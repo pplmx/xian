@@ -21,6 +21,8 @@ export const useSettingsStore = defineStore(
     const smartKeep = ref<import('@/core/smartKeep').SmartKeepConfig>({
       enabled: false,
       minQuality: 3,
+      minTier: 0,
+      junkBelowLine: false,
       keepCoreAffix: true,
       keepComboPiece: true,
       keepPerfectRolls: true,
@@ -50,9 +52,19 @@ export const useSettingsStore = defineStore(
       installNoticeDismissed.value = installNoticeDismissed.value === true
       decomposeRanks.value = asArray<number>(decomposeRanks.value).filter(n => typeof n === 'number' && Number.isFinite(n))
       const sk = asRecord<unknown>(smartKeep.value)
+      /**
+       * junkBelowLine 是新增项,老档没有这个字段 —— 拿"老档勾过一键分解档位"当迁移信号:
+       * 那批玩家原本就期望线下之物无救(旧口径是勾选档一律回收),给他们保持手感;
+       * 一旦落过盘,此后完全听玩家的。字段缺失才迁移,故只生效一次。
+       */
+      const legacyJunk = sk.junkBelowLine === undefined && decomposeRanks.value.length > 0
       smartKeep.value = {
         enabled: sk.enabled === true,
-        minQuality: Math.floor(asFiniteNumber(sk.minQuality, 3, 0)),
+        // 品质档位是全表九档(凡→神),不再只有灵/玄/地三个选项
+        minQuality: Math.min(8, Math.floor(asFiniteNumber(sk.minQuality, 3, 0))),
+        // 阶级下限:0 = 关;上限取区域表最高层级
+        minTier: Math.min(32, Math.max(0, Math.floor(asFiniteNumber(sk.minTier, 0, 0)))),
+        junkBelowLine: sk.junkBelowLine === undefined ? legacyJunk : sk.junkBelowLine === true,
         keepCoreAffix: sk.keepCoreAffix !== false,
         keepComboPiece: sk.keepComboPiece !== false,
         keepPerfectRolls: sk.keepPerfectRolls !== false,

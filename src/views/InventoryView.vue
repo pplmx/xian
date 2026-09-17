@@ -306,7 +306,15 @@
 
     <!-- 一键分解:勾选品质(记忆勾选) -->
     <BaseModal :open="decomposeOpen" title="一键分解" @close="decomposeOpen = false">
-      <p class="text-[11px] text-ink-faint">勾选要分解的品质,已佩戴与上锁的装备不受影响。勾选会被记住;开启智能收纳后,拾取到所选品质的装备将自动回收为器灵尘,不再占行囊;未开启智能收纳时,拾取照常入包,此勾选仅在下方「分 解」时作为筛选。行囊中已存的同类须点下方「分 解」方才化尘。</p>
+      <!--
+        这段文案此前承诺了两件事(手动筛选 + 自动回收),于是和「智能收纳」的保留线打架:
+        玩家把保留线设在灵品,却因为这里勾过玄品而被自动扔掉玄品。现在这一页只管手动那一次。
+      -->
+      <p class="text-[11px] leading-relaxed text-ink-faint">
+        勾选要分解的品质,已佩戴与上锁的装备不受影响。勾选会被记住,但**只管这一页的手动分解**
+        —— 掉落时的自动去留由「智能收纳」说了算(见上一页):那里定的「此品质起一律保留」是硬承诺,
+        这里的勾选压不动它。
+      </p>
       <div class="mt-2 space-y-1">
         <label
           v-for="row in decomposeRows"
@@ -349,19 +357,74 @@
         <span class="text-[13px] text-ink-soft">启用智能收纳</span>
         <input v-model="settings.smartKeep.enabled" type="checkbox" class="h-4 w-4 accent-cinnabar" />
       </label>
-      <div class="flex items-center justify-between py-1.5">
-        <span class="text-[12px] text-ink-soft">此品质起一律保留</span>
-        <div class="flex gap-1">
+      <!--
+        品质下限:九档全给(凡→神)。从前只列灵/玄/地三档,于是"想更严一点"无处可选 ——
+        而玩家真正想说的常常是"天品以下都别留"。
+      -->
+      <div class="py-1.5">
+        <div class="flex items-baseline justify-between">
+          <span class="text-[12px] text-ink-soft">此品质起一律保留</span>
+          <span class="text-[10px] text-ink-faint">低于它才交给缘分裁决</span>
+        </div>
+        <div class="mt-1.5 flex flex-wrap gap-1">
           <button
             v-for="q in KEEP_QUALITY_CHOICES"
             :key="q.rank"
             class="chip-ink"
-            :class="settings.smartKeep.minQuality === q.rank ? 'border-cinnabar text-cinnabar' : 'border-ink/25 text-ink-faint'"
+            :style="settings.smartKeep.minQuality === q.rank ? { color: q.color, borderColor: q.color } : {}"
+            :class="settings.smartKeep.minQuality === q.rank ? '' : 'border-ink/25 text-ink-faint'"
             @click="settings.smartKeep.minQuality = q.rank"
           >
             {{ q.name }}
           </button>
         </div>
+      </div>
+      <!--
+        阶级下限:与品质下限是两条独立的废料定义 —— 品质管"这件成色如何",
+        阶级管"这是哪一界的旧物"。它是无条件回收(不看缘分),所以给足读数与警示。
+      -->
+      <div class="py-1.5">
+        <div class="flex items-baseline justify-between">
+          <span class="text-[12px] text-ink-soft">此阶以下一律回收</span>
+          <span class="text-[10px]" :class="settings.smartKeep.minTier > 0 ? 'text-cinnabar' : 'text-ink-faint'">
+            {{ settings.smartKeep.minTier > 0 ? `低于 ${settings.smartKeep.minTier} 阶:不问缘分` : '未启用' }}
+          </span>
+        </div>
+        <div class="mt-1.5 flex items-center gap-2">
+          <button class="chip-ink !px-3" :disabled="settings.smartKeep.minTier <= 0" @click="bumpMinTier(-1)">−</button>
+          <span class="tabular w-14 text-center font-kai text-[15px] text-ink">
+            {{ settings.smartKeep.minTier > 0 ? `${settings.smartKeep.minTier} 阶` : '关' }}
+          </span>
+          <button class="chip-ink !px-3" :disabled="settings.smartKeep.minTier >= 32" @click="bumpMinTier(1)">＋</button>
+          <span class="ml-1 text-[10px] text-ink-ghost">
+            你当前可到 {{ playerTier }} 阶
+          </span>
+        </div>
+      </div>
+      <!--
+        「线下不看缘分」:承接从前藏在「一键分解」里的那股需求(显式废料声明),
+        但把它收回政策弹窗、并排在保留线之后 —— 线上的件永远不受它影响。
+      -->
+      <label class="flex items-center justify-between py-1.5">
+        <span class="text-[12px] text-ink-soft">
+          线下不看缘分,一律回收
+          <span class="block text-[10px] text-ink-faint">低于保留线的件不再由核心词条/套件救回</span>
+        </span>
+        <input v-model="settings.smartKeep.junkBelowLine" type="checkbox" class="h-4 w-4 accent-cinnabar" />
+      </label>
+      <!--
+        读数:按**当前**规则体检行囊 —— 收纳最吓人的地方是"看不见",
+        所以这里摊开"会扔几件、各因哪条规则",调开关时数字跟着动。
+      -->
+      <div v-if="settings.smartKeep.enabled" class="mt-1 rounded-md bg-paper-deep/60 px-2.5 py-2 text-[10px]">
+        <p class="text-ink-soft tabular">
+          依当前规则:行囊 {{ impact.candidates }} 件中留 {{ impact.keep }} 件 · 化尘 {{ impact.recycle }} 件
+        </p>
+        <p v-for="row in impact.byReason" :key="row.reason" class="mt-0.5 flex justify-between tabular">
+          <span class="text-ink-faint">{{ row.reason }}</span>
+          <span class="text-cinnabar/90">{{ row.count }} 件</span>
+        </p>
+        <p v-if="impact.byReason.length === 0" class="mt-0.5 text-ink-faint">眼下没有会被自动判掉的件</p>
       </div>
       <label class="flex items-center justify-between py-1.5">
         <span class="text-[12px] text-ink-soft">保留主流派核心词条件</span>
@@ -436,6 +499,8 @@
     upgradeArtifact
   } from '@/core/forge'
   import { keepVerdict } from '@/core/smartKeep'
+  import { smartKeepImpact } from '@/core/smartKeep'
+  import { maxTierForMajor } from '@/data/regions'
   import { equipSetDef, setCounts, type EquipSetDef } from '@/core/equipSet'
   import { useLoreStore } from '@/stores/lore'
   import { DAO_NAMES, SKILLS, skillStageName } from '@/data/crafting'
@@ -677,14 +742,25 @@
 
   // ---- 智能收纳 ----
   const smartOpen = ref(false)
-  const KEEP_QUALITY_CHOICES = [
-    { rank: 3, name: '灵品' },
-    { rank: 4, name: '玄品' },
-    { rank: 5, name: '地品' }
-  ]
+  /**
+   * 品质下限的九档全给(凡→神)—— 只列灵/玄/地那三档时,"想更严一点"无处可选。
+   * 名字与配色都取自品质表,不在这里另抄一份。
+   */
+  const KEEP_QUALITY_CHOICES = QUALITIES.map(q => ({ rank: q.rank, name: q.name, color: q.color }))
 
-  /** 待清理件数(确认提示用) */
-  const cleanCount = computed(() => inventory.bagItems.filter(it => !it.locked && !keepVerdict(it).keep).length)
+  /** 玩家当前能到的最深层级 —— 给阶级下限一个参照(区域表的唯一口径) */
+  const playerTier = computed(() => maxTierForMajor(player.major))
+
+  function bumpMinTier(delta: number): void {
+    settings.smartKeep.minTier = Math.max(0, Math.min(32, settings.smartKeep.minTier + delta))
+    cleanConfirm.value = false
+  }
+
+  /** 按当前规则的体检读数(与裁决同一口径,见 core/smartKeep.smartKeepImpact) */
+  const impact = computed(() => smartKeepImpact(inventory.bagItems))
+
+  /** 待清理件数(确认提示用)—— 与读数同源 */
+  const cleanCount = computed(() => impact.value.recycle)
 
   /** 清理确认态:按一次按钮先落在「再想想/清理化尘」上 */
   const cleanConfirm = ref(false)
