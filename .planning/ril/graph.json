@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 209,
+  "round": 210,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-17T15:42:45+00:00",
+  "updated_at": "2026-09-17T23:53:38+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -11958,7 +11958,7 @@
       "version": 1,
       "created_at": "2026-09-16T01:33:21+00:00",
       "updated_at": "2026-09-16T01:33:21+00:00",
-      "touched_round": 208,
+      "touched_round": 210,
       "summary": "src/core/pillService.ts + src/core/breakthrough.ts + src/core/save.ts(炼丹/突破/存档三条主干)"
     },
     "CHG-239": {
@@ -12476,6 +12476,53 @@
       "touched_round": 209,
       "rationale": "稀有度的承诺是三条:不被支配、期望更强、各有领地。budgetOfMods 是机制复杂度会计(它自己的注释写着\"不是玩家资源\"),按战斗口径定参考档,会把条件类战斗词条算重、运气与进阶率算轻 —— 拿它当强度阶梯就会得出错误的平衡结论。故判定:ISS-216 不是缺陷,判据按三条真承诺重写,数值不动。",
       "alternatives_rejected": "①按预算重排 33 件数值:为一把错的尺子改动数据,会把真平衡改坏(且会连带抽取权重的体感);②按预算重新分等:等于让\"复杂度\"决定稀缺度,与\"稀有=强\"的玩家认知相反;③无视这条告警:下次还会有人重新发现并再判一遍。"
+    },
+    "ISS-217": {
+      "id": "ISS-217",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-17T23:53:30+00:00",
+      "updated_at": "2026-09-17T23:53:30+00:00",
+      "touched_round": 210,
+      "severity": 0.8,
+      "confidence": 1.0,
+      "effort": 2,
+      "summary": "自动回收有两个政策入口,且互不知情:「一键分解」的勾选档(decomposeRanks,默认勾凡品+良品)在 shouldAutoRecycle 里排在**所有保留规则之前**,于是玩家把智能收纳的保留线设在灵品、却在手动分解里勾过玄品时,玄品在保留线之上也被自动回收(玩家实测)。该行为还被一条判据锁着(「显式废料声明压过保留规则」)——是有测试保护的错误设计。同一条链上另有一处同类隐患:凝炼台入炉会连同强化投入毁掉已淬养的件,而界面不提示。"
+    },
+    "EV-194": {
+      "id": "EV-194",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-17T23:53:30+00:00",
+      "updated_at": "2026-09-17T23:53:30+00:00",
+      "touched_round": 210,
+      "source": "src/core/smartKeep.spec.ts(保留线以上的件永不被自动回收 · 实测事故回归)",
+      "summary": "全链审计(谁能替我扔装备):①拾取自动回收闸(唯一漏斗 loot.acquireEquipment,在线/离线/际遇/秘境/镇压共用)②行囊满腾位(只挤无缘件,尊重政策)③满包折算(只动新件)④一键分解(手动)⑤依规则清理(手动+二次确认)⑥凝炼台入炉(手动+二次确认,不提示已淬养)。修复后判词顺序:投入保护 > 阶级下限 > 品质下限 > junkBelowLine > 缘分规则,并由回归用例钉住。",
+      "confidence": 1.0
+    },
+    "CHG-247": {
+      "id": "CHG-247",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-17T23:53:30+00:00",
+      "updated_at": "2026-09-17T23:53:30+00:00",
+      "touched_round": 210,
+      "commit": "c84ed8b",
+      "summary": "自动回收政策单一入口化:去掉 shouldAutoRecycle 里的 decomposeRanks 分支;新增 junkBelowLine(线下不看缘分,排在保留线之后);一键分解弹窗文案改写;凝炼台补已淬养警示;老档一次性迁移(junkBelowLine 缺失 + 勾过分解档 ⇒ 开启)。"
+    },
+    "DEC-053": {
+      "id": "DEC-053",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-17T23:53:30+00:00",
+      "updated_at": "2026-09-17T23:53:30+00:00",
+      "touched_round": 210,
+      "rationale": "自动化政策只能有一个入口。「一键分解」是操作(手动批量这一次),「智能收纳」是政策(掉落的长期去留);把两者混在一起,玩家只记得自己设过的那个,于是出现「保留线说留、实测被扔」。故:政策收进智能收纳,操作留在原位;线下\"不看缘分\"那股真实需求以 junkBelowLine 的形式收编,并排在保留线之后 —— 线上的件永不中招。",
+      "alternatives_rejected": "①保留 decomposeRanks 的优先权、只把它挪到保留线之后:两个弹窗仍能管同一件事,玩家照样会困惑;②删掉线下不看缘分的能力:那股需求真实存在(凡俗之物不想让缘分救回);③只改文案不改行为:文案不能修好一个会扔玩家东西的冲突。"
     }
   },
   "edges": [
@@ -18605,6 +18652,24 @@
       "to": "ISS-216",
       "type": "resolves",
       "created_at": "2026-09-17T15:42:45+00:00"
+    },
+    {
+      "from": "DEC-053",
+      "to": "COMP-024",
+      "type": "governs",
+      "created_at": "2026-09-17T23:53:30+00:00"
+    },
+    {
+      "from": "ISS-217",
+      "to": "COMP-024",
+      "type": "located_in",
+      "created_at": "2026-09-17T23:53:30+00:00"
+    },
+    {
+      "from": "CHG-247",
+      "to": "ISS-217",
+      "type": "resolves",
+      "created_at": "2026-09-17T23:53:38+00:00"
     }
   ]
 }
