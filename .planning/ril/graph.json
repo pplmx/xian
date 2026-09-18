@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 280,
+  "round": 281,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T18:36:20+00:00",
+  "updated_at": "2026-09-18T18:44:12+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16544,7 +16544,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:36:06+00:00",
       "updated_at": "2026-09-18T18:36:06+00:00",
-      "touched_round": 280,
+      "touched_round": 281,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16590,15 +16590,65 @@
     "ISS-234": {
       "id": "ISS-234",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-18T18:36:14+00:00",
-      "updated_at": "2026-09-18T18:36:14+00:00",
-      "touched_round": 280,
+      "updated_at": "2026-09-18T18:44:12+00:00",
+      "touched_round": 281,
       "severity": 0.35,
       "confidence": 0.9,
       "effort": 1,
-      "summary": "换期口径在别处还有第二份实现:复活 / 转世时给跨世计数器打快照(core/samsaraService.beginLife 的 vow.base)用的是同一套\"基准快照\"手法,但那份逻辑没有走库,也没有幂等保护 —— 若 beginLife 被重复调用(重进、回放),本世的进度同样会被重设。"
+      "summary": "(已解决,CHG-344)基准快照手法在复活/转世那边还有第二份实现(core/samsaraService.beginLife 的 vow.base),没走库、也没有幂等保护。现已改走库的 counters 原语,并加\"一世一题\"判定(已立过不再重打基准;转世流程先撤旧题再立新题)。"
+    },
+    "TASK-262": {
+      "id": "TASK-262",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:44:03+00:00",
+      "updated_at": "2026-09-18T18:44:03+00:00",
+      "touched_round": 281,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "把\"计数器基准快照\"抽成库原语:snapshotOf / deltaOf / deltaSince(同一条减法只有一处实现;增量夹到 ≥0、缺基准按 0)。tasks.ts 改用这组原语;本作 core/samsaraService 的 countersDelta/分支数/雪耻数与本世基准改走它,并收掉 ISS-234(立誓一世一次:已经立过不再重打基准;转世流程先撤旧题再立新题)。继续攒批不发版。"
+    },
+    "CHG-344": {
+      "id": "CHG-344",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:44:04+00:00",
+      "updated_at": "2026-09-18T18:44:04+00:00",
+      "touched_round": 281,
+      "commit": "9af8435",
+      "summary": "库:新增 src/counters.ts 与 counters.spec.ts(6 例:快照是死数据、增量口径、夹取与坏值、缺基准按 0、非计数器整数同规则),tasks.ts 的 rollover/deltaOf 改用它们,index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目。宿主:core/samsaraService 改走三个新原语并在 beginLife 加\"一世一题\"判定,core/reincarnation 先 setVow(null) 再立新题,新增 engineLifeParity.spec(8 例,冻结旧开世与旧增量 + 两条有意加固),test-report 补分类,docs/engine.md 加一行并更新引用数与导出数(51 处 / 70 个)。"
+    },
+    "EV-269": {
+      "id": "EV-269",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:44:09+00:00",
+      "updated_at": "2026-09-18T18:44:09+00:00",
+      "touched_round": 281,
+      "confidence": 0.96,
+      "source": "变更 CHG-344(9af8435)。bunx vitest run src/core/engineLifeParity.spec.ts(8 例);bun run check;bun run test(235 文件/2315 例);bun run test:report(2315 过/0 败);cd packages/engine && bun run check(35 文件/299 例);bun run check:engine(51 处引用);bun run check:engine:standalone",
+      "summary": "本世计搬迁后与迁移前逐位一致:开世基准逐键相同(含空账与多计数器),本世增量在\"当前<基准\"与\"缺基准\"两档上逐点相同(都是 0 与非负),计数型与分支型命题的读数同源。ISS-234 收掉:beginLife 加了\"一世一题\"判定(已立过直接返回),转世流程改为先 setVow(null) 再立新题 —— 于是\"重进来一次把本世进度重新打基准抹掉\"这条路断了,而正常转世的基准照旧换新(判据里两条都钉住)。"
+    },
+    "DEC-132": {
+      "id": "DEC-132",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:44:09+00:00",
+      "updated_at": "2026-09-18T18:44:09+00:00",
+      "touched_round": 281,
+      "summary": "\"打基准 + 算这一段\"只留一份实现(库的 counters 原语),\"立誓 / 立题\"这类一世一次的动作必须在库外由宿主显式撤旧题,再做幂等判定。",
+      "rationale": "同一条减法(当前 − 基准,再夹到 ≥0)此前散在每日任务、本世计与分支/雪耻三处:夹取漏一处,回档那天就冒出负进度,而\"负进度\"不只是显示难看 —— 它会让\"够不够\"的判定永远为真(白送奖励)。故把这条规则收进库原语,任务板与本世计都用它。第二条来自 ISS-234:\"一世一次\"这类动作的幂等不能靠\"调用方小心\",也不能靠内容层的条件(内容会变),而要靠**状态本身**(有没有题)判定;代价是周期切换必须显式先撤旧题 —— 把这一步写在流程里(转世先 setVow(null)),\"新一世\"与\"同一世重进来一次\"这两件事才分得开。",
+      "alternatives_rejected": "①在三处各写一遍 max(0, now - base)(现状,漏一处就出事);②给 beginLife 加一个\"强制重打\"参数让调用方决定(等于把幂等责任又推回调用方,而重进来的那条路径正是调用方没意识到的);③用时间戳判断是不是同一世(vow.at 与 now 差多少算同一世?阈值是猜的);④把本世计也做成 createTaskBoard 的一种(周期是\"世\",但本世的度量不止计数器(分支数、雪耻数、图鉴、技艺……),硬套会把不相关的维度塞进同一个模型)。"
     }
   },
   "edges": [
@@ -25278,6 +25328,30 @@
       "to": "COMP-003",
       "type": "located_in",
       "created_at": "2026-09-18T18:36:20+00:00"
+    },
+    {
+      "from": "CHG-344",
+      "to": "TASK-262",
+      "type": "implements",
+      "created_at": "2026-09-18T18:44:12+00:00"
+    },
+    {
+      "from": "DEC-132",
+      "to": "TASK-262",
+      "type": "governs",
+      "created_at": "2026-09-18T18:44:12+00:00"
+    },
+    {
+      "from": "TASK-262",
+      "to": "TASK-261",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:44:12+00:00"
+    },
+    {
+      "from": "CHG-344",
+      "to": "ISS-234",
+      "type": "resolves",
+      "created_at": "2026-09-18T18:44:12+00:00"
     }
   ]
 }
