@@ -129,6 +129,7 @@
 | 投资点的容量怎么分、换主位亏不亏 | `createPointPool` | `points.sim.spec.ts`(主位上限与总容量是两道闸;超额部分冻结) |
 | 跨模块自洽(状态 × 投资点 × 任务) | `createBuffSystem` + `createPointPool` + `createTaskBoard` | `integrationBuffs.spec.ts`(到期边界与剪枝顺序无关、加点不回溯、进度不回退、叠加是相乘) |
 | 跨模块自洽(战斗 → 掉落 → 入库 → 装配 → 面板) | 战斗 + 掉落 + 入库 + 装备 + 属性 | `integrationLoot.spec.ts`(件数守恒、折算同源、见证不漏、容量不越界、面板单调、同种子可复现) |
+| 跨模块自洽(周期 × 内容池 × 抉择) | `createCycleSystem` + `drawFrom` + `createChoiceSystem` | `integrationWorld.spec.ts`(问行情不掷骰、抽到的事必须切题、一次性牌只碰一次、账目守恒) |
 
 ## 3 · 三条纪律
 
