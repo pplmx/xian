@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 277,
+  "round": 278,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T18:13:06+00:00",
+  "updated_at": "2026-09-18T18:21:03+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16343,7 +16343,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:12:56+00:00",
       "updated_at": "2026-09-18T18:12:56+00:00",
-      "touched_round": 277,
+      "touched_round": 278,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16398,6 +16398,56 @@
       "confidence": 0.9,
       "effort": 1,
       "summary": "本作的状态读取路径仍问\"列表里有没有\",而不是\"此刻还算不算数\":buffMods 会把已经到期、但还没被心跳剪掉的那一拍的状态算进属性汇总(README 里的「疗伤中」同理)。库侧已给出正确判据(active/has/remainingSec,库用例钉着),换过去是一次显式的行为改动(到期那一拍少算一条),故与搬迁分开做。"
+    },
+    "TASK-259": {
+      "id": "TASK-259",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:20:53+00:00",
+      "updated_at": "2026-09-18T18:20:53+00:00",
+      "touched_round": 278,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增设施层:createFacilitySystem(能不能升 + 上限取小 + 费用 + 效果 + 每小时产出)与 accrue(按秒推进、零头留累加器)。门槛由内容给函数且顺序即界面说法;上限只封升级不改已有等级;费用数额是泛型(本作灵石是大数)。本作 core/engineFacilities 接线 buildingService 与 stores/dongfu 的 buildingMods/buildingCap/produce,示例「书桌与日常」再加一层。继续攒批不发版。"
+    },
+    "CHG-341": {
+      "id": "CHG-341",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:20:53+00:00",
+      "updated_at": "2026-09-18T18:20:53+00:00",
+      "touched_round": 278,
+      "commit": "86cb558",
+      "summary": "库:新增 src/facilities.ts 与 facilities.spec.ts(14 例:门槛顺序、上限取小与只封升级、0 级不算数、效果顺序、速率合计、未知 id 与坏值、零头累积(24 小时不丢一份)、按键结算、拆设施后发零头、纯函数),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目,示例 daily-loop 加书桌台灯一层。宿主:新增 core/engineFacilities.ts(内容与换算层:(洞府+1)×5 只写一处),buildingService 的门槛与费用、stores/dongfu 的 buildingMods/buildingCap/produce 改走它,新增 engineFacilitiesParity.spec(7 例,冻结旧门槛与旧产出推进),test-report 补分类,docs/engine.md 加一行并把引用数与导出数对回实际(44 处 / 65 个)。"
+    },
+    "EV-265": {
+      "id": "EV-265",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:20:56+00:00",
+      "updated_at": "2026-09-18T18:20:56+00:00",
+      "touched_round": 278,
+      "confidence": 0.96,
+      "source": "变更 CHG-341(86cb558)。bunx vitest run src/core/engineFacilitiesParity.spec.ts(7 例);bun run check(宿主 type-check + lint 全绿);bun run test(228 文件/2248 例);bun run test:report(2248 过/0 败);cd packages/engine && bun run check(30 文件/268 例,含示例);bun run check:engine(44 处引用);bun run check:engine:standalone",
+      "summary": "设施搬迁后本作行为一位未动:七座建筑 × 五组等级 × 四档境界的门槛文案/下一级/费用逐位相同(灵石大数用 formatExact 比),产出侧五组等级 × 七档时长加连推 600 拍,累加器与发出去的整数逐位相同,并走一遍真 store 验库存进账。一个实现细节值得记住:库的 accrue 收「每小时速率 + 秒数」并做 (rate*sec)/3600,与迁移前 (lv*rate*sec)/3600 的运算顺序一致,所以连浮点零头都对得上;若改成先算小时再相乘,长时间挂机会在进位边界上飘。"
+    },
+    "DEC-129": {
+      "id": "DEC-129",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:21:01+00:00",
+      "updated_at": "2026-09-18T18:21:01+00:00",
+      "touched_round": 278,
+      "summary": "设施的每小时产出必须留零头(速率按小时给、按秒推进,整数才入账);等级上限只封升级,不改已有等级。",
+      "rationale": "两条都是\"数字被静默改掉\"的一类错。①产出:本作的速率是 1.5 悟道点/小时、2.4 玄铁/小时这类小数,若每次心跳都先取整再累加(或按拍截断),整条产线就被抹平了 —— 玩家挂满一晚也只看到 0,而且没有任何报错;正确做法是零头留在累加器里,够了整数才发,并且**累加器里已经攒着的零头也要看一眼**(设施拆了 / 降到 0 级时,残留的 1.2 份该发出去)。②上限:上限的作用是\"挡住再升一级\",不是\"把等级改小\" —— 若实现成\"读取时按上限截断\",洞府降级或规则调整就会静默抹掉玩家已有的投入(本作转世时建筑归零是**显式**的重置,和静默截断不是一回事)。附带一条口径:门槛的判定顺序属于内容(先报\"境界不够\"还是\"已至顶层\",是玩家先看到哪句话),库只保证\"能升\"与\"要花什么\"出自同一次判定。",
+      "alternatives_rejected": "①按拍取整(实现最省事,长期产出归零,且只在长时间挂机后才看得出来);②把小数产出攒在展示层而不是存档里(切界面就丢,离线更不用说);③上限实现成读取时截断(玩家已有的等级会凭空变小,且没人知道是谁改的);④把所有建筑的上限写死在库里(洞府限制其余建筑是**内容**的选择,别的作品可能用科技树或声望定上限 —— 所以是 cap(levels, ctx) 而不是一个常数)。"
     }
   },
   "edges": [
@@ -24999,6 +25049,24 @@
       "to": "COMP-018",
       "type": "located_in",
       "created_at": "2026-09-18T18:13:06+00:00"
+    },
+    {
+      "from": "CHG-341",
+      "to": "TASK-259",
+      "type": "implements",
+      "created_at": "2026-09-18T18:21:03+00:00"
+    },
+    {
+      "from": "DEC-129",
+      "to": "TASK-259",
+      "type": "governs",
+      "created_at": "2026-09-18T18:21:03+00:00"
+    },
+    {
+      "from": "TASK-259",
+      "to": "TASK-258",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:21:03+00:00"
     }
   ]
 }
