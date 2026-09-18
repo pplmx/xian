@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 288,
+  "round": 289,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:24:24+00:00",
+  "updated_at": "2026-09-18T19:32:43+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16807,7 +16807,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:07:20+00:00",
       "updated_at": "2026-09-18T19:07:20+00:00",
-      "touched_round": 287,
+      "touched_round": 289,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16999,6 +16999,56 @@
       "summary": "发版流程固定成五步:改 package.json、把「未发布」定稿成带日期的版本一节、同步三处 tag 引用(engine README / engine docs/development / 根 README)、推宿主与子树、在 engine 仓库 gh release create 并按 CHANGELOG 分主题写说明。",
       "rationale": "发布这件事最容易出的错不是\"发错版本号\",而是**说明与实际不一致**:tag 指向哪个提交、那个提交里的版本号是多少、发布包里装的是哪一版、README 让人 pin 的是哪个 tag —— 四处任意一处没同步,外面的人就会按着一份错的说明接库。故把流程固定成五步,并把\"核对 tag 指向 + 包内 version\"也当成发版的一部分(用 gh api 读 tag 里的 package.json,而不是凭本地印象)。节奏上继续按版本口径:攒批(39 个提交一版)、默认只加 patch、tag 是给外面人一个可 pin 的节点。",
       "alternatives_rejected": "①改完就发(历史上的 0.1.2–0.1.5 一天连跳四次,已经按攒批口径纠正过一次);②只推 tag 不核对它指向哪(子树推送与 tag 是两步,顺序错了 tag 会落在旧提交上);③在宿主仓库打引擎 tag(库的 release 属于 engine 仓库,宿主有自己的 app 版本线 v1.35.0);④release 说明另写一份(与 CHANGELOG 各写各的迟早不一致;现在按 CHANGELOG 的分节改写,口径只有一份)。"
+    },
+    "TASK-270": {
+      "id": "TASK-270",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T19:32:36+00:00",
+      "updated_at": "2026-09-18T19:32:36+00:00",
+      "touched_round": 289,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增配方执行层:createRecipeRunner(costs/rate/blocked/affordable/spentOnFail/bonus/bonusCap),把\"开炉 → 扣料 → 掷成败 → 双成\"的顺序与边界收进库 —— 尤其\"没开炉\"与\"开炉失败\"分成两档。本作 core/engineCraft 接线 pillService.craftPill。"
+    },
+    "CHG-352": {
+      "id": "CHG-352",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:32:36+00:00",
+      "updated_at": "2026-09-18T19:32:36+00:00",
+      "touched_round": 289,
+      "commit": "844104d",
+      "summary": "库:新增 src/recipes.ts 与 recipes.spec.ts(11 例),index/publicApi.spec 导出,CHANGELOG「未发布」新起一节并写清五条口径,README 加模块行 / 定制行 / 目录树,公开面计数更新到 75/200。宿主:新增 core/engineCraft.ts(内容与回报的接入层:成功率仍走 craftability,花费与保料仍是本作口径,双成上限 0.8 写进配置),pillService.craftPill 改走它并按回报记账,新增 engineCraftParity.spec(6 例),test-report 补分类,docs/engine.md 加一行并把引用数更新到 59。"
+    },
+    "EV-277": {
+      "id": "EV-277",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:32:36+00:00",
+      "updated_at": "2026-09-18T19:32:36+00:00",
+      "touched_round": 289,
+      "confidence": 0.96,
+      "source": "变更 CHG-352(844104d)。bunx vitest run src/core/engineCraftParity.spec.ts(6 例);bunx vitest run src/core/pillService.spec.ts src/core/craftability.spec.ts src/core/pillValue.spec.ts(60 例,迁移前的炼丹契约);bun run check;bun run test(244 文件/2393 例);bun run test:report(2393 过/0 败);cd packages/engine && bun run check(45 文件/352 例);bun run check:engine(59 处引用);bun run check:engine:standalone",
+      "summary": "炼丹执行搬迁后逐项一致:成功 / 双成 / 失败 / 不知此方 / 材料不足五格下,回报(ok/count/aborted)、扣掉的灵草与灵石、背包丹药数、pillsCrafted 与 pillsFailed、技艺经验与配方熟练度、提示语、掷骰数全部相同。两处口径被钉住:①\"没开炉\"不扣料、不掷骰、不计失败(旧写法靠几个提前 return,现在是回报里的 fired:false);②失败时灵草按技艺保下一部分、灵石不退(逐条花费各自说明)。对账时避开了成就发赏那笔旁路账(预先解锁全部成就与主线),否则同一次炼制里混着两笔账,数字对不上。"
+    },
+    "DEC-140": {
+      "id": "DEC-140",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:32:43+00:00",
+      "updated_at": "2026-09-18T19:32:43+00:00",
+      "touched_round": 289,
+      "summary": "\"没开炉\"与\"开炉失败\"必须在结构上分开:前者不扣料、不掷骰、不计失败;后者才走扣料与技艺成长。",
+      "rationale": "这两件事在代码里太容易混:反正都是\"没炼成\",于是几处提前 return 就把它们写在了一起。代价有三层:①玩家看到的是同一句\"炼制失败\",但一次是\"你材料不够\",一次是\"你手艺不行\" —— 该补的东西完全不同;②数据层会把\"没做的事\"记成\"做砸了\"(失败次数、失败率全线失真);③随机流也会被牵连 —— 没开炉却掷了一颗骰,后续一切随机结果跟着位移。故库把\"能不能开炉\"与\"成不成\"分成两档回报(fired / succeeded),并把顺序写死:门槛 → 材料 → 掷骰(与掉落层的\"保底照样掷骰\"是同一类边界问题的两个方向)。",
+      "alternatives_rejected": "①用同一个 false 表示所有未成功(这就是迁移前的状态,三层代价都真实存在);②把材料检查放进库(库不认识资源账本,只该由调用方报\"够不够\");③让\"没开炉\"也消耗随机(牵连后续随机流,且无法解释给玩家);④把失败保料的取整/大数算术放进库(那属于数值层,库一旦掺进去就得认识 GNum)。"
     }
   },
   "edges": [
@@ -25834,6 +25884,24 @@
       "to": "TASK-268",
       "type": "depends_on",
       "created_at": "2026-09-18T19:24:24+00:00"
+    },
+    {
+      "from": "CHG-352",
+      "to": "TASK-270",
+      "type": "implements",
+      "created_at": "2026-09-18T19:32:43+00:00"
+    },
+    {
+      "from": "DEC-140",
+      "to": "TASK-270",
+      "type": "governs",
+      "created_at": "2026-09-18T19:32:43+00:00"
+    },
+    {
+      "from": "TASK-270",
+      "to": "TASK-266",
+      "type": "depends_on",
+      "created_at": "2026-09-18T19:32:43+00:00"
     }
   ]
 }
