@@ -97,6 +97,7 @@
 | "本次所得"与账本对得上 | `createSettlement` | `settlement.spec.ts` |
 | 哪个资源是瓶颈 / 烂在手里 | `createEconomyReadings` | `economy.spec.ts` + `economy.sim.spec.ts`(默认阈值翻译成"支出/收入"区间,以及 ±10% 的敏感区有多宽) |
 | 自动清理规则链 | `createTriage` | `examples/daily-loop.ts` 的清理段 |
+| 整套经营闭环(产线 → 上限 → 卖出 → 体检 → 升级 → 清理 → 日常) | —— | `examples/shop-loop.ts`(一产一销的一间铺子:零头不丢、上限截断、离线时长账、两种升级选择各算一遍、清仓规则链,全在一份 200 行的小程序里) |
 | 跨模块自洽(账目) | —— | `integration.spec.ts`(守恒 / 同源 / 单调幂等 / 可复现) |
 | 跨模块自洽(时间 × 随机) | `planIdle` + `createCycleSystem` + `createPityCounter` | `integrationTime.spec.ts`(同种子同结果、问周期不消耗随机、保底不改未触发前的随机、分段与逐步一致) |
 | 跨模块自洽(状态 × 投资点 × 任务) | `createBuffSystem` + `createPointPool` + `createTaskBoard` | `integrationBuffs.spec.ts`(到期边界与剪枝顺序无关、加点不回溯、进度不回退、叠加是相乘) |

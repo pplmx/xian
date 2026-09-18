@@ -50,7 +50,7 @@
     "type-check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "examples": "bun examples/quickstart.ts && bun examples/minimal.ts && bun examples/combo-arts.ts && bun examples/daily-loop.ts && bun examples/quest-loop.ts && bun examples/collect-loop.ts && bun examples/combat-takeover.ts",
+    "examples": "bun examples/quickstart.ts && bun examples/minimal.ts && bun examples/combo-arts.ts && bun examples/daily-loop.ts && bun examples/quest-loop.ts && bun examples/collect-loop.ts && bun examples/shop-loop.ts && bun examples/combat-takeover.ts",
     "type-check:examples": "tsc -p tsconfig.examples.json",
     "verify:dist": "node scripts/verify-dist.mjs",
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.examples.json && vitest run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs && bun run examples"
