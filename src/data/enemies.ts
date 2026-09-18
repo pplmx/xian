@@ -417,7 +417,9 @@ export const ENEMIES: EnemyDef[] = [
   e('e_sealing', '星海仙灵', 25, 'star', [1.2, 1.5, 1.1, 1.35], [{ name: '星屑乱舞', mult: 1.3, rate: 0.5, effect: 'multi' }], {
     element: 'light'
   }),
-  e('e_meteorbeast', '陨星仙兽', 25, 'paw', [1.8, 1.4, 1.4, 1.0], [heavy('陨星冲撞', 2.5, 0.3)], { element: 'earth' }),
+  // id 不能与 17 层的「陨铁兽」重名:敌人表按 id 建索引(后写的覆盖先写的),
+  // 重名会让星陨荒原那一处刷出 25 层的数值(见 dataIntegrity 的 id 唯一性判据)
+  e('e_meteorimmortal', '陨星仙兽', 25, 'paw', [1.8, 1.4, 1.4, 1.0], [heavy('陨星冲撞', 2.5, 0.3)], { element: 'earth' }),
   e('e_xinghaizhu', '星海之主', 25, 'skull', [6.1, 2.0, 1.4, 1.3], [{ name: '星海乱流', mult: 1.3, rate: 0.5, effect: 'multi' }], {
     boss: true,
     element: 'light',

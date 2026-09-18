@@ -273,7 +273,7 @@ export const REGIONS: RegionDef[] = [
   r('leichi', '太乙雷池', 24, 12, 5, 'zap', '一池雷水亘古不涸,太乙仙光自池底冲天而起', ['e_tai_thunder', 'e_tai_light'], 'e_tai_zun', ['general', 'thunder', 'immortal'], 'jinyuan'),
   r('daochang', '玄机道场', 24, 12, 5, 'scroll', '残破的道场里机关仍在自转,道童仍在扫地', ['e_qitong', 'e_puppet'], 'e_daozun', ['general', 'immortal'], 'leichi'),
   r('daluotian', '大罗天阙', 25, 13, 5, 'star', '大罗天阙悬于星河之上,星君执掌周天星斗', ['e_luo_star', 'e_luo_void'], 'e_luo_lord', ['general', 'sky', 'immortal'], 'daochang'),
-  r('xinghai', '罗天星海', 25, 13, 5, 'sparkles', '星海浩瀚无垠,每一粒星都是一位陨落星君的余烬', ['e_sealing', 'e_meteorbeast'], 'e_xinghaizhu', ['general', 'sky', 'immortal'], 'daluotian'),
+  r('xinghai', '罗天星海', 25, 13, 5, 'sparkles', '星海浩瀚无垠,每一粒星都是一位陨落星君的余烬', ['e_sealing', 'e_meteorimmortal'], 'e_xinghaizhu', ['general', 'sky', 'immortal'], 'daluotian'),
   // ============ 神界(26-29 层,每层两处)============
   r('shenbian', '神域边陲', 26, 14, 5, 'shield', '神域边陲法则紊乱,斥候与凶兽游弋其间', ['e_god_scout', 'e_god_beast'], 'e_god_border', ['general', 'god'], 'xinghai'),
   r('shenjihuang', '神迹荒原', 26, 14, 5, 'sparkles', '荒原上散落着上古神迹,抬眼即是神明留下的手笔', ['e_miraclepuppet', 'e_wildbeast'], 'e_miraclekeeper', ['general', 'god'], 'shenbian'),

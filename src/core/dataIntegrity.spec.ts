@@ -19,6 +19,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { MAX_MAJOR } from '@/data/realms'
 import { REGIONS } from '@/data/regions'
+import { ENEMIES } from '@/data/enemies'
 import { QUALITIES } from '@/data/qualities'
 import { LIFE_THEMES } from '@/data/lifeThemes'
 import { SAMSARA_STAGES } from '@/data/samsara'
@@ -62,5 +63,27 @@ describe('数据完整性 · 内容门槛必须可达', () => {
     expect(MAX_REGION_TIER).toBeGreaterThan(0)
     expect(MAX_QUALITY_RANK).toBe(8)
     expect(MAX_MAJOR).toBeGreaterThan(0)
+  })
+
+  /**
+   * id 唯一性 —— 敌人表与区域表都按 id 建索引(`new Map(list.map(x => [x.id, x]))`),
+   * 后写的静默覆盖先写的。重名的后果不是"多一条数据",而是**某一处地界刷出另一处的怪**:
+   * 实测 `e_meteorbeast` 曾在 17 层与 25 层各写一次,于是星陨荒原的玩家撞上 25 层数值。
+   * 这种缺陷不会让任何东西报错,只能靠判据查。
+   */
+  it('敌人 id 与区域 id 都不重名(重名 = 后写的静默覆盖先写的)', () => {
+    const dupEnemies = ENEMIES.map(e => e.id).filter((id, i, arr) => arr.indexOf(id) !== i)
+    expect(dupEnemies).toEqual([])
+    const dupRegions = REGIONS.map(r => r.id).filter((id, i, arr) => arr.indexOf(id) !== i)
+    expect(dupRegions).toEqual([])
+  })
+
+  it('每个区域引用的敌人与首领都真实存在', () => {
+    const known = new Set(ENEMIES.map(e => e.id))
+    for (const r of REGIONS) {
+      for (const id of [...r.enemies, r.boss]) {
+        expect(known.has(id), `区域「${r.name}」引用了不存在的敌人 ${id}`).toBe(true)
+      }
+    }
   })
 })
