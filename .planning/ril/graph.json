@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 352,
+  "round": 353,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:41:28+00:00",
+  "updated_at": "2026-09-18T23:48:53+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 349,
+      "touched_round": 352,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -19639,6 +19639,65 @@
       "confidence": 0.95,
       "source": "变更 CHG-416(c591866)。正向:bun run check 全绿,新判据印\"定制表旋钮自检通过(162 个旋钮在源码里都存在)\"。反向:把 docs/usage.md 的 realms.exp.costFn(major, layer) 改成 costFnXX,自检当场红并点名 costFnXX(随后还原,git diff 只剩 verify-dist.mjs 一处)。同时记一条判据设计经验:原先那条\"表里名字要有用例\"的提取口径会把带调用糖的片段整体过滤掉(costFn(major, layer) 不匹配标识符正则),所以两条判据覆盖的其实是不同的集合 —— 162 ⊃ 99。",
       "summary": "定制表从\"名字有人用过\"升级为\"承诺的开关真的存在\"。这两条各管一段:前者管名字与用例的对应,后者管文档与源码的对应。"
+    },
+    "ISS-238": {
+      "id": "ISS-238",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T23:48:52+00:00",
+      "updated_at": "2026-09-18T23:48:53+00:00",
+      "touched_round": 352,
+      "summary": "内容把成功率算成 NaN 时(rateFn 写 0/0、表里那一格是空的、道具加成叠出 NaN),breakthroughRate 返回 NaN,rng.chance(NaN) 恒为 false —— 玩家修为满了却永远进不了境,而且界面上不会出现任何可疑的数(rate 显示 NaN 也常被 UI 吞掉)。"
+    },
+    "TASK-333": {
+      "id": "TASK-333",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T23:48:52+00:00",
+      "updated_at": "2026-09-18T23:48:53+00:00",
+      "touched_round": 352,
+      "category": "test",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "补第 28 份消融「数字什么时候不够用」:2^53 安全区边界、formatAmount 在\"京\"档的显示分辨率(同一字符串盖住 5e14)、×1.5/×3.2 曲线第几层越界、1e308×10=Infinity,以及用一份 30 行的 Numeric<bigint> 证明换数值层公式一行不改。同时堵上探测中撞到的 NaN 洞。"
+    },
+    "CHG-417": {
+      "id": "CHG-417",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:48:52+00:00",
+      "updated_at": "2026-09-18T23:48:52+00:00",
+      "touched_round": 352,
+      "commit": "34ff432",
+      "summary": "库:新增 src/numeric.sim.spec.ts(28 号消融,6 条);realms.ts 的 breakthroughRate 与 attemptBreakthrough 的加成项改为\"NaN 先归 0 再夹取\"(±Infinity 行为不变);realms.spec.ts 加回归用例;docs/tuning.md 新增一节 + 一页索引一行;docs/usage.md、docs/assembly.md 补指针;README 用例数 521/71 → 528/72;CHANGELOG 两条。"
+    },
+    "EV-343": {
+      "id": "EV-343",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:48:52+00:00",
+      "updated_at": "2026-09-18T23:48:52+00:00",
+      "touched_round": 352,
+      "confidence": 0.96,
+      "source": "变更 CHG-417(34ff432)。实测:bunx vitest run src/numeric.sim.spec.ts --reporter=verbose(打印:MAX_SAFE+1 = 2^53 而 +2 已吞;formatAmount(1e16)=1.0京 且同一字符串盖住 499,999,999,999,999;×1.5 第 80 层 / ×3.2 第 28 层;1e308×10=Infinity;number 2.15369396307555808960e+26 vs bigint 215369396307555776631074700 相对差 1.6e-16;clamp(NaN,0,1)=NaN)。闸门:cd packages/engine && bun run check 全绿(528 例 / 72 文件 + 13 道自检,含 28 份消融的一页索引逐节点名 + 13 份示例)。宿主(因为动了运行时代码):bun run test 280 文件 / 2577 例全过、bun run check:engine 通过(60 处引用全走公开入口)。",
+      "summary": "第一次用\"先量边界、再顺手修\"的方式推进:消融本来只是读数,量到 clamp(NaN) 这一步时发现 realms 会把 NaN 交给骰子(与 recipes 早已采用的口径不一致),于是同一轮里既补判据又补修正。"
+    },
+    "DEC-154": {
+      "id": "DEC-154",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:48:52+00:00",
+      "updated_at": "2026-09-18T23:48:52+00:00",
+      "touched_round": 352,
+      "summary": "成功率类数值的非有限值口径:NaN 先归 0 再夹取到 [min,max](recipes 与 realms 一致);±Infinity 不归 0,保留方向照旧夹到两端;修为需求/面板值这类 T 值不做兜底(它们走 Numeric,内容算错就该在内容侧自查)。",
+      "rationale": "NaN 与 ±Infinity 是两种不同的错:NaN 说明\"这个数根本没算出来\"(0/0、缺字段),它是骰子上最坏的输入 —— rng.chance(NaN) 恒 false,现象是\"玩家满了却永远失败\"且界面上看不出任何可疑的数;而 ±Infinity 是\"极大/极小但方向明确\",旧行为(夹到 max/min)既合理又已经在预设与宿主里跑了很久,把它一并改成 0 会造成\"本该必成变成几乎必败\"的反向惊喜。所以只堵 NaN,别的逐位不变。修为需求与基础面板走的是泛型 T(大数适配器里根本没有 NaN 这个概念),在那里做 number 专属兜底既不通用也掩盖配置错误。",
+      "alternatives_rejected": "①非有限值一律归 0(会把 Infinity 的\"必成\"翻成\"几乎必败\",属于对旧行为的破坏);②让 breakthroughRate 抛错(运行期热路径抛错会把\"内容写错一个数\"升级成\"整个界面崩\",而这一层的既有风格是结构错误在配置期抛、数值在运行期夹);③什么都不做只在文档写一句(等于把\"永远失败\"这个最难查的现象留给使用者);④把 NaN 夹到 max(玩家会看到\"永远是好的\",比失败更糟 —— 错的方向看不见)。"
     }
   },
   "edges": [
@@ -29110,6 +29169,36 @@
       "to": "TASK-332",
       "type": "governs",
       "created_at": "2026-09-18T23:41:28+00:00"
+    },
+    {
+      "from": "CHG-417",
+      "to": "TASK-333",
+      "type": "implements",
+      "created_at": "2026-09-18T23:48:52+00:00"
+    },
+    {
+      "from": "CHG-417",
+      "to": "ISS-238",
+      "type": "resolves",
+      "created_at": "2026-09-18T23:48:52+00:00"
+    },
+    {
+      "from": "ISS-238",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T23:48:52+00:00"
+    },
+    {
+      "from": "DEC-154",
+      "to": "TASK-333",
+      "type": "governs",
+      "created_at": "2026-09-18T23:48:52+00:00"
+    },
+    {
+      "from": "DEC-154",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T23:48:52+00:00"
     }
   ]
 }
