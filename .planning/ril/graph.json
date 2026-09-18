@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 276,
+  "round": 277,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T18:04:18+00:00",
+  "updated_at": "2026-09-18T18:13:06+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10531,7 +10531,7 @@
       "version": 1,
       "created_at": "2026-09-15T10:28:25+00:00",
       "updated_at": "2026-09-15T10:28:25+00:00",
-      "touched_round": 185,
+      "touched_round": 277,
       "summary": "状态(buff/负面状态)系统:data/buffs 定义 + cultivation store buffs 生命周期(施加/叠加/过期修剪) + BuffDialog/状态条展示",
       "path": "src/stores/cultivation.ts"
     },
@@ -16293,7 +16293,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:04:10+00:00",
       "updated_at": "2026-09-18T18:04:10+00:00",
-      "touched_round": 276,
+      "touched_round": 277,
       "category": "core-feature",
       "severity": 0.45,
       "confidence": 0.9,
@@ -16335,6 +16335,69 @@
       "summary": "\"战利品翻倍\"默认翻的是份数而不是掷骰次数;保底是改写这一次的结果而不是跳过这颗骰子 —— 两者都不许动随机流。",
       "rationale": "掉落逻辑最容易出两类说不清的错:①倍率把掷骰次数也放大了(0.5 的概率掷两次与掷一次 ×2 份,期望相同但**分布完全不同**,而且随机流一变,同种子下的整场战斗都换了模样);②保底写成 `||` 短路(读代码时看不出\"第一抽必出\",且开不开保底会让后续随机数整体位移)。故两条都定在库的口径里:countMult 默认只乘份数,要\"多抽一次\"必须显式开 scalesWithAttempts(本作装备掉落就是这种);保底每次尝试照样掷一次骰子,只改写这一次的结果 —— 于是\"开保底\"这个开关在随机流上是**透明**的。附带一条:命中当场处理(onHit)是必需的,不然\"生成装备\"这些自己还要掷骰的后续动作会挤到别的判定后面。",
       "alternatives_rejected": "①让 countMult 同时乘抽数与份数(看似\"翻倍更彻底\",实则改了概率分布,且对账时必须逐条解释为什么同一颗种子结果不同);②保底靠调用方自己写 `if (boss && i === 0)`(这就是本作迁移前的写法:能跑,但\"第一抽必出\"这个规则藏在条件里,改了没人发现);③把后续生成统一放到整表掷完之后(代码更整齐,代价是随机流错位 —— 只有对账能发现,而且发现时已经\"整场战斗都变了\")。"
+    },
+    "TASK-258": {
+      "id": "TASK-258",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:12:56+00:00",
+      "updated_at": "2026-09-18T18:12:56+00:00",
+      "touched_round": 277,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增状态(增益/减益)层:createBuffSystem 把\"这一条现在还在不在、还剩多久、再叠一次怎样\"做成骨架 —— 默认叠时长(extend,而不是会吞剩余时长的刷新)、过期实例以 now 起算、生效与清理共用一个判据(到期时刻 > now)、按分类清除并回报剪掉几条、nextExpiry 给\"下一次状态变化\"、clock 只声明一次单位(内容表写秒)。本作 stores/cultivation 的 addBuff/pruneBuffs/clearNegativeBuffs/buffMods 改走 core/engineBuffs,示例「书桌与日常」加一层状态。继续攒批不发版。"
+    },
+    "CHG-340": {
+      "id": "CHG-340",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:12:56+00:00",
+      "updated_at": "2026-09-18T18:12:56+00:00",
+      "touched_round": 277,
+      "commit": "3d1e9d3",
+      "summary": "库:新增 src/buffs.ts 与 buffs.spec.ts(11 例:三种叠法、过期不叠负剩余、边界共用判据、未知 id 静默无效、按分类清除、active 三件套、nextExpiry、毫秒时钟、叠加上限、纯函数),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目,示例 daily-loop 加一层状态。宿主:新增 core/engineBuffs.ts(内容与换算层:{defId} 与 id、秒与毫秒),stores/cultivation 的四处改走它,新增 engineBuffsParity.spec(9 例,冻结迁移前实现,endsAt 逐毫秒比),test-report 补分类,docs/engine.md 加一行。"
+    },
+    "EV-264": {
+      "id": "EV-264",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:12:59+00:00",
+      "updated_at": "2026-09-18T18:12:59+00:00",
+      "touched_round": 277,
+      "confidence": 0.96,
+      "source": "变更 CHG-340(3d1e9d3)。bunx vitest run src/core/engineBuffsParity.spec.ts(9 例);bun run check(宿主 type-check + lint 全绿);bun run test(226 文件/2227 例);bun run test:report(2227 过/0 败);cd packages/engine && bun run check(28 文件/254 例,含示例);bun run check:engine(42 处引用);bun run check:engine:standalone",
+      "summary": "状态层搬迁后本作行为一位未动:五组状态 × 五种 id 下 endsAt 逐毫秒相同(毫秒/秒的换算只写在 core/engineBuffs 一层),连加三次的累计一致、剪枝边界与返回值一致、清负面只剪 injury、效果来源清单逐条同序。过程的两个发现:①楷体子集扫描会把非 spec 源码里的新字符当缺字(源文件里写 ↔ 就红),注释里换成文字说法即可;②本作的读取路径(addBuff 之外的 buffMods)问的是\"列表里有没有\",与库按此刻判的口径有一拍之差,已作为已知差异写进判据并记成 ISS-231,不混在搬迁里顺手改。"
+    },
+    "DEC-128": {
+      "id": "DEC-128",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:13:03+00:00",
+      "updated_at": "2026-09-18T18:13:03+00:00",
+      "touched_round": 277,
+      "summary": "状态重复施加的默认口径是\"叠时长\"(剩余 + 新时长),不是\"刷新\";生效与清理共用同一个判据(到期时刻 > now)。",
+      "rationale": "这两条都属于\"看着都合理、只在玩到那一刻才发现\"的错。①刷新式写法 `Math.max(旧到期, now + 时长)` 读起来像\"取较长者、很稳\",实际是把玩家已经买到的剩余时长清零重算 —— 增益还剩 20 分钟时再吃一味同样的药,那句「药力化开」的承诺就少兑现了 20 分钟。②到期判据若在\"显示/合并\"与\"清理\"两处各写一次(一处理解为 >,一处为 >=),就会在正好到期的那一帧飘出一条幽灵状态,而这种错只在边界那一拍出现,谁都复现不出来。故:默认 extend(剩余足额兑现),并且\"还算不算数\"只有一处实现(active / prune / has / remainingSec / nextExpiry 共用);已过期实例以 now 起算,不把负剩余叠进来(离线一晚回来必踩)。",
+      "alternatives_rejected": "①取较长者 / 一律刷新当默认(实现最省事,但等于把玩家的剩余时长吞掉,且没有地方能表达\"叠\"这件事);②给每条状态各配一套叠法(内容表会慢慢长出一堆特例,而绝大多数状态要的是同一件事);③到期判据只写在清理里、显示与合并各判一次(三处判据迟早不一致,且不一致时只有玩家看得见);④把\"层数\"写进实例(时间型状态里层数与时长是同一件事的两种写法,同时存在就要解释\"3 层 5 分钟\"到底意味着什么)。"
+    },
+    "ISS-231": {
+      "id": "ISS-231",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:13:03+00:00",
+      "updated_at": "2026-09-18T18:13:03+00:00",
+      "touched_round": 277,
+      "severity": 0.2,
+      "confidence": 0.9,
+      "effort": 1,
+      "summary": "本作的状态读取路径仍问\"列表里有没有\",而不是\"此刻还算不算数\":buffMods 会把已经到期、但还没被心跳剪掉的那一拍的状态算进属性汇总(README 里的「疗伤中」同理)。库侧已给出正确判据(active/has/remainingSec,库用例钉着),换过去是一次显式的行为改动(到期那一拍少算一条),故与搬迁分开做。"
     }
   },
   "edges": [
@@ -24912,6 +24975,30 @@
       "to": "TASK-256",
       "type": "depends_on",
       "created_at": "2026-09-18T18:04:18+00:00"
+    },
+    {
+      "from": "CHG-340",
+      "to": "TASK-258",
+      "type": "implements",
+      "created_at": "2026-09-18T18:13:05+00:00"
+    },
+    {
+      "from": "DEC-128",
+      "to": "TASK-258",
+      "type": "governs",
+      "created_at": "2026-09-18T18:13:05+00:00"
+    },
+    {
+      "from": "TASK-258",
+      "to": "TASK-257",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:13:05+00:00"
+    },
+    {
+      "from": "ISS-231",
+      "to": "COMP-018",
+      "type": "located_in",
+      "created_at": "2026-09-18T18:13:06+00:00"
     }
   ]
 }
