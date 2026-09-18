@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 324,
+  "round": 325,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:53:10+00:00",
+  "updated_at": "2026-09-18T21:55:15+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18559,6 +18559,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-388(9ddddf1)。bunx vitest run src/equipment.sim.spec.ts(4 例全过;打印:不锁条 1 条 189 次 / 2 条 211 次 / 3 条 0 次(凡品区间 1~2);锁两条 → 3 条 ×200;池子被部位筛空 → 结果原样 [{\"id\":\"edge\",\"roll\":0.5}];良品 5 种词条都能出、凡品 4 种(focus 的 minRank 挡住);掷点 最小 0.000 / 最大 0.999 / 均值 0.500;入参 [{\"id\":\"sharp\",\"roll\":0.2}] 洗后不变);cd packages/engine && bun run check(451 例 / 56 文件 + 八道自检,调参参考自检报 16 份消融、用例文件数自检当场抓出 55→56、相对导入自检 96 个源文件);cd /workspace/xian && bun run test(263 文件 / 2499 例)、check:engine(59 处引用)、check:engine:standalone(96 个源文件)。",
       "summary": "洗练层的两条刻度:①\"至少给一条新的\"是硬保底(锁两条必定三条)—— 花钱洗不该洗了等于没洗;②唯一例外是候选池被门槛筛空(这时给不出新的,只保留锁住的),这也是内容侧唯一需要显式决定\"要不要允许\"的口子。"
+    },
+    "TASK-306": {
+      "id": "TASK-306",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:55:15+00:00",
+      "updated_at": "2026-09-18T21:55:15+00:00",
+      "touched_round": 324,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.13:把自 0.1.12 起的 7 个实质提交(六份消融:事件选项/副本节奏/图鉴与记忆/技能与背包/洗练;examples/from-zero.ts 从零装配示例;发布包\"冷启动\"自检)定成一个可 pin 的节点。公开面未动,行为与 0.1.12 逐位一致。"
+    },
+    "CHG-389": {
+      "id": "CHG-389",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:55:15+00:00",
+      "updated_at": "2026-09-18T21:55:15+00:00",
+      "touched_round": 324,
+      "commit": "6ac15e9",
+      "summary": "发版五步:package.json 0.1.12 → 0.1.13;CHANGELOG「未发布」定稿成带日期的一节(写明零运行时变更);三处 tag 引用同步(engine README 安装块与版本块、docs/development.md 的 npm pack 例、根 README 的版本与依赖串);宿主与 subtree 推送(engine main → 599d749);gh release create v0.1.13 + gh api 核对。"
+    },
+    "EV-315": {
+      "id": "EV-315",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:55:15+00:00",
+      "updated_at": "2026-09-18T21:55:15+00:00",
+      "touched_round": 324,
+      "confidence": 0.97,
+      "source": "变更 CHG-389(6ac15e9)。cd packages/engine && bun run check(451 例 / 56 文件 + 八道自检;发布包自检已是 wanxiang-engine-0.1.13.tgz,含预设装配 / 冷启动装配 / bundler 与 node16 两种 tsc);cd /workspace/xian && bun run test(263 文件 / 2499 例)、check:engine(59 处引用)、check:engine:standalone(96 个源文件 + 9 示例);git push origin main(2d139b0..6ac15e9)、git subtree push(→ 599d749);gh api 核对:tag v0.1.13 → 599d749…、package.json version 0.1.13、README 三处 v0.1.13 引用就位、release 非 draft / 非 prerelease。",
+      "summary": "0.1.13 是第二个\"零功能变更\"的节点(tag 指向的代码与 0.1.12 行为一致),但它把\"内容作者该看哪张表\"这件事做完整了:16 份消融覆盖了升级曲线、掉落与保底、抽取、经济、清理、内容池、离线、状态、抉择、副本、图鉴、记忆、技能、背包、洗练,并且每一份都被一条自检保证收进 docs/tuning.md。"
     }
   },
   "edges": [
@@ -27820,6 +27858,12 @@
       "to": "TASK-305",
       "type": "implements",
       "created_at": "2026-09-18T21:53:10+00:00"
+    },
+    {
+      "from": "CHG-389",
+      "to": "TASK-306",
+      "type": "implements",
+      "created_at": "2026-09-18T21:55:15+00:00"
     }
   ]
 }
