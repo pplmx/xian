@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 255,
+  "round": 256,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T14:30:28+00:00",
+  "updated_at": "2026-09-18T14:48:43+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 254,
+      "touched_round": 256,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15068,7 +15068,7 @@
       "version": 1,
       "created_at": "2026-09-18T14:21:53+00:00",
       "updated_at": "2026-09-18T14:21:53+00:00",
-      "touched_round": 254,
+      "touched_round": 256,
       "category": "test-quality",
       "severity": 0.4,
       "confidence": 0.95,
@@ -15198,6 +15198,117 @@
       "confidence": 0.97,
       "source": "变更 CHG-315(ab7fcf1)。bun run check:engine(8 个入口 + 三份内容包 + 真装一遍,25 处宿主引用全走公开入口);cd packages/engine && bun run check(147 例 + 产物自检 + 发布包可在临时项目里 import 到 daily);bun run test(199 文件/2042 例);bun run check:engine:standalone(36 个源文件独立编译);gh run list -R pplmx/wanxiang-engine(35356518370 success,workflow 里已加 daily 文件清单)",
       "summary": "三份内容包都能按包名/子路径装起来:发布包解包后 import wanxiang-engine/presets/daily 通过,并在日常题材上跑完一圈(升学/换文具/图书馆遭遇/期末通关结算都有判据)。"
+    },
+    "TASK-235": {
+      "id": "TASK-235",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:24+00:00",
+      "updated_at": "2026-09-18T14:48:24+00:00",
+      "touched_round": 256,
+      "category": "docs",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "把 README 重做成正式项目结构(徽章/目录/分层),长篇内容下沉 docs/parity.md 与 docs/development.md;新增 examples/quickstart.ts 并把示例接进判据(类型检查 + bun run examples + 独立成库自检各跑一遍);发布包改为附上 CHANGELOG 与 docs。"
+    },
+    "TASK-236": {
+      "id": "TASK-236",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:29+00:00",
+      "updated_at": "2026-09-18T14:48:29+00:00",
+      "touched_round": 256,
+      "category": "correctness",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "修\"内容没写全就随机崩\":装配时对\"某槽位一件模板都没有\"只给警告,但运行时掷到该槽位会直接抛错(崩在战斗结算里、离原因很远)。改成只在该层真的有内容的槽位里掷,一个都没有才报错;opts.slot 点名的空槽位仍然大声报错。写 README 示例时撞上。"
+    },
+    "CHG-316": {
+      "id": "CHG-316",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:30+00:00",
+      "updated_at": "2026-09-18T14:48:30+00:00",
+      "touched_round": 256,
+      "commit": "9d11bc5",
+      "summary": "README 重写为正式项目结构(徽章/目录/分层);新增 docs/parity.md(与本体逐数字对账)与 docs/development.md(集成与同步);examples/quickstart.ts(README 快速开始的可跑版本);package.json files 加 CHANGELOG 与 docs、scripts 加 examples;verify-dist.mjs 断言发布包含 docs 与 CHANGELOG 且不含 src;tsconfig include examples;engine-dist.mjs 与 engine-standalone.mjs 同步(后者新增步骤⑥:示例搬走后仍要跑得通)。"
+    },
+    "CHG-317": {
+      "id": "CHG-317",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:30+00:00",
+      "updated_at": "2026-09-18T14:48:30+00:00",
+      "touched_round": 256,
+      "commit": "fdb67ee",
+      "summary": "新增 tsconfig.examples.json(types:[\"node\"],只管 examples/),库源码那份 tsconfig 保持 types:[];@types/node 写进 devDependencies;check 增加 tsc -p tsconfig.examples.json 与 bun run examples;独立仓 CI 文件清单补 CHANGELOG/docs。"
+    },
+    "CHG-318": {
+      "id": "CHG-318",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:33+00:00",
+      "updated_at": "2026-09-18T14:48:33+00:00",
+      "touched_round": 256,
+      "commit": "a4c2ef3",
+      "summary": "equipment.generate 只在该层真的有内容的槽位里掷槽位(该层没内容按既有退档规则顶上),一个都没有才报\"层级 N 没有任何可掉落的模板\";opts.slot 点名的空槽位仍指名报错。新增 2 例判据(空槽位不出现/点名报错/退档掉落)。"
+    },
+    "EV-241": {
+      "id": "EV-241",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:33+00:00",
+      "updated_at": "2026-09-18T14:48:33+00:00",
+      "touched_round": 256,
+      "confidence": 0.97,
+      "source": "变更 CHG-316/CHG-317(9d11bc5、fdb67ee)。bun run check(16 文件/149 例 + 产物自检 + 发布包自检 + 示例);bun run check:engine(8 入口 + 三份内容包);bun run check:engine:standalone(36 源文件 · 示例可跑);bun run test(199 文件/2044 例);干净目录模拟 CI:bun install --frozen-lockfile && bun run check 通过;独立仓 CI 35358340393 success(此前 35358026023 因 console 类型失败)",
+      "summary": "README 的示例从\"文档文字\"变成判据:类型检查、真跑、以及搬到独立目录后仍可跑;顺带抓到并修掉示例只借宿主 @types/node 才通过的问题。"
+    },
+    "EV-242": {
+      "id": "EV-242",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:34+00:00",
+      "updated_at": "2026-09-18T14:48:34+00:00",
+      "touched_round": 256,
+      "confidence": 0.95,
+      "source": "变更 CHG-318(a4c2ef3)。bunx vitest run src/equipment.spec.ts(16 例);bun run check:engine(宿主对账与全量引用照旧);bun run test(199 文件/2044 例)",
+      "summary": "空槽位不再随机抛错:掷 80 次只出有内容的槽位、点名空槽位报错并带 id、整层无模板时给出\"这一层\"的错、某层没内容按退档掉落;内容齐全时可选槽位集合与原来一致,随机流不变(对账用例照旧)。"
+    },
+    "DEC-107": {
+      "id": "DEC-107",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:39+00:00",
+      "updated_at": "2026-09-18T14:48:39+00:00",
+      "touched_round": 256,
+      "rationale": "README 里的代码片段是使用者最先照抄的东西,却往往没人跑 —— 它一烂,抄的人比他读文档更慢地把坑踩实。故\"文档里承诺能跑的\"要有文件承载并进判据:README 快速开始对应 examples/quickstart.ts,进类型检查(tsconfig.examples.json)、进 bun run check 的 bun run examples、进独立成库自检的步骤⑥(搬到临时目录后仍要跑通)。这次立刻拿到回报:示例跑出\"空槽位随机抛错\"这个真 bug,以及\"示例只借宿主 @types/node 才通过\"这个只在独立仓 CI 现形的问题。",
+      "alternatives_rejected": "①示例只在文档里贴代码(没人跑,漂移到发现时已经教坏一批人);②示例放 src 里当用例(它要打印给人看,和用例的判据口径不同);③让示例共用库的 tsconfig(会把 Node 全局类型引给 src,等于允许库源码偷偷用 process/Buffer)。",
+      "summary": "文档里承诺能跑的代码必须有对应文件并进判据(类型检查 + 真跑 + 搬到独立目录仍能跑);示例与库源码各自一份 tsconfig,别让示例把 Node 类型引进库。"
+    },
+    "DEC-108": {
+      "id": "DEC-108",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:48:39+00:00",
+      "updated_at": "2026-09-18T14:48:39+00:00",
+      "touched_round": 256,
+      "rationale": "首次发布前,仓库里已经有一个几十分钟前打、且没有任何消费者(无 release、无 npm 包、无人 pin)的 v0.1.0 tag。若把它留在旧提交上,公开的第一版里 README 是刚被替换掉的旧稿、且不含发布前修掉的两处问题 —— 拿 tag 装的人会得到一个与仓库首页不一致的包。故在\"还没有 release 指向它\"的窗口内把 tag 移到最终提交;窗口一旦关闭(tag 已被 release/npm 引用),tag 视为不可变,后续改动一律走新版本号。",
+      "alternatives_rejected": "①保留旧 tag、把两处修复留到下个版本(第一版带着已知的随机崩与旧 README);②删掉 tag 等以后再说(使用者无处可 pin);③以后也随手移动 tag(发布出去的那一版会被静默换掉,比旧 README 更糟)。",
+      "summary": "发布前(尚无 release/npm 引用)允许把 tag 移到最终提交,让首版与仓库首页一致;一旦发布出去,tag 不可变,改动走新版本。"
     }
   },
   "edges": [
@@ -23259,6 +23370,54 @@
       "to": "TASK-234",
       "type": "governs",
       "created_at": "2026-09-18T14:30:28+00:00"
+    },
+    {
+      "from": "CHG-316",
+      "to": "TASK-235",
+      "type": "implements",
+      "created_at": "2026-09-18T14:48:42+00:00"
+    },
+    {
+      "from": "CHG-317",
+      "to": "TASK-235",
+      "type": "implements",
+      "created_at": "2026-09-18T14:48:42+00:00"
+    },
+    {
+      "from": "CHG-318",
+      "to": "TASK-236",
+      "type": "implements",
+      "created_at": "2026-09-18T14:48:42+00:00"
+    },
+    {
+      "from": "TASK-235",
+      "to": "TASK-232",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:48:42+00:00"
+    },
+    {
+      "from": "TASK-236",
+      "to": "TASK-235",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:48:42+00:00"
+    },
+    {
+      "from": "DEC-107",
+      "to": "TASK-235",
+      "type": "governs",
+      "created_at": "2026-09-18T14:48:42+00:00"
+    },
+    {
+      "from": "DEC-108",
+      "to": "TASK-235",
+      "type": "governs",
+      "created_at": "2026-09-18T14:48:42+00:00"
+    },
+    {
+      "from": "DEC-107",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T14:48:43+00:00"
     }
   ]
 }
