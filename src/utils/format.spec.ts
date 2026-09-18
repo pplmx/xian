@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cnNumber, formatCountdown, formatDuration, formatGN, formatPercent } from './format'
+import { cnNumber, formatCountdown, formatDuration, formatExact, formatGN, formatPercent, formatScientific } from './format'
 import { gn, powN } from './gnum'
 
 describe('数值格式化', () => {
@@ -33,6 +33,30 @@ describe('数值格式化', () => {
     expect(formatDuration(65)).toBe('1分5秒')
     expect(formatDuration(3660)).toBe('1小时1分')
     expect(formatDuration(90000)).toBe('1天1小时')
+  })
+
+  /**
+   * 精确值 —— 缩写是为了排版,不是为了读数。
+   *
+   * 到「京 / 垓」那一段之后 formatGN 只给三四位有效数字,增长直接被四舍五入吃掉
+   * (12.3521京 与 12.3544京 都显示 12.35京)。详情页要回答的是"它到底是几",
+   * 故这里逐位还原,并在位数过长时退回科学计数 —— 不假装尾部的零是精度。
+   */
+  it('精确值:还原完整位数并每三位加分隔', () => {
+    expect(formatExact(0)).toBe('0')
+    expect(formatExact(1234)).toBe('1,234')
+    expect(formatExact(-1234)).toBe('-1,234')
+    // 12.35万 = 123,500(缩写丢掉的位都回来了)
+    expect(formatExact({ m: 1.235, e: 5 })).toBe('123,500')
+    // 一京 = 10^16
+    expect(formatExact({ m: 1.2345, e: 16 })).toBe('12,345,000,000,000,000')
+    // 24 位以内仍写全;超过就换科学计数法(尾数只留有意义的位数,不补零装作精度)
+    expect(formatExact({ m: 1.2345, e: 25 })).toBe('1.2345×10^25')
+  })
+
+  it('科学计数法:一眼看出量级(四位有效数字)', () => {
+    expect(formatScientific(0)).toBe('0')
+    expect(formatScientific({ m: 1.2345, e: 21 })).toBe('1.234×10^21')
   })
 
   /**

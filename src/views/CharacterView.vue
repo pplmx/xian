@@ -4,7 +4,9 @@
     <div class="card-ink px-4 py-4">
       <div class="flex items-center justify-between">
         <span class="text-[10px] tracking-[0.3em] text-ink-faint">战 力</span>
-        <span class="font-kai text-[18px] text-cinnabar tabular">{{ formatGN(stats.power) }}</span>
+        <span class="font-kai text-[18px] text-cinnabar tabular">
+          <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
+        </span>
       </div>
       <div class="ink-divider my-3" />
       <!-- 灵根 -->
@@ -55,15 +57,21 @@
         <div class="grid grid-cols-3 gap-2 text-center">
           <div>
             <p class="text-[10px] text-ink-faint">攻击</p>
-            <p class="tabular font-kai text-[15px] text-ink">{{ formatGN(stats.attack) }}</p>
+            <p class="tabular font-kai text-[15px] text-ink">
+              <TapNumber :value="stats.attack" title="攻击" />
+            </p>
           </div>
           <div>
             <p class="text-[10px] text-ink-faint">防御</p>
-            <p class="tabular font-kai text-[15px] text-ink">{{ formatGN(stats.defense) }}</p>
+            <p class="tabular font-kai text-[15px] text-ink">
+              <TapNumber :value="stats.defense" title="防御" />
+            </p>
           </div>
           <div>
             <p class="text-[10px] text-ink-faint">气血</p>
-            <p class="tabular font-kai text-[15px] text-ink">{{ formatGN(stats.maxHp) }}</p>
+            <p class="tabular font-kai text-[15px] text-ink">
+              <TapNumber :value="stats.maxHp" title="气血" />
+            </p>
           </div>
         </div>
         <div v-if="modRows.length" class="ink-divider my-2.5" />
@@ -496,7 +504,8 @@
   import { mentorHint } from '@/core/fortuneChain'
   import { buildIdentity } from '@/core/identityService'
   import { rootElements, tendencyLines } from '@/core/linggenAffinity'
-  import { cnNumber, formatGN, formatPercent } from '@/utils/format'
+  import { cnNumber, formatPercent } from '@/utils/format'
+  import TapNumber from '@/components/common/TapNumber.vue'
   import type { AnyStatKey } from '@/types'
   import { STAT_NAMES } from '@/ui/statNames'
   import SectionTitle from '@/components/common/SectionTitle.vue'
@@ -511,6 +520,12 @@
   const loadouts = useLoadoutsStore()
 
   const stats = computed(() => player.finalStats)
+  /** 战力详情:三围原始读数各一行 —— 战力是它们的加权和,拆开才知道涨在哪一项 */
+  const powerDetailRows = computed(() => [
+    { label: '攻击', value: player.finalStats.attack },
+    { label: '防御', value: player.finalStats.defense },
+    { label: '气血', value: player.finalStats.maxHp }
+  ])
 
   /** 灵根的天然牌面(倾向文案,不含任何数值) */
   const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roots)))

@@ -9,6 +9,23 @@ export interface Toast {
   kind: 'info' | 'success' | 'warn' | 'rare'
 }
 
+/**
+ * 数值详情 —— 点任意大数后弹出来的那一页。
+ *
+ * rows 的约定:第一行是"这个数本身",后面可以跟"所需 / 还需 / 每秒"这类同族读数;
+ * note 放一句人话(如"按当前速率还需 3 天 2 时")—— 一行字的解释比再堆一个数字有用。
+ */
+export interface NumberDetailView {
+  title: string
+  /**
+   * 一行一个读数。`value` 走数值格式化(缩写 + 点开看精确值);
+   * `text` 用于**本来就不是数**的那一行 —— 如"预计还要多久"(时长),
+   * 它没有精确值可展开,但有话直说反而最有用。
+   */
+  rows: { label: string; value?: import('@/types').GNum | number; text?: string; hint?: string }[]
+  note?: string
+}
+
 export interface BreakthroughView {
   success: boolean
   fromLabel: string
@@ -69,6 +86,14 @@ export const useUiStore = defineStore('ui', () => {
   const artifactDetailId = ref<string | null>(null)
   const gongfaDetailId = ref<string | null>(null)
   const buffDetailId = ref<string | null>(null)
+  /**
+   * 数值详情浮层(点任意大数即可打开)。
+   *
+   * 为什么走全局:数值散落在修炼页/人物页/图鉴/战报各处,而"展开详情"不该改它们的排版
+   * (窄屏加行必炸)。故只在被点的那个数上做个记号,详情统一由 App 挂的浮层呈现 ——
+   * 与 buffDetailId / gongfaDetailId 同一套做法。
+   */
+  const numberDetail = ref<NumberDetailView | null>(null)
   const deathDialog = ref(false)
   const reincarnation = ref<ReincarnationView | null>(null)
   const corruptedNotice = ref<string[]>([])
@@ -94,8 +119,9 @@ export const useUiStore = defineStore('ui', () => {
     breakthrough,
     equipDetailUid,
     artifactDetailId,
-    gongfaDetailId,
-    buffDetailId,
+      gongfaDetailId,
+      buffDetailId,
+      numberDetail,
     deathDialog,
     reincarnation,
     corruptedNotice,

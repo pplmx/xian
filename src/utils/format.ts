@@ -55,6 +55,51 @@ export function formatRate(v: GNum | number): string {
   return `${formatGN(v)}/秒`
 }
 
+/**
+ * 精确值 —— 把缩写拆回完整数字,并每三位加分隔。
+ *
+ * 为什么要它:缩写是为了排版,不是为了读数。到了「京 / 垓」那一段,
+ * formatGN 只给三四位有效数字,于是**增长直接看不见** ——
+ * 12.3521京 与 12.3544京 都显示成「12.35京」,玩家盯着屏幕只觉得数字不动。
+ * 详情里要给出的是"它现在到底是几",故这里还原完整位数。
+ *
+ * 两条诚实约束:
+ *   一 GNum 的尾数来自 JS number(约 15~16 位有效数字),**再往后不是精度而是量级** ——
+ *      所以超过 24 位(约 8 位中文单位)时不再堆零,改用 `1.2345×10^21` 这种写法;
+ *   二 有效数字只留 15 位,剩下的补 0,并明确标注"尾数为有效数字,其后是量级"。
+ */
+export function formatExact(v: GNum | number): string {
+  const g = typeof v === 'number' ? gn(v) : gn(v)
+  if (g.m === 0) return '0'
+  const sign = g.m < 0 ? '-' : ''
+  const abs = Math.abs(g.m)
+  const intDigits = Math.floor(Math.log10(abs)) + 1
+  const decimals = Math.max(0, 15 - intDigits)
+  const digits = abs.toFixed(decimals).replace('.', '').replace(/0+$/, '') || '0'
+  const width = g.e + 1
+  if (width <= 24) {
+    const padded = digits.length >= width ? digits.slice(0, width) : digits.padEnd(width, '0')
+    return sign + group(padded)
+  }
+  // 太长:不假装有那么多位精度,退回科学计数
+  const m = abs.toPrecision(15).replace(/\.?0+$/, '')
+  return `${sign}${m}×10^${g.e}`
+}
+
+/** 科学计数法(给"这个数有多大"一个一眼可比的写法) */
+export function formatScientific(v: GNum | number): string {
+  const g = typeof v === 'number' ? gn(v) : gn(v)
+  if (g.m === 0) return '0'
+  return `${g.m.toPrecision(4).replace(/\.?0+$/, '')}×10^${g.e}`
+}
+
+/** 每三位加分隔(负数原样带符号) */
+function group(digits: string): string {
+  const sign = digits.startsWith('-') ? '-' : ''
+  const body = sign ? digits.slice(1) : digits
+  return sign + body.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+}
+
 /** 数值非法时的统一占位(避免界面出现 NaN%/Infinity%) */
 const NOT_AVAILABLE = '--'
 

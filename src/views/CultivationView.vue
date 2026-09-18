@@ -18,8 +18,19 @@
             修为 +{{ formatRate(player.cultPerSec) }}
             <span class="ml-0.5 text-[9px] text-ink-faint">{{ showCultBreakdown ? '▾' : '▸' }}来路</span>
           </button>
+          <!--
+            修为数可点:缩写照旧(排版不动),点开看精确值。
+            详情里按玩家的建议分两行(现有 / 所需),并补上**还需**与**预计耗时** ——
+            大数字看不出变化时,"还差多远、还要多久"才是真正被感知的那个量。
+          -->
           <span>
-            {{ formatGN(player.expFull ? player.expReq : player.exp) }} / {{ formatGN(player.expReq) }}
+            <TapNumber
+              :value="player.expFull ? player.expReq : player.exp"
+              title="修为"
+              :rows="expDetailRows"
+              :note="expDetailNote"
+            />
+            / {{ formatGN(player.expReq) }}
             <span v-if="player.expFull && player.expOverflow.m > 0" class="text-jade">
               · 积 +{{ formatGN(player.expOverflow) }}
             </span>
@@ -50,7 +61,13 @@
         <div class="mb-1 flex justify-between text-[11px] text-ink-faint tabular">
           <span>灵气 +{{ formatRate(player.qiRegenPerSec) }}</span>
           <span>
-            {{ formatNum(Math.floor(Math.min(resources.qi, player.qiCapValue))) }} / {{ formatNum(player.qiCapValue) }}
+            <TapNumber
+              :value="Math.floor(Math.min(resources.qi, player.qiCapValue))"
+              title="灵气"
+              :rows="qiDetailRows"
+              :note="qiDetailNote"
+            />
+            / {{ formatNum(player.qiCapValue) }}
             <span v-if="resources.qi > player.qiCapValue" class="text-azure">
               · 积余 {{ formatNum(Math.floor(resources.qi)) }} / {{ formatNum(player.qiBankCapValue) }}
             </span>
@@ -206,7 +223,11 @@
         </span>
       </div>
       <p class="mt-0.5 text-[10px] text-ink-faint">
-        静坐一炷香({{ retreatMinutes }} 分钟),修炼速度 +{{ retreatPct }}%;闭关期间无法外出历练。
+        <!--
+          文案里的时制要与真实时长对得上:闭关只有 5 分钟,一炷香却是 30 分钟 ——
+          拿"一炷香"说 5 分钟,玩家按古语理解会以为半小时,那就成了撒谎。
+        -->
+        静坐片刻({{ retreatMinutes }} 分钟),修炼速度 +{{ retreatPct }}%;闭关期间无法外出历练。
       </p>
       <button v-if="!retreating" type="button" class="chip-ink mt-2 w-full !py-1.5 text-[11px]" @click="beginRetreat">
         闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)
@@ -325,7 +346,7 @@
   import { useUiStore } from '@/stores/ui'
   import { attemptBreakthrough, breakthroughInfo } from '@/core/breakthrough'
   import { prepareBreakthrough, startRetreat, isRetreating, getRetreatRemainingSec } from '@/core/earlyGameService'
-  import { toNum } from '@/utils/gnum'
+  import { subClamp, toNum } from '@/utils/gnum'
   import { baseCultPerSec } from '@/core/formulas'
   import { modOf } from '@/core/statsCalc'
   import {
@@ -348,7 +369,8 @@
   import { buffDef } from '@/data/buffs'
   import { pillDef } from '@/data/pills'
   import { COMPREHEND_PAGE_COST } from '@/data/constants'
-  import { formatCountdown, formatGN, formatNum, formatPercent, formatRate } from '@/utils/format'
+  import { formatCountdown, formatDuration, formatGN, formatNum, formatPercent, formatRate } from '@/utils/format'
+  import TapNumber from '@/components/common/TapNumber.vue'
   import { qualityDef } from '@/data/qualities'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import ProgressBar from '@/components/common/ProgressBar.vue'
@@ -378,6 +400,57 @@
   const now = useNow()
 
   const btInfo = computed(() => breakthroughInfo())
+
+  /**
+   * 修为数值详情的两行 + 一句人话。
+   *
+   * 「还需」用 subClamp 算(不足则为 0),预计耗时 = 还需 ÷ 当前修为速度 ——
+   * 到「京」这一档之后,绝对值本身看不出涨落,而这句"还需 3 天 2 时"每天都变,
+   * 玩家据此判断自己是不是在前进。已圆满时不再报时间(那是在等突破,不是等修为)。
+   */
+  const expDetailRows = computed(() => [
+    { label: '所需', value: player.expReq, hint: '当前这一层的需求' },
+    {
+      label: '还需',
+      value: subClamp(player.expReq, player.exp),
+      hint: player.expFull ? '已至圆满,可尝试突破' : `每秒 ${formatRate(player.cultPerSec)}`
+    },
+    /**
+     * 玩家点名要的那一行:绝对值到「京」以后看不出涨落,**"还要多久"才看得见变化** ——
+     * 它每天都在动。故把它从脚注提成独立一行(用 text 走时长格式,没有精确值可展开)。
+     */
+    { label: '预计', text: expEtaText.value, hint: '按当前修为速率;未计战斗所得与丹药' }
+  ])
+  /** 修为见满还需多久(已满/无速率时说人话,不给假时长) */
+  const expEtaText = computed(() => {
+    if (player.expFull) return '已满 —— 下一步是突破'
+    const remain = toNum(subClamp(player.expReq, player.exp))
+    if (remain <= 0) return '就要满了'
+    if (player.cultPerSec <= 0) return '当前无修为进项'
+    return `约 ${formatDuration(remain / player.cultPerSec)}`
+  })
+  const expDetailNote = computed(() => {
+    if (player.expFull) return '修为已满 —— 下一步是突破,不是再攒。'
+    return undefined
+  })
+
+  /** 灵气同理:回满还要多久 —— 突破、疗伤、炼丹都在等这条线 */
+  const qiDetailRows = computed(() => [
+    { label: '上限', value: player.qiCapValue, hint: `可积到 ${formatNum(player.qiBankCapValue)}` },
+    {
+      label: '还差',
+      value: Math.max(0, Math.floor(player.qiCapValue - resources.qi)),
+      hint: `每秒 ${formatRate(player.qiRegenPerSec)}`
+    },
+    { label: '预计回满', text: qiEtaText.value, hint: '按当前回复速度' }
+  ])
+  const qiEtaText = computed(() => {
+    const gap = player.qiCapValue - resources.qi
+    if (gap <= 0) return '已满'
+    if (player.qiRegenPerSec <= 0) return '当前无回复'
+    return `约 ${formatDuration(gap / player.qiRegenPerSec)}`
+  })
+  const qiDetailNote = computed(() => (player.qiCapValue - resources.qi <= 0 ? '灵气已满。' : undefined))
 
   // Phase 28 突破准备:按钮文案/耗时/药价全部来自 BREAKTHROUGH_PREP_OPTIONS,不再在视图里写第二份
   const prepMeditate = BREAKTHROUGH_PREP_OPTIONS.find(o => o.id === 'meditate')!
