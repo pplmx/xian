@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 210,
+  "round": 211,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-17T23:53:38+00:00",
+  "updated_at": "2026-09-18T00:39:13+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 204,
+      "touched_round": 211,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -11958,7 +11958,7 @@
       "version": 1,
       "created_at": "2026-09-16T01:33:21+00:00",
       "updated_at": "2026-09-16T01:33:21+00:00",
-      "touched_round": 210,
+      "touched_round": 211,
       "summary": "src/core/pillService.ts + src/core/breakthrough.ts + src/core/save.ts(炼丹/突破/存档三条主干)"
     },
     "CHG-239": {
@@ -12523,6 +12523,66 @@
       "touched_round": 210,
       "rationale": "自动化政策只能有一个入口。「一键分解」是操作(手动批量这一次),「智能收纳」是政策(掉落的长期去留);把两者混在一起,玩家只记得自己设过的那个,于是出现「保留线说留、实测被扔」。故:政策收进智能收纳,操作留在原位;线下\"不看缘分\"那股真实需求以 junkBelowLine 的形式收编,并排在保留线之后 —— 线上的件永不中招。",
       "alternatives_rejected": "①保留 decomposeRanks 的优先权、只把它挪到保留线之后:两个弹窗仍能管同一件事,玩家照样会困惑;②删掉线下不看缘分的能力:那股需求真实存在(凡俗之物不想让缘分救回);③只改文案不改行为:文案不能修好一个会扔玩家东西的冲突。"
+    },
+    "ISS-218": {
+      "id": "ISS-218",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T00:39:04+00:00",
+      "updated_at": "2026-09-18T00:39:04+00:00",
+      "touched_round": 211,
+      "severity": 0.85,
+      "confidence": 1.0,
+      "effort": 2,
+      "summary": "区域之主的门槛绑在「这一趟的连胜」上:在线 bossDue 读 s.wins(本趟胜场),而战败会 stopExploration(defeat) 结束整趟、连胜归零 —— 等于要求「一趟连胜 10 场」。安稳(危险 ×1)做得到,深入(×1.45)/涉险(×2.1)里输一场就全赔,于是难模式几乎刷不到首领,下一片地界永远不解锁(玩家实测)。离线同病:它的门槛读「这一段离线结算赢了几场」。"
+    },
+    "ISS-219": {
+      "id": "ISS-219",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T00:39:04+00:00",
+      "updated_at": "2026-09-18T00:39:04+00:00",
+      "touched_round": 211,
+      "severity": 0.6,
+      "confidence": 1.0,
+      "effort": 1,
+      "summary": "文案里的时制与现代时长差一倍:聚灵丹「半个时辰内修炼倍增」实际 1800s=30 分钟(半个时辰是 1 小时);修为丹阶梯写「半时/一时/二时」实际按小时算;闭关提示「静坐一炷香(5 分钟)」而一炷香是 30 分钟。玩家按古语理解会得到双倍预期。"
+    },
+    "EV-195": {
+      "id": "EV-195",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T00:39:04+00:00",
+      "updated_at": "2026-09-18T00:39:04+00:00",
+      "touched_round": 211,
+      "source": "src/core/exploration.spec.ts(首领进度按地界累计的回归)· src/data/timeUnits.spec.ts(时制对账)",
+      "summary": "修复后:首领叩门进度按地界累计(regionWins,持久化、换世清空、坏档归零),在线与离线共用同一门槛读法;时制立表(一盏茶10分/一刻15分/一炷香30分/半个时辰1小时/一个时辰2小时),落不在表上的值用「将近/有余」+分钟数,凡文案出现时制词都由判据折成秒与数据对账。",
+      "confidence": 1.0
+    },
+    "CHG-248": {
+      "id": "CHG-248",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T00:39:04+00:00",
+      "updated_at": "2026-09-18T00:39:04+00:00",
+      "touched_round": 211,
+      "commit": "8fe462c",
+      "summary": "首领门槛改为按地界累计:adventure.regionWins + addRegionWins/winsIn,在线与离线同源,战斗页提示同源;战败仍结束整趟但进度不清零。"
+    },
+    "CHG-249": {
+      "id": "CHG-249",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T00:39:04+00:00",
+      "updated_at": "2026-09-18T00:39:04+00:00",
+      "touched_round": 211,
+      "commit": "6cda969",
+      "summary": "大数可点开看精确值(formatExact + TapNumber + 全局 NumberDetailDialog,含修为/灵气的「预计还需多久」);时制文案与现代时长对齐(data/timeUnits + 全表修正 + 对账判据);命中区抬到 30px。"
     }
   },
   "edges": [
@@ -18670,6 +18730,30 @@
       "to": "ISS-217",
       "type": "resolves",
       "created_at": "2026-09-17T23:53:38+00:00"
+    },
+    {
+      "from": "CHG-249",
+      "to": "ISS-218",
+      "type": "resolves",
+      "created_at": "2026-09-18T00:39:04+00:00"
+    },
+    {
+      "from": "ISS-218",
+      "to": "COMP-006",
+      "type": "located_in",
+      "created_at": "2026-09-18T00:39:04+00:00"
+    },
+    {
+      "from": "ISS-219",
+      "to": "COMP-024",
+      "type": "located_in",
+      "created_at": "2026-09-18T00:39:04+00:00"
+    },
+    {
+      "from": "CHG-248",
+      "to": "ISS-219",
+      "type": "resolves",
+      "created_at": "2026-09-18T00:39:13+00:00"
     }
   ]
 }
