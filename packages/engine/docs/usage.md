@@ -54,7 +54,10 @@
 
 战斗只吃属性系统的输出。读哪几个键由你指定 —— 本值叫"火力/装甲/结构值"或"专注力/耐心/精力"都能直接指过去:
 
+<!-- compile-check -->
 ```ts
+import { createCombatEngine } from 'wanxiang-engine'
+
 const combat = createCombatEngine({
   keys: { attack: 'power', defense: 'armor', hp: 'hull', maxHp: 'hullMax', speed: 'thrust' },
   damageFn: ctx => Math.max(1, ctx.attack * ctx.mult - ctx.defense)   // 减法型?整条公式归你
@@ -63,7 +66,10 @@ const combat = createCombatEngine({
 
 技能上的效果标记(`stun` / `drain` / `pierce` / `multi`…)库里**不认识**,只原样交给你解释:
 
+<!-- compile-check -->
 ```ts
+import { createCombatEngine } from 'wanxiang-engine'
+
 createCombatEngine({
   skillEffectFn: ctx => {
     if (ctx.skill.effect !== 'stun') return        // 返回空 = 交回默认出手
@@ -79,7 +85,10 @@ createCombatEngine({
 
 **护盾、反击、追击、标签语义**也都有开关(默认全关,关着时与旧版逐位一致):
 
+<!-- compile-check -->
 ```ts
+import { createCombatEngine } from 'wanxiang-engine'
+
 createCombatEngine({
   shield: { capRatio: 0.5 },        // 护盾先吃伤害、总量封顶;开局盾读 mods.shieldOnStart,溢疗成盾读 mods.overhealShield
   followups: {},                    // 反击与追击:读 counterRate/comboRate,打一记打折的,且不再链
@@ -105,7 +114,10 @@ createCombatEngine({
 
 `planIdle` 只算时长账;每一步产出什么是你的事(`runIdle` 按步折叠):
 
+<!-- compile-check -->
 ```ts
+import { planIdle, runIdle } from 'wanxiang-engine'
+
 const plan = planIdle(8 * 3600_000, { stepMs: 60_000, capMs: 6 * 3600_000, efficiency: 0.9 })
 // cappedMs 6h · effectiveMs 5.4h · steps 324 · overflowMs 2h
 const gained = runIdle(plan, 0, (total, i, stepMs) => total + stepMs)
@@ -115,8 +127,12 @@ const gained = runIdle(plan, 0, (total, i, stepMs) => total + stepMs)
 
 两个模块,**都不碰存储介质**(localStorage / 文件 / 云 / 内存由你接 —— 于是浏览器、容器、服务端同一套):
 
+<!-- compile-check -->
 ```ts
 import { defineSaveFormat, encodeSave, decodeSave, asFiniteNumber, asStringArray } from 'wanxiang-engine'
+
+type State = { gold: number; bag: string[] }
+const state: State = { gold: 5, bag: [] }   // 例如从存档里读出来的那一份
 
 const FORMAT = defineSaveFormat<State>({
   currentVersion: 3,
@@ -149,7 +165,10 @@ else console.log(result.reason)                 // 'parse' | 'future' | 'shape'
 
 ### 技能 / 功法:等级曲线、消耗、满级分支
 
+<!-- compile-check -->
 ```ts
+import { createSkillSystem } from 'wanxiang-engine'
+
 const skills = createSkillSystem({
   skills: [{
     id: 'sword',
@@ -181,16 +200,22 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 
 ### 炼制:成功率是四个乘区相乘
 
+<!-- compile-check -->
 ```ts
-import { composeCraftRate, overReachFactor, proficiencyFromExp, stageNameOf } from 'wanxiang-engine'
+import { composeCraftRate, proficiencyFromExp, stageNameOf, type CraftFormula } from 'wanxiang-engine'
 
 const FORMULA = {
-  baseRate: 0.95,                                          // 各项皆满、不越级时的上限 —— 剩下的留给天意
-  mastery: { floor: 0.22, span: 0.78 },                     // 配方掌握度
-  lore: { floor: 0.42, span: 0.58 },                        // 材料认知度
-  skill: { floor: 0.3, span: 0.7 },                         // 技艺水平(调用方先归一到 0~1)
-  overReach: { table: [1, 0.6, 0.35, 0.18], decay: 0.45 }   // 越级:表内查表,表外指数衰减
-}
+  baseRate: 0.95,                        // 各项皆满、不越级时的上限 —— 剩下的留给天意
+  levers: {                              // 乘区:几个、叫什么,全由作品定
+    mastery: { floor: 0.22, span: 0.78 }, // 配方掌握度
+    lore: { floor: 0.42, span: 0.58 },    // 材料认知度
+    skill: { floor: 0.3, span: 0.7 }      // 技艺水平(调用方先归一到 0~1)
+  },
+  overReach: {                           // 越级:表内查表,表外指数衰减
+    key: 'overReach',                    // 读输入里的哪一项当"越了几阶"
+    spec: { table: [1, 0.6, 0.35, 0.18], decay: 0.45 }
+  }
+} satisfies CraftFormula
 
 composeCraftRate({ mastery: 0.6, lore: 0.8, skill: 0.5, overReach: 1 }, FORMULA)
 proficiencyFromExp(5400, 600)   // 90 —— 双曲饱和:逼近上限而不到顶
@@ -203,8 +228,11 @@ stageNameOf(92, [{ min: 85, name: '通玄' }, { min: 0, name: '生疏' }])
 
 ### 资源账本:钱、材料、点数
 
+<!-- compile-check -->
 ```ts
-import { createResourceSystem } from 'wanxiang-engine'
+import { createResourceSystem, planIdle } from 'wanxiang-engine'
+
+const plan = planIdle(8 * 3600_000, { stepMs: 3600_000 })   // 与上面离线那一层对接
 
 const res = createResourceSystem({
   resources: [
@@ -232,8 +260,13 @@ res.audit(mined.entries).bySource            // 每个来源贡献了多少,一�
 
 ### 任务 / 成就:一条判据,两种用法
 
+<!-- compile-check -->
 ```ts
 import { evalGoal, goalProgress, type GoalEnv } from 'wanxiang-engine'
+
+const counters: Record<string, number> = { kills: 3 }   // 你的计数器
+const player = { major: 2, sub: 1 }                     // 你的境界状态
+const flags: Record<string, boolean> = { met: true }    // 你的一次性标记
 
 const cond = { type: 'counter', key: 'kills', value: 10 } as const
 const env: GoalEnv = {
@@ -254,7 +287,10 @@ goalProgress(cond, env)    // { done, ratio, current, target }
 
 ### 伙伴 / 随从:数值之外还有"性格"
 
+<!-- compile-check -->
 ```ts
+import { createCompanionSystem } from 'wanxiang-engine'
+
 const companions = createCompanionSystem({
   neutral: { exploreDurMult: 1, dangerMult: 1, dropLuck: 0, lossReduction: 0 }, // 键名与中性值由作品给
   traits: [
