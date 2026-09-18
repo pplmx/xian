@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 351,
+  "round": 352,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:38:58+00:00",
+  "updated_at": "2026-09-18T23:41:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19538,7 +19538,7 @@
       "version": 1,
       "created_at": "2026-09-18T23:32:11+00:00",
       "updated_at": "2026-09-18T23:32:11+00:00",
-      "touched_round": 350,
+      "touched_round": 351,
       "summary": "示例覆盖只承诺\"每个模块至少有一份示例走到\"与\"有争议/易错的用法有示例\",不承诺\"75 个导出逐个都有示例\"。剩余 30 个未出现在示例里的导出按归属分三类收口:①defineGame 门面装配(createRealmSystem / createAttributeSystem / createDungeonSystem / createEquipmentSystem / validateGame / deckPool 等)—— 示例与宿主都走门面,单个工厂由各自模块的用例覆盖;②宿主/文档层工具(clamp / formatAmount / asRecord / asArray / progressText / inBand / leverFactor / overReachFactor 等)—— 它们的用例在模块 spec 里,示例里出现反而会喧宾夺主;③随机源与种子(mulberry32 / seedFromString / randomRng)—— 属于\"换掉默认实现\"的说明项,已写在 docs/usage.md 的定制表里。判据:每个模块在 examples/ 下至少被引用一次(现为 37/37),加上 publicApi.spec 钉名字与用例钉行为两道,共三道。",
       "rationale": "示例的价值是\"让人看懂怎么接\",不是把 75 个导出各写一行。硬凑出来的示例行既不会覆盖真实组合(它们本来就在模块用例里被逐条钉过),还会把示例从\"能读的小循环\"稀释成\"导出清单朗读\"。相反,按模块收口(37/37 有示例)是可验证的可红判据,能挡住\"整个模块没有任何示例\"这种真空白,而单个导出层面已经有 publicApi.spec + 各模块 spec 两道。",
       "alternatives_rejected": "①要求 75 个导出逐个出现在示例里(会把示例稀释成清单,而且 clamp / asRecord 这类内部小工具没有可读的独立循环可讲);②干脆不设示例覆盖判据(那么\"某个模块整块没示例\"这类真空白没人发现,本轮的三个导出就是这种漏网);③按导出数量设阈值(阈值是拍出来的,且会鼓励凑数行,不如\"按模块 37/37\"这种自然零点)。"
@@ -19602,6 +19602,43 @@
       "confidence": 0.95,
       "source": "变更 CHG-415(10938d4)。正向:cd packages/engine && bun run check 全绿,新判据印\"示例覆盖自检通过(36 个模块都有示例走到 + 3 份内容包有出处)\"。反向(防空转):把 examples/realm-ladder.ts 移出 examples/ 并临时删掉 docs/assembly.md 里那一行,自检直接红并点名\"src/numeric.ts、src/realms.ts\"(随后完全还原,git status --short 只剩 scripts/verify-dist.mjs 一处改动)。宿主侧本轮仍无改动。",
       "summary": "口径从\"人工审过一次\"升级成\"下回当场红\"。两条经验:①模块级判据用\"该模块任一导出在示例代码里出现\"即可,不必解析每个导出的调用(导出级已由 publicBehavior.spec 兜住);②先剥注释/import/字符串再匹配 —— 否则 import 行就能满足判据(上一轮就是这么被骗过一次)。"
+    },
+    "TASK-332": {
+      "id": "TASK-332",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T23:41:28+00:00",
+      "updated_at": "2026-09-18T23:41:28+00:00",
+      "touched_round": 351,
+      "category": "test",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1,
+      "summary": "再补一道判据:docs/usage.md 的定制表里凡写成 a.b.c 或 fn(...) 的旋钮,末尾名字必须在 src(不含 spec)里存在 —— 拦\"文档承诺了一个源码里根本没有的开关\"。"
+    },
+    "CHG-416": {
+      "id": "CHG-416",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:41:28+00:00",
+      "updated_at": "2026-09-18T23:41:28+00:00",
+      "touched_round": 351,
+      "commit": "c591866",
+      "summary": "库:scripts/verify-dist.mjs 增加「定制表旋钮自检」(第 13 道);docs/development.md 判据表补第三行(文档承诺级);CHANGELOG「未发布」记一条。运行时代码与公开面未动。"
+    },
+    "EV-342": {
+      "id": "EV-342",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:41:28+00:00",
+      "updated_at": "2026-09-18T23:41:28+00:00",
+      "touched_round": 351,
+      "confidence": 0.95,
+      "source": "变更 CHG-416(c591866)。正向:bun run check 全绿,新判据印\"定制表旋钮自检通过(162 个旋钮在源码里都存在)\"。反向:把 docs/usage.md 的 realms.exp.costFn(major, layer) 改成 costFnXX,自检当场红并点名 costFnXX(随后还原,git diff 只剩 verify-dist.mjs 一处)。同时记一条判据设计经验:原先那条\"表里名字要有用例\"的提取口径会把带调用糖的片段整体过滤掉(costFn(major, layer) 不匹配标识符正则),所以两条判据覆盖的其实是不同的集合 —— 162 ⊃ 99。",
+      "summary": "定制表从\"名字有人用过\"升级为\"承诺的开关真的存在\"。这两条各管一段:前者管名字与用例的对应,后者管文档与源码的对应。"
     }
   },
   "edges": [
@@ -29061,6 +29098,18 @@
       "to": "TASK-331",
       "type": "governs",
       "created_at": "2026-09-18T23:38:58+00:00"
+    },
+    {
+      "from": "CHG-416",
+      "to": "TASK-332",
+      "type": "implements",
+      "created_at": "2026-09-18T23:41:28+00:00"
+    },
+    {
+      "from": "DEC-153",
+      "to": "TASK-332",
+      "type": "governs",
+      "created_at": "2026-09-18T23:41:28+00:00"
     }
   ]
 }
