@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 231,
+  "round": 232,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T11:45:00+00:00",
+  "updated_at": "2026-09-18T12:20:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13793,6 +13793,78 @@
       "rationale": "离线的\"回来补多少\"里有三条常被写成一行表达式的口径:上限(经营买的东西)、效率(在线优于离线的平衡)、粒度(每步结算一次的实现细节)。写成一行时,面板说不出\"超出上限的那部分没算哪一档\",调平衡也分不清改的是谁。故库把它拆成 cappedMs / effectiveMs / steps / remainderMs / overflowMs 五个数,并把\"每一步产什么\"完全留给调用方 —— 引擎不该知道修为还是材料。",
       "alternatives_rejected": "①库提供一个\"离线收益\"函数(必须知道修为/材料,内容耦合进机制);②继续写在应用的结算函数里(第三份时长账,接入方还得自己再写一份);③只给 min() 一个上限工具(说不清效率与粒度)。",
       "summary": "离时时长账拆成五个数、产出留给调用方;库只做时长与步数的账。"
+    },
+    "TASK-211": {
+      "id": "TASK-211",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T12:20:00+00:00",
+      "updated_at": "2026-09-18T12:20:00+00:00",
+      "touched_round": 232,
+      "category": "core-feature",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "把存档里与作品无关的两半抽进公共库:形状修复原语(saveShape)与版本迁移链(save);库不碰存储介质。本作改用库的实现(形状原语直接转出、迁移链走 runMigrations),导入时的 lastActiveAt 重戳等本作语义留在原地。"
+    },
+    "CHG-275": {
+      "id": "CHG-275",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T12:20:00+00:00",
+      "updated_at": "2026-09-18T12:20:00+00:00",
+      "touched_round": 232,
+      "commit": "b23e11a",
+      "summary": "库侧新增 saveShape.ts/saveShape.spec.ts 与 save.ts/save.spec.ts:形状修复七原语;defineSaveFormat({currentVersion,migrations,revive})、encodeSave/decodeSave/decodeSavePayload/runMigrations;迁移是链(缺跳按形状没变、版本号损坏按最老补起)、未来版本拒绝(parse/future/shape 三种失败),asArray 的自定义判据改为先滤 null/undefined。"
+    },
+    "CHG-276": {
+      "id": "CHG-276",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T12:20:00+00:00",
+      "updated_at": "2026-09-18T12:20:00+00:00",
+      "touched_round": 232,
+      "commit": "6cc6757",
+      "summary": "应用侧:utils/saveShape.ts 变为转出库;core/save.ts 的 EXPORT_FORMAT(currentVersion=SAVE_VERSION,migrations[1]=法宝位迁移)交给库跑链,lastActiveAt 重戳留在本作。"
+    },
+    "EV-217": {
+      "id": "EV-217",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T12:20:00+00:00",
+      "updated_at": "2026-09-18T12:20:00+00:00",
+      "touched_round": 232,
+      "source": "packages/engine(84 例)+ bun run test(193 文件 / 1956 例)+ bun run check + bun run check:engine",
+      "summary": "存档路径的端到端判据全绿:saveMigration.spec 走真实导入(值搬过去/旧字段清掉/幂等)、saveRoundTrip、savePersistence、storeResilience;库侧新增 save.spec(往返/链式迁移/缺跳/未来版本/坏内容/已解析对象/版本号损坏)与 saveShape.spec(七原语边界);产物自检 31 个文件 / 52.0 KB。"
+    },
+    "DEC-081": {
+      "id": "DEC-081",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T12:20:00+00:00",
+      "updated_at": "2026-09-18T12:20:00+00:00",
+      "touched_round": 232,
+      "rationale": "存档这件事里只有两半是通用的:读回来的数据怎么把形状修回可用的样子、版本怎么一跳到当前。存储介质(localStorage/文件/云)、加解密、以及\"导入即从现在继续\"这类作品语义都不是通用的 —— 故库收前两半,且刻意不碰介质,于是浏览器/容器/服务端能用同一套。两条铁律写进实现:迁移是链(缺跳按形状没变、版本号损坏按最老补起,而不是跳过整条链),未来版本拒绝(猜错会把新档写坏,比读不到严重)。",
+      "alternatives_rejected": "①库直接提供 localStorage 存档(绑死介质与浏览器);②库管加解密(密钥管理是使用方的事,且本作的密文格式是产品决定);③把迁移写成\"版本 → 直接转换\"的字典(跳版组合爆炸,且跳过的中间态没人验)。",
+      "summary": "库收存档的两半(形状修复 + 版本迁移链),不碰存储介质;迁移是链、未来版本不猜,失败分 parse/future/shape。"
+    },
+    "DEC-082": {
+      "id": "DEC-082",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T12:20:00+00:00",
+      "updated_at": "2026-09-18T12:20:00+00:00",
+      "touched_round": 232,
+      "rationale": "抽取时发现 asArray 的契约有洞:自定义判据拿得到 null/undefined,于是每个调用点都得自己写 `!!x && …`(本作 12 处调用全写了)。忘一次就是白屏 —— 而这正是这个模块存在的理由。搬迁时顺手收紧:先滤一层再交给判据。抽取不只是搬代码,遇到这种\"每个调用点都在补偿同一个坑\"的契约,就该在库里改掉。",
+      "alternatives_rejected": "①原样搬(把坑一起搬给使用者);②只在本作调用点保持 `!!x &&`(新使用者仍会踩);③让判据自己声明是否接受 null(契约复杂化,收益为零)。",
+      "summary": "抽取时顺手收紧契约:asArray 先滤 null/undefined 再交给自定义判据 —— 抽取不等于照抄,重复出现在每个调用点的补偿就是该在库里消掉的东西。"
     }
   },
   "edges": [
@@ -20726,6 +20798,66 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "CHG-275",
+      "to": "TASK-211",
+      "type": "implements",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "CHG-276",
+      "to": "TASK-211",
+      "type": "implements",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "CHG-275",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "CHG-276",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "EV-217",
+      "to": "CHG-275",
+      "type": "validates",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "EV-217",
+      "to": "CHG-276",
+      "type": "validates",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "TASK-211",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "TASK-211",
+      "to": "TASK-210",
+      "type": "depends_on",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "DEC-081",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "DEC-082",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T12:20:00+00:00"
     }
   ]
 }
