@@ -52,6 +52,11 @@ import type {
   CodexState,
   CodexSystem,
   CodexView,
+  StageMemory,
+  StageMemoryConfig,
+  StageMemoryInput,
+  StageMemoryState,
+  StageSpec,
   CycleSystem,
   CraftLevers,
   DamageContext,
@@ -164,6 +169,7 @@ const RUNTIME_EXPORTS = [
   'compareBy',
   'createChoiceSystem',
   'createCodex',
+  'createStageMemory',
   'createCycleSystem',
   'createAttributeSystem',
   'createCombatEngine',
@@ -293,6 +299,7 @@ type PublicTypes = {
   cycles: [CycleConfig, CycleContext, CycleEntry, CycleSystem, ScheduledCycle]
   choices: [ChoiceConfig<number, number>, ChoiceDef<number>, ChoiceOutcome<number>, ChoiceReceipt<number>, ChoiceSystem<number, number>]
   codex: [CodexConfig, CodexStage, CodexState, CodexSystem, CodexView]
+  memory: [StageMemory, StageMemoryConfig, StageMemoryInput, StageMemoryState, StageSpec]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

@@ -10,25 +10,13 @@
  */
 import type { RegionProsperity, RegionRecall, NemesisRecord, EventMemory } from '@/types'
 import { usePlayerStore } from '@/stores/player'
+import { REGION_MEMORY, REVIVE_AFTER_HOURS } from './engineMemory'
 
 // ============ S1: 区域兴衰 ============
 
-/** 玩家在区域内累计胜场达到多少进入稳定 */
-export const STABLE_WINS = 30
-/** 累计胜场达到多少进入繁盛 */
-export const FLOURISH_WINS = 80
-/**
- * 守土之年:镇压后「守得住」本身也该算数。
- *
- * 镇压一落地,该地就不再产出胜场 —— 于是繁盛(80 胜)只能在镇压**之前**刷出来,
- * 与「镇压后守多久」无关。这里补上时长一路:守满即成,不必先刷满。
- */
-export const STABLE_HOURS = 6
-export const FLOURISH_HOURS = 24
-/** 无活动多长时间(小时)后,繁华短暂回落 */
-export const DECAY_HOURS = 48
-/** 镇压后无活动超过多少小时,区域开始复苏(自动解除镇压) */
-export const REVIVE_AFTER_HOURS = 72
+// 档位与门槛住在 core/engineMemory(那是本作对库"档位机"的定制);这里转出,
+// 调用方与用例的 import 一行不用改
+export { DECAY_HOURS, FLOURISH_HOURS, FLOURISH_WINS, REVIVE_AFTER_HOURS, STABLE_HOURS, STABLE_WINS } from './engineMemory'
 
 /**
  * 妖气复聚的钟 —— 「这片地界多久没被打理了」。
@@ -45,13 +33,13 @@ export function regionTouchedAt(
   suppressedAt: number | undefined,
   clearedAt: number | undefined
 ): number {
-  return Math.max(lastFightAt ?? 0, suppressedAt ?? 0, clearedAt ?? 0)
+  // 钟的起点 = 最后一次与它打交道(战斗 / 镇压 / 通关,取最晚)
+  return REGION_MEMORY.touchedAt(lastFightAt, suppressedAt, clearedAt)
 }
 
 /** 该地界此刻是否该复聚(纯函数;钟没走过 —— 从未打过交道 —— 不算) */
 export function isRegionRevived(touchedAt: number, now: number): boolean {
-  if (touchedAt <= 0) return false
-  return (now - touchedAt) / 3600_000 > REVIVE_AFTER_HOURS
+  return REGION_MEMORY.idleBeyond(touchedAt, now, REVIVE_AFTER_HOURS)
 }
 
 /**
@@ -62,7 +50,7 @@ export function isRegionRevived(touchedAt: number, now: number): boolean {
  */
 export function hoursUntilRevive(suppressedAt: number | undefined, now: number = Date.now()): number {
   if (suppressedAt === undefined) return 0
-  return Math.max(0, REVIVE_AFTER_HOURS - (now - suppressedAt) / 3600_000)
+  return REGION_MEMORY.hoursUntil(suppressedAt, now, REVIVE_AFTER_HOURS)
 }
 
 interface RegionStateInput {
@@ -75,19 +63,16 @@ interface RegionStateInput {
 
 /** 派生区域兴衰状态(纯函数,无副作用) */
 export function deriveProsperity(input: RegionStateInput): RegionRecall {
-  const idleHours = (input.now - input.lastActivityAt) / 3600_000
   // 守土时长:镇压后守了多久(与「打赢过多少场」是两条路)
-  const heldHours = input.suppressedAt !== undefined ? (input.now - input.suppressedAt) / 3600_000 : 0
-  let prosperity: RegionProsperity = 'chaos'
-  // 镇压过才有资格谈「稳定/繁盛」;持续活动(或一直守着)才可维持
-  if (input.hasSuppressed) {
-    const alive = idleHours < DECAY_HOURS
-    if (alive && (input.totalWins >= FLOURISH_WINS || heldHours >= FLOURISH_HOURS)) {
-      prosperity = 'flourish'
-    } else if (alive && (input.totalWins >= STABLE_WINS || heldHours >= STABLE_HOURS)) {
-      prosperity = 'stable'
-    }
-  }
+  const heldHours = input.suppressedAt !== undefined ? REGION_MEMORY.hoursBetween(input.suppressedAt, input.now) : 0
+  // 档位机由库给:多路门槛取先到、没镇压过就停在最低档、太久没来就回落
+  const stage = REGION_MEMORY.stateOf({
+    count: input.totalWins,
+    hours: heldHours,
+    idleHours: REGION_MEMORY.hoursBetween(input.lastActivityAt, input.now),
+    eligible: input.hasSuppressed
+  })
+  const prosperity = stage.id as RegionProsperity
   return {
     prosperity,
     since: input.suppressedAt ?? input.lastActivityAt,
@@ -114,14 +99,8 @@ export function prosperityName(p: RegionProsperity): string {
  * 但"守得住"从此看得见回报,不再只是一个 ±2% 的装饰。
  */
 export function prosperityYieldMult(p: RegionProsperity): number {
-  switch (p) {
-    case 'flourish':
-      return 1.1
-    case 'stable':
-      return 1.05
-    default:
-      return 1.0
-  }
+  // 系数写在档位表里(见 core/engineMemory)—— 档位与它的回报在同一处,不会再分家
+  return REGION_MEMORY.stages.find(stage => stage.id === p)?.mult ?? 1
 }
 
 // ============ S2: 宿敌记忆 ============

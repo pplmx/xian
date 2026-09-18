@@ -135,6 +135,9 @@ export { createChoiceSystem } from './choices.js'
 export type { CodexConfig, CodexStage, CodexState, CodexSystem, CodexView } from './codex.js'
 export { createCodex } from './codex.js'
 
+export type { StageMemory, StageMemoryConfig, StageMemoryInput, StageMemoryState, StageSpec } from './memory.js'
+export { createStageMemory } from './memory.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 
