@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 316,
+  "round": 317,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:24:23+00:00",
+  "updated_at": "2026-09-18T21:29:58+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18220,6 +18220,79 @@
       "confidence": 0.96,
       "source": "变更 CHG-379(3d5d1b7)。bunx vitest run src/crafting.sim.spec.ts(4 例,打印:四项全弱 2.0% / 四项全满 90.0%;单拉一项 2.0%→13.5%(×6.7)/8.1%(×4.0)/3.4%(×1.7);越级高 0/1/2/3/4/6/8/10 阶 → 100%/60%/35%/18%/9%/2.3%/0.56%/0.14%;熟练度 0/50/100/200/400/900/1900/9900 点 → 0/33.3/50/66.7/80/90/95/99);cd packages/engine && bun run check(423 例 / 49 文件 + 七道自检,其中\"调参参考自检通过(9 份消融实验都被收进 docs/tuning.md)\"、用例文件数自检当场抓出 README 的 48→49);cd /workspace/xian && bun run test(2471 例)、test:report(2471 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(89 个源文件)。",
       "summary": "炼制层的刻度被量清楚:①下限不是\"兜底\",它就是设计——全弱 2.0% 让\"赌一把\"这个选项存在;②谁的下限低谁就是主要准备(倍数 = 1/下限);③越级是指数代价(表外每阶 ×0.5),高 10 阶只剩千分之一;④熟练度双曲饱和永远不到顶,所以\"练满通吃\"不存在,想留\"练满\"的口子要在内容层按阈值判。"
+    },
+    "TASK-298": {
+      "id": "TASK-298",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:29:50+00:00",
+      "updated_at": "2026-09-18T21:29:50+00:00",
+      "touched_round": 316,
+      "category": "bugfix",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "修消费者侧编译缺陷并发 0.1.12:companions.d.ts 里相对导入少 .js,node16/nodenext 且 skipLibCheck:false 的使用者编译报 TS2835(库自己全绿);补扩展名 + 加两道防线(发布包自检里的\"类型消费者\"用 tsc --strict 按 bundler 与 node16 各编一遍;源码相对导入必须带 .js 的静态自检),连同炼制乘区消融一起作为 0.1.12 补丁发布。"
+    },
+    "CHG-380": {
+      "id": "CHG-380",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:29:50+00:00",
+      "updated_at": "2026-09-18T21:29:50+00:00",
+      "touched_round": 316,
+      "commit": "10d3232",
+      "summary": "库:src/companions.ts 补 .js(连同 companions.spec.ts 的一致性);scripts/verify-dist.mjs 新增类型消费者自检(在临时项目里写 probe.mts,按 bundler 与 node16 跑 tsc --strict)与相对导入静态自检;docs/development.md 记下这条经验并修正过期的\"工程侧 25 处引用\"(实际 59);CHANGELOG「未发布」记一节。宿主无改动。"
+    },
+    "CHG-381": {
+      "id": "CHG-381",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:29:50+00:00",
+      "updated_at": "2026-09-18T21:29:50+00:00",
+      "touched_round": 316,
+      "commit": "ebe55c6",
+      "summary": "补丁发版五步:package.json 0.1.11 → 0.1.12;CHANGELOG 定稿成带日期的一节(写明与 0.1.11 相隔数分钟是因为前者带了这个缺陷);三处 tag 引用同步;宿主与 subtree 推送(engine main → 94284e7);gh release create v0.1.12 + gh api 核对(tag → 94284e7、package.json version 0.1.12、src/companions.ts 在 tag 上已带 .js)。"
+    },
+    "EV-306": {
+      "id": "EV-306",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:29:50+00:00",
+      "updated_at": "2026-09-18T21:29:50+00:00",
+      "touched_round": 316,
+      "confidence": 0.97,
+      "source": "变更 CHG-380(10d3232)与 CHG-381(ebe55c6)。node scripts/verify-dist.mjs 首次运行即报错:node_modules/wanxiang-engine/dist/companions.d.ts(18,27): error TS2835 … Did you mean ./attributes.js?(moduleResolution node16);修好后同一自检输出\"使用者的 tsc --strict 通过(moduleResolution: bundler / node16)\";防空转:把 companions.ts 改回无扩展名 → \"这些相对导入少了 .js 扩展名:companions.ts → ./attributes\";cd packages/engine && bun run check(423 例 / 49 文件 + 八道自检 + 发布包 wanxiang-engine-0.1.12.tgz);cd /workspace/xian && bun run test(2471 例)、check:engine(59 处引用)、check:engine:standalone(89 个源文件);gh api:tag v0.1.12 → 94284e7…、package.json version 0.1.12、src/companions.ts 第 18 行 ./attributes.js;gh release view → isDraft false / isPrerelease false。",
+      "summary": "一条\"库自己全绿、只在别人那边红\"的缺陷被自检抓住:运行时 import 成功说明不了\"能编\"。新增的类型消费者自检(真造 .mts + tsc --strict × 两种 moduleResolution)补上了这个缝,防空转也验过。0.1.12 作为补丁发布:公开面与数值一位未变。"
+    },
+    "DEC-151": {
+      "id": "DEC-151",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:29:50+00:00",
+      "updated_at": "2026-09-18T21:29:50+00:00",
+      "touched_round": 316,
+      "summary": "发布包自检必须包含\"使用者侧的类型编译\"(tsc --strict,至少 bundler 与 node16 两种 moduleResolution),而不止运行时 import。",
+      "rationale": "0.1.11 带着一个缺陷出去了:companions.d.ts 的相对导入少 .js,库自己的构建、423 例、Node import 全过,而 node16 的使用者一编译就红。原因是我们的自检只覆盖了\"装上能不能跑\",没覆盖\"能不能编\" —— 而 .d.ts 的解析规则与运行时不同(node16 要求显式扩展名)。这类缺陷的代价不对称:库这边零症状,使用者那边直接卡住,而且发出去之后只能靠新版本补救。故把类型消费者自检当作发布前的必修项。",
+      "alternatives_rejected": "①只在 CI 里跑 tsc --noEmit(那查的是源码与 dist 的一致性,查不到\"使用者按包名 + 两种解析规则能不能过\");②靠人记得在 companions.ts 写 .js(这次就是人漏了,而且漏了半年也没人发现);③只做静态检查扩展名(能抓住这一类,但抓不住 .d.ts 里其它解析问题,如 exports 映射、子路径 types 指错、泛型默认值不合法 —— 所以两条都要)。"
+    },
+    "EV-307": {
+      "id": "EV-307",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:29:58+00:00",
+      "updated_at": "2026-09-18T21:29:58+00:00",
+      "touched_round": 317,
+      "confidence": 0.9,
+      "source": "更正 DEC-151 的 alternatives_rejected ② 里\"漏了半年也没人发现\"这句:没有量过这个缺陷存在了多久 —— 只知道 0.1.11 的 tag 上带着它,以及新加的类型消费者自检第一次运行就抓到了它(见 EV-306)。\"半年\"是随手写的、没有依据;结论不变(靠人记得写 .js 不可靠,必须有自检)。",
+      "summary": "更正一处未经核实的表述:DEC-151 里说的\"漏了半年\"没有证据支持;缺陷存在时长未测量。"
     }
   },
   "edges": [
@@ -27421,6 +27494,24 @@
       "to": "TASK-297",
       "type": "implements",
       "created_at": "2026-09-18T21:24:23+00:00"
+    },
+    {
+      "from": "CHG-380",
+      "to": "TASK-298",
+      "type": "implements",
+      "created_at": "2026-09-18T21:29:50+00:00"
+    },
+    {
+      "from": "CHG-381",
+      "to": "TASK-298",
+      "type": "implements",
+      "created_at": "2026-09-18T21:29:50+00:00"
+    },
+    {
+      "from": "DEC-151",
+      "to": "TASK-298",
+      "type": "governs",
+      "created_at": "2026-09-18T21:29:50+00:00"
     }
   ]
 }
