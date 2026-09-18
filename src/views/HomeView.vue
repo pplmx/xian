@@ -81,6 +81,20 @@
             <span class="text-[10px] text-ink-faint">主线 {{ quests.mainIdx + 1 }}/{{ MAIN_QUESTS.length }}</span>
           </p>
           <p class="mt-0.5 text-[11px] text-ink-faint">{{ mainQuest.desc }}(达成后自动领赏)</p>
+          <!--
+            主线只给"要做什么"不够 —— 新手第一天靠它当路线图,得知道自己走到哪了。
+            进度文案与发赏判定同源(core/questProgress 读 progress.evalCond)。
+          -->
+          <p v-if="mainProgress" class="mt-1 flex items-center justify-between tabular text-[11px]">
+            <span :class="mainProgress.done ? 'text-jade' : 'text-ink-faint'">{{ mainProgress.text }}</span>
+            <span v-if="mainProgress.ratio !== null" class="ml-2 h-1 w-16 shrink-0 overflow-hidden rounded-full bg-ink/10">
+              <span
+                class="block h-full rounded-full"
+                :class="mainProgress.done ? 'bg-jade' : 'bg-cinnabar/70'"
+                :style="{ width: `${Math.round(mainProgress.ratio * 100)}%` }"
+              />
+            </span>
+          </p>
         </template>
         <p v-else class="text-[12px] text-ink-faint">主线已尽,前路由你自己书写。</p>
         <div class="ink-divider my-2.5" />
@@ -139,6 +153,7 @@
   import { WORLD_BREAK_MAJOR } from '@/data/realms'
   import { todayWeather } from '@/core/weather'
   import { generateCurrentGoal, type Goal } from '@/core/goal'
+  import { currentMainQuestProgress } from '@/core/questProgress'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
   import VeinInvestCard from '@/components/dongfu/VeinInvestCard.vue'
@@ -167,6 +182,8 @@
   const weather = computed(() => todayWeather())
 
   const mainQuest = computed(() => MAIN_QUESTS[quests.mainIdx])
+  /** 主线的进度读数(与发赏判定同源) */
+  const mainProgress = computed(() => currentMainQuestProgress())
 
   const dailyRows = computed(() =>
     DAILY_TASKS.map(t => ({

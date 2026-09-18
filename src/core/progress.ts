@@ -68,7 +68,13 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
   return lines
 }
 
-function evalCond(cond: AchvCond): boolean {
+/**
+ * 条件是否达成 —— **成就与任务的唯一判据**。
+ *
+ * 导出是为了让界面上的「进度文案」(见 core/questProgress)读同一份判断:
+ * 显示"还差 3 个敌人"与实际能不能领赏,不许各算各的。
+ */
+export function evalCond(cond: AchvCond): boolean {
   const quests = useQuestsStore()
   const player = usePlayerStore()
   switch (cond.type) {
