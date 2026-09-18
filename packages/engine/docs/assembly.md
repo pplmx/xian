@@ -121,6 +121,8 @@
 | 整套经营闭环(产线 → 上限 → 卖出 → 体检 → 升级 → 清理 → 日常) | —— | `examples/shop-loop.ts`(一产一销的一间铺子:零头不丢、上限截断、离线时长账、两种升级选择各算一遍、清仓规则链,全在一份 200 行的小程序里) |
 | 跨模块自洽(账目) | —— | `integration.spec.ts`(守恒 / 同源 / 单调幂等 / 可复现) |
 | 跨模块自洽(时间 × 随机) | `planIdle` + `createCycleSystem` + `createPityCounter` | `integrationTime.spec.ts`(同种子同结果、问周期不消耗随机、保底不改未触发前的随机、分段与逐步一致) |
+| 轮换的长期分布与"最长连着重复几天" | `createCycleSystem` | `cycles.sim.spec.ts`(权重摆好之后一年里的实测天数与最长连庄) |
+| 投资点的容量怎么分、换主位亏不亏 | `createPointPool` | `points.sim.spec.ts`(主位上限与总容量是两道闸;超额部分冻结) |
 | 跨模块自洽(状态 × 投资点 × 任务) | `createBuffSystem` + `createPointPool` + `createTaskBoard` | `integrationBuffs.spec.ts`(到期边界与剪枝顺序无关、加点不回溯、进度不回退、叠加是相乘) |
 
 ## 3 · 三条纪律
