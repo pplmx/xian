@@ -87,6 +87,8 @@ export type {
   CombatKeys,
   DamageContext,
   SkillEffectContext,
+  SkillPickContext,
+  StrikeContext,
   StrikeOptions
 } from './combat.js'
 export { createCombatEngine } from './combat.js'

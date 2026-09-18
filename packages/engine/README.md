@@ -521,6 +521,8 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
 | **战斗伤害公式完全自己定** | `BattleConfig.damageFn(ctx, rng)`(减法型/除算型/查表型都行;给了它,地板与修正都归你) |
 | **技能的效果标记怎么解释** | `BattleConfig.skillEffectFn(ctx, rng)` —— 库不认识 `stun/drain/pierce/multi`,只把标签交过来;返回 `true` 即"这次出手归我" |
+| **这一回合出哪一招** | `BattleConfig.skillFn(ctx, rng)` —— 返回技能 = 用它 / 返回 `null` = 这一回合不出技能 / 不返回 = 交回默认(每个技能各掷一颗再抽一个);"按序掷、第一个命中即用"这类规则就在这里接管(随机流从此与本作对齐) |
+| **整次出手怎么打**(先掷浮动还是先判暴击、吸血何时结算) | `BattleConfig.strikeFn(ctx, rng)` —— 返回 `true` 即整次归你:自己掷、自己用 `ctx.applyDamage` 落账(它返回的量就是这次出手的伤害);`ctx.damage(mult)` 可拿默认公式的结果"基于默认改一点" |
 | **技能标签的通行解释**(多段 / 震慑 / 吸取 / 加盾 / 放血 / 穿甲) | `BattleConfig.skillEffects`(段数、概率、比例都可配;不配则一个标签都不解释,继续交给 `skillEffectFn`) |
 | **要按回合推进的东西**(流血 / 中毒 / 增益层数 / 冷却 / 首领阶段) | `BattleConfig.tickFn(ctx, rng)` —— 每回合结束叫一次,`ctx` 给同一套原语与一个本场抽屉 `state` |
 | **内容驱动的反应**(流派组合技 / 法宝触发) | `BattleConfig.onEvent(ctx, event, rng)` —— 每记完一条事件交给你看一眼(如"看到会心就追加一记");钩子自己引发的出手不会再触发它(防递归) |
@@ -616,7 +618,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 75 个运行时导出 + 200 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+| 公开面判据 | 75 个运行时导出 + 202 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
 
 ## 边界与兼容性
 

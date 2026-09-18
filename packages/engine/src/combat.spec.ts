@@ -162,6 +162,109 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     expect(called).toBeGreaterThan(0)
   })
 
+  it('选技能的主权:按序掷、第一个命中即用(默认是"全掷一遍再抽一个")', () => {
+    const foe = () =>
+      fighter({
+        id: 'e',
+        name: '乙',
+        attack: 8,
+        defense: 0,
+        hp: 200,
+        maxHp: 200,
+        skills: [
+          { name: '探路', mult: 0, rate: 0 },
+          { name: '扑击', mult: 1.5, rate: 1 }
+        ]
+      })
+    // 本作式:按序掷,第一个命中就用它 —— 第二个技能那一颗骰子根本不用掷
+    const sequential = createCombatEngine({
+      variance: 0,
+      skillFn: (ctx, rng) => {
+        for (const s of ctx.skills) if (rng.chance(s.rate)) return s
+        return null
+      }
+    })
+    const out = sequential.resolve(fighter({ attack: 30 }), foe(), createRng(7))
+    expect(out.events.some(e => e.text.includes('扑击'))).toBe(true)
+    expect(out.events.some(e => e.text.includes('探路'))).toBe(false)
+    // 随机消耗与默认那套不同 —— 这正是"调参数对齐不了、必须整段接管"的原因
+    const counted = () => {
+      const base = createRng(7)
+      let draws = 0
+      return {
+        rng: {
+          ...base,
+          chance: (p: number) => (draws += 1, base.chance(p)),
+          pick: <U>(arr: readonly U[]): U => (draws += 1, base.pick(arr))
+        },
+        draws: () => draws
+      }
+    }
+    const withDefault = counted()
+    createCombatEngine({ variance: 0 }).resolve(fighter({ attack: 30 }), foe(), withDefault.rng)
+    const withSequential = counted()
+    sequential.resolve(fighter({ attack: 30 }), foe(), withSequential.rng)
+    // 默认每回合"每个技能各掷一颗 + 抽一个",按序掷只掷到命中为止 —— 总消耗必然不同
+    expect(withSequential.draws()).toBeLessThan(withDefault.draws())
+  })
+
+  it('选技能返回 null:这一回合不出技能(普通出手),而不是"交回默认"', () => {
+    const foe = () =>
+      fighter({
+        id: 'e',
+        name: '乙',
+        attack: 8,
+        defense: 0,
+        hp: 120,
+        maxHp: 120,
+        skills: [{ name: '扑击', mult: 1.5, rate: 1 }]
+      })
+    const noSkill = createCombatEngine({ variance: 0, skillFn: () => null })
+    const out = noSkill.resolve(fighter({ attack: 30 }), foe(), createRng(3))
+    expect(out.events.some(e => e.kind === 'skill')).toBe(false)
+    expect(out.events.some(e => e.kind === 'hit' || e.kind === 'crit')).toBe(true)
+  })
+
+  it('选技能不返回时交回默认:与不配这个钩子逐位一致', () => {
+    const foe = () =>
+      fighter({ id: 'e', name: '乙', attack: 8, defense: 0, hp: 120, maxHp: 120, skills: [{ name: '扑击', mult: 1.5, rate: 0.5 }] })
+    const base = createCombatEngine({ variance: 0 }).resolve(fighter({ attack: 30 }), foe(), createRng(11))
+    const withFn = createCombatEngine({ variance: 0, skillFn: () => undefined }).resolve(fighter({ attack: 30 }), foe(), createRng(11))
+    expect(withFn.events).toEqual(base.events)
+    expect(withFn.win).toBe(base.win)
+  })
+
+  it('整次出手的主权:自己掷、自己扣(返回值就是自己落账的那一份)', () => {
+    const seen: string[] = []
+    const custom = createCombatEngine({
+      variance: 0,
+      strikeFn: (ctx, rng) => {
+        seen.push(`${ctx.opts.kind ?? 'hit'}:${ctx.opts.skill?.name ?? '普攻'}`)
+        // 固定真伤:不看攻防、不看浮动,自己掷一次决定是否暴击
+        const crit = rng.chance(0.25)
+        const dealt = ctx.applyDamage(ctx.defender, crit ? 40 : 20, { bypassShield: true })
+        ctx.log(crit ? 'crit' : 'hit', `${ctx.attacker.name} 一记真伤,造成 ${dealt}`, dealt)
+        return true
+      }
+    })
+    const out = custom.resolve(
+      fighter({ attack: 30 }),
+      fighter({ id: 'e', name: '乙', attack: 8, defense: 0, hp: 100, maxHp: 100 }),
+      createRng(5)
+    )
+    expect(seen.length).toBeGreaterThan(0)
+    expect(out.events.every(e => e.damage === 0 || e.damage === 20 || e.damage === 40)).toBe(true)
+    expect(out.events.some(e => e.text.includes('真伤'))).toBe(true)
+  })
+
+  it('整次出手不返回时交回默认:与不配这个钩子逐位一致', () => {
+    const foe = () => fighter({ id: 'e', name: '乙', attack: 8, defense: 0, hp: 120, maxHp: 120 })
+    const base = createCombatEngine({ variance: 0 }).resolve(fighter({ attack: 30 }), foe(), createRng(13))
+    const withFn = createCombatEngine({ variance: 0, strikeFn: () => undefined }).resolve(fighter({ attack: 30 }), foe(), createRng(13))
+    expect(withFn.events).toEqual(base.events)
+    expect(withFn.win).toBe(base.win)
+  })
+
   it('技能效果可基于默认改:多打几下、伤害翻倍,并且本场有个跨回合的抽屉', () => {
     // 玩家的技能:第一次按默认打,之后每次都翻倍(用 state 记"这是第几次")
     const engine = createCombatEngine({

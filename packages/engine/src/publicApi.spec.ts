@@ -181,6 +181,7 @@ import type {
   SkillCostSpec,
   SkillDef,
   SkillEffectContext,
+  SkillPickContext,
   SkillState,
   SkillSystem,
   SoftPity,
@@ -190,6 +191,7 @@ import type {
   StageDef,
   StatsInput,
   StrikeOptions,
+  StrikeContext,
   SwitchInfo,
   SwitchOutcome,
   TemplateDef,
@@ -370,6 +372,8 @@ type PublicTypes = {
     CombatKeys,
     DamageContext<number>,
     SkillEffectContext<number>,
+    SkillPickContext<number>,
+    StrikeContext<number>,
     StrikeOptions
   ]
   idle: [IdleConfig, IdlePlan]

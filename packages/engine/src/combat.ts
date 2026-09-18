@@ -108,6 +108,36 @@ export interface BattleConfig<T = number> {
    */
   skillEffectFn?: (ctx: SkillEffectContext<T>, rng: Rng) => boolean | void
   /**
+   * 自己选这一回合出哪一招(**可选**)—— "选技能"这件事的主权。
+   *
+   * 默认是"把每个技能都掷一遍(各消耗一颗骰子),再从命中的里抽一个"。这一条看着无关紧要,
+   * 却是**随机流分歧最大的一处**:另一款作品很可能是"按序掷,第一个命中即用"(只消耗到命中
+   * 为止的那几颗),同一颗种子下一步就对不上了 —— 这不是调参数能对齐的,必须让作品整段接管。
+   *
+   *   返回一个技能 —— 这一回合就用它;
+   *   返回 `null` —— 这一回合**不出技能**(普通出手);
+   *   不返回(`undefined`)—— 交回默认选择。
+   *
+   * 钩子里拿得到本场的随机源,所以"按序掷"这类规则写得出来;`skills` 原样给你
+   * (需要过滤就用你自己的条件),`state` 是本场抽屉(冷却 / 连携都落在这儿)。
+   */
+  skillFn?: (ctx: SkillPickContext<T>, rng: Rng) => EnemySkillDef | null | undefined
+  /**
+   * 自己接管**整次出手**(**可选**)—— "这一招怎么打"的主权。
+   *
+   * 与 `damageFn` 的区别:那个只管"伤害怎么算",这一条管**整次出手的先后**——
+   * 先掷浮动还是先判暴击、闪避怎么定、吸血在什么时候结算、日志写成什么样。
+   * 那款真实作品与库的分歧正落在这些顺序上(同种子结果不同),所以要能整段交还。
+   *
+   *   返回 `true` —— 这一次出手归你(引擎不再走默认那套);造成的伤害请用
+   *   `ctx.applyDamage(target, 数额)` 落账 —— 它返回实际扣掉的量,引擎会把它作为
+   *   `strike` 的返回值交给调用方(反击/追击/钩子的串联都靠这个数)。
+   *   返回别的(含什么都不返回)—— 引擎按默认出手(与不配这个钩子时逐位一致)。
+   *
+   * 想"基于默认改一点"仍用 `ctx.damage(mult)` 自算;想整段另起一套就自己掷、自己扣。
+   */
+  strikeFn?: (ctx: StrikeContext<T>, rng: Rng) => boolean | void
+  /**
    * 自己接管伤害公式(**可选**)。
    *
    * 默认是 `攻击² /(攻击+防御)` 再乘上浮动、增伤、减伤,并有"每击至少 × minDamageRatio"的地板。
@@ -242,6 +272,67 @@ export interface SkillEffectContext<T> {
   /** 记一条自己的日志(展示文本归你) */
   log: (kind: BattleEventKind, text: string, damage?: number, actor?: string) => void
   /** 本场共用的小抽屉:跨回合记状态(层数/冷却)用,引擎不解释它 */
+  state: Record<string, unknown>
+}
+
+/**
+ * 选技能的上下文 —— 引擎问"这一回合你出哪一招"。
+ *
+ * 只给该给的东西:`skills` 是这一方这一回合的技能表(原样,不过滤),`state` 是本场抽屉;
+ * 想按序掷就自己 `rng.chance(s.rate)`,想按冷却筛就读 `state`。
+ */
+export interface SkillPickContext<T> {
+  round: number
+  /** 轮到谁出手(引擎内部的副本,直接改它不会污染调用方传进来的对象) */
+  attacker: Combatant<T>
+  /** 挨打方 */
+  defender: Combatant<T>
+  /** 这一方这一回合的技能表(通常就是 `attacker.skills`) */
+  skills: readonly EnemySkillDef[]
+  /** 已按 `keys` 解析好的本值键名 */
+  keys: Required<CombatKeys>
+  /** 取本值(转成 number,便于比较) */
+  num: (c: Combatant<T>, key: string) => number
+  /** 本场共用的小抽屉(冷却 / 连携 / 阶段) */
+  state: Record<string, unknown>
+}
+
+/**
+ * 接管整次出手的上下文 —— 与技能效果解释器同一套原语,另外带上"这一次出手是什么":
+ * 技能 / 倍率 / 事件类型 / 是否穿甲。
+ */
+export interface StrikeContext<T> {
+  /** 当前回合数 */
+  round: number
+  /** 出手方(引擎内部的副本) */
+  attacker: Combatant<T>
+  /** 挨打方(引擎内部的副本) */
+  defender: Combatant<T>
+  /** 这一次出手的规格(默认出手、技能、反击、追击、钩子追加都走同一份) */
+  opts: Readonly<StrikeOptions>
+  /** 已按 `keys` 解析好的本值键名 */
+  keys: Required<CombatKeys>
+  /** 取本值(原样 T) */
+  statOf: (c: Combatant<T>, key: string) => T
+  /** 改本值 */
+  setStat: (c: Combatant<T>, key: string, value: T) => void
+  /** 取本值(转成 number) */
+  num: (c: Combatant<T>, key: string) => number
+  /** 只算伤害不落账(默认公式或 `damageFn` 的结果)—— 想"基于默认改一点"就用它 */
+  damage: (mult?: number) => number
+  /** 落账:先扣护盾再扣生命并记一条日志;返回实际扣掉的生命(引擎据此回报本次出手的伤害) */
+  applyDamage: (target: Combatant<T>, amount: number, opts?: { bypassShield?: boolean }) => number
+  /** 目标当前的护盾余量 */
+  shieldOf: (target: Combatant<T>) => number
+  /** 加护盾;返回实际加上去的量 */
+  gainShield: (target: Combatant<T>, amount: number) => number
+  /** 治疗;溢出部分按配置转为护盾 */
+  heal: (target: Combatant<T>, amount: number) => { applied: number; shielded: number }
+  /** 让目标的下一次出手被跳过 */
+  skipNextTurn: (target: Combatant<T>) => void
+  /** 记一条自己的日志(展示文本归你) */
+  log: (kind: BattleEventKind, text: string, damage?: number, actor?: string) => void
+  /** 本场共用的小抽屉 */
   state: Record<string, unknown>
 }
 
@@ -493,6 +584,43 @@ export function createCombatEngine<T = number>(config: BattleConfig<T> = {}, num
       }
 
       const strike = (attacker: Combatant<T>, defender: Combatant<T>, round: number, opts: StrikeOptions = {}): number => {
+        /**
+         * 整次出手的主权(可选):返回 true = 归你,引擎不再走下面那套默认;
+         * 你落账了多少(经 `ctx.applyDamage`),这里就回报多少 —— 反击/追击/钩子的串联靠这个数。
+         */
+        if (config.strikeFn) {
+          let dealt = 0
+          const strikeCtx: StrikeContext<T> = {
+            round,
+            attacker,
+            defender,
+            opts,
+            keys,
+            statOf: stat,
+            setStat,
+            num: statNum,
+            damage: (mult?: number): number => rawDamage(attacker, defender, mult ?? opts.mult ?? opts.skill?.mult ?? 1, rng),
+            applyDamage: (target: Combatant<T>, amount: number, o?: { bypassShield?: boolean }): number => {
+              const lost = damageDealt(target, amount, o).lost
+              dealt += lost
+              return lost
+            },
+            shieldOf,
+            gainShield,
+            heal,
+            skipNextTurn: (target: Combatant<T>) => skipping.add(target),
+            log: (kind, text, damage, actor) => emit(round, actor ?? attacker.name, kind, text, damage),
+            state
+          }
+          hookDepth += 1
+          let handled: boolean | void
+          try {
+            handled = config.strikeFn(strikeCtx, rng)
+          } finally {
+            hookDepth -= 1
+          }
+          if (handled === true) return dealt
+        }
         const skill = opts.skill
         const mult = opts.mult ?? skill?.mult ?? 1
         const kind: BattleEventKind = opts.kind ?? (skill ? 'skill' : 'hit')
@@ -678,8 +806,34 @@ export function createCombatEngine<T = number>(config: BattleConfig<T> = {}, num
             continue
           }
           const skills = attacker.skills ?? []
-          const usable = skills.filter(s => rng.chance(s.rate))
-          const skill = usable.length > 0 ? rng.pick(usable) : undefined
+          /**
+           * 选技能(可选主权):
+           *   返回技能 → 用它;返回 `null` → 这一回合不出技能(普通出手);
+           *   不返回 → 交回默认(每个技能各掷一颗,再从命中的里抽一个)。
+           * 不配这个钩子时**一颗骰子都不会多掷** —— 默认路径与从前逐位一致。
+           */
+          let skill: EnemySkillDef | undefined
+          if (config.skillFn) {
+            hookDepth += 1
+            let chosen: EnemySkillDef | null | undefined
+            try {
+              chosen = config.skillFn(
+                { round, attacker, defender, skills, keys, num: statNum, state },
+                rng
+              )
+            } finally {
+              hookDepth -= 1
+            }
+            if (chosen === undefined) {
+              const usable = skills.filter(s => rng.chance(s.rate))
+              skill = usable.length > 0 ? rng.pick(usable) : undefined
+            } else {
+              skill = chosen ?? undefined
+            }
+          } else {
+            const usable = skills.filter(s => rng.chance(s.rate))
+            skill = usable.length > 0 ? rng.pick(usable) : undefined
+          }
           // 有技能且调用方给了效果解释器:由他决定这一次出手怎么算;他说"没处理"才走默认
           if (skill && runEffect(attacker, defender, round, skill)) continue
           strike(attacker, defender, round, {
