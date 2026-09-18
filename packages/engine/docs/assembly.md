@@ -95,7 +95,7 @@
 | 收支带来源、上限、取整 | `createResourceSystem` | `resources.spec.ts` |
 | 每小时产出(零头不丢) | `accrue` | `facilities.spec.ts` |
 | "本次所得"与账本对得上 | `createSettlement` | `settlement.spec.ts` |
-| 哪个资源是瓶颈 / 烂在手里 | `createEconomyReadings` | `economy.spec.ts` |
+| 哪个资源是瓶颈 / 烂在手里 | `createEconomyReadings` | `economy.spec.ts` + `economy.sim.spec.ts`(默认阈值翻译成"支出/收入"区间,以及 ±10% 的敏感区有多宽) |
 | 自动清理规则链 | `createTriage` | `examples/daily-loop.ts` 的清理段 |
 | 跨模块自洽(账目) | —— | `integration.spec.ts`(守恒 / 同源 / 单调幂等 / 可复现) |
 | 跨模块自洽(时间 × 随机) | `planIdle` + `createCycleSystem` + `createPityCounter` | `integrationTime.spec.ts`(同种子同结果、问周期不消耗随机、保底不改未触发前的随机、分段与逐步一致) |
