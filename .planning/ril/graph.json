@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 300,
+  "round": 301,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:25:59+00:00",
+  "updated_at": "2026-09-18T20:29:32+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16995,7 +16995,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:24:19+00:00",
       "updated_at": "2026-09-18T19:24:19+00:00",
-      "touched_round": 295,
+      "touched_round": 301,
       "summary": "发版流程固定成五步:改 package.json、把「未发布」定稿成带日期的版本一节、同步三处 tag 引用(engine README / engine docs/development / 根 README)、推宿主与子树、在 engine 仓库 gh release create 并按 CHANGELOG 分主题写说明。",
       "rationale": "发布这件事最容易出的错不是\"发错版本号\",而是**说明与实际不一致**:tag 指向哪个提交、那个提交里的版本号是多少、发布包里装的是哪一版、README 让人 pin 的是哪个 tag —— 四处任意一处没同步,外面的人就会按着一份错的说明接库。故把流程固定成五步,并把\"核对 tag 指向 + 包内 version\"也当成发版的一部分(用 gh api 读 tag 里的 package.json,而不是凭本地印象)。节奏上继续按版本口径:攒批(39 个提交一版)、默认只加 patch、tag 是给外面人一个可 pin 的节点。",
       "alternatives_rejected": "①改完就发(历史上的 0.1.2–0.1.5 一天连跳四次,已经按攒批口径纠正过一次);②只推 tag 不核对它指向哪(子树推送与 tag 是两步,顺序错了 tag 会落在旧提交上);③在宿主仓库打引擎 tag(库的 release 属于 engine 仓库,宿主有自己的 app 版本线 v1.35.0);④release 说明另写一份(与 CHANGELOG 各写各的迟早不一致;现在按 CHANGELOG 的分节改写,口径只有一份)。"
@@ -17546,7 +17546,7 @@
       "version": 1,
       "created_at": "2026-09-18T20:25:52+00:00",
       "updated_at": "2026-09-18T20:25:52+00:00",
-      "touched_round": 300,
+      "touched_round": 301,
       "category": "docs",
       "severity": 0.35,
       "confidence": 0.95,
@@ -17576,6 +17576,44 @@
       "confidence": 0.97,
       "source": "变更 CHG-363(3241467)。bun packages/engine/examples/combat-takeover.ts(输出\"胜负与回合数逐场相同:200/200(100%)\");cd packages/engine && bun run check(6 个示例全部跑通 + 组装指南自检 + 定制表自检 + 发布包自检);cd /workspace/xian && bun run test(247 文件/2427 例);bun run test:report(2427 过/0 败);bun run check:engine;bun run check:engine:standalone",
       "summary": "示例实测 200/200 逐场相同,并且它自己就抓出了一处错误:第一版我把库的默认回血(回合末)与老口径的回血(自己回合开头)同时开着,结果只有 52% 相同;删掉 mods.regenPerRound 之后 100%。这与 DEC-148 记的\"别把某一部分写重\"是同一条 —— 说明同种子对账是这类接管的必需品,而不是可选项。示例同时进两份自检(库内 check 与独立成库自检),不会腐烂。"
+    },
+    "TASK-282": {
+      "id": "TASK-282",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:29:32+00:00",
+      "updated_at": "2026-09-18T20:29:32+00:00",
+      "touched_round": 301,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.10:v0.1.9 之后 11 个提交(战斗三处主权 + 两格 200 种子 100% 实测 + 接管示例 + 两条接管经验)集中成一版,只加 patch;CHANGELOG 定稿、三处 tag 引用同步、engine 仓库 release 并核对 tag 指向与包内版本。"
+    },
+    "CHG-364": {
+      "id": "CHG-364",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:29:32+00:00",
+      "updated_at": "2026-09-18T20:29:32+00:00",
+      "touched_round": 301,
+      "commit": "791c31e",
+      "summary": "发版改动:package.json 0.1.9 → 0.1.10;CHANGELOG「未发布」→「0.1.10 — 2026-09-19」并补本批总述(11 个提交、库 379 例/40 文件、宿主侧 24 份对账与消融、公开面 75 运行时导出 / 203 类型);README 安装块与版本块、docs/development、根 README 的引用同步;gh release create v0.1.10(tag 落在 engine main 的 db1b644)。"
+    },
+    "EV-289": {
+      "id": "EV-289",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:29:32+00:00",
+      "updated_at": "2026-09-18T20:29:32+00:00",
+      "touched_round": 301,
+      "confidence": 0.98,
+      "source": "变更 CHG-364(791c31e / engine db1b644)。cd packages/engine && bun run check(6 个示例全跑 + 组装指南自检 + 定制表自检 + 发布包自检报告 wanxiang-engine-0.1.10.tgz 可用);cd /workspace/xian && bun run test(247 文件/2427 例);bun run test:report(2427 过 / 0 败);bun run check:engine(59 处引用);bun run check:engine:standalone(80 个源文件);gh release view v0.1.10 + gh api 核对 tag 指向 db1b644 且该提交里 version 已是 0.1.10",
+      "summary": "0.1.10 发布完成且逐项核对:release 页 https://github.com/pplmx/wanxiang-engine/releases/tag/v0.1.10,tag 指向 engine main 的 db1b644,包内 version 为 0.1.10,发布包自检按新版本号产出并\"真装一遍\"通过。发版前所有闸门全绿(库 379 例、宿主 2427 例、分类报告 2427 过 / 0 败、宿主 59 处引用全走公开入口)。发版说明按 CHANGELOG 的分节改写,含三处主权表、两格实测数字与两条接管经验。"
     }
   },
   "edges": [
@@ -26633,6 +26671,24 @@
       "to": "TASK-280",
       "type": "depends_on",
       "created_at": "2026-09-18T20:25:59+00:00"
+    },
+    {
+      "from": "CHG-364",
+      "to": "TASK-282",
+      "type": "implements",
+      "created_at": "2026-09-18T20:29:32+00:00"
+    },
+    {
+      "from": "DEC-139",
+      "to": "TASK-282",
+      "type": "governs",
+      "created_at": "2026-09-18T20:29:32+00:00"
+    },
+    {
+      "from": "TASK-282",
+      "to": "TASK-281",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:29:32+00:00"
     }
   ]
 }
