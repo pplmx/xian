@@ -485,7 +485,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **图鉴 / 收集深度**(见过 → 眼熟 → 洞悉 / 用过才算真懂) | `createCodex({ stages, stagesOf? })` —— 累计照面升档(一次只进一层、可分组换门槛表)/ 概率升档 / 直接推到某档;`rememberBest` 只记见过的最好一件(各维度取高);`view` / `stats` 给"还差多少""已知几条" |
 | **世界对该对象的记忆**(区域繁荣、阵营好感、门派声望) | `createStageMemory({ stages, decayAfterHours? })` —— 门槛可多路取先到(计数 / 时长)、没资格停在最低档、不打交道就回落;`touchedAt` / `hoursUntil` / `idleBeyond` 管"最后一次打交道"与倒计时 |
 | **经济体检**(哪个资源是瓶颈 / 烂在手里) | `createEconomyReadings({ bands?, labels? })` —— 进/出比值的判词(默认阈值 0.7 / 3 / 10)、分期读、带 `note` 的"没把握"标记;出为 0 时比值是无穷而不是 1 |
-| **掉落/奖励收不下怎么办** | `createIntake({ holding, accept?, evictable?, fallback, witness? })` —— 先见证再裁决、满了腾位(腾位失败不追回)、各条去路共用一条折算账、回执带人话与原因 |
+| **掉落/奖励收不下怎么办** | `createIntake({ holding, accept?(item, holding), evictable?(items, incoming) → 被挤掉那件, fallback, witness? })` —— 先见证再裁决、满了腾位(腾位失败不追回)、各条去路共用一条折算账、回执带人话与原因;`evictable` 拿到的是**现有全部件 + 新来的那件**(挑谁走由你比) |
 | **"本次所得"与账本对不上** | `createSettlement({ resources }, numeric?)` —— 回执里的每个数字都取自落账时的**实际发生额**,`clipped` 单独说明被上限截掉多少;想显示别的数就得绕过回执,那是显式越界 |
 | **掉率与保底的口径**(叠过 1 算必中 / 再高也不超过 90% / 首领第一抽必出) | `createDropTable(entries)`:`chanceCap` 另设上限、`guaranteed` 配 `guarantee` 开保底(开不开都不改随机流)、`scalesWithChance` / `scalesWithAttempts` / `scalesWithCount` 各自决定吃不吃倍率;`rollOne` 逐条掷、`roll` 整表掷,**顺序即声明顺序** |
 | **增益 / 减益的时长口径**(同一条再吃一次药:叠时长 / 取较长者 / 重新起算) | `createBuffSystem({ defs, stacking })` —— 默认 `'extend'`(剩余 + 新时长),`'longest'` 是取较长者(刷新,剩余被吞),`'reset'` 一律从现在起算;`maxDurationSec` 可给叠加上限 |
@@ -535,7 +535,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 多只伙伴的性格怎么合 | `companions.stack: 'override'`(默认,覆盖)/ `'add-relative'`(各自相对中性那一份相加) |
 | 伙伴性格的键名与中性值 | `companions.traits[].mods` + `companions.neutral`(缺中性值直接报错) |
 | **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改 |
-| **资源有哪些 / 叫什么 / 上限多少**(货币、材料、点数) | `createResourceSystem({ resources })`:键名与展示名分开,`cap` / `floor` 逐个给;上限还能随账本变(`capFn`) |
+| **资源有哪些 / 叫什么 / 上限多少**(货币、材料、点数) | `createResourceSystem({ resources })`:键名与展示名分开,`cap` / `floor` 逐个给(**不写 `cap` 才是无上限**,写 `0` 就是上限 0);上限还能随账本变(`capFn`) |
 | **收支要不要带来源**(审计"这批是哪来的") | 每条收支都可带 `source`;`audit()` 按资源与按来源各汇总一份,明细恒等于合计 |
 | **买不起时怎么办** | `pay` 默认**整笔要么全成、要么不动**并给出缺口;要允许分次付就显式开 `partial` |
 | **挂机产出的上限** | `produce(ledger, steps, perStep)` 逐步夹上限 —— 一步乘完再加是算不出"中途到顶"的 |
