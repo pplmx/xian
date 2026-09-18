@@ -249,6 +249,15 @@ npm i ./wanxiang-engine-0.1.0.tgz
 #    把 packages/engine 加进根 package.json 的 workspaces 即可
 ```
 
+```jsonc
+// 四 · 直接从 GitHub 装(不需要 npm 发布)
+"dependencies": { "wanxiang-engine": "github:pplmx/wanxiang-engine" }
+```
+
+装 git 依赖时,包会**自己跑一次 `prepare` 把 dist 编译出来**(这就是 package.json 里那行
+`"prepare": "tsc -p tsconfig.build.json"` 的用处)—— 否则别人装到的是一份没有产物的源码,
+`import 'wanxiang-engine'` 会直接找不到入口。仓库里刻意**不提交 dist**,只让它在安装/发布时生成。
+
 包里有什么、别人装得上、装上真能跑,由 `bun run check:engine` 守着:
 它先按发布口径编译,再**从 dist import**(不经过仓库别名、不经过 src),用内容包走完
 修炼 → 进阶 → 掉装 → 装配 → 副本 → 通关奖励,并断言坏配置会被交叉校验挡住。
