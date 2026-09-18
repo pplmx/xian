@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 219,
+  "round": 220,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T05:29:27+00:00",
+  "updated_at": "2026-09-18T05:49:16+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -7002,11 +7002,11 @@
     "HYP-058": {
       "id": "HYP-058",
       "type": "hypothesis",
-      "status": "stale",
-      "version": 2,
+      "status": "resolved",
+      "version": 3,
       "created_at": "2026-09-12T06:50:28+00:00",
-      "updated_at": "2026-09-15T01:09:21+00:00",
-      "touched_round": 134,
+      "updated_at": "2026-09-18T05:49:15+00:00",
+      "touched_round": 220,
       "summary": "「假红」也要查到底:一条判据时红时绿,往往不是被测对象不稳,而是取景里混进了别的活物(随机浮层、第三方脚本)。处理不是放宽阈值或加重试,而是把取景收拾干净(钉死随机源、按脚本出处分流异常),否则真正的问题会被红绿噪声掩盖",
       "confidence": 0.85
     },
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 205,
+      "touched_round": 220,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -10913,7 +10913,7 @@
       "version": 2,
       "created_at": "2026-09-15T13:02:37+00:00",
       "updated_at": "2026-09-15T13:03:53+00:00",
-      "touched_round": 189,
+      "touched_round": 220,
       "severity": 0.5,
       "confidence": 0.95,
       "summary": "浏览器自检从不上 CI:三个工作流里没有任何 scripts/ 引用,layout-check(162 组页面×视口、触达区、对比度、焦点、弹窗语义、离屏回放)与 ui-smoke 只活在「谁记得在本地跑一次」;而发版是 tag 触发,等于每一个发出去的包都没有 UI 层面的门。脚本头部写着「不写进依赖,免得 CI 背一个浏览器」,但那个取舍从未进图谱,也没人再问过值不值"
@@ -12935,6 +12935,69 @@
       "rationale": "落盘字段会制造第二处真相:「卡上记着已看过、存档却不记得」(或反之)在换设备、清缓存、导入导出时必然分叉;而这张卡要表达的东西——「还没做过这件事」——本来就在存档里(历练计数与主线下标)。由状态推出来的窗口天然自愈:做过一次历练、走过第一条主线,卡就收了,不需要任何清理逻辑,也不会因为清缓存而重新唠叨。",
       "alternatives_rejected": "①一次性 flag 落盘:要新增字段 + 清理时机 + 导入导出语义,且与已有计数重复记账;②首访修炼/历练页时弹一次提示:要两处接线、两份判据,而新手的第一眼在首页,还没进那两个页签;③把入口并进现有「修行目标」卡:目标与「第一步」是两种语义(长期方向 vs 开局一次),混在一张卡里会让收卡时机无处安放。",
       "summary": "新手引导的窗口不落盘:给不给「第一步」卡由已有状态(历练计数 / 主线下标 / 境界 / 修为 / 闭关)推出来,不引入「已看过」字段。"
+    },
+    "ISS-225": {
+      "id": "ISS-225",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T05:49:15+00:00",
+      "updated_at": "2026-09-18T05:49:16+00:00",
+      "touched_round": 220,
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 1,
+      "summary": "界面冒烟(ui-smoke)没进 CI:ISS-188「浏览器自检从不上 CI」当时点名的就是 layout-check 与 ui-smoke 两条,而处置只把排版自检与离线自检接进了 build.yml 的 ui-check job 与 deploy.yml —— ui-smoke 至今只活在「谁记得在本地跑一次」里。它是三条自检里唯一「逐页点按钮,看点下去会不会炸、有没有 NaN/undefined 漏到正文」的一条,而发版是 tag 触发,等于每个发出去的包都少这一道门。接它之前还押着一个前提缺陷:它原先裸收 pageerror,CI 的机器有网,站点里那段第三方统计脚本(实测会抛 Invalid UUID)足以把它染红 —— 而这种假红本地断网查不出来。"
+    },
+    "TASK-200": {
+      "id": "TASK-200",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T05:49:15+00:00",
+      "updated_at": "2026-09-18T05:49:16+00:00",
+      "touched_round": 220,
+      "category": "dx",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.5,
+      "summary": "把界面冒烟接进 CI(build.yml 的 ui-check job 与 deploy.yml),接之前先抽一处「什么算我们的失败」:scripts/lib/pageErrors.mjs 供三条自检共用(第三方统计脚本的异常只提示不计入);ui-check 的 timeout 20→40 分钟。"
+    },
+    "CHG-257": {
+      "id": "CHG-257",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T05:49:15+00:00",
+      "updated_at": "2026-09-18T05:49:15+00:00",
+      "touched_round": 220,
+      "commit": "100fa79",
+      "summary": "scripts/lib/pageErrors.mjs 新增(watchPageErrors 分流 + ANALYTICS_BLOCKED_ARGS),layout-check / ui-smoke / offline-check 三处改为共用;ui-smoke 接入 build.yml ui-check job 与 deploy.yml(并在启动参数里断掉分析脚本域名);ui-check timeout 20→40 分钟;两处脚本头补「它同时在 CI 里跑」。"
+    },
+    "EV-203": {
+      "id": "EV-203",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T05:49:15+00:00",
+      "updated_at": "2026-09-18T05:49:15+00:00",
+      "touched_round": 220,
+      "source": "bun scripts/ui-smoke.mjs / bun scripts/offline-check.mjs / bun scripts/layout-check.mjs / scripts/lib/pageErrors.mjs 自测",
+      "summary": "① 冒烟实测:15 页 67 次点击、无运行时异常,「点了没反应」2 处(/dongfu 返回、/world 出发)为读数不判失败;一轮 5 分 31 秒(断掉第三方域名前后量过:5 分 03 秒 → 5 分 31 秒,并不省时间,故不拿省时当理由)。② 分流模块自测:第三方异常(堆栈含 sdk.51.la)只打印一次、不进 sink;自家异常进 sink;回调式 sink 也认。③ offline-check 四件事全绿;layout-check 167 组全绿(改后重跑)。④ YAML 解析通过。",
+      "confidence": 1.0
+    },
+    "DEC-059": {
+      "id": "DEC-059",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T05:49:15+00:00",
+      "updated_at": "2026-09-18T05:49:15+00:00",
+      "touched_round": 220,
+      "rationale": "三条自检从前各写一份 pageerror 收集,口径已经在漂(只有排版自检做了分流,另两条裸收),而冒烟正要接进有网的 CI —— 同上一次「两处各写一份 import 校验」是同一类问题:凡是「什么算我们的失败」这种判断,写两遍迟早分叉,而分叉的表现是其中一条门偶发假红,最难查。抽成一处之后,分流规则改一次三条都跟着变。",
+      "alternatives_rejected": "①给冒烟单独补一份分流(第三次重复,下一条自检接 CI 时还要再抄一遍);②靠不给 CI 网络来规避(CI 的机器就是有网,而本地断网正是这类假红查不出来的原因);③把第三方脚本从产物里去掉(它是站点的统计,不属于本仓库的取舍);④只加超长 timeout 让冒烟慢慢跑(那是接进 CI 的时长问题,不是假红问题的解,故另记在 build.yml 的注释里)。",
+      "summary": "「什么算我们的失败」只写一处:自检脚本共用的页面异常分流(第三方脚本抛的不算我们的账);接一条自检进 CI 之前,先让它不会因第三方而假红。"
     }
   },
   "edges": [
@@ -19268,6 +19331,48 @@
       "to": "COMP-011",
       "type": "governs",
       "created_at": "2026-09-18T05:29:18+00:00"
+    },
+    {
+      "from": "TASK-200",
+      "to": "ISS-225",
+      "type": "addresses",
+      "created_at": "2026-09-18T05:49:15+00:00"
+    },
+    {
+      "from": "TASK-200",
+      "to": "ISS-188",
+      "type": "addresses",
+      "created_at": "2026-09-18T05:49:15+00:00"
+    },
+    {
+      "from": "CHG-257",
+      "to": "TASK-200",
+      "type": "implements",
+      "created_at": "2026-09-18T05:49:15+00:00"
+    },
+    {
+      "from": "CHG-257",
+      "to": "ISS-225",
+      "type": "resolves",
+      "created_at": "2026-09-18T05:49:15+00:00"
+    },
+    {
+      "from": "ISS-225",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-18T05:49:15+00:00"
+    },
+    {
+      "from": "EV-203",
+      "to": "HYP-058",
+      "type": "validates",
+      "created_at": "2026-09-18T05:49:15+00:00"
+    },
+    {
+      "from": "DEC-059",
+      "to": "COMP-016",
+      "type": "governs",
+      "created_at": "2026-09-18T05:49:15+00:00"
     }
   ]
 }
