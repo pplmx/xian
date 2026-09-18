@@ -1,0 +1,53 @@
+import { describe, expect, it } from 'vitest'
+import type { GoalEnv } from './goals'
+import { evalGoal, goalProgress } from './goals'
+
+function env(over: Partial<GoalEnv> & { counters?: Record<string, number> } = {}): GoalEnv {
+  const counters = over.counters ?? {}
+  return {
+    counter: key => counters[key] ?? 0,
+    level: () => 0,
+    ...over
+  }
+}
+
+describe('目标/条件 —— 判定与进度', () => {
+  it('计数型:够了才算,进度按比例', () => {
+    const e = env({ counters: { kill: 3 } })
+    expect(evalGoal({ type: 'counter', key: 'kill', value: 10 }, e)).toBe(false)
+    expect(evalGoal({ type: 'counter', key: 'kill', value: 3 }, e)).toBe(true)
+    expect(goalProgress({ type: 'counter', key: 'kill', value: 10 }, e)).toEqual({ done: false, ratio: 0.3, current: 3, target: 10 })
+    // 超出目标时比例封顶 1,但当前值照实报(不替调用方截断)
+    expect(goalProgress({ type: 'counter', key: 'kill', value: 2 }, e)).toEqual({ done: true, ratio: 1, current: 3, target: 2 })
+  })
+
+  it('目标为 0 时不会除零:视为已达成', () => {
+    expect(goalProgress({ type: 'counter', key: 'x', value: 0 }, env())).toEqual({ done: true, ratio: 1, current: 0, target: 0 })
+  })
+
+  it('等级型与位阶型:大阶优先,小阶只在同阶时比', () => {
+    const e = env({ level: () => 3, subLevel: () => 2 })
+    expect(evalGoal({ type: 'level', min: 3 }, e)).toBe(true)
+    expect(evalGoal({ type: 'level', min: 4 }, e)).toBe(false)
+    expect(evalGoal({ type: 'position', major: 3, sub: 2 }, e)).toBe(true)
+    expect(evalGoal({ type: 'position', major: 3, sub: 3 }, e)).toBe(false)
+    expect(evalGoal({ type: 'position', major: 2, sub: 9 }, e)).toBe(true)
+    // 省略 sub 即只看大阶
+    expect(evalGoal({ type: 'position', major: 3 }, e)).toBe(true)
+  })
+
+  it('品阶型与自定义:环境没提供就当不成立', () => {
+    expect(evalGoal({ type: 'rank', min: 3 }, env())).toBe(false)
+    expect(evalGoal({ type: 'custom', key: '渡劫' }, env())).toBe(false)
+    const rich = env({ rank: () => 5, custom: key => key === '渡劫' })
+    expect(evalGoal({ type: 'rank', min: 3 }, rich)).toBe(true)
+    expect(evalGoal({ type: 'custom', key: '渡劫' }, rich)).toBe(true)
+    expect(evalGoal({ type: 'custom', key: '飞升' }, rich)).toBe(false)
+  })
+
+  it('进度视图:不可量化的那类只答达成与否;自定义没环境时返回 null', () => {
+    expect(goalProgress({ type: 'position', major: 2 }, env({ level: () => 1 }))).toEqual({ done: false, ratio: null, current: null, target: null })
+    expect(goalProgress({ type: 'rank', min: 3 }, env({ rank: () => 2 }))).toEqual({ done: false, ratio: null, current: 2, target: 3 })
+    expect(goalProgress({ type: 'custom', key: 'x' }, env())).toBeNull()
+  })
+})

@@ -201,6 +201,30 @@ stageNameOf(92, [{ min: 85, name: '通玄' }, { min: 0, name: '生疏' }])
 配套两条:熟练度用双曲饱和(技艺没有"练满",想留口子就在上层按阈值判),
 分档给裸数字起名字(玩家读名字,不读数字)。
 
+## 任务 / 成就:一条判据,两种用法
+
+```ts
+import { evalGoal, goalProgress, type GoalEnv } from 'wanxiang-engine'
+
+const cond = { type: 'counter', key: 'kills', value: 10 } as const
+const env: GoalEnv = {
+  counter: key => counters[key] ?? 0, // 引擎不认识你的存档,只向环境提问
+  level: () => player.major,
+  subLevel: () => player.sub,
+  custom: key => flags[key] === true
+}
+
+evalGoal(cond, env)            // 达成与否 —— 界面与发赏共用这一份
+goalProgress(cond, env)        // { done, ratio, current, target }
+```
+
+条件有五种:`counter`(计数)、`level`(等级)、`position`(大阶 + 小阶)、`rank`(品阶)、
+`custom`(交给作品判)。**"达成与否"只有一处实现**:界面显示"还差 3 个敌人"与发赏时的判定
+读同一个函数 —— 否则迟早出现"界面说成了、领赏时不算",而玩家只会当成吞奖励。
+
+进度视图只对**可量化**的条件给比例(比例封顶 1、目标为 0 时不除零);
+等级/位阶这类只有"到没到",`ratio` 为 null —— 界面就不画条,不硬编一个读数。
+
 ## 接进你自己的项目
 
 包内自带 `dist` 的编译与入口声明,但**还没有发到 npm**(发布是显式动作)。三种接法任选:

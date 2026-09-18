@@ -93,5 +93,8 @@ export { createSkillSystem } from './skills'
 export type { CraftFormula, CraftLevers, LeverSpec, OverReachSpec, StageDef } from './crafting'
 export { averageLore, composeCraftRate, leverFactor, overReachFactor, proficiencyFromExp, stageNameOf, weightedSkill } from './crafting'
 
+export type { GoalCond, GoalEnv, GoalProgress } from './goals'
+export { evalGoal, goalProgress } from './goals'
+
 export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config'
 export { defineGame, validateGame } from './config'
