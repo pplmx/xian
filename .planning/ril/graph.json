@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 305,
+  "round": 306,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:49:11+00:00",
+  "updated_at": "2026-09-18T20:53:44+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17778,6 +17778,44 @@
       "summary": "掉落层的\\\"翻倍\\\"默认只给份数倍率(countMult):要按\\\"次数\\\"翻倍必须显式开 scalesWithAttempts(= 多抽一次),因为它会改随机流,不能当默认。",
       "rationale": "两条路期望相同、手感不同:份数 ×2 是\\\"把一次结果整体放大\\\"(档位只有 0/2,波动更高),多抽一次是两次独立判定(能落在 0/1/2,波动更低、更稳)但**掷骰次数翻倍**,后面的随机流随之改变 —— 而\\\"随机流是契约\\\"(同一颗种子跑两遍整条链一样)是库对使用者的承诺,任何会改随机流的开关都必须是显式的。实测(同一份内容 20_000 场):装备那条份数 ×2 得 0.92 波动、多抽一次得 0.65;同一颗种子下前者掷 1 次骰、后者掷 2 次。",
       "alternatives_rejected": "①把 attempts 也默认吃 countMult(使用者的\\\"战利品翻倍\\\"会静默改掉随机流,是那种几个月后才以\\\"后半段战斗结果不一样\\\"现形的故障);②只留 countMult、砍掉 attempts 倍率(做不到\\\"多抽一次\\\"这种更稳的手感,而抽卡类内容正需要它);③在库层替使用方决定翻倍语义(键名/阈值/曲线属于内容,库只能给两条路与显式开关)。"
+    },
+    "TASK-287": {
+      "id": "TASK-287",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:53:39+00:00",
+      "updated_at": "2026-09-18T20:53:39+00:00",
+      "touched_round": 305,
+      "category": "core-feature",
+      "severity": 0.25,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "第五份示例「一角点心铺」(examples/shop-loop.ts):补上组装指南四条配方里唯一没有示例的配方 D(经营模拟)。一份程序串起产线(facilities+accrue 零头)、上限截断(resources+settlement 回执的 clipped)、离线时长账(planIdle)、两种升级选择各算一遍再花(economy 判词)、口碑作为别人给的上限(capReason)、清仓规则链(triage impact)、今日三件(tasks 增量)。"
+    },
+    "CHG-369": {
+      "id": "CHG-369",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:53:39+00:00",
+      "updated_at": "2026-09-18T20:53:39+00:00",
+      "touched_round": 305,
+      "commit": "cd83f51",
+      "summary": "库:新增 examples/shop-loop.ts(约 250 行,题材中性:一产一销的点心铺);package.json 的 examples 脚本挂上它(宿主独立成库自检从该脚本读清单,新示例自动被搬走后真跑);README 目录树的示例清单、docs/assembly.md 配方 D 的\"整套闭环\"一行、CHANGELOG「未发布」各补一处。宿主无改动。"
+    },
+    "EV-294": {
+      "id": "EV-294",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:53:39+00:00",
+      "updated_at": "2026-09-18T20:53:39+00:00",
+      "touched_round": 305,
+      "confidence": 0.95,
+      "source": "变更 CHG-369(cd83f51)。bun examples/shop-loop.ts(实测打印:8h→计入 6h→效率 0.8→4 步+余 48 分钟;每步出 3 份零头 0.2/0.4/0.6/0.8、卖 1 份、扔 2 份;小计卖 4 份/进账 12 文/截掉 8 份;体检 3.2/1=过剩→升灶台 6.4/1 仍过剩、升柜台 3.2/2 顺畅;升完再问被 capReason 挡住;清理留 2 扔 2,关掉隔夜规则变扔 0;今日三件 4/4、12/12、1/1 全勾);cd packages/engine && bun run check(396 例 + 组装指南 25 工厂 / 定制表 99 名字 / 发布包自检,示例路径核对通过);cd /workspace/xian && bun run test(2444 例)、bun run test:report(2444 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(83 个源文件 + 8 份示例在搬走后真跑)",
+      "summary": "四条配方现在各有一份可跑的整套示例:A 快速上手/最小循环, B 战斗组合技与战斗接管, C 星屑集册, D 一角点心铺。经营这份同时把两处\"看起来该是 A 其实是 B\"的口径摆出来:①零头不丢在**累加器**而不是每步取整(3.2 份/小时每步只发 3,余数跨步累积);②\"产量不够\"未必是瓶颈 —— 本例 3.2 进 / 1 出被判过剩,填产出只会更过剩,该填的是出口(这一条直接决定先升哪座设施)。"
     }
   },
   "edges": [
@@ -26907,6 +26945,12 @@
       "to": "TASK-286",
       "type": "governs",
       "created_at": "2026-09-18T20:49:11+00:00"
+    },
+    {
+      "from": "CHG-369",
+      "to": "TASK-287",
+      "type": "implements",
+      "created_at": "2026-09-18T20:53:41+00:00"
     }
   ]
 }
