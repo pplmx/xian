@@ -48,6 +48,20 @@ export interface BattleConfig {
   /** 本值键名(默认 attack / defense / hp / maxHp / speed) */
   keys?: CombatKeys
   /**
+   * 自己解释技能的 `effect`(**可选**)。
+   *
+   * 库**不认识** stun / drain / pierce / multi / bleed 这些标签 —— 它只把标签原样交过来,
+   * 由你决定"定身"在这款游戏里到底意味着什么(也许你的题材里是"分心""伤口""没电了")。
+   *
+   *   返回 `true`  —— 这次出手你已经处理完(引擎不再按默认公式打这一下);
+   *   返回别的(含什么都不返回)—— 引擎按默认出手(与不配这个钩子时逐位一致)。
+   *
+   * 给了它,**这一次出手的规则完全归你**:引擎不会在你之外再叠加任何东西。
+   * 想基于默认改动(多打几下、伤害减半)就用 `ctx.strike(mult)`;
+   * 想完全另算(穿甲/真伤)就用 `ctx.damage(mult)` + `ctx.applyDamage(target, 数额)`。
+   */
+  skillEffectFn?: <T>(ctx: SkillEffectContext<T>, rng: Rng) => boolean | void
+  /**
    * 自己接管伤害公式(**可选**)。
    *
    * 默认是 `攻击² /(攻击+防御)` 再乘上浮动、增伤、减伤,并有"每击至少 × minDamageRatio"的地板。
@@ -83,7 +97,54 @@ export interface DamageContext<T> {
   damageReduction: number
 }
 
-export type BattleEventKind = 'hit' | 'crit' | 'dodge' | 'skill' | 'counter' | 'lifesteal' | 'regen' | 'end'
+/**
+ * 技能效果的解释上下文 —— 引擎把自己内部用的那些原语摊开给你,而不是让你另起一套。
+ *
+ * 每个原语都对应引擎自己走的那条路,所以"你写的"与"引擎给的"不会两套口径:
+ * `strike` 就是默认那一次出手(命中/暴击/吸血/日志全同源),`damage` 就是默认伤害公式的结果。
+ */
+export interface SkillEffectContext<T> {
+  round: number
+  /** 出手方(引擎内部的副本,直接改它不会污染调用方传进来的对象) */
+  attacker: Combatant<T>
+  /** 挨打方(同上) */
+  defender: Combatant<T>
+  /** 触发的那条技能定义(读 `skill.effect` 认标签、读 `skill.desc` 也行) */
+  skill: EnemySkillDef
+  /** 技能自带倍率(默认出手用的就是它) */
+  mult: number
+  /** 已按 `keys` 解析好的本值键名 */
+  keys: Required<CombatKeys>
+  /** 取本值(原样 T) */
+  statOf: (c: Combatant<T>, key: string) => T
+  /** 改本值:如"定身"把先手压到 0、"抽蓝"扣一项资源 */
+  setStat: (c: Combatant<T>, key: string, value: T) => void
+  /** 取本值(转成 number,便于比较与算数) */
+  num: (c: Combatant<T>, key: string) => number
+  /** 按默认规则打这一下(可换倍率);返回实际造成的伤害 */
+  strike: (mult?: number) => number
+  /** 只算伤害不落账(默认公式或 `damageFn` 的结果),给"穿甲/真伤"这类自己扣血的写法用 */
+  damage: (mult?: number) => number
+  /** 落账:扣目标当前生命并记一条日志;返回实际扣掉的值 */
+  applyDamage: (target: Combatant<T>, amount: number) => number
+  /** 让目标的下一次出手被跳过(定身/眩晕);重复调用不叠加 */
+  skipNextTurn: (target: Combatant<T>) => void
+  /** 记一条自己的日志(展示文本归你) */
+  log: (kind: BattleEventKind, text: string, damage?: number, actor?: string) => void
+  /** 本场共用的小抽屉:跨回合记状态(层数/冷却)用,引擎不解释它 */
+  state: Record<string, unknown>
+}
+
+export type BattleEventKind =
+  | 'hit'
+  | 'crit'
+  | 'dodge'
+  | 'skill'
+  | 'counter'
+  | 'lifesteal'
+  | 'regen'
+  | 'skip'
+  | 'end'
 
 export interface BattleEvent {
   round: number
@@ -148,13 +209,13 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
     rng: Rng,
     events: BattleEvent[],
     skill?: EnemySkillDef
-  ): void => {
+  ): number => {
     const kind: BattleEventKind = skill ? 'skill' : 'hit'
     const label = skill ? `【${skill.name}】` : ''
     const missChance = Math.max(0, Math.min(0.95, mod(defender.mods, 'dodgeRate') - mod(attacker.mods, 'accuracy')))
     if (rng.chance(missChance)) {
       events.push({ round, actor: attacker.name, kind: 'dodge', damage: 0, text: `${attacker.name} 出手,${defender.name} 闪开了` })
-      return
+      return 0
     }
     const critRate = Math.max(0, Math.min(1, mod(attacker.mods, 'critRate')))
     const isCrit = !skill && rng.chance(critRate)
@@ -177,6 +238,7 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
         events.push({ round, actor: attacker.name, kind: 'lifesteal', damage: 0, text: `${attacker.name} 汲取 ${Math.round(heal)} 生命` })
       }
     }
+    return dealt
   }
 
   const alive = (c: Combatant<T>): boolean => numeric.cmp(stat(c, keys.hp), numeric.zero) > 0
@@ -192,6 +254,54 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
     resolve(player: Combatant<T>, enemy: Combatant<T>, rng: Rng): BattleResult<T> {
       const [p, e] = build(player, enemy)
       const events: BattleEvent[] = []
+      /** 被"跳过下一次出手"的目标(技能效果解释器自己往里加) */
+      const skipping = new Set<Combatant<T>>()
+      /** 本场共用的小抽屉:钩子跨回合记状态用,引擎不解释 */
+      const state: Record<string, unknown> = {}
+
+      const applyDamage = (target: Combatant<T>, amount: number): number => {
+        const dealt = Math.min(amount, statNum(target, keys.hp))
+        if (!(dealt > 0)) return 0
+        setStat(target, keys.hp, numeric.max(numeric.zero, numeric.sub(stat(target, keys.hp), numeric.from(amount))))
+        return dealt
+      }
+
+      /** 技能效果解释器:把引擎内部的出手/伤害/落账原语摊开给调用方,而不是让他另起一套 */
+      const runEffect = (attacker: Combatant<T>, defender: Combatant<T>, round: number, skill: EnemySkillDef): boolean => {
+        const fn = config.skillEffectFn
+        if (!fn) return false
+        const emit = (kind: BattleEventKind, text: string, damage = 0, actor?: string): void => {
+          events.push({ round, actor: actor ?? attacker.name, kind, damage, text })
+        }
+        const handled = fn(
+          {
+            round,
+            attacker,
+            defender,
+            skill,
+            mult: skill.mult,
+            keys,
+            statOf: stat,
+            setStat,
+            num: statNum,
+            strike: (mult?: number): number => strike(attacker, defender, round, rng, events, { ...skill, mult: mult ?? skill.mult }),
+            damage: (mult?: number): number => rawDamage(attacker, defender, mult ?? skill.mult, rng),
+            applyDamage: (target: Combatant<T>, amount: number): number => {
+              const dealt = applyDamage(target, amount)
+              if (dealt > 0) emit('skill', `${attacker.name} 【${skill.name}】命中 ${target.name},造成 ${Math.round(dealt)} 伤害`, dealt)
+              return dealt
+            },
+            skipNextTurn: (target: Combatant<T>): void => {
+              skipping.add(target)
+            },
+            log: emit,
+            state
+          },
+          rng
+        )
+        return handled === true
+      }
+
       const pSpeed = statNum(p, keys.speed) * (1 + mod(p.mods, 'speed'))
       const eSpeed = statNum(e, keys.speed) * (1 + mod(e.mods, 'speed'))
       const playerFirst = pSpeed >= eSpeed
@@ -209,9 +319,15 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
             ]
         for (const [attacker, defender] of order) {
           if (!alive(p) || !alive(e)) break
+          if (skipping.delete(attacker)) {
+            events.push({ round, actor: attacker.name, kind: 'skip', damage: 0, text: `${attacker.name} 这一回合没有出手` })
+            continue
+          }
           const skills = attacker.skills ?? []
           const usable = skills.filter(s => rng.chance(s.rate))
           const skill = usable.length > 0 ? rng.pick(usable) : undefined
+          // 有技能且调用方给了效果解释器:由他决定这一次出手怎么算;他说"没处理"才走默认
+          if (skill && runEffect(attacker, defender, round, skill)) continue
           strike(attacker, defender, round, rng, events, skill)
         }
         for (const c of [p, e]) {

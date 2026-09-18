@@ -142,4 +142,70 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     expect(seen[1]).toBeCloseTo(0.25, 10)
     expect(seen[2]).toBeCloseTo(0.08, 10)
   })
+
+  it('技能效果解释器不配(或返回空)时:出手规则与原来逐位一致', () => {
+    const foe = () =>
+      fighter({ id: 'e', name: '乙', attack: 8, defense: 0, hp: 120, maxHp: 120, skills: [{ name: '扑击', mult: 1.5, rate: 1, effect: 'stun' }] })
+    const base = createCombatEngine({ variance: 0 })
+    const withFn = createCombatEngine({ variance: 0, skillEffectFn: () => undefined })
+    const a = base.resolve(fighter({ attack: 30 }), foe(), createRng(7))
+    const b = withFn.resolve(fighter({ attack: 30 }), foe(), createRng(7))
+    expect(b.events).toEqual(a.events)
+    // 钩子只在配了的时候才被调用
+    let called = 0
+    createCombatEngine({
+      variance: 0,
+      skillEffectFn: () => {
+        called += 1
+      }
+    }).resolve(fighter({ attack: 30 }), foe(), createRng(7))
+    expect(called).toBeGreaterThan(0)
+  })
+
+  it('技能效果可基于默认改:多打几下、伤害翻倍,并且本场有个跨回合的抽屉', () => {
+    // 玩家的技能:第一次按默认打,之后每次都翻倍(用 state 记"这是第几次")
+    const engine = createCombatEngine({
+      variance: 0,
+      skillEffectFn: ctx => {
+        const times = (ctx.state.times as number | undefined) ?? 0
+        ctx.state.times = times + 1
+        ctx.strike(times === 0 ? undefined : ctx.mult * 2)
+        return true
+      }
+    })
+    const me = fighter({ attack: 30, hp: 500, maxHp: 500, skills: [{ name: '连击', mult: 1, rate: 1 }] })
+    const foe = fighter({ id: 'e', name: '乙', attack: 1, defense: 0, hp: 400, maxHp: 400, speed: 0 })
+    const battle = engine.resolve(me, foe, createRng(11))
+    const hits = battle.events.filter(e => e.kind === 'skill').map(e => e.damage)
+    // 攻 30 / 防 0 → 默认每击 30;第一次 30,第二次 60,第三次 60……
+    expect(hits[0]).toBeCloseTo(30, 6)
+    expect(hits[1]).toBeCloseTo(60, 6)
+    expect(battle.win).toBe(true)
+  })
+
+  it('技能效果可以完全另起一套:定身(跳过出手)+ 固定真伤,引擎不再补打一下', () => {
+    const engine = createCombatEngine({
+      variance: 0,
+      skillEffectFn: ctx => {
+        if (ctx.skill.effect !== 'stun') return
+        ctx.skipNextTurn(ctx.defender)
+        ctx.applyDamage(ctx.defender, 25)
+        ctx.log('skill', `${ctx.attacker.name} 定住了 ${ctx.defender.name}`)
+        return true
+      }
+    })
+    const me = fighter({ attack: 30, hp: 500, maxHp: 500, skills: [{ name: '定身术', mult: 1, rate: 1, effect: 'stun' }] })
+    const foe = fighter({ id: 'e', name: '乙', attack: 1, defense: 0, hp: 500, maxHp: 500, speed: 0 })
+    const battle = engine.resolve(me, foe, createRng(3))
+    const first = battle.events[0]!
+    // 真伤是 25,不是默认公式那 30 —— 说明这一次出手完全由调用方说了算
+    expect(first.damage).toBe(25)
+    expect(first.text).toContain('命中')
+    // 挨打方的下一次出手被跳过(记成 skip,而不是"命中")
+    expect(battle.events.some(e => e.kind === 'skip' && e.actor === '乙')).toBe(true)
+    // 每回合正好一条出手事件:定身那张没被"引擎再按默认补打一下"
+    const firstRound = battle.events.filter(e => e.round === 1)
+    expect(firstRound.filter(e => e.damage > 0).length).toBe(1)
+    expect(battle.win).toBe(true)
+  })
 })

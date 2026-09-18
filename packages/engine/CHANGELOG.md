@@ -31,6 +31,11 @@
 **通用性**
 
 - `lifespan` 改为可选:日常/学习/经营这类没有生死的题材不必编一个寿元数(省略即无限)
+- 技能的效果标记不再只是"带着走":`BattleConfig.skillEffectFn` 让作品自己解释
+  `stun / drain / pierce / multi`(库不认识这些词);ctx 给的是引擎自己那条路上的原语
+  (默认出手 `strike`、只算不落账 `damage`、落账 `applyDamage`、跳过下次出手 `skipNextTurn`、
+  本场共用抽屉 `state`),返回 `true` 表示这次出手由调用方处理完。不配则与既有行为逐位一致;
+  新增事件类型 `skip`(某方这一回合没出手)
 - `crafting.levers` 改成**任意个数与名字**的乘区表(原来是写死的掌握/认知/技艺三区),
   每区可给自定义曲线;越级惩罚改为可选(不配就没有越级这回事)
 - 几处"写死的曲线"开成钩子:`realms.exp.costFn`、`realms.combat.statsFn`、

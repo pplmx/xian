@@ -28,7 +28,11 @@ export interface EnemySkillDef {
   mult: number
   /** 触发概率 */
   rate: number
-  /** 机制标记:stun / drain / pierce / multi / bleed 之类,由战斗系统解释 */
+  /**
+   * 机制标记(自由文本):stun / drain / pierce / multi / bleed 之类。
+   * 库**不认识**这些词,只把它原样交给 `BattleConfig.skillEffectFn` 去解释 ——
+   * 你的题材里叫"分心""伤口""没电了"也行。
+   */
   effect?: string
   desc?: string
 }
