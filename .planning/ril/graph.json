@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 244,
+  "round": 245,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:05:00+00:00",
+  "updated_at": "2026-09-18T20:45:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14600,6 +14600,55 @@
       "rationale": "上一轮把\"曲线形状\"开了钩子,这一轮把\"键名与语义\"也开掉。判断标准仍是\"换形态要不要改库\":①一款游戏的攻防血叫火力/装甲/结构值,或专注力/耐心/精力 —— 只要给 BattleConfig.keys 指过去,战斗逻辑一行不用改;②牌堆的\"标签相交\"只是最常见的一种语义,要求\"牌要求的标签全在场\"或用排除标签表达\"疫期不出集市事件\"同样常见。顺带修一处旧副作用:战斗原先就地消耗传入的 hp,调用方想重放同一场得自己复制 —— 现在内部拷一份再打,输入不变。",
       "alternatives_rejected": "①保持固定键名、让使用方自己映射(能用,但\"自由定制\"打了折);②把键名做成全局约定表(多一层间接,且仍旧写死);③标签语义只留 any(排除与全中这两类规则就只能写在筛选外面)。",
       "summary": "键名(BattleConfig.keys)与语义(deck.match/excludeTags)都属于\"可配\"而非\"写死\";顺手去掉战斗就地改动输入对象的副作用。"
+    },
+    "TASK-224": {
+      "id": "TASK-224",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:45:00+00:00",
+      "updated_at": "2026-09-18T20:45:00+00:00",
+      "touched_round": 245,
+      "category": "core-feature",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "继续开钩子:进阶成功率(realms.breakthrough.rateFn)、敌人数值曲线(dungeons.enemyPower.scaleFn)、词条合并算法本身(attributes.diminish: ranked/max/sum/fold)。三者默认路径与既有行为逐位一致,新路径各有判据。"
+    },
+    "CHG-299": {
+      "id": "CHG-299",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:45:00+00:00",
+      "updated_at": "2026-09-18T20:45:00+00:00",
+      "touched_round": 245,
+      "commit": "2bba406",
+      "summary": "realms:RealmBreakthroughConfig 判别联合,支持 rateFn(major,layer)(仍受 min/max 夹取);dungeons:enemyPower.scaleFn(tier) 完全接管层级系数;attributes:AttributeSystemConfig.diminish { mode?: ranked|max|sum, fold?(values) },三条路径都保证\"面板明细之和 = 合计\"(max 记给最强来源,fold 按占比摊回);README 自由定制表与 CHANGELOG 同步。"
+    },
+    "EV-230": {
+      "id": "EV-230",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:45:00+00:00",
+      "updated_at": "2026-09-18T20:45:00+00:00",
+      "touched_round": 245,
+      "source": "packages/engine（15 文件 / 123 例,含 Node 产物探测）+ bun run test（宿主 198 文件 / 2018 例）+ bun run check + bun run check:engine + 库仓 CI（gh run list:push success 23s）",
+      "summary": "判据:rateFn 曲线与上下限夹取(含层数被夹到本境界最大层)一条;scaleFn 完全接管、不看 tierGrowth 一条;递减三模式与 fold 各一条,另有一条专验\"换算法后明细之和仍等于合计\"。宿主侧的属性合并对账(默认 ranked + DIMINISH_WEIGHTS)全部照旧通过 —— 说明默认路径未动。"
+    },
+    "DEC-097": {
+      "id": "DEC-097",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:45:00+00:00",
+      "updated_at": "2026-09-18T20:45:00+00:00",
+      "touched_round": 245,
+      "rationale": "这一轮的取舍标准仍是\"换形态要不要改库\",但做法上多了一条自律:凡开新钩子,默认路径必须与既有实现逐位一致,并由既有对账(宿主 engineParity 里那些冻结旧口径的用例)兜底 —— 否则\"加自由度\"会变成\"悄悄改数值\"。三处新钩子都遵守:named 默认走原公式,max/sum/fold 只在显式配置时生效。",
+      "alternatives_rejected": "①把默认一并改成\"最通用\"的新算法(等于替使用方改数值);②只加配置项不加判据(自由度有了,边界没钉);③把递减算法做成插件式注册表(过度设计,三种常见模式 + 一个 fold 已够)。",
+      "summary": "开钩子的纪律:默认路径与既有行为逐位一致(由冻结旧口径的对账兜底),新路径只在显式配置时生效。"
     }
   },
   "edges": [
@@ -22223,6 +22272,42 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T20:05:00+00:00"
+    },
+    {
+      "from": "CHG-299",
+      "to": "TASK-224",
+      "type": "implements",
+      "created_at": "2026-09-18T20:45:00+00:00"
+    },
+    {
+      "from": "CHG-299",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T20:45:00+00:00"
+    },
+    {
+      "from": "EV-230",
+      "to": "CHG-299",
+      "type": "validates",
+      "created_at": "2026-09-18T20:45:00+00:00"
+    },
+    {
+      "from": "TASK-224",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T20:45:00+00:00"
+    },
+    {
+      "from": "TASK-224",
+      "to": "TASK-223",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:45:00+00:00"
+    },
+    {
+      "from": "DEC-097",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T20:45:00+00:00"
     }
   ]
 }
