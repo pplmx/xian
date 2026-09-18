@@ -24,6 +24,7 @@ import { collect, track } from './progress'
 import { recordEvent } from './worldMemory'
 import { recordFortuneChoice } from './fortuneChain'
 import { modOf } from './statsCalc'
+import { deckPool, drawFrom, inBand } from 'wanxiang-engine'
 import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
 import { useInventoryStore } from '@/stores/inventory'
@@ -46,10 +47,35 @@ const MATERIAL_NAMES = { herb: '灵草', ore: '玄铁', page: '功法残页', du
  * `ev.minRealm !== undefined && …` 之类的半套判据。
  */
 export function eventInRealmBand(ev: Pick<EventDef, 'minRealm' | 'maxRealm'>, major: number): boolean {
-  if (ev.minRealm !== undefined && major < ev.minRealm) return false
-  if (ev.maxRealm !== undefined && major > ev.maxRealm) return false
-  return true
+  // 区间判定由公共库给(见 packages/engine 的 deck.inBand):两端可省、含端点
+  return inBand(major, { min: ev.minRealm, max: ev.maxRealm })
 }
+
+/**
+ * 事件表 → 牌堆条目(**模块级构建一次**)。
+ *
+ * 牌堆要的四件事在这里对上库的字段名:等级区间 min/max、场所标签 tags、
+ * 一次性 once、权重 weight;奇缘阶段不属于随机池,故在构建时就排除。
+ */
+const EVENT_DECK = EVENTS.filter(ev => !chainOfEvent(ev.id)).map(ev => ({
+  def: ev,
+  id: ev.id,
+  tags: ev.tags,
+  weight: ev.weight,
+  once: ev.once,
+  min: ev.minRealm,
+  max: ev.maxRealm
+}))
+
+/** 机缘同样是牌堆(带元素倾向的加权) —— 与普通事件共用库里的那套筛池与抽取 */
+const FORTUNE_DECK = FORTUNE_EVENTS.map(ev => ({
+  def: ev,
+  id: ev.id,
+  tags: ev.tags,
+  weight: ev.weight,
+  min: ev.minRealm,
+  max: ev.maxRealm
+}))
 
 /** 此刻该走的那几程(链条未结、境界够、尚未抽到过) */
 export function pendingChainStages(major: number): { chainId: string; stage: number; event: EventDef }[] {
@@ -102,17 +128,15 @@ export function chainProgressRows(): ChainProgress[] {
 export function regionEventPoolFor(region: RegionDef): EventDef[] {
   const player = usePlayerStore()
   const adventure = useAdventureStore()
-  return EVENTS.filter(ev => {
-    if (chainOfEvent(ev.id)) return false
-    if (!eventInRealmBand(ev, player.major)) return false
-    if (ev.once && adventure.seenOnceEvents.includes(ev.id)) return false
-    return ev.tags.some(t => region.eventTags.includes(t))
-  })
+  // 三件事(区间 / 场所标签 / 一次性)由库的牌堆一次筛清;这里只把本作的计数与
+  // 已见表递过去。池子保持事件表原序,判据仍能直接问"池子里有谁"。
+  return deckPool(EVENT_DECK, { level: player.major, tags: region.eventTags, seen: adventure.seenOnceEvents }).map(e => e.def)
 }
 
 /** 为区域挑选一个事件(rand 可注入,便于测试与模拟) */
 export function pickEventFor(region: RegionDef, rand: RandomService = rng): EventDef | null {
   const player = usePlayerStore()
+  const adventure = useAdventureStore()
   // Phase 34.2 奇缘:上一程结在哪里,下一程才从哪里起
   if (rand.chance(CHAIN_STAGE_CHANCE)) {
     const chainEvent = pickChainStageEvent(player.major, rand)
@@ -123,19 +147,18 @@ export function pickEventFor(region: RegionDef, rand: RandomService = rng): Even
     // 机缘同样过境界带:人间界的机缘(丹方/幼兽/剑痕)不该被道祖撞见,
     // 界外的机缘(仙门古琴/神域王座)也不该落进凡界路线 —— 后者在凡界世界生成
     // 的标签池里已经堵住(见 mortalWorldGen),这里再按玩家当前境界收一道。
-    const fortune = FORTUNE_EVENTS.filter(
-      ev => eventInRealmBand(ev, player.major) && ev.tags.some(t => region.eventTags.includes(t))
-    )
     // Phase 32.2:同源机缘更容易撞见——灵根在此接入"机缘 → 师承 → 流派"的因果链起点。
     // 非同源机缘权重不变(仍是 ev.weight),没有一条路被灵根关掉。
-    if (fortune.length > 0) {
-      const elements = rootElements(player.linggen?.roots)
-      return rand.weighted(fortune, ev => ev.weight * fortuneAffinity(ev.element, elements))
-    }
+    const elements = rootElements(player.linggen?.roots)
+    const fortune = drawFrom(FORTUNE_DECK, { level: player.major, tags: region.eventTags }, rand, {
+      // 「倾向而非门槛」:同源加权,非同源不动 —— 没有一条路被灵根关掉
+      weightMultiplier: entry => fortuneAffinity(entry.def.element, elements)
+    })
+    if (fortune) return fortune.def
   }
-  const pool = regionEventPoolFor(region)
-  if (pool.length === 0) return null
-  return rand.weighted(pool, ev => ev.weight)
+  // 抽牌也交给库(权重、全 0 退回均匀等口径在库内);奇缘/机缘两条分支是本作的叙事结构,留在上面
+  const drawn = drawFrom(EVENT_DECK, { level: player.major, tags: region.eventTags, seen: adventure.seenOnceEvents }, rand)
+  return drawn?.def ?? null
 }
 
 /** 选项条件校验 */
