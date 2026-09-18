@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 223,
+  "round": 224,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T06:53:39+00:00",
+  "updated_at": "2026-09-18T07:20:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13159,6 +13159,146 @@
       "rationale": "预告的目的是防损失;而复聚不是损失 —— 它只把「已靖」收回去,镇压资格永久、一键即可把收益接回,首领那份(4× 战利品与认知)是白送的重逢。给每一处已靖地界挂上倒计时,等于把这份机会写成\"还有 N 小时又要打一趟\"的待办,与\"不破坏挂机\"相冲突。故:镇压中的地界仍然预告(收益会被打断,那里才是防损失的地方),已靖的地界不预告,但**发生的那一刻必须在玩家正在看的地方说清**。",
       "alternatives_rejected": "①每处已靖地界都挂倒计时(把内容写成待办,窄屏还多一处挤压风险);②复聚时弹一个说明窗(打断归来流程,而归来卷轴本就是说明这件事的地方);③只发提示条(实测归来时眼前是卷轴弹窗,提示条在跟它抢注意力);④干脆不解释(玩家会把\"已靖的地界旧主回来了\"当成丢档或 bug)。",
       "summary": "妖气复聚不预告,但要在\"发生的那一刻、玩家正在看的地方\"说清:写进归来卷轴的账目(含\"再历一程即可复靖\"),而不是只发一条提示条。"
+    },
+    "COMP-027": {
+      "id": "COMP-027",
+      "type": "component",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
+    },
+    "ISS-228": {
+      "id": "ISS-228",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 1,
+      "summary": "敌人 id 重名:e_meteorbeast 在 17 层(陨铁兽)与 25 层(陨星仙兽)各写一次。敌人表按 id 建索引(new Map(list.map([x.id,x]))),后写的静默覆盖先写的 —— 星陨荒原(17 层)的玩家一直在撞 25 层数值的怪。此前没有任何判据守 id 唯一性。发现路径:公共库 defineGame 的交叉校验(区域引用的敌人必须在敌人表里、敌人 id 不得重复)在把本作内容装进引擎时逐条对账照出。"
+    },
+    "CHG-260": {
+      "id": "CHG-260",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "commit": "b09e97f",
+      "summary": "25 层的「陨星仙兽」id 改为 e_meteorimmortal 并跟改罗天星海引用;dataIntegrity.spec 补两条判据:敌人/区域 id 不重名、区域引用的敌人与首领都真实存在。"
+    },
+    "TASK-203": {
+      "id": "TASK-203",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "category": "core-feature",
+      "severity": 0.7,
+      "confidence": 0.9,
+      "effort": 5,
+      "unlock_factor": 1.0,
+      "summary": "抽出公共库:把等级(境界)/属性/装备/副本四套系统做成可配置内核,他人只需要配置新的等级体系名称、装备名称、属性名称、副本名称等,就能搭自己的游戏;并用本作真实数据做逐数字对账,证明抽出来的是真身而不是另写的一套。"
+    },
+    "CHG-261": {
+      "id": "CHG-261",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "commit": "4c805b5",
+      "summary": "新增 packages/engine:attributes(属性登记 + 递减/软阈值合并 + 本值×平铺×百分比×另乘)、realms(世界/大境界/小层 + 修为/进阶/寿元/基础属性/两段式曲线)、equipment(槽位/品质/模板/词条/套装 + 生成/解析/装配)、dungeons(区域链/敌人/遭遇/首领门槛/通关奖励)、combat(回合制解算)、config(defineGame + validateGame 交叉校验)、numeric(数值适配层)、rng(mulberry32 可复现)。"
+    },
+    "CHG-262": {
+      "id": "CHG-262",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "commit": "4c805b5",
+      "summary": "内容包与闸门:presets/xiuxian(4 界 21 境/9 品质/6 层装备/6 区域)与 presets/demo(星港:舱位等级/舰载模块/火力·装甲·结构值)机制键相同、名字无一相同;examples/minimal.ts 换皮后跑完整一圈;src/core/engineParity.spec.ts 与本体逐条对账;vitest include、tsconfig.app include 与 @engine 别名、eslint 覆盖 packages、test-report 加 Engine 分类、新增 test:engine 与 build:engine。"
+    },
+    "EV-206": {
+      "id": "EV-206",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "source": "packages/engine(7 个 spec 文件 / 51 例)",
+      "summary": "库自身用例覆盖:改名不改机制键、递减阶梯 1/0.75/0.5/0.25、软阈值与明细摊回、最终属性四层合成、境界名模板与两段曲线、需求单调与跨界加价、修为不满不得进阶、试炼大关不掷骰、按层精确取池、品质窗口与强制下限、同种子可复现、词条数值与单位换算、套装件数门槛、首领进度攒满必出、通关只记第一次、回合上限与闪避/吸血路径。"
+    },
+    "EV-207": {
+      "id": "EV-207",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "source": "src/core/engineParity.spec.ts(19 例)",
+      "summary": "与本体对账全绿:21 境 × 10 层的名目/寿元/修为需求/基础三维/进阶成功率逐条相同;200 组随机来源下 mergeMods 逐键相同;每层每部位掉落池逐 id 相同、词条数值逐条相同、同一件装备的平铺与词条与 resolveEquipStats 逐项相同;区域/敌人表逐条相同且解锁口径与 unlockClosure 在若干存档状态下一致。"
+    },
+    "EV-208": {
+      "id": "EV-208",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "source": "bun run test(190 文件 / 1920 例)+ bun run check(vue-tsc + eslint src packages)+ bun run build:engine + bun packages/engine/examples/minimal.ts",
+      "summary": "全量闸门全绿;示例脚本实跑:换皮后的星港世界走完修炼→进阶→掉装→装配→打副本→通关拿奖励,输出可见(进阶提示按新名目「见习船员 II 阶」)。"
+    },
+    "DEC-065": {
+      "id": "DEC-065",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "rationale": "公共库要能被别人拿去搭别的游戏,就不能背着本作的框架与内容量:带上 Vue/Pinia 等于把框架选型强加给使用者;带上 288 件手写装备等于把内容量当接口。故:内核零运行时依赖、四套系统各自数据驱动,名词全部来自配置;数值用 Numeric<T> 适配层隔开(默认 number,大数库可插拔),公式不认具体大数实现。",
+      "alternatives_rejected": "①直接复制 src/core 到新目录(仍与 @/types、stores、Vue 纠缠,别人拿不走);②只写一份精简单机 demo(无法证明抽出来的是真身,数字会与本作漂移);③做成 monorepo 工作区并强制 bun install 联动(在既有仓库里改动面过大,且当前以 @engine 别名接入已足够)。",
+      "summary": "公共库独立成包 packages/engine:零运行时依赖、不碰 Vue/Pinia/浏览器 API;数值与随机走可插拔适配层;入库以 @engine 别名接入,发布时 build:engine 出 dist。"
+    },
+    "DEC-066": {
+      "id": "DEC-066",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "rationale": "「只需要配置名称」这句话要能被判据检验,否则只是口号。机制键(key)一旦跟着改名,公式、存档与内容 gate 全部失锚;而展示名(name)本就该随题材走。故把两者分开:key 是引擎接口,name 是作品的名字。星港包与仙侠包机制键完全相同、名字无一相同,两边都能跑完整一圈 —— 这是判据,不是承诺。",
+      "alternatives_rejected": "①两套等价的全量实现(维护两份机制,迟早漂移);②只做改名映射表而不改数据(仍是同一份内容,证明不了换皮)。",
+      "summary": "换皮 = 只改配置里的展示名;机制键不动。以「机制键完全相同、名字无一相同」的两份内容包为判据。"
+    },
+    "DEC-067": {
+      "id": "DEC-067",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T07:20:00+00:00",
+      "updated_at": "2026-09-18T07:20:00+00:00",
+      "touched_round": 224,
+      "rationale": "本作词条按百分点书写(「攻击提升 4.2%」→ min 2 / max 5),属性表用分数(0.042),两边差一个 100。这类单位换算必须是配置里的一条明文规矩 —— 靠「碰巧两边写法一致」迟早出事:引擎解析装备时就曾按原值入属性,算出「火力增幅 +980%」。同理,层级系数允许整表覆盖(tierFactors),因为接入既有曲线时指数式对不上。",
+      "alternatives_rejected": "①在词条定义里逐条除以 100(散在内容里,改单位要动几百条);②引擎默认按百分点理解(把本作的口径当成通用口径)。",
+      "summary": "词条数值的书写单位写成配置项 affixValueScale(默认 1;按百分点书写时填 100),层级系数支持 tierFactors 整表覆盖。"
     }
   },
   "edges": [
@@ -19612,6 +19752,96 @@
       "to": "COMP-006",
       "type": "governs",
       "created_at": "2026-09-18T06:53:39+00:00"
+    },
+    {
+      "from": "ISS-228",
+      "to": "COMP-006",
+      "type": "located_in",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "CHG-260",
+      "to": "ISS-228",
+      "type": "resolves",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "CHG-260",
+      "to": "COMP-006",
+      "type": "located_in",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "TASK-203",
+      "to": "ISS-228",
+      "type": "addresses",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "TASK-203",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "CHG-261",
+      "to": "TASK-203",
+      "type": "implements",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "CHG-262",
+      "to": "TASK-203",
+      "type": "implements",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "CHG-261",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "CHG-262",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "EV-206",
+      "to": "CHG-261",
+      "type": "validates",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "EV-207",
+      "to": "CHG-262",
+      "type": "validates",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "EV-208",
+      "to": "TASK-203",
+      "type": "validates",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "DEC-065",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "DEC-066",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "DEC-067",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T07:20:00+00:00"
     }
   ]
 }
