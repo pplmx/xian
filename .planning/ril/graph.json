@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 211,
+  "round": 212,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T00:39:13+00:00",
+  "updated_at": "2026-09-18T02:30:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 211,
+      "touched_round": 212,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -12583,6 +12583,53 @@
       "touched_round": 211,
       "commit": "6cda969",
       "summary": "大数可点开看精确值(formatExact + TapNumber + 全局 NumberDetailDialog,含修为/灵气的「预计还需多久」);时制文案与现代时长对齐(data/timeUnits + 全表修正 + 对账判据);命中区抬到 30px。"
+    },
+    "ISS-220": {
+      "id": "ISS-220",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T02:30:16+00:00",
+      "updated_at": "2026-09-18T02:30:17+00:00",
+      "touched_round": 212,
+      "severity": 0.9,
+      "confidence": 1.0,
+      "effort": 2,
+      "summary": "「很长时间不登录,灵气/修为也不变化」——两头都是真问题:①修炼页在圆满时显示的是「所需」而不是「修为」(expFull ? expReq : exp),数字确实不动,玩家据此判定\"修为不涨\";②离线把修为/灵气也按洞府上限切掉(0 级只有 8 小时),挂一周回来几乎没动,而归来弹窗只说一句\"收益按 X 结算\",不说丢了多久、也不说怎么提高。"
+    },
+    "EV-196": {
+      "id": "EV-196",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T02:30:16+00:00",
+      "updated_at": "2026-09-18T02:30:16+00:00",
+      "touched_round": 212,
+      "source": "src/core/offlineCap.spec.ts(修为与灵气不限时的判据)",
+      "summary": "改后口径:被动修行(修为/灵气)按真实离线时长全额入账(不打折不封顶);产出与派遣(材料/钻研/历练/镇压)仍受洞府上限(8/12/24/48/72h)+0.9 折扣。判据:挂一周 × 洞府 0/4 级,修为恰为 在线速率×时长,灵气充到 min(回气量, 银行顶),产出 capped=true。",
+      "confidence": 1.0
+    },
+    "CHG-250": {
+      "id": "CHG-250",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T02:30:17+00:00",
+      "updated_at": "2026-09-18T02:30:17+00:00",
+      "touched_round": 212,
+      "commit": "50d3372",
+      "summary": "修为显示改为真实值(圆满由标记表达);离线拆两条账(被动修行不限时、产出受洞府上限);灵气到顶与离线损失都摊开说明。"
+    },
+    "DEC-054": {
+      "id": "DEC-054",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T02:30:17+00:00",
+      "updated_at": "2026-09-18T02:30:17+00:00",
+      "touched_round": 212,
+      "rationale": "放置游戏的核心承诺是\"你不在时仍在修行\",故被动修行(修为/灵气)不该被上限切掉;而洞府等级该买的是\"产出与派遣的上限\"——那是要经营的部分。两者拆开后:修为积余再多也要亲手一关一关突破,灵气有 10 倍容量的银行顶兜着,故不封顶不会撑破节奏。",
+      "alternatives_rejected": "①保留上限只把说明写得更清楚:玩家要的是真的能涨,不是解释为什么不能涨;②修为与灵气也打 0.9 折扣:修行不打折更符合直觉,折扣留给产出;③连产出也一并放开:洞府就失去升级理由,且离线一夜刷满材料会压掉在线历练的意义。"
     }
   },
   "edges": [
@@ -18754,6 +18801,24 @@
       "to": "ISS-219",
       "type": "resolves",
       "created_at": "2026-09-18T00:39:13+00:00"
+    },
+    {
+      "from": "DEC-054",
+      "to": "COMP-006",
+      "type": "governs",
+      "created_at": "2026-09-18T02:30:17+00:00"
+    },
+    {
+      "from": "ISS-220",
+      "to": "COMP-006",
+      "type": "located_in",
+      "created_at": "2026-09-18T02:30:17+00:00"
+    },
+    {
+      "from": "CHG-250",
+      "to": "ISS-220",
+      "type": "resolves",
+      "created_at": "2026-09-18T02:30:28+00:00"
     }
   ]
 }
