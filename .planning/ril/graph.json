@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 331,
+  "round": 332,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:17:54+00:00",
+  "updated_at": "2026-09-18T22:21:15+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18837,6 +18837,44 @@
       "confidence": 0.97,
       "source": "变更 CHG-395(7014ebc)。cd packages/engine && bun run check(460 例 / 57 文件 + 十一道自检 + 10 份示例;发布包自检已是 wanxiang-engine-0.1.14.tgz);cd /workspace/xian && bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件);git push origin main(e8e176b..7014ebc)、subtree push(→ 4540a69);gh api 核对:tag v0.1.14 → 4540a69…、package.json version 0.1.14、examples/arena-takeover.ts 在 tag 上(222 行)、release 非 draft / 非 prerelease。",
       "summary": "0.1.14 是第三个\"零功能变更\"的节点,换来的是一条更硬的保证:文档里标了 compile-check 的 12 段代码块都对着发布包编过,模块速查表不许漏模块,而战斗三处主权在第二套题材上照样 200/200 复刻。"
+    },
+    "TASK-313": {
+      "id": "TASK-313",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:21:15+00:00",
+      "updated_at": "2026-09-18T22:21:15+00:00",
+      "touched_round": 331,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "产线曲线与结算粒度消融(facilities.sim.spec):每级 1.6 件/小时、仓库 40 格下,1 级 25 小时装满、5 级 5 小时装满,装满后每小时产的 1.6~8.0 件全是浪费;若\"每步向下取整\",按小时结算一天 24 件、按 10 分钟/1 分钟结算都是 0 件,而 accrue 累加器下三种粒度一致(24 小时 = 38 件 + 余 0.40);上限取小只封升级;ratesOf 只算等级>0。"
+    },
+    "CHG-396": {
+      "id": "CHG-396",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:21:15+00:00",
+      "updated_at": "2026-09-18T22:21:15+00:00",
+      "touched_round": 331,
+      "commit": "d98102d",
+      "summary": "库:新增 src/facilities.sim.spec.ts(5 例);CHANGELOG「未发布」记一节;docs/tuning.md 新增一节(第 17 份消融进参考表);docs/assembly.md 配方 A 补一行、坑清单补一行(产线\"每秒结算一次更精确\");README 用例数改 465/58。宿主无改动。"
+    },
+    "EV-322": {
+      "id": "EV-322",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:21:15+00:00",
+      "updated_at": "2026-09-18T22:21:15+00:00",
+      "touched_round": 331,
+      "confidence": 0.96,
+      "source": "变更 CHG-396(d98102d)。bunx vitest run src/facilities.sim.spec.ts(5 例全过;打印:1/2/3/4/5 级 → 1.6/3.2/4.8/6.4/8.0 件每小时、25.0/12.5/8.3/6.3/5.0 小时装满;截断对照 每小时一天 24 件 vs 每 10 分钟 0 件 vs 每分钟 0 件(累加器下都是 38 件);三种粒度均 38 件 + 余 0.40;口碑 0 不能升(理由文本)、口碑 9 上限 4 级;ratesOf 等级 0 不产);cd packages/engine && bun run check(465 例 / 58 文件 + 十一道自检,调参参考自检报 17 份消融、用例文件数自检当场抓出 57→58、相对导入自检 98 个源文件);cd /workspace/xian && bun run test(265 文件 / 2513 例)、check:engine(59 处引用)、check:engine:standalone(98 个源文件)。",
+      "summary": "产线这一层最容易被忽视的两件事被量化:①装满之后产量全是浪费(升级只让装满更快);②结算粒度不是精度 —— 若每步取整,粒度越细丢得越狠(10 分钟粒度下一天 0 件),而累加器让粒度彻底无关。"
     }
   },
   "edges": [
@@ -28146,6 +28184,12 @@
       "to": "TASK-312",
       "type": "implements",
       "created_at": "2026-09-18T22:17:54+00:00"
+    },
+    {
+      "from": "CHG-396",
+      "to": "TASK-313",
+      "type": "implements",
+      "created_at": "2026-09-18T22:21:15+00:00"
     }
   ]
 }
