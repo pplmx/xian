@@ -228,14 +228,19 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **炼制乘区几个、叫什么、什么形状** | `crafting.levers`(任意键)+ 每区 `LeverSpec.curve`(自定义曲线)+ 可选 `overReach` |
 | 词条数值单位(百分点 / 分数) | `equipment.affixValueScale` 或单个词条的 `scale` |
 | **技能消耗完全自己定** | `skills.costs[].amount(level)`(折扣与下限仍生效) |
+| **技能词条曲线完全自己定** | `SkillDef.modsFn(level)`(给了它,`baseMods`/`perLevelMods` 忽略) |
 | **奖励数额完全自己定** | `dungeons.victoryRewards[].amount(tier)`(概率仍生效) |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **词条合并的算法本身** | `attributes.diminish`:默认按贡献降序打折,也可 `'max'`(只取最强)/ `'sum'`(直接相加)/ 自定义 `fold(values)` |
+| **强化加成曲线** | `equipment.power.levelBonusFn(level)`(默认每级 × `levelBonus`) |
+| **一件装备几条词条 / 每条词多重** | `equipment.affixCountFn(quality, tier, rng)`、`equipment.affixWeightFn(affix, quality, tier)` |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **区域多条前置**("两条线都通才开"/"任一即可") | `requireCleared: string \| string[]` + `requireMode: 'all' \| 'any'` |
 | **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
 | **随机内容池的标签体系与区间** | `deck` 的 `tags` / `min` / `max` / `weight` / `once`,`weightMultiplier`(倾向而非门槛) |
 | 牌堆标签怎么算切题 | `DeckContext.match: 'any' \| 'all'`(相交 / 牌要求全中)、`excludeTags`(命中即排除) |
+| **抽 N 张的保底** | `drawMany(..., { guarantee: { tag, min } })`(至少 min 张带该标签;池里不够则补多少算多少) |
+| 多只伙伴的性格怎么合 | `companions.stack: 'override'`(默认,覆盖)/ `'add-relative'`(各自相对中性那一份相加) |
 | 目标/成就条件 | `goals` 的 `counter \| level \| position \| rank \| custom`,自定义键用 `GoalEnv.custom` |
 | 伙伴性格的键名与中性值 | `companions.traits[].mods` + `companions.neutral`(缺中性值直接报错) |
 | **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改(宿主接 GNum 的例子见其 `engineNumeric`) |

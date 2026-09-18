@@ -47,6 +47,9 @@
   `maxLayer` 语义改为"所有境界里最多的层数")与**区域多条前置**
   (`requireCleared: string | string[]` + `requireMode: 'all' | 'any'`;
   校验与成环检测同步跟上,补票也按同一语义)
+- 再开五处:`SkillDef.modsFn(level)`、`EquipmentPowerConfig.levelBonusFn(level)`、
+  `EquipmentConfig.affixCountFn` / `affixWeightFn`、`CompanionConfig.stack`、以及
+  `drawMany` 的 `guarantee: { tag, min }`(保底)
 
 **已验证**
 
