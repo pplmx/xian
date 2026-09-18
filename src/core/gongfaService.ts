@@ -5,7 +5,7 @@ import { rng } from '@/utils/random'
 import { GONGFA, gongfaDef } from '@/data/gongfa'
 import { qualityDef } from '@/data/qualities'
 import { COMPREHEND_PAGE_COST } from '@/data/constants'
-import { gongfaUpCost } from './formulas'
+import { GONGFA_SYSTEM } from './engineWorld'
 import { gongfaAffinity, rootElements } from './linggenAffinity'
 import { collect, track } from './progress'
 import { usePlayerStore } from '@/stores/player'
@@ -69,10 +69,15 @@ export function gongfaUpgradeCost(id: string): { wudao: number; page: number } |
   const def = gongfaDef(id)
   const lv = cultivation.learned[id]
   if (!def || !lv || lv >= def.maxLevel) return null
-  const q = qualityDef(def.quality)
   // 寒冥灵脉:参悟悟道点折扣(Phase 30.3)
   const discount = Math.min(0.5, useDongfuStore().insightDiscount)
-  return { wudao: Math.max(1, Math.ceil(gongfaUpCost(q.rank, lv) * (1 - discount))), page: Math.ceil(lv * (1 + q.rank * 0.5)) }
+  // 消耗曲线由公共库算(见 core/engineWorld 的 GONGFA_SYSTEM):
+  // 悟道点 = 基数 × 倍率^等级 ×(1-折扣);残页 = 等级 ×(1 + 品质序 × 0.5),下限 1
+  const costs = GONGFA_SYSTEM.costAt(id, lv, { discount })
+  return {
+    wudao: costs.find(c => c.key === 'wudao')?.amount ?? 0,
+    page: costs.find(c => c.key === 'page')?.amount ?? 0
+  }
 }
 
 export function upgradeGongfa(id: string): boolean {

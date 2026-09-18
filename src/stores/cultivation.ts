@@ -6,23 +6,15 @@ import { persistConfig } from '@/utils/storage'
 import { gongfaDef } from '@/data/gongfa'
 import { buffDef } from '@/data/buffs'
 import { gongfaBranchDef } from '@/data/gongfaBranches'
+import { GONGFA_SYSTEM } from '@/core/engineWorld'
 import { mergeMods } from '@/core/statsCalc'
 import { asArray, asNumberRecord, asRecord, asStringArray } from '@/utils/saveShape'
 
 /** 功法在某等级下的属性 */
 export function gongfaModsAt(id: string, level: number): StatMods {
-  const def = gongfaDef(id)
-  if (!def) return {}
-  const out: StatMods = {}
-  for (const k in def.baseMods) {
-    const key = k as keyof StatMods
-    out[key] = def.baseMods[key] ?? 0
-  }
-  for (const k in def.perLevelMods) {
-    const key = k as keyof StatMods
-    out[key] = (out[key] ?? 0) + (def.perLevelMods[key] ?? 0) * Math.max(0, level - 1)
-  }
-  return out
+  // 成长曲线由公共库算(见 core/engineWorld 的 GONGFA_SYSTEM):
+  // 第 N 级 = 基础词条 + 每级词条 × (N-1),只有每级键在 1 级时也会以 0 出现
+  return GONGFA_SYSTEM.modsAt(id, level) as StatMods
 }
 
 export const useCultivationStore = defineStore(

@@ -45,13 +45,20 @@ import {
   WORLD_STEP_EXP_MULT
 } from '@/data/constants'
 import { AFFIXES } from '@/data/affixes'
-import { QUALITIES } from '@/data/qualities'
+import { QUALITIES, qualityDef } from '@/data/qualities'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
 import { EQUIP_SETS } from '@/data/equipSets'
 import { ENEMIES } from '@/data/enemies'
 import { REGIONS } from '@/data/regions'
+import { GONGFA } from '@/data/gongfa'
+import { GONGFA_BRANCHES } from '@/data/gongfaBranches'
 import { STAT_NAMES } from '@/ui/statNames'
 import { uid } from '@/utils/id'
+import {
+  GONGFA_UP_GROWTH,
+  GONGFA_UP_WUDAO_BASE
+} from '@/data/constants'
+import { createSkillSystem } from '@engine/index'
 import { powerScale } from './tierScale'
 import { gnumNumeric } from './engineNumeric'
 
@@ -233,3 +240,35 @@ export const ENGINE_WORLD_CONFIG: GameConfig<GNum> = {
 
 /** GNum 版世界(本作实际使用的入口) */
 export const ENGINE_WORLD: Game<GNum> = defineGame<GNum>(ENGINE_WORLD_CONFIG, { numeric: gnumNumeric, newUid: uid })
+
+/**
+ * 功法(技能)系统 —— 内容取自 data/gongfa 与 data/gongfaBranches,
+ * 成长曲线(第 N 级 = 基础 + 每级 ×(N-1))与升级消耗曲线由公共库算。
+ *
+ * 放在这里而不是塞进 GameConfig:技能不是"世界的四件套"之一,而是一层可选的装配,
+ * 库也把它写成独立系统(见 packages/engine 的 skills)。
+ */
+const qualityRankOf = (id: string): number => qualityDef(id as (typeof QUALITIES)[number]['id']).rank
+
+export const GONGFA_SYSTEM = createSkillSystem({
+  skills: GONGFA.map(def => {
+    const qualityRank = qualityRankOf(def.quality)
+    return {
+      id: def.id,
+      name: def.name,
+      kind: def.type,
+      maxLevel: def.maxLevel,
+      baseMods: def.baseMods,
+      perLevelMods: def.perLevelMods,
+      requiredLevel: def.minRealm,
+      // 本作的消耗曲线:悟道点 = 基数 ×(1 + 品质序 × 0.6) × 倍率^等级;残页 = 等级 ×(1 + 品质序 × 0.5)
+      costs: [
+        { key: 'wudao', base: GONGFA_UP_WUDAO_BASE * (1 + qualityRank * 0.6), growth: GONGFA_UP_GROWTH },
+        // 残页不打折:本作只有悟道点吃洞府折扣(见 gongfaService.gongfaUpgradeCost)
+        { key: 'page', base: 0, levelStep: 1 + qualityRank * 0.5, discountable: false }
+      ],
+      branches: GONGFA_BRANCHES.filter(b => b.gongfaId === def.id).map(b => ({ id: b.id, name: b.name, mods: b.mods, desc: b.desc })),
+      desc: def.desc
+    }
+  })
+})

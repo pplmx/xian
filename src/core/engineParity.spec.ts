@@ -71,6 +71,11 @@ import { activeSets, hasActiveSet, setCounts } from './equipSet'
 import { equipmentTemplate as realTemplate } from '@/data/equipment'
 import { planIdle } from '@engine/index'
 import { OFFLINE_CAP_HOURS, OFFLINE_EFFICIENCY } from '@/data/constants'
+import { GONGFA } from '@/data/gongfa'
+import { GONGFA_BRANCHES } from '@/data/gongfaBranches'
+import { GONGFA_SYSTEM } from './engineWorld'
+import { GONGFA_UP_GROWTH, GONGFA_UP_WUDAO_BASE } from '@/data/constants'
+import { qualityDef as realQualityDefOf } from '@/data/qualities'
 
 /**
  * 对账就用**应用运行时那一份**世界对象(ENGINE_WORLD),不再另装一份:
@@ -212,6 +217,26 @@ function refUnlockClosure(unlocked: readonly string[], cleared: readonly string[
 function refWinsUntilRegionBoss(wins: number, cleared: boolean): number | null {
   if (cleared) return null
   return Math.max(0, EXPLORE_BOSS_AFTER_WINS - wins)
+}
+
+/** 迁移前 stores/cultivation.gongfaModsAt 的原式 */
+function refGongfaModsAt(id: string, level: number): Record<string, number> {
+  const def = GONGFA.find(g => g.id === id)
+  if (!def) return {}
+  const out: Record<string, number> = {}
+  for (const k in def.baseMods) out[k] = (def.baseMods as Record<string, number>)[k] ?? 0
+  for (const k in def.perLevelMods) {
+    out[k] = (out[k] ?? 0) + ((def.perLevelMods as Record<string, number>)[k] ?? 0) * Math.max(0, level - 1)
+  }
+  return out
+}
+
+/** 迁移前 core/gongfaService.gongfaUpgradeCost 的原式(悟道点吃折扣,残页不吃) */
+function refGongfaUpgradeCost(qualityRank: number, level: number, discount: number): { wudao: number; page: number } {
+  return {
+    wudao: Math.max(1, Math.ceil(GONGFA_UP_WUDAO_BASE * (1 + qualityRank * 0.6) * Math.pow(GONGFA_UP_GROWTH, level) * (1 - discount))),
+    page: Math.ceil(level * (1 + qualityRank * 0.5))
+  }
 }
 
 /** 迁移前 data/affixes.affixValue 的原式(词条数值 = min + (max-min) × roll,按小数位取整) */
@@ -689,6 +714,51 @@ describe('对账 · 离时时长账(库的闲置模块 与 冻结的旧式子)',
         expect(plan.overflowMs / 1000, where).toBeCloseTo(ref.overflowSec, 6)
         expect(plan.overflowMs > 1000, where).toBe(ref.capped)
         expect(plan.steps, where).toBe(Math.floor(plan.effectiveMs / 1000))
+      }
+    }
+  })
+})
+
+describe('对账 · 功法/技能(库的技能系统 与 冻结的旧口径)', () => {
+  it('等级曲线:全部功法 × 每个等级,逐键精确相等', () => {
+    for (const def of GONGFA) {
+      for (let level = 1; level <= def.maxLevel; level += 1) {
+        const mine = GONGFA_SYSTEM.modsAt(def.id, level)
+        const ref = refGongfaModsAt(def.id, level)
+        expect(Object.keys(mine).sort(), `${def.id}·${level} 键集`).toEqual(Object.keys(ref).sort())
+        for (const key of Object.keys(ref)) {
+          expect(mine[key], `${def.id}·${level}·${key}`).toBe(ref[key])
+        }
+      }
+    }
+  })
+
+  it('升级消耗:全部功法 × 每个等级 × 三档折扣,逐项精确相等(悟道点打折、残页不打)', () => {
+    for (const def of GONGFA) {
+      const rank = realQualityDefOf(def.quality).rank
+      for (let level = 1; level <= def.maxLevel; level += 1) {
+        for (const discount of [0, 0.2, 0.5]) {
+          const ref = refGongfaUpgradeCost(rank, level, discount)
+          const costs = GONGFA_SYSTEM.costAt(def.id, level, { discount })
+          const where = `${def.id}·${level}·折扣${discount}`
+          if (level >= def.maxLevel) {
+            expect(costs, `${where} 满级不该有消耗`).toEqual([])
+            continue
+          }
+          expect(costs.find(c => c.key === 'wudao')?.amount, `${where} 悟道点`).toBe(ref.wudao)
+          expect(costs.find(c => c.key === 'page')?.amount, `${where} 残页`).toBe(ref.page)
+        }
+      }
+    }
+  })
+
+  it('满级分支与装配来源:与 app 现在读到的分支表一致', () => {
+    for (const def of GONGFA) {
+      const ids = GONGFA_SYSTEM.branchesOf(def.id).map(b => b.id)
+      const refIds = GONGFA_BRANCHES.filter(b => b.gongfaId === def.id).map(b => b.id)
+      expect(ids, `${def.id} 的分支表`).toEqual(refIds)
+      for (const bid of refIds) {
+        expect(GONGFA_SYSTEM.branchMods(def.id, bid), `${def.id}·${bid}`).toEqual(GONGFA_BRANCHES.find(b => b.id === bid)!.mods)
       }
     }
   })
