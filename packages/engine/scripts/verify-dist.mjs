@@ -515,6 +515,33 @@ export const probe = { plan, hits, worlds: games.map(g => g.realms.realms.length
     )
     console.log(`   使用者的 tsc --strict 通过(moduleResolution: ${label})`)
   }
+
+  /**
+   * 文档片段自检 —— 文档里那些"自称完整"的代码块,必须能对着**发布包**编译过。
+   *
+   * 文档腐烂最常见的方式不是写错字,而是**片段停在两个版本前**:库改了名字、调了签名,
+   * 示例还照旧 —— 而读者是照着抄的人。约定:块前面一行写 `<!-- compile-check -->`
+   * (可以带一句说明),自检就把它抽出来当 `.mts` 编一遍。没标的不查 ——
+   * 很多片段本来就是节选(中间写着省略号),硬查只会逼着文档写废话。
+   */
+  const docSources = ['README.md', ...readdirSync(resolve(ENGINE, 'docs')).map(name => `docs/${name}`)]
+  let checkedBlocks = 0
+  for (const rel of docSources) {
+    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
+    const marked = [...text.matchAll(/<!-- compile-check[^>]*-->\s*\n```(?:ts|typescript)\n([\s\S]*?)^```$/gm)]
+    for (const [index, block] of marked.entries()) {
+      const file = resolve(app, `doc-${rel.replace(/\W+/g, '-')}-${index}.mts`)
+      writeFileSync(file, block[1])
+      execFileSync(
+        'node',
+        [tsc, '--noEmit', '--strict', '--target', 'es2022', '--module', 'esnext', '--moduleResolution', 'bundler', '--skipLibCheck', 'false', file],
+        { cwd: app, stdio: 'inherit' }
+      )
+      checkedBlocks += 1
+    }
+  }
+  assert.ok(checkedBlocks >= 1, '文档里一个 compile-check 片段都没有?约定被删了?')
+  console.log(`   文档片段编译通过(${checkedBlocks} 段标了 compile-check 的代码块都对着发布包编过)`)
 } else {
   console.log('   (跳过类型消费者自检:本地没有 typescript —— 先 bun install)')
 }

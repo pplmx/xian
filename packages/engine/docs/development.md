@@ -89,5 +89,10 @@ bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json
 `numberNumeric` / `mulberry32` / `seedFromString` / `randomRng` / 两张默认表 / `progressText`),
 现已各配一条判据(`src/publicBehavior.spec.ts`),并让自检常驻。
 
+文档里的代码块也有判据:**块前面一行写 `<!-- compile-check -->` 就会进自检** ——
+它被抽出来,在"真装了一遍发布包"的临时项目里用 `tsc --strict` 编一遍。
+文档腐烂最常见的方式是"片段停在两个版本前",而读者是照着抄的人;没标的不查,
+因为很多片段本来就是节选。
+
 只要有一处"顺手用了工程侧的别名或配置",`check:engine:standalone` 就会红 ——
 而这种依赖待在同一个仓库里是看不出来的。

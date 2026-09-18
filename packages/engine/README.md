@@ -69,6 +69,7 @@ bun add github:pplmx/wanxiang-engine#v0.1.13
 npm  i github:pplmx/wanxiang-engine#v0.1.13
 ```
 
+<!-- compile-check: 这段是"装上就能跑"的导入示例,自检会拿发布包把它编一遍 -->
 ```ts
 import { defineGame, createRng } from 'wanxiang-engine'
 
@@ -89,6 +90,7 @@ import { DAILY }   from 'wanxiang-engine/presets/daily'     // 日常 · 学习
 列了四条配方,每条都指到能跑的示例或判据用例。
 它装配一个自己的小世界,然后走完「修炼 → 进阶 → 掉装 → 装配 → 遭遇 → 通关结算」:
 
+<!-- compile-check -->
 ```ts
 import { attributeDefs, createRng, defineGame, emptyProgress } from 'wanxiang-engine'
 
