@@ -156,15 +156,19 @@ const walk = dir => {
 walk(APP_SRC)
 const aliasUsers = []
 const deepUsers = []
+const crawlUsers = []
 let byName = 0
 for (const file of appFiles) {
   const text = readFileSync(file, 'utf8')
   if (/from '@engine/.test(text)) aliasUsers.push(file.replace(ROOT + '/', ''))
   if (/from 'wanxiang-engine\//.test(text)) deepUsers.push(file.replace(ROOT + '/', ''))
+  // 相对路径直接钻进库内部也算"没按使用者的方式引用"
+  if (/from '[^']*packages\/engine/.test(text)) crawlUsers.push(file.replace(ROOT + '/', ''))
   byName += (text.match(/from 'wanxiang-engine'/g) ?? []).length
 }
 assert.deepEqual(aliasUsers, [], `这些文件还在用仓库内部别名 @engine:${aliasUsers.join('、')}`)
 assert.deepEqual(deepUsers, [], `这些文件绕过了公开入口(深层导入):${deepUsers.join('、')}`)
+assert.deepEqual(crawlUsers, [], `这些文件用相对路径直接钻进库内部:${crawlUsers.join('、')}`)
 assert.ok(byName > 0, '宿主一处都没引用库?那这份自检在验什么')
 console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
 
