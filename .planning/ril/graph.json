@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 309,
+  "round": 310,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:03:05+00:00",
+  "updated_at": "2026-09-18T21:06:01+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17954,6 +17954,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-372(1f10d03)。node scripts/verify-dist.mjs → \"目录树自检通过(37 个模块文件 + 4 份文档都在图上)\";防空转实测:sed 删掉树上的 idle.ts 一行 → AssertionError(与 src/ 对不上);把 index.ts 改名 indexXX.ts → 同样 AssertionError;从备份恢复 → 重新绿。全套:bun run check(400 例 / 44 文件 + 组装指南 25 工厂 + 定制表 99 名字 + 目录树 + 产物 75 导出 + 发布包);宿主 test 2448 例、test:report 0 败、check:engine 59 处引用、check:engine:standalone 84 个源文件。",
       "summary": "README 的目录树从\"给人看的便条\"变成有判据的地图:树上列的 37 个模块文件与 src/ 下实际文件逐项相同,docs/ 下每份文档都在图上。这类自检的价值在于它是**双向**的 —— 少列一份会红(新层没进地图),多列一份也红(改了名没跟着改)。"
+    },
+    "TASK-291": {
+      "id": "TASK-291",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:06:01+00:00",
+      "updated_at": "2026-09-18T21:06:01+00:00",
+      "touched_round": 309,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "内容池消融(deck.sim.spec):量\"清空一张池子\"的成本 —— 一次性池里抽到即排除,所以清空抽数恒等于张数(24 张 = 24 抽,与权重无关,200 颗种子平均与最慢都是 24);权重真正做的是排序(三档第一次出现的中位抽号 8/16/22);一旦限定预算(只抽 10 抽),排序变成覆盖率(见到罕见档 22% vs 摊平权重 94%);抽干即空,必须留常驻底牌。"
+    },
+    "CHG-373": {
+      "id": "CHG-373",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:06:01+00:00",
+      "updated_at": "2026-09-18T21:06:01+00:00",
+      "touched_round": 309,
+      "commit": "1818cab",
+      "summary": "库:新增 src/deck.sim.spec.ts(5 例);CHANGELOG「未发布」记下那张三行对照表与四条结论;docs/assembly.md 配方 C 加一行(权重影响什么)、坑清单加两行(以为权重低=清空成本高、全一次性牌却不留底牌);README 用例数改 405/45;verify-dist.mjs 新增\"用例文件数自检\"(README 的 N 个用例 / M 个文件 里 M 必须等于 src 下实际 spec 文件数)。宿主无改动。"
+    },
+    "EV-299": {
+      "id": "EV-299",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:06:01+00:00",
+      "updated_at": "2026-09-18T21:06:01+00:00",
+      "touched_round": 309,
+      "confidence": 0.96,
+      "source": "变更 CHG-373(1818cab)。bunx vitest run src/deck.sim.spec.ts(5 例,打印:24 张全清 中位 24 / 平均 24.0 / 最慢 24;三档第一次出现中位抽号 常见 8 / 少见 16 / 罕见 22;只抽 10 抽见到罕见 22% vs 权重全 0 时 94%;抽干后连抽 5 次全 null;允许重复抽 5 张时 200 轮里 90 轮撞到重复);node scripts/verify-dist.mjs → 新增\"用例数自检通过(README 写的 45 个用例文件与实际一致)\";cd packages/engine && bun run check(405 例 / 45 文件 + 组装指南 25 工厂 + 定制表 99 名字 + 目录树 37 模块 / 4 文档 + 用例数 + 产物 75 导出 + 发布包);cd /workspace/xian && bun run test(2453 例)、bun run test:report(2453 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(85 个源文件 + 8 示例)。",
+      "summary": "把\"权重\"这件事量清楚了:在一次性内容池里,权重**不影响清空成本**(清空恒等于张数,因为抽到即排除),它只决定先后;但当预算被限定(玩家一天只抽 10 次),先后就变成覆盖率 —— 同一批内容,见到\"罕见\"档的概率 22% vs 摊平权重 94%。这条口径决定了\"限定内容该配多少抽\"\"要不要加保底标签\"。另附一条工程判据:README 的用例文件数现在由自检盯着(静态可数),用例数仍人工核对。"
     }
   },
   "edges": [
@@ -27113,6 +27151,12 @@
       "to": "TASK-290",
       "type": "implements",
       "created_at": "2026-09-18T21:03:05+00:00"
+    },
+    {
+      "from": "CHG-373",
+      "to": "TASK-291",
+      "type": "implements",
+      "created_at": "2026-09-18T21:06:01+00:00"
     }
   ]
 }
