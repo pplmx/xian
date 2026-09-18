@@ -186,4 +186,31 @@ describe('副本系统 —— 区域链/遭遇/首领门槛/通关奖励', () =>
     // 主线顺序仍按第一条前置排:r3 排在 r1 之后
     expect(any.chain().map(r => r.id)).toEqual(['r1', 'r3', 'r2'])
   })
+
+  it('遭遇调度可以自己接管:指定敌人、强制出首领、或返回 null 交回默认', () => {
+    // 前两场必是 e2,第三场必出首领,其余交回默认
+    const sys = createDungeonSystem({
+      ...CONFIG,
+      encounterFn: ({ region, progress }) => {
+        const runs = progress.runs[region.id] ?? 0
+        if (runs === 0 || runs === 1) return { kind: 'normal', enemyId: 'e2' }
+        if (runs === 2) return { kind: 'boss' }
+        return null
+      }
+    })
+    const rng = createRng(1)
+    let progress = emptyProgress()
+    const seen: string[] = []
+    for (let i = 0; i < 4; i += 1) {
+      const enc = sys.nextEncounter('r1', progress, rng)
+      seen.push(enc.enemyId)
+      progress = sys.onVictory('r1', enc, progress, rng).progress
+    }
+    expect(seen.slice(0, 2)).toEqual(['e2', 'e2'])
+    expect(seen[2]).toBe('b1') // 首领
+    expect(seen[3]).toBeTruthy() // 交回默认
+    // 返回 { kind:'normal' } 但不指定敌人 → 从本区普通池里挑
+    const anyNormal = createDungeonSystem({ ...CONFIG, encounterFn: () => ({ kind: 'normal' }) })
+    expect(['e1', 'e2']).toContain(anyNormal.nextEncounter('r1', emptyProgress(), createRng(3)).enemyId)
+  })
 })

@@ -132,6 +132,28 @@ export interface DungeonConfig {
   victoryRewards?: RewardDef[]
   /** 是否需要前置通关才解锁(默认 true) */
   requireChain?: boolean
+  /**
+   * 自己接管"这一场遇到什么"(**可选**)。
+   *
+   * 默认只有两种节奏:攒够 N 胜出首领(循环)或攒够一次、通关即止。
+   * 想按时间/强度/剧情阶段给不同遭遇(前几场必是杂兵、某阶段必出首领、
+   * 或按进度挑特定敌人),用这个钩子:
+   *
+   *   返回 `null` 就交回默认逻辑(调用方可以只在特定条件下接管);
+   *   返回 `{ kind: 'normal' }` 时不指定 enemyId 即从该区域的普通池里按均等权重挑一个
+   *   (与默认逻辑同一处实现);`{ kind: 'boss' }` 同理。
+   */
+  encounterFn?: (
+    ctx: {
+      region: RegionDef
+      progress: DungeonProgress
+      /** 默认逻辑此刻会不会出首领(攒够胜场 / 一次性已通) */
+      bossDue: boolean
+      /** 该区域的普通遭遇池(已滤掉不存在的敌人;可能为空) */
+      pool: readonly string[]
+    },
+    rng: Rng
+  ) => { kind: 'normal' | 'boss'; enemyId?: string } | null
 }
 
 export interface DungeonProgress {
@@ -300,9 +322,20 @@ export function createDungeonSystem<T = number>(
     if (!region) throw new Error(`副本系统:没有这个区域 —— ${regionId}`)
     const remaining = winsUntilBoss(progress.bossWins[regionId] ?? 0, progress.cleared.includes(regionId))
     const due = rhythm === 'once' ? remaining === 0 : remaining !== null && remaining <= 1
-    if (due || region.enemies.length === 0) return { regionId, kind: 'boss', enemyId: region.boss }
     const pool = region.enemies.filter(id => enemyById.has(id))
-    return { regionId, kind: 'normal', enemyId: pool.length > 0 ? rng.weighted(pool, () => 1) : region.boss }
+    const defaultChoice = (): Encounter => {
+      if (due || pool.length === 0) return { regionId, kind: 'boss', enemyId: region.boss }
+      return { regionId, kind: 'normal', enemyId: rng.weighted(pool, () => 1) }
+    }
+    if (config.encounterFn) {
+      const choice = config.encounterFn({ region, progress, bossDue: due, pool }, rng)
+      if (choice) {
+        if (choice.enemyId !== undefined) return { regionId, kind: choice.kind, enemyId: choice.enemyId }
+        if (choice.kind === 'boss') return { regionId, kind: 'boss', enemyId: region.boss }
+        if (pool.length > 0) return { regionId, kind: 'normal', enemyId: rng.weighted(pool, () => 1) }
+      }
+    }
+    return defaultChoice()
   }
 
   const rewardAmount = (reward: RewardDef, tier: number): T => {
