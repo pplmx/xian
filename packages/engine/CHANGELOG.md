@@ -20,6 +20,24 @@
 
 ## 未发布
 
+## 0.1.12 — 2026-09-19
+
+这是一个**给使用者的补丁**:修掉一处只在别人那边现形的编译问题,顺手补上炼制乘区的刻度。
+公开面与数值一位未变(仍是 75 个运行时导出 / 203 个公开类型)。
+
+- **修:`.d.ts` 里少了一个 `.js`** —— `src/companions.ts` 的 `from './attributes'` 漏了扩展名,
+  TypeScript 原样搬进 `companions.d.ts`,于是库自己怎么跑都正常,而
+  `moduleResolution: node16 / nodenext` 且没开 `skipLibCheck` 的消费者一编译就红(TS2835)。
+  这正是我们新加的**类型消费者自检**第一次跑就抓出来的 —— 见下;
+- **发布包自检新增"类型消费者"一步**:真造一个 `.mts`,用 `tsc --strict` 按 `bundler` 与 `node16`
+  两种解析各编一遍。运行时 import 成功只说明"装上能跑",说明不了"能编";这道自检堵的正是这个缝;
+- **新增相对导入静态自检**:源码里任何相对导入少了 `.js` 都直接红(防空转已验:改回去 → 红);
+- **消融实验:炼制的四个乘区各值多少**(`crafting.sim.spec.ts`)—— 下限决定"全弱时还剩多少",
+  单拉一项的倍数就是 `1 / 下限`,越级表外每阶 ×0.5,熟练度双曲饱和永远不到顶;
+  同批收进 [`docs/tuning.md`](./docs/tuning.md)(参考表收全 9 份消融)。
+
+版本 0.1.11 → 0.1.12(只加 patch;0.1.11 与 0.1.12 相隔数分钟 —— 因为前者带了这个消费者侧的缺陷)。
+
 - **修:一个只在"使用者那边"现形的编译问题**(`companions.d.ts`)。`src/companions.ts` 里那句
   `import type { Mods } from './attributes'` 少了 `.js` 扩展名,TypeScript 会把它原样搬进 `.d.ts`
   —— 于是**库自己怎么跑都正常**(构建、用例、Node import 全过),而 `moduleResolution: node16 / nodenext`
