@@ -20,6 +20,24 @@
 
 ## 未发布
 
+- **公开面行为判据审计 —— 9 个导出从没被任何判据碰过,现已补上并加了常驻自检**。
+  做法:把 src 下全部用例(去掉注释、import 与字符串字面量,并排除只罗列名字的 `publicApi.spec.ts`)
+  与 `examples/` 扫一遍,对 dist 的 75 个运行时导出逐个查"有没有被真正用起来" ——
+  结果有 9 个只在公开面清单里露过名字:`clamp`、`formatAmount`、`numberNumeric`、`mulberry32`、
+  `seedFromString`、`randomRng`、`DEFAULT_ATTRIBUTES`、`DEFAULT_LAYER_NAMES`、`progressText`。
+  清单里有、却没判据,等于**承诺了一个没人试过的行为**:改名会红,边界写错不会。
+
+  新增 `src/publicBehavior.spec.ts` 给这 9 个各配一条最小判据,顺手把口径钉死:
+  `clamp` 的边界值原样返回、反向区间给 `lo`;`formatAmount` 一万以下写原数、`10000` 起进"万"档、
+  `Infinity` 写 `∞`;`numberNumeric` 除零给 **0**(不是 Infinity)且它就是 `formatAmount`;
+  `mulberry32` 与 `createRng` 同源(同种子首值一致)、值域 `[0,1)`;`seedFromString` 是 FNV-1a
+  (空串给 `0x811c9dc5`);`randomRng` 是"非可复现"的那一个、接口与可复现源相同;
+  `DEFAULT_ATTRIBUTES` 是 27 条且核心三围为攻/防/血,`attributeDefs()` 给的是副本(改它不动原表);
+  `DEFAULT_LAYER_NAMES` 十层、末尾"圆满";`progressText` 是"标签 当前/需求(向下取整的百分比)"。
+
+  **新增一条常驻自检**(`verify-dist.mjs`):每个运行时导出都必须出现在**代码位置**上
+  —— 注释、import 行、字符串字面量里的名字都不算。防空转已验:把 `clamp` 的调用全删掉 →
+  自检指名道姓报 `clamp`,加回来 → 绿。
 ## 0.1.13 — 2026-09-19
 
 这一批是**"把内容作者真要下决定的地方都量成表"**:运行时代码仍然一行没动(仍是 75 个运行时导出 /

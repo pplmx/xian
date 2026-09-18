@@ -83,5 +83,11 @@ bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json
 | `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"(含使用者侧的 `tsc --strict`)、工程侧 59 处引用全走公开入口 |
 | `bun run check:engine:standalone` | 整份目录复制到临时目录(不带 dist 与 node_modules)后,独立编译、独立跑用例、独立 import 产物、跑示例,并断言源码里没有任何工程侧引用 |
 
+库这一侧还有一条与"公开面"有关的判据:**每个运行时导出都必须在代码位置上被真正用过**
+(`scripts/verify-dist.mjs`)—— 注释、import 行、字符串字面量里的名字都不算。这条是审计出来的:
+75 个导出里曾有 9 个只在 `publicApi.spec.ts` 的名字清单里露过面(`clamp` / `formatAmount` /
+`numberNumeric` / `mulberry32` / `seedFromString` / `randomRng` / 两张默认表 / `progressText`),
+现已各配一条判据(`src/publicBehavior.spec.ts`),并让自检常驻。
+
 只要有一处"顺手用了工程侧的别名或配置",`check:engine:standalone` 就会红 ——
 而这种依赖待在同一个仓库里是看不出来的。

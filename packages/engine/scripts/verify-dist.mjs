@@ -182,6 +182,52 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   }
   assert.deepEqual(badSpecs, [], `这些相对导入少了 .js 扩展名(消费者用 node16 解析时会红):${badSpecs.join('、')}`)
   console.log(`相对导入自检通过(${srcFiles.length} 个源文件里的相对导入都带 .js)`)
+
+  /**
+   * 公开面行为判据自检 —— **每个运行时导出都得有人真用过**。
+   *
+   * 公开面清单(`publicApi.spec.ts`)只回答"名字还在不在",回答不了"这个名字背后的行为有没有人试过":
+   * 改名会红,但边界写错不会。这次审计就是冲着这个缝来的 —— 75 个导出里有 9 个
+   * (`clamp` / `formatAmount` / `numberNumeric` / `mulberry32` / `seedFromString` / `randomRng` /
+   * `DEFAULT_ATTRIBUTES` / `DEFAULT_LAYER_NAMES` / `progressText`)从没被任何用例或示例碰过,
+   * 只在名字清单里露过面。现在它们各有一条判据(`src/publicBehavior.spec.ts`),
+   * 而这条自检负责让"下回再冒出一个"的当场红。
+   *
+   * 扫的是**去掉注释**之后的用例与示例正文(排除只罗列名字的 `publicApi.spec.ts`),
+   * 所以"在注释里提了一句"不算用过。
+   */
+  /**
+   * 去掉注释、import 行与字符串字面量:只留**代码位置上的标识符**。
+   *
+   * 为什么要做到这么细:一条 `import { clamp } from './numeric.js'`、一句测试标题里提到名字、
+   * 或者文档字符串里写过它 —— 这三种都不等于"有人真用过",而它们都能骗过朴素的包含判断。
+   * 去掉之后仍能匹配到,才是真的在调用/引用。
+   */
+  const stripComments = text =>
+    text
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/[^\n]*/g, '')
+      .replace(/^\s*import[\s\S]*?from\s*'[^']*'/gm, '')
+      .replace(/^\s*import\s*'[^']*'/gm, '')
+      .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+      .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+      .replace(/`(?:[^`\\]|\\.)*`/g, '``')
+  const usageText = [
+    ...readdirSync(resolve(ENGINE, 'src'))
+      .filter(name => name.endsWith('.spec.ts') && name !== 'publicApi.spec.ts')
+      .map(name => stripComments(readFileSync(resolve(ENGINE, 'src', name), 'utf-8'))),
+    ...readdirSync(resolve(ENGINE, 'examples'))
+      .filter(name => name.endsWith('.ts'))
+      .map(name => stripComments(readFileSync(resolve(ENGINE, 'examples', name), 'utf-8')))
+  ].join('\n')
+  const exportNames = Object.keys(engine)
+  const unusedExports = exportNames.filter(name => !new RegExp(`\\b${name}\\b`).test(usageText))
+  assert.deepEqual(
+    unusedExports,
+    [],
+    `这些导出没有任何行为性用例或示例用过(只出现在 publicApi.spec 的名字清单里):${unusedExports.join('、')}`
+  )
+  console.log(`公开面行为判据自检通过(${exportNames.length} 个导出都有人真用过)`)
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
