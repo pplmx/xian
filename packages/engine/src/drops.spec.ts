@@ -66,6 +66,16 @@ describe('掉落表 —— "这一场给不给、给几份"', () => {
     expect(table.effectiveChance(entry, { chanceMult: 1.1 })).toBeCloseTo(0.66, 12) // 未触顶就不动
   })
 
+  it('scalesWithChance: false —— 有些基础掉落不该被福缘放大', () => {
+    const flat = one({ chance: 0.4, scalesWithChance: false })
+    const table = createDropTable([flat, one({ chance: 0.4 }, 'boosted')])
+    // 概率倍率只作用于"吃倍率"的那一条:一条原地不动,另一条翻倍
+    expect(table.effectiveChance(flat, { chanceMult: 2 })).toBeCloseTo(0.4, 12)
+    expect(table.effectiveChance(table.entries[1]!, { chanceMult: 2 })).toBeCloseTo(0.8, 12)
+    // 上限与钳位仍然照旧生效(不吃倍率不等于不归一)
+    expect(table.effectiveChance(one({ chance: 2, scalesWithChance: false }), { chanceMult: 9 })).toBe(1)
+  })
+
   it('保底:开 guarantee 时这一条的**第一次**尝试必中,且保底不改随机流', () => {
     const table = createDropTable([one({ chance: 0, guaranteed: true, attempts: 3 })])
     const entry = table.entries[0]!

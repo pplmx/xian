@@ -39,6 +39,7 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
  */
 {
   const doc = readFileSync(resolve(ENGINE, 'docs/assembly.md'), 'utf-8')
+  const readme = readFileSync(resolve(ENGINE, 'README.md'), 'utf-8')
   const factories = new Set([...doc.matchAll(/`(create[A-Z]\w*)`/g)].map(m => m[1]))
   assert.ok(factories.size >= 8, '组装指南里应当指向足够多的模块(至少 8 个 create*)')
   for (const name of factories) {
@@ -63,6 +64,38 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
     assert.ok(found, `组装指南提到的用例不存在:${spec}`)
   }
   console.log(`组装指南自检通过(${factories.size} 个工厂 + ${plainApis.size} 个工具 + 示例与用例路径)`)
+
+  /**
+   * 定制表自检 —— README 的「想改什么,改哪里」里,凡是**公开导出**的名字,都得有用例提到过。
+   *
+   * 为什么值得一条判据:那张表是使用者最先读的东西,也最容易"说得比做得多" —— 承诺"这个可以
+   * 接管",但库里没有任何判据钉住它。这里不判断覆盖得好不好(那要看人),只拦最硬的一种:
+   * **说了能改、却没有任何用例碰过**。
+   */
+  const specDir = resolve(ENGINE, 'src')
+  const specText = readdirSync(specDir, { recursive: true, encoding: 'utf-8' })
+    .filter(entry => typeof entry === 'string' && entry.endsWith('.spec.ts'))
+    .map(entry => readFileSync(resolve(specDir, entry), 'utf-8'))
+    .join('\n')
+  const tableStart = readme.indexOf('## 定制:想改什么,改哪里')
+  const tableEnd = readme.indexOf('\n## ', tableStart + 5)
+  const table = readme.slice(tableStart, tableEnd)
+  /**
+   * 取每个反引号片段里最后一个标识符片段:`equipment.affixCountFn` → `affixCountFn`,
+   * `'max'` 这类字面量会被跳过(不以字母开头)。
+   */
+  const promised = [
+    ...new Set(
+      [...table.matchAll(/`([^`]+)`/g)]
+        .map(m => m[1].split('.').pop().trim())
+        .filter(name => /^[A-Za-z_]\w*$/.test(name))
+    )
+  ]
+  // 防空转:标题被改掉、正则失配时,这份自检会"通过"得毫无意义
+  assert.ok(promised.length >= 40, `定制表只读出 ${promised.length} 个名字 —— 标题或表格结构变了?`)
+  const unpinned = promised.filter(name => !specText.includes(name))
+  assert.deepEqual(unpinned, [], `定制表承诺可改、却没有任何用例提到:${unpinned.join('、')}`)
+  console.log(`定制表自检通过(${promised.length} 个名字,逐个都有用例提到)`)
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
