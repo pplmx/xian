@@ -24,6 +24,16 @@ export type GoalCond =
   | { type: 'rank'; min: number }
   /** 自定义:交给作品判(如"是否已渡过某劫") */
   | { type: 'custom'; key: string }
+  /**
+   * 组合:**全部**子条件都成立才算成立(可嵌套)。
+   * 空数组视为成立(没有要求)—— 这与"空条件不该拦住人"的直觉一致。
+   */
+  | { type: 'all'; of: readonly GoalCond[] }
+  /**
+   * 组合:**任一**子条件成立即成立(可嵌套)。
+   * 空数组视为不成立 —— "没有任何一条路"就是走不通。
+   */
+  | { type: 'any'; of: readonly GoalCond[] }
 
 /** 作品侧的环境:引擎向它提问,而不是自己去翻存档 */
 export interface GoalEnv {
@@ -56,6 +66,10 @@ export function evalGoal(cond: GoalCond, env: GoalEnv): boolean {
       return env.rank !== undefined && env.rank() >= cond.min
     case 'custom':
       return env.custom?.(cond.key) ?? false
+    case 'all':
+      return cond.of.every(sub => evalGoal(sub, env))
+    case 'any':
+      return cond.of.some(sub => evalGoal(sub, env))
   }
 }
 
@@ -67,6 +81,8 @@ export interface GoalProgress {
   current: number | null
   /** 目标值(可量化那类才有) */
   target: number | null
+  /** 组合条件才有:逐个子的进度(递归),方便界面把"还差哪一条"摊开 */
+  parts?: (GoalProgress | null)[]
 }
 
 /**
@@ -90,5 +106,8 @@ export function goalProgress(cond: GoalCond, env: GoalEnv): GoalProgress | null 
     case 'custom':
       // 自定义条件是不是"能显示进度",只有作品知道:它没提供 custom 就当作没有进度可言
       return env.custom === undefined ? null : { done, ratio: null, current: null, target: null }
+    case 'all':
+    case 'any':
+      return { done, ratio: null, current: null, target: null, parts: cond.of.map(sub => goalProgress(sub, env)) }
   }
 }

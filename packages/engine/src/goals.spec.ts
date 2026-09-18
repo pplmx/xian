@@ -50,4 +50,32 @@ describe('目标/条件 —— 判定与进度', () => {
     expect(goalProgress({ type: 'rank', min: 3 }, env({ rank: () => 2 }))).toEqual({ done: false, ratio: null, current: 2, target: 3 })
     expect(goalProgress({ type: 'custom', key: 'x' }, env())).toBeNull()
   })
+
+  it('组合条件:全部 / 任一,可嵌套;空数组的语义写清', () => {
+    const e = env({ counters: { kill: 5, explore: 1 }, level: () => 2, custom: k => k === '渡劫' })
+    const kill5 = { type: 'counter', key: 'kill', value: 5 } as const
+    const kill9 = { type: 'counter', key: 'kill', value: 9 } as const
+    const lv3 = { type: 'level', min: 3 } as const
+    const tribulation = { type: 'custom', key: '渡劫' } as const
+
+    expect(evalGoal({ type: 'all', of: [kill5, { type: 'level', min: 2 }] }, e)).toBe(true)
+    expect(evalGoal({ type: 'all', of: [kill5, lv3] }, e)).toBe(false)
+    expect(evalGoal({ type: 'any', of: [kill9, lv3, tribulation] }, e)).toBe(true)
+    expect(evalGoal({ type: 'any', of: [kill9, lv3] }, e)).toBe(false)
+    // 嵌套:（杀够 5 且到 2 级）或 渡过劫
+    expect(evalGoal({ type: 'any', of: [{ type: 'all', of: [kill5, { type: 'level', min: 2 }] }, lv3] }, e)).toBe(true)
+    // 空数组:all 成立(没有要求),any 不成立(没有一条路)
+    expect(evalGoal({ type: 'all', of: [] }, e)).toBe(true)
+    expect(evalGoal({ type: 'any', of: [] }, e)).toBe(false)
+  })
+
+  it('组合条件的进度:自己不给比例,但把每个子的进度摊开', () => {
+    const e = env({ counters: { kill: 5 }, level: () => 2 })
+    const p = goalProgress({ type: 'all', of: [{ type: 'counter', key: 'kill', value: 10 }, { type: 'level', min: 3 }] }, e)
+    expect(p?.done).toBe(false)
+    expect(p?.ratio).toBeNull()
+    expect(p?.parts?.length).toBe(2)
+    expect(p?.parts?.[0]).toEqual({ done: false, ratio: 0.5, current: 5, target: 10 })
+    expect(p?.parts?.[1]?.done).toBe(false)
+  })
 })
