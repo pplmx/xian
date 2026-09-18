@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 326,
+  "round": 327,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:59:35+00:00",
+  "updated_at": "2026-09-18T22:02:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18647,6 +18647,44 @@
       "summary": "公开面清单必须配\"行为判据自检\":每个运行时导出都要在代码位置上被至少一份用例或示例用过(注释、import 行、字符串字面量里的名字都不算)。",
       "rationale": "公开面清单(publicApi.spec 的 75 个名字)与行为判据是两件事:前者管\"名字没被悄悄改掉/删掉\",后者管\"这个名字背后的行为有人试过\"。这次实测出的 9 个只被列进清单的导出(clamp、formatAmount、numberNumeric、mulberry32、seedFromString、randomRng、两张默认表、progressText)就是这条缝的产物 —— 它们能改名就红,但边界写错、口径反转都不会有任何反应,而使用者拿到的却是\"承诺过\"的行为。做法上还有一条经验:朴素的包含判断会被 import 行、测试标题、文档字符串骗过(第一次防空转就撞上了),所以必须先剥掉注释、import 与字符串字面量再匹配。",
       "alternatives_rejected": "①只依赖 publicApi.spec 的名字清单(它只钉名字,钉不住行为);②人工过一遍清单(75 个名字靠人看,下回新加的导出照样会漏);③用\"名字在文件里出现过\"做判据(import 行与测试标题就能满足,实测防空转时立刻被骗过 —— 所以改成\"剥掉注释/import/字符串后仍出现在代码位置\");④给这 9 个导出直接删掉(它们都是有用的对外件:数值适配、随机源、默认表、展示格式化,删了反而缺件)。"
+    },
+    "TASK-308": {
+      "id": "TASK-308",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:02:32+00:00",
+      "updated_at": "2026-09-18T22:02:32+00:00",
+      "touched_round": 326,
+      "category": "docs",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "模块速查覆盖自检:docs/usage.md 的模块表此前漏了 holding(背包/持有)、rng(随机源四个导出)、presets(内容包),saveShape 一组也被埋在\"存档\"行里;补齐后新增自检 —— 36 个模块文件各有锚点必须在模块表出现(缺一个即红),反向要求锚点表里的文件真实存在。顺带查了类型面:203 个公开类型没有孤儿(17 个 XxxSystem 别名是工厂返回类型,可达性由 publicApi.spec 钉住)。"
+    },
+    "CHG-391": {
+      "id": "CHG-391",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:02:33+00:00",
+      "updated_at": "2026-09-18T22:02:33+00:00",
+      "touched_round": 326,
+      "commit": "bc2ea1b",
+      "summary": "库:docs/usage.md 模块表补三行(随机源 / 背包 / 内容包)并把 saveShape 拆出来单列;scripts/verify-dist.mjs 新增模块速查覆盖自检(MODULE_ANCHORS 显式锚点表 + 双向断言);CHANGELOG「未发布」记一节(含防空转验证)。库实现未改,宿主无改动。"
+    },
+    "EV-317": {
+      "id": "EV-317",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:02:33+00:00",
+      "updated_at": "2026-09-18T22:02:33+00:00",
+      "touched_round": 326,
+      "confidence": 0.96,
+      "source": "变更 CHG-391(bc2ea1b)。审计脚本(读 src 各模块的运行时导出名,查 docs/usage.md 是否提到):初测 5 个模块完全没被提到(dungeons/equipment/holding/numeric/realms —— 其中四个是通过 game.* 用的,属误报),人工核对后确认真正缺的是 holding / rng / presets 三个,已补;node scripts/verify-dist.mjs → \"模块速查覆盖自检通过(37 个模块都在 docs/usage.md 里)\";防空转:把 usage.md 里 createHoldingSystem 换成\"持有系统\" → 报 \"这些模块没有出现在 docs/usage.md 的模块表里:holding.ts\",恢复 → 绿;类型面:扫 dist 全部 .d.ts,203 个公开类型里 17 个只在自身声明处出现一次(BuffSystem/Chain/ChoiceSystem/CodexSystem/CycleSystem/DropTable/EconomyReadings/FacilitySystem/IntakeSystem/PityCounter/PointPool/RecipeRunner/Settlement/StageMemory/TaskBoard/TriageSystem/UnlockRegistry),逐个核对是 XxxSystem 别名(工厂返回类型),不是孤儿;bun run check(460 例 / 57 文件 + 十道自检);宿主 bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件)。",
+      "summary": "文档地图也补上了判据:模块速查表从此\"不许漏模块\"(36 个锚点缺一即红,反向查文件是否存在)。同时确认类型面没有孤儿 —— 那 17 个只在声明处出现的别名都是工厂返回类型,使用者取得到、也用得上。"
     }
   },
   "edges": [
@@ -27926,6 +27964,12 @@
       "to": "TASK-307",
       "type": "governs",
       "created_at": "2026-09-18T21:59:35+00:00"
+    },
+    {
+      "from": "CHG-391",
+      "to": "TASK-308",
+      "type": "implements",
+      "created_at": "2026-09-18T22:02:33+00:00"
     }
   ]
 }
