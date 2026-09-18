@@ -38,6 +38,8 @@ import {
   EXP_SUB_GROWTH,
   LATE_COMBAT_GROWTH,
   LATE_EXP_GROWTH,
+  QUALITY_OUT_OF_BAND,
+  QUALITY_TIER_SHIFT,
   SOFT_CAPS,
   WORLD_STEP_EXP_MULT
 } from '@/data/constants'
@@ -49,6 +51,7 @@ import { ENEMIES } from '@/data/enemies'
 import { REGIONS } from '@/data/regions'
 import { STAT_NAMES } from '@/ui/statNames'
 import { toNum } from '@/utils/gnum'
+import { uid } from '@/utils/id'
 import { powerScale } from './tierScale'
 import { gnumNumeric } from './engineNumeric'
 
@@ -180,7 +183,11 @@ export const ENGINE_WORLD_CONFIG: GameConfig = {
       tierFactors: Array.from({ length: Math.max(...EQUIPMENT_TEMPLATES.map(t => t.tier)) }, (_, i) => toNum(powerScale(i + 1)))
     },
     // 词条按百分点书写(「攻击提升 4.2%」),入属性时统一 ÷100
-    affixValueScale: 100
+    affixValueScale: 100,
+    // 品质窗口与层阶加成同样取自 data/constants —— 凡库有默认值的平衡参数,
+    // 本作一律显式传入(见 DEC-071):默认值接管平衡是最难被发现的一种分叉。
+    outOfBand: QUALITY_OUT_OF_BAND,
+    qualityTierShift: QUALITY_TIER_SHIFT
   },
   dungeons: {
     regions: REGIONS.map(r => ({
@@ -223,4 +230,4 @@ export const ENGINE_WORLD_CONFIG: GameConfig = {
 }
 
 /** GNum 版世界(本作实际使用的入口) */
-export const ENGINE_WORLD: Game<GNum> = defineGame<GNum>(ENGINE_WORLD_CONFIG, { numeric: gnumNumeric })
+export const ENGINE_WORLD: Game<GNum> = defineGame<GNum>(ENGINE_WORLD_CONFIG, { numeric: gnumNumeric, newUid: uid })

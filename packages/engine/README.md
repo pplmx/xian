@@ -149,6 +149,16 @@ console.log(battle.win ? '胜' : '败', battle.rounds, '回合')
 现在由库的属性系统计算(递减阶梯仍取自本作的 `data/constants.DIMINISH_WEIGHTS`,
 在配置里显式传入 —— 平衡口径仍只有一处)。
 
+装备的**生成**也换过去了:`src/core/equipGen.ts` 的
+`generateEquipment` / `qualityWeightAt`(以及池子查询)现在由库的装备系统执行 ——
+「哪一层掉哪几件」「品质怎么掷」「词条怎么筛」都是通用规则。
+判据连**随机流状态**都比:同一种子下生成同一件之外,还要消耗同样多的随机数,
+否则后面的掉落会整体错位。
+
+装备的**数值解析**(`resolveEquipStats`)仍留在本作:它用的是本作的层级战力表
+(`core/tierScale.powerScale`,GNum),而库那边同一张表以 number 投影进去,
+差在双精度末位 —— 「玩家看到的数字一位不变」这条线要求解析走 GNum。
+
 这件事能被证明,而不是靠"我改了":
 
 1. `engineParity.spec.ts` 里留着**迁移前冻结的旧公式**(`refExpRequirement` 等三个),
@@ -157,8 +167,8 @@ console.log(battle.win ? '胜' : '败', battle.rounds, '回合')
    `ENGINE_WORLD.realms.expCost(major, sub)` 是同一份结果,并再次与冻结口径对账;
 3. 全量 1922 个用例、`vue-tsc`、ESLint 与生产构建全绿 —— 玩家侧的数字一位没动。
 
-尚未迁移的是装备生成/解析与副本调度(`equipGen` / `regions`),它们仍与库并行存在,
-由同一份判据钉着;下一步按同样的方式逐个换过去。
+尚未迁移的是副本调度(`regions` / `adventure`),它与库并行存在,由同一份判据钉着;
+下一步按同样的方式换过去。
 
 ## 目录
 

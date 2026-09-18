@@ -11,7 +11,14 @@ export interface Rng {
   chance(p: number): boolean
   pick<T>(arr: readonly T[]): T
   weighted<T>(items: readonly T[], weightOf: (item: T) => number): T
-  shuffle<T>(arr: readonly T[]): T[]
+  /**
+   * 洗牌 —— **可选**。
+   *
+   * 引擎自己不用它;留成可选是为了让使用方**已有的随机服务**能直接接进来
+   * (例如《云隐修仙录》的 RandomService 就没有 shuffle)。
+   * 接口越大,接进来要满足的条件越多,而库并不需要它。
+   */
+  shuffle?<T>(arr: readonly T[]): T[]
 }
 
 /** mulberry32:小、快、够用,且同一种子在任何引擎上都给同一串数 */

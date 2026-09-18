@@ -5,7 +5,8 @@ import { AFFIX_RARITY_RANK, affixDef } from '@/data/affixes'
 import { equipmentTemplate } from '@/data/equipment'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
 import { isZero, toNum } from '@/utils/gnum'
-import { generateEquipment, resolveEquipStats, rollQuality, sortAffixLines } from './equipGen'
+import { generateEquipment, resolveEquipStats, sortAffixLines } from './equipGen'
+import { ENGINE_WORLD } from './engineWorld'
 import type { EquipmentInstance, QualityId } from '@/types'
 
 const seeded = (seed = 42): RandomService => new RandomService(mulberry32(seed))
@@ -14,7 +15,7 @@ describe('装备生成', () => {
   it('品质下限约束生效', () => {
     const rng = seeded(1)
     for (let i = 0; i < 50; i += 1) {
-      const q = rollQuality(3, rng, { minQualityRank: 3 })
+      const q = ENGINE_WORLD.equipment.rollQuality(3, rng, { tier: 3, minQualityRank: 3 })
       expect(q.rank).toBeGreaterThanOrEqual(3)
     }
   })
@@ -25,8 +26,8 @@ describe('装备生成', () => {
     let lowSum = 0
     let highSum = 0
     for (let i = 0; i < 400; i += 1) {
-      lowSum += rollQuality(1, low).rank
-      highSum += rollQuality(18, high).rank
+      lowSum += ENGINE_WORLD.equipment.rollQuality(1, low, { tier: 1 }).rank
+      highSum += ENGINE_WORLD.equipment.rollQuality(18, high, { tier: 18 }).rank
     }
     expect(highSum).toBeGreaterThan(lowSum)
   })

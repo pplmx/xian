@@ -20,7 +20,7 @@ import { GONGFA } from '@/data/gongfa'
 import { REGIONS } from '@/data/regions'
 import { WORLDS, worldOf } from '@/data/realms'
 import type { EquipSlot, WorldId } from '@/types'
-import { equipTemplatePool } from './equipGen'
+import { ENGINE_WORLD } from './engineWorld'
 
 /** 层级 → 界域:与内容密度审计同一份口径(区域表是层级的唯一来源) */
 const TIER_WORLD = new Map<number, WorldId>()
@@ -122,7 +122,7 @@ describe('名与境界同形 · 写了就得掉得出来', () => {
 
   it('每一件装备模板都真的进得了池 —— 池子外的名字是图鉴里点不亮的灯', () => {
     const dead = EQUIPMENT_TEMPLATES.filter(
-      t => !ALL_TIERS.some(tier => equipTemplatePool(tier).some(x => x.id === t.id))
+      t => !ALL_TIERS.some(tier => ENGINE_WORLD.equipment.poolAtTier(tier).some(x => x.id === t.id))
     )
     expect(dead.map(t => `${t.name}(${t.id})`), '这些模板在任何层级都进不了掉落池').toEqual([])
   })
@@ -147,10 +147,10 @@ describe('名与境界同形 · 写了就得掉得出来', () => {
   it('掉落池按阶取:某阶掉出的名字,必属该阶(名字与阶一一对应)', () => {
     const wrong: string[] = []
     for (const tier of ALL_TIERS) {
-      for (const t of equipTemplatePool(tier)) {
+      for (const t of ENGINE_WORLD.equipment.poolAtTier(tier)) {
         if (t.tier !== tier) wrong.push(`${tier} 阶的池子里有 ${t.name}(${t.tier} 阶)`)
       }
-      const pool = equipTemplatePool(tier)
+      const pool = ENGINE_WORLD.equipment.poolAtTier(tier)
       expect(pool.length, `${tier} 阶的池子是空的`).toBeGreaterThan(0)
       // 九槽各一件:掉什么部位不再由表的行序决定
       expect(new Set(pool.map(t => t.slot)).size, `${tier} 阶的池子没覆盖九个部位`).toBe(9)

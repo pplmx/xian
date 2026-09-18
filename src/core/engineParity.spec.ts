@@ -48,10 +48,14 @@ import { isSoftCapped, mergeModsDetailed, modDepth } from './statsCalc'
 import { AFFIXES, affixValue } from '@/data/affixes'
 import { QUALITIES } from '@/data/qualities'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
-import { equipTemplatePool, resolveEquipStats } from './equipGen'
+import { generateEquipment, resolveEquipStats } from './equipGen'
 import { ENEMIES } from '@/data/enemies'
 import { REGIONS, unlockClosure } from '@/data/regions'
 import { STAT_NAMES } from '@/ui/statNames'
+import { mulberry32, RandomService } from '@/utils/random'
+import { QUALITY_OUT_OF_BAND, QUALITY_TIER_SHIFT } from '@/data/constants'
+import type { EquipmentInstance, EquipSlot, QualityDef } from '@/types'
+import { uid as newUid } from '@/utils/id'
 import { ENGINE_WORLD, ENGINE_WORLD_CONFIG } from './engineWorld'
 
 /**
@@ -99,6 +103,77 @@ function refBreakthroughBaseRate(major: number, sub: number): number {
   const isMajorStep = sub >= SUB_LEVELS - 1
   const raw = isMajorStep ? BT_MAJOR_BASE_RATE - major * BT_MAJOR_DECAY : BT_SUB_BASE_RATE - sub * BT_SUB_DECAY
   return Math.max(BT_MIN_RATE, Math.min(BT_MAX_RATE, raw))
+}
+
+// ---- 迁移前 core/equipGen 的生成路径(池子 / 品质权重 / 掷品质 / 生成实例) ----
+
+const REF_DROP_SLOTS: EquipSlot[] = ['weapon', 'head', 'body', 'wrist', 'belt', 'boots', 'necklace', 'ring', 'talisman']
+
+function refTemplatesAtTier(tier: number, slot: EquipSlot) {
+  return EQUIPMENT_TEMPLATES.filter(t => t.tier === tier && t.slot === slot)
+}
+
+function refTemplatesForDrop(tier: number, slot: EquipSlot) {
+  const here = refTemplatesAtTier(tier, slot)
+  if (here.length > 0) return here
+  const tiers = [...new Set(EQUIPMENT_TEMPLATES.filter(t => t.slot === slot).map(t => t.tier))].sort((a, b) => b - a)
+  const fallback = tiers.find(t => t < tier) ?? tiers[tiers.length - 1]
+  return fallback === undefined ? [] : refTemplatesAtTier(fallback, slot)
+}
+
+function refEquipTemplatePool(tier: number, slot?: EquipSlot) {
+  if (slot !== undefined) return refTemplatesForDrop(tier, slot)
+  return REF_DROP_SLOTS.flatMap(s => refTemplatesForDrop(tier, s))
+}
+
+function refBandFactor(q: QualityDef, tier: number, opts: { minQualityRank?: number }): number {
+  if (opts.minQualityRank !== undefined) return 1
+  const distance = Math.max(0, q.fromTier - tier, tier - q.toTier)
+  return distance === 0 ? 1 : Math.pow(QUALITY_OUT_OF_BAND, distance)
+}
+
+function refQualityWeightAt(q: QualityDef, tier: number, opts: { luck?: number; minQualityRank?: number } = {}): number {
+  const luck = opts.luck ?? 0
+  if (q.rank === 0) return q.weight * refBandFactor(q, tier, opts)
+  const tierBoost = Math.pow(QUALITY_TIER_SHIFT, (tier - 1) * Math.min(q.rank, 4) * 0.35)
+  const luckBoost = 1 + luck * (q.rank >= 3 ? 1.5 : 0.5)
+  return q.weight * tierBoost * luckBoost * refBandFactor(q, tier, opts)
+}
+
+function refRollQuality(tier: number, rng: RandomService, opts: { minQualityRank?: number; luck?: number } = {}): QualityDef {
+  const floor = opts.minQualityRank ?? 0
+  const pool = QUALITIES.filter(q => q.rank >= floor)
+  return rng.weighted(pool, q => refQualityWeightAt(q, tier, opts))
+}
+
+function refGenerateEquipment(
+  tier: number,
+  rng: RandomService,
+  opts: { slot?: EquipSlot; minQualityRank?: number; luck?: number } = {}
+): EquipmentInstance {
+  const slot = opts.slot ?? REF_DROP_SLOTS[Math.min(REF_DROP_SLOTS.length - 1, rng.int(0, REF_DROP_SLOTS.length - 1))]!
+  const eligible = refEquipTemplatePool(tier, slot)
+  const template = rng.weighted(eligible, () => 1)
+  const quality = refRollQuality(tier, rng, opts)
+  const [minA, maxA] = quality.affixes
+  const affixCount = rng.int(minA, maxA)
+  const chosen: { id: string; roll: number }[] = []
+  const used = new Set<string>()
+  let guard = 0
+  while (chosen.length < affixCount && guard < 50) {
+    guard += 1
+    const candidates = AFFIXES.filter(
+      a =>
+        !used.has(a.id) &&
+        (a.minRank === undefined || quality.rank >= a.minRank) &&
+        (a.slots === undefined || a.slots.includes(template.slot))
+    )
+    if (candidates.length === 0) break
+    const picked = rng.weighted(candidates, a => a.weight)
+    used.add(picked.id)
+    chosen.push({ id: picked.id, roll: rng.next() })
+  }
+  return { uid: newUid(), templateId: template.id, quality: quality.id, tier, level: 0, affixes: chosen }
 }
 
 // ============ 等级 ============
@@ -342,13 +417,53 @@ describe('对账 · 装备系统(库 与 尚未迁移的 equipGen)', () => {
     expect(system.template(EQUIPMENT_TEMPLATES[0]!.id)?.name).toBe(EQUIPMENT_TEMPLATES[0]!.name)
   })
 
-  it('每层每部位的掉落池与 equipTemplatePool 完全一致(逐 id 比)', () => {
+  it('每层每部位的掉落池与冻结的旧池子完全一致(逐 id 比)', () => {
     const maxTier = Math.max(...EQUIPMENT_TEMPLATES.map(t => t.tier))
     for (let tier = 1; tier <= maxTier; tier += 1) {
       for (const slot of DROP_SLOTS) {
-        expect(system.templatesAtTier(tier, slot).map(t => t.id)).toEqual(equipTemplatePool(tier, slot).map(t => t.id))
+        expect(system.templatesAtTier(tier, slot).map(t => t.id)).toEqual(refEquipTemplatePool(tier, slot).map(t => t.id))
       }
-      expect(system.poolAtTier(tier).map(t => t.id)).toEqual(equipTemplatePool(tier).map(t => t.id))
+      expect(system.poolAtTier(tier).map(t => t.id)).toEqual(refEquipTemplatePool(tier).map(t => t.id))
+    }
+  })
+
+  it('品质权重与冻结口径逐档相同(含窗口、气运与强制下限)', () => {
+    for (const tier of [1, 3, 9, 16, 24, 30]) {
+      for (const q of QUALITIES) {
+        const mine = system.qualityWeightAt(system.quality(q.id), tier, { tier })
+        expect(mine, `tier ${tier} · ${q.id}`).toBe(refQualityWeightAt(q, tier))
+        const lucky = system.qualityWeightAt(system.quality(q.id), tier, { tier, luck: 0.4 })
+        expect(lucky, `tier ${tier} · ${q.id} · luck`).toBe(refQualityWeightAt(q, tier, { luck: 0.4 }))
+        const floored = system.qualityWeightAt(system.quality(q.id), tier, { tier, minQualityRank: 3 })
+        expect(floored, `tier ${tier} · ${q.id} · floor`).toBe(refQualityWeightAt(q, tier, { minQualityRank: 3 }))
+      }
+    }
+  })
+
+  it('生成一件装备:与冻结口径逐字段相同,且**消耗同样多的随机数**', () => {
+    const strip = (inst: EquipmentInstance): Record<string, unknown> => {
+      const copy: Record<string, unknown> = { ...inst }
+      delete copy.uid
+      return copy
+    }
+    const cases: { tier: number; opts: { slot?: EquipSlot; luck?: number; minQualityRank?: number } }[] = [
+      { tier: 1, opts: {} },
+      { tier: 1, opts: { slot: 'weapon' } },
+      { tier: 7, opts: { luck: 0.5 } },
+      { tier: 13, opts: { slot: 'body', minQualityRank: 4 } },
+      { tier: 25, opts: {} },
+      { tier: 32, opts: { minQualityRank: 8 } }
+    ]
+    for (const { tier, opts } of cases) {
+      for (let seed = 1; seed <= 40; seed += 1) {
+        const mineRng = new RandomService(mulberry32(seed))
+        const refRng = new RandomService(mulberry32(seed))
+        const mine = generateEquipment(tier, mineRng, opts)
+        const ref = refGenerateEquipment(tier, refRng, opts)
+        expect(strip(mine), `tier ${tier} seed ${seed}`).toEqual(strip(ref))
+        // 随机流状态也要一致:否则同一种子后面所有掉落都会整体错位
+        expect(mineRng.next(), `tier ${tier} seed ${seed} · 随机流`).toBe(refRng.next())
+      }
     }
   })
 
