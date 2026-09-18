@@ -28,7 +28,14 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "type-check": "tsc -p tsconfig.json --noEmit"
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "tsc -p tsconfig.json --noEmit && vitest run && tsc -p tsconfig.build.json"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.0"
   },
   "keywords": [
     "game-engine",

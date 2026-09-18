@@ -5,6 +5,9 @@
 
 它从《云隐修仙录》里抽出来,并保留了一份**逐数字对账**的判据(见下文"为什么不只是另写一套")。
 
+**它现在是一份可以单独成 repo 的包**:零运行时依赖,自带测试配置与用例,
+复制出去 `bun install && bun test && bun build` 就能独立迭代(见"单独成库")。
+
 ```bash
 bun packages/engine/examples/minimal.ts   # 换皮后的完整一圈:修炼 → 掉装 → 打副本 → 通关
 ```
@@ -249,6 +252,34 @@ npm i ./wanxiang-engine-0.1.0.tgz
 这一条已接进 CI(deploy / build / 发版三条流水线)。
 
 依赖为零,不需要任何构建器插件:库是纯 ESM + `.d.ts`,Vite / webpack / Node / Bun / Deno 直接可用。
+
+## 单独成库(单独迭代)
+
+这一份目录**不依赖宿主仓库**:源码里没有 `@/` 之类的别名,也不 import 宿主任何模块;
+自带 `vitest.config.ts` 与 `package.json` 的 `devDependencies`,复制出去就能独立开发。
+
+```bash
+cd packages/engine
+bun install          # 只装 typescript + vitest(开发依赖)
+bun run check        # 类型检查 + 跑自己的用例 + 出 dist
+bun run build        # 只出 dist(含 .d.ts)
+```
+
+要变成独立仓库,两条路:
+
+```bash
+# 一 · git subtree 拆出去(保留这段历史)
+git subtree split -P packages/engine -b engine-main
+git push git@github.com:<你>/wanxiang-engine.git engine-main:main
+
+# 二 · 直接复制(不要历史)
+cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
+```
+
+宿主仓库这边有一条**机械判据**守着"它真的能独立"(`bun run check:engine:standalone`):
+把整份目录复制到临时目录(不带 dist 与 node_modules),在那里独立编译、独立跑用例、
+独立 import 一次产物装配出换皮世界;并断言源码里没有任何宿主引用。
+只要有一处"顺手用了宿主的别名或配置",这条就会红 —— 而这种依赖待在同一个仓库里是看不出来的。
 
 ## 「只改名字」到底改哪儿
 

@@ -80,6 +80,8 @@ bun run test:engine
 bun run build:engine
 # 产物自检:编译 → 从 dist import → 跑完整一圈(已接进 CI)
 bun run check:engine
+# 独立成库自检:复制到临时目录 → 独立编译/跑用例/装配换皮世界(已接进 CI)
+bun run check:engine:standalone
 ```
 
 ### 公共库：万象引擎（`packages/engine`）
