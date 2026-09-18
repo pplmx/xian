@@ -92,6 +92,27 @@ bun run check:engine:standalone
 开发期由 Vite/TS 的解析配置指到源码；等它拆成独立 repo 之后，把这一行换成真依赖即可，源码一个字不用改。
 `bun run check:engine` 会守住"只经公开入口引用、别名不许复活"这条。
 
+**库已独立成仓库**：<https://github.com/pplmx/wanxiang-engine>（由本仓库 `packages/engine` 用 `git subtree split` 拆出，保留库自身的提交历史）。
+别人引用它有四种方式，任选：
+
+```jsonc
+// 一 · 直接跟仓库(无需发布)
+"wanxiang-engine": "github:pplmx/wanxiang-engine"
+// 二 · 本地路径
+"wanxiang-engine": "file:packages/engine"
+// 三 · 打包安装
+//   cd packages/engine && npm pack   →  npm i ./wanxiang-engine-0.1.0.tgz
+// 四 · 发到 npm 之后
+"wanxiang-engine": "^0.1.0"
+```
+
+本仓库与独立仓库之间的同步（**选一处开发，别两边同时改**）：
+
+```bash
+git subtree push --prefix=packages/engine engine main   # 宿主 → 库
+git subtree pull --prefix=packages/engine engine main   # 库 → 宿主
+```
+
 ```text
 packages/engine/
 ├── src/
