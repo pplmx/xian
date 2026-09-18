@@ -305,6 +305,52 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
     assert.ok(exists, `模块锚点表里写了不存在的模块:${file}`)
   }
   console.log(`模块速查覆盖自检通过(${Object.keys(MODULE_ANCHORS).length} 个模块都在 docs/usage.md 里)`)
+
+  /**
+   * 示例覆盖自检 —— **每个模块都得有一份示例走到**。
+   *
+   * 这条判据是"示例该写到什么程度"的收口:示例承诺的是"每个模块至少有一条能跑的路径",
+   * 而不是"75 个导出逐个都有一行示例"(导出层面的行为由各模块自己的用例与
+   * `publicBehavior.spec.ts` 钉住, 见 `docs/development.md`)。
+   *
+   * 为什么还是要立这条:审计时发现 `realms` 与 `numeric` 两个模块**零示例** ——
+   * 一个是等级体系的正门、一个是换大数实现的口子,而上面两道判据(名字清单、用例)
+   * 都发现不了"整个模块没人用过"。内容包(`presets/`)另算出处:示例里 import 过,
+   * 或 README / 模块速查的装配片段里写着(三份内容包本来就有一份不进示例 ——
+   * "不引用任何内容包"的那份示例正是要证明这件事)。
+   */
+  const exampleCode = readdirSync(resolve(ENGINE, 'examples'))
+    .filter(name => name.endsWith('.ts'))
+    .map(name => stripComments(readFileSync(resolve(ENGINE, 'examples', name), 'utf-8')))
+    .join('\n')
+  const presetDocs = [readFileSync(resolve(ENGINE, 'README.md'), 'utf-8'), usage].join('\n')
+  /** 一个模块导出的名字(够用即可:函数/常量/类/类型 + `export { … }` 两种写法都算) */
+  const exportNamesOf = rel => {
+    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
+    const names = new Set()
+    for (const m of text.matchAll(/^export\s+(?:async\s+)?(?:function|class|const|let|var|interface|type|enum)\s+([A-Za-z0-9_$]+)/gm)) {
+      names.add(m[1])
+    }
+    for (const m of text.matchAll(/^export\s*\{([^}]*)\}/gm)) {
+      for (const part of m[1].split(',')) {
+        const name = part.split(/\s+as\s+/).pop().trim()
+        if (name) names.add(name)
+      }
+    }
+    return [...names]
+  }
+  const usedIn = (names, text) => names.some(name => new RegExp(`\\b${name}\\b`).test(text))
+  const sourceModules = readdirSync(resolve(ENGINE, 'src'))
+    .filter(name => name.endsWith('.ts') && !name.endsWith('.spec.ts') && name !== 'index.ts')
+    .map(name => `src/${name}`)
+  const presetModules = readdirSync(resolve(ENGINE, 'src/presets'))
+    .filter(name => name.endsWith('.ts') && !name.endsWith('.spec.ts'))
+    .map(name => `src/presets/${name}`)
+  const noExample = sourceModules.filter(rel => !usedIn(exportNamesOf(rel), exampleCode))
+  assert.deepEqual(noExample, [], `这些模块在 examples/ 里一个导出都没用到(整个模块没有能跑的路径):${noExample.join('、')}`)
+  const orphanPresets = presetModules.filter(rel => !usedIn(exportNamesOf(rel), exampleCode + presetDocs))
+  assert.deepEqual(orphanPresets, [], `这些内容包既没进示例、也没进 README / docs/usage.md 的装配片段:${orphanPresets.join('、')}`)
+  console.log(`示例覆盖自检通过(${sourceModules.length} 个模块都有示例走到 + ${presetModules.length} 份内容包有出处)`)
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
