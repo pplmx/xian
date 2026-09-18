@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 330,
+  "round": 331,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:14:55+00:00",
+  "updated_at": "2026-09-18T22:17:54+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18799,6 +18799,44 @@
       "confidence": 0.97,
       "source": "变更 CHG-394(69f5dd0)。bun examples/arena-takeover.ts → \"胜负与回合数逐场相同:200/200(100%)\";其中老口径胜 136 场;回合数分布 4 回合×5 · 6 回合×177 · 9 回合×18;cd packages/engine && bun run check(460 例 / 57 文件 + 十一道自检 + 10 份示例全跑;组装指南/目录树自检确认新示例进了文档);cd /workspace/xian && bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件 · 示例可跑)。",
       "summary": "三处主权(skillFn / strikeFn / actFn)在第二套题材上也完全复刻:拳赛没有护盾、没有概率反击、没有追击、伤害公式也完全不同,照样 200/200 逐场相同。过程中两处真问题都记下了:体力初值没传进接管版(双方一直格挡)、反打设成\"必还\"导致强弱一边倒(改成要垫 10 点体力才有真实胜负)—— 这也提醒\"对账样本要检查有没有胜负与长短\"。"
+    },
+    "TASK-312": {
+      "id": "TASK-312",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:17:54+00:00",
+      "updated_at": "2026-09-18T22:17:54+00:00",
+      "touched_round": 330,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.14:把自 0.1.13 起的 4 个实质提交(模块速查覆盖自检、文档片段自检、usage 十段进 compile-check 并修掉过期炼制示例、第二份战斗接管示例「码头拳赛」)定成一个可 pin 的节点。公开面未动,行为与 0.1.13 逐位一致。"
+    },
+    "CHG-395": {
+      "id": "CHG-395",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:17:54+00:00",
+      "updated_at": "2026-09-18T22:17:54+00:00",
+      "touched_round": 330,
+      "commit": "7014ebc",
+      "summary": "发版五步:package.json 0.1.13 → 0.1.14;CHANGELOG「未发布」定稿成带日期的一节(写明零运行时变更与四件事);三处 tag 引用同步(engine README 安装块与版本块、docs/development.md 的 npm pack 例、根 README);宿主与 subtree 推送(engine main → 4540a69);gh release create v0.1.14 + gh api 核对。"
+    },
+    "EV-321": {
+      "id": "EV-321",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:17:54+00:00",
+      "updated_at": "2026-09-18T22:17:54+00:00",
+      "touched_round": 330,
+      "confidence": 0.97,
+      "source": "变更 CHG-395(7014ebc)。cd packages/engine && bun run check(460 例 / 57 文件 + 十一道自检 + 10 份示例;发布包自检已是 wanxiang-engine-0.1.14.tgz);cd /workspace/xian && bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件);git push origin main(e8e176b..7014ebc)、subtree push(→ 4540a69);gh api 核对:tag v0.1.14 → 4540a69…、package.json version 0.1.14、examples/arena-takeover.ts 在 tag 上(222 行)、release 非 draft / 非 prerelease。",
+      "summary": "0.1.14 是第三个\"零功能变更\"的节点,换来的是一条更硬的保证:文档里标了 compile-check 的 12 段代码块都对着发布包编过,模块速查表不许漏模块,而战斗三处主权在第二套题材上照样 200/200 复刻。"
     }
   },
   "edges": [
@@ -28102,6 +28140,12 @@
       "to": "TASK-311",
       "type": "implements",
       "created_at": "2026-09-18T22:14:55+00:00"
+    },
+    {
+      "from": "CHG-395",
+      "to": "TASK-312",
+      "type": "implements",
+      "created_at": "2026-09-18T22:17:54+00:00"
     }
   ]
 }
