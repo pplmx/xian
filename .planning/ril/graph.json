@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 234,
+  "round": 235,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T13:50:00+00:00",
+  "updated_at": "2026-09-18T14:35:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13985,6 +13985,66 @@
       "rationale": "炼制在本作原是\"够级必成、不够级看不见方子\"的硬门槛,后来改成四乘区。抽库时保留的是**改后的形状**:四个乘区各有下限,任何一项弱都不把成功率归零,四项全弱时自然低到不该开炉 —— 于是\"赌一把\"始终是玩家的选择,而\"准备得怎么样\"能逐条权衡。库不做\"够级判定\":那是作品的知识门槛(知不知道有这张方子),不是通用机制。",
       "alternatives_rejected": "①库提供\"等级 ≥ 配方阶\"的硬门槛判定(把已被否定的旧口径固化进公共库);②库只给一个成功率数值表(乘区语义丢失,使用方只能整段照抄);③把 bearableRank 也收进库(那是\"练气可稳承一阶\"这类作品设定)。",
       "summary": "炼制:库给四乘区与越级曲线的形状与算法(各有下限),不提供硬门槛判定;知识门槛与承受阶位留在作品侧。"
+    },
+    "TASK-214": {
+      "id": "TASK-214",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:35:00+00:00",
+      "updated_at": "2026-09-18T14:35:00+00:00",
+      "touched_round": 235,
+      "category": "core-feature",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "\"等等\"里的任务/成就抽进公共库:GoalCond 五型(计数/等级/位阶/品阶/自定义)、GoalEnv 环境接口(引擎不认识存档,只向作品提问)、evalGoal(唯一判据)与 goalProgress(进度视图)。本作 evalCond 改为\"翻条件 + 问环境\",questProgress 的判定与比例改走库,文案仍留本作。"
+    },
+    "CHG-281": {
+      "id": "CHG-281",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:35:00+00:00",
+      "updated_at": "2026-09-18T14:35:00+00:00",
+      "touched_round": 235,
+      "commit": "473711a",
+      "summary": "库侧新增 goals.ts/goals.spec.ts:GoalCond、GoalEnv、evalGoal、goalProgress;两条口径写进实现(位阶型大阶优先;只有可量化条件给 ratio,目标为 0 不除零);index 导出;README 补该模块与\"为什么判据要收成一处\"。"
+    },
+    "CHG-282": {
+      "id": "CHG-282",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:35:00+00:00",
+      "updated_at": "2026-09-18T14:35:00+00:00",
+      "touched_round": 235,
+      "commit": "a84caad",
+      "summary": "应用侧:core/progress 增 toGoalCond(quality 显式返回 null)与 goalEnv(计数器/境界/自定义键),evalCond 改为调库;core/questProgress 的 done/ratio 改用 goalProgress;engineParity 补「任务与成就条件」对账:主线+每日+成就全部真实条件 × 6 档境界 × 3 档小阶 × 计数四档与冻结旧判据逐个相同,并钉住品质型不被翻成等级判据。"
+    },
+    "EV-220": {
+      "id": "EV-220",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:35:00+00:00",
+      "updated_at": "2026-09-18T14:35:00+00:00",
+      "touched_round": 235,
+      "source": "src/core/engineParity.spec.ts(39 例)+ packages/engine(102 例)+ bun run test(196 文件 / 1984 例)+ bun run check + bun run check:engine",
+      "summary": "目标条件对账:真实条件表(主线 32 + 每日 3 + 成就 62 的量级)覆盖四型;每个条件在 6×3 状态与计数四档下与冻结旧判据逐个相同,比例口径(封顶 1、目标 0)逐点相同;库内另有五型判定与进度视图的独立用例。全量闸门与产物自检(37 个文件 / 61.3 KB)全绿。"
+    },
+    "DEC-085": {
+      "id": "DEC-085",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:35:00+00:00",
+      "updated_at": "2026-09-18T14:35:00+00:00",
+      "touched_round": 235,
+      "rationale": "\"达成与否\"若在界面与发赏各写一遍,迟早出现\"界面说成了、领赏时不算\"(或反过来),而玩家只会把它当成吞奖励 —— 这类不一致最伤信任。故判据收成 evalGoal 一处,进度视图 goalProgress 与它共用同一份判断;环境由作品给(计数怎么存、等级怎么算、品阶何谓),库不碰存档。另有一条本作语义必须留在本作:品质成就由 checkQuality 显式触发、不与等级同路,故翻译层对 quality 显式返回 null,而不是硬翻成\"品阶达标\"。",
+      "alternatives_rejected": "①库直接读某个约定的存档形状(把作品的数据结构固化进公共库);②界面自己再写一遍比较(正是要消掉的分叉);③把 quality 也翻成\"品阶达标\"(会改变本作语义:品质成就是由掉落事件触发的,不是看当前品阶)。",
+      "summary": "达成判据收成 evalGoal + goalProgress 一处,环境由作品提供;作品特有的旁路(本作的 checkQuality)在翻译层显式排除。"
     }
   },
   "edges": [
@@ -21086,6 +21146,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "CHG-281",
+      "to": "TASK-214",
+      "type": "implements",
+      "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "CHG-282",
+      "to": "TASK-214",
+      "type": "implements",
+      "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "CHG-281",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "CHG-282",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "EV-220",
+      "to": "CHG-281",
+      "type": "validates",
+      "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "EV-220",
+      "to": "CHG-282",
+      "type": "validates",
+      "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "TASK-214",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "TASK-214",
+      "to": "TASK-213",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "DEC-085",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T14:35:00+00:00"
     }
   ]
 }
