@@ -39,6 +39,9 @@
 - **补齐公开面**:`CombatKeys` / `DamageContext` / `SkillEffectContext` / `BattleEventKind`、
   `RealmExpConfig` / `RealmCombatConfig` / `RealmBreakthroughConfig`、`ProficiencyConfig`
   现在都能从公开入口取到 —— 以前它们只在内部模块里,使用者写钩子时标不上类型
+- **日常学习内容包也能装了**:`package.json` 的 `exports` 补上 `./presets/daily`
+  (此前只声明了 `./presets/xiuxian` 与 `./presets/demo`,那份"与战斗无关"的题材
+  在仓库里跑得通、装到别人那儿却 import 不到)
 - `crafting.levers` 改成**任意个数与名字**的乘区表(原来是写死的掌握/认知/技艺三区),
   每区可给自定义曲线;越级惩罚改为可选(不配就没有越级这回事)
 - 几处"写死的曲线"开成钩子:`realms.exp.costFn`、`realms.combat.statsFn`、

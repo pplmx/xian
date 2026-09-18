@@ -21,13 +21,14 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
 const DIST = resolve(import.meta.dirname, '..', 'dist')
-for (const entry of ['index.js', 'index.d.ts', 'presets/demo.js', 'presets/xiuxian.js']) {
+for (const entry of ['index.js', 'index.d.ts', 'presets/demo.js', 'presets/xiuxian.js', 'presets/daily.js']) {
   assert.ok(existsSync(resolve(DIST, entry)), `产物缺文件:dist/${entry} —— 先跑 bun run build`)
 }
 
 const engine = await import(resolve(DIST, 'index.js'))
 const { DEMO } = await import(resolve(DIST, 'presets/demo.js'))
 const { XIUXIAN } = await import(resolve(DIST, 'presets/xiuxian.js'))
+const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
 const game = engine.defineGame(DEMO)
@@ -36,6 +37,51 @@ assert.equal(game.attributes.name('attack'), '火力')
 const loot = game.equipment.generate(engine.createRng('verify'), { tier: 1 })
 assert.ok(game.equipment.resolve(loot).template, '掉出来的装备应当能解析')
 assert.equal(engine.defineGame(XIUXIAN).realms.realms.length, 21)
+
+// 第三个题材(与战斗/修仙都无关的那份)也要能装起来走一圈 —— 通用性不是"两份预设恰好像",
+// 而是"没有任何战斗世界观的题材,同一套内核照样跑完升级 → 掉装备 → 遭遇 → 通关结算"。
+{
+  const game = engine.defineGame(DAILY)
+  assert.equal(game.realms.label(0, 0), '启蒙班·第一周')
+  assert.equal(game.attributes.name('attack'), '专注力')
+  const rng = engine.createRng('书桌')
+  const state = game.realms.addExp({ major: 0, layer: 0, exp: 0 }, Number(game.realms.expCost(0, 0)))
+  assert.equal(game.realms.progress(state).ready, true)
+  const loot = game.equipment.generate(rng, { tier: 1 })
+  const resolved = game.equipment.resolve(loot)
+  assert.ok(resolved.template, '掉出来的文具应当能解析')
+  const loadout = game.equipment.equip({ equipped: {} }, loot)
+  const equipped = game.equipment.resolveLoadout(loadout, new Map([[loot.uid, loot]]))
+  const stats = game.attributes.compute({
+    base: game.realms.baseStats(0, 0),
+    flat: equipped.flats,
+    modSources: [equipped.mods, resolved.mods]
+  })
+  const region = game.dungeons.firstRegion()
+  assert.equal(region.name, '图书馆')
+  const encounter = game.dungeons.nextEncounter(region.id, engine.emptyProgress(), rng)
+  const foe = game.dungeons.snapshot(encounter.enemyId)
+  const battle = game.combat.resolve(
+    {
+      id: 'me',
+      name: '我',
+      stats: {
+        hp: stats.final.maxHp ?? 0,
+        maxHp: stats.final.maxHp ?? 0,
+        attack: stats.final.attack ?? 0,
+        defense: stats.final.defense ?? 0,
+        speed: 1
+      },
+      mods: stats.mods
+    },
+    { id: foe.id, name: foe.name, stats: foe.stats, mods: foe.mods, skills: foe.skills },
+    rng
+  )
+  assert.ok(battle.events.length > 0, '这一场得有过程')
+  const outcome = game.dungeons.onVictory(region.id, { ...encounter, kind: 'boss' }, engine.emptyProgress(), rng)
+  assert.equal(outcome.firstClear, true)
+  assert.ok(outcome.rewards.length > 0, '通关要给点东西(哪怕是"理解"与零花钱)')
+}
 
 console.log(`Node 产物自检通过(dist 可被 node ESM 直接 import:${Object.keys(engine).length} 个导出)`)
 
@@ -65,10 +111,12 @@ const consumerProbe = `
   const assert = (await import('node:assert/strict')).default
   const engine = await import('wanxiang-engine')
   const { DEMO } = await import('wanxiang-engine/presets/demo')
+  const { DAILY } = await import('wanxiang-engine/presets/daily')
   const game = engine.defineGame(DEMO)
   assert.equal(game.realms.label(0, 0), '见习船员 I 阶')
+  assert.equal(engine.defineGame(DAILY).realms.label(8, 5), '高三·期末')
   assert.equal(typeof engine.defineGame, 'function')
-  console.log('   按包名 import 通过(含子路径内容包)')
+  console.log('   按包名 import 通过(含两份子路径内容包)')
 `
 execFileSync('node', ['--input-type=module', '-e', consumerProbe], { cwd: app, stdio: 'inherit' })
 console.log(`发布包自检通过(${tgz} 装进临时项目后可用)`)

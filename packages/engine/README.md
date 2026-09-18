@@ -206,8 +206,9 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 一句话:**名字随便换,机制键不动**。引擎里没有一个字段要求你叫它"修为"或"境界" ——
 它只要求你给出"一串有序的世界名、每层的成长曲线、每个部位的几种成色"。
 
-两份现成的内容包可以直接对照:`presets/xiuxian`(修仙)、`presets/demo`(科幻)、
-`presets/daily`(日常学习,含学科/伙伴/做饭三份配套配置)。
+三份现成的内容包可以直接对照,也都从包名起就能取到:
+`import 'wanxiang-engine/presets/xiuxian'`(修仙)、`.../demo`(科幻)、
+`.../daily`(日常学习,含学科/伙伴/做饭三份配套配置)。
 
 ## 自由定制:想改什么,改哪里
 
@@ -441,13 +442,16 @@ cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
 | 装备叫什么 | `equipment.templates[].name`、`slots[].name`、`qualities[].name`、`affixes[].name` | id 与部位键 |
 | 副本叫什么 | `dungeons.regions[].name`、`enemies[].name` | id、层级、前置关系 |
 
-两份现成的内容包可以对照着看:
+三份现成的内容包可以对照着看:
 
 - `src/presets/xiuxian.ts` —— 仙侠:四界二十一境、九档品质、六层装备、六个区域
 - `src/presets/demo.ts` —— 星港:舱位等级、舰载模块、火力/装甲/结构值、三个星区
+- `src/presets/daily.ts` —— 书桌与日常:学段与周次、专注力/精力、文具与书桌、图书馆与期末考试
+  (这份是**没有战斗世界观**的题材,用来证明通用性不是"两份预设恰好像")
 
-两者的**机制键完全一致**,名字没有一处相同,而都能跑完「修炼 → 进阶 → 掉装 → 装配 → 打副本 → 通关拿奖励」。
-这不是文档里的承诺,是 `src/presets/presets.spec.ts` 里的判据。
+三者的**机制键完全一致**,名字没有一处相同,而都能跑完「修炼 → 进阶 → 掉装 → 装配 → 打副本 → 通关拿奖励」。
+这不是文档里的承诺,是 `src/presets/presets.spec.ts` 里的判据;发布包那边(`scripts/verify-dist.mjs`)
+还会真的装一遍、按包名与子路径 import,再把三份内容包各装配一次。
 
 ## 装配时会替你抓的错
 
@@ -527,7 +531,7 @@ packages/engine/
     dungeons.ts     区域链/敌人/遭遇/首领门槛/通关奖励
     combat.ts       回合制解算(副本的下半场)
     config.ts       defineGame / validateGame(交叉校验)
-    presets/        仙侠与星港两份内容包
+    presets/        仙侠 / 星港 / 日常学习三份内容包
   examples/minimal.ts
 ```
 

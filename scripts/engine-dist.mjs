@@ -31,7 +31,8 @@ const entries = [
   pkg.exports['.'].types,
   pkg.exports['.'].import,
   pkg.exports['./presets/xiuxian'].import,
-  pkg.exports['./presets/demo'].import
+  pkg.exports['./presets/demo'].import,
+  pkg.exports['./presets/daily'].import
 ]
 for (const entry of entries) {
   assert.ok(entry, 'package.json 里少了一个入口声明')
@@ -134,7 +135,16 @@ execFileSync('npm', ['pack', '--dry-run', '--json'], {
 })
 const pack = JSON.parse(readFileSync(packJson, 'utf8'))[0]
 const shipped = pack.files.map(f => f.path)
-for (const required of ['dist/index.js', 'dist/index.d.ts', 'dist/presets/demo.js', 'README.md', 'LICENSE', 'package.json']) {
+for (const required of [
+  'dist/index.js',
+  'dist/index.d.ts',
+  'dist/presets/demo.js',
+  'dist/presets/daily.js',
+  'dist/presets/xiuxian.js',
+  'README.md',
+  'LICENSE',
+  'package.json'
+]) {
   assert.ok(shipped.includes(required), `发布包里少了 ${required}(实际:${shipped.slice(0, 8).join(', ')}…)`)
 }
 assert.ok(
@@ -176,4 +186,4 @@ assert.deepEqual(crawlUsers, [], `这些文件用相对路径直接钻进库内�
 assert.ok(byName > 0, '宿主一处都没引用库?那这份自检在验什么')
 console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
 
-console.log(`产物自检通过:${entries.length} 个入口 + 两份内容包 + 交叉校验 + 发布包内容 + 真装一遍 + 宿主引用方式`)
+console.log(`产物自检通过:${entries.length} 个入口 + 三份内容包 + 交叉校验 + 发布包内容 + 真装一遍 + 宿主引用方式`)

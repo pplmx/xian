@@ -20,6 +20,10 @@
     "./presets/demo": {
       "types": "./dist/presets/demo.d.ts",
       "import": "./dist/presets/demo.js"
+    },
+    "./presets/daily": {
+      "types": "./dist/presets/daily.d.ts",
+      "import": "./dist/presets/daily.js"
     }
   },
   "files": [
