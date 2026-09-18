@@ -355,9 +355,10 @@ describe('消融实验续 · 接上主权之后能对齐到哪一步', () => {
       const red = Math.min(MITIGATION_CAP, def / (def + atk * MITIGATION_K))
       factor *= 1 - red
       factor *= Math.max(0.1, 1 - (dMods.damageReduction ?? 0))
-      const lost = ctx.applyDamage(defender, atk * Math.max(0.02, factor))
-      void lost
-      trace.push(`${attacker.id ?? attacker.name}#${(ctx.num(defender, 'hp') / Math.max(1, ctx.num(defender, 'maxHp'))).toFixed(3)}`)
+      const raw = atk * Math.max(0.02, factor)
+      ctx.applyDamage(defender, raw)
+      // 记的是**这一手的原始伤害**(与战报里的伤害同口径),不是扣完护盾后的净失血
+      trace.push(`${attacker.id ?? attacker.name}#${raw.toFixed(2)}`)
       // 出手之后:反击(挨打方的反应)→ 追击 → 震慑;**词条为 0 也照掷**
       if (opts.counter !== false && ctx.num(defender, 'hp') > 0 && rng.chance(Math.max(0, dMods.counterRate ?? 0))) {
         oneStrike(ctx, rng, defender, attacker, 0.5 * (1 + (dMods.counterDamage ?? 0)), { counter: false, followups: false })
@@ -421,8 +422,8 @@ describe('消融实验续 · 接上主权之后能对齐到哪一步', () => {
       if (host.win === libraryResolve(s, seed).win) agreeDefault += 1
       const [p, e] = enginePair(s)
       const battle = sovereignEngineFull().resolve(
-        { ...p, mods: bumpCrit(p.mods) },
-        { ...e, mods: bumpCrit(e.mods) },
+        p,
+        e,
         createRng(seed) as unknown as Rng
       )
       const mine = { win: battle.win, rounds: battle.rounds }
@@ -435,16 +436,25 @@ describe('消融实验续 · 接上主权之后能对齐到哪一步', () => {
         `库 + 三处主权(完整版)胜负一致 ${pct(agreeSovereign)}(回合数相同 ${pct(roundsMatch)})\n`
     )
     /**
-     * 这一格**还没到 100%**:接上主权之后胜负有 92% 对得上(默认 58%),但回合数只有 66% 相同 ——
-     * 说明在"技能 + 护盾 + 反击"的复杂格里,随机消耗序列还有一处没照抄齐(第一处分歧落在
-     * 第二回合玩家那一击后的血线上)。这条记进图谱(ISS-235)留待下一轮;方法就留在下面的
-     * 诊断用例里:它先找一颗"回合数就对不上"的种子,再把两边每一击后的血线逐条列出来。
+     * 两格都对齐了(默认 58% → 主权版 100%)。
+     *
+     * 卡住过一阵的那处分歧,根因不在库也不在随机消耗序列,而在**我的复刻写重了一份**:
+     * 主权版的 `strikeFn` 自带 `CRIT_BASE(0.05)`,而我在场景里又套了给"用库默认暴击"那份
+     * 对照准备的 `bumpCrit` —— 于是暴击率成了 0.30 而本作是 0.25,第一手就分岔。
+     * 教训值得写下来:**整段接管时要连"这一部分是谁加的"一起搬**,别让两边各加一次。
+     * (随机消耗序列那一半的教训见文件头:词条为 0 的骰子也要照掷。)
      */
-    expect(agreeSovereign).toBeGreaterThan(agreeDefault)
-    expect(agreeSovereign / SEEDS.length).toBeGreaterThanOrEqual(0.9)
-    expect(roundsMatch / SEEDS.length).toBeGreaterThanOrEqual(0.6)
+    expect(agreeSovereign).toBe(SEEDS.length)
+    expect(roundsMatch).toBe(SEEDS.length)
   })
 
+  /**
+   * 诊断工具:先找一颗"回合数就对不上"的种子,再把两边每一手的**原始伤害**逐条列出来。
+   *
+   * 两个细节:比的是原始伤害而不是"扣完护盾后的净失血"(开局护盾会把前几手全吞掉,
+   * 净失血看不出差别);而本作战报里的伤害是 `formatGN` 三位有效数字,所以末位那点差
+   * 是**格式差**不是数值差 —— 真正的分歧是整数量级的。
+   */
   it('诊断:头几手逐条比(对齐不上时,它能指出第一处分歧)', () => {
     const s = SCENARIOS[3]!
     /** 先找一颗"回合数就对不上"的种子 —— 分歧越小越好定位 */
@@ -452,26 +462,29 @@ describe('消融实验续 · 接上主权之后能对齐到哪一步', () => {
     for (let seed = 1; seed <= 200 && badSeed === 0; seed += 1) {
       const [p, e] = enginePair(s)
       const battle = sovereignEngineFull().resolve(
-        { ...p, mods: bumpCrit(p.mods) },
-        { ...e, mods: bumpCrit(e.mods) },
+        p,
+        e,
         createRng(seed) as unknown as Rng
       )
       if (battle.rounds !== hostResolve(s, seed).rounds) badSeed = seed
     }
     const [p, e] = enginePair(s)
     sovereignEngineFull().resolve(
-      { ...p, mods: bumpCrit(p.mods) },
-      { ...e, mods: bumpCrit(e.mods) },
+      p,
+      e,
       createRng(badSeed || 1) as unknown as Rng
     )
     const mine = (globalThis as { __combatTrace?: string[] }).__combatTrace ?? []
     const hostLog = resolveCombat(playerSnap(s), enemySnap(s), new RandomService(mulberry32(badSeed || 1))).log
     const hostSeq = hostLog
       .filter(row => row.t === 'atk' || row.t === 'crit' || row.t === 'skill')
-      .map(row => `${row.side === 'p' ? 'player' : '山精'}#${(row.side === 'p' ? row.ehp : row.php).toFixed(3)}`)
+      .map(row => `${row.side === 'p' ? 'player' : '山精'}#${Number(String(row.dmg).replace(/,/g, '')).toFixed(2)}`)
     console.log(`  第一颗对不上的种子:${badSeed}`)
-    console.log(`  我这边头 6 手:${mine.slice(0, 6).join(' ')}`)
-    console.log(`  本作头 6 手  :${hostSeq.slice(0, 6).join(' ')}`)
+    console.log(`  我这边头 10 手:${mine.slice(0, 10).join(' ')}`)
+    console.log(`  本作头 10 手  :${hostSeq.slice(0, 10).join(' ')}`)
+    const firstDiff = mine.findIndex((row, i) => row !== hostSeq[i])
+    console.log(`  第一处不同:第 ${firstDiff + 1} 手(我 ${mine[firstDiff]} / 本作 ${hostSeq[firstDiff]})`)
+    console.log(`  本作那一段的细节:${hostLog.slice(0, 12).map(r => `${r.t}${r.side}#${r.dmg ?? '-'}`).join(' ')}`)
     expect(mine.length).toBeGreaterThan(0)
   })
 })
