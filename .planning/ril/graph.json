@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 321,
+  "round": 322,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:41:09+00:00",
+  "updated_at": "2026-09-18T21:45:36+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18445,6 +18445,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-385(05e9b91)。node scripts/verify-dist.mjs → 新增输出\"从零装配通过(不引用任何内容包:自己写槽位/品质/词条/区域/敌人,跑通修炼 → 掉装 → 通关)\",发布包自检总输出变为\"wanxiang-engine-0.1.12.tgz 装进临时项目后可用 · 含使用者侧的 tsc 严格模式\";防空转:把内联断言里的一处标签改成\"故意写错\"→ 退出码 1,改回 → 0;cd packages/engine && bun run check(431 例 / 51 文件 + 八道自检 + 9 示例);cd /workspace/xian && bun run test(258 文件 / 2479 例)、check:engine(59 处引用)、check:engine:standalone(91 个源文件)。",
       "summary": "这层库里最深的一条承诺(\"换一套名字与内容就能搭出自己的游戏\")现在有了对发布产物的直接证据:打包 → 装进空项目 → 只用包名导出从零装配一款新题材 → 跑通一圈。此前的证据只到\"装配三份自带内容包\",那是\"样例能用\",不是\"自己写也能用\"。"
+    },
+    "TASK-303": {
+      "id": "TASK-303",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:45:35+00:00",
+      "updated_at": "2026-09-18T21:45:35+00:00",
+      "touched_round": 321,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "图鉴与世界记忆两份消融(codex.sim.spec + memory.sim.spec):图鉴门槛 3/8/20 次照面(权重 3 提前到 1/3/7)、概率升档每掷中只推一层(每次 10%/20 次照面只有约 1/3 到顶,实测 33.5% vs 理论 32.3%)、只增不减与\"各维取高\";世界记忆两路门槛取先到、差一点只掉一档(分级取)、回落是硬开关(71h→繁荣、72h→荒芜)、\"没资格\"与\"太久没来\"靠 decayed 区分。"
+    },
+    "CHG-386": {
+      "id": "CHG-386",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:45:35+00:00",
+      "updated_at": "2026-09-18T21:45:35+00:00",
+      "touched_round": 321,
+      "commit": "8a3f198",
+      "summary": "库:新增 src/codex.sim.spec.ts 与 src/memory.sim.spec.ts(各 4 例);CHANGELOG「未发布」记两节;docs/tuning.md 新增两节(第 12、13 份消融进参考表);docs/assembly.md 配方 B 补图鉴与世界记忆两行、坑清单补两行;README 用例数改 439/53。宿主无改动。"
+    },
+    "EV-312": {
+      "id": "EV-312",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:45:36+00:00",
+      "updated_at": "2026-09-18T21:45:36+00:00",
+      "touched_round": 321,
+      "confidence": 0.96,
+      "source": "变更 CHG-386(8a3f198)。bunx vitest run src/codex.sim.spec.ts src/memory.sim.spec.ts(8 例全过;打印:20 次照面停在 0 0 1 1 1 1 1 2…3、升档在第 3/8/20 次;权重 3 时 1 1 2 2 2 2 3;概率升档 20 次后 初见 12.4% / 眼熟 25.9% / 知其路数 28.2% / 洞悉 33.5%(理论 32.3%);三件里记下 {\"quality\":3,\"tier\":9};记忆:打 3 场或守 12 小时 → 安生、10 场或 48 小时 → 繁荣、9 场/47 小时 → 安生;闲置 71h → 繁荣、72h → 荒芜;没资格 decayed=false vs 太久没来 true);cd packages/engine && bun run check(439 例 / 53 文件 + 八道自检,调参参考自检报 13 份消融、用例文件数自检当场抓出 51→53、相对导入自检 93 个源文件);cd /workspace/xian && bun run test(260 文件 / 2487 例)、check:engine(59 处引用)、check:engine:standalone(93 个源文件)。",
+      "summary": "两条\"看着差不多、其实差很远\"的路被量清楚:①累计阈值升档 vs 概率升档 —— 同样 20 次照面,前者必定到顶,后者只有约三分之一(每掷中一次只推一层);②世界记忆的升档是分级取(差一点只掉一档),但回落是硬开关(到点直接回最低档)。"
     }
   },
   "edges": [
@@ -27688,6 +27726,12 @@
       "to": "TASK-302",
       "type": "implements",
       "created_at": "2026-09-18T21:41:08+00:00"
+    },
+    {
+      "from": "CHG-386",
+      "to": "TASK-303",
+      "type": "implements",
+      "created_at": "2026-09-18T21:45:36+00:00"
     }
   ]
 }
