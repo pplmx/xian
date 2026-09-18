@@ -71,4 +71,36 @@ describe('属性系统 —— 换皮不改机制', () => {
     const depth = sys.modDepth({ attackPct: 0.5, critRate: 0.1, dodgeRate: 0.05 })
     expect(depth).toBeCloseTo(0.15, 10)
   })
+
+  it('递减算法本身可配:默认按贡献打折,也可取最大 / 直接叠加 / 自己折叠', () => {
+    const sources = [{ counterRate: 0.08 }, { counterRate: 0.12 }, { counterRate: 0.04 }]
+    // 默认:降序 0.12 + 0.08×0.75 + 0.04×0.5
+    const ranked = createAttributeSystem({ defs: attributeDefs({}) })
+    expect(ranked.mergeMods(sources).counterRate).toBeCloseTo(0.12 + 0.08 * 0.75 + 0.04 * 0.5, 10)
+    // 只取最强的那一份
+    const maxOnly = createAttributeSystem({ defs: attributeDefs({}), diminish: { mode: 'max' } })
+    expect(maxOnly.mergeMods(sources).counterRate).toBeCloseTo(0.12, 10)
+    // 直接叠加(等于关掉递减,不必逐条改 def)
+    const sum = createAttributeSystem({ defs: attributeDefs({}), diminish: { mode: 'sum' } })
+    expect(sum.mergeMods(sources).counterRate).toBeCloseTo(0.24, 10)
+    // 自己折叠:取平方和开根这类都行,这里用"只算前两名之和的一半"
+    const folded = createAttributeSystem({
+      defs: attributeDefs({}),
+      diminish: { fold: values => [...values].sort((a, b) => b - a).slice(0, 2).reduce((a, b) => a + b, 0) / 2 }
+    })
+    expect(folded.mergeMods(sources).counterRate).toBeCloseTo((0.12 + 0.08) / 2, 10)
+  })
+
+  it('换递减算法后,面板明细之和仍等于合计(fold 按占比摊回)', () => {
+    const sys = createAttributeSystem({ defs: attributeDefs({}), diminish: { mode: 'max' } })
+    const { mods, effective } = sys.mergeModsDetailed([{ counterRate: 0.05 }, { counterRate: 0.2 }, { counterRate: 0.1 }])
+    const detailSum = effective.reduce((acc, row) => acc + (row.counterRate ?? 0), 0)
+    expect(detailSum).toBeCloseTo(mods.counterRate ?? 0, 10)
+
+    const foldSys = createAttributeSystem({ defs: attributeDefs({}), diminish: { fold: values => values.reduce((a, b) => a + b, 0) * 0.5 } })
+    const folded = foldSys.mergeModsDetailed([{ counterRate: 0.05 }, { counterRate: 0.2 }])
+    const foldedSum = folded.effective.reduce((acc, row) => acc + (row.counterRate ?? 0), 0)
+    expect(foldedSum).toBeCloseTo(folded.mods.counterRate ?? 0, 10)
+    expect(folded.mods.counterRate).toBeCloseTo(0.125, 10)
+  })
 })

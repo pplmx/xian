@@ -82,6 +82,30 @@ export type RealmCombatConfig =
   | (GrowthCurve & { base: Record<string, number>; layerGrowth: number; statsFn?: undefined })
   | (GrowthCurve & { statsFn: (major: number, layer: number) => Record<string, number> })
 
+/**
+ * 进阶成功率的两条路:**线性衰减**(小层看层数、大关看境界),或**自己接管**。
+ *
+ * 两条路都仍受 `min/max` 夹取 —— 那是"这个骰子的取值范围",属于结构;
+ * `rateFn` 只回答"基础值是多少",调用方给的天赋/道具加成照旧叠加。
+ */
+export type RealmBreakthroughConfig = {
+  min: number
+  max: number
+  /** true = 大关必须走天劫/试炼,不掷这个骰子 */
+  majorRequiresTrial?: boolean
+} & (
+  | {
+      /** 小层进阶基础成功率与每层衰减 */
+      layerBase: number
+      layerDecay: number
+      /** 大关(跨大境界)基础成功率与每大境界衰减 */
+      majorBase: number
+      majorDecay: number
+      rateFn?: undefined
+    }
+  | { rateFn: (major: number, layer: number) => number }
+)
+
 export interface RealmSystemConfig {
   worlds: WorldConfig[]
   /** 小层名目,默认 ['一层'…'九层','圆满'] —— 顺序即小层序号 */
@@ -92,18 +116,7 @@ export interface RealmSystemConfig {
   exp: RealmExpConfig
   /** 基础本值:曲线,或 statsFn 自己接管 */
   combat: RealmCombatConfig
-  breakthrough: {
-    /** 小层进阶基础成功率与每层衰减 */
-    layerBase: number
-    layerDecay: number
-    /** 大关(跨大境界)基础成功率与每大境界衰减 */
-    majorBase: number
-    majorDecay: number
-    min: number
-    max: number
-    /** true = 大关必须走天劫/试炼,不掷这个骰子 */
-    majorRequiresTrial?: boolean
-  }
+  breakthrough: RealmBreakthroughConfig
   /**
    * 「一段生涯的长度」:世界内按 growth 复利,跨界那一次是"大跃"(base 直接给定)。
    * 只给 base/growth 时,后续世界的 base = 上一世界末境寿元 × worldStepMult。
@@ -310,7 +323,8 @@ export function createRealmSystem<T = number>(
     const m = clamp(major_, 0, maxMajor)
     const l = clamp(layer, 0, layerEnd)
     const bt = config.breakthrough
-    const raw = isMajorStep(m, l) ? bt.majorBase - m * bt.majorDecay : bt.layerBase - l * bt.layerDecay
+    // 自己接管成功率曲线的:原样用它的数(仍受 min/max 夹取 —— 那是取值范围,不是曲线)
+    const raw = bt.rateFn ? bt.rateFn(m, l) : isMajorStep(m, l) ? bt.majorBase - m * bt.majorDecay : bt.layerBase - l * bt.layerDecay
     return clamp(raw, bt.min, bt.max)
   }
 

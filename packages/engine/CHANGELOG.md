@@ -39,6 +39,10 @@
   (取代原先固定的 `hp/maxHp/attack/defense/speed` 字段),`BattleConfig.keys` 指定读哪几个键 ——
   本值叫"火力/装甲/结构值"或"专注力/耐心/精力"都行。战斗不再就地改动传入对象(内部拷一份)。
 - 牌堆的标签语义可配:`DeckContext.match: 'any' | 'all'`(默认 any)与 `excludeTags`
+- 又开三处:`realms.breakthrough.rateFn`(自己定进阶成功率)、
+  `dungeons.enemyPower.scaleFn`(自己定敌人数值曲线)、
+  `attributes.diminish`(递减算法本身:`ranked` 默认 / `max` / `sum` / 自定义 `fold`,
+  且明细仍恒等于合计)
 
 **已验证**
 

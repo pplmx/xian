@@ -105,7 +105,19 @@ export interface DungeonConfig {
    */
   bossRhythm?: 'cycle' | 'once'
   /** 敌人数值基数与层级曲线 */
-  enemyPower?: { baseHp: number; baseAttack: number; baseDefense: number; tierGrowth: number; tierFactors?: number[] }
+  enemyPower?: {
+    baseHp: number
+    baseAttack: number
+    baseDefense: number
+    tierGrowth: number
+    /** 直接给出每一层的缩放系数(第 i 项 = 层级 i+1) */
+    tierFactors?: number[]
+    /**
+     * 自己接管层级系数(**可选**):给了它就完全接管(返回该层的缩放倍数),
+     * 便于"分层档不按同一条指数走"的作品 —— 与装备那边的 tierFactors 是同一个思路。
+     */
+    scaleFn?: (tier: number) => number
+  }
   /** 每场胜利的通用奖励 */
   victoryRewards?: RewardDef[]
   /** 是否需要前置通关才解锁(默认 true) */
@@ -315,7 +327,9 @@ export function createDungeonSystem<T = number>(
   const snapshot = (enemyId: string): EnemySnapshot<T> => {
     const def = enemyById.get(enemyId)
     if (!def) throw new Error(`副本系统:没有这个敌人 —— ${enemyId}`)
-    const factor = power.tierFactors?.[def.tier - 1] ?? power.tierGrowth ** Math.max(0, def.tier - 1)
+    const factor = power.scaleFn
+      ? power.scaleFn(def.tier)
+      : power.tierFactors?.[def.tier - 1] ?? power.tierGrowth ** Math.max(0, def.tier - 1)
     return {
       id: def.id,
       name: def.name,

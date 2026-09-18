@@ -220,6 +220,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | 属性维度(几个、叫什么) | `attributes.defs` + `core`;本值想有几个就几个 |
 | **每级需求完全自己定**(手调表、非指数公式) | `realms.exp.costFn(major, layer)` |
 | **基础属性完全自己定** | `realms.combat.statsFn(major, layer)` |
+| **进阶成功率完全自己定** | `realms.breakthrough.rateFn(major, layer)`(仍受 `min/max` 夹取) |
 | 不要"寿元"这回事 | 省略 `lifespan`(`lifespanOf` 返回 Infinity) |
 | 品质档数 / 槽位数量 / 每档词条条数 | `qualities[]` / `slots[]` / `QualityDef.affixes` |
 | 层级系数是张表而不是指数 | `equipment.power.tierFactors` |
@@ -227,6 +228,8 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | 词条数值单位(百分点 / 分数) | `equipment.affixValueScale` 或单个词条的 `scale` |
 | **技能消耗完全自己定** | `skills.costs[].amount(level)`(折扣与下限仍生效) |
 | **奖励数额完全自己定** | `dungeons.victoryRewards[].amount(tier)`(概率仍生效) |
+| **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
+| **词条合并的算法本身** | `attributes.diminish`:默认按贡献降序打折,也可 `'max'`(只取最强)/ `'sum'`(直接相加)/ 自定义 `fold(values)` |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
 | **随机内容池的标签体系与区间** | `deck` 的 `tags` / `min` / `max` / `weight` / `once`,`weightMultiplier`(倾向而非门槛) |

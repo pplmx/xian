@@ -61,6 +61,20 @@ export interface AttributeSystemConfig {
   powerWeights?: Record<string, number>
   /** 递减阶梯,默认 [1, 0.75, 0.5, 0.25] */
   diminishingWeights?: readonly number[]
+  /**
+   * 递减**算法**本身 —— 不是所有作品都想要"按贡献降序打折"。
+   *
+   *   `ranked`(默认):来源按数值降序,逐个乘阶梯权重(云隐的做法);
+   *   `max`         :同名只取最强的那一份,其余不计(干脆利落,适合"不许叠"的题材);
+   *   `sum`         :同名直接相加(等于关掉递减,但比逐条改 def 省事);
+   *   或者给 `fold`:自己接管 —— 拿到一组数值,返回计入的合计。
+   *
+   * 无论哪种,面板明细都仍会摊回各来源(合计恒等于明细之和);`fold` 下按各自占比摊。
+   */
+  diminish?: {
+    mode?: 'ranked' | 'max' | 'sum'
+    fold?: (values: readonly number[]) => number
+  }
 }
 
 export interface OnTopMult {
@@ -167,17 +181,38 @@ export function createAttributeSystem<T = number>(
       }
     })
 
+    const diminish = config.diminish
+    const attribute = (src: number, key: string, counted: number): void => {
+      const bucket = effective[src]!
+      bucket[key] = (bucket[key] ?? 0) + counted
+    }
     for (const [key, list] of diminished) {
-      list.sort((a, b) => b.value - a.value)
-      let sum = out[key] ?? 0
-      for (let i = 0; i < list.length; i += 1) {
-        const entry = list[i]!
-        const counted = entry.value * (weights[Math.min(i, weights.length - 1)] ?? 0.25)
-        sum += counted
-        const bucket = effective[entry.src]!
-        bucket[key] = (bucket[key] ?? 0) + counted
+      let total = 0
+      if (diminish?.fold) {
+        // 自己接管:按各来源占比摊回,保证"明细之和 = 合计"
+        const raw = list.reduce((acc, e) => acc + e.value, 0)
+        total = diminish.fold(list.map(e => e.value))
+        if (raw > 0) for (const e of list) attribute(e.src, key, (e.value / raw) * total)
+      } else if ((diminish?.mode ?? 'ranked') === 'sum') {
+        for (const e of list) {
+          total += e.value
+          attribute(e.src, key, e.value)
+        }
+      } else if (diminish?.mode === 'max') {
+        let best = list[0]!
+        for (const e of list) if (e.value > best.value) best = e
+        total = best.value
+        attribute(best.src, key, best.value)
+      } else {
+        const sorted = [...list].sort((a, b) => b.value - a.value)
+        for (let i = 0; i < sorted.length; i += 1) {
+          const entry = sorted[i]!
+          const counted = entry.value * (weights[Math.min(i, weights.length - 1)] ?? 0.25)
+          total += counted
+          attribute(entry.src, key, counted)
+        }
       }
-      out[key] = sum
+      out[key] = (out[key] ?? 0) + total
     }
 
     // 软阈值:同乘一个系数摊回各来源,故明细之和仍等于合计

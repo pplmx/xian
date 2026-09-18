@@ -149,4 +149,19 @@ describe('等级体系 —— 名目、曲线、进阶、寿元', () => {
     const three = makeSystem({ combat: { realmGrowth: 1, statsFn: () => ({ power: 5, guard: 3, vitality: 40 }) } })
     expect(Object.keys(three.baseStats(0, 0))).toEqual(['power', 'guard', 'vitality'])
   })
+
+  it('进阶成功率也能自己接管:rateFn 返回基础值,仍受 min/max 夹取', () => {
+    const sys = makeSystem({
+      breakthrough: { min: 0.1, max: 0.9, rateFn: (major, layer) => 0.5 + major * 0.1 - layer * 0.05 }
+    })
+    expect(sys.breakthroughRate(0, 0)).toBeCloseTo(0.5, 10)
+    expect(sys.breakthroughRate(2, 0)).toBeCloseTo(0.7, 10)
+    // 层数会被夹到本境界的最大层(这组配置是 3 层)
+    expect(sys.breakthroughRate(0, 99)).toBeCloseTo(0.5 - 3 * 0.05, 10)
+    // 低于下限时被夹到 min;高于上限时被夹到 max
+    const floored = makeSystem({ breakthrough: { min: 0.1, max: 0.9, rateFn: () => 0.01 } })
+    expect(floored.breakthroughRate(0, 0)).toBe(0.1)
+    const clamped = makeSystem({ breakthrough: { min: 0.1, max: 0.9, rateFn: () => 5 } })
+    expect(clamped.breakthroughRate(0, 0)).toBe(0.9)
+  })
 })

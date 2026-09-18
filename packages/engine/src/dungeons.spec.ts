@@ -138,4 +138,14 @@ describe('副本系统 —— 区域链/遭遇/首领门槛/通关奖励', () =>
     expect(out.rewards.find(r => r.id === 'score')?.amount).toBe(10)
     expect(out.rewards.some(r => r.id === 'rare')).toBe(false) // chance 0 → 不给
   })
+
+  it('敌人数值曲线可以自己接管(scaleFn 完全接管层级系数)', () => {
+    const custom = createDungeonSystem({
+      ...CONFIG,
+      enemyPower: { baseHp: 100, baseAttack: 10, baseDefense: 5, tierGrowth: 99, scaleFn: tier => tier }
+    })
+    // 层级 1 系数 1、层级 3 系数 3 —— 完全不看 tierGrowth
+    expect(Number(custom.snapshot('e1').stats.hp)).toBeCloseTo(100, 6)
+    expect(Number(custom.snapshot('e4').stats.hp)).toBeCloseTo(100 * 3, 6)
+  })
 })
