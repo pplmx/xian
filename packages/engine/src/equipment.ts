@@ -91,6 +91,13 @@ export interface AffixDef {
    * 这类单位换算必须是配置里的一条明文规矩,不能靠"碰巧两边都用同一种写法"。
    */
   scale?: number
+  /**
+   * 取值曲线(**可选**):给 0~1 的档位,返回**原始数值**(之后仍按 `decimals` 取整)。
+   *
+   * 默认是线性的 `min + (max − min) × roll`。想让"掷得满"更值钱(凸曲线)、
+   * 或让中档更常见(凹曲线),给一条函数即可 —— `min`/`max` 仍用于展示区间与筛选。
+   */
+  valueCurve?: (roll: number) => number
   /** 描述模板,`{v}` 为数值占位 */
   desc?: string
 }
@@ -332,7 +339,8 @@ export function createEquipmentSystem<T = number>(
   }
 
   const affixValue = (def: AffixDef, roll: number): number => {
-    const v = def.min + (def.max - def.min) * clamp(roll, 0, 1)
+    const r = clamp(roll, 0, 1)
+    const v = def.valueCurve ? def.valueCurve(r) : def.min + (def.max - def.min) * r
     const f = Math.pow(10, def.decimals ?? 1)
     return Math.round(v * f) / f
   }

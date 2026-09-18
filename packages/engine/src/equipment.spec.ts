@@ -194,6 +194,18 @@ describe('装备系统 —— 槽位/品质/模板/词条/套装', () => {
     expect(line.after).toBe('%')
   })
 
+  it('词条取值曲线可自己接管:凸曲线让"掷得满"更值钱', () => {
+    const sys = createEquipmentSystem({
+      ...CONFIG,
+      affixes: CONFIG.affixes.map(a => (a.id === 'a_atk' ? { ...a, valueCurve: (roll: number) => a.min + (a.max - a.min) * roll * roll } : a))
+    })
+    const def = sys.affix('a_atk')!
+    // min 1 / max 5:线性中档是 3;平方曲线中档是 1 + 4×0.25 = 2
+    expect(sys.affixValue(def, 0.5)).toBeCloseTo(2, 10)
+    expect(sys.affixValue(def, 1)).toBeCloseTo(5, 10)
+    expect(sys.affixValue(def, 0)).toBeCloseTo(1, 10)
+  })
+
   it('词条数值的书写单位可配置:百分点书写时 ÷100 入属性', () => {
     const points = createEquipmentSystem({ ...CONFIG, affixValueScale: 100 })
     const instance = { uid: 'x', templateId: 'w1', qualityId: 'common', tier: 1, level: 0, affixes: [{ id: 'a_atk', roll: 0.5 }] }
