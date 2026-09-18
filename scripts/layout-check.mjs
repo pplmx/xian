@@ -219,8 +219,18 @@ async function measurePage(page) {
       .filter(el => {
         const r = el.getBoundingClientRect()
         if (r.width <= 0 || r.right <= vw + 2) return false
-        // 纯装饰层(墨爆/传送门)故意超出视口,且不吃事件,不算排版事故
-        return !el.classList.contains('pointer-events-none') && !el.closest('.pointer-events-none')
+        /*
+         * 纯装饰层(墨爆 / 传送门 / 法球的三层旋转环)故意越过视口边缘,且不吃事件,不算排版事故。
+         *
+         * 判据看的是**计算后的 pointer-events**,不是类名 —— 组件里关掉事件用的是自定义类
+         * (如 `.ring-layer`),按类名找 `.pointer-events-none` 会漏掉它们;而旋转中的方形盒子
+         * 其 `getBoundingClientRect()` 会随动画相位涨到 √2 倍,于是同一处装饰一会儿过、一会儿不过
+         * —— 那是量法在抖,不是排版在坏(曾让 v1.34.0 的发版流水线红在 375px 首页上)。
+         */
+        for (let node = el; node; node = node.parentElement) {
+          if (getComputedStyle(node).pointerEvents === 'none') return false
+        }
+        return true
       })
       .slice(0, 4)
       .map(el => `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]}@${Math.round(el.getBoundingClientRect().right)}`)
