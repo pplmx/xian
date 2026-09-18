@@ -1,5 +1,7 @@
 # 云隐修仙录 Docker 部署指南
 
+> 本文只管部署。游戏本体、开发命令与公共库见 [README.md](README.md)。
+
 ## 快速开始
 
 ### 方式一：使用预构建镜像（推荐）
@@ -8,16 +10,16 @@
 
 ```bash
 # 最新版本
-docker run -d -p 8080:80 ghcr.io/setube/yunyin-xiuxian:latest
+docker run -d -p 8080:80 ghcr.io/pplmx/xian:latest
 
 # 指定版本号（取 package.json 的 version，将下面的 <version> 换成实际版本号）
-docker run -d -p 8080:80 ghcr.io/setube/yunyin-xiuxian:<version>
+docker run -d -p 8080:80 ghcr.io/pplmx/xian:<version>
 
 # 指定提交
-docker run -d -p 8080:80 ghcr.io/setube/yunyin-xiuxian:<commit-sha>
+docker run -d -p 8080:80 ghcr.io/pplmx/xian:<commit-sha>
 ```
 
-若仓库配置了 `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`，同一份镜像会额外推送到 Docker Hub 的 `<user>/yunyin-xiuxian`，标签一致。
+若仓库配置了 `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`，同一份镜像会额外推送到 Docker Hub 的 `<user>/xian`，标签一致。
 
 ### 方式二：本地构建镜像
 
@@ -245,8 +247,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/yunyin-xiuxian:latest
-            ghcr.io/${{ github.repository_owner }}/yunyin-xiuxian:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/xian:latest
+            ghcr.io/${{ github.repository_owner }}/xian:${{ github.ref_name }}
 ```
 
 ## 许可证
