@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 320,
+  "round": 321,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:39:27+00:00",
+  "updated_at": "2026-09-18T21:41:09+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18407,6 +18407,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-384(4cdc907)。bunx vitest run src/dungeons.sim.spec.ts(4 例,打印:once → 普通×4 后第 5 场首领、之后全普通;cycle → 第 4、8 场首领;每场前的读数 0/4 · 1/3 · 2/2 · 3/1 · 0/4 · 1/3;敌人快照 拦路小兵 100/10/6、跑得快的 80/12/5.4、平原首领 300/13/7.2、山道岩羊 231/23.1/12.6、山地首领 735/29.4/16.4;连打 2000 次首领 → 首通 1 次、装备掉落 579 次(28.9%));cd packages/engine && bun run check(431 例 / 51 文件 + 八道自检,其中组装指南自检现在是 26 个工厂、调参参考自检报 11 份消融、用例文件数自检当场抓出 50→51);cd /workspace/xian && bun run test(258 文件 / 2479 例)、check:engine(59 处引用)、check:engine:standalone(91 个源文件)。",
       "summary": "副本层的两个易错点被量化:①两种节奏在同样 bossProgress 下差一场(cycle 第 4 场 / once 第 5 场)—— 抄内容时最容易错的一格;②首领倒下即重新计数、once 通关后再无首领,所以\"刷本\"与\"通关\"是两种完全不同的后期循环。难度曲线的刻度也给了表(tierGrowth × 各自 hpMult/atkMult)。"
+    },
+    "TASK-302": {
+      "id": "TASK-302",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:41:08+00:00",
+      "updated_at": "2026-09-18T21:41:08+00:00",
+      "touched_round": 320,
+      "category": "core-feature",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "发布包自检新增\"冷启动\"一段:在临时项目里用包里导出的东西从零写一份新题材(槽位/品质/词条/区域/敌人全自己写,不碰 presets/*),装配并跑通\"升任 → 掉装 → 通关\",断言标签、模板解析与首通。把 from-zero 示例从\"仓库里的文件\"变成\"对发布产物的证据\"。"
+    },
+    "CHG-385": {
+      "id": "CHG-385",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:41:08+00:00",
+      "updated_at": "2026-09-18T21:41:08+00:00",
+      "touched_round": 320,
+      "commit": "05e9b91",
+      "summary": "库:scripts/verify-dist.mjs 的使用者探针里新增一段内联的最小 GameConfig(约 40 行)与一圈验收,断言 attributes.name / realms.label / equipment.slots / 模板可解析 / 首次通关;docs/development.md 把发布包自检的三段内容写清楚;CHANGELOG「未发布」记一节(含防空转验证)。库实现未改。宿主无改动。"
+    },
+    "EV-311": {
+      "id": "EV-311",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:41:08+00:00",
+      "updated_at": "2026-09-18T21:41:08+00:00",
+      "touched_round": 320,
+      "confidence": 0.96,
+      "source": "变更 CHG-385(05e9b91)。node scripts/verify-dist.mjs → 新增输出\"从零装配通过(不引用任何内容包:自己写槽位/品质/词条/区域/敌人,跑通修炼 → 掉装 → 通关)\",发布包自检总输出变为\"wanxiang-engine-0.1.12.tgz 装进临时项目后可用 · 含使用者侧的 tsc 严格模式\";防空转:把内联断言里的一处标签改成\"故意写错\"→ 退出码 1,改回 → 0;cd packages/engine && bun run check(431 例 / 51 文件 + 八道自检 + 9 示例);cd /workspace/xian && bun run test(258 文件 / 2479 例)、check:engine(59 处引用)、check:engine:standalone(91 个源文件)。",
+      "summary": "这层库里最深的一条承诺(\"换一套名字与内容就能搭出自己的游戏\")现在有了对发布产物的直接证据:打包 → 装进空项目 → 只用包名导出从零装配一款新题材 → 跑通一圈。此前的证据只到\"装配三份自带内容包\",那是\"样例能用\",不是\"自己写也能用\"。"
     }
   },
   "edges": [
@@ -27644,6 +27682,12 @@
       "to": "TASK-301",
       "type": "implements",
       "created_at": "2026-09-18T21:39:27+00:00"
+    },
+    {
+      "from": "CHG-385",
+      "to": "TASK-302",
+      "type": "implements",
+      "created_at": "2026-09-18T21:41:08+00:00"
     }
   ]
 }
