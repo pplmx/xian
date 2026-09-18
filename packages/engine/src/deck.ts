@@ -59,7 +59,7 @@ export function deckPool<T extends DeckEntry>(entries: readonly T[], ctx: DeckCo
   return entries.filter(entry => entryAllowed(entry, ctx))
 }
 
-export interface DrawOptions {
+export interface DrawOptions<T extends DeckEntry = DeckEntry> {
   /**
    * 情境加权:返回该牌的权重**倍数**(默认 1)。
    *
@@ -67,7 +67,7 @@ export interface DrawOptions {
    * 返回 0 表示这张牌这次不参与;但要"完全不该出现",请用 tags/区间表达:
    * 那两样回答的是"该不该有",倍数只回答"多不多"。
    */
-  weightMultiplier?: (entry: DeckEntry) => number
+  weightMultiplier?: (entry: T) => number
 }
 
 /**
@@ -76,10 +76,10 @@ export interface DrawOptions {
  * 权重按 `weight × weightMultiplier` 计;全为 0 时退回**均匀抽取**
  * (而不是抛错或永远返回空:内容运营把权重全调成 0 的那天,玩家不该什么都遇不到)。
  */
-export function drawFrom<T extends DeckEntry>(entries: readonly T[], ctx: DeckContext, rng: Rng, opts: DrawOptions = {}): T | null {
+export function drawFrom<T extends DeckEntry>(entries: readonly T[], ctx: DeckContext, rng: Rng, opts: DrawOptions<T> = {}): T | null {
   const pool = deckPool(entries, ctx)
   if (pool.length === 0) return null
-  const weightOf = (entry: DeckEntry): number => {
+  const weightOf = (entry: T): number => {
     const mult = opts.weightMultiplier?.(entry) ?? 1
     return Math.max(0, entry.weight * mult)
   }
