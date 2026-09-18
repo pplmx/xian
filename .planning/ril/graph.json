@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 343,
+  "round": 344,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:03:38+00:00",
+  "updated_at": "2026-09-18T23:08:47+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19293,6 +19293,44 @@
       "confidence": 0.97,
       "source": "变更 CHG-407(00fbcda)。cd packages/engine && bun run check(501 例 / 67 文件 + 十一道自检 + 11 示例;发布包自检已是 wanxiang-engine-0.1.17.tgz);cd /workspace/xian && bun run test(275 文件 / 2550 例)、bun run test:report(2550 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(107 个源文件);git push origin main(526ba2b..00fbcda)、subtree push(→ 27193b0);gh api 核对:tag v0.1.17 → 27193b0…、package.json version 0.1.17、tag 上的 docs/tuning.md 含\"一页索引\"、release 非 draft / 非 prerelease。",
       "summary": "0.1.17 把\"参考表能找、示例能抄\"这件事收口:26 行索引让使用者按\"我要调什么\"检索(索引本身有判据),11 份示例覆盖到绝大多数公开层。仍是零运行时变更。"
+    },
+    "TASK-325": {
+      "id": "TASK-325",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T23:08:47+00:00",
+      "updated_at": "2026-09-18T23:08:47+00:00",
+      "touched_round": 343,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "规模实验(scale.sim.spec):给\"服务端跑批量模拟也能直接用\"补上吞吐数字与闸门 —— 掉落 3846 次/ms(100 万次 0.3 秒)、战斗 57.5 场/ms(1 万场 13.3 万回合 0.17 秒)、离线折叠 76923 步/ms、存档编解码 357 次/ms、属性结算 324 次/ms;闸门设在实测十几倍之下(挡数量级退化、不挡 CI 抖动),每条配防空转断言。"
+    },
+    "CHG-408": {
+      "id": "CHG-408",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:08:47+00:00",
+      "updated_at": "2026-09-18T23:08:47+00:00",
+      "touched_round": 343,
+      "commit": "eedb25c",
+      "summary": "库:新增 src/scale.sim.spec.ts(5 例);CHANGELOG「未发布」记一节(含吞吐表);docs/tuning.md 新增一节与索引一行(实测实验 27 份);README 用例数改 506/68。宿主无改动。"
+    },
+    "EV-334": {
+      "id": "EV-334",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:08:47+00:00",
+      "updated_at": "2026-09-18T23:08:47+00:00",
+      "touched_round": 343,
+      "confidence": 0.96,
+      "source": "变更 CHG-408(eedb25c)。bunx vitest run src/scale.sim.spec.ts(5 例全过,整套 577ms;打印:掉落表 100000 次 / 26ms;战斗 10000 次 / 174ms、共 133040 回合;离线折叠 1000000 步 / 13ms;存档编解码 10000 次 / 28ms;属性结算 100000 次 / 309ms);cd packages/engine && bun run check(506 例 / 68 文件 + 十一道自检,调参参考自检报 27 份且索引逐节点名、用例文件数自检当场抓出 67→68、相对导入自检 108 个源文件);cd /workspace/xian && bun run test(276 文件 / 2555 例)、test:report(2555 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(108 个源文件)。",
+      "summary": "把\"能跑批量模拟\"从一句话变成有数字、有闸门的判据:五条热路径的吞吐与\"全服一晚上要跑多久\"都量了出来,闸门宽到不挡 CI 抖动、窄到挡得住数量级退化。过程中也发现一个自己的测量错误:第一版离线那条 2ms 跑完一百万步(读数是空的),改成每步做真活才是有效测量 —— 这条教训写进了用例注释。"
     }
   },
   "edges": [
@@ -28674,6 +28712,12 @@
       "to": "TASK-324",
       "type": "implements",
       "created_at": "2026-09-18T23:03:38+00:00"
+    },
+    {
+      "from": "CHG-408",
+      "to": "TASK-325",
+      "type": "implements",
+      "created_at": "2026-09-18T23:08:47+00:00"
     }
   ]
 }
