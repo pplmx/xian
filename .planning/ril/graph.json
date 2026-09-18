@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 232,
+  "round": 233,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T12:20:00+00:00",
+  "updated_at": "2026-09-18T13:05:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13865,6 +13865,66 @@
       "rationale": "抽取时发现 asArray 的契约有洞:自定义判据拿得到 null/undefined,于是每个调用点都得自己写 `!!x && …`(本作 12 处调用全写了)。忘一次就是白屏 —— 而这正是这个模块存在的理由。搬迁时顺手收紧:先滤一层再交给判据。抽取不只是搬代码,遇到这种\"每个调用点都在补偿同一个坑\"的契约,就该在库里改掉。",
       "alternatives_rejected": "①原样搬(把坑一起搬给使用者);②只在本作调用点保持 `!!x &&`(新使用者仍会踩);③让判据自己声明是否接受 null(契约复杂化,收益为零)。",
       "summary": "抽取时顺手收紧契约:asArray 先滤 null/undefined 再交给自定义判据 —— 抽取不等于照抄,重复出现在每个调用点的补偿就是该在库里消掉的东西。"
+    },
+    "TASK-212": {
+      "id": "TASK-212",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T13:05:00+00:00",
+      "updated_at": "2026-09-18T13:05:00+00:00",
+      "touched_round": 233,
+      "category": "core-feature",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "\"等等\"里的功法/技能抽进公共库:等级曲线(基础 + 每级 ×(N-1))、消耗曲线(基数 × 倍率^等级 + 线性项,折扣按项可选)、满级分支(修满择一,追加词条)、装配汇总(返回每部一份来源)。本作 63 部功法与升级消耗改为经库计算。"
+    },
+    "CHG-277": {
+      "id": "CHG-277",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T13:05:00+00:00",
+      "updated_at": "2026-09-18T13:05:00+00:00",
+      "touched_round": 233,
+      "commit": "042a94e",
+      "summary": "库侧新增 skills.ts/skills.spec.ts:SkillCostSpec(基数/倍率/线性项/discountable/下限)、SkillBranchDef、SkillDef、SkillState、createSkillSystem(modsAt / costAt / branchesOf / branchMods / sourcesOf);index 导出;README 补该模块与三处刻意设计。"
+    },
+    "CHG-278": {
+      "id": "CHG-278",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T13:05:00+00:00",
+      "updated_at": "2026-09-18T13:05:00+00:00",
+      "touched_round": 233,
+      "commit": "840df30",
+      "summary": "应用侧:engineWorld 新增 GONGFA_SYSTEM(内容取自 data/gongfa 与 data/gongfaBranches,品质序折进消耗基数与线性项;残页 discountable:false);stores/cultivation.gongfaModsAt 与 core/gongfaService.gongfaUpgradeCost 的数值部分转发库;engineParity 补功法对账(63 部 × 每级逐键、× 三档折扣逐项、分支表逐条)。"
+    },
+    "EV-218": {
+      "id": "EV-218",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T13:05:00+00:00",
+      "updated_at": "2026-09-18T13:05:00+00:00",
+      "touched_round": 233,
+      "source": "src/core/engineParity.spec.ts(32 例)+ packages/engine(90 例)+ bun run test(194 文件 / 1965 例)+ bun run check + bun run check:engine",
+      "summary": "功法对账:63 部 × 每个等级的词条逐键精确相等;消耗在折扣 0/0.2/0.5 三档下逐项相等(含\"悟道点打折、残页不打折\"与满级无消耗);分支表与分支词条逐条相等;库内另有曲线/消耗/分支/来源/配置错误的独立用例。全量闸门与产物自检(33 个文件 / 55.0 KB)全绿。"
+    },
+    "DEC-083": {
+      "id": "DEC-083",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T13:05:00+00:00",
+      "updated_at": "2026-09-18T13:05:00+00:00",
+      "touched_round": 233,
+      "rationale": "写功法对账时先照出一处我自己在库里引入的漂移:通用消耗模型把折扣乘到了**所有**消耗项上,而本作只有悟道点打折、残页不打。这类漂移不会红任何既有用例(没有用例覆盖\"折扣下的残页\"),只会让玩家发现\"升级时残页变少了\"。修法是给消耗项加 discountable(默认 true),并让本作如实声明 —— 通用模型不该假设\"折扣对整组消耗一视同仁\"。",
+      "alternatives_rejected": "①让库对所有项打同样的折(把本作的平衡改掉,且违背\"数字一位不变\");②折扣留在应用侧自己乘(消耗曲线就要分成两处算);③给折扣写成逐项函数(配置里塞函数,不利于序列化与对账)。",
+      "summary": "消耗折扣按项可选(discountable,默认 true);通用模型不假设\"折扣对整组一视同仁\"。"
     }
   },
   "edges": [
@@ -20858,6 +20918,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T12:20:00+00:00"
+    },
+    {
+      "from": "CHG-277",
+      "to": "TASK-212",
+      "type": "implements",
+      "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "CHG-278",
+      "to": "TASK-212",
+      "type": "implements",
+      "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "CHG-277",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "CHG-278",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "EV-218",
+      "to": "CHG-277",
+      "type": "validates",
+      "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "EV-218",
+      "to": "CHG-278",
+      "type": "validates",
+      "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "TASK-212",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "TASK-212",
+      "to": "TASK-209",
+      "type": "depends_on",
+      "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "DEC-083",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T13:05:00+00:00"
     }
   ]
 }
