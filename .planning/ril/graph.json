@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 267,
+  "round": 268,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:06:17+00:00",
+  "updated_at": "2026-09-18T17:12:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 267,
+      "touched_round": 268,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15843,7 +15843,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:06:05+00:00",
       "updated_at": "2026-09-18T17:06:05+00:00",
-      "touched_round": 267,
+      "touched_round": 268,
       "category": "docs",
       "severity": 0.4,
       "confidence": 0.95,
@@ -15897,6 +15897,56 @@
       "rationale": "在动\"把 592 行战斗搬进库\"之前先做了消融:把库的战斗按本作口径尽量配好,同场景 × 200 种子对比。读数是**量级接近但不可互换** —— 均势场景胜率 83% vs 85%、38% vs 38%,可同一种子下的胜负只有 75% / 58% 一致。差的四处都不是\"加公式钩子\"能补的:①伤害公式形状(本作 攻击×系数 + 防/(防+攻×1.15) 封顶 75% vs 库 攻²/(攻+防) + 每击地板 5%);②一次出手的顺序(本作先掷浮动再判暴击,库相反);③技能选择(本作按序掷、第一个命中即用;库全掷一遍再抽 —— 随机流整体错位);④本作自己那批词条(背水/锋芒/罡盾/斩杀/先手/破甲/减伤/易伤)在库的公式里没有位置。另有调度细节(先手口径、Boss 阶段与长生印在回合开始触发而库的 tickFn 在回合结束)。结论:本作战斗维持原样;库的战斗保持\"给没有战斗实现的作品一套开箱骨架\"的定位。若将来真要统一,缺的是 `skillFn` / `strikeFn` 两处**主权**(把\"选哪一招\"\"这一招怎么算\"整段交还作品),而不是更多参数。",
       "alternatives_rejected": "①硬把本作战斗换成库的(25% 的种子会给出不同胜负,平衡审计与玩家手感全动,而收益只是\"代码更统一\");②为了对齐而给库加一堆公式参数(参数永远追不上本作那套流水线,且库会长成那款游戏的复刻);③不做实验直接搬(等搬完才发现数字全变,代价最大)。",
       "summary": "战斗不接库:消融证明两者量级接近但不可互换(同种子一致率 58-75%),差异源于公式形状/出手顺序/技能选择的随机流/本作独有词条;库的战斗保持开箱骨架定位,统一需要的是 skillFn 与 strikeFn 两处主权。"
+    },
+    "TASK-249": {
+      "id": "TASK-249",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:12:19+00:00",
+      "updated_at": "2026-09-18T17:12:19+00:00",
+      "touched_round": 268,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增周期层(天时/每日/赛季):createCycleSystem 把四条易踩的坑写进实现(确定性=由周期序号派生独立随机源不碰全局流、不依赖现实时间、分段换池、可预告);pick/seedOf 可接管以便既有作品换层后每一天不变。本作天时接过去,界面补\"还有多久换\"与明日天时。按新口径攒批不发版。"
+    },
+    "CHG-331": {
+      "id": "CHG-331",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:12:20+00:00",
+      "updated_at": "2026-09-18T17:12:20+00:00",
+      "touched_round": 268,
+      "commit": "8042d48",
+      "summary": "库:新增 src/cycles.ts 与 cycles.spec.ts(8 例:序号与剩余时间、同周期永远相同、不消耗全局随机流、相邻周期看起来无关、换池、预告、抽取规则接管、按周期给词条),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 加条目。宿主:core/weather 的周期序号/种子/池切换走库(原种子公式与抽取规则通过 seedOf/pick 保留);新增 engineCycleParity.spec(4 例,逐日对账);HomeView 显示剩余时间与明日天时;weatherDef 从死导出豁免名单销账;test-report 补 engineCycleParity 分类;docs/engine.md 迁移表加一行。"
+    },
+    "EV-255": {
+      "id": "EV-255",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:12:28+00:00",
+      "updated_at": "2026-09-18T17:12:28+00:00",
+      "touched_round": 268,
+      "confidence": 0.97,
+      "source": "变更 CHG-331(8042d48)。bunx vitest run src/core/engineCycleParity.spec.ts(4 例:人间界 60 天逐日相同且同日不同时刻相同、各界×每个境界各 12 天、换界域换池、剩余时间与预告);bunx vitest run src/core/weather.spec.ts(15 例);bun run test(210 文件/2121 例);bunx vitest run src/core/deadExportAudit.spec.ts(5 例);bun run test:report(2121 过/0 败);cd packages/engine && bun run check(20 文件/195 例);bun run check:engine(30 处引用);bun run check:engine:standalone",
+      "summary": "天时搬迁逐日对账:60 天 + 各界各 12 天的天时 id 与冻结实现完全相同(界面可见的东西一天没变),而库里多出来的\"还有多久换\"与预告被界面真用上(死导出审计零豁免新增,反而销掉一条)。"
+    },
+    "DEC-120": {
+      "id": "DEC-120",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:12:28+00:00",
+      "updated_at": "2026-09-18T17:12:28+00:00",
+      "touched_round": 268,
+      "rationale": "周期(每日天时/运势/赛季)这类东西,难点不在抽取而在**确定性**:结果必须只由\"第几个周期\"决定。两条实现纪律写进了库:①派生**独立的**随机源,绝不消耗全局随机流(否则今天是什么取决于玩家此前掷过多少次骰子 —— 回放、离线、跨端都会飘);②序号来自游戏内时长而非现实时间(改系统时间、跨时区、挂机一晚都不该换天)。同时 `pick`/`seedOf` 可接管:已上线的作品换到这一层时,每一天的天时一位不变 —— 否则玩家会以为游戏在悄悄动平衡。",
+      "alternatives_rejected": "①用全局 rng 抽(最自然的写法,也是最容易漂的);②用 Date.now()(跨时区与改系统时间即穿);③把抽取规则也写死进库(本作\"清和 30%、其余均分\"这种口径没法表达,换层就会改变每天的可见结果)。",
+      "summary": "周期层的两条纪律:由周期序号派生独立随机源(不碰全局流)、序号来自游戏内时长(不碰现实时间);抽取规则与种子公式可接管,保证既有作品换层后每一天不变。"
     }
   },
   "edges": [
@@ -24276,6 +24326,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:06:17+00:00"
+    },
+    {
+      "from": "CHG-331",
+      "to": "TASK-249",
+      "type": "implements",
+      "created_at": "2026-09-18T17:12:28+00:00"
+    },
+    {
+      "from": "TASK-249",
+      "to": "TASK-248",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:12:28+00:00"
+    },
+    {
+      "from": "DEC-120",
+      "to": "TASK-249",
+      "type": "governs",
+      "created_at": "2026-09-18T17:12:28+00:00"
+    },
+    {
+      "from": "DEC-120",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:12:28+00:00"
     }
   ]
 }
