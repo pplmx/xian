@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 299,
+  "round": 300,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:22:09+00:00",
+  "updated_at": "2026-09-18T20:25:59+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17496,7 +17496,7 @@
       "version": 1,
       "created_at": "2026-09-18T20:21:59+00:00",
       "updated_at": "2026-09-18T20:21:59+00:00",
-      "touched_round": 299,
+      "touched_round": 300,
       "category": "bug-fix",
       "severity": 0.3,
       "confidence": 0.95,
@@ -17538,6 +17538,44 @@
       "summary": "\"整段接管\"的第二条通用经验:接管时要把\"某一部分是谁加的\"一起搬 —— 库默认加的那一份(比如暴击基数)在接管之后不能再加一次。",
       "rationale": "\"少掷没用的骰子\"与\"把某一部分写重\"是接管外部实现时的两种镜像错误:前者让随机流错位(症状是几回合之后全乱),后者让数值偏一份(症状是第一手就差一个倍率)。两者都极难从\"看起来差不多\"里发现 —— 前者要看随机消耗个数,后者要把每一手的原始数值列出来逐条比。故接管实验的标准做法应当是:同种子 + 逐手原始数值 + 随机消耗计数,三样一起对;只比胜负是发现不了的(92% 的胜负一致率掩盖了 100% 的回合数不一致)。",
       "alternatives_rejected": "①只比胜负与血线(92% 看着\"差不多\",但回合数只有 66% —— 掩盖了系统性偏差);②比\"扣完护盾后的净失血\"(开局护盾会把前几手全吞掉,看不出差别);③认为\"库的实现有问题\"(实际两次都是实现侧的复刻写错:少掷骰子、把基数加两次);④把诊断用例当一次性工具删掉(它是这类分歧唯一高效的手段,留着下次直接用)。"
+    },
+    "TASK-281": {
+      "id": "TASK-281",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:25:52+00:00",
+      "updated_at": "2026-09-18T20:25:52+00:00",
+      "touched_round": 300,
+      "category": "docs",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "新增示例 examples/combat-takeover.ts:三处主权的可抄落点 —— 先写\"老口径\"(自写回合循环),再用 skillFn/strikeFn/actFn 接进库,同 200 颗种子胜负与回合数 200/200 逐场相同;示例进 examples 脚本(自检清单从 package.json 读,不会漏检),README 与组装指南同步。"
+    },
+    "CHG-363": {
+      "id": "CHG-363",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:25:52+00:00",
+      "updated_at": "2026-09-18T20:25:52+00:00",
+      "touched_round": 300,
+      "commit": 3241467,
+      "summary": "库:新增 examples/combat-takeover.ts(约 200 行,含老口径参考实现 + 接管版 + 同种子对账 + 战报打印),package.json 的 examples 脚本加它,README 目录树与组装指南配方表补上,CHANGELOG「未发布」加一条。宿主无改动。"
+    },
+    "EV-288": {
+      "id": "EV-288",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:25:53+00:00",
+      "updated_at": "2026-09-18T20:25:53+00:00",
+      "touched_round": 300,
+      "confidence": 0.97,
+      "source": "变更 CHG-363(3241467)。bun packages/engine/examples/combat-takeover.ts(输出\"胜负与回合数逐场相同:200/200(100%)\");cd packages/engine && bun run check(6 个示例全部跑通 + 组装指南自检 + 定制表自检 + 发布包自检);cd /workspace/xian && bun run test(247 文件/2427 例);bun run test:report(2427 过/0 败);bun run check:engine;bun run check:engine:standalone",
+      "summary": "示例实测 200/200 逐场相同,并且它自己就抓出了一处错误:第一版我把库的默认回血(回合末)与老口径的回血(自己回合开头)同时开着,结果只有 52% 相同;删掉 mods.regenPerRound 之后 100%。这与 DEC-148 记的\"别把某一部分写重\"是同一条 —— 说明同种子对账是这类接管的必需品,而不是可选项。示例同时进两份自检(库内 check 与独立成库自检),不会腐烂。"
     }
   },
   "edges": [
@@ -26583,6 +26621,18 @@
       "to": "ISS-235",
       "type": "resolves",
       "created_at": "2026-09-18T20:22:09+00:00"
+    },
+    {
+      "from": "CHG-363",
+      "to": "TASK-281",
+      "type": "implements",
+      "created_at": "2026-09-18T20:25:59+00:00"
+    },
+    {
+      "from": "TASK-281",
+      "to": "TASK-280",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:25:59+00:00"
     }
   ]
 }
