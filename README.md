@@ -143,6 +143,7 @@ packages/engine/
 | 功法（等级曲线 / 升级消耗 / 满级分支） | `core/engineWorld` 的 `GONGFA_SYSTEM`；`stores/cultivation` 与 `core/gongfaService` 转发 | 63 部功法 × 每级 × 三档折扣逐键/逐项与冻结旧口径相等（含"悟道点打折、残页不打折"） |
 | 炼制（成功率四乘区 / 越级惩罚 / 熟练度曲线） | `core/craftability` 与 `data/crafting` 的纯式走库的 crafting | 四维网格（掌握×认知×技艺×越级）逐点精确相等；真实丹方的材料表与技艺权重逐条相等 |
 | 任务/成就的达成判据与进度 | `core/progress.evalCond` 与 `core/questProgress` 走库的 goals | 全部真实条件（主线/每日/成就）× 若干状态与冻结旧判据逐个相同；品质型条件的"不与等级同路"也被钉住 |
+| 灵兽性格与词条 | `core/engineWorld` 的 `COMPANION_SYSTEM`；`core/petPersonality` 与 `stores/player` 的灵兽加成转发 | 14 只灵兽的性格系数逐项、自身词条逐只与冻结旧表相同；无灵兽/未知 id 一律中性 |
 
 四套系统的**规则**至此都由库承担；应用侧留下的是内容数据与依赖本作 GNum 战力表的数值解析。
 

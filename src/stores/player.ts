@@ -9,7 +9,7 @@ import { SUB_LEVELS, START_AGE } from '@/data/constants'
 import { QI_BANK_MULT } from '@/data/constants'
 import { legacyInsightOf } from '@/data/samsara'
 import { titleDef } from '@/data/titles'
-import { petDef } from '@/data/pets'
+import { COMPANION_SYSTEM } from '@/core/engineWorld'
 import { mentorDef } from '@/data/mentors'
 import { talentDef } from '@/data/talents'
 import { baseCultPerSec, baseQiRegen, expRequirement, qiCap } from '@/core/formulas'
@@ -160,15 +160,15 @@ export const usePlayerStore = defineStore(
     })
     const petMods = computed<StatMods>(() => {
       if (!petId.value) return {}
-      const def = petDef(petId.value)
-      if (!def) return {}
       // 灵兽园等级(beastMult)与「安抚灵兽」类 buff(beastPct)都放大灵兽效果;
       // buffMods 只依赖 cultivation 自身,不兜回本 computed,无循环
       const buffPct = 1 + modOf(cultivation.buffMods, 'beastPct')
       const scaled: StatMods = {}
-      for (const k in def.mods) {
+      // "这只灵兽带哪些词条"由库的伙伴系统回答(见 core/engineWorld 的 COMPANION_SYSTEM)
+      const base = COMPANION_SYSTEM.modsOf(petId.value)
+      for (const k in base) {
         const key = k as keyof StatMods
-        scaled[key] = (def.mods[key] ?? 0) * dongfu.beastMult * buffPct
+        scaled[key] = (base[key] ?? 0) * dongfu.beastMult * buffPct
       }
       return scaled
     })

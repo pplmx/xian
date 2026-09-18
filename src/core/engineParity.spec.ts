@@ -91,6 +91,9 @@ import { chainOfEvent } from '@/data/chains'
 import { deckPool, drawFrom, drawMany, type DeckEntry } from 'wanxiang-engine'
 import { REGIONS as ALL_REGIONS } from '@/data/regions'
 import { TALENTS } from '@/data/talents'
+import { PETS } from '@/data/pets'
+import { PET_TRAITS } from '@/data/petTraits'
+import { COMPANION_SYSTEM } from './engineWorld'
 
 /**
  * 对账就用**应用运行时那一份**世界对象(ENGINE_WORLD),不再另装一份:
@@ -988,6 +991,48 @@ describe('对账 · 任务与成就条件(库的 goals 与 冻结的旧判据)',
         }
       }
     }
+  })
+})
+
+describe('对账 · 灵兽性格与词条(库的伙伴系统 与 冻结的旧表)', () => {
+  /** 迁移前 core/petPersonality 的 EFFECTS 表(原样抄一份,不 import 被迁移的模块) */
+  const REF_EFFECTS: Record<string, { exploreDurMult: number; dangerMult: number; dropLuck: number; lossReduction: number }> = {
+    greedy: { exploreDurMult: 1.0, dangerMult: 1.05, dropLuck: 0.06, lossReduction: 0 },
+    steady: { exploreDurMult: 1.1, dangerMult: 0.98, dropLuck: 0, lossReduction: 0.02 },
+    fierce: { exploreDurMult: 1.0, dangerMult: 1.15, dropLuck: 0.02, lossReduction: 0 },
+    cautious: { exploreDurMult: 0.95, dangerMult: 0.95, dropLuck: -0.02, lossReduction: 0.04 }
+  }
+  const NEUTRAL = { exploreDurMult: 1, dangerMult: 1, dropLuck: 0, lossReduction: 0 }
+  const refEffects = (petId: string | null) => {
+    if (!petId) return { ...NEUTRAL }
+    const def = PETS.find(p => p.id === petId)
+    if (!def) return { ...NEUTRAL }
+    return REF_EFFECTS[def.personality] ?? { ...NEUTRAL }
+  }
+
+  it('每只灵兽的性格效果逐项相同;无灵兽、未知 id 一律中性', () => {
+    for (const pet of PETS) {
+      expect(COMPANION_SYSTEM.effectsOf(pet.id), pet.id).toEqual(refEffects(pet.id))
+    }
+    expect(COMPANION_SYSTEM.effectsOf(null)).toEqual(refEffects(null))
+    expect(COMPANION_SYSTEM.effectsOf('不存在的灵兽')).toEqual(refEffects('不存在的灵兽'))
+  })
+
+  it('灵兽自身词条逐只相同(数值加成的口径没变)', () => {
+    for (const pet of PETS) {
+      expect(COMPANION_SYSTEM.modsOf(pet.id), pet.id).toEqual({ ...pet.mods })
+    }
+    expect(COMPANION_SYSTEM.modsOf(null)).toEqual({})
+  })
+
+  it('性格内容表就是本作那四条(名字与说明仍归作品)', () => {
+    expect(COMPANION_SYSTEM.traits.map(t => t.id).sort()).toEqual(Object.keys(REF_EFFECTS).sort())
+    for (const trait of PET_TRAITS) {
+      expect(COMPANION_SYSTEM.trait(trait.id)?.name, trait.id).toBe(trait.name)
+      expect(COMPANION_SYSTEM.trait(trait.id)?.mods, trait.id).toEqual(REF_EFFECTS[trait.id])
+    }
+    // 每只灵兽的性格都能在表里找到(装配时会校验,这里再钉一次)
+    for (const pet of PETS) expect(COMPANION_SYSTEM.trait(pet.personality), pet.id).toBeDefined()
   })
 })
 

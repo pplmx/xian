@@ -59,6 +59,9 @@ import {
   GONGFA_UP_WUDAO_BASE
 } from '@/data/constants'
 import { createSkillSystem } from 'wanxiang-engine'
+import { createCompanionSystem } from 'wanxiang-engine'
+import { PET_TRAITS } from '@/data/petTraits'
+import { PETS } from '@/data/pets'
 import { powerScale } from './tierScale'
 import { gnumNumeric } from './engineNumeric'
 
@@ -271,4 +274,17 @@ export const GONGFA_SYSTEM = createSkillSystem({
       desc: def.desc
     }
   })
+})
+
+/**
+ * 灵兽(伙伴)系统 —— 内容取自 data/pets 与 data/petTraits,
+ * 「性格 → 一组行为系数」的叠加规则由公共库算。
+ *
+ * 中性基线由本作给:倍率类的中性是 1、加法类的中性是 0 —— 库猜不出这个,
+ * 所以必须显式写出来(否则"没带灵兽"那天会悄悄改变历练时长与掉落)。
+ */
+export const COMPANION_SYSTEM = createCompanionSystem({
+  companions: PETS.map(p => ({ id: p.id, name: p.name, traitId: p.personality, mods: p.mods })),
+  traits: PET_TRAITS,
+  neutral: { exploreDurMult: 1, dangerMult: 1, dropLuck: 0, lossReduction: 0 }
 })
