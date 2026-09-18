@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 282,
+  "round": 283,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T18:51:27+00:00",
+  "updated_at": "2026-09-18T18:58:52+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16544,7 +16544,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:36:06+00:00",
       "updated_at": "2026-09-18T18:36:06+00:00",
-      "touched_round": 281,
+      "touched_round": 283,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16699,6 +16699,56 @@
       "summary": "状态的\"生效\"判据只有一处(库的 active:到期时刻 > 时钟);时钟由心跳推进(不读 Date.now()),且不在 computed 的 getter 里懒创建别的 store。",
       "rationale": "\"到期了还算不算数\"这类判据一旦有第二处(一处用在显示、一处用在汇总),就必然出现\"界面说没了、属性里还在\"的不一致;而且两处判据的边界(> 还是 >=)迟早会各写各的。故唯一判据放在库里,宿主只提供时钟。时钟为什么由心跳推进而不是 `Date.now()`:computed 只认响应式依赖,读死时间戳会让它\"只记住第一次算出的结果\"(到期的状态永远挂着);而在 getter 里懒创建别的 store 更糟 —— 那次懒创建本身是一次响应式写入,会把整条属性链打成\"每次读都重算\"(实测:finalStats 每次读取都是新对象,连\"注入 mods\"的测试手法都失效)。附带一条性能口径:没有状态在身时不推进时钟,免得每秒白重算整条属性链。",
       "alternatives_rejected": "①读取时直接 `Date.now()`(computed 不会因为时间流逝而失效,到期不散);②在 getter 里 `useGameStore().totalPlaySec` 借心跳(懒创建 = getter 内的响应式写入,属性链每次读都重算,且这种失效很难从症状上认出来);③保留\"列表里有没有\"的口径、靠更勤的剪枝兜住(那等于承认判据有两处,只是把不一致的窗口改小);④把时钟做成全局单例(测试与回放都难,且与 store 的响应式边界不一致)。"
+    },
+    "TASK-264": {
+      "id": "TASK-264",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:58:38+00:00",
+      "updated_at": "2026-09-18T18:58:38+00:00",
+      "touched_round": 283,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增顺序任务链:createChain(一次结算连推多节、守卫默认 5 节且撞上回报 capped、不可逆、到链尾就停;条件由内容给)。本作 core/engineChain 接线 progress.checkMainQuest 与 stores/quests.setMainIndex、HomeView 的当前主线改用 mainQuestAt。继续攒批不发版。"
+    },
+    "CHG-346": {
+      "id": "CHG-346",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:58:38+00:00",
+      "updated_at": "2026-09-18T18:58:38+00:00",
+      "touched_round": 283,
+      "commit": "568878c",
+      "summary": "库:新增 src/chain.ts 与 chain.spec.ts(11 例:连推多节、中途停下、链尾、守卫与 capped、上限不是配额、坏下标、读数、不可逆、ctx 传给判据),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目。宿主:新增 core/engineChain.ts(内容与判据的接入层,不 import progress 以免成环),progress.checkMainQuest 改走库并在撞守卫时 log,stores/quests 增 setMainIndex,HomeView 的当前主线改用 mainQuestAt,新增 engineChainParity.spec(7 例,冻结旧 while(guard<5)),test-report 补分类,docs/engine.md 加一行并更新引用数与导出数(53 处 / 71 个)。"
+    },
+    "EV-271": {
+      "id": "EV-271",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:58:41+00:00",
+      "updated_at": "2026-09-18T18:58:41+00:00",
+      "touched_round": 283,
+      "confidence": 0.96,
+      "source": "变更 CHG-346(568878c)。bunx vitest run src/core/engineChainParity.spec.ts(7 例);bun run check;bun run test(237 文件/2333 例);bun run test:report(2333 过/0 败);cd packages/engine && bun run check(37 文件/310 例);bun run check:engine(53 处引用);bun run check:engine:standalone",
+      "summary": "主线链搬迁后推进结果一位不差:五组玩家状态下(新档推不动 / 前两节一起过 / 一口气满足十几节 / 从中途开始 / 已到链尾)推进后的下标与走过节数都与冻结的 while(guard<5) 相同。守卫的意义被实测确认:构造一个\"前 11 节条件同时成立\"的档,一轮只推 5 节并被标为 capped(迁移前只是悄悄停下,内容写歪没人知道);走真路径(track → 逐节发赏 → 提示文案与顺序 → 下标一次落账)也验过。顺带一处小收获:deadExportAudit 当场抓出 mainQuestAt 无人使用,把它接到 HomeView 的\"当前主线\"读数上(消掉一处重复取数),而不是加白名单。"
+    },
+    "DEC-134": {
+      "id": "DEC-134",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:58:47+00:00",
+      "updated_at": "2026-09-18T18:58:47+00:00",
+      "touched_round": 283,
+      "summary": "顺序任务链的推进是一轮\"能推多远推多远\"(默认最多 5 节),守卫撞上必须回报(capped);而周期任务板的换期是幂等。",
+      "rationale": "\"连推多节\"是玩家视角的事实:一次大提升、一次离线回来,后面几节常常同时成立。若实现成\"每次只推一节\",玩家会看到\"明明达成了却卡着不动\"—— 而且这种卡顿只在特定顺序下出现,复现都难。所以推进必须是循环。但循环必须有守卫:内容一旦写歪(条件恒真)或存档损坏,没有守卫的 while 会一帧跳完整条链,甚至卡住渲染帧;更糟的是\"悄悄停下\"—— 事故被藏起来,下次还会再犯,故守卫要能把\"我被截住了\"说出来(库回报 capped,本作 log 一行)。与周期任务板(换期幂等、一期一次)的区别值得写清:那条线是\"同一期的重复调用不许改状态\",这条线是\"一次调用可以连走多节\" —— 两者都关于\"一次调用能走多远\",但一个是零、一个是多。",
+      "alternatives_rejected": "①每次只推一节(实现最省事,代价是玩家卡顿且难复现);②不加守卫的 while(内容写歪就跳完整条链);③有守卫但静默停止(事故被藏起来;本作迁移前就是这样,故这次把 capped 变成返回值);④把守卫做成配额(例如\"每天最多推进 5 节\")—— 那是玩法设计,不该塞进库的结构规则;⑤让库自己去判断\"这一节达成了吗\"(库不认识境界 / 计数 / 物品,判据必须由内容给;本作的判据就是 progress.evalCond,与界面进度读数共用同一份)。"
     }
   },
   "edges": [
@@ -25420,6 +25470,24 @@
       "to": "ISS-231",
       "type": "resolves",
       "created_at": "2026-09-18T18:51:27+00:00"
+    },
+    {
+      "from": "CHG-346",
+      "to": "TASK-264",
+      "type": "implements",
+      "created_at": "2026-09-18T18:58:52+00:00"
+    },
+    {
+      "from": "DEC-134",
+      "to": "TASK-264",
+      "type": "governs",
+      "created_at": "2026-09-18T18:58:52+00:00"
+    },
+    {
+      "from": "TASK-264",
+      "to": "TASK-261",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:58:52+00:00"
     }
   ]
 }
