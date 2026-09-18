@@ -18,6 +18,7 @@ import type {
   AffixDef,
   AffixLine,
   AffixRoll,
+  AddFailure,
   AttributeDef,
   AttributeSystem,
   AttributeSystemConfig,
@@ -62,6 +63,10 @@ import type {
   GoalEnv,
   GoalProgress,
   GrowthCurve,
+  Holding,
+  HoldingConfig,
+  HoldingItem,
+  HoldingSystem,
   IdleConfig,
   IdlePlan,
   IssueLevel,
@@ -107,6 +112,7 @@ import type {
   SkillState,
   SkillSystem,
   SlotDef,
+  SlotMap,
   StageDef,
   StatsInput,
   StrikeOptions,
@@ -138,6 +144,7 @@ const RUNTIME_EXPORTS = [
   'createCompanionSystem',
   'createDungeonSystem',
   'createEquipmentSystem',
+  'createHoldingSystem',
   'createRealmSystem',
   'createResourceSystem',
   'createRng',
@@ -177,6 +184,11 @@ const RUNTIME_EXPORTS = [
  * 类型清单:上面 import 的每个名字都要能**只从公开入口**取到。
  * 这个空壳把它们串成一个大对象,只为让 tsc 真的去解析它们(类型不参与运行,故运行时无副作用)。
  */
+/** 持有层的样例件:库只要求 uid,其余随便 */
+interface SampleItem extends HoldingItem {
+  name?: string
+}
+
 type PublicTypes = {
   attribute: [AttributeDef, AttributeSystem, AttributeSystemConfig, ComputedStats<number>, Mods, OnTopMult, StatsInput<number>]
   realm: [
@@ -249,6 +261,7 @@ type PublicTypes = {
   skills: [SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem]
   crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef]
   resources: [AppliedEntry, Ledger<number>, ResourceDef, ResourceEntry, ResourceSummary, ResourceSystem, ResourceSystemConfig]
+  holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]
   companions: [CompanionConfig, CompanionDef, CompanionSystem, TraitDef]

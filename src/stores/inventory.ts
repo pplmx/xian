@@ -4,11 +4,11 @@ import { computed, ref } from 'vue'
 import type { ArtifactOwned, EquipmentInstance, EquipSlot, GNum, StatMods } from '@/types'
 import { add, gnZero } from '@/utils/gnum'
 import { persistConfig } from '@/utils/storage'
+import { asEquipSlots, asSlotMap, createBag } from '@/core/engineHolding'
 import { resolveEquipStats } from '@/core/equipGen'
 import { mergeMods } from '@/core/statsCalc'
 import { useLoreStore } from '@/stores/lore'
 import { artifactDef, artifactValue } from '@/data/artifacts'
-import { BAG_CAPACITY } from '@/data/constants'
 import { asArray, asNumberRecord, asRecord, asStringArray } from '@/utils/saveShape'
 
 export const useInventoryStore = defineStore(
@@ -36,7 +36,13 @@ export const useInventoryStore = defineStore(
 
     const bagItems = computed(() => items.value.filter(it => !equippedUids.value.has(it.uid)))
 
-    const bagFull = computed(() => bagItems.value.length >= BAG_CAPACITY)
+    /**
+     * 背包口径走库的持有层(见 core/engineHolding):容量、什么算占位、删一件顺带卸下,
+     * 都由那一层回答 —— 这个文件只剩"状态怎么存"。
+     */
+    const bag = createBag(() => equippedUids.value)
+
+    const bagFull = computed(() => bag.isFull({ items: items.value }))
 
     /** 已装备件的平铺数值合计 */
     const equipFlats = computed(() => {
@@ -67,42 +73,40 @@ export const useInventoryStore = defineStore(
     )
 
     function findItem(uid: string): EquipmentInstance | undefined {
-      return items.value.find(it => it.uid === uid)
+      return bag.find({ items: items.value }, uid)
     }
 
     /** 加入装备;背包满则返回 false(由调用方决定折算) */
     function addEquipment(inst: EquipmentInstance): boolean {
-      if (bagFull.value) return false
-      items.value = [...items.value, inst]
+      const added = bag.add({ items: items.value }, inst)
+      if (!added.ok) return false
+      items.value = added.holding.items
       return true
     }
 
     function removeEquipment(uid: string): void {
-      items.value = items.value.filter(it => it.uid !== uid)
-      for (const slot in equipped.value) {
-        if (equipped.value[slot as EquipSlot] === uid) {
-          const next = { ...equipped.value }
-          delete next[slot as EquipSlot]
-          equipped.value = next
-        }
-      }
+      const taken = bag.remove({ items: items.value }, uid)
+      if (!taken.removed) return
+      items.value = taken.holding.items
+      // 删一件要把所有槽位上的它摘掉,否则装配表里会留一个悬空 uid
+      const off = bag.unassignUid(asSlotMap(equipped.value), uid)
+      if (off.cleared.length > 0) equipped.value = asEquipSlots(off.slots)
     }
 
     function replaceItem(inst: EquipmentInstance): void {
-      items.value = items.value.map(it => (it.uid === inst.uid ? inst : it))
+      const replaced = bag.replace({ items: items.value }, inst)
+      if (replaced.found) items.value = replaced.holding.items
     }
 
     function equip(uid: string, slot: EquipSlot): void {
-      equipped.value = { ...equipped.value, [slot]: uid }
+      equipped.value = asEquipSlots(bag.assign(asSlotMap(equipped.value), slot, uid))
       // 「亲手用过」记在图鉴的见闻里:收录深度因此有一档由玩家自己推进(见 ui/codex)
       const inst = findItem(uid)
       if (inst) useLoreStore().noteEquipUsed(inst.templateId)
     }
 
     function unequip(slot: EquipSlot): void {
-      const next = { ...equipped.value }
-      delete next[slot]
-      equipped.value = next
+      equipped.value = asEquipSlots(bag.unassignSlot(asSlotMap(equipped.value), slot))
     }
 
     function addPill(id: string, n: number): void {

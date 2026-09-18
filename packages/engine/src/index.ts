@@ -122,6 +122,9 @@ export type {
 } from './resources.js'
 export { createResourceSystem } from './resources.js'
 
+export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
+export { createHoldingSystem } from './holding.js'
+
 export type { GoalCond, GoalEnv, GoalProgress } from './goals.js'
 export { evalGoal, goalProgress } from './goals.js'
 
