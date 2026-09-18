@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 308,
+  "round": 309,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:00:22+00:00",
+  "updated_at": "2026-09-18T21:03:05+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17916,6 +17916,44 @@
       "summary": "\"某条规则没出手\"要先用 partition 逐规则计数,再判是\"被全覆盖\"还是\"超出值域\";不能拿 impact().byReason 当\"规则生效表\"。",
       "rationale": "真实返工:这次写消融实验时,第一版就照着 impact().byReason 推断\"三品以上当藏一次都没出手\",跑出来是 4 次 —— 因为 byReason 只统计**判掉**的件(见 triage.ts 的 impact 实现),凡是决定\"留下\"的规则永远不会出现在这张表里。按那个读数下结论,会把一条正常工作的保护性规则当成死规则删掉,而这正是\"自动清理把好东西扔了\"这类事故的温床。故:查规则是否生效,要用 partition 的 verdict.rule 逐规则计数(keep 与 junk 都算)。",
       "alternatives_rejected": "①直接读 impact().byReason 当\"规则生效表\"(会把所有负责\"留下\"的规则显示成 0 次,误判成死规则);②给 impact 补一栏 keepByReason 改公开行为(现有语义是\"判掉的原因分布\",是界面文案要用的形状;改它等于改公开口径,而这次只需要一份诊断读法);③只做一个一次性脚本查规则(这类\"装了没生效\"的坑每次改内容都会再遇到,留成常驻用例更值)。"
+    },
+    "TASK-290": {
+      "id": "TASK-290",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:03:05+00:00",
+      "updated_at": "2026-09-18T21:03:05+00:00",
+      "touched_round": 308,
+      "category": "docs",
+      "severity": 0.25,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "目录树自检:README 的 packages/engine 目录树与 src/ 下的非用例 .ts、docs/ 下的文档逐项对齐 —— 新模块漏写(地图少一块)或改名后未同步(地图指向不存在的路)都红。顺带补上 index.ts 与四份文档的文件名,修正\"四十一层\"的错误计数(实际 36 个模块文件 + 3 份内容包)。"
+    },
+    "CHG-372": {
+      "id": "CHG-372",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:03:05+00:00",
+      "updated_at": "2026-09-18T21:03:05+00:00",
+      "touched_round": 308,
+      "commit": "1f10d03",
+      "summary": "库:scripts/verify-dist.mjs 新增目录树自检(两侧都比对);README 目录树补 index.ts 与 docs/usage.md|assembly.md|parity.md|development.md 四行、修正模块数、用例数改 400/44;CHANGELOG「未发布」记一节(含防空转验证)。宿主无改动。"
+    },
+    "EV-298": {
+      "id": "EV-298",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:03:05+00:00",
+      "updated_at": "2026-09-18T21:03:05+00:00",
+      "touched_round": 308,
+      "confidence": 0.96,
+      "source": "变更 CHG-372(1f10d03)。node scripts/verify-dist.mjs → \"目录树自检通过(37 个模块文件 + 4 份文档都在图上)\";防空转实测:sed 删掉树上的 idle.ts 一行 → AssertionError(与 src/ 对不上);把 index.ts 改名 indexXX.ts → 同样 AssertionError;从备份恢复 → 重新绿。全套:bun run check(400 例 / 44 文件 + 组装指南 25 工厂 + 定制表 99 名字 + 目录树 + 产物 75 导出 + 发布包);宿主 test 2448 例、test:report 0 败、check:engine 59 处引用、check:engine:standalone 84 个源文件。",
+      "summary": "README 的目录树从\"给人看的便条\"变成有判据的地图:树上列的 37 个模块文件与 src/ 下实际文件逐项相同,docs/ 下每份文档都在图上。这类自检的价值在于它是**双向**的 —— 少列一份会红(新层没进地图),多列一份也红(改了名没跟着改)。"
     }
   },
   "edges": [
@@ -27069,6 +27107,12 @@
       "to": "TASK-289",
       "type": "governs",
       "created_at": "2026-09-18T21:00:22+00:00"
+    },
+    {
+      "from": "CHG-372",
+      "to": "TASK-290",
+      "type": "implements",
+      "created_at": "2026-09-18T21:03:05+00:00"
     }
   ]
 }
