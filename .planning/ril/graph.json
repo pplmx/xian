@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 221,
+  "round": 222,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T06:08:39+00:00",
+  "updated_at": "2026-09-18T06:38:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 221,
+      "touched_round": 222,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -13072,6 +13072,81 @@
       "rationale": "同一件事两条路(在线击败 / 读档补票)必须过同一个方法,否则下次扩界时总有一条被落下 —— 这次整个 bug 就是\"规则活在事件里\"的产物。故把 applyUnlockClosure 作为唯一入口,返回新开的清单给界面报喜,读档路径不需要提示(静默补票),在线路径照旧报 toast。",
       "alternatives_rejected": "①保留 unlock(单 id)供在线路径使用、补票路径另算一遍(两把尺子);②让 sanitize 也发 toast(启动即弹一串\"新地界已开放\"是噪声,且与\"离线归来\"提示抢注意力);③只在在线路径接线、补票路径单独写闭包(重复一次实现)。",
       "summary": "区域解锁:规则只写一处 —— 在线击败与读档补票都过 applyUnlockClosure,返回\"这一次新开的\"清单给界面报喜。"
+    },
+    "ISS-227": {
+      "id": "ISS-227",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T06:38:57+00:00",
+      "updated_at": "2026-09-18T06:38:57+00:00",
+      "touched_round": 222,
+      "severity": 0.6,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "首领是一次性内容,与另外两处设计互相拆台:①首领认知三道门槛还特意加倍(2/10/28 次交手),而首领一条命只打一次 ——「知其路数」「洞悉」对首领永远够不着,而「残血变阵」「首领本相」只在洞悉层揭示,层 2 那句「再多打几场,连它残血那一手也瞒不过你」是永久空头承诺(×2 那套说明当初就假设首领会反复交手);②妖气复聚只复聚杂兵 —— 镇压满 72 小时自动解除、说「此地重新成为历练之地」,可妖气之源(首领)不回来,而镇压资格永久、一键即可切回,于是那个倒计时对玩家几乎只是一次点击,叙事也是半截的。另一面:已靖却没镇压过的地界,旧主永远不会回来。"
+    },
+    "TASK-202": {
+      "id": "TASK-202",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T06:38:57+00:00",
+      "updated_at": "2026-09-18T06:38:57+00:00",
+      "touched_round": 222,
+      "category": "core-feature",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "把妖气复聚定成世界节律:够钟(最后一次打交道后 72 小时)的已靖地界旧主归来、镇压松开;不惩罚挂机(镇压资格永久、一键接回收益);再靖即复位;首领认知门槛按\"见到它的机会\"定档(三次交手即洞悉);历练页画出复聚那一行;goal 的「深入」不再把复聚旧地界当前沿。"
+    },
+    "CHG-259": {
+      "id": "CHG-259",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:38:57+00:00",
+      "updated_at": "2026-09-18T06:38:57+00:00",
+      "touched_round": 222,
+      "commit": "224b582",
+      "summary": "新增 core/regionRevival.settleRegionRevivals(复聚唯一入口:旧主归来 + 镇压松开,聚合提示);worldMemory 的钟改为 regionTouchedAt(战斗/镇压/已靖三取较晚)+ isRegionRevived;adventure store 新增 clearedAt(显式已靖时刻,离线斩首也认)与 revived(markRevived/markCleared 互斥)并接入 sanitize 与读档补票;loreService 首领门槛改 ENEMY_LORE_BOSS_THRESHOLDS=[0,1,2,3];suppress 结算先跑复聚且挪到早退之前;AdventureView 画出复聚状态与\"再历一程即可复靖\";goal 排除复聚地界;layout-check 夹具补复聚态与第三十八件事;新增 core/regionRevival.spec(12 例)。"
+    },
+    "EV-205": {
+      "id": "EV-205",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:38:57+00:00",
+      "updated_at": "2026-09-18T06:38:57+00:00",
+      "touched_round": 222,
+      "source": "src/core/regionRevival.spec.ts(12 例)/ 全量 vitest 1846 用例 + vue-tsc + eslint / bun scripts/layout-check.mjs(168 组)/ bun scripts/ui-smoke.mjs",
+      "summary": "① 判据覆盖:够钟复聚、常去不复聚、守着也到点、不惩罚挂机(资格仍在、可一键接回)、幂等、未靖不参与、再靖复位且重新起钟、坏档按\"已靖为准\"修形、离线斩首不会立刻复聚、首领三次交手即洞悉、接线(经由 settleSuppressedRegions)。② 判据抓到的两处真问题:离线斩首不写 regionStats(故补 clearedAt);settleSuppressedRegions 在无镇压时早退,复聚结算排在后面走不到 —— 这条是故障注入抓出来的(摘掉复聚调用时,直接调复聚的用例全绿,只有接线那条红)。③ 故障注入:摘掉复聚调用 → 接线判据红,复原全绿。④ 经济上界:每处复聚地界每周期最多 1 次首领战(≈4 等效场),20 处 ≈ 每小时 1.1 等效场 ≈ 历练收入(252 场/小时)的 0.4%,且须主动前往,故不动经济审计口径。⑤ 排版 168 组全绿(新增第三十八件事)、冒烟 15 页 69 次点击无运行时异常。",
+      "confidence": 1.0
+    },
+    "DEC-062": {
+      "id": "DEC-062",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:38:57+00:00",
+      "updated_at": "2026-09-18T06:38:57+00:00",
+      "touched_round": 222,
+      "rationale": "首领的认知门槛该按「见到它的机会」定,不该按它有多复杂:门前那道 ×2(2/10/28 次)在\"首领一生只打一次\"的前提下永远够不着,而专为首领写的那两层情报(残血变阵/本相)就成了没人看得见的内容 —— 复杂度不该被表达成\"次数更多\",尤其当次数根本不存在时。复聚给了重逢的节奏(每 72 小时最多一回),三次交手即洞悉,合计约一周半。",
+      "alternatives_rejected": "①维持 ×2 并把首领情报的揭示层下调(等于承认首领永远只知道个大概,首领会\"本相\"这件事白写);②只把门槛降到 1/5/14 照搬普通敌人(对隔几天才见一面的对手仍然太慢);③干脆取消首领认知(丢掉\"交手越多看得越清\"这条贯穿全游戏的设计)。",
+      "summary": "首领认知门槛按「见到它的机会」定档:三次交手即洞悉(ENEMY_LORE_BOSS_THRESHOLDS=[0,1,2,3]),撤掉首领的 ×2。"
+    },
+    "DEC-063": {
+      "id": "DEC-063",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:38:57+00:00",
+      "updated_at": "2026-09-18T06:38:57+00:00",
+      "touched_round": 222,
+      "rationale": "挂机是这款游戏的核心体验(原则见 worldMemory 与镇压系统的头注):若复聚要求\"必须再打一次首领才恢复收益\",三天没上线就变成二十场必修课。故复聚只收走「已靖」,镇压资格保持永久、一键即可把收益接回来 —— 首领那份(4× 战利品与认知)变成\"想要就去拿\"的内容,而不是欠债。经济上界也支持这个尺度:复聚带来的首领战不超过历练收入的 0.4%,不足以影响任何一条收入线。",
+      "alternatives_rejected": "①复聚后须再靖才恢复镇压(把节奏变成税,与\"不破坏挂机\"冲突);②复聚时把已靖地界整体回滚(惩罚性太强,且把\"世界记得你做过什么\"一起抹掉);③已靖永久、首领只在转世后重逢(就是现状:高界首领的认知与情报事实上不可达)。",
+      "summary": "复聚不惩罚挂机:只收走「已靖」,镇压资格永久、一键接回收益;首领那份内容由玩家自行选择去取。"
     }
   },
   "edges": [
@@ -19483,6 +19558,42 @@
       "to": "COMP-006",
       "type": "governs",
       "created_at": "2026-09-18T06:08:39+00:00"
+    },
+    {
+      "from": "TASK-202",
+      "to": "ISS-227",
+      "type": "addresses",
+      "created_at": "2026-09-18T06:38:57+00:00"
+    },
+    {
+      "from": "CHG-259",
+      "to": "TASK-202",
+      "type": "implements",
+      "created_at": "2026-09-18T06:38:57+00:00"
+    },
+    {
+      "from": "CHG-259",
+      "to": "ISS-227",
+      "type": "resolves",
+      "created_at": "2026-09-18T06:38:57+00:00"
+    },
+    {
+      "from": "ISS-227",
+      "to": "COMP-006",
+      "type": "located_in",
+      "created_at": "2026-09-18T06:38:57+00:00"
+    },
+    {
+      "from": "DEC-062",
+      "to": "COMP-006",
+      "type": "governs",
+      "created_at": "2026-09-18T06:38:57+00:00"
+    },
+    {
+      "from": "DEC-063",
+      "to": "COMP-006",
+      "type": "governs",
+      "created_at": "2026-09-18T06:38:57+00:00"
     }
   ]
 }
