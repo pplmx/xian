@@ -206,6 +206,9 @@ export { createPityCounter, softChance } from './pity.js'
 export type { UnlockEntry, UnlockOutcome, UnlockRegistry, UnlockScan, UnlockState } from './unlocks.js'
 export { createUnlockRegistry } from './unlocks.js'
 
+export type { CraftCost, CraftOutcome, RecipeRunner, RecipeRunnerConfig } from './recipes.js'
+export { createRecipeRunner } from './recipes.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

@@ -52,6 +52,8 @@ import type {
   CompanionSystem,
   ComputedStats,
   CraftFormula,
+  CraftCost,
+  CraftOutcome,
   CounterMap,
   CycleConfig,
   CycleContext,
@@ -157,6 +159,8 @@ import type {
   RealmState,
   RealmSystem,
   RealmSystemConfig,
+  RecipeRunner,
+  RecipeRunnerConfig,
   RegionDef,
   ResourceDef,
   ResourceEntry,
@@ -249,6 +253,7 @@ const RUNTIME_EXPORTS = [
   'createPointPool',
   'createPityCounter',
   'createRealmSystem',
+  'createRecipeRunner',
   'createResourceSystem',
   'createRng',
   'createSkillSystem',
@@ -389,6 +394,7 @@ type PublicTypes = {
   chain: [Chain<{ open: boolean }>, ChainAdvance, ChainConfig<{ open: boolean }>, ChainNode, ChainState]
   pity: [PityConfig, PityCounter, PityRoll, PityState, SoftPity]
   unlocks: [UnlockEntry, UnlockOutcome, UnlockRegistry, UnlockScan, UnlockState]
+  recipes: [CraftCost<number>, CraftOutcome<number>, RecipeRunner<{ herb: number }>, RecipeRunnerConfig<{ herb: number }>]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

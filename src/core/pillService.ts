@@ -13,8 +13,8 @@ import { recipeCraft, type SkillId } from '@/data/crafting'
 import { expFromSecs, stoneByTier } from './formulas'
 import { maxTierForMajor } from '@/data/regions'
 import { collect, track } from './progress'
-import { modOf } from './statsCalc'
 import { craftability, knownRecipes } from './craftability'
+import { runCraft, spentOf } from './engineCraft'
 import { noteMaterialUsed } from './loreService'
 import { noteTaboo } from './samsaraService'
 import { usePlayerStore } from '@/stores/player'
@@ -142,33 +142,29 @@ export interface CraftOutcome {
 export function craftPill(id: string): CraftOutcome {
   const resources = useResourcesStore()
   const inventory = useInventoryStore()
-  const player = usePlayerStore()
   const ui = useUiStore()
   const def = pillDef(id)
-  const cost = pillCraftCost(id)
   const able = craftability(id)
+  const cost = pillCraftCost(id)
   if (!def || !cost || !able) return { ok: false, count: 0, aborted: true }
 
-  if (able.blockers.length > 0) {
-    ui.toast(able.blockers[0]!, 'warn')
+  /**
+   * 开一次炉:门槛、材料、成败与双成由库同一次判定给出(见 core/engineCraft)。
+   * **"没开炉"与"开炉失败"从这里开始就是两件事** —— 前者什么都不发生,
+   * 后者要扣料、长技艺、记失败。
+   */
+  const canPay = resources.hasSmall('herb', cost.herb) && resources.hasStone(cost.stone)
+  const roll = runCraft(id, { pillId: id, canPay }, rng)
+  if (!roll.fired) {
+    ui.toast(roll.reason, 'warn')
     return { ok: false, count: 0, aborted: true }
   }
-  if (!resources.hasSmall('herb', cost.herb) || !resources.hasStone(cost.stone)) {
-    ui.toast('灵草或灵石不足', 'warn')
-    return { ok: false, count: 0, aborted: true }
-  }
-
   const craft = recipeCraft(def)
-  const succeeded = rng.chance(able.successRate)
+  const succeeded = roll.succeeded
 
-  // 无论成败,炉先开了,料先下了
-  resources.spendStone(cost.stone)
-  if (succeeded) {
-    resources.spendSmall('herb', cost.herb)
-  } else {
-    const kept = Math.floor(cost.herb * salvageRatio(able.skill))
-    resources.spendSmall('herb', cost.herb - kept)
-  }
+  // 无论成败,炉先开了,料先下了 —— 扣多少照回报记账,不再自己算一遍
+  resources.spendStone(spentOf(roll, 'stone') as GNum)
+  resources.spendSmall('herb', spentOf(roll, 'herb') as number)
 
   gainCraftExp(craft?.skills ?? {}, able.rank, succeeded)
   for (const mid of able.materials) noteMaterialUsed(mid, succeeded)
@@ -182,14 +178,13 @@ export function craftPill(id: string): CraftOutcome {
     return { ok: false, count: 0 }
   }
 
-  const yieldMod = modOf(player.finalStats.mods, 'alchemyYield')
-  const extra = rng.chance(Math.min(0.8, able.bonusChance + yieldMod)) ? 1 : 0
-  inventory.addPill(id, 1 + extra)
-  track('pillsCrafted', 1 + extra)
+  const extra = roll.extra
+  inventory.addPill(id, roll.produced)
+  track('pillsCrafted', roll.produced)
   collect('pill', id)
   playSfx('success')
-  ui.toast(extra ? `丹成两枚!「${def.name}」品相极佳` : `炼成「${def.name}」×1`, extra ? 'rare' : 'success')
-  return { ok: true, count: 1 + extra }
+  ui.toast(extra ? `丹成两枚!「${def.name}」品相极佳` : `炼成「${def.name}」×${roll.produced}`, extra ? 'rare' : 'success')
+  return { ok: true, count: roll.produced }
 }
 
 /** 炸炉话术:优先复述最要命的那条短板,让玩家知道该补什么 */

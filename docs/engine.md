@@ -45,6 +45,7 @@
 | 主线任务链(一次结算连推几节) | `core/engineChain` 转发到库的 `createChain`(内容仍是 `data/quests` 的 `MAIN_QUESTS`,判据仍是 `progress.evalCond`,守卫仍是 5 节) | `engineChainParity.spec` 冻结迁移前的 `while (guard < 5)` 循环:五组玩家状态下推进后的下标与走过节数逐点相同;另钉"一口气满足十几节时被守卫截在 5 节,且回报 `capped`"(迁移前只是悄悄停下,内容写歪没人知道),并走一遍真路径验奖励与提示文案顺序 |
 | 认知检定里的照面保底(软保底) | `core/loreService` 的 `discernChance` / `natureChance` 改走库的 `softChance`(基础概率、每步涨幅与上下限仍是本作口径) | `enginePityParity.spec` 冻结迁移前的两条公式:三档阶位 × 三档技艺 × 六档照面次数(药性另有门槛前后五档)下概率**逐点相同**;另钉"涨幅封顶"与"概率夹在 4%~90% / 2%~75%"两条 —— 不封顶的话后期概率会被抬到 1,"越看越眼熟"就成了"第 N 次必认出" |
 | 成就解锁(62 枚,含品质型 / 状态型 / 境界型) | `core/engineUnlocks` 转发到库的 `createUnlockRegistry`(内容与判据仍是 `data/achievements` + `progress.evalCond`,去重从 store 的一行 `includes` 收进库) | `engineUnlockParity.spec` 冻结迁移前的扫描与显式解锁:四组玩家状态下**新解锁的条目与顺序**、成就表、提示语与顺序全同;另钉"重复扫描不重复发奖""状态型成就每拍来敲门也只发一次""认不出的 id 不当成解锁"三条 |
+| 炼丹执行(开炉 / 扣料 / 成败 / 双成) | `core/engineCraft` 转发到库的 `createRecipeRunner`(成功率仍由 `core/craftability` 算,花费与保料仍是本作口径,双成上限 0.8 写进配置) | `engineCraftParity.spec` 冻结迁移前的 `craftPill`:成功 / 双成 / 失败 / 不知此方 / 材料不足五格下,**回报、扣掉的灵草与灵石、背包、计数器、技艺经验与配方熟练度、提示语、掷骰数**全同;另钉"没开炉不扣料不掷骰"与"失败保草不保石"两条 |
 
 资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
 材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,
@@ -59,7 +60,7 @@ import { emptyProgress } from 'wanxiang-engine'
 ```
 
 `bun run check:engine` 会守住这条:宿主源码里**只经公开入口引用**,内部别名、深层导入、
-相对路径钻内部三类做法各有一条断言拦着(当前 56 处引用全部合规)。
+相对路径钻内部三类做法各有一条断言拦着(当前 59 处引用全部合规)。
 
 ## 同步与自检
 

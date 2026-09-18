@@ -205,6 +205,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 战斗 | `game.combat` | 这场遭遇谁赢?回合日志长什么样? |
 | 技能 | `createSkillSystem` | 练到第几级加多少?要花什么?满级选哪条路? |
 | 炼制 | `composeCraftRate` 等 | 这次能不能成?四个乘区各贡献多少? |
+| 配方执行 | `createRecipeRunner` | 开炉之后实际发生什么:没开炉与开炉失败、失败保料、成功后再掷双成 |
 | 目标 | `evalGoal` / `goalProgress` | 这条任务达成了吗?进度怎么显示? |
 | 随机内容池 | `drawFrom` / `drawMany` | 该从池子里抽什么?怎么保证切题? |
 | 伙伴 | `createCompanionSystem` | 带这只伙伴的系数是多少?带多只怎么合? |
@@ -498,6 +499,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **每小时产出与零头**(1.5 点/小时、2.4 块/小时) | `perHour(level)` 给速率、`accrue(frac, rates, sec)` 按秒推进:零头留在累加器里,够了整数才发,连"设施拆了"攒下的零头也会发出去 |
 | **加点 / 天赋树 / 科技点**(往哪儿投、能不能回头) | `createPointPool({ branches, total, mainCap, sideCap })` —— 总容量与主副两档上限取小,三句说法由内容给;`switchMain` 换主位**只换方向、不作废已投点数**;投不成状态原样返回(含"首投自动认主"只在成功那次生效) |
 | **加点的效果与费用** | `branch.effect(points)` 与 `costs(state, id, ctx)` / `switchCosts(...)` —— 效果库不解释(本作是每点 × 点数相加);费用数额是泛型(本作灵石是大数);`blocked` 返回 `''` 表示"不说理由" |
+| **炼制 / 合成的执行**(材料够不够、失败赔多少、双成) | `createRecipeRunner({ costs, rate, spentOnFail?, bonus?, bonusCap?, blocked?, affordable? })` —— **"没开炉"与"开炉失败"分开**(前者不扣料、不掷骰、不计失败);失败按**逐条花费**折减(门槛费通常不退);双成在成功后再掷一次并夹上限;回报带 `spent` / `produced` 供你记账 |
 | **每日 / 每周任务怎么算进度** | `createTaskBoard({ tasks })` —— 任务只声明"看哪个计数器、干到多少";`rollover(state, counters, period)` 换期时给计数器**打基准快照**(而不是清零,生涯成就还要用它),同期再调**幂等** |
 | **自动发放还是玩家手动领** | `settle(state, counters)` 一次挑出"达成且没领过"的(自动发放,顺序即声明顺序);`claim(state, counters, id)` 是手动领取 —— 两条路共用同一份 `claimed`,不会重复给 |
 | **进度条读什么** | `board(state, counters)` 一行一条:`delta`(本期增量,已夹到 ≥ 0)/ `progress`(封在目标值)/ `done` / `claimed`,界面直接用 |
@@ -612,7 +614,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 74 个运行时导出 + 196 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+| 公开面判据 | 75 个运行时导出 + 200 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
 
 ## 边界与兼容性
 
@@ -664,6 +666,7 @@ packages/engine/
     combat.ts       回合制解算(副本的下半场)
     skills.ts       技能/功法:等级曲线、消耗、满级分支
     crafting.ts     炼制:成功率四乘区与熟练度曲线
+    recipes.ts      配方执行:开炉 → 扣料 → 成败 → 双成(与成功率互补)
     facilities.ts   设施:升级门槛 / 上限 / 每小时产出与零头
     points.ts       投资点:总容量与主副两档上限、换位不作废已投
     resources.ts    资源账本:收支、上下限、来源明细
