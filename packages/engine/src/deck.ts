@@ -105,6 +105,14 @@ function pickOne<T extends DeckEntry>(pool: readonly T[], rng: Rng, weightMultip
 export interface DrawManyOptions<T extends DeckEntry = DeckEntry> extends DrawOptions<T> {
   /** 一轮之内不重复(默认 true);关掉它等于独立抽 N 次,可能抽到同一张 */
   distinct?: boolean
+  /**
+   * 保底:保证这一轮里**至少 `min` 张带 `tag`**。
+   *
+   * 不够时按顺序处理:先拿"带该标签且还没抽到"的牌,替换掉末尾那些不带标签的;
+   * 没有可替换的位置(比如抽数本来就少于 min)就往后再抽几张。
+   * 池子里带该标签的牌不够时,**有多少补多少** —— 保底不凭空造牌。
+   */
+  guarantee?: { tag: string; min: number }
 }
 
 /**
@@ -129,6 +137,25 @@ export function drawMany<T extends DeckEntry>(
     const picked = pickOne(pool, rng, opts.weightMultiplier)
     out.push(picked)
     taken.add(picked.id)
+  }
+  if (opts.guarantee && opts.guarantee.min > 0) {
+    const tag = opts.guarantee.tag
+    const hasTag = (e: T): boolean => (e.tags ?? []).includes(tag)
+    const spare = (): T[] => deckPool(entries, ctx).filter(e => hasTag(e) && !taken.has(e.id))
+    let matching = out.filter(hasTag).length
+    let pool = spare()
+    while (matching < opts.guarantee.min && pool.length > 0) {
+      // 先从末尾换掉一张不带标签的
+      let replaceAt = -1
+      for (let i = out.length - 1; i >= 0; i -= 1) if (!hasTag(out[i]!)) { replaceAt = i; break }
+      const picked = pickOne(pool, rng, opts.weightMultiplier)
+      pool = pool.filter(e => e.id !== picked.id)
+      if (replaceAt >= 0) taken.delete(out[replaceAt]!.id)
+      if (replaceAt >= 0) out[replaceAt] = picked
+      else out.push(picked)
+      taken.add(picked.id)
+      matching += 1
+    }
   }
   return out
 }

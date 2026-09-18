@@ -92,6 +92,32 @@ describe('内容牌堆 —— 区间、标签、一次性、权重', () => {
     expect(deckPool(pool, { level: 0, tags: ['rain', 'water'], excludeTags: ['rain'] }).map(e => e.id)).toEqual(['waterOnly'])
   })
 
+  it('保底:保证至少 N 张带某标签;不够替换、再不济往后补;池里不够就补多少算多少', () => {
+    // 稀有牌权重极低,不保底时几乎抽不到
+    const pool = [
+      { id: 'common1', tags: ['common'], weight: 1000 },
+      { id: 'common2', tags: ['common'], weight: 1000 },
+      { id: 'rare1', tags: ['rare'], weight: 1 },
+      { id: 'rare2', tags: ['rare'], weight: 1 }
+    ]
+    const rng = createRng(3)
+    const ctx = { level: 0, tags: ['common', 'rare'] } // 情境里两类都说得通
+    for (let i = 0; i < 50; i += 1) {
+      const got = drawMany(pool, ctx, rng, 3, { guarantee: { tag: 'rare', min: 1 } })
+      expect(got.filter(e => e.tags.includes('rare')).length).toBeGreaterThanOrEqual(1)
+      // 不重复仍然成立
+      expect(new Set(got.map(e => e.id)).size).toBe(got.length)
+    }
+    // 抽数少于保底数:往后补足
+    const two = drawMany(pool, ctx, createRng(5), 1, { guarantee: { tag: 'rare', min: 2 } })
+    expect(two.filter(e => e.tags.includes('rare')).length).toBe(2)
+    // 池里带该标签的只有一张:补多少算多少,不凭空造
+    const thin = [{ id: 'a', tags: ['x'], weight: 1 }, { id: 'b', tags: [], weight: 100 }, { id: 'c', tags: [], weight: 100 }]
+    const got = drawMany(thin, { level: 0, tags: ['x'] }, createRng(7), 2, { guarantee: { tag: 'x', min: 3 } })
+    expect(got.filter(e => e.tags.includes('x')).length).toBe(1)
+    expect(got.length).toBe(2)
+  })
+
   it('多抽与单抽共用同一套权重口径:同种子下逐张一致', () => {
     const a = createRng(21)
     const b = createRng(21)
