@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 263,
+  "round": 264,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:34:47+00:00",
+  "updated_at": "2026-09-18T16:45:13+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 263,
+      "touched_round": 264,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15617,7 +15617,7 @@
       "version": 1,
       "created_at": "2026-09-18T16:34:40+00:00",
       "updated_at": "2026-09-18T16:34:40+00:00",
-      "touched_round": 263,
+      "touched_round": 264,
       "category": "core-feature",
       "severity": 0.55,
       "confidence": 0.9,
@@ -15659,6 +15659,56 @@
       "rationale": "\"我们自己就是第一个定制用户\"要落到实处,靠的不是声明而是**先接一层、再看它缺什么**。资源层的接线照出两个真缺口(收支条目只收 number → 大数资源加不进去;不会取整 → 材料会出现 2.5),而这两个缺口在任何\"先设计通用 API 再等用户\"的路径里都不会被发现。故规矩定成这样:库每加一层,本作就尽快用它一次(哪怕只是把 store 的动作转发过去),用法与旧口径逐位对账;探出来的缺口当场补库,补不动就说明这层设计有问题。",
       "alternatives_rejected": "①等库\"设计完整\"再接(缺口要等外部使用者踩到才发现);②接的时候顺手改口径(把\"迁移\"变成\"重做\",平衡与存档都会动);③接一层就丢开不维护(库与作品各长各的,对账会失效)。",
       "summary": "库每加一层,本作就尽快真实用它一次并与旧口径逐位对账;探出的缺口当场补库 —— 通用性由真实用法长出来,不靠声明。"
+    },
+    "TASK-244": {
+      "id": "TASK-244",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:06+00:00",
+      "updated_at": "2026-09-18T16:45:06+00:00",
+      "touched_round": 264,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 4,
+      "unlock_factor": 1.0,
+      "summary": "补上持有(背包)这一层:库新增 holding 模块(uid 身份、capacity 可现算、counted 定\"什么算占位\"、纯函数 add/remove/replace/find、装配联动 unassignUid 防悬空 uid),并把本作 stores/inventory 的背包部分接过去,用迁移前冻结的旧实现逐位对账。库 0.1.6。"
+    },
+    "CHG-326": {
+      "id": "CHG-326",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:06+00:00",
+      "updated_at": "2026-09-18T16:45:06+00:00",
+      "touched_round": 264,
+      "commit": 6631574,
+      "summary": "库:新增 src/holding.ts 与 holding.spec.ts(8 例),index.ts/publicApi.spec 导出并列入公开面(51 运行时导出)。宿主:新增 src/core/engineHolding.ts(容量 BAG_CAPACITY、\"已装配的不占位\")与 engineHoldingParity.spec.ts(6 条冻结旧实现的对账);stores/inventory 的 findItem/addEquipment/removeEquipment/replaceItem/equip/unequip/bagFull 改为转发,公开 API 与持久化形状不变;test-report 补 engineHoldingParity 分类。"
+    },
+    "EV-250": {
+      "id": "EV-250",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:13+00:00",
+      "updated_at": "2026-09-18T16:45:13+00:00",
+      "touched_round": 264,
+      "confidence": 0.96,
+      "source": "变更 CHG-326(6631574)。bun run test(204 文件/2090 例);bunx vitest run src/core/engineHoldingParity.spec.ts(6 例:容量边界、满了收不进且入参不被就地改、删件顺带卸下全部槽位、替换同 uid、装配表、重复 uid 拒收);bun run test:report(2090 过/0 败);bun run check:engine(27 处引用全走公开入口);bun run check:engine:standalone(40 源文件);cd packages/engine && bun run check(18 文件/179 例);gh release create v0.1.6",
+      "summary": "背包口径搬迁逐位对账:容量/占位/满了收不进/删件顺带卸下/替换/装配表与旧 store 一致,全量 2090 例未因换实现变化;一处有意的收紧(重复 uid 拒收)写在用例里。"
+    },
+    "DEC-116": {
+      "id": "DEC-116",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:13+00:00",
+      "updated_at": "2026-09-18T16:45:13+00:00",
+      "touched_round": 264,
+      "rationale": "持有层把\"什么算占位\"做成配置(counted),而不是写死\"背包容量 = 件数\":本作的口径是\"已装配的不占背包位\",而别的游戏可能全都占、或按重量算。同样地,\"满了怎么办\"也不由库决定 —— add 只返回 full 与原因,折算成什么(自动分解/寄到邮箱/拒绝拾取)是作品的规则。这两条都是\"库给形状不给规则\"的老纪律在新一层的应用;顺带照出一个真问题:删一件若不在所有槽位上摘掉它,装配表里就会留悬空 uid。",
+      "alternatives_rejected": "①把容量写死成\"件数上限\"(持有层就绑死了装备这一种东西);②满了自动折算成资源(库不知道那件值多少,也不该知道);③只给\"装配表\"这一半(删件与装配联动的坑会留给每个使用者自己踩)。",
+      "summary": "持有层只认 uid 与\"什么算占位/容量多大\"这两条配置;满了怎么办由作品决定;删件必须把该件从所有槽位摘掉(库提供 unassignUid)。"
     }
   },
   "edges": [
@@ -23936,6 +23986,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:34:47+00:00"
+    },
+    {
+      "from": "CHG-326",
+      "to": "TASK-244",
+      "type": "implements",
+      "created_at": "2026-09-18T16:45:13+00:00"
+    },
+    {
+      "from": "TASK-244",
+      "to": "TASK-243",
+      "type": "depends_on",
+      "created_at": "2026-09-18T16:45:13+00:00"
+    },
+    {
+      "from": "DEC-116",
+      "to": "TASK-244",
+      "type": "governs",
+      "created_at": "2026-09-18T16:45:13+00:00"
+    },
+    {
+      "from": "DEC-116",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T16:45:13+00:00"
     }
   ]
 }
