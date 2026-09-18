@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 225,
+  "round": 226,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T08:05:00+00:00",
+  "updated_at": "2026-09-18T08:35:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13394,6 +13394,55 @@
       "rationale": "本作的装备共鸣是**机制套**(铁壁 = 首次致命伤保留 1 点气血、星斗 = 开战护盾),不是数值套。库原先把套装只建模成 bonuses[{pieces, mods}],于是接本作时只能把机制效果丢进 desc —— 那样\"件数够没够\"算了,但玩法层拿不到该生效的规则。补 hook?: string 之后,库只回答\"哪些 hook 生效\",解释权归玩法层:同一套模型既能表达 +10% 攻击的数值套,也能表达改规则的机制套。",
       "alternatives_rejected": "①把机制套硬塞成 mods(表达不了\"首次致命伤留 1 血\");②在库里实现钩子语义(库不该认识 ironwall/astral 这种作品概念);③套装由作品自己算,不进库(件数与激活判定就要各写一份)。",
       "summary": "套装分两层:mods 表数值、hook 表机制;库负责激活判定,解释归玩法层。已在 engineParity 中把本作的五套共鸣(铁壁/星斗/仙甲/神铠/混沌)接进配置。"
+    },
+    "TASK-205": {
+      "id": "TASK-205",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T08:35:00+00:00",
+      "updated_at": "2026-09-18T08:35:00+00:00",
+      "touched_round": 226,
+      "category": "core-feature",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "把本作接到公共库(第二段:词条合并):statsCalc 的 mergeMods / mergeModsDetailed / isSoftCapped / modDepth 改为转发库的属性系统;递减阶梯从 data/constants.DIMINISH_WEIGHTS 显式传入配置,不让库默认值悄悄接管平衡。与迁移前冻结口径比合计与来源明细,各 200 组随机来源逐键相等。"
+    },
+    "CHG-265": {
+      "id": "CHG-265",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:35:00+00:00",
+      "updated_at": "2026-09-18T08:35:00+00:00",
+      "touched_round": 226,
+      "commit": "2a0c2dc",
+      "summary": "statsCalc 四处委托库实现;engineWorld 的属性配置补 diminishingWeights(来源仍是 data/constants);engineParity 增冻结的 refMergeModsDetailed(含递减与软阈值两道折算)与明细/接线判据。"
+    },
+    "EV-211": {
+      "id": "EV-211",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:35:00+00:00",
+      "updated_at": "2026-09-18T08:35:00+00:00",
+      "touched_round": 226,
+      "source": "src/core/engineParity.spec.ts(23 例)+ bun run test(190 文件 / 1924 例)+ vue-tsc + eslint",
+      "summary": "属性合并对账:200 组随机来源的合计逐键相等、另 200 组逐来源明细相等且明细之和恒等于合计;接线断言证明 statsCalc 与库同一份结果。期间 deadExportAudit 抓到 DIMINISH_WEIGHTS 一度成为死导出 —— 提示\"库的默认阶梯正在接管平衡\",改为显式传入后销账。"
+    },
+    "DEC-071": {
+      "id": "DEC-071",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:35:00+00:00",
+      "updated_at": "2026-09-18T08:35:00+00:00",
+      "touched_round": 226,
+      "rationale": "把合并规则搬进库之后,最容易悄悄发生的不是算错,而是**平衡参数被库的默认值接管**:库有一份默认递减阶梯,本作的 data/constants 里也有 —— 一旦没人再引用后者,将来调平衡的人改的是常量,而运行时读的是库的默认值,两者谁生效没人说得清。故凡库有默认值的平衡参数,本作一律显式传入(即使当前数值相同);deadExportAudit 正好是这条的探针:常量变成死导出,就是\"默认值接管\"的信号。",
+      "alternatives_rejected": "①直接用库的默认阶梯(少一行配置,但平衡的真源分裂);②让库不带默认值(对新使用者不友好);③把常量删掉只留库默认(本作的平衡史与审计口径会一起丢)。",
+      "summary": "凡库有默认值的平衡参数,本作显式传入(当前:递减阶梯 DIMINISH_WEIGHTS);常量成为死导出即视为\"默认值接管\"的信号。"
     }
   },
   "edges": [
@@ -20009,6 +20058,48 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "CHG-265",
+      "to": "TASK-205",
+      "type": "implements",
+      "created_at": "2026-09-18T08:35:00+00:00"
+    },
+    {
+      "from": "CHG-265",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T08:35:00+00:00"
+    },
+    {
+      "from": "EV-211",
+      "to": "CHG-265",
+      "type": "validates",
+      "created_at": "2026-09-18T08:35:00+00:00"
+    },
+    {
+      "from": "EV-211",
+      "to": "TASK-204",
+      "type": "validates",
+      "created_at": "2026-09-18T08:35:00+00:00"
+    },
+    {
+      "from": "TASK-205",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T08:35:00+00:00"
+    },
+    {
+      "from": "TASK-205",
+      "to": "TASK-204",
+      "type": "depends_on",
+      "created_at": "2026-09-18T08:35:00+00:00"
+    },
+    {
+      "from": "DEC-071",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T08:35:00+00:00"
     }
   ]
 }
