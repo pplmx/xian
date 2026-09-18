@@ -23,7 +23,11 @@ import type {
   BattleConfig,
   BattleEvent,
   BattleEventKind,
+  BattleFollowupConfig,
+  BattleHookContext,
   BattleResult,
+  BattleShieldConfig,
+  BattleSkillEffectsConfig,
   BreakthroughResult,
   Combatant,
   CombatEngine,
@@ -98,6 +102,7 @@ import type {
   SlotDef,
   StageDef,
   StatsInput,
+  StrikeOptions,
   TemplateDef,
   TraitDef,
   ValidationIssue,
@@ -214,12 +219,17 @@ type PublicTypes = {
     BattleConfig,
     BattleEvent,
     BattleEventKind,
+    BattleFollowupConfig,
+    BattleHookContext<number>,
     BattleResult<number>,
+    BattleShieldConfig,
+    BattleSkillEffectsConfig,
     Combatant<number>,
     CombatEngine,
     CombatKeys,
     DamageContext<number>,
-    SkillEffectContext<number>
+    SkillEffectContext<number>,
+    StrikeOptions
   ]
   idle: [IdleConfig, IdlePlan]
   save: [SaveDecodeResult<number>, SaveFormat<number>, SavePayload]

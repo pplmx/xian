@@ -72,6 +72,28 @@ export interface BattleConfig {
    */
   skillEffects?: BattleSkillEffectsConfig | true
   /**
+   * 每回合结束的回调(**可选**)。
+   *
+   * 给"要按回合推进的东西"一个落点:流血 / 中毒 / 灼烧、增益层数递减、冷却、
+   * 首领的阶段阈值检查……引擎不解释它们,只保证**每个回合结束调一次**,并把
+   * 出手/落账/加盾/治疗/定身这套原语交到你手里。
+   * 跨回合记东西用 `ctx.state`(本场共用的小抽屉,引擎不解释)。
+   */
+  tickFn?: <T>(ctx: BattleHookContext<T>, rng: Rng) => void
+  /**
+   * 事件反应(**可选**)—— 引擎每记完一条事件就交给你看一眼。
+   *
+   * 这是"**内容驱动**"那三样的落点,库只给接口形状、不给规则:
+   *
+   *   流派组合技:看到 `kind === 'crit'` 且自己的流派对得上 → 追加一记 `strike`
+   *   法宝触发  :看到 `kind === 'shield'`(护盾被打破)或挨打 → `heal` / `gainShield`
+   *   首领阶段  :在 `tickFn` 里比对 `hp/maxHp` 的阈值,越过就改自己的词条与技能表
+   *
+   * 防递归:钩子自己引发的出手(`strike`/`log`)不会再次触发本钩子 ——
+   * 否则"会心追加一记、那一记又全会心"会一路打下去。
+   */
+  onEvent?: <T>(ctx: BattleHookContext<T>, event: BattleEvent, rng: Rng) => void
+  /**
    * 自己解释技能的 `effect`(**可选**)。
    *
    * 库**不认识** stun / drain / pierce / multi / bleed 这些标签 —— 它只把标签原样交过来,
@@ -147,6 +169,23 @@ export interface BattleSkillEffectsConfig {
   pierceTags?: readonly string[]
 }
 
+/** 一次出手能带的东西 —— 默认出手、技能、反击、追击、钩子里的追加出手都走同一个函数 */
+export interface StrikeOptions {
+  skill?: EnemySkillDef
+  /** 倍率;默认取技能倍率或 1 */
+  mult?: number
+  /** 事件类型;默认技能算 skill,其余算 hit */
+  kind?: BattleEventKind
+  /** 事件文本前缀(如「反击」「追击」);默认技能名 */
+  label?: string
+  /** 无视护盾(穿甲/真伤) */
+  bypassShield?: boolean
+  /** 这一记不会再引发反击 */
+  noCounter?: boolean
+  /** 这一记不会再引发追击 */
+  noFollowups?: boolean
+}
+
 export interface DamageContext<T> {
   attacker: Combatant<T>
   defender: Combatant<T>
@@ -204,6 +243,46 @@ export interface SkillEffectContext<T> {
   log: (kind: BattleEventKind, text: string, damage?: number, actor?: string) => void
   /** 本场共用的小抽屉:跨回合记状态(层数/冷却)用,引擎不解释它 */
   state: Record<string, unknown>
+}
+
+/**
+ * 回合钩子与事件反应拿到的上下文 —— 与技能效果解释器同一套原语,区别是**不绑出手双方**。
+ *
+ * 技能钩子天然知道"谁打谁"(它就是在这一次出手里被叫起来的);而回合钩子与事件反应
+ * 是旁观者:它可能想让自己这边追加一记、也可能想给对面挂个流血,所以出手双方由调用方指定。
+ */
+export interface BattleHookContext<T> {
+  /** 当前回合数(开局护盾那一步是第 0 回合) */
+  round: number
+  /** 玩家一侧(引擎内部的副本,直接改它不会污染调用方传进来的对象) */
+  player: Combatant<T>
+  /** 敌人一侧(同上) */
+  enemy: Combatant<T>
+  /** 已按 `keys` 解析好的本值键名 */
+  keys: Required<CombatKeys>
+  statOf: (c: Combatant<T>, key: string) => T
+  setStat: (c: Combatant<T>, key: string, value: T) => void
+  num: (c: Combatant<T>, key: string) => number
+  /** 护盾余量(没配 `shield` 时恒为 0) */
+  shieldOf: (c: Combatant<T>) => number
+  /** 加护盾(未配 `shield` 时什么都不做);返回实际加上去的量 */
+  gainShield: (c: Combatant<T>, amount: number) => number
+  /** 治疗;溢出部分按配置转为护盾 */
+  heal: (c: Combatant<T>, amount: number) => { applied: number; shielded: number }
+  /** 落账:先扣护盾再扣生命;返回扣掉的生命 */
+  applyDamage: (target: Combatant<T>, amount: number, opts?: { bypassShield?: boolean }) => number
+  /** 按默认规则打一记(倍率/标签/穿甲可指定);返回扣掉的生命 */
+  strike: (attacker: Combatant<T>, defender: Combatant<T>, opts?: StrikeOptions) => number
+  /** 只算伤害不落账 */
+  damage: (attacker: Combatant<T>, defender: Combatant<T>, mult?: number) => number
+  /** 让目标的下一次出手被跳过 */
+  skipNextTurn: (target: Combatant<T>) => void
+  /** 记一条自己的日志(展示文本归你) */
+  log: (kind: BattleEventKind, text: string, damage?: number, actor?: string) => void
+  /** 本场共用的小抽屉:层数 / 冷却 / 阶段放这儿 */
+  state: Record<string, unknown>
+  /** 这一场是否已经分出胜负(钩子里据此提前收手) */
+  over: () => boolean
 }
 
 export type BattleEventKind =
@@ -279,23 +358,6 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
   }
 
   const alive = (c: Combatant<T>): boolean => numeric.cmp(stat(c, keys.hp), numeric.zero) > 0
-
-  /** 一次出手能带的东西 —— 默认出手、技能、反击、追击都走同一个函数,只有这几项不同 */
-  interface StrikeOptions {
-    skill?: EnemySkillDef
-    /** 倍率;默认取技能倍率或 1 */
-    mult?: number
-    /** 事件类型;默认技能算 skill,其余算 hit */
-    kind?: BattleEventKind
-    /** 事件文本前缀(如「反击」);默认技能名 */
-    label?: string
-    /** 无视护盾(穿甲/真伤) */
-    bypassShield?: boolean
-    /** 这一记不会再引发反击 */
-    noCounter?: boolean
-    /** 这一记不会再引发追击 */
-    noFollowups?: boolean
-  }
 
   /** 拷一份再打:调用方的对象不被就地改;本值表也要拷,否则两边共用同一张表 */
   const build = (a: Combatant<T>, b: Combatant<T>): [Combatant<T>, Combatant<T>] => [
@@ -378,8 +440,50 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
       const applyDamage = (target: Combatant<T>, amount: number, opts: { bypassShield?: boolean } = {}): number =>
         damageDealt(target, amount, opts).lost
 
+      /**
+       * 记一条事件,并(仅在"不是钩子自己引发的"时候)交给 `onEvent` 看一眼。
+       *
+       * `hookDepth` 就是防递归的那道门:钩子里再出手/再记日志时深度不为 0,
+       * 于是不会再把钩子叫起来 —— 否则"会心追加一记"会自己喂自己。
+       */
+      let hookDepth = 0
+      /** 回合钩子 / 事件反应共用的上下文(不绑出手双方:谁打谁由钩子自己指定) */
+      const hookContext = (atRound: number): BattleHookContext<T> => ({
+        round: atRound,
+        player: p,
+        enemy: e,
+        keys,
+        statOf: stat,
+        setStat,
+        num: statNum,
+        shieldOf,
+        gainShield,
+        heal,
+        applyDamage,
+        strike: (attacker: Combatant<T>, defender: Combatant<T>, opts: StrikeOptions = {}): number =>
+          strike(attacker, defender, atRound, opts),
+        damage: (attacker: Combatant<T>, defender: Combatant<T>, mult?: number): number =>
+          rawDamage(attacker, defender, mult ?? 1, rng),
+        skipNextTurn: (target: Combatant<T>): void => {
+          skipping.add(target)
+        },
+        log: (kind: BattleEventKind, text: string, damage = 0, actor?: string): void => {
+          emit(atRound, actor ?? p.name, kind, text, damage)
+        },
+        state,
+        over: (): boolean => !alive(p) || !alive(e)
+      })
+
       const emit = (round: number, actor: string, kind: BattleEventKind, text: string, damage = 0): void => {
-        events.push({ round, actor, kind, damage, text })
+        const event: BattleEvent = { round, actor, kind, damage, text }
+        events.push(event)
+        if (!config.onEvent || hookDepth > 0) return
+        hookDepth += 1
+        try {
+          config.onEvent(hookContext(round), event, rng)
+        } finally {
+          hookDepth -= 1
+        }
       }
 
       const strike = (attacker: Combatant<T>, defender: Combatant<T>, round: number, opts: StrikeOptions = {}): number => {
@@ -586,6 +690,21 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
           }
           if (healed.shielded > 0) {
             emit(round, c.name, 'shield', `${c.name} 溢出的生机化为护盾(吸收 ${Math.round(healed.shielded)})`)
+          }
+        }
+
+        /*
+         * 每回合结束:把"要按回合推进的东西"交给作品。
+         *
+         * 引擎在这里只做两件事:给你一套原语、保证每回合叫一次;流血怎么掉、
+         * 增益怎么减、首领阶段在哪条阈值上翻面,全归你(所以这里也叫"内容驱动")。
+         */
+        if (config.tickFn) {
+          hookDepth += 1
+          try {
+            config.tickFn(hookContext(round), rng)
+          } finally {
+            hookDepth -= 1
           }
         }
       }

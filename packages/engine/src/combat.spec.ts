@@ -358,4 +358,70 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     // 同一份配置两次结果一致(结算仍是纯函数)
     expect(build11().events).toEqual(now.events)
   })
+
+  it('回合钩子:每回合结束叫一次,拿得到原语与本场抽屉(流血 / 层数 / 阶段都落在这儿)', () => {
+    const ticks: number[] = []
+    const engine = createCombatEngine({
+      variance: 0,
+      maxRounds: 4,
+      tickFn: (ctx, rng) => {
+        ticks.push(ctx.round)
+        // 第一回合末挂上"每回合掉 5 点"的流血,层数放在本场抽屉里
+        const stacks = (ctx.state.bleed as number | undefined) ?? 0
+        ctx.state.bleed = stacks + 1
+        const lost = ctx.applyDamage(ctx.enemy, 5 * ((ctx.state.bleed as number) ?? 1))
+        if (lost > 0) ctx.log('skill', `${ctx.enemy.name} 因流血又损 ${lost} 生命`, lost, ctx.player.name)
+        expect(rng.float(0, 1)).toBeGreaterThanOrEqual(0) // 钩子里也能用随机源
+        expect(typeof ctx.over()).toBe('boolean')
+      }
+    })
+    const battle = engine.resolve(
+      fighter({ attack: 0, hp: 500, maxHp: 500 }),
+      fighter({ id: 'e', name: '乙', attack: 1, defense: 0, hp: 9999, maxHp: 9999 }),
+      createRng(17)
+    )
+    expect(ticks).toEqual([1, 2, 3, 4])
+    const bleedHits = battle.events.filter(e => e.text.includes('因流血'))
+    expect(bleedHits.length).toBe(4)
+    expect(bleedHits.map(e => e.damage)).toEqual([5, 10, 15, 20]) // 层数累加
+    expect(Number(battle.enemyHp)).toBe(9999 - 50)
+  })
+
+  it('事件反应:能做出"会心即追加一记"的流派组合技,且钩子不会自己喂自己', () => {
+    let triggered = 0
+    const engine = createCombatEngine({
+      variance: 0,
+      onEvent: (ctx, event) => {
+        if (event.kind !== 'crit' || event.actor !== ctx.player.name) return
+        triggered += 1
+        // 组合技形状:自己的出手会心时,追加一记 0.7 倍的追击
+        ctx.strike(ctx.player, ctx.enemy, { mult: 0.7, label: '剑势连绵' })
+      }
+    })
+    const battle = engine.resolve(
+      fighter({ attack: 30, hp: 500, maxHp: 500, mods: { critRate: 1 } }),
+      fighter({ id: 'e', name: '乙', attack: 1, defense: 0, hp: 9999, maxHp: 9999 }),
+      createRng(19)
+    )
+    // 每一次会心都追加一记 —— 但追加的那一记自己会心时**不再**触发(防递归)
+    const crits = battle.events.filter(e => e.kind === 'crit' && e.actor === '甲').length
+    const followups = battle.events.filter(e => e.text.includes('剑势连绵')).length
+    expect(triggered).toBeGreaterThan(1)
+    expect(followups).toBe(triggered) // 一次触发一记,没有级联
+    // 追加的那一记同样是命中、也会心(带 critRate 1),但它没有再去触发钩子 ——
+    // 否则每一记都会再长出一记,followups 会指数级膨胀
+    expect(crits).toBeGreaterThan(triggered)
+  })
+
+  it('不配 tickFn / onEvent 时,结算与从前逐位一致', () => {
+    const build = (extra = {}) =>
+      createCombatEngine({ variance: 0, ...extra }).resolve(
+        fighter({ attack: 30, hp: 400, maxHp: 400, mods: { critRate: 1 } }),
+        fighter({ id: 'e', name: '乙', attack: 9, defense: 2, hp: 380, maxHp: 380 }),
+        createRng(23)
+      )
+    const bare = build()
+    expect(build({ onEvent: () => {} }).events).toEqual(bare.events)
+    expect(build({ tickFn: () => {} }).events).toEqual(bare.events)
+  })
 })

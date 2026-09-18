@@ -60,9 +60,9 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 尚未发布到 npm。按 tag 引用(**请用 tag,不要跟 `main`** —— 库还在长,`main` 随时会动):
 
 ```bash
-bun add github:pplmx/wanxiang-engine#v0.2.0
+bun add github:pplmx/wanxiang-engine#v0.3.0
 # 或
-npm  i github:pplmx/wanxiang-engine#v0.2.0
+npm  i github:pplmx/wanxiang-engine#v0.3.0
 ```
 
 ```ts
@@ -235,6 +235,30 @@ createCombatEngine({
 
 `ctx` 给的是引擎自己那条路上的原语:默认那一击 `strike(mult?)`、只算不落账 `damage(mult?)`、
 落账 `applyDamage(target, amount)`、`skipNextTurn`、日志 `log`,以及本场共用的小抽屉 `state`(跨回合记层数/冷却)。
+
+**护盾、反击、追击、标签语义**也都有开关(默认全关,关着时与旧版逐位一致):
+
+```ts
+createCombatEngine({
+  shield: { capRatio: 0.5 },        // 护盾先吃伤害、总量封顶;开局盾读 mods.shieldOnStart,溢疗成盾读 mods.overhealShield
+  followups: {},                    // 反击与追击:读 counterRate/comboRate,打一记打折的,且不再链
+  skillEffects: { multiHits: 2 },   // 给 multi/stun/drain/shield/bleed/pierce 一套通行语义;不配就一个都不解释
+  tickFn: ctx => {                  // 每回合结束:流血 / 层数 / 冷却 / 首领阶段都落在这儿
+    const stacks = (ctx.state.bleed as number) ?? 0
+    ctx.state.bleed = stacks + 1
+    ctx.applyDamage(ctx.enemy, 5 * stacks)
+  },
+  onEvent: (ctx, event) => {        // 内容驱动的反应:看到会心就追加一记(钩子自己引发的出手不会再触发它)
+    if (event.kind === 'crit' && event.actor === ctx.player.name) {
+      ctx.strike(ctx.player, ctx.enemy, { mult: 0.7, label: '剑势连绵' })
+    }
+  }
+})
+```
+
+**什么留在作品那一侧**(库只给接口形状,不实现规则):**流派组合技**(用 `onEvent` 看会心 / 破盾等事件再追加一记)、
+**法宝自动触发**(同样在 `onEvent`,或在 `tickFn` 里数冷却)、**首领阶段**(在 `tickFn` 里比对 `hp/maxHp` 的阈值,
+越过就换技能表与词条)。这三样都绑内容 —— 塞进库里等于把某个游戏的设计当成通用规则。
 
 ### 离线推进
 
@@ -411,6 +435,8 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **战斗伤害公式完全自己定** | `BattleConfig.damageFn(ctx, rng)`(减法型/除算型/查表型都行;给了它,地板与修正都归你) |
 | **技能的效果标记怎么解释** | `BattleConfig.skillEffectFn(ctx, rng)` —— 库不认识 `stun/drain/pierce/multi`,只把标签交过来;返回 `true` 即"这次出手归我" |
 | **技能标签的通行解释**(多段 / 震慑 / 吸取 / 加盾 / 放血 / 穿甲) | `BattleConfig.skillEffects`(段数、概率、比例都可配;不配则一个标签都不解释,继续交给 `skillEffectFn`) |
+| **要按回合推进的东西**(流血 / 中毒 / 增益层数 / 冷却 / 首领阶段) | `BattleConfig.tickFn(ctx, rng)` —— 每回合结束叫一次,`ctx` 给同一套原语与一个本场抽屉 `state` |
+| **内容驱动的反应**(流派组合技 / 法宝触发) | `BattleConfig.onEvent(ctx, event, rng)` —— 每记完一条事件交给你看一眼(如"看到会心就追加一记");钩子自己引发的出手不会再触发它(防递归) |
 | **护盾池**(先吃盾再掉血 / 上限封顶 / 溢疗成盾) | `BattleConfig.shield`:上限 `capRatio`(默认 50%)、开局盾 `mods.shieldOnStart`、溢疗成盾 `mods.overhealShield`;不配就没有护盾这回事 |
 | **反击与追击** | `BattleConfig.followups`:各读一对词条(默认 `counterRate/counterDamage`、`comboRate/comboDamage`),概率触发一记打折出手,且这一记不再引发反击/追击 |
 | **技能消耗完全自己定** | `skills.costs[].amount(level)`(折扣与下限仍生效) |
@@ -512,7 +538,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 
 ## 版本与发布
 
-- 当前版本 **0.2.0**(tag `v0.2.0`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
+- 当前版本 **0.3.0**(tag `v0.3.0`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
 - 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:
   **公开面即承诺**,新增走 minor、破坏走 minor 并写明怎么改;
   0.x 期间数值曲线不承诺不变,但没有显式配置时**默认行为逐位不变**。

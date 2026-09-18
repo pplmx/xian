@@ -76,12 +76,17 @@ export type {
   BattleConfig,
   BattleEvent,
   BattleEventKind,
+  BattleFollowupConfig,
+  BattleHookContext,
   BattleResult,
+  BattleShieldConfig,
+  BattleSkillEffectsConfig,
   Combatant,
   CombatEngine,
   CombatKeys,
   DamageContext,
-  SkillEffectContext
+  SkillEffectContext,
+  StrikeOptions
 } from './combat.js'
 export { createCombatEngine } from './combat.js'
 
