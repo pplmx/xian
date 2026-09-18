@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 335,
+  "round": 336,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:32:00+00:00",
+  "updated_at": "2026-09-18T22:35:41+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18989,6 +18989,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-399(8546e95)。bunx vitest run src/cycles.sim.spec.ts src/points.sim.spec.ts(8 例全过;打印:清和 87/细雨 77/罡风 89/迷雾 73/雷暴 39 天、最长连续重复 4 天;第 8 天问 100 遍都是「细雨」;问周期与问三十天预告都不消耗随机流;倒计时 86400/86399/1/86400/86399/1;主位投 6 后再投被\"主位已经加满\"挡住、副位能投;换主位后剑心仍 6 点、上限变 3;境界 1 投神识状态原封不动;旧键 oldBranch 占 4 点);cd packages/engine && bun run check(485 例 / 63 文件 + 十一道自检,调参参考自检报 22 份消融、用例文件数自检当场抓出 61→63、相对导入自检 103 个源文件);cd /workspace/xian && bun run test(270 文件 / 2533 例)、check:engine(59 处引用)、check:engine:standalone(103 个源文件)。",
       "summary": "两处\"玩家会自己算\"的刻度:①轮换的长期分布与\"最长连庄\"(权重摆好之后一年实测,最长连 3-4 天是常态,想禁止得内容侧加约束);②投资点的两道闸与\"换主位亏不亏\"(已投不作废、超额冻结)。"
+    },
+    "TASK-317": {
+      "id": "TASK-317",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:35:41+00:00",
+      "updated_at": "2026-09-18T22:35:41+00:00",
+      "touched_round": 335,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.15:把自 0.1.14 起的 6 个实质提交(产线曲线/结算粒度、每日任务目标值、账本上限与审计、入库折算、周期轮换分布、投资点容量)定成一个可 pin 的节点。消融实验 16 → 22 份,全部收进 docs/tuning.md。公开面未动,行为与 0.1.14 逐位一致。"
+    },
+    "CHG-400": {
+      "id": "CHG-400",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:35:41+00:00",
+      "updated_at": "2026-09-18T22:35:41+00:00",
+      "touched_round": 335,
+      "commit": "9bdf9bf",
+      "summary": "发版五步:package.json 0.1.14 → 0.1.15;CHANGELOG「未发布」定稿成带日期的一节(列六份新刻度、写明零运行时变更);三处 tag 引用同步(engine README、docs/development.md 的 tgz 例、根 README);宿主与 subtree 推送(engine main → eb0be9b);gh release create v0.1.15 + gh api 核对。"
+    },
+    "EV-326": {
+      "id": "EV-326",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:35:41+00:00",
+      "updated_at": "2026-09-18T22:35:41+00:00",
+      "touched_round": 335,
+      "confidence": 0.97,
+      "source": "变更 CHG-400(9bdf9bf)。cd packages/engine && bun run check(485 例 / 63 文件 + 十一道自检 + 10 示例;发布包自检已是 wanxiang-engine-0.1.15.tgz);cd /workspace/xian && bun run test(270 文件 / 2533 例)、check:engine(59 处引用)、check:engine:standalone(103 个源文件);git push origin main(1d5786d..9bdf9bf)、subtree push(→ eb0be9b);gh api 核对:tag v0.1.15 → eb0be9b…、package.json version 0.1.15、tag 上的 docs/tuning.md 提到 25 处 *.sim.spec.ts、release 非 draft / 非 prerelease。",
+      "summary": "0.1.15 把\"只有语义、没有刻度\"的模块补齐到 22 份:产线、每日任务、账本、入库、周期轮换、投资点各有一张能被内容作者直接用的表。仍是零运行时变更 —— 这一批的价值全在\"别人少踩几个坑\"。"
     }
   },
   "edges": [
@@ -28322,6 +28360,12 @@
       "to": "TASK-316",
       "type": "implements",
       "created_at": "2026-09-18T22:32:00+00:00"
+    },
+    {
+      "from": "CHG-400",
+      "to": "TASK-317",
+      "type": "implements",
+      "created_at": "2026-09-18T22:35:41+00:00"
     }
   ]
 }
