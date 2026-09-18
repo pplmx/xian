@@ -132,6 +132,7 @@
 | 跨模块自洽(状态 × 投资点 × 任务) | `createBuffSystem` + `createPointPool` + `createTaskBoard` | `integrationBuffs.spec.ts`(到期边界与剪枝顺序无关、加点不回溯、进度不回退、叠加是相乘) |
 | 跨模块自洽(战斗 → 掉落 → 入库 → 装配 → 面板) | 战斗 + 掉落 + 入库 + 装备 + 属性 | `integrationLoot.spec.ts`(件数守恒、折算同源、见证不漏、容量不越界、面板单调、同种子可复现) |
 | 跨模块自洽(周期 × 内容池 × 抉择) | `createCycleSystem` + `drawFrom` + `createChoiceSystem` | `integrationWorld.spec.ts`(问行情不掷骰、抽到的事必须切题、一次性牌只碰一次、账目守恒) |
+| 跨模块自洽(技艺 → 采料 → 开炉 → 入库 → 体检) | `createSkillSystem` + `createCompanionSystem` + `createDropTable` + `createRecipeRunner` + `createEconomyReadings` | `integrationCraft.spec.ts`(没开炉不扣料也不掷骰、回执与公式同源、失败逐条保料、产出 = 成功 + 双成、体检与账本同源、同种子可复现) |
 
 ## 3 · 三条纪律
 

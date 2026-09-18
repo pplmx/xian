@@ -291,7 +291,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 | 判据 | 钉住的事 | 在哪 |
 | --- | --- | --- |
-| 用例 | 公开面的行为,514 个用例 / 70 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
+| 用例 | 公开面的行为,521 个用例 / 71 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
