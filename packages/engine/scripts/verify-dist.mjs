@@ -228,6 +228,65 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
     `这些导出没有任何行为性用例或示例用过(只出现在 publicApi.spec 的名字清单里):${unusedExports.join('、')}`
   )
   console.log(`公开面行为判据自检通过(${exportNames.length} 个导出都有人真用过)`)
+
+  /**
+   * 模块速查覆盖自检 —— 每个模块文件都得在 `docs/usage.md` 的模块表里找得到。
+   *
+   * 这份表是使用者"要找某一层时"的入口:新加一个模块却忘了写进去,等于这层不存在
+   * (只在地图的目录树里露脸,没有"它回答什么问题"那一行)。锚点用**中文主题或代表入口**
+   * 写成一张显式的表 —— 因为好些模块是通过 `game.*` 用的,不是靠 `create*` 名字找。
+   */
+  const MODULE_ANCHORS = {
+    'realms.ts': 'game.realms',
+    'attributes.ts': 'game.attributes',
+    'rng.ts': 'mulberry32',
+    'equipment.ts': 'game.equipment',
+    'holding.ts': 'createHoldingSystem',
+    'dungeons.ts': 'game.dungeons',
+    'combat.ts': 'game.combat',
+    'skills.ts': 'createSkillSystem',
+    'crafting.ts': 'composeCraftRate',
+    'recipes.ts': 'createRecipeRunner',
+    'goals.ts': 'evalGoal',
+    'deck.ts': 'drawFrom',
+    'companions.ts': 'createCompanionSystem',
+    'idle.ts': 'planIdle',
+    'save.ts': 'defineSaveFormat',
+    'saveShape.ts': 'asRecord',
+    'numeric.ts': 'Numeric<T>',
+    'config.ts': 'defineGame',
+    'resources.ts': 'createResourceSystem',
+    'triage.ts': 'createTriage',
+    'cycles.ts': 'createCycleSystem',
+    'choices.ts': 'createChoiceSystem',
+    'codex.ts': 'createCodex',
+    'memory.ts': 'createStageMemory',
+    'economy.ts': 'createEconomyReadings',
+    'intake.ts': 'createIntake',
+    'settlement.ts': 'createSettlement',
+    'drops.ts': 'createDropTable',
+    'buffs.ts': 'createBuffSystem',
+    'facilities.ts': 'createFacilitySystem',
+    'points.ts': 'createPointPool',
+    'tasks.ts': 'createTaskBoard',
+    'counters.ts': 'snapshotOf',
+    'chain.ts': 'createChain',
+    'pity.ts': 'createPityCounter',
+    'unlocks.ts': 'createUnlockRegistry',
+    'presets/': '内容包'
+  }
+  const moduleFiles = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).filter(
+    entry => typeof entry === 'string' && (entry.endsWith('.ts') || entry.endsWith('/')) && !entry.endsWith('.spec.ts')
+  )
+  const uncovered = Object.entries(MODULE_ANCHORS).filter(([, anchor]) => !usage.includes(anchor)).map(([file]) => file)
+  assert.deepEqual(uncovered, [], `这些模块没有出现在 docs/usage.md 的模块表里:${uncovered.join('、')}`)
+  assert.ok(uncovered.length === 0 && Object.keys(MODULE_ANCHORS).length >= 36, '模块锚点表少写了一项?')
+  // 反向:锚点表里的模块文件必须真实存在(改了名/删了文件时要跟着改)
+  for (const file of Object.keys(MODULE_ANCHORS)) {
+    const exists = moduleFiles.some(entry => entry === file || entry.startsWith(file))
+    assert.ok(exists, `模块锚点表里写了不存在的模块:${file}`)
+  }
+  console.log(`模块速查覆盖自检通过(${Object.keys(MODULE_ANCHORS).length} 个模块都在 docs/usage.md 里)`)
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
