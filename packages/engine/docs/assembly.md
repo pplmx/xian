@@ -82,6 +82,7 @@
 | 软保底(越抽越容易)与第 N 次必出 | `createPityCounter` / `softChance` | `pity.spec.ts` + `pity.sim.spec.ts`(实测数字) |
 | 收集进度(照面 / 懂几成) | `createCodex` | `codex.spec.ts` |
 | 重复的怎么处理 | `createIntake` | `intake.spec.ts` |
+| 整套抽卡 + 图鉴 + 日常的闭环 | —— | `examples/collect-loop.ts`(内容池 / 保底 / 集册 / 折算 / 今日三件 / 成就 / 经济体检在一份 200 行的小程序里) |
 
 ### 配方 D · 经营模拟
 

@@ -697,7 +697,7 @@ packages/engine/
     saveShape.ts    形状修复原语
     config.ts       defineGame / validateGame(交叉校验)
     presets/        仙侠 / 星港 / 日常学习三份内容包
-  examples/         可跑示例(快速上手 / 最小循环 / 战斗组合技 / 书桌与日常 / 自习室的一天 / 战斗接管)
+  examples/         可跑示例(快速上手 / 最小循环 / 战斗组合技 / 书桌与日常 / 自习室的一天 / 星屑集册 / 战斗接管)
     docs/             对账(parity)/ 开发(development)/ **组装指南(assembly)**
 ```
 
