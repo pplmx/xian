@@ -21,7 +21,8 @@
      */
     "types": ["vite/client", "node"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@engine/*": ["./packages/engine/src/*"]
     },
 
     /* Linting */
@@ -40,5 +41,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "packages/engine/src/**/*.ts"]
 }

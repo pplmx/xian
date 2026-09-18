@@ -13,6 +13,10 @@ import { readFileSync, rmSync } from 'node:fs'
  */
 const CATEGORIES = [
   {
+    name: 'Engine      公共库内核',
+    match: ['packages/engine', 'engineParity']
+  },
+  {
     name: 'Unit        数值纯函数',
     match: ['gnum', 'format', 'timeUnits', 'savePlaintext', 'formulas', 'linggenGen', 'equipGen', 'crypto', 'quests', 'codex', 'craftability', 'reforge', 'theme', 'savePersistence', 'dongfu.spec', 'ui.spec']
   },

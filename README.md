@@ -65,7 +65,7 @@ bun run build
 # 预览构建结果
 bun preview
 
-# 全量测试（数值/战斗/流派/曲线/经济/回归/终局/决策，155 个 spec）
+# 全量测试（数值/战斗/流派/曲线/经济/回归/终局/决策/公共库，190 个 spec）
 # 注意用 bun run test,不能用 bun test —— 后者会调 Bun 自带的测试器而非 Vitest
 bun run test
 
@@ -74,7 +74,35 @@ bun run test:report
 
 # 类型检查 + ESLint
 bun run check
+
+# 只跑公共库（万象引擎）的用例，或出它的 dist
+bun run test:engine
+bun run build:engine
 ```
+
+### 公共库：万象引擎（`packages/engine`）
+
+等级（境界）、属性、装备、副本四套系统已经从本作里**抽成独立内核**：不依赖 Vue / Pinia / 浏览器 API，
+换一套名称与内容就能搭出自己的游戏 —— 境界叫什么、装备叫什么、属性叫什么、副本叫什么，全都在配置里。
+
+```text
+packages/engine/
+├── src/
+│   ├── attributes.ts   # 属性登记表 + 词条合并（递减 / 软阈值）+ 最终结算
+│   ├── realms.ts       # 世界/境界/小层 + 修为、进阶、寿元、基础属性
+│   ├── equipment.ts    # 槽位/品质/模板/词条/套装 + 生成与解析
+│   ├── dungeons.ts     # 区域链/敌人/遭遇/首领门槛/通关奖励
+│   ├── combat.ts       # 回合制解算
+│   ├── config.ts       # defineGame / validateGame（交叉校验）
+│   └── presets/        # 仙侠包（本作名目）与星港包（换皮示例）
+└── examples/minimal.ts # 换皮后跑完整一圈
+```
+
+两份内容包使用**完全相同的机制键**、彼此没有一个重名，却都能跑完「修炼 → 进阶 → 掉装 → 装配 → 打副本 → 通关」。
+这是判据而不是承诺：见 `packages/engine/src/presets/presets.spec.ts`（换皮）与
+`src/core/engineParity.spec.ts`（与本体逐数字对账：境界/寿元/修为/三维/进阶率、词条合并、掉落池与装备结算、区域解锁）。
+
+细节与接入方式见 [`packages/engine/README.md`](packages/engine/README.md)。
 
 ### 多端构建
 
@@ -140,13 +168,14 @@ docker run -d -p 8080:80 yunyin-xiuxian
 | Tone.js         | 15    | FluidR3 乐器采样播放（BGM + SFX）           |
 | CryptoJS        | 4     | 存档 AES 加密                               |
 | lucide-vue-next | 0.577 | 图标库                                      |
-| Vitest          | 5     | 单元测试与平衡审计（155 个 spec）           |
+| Vitest          | 5     | 单元测试与平衡审计（190 个 spec）           |
 | Electron        | 39    | Windows 桌面客户端打包                      |
 | Capacitor       | 8     | Android 客户端打包                          |
 
 ## 项目结构
 
 ```text
+packages/engine/          # 公共库：等级/属性/装备/副本四套系统的可配置内核（见上）
 src/
 ├── data/                 # 内容层：纯静态声明式定义（48 个模块）
 │   ├── realms.ts             # 4 界域 · 21 境界

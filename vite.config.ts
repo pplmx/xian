@@ -31,12 +31,16 @@ export default defineConfig({
     alias: {
       // 用 import.meta.dirname 而非 __dirname:Vite 8 的 configLoader: 'native'
       // (未来版本的默认值)不提供 CJS 那套变量,继续用 __dirname 会在切换后报错
-      '@': resolve(import.meta.dirname, 'src')
+      '@': resolve(import.meta.dirname, 'src'),
+      // 公共库(等级/属性/装备/副本内核)—— 独立包,不带 Vue/Pinia 依赖,
+      // 应用侧按包名导入;真要对外发布时 `bun run build:engine` 出 dist 即可
+      '@engine': resolve(import.meta.dirname, 'packages/engine/src')
     }
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.spec.ts'],
+    // 应用自身的用例在 src/,公共库的用例在 packages/engine —— 两边都要跑
+    include: ['src/**/*.spec.ts', 'packages/engine/**/*.spec.ts'],
     // 平衡审计类用例(buildSim / celestialSim / synergyScan / worldGen 等)
     // 单个要跑上万次模拟,单独执行约 2 秒,但 97 个文件并行时互相抢 CPU 会顶到
     // vitest 的 5 秒默认上限 —— 切到 bun 后并行度更高,synergyScan 实测 5227ms 超时。

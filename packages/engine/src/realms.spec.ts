@@ -1,0 +1,122 @@
+import { describe, expect, it } from 'vitest'
+import type { RealmSystemConfig } from './realms'
+import { createRealmSystem } from './realms'
+import { createRng } from './rng'
+
+function makeSystem(overrides: Partial<RealmSystemConfig> = {}) {
+  return createRealmSystem({
+    worlds: [
+      { id: 'a', name: '下界', realms: ['青铜', '白银', '黄金'] },
+      { id: 'b', name: '上界', realms: ['铂金', '钻石'] }
+    ],
+    layerNames: ['一层', '二层', '三层', '圆满'],
+    exp: { base: 100, realmGrowth: 10, layerGrowth: 2, worldStepMult: 3 },
+    combat: { base: { attack: 10, defense: 5, maxHp: 100 }, realmGrowth: 4, layerGrowth: 1.5 },
+    breakthrough: { layerBase: 0.9, layerDecay: 0.05, majorBase: 0.6, majorDecay: 0.05, min: 0.1, max: 0.95 },
+    lifespan: { byWorld: { a: { base: 100, growth: 3 }, b: { base: 9000, growth: 4 } } },
+    ...overrides
+  })
+}
+
+describe('等级体系 —— 名目、曲线、进阶、寿元', () => {
+  it('境界名与小层名拼成一行字,模板可换', () => {
+    const sys = makeSystem()
+    expect(sys.label(0, 0)).toBe('青铜·一层')
+    expect(sys.label(3, 3)).toBe('铂金·圆满')
+    const custom = makeSystem({ labelFormat: '{realm} {layer} 阶' })
+    expect(custom.label(1, 2)).toBe('白银 三层 阶')
+  })
+
+  it('世界划分连续无缝,序号即境界序号', () => {
+    const sys = makeSystem()
+    expect(sys.realms.map(r => r.major)).toEqual([0, 1, 2, 3, 4])
+    expect(sys.worlds).toEqual([
+      { id: 'a', name: '下界', desc: undefined, start: 0, end: 2 },
+      { id: 'b', name: '上界', desc: undefined, start: 3, end: 4 }
+    ])
+    expect(sys.isWorldEntry(3)).toBe(true)
+    expect(sys.isWorldEntry(2)).toBe(false)
+  })
+
+  it('修为需求随层、随境单调上涨;界末圆满再乘跨界系数', () => {
+    const sys = makeSystem()
+    for (let major = 0; major < sys.maxMajor; major += 1) {
+      for (let layer = 0; layer < sys.maxLayer; layer += 1) {
+        expect(Number(sys.expCost(major, layer + 1))).toBeGreaterThan(Number(sys.expCost(major, layer)))
+      }
+    }
+    // 跨界那一层单独加价:界末圆满 = 同境界内同层需求 × 世界的跨界系数
+    const worldStep = sys.expCost(2, sys.maxLayer)
+    const inside = sys.expCost(2, sys.maxLayer - 1)
+    expect(Number(worldStep)).toBeCloseTo(Number(inside) * 2 * 3, 6)
+    // 注意:**不保证**「下一界的第一层 > 上一界的圆满」—— 界末被加了墙、
+    // 而新界的第一层又从头起步,这正是"飞升是一次大跃,之后重新爬"的形状。
+    expect(Number(sys.expCost(3, 0))).toBeLessThan(Number(worldStep))
+  })
+
+  it('基础属性随境界与层数成长', () => {
+    const sys = makeSystem()
+    expect(Number(sys.baseStats(0, 0).attack)).toBeCloseTo(10, 6)
+    expect(Number(sys.baseStats(1, 0).attack)).toBeCloseTo(40, 6)
+    expect(Number(sys.baseStats(0, 1).attack)).toBeCloseTo(15, 6)
+    expect(Number(sys.baseStats(0, 0).maxHp)).toBeCloseTo(100, 6)
+  })
+
+  it('寿元按世界复利,跨界为大跃', () => {
+    const sys = makeSystem()
+    expect(sys.lifespanOf(0)).toBe(100)
+    expect(sys.lifespanOf(1)).toBe(300)
+    expect(sys.lifespanOf(2)).toBe(900)
+    expect(sys.lifespanOf(3)).toBe(9000)
+    expect(sys.lifespanOf(4)).toBe(36000)
+  })
+
+  it('修为封顶在当前小层的需求上', () => {
+    const sys = makeSystem()
+    const cost = sys.expCost(0, 0)
+    const capped = sys.addExp({ major: 0, layer: 0, exp: 0 }, 100000)
+    expect(capped.exp).toBe(cost)
+  })
+
+  it('修为不满不能进阶;满了才掷骰;失败保留修为', () => {
+    const sys = makeSystem()
+    const rng = createRng(1)
+    const notReady = sys.attemptBreakthrough({ major: 0, layer: 0, exp: 0 }, { rng })
+    expect(notReady.ok).toBe(false)
+    expect(notReady.reason).toBe('not-ready')
+
+    const cost = Number(sys.expCost(0, 0))
+    const state = { major: 0, layer: 0, exp: cost }
+    const result = sys.attemptBreakthrough(state, { rng, bonusRate: 10 }) // 加成拉满,必成
+    expect(result.ok).toBe(true)
+    expect(result.state).toEqual({ major: 0, layer: 1, exp: 0 })
+    expect(result.to).toBe('青铜·二层')
+  })
+
+  it('大关可声明必须走试炼:不给掷骰的机会', () => {
+    const sys = makeSystem({
+      breakthrough: { layerBase: 1, layerDecay: 0, majorBase: 1, majorDecay: 0, min: 1, max: 1, majorRequiresTrial: true }
+    })
+    const state = { major: 0, layer: sys.maxLayer, exp: sys.expCost(0, sys.maxLayer) }
+    const result = sys.attemptBreakthrough(state, { rng: createRng(3) })
+    expect(result.requiresTrial).toBe(true)
+    expect(result.ok).toBe(false)
+    expect(result.state.major).toBe(0)
+  })
+
+  it('走到最后一个境界的圆满不能再进阶', () => {
+    const sys = makeSystem()
+    const state = { major: sys.maxMajor, layer: sys.maxLayer, exp: sys.expCost(sys.maxMajor, sys.maxLayer) }
+    const result = sys.attemptBreakthrough(state, { rng: createRng(1) })
+    expect(result.reason).toBe('max')
+  })
+
+  it('进度视图给出比例与是否可进阶', () => {
+    const sys = makeSystem()
+    const cost = Number(sys.expCost(0, 0))
+    const half = sys.progress({ major: 0, layer: 0, exp: cost / 2 })
+    expect(half.ratio).toBeCloseTo(0.5, 6)
+    expect(half.ready).toBe(false)
+    expect(sys.progress({ major: 0, layer: 0, exp: cost }).ready).toBe(true)
+  })
+})

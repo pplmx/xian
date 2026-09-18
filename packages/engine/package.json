@@ -1,0 +1,42 @@
+{
+  "name": "wanxiang-engine",
+  "version": "0.1.0",
+  "description": "万象引擎 —— 可配置的等级(境界)/装备/属性/副本系统内核:换一套名称与内容,就能搭出自己的游戏",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./presets/xiuxian": {
+      "types": "./dist/presets/xiuxian.d.ts",
+      "import": "./dist/presets/xiuxian.js"
+    },
+    "./presets/demo": {
+      "types": "./dist/presets/demo.d.ts",
+      "import": "./dist/presets/demo.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "type-check": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "game-engine",
+    "idle-game",
+    "rpg",
+    "level",
+    "equipment",
+    "attributes",
+    "dungeon"
+  ]
+}
