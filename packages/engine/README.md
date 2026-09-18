@@ -649,14 +649,31 @@ packages/engine/
   src/
     numeric.ts      数值适配层(默认 number,大数库可插拔)
     rng.ts          可复现随机(mulberry32,与源工程可交换种子对账)
+    counters.ts     计数器基准快照(生涯 / 本期共用一份计数)
     attributes.ts   属性登记表 + 合并规则 + 最终属性结算
+    buffs.ts        状态(时效增益):叠时长、过期即散、按分类清除
     realms.ts       世界/境界/小层 + 修为/进阶/寿元/基础属性
     equipment.ts    槽位/品质/模板/词条/套装 + 生成与解析
+    holding.ts      持有:容量、占位、替换
     dungeons.ts     区域链/敌人/遭遇/首领门槛/通关奖励
     combat.ts       回合制解算(副本的下半场)
     skills.ts       技能/功法:等级曲线、消耗、满级分支
     crafting.ts     炼制:成功率四乘区与熟练度曲线
+    facilities.ts   设施:升级门槛 / 上限 / 每小时产出与零头
+    points.ts       投资点:总容量与主副两档上限、换位不作废已投
+    resources.ts    资源账本:收支、上下限、来源明细
+    triage.ts       分流裁决:留还是不留,以及为什么
+    intake.ts       入库漏斗:先见证、按规则拒收、满了腾位、折算
+    settlement.ts   结算回执:实际入账是唯一来源
+    drops.ts        掉落表:概率归一、保底、抽数与份数
+    economy.ts      经济读数:进/出比值与判词
+    cycles.ts       周期:每日 / 每赛季的确定性轮换
+    choices.ts      抉择:事件选项、加权后果、超时兜底
+    tasks.ts        周期任务板:按计数增量结算、换期幂等
+    chain.ts        顺序任务链:一次连推多节、守卫与到链尾
     goals.ts        目标/成就条件(判定与进度视图)
+    codex.ts        图鉴:照面累计升档、只记见过的最好一件
+    memory.ts       世界记忆:档位门槛与不打交道就回落
     deck.ts         随机内容池(区间/标签/一次性/权重/保底)
     companions.ts   伙伴与性格系数
     idle.ts         离线时长账
@@ -664,7 +681,7 @@ packages/engine/
     saveShape.ts    形状修复原语
     config.ts       defineGame / validateGame(交叉校验)
     presets/        仙侠 / 星港 / 日常学习三份内容包
-  examples/         可跑示例
+  examples/         可跑示例(快速上手 / 最小循环 / 战斗组合技 / 书桌与日常 / 自习室的一天)
   docs/             对账与开发文档
 ```
 
