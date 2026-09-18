@@ -148,4 +148,42 @@ describe('副本系统 —— 区域链/遭遇/首领门槛/通关奖励', () =>
     expect(Number(custom.snapshot('e1').stats.hp)).toBeCloseTo(100, 6)
     expect(Number(custom.snapshot('e4').stats.hp)).toBeCloseTo(100 * 3, 6)
   })
+
+  it('多条前置:默认"全部已通",也可声明"任一已通即可"', () => {
+    const all = createDungeonSystem({
+      ...CONFIG,
+      regions: [
+        { id: 'r1', name: '一图', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1' },
+        { id: 'r2', name: '二图', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1' },
+        {
+          id: 'r3',
+          name: '汇合点',
+          tier: 2,
+          minRealm: 0,
+          enemies: ['e3'],
+          boss: 'b2',
+          requireCleared: ['r1', 'r2']
+        }
+      ]
+    })
+    const none = emptyProgress()
+    expect(all.isUnlocked('r3', none, 0)).toBe(false)
+    expect(all.isUnlocked('r3', { ...none, cleared: ['r1'] }, 0)).toBe(false)
+    expect(all.isUnlocked('r3', { ...none, cleared: ['r1', 'r2'] }, 0)).toBe(true)
+    // 补票同理:只补该补的
+    expect(all.prereqClosure(['r1'], ['r1'])).toEqual(['r1'])
+    expect(all.prereqClosure(['r1'], ['r1', 'r2'])).toEqual(['r1', 'r3'])
+
+    const any = createDungeonSystem({
+      ...CONFIG,
+      regions: [
+        { id: 'r1', name: '一图', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1' },
+        { id: 'r2', name: '二图', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1' },
+        { id: 'r3', name: '汇合点', tier: 2, minRealm: 0, enemies: ['e3'], boss: 'b2', requireCleared: ['r1', 'r2'], requireMode: 'any' }
+      ]
+    })
+    expect(any.isUnlocked('r3', { ...none, cleared: ['r2'] }, 0)).toBe(true)
+    // 主线顺序仍按第一条前置排:r3 排在 r1 之后
+    expect(any.chain().map(r => r.id)).toEqual(['r1', 'r3', 'r2'])
+  })
 })

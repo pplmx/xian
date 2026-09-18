@@ -43,6 +43,10 @@
   `dungeons.enemyPower.scaleFn`(自己定敌人数值曲线)、
   `attributes.diminish`(递减算法本身:`ranked` 默认 / `max` / `sum` / 自定义 `fold`,
   且明细仍恒等于合计)
+- 两处结构放宽:**逐境层数可不同**(`RealmEntry.layers`,新增 `layersOf` / `maxLayerOf`,
+  `maxLayer` 语义改为"所有境界里最多的层数")与**区域多条前置**
+  (`requireCleared: string | string[]` + `requireMode: 'all' | 'any'`;
+  校验与成环检测同步跟上,补票也按同一语义)
 
 **已验证**
 

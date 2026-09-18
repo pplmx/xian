@@ -164,4 +164,29 @@ describe('等级体系 —— 名目、曲线、进阶、寿元', () => {
     const clamped = makeSystem({ breakthrough: { min: 0.1, max: 0.9, rateFn: () => 5 } })
     expect(clamped.breakthroughRate(0, 0)).toBe(0.9)
   })
+
+  it('逐境层数可不同:前境两层、后境四层,各自独立', () => {
+    const sys = createRealmSystem({
+      worlds: [{ id: 'a', name: '一段', realms: [{ name: '一境', layers: ['上', '下'] }, '二境', '三境'] }],
+      layerNames: ['一', '二', '三', '圆满'],
+      exp: { base: 10, realmGrowth: 2, layerGrowth: 2 },
+      combat: { base: { attack: 10 }, realmGrowth: 2, layerGrowth: 1.5 },
+      breakthrough: { layerBase: 1, layerDecay: 0, majorBase: 1, majorDecay: 0, min: 1, max: 1 }
+    })
+    // 第一境两层,后两境用全局那套四层
+    expect(sys.layersOf(0)).toEqual(['上', '下'])
+    expect(sys.maxLayerOf(0)).toBe(1)
+    expect(sys.maxLayerOf(1)).toBe(3)
+    expect(sys.maxLayer).toBe(3) // 所有境界里最多的层数
+    expect(sys.label(0, 1)).toBe('一境·下')
+    expect(sys.label(0, 99)).toBe('一境·下') // 超出的层被夹到本境最后一层
+    expect(sys.label(1, 3)).toBe('二境·圆满')
+    // 第一境走到"下"就是大关:再进阶即进入第二境
+    const step = sys.attemptBreakthrough({ major: 0, layer: 1, exp: sys.expCost(0, 1) }, { rng: createRng(1) })
+    expect(step.ok).toBe(true)
+    expect(step.state).toEqual({ major: 1, layer: 0, exp: 0 })
+    expect(step.to).toBe('二境·一')
+    // 修为封顶按**本境**的层需求,不是按别境
+    expect(sys.addExp({ major: 0, layer: 1, exp: 0 }, 999999).exp).toBe(sys.expCost(0, 1))
+  })
 })

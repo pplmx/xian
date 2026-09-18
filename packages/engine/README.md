@@ -223,6 +223,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **进阶成功率完全自己定** | `realms.breakthrough.rateFn(major, layer)`(仍受 `min/max` 夹取) |
 | 不要"寿元"这回事 | 省略 `lifespan`(`lifespanOf` 返回 Infinity) |
 | 品质档数 / 槽位数量 / 每档词条条数 | `qualities[]` / `slots[]` / `QualityDef.affixes` |
+| **逐境层数不同**(前几境九层、后几境三层) | `realms.worlds[].realms[]` 里给某一境写 `layers`(其余仍用全局 `layerNames`) |
 | 层级系数是张表而不是指数 | `equipment.power.tierFactors` |
 | **炼制乘区几个、叫什么、什么形状** | `crafting.levers`(任意键)+ 每区 `LeverSpec.curve`(自定义曲线)+ 可选 `overReach` |
 | 词条数值单位(百分点 / 分数) | `equipment.affixValueScale` 或单个词条的 `scale` |
@@ -231,6 +232,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **词条合并的算法本身** | `attributes.diminish`:默认按贡献降序打折,也可 `'max'`(只取最强)/ `'sum'`(直接相加)/ 自定义 `fold(values)` |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
+| **区域多条前置**("两条线都通才开"/"任一即可") | `requireCleared: string \| string[]` + `requireMode: 'all' \| 'any'` |
 | **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
 | **随机内容池的标签体系与区间** | `deck` 的 `tags` / `min` / `max` / `weight` / `once`,`weightMultiplier`(倾向而非门槛) |
 | 牌堆标签怎么算切题 | `DeckContext.match: 'any' \| 'all'`(相交 / 牌要求全中)、`excludeTags`(命中即排除) |

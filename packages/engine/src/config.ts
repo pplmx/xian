@@ -183,25 +183,36 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
     if (!enemyIds.has(r.boss)) err('DUNGEON_REGION_BOSS', `区域 ${r.id}(${r.name})的首领不存在:${r.boss}`)
     const boss = config.dungeons.enemies.find(e => e.id === r.boss)
     if (boss && boss.boss !== true) warn('DUNGEON_BOSS_FLAG', `区域 ${r.id} 的首领 ${r.boss}(${boss.name})没有标 boss:true`)
-    if (r.requireCleared !== undefined && !regionIds.has(r.requireCleared)) {
-      err('DUNGEON_REGION_CHAIN', `区域 ${r.id}(${r.name})的前置不存在:${r.requireCleared}`)
+    const prereqs = r.requireCleared === undefined ? [] : typeof r.requireCleared === 'string' ? [r.requireCleared] : r.requireCleared
+    for (const id of prereqs) {
+      if (!regionIds.has(id)) err('DUNGEON_REGION_CHAIN', `区域 ${r.id}(${r.name})的前置不存在:${id}`)
+    }
+    if (r.requireMode === 'any' && prereqs.length < 2) {
+      warn('DUNGEON_REGION_MODE', `区域 ${r.id}(${r.name})写了 requireMode: 'any' 但前置不足两条,等价于默认`)
     }
     if (r.minRealm > majorCount - 1) {
       err('DUNGEON_REGION_REALM', `区域 ${r.id}(${r.name})的推荐等级 ${r.minRealm} 超出境界范围 0..${majorCount - 1}`)
     }
     if (r.tier < 1) err('DUNGEON_REGION_TIER', `区域 ${r.id}(${r.name})的层级必须 ≥ 1`)
   }
-  // 链条不能有环
+  // 前置关系不能有环(多条前置时把每条边都走一遍)
+  const prereqList = (id: string): readonly string[] => {
+    const r = config.dungeons.regions.find(x => x.id === id)
+    if (!r || r.requireCleared === undefined) return []
+    return typeof r.requireCleared === 'string' ? [r.requireCleared] : r.requireCleared
+  }
   for (const r of config.dungeons.regions) {
-    const seen = new Set<string>([r.id])
-    let cur = r.requireCleared
-    while (cur !== undefined) {
-      if (seen.has(cur)) {
-        err('DUNGEON_REGION_CYCLE', `区域链条成环:${[...seen].join(' → ')} → ${cur}`)
+    const stack: string[] = [...prereqList(r.id)]
+    const seen = new Set<string>()
+    while (stack.length > 0) {
+      const cur = stack.pop()!
+      if (cur === r.id) {
+        err('DUNGEON_REGION_CYCLE', `区域 ${r.id}(${r.name})的前置关系成环`)
         break
       }
+      if (seen.has(cur)) continue
       seen.add(cur)
-      cur = config.dungeons.regions.find(x => x.id === cur)?.requireCleared
+      stack.push(...prereqList(cur))
     }
   }
   for (const e of config.dungeons.enemies) {

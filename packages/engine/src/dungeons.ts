@@ -83,8 +83,18 @@ export interface RegionDef {
   enemies: string[]
   /** 首领(敌人 id) */
   boss: string
-  /** 前置区域(击败其首领后解锁) */
-  requireCleared?: string
+  /**
+   * 前置区域:要开这一处,需要先通的那些地方。
+   *
+   *   字符串     —— 一条前置(最常见,也是原来唯一支持的写法);
+   *   字符串数组 —— 多条前置,语义看 `requireMode`(默认全部)。
+   *
+   * 多条前置是给"两条线都走通才开"这种结构的:主线之外还有支线时,
+   * 用一条链硬串会把支线变成"必须顺路",而这里可以表达"两者都要"或"任一条即可"。
+   */
+  requireCleared?: string | readonly string[]
+  /** 多条前置时的语义:默认 `'all'`(全部已通);`'any'` 表示任一已通即可 */
+  requireMode?: 'all' | 'any'
   eventTags?: string[]
   /** 该图专属奖励(叠加在通用奖励上) */
   rewards?: RewardDef[]
@@ -212,15 +222,28 @@ export function createDungeonSystem<T = number>(
   const requireChain = config.requireChain ?? true
   const power = config.enemyPower ?? { baseHp: 150, baseAttack: 12, baseDefense: 7, tierGrowth: 1.9 }
 
+  /** 某区域的前置列表(字符串与数组两种写法都收成一个数组) */
+  const prereqsOf = (region: RegionDef): readonly string[] =>
+    region.requireCleared === undefined ? [] : typeof region.requireCleared === 'string' ? [region.requireCleared] : region.requireCleared
+
+  /** 前置是否已满足(多条时按 requireMode:默认全部) */
+  const prereqMet = (region: RegionDef, beaten: ReadonlySet<string>): boolean => {
+    const prereqs = prereqsOf(region)
+    if (prereqs.length === 0) return true
+    return region.requireMode === 'any' ? prereqs.some(id => beaten.has(id)) : prereqs.every(id => beaten.has(id))
+  }
+
   const firstRegion = (): RegionDef => {
-    const head = regions.find(r => r.requireCleared === undefined || !regionById.has(r.requireCleared))
+    // 没有前置的,或前置指向了不认识的 id(内容被挪过) —— 都当作可作起点
+    const head = regions.find(r => prereqsOf(r).every(id => !regionById.has(id)))
     return head ?? regions[0]!
   }
 
   const chain = (): RegionDef[] => {
+    // 排序:按"被谁当作前置"建图,从起点出发做深度优先(多条前置时认第一条作为顺序依据)
     const byRequirement = new Map<string, RegionDef[]>()
     for (const r of regions) {
-      const key = r.requireCleared ?? ''
+      const key = prereqsOf(r)[0] ?? ''
       const list = byRequirement.get(key)
       if (list) list.push(r)
       else byRequirement.set(key, [r])
@@ -241,8 +264,8 @@ export function createDungeonSystem<T = number>(
     const region = regionById.get(regionId)
     if (!region) return false
     if (major < region.minRealm) return false
-    if (!requireChain || region.requireCleared === undefined) return true
-    return progress.cleared.includes(region.requireCleared)
+    if (!requireChain) return true
+    return prereqMet(region, new Set(progress.cleared))
   }
 
   const unlocked = (progress: DungeonProgress, major: number): RegionDef[] =>
@@ -264,8 +287,8 @@ export function createDungeonSystem<T = number>(
     const have = new Set(out)
     const beaten = new Set(cleared)
     for (const region of chain()) {
-      if (have.has(region.id) || region.requireCleared === undefined) continue
-      if (!beaten.has(region.requireCleared)) continue
+      if (have.has(region.id) || prereqsOf(region).length === 0) continue
+      if (!prereqMet(region, beaten)) continue
       have.add(region.id)
       out.push(region.id)
     }

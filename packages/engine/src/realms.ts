@@ -31,6 +31,14 @@ export interface RealmEntry {
   lore?: string
   /** 寿元;省略时按 lifespan 曲线算 */
   lifespanYears?: number
+  /**
+   * 这一境界自己的小层名目(**可选**)。
+   *
+   * 不写就用 `layerNames` 那一套;写了就只有这一境按它走 ——
+   * 前几境九层、后几境三层的作品不必再被迫拉成同一长度。
+   * 长度即这一境的层数(含"圆满"那一层)。
+   */
+  layers?: readonly string[]
 }
 
 export interface WorldConfig {
@@ -50,6 +58,8 @@ export interface RealmDef {
   desc?: string
   lore?: string
   lifespanYears: number
+  /** 这一境界的小层名目(未覆盖时即全局那套) */
+  layers: readonly string[]
 }
 
 export interface WorldDef {
@@ -172,7 +182,12 @@ export interface RealmSystem<T = number> {
   readonly realms: readonly RealmDef[]
   readonly layerNames: readonly string[]
   readonly maxMajor: number
+  /** **所有境界里最多的层数**(逐境层数可能不同);要问某一境,用 maxLayerOf */
   readonly maxLayer: number
+  /** 某境界的小层名目 */
+  layersOf(major: number): readonly string[]
+  /** 某境界的最大层序号(= 其层数 − 1) */
+  maxLayerOf(major: number): number
   realmAt(major: number): RealmDef
   worldOf(major: number): WorldDef
   worldById(id: string): WorldDef | undefined
@@ -232,7 +247,8 @@ export function createRealmSystem<T = number>(
         major,
         desc: def.desc,
         lore: def.lore,
-        lifespanYears: def.lifespanYears ?? 0
+        lifespanYears: def.lifespanYears ?? 0,
+        layers: def.layers !== undefined && def.layers.length > 0 ? [...def.layers] : layerNames
       })
       major += 1
     }
@@ -245,7 +261,9 @@ export function createRealmSystem<T = number>(
   const defaultLateFrom = worlds[1]?.start ?? maxMajor + 1
   const expLateFrom = config.exp.lateFrom ?? defaultLateFrom
   const combatLateFrom = config.combat.lateFrom ?? defaultLateFrom
-  const layerEnd = layerNames.length - 1
+  /** 第 m 境的最后一层(逐境层数可以不同) */
+  const endOf = (m: number): number => realms[clamp(m, 0, maxMajor)]!.layers.length - 1
+  const maxLayer = Math.max(...realms.map(r => r.layers.length - 1))
 
   const splitAt = (i: number, lateFrom: number): { early: number; late: number } => {
     const e = Math.min(Math.max(0, i), lateFrom)
@@ -291,13 +309,13 @@ export function createRealmSystem<T = number>(
 
   const worldEntries = worlds.slice(1).map(w => w.start)
 
-  const isMajorStep = (_major: number, layer: number): boolean => layer >= layerEnd
+  const isMajorStep = (m: number, layer: number): boolean => layer >= endOf(m)
   const isWorldStep = (major_: number, layer: number): boolean =>
     isMajorStep(major_, layer) && major_ < maxMajor && worldEntries.includes(major_ + 1)
 
   const expCost = (major_: number, layer: number): T => {
     const m = clamp(major_, 0, maxMajor)
-    const l = clamp(layer, 0, layerEnd)
+    const l = clamp(layer, 0, endOf(m))
     // 自己接管需求曲线的:原样用它的数(引擎不插值、不缩放)
     if (config.exp.costFn) return numeric.from(config.exp.costFn(m, l))
     const stepMult = isWorldStep(m, l) ? config.exp.worldStepMult ?? 1 : 1
@@ -307,7 +325,7 @@ export function createRealmSystem<T = number>(
 
   const baseStats = (major_: number, layer: number): Record<string, T> => {
     const m = clamp(major_, 0, maxMajor)
-    const l = clamp(layer, 0, layerEnd)
+    const l = clamp(layer, 0, endOf(m))
     if (config.combat.statsFn) {
       const out: Record<string, T> = {}
       for (const [key, value] of Object.entries(config.combat.statsFn(m, l))) out[key] = numeric.from(value)
@@ -321,7 +339,7 @@ export function createRealmSystem<T = number>(
 
   const breakthroughRate = (major_: number, layer: number): number => {
     const m = clamp(major_, 0, maxMajor)
-    const l = clamp(layer, 0, layerEnd)
+    const l = clamp(layer, 0, endOf(m))
     const bt = config.breakthrough
     // 自己接管成功率曲线的:原样用它的数(仍受 min/max 夹取 —— 那是取值范围,不是曲线)
     const raw = bt.rateFn ? bt.rateFn(m, l) : isMajorStep(m, l) ? bt.majorBase - m * bt.majorDecay : bt.layerBase - l * bt.layerDecay
@@ -330,13 +348,13 @@ export function createRealmSystem<T = number>(
 
   const label = (major_: number, layer: number): string => {
     const r = realms[clamp(major_, 0, maxMajor)]!
-    const name = layerNames[clamp(layer, 0, layerEnd)] ?? String(layer)
+    const name = r.layers[clamp(layer, 0, r.layers.length - 1)] ?? String(layer)
     return labelFormat.replace('{realm}', r.name).replace('{layer}', name)
   }
 
   const progress = (state: RealmState<T>): ProgressView<T> => {
     const m = clamp(state.major, 0, maxMajor)
-    const l = clamp(state.layer, 0, layerEnd)
+    const l = clamp(state.layer, 0, endOf(m))
     const cost = expCost(m, l)
     const ratioNum = cost === numeric.zero ? 1 : numeric.toNumber(numeric.div(state.exp, cost))
     const ratio = clamp(Number.isFinite(ratioNum) ? ratioNum : 1, 0, 1)
@@ -350,7 +368,7 @@ export function createRealmSystem<T = number>(
       ready: numeric.cmp(state.exp, cost) >= 0,
       isMajorStep: isMajorStep(m, l),
       isWorldStep: isWorldStep(m, l),
-      atWorldEnd: l >= layerEnd
+      atWorldEnd: l >= endOf(m)
     }
   }
 
@@ -365,12 +383,12 @@ export function createRealmSystem<T = number>(
     opts: { rng: Rng; bonusRate?: number; keepExpOnFail?: boolean }
   ): BreakthroughResult<T> => {
     const m = clamp(state.major, 0, maxMajor)
-    const l = clamp(state.layer, 0, layerEnd)
+    const l = clamp(state.layer, 0, endOf(m))
     const majorStep = isMajorStep(m, l)
     const worldStep = isWorldStep(m, l)
     const from = label(m, l)
     const rate = clamp(breakthroughRate(m, l) + (opts.bonusRate ?? 0), config.breakthrough.min, config.breakthrough.max)
-    const atMax = m >= maxMajor && l >= layerEnd
+    const atMax = m >= maxMajor && l >= endOf(m)
     if (atMax) {
       return { ok: false, rate, state, requiresTrial: false, isMajorStep: majorStep, isWorldStep: worldStep, from, to: from, reason: 'max' }
     }
@@ -394,7 +412,9 @@ export function createRealmSystem<T = number>(
     realms,
     layerNames,
     maxMajor,
-    maxLayer: layerEnd,
+    maxLayer,
+    layersOf: m => realms[clamp(m, 0, maxMajor)]!.layers,
+    maxLayerOf: m => endOf(clamp(m, 0, maxMajor)),
     realmAt: major_ => realms[clamp(major_, 0, maxMajor)]!,
     worldOf: major_ => worlds.find(w => clamp(major_, 0, maxMajor) >= w.start && clamp(major_, 0, maxMajor) <= w.end) ?? worlds[0]!,
     worldById: id => worlds.find(w => w.id === id),

@@ -72,6 +72,30 @@ describe('世界装配 —— 交叉校验', () => {
     expect(validateGame(cfg).some(i => i.code === 'DUNGEON_REGION_CYCLE')).toBe(true)
   })
 
+  it('多条前置:逐条校验存在性,成环也照样查得出来', () => {
+    const cfg = baseConfig()
+    cfg.dungeons.regions.push({ id: 'r2', name: '二图', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1' })
+    cfg.dungeons.regions.push({ id: 'r3', name: '三图', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1', requireCleared: ['r1', 'nobody'] })
+    const codes = validateGame(cfg).map(i => i.code)
+    expect(codes).toContain('DUNGEON_REGION_CHAIN')
+
+    const cyc = baseConfig()
+    cyc.dungeons.regions.push({ id: 'r2', name: '二图', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1', requireCleared: ['r3'] })
+    cyc.dungeons.regions.push({ id: 'r3', name: '三图', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1', requireCleared: ['r2'] })
+    expect(validateGame(cyc).some(i => i.code === 'DUNGEON_REGION_CYCLE')).toBe(true)
+  })
+
+  it('逐境层数可不同:某一境自己给了 layers 就用它,其余仍用全局那套', () => {
+    const cfg = baseConfig()
+    cfg.realms.worlds = [{ id: 'a', name: '世界', realms: [{ name: '一境', layers: ['上', '下'] }, '二境'] }]
+    const game = defineGame(cfg)
+    expect(game.realms.layersOf(0)).toEqual(['上', '下'])
+    // 没写 layers 的仍用全局那套
+    expect(game.realms.layersOf(1)).toEqual(game.realms.layerNames)
+    expect(game.realms.maxLayerOf(0)).toBe(1)
+    expect(game.realms.maxLayerOf(1)).toBe(game.realms.layerNames.length - 1)
+  })
+
   it('区域推荐等级超出境界范围 → 报错', () => {
     const cfg = baseConfig()
     cfg.dungeons.regions[0]!.minRealm = 99
