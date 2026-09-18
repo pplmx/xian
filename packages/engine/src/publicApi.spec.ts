@@ -47,6 +47,7 @@ import type {
   CompanionSystem,
   ComputedStats,
   CraftFormula,
+  CounterMap,
   CycleConfig,
   CycleContext,
   CycleEntry,
@@ -236,6 +237,8 @@ const RUNTIME_EXPORTS = [
   'createSkillSystem',
   'createTaskBoard',
   'createTriage',
+  'deltaOf',
+  'deltaSince',
   'deckPool',
   'decodeSave',
   'decodeSavePayload',
@@ -262,6 +265,7 @@ const RUNTIME_EXPORTS = [
   'runIdle',
   'runMigrations',
   'seedFromString',
+  'snapshotOf',
   'stageNameOf',
   'validateGame',
   'weightedSkill'
@@ -362,6 +366,7 @@ type PublicTypes = {
   facilities: [FacilityCost<number>, FacilityDef<Mods, { realm: number }, number>, FacilitySystem<Mods, { realm: number }, number>, LevelMap, UpgradeInfo<number>]
   points: [InvestInfo<number>, InvestOutcome<number>, PointBranch<Mods>, PointCost<number>, PointPool<Mods, { open: boolean }, number>, PointState, PointsConfig<Mods, { open: boolean }, number>, SwitchInfo<number>, SwitchOutcome<number>]
   tasks: [ClaimOutcome, SettleResult, TaskBoard, TaskBoardState, TaskProgress, TaskSpec]
+  counters: [CounterMap]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

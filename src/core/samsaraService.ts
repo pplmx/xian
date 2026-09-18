@@ -47,6 +47,7 @@ import { useQuestsStore } from '@/stores/quests'
 import { useCultivationStore } from '@/stores/cultivation'
 import { useUiStore } from '@/stores/ui'
 import type { CounterKey } from '@/types'
+import { deltaOf, deltaSince, snapshotOf } from 'wanxiang-engine'
 
 // ============ 宿慧折算(纯函数,可独立测试) ============
 
@@ -161,8 +162,13 @@ export interface ThemeProgress {
   done: boolean
 }
 
+/**
+ * 本世增量 —— 与每日任务共用库的同一份"基准快照"原语(`counters.ts`):
+ * 增量 = 当前 − 开世基准,夹到 ≥ 0。同一条减法不再各处各写一遍(少一处夹取,
+ * 回档那天就会冒出负进度)。
+ */
 function countersDelta(key: CounterKey, base: Partial<Record<CounterKey, number>>): number {
-  return Math.max(0, useQuestsStore().counter(key) - (base[key] ?? 0))
+  return deltaSince(base as Record<string, number>, useQuestsStore().counters as Record<string, number>, key)
 }
 
 /** 已择定的悟道分支数 */
@@ -195,9 +201,9 @@ function metricProgress(metric: LifeThemeMetric, vow: LifeVow): ThemeProgress {
     case 'enemyLore':
       return prog(lore.masteredEnemyCount, metric.n)
     case 'branch':
-      return prog(Math.max(0, branchCount() - vow.baseBranches), metric.n)
+      return prog(deltaOf(vow.baseBranches, branchCount()), metric.n)
     case 'avenge':
-      return prog(Math.max(0, avengedCount() - vow.baseAvenged), metric.n)
+      return prog(deltaOf(vow.baseAvenged, avengedCount()), metric.n)
     case 'all': {
       // 取各条中最落后的一条作为整体进度:全部达成才算达成
       const parts = metric.of.map(m => metricProgress(m, vow))
@@ -278,11 +284,16 @@ export function beginLife(themeId: string | null, now = Date.now()): void {
     player.setVow(null)
     return
   }
+  /**
+   * 一世一题:已经立过就直接返回 —— 重进来一次(连点确认、恢复流程)不该把这一世
+   * 已经攒下的进度重新打基准抹掉。转世流程会**先撤上一世的题**再立新题(见 core/reincarnation)。
+   */
+  if (player.reincarnation.vow) return
   const quests = useQuestsStore()
   player.setVow({
     themeId,
     at: now,
-    base: { ...quests.counters },
+    base: snapshotOf(quests.counters) as Partial<Record<CounterKey, number>>,
     baseBranches: branchCount(),
     baseAvenged: avengedCount(),
     broken: false

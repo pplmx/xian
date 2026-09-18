@@ -14,7 +14,11 @@
  *
  * 另两条口径:`claimed` 保证**一期一次**(自动发放与手动领取共用同一份记录,不会重复给);
  * 结算顺序即声明顺序(一连完成三条任务时,战报与奖励的顺序稳定)。
+ *
+ * "打基准 + 算增量"这一组原语来自 `counters.ts`(作品自己的"本世 / 本赛季"也用同一份,
+ * 免得同一条减法在三个地方各写一遍、各漏一次夹取)。
  */
+import { deltaSince, snapshotOf } from './counters.js'
 
 export interface TaskSpec {
   id: string
@@ -78,14 +82,12 @@ export function createTaskBoard(config: { tasks: readonly TaskSpec[] }) {
     period: string
   ): TaskBoardState => {
     if (state.period === period) return state
-    return { period, base: { ...counters }, claimed: [] }
+    return { period, base: snapshotOf(counters), claimed: [] }
   }
 
-  /** 本期增量:当前 − 期初基准,夹到 ≥ 0(缺基准按 0 起算) */
+  /** 本期增量:当前 − 期初基准,夹到 ≥ 0(缺基准按 0 起算;见 counters.ts) */
   const deltaOf = (state: TaskBoardState, counters: Readonly<Record<string, number>>, counter: string): number => {
-    const now = counters[counter] ?? 0
-    const base = state.base[counter] ?? 0
-    return Number.isFinite(now - base) ? Math.max(0, now - base) : 0
+    return deltaSince(state.base, counters, counter)
   }
 
   /** 一条任务本期的进度读数(界面直接用) */

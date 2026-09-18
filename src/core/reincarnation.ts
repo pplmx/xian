@@ -230,7 +230,9 @@ export function confirmReincarnation(chosenTalentId: string | null, chosenThemeI
   useGameStore().resetCreateDraft()
   // 道途归还天地,道源与道痕随神魂不灭
   useEndgameStore().onRebirth()
-  // 立下这一世的题。快照须在重置之后取,「本世」方才从此刻算起
+  // 立下这一世的题。快照须在重置之后取,「本世」方才从此刻算起。
+  // 先撤上一世的题:立誓一世一次,beginLife 靠"有没有题"认出这一世已经立过(见 samsaraService)
+  player.setVow(null)
   beginLife(view.themeChoices.includes(chosenThemeId ?? '') ? chosenThemeId : null)
   recordMilestone('first_rebirth')
   track('reincarnations')
