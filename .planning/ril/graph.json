@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 353,
+  "round": 354,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:48:53+00:00",
+  "updated_at": "2026-09-18T23:52:48+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19698,6 +19698,43 @@
       "summary": "成功率类数值的非有限值口径:NaN 先归 0 再夹取到 [min,max](recipes 与 realms 一致);±Infinity 不归 0,保留方向照旧夹到两端;修为需求/面板值这类 T 值不做兜底(它们走 Numeric,内容算错就该在内容侧自查)。",
       "rationale": "NaN 与 ±Infinity 是两种不同的错:NaN 说明\"这个数根本没算出来\"(0/0、缺字段),它是骰子上最坏的输入 —— rng.chance(NaN) 恒 false,现象是\"玩家满了却永远失败\"且界面上看不出任何可疑的数;而 ±Infinity 是\"极大/极小但方向明确\",旧行为(夹到 max/min)既合理又已经在预设与宿主里跑了很久,把它一并改成 0 会造成\"本该必成变成几乎必败\"的反向惊喜。所以只堵 NaN,别的逐位不变。修为需求与基础面板走的是泛型 T(大数适配器里根本没有 NaN 这个概念),在那里做 number 专属兜底既不通用也掩盖配置错误。",
       "alternatives_rejected": "①非有限值一律归 0(会把 Infinity 的\"必成\"翻成\"几乎必败\",属于对旧行为的破坏);②让 breakthroughRate 抛错(运行期热路径抛错会把\"内容写错一个数\"升级成\"整个界面崩\",而这一层的既有风格是结构错误在配置期抛、数值在运行期夹);③什么都不做只在文档写一句(等于把\"永远失败\"这个最难查的现象留给使用者);④把 NaN 夹到 max(玩家会看到\"永远是好的\",比失败更糟 —— 错的方向看不见)。"
+    },
+    "TASK-334": {
+      "id": "TASK-334",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T23:52:47+00:00",
+      "updated_at": "2026-09-18T23:52:48+00:00",
+      "touched_round": 353,
+      "category": "test",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "补第九条组合验收链:境界 × 副本 × 世界记忆。副本是内核点名的四套系统之一,却一直没有验收链(单模块用例有,跨模块没人验)。断言:开图要等级与前置同时满足(all/any 两种结构)、winsUntilBoss 与实跑一致、cycle 第 4 场 / once 第 5 场、记忆回落不清进度、奖励逐场入账、面板说话、同种子可复现。"
+    },
+    "CHG-418": {
+      "id": "CHG-418",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:52:47+00:00",
+      "updated_at": "2026-09-18T23:52:47+00:00",
+      "touched_round": 353,
+      "commit": "de1c6ff",
+      "summary": "库:新增 src/integrationDungeons.spec.ts(6 条,约 300 行);docs/assembly.md 验收清单补一行;README 用例数 528/72 → 534/73;CHANGELOG「未发布」记一条。运行时代码与公开面未动。"
+    },
+    "EV-344": {
+      "id": "EV-344",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:52:47+00:00",
+      "updated_at": "2026-09-18T23:52:47+00:00",
+      "touched_round": 353,
+      "confidence": 0.95,
+      "source": "变更 CHG-418(de1c6ff)。实测(种子「推图」):21 场全胜,通关场次 pass=第 5 / wood=第 11 / mine=第 16 / keep=第 21,铜钱 460(与逐场曲线复算一致)、草药 13、城印 1;赢了 21 场 → 记忆「繁盛」×1.35,idleHours=48 后回「荒僻」×1.00 而进度与账本一位不动。八颗种子的草药分布 10/13/9/12/11/9/17/11(证明随机真的在起作用)。闸门:cd packages/engine && bun run check 全绿(534 例 / 73 文件 + 13 道自检 + 13 份示例)。",
+      "summary": "四条核心系统里最后一条也进链了。过程中撞到三个真实口径:①once 节奏下首领在第 5 场而不是第 4 场(与 dungeons.sim.spec 的刻度一致,我第一版按 4 写了);②通关后回头刷,胜场继续累计但 need=null;③rewardFn 是配置级钩子,每个区域的首领都会进来 —— 想只给某一个区域加东西必须看 region.id。"
     }
   },
   "edges": [
@@ -29199,6 +29236,12 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T23:48:52+00:00"
+    },
+    {
+      "from": "CHG-418",
+      "to": "TASK-334",
+      "type": "implements",
+      "created_at": "2026-09-18T23:52:48+00:00"
     }
   ]
 }
