@@ -78,7 +78,7 @@
 | 你要的东西 | 接哪个 | 可跑的证据 |
 | --- | --- | --- |
 | 抽到不重复、按标签切题 | `drawFrom` / `drawMany` | `deck.spec.ts` |
-| 单次概率(归一 + 上限) | `createDropTable` | `drops.spec.ts` |
+| 单次概率(归一 + 上限)、保底、份数 | `createDropTable` | `drops.spec.ts` + `drops.sim.spec.ts`(实测数字) |
 | 软保底(越抽越容易)与第 N 次必出 | `createPityCounter` / `softChance` | `pity.spec.ts` + `pity.sim.spec.ts`(实测数字) |
 | 收集进度(照面 / 懂几成) | `createCodex` | `codex.spec.ts` |
 | 重复的怎么处理 | `createIntake` | `intake.spec.ts` |
@@ -110,7 +110,7 @@
 3. **随机流是契约**:保底**改写结果而不跳过掷骰**;周期类的东西**不消耗全局随机流**。
    这两条都是为了"同一颗种子跑两遍,整条链一样"。
 
-## 4 · 十处最容易踩的坑(都来自真实返工)
+## 4 · 最容易踩的坑(都来自真实返工)
 
 | 坑 | 正确做法 | 判据 |
 | --- | --- | --- |
@@ -122,6 +122,9 @@
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
 | 保底时跳过掷骰 | 照样掷,只改写结果 | `drops.spec.ts` / `pity.spec.ts` |
 | 软保底不封顶 | 涨幅封顶(不封顶等于偷偷变成硬保底) | `pity.sim.spec.ts` |
+| 以为"概率翻倍"就等于产出翻倍 | 撞上 1 或 `chanceCap` 之后倍率在那一条上失效(同一份内容 ×4 只拿到 2.45 倍产出) | `drops.sim.spec.ts` |
+| 开了 `guarantee` 却没看出变化 | 保底只对挂了 `guaranteed: true` 的条目生效 —— 没挂的条目开不开都一样 | `drops.sim.spec.ts` |
+| 想要产出翻倍,却用 `scalesWithAttempts` | 那是"多抽一次":期望一样,但**掷骰次数翻倍、后面的随机流全变**;不改随机流地翻倍用 `countMult` | `drops.sim.spec.ts` |
 | "没开炉"与"开炉失败"混成一个 false | 分成 `fired` 与 `succeeded` 两档 | `recipes.spec.ts` |
 | 小数产出按拍取整 | 零头留累加器,够了整数才发 | `facilities.spec.ts` |
 | 接管战斗时只照抄公式、不照抄**掷骰序列** | 对方那边"掷了但没用上"的骰子(反击/追击/震慑,词条为 0 也照掷)必须照掷,否则后面全乱 | `combat.spec.ts`(三处主权)+ 你自己那份同种子对账 |
