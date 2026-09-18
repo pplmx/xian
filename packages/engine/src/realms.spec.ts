@@ -165,6 +165,28 @@ describe('等级体系 —— 名目、曲线、进阶、寿元', () => {
     expect(clamped.breakthroughRate(0, 0)).toBe(0.9)
   })
 
+  it('成功率算出来不是有限数时按 0 夹住:NaN 不许传到骰子上', () => {
+    // 内容是 0/0、缺字段、表里那一格是空的 —— 都会算出 NaN。
+    // 若原样传下去:`rng.chance(NaN)` 恒为 false,玩家"满了却永远失败",界面上还看不出问题。
+    const sys = makeSystem({ breakthrough: { min: 0.1, max: 0.9, rateFn: () => Number.NaN } })
+    expect(Number.isNaN(sys.breakthroughRate(0, 0))).toBe(false)
+    expect(sys.breakthroughRate(0, 0)).toBe(0.1) // 夹到下限
+
+    const state = { major: 0, layer: 0, exp: sys.expCost(0, 0) }
+    const rng = createRng('NaN-防护')
+    const results = Array.from({ length: 200 }, () => sys.attemptBreakthrough(state, { rng }))
+    expect(results.every(r => Number.isFinite(r.rate))).toBe(true)
+    expect(results.every(r => r.rate >= 0.1 && r.rate <= 0.9)).toBe(true)
+    // 仍然是"真的在掷骰":按 10% 的下限,200 次里总该成几次(不是恒 false)
+    expect(results.filter(r => r.ok).length).toBeGreaterThan(0)
+    // 加成那一项也不是有限数时,同样按 0 处理(而不是把整体污染成 NaN)
+    const polluted = sys.attemptBreakthrough(state, { rng, bonusRate: Number.NaN })
+    expect(polluted.rate).toBe(0.1)
+    // Infinity 早就被夹住了(这一条是本来就对的行为,顺手钉住)
+    const infinite = makeSystem({ breakthrough: { min: 0.1, max: 0.9, rateFn: () => Number.POSITIVE_INFINITY } })
+    expect(infinite.breakthroughRate(0, 0)).toBe(0.9)
+  })
+
   it('逐境层数可不同:前境两层、后境四层,各自独立', () => {
     const sys = createRealmSystem({
       worlds: [{ id: 'a', name: '一段', realms: [{ name: '一境', layers: ['上', '下'] }, '二境', '三境'] }],

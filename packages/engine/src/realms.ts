@@ -343,7 +343,10 @@ export function createRealmSystem<T = number>(
     const bt = config.breakthrough
     // 自己接管成功率曲线的:原样用它的数(仍受 min/max 夹取 —— 那是取值范围,不是曲线)
     const raw = bt.rateFn ? bt.rateFn(m, l) : isMajorStep(m, l) ? bt.majorBase - m * bt.majorDecay : bt.layerBase - l * bt.layerDecay
-    return clamp(raw, bt.min, bt.max)
+    // NaN(0/0、缺参数、表里那一格是空的)先按 0 处理再夹取:它无法比较,`clamp` 也兜不住 ——
+    // 而 NaN 一旦传到骰子上就是"永远失败",玩家只看到"我明明满了却一直失败",界面上连个可疑的数都没有。
+    // ±Infinity 不在此列:它仍有方向(照旧被夹到 min/max 那一端),行为与旧版逐位一致。
+    return clamp(Number.isNaN(raw) ? 0 : raw, bt.min, bt.max)
   }
 
   const label = (major_: number, layer: number): string => {
@@ -387,7 +390,10 @@ export function createRealmSystem<T = number>(
     const majorStep = isMajorStep(m, l)
     const worldStep = isWorldStep(m, l)
     const from = label(m, l)
-    const rate = clamp(breakthroughRate(m, l) + (opts.bonusRate ?? 0), config.breakthrough.min, config.breakthrough.max)
+    // 加成那一项也可能是 NaN(道具/天赋叠出来的、缺字段),一并挡在这里(Infinity 照旧有方向)
+    const rawBonus = opts.bonusRate ?? 0
+    const bonus = Number.isNaN(rawBonus) ? 0 : rawBonus
+    const rate = clamp(breakthroughRate(m, l) + bonus, config.breakthrough.min, config.breakthrough.max)
     const atMax = m >= maxMajor && l >= endOf(m)
     if (atMax) {
       return { ok: false, rate, state, requiresTrial: false, isMajorStep: majorStep, isWorldStep: worldStep, from, to: from, reason: 'max' }

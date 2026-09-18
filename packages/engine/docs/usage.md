@@ -392,7 +392,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **目标条件的组合** | `{ type: 'all', of: [...] }` / `{ type: 'any', of: [...] }`(可嵌套;空 `all` 成立、空 `any` 不成立) |
 | 多只伙伴的性格怎么合 | `companions.stack: 'override'`(默认,覆盖)/ `'add-relative'`(各自相对中性那一份相加) |
 | 伙伴性格的键名与中性值 | `companions.traits[].mods` + `companions.neutral`(缺中性值直接报错) |
-| **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改 |
+| **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改;**该换的时机与边界**见[调参实测参考](./tuning.md)的「数字什么时候不够用」那一节(2^53 起 +1 会被吞;每层 ×1.5 打到第 80 层越界) |
 | **资源有哪些 / 叫什么 / 上限多少**(货币、材料、点数) | `createResourceSystem({ resources })`:键名与展示名分开,`cap` / `floor` 逐个给(**不写 `cap` 才是无上限**,写 `0` 就是上限 0);上限还能随账本变(`capFn`) |
 | **收支要不要带来源**(审计"这批是哪来的") | 每条收支都可带 `source`;`audit()` 按资源与按来源各汇总一份,明细恒等于合计 |
 | **买不起时怎么办** | `pay` 默认**整笔要么全成、要么不动**并给出缺口;要允许分次付就显式开 `partial` |

@@ -232,7 +232,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 逐项对照表(近一百个可改点)见 [模块速查 · 定制](./docs/usage.md#定制想改什么改哪里);
 "照着装配一套完整玩法"的四条配方与坑清单见 [组装指南](./docs/assembly.md)。
 调数值之前先看 [**调参实测参考**](./docs/tuning.md):文首是**一页索引**(「你要调的东西 →
-在哪一节 → 一句话结论」,26 行),后面是每份消融的推导、表格与复现命令 ——
+在哪一节 → 一句话结论」,每份消融一行),后面是每份消融的推导、表格与复现命令 ——
 离线上限、保底、掉落倍率、内容池权重、状态叠加这些"配错了也看不出来"的地方,都在那里量成了数字。
 
 ## 题材无关性
@@ -291,7 +291,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 | 判据 | 钉住的事 | 在哪 |
 | --- | --- | --- |
-| 用例 | 公开面的行为,521 个用例 / 71 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
+| 用例 | 公开面的行为,528 个用例 / 72 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
