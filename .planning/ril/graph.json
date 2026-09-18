@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 302,
+  "round": 303,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:36:02+00:00",
+  "updated_at": "2026-09-18T20:40:44+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17057,7 +17057,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:37:14+00:00",
       "updated_at": "2026-09-18T19:37:14+00:00",
-      "touched_round": 292,
+      "touched_round": 303,
       "category": "core-feature",
       "severity": 0.45,
       "confidence": 0.9,
@@ -17652,6 +17652,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-365(ecacdb6)。bun packages/engine/examples/collect-loop.ts(输出显示:第 12/24 抽标「保底」、软保底把概率从 18% 推到 48%、重复的折成星屑、集册三种、今日三件全成、成就\"集齐三种\"、体检\"星屑只进不出\");cd packages/engine && bun run check(7 个示例全跑 + 组装指南自检 + 定制表自检 + 发布包自检);cd /workspace/xian && bun run test(247 文件/2427 例);bun run test:report(2427 过 / 0 败);bun run check:engine;bun run check:engine:standalone",
       "summary": "示例实跑通过且把新层都演到了:①保底那两次标着「保底」,软保底让同一条内容池在第 18 抽时概率从 18% 涨到 48%;②重复卡走入库漏斗的折算去路(星屑从 0 变 8);③集册按照面累计升到「认得」;④今日三件按增量结算;⑤一次性成就\"集齐三种\"解锁;⑥经济体检把\"星屑只进不出\"说出来而不是显示成健康。过程中修掉两处小问题(示例里 counters 的索引访问类型、level band 字段名),类型检查与 lint 都当场拦住了。"
+    },
+    "TASK-284": {
+      "id": "TASK-284",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:40:37+00:00",
+      "updated_at": "2026-09-18T20:40:37+00:00",
+      "touched_round": 303,
+      "category": "core-feature",
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "组合验收第四条链:老档升级之后世界照旧(integrationSave.spec)—— 老档形状(字段缺/值脏/版本落后)走完解码→迁移→形状修复,再推三轮世界,断言形状合法、迁移幂等、升级纯、升级后世界与同状态新开逐字段相同;三种失败(parse/future/shape)各自钉住。顺手修正 decodeSavePayload 对负数版本号的口径(与 runMigrations 一致)。"
+    },
+    "CHG-366": {
+      "id": "CHG-366",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:40:37+00:00",
+      "updated_at": "2026-09-18T20:40:37+00:00",
+      "touched_round": 303,
+      "commit": "1fa44cd",
+      "summary": "库:新增 src/integrationSave.spec.ts(7 例);src/save.ts 的 decodeSavePayload 把版本号一律 Math.max(1, …)(原先负数只按非有限数处理,fromVersion 会报 -3 而迁移从最老一版走);CHANGELOG「未发布」加两条(组合验收 + 口径修正)。宿主无改动。"
+    },
+    "EV-291": {
+      "id": "EV-291",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:40:37+00:00",
+      "updated_at": "2026-09-18T20:40:37+00:00",
+      "touched_round": 303,
+      "confidence": 0.96,
+      "source": "变更 CHG-366(1fa44cd)。bunx vitest run src/integrationSave.spec.ts src/save.spec.ts src/saveShape.spec.ts(23 例);cd packages/engine && bun run check(386 例 + 组装指南/定制表/发布包自检);cd /workspace/xian && bun run test(248 文件/2434 例);bun run test:report(2434 过 / 0 败);bun run check:engine;bun run check:engine:standalone",
+      "summary": "存档链的组合验收一次就撞出一处口径分歧:decodeSavePayload 对负数版本号只按\"非有限数\"处理,于是 fromVersion 如实报 -3,而 runMigrations 其实从最老的一版开始补 —— 报告与行为不一致。修正为两边都 Math.max(1, …) 之后,三种未知版本(缺失/NaN/负数)一律\"从最老补上来\",判据里逐个钉住。其余不变量成立:脏值被修掉而合法值留着、老字段保留、迁移幂等、升级纯、升级后的世界与同状态新开推三轮后逐字段相同。"
     }
   },
   "edges": [
@@ -26739,6 +26777,18 @@
       "to": "TASK-272",
       "type": "depends_on",
       "created_at": "2026-09-18T20:36:02+00:00"
+    },
+    {
+      "from": "CHG-366",
+      "to": "TASK-284",
+      "type": "implements",
+      "created_at": "2026-09-18T20:40:44+00:00"
+    },
+    {
+      "from": "TASK-284",
+      "to": "TASK-271",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:40:44+00:00"
     }
   ]
 }
