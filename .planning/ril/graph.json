@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 337,
+  "round": 338,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:41:13+00:00",
+  "updated_at": "2026-09-18T22:45:27+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19065,6 +19065,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-401(5daaf7d)。bunx vitest run src/realms.sim.spec.ts src/companions.sim.spec.ts(8 例全过;打印:第 1 境十层 40/54/72.9/98.42/132.86/179.36/242.14/326.89/441.30/595.75;境内 14.89 倍、跨境 1.28 倍、换界域 0.64 倍;小层成功率 95%→71%、第 10 层 78%;各界大关 78/73/68/63/58/53%;实测第 6 境大关平均 1.89 次、最长连败 9 次;从零到顶 5707419730;<br>伙伴:三只 override dropLuck 0.02 vs add-relative 0.08、时长 0.94 vs 1.04;中性值缺键报错文本点名 exploreDurMult);cd packages/engine && bun run check(493 例 / 65 文件 + 十一道自检,组装指南自检报 27 个工厂、调参参考自检报 24 份消融、用例文件数自检当场抓出 63→65、相对导入自检 105 个源文件);cd /workspace/xian && bun run test(272 文件 / 2541 例)、check:engine(59 处引用)、check:engine:standalone(105 个源文件)。",
       "summary": "境界层最有价值的一条是\"陡峭到底发生在哪\":不是换境界那一下,而是层内累计(14.89 倍),换界域甚至会\"回落\"(0.64 倍);加上\"最后一层是大关、成功率另走一条线\",内容作者据此就能解释玩家为什么觉得\"某几层特别难\"。伙伴层的取舍也被量化:同键叠加与否是一个开关,两种口径差 4 倍。"
+    },
+    "TASK-319": {
+      "id": "TASK-319",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:45:26+00:00",
+      "updated_at": "2026-09-18T22:45:26+00:00",
+      "touched_round": 337,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "开炉期望账与伤害公式刻度两份消融(recipes.sim + combat.sim):①一炉期望产出 = 成功率×(1+双成率)(0.55×1.35=0.7506)、期望花费按成败加权(灵草 3.110/门槛费 11.096)、没开炉一颗骰子不掷、双成夹到上限(声明 150% 实测 80.2%);②默认伤害 ≈ 攻²/(攻+防)(攻 50/100/200 打 100 防 = 16.67/50/133.33,攻击翻倍伤害 2.67 倍)、1000 血靶子 20/8/4 回合、地板是攻击的 5%(攻 10 打 10000 防仍 0.500)、回合上限算守方胜。"
+    },
+    "CHG-402": {
+      "id": "CHG-402",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:45:26+00:00",
+      "updated_at": "2026-09-18T22:45:26+00:00",
+      "touched_round": 337,
+      "commit": 7686006,
+      "summary": "库:新增 src/recipes.sim.spec.ts 与 src/combat.sim.spec.ts(各 4 例);CHANGELOG「未发布」记两节;docs/tuning.md 新增两节(第 25、26 份消融进参考表);docs/assembly.md 补三行(含一条坑:以为成功率等于一炉产量);README 用例数改 501/67。宿主无改动。"
+    },
+    "EV-328": {
+      "id": "EV-328",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:45:26+00:00",
+      "updated_at": "2026-09-18T22:45:26+00:00",
+      "touched_round": 337,
+      "confidence": 0.96,
+      "source": "变更 CHG-402(7686006)。bunx vitest run src/recipes.sim.spec.ts src/combat.sim.spec.ts(8 例全过;recipes 打印:成功率实测 55.5%、双成 35.3%、平均产出 0.7506、灵草 3.110、灵石 11.096;没开炉掷 0 颗骰子;双成声明 150% 实测 80.2%、平均 1.802 件。combat 打印:攻 50/100/200 打 100 防 = 16.67/50/133.33;靶子 1000 血 → 20/12/8/4 回合;攻 10 打 10000 防每击 0.500(公式值 0.0100);上限 10 回合时打不穿、玩家未胜);cd packages/engine && bun run check(501 例 / 67 文件 + 十一道自检,调参参考自检报 26 份消融、用例文件数自检当场抓出 65→67、相对导入自检 107 个源文件);cd /workspace/xian && bun run test(274 文件 / 2549 例)、check:engine(59 处引用)、check:engine:standalone(107 个源文件)。",
+      "summary": "把\"一炉值多少\"与\"这套伤害公式的手感\"都量成了表:①开炉的期望是成功率与双成率的乘积(两头都要算),保料率决定失败是\"慢\"还是\"亏\";②除算型伤害公式对攻击更敏感(翻倍 → 2.67 倍),且有 5% 地板兜底。到这一批为止,公开面每个有数值深度的模块都有了自己的刻度表(26 份)。"
     }
   },
   "edges": [
@@ -28410,6 +28448,12 @@
       "to": "TASK-318",
       "type": "implements",
       "created_at": "2026-09-18T22:41:13+00:00"
+    },
+    {
+      "from": "CHG-402",
+      "to": "TASK-319",
+      "type": "implements",
+      "created_at": "2026-09-18T22:45:26+00:00"
     }
   ]
 }
