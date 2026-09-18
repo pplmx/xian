@@ -71,6 +71,20 @@ describe('等级体系 —— 名目、曲线、进阶、寿元', () => {
     expect(sys.lifespanOf(4)).toBe(36000)
   })
 
+  it('不配寿元 = 无限:日常/学习这类没有生死的题材不该被迫编一个数', () => {
+    const withoutLifespan = {
+      worlds: [{ id: 'a', name: '一段', realms: ['一年级', '二年级'] }],
+      layerNames: ['第一周', '期末'],
+      exp: { base: 10, realmGrowth: 2, layerGrowth: 1.5 },
+      combat: { base: { attack: 10, defense: 5, maxHp: 100 }, realmGrowth: 2, layerGrowth: 1.2 },
+      breakthrough: { layerBase: 0.9, layerDecay: 0.05, majorBase: 0.6, majorDecay: 0.05, min: 0.1, max: 1 }
+    }
+    const sys = createRealmSystem(withoutLifespan)
+    expect(sys.lifespanOf(0)).toBe(Number.POSITIVE_INFINITY)
+    expect(sys.lifespanOf(1)).toBe(Number.POSITIVE_INFINITY)
+    expect(sys.realmAt(0).lifespanYears).toBe(Number.POSITIVE_INFINITY)
+  })
+
   it('修为封顶在当前小层的需求上', () => {
     const sys = makeSystem()
     const cost = sys.expCost(0, 0)

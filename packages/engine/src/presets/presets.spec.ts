@@ -10,6 +10,10 @@ import { emptyProgress } from '../dungeons.js'
 import { createRng } from '../rng.js'
 import { DEMO } from './demo.js'
 import { XIUXIAN } from './xiuxian.js'
+import { DAILY, DAILY_COMPANIONS, DAILY_COOKING, DAILY_SKILLS } from './daily.js'
+import { composeCraftRate } from '../crafting.js'
+import { createCompanionSystem } from '../companions.js'
+import { createSkillSystem } from '../skills.js'
 
 describe('内容包 —— 仙侠与星港', () => {
   it('仙侠包:四界二十一境,六层装备,一条副本链', () => {
@@ -112,5 +116,106 @@ describe('内容包 —— 仙侠与星港', () => {
     expect(tier1.name).toBe('青竹剑')
     expect(tier2.name).toBe('玄铁重剑')
     expect(game.equipment.template('t2_weapon_1')?.setId).toBe('s_tiebi')
+  })
+})
+
+describe('内容包 —— 书桌与日常(跨题材通用性的判据)', () => {
+  it('同一套内核装出一款学习/日常游戏:学段与周次、专注与精力、文具与书桌', () => {
+    const game = defineGame(DAILY)
+    expect(game.realms.worlds.map(w => w.name)).toEqual(['小学', '中学', '高中'])
+    expect(game.realms.realms.length).toBe(9)
+    expect(game.realms.label(0, 0)).toBe('启蒙班·第一周')
+    expect(game.realms.label(8, 5)).toBe('高三·期末')
+    expect(game.attributes.name('attack')).toBe('专注力')
+    expect(game.attributes.name('maxHp')).toBe('精力')
+    expect(game.attributes.name('cultivationSpeed')).toBe('学习效率')
+    expect(game.equipment.slots.map(s => s.name)).toEqual(['文具', '耳机', '书桌', '小摆件'])
+    expect(game.equipment.qualities.map(q => q.name)).toEqual(['地摊货', '文具店', '限定款'])
+    expect(game.dungeons.chain().map(r => r.name)).toEqual(['图书馆', '自习室', '教室'])
+    expect(game.dungeons.enemy('finalexam')?.name).toBe('期末考试')
+  })
+
+  it('换的只是名字:机制键与仙侠包**一个不差**,改过名的键名字全不一样', () => {
+    const daily = defineGame(DAILY)
+    const xian = defineGame(XIUXIAN)
+    // 机制键完全一致 —— 这是"同一套内核"的硬证据
+    expect(daily.attributes.defs.map(d => d.key)).toEqual(xian.attributes.defs.map(d => d.key))
+    // 逐键比展示名:本包显式改过名的那些,名字必须与仙侠包不同
+    const xianName = new Map(xian.attributes.defs.map(d => [d.key, d.name]))
+    const renamed = daily.attributes.defs.filter(d => (xianName.get(d.key) ?? d.key) !== d.name)
+    expect(renamed.length).toBeGreaterThanOrEqual(12)
+    expect(renamed.map(d => d.name)).toContain('专注力')
+    expect(renamed.map(d => d.name)).toContain('学习效率')
+    // 展示名不重复(免得面板上两条词条同名)
+    expect(new Set(daily.attributes.defs.map(d => d.name)).size).toBe(daily.attributes.defs.length)
+  })
+
+  it('这款学习游戏能跑完整一圈:自习 → 升学 → 换文具 → 去图书馆 → 期末考 → 通关', () => {
+    const game = defineGame(DAILY)
+    const rng = createRng('书桌')
+
+    // 自习(加"理解")→ 升学
+    let state = { major: 0, layer: 0, exp: 0 }
+    state = game.realms.addExp(state, Number(game.realms.expCost(0, 0)))
+    let step = game.realms.attemptBreakthrough(state, { rng, bonusRate: 1 })
+    for (let i = 0; i < 50 && !step.ok; i += 1) step = game.realms.attemptBreakthrough(state, { rng, bonusRate: 1 })
+    expect(step.ok).toBe(true)
+    expect(step.to).toBe('启蒙班·第二周')
+    state = step.state
+
+    // 换文具
+    const loot = game.equipment.generate(rng, { tier: 1, luck: 0.2 })
+    const item = game.equipment.resolve(loot)
+    expect(item.template).toBeDefined()
+    const equipped = game.equipment.resolveLoadout(game.equipment.equip({ equipped: {} }, loot), new Map([[loot.uid, loot]]))
+    const stats = game.attributes.compute({ base: game.realms.baseStats(state.major, state.layer), flat: equipped.flats, modSources: [equipped.mods, item.mods] })
+    expect(Number(stats.final.maxHp ?? 0)).toBeGreaterThan(0)
+
+    // 去图书馆:遇到阻碍 → 打一场 → 通关拿奖励
+    const region = game.dungeons.firstRegion()
+    expect(region.name).toBe('图书馆')
+    const encounter = game.dungeons.nextEncounter(region.id, emptyProgress(), rng)
+    const foe = game.dungeons.snapshot(encounter.enemyId)
+    expect(foe.name.length).toBeGreaterThan(0)
+    const battle = game.combat.resolve(
+      {
+        id: 'me',
+        name: '我',
+        hp: stats.final.maxHp ?? 0,
+        maxHp: stats.final.maxHp ?? 0,
+        attack: stats.final.attack ?? 0,
+        defense: stats.final.defense ?? 0,
+        speed: 1,
+        mods: stats.mods
+      },
+      { id: foe.id, name: foe.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, speed: foe.speed, mods: foe.mods, skills: foe.skills },
+      rng
+    )
+    expect(Number.isFinite(Number(battle.playerHp))).toBe(true)
+    const outcome = game.dungeons.onVictory(region.id, { ...encounter, kind: 'boss' }, emptyProgress(), rng)
+    expect(outcome.firstClear).toBe(true)
+    expect(outcome.rewards.map(r => r.name)).toContain('理解')
+    expect(outcome.rewards.map(r => r.name)).toContain('零花钱')
+  })
+
+  it('学科、朋友的性子、做饭都能用同一套系统装出来', () => {
+    const skills = createSkillSystem(DAILY_SKILLS)
+    expect(skills.modsAt('math', 6).attackPct).toBeCloseTo(0.04 + 0.02 * 5, 10)
+    expect(skills.costAt('math', 3).map(c => c.key)).toEqual(['homework', 'notebook'])
+    expect(skills.branchesOf('math').map(b => b.id)).toEqual(['drill', 'insight'])
+    expect(skills.sourcesOf([{ skillId: 'math', level: 6, branchId: 'insight' }]).length).toBe(2)
+
+    const companions = createCompanionSystem(DAILY_COMPANIONS)
+    expect(companions.effectsOf('deskmate').dropLuck).toBeCloseTo(0.05, 10)
+    expect(companions.effectsOf('cat').lossReduction).toBeCloseTo(0.04, 10)
+    expect(companions.modsOf('deskmate')).toEqual({ attackPct: 0.03 })
+    expect(companions.effectsOf(null).dropLuck).toBe(0)
+
+    // 做饭:火候足而且不越级时贴着基准率
+    const perfect = composeCraftRate({ mastery: 1, lore: 1, skill: 1, overReach: 0 }, DAILY_COOKING)
+    expect(perfect).toBeCloseTo(0.95, 10)
+    const hard = composeCraftRate({ mastery: 0.5, lore: 0.5, skill: 0.4, overReach: 2 }, DAILY_COOKING)
+    expect(hard).toBeGreaterThan(0)
+    expect(hard).toBeLessThan(0.4)
   })
 })

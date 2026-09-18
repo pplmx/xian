@@ -90,10 +90,14 @@ export interface RealmSystemConfig {
     majorRequiresTrial?: boolean
   }
   /**
-   * 寿元:世界内按 growth 复利,跨界那一次是"大跃"(base 直接给定)。
+   * 「一段生涯的长度」:世界内按 growth 复利,跨界那一次是"大跃"(base 直接给定)。
    * 只给 base/growth 时,后续世界的 base = 上一世界末境寿元 × worldStepMult。
+   *
+   * **可以不给**:修仙/武侠这类"寿元即压力"的题材需要它,而日常、学习、经营这类
+   * 没有生死的游戏不该被迫编一个数字 —— 省略时 `lifespanOf` 返回 Infinity,
+   * 境界数据里的 lifespanYears 也是 Infinity(界面显示成"无限"即可)。
    */
-  lifespan:
+  lifespan?:
     | { byWorld: Record<string, { base: number; growth: number }> }
     | { base: number; growth: number; worldStepMult: number }
 }
@@ -227,14 +231,15 @@ export function createRealmSystem<T = number>(
 
   // ---- 寿元表:世界内复利,跨界为大跃 ----
   const lifespanByWorld = new Map<string, { base: number; growth: number; start: number }>()
-  if ('byWorld' in config.lifespan) {
+  const lifespanCfg = config.lifespan
+  if (lifespanCfg && 'byWorld' in lifespanCfg) {
     for (const w of worlds) {
-      const cfg = config.lifespan.byWorld[w.id]
+      const cfg = lifespanCfg.byWorld[w.id]
       if (!cfg) throw new Error(`等级体系:缺少世界 ${w.id} 的寿元参数`)
       lifespanByWorld.set(w.id, { ...cfg, start: w.start })
     }
-  } else {
-    const { base, growth, worldStepMult } = config.lifespan
+  } else if (lifespanCfg) {
+    const { base, growth, worldStepMult } = lifespanCfg
     for (const w of worlds) {
       if (w.start === 0) {
         lifespanByWorld.set(w.id, { base, growth, start: 0 })
@@ -247,6 +252,8 @@ export function createRealmSystem<T = number>(
     }
   }
   const lifespanOfRaw = (i: number): number => {
+    // 没配寿命 = 无限:这类题材里没有"到点就死"的设计
+    if (lifespanByWorld.size === 0) return Number.POSITIVE_INFINITY
     const idx = Math.max(0, Math.min(maxMajor, i))
     const w = worlds.find(x => idx >= x.start && idx <= x.end) ?? worlds[0]!
     const cfg = lifespanByWorld.get(w.id)!
