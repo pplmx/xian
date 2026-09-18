@@ -6,7 +6,7 @@ import { rng } from '@/utils/random'
 import { add, gnZero } from '@/utils/gnum'
 import { formatGN } from '@/utils/format'
 import { enemyDef } from '@/data/enemies'
-import { regionDef, REGIONS } from '@/data/regions'
+import { regionDef } from '@/data/regions'
 import {
   EVENT_AUTO_RESOLVE_SECONDS,
   EXPLORE_BATTLE_INTERVAL,
@@ -432,10 +432,9 @@ export function clearRegionAndUnlockNext(regionId: string): void {
   // 本世路线推进:通过这一段,下一段自开
   const nextPlace = advanceRoute(regionId)
   if (nextPlace) ui.toast(`此世前路已明——${nextPlace}`, 'rare')
-  for (const r of REGIONS) {
-    if (r.requireCleared === regionId && adventure.unlock(r.id)) {
-      ui.toast(`新的历练之地已开放——${r.name}`, 'rare')
-    }
+  // 前置已靖 → 此地已开:与读档补票同一把尺子(见 stores/adventure.applyUnlockClosure)
+  for (const id of adventure.applyUnlockClosure()) {
+    ui.toast(`新的历练之地已开放——${regionDef(id)?.name ?? ''}`, 'rare')
   }
 }
 

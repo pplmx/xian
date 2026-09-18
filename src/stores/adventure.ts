@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { AdventureSession, CombatResult } from '@/types'
 import { persistConfig } from '@/utils/storage'
-import { regionDef } from '@/data/regions'
+import { regionDef, unlockClosure } from '@/data/regions'
 import { gn } from '@/utils/gnum'
 import { asFiniteNumber, asObjectOrNull, asRecord, asStringArray } from '@/utils/saveShape'
 
@@ -67,6 +67,15 @@ export const useAdventureStore = defineStore(
       if (unlocked.value.length === 0) unlocked.value = ['qingyun']
       mortalCleared.value = asStringArray(mortalCleared.value)
       cleared.value = asStringArray(cleared.value)
+      /**
+       * 前置已靖 → 此地已开:补票(见 data/regions.unlockClosure)。
+       *
+       * 解锁从前是**事件式**的(击败那一刻写一次),而扩界会把新地界挂在早已被清掉的
+       * 前置之后 —— 那种存档再也没机会等到那一次事件(首领已靖不复现)。放在这里补,
+       * 是因为读档修形是唯一的入口:开局(engine.start → sanitizeOfflineInputs)与
+       * 导入存档都会过它,玩家不需要做任何事。
+       */
+      applyUnlockClosure()
       // 累计胜场:形状不对就修成"全是有限非负数",坏值一律归零(它决定首领何时出现)
       const winsRaw = asRecord<unknown>(regionWins.value)
       const wins: Record<string, number> = {}
@@ -123,10 +132,17 @@ export const useAdventureStore = defineStore(
       session.value = s
     }
 
-    function unlock(regionId: string): boolean {
-      if (unlocked.value.includes(regionId)) return false
-      unlocked.value = [...unlocked.value, regionId]
-      return true
+    /**
+     * 按不变量补齐解锁表(前置已靖 → 此地已开),返回**这一次新开的**那些。
+     *
+     * 在线(击败前置之首)与读档(补票)两条路都过这一个方法 —— 规则只写一处,
+     * 免得下次扩界时其中一条又忘了走(那正是这次这个 bug 的形状)。
+     */
+    function applyUnlockClosure(): string[] {
+      const before = new Set(unlocked.value)
+      const next = unlockClosure(unlocked.value, cleared.value)
+      unlocked.value = next
+      return next.filter(id => !before.has(id))
     }
 
     function markCleared(regionId: string): boolean {
@@ -193,7 +209,7 @@ export const useAdventureStore = defineStore(
       sessionActive,
       currentRegion,
       setSession,
-      unlock,
+      applyUnlockClosure,
       markCleared,
       addRegionWins,
       winsIn,
