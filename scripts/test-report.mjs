@@ -14,7 +14,7 @@ import { readFileSync, rmSync } from 'node:fs'
 const CATEGORIES = [
   {
     name: 'Engine      公共库内核',
-    match: ['packages/engine', 'engineParity', 'engineResourceParity', 'engineHoldingParity', 'engineReforgeParity', 'engineTriageParity', 'engineCombatAblation', 'engineCycleParity', 'engineChoiceParity', 'engineCodexParity', 'engineMemoryParity', 'engineEconomyParity', 'engineIntakeParity', 'engineSettlementParity', 'engineDropsParity', 'engineBuffsParity', 'engineBuffAblation', 'engineFacilitiesParity', 'engineVeinParity', 'engineDailyParity', 'engineLifeParity', 'engineChainParity', 'enginePityParity', 'engineUnlockParity', 'engineCraftParity']
+    match: ['packages/engine', 'engineAdoption', 'engineParity', 'engineResourceParity', 'engineHoldingParity', 'engineReforgeParity', 'engineTriageParity', 'engineCombatAblation', 'engineCycleParity', 'engineChoiceParity', 'engineCodexParity', 'engineMemoryParity', 'engineEconomyParity', 'engineIntakeParity', 'engineSettlementParity', 'engineDropsParity', 'engineBuffsParity', 'engineBuffAblation', 'engineFacilitiesParity', 'engineVeinParity', 'engineDailyParity', 'engineLifeParity', 'engineChainParity', 'enginePityParity', 'engineUnlockParity', 'engineCraftParity']
   },
   {
     name: 'Unit        数值纯函数',
