@@ -1,0 +1,105 @@
+/**
+ * 公共库产物自检 —— 「发得出去、别人装得上、装上真能跑」。
+ *
+ * 用例跑的是 src,这里跑的是 **dist**:先按 package.json 的发布口径编译,
+ * 再从产物里 import(不经过仓库别名、不经过 src),用 demo 内容包走完整一圈。
+ *
+ * 为什么单独一条:用例全绿而产物是空壳/漏文件/导出对不上,是"公共库"最常见的翻车方式,
+ * 而它恰好不会被任何 src 用例发现 —— 别人 npm 装下来才发现,那时已经晚了。
+ *
+ * 用法:`bun run check:engine`
+ */
+import { execFileSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import assert from 'node:assert/strict'
+
+const ROOT = resolve(import.meta.dirname, '..')
+const PKG_DIR = resolve(ROOT, 'packages/engine')
+const DIST = resolve(PKG_DIR, 'dist')
+
+console.log('① 编译产物(tsc -p packages/engine/tsconfig.build.json)')
+execFileSync('bunx', ['tsc', '-p', 'packages/engine/tsconfig.build.json'], { cwd: ROOT, stdio: 'inherit' })
+
+console.log('② 校验 package.json 声明的入口都存在')
+const pkg = JSON.parse(readFileSync(resolve(PKG_DIR, 'package.json'), 'utf8'))
+const entries = [
+  pkg.main,
+  pkg.module,
+  pkg.types,
+  pkg.exports['.'].types,
+  pkg.exports['.'].import,
+  pkg.exports['./presets/xiuxian'].import,
+  pkg.exports['./presets/demo'].import
+]
+for (const entry of entries) {
+  assert.ok(entry, 'package.json 里少了一个入口声明')
+  assert.ok(existsSync(resolve(PKG_DIR, entry)), `声明了却不存在:${entry}`)
+}
+console.log(`   ${entries.length} 个入口齐全`)
+
+console.log('③ 从产物 import(不走仓库别名、不走 src)')
+const engine = await import(resolve(DIST, 'index.js'))
+const { DEMO } = await import(resolve(DIST, 'presets/demo.js'))
+const { XIUXIAN } = await import(resolve(DIST, 'presets/xiuxian.js'))
+
+// 只写名字与内容就能装配出一个世界 —— 这是这个库存在的理由
+const game = engine.defineGame(DEMO)
+const rng = engine.createRng('dist-smoke')
+assert.equal(game.realms.label(0, 0), '见习船员 I 阶')
+assert.equal(game.attributes.name('attack'), '火力')
+assert.ok(game.equipment.slots.length >= 4 && game.dungeons.regions.length >= 3)
+
+// 修炼 → 进阶
+let state = { major: 0, layer: 0, exp: 0 }
+state = game.realms.addExp(state, Number(game.realms.expCost(0, 0)))
+let step = game.realms.attemptBreakthrough(state, { rng, bonusRate: 1 })
+for (let i = 0; i < 50 && !step.ok; i += 1) step = game.realms.attemptBreakthrough(state, { rng, bonusRate: 1 })
+assert.equal(step.ok, true, '进阶应当成功(加成拉满)')
+
+// 掉装 → 装配 → 结算
+const loot = game.equipment.generate(rng, { tier: 1 })
+const item = game.equipment.resolve(loot)
+assert.ok(item.template, '掉出来的装备应当能在模板表里找到')
+const loadout = game.equipment.equip({ equipped: {} }, loot)
+const equipped = game.equipment.resolveLoadout(loadout, new Map([[loot.uid, loot]]))
+const stats = game.attributes.compute({
+  base: game.realms.baseStats(step.state.major, step.state.layer),
+  flat: equipped.flats,
+  modSources: [equipped.mods, item.mods]
+})
+assert.ok(Number(stats.final.maxHp) > 0, '结算后的生命上限应当为正')
+
+// 打副本 → 通关拿奖励
+const region = game.dungeons.firstRegion()
+const encounter = game.dungeons.nextEncounter(region.id, engine.emptyProgress(), rng)
+const foe = game.dungeons.snapshot(encounter.enemyId)
+const battle = game.combat.resolve(
+  {
+    id: 'player',
+    name: '玩家',
+    hp: stats.final.maxHp,
+    maxHp: stats.final.maxHp,
+    attack: stats.final.attack,
+    defense: stats.final.defense,
+    speed: 1,
+    mods: stats.mods
+  },
+  { id: foe.id, name: foe.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, speed: foe.speed, mods: foe.mods, skills: foe.skills },
+  rng
+)
+assert.ok(Number.isFinite(Number(battle.playerHp)), '战斗结果应当是有限数')
+const outcome = game.dungeons.onVictory(region.id, { ...encounter, kind: 'boss' }, engine.emptyProgress(), rng)
+assert.equal(outcome.firstClear, true)
+assert.ok(outcome.progress.cleared.includes(region.id))
+
+// 交叉校验真的会挡人:引用不存在的敌人应当抛错并指名道姓
+const broken = { ...DEMO, dungeons: { ...DEMO.dungeons, regions: [{ ...DEMO.dungeons.regions[0], enemies: ['不存在的敌人'] }] } }
+assert.throws(() => engine.defineGame(broken), /DUNGEON_REGION_ENEMY/, '坏配置应当被交叉校验挡住')
+
+// 仙侠包也要能从产物里装配起来
+const xian = engine.defineGame(XIUXIAN)
+assert.equal(xian.realms.realms.length, 21)
+
+console.log('④ 换皮世界跑通:修炼 → 进阶 → 掉装 → 装配 → 副本 → 通关奖励')
+console.log(`   产物自检通过(dist 可发布:${entries.length} 个入口 + 两份内容包 + 交叉校验)`)

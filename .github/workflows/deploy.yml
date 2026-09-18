@@ -30,6 +30,9 @@ jobs:
         run: |
           bun run check
           bun run test
+          # 公共库的发布产物也要自检:用例跑的是 src,这一条跑的是 dist ——
+          # 空壳产物/漏文件/导出对不上,只会在别人 npm 装下来时才暴露,那时已经晚了
+          bun run check:engine
       - name: 构建
         run: bun run build
       # 浏览器自检放在**上传产物之前**:排版/触达区/对比度/焦点/弹窗语义/

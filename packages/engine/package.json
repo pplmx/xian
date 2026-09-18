@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "万象引擎 —— 可配置的等级(境界)/装备/属性/副本系统内核:换一套名称与内容,就能搭出自己的游戏",
   "type": "module",
-  "license": "MIT",
+  "license": "CC-BY-NC-4.0",
   "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.js",

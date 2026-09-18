@@ -78,6 +78,8 @@ bun run check
 # 只跑公共库（万象引擎）的用例，或出它的 dist
 bun run test:engine
 bun run build:engine
+# 产物自检:编译 → 从 dist import → 跑完整一圈(已接进 CI)
+bun run check:engine
 ```
 
 ### 公共库：万象引擎（`packages/engine`）

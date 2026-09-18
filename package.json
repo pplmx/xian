@@ -15,6 +15,7 @@
     "test:engine": "vitest run packages/engine",
     "test:report": "bun scripts/test-report.mjs",
     "build:engine": "tsc -p packages/engine/tsconfig.build.json",
+    "check:engine": "bun scripts/engine-dist.mjs",
     "type-check": "vue-tsc -b",
     "check": "bun run type-check && bun run lint",
     "build:electron": "vue-tsc -b && vite build && esbuild electron/main.js --bundle --platform=node --format=esm --outfile=dist-electron/main.js --external:electron && esbuild electron/preload.js --bundle --platform=node --format=cjs --outfile=dist-electron/preload.js --external:electron && electron-builder",

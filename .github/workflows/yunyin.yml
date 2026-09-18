@@ -50,6 +50,8 @@ jobs:
         run: |
           bun run check
           bun run test
+          # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
+          bun run check:engine
 
       - name: 构建项目
         run: bun run build

@@ -94,6 +94,31 @@ console.log(battle.win ? '胜' : '败', battle.rounds, '回合')
 
 战斗解算(`game.combat`)是副本的下半场:一场遭遇要分得出胜负。它同样只吃属性系统的输出。
 
+## 接进你自己的项目
+
+包内自带 `dist` 的编译与入口声明,但**还没有发到 npm**(发布是显式动作)。三种接法任选:
+
+```bash
+# 一 · 本地路径依赖(最快)
+#    package.json: "wanxiang-engine": "file:../packages/engine"
+#    先出一次产物:
+bun run build:engine          # 在本仓库根目录;或 cd packages/engine && bun run build
+
+# 二 · 打包成 tgz 再装
+cd packages/engine && npm pack     # 得到 wanxiang-engine-0.1.0.tgz
+npm i ./wanxiang-engine-0.1.0.tgz
+
+# 三 · monorepo 工作区
+#    把 packages/engine 加进根 package.json 的 workspaces 即可
+```
+
+包里有什么、别人装得上、装上真能跑,由 `bun run check:engine` 守着:
+它先按发布口径编译,再**从 dist import**(不经过仓库别名、不经过 src),用内容包走完
+修炼 → 进阶 → 掉装 → 装配 → 副本 → 通关奖励,并断言坏配置会被交叉校验挡住。
+这一条已接进 CI(deploy / build / 发版三条流水线)。
+
+依赖为零,不需要任何构建器插件:库是纯 ESM + `.d.ts`,Vite / webpack / Node / Bun / Deno 直接可用。
+
 ## 「只改名字」到底改哪儿
 
 | 想改的东西 | 改配置的哪一处 | 不改的东西 |

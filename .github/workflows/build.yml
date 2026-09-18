@@ -113,6 +113,8 @@ jobs:
           bun install --frozen-lockfile
           bun run check
           bun run test
+          # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
+          bun run check:engine
 
       - name: 缓存 Electron Builder
         uses: actions/cache@v6
@@ -163,6 +165,8 @@ jobs:
           bun install --frozen-lockfile
           bun run check
           bun run test
+          # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
+          bun run check:engine
 
       - name: 配置 Java
         uses: actions/setup-java@v6
