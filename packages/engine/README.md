@@ -84,6 +84,8 @@ import { DAILY }   from 'wanxiang-engine/presets/daily'     // 日常 · 学习
 ## 快速开始
 
 一份完整可跑的程序在 [`examples/quickstart.ts`](./examples/quickstart.ts),用 `bun examples/quickstart.ts` 运行。
+**要动手搭自己的系统,先看[组装指南](./docs/assembly.md)**:它按"要做一个 X 类的游戏该接哪些模块"
+列了四条配方,每条都指到能跑的示例或判据用例。
 它装配一个自己的小世界,然后走完「修炼 → 进阶 → 掉装 → 装配 → 遭遇 → 通关结算」:
 
 ```ts
@@ -692,7 +694,7 @@ packages/engine/
     config.ts       defineGame / validateGame(交叉校验)
     presets/        仙侠 / 星港 / 日常学习三份内容包
   examples/         可跑示例(快速上手 / 最小循环 / 战斗组合技 / 书桌与日常 / 自习室的一天)
-  docs/             对账与开发文档
+    docs/             对账(parity)/ 开发(development)/ **组装指南(assembly)**
 ```
 
 ## 许可

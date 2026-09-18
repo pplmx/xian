@@ -16,11 +16,12 @@
  */
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, mkdirSync, readdirSync, renameSync } from 'node:fs'
+import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, renameSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
-const DIST = resolve(import.meta.dirname, '..', 'dist')
+const ENGINE = resolve(import.meta.dirname, '..')
+const DIST = resolve(ENGINE, 'dist')
 for (const entry of ['index.js', 'index.d.ts', 'presets/demo.js', 'presets/xiuxian.js', 'presets/daily.js']) {
   assert.ok(existsSync(resolve(DIST, entry)), `产物缺文件:dist/${entry} —— 先跑 bun run build`)
 }
@@ -29,6 +30,40 @@ const engine = await import(resolve(DIST, 'index.js'))
 const { DEMO } = await import(resolve(DIST, 'presets/demo.js'))
 const { XIUXIAN } = await import(resolve(DIST, 'presets/xiuxian.js'))
 const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
+
+/**
+ * 组装指南自检 —— 文档里的每个 `create*` 与每个示例文件都必须真实存在。
+ *
+ * 为什么值得一条判据:指南是"照着抄"的东西,而文档最典型的腐烂方式就是**指向一个已经不存在的
+ * 模块**(拆了、改名了、还没写),抄的人会先怀疑自己。这里把"提到的都得有"变成机器判据。
+ */
+{
+  const doc = readFileSync(resolve(ENGINE, 'docs/assembly.md'), 'utf-8')
+  const factories = new Set([...doc.matchAll(/`(create[A-Z]\w*)`/g)].map(m => m[1]))
+  assert.ok(factories.size >= 8, '组装指南里应当指向足够多的模块(至少 8 个 create*)')
+  for (const name of factories) {
+    assert.ok(name in engine, `组装指南提到 ${name},但公开入口没有这个导出`)
+  }
+  const plainApis = new Set(
+    [...doc.matchAll(/`(evalGoal|goalProgress|planIdle|runIdle|drawFrom|drawMany|snapshotOf|deltaSince|accrue|defineGame|defineSaveFormat|asRecord|composeCraftRate|softChance)`/g)].map(
+      m => m[1]
+    )
+  )
+  for (const name of plainApis) {
+    assert.ok(name in engine, `组装指南提到 ${name},但公开入口没有这个导出`)
+  }
+  for (const [, example] of doc.matchAll(/(examples\/[\w.-]+\.ts)/g)) {
+    assert.ok(existsSync(resolve(ENGINE, example)), `组装指南提到的示例不存在:${example}`)
+  }
+  for (const [, spec] of doc.matchAll(/`(\w+\.spec\.ts)`/g)) {
+    // 用例可能在子目录里(如 presets/presets.spec.ts):按文件名整棵树找
+    const found = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).some(
+      entry => typeof entry === 'string' && entry.endsWith(spec)
+    )
+    assert.ok(found, `组装指南提到的用例不存在:${spec}`)
+  }
+  console.log(`组装指南自检通过(${factories.size} 个工厂 + ${plainApis.size} 个工具 + 示例与用例路径)`)
+}
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
 const game = engine.defineGame(DEMO)

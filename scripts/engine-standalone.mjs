@@ -73,8 +73,17 @@ try {
   execFileSync(process.execPath, ['--input-type=module', '-e', probe], { cwd: target, stdio: 'inherit' })
 
   console.log('⑥ README 里的例子在搬走之后也跑得通')
-  // README 承诺 `bun run examples` 能跑 —— 那就真跑。示例烂了比文档写错更糟:它会教坏抄的人。
-  for (const example of ['examples/quickstart.ts', 'examples/minimal.ts', 'examples/combo-arts.ts', 'examples/daily-loop.ts']) {
+  /**
+   * README 承诺 `bun run examples` 能跑 —— 那就真跑。
+   * 清单**从 package.json 的 examples 脚本里读**,而不是在这里硬编:新加一个示例时,
+   * 自检跟着长,不会出现"示例漏检"这种静默腐烂(quest-loop.ts 曾经就漏在外面)。
+   */
+  const examples = (JSON.parse(readFileSync(join(target, 'package.json'), 'utf-8')).scripts.examples ?? '')
+    .split('&&')
+    .map(part => part.trim().replace(/^bun\s+/, ''))
+    .filter(Boolean)
+  assert.ok(examples.length >= 3, 'examples 脚本里应当至少有三个示例')
+  for (const example of examples) {
     assert.ok(existsSync(join(target, example)), `README 提到的示例不存在:${example}`)
     execFileSync('bun', [example], { cwd: target, stdio: 'ignore' })
   }
