@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 226,
+  "round": 227,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T08:35:00+00:00",
+  "updated_at": "2026-09-18T09:15:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13443,6 +13443,67 @@
       "rationale": "把合并规则搬进库之后,最容易悄悄发生的不是算错,而是**平衡参数被库的默认值接管**:库有一份默认递减阶梯,本作的 data/constants 里也有 —— 一旦没人再引用后者,将来调平衡的人改的是常量,而运行时读的是库的默认值,两者谁生效没人说得清。故凡库有默认值的平衡参数,本作一律显式传入(即使当前数值相同);deadExportAudit 正好是这条的探针:常量变成死导出,就是\"默认值接管\"的信号。",
       "alternatives_rejected": "①直接用库的默认阶梯(少一行配置,但平衡的真源分裂);②让库不带默认值(对新使用者不友好);③把常量删掉只留库默认(本作的平衡史与审计口径会一起丢)。",
       "summary": "凡库有默认值的平衡参数,本作显式传入(当前:递减阶梯 DIMINISH_WEIGHTS);常量成为死导出即视为\"默认值接管\"的信号。"
+    },
+    "TASK-206": {
+      "id": "TASK-206",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T09:15:00+00:00",
+      "updated_at": "2026-09-18T09:15:00+00:00",
+      "touched_round": 227,
+      "category": "core-feature",
+      "severity": 0.6,
+      "confidence": 0.95,
+      "effort": 4,
+      "unlock_factor": 1.0,
+      "summary": "把本作接到公共库(第三段:装备生成):掉落池 / 品质权重 / 掷品质 / 生成实例四条改为经库的装备系统;库 Rng 的 shuffle 收成可选以便宿主已有的随机服务直接接入。判据除逐字段相等外,新增\"随机流消耗一致\"(同种子下生成同样的东西、消耗同样多的随机数)。"
+    },
+    "CHG-266": {
+      "id": "CHG-266",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T09:15:00+00:00",
+      "updated_at": "2026-09-18T09:15:00+00:00",
+      "touched_round": 227,
+      "commit": "b904519",
+      "summary": "equipGen 生成路径委托库;删除已无运行时调用方的 equipTemplatePool / rollQuality(契约用例改读库);resolveEquipStats 保留在应用侧(依赖 GNum 战力表);engineWorld 显式传入 outOfBand 与 qualityTierShift;库 Rng.shuffle 改为可选。"
+    },
+    "EV-212": {
+      "id": "EV-212",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T09:15:00+00:00",
+      "updated_at": "2026-09-18T09:15:00+00:00",
+      "touched_round": 227,
+      "source": "src/core/engineParity.spec.ts(26 例)+ bun run test(190 文件 / 1926 例)+ vue-tsc + eslint",
+      "summary": "装备生成对账:池子逐层逐部位逐 id、品质权重逐档(窗口/气运/强制下限三种分支)、实例逐字段(6 层 × 40 种子 × 6 组参数)、随机流状态;另冻结 refGenerateEquipment / refRollQuality / refEquipTemplatePool 三个迁移前实现。期间 deadExportAudit 抓到 QUALITY_OUT_OF_BAND 与 QUALITY_TIER_SHIFT 成为死导出(库默认值接管平衡),已按 DEC-071 显式传入配置销账。"
+    },
+    "DEC-072": {
+      "id": "DEC-072",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T09:15:00+00:00",
+      "updated_at": "2026-09-18T09:15:00+00:00",
+      "touched_round": 227,
+      "rationale": "\"生成同样的东西\"与\"消耗同样多的随机数\"是两件事:前者只看一次掉落的结果,后者决定同一种子下**之后所有随机**的走向。若迁移后随机消耗变了,单件掉落可能仍对得上(权重相同),而整条链路(历练、丹药、事件)会整体错位 —— 这种偏移不会红任何单点判据,只会在某天表现为\"玩家反馈运气变了\"。故生成路径的迁移判据必须钉住随机流状态本身,而不只是产物。",
+      "alternatives_rejected": "①只比产物(漏掉流错位);②改用独立随机源隔离(改变玩家实际体验,且掩盖问题);③重录所有依赖种子的基线(把错位写成\"新口径\",再也说不清是否退化)。",
+      "summary": "凡迁移涉及随机消耗的路径,判据必须连同\"随机流状态\"一起比,而不是只比产物。"
+    },
+    "DEC-073": {
+      "id": "DEC-073",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T09:15:00+00:00",
+      "updated_at": "2026-09-18T09:15:00+00:00",
+      "touched_round": 227,
+      "rationale": "装备的生成规则(哪层掉哪几件、品质窗口、词条筛选)是通用机制,已进库;而数值解析用的是本作自己的层级战力表(GNum),与库配置里那张 number 投影的表差在双精度末位。两者取舍不同:前者搬过去能换来\"机制只有一处\",后者搬过去会让玩家看到的数字在末位漂移。故拆开处理:生成进库,解析留下,并在两处注释与 README 写明为什么。",
+      "alternatives_rejected": "①两半都搬(接受末位漂移,违背\"数字一位不变\");②两半都不搬(机制继续两份实现,迟早分叉);③把战力表也改成 number(大数会溢出,后期数值直接失效)。",
+      "summary": "生成规则进库、数值解析留在应用侧(GNum 战力表),拆分的理由写进注释与文档。"
     }
   },
   "edges": [
@@ -20100,6 +20161,48 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T08:35:00+00:00"
+    },
+    {
+      "from": "CHG-266",
+      "to": "TASK-206",
+      "type": "implements",
+      "created_at": "2026-09-18T09:15:00+00:00"
+    },
+    {
+      "from": "CHG-266",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T09:15:00+00:00"
+    },
+    {
+      "from": "EV-212",
+      "to": "CHG-266",
+      "type": "validates",
+      "created_at": "2026-09-18T09:15:00+00:00"
+    },
+    {
+      "from": "TASK-206",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T09:15:00+00:00"
+    },
+    {
+      "from": "TASK-206",
+      "to": "TASK-205",
+      "type": "depends_on",
+      "created_at": "2026-09-18T09:15:00+00:00"
+    },
+    {
+      "from": "DEC-072",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T09:15:00+00:00"
+    },
+    {
+      "from": "DEC-073",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T09:15:00+00:00"
     }
   ]
 }
