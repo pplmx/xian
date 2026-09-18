@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 323,
+  "round": 324,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:50:33+00:00",
+  "updated_at": "2026-09-18T21:53:10+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18521,6 +18521,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-387(0e18b79)。bunx vitest run src/skills.sim.spec.ts src/holding.sim.spec.ts(8 例全过;打印:悟道点逐级 12 → 16 → 22 → 31 → 44、合计 125、最后一级占 35%;打七折 悟道点省 29.6% / 残页 0% / 整本 26.4%;1 级 {attackPct:0.04,critRate:0} vs 6 级 {attackPct:0.14,critRate:0.025},基础占 29%;分支折算 猛进 ≈ 2.5 级、沉潜 ≈ 6.0 级;背包 20/20 → 装 6 件后 14/20 还能收 6;强塞后 21/20 且 isFull=true);cd packages/engine && bun run check(447 例 / 55 文件 + 八道自检,调参参考自检报 15 份消融、用例文件数自检当场抓出 53→55、相对导入自检 95 个源文件);cd /workspace/xian && bun run test(262 文件 / 2495 例)、check:engine(59 处引用)、check:engine:standalone(95 个源文件)。",
       "summary": "两处\"账要自己算一遍才知道\"的刻度:①功法的升级消耗是指数曲线,单级 × 级数会低估一半以上(实测 125 点 vs 直觉的几十点),而且打折项与不打折项混在一张表里时,声明的折扣率不等于实际节省率(30% → 26.4%);②背包容量与装配的关系 —— 装配不占位,所以\"背包满了\"常常只是\"没穿上\"。"
+    },
+    "TASK-305": {
+      "id": "TASK-305",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:53:10+00:00",
+      "updated_at": "2026-09-18T21:53:10+00:00",
+      "touched_round": 323,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "洗练消融(equipment.sim.spec):锁 N 条之后目标条数取 max(品质区间, N+1) —— 锁两条必定洗出三条(\"至少一条新的\"是硬保底);唯一例外是池子被门槛(部位/品阶/层级)筛空,只保留锁住的;同一件不撞名(200 次 0 重复)、掷点均值 0.500、良品专属词条凡品洗不出来;纯函数不动出身。"
+    },
+    "CHG-388": {
+      "id": "CHG-388",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:53:10+00:00",
+      "updated_at": "2026-09-18T21:53:10+00:00",
+      "touched_round": 323,
+      "commit": "9ddddf1",
+      "summary": "库:新增 src/equipment.sim.spec.ts(4 例);CHANGELOG「未发布」记一节;docs/tuning.md 新增一节(第 16 份消融进参考表);docs/assembly.md 配方 A 补一行洗练、坑清单补一行(以为洗练总会给点新的);README 用例数改 451/56。宿主无改动。"
+    },
+    "EV-314": {
+      "id": "EV-314",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:53:10+00:00",
+      "updated_at": "2026-09-18T21:53:10+00:00",
+      "touched_round": 323,
+      "confidence": 0.96,
+      "source": "变更 CHG-388(9ddddf1)。bunx vitest run src/equipment.sim.spec.ts(4 例全过;打印:不锁条 1 条 189 次 / 2 条 211 次 / 3 条 0 次(凡品区间 1~2);锁两条 → 3 条 ×200;池子被部位筛空 → 结果原样 [{\"id\":\"edge\",\"roll\":0.5}];良品 5 种词条都能出、凡品 4 种(focus 的 minRank 挡住);掷点 最小 0.000 / 最大 0.999 / 均值 0.500;入参 [{\"id\":\"sharp\",\"roll\":0.2}] 洗后不变);cd packages/engine && bun run check(451 例 / 56 文件 + 八道自检,调参参考自检报 16 份消融、用例文件数自检当场抓出 55→56、相对导入自检 96 个源文件);cd /workspace/xian && bun run test(263 文件 / 2499 例)、check:engine(59 处引用)、check:engine:standalone(96 个源文件)。",
+      "summary": "洗练层的两条刻度:①\"至少给一条新的\"是硬保底(锁两条必定三条)—— 花钱洗不该洗了等于没洗;②唯一例外是候选池被门槛筛空(这时给不出新的,只保留锁住的),这也是内容侧唯一需要显式决定\"要不要允许\"的口子。"
     }
   },
   "edges": [
@@ -27776,6 +27814,12 @@
       "to": "TASK-304",
       "type": "implements",
       "created_at": "2026-09-18T21:50:33+00:00"
+    },
+    {
+      "from": "CHG-388",
+      "to": "TASK-305",
+      "type": "implements",
+      "created_at": "2026-09-18T21:53:10+00:00"
     }
   ]
 }
