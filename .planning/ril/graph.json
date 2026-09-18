@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 340,
+  "round": 341,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:52:35+00:00",
+  "updated_at": "2026-09-18T22:55:49+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19179,6 +19179,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-404(4849c49)。node scripts/verify-dist.mjs → \"调参参考自检通过(26 份消融都在 docs/tuning.md,且一页索引逐节点名)\";另用脚本核对:索引行数 26 = 消融份数 26,26 个节标题全部出现在索引中;防空转:删掉「伤害公式的节奏」那一行 → 报\"一页索引有 25 行,但消融有 26 份\",恢复 → 绿;bun run check(501 例 / 67 文件 + 十一道自检);宿主 bun run test(274 文件 / 2549 例)、check:engine(59 处引用)、check:engine:standalone(107 个源文件)。",
       "summary": "把\"参考表\"从\"能查\"做成\"能找\":26 行的索引让使用者按\"我要调什么\"检索,而不是按模块名猜;并且索引本身也被判据盯着(漏一节、标题改名都会红)。这是文档判据系列里第一次覆盖\"入口层\"而不是\"内容层\"。"
+    },
+    "TASK-322": {
+      "id": "TASK-322",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:55:48+00:00",
+      "updated_at": "2026-09-18T22:55:48+00:00",
+      "touched_round": 340,
+      "category": "docs",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "示例「行商十二日」(examples/world-loop.ts):把四个此前没有任何示例的模块串起来 —— cycles(每天换行情,确定性轮换)、choices(路上遇事,按权重掷后果)、points(门道点三条路,总量 6/主位 4/副位 2)、memory(名声两路门槛 + 48 小时硬回落)。跑十二天并演示\"歇 40 小时还剩 8 小时到线、歇 72 小时已过线\"的边界。"
+    },
+    "CHG-405": {
+      "id": "CHG-405",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:55:49+00:00",
+      "updated_at": "2026-09-18T22:55:49+00:00",
+      "touched_round": 340,
+      "commit": "4ab5bf5",
+      "summary": "库:新增 examples/world-loop.ts(约 200 行);package.json 的 examples 脚本挂上它(独立成库自检从脚本读清单);README 目录树与 docs/assembly.md 各补一行;CHANGELOG「未发布」记一节。宿主无改动。"
+    },
+    "EV-331": {
+      "id": "EV-331",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:55:49+00:00",
+      "updated_at": "2026-09-18T22:55:49+00:00",
+      "touched_round": 340,
+      "confidence": 0.96,
+      "source": "变更 CHG-405(4ab5bf5)。审计(逐模块查 examples/ 是否引用):初测 cycles/points/memory/choices 四个模块零示例,补完后为 0;bun examples/world-loop.ts(实测输出:十二天的行情/遭遇/本钱/加点/名声逐行,歇 40 小时剩 8 小时到线、歇 72 小时 decayed=true,小结\"行情共 4 种 · 门道 4/6 点(砍价 4 级) · 本钱 114\");cd packages/engine && bun run check(501 例 / 67 文件 + 十一道自检 + 11 份示例全跑);cd /workspace/xian && bun run test(274 文件 / 2549 例)、check:engine(59 处引用)、check:engine:standalone(107 个源文件)。",
+      "summary": "补齐\"有判据但没示例\"的最后一处空白:四个模块(周期/抉择/投资点/世界记忆)此前只在用例与文档里出现过,使用者拿不到一份\"它们怎么配合\"的可跑程序。现在 11 份示例合起来覆盖了绝大多数公开层。"
     }
   },
   "edges": [
@@ -28542,6 +28580,12 @@
       "to": "TASK-321",
       "type": "implements",
       "created_at": "2026-09-18T22:52:35+00:00"
+    },
+    {
+      "from": "CHG-405",
+      "to": "TASK-322",
+      "type": "implements",
+      "created_at": "2026-09-18T22:55:49+00:00"
     }
   ]
 }
