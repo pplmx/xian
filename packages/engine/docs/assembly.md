@@ -52,6 +52,7 @@
 | --- | --- | --- |
 | 等级曲线、进阶、寿元 | `createRealmSystem` | `presets/xiuxian` + `presets.spec.ts` |
 | 掉装 / 洗练 / 装配 | `createEquipmentSystem` | `examples/quickstart.ts` |
+| 洗练 / 重铸(锁住几条、其余重掷) | `equipment.rerollAffixes` | `equipment.sim.spec.ts`(锁两条必定洗出三条;池子被门槛排空是唯一例外) |
 | 技能 / 功法(等级曲线、升级消耗、满级择路) | `createSkillSystem` | `skills.spec.ts` + `skills.sim.spec.ts`(练满总账、折扣只省可折项、分支值几级) |
 | 背包 / 持有(容量、装配即腾位、满了怎么办) | `createHoldingSystem` | `holding.spec.ts` + `holding.sim.spec.ts`(装上 6 件就腾出 6 位) |
 | 副本链(区域怎么开、打几场见首领、通关给什么) | `createDungeonSystem` | `dungeons.spec.ts` + `dungeons.sim.spec.ts`(两种节奏差一场、敌人随层级陡多少) |
@@ -152,6 +153,7 @@
 | 以为世界记忆会逐级回落 | 到点**直接回最低档**(系数 1.15 → 1.00);差一点只掉一档是升档时的分级取,回落没有过渡 | `memory.sim.spec.ts` |
 | 以为折扣打在整本账上 | 只作用于可折项:声明三成折扣,整本只省 26.4%(不参与打折的那一项按原价收) | `skills.sim.spec.ts` |
 | 玩家报"背包满了",先想到加容量 | 先看他是不是没把新装备穿上 —— **装配不占背包位**,容量 20 的包装上 6 件就能再收 6 件 | `holding.sim.spec.ts` |
+| 以为洗练"总会给点新的" | 池子被门槛(部位 / 品阶 / 层级)筛空时给不出新的,只保留锁住的 —— 要不要允许这种"洗了等于没洗"由内容决定 | `equipment.sim.spec.ts` |
 | 以为"堆同名"最后自然没收益 | 六条同名 +10% 在 ranked 下是 30%、`max` 10%、`sum` 60% —— 三种是完全不同的内容政策 | `attributes.sim.spec.ts` |
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
 | 保底时跳过掷骰 | 照样掷,只改写结果 | `drops.spec.ts` / `pity.spec.ts` |
