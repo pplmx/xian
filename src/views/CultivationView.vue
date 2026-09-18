@@ -24,15 +24,21 @@
             大数字看不出变化时,"还差多远、还要多久"才是真正被感知的那个量。
           -->
           <span>
+            <!--
+              这里**永远显示真实修为**。从前写的是 `expFull ? expReq : exp` ——
+              圆满之后那行就锁死在「所需」上,玩家盯着一个不动的数,得出的结论自然是
+              「修为不涨」(实测反馈)。圆满该由后面的标记说明,不该拿假的现值去表达。
+            -->
             <TapNumber
-              :value="player.expFull ? player.expReq : player.exp"
+              :value="player.exp"
               title="修为"
               :rows="expDetailRows"
               :note="expDetailNote"
             />
             / {{ formatGN(player.expReq) }}
-            <span v-if="player.expFull && player.expOverflow.m > 0" class="text-jade">
-              · 积 +{{ formatGN(player.expOverflow) }}
+            <span v-if="player.expFull" class="text-jade">
+              · 圆满
+              <template v-if="player.expOverflow.m > 0">(积 +{{ formatGN(player.expOverflow) }})</template>
             </span>
           </span>
         </div>
@@ -71,6 +77,8 @@
             <span v-if="resources.qi > player.qiCapValue" class="text-azure">
               · 积余 {{ formatNum(Math.floor(resources.qi)) }} / {{ formatNum(player.qiBankCapValue) }}
             </span>
+            <!-- 灵气积到银行上限就不再涨 —— 不说明的话,玩家只会以为它坏了 -->
+            <span v-if="resources.qi >= player.qiBankCapValue" class="text-azure">· 已积至上限</span>
           </span>
         </div>
         <ProgressBar
@@ -450,7 +458,13 @@
     if (player.qiRegenPerSec <= 0) return '当前无回复'
     return `约 ${formatDuration(gap / player.qiRegenPerSec)}`
   })
-  const qiDetailNote = computed(() => (player.qiCapValue - resources.qi <= 0 ? '灵气已满。' : undefined))
+  const qiDetailNote = computed(() => {
+    if (resources.qi >= player.qiBankCapValue) {
+      return `灵气已积到上限(${formatNum(player.qiBankCapValue)} = 容量的 10 倍)——不会再涨;突破、疗伤与炼丹会消耗它。`
+    }
+    if (player.qiCapValue - resources.qi <= 0) return '灵气已满(标称容量),继续积余到上限为止。'
+    return undefined
+  })
 
   // Phase 28 突破准备:按钮文案/耗时/药价全部来自 BREAKTHROUGH_PREP_OPTIONS,不再在视图里写第二份
   const prepMeditate = BREAKTHROUGH_PREP_OPTIONS.find(o => o.id === 'meditate')!

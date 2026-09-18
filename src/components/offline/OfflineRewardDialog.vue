@@ -5,7 +5,11 @@
       <p class="mt-2 text-[12px] text-ink-faint">
         闭关
         <span class="font-kai text-[13px] text-ink">{{ formatDuration(summary.seconds) }}</span>
-        <template v-if="summary.capped">(收益按 {{ formatDuration(summary.cappedSeconds) }} 结算)</template>
+        <!--
+          两条账分开报:被动修行(修为/灵气)不限时、全额;产出与派遣受洞府上限。
+          从前只写一句"收益按 X 结算",玩家看到的是"挂了一周没怎么变",却不知道哪一条被砍了。
+        -->
+        <template v-if="summary.capped">(修为与灵气全额入账;产出与历练按 {{ formatDuration(summary.cappedSeconds) }} 结算)</template>
       </p>
       <div class="ink-divider my-3" />
       <ul class="stagger-in space-y-2 text-left">

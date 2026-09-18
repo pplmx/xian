@@ -4,7 +4,7 @@
  */
 import type { EventDef, OfflineSummary } from '@/types'
 import { add, gn, gnZero, isZero, mulN, sub } from '@/utils/gnum'
-import { formatGN } from '@/utils/format'
+import { formatDuration, formatGN } from '@/utils/format'
 import { rng } from '@/utils/random'
 import { regionDef } from '@/data/regions'
 import { enemyDef } from '@/data/enemies'
@@ -18,6 +18,7 @@ import {
   INSTANT_EXP_LAYER_CAP,
   OFFLINE_BOSS_REWARD_MULT,
   OFFLINE_EFFICIENCY,
+  OFFLINE_CAP_HOURS,
   OFFLINE_MODAL_MIN_SECONDS
 } from '@/data/constants'
 import { makeEnemySnap, resolveCombat, sampleWinRate } from './combat'
@@ -86,20 +87,43 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const dtSec = Math.max(0, (nowMs - game.lastActiveAt) / 1000)
   if (dtSec < 1) return null
 
+  /**
+   * 离线分两条账:**被动修行不限时**,产出与派遣受洞府上限约束。
+   *
+   * 玩家反馈:「很长时间不登录,灵气/修为也不变化。」查下来是离线上限把时间切掉了 ——
+   * 而放置游戏的核心承诺恰恰是"你不在时仍在修行"。故拆开:
+   *   · 修为与灵气:按**真实离线时长**全额结算(不打折、不封顶)——
+   *     修行是身体自己在做的事,不该因为你没开 App 就白丢;
+   *   · 材料产出 / 藏经阁钻研 / 历练 / 镇压:仍受洞府上限(8/12/24/48/72 小时)约束,
+   *     并保留 0.9 的挂机折扣 —— 这些是"要经营的东西",洞府等级买的就是它们。
+   * 修为不封顶不会撑爆后面的境界:修为只是"积余",境界仍要一关一关亲手突破,
+   * 而灵气另有 10 倍容量的银行顶兜着(见 resources.setQi)。
+   */
+  const passiveSec = dtSec
   const capSec = Math.min(dtSec, dongfu.offlineCapHours * 3600)
   const effSec = capSec * OFFLINE_EFFICIENCY
   const notes: string[] = []
+  if (dtSec > capSec + 1) {
+    const capHours = dongfu.offlineCapHours
+    const idx = (OFFLINE_CAP_HOURS as readonly number[]).indexOf(capHours)
+    const nextCap = idx >= 0 && idx < OFFLINE_CAP_HOURS.length - 1 ? OFFLINE_CAP_HOURS[idx + 1]! : null
+    notes.push(
+      `离府 ${formatDuration(dtSec)}:修为与灵气按时长全额入账;` +
+        `材料、钻研与历练受洞府上限(${capHours} 小时)约束,超出的 ${formatDuration(dtSec - capSec)} 未计入` +
+        (nextCap ? ` —— 洞府升一级可提到 ${nextCap} 小时` : ' —— 洞府已至最高档')
+    )
+  }
   const equipmentGained: OfflineSummary['equipment'] = []
   /** 离线期间未入包(自动回收/满包化尘)装备化作的器灵尘 */
   let recycledDust = 0
 
   // ---- 修炼 ----
   const expBefore = { ...player.exp }
-  player.gainExp(mulN(gn(player.cultPerSec), effSec))
+  player.gainExp(mulN(gn(player.cultPerSec), passiveSec))
 
   // ---- 灵气 ----
   const qiBefore = resources.qi
-  resources.setQi(resources.qi + player.qiRegenPerSec * effSec, player.qiCapValue)
+  resources.setQi(resources.qi + player.qiRegenPerSec * passiveSec, player.qiCapValue)
 
   // ---- 建筑产出 ----
   const herbBefore = resources.herb

@@ -17,6 +17,7 @@ import { useLoreStore } from '@/stores/lore'
 import { useGameStore } from '@/stores/game'
 import { usePlayerStore } from '@/stores/player'
 import { useDongfuStore } from '@/stores/dongfu'
+import { useResourcesStore } from '@/stores/resources'
 import { useUiStore } from '@/stores/ui'
 import { todayWeather } from './weather'
 import { gn, mulN, toNum } from '@/utils/gnum'
@@ -213,28 +214,48 @@ describe('离线结算同源吃天时(ISS-027 续)', () => {
   })
 
   /**
-   * 离线折扣的**口径一致性**:离线修为 = 在线速率 × 时长 × OFFLINE_EFFICIENCY。
-   * 单看「有没有增长」看不出量级走样 —— 高界数值跨十几个数量级,
-   * 某处若被 clamp 或精度丢失,增长率就会悄悄偏离这个折扣。
+   * 修为与灵气**不限时** —— 玩家那句话:「很长时间不登录,灵气/修为也不变化。」
+   *
+   * 旧口径把它们也按洞府上限切掉(洞府 0 级只结算 8 小时),于是挂一周回来几乎没动。
+   * 现在两条账分开:
+   *   被动修行(修为 / 灵气):按**真实离线时长**全额结算,不打折也不封顶 ——
+   *     修行是身体自己在做的事,不该因为没开 App 就白丢;
+   *   产出与派遣(材料 / 钻研 / 历练 / 镇压):仍受洞府上限约束,保留 0.9 挂机折扣。
+   * 修为不封顶撑不破后面的境界:它只是"积余",境界仍要一关一关亲手突破;
+   * 灵气另有 10 倍容量的银行顶兜着。
    */
-  it('离线折扣全程一致:人间/真仙/神人/混沌的增益都恰是 在线速率 ×0.9', () => {
-    for (const major of [0, 9, 14, 20]) {
+  it('修为与灵气不限时:挂 N 天,就按 N 天全额入账(洞府等级不影响这两条)', () => {
+    const gapHours = 24 * 7 // 挂一周 —— 远超任何洞府档位的上限
+    for (const mansionLevel of [0, 4]) {
       setActivePinia(createPinia())
       const game = useGameStore()
       const player = usePlayerStore()
+      const dongfu = useDongfuStore()
+      const resources = useResourcesStore()
       game.markStarted()
-      player.major = major
+      player.major = 3
       player.sub = 0
-      const gapHours = 4 // 低于最低封顶(8h),故 capSec = 真实时长
+      dongfu.setLevel('mansion', mansionLevel)
+      resources.$patch({ qi: 0 })
       game.lastActiveAt = Date.now() - gapHours * 3600 * 1000
       const rate = player.cultPerSec
-      const effSec = gapHours * 3600 * OFFLINE_EFFICIENCY
+      const qiRate = player.qiRegenPerSec
       const before = toNum(player.exp)
-      expect(settleOffline(Date.now()), `major ${major} 离线未结算`).not.toBeNull()
+      const summary = settleOffline(Date.now())
+      expect(summary, `洞府 ${mansionLevel} 级:离线未结算`).not.toBeNull()
+      // 修为:全额(无 0.9 折扣、无洞府上限)
       const gained = toNum(player.exp) - before
-      const expected = toNum(mulN(gn(rate), effSec))
-      expect(expected, `major ${major} 期望增益为 0,断言形同虚设`).toBeGreaterThan(0)
-      expect(gained / expected, `major ${major} 离线增益偏离 0.9 折扣:${(gained / expected).toFixed(4)}`).toBeCloseTo(1, 3)
+      expect(gained / toNum(mulN(gn(rate), gapHours * 3600)), `洞府 ${mansionLevel} 级:修为被打了折或被封顶`).toBeCloseTo(1, 3)
+      // 灵气:同样按真实时长回充(到银行顶为止 —— 这里是 10 倍容量)
+      expect(summary!.qi, `洞府 ${mansionLevel} 级:灵气没按时长入账`).toBeGreaterThan(0)
+      const bankCap = player.qiBankCapValue
+      const expectedQi = Math.min(qiRate * gapHours * 3600, bankCap)
+      expect(summary!.qi, `洞府 ${mansionLevel} 级:灵气入账量`).toBeCloseTo(expectedQi, 0)
+      // 「不限时」的实际效力是"到顶为止":灵气另有 10 倍容量的银行顶兜着,不会无限膨胀
+      if (mansionLevel === 0) expect(expectedQi, '一周的回气量本该顶到银行上限,否则这条判据没验到顶').toBeCloseTo(bankCap, 0)
+      // 而**产出**仍受洞府上限:0 级只结算 8 小时
+      if (mansionLevel === 0) expect(summary!.capped, '洞府 0 级时产出应受 8 小时上限约束').toBe(true)
+      expect(summary!.cappedSeconds).toBeLessThanOrEqual(dongfu.offlineCapHours * 3600 + 1)
     }
   })
 })
