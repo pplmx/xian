@@ -45,6 +45,16 @@ export interface CompanionConfig {
    * 没有伙伴(或伙伴没性格)时返回它;返回的是拷贝,调用方改不动配置。
    */
   neutral: Record<string, number>
+  /**
+   * 多只伙伴的性格系数怎么合(默认 `override`):
+   *
+   *   `override`     —— 后一只有性格就覆盖该键(原来唯一的行为)。
+   *                     好处是不会冒出 1.05×1.1 这种没人预期过的数。
+   *   `add-relative` —— 各自**相对中性**的那一份相加:
+   *                     倍率类 1 + (0.05 + 0.10) = 1.15;加法类 0 + (0.06 + 0.02) = 0.08。
+   *                     同一个开关对两类键都成立,故不必为它们各写一套。
+   */
+  stack?: 'override' | 'add-relative'
 }
 
 export interface CompanionSystem {
@@ -79,6 +89,7 @@ export function createCompanionSystem(config: CompanionConfig): CompanionSystem 
     }
   }
   const neutral = { ...config.neutral }
+  const stack = config.stack ?? 'override'
   for (const t of traits) {
     for (const key of Object.keys(t.mods)) {
       if (!(key in neutral)) {
@@ -107,7 +118,12 @@ export function createCompanionSystem(config: CompanionConfig): CompanionSystem 
       if (id === null || seen.has(id)) continue
       seen.add(id)
       const trait = traitById.get(byId.get(id)?.traitId ?? '')
-      if (trait) for (const [key, value] of Object.entries(trait.mods)) out[key] = value
+      if (trait) {
+        for (const [key, value] of Object.entries(trait.mods)) {
+          out[key] =
+            stack === 'add-relative' ? (out[key] ?? neutral[key] ?? 0) + (value - (neutral[key] ?? 0)) : value
+        }
+      }
       const own = byId.get(id)?.mods
       for (const [key, value] of Object.entries(own ?? {})) {
         if (typeof value !== 'number') continue

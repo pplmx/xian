@@ -44,6 +44,29 @@ describe('伙伴系统 —— 性格系数与自身词条', () => {
     expect(SYSTEM.activeMods(['fox', 'turtle']).exploreDurMult).toBe(1.1)
   })
 
+  it('多只时怎么合由作品定:默认覆盖,也可"各自相对中性那一份相加"', () => {
+    const additive = createCompanionSystem({
+      neutral: NEUTRAL,
+      stack: 'add-relative',
+      traits: [
+        { id: 'greedy', mods: { dangerMult: 1.05, dropLuck: 0.06 } },
+        { id: 'steady', mods: { exploreDurMult: 1.1, dropLuck: 0.02 } }
+      ],
+      companions: [
+        { id: 'fox', name: '狐', traitId: 'greedy' },
+        { id: 'turtle', name: '龟', traitId: 'steady' }
+      ]
+    })
+    const both = additive.activeMods(['fox', 'turtle'])
+    // 倍率类:1 + (0.05 + 0.10) = 1.15;加法类:0 + (0.06 + 0.02) = 0.08
+    expect(both.dangerMult).toBeCloseTo(1.05, 10)
+    expect(both.exploreDurMult).toBeCloseTo(1.1, 10)
+    expect(both.dropLuck).toBeCloseTo(0.08, 10)
+    // 单只时两种模式结果相同(没有可叠的对象)
+    expect(additive.activeMods(['fox']).dropLuck).toBeCloseTo(0.06, 10)
+    expect(SYSTEM.activeMods(['fox']).dropLuck).toBeCloseTo(0.06, 10)
+  })
+
   it('配置错误当场报错:重复 id、指向不存在的性格、性格用了没有中性值的键', () => {
     expect(() => createCompanionSystem({ neutral: NEUTRAL, traits: [], companions: [{ id: 'a', name: 'A' }, { id: 'a', name: 'B' }] })).toThrow(/重复/)
     expect(() => createCompanionSystem({ neutral: {}, traits: [], companions: [{ id: 'a', name: 'A', traitId: 'ghost' }] })).toThrow(/未定义的性格/)
