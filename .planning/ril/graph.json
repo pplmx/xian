@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 253,
+  "round": 255,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T14:22:05+00:00",
+  "updated_at": "2026-09-18T14:30:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 253,
+      "touched_round": 254,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15068,7 +15068,7 @@
       "version": 1,
       "created_at": "2026-09-18T14:21:53+00:00",
       "updated_at": "2026-09-18T14:21:53+00:00",
-      "touched_round": 253,
+      "touched_round": 254,
       "category": "test-quality",
       "severity": 0.4,
       "confidence": 0.95,
@@ -15110,6 +15110,94 @@
       "rationale": "库的判据要站在\"使用者那一侧\",而不是\"作者那一侧\"。作者视角能验的是\"文件在、能读到\"(按路径 import 仓库里的 dist);使用者会遇到的是另一批事:files 少收文件、exports 指错、子路径导出漏声明、包名解析不到。这两类判据的失败方式不重叠,且后者只会在别人 npm i 之后暴露 —— 那是发布出去才发现的翻车,代价最高。故把\"真 pack 一次、装进临时项目、按包名 import\"做成常规闸门,且宿主与独立仓库共用同一份实现,不维护第二套口径。",
       "alternatives_rejected": "①只跑 npm pack --dry-run 看清单(内容对得上,但\"能不能解析\"没验);②让使用者在 issue 里报(等别人踩);③宿主另写一份打包判据(两套口径必然漂移,且上游改了独立仓库才红)。",
       "summary": "发布类判据要按使用者的做法来:真 pack、真装进 node_modules、按包名与子路径 import;作者视角的\"文件能读到\"不能代替它。"
+    },
+    "TASK-233": {
+      "id": "TASK-233",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:30:07+00:00",
+      "updated_at": "2026-09-18T14:30:07+00:00",
+      "touched_round": 255,
+      "category": "dx",
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "补齐公开面并把它钉成判据:①把只在内部模块里的类型(CombatKeys/DamageContext/SkillEffectContext/BattleEventKind、RealmExpConfig/RealmCombatConfig/RealmBreakthroughConfig、ProficiencyConfig)从公开入口导出;②新增 src/publicApi.spec.ts,运行时导出名单一字不差 + 每个公开类型只能从 ./index.js 取到。"
+    },
+    "CHG-314": {
+      "id": "CHG-314",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:30:10+00:00",
+      "updated_at": "2026-09-18T14:30:10+00:00",
+      "touched_round": 254,
+      "commit": "e4259e6",
+      "summary": "src/index.ts 补 8 个公开类型导出;新增 src/publicApi.spec.ts(3 例:运行时导出名单逐字比对、类型不出现在运行时、类型清单编译期可取到);README 与 CHANGELOG 同步。"
+    },
+    "EV-239": {
+      "id": "EV-239",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:30:10+00:00",
+      "updated_at": "2026-09-18T14:30:10+00:00",
+      "touched_round": 254,
+      "confidence": 0.97,
+      "source": "变更 CHG-314(e4259e6)。cd packages/engine && bun run check(16 文件/147 例 + 产物自检);bun run test(199 文件/2042 例);反向验证:临时删掉 index.ts 里 SkillEffectContext 的导出 → tsc 立刻报 TS2305(判据不空转);gh run list -R pplmx/wanxiang-engine(35356217279 success)",
+      "summary": "公开面判据双向有效:少导出一个公开类型会红(已用故意删除验证),运行时导出增删也会红;三份内容包与世界装配照旧全绿。"
+    },
+    "DEC-106": {
+      "id": "DEC-106",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:30:14+00:00",
+      "updated_at": "2026-09-18T14:30:14+00:00",
+      "touched_round": 255,
+      "rationale": "公共库的\"承诺\"有三种形态,而第三种只有使用者在乎:①文档里写的用法;②库内部的用例全绿;③**公开面本身**(导出名单与类型)。第③种最阴:少导出一个类型、多删一个运行时导出、漏声明一条子路径 exports —— 库内 tsc 全绿、用例全绿、跑一遍源码也全对,直到使用者想标个类型或 import 一条子路径才发现。故凡\"对外承诺\"都要能被机械判据钉住:导出名单逐字比对、类型只能从公开入口取、发布包真装一遍并按包名与子路径 import。判据的取向是\"使用者会怎么用\",不是\"作者看得见什么\"。",
+      "alternatives_rejected": "①靠 code review 盯导出(人一多必漏,且改动本身无痕迹);②只测源码不测产物(上一轮的 exports 缺口正是这类);③把所有内部类型一股脑导出(公开面变成垃圾桶,后续无法判断哪些是承诺)。",
+      "summary": "公开面(导出名单 / 公开类型 / 子路径 exports)是库对外的承诺,必须被机械判据钉住,且判据要按使用者的用法写(装一遍、按包名 import),不能只靠库内部全绿。"
+    },
+    "TASK-234": {
+      "id": "TASK-234",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:30:17+00:00",
+      "updated_at": "2026-09-18T14:30:17+00:00",
+      "touched_round": 255,
+      "category": "correctness",
+      "severity": 0.6,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "修一个\"库内全绿、使用者取不到\"的发布缺陷:日常学习内容包(唯一与战斗无关的题材)没有出现在 package.json 的 exports 里,别人 import wanxiang-engine/presets/daily 解析不到;补上声明,并让发布包判据真装一遍后按子路径 import 三份内容包。"
+    },
+    "CHG-315": {
+      "id": "CHG-315",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:30:23+00:00",
+      "updated_at": "2026-09-18T14:30:23+00:00",
+      "touched_round": 255,
+      "commit": "ab7fcf1",
+      "summary": "packages/engine/package.json exports 补 ./presets/daily;scripts/verify-dist.mjs 加产物文件清单项与\"第三个题材完整一圈\"(自习→升学→换文具→装配→图书馆遭遇→期末通关结算),并在消费侧探针里按子路径 import daily;scripts/engine-dist.mjs 入口/发布包清单、独立仓 CI 文件清单同步;README/CHANGELOG 说明三份内容包都从包名起可取。"
+    },
+    "EV-240": {
+      "id": "EV-240",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:30:23+00:00",
+      "updated_at": "2026-09-18T14:30:23+00:00",
+      "touched_round": 255,
+      "confidence": 0.97,
+      "source": "变更 CHG-315(ab7fcf1)。bun run check:engine(8 个入口 + 三份内容包 + 真装一遍,25 处宿主引用全走公开入口);cd packages/engine && bun run check(147 例 + 产物自检 + 发布包可在临时项目里 import 到 daily);bun run test(199 文件/2042 例);bun run check:engine:standalone(36 个源文件独立编译);gh run list -R pplmx/wanxiang-engine(35356518370 success,workflow 里已加 daily 文件清单)",
+      "summary": "三份内容包都能按包名/子路径装起来:发布包解包后 import wanxiang-engine/presets/daily 通过,并在日常题材上跑完一圈(升学/换文具/图书馆遭遇/期末通关结算都有判据)。"
     }
   },
   "edges": [
@@ -23129,6 +23217,48 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T14:22:05+00:00"
+    },
+    {
+      "from": "CHG-314",
+      "to": "TASK-233",
+      "type": "implements",
+      "created_at": "2026-09-18T14:30:14+00:00"
+    },
+    {
+      "from": "TASK-233",
+      "to": "TASK-232",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:30:14+00:00"
+    },
+    {
+      "from": "DEC-106",
+      "to": "TASK-233",
+      "type": "governs",
+      "created_at": "2026-09-18T14:30:14+00:00"
+    },
+    {
+      "from": "DEC-106",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T14:30:14+00:00"
+    },
+    {
+      "from": "CHG-315",
+      "to": "TASK-234",
+      "type": "implements",
+      "created_at": "2026-09-18T14:30:28+00:00"
+    },
+    {
+      "from": "TASK-234",
+      "to": "TASK-233",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:30:28+00:00"
+    },
+    {
+      "from": "DEC-106",
+      "to": "TASK-234",
+      "type": "governs",
+      "created_at": "2026-09-18T14:30:28+00:00"
     }
   ]
 }
