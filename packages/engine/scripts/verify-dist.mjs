@@ -107,6 +107,23 @@ mkdirSync(nm, { recursive: true })
 execFileSync('tar', ['-xzf', resolve(tarballDir, tgz), '-C', nm], { stdio: 'inherit' })
 renameSync(resolve(nm, 'package'), resolve(nm, 'wanxiang-engine'))
 
+// 发布包里该有什么:产物 + 说明 + 变更记录 + 文档。少一样,使用者就只拿到半个包。
+const installed = resolve(nm, 'wanxiang-engine')
+for (const required of [
+  'dist/index.js',
+  'dist/index.d.ts',
+  'dist/presets/daily.js',
+  'package.json',
+  'README.md',
+  'CHANGELOG.md',
+  'LICENSE',
+  'docs/parity.md',
+  'docs/development.md'
+]) {
+  assert.ok(existsSync(resolve(installed, required)), `发布包里少了 ${required}`)
+}
+assert.ok(!existsSync(resolve(installed, 'src')), '发布包里混进了源码目录 —— 对外只该发 dist 与说明')
+
 const consumerProbe = `
   const assert = (await import('node:assert/strict')).default
   const engine = await import('wanxiang-engine')

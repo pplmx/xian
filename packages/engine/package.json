@@ -40,7 +40,9 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md",
+    "docs"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -48,8 +50,9 @@
     "type-check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "examples": "bun examples/quickstart.ts && bun examples/minimal.ts",
     "verify:dist": "node scripts/verify-dist.mjs",
-    "check": "tsc -p tsconfig.json --noEmit && vitest run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs"
+    "check": "tsc -p tsconfig.json --noEmit && vitest run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs && bun run examples"
   },
   "devDependencies": {
     "typescript": "~6.0.3",

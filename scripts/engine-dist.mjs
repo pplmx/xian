@@ -142,8 +142,11 @@ for (const required of [
   'dist/presets/daily.js',
   'dist/presets/xiuxian.js',
   'README.md',
+  'CHANGELOG.md',
   'LICENSE',
-  'package.json'
+  'package.json',
+  'docs/parity.md',
+  'docs/development.md'
 ]) {
   assert.ok(shipped.includes(required), `发布包里少了 ${required}(实际:${shipped.slice(0, 8).join(', ')}…)`)
 }
