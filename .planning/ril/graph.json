@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 264,
+  "round": 265,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:45:13+00:00",
+  "updated_at": "2026-09-18T16:53:03+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 264,
+      "touched_round": 265,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15667,7 +15667,7 @@
       "version": 1,
       "created_at": "2026-09-18T16:45:06+00:00",
       "updated_at": "2026-09-18T16:45:06+00:00",
-      "touched_round": 264,
+      "touched_round": 265,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -15709,6 +15709,56 @@
       "rationale": "持有层把\"什么算占位\"做成配置(counted),而不是写死\"背包容量 = 件数\":本作的口径是\"已装配的不占背包位\",而别的游戏可能全都占、或按重量算。同样地,\"满了怎么办\"也不由库决定 —— add 只返回 full 与原因,折算成什么(自动分解/寄到邮箱/拒绝拾取)是作品的规则。这两条都是\"库给形状不给规则\"的老纪律在新一层的应用;顺带照出一个真问题:删一件若不在所有槽位上摘掉它,装配表里就会留悬空 uid。",
       "alternatives_rejected": "①把容量写死成\"件数上限\"(持有层就绑死了装备这一种东西);②满了自动折算成资源(库不知道那件值多少,也不该知道);③只给\"装配表\"这一半(删件与装配联动的坑会留给每个使用者自己踩)。",
       "summary": "持有层只认 uid 与\"什么算占位/容量多大\"这两条配置;满了怎么办由作品决定;删件必须把该件从所有槽位摘掉(库提供 unassignUid)。"
+    },
+    "TASK-245": {
+      "id": "TASK-245",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T16:52:57+00:00",
+      "updated_at": "2026-09-18T16:52:57+00:00",
+      "touched_round": 265,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "把\"洗练/重铸\"抽成库的骨架:equipment.rerollAffixes(保留封存、其余重掷),并与 generate 共用同一处掷词条实现(pickAffixes:池子/门槛/权重/掷点只写一次);本作 core/reforge 的重掷改为转发,用旧循环冻结对账(含随机源消耗一致)。按新口径不发版,改动攒在「未发布」。"
+    },
+    "CHG-327": {
+      "id": "CHG-327",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:52:58+00:00",
+      "updated_at": "2026-09-18T16:52:58+00:00",
+      "touched_round": 265,
+      "commit": 7997735,
+      "summary": "库:equipment.ts 抽出 pickAffixes 并新增 rerollAffixes(第 19 条装备用例:保留不动/条数与池子口径/全封存时尽量给新条/纯函数),index 与 publicApi.spec 导出 RerollOptions;CHANGELOG 新增「未发布」一节并记录本改动;README 定制表加洗练一行。宿主:core/reforge 转发到库,新增 engineReforgeParity.spec(3 例,含随机流消耗一致),test-report 补分类,docs/engine.md 迁移表加两行(持有层与重铸)。"
+    },
+    "EV-251": {
+      "id": "EV-251",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:53:03+00:00",
+      "updated_at": "2026-09-18T16:53:03+00:00",
+      "touched_round": 265,
+      "confidence": 0.96,
+      "source": "变更 CHG-327(7997735)。bunx vitest run src/core/engineReforgeParity.spec.ts(3 例:五组种子×四类装备逐条相同、随机流消耗一致、封存原样不动);bun run test(205 文件/2096 例);bun run test:report(2096 过/0 败);cd packages/engine && bun run check(18 文件/182 例);bun run check:engine(27 处引用);bun run check:engine:standalone",
+      "summary": "洗练搬迁逐位对账:新实现与旧循环在四类装备×五组种子下词条与掷点完全一致,且消耗的随机数个数相同(否则整局随机序列会错位);全量 2096 例未因换实现变化。"
+    },
+    "DEC-117": {
+      "id": "DEC-117",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:53:03+00:00",
+      "updated_at": "2026-09-18T16:53:03+00:00",
+      "touched_round": 265,
+      "rationale": "库里凡是\"同一件事会被两处用到\"的,必须共用一处实现:生成装备要掷词条,洗练也要掷词条,池子筛法/权重/掷点顺序若各写一份,迟早分叉成两套口径 —— 而玩家看到的是\"掉出来的\"和\"洗出来的\"不一致,却查不出为什么。故这一轮把 pickAffixes 抽成唯一实现,generate 与 rerollAffixes 都走它;判据那边也不只比结果,还比**随机源消耗数**(顺序或次数一变,整局之后的随机流都错位)。",
+      "alternatives_rejected": "①让库的 reroll 与 generate 各写一份(短期省事,长期两套口径);②把洗练留在作品侧只抽\"掷词条\"这个函数出去(使用者仍要自己拼装池子/门槛/条数规则);③重掷时重算品质与层级(洗的应是词条构成,不是出身)。",
+      "summary": "同一件事被两处用到时必须共用一处实现(生成与洗练共用掷词条);判据除结果外还比随机源消耗数,防止随机流错位。"
     }
   },
   "edges": [
@@ -24010,6 +24060,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:45:13+00:00"
+    },
+    {
+      "from": "CHG-327",
+      "to": "TASK-245",
+      "type": "implements",
+      "created_at": "2026-09-18T16:53:03+00:00"
+    },
+    {
+      "from": "TASK-245",
+      "to": "TASK-244",
+      "type": "depends_on",
+      "created_at": "2026-09-18T16:53:03+00:00"
+    },
+    {
+      "from": "DEC-117",
+      "to": "TASK-245",
+      "type": "governs",
+      "created_at": "2026-09-18T16:53:03+00:00"
+    },
+    {
+      "from": "DEC-117",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T16:53:03+00:00"
     }
   ]
 }
