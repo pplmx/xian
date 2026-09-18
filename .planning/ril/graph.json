@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 228,
+  "round": 229,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T09:45:00+00:00",
+  "updated_at": "2026-09-18T10:25:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13578,6 +13578,89 @@
       "rationale": "公共库一旦离开仓库,它的 package.json 就是使用者看到的全部事实。声明 MIT 而作品实为 CC BY-NC 4.0,等于给出一个作品本身并不拥有的授权;这类不一致在仓库内部看不出来,发出去就是对外承诺。故:包内许可与仓库根目录一致,许可证文本随包发出(npm 会自动带上包内 LICENSE),并在 README 写明。",
       "alternatives_rejected": "①沿用 MIT(与作品许可冲突);②不在包里写 license(默认全权保留,使用者无法判断能否用);③只在 README 提一句(授权以 package.json 与 LICENSE 为准)。",
       "summary": "包内许可与仓库一致(CC-BY-NC-4.0),许可证文本随包发出。"
+    },
+    "TASK-208": {
+      "id": "TASK-208",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T10:25:00+00:00",
+      "updated_at": "2026-09-18T10:25:00+00:00",
+      "touched_round": 229,
+      "category": "core-feature",
+      "severity": 0.6,
+      "confidence": 0.95,
+      "effort": 4,
+      "unlock_factor": 1.0,
+      "summary": "把本作接到公共库(第四段:副本规则):首领门槛与节奏由库的 winsUntilBoss 回答(本作是 once 节奏:攒够十胜出一位首领、击败即通关、此后不再出),离线自动挑战与界面提示共用;读档补票的不变量(前置已通→此地已开,只补该补的、保留历史 id、幂等)从 data/regions 搬进库的 prereqClosure。至此四套系统(等级/属性/装备/副本)的规则都由库承担。"
+    },
+    "CHG-268": {
+      "id": "CHG-268",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T10:25:00+00:00",
+      "updated_at": "2026-09-18T10:25:00+00:00",
+      "touched_round": 229,
+      "commit": "d93cdb1",
+      "summary": "库侧:DungeonConfig 增 bossRhythm(cycle 默认 / once),抽出 winsUntilBoss(wins, cleared) 作为门槛唯一语义(once 下通关即 null、cycle 下循环),nextEncounter/bossProgress 都走它;新增 prereqClosure(unlocked, cleared);仙侠内容包改为 bossProgress 10 + once;库内补 once 节奏、两种门槛语义、补票三条性质用例。"
+    },
+    "CHG-269": {
+      "id": "CHG-269",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T10:25:00+00:00",
+      "updated_at": "2026-09-18T10:25:00+00:00",
+      "touched_round": 229,
+      "commit": "d772b7e",
+      "summary": "应用侧:exploration.winsUntilRegionBoss 转发库;offline 的 `winsIn >= 常数` 改为问同一个入口;data/regions.unlockClosure 删除、store 改调库的 prereqClosure;门槛常数的唯一住处变成 core/engineWorld;singleSourceAudit 判据随之搬家(两个模块都走 winsUntilRegionBoss、都不许引用常数,常数只许出现在装配处)。"
+    },
+    "CHG-270": {
+      "id": "CHG-270",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T10:25:00+00:00",
+      "updated_at": "2026-09-18T10:25:00+00:00",
+      "touched_round": 229,
+      "commit": "218e214",
+      "summary": "产物自检增加第 ⑤ 步:npm pack --dry-run --json(缓存指向临时目录、输出落文件以避开非 TTY 下管道给空串),断言发布包含 dist/index.js、dist/index.d.ts、两份内容包、README、LICENSE、package.json 且不含 src/;当前 25 个文件 / 打包 43.8 KB。"
+    },
+    "EV-214": {
+      "id": "EV-214",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T10:25:00+00:00",
+      "updated_at": "2026-09-18T10:25:00+00:00",
+      "touched_round": 229,
+      "source": "src/core/engineParity.spec.ts(29 例)+ packages/engine(55 例)+ bun run test(190 文件 / 1931 例)+ bun run check + bun run check:engine",
+      "summary": "副本对账:门槛从 0 到 15 胜逐点与冻结旧口径相同(含 cleared 分支)、补票逐存档状态相同且幂等/保留历史 id/不看等级、once 节奏下攒够出首领且通关后只出杂兵;全量闸门与产物自检(7 入口 + 发布包内容)全绿。"
+    },
+    "DEC-076": {
+      "id": "DEC-076",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T10:25:00+00:00",
+      "updated_at": "2026-09-18T10:25:00+00:00",
+      "touched_round": 229,
+      "rationale": "首领节奏在两类玩法里本就不同:刷本循环要\"每 N 胜复现\",推进玩法要\"攒够出一次、通关即止\"。原先把前者写死,后者就只能在应用侧再写一套判定 —— 那正是\"机制两份实现\"的起点。故把节奏写成配置(bossRhythm),并把门槛语义收进一个纯函数 winsUntilBoss(wins, cleared):界面提示、在线判定、离线自动挑战、通关判定都问它。",
+      "alternatives_rejected": "①保持写死 cycle,应用侧自写 once(机制分叉);②把门槛判据留在应用侧、库只存数据(库的副本系统就只是数据表);③两种节奏各写一套 nextEncounter(同一件事两份实现)。",
+      "summary": "首领节奏是配置(cycle/once),门槛语义只有 winsUntilBoss 一处;all callers 共用。"
+    },
+    "DEC-077": {
+      "id": "DEC-077",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T10:25:00+00:00",
+      "updated_at": "2026-09-18T10:25:00+00:00",
+      "touched_round": 229,
+      "rationale": "同源审计原来钉的是\"两个模块都必须引用门槛常数\" —— 那是当时结构的唯一真相源。规则搬进库之后,常数只在装配处出现一次,旧判据会误红。判据必须跟着真相源搬家,否则要么被删(失去守卫),要么被改成\"允许两处\"(放走分叉)。新判据比旧的更严:它不仅要求在线/离线走同一入口,还要求两个模块**都不许**再引用常数,并断言常数只出现在装配处。",
+      "alternatives_rejected": "①删掉这条审计(门槛又没有守卫了);②放宽成\"引用常数或调用入口皆可\"(两处真相源合法化);③把常数留在其中一个模块里当\"转发\"(多一层无意义的间接)。",
+      "summary": "规则搬家时,同源审计跟着搬到新的真相源位置,且判据只应更严:新住所唯一、调用方一律走入口。"
     }
   },
   "edges": [
@@ -20331,6 +20414,72 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "CHG-268",
+      "to": "TASK-208",
+      "type": "implements",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "CHG-269",
+      "to": "TASK-208",
+      "type": "implements",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "CHG-268",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "CHG-269",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "EV-214",
+      "to": "CHG-269",
+      "type": "validates",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "EV-214",
+      "to": "CHG-268",
+      "type": "validates",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "TASK-208",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "TASK-208",
+      "to": "TASK-206",
+      "type": "depends_on",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "CHG-270",
+      "to": "TASK-207",
+      "type": "implements",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "DEC-076",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "DEC-077",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T10:25:00+00:00"
     }
   ]
 }
