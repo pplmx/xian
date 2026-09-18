@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 344,
+  "round": 345,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:08:47+00:00",
+  "updated_at": "2026-09-18T23:16:01+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19331,6 +19331,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-408(eedb25c)。bunx vitest run src/scale.sim.spec.ts(5 例全过,整套 577ms;打印:掉落表 100000 次 / 26ms;战斗 10000 次 / 174ms、共 133040 回合;离线折叠 1000000 步 / 13ms;存档编解码 10000 次 / 28ms;属性结算 100000 次 / 309ms);cd packages/engine && bun run check(506 例 / 68 文件 + 十一道自检,调参参考自检报 27 份且索引逐节点名、用例文件数自检当场抓出 67→68、相对导入自检 108 个源文件);cd /workspace/xian && bun run test(276 文件 / 2555 例)、test:report(2555 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(108 个源文件)。",
       "summary": "把\"能跑批量模拟\"从一句话变成有数字、有闸门的判据:五条热路径的吞吐与\"全服一晚上要跑多久\"都量了出来,闸门宽到不挡 CI 抖动、窄到挡得住数量级退化。过程中也发现一个自己的测量错误:第一版离线那条 2ms 跑完一百万步(读数是空的),改成每步做真活才是有效测量 —— 这条教训写进了用例注释。"
+    },
+    "TASK-326": {
+      "id": "TASK-326",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T23:16:00+00:00",
+      "updated_at": "2026-09-18T23:16:00+00:00",
+      "touched_round": 344,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "组合验收第六条链(integrationLoot.spec):战斗 → 通关奖励 → 掉落 → 入库(收下/折算)→ 持有 → 装配 → 属性 → 面板。断言六条不变量:件数守恒、折算同源(回执=账本增量)、见证不漏、容量不越界、面板单调(且明细之和=面板值)、同种子可复现。实测 40 局:赢 40、掉 23、收 4、折算 19、尘 +144.87、见证 23。"
+    },
+    "CHG-409": {
+      "id": "CHG-409",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:16:01+00:00",
+      "updated_at": "2026-09-18T23:16:01+00:00",
+      "touched_round": 344,
+      "commit": "a30d741",
+      "summary": "库:新增 src/integrationLoot.spec.ts(4 例);CHANGELOG「未发布」记一节;docs/assembly.md 的跨模块验收表补一行;README 用例数改 510/69。宿主无改动。"
+    },
+    "EV-335": {
+      "id": "EV-335",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:16:01+00:00",
+      "updated_at": "2026-09-18T23:16:01+00:00",
+      "touched_round": 344,
+      "confidence": 0.96,
+      "source": "变更 CHG-409(a30d741)。bunx vitest run src/integrationLoot.spec.ts(4 例全过;打印\"40 场里赢 40 场:掉出 19 件 · 收下 3 · 折算 16 · 尘 +115.2 · 见证 19 · 背包 3/4 · 面板攻击 93.29\"与\"20 件全折算:回执合计 100 · 账本余额 100 · 期望 100\"以及同种子两遍的逐字段一致);cd packages/engine && bun run check(510 例 / 69 文件 + 十一道自检);cd /workspace/xian && bun run test(277 文件 / 2559 例)、bun run test:report(2559 过 / 0 败;另记一次不可复现的红:同一批命令里 test:report 曾退出 1,随后 6 次连跑全绿,未能定位)、check:engine(60 处引用)、check:engine:standalone(109 个源文件)。",
+      "summary": "第六条链把\"每场胜利都会走的那条路\"整段验收了:链上三个记账点(掉落表/入库漏斗/账本)必须对得上,而且面板是这条链的终点(装备词条经合并与软阈值之后,明细之和仍等于面板值)。顺带记一条观察:test:report 在一次链式执行里退出 1,但此后 6 次连跑全绿 —— 未能复现,先记在案。"
     }
   },
   "edges": [
@@ -28718,6 +28756,12 @@
       "to": "TASK-325",
       "type": "implements",
       "created_at": "2026-09-18T23:08:47+00:00"
+    },
+    {
+      "from": "CHG-409",
+      "to": "TASK-326",
+      "type": "implements",
+      "created_at": "2026-09-18T23:16:01+00:00"
     }
   ]
 }
