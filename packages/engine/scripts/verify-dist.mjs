@@ -102,6 +102,34 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   console.log(`定制表自检通过(${promised.length} 个名字,逐个都有用例提到)`)
 
   /**
+   * 定制表旋钮自检 —— 表里写出来的**旋钮路径**必须真的在源码里存在。
+   *
+   * 上面那条管"表里的名字有用例提到",管不了另一种腐烂:表里写着 `realms.exp.costFn`,
+   * 而源码里根本没有这个名字(改过名、还没实现、或者抄错了一层)。这张表就是"承诺"本身 ——
+   * 承诺一个不存在的开关,读者会照着写,然后对着编译错误怀疑自己。
+   *
+   * 取值口径:反引号片段去掉尾巴上的调用糖 `(...)`,再取最后一个标识符段 ——
+   * `realms.breakthrough.rateFn(major, layer)` → `rateFn`;`'max'` 这类字面量不以字母开头,跳过。
+   * 只查"存在"(不查类型与签名,那是使用者侧 `tsc` 与用例的事)。
+   */
+  const srcText = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' })
+    .filter(entry => typeof entry === 'string' && entry.endsWith('.ts') && !entry.endsWith('.spec.ts'))
+    .map(entry => readFileSync(resolve(specDir, entry), 'utf-8'))
+    .join('\n')
+  const knobs = [
+    ...new Set(
+      [...table.matchAll(/`([^`\n]+)`/g)]
+        .map(m => m[1].trim().replace(/\([^()]*\)\s*$/, '').split('.').pop().trim())
+        .filter(name => /^[A-Za-z_]\w*$/.test(name))
+    )
+  ]
+  // 防空转:与上面那条同源,读不出东西就说明表格结构变了
+  assert.ok(knobs.length >= promised.length, `定制表旋钮只读出 ${knobs.length} 个 —— 表格结构变了?`)
+  const phantom = knobs.filter(name => !new RegExp(`\\b${name}\\b`).test(srcText))
+  assert.deepEqual(phantom, [], `定制表承诺的旋钮在源码里找不到:${phantom.join('、')}`)
+  console.log(`定制表旋钮自检通过(${knobs.length} 个旋钮在源码里都存在)`)
+
+  /**
    * 目录树自检 —— README 里那棵树是使用者的地图,它必须**和仓库逐项对得上**。
    *
    * 两边都拦:新加一个模块却忘了写进树(地图少一块,读者以为库里没有这层),
