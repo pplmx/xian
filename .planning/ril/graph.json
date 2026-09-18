@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 339,
+  "round": 340,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:48:30+00:00",
+  "updated_at": "2026-09-18T22:52:35+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19141,6 +19141,44 @@
       "confidence": 0.97,
       "source": "变更 CHG-403(5a3f857)。cd packages/engine && bun run check(501 例 / 67 文件 + 十一道自检 + 10 示例;发布包自检已是 wanxiang-engine-0.1.16.tgz);cd /workspace/xian && bun run test(274 文件 / 2549 例)、check:engine(59 处引用)、check:engine:standalone(107 个源文件);git push origin main(c24b1fd..5a3f857)、subtree push(→ 8f1f566);gh api 核对:tag v0.1.16 → 8f1f566…、package.json version 0.1.16、release 非 draft / 非 prerelease。",
       "summary": "0.1.16 让\"刻度表\"这条线收口:26 份消融覆盖了升级曲线、掉落与保底、抽取、经济、清理、内容池、离线、状态、抉择、副本、图鉴、记忆、技能、背包、洗练、账本、入库、周期、投资点、每日任务、产线、境界、伙伴、开炉、伤害公式 —— 每个有数值深度的模块都有一张能被内容作者直接用的表,且由自检保证不许漏收。"
+    },
+    "TASK-321": {
+      "id": "TASK-321",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:52:35+00:00",
+      "updated_at": "2026-09-18T22:52:35+00:00",
+      "touched_round": 339,
+      "category": "docs",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "调参参考(docs/tuning.md,485 行/26 节)文首加\"一页索引\":26 行「你要调的东西 → 在哪一节 → 一句话结论」;自检加一条 —— 索引行数必须等于消融份数且每个小节标题都被索引点名(防空转已验:删一行即报\"25 行 vs 26 份\")。README 指针同步改成\"文首是一页索引\"。"
+    },
+    "CHG-404": {
+      "id": "CHG-404",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:52:35+00:00",
+      "updated_at": "2026-09-18T22:52:35+00:00",
+      "touched_round": 339,
+      "commit": "4849c49",
+      "summary": "库:docs/tuning.md 加一页索引(26 行);scripts/verify-dist.mjs 的调参参考自检扩成\"收全 + 索引逐节点名\";README 调参参考那段改写;CHANGELOG「未发布」记一节。库实现未改,宿主无改动。"
+    },
+    "EV-330": {
+      "id": "EV-330",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:52:35+00:00",
+      "updated_at": "2026-09-18T22:52:35+00:00",
+      "touched_round": 339,
+      "confidence": 0.96,
+      "source": "变更 CHG-404(4849c49)。node scripts/verify-dist.mjs → \"调参参考自检通过(26 份消融都在 docs/tuning.md,且一页索引逐节点名)\";另用脚本核对:索引行数 26 = 消融份数 26,26 个节标题全部出现在索引中;防空转:删掉「伤害公式的节奏」那一行 → 报\"一页索引有 25 行,但消融有 26 份\",恢复 → 绿;bun run check(501 例 / 67 文件 + 十一道自检);宿主 bun run test(274 文件 / 2549 例)、check:engine(59 处引用)、check:engine:standalone(107 个源文件)。",
+      "summary": "把\"参考表\"从\"能查\"做成\"能找\":26 行的索引让使用者按\"我要调什么\"检索,而不是按模块名猜;并且索引本身也被判据盯着(漏一节、标题改名都会红)。这是文档判据系列里第一次覆盖\"入口层\"而不是\"内容层\"。"
     }
   },
   "edges": [
@@ -28498,6 +28536,12 @@
       "to": "TASK-320",
       "type": "implements",
       "created_at": "2026-09-18T22:48:30+00:00"
+    },
+    {
+      "from": "CHG-404",
+      "to": "TASK-321",
+      "type": "implements",
+      "created_at": "2026-09-18T22:52:35+00:00"
     }
   ]
 }
