@@ -84,6 +84,11 @@ export const useQuestsStore = defineStore(
       mainIdx.value += 1
     }
 
+    /** 整份写回主线下标(链的推进结果一次落账) */
+    function setMainIndex(index: number): void {
+      mainIdx.value = Math.max(0, Math.floor(index))
+    }
+
     function ownTitle(id: string): boolean {
       if (titlesOwned.value.includes(id)) return false
       titlesOwned.value = [...titlesOwned.value, id]
@@ -125,6 +130,7 @@ export const useQuestsStore = defineStore(
       hasAchieved,
       unlockAchievement,
       advanceMain,
+      setMainIndex,
       ownTitle,
       collect,
       rolloverDaily,

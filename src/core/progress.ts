@@ -12,6 +12,7 @@ import { titleDef } from '@/data/titles'
 import { pillDef } from '@/data/pills'
 import { stoneByTier } from './formulas'
 import { dailyShapeOf, dailyStateOf, dailyTaskDef, settleDailies } from './engineDailies'
+import { advanceMainChain, mainQuestDefById } from './engineChain'
 import { usePlayerStore } from '@/stores/player'
 import { useQuestsStore } from '@/stores/quests'
 import { useResourcesStore } from '@/stores/resources'
@@ -184,14 +185,22 @@ export function checkStateAchievements(): void {
 function checkMainQuest(): void {
   const quests = useQuestsStore()
   const ui = useUiStore()
-  let guard = 0
-  while (guard < 5) {
-    guard += 1
-    const current = MAIN_QUESTS[quests.mainIdx]
-    if (!current || !evalCond(current.cond)) break
-    grantReward(current.reward, true)
-    ui.toast(`任务完成「${current.name}」`, 'success')
-    quests.advanceMain()
+  /**
+   * 一次结算可以连推多节(玩家一口气满足后面几节是常事),守卫是 5 节 ——
+   * 顺序与迁移前一致:逐节"发赏 → 提示",再把下标一次落账(见 core/engineChain)。
+   */
+  const out = advanceMainChain(quests.mainIdx, node => {
+    const def = mainQuestDefById(node.id)
+    return def !== undefined && evalCond(def.cond)
+  })
+  for (const def of out.advanced) {
+    grantReward(def.reward, true)
+    ui.toast(`任务完成「${def.name}」`, 'success')
+  }
+  if (out.index !== quests.mainIdx) quests.setMainIndex(out.index)
+  if (out.capped) {
+    // 守卫是为了挡住"条件恒真"这类内容事故,不该静默:说一句,好查
+    console.warn('[进度] 主线一次结算撞上限,请检查条件是否恒真:', out.index, MAIN_QUESTS[out.index]?.id)
   }
 }
 

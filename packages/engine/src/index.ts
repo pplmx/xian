@@ -197,6 +197,9 @@ export { createTaskBoard } from './tasks.js'
 export type { CounterMap } from './counters.js'
 export { deltaOf, deltaSince, snapshotOf } from './counters.js'
 
+export type { Chain, ChainAdvance, ChainConfig, ChainNode, ChainState } from './chain.js'
+export { createChain } from './chain.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

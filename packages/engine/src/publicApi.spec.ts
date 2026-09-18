@@ -39,6 +39,11 @@ import type {
   BuffStacking,
   BuffSystem,
   BuffView,
+  Chain,
+  ChainAdvance,
+  ChainConfig,
+  ChainNode,
+  ChainState,
   Combatant,
   CombatEngine,
   CombatKeys,
@@ -215,6 +220,7 @@ const RUNTIME_EXPORTS = [
   'composeCraftRate',
   'compareBy',
   'createChoiceSystem',
+  'createChain',
   'createCodex',
   'createDropTable',
   'createEconomyReadings',
@@ -367,6 +373,7 @@ type PublicTypes = {
   points: [InvestInfo<number>, InvestOutcome<number>, PointBranch<Mods>, PointCost<number>, PointPool<Mods, { open: boolean }, number>, PointState, PointsConfig<Mods, { open: boolean }, number>, SwitchInfo<number>, SwitchOutcome<number>]
   tasks: [ClaimOutcome, SettleResult, TaskBoard, TaskBoardState, TaskProgress, TaskSpec]
   counters: [CounterMap]
+  chain: [Chain<{ open: boolean }>, ChainAdvance, ChainConfig<{ open: boolean }>, ChainNode, ChainState]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

@@ -176,6 +176,7 @@
   import { currentMainQuestProgress } from '@/core/questProgress'
   import { currentFirstStep } from '@/core/firstStep'
   import { dailyRowsOf, dailyStateOf } from '@/core/engineDailies'
+  import { mainQuestAt } from '@/core/engineChain'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
   import VeinInvestCard from '@/components/dongfu/VeinInvestCard.vue'
@@ -217,7 +218,7 @@
   })
   const tomorrowWeather = computed(() => upcomingWeather(2)[1])
 
-  const mainQuest = computed(() => MAIN_QUESTS[quests.mainIdx])
+  const mainQuest = computed(() => mainQuestAt(quests.mainIdx))
   /** 主线的进度读数(与发赏判定同源) */
   const mainProgress = computed(() => currentMainQuestProgress())
 

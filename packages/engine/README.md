@@ -227,6 +227,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 投资点 | `createPointPool` | 天赋 / 科技 / 属性点往哪儿投:总容量与主副两档上限、换位不作废已投、投不成什么都不改 |
 | 周期任务板 | `createTaskBoard` | 每日 / 每周 / 打卡:进度靠"当前 − 期初基准"(不清零计数器)、换期幂等、增量不出现负数、一期只结算一次 |
 | 计数器基准快照 | `snapshotOf` / `deltaOf` / `deltaSince` | "从哪一刻算起":同一份只增不减的计数器同时回答"生涯多少"与"这一段多少",不用清零 |
+| 顺序任务链 | `createChain` | 主线 / 章节 / 教程:一次结算连推多节、有守卫且撞上要能说出来、不可逆、到链尾就停 |
 
 ### 战斗:副本的下半场
 
@@ -500,6 +501,8 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **进度条读什么** | `board(state, counters)` 一行一条:`delta`(本期增量,已夹到 ≥ 0)/ `progress`(封在目标值)/ `done` / `claimed`,界面直接用 |
 | **"本世 / 本赛季 / 本次活动"从哪算起** | `snapshotOf(counters)` 打基准、`deltaSince(base, counters, key)` 算这一段 —— 与周期任务板同一份原语;增量一律夹到 ≥ 0,缺基准按 0 起算(回档那天不出现负进度) |
 | **非计数器的"这一段"**(择定了几条路 / 雪耻几个宿敌) | `deltaOf(base, now)` —— 同一个夹取规则,不为整数单写一遍 |
+| **主线 / 章节 / 教程怎么推进** | `createChain({ nodes, done, maxSteps? })` —— `done(node, ctx)` 由内容给(库不认识境界 / 计数);一次能推多远推多远(默认最多 5 节,撞上守卫回报 `capped`),到链尾即停,推进不可逆 |
+| **"还剩几节 / 现在在哪一节"** | `current(state)` / `remaining(state)` / `indexOf(id)` / `nodeAt(index)` —— 界面读数与推进共用同一份;坏下标自动夹回合法范围 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
@@ -604,7 +607,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 70 个运行时导出 + 181 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+| 公开面判据 | 71 个运行时导出 + 186 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
 
 ## 边界与兼容性
 
