@@ -125,6 +125,7 @@
 | 跨模块自洽(账目) | —— | `integration.spec.ts`(守恒 / 同源 / 单调幂等 / 可复现) |
 | 跨模块自洽(时间 × 随机) | `planIdle` + `createCycleSystem` + `createPityCounter` | `integrationTime.spec.ts`(同种子同结果、问周期不消耗随机、保底不改未触发前的随机、分段与逐步一致) |
 | 轮换的长期分布与"最长连着重复几天" | `createCycleSystem` | `cycles.sim.spec.ts`(权重摆好之后一年里的实测天数与最长连庄) |
+| 周期 + 抉择 + 投资点 + 世界记忆怎么串 | 四层各一 | `examples/world-loop.ts`(「行商十二日」:每天换行情、路上遇事、加点、名声回落) |
 | 投资点的容量怎么分、换主位亏不亏 | `createPointPool` | `points.sim.spec.ts`(主位上限与总容量是两道闸;超额部分冻结) |
 | 跨模块自洽(状态 × 投资点 × 任务) | `createBuffSystem` + `createPointPool` + `createTaskBoard` | `integrationBuffs.spec.ts`(到期边界与剪枝顺序无关、加点不回溯、进度不回退、叠加是相乘) |
 
