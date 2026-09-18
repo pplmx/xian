@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 319,
+  "round": 320,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:36:30+00:00",
+  "updated_at": "2026-09-18T21:39:27+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18369,6 +18369,44 @@
       "confidence": 0.95,
       "source": "变更 CHG-383(05a1030)。bun examples/from-zero.ts(实测输出:境界 送信学徒 → 熟路邮差 → 翻山邮差 → 急件信使;升任 5 次;掉 6 件行头;遭遇逐个通过并\"平原官道 通关:经验 ×18、报酬 ×6\";收尾行统计 2 段路 / 4 个职级 / 4 条词条 / 6 个阻碍、通关 1 处);cd packages/engine && bun run check(427 例 / 50 文件 + 八道自检 + 9 份示例全跑);cd /workspace/xian && bun run test(257 文件 / 2475 例)、check:engine(59 处引用)、check:engine:standalone(90 个源文件 · 示例可跑)。",
       "summary": "给\"别人引用库就能快速构建\"补上最直接的一件东西:一份不依赖任何内容包、可整份复制的起点。它与 presets 的关系是\"模板 vs 样例\"——presets 演示三款题材装出来的样子,from-zero 演示最短要写多少行。"
+    },
+    "TASK-301": {
+      "id": "TASK-301",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:39:26+00:00",
+      "updated_at": "2026-09-18T21:39:26+00:00",
+      "touched_round": 319,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "副本节奏与难度消融(dungeons.sim.spec):同样 bossProgress 4,cycle 第 4 场见首领、once 第 5 场(差一场);首领倒下即重新计数,once 通关后再无首领;敌人强度是 baseHp×tierGrowth×各自系数(T1 杂兵 100 血 / T2 岩羊 231 / T2 首领 735);连打 2000 次首领 firstClear 只 1 次、声明 30% 的掉落项实测 28.9%。"
+    },
+    "CHG-384": {
+      "id": "CHG-384",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:39:26+00:00",
+      "updated_at": "2026-09-18T21:39:26+00:00",
+      "touched_round": 319,
+      "commit": "4cdc907",
+      "summary": "库:新增 src/dungeons.sim.spec.ts(4 例);CHANGELOG「未发布」记一节;docs/tuning.md 新增一节(第 11 份消融进参考表);docs/assembly.md 配方 A 补一行副本链、坑清单补两行(两种节奏差一场、以为见过首领就次次见);README 用例数改 431/51。宿主无改动。"
+    },
+    "EV-310": {
+      "id": "EV-310",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:39:26+00:00",
+      "updated_at": "2026-09-18T21:39:26+00:00",
+      "touched_round": 319,
+      "confidence": 0.96,
+      "source": "变更 CHG-384(4cdc907)。bunx vitest run src/dungeons.sim.spec.ts(4 例,打印:once → 普通×4 后第 5 场首领、之后全普通;cycle → 第 4、8 场首领;每场前的读数 0/4 · 1/3 · 2/2 · 3/1 · 0/4 · 1/3;敌人快照 拦路小兵 100/10/6、跑得快的 80/12/5.4、平原首领 300/13/7.2、山道岩羊 231/23.1/12.6、山地首领 735/29.4/16.4;连打 2000 次首领 → 首通 1 次、装备掉落 579 次(28.9%));cd packages/engine && bun run check(431 例 / 51 文件 + 八道自检,其中组装指南自检现在是 26 个工厂、调参参考自检报 11 份消融、用例文件数自检当场抓出 50→51);cd /workspace/xian && bun run test(258 文件 / 2479 例)、check:engine(59 处引用)、check:engine:standalone(91 个源文件)。",
+      "summary": "副本层的两个易错点被量化:①两种节奏在同样 bossProgress 下差一场(cycle 第 4 场 / once 第 5 场)—— 抄内容时最容易错的一格;②首领倒下即重新计数、once 通关后再无首领,所以\"刷本\"与\"通关\"是两种完全不同的后期循环。难度曲线的刻度也给了表(tierGrowth × 各自 hpMult/atkMult)。"
     }
   },
   "edges": [
@@ -27600,6 +27638,12 @@
       "to": "TASK-300",
       "type": "implements",
       "created_at": "2026-09-18T21:36:30+00:00"
+    },
+    {
+      "from": "CHG-384",
+      "to": "TASK-301",
+      "type": "implements",
+      "created_at": "2026-09-18T21:39:27+00:00"
     }
   ]
 }
