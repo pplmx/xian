@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 279,
+  "round": 280,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T18:30:32+00:00",
+  "updated_at": "2026-09-18T18:36:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -425,7 +425,7 @@
       "version": 1,
       "created_at": "2026-09-09T14:46:51+00:00",
       "updated_at": "2026-09-09T14:46:51+00:00",
-      "touched_round": 214,
+      "touched_round": 280,
       "summary": "转世/轮回系统(reincarnation.ts + player store 跨世字段)"
     },
     "ISS-016": {
@@ -16481,7 +16481,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:30:20+00:00",
       "updated_at": "2026-09-18T18:30:20+00:00",
-      "touched_round": 279,
+      "touched_round": 280,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16536,6 +16536,69 @@
       "summary": "投资点的两条口径:换主位只换方向、不作废已投点数;判定不过时状态必须原地不动(含\"首投自动认主\"只在投成功那一次生效)。",
       "rationale": "\"加点\"里真正伤玩家的不是数值给少了,而是**悄悄改变他已投入的东西**。①换主位:玩家在主位投到 70 点后改立别的方向,那 70 点若被\"按副位上限截断\"就等于没收 —— 正确做法是只封住\"再投\",已投的照旧生效,代价由迁脉费表达,方向有代价但不锁死。②判定不过:门槛 / 容量 / 上限 / 缺钱任一不过时,状态必须一位不动;尤其\"首次投点自动认主\"这条便利规则,若放在付费之前,就会出现\"点了却没投成、主脉却被认下\"的怪状态 —— 玩家不仅没得到点数,还失去了往想投的方向加点的资格。故库的 contract 写成\"run 失败时原样返回同一份 state\"(连引用都不换,界面也不会因没发生的事重渲染)。",
       "alternatives_rejected": "①改主位时把超出的点数退回或作废(玩家会觉得\"投过的被偷走了\";要退就该有显式的\"洗点\"功能,而不是换向的副作用);②首次投点先认主、再校验费用(这就是本作迁移前的写法,造出\"没投成却认了主\"的状态);③把费用校验也搬进库(库不认识灵石与货币来源,费用只该作为判定的一部分返回给调用方去付);④容量与上限只报一个笼统的\"不能投\"(玩家不知道该去清容量还是该换主位 —— 三句说法必须分开)。"
+    },
+    "TASK-261": {
+      "id": "TASK-261",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:36:06+00:00",
+      "updated_at": "2026-09-18T18:36:06+00:00",
+      "touched_round": 280,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增周期任务板:createTaskBoard(进度=当前−期初基准(不清零计数器)、换期幂等、增量夹到 ≥0、一期一次结算/领取、顺序即声明顺序)。本作 core/engineDailies 接线 stores/quests 的换期与 core/progress 的日课结算、HomeView 的读数改用同一份 board;顺手加固\"同期重复换期会吞进度\"。继续攒批不发版。"
+    },
+    "CHG-343": {
+      "id": "CHG-343",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:36:06+00:00",
+      "updated_at": "2026-09-18T18:36:06+00:00",
+      "touched_round": 280,
+      "commit": "a591e0e",
+      "summary": "库:新增 src/tasks.ts 与 tasks.spec.ts(12 例:增量口径、封顶读数、换期幂等、负数与缺基准、批量结算顺序、已领不重发、手动领取三种未成、整板顺序、坏值、纯函数),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目。宿主:新增 core/engineDailies.ts(内容与存档形状的换算层),stores/quests 的 rolloverDaily 改走库并加 setDailyState、去掉 dailyDelta/markDailyDone,core/progress 的 checkDaily 改走 settle,HomeView 的 dailyRows 改用 board,新增 engineDailyParity.spec(16 例),test-report 补分类,docs/engine.md 加一行并把引用数与导出数对回实际(49 处 / 67 个)。"
+    },
+    "EV-268": {
+      "id": "EV-268",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:36:09+00:00",
+      "updated_at": "2026-09-18T18:36:09+00:00",
+      "touched_round": 280,
+      "confidence": 0.96,
+      "source": "变更 CHG-343(a591e0e)。bunx vitest run src/core/engineDailyParity.spec.ts(16 例);bun run check;bun run test(233 文件/2301 例);bun run test:report(2301 过/0 败);cd packages/engine && bun run check(32 文件/292 例);bun run check:engine(49 处引用);bun run check:engine:standalone",
+      "summary": "每日任务搬迁后结算结果一位不差:七组每日账 × 计数下结算出哪几条、按什么顺序、结算后的 done 列表与冻结口径全同;首页读数同源;走真路径(track → 日课记账 → 奖励到账、同一个计数再记一次不重复发)也验过。两处口径被钉住:①计数器不清零(进度靠基准快照,生涯成就照旧能算);②换期幂等 —— 迁移前的换期是无条件重设基准,直接调用会把当天已攒的进度吞掉(现在的调用方有心跳前的日期判断,所以线上没露出来,但那是运气,这次顺带加固)。一处有意修正:增量夹到 ≥0,回档那天不再显示负进度。"
+    },
+    "DEC-131": {
+      "id": "DEC-131",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:36:14+00:00",
+      "updated_at": "2026-09-18T18:36:14+00:00",
+      "touched_round": 280,
+      "summary": "周期任务的进度靠\"当前计数 − 期初基准\"的基准快照实现(不清零计数器),且换期必须幂等、增量夹到 ≥ 0。",
+      "rationale": "三条都是同一类事故的不同侧面:玩家\"已经挣到的东西被系统的记账方式吃掉\"。①清零计数器:计数器同时喂生涯成就(「累计击败 1000 个敌人」),换期清零等于把生涯成就一起抹掉 —— 而基准快照既留住了生涯累计,又让\"本期进度\"有定义;②换期不幂等:心跳每次都会问\"该换期了吗\",只要有一条路径在同一天里再触发一次(手动调用、多入口、重进游戏),基准就被挪到那一刻,当天已攒的进度静默归零;③负增量:回档或坏档让\"当前 < 基准\"时,负进度会让进度条显示负数,更糟的是\"够不够\"的判定会永远为真(白送奖励)。故库的 rollover 写成\"同期原样返回\",delta 一律 max(0, …)。",
+      "alternatives_rejected": "①换期时把计数器清零(实现最直接,代价是生涯成就与所有长线统计一起报废);②把\"本期进度\"单独存一份计数而不是基准(那就有了第二份真相:任何漏加的路径都会让进度与真实行为脱节,而基准永远不会漏);③在调用方各自判断\"该不该换期\"(现在的宿主就是这么写的 —— 判断与换期分居两地,多一个入口就多一处漏;幂等应该由库兜住);④负增量原样透传(回档玩家的进度条变成负数,且\"够不够\"永远成立)。"
+    },
+    "ISS-234": {
+      "id": "ISS-234",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:36:14+00:00",
+      "updated_at": "2026-09-18T18:36:14+00:00",
+      "touched_round": 280,
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 1,
+      "summary": "换期口径在别处还有第二份实现:复活 / 转世时给跨世计数器打快照(core/samsaraService.beginLife 的 vow.base)用的是同一套\"基准快照\"手法,但那份逻辑没有走库,也没有幂等保护 —— 若 beginLife 被重复调用(重进、回放),本世的进度同样会被重设。"
     }
   },
   "edges": [
@@ -25191,6 +25254,30 @@
       "to": "COMP-007",
       "type": "located_in",
       "created_at": "2026-09-18T18:30:32+00:00"
+    },
+    {
+      "from": "CHG-343",
+      "to": "TASK-261",
+      "type": "implements",
+      "created_at": "2026-09-18T18:36:20+00:00"
+    },
+    {
+      "from": "DEC-131",
+      "to": "TASK-261",
+      "type": "governs",
+      "created_at": "2026-09-18T18:36:20+00:00"
+    },
+    {
+      "from": "TASK-261",
+      "to": "TASK-260",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:36:20+00:00"
+    },
+    {
+      "from": "ISS-234",
+      "to": "COMP-003",
+      "type": "located_in",
+      "created_at": "2026-09-18T18:36:20+00:00"
     }
   ]
 }
