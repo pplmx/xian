@@ -108,4 +108,38 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     expect(me.stats.hull).toBe(300)
     expect(foe.stats.hull).toBe(40)
   })
+
+  it('伤害公式可自己接管:减法型、除算型、查表型都行(地板也归调用方)', () => {
+    // 减法型:攻 − 防,至少 1
+    const subtractive = createCombatEngine({
+      variance: 0,
+      damageFn: ctx => Math.max(1, ctx.attack * ctx.mult - ctx.defense)
+    })
+    const me = { id: 'me', name: '甲', stats: { attack: 50, defense: 5, hp: 100, maxHp: 100, speed: 2 }, mods: {} }
+    const foe = { id: 'foe', name: '乙', stats: { attack: 5, defense: 20, hp: 90, maxHp: 90, speed: 1 }, mods: {} }
+    const battle = subtractive.resolve(me, foe, createRng(1))
+    expect(battle.win).toBe(true)
+    // 每击 50−20=30,90 血正好三击;同一种子可复现
+    const again = subtractive.resolve(me, foe, createRng(1))
+    expect(again.events).toEqual(battle.events)
+    // 只数我方出手:90 血 / 每击 30 = 三击(对方那几下不计)
+    expect(battle.events.filter(e => e.actor === '甲' && (e.kind === 'hit' || e.kind === 'crit')).length).toBe(3)
+
+    // 自定义公式里也能读到默认会给的那几样(浮动/增伤/减伤)
+    const seen: number[] = []
+    const probe = createCombatEngine({
+      damageFn: ctx => {
+        seen.push(ctx.damageBonus, ctx.damageReduction, ctx.variance)
+        return 1
+      }
+    })
+    probe.resolve(
+      { id: 'a', name: '甲', stats: { attack: 10, defense: 0, hp: 100, maxHp: 100, speed: 1 }, mods: { damageBonus: 0.5 } },
+      { id: 'b', name: '乙', stats: { attack: 1, defense: 0, hp: 100, maxHp: 100, speed: 1 }, mods: { damageReduction: 0.25 } },
+      createRng(2)
+    )
+    expect(seen[0]).toBeCloseTo(0.5, 10)
+    expect(seen[1]).toBeCloseTo(0.25, 10)
+    expect(seen[2]).toBeCloseTo(0.08, 10)
+  })
 })

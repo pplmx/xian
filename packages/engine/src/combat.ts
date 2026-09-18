@@ -47,6 +47,15 @@ export interface Combatant<T> {
 export interface BattleConfig {
   /** 本值键名(默认 attack / defense / hp / maxHp / speed) */
   keys?: CombatKeys
+  /**
+   * 自己接管伤害公式(**可选**)。
+   *
+   * 默认是 `攻击² /(攻击+防御)` 再乘上浮动、增伤、减伤,并有"每击至少 × minDamageRatio"的地板。
+   * 不同题材要的形状差别很大:减法型(攻−防)、除算型(攻/防)、查表型、带破甲与穿甲的混合型……
+   * 给这个函数就完全接管 —— **地板与全部修正都归你**(引擎不再叠加任何东西),
+   * 拿到的是已经判过闪避与暴击之后的一次出手(暴击倍率已并入 `mult`)。
+   */
+  damageFn?: <T>(ctx: DamageContext<T>, rng: Rng) => number
   /** 回合上限,默认 30(打不完算守方胜) */
   maxRounds?: number
   /** 暴击基础倍率,默认 1.5 */
@@ -57,6 +66,21 @@ export interface BattleConfig {
   minDamageRatio?: number
   /** 每回合结束回复比例(双方各有 mods.regenPerRound 时按各自算) */
   regenBase?: number
+}
+
+export interface DamageContext<T> {
+  attacker: Combatant<T>
+  defender: Combatant<T>
+  /** 攻击方本值(已按 keys 取好) */
+  attack: number
+  /** 防守方本值(已按 keys 取好) */
+  defense: number
+  /** 本次倍率:技能倍率 × 暴击倍率(普通出手时即暴击倍率) */
+  mult: number
+  /** 默认公式会用到的浮动幅度、增伤与减伤(自定义时可按需复用) */
+  variance: number
+  damageBonus: number
+  damageReduction: number
 }
 
 export type BattleEventKind = 'hit' | 'crit' | 'dodge' | 'skill' | 'counter' | 'lifesteal' | 'regen' | 'end'
@@ -105,11 +129,15 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
   const rawDamage = (attacker: Combatant<T>, defender: Combatant<T>, mult: number, rng: Rng): number => {
     const atk = statNum(attacker, keys.attack)
     const def = statNum(defender, keys.defense)
+    const damageBonus = mod(attacker.mods, 'damageBonus')
+    const damageReduction = Math.min(0.9, Math.max(0, mod(defender.mods, 'damageReduction')))
+    if (config.damageFn) {
+      // 自己接管:地板与全部修正都归调用方,引擎不再叠加
+      return config.damageFn({ attacker, defender, attack: atk, defense: def, mult, variance, damageBonus, damageReduction }, rng)
+    }
     const base = atk <= 0 ? 0 : (atk * atk) / (atk + def)
     const jitter = 1 + rng.float(-variance, variance)
-    const bonus = 1 + mod(attacker.mods, 'damageBonus')
-    const reduction = Math.min(0.9, Math.max(0, mod(defender.mods, 'damageReduction')))
-    const dmg = base * mult * jitter * bonus * (1 - reduction)
+    const dmg = base * mult * jitter * (1 + damageBonus) * (1 - damageReduction)
     return Math.max(atk * minDamageRatio, dmg)
   }
 
