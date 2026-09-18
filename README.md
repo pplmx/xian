@@ -6,6 +6,7 @@
   一款文字版修仙放置游戏 —— 水墨国风,四界二十一境,
   后台预解算的回合制战斗,断网也能接着修。
 
+  [![Release](https://img.shields.io/github/v/release/pplmx/xian?style=flat&logo=github&label=Release)](https://github.com/pplmx/xian/releases/latest)
   [![CI](https://github.com/pplmx/xian/actions/workflows/deploy.yml/badge.svg)](https://github.com/pplmx/xian/actions/workflows/deploy.yml)
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 </div>
