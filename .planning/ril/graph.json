@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 273,
+  "round": 274,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:42:26+00:00",
+  "updated_at": "2026-09-18T17:47:48+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 273,
+      "touched_round": 274,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -16143,7 +16143,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:42:20+00:00",
       "updated_at": "2026-09-18T17:42:20+00:00",
-      "touched_round": 273,
+      "touched_round": 274,
       "category": "core-feature",
       "severity": 0.45,
       "confidence": 0.9,
@@ -16185,6 +16185,56 @@
       "rationale": "经济体检最容易出的错是**把\"没有出口\"读成\"刚刚好\"**:出为 0 时若按 ratio=1 处理,那种只进不出的资源会显示成健康,而它恰恰是要找出来的问题(烂在手里/纯噪音)。故口径写进库:比值 = 进/出,出为 0 即无穷。第二条是\"不许假装知道\":模型没覆盖的出口必须带 `note`,既不算健康也不算事故 —— 审计的价值全在\"读数可信\",而一个假装健康的读数比没有读数更坏。第三条是阈值与判词名都归作品:0.7/3/10 是某款作品的实测口径,别的题材可能完全不同,判词也该用它自己的说法。",
       "alternatives_rejected": "①用绝对量而不是比值(资源量级差几个数量级,读不出松紧);②把出为 0 当成 ratio=1(最隐蔽的那种错);③把阈值与判词名写死进库(别的题材要改就得改库)。",
       "summary": "经济读数三条口径进库:比值(出为 0 是无穷,不许当成\"刚刚好\")、没把握就写 note(不许假装知道)、阈值与判词名归作品。"
+    },
+    "TASK-255": {
+      "id": "TASK-255",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:47:41+00:00",
+      "updated_at": "2026-09-18T17:47:41+00:00",
+      "touched_round": 274,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增入库漏斗层:createIntake 组合在持有层之上,给\"外来物收不下怎么办\"的五条顺序(先见证再裁决、按规则拒收、满了腾位且腾位失败不追回、各条去路共用一条折算账、回执带人话与原因);本作 acquireEquipment 改走它,四条去路的文案与去向冻结对账。继续攒批不发版。"
+    },
+    "CHG-337": {
+      "id": "CHG-337",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:47:42+00:00",
+      "updated_at": "2026-09-18T17:47:42+00:00",
+      "touched_round": 274,
+      "commit": "9daf220",
+      "summary": "库:新增 src/intake.ts 与 intake.spec.ts(6 例:收下、先见证再裁决、force 跳过裁决、满了腾位与腾位失败不追回、无腾位策略直接折算),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 加条目。宿主:loot.acquireEquipment 改走 EQUIP_INTAKE(holding 适配到 inventory 的 add/remove/bagFull,accept=自动回收裁决,evictable=智能收纳腾位,fallback=化尘,sack witness=图鉴见闻),新增 engineIntakeParity.spec(5 例),test-report 补分类,docs/engine.md 加一行。"
+    },
+    "EV-261": {
+      "id": "EV-261",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:47:48+00:00",
+      "updated_at": "2026-09-18T17:47:48+00:00",
+      "touched_round": 274,
+      "confidence": 0.97,
+      "source": "变更 CHG-337(9daf220)。bunx vitest run src/core/engineIntakeParity.spec.ts(5 例:四条去路的文案与去向、见闻在裁决之前、forceKeep 跳过裁决);bunx vitest run src/core/loot.spec.ts src/core/smartKeep.spec.ts(33 例原判据全绿);bun run test(220 文件/2172 例);bun run test:report(2172 过/0 败);cd packages/engine && bun run check(25 文件/226 例);bun run check:engine(37 处引用);bun run check:engine:standalone",
+      "summary": "入库漏斗搬迁后四条去路一条不差:自动回收/行囊已满/收纳腾位/顺利入包的文案前缀、是否入包、化尘与退石数量都与旧实现一致;时机约定(先见闻、forceKeep 跳过裁决)也保持。"
+    },
+    "DEC-125": {
+      "id": "DEC-125",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:47:48+00:00",
+      "updated_at": "2026-09-18T17:47:48+00:00",
+      "touched_round": 274,
+      "rationale": "入库是一个**顺序敏感**的漏斗,顺序错一处就会静默丢东西:见证若排在裁决之后,化尘的那件就不算\"见过\"(图鉴少一条,而玩家明明看见过);裁决若排在见证之前,同理;满了腾位若不做,值得留的新件会被折算;腾位若\"失败后追回\"旧件,就出现了\"旧件既没化尘也没留在包里\"的中间态(或者反过来,旧件化尘了、新件也没进来,背包凭空少一件)。故这五条顺序收进库,而每一条的判据(什么算值得留、挤谁、折算成什么)仍归作品 —— 库不猜。",
+      "alternatives_rejected": "①把入库写成\"try add else fallback\"两行(见证时机、腾位、腾位失败这些边界全丢);②让库决定\"满了自动折算成什么\"(库不知道那件值多少);③把腾位做成\"先删旧件、再尝试加新件、失败就把旧件加回来\"(回滚看起来安全,实际会把\"已化尘\"的旧件复活,账目对不上)。",
+      "summary": "入库漏斗的五条顺序(见证→裁决→腾位→重试→折算)收进库;每条的判据由作品给;腾位失败不追回。"
     }
   },
   "edges": [
@@ -24696,6 +24746,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:42:26+00:00"
+    },
+    {
+      "from": "CHG-337",
+      "to": "TASK-255",
+      "type": "implements",
+      "created_at": "2026-09-18T17:47:48+00:00"
+    },
+    {
+      "from": "TASK-255",
+      "to": "TASK-254",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:47:48+00:00"
+    },
+    {
+      "from": "DEC-125",
+      "to": "TASK-255",
+      "type": "governs",
+      "created_at": "2026-09-18T17:47:48+00:00"
+    },
+    {
+      "from": "DEC-125",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:47:48+00:00"
     }
   ]
 }
