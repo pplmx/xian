@@ -178,6 +178,13 @@ export interface SuppressedYield {
   recycledDust: number
   /** 各地界的物产累计(灵草/玄铁/残页/器灵尘) */
   resources: { id: SuppressResource; name: string; amount: number }[]
+  /**
+   * 这一段时间里妖气复聚的地界(见 core/regionRevival)。
+   *
+   * 跟着收益一起回给调用方,是为了让**归来卷轴**能把这件事写进账目 ——
+   * 刚回来的玩家看的是那一屏,而提示条正在跟它抢注意力(实测:归来时卷轴是弹窗)。
+   */
+  revived: string[]
 }
 
 export function settleSuppressedRegions(dt: number, service: RandomService = rng): SuppressedYield | null {
@@ -185,7 +192,7 @@ export function settleSuppressedRegions(dt: number, service: RandomService = rng
   const resources = useResourcesStore()
 
   const hours = dt / 3600
-  const total: SuppressedYield = { stone: gnZero(), equipment: [], recycledDust: 0, resources: [] }
+  const total: SuppressedYield = { stone: gnZero(), equipment: [], recycledDust: 0, resources: [], revived: [] }
   const now = Date.now()
 
   /**
@@ -198,11 +205,12 @@ export function settleSuppressedRegions(dt: number, service: RandomService = rng
    * **必须排在"没有镇压就直接返回"之前**:复聚管的不只是镇压 —— 已靖却没镇压的
    * 地界(旧主同样该归来)一份镇压都没有,若让那句早退挡在前面,那条路永远走不到。
    */
-  settleRegionRevivals(now)
-  if (player.suppressedRegions.length === 0) return null
+  total.revived = settleRegionRevivals(now)
+  // 既没有镇压收益、也没有复聚可说,才是"这一段时间什么也没发生"
+  if (player.suppressedRegions.length === 0) return total.revived.length > 0 ? total : null
 
   const active = player.suppressedRegions
-  if (active.length === 0) return null
+  if (active.length === 0) return total
 
   for (const regionId of active) {
     const region = regionDef(regionId)

@@ -141,6 +141,15 @@ describe('妖气复聚 · 旧主归来', () => {
     expect(adventure.revived).toContain('hongmeng')
     expect(adventure.cleared).not.toContain('hongmeng')
   })
+
+  it('复聚要跟着收益一起回给调用方 —— 归来卷轴得写得出这一行', () => {
+    const { adventure } = clearedRegion('hongmeng', REVIVE_AFTER_HOURS + 1)
+    const out = settleSuppressedRegions(3600)
+    expect(out?.revived).toEqual(['hongmeng'])
+    // 一处镇压都没有、只有复聚时,也要把话带出去(不能因为"没收益"就吞掉)
+    expect(out).not.toBeNull()
+    expect(adventure.revived).toContain('hongmeng')
+  })
 })
 
 describe('妖气复聚 · 首领认知门槛', () => {

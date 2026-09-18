@@ -18,6 +18,7 @@ import { useGameStore } from '@/stores/game'
 import { usePlayerStore } from '@/stores/player'
 import { useDongfuStore } from '@/stores/dongfu'
 import { useResourcesStore } from '@/stores/resources'
+import { useAdventureStore } from '@/stores/adventure'
 import { useUiStore } from '@/stores/ui'
 import { todayWeather } from './weather'
 import { gn, mulN, toNum } from '@/utils/gnum'
@@ -158,6 +159,33 @@ describe('离线结算同源吃天时(ISS-027 续)', () => {
     }
     for (const line of summary.notes) expect(line).not.toContain('NaN')
     for (const e of summary.equipment) expect(e.name).not.toContain('NaN')
+  })
+
+  /**
+   * 归来卷轴要写得出「妖气复聚」那一行(见 core/regionRevival)。
+   *
+   * 刚回来的玩家眼前是这扇卷轴(弹窗),提示条正在跟它抢注意力 —— 而「我靖过的地界
+   * 怎么旧主又回来了」是这一屏最容易被当成丢档或 bug 的一件事,必须在账目里说清,
+   * 并顺手给出"该怎么办"(再历一程即可复靖)。
+   */
+  it('挂久了归来:已靖的地界妖气复聚,卷轴账目里写得出来', () => {
+    const game = useGameStore()
+    const adventure = useAdventureStore()
+    game.markStarted()
+    // 超过妖气复聚的期限(72 小时)才谈得上"归来时旧主已回"
+    const awayHours = 100
+    game.lastActiveAt = Date.now() - awayHours * 3600 * 1000
+    // 离开前青云山麓已靖(钟停在那一刻),此后一直没回来
+    adventure.cleared = ['qingyun']
+    adventure.clearedAt = { qingyun: Date.now() - awayHours * 3600 * 1000 }
+
+    const summary = settleOffline(Date.now())!
+
+    const joined = summary.notes.join(' | ')
+    expect(joined, '归来账目里没提妖气复聚').toContain('妖气复聚')
+    expect(joined, '复聚那一行没说该怎么办').toContain('复靖')
+    expect(adventure.revived).toContain('qingyun')
+    expect(adventure.cleared).not.toContain('qingyun')
   })
 
   /**
