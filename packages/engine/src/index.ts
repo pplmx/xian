@@ -123,6 +123,9 @@ export type {
 } from './resources.js'
 export { createResourceSystem } from './resources.js'
 
+export type { TriageConfig, TriageImpact, TriageOutcome, TriageRule, TriageSystem, TriageVerdict } from './triage.js'
+export { compareBy, createTriage } from './triage.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

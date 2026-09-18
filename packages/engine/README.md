@@ -213,6 +213,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 数值层 | `Numeric<T>` | 数值超过 double 怎么办? |
 | 装配 | `defineGame` | 内容之间的引用是否自洽? |
 | 资源账本 | `createResourceSystem` | 灵石 / 信用点 / 零花钱:收多少、付得起吗、上限多少、这批是哪来的? |
+| 分流裁决 | `createTriage` | 这一件留还是不留?自动回收 / 自动分解的规则顺序与读数 |
 
 ### 战斗:副本的下半场
 
@@ -460,6 +461,8 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **强化加成曲线** | `equipment.power.levelBonusFn(level)`(默认每级 × `levelBonus`) |
 | **一件装备几条词条 / 每条词多重** | `equipment.affixCountFn(quality, tier, rng)`、`equipment.affixWeightFn(affix, quality, tier)` |
 | **洗练 / 重铸词条**(保留几条、其余推倒重来) | `equipment.rerollAffixes(affixes, { rng, quality, tier, slot, keep })` —— 与生成共用同一处掷词条实现;`keep` 就是"封存"的那几条,成本与次数上限归你 |
+| **自动去留的规则顺序**(自动回收 / 自动分解 / 自动出售) | `createTriage({ rules, skip?, fallback? })`:第一条表态的说了算,谁都没表态才用兜底;`impact()` 给"每条规则各判掉多少"的读数,与裁决共用同一条链 |
+| **行囊满了先挤掉谁** | `compareBy(比较器…)`:一串比较器依次比,前一层分出胜负就不再往下 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |

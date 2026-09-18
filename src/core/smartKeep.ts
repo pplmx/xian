@@ -9,6 +9,7 @@
  *   词条近满件 —— 条条都在满值线以上,数值本就高过同档。
  */
 import type { EquipmentInstance } from '@/types'
+import { compareBy, createTriage } from 'wanxiang-engine'
 import { qualityDef } from '@/data/qualities'
 import { SMART_KEEP_PERFECT_ROLL } from '@/data/constants'
 import { equipmentTemplate } from '@/data/equipment'
@@ -69,22 +70,10 @@ export interface SmartKeepImpact {
 }
 
 export function smartKeepImpact(items: EquipmentInstance[]): SmartKeepImpact {
-  let keep = 0
-  let recycle = 0
-  const counts = new Map<string, number>()
-  for (const item of items) {
-    if (item.locked) continue
-    const v = keepVerdict(item)
-    if (v.keep) keep += 1
-    else {
-      recycle += 1
-      counts.set(v.reason, (counts.get(v.reason) ?? 0) + 1)
-    }
-  }
-  const byReason = [...counts.entries()]
-    .map(([reason, count]) => ({ reason, count }))
-    .sort((a, b) => b.count - a.count)
-  return { candidates: keep + recycle, keep, recycle, byReason }
+  // 读数与裁决共用同一条链(库那边同一个 `decide`),不在界面里另算一遍
+  // 上锁的件不参与自动裁决 —— 与旧口径一致:它在裁决之外,连候选都不算
+  const impact = TRIAGE.impact(items.filter(item => !item.locked))
+  return { candidates: impact.candidates, keep: impact.keep, recycle: impact.junk, byReason: impact.byReason }
 }
 
 export interface KeepVerdict {
@@ -92,6 +81,90 @@ export interface KeepVerdict {
   reason: string
 }
 
+/**
+ * 裁决链 —— **顺序与读数交给库的分流层**(见 packages/engine 的 triage),
+ * 判据与文案仍是本作的内容:哪条规则先问、凭什么留、凭什么扔,都写在这里。
+ *
+ * 三条顺序上的教训(都是实测撞出来的)已经固化在下面的排列里:
+ *   一 练过的件最先豁免 —— 身上有玩家的投入,不属于自动裁决的管辖;
+ *   二 阶级下限与品质下限是两条独立的"废料定义",阶级那条排在缘分之前;
+ *   三 成套件与词条近满不看流派,排在新档"道途未成"之前。
+ */
+const TRIAGE = createTriage<EquipmentInstance>({
+  rules: [
+    {
+      id: 'investment',
+      label: '已淬养,留待你自己定夺',
+      decide: item => (hasInvestment(item) ? { keep: true, reason: '已淬养,留待你自己定夺' } : undefined)
+    },
+    {
+      id: 'tierFloor',
+      label: '往下看层级',
+      decide: item => {
+        const cfg = useSettingsStore().smartKeep
+        if (cfg.minTier > 0 && item.tier < cfg.minTier) return { keep: false, reason: `低于 ${cfg.minTier} 阶` }
+        return undefined
+      }
+    },
+    {
+      id: 'qualityLine',
+      label: '往上看成色',
+      decide: item => {
+        const cfg = useSettingsStore().smartKeep
+        const q = qualityDef(item.quality)
+        return q.rank >= cfg.minQuality ? { keep: true, reason: `${q.name}当藏` } : undefined
+      }
+    },
+    {
+      id: 'junkBelowLine',
+      label: '线下不看缘分',
+      decide: () => (useSettingsStore().smartKeep.junkBelowLine ? { keep: false, reason: '线下不看缘分' } : undefined)
+    },
+    {
+      id: 'setPiece',
+      label: '成套共鸣件',
+      decide: item => {
+        if (!useSettingsStore().smartKeep.keepSetPiece) return undefined
+        const setId = equipmentTemplate(item.templateId)?.set
+        return setId ? { keep: true, reason: `「${equipSetDef(setId)?.name ?? '成套'}」套件` } : undefined
+      }
+    },
+    {
+      id: 'perfectRolls',
+      label: '词条近满',
+      decide: item =>
+        useSettingsStore().smartKeep.keepPerfectRolls && perfectRolls(item) ? { keep: true, reason: '词条近满' } : undefined
+    },
+    {
+      id: 'build',
+      label: '看这一件与你的道途有没有关系',
+      decide: item => {
+        const cfg = useSettingsStore().smartKeep
+        const build = detectBuild(usePlayerStore().finalStats.mods)
+        // 新档还没形成流派:到此为止,唯品质论(与"与道无缘"是两句不同的话)
+        if (!build) return { keep: false, reason: '道途未成,唯品质论' }
+        const mods = resolveEquipStats(item).mods
+        if (cfg.keepCoreAffix) {
+          for (const key of Object.keys(build.style.core)) {
+            if ((mods[key as keyof typeof mods] ?? 0) > 0) return { keep: true, reason: `含${build.style.name}核心词条` }
+          }
+        }
+        if (cfg.keepComboPiece) {
+          for (const style of BUILD_STYLES) {
+            if (style.id === build.style.id) continue
+            const art = matchComboArt(build.style.id, style.id)
+            if (!art) continue
+            for (const key of Object.keys(style.core)) {
+              if ((mods[key as keyof typeof mods] ?? 0) > 0) return { keep: true, reason: `「${art.name}」组合技部件` }
+            }
+          }
+        }
+        return undefined
+      }
+    }
+  ],
+  fallback: { keep: false, reason: '与道无缘' }
+})
 /**
  * 自动回收裁决 —— 装备进包前的第一道闸
  * **智能收纳是总闸**:没开,装备一律不替你扔 —— 历练/挂机掉落的凡俗之物也照常入包。
@@ -112,7 +185,7 @@ export function shouldAutoRecycle(item: EquipmentInstance): boolean {
    * 而玩家只记得自己设过的那个。现在自动回收的**唯一政策入口是本配置**
    * (junkBelowLine 承接"线下不看缘分"那股需求),「一键分解」只管手动批量那一次。
    */
-  return !keepVerdict(item).keep
+  return !TRIAGE.decide(item).keep
 }
 
 /** 身上有没有玩家的投入(强化 / 重铸 / 封存词条)—— 有则不参与一切自动去留 */
@@ -127,48 +200,10 @@ export function perfectRolls(item: EquipmentInstance): boolean {
 
 /** 判定一件装备是否值得收纳 */
 export function keepVerdict(item: EquipmentInstance): KeepVerdict {
-  const cfg = useSettingsStore().smartKeep
-  const q = qualityDef(item.quality)
-  // 先于品质:练过的件不属于「自动裁决」的管辖范围
-  if (hasInvestment(item)) return { keep: true, reason: '已淬养,留待你自己定夺' }
-  // 阶级下限:几条规则里最硬的一条(玩家要求"多少阶以下全都回收"),故排在缘分之前
-  if (cfg.minTier > 0 && item.tier < cfg.minTier) {
-    return { keep: false, reason: `低于 ${cfg.minTier} 阶` }
-  }
-  if (q.rank >= cfg.minQuality) return { keep: true, reason: `${q.name}当藏` }
-  // 线下:玩家若声明"不看缘分",就到此为止(它管不到线上的件 —— 上一行已经拦住了)
-  if (cfg.junkBelowLine) return { keep: false, reason: '线下不看缘分' }
-
-  // 这两条不看流派,故排在「道途未成」之前 —— 新档也该留住成套件与满值件
-  const setId = equipmentTemplate(item.templateId)?.set
-  if (cfg.keepSetPiece && setId) return { keep: true, reason: `「${equipSetDef(setId)?.name ?? '成套'}」套件` }
-  if (cfg.keepPerfectRolls && perfectRolls(item)) return { keep: true, reason: '词条近满' }
-
-  const build = detectBuild(usePlayerStore().finalStats.mods)
-  if (!build) return { keep: false, reason: '道途未成,唯品质论' }
-  const mods = resolveEquipStats(item).mods
-
-  if (cfg.keepCoreAffix) {
-    for (const key of Object.keys(build.style.core)) {
-      if ((mods[key as keyof typeof mods] ?? 0) > 0) {
-        return { keep: true, reason: `含${build.style.name}核心词条` }
-      }
-    }
-  }
-  if (cfg.keepComboPiece) {
-    // 与主流派可成组合技的副体系:这类词条件是「未来的组合技部件」
-    for (const style of BUILD_STYLES) {
-      if (style.id === build.style.id) continue
-      const art = matchComboArt(build.style.id, style.id)
-      if (!art) continue
-      for (const key of Object.keys(style.core)) {
-        if ((mods[key as keyof typeof mods] ?? 0) > 0) {
-          return { keep: true, reason: `「${art.name}」组合技部件` }
-        }
-      }
-    }
-  }
-  return { keep: false, reason: '与道无缘' }
+  // 对外形状不变(调用方只要 keep 与理由);"是哪一条规则判的"在 TRIAGE.decide 里,
+  // 界面哪天想显示规则名再取(现在不显示,就不往公开形状里塞)。
+  const { keep, reason } = TRIAGE.decide(item)
+  return { keep, reason }
 }
 
 /**
@@ -176,16 +211,24 @@ export function keepVerdict(item: EquipmentInstance): KeepVerdict {
  * (练过的件根本进不了候选 —— 见 keepVerdict 的第一条。)
  */
 export function compareEvictable(a: EquipmentInstance, b: EquipmentInstance): number {
-  const qa = qualityDef(a.quality).rank
-  const qb = qualityDef(b.quality).rank
-  if (qa !== qb) return qa - qb
-  if (a.tier !== b.tier) return a.tier - b.tier
-  return rollSum(a) - rollSum(b)
+  return EVICT_ORDER(a, b)
 }
 
 function rollSum(item: EquipmentInstance): number {
   return item.affixes.reduce((s, x) => s + x.roll, 0)
 }
+
+/**
+ * 行囊满时先挤掉谁:成色最低 → 层级最低 → 词条最弱。
+ *
+ * 三层依次比由库的 `compareBy` 串起来(前一层分出胜负就不再看下一层);
+ * "先比什么"仍是本作的口径 —— 换个游戏可能先比"有没有被强化过"。
+ */
+const EVICT_ORDER = compareBy<EquipmentInstance>(
+  (a, b) => qualityDef(a.quality).rank - qualityDef(b.quality).rank,
+  (a, b) => a.tier - b.tier,
+  (a, b) => rollSum(a) - rollSum(b)
+)
 
 /** 是否启用智能收纳 */
 export function smartKeepEnabled(): boolean {

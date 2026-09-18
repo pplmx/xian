@@ -118,6 +118,12 @@ import type {
   StatsInput,
   StrikeOptions,
   TemplateDef,
+  TriageConfig,
+  TriageImpact,
+  TriageOutcome,
+  TriageRule,
+  TriageSystem,
+  TriageVerdict,
   TraitDef,
   ValidationIssue,
   VictoryOutcome,
@@ -140,6 +146,7 @@ const RUNTIME_EXPORTS = [
   'averageLore',
   'clamp',
   'composeCraftRate',
+  'compareBy',
   'createAttributeSystem',
   'createCombatEngine',
   'createCompanionSystem',
@@ -150,6 +157,7 @@ const RUNTIME_EXPORTS = [
   'createResourceSystem',
   'createRng',
   'createSkillSystem',
+  'createTriage',
   'deckPool',
   'decodeSave',
   'decodeSavePayload',
@@ -263,6 +271,7 @@ type PublicTypes = {
   skills: [SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem]
   crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef]
   resources: [AppliedEntry, Ledger<number>, ResourceDef, ResourceEntry, ResourceSummary, ResourceSystem, ResourceSystemConfig]
+  triage: [TriageConfig<SampleItem>, TriageImpact, TriageOutcome, TriageRule<SampleItem>, TriageSystem<SampleItem>, TriageVerdict]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]
