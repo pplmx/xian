@@ -184,6 +184,12 @@ npm i ./wanxiang-engine-0.1.0.tgz
 (`core/tierScale.powerScale`,GNum),而库那边同一张表以 number 投影进去,
 差在双精度末位 —— 「玩家看到的数字一位不变」这条线要求解析走 GNum。
 
+副本的**规则**也换过去了:首领门槛与节奏(`winsUntilBoss`,本作是
+「攒够 10 胜出一位首领、击败即通关、此后不再出」的 `once` 节奏)由库回答,
+在线、离线自动挑战与界面提示共用这一处;读档补票的不变量
+(`prereqClosure`:前置已通 → 此地已开,只补该补的、保留不认识的历史 id、幂等)
+也从 `data/regions` 搬进了库,由 store 在读档修形口调用。
+
 这件事能被证明,而不是靠"我改了":
 
 1. `engineParity.spec.ts` 里留着**迁移前冻结的旧公式**(`refExpRequirement` 等三个),
@@ -192,8 +198,8 @@ npm i ./wanxiang-engine-0.1.0.tgz
    `ENGINE_WORLD.realms.expCost(major, sub)` 是同一份结果,并再次与冻结口径对账;
 3. 全量 1922 个用例、`vue-tsc`、ESLint 与生产构建全绿 —— 玩家侧的数字一位没动。
 
-尚未迁移的是副本调度(`regions` / `adventure`),它与库并行存在,由同一份判据钉着;
-下一步按同样的方式换过去。
+至此四套系统(等级 / 属性 / 装备 / 副本)的**规则**都已由库承担;
+留在应用侧的是内容数据与那些**依赖本作大数战力表**的数值解析。
 
 ## 目录
 

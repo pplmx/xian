@@ -90,6 +90,15 @@ export interface DungeonConfig {
   enemies: EnemyDef[]
   /** 击败 N 次普通遭遇后必出首领,默认 8 */
   bossProgress?: number
+  /**
+   * 首领节奏 —— 两款游戏在这件事上真的不同,故写成配置:
+   *
+   *   `cycle`(默认):每 N 胜出一次首领,打完重新计数,首领可以反复出现
+   *                  (适合"刷本打 BOSS"的循环玩法);
+   *   `once`       :攒到 N 胜出一次首领,击败即通关,此后不再出
+   *                  (适合"一图一关、通关开下一图"的推进玩法)。
+   */
+  bossRhythm?: 'cycle' | 'once'
   /** 敌人数值基数与层级曲线 */
   enemyPower?: { baseHp: number; baseAttack: number; baseDefense: number; tierGrowth: number; tierFactors?: number[] }
   /** 每场胜利的通用奖励 */
@@ -144,8 +153,22 @@ export interface DungeonSystem<T = number> {
   chain(): RegionDef[]
   isUnlocked(regionId: string, progress: DungeonProgress, major: number): boolean
   unlocked(progress: DungeonProgress, major: number): RegionDef[]
-  /** 该区域当前攒了多少首领进度,以及还差几次 */
-  bossProgress(regionId: string, progress: DungeonProgress): { wins: number; need: number }
+  /** 该区域当前攒了多少首领进度,以及还差几次;need 为 null = 此地已无首领 */
+  bossProgress(regionId: string, progress: DungeonProgress): { wins: number; need: number | null }
+  /**
+   * 距区域之主还差几胜 —— 界面提示与战斗判定共用这一处。
+   *
+   * @returns null = 此地已无首领(once 节奏下已通关);0 = 下一战即是首领
+   */
+  winsUntilBoss(wins: number, cleared?: boolean): number | null
+  /**
+   * 前置补票 —— **不看等级**,凡"前置已通"的都该开。
+   *
+   * 这是读档修形用的不变量,不是解锁判据(解锁判据见 isUnlocked):
+   * 扩界之后新加的一段地界,若它的前置早在这份存档里通过,那一处就该开着 ——
+   * 否则旧存档会永久卡在"需先击败某某"上。
+   */
+  prereqClosure(unlocked: readonly string[], cleared: readonly string[]): string[]
   nextEncounter(regionId: string, progress: DungeonProgress, rng: Rng): Encounter
   onVictory(regionId: string, encounter: Encounter, progress: DungeonProgress, rng: Rng): VictoryOutcome<T>
   /** 敌人快照(数值已按层级放大) */
@@ -165,6 +188,7 @@ export function createDungeonSystem<T = number>(
   const regionById = new Map(regions.map(r => [r.id, r]))
   const enemyById = new Map(enemies.map(e => [e.id, e]))
   const bossGoal = config.bossProgress ?? 8
+  const rhythm = config.bossRhythm ?? 'cycle'
   const requireChain = config.requireChain ?? true
   const power = config.enemyPower ?? { baseHp: 150, baseAttack: 12, baseDefense: 7, tierGrowth: 1.9 }
 
@@ -204,16 +228,36 @@ export function createDungeonSystem<T = number>(
   const unlocked = (progress: DungeonProgress, major: number): RegionDef[] =>
     chain().filter(r => isUnlocked(r.id, progress, major))
 
-  const bossProgress = (regionId: string, progress: DungeonProgress): { wins: number; need: number } => {
+  const winsUntilBoss = (wins: number, cleared = false): number | null => {
+    // 只有 once 节奏才"通关即再无首领":cycle 是刷本循环,通关不改变节奏
+    if (rhythm === 'once') return cleared ? null : Math.max(0, bossGoal - wins)
+    return bossGoal - (wins % bossGoal)
+  }
+
+  const bossProgress = (regionId: string, progress: DungeonProgress): { wins: number; need: number | null } => {
     const wins = progress.bossWins[regionId] ?? 0
-    return { wins: wins % bossGoal, need: bossGoal - (wins % bossGoal) }
+    return { wins, need: winsUntilBoss(wins, progress.cleared.includes(regionId)) }
+  }
+
+  const prereqClosure = (unlocked: readonly string[], cleared: readonly string[]): string[] => {
+    const out = [...unlocked]
+    const have = new Set(out)
+    const beaten = new Set(cleared)
+    for (const region of chain()) {
+      if (have.has(region.id) || region.requireCleared === undefined) continue
+      if (!beaten.has(region.requireCleared)) continue
+      have.add(region.id)
+      out.push(region.id)
+    }
+    return out
   }
 
   const nextEncounter = (regionId: string, progress: DungeonProgress, rng: Rng): Encounter => {
     const region = regionById.get(regionId)
     if (!region) throw new Error(`副本系统:没有这个区域 —— ${regionId}`)
-    const { need } = bossProgress(regionId, progress)
-    if (need <= 1 || region.enemies.length === 0) return { regionId, kind: 'boss', enemyId: region.boss }
+    const remaining = winsUntilBoss(progress.bossWins[regionId] ?? 0, progress.cleared.includes(regionId))
+    const due = rhythm === 'once' ? remaining === 0 : remaining !== null && remaining <= 1
+    if (due || region.enemies.length === 0) return { regionId, kind: 'boss', enemyId: region.boss }
     const pool = region.enemies.filter(id => enemyById.has(id))
     return { regionId, kind: 'normal', enemyId: pool.length > 0 ? rng.weighted(pool, () => 1) : region.boss }
   }
@@ -287,6 +331,8 @@ export function createDungeonSystem<T = number>(
     isUnlocked,
     unlocked,
     bossProgress,
+    winsUntilBoss,
+    prereqClosure,
     nextEncounter,
     onVictory,
     snapshot

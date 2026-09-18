@@ -52,6 +52,50 @@ describe('副本系统 —— 区域链/遭遇/首领门槛/通关奖励', () =>
     expect(kinds).toEqual(['normal', 'normal', 'boss', 'normal', 'normal', 'boss'])
   })
 
+  it('once 节奏:攒够胜场出一次首领,通关后此地再无首领', () => {
+    const once = createDungeonSystem({ ...CONFIG, bossRhythm: 'once' as const })
+    const rng = createRng(11)
+    let progress = emptyProgress()
+    const kinds: string[] = []
+    for (let i = 0; i < 6; i += 1) {
+      const encounter = once.nextEncounter('r1', progress, rng)
+      kinds.push(encounter.kind)
+      progress = once.onVictory('r1', encounter, progress, rng).progress
+    }
+    // 攒够 3 胜之后的那一战才是首领(与"还差几胜"的读数一致:还差 0 胜时下一战即首领)
+    expect(kinds).toEqual(['normal', 'normal', 'normal', 'boss', 'normal', 'normal'])
+    expect(progress.cleared).toEqual(['r1'])
+    expect(once.winsUntilBoss(3, true)).toBeNull()
+  })
+
+  it('winsUntilBoss:两种节奏下的门槛语义', () => {
+    const cycle = createDungeonSystem(CONFIG)
+    // cycle:每 3 胜一次,门槛之上循环
+    expect(cycle.winsUntilBoss(0)).toBe(3)
+    expect(cycle.winsUntilBoss(2)).toBe(1)
+    expect(cycle.winsUntilBoss(3)).toBe(3)
+    expect(cycle.winsUntilBoss(5)).toBe(1)
+    const once = createDungeonSystem({ ...CONFIG, bossRhythm: 'once' as const })
+    // once:攒够就出,门槛之上不出现负数;通关后为 null
+    expect(once.winsUntilBoss(0)).toBe(3)
+    expect(once.winsUntilBoss(3)).toBe(0)
+    expect(once.winsUntilBoss(9)).toBe(0)
+    expect(once.winsUntilBoss(0, true)).toBeNull()
+  })
+
+  it('前置补票:只看"前置是否已通",不看等级,也不吞掉不认识的历史 id', () => {
+    const sys = createDungeonSystem(CONFIG)
+    expect(sys.prereqClosure(['r1'], ['r1'])).toEqual(['r1', 'r2'])
+    expect(sys.prereqClosure(['r1'], ['r1', 'r2'])).toEqual(['r1', 'r2', 'r3'])
+    // 补过再补是同一份(幂等)
+    expect(sys.prereqClosure(['r1', 'r2'], ['r1'])).toEqual(['r1', 'r2'])
+    // 不认识的历史 id 保留
+    expect(sys.prereqClosure(['r1', '旧地界'], ['r1'])).toEqual(['r1', '旧地界', 'r2'])
+    // 幂等:算到不动点
+    const once = sys.prereqClosure(sys.prereqClosure(['r1'], ['r1', 'r2']), ['r1', 'r2'])
+    expect(once).toEqual(['r1', 'r2', 'r3'])
+  })
+
   it('通关只记第一次,奖励按层级放大', () => {
     const sys = createDungeonSystem(CONFIG)
     const rng = createRng(2)

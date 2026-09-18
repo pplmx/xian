@@ -197,7 +197,10 @@ export const XIUXIAN: GameConfig = {
       { id: 'e_bonesoldier', name: '白骨兵卒', tier: 6, icon: 'bone', hpMult: 1.3, atkMult: 1.05, defMult: 1.25, speed: 0.9, skills: [{ name: '骨刀劈砍', mult: 1.6, rate: 0.24 }] },
       { id: 'e_oldgeneral', name: '上古兵主', tier: 6, icon: 'skull', hpMult: 5.0, atkMult: 1.5, defMult: 1.5, speed: 1.0, boss: true, archetype: 'truedmg', skills: [{ name: '兵戈之威', mult: 2.1, rate: 0.32, effect: 'pierce' }] }
     ],
-    bossProgress: 8,
+    // 攒够十胜引出一位首领,击败即通关、此后此地不再出首领(与云隐同一条节奏);
+    // 「旧主归来」那类复现是世界节律,不改变这条门槛
+    bossProgress: 10,
+    bossRhythm: 'once',
     enemyPower: { baseHp: 150, baseAttack: 12, baseDefense: 7, tierGrowth: 1.9 },
     victoryRewards: [
       { id: 'exp', name: '修为', base: 40, tierGrowth: 1.9 },
