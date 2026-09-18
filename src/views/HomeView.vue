@@ -31,8 +31,11 @@
           <div class="mt-3 flex items-center gap-1.5">
             <GameIcon name="sparkles" :size="13" class="shrink-0 text-gold-ink" />
             <span class="font-kai text-[12px] tracking-widest text-ink">{{ weather.name }}</span>
+            <span class="ml-1 text-[10px] text-ink-faint tabular">{{ weatherLeft }}</span>
           </div>
-          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">{{ weather.desc }}</p>
+          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+            {{ weather.desc }}<span v-if="tomorrowWeather"> · 明日{{ tomorrowWeather.name }}</span>
+          </p>
         </div>
         <!-- 修炼法球 · 灵气法阵环绕 -->
         <div class="relative mr-1 -mt-1 h-35 w-35 shrink-0">
@@ -168,7 +171,7 @@
   import { VEIN_UNLOCK_MAJOR } from '@/data/constants'
   import { LIFESPAN_WARN_RATIO } from '@/data/constants'
   import { WORLD_BREAK_MAJOR } from '@/data/realms'
-  import { todayWeather } from '@/core/weather'
+  import { todayWeather, upcomingWeather, weatherRemainingSec } from '@/core/weather'
   import { generateCurrentGoal, type Goal } from '@/core/goal'
   import { currentMainQuestProgress } from '@/core/questProgress'
   import { currentFirstStep } from '@/core/firstStep'
@@ -200,6 +203,18 @@
 
   // Phase 31 A1:今日天时(确定性,refreshed 每游戏日)
   const weather = computed(() => todayWeather())
+  /**
+   * 天时的两个读数(来自库的周期层):
+   *   还有多久换 —— 天时是每天一次的确定性环境,玩家该知道它什么时候变;
+   *   明日是什么 —— 预告让"今天该做什么"变成可以规划的事,而不是开盲盒。
+   */
+  const weatherLeft = computed(() => {
+    const total = weatherRemainingSec()
+    const hours = Math.floor(total / 3600)
+    const minutes = Math.max(0, Math.round((total % 3600) / 60))
+    return hours > 0 ? `还有 ${hours} 时 ${minutes} 分` : `还有 ${minutes} 分`
+  })
+  const tomorrowWeather = computed(() => upcomingWeather(2)[1])
 
   const mainQuest = computed(() => MAIN_QUESTS[quests.mainIdx])
   /** 主线的进度读数(与发赏判定同源) */

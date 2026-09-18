@@ -297,7 +297,6 @@ describe('死导出审计', () => {
    * 一个模块若从没被运行时引用过,它整份都是审计工具,自然全是 spec-only。
    */
   const SPEC_ONLY_ALLOWLIST: Record<string, string> = {
-    weatherDef: '查表原语:运行时用 todayWeather() 直接取对象,按 id 查表服务于数据自检与联动审计',
     reliefKinds: '审计汇总:把灵根的劫型解法通道列出来,供渡劫审计与灵根角色审计读',
     winChanceFromRatio: '审计公式:胜率换算只作审计口径,不进战斗结算',
     lt: '数值原语:gNum 比较,供公式单调性用例读',

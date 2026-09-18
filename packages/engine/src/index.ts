@@ -126,6 +126,9 @@ export { createResourceSystem } from './resources.js'
 export type { TriageConfig, TriageImpact, TriageOutcome, TriageRule, TriageSystem, TriageVerdict } from './triage.js'
 export { compareBy, createTriage } from './triage.js'
 
+export type { CycleConfig, CycleContext, CycleEntry, CycleSystem, ScheduledCycle } from './cycles.js'
+export { createCycleSystem } from './cycles.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

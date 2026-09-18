@@ -39,6 +39,10 @@ import type {
   CompanionSystem,
   ComputedStats,
   CraftFormula,
+  CycleConfig,
+  CycleContext,
+  CycleEntry,
+  CycleSystem,
   CraftLevers,
   DamageContext,
   DeckContext,
@@ -113,6 +117,7 @@ import type {
   SkillState,
   SkillSystem,
   SlotDef,
+  ScheduledCycle,
   SlotMap,
   StageDef,
   StatsInput,
@@ -147,6 +152,7 @@ const RUNTIME_EXPORTS = [
   'clamp',
   'composeCraftRate',
   'compareBy',
+  'createCycleSystem',
   'createAttributeSystem',
   'createCombatEngine',
   'createCompanionSystem',
@@ -272,6 +278,7 @@ type PublicTypes = {
   crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef]
   resources: [AppliedEntry, Ledger<number>, ResourceDef, ResourceEntry, ResourceSummary, ResourceSystem, ResourceSystemConfig]
   triage: [TriageConfig<SampleItem>, TriageImpact, TriageOutcome, TriageRule<SampleItem>, TriageSystem<SampleItem>, TriageVerdict]
+  cycles: [CycleConfig, CycleContext, CycleEntry, CycleSystem, ScheduledCycle]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]
