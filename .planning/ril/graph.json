@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 303,
+  "round": 304,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:40:44+00:00",
+  "updated_at": "2026-09-18T20:44:18+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17660,7 +17660,7 @@
       "version": 1,
       "created_at": "2026-09-18T20:40:37+00:00",
       "updated_at": "2026-09-18T20:40:37+00:00",
-      "touched_round": 303,
+      "touched_round": 304,
       "category": "core-feature",
       "severity": 0.45,
       "confidence": 0.95,
@@ -17690,6 +17690,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-366(1fa44cd)。bunx vitest run src/integrationSave.spec.ts src/save.spec.ts src/saveShape.spec.ts(23 例);cd packages/engine && bun run check(386 例 + 组装指南/定制表/发布包自检);cd /workspace/xian && bun run test(248 文件/2434 例);bun run test:report(2434 过 / 0 败);bun run check:engine;bun run check:engine:standalone",
       "summary": "存档链的组合验收一次就撞出一处口径分歧:decodeSavePayload 对负数版本号只按\"非有限数\"处理,于是 fromVersion 如实报 -3,而 runMigrations 其实从最老的一版开始补 —— 报告与行为不一致。修正为两边都 Math.max(1, …) 之后,三种未知版本(缺失/NaN/负数)一律\"从最老补上来\",判据里逐个钉住。其余不变量成立:脏值被修掉而合法值留着、老字段保留、迁移幂等、升级纯、升级后的世界与同状态新开推三轮后逐字段相同。"
+    },
+    "TASK-285": {
+      "id": "TASK-285",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:44:11+00:00",
+      "updated_at": "2026-09-18T20:44:11+00:00",
+      "touched_round": 304,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "经济读数消融实验(economy.sim.spec):把默认阈值 0.7/3/10 翻译成\"支出/收入\"的区间(idle <0.10、surplus <0.34、healthy <1.43、tight 更高),钉住翻档点与\"阈值闭在宽的一侧\"的边界行为,并量出 ±10% 敏感区(401 个参数点里 71 个,17.7%)。"
+    },
+    "CHG-367": {
+      "id": "CHG-367",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:44:11+00:00",
+      "updated_at": "2026-09-18T20:44:11+00:00",
+      "touched_round": 304,
+      "commit": "cf2c405",
+      "summary": "库:新增 src/economy.sim.spec.ts(5 例,含区间表与敏感区读数);CHANGELOG「未发布」记下三条结论(翻档点=1/阈值、阈值闭在宽的一侧、±10% 敏感区 17.7%);README 与组装指南的两行补上\"换算成支出/收入\"的口径。宿主无改动。"
+    },
+    "EV-292": {
+      "id": "EV-292",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:44:11+00:00",
+      "updated_at": "2026-09-18T20:44:11+00:00",
+      "touched_round": 304,
+      "confidence": 0.96,
+      "source": "变更 CHG-367(cf2c405)。bunx vitest run src/economy.sim.spec.ts(5 例,打印区间表与\"扫过 401 个参数点:收入抖 ±10% 就改判的有 71 个(17.7%)\");cd packages/engine && bun run check(391 例 + 组装指南/定制表/发布包自检);cd /workspace/xian && bun run test(249 文件/2439 例);bun run test:report(2439 过 / 0 败);bun run check:engine;bun run check:engine:standalone",
+      "summary": "消融结果可直接抄进内容设计:①\"资源吃紧\"的门槛是支出超收入 43%,不是 100%(阈值 0.7 的倒数);②过剩从支出低于收入 1/3 起算,只进不出从低于 1/10 起算;③阈值闭在宽的一侧(正好 0.7 是健康、正好 10 是过剩),六个边界点都用判据钉住;④在支出/收入 ∈ [0.5, 2] 这一带,收入抖 ±10% 就改判的参数占 17.7%(都贴着翻档点),提示\"贴着边界下结论\"要谨慎。"
     }
   },
   "edges": [
@@ -26789,6 +26827,18 @@
       "to": "TASK-271",
       "type": "depends_on",
       "created_at": "2026-09-18T20:40:44+00:00"
+    },
+    {
+      "from": "CHG-367",
+      "to": "TASK-285",
+      "type": "implements",
+      "created_at": "2026-09-18T20:44:17+00:00"
+    },
+    {
+      "from": "TASK-285",
+      "to": "TASK-284",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:44:18+00:00"
     }
   ]
 }
