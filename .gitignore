@@ -35,6 +35,9 @@ docs/generated/
 __pycache__/
 *.pyc
 
+# 崩溃转储:无头 Chromium 在被内核限制拦下时会往仓库根目录摔一份 core.<pid>
+core.[0-9]*
+
 # wrangler files
 .wrangler
 .dev.vars*

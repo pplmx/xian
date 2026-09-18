@@ -2669,20 +2669,38 @@ for (const vp of VIEWPORTS) {
   }
   checked += 1
   /**
-   * 先把「可能还在排队的写盘」等掉,再投入。
+   * 先自己落一次盘,再投入 —— 否则这条判据是在跟别人的定时器赛跑。
    *
-   * 存档是节流的(SAVE_FLUSH_MS = 5 秒):只要此前任何一次状态变更还在窗口里,
-   * 这一笔投入就会搭着那次定时器一起落盘 —— 于是下面「此刻磁盘该还是旧值」读到的是
-   * 「已经写了」,判据报「节流没起作用」,而真相只是它撞上了别人的定时器(实测复现过)。
-   * 等满一个窗口再动手,这笔投入就是唯一待写的一笔,读数才由这条判据说了算。
+   * 引擎每秒都在改状态(修为/灵气),待写队列因此**每 6 秒必刷一次**,
+   * 与「什么时候投入」毫无关系(探针实测:25 秒里无人投入也刷 4 次,
+   * 时刻 2.0s / 8.1s / 14.1s / 20.0s,间隔 6.0 / 6.1 / 5.9 秒)。
+   * 旧写法是等满一个窗口(5800ms)再投入,以为「此刻没有待写的队列了」——
+   * 可等待结束后 5 秒内照样有别人的刷新:投入若正好跨在刷新上,磁盘读到的
+   * 已经是新值,判据反过来报「节流没起作用」。CI 上偶发红就是这么来的
+   * (探针按旧写法跑 8 次,误报 2 次 —— 投入那 1.5 秒落在 6 秒一拍的刷新点上)。
+   *
+   * 改法:自己派一次 pagehide 把盘落干净(顺带证明这条监听真的接上了),
+   * 下一次刷新至少 5 秒之后 —— 投入与读数都在这个安静窗口里,读数才由判据说了算。
+   * 顺带补两条前提:盘上得真是投入前的数、这笔投入得真花了钱 —— 少了它们,
+   * 读数不成立(比如页面值没读出来)时判据会静默空过,看着绿其实什么都没证。
    */
-  await page.waitForTimeout(5800)
+  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
+  await page.waitForTimeout(300)
   const start = await readFormatted(page, '灵石')
+  const startDisk = await diskStone()
+  // 前提:盘上得真是投入前的数。这一条不成立,后面「没立刻变」什么都证明不了
+  if (startDisk === null || start.value === null || Math.abs(startDisk - start.value) > start.value * 0.001) {
+    failures.push(`[390] 落盘场景:派发 pagehide 之后磁盘还是 ${startDisk},页面已是 ${start.text} —— 待刷存档没落盘`)
+  }
   const afterInvest = await investOnce()
   const onDiskBefore = await diskStone()
-  // 先确认节流确实在起作用:此刻磁盘还该是旧值,否则后面那一步证明不了什么
-  if (onDiskBefore !== null && afterInvest.value !== null && Math.abs(onDiskBefore - afterInvest.value) < afterInvest.value * 0.001) {
-    failures.push('[390] 落盘场景:投入之后磁盘立刻就变了 —— 节流没起作用,这条判据也就证明不了什么')
+  // 这一笔得真的花掉了钱 —— 否则「盘上没有跟着变」只是因为什么都没发生
+  if (start.value !== null && afterInvest.value !== null && Math.abs(afterInvest.value - start.value) < start.value * 0.001) {
+    failures.push('[390] 落盘场景:投脉之后页面上的灵石没变 —— 这一步没真花掉钱,后面两条判据都不作数')
+  }
+  // 节流在起作用:投入之后这一瞬,盘上还该停在投入前的数(而不是跟着页面一起变)
+  if (startDisk === null || onDiskBefore === null || Math.abs(onDiskBefore - startDisk) > startDisk * 0.001) {
+    failures.push(`[390] 落盘场景:投入之后磁盘立刻从 ${startDisk} 变成 ${onDiskBefore} —— 节流没起作用(这笔投入本该还躺在待刷队列里)`)
   }
   // ① 切后台
   await page.evaluate(() => {
@@ -2696,6 +2714,9 @@ for (const vp of VIEWPORTS) {
   }
   // ② 离开页面(pagehide)
   const second = await investOnce()
+  if (afterInvest.value !== null && second.value !== null && Math.abs(second.value - afterInvest.value) < afterInvest.value * 0.001) {
+    failures.push('[390] 落盘场景:第二次投脉之后页面上的灵石没变 —— 这一条同样不作数')
+  }
   await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
   await page.waitForTimeout(400)
   const afterHide = await diskStone()
@@ -2703,7 +2724,10 @@ for (const vp of VIEWPORTS) {
     failures.push(`[390] 落盘场景:pagehide 之后磁盘还是 ${afterHide},页面已是 ${second.text} —— 待刷存档没落盘`)
   }
   if (pageErrors.length) failures.push(`[390] 落盘场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  console.log(`\n落盘时机:开局 ${start.text} → 投脉后页面 ${afterInvest.text}(磁盘暂为旧值,节流中)→ 切后台落盘 · 再投一次 ${second.text} → pagehide 落盘`)
+  console.log(
+    `\n落盘时机:开局 ${start.text}(盘上 ${startDisk})→ 投脉后页面 ${afterInvest.text}` +
+      `(盘上仍 ${onDiskBefore},节流中)→ 切后台落盘 ${afterHidden} · 再投一次 ${second.text} → pagehide 落盘 ${afterHide}`
+  )
   await ctx.close()
 }
 
