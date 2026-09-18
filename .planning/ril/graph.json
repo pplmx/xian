@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 336,
+  "round": 337,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:35:41+00:00",
+  "updated_at": "2026-09-18T22:41:13+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19027,6 +19027,44 @@
       "confidence": 0.97,
       "source": "变更 CHG-400(9bdf9bf)。cd packages/engine && bun run check(485 例 / 63 文件 + 十一道自检 + 10 示例;发布包自检已是 wanxiang-engine-0.1.15.tgz);cd /workspace/xian && bun run test(270 文件 / 2533 例)、check:engine(59 处引用)、check:engine:standalone(103 个源文件);git push origin main(1d5786d..9bdf9bf)、subtree push(→ eb0be9b);gh api 核对:tag v0.1.15 → eb0be9b…、package.json version 0.1.15、tag 上的 docs/tuning.md 提到 25 处 *.sim.spec.ts、release 非 draft / 非 prerelease。",
       "summary": "0.1.15 把\"只有语义、没有刻度\"的模块补齐到 22 份:产线、每日任务、账本、入库、周期轮换、投资点各有一张能被内容作者直接用的表。仍是零运行时变更 —— 这一批的价值全在\"别人少踩几个坑\"。"
+    },
+    "TASK-318": {
+      "id": "TASK-318",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:41:13+00:00",
+      "updated_at": "2026-09-18T22:41:13+00:00",
+      "touched_round": 336,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "境界曲线与伙伴两份消融(realms.sim + companions.sim):①境内涨 14.89 倍而跨境只涨 1.28 倍、换界域 0.64 倍(worldStepMult 加在旧世界最后一层);最后一层是\"大关\"走另一条成功率线(78%-5%×境号,第 6 境 53%);期望次数 = 1/成功率,实测最长连败 9 次;从零到顶 57 亿点。②伙伴\"同键要不要叠\"是开关(override 取最后一只 vs add-relative 相加,前者与顺序有关);性格系数与自身词条两套账;中性值缺键当场报错并点名。"
+    },
+    "CHG-401": {
+      "id": "CHG-401",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:41:13+00:00",
+      "updated_at": "2026-09-18T22:41:13+00:00",
+      "touched_round": 336,
+      "commit": "5daaf7d",
+      "summary": "库:新增 src/realms.sim.spec.ts 与 src/companions.sim.spec.ts(各 4 例);CHANGELOG「未发布」记两节;docs/tuning.md 新增两节(第 23、24 份消融进参考表);docs/assembly.md 补两行;README 用例数改 493/65。宿主无改动。"
+    },
+    "EV-327": {
+      "id": "EV-327",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:41:13+00:00",
+      "updated_at": "2026-09-18T22:41:13+00:00",
+      "touched_round": 336,
+      "confidence": 0.96,
+      "source": "变更 CHG-401(5daaf7d)。bunx vitest run src/realms.sim.spec.ts src/companions.sim.spec.ts(8 例全过;打印:第 1 境十层 40/54/72.9/98.42/132.86/179.36/242.14/326.89/441.30/595.75;境内 14.89 倍、跨境 1.28 倍、换界域 0.64 倍;小层成功率 95%→71%、第 10 层 78%;各界大关 78/73/68/63/58/53%;实测第 6 境大关平均 1.89 次、最长连败 9 次;从零到顶 5707419730;<br>伙伴:三只 override dropLuck 0.02 vs add-relative 0.08、时长 0.94 vs 1.04;中性值缺键报错文本点名 exploreDurMult);cd packages/engine && bun run check(493 例 / 65 文件 + 十一道自检,组装指南自检报 27 个工厂、调参参考自检报 24 份消融、用例文件数自检当场抓出 63→65、相对导入自检 105 个源文件);cd /workspace/xian && bun run test(272 文件 / 2541 例)、check:engine(59 处引用)、check:engine:standalone(105 个源文件)。",
+      "summary": "境界层最有价值的一条是\"陡峭到底发生在哪\":不是换境界那一下,而是层内累计(14.89 倍),换界域甚至会\"回落\"(0.64 倍);加上\"最后一层是大关、成功率另走一条线\",内容作者据此就能解释玩家为什么觉得\"某几层特别难\"。伙伴层的取舍也被量化:同键叠加与否是一个开关,两种口径差 4 倍。"
     }
   },
   "edges": [
@@ -28366,6 +28404,12 @@
       "to": "TASK-317",
       "type": "implements",
       "created_at": "2026-09-18T22:35:41+00:00"
+    },
+    {
+      "from": "CHG-401",
+      "to": "TASK-318",
+      "type": "implements",
+      "created_at": "2026-09-18T22:41:13+00:00"
     }
   ]
 }
