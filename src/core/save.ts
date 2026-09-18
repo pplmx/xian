@@ -11,22 +11,39 @@ import {
   type ExportPayload
 } from '@/utils/storage'
 import { encryptSave, readSaveText } from '@/utils/crypto'
+import { defineSaveFormat, runMigrations } from '@engine/index'
 import { useGameStore } from '@/stores/game'
 import { engine } from './engine'
 
+/**
+ * 本作的存档格式:版本链由公共库执行(见 packages/engine 的 save / runMigrations)。
+ *
+ * 版本 1 → 2 那一跳把法宝从「单法宝位」改成「多法宝位」;缺的跳按"形状没变"处理。
+ * 这里只写**这一款游戏**的那几跳与目标版本,链的走法归库。
+ */
+const EXPORT_FORMAT = defineSaveFormat<Record<string, unknown>>({
+  currentVersion: SAVE_VERSION,
+  migrations: {
+    1: data => {
+      const d = { ...(data as Record<string, unknown>) }
+      if (typeof d.inventory === 'object' && d.inventory !== null) {
+        d.inventory = migrateInventorySlice(d.inventory as Record<string, unknown>)
+      }
+      return d
+    }
+  }
+})
+
 /** 迁移旧版本存档(链式) */
 function migrate(payload: ExportPayload): ExportPayload {
-  const migrated = { ...payload, data: { ...payload.data } }
-  if (migrated.version < 2 && typeof migrated.data.inventory === 'object' && migrated.data.inventory !== null) {
-    migrated.data.inventory = migrateInventorySlice(migrated.data.inventory as Record<string, unknown>)
-  }
+  const data = runMigrations(payload.data, payload.version, EXPORT_FORMAT as never) as Record<string, unknown>
+  const migrated: ExportPayload = { ...payload, version: SAVE_VERSION, data: { ...data } }
   // 导入 = 从这份快照继续:lastActiveAt 重戳为现在的时刻。
   // 快照里吞着的是导出那一刻的时间戳,直接沿用会把「导入旧备份」误算成
   // 「缺勤数月」——离线资源按 8h 封顶、年龄却按全程流,先死处理
   if (migrated.data.game && typeof migrated.data.game === 'object') {
     migrated.data.game = { ...(migrated.data.game as Record<string, unknown>), lastActiveAt: Date.now() }
   }
-  migrated.version = SAVE_VERSION
   return migrated
 }
 
