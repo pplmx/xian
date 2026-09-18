@@ -291,7 +291,73 @@ const consumerProbe = `
   assert.equal(engine.defineGame(DAILY).realms.label(8, 5), '高三·期末')
   assert.equal(typeof engine.defineGame, 'function')
   console.log('   按包名 import 通过(含两份子路径内容包)')
-`
+
+  /**
+   * 从零装一个世界 —— **不碰任何内容包**,只用包名导出的东西装配一份新题材。
+   *
+   * 这一段的用意:前面两项验的是"包里带的东西能用",这一段验的是"**别人自己写一份也能用**"。
+   * 内容包是样例,真正要证明的是"槽位/品质/词条/区域/敌人都是内容,写一份就有一款游戏"。
+   */
+  const SLOTS = [
+    { id: 'weapon', name: '靴子', order: 1 },
+    { id: 'body', name: '邮包', order: 2 }
+  ]
+  const mine = engine.defineGame({
+    name: '边境邮差(发布包冷启动)',
+    attributes: { defs: engine.attributeDefs({ rename: { attack: '脚力', defense: '耐力', maxHp: '体力' } }) },
+    realms: {
+      worlds: [{ id: 'plain', name: '平原路', realms: ['送信学徒', '熟路邮差'] }],
+      layerNames: ['第一段', '第二段'],
+      labelFormat: '{realm}·{layer}',
+      exp: { base: 25, realmGrowth: 5, layerGrowth: 1.3, worldStepMult: 1.9 },
+      combat: { base: { attack: 11, defense: 6, maxHp: 110 }, realmGrowth: 3.2, layerGrowth: 1.12 },
+      breakthrough: { layerBase: 0.94, layerDecay: 0.04, majorBase: 0.72, majorDecay: 0.07, min: 0.2, max: 0.98 }
+    },
+    equipment: {
+      slots: SLOTS,
+      qualities: [{ id: 'cloth', name: '粗布', rank: 0, mult: 1, affixes: [0, 1], fromTier: 1, toTier: 8, weight: 300 }],
+      templates: engine.generateTemplates({
+        slots: SLOTS,
+        baseBySlot: { weapon: { attack: 5 }, body: { defense: 4, maxHp: 16 } },
+        tiers: [['旧布鞋', '帆布邮包'], ['量脚皮靴', '防水邮包']]
+      }),
+      affixes: [{ id: 'swift', name: '疾行', key: 'attackPct', min: 3, max: 8, weight: 100, desc: '脚力提升 {v}%' }],
+      power: { tierGrowth: 2, baseFactor: 0.6, qualityExponent: 1.6 },
+      affixValueScale: 100
+    },
+    dungeons: {
+      regions: [{ id: 'plainroad', name: '平原官道', tier: 1, minRealm: 0, enemies: ['mud'], boss: 'flooded' }],
+      enemies: [
+        { id: 'mud', name: '烂泥路', tier: 1, hpMult: 1, atkMult: 1, defMult: 1, speed: 1 },
+        { id: 'flooded', name: '冲垮的桥', tier: 1, hpMult: 3, atkMult: 1.25, defMult: 1.2, speed: 1, boss: true }
+      ],
+      bossProgress: 2,
+      bossRhythm: 'once',
+      enemyPower: { baseHp: 110, baseAttack: 11, baseDefense: 6, tierGrowth: 2.05 },
+      victoryRewards: [{ id: 'money', name: '报酬', base: 6, tierGrowth: 1.6 }]
+    }
+  })
+
+  assert.equal(mine.attributes.name('attack'), '脚力')
+  assert.equal(mine.realms.label(0, 0), '送信学徒·第一段')
+  assert.equal(mine.equipment.slots.length, 2)
+  const rng = engine.createRng('边境邮差')
+  let state = { major: 0, layer: 0, exp: 0 }
+  state = mine.realms.addExp(state, Number(mine.realms.expCost(0, 0)))
+  const item = mine.equipment.generate(rng, { tier: 1 })
+  assert.ok(mine.equipment.resolve(item).template, '自己写的模板应当能解析')
+  let progress = engine.emptyProgress()
+  let cleared = false
+  for (let i = 0; i < 4 && !cleared; i += 1) {
+    const encounter = mine.dungeons.nextEncounter('plainroad', progress, rng)
+    const outcome = mine.dungeons.onVictory('plainroad', encounter, progress, rng)
+    progress = outcome.progress
+    cleared = cleared || outcome.firstClear
+  }
+  assert.equal(cleared, true, '自己写的区域应当能通关')
+  assert.ok(progress.cleared.includes('plainroad'))
+  console.log('   从零装配通过(不引用任何内容包:自己写槽位/品质/词条/区域/敌人,跑通修炼 → 掉装 → 通关)')
+ `
 execFileSync('node', ['--input-type=module', '-e', consumerProbe], { cwd: app, stdio: 'inherit' })
 
 /**

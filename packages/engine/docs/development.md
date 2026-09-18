@@ -64,7 +64,9 @@ bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json
 ```
 
 `bun run check` 里的**发布包自检**做的不只是"装上能跑":它真 `npm pack`、摊进临时项目,
-再按包名 import 一次(含内容包子路径),然后**用一个 `.mts` 消费者跑 `tsc --strict`** ——
+再按包名 import 一次(含内容包子路径),**用包名导出的东西从零装一份新题材的世界并跑通一圈**
+(不碰任何内容包 —— 内容包是样例,要证明的是"自己写一份也能用"),
+然后**用一个 `.mts` 消费者跑 `tsc --strict`** ——
 `moduleResolution` 会试 `bundler` 与 `node16` 两种。多加这一步是因为踩过一次:
 `companions.d.ts` 里一句 `from './attributes'` 漏了 `.js`,库自己怎么跑都正常,
 而 `node16` 的使用者一编译就红(TS2835)。同一条纪律也做成了静态判据:源码里的相对导入必须带 `.js`。
