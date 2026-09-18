@@ -134,6 +134,7 @@
 | 跨模块自洽(战斗 → 掉落 → 入库 → 装配 → 面板) | 战斗 + 掉落 + 入库 + 装备 + 属性 | `integrationLoot.spec.ts`(件数守恒、折算同源、见证不漏、容量不越界、面板单调、同种子可复现) |
 | 跨模块自洽(周期 × 内容池 × 抉择) | `createCycleSystem` + `drawFrom` + `createChoiceSystem` | `integrationWorld.spec.ts`(问行情不掷骰、抽到的事必须切题、一次性牌只碰一次、账目守恒) |
 | 跨模块自洽(技艺 → 采料 → 开炉 → 入库 → 体检) | `createSkillSystem` + `createCompanionSystem` + `createDropTable` + `createRecipeRunner` + `createEconomyReadings` | `integrationCraft.spec.ts`(没开炉不扣料也不掷骰、回执与公式同源、失败逐条保料、产出 = 成功 + 双成、体检与账本同源、同种子可复现) |
+| 跨模块自洽(境界 × 副本 × 世界记忆) | `createRealmSystem` + `createDungeonSystem` + `createStageMemory` | `integrationDungeons.spec.ts`(开图要等级与前置同时满足、`winsUntilBoss` 与实跑的第几场见首领一致、`cycle`/`once` 两种节奏、记忆回落不清进度、奖励逐场入账、同种子可复现) |
 
 ## 3 · 三条纪律
 
