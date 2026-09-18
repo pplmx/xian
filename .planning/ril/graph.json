@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 284,
+  "round": 285,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:02:19+00:00",
+  "updated_at": "2026-09-18T19:07:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16481,7 +16481,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:30:20+00:00",
       "updated_at": "2026-09-18T18:30:20+00:00",
-      "touched_round": 280,
+      "touched_round": 285,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16799,6 +16799,56 @@
       "summary": "示例与目录树也是交付面的一部分:每加一个\"使用者要抄的东西\",都要进自检并写清它演示了什么。",
       "rationale": "库的抽象做得对不对,不看源码看**别人能不能照着抄**。此前五份经验都只在 README 的表格与用例里,没有一个\"把新模块串起来\"的可跑落点:使用者读得到 createChain 的签名,却看不出主线 / 今日 / 成就该怎么摆在一起,更看不出\"同一个计数器怎么同时回答生涯与本期\"。示例还解决另一个问题:它是**进自检的文档** —— 类型检查、bun run examples、独立成库自检都会跑它,所以不会像纯文档那样悄悄腐烂(接口改了、示例编不过,当场就红)。同理,README 的目录树是使用者对\"这库有什么\"的第一印象,缺 14 个模块的树等于告诉人家\"这库只有 19 个文件\"。",
       "alternatives_rejected": "①只在 README 里贴代码片段(不编译、不跑,改了接口它不会红);②让示例只演示单个模块(看得出 API,看不出怎么拼);③把示例写成\"完整游戏\"(几百行界面与存档会把\"骨架\"埋掉,新模块也难插进来);④目录树保持\"只列大事\"(省事,但使用者对库规模的判断直接错了)。"
+    },
+    "TASK-266": {
+      "id": "TASK-266",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T19:07:20+00:00",
+      "updated_at": "2026-09-18T19:07:20+00:00",
+      "touched_round": 285,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增抽取保底层:pity.ts(softChance 软保底曲线(涨幅封顶、概率上下限、坏值当 0)+ createPityCounter 硬保底(第 hardAt 次必出、照样掷骰、resetOn 决定何时清零、池子各记各的))。本作认知检定的照面保底改走 softChance。继续攒批不发版。"
+    },
+    "CHG-348": {
+      "id": "CHG-348",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:07:20+00:00",
+      "updated_at": "2026-09-18T19:07:20+00:00",
+      "touched_round": 285,
+      "commit": "f034800",
+      "summary": "库:新增 src/pity.ts 与 pity.spec.ts(13 例),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目并补目录树。宿主:core/loreService 的 discernChance/natureChance 改走 softChance(基础概率、每步涨幅、上下限仍是本作口径),新增 enginePityParity.spec(5 例,冻结核对两条旧公式的整个网格),test-report 补分类,docs/engine.md 加一行并更新引用数与导出数(54 处 / 73 个)。"
+    },
+    "EV-273": {
+      "id": "EV-273",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:07:20+00:00",
+      "updated_at": "2026-09-18T19:07:20+00:00",
+      "touched_round": 285,
+      "confidence": 0.96,
+      "source": "变更 CHG-348(f034800)。bunx vitest run src/core/enginePityParity.spec.ts(5 例);bunx vitest run src/core/craftability.spec.ts(37 例,含迁移前那批认知检定契约);bun run check;bun run test(239 文件/2351 例);bun run test:report(2351 过/0 败);cd packages/engine && bun run check(39 文件/323 例);bun run check:engine(54 处引用);bun run check:engine:standalone",
+      "summary": "软保底曲线搬迁后概率逐点不变:三档阶位 × 三档技艺 × 六档照面次数(药性另有门槛前后五档)全部 toBe 相等,不是近似;涨幅封顶与上下限两条也被单独钉住(最难那味 4%、最容易 90%;药性 2%/75%);门槛之前恒为 0 照旧。库侧 13 例覆盖硬保底边界(第 89 次按概率、第 90 次为 1)、hardAt:1 的极端形状、保底照样掷骰(开不开保底随机消耗一样)、resetOn 两种口径与池子分开计数。"
+    },
+    "DEC-136": {
+      "id": "DEC-136",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:07:28+00:00",
+      "updated_at": "2026-09-18T19:07:28+00:00",
+      "touched_round": 285,
+      "summary": "软保底要涨也要封顶,概率一律夹在上下限内;硬保底是\"改写这一次的结果\"而不是跳过掷骰。",
+      "rationale": "两条都是\"看着能用、数值上却在悄悄改写玩法\"的坑。①软保底不封顶:见得 / 抽得够多之后概率被抬到 1,于是\"越看越眼熟\"变成\"第 N 次必认出\" —— 中间那些次数的意义全没了,而且这种改写发生在玩家看不见的地方(他只会觉得\"最近怎么这么好出\")。上下限同理:下限保证\"再难也有 4% 的一线\",上限保证\"最容易也别变成走过场\"。②硬保底跳过掷骰:省事,但随机流会随\"开不开保底\"整体位移 —— 同一颗种子下,开了保底之后的每一次判定都换了值(与掉落层同一条纪律,DEC-127)。③清零时机是**玩法选择**而非实现细节:出货就清(常见)与只在保底顶出来时清(自然出货不消耗保底额度)两种作品都有,库把它写成 resetOn,而不是替作品决定。",
+      "alternatives_rejected": "①软保底不封顶(后期等价于硬保底,且把\"概率曲线\"这件事藏起来);②只给上限不给下限(基础概率算出来是 0 时永远出不来,而玩家只会看到\"这东西根本抽不到\");③保底直接 `return true` 不掷骰(随机流错位);④把清零时机写死在库里(两种玩法都真实存在,写死就是把一种作品的习惯当成标准);⑤把软保底塞进掉落层(那一层管单次判定,跨次数的账与当时那一次的概率是两件事,混在一起之后\"这次概率多少\"就要去翻历史)。"
     }
   },
   "edges": [
@@ -25556,6 +25606,24 @@
       "to": "TASK-264",
       "type": "depends_on",
       "created_at": "2026-09-18T19:02:19+00:00"
+    },
+    {
+      "from": "CHG-348",
+      "to": "TASK-266",
+      "type": "implements",
+      "created_at": "2026-09-18T19:07:28+00:00"
+    },
+    {
+      "from": "DEC-136",
+      "to": "TASK-266",
+      "type": "governs",
+      "created_at": "2026-09-18T19:07:28+00:00"
+    },
+    {
+      "from": "TASK-266",
+      "to": "TASK-260",
+      "type": "depends_on",
+      "created_at": "2026-09-18T19:07:33+00:00"
     }
   ]
 }
