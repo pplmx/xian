@@ -219,6 +219,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 图鉴 | `createCodex` | 见过什么、懂到什么程度:照面累计升档、概率升档、用过才算真懂、只记见过的最好一件 |
 | 世界记忆 | `createStageMemory` | 区域繁荣 / 阵营好感:多路门槛取先到、有资格才升档、不打交道会回落 |
 | 经济读数 | `createEconomyReadings` | 哪一样不对劲:进/出比值的判词(瓶颈·健康·过剩·闲置)、分期读、带"没把握"标记 |
+| 入库漏斗 | `createIntake` | 收不下怎么办:先见证、按规则拒收、满了腾位、折算成别的东西 |
 
 ### 战斗:副本的下半场
 
@@ -473,6 +474,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **图鉴 / 收集深度**(见过 → 眼熟 → 洞悉 / 用过才算真懂) | `createCodex({ stages, stagesOf? })` —— 累计照面升档(一次只进一层、可分组换门槛表)/ 概率升档 / 直接推到某档;`rememberBest` 只记见过的最好一件(各维度取高);`view` / `stats` 给"还差多少""已知几条" |
 | **世界对该对象的记忆**(区域繁荣、阵营好感、门派声望) | `createStageMemory({ stages, decayAfterHours? })` —— 门槛可多路取先到(计数 / 时长)、没资格停在最低档、不打交道就回落;`touchedAt` / `hoursUntil` / `idleBeyond` 管"最后一次打交道"与倒计时 |
 | **经济体检**(哪个资源是瓶颈 / 烂在手里) | `createEconomyReadings({ bands?, labels? })` —— 进/出比值的判词(默认阈值 0.7 / 3 / 10)、分期读、带 `note` 的"没把握"标记;出为 0 时比值是无穷而不是 1 |
+| **掉落/奖励收不下怎么办** | `createIntake({ holding, accept?, evictable?, fallback, witness? })` —— 先见证再裁决、满了腾位(腾位失败不追回)、各条去路共用一条折算账、回执带人话与原因 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |

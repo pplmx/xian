@@ -141,6 +141,9 @@ export { createStageMemory } from './memory.js'
 export type { EconomyConfig, EconomyPeriod, EconomyReadings, EconomyVerdict, FlowInput, FlowReading, PeriodReading } from './economy.js'
 export { createEconomyReadings } from './economy.js'
 
+export type { IntakeConfig, IntakeResult, IntakeSystem } from './intake.js'
+export { createIntake } from './intake.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

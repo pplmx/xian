@@ -18,6 +18,7 @@ import {
   PILL_DROP_CHANCE
 } from '@/data/constants'
 import { generateEquipment } from './equipGen'
+import { createIntake } from 'wanxiang-engine'
 import { expFromSecs, stoneByTier } from './formulas'
 import { modOf } from './statsCalc'
 import { personalityEffects } from './petPersonality'
@@ -58,69 +59,83 @@ export interface AcquireResult {
 }
 
 /**
+ * 装备入账漏斗 —— **唯一的一处**(历练 / 离线 / 际遇 / 秘境 / 镇压 / 开局馈赠都走它)。
+ *
+ * 顺序交给库的入库层(见 packages/engine 的 intake),本作只给它四个函数:
+ *   witness   先记见闻(化尘的那件也是"见过" —— 图鉴收录因此不必另设埋点);
+ *   accept    自动回收的裁决(总闸关着时一律照收;forceKeep 直接跳过);
+ *   evictable 满了要不要腾位、挤掉谁(只有值得留的新件才腾);
+ *   fallback  折算(与手动分解同一条账:底材 + 强化投入八成)。
+ */
+const EQUIP_INTAKE = createIntake<EquipmentInstance, { dust: number; stone: GNum }>({
+  holding: {
+    add: (holding, item) => {
+      const inventory = useInventoryStore()
+      return inventory.addEquipment(item)
+        ? { ok: true, holding: { items: inventory.items } }
+        : { ok: false, holding, reason: 'full' }
+    },
+    isFull: () => useInventoryStore().bagFull,
+    remove: (holding, uid) => {
+      const removed = holding.items.find(it => it.uid === uid)
+      useInventoryStore().removeEquipment(uid)
+      return { holding: { items: useInventoryStore().items }, removed }
+    }
+  },
+  accept: inst => !shouldAutoRecycle(inst),
+  evictable: (items, incoming) => {
+    if (!smartKeepEnabled() || !keepVerdict(incoming).keep) return undefined
+    const equipped = useInventoryStore().equippedUids
+    return items.filter(it => !equipped.has(it.uid) && !it.locked && !keepVerdict(it).keep).sort(compareEvictable)[0]
+  },
+  witness: inst => {
+    const q = qualityDef(inst.quality)
+    useLoreStore().noteEquipSeen(inst.templateId, q.rank, inst.tier)
+    track('equipsGained')
+    collect('equip', inst.templateId)
+    checkQualityAchievement(q.rank)
+  },
+  fallback: inst => {
+    const gain = salvageOf(inst)
+    const resources = useResourcesStore()
+    resources.addSmall('dust', gain.dust)
+    resources.addStone(gain.stone)
+    const tail = isZero(gain.stone) ? `化作器灵尘×${gain.dust}` : `化作器灵尘×${gain.dust} · 退灵石 ${formatGN(gain.stone)}`
+    return { line: tail, yield: { dust: gain.dust, stone: gain.stone } }
+  }
+})
+
+/**
  * 拾取一件已生成的装备:入包或折算。
- * 无论在线(战斗掉落/事件/镇压)还是离线(挂机结算),都先过自动回收裁决——
- * 而自动回收只有在智能收纳开启时才生效(总闸);命中回收规则的直接化尘不入包;
- * forceKeep(新手馈赠)不受此闸约束。
- * 入包后若行囊已满,智能收纳开启时,值得收藏的新件可挤掉包内与道无缘者。
+ *
+ * 无论在线(战斗掉落 / 事件 / 镇压)还是离线(挂机结算),都走这一个漏斗 ——
+ * 见证、裁决、腾位、折算的顺序见 `EQUIP_INTAKE`。
  */
 export function acquireEquipment(inst: EquipmentInstance, opts: { quiet?: boolean; forceKeep?: boolean } = {}): AcquireResult {
   const { quiet = false, forceKeep = false } = opts
   const inventory = useInventoryStore()
-  const resources = useResourcesStore()
   const ui = useUiStore()
   const q = qualityDef(inst.quality)
   const t = equipmentTemplate(inst.templateId)
   const label = `${q.name}·${t?.name ?? '不明之物'}`
-  /**
-   * 先记见闻,再谈留不留:化尘的那件也是「见过」。
-   * 这里是装备入账的唯一漏斗(历练/离线/际遇/秘境/镇压/开局馈赠都走它),
-   * 故图鉴的收录深度不必另设埋点 —— 埋点一多,总有几处会漏。
-   */
-  useLoreStore().noteEquipSeen(inst.templateId, q.rank, inst.tier)
-  track('equipsGained')
-  collect('equip', inst.templateId)
-  checkQualityAchievement(q.rank)
-  /** 化尘结算 —— 与手动分解走同一条账(底材 + 强化投入八成);新掉落多为 0 级,退了就是全额底材 */
-  const toDust = (item: EquipmentInstance): AcquireResult => {
-    const gain = salvageOf(item)
-    resources.addSmall('dust', gain.dust)
-    resources.addStone(gain.stone)
-    const tail = isZero(gain.stone) ? `化作器灵尘×${gain.dust}` : `化作器灵尘×${gain.dust} · 退灵石 ${formatGN(gain.stone)}`
-    return { line: tail, bagged: false, dust: gain.dust, stone: gain.stone }
-  }
-  // 自动回收闸:新件先过裁决,命中回收规则的不占行囊,直接化尘
-  if (!forceKeep && shouldAutoRecycle(inst)) {
-    const res = toDust(inst)
-    return { ...res, line: `${label}(自动回收,${res.line})` }
-  }
-  if (!inventory.addEquipment(inst)) {
-    // 智能收纳:新件值得留则腾位(分解包内最差的「与道无缘」件)
-    if (smartKeepEnabled() && keepVerdict(inst).keep) {
-      const evictable = inventory.bagItems
-        .filter(it => !it.locked && !keepVerdict(it).keep)
-        .sort(compareEvictable)[0]
-      if (evictable) {
-        inventory.removeEquipment(evictable.uid)
-        const evicted = toDust(evictable)
-        if (inventory.addEquipment(inst)) {
-          return {
-            line: `${label}(收纳规则腾位:${equipmentTemplate(evictable.templateId)?.name ?? '旧物'}${evicted.line})`,
-            bagged: true,
-            dust: evicted.dust,
-            stone: evicted.stone
-          }
-        }
-        // 腾位后仍放不进去(理论上不会):那件旧物已化尘不追回,新件按满包那条路折算
-      }
+
+  const result = EQUIP_INTAKE.admit({ items: inventory.items }, inst, { force: forceKeep })
+  const first = result.yields[0]
+  const dust = first?.yield?.dust ?? 0
+  const stone = first?.yield?.stone ?? gnZero()
+
+  if (result.admitted) {
+    if (result.evicted) {
+      const oldName = equipmentTemplate(result.evicted.templateId)?.name ?? '旧物'
+      return { line: `${label}(收纳规则腾位:${oldName}${first?.line ?? ''})`, bagged: true, dust, stone }
     }
-    const res = toDust(inst)
-    return { ...res, line: `${label}(行囊已满,${res.line})` }
+    if (!quiet && q.rank >= 3) {
+      ui.toast(`灵光乍现,拾得「${label}」`, 'rare')
+    }
+    return { line: label, bagged: true, dust: 0, stone: gnZero() }
   }
-  if (!quiet && q.rank >= 3) {
-    ui.toast(`灵光乍现,拾得「${label}」`, 'rare')
-  }
-  return { line: label, bagged: true, dust: 0, stone: gnZero() }
+  const prefix = result.reason === 'rejected' ? '自动回收' : '行囊已满'
+  return { line: `${label}(${prefix},${first?.line ?? ''})`, bagged: false, dust, stone }
 }
 
 /** 获得法宝:重复则折算悟道点 */
