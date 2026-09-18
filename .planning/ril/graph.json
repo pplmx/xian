@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 338,
+  "round": 339,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:45:27+00:00",
+  "updated_at": "2026-09-18T22:48:30+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19103,6 +19103,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-402(7686006)。bunx vitest run src/recipes.sim.spec.ts src/combat.sim.spec.ts(8 例全过;recipes 打印:成功率实测 55.5%、双成 35.3%、平均产出 0.7506、灵草 3.110、灵石 11.096;没开炉掷 0 颗骰子;双成声明 150% 实测 80.2%、平均 1.802 件。combat 打印:攻 50/100/200 打 100 防 = 16.67/50/133.33;靶子 1000 血 → 20/12/8/4 回合;攻 10 打 10000 防每击 0.500(公式值 0.0100);上限 10 回合时打不穿、玩家未胜);cd packages/engine && bun run check(501 例 / 67 文件 + 十一道自检,调参参考自检报 26 份消融、用例文件数自检当场抓出 65→67、相对导入自检 107 个源文件);cd /workspace/xian && bun run test(274 文件 / 2549 例)、check:engine(59 处引用)、check:engine:standalone(107 个源文件)。",
       "summary": "把\"一炉值多少\"与\"这套伤害公式的手感\"都量成了表:①开炉的期望是成功率与双成率的乘积(两头都要算),保料率决定失败是\"慢\"还是\"亏\";②除算型伤害公式对攻击更敏感(翻倍 → 2.67 倍),且有 5% 地板兜底。到这一批为止,公开面每个有数值深度的模块都有了自己的刻度表(26 份)。"
+    },
+    "TASK-320": {
+      "id": "TASK-320",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:48:30+00:00",
+      "updated_at": "2026-09-18T22:48:30+00:00",
+      "touched_round": 338,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.16:把两轮四个实质提交(境界曲线手感、伙伴手感、开炉期望账、默认伤害公式刻度)定成节点。消融实验 22 → 26 份,公开面里每个有数值深度的模块都有自己的刻度表。公开面未动,行为与 0.1.15 逐位一致。"
+    },
+    "CHG-403": {
+      "id": "CHG-403",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:48:30+00:00",
+      "updated_at": "2026-09-18T22:48:30+00:00",
+      "touched_round": 338,
+      "commit": "5a3f857",
+      "summary": "发版五步:package.json 0.1.15 → 0.1.16;CHANGELOG「未发布」定稿成带日期的一节(列四份新刻度、写明零运行时变更与\"26 份消融齐了\");三处 tag 引用同步;宿主与 subtree 推送(engine main → 8f1f566);gh release create v0.1.16 + gh api 核对。"
+    },
+    "EV-329": {
+      "id": "EV-329",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:48:30+00:00",
+      "updated_at": "2026-09-18T22:48:30+00:00",
+      "touched_round": 338,
+      "confidence": 0.97,
+      "source": "变更 CHG-403(5a3f857)。cd packages/engine && bun run check(501 例 / 67 文件 + 十一道自检 + 10 示例;发布包自检已是 wanxiang-engine-0.1.16.tgz);cd /workspace/xian && bun run test(274 文件 / 2549 例)、check:engine(59 处引用)、check:engine:standalone(107 个源文件);git push origin main(c24b1fd..5a3f857)、subtree push(→ 8f1f566);gh api 核对:tag v0.1.16 → 8f1f566…、package.json version 0.1.16、release 非 draft / 非 prerelease。",
+      "summary": "0.1.16 让\"刻度表\"这条线收口:26 份消融覆盖了升级曲线、掉落与保底、抽取、经济、清理、内容池、离线、状态、抉择、副本、图鉴、记忆、技能、背包、洗练、账本、入库、周期、投资点、每日任务、产线、境界、伙伴、开炉、伤害公式 —— 每个有数值深度的模块都有一张能被内容作者直接用的表,且由自检保证不许漏收。"
     }
   },
   "edges": [
@@ -28454,6 +28492,12 @@
       "to": "TASK-319",
       "type": "implements",
       "created_at": "2026-09-18T22:45:26+00:00"
+    },
+    {
+      "from": "CHG-403",
+      "to": "TASK-320",
+      "type": "implements",
+      "created_at": "2026-09-18T22:48:30+00:00"
     }
   ]
 }
