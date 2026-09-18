@@ -244,9 +244,14 @@ function runBattle(now: number): void {
   if (!region) return
   const modeDef = EXPLORE_MODES[s.mode]
 
-  const notCleared = !adventure.cleared.includes(region.id)
-  // 每积累 EXPLORE_BOSS_AFTER_WINS 胜,方有资格挑战区域之主(避免开局撞见首领)
-  const bossDue = winsUntilRegionBoss(s.wins, !notCleared) === 0
+  /**
+   * 区域之主的门槛按**这一地界的累计胜场**算,不是"这一趟的连胜"。
+   *
+   * 从前读的是 s.wins(本趟胜场),而战败会结束整趟 —— 于是难模式里输一场就全赔,
+   * 涉险(危险 ×2.1)几乎永远见不到首领、下一片地界也就永远不开(玩家实测)。
+   * 叩门资格该是"对这一地界熟到什么程度",不是"一趟不输"。
+   */
+  const bossDue = winsUntilRegionBoss(adventure.winsIn(region.id), adventure.cleared.includes(region.id)) === 0
   // 敌群与首领取自**本世路线节点**,不是 REGIONS ——
   // 同一处地界放进不同世界,遇到的就该是不同的东西
   const content = placeContent(region.id)
@@ -302,6 +307,8 @@ function runBattle(now: number): void {
 
   if (result.win) {
     track('kills')
+    // 累计胜场:区域之主的门槛认它(见上面那段)——战败结束整趟,但这份进度不清零
+    adventure.addRegionWins(region.id)
     // Phase 28 连胜:再下一城,3/5/10 档发放只管奖(见 earlyGameService.recordWin)
     recordStreakWin()
     // Phase 31 A2:区域事件掉落修正(妖潮/古墓/商队更丰)

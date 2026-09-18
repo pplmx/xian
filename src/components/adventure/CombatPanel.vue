@@ -276,7 +276,8 @@
     const s = session.value
     const r = region.value
     if (!s || !r) return null
-    return winsUntilRegionBoss(s.wins, adventure.cleared.includes(r.id))
+    // 门槛认的是这一地界的**累计**胜场(战败结束整趟,但进度不清零)—— 见 core/exploration
+    return winsUntilRegionBoss(adventure.winsIn(r.id), adventure.cleared.includes(r.id))
   })
   const bossSoon = computed(() => bossIn.value !== null && bossIn.value <= 0)
   const bossHint = computed(() => {

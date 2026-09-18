@@ -43,6 +43,16 @@ export const useAdventureStore = defineStore(
      */
     const mortalCleared = ref<string[]>([])
     const cleared = ref<string[]>([])
+    /**
+     * 各地界的**累计胜场** —— 区域之主的门槛认它,不是"这一趟"的连胜。
+     *
+     * 玩家实测:涉险(危险 ×2.1)/深入(×1.45)模式几乎刷不到首领,只有安稳能,
+     * 于是下一片地界永远不开。根因是门槛绑在**单趟连胜**上 —— 而战败会结束整趟
+     * (stopExploration('defeat')),连胜随之归零,难模式里输一场就全赔。
+     * 首领该是"对这一地界熟到能叩门",不是"一趟不输" —— 故改成按地界累计。
+     * 与 mortalCleared 一样随换世清空:换了天地,旧地界的门路要重新蹚。
+     */
+    const regionWins = ref<Record<string, number>>({})
     const session = ref<AdventureSession | null>(null)
     const pendingEventId = ref<string | null>(null)
     const pendingEventSince = ref(0)
@@ -57,6 +67,14 @@ export const useAdventureStore = defineStore(
       if (unlocked.value.length === 0) unlocked.value = ['qingyun']
       mortalCleared.value = asStringArray(mortalCleared.value)
       cleared.value = asStringArray(cleared.value)
+      // 累计胜场:形状不对就修成"全是有限非负数",坏值一律归零(它决定首领何时出现)
+      const winsRaw = asRecord<unknown>(regionWins.value)
+      const wins: Record<string, number> = {}
+      for (const [id, n] of Object.entries(winsRaw)) {
+        const v = Math.floor(asFiniteNumber(n, 0, 0))
+        if (v > 0) wins[id] = v
+      }
+      regionWins.value = wins
       session.value = asObjectOrNull<AdventureSession>(session.value)
       /**
        * 历练会话是引擎每 tick 都要读的活状态:endsAt/nextBattleAt 若为 NaN,
@@ -117,6 +135,17 @@ export const useAdventureStore = defineStore(
       return true
     }
 
+    /** 记一场胜 —— 区域之主的门槛按这个累计,与"这一趟"无关 */
+    function addRegionWins(regionId: string, n = 1): void {
+      if (n <= 0) return
+      regionWins.value = { ...regionWins.value, [regionId]: (regionWins.value[regionId] ?? 0) + n }
+    }
+
+    /** 某地界的累计胜场(界面与结算都读它,不各自再数一遍) */
+    function winsIn(regionId: string): number {
+      return regionWins.value[regionId] ?? 0
+    }
+
     function setPendingEvent(id: string | null, now: number): void {
       pendingEventId.value = id
       pendingEventSince.value = id ? now : 0
@@ -136,6 +165,8 @@ export const useAdventureStore = defineStore(
       mortalWorld.value = w
       // 换界即换路:本世进度不跨界继承
       mortalCleared.value = []
+      // 门路也是本世的:换一片天地,旧地界的叩门资格不再作数
+      regionWins.value = {}
     }
 
     /** 标记本世某节点已通;已通过则返回 false */
@@ -148,6 +179,7 @@ export const useAdventureStore = defineStore(
     return {
       mortalWorld,
       mortalCleared,
+      regionWins,
       setMortalWorld,
       markNodeCleared,
       unlocked,
@@ -163,6 +195,8 @@ export const useAdventureStore = defineStore(
       setSession,
       unlock,
       markCleared,
+      addRegionWins,
+      winsIn,
       setPendingEvent,
       markEventSeen,
       recordBattle,

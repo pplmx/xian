@@ -291,4 +291,41 @@ describe('首领门槛 · 界面提示与战斗判定同源', () => {
   it('已靖地界:不再有首领,提示返回 null', () => {
     expect(winsUntilRegionBoss(0, true)).toBeNull()
   })
+
+  /**
+   * **玩家实测的回归**:涉险(危险 ×2.1)/深入(×1.45)几乎刷不到首领,只有安稳能,
+   * 于是下一片地界永远不开。
+   *
+   * 根因:门槛读的是**本趟胜场**(s.wins),而战败会结束整趟(stopExploration('defeat')),
+   * 连胜随之归零 —— 难模式里输一场就全赔。首领该是"对这一地界熟到能叩门",
+   * 不是"一趟不输",故进度改为按地界累计(regionWins),换世才清空。
+   */
+  it('首领进度按地界累计:一趟战败不清零,下一趟接着算', () => {
+    setActivePinia(createPinia())
+    const adventure = useAdventureStore()
+    const region = 'qingyun'
+    expect(adventure.winsIn(region)).toBe(0)
+    // 第一趟赢 7 场后战败(会话结束)
+    adventure.addRegionWins(region, 7)
+    adventure.setSession(null)
+    expect(adventure.winsIn(region), '战败不该把叩门进度清零').toBe(7)
+    // 第二趟再赢 3 场:累计到门槛,首领就在下一战
+    adventure.addRegionWins(region, 3)
+    expect(winsUntilRegionBoss(adventure.winsIn(region), false)).toBe(0)
+    // 换一片天地:门路重新蹚(与 mortalCleared 同规则)
+    adventure.setMortalWorld(null)
+    expect(adventure.winsIn(region)).toBe(0)
+  })
+
+  it('累计胜场是持久的、且坏档值会被修回(它决定首领何时出现)', () => {
+    setActivePinia(createPinia())
+    const adventure = useAdventureStore()
+    adventure.addRegionWins('qingyun', 2)
+    // 损坏存档:负数 / NaN / 字符串一律不算数
+    adventure.$patch({ regionWins: { qingyun: -5, luoxia: Number.NaN, heifeng: 'x' as unknown as number } })
+    adventure.sanitize()
+    expect(adventure.winsIn('qingyun')).toBe(0)
+    expect(adventure.winsIn('luoxia')).toBe(0)
+    expect(adventure.winsIn('heifeng')).toBe(0)
+  })
 })

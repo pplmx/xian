@@ -249,9 +249,14 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       // 并非真实经历。总结与旅途记录若按全量上报,玩家会看到「际会 3456 次」
       // 而实际只结算了 40 次——把 count 收敛为真实经历再写进 summary 与 session
       events = evCap
-      // 离线自动挑战区域首领(收益折损,胜则连锁解锁;门槛与在线一致,避免离线早一步解锁下一区)
-      // 门槛与在线同源(EXPLORE_BOSS_AFTER_WINS):两处各写一个 10,改一处就抢跑解锁
-      if (!adventure.cleared.includes(region.id) && wins >= EXPLORE_BOSS_AFTER_WINS) {
+      /**
+       * 离线自动挑战区域首领(收益折损,胜则连锁解锁)。
+       *
+       * 门槛与在线同源:读**这一地界的累计胜场**(本趟胜场并进去之后再判),
+       * 而不是"这一段离线结算里赢了几场"—— 否则难模式(胜率低)在离线也见不到首领。
+       */
+      adventure.addRegionWins(region.id, wins)
+      if (!adventure.cleared.includes(region.id) && adventure.winsIn(region.id) >= EXPLORE_BOSS_AFTER_WINS) {
         const bossDef = enemyDef(placeContent(region.id).boss)
         if (bossDef) {
           const bossDanger = dangerFactorFor(modeDef.dangerMult, region.danger, petDangerMult, regionEventDanger)
