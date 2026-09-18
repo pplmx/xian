@@ -229,6 +229,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 计数器基准快照 | `snapshotOf` / `deltaOf` / `deltaSince` | "从哪一刻算起":同一份只增不减的计数器同时回答"生涯多少"与"这一段多少",不用清零 |
 | 顺序任务链 | `createChain` | 主线 / 章节 / 教程:一次结算连推多节、有守卫且撞上要能说出来、不可逆、到链尾就停 |
 | 抽取保底 | `softChance` / `createPityCounter` | 抽得越多越容易出(涨幅封顶、概率有上下限)、第 N 次必出(保底照样掷骰)、出货清不清账你定 |
+| 一次性解锁 | `createUnlockRegistry` | 成就 / 里程碑 / 勋章:只记一次、一次可解多条且顺序稳定、显式解锁也去重 |
 
 ### 战斗:副本的下半场
 
@@ -506,6 +507,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **"还剩几节 / 现在在哪一节"** | `current(state)` / `remaining(state)` / `indexOf(id)` / `nodeAt(index)` —— 界面读数与推进共用同一份;坏下标自动夹回合法范围 |
 | **"看/抽了多少次之后概率变高"**(软保底) | `softChance(base, tries, { step, cap, floor, ceil })` —— 涨多少、涨到哪儿封顶、概率夹在哪区间,一次说清(本作的照面次数保底就是这条:每多看一次 +3%、最多 +35%、夹在 4%~90%) |
 | **"第 N 次必出"**(硬保底与计数) | `createPityCounter({ hardAt, resetOn })` —— `roll(state, pool, rng, base, soft?)` 掷一次并回报 `hit / pity / chance`;**保底照样掷骰**(随机流与开不开保底无关);`resetOn: 'hit' \| 'pity'` 决定什么时候清零,池子各记各的 |
+| **成就 / 里程碑 / 勋章**(达成过一次就永远算数) | `createUnlockRegistry({ entries })` —— `scan(state, ok)` 一次挑出"达成了且还没解开"的(顺序即声明顺序);`unlock(state, id)` 给"没有可判定的条件、只能由当时动作声明"的成就(同样去重,反复触发也只发一次);`list` 保留解锁顺序,成就墙按它排 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
@@ -610,7 +612,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 73 个运行时导出 + 191 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+| 公开面判据 | 74 个运行时导出 + 196 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
 
 ## 边界与兼容性
 
@@ -675,6 +677,7 @@ packages/engine/
     choices.ts      抉择:事件选项、加权后果、超时兜底
     tasks.ts        周期任务板:按计数增量结算、换期幂等
     chain.ts        顺序任务链:一次连推多节、守卫与到链尾
+    unlocks.ts      一次性解锁:成就 / 里程碑的登记簿(只记一次)
     goals.ts        目标/成就条件(判定与进度视图)
     codex.ts        图鉴:照面累计升档、只记见过的最好一件
     memory.ts       世界记忆:档位门槛与不打交道就回落

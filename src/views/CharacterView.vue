@@ -186,7 +186,7 @@
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">藏珍与成就</span>
         <span class="block text-[10px] text-ink-faint tabular">
-          成就 {{ quests.achieved.length }}/{{ ACHIEVEMENTS.length }} · 图鉴 {{ collectHave }}/{{ collectTotal }}
+          成就 {{ achievementCounts(achievementStateOf(quests.achieved)).done }}/{{ ACHIEVEMENTS.length }} · 图鉴 {{ collectHave }}/{{ collectTotal }}
         </span>
       </span>
       <span class="text-[11px] text-gold-ink">翻阅 →</span>
@@ -508,6 +508,7 @@
   import TapNumber from '@/components/common/TapNumber.vue'
   import type { AnyStatKey } from '@/types'
   import { STAT_NAMES } from '@/ui/statNames'
+  import { achievementCounts, achievementStateOf } from '@/core/engineUnlocks'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
 

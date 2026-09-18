@@ -5,7 +5,7 @@
 
     <!-- 成就 -->
     <template v-if="tab === 'achievement'">
-      <SectionTitle title="成就" :hint="`${quests.achieved.length}/${ACHIEVEMENTS.length}`" />
+      <SectionTitle title="成就" :hint="`${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length}`" />
       <div class="card-ink divide-y divide-ink/6 px-4">
         <div v-for="row in achievementRows" :key="row.id" class="flex items-center gap-3 py-2.5">
           <span
@@ -95,6 +95,7 @@
   } from '@/ui/codex'
   import { gongfaFuncText, gongfaMetaText } from '@/ui/itemText'
   import { achievementDirection } from '@/ui/achievementHint'
+  import { achievementCounts, achievementStateOf } from '@/core/engineUnlocks'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import InkTabs from '@/components/common/InkTabs.vue'
   import BaseModal from '@/components/common/BaseModal.vue'

@@ -74,10 +74,9 @@ export const useQuestsStore = defineStore(
       return achieved.value.includes(id)
     }
 
-    function unlockAchievement(id: string): boolean {
-      if (achieved.value.includes(id)) return false
-      achieved.value = [...achieved.value, id]
-      return true
+    /** 整份写回成就表(解锁的判定与去重在 core/engineUnlocks) */
+    function setAchieved(ids: readonly string[]): void {
+      achieved.value = [...ids]
     }
 
     function advanceMain(): void {
@@ -128,7 +127,7 @@ export const useQuestsStore = defineStore(
       counter,
       inc,
       hasAchieved,
-      unlockAchievement,
+      setAchieved,
       advanceMain,
       setMainIndex,
       ownTitle,

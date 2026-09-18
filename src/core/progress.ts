@@ -2,7 +2,7 @@
  * 进度服务 —— 计数器 / 成就 / 主线任务 / 每日任务 / 奖励发放
  * 所有系统通过 track() 汇报行为,由此统一驱动成就与任务
  */
-import type { AchvCond, CounterKey, RewardBundle } from '@/types'
+import type { AchvCond, AchievementDef, CounterKey, RewardBundle } from '@/types'
 import { gte } from '@/utils/gnum'
 import { todayStr } from '@/utils/time'
 import { ACHIEVEMENTS } from '@/data/achievements'
@@ -13,6 +13,7 @@ import { pillDef } from '@/data/pills'
 import { stoneByTier } from './formulas'
 import { dailyShapeOf, dailyStateOf, dailyTaskDef, settleDailies } from './engineDailies'
 import { advanceMainChain, mainQuestDefById } from './engineChain'
+import { achievementIdsOf, achievementStateOf, scanAchievements, unlockAchievementById } from './engineUnlocks'
 import { usePlayerStore } from '@/stores/player'
 import { useQuestsStore } from '@/stores/quests'
 import { useResourcesStore } from '@/stores/resources'
@@ -127,11 +128,21 @@ export function evalCond(cond: AchvCond): boolean {
   return goal !== null && evalGoal(goal, goalEnv())
 }
 
+/**
+ * 解开一枚成就并报喜 —— **去重由库的登记簿管**("只登记一次"),
+ * 状态型成就每拍都会来敲一次门,重复发奖正是这层要挡住的事。
+ */
 function unlockAchievement(id: string): void {
   const quests = useQuestsStore()
+  const out = unlockAchievementById(achievementStateOf(quests.achieved), id)
+  if (!out.unlocked || !out.def) return
+  quests.setAchieved(achievementIdsOf(out.state))
+  announceAchievement(out.def)
+}
+
+/** 发奖 + 报喜(顺序与迁移前一致:先发赏,再提示) */
+function announceAchievement(def: AchievementDef): void {
   const ui = useUiStore()
-  const def = ACHIEVEMENTS.find(a => a.id === id)
-  if (!def || !quests.unlockAchievement(id)) return
   if (def.reward) grantReward(def.reward, true)
   ui.toast(`成就达成「${def.name}」`, 'rare')
 }
@@ -139,18 +150,20 @@ function unlockAchievement(id: string): void {
 /** 检查所有可自动判定的成就 */
 export function checkAchievements(): void {
   const quests = useQuestsStore()
-  for (const def of ACHIEVEMENTS) {
-    if (quests.hasAchieved(def.id)) continue
-    if (def.cond.type === 'quality') continue
+  const out = scanAchievements(achievementStateOf(quests.achieved), def => {
+    if (def.cond.type === 'quality') return false
     /**
      * custom 分两种:
      * - `realm_<major>_<sub>`:状态可判,这里直接判(此前被一并跳过,于是这条分支成了死代码,
      *   「炼气圆满」那类成就根本无人解锁);
      * - 其余状态型键(lifespanLow / lifespan10k / stone1m):由 checkStateAchievements 显式触发。
      */
-    if (def.cond.type === 'custom' && !/^realm_\d+_\d+$/.test(def.cond.key)) continue
-    if (evalCond(def.cond)) unlockAchievement(def.id)
-  }
+    if (def.cond.type === 'custom' && !/^realm_\d+_\d+$/.test(def.cond.key)) return false
+    return evalCond(def.cond)
+  })
+  if (out.newly.length === 0) return
+  quests.setAchieved(achievementIdsOf(out.state))
+  for (const def of out.newly) announceAchievement(def)
 }
 
 /** 品质成就(获得装备时显式调用) */

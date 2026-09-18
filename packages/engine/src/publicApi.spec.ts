@@ -201,6 +201,11 @@ import type {
   TaskProgress,
   TaskSpec,
   UpgradeInfo,
+  UnlockEntry,
+  UnlockOutcome,
+  UnlockRegistry,
+  UnlockScan,
+  UnlockState,
   ValidationIssue,
   VictoryOutcome,
   WorldConfig,
@@ -249,6 +254,7 @@ const RUNTIME_EXPORTS = [
   'createSkillSystem',
   'createTaskBoard',
   'createTriage',
+  'createUnlockRegistry',
   'deltaOf',
   'deltaSince',
   'deckPool',
@@ -382,6 +388,7 @@ type PublicTypes = {
   counters: [CounterMap]
   chain: [Chain<{ open: boolean }>, ChainAdvance, ChainConfig<{ open: boolean }>, ChainNode, ChainState]
   pity: [PityConfig, PityCounter, PityRoll, PityState, SoftPity]
+  unlocks: [UnlockEntry, UnlockOutcome, UnlockRegistry, UnlockScan, UnlockState]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

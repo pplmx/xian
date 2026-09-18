@@ -203,6 +203,9 @@ export { createChain } from './chain.js'
 export type { PityConfig, PityCounter, PityRoll, PityState, SoftPity } from './pity.js'
 export { createPityCounter, softChance } from './pity.js'
 
+export type { UnlockEntry, UnlockOutcome, UnlockRegistry, UnlockScan, UnlockState } from './unlocks.js'
+export { createUnlockRegistry } from './unlocks.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 
