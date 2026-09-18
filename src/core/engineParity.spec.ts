@@ -30,6 +30,7 @@ import {
   COMBAT_MAJOR_GROWTH,
   COMBAT_SUB_GROWTH,
   DIMINISH_KEYS,
+  DIMINISH_WEIGHTS,
   EXP_BASE,
   EXP_MAJOR_GROWTH,
   EXP_SUB_GROWTH,
@@ -43,6 +44,7 @@ import { LIFESPAN_WORLDS, MAX_MAJOR, REALMS, SUB_NAMES, WORLDS, WORLD_BREAK_MAJO
 import { mul, mulN, powN, toNum } from '@/utils/gnum'
 import { baseCombatStats, breakthroughBaseRate, expRequirement, powerScale } from './formulas'
 import { mergeMods } from './statsCalc'
+import { isSoftCapped, mergeModsDetailed, modDepth } from './statsCalc'
 import { AFFIXES, affixValue } from '@/data/affixes'
 import { QUALITIES } from '@/data/qualities'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
@@ -212,7 +214,54 @@ function realAttributeDefs(): AttributeDef[] {
   })
 }
 
-describe('对账 · 属性合并规则(库 与 尚未迁移的 statsCalc)', () => {
+/** 迁移前 core/statsCalc.mergeModsDetailed 的原式(含递减与软阈值两道折算) */
+function refMergeModsDetailed(sources: Record<string, number>[]): { mods: Record<string, number>; effective: Record<string, number>[] } {
+  const out: Record<string, number> = {}
+  const effective: Record<string, number>[] = sources.map(() => ({}))
+  const diminished = new Map<string, { src: number; value: number }[]>()
+  sources.forEach((src, si) => {
+    for (const key in src) {
+      const v = src[key]
+      if (typeof v !== 'number' || v === 0) continue
+      if (v > 0 && (DIMINISH_KEYS as readonly string[]).includes(key)) {
+        const list = diminished.get(key)
+        if (list) list.push({ src: si, value: v })
+        else diminished.set(key, [{ src: si, value: v }])
+      } else {
+        out[key] = (out[key] ?? 0) + v
+        effective[si]![key] = v
+      }
+    }
+  })
+  for (const [key, list] of diminished) {
+    list.sort((a, b) => b.value - a.value)
+    let sum = out[key] ?? 0
+    for (let i = 0; i < list.length; i += 1) {
+      const entry = list[i]!
+      const counted = entry.value * (DIMINISH_WEIGHTS[Math.min(i, DIMINISH_WEIGHTS.length - 1)] ?? 0.25)
+      sum += counted
+      const bucket = effective[entry.src]!
+      bucket[key] = (bucket[key] ?? 0) + counted
+    }
+    out[key] = sum
+  }
+  for (const key in SOFT_CAPS) {
+    const rule = SOFT_CAPS[key as keyof typeof SOFT_CAPS]
+    const v = out[key]
+    if (rule && typeof v === 'number' && v > rule.cap) {
+      const scaled = rule.cap + (v - rule.cap) * rule.diminish
+      const factor = scaled / v
+      for (const bucket of effective) {
+        const own = bucket[key]
+        if (typeof own === 'number' && own !== 0) bucket[key] = own * factor
+      }
+      out[key] = scaled
+    }
+  }
+  return { mods: out, effective }
+}
+
+describe('对账 · 属性合并规则(库 与 冻结的旧口径)', () => {
   const system = NUM_WORLD.attributes
 
   it('覆盖到游戏登记过的每一个词条键', () => {
@@ -234,11 +283,46 @@ describe('对账 · 属性合并规则(库 与 尚未迁移的 statsCalc)', () =
         sources.push(src)
       }
       const mine = system.mergeMods(sources)
-      const game = mergeMods(sources as never)
-      for (const key of keys) {
-        expect(mine[key] ?? 0, `round ${round} · ${key}`).toBeCloseTo((game[key as keyof typeof game] as number) ?? 0, 9)
+      const ref = refMergeModsDetailed(sources)
+      expect(Object.keys(mine).sort()).toEqual(Object.keys(ref.mods).sort())
+      for (const key of Object.keys(ref.mods)) {
+        expect(mine[key] ?? 0, `round ${round} · ${key}`).toBeCloseTo(ref.mods[key]!, 12)
       }
     }
+  })
+
+  it('来源明细也一致:两道折算都摊回来源,明细之和等于合计', () => {
+    const rng = createRng(77)
+    const keys = ['critRate', 'dodgeRate', 'counterRate', 'shieldOnStart', 'firstStrike', 'attackPct', 'lifesteal']
+    for (let round = 0; round < 200; round += 1) {
+      const sources: Record<string, number>[] = []
+      for (let i = 0, n = rng.int(1, 5); i < n; i += 1) {
+        const src: Record<string, number> = {}
+        for (const key of keys) if (rng.chance(0.5)) src[key] = rng.float(0, 0.6)
+        sources.push(src)
+      }
+      const mine = system.mergeModsDetailed(sources)
+      const ref = refMergeModsDetailed(sources)
+      expect(mine.effective.length).toBe(ref.effective.length)
+      for (let i = 0; i < ref.effective.length; i += 1) {
+        const a = mine.effective[i] ?? {}
+        const b = ref.effective[i]!
+        expect(Object.keys(a).sort(), `round ${round} · row ${i}`).toEqual(Object.keys(b).sort())
+        for (const key of Object.keys(b)) expect(a[key] ?? 0).toBeCloseTo(b[key]!, 12)
+      }
+      for (const key of Object.keys(ref.mods)) expect(mine.mods[key] ?? 0).toBeCloseTo(ref.mods[key]!, 12)
+    }
+  })
+
+  it('迁移接线:statsCalc 的合并与判定都经库计算', () => {
+    const sources = [{ critRate: 0.5 }, { critRate: 0.45, attackPct: 0.2 }]
+    const detailed = mergeModsDetailed(sources)
+    expect(detailed.mods).toEqual(system.mergeModsDetailed(sources).mods)
+    expect(detailed.effective).toEqual(system.mergeModsDetailed(sources).effective)
+    expect(mergeMods(sources)).toEqual(system.mergeMods(sources))
+    expect(isSoftCapped(detailed.mods, 'critRate')).toBe(system.isSoftCapped(detailed.mods, 'critRate'))
+    expect(modDepth(detailed.mods)).toBe(system.modDepth(detailed.mods))
+    expect(modDepth({ attackPct: 0.5, critRate: 0.1, dodgeRate: 0.05, cultivationSpeed: 0.3 })).toBeCloseTo(0.15, 12)
   })
 })
 

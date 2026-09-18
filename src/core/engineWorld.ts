@@ -29,6 +29,7 @@ import {
   COMBAT_MAJOR_GROWTH,
   COMBAT_SUB_GROWTH,
   DIMINISH_KEYS,
+  DIMINISH_WEIGHTS,
   EQUIP_BASE_FACTOR,
   EQUIP_LEVEL_BONUS,
   EQUIP_QUALITY_FLAT_EXP,
@@ -81,7 +82,12 @@ function attributes(): AttributeDef[] {
 export const ENGINE_WORLD_CONFIG: GameConfig = {
   name: '云隐修仙录',
   version: '1.33.0',
-  attributes: { defs: attributes() },
+  attributes: {
+    defs: attributes(),
+    // 递减阶梯的来源仍是 data/constants(平衡口径的唯一定义处)——
+    // 传进去,而不是让库用它自己的默认值:哪天调平衡,这里跟得上。
+    diminishingWeights: DIMINISH_WEIGHTS
+  },
   realms: {
     worlds: WORLDS.map(w => ({
       id: w.id,

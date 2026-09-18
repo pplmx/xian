@@ -1,6 +1,14 @@
 /**
  * 属性汇总 —— Base × 装备 × 功法 × 天赋 × Buff × 建筑 = FinalStats
  * 纯函数:输入快照,输出最终属性
+ *
+ * 「词条怎么合并」这条规则已搬进公共库的属性系统(见 core/engineWorld):
+ * mergeMods / mergeModsDetailed / isSoftCapped / modDepth 都是转发。
+ * 仍然是**两处非线性**:递减词条按贡献排队打折(1 / 0.75 / 0.5 / 0.25)、
+ * 合计越过软阈值后超出部分折算;两道折算都摊回来源,故明细之和恒等于面板值。
+ *
+ * 留在这里的是本作自己的那部分:道果的另乘、灵根与灵气充盈并入修炼速度 ——
+ * 那些是《云隐修仙录》的平衡设计,不是通用规则。
  */
 import type { AnyStatKey, FinalStats, GNum, StatMods, StatSourceRow } from '@/types'
 import { add, mulN } from '@/utils/gnum'
@@ -8,12 +16,10 @@ import {
   DAO_FRUIT_COMBAT_BONUS,
   DAO_FRUIT_CULT_BONUS,
   DAO_FRUIT_SOFT_EXP,
-  DIMINISH_KEYS,
-  DIMINISH_WEIGHTS,
-  QI_RICH_BONUS,
-  SOFT_CAPS
+  QI_RICH_BONUS
 } from '@/data/constants'
 import { baseCombatStats, powerScore } from './formulas'
+import { ENGINE_WORLD } from './engineWorld'
 
 export interface StatsInput {
   major: number
@@ -32,15 +38,13 @@ export interface StatsInput {
   qiRich: boolean
 }
 
-const DIMINISH_SET = new Set<AnyStatKey>(DIMINISH_KEYS)
-
 /**
  * 合并多个来源的百分比属性。
  * 普通词条同键相加;条件/触发词条(DIMINISH_KEYS)按来源贡献降序以 100%/75%/50%/25% 递减计入——
  * 同一词条重复堆叠边际递减,混合构筑相对更值(Phase 19.5)
  */
 export function mergeMods(sources: StatMods[]): StatMods {
-  return mergeModsDetailed(sources).mods
+  return ENGINE_WORLD.attributes.mergeMods(sources)
 }
 
 /**
@@ -52,59 +56,13 @@ export function mergeMods(sources: StatMods[]): StatMods {
  * 打折后的那一份记给该来源,软阈值则给所有相关来源同乘一个系数(线性,故仍相加正确)。
  */
 export function mergeModsDetailed(sources: StatMods[]): { mods: StatMods; effective: StatMods[] } {
-  const out: StatMods = {}
-  const effective: StatMods[] = sources.map(() => ({}))
-  const diminished = new Map<AnyStatKey, { src: number; value: number }[]>()
-  sources.forEach((src, si) => {
-    for (const k in src) {
-      const key = k as AnyStatKey
-      const v = src[key]
-      if (typeof v !== 'number' || v === 0) continue
-      if (v > 0 && DIMINISH_SET.has(key)) {
-        const list = diminished.get(key)
-        if (list) list.push({ src: si, value: v })
-        else diminished.set(key, [{ src: si, value: v }])
-      } else {
-        out[key] = (out[key] ?? 0) + v
-        effective[si]![key] = v
-      }
-    }
-  })
-  for (const [key, list] of diminished) {
-    list.sort((a, b) => b.value - a.value)
-    let sum = out[key] ?? 0
-    for (let i = 0; i < list.length; i += 1) {
-      const entry = list[i]!
-      const counted = entry.value * (DIMINISH_WEIGHTS[Math.min(i, DIMINISH_WEIGHTS.length - 1)] ?? 0.25)
-      sum += counted
-      const bucket = effective[entry.src]!
-      bucket[key] = (bucket[key] ?? 0) + counted
-    }
-    out[key] = sum
-  }
-  // Phase 30.4 软阈值:合计越过 cap 后超出部分折算(极端堆叠的第二道防线)
-  for (const k in SOFT_CAPS) {
-    const key = k as AnyStatKey
-    const v = out[key]
-    const rule = SOFT_CAPS[key]
-    if (rule && typeof v === 'number' && v > rule.cap) {
-      const scaled = rule.cap + (v - rule.cap) * rule.diminish
-      // 同乘一个系数摊回各来源:明细之和仍等于面板值
-      const factor = scaled / v
-      for (const bucket of effective) {
-        const own = bucket[key]
-        if (typeof own === 'number' && own !== 0) bucket[key] = own * factor
-      }
-      out[key] = scaled
-    }
-  }
-  return { mods: out, effective }
+  const { mods, effective } = ENGINE_WORLD.attributes.mergeModsDetailed(sources)
+  return { mods, effective }
 }
 
 /** 某键是否已进入软阈值递减区(展示层提示用) */
 export function isSoftCapped(mods: StatMods, key: AnyStatKey): boolean {
-  const rule = SOFT_CAPS[key]
-  return rule !== undefined && (mods[key] ?? 0) >= rule.cap
+  return ENGINE_WORLD.attributes.isSoftCapped(mods, key)
 }
 
 /**
@@ -114,14 +72,7 @@ export function isSoftCapped(mods: StatMods, key: AnyStatKey): boolean {
  * 后者不参与战斗。剩下的暴击、闪避、吸血、反击、护盾等才是构筑的实际厚度
  */
 export function modDepth(mods: StatMods): number {
-  let sum = 0
-  for (const k in mods) {
-    const key = k as AnyStatKey
-    if (key === 'attackPct' || key === 'defensePct' || key === 'maxHpPct' || key === 'cultivationSpeed') continue
-    const v = mods[key]
-    if (typeof v === 'number' && v > 0) sum += v
-  }
-  return sum
+  return ENGINE_WORLD.attributes.modDepth(mods)
 }
 
 export function modOf(mods: StatMods, key: AnyStatKey): number {

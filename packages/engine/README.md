@@ -144,6 +144,11 @@ console.log(battle.win ? '胜' : '败', battle.rounds, '回合')
 `expRequirement` / `baseCombatStats` / `breakthroughBaseRate` / `isWorldStepLayer`
 现在转发到 `src/core/engineWorld.ts`(用 GNum 适配器装配的库世界)。
 
+词条合并规则也换过去了:`src/core/statsCalc.ts` 的
+`mergeMods` / `mergeModsDetailed` / `isSoftCapped` / `modDepth`
+现在由库的属性系统计算(递减阶梯仍取自本作的 `data/constants.DIMINISH_WEIGHTS`,
+在配置里显式传入 —— 平衡口径仍只有一处)。
+
 这件事能被证明,而不是靠"我改了":
 
 1. `engineParity.spec.ts` 里留着**迁移前冻结的旧公式**(`refExpRequirement` 等三个),
@@ -152,8 +157,8 @@ console.log(battle.win ? '胜' : '败', battle.rounds, '回合')
    `ENGINE_WORLD.realms.expCost(major, sub)` 是同一份结果,并再次与冻结口径对账;
 3. 全量 1922 个用例、`vue-tsc`、ESLint 与生产构建全绿 —— 玩家侧的数字一位没动。
 
-尚未迁移的是属性合并、装备生成/解析与副本调度(`statsCalc` / `equipGen` / `regions`),
-它们仍与库并行存在,由同一份判据钉着;下一步按同样的方式逐个换过去。
+尚未迁移的是装备生成/解析与副本调度(`equipGen` / `regions`),它们仍与库并行存在,
+由同一份判据钉着;下一步按同样的方式逐个换过去。
 
 ## 目录
 
