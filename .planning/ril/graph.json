@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 314,
+  "round": 315,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:17:27+00:00",
+  "updated_at": "2026-09-18T21:20:54+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18144,6 +18144,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-377(78b77c3)。bunx vitest run src/attributes.sim.spec.ts(4 例,打印:1/2/3/4/5/6/10 条 → 10.0%/17.5%/22.5%/25.0%/27.5%/30.0%/40.0%(≈1.00/1.75/2.25/2.50/2.75/3.00/4.00 条份量);ranked 30% vs max 10% vs sum 60%;会心率 50→50、75→75、80→77.5、100→87.5、150→112.5、200→137.5;六条明细 10.0/7.5/5.0/2.5/2.5/2.5);cd packages/engine && bun run check(419 例 / 48 文件 + 七道自检,其中调参参考自检报\"8 份消融实验都被收进 docs/tuning.md\",目录树自检与用例文件数自检各当场抓出一次文档漂移);cd /workspace/xian && bun run test(2467 例)、test:report(2467 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(88 个源文件)。",
       "summary": "把\"递减\"这个词的真相量清楚了:默认阶梯只折前四条,第 5 条起恒定 25% —— 所以\"堆同名\"仍然线性获益,想封顶必须用软阈值或 max。同时给出三种同名政策的对照刻度(ranked 30% / max 10% / sum 60%),以及软阈值的斜率(越过 75% 后每 +1% 只值 +0.5%)。"
+    },
+    "TASK-296": {
+      "id": "TASK-296",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:20:54+00:00",
+      "updated_at": "2026-09-18T21:20:54+00:00",
+      "touched_round": 314,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.11:把自 0.1.10 起的 13 个实质提交(文档分层 README→docs/usage.md、新增 docs/tuning.md、经营示例、八份消融、三道新自检)定成一个可 pin 的节点。公开面未动(75 导出 / 203 类型),行为与 0.1.10 逐位一致。"
+    },
+    "CHG-378": {
+      "id": "CHG-378",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:20:54+00:00",
+      "updated_at": "2026-09-18T21:20:54+00:00",
+      "touched_round": 314,
+      "commit": "dbd5521",
+      "summary": "发版五步:package.json 0.1.10 → 0.1.11;CHANGELOG「未发布」定稿成带日期的一节(并写明这一批不动公开面、行为逐位一致);三处 tag 引用同步(engine README 安装块与版本块、docs/development.md 的 npm pack 例、根 README 的版本与依赖串);宿主与 subtree 推送(engine main → a9ddfb3);gh release create v0.1.11 + gh api 核对。"
+    },
+    "EV-304": {
+      "id": "EV-304",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:20:54+00:00",
+      "updated_at": "2026-09-18T21:20:54+00:00",
+      "touched_round": 314,
+      "confidence": 0.97,
+      "source": "变更 CHG-378(dbd5521)。cd packages/engine && bun run check(419 例 / 48 文件 + 七道自检;发布包自检已变成 wanxiang-engine-0.1.11.tgz 且装进临时项目可用);cd /workspace/xian && bun run test(2467 例)、test:report(2467 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(88 个源文件 + 8 示例);git push origin main(77ceda1..dbd5521)、git subtree push --prefix=packages/engine engine main(95bdf58..a9ddfb3);gh release create v0.1.11 --target a9ddfb3898709366943507d8b9e776fe9815445b;gh api repos/pplmx/wanxiang-engine/git/ref/tags/v0.1.11 → sha a9ddfb3…、type commit;gh api contents/package.json?ref=v0.1.11 → version 0.1.11;gh api contents/README.md?ref=v0.1.11 → 三处 v0.1.11 引用就位;gh release view → isDraft false / isPrerelease false。",
+      "summary": "0.1.11 是一个\"零功能变更\"的节点:tag 指向的代码行为与 0.1.10 完全一致,新增的是八份消融、三份文档(usage/tuning/shop-loop 示例)与三道文档自检。首次尝试 gh release create 用短 SHA 作 --target 被拒(\"tag_name is not a valid tag\"),改用完整 SHA 成功 —— 记下来省得下次再撞。"
     }
   },
   "edges": [
@@ -27333,6 +27371,12 @@
       "to": "TASK-295",
       "type": "implements",
       "created_at": "2026-09-18T21:17:27+00:00"
+    },
+    {
+      "from": "CHG-378",
+      "to": "TASK-296",
+      "type": "implements",
+      "created_at": "2026-09-18T21:20:54+00:00"
     }
   ]
 }
