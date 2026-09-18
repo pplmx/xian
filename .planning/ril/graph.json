@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 249,
+  "round": 250,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:05:00+00:00",
+  "updated_at": "2026-09-18T23:40:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14911,6 +14911,55 @@
       "rationale": "三处都是\"计算结果或文本形态\"的写死,而它们恰好是最容易被题材与引擎需求拉开差距的地方:伤害公式(减法/除算/查表)、存档文本(压缩/加密/换封套)、词条取值(凸/凹曲线)。统一按\"完全接管\"处理:一旦给了函数,引擎不再叠加自己的规则(伤害不再压地板、编解码不再套 JSON、取值不再线性插值)——半接管最难讲清,而\"要么默认、要么全归你\"边界最清楚。",
       "alternatives_rejected": "①半接管(比如自定义伤害后再压一次地板):两套规则叠加,使用方算不准;②只给参数不给函数(表达不了形状);③把 codec 做成固定几个选项(压缩/加密各自实现千差万别)。",
       "summary": "计算结果/文本形态类钩子一律\"完全接管\":给了函数就不再叠加引擎自己的规则;默认路径逐位不变。"
+    },
+    "TASK-229": {
+      "id": "TASK-229",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T23:40:00+00:00",
+      "updated_at": "2026-09-18T23:40:00+00:00",
+      "touched_round": 250,
+      "category": "tooling",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "回答\"我们对万象的引用到底是不是像普通用户集成(submodule? npm/github 包?)\"并顺手补判据:核实当前是\"同仓源码 + 包名导入 + 解析别名 + subtree 同步\"(无依赖项、无 .gitmodules、packages/engine 是普通文件);把\"像使用者那样引用\"的判据补上第三种漏洞 —— 相对路径直接钻进库内部。"
+    },
+    "CHG-310": {
+      "id": "CHG-310",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:40:00+00:00",
+      "updated_at": "2026-09-18T23:40:00+00:00",
+      "touched_round": 250,
+      "commit": "48312cd",
+      "summary": "scripts/engine-dist.mjs 第 ⑥ 步增加第三种禁止项:src 下任何 import 规范出现 packages/engine(相对路径钻内部)即报错;与\"禁内部别名\"\"禁深层导入\"共用一段扫描。当前 25 处引用全部走公开入口。"
+    },
+    "EV-235": {
+      "id": "EV-235",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:40:00+00:00",
+      "updated_at": "2026-09-18T23:40:00+00:00",
+      "touched_round": 250,
+      "source": "bun run check:engine(第 ⑥ 步:25 处引用全走公开入口,三类违规各会红)+ git ls-files -s packages/engine(mode 100644,非 gitlink)+ 根 package.json 无 wanxiang-engine 依赖 + 无 .gitmodules",
+      "summary": "引用现状核实:不是 submodule(无 .gitmodules、库目录是普通文件),也不是包依赖(根 package.json 无该依赖),而是\"同仓源码 + 包名导入 + vite/tsconfig 别名 + git subtree 同步独立仓\";应用侧 25 处 import 的写法与普通使用者一致,且三类\"绕开公开入口\"的做法都有判据拦截。"
+    },
+    "DEC-102": {
+      "id": "DEC-102",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:40:00+00:00",
+      "updated_at": "2026-09-18T23:40:00+00:00",
+      "touched_round": 250,
+      "rationale": "库仍在快速长大(每轮都在加系统),此时切成包依赖会把\"改库\"变成\"发版/重装/重建 dist\",拖慢迭代;而切包真正要防的是\"宿主偷偷依赖库内部\",这件事已经由三条判据拦住(禁内部别名、禁深层导入、禁相对路径钻内部),外加独立成库自检。故开发期保持\"同仓源码 + 包名导入\",等 API 稳定(0.2/1.0)再切包:那时宿主只改 1 行依赖 + 删 2 行解析配置,源码不用动。",
+      "alternatives_rejected": "①现在就切 github: 依赖(Bun 默认拦 prepare,需 trustedDependencies 或预构建;类型跳转退到 .d.ts,改库要重装);②改成 submodule(库仓为唯一真源,但多仓协作与 CI 成本高,且开发循环一样要 build);③什么都不做、只靠自觉(现在三条判据正是替代\"自觉\"的做法)。",
+      "summary": "开发期用\"同仓源码 + 包名导入 + 禁止绕开公开入口\"的折中;API 稳定后再切 npm 包依赖(宿主改动仅一行依赖 + 删两行别名)。"
     }
   },
   "edges": [
@@ -22822,6 +22871,42 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "CHG-310",
+      "to": "TASK-229",
+      "type": "implements",
+      "created_at": "2026-09-18T23:40:00+00:00"
+    },
+    {
+      "from": "CHG-310",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T23:40:00+00:00"
+    },
+    {
+      "from": "EV-235",
+      "to": "CHG-310",
+      "type": "validates",
+      "created_at": "2026-09-18T23:40:00+00:00"
+    },
+    {
+      "from": "TASK-229",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T23:40:00+00:00"
+    },
+    {
+      "from": "TASK-229",
+      "to": "TASK-216",
+      "type": "depends_on",
+      "created_at": "2026-09-18T23:40:00+00:00"
+    },
+    {
+      "from": "DEC-102",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T23:40:00+00:00"
     }
   ]
 }
