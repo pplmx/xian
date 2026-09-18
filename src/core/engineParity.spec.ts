@@ -81,6 +81,11 @@ import { PILLS } from '@/data/pills'
 import { recipeCraft, type SkillId } from '@/data/crafting'
 import { LORE_MAX, MATERIALS } from '@/data/materials'
 import { SKILL_EXP_SCALE, skillLevelFromExp, skillStageName } from '@/data/crafting'
+import { MAIN_QUESTS, DAILY_TASKS } from '@/data/quests'
+import { ACHIEVEMENTS } from '@/data/achievements'
+import { toGoalCond } from './progress'
+import { evalGoal, goalProgress, type GoalEnv } from '@engine/index'
+import type { AchvCond } from '@/types'
 
 /**
  * 对账就用**应用运行时那一份**世界对象(ENGINE_WORLD),不再另装一份:
@@ -277,6 +282,38 @@ function refWeightedSkill(craft: { skills: Record<string, number | undefined> },
     weight += w
   }
   return weight > 0 ? total / weight : 0
+}
+
+// ---- 迁移前 core/progress.evalCond 的原式(改写成"向环境提问",便于对账) ----
+
+interface RefGoalState {
+  counter: (key: string) => number
+  major: number
+  sub: number
+}
+
+function refEvalCond(cond: AchvCond, st: RefGoalState): boolean {
+  switch (cond.type) {
+    case 'counter':
+      return st.counter(cond.key) >= cond.value
+    case 'realm':
+      return st.major >= cond.major
+    case 'quality':
+      return false // 品质成就由 checkQuality 显式触发
+    case 'custom': {
+      const m = /^realm_(\d+)_(\d+)$/.exec(cond.key)
+      if (m) {
+        const major = Number(m[1])
+        const sub = Number(m[2])
+        return st.major > major || (st.major === major && st.sub >= sub)
+      }
+      return false
+    }
+  }
+}
+
+function refGoalEnv(st: RefGoalState): GoalEnv {
+  return { counter: key => st.counter(key), level: () => st.major, subLevel: () => st.sub, custom: () => false }
 }
 
 /** 迁移前 data/affixes.affixValue 的原式(词条数值 = min + (max-min) × roll,按小数位取整) */
@@ -863,6 +900,50 @@ describe('对账 · 炼制(库的乘区公式 与 冻结的旧口径)', () => {
     }
     for (let lv = -5; lv <= 105; lv += 1) {
       expect(skillStageName(lv), `等级 ${lv}`).toBe(refStage(lv))
+    }
+  })
+})
+
+describe('对账 · 任务与成就条件(库的 goals 与 冻结的旧判据)', () => {
+  // 每日任务不是 AchvCond 形状(它记的是 counterKey + target),按同一条计数语义折算过来
+  const dailyConds: AchvCond[] = DAILY_TASKS.map(t => ({ type: 'counter' as const, key: t.counterKey as never, value: t.target }))
+  const allConds: AchvCond[] = [...MAIN_QUESTS.map(q => q.cond), ...dailyConds, ...ACHIEVEMENTS.map(a => a.cond)]
+
+  it('真实条件表非空,且覆盖到四种类型', () => {
+    expect(allConds.length).toBeGreaterThan(50)
+    expect(new Set(allConds.map(c => c.type))).toEqual(new Set(['counter', 'realm', 'quality', 'custom']))
+  })
+
+  it('判定与进度:每个真实条件 × 若干状态,与冻结旧判据逐个相同(品质型除外)', () => {
+    const levels = [0, 1, 3, 9, 14, 20]
+    const subs = [0, 3, 9]
+    for (const cond of allConds) {
+      const goal = toGoalCond(cond)
+      if (cond.type === 'quality') {
+        // 品质成就由 checkQuality 显式触发,不与等级同路 —— 翻译层就该认出这一点
+        expect(goal, '品质条件不该被翻成等级判据').toBeNull()
+        continue
+      }
+      expect(goal, `${cond.type} 条件应当能翻成库的条件`).not.toBeNull()
+      for (const major of levels) {
+        for (const sub of subs) {
+          // 计数型:围绕目标值取 0 / 差一 / 达标 / 超出;其它类型取 0 与一个大数
+          const counterValues = cond.type === 'counter' ? [0, Math.max(0, cond.value - 1), cond.value, cond.value + 3] : [0]
+          for (const count of counterValues) {
+            const st: RefGoalState = { counter: () => count, major, sub }
+            const where = `${cond.type}·${major}·${sub}·计数${count}`
+            expect(evalGoal(goal!, refGoalEnv(st)), where).toBe(refEvalCond(cond, st))
+            const p = goalProgress(goal!, refGoalEnv(st))
+            expect(p?.done, `${where}·进度`).toBe(refEvalCond(cond, st))
+            if (cond.type === 'counter') {
+              const expectedRatio = cond.value > 0 ? Math.min(1, count / cond.value) : 1
+              expect(p?.ratio, `${where}·比例`).toBe(expectedRatio)
+            } else {
+              expect(p?.ratio, `${where}·比例应为 null`).toBeNull()
+            }
+          }
+        }
+      }
     }
   })
 })

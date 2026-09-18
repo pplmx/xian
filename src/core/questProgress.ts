@@ -12,7 +12,8 @@
  *      custom 的 realm_a_b 与 evalCond 用同一套比较(境界 > 或 = 且层数 ≥)。
  */
 import type { AchvCond, QuestDef } from '@/types'
-import { evalCond } from './progress'
+import { goalEnv, toGoalCond } from './progress'
+import { goalProgress } from '@engine/index'
 import { realmDef, realmLabel } from '@/data/realms'
 import { usePlayerStore } from '@/stores/player'
 import { useQuestsStore } from '@/stores/quests'
@@ -29,7 +30,12 @@ export interface QuestProgressView {
 export function questProgressOf(cond: AchvCond): QuestProgressView | null {
   const player = usePlayerStore()
   const quests = useQuestsStore()
-  const done = evalCond(cond)
+  const goal = toGoalCond(cond)
+  if (goal === null) return null
+  // 判定与进度由公共库给(见 packages/engine 的 goals):界面读数与领赏判定同一份
+  const progress = goalProgress(goal, goalEnv())
+  if (progress === null) return null
+  const done = progress.done
 
   switch (cond.type) {
     case 'counter': {
@@ -37,7 +43,7 @@ export function questProgressOf(cond: AchvCond): QuestProgressView | null {
       return {
         text: done ? `已成(${cond.value}/${cond.value})` : `已 ${Math.min(cur, cond.value)}/${cond.value}`,
         done,
-        ratio: cond.value > 0 ? Math.min(1, cur / cond.value) : 1
+        ratio: progress.ratio
       }
     }
     case 'realm': {

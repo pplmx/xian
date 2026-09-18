@@ -17,6 +17,47 @@ import { useResourcesStore } from '@/stores/resources'
 import { useInventoryStore } from '@/stores/inventory'
 import { useUiStore } from '@/stores/ui'
 import type { CollectionCategory } from '@/stores/quests'
+import type { GoalCond, GoalEnv } from '@engine/index'
+import { evalGoal } from '@engine/index'
+
+/**
+ * 本作的条件 → 库的条件。
+ *
+ * `custom` 里的 `realm_<大阶>_<小阶>` 是本作"修到某一层"的写法,翻成库的位阶型;
+ * 其余自定义键(寿元、灵石这类状态)在库里仍是"交给作品判"。
+ */
+export function toGoalCond(cond: AchvCond): GoalCond | null {
+  switch (cond.type) {
+    case 'counter':
+      return { type: 'counter', key: cond.key, value: cond.value }
+    case 'realm':
+      return { type: 'position', major: cond.major }
+    case 'quality':
+      return null
+    case 'custom': {
+      const m = /^realm_(\d+)_(\d+)$/.exec(cond.key)
+      if (m) return { type: 'position', major: Number(m[1]), sub: Number(m[2]) }
+      return { type: 'custom', key: cond.key }
+    }
+  }
+}
+
+/**
+ * 本作的环境:计数、境界、自定义键 —— 库向这里提问,而不是自己去翻存档。
+ *
+ * `custom` 目前一律返回 false:本作还没有"一次性外部事实"型的条件键;
+ * 等哪天真有(如"是否已渡过某劫"),从这里接上即可,判据那边一行不用改。
+ */
+export function goalEnv(): GoalEnv {
+  const quests = useQuestsStore()
+  const player = usePlayerStore()
+  return {
+    counter: key => quests.counter(key as CounterKey),
+    level: () => player.major,
+    subLevel: () => player.sub,
+    custom: () => false
+  }
+}
 
 /** 玩家当前所处的等效掉落层级 */
 export function playerTier(): number {
@@ -73,27 +114,15 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
  *
  * 导出是为了让界面上的「进度文案」(见 core/questProgress)读同一份判断:
  * 显示"还差 3 个敌人"与实际能不能领赏,不许各算各的。
+ *
+ * 比较本身已搬进公共库(见 packages/engine 的 goals.evalGoal):库只认"环境",
+ * 不认识本作的存档;本文件负责把本作的计数、境界与自定义键翻成库的三问。
  */
 export function evalCond(cond: AchvCond): boolean {
-  const quests = useQuestsStore()
-  const player = usePlayerStore()
-  switch (cond.type) {
-    case 'counter':
-      return quests.counter(cond.key) >= cond.value
-    case 'realm':
-      return player.major >= cond.major
-    case 'quality':
-      return false // 品质成就由 checkQuality 显式触发
-    case 'custom': {
-      const m = /^realm_(\d+)_(\d+)$/.exec(cond.key)
-      if (m) {
-        const major = Number(m[1])
-        const sub = Number(m[2])
-        return player.major > major || (player.major === major && player.sub >= sub)
-      }
-      return false
-    }
-  }
+  // 品质成就由 checkQuality 显式触发(不与等级同路),故不走通用判据
+  if (cond.type === 'quality') return false
+  const goal = toGoalCond(cond)
+  return goal !== null && evalGoal(goal, goalEnv())
 }
 
 function unlockAchievement(id: string): void {
