@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 311,
+  "round": 312,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:08:48+00:00",
+  "updated_at": "2026-09-18T21:11:36+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18030,6 +18030,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-374(1c4f8e4)。bunx vitest run src/idle.sim.spec.ts(5 例,打印:1h→1 步 / 6h→6 步 / 7h→6 步(86%)/ 24h→6 步(25%)/ 72h→6 步(8%,吞 66h);边际 1h..6h 各 +1、7h 与 24h 为 0;8 小时一次算完 6 步 vs 4+4 结算 8 步(无上限时两者都是 8 步);12h/上限 6h/效率 0.5 → 计入 6h、有效 3h、3 步;maxSteps=90 → 90 步 + 余 270 分钟 = 有效 360 分钟);cd packages/engine && bun run check(410 例 / 46 文件 + 组装指南 25 工厂 + 定制表 99 名字 + 目录树 37 模块 / 4 文档 + 用例数自检 —— 这一轮它当场抓出 README 还写着 45 个文件 + 产物 75 导出 + 发布包);cd /workspace/xian && bun run test(2458 例)、bun run test:report(2458 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(86 个源文件)。",
       "summary": "离线收益的两条口径被量化:①过了上限边际收益为 0(6 小时与 72 小时拿到的一样),这条曲线决定\"离线上限怎么卖\";②上限是\"每次结算\"施加的 —— 同样 8 小时,拆成 4+4 两次结算能多拿 2 步,所以长度不变量(分段与一次算完一致)只在没踩到上限时成立,真要封顶必须自己维护\"今天已计入多少\"。副产品:上一轮新加的\"用例文件数自检\"在这一轮立刻抓出 README 的数字漂移,证明自检本身有用。"
+    },
+    "TASK-293": {
+      "id": "TASK-293",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:11:36+00:00",
+      "updated_at": "2026-09-18T21:11:36+00:00",
+      "touched_round": 311,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "状态叠加消融(buffs.sim.spec):量三种叠加算法的兑现量 —— 30 分钟的药每 20 分钟服一次连服 24 次,extend 有状态 720 分钟(全程)且尾部长 260 分钟,longest/reset 只有 490 分钟、尾部 30 分钟(差 47% ≈ 白吃 7.67 剂);不重叠时三种完全一样(240 分钟),差异只来自重叠;过期后再服 extend 也不补回过去(150 分钟处服 → 到 180);封顶一重叠就顶住(四次读数全 45)。"
+    },
+    "CHG-375": {
+      "id": "CHG-375",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:11:36+00:00",
+      "updated_at": "2026-09-18T21:11:36+00:00",
+      "touched_round": 311,
+      "commit": "6a4792b",
+      "summary": "库:新增 src/buffs.sim.spec.ts(5 例);CHANGELOG「未发布」记下那张三行对照表与四条结论;docs/assembly.md 坑清单补一行(以为叠时长/刷新只是口味问题);README 用例数改 415/47。宿主无改动。"
+    },
+    "EV-301": {
+      "id": "EV-301",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:11:36+00:00",
+      "updated_at": "2026-09-18T21:11:36+00:00",
+      "touched_round": 311,
+      "confidence": 0.96,
+      "source": "变更 CHG-375(6a4792b)。bunx vitest run src/buffs.sim.spec.ts(5 例,打印:extend 有状态 720 分钟 / 尾部 260 分钟;longest 与 reset 均 490 / 30;差值 230 分钟 ≈ 7.67 剂;不重叠时三者均为 240 分钟;第 0 分钟服一剂到 30 分钟、第 150 分钟再服到 180 分钟;上限 45 分钟时四次叠加读数 45→45→45→45);cd packages/engine && bun run check(415 例 / 47 文件 + 组装指南 25 工厂 + 定制表 99 名字 + 目录树 37 模块 / 4 文档 + 用例数自检(当场抓出 README 还写 46)+ 产物 75 导出 + 发布包);cd /workspace/xian && bun run test(2463 例)、bun run test:report(2463 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(87 个源文件)。",
+      "summary": "默认值\"叠时长\"的价格被量化了:同样 24 剂药,叠时长兑现 720 分钟、刷新只有 490 分钟(玩家视角:白吃 7.67 剂),而这只有在\"服用间隔小于药效\"时才体现 —— 间隔大于药效时三种算法一模一样。这条口径直接决定内容侧该把药效与服用频率怎么配。"
     }
   },
   "edges": [
@@ -27201,6 +27239,12 @@
       "to": "TASK-292",
       "type": "implements",
       "created_at": "2026-09-18T21:08:48+00:00"
+    },
+    {
+      "from": "CHG-375",
+      "to": "TASK-293",
+      "type": "implements",
+      "created_at": "2026-09-18T21:11:36+00:00"
     }
   ]
 }
