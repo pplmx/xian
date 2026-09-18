@@ -31,6 +31,14 @@ const SET_DEFS: Map<string, EquipSetDef> = new Map([
   ['s_hundunjia', { id: 's_hundunjia', name: '混沌共鸣', required: 2, effectDesc: '开战时本源护体(护盾+5%)', hook: 'astral' }]
 ])
 
+/**
+ * 全部共鸣定义 —— 给公共库的装配用(见 core/engineWorld)。
+ *
+ * 装备模板里写着 `set: 's_xingdou'`,而共鸣的效果住在这一张表里;
+ * 把两处拼起来才能回答"这套装到底有没有定义" —— 引擎的交叉校验正是查这个。
+ */
+export const EQUIP_SETS: EquipSetDef[] = [...SET_DEFS.values()]
+
 export function equipSetDef(setId: string): EquipSetDef | undefined {
   return SET_DEFS.get(setId)
 }

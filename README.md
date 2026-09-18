@@ -102,6 +102,10 @@ packages/engine/
 这是判据而不是承诺：见 `packages/engine/src/presets/presets.spec.ts`（换皮）与
 `src/core/engineParity.spec.ts`（与本体逐数字对账：境界/寿元/修为/三维/进阶率、词条合并、掉落池与装备结算、区域解锁）。
 
+**本作已经开始用这个库**：等级曲线的四条（`expRequirement` / `baseCombatStats` / `breakthroughBaseRate` / `isWorldStepLayer`）
+已改为经 `src/core/engineWorld.ts` 调用库的实现，数值与迁移前**逐位相同**（判据拿迁移前冻结的旧公式做精确相等对账，
+21 境 × 10 层逐个过）。属性/装备/副本三套尚未迁移，仍由同一份对账判据钉着，下一步按同样方式换过去。
+
 细节与接入方式见 [`packages/engine/README.md`](packages/engine/README.md)。
 
 ### 多端构建
