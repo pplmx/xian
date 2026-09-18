@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 261,
+  "round": 262,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:18:53+00:00",
+  "updated_at": "2026-09-18T16:27:15+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 261,
+      "touched_round": 262,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15517,7 +15517,7 @@
       "version": 1,
       "created_at": "2026-09-18T16:18:47+00:00",
       "updated_at": "2026-09-18T16:18:47+00:00",
-      "touched_round": 261,
+      "touched_round": 262,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -15559,6 +15559,56 @@
       "rationale": "有些机制不适合\"实现进库\":流派组合技、法宝触发、首领阶段都绑具体内容,一旦内建就等于把某个游戏的设计当成通用规则,别人拿到手反而要跟它绕。但它们需要的**能力**是通用的 —— 按回合推进、看到事件再反应。所以库的正确姿势是\"给形状不给规则\":提供 tickFn/onEvent 与一套原语,把\"什么时候追加一记\"\"破盾时触发什么\"留在作品侧。代价是使用者要多写十几行;收益是库不必猜题材,也不会因为某款游戏改玩法而被动。",
       "alternatives_rejected": "①把组合技/法宝/Boss阶段内建成\"通用战斗系统\"(把一款游戏的设计固化成库的口径);②只提供 combat 全量接管钩子(使用者要重写命中/暴击/护盾/反击,等于放弃库);③什么都不给(每家自己重写一套回合推进与事件分发,口径各不同)。",
       "summary": "绑内容的机制不实现进库,只给\"按回合推进 + 事件反应\"的接口形状与原语;库不猜题材,作品自己写规则。"
+    },
+    "TASK-242": {
+      "id": "TASK-242",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T16:27:08+00:00",
+      "updated_at": "2026-09-18T16:27:08+00:00",
+      "touched_round": 262,
+      "category": "core-feature",
+      "severity": 0.55,
+      "confidence": 0.9,
+      "effort": 4,
+      "unlock_factor": 1.0,
+      "summary": "补上库的最后一块地基:资源账本 resources(键名/展示名分开、cap/floor、capFn 动态上限、pay 整笔不扣 + 缺口、grant/apply 落账夹取、audit 按来源与按资源汇总、produce 逐步夹上限、normalize 形状修复、纯函数、Numeric<T>);并用 examples/combo-arts.ts 证明战斗钩子能表达真实战斗的三种组合技(探路顺带找出 shieldbreak 事件与 gainShield 收负数两个口子)。库 0.4.0。"
+    },
+    "CHG-324": {
+      "id": "CHG-324",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:27:09+00:00",
+      "updated_at": "2026-09-18T16:27:09+00:00",
+      "touched_round": 262,
+      "commit": "e9ca59f",
+      "summary": "新增 packages/engine/src/resources.ts 与 resources.spec.ts(8 例);index.ts/publicApi.spec 导出并列入公开面;examples/combo-arts.ts(三种组合技全用钩子写)并接进 examples 脚本与 engine-standalone 自检;combat.ts 新增 shieldbreak 事件、gainShield 收负数、BattleConfig<T> 泛型化(钩子签名绑定具体数值类型);README 新增资源账本一节与定制表四行、\"我们自己就是第一个定制用户\"的判断标准;CHANGELOG 0.4.0;版本 0.4.0。"
+    },
+    "EV-248": {
+      "id": "EV-248",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:27:13+00:00",
+      "updated_at": "2026-09-18T16:27:13+00:00",
+      "touched_round": 262,
+      "confidence": 0.96,
+      "source": "变更 CHG-324(e9ca59f)。cd packages/engine && bun run check(17 文件/169 例:资源 8 条 + 战斗 23 条 + 三份示例);bun run test(201 文件/2068 例);bun run check:engine(25 处引用全走公开入口);bun run check:engine:standalone(38 源文件、示例三份都跑);bun run test:report(2068 过/0 败);发布包自检 wanxiang-engine-0.4.0.tgz;gh release create v0.4.0 成功",
+      "summary": "资源层六条口径各有判据(买不起不扣 + 缺口、落账夹上下限、capFn 动态上限、逐步产出逐步夹、审计明细恒等于合计、形状修复与坏条目跳过);组合技示例三种机制全部触发且一行规则未进库。"
+    },
+    "DEC-114": {
+      "id": "DEC-114",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:27:15+00:00",
+      "updated_at": "2026-09-18T16:27:15+00:00",
+      "touched_round": 262,
+      "rationale": "用户给了一条总纲:库必须抽象通用、方便使用者定制,\"我们自己就相当于第一个使用 engine 的定制用户\"。它落到可操作的一条:**只有那部作品才需要的东西,不进库**。于是每次往库加东西先问一句\"别的游戏会因为这条规则受益吗\"——受益的进库(护盾池、反击、资源账本);只有本作要的留在作品侧(组合技、法宝触发、Boss 阶段、具体数值曲线),库只提供它们需要的**能力形状**(破盾/会心/每回合结束这三个落点)。这条总纲同时解释了为什么资源层里一个题材词都没有:键名、上限、来源标签全归使用者。",
+      "alternatives_rejected": "①\"把本作的实现整个搬进库\"(库会变成那款游戏的复刻,别人拿到手要跟它的设计绕);②\"只抽四套主干、其余一律不管\"(使用者仍要自己写资源账本、离线推进、标签解释 —— 重复劳动没消除);③\"按本作需要什么就抽什么\"(库的形状由一部作品的进度决定,后来的人只能被动接受)。",
+      "summary": "库的判断标准是\"只有那部作品才需要的东西不进库\":通用能力进库,内容驱动留在作品侧;我们自己就是第一个定制用户,不是库的主人。"
     }
   },
   "edges": [
@@ -23788,6 +23838,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:18:53+00:00"
+    },
+    {
+      "from": "CHG-324",
+      "to": "TASK-242",
+      "type": "implements",
+      "created_at": "2026-09-18T16:27:15+00:00"
+    },
+    {
+      "from": "TASK-242",
+      "to": "TASK-241",
+      "type": "depends_on",
+      "created_at": "2026-09-18T16:27:15+00:00"
+    },
+    {
+      "from": "DEC-114",
+      "to": "TASK-242",
+      "type": "governs",
+      "created_at": "2026-09-18T16:27:15+00:00"
+    },
+    {
+      "from": "DEC-114",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T16:27:15+00:00"
     }
   ]
 }
