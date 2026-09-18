@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 347,
+  "round": 348,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:22:45+00:00",
+  "updated_at": "2026-09-18T23:28:23+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19445,6 +19445,44 @@
       "confidence": 0.97,
       "source": "变更 CHG-411(d271193)。cd packages/engine && bun run check(514 例 / 70 文件 + 十一道自检 + 11 示例;发布包自检已是 wanxiang-engine-0.1.18.tgz);cd /workspace/xian && bun run test(278 文件 / 2563 例)、test:report(2563 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(110 个源文件);git push origin main(379cc67..d271193)、subtree push(→ c37bb19);gh api:tag v0.1.18 → c37bb19…、package.json version 0.1.18、release 非 draft / 非 prerelease、release 列表 Latest 为 v0.1.18。",
       "summary": "0.1.18 让\"规模\"这条承诺有了证据(五条热路径的吞吐 + 闸门),并让跨模块验收链到七条(账目、时间×随机、状态×投资点×任务、老档、时间×状态、战斗→掉落→面板、周期×内容池×抉择)。"
+    },
+    "TASK-329": {
+      "id": "TASK-329",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T23:28:23+00:00",
+      "updated_at": "2026-09-18T23:28:23+00:00",
+      "touched_round": 347,
+      "category": "docs",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "示例「药庐二十四炉」(examples/craft-loop.ts):把 skills / companions / drops / crafting / recipes 五个此前没有任何示例的层串成\"技艺 → 采料 → 开炉 → 成品\"的完整小循环。实测 24 炉:成功率随技艺 30% → 65.6%、真开炉 23 次、没开炉 1 次、成丹 11 颗(双成 1)、失败退回草药 33 株,并指出\"灵药是瓶颈\"。"
+    },
+    "CHG-412": {
+      "id": "CHG-412",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:28:23+00:00",
+      "updated_at": "2026-09-18T23:28:23+00:00",
+      "touched_round": 347,
+      "commit": "f9e4d98",
+      "summary": "库:新增 examples/craft-loop.ts(约 200 行);package.json 的 examples 脚本挂上它;README 目录树与 docs/assembly.md 配方 A 各补一行;CHANGELOG「未发布」记一节。宿主无改动。"
+    },
+    "EV-338": {
+      "id": "EV-338",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:28:23+00:00",
+      "updated_at": "2026-09-18T23:28:23+00:00",
+      "touched_round": 347,
+      "confidence": 0.96,
+      "source": "变更 CHG-412(f9e4d98)。审计(逐模块查 examples/ 是否引用):初测 skills/crafting/recipes/drops/companions 五个模块零示例,补完后为 0;bun examples/craft-loop.ts(实测输出:成功率 30% → 65.6% 随技艺上升;24 炉小结 采到料 24 趟 / 真开炉 23 / 没开炉 1 / 成丹 11(双成 1);失败退回草药 33 株;灵药只出不进用尽);cd packages/engine && bun run check(514 例 / 70 文件 + 十一道自检 + 12 份示例全跑);cd /workspace/xian && bun run test(278 文件 / 2563 例)、test:report(2563 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(110 个源文件)。",
+      "summary": "技艺线第一次有可跑示例:五层各管一段(技艺给输入、帮手给系数、采药给材料、成算给概率、开炉给结果)。过程中还踩到一条真口径:乘区输入必须先归一(第一版给了 0.15~0.22 这种数,成功率只有 13%,二十炉颗粒无收),已写进示例注释。"
     }
   },
   "edges": [
@@ -28850,6 +28888,12 @@
       "to": "TASK-328",
       "type": "implements",
       "created_at": "2026-09-18T23:22:45+00:00"
+    },
+    {
+      "from": "CHG-412",
+      "to": "TASK-329",
+      "type": "implements",
+      "created_at": "2026-09-18T23:28:23+00:00"
     }
   ]
 }
