@@ -26,8 +26,11 @@ export type {
   BreakthroughResult,
   GrowthCurve,
   ProgressView,
+  RealmBreakthroughConfig,
+  RealmCombatConfig,
   RealmDef,
   RealmEntry,
+  RealmExpConfig,
   RealmState,
   RealmSystem,
   RealmSystemConfig,
@@ -69,7 +72,17 @@ export type {
 } from './dungeons.js'
 export { createDungeonSystem, emptyProgress } from './dungeons.js'
 
-export type { BattleConfig, BattleEvent, BattleResult, CombatEngine, Combatant } from './combat.js'
+export type {
+  BattleConfig,
+  BattleEvent,
+  BattleEventKind,
+  BattleResult,
+  Combatant,
+  CombatEngine,
+  CombatKeys,
+  DamageContext,
+  SkillEffectContext
+} from './combat.js'
 export { createCombatEngine } from './combat.js'
 
 export type { IdleConfig, IdlePlan } from './idle.js'
@@ -90,7 +103,7 @@ export {
 export type { SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem } from './skills.js'
 export { createSkillSystem } from './skills.js'
 
-export type { CraftFormula, CraftLevers, LeverSpec, OverReachSpec, StageDef } from './crafting.js'
+export type { CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef } from './crafting.js'
 export { averageLore, composeCraftRate, leverFactor, overReachFactor, proficiencyFromExp, stageNameOf, weightedSkill } from './crafting.js'
 
 export type { GoalCond, GoalEnv, GoalProgress } from './goals.js'

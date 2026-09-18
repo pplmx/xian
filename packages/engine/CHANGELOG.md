@@ -36,6 +36,9 @@
   (默认出手 `strike`、只算不落账 `damage`、落账 `applyDamage`、跳过下次出手 `skipNextTurn`、
   本场共用抽屉 `state`),返回 `true` 表示这次出手由调用方处理完。不配则与既有行为逐位一致;
   新增事件类型 `skip`(某方这一回合没出手)
+- **补齐公开面**:`CombatKeys` / `DamageContext` / `SkillEffectContext` / `BattleEventKind`、
+  `RealmExpConfig` / `RealmCombatConfig` / `RealmBreakthroughConfig`、`ProficiencyConfig`
+  现在都能从公开入口取到 —— 以前它们只在内部模块里,使用者写钩子时标不上类型
 - `crafting.levers` 改成**任意个数与名字**的乘区表(原来是写死的掌握/认知/技艺三区),
   每区可给自定义曲线;越级惩罚改为可选(不配就没有越级这回事)
 - 几处"写死的曲线"开成钩子:`realms.exp.costFn`、`realms.combat.statsFn`、

@@ -428,6 +428,10 @@ cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
 `import 'wanxiang-engine'` 与 `'wanxiang-engine/presets/demo'`。**按路径 import 本地 dist**
 只能说明文件写出来了;"按包名装得上、子路径也解析得到"才是别人那边会发生的事。
 
+公开面本身也有一条判据(`src/publicApi.spec.ts`):运行时导出名单一字不差地钉在用例里,
+且每个模块的公开类型都必须能**只从公开入口**取到 —— 少导出一个类型在库内部看不出来
+(源码与用例全绿,直到使用者想给钩子标参数类型时才发现),这条会在那时红。
+
 ## 「只改名字」到底改哪儿
 
 | 想改的东西 | 改配置的哪一处 | 不改的东西 |
