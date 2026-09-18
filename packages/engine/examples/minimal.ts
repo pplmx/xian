@@ -8,7 +8,7 @@
  * 它不依赖 Vue/Pinia,也不需要任何界面 —— 引擎是纯逻辑层,
  * 界面、存档、离线结算都由使用方自己决定。
  */
-import { createRng, defineGame, emptyProgress, planIdle, runIdle } from '../src/index'
+import { asFiniteNumber, asStringArray, createRng, decodeSave, defineGame, defineSaveFormat, emptyProgress, encodeSave, planIdle, runIdle } from '../src/index'
 import { DEMO } from '../src/presets/demo'
 
 const game = defineGame(DEMO)
@@ -103,3 +103,33 @@ console.log(
     `超出未计 ${(idle.overflowMs / 3600_000).toFixed(1)}h · 不足一步的余量 ${Math.round(idle.remainderMs / 60_000)} 分`
 )
 console.log(`逐步累积(示例:每步 10 分钟)= ${(banked / 3600_000).toFixed(2)}h`)
+
+// 5. 存档:版本链 + 形状修复(存储介质由游戏自己接:这里是内存字符串)
+interface SaveState {
+  cleared: string[]
+  credits: number
+}
+const SAVE_FORMAT = defineSaveFormat<SaveState>({
+  currentVersion: 2,
+  migrations: {
+    // 版本 1 的档里把这个字段叫 gold(且是字符串),版本 2 起叫 credits(数字)
+    1: data => {
+      const d = data as { gold?: unknown; cleared?: unknown }
+      return { cleared: d.cleared, credits: Number(d.gold ?? 0) }
+    }
+  },
+  revive: data => {
+    const d = data as { credits?: unknown; cleared?: unknown }
+    return { credits: asFiniteNumber(d.credits, 0, 0), cleared: asStringArray(d.cleared) }
+  }
+})
+const saved = encodeSave<SaveState>({ cleared: [...progress.cleared], credits: 1234 }, SAVE_FORMAT)
+const reloaded = decodeSave(saved, SAVE_FORMAT)
+const oldSave = decodeSave(JSON.stringify({ version: 1, savedAt: 0, data: { gold: '99', cleared: ['母港星域'] } }), SAVE_FORMAT)
+console.log('----')
+console.log(
+  `存档往返:${reloaded.ok ? `${reloaded.state.cleared.length} 处已通关 · ${reloaded.state.credits} 信用点` : `失败(${reloaded.reason})`}`
+)
+console.log(
+  `旧档迁移:${oldSave.ok ? `v${oldSave.fromVersion} → v${oldSave.version}(gold→credits:${oldSave.state.credits})` : `失败(${oldSave.reason})`}`
+)
