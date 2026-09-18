@@ -66,6 +66,9 @@ import type {
   IntakeResult,
   IntakeSystem,
   PeriodReading,
+  Settlement,
+  SettlementPlan,
+  SettlementReceipt,
   StageSpec,
   CycleSystem,
   CraftLevers,
@@ -181,6 +184,7 @@ const RUNTIME_EXPORTS = [
   'createCodex',
   'createEconomyReadings',
   'createIntake',
+  'createSettlement',
   'createStageMemory',
   'createCycleSystem',
   'createAttributeSystem',
@@ -314,6 +318,7 @@ type PublicTypes = {
   memory: [StageMemory, StageMemoryConfig, StageMemoryInput, StageMemoryState, StageSpec]
   economy: [EconomyConfig, EconomyPeriod, EconomyReadings, EconomyVerdict, FlowInput, FlowReading, PeriodReading]
   intake: [IntakeConfig<SampleItem, number>, IntakeResult<SampleItem, number>, IntakeSystem<SampleItem, number>]
+  settlement: [Settlement<number>, SettlementPlan<number>, SettlementReceipt<number>]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

@@ -144,6 +144,9 @@ export { createEconomyReadings } from './economy.js'
 export type { IntakeConfig, IntakeResult, IntakeSystem } from './intake.js'
 export { createIntake } from './intake.js'
 
+export type { Settlement, SettlementPlan, SettlementReceipt } from './settlement.js'
+export { createSettlement } from './settlement.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

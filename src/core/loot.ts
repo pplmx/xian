@@ -18,7 +18,9 @@ import {
   PILL_DROP_CHANCE
 } from '@/data/constants'
 import { generateEquipment } from './equipGen'
-import { createIntake } from 'wanxiang-engine'
+import { createIntake, createSettlement } from 'wanxiang-engine'
+import { gnumNumeric } from './engineNumeric'
+import { STONE_LEDGER } from './engineResources'
 import { expFromSecs, stoneByTier } from './formulas'
 import { modOf } from './statsCalc'
 import { personalityEffects } from './petPersonality'
@@ -104,6 +106,15 @@ const EQUIP_INTAKE = createIntake<EquipmentInstance, { dust: number; stone: GNum
     return { line: tail, yield: { dust: gain.dust, stone: gain.stone } }
   }
 })
+
+/**
+ * 灵石结算 —— 回执里的数是**账本实际入账**,不是另算一份。
+ *
+ * 从前历练会话自己按 `stoneByTier(tier, 10×modeMult)` 记了一份"本次所得",
+ * 漏了福缘、区域事件与首领倍率,于是界面上的数与行囊里多出来的对不上。
+ * 现在这个数只有一个来源:落账时的实际发生额(见库的 settlement)。
+ */
+const STONE_SETTLEMENT = createSettlement<GNum>({ resources: STONE_LEDGER }, gnumNumeric)
 
 /**
  * 拾取一件已生成的装备:入包或折算。
@@ -224,7 +235,13 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
   // 灵石
   const stoneAmt = rng.float(0.8, 1.2) * rewardMult * bossMult * doubled * (1 + modOf(mods, 'spiritStoneGain'))
   const stone = stoneByTier(tier, 10 * stoneAmt)
-  resources.addStone(stone)
+  // 落账,并把"实际入账"取回来 —— 界面上的"本次所得"与行囊里多出来的只有这一个来源
+  const settledStone = STONE_SETTLEMENT.settle(
+    { stone: resources.spiritStone },
+    { grants: [{ key: 'stone', amount: stone, source: '战斗' }] }
+  )
+  resources.spiritStone = settledStone.ledger.stone!
+  const stoneGained = settledStone.receipt.totals.stone ?? gnZero()
 
   /**
    * 战斗修为 —— 与丹药、际遇同一把尺子:等效闭关时长 × 各种倍率,封顶不满一层。
@@ -287,5 +304,5 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
     }
   }
 
-  return { lines, stone, exp, items }
+  return { lines, stone: stoneGained, exp, items }
 }
