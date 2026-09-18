@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 220,
+  "round": 221,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T05:49:16+00:00",
+  "updated_at": "2026-09-18T06:08:39+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 216,
+      "touched_round": 221,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -3096,7 +3096,7 @@
       "version": 1,
       "created_at": "2026-09-11T16:45:58+00:00",
       "updated_at": "2026-09-11T16:45:58+00:00",
-      "touched_round": 213,
+      "touched_round": 221,
       "summary": "属性汇总(statsCalc + player 各 mod 源:装备/功法/buff/建筑/灵脉/称号/师承/灵兽/天时/在身之卦/命格/天赋)"
     },
     "DEC-022": {
@@ -12998,6 +12998,80 @@
       "rationale": "三条自检从前各写一份 pageerror 收集,口径已经在漂(只有排版自检做了分流,另两条裸收),而冒烟正要接进有网的 CI —— 同上一次「两处各写一份 import 校验」是同一类问题:凡是「什么算我们的失败」这种判断,写两遍迟早分叉,而分叉的表现是其中一条门偶发假红,最难查。抽成一处之后,分流规则改一次三条都跟着变。",
       "alternatives_rejected": "①给冒烟单独补一份分流(第三次重复,下一条自检接 CI 时还要再抄一遍);②靠不给 CI 网络来规避(CI 的机器就是有网,而本地断网正是这类假红查不出来的原因);③把第三方脚本从产物里去掉(它是站点的统计,不属于本仓库的取舍);④只加超长 timeout 让冒烟慢慢跑(那是接进 CI 的时长问题,不是假红问题的解,故另记在 build.yml 的注释里)。",
       "summary": "「什么算我们的失败」只写一处:自检脚本共用的页面异常分流(第三方脚本抛的不算我们的账);接一条自检进 CI 之前,先让它不会因第三方而假红。"
+    },
+    "ISS-226": {
+      "id": "ISS-226",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T06:08:30+00:00",
+      "updated_at": "2026-09-18T06:08:31+00:00",
+      "touched_round": 221,
+      "severity": 0.8,
+      "confidence": 1.0,
+      "effort": 1,
+      "summary": "扩界前通关过人间界的存档永久锁死仙界(玩家反馈:仙界之后那一处永远刷不出来)。解锁从前是**一次性事件** —— 只在首次击败某地之主那一刻把 requireCleared === 此地 的下游写进 unlocked(exploration.clearRegionAndUnlockNext;markCleared 第二次返回 false 即早退)。而 8fd3110 的境界扩界新加了云海仙门(tier 21,仙界入口)并把它的 requireCleared 指向鸿蒙裂隙(tier 20,人间界最后一处):扩界前就清过人间界的存档,鸿蒙裂隙已靖、首领不再复现,那次 unlock() 再无第二次机会,云海仙门永久挂着「需先击败鸿蒙裂隙之主」—— 代价是仙界/神界/混沌海 24 处地界、12 大境界对该存档整体不可达。同一形状对任何「新加一段地界、而它的前置早已被清」的扩界都成立。"
+    },
+    "TASK-201": {
+      "id": "TASK-201",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T06:08:30+00:00",
+      "updated_at": "2026-09-18T06:08:31+00:00",
+      "touched_round": 221,
+      "category": "correctness",
+      "severity": 0.8,
+      "confidence": 1.0,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "把「前置已靖 → 此地已开」从事件补成不变量:data/regions.unlockClosure(纯函数、不动点、幂等、保留不认识的历史 id),在线与读档两条路共用 stores/adventure.applyUnlockClosure;sanitize 里补票;10 例判据(unlockChainSelfHeal.spec)。"
+    },
+    "CHG-258": {
+      "id": "CHG-258",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:08:30+00:00",
+      "updated_at": "2026-09-18T06:08:30+00:00",
+      "touched_round": 221,
+      "commit": "11ca957",
+      "summary": "data/regions 新增 unlockClosure(unlocked, cleared);stores/adventure 新增 applyUnlockClosure(替换只被调用一次的 unlock),sanitize 里补票;exploration.clearRegionAndUnlockNext 改走同一方法(行为不变,仍按新开的清单报 toast);新增 core/unlockChainSelfHeal.spec(10 例)。"
+    },
+    "EV-204": {
+      "id": "EV-204",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:08:30+00:00",
+      "updated_at": "2026-09-18T06:08:30+00:00",
+      "touched_round": 221,
+      "source": "src/core/unlockChainSelfHeal.spec.ts(10 例)/ 全量 vitest 1833 用例 + vue-tsc + eslint",
+      "summary": "① 修前判据 5 红(扩界前通关档读档后云海仙门仍锁着、startExploration(\\\"yunhai\\\") 返回 false)—— bug 在真代码上复现;修后 10 全绿。② 故障注入:把 sanitize 里那次补票摘掉 → 同一 5 条当场红,复原后全绿。③ 覆盖的边界:只补该补的(不整表全开)、前置未靖不开、链式补齐、幂等、新号不被吞、不认识的历史 id 保留、坏形状先修形再补票、补票后真能出发、表本身每处地界都有真实前置。④ 全量 1833 用例(+10)、vue-tsc 与 eslint 干净。",
+      "confidence": 1.0
+    },
+    "DEC-060": {
+      "id": "DEC-060",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:08:30+00:00",
+      "updated_at": "2026-09-18T06:08:30+00:00",
+      "touched_round": 221,
+      "rationale": "解锁规则从前活在**事件**里(击败那一刻写一次),于是任何\"新地界挂在早已被清的前置之后\"的扩界都会把老存档锁死 —— 而且锁得毫无痕迹(界面只显示一句永远无法满足的要求)。规则本身是纯粹的关系(前置已靖 → 此地已开),故把它写成纯函数,并让在线与读档两条路都过它:读档修形是开局与导入的公共入口,补票因此不需要玩家做任何事,也不会出现\"两条路各写一遍、其中一条忘了走\"。",
+      "alternatives_rejected": "①在线路径加一次\"回头补\"的扫描(治不了已经不玩那时的老存档,且又是一次性事件);②在 canEnterRegion 里即时推导(读路径推导会与界面的\"已发现/锁图标\"分岔 —— 本仓库刚为这类分岔吃过一次亏,exploration 里那句共用谓词的注释就是前科);③让已靖首领复现以便再触发一次 unlock(改的是玩法:已靖不再复现是现行设计);④加一段一次性迁移脚本(读档修形本来就是每次启动都跑的公共入口,再起一套迁移只会多一处要维护的真相)。"
+    },
+    "DEC-061": {
+      "id": "DEC-061",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:08:31+00:00",
+      "updated_at": "2026-09-18T06:08:31+00:00",
+      "touched_round": 221,
+      "rationale": "同一件事两条路(在线击败 / 读档补票)必须过同一个方法,否则下次扩界时总有一条被落下 —— 这次整个 bug 就是\"规则活在事件里\"的产物。故把 applyUnlockClosure 作为唯一入口,返回新开的清单给界面报喜,读档路径不需要提示(静默补票),在线路径照旧报 toast。",
+      "alternatives_rejected": "①保留 unlock(单 id)供在线路径使用、补票路径另算一遍(两把尺子);②让 sanitize 也发 toast(启动即弹一串\"新地界已开放\"是噪声,且与\"离线归来\"提示抢注意力);③只在在线路径接线、补票路径单独写闭包(重复一次实现)。",
+      "summary": "区域解锁:规则只写一处 —— 在线击败与读档补票都过 applyUnlockClosure,返回\"这一次新开的\"清单给界面报喜。"
     }
   },
   "edges": [
@@ -19373,6 +19447,42 @@
       "to": "COMP-016",
       "type": "governs",
       "created_at": "2026-09-18T05:49:15+00:00"
+    },
+    {
+      "from": "TASK-201",
+      "to": "ISS-226",
+      "type": "addresses",
+      "created_at": "2026-09-18T06:08:31+00:00"
+    },
+    {
+      "from": "CHG-258",
+      "to": "TASK-201",
+      "type": "implements",
+      "created_at": "2026-09-18T06:08:31+00:00"
+    },
+    {
+      "from": "CHG-258",
+      "to": "ISS-226",
+      "type": "resolves",
+      "created_at": "2026-09-18T06:08:31+00:00"
+    },
+    {
+      "from": "ISS-226",
+      "to": "COMP-006",
+      "type": "located_in",
+      "created_at": "2026-09-18T06:08:39+00:00"
+    },
+    {
+      "from": "DEC-060",
+      "to": "COMP-006",
+      "type": "governs",
+      "created_at": "2026-09-18T06:08:39+00:00"
+    },
+    {
+      "from": "DEC-061",
+      "to": "COMP-006",
+      "type": "governs",
+      "created_at": "2026-09-18T06:08:39+00:00"
     }
   ]
 }
