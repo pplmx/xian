@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 328,
+  "round": 329,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:06:11+00:00",
+  "updated_at": "2026-09-18T22:10:48+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18723,6 +18723,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-392(0dee685)。node scripts/verify-dist.mjs → 新增输出\"文档片段编译通过(2 段标了 compile-check 的代码块都对着发布包编过)\";防空转:把 README 快速开始块里的 defineGame 改成 defineGameXX → 发布包自检退出码 1,改回 → 0;bun run check(460 例 / 57 文件 + 十一道自检);宿主 bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件)。",
       "summary": "文档里的\"能跑的程序\"第一次有了判据:快速开始那一百来行与子路径导入都对着发布包编过。约定用显式标记(<!-- compile-check -->),因为文档里多数片段本来就是节选,一刀切地全查会逼着文档写废话。"
+    },
+    "TASK-310": {
+      "id": "TASK-310",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:47+00:00",
+      "updated_at": "2026-09-18T22:10:47+00:00",
+      "touched_round": 328,
+      "category": "docs",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "docs/usage.md 十段模块用法进 compile-check(累计 12 段):标完当场抓出炼制那段是过期文档(旧形状:乘区平铺顶层 + overReach 只给 {table,decay};现口径是 levers 与 overReach:{key,spec}),已按当前接口改正;其余九段补最小上下文(import 与 State/counters/player/flags/plan 示例值),速查表从\"示意\"变\"照抄能过\"。"
+    },
+    "CHG-393": {
+      "id": "CHG-393",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:48+00:00",
+      "updated_at": "2026-09-18T22:10:48+00:00",
+      "touched_round": 328,
+      "commit": "dce7f32",
+      "summary": "库:docs/usage.md 十处代码块加 compile-check 标记并补齐上下文(含炼制那段按当前 levers/overReach 口径重写);CHANGELOG「未发布」记一节(含防空转验证)。库实现未改,宿主无改动。"
+    },
+    "EV-319": {
+      "id": "EV-319",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:48+00:00",
+      "updated_at": "2026-09-18T22:10:48+00:00",
+      "touched_round": 328,
+      "confidence": 0.96,
+      "source": "变更 CHG-393(dce7f32)。node scripts/verify-dist.mjs → \"文档片段编译通过(12 段标了 compile-check 的代码块都对着发布包编过)\"(从 2 段涨到 12 段);防空转:把 usage.md 里 createResourceSystem 改成 createResourceSystemXX → 发布包自检退出码 1,改回 → 0;bun run check(460 例 / 57 文件 + 十一道自检);宿主 bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件)。",
+      "summary": "文档判据第一次真的抓到内容问题:炼制示例停在旧 API 上(乘区形状变了),而这是使用者最先抄的地方。做法上确认了一条经验:把\"节选\"标成 compile-check 之后,必须给它们补最小上下文(import + 假数据),这样文档审一遍就等于把示例跑了一遍。"
     }
   },
   "edges": [
@@ -28014,6 +28052,12 @@
       "to": "TASK-309",
       "type": "implements",
       "created_at": "2026-09-18T22:06:11+00:00"
+    },
+    {
+      "from": "CHG-393",
+      "to": "TASK-310",
+      "type": "implements",
+      "created_at": "2026-09-18T22:10:48+00:00"
     }
   ]
 }
