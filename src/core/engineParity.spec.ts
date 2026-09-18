@@ -86,6 +86,10 @@ import { ACHIEVEMENTS } from '@/data/achievements'
 import { toGoalCond } from './progress'
 import { evalGoal, goalProgress, type GoalEnv } from '@engine/index'
 import type { AchvCond } from '@/types'
+import { EVENTS } from '@/data/events'
+import { chainOfEvent } from '@/data/chains'
+import { deckPool, drawFrom, type DeckEntry } from '@engine/index'
+import { REGIONS as ALL_REGIONS } from '@/data/regions'
 
 /**
  * 对账就用**应用运行时那一份**世界对象(ENGINE_WORLD),不再另装一份:
@@ -314,6 +318,33 @@ function refEvalCond(cond: AchvCond, st: RefGoalState): boolean {
 
 function refGoalEnv(st: RefGoalState): GoalEnv {
   return { counter: key => st.counter(key), level: () => st.major, subLevel: () => st.sub, custom: () => false }
+}
+
+// ---- 迁移前 core/eventEngine.regionEventPoolFor 的筛法(区间 + 场所标签 + 一次性) ----
+
+interface RefEventLike {
+  id: string
+  tags: readonly string[]
+  minRealm?: number
+  maxRealm?: number
+  once?: boolean
+}
+
+function refEventInBand(ev: RefEventLike, major: number): boolean {
+  if (ev.minRealm !== undefined && major < ev.minRealm) return false
+  if (ev.maxRealm !== undefined && major > ev.maxRealm) return false
+  return true
+}
+
+function refRegionEventPool(events: readonly RefEventLike[], regionTags: readonly string[], major: number, seen: readonly string[]): string[] {
+  return events
+    .filter(ev => {
+      if (chainOfEvent(ev.id)) return false
+      if (!refEventInBand(ev, major)) return false
+      if (ev.once === true && seen.includes(ev.id)) return false
+      return ev.tags.some(t => regionTags.includes(t))
+    })
+    .map(ev => ev.id)
 }
 
 /** 迁移前 data/affixes.affixValue 的原式(词条数值 = min + (max-min) × roll,按小数位取整) */
@@ -945,6 +976,53 @@ describe('对账 · 任务与成就条件(库的 goals 与 冻结的旧判据)',
         }
       }
     }
+  })
+})
+
+describe('对账 · 事件池(库的牌堆 与 冻结的旧筛法)', () => {
+  /** 把本作的事件表翻成牌堆条目(区间字段名不同,语义一致) */
+  const deck: (DeckEntry & { def: (typeof EVENTS)[number] })[] = EVENTS.map(ev => ({
+    def: ev,
+    id: ev.id,
+    tags: ev.tags,
+    weight: ev.weight,
+    once: ev.once,
+    min: ev.minRealm,
+    max: ev.maxRealm
+  }))
+
+  it('筛池:若干区域 × 若干境界 × 两档"见过",与冻结旧筛法逐条相同', () => {
+    const seenCases: string[][] = [[], EVENTS.slice(0, 20).map(e => e.id)]
+    let checked = 0
+    for (const region of ALL_REGIONS.filter((_, i) => i % 5 === 0)) {
+      for (const major of [0, 1, 4, 9, 14, 20]) {
+        for (const seen of seenCases) {
+          const mine = deckPool(deck, { level: major, tags: region.eventTags, seen }).map(e => e.id)
+          const ref = refRegionEventPool(EVENTS, region.eventTags, major, seen)
+          expect(mine, `${region.id}·境界${major}`).toEqual(ref)
+          checked += 1
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(30)
+  })
+
+  it('抽一张:同一种子下与旧的加权抽取选出同一张(随机流消耗也一致)', () => {
+    let drawn = 0
+    for (const region of ALL_REGIONS.filter((_, i) => i % 7 === 0)) {
+      const refIds = refRegionEventPool(EVENTS, region.eventTags, 9, [])
+      if (refIds.length === 0) continue
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const mineRng = new RandomService(mulberry32(seed))
+        const refRng = new RandomService(mulberry32(seed))
+        const mine = drawFrom(deck, { level: 9, tags: region.eventTags }, mineRng)
+        const refEvent = refRng.weighted(EVENTS.filter(e => refIds.includes(e.id)), e => e.weight)
+        expect(mine?.id, `${region.id}·种子${seed}`).toBe(refEvent.id)
+        expect(mineRng.next(), `${region.id}·种子${seed}·随机流`).toBe(refRng.next())
+        drawn += 1
+      }
+    }
+    expect(drawn).toBeGreaterThan(20)
   })
 })
 
