@@ -75,5 +75,17 @@ export { createCombatEngine } from './combat'
 export type { IdleConfig, IdlePlan } from './idle'
 export { planIdle, runIdle } from './idle'
 
+export type { SaveDecodeResult, SaveFormat, SavePayload } from './save'
+export { decodeSave, decodeSavePayload, defineSaveFormat, encodeSave, runMigrations } from './save'
+export {
+  asArray,
+  asFiniteNumber,
+  asNumberRecord,
+  asObjectOrNull,
+  asRecord,
+  asRecordOf,
+  asStringArray
+} from './saveShape'
+
 export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config'
 export { defineGame, validateGame } from './config'

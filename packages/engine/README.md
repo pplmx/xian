@@ -104,6 +104,43 @@ const plan = planIdle(8 * 3600_000, { stepMs: 60_000, capMs: 6 * 3600_000, effic
 const gained = runIdle(plan, 0, (total, i, stepMs) => total + stepMs)
 ```
 
+## 存档:形状修复 + 版本迁移
+
+两个模块,**都不碰存储介质**(localStorage / 文件 / 云 / 内存由你接 —— 于是浏览器、容器、服务端同一套):
+
+```ts
+import { defineSaveFormat, encodeSave, decodeSave, asFiniteNumber, asStringArray } from 'wanxiang-engine'
+
+const FORMAT = defineSaveFormat<State>({
+  currentVersion: 3,
+  migrations: {
+    1: d => ({ ...(d as object), gold: Number((d as { gold?: unknown }).gold ?? 0) }), // v1 → v2
+    2: d => ({ ...(d as object), bag: [] })                                            // v2 → v3
+  },
+  revive: d => ({
+    gold: asFiniteNumber((d as { gold?: unknown }).gold, 0, 0),
+    bag: asStringArray((d as { bag?: unknown }).bag)
+  })
+})
+
+const text = encodeSave(state, FORMAT)          // { version, savedAt, data }
+const result = decodeSave(text, FORMAT)
+if (result.ok) console.log(result.state, result.fromVersion, result.migrated)
+else console.log(result.reason)                 // 'parse' | 'future' | 'shape'
+```
+
+两条铁律,都是从"老玩家的档必须进得来"倒推的:
+
+- **迁移是链,不是分支**:版本 1 的档一路走到当前版本,每一跳只做那一跳的事;
+  缺的那一跳按"形状没变"处理(不打断整条链)。版本号缺失/损坏时按**最老**的一版补起。
+- **未来的版本不许猜**:读到比当前更高的版本就拒绝并说明 —— 猜错的代价是把新档写坏,
+  而写坏比读不到严重得多。失败有三种名字(`parse` / `future` / `shape`),界面才说得清
+  "是文件选错了、该升级了、还是真损坏"。
+
+`revive` 里用的 `asArray` / `asRecord` / `asFiniteNumber` / `asNumberRecord` / `asStringArray`
+是配套的**形状修复原语**:形状不对就用兜底值,而不是抛错。`asArray` 的自定义判据拿到的元素
+保证不是 null/undefined —— 判据里那次"忘了写 `!!x &&`"正是白屏的常见起因。
+
 ## 接进你自己的项目
 
 包内自带 `dist` 的编译与入口声明,但**还没有发到 npm**(发布是显式动作)。三种接法任选:
