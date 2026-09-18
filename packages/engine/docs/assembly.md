@@ -51,6 +51,7 @@
 | 你要的东西 | 接哪个 | 可跑的证据 |
 | --- | --- | --- |
 | 等级曲线、进阶、寿元 | `createRealmSystem` | `presets/xiuxian` + `presets.spec.ts` |
+| 等级曲线的手感(一层涨多少、跨境陡不陡、卡关卡几次) | 同上 | `realms.sim.spec.ts`(境内涨 14.9 倍而跨境只涨 1.28 倍;大关另走一条成功率线) |
 | 掉装 / 洗练 / 装配 | `createEquipmentSystem` | `examples/quickstart.ts` |
 | 洗练 / 重铸(锁住几条、其余重掷) | `equipment.rerollAffixes` | `equipment.sim.spec.ts`(锁两条必定洗出三条;池子被门槛排空是唯一例外) |
 | 技能 / 功法(等级曲线、升级消耗、满级择路) | `createSkillSystem` | `skills.spec.ts` + `skills.sim.spec.ts`(练满总账、折扣只省可折项、分支值几级) |
@@ -81,6 +82,7 @@
 | 主线三节(一次结算连推多节) | `createChain` | `examples/quest-loop.ts` |
 | 成就 / 里程碑(只记一次) | `createUnlockRegistry` | `examples/quest-loop.ts` |
 | "本季多少" | `snapshotOf` / `deltaSince` | `examples/quest-loop.ts` 的本季段 |
+| 伙伴 / 随从(性格系数怎么合) | `createCompanionSystem` | `companions.spec.ts` + `companions.sim.spec.ts`(默认 override 只留最后一只;`add-relative` 才是相加) |
 | 抉择(事件选项 / 分支:能不能选、按权重掷哪种后果、没选时的兜底) | `createChoiceSystem` | `choices.spec.ts` + `choices.sim.spec.ts`(5% 的分支抽 100 次可能一次不出;兜底三级落到哪) |
 | 图鉴 / 见闻(见过什么、懂到什么程度) | `createCodex` | `codex.spec.ts` + `codex.sim.spec.ts`(门槛 3/8/20 次照面、概率升档的到位率) |
 | 世界记忆(区域繁荣 / 阵营好感:升档与回落) | `createStageMemory` | `memory.spec.ts` + `memory.sim.spec.ts`(两路门槛取先到、闲置到点即回落) |
