@@ -64,9 +64,9 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 尚未发布到 npm。按 tag 引用(**请用 tag,不要跟 `main`** —— 库还在长,`main` 随时会动):
 
 ```bash
-bun add github:pplmx/wanxiang-engine#v0.1.16
+bun add github:pplmx/wanxiang-engine#v0.1.17
 # 或
-npm  i github:pplmx/wanxiang-engine#v0.1.16
+npm  i github:pplmx/wanxiang-engine#v0.1.17
 ```
 
 <!-- compile-check: 这段是"装上就能跑"的导入示例,自检会拿发布包把它编一遍 -->
@@ -308,7 +308,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 ## 版本与发布
 
-- 当前版本 **0.1.16**(tag `v0.1.16`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
+- 当前版本 **0.1.17**(tag `v0.1.17`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
 - 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:
   **攒批发布** —— 几十个改动攒一版是常态,期间它们记在「未发布」一节里;tag 是给外面的人
   一个可 pin 的阶段性节点,不是改动的日记。版本跟着实际分量走,真有里程碑才跳 minor 并写清为什么;
