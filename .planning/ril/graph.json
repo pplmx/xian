@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 240,
+  "round": 241,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:55:00+00:00",
+  "updated_at": "2026-09-18T18:15:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14393,6 +14393,66 @@
       "rationale": "从 git 装包时,仓库里没有 dist(产物不入库),故必须让包在安装时自己构建 —— `prepare` 就是干这个的。但工具链行为不一致:npm 会跑 prepare(并提示 allowScripts),Bun 默认**拦**生命周期脚本。与其把 dist 提交进仓库(把编译产物当源码养),不如保留 prepare + 在文档里写清两条路:npm 开箱可用;Bun 需 trustedDependencies 或改用 tgz/npm。",
       "alternatives_rejected": "①把 dist 提交进仓库(产物与源码两份真相,还要在 CI 里防漂移);②只支持 npm 发布后再装(绕过 git 安装这条零成本路径);③让使用者自己 build(把成本推给使用者,而且没人会读 README 那一行)。",
       "summary": "git 安装用 prepare 自动出产物;dist 不入库;Bun 的安全策略差异写进文档(trustedDependencies 或 tgz)。"
+    },
+    "TASK-220": {
+      "id": "TASK-220",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:15:00+00:00",
+      "updated_at": "2026-09-18T18:15:00+00:00",
+      "touched_round": 241,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "\"等等\"里的灵兽(伙伴)抽进公共库:companion(自身词条)+ trait(一组有中性值的行为系数),effectsOf/modsOf/activeMods 三个入口;本作 14 只灵兽的性格效果与自身词条改经库计算,性格内容单列 data/petTraits 以免装配与查询互相成环。"
+    },
+    "CHG-294": {
+      "id": "CHG-294",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:15:00+00:00",
+      "updated_at": "2026-09-18T18:15:00+00:00",
+      "touched_round": 241,
+      "commit": "058dbf4",
+      "summary": "库侧新增 companions.ts/companions.spec.ts:TraitDef(mods 为绝对取值)、CompanionDef、CompanionConfig(neutral 必填)、createCompanionSystem(effectsOf/modsOf/activeMods);多只合并时性格系数覆盖式、重复 id 只算一次;性格用了没有中性值的键 → 装配即报错。index 导出;README 补该模块与三处刻意设计。"
+    },
+    "CHG-295": {
+      "id": "CHG-295",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:15:00+00:00",
+      "updated_at": "2026-09-18T18:15:00+00:00",
+      "touched_round": 241,
+      "commit": "0d1f4c1",
+      "summary": "应用侧:新增 data/petTraits.ts(四条性格的系数与文案);engineWorld 增 COMPANION_SYSTEM(内容取自 data/pets,中性基线显式给);core/petPersonality.personalityEffects → 库 effectsOf(名字/说明照旧转出);stores/player 的 petMods → 库 modsOf(灵兽园与 buff 的放大留在本作);engineParity 补灵兽对账。"
+    },
+    "EV-226": {
+      "id": "EV-226",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:15:00+00:00",
+      "updated_at": "2026-09-18T18:15:00+00:00",
+      "touched_round": 241,
+      "source": "src/core/engineParity.spec.ts(45 例)+ packages/engine(106 例)+ bun run test(198 文件 / 2001 例)+ bun run check + bun run check:engine + 库仓 CI(gh run list:push success 17s)",
+      "summary": "灵兽对账:14 只的性格效果逐项与冻结旧表相同、自身词条逐只相同、无灵兽/未知 id 一律中性、性格内容表 id/名字/系数逐条相同;全量闸门与两道产物自检(含 Node 探测)全绿;库仓 CI 对新提交 success。"
+    },
+    "DEC-093": {
+      "id": "DEC-093",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:15:00+00:00",
+      "updated_at": "2026-09-18T18:15:00+00:00",
+      "touched_round": 241,
+      "rationale": "伙伴这类\"数值之外还有行为倾向\"的东西,若把四项系数写死在库里(历练时长/危险度/掉落/损失),换个题材就得改库。故库只认\"一组有中性值的系数\",键名与中性值由作品给 —— 倍率的中性是 1、加法的中性是 0,引擎猜不出来,所以缺一个键就在装配时报错(而不是悄悄按 0 处理,那会让\"没带伙伴\"那天改变数值)。多只伙伴时性格系数取覆盖而非相乘:相乘会给出 1.05×1.1 这种没人预期过的数。",
+      "alternatives_rejected": "①把四项系数固化成库的字段(题材耦合);②中性值默认按 0 处理(倍率类会归零,静默改变数值);③多只伙伴系数相乘(产生设计外的复合效果)。",
+      "summary": "伙伴:库只认\"有中性值的一组系数\",键名与中性值由作品给(缺键即报错);性格覆盖式合并,自身词条相加。"
     }
   },
   "edges": [
@@ -21854,6 +21914,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "CHG-294",
+      "to": "TASK-220",
+      "type": "implements",
+      "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "CHG-295",
+      "to": "TASK-220",
+      "type": "implements",
+      "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "CHG-294",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "CHG-295",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "EV-226",
+      "to": "CHG-294",
+      "type": "validates",
+      "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "EV-226",
+      "to": "CHG-295",
+      "type": "validates",
+      "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "TASK-220",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "TASK-220",
+      "to": "TASK-219",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "DEC-093",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T18:15:00+00:00"
     }
   ]
 }
