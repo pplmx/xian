@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 275,
+  "round": 276,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:55:26+00:00",
+  "updated_at": "2026-09-18T18:04:18+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16243,7 +16243,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:55:14+00:00",
       "updated_at": "2026-09-18T17:55:14+00:00",
-      "touched_round": 275,
+      "touched_round": 276,
       "category": "core-feature",
       "severity": 0.45,
       "confidence": 0.9,
@@ -16285,6 +16285,56 @@
       "rationale": "\"本次所得\"与实际到账对不上,是最容易被玩家当场抓住的一类错(界面写 120、行囊多 100),而它的根因永远是**同一个数被算了两遍**。口头纪律(\"要和账本一致\")挡不住它,因为两处的代码看起来都合理。故把\"实际入账\"做成回执的唯一来源:回执的每个数字都取自落账时的实际发生额,想显示别的数就必须绕过回执 —— 那是**显式**的越界,而不是一次无心的复制。另一条相关的边界也该写下来:一次结算里可能混着好几笔账(成就奖励、装备化尘折返),所以\"钱包净增量 = 回执\"只在能把旁路排除时成立;判据要么排除旁路,要么只比\"回执 = 该笔的口径\"。",
       "alternatives_rejected": "①靠注释提醒\"两处要一致\"(已被证明挡不住);②让界面自己再算一遍所需的数(那就是第二份口径);③把回执做成\"计划值 + 事后校验\"(校验失败时玩家已经看见了错数)。",
       "summary": "让\"实际入账\"成为回执的唯一来源(取自落账实际发生额),把\"同源\"从自觉变成结构;判据要么排除旁路账,要么只比该笔口径。"
+    },
+    "TASK-257": {
+      "id": "TASK-257",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:04:10+00:00",
+      "updated_at": "2026-09-18T18:04:10+00:00",
+      "touched_round": 276,
+      "category": "core-feature",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "新增掉落表层:createDropTable 把\"这一场给不给、给几份\"做成表 —— 概率进判定前钳到 [0,1](chanceCap 可另设上限)、条目保底(guaranteed + 调用方 guarantee,且开不开都不改随机流)、attempts/count 各自决定吃不吃 countMult、顺序即声明顺序、onHit 让\"生成装备\"这类自己还要掷骰的后续动作在命中当场做。本作 afterWin 的五类掉落改走它(装备 90% 上限、首领首抽必出、翻倍=装备多抽一次仍是本作口径),概率归一改用库的 clamp。继续攒批不发版。"
+    },
+    "CHG-339": {
+      "id": "CHG-339",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:04:10+00:00",
+      "updated_at": "2026-09-18T18:04:10+00:00",
+      "touched_round": 276,
+      "commit": "c822430",
+      "summary": "库:新增 src/drops.ts 与 drops.spec.ts(11 例:钳位与 chanceCap、保底与\"不改随机流\"、attempts 默认不吃 countMult、count 闭区间只在命中时抽、份数倍率不重复叠加、roll 顺序即声明顺序、onHit 与手写循环逐颗骰子一致、整表掷的 onHit 顺序、纯函数),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目。宿主:loot.afterWin 的六条条目改走 createDropTable(本地 capChance 删除,归一改用库的 clamp),新增 engineDropsParity.spec(15 例:四档战斗 × 两颗种子与冻结旧判定逐条比随机调用/文案/件数,另钉钳位、保底、翻倍两副面孔),test-report 补分类,docs/engine.md 加一行并把引用数 25 → 40。"
+    },
+    "EV-263": {
+      "id": "EV-263",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:04:13+00:00",
+      "updated_at": "2026-09-18T18:04:13+00:00",
+      "touched_round": 276,
+      "confidence": 0.97,
+      "source": "变更 CHG-339(c822430)。bunx vitest run src/core/engineDropsParity.spec.ts(15 例);bun run check(宿主 type-check + lint 全绿);bun run test(224 文件/2207 例);bun run test:report(2207 过/0 败);cd packages/engine && bun run check(27 文件/243 例);bun run check:engine(40 处引用);bun run check:engine:standalone",
+      "summary": "掉落判定改走掉落表后随机流一位未动:冻结旧判定做对账时,四档战斗 × 两颗种子的随机调用(方法 + 参数 + 先后)、战报文案与拾获件数逐条相同 —— 关键是 onHit 必须在命中当场处理,若等整表掷完再生成装备,那几颗骰子会挤到丹药/法宝之前。另把三条本作口径钉成数字:叠过 1 钳到 1 且装备封 0.9、保底开不开掷骰次数都是 7 次、翻倍在装备上是 8 次判定(多抽一次)而残页是\"命中一次 × 份数 2\"。"
+    },
+    "DEC-127": {
+      "id": "DEC-127",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:04:16+00:00",
+      "updated_at": "2026-09-18T18:04:16+00:00",
+      "touched_round": 276,
+      "summary": "\"战利品翻倍\"默认翻的是份数而不是掷骰次数;保底是改写这一次的结果而不是跳过这颗骰子 —— 两者都不许动随机流。",
+      "rationale": "掉落逻辑最容易出两类说不清的错:①倍率把掷骰次数也放大了(0.5 的概率掷两次与掷一次 ×2 份,期望相同但**分布完全不同**,而且随机流一变,同种子下的整场战斗都换了模样);②保底写成 `||` 短路(读代码时看不出\"第一抽必出\",且开不开保底会让后续随机数整体位移)。故两条都定在库的口径里:countMult 默认只乘份数,要\"多抽一次\"必须显式开 scalesWithAttempts(本作装备掉落就是这种);保底每次尝试照样掷一次骰子,只改写这一次的结果 —— 于是\"开保底\"这个开关在随机流上是**透明**的。附带一条:命中当场处理(onHit)是必需的,不然\"生成装备\"这些自己还要掷骰的后续动作会挤到别的判定后面。",
+      "alternatives_rejected": "①让 countMult 同时乘抽数与份数(看似\"翻倍更彻底\",实则改了概率分布,且对账时必须逐条解释为什么同一颗种子结果不同);②保底靠调用方自己写 `if (boss && i === 0)`(这就是本作迁移前的写法:能跑,但\"第一抽必出\"这个规则藏在条件里,改了没人发现);③把后续生成统一放到整表掷完之后(代码更整齐,代价是随机流错位 —— 只有对账能发现,而且发现时已经\"整场战斗都变了\")。"
     }
   },
   "edges": [
@@ -24844,6 +24894,24 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:55:26+00:00"
+    },
+    {
+      "from": "CHG-339",
+      "to": "TASK-257",
+      "type": "implements",
+      "created_at": "2026-09-18T18:04:18+00:00"
+    },
+    {
+      "from": "DEC-127",
+      "to": "TASK-257",
+      "type": "governs",
+      "created_at": "2026-09-18T18:04:18+00:00"
+    },
+    {
+      "from": "TASK-257",
+      "to": "TASK-256",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:04:18+00:00"
     }
   ]
 }
