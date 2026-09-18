@@ -135,7 +135,8 @@ export const CONTENT_GATES: ContentGate[] = [
     minMajor: 3,
     evidence:
       `随机池 ${POOL_EVENTS.length} 个事件中 ${POOL_EVENTS.filter(e => e.minRealm !== undefined).length} 个带 minRealm` +
-      `(入门 2 个 · 仙界及以上 7 个),其余无门槛;另有奇缘阶段不计入(不分地界)`,
+      `(入门 2 个 · 仙界及以上 7 个),${POOL_EVENTS.filter(e => e.maxRealm !== undefined).length} 个带境界带上限` +
+      `(乡野小事收在金丹前后,人间界的遗迹收在渡劫);另有奇缘阶段不计入(不分地界)`,
     reachableByGoldRebirth: false,
     bypass: '绝大多数事件无门槛;仅问道石(元婴)真正需要深修',
     qualifies: false

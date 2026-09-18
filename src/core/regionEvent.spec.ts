@@ -37,4 +37,22 @@ describe('区域动态事件(regionEvent)', () => {
     const lingmai = regionEventDef('lingmai')!
     expect(lingmai.dangerMult).toBe(1)
   })
+
+  it('同一个机制换界域换叫法,但倍率一条不动', () => {
+    // 人间界有「过路商队」,混沌海里没有 —— 文案按界域取,数值只此一份
+    const mortal = regionEventDef('shangdui', 0)!
+    const chaos = regionEventDef('shangdui', 20)!
+    expect(mortal.name).toBe('商队遇袭')
+    expect(chaos.name).not.toBe(mortal.name)
+    expect(chaos.rewardMult).toBe(mortal.rewardMult)
+    expect(chaos.dangerMult).toBe(mortal.dangerMult)
+    expect(chaos.eventMult).toBe(mortal.eventMult)
+    for (const id of REGION_EVENTS.map(e => e.id)) {
+      for (const major of [9, 14, 20]) {
+        const def = regionEventDef(id, major)!
+        expect(def.desc, `${id} 在 ${major} 境没有自己的说法`).toBeTruthy()
+        expect(def.name, `${id} 在 ${major} 境还用人间界的名字`).not.toBe(regionEventDef(id)!.name)
+      }
+    }
+  })
 })

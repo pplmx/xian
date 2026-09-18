@@ -56,8 +56,13 @@ import { useDiagStore } from '@/stores/diag'
 /**
  * 离线事件兜底池:世界标签不命中公共事件池时的默认通用际遇。
  * 一律取无代价、可幂等自动结算的 general 事件(在线在绝大多数字段地界也能遇到)。
+ *
+ * **必须是「与境界无关」的那几条**(没有 maxRealm,见 data/events 的境界带):
+ * 兜底池直接绕过了 regionEventPoolFor 的境界带,若在这里塞一条写上上限的事件,
+ * 高阶玩家离线就会撞见低阶的际遇 —— 比如凡俗药园(上限金丹)落到道祖的离线账里。
+ * eventRealmBand.spec 守着这条(兜底池里不许出现带 maxRealm 的事件)。
  */
-const DEFAULT_OFFLINE_EVENT_IDS = ['ev_spring', 'ev_herb_garden', 'ev_night_talk', 'ev_falling_star', 'ev_old_man']
+export const DEFAULT_OFFLINE_EVENT_IDS = ['ev_spring', 'ev_night_talk', 'ev_falling_star', 'ev_old_man']
 
 /**
  * 在线有取舍的事件效果类(身份/永久构筑):离线的自动结算**不得替玩家拍板**。

@@ -33,6 +33,7 @@ import {
   part
 } from './daoluService'
 import { usePlayerStore } from '@/stores/player'
+import { MAX_MAJOR } from '@/data/realms'
 
 const SRC = readFileSync(resolve(__dirname, 'daoluService.ts'), 'utf-8')
 /** 只看代码,不看注释 —— 注释里正大光明地写着这些名字 */
@@ -117,11 +118,31 @@ describe('道侣 · 二:不存在唯一最优', () => {
   })
 
   it('相遇候选随本世地貌变化,不是固定名单', () => {
-    const a = candidatesFor(['林泽', '山岳']).map(d => d.name)
-    const b = candidatesFor(['幽冥', '天象']).map(d => d.name)
+    const a = candidatesFor(['林泽', '山岳'], MAX_MAJOR).map(d => d.name)
+    const b = candidatesFor(['幽冥', '天象'], MAX_MAJOR).map(d => d.name)
     expect(a.join()).not.toBe(b.join())
     console.log(`\n林泽/山岳之世可遇:${a.join('、')}`)
     console.log(`幽冥/天象之世可遇:${b.join('、')}`)
+  })
+
+  it('初见境界真的接上了:她在写定的那一境才登场', () => {
+    const terrain = ['林泽', '山岳', '废墟', '幽冥', '天象', '火域']
+    // 炼气期谁都不该拦路 —— 十位的 startMajor 最低也是筑基
+    expect(candidatesFor(terrain, 0)).toEqual([])
+    // 逐境只增不减,且到写定的最高初见境界时全部登场
+    let prev = 0
+    for (let m = 0; m <= MAX_MAJOR; m += 1) {
+      const n = candidatesFor(terrain, m).length
+      expect(n, `第 ${m} 境的候选比上一境还少`).toBeGreaterThanOrEqual(prev)
+      prev = n
+    }
+    expect(prev).toBe(DAOLU.length)
+    for (const d of DAOLU) {
+      expect(candidatesFor(terrain, d.startMajor).map(c => c.id), `${d.name} 到了自己的初见境界却没登场`).toContain(d.id)
+      if (d.startMajor > 0) {
+        expect(candidatesFor(terrain, d.startMajor - 1).map(c => c.id), `${d.name} 提前一境就登场了`).not.toContain(d.id)
+      }
+    }
   })
 })
 
@@ -236,7 +257,7 @@ describe('道侣 · 五:轮回留历史,不留人', () => {
     let met = 0
     const N = 400
     for (let i = 0; i < N; i += 1) {
-      if (destinedCandidate(deep, ['林泽', '山岳'])) met += 1
+      if (destinedCandidate(deep, ['林泽', '山岳'], 3)) met += 1
     }
     const rate = met / N
     // 既不是零,也远不是必然
@@ -251,7 +272,7 @@ describe('道侣 · 五:轮回留历史,不留人', () => {
   it('没有深交过的人不会触发宿缘', () => {
     const shallow = [{ daoluId: 'dl_qingli', name: '沈青璃', stage: 'known' as const, ending: 'missed' as const, shared: 0 }]
     let met = 0
-    for (let i = 0; i < 200; i += 1) if (destinedCandidate(shallow, ['林泽'])) met += 1
+    for (let i = 0; i < 200; i += 1) if (destinedCandidate(shallow, ['林泽'], 3)) met += 1
     expect(met).toBe(0)
     console.log('\n只是相识过的人,不会因宿缘再遇 —— 重逢的前提是曾经走得够深')
   })

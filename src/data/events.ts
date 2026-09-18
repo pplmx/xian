@@ -1,5 +1,6 @@
-/** 随机事件库 —— 81 个随机事件(含 21 个奇缘阶段) + 11 条机缘,数据驱动,按区域标签匹配 */
+/** 随机事件库 —— 81 个随机事件(含 21 个奇缘阶段) + 11 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from '@/types'
+import { WORLD_BREAK_MAJOR } from './realms'
 import { CHAIN_EVENTS } from './chains'
 
 function o(weight: number, text: string, ...effects: EventEffect[]): EventOutcome {
@@ -16,12 +17,46 @@ function ev(
   text: string,
   tags: string[],
   choices: EventChoice[],
-  opts: Partial<Pick<EventDef, 'minRealm' | 'once' | 'weight' | 'element'>> = {}
+  opts: Partial<Pick<EventDef, 'minRealm' | 'maxRealm' | 'once' | 'weight' | 'element'>> = {}
 ): EventDef {
-  return { id, title, text, tags, choices, weight: opts.weight ?? 100, minRealm: opts.minRealm, once: opts.once, element: opts.element }
+  return {
+    id,
+    title,
+    text,
+    tags,
+    choices,
+    weight: opts.weight ?? 100,
+    minRealm: opts.minRealm,
+    maxRealm: opts.maxRealm,
+    once: opts.once,
+    element: opts.element
+  }
 }
 
 const leave = (text = '你摇了摇头,转身离去。') => c('离开', [o(1, text)], { isDefault: true })
+
+/**
+ * 境界带 · 上限怎么取
+ *
+ * 标签(tags)回答的是「在哪种地方」,境界带回答的是「在哪一境还说得通」——
+ * 两者是**与**的关系。没有上限时,一条写在乡野尺度上的事件会跟着 'general'
+ * 标签一路漏到道祖的池子里(元婴修士被一窝蚂蚁咬成重伤,就是这么来的)。
+ *
+ * 上限按这条事件**自身的规模**取,不按它有多稀有:
+ *
+ *   1   筑基     山野小物   —— 蚁穴藏珍(一窝灵蚁能咬伤的只有筑基)
+ *   2   金丹     凡俗乡野   —— 乞丐、小和尚、山下集市、路边赌石、倾覆货车
+ *   3~4 元婴~化神 散修之间   —— 商人的仙缘、无主药园、宗门弟子遇袭、藏宝图
+ *   5~7 炼虚~大乘 上古遗迹   —— 千年灵芝、黑市、地火炉窟、寒冰棺椁、骨刻经文
+ *   8   渡劫     通天之物   —— 无字石门、观星台、仙田遗种;人间界的尽头
+ *   —   不设     天地自然   —— 灵泉、流星、深谷琴音,与心魔、问道石、隐世高人:
+ *                            它们的规模不随境界变,写在任何境界都成立
+ *
+ * 界外(仙界起)另有一池自己的内容(ev_xianmen_yize 起,minRealm 9+),
+ * 故人间界的事件一律收在 8 以内:**境界带的两头都要堵**,
+ * 只堵住"神界机缘漏进炼气期"那半边不算数。
+ */
+const MORTAL_END = WORLD_BREAK_MAJOR - 1 // 8 渡劫
 
 export const EVENTS: EventDef[] = [
   // 奇缘的阶段事件:一律带 chain 标签,只有 pickChainStageEvent 能把它们请出来
@@ -46,7 +81,8 @@ export const EVENTS: EventDef[] = [
         { isDefault: true }
       ),
       leave()
-    ]
+    ],
+    { maxRealm: 4 }
   ),
   ev(
     'ev_spring',
@@ -81,7 +117,8 @@ export const EVENTS: EventDef[] = [
         { hint: '需要灵石', cond: { type: 'stone', tierAmount: 30 } }
       ),
       c('婉拒', [o(1, '商人耸耸肩,吹着口哨走远了。')], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 3 }
   ),
   ev(
     'ev_old_man',
@@ -112,7 +149,8 @@ export const EVENTS: EventDef[] = [
         o(30, '杀死它的凶手去而复返!你且战且退,受了点伤。', { type: 'buff', id: 'injury' }, { type: 'material', id: 'ore', amount: 2 })
       ]),
       leave('血腥气太重,你决定绕道而行。')
-    ]
+    ],
+    { maxRealm: 4 }
   ),
   ev(
     'ev_formation',
@@ -126,7 +164,8 @@ export const EVENTS: EventDef[] = [
         o(25, '阵法突然反噬,你狼狈退出。', { type: 'buff', id: 'injury' })
       ]),
       c('研究阵纹', [o(1, '你临摹阵纹,于阵道小有所悟。', { type: 'material', id: 'wudao', amount: 4 })], { isDefault: true })
-    ]
+    ],
+    { maxRealm: MORTAL_END }
   ),
   ev(
     'ev_lost_monk',
@@ -143,7 +182,8 @@ export const EVENTS: EventDef[] = [
         { isDefault: true }
       ),
       c('指个方向便走', [o(1, '小和尚道了声谢,一步三回头地走了。')])
-    ]
+    ],
+    { maxRealm: 2 }
   ),
   ev(
     'ev_gamble',
@@ -161,7 +201,8 @@ export const EVENTS: EventDef[] = [
         { hint: '需要灵石', cond: { type: 'stone', tierAmount: 25 } }
       ),
       c('看看热闹', [o(1, '你围观半晌,看破了庄家的手法,悄然离去。')], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 3 }
   ),
   ev(
     'ev_thunder_bath',
@@ -188,7 +229,8 @@ export const EVENTS: EventDef[] = [
         o(35, '床底藏着一小袋灵石。', { type: 'stone', tierAmount: 40 }),
         o(25, '什么都没有,只有满屋灰尘。')
       ])
-    ]
+    ],
+    { maxRealm: 3 }
   ),
   ev(
     'ev_sword_stone',
@@ -202,7 +244,8 @@ export const EVENTS: EventDef[] = [
         o(40, '纹丝不动,你的手却被剑气所伤。', { type: 'buff', id: 'injury' })
       ]),
       c('参悟剑铭', [o(1, '你静观铭文,若有所思。', { type: 'material', id: 'wudao', amount: 5 })], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 5 }
   ),
   ev(
     'ev_moon_lake',
@@ -216,7 +259,8 @@ export const EVENTS: EventDef[] = [
         o(35, '你摸到几块温润的月华石。', { type: 'material', id: 'ore', amount: 8 }),
         o(25, '湖底暗流涌动,你差点没能上来。', { type: 'buff', id: 'injury' })
       ])
-    ]
+    ],
+    { maxRealm: 5 }
   ),
   ev(
     'ev_beggar',
@@ -234,7 +278,8 @@ export const EVENTS: EventDef[] = [
         { hint: '需要灵石', cond: { type: 'stone', tierAmount: 15 } }
       ),
       c('置之不理', [o(1, '你径直走过。修行路上,各安天命。')], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 2 }
   ),
   ev(
     'ev_cave_in',
@@ -248,7 +293,8 @@ export const EVENTS: EventDef[] = [
         o(25, '二次塌方!你仓皇逃出,灰头土脸。', { type: 'buff', id: 'injury' })
       ]),
       leave('山体不稳,你不敢久留。')
-    ]
+    ],
+    { maxRealm: 5 }
   ),
   ev(
     'ev_chess',
@@ -283,7 +329,8 @@ export const EVENTS: EventDef[] = [
         o(60, '你心一横下了手,取得一颗灵气充盈的内丹。', { type: 'exp', secs: 60 }),
         o(40, '你刚出手,一声兽吼震彻山林——它的母亲来了!', { type: 'buff', id: 'injury' })
       ])
-    ]
+    ],
+    { maxRealm: 4 }
   ),
   ev(
     'ev_night_talk',
@@ -338,7 +385,8 @@ export const EVENTS: EventDef[] = [
         { isDefault: true }
       ),
       leave('修行要紧,你没有停留。')
-    ]
+    ],
+    { maxRealm: 5 }
   ),
   ev(
     'ev_broken_cart',
@@ -356,7 +404,8 @@ export const EVENTS: EventDef[] = [
         [o(60, '你救起昏迷的商人,他以灵石相谢。', { type: 'stone', tierAmount: 45 }), o(40, '四下无人,只有风声。你留下标记便离开了。')],
         { isDefault: true }
       )
-    ]
+    ],
+    { maxRealm: 2 }
   ),
   ev(
     'ev_mirage_tower',
@@ -370,7 +419,8 @@ export const EVENTS: EventDef[] = [
         o(35, '塔中阴气缠身,你逃出时脸色发白。', { type: 'buff', id: 'curse_xinmo' })
       ]),
       leave('塔影幢幢,你压下好奇心,绕塔而行。')
-    ]
+    ],
+    { maxRealm: 7 }
   ),
   ev(
     'ev_immortal_dream',
@@ -389,7 +439,7 @@ export const EVENTS: EventDef[] = [
       ),
       c('强行醒来', [o(1, '你警觉这或是心魔幻境,强行醒转,一身冷汗。')])
     ],
-    { weight: 60 }
+    { weight: 60, maxRealm: MORTAL_END }
   ),
   ev(
     'ev_ant_nest',
@@ -399,10 +449,11 @@ export const EVENTS: EventDef[] = [
     [
       c('挖开蚁穴', [
         o(60, '蚁穴深处堆着不少灵石碎屑。', { type: 'stone', tierAmount: 30 }),
-        o(40, '蚁后震怒,万蚁齐出!你抱头鼠窜。', { type: 'buff', id: 'injury' })
+        o(40, '蚁后震怒,万蚁齐出!你被啃出几处伤口,狼狈退出。', { type: 'buff', id: 'injury' })
       ]),
       c('跟踪来源', [o(1, '你顺藤摸瓜,找到了灵蚁的采集地。', { type: 'material', id: 'ore', amount: 6 })], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 1 }
   ),
   ev(
     'ev_rain_shelter',
@@ -422,7 +473,8 @@ export const EVENTS: EventDef[] = [
         o(40, '神像腹中果然有前人藏的灵石!', { type: 'stone', tierAmount: 55 }),
         o(60, '你刚动手,一道阴风卷过,你被摄去了一缕精气。', { type: 'buff', id: 'curse_xinmo' })
       ])
-    ]
+    ],
+    { maxRealm: 5 }
   ),
   ev(
     'ev_qin_sound',
@@ -454,7 +506,8 @@ export const EVENTS: EventDef[] = [
         { isDefault: true }
       ),
       c('焚图祭亡者', [o(1, '你将图纸烧予枯骨:「宝物随缘,前辈安息。」心境圆融少许。', { type: 'material', id: 'wudao', amount: 4 })])
-    ]
+    ],
+    { maxRealm: 4 }
   ),
   ev(
     'ev_yaodan_auction',
@@ -472,7 +525,8 @@ export const EVENTS: EventDef[] = [
         { hint: '需要较多灵石', cond: { type: 'stone', tierAmount: 80 } }
       ),
       leave('黑市水深,你转了一圈便离开了。')
-    ]
+    ],
+    { maxRealm: 6 }
   ),
   ev(
     'ev_face_wall',
@@ -506,7 +560,8 @@ export const EVENTS: EventDef[] = [
         o(20, '手一滑,你摔下数丈,幸被古藤接住。', { type: 'buff', id: 'injury' })
       ]),
       leave('君子不立危墙之下,你按捺住贪念。')
-    ]
+    ],
+    { maxRealm: 5 }
   ),
   ev(
     'ev_mine_vein',
@@ -523,7 +578,8 @@ export const EVENTS: EventDef[] = [
         { isDefault: true }
       ),
       c('只取表层', [o(1, '你浅尝辄止,取了些浮矿便走。', { type: 'material', id: 'ore', amount: 7 })])
-    ]
+    ],
+    { maxRealm: 5 }
   ),
   ev(
     'ev_god_tree',
@@ -537,7 +593,8 @@ export const EVENTS: EventDef[] = [
         o(25, '树洞的主人回来了——一只暴躁的妖猿!', { type: 'buff', id: 'injury' })
       ]),
       c('树下打坐', [o(1, '神木灵气庇护,你修炼事半功倍。', { type: 'exp', secs: 60 })], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 6 }
   ),
   ev(
     'ev_firebird',
@@ -551,7 +608,8 @@ export const EVENTS: EventDef[] = [
         o(20, '真火灼手,你被烫得不轻。', { type: 'buff', id: 'injury' })
       ]),
       c('目送其落', [o(1, '羽毛落地即熄,只余一小撮暖灰。', { type: 'material', id: 'dust', amount: 5 })], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 7 }
   ),
   ev(
     'ev_lava_forge',
@@ -564,7 +622,8 @@ export const EVENTS: EventDef[] = [
         o(40, '火候失控,器胚炸裂,你被崩了一脸灰。', { type: 'material', id: 'dust', amount: 8 })
       ]),
       c('采集火髓', [o(1, '你在喷口边缘刮取了些许火髓精华。', { type: 'material', id: 'ore', amount: 10 })], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 6 }
   ),
   ev(
     'ev_drift_bottle',
@@ -578,7 +637,8 @@ export const EVENTS: EventDef[] = [
         o(25, '瓶中冲出一股怨气,缠上了你!', { type: 'buff', id: 'curse_xinmo' })
       ]),
       leave('来历不明之物,你没有妄动。')
-    ]
+    ],
+    { maxRealm: 6 }
   ),
   ev(
     'ev_turtle',
@@ -608,7 +668,8 @@ export const EVENTS: EventDef[] = [
         o(45, '巨蚌猛然合拢,差点夹断你的手!', { type: 'buff', id: 'injury' })
       ]),
       leave('取珠伤蚌,非修道人所为。你转身离去,心境澄明。')
-    ]
+    ],
+    { maxRealm: 2 }
   ),
   ev(
     'ev_ghost_lantern',
@@ -622,7 +683,8 @@ export const EVENTS: EventDef[] = [
         o(30, '灯火骤灭,阴风四起!你且战且退。', { type: 'buff', id: 'injury' })
       ]),
       leave('子不语怪力乱神,你目不斜视地走过。')
-    ]
+    ],
+    { maxRealm: 6 }
   ),
   ev(
     'ev_bone_scripture',
@@ -636,7 +698,8 @@ export const EVENTS: EventDef[] = [
         o(25, '经文中藏着前人的执念,读之心魔暗生。', { type: 'buff', id: 'curse_xinmo' })
       ]),
       c('葬骨立碑', [o(1, '你将枯骨安葬。尘归尘,土归土,你只觉因果两清。', { type: 'buff', id: 'bless_jiyuan' })], { isDefault: true })
-    ]
+    ],
+    { maxRealm: 7 }
   ),
   ev(
     'ev_starfall_pool',
@@ -656,7 +719,8 @@ export const EVENTS: EventDef[] = [
         o(50, '池底沉着几块陨落的星髓。', { type: 'material', id: 'ore', amount: 14 }),
         o(50, '你搅碎了满池星光,什么也没捞到。')
       ])
-    ]
+    ],
+    { maxRealm: MORTAL_END }
   ),
   ev(
     'ev_void_crack',
@@ -671,7 +735,7 @@ export const EVENTS: EventDef[] = [
       ]),
       leave('虚空凶险,你退避三舍。')
     ],
-    { weight: 60 }
+    { weight: 60, maxRealm: MORTAL_END }
   ),
   ev(
     'ev_fairy_field',
@@ -690,7 +754,8 @@ export const EVENTS: EventDef[] = [
       c('原地培育', [
         o(1, '你守着仙田数日,灵植开花结果。', { type: 'material', id: 'herb', amount: 10 }, { type: 'material', id: 'wudao', amount: 3 })
       ])
-    ]
+    ],
+    { maxRealm: MORTAL_END }
   ),
   ev(
     'ev_ice_coffin',
@@ -706,7 +771,8 @@ export const EVENTS: EventDef[] = [
         o(30, '棺中人指间夹着一页玉笺,似是留给后来者。', { type: 'gongfa' }),
         o(30, '寒气反噬!你冻得嘴唇发紫。', { type: 'buff', id: 'injury' })
       ])
-    ]
+    ],
+    { maxRealm: 7 }
   ),
   ev(
     'ev_heart_demon',
@@ -751,7 +817,8 @@ export const EVENTS: EventDef[] = [
         o(25, '开炉瞬间药力冲腾,你吸入过量药气,头晕目眩。', { type: 'buff', id: 'injury' })
       ]),
       leave('丹炉主人恐有不测,你不愿沾染因果。')
-    ]
+    ],
+    { maxRealm: 6 }
   ),
   ev(
     'ev_wine_immortal',
@@ -791,7 +858,8 @@ export const EVENTS: EventDef[] = [
         { isDefault: true }
       ),
       c('过门不入', [o(1, '红尘滚滚,你心如止水地走过。', { type: 'material', id: 'wudao', amount: 2 })])
-    ]
+    ],
+    { maxRealm: 2 }
   ),
   ev(
     'ev_ancient_gate',
@@ -806,7 +874,7 @@ export const EVENTS: EventDef[] = [
       ]),
       leave('缘分未到,强求无益。')
     ],
-    { weight: 70 }
+    { weight: 70, maxRealm: MORTAL_END }
   ),
   ev(
     'ev_rescue_disciple',
@@ -831,7 +899,8 @@ export const EVENTS: EventDef[] = [
           { type: 'buff', id: 'curse_xinmo' }
         )
       ])
-    ]
+    ],
+    { maxRealm: 4 }
   ),
   ev(
     'ev_border_stall',
@@ -861,7 +930,8 @@ export const EVENTS: EventDef[] = [
         ],
         { hint: '需要灵石', cond: { type: 'stone', tierAmount: 10 } }
       )
-    ]
+    ],
+    { maxRealm: 2 }
   ),
   ev(
     'ev_stargazer',
@@ -875,7 +945,8 @@ export const EVENTS: EventDef[] = [
         o(20, '星光刺目,你双眼酸胀,险些迷了心神。', { type: 'buff', id: 'curse_xinmo' })
       ]),
       leave('天机莫测,你看了两眼便移开目光。')
-    ]
+    ],
+    { maxRealm: MORTAL_END }
   ),
   // ============ 仙界及以上际遇(准入境界 9-20)============
   ev(
@@ -934,8 +1005,10 @@ export const EVENTS: EventDef[] = [
       c(
         '摘取仙桃',
         [
-          o(60, '你摘下仙桃,一口入腹,寿元大增。', { type: 'lifespan', years: 800 }),
-          o(40, '仙蟒骤然发难,你夺桃而走,却也受了些伤。', { type: 'lifespan', years: 300 }, { type: 'buff', id: 'injury' })
+          // 界外的寿元以亿载计:一株仙桃写的必须是「当前境界寿元的几成」,
+          // 不是「八百年」—— 对一位金仙来说,八百年连一次吐纳都算不上。
+          o(60, '你摘下仙桃,一口入腹,寿元大增。', { type: 'lifespan', pct: 0.05 }),
+          o(40, '仙蟒骤然发难,你夺桃而走,却也受了些伤。', { type: 'lifespan', pct: 0.02 }, { type: 'buff', id: 'injury' })
         ],
         { isDefault: true }
       ),
@@ -1069,6 +1142,13 @@ export const EVENTS: EventDef[] = [
  * Phase 32.2:部分机缘带元素倾向,同源灵根更容易撞见。
  * 刻意留下无元素的中性机缘(妖兽认主 / 隐世高人)——
  * 若条条机缘都认灵根,灵根就从"倾向"变成了"分配职业"。
+ *
+ * 境界带:机缘按**界域**分池,各池写给各自那一界的人。
+ * 前五条(剑痕/丹方/幼兽/高人/秘术)是人间界的机缘,收在 8(渡劫)以内 ——
+ * 它们从前只认区域标签,而界外区域同样带 'general',于是道祖也会撞见
+ * 「幼兽认主」「失传丹方」这类凡界尺度的事;界外三条界域各有自己的两条机缘
+ * (仙门古琴/云端仙尊 · 神域王座/法则之心 · 混沌之种/鸿蒙先台),
+ * 由 minRealm 或界域标签守住,故两头都不漏。
  */
 export const FORTUNE_EVENTS: EventDef[] = [
   ev(
@@ -1084,7 +1164,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
       ]),
       c('绕道而行', [o(1, '剑气凛冽,你压下好奇,转身离去。')], { isDefault: true })
     ],
-    { element: 'metal' }
+    { element: 'metal', maxRealm: MORTAL_END }
   ),
   ev(
     'ft_ancient_elixir',
@@ -1098,7 +1178,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
       ]),
       c('放回原处', [o(1, '前人遗物,你不敢轻动,悄然离开。')], { isDefault: true })
     ],
-    { element: 'wood' }
+    { element: 'wood', maxRealm: MORTAL_END }
   ),
   ev(
     'ft_beast_pledge',
@@ -1111,7 +1191,8 @@ export const FORTUNE_EVENTS: EventDef[] = [
         o(30, '幼兽随了一段路便跑开了,你只留下一段记忆。', { type: 'material', id: 'herb', amount: 6 })
       ]),
       c('轻轻放它离去', [o(1, '你摆摆手,幼兽一步三回头地走了。')], { isDefault: true })
-    ]
+    ],
+    { maxRealm: MORTAL_END }
   ),
   ev(
     'ft_reclusive_elder',
@@ -1125,7 +1206,8 @@ export const FORTUNE_EVENTS: EventDef[] = [
         o(20, '老翁摇摇头:「你缘未至。」你悻悻而返。', { type: 'nothing' })
       ]),
       c('不去打扰', [o(1, '高人清修,你静立片刻,悄然离去。')], { isDefault: true })
-    ]
+    ],
+    { maxRealm: MORTAL_END }
   ),
   ev(
     'ft_blood_contract',
@@ -1139,7 +1221,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
       ]),
       c('掩埋龟甲', [o(1, '此物不祥,你掘土掩埋,心念一清。')], { isDefault: true })
     ],
-    { element: 'dark' }
+    { element: 'dark', maxRealm: MORTAL_END }
   ),
 
   // ============ 仙界及以上机缘(仅以界域标签出现,不会落到人间界)============
@@ -1242,7 +1324,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
         [
           o(50, '碑上无字,你看见的却是自己此生的路。', { type: 'material', id: 'wudao', amount: 90 }),
           o(30, '石碑反噬,你神魂震荡,却也窥见大道一角。', { type: 'buff', id: 'injury' }, { type: 'exp', secs: 90 }),
-          o(20, '你于台上静立良久,寿元悄然增了数千年。', { type: 'lifespan', years: 3000 })
+          o(20, '你于台上静立良久,再回神时,寿元已悄然厚了一层。', { type: 'lifespan', pct: 0.02 })
         ]
       ),
       c('不登此台', [o(1, '你退开一步。那笔账,你还没打算现在就结。')], { isDefault: true })

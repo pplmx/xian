@@ -127,10 +127,20 @@ export function currentDaolu(): DaoluDef | null {
  *
  * 与本世之界挂钩:她偏好的地貌若在这一世的路线上,才更可能出现 ——
  * 世界不同 → 路径不同 → 遇见谁不同,轮回与世界生成由此连上
+ *
+ * 两道门都要过,缺一不可:
+ *   地貌 —— 她出没的地方得在这条路线上(上面那条);
+ *   境界 —— `startMajor` 写的是「初见时的境界」,是她走到哪一步才登场。
+ *          这道门从前只有数据、没有接线:字段摆在那儿(连审计表都在打印它),
+ *          runtime 一次也没读过,于是写在化神初见的人会在炼气期就拦路搭话。
+ *          同一条口径在事件那边刚补过(见 eventEngine.eventInRealmBand)——
+ *          「写在哪儿」与「在哪儿能被撞见」必须是同一件事。
  */
-export function candidatesFor(terrains: readonly string[]): DaoluDef[] {
+export function candidatesFor(terrains: readonly string[], major: number): DaoluDef[] {
   const seen = new Set(terrains)
-  return DAOLU.filter(d => d.terrains.length === 0 || d.terrains.some(t => seen.has(t)))
+  return DAOLU.filter(
+    d => d.startMajor <= major && (d.terrains.length === 0 || d.terrains.some(t => seen.has(t)))
+  )
 }
 
 /**
@@ -138,7 +148,11 @@ export function candidatesFor(terrains: readonly string[]): DaoluDef[] {
  *
  * 是概率不是按钮 —— 若能保证重逢,轮回就失去了分别的重量
  */
-export function destinedCandidate(history: readonly BondRecord[], terrains: readonly string[]): DaoluDef | null {
+export function destinedCandidate(
+  history: readonly BondRecord[],
+  terrains: readonly string[],
+  major: number
+): DaoluDef | null {
   const deep = history.filter(r => stageIndex(r.stage) >= stageIndex('pledged'))
   if (deep.length === 0) return null
   // 走得越深,重逢的可能越大,但永远不满
@@ -148,7 +162,7 @@ export function destinedCandidate(history: readonly BondRecord[], terrains: read
   const def = daoluDef(pick.daoluId)
   if (!def) return null
   // 仍要她愿意出现在这一世的地界上
-  return candidatesFor(terrains).some(c => c.id === def.id) ? def : null
+  return candidatesFor(terrains, major).some(c => c.id === def.id) ? def : null
 }
 
 /** 初遇:记住这个人 */

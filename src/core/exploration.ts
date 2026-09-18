@@ -114,7 +114,8 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
   // Phase 31 A2:出发时低频判定区域事件(妖潮等,30~120 分钟)
   const ev = rollRegionEvent(region)
   if (ev) {
-    const def = regionEventDef(ev.eventId)
+    // 界域化的叫法:人间界是「妖潮/商队遇袭」,混沌海是「凶兽潮/掠夺者」
+    const def = regionEventDef(ev.eventId, player.major)
     ui.toast(`${region.name}风云突变——${def?.name ?? '异象'}!`, 'warn')
   }
   // Phase 31.4 区域凭吊:重访已镇压之地,低概率世界说起你的旧事
@@ -183,7 +184,7 @@ export function explorationFoeDanger(o: {
 }): { total: number; origin: FoeOrigin } {
   const modeMult = EXPLORE_MODES[o.mode].dangerMult
   const pet = personalityEffects(o.petId)
-  const evDef = o.eventId ? regionEventDef(o.eventId) : undefined
+  const evDef = o.eventId ? regionEventDef(o.eventId, usePlayerStore().major) : undefined
   const eventMult = evDef?.dangerMult ?? 1
   const total = dangerFactorFor(modeMult, o.regionDanger, pet.dangerMult, eventMult)
   const petName = o.petId ? petDef(o.petId)?.name : undefined
@@ -203,7 +204,7 @@ export function explorationFoeDanger(o: {
  */
 export function regionFoeOrigin(region: RegionDef): FoeOrigin {
   const ev = currentRegionEvent(region.id)
-  const evDef = ev ? regionEventDef(ev.eventId) : undefined
+  const evDef = ev ? regionEventDef(ev.eventId, usePlayerStore().major) : undefined
   return mortalFoeOriginFromParts(region.tier, [
     { label: '地界凶险', ratio: 1 + (region.danger - 1) * 0.05 },
     { label: evDef?.name ?? '区域事件', ratio: evDef?.dangerMult ?? 1 }
@@ -407,8 +408,8 @@ function maybeEncounter(regionId: string): void {
   if (!rng.chance(MEET_CHANCE)) return
   const terrains = w.chain.map(p => terrainOf(p.fromId))
   // 宿缘优先:上一世走得深的人有机会再遇,但绝不保证
-  const destined = destinedCandidate(player.reincarnation.bonds, terrains)
-  const pool = destined ? [destined] : candidatesFor(terrains)
+  const destined = destinedCandidate(player.reincarnation.bonds, terrains, player.major)
+  const pool = destined ? [destined] : candidatesFor(terrains, player.major)
   if (pool.length === 0) return
   const here = regionDef(regionId)
   // 同地貌的人更可能在此处照面

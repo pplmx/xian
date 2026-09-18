@@ -518,7 +518,15 @@ export type EventEffect =
   | { type: 'gongfa'; id?: string }
   | { type: 'artifact'; id?: string }
   | { type: 'buff'; id: string }
-  | { type: 'lifespan'; years: number }
+  /**
+   * 寿元奖励 —— 两种写法,只有一个口径:**按当前境界的寿元折算**。
+   *
+   * `years` 是绝对年数(只该用在人间界:那里的寿元本身是几千载的量级);
+   * `pct` 是当前境界寿元(REALMS[major].lifespanYears)的比例 —— 界外的寿元
+   * 以亿载、万亿载计,绝对值毫无意义(「仙桃延寿八百载」对一位金仙等于没有,
+   * 而他的寿元是一亿载),故界外一律写比例。
+   */
+  | { type: 'lifespan'; years?: number; pct?: number }
   | { type: 'pet'; id?: string }
   | { type: 'nothing' }
 
@@ -586,7 +594,16 @@ export interface EventDef {
   title: string
   text: string
   tags: string[]
+  /** 写就这条事件的境界段下限(缺省 = 不限,与 tags 一起决定何时能被抽到) */
   minRealm?: number
+  /**
+   * 写就这条事件的境界段上限(缺省 = 不限)。
+   *
+   * 事件的规模得撑得住它能落到的最高境界:灵蚁巢只写到筑基,凡俗集市只写到金丹,
+   * 人间界的遗迹写到渡劫为止 —— 界外(仙界起)另有自己的一池内容。
+   * 与 tags 的关系是**与**:标签说"在哪种地方",境界带说"在哪一境还说得通"。
+   */
+  maxRealm?: number
   once?: boolean
   weight: number
   choices: EventChoice[]

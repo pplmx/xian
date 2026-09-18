@@ -166,7 +166,33 @@ function bossDanger(index: number): number {
  */
 const BOSSES: EnemyDef[] = ENEMIES.filter(e => e.archetype !== undefined && e.tier <= MORTAL_TIER_MAX)
 const MOBS: EnemyDef[] = ENEMIES.filter(e => e.archetype === undefined && e.tier <= MORTAL_TIER_MAX)
-const ALL_EVENT_TAGS: string[] = [...new Set(EVENTS.flatMap(e => e.tags))]
+
+/**
+ * 本世路线的**事件标签池** —— 只能从人间界区域真的带过的标签里取。
+ *
+ * 从前这里是 `EVENTS.flatMap(e => e.tags)` 的全集,于是 'immortal' / 'god' / 'chaos'
+ * 这三个界外标签也进了池子,而事件挑选只认标签、不认境界 —— 一条炼气期的凡界路线
+ * 可能被掷到「仙门古琴」:仙品功法、太初丹直接落进凡界,镇压物产也跟着界外标签涨。
+ * 界外内容有界外的门(minRealm 与界域标签),生成器不该替玩家把它打开。
+ */
+const MORTAL_TAGS: Set<string> = new Set(MORTAL_REGIONS.flatMap(r => r.eventTags))
+const ALL_EVENT_TAGS: string[] = [...new Set(EVENTS.flatMap(e => e.tags))].filter(t => MORTAL_TAGS.has(t))
+
+/**
+ * 标签 → 它**最早**出现在人间界的第几层(取所有带该标签的人间界区域的最小层级)。
+ *
+ * nearTier 的语义是「取与目标层级相近的素材」,可它比较的是候选自带的 tier ——
+ * 之前每个候选都被填成了当前节点的 tier,于是排序恒为等距、退化成纯随机:
+ * 一层的新手村可能配到剑冢(10 层)的标签。填上标签真正的出处层级,
+ * nearTier 才是它名字里的那个意思。
+ */
+const TAG_HOME_TIER = new Map<string, number>()
+for (const r of MORTAL_REGIONS) {
+  for (const t of r.eventTags) {
+    const cur = TAG_HOME_TIER.get(t)
+    if (cur === undefined || r.tier < cur) TAG_HOME_TIER.set(t, r.tier)
+  }
+}
 
 /**
  * 挑一个尚未被本世占用的首领。
@@ -259,7 +285,7 @@ export function generateMortalWorld(seed: number): MortalWorld {
     // 事件标签数量由节奏曲线决定
     const want = density[i]!
     const tags = nearTier(
-      ALL_EVENT_TAGS.map(t => ({ t, tier })),
+      ALL_EVENT_TAGS.map(t => ({ t, tier: TAG_HOME_TIER.get(t) ?? tier })),
       tier,
       rng,
       want

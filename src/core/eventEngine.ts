@@ -3,9 +3,10 @@
  */
 import type { EventChoice, EventDef, EventEffect, RegionDef } from '@/types'
 import { RandomService, rng } from '@/utils/random'
-import { formatGN } from '@/utils/format'
+import { formatGN, formatYears } from '@/utils/format'
 import { EVENTS, FORTUNE_EVENTS, eventDef } from '@/data/events'
 import { CHAINS, chainOfEvent } from '@/data/chains'
+import { realmDef } from '@/data/realms'
 // 三档触发概率是同一份数据(见 data/constants 那段注释):际遇在 exploration 掷,
 // 奇缘与机缘在这里从上一步的结果里再掷一次。数字不在本文件另写一遍 ——
 // core/eventTier 要把这条乘法链讲给玩家听,两边各写一份就会互相撒谎。
@@ -32,6 +33,24 @@ import { useQuestsStore } from '@/stores/quests'
 
 const MATERIAL_NAMES = { herb: '灵草', ore: '玄铁', page: '功法残页', dust: '器灵尘', wudao: '悟道点' } as const
 
+/**
+ * 境界带 —— 这条事件在**这一境**还说不说得通。
+ *
+ * 判据只有一条,全部事件池都读它:minRealm ≤ 当前境界 ≤ maxRealm。
+ * 从前只有 minRealm(而且只有普通事件读),于是两个方向都会漏:
+ *   漏下去 —— 人间界的乡野小事躺在 'general' 标签里,一路漏到混沌海
+ *             (元婴修士被一窝蚂蚁咬成重伤,就是这么来的);
+ *   漏上来 —— 机缘(ft_)根本不看境界,只按区域标签选,而神界/混沌海的区域
+ *             同样带 'general',于是人间界的丹方/幼兽也漏进道祖的池子。
+ * 所以这里是**唯一入口**:谁要挑事件,谁就得先过这道门,不许自己写
+ * `ev.minRealm !== undefined && …` 之类的半套判据。
+ */
+export function eventInRealmBand(ev: Pick<EventDef, 'minRealm' | 'maxRealm'>, major: number): boolean {
+  if (ev.minRealm !== undefined && major < ev.minRealm) return false
+  if (ev.maxRealm !== undefined && major > ev.maxRealm) return false
+  return true
+}
+
 /** 此刻该走的那几程(链条未结、境界够、尚未抽到过) */
 export function pendingChainStages(major: number): { chainId: string; stage: number; event: EventDef }[] {
   const player = usePlayerStore()
@@ -42,7 +61,7 @@ export function pendingChainStages(major: number): { chainId: string; stage: num
     if (!eventId) continue // 这条缘已了
     const def = eventDef(eventId)
     if (!def) continue
-    if (def.minRealm !== undefined && major < def.minRealm) continue
+    if (!eventInRealmBand(def, major)) continue
     out.push({ chainId: chain.id, stage: done, event: def })
   }
   return out
@@ -85,7 +104,7 @@ export function regionEventPoolFor(region: RegionDef): EventDef[] {
   const adventure = useAdventureStore()
   return EVENTS.filter(ev => {
     if (chainOfEvent(ev.id)) return false
-    if (ev.minRealm !== undefined && player.major < ev.minRealm) return false
+    if (!eventInRealmBand(ev, player.major)) return false
     if (ev.once && adventure.seenOnceEvents.includes(ev.id)) return false
     return ev.tags.some(t => region.eventTags.includes(t))
   })
@@ -101,7 +120,12 @@ export function pickEventFor(region: RegionDef, rand: RandomService = rng): Even
   }
   // Phase 31 S2:极小概率先判机缘事件(带代价选择)
   if (rand.chance(FORTUNE_CHANCE)) {
-    const fortune = FORTUNE_EVENTS.filter(ev => ev.tags.some(t => region.eventTags.includes(t)))
+    // 机缘同样过境界带:人间界的机缘(丹方/幼兽/剑痕)不该被道祖撞见,
+    // 界外的机缘(仙门古琴/神域王座)也不该落进凡界路线 —— 后者在凡界世界生成
+    // 的标签池里已经堵住(见 mortalWorldGen),这里再按玩家当前境界收一道。
+    const fortune = FORTUNE_EVENTS.filter(
+      ev => eventInRealmBand(ev, player.major) && ev.tags.some(t => region.eventTags.includes(t))
+    )
     // Phase 32.2:同源机缘更容易撞见——灵根在此接入"机缘 → 师承 → 流派"的因果链起点。
     // 非同源机缘权重不变(仍是 ev.weight),没有一条路被灵根关掉。
     if (fortune.length > 0) {
@@ -188,9 +212,15 @@ function applyEffect(effect: EventEffect, tier: number): string | null {
       cultivation.addBuff(effect.id, Date.now())
       return def.kind === 'injury' ? `陷入「${def.name}」状态` : `获得「${def.name}」加持`
     }
-    case 'lifespan':
-      player.addLifespan(effect.years)
-      return `寿元 +${effect.years} 载`
+    case 'lifespan': {
+      // 界外一律写比例:金仙的寿元是一亿载,「延寿八百载」那点绝对年数在界外
+      // 连零头都算不上,写死数字的文案与账目都会变成谎话(见 EventEffect 注释)。
+      const years =
+        effect.pct !== undefined ? Math.round(realmDef(player.major).lifespanYears * effect.pct) : (effect.years ?? 0)
+      if (years <= 0) return null
+      player.addLifespan(years)
+      return `寿元 +${formatYears(years)}`
+    }
     case 'pet': {
       const quests = useQuestsStore()
       const owned = new Set(quests.collections.pet)
