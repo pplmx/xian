@@ -171,6 +171,19 @@ export type {
 } from './facilities.js'
 export { accrue, createFacilitySystem } from './facilities.js'
 
+export type {
+  InvestInfo,
+  InvestOutcome,
+  PointBranch,
+  PointCost,
+  PointPool,
+  PointState,
+  PointsConfig,
+  SwitchInfo,
+  SwitchOutcome
+} from './points.js'
+export { createPointPool } from './points.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

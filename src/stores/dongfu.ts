@@ -5,10 +5,11 @@ import type { BuildingId, SmallResourceId, StatMods } from '@/types'
 import type { VeinId } from '@/data/veins'
 import { persistConfig } from '@/utils/storage'
 import { BUILDINGS } from '@/data/buildings'
-import { INSIGHT_DISCOUNT_PER_POINT, VEINS } from '@/data/veins'
+import { INSIGHT_DISCOUNT_PER_POINT } from '@/data/veins'
 import { FORGE_LEVEL_PER_CAP, OFFLINE_CAP_HOURS } from '@/data/constants'
 import { mergeMods } from '@/core/statsCalc'
 import { buildingLevelCapOf, buildingModSources, capOfBuilding, produceOf } from '@/core/engineFacilities'
+import { veinModsOf, veinStateOf, veinTotalOf } from '@/core/engineVeins'
 import { useResourcesStore } from './resources'
 
 export const useDongfuStore = defineStore(
@@ -34,25 +35,16 @@ export const useDongfuStore = defineStore(
       return mergeMods(buildingModSources(levels.value))
     })
 
-    /** 灵脉属性加成(悟道脉走参悟折扣,不入 mods) */
+    /** 灵脉属性加成(悟道脉走参悟折扣,不入 mods)—— 每点 × 点数的口径在接入层 */
     const veinMods = computed<StatMods>(() => {
-      const out: StatMods = {}
-      for (const def of VEINS) {
-        const pts = veinPoints.value[def.id] ?? 0
-        if (pts <= 0) continue
-        for (const k in def.perPoint) {
-          const key = k as keyof StatMods
-          out[key] = (out[key] ?? 0) + (def.perPoint[key] ?? 0) * pts
-        }
-      }
-      return out
+      return veinModsOf(veinStateOf(veinPoints.value, veinMain.value))
     })
 
     /** 悟道脉参悟折扣(0~) */
     const insightDiscount = computed(() => (veinPoints.value.insight ?? 0) * INSIGHT_DISCOUNT_PER_POINT)
 
     /** 灵脉已投总点数 */
-    const veinTotal = computed(() => Object.values(veinPoints.value).reduce((a, b) => a + b, 0))
+    const veinTotal = computed(() => veinTotalOf(veinStateOf(veinPoints.value, veinMain.value)))
 
     const offlineCapHours = computed(() => OFFLINE_CAP_HOURS[Math.min(levels.value.mansion, OFFLINE_CAP_HOURS.length - 1)]!)
     /** 洞府等级限制其余建筑上限 */
@@ -106,6 +98,12 @@ export const useDongfuStore = defineStore(
       veinMain.value = id
     }
 
+    /** 整份写回灵脉账(点数 + 主脉)—— 服务的判定结果一次落到 store 上 */
+    function setVeinState(state: { points: Record<string, number>; main: string | null }): void {
+      veinPoints.value = { ...veinPoints.value, ...(state.points as Record<VeinId, number>) }
+      veinMain.value = state.main as VeinId | null
+    }
+
     /**
      * 转世:洞府与地脉都是「外物」,随皮囊一同散去 —— 建筑归零、灵脉清零。
      * 留下的只有认知与宿慧(见 core/reincarnation 的继承清单)。
@@ -150,6 +148,7 @@ export const useDongfuStore = defineStore(
       setLevel,
       addVeinPoint,
       setVeinMain,
+      setVeinState,
       resetForRebirth,
       produce,
       sanitize

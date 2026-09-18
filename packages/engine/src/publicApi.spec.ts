@@ -116,6 +116,8 @@ import type {
   HoldingSystem,
   IdleConfig,
   IdlePlan,
+  InvestInfo,
+  InvestOutcome,
   IssueLevel,
   LeverSpec,
   Ledger,
@@ -128,6 +130,11 @@ import type {
   OnTopMult,
   OverReachSpec,
   ProficiencyConfig,
+  PointBranch,
+  PointCost,
+  PointPool,
+  PointState,
+  PointsConfig,
   ProgressView,
   RerollOptions,
   QualityDef,
@@ -166,6 +173,8 @@ import type {
   StageDef,
   StatsInput,
   StrikeOptions,
+  SwitchInfo,
+  SwitchOutcome,
   TemplateDef,
   TriageConfig,
   TriageImpact,
@@ -214,6 +223,7 @@ const RUNTIME_EXPORTS = [
   'createEquipmentSystem',
   'createFacilitySystem',
   'createHoldingSystem',
+  'createPointPool',
   'createRealmSystem',
   'createResourceSystem',
   'createRng',
@@ -343,6 +353,7 @@ type PublicTypes = {
   drops: [DropEntry, DropHit, DropOptions, DropTable]
   buffs: [BuffApply, BuffChange, BuffConfig<Mods>, BuffDef<Mods>, BuffInstance, BuffStacking, BuffSystem<Mods>, BuffView<Mods>]
   facilities: [FacilityCost<number>, FacilityDef<Mods, { realm: number }, number>, FacilitySystem<Mods, { realm: number }, number>, LevelMap, UpgradeInfo<number>]
+  points: [InvestInfo<number>, InvestOutcome<number>, PointBranch<Mods>, PointCost<number>, PointPool<Mods, { open: boolean }, number>, PointState, PointsConfig<Mods, { open: boolean }, number>, SwitchInfo<number>, SwitchOutcome<number>]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

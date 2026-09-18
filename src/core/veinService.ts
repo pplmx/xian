@@ -2,12 +2,22 @@
  * 灵脉服务 —— Phase 30.3
  * 投点规则:总容量 100;主脉独占 70;副脉各 ≤30。
  * 主脉可迁移(付费换向),已投点数不回收——方向选择有代价但不锁死。
+ *
+ * 规则本身已搬进公共库(`core/engineVeins` 是接入层):这里只留"要花多少灵石、
+ * 钱够不够、要不要提示"。判定顺序与文案(含"未开放时不吭声")都在接入层里。
  */
 import type { GNum } from '@/types'
 import type { VeinId } from '@/data/veins'
 import { veinDef } from '@/data/veins'
-import { VEIN_MAIN_CAPACITY, VEIN_POINT_STONE, VEIN_SIDE_CAP, VEIN_TOTAL_CAPACITY, VEIN_UNLOCK_MAJOR } from '@/data/constants'
-import { stoneByTier } from './formulas'
+import { VEIN_UNLOCK_MAJOR } from '@/data/constants'
+import {
+  investVeinIn,
+  switchVeinMainIn,
+  veinCapOf,
+  veinPointCostAt,
+  veinStateOf,
+  veinSwitchCostAt
+} from './engineVeins'
 import { playerTier } from './progress'
 import { usePlayerStore } from '@/stores/player'
 import { useDongfuStore } from '@/stores/dongfu'
@@ -22,17 +32,17 @@ export function veinsUnlocked(): boolean {
 /** 某条脉当前可投上限 */
 export function veinCap(id: VeinId): number {
   const dongfu = useDongfuStore()
-  return dongfu.veinMain === id ? VEIN_MAIN_CAPACITY : VEIN_SIDE_CAP
+  return veinCapOf(veinStateOf(dongfu.veinPoints, dongfu.veinMain), id)
 }
 
 /** 单点投资成本(按玩家当前层级) */
 export function veinPointCost(): GNum {
-  return stoneByTier(playerTier(), VEIN_POINT_STONE)
+  return veinPointCostAt(playerTier())
 }
 
 /** 主脉迁移费 */
 export function veinSwitchCost(): GNum {
-  return stoneByTier(playerTier(), VEIN_POINT_STONE * 20)
+  return veinSwitchCostAt(playerTier())
 }
 
 /**
@@ -43,25 +53,23 @@ export function investVein(id: VeinId): boolean {
   const dongfu = useDongfuStore()
   const resources = useResourcesStore()
   const ui = useUiStore()
-  if (!veinsUnlocked()) return false
-
-  if (dongfu.veinTotal >= VEIN_TOTAL_CAPACITY) {
-    ui.toast('灵脉容量已尽,唯有取舍', 'warn')
+  const info = investVeinIn(veinStateOf(dongfu.veinPoints, dongfu.veinMain), id, {
+    major: usePlayerStore().major,
+    tier: playerTier()
+  })
+  if (!info.can) {
+    // 空字符串 = 这个门槛不该打扰玩家(未开放就是这样)
+    if (info.reason !== '') ui.toast(info.reason, 'warn')
     return false
   }
-  if (dongfu.veinMain === null) dongfu.setVeinMain(id)
-  const current = dongfu.veinPoints[id] ?? 0
-  if (current >= veinCap(id)) {
-    ui.toast(dongfu.veinMain === id ? '主脉已至圆满' : '副脉有其上限,欲再进须立为主脉', 'warn')
-    return false
-  }
-  const cost = veinPointCost()
+  const cost = info.costs[0]!.amount
   if (!resources.hasStone(cost)) {
     ui.toast('灵石不足', 'warn')
     return false
   }
   resources.spendStone(cost)
-  dongfu.addVeinPoint(id, 1)
+  // 整份写回:点数 + 主脉(首投自动认主由库决定,投成功才认)
+  dongfu.setVeinState(info.state)
   return true
 }
 
@@ -70,14 +78,19 @@ export function switchMainVein(id: VeinId): boolean {
   const dongfu = useDongfuStore()
   const resources = useResourcesStore()
   const ui = useUiStore()
-  if (!veinsUnlocked() || dongfu.veinMain === id) return false
-  const cost = veinSwitchCost()
+  const info = switchVeinMainIn(veinStateOf(dongfu.veinPoints, dongfu.veinMain), id, {
+    major: usePlayerStore().major,
+    tier: playerTier()
+  })
+  // 未开放 / 已经在主位:静默(迁移前也是不提示)
+  if (!info.can) return false
+  const cost = info.costs[0]!.amount
   if (!resources.hasStone(cost)) {
     ui.toast('灵石不足,迁脉非小事', 'warn')
     return false
   }
   resources.spendStone(cost)
-  dongfu.setVeinMain(id)
+  dongfu.setVeinState(info.state)
   ui.toast(`主脉改走「${veinDef(id).name}」`, 'success')
   return true
 }
