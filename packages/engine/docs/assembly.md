@@ -100,6 +100,7 @@
 | 收集进度(照面 / 懂几成) | `createCodex` | `codex.spec.ts` |
 | 重复的怎么处理 | `createIntake` | `intake.spec.ts` |
 | 整套抽卡 + 图鉴 + 日常的闭环 | —— | `examples/collect-loop.ts`(内容池 / 保底 / 集册 / 折算 / 今日三件 / 成就 / 经济体检在一份 200 行的小程序里) |
+| 收不下怎么办(被拒 / 被挤掉 / 收不下,三条去路同一本折算账) | `createIntake` | `intake.spec.ts` + `intake.sim.spec.ts`(一次入库折算的是哪一件、见证与收纳分开) |
 
 ### 配方 D · 经营模拟
 
@@ -110,6 +111,7 @@
 | 你要的东西 | 接哪个 | 可跑的证据 |
 | --- | --- | --- |
 | 收支带来源、上限、取整 | `createResourceSystem` | `resources.spec.ts` |
+| 上限截断、来源审计、整笔付出 | 同上 | `resources.sim.spec.ts`(发 150 只入 10、买不起整笔不扣) |
 | 每小时产出(零头不丢) | `accrue` | `facilities.spec.ts` |
 | 离线时长账(上限 / 效率 / 步数) | `planIdle` / `runIdle` | `idle.spec.ts` + `idle.sim.spec.ts`(边际收益曲线,以及"上限是按每次结算施加的") |
 | "本次所得"与账本对得上 | `createSettlement` | `settlement.spec.ts` |
