@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 236,
+  "round": 237,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T15:25:00+00:00",
+  "updated_at": "2026-09-18T16:05:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14128,6 +14128,55 @@
       "rationale": "牌堆把四件事拆开:区间(该不该现在出现)、场所标签(此处说不说得通)、一次性(是否只碰一次)、权重(谁更常见)。合在一起写时,\"这张牌为什么没出现\"就答不上来,而内容运营最常问的正是这个。另两条口径也是刻意的:情境加权是倾向而不是门槛(要\"完全不该出现\"用标签/区间表达);权重全为 0 时退回均匀抽取而不是抽空(运营把权重调没的那天,玩家不该什么都遇不到)。",
       "alternatives_rejected": "①只给一个 weightedPick(使用方各自再写筛选,四件事又合回去);②把\"加权倍数=0\"当作删除(语义与标签重叠,排查时说不清);③权重全 0 时抛错或返回空(把配置错误变成玩家看不到内容)。",
       "summary": "牌堆四件事分开(区间/标签/一次性/权重);情境加权是倾向不是门槛;权重全 0 退回均匀。"
+    },
+    "TASK-216": {
+      "id": "TASK-216",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T16:05:00+00:00",
+      "updated_at": "2026-09-18T16:05:00+00:00",
+      "touched_round": 237,
+      "category": "core-feature",
+      "severity": 0.65,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "让\"只引用库\"成为源码事实:应用侧 12 个文件、21 处引用从内部别名 @engine 改为按包名 wanxiang-engine 导入;解析只留一行(开发期指源码,拆库后换真依赖);并把\"别名不许复活、不许深层导入\"写成机械判据接进 check:engine。"
+    },
+    "CHG-286": {
+      "id": "CHG-286",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:05:00+00:00",
+      "updated_at": "2026-09-18T16:05:00+00:00",
+      "touched_round": 237,
+      "commit": "8477d22",
+      "summary": "src 下 12 个文件改为 from 'wanxiang-engine';vite.config.ts 别名与 tsconfig.app.json paths 由 @engine/* 改为包名 → packages/engine/src/index.ts;scripts/engine-dist.mjs 增第 ⑥ 步:扫描 src/**/*.ts|vue,断言无 @engine 别名、无深层路径、且确有按包名的引用;README(根与库)写明这条引用方式与拆库后要改的那一行。"
+    },
+    "EV-222": {
+      "id": "EV-222",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:05:00+00:00",
+      "updated_at": "2026-09-18T16:05:00+00:00",
+      "touched_round": 237,
+      "source": "bun run check:engine(第 ⑥ 步:21 处引用全部走公开入口)+ bun run test(197 文件 / 1990 例)+ bun run check + bun run check:engine:standalone",
+      "summary": "改写后全绿:类型检查、1990 例、产物自检(含引用方式)、独立成库自检(32 源文件 · 独立编译 · 99 例 · 独立装配)全部通过;应用侧再出现内部别名或深层导入会当场红。"
+    },
+    "DEC-088": {
+      "id": "DEC-088",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:05:00+00:00",
+      "updated_at": "2026-09-18T16:05:00+00:00",
+      "touched_round": 237,
+      "rationale": "\"别人只需要引用库\"这条目标,最先该在**本作自己的源码**里成立:若宿主还在用仓库内部别名,那说明\"引用\"是本仓库特有的便利,而不是库对外提供的接口。故把导入改成包名(与使用者写法一致),解析只留一行(开发期指向源码以免每次先 build);拆库那天改的就是这一行。同时把两件容易回潮的事(别名复活、绕开公开入口的深层导入)写成机械判据 —— 这类退化在同一个仓库里没人会注意到,直到别人拿去用才发现接的是私有路径。",
+      "alternatives_rejected": "①继续用内部别名(源码看不出\"这是个外部库\",拆库时要改十几处);②直接引 dist(开发期每次都要先 build,迭代变慢);③只写进文档提醒(没有闸,迟早回潮)。",
+      "summary": "宿主按包名引用库(源码即使用者写法),解析一行可换;别名与深层导入由机械判据禁止。"
     }
   },
   "edges": [
@@ -21355,6 +21404,42 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "CHG-286",
+      "to": "TASK-216",
+      "type": "implements",
+      "created_at": "2026-09-18T16:05:00+00:00"
+    },
+    {
+      "from": "CHG-286",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T16:05:00+00:00"
+    },
+    {
+      "from": "EV-222",
+      "to": "CHG-286",
+      "type": "validates",
+      "created_at": "2026-09-18T16:05:00+00:00"
+    },
+    {
+      "from": "TASK-216",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T16:05:00+00:00"
+    },
+    {
+      "from": "TASK-216",
+      "to": "TASK-215",
+      "type": "depends_on",
+      "created_at": "2026-09-18T16:05:00+00:00"
+    },
+    {
+      "from": "DEC-088",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T16:05:00+00:00"
     }
   ]
 }
