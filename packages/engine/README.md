@@ -228,6 +228,8 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 逐项对照表(近一百个可改点)见 [模块速查 · 定制](./docs/usage.md#定制想改什么改哪里);
 "照着装配一套完整玩法"的四条配方与坑清单见 [组装指南](./docs/assembly.md)。
+调数值之前先看 [**调参实测参考**](./docs/tuning.md):离线上限、保底、掉落倍率、内容池权重、
+状态叠加这些"配错了也看不出来"的地方,都在那里量成了数字。
 
 ## 题材无关性
 
@@ -371,6 +373,7 @@ packages/engine/
   docs/
     usage.md        模块速查与定制点(每层回答什么、想改什么改哪里)
     assembly.md     组装指南:四条配方 + 坑清单 + 验收清单
+    tuning.md       调参实测参考:消融实验量出来的刻度(离线上限 / 保底 / 权重 / 叠加……)
     parity.md       与源工程的对账口径
     development.md  开发、同步与"接进你自己项目"的四种写法
 ```

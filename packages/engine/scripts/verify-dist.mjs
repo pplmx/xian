@@ -142,6 +142,24 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   assert.ok(countRow, 'README 的判据表里找不到"用例 / 文件"那一行')
   assert.equal(Number(countRow[2]), specFiles, `README 写的用例文件数与实际不符(实际 ${specFiles} 个)`)
   console.log(`用例数自检通过(README 写的 ${countRow[2]} 个用例文件与实际一致)`)
+
+  /**
+   * 调参参考自检 —— `docs/tuning.md` 必须**收全**每一份消融实验。
+   *
+   * 消融实验的价值在于"量出来的数字有人看得到";新加一份却忘了收进参考表,就等于白量。
+   * 这条自检反向掐住它:凡是 `src/*.sim.spec.ts`,参考表里必须点名一份(顺带保证点到的文件存在)。
+   */
+  const tuning = readFileSync(resolve(ENGINE, 'docs/tuning.md'), 'utf-8')
+  const simSpecs = readdirSync(resolve(ENGINE, 'src'))
+    .filter(name => name.endsWith('.sim.spec.ts'))
+    .sort()
+  assert.ok(simSpecs.length >= 4, `消融实验只有 ${simSpecs.length} 份 —— 目录或命名变了?`)
+  const missing = simSpecs.filter(name => !tuning.includes(name))
+  assert.deepEqual(missing, [], `这些消融实验还没收进 docs/tuning.md:${missing.join('、')}`)
+  for (const [, spec] of tuning.matchAll(/`(src\/\w+\.sim\.spec\.ts)`/g)) {
+    assert.ok(simSpecs.includes(spec.replace('src/', '')), `调参参考指向了不存在的用例:${spec}`)
+  }
+  console.log(`调参参考自检通过(${simSpecs.length} 份消融实验都被收进 docs/tuning.md)`)
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
@@ -232,6 +250,8 @@ for (const required of [
   'CHANGELOG.md',
   'LICENSE',
   'docs/usage.md',
+  'docs/assembly.md',
+  'docs/tuning.md',
   'docs/parity.md',
   'docs/development.md'
 ]) {
