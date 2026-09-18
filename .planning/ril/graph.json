@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 229,
+  "round": 230,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T10:25:00+00:00",
+  "updated_at": "2026-09-18T11:05:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13661,6 +13661,78 @@
       "rationale": "同源审计原来钉的是\"两个模块都必须引用门槛常数\" —— 那是当时结构的唯一真相源。规则搬进库之后,常数只在装配处出现一次,旧判据会误红。判据必须跟着真相源搬家,否则要么被删(失去守卫),要么被改成\"允许两处\"(放走分叉)。新判据比旧的更严:它不仅要求在线/离线走同一入口,还要求两个模块**都不许**再引用常数,并断言常数只出现在装配处。",
       "alternatives_rejected": "①删掉这条审计(门槛又没有守卫了);②放宽成\"引用常数或调用入口皆可\"(两处真相源合法化);③把常数留在其中一个模块里当\"转发\"(多一层无意义的间接)。",
       "summary": "规则搬家时,同源审计跟着搬到新的真相源位置,且判据只应更严:新住所唯一、调用方一律走入口。"
+    },
+    "TASK-209": {
+      "id": "TASK-209",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T11:05:00+00:00",
+      "updated_at": "2026-09-18T11:05:00+00:00",
+      "touched_round": 230,
+      "category": "core-feature",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "装备系统收尾:解析(resolveEquipStats)与共鸣统计(setCounts/activeSets/hasActiveSet)一并交库,应用侧只剩内容与形状适配。为此库允许配置里直接放宿主的大数(Numeric.of + 通用配置),层级战力表不再投影成 double —— 解析得以与迁移前逐位相同。"
+    },
+    "CHG-271": {
+      "id": "CHG-271",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:05:00+00:00",
+      "updated_at": "2026-09-18T11:05:00+00:00",
+      "touched_round": 230,
+      "commit": "c4769a7",
+      "summary": "库侧:Numeric 增 of(value:number|T);EquipmentPowerConfig/EquipmentConfig/GameConfig 泛型化(默认 number),tierFactors 项可为 number 或宿主数值类型;引擎取用走 numeric.of;库内补\"宿主大数表不被拍平\"的用例(带指数的最小大数壳)。"
+    },
+    "CHG-272": {
+      "id": "CHG-272",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:05:00+00:00",
+      "updated_at": "2026-09-18T11:05:00+00:00",
+      "touched_round": 230,
+      "commit": "e5dba70",
+      "summary": "应用侧:engineWorld 的 tierFactors 直接放 GNum;resolveEquipStats 转发库并做形状适配(quality→qualityId、平铺键补零);equipSet 的件数与 hook 激活改由库的 resolveLoadout 算,内容单独成 data/equipSets.ts(打断装配↔查询的环);删除被库取代的 data/affixes.affixValue 与 AFFIX_RARITY_RANK。"
+    },
+    "EV-215": {
+      "id": "EV-215",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:05:00+00:00",
+      "updated_at": "2026-09-18T11:05:00+00:00",
+      "touched_round": 230,
+      "source": "src/core/engineParity.spec.ts(28 例)+ packages/engine(56 例)+ bun run test(190 文件 / 1934 例)+ bun run check + bun run check:engine",
+      "summary": "解析对账:与冻结原式 GNum toEqual 精确相等(层级×品质×强化逐组),app 入口与库同结果、缺模板补零;共鸣对账:真实装配(一槽一件)上件数与激活与冻结旧口径相同,并写清\"同槽位只算后装的那件\";库用例证明宿主大数表的指数未被拍平。全量闸门与产物自检全绿。"
+    },
+    "DEC-078": {
+      "id": "DEC-078",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:05:00+00:00",
+      "updated_at": "2026-09-18T11:05:00+00:00",
+      "touched_round": 230,
+      "rationale": "上一轮把解析留在应用侧,理由是\"库只收得下 number 表,搬过去会漂\"。但那是库的**限制**,不是任务的边界:层级系数本就是宿主自己的数,库没有理由要求它先投影成 double。遇到这种\"因为库的接口不够而把机制留在应用侧\"的情形,正确做法是补接口(Numeric.of + 泛型配置),而不是接受机制两份实现。",
+      "alternatives_rejected": "①接受 1e-16 投影,把解析也搬过去(违背\"数字一位不变\");②继续留两份解析(机制分叉,正是本轮要消掉的东西);③把宿主的层级表改成 number(大数溢出,后期数值直接失效)。",
+      "summary": "当\"搬不过去\"的原因在库的接口上时,补接口而不是留副本;判据仍以\"数字一位不变\"为准。"
+    },
+    "DEC-079": {
+      "id": "DEC-079",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:05:00+00:00",
+      "updated_at": "2026-09-18T11:05:00+00:00",
+      "touched_round": 230,
+      "rationale": "共鸣原来是 core/equipSet 自己数件数、自己判激活;而库里早已有 resolveLoadout(件数 → 激活的 hook)。两份规则意味着\"几件算一套\"会有两种答法。把内容与规则分开之后:data/equipSets.ts 只写名字/件数/文案/hook,件数与激活由库算 —— 且库的装配模型是**按槽位**的,这顺手把\"一次戴两顶帽子\"这类不存在的状态从判据里挤了出去。",
+      "alternatives_rejected": "①继续两份实现(件数口径迟早分叉);②把共鸣内容也塞进库里(那是作品的内容,不是通用机制);③内容留在 core/equipSet 并与库互引(模块成环,实测会炸)。",
+      "summary": "共鸣:内容(data/equipSets.ts)与规则(库 resolveLoadout)分开;件数与 hook 激活只有库一处实现,判据按真实装配(一槽一件)写。"
     }
   },
   "edges": [
@@ -20480,6 +20552,66 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T10:25:00+00:00"
+    },
+    {
+      "from": "CHG-271",
+      "to": "TASK-209",
+      "type": "implements",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "CHG-272",
+      "to": "TASK-209",
+      "type": "implements",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "CHG-271",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "CHG-272",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "EV-215",
+      "to": "CHG-271",
+      "type": "validates",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "EV-215",
+      "to": "CHG-272",
+      "type": "validates",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "TASK-209",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "TASK-209",
+      "to": "TASK-208",
+      "type": "depends_on",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "DEC-078",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "DEC-079",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T11:05:00+00:00"
     }
   ]
 }
