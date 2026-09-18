@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 258,
+  "round": 259,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T15:08:51+00:00",
+  "updated_at": "2026-09-18T15:15:16+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 258,
+      "touched_round": 259,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -15367,7 +15367,7 @@
       "version": 1,
       "created_at": "2026-09-18T15:08:45+00:00",
       "updated_at": "2026-09-18T15:08:45+00:00",
-      "touched_round": 258,
+      "touched_round": 259,
       "category": "docs",
       "severity": 0.45,
       "confidence": 0.95,
@@ -15409,6 +15409,56 @@
       "rationale": "README 是门面,不是仓库;把\"与库的关系、迁移对账清单、设计规范\"这类长内容堆在门面上,结果是:新来的人找不到\"怎么跑\",而需要细节的人又不该在门面里翻。故 门面只留\"这是什么 / 能做什么 / 怎么跑 / 怎么发 / 去哪看细节\",长文下沉到 docs/ 并在门面上留一句指路。同时数量必须能被数出来:本作早就有 dataHeaderAudit 把 README 点到的数字与数据表比对 —— 这次重写仍然按它的措辞走,不改判据只改文档,因为\"数字过期\"比\"措辞不美\"严重得多。",
       "alternatives_rejected": "①在 README 里保留全部细节(门面越来越长,读者先被淹没);②把长文直接删掉(证据与依据没了,后来的人只能重新摸索);③为了让新措辞过审而放宽 README 数字判据(等于把唯一一条防\"数字过期\"的闸门拆了)。",
       "summary": "门面只留门面的内容(门面 + 指路),长文进 docs/;文档里的数量必须能由数据表数出来,判据不迁就措辞。"
+    },
+    "TASK-239": {
+      "id": "TASK-239",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T15:15:09+00:00",
+      "updated_at": "2026-09-18T15:15:09+00:00",
+      "touched_round": 259,
+      "category": "docs",
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "README 瘦成门面并把长文分进 docs/(usage 玩法、development 开发、deployment 部署、engine 库协作、design 设计规范);清掉旧仓库的外部信息(QQ 群、试玩站、旧仓库链接、旧作者赞助链接),应用内关于弹窗与隐私页同步;README 数字判据改读 docs/usage.md;两个仓库的 GitHub 简介与 topics 一并更新。"
+    },
+    "CHG-321": {
+      "id": "CHG-321",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:15:10+00:00",
+      "updated_at": "2026-09-18T15:15:10+00:00",
+      "touched_round": 259,
+      "commit": "3cbfc3a",
+      "summary": "README.md 重写为门面(一句话/截图/五条命令/文档导航/公共库/技术栈/许可);新增 docs/usage.md、docs/development.md、docs/deployment.md(并入原 README.Docker.md 并删除该文件);AboutDialog.vue 与 PrivacyDialog.vue 指向 pplmx/xian 并去掉 QQ 群;public/privacy.html 同步;ISSUE_TEMPLATE/config.yml 去掉 QQ 联系入口;FUNDING.yml 清空外部赞助链接;dataHeaderAudit.spec 改读 docs/usage.md;gh repo edit 更新两仓 description/topics。"
+    },
+    "EV-245": {
+      "id": "EV-245",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:15:13+00:00",
+      "updated_at": "2026-09-18T15:15:13+00:00",
+      "touched_round": 259,
+      "confidence": 0.97,
+      "source": "变更 CHG-321(3cbfc3a)。bun run test(199 文件/2044 例);bun run check(vue-tsc + ESLint);bun run test:report(9 类 2044 过/0 败);bunx vitest run src/core/dataHeaderAudit.spec.ts(3 例,改读 docs/usage.md 后通过);rg 全仓查 920930589 / yunyin.wenzi.games / qm.qq.com / setube / README.Docker 无命中;gh repo view 复核两仓 description 与 topics;git push origin main 后两条流水线触发",
+      "summary": "门面与文档分离后判据全绿;外部信息(旧社群/旧站点/旧仓库/旧赞助)在文档、应用内与隐私页三处都已清除。"
+    },
+    "DEC-111": {
+      "id": "DEC-111",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:15:15+00:00",
+      "updated_at": "2026-09-18T15:15:15+00:00",
+      "touched_round": 259,
+      "rationale": "门面(README)的职责是\"让人三十秒内知道这是什么、怎么跑起来、细节去哪看\",不是仓库的目录本身。把玩法、开发、部署、设计规范全堆在 README 里的代价是:第一次来的人先被淹没,而真正需要细节的人又只能在一个越来越长的文件里翻。所以按读者分流:README 只留门面与导航,玩法进 usage、开发与判据进 development、部署进 deployment、协作与对账进 engine、设计规范进 design —— 且数量判据跟着文档走(数字从 README 搬到 usage 时,判据也改读那份),避免为了\"过判据\"把长文又塞回门面。",
+      "alternatives_rejected": "①README 继续全量(读者被淹没,且文档越写越像仓库目录);②为了保住 README 数字判据把长文留在 README(本末倒置:判据服务于文档,不是文档服务于判据);③删掉细节只留链接(证据与依据消失,后来的人只能重新摸索)。",
+      "summary": "按读者分流:门面只放\"是什么/怎么跑/去哪看\",细节各归其文档,且数量判据跟着文档搬家 —— 不为过判据而把长文塞回门面。"
     }
   },
   "edges": [
@@ -23566,6 +23616,30 @@
       "to": "COMP-016",
       "type": "governs",
       "created_at": "2026-09-18T15:08:51+00:00"
+    },
+    {
+      "from": "CHG-321",
+      "to": "TASK-239",
+      "type": "implements",
+      "created_at": "2026-09-18T15:15:15+00:00"
+    },
+    {
+      "from": "TASK-239",
+      "to": "TASK-238",
+      "type": "depends_on",
+      "created_at": "2026-09-18T15:15:15+00:00"
+    },
+    {
+      "from": "DEC-111",
+      "to": "TASK-239",
+      "type": "governs",
+      "created_at": "2026-09-18T15:15:15+00:00"
+    },
+    {
+      "from": "DEC-111",
+      "to": "COMP-016",
+      "type": "governs",
+      "created_at": "2026-09-18T15:15:16+00:00"
     }
   ]
 }
