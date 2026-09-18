@@ -74,7 +74,7 @@ try {
 
   console.log('⑥ README 里的例子在搬走之后也跑得通')
   // README 承诺 `bun run examples` 能跑 —— 那就真跑。示例烂了比文档写错更糟:它会教坏抄的人。
-  for (const example of ['examples/quickstart.ts', 'examples/minimal.ts', 'examples/combo-arts.ts']) {
+  for (const example of ['examples/quickstart.ts', 'examples/minimal.ts', 'examples/combo-arts.ts', 'examples/daily-loop.ts']) {
     assert.ok(existsSync(join(target, example)), `README 提到的示例不存在:${example}`)
     execFileSync('bun', [example], { cwd: target, stdio: 'ignore' })
   }

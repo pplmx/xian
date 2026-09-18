@@ -125,7 +125,7 @@ function libraryEngine() {
   })
 }
 
-function bumpCrit(mods: Record<string, number>): Record<string, number> {
+function bumpCrit(mods: CombatantSnap['mods']): CombatantSnap['mods'] {
   return { ...mods, critRate: (mods.critRate ?? 0) + 0.05 }
 }
 
