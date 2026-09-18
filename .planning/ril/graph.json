@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 262,
+  "round": 263,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:27:15+00:00",
+  "updated_at": "2026-09-18T16:34:47+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 262,
+      "touched_round": 263,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15567,7 +15567,7 @@
       "version": 1,
       "created_at": "2026-09-18T16:27:08+00:00",
       "updated_at": "2026-09-18T16:27:08+00:00",
-      "touched_round": 262,
+      "touched_round": 263,
       "category": "core-feature",
       "severity": 0.55,
       "confidence": 0.9,
@@ -15609,6 +15609,56 @@
       "rationale": "用户给了一条总纲:库必须抽象通用、方便使用者定制,\"我们自己就相当于第一个使用 engine 的定制用户\"。它落到可操作的一条:**只有那部作品才需要的东西,不进库**。于是每次往库加东西先问一句\"别的游戏会因为这条规则受益吗\"——受益的进库(护盾池、反击、资源账本);只有本作要的留在作品侧(组合技、法宝触发、Boss 阶段、具体数值曲线),库只提供它们需要的**能力形状**(破盾/会心/每回合结束这三个落点)。这条总纲同时解释了为什么资源层里一个题材词都没有:键名、上限、来源标签全归使用者。",
       "alternatives_rejected": "①\"把本作的实现整个搬进库\"(库会变成那款游戏的复刻,别人拿到手要跟它的设计绕);②\"只抽四套主干、其余一律不管\"(使用者仍要自己写资源账本、离线推进、标签解释 —— 重复劳动没消除);③\"按本作需要什么就抽什么\"(库的形状由一部作品的进度决定,后来的人只能被动接受)。",
       "summary": "库的判断标准是\"只有那部作品才需要的东西不进库\":通用能力进库,内容驱动留在作品侧;我们自己就是第一个定制用户,不是库的主人。"
+    },
+    "TASK-243": {
+      "id": "TASK-243",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T16:34:40+00:00",
+      "updated_at": "2026-09-18T16:34:40+00:00",
+      "touched_round": 263,
+      "category": "core-feature",
+      "severity": 0.55,
+      "confidence": 0.9,
+      "effort": 4,
+      "unlock_factor": 1.0,
+      "summary": "让本作成为资源层的第一个真实使用者:store 的动作转发到 core/engineResources(库的资源账本 + GNum 适配器),口径(cap/floor/整数/大数)搬进库;对账照 engineParity 的做法冻结旧实现逐位比对;顺带照出并补上库的两个缺口(收支条目收 T 的大数台账、integer 取整)。库 0.5.0。"
+    },
+    "CHG-325": {
+      "id": "CHG-325",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:34:41+00:00",
+      "updated_at": "2026-09-18T16:34:41+00:00",
+      "touched_round": 263,
+      "commit": "706ea17",
+      "summary": "宿主:新增 src/core/engineResources.ts(灵石 GNum 台账 + 材料/灵气整数台账与六个动作)与 src/core/engineResourceParity.spec.ts(迁移前实现当尺子的六条对账);stores/resources 动作改为转发(公开 API 与持久化形状不变);docs/engine.md 迁移表加资源一行。库:resources.ts 支持 number|T 的收支条目与 AppliedEntry/ResourceSummary 泛型化、ResourceDef.integer、Partial 入参;CHANGELOG 0.5.0 与版本。"
+    },
+    "EV-249": {
+      "id": "EV-249",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:34:46+00:00",
+      "updated_at": "2026-09-18T16:34:46+00:00",
+      "touched_round": 263,
+      "confidence": 0.97,
+      "source": "变更 CHG-325(706ea17)。bun run test(202 文件/2076 例);bunx vitest run src/core/engineResourceParity.spec.ts(6 例:灵石 6 组收付含 1e40 逐位相等、材料取整不为负、灵气 QI_BANK_MULT 软顶、审计明细恒等于合计);bun run test:report(2076 过/0 败);bun run check(vue-tsc + ESLint);bun run check:engine(26 处引用全走公开入口);bun run check:engine:standalone;cd packages/engine && bun run check(17 文件/171 例);gh release create v0.5.0",
+      "summary": "资源口径搬迁逐位对账:灵石(含 1e40 大数)收付与旧 store 一致、材料取整与不为负一致、灵气软顶一致;整套 2076 例未因换实现而变化;一处有意的收紧(材料支出取整)写在用例头注里,内容中不存在这种支出。"
+    },
+    "DEC-115": {
+      "id": "DEC-115",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:34:47+00:00",
+      "updated_at": "2026-09-18T16:34:47+00:00",
+      "touched_round": 263,
+      "rationale": "\"我们自己就是第一个定制用户\"要落到实处,靠的不是声明而是**先接一层、再看它缺什么**。资源层的接线照出两个真缺口(收支条目只收 number → 大数资源加不进去;不会取整 → 材料会出现 2.5),而这两个缺口在任何\"先设计通用 API 再等用户\"的路径里都不会被发现。故规矩定成这样:库每加一层,本作就尽快用它一次(哪怕只是把 store 的动作转发过去),用法与旧口径逐位对账;探出来的缺口当场补库,补不动就说明这层设计有问题。",
+      "alternatives_rejected": "①等库\"设计完整\"再接(缺口要等外部使用者踩到才发现);②接的时候顺手改口径(把\"迁移\"变成\"重做\",平衡与存档都会动);③接一层就丢开不维护(库与作品各长各的,对账会失效)。",
+      "summary": "库每加一层,本作就尽快真实用它一次并与旧口径逐位对账;探出的缺口当场补库 —— 通用性由真实用法长出来,不靠声明。"
     }
   },
   "edges": [
@@ -23862,6 +23912,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:27:15+00:00"
+    },
+    {
+      "from": "CHG-325",
+      "to": "TASK-243",
+      "type": "implements",
+      "created_at": "2026-09-18T16:34:47+00:00"
+    },
+    {
+      "from": "TASK-243",
+      "to": "TASK-242",
+      "type": "depends_on",
+      "created_at": "2026-09-18T16:34:47+00:00"
+    },
+    {
+      "from": "DEC-115",
+      "to": "TASK-243",
+      "type": "governs",
+      "created_at": "2026-09-18T16:34:47+00:00"
+    },
+    {
+      "from": "DEC-115",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T16:34:47+00:00"
     }
   ]
 }
