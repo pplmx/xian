@@ -227,6 +227,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | 层级系数是张表而不是指数 | `equipment.power.tierFactors` |
 | **炼制乘区几个、叫什么、什么形状** | `crafting.levers`(任意键)+ 每区 `LeverSpec.curve`(自定义曲线)+ 可选 `overReach` |
 | 词条数值单位(百分点 / 分数) | `equipment.affixValueScale` 或单个词条的 `scale` |
+| 词条数值的取值曲线 | `AffixDef.valueCurve(roll)`(默认线性;凸/凹曲线可表达「掷得满更值钱」) |
 | **技能消耗完全自己定** | `skills.costs[].amount(level)`(折扣与下限仍生效) |
 | **技能词条曲线完全自己定** | `SkillDef.modsFn(level)`(给了它,`baseMods`/`perLevelMods` 忽略) |
 | **奖励数额完全自己定** | `dungeons.victoryRewards[].amount(tier)`(概率仍生效) |
@@ -238,6 +239,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
 | **区域多条前置**("两条线都通才开"/"任一即可") | `requireCleared: string \| string[]` + `requireMode: 'all' \| 'any'` |
 | **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
+| **战斗伤害公式完全自己定** | `BattleConfig.damageFn(ctx, rng)`(减法型/除算型/查表型都行;给了它,地板与修正都归你) |
 | **随机内容池的标签体系与区间** | `deck` 的 `tags` / `min` / `max` / `weight` / `once`,`weightMultiplier`(倾向而非门槛) |
 | 牌堆标签怎么算切题 | `DeckContext.match: 'any' \| 'all'`(相交 / 牌要求全中)、`excludeTags`(命中即排除) |
 | **抽 N 张的保底** | `drawMany(..., { guarantee: { tag, min } })`(至少 min 张带该标签;池里不够则补多少算多少) |
@@ -248,6 +250,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改(宿主接 GNum 的例子见其 `engineNumeric`) |
 | 随机源(可复现 / 平台随机) | `Rng` 接口;库自带 mulberry32,可换 |
 | 存档介质与加密 | 库**不碰介质**:`encodeSave` 出字符串,写哪儿、要不要加密都归你 |
+| **存档的编码格式** | `SaveFormat.codec: { encode, decode }`(压缩/加密/换封套都行;迁移链与形状修复照旧) |
 | 内容校验的严格度 | `defineGame(config, { strict: true })` 把警告也当错误 |
 
 两条不变式(其余都能改):

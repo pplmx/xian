@@ -52,6 +52,8 @@
   `drawMany` 的 `guarantee: { tag, min }`(保底)
 - 目标条件可组合:`{ type: 'all' | 'any', of: [...] }`(可嵌套,进度给 `parts`);
   遭遇调度可接管:`DungeonConfig.encounterFn(ctx, rng)`(返回 null 即用默认节奏)
+- 又开三处:`BattleConfig.damageFn`(伤害公式)、`SaveFormat.codec`(存档编解码)、
+  `AffixDef.valueCurve`(词条取值曲线)
 
 **已验证**
 
