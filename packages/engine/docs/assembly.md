@@ -95,6 +95,7 @@
 | --- | --- | --- |
 | 收支带来源、上限、取整 | `createResourceSystem` | `resources.spec.ts` |
 | 每小时产出(零头不丢) | `accrue` | `facilities.spec.ts` |
+| 离线时长账(上限 / 效率 / 步数) | `planIdle` / `runIdle` | `idle.spec.ts` + `idle.sim.spec.ts`(边际收益曲线,以及"上限是按每次结算施加的") |
 | "本次所得"与账本对得上 | `createSettlement` | `settlement.spec.ts` |
 | 哪个资源是瓶颈 / 烂在手里 | `createEconomyReadings` | `economy.spec.ts` + `economy.sim.spec.ts`(默认阈值翻译成"支出/收入"区间,以及 ±10% 的敏感区有多宽) |
 | 自动清理规则链 | `createTriage` | `examples/daily-loop.ts` 的清理段 |
@@ -124,6 +125,7 @@
 | 规则装了就当它在生效 | 数每条规则接走几件:0 次要么是被前一条全覆盖,要么是阈值超出内容值域 | `triage.sim.spec.ts` |
 | 以为"权重低"等于"清空成本高" | 一次性池里抽到就排除,清空抽数**恒等于张数**;权重只排序 —— 限定预算时才体现为曝光差异 | `deck.sim.spec.ts` |
 | 全是一次性牌却不留底牌 | 池子抽干后每抽都是 `null`(玩家:"什么都没发生")—— 常驻底牌或保底标签二选一 | `deck.sim.spec.ts` |
+| 以为离线上限"按天累计" | 上限是**按每次结算**施加的:同样 8 小时,拆成 4+4 两次结算就多拿 2 步 —— 要真封顶,得自己维护"今天已经计入多少" | `idle.sim.spec.ts` |
 | 换期不幂等 | 同期再调一次必须原样返回(心跳每次都会问) | `tasks.spec.ts` |
 | 状态刷新吞掉剩余时长 | 叠时长:`max(旧到期, now) + 时长` | `buffs.spec.ts` |
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
