@@ -8,6 +8,9 @@
 **它现在是一份可以单独成 repo 的包**:零运行时依赖,自带测试配置与用例,
 复制出去 `bun install && bun test && bun build` 就能独立迭代(见"单独成库")。
 
+> 独立仓库:<https://github.com/pplmx/wanxiang-engine>
+> 本目录是它的**上游**:宿主仓库(云隐修仙录)在这里开发,再按下面的方式同步过去。
+
 ```bash
 bun packages/engine/examples/minimal.ts   # 换皮后的完整一圈:修炼 → 掉装 → 打副本 → 通关
 ```
@@ -261,6 +264,20 @@ npm i ./wanxiang-engine-0.1.0.tgz
 
 这一份目录**不依赖宿主仓库**:源码里没有 `@/` 之类的别名,也不 import 宿主任何模块;
 自带 `vitest.config.ts` 与 `package.json` 的 `devDependencies`,复制出去就能独立开发。
+
+它已经独立成仓库(`pplmx/wanxiang-engine`)。开发有两种走法,**选一处开发即可,不要两边同时改**:
+
+```bash
+# 走法一(推荐):在独立仓库里开发
+git clone git@github.com:pplmx/wanxiang-engine.git && cd wanxiang-engine
+bun install && bun run check
+
+# 走法二:在宿主仓库里开发,再推过去
+cd <宿主仓库>
+git subtree push --prefix=packages/engine git@github.com:pplmx/wanxiang-engine.git main
+```
+
+两边都改会分叉 —— `git subtree push` 遇到分叉会直接拒绝,那时先 `git subtree pull --prefix=packages/engine git@github.com:pplmx/wanxiang-engine.git main` 合回来。
 
 ```bash
 cd packages/engine

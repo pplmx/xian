@@ -1,0 +1,39 @@
+name: CI
+
+# 这个仓库就是库本身:类型检查 + 自己的用例 + 出 dist + 验发布包内容。
+# 判据写在这里而不是宿主工程里,是因为"库能不能自己站住"必须由它自己回答 ——
+# 宿主仓库那边的对账是另一件事(见宿主侧的 engineParity)。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: 安装 Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: 安装依赖
+        run: bun install --frozen-lockfile
+      - name: 类型检查 + 用例 + 出产物
+        run: bun run check
+      - name: 校验发布包内容(npm pack --dry-run)
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e "
+            const pack = JSON.parse(require('node:fs').readFileSync('/tmp/pack.json', 'utf8'))[0]
+            const files = pack.files.map(f => f.path)
+            const need = ['dist/index.js', 'dist/index.d.ts', 'dist/presets/demo.js', 'README.md', 'LICENSE', 'package.json']
+            const missing = need.filter(n => !files.includes(n))
+            const leaked = files.filter(p => p.startsWith('src/'))
+            if (missing.length || leaked.length) { console.error('发布包有问题', { missing, leaked }); process.exit(1) }
+            console.log('发布包 ' + files.length + ' 个文件 / ' + (pack.size / 1024).toFixed(1) + ' KB')
+          "
