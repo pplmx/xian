@@ -100,5 +100,8 @@ export type { DeckContext, DeckEntry, DrawOptions, LevelBand } from './deck.js'
 export type { DrawManyOptions } from './deck.js'
 export { deckPool, drawFrom, drawMany, entryAllowed, inBand } from './deck.js'
 
+export type { CompanionConfig, CompanionDef, CompanionSystem, TraitDef } from './companions.js'
+export { createCompanionSystem } from './companions.js'
+
 export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config.js'
 export { defineGame, validateGame } from './config.js'

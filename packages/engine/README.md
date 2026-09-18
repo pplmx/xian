@@ -231,6 +231,33 @@ goalProgress(cond, env)        // { done, ratio, current, target }
 进度视图只对**可量化**的条件给比例(比例封顶 1、目标为 0 时不除零);
 等级/位阶这类只有"到没到",`ratio` 为 null —— 界面就不画条,不硬编一个读数。
 
+## 伙伴 / 随从:数值之外还有"性格"
+
+```ts
+const companions = createCompanionSystem({
+  neutral: { exploreDurMult: 1, dangerMult: 1, dropLuck: 0, lossReduction: 0 }, // 键名与中性值由作品给
+  traits: [
+    { id: 'greedy', name: '贪宝', mods: { dangerMult: 1.05, dropLuck: 0.06 } },
+    { id: 'steady', name: '慢稳', mods: { exploreDurMult: 1.1, lossReduction: 0.02 } }
+  ],
+  companions: [
+    { id: 'fox', name: '青羽灵狐', traitId: 'greedy', mods: { luck: 0.05 } }
+  ]
+})
+
+companions.effectsOf('fox')  // 性格系数(与中性基线合并后的完整一组)
+companions.modsOf('fox')     // 伙伴自身词条(与装备同一种表达)
+companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
+```
+
+三处刻意的设计:
+
+- **中性值必须由作品给**:倍率的中性是 1、加法的中性是 0,引擎猜不出来 ——
+  猜错就会出现"没带伙伴反而更快/更穷"这种没人能一眼看出的偏差。故配置里少一个键就直接报错。
+- **性格系数是绝对取值**(写 1.05,不写 "+5%"):读的时候不必反推基线。
+- **性格键名由作品定**:引擎只当它是"一组有中性值的系数",不规定必须有哪几项 ——
+  换个题材完全可以换成"曝光率/噪音/耗油"。
+
 ## 接进你自己的项目
 
 包内自带 `dist` 的编译与入口声明,但**还没有发到 npm**(发布是显式动作)。三种接法任选:
