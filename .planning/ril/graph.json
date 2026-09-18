@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 274,
+  "round": 275,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:47:48+00:00",
+  "updated_at": "2026-09-18T17:55:26+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 274,
+      "touched_round": 275,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -16193,7 +16193,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:47:41+00:00",
       "updated_at": "2026-09-18T17:47:41+00:00",
-      "touched_round": 274,
+      "touched_round": 275,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16235,6 +16235,56 @@
       "rationale": "入库是一个**顺序敏感**的漏斗,顺序错一处就会静默丢东西:见证若排在裁决之后,化尘的那件就不算\"见过\"(图鉴少一条,而玩家明明看见过);裁决若排在见证之前,同理;满了腾位若不做,值得留的新件会被折算;腾位若\"失败后追回\"旧件,就出现了\"旧件既没化尘也没留在包里\"的中间态(或者反过来,旧件化尘了、新件也没进来,背包凭空少一件)。故这五条顺序收进库,而每一条的判据(什么算值得留、挤谁、折算成什么)仍归作品 —— 库不猜。",
       "alternatives_rejected": "①把入库写成\"try add else fallback\"两行(见证时机、腾位、腾位失败这些边界全丢);②让库决定\"满了自动折算成什么\"(库不知道那件值多少);③把腾位做成\"先删旧件、再尝试加新件、失败就把旧件加回来\"(回滚看起来安全,实际会把\"已化尘\"的旧件复活,账目对不上)。",
       "summary": "入库漏斗的五条顺序(见证→裁决→腾位→重试→折算)收进库;每条的判据由作品给;腾位失败不追回。"
+    },
+    "TASK-256": {
+      "id": "TASK-256",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:14+00:00",
+      "updated_at": "2026-09-18T17:55:14+00:00",
+      "touched_round": 275,
+      "category": "core-feature",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "新增结算回执层:createSettlement 让\"实际入账\"成为回执的唯一来源(取自 resources 落账时的实际发生额,被夹掉的差额另给 clipped);本作 afterWin 的灵石落账与 DropSummary.stone 改走它,并用\"固定随机值 + 冻结公式\"验到回执 = 公式 = 账本增量。继续攒批不发版。"
+    },
+    "CHG-338": {
+      "id": "CHG-338",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:15+00:00",
+      "updated_at": "2026-09-18T17:55:15+00:00",
+      "touched_round": 275,
+      "commit": "bbd38e2",
+      "summary": "库:新增 src/settlement.ts 与 settlement.spec.ts(6 例:合计=账本增量、上限截断进 clipped、扣除的实际发生额、多笔同键与取整差额、纯函数、空发放),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 加条目。宿主:loot.afterWin 的灵石改走 STONE_SETTLEMENT(写回 spiritStone 并取回执合计作为 DropSummary.stone),新增 engineSettlementParity.spec(3 例,冻结概率与浮动),test-report 补分类,docs/engine.md 加一行。"
+    },
+    "EV-262": {
+      "id": "EV-262",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:19+00:00",
+      "updated_at": "2026-09-18T17:55:19+00:00",
+      "touched_round": 275,
+      "confidence": 0.97,
+      "source": "变更 CHG-338(bbd38e2)。bunx vitest run src/core/engineSettlementParity.spec.ts(3 例:四档场景回执=冻结公式且普通档账本增量=回执、翻倍档同样、非零);bunx vitest run src/core/loot.spec.ts(18 例);bun run test(222 文件/2181 例);bun run test:report(2181 过/0 败);cd packages/engine && bun run check(26 文件/232 例);bun run check:engine(37 处引用);bun run check:engine:standalone",
+      "summary": "结算回执搬迁后行为一位不变(灵石无上限故落账额=计划额),并把\"回执=公式=账本增量\"钉成判据;探路时确认了一个边界 —— 首领保底装备会带出成就奖励,那是另一笔账,故那一档只比公式。"
+    },
+    "DEC-126": {
+      "id": "DEC-126",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:26+00:00",
+      "updated_at": "2026-09-18T17:55:26+00:00",
+      "touched_round": 275,
+      "rationale": "\"本次所得\"与实际到账对不上,是最容易被玩家当场抓住的一类错(界面写 120、行囊多 100),而它的根因永远是**同一个数被算了两遍**。口头纪律(\"要和账本一致\")挡不住它,因为两处的代码看起来都合理。故把\"实际入账\"做成回执的唯一来源:回执的每个数字都取自落账时的实际发生额,想显示别的数就必须绕过回执 —— 那是**显式**的越界,而不是一次无心的复制。另一条相关的边界也该写下来:一次结算里可能混着好几笔账(成就奖励、装备化尘折返),所以\"钱包净增量 = 回执\"只在能把旁路排除时成立;判据要么排除旁路,要么只比\"回执 = 该笔的口径\"。",
+      "alternatives_rejected": "①靠注释提醒\"两处要一致\"(已被证明挡不住);②让界面自己再算一遍所需的数(那就是第二份口径);③把回执做成\"计划值 + 事后校验\"(校验失败时玩家已经看见了错数)。",
+      "summary": "让\"实际入账\"成为回执的唯一来源(取自落账实际发生额),把\"同源\"从自觉变成结构;判据要么排除旁路账,要么只比该笔口径。"
     }
   },
   "edges": [
@@ -24770,6 +24820,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:47:48+00:00"
+    },
+    {
+      "from": "CHG-338",
+      "to": "TASK-256",
+      "type": "implements",
+      "created_at": "2026-09-18T17:55:26+00:00"
+    },
+    {
+      "from": "TASK-256",
+      "to": "TASK-255",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:55:26+00:00"
+    },
+    {
+      "from": "DEC-126",
+      "to": "TASK-256",
+      "type": "governs",
+      "created_at": "2026-09-18T17:55:26+00:00"
+    },
+    {
+      "from": "DEC-126",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:55:26+00:00"
     }
   ]
 }
