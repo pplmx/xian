@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 325,
+  "round": 326,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:55:15+00:00",
+  "updated_at": "2026-09-18T21:59:35+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18597,6 +18597,56 @@
       "confidence": 0.97,
       "source": "变更 CHG-389(6ac15e9)。cd packages/engine && bun run check(451 例 / 56 文件 + 八道自检;发布包自检已是 wanxiang-engine-0.1.13.tgz,含预设装配 / 冷启动装配 / bundler 与 node16 两种 tsc);cd /workspace/xian && bun run test(263 文件 / 2499 例)、check:engine(59 处引用)、check:engine:standalone(96 个源文件 + 9 示例);git push origin main(2d139b0..6ac15e9)、git subtree push(→ 599d749);gh api 核对:tag v0.1.13 → 599d749…、package.json version 0.1.13、README 三处 v0.1.13 引用就位、release 非 draft / 非 prerelease。",
       "summary": "0.1.13 是第二个\"零功能变更\"的节点(tag 指向的代码与 0.1.12 行为一致),但它把\"内容作者该看哪张表\"这件事做完整了:16 份消融覆盖了升级曲线、掉落与保底、抽取、经济、清理、内容池、离线、状态、抉择、副本、图鉴、记忆、技能、背包、洗练,并且每一份都被一条自检保证收进 docs/tuning.md。"
+    },
+    "TASK-307": {
+      "id": "TASK-307",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:59:34+00:00",
+      "updated_at": "2026-09-18T21:59:34+00:00",
+      "touched_round": 325,
+      "category": "core-feature",
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "公开面行为判据审计:扫 src 全部用例(去注释/import/字符串)与 examples,查出 75 个运行时导出里有 9 个( clamp、formatAmount、numberNumeric、mulberry32、seedFromString、randomRng、DEFAULT_ATTRIBUTES、DEFAULT_LAYER_NAMES、progressText )从没被真正用过,只在 publicApi.spec 的名字清单里露面。补 src/publicBehavior.spec.ts(9 例)钉住各自口径,并在 verify-dist.mjs 加常驻自检\"每个导出必须在代码位置被用过\"(注释/import/字符串不算),防空转已验。"
+    },
+    "CHG-390": {
+      "id": "CHG-390",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:59:34+00:00",
+      "updated_at": "2026-09-18T21:59:34+00:00",
+      "touched_round": 325,
+      "commit": "a0478dd",
+      "summary": "库:新增 src/publicBehavior.spec.ts(9 例);scripts/verify-dist.mjs 新增公开面行为判据自检(去注释/import/字符串后按词边界查每个导出,缺失即红);docs/development.md 记下这条判据与它的来由;CHANGELOG「未发布」记一节;README 用例数改 460/57。库实现未改。宿主无改动。"
+    },
+    "EV-316": {
+      "id": "EV-316",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:59:35+00:00",
+      "updated_at": "2026-09-18T21:59:35+00:00",
+      "touched_round": 325,
+      "confidence": 0.96,
+      "source": "变更 CHG-390(a0478dd)。审计脚本(node --input-type=module,读 dist 导出 + 扫 src/examples 去注释文本):初测\"没有行为性用例/示例的导出\" 9 个;补判据后重测为 0;node scripts/verify-dist.mjs → \"公开面行为判据自检通过(75 个导出都有人真用过)\";防空转:把 publicBehavior.spec.ts 里 clamp 的六处断言改成 void 0 → 自检报 \"这些导出没有任何行为性用例或示例用过:clamp\",恢复 → 绿;bun run check(460 例 / 57 文件 + 九道自检);宿主 bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件)。",
+      "summary": "公开面清单只回答\"名字还在不在\",回答不了\"这个名字背后的行为有没有人试过\" —— 改名会红,边界写错不会。这次审计就是补这个缝:9 个导出各配一条判据,外加一条\"必须出现在代码位置\"的常驻自检(注释/import/字符串都不算)。同类审计在库里做过一次(定制表承诺 vs 判据,揪出 scalesWithChance),这是第二次。"
+    },
+    "DEC-152": {
+      "id": "DEC-152",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:59:35+00:00",
+      "updated_at": "2026-09-18T21:59:35+00:00",
+      "touched_round": 325,
+      "summary": "公开面清单必须配\"行为判据自检\":每个运行时导出都要在代码位置上被至少一份用例或示例用过(注释、import 行、字符串字面量里的名字都不算)。",
+      "rationale": "公开面清单(publicApi.spec 的 75 个名字)与行为判据是两件事:前者管\"名字没被悄悄改掉/删掉\",后者管\"这个名字背后的行为有人试过\"。这次实测出的 9 个只被列进清单的导出(clamp、formatAmount、numberNumeric、mulberry32、seedFromString、randomRng、两张默认表、progressText)就是这条缝的产物 —— 它们能改名就红,但边界写错、口径反转都不会有任何反应,而使用者拿到的却是\"承诺过\"的行为。做法上还有一条经验:朴素的包含判断会被 import 行、测试标题、文档字符串骗过(第一次防空转就撞上了),所以必须先剥掉注释、import 与字符串字面量再匹配。",
+      "alternatives_rejected": "①只依赖 publicApi.spec 的名字清单(它只钉名字,钉不住行为);②人工过一遍清单(75 个名字靠人看,下回新加的导出照样会漏);③用\"名字在文件里出现过\"做判据(import 行与测试标题就能满足,实测防空转时立刻被骗过 —— 所以改成\"剥掉注释/import/字符串后仍出现在代码位置\");④给这 9 个导出直接删掉(它们都是有用的对外件:数值适配、随机源、默认表、展示格式化,删了反而缺件)。"
     }
   },
   "edges": [
@@ -27864,6 +27914,18 @@
       "to": "TASK-306",
       "type": "implements",
       "created_at": "2026-09-18T21:55:15+00:00"
+    },
+    {
+      "from": "CHG-390",
+      "to": "TASK-307",
+      "type": "implements",
+      "created_at": "2026-09-18T21:59:35+00:00"
+    },
+    {
+      "from": "DEC-152",
+      "to": "TASK-307",
+      "type": "governs",
+      "created_at": "2026-09-18T21:59:35+00:00"
     }
   ]
 }
