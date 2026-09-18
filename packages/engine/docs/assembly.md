@@ -70,6 +70,7 @@
 | 主线三节(一次结算连推多节) | `createChain` | `examples/quest-loop.ts` |
 | 成就 / 里程碑(只记一次) | `createUnlockRegistry` | `examples/quest-loop.ts` |
 | "本季多少" | `snapshotOf` / `deltaSince` | `examples/quest-loop.ts` 的本季段 |
+| 抉择(事件选项 / 分支:能不能选、按权重掷哪种后果、没选时的兜底) | `createChoiceSystem` | `choices.spec.ts` + `choices.sim.spec.ts`(5% 的分支抽 100 次可能一次不出;兜底三级落到哪) |
 
 ### 配方 C · 抽卡收集
 
@@ -134,6 +135,8 @@
 | 以为递减阶梯会一路衰减下去 | `[1, 0.75, 0.5, 0.25]` 只折前四条,第 5 条起恒定 25%;要真封顶得靠软阈值或 `max` | `attributes.sim.spec.ts` |
 | 以为乘区全弱成功率就是 0 | 下限是刻意的:全弱 ≈ 2%(低到不该开炉,但"赌一把"这个选择还在) | `crafting.sim.spec.ts` |
 | 以为熟练度有"练满" | 双曲饱和永远不到顶:9 × scale 才九成,99 分要 99 × scale —— 想要"练满"就在内容层按阈值判 | `crafting.sim.spec.ts` |
+| 给一条稀有分支配了 5% 权重就以为"玩家总会撞到" | 抽 100 次一次不出的概率约 0.6% —— 稀有内容要么多给机会,要么配保底 | `choices.sim.spec.ts` |
+| 以为"没选"就是取第一个选项 | 兜底是三级:标了默认且可选 → 第一条可选的 → 第一条;锁住的默认项不会被硬塞 | `choices.sim.spec.ts` |
 | 以为"堆同名"最后自然没收益 | 六条同名 +10% 在 ranked 下是 30%、`max` 10%、`sum` 60% —— 三种是完全不同的内容政策 | `attributes.sim.spec.ts` |
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
 | 保底时跳过掷骰 | 照样掷,只改写结果 | `drops.spec.ts` / `pity.spec.ts` |
