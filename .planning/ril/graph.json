@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 247,
+  "round": 248,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:10:00+00:00",
+  "updated_at": "2026-09-18T22:35:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14780,6 +14780,66 @@
       "rationale": "五处钩子的取舍都遵循同一条:先把\"默认行为\"钉死(与既有实现逐位一致,由宿主冻结旧口径的对账兜底),再把\"另一种形状\"作为显式开关加进来。几处语义边界也刻意写清:affixWeightFn 返回 0 是\"这次不参与\",要\"根本不可能出\"仍用 minRank/minTier/slots;guarantee 只在**已过情境筛选的池子**里挑,不越权决定\"这张牌该不该出现在此情境\";companions.stack 用\"相加相对量\"而不是\"相乘绝对值\",这样一个开关对倍率类与加法类同时成立。",
       "alternatives_rejected": "①把新形状设为默认(等于替使用方改数值);②让 weight=0 兼任\"排除\"(与 minRank/slots 语义重叠,排查时分不清);③保底越权改情境筛选(把\"该不该出现\"和\"至少几张\"混成一件事)。",
       "summary": "开钩子的统一纪律:默认逐位不变;新形状显式开关;每处写清语义边界(参与/排除、情境/保底、相对/绝对)。"
+    },
+    "TASK-227": {
+      "id": "TASK-227",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:35:00+00:00",
+      "updated_at": "2026-09-18T22:35:00+00:00",
+      "touched_round": 248,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "两处补全:①目标条件可组合({type:all|any, of:[...]},可嵌套,进度给 parts);②遭遇调度可接管(DungeonConfig.encounterFn(ctx,rng),返回 null 交回默认)。默认路径与既有实现保持一致。"
+    },
+    "CHG-305": {
+      "id": "CHG-305",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:35:00+00:00",
+      "updated_at": "2026-09-18T22:35:00+00:00",
+      "touched_round": 248,
+      "commit": "6ca26d4",
+      "summary": "goals:GoalCond 增 all/any 组合(可嵌套);空 all 视为成立、空 any 视为不成立;goalProgress 对组合返回 parts(逐子进度,递归),组合自身 ratio 为 null。"
+    },
+    "CHG-306": {
+      "id": "CHG-306",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:35:00+00:00",
+      "updated_at": "2026-09-18T22:35:00+00:00",
+      "touched_round": 248,
+      "commit": "cd8b64c",
+      "summary": "dungeons:DungeonConfig.encounterFn(ctx:{region,progress,bossDue,pool}, rng) 可接管\"这一场遇到什么\";返回 null 交回默认,{kind} 不指定敌人则从本区普通池挑 —— 与默认逻辑共用同一处挑敌人实现(rng.weighted(pool,()=>1)),不会出现接管后随机流错位。README/CHANGELOG 同步(docs 提交 ad0dc00)。"
+    },
+    "EV-233": {
+      "id": "EV-233",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:35:00+00:00",
+      "updated_at": "2026-09-18T22:35:00+00:00",
+      "touched_round": 248,
+      "source": "packages/engine（15 文件 / 135 例,含 Node 产物探测）+ bun run test（宿主 198 文件 / 2030 例）+ bun run check + bun run check:engine + 独立成库自检 + 库仓 CI（push success 21s）",
+      "summary": "组合条件判据:全部/任一/嵌套/两种空数组语义、组合进度摊开两个子读数;遭遇调度判据:前两场指定敌人、第三场强制首领、其后交回默认,以及\"只给 kind 不给敌人\"从池里挑。默认路径(单前置链、默认节奏)仍由宿主冻结旧口径对账兜底。"
+    },
+    "DEC-100": {
+      "id": "DEC-100",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:35:00+00:00",
+      "updated_at": "2026-09-18T22:35:00+00:00",
+      "touched_round": 248,
+      "rationale": "组合条件与遭遇调度都属于\"把表达力补齐\"而不是\"改数值\":①一条目标只能挂一个条件时,\"既 A 又 B\"只能用 custom 绕过,而 custom 是给作品自判的逃生口,不该被当成常规表达手段;②遭遇只有两种节奏,而\"前几场必是杂兵、某阶段必出首领\"这类按进度编排的剧本很常见。两处都保持\"默认不变 + 显式开关\",并把边界写清楚:空 all/any 的语义、遭遇钩子与默认逻辑共用同一处挑敌人(避免随机流错位)。",
+      "alternatives_rejected": "①让 custom 承担组合职责(逃生口被常规使用,语义与可测性都变差);②遭遇钩子自己写挑敌人逻辑(容易出现\"接管后随机流不一样\",那是最难查的一类错位);③空数组语义留白(使用方各自猜,行为不可预期)。",
+      "summary": "表达力补齐也守\"默认不变 + 显式开关\";空数组语义与\"钩子与默认共用一处实现\"都写进实现与文档。"
     }
   },
   "edges": [
@@ -22565,6 +22625,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "CHG-305",
+      "to": "TASK-227",
+      "type": "implements",
+      "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "CHG-306",
+      "to": "TASK-227",
+      "type": "implements",
+      "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "CHG-305",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "CHG-306",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "EV-233",
+      "to": "CHG-305",
+      "type": "validates",
+      "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "EV-233",
+      "to": "CHG-306",
+      "type": "validates",
+      "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "TASK-227",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "TASK-227",
+      "to": "TASK-226",
+      "type": "depends_on",
+      "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "DEC-100",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T22:35:00+00:00"
     }
   ]
 }
