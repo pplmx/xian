@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 332,
+  "round": 333,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:21:15+00:00",
+  "updated_at": "2026-09-18T22:24:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18875,6 +18875,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-396(d98102d)。bunx vitest run src/facilities.sim.spec.ts(5 例全过;打印:1/2/3/4/5 级 → 1.6/3.2/4.8/6.4/8.0 件每小时、25.0/12.5/8.3/6.3/5.0 小时装满;截断对照 每小时一天 24 件 vs 每 10 分钟 0 件 vs 每分钟 0 件(累加器下都是 38 件);三种粒度均 38 件 + 余 0.40;口碑 0 不能升(理由文本)、口碑 9 上限 4 级;ratesOf 等级 0 不产);cd packages/engine && bun run check(465 例 / 58 文件 + 十一道自检,调参参考自检报 17 份消融、用例文件数自检当场抓出 57→58、相对导入自检 98 个源文件);cd /workspace/xian && bun run test(265 文件 / 2513 例)、check:engine(59 处引用)、check:engine:standalone(98 个源文件)。",
       "summary": "产线这一层最容易被忽视的两件事被量化:①装满之后产量全是浪费(升级只让装满更快);②结算粒度不是精度 —— 若每步取整,粒度越细丢得越狠(10 分钟粒度下一天 0 件),而累加器让粒度彻底无关。"
+    },
+    "TASK-314": {
+      "id": "TASK-314",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:24:28+00:00",
+      "updated_at": "2026-09-18T22:24:28+00:00",
+      "touched_round": 332,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "每日任务目标值消融(tasks.sim.spec):用两张画像(活跃 40 场/天、休闲 15 场/天)扫目标值 —— ≤15 两边都达成、≥20 休闲永远完不成;结论是目标按休闲画像的六成(9 场)定,休闲还留 1.7 倍余量。另量:跨期不累积(期初 40 → 今天打 3 → 进度 3,生涯计数仍 43);换期与结算各自幂等、自动结算与手动领取共用 claimed;进度夹到 ≥ 0。"
+    },
+    "CHG-397": {
+      "id": "CHG-397",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:24:28+00:00",
+      "updated_at": "2026-09-18T22:24:28+00:00",
+      "touched_round": 332,
+      "commit": "b09611b",
+      "summary": "库:新增 src/tasks.sim.spec.ts(4 例);CHANGELOG「未发布」记一节;docs/tuning.md 新增一节(第 18 份消融进参考表);docs/assembly.md 配方 B 补一行(目标值定多少);README 用例数改 469/59。宿主无改动。"
+    },
+    "EV-323": {
+      "id": "EV-323",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:24:28+00:00",
+      "updated_at": "2026-09-18T22:24:28+00:00",
+      "touched_round": 332,
+      "confidence": 0.96,
+      "source": "变更 CHG-397(b09611b)。bunx vitest run src/tasks.sim.spec.ts(4 例全过;打印:目标 5/10/15 两边达成、20/30/40 休闲完不成;目标 9 时休闲余量 1.7 倍;期初 40 场 → 今天 43 场 → 进度 3/10;同期再调 rollover 原样返回、自动结算后再 claim 被挡(claimed);期初 20 场被清零 → 进度 0 不是负数);cd packages/engine && bun run check(469 例 / 59 文件 + 十一道自检,调参参考自检报 18 份消融、用例文件数自检当场抓出 58→59);cd /workspace/xian && bun run test(266 文件 / 2517 例)、check:engine(59 处引用)、check:engine:standalone(99 个源文件)。",
+      "summary": "把\"每日任务目标值\"从拍脑袋变成一条可执行的经验线:按休闲画像的六成定。同时确认\"跨期不累积\"是设计而非缺陷(基准快照),以及三条幂等/夹取口径。"
     }
   },
   "edges": [
@@ -28190,6 +28228,12 @@
       "to": "TASK-313",
       "type": "implements",
       "created_at": "2026-09-18T22:21:15+00:00"
+    },
+    {
+      "from": "CHG-397",
+      "to": "TASK-314",
+      "type": "implements",
+      "created_at": "2026-09-18T22:24:28+00:00"
     }
   ]
 }
