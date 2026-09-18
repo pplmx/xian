@@ -19,13 +19,13 @@ import { createDungeonSystem } from './dungeons'
 import type { BattleConfig, CombatEngine } from './combat'
 import { createCombatEngine } from './combat'
 
-export interface GameConfig {
+export interface GameConfig<T = number> {
   /** 作品名 —— 引擎不会把它插进任何文案,只用来标识这份配置 */
   name: string
   version?: string
   attributes: AttributeSystemConfig
   realms: RealmSystemConfig
-  equipment: EquipmentConfig
+  equipment: EquipmentConfig<T>
   dungeons: DungeonConfig
   combat?: BattleConfig
 }
@@ -38,7 +38,8 @@ export interface Game<T = number> {
   readonly equipment: EquipmentSystem<T>
   readonly dungeons: DungeonSystem<T>
   readonly combat: CombatEngine<T>
-  readonly config: GameConfig
+  /** 装配用的原始配置(数值可能是宿主自己的类型,如 GNum 的层级表) */
+  readonly config: GameConfig<T>
 }
 
 export type IssueLevel = 'error' | 'warning'
@@ -63,7 +64,7 @@ function duplicates(ids: readonly string[]): string[] {
  * 逐条对账。错误(引用不存在、键重复、链条断掉)会挡住装配;
  * 警告(某层某部位没有内容、首领没标记 boss)只是提示。
  */
-export function validateGame(config: GameConfig): ValidationIssue[] {
+export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue[] {
   const issues: ValidationIssue[] = []
   const err = (code: string, message: string): void => void issues.push({ level: 'error', code, message })
   const warn = (code: string, message: string): void => void issues.push({ level: 'warning', code, message })
@@ -222,7 +223,7 @@ export interface DefineOptions<T> {
  * 装配一个世界:返回的四套系统是纯函数 + 数据驱动,不依赖任何框架,
  * Vue / React / 命令行 / 服务端都能拿同一份配置直接用。
  */
-export function defineGame<T = number>(config: GameConfig, opts: DefineOptions<T> = {}): Game<T> {
+export function defineGame<T = number>(config: GameConfig<T>, opts: DefineOptions<T> = {}): Game<T> {
   const issues = validateGame(config)
   const blocking = opts.strict === true ? issues : issues.filter(i => i.level === 'error')
   if (blocking.length > 0) {

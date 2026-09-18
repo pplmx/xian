@@ -110,7 +110,7 @@ export interface SetDef {
   bonuses: { pieces: number; mods: Mods; desc?: string; hook?: string }[]
 }
 
-export interface EquipmentPowerConfig {
+export interface EquipmentPowerConfig<T = number> {
   /** 层级系数:`tierGrowth^(tier-1)` */
   tierGrowth: number
   /** 总预算系数,压住整条曲线的绝对值 */
@@ -118,18 +118,24 @@ export interface EquipmentPowerConfig {
   /** 品质对平铺的放大指数 */
   qualityExponent?: number
   /** 直接给出每一层的系数(覆盖指数式);第 i 项对应 tier=i+1 */
-  tierFactors?: number[]
+  /**
+   * 直接给出每一层的系数(覆盖指数式);第 i 项对应 tier=i+1。
+   *
+   * 项可以是数字,也可以是**宿主自己的数值类型**(大数实现)—— 由 `Numeric.of` 收下。
+   * 于是"层级表"既能写成 `[1, 2, 4]`,也能是一串 GNum,不必先投影成 double。
+   */
+  tierFactors?: readonly (number | T)[]
   /** 每强化一级的平铺加成 */
   levelBonus?: number
 }
 
-export interface EquipmentConfig {
+export interface EquipmentConfig<T = number> {
   slots: SlotDef[]
   qualities: QualityDef[]
   templates: TemplateDef[]
   affixes: AffixDef[]
   sets?: SetDef[]
-  power: EquipmentPowerConfig
+  power: EquipmentPowerConfig<T>
   /** 窗口外权重衰减底数,默认 0.1 */
   outOfBand?: number
   /** 每层级 +1 的高品质权重倍率,默认 1.18 */
@@ -235,7 +241,7 @@ function uidFactory(): () => string {
 }
 
 export function createEquipmentSystem<T = number>(
-  config: EquipmentConfig,
+  config: EquipmentConfig<T>,
   numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>,
   newUid: () => string = uidFactory()
 ): EquipmentSystem<T> {
@@ -262,7 +268,7 @@ export function createEquipmentSystem<T = number>(
   const tierScale = (tier: number): T => {
     const t = Math.max(1, tier)
     const override = config.power.tierFactors?.[t - 1]
-    return override !== undefined ? numeric.from(override) : numeric.powN(config.power.tierGrowth, t - 1)
+    return override !== undefined ? numeric.of(override) : numeric.powN(config.power.tierGrowth, t - 1)
   }
 
   const templatesAtTier = (tier: number, slot: string): TemplateDef[] =>

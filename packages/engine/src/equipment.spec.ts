@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { Numeric } from './numeric'
 import type { EquipmentConfig } from './equipment'
 import { createEquipmentSystem } from './equipment'
 import { createRng } from './rng'
@@ -32,6 +33,48 @@ const CONFIG: EquipmentConfig = {
 }
 
 describe('装备系统 —— 槽位/品质/模板/词条/套装', () => {
+  it('层级系数表可以是宿主自己的数值类型(Numeric.of 原样收下,不经过 double)', () => {
+    // 一个最小的大数壳:只为验证"引擎确实用它自己的数在算,而不是先投影成 number"
+    type Box = { m: number; e: number }
+    const at = (a: Box, b: Box): { a: Box; b: Box; e: number } => {
+      const e = Math.max(a.e, b.e)
+      return { a: { m: a.m * 10 ** (a.e - e), e }, b: { m: b.m * 10 ** (b.e - e), e }, e }
+    }
+    const box: Numeric<Box> = {
+      zero: { m: 0, e: 0 },
+      one: { m: 1, e: 0 },
+      from: n => ({ m: n, e: 0 }),
+      of: v => (typeof v === 'number' ? { m: v, e: 0 } : v),
+      add: (a, b) => {
+        const x = at(a, b)
+        return { m: x.a.m + x.b.m, e: x.e }
+      },
+      sub: (a, b) => {
+        const x = at(a, b)
+        return { m: x.a.m - x.b.m, e: x.e }
+      },
+      mul: (a, b) => ({ m: a.m * b.m, e: a.e + b.e }),
+      mulN: (a, k) => ({ m: a.m * k, e: a.e }),
+      div: (a, b) => ({ m: a.m / b.m, e: a.e - b.e }),
+      pow: (a, k) => ({ m: a.m ** k, e: 0 }),
+      powN: (base, k) => ({ m: base ** k, e: 0 }),
+      cmp: (a, b) => (a.m < b.m ? -1 : a.m > b.m ? 1 : 0),
+      max: (a, b) => (a.m > b.m ? a : b),
+      toNumber: a => a.m * 10 ** a.e,
+      format: a => String(a.m)
+    }
+    const sys = createEquipmentSystem<Box>(
+      { ...CONFIG, power: { ...CONFIG.power, tierFactors: [{ m: 5, e: 0 }, { m: 2, e: 1 }] } },
+      box,
+      () => 'uid'
+    )
+    // 基 10 × 层级系数 {m:2, e:1}(即 20)= {m:20, e:1}
+    // —— **指数保住了**,说明表里的宿主数值原样进了运算,没有被先投影成 double
+    const resolved = sys.resolve({ uid: 'u', templateId: 'w1', qualityId: 'common', tier: 2, level: 0, affixes: [] })
+    expect(resolved.flats.attack).toEqual({ m: 20, e: 1 })
+    expect(box.toNumber(resolved.flats.attack!)).toBe(200)
+  })
+
   it('按层精确取池,不累积', () => {
     const sys = createEquipmentSystem(CONFIG)
     expect(sys.templatesAtTier(1, 'weapon').map(t => t.id)).toEqual(['w1'])

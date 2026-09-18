@@ -12,6 +12,14 @@ export interface Numeric<T> {
   readonly zero: T
   readonly one: T
   from(n: number): T
+  /**
+   * 收下一个**宿主自己的数值**:数字,或已经是本数值层的值。
+   *
+   * 存在的理由是配置里的表:层级战力系数可以是宿主的大数(如 GNum 的 {m,e}),
+   * 引擎不解释它的含义,只把它转成 T 之后照常参与运算。
+   * 于是"宿主的大数表"与"引擎的公式"之间不必经过 double 投影 —— 逐位一致。
+   */
+  of(value: number | T): T
   add(a: T, b: T): T
   sub(a: T, b: T): T
   mul(a: T, b: T): T
@@ -65,6 +73,7 @@ export const numberNumeric: Numeric<number> = {
   zero: 0,
   one: 1,
   from: n => n,
+  of: value => (typeof value === 'number' ? value : value),
   add: (a, b) => a + b,
   sub: (a, b) => a - b,
   mul: (a, b) => a * b,
