@@ -13,9 +13,9 @@
  * 内容可以重写,机制不能悄悄漂移。哪天有人只改了一边,这里会红。
  */
 import { describe, expect, it } from 'vitest'
-import type { AttributeDef } from '@engine/index'
-import { attributeDefs } from '@engine/index'
-import { createRng } from '@engine/rng'
+import type { AttributeDef } from 'wanxiang-engine'
+import { attributeDefs } from 'wanxiang-engine'
+import { createRng } from 'wanxiang-engine'
 import type { GNum, QualityId } from '@/types'
 import {
   BT_MAJOR_BASE_RATE,
@@ -69,7 +69,7 @@ import type { ResolvedEquipStats } from './equipGen'
 import { ENGINE_WORLD, ENGINE_WORLD_CONFIG } from './engineWorld'
 import { activeSets, hasActiveSet, setCounts } from './equipSet'
 import { equipmentTemplate as realTemplate } from '@/data/equipment'
-import { planIdle } from '@engine/index'
+import { planIdle } from 'wanxiang-engine'
 import { OFFLINE_CAP_HOURS, OFFLINE_EFFICIENCY } from '@/data/constants'
 import { GONGFA } from '@/data/gongfa'
 import { GONGFA_BRANCHES } from '@/data/gongfaBranches'
@@ -84,11 +84,11 @@ import { SKILL_EXP_SCALE, skillLevelFromExp, skillStageName } from '@/data/craft
 import { MAIN_QUESTS, DAILY_TASKS } from '@/data/quests'
 import { ACHIEVEMENTS } from '@/data/achievements'
 import { toGoalCond } from './progress'
-import { evalGoal, goalProgress, type GoalEnv } from '@engine/index'
+import { evalGoal, goalProgress, type GoalEnv } from 'wanxiang-engine'
 import type { AchvCond } from '@/types'
 import { EVENTS } from '@/data/events'
 import { chainOfEvent } from '@/data/chains'
-import { deckPool, drawFrom, type DeckEntry } from '@engine/index'
+import { deckPool, drawFrom, type DeckEntry } from 'wanxiang-engine'
 import { REGIONS as ALL_REGIONS } from '@/data/regions'
 
 /**

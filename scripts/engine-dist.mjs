@@ -10,7 +10,7 @@
  * 用法:`bun run check:engine`
  */
 import { execFileSync } from 'node:child_process'
-import { existsSync, openSync, readFileSync, mkdtempSync } from 'node:fs'
+import { existsSync, openSync, readFileSync, readdirSync, mkdtempSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import assert from 'node:assert/strict'
@@ -126,4 +126,29 @@ assert.ok(
 )
 console.log(`   ${shipped.length} 个文件 · 打包 ${(pack.size / 1024).toFixed(1)} KB / 展开 ${((pack.unpackedSize ?? 0) / 1024).toFixed(1)} KB`)
 
-console.log(`产物自检通过:${entries.length} 个入口 + 两份内容包 + 交叉校验 + 发布包内容`)
+console.log('⑥ 宿主只经公开入口引用库(不许别名复活、不许深层路径)')
+const APP_SRC = resolve(ROOT, 'src')
+const appFiles = []
+const walk = dir => {
+  for (const name of readdirSync(dir)) {
+    const full = resolve(dir, name)
+    if (statSync(full).isDirectory()) walk(full)
+    else if (full.endsWith('.ts') || full.endsWith('.vue')) appFiles.push(full)
+  }
+}
+walk(APP_SRC)
+const aliasUsers = []
+const deepUsers = []
+let byName = 0
+for (const file of appFiles) {
+  const text = readFileSync(file, 'utf8')
+  if (/from '@engine/.test(text)) aliasUsers.push(file.replace(ROOT + '/', ''))
+  if (/from 'wanxiang-engine\//.test(text)) deepUsers.push(file.replace(ROOT + '/', ''))
+  byName += (text.match(/from 'wanxiang-engine'/g) ?? []).length
+}
+assert.deepEqual(aliasUsers, [], `这些文件还在用仓库内部别名 @engine:${aliasUsers.join('、')}`)
+assert.deepEqual(deepUsers, [], `这些文件绕过了公开入口(深层导入):${deepUsers.join('、')}`)
+assert.ok(byName > 0, '宿主一处都没引用库?那这份自检在验什么')
+console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
+
+console.log(`产物自检通过:${entries.length} 个入口 + 两份内容包 + 交叉校验 + 发布包内容 + 宿主引用方式`)

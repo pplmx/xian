@@ -12,4 +12,4 @@ export {
   asRecord,
   asRecordOf,
   asStringArray
-} from '@engine/index'
+} from 'wanxiang-engine'

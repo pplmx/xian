@@ -13,7 +13,7 @@
  */
 import type { AchvCond, QuestDef } from '@/types'
 import { goalEnv, toGoalCond } from './progress'
-import { goalProgress } from '@engine/index'
+import { goalProgress } from 'wanxiang-engine'
 import { realmDef, realmLabel } from '@/data/realms'
 import { usePlayerStore } from '@/stores/player'
 import { useQuestsStore } from '@/stores/quests'

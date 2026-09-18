@@ -6,7 +6,7 @@
  * 组内装备要求件数宽松(挂载中的同 set 件数 ≥2 即共鸣)。
  */
 import type { EquipmentInstance } from '@/types'
-import type { EquipmentInstance as EngineEquipmentInstance } from '@engine/index'
+import type { EquipmentInstance as EngineEquipmentInstance } from 'wanxiang-engine'
 import { equipmentTemplate } from '@/data/equipment'
 import type { EquipSetDef } from '@/data/equipSets'
 import { equipSetDef } from '@/data/equipSets'

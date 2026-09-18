@@ -32,9 +32,12 @@ export default defineConfig({
       // 用 import.meta.dirname 而非 __dirname:Vite 8 的 configLoader: 'native'
       // (未来版本的默认值)不提供 CJS 那套变量,继续用 __dirname 会在切换后报错
       '@': resolve(import.meta.dirname, 'src'),
-      // 公共库(等级/属性/装备/副本内核)—— 独立包,不带 Vue/Pinia 依赖,
-      // 应用侧按包名导入;真要对外发布时 `bun run build:engine` 出 dist 即可
-      '@engine': resolve(import.meta.dirname, 'packages/engine/src')
+      /*
+       * 公共库按**包名**解析 —— 应用侧源码里写的就是 `from 'wanxiang-engine'`,
+       * 与"别人装了包再用"时一模一样。开发期指到源码(热更新快、不必先 build),
+       * 拆库之后把这一行换成真依赖即可,源码一个字不用改。
+       */
+      'wanxiang-engine': resolve(import.meta.dirname, 'packages/engine/src/index.ts')
     }
   },
   test: {

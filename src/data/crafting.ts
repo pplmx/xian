@@ -9,7 +9,7 @@
  */
 import type { PillDef } from '@/types'
 import { MATERIALS, type MaterialDef } from './materials'
-import { proficiencyFromExp, stageNameOf } from '@engine/index'
+import { proficiencyFromExp, stageNameOf } from 'wanxiang-engine'
 
 export type SkillId =
   // 识材道(炼丹炼器共用)

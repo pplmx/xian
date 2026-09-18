@@ -11,7 +11,7 @@ import {
   type ExportPayload
 } from '@/utils/storage'
 import { encryptSave, readSaveText } from '@/utils/crypto'
-import { defineSaveFormat, runMigrations } from '@engine/index'
+import { defineSaveFormat, runMigrations } from 'wanxiang-engine'
 import { useGameStore } from '@/stores/game'
 import { engine } from './engine'
 

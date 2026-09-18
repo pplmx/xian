@@ -10,9 +10,9 @@
  *
  * 数值走 GNum 适配器(见 core/engineNumeric):库不认识 GNum,只认识 Numeric<T>。
  */
-import type { Game, GameConfig } from '@engine/index'
-import { attributeDefs, defineGame } from '@engine/index'
-import type { AttributeDef } from '@engine/index'
+import type { Game, GameConfig } from 'wanxiang-engine'
+import { attributeDefs, defineGame } from 'wanxiang-engine'
+import type { AttributeDef } from 'wanxiang-engine'
 import type { GNum } from '@/types'
 import { LIFESPAN_WORLDS, REALMS, SUB_NAMES, WORLDS } from '@/data/realms'
 import { WORLD_BREAK_MAJOR } from '@/data/realms'
@@ -58,7 +58,7 @@ import {
   GONGFA_UP_GROWTH,
   GONGFA_UP_WUDAO_BASE
 } from '@/data/constants'
-import { createSkillSystem } from '@engine/index'
+import { createSkillSystem } from 'wanxiang-engine'
 import { powerScale } from './tierScale'
 import { gnumNumeric } from './engineNumeric'
 

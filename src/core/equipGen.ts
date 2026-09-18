@@ -21,7 +21,7 @@
  * 数字与迁移前逐位相同。
  */
 import type { AffixRarity, EquipmentInstance, EquipSlot, GNum, QualityDef, QualityId, StatMods } from '@/types'
-import type { EquipmentInstance as EngineEquipmentInstance } from '@engine/index'
+import type { EquipmentInstance as EngineEquipmentInstance } from 'wanxiang-engine'
 import type { RandomService } from '@/utils/random'
 import { gnZero } from '@/utils/gnum'
 import { ENGINE_WORLD } from './engineWorld'

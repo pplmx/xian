@@ -10,7 +10,7 @@
  * "把公式搬进库"就从"数字一个不变"退化成"看起来差不多"。
  */
 import type { GNum } from '@/types'
-import type { Numeric } from '@engine/index'
+import type { Numeric } from 'wanxiang-engine'
 import { add, cmp, div, gn, gnMax, gnZero, mul, mulN, powN, sub, toNum } from '@/utils/gnum'
 import { formatExact } from '@/utils/format'
 

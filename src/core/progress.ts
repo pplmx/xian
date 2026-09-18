@@ -17,8 +17,8 @@ import { useResourcesStore } from '@/stores/resources'
 import { useInventoryStore } from '@/stores/inventory'
 import { useUiStore } from '@/stores/ui'
 import type { CollectionCategory } from '@/stores/quests'
-import type { GoalCond, GoalEnv } from '@engine/index'
-import { evalGoal } from '@engine/index'
+import type { GoalCond, GoalEnv } from 'wanxiang-engine'
+import { evalGoal } from 'wanxiang-engine'
 
 /**
  * 本作的条件 → 库的条件。

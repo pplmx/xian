@@ -88,6 +88,9 @@ bun run check:engine:standalone
 
 等级（境界）、属性、装备、副本四套系统已经从本作里**抽成独立内核**：不依赖 Vue / Pinia / 浏览器 API，
 换一套名称与内容就能搭出自己的游戏 —— 境界叫什么、装备叫什么、属性叫什么、副本叫什么，全都在配置里。
+**本作自己也按包名引用它**（源码里写的是 `from 'wanxiang-engine'`），
+开发期由 Vite/TS 的解析配置指到源码；等它拆成独立 repo 之后，把这一行换成真依赖即可，源码一个字不用改。
+`bun run check:engine` 会守住"只经公开入口引用、别名不许复活"这条。
 
 ```text
 packages/engine/

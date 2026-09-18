@@ -13,7 +13,7 @@ import { recipeCraft, skillDef, type RecipeCraft, type SkillId } from '@/data/cr
 import { pillDef, PILLS } from '@/data/pills'
 import { useLoreStore } from '@/stores/lore'
 import { usePlayerStore } from '@/stores/player'
-import { averageLore, composeCraftRate, overReachFactor as libOverReachFactor, weightedSkill as libWeightedSkill } from '@engine/index'
+import { averageLore, composeCraftRate, overReachFactor as libOverReachFactor, weightedSkill as libWeightedSkill } from 'wanxiang-engine'
 
 /** 各项皆满且同阶时的成功率上限 —— 余下的是天意 */
 export const CRAFT_BASE_RATE = 0.95
