@@ -76,6 +76,8 @@
 | 成就 / 里程碑(只记一次) | `createUnlockRegistry` | `examples/quest-loop.ts` |
 | "本季多少" | `snapshotOf` / `deltaSince` | `examples/quest-loop.ts` 的本季段 |
 | 抉择(事件选项 / 分支:能不能选、按权重掷哪种后果、没选时的兜底) | `createChoiceSystem` | `choices.spec.ts` + `choices.sim.spec.ts`(5% 的分支抽 100 次可能一次不出;兜底三级落到哪) |
+| 图鉴 / 见闻(见过什么、懂到什么程度) | `createCodex` | `codex.spec.ts` + `codex.sim.spec.ts`(门槛 3/8/20 次照面、概率升档的到位率) |
+| 世界记忆(区域繁荣 / 阵营好感:升档与回落) | `createStageMemory` | `memory.spec.ts` + `memory.sim.spec.ts`(两路门槛取先到、闲置到点即回落) |
 
 ### 配方 C · 抽卡收集
 
@@ -144,6 +146,8 @@
 | 以为"没选"就是取第一个选项 | 兜底是三级:标了默认且可选 → 第一条可选的 → 第一条;锁住的默认项不会被硬塞 | `choices.sim.spec.ts` |
 | 以为 `bossProgress` 一样的两种节奏是一回事 | `cycle` 第 4 场见首领、`once` 第 5 场(差一场,玩家能感觉出来) | `dungeons.sim.spec.ts` |
 | 以为见过首领之后次次见首领 | 首领倒下即**重新计数**;`once` 通关后更是再没有首领(刷本变纯刷素材) | `dungeons.sim.spec.ts` |
+| 以为概率升档与累计阈值是两条差不多的路 | 差得多:每次 10%、照面 20 次,累计阈值必定到顶,概率路只有约三分之一到顶(每掷中一次只推一层) | `codex.sim.spec.ts` |
+| 以为世界记忆会逐级回落 | 到点**直接回最低档**(系数 1.15 → 1.00);差一点只掉一档是升档时的分级取,回落没有过渡 | `memory.sim.spec.ts` |
 | 以为"堆同名"最后自然没收益 | 六条同名 +10% 在 ranked 下是 30%、`max` 10%、`sum` 60% —— 三种是完全不同的内容政策 | `attributes.sim.spec.ts` |
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
 | 保底时跳过掷骰 | 照样掷,只改写结果 | `drops.spec.ts` / `pity.spec.ts` |
