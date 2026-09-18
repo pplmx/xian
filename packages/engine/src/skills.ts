@@ -49,6 +49,13 @@ export interface SkillBranchDef {
   /** 选了它追加的词条 */
   mods: Mods
   desc?: string
+  /**
+   * 前置分支(**可选**):要能选它,这些分支必须**已经选过**。
+   *
+   * 用于"先走某条道才解锁另一条"的谱系(例:先悟"悟理"才能再悟"观微")。
+   * 引擎只回答"这一条现在能不能选",至于"一次能选几条、能不能反悔"归玩法层。
+   */
+  requires?: readonly string[]
 }
 
 export interface SkillDef {
@@ -103,6 +110,13 @@ export interface SkillSystem {
   costAt(id: string, level: number, opts?: { discount?: number }): { key: string; amount: number }[]
   /** 满级可择的路 */
   branchesOf(id: string): readonly SkillBranchDef[]
+  /**
+   * 此刻**可以选**的分支:排除掉前置没满足的那些。
+   *
+   * `chosen` 是已经选过的分支 id(**所有技能共用一个集合**,故跨技能的前置也表达得出来)。
+   * 前置指向不存在的分支时按"永远选不了"处理 —— 那是内容写错,不该静默当成满足。
+   */
+  availableBranches(id: string, chosen: readonly string[]): SkillBranchDef[]
   /** 选了某条路之后追加的词条(找不到就空) */
   branchMods(id: string, branchId: string): Mods
   /** 装配汇总:**每部功法一份来源**(供作品侧再过一遍自己的合并规则) */
@@ -154,6 +168,15 @@ export function createSkillSystem(config: SkillConfig): SkillSystem {
 
   const branchesOf = (id: string): readonly SkillBranchDef[] => byId.get(id)?.branches ?? []
 
+  const knownBranchIds = new Set(defs.flatMap(d => (d.branches ?? []).map(b => b.id)))
+
+  const availableBranches = (id: string, chosen: readonly string[]): SkillBranchDef[] => {
+    const picked = new Set(chosen)
+    return branchesOf(id).filter(branch =>
+      (branch.requires ?? []).every(req => knownBranchIds.has(req) && picked.has(req))
+    )
+  }
+
   const branchMods = (id: string, branchId: string): Mods => {
     const branch = branchesOf(id).find(b => b.id === branchId)
     return branch ? { ...branch.mods } : {}
@@ -172,5 +195,5 @@ export function createSkillSystem(config: SkillConfig): SkillSystem {
     return out
   }
 
-  return { defs, def: id => byId.get(id), modsAt, costAt, branchesOf, branchMods, sourcesOf }
+  return { defs, def: id => byId.get(id), modsAt, costAt, branchesOf, availableBranches, branchMods, sourcesOf }
 }

@@ -117,4 +117,30 @@ describe('技能/功法 —— 等级曲线、消耗、满级分支、装配来�
     once.attackPct = 9
     expect(sys.modsAt('s', 3).attackPct).toBeCloseTo(0.15, 10)
   })
+
+  it('分支可以互相有前置:选过某条道才解锁另一条;前置写错则永远选不了', () => {
+    const sys = createSkillSystem({
+      skills: [
+        {
+          id: 'a',
+          name: 'A',
+          maxLevel: 2,
+          branches: [
+            { id: 'b_base', mods: { attackPct: 0.05 } },
+            { id: 'b_deep', mods: { critRate: 0.02 }, requires: ['b_base'] }
+          ]
+        },
+        { id: 'c', name: 'C', maxLevel: 2, branches: [{ id: 'c_edge', mods: { maxHpPct: 0.03 }, requires: ['b_base'] }] }
+      ]
+    })
+    // 什么都没选:只有无前置的那条可选
+    expect(sys.availableBranches('a', []).map(b => b.id)).toEqual(['b_base'])
+    // 选过 b_base 之后:本技能与别的技能的前置分支都解锁(集合是所有技能共用的)
+    expect(sys.availableBranches('a', ['b_base']).map(b => b.id)).toEqual(['b_base', 'b_deep'])
+    expect(sys.availableBranches('c', ['b_base']).map(b => b.id)).toEqual(['c_edge'])
+    expect(sys.availableBranches('c', []).map(b => b.id)).toEqual([])
+    // 前置指向不存在的分支:按永远选不了处理,不静默放过
+    const typo = createSkillSystem({ skills: [{ id: 's', name: 'S', maxLevel: 1, branches: [{ id: 'x', mods: {}, requires: ['没有这条'] }] }] })
+    expect(typo.availableBranches('s', ['没有这条'])).toEqual([])
+  })
 })
