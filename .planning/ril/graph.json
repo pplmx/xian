@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 313,
+  "round": 314,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:14:20+00:00",
+  "updated_at": "2026-09-18T21:17:27+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18106,6 +18106,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-376(5705f72)。文档里的每个数字都来自当场跑出来的输出(bunx vitest run src/economy.sim.spec.ts、pity.sim.spec.ts、drops.sim.spec.ts、triage.sim.spec.ts、deck.sim.spec.ts、idle.sim.spec.ts、buffs.sim.spec.ts);node scripts/verify-dist.mjs → 七道自检通过,其中新增\"调参参考自检通过(7 份消融实验都被收进 docs/tuning.md)\",且目录树自检当场抓出 README 树里少了 tuning.md;防空转:从表里删掉 buffs/idle 两份用例名 → AssertionError 列出这两份,加回 → 绿;cd packages/engine && bun run check(415 例 / 47 文件 + 全部自检);cd /workspace/xian && bun run test(2463 例)、test:report(2463 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(87 个源文件)。",
       "summary": "消融实验从\"用例里打印数字\"升级为\"有一页人看的刻度表 + 一条不许漏收的自检\":内容作者不用翻 spec 就能看到离线上限怎么吃掉收益(72 小时 = 6 小时)、保底钉的是最差还是中位、权重在限定预算下的真实作用(22% vs 94%)。参考表本身也被判据盯着 —— 新加一份消融却忘了收录会红。"
+    },
+    "TASK-295": {
+      "id": "TASK-295",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:17:26+00:00",
+      "updated_at": "2026-09-18T21:17:26+00:00",
+      "touched_round": 313,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "词条递减边际消融(attributes.sim.spec):量同名词条堆到第几条还值钱 —— 默认阶梯 [1,0.75,0.5,0.25] 只折前四条,第 5 条起恒定 25%(10 条名义 +100% 实际 +40%,光靠阶梯封不住顶);三种政策形状不同(6 条 +10% → ranked 30% / max 10% / sum 60%);软阈值越过 75% 后每 +1% 只值 +0.5%(100%→87.5%、200%→137.5%);明细摊回来源(10/7.5/5/2.5/2.5/2.5,和恒等于面板值)。"
+    },
+    "CHG-377": {
+      "id": "CHG-377",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:17:27+00:00",
+      "updated_at": "2026-09-18T21:17:27+00:00",
+      "touched_round": 313,
+      "commit": "78b77c3",
+      "summary": "库:新增 src/attributes.sim.spec.ts(4 例);CHANGELOG「未发布」记一节;docs/tuning.md 新增一节(第 8 份消融进参考表);docs/assembly.md 坑清单补两行(以为递减会一路衰减、以为堆同名最后没收益);README 用例数改 419/48。宿主无改动。"
+    },
+    "EV-303": {
+      "id": "EV-303",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:17:27+00:00",
+      "updated_at": "2026-09-18T21:17:27+00:00",
+      "touched_round": 313,
+      "confidence": 0.96,
+      "source": "变更 CHG-377(78b77c3)。bunx vitest run src/attributes.sim.spec.ts(4 例,打印:1/2/3/4/5/6/10 条 → 10.0%/17.5%/22.5%/25.0%/27.5%/30.0%/40.0%(≈1.00/1.75/2.25/2.50/2.75/3.00/4.00 条份量);ranked 30% vs max 10% vs sum 60%;会心率 50→50、75→75、80→77.5、100→87.5、150→112.5、200→137.5;六条明细 10.0/7.5/5.0/2.5/2.5/2.5);cd packages/engine && bun run check(419 例 / 48 文件 + 七道自检,其中调参参考自检报\"8 份消融实验都被收进 docs/tuning.md\",目录树自检与用例文件数自检各当场抓出一次文档漂移);cd /workspace/xian && bun run test(2467 例)、test:report(2467 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(88 个源文件)。",
+      "summary": "把\"递减\"这个词的真相量清楚了:默认阶梯只折前四条,第 5 条起恒定 25% —— 所以\"堆同名\"仍然线性获益,想封顶必须用软阈值或 max。同时给出三种同名政策的对照刻度(ranked 30% / max 10% / sum 60%),以及软阈值的斜率(越过 75% 后每 +1% 只值 +0.5%)。"
     }
   },
   "edges": [
@@ -27289,6 +27327,12 @@
       "to": "TASK-294",
       "type": "implements",
       "created_at": "2026-09-18T21:14:20+00:00"
+    },
+    {
+      "from": "CHG-377",
+      "to": "TASK-295",
+      "type": "implements",
+      "created_at": "2026-09-18T21:17:27+00:00"
     }
   ]
 }
