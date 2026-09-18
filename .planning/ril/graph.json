@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 252,
+  "round": 253,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T14:18:38+00:00",
+  "updated_at": "2026-09-18T14:22:05+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 252,
+      "touched_round": 253,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15018,7 +15018,7 @@
       "version": 1,
       "created_at": "2026-09-18T14:18:30+00:00",
       "updated_at": "2026-09-18T14:18:30+00:00",
-      "touched_round": 252,
+      "touched_round": 253,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.95,
@@ -15060,6 +15060,56 @@
       "rationale": "让调用者\"完全接管\"时,如果他手里只有\"这件事你自己做\",就必须把引擎已有的命中判定/暴击/吸血/日志/扣血重写一遍,于是同一套口径出现两份、日后必然漂移。把引擎内部那条路上的原语摊进 ctx(默认那一击 strike、只算不落账 damage、落账 applyDamage、跳过下次出手 skipNextTurn、本场抽屉 state),调用者写的就是\"基于引擎的增量\",而引擎也不必为每个题材猜语义。这与 DEC-101(完全接管)与 DEC-103(先把默认算好再交出去)是同一族纪律:接管的是决定权,不是把引擎的职责复制一份。",
       "alternatives_rejected": "①库内置一套 stun/drain/pierce 语义(等于给所有题材定死玩法词,与\"库只认结构不认题材\"冲突);②只给只读 ctx、让调用者返回一个\"补丁对象\"(表达力不够:定身要跨回合、真伤要绕开公式);③让调用者改传进来的战斗对象(与库\"不就地改动传入对象\"的取向冲突,且副本/离线批量结算会互相污染)。",
       "summary": "「完全接管」类钩子的 ctx 要给调用者引擎同源的原语(默认执行、只算、落账、跳过出手、本场抽屉),让他写增量而不是复刻引擎;库对题材词(如 stun)永不表态。"
+    },
+    "TASK-232": {
+      "id": "TASK-232",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:21:53+00:00",
+      "updated_at": "2026-09-18T14:21:53+00:00",
+      "touched_round": 253,
+      "category": "test-quality",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "补一条\"使用者那一侧\"的判据:真的 npm pack,把 tarball 摊进临时项目的 node_modules/wanxiang-engine,再从那个项目里 import 包名与子路径内容包 —— 按路径 import 本地 dist 只能证明文件写出来了,证明不了别人 npm i 之后能按包名装上。"
+    },
+    "CHG-313": {
+      "id": "CHG-313",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:21:54+00:00",
+      "updated_at": "2026-09-18T14:21:54+00:00",
+      "touched_round": 253,
+      "commit": "8d3aadb",
+      "summary": "packages/engine/scripts/verify-dist.mjs 追加发布包安装判据(npm pack --silent → tar 摊进临时 node_modules → node -e 按包名 import 主页与 presets/demo 子路径并装配换皮世界);scripts/engine-dist.mjs 步骤 ⑤ 顺带调用它,免得宿主维护第二套口径;README「单独成库」补一段说明两种判据各自在验什么。"
+    },
+    "EV-238": {
+      "id": "EV-238",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:21:56+00:00",
+      "updated_at": "2026-09-18T14:21:56+00:00",
+      "touched_round": 253,
+      "confidence": 0.97,
+      "source": "变更 CHG-313(8d3aadb)。node packages/engine/scripts/verify-dist.mjs(输出\"按包名 import 通过(含子路径内容包)\"与\"发布包自检通过(wanxiang-engine-0.1.0.tgz 装进临时项目后可用)\");bun run check:engine(⑥ 仍为 25 处引用全走公开入口);bun run check:engine:standalone;独立仓库 CI 35355656128 success(该 CI 的 bun run check 里就跑这段)",
+      "summary": "发布包能被\"像使用者那样\"装起来:tmp 项目 node_modules 里解包后可 import 包名与子路径内容包并装配世界;宿主与独立仓库两处闸门都覆盖到这条。"
+    },
+    "DEC-105": {
+      "id": "DEC-105",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:22:00+00:00",
+      "updated_at": "2026-09-18T14:22:00+00:00",
+      "touched_round": 253,
+      "rationale": "库的判据要站在\"使用者那一侧\",而不是\"作者那一侧\"。作者视角能验的是\"文件在、能读到\"(按路径 import 仓库里的 dist);使用者会遇到的是另一批事:files 少收文件、exports 指错、子路径导出漏声明、包名解析不到。这两类判据的失败方式不重叠,且后者只会在别人 npm i 之后暴露 —— 那是发布出去才发现的翻车,代价最高。故把\"真 pack 一次、装进临时项目、按包名 import\"做成常规闸门,且宿主与独立仓库共用同一份实现,不维护第二套口径。",
+      "alternatives_rejected": "①只跑 npm pack --dry-run 看清单(内容对得上,但\"能不能解析\"没验);②让使用者在 issue 里报(等别人踩);③宿主另写一份打包判据(两套口径必然漂移,且上游改了独立仓库才红)。",
+      "summary": "发布类判据要按使用者的做法来:真 pack、真装进 node_modules、按包名与子路径 import;作者视角的\"文件能读到\"不能代替它。"
     }
   },
   "edges": [
@@ -23055,6 +23105,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T14:18:38+00:00"
+    },
+    {
+      "from": "CHG-313",
+      "to": "TASK-232",
+      "type": "implements",
+      "created_at": "2026-09-18T14:21:57+00:00"
+    },
+    {
+      "from": "TASK-232",
+      "to": "TASK-231",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:21:57+00:00"
+    },
+    {
+      "from": "DEC-105",
+      "to": "TASK-232",
+      "type": "governs",
+      "created_at": "2026-09-18T14:22:05+00:00"
+    },
+    {
+      "from": "DEC-105",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T14:22:05+00:00"
     }
   ]
 }
