@@ -87,5 +87,8 @@ export {
   asStringArray
 } from './saveShape'
 
+export type { SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem } from './skills'
+export { createSkillSystem } from './skills'
+
 export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config'
 export { defineGame, validateGame } from './config'

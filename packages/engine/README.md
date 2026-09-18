@@ -141,6 +141,40 @@ else console.log(result.reason)                 // 'parse' | 'future' | 'shape'
 是配套的**形状修复原语**:形状不对就用兜底值,而不是抛错。`asArray` 的自定义判据拿到的元素
 保证不是 null/undefined —— 判据里那次"忘了写 `!!x &&`"正是白屏的常见起因。
 
+## 技能 / 功法:等级曲线、消耗、满级分支
+
+```ts
+const skills = createSkillSystem({
+  skills: [
+    {
+      id: 'sword',
+      name: '青锋诀',
+      kind: '主修', // 引擎只当标签,不当规则
+      maxLevel: 9,
+      baseMods: { attackPct: 0.05 }, // 入门就会的
+      perLevelMods: { attackPct: 0.03 }, // 练出来的
+      costs: [
+        { key: 'wudao', base: 10, growth: 1.5 }, // 基数 × 倍率^等级
+        { key: 'page', base: 0, levelStep: 2, discountable: false } // 线性项,且不吃折扣
+      ],
+      branches: [{ id: 'fast', name: '疾锋', mods: { speed: 0.05 } }] // 满级再择一条路
+    }
+  ]
+})
+
+skills.modsAt('sword', 3) // 第 N 级 = 基础 + 每级 × (N-1)
+skills.costAt('sword', 2, { discount: 0.2 })
+skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部功法一份来源
+```
+
+三处刻意的设计:
+
+- **基础与每级分开写**:调平衡时才分得清"它本来就这么强"与"练满才有这么强"。
+- **折扣是按项选的**(`discountable`):现实里一组消耗常常只有一部分打折
+  (本作是"悟道点可折、残页不打折")。一刀切地乘到所有项上,省几行配置、换一处静默漂移。
+- **装配汇总返回一组来源,而不是一个加总**:作品侧通常还要过自己的合并规则(递减、软上限),
+  加总就把那层信息丢了。
+
 ## 接进你自己的项目
 
 包内自带 `dist` 的编译与入口声明,但**还没有发到 npm**(发布是显式动作)。三种接法任选:
