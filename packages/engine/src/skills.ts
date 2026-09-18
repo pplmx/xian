@@ -101,7 +101,7 @@ export interface SkillSystem {
   /**
    * 某等级的词条。
    *
-   * 与《云隐修仙录》同口径:先铺 `baseMods`,再对每个 `perLevelMods` 键加
+   * 与上游工程同口径:先铺 `baseMods`,再对每个 `perLevelMods` 键加
    * `值 × max(0, 等级-1)` —— 于是**只有 perLevelMods 里出现的键,在 1 级时也会以 0 出现**。
    * 这不是疏忽:面板要能显示"这一条要练上去才有"。
    */

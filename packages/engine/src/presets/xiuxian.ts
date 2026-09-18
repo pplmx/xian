@@ -1,11 +1,11 @@
 /**
- * 仙侠内容包 —— 用云隐修仙录的名目装出一整个世界。
+ * 仙侠内容包 —— 一套现成的仙侠名目,装出一整个世界。
  *
  * 这份预设有两个用处:
  *   一 拿来就能跑:想要一款修仙放置游戏,直接 `defineGame(XIUXIAN)` 就有了骨架;
  *   二 当"换皮怎么做"的范例:凡是名字,都在这一处配置里,机制那边一行没改。
  *
- * 这里**只收名目,不搬数值史**:境界曲线给了与云隐同源的参数,
+ * 这里**只收名目,不搬数值史**:境界曲线给了一套可用作起点的参数,
  * 装备只到 6 层(手写的 288 件不是公共库该背的包袱 —— 那是作品的内容量)。
  */
 import type { GameConfig } from '../config.js'
@@ -13,7 +13,7 @@ import { attributeDefs } from '../attributes.js'
 import type { AffixDef, QualityDef, SlotDef, TemplateDef } from '../equipment.js'
 import { generateTemplates } from '../equipment.js'
 
-/** 四大界域 · 21 大境界(名目与云隐修仙录一致) */
+/** 四大界域 · 21 大境界(仙侠题材的通行名目) */
 const WORLDS = [
   ['mortal', '人间界', '炼气', '筑基', '金丹', '元婴', '化神', '炼虚', '合体', '大乘', '渡劫'],
   ['immortal', '仙界', '真仙', '玄仙', '金仙', '太乙', '大罗'],
@@ -34,7 +34,7 @@ export const XIUXIAN_SLOTS: SlotDef[] = [
   { id: 'talisman', name: '符箓', icon: 'scroll', order: 9 }
 ]
 
-/** 九档品质(凡品 → 神品),倍率与词条区间沿用云隐修仙录 */
+/** 九档品质(凡品 → 神品),倍率与词条区间是一套调好的起点 */
 export const XIUXIAN_QUALITIES: QualityDef[] = [
   { id: 'mortal', name: '凡品', rank: 0, mult: 1.0, affixes: [0, 1], fromTier: 1, toTier: 12, weight: 5000, color: '#857F70' },
   { id: 'fine', name: '良品', rank: 1, mult: 1.25, affixes: [1, 2], fromTier: 1, toTier: 16, weight: 3000, color: '#6E8B74' },
@@ -47,7 +47,7 @@ export const XIUXIAN_QUALITIES: QualityDef[] = [
   { id: 'divine', name: '神品', rank: 8, mult: 9.5, affixes: [6, 9], fromTier: 24, toTier: 32, weight: 0.05, color: '#A83F39' }
 ]
 
-/** 每层九件,名字从该层的地界长出来(与云隐「一阶一名」同一条规矩) */
+/** 每层九件,名字从该层的地界长出来(「一阶一名」) */
 const TIER_NAMES: { tier: number; region: string; names: string[]; set?: string }[] = [
   {
     tier: 1,
@@ -84,7 +84,7 @@ const TIER_NAMES: { tier: number; region: string; names: string[]; set?: string 
   }
 ]
 
-/** 词条名目与云隐同源:改的是名字,机制键照旧 */
+/** 词条名目取自仙侠题材:改的是名字,机制键照旧 */
 type AffixSeed = Omit<AffixDef, 'rarity' | 'weight'> & { weight?: number }
 
 const XIUXIAN_AFFIXES: AffixSeed[] = [
@@ -197,7 +197,7 @@ export const XIUXIAN: GameConfig = {
       { id: 'e_bonesoldier', name: '白骨兵卒', tier: 6, icon: 'bone', hpMult: 1.3, atkMult: 1.05, defMult: 1.25, speed: 0.9, skills: [{ name: '骨刀劈砍', mult: 1.6, rate: 0.24 }] },
       { id: 'e_oldgeneral', name: '上古兵主', tier: 6, icon: 'skull', hpMult: 5.0, atkMult: 1.5, defMult: 1.5, speed: 1.0, boss: true, archetype: 'truedmg', skills: [{ name: '兵戈之威', mult: 2.1, rate: 0.32, effect: 'pierce' }] }
     ],
-    // 攒够十胜引出一位首领,击败即通关、此后此地不再出首领(与云隐同一条节奏);
+    // 攒够十胜引出一位首领,击败即通关、此后此地不再出首领(once 节奏);
     // 「旧主归来」那类复现是世界节律,不改变这条门槛
     bossProgress: 10,
     bossRhythm: 'once',

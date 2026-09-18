@@ -1,6 +1,6 @@
 /**
  * 随机服务 —— 概率逻辑必须可复现,否则「掉率不对」这类问题只能靠抽样猜。
- * 与云隐修仙录的 `utils/random` 同形(mulberry32),所以两边可以交换种子对账。
+ * 与上游工程的 `utils/random` 同形(mulberry32),所以两边可以交换种子对账。
  */
 export interface Rng {
   next(): number
@@ -15,7 +15,7 @@ export interface Rng {
    * 洗牌 —— **可选**。
    *
    * 引擎自己不用它;留成可选是为了让使用方**已有的随机服务**能直接接进来
-   * (例如《云隐修仙录》的 RandomService 就没有 shuffle)。
+   * (例如上游工程的 RandomService 就没有 shuffle)。
    * 接口越大,接进来要满足的条件越多,而库并不需要它。
    */
   shuffle?<T>(arr: readonly T[]): T[]

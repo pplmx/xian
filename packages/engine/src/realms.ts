@@ -9,7 +9,7 @@
  *
  * ## 世界(界域)概念
  *
- * 等级不是一条直线:云隐修仙录是「人间界 → 仙界 → 神界 → 混沌海」,
+ * 等级不是一条直线:上游工程是「人间界 → 仙界 → 神界 → 混沌海」,
  * 每一次跨界都是一次大跃(寿元、修为需求、基础属性都会跳一档)。
  * 引擎把这件事抽象成 `worlds` —— 每个世界一段序号区间,区间相接即"跨界"。
  * 只做一条直线的游戏给一个世界即可,引擎不会额外要求什么。
@@ -204,7 +204,7 @@ export interface RealmSystem<T = number> {
   isMajorStep(major: number, layer: number): boolean
   isWorldStep(major: number, layer: number): boolean
   progress(state: RealmState<T>): ProgressView<T>
-  /** 加修为,封顶在当前小层的需求上(与云隐修仙录同口径:修为不会溢出到下一层) */
+  /** 加修为,封顶在当前小层的需求上(与上游工程同口径:修为不会溢出到下一层) */
   addExp(state: RealmState<T>, amount: T): RealmState<T>
   /** 修为满了才允许进阶;失败保留修为(放置类的宽容口径,可配置) */
   attemptBreakthrough(

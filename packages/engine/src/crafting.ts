@@ -145,7 +145,7 @@ export interface CraftFormula {
   /**
    * 乘区表:**几个、叫什么,全由作品定**。
    *
-   * 云隐修仙录用的是"掌握 / 认知 / 技艺"三区(再加越级),而换个题材可能完全不同 ——
+   * 上游工程用的是"掌握 / 认知 / 技艺"三区(再加越级),而换个题材可能完全不同 ——
    * 做饭是"火候 / 备料 / 调味",铸剑是"炉温 / 锻打 / 淬火",写代码是"需求理解 /
    * 设计与实现"。键名只是标签,引擎只做一件事:**按乘区表逐项取 `下限 + 跨度 × clamp01(值)`
    * 再乘起来**(顺序即对象键的顺序,故结果可复现)。
@@ -169,7 +169,7 @@ export interface CraftLevers {
  * 合成成功率 = 基准 × Π(各乘区) × 越级因子。
  *
  * 乘法顺序 = 基准、按 `formula.levers` 的键序、最后越级 ——
- * 与《云隐修仙录》原式一致(逐位对齐,迁移时数字一位不变)。
+ * 与上游工程原式一致(逐位对齐,迁移时数字一位不变)。
  */
 export function composeCraftRate(values: CraftLevers, formula: CraftFormula): number {
   let rate = formula.baseRate

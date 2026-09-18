@@ -86,7 +86,7 @@ export interface AffixDef {
   /**
    * 词条数值进入属性前的除数。
    *
-   * 云隐修仙录的词条写的是**百分点**(「攻击提升 4.2%」→ min 2 / max 5),
+   * 上游工程的词条写的是**百分点**(「攻击提升 4.2%」→ min 2 / max 5),
    * 而属性表用的是**分数**(0.042);两边差一个 100。
    * 这类单位换算必须是配置里的一条明文规矩,不能靠"碰巧两边都用同一种写法"。
    */
@@ -400,7 +400,7 @@ export function createEquipmentSystem<T = number>(
     if (!template) return { template, quality, flats, mods, affixLines }
 
     const scale = tierScale(instance.tier)
-    // 与云隐修仙录同形:平铺 = 层级系数 × (基数 × 总预算系数 × 品质倍率 × 强化加成)
+    // 与上游工程同形:平铺 = 层级系数 × (基数 × 总预算系数 × 品质倍率 × 强化加成)
     // —— 乘法的结合顺序也照搬,大数库下才能逐位一致
     const levelPart = config.power.levelBonusFn ? config.power.levelBonusFn(instance.level) : instance.level * levelBonus
     const factor = baseFactor * quality.mult ** qualityExp * (1 + levelPart)
@@ -514,7 +514,7 @@ export function createEquipmentSystem<T = number>(
  * 从"名目表"生成整套模板 —— 给不想手写几百件装备的人。
  *
  * 输入:每层每个部位的名字(base 权重按部位默认表给,或显式指定),
- * 输出:`TemplateDef[]`。云隐修仙录那 288 件是手写的;一个新游戏
+ * 输出:`TemplateDef[]`。上游工程那 288 件是手写的;一个新游戏
  * 往往只需要"这九层每层九件"的名字。
  */
 export function generateTemplates(opts: {

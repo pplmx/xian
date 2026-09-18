@@ -1,7 +1,7 @@
-# 与《云隐修仙录》的逐数字对账
+# 逐数字对账
 
-这份库不是"另写一套近似的东西"。它与《云隐修仙录》本体之间有一份 **parity(对账)判据**:
-用本作的真实数据装配同一套系统,然后逐条比。判据在宿主仓库的 `src/core/engineParity.spec.ts`。
+这份库不是"另写一套近似的东西"。它从一个在运营的放置游戏里抽出来,并保留了一份 **parity(对账)判据**:
+用那个工程的真实数据装配同一套系统,然后逐条比(判据在源工程的 `src/core/engineParity.spec.ts`)。
 
 ## 比什么
 
@@ -15,10 +15,10 @@
 
 ## 已经换过去的部分
 
-| 宿主侧 | 现在由谁算 |
+| 源工程侧 | 现在由谁算 |
 | --- | --- |
 | `core/formulas.ts` 的 `expRequirement` / `baseCombatStats` / `breakthroughBaseRate` / `isWorldStepLayer` | 库(经 `core/engineWorld.ts`,用 GNum 适配器装配) |
-| `core/statsCalc.ts` 的 `mergeMods` / `mergeModsDetailed` / `isSoftCapped` / `modDepth` | 库的属性系统(递减阶梯仍取自宿主 `data/constants.DIMINISH_WEIGHTS`,以配置显式传入 —— 平衡口径只有一处) |
+| `core/statsCalc.ts` 的 `mergeMods` / `mergeModsDetailed` / `isSoftCapped` / `modDepth` | 库的属性系统(递减阶梯仍取自源工程的 `data/constants.DIMINISH_WEIGHTS`,以配置显式传入 —— 平衡口径只有一处) |
 | `core/equipGen.ts` 的 `generateEquipment` / `qualityWeightAt` 与池子查询 | 库的装备系统(判据连**随机流状态**都比:同一种子下生成同一件之外,还要消耗同样多的随机数) |
 | 首领门槛与节奏(`winsUntilBoss`)、读档补票不变量(`prereqClosure`) | 库的副本系统(在线、离线自动挑战与界面提示共用这一处) |
 
@@ -31,6 +31,6 @@
    `toEqual`(GNum 精确相等)—— 21 境 × 10 层逐个过;
 2. 另有一节「迁移接线」直接断言 `formulas.expRequirement(major, sub)` 与
    `ENGINE_WORLD.realms.expCost(major, sub)` 是同一份结果,并再次与冻结口径对账;
-3. 宿主全量用例、`vue-tsc`、ESLint 与生产构建全绿 —— 玩家侧的数字一位没动。
+3. 源工程的全量用例、`vue-tsc`、ESLint 与生产构建全绿 —— 玩家侧的数字一位没动。
 
 至此四套系统(等级 / 属性 / 装备 / 副本)的**规则**都由库承担。

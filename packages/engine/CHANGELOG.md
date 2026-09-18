@@ -13,14 +13,14 @@
 
 ## 0.1.0 — 2026-09-18
 
-首个版本 —— 从《云隐修仙录》抽出的可配置数值内核,零运行时依赖。
+首个版本 —— 可配置的数值内核,零运行时依赖。
 公开发布:`v0.1.0`(GitHub tag / release),`npm install wanxiang-engine` 尚未发布 —— 现在
 可以按 tag 引用:`github:pplmx/wanxiang-engine#v0.1.0`。
 
 **文档与示例**
 
 - README 重做成正式项目的结构(徽章 / 目录 / 分层),长篇内容下沉到
-  `docs/parity.md`(与本体逐数字对账)与 `docs/development.md`(开发与集成);
+  `docs/parity.md`(与源工程逐数字对账)与 `docs/development.md`(开发与集成);
   发布包改为一并附上 `CHANGELOG.md` 与 `docs/`。
 - 新增 `examples/quickstart.ts` —— README「快速开始」那一节的可跑版本,并接进判据:
   示例参与类型检查,`bun run examples` 会被 `bun run check` 与"独立成库自检"各跑一遍。

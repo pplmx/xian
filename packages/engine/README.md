@@ -2,8 +2,10 @@
 
 **一套可配置的游戏基础数值内核。** 等级(境界)、属性、装备、副本、技能、炼制、伙伴、目标、随机内容池 ——
 换一套名字与内容,就能搭出自己的放置 / RPG / 养成游戏;机制一行不用重写。
-它从《云隐修仙录》里抽出来,并与本体逐数字对账(见 [判据](./docs/parity.md))。
 零运行时依赖,纯 ESM + 类型声明。
+
+它的规则不是拍脑袋来的:整套数值与一个在运营的放置游戏**逐数字对账**,迁移前后玩家看到的数字一位不变
+(见[判据](./docs/parity.md))。
 
 [![CI](https://github.com/pplmx/wanxiang-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/pplmx/wanxiang-engine/actions/workflows/ci.yml)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](#边界与兼容性)
@@ -481,8 +483,8 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 错误会直接挡住装配并指名道姓;警告(某层某部位没有内容、首领没标 `boss: true`)只是提示,
 发版前可以用 `defineGame(config, { strict: true })` 把它们也变成错误。
 
-> 实战例子:这份校验在接入《云隐修仙录》内容时抓出了 `e_meteorbeast` 的 id 重复 —— 17 层与 25 层各写了一次,
-> 因为敌人表按 id 建索引,星陨荒原的玩家一直在撞 25 层数值的怪。
+> 实战例子:接入一款真实作品的内容时,这份校验抓出过一个敌人 id 重复 —— 同一个敌人被写了两遍,
+> 而敌人表按 id 建索引,于是本该打低层的玩家一直在撞高层数值的怪。写内容的人不会自己发现,玩家也只会觉得"这怪怎么这么硬"。
 
 ## 质量与判据
 
@@ -491,7 +493,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 判据 | 钉住的事 | 在哪 |
 | --- | --- | --- |
 | 用例 | 16 个模块的行为,147 个用例(零运行时依赖,`bun install && bun test` 即可跑) | `src/**/*.spec.ts` |
-| 与本体对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
+| 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
 | 公开面判据 | 50 个运行时导出 + 90 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
@@ -522,9 +524,10 @@ bun run build                  # 只出 dist(含 .d.ts)
 bun run examples               # 跑一遍 examples/ 下的示例
 ```
 
-这个目录**不依赖宿主仓库**:源码里没有 `@/` 之类的别名,也不 import 宿主任何模块。
-它已经独立成仓库(<https://github.com/pplmx/wanxiang-engine>),上游是本仓库的 `packages/engine`;
-同步方式、接进自己项目的四种写法、以及"它真的能独立"的自检,见[开发文档](./docs/development.md)。
+这个目录**不依赖它外面的工程**:源码里没有 `@/` 之类的别名,也不 import 工程里的任何模块,
+`bun install && bun run check` 就能跑。它已经独立成仓库
+(<https://github.com/pplmx/wanxiang-engine>),同步方式、接进自己项目的四种写法、
+以及"它真的能独立"的自检,见[开发文档](./docs/development.md)。
 
 ## 目录
 
@@ -532,7 +535,7 @@ bun run examples               # 跑一遍 examples/ 下的示例
 packages/engine/
   src/
     numeric.ts      数值适配层(默认 number,大数库可插拔)
-    rng.ts          可复现随机(mulberry32,与本体同源)
+    rng.ts          可复现随机(mulberry32,与源工程可交换种子对账)
     attributes.ts   属性登记表 + 合并规则 + 最终属性结算
     realms.ts       世界/境界/小层 + 修为/进阶/寿元/基础属性
     equipment.ts    槽位/品质/模板/词条/套装 + 生成与解析
@@ -554,5 +557,4 @@ packages/engine/
 
 ## 许可
 
-CC BY-NC 4.0(**禁止商用**)—— 与《云隐修仙录》本体一致。
-若要把本库用于商业项目,请先开 issue 说明用途。
+CC BY-NC 4.0(**禁止商用**)。若要把本库用于商业项目,请先开 issue 说明用途。

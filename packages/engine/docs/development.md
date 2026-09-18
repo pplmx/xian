@@ -24,16 +24,17 @@ npm i ./wanxiang-engine-0.1.0.tgz
 
 ## 本目录与独立仓库的关系
 
-`packages/engine` 是上游(在《云隐修仙录》仓库里开发),<https://github.com/pplmx/wanxiang-engine>
-是它拆出去的独立仓库。**选一处开发即可,不要两边同时改**:
+本库的**上游**在一个更大的游戏工程里(那个工程的 `packages/engine` 子目录),
+<https://github.com/pplmx/wanxiang-engine> 是它拆出来的独立仓库(也就是本仓库)。
+**选一处开发即可,不要两边同时改**:
 
 ```bash
 # 走法一(推荐):在独立仓库里开发
 git clone git@github.com:pplmx/wanxiang-engine.git && cd wanxiang-engine
 bun install && bun run check
 
-# 走法二:在宿主仓库里开发,再推过去
-cd <宿主仓库>
+# 走法二:在上游工程里开发,再推过去
+cd <上游工程>
 git subtree push --prefix=packages/engine git@github.com:pplmx/wanxiang-engine.git main
 ```
 
@@ -64,15 +65,15 @@ bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json
 
 示例是跑在 Node/Bun 上的命令行程序,所以单独一份 `tsconfig.examples.json` 给它们开 Node 类型;
 **库源码那份 tsconfig 刻意不引 Node 类型** —— 免得谁顺手在 `src` 里用了 `process` / `Buffer`
-还一路绿灯(库必须能在浏览器里跑)。这条差别是 CI 抓出来的:本地因为宿主把 `@types/node`
-提升到了根目录而看不出来,搬到独立仓库里一装就红。
+还一路绿灯(库必须能在浏览器里跑)。这条差别是 CI 抓出来的:在上游工程里因为根目录已经有
+`@types/node` 而看不出来,搬到独立仓库里一装就红。
 
-宿主仓库那边还有两条守着"拆得干净"的判据:
+上游工程那边还有两条守着"拆得干净"的判据(它们在工程侧,独立仓库里跑不了):
 
 | 命令 | 钉住的事 |
 | --- | --- |
-| `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"、宿主 25 处引用全走公开入口 |
-| `bun run check:engine:standalone` | 整份目录复制到临时目录(不带 dist 与 node_modules)后,独立编译、独立跑用例、独立 import 产物、跑示例,并断言源码里没有任何宿主引用 |
+| `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"、工程侧 25 处引用全走公开入口 |
+| `bun run check:engine:standalone` | 整份目录复制到临时目录(不带 dist 与 node_modules)后,独立编译、独立跑用例、独立 import 产物、跑示例,并断言源码里没有任何工程侧引用 |
 
-只要有一处"顺手用了宿主的别名或配置",`check:engine:standalone` 就会红 ——
+只要有一处"顺手用了工程侧的别名或配置",`check:engine:standalone` 就会红 ——
 而这种依赖待在同一个仓库里是看不出来的。
