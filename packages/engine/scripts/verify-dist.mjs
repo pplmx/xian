@@ -159,7 +159,25 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   for (const [, spec] of tuning.matchAll(/`(src\/\w+\.sim\.spec\.ts)`/g)) {
     assert.ok(simSpecs.includes(spec.replace('src/', '')), `调参参考指向了不存在的用例:${spec}`)
   }
-  console.log(`调参参考自检通过(${simSpecs.length} 份消融实验都被收进 docs/tuning.md)`)
+  /**
+   * 一页索引自检 —— 文首那张"你要调的那件事在哪一节"的表,必须**一节课一行**。
+   *
+   * 参考表长到二十多节之后,"收全了"还不够用:得让人在半分钟内找到自己那一行。
+   * 所以这一条盯两件事:①索引行数 = 消融份数(不许有节漏进索引);
+   * ②每个小节的标题都在索引里被点名(标题改了、索引没改,也会红)。
+   */
+  const indexStart = tuning.indexOf('## 一页索引')
+  assert.ok(indexStart >= 0, 'docs/tuning.md 里找不到「一页索引」那一节')
+  const indexEnd = tuning.indexOf('\n## ', indexStart + 5)
+  const indexBlock = tuning.slice(indexStart, indexEnd < 0 ? undefined : indexEnd)
+  const indexRows = [...indexBlock.matchAll(/^\| (?!---)/gm)].length - 1 // 去掉表头那一行
+  assert.equal(indexRows, simSpecs.length, `一页索引有 ${indexRows} 行,但消融有 ${simSpecs.length} 份 —— 有节没进索引?`)
+  const sectionTitles = [...tuning.matchAll(/^## (?!一页索引|怎么自己复现)(.+)$/gm)].map(line =>
+    line[1].replace(/\s*\(`[^`]+`\)\s*$/, '').trim()
+  )
+  const missingFromIndex = sectionTitles.filter(title => !indexBlock.includes(title))
+  assert.deepEqual(missingFromIndex, [], `这些小节没进一页索引:${missingFromIndex.join('、')}`)
+  console.log(`调参参考自检通过(${simSpecs.length} 份消融都在 docs/tuning.md,且一页索引逐节点名)`)
 
   /**
    * 相对导入自检 —— 源码里的相对导入必须带 `.js` 扩展名。
