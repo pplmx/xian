@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 246,
+  "round": 247,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:25:00+00:00",
+  "updated_at": "2026-09-18T22:10:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14698,6 +14698,88 @@
       "rationale": "前几轮开的是\"数值曲线与算法\"的钩子,这两处是更硬的结构:①原先\"所有境界层数必须相同\",而现实里前段九层、后段三层的分级很常见;②原先\"前置只能有一条\",而主线之外有支线时用单链硬串会把支线变成必须顺路。两处都按同一纪律改:默认行为逐位不变(全局层名、字符串前置),新写法只在显式配置时生效;语义写在字段上(requireMode),不靠\"数组就一定是全部\"这种默契。",
       "alternatives_rejected": "①只在文档里说明\"层数要一样/前置只有一条\"(限制真实存在);②把 maxLayer 语义悄悄改掉(使用方按旧语义读会出错,故明确成\"最多的层数\"并补 maxLayerOf);③多条前置不加 requireMode、一律\"全部\"(汇合与任一路径两种结构只能表达一种)。",
       "summary": "结构写死也按\"默认不变 + 显式开关\"放宽:逐境层数(RealmEntry.layers)与多条前置(requireMode),语义写进字段而非默契。"
+    },
+    "TASK-226": {
+      "id": "TASK-226",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:00+00:00",
+      "updated_at": "2026-09-18T22:10:00+00:00",
+      "touched_round": 247,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "继续开五处钩子:技能词条曲线(SkillDef.modsFn)、强化加成曲线(EquipmentPowerConfig.levelBonusFn)、装备词条条数与权重(affixCountFn/affixWeightFn)、伙伴多只时的合并方式(CompanionConfig.stack)、抽 N 张的保底(drawMany guarantee)。默认路径全部与既有实现一致。"
+    },
+    "CHG-301": {
+      "id": "CHG-301",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:00+00:00",
+      "updated_at": "2026-09-18T22:10:00+00:00",
+      "touched_round": 247,
+      "commit": "9b19d24",
+      "summary": "skills:SkillDef.modsFn(level) 接管某等级的词条(忽略 baseMods/perLevelMods);equipment:EquipmentPowerConfig.levelBonusFn(level) 返回并到 1 上的比例。"
+    },
+    "CHG-302": {
+      "id": "CHG-302",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:00+00:00",
+      "updated_at": "2026-09-18T22:10:00+00:00",
+      "touched_round": 247,
+      "commit": "8b845f4",
+      "summary": "equipment:EquipmentConfig.affixCountFn(quality,tier,rng) 取代那一次 rng.int(仍受 maxAffixCount 封顶);affixWeightFn(affix,quality,tier) 接管抽取权重(0 即不参与,与 minRank/minTier/slots 分工明确)。"
+    },
+    "CHG-303": {
+      "id": "CHG-303",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:00+00:00",
+      "updated_at": "2026-09-18T22:10:00+00:00",
+      "touched_round": 247,
+      "commit": "5b463bb",
+      "summary": "companions:CompanionConfig.stack: override(默认,覆盖)/ add-relative(各自相对中性那一份相加 —— 同一开关对倍率类与加法类都成立)。"
+    },
+    "CHG-304": {
+      "id": "CHG-304",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:00+00:00",
+      "updated_at": "2026-09-18T22:10:00+00:00",
+      "touched_round": 247,
+      "commit": "f7a1dfa",
+      "summary": "deck:drawMany 增 guarantee:{tag,min} 保底 —— 不够则替换末尾不带标签的,无处可换则往后补;池里不够则补多少算多少(不凭空造牌),去重仍成立。README/CHANGELOG 同步(docs 提交 59aee68)。"
+    },
+    "EV-232": {
+      "id": "EV-232",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:00+00:00",
+      "updated_at": "2026-09-18T22:10:00+00:00",
+      "touched_round": 247,
+      "source": "packages/engine（15 文件 / 132 例,含 Node 产物探测）+ bun run test（宿主 198 文件 / 2027 例）+ bun run check + bun run check:engine + 独立成库自检 + 库仓 CI（push success 24s）",
+      "summary": "五处各有一组判据:modsFn 三段曲线与返回拷贝;levelBonusFn 用 √level 手算对账;affixCountFn 按层级保底与封顶、affixWeightFn 只留一条;stack 两模式对比;guarantee 50 轮不少于一张 + 抽数不足时补 + 池不够不造牌。默认路径照旧由宿主对账兜底。"
+    },
+    "DEC-099": {
+      "id": "DEC-099",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:10:00+00:00",
+      "updated_at": "2026-09-18T22:10:00+00:00",
+      "touched_round": 247,
+      "rationale": "五处钩子的取舍都遵循同一条:先把\"默认行为\"钉死(与既有实现逐位一致,由宿主冻结旧口径的对账兜底),再把\"另一种形状\"作为显式开关加进来。几处语义边界也刻意写清:affixWeightFn 返回 0 是\"这次不参与\",要\"根本不可能出\"仍用 minRank/minTier/slots;guarantee 只在**已过情境筛选的池子**里挑,不越权决定\"这张牌该不该出现在此情境\";companions.stack 用\"相加相对量\"而不是\"相乘绝对值\",这样一个开关对倍率类与加法类同时成立。",
+      "alternatives_rejected": "①把新形状设为默认(等于替使用方改数值);②让 weight=0 兼任\"排除\"(与 minRank/slots 语义重叠,排查时分不清);③保底越权改情境筛选(把\"该不该出现\"和\"至少几张\"混成一件事)。",
+      "summary": "开钩子的统一纪律:默认逐位不变;新形状显式开关;每处写清语义边界(参与/排除、情境/保底、相对/绝对)。"
     }
   },
   "edges": [
@@ -22393,6 +22475,96 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T21:25:00+00:00"
+    },
+    {
+      "from": "CHG-301",
+      "to": "TASK-226",
+      "type": "implements",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "CHG-302",
+      "to": "TASK-226",
+      "type": "implements",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "CHG-303",
+      "to": "TASK-226",
+      "type": "implements",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "CHG-304",
+      "to": "TASK-226",
+      "type": "implements",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "CHG-301",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "CHG-302",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "CHG-303",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "CHG-304",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "EV-232",
+      "to": "CHG-301",
+      "type": "validates",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "EV-232",
+      "to": "CHG-302",
+      "type": "validates",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "EV-232",
+      "to": "CHG-303",
+      "type": "validates",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "EV-232",
+      "to": "CHG-304",
+      "type": "validates",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "TASK-226",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "TASK-226",
+      "to": "TASK-225",
+      "type": "depends_on",
+      "created_at": "2026-09-18T22:10:00+00:00"
+    },
+    {
+      "from": "DEC-099",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T22:10:00+00:00"
     }
   ]
 }
