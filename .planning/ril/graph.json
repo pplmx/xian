@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 322,
+  "round": 323,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:45:36+00:00",
+  "updated_at": "2026-09-18T21:50:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18483,6 +18483,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-386(8a3f198)。bunx vitest run src/codex.sim.spec.ts src/memory.sim.spec.ts(8 例全过;打印:20 次照面停在 0 0 1 1 1 1 1 2…3、升档在第 3/8/20 次;权重 3 时 1 1 2 2 2 2 3;概率升档 20 次后 初见 12.4% / 眼熟 25.9% / 知其路数 28.2% / 洞悉 33.5%(理论 32.3%);三件里记下 {\"quality\":3,\"tier\":9};记忆:打 3 场或守 12 小时 → 安生、10 场或 48 小时 → 繁荣、9 场/47 小时 → 安生;闲置 71h → 繁荣、72h → 荒芜;没资格 decayed=false vs 太久没来 true);cd packages/engine && bun run check(439 例 / 53 文件 + 八道自检,调参参考自检报 13 份消融、用例文件数自检当场抓出 51→53、相对导入自检 93 个源文件);cd /workspace/xian && bun run test(260 文件 / 2487 例)、check:engine(59 处引用)、check:engine:standalone(93 个源文件)。",
       "summary": "两条\"看着差不多、其实差很远\"的路被量清楚:①累计阈值升档 vs 概率升档 —— 同样 20 次照面,前者必定到顶,后者只有约三分之一(每掷中一次只推一层);②世界记忆的升档是分级取(差一点只掉一档),但回落是硬开关(到点直接回最低档)。"
+    },
+    "TASK-304": {
+      "id": "TASK-304",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:50:33+00:00",
+      "updated_at": "2026-09-18T21:50:33+00:00",
+      "touched_round": 322,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "技能与背包两份消融(skills.sim + holding.sim):功法练满的总账按指数曲线累(逐级 12/16/22/31/44,合计 125 点,最后一级占三分之一)、折扣只作用于可折项(三成折扣整本只省 26.4%)、满级分支按每级贡献折算(+5% 攻击≈2.5 级、+3% 会心≈6 级)、带 requires 的分支是谱系;背包容量 20 时装配即腾位(装上 6 件可再收 6 件)、两种拒绝优先级固定(duplicate 先于 full)、force 明知超载也收且读数如实、删件清掉所有相关槽位。"
+    },
+    "CHG-387": {
+      "id": "CHG-387",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:50:33+00:00",
+      "updated_at": "2026-09-18T21:50:33+00:00",
+      "touched_round": 322,
+      "commit": "0e18b79",
+      "summary": "库:新增 src/skills.sim.spec.ts 与 src/holding.sim.spec.ts(各 4 例);CHANGELOG「未发布」记两节;docs/tuning.md 新增两节(第 14、15 份消融进参考表);docs/assembly.md 配方 A 补技能与背包两行、坑清单补两行(折扣不是打在整本账上、背包满了先看有没有装备上);README 用例数改 447/55。宿主无改动。"
+    },
+    "EV-313": {
+      "id": "EV-313",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:50:33+00:00",
+      "updated_at": "2026-09-18T21:50:33+00:00",
+      "touched_round": 322,
+      "confidence": 0.96,
+      "source": "变更 CHG-387(0e18b79)。bunx vitest run src/skills.sim.spec.ts src/holding.sim.spec.ts(8 例全过;打印:悟道点逐级 12 → 16 → 22 → 31 → 44、合计 125、最后一级占 35%;打七折 悟道点省 29.6% / 残页 0% / 整本 26.4%;1 级 {attackPct:0.04,critRate:0} vs 6 级 {attackPct:0.14,critRate:0.025},基础占 29%;分支折算 猛进 ≈ 2.5 级、沉潜 ≈ 6.0 级;背包 20/20 → 装 6 件后 14/20 还能收 6;强塞后 21/20 且 isFull=true);cd packages/engine && bun run check(447 例 / 55 文件 + 八道自检,调参参考自检报 15 份消融、用例文件数自检当场抓出 53→55、相对导入自检 95 个源文件);cd /workspace/xian && bun run test(262 文件 / 2495 例)、check:engine(59 处引用)、check:engine:standalone(95 个源文件)。",
+      "summary": "两处\"账要自己算一遍才知道\"的刻度:①功法的升级消耗是指数曲线,单级 × 级数会低估一半以上(实测 125 点 vs 直觉的几十点),而且打折项与不打折项混在一张表里时,声明的折扣率不等于实际节省率(30% → 26.4%);②背包容量与装配的关系 —— 装配不占位,所以\"背包满了\"常常只是\"没穿上\"。"
     }
   },
   "edges": [
@@ -27732,6 +27770,12 @@
       "to": "TASK-303",
       "type": "implements",
       "created_at": "2026-09-18T21:45:36+00:00"
+    },
+    {
+      "from": "CHG-387",
+      "to": "TASK-304",
+      "type": "implements",
+      "created_at": "2026-09-18T21:50:33+00:00"
     }
   ]
 }
