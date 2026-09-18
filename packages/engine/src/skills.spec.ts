@@ -95,4 +95,26 @@ describe('技能/功法 —— 等级曲线、消耗、满级分支、装配来�
     // 折扣照乘,但仍不低于下限 1
     expect(table.costAt('s', 3, { discount: 1 })).toEqual([{ key: 'coin', amount: 1 }])
   })
+
+  it('词条曲线也能自己接管:modsFn 给你等级、你还一组词条', () => {
+    const sys = createSkillSystem({
+      skills: [
+        {
+          id: 's',
+          name: 'S',
+          maxLevel: 5,
+          baseMods: { attackPct: 99 }, // 给了 modsFn 就该被忽略
+          perLevelMods: { attackPct: 99 },
+          modsFn: level => ({ attackPct: level <= 3 ? level * 0.05 : 0.15 + (level - 3) * 0.01 })
+        }
+      ]
+    })
+    expect(sys.modsAt('s', 1)).toEqual({ attackPct: 0.05 })
+    expect(sys.modsAt('s', 3).attackPct).toBeCloseTo(0.15, 10)
+    expect(sys.modsAt('s', 5).attackPct).toBeCloseTo(0.17, 10)
+    // 返回的是拷贝:改它不影响下一次
+    const once = sys.modsAt('s', 3)
+    once.attackPct = 9
+    expect(sys.modsAt('s', 3).attackPct).toBeCloseTo(0.15, 10)
+  })
 })

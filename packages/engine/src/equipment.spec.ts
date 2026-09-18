@@ -145,6 +145,17 @@ describe('装备系统 —— 槽位/品质/模板/词条/套装', () => {
     expect(Number(upgraded.flats.attack)).toBeCloseTo(12 * 2 * factor * 1.2, 6)
   })
 
+  it('强化加成曲线可自己接管:levelBonusFn 返回并到 1 上的比例', () => {
+    const sys = createEquipmentSystem({
+      ...CONFIG,
+      power: { ...CONFIG.power, levelBonusFn: level => Math.sqrt(level) * 0.1 }
+    })
+    const inst = { uid: 'u', templateId: 'w1', qualityId: 'common', tier: 1, level: 4, affixes: [] }
+    const resolved = sys.resolve(inst)
+    // 基 10 × 层级系数 1 × 品质 1 ×(1 + √4 × 0.1)= 12
+    expect(Number(resolved.flats.attack)).toBeCloseTo(10 * 1.2, 6)
+  })
+
   it('词条数值 = min + (max-min) × roll,并按稀有度给出展示行', () => {
     const sys = createEquipmentSystem(CONFIG)
     const def = sys.affix('a_atk')!

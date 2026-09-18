@@ -127,6 +127,12 @@ export interface EquipmentPowerConfig<T = number> {
   tierFactors?: readonly (number | T)[]
   /** 每强化一级的平铺加成 */
   levelBonus?: number
+  /**
+   * 自己接管强化加成(**可选**):返回**并到 1 上的比例**
+   * (默认是 `level * levelBonus`,即每级线性的那一份)。
+   * 想让前几级猛、后面缓,或按层级给不同的强化效率,用它。
+   */
+  levelBonusFn?: (level: number) => number
 }
 
 export interface EquipmentConfig<T = number> {
@@ -360,7 +366,8 @@ export function createEquipmentSystem<T = number>(
     const scale = tierScale(instance.tier)
     // 与云隐修仙录同形:平铺 = 层级系数 × (基数 × 总预算系数 × 品质倍率 × 强化加成)
     // —— 乘法的结合顺序也照搬,大数库下才能逐位一致
-    const factor = baseFactor * quality.mult ** qualityExp * (1 + instance.level * levelBonus)
+    const levelPart = config.power.levelBonusFn ? config.power.levelBonusFn(instance.level) : instance.level * levelBonus
+    const factor = baseFactor * quality.mult ** qualityExp * (1 + levelPart)
     for (const [key, weight] of Object.entries(template.base ?? {})) {
       if (!weight) continue
       flats[key] = numeric.add(flats[key] ?? numeric.zero, numeric.mulN(scale, weight * factor))

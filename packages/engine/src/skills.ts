@@ -61,6 +61,13 @@ export interface SkillDef {
   baseMods?: Mods
   /** 每升一级追加的词条 */
   perLevelMods?: Mods
+  /**
+   * 自己接管"某等级给什么词条"(**可选**):给了它,baseMods/perLevelMods 全部忽略。
+   *
+   * 线性成长(基础 + 每级 ×(N-1))覆盖大多数情况,但"前段猛、后段缓""到某级突然开窍"
+   * 这类手感需要别的形状 —— 直接给函数,不必把曲线硬掰成两段。
+   */
+  modsFn?: (level: number) => Mods
   /** 学习门槛(等级序号之类);引擎只存不判,由玩法层决定何时可用 */
   requiredLevel?: number
   /** 升级消耗:按上面的曲线算 */
@@ -115,6 +122,7 @@ export function createSkillSystem(config: SkillConfig): SkillSystem {
     const def = byId.get(id)
     if (!def) return {}
     const lv = Math.max(1, Math.floor(level))
+    if (def.modsFn) return { ...def.modsFn(lv) }
     const out: Mods = {}
     for (const k in def.baseMods) {
       const v = def.baseMods[k]
