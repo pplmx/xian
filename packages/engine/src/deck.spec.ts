@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createRng } from './rng'
-import { deckPool, drawFrom, entryAllowed, inBand } from './deck'
+import { deckPool, drawFrom, drawMany, entryAllowed, inBand } from './deck'
 
 const ENTRIES = [
   { id: 'a', tags: ['forest'], weight: 100, min: 0, max: 3 },
@@ -58,5 +58,42 @@ describe('内容牌堆 —— 区间、标签、一次性、权重', () => {
     }
     expect(d).toBeGreaterThan(a)
     expect(drawFrom([{ id: 'only', weight: 0 }], { level: 0, tags: [] }, rng)?.id).toBe('only')
+  })
+
+  it('抽 N 张:默认不重复,池子不够就早停(不补齐),可关掉去重', () => {
+    const rng = createRng(3)
+    const forest = { level: 1, tags: ['forest'] }
+    // 池里只有 a / d / e 三张(且 e 权重 0),抽 5 张最多拿到 3 张不重复的
+    const some = drawMany(ENTRIES, forest, rng, 5)
+    expect(some.length).toBe(3)
+    expect(new Set(some.map(e => e.id)).size).toBe(3)
+    // 关掉去重:与独立抽 5 次等价
+    const repeated = drawMany([{ id: 'x', weight: 1 }], { level: 0, tags: [] }, rng, 3, { distinct: false })
+    expect(repeated.map(e => e.id)).toEqual(['x', 'x', 'x'])
+    // 抽 0 张或负数:什么都不给
+    expect(drawMany(ENTRIES, forest, rng, 0)).toEqual([])
+    expect(drawMany(ENTRIES, forest, rng, -3)).toEqual([])
+    // seen 只对"一次性牌"生效(d 是 once;a 不是,故 a 不受影响)
+    expect(drawMany(ENTRIES, { ...forest, seen: ['d'] }, rng, 5).map(e => e.id)).toEqual(['a', 'e'])
+  })
+
+  it('多抽与单抽共用同一套权重口径:同种子下逐张一致', () => {
+    const a = createRng(21)
+    const b = createRng(21)
+    const many = drawMany(ENTRIES, { level: 1, tags: ['forest'] }, a, 3)
+    const oneByOne: string[] = []
+    const taken: string[] = []
+    for (let i = 0; i < 3; i += 1) {
+      const got = drawFrom(
+        ENTRIES.filter(e => !taken.includes(e.id)),
+        { level: 1, tags: ['forest'] },
+        b
+      )
+      if (!got) break
+      taken.push(got.id)
+      oneByOne.push(got.id)
+    }
+    expect(many.map(e => e.id)).toEqual(oneByOne)
+    expect(a.next()).toBe(b.next())
   })
 })

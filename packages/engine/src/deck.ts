@@ -79,11 +79,43 @@ export interface DrawOptions<T extends DeckEntry = DeckEntry> {
 export function drawFrom<T extends DeckEntry>(entries: readonly T[], ctx: DeckContext, rng: Rng, opts: DrawOptions<T> = {}): T | null {
   const pool = deckPool(entries, ctx)
   if (pool.length === 0) return null
-  const weightOf = (entry: T): number => {
-    const mult = opts.weightMultiplier?.(entry) ?? 1
-    return Math.max(0, entry.weight * mult)
-  }
+  return pickOne(pool, rng, opts.weightMultiplier)
+}
+
+/** 权重与"全 0 退回均匀"的口径只此一处 —— 单抽与多抽共用 */
+function pickOne<T extends DeckEntry>(pool: readonly T[], rng: Rng, weightMultiplier?: (entry: T) => number): T {
+  const weightOf = (entry: T): number => Math.max(0, entry.weight * (weightMultiplier?.(entry) ?? 1))
   const total = pool.reduce((acc, entry) => acc + weightOf(entry), 0)
-  if (total <= 0) return rng.pick(pool)
-  return rng.weighted(pool, weightOf)
+  return total <= 0 ? rng.pick(pool) : rng.weighted(pool, weightOf)
+}
+
+export interface DrawManyOptions<T extends DeckEntry = DeckEntry> extends DrawOptions<T> {
+  /** 一轮之内不重复(默认 true);关掉它等于独立抽 N 次,可能抽到同一张 */
+  distinct?: boolean
+}
+
+/**
+ * 抽 N 张(默认不重复)—— 开局天赋、掉落组合、一次性奖励这类"一次给几样"的场景。
+ *
+ * 与单抽共用同一套筛选与权重口径,故"池子空了就早停"(而不是补齐到 N),
+ * 也不会出现"单抽与多抽的权重算法不一样"这种最难查的分叉。
+ */
+export function drawMany<T extends DeckEntry>(
+  entries: readonly T[],
+  ctx: DeckContext,
+  rng: Rng,
+  count: number,
+  opts: DrawManyOptions<T> = {}
+): T[] {
+  const distinct = opts.distinct ?? true
+  const out: T[] = []
+  const taken = new Set<string>()
+  for (let i = 0; i < Math.max(0, Math.floor(count)); i += 1) {
+    const pool = deckPool(entries, ctx).filter(entry => !distinct || !taken.has(entry.id))
+    if (pool.length === 0) break
+    const picked = pickOne(pool, rng, opts.weightMultiplier)
+    out.push(picked)
+    taken.add(picked.id)
+  }
+  return out
 }

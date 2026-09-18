@@ -97,7 +97,8 @@ export type { GoalCond, GoalEnv, GoalProgress } from './goals'
 export { evalGoal, goalProgress } from './goals'
 
 export type { DeckContext, DeckEntry, DrawOptions, LevelBand } from './deck'
-export { deckPool, drawFrom, entryAllowed, inBand } from './deck'
+export type { DrawManyOptions } from './deck'
+export { deckPool, drawFrom, drawMany, entryAllowed, inBand } from './deck'
 
 export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config'
 export { defineGame, validateGame } from './config'
