@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 270,
+  "round": 271,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:20:22+00:00",
+  "updated_at": "2026-09-18T17:30:49+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 270,
+      "touched_round": 271,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15993,7 +15993,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:20:15+00:00",
       "updated_at": "2026-09-18T17:20:15+00:00",
-      "touched_round": 270,
+      "touched_round": 271,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16035,6 +16035,56 @@
       "rationale": "抉择这类结构最容易在三个边界上翻车:①\"选不了\"只给布尔值,界面只能干瞪眼(`available` 因此允许直接返回一句人话);②后果写死一种,而\"同一句伸手去拿\"本就该有概率不同的下场(后果按权重掷,且权重全为 0 时取第一条 —— 边界必须确定,不能返回空);③玩家没选时到处各写一遍\"用哪条\"(离线自动结算一处、界面超时一处),两处迟早不一致 —— 三级兜底(默认且可选 → 第一条可选 → 第一条)收进库一处。而\"效果是什么\"仍归作品:库不认识资源、功法、法宝这些标签,只逐条问解释器并把说明收成回执。",
       "alternatives_rejected": "①把效果类型内建进库(库就得认识\"灵石\"\"功法\",变成某款游戏的复刻);②只给一个\"按权重抽一个\"的函数(选不了的理由、兜底顺序、回执形状仍要每家自己写);③让界面与离线各写一套兜底(实测最容易分叉的地方)。",
       "summary": "抉择层的库形态:能不能选(可带理由)、后果按权重掷(权重全零有确定边界)、效果由作品解释并收成回执、没选时三级兜底一处实现。"
+    },
+    "TASK-252": {
+      "id": "TASK-252",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:30:41+00:00",
+      "updated_at": "2026-09-18T17:30:41+00:00",
+      "touched_round": 271,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增图鉴/见闻层:createCodex 给三条升档路(累计照面升档且一次只进一层、可分组换门槛表;按概率升档;用过直接推开)与不可逆推进,外加\"只记见过的最好一件\"(各维度取高、与当前持有无关)和\"还差多少/已知几条\"的读数。本作敌人认知与装备见闻接过去,档位表与门槛搬到 core/loreThresholds。继续攒批不发版。"
+    },
+    "CHG-334": {
+      "id": "CHG-334",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:30:42+00:00",
+      "updated_at": "2026-09-18T17:30:42+00:00",
+      "touched_round": 271,
+      "commit": "ad87e5c",
+      "summary": "库:新增 src/codex.ts 与 codex.spec.ts(6 例:容错阈值升档含败绩权重、首领另表、概率升档、用过不可逆、各维度取高、进度读数),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 加条目。宿主:新增 core/engineCodex.ts 与 core/loreThresholds.ts(阈值/档名从 loreService 与 stores/lore 迁出并转出),stores/lore 的升级判定与装备见闻改走库(计数仍由 store 记),loreService.noteEnemy 改用 store 的 advanceEnemyLoreIfDue,新增 engineCodexParity.spec(4 例),test-report 补分类,docs/engine.md 加一行。"
+    },
+    "EV-258": {
+      "id": "EV-258",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:30:49+00:00",
+      "updated_at": "2026-09-18T17:30:49+00:00",
+      "touched_round": 271,
+      "confidence": 0.97,
+      "source": "变更 CHG-334(ad87e5c)。bunx vitest run src/core/engineCodexParity.spec.ts(4 例:普通怪与首领各 60 次交手累计与档位逐次相同、败绩权重下也只进一层、装备见闻三格、用过之后只升不降);bunx vitest run src/core/regionRevival.spec.ts(13 例,含盯着 markEnemySeen 的\"一场只进一层\");bun run test(214 文件/2141 例);bunx vitest run src/core/deadExportAudit.spec.ts;bun run test:report(2141 过/0 败);cd packages/engine && bun run check(22 文件/207 例);bun run check:engine(33 处引用);bun run check:engine:standalone",
+      "summary": "图鉴搬迁逐次对账:敌人累计/档位/是否升档在 60 次交手(含败绩权重)下与冻结实现完全相同、首领门槛表生效、一次只进一层;装备见闻的品质/层级/用过三格逐条相同;死导出审计零新增(计数仍走 store 的 markEnemySeen)。"
+    },
+    "DEC-122": {
+      "id": "DEC-122",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:30:49+00:00",
+      "updated_at": "2026-09-18T17:30:49+00:00",
+      "touched_round": 271,
+      "rationale": "图鉴这类\"越看越懂\"的系统,难点在三条路各自不能串味:①累计门槛要**一次只进一层**(败绩权重 3 也不能一夜从\"未识\"跳到\"洞悉\" —— 玩家读到的每一层情报都得真的打过那么多场),且稀有对手(首领)的门槛该另配一张表;②概率升档与累计门槛是两回事(见得多不等于认得出);③\"用过才算真懂\"是**行为**推开的,与运气无关。另有两条容易写歪的细节:推进不可逆(玩家不会\"忘了见过什么\"),以及\"见过的最好一件\"要**各维度各记各的**(\"15 阶天品与 20 阶良品谁更好\"没有定义),且与当前是否还持有无关(化了尘也是见过)。这四件事都收进库,因为每一件都是\"写歪了很难发现\"的那类。",
+      "alternatives_rejected": "①只给\"计数 → 档位\"的查表函数(三条路的边界、不可逆、取高合并仍要每家自己写);②把档位表也塞进库(本作的档名与门槛是内容,库不该认识\"眼熟/洞悉\");③把\"见过最好\"做成\"当前持有最好\"(化尘之后就见闻倒退,与图鉴的意义相反)。",
+      "summary": "图鉴层的四条边界收进库:一次只进一层、可分组换门槛表、概率升档与行为推进是另外两条路、推进不可逆;外加\"只记见过的最好一件\"(各维度取高)。档名与门槛仍是内容。"
     }
   },
   "edges": [
@@ -24474,6 +24524,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:20:22+00:00"
+    },
+    {
+      "from": "CHG-334",
+      "to": "TASK-252",
+      "type": "implements",
+      "created_at": "2026-09-18T17:30:49+00:00"
+    },
+    {
+      "from": "TASK-252",
+      "to": "TASK-251",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:30:49+00:00"
+    },
+    {
+      "from": "DEC-122",
+      "to": "TASK-252",
+      "type": "governs",
+      "created_at": "2026-09-18T17:30:49+00:00"
+    },
+    {
+      "from": "DEC-122",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:30:49+00:00"
     }
   ]
 }
