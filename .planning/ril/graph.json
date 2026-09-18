@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 329,
+  "round": 330,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:10:48+00:00",
+  "updated_at": "2026-09-18T22:14:55+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18761,6 +18761,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-393(dce7f32)。node scripts/verify-dist.mjs → \"文档片段编译通过(12 段标了 compile-check 的代码块都对着发布包编过)\"(从 2 段涨到 12 段);防空转:把 usage.md 里 createResourceSystem 改成 createResourceSystemXX → 发布包自检退出码 1,改回 → 0;bun run check(460 例 / 57 文件 + 十一道自检);宿主 bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件)。",
       "summary": "文档判据第一次真的抓到内容问题:炼制示例停在旧 API 上(乘区形状变了),而这是使用者最先抄的地方。做法上确认了一条经验:把\"节选\"标成 compile-check 之后,必须给它们补最小上下文(import + 假数据),这样文档审一遍就等于把示例跑了一遍。"
+    },
+    "TASK-311": {
+      "id": "TASK-311",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:14:55+00:00",
+      "updated_at": "2026-09-18T22:14:55+00:00",
+      "touched_round": 329,
+      "category": "core-feature",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "跨题材战斗接管实测:新增 examples/arena-takeover.ts「码头拳赛」,用一套与修仙完全不同的规则(体力/格挡、确定性贴身反打、连击追加、力量×连击×浮动−护体的伤害公式)接进库的三处主权;同 200 颗种子胜负与回合数逐场相同(200/200),老口径胜 136 场、回合数 4/6/9 各 5/177/18 —— 证明三处主权不是\"刚好合用\"。"
+    },
+    "CHG-394": {
+      "id": "CHG-394",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:14:55+00:00",
+      "updated_at": "2026-09-18T22:14:55+00:00",
+      "touched_round": 329,
+      "commit": "69f5dd0",
+      "summary": "库:新增 examples/arena-takeover.ts(约 210 行,含老口径实现 + 三处主权接管版 + 200 种子对账 + 回合数分布);package.json 的 examples 脚本挂上它(独立成库自检从脚本读清单);README 目录树与 docs/assembly.md 配方 A 各加一行;CHANGELOG「未发布」记一节。宿主无改动。"
+    },
+    "EV-320": {
+      "id": "EV-320",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:14:55+00:00",
+      "updated_at": "2026-09-18T22:14:55+00:00",
+      "touched_round": 329,
+      "confidence": 0.97,
+      "source": "变更 CHG-394(69f5dd0)。bun examples/arena-takeover.ts → \"胜负与回合数逐场相同:200/200(100%)\";其中老口径胜 136 场;回合数分布 4 回合×5 · 6 回合×177 · 9 回合×18;cd packages/engine && bun run check(460 例 / 57 文件 + 十一道自检 + 10 份示例全跑;组装指南/目录树自检确认新示例进了文档);cd /workspace/xian && bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件 · 示例可跑)。",
+      "summary": "三处主权(skillFn / strikeFn / actFn)在第二套题材上也完全复刻:拳赛没有护盾、没有概率反击、没有追击、伤害公式也完全不同,照样 200/200 逐场相同。过程中两处真问题都记下了:体力初值没传进接管版(双方一直格挡)、反打设成\"必还\"导致强弱一边倒(改成要垫 10 点体力才有真实胜负)—— 这也提醒\"对账样本要检查有没有胜负与长短\"。"
     }
   },
   "edges": [
@@ -28058,6 +28096,12 @@
       "to": "TASK-310",
       "type": "implements",
       "created_at": "2026-09-18T22:10:48+00:00"
+    },
+    {
+      "from": "CHG-394",
+      "to": "TASK-311",
+      "type": "implements",
+      "created_at": "2026-09-18T22:14:55+00:00"
     }
   ]
 }
