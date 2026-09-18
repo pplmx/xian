@@ -223,6 +223,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 结算回执 | `createSettlement` | 这一笔到底给了多少:合计取自账本实际入账,被截掉的部分另给一栏 |
 | 掉落表 | `createDropTable` | 这一场给不给、给几份:概率先归一(可另设上限)、保底不改随机流、翻倍翻的是份数、命中当场处理 |
 | 状态 / 时效增益 | `createBuffSystem` | 这一条还在不在、还剩多久、再叠一次怎样:叠时长而非刷新、过期不叠负剩余、生效与清理同一判据、按分类清除 |
+| 设施 | `createFacilitySystem` / `accrue` | 这一座几级、还能不能再升、升了每小时多出什么:门槛顺序即说法、上限取小且只封升级、零头留在累加器里 |
 
 ### 战斗:副本的下半场
 
@@ -485,6 +486,10 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **时间单位与时钟** | `clock: 'sec' \| 'ms'` —— 内容表里的 `durationSec` 永远是秒,`now` / `endsAt` 用哪个单位由这一处声明(毫秒对应 `Date.now()`);`remainingSec` 报给界面的永远是秒 |
 | **状态效果的合并** | `mods` 库不解释,`active(list, now)` 原样带出 —— 拿去喂你自己的属性汇总(本作是 `mergeMods`,递减口径仍在本作) |
 | **"下一次状态变化在什么时候"**(面板重算与倒计时) | `nextExpiry(list, now)` 给出最近到期的那一条(标识 + 到期时刻 + 还有多久);全空或全过期即 `null` |
+| **升级门槛与"为什么不能升"**(境界 / 声望 / 前置建筑) | `createFacilitySystem({ facilities })` 里每条给 `blocked(levels, level, ctx)` —— 返回一句人话或 `undefined`,**顺序即界面的说法**;库只保证"能升"与"要花什么"出自同一次判定 |
+| **等级上限由别的东西决定**(洞府决定其余建筑上限 / 科技等级决定产线上限) | `cap(levels, ctx)` + `capReason`:与自身上限 `maxLevel` **取小**,只封升级、不改已有等级(本作:(洞府等级 + 1) × 5) |
+| **升级要花什么** | `costs(level, ctx)` 返回 `{ key, amount }[]` —— 键名与数额都归你(数额是泛型:本作的灵石是大数),付钱由调用方做(配 `createResourceSystem` 的 `pay`) |
+| **每小时产出与零头**(1.5 点/小时、2.4 块/小时) | `perHour(level)` 给速率、`accrue(frac, rates, sec)` 按秒推进:零头留在累加器里,够了整数才发,连"设施拆了"攒下的零头也会发出去 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
@@ -589,7 +594,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 63 个运行时导出 + 160 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+| 公开面判据 | 65 个运行时导出 + 165 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
 
 ## 边界与兼容性
 

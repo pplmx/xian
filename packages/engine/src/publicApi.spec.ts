@@ -101,6 +101,9 @@ import type {
   EquipmentInstance,
   EquipmentPowerConfig,
   EquipmentSystem,
+  FacilityCost,
+  FacilityDef,
+  FacilitySystem,
   Game,
   GameConfig,
   GoalCond,
@@ -116,6 +119,7 @@ import type {
   IssueLevel,
   LeverSpec,
   Ledger,
+  LevelMap,
   LevelBand,
   Loadout,
   LoadoutStats,
@@ -170,6 +174,7 @@ import type {
   TriageSystem,
   TriageVerdict,
   TraitDef,
+  UpgradeInfo,
   ValidationIssue,
   VictoryOutcome,
   WorldConfig,
@@ -189,6 +194,7 @@ const RUNTIME_EXPORTS = [
   'asStringArray',
   'attributeDefs',
   'averageLore',
+  'accrue',
   'clamp',
   'composeCraftRate',
   'compareBy',
@@ -206,6 +212,7 @@ const RUNTIME_EXPORTS = [
   'createCompanionSystem',
   'createDungeonSystem',
   'createEquipmentSystem',
+  'createFacilitySystem',
   'createHoldingSystem',
   'createRealmSystem',
   'createResourceSystem',
@@ -335,6 +342,7 @@ type PublicTypes = {
   settlement: [Settlement<number>, SettlementPlan<number>, SettlementReceipt<number>]
   drops: [DropEntry, DropHit, DropOptions, DropTable]
   buffs: [BuffApply, BuffChange, BuffConfig<Mods>, BuffDef<Mods>, BuffInstance, BuffStacking, BuffSystem<Mods>, BuffView<Mods>]
+  facilities: [FacilityCost<number>, FacilityDef<Mods, { realm: number }, number>, FacilitySystem<Mods, { realm: number }, number>, LevelMap, UpgradeInfo<number>]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

@@ -162,6 +162,15 @@ export type {
 } from './buffs.js'
 export { createBuffSystem } from './buffs.js'
 
+export type {
+  FacilityCost,
+  FacilityDef,
+  FacilitySystem,
+  LevelMap,
+  UpgradeInfo
+} from './facilities.js'
+export { accrue, createFacilitySystem } from './facilities.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

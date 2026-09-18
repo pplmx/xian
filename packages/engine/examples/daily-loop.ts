@@ -4,20 +4,23 @@
  *
  * 运行:`bun packages/engine/examples/daily-loop.ts`(或 `bun run examples`)
  *
- * 它一次用上五层,而且**没有一个字提到修仙**:
+ * 它一次用上六层,而且**没有一个字提到修仙**:
  *
  *   resources  精力 / 专注 / 零花钱 / 文具券(有上限、要取整、收支带来源)
  *   idle       离线三小时:先把时间账算清,再按步产出(精力到顶就不再进)
  *   holding    文具盒:容量、占位、替换
  *   triage     放学自动清理:哪些留、哪些换券,以及"关掉某条规则会少留几件"的读数
  *   buffs      状态:自习的「专注」叠时长、熬夜的「瞌睡」按分类清掉、下一次变化在什么时候
+ *   facilities 设施:书桌与台灯(门槛给一句人话、上限由书桌定、每小时产出留零头)
  *
  * 想要的读法:一个不写得像"游戏引擎文档"的、能被抄走的最小闭环 ——
  * 换掉名字与数值,它就是另一款游戏。
  */
 import {
+  accrue,
   compareBy,
   createBuffSystem,
+  createFacilitySystem,
   createHoldingSystem,
   createResourceSystem,
   createTriage,
@@ -133,7 +136,49 @@ console.log(
 )
 moodState = washed.instances
 
-// ——— 7. 一天掉两件文具,顺手过一遍自动清理 ———
+// ——— 7. 设施:书桌与台灯 ———
+/**
+ * 三件事交给库,口径由这份内容给:
+ *   · 能不能升:台灯得先把灯泡买回来(门槛返回一句人话,界面直接显示);
+ *   · 上限取小:台灯的上限是「书桌等级 + 1」,到顶时给的说法也由内容给;
+ *   · 每小时产出:台灯每级 1.5 点专注 —— 开 50 分钟只够发 1 点,零头留着接着攒。
+ */
+const desk = createFacilitySystem<{ quiet: number }, { bulb: boolean }, number>({
+  facilities: [
+    {
+      id: 'desk',
+      name: '书桌',
+      maxLevel: 4,
+      costs: level => [{ key: 'money', amount: 10 + level * 10 }],
+      mods: level => ({ quiet: level * 0.1 })
+    },
+    {
+      id: 'lamp',
+      name: '台灯',
+      maxLevel: 3,
+      cap: levels => (levels.desk ?? 0) + 1,
+      capReason: '先把书桌升上去',
+      blocked: (_levels, _level, ctx) => (ctx.bulb ? undefined : '还没买灯泡'),
+      costs: level => [{ key: 'money', amount: 10 + level * 5 }],
+      perHour: level => ({ focus: level * 1.5 })
+    }
+  ]
+})
+const deskLevels = { desk: 1, lamp: 1 }
+const lampInfo = desk.upgradeInfo(deskLevels, 'lamp', { bulb: true })
+console.log('—— 书桌一角 ——')
+console.log(
+  `  台灯:${lampInfo.can ? `可以升到 ${lampInfo.nextLevel} 级,花 ${lampInfo.costs[0]!.amount} 零花钱` : lampInfo.reason}` +
+    ` · ${desk.upgradeInfo(deskLevels, 'lamp', { bulb: false }).reason}`
+)
+const light = accrue({}, desk.ratesOf(deskLevels, { bulb: true }), 50 * 60)
+console.log(
+  `  开灯 50 分钟:进 ${light.whole.focus ?? 0} 点专注,零头 ${(light.frac.focus ?? 0).toFixed(2)} 留着` +
+    ` · 升到 2 级就是 ${desk.ratesOf({ desk: 1, lamp: 2 }, { bulb: true }).focus} 点/小时` +
+    ` · 再想升:${desk.upgradeInfo({ desk: 1, lamp: 2 }, 'lamp', { bulb: true }).reason}`
+)
+
+// ——— 8. 一天掉两件文具,顺手过一遍自动清理 ———
 const drops: Stationery[] = [
   pen,
   { uid: 'e1', name: '橡皮', rarity: 0, level: 0 },
@@ -157,7 +202,7 @@ const impact = cleanup.impact(box.list(holding))
 console.log(`  清理读数:候选 ${impact.candidates} 件 · 留 ${impact.keep} · 换券 ${impact.junk}`)
 console.log(`    规则明细:${impact.byReason.map(r => `${r.reason}×${r.count}`).join(' / ')}`)
 
-// ——— 8. 这一天的账:每个来源各给了多少 ———
+// ——— 9. 这一天的账:每个来源各给了多少 ———
 const day = ledger.audit([...offline.entries, ...bought.entries, ...recycled.entries])
 console.log('\n—— 今天这笔账 ——')
 for (const [source, row] of Object.entries(day.bySource)) {
@@ -179,5 +224,6 @@ console.log(`\n盒子满了会先退:${[...box.list(holding)].sort(eviction)[0]?
 console.log(
   `\n没有一行提到修仙:资源(${ledger.defs.length} 种) · 持有(${box.count(holding)}/${box.capacityOf(holding)}) · ` +
     `裁决(${cleanup.rules.length} 条规则) · 离线(${runIdle(plan, 0, n => n + 1)} 步) · ` +
-    `状态(${mood.active(moodState, afterTenMin).length} 条生效)`
+    `状态(${mood.active(moodState, afterTenMin).length} 条生效) · ` +
+    `设施(${desk.facilities.length} 座 · 台灯 ${desk.levelOf(deskLevels, 'lamp')} 级)`
 )

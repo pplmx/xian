@@ -3,7 +3,8 @@
  */
 import type { BuildingId, GNum } from '@/types'
 import { buildingDef } from '@/data/buildings'
-import { buildingCost } from './formulas'
+import { gnZero } from '@/utils/gnum'
+import { buildingUpgradeInfoOf } from './engineFacilities'
 import { track } from './progress'
 import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
@@ -21,23 +22,15 @@ export interface BuildingUpgradeInfo {
 export function buildingUpgradeInfo(id: BuildingId): BuildingUpgradeInfo {
   const dongfu = useDongfuStore()
   const player = usePlayerStore()
-  const def = buildingDef(id)!
-  const lv = dongfu.levels[id] ?? 0
-  const stone = buildingCost(def.costBase, lv)
-  const ore = def.costOre * (lv + 1)
-  let canUpgrade = true
-  let reason = ''
-  if (player.major < def.unlockRealm) {
-    canUpgrade = false
-    reason = `需 ${['炼气', '筑基', '金丹'][def.unlockRealm] ?? '更高'} 境`
-  } else if (lv >= def.maxLevel) {
-    canUpgrade = false
-    reason = '已至顶层'
-  } else if (id !== 'mansion' && lv >= dongfu.buildingLevelCap) {
-    canUpgrade = false
-    reason = '受洞府等级所限'
+  // 门槛、上限与费用出自库的同一次判定(core/engineFacilities 里是本作的顺序与文案)
+  const info = buildingUpgradeInfoOf(id, dongfu.levels, player.major)
+  return {
+    canUpgrade: info.can,
+    reason: info.reason,
+    stone: (info.costs.find(c => c.key === 'stone')?.amount ?? gnZero()) as GNum,
+    ore: (info.costs.find(c => c.key === 'ore')?.amount ?? 0) as number,
+    nextLevel: info.nextLevel
   }
-  return { canUpgrade, reason, stone, ore, nextLevel: lv + 1 }
 }
 
 export function upgradeBuilding(id: BuildingId): boolean {

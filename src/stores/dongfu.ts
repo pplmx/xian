@@ -1,19 +1,14 @@
 /** 洞府状态 —— 建筑等级与产出 / 灵脉投资 */
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { BuildingId, StatMods } from '@/types'
+import type { BuildingId, SmallResourceId, StatMods } from '@/types'
 import type { VeinId } from '@/data/veins'
 import { persistConfig } from '@/utils/storage'
-import { BUILDINGS, buildingDef } from '@/data/buildings'
+import { BUILDINGS } from '@/data/buildings'
 import { INSIGHT_DISCOUNT_PER_POINT, VEINS } from '@/data/veins'
-import {
-  FIELD_HERB_PER_HOUR,
-  FIELD_ORE_PER_HOUR,
-  FORGE_LEVEL_PER_CAP,
-  LIBRARY_WUDAO_PER_HOUR,
-  OFFLINE_CAP_HOURS
-} from '@/data/constants'
+import { FORGE_LEVEL_PER_CAP, OFFLINE_CAP_HOURS } from '@/data/constants'
 import { mergeMods } from '@/core/statsCalc'
+import { buildingLevelCapOf, buildingModSources, capOfBuilding, produceOf } from '@/core/engineFacilities'
 import { useResourcesStore } from './resources'
 
 export const useDongfuStore = defineStore(
@@ -35,12 +30,8 @@ export const useDongfuStore = defineStore(
     const veinPoints = ref<Record<VeinId, number>>({ gather: 0, craft: 0, alchemy: 0, insight: 0 })
 
     const buildingMods = computed<StatMods>(() => {
-      const sources: StatMods[] = []
-      for (const def of BUILDINGS) {
-        const lv = levels.value[def.id] ?? 0
-        if (lv > 0 && def.mods) sources.push(def.mods(lv))
-      }
-      return mergeMods(sources)
+      // 建筑效果的来源清单由库给出(只算真的建起来了的),合并仍是本作的属性汇总口径
+      return mergeMods(buildingModSources(levels.value))
     })
 
     /** 灵脉属性加成(悟道脉走参悟折扣,不入 mods) */
@@ -65,12 +56,10 @@ export const useDongfuStore = defineStore(
 
     const offlineCapHours = computed(() => OFFLINE_CAP_HOURS[Math.min(levels.value.mansion, OFFLINE_CAP_HOURS.length - 1)]!)
     /** 洞府等级限制其余建筑上限 */
-    const buildingLevelCap = computed(() => (levels.value.mansion + 1) * 5)
+    const buildingLevelCap = computed(() => buildingLevelCapOf(levels.value.mansion))
     /** 建筑实际可达上限:洞府全局闸门与自身品类上限取小(洞府自身不受自己闸门所限) */
     function buildingCap(id: BuildingId): number {
-      const def = buildingDef(id)
-      if (id === 'mansion' || !def) return def?.maxLevel ?? 0
-      return Math.min(def.maxLevel, buildingLevelCap.value)
+      return capOfBuilding(id, levels.value)
     }
     const subGongfaSlots = computed(() => 1 + Math.floor(levels.value.library / 3))
     const alchemyLevel = computed(() => levels.value.alchemy)
@@ -133,21 +122,11 @@ export const useDongfuStore = defineStore(
     /** 建筑产出(灵田/藏经阁),按秒推进 */
     function produce(dtSec: number): void {
       const resources = useResourcesStore()
-      const fieldLv = levels.value.field
-      const libLv = levels.value.library
-      if (fieldLv > 0) {
-        frac.value.herb += (fieldLv * FIELD_HERB_PER_HOUR * dtSec) / 3600
-        frac.value.ore += (fieldLv * FIELD_ORE_PER_HOUR * dtSec) / 3600
-      }
-      if (libLv > 0) {
-        frac.value.wudao += (libLv * LIBRARY_WUDAO_PER_HOUR * dtSec) / 3600
-      }
-      for (const key of ['herb', 'ore', 'wudao'] as const) {
-        const whole = Math.floor(frac.value[key])
-        if (whole >= 1) {
-          frac.value[key] -= whole
-          resources.addSmall(key, whole)
-        }
+      // 每小时速率来自建筑等级,零头怎么留、什么时候进位由库的 accrue 管(见 core/engineFacilities)
+      const step = produceOf(frac.value, levels.value, dtSec)
+      frac.value = step.frac as typeof frac.value
+      for (const [key, whole] of Object.entries(step.whole)) {
+        resources.addSmall(key as SmallResourceId, whole)
       }
     }
 
