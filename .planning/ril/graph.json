@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 243,
+  "round": 244,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:30:00+00:00",
+  "updated_at": "2026-09-18T20:05:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14551,6 +14551,55 @@
       "rationale": "用户明确说\"先做通用的、足够抽象、让用户可以自由定制\",并强调前面那些题材只是举例。判断\"够不够抽象\"的标准不是看名字好不好听,而是看**换一个形态时要不要改库**:①配方乘区的个数与名字(原来写死三区)②每级需求的形状(原来只有两段指数)③基础本值的算法与维度(原来只有曲线)④消耗与奖励的数额(原来只有基数×倍率)。四处都改成\"曲线或自定义函数\"二选一:默认给公式(新手能用),要给表/给函数就完全接管(老手能改)。判别联合保证两条路各自字段清楚,不允许混填。",
       "alternatives_rejected": "①只在文档里写\"可以改\"(改不了的地方文档救不了);②把所有曲线都改成函数(新手要写代码才能起步,反而更难用);③让用户 fork 库改公式(那就不是公共库了)。",
       "summary": "抽象的可操作标准:换形态不改库。凡\"曲线形态\"处一律留两条路——默认公式(开箱可用)或自定义函数(完全接管),判别联合保证字段不混填。"
+    },
+    "TASK-223": {
+      "id": "TASK-223",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:05:00+00:00",
+      "updated_at": "2026-09-18T20:05:00+00:00",
+      "touched_round": 244,
+      "category": "core-feature",
+      "severity": 0.6,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "继续\"换形态不改库\"的清扫:战斗的本值键改为可配(Combatant.stats 表 + BattleConfig.keys),副本快照同步改本值表;牌堆标签语义改为可配(match: any/all + excludeTags);顺带修掉战斗就地改动传入对象的行为。"
+    },
+    "CHG-298": {
+      "id": "CHG-298",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:05:00+00:00",
+      "updated_at": "2026-09-18T20:05:00+00:00",
+      "touched_round": 244,
+      "commit": "e18fa36",
+      "summary": "combat:Combatant 由 hp/maxHp/attack/defense/speed 固定字段改为一律走 stats 表;BattleConfig.keys 指定攻/防/血/上限/先手各读哪个键;内部拷贝后再打(不再就地消耗传入对象);dungeons:EnemySnapshot 同步改 stats 表;deck:DeckContext.match(any/all)与 excludeTags;README 自由定制表与 CHANGELOG 同步。"
+    },
+    "EV-229": {
+      "id": "EV-229",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:05:00+00:00",
+      "updated_at": "2026-09-18T20:05:00+00:00",
+      "touched_round": 244,
+      "source": "packages/engine（15 文件 / 119 例,含 Node 产物探测）+ bun run test（宿主 198 文件 / 2014 例）+ bun run check + bun run check:engine + 库仓 CI（gh run list:push success 40s）",
+      "summary": "判据:用\"火力/装甲/结构值/迅捷\"一套键名跑完整场战斗并断言传入对象未被改动;牌堆四种标签情形(相交/全中/排除/默认)各一条;预设、示例与宿主产物自检全部改用本值表后照旧全绿。"
+    },
+    "DEC-096": {
+      "id": "DEC-096",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:05:00+00:00",
+      "updated_at": "2026-09-18T20:05:00+00:00",
+      "touched_round": 244,
+      "rationale": "上一轮把\"曲线形状\"开了钩子,这一轮把\"键名与语义\"也开掉。判断标准仍是\"换形态要不要改库\":①一款游戏的攻防血叫火力/装甲/结构值,或专注力/耐心/精力 —— 只要给 BattleConfig.keys 指过去,战斗逻辑一行不用改;②牌堆的\"标签相交\"只是最常见的一种语义,要求\"牌要求的标签全在场\"或用排除标签表达\"疫期不出集市事件\"同样常见。顺带修一处旧副作用:战斗原先就地消耗传入的 hp,调用方想重放同一场得自己复制 —— 现在内部拷一份再打,输入不变。",
+      "alternatives_rejected": "①保持固定键名、让使用方自己映射(能用,但\"自由定制\"打了折);②把键名做成全局约定表(多一层间接,且仍旧写死);③标签语义只留 any(排除与全中这两类规则就只能写在筛选外面)。",
+      "summary": "键名(BattleConfig.keys)与语义(deck.match/excludeTags)都属于\"可配\"而非\"写死\";顺手去掉战斗就地改动输入对象的副作用。"
     }
   },
   "edges": [
@@ -22138,6 +22187,42 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T19:30:00+00:00"
+    },
+    {
+      "from": "CHG-298",
+      "to": "TASK-223",
+      "type": "implements",
+      "created_at": "2026-09-18T20:05:00+00:00"
+    },
+    {
+      "from": "CHG-298",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T20:05:00+00:00"
+    },
+    {
+      "from": "EV-229",
+      "to": "CHG-298",
+      "type": "validates",
+      "created_at": "2026-09-18T20:05:00+00:00"
+    },
+    {
+      "from": "TASK-223",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T20:05:00+00:00"
+    },
+    {
+      "from": "TASK-223",
+      "to": "TASK-222",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:05:00+00:00"
+    },
+    {
+      "from": "DEC-096",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T20:05:00+00:00"
     }
   ]
 }
