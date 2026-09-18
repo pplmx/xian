@@ -14,7 +14,7 @@ import {
   recordEvent,
   shouldTriggerAftermath,
   aftermathText,
-  isReviving,
+  isRegionRevived,
   prosperityYieldMult,
   regionRecallFor,
   NEMESIS_THRESHOLD,
@@ -118,11 +118,12 @@ describe('S1 区域兴衰', () => {
     expect(prosperityYieldMult('chaos')).toBeCloseTo(1.0, 6)
   })
 
-  it('复苏判定:超过 72 小时无活动则复苏', () => {
+  it('复苏判定:超过 72 小时没打交道则复聚', () => {
     const t = Date.now()
-    expect(isReviving(t, t + REVIVE_AFTER_HOURS * 3600_000 + 1)).toBe(true)
-    expect(isReviving(t, t + REVIVE_AFTER_HOURS * 3600_000 - 1)).toBe(false)
-    expect(isReviving(undefined, t)).toBe(false)
+    expect(isRegionRevived(t, t + REVIVE_AFTER_HOURS * 3600_000 + 1)).toBe(true)
+    expect(isRegionRevived(t, t + REVIVE_AFTER_HOURS * 3600_000 - 1)).toBe(false)
+    // 从未打过交道(钟根本没走过)不算复聚
+    expect(isRegionRevived(0, t)).toBe(false)
   })
 
   /**
@@ -137,8 +138,8 @@ describe('S1 区域兴衰', () => {
     // 倒计时归零的那一刻,正是复苏判定翻真的位置(两条口径不许分叉)
     const atRevive = t + REVIVE_AFTER_HOURS * 3600_000
     expect(hoursUntilRevive(t, atRevive)).toBe(0)
-    expect(isReviving(t, atRevive - 1)).toBe(false)
-    expect(isReviving(t, atRevive + 1)).toBe(true)
+    expect(isRegionRevived(t, atRevive - 1)).toBe(false)
+    expect(isRegionRevived(t, atRevive + 1)).toBe(true)
     expect(hoursUntilRevive(t, atRevive + 999 * 3600_000), '过期不出现负数').toBe(0)
   })
 })

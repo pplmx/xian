@@ -7,7 +7,6 @@
 
 import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
-import { useUiStore } from '@/stores/ui'
 import { regionDef } from '@/data/regions'
 import { stoneByTier } from '@/core/formulas'
 import { generateEquipment } from '@/core/equipGen'
@@ -16,7 +15,8 @@ import { rng, type RandomService } from '@/utils/random'
 import { gnZero, add } from '@/utils/gnum'
 import type { GNum, QualityId } from '@/types'
 import { equipmentTemplate } from '@/data/equipment'
-import { deriveProsperity, isReviving, prosperityYieldMult } from './worldMemory'
+import { deriveProsperity, prosperityYieldMult } from './worldMemory'
+import { settleRegionRevivals } from './regionRevival'
 
 /** 区域统计数据(使用指数移动平均) */
 export interface RegionStats {
@@ -184,24 +184,24 @@ export function settleSuppressedRegions(dt: number, service: RandomService = rng
   const player = usePlayerStore()
   const resources = useResourcesStore()
 
-  if (player.suppressedRegions.length === 0) return null
-
   const hours = dt / 3600
   const total: SuppressedYield = { stone: gnZero(), equipment: [], recycledDust: 0, resources: [] }
   const now = Date.now()
 
-  // Phase 30.9:复苏判定 —— 镇压超过 72h 无活动,区域妖气再聚,自动解除镇压
-  const revived: string[] = []
-  for (const regionId of player.suppressedRegions) {
-    if (isReviving(player.suppressedSince[regionId], now)) revived.push(regionId)
-  }
-  if (revived.length > 0) {
-    for (const regionId of revived) player.unsuppressRegion(regionId)
-    const names = revived.map(id => regionDef(id)?.name ?? id).join('、')
-    useUiStore().toast(`${names}妖气复聚,镇压松动——此地重新成为历练之地`, 'info')
-    // 复苏后本 tick 不再为这些区域结算
-  }
-  const active = player.suppressedRegions.filter(id => !revived.includes(id))
+  /**
+   * 妖气复聚先结算,再算收益 —— 复聚的地界这一 tick 自然不再产出。
+   *
+   * 判定收在 core/regionRevival 一处:它同时管「镇压松动」与「旧主归来」,
+   * 两件事同一个钟。从前这里自己判一次(只解除镇压、首领不回来),
+   * 于是已靖却从不镇压的地界永远不复聚。
+   *
+   * **必须排在"没有镇压就直接返回"之前**:复聚管的不只是镇压 —— 已靖却没镇压的
+   * 地界(旧主同样该归来)一份镇压都没有,若让那句早退挡在前面,那条路永远走不到。
+   */
+  settleRegionRevivals(now)
+  if (player.suppressedRegions.length === 0) return null
+
+  const active = player.suppressedRegions
   if (active.length === 0) return null
 
   for (const regionId of active) {

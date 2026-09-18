@@ -90,7 +90,14 @@ export function generateCurrentGoal(player: ReturnType<typeof usePlayerStore>): 
   //    材料与装备同门 —— 供应/装填补缺 —— 都只在"已通关过至少一地界"后才提示,
   //    免得开局就叠在 explore 上重复"去历练"。)
   const adventure = useAdventureStore()
-  const nextRegion = REGIONS.find(r => adventure.unlocked.includes(r.id) && !adventure.cleared.includes(r.id))
+  /**
+   * 「深入」只指**没涉足过**的地界:复聚的旧地界(见 core/regionRevival)不算 ——
+   * 它在表序上排在前面,若算进来,一位推到仙界的玩家会被告知「深入青云山麓」。
+   * 旧主的重逢由历练页自己说(那一行有「妖气复聚」与"再历一程即可复靖")。
+   */
+  const nextRegion = REGIONS.find(
+    r => adventure.unlocked.includes(r.id) && !adventure.cleared.includes(r.id) && !adventure.revived.includes(r.id)
+  )
   if (nextRegion) {
     return {
       type: 'explore',

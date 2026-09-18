@@ -30,10 +30,28 @@ export const DECAY_HOURS = 48
 /** 镇压后无活动超过多少小时,区域开始复苏(自动解除镇压) */
 export const REVIVE_AFTER_HOURS = 72
 
-/** 镇压区域是否已进入复苏期(纯函数) */
-export function isReviving(suppressedAt: number | undefined, now: number): boolean {
-  if (suppressedAt === undefined) return false
-  return (now - suppressedAt) / 3600_000 > REVIVE_AFTER_HOURS
+/**
+ * 妖气复聚的钟 —— 「这片地界多久没被打理了」。
+ *
+ * 起点是**最后一次与它打交道**:在该地界战斗,或把它镇压下来,两者取较晚的那个。
+ *
+ * 从前这个钟只在镇压中的地界上走(读 suppressedSince),于是「已靖却从不镇压」的地界
+ * 永远不复聚 —— 那里的旧主再也不会回来,首领认知永远停在「眼熟」,而妖气复聚本该是
+ * 世界自己的节律,不是镇压的附属品。收成一个起点之后,两种地界同一套节律:
+ * 常去的地方妖气聚不起来,放着不管的地方旧主会回来。
+ */
+export function regionTouchedAt(
+  lastFightAt: number | undefined,
+  suppressedAt: number | undefined,
+  clearedAt: number | undefined
+): number {
+  return Math.max(lastFightAt ?? 0, suppressedAt ?? 0, clearedAt ?? 0)
+}
+
+/** 该地界此刻是否该复聚(纯函数;钟没走过 —— 从未打过交道 —— 不算) */
+export function isRegionRevived(touchedAt: number, now: number): boolean {
+  if (touchedAt <= 0) return false
+  return (now - touchedAt) / 3600_000 > REVIVE_AFTER_HOURS
 }
 
 /**

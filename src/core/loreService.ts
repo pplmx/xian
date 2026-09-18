@@ -49,8 +49,19 @@ export const STUDY_REACH_OVER = 1
  * 3 洞悉:连它残血变阵的那一手都在你意料之中。
  */
 export const ENEMY_LORE_THRESHOLDS = [0, 1, 5, 14] as const
-/** 首领机制繁复,认知门槛加倍 */
-export const ENEMY_LORE_BOSS_MULT = 2
+/**
+ * 首领的认知门槛单独定档 —— **按「见到它的机会」定,不按它有多复杂**。
+ *
+ * 从前是普通门槛 ×2(2/10/28 次交手),那套假设首领会反复交手;而首领一条命只打一次
+ * (已靖之后不再复现),于是「知其路数」(10 次)与「洞悉」(28 次)对首领永远够不着,
+ * 专为首领写的两层情报(残血变阵 / 本相)没人看得到,层 2 那句
+ * 「再多打几场,连它残血那一手也瞒不过你」也是一句空头承诺。
+ *
+ * 妖气复聚给了重逢的机会(每 72 小时最多一回,见 core/regionRevival),三次交手即洞悉,
+ * 合计约一周半 —— 对"隔几天才见一面"的对手,这个节奏才配得上它的稀有度。
+ * 败在它手里一次算三次(ENEMY_LORE_LOSS_WEIGHT),故打不过的人反而更快认清它。
+ */
+export const ENEMY_LORE_BOSS_THRESHOLDS = [0, 1, 2, 3] as const
 /** 败在它手里,一次抵得上打赢数次 —— 疼过才记得牢 */
 export const ENEMY_LORE_LOSS_WEIGHT = 3
 
@@ -175,8 +186,8 @@ export function noteEnemy(enemyId: string, win: boolean): boolean {
 
   const cur = lore.enemyLoreOf(enemyId)
   if (cur >= ENEMY_LORE_MAX) return false
-  const mult = def.isBoss ? ENEMY_LORE_BOSS_MULT : 1
-  if (lore.enemySeenOf(enemyId) < ENEMY_LORE_THRESHOLDS[cur + 1]! * mult) return false
+  const need = (def.isBoss ? ENEMY_LORE_BOSS_THRESHOLDS : ENEMY_LORE_THRESHOLDS)[cur + 1]!
+  if (lore.enemySeenOf(enemyId) < need) return false
   if (!lore.advanceEnemyLore(enemyId, cur + 1)) return false
 
   const ui = useUiStore()

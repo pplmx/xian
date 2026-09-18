@@ -74,6 +74,8 @@
  *      巡页用的档里敌人名字都短、认知层为 0(特性根本不显示),这一档从前没被量过。
  *   三十七 新手第一步卡:刚建号的人落在首页时,这张卡要在、要指向历练、要够高 ——
  *      它把「目标 / 主线 / 每日」三块串成一条线,并递出第一个入口(见 core/firstStep)。
+ *   三十八 妖气复聚那一行:旧主归来的旧地界要画出「妖气复聚」、要写清"再历一程即可复靖"、
+ *      还要有「出发」(见 core/regionRevival)—— 它是这条世界节律唯一的可见面。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -1127,7 +1129,14 @@ for (const vp of VIEWPORTS) {
     // 地界表:解锁到黑风林一带,好让「镇压中 / 已取得资格」两种卡片都渲染出来
     adventure: {
       unlocked: ['qingyun', 'luoxia', 'heifeng', 'wanyao', 'cangwu', 'guzhanchang'],
-      cleared: ['qingyun', 'luoxia', 'heifeng', 'wanyao'],
+      // luoxia 不在 cleared 里 —— 它已「妖气复聚」,旧主归来(见下一行的 revived)
+      cleared: ['qingyun', 'heifeng', 'wanyao'],
+      /*
+       * 妖气复聚那一行(见 core/regionRevival):旧主归来、此地处不再「已靖」。
+       * 它要进夹具,是因为它是这条设计唯一的可见面 —— 而「名字 + 已靖/复聚标签 +
+       * 简介 + 该怎么办」正是这一行最挤的一档,窄屏上最容易把字挤成竖排。
+       */
+      revived: ['luoxia'],
       mortalCleared: [],
       session: null,
       pendingEventId: null,
@@ -1212,6 +1221,29 @@ for (const vp of VIEWPORTS) {
     const railFails = railProblems(rail)
     if (rail) checked += 1
     if (railFails.length) failures.push(`[390-late] ${route} → ${railFails.join(' / ')}`)
+  }
+
+  /*
+   * 妖气复聚那一行得真画出来,而且得说清"该怎么办"。
+   *
+   * 夹具里备着一处复聚的旧地界(luoxia)。这条判据存在的理由与「已靖」不同:
+   * 已靖是安静的状态,复聚是**要玩家动手的状态** —— 只写「妖气复聚」而不写
+   * 「再历一程即可复靖」,玩家看到的就是一处忽然变回锁着的地界(实测过同类抱怨)。
+   */
+  await page.goto(INDEX + '#/adventure', { waitUntil: 'load' })
+  await page.waitForTimeout(700)
+  checked += 1
+  const reviveCard = await page.evaluate(() => {
+    const card = [...document.querySelectorAll('[data-region-card]')].find(c => (c.innerText || '').includes('妖气复聚'))
+    return { found: Boolean(card), text: (card?.innerText || '').replace(/\s+/g, ' ') }
+  })
+  if (!reviveCard.found) {
+    failures.push('[390-late] 历练页:夹具里那处妖气复聚的旧地界没画出「妖气复聚」')
+  } else {
+    if (!reviveCard.text.includes('再历一程即可复靖')) {
+      failures.push('[390-late] 历练页:复聚那一行只说了「妖气复聚」,没说该怎么办(再历一程即可复靖)')
+    }
+    if (!/出发/.test(reviveCard.text)) failures.push('[390-late] 历练页:复聚的地界没有「出发」入口 —— 旧主回来却进不去')
   }
 
   /*

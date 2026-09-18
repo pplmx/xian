@@ -83,7 +83,7 @@
               <!-- 标签与名字同排但**可换行**:窄屏上宁可标签绕到下一行,也不许把名字挤成竖排 -->
               <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span data-region-name class="font-kai text-[15px] tracking-wider text-ink">{{ row.def.name }}</span>
-                <span v-if="row.suppressed && !row.revived" class="chip-ink border-gold-ink/60 text-[9px] text-gold-ink">已镇压</span>
+                <span v-if="row.suppressed" class="chip-ink border-gold-ink/60 text-[9px] text-gold-ink">已镇压</span>
                 <span v-else-if="row.revived" class="chip-ink border-cinnabar/60 text-[9px] text-cinnabar">妖气复聚</span>
                 <span v-else-if="row.cleared" class="chip-ink border-jade/60 text-[9px] text-jade">已靖</span>
                 <!-- 世界记忆(Phase 30.9):区域兴衰状态 -->
@@ -99,6 +99,8 @@
                 {{ REALMS[row.def.minRealm]?.name }}境相宜 ·
                 <span :class="row.def.danger >= 4 ? 'text-cinnabar' : ''">{{ DANGER_NAMES[row.def.danger] }}</span>
                 <span v-if="row.tooHard" class="ml-1 text-cinnabar">· 境界尚浅,恐有性命之忧</span>
+                <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
+                <span v-if="row.revived" class="ml-1 text-cinnabar/80">· 旧主归来,再历一程即可复靖</span>
               </p>
               <!--
                 敌人的「层级补偿」此前只落在数值里:玩家看到的只是一只小怪,打起来却像换了一身装备。
@@ -301,7 +303,7 @@
   import { pendingChainStages } from '@/core/eventEngine'
   import { foeOriginPartsText } from '@/core/battleAnalysis'
   import { SUPPRESS_THRESHOLDS, suppressRateFor, suppressionProgress } from '@/core/suppress'
-  import { REVIVE_AFTER_HOURS, hoursUntilRevive, regionRecallFor, prosperityName, isReviving, prosperityYieldMult } from '@/core/worldMemory'
+  import { REVIVE_AFTER_HOURS, hoursUntilRevive, regionRecallFor, prosperityName, prosperityYieldMult } from '@/core/worldMemory'
   import { mulN } from '@/utils/gnum'
   import { detectBuild } from '@/core/buildDetect'
   import { detectionAdaptation, ecologyChips, ECO_LEVEL_NAMES, recommendForRegion, regionEcology, starsText } from '@/core/buildAdvisor'
@@ -368,7 +370,8 @@
       const eco = regionEcology(r)
       const suppressed = player.suppressedRegions.includes(r.id)
       const recall = regionRecallFor(r.id)
-      const revived = suppressed && isReviving(player.suppressedSince[r.id], Date.now())
+      // 妖气复聚是落盘的世界状态(见 core/regionRevival),不是"镇压到点"的临时读数
+      const revived = adventure.revived.includes(r.id)
       return {
         def: r,
         // 旧链:这处地界是否**已被发现** —— 决定列表可见性、锁图标与简介

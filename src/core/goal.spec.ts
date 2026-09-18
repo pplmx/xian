@@ -77,6 +77,21 @@ describe('修行目标(Phase 29)', () => {
     expect(goal.text).toContain('深入')
   })
 
+  it('复聚的旧地界不占「深入」的位置(它按表序排在前面,不许把前沿顶掉)', () => {
+    const player = usePlayerStore()
+    player.initCharacter('目标', { roots: [] } as never)
+    player.exp = gnZero()
+    const adventure = useAdventureStore()
+    adventure.unlocked = ['qingyun', 'luoxia', 'heifeng']
+    adventure.cleared = ['qingyun']
+    // 落霞谷「妖气复聚」(旧主归来),而黑风林才是真正的未涉足之地
+    adventure.revived = ['luoxia']
+    const goal = generateCurrentGoal(player)!
+    expect(goal.type).toBe('explore')
+    expect(goal.text).toContain('黑风林')
+    expect(goal.text).not.toContain('落霞谷')
+  })
+
   it('已遍历的图清净空、库存与装备皆足 → 真兜底返回 null(不硬塞建议)', () => {
     const player = usePlayerStore()
     player.initCharacter('目标', { roots: [] } as never)

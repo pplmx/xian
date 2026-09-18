@@ -5,7 +5,7 @@ import type { AdventureSession, CombatResult } from '@/types'
 import { persistConfig } from '@/utils/storage'
 import { regionDef, unlockClosure } from '@/data/regions'
 import { gn } from '@/utils/gnum'
-import { asFiniteNumber, asObjectOrNull, asRecord, asStringArray } from '@/utils/saveShape'
+import { asFiniteNumber, asNumberRecord, asObjectOrNull, asRecord, asStringArray } from '@/utils/saveShape'
 
 export interface LastBattleView {
   enemyName: string
@@ -44,6 +44,22 @@ export const useAdventureStore = defineStore(
     const mortalCleared = ref<string[]>([])
     const cleared = ref<string[]>([])
     /**
+     * 各地界的「已靖时刻」—— 妖气从这一刻起重新聚(见 core/regionRevival 的钟)。
+     *
+     * 为什么要单独记这个:已靖可能发生在**离线结算**里,而离线那条路不写区域统计
+     * (见 offline.ts 只推进会话与斩杀,不碰 regionStats),于是"最后一次在当地战斗"
+     * 会停在很久以前 —— 拿它当钟,离线斩下的首领回来时立刻就会被判成复聚。
+     * 已靖本身就是一次打交道,故给它一个自己的、在 markCleared 里落下的时刻。
+     */
+    const clearedAt = ref<Record<string, number>>({})
+    /**
+     * 妖气复聚 —— 当前「旧主归来、尚未再靖」的地界(见 core/regionRevival)。
+     *
+     * 与 cleared 互斥:一地不在两处。它要落盘,因为"这块地现在还有没有旧主"是
+     * 世界状态(玩家下次打开游戏得看到同一件事)。
+     */
+    const revived = ref<string[]>([])
+    /**
      * 各地界的**累计胜场** —— 区域之主的门槛认它,不是"这一趟"的连胜。
      *
      * 玩家实测:涉险(危险 ×2.1)/深入(×1.45)模式几乎刷不到首领,只有安稳能,
@@ -67,6 +83,19 @@ export const useAdventureStore = defineStore(
       if (unlocked.value.length === 0) unlocked.value = ['qingyun']
       mortalCleared.value = asStringArray(mortalCleared.value)
       cleared.value = asStringArray(cleared.value)
+      /**
+       * 复聚表:只留表上认得、且此刻确实没靖的那些。两者同时出现(坏档或旧版本
+       * 写坏)时以 cleared 为准 —— 「已靖」是更硬的事实,复聚只是它的反面。
+       */
+      revived.value = asStringArray(revived.value).filter(id => regionDef(id) !== undefined && !cleared.value.includes(id))
+      // 已靖时刻:只留此刻确实已靖的那些(与 cleared 同一份事实,不许多出一份)
+      const clearedAtRaw = asNumberRecord(clearedAt.value, 0)
+      const clearedAtNext: Record<string, number> = {}
+      for (const id of cleared.value) {
+        const at = clearedAtRaw[id]
+        if (at !== undefined && at > 0) clearedAtNext[id] = at
+      }
+      clearedAt.value = clearedAtNext
       /**
        * 前置已靖 → 此地已开:补票(见 data/regions.unlockClosure)。
        *
@@ -148,6 +177,26 @@ export const useAdventureStore = defineStore(
     function markCleared(regionId: string): boolean {
       if (cleared.value.includes(regionId)) return false
       cleared.value = [...cleared.value, regionId]
+      // 已靖即起钟:妖气从这一刻重新聚(离线斩首也走这里,故离线也认得这个起点)
+      clearedAt.value = { ...clearedAt.value, [regionId]: Date.now() }
+      // 再靖:这处地界的「妖气复聚」随之收掉(它不再等旧主归来,而是已经归过了)
+      if (revived.value.includes(regionId)) revived.value = revived.value.filter(id => id !== regionId)
+      return true
+    }
+
+    /**
+     * 妖气复聚:该地界不再「已靖」,旧主归来(见 core/regionRevival)。
+     *
+     * 只动这两项:镇压资格(suppressQualified)是永久的 —— 松开镇压由 core 那边
+     * 单独做,玩家一键就能把收益接回来,复聚不构成对挂机的惩罚。
+     */
+    function markRevived(regionId: string): boolean {
+      if (revived.value.includes(regionId)) return false
+      cleared.value = cleared.value.filter(id => id !== regionId)
+      const nextAt = { ...clearedAt.value }
+      delete nextAt[regionId]
+      clearedAt.value = nextAt
+      revived.value = [...revived.value, regionId]
       return true
     }
 
@@ -200,6 +249,8 @@ export const useAdventureStore = defineStore(
       markNodeCleared,
       unlocked,
       cleared,
+      clearedAt,
+      revived,
       session,
       pendingEventId,
       pendingEventSince,
@@ -211,6 +262,7 @@ export const useAdventureStore = defineStore(
       setSession,
       applyUnlockClosure,
       markCleared,
+      markRevived,
       addRegionWins,
       winsIn,
       setPendingEvent,
