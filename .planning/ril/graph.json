@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 345,
+  "round": 346,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:16:01+00:00",
+  "updated_at": "2026-09-18T23:19:18+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19369,6 +19369,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-409(a30d741)。bunx vitest run src/integrationLoot.spec.ts(4 例全过;打印\"40 场里赢 40 场:掉出 19 件 · 收下 3 · 折算 16 · 尘 +115.2 · 见证 19 · 背包 3/4 · 面板攻击 93.29\"与\"20 件全折算:回执合计 100 · 账本余额 100 · 期望 100\"以及同种子两遍的逐字段一致);cd packages/engine && bun run check(510 例 / 69 文件 + 十一道自检);cd /workspace/xian && bun run test(277 文件 / 2559 例)、bun run test:report(2559 过 / 0 败;另记一次不可复现的红:同一批命令里 test:report 曾退出 1,随后 6 次连跑全绿,未能定位)、check:engine(60 处引用)、check:engine:standalone(109 个源文件)。",
       "summary": "第六条链把\"每场胜利都会走的那条路\"整段验收了:链上三个记账点(掉落表/入库漏斗/账本)必须对得上,而且面板是这条链的终点(装备词条经合并与软阈值之后,明细之和仍等于面板值)。顺带记一条观察:test:report 在一次链式执行里退出 1,但此后 6 次连跑全绿 —— 未能复现,先记在案。"
+    },
+    "TASK-327": {
+      "id": "TASK-327",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T23:19:17+00:00",
+      "updated_at": "2026-09-18T23:19:17+00:00",
+      "touched_round": 345,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "组合验收第七条链(integrationWorld.spec):周期 × 内容池 × 抉择 —— 30 天里每天问行情、抽一张切题的牌、掷一次后果、落账。断言:问行情不掷骰(把\"问今天/问预告\"翻 8 倍,账目与随机消耗一位不变)、抽到的牌必须与当天行情标签相交(不切题 0 次)、一次性牌只碰一次、账目守恒、同种子可复现。"
+    },
+    "CHG-410": {
+      "id": "CHG-410",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:19:17+00:00",
+      "updated_at": "2026-09-18T23:19:17+00:00",
+      "touched_round": 345,
+      "commit": "9d8afeb",
+      "summary": "库:新增 src/integrationWorld.spec.ts(4 例);CHANGELOG「未发布」记一节;docs/assembly.md 跨模块验收表补一行;README 用例数改 514/70。宿主无改动。"
+    },
+    "EV-336": {
+      "id": "EV-336",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:19:17+00:00",
+      "updated_at": "2026-09-18T23:19:17+00:00",
+      "touched_round": 345,
+      "confidence": 0.96,
+      "source": "变更 CHG-410(9d8afeb)。bunx vitest run src/integrationWorld.spec.ts(4 例全过;打印:30 天行情 clear/fog/wind/rain、抽到 30 次、铜钱 80、掷骰 60;多问 8 倍预告后仍是铜钱 80 / 掷骰 60;不切题 0 次;一次性牌 2 张遇 2 张、重复 0 次;效果之和 134 = 账本余额 134);cd packages/engine && bun run check(514 例 / 70 文件 + 十一道自检);cd /workspace/xian && bun run test(278 文件 / 2563 例)、test:report(2563 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(110 个源文件)。",
+      "summary": "第七条链把\"会变的世界\"整段验收了:周期层不掷骰(所以问多少次都一样)、内容池按当天标签切题、抉择把后果变成账目。三条断言里最有价值的是\"多问 8 倍预告而账目一位不变\"—— 它是\"周期不消耗全局随机流\"在多模块下的样子。"
     }
   },
   "edges": [
@@ -28762,6 +28800,12 @@
       "to": "TASK-326",
       "type": "implements",
       "created_at": "2026-09-18T23:16:01+00:00"
+    },
+    {
+      "from": "CHG-410",
+      "to": "TASK-327",
+      "type": "implements",
+      "created_at": "2026-09-18T23:19:17+00:00"
     }
   ]
 }
