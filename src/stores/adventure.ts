@@ -100,7 +100,7 @@ export const useAdventureStore = defineStore(
        * 前置已靖 → 此地已开:补票(见 data/regions.unlockClosure)。
        *
        * 解锁从前是**事件式**的(击败那一刻写一次),而扩界会把新地界挂在早已被清掉的
-       * 前置之后 —— 那种存档再也没机会等到那一次事件(首领已靖不复现)。放在这里补,
+       * 前置之后 —— 那种存档再也没机会等到那一次事件(那时的规矩是首领靖过便不复现)。放在这里补,
        * 是因为读档修形是唯一的入口:开局(engine.start → sanitizeOfflineInputs)与
        * 导入存档都会过它,玩家不需要做任何事。
        */
