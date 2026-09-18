@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 257,
+  "round": 258,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T14:54:57+00:00",
+  "updated_at": "2026-09-18T15:08:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 220,
+      "touched_round": 258,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -15317,7 +15317,7 @@
       "version": 1,
       "created_at": "2026-09-18T14:54:51+00:00",
       "updated_at": "2026-09-18T14:54:51+00:00",
-      "touched_round": 257,
+      "touched_round": 258,
       "category": "docs",
       "severity": 0.5,
       "confidence": 0.95,
@@ -15359,6 +15359,56 @@
       "rationale": "公共库的对外文字里,出现\"从某部作品抽出来\"这类出处,对使用者没有价值(他们要知道的是这个库能做什么、凭什么信),却有三个副作用:①把自己写成别人的附属,读者会怀疑\"它离了母体还能不能活\";②把两边迭代绑在一起,母体改玩法时看起来像库也在改;③一旦有人拿库做别的题材,出处就是噪音(甚至像 IP 关联)。质量证据本身要留(与在运营作品逐数字对账),但只留事实、不留名字:用\"源工程 / 工程侧\"这一类中性指代。同理,LICENSE 的版权人应是作者本人/组织,而不是某部作品名。",
       "alternatives_rejected": "①保留出处当卖点(把\"有实战检验\"与\"出身\"混为一谈 —— 前者该留,后者该去);②连对账事实一起删(等于丢掉最有分量的质量证据);③只改 README 不改源码注释与仓库简介/release 说明(.d.ts 会带着注释发给使用者,外面的人也会先看仓库简介)。",
       "summary": "库的对外文字只留\"与在运营作品逐数字对账\"这个事实,不点作品名;出处不进对外表述,版权人写作者而不是作品名。"
+    },
+    "TASK-238": {
+      "id": "TASK-238",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T15:08:45+00:00",
+      "updated_at": "2026-09-18T15:08:45+00:00",
+      "touched_round": 258,
+      "category": "docs",
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "本作文档统一重做:README 重排为正式结构(徽章/目录/散文特色 + 系统一览表),长文下沉 docs/engine.md(与万象引擎的关系与逐数字对账清单)与 docs/design.md(设计规范);过期数字与旧仓库/镜像地址修正;README.Docker.md 加回导航并修镜像路径;test:report 的 51 个未分类用例补齐并列出未登记文件。"
+    },
+    "CHG-320": {
+      "id": "CHG-320",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:08:46+00:00",
+      "updated_at": "2026-09-18T15:08:46+00:00",
+      "touched_round": 258,
+      "commit": "c8f6086",
+      "summary": "README.md 重写(含游戏特色散文与系统一览表;数字重数为 199 spec/2044 例、data 51 模块、core 110+165、15 store、17 页面、34 组件;徽章与 issue/release 链接改 pplmx/xian;镜像改 ghcr.io/pplmx/xian;新增\"质量与判据\"节);新增 docs/engine.md 与 docs/design.md;README.Docker.md 修镜像地址并加导航;scripts/test-report.mjs 补 eventRealmBand/regionRevival/unlockChainSelfHeal/firstStep/questProgress 映射并在未分类时列出文件与条数。"
+    },
+    "EV-244": {
+      "id": "EV-244",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:08:49+00:00",
+      "updated_at": "2026-09-18T15:08:49+00:00",
+      "touched_round": 258,
+      "confidence": 0.97,
+      "source": "变更 CHG-320(c8f6086)。bunx vitest run src/core/dataHeaderAudit.spec.ts(3 例:表头计数、README 特色段数量、README 系统一览表逐行)通过;bun run test(199 文件/2044 例);bun run test:report(9 类 2044 过/0 败,未分类 0);bun run check(vue-tsc + ESLint);git push origin main 后 GitHub Actions 部署与镜像两条流水线在跑",
+      "summary": "README 里点到的每个数量都能从数据表数出来(原来在这个判据上红了两处:缺 63 部功法/44 个区域/14 只灵兽的措辞,以及后来缺的 62 个成就/29 枚称号);测试分类报告从\"51 个未分类\"回到 0。"
+    },
+    "DEC-110": {
+      "id": "DEC-110",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:08:51+00:00",
+      "updated_at": "2026-09-18T15:08:51+00:00",
+      "touched_round": 258,
+      "rationale": "README 是门面,不是仓库;把\"与库的关系、迁移对账清单、设计规范\"这类长内容堆在门面上,结果是:新来的人找不到\"怎么跑\",而需要细节的人又不该在门面里翻。故 门面只留\"这是什么 / 能做什么 / 怎么跑 / 怎么发 / 去哪看细节\",长文下沉到 docs/ 并在门面上留一句指路。同时数量必须能被数出来:本作早就有 dataHeaderAudit 把 README 点到的数字与数据表比对 —— 这次重写仍然按它的措辞走,不改判据只改文档,因为\"数字过期\"比\"措辞不美\"严重得多。",
+      "alternatives_rejected": "①在 README 里保留全部细节(门面越来越长,读者先被淹没);②把长文直接删掉(证据与依据没了,后来的人只能重新摸索);③为了让新措辞过审而放宽 README 数字判据(等于把唯一一条防\"数字过期\"的闸门拆了)。",
+      "summary": "门面只留门面的内容(门面 + 指路),长文进 docs/;文档里的数量必须能由数据表数出来,判据不迁就措辞。"
     }
   },
   "edges": [
@@ -23492,6 +23542,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T14:54:57+00:00"
+    },
+    {
+      "from": "CHG-320",
+      "to": "TASK-238",
+      "type": "implements",
+      "created_at": "2026-09-18T15:08:51+00:00"
+    },
+    {
+      "from": "TASK-238",
+      "to": "TASK-237",
+      "type": "depends_on",
+      "created_at": "2026-09-18T15:08:51+00:00"
+    },
+    {
+      "from": "DEC-110",
+      "to": "TASK-238",
+      "type": "governs",
+      "created_at": "2026-09-18T15:08:51+00:00"
+    },
+    {
+      "from": "DEC-110",
+      "to": "COMP-016",
+      "type": "governs",
+      "created_at": "2026-09-18T15:08:51+00:00"
     }
   ]
 }
