@@ -111,6 +111,17 @@ export { createSkillSystem } from './skills.js'
 export type { CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef } from './crafting.js'
 export { averageLore, composeCraftRate, leverFactor, overReachFactor, proficiencyFromExp, stageNameOf, weightedSkill } from './crafting.js'
 
+export type {
+  AppliedEntry,
+  Ledger,
+  ResourceDef,
+  ResourceEntry,
+  ResourceSummary,
+  ResourceSystem,
+  ResourceSystemConfig
+} from './resources.js'
+export { createResourceSystem } from './resources.js'
+
 export type { GoalCond, GoalEnv, GoalProgress } from './goals.js'
 export { evalGoal, goalProgress } from './goals.js'
 

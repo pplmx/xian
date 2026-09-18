@@ -14,6 +14,7 @@
 import { describe, expect, it } from 'vitest'
 import * as engine from './index.js'
 import type {
+  AppliedEntry,
   AffixDef,
   AffixLine,
   AffixRoll,
@@ -65,6 +66,7 @@ import type {
   IdlePlan,
   IssueLevel,
   LeverSpec,
+  Ledger,
   LevelBand,
   Loadout,
   LoadoutStats,
@@ -84,6 +86,11 @@ import type {
   RealmSystem,
   RealmSystemConfig,
   RegionDef,
+  ResourceDef,
+  ResourceEntry,
+  ResourceSummary,
+  ResourceSystem,
+  ResourceSystemConfig,
   ResolvedEquipment,
   RewardDef,
   Rng,
@@ -132,6 +139,7 @@ const RUNTIME_EXPORTS = [
   'createDungeonSystem',
   'createEquipmentSystem',
   'createRealmSystem',
+  'createResourceSystem',
   'createRng',
   'createSkillSystem',
   'deckPool',
@@ -196,7 +204,12 @@ type PublicTypes = {
     EquipmentSystem,
     Loadout,
     LoadoutStats<number>,
-    QualityDef,
+  QualityDef,
+  ResourceDef,
+  ResourceEntry,
+  ResourceSummary,
+  ResourceSystem,
+  ResourceSystemConfig,
     ResolvedEquipment<number>,
     RollOptions,
     SetDef,
@@ -235,6 +248,7 @@ type PublicTypes = {
   save: [SaveDecodeResult<number>, SaveFormat<number>, SavePayload]
   skills: [SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem]
   crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef]
+  resources: [AppliedEntry, Ledger<number>, ResourceDef, ResourceEntry, ResourceSummary, ResourceSystem, ResourceSystemConfig]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]
   companions: [CompanionConfig, CompanionDef, CompanionSystem, TraitDef]

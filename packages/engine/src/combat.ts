@@ -44,7 +44,7 @@ export interface Combatant<T> {
   skills?: EnemySkillDef[]
 }
 
-export interface BattleConfig {
+export interface BattleConfig<T = number> {
   /** 本值键名(默认 attack / defense / hp / maxHp / speed) */
   keys?: CombatKeys
   /**
@@ -79,7 +79,7 @@ export interface BattleConfig {
    * 出手/落账/加盾/治疗/定身这套原语交到你手里。
    * 跨回合记东西用 `ctx.state`(本场共用的小抽屉,引擎不解释)。
    */
-  tickFn?: <T>(ctx: BattleHookContext<T>, rng: Rng) => void
+  tickFn?: (ctx: BattleHookContext<T>, rng: Rng) => void
   /**
    * 事件反应(**可选**)—— 引擎每记完一条事件就交给你看一眼。
    *
@@ -92,7 +92,7 @@ export interface BattleConfig {
    * 防递归:钩子自己引发的出手(`strike`/`log`)不会再次触发本钩子 ——
    * 否则"会心追加一记、那一记又全会心"会一路打下去。
    */
-  onEvent?: <T>(ctx: BattleHookContext<T>, event: BattleEvent, rng: Rng) => void
+  onEvent?: (ctx: BattleHookContext<T>, event: BattleEvent, rng: Rng) => void
   /**
    * 自己解释技能的 `effect`(**可选**)。
    *
@@ -106,7 +106,7 @@ export interface BattleConfig {
    * 想基于默认改动(多打几下、伤害减半)就用 `ctx.strike(mult)`;
    * 想完全另算(穿甲/真伤)就用 `ctx.damage(mult)` + `ctx.applyDamage(target, 数额)`。
    */
-  skillEffectFn?: <T>(ctx: SkillEffectContext<T>, rng: Rng) => boolean | void
+  skillEffectFn?: (ctx: SkillEffectContext<T>, rng: Rng) => boolean | void
   /**
    * 自己接管伤害公式(**可选**)。
    *
@@ -115,7 +115,7 @@ export interface BattleConfig {
    * 给这个函数就完全接管 —— **地板与全部修正都归你**(引擎不再叠加任何东西),
    * 拿到的是已经判过闪避与暴击之后的一次出手(暴击倍率已并入 `mult`)。
    */
-  damageFn?: <T>(ctx: DamageContext<T>, rng: Rng) => number
+  damageFn?: (ctx: DamageContext<T>, rng: Rng) => number
   /** 回合上限,默认 30(打不完算守方胜) */
   maxRounds?: number
   /** 暴击基础倍率,默认 1.5 */
@@ -293,6 +293,7 @@ export type BattleEventKind =
   | 'counter'
   | 'combo'
   | 'shield'
+  | 'shieldbreak'
   | 'lifesteal'
   | 'regen'
   | 'skip'
@@ -323,7 +324,7 @@ function mod(mods: Mods, key: string): number {
   return typeof v === 'number' ? v : 0
 }
 
-export function createCombatEngine<T = number>(config: BattleConfig = {}, numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>) {
+export function createCombatEngine<T = number>(config: BattleConfig<T> = {}, numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>) {
   const maxRounds = config.maxRounds ?? 30
   const critMultiplier = config.critMultiplier ?? 1.5
   const variance = config.variance ?? 0.08
@@ -395,12 +396,17 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
 
       const shieldOf = (c: Combatant<T>): number => shields.get(c) ?? 0
 
-      /** 加护盾:受上限夹取;返回实际加上去的量 */
+      /**
+       * 加护盾:受上限夹取;返回实际变化量。
+       *
+       * **也收负数**(扣盾):"濒死时护盾消散一半"这类代价要能在钩子里表达出来,
+       * 而不该为此另开一个 API。扣到 0 为止,不会变成负盾。
+       */
       const gainShield = (c: Combatant<T>, amount: number): number => {
-        if (!config.shield || !(amount > 0)) return 0
+        if (!config.shield || amount === 0) return 0
         const cap = Math.max(0, statNum(c, keys.maxHp) * shieldCap)
         const before = shieldOf(c)
-        const after = Math.min(cap, before + amount)
+        const after = Math.min(cap, Math.max(0, before + amount))
         shields.set(c, after)
         return after - before
       }
@@ -501,6 +507,10 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
         const critMult = isCrit ? critMultiplier + mod(attacker.mods, 'critDamage') : 1
         const damage = rawDamage(attacker, defender, mult * critMult, rng)
         const { absorbed, lost } = damageDealt(defender, damage, { bypassShield: opts.bypassShield })
+        // 护盾被击破的**那一刻**要有事件:"破盾才触发的反震 / 法宝"全靠它,否则钩子只能去猜
+        if (absorbed > 0 && shieldOf(defender) === 0) {
+          emit(round, defender.name, 'shieldbreak', `${defender.name} 的护盾碎了`)
+        }
         const shieldNote = absorbed > 0 ? `(护盾挡下 ${Math.round(absorbed)})` : ''
         emit(
           round,

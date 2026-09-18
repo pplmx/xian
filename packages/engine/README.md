@@ -1,11 +1,15 @@
 # 万象引擎 · wanxiang-engine
 
-**一套可配置的游戏基础数值内核。** 等级(境界)、属性、装备、副本、技能、炼制、伙伴、目标、随机内容池 ——
-换一套名字与内容,就能搭出自己的放置 / RPG / 养成游戏;机制一行不用重写。
+**一套可配置的游戏基础数值内核。** 等级(境界)、属性、装备、副本、技能、炼制、资源账本、
+伙伴、目标、随机内容池 —— 换一套名字与内容,就能搭出自己的放置 / RPG / 养成游戏;机制一行不用重写。
 零运行时依赖,纯 ESM + 类型声明。
 
 它的规则不是拍脑袋来的:整套数值与一个在运营的放置游戏**逐数字对账**,迁移前后玩家看到的数字一位不变
 (见[判据](./docs/parity.md))。
+
+**判断标准只有一条:只有那部作品才需要的东西,不进库。** 我们自己就是第一个"拿库定制游戏"的用户 ——
+凡是本作独有的设计(流派组合技、法宝触发、首领阶段……)都留在作品侧,库只提供它们需要的**能力形状**
+(比如"破盾了""会心了""每回合结束了"这三个落点)。详见[什么留在作品那一侧](#战斗副本的下半场)。
 
 [![CI](https://github.com/pplmx/wanxiang-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/pplmx/wanxiang-engine/actions/workflows/ci.yml)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](#边界与兼容性)
@@ -60,9 +64,9 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 尚未发布到 npm。按 tag 引用(**请用 tag,不要跟 `main`** —— 库还在长,`main` 随时会动):
 
 ```bash
-bun add github:pplmx/wanxiang-engine#v0.3.0
+bun add github:pplmx/wanxiang-engine#v0.4.0
 # 或
-npm  i github:pplmx/wanxiang-engine#v0.3.0
+npm  i github:pplmx/wanxiang-engine#v0.4.0
 ```
 
 ```ts
@@ -208,6 +212,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 存档 | `defineSaveFormat` 等 | 老档怎么升到新版本?形状坏了怎么补? |
 | 数值层 | `Numeric<T>` | 数值超过 double 怎么办? |
 | 装配 | `defineGame` | 内容之间的引用是否自洽? |
+| 资源账本 | `createResourceSystem` | 灵石 / 信用点 / 零花钱:收多少、付得起吗、上限多少、这批是哪来的? |
 
 ### 战斗:副本的下半场
 
@@ -360,6 +365,35 @@ stageNameOf(92, [{ min: 85, name: '通玄' }, { min: 0, name: '生疏' }])
 这四条本可各自权衡的线全被一条线吞掉。这里四区相乘、**各有下限** —— 任何一项弱都不会把成功率归零,
 但四项全弱时自然低到不该开炉;"赌一把"于是始终是玩家的选择。
 
+### 资源账本:钱、材料、点数
+
+```ts
+import { createResourceSystem } from 'wanxiang-engine'
+
+const res = createResourceSystem({
+  resources: [
+    { key: 'stone', name: '灵石' },
+    { key: 'herb', name: '灵草', cap: 100 },
+    { key: 'wudao', name: '悟道点', cap: 5000 }
+  ]
+})
+
+let wallet = res.create({ stone: 30 })
+const paid = res.pay(wallet, [{ key: 'stone', amount: 50, source: '炼丹' }])
+paid.ok            // false —— 买不起就整笔不扣
+paid.shortfall     // [{ key: 'stone', short: 20 }]
+
+wallet = res.grant(wallet, [{ key: 'herb', amount: 150, source: '掉落' }]).ledger
+res.of(wallet, 'herb')                       // 100 —— 落账时夹到上限,而不是事后修补
+
+// 挂机产出与 idle 的步数账对接:逐步夹上限(一次乘完再加是算不出"中途到顶"的)
+const mined = res.produce(wallet, plan.steps, [{ key: 'stone', amount: 5, source: '洞府' }])
+res.audit(mined.entries).bySource            // 每个来源贡献了多少,一眼可查
+```
+
+键名、上限、名字、来源标签全归你 —— 库不认识"灵石"这两个字(与属性系统的约定一致)。
+存档坏了那一格用 `res.normalize(存档里的那一坨)` 兜回来,而不是让整个档报废。
+
 ### 任务 / 成就:一条判据,两种用法
 
 ```ts
@@ -450,6 +484,10 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 多只伙伴的性格怎么合 | `companions.stack: 'override'`(默认,覆盖)/ `'add-relative'`(各自相对中性那一份相加) |
 | 伙伴性格的键名与中性值 | `companions.traits[].mods` + `companions.neutral`(缺中性值直接报错) |
 | **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改 |
+| **资源有哪些 / 叫什么 / 上限多少**(货币、材料、点数) | `createResourceSystem({ resources })`:键名与展示名分开,`cap` / `floor` 逐个给;上限还能随账本变(`capFn`) |
+| **收支要不要带来源**(审计"这批是哪来的") | 每条收支都可带 `source`;`audit()` 按资源与按来源各汇总一份,明细恒等于合计 |
+| **买不起时怎么办** | `pay` 默认**整笔要么全成、要么不动**并给出缺口;要允许分次付就显式开 `partial` |
+| **挂机产出的上限** | `produce(ledger, steps, perStep)` 逐步夹上限 —— 一步乘完再加是算不出"中途到顶"的 |
 | 随机源(可复现 / 平台随机) | `Rng` 接口;库自带 mulberry32,可换 |
 | 存档介质与加密 | 库**不碰介质**:`encodeSave` 出字符串,写哪儿、要不要加密都归你 |
 | **存档的编码格式** | `SaveFormat.codec: { encode, decode }`(压缩/加密/换封套都行;迁移链与形状修复照旧) |
@@ -538,7 +576,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 
 ## 版本与发布
 
-- 当前版本 **0.3.0**(tag `v0.3.0`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
+- 当前版本 **0.4.0**(tag `v0.4.0`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
 - 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:
   **公开面即承诺**,新增走 minor、破坏走 minor 并写明怎么改;
   0.x 期间数值曲线不承诺不变,但没有显式配置时**默认行为逐位不变**。

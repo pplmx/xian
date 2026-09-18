@@ -27,7 +27,7 @@ export interface GameConfig<T = number> {
   realms: RealmSystemConfig
   equipment: EquipmentConfig<T>
   dungeons: DungeonConfig<T>
-  combat?: BattleConfig
+  combat?: BattleConfig<T>
 }
 
 export interface Game<T = number> {

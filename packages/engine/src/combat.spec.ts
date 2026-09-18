@@ -424,4 +424,37 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     expect(build({ onEvent: () => {} }).events).toEqual(bare.events)
     expect(build({ tickFn: () => {} }).events).toEqual(bare.events)
   })
+
+  it('护盾被击破的那一刻有事件 —— "破盾才触发"的机制不必再去猜', () => {
+    const battle = createCombatEngine({ variance: 0, shield: {} }).resolve(
+      fighter({ attack: 10, defense: 0, hp: 300, maxHp: 300, speed: 1, mods: { shieldOnStart: 0.05 } }),
+      fighter({ id: 'e', name: '乙', attack: 40, defense: 0, hp: 500, maxHp: 500, speed: 2 }),
+      createRng(29)
+    )
+    const breaking = battle.events.filter(e => e.kind === 'shieldbreak')
+    expect(breaking.length).toBe(1)
+    expect(breaking[0]!.actor).toBe('甲') // 事件记在**盾碎的那一方**头上
+    expect(breaking[0]!.round).toBe(1)
+  })
+
+  it('加盾原语也收负数(扣盾):"濒死时护盾消散一半"这类代价表达得出来', () => {
+    const drained: number[] = []
+    const battle = createCombatEngine({
+      variance: 0,
+      maxRounds: 2,
+      shield: {},
+      tickFn: ctx => {
+        if (ctx.round !== 1) return
+        drained.push(ctx.shieldOf(ctx.player))
+        drained.push(ctx.gainShield(ctx.player, -40)) // 扣 40,返回实际变化量(负数)
+      }
+    }).resolve(
+      fighter({ attack: 10, defense: 0, hp: 300, maxHp: 300, speed: 2, mods: { shieldOnStart: 0.5 } }),
+      fighter({ id: 'e', name: '乙', attack: 0, defense: 0, hp: 200, maxHp: 200, speed: 1 }),
+      createRng(31)
+    )
+    expect(drained[0]).toBe(150) // 开局盾 = 300 × 50%
+    expect(drained[1]).toBe(-40)
+    expect(battle.playerShield).toBe(110)
+  })
 })
