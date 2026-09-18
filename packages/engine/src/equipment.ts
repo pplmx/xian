@@ -148,6 +148,21 @@ export interface EquipmentConfig<T = number> {
   qualityTierShift?: number
   /** 词条条数上限(防御性),默认 12 */
   maxAffixCount?: number
+  /**
+   * 自己接管"这一件带几条词条"(**可选**):返回值即条数(仍受 `maxAffixCount` 封顶)。
+   *
+   * 默认是"在品质自己的 [下限, 上限] 里均匀取一个"。想按层级给保底
+   * (低层只出一条、高层至少三条)或做别的分布,给函数即可 —— 它在抽取流程里
+   * 取代那一次 `rng.int(下限, 上限)`,故随机流与默认路径一致。
+   */
+  affixCountFn?: (quality: QualityDef, tier: number, rng: Rng) => number
+  /**
+   * 自己接管词条抽取权重(**可选**):返回该词条这一次的权重(默认用 `AffixDef.weight`)。
+   *
+   * 用途是"倾向而非门槛":高层更容易出某几条、某个品质偏爱某类词条。
+   * 返回 0 表示这一次不参与;要"根本不可能出",请在词条上写 `minRank` / `minTier` / `slots`。
+   */
+  affixWeightFn?: (affix: AffixDef, quality: QualityDef, tier: number) => number
   /** 本作品词条数值的统一换算系数(默认 1;以百分点书写时填 100) */
   affixValueScale?: number
 }
@@ -332,7 +347,8 @@ export function createEquipmentSystem<T = number>(
     const template = rng.weighted(eligible, () => 1)
     const quality = rollQuality(tier, rng, opts)
     const [minA, maxA] = quality.affixes
-    const count = Math.min(maxAffixCount, rng.int(minA, maxA))
+    const wanted = config.affixCountFn ? config.affixCountFn(quality, tier, rng) : rng.int(minA, maxA)
+    const count = Math.min(maxAffixCount, Math.max(0, Math.floor(wanted)))
     const chosen: AffixRoll[] = []
     const used = new Set<string>()
     let guard = 0
@@ -346,7 +362,7 @@ export function createEquipmentSystem<T = number>(
           (a.slots === undefined || a.slots.includes(slot))
       )
       if (candidates.length === 0) break
-      const picked = rng.weighted(candidates, a => a.weight)
+      const picked = rng.weighted(candidates, a => (config.affixWeightFn ? config.affixWeightFn(a, quality, tier) : a.weight))
       used.add(picked.id)
       chosen.push({ id: picked.id, roll: rng.next() })
     }

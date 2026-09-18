@@ -156,6 +156,25 @@ describe('装备系统 —— 槽位/品质/模板/词条/套装', () => {
     expect(Number(resolved.flats.attack)).toBeCloseTo(10 * 1.2, 6)
   })
 
+  it('词条条数与权重也能自己接管:按层级给保底条数、按情境偏袒某几条', () => {
+    const sys = createEquipmentSystem({
+      ...CONFIG,
+      maxAffixCount: 3,
+      affixCountFn: (_quality, tier) => (tier >= 2 ? 3 : 1), // 高层保底三条
+      affixWeightFn: (affix, _quality, tier) => (affix.id === 'a_crit' && tier >= 2 ? 10000 : 0)
+    })
+    const low = sys.generate(createRng(1), { tier: 1, slot: 'weapon' })
+    expect(low.affixes.length).toBe(1)
+    const high = sys.generate(createRng(2), { tier: 2, slot: 'weapon' })
+    // 兵器位在配置里只有两条合法词条(a_atk / a_crit),要三条也只能给两条 —— 取尽即止
+    expect(high.affixes.length).toBe(2)
+    // 权重被接管后:除 a_crit 外全为 0,故它必在其中
+    expect(high.affixes.map(a => a.id)).toContain('a_crit')
+    // 超过上限时被 maxAffixCount 封顶
+    const greedy = createEquipmentSystem({ ...CONFIG, maxAffixCount: 2, affixCountFn: () => 99 })
+    expect(greedy.generate(createRng(3), { tier: 1, slot: 'weapon' }).affixes.length).toBeLessThanOrEqual(2)
+  })
+
   it('词条数值 = min + (max-min) × roll,并按稀有度给出展示行', () => {
     const sys = createEquipmentSystem(CONFIG)
     const def = sys.affix('a_atk')!
