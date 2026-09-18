@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 294,
+  "round": 295,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:53:23+00:00",
+  "updated_at": "2026-09-18T19:57:17+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16995,7 +16995,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:24:19+00:00",
       "updated_at": "2026-09-18T19:24:19+00:00",
-      "touched_round": 288,
+      "touched_round": 295,
       "summary": "发版流程固定成五步:改 package.json、把「未发布」定稿成带日期的版本一节、同步三处 tag 引用(engine README / engine docs/development / 根 README)、推宿主与子树、在 engine 仓库 gh release create 并按 CHANGELOG 分主题写说明。",
       "rationale": "发布这件事最容易出的错不是\"发错版本号\",而是**说明与实际不一致**:tag 指向哪个提交、那个提交里的版本号是多少、发布包里装的是哪一版、README 让人 pin 的是哪个 tag —— 四处任意一处没同步,外面的人就会按着一份错的说明接库。故把流程固定成五步,并把\"核对 tag 指向 + 包内 version\"也当成发版的一部分(用 gh api 读 tag 里的 package.json,而不是凭本地印象)。节奏上继续按版本口径:攒批(39 个提交一版)、默认只加 patch、tag 是给外面人一个可 pin 的节点。",
       "alternatives_rejected": "①改完就发(历史上的 0.1.2–0.1.5 一天连跳四次,已经按攒批口径纠正过一次);②只推 tag 不核对它指向哪(子树推送与 tag 是两步,顺序错了 tag 会落在旧提交上);③在宿主仓库打引擎 tag(库的 release 属于 engine 仓库,宿主有自己的 app 版本线 v1.35.0);④release 说明另写一份(与 CHANGELOG 各写各的迟早不一致;现在按 CHANGELOG 的分节改写,口径只有一份)。"
@@ -17257,7 +17257,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:53:17+00:00",
       "updated_at": "2026-09-18T19:53:17+00:00",
-      "touched_round": 294,
+      "touched_round": 295,
       "category": "core-feature",
       "severity": 0.4,
       "confidence": 0.9,
@@ -17299,6 +17299,44 @@
       "summary": "跨模块时间线上,凡\"随时间变化的东西\"都只以一个时钟为判据(不看列表长度、不看是否已剪),并在组合验收里用\"换执行顺序结果不变\"来钉住它。",
       "rationale": "\"先剪过期还是先算产出\"这类顺序问题,单模块用例看不见:状态层自己是对的(剪得干净),产线自己也是对的(算得准),但拼起来顺序一变,收益就差一步。根因只有一个:某个判据看的是**列表长度或是否已剪**这类中间状态,而不是时钟。故定两条:①判据只认时钟(到期时刻 > 时钟),列表怎么剪都不影响结果;②组合验收用\"换执行顺序,结果逐行相同\"来证明这件事 —— 这比为某个顺序写一条判据更强,因为它把\"顺序无关\"本身变成了性质。",
       "alternatives_rejected": "①规定\"必须先剪再算\"并写进文档(那是把实现细节当契约,换个人换个顺序就出事);②让剪枝顺手把\"这一步的收益\"定死(状态层不该知道产线);③只在状态层加一条\"到期那一步不生效\"的判据(它管不到拼装顺序);④用\"同种子两遍一致\"代替(这条链没有随机,同种子一致会永远为真 —— 又是一次空转)。"
+    },
+    "TASK-276": {
+      "id": "TASK-276",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T19:57:10+00:00",
+      "updated_at": "2026-09-18T19:57:10+00:00",
+      "touched_round": 295,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.9:v0.1.8 之后 13 个提交(配方执行 + 三条组合验收链 + 组装指南 + 定制表审计与两份文档自检)集中成一版,只加 patch;CHANGELOG 定稿、三处 tag 引用同步、engine 仓库 release 并核对 tag 指向与包内版本。"
+    },
+    "CHG-358": {
+      "id": "CHG-358",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:57:10+00:00",
+      "updated_at": "2026-09-18T19:57:10+00:00",
+      "touched_round": 295,
+      "commit": 5437601,
+      "summary": "发版改动:package.json 0.1.8 → 0.1.9;CHANGELOG「未发布」→「0.1.9 — 2026-09-19」并补本批总述(13 个提交、库 372 例/40 文件、宿主侧 24 份对账与消融、公开面 74→75 运行时导出 / 196→200 类型);README 安装块与版本块、docs/development 的装法、根 README 的引擎版本引用同步;gh release create v0.1.9(tag 落在 engine main 的发版提交 cac5872,标题修正过一次引号)。"
+    },
+    "EV-283": {
+      "id": "EV-283",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:57:10+00:00",
+      "updated_at": "2026-09-18T19:57:10+00:00",
+      "touched_round": 295,
+      "confidence": 0.98,
+      "source": "变更 CHG-358(5437601 / engine cac5872)。cd packages/engine && bun run check(48 文件/376→发布前 372 例 + 组装指南与定制表自检 + 发布包自检报告 wanxiang-engine-0.1.9.tgz 可用);cd /workspace/xian && bun run test(247 文件/2417 例);bun run test:report(2417 过/0 败);bun run check:engine(59 处引用);bun run check:engine:standalone(80 个源文件);gh release view v0.1.9 + gh api 核对 tag 指向 cac5872 且该提交里 version 已是 0.1.9",
+      "summary": "0.1.9 发布完成且逐项核对:release 页 https://github.com/pplmx/wanxiang-engine/releases/tag/v0.1.9,tag 指向 engine main 的 cac5872,包内 version 为 0.1.9,发布包自检按新版本号产出并\"真装一遍\"通过。发版前所有闸门全绿(库 372 例、宿主 2417 例、分类报告 2417 过/0 败、宿主 59 处引用全走公开入口)。发布说明按 CHANGELOG 的分节改写(tag 前后两版说明风格一致)。"
     }
   },
   "edges": [
@@ -26242,6 +26280,24 @@
       "to": "TASK-273",
       "type": "depends_on",
       "created_at": "2026-09-18T19:53:23+00:00"
+    },
+    {
+      "from": "CHG-358",
+      "to": "TASK-276",
+      "type": "implements",
+      "created_at": "2026-09-18T19:57:17+00:00"
+    },
+    {
+      "from": "DEC-139",
+      "to": "TASK-276",
+      "type": "governs",
+      "created_at": "2026-09-18T19:57:17+00:00"
+    },
+    {
+      "from": "TASK-276",
+      "to": "TASK-275",
+      "type": "depends_on",
+      "created_at": "2026-09-18T19:57:17+00:00"
     }
   ]
 }
