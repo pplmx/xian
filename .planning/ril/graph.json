@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 227,
+  "round": 228,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T09:15:00+00:00",
+  "updated_at": "2026-09-18T09:45:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13504,6 +13504,80 @@
       "rationale": "装备的生成规则(哪层掉哪几件、品质窗口、词条筛选)是通用机制,已进库;而数值解析用的是本作自己的层级战力表(GNum),与库配置里那张 number 投影的表差在双精度末位。两者取舍不同:前者搬过去能换来\"机制只有一处\",后者搬过去会让玩家看到的数字在末位漂移。故拆开处理:生成进库,解析留下,并在两处注释与 README 写明为什么。",
       "alternatives_rejected": "①两半都搬(接受末位漂移,违背\"数字一位不变\");②两半都不搬(机制继续两份实现,迟早分叉);③把战力表也改成 number(大数会溢出,后期数值直接失效)。",
       "summary": "生成规则进库、数值解析留在应用侧(GNum 战力表),拆分的理由写进注释与文档。"
+    },
+    "ISS-229": {
+      "id": "ISS-229",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T09:45:00+00:00",
+      "updated_at": "2026-09-18T09:45:00+00:00",
+      "touched_round": 228,
+      "severity": 0.4,
+      "confidence": 1.0,
+      "effort": 1,
+      "summary": "公共库包声明 license: MIT,而本仓库根目录是 CC BY-NC 4.0。这不是措辞问题:一旦有人 npm 装下来,这份声明就是他看到的授权 —— 与作品实际许可冲突。"
+    },
+    "TASK-207": {
+      "id": "TASK-207",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T09:45:00+00:00",
+      "updated_at": "2026-09-18T09:45:00+00:00",
+      "touched_round": 228,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "让公共库真的\"发得出去、装得上、跑得起来\":新增产物自检(编译 → 校验 7 个入口 → 从 dist import → 换皮世界走完整一圈 → 坏配置被交叉校验挡住),接进三条流水线的同一道闸;修正许可声明并把许可证文本随包发出;README 补三种接入方式。"
+    },
+    "CHG-267": {
+      "id": "CHG-267",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T09:45:00+00:00",
+      "updated_at": "2026-09-18T09:45:00+00:00",
+      "touched_round": 228,
+      "commit": "4735004",
+      "summary": "新增 scripts/engine-dist.mjs 与 bun run check:engine;接进 deploy.yml / build.yml(两处) / yunyin.yml 的静态检查步骤;packages/engine/package.json 的 license 改为 CC-BY-NC-4.0 并新增包内 LICENSE;README 补「接进你自己的项目」(本地路径依赖 / npm pack / monorepo)。"
+    },
+    "EV-213": {
+      "id": "EV-213",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T09:45:00+00:00",
+      "updated_at": "2026-09-18T09:45:00+00:00",
+      "touched_round": 228,
+      "source": "bun run check:engine(产物自检)+ bun run check + bun run test(190 文件 / 1926 例)",
+      "summary": "产物自检通过:7 个入口(含 .d.ts)齐全,从 dist import 后星港包走完修炼→进阶→掉装→装配→副本→通关奖励,仙侠包装配出 21 境,坏配置(引用不存在的敌人)被交叉校验以 DUNGEON_REGION_ENEMY 挡住。三条流水线已把该步接入与 check+test 同一道闸。"
+    },
+    "DEC-074": {
+      "id": "DEC-074",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T09:45:00+00:00",
+      "updated_at": "2026-09-18T09:45:00+00:00",
+      "touched_round": 228,
+      "rationale": "src 的用例全绿,不能证明\"别人装得上\":用例走仓库别名与源码,发布产物走 dist 与 package.json 的 exports —— 两者之间隔着编译、入口声明、文件清单三道门,任何一道对不上都不会红。故给产物单独立一条判据,并且**从 dist import**(刻意不走别名/不走 src),把\"装下来能不能用\"变成每次提交都要过的闸。",
+      "alternatives_rejected": "①靠人手动 npm pack 试一次(没有闸,回归时无人重跑);②让用例直接 import dist(测试依赖构建产物,本地改一处就要先编译);③只在发版时验证(平时分支早已漂移)。",
+      "summary": "产物自检独立成条(bun run check:engine):编译 → 入口存在 → 从 dist import 跑完整一圈 → 坏配置被挡,并入 CI 同一道闸。"
+    },
+    "DEC-075": {
+      "id": "DEC-075",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T09:45:00+00:00",
+      "updated_at": "2026-09-18T09:45:00+00:00",
+      "touched_round": 228,
+      "rationale": "公共库一旦离开仓库,它的 package.json 就是使用者看到的全部事实。声明 MIT 而作品实为 CC BY-NC 4.0,等于给出一个作品本身并不拥有的授权;这类不一致在仓库内部看不出来,发出去就是对外承诺。故:包内许可与仓库根目录一致,许可证文本随包发出(npm 会自动带上包内 LICENSE),并在 README 写明。",
+      "alternatives_rejected": "①沿用 MIT(与作品许可冲突);②不在包里写 license(默认全权保留,使用者无法判断能否用);③只在 README 提一句(授权以 package.json 与 LICENSE 为准)。",
+      "summary": "包内许可与仓库一致(CC-BY-NC-4.0),许可证文本随包发出。"
     }
   },
   "edges": [
@@ -20203,6 +20277,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T09:15:00+00:00"
+    },
+    {
+      "from": "CHG-267",
+      "to": "ISS-229",
+      "type": "resolves",
+      "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "CHG-267",
+      "to": "TASK-207",
+      "type": "implements",
+      "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "CHG-267",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "ISS-229",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "EV-213",
+      "to": "CHG-267",
+      "type": "validates",
+      "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "TASK-207",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "TASK-207",
+      "to": "TASK-206",
+      "type": "depends_on",
+      "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "DEC-074",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T09:45:00+00:00"
+    },
+    {
+      "from": "DEC-075",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T09:45:00+00:00"
     }
   ]
 }
