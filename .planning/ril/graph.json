@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 315,
+  "round": 316,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:20:54+00:00",
+  "updated_at": "2026-09-18T21:24:23+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18182,6 +18182,44 @@
       "confidence": 0.97,
       "source": "变更 CHG-378(dbd5521)。cd packages/engine && bun run check(419 例 / 48 文件 + 七道自检;发布包自检已变成 wanxiang-engine-0.1.11.tgz 且装进临时项目可用);cd /workspace/xian && bun run test(2467 例)、test:report(2467 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(88 个源文件 + 8 示例);git push origin main(77ceda1..dbd5521)、git subtree push --prefix=packages/engine engine main(95bdf58..a9ddfb3);gh release create v0.1.11 --target a9ddfb3898709366943507d8b9e776fe9815445b;gh api repos/pplmx/wanxiang-engine/git/ref/tags/v0.1.11 → sha a9ddfb3…、type commit;gh api contents/package.json?ref=v0.1.11 → version 0.1.11;gh api contents/README.md?ref=v0.1.11 → 三处 v0.1.11 引用就位;gh release view → isDraft false / isPrerelease false。",
       "summary": "0.1.11 是一个\"零功能变更\"的节点:tag 指向的代码行为与 0.1.10 完全一致,新增的是八份消融、三份文档(usage/tuning/shop-loop 示例)与三道文档自检。首次尝试 gh release create 用短 SHA 作 --target 被拒(\"tag_name is not a valid tag\"),改用完整 SHA 成功 —— 记下来省得下次再撞。"
+    },
+    "TASK-297": {
+      "id": "TASK-297",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:24:23+00:00",
+      "updated_at": "2026-09-18T21:24:23+00:00",
+      "touched_round": 315,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "炼制乘区消融(crafting.sim.spec):量四个乘区与越级、熟练度的刻度 —— 四项全弱 2.0%(下限让\"赌一把\"仍存在)、四项全满 90%;单拉一项的倍数就是 1/下限(0.15→×6.7、0.25→×4.0、0.6→×1.7);越级高 1/2/3 阶 60%/35%/18%,表外每阶 ×0.5(高 6 阶 2.3%、高 10 阶 0.14%);熟练度双曲饱和(9×scale 到九成、99 分要 99×scale、永远不到 100)。"
+    },
+    "CHG-379": {
+      "id": "CHG-379",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:24:23+00:00",
+      "updated_at": "2026-09-18T21:24:23+00:00",
+      "touched_round": 315,
+      "commit": "3d5d1b7",
+      "summary": "库:新增 src/crafting.sim.spec.ts(4 例);CHANGELOG「未发布」记一节;docs/tuning.md 新增一节(第 9 份消融进参考表);docs/assembly.md 配方 A 补炼制两行(四乘区 / 开炉执行)、坑清单补两行(以为全弱就是 0、以为熟练度能练满);README 用例数改 423/49。宿主无改动。"
+    },
+    "EV-305": {
+      "id": "EV-305",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:24:23+00:00",
+      "updated_at": "2026-09-18T21:24:23+00:00",
+      "touched_round": 315,
+      "confidence": 0.96,
+      "source": "变更 CHG-379(3d5d1b7)。bunx vitest run src/crafting.sim.spec.ts(4 例,打印:四项全弱 2.0% / 四项全满 90.0%;单拉一项 2.0%→13.5%(×6.7)/8.1%(×4.0)/3.4%(×1.7);越级高 0/1/2/3/4/6/8/10 阶 → 100%/60%/35%/18%/9%/2.3%/0.56%/0.14%;熟练度 0/50/100/200/400/900/1900/9900 点 → 0/33.3/50/66.7/80/90/95/99);cd packages/engine && bun run check(423 例 / 49 文件 + 七道自检,其中\"调参参考自检通过(9 份消融实验都被收进 docs/tuning.md)\"、用例文件数自检当场抓出 README 的 48→49);cd /workspace/xian && bun run test(2471 例)、test:report(2471 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(89 个源文件)。",
+      "summary": "炼制层的刻度被量清楚:①下限不是\"兜底\",它就是设计——全弱 2.0% 让\"赌一把\"这个选项存在;②谁的下限低谁就是主要准备(倍数 = 1/下限);③越级是指数代价(表外每阶 ×0.5),高 10 阶只剩千分之一;④熟练度双曲饱和永远不到顶,所以\"练满通吃\"不存在,想留\"练满\"的口子要在内容层按阈值判。"
     }
   },
   "edges": [
@@ -27377,6 +27415,12 @@
       "to": "TASK-296",
       "type": "implements",
       "created_at": "2026-09-18T21:20:54+00:00"
+    },
+    {
+      "from": "CHG-379",
+      "to": "TASK-297",
+      "type": "implements",
+      "created_at": "2026-09-18T21:24:23+00:00"
     }
   ]
 }
