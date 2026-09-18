@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 250,
+  "round": 251,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:40:00+00:00",
+  "updated_at": "2026-09-18T14:15:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 224,
+      "touched_round": 251,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -14848,7 +14848,7 @@
       "version": 1,
       "created_at": "2026-09-18T23:05:00+00:00",
       "updated_at": "2026-09-18T23:05:00+00:00",
-      "touched_round": 249,
+      "touched_round": 251,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.95,
@@ -14960,6 +14960,56 @@
       "rationale": "库仍在快速长大(每轮都在加系统),此时切成包依赖会把\"改库\"变成\"发版/重装/重建 dist\",拖慢迭代;而切包真正要防的是\"宿主偷偷依赖库内部\",这件事已经由三条判据拦住(禁内部别名、禁深层导入、禁相对路径钻内部),外加独立成库自检。故开发期保持\"同仓源码 + 包名导入\",等 API 稳定(0.2/1.0)再切包:那时宿主只改 1 行依赖 + 删 2 行解析配置,源码不用动。",
       "alternatives_rejected": "①现在就切 github: 依赖(Bun 默认拦 prepare,需 trustedDependencies 或预构建;类型跳转退到 .d.ts,改库要重装);②改成 submodule(库仓为唯一真源,但多仓协作与 CI 成本高,且开发循环一样要 build);③什么都不做、只靠自觉(现在三条判据正是替代\"自觉\"的做法)。",
       "summary": "开发期用\"同仓源码 + 包名导入 + 禁止绕开公开入口\"的折中;API 稳定后再切 npm 包依赖(宿主改动仅一行依赖 + 删两行别名)。"
+    },
+    "TASK-230": {
+      "id": "TASK-230",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:14:31+00:00",
+      "updated_at": "2026-09-18T14:14:31+00:00",
+      "touched_round": 251,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "给副本结算开一个「整场奖励由调用者接管」的钩子 dungeons.rewardFn(ctx, rng):把按默认规则算好的奖励(含概率判定已生效)放进 ctx.defaultRewards 先给调用者看,再让他决定 —— 返回 null 交回默认、基于它改、或完全另起一套;数额收普通数字由数值层转成 T。"
+    },
+    "CHG-311": {
+      "id": "CHG-311",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:14:34+00:00",
+      "updated_at": "2026-09-18T14:14:34+00:00",
+      "touched_round": 251,
+      "commit": "cb5aa89",
+      "summary": "packages/engine/src/dungeons.ts 加可选 DungeonConfig.rewardFn:结算时若给出,则用其返回值作为本场奖励(经 numeric.from 转 T);未给则走原路径。DungeonConfig 与 GameConfig.dungeons 变成 <T = number> 泛型,让 defaultRewards 的类型跟着数值层走(默认 number,现有写法不受影响)。README 自由定制表与 CHANGELOG 同步补条目。"
+    },
+    "EV-236": {
+      "id": "EV-236",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:14:34+00:00",
+      "updated_at": "2026-09-18T14:14:34+00:00",
+      "touched_round": 251,
+      "confidence": 0.98,
+      "source": "cd packages/engine && bun run check(15 文件/141 例 + 产物自检);bunx vitest run packages/engine/src/dungeons.spec.ts(13 例,含新增 3 例);bun run test(198 文件/2036 例);bun run check:engine(7 入口 + 发布包 + 25 处引用全走公开入口);bun run check:engine:standalone(独立成库自检);gh run list -R pplmx/wanxiang-engine(35354828383 success)",
+      "summary": "rewardFn 三条路径各有判据:首领双倍(读默认再改)、返回 null 时 rewards 与不配钩子在同一 rng 下逐位相同、完全另起一套(amount: 7 原样落地);宿主 2036 例与独立仓 CI 全绿,默认路径未动。"
+    },
+    "DEC-103": {
+      "id": "DEC-103",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:14:37+00:00",
+      "updated_at": "2026-09-18T14:14:37+00:00",
+      "touched_round": 251,
+      "rationale": "「完全接管」类钩子若只给调用者空手,他就得把引擎已算过的概率/层级/合并逻辑重写一遍,等于把默认规则复制进业务代码。把默认结果放进 ctx 而不是让钩子自算,可让三件事同时成立:①不改也能用(返回 null);②改的是增量(基于默认加料)而非重写;③默认路径本身不被触碰(默认不变 + 显式开关,与 DEC-101 同一条纪律)。数额收 number 由 numeric.from 转 T,是为了让钩子写法与 victoryRewards[].amount 同形,大数实现者不必在钩子里碰 T。",
+      "alternatives_rejected": "①只给 ctx 不给 defaultRewards(调用者要复刻概率与层级规则,极易与引擎口径漂移);②让钩子直接改传入数组(副作用式接管,与库「不就地改动传入对象」的既有取向冲突);③先算好但只给汇总值不给明细(按 id 加料做不了)。",
+      "summary": "「完全接管」类钩子要先把默认结果算好放进 ctx 再交给调用者(可读、可改、可弃),而不是让他从零重写;数额统一收 number 由数值层转 T。"
     }
   },
   "edges": [
@@ -22907,6 +22957,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T23:40:00+00:00"
+    },
+    {
+      "from": "CHG-311",
+      "to": "TASK-230",
+      "type": "implements",
+      "created_at": "2026-09-18T14:14:39+00:00"
+    },
+    {
+      "from": "TASK-230",
+      "to": "TASK-228",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:15:00+00:00"
+    },
+    {
+      "from": "DEC-103",
+      "to": "TASK-230",
+      "type": "governs",
+      "created_at": "2026-09-18T14:15:00+00:00"
+    },
+    {
+      "from": "DEC-103",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T14:15:00+00:00"
     }
   ]
 }
