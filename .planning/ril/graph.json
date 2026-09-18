@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 333,
+  "round": 334,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:24:28+00:00",
+  "updated_at": "2026-09-18T22:27:48+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18913,6 +18913,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-397(b09611b)。bunx vitest run src/tasks.sim.spec.ts(4 例全过;打印:目标 5/10/15 两边达成、20/30/40 休闲完不成;目标 9 时休闲余量 1.7 倍;期初 40 场 → 今天 43 场 → 进度 3/10;同期再调 rollover 原样返回、自动结算后再 claim 被挡(claimed);期初 20 场被清零 → 进度 0 不是负数);cd packages/engine && bun run check(469 例 / 59 文件 + 十一道自检,调参参考自检报 18 份消融、用例文件数自检当场抓出 58→59);cd /workspace/xian && bun run test(266 文件 / 2517 例)、check:engine(59 处引用)、check:engine:standalone(99 个源文件)。",
       "summary": "把\"每日任务目标值\"从拍脑袋变成一条可执行的经验线:按休闲画像的六成定。同时确认\"跨期不累积\"是设计而非缺陷(基准快照),以及三条幂等/夹取口径。"
+    },
+    "TASK-315": {
+      "id": "TASK-315",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:27:47+00:00",
+      "updated_at": "2026-09-18T22:27:47+00:00",
+      "touched_round": 333,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "账本与入库两份消融(resources.sim + intake.sim):①上限截断记在回执里(90+150 上限 100 → 入账 10、截 140)、来源审计三份汇总恒等、pay 的分界线是\"够不够\"(29 付 30 整笔不扣,partial 才分次)、整数资源落账取整;②入库一次折算的是\"被挤掉那件\"而非新来的、腾位是有代价的置换、不值得留就不挤位、见证与收纳分离(被拒的也进图鉴)。"
+    },
+    "CHG-398": {
+      "id": "CHG-398",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:27:48+00:00",
+      "updated_at": "2026-09-18T22:27:48+00:00",
+      "touched_round": 333,
+      "commit": "977e3f9",
+      "summary": "库:新增 src/resources.sim.spec.ts 与 src/intake.sim.spec.ts(各 4 例);CHANGELOG「未发布」记两节;docs/tuning.md 新增两节(第 19、20 份消融进参考表);docs/assembly.md 配方 A/C 各补一行;README 用例数改 477/61。宿主无改动。"
+    },
+    "EV-324": {
+      "id": "EV-324",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:27:48+00:00",
+      "updated_at": "2026-09-18T22:27:48+00:00",
+      "touched_round": 333,
+      "confidence": 0.96,
+      "source": "变更 CHG-398(977e3f9)。bunx vitest run src/resources.sim.spec.ts src/intake.sim.spec.ts(8 例全过;打印:90+150 → 余额 100 / 入账 10 / 截 140;来源 洞府产出 80 · 战斗掉落 40 · 分解 15(按来源 135 = 按资源 135);29 付 30 默认整笔不扣(缺口 1)、partial → 余额 0、刚好 30 → 成交;2.9 棵草入账 2、0.4 份尘入账 0;塞满 3 件品质 1 来品质 3 → 收下并把 a 挤掉(化尘 +2);塞满 1/4/1 来品质 2 → 挤掉品质 1(折算 2)、件数仍 3;凡品被拒 → 见证 1 条 + 化尘 +1;塞满三件品质 4 来品质 2 → full、包未动、化尘 +3);cd packages/engine && bun run check(477 例 / 61 文件 + 十一道自检,调参参考自检报 20 份消融、用例文件数自检当场抓出 59→61、相对导入自检 101 个源文件);cd /workspace/xian && bun run test(268 文件 / 2525 例)、check:engine(59 处引用)、check:engine:standalone(101 个源文件)。",
+      "summary": "账本与入库两层的刻度补齐:截断必须能被界面说清(回执里的 clipped)、来源审计必须三份汇总恒等、pay 的成败是一条硬线(整笔 vs partial 两种口径在账上留下完全不同的记录);入库最易写反的一格是\"折算的是被挤掉那件,不是新来的\",以及\"见证与收纳是两件事\"。"
     }
   },
   "edges": [
@@ -28234,6 +28272,12 @@
       "to": "TASK-314",
       "type": "implements",
       "created_at": "2026-09-18T22:24:28+00:00"
+    },
+    {
+      "from": "CHG-398",
+      "to": "TASK-315",
+      "type": "implements",
+      "created_at": "2026-09-18T22:27:48+00:00"
     }
   ]
 }
