@@ -9,6 +9,7 @@
  */
 import type { PillDef } from '@/types'
 import { MATERIALS, type MaterialDef } from './materials'
+import { proficiencyFromExp, stageNameOf } from '@engine/index'
 
 export type SkillId =
   // 识材道(炼丹炼器共用)
@@ -73,8 +74,9 @@ export function skillDef(id: SkillId): SkillDef | undefined {
 export const SKILL_EXP_SCALE = 600
 
 export function skillLevelFromExp(exp: number): number {
-  const e = Math.max(0, exp)
-  return (100 * e) / (e + SKILL_EXP_SCALE)
+  // 双曲饱和曲线由公共库给(见 packages/engine 的 crafting.proficiencyFromExp):
+  // 永远逼近上限而不到顶 —— 技艺没有"练满"一说
+  return proficiencyFromExp(exp, SKILL_EXP_SCALE)
 }
 
 /** 技艺境地:用叙事分档代替裸数字,避免玩家把技艺读成"等级" */
@@ -90,7 +92,7 @@ const SKILL_STAGES: readonly { min: number; name: string }[] = [
 ]
 
 export function skillStageName(level: number): string {
-  return SKILL_STAGES.find(s => level >= s.min)?.name ?? '生疏'
+  return stageNameOf(level, SKILL_STAGES, '生疏')
 }
 
 // ============ 丹方工艺表 ============

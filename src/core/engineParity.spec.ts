@@ -76,6 +76,11 @@ import { GONGFA_BRANCHES } from '@/data/gongfaBranches'
 import { GONGFA_SYSTEM } from './engineWorld'
 import { GONGFA_UP_GROWTH, GONGFA_UP_WUDAO_BASE } from '@/data/constants'
 import { qualityDef as realQualityDefOf } from '@/data/qualities'
+import { composeSuccessRate, materialLoreOf, overReachFactor as appOverReachFactor, weightedSkill as appWeightedSkill } from './craftability'
+import { PILLS } from '@/data/pills'
+import { recipeCraft, type SkillId } from '@/data/crafting'
+import { LORE_MAX, MATERIALS } from '@/data/materials'
+import { SKILL_EXP_SCALE, skillLevelFromExp, skillStageName } from '@/data/crafting'
 
 /**
  * 对账就用**应用运行时那一份**世界对象(ENGINE_WORLD),不再另装一份:
@@ -237,6 +242,41 @@ function refGongfaUpgradeCost(qualityRank: number, level: number, discount: numb
     wudao: Math.max(1, Math.ceil(GONGFA_UP_WUDAO_BASE * (1 + qualityRank * 0.6) * Math.pow(GONGFA_UP_GROWTH, level) * (1 - discount))),
     page: Math.ceil(level * (1 + qualityRank * 0.5))
   }
+}
+
+// ---- 迁移前 core/craftability 的四条纯式(成功率乘区 / 越级 / 认知度 / 加权技艺) ----
+
+const clamp01 = (v: number): number => Math.max(0, Math.min(1, v))
+
+function refOverReachFactor(over: number): number {
+  if (over <= 0) return 1
+  const TABLE = [1, 0.6, 0.35, 0.18]
+  return over < TABLE.length ? TABLE[over]! : 0.18 * Math.pow(0.45, over - 3)
+}
+
+function refComposeSuccessRate(mastery: number, matLore: number, skill: number, over: number): number {
+  const masteryFactor = 0.22 + 0.78 * clamp01(mastery)
+  const loreFactor = 0.42 + 0.58 * clamp01(matLore)
+  const skillFactor = 0.3 + 0.7 * clamp01(skill / 100)
+  return 0.95 * masteryFactor * loreFactor * skillFactor * refOverReachFactor(over)
+}
+
+function refMaterialLoreOf(materials: readonly string[], loreOf: (id: string) => number): number {
+  if (materials.length === 0) return 1
+  let sum = 0
+  for (const id of materials) sum += Math.min(LORE_MAX, Math.max(0, loreOf(id))) / LORE_MAX
+  return sum / materials.length
+}
+
+function refWeightedSkill(craft: { skills: Record<string, number | undefined> }, levelOf: (id: string) => number): number {
+  let total = 0
+  let weight = 0
+  for (const [k, w] of Object.entries(craft.skills)) {
+    if (w === undefined) continue
+    total += levelOf(k) * w
+    weight += w
+  }
+  return weight > 0 ? total / weight : 0
 }
 
 /** 迁移前 data/affixes.affixValue 的原式(词条数值 = min + (max-min) × roll,按小数位取整) */
@@ -760,6 +800,69 @@ describe('对账 · 功法/技能(库的技能系统 与 冻结的旧口径)', (
       for (const bid of refIds) {
         expect(GONGFA_SYSTEM.branchMods(def.id, bid), `${def.id}·${bid}`).toEqual(GONGFA_BRANCHES.find(b => b.id === bid)!.mods)
       }
+    }
+  })
+})
+
+describe('对账 · 炼制(库的乘区公式 与 冻结的旧口径)', () => {
+  it('成功率:掌握/认知/技艺/越级 四维网格上逐点精确相等', () => {
+    for (const mastery of [0, 0.2, 0.5, 0.9, 1, 1.5]) {
+      for (const lore of [0, 0.33, 0.75, 1]) {
+        for (const skill of [0, 12, 55, 100, 140]) {
+          for (const over of [-1, 0, 1, 3, 5, 9]) {
+            const where = `掌握${mastery}·认知${lore}·技艺${skill}·越级${over}`
+            expect(appOverReachFactor(over), where).toBe(refOverReachFactor(over))
+            expect(composeSuccessRate(mastery, lore, skill, over), where).toBe(refComposeSuccessRate(mastery, lore, skill, over))
+          }
+        }
+      }
+    }
+  })
+
+  it('平均认知度:真实丹方的材料表 × 若干认知档,逐条相等', () => {
+    const recipes = PILLS.map(def => recipeCraft(def)).filter((c): c is NonNullable<typeof c> => c !== null)
+    expect(recipes.length).toBeGreaterThan(10)
+    for (const lorePerItem of [0, 1, Math.floor(LORE_MAX / 2), LORE_MAX, LORE_MAX + 5]) {
+      const loreOf = (): number => lorePerItem
+      for (const craft of recipes) {
+        expect(materialLoreOf(craft.materials, loreOf), `材料认知 ${lorePerItem}`).toBe(refMaterialLoreOf(craft.materials, loreOf))
+      }
+    }
+  })
+
+  it('加权技艺:真实丹方 × 几档技艺水平,逐条相等', () => {
+    const recipes = PILLS.map(def => recipeCraft(def)).filter((c): c is NonNullable<typeof c> => c !== null)
+    for (const level of [0, 25, 60, 100]) {
+      const levelOf = (_id: SkillId): number => level
+      for (const craft of recipes) {
+        expect(appWeightedSkill(craft, levelOf), `技艺 ${level}`).toBe(refWeightedSkill({ skills: craft.skills as Record<string, number | undefined> }, id => levelOf(id as SkillId)))
+      }
+    }
+  })
+
+  it('材料表本身非空(否则上面两条会假绿)', () => {
+    expect(MATERIALS.length).toBeGreaterThan(0)
+  })
+
+  it('熟练度曲线与叙事分档:与冻结的旧口径一致', () => {
+    // 迁移前 data/crafting 的两条:双曲饱和 100e/(e+600),以及按 min 找第一档
+    const refLevel = (exp: number): number => (100 * Math.max(0, exp)) / (Math.max(0, exp) + SKILL_EXP_SCALE)
+    const stages = [
+      { min: 94, name: '大成' },
+      { min: 85, name: '通玄' },
+      { min: 72, name: '精通' },
+      { min: 58, name: '娴熟' },
+      { min: 40, name: '小成' },
+      { min: 25, name: '入门' },
+      { min: 10, name: '初识' },
+      { min: 0, name: '生疏' }
+    ]
+    const refStage = (lv: number): string => stages.find(s => lv >= s.min)?.name ?? '生疏'
+    for (const exp of [0, 1, 200, SKILL_EXP_SCALE, 5400, 1e6, -50]) {
+      expect(skillLevelFromExp(exp), `经验 ${exp}`).toBe(refLevel(exp))
+    }
+    for (let lv = -5; lv <= 105; lv += 1) {
+      expect(skillStageName(lv), `等级 ${lv}`).toBe(refStage(lv))
     }
   })
 })

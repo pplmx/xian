@@ -13,9 +13,22 @@ import { recipeCraft, skillDef, type RecipeCraft, type SkillId } from '@/data/cr
 import { pillDef, PILLS } from '@/data/pills'
 import { useLoreStore } from '@/stores/lore'
 import { usePlayerStore } from '@/stores/player'
+import { averageLore, composeCraftRate, overReachFactor as libOverReachFactor, weightedSkill as libWeightedSkill } from '@engine/index'
 
 /** 各项皆满且同阶时的成功率上限 —— 余下的是天意 */
 export const CRAFT_BASE_RATE = 0.95
+
+/**
+ * 本作的合成公式 —— 四个乘区各有下限,越级另走陡峭曲线。
+ * 形状与算法由公共库给(见 packages/engine 的 crafting),这里只有本作的那几个数。
+ */
+const CRAFT_FORMULA = {
+  baseRate: CRAFT_BASE_RATE,
+  mastery: { floor: 0.22, span: 0.78 },
+  lore: { floor: 0.42, span: 0.58 },
+  skill: { floor: 0.3, span: 0.7 },
+  overReach: { table: [1, 0.6, 0.35, 0.18], decay: 0.45 }
+}
 
 export interface Craftability {
   recipeId: string
@@ -49,30 +62,20 @@ export function bearableRank(major: number): number {
 /**
  * 超规格惩罚。不是禁止,是陡峭——
  * 高一阶还有六成把握,高四阶就只剩一线生机了。
+ * 曲线由公共库算(表与衰减都在上面的公式里)。
  */
 export function overReachFactor(over: number): number {
-  if (over <= 0) return 1
-  const TABLE = [1, 0.6, 0.35, 0.18]
-  return over < TABLE.length ? TABLE[over]! : 0.18 * Math.pow(0.45, over - 3)
+  return libOverReachFactor(over, CRAFT_FORMULA.overReach)
 }
 
-/** 方中灵材的平均认知度(0~1) */
+/** 方中灵材的平均认知度(0~1)—— 归一与平均由公共库算 */
 export function materialLoreOf(materials: readonly string[], loreOf: (id: string) => number): number {
-  if (materials.length === 0) return 1
-  const sum = materials.reduce((acc, id) => acc + Math.min(LORE_MAX, loreOf(id)) / LORE_MAX, 0)
-  return sum / materials.length
+  return averageLore(materials, loreOf, LORE_MAX)
 }
 
-/** 按丹方的技艺权重加权求和(0~100) */
+/** 按丹方的技艺权重加权求和(0~100)—— 加权由公共库算 */
 export function weightedSkill(craft: RecipeCraft, levelOf: (id: SkillId) => number): number {
-  let total = 0
-  let weight = 0
-  for (const [k, w] of Object.entries(craft.skills)) {
-    if (w === undefined) continue
-    total += levelOf(k as SkillId) * w
-    weight += w
-  }
-  return weight > 0 ? total / weight : 0
+  return libWeightedSkill(craft.skills as Record<string, number | undefined>, id => levelOf(id as SkillId))
 }
 
 /**
@@ -80,10 +83,7 @@ export function weightedSkill(craft: RecipeCraft, levelOf: (id: SkillId) => numb
  * 任何一项都不会把成功率直接归零,但四项全弱时结果自然低到不该开炉。
  */
 export function composeSuccessRate(mastery: number, matLore: number, skill: number, over: number): number {
-  const masteryFactor = 0.22 + 0.78 * Math.max(0, Math.min(1, mastery))
-  const loreFactor = 0.42 + 0.58 * Math.max(0, Math.min(1, matLore))
-  const skillFactor = 0.3 + 0.7 * Math.max(0, Math.min(1, skill / 100))
-  return CRAFT_BASE_RATE * masteryFactor * loreFactor * skillFactor * overReachFactor(over)
+  return composeCraftRate({ mastery, lore: matLore, skill: skill / 100, overReach: over }, CRAFT_FORMULA)
 }
 
 function weaknessLines(c: {

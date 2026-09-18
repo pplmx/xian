@@ -115,6 +115,7 @@ packages/engine/
 | 离时时长账（上限 / 效率 / 步数 / 余量） | `core/offline` 走库的闲置模块 `planIdle` | 五档洞府上限 × 0~200 小时逐点与冻结旧式子相同（含"是否被截"的 1 秒容差） |
 | 存档形状修复与版本迁移链 | `utils/saveShape` 转出库的实现；`core/save` 的迁移链走库的 `runMigrations` | 老档迁移值搬过去/旧字段清掉/幂等由 `saveMigration.spec` 端到端钉着；库侧另有形状原语与链式迁移的独立用例 |
 | 功法（等级曲线 / 升级消耗 / 满级分支） | `core/engineWorld` 的 `GONGFA_SYSTEM`；`stores/cultivation` 与 `core/gongfaService` 转发 | 63 部功法 × 每级 × 三档折扣逐键/逐项与冻结旧口径相等（含"悟道点打折、残页不打折"） |
+| 炼制（成功率四乘区 / 越级惩罚 / 熟练度曲线） | `core/craftability` 与 `data/crafting` 的纯式走库的 crafting | 四维网格（掌握×认知×技艺×越级）逐点精确相等；真实丹方的材料表与技艺权重逐条相等 |
 
 四套系统的**规则**至此都由库承担；应用侧留下的是内容数据与依赖本作 GNum 战力表的数值解析。
 
