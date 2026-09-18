@@ -200,6 +200,9 @@ export { deltaOf, deltaSince, snapshotOf } from './counters.js'
 export type { Chain, ChainAdvance, ChainConfig, ChainNode, ChainState } from './chain.js'
 export { createChain } from './chain.js'
 
+export type { PityConfig, PityCounter, PityRoll, PityState, SoftPity } from './pity.js'
+export { createPityCounter, softChance } from './pity.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

@@ -142,6 +142,10 @@ import type {
   PointPool,
   PointState,
   PointsConfig,
+  PityConfig,
+  PityCounter,
+  PityRoll,
+  PityState,
   ProgressView,
   RerollOptions,
   QualityDef,
@@ -175,6 +179,7 @@ import type {
   SkillEffectContext,
   SkillState,
   SkillSystem,
+  SoftPity,
   SlotDef,
   ScheduledCycle,
   SlotMap,
@@ -237,6 +242,7 @@ const RUNTIME_EXPORTS = [
   'createFacilitySystem',
   'createHoldingSystem',
   'createPointPool',
+  'createPityCounter',
   'createRealmSystem',
   'createResourceSystem',
   'createRng',
@@ -272,6 +278,7 @@ const RUNTIME_EXPORTS = [
   'runMigrations',
   'seedFromString',
   'snapshotOf',
+  'softChance',
   'stageNameOf',
   'validateGame',
   'weightedSkill'
@@ -374,6 +381,7 @@ type PublicTypes = {
   tasks: [ClaimOutcome, SettleResult, TaskBoard, TaskBoardState, TaskProgress, TaskSpec]
   counters: [CounterMap]
   chain: [Chain<{ open: boolean }>, ChainAdvance, ChainConfig<{ open: boolean }>, ChainNode, ChainState]
+  pity: [PityConfig, PityCounter, PityRoll, PityState, SoftPity]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

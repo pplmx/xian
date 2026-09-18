@@ -228,6 +228,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 周期任务板 | `createTaskBoard` | 每日 / 每周 / 打卡:进度靠"当前 − 期初基准"(不清零计数器)、换期幂等、增量不出现负数、一期只结算一次 |
 | 计数器基准快照 | `snapshotOf` / `deltaOf` / `deltaSince` | "从哪一刻算起":同一份只增不减的计数器同时回答"生涯多少"与"这一段多少",不用清零 |
 | 顺序任务链 | `createChain` | 主线 / 章节 / 教程:一次结算连推多节、有守卫且撞上要能说出来、不可逆、到链尾就停 |
+| 抽取保底 | `softChance` / `createPityCounter` | 抽得越多越容易出(涨幅封顶、概率有上下限)、第 N 次必出(保底照样掷骰)、出货清不清账你定 |
 
 ### 战斗:副本的下半场
 
@@ -503,6 +504,8 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **非计数器的"这一段"**(择定了几条路 / 雪耻几个宿敌) | `deltaOf(base, now)` —— 同一个夹取规则,不为整数单写一遍 |
 | **主线 / 章节 / 教程怎么推进** | `createChain({ nodes, done, maxSteps? })` —— `done(node, ctx)` 由内容给(库不认识境界 / 计数);一次能推多远推多远(默认最多 5 节,撞上守卫回报 `capped`),到链尾即停,推进不可逆 |
 | **"还剩几节 / 现在在哪一节"** | `current(state)` / `remaining(state)` / `indexOf(id)` / `nodeAt(index)` —— 界面读数与推进共用同一份;坏下标自动夹回合法范围 |
+| **"看/抽了多少次之后概率变高"**(软保底) | `softChance(base, tries, { step, cap, floor, ceil })` —— 涨多少、涨到哪儿封顶、概率夹在哪区间,一次说清(本作的照面次数保底就是这条:每多看一次 +3%、最多 +35%、夹在 4%~90%) |
+| **"第 N 次必出"**(硬保底与计数) | `createPityCounter({ hardAt, resetOn })` —— `roll(state, pool, rng, base, soft?)` 掷一次并回报 `hit / pity / chance`;**保底照样掷骰**(随机流与开不开保底无关);`resetOn: 'hit' \| 'pity'` 决定什么时候清零,池子各记各的 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
@@ -607,7 +610,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 71 个运行时导出 + 186 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+| 公开面判据 | 73 个运行时导出 + 191 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
 
 ## 边界与兼容性
 
@@ -666,6 +669,7 @@ packages/engine/
     intake.ts       入库漏斗:先见证、按规则拒收、满了腾位、折算
     settlement.ts   结算回执:实际入账是唯一来源
     drops.ts        掉落表:概率归一、保底、抽数与份数
+    pity.ts         抽取保底:软保底曲线(涨幅封顶)与第 N 次必出
     economy.ts      经济读数:进/出比值与判词
     cycles.ts       周期:每日 / 每赛季的确定性轮换
     choices.ts      抉择:事件选项、加权后果、超时兜底

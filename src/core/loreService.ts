@@ -12,6 +12,7 @@ import { recipeCraft, type SkillId } from '@/data/crafting'
 import { pillDef, PILLS } from '@/data/pills'
 import { enemyDef } from '@/data/enemies'
 import { bearableRank } from './craftability'
+import { softChance } from 'wanxiang-engine'
 import { useLoreStore } from '@/stores/lore'
 import { useDongfuStore } from '@/stores/dongfu'
 import { usePlayerStore } from '@/stores/player'
@@ -61,11 +62,14 @@ export {
  * 辨识一味未知灵材的概率。
  * 材料阶位越高越难认,识材技艺越高越容易,照面次数给一点保底——
  * 见得够多,再迟钝的人也总有认出来的一天。
+ *
+ * 那份"见得多了概率涨"的曲线走库的软保底原语(见 packages/engine 的 pity):
+ * 每多一次照面 +3%,最多 +35%,概率夹在 [4%, 90%] —— 涨幅封顶这一条很重要,
+ * 不封顶的话到了后期概率会被抬到 1,等于把"越看越眼熟"改写成"第 N 次必认出"。
  */
 export function discernChance(rank: number, discernLevel: number, seen: number): number {
   const base = 0.2 + discernLevel / 260 - (rank - 1) * 0.018
-  const familiarity = Math.min(0.35, seen * 0.03)
-  return Math.max(0.04, Math.min(0.9, base + familiarity))
+  return softChance(base, seen, { step: 0.03, cap: 0.35, floor: 0.04, ceil: 0.9 })
 }
 
 /**
@@ -75,8 +79,8 @@ export function discernChance(rank: number, discernLevel: number, seen: number):
 export function natureChance(rank: number, discernLevel: number, craftLevel: number, seen: number): number {
   if (seen < SEEN_FOR_NATURE) return 0
   const base = 0.1 + discernLevel / 500 + craftLevel / 300 - (rank - 1) * 0.015
-  const familiarity = Math.min(0.25, (seen - SEEN_FOR_NATURE) * 0.02)
-  return Math.max(0.02, Math.min(0.75, base + familiarity))
+  // 门槛之后才开始涨:所以传进去的是"越过门槛之后见过几次"
+  return softChance(base, seen - SEEN_FOR_NATURE, { step: 0.02, cap: 0.25, floor: 0.02, ceil: 0.75 })
 }
 
 // ============ 服务 ============
