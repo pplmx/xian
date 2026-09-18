@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 214,
+  "round": 215,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T02:55:00+00:00",
+  "updated_at": "2026-09-18T03:06:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -1823,7 +1823,7 @@
       "version": 1,
       "created_at": "2026-09-11T08:22:14+00:00",
       "updated_at": "2026-09-11T08:22:14+00:00",
-      "touched_round": 172,
+      "touched_round": 215,
       "summary": "修行目标系统(goal.ts 纯函数 + HomeView 指引卡):给方向不替玩家做决定"
     },
     "TASK-032": {
@@ -12713,6 +12713,56 @@
       "confidence": 1.0,
       "effort": 1,
       "summary": "归来结算的寿元告警:离线修为/灵气已不限时,而寿元按现实时间走 —— 长缺席可能把人送到油尽灯枯边上,旧文案只报\"流逝了多少\"(没说剩多少、也没说危不危险)。已补告警(阈值与顶栏同源)。"
+    },
+    "ISS-222": {
+      "id": "ISS-222",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T03:06:20+00:00",
+      "updated_at": "2026-09-18T03:06:20+00:00",
+      "touched_round": 215,
+      "severity": 0.5,
+      "confidence": 1.0,
+      "effort": 1,
+      "summary": "新手引导的路线图缺进度:首页把主线任务的名字与说明摆着,却不给进度;而每日任务有 3/10。主线(32 条,顺序即教学:突破→历练→杀敌→装备→炼气圆满→筑基→功法→建筑→炼丹→首领→金丹)正是新手第一天唯一的路线图,玩家无从判断\"这一趟历练算不算数\"\"还差几个敌人\",也看不出离下一境多远。"
+    },
+    "EV-198": {
+      "id": "EV-198",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T03:06:20+00:00",
+      "updated_at": "2026-09-18T03:06:20+00:00",
+      "touched_round": 215,
+      "source": "src/core/questProgress.ts / questProgress.spec.ts(读数与 evalCond 全表对账)",
+      "summary": "三种条件都翻成人话:计数→已 X/Y;突破境界→尚在 X·需至 Y;突破到某境界某层→与判据同一套比较。达成与否读 progress.evalCond(已导出为公开判据),spec 逐条对账 32 条主线;认不出的状态型键返回 null 不硬编。首页主线卡加一行进度 + 计数类细进度条。",
+      "confidence": 1.0
+    },
+    "CHG-253": {
+      "id": "CHG-253",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T03:06:20+00:00",
+      "updated_at": "2026-09-18T03:06:20+00:00",
+      "touched_round": 215,
+      "commit": "92b9e7c",
+      "summary": "主线任务显示进度:新增 core/questProgress(与 evalCond 同源),HomeView 主线卡接入;questProgress.spec 覆盖计数/境界/两层比较/状态键/全表对账。"
+    },
+    "TASK-197": {
+      "id": "TASK-197",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T03:06:20+00:00",
+      "updated_at": "2026-09-18T03:06:20+00:00",
+      "touched_round": 215,
+      "category": "core-feature",
+      "severity": 0.4,
+      "confidence": 0.9,
+      "effort": 1,
+      "summary": "新手前 30 分钟仍有可做的一层:现在的引导靠\"目标 + 主线 + 每日\"三块并列,缺一条把三者串起来的显式第一步(例如首次进入修炼页/历练页时的一次性提示)。本轮只补了主线进度(读数),下一步可做\"第一次该点哪里\"的引导卡。"
     }
   },
   "edges": [
@@ -18944,6 +18994,24 @@
       "to": "TASK-196",
       "type": "implements",
       "created_at": "2026-09-18T02:55:00+00:00"
+    },
+    {
+      "from": "CHG-253",
+      "to": "ISS-222",
+      "type": "resolves",
+      "created_at": "2026-09-18T03:06:20+00:00"
+    },
+    {
+      "from": "ISS-222",
+      "to": "COMP-011",
+      "type": "located_in",
+      "created_at": "2026-09-18T03:06:20+00:00"
+    },
+    {
+      "from": "TASK-197",
+      "to": "ISS-222",
+      "type": "addresses",
+      "created_at": "2026-09-18T03:06:20+00:00"
     }
   ]
 }
