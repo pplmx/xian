@@ -423,6 +423,11 @@ cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
 独立 import 一次产物装配出换皮世界;并断言源码里没有任何宿主引用。
 只要有一处"顺手用了宿主的别名或配置",这条就会红 —— 而这种依赖待在同一个仓库里是看不出来的。
 
+库自己的 `bun run check` 末尾还会跑**使用者那一侧**的判据(`scripts/verify-dist.mjs`):
+真的 `npm pack` 一次,把 tarball 摊进临时项目的 `node_modules/`,再从那个项目里
+`import 'wanxiang-engine'` 与 `'wanxiang-engine/presets/demo'`。**按路径 import 本地 dist**
+只能说明文件写出来了;"按包名装得上、子路径也解析得到"才是别人那边会发生的事。
+
 ## 「只改名字」到底改哪儿
 
 | 想改的东西 | 改配置的哪一处 | 不改的东西 |

@@ -143,6 +143,10 @@ assert.ok(
 )
 console.log(`   ${shipped.length} 个文件 · 打包 ${(pack.size / 1024).toFixed(1)} KB / 展开 ${((pack.unpackedSize ?? 0) / 1024).toFixed(1)} KB`)
 
+// 内容对得上还不够:真的装一遍。复用库自己的那一份判据(它连"按包名 + 子路径 import"都验),
+// 免得宿主这边维护第二套口径;上游改坏了,在这里就红,不必等推完独立仓库才由 CI 发现。
+execFileSync('node', ['packages/engine/scripts/verify-dist.mjs'], { cwd: ROOT, stdio: 'inherit' })
+
 console.log('⑥ 宿主只经公开入口引用库(不许别名复活、不许深层路径)')
 const APP_SRC = resolve(ROOT, 'src')
 const appFiles = []
@@ -172,4 +176,4 @@ assert.deepEqual(crawlUsers, [], `这些文件用相对路径直接钻进库内�
 assert.ok(byName > 0, '宿主一处都没引用库?那这份自检在验什么')
 console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
 
-console.log(`产物自检通过:${entries.length} 个入口 + 两份内容包 + 交叉校验 + 发布包内容 + 宿主引用方式`)
+console.log(`产物自检通过:${entries.length} 个入口 + 两份内容包 + 交叉校验 + 发布包内容 + 真装一遍 + 宿主引用方式`)
