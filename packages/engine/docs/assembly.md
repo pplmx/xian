@@ -52,6 +52,7 @@
 | --- | --- | --- |
 | 等级曲线、进阶、寿元 | `createRealmSystem` | `presets/xiuxian` + `presets.spec.ts` |
 | 等级曲线的手感(一层涨多少、跨境陡不陡、卡关卡几次) | 同上 | `realms.sim.spec.ts`(境内涨 14.9 倍而跨境只涨 1.28 倍;大关另走一条成功率线) |
+| **自己写一张境界表**(世界分段 / 逐境层数 / 两段式需求 / 大关走试炼 / 换数值层) | `createRealmSystem` + `Numeric<T>` | `examples/realm-ladder.ts`(「一梯三界」:点心铺学徒 → 宗师,7 境 × 5 层、没配 lifespan 就等于无限、只拧一个后段倍率就从 871 天缩到 660 天) |
 | 掉装 / 洗练 / 装配 | `createEquipmentSystem` | `examples/quickstart.ts` |
 | 洗练 / 重铸(锁住几条、其余重掷) | `equipment.rerollAffixes` | `equipment.sim.spec.ts`(锁两条必定洗出三条;池子被门槛排空是唯一例外) |
 | 技能 / 功法(等级曲线、升级消耗、满级择路) | `createSkillSystem` | `skills.spec.ts` + `skills.sim.spec.ts`(练满总账、折扣只省可折项、分支值几级) |
