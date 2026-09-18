@@ -29,6 +29,7 @@ import { qualityDef } from '@/data/qualities'
 import { MAX_MAJOR } from '@/data/realms'
 import { WORLD_BREAK_MAJOR } from '@/data/realms'
 import { maxTierForMajor } from '@/data/regions'
+import { createEconomyReadings } from 'wanxiang-engine'
 import {
   DAO_SOURCE_PER_FRUIT,
   FURNACE_RATES,
@@ -93,12 +94,13 @@ function buildingLevel(major: number, maxLevel: number): number {
   return Math.min(maxLevel, 2 + 2 * major)
 }
 
-function verdictOf(ratio: number): ResourceFlow['verdict'] {
-  if (ratio < 0.7) return '瓶颈'
-  if (ratio <= 3) return '健康'
-  if (ratio <= 10) return '过剩'
-  return '闲置'
-}
+/**
+ * 经济读数走库的经济层(见 packages/engine 的 economy):比值怎么算、分档阈值、
+ * "没把握就写 note"的口径都在那儿;本作只给判词的说法(瓶颈 / 健康 / 过剩 / 闲置)。
+ */
+const ECONOMY_READINGS = createEconomyReadings({
+  labels: { tight: '瓶颈', healthy: '健康', surplus: '过剩', idle: '闲置' }
+})
 
 /** 该层级掉落装备的平均分解灵尘(真实生成取样) */
 export function avgDustPerDrop(tier: number, samples = 200): number {
@@ -230,8 +232,15 @@ export function auditEra(major: number): EraAudit {
   const daoCostHours = furnace && furnace.potential > 0 ? DAO_SOURCE_PER_FRUIT / furnace.potential : 0
 
   const make = (resource: AuditResource, income: number, sink: number, note?: string): ResourceFlow => {
-    const ratio = sink > 0 ? income / sink : Infinity
-    return { resource, incomePerHour: income, sinkPerHour: sink, ratio, verdict: verdictOf(ratio), note }
+    const [reading] = ECONOMY_READINGS.read([{ key: resource, income, sink, note }])
+    return {
+      resource,
+      incomePerHour: income,
+      sinkPerHour: sink,
+      ratio: reading!.ratio,
+      verdict: reading!.verdict as ResourceFlow['verdict'],
+      note
+    }
   }
 
   /** 界外:这几样材料的出口改认熔炉(人间界照旧走各自的去处) */

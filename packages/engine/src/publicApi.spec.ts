@@ -56,6 +56,13 @@ import type {
   StageMemoryConfig,
   StageMemoryInput,
   StageMemoryState,
+  EconomyConfig,
+  EconomyPeriod,
+  EconomyReadings,
+  EconomyVerdict,
+  FlowInput,
+  FlowReading,
+  PeriodReading,
   StageSpec,
   CycleSystem,
   CraftLevers,
@@ -169,6 +176,7 @@ const RUNTIME_EXPORTS = [
   'compareBy',
   'createChoiceSystem',
   'createCodex',
+  'createEconomyReadings',
   'createStageMemory',
   'createCycleSystem',
   'createAttributeSystem',
@@ -300,6 +308,7 @@ type PublicTypes = {
   choices: [ChoiceConfig<number, number>, ChoiceDef<number>, ChoiceOutcome<number>, ChoiceReceipt<number>, ChoiceSystem<number, number>]
   codex: [CodexConfig, CodexStage, CodexState, CodexSystem, CodexView]
   memory: [StageMemory, StageMemoryConfig, StageMemoryInput, StageMemoryState, StageSpec]
+  economy: [EconomyConfig, EconomyPeriod, EconomyReadings, EconomyVerdict, FlowInput, FlowReading, PeriodReading]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

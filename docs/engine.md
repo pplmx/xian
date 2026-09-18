@@ -33,6 +33,7 @@
 | 事件结算(掷后果 / 效果解释 / 超时兜底) | `core/eventEngine` 的 `resolveEventChoice` 与 `autoResolveEvent` 走库的 `createChoiceSystem`(效果的语义仍由本作的 `applyEffect` 解释) | `engineChoiceParity.spec` 冻结旧实现:前 40 个事件的每个选项 × 20 颗种子,**掷中的后果与之后消耗的随机数**都逐次相同;三级兜底在两种玩家状态下与旧实现一致 |
 | 敌人认知与装备见闻(图鉴) | `stores/lore` 的升档判定与"各取其高"走库的 `createCodex`(档位表与门槛仍住在本作 `core/loreThresholds`) | `engineCodexParity.spec` 冻结旧实现:普通怪与首领各 60 次交手的累计与档位逐次相同(含"一次只进一层")、装备见闻的品质 / 层级 / 用过三格逐个相同 |
 | 区域兴衰与妖气复聚(世界记忆) | `core/worldMemory` 的档位判定与"钟"走库的 `createStageMemory`(档位表与门槛搬进 `core/engineMemory`,系数写在同一张表里) | `engineMemoryParity.spec` 冻结旧实现:胜场 × 守时 × 闲置时长 × 是否镇压过的全网格逐点相同;复聚的钟与倒计时、"从没打过交道不算够钟"也逐点一致 |
+| 经济体检读数(瓶颈 / 过剩 / 闲置) | `core/economySim` 的比值与判词走库的 `createEconomyReadings`(判词名仍是本作的中文口径) | `engineEconomyParity.spec` 冻结旧实现:21 个时代 × 每条资源流的比值与判词逐条相同;边界(出为 0、进为 0、恰好压在 0.7 / 3 / 10)逐点一致;"没把握就写 note"的约定还在 |
 
 资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
 材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,
