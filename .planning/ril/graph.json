@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 230,
+  "round": 231,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T11:05:00+00:00",
+  "updated_at": "2026-09-18T11:45:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13733,6 +13733,66 @@
       "rationale": "共鸣原来是 core/equipSet 自己数件数、自己判激活;而库里早已有 resolveLoadout(件数 → 激活的 hook)。两份规则意味着\"几件算一套\"会有两种答法。把内容与规则分开之后:data/equipSets.ts 只写名字/件数/文案/hook,件数与激活由库算 —— 且库的装配模型是**按槽位**的,这顺手把\"一次戴两顶帽子\"这类不存在的状态从判据里挤了出去。",
       "alternatives_rejected": "①继续两份实现(件数口径迟早分叉);②把共鸣内容也塞进库里(那是作品的内容,不是通用机制);③内容留在 core/equipSet 并与库互引(模块成环,实测会炸)。",
       "summary": "共鸣:内容(data/equipSets.ts)与规则(库 resolveLoadout)分开;件数与 hook 激活只有库一处实现,判据按真实装配(一槽一件)写。"
+    },
+    "TASK-210": {
+      "id": "TASK-210",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T11:45:00+00:00",
+      "updated_at": "2026-09-18T11:45:00+00:00",
+      "touched_round": 231,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "把「离线推进」这条放置类的另一半也抽出成库能力:planIdle 只算时长账(过去多久 → 计入上限 → 乘效率 → 步数/余量 + 被上限吃掉的部分),runIdle 按步折叠、每一步产出由调用方决定;本作的离线结算改用 planIdle,其余内容与平衡不动。"
+    },
+    "CHG-273": {
+      "id": "CHG-273",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:45:00+00:00",
+      "updated_at": "2026-09-18T11:45:00+00:00",
+      "touched_round": 231,
+      "commit": "ed3639c",
+      "summary": "库侧新增 idle.ts / idle.spec.ts:IdleConfig(stepMs/capMs/efficiency/maxSteps)、IdlePlan(elapsed/cappedMs/effectiveMs/steps/remainderMs/overflowMs/capped/stepMs)、planIdle/runIdle;index 导出;示例脚本补一段离线账;README 补该模块。"
+    },
+    "CHG-274": {
+      "id": "CHG-274",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:45:00+00:00",
+      "updated_at": "2026-09-18T11:45:00+00:00",
+      "touched_round": 231,
+      "commit": "278e29a",
+      "summary": "应用侧:core/offline 的 capSec/effSec/是否被截改为 planIdle(dtSec*1000, { stepMs:1000, capMs:洞府档位*3600*1000, efficiency:0.9 });engineParity 补「离时时长账」对账:五档上限 × 0~200 小时逐点与冻结旧式子相同(连 1 秒容差都照搬)。"
+    },
+    "EV-216": {
+      "id": "EV-216",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:45:00+00:00",
+      "updated_at": "2026-09-18T11:45:00+00:00",
+      "touched_round": 231,
+      "source": "src/core/engineParity.spec.ts(29 例)+ packages/engine(62 例)+ bun run test(191 文件 / 1941 例)+ bun run check + bun run check:engine + bun packages/engine/examples/minimal.ts",
+      "summary": "离线账对账:五档洞府上限 × 0~200 小时逐点相同(cappedMs/effectiveMs/overflowMs/capped/steps);库内用例覆盖不封顶、上限与效率分别作用、余量不吞、步数上限、非法步长、逐步折叠;示例脚本实跑输出 8h/上限6h/效率0.9 → 计入6h·有效5.4h·32步·余4分;产物自检 27 个文件 / 46.7 KB。"
+    },
+    "DEC-080": {
+      "id": "DEC-080",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T11:45:00+00:00",
+      "updated_at": "2026-09-18T11:45:00+00:00",
+      "touched_round": 231,
+      "rationale": "离线的\"回来补多少\"里有三条常被写成一行表达式的口径:上限(经营买的东西)、效率(在线优于离线的平衡)、粒度(每步结算一次的实现细节)。写成一行时,面板说不出\"超出上限的那部分没算哪一档\",调平衡也分不清改的是谁。故库把它拆成 cappedMs / effectiveMs / steps / remainderMs / overflowMs 五个数,并把\"每一步产什么\"完全留给调用方 —— 引擎不该知道修为还是材料。",
+      "alternatives_rejected": "①库提供一个\"离线收益\"函数(必须知道修为/材料,内容耦合进机制);②继续写在应用的结算函数里(第三份时长账,接入方还得自己再写一份);③只给 min() 一个上限工具(说不清效率与粒度)。",
+      "summary": "离时时长账拆成五个数、产出留给调用方;库只做时长与步数的账。"
     }
   },
   "edges": [
@@ -20612,6 +20672,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T11:05:00+00:00"
+    },
+    {
+      "from": "CHG-273",
+      "to": "TASK-210",
+      "type": "implements",
+      "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "CHG-274",
+      "to": "TASK-210",
+      "type": "implements",
+      "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "CHG-273",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "CHG-274",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "EV-216",
+      "to": "CHG-274",
+      "type": "validates",
+      "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "EV-216",
+      "to": "CHG-273",
+      "type": "validates",
+      "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "TASK-210",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "TASK-210",
+      "to": "TASK-209",
+      "type": "depends_on",
+      "created_at": "2026-09-18T11:45:00+00:00"
+    },
+    {
+      "from": "DEC-080",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T11:45:00+00:00"
     }
   ]
 }
