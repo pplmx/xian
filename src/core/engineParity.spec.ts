@@ -69,6 +69,8 @@ import type { ResolvedEquipStats } from './equipGen'
 import { ENGINE_WORLD, ENGINE_WORLD_CONFIG } from './engineWorld'
 import { activeSets, hasActiveSet, setCounts } from './equipSet'
 import { equipmentTemplate as realTemplate } from '@/data/equipment'
+import { planIdle } from '@engine/index'
+import { OFFLINE_CAP_HOURS, OFFLINE_EFFICIENCY } from '@/data/constants'
 
 /**
  * 对账就用**应用运行时那一份**世界对象(ENGINE_WORLD),不再另装一份:
@@ -664,6 +666,33 @@ describe('对账 · 装备系统(库 与 尚未迁移的 equipGen)', () => {
 })
 
 // ============ 副本 ============
+
+/** 迁移前 core/offline 的时长账:上限、效率、是否被截(带 1 秒容差) */
+function refOfflineBudget(dtSec: number, capHours: number): { capSec: number; effSec: number; capped: boolean; overflowSec: number } {
+  const capSec = Math.min(dtSec, capHours * 3600)
+  return { capSec, effSec: capSec * OFFLINE_EFFICIENCY, capped: dtSec > capSec + 1, overflowSec: dtSec - capSec }
+}
+
+describe('对账 · 离时时长账(库的闲置模块 与 冻结的旧式子)', () => {
+  it('上限、效率、是否被截逐点相同(各档洞府上限 × 从 0 到 200 小时)', () => {
+    for (const capHours of OFFLINE_CAP_HOURS) {
+      for (let dtSec = 0; dtSec <= 200 * 3600; dtSec += 997) {
+        const ref = refOfflineBudget(dtSec, capHours)
+        const plan = planIdle(dtSec * 1000, {
+          stepMs: 1000,
+          capMs: capHours * 3600 * 1000,
+          efficiency: OFFLINE_EFFICIENCY
+        })
+        const where = `dt=${dtSec}s · cap=${capHours}h`
+        expect(plan.cappedMs / 1000, where).toBe(ref.capSec)
+        expect(plan.effectiveMs / 1000, where).toBeCloseTo(ref.effSec, 6)
+        expect(plan.overflowMs / 1000, where).toBeCloseTo(ref.overflowSec, 6)
+        expect(plan.overflowMs > 1000, where).toBe(ref.capped)
+        expect(plan.steps, where).toBe(Math.floor(plan.effectiveMs / 1000))
+      }
+    }
+  })
+})
 
 describe('对账 · 副本系统(库 与 尚未迁移的 regions/enemies)', () => {
   const system = NUM_WORLD.dungeons

@@ -30,6 +30,7 @@ import { autoResolveEvent, regionEventPoolFor } from './eventEngine'
 import { clearRegionAndUnlockNext, exploreEventChance, dangerFactorFor, explorationRules, winsUntilRegionBoss } from './exploration'
 import { currentRegionEvent, regionEventDef } from './regionEvent'
 import { placeContent } from './mortalWorldService'
+import { planIdle } from '@engine/index'
 import { expFromSecs, stoneByTier } from './formulas'
 import { settleSuppressedRegions } from './suppress'
 import { harvestMaterials, studyTick } from './loreService'
@@ -106,10 +107,20 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
    * 而灵气另有 10 倍容量的银行顶兜着(见 resources.setQi)。
    */
   const passiveSec = dtSec
-  const capSec = Math.min(dtSec, dongfu.offlineCapHours * 3600)
-  const effSec = capSec * OFFLINE_EFFICIENCY
+  /**
+   * 时长账交给公共库算(见 core/engineWorld 的闲置模块):
+   * 上限(洞府买的就是它)、效率(挂机折扣)、步数与余量各是各的数,
+   * 混在一个表达式里就说不清"超出的那部分到底没算哪一档"。
+   */
+  const idle = planIdle(dtSec * 1000, {
+    stepMs: 1000,
+    capMs: dongfu.offlineCapHours * 3600 * 1000,
+    efficiency: OFFLINE_EFFICIENCY
+  })
+  const capSec = idle.cappedMs / 1000
+  const effSec = idle.effectiveMs / 1000
   const notes: string[] = []
-  if (dtSec > capSec + 1) {
+  if (idle.overflowMs > 1000) {
     const capHours = dongfu.offlineCapHours
     const idx = (OFFLINE_CAP_HOURS as readonly number[]).indexOf(capHours)
     const nextCap = idx >= 0 && idx < OFFLINE_CAP_HOURS.length - 1 ? OFFLINE_CAP_HOURS[idx + 1]! : null
