@@ -50,6 +50,8 @@
 - 再开五处:`SkillDef.modsFn(level)`、`EquipmentPowerConfig.levelBonusFn(level)`、
   `EquipmentConfig.affixCountFn` / `affixWeightFn`、`CompanionConfig.stack`、以及
   `drawMany` 的 `guarantee: { tag, min }`(保底)
+- 目标条件可组合:`{ type: 'all' | 'any', of: [...] }`(可嵌套,进度给 `parts`);
+  遭遇调度可接管:`DungeonConfig.encounterFn(ctx, rng)`(返回 null 即用默认节奏)
 
 **已验证**
 

@@ -235,6 +235,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **强化加成曲线** | `equipment.power.levelBonusFn(level)`(默认每级 × `levelBonus`) |
 | **一件装备几条词条 / 每条词多重** | `equipment.affixCountFn(quality, tier, rng)`、`equipment.affixWeightFn(affix, quality, tier)` |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
+| **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
 | **区域多条前置**("两条线都通才开"/"任一即可") | `requireCleared: string \| string[]` + `requireMode: 'all' \| 'any'` |
 | **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
 | **随机内容池的标签体系与区间** | `deck` 的 `tags` / `min` / `max` / `weight` / `once`,`weightMultiplier`(倾向而非门槛) |
@@ -242,6 +243,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **抽 N 张的保底** | `drawMany(..., { guarantee: { tag, min } })`(至少 min 张带该标签;池里不够则补多少算多少) |
 | 多只伙伴的性格怎么合 | `companions.stack: 'override'`(默认,覆盖)/ `'add-relative'`(各自相对中性那一份相加) |
 | 目标/成就条件 | `goals` 的 `counter \| level \| position \| rank \| custom`,自定义键用 `GoalEnv.custom` |
+| **目标条件的组合** | `{ type: 'all', of: [...] }` / `{ type: 'any', of: [...] }`(可嵌套;空 `all` 成立、空 `any` 不成立),进度视图用 `parts` 摊开每个子条件 |
 | 伙伴性格的键名与中性值 | `companions.traits[].mods` + `companions.neutral`(缺中性值直接报错) |
 | **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改(宿主接 GNum 的例子见其 `engineNumeric`) |
 | 随机源(可复现 / 平台随机) | `Rng` 接口;库自带 mulberry32,可换 |
