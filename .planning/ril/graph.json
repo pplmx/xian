@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 327,
+  "round": 328,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:02:33+00:00",
+  "updated_at": "2026-09-18T22:06:11+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18685,6 +18685,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-391(bc2ea1b)。审计脚本(读 src 各模块的运行时导出名,查 docs/usage.md 是否提到):初测 5 个模块完全没被提到(dungeons/equipment/holding/numeric/realms —— 其中四个是通过 game.* 用的,属误报),人工核对后确认真正缺的是 holding / rng / presets 三个,已补;node scripts/verify-dist.mjs → \"模块速查覆盖自检通过(37 个模块都在 docs/usage.md 里)\";防空转:把 usage.md 里 createHoldingSystem 换成\"持有系统\" → 报 \"这些模块没有出现在 docs/usage.md 的模块表里:holding.ts\",恢复 → 绿;类型面:扫 dist 全部 .d.ts,203 个公开类型里 17 个只在自身声明处出现一次(BuffSystem/Chain/ChoiceSystem/CodexSystem/CycleSystem/DropTable/EconomyReadings/FacilitySystem/IntakeSystem/PityCounter/PointPool/RecipeRunner/Settlement/StageMemory/TaskBoard/TriageSystem/UnlockRegistry),逐个核对是 XxxSystem 别名(工厂返回类型),不是孤儿;bun run check(460 例 / 57 文件 + 十道自检);宿主 bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件)。",
       "summary": "文档地图也补上了判据:模块速查表从此\"不许漏模块\"(36 个锚点缺一即红,反向查文件是否存在)。同时确认类型面没有孤儿 —— 那 17 个只在声明处出现的别名都是工厂返回类型,使用者取得到、也用得上。"
+    },
+    "TASK-309": {
+      "id": "TASK-309",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T22:06:11+00:00",
+      "updated_at": "2026-09-18T22:06:11+00:00",
+      "touched_round": 327,
+      "category": "docs",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "文档片段自检:标了 <!-- compile-check --> 的代码块会被抽出来,在\"真装了一遍发布包\"的临时项目里用 tsc --strict 编一遍。README 先标两段(快速开始完整程序、三份内容包子路径导入),此前文档里的 ts 片段从没被执行过 —— 腐烂方式就是\"片段停在两个版本前\"。未标的不查(很多片段本是节选)。"
+    },
+    "CHG-392": {
+      "id": "CHG-392",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:06:11+00:00",
+      "updated_at": "2026-09-18T22:06:11+00:00",
+      "touched_round": 327,
+      "commit": "0dee685",
+      "summary": "库:README 两处 ts 块前加 compile-check 标记;scripts/verify-dist.mjs 新增文档片段自检(抽取标记块 → 写成 .mts → tsc --strict 对着发布包编,要求至少 1 段);docs/development.md 记下这条约定;CHANGELOG「未发布」记一节(含防空转验证)。库实现未改,宿主无改动。"
+    },
+    "EV-318": {
+      "id": "EV-318",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T22:06:11+00:00",
+      "updated_at": "2026-09-18T22:06:11+00:00",
+      "touched_round": 327,
+      "confidence": 0.96,
+      "source": "变更 CHG-392(0dee685)。node scripts/verify-dist.mjs → 新增输出\"文档片段编译通过(2 段标了 compile-check 的代码块都对着发布包编过)\";防空转:把 README 快速开始块里的 defineGame 改成 defineGameXX → 发布包自检退出码 1,改回 → 0;bun run check(460 例 / 57 文件 + 十一道自检);宿主 bun run test(264 文件 / 2508 例)、check:engine(59 处引用)、check:engine:standalone(97 个源文件)。",
+      "summary": "文档里的\"能跑的程序\"第一次有了判据:快速开始那一百来行与子路径导入都对着发布包编过。约定用显式标记(<!-- compile-check -->),因为文档里多数片段本来就是节选,一刀切地全查会逼着文档写废话。"
     }
   },
   "edges": [
@@ -27970,6 +28008,12 @@
       "to": "TASK-308",
       "type": "implements",
       "created_at": "2026-09-18T22:02:33+00:00"
+    },
+    {
+      "from": "CHG-392",
+      "to": "TASK-309",
+      "type": "implements",
+      "created_at": "2026-09-18T22:06:11+00:00"
     }
   ]
 }
