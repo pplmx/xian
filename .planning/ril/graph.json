@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 289,
+  "round": 290,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:32:43+00:00",
+  "updated_at": "2026-09-18T19:37:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16807,7 +16807,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:07:20+00:00",
       "updated_at": "2026-09-18T19:07:20+00:00",
-      "touched_round": 289,
+      "touched_round": 290,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -17049,6 +17049,56 @@
       "summary": "\"没开炉\"与\"开炉失败\"必须在结构上分开:前者不扣料、不掷骰、不计失败;后者才走扣料与技艺成长。",
       "rationale": "这两件事在代码里太容易混:反正都是\"没炼成\",于是几处提前 return 就把它们写在了一起。代价有三层:①玩家看到的是同一句\"炼制失败\",但一次是\"你材料不够\",一次是\"你手艺不行\" —— 该补的东西完全不同;②数据层会把\"没做的事\"记成\"做砸了\"(失败次数、失败率全线失真);③随机流也会被牵连 —— 没开炉却掷了一颗骰,后续一切随机结果跟着位移。故库把\"能不能开炉\"与\"成不成\"分成两档回报(fired / succeeded),并把顺序写死:门槛 → 材料 → 掷骰(与掉落层的\"保底照样掷骰\"是同一类边界问题的两个方向)。",
       "alternatives_rejected": "①用同一个 false 表示所有未成功(这就是迁移前的状态,三层代价都真实存在);②把材料检查放进库(库不认识资源账本,只该由调用方报\"够不够\");③让\"没开炉\"也消耗随机(牵连后续随机流,且无法解释给玩家);④把失败保料的取整/大数算术放进库(那属于数值层,库一旦掺进去就得认识 GNum)。"
+    },
+    "TASK-271": {
+      "id": "TASK-271",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T19:37:14+00:00",
+      "updated_at": "2026-09-18T19:37:14+00:00",
+      "touched_round": 290,
+      "category": "core-feature",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "补上组合验收:integration.spec 搭一条真实链路(产线小数累积 → 资源上限 → 结算回执 → 计数器 → 周期任务 / 主线 / 成就 → 再投资设施),只断言跨模块不变量(产量守恒、回执同源、上限不被绕过、进度单调且幂等、判据唯一、可复现)。"
+    },
+    "CHG-353": {
+      "id": "CHG-353",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:37:14+00:00",
+      "updated_at": "2026-09-18T19:37:14+00:00",
+      "touched_round": 290,
+      "commit": "773a31a",
+      "summary": "库:新增 src/integration.spec.ts(10 例,题材是小工坊,与修仙无关),CHANGELOG「未发布」加一条并写明它抓到的两处接口误读,README 的定制表补上 createIntake.evictable 的签名与 ResourceDef.cap 的口径(不写才是无上限)。宿主无改动。"
+    },
+    "EV-278": {
+      "id": "EV-278",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:37:14+00:00",
+      "updated_at": "2026-09-18T19:37:14+00:00",
+      "touched_round": 290,
+      "confidence": 0.95,
+      "source": "变更 CHG-353(773a31a)。bunx vitest run src/integration.spec.ts(10 例);cd packages/engine && bun run check(46 文件/362 例,含示例);bun run test(宿主 245 文件/2403 例);bun run test:report(2403 过/0 败);bun run check:engine(59 处引用);bun run check:engine:standalone",
+      "summary": "组合验收一次就抓出两处\"文档读得出、照着拼会踩\"的接口:①ResourceDef.cap 写 0 是\"上限 0\"(不写才是无上限)—— 产量守恒那条判据当场算出回执为 0;②createIntake 的 evictable 收的是 (items, incoming) 而不是单件对单件 —— 挤位那条判据当场没挤成。两处都补进 README 定制表(带签名与口径),并写进 CHANGELOG。链路本身的不变量全部成立:产出 = 入账 + 截断、账本增量 = 回执、重复结算不重复发奖、三条进度线只增不减、同种子两遍全同。"
+    },
+    "DEC-141": {
+      "id": "DEC-141",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:37:14+00:00",
+      "updated_at": "2026-09-18T19:37:14+00:00",
+      "touched_round": 290,
+      "summary": "单模块语义之外还要有组合验收:跨模块只断言不变量(守恒、同源、单调幂等、判据唯一、可复现),而且验收用例要用\"另一套题材 + 只看文档拼一遍\"的方式写。",
+      "rationale": "单模块用例证明\"每个零件对\",但用户拿到的是组合:一处产出的数字要经过产线、上限、回执、计数、任务/成就、再投资,中间任何一环各算一遍账目就会分叉 —— 这类错在单模块用例里永远看不见。更要紧的是写法:这份验收刻意用另一套题材(小工坊)、刻意只看 README 与签名去拼,于是它测的是\"文档能不能让人拼对\",而不是\"我记不记得这些 API\"。它第一次跑就抓出两处误读(ResourceDef.cap=0 的含义、evictable 的参数形状),这正是不变量之外的价值。",
+      "alternatives_rejected": "①只靠示例程序(daily-loop / quest-loop 是我自己写的,按我的记忆拼,不会暴露文档的坑);②把组合验收写成\"跑一遍不报错\"(不断言不变量,等于只测类型);③在宿主里做组合验收(那测的是本作的内容装配,不是库的拼装说明);④为组合验收新增一个\"组合 API\"(把模块缝在一起会毁掉各自的边界,拼装本来就该由使用者做)。"
     }
   },
   "edges": [
@@ -25902,6 +25952,24 @@
       "to": "TASK-266",
       "type": "depends_on",
       "created_at": "2026-09-18T19:32:43+00:00"
+    },
+    {
+      "from": "CHG-353",
+      "to": "TASK-271",
+      "type": "implements",
+      "created_at": "2026-09-18T19:37:20+00:00"
+    },
+    {
+      "from": "DEC-141",
+      "to": "TASK-271",
+      "type": "governs",
+      "created_at": "2026-09-18T19:37:20+00:00"
+    },
+    {
+      "from": "TASK-271",
+      "to": "TASK-266",
+      "type": "depends_on",
+      "created_at": "2026-09-18T19:37:20+00:00"
     }
   ]
 }
