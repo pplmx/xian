@@ -22,15 +22,38 @@
 // ============ 熟练度 ============
 
 /**
+ * 熟练度曲线:两条路 —— **默认的双曲饱和**,或**自己接管**。
+ *
+ * 不给 `curve` 时用 `cap·e/(e+scale)`:经验越多越接近上限,但永远不到顶
+ * (想给"练满"留口子就在上层按阈值判,而不是让这条曲线到顶)。
+ * 给了 `curve` 就完全接管 —— 段位式、对数式、查表式都行。
+ */
+export interface ProficiencyConfig {
+  /** 饱和系数(默认曲线用) */
+  scale: number
+  /** 上限,默认 100 */
+  cap?: number
+  /** 自己接管:给累计经验,返回熟练度(给了它,scale/cap 忽略) */
+  curve?: (exp: number) => number
+}
+
+/**
  * 累积经验 → 熟练度 0~上限(默认 100)。
  *
  * 双曲饱和:经验越多越接近上限,但**永远不到顶**。想给"练满"留口子,
  * 就在上层按 level ≥ 某阈值判定,而不是让这条曲线到顶 —— 后者会让后期经验白涨。
+ *
+ * 第二个参数既可以只给一个数字(旧的写法:饱和系数),也可以给一份配置
+ * (想换曲线、改上限时用)。
  */
-export function proficiencyFromExp(exp: number, scale: number, cap = 100): number {
+export function proficiencyFromExp(exp: number, scaleOrConfig: number | ProficiencyConfig, cap = 100): number {
   const e = Math.max(0, exp)
+  const config: ProficiencyConfig = typeof scaleOrConfig === 'number' ? { scale: scaleOrConfig, cap } : scaleOrConfig
+  if (config.curve) return config.curve(e)
+  const scale = config.scale
+  const top = config.cap ?? cap
   if (!(scale > 0)) return cap
-  return (cap * e) / (e + scale)
+  return (top * e) / (e + scale)
 }
 
 /** 分档:给裸数字起名字(按 min 从高到低找第一档) */

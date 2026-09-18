@@ -30,6 +30,17 @@ describe('炼制/技艺 —— 熟练度、乘区、越级', () => {
     expect(proficiencyFromExp(100, 0)).toBe(100)
   })
 
+  it('熟练度曲线可自己接管:配置形态可改上限,也可整条曲线归你', () => {
+    // 配置形态:scale + cap
+    expect(proficiencyFromExp(600, { scale: 600, cap: 200 })).toBeCloseTo(100, 10)
+    // 自己接管:段位式(每 500 经验一档,最多 5 档)
+    const tiered = proficiencyFromExp(2600, { scale: 600, curve: exp => Math.min(5, Math.floor(exp / 500)) })
+    expect(tiered).toBe(5)
+    expect(proficiencyFromExp(1200, { scale: 600, curve: exp => Math.min(5, Math.floor(exp / 500)) })).toBe(2)
+    // 旧写法(直接给数字)照旧
+    expect(proficiencyFromExp(600, 600)).toBeCloseTo(50, 10)
+  })
+
   it('分档:读名字不读数字,低过所有档给兜底', () => {
     const stages = [
       { min: 85, name: '通玄' },
