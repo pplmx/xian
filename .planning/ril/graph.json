@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 271,
+  "round": 272,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:30:49+00:00",
+  "updated_at": "2026-09-18T17:36:40+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 271,
+      "touched_round": 272,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -16043,7 +16043,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:30:41+00:00",
       "updated_at": "2026-09-18T17:30:41+00:00",
-      "touched_round": 271,
+      "touched_round": 272,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16085,6 +16085,56 @@
       "rationale": "图鉴这类\"越看越懂\"的系统,难点在三条路各自不能串味:①累计门槛要**一次只进一层**(败绩权重 3 也不能一夜从\"未识\"跳到\"洞悉\" —— 玩家读到的每一层情报都得真的打过那么多场),且稀有对手(首领)的门槛该另配一张表;②概率升档与累计门槛是两回事(见得多不等于认得出);③\"用过才算真懂\"是**行为**推开的,与运气无关。另有两条容易写歪的细节:推进不可逆(玩家不会\"忘了见过什么\"),以及\"见过的最好一件\"要**各维度各记各的**(\"15 阶天品与 20 阶良品谁更好\"没有定义),且与当前是否还持有无关(化了尘也是见过)。这四件事都收进库,因为每一件都是\"写歪了很难发现\"的那类。",
       "alternatives_rejected": "①只给\"计数 → 档位\"的查表函数(三条路的边界、不可逆、取高合并仍要每家自己写);②把档位表也塞进库(本作的档名与门槛是内容,库不该认识\"眼熟/洞悉\");③把\"见过最好\"做成\"当前持有最好\"(化尘之后就见闻倒退,与图鉴的意义相反)。",
       "summary": "图鉴层的四条边界收进库:一次只进一层、可分组换门槛表、概率升档与行为推进是另外两条路、推进不可逆;外加\"只记见过的最好一件\"(各维度取高)。档名与门槛仍是内容。"
+    },
+    "TASK-253": {
+      "id": "TASK-253",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:36:32+00:00",
+      "updated_at": "2026-09-18T17:36:32+00:00",
+      "touched_round": 272,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增世界记忆档位层:createStageMemory 给四条规则(多路门槛取先到、有资格才升档、不打交道就回落、钟的起点取最后一次打交道且从没打过交道不算够钟),档位自带系数,倒计时与够钟共用同一阈值;本作区域兴衰与妖气复聚接过去,全网格冻结对账。继续攒批不发版。"
+    },
+    "CHG-335": {
+      "id": "CHG-335",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:36:33+00:00",
+      "updated_at": "2026-09-18T17:36:33+00:00",
+      "touched_round": 272,
+      "commit": "fd4b926",
+      "summary": "库:新增 src/memory.ts 与 memory.spec.ts(8 例:多路门槛、资格闸门、回落与不回落、钟起点、倒计时与够钟、系数、空表报错),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 加条目。宿主:新增 core/engineMemory.ts(档位表与门槛),core/worldMemory 的 deriveProsperity/regionTouchedAt/isRegionRevived/hoursUntilRevive 改走库、prosperityYieldMult 读档位系数,新增 engineMemoryParity.spec(4 例,400+ 组合全网格),test-report 补分类,docs/engine.md 加一行。"
+    },
+    "EV-259": {
+      "id": "EV-259",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:36:40+00:00",
+      "updated_at": "2026-09-18T17:36:40+00:00",
+      "touched_round": 272,
+      "confidence": 0.97,
+      "source": "变更 CHG-335(fd4b926)。bunx vitest run src/core/engineMemoryParity.spec.ts(4 例:胜场×守时×闲置时长×是否镇压过 400+ 组合逐点相同、复聚的钟含\"从没打过交道不算够钟\"、倒计时与阈值同源、档位系数);bun run test(216 文件/2153 例);bun run test:report(2153 过/0 败);cd packages/engine && bun run check(23 文件/215 例);bun run check:engine(34 处引用);bun run check:engine:standalone",
+      "summary": "世界记忆搬迁逐点对账:兴衰档位在全网格上与冻结实现完全相同(含\"没镇压过只算混乱\"与 48 小时回落边界),复聚的钟与倒计时一致且从没打过交道不算够钟;档位系数改为读同一张表,不再另写 switch。"
+    },
+    "DEC-123": {
+      "id": "DEC-123",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:36:40+00:00",
+      "updated_at": "2026-09-18T17:36:40+00:00",
+      "touched_round": 272,
+      "rationale": "世界记忆(繁荣/好感/声望)最容易写成一个只增不减的计数器,而真实作品里的教训是:①只认计数会让另一条路永远算不出回报(本作的区域繁荣一度只能在镇压前刷胜场,\"守得住\"白守);②没有资格闸门,再能打的地界也会直接变\"繁荣\"(没镇压过的地界该只是混乱);③没有回落,守土就成了一劳永逸的税,而世界的记忆本该会淡;④\"多久没来\"的钟起点若取错(只挂在镇压上),从没镇压过的地界永远不触发世界节律。这四条都收进库,档位名与门槛仍归作品。",
+      "alternatives_rejected": "①只给\"计数 → 档位\"的查表(另三条仍要每家自己写);②把回落做成\"定时器\"(需要外部驱动,离线一晚就漏);③让库自己决定\"多久算久\"(本作 48 小时是平衡出来的,别的题材可能 3 天或永不回落)。",
+      "summary": "世界记忆档位层的四条规则收进库:多路门槛取先到、资格闸门、会回落、钟起点取最后一次打交道;档位名/门槛/时限仍是内容。"
     }
   },
   "edges": [
@@ -24548,6 +24598,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:30:49+00:00"
+    },
+    {
+      "from": "CHG-335",
+      "to": "TASK-253",
+      "type": "implements",
+      "created_at": "2026-09-18T17:36:40+00:00"
+    },
+    {
+      "from": "TASK-253",
+      "to": "TASK-252",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:36:40+00:00"
+    },
+    {
+      "from": "DEC-123",
+      "to": "TASK-253",
+      "type": "governs",
+      "created_at": "2026-09-18T17:36:40+00:00"
+    },
+    {
+      "from": "DEC-123",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:36:40+00:00"
     }
   ]
 }
