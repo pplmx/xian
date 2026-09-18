@@ -49,6 +49,7 @@
 | 等级曲线、进阶、寿元 | `createRealmSystem` | `presets/xiuxian` + `presets.spec.ts` |
 | 掉装 / 洗练 / 装配 | `createEquipmentSystem` | `examples/quickstart.ts` |
 | 战斗骨架(护盾、反击、追击、技能标签) | `createCombatEngine` | `examples/combo-arts.ts` |
+| **把你自己那套战斗整段接进来** | `BattleConfig` 的 `skillFn` / `strikeFn` / `actFn` | `examples/combat-takeover.ts`(老口径 × 接管版,同 200 颗种子逐场相同) |
 | 掉落表(概率归一、保底、份数) | `createDropTable` | `drops.spec.ts` |
 | 建造 / 每小时产出 | `createFacilitySystem` + `accrue` | `examples/daily-loop.ts` 的设施段 |
 | 加点(天赋 / 灵脉) | `createPointPool` | `points.spec.ts` |
