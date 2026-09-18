@@ -55,6 +55,7 @@ import type {
   ChoiceOutcome,
   ChoiceReceipt,
   ChoiceSystem,
+  ClaimOutcome,
   CodexConfig,
   CodexStage,
   CodexState,
@@ -159,6 +160,7 @@ import type {
   SaveDecodeResult,
   SaveFormat,
   SavePayload,
+  SettleResult,
   SetDef,
   SkillBranchDef,
   SkillConfig,
@@ -183,6 +185,10 @@ import type {
   TriageSystem,
   TriageVerdict,
   TraitDef,
+  TaskBoard,
+  TaskBoardState,
+  TaskProgress,
+  TaskSpec,
   UpgradeInfo,
   ValidationIssue,
   VictoryOutcome,
@@ -228,6 +234,7 @@ const RUNTIME_EXPORTS = [
   'createResourceSystem',
   'createRng',
   'createSkillSystem',
+  'createTaskBoard',
   'createTriage',
   'deckPool',
   'decodeSave',
@@ -354,6 +361,7 @@ type PublicTypes = {
   buffs: [BuffApply, BuffChange, BuffConfig<Mods>, BuffDef<Mods>, BuffInstance, BuffStacking, BuffSystem<Mods>, BuffView<Mods>]
   facilities: [FacilityCost<number>, FacilityDef<Mods, { realm: number }, number>, FacilitySystem<Mods, { realm: number }, number>, LevelMap, UpgradeInfo<number>]
   points: [InvestInfo<number>, InvestOutcome<number>, PointBranch<Mods>, PointCost<number>, PointPool<Mods, { open: boolean }, number>, PointState, PointsConfig<Mods, { open: boolean }, number>, SwitchInfo<number>, SwitchOutcome<number>]
+  tasks: [ClaimOutcome, SettleResult, TaskBoard, TaskBoardState, TaskProgress, TaskSpec]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

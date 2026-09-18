@@ -40,6 +40,7 @@
 | 状态(增益 / 减益)的施加、剪过期与清负面 | `core/engineBuffs` 转发到库的 `createBuffSystem`(内容仍是 `data/buffs`,`{defId}` ↔ 库 `{id}` 与秒/毫秒的换算只在这一层) | `engineBuffsParity.spec` 冻结迁移前的 `addBuff` / `pruneBuffs` / `clearNegativeBuffs` / `buffMods`:五组状态 × 五种 id 下 `endsAt` **逐毫秒**相同,连加三次的累计一致,剪枝边界与"有没有变化"的返回值一致;另把两条已知差异(读取路径仍问"列表里有没有"、库的 `active` 按此刻判)写在明处 |
 | 洞府建筑(能不能升 / 上限 / 费用 / 每小时产出) | `core/engineFacilities` 转发到库的 `createFacilitySystem` 与 `accrue`(内容仍是 `data/buildings`,门槛文案与顺序、费用曲线、产出速率都是本作口径) | `engineFacilitiesParity.spec` 冻结迁移前的两块实现:七座建筑 × 五组等级 × 四档境界下**门槛文案、下一级与费用逐位相同**(灵石用 `formatExact` 比大数);产出侧五组等级 × 七档时长 + 连推 600 拍,累加器与发出去的整数**逐位相同** |
 | 灵脉投资点(投点 / 上限 / 换主脉) | `core/engineVeins` 转发到库的 `createPointPool`(内容仍是 `data/veins`;总容量 100、主脉 70、副脉 30 与三句提示语都是本作口径) | `engineVeinParity.spec` 冻结迁移前的服务实现:五条动作脚本下**每一步的成败、点数、主脉与灵石余额逐位相同**,提示语的文案与顺序也逐条相同;另写明一处**有意修正** —— "点了却没灵石"时主脉不再被悄悄认下(旧写法会) |
+| 每日任务(今日增量结算与换期) | `core/engineDailies` 转发到库的 `createTaskBoard`(内容仍是 `data/quests` 的 `DAILY_TASKS`,文案与报酬都是本作口径) | `engineDailyParity.spec` 冻结迁移前的逐条判定与换期:七组每日账 × 计数下**结算出哪几条、按什么顺序、结算后的 `done` 列表**全同,首页读数同源;另钉两条口径(计数器不清零、换期幂等)与一处**有意修正**(增量夹到 ≥ 0:回档那天不再显示负进度) |
 
 资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
 材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,
@@ -54,7 +55,7 @@ import { emptyProgress } from 'wanxiang-engine'
 ```
 
 `bun run check:engine` 会守住这条:宿主源码里**只经公开入口引用**,内部别名、深层导入、
-相对路径钻内部三类做法各有一条断言拦着(当前 47 处引用全部合规)。
+相对路径钻内部三类做法各有一条断言拦着(当前 49 处引用全部合规)。
 
 ## 同步与自检
 

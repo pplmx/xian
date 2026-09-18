@@ -184,6 +184,16 @@ export type {
 } from './points.js'
 export { createPointPool } from './points.js'
 
+export type {
+  ClaimOutcome,
+  SettleResult,
+  TaskBoard,
+  TaskBoardState,
+  TaskProgress,
+  TaskSpec
+} from './tasks.js'
+export { createTaskBoard } from './tasks.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

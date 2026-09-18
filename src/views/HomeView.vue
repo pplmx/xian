@@ -167,7 +167,7 @@
   import { useAdventureStore } from '@/stores/adventure'
   import { useCultivationStore } from '@/stores/cultivation'
   import { useQuestsStore } from '@/stores/quests'
-  import { DAILY_TASKS, MAIN_QUESTS } from '@/data/quests'
+  import { MAIN_QUESTS } from '@/data/quests'
   import { VEIN_UNLOCK_MAJOR } from '@/data/constants'
   import { LIFESPAN_WARN_RATIO } from '@/data/constants'
   import { WORLD_BREAK_MAJOR } from '@/data/realms'
@@ -175,6 +175,7 @@
   import { generateCurrentGoal, type Goal } from '@/core/goal'
   import { currentMainQuestProgress } from '@/core/questProgress'
   import { currentFirstStep } from '@/core/firstStep'
+  import { dailyRowsOf, dailyStateOf } from '@/core/engineDailies'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
   import VeinInvestCard from '@/components/dongfu/VeinInvestCard.vue'
@@ -221,10 +222,7 @@
   const mainProgress = computed(() => currentMainQuestProgress())
 
   const dailyRows = computed(() =>
-    DAILY_TASKS.map(t => ({
-      ...t,
-      progress: Math.min(t.target, quests.dailyDelta(t.counterKey)),
-      done: quests.daily.done.includes(t.id)
-    }))
+    // 与发赏判定同源:进度 = 今日增量,`done` = 本期已经结算过
+    dailyRowsOf(dailyStateOf(quests.daily), quests.counters)
   )
 </script>

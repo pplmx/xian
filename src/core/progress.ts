@@ -6,11 +6,12 @@ import type { AchvCond, CounterKey, RewardBundle } from '@/types'
 import { gte } from '@/utils/gnum'
 import { todayStr } from '@/utils/time'
 import { ACHIEVEMENTS } from '@/data/achievements'
-import { DAILY_TASKS, MAIN_QUESTS } from '@/data/quests'
+import { MAIN_QUESTS } from '@/data/quests'
 import { LIFESPAN_CRITICAL_RATIO } from '@/data/constants'
 import { titleDef } from '@/data/titles'
 import { pillDef } from '@/data/pills'
 import { stoneByTier } from './formulas'
+import { dailyShapeOf, dailyStateOf, dailyTaskDef, settleDailies } from './engineDailies'
 import { usePlayerStore } from '@/stores/player'
 import { useQuestsStore } from '@/stores/quests'
 import { useResourcesStore } from '@/stores/resources'
@@ -197,13 +198,16 @@ function checkMainQuest(): void {
 function checkDaily(): void {
   const quests = useQuestsStore()
   const ui = useUiStore()
-  for (const task of DAILY_TASKS) {
-    if (quests.daily.done.includes(task.id)) continue
-    if (quests.dailyDelta(task.counterKey) >= task.target) {
-      quests.markDailyDone(task.id)
-      grantReward(task.reward, true)
-      ui.toast(`日课已成「${task.name}」`, 'success')
-    }
+  // 一次结算"达成且本期没领过"的(顺序即 DAILY_TASKS 顺序),先记账再发赏 ——
+  // 发赏若又牵动 track,重新进来也认得出"已经领过"了
+  const settled = settleDailies(dailyStateOf(quests.daily), quests.counters)
+  if (settled.settled.length === 0) return
+  quests.setDailyState(dailyShapeOf(settled.state))
+  for (const row of settled.settled) {
+    const def = dailyTaskDef(row.task.id)
+    if (!def) continue
+    grantReward(def.reward, true)
+    ui.toast(`日课已成「${def.name}」`, 'success')
   }
 }
 

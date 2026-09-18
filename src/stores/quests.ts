@@ -5,6 +5,8 @@ import type { CounterKey } from '@/types'
 import { persistConfig } from '@/utils/storage'
 import { MAIN_QUESTS } from '@/data/quests'
 import { asFiniteNumber, asNumberRecord, asObjectOrNull, asRecord, asStringArray } from '@/utils/saveShape'
+import type { StoredDaily } from '@/core/engineDailies'
+import { dailyShapeOf, dailyStateOf, rolloverDailyBoard } from '@/core/engineDailies'
 
 export type CollectionCategory = 'equip' | 'gongfa' | 'pill' | 'artifact' | 'pet' | 'event' | 'talent'
 
@@ -96,16 +98,17 @@ export const useQuestsStore = defineStore(
       return true
     }
 
-    function rolloverDaily(date: string): void {
-      daily.value = { date, base: { ...counters.value }, done: [] }
+    /**
+     * 换期:把此刻的计数器记成本期基准。
+     * 幂等由库保证(同一期再叫一次不会把当天已攒的进度清掉 —— 心跳每次都问"该换期了吗")。
+     */
+    function rolloverDaily(period: string): void {
+      daily.value = dailyShapeOf(rolloverDailyBoard(dailyStateOf(daily.value), counters.value, period))
     }
 
-    function dailyDelta(key: CounterKey): number {
-      return (counters.value[key] ?? 0) - (daily.value.base[key] ?? 0)
-    }
-
-    function markDailyDone(taskId: string): void {
-      daily.value = { ...daily.value, done: [...daily.value.done, taskId] }
+    /** 整份写回每日账(结算结果一次落账) */
+    function setDailyState(state: StoredDaily): void {
+      daily.value = state
     }
 
     return {
@@ -125,8 +128,7 @@ export const useQuestsStore = defineStore(
       ownTitle,
       collect,
       rolloverDaily,
-      dailyDelta,
-      markDailyDone,
+      setDailyState,
       sanitize
     }
   },
