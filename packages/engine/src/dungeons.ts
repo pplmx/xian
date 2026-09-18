@@ -100,7 +100,7 @@ export interface RegionDef {
   rewards?: RewardDef[]
 }
 
-export interface DungeonConfig {
+export interface DungeonConfig<T = number> {
   regions: RegionDef[]
   enemies: EnemyDef[]
   /** 击败 N 次普通遭遇后必出首领,默认 8 */
@@ -130,6 +130,24 @@ export interface DungeonConfig {
   }
   /** 每场胜利的通用奖励 */
   victoryRewards?: RewardDef[]
+  /**
+   * 自己接管"这一场给什么"(**可选**)。
+   *
+   * 默认奖励已经算好放在 `ctx.defaultRewards` 里(含概率判定),可以**先看再决定**:
+   * 返回 null 就用默认;想调整就基于它改;想完全另起一套就自己造。
+   * 数额用普通数字,引擎按数值层转成 T(与其它奖励同一条路)。
+   */
+  rewardFn?: (
+    ctx: {
+      region: RegionDef
+      encounter: Encounter
+      progress: DungeonProgress
+      tier: number
+      /** 默认规则算好的这一场奖励 */
+      defaultRewards: readonly { id: string; name?: string; amount: T }[]
+    },
+    rng: Rng
+  ) => { id: string; name?: string; amount: number }[] | null
   /** 是否需要前置通关才解锁(默认 true) */
   requireChain?: boolean
   /**
@@ -232,7 +250,7 @@ export function emptyProgress(): DungeonProgress {
 }
 
 export function createDungeonSystem<T = number>(
-  config: DungeonConfig,
+  config: DungeonConfig<T>,
   numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>
 ): DungeonSystem<T> {
   const regions = [...config.regions]
@@ -362,6 +380,12 @@ export function createDungeonSystem<T = number>(
     }
     for (const def of config.victoryRewards ?? []) merge(def)
     for (const def of region.rewards ?? []) merge(def)
+    const overridden = config.rewardFn
+      ? config.rewardFn({ region, encounter, progress, tier: region.tier, defaultRewards: rewards }, rng)
+      : null
+    const finalRewards = overridden
+      ? overridden.map(r => ({ id: r.id, name: r.name, amount: numeric.from(r.amount) }))
+      : rewards
 
     // 首领倒下即重新计数:下一轮首领要再攒满一次,而不是"见过一次之后次次见"
     const wins = encounter.kind === 'boss' ? 0 : (progress.bossWins[regionId] ?? 0) + 1
@@ -374,7 +398,7 @@ export function createDungeonSystem<T = number>(
     }
     return {
       progress: { cleared, bossWins: { ...progress.bossWins, [regionId]: wins }, runs },
-      rewards,
+      rewards: finalRewards,
       firstClear,
       encounter
     }

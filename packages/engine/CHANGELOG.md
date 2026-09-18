@@ -33,8 +33,10 @@
 - `lifespan` 改为可选:日常/学习/经营这类没有生死的题材不必编一个寿元数(省略即无限)
 - `crafting.levers` 改成**任意个数与名字**的乘区表(原来是写死的掌握/认知/技艺三区),
   每区可给自定义曲线;越级惩罚改为可选(不配就没有越级这回事)
-- 三处"写死的曲线"开成钩子:`realms.exp.costFn`、`realms.combat.statsFn`、
-  `skills.costs[].amount`、`dungeons.victoryRewards[].amount`
+- 几处"写死的曲线"开成钩子:`realms.exp.costFn`、`realms.combat.statsFn`、
+  `skills.costs[].amount`、`dungeons.victoryRewards[].amount`、`dungeons.rewardFn`
+  (后者是**整场奖励完全接管**:默认奖励先算好放进 `ctx.defaultRewards`,可以先看再决定;
+  返回 `null` 即交回默认。数额收普通数字,引擎按数值层转成 `T`)
 - **战斗的本值改为一张表 + 可配键名**:`Combatant.stats`、`EnemySnapshot.stats`
   (取代原先固定的 `hp/maxHp/attack/defense/speed` 字段),`BattleConfig.keys` 指定读哪几个键 ——
   本值叫"火力/装甲/结构值"或"专注力/耐心/精力"都行。战斗不再就地改动传入对象(内部拷一份)。

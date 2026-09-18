@@ -213,4 +213,28 @@ describe('副本系统 —— 区域链/遭遇/首领门槛/通关奖励', () =>
     const anyNormal = createDungeonSystem({ ...CONFIG, encounterFn: () => ({ kind: 'normal' }) })
     expect(['e1', 'e2']).toContain(anyNormal.nextEncounter('r1', emptyProgress(), createRng(3)).enemyId)
   })
+
+  it('奖励可自己接管:能读到默认奖励再决定,返回 null 就用默认', () => {
+    // 首领双倍、普通遭遇按默认
+    const sys = createDungeonSystem({
+      ...CONFIG,
+      rewardFn: ({ encounter, defaultRewards }) =>
+        encounter.kind === 'boss' ? defaultRewards.map(r => ({ id: r.id, name: r.name, amount: r.amount * 2 })) : null
+    })
+    const rng = createRng(9)
+    const normal = sys.onVictory('r1', { regionId: 'r1', kind: 'normal', enemyId: 'e1' }, emptyProgress(), rng)
+    const boss = sys.onVictory('r1', { regionId: 'r1', kind: 'boss', enemyId: 'b1' }, emptyProgress(), rng)
+    const base = createDungeonSystem(CONFIG)
+    const baseNormal = base.onVictory('r1', { regionId: 'r1', kind: 'normal', enemyId: 'e1' }, emptyProgress(), createRng(9))
+    expect(normal.rewards).toEqual(baseNormal.rewards) // 返回 null → 默认
+    expect(Number(boss.rewards.find(r => r.id === 'exp')!.amount)).toBeCloseTo(
+      Number(base.onVictory('r1', { regionId: 'r1', kind: 'boss', enemyId: 'b1' }, emptyProgress(), createRng(9)).rewards.find(r => r.id === 'exp')!.amount) * 2,
+      6
+    )
+    // 完全另起一套也行
+    const custom = createDungeonSystem({ ...CONFIG, rewardFn: () => [{ id: 'star', name: '星', amount: 7 }] })
+    expect(custom.onVictory('r1', { regionId: 'r1', kind: 'normal', enemyId: 'e1' }, emptyProgress(), createRng(1)).rewards).toEqual([
+      { id: 'star', name: '星', amount: 7 }
+    ])
+  })
 })

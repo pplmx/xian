@@ -231,6 +231,7 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **技能消耗完全自己定** | `skills.costs[].amount(level)`(折扣与下限仍生效) |
 | **技能词条曲线完全自己定** | `SkillDef.modsFn(level)`(给了它,`baseMods`/`perLevelMods` 忽略) |
 | **奖励数额完全自己定** | `dungeons.victoryRewards[].amount(tier)`(概率仍生效) |
+| **整场奖励完全自己接管** | `dungeons.rewardFn(ctx, rng)`(默认奖励已算好放在 `ctx.defaultRewards` 里,可以先看再决定;`null` 即交回默认) |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **词条合并的算法本身** | `attributes.diminish`:默认按贡献降序打折,也可 `'max'`(只取最强)/ `'sum'`(直接相加)/ 自定义 `fold(values)` |
 | **强化加成曲线** | `equipment.power.levelBonusFn(level)`(默认每级 × `levelBonus`) |
