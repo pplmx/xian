@@ -100,6 +100,33 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   const unpinned = promised.filter(name => !specText.includes(name))
   assert.deepEqual(unpinned, [], `定制表承诺可改、却没有任何用例提到:${unpinned.join('、')}`)
   console.log(`定制表自检通过(${promised.length} 个名字,逐个都有用例提到)`)
+
+  /**
+   * 目录树自检 —— README 里那棵树是使用者的地图,它必须**和仓库逐项对得上**。
+   *
+   * 两边都拦:新加一个模块却忘了写进树(地图少一块,读者以为库里没有这层),
+   * 或者改了名/删了文件却没改树(地图指向不存在的路,照着找的人先怀疑自己)。
+   * 树上的文档清单同理 —— `docs/` 下每份文档都得在地图上。
+   */
+  const readme = readFileSync(resolve(ENGINE, 'README.md'), 'utf-8')
+  const treeBlock = readme.match(/```\n(packages\/engine\/[\s\S]*?)```/)
+  assert.ok(treeBlock, 'README 里找不到 packages/engine/ 的目录树代码块')
+  const tree = treeBlock[1]
+  const listedModules = [...tree.matchAll(/^ {4}([A-Za-z]\w*)\.ts\b/gm)].map(m => m[1])
+  const actualModules = readdirSync(resolve(ENGINE, 'src'))
+    .filter(name => name.endsWith('.ts') && !name.endsWith('.spec.ts'))
+    .map(name => name.replace(/\.ts$/, ''))
+  assert.deepEqual(
+    [...listedModules].sort(),
+    [...actualModules].sort(),
+    'README 的目录树与 src/ 下的模块文件对不上(少列了模块,或列了不存在的文件)'
+  )
+  const listedDocs = [...tree.matchAll(/(\w+)\.md/g)].map(m => m[1])
+  const actualDocs = readdirSync(resolve(ENGINE, 'docs')).map(name => name.replace(/\.md$/, ''))
+  for (const doc of actualDocs) {
+    assert.ok(listedDocs.includes(doc), `README 的目录树里没有列 docs/${doc}.md`)
+  }
+  console.log(`目录树自检通过(${listedModules.length} 个模块文件 + ${actualDocs.length} 份文档都在图上)`)
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用

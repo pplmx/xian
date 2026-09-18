@@ -198,7 +198,8 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 ## 模块一览
 
-库按"一层回答一个问题"切开,`src/` 下每个文件就是一层(共四十一层)。按**你要做的事**分组:
+库按"一层回答一个问题"切开,`src/` 下 36 个模块文件各是一层(另有 3 份内容包)。
+按**你要做的事**分组:
 
 | 这一组 | 回答什么 | 代表入口 |
 | --- | --- | --- |
@@ -328,6 +329,7 @@ bun run examples               # 跑一遍 examples/ 下的示例
 ```
 packages/engine/
   src/
+    index.ts        公开入口(对外承诺的就是这里导出的东西,清单钉在 publicApi.spec.ts)
     numeric.ts      数值适配层(默认 number,大数库可插拔)
     rng.ts          可复现随机(mulberry32,与源工程可交换种子对账)
     counters.ts     计数器基准快照(生涯 / 本期共用一份计数)
@@ -366,7 +368,11 @@ packages/engine/
     config.ts       defineGame / validateGame(交叉校验)
     presets/        仙侠 / 星港 / 日常学习三份内容包
   examples/         可跑示例(快速上手 / 最小循环 / 战斗组合技 / 书桌与日常 / 自习室的一天 / 星屑集册 / 一角点心铺 / 战斗接管)
-  docs/             模块速查(usage)/ 组装指南(assembly)/ 对账(parity)/ 开发(development)
+  docs/
+    usage.md        模块速查与定制点(每层回答什么、想改什么改哪里)
+    assembly.md     组装指南:四条配方 + 坑清单 + 验收清单
+    parity.md       与源工程的对账口径
+    development.md  开发、同步与"接进你自己项目"的四种写法
 ```
 
 ## 许可
