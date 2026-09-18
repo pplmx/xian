@@ -256,4 +256,30 @@ describe('装备系统 —— 槽位/品质/模板/词条/套装', () => {
     expect(s.sets[0]?.pieces).toBe(2)
     expect(sys.sets[0]?.id).toBe('s1')
   })
+
+  it('某槽位一件都没写时:掷槽位不会掷到它(装配只警告,运行时就不该随机炸)', () => {
+    // 护甲一件模板都没写 —— 装配时只是警告(EQUIP_SLOT_EMPTY),那就不能在战斗结算里随机抛错
+    const partial = createEquipmentSystem({
+      ...CONFIG,
+      templates: CONFIG.templates.filter(t => t.slot !== 'body')
+    })
+    const rng = createRng(5)
+    const slots = new Set<string>()
+    for (let i = 0; i < 80; i += 1) slots.add(partial.resolve(partial.generate(rng, { tier: 2 })).template!.slot)
+    expect([...slots].sort()).toEqual(['ring', 'weapon'])
+
+    // 点名要一个没内容的槽位:仍然大声报错,并指名道姓
+    expect(() => partial.generate(createRng(7), { tier: 2, slot: 'body' })).toThrow(/body/)
+
+    // 一个模板都没有:报错说清是"这一层没有任何可掉落的模板"
+    const none = createEquipmentSystem({ ...CONFIG, templates: [] })
+    expect(() => none.generate(createRng(8), { tier: 3 })).toThrow(/层级 3 没有任何可掉落的模板/)
+  })
+
+  it('某层没内容时按退档掉落(不是抛错)', () => {
+    const sys = createEquipmentSystem({ ...CONFIG, templates: CONFIG.templates.filter(t => t.tier === 1) })
+    const loot = sys.generate(createRng(9), { tier: 3, slot: 'weapon' })
+    expect(loot.tier).toBe(3)
+    expect(loot.templateId).toBe('w1') // 第 3 层没写内容 → 拿第 1 层的顶上
+  })
 })

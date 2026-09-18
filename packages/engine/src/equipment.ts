@@ -349,7 +349,19 @@ export function createEquipmentSystem<T = number>(
     const tier = Math.max(1, opts.tier)
     const dropSlots = slots.filter(s => (s.dropWeight ?? 1) > 0)
     if (dropSlots.length === 0) throw new Error('装备系统:没有任何可掉落的槽位')
-    const slot = opts.slot ?? rng.weighted(dropSlots, s => s.dropWeight ?? 1).id
+    /*
+     * 掷槽位时只在该层**真的有内容**的槽位里掷。
+     *
+     * 起因:装配时的 `EQUIP_SLOT_EMPTY` / `EQUIP_TIER_SLOT_GAP` 只是警告(内容还没写全很常见),
+     * 但"掷到一个没有模板的槽位"原本会直接抛错 —— 于是内容不全的存档点会在战斗中随机炸掉,
+     * 而装配时明明只给了警告。警告的东西不该在运行时变成崩溃:退档掉落那条路(见 poolAtTier)
+     * 本来就表达了"这一层没内容,拿有内容的顶上"。
+     *
+     * `opts.slot` 是**点名**要某个槽位,那种情况仍然大声报错并指名道姓。
+     */
+    const withContent = dropSlots.filter(s => poolAtTier(tier, s.id).length > 0)
+    if (withContent.length === 0) throw new Error(`装备系统:层级 ${tier} 没有任何可掉落的模板`)
+    const slot = opts.slot ?? rng.weighted(withContent, s => s.dropWeight ?? 1).id
     const eligible = poolAtTier(tier, slot)
     if (eligible.length === 0) throw new Error(`装备系统:层级 ${tier} 的槽位 ${slot} 没有任何模板`)
     const template = rng.weighted(eligible, () => 1)
