@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 269,
+  "round": 270,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:15:13+00:00",
+  "updated_at": "2026-09-18T17:20:22+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 268,
+      "touched_round": 270,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15955,7 +15955,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:15:03+00:00",
       "updated_at": "2026-09-18T17:15:03+00:00",
-      "touched_round": 269,
+      "touched_round": 270,
       "category": "docs",
       "severity": 0.3,
       "confidence": 0.95,
@@ -15985,6 +15985,56 @@
       "confidence": 0.97,
       "source": "变更 CHG-332(3a513f5)。cd packages/engine && bun run check(20 文件/195 例 + 四份示例);bun run test(210 文件/2121 例);bun run test:report(2121 过/0 败);bun run check:engine(30 处引用全走公开入口);bun run check:engine:standalone(44 源文件);独立仓 tag v0.1.7 推送成功;gh release create v0.1.7",
       "summary": "0.1.7 是区间内第一次\"攒批发版\":四处独立功能 + 一次消融结论 + 示例,判据全绿后才发;版本只加 patch(0.1.6→0.1.7),符合\"编号别起飞\"的口径。"
+    },
+    "TASK-251": {
+      "id": "TASK-251",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:15+00:00",
+      "updated_at": "2026-09-18T17:20:15+00:00",
+      "touched_round": 270,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增抉择层(事件选项/任务分支/商店讨价):createChoiceSystem 给四件事的顺序与边界(能不能选可带理由、后果按权重掷且权重全零取第一条、效果逐条由作品解释并收成回执、没选时三级兜底);本作事件结算接过去,用旧实现冻结对账(含掷中的后果与之后消耗的随机数)。继续攒批不发版。"
+    },
+    "CHG-333": {
+      "id": "CHG-333",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:15+00:00",
+      "updated_at": "2026-09-18T17:20:15+00:00",
+      "touched_round": 270,
+      "commit": "759269c",
+      "summary": "库:新增 src/choices.ts 与 choices.spec.ts(6 例),index/publicApi.spec 导出(ChoiceConfig/ChoiceDef/ChoiceOutcome/ChoiceReceipt/ChoiceSystem 与 createChoiceSystem),CHANGELOG「未发布」与 README 加条目。宿主:eventEngine 的 resolveEventChoice 走 CHOICES.resolve、autoResolveEvent 走 CHOICES.defaultIndex(applyEffect 原样保留),新增 engineChoiceParity.spec(4 例),test-report 补分类,docs/engine.md 迁移表加一行。"
+    },
+    "EV-257": {
+      "id": "EV-257",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:22+00:00",
+      "updated_at": "2026-09-18T17:20:22+00:00",
+      "touched_round": 270,
+      "confidence": 0.97,
+      "source": "变更 CHG-333(759269c)。bunx vitest run src/core/engineChoiceParity.spec.ts(4 例:前 40 事件×每选项×20 种子掷中的后果相同、消耗的随机数相同、两种玩家状态下三级兜底一致、回执文本取自掷中的后果);bunx vitest run src/core/eventEngine.spec.ts src/core/regionEvent.spec.ts src/core/chainProgression.spec.ts(21 例);bun run test(212 文件/2131 例);bun run test:report(2131 过/0 败);cd packages/engine && bun run check(21 文件/201 例);bun run check:engine(32 处引用);bun run check:engine:standalone",
+      "summary": "事件结算搬迁逐次对账:掷中的后果、后果下标与之后消耗的随机数流与冻结实现完全相同;三级兜底(默认且可选→第一条可选→第一条)在两种玩家状态下一致;对账次数 >200,非空转。"
+    },
+    "DEC-121": {
+      "id": "DEC-121",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:22+00:00",
+      "updated_at": "2026-09-18T17:20:22+00:00",
+      "touched_round": 270,
+      "rationale": "抉择这类结构最容易在三个边界上翻车:①\"选不了\"只给布尔值,界面只能干瞪眼(`available` 因此允许直接返回一句人话);②后果写死一种,而\"同一句伸手去拿\"本就该有概率不同的下场(后果按权重掷,且权重全为 0 时取第一条 —— 边界必须确定,不能返回空);③玩家没选时到处各写一遍\"用哪条\"(离线自动结算一处、界面超时一处),两处迟早不一致 —— 三级兜底(默认且可选 → 第一条可选 → 第一条)收进库一处。而\"效果是什么\"仍归作品:库不认识资源、功法、法宝这些标签,只逐条问解释器并把说明收成回执。",
+      "alternatives_rejected": "①把效果类型内建进库(库就得认识\"灵石\"\"功法\",变成某款游戏的复刻);②只给一个\"按权重抽一个\"的函数(选不了的理由、兜底顺序、回执形状仍要每家自己写);③让界面与离线各写一套兜底(实测最容易分叉的地方)。",
+      "summary": "抉择层的库形态:能不能选(可带理由)、后果按权重掷(权重全零有确定边界)、效果由作品解释并收成回执、没选时三级兜底一处实现。"
     }
   },
   "edges": [
@@ -24400,6 +24450,30 @@
       "to": "TASK-249",
       "type": "depends_on",
       "created_at": "2026-09-18T17:15:13+00:00"
+    },
+    {
+      "from": "CHG-333",
+      "to": "TASK-251",
+      "type": "implements",
+      "created_at": "2026-09-18T17:20:22+00:00"
+    },
+    {
+      "from": "TASK-251",
+      "to": "TASK-250",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:20:22+00:00"
+    },
+    {
+      "from": "DEC-121",
+      "to": "TASK-251",
+      "type": "governs",
+      "created_at": "2026-09-18T17:20:22+00:00"
+    },
+    {
+      "from": "DEC-121",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:20:22+00:00"
     }
   ]
 }
