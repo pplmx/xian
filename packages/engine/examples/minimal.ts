@@ -8,8 +8,8 @@
  * 它不依赖 Vue/Pinia,也不需要任何界面 —— 引擎是纯逻辑层,
  * 界面、存档、离线结算都由使用方自己决定。
  */
-import { asFiniteNumber, asStringArray, createRng, decodeSave, defineGame, defineSaveFormat, emptyProgress, encodeSave, planIdle, runIdle } from '../src/index'
-import { DEMO } from '../src/presets/demo'
+import { asFiniteNumber, asStringArray, createRng, decodeSave, defineGame, defineSaveFormat, emptyProgress, encodeSave, planIdle, runIdle } from '../src/index.js'
+import { DEMO } from '../src/presets/demo.js'
 
 const game = defineGame(DEMO)
 const rng = createRng('星港-示例')
