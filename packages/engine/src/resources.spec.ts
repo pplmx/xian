@@ -124,4 +124,73 @@ describe('资源账本 —— 货币 / 材料 / 点数这一层', () => {
     expect(out.entries.length).toBe(1)
     expect(out.rejected.length).toBe(1) // NaN 那条被拒,但没让整场结算崩
   })
+
+  it('整数资源落账时取整 —— "灵草 ×2.5" 没人看得懂', () => {
+    const res = createResourceSystem({ resources: [{ key: 'herb', name: '灵草', integer: true }, { key: 'stone', name: '灵石' }] })
+    const wallet = res.create()
+    const gained = res.grant(wallet, [
+      { key: 'herb', amount: 2.7, source: '掉落' },
+      { key: 'stone', amount: 2.7, source: '掉落' } // 货币不取整
+    ])
+    expect(Number(gained.ledger.herb)).toBe(2)
+    expect(Number(gained.ledger.stone)).toBe(2.7)
+    expect(Number(gained.entries[0]!.applied)).toBe(2) // 实际发生额也是 2,不是 2.7
+    expect(gained.entries[0]!.clamped).toBe(true)
+  })
+
+  it('大数台账:收支条目可以传台账自己的数(T),不经过 double', () => {
+    // 一个最小的大数壳:m × 10^e(与宿主 GNum 同形),只为验证"条目收 T"
+    type Big = { m: number; e: number }
+    const norm = (a: Big): Big => {
+      if (a.m === 0) return { m: 0, e: 0 }
+      let { m, e } = a
+      while (Math.abs(m) >= 10) {
+        m /= 10
+        e += 1
+      }
+      while (Math.abs(m) < 1 && m !== 0) {
+        m *= 10
+        e -= 1
+      }
+      return { m, e }
+    }
+    const align = (a: Big, b: Big): [number, number, number] => {
+      const e = Math.max(a.e, b.e)
+      return [a.m * 10 ** (a.e - e), b.m * 10 ** (b.e - e), e]
+    }
+    const numeric = {
+      zero: { m: 0, e: 0 } as Big,
+      one: { m: 1, e: 0 } as Big,
+      from: (n: number) => norm({ m: n, e: 0 }),
+      of: (value: unknown) => (typeof value === 'number' ? norm({ m: value, e: 0 }) : (value as Big)),
+      add: (a: Big, b: Big): Big => {
+        const [x, y, e] = align(a, b)
+        return norm({ m: x + y, e })
+      },
+      sub: (a: Big, b: Big): Big => {
+        const [x, y, e] = align(a, b)
+        return norm({ m: x - y, e })
+      },
+      mul: (a: Big, b: Big): Big => norm({ m: a.m * b.m, e: a.e + b.e }),
+      mulN: (a: Big, k: number): Big => norm({ m: a.m * k, e: a.e }),
+      div: (a: Big, b: Big): Big => norm({ m: a.m / b.m, e: a.e - b.e }),
+      pow: (a: Big, k: number): Big => norm({ m: a.m ** k, e: a.e * k }),
+      powN: (n: number, k: number): Big => norm({ m: n ** k, e: 0 }),
+      cmp: (a: Big, b: Big): number => {
+        const [x, y] = align(a, b)
+        return x === y ? 0 : x > y ? 1 : -1
+      },
+      max: (a: Big, b: Big): Big => (numeric.cmp(a, b) >= 0 ? a : b),
+      toNumber: (a: Big): number => a.m * 10 ** a.e
+    }
+
+    const res = createResourceSystem<Big>({ resources: [{ key: 'stone', name: '灵石' }] }, numeric as never)
+    const wallet = res.create()
+    const big = { m: 1, e: 40 } as Big // 1e40 量级的收入
+    const gained = res.grant(wallet, [{ key: 'stone', amount: big, source: '秘境' }])
+    const amount = gained.ledger.stone!
+    expect(amount.m).toBeCloseTo(1, 10)
+    expect(amount.e).toBe(40) // 没被压成 double
+    expect(res.audit(gained.entries).bySource['秘境']!.net.e).toBe(40)
+  })
 })

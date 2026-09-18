@@ -14,7 +14,7 @@ import { readFileSync, rmSync } from 'node:fs'
 const CATEGORIES = [
   {
     name: 'Engine      公共库内核',
-    match: ['packages/engine', 'engineParity']
+    match: ['packages/engine', 'engineParity', 'engineResourceParity']
   },
   {
     name: 'Unit        数值纯函数',

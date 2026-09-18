@@ -29,30 +29,42 @@ export interface ResourceDef {
   cap?: number
   /** 下限,默认 0(即"不可为负") */
   floor?: number
+  /**
+   * 是不是整数资源(默认 false)。
+   *
+   * 材料/点数这类东西是整数(「灵草 ×2.5」没人看得懂),货币常常带小数 ——
+   * 口径由你定,落账时按这里取整(向下取整,与"只多不少"无关:取整发生在夹取之后)。
+   */
+  integer?: boolean
 }
 
 /** 一本账:资源键 → 数量。纯数据,随便序列化 */
 export type Ledger<T> = Record<string, T>
 
-export interface ResourceEntry {
+export interface ResourceEntry<T = number> {
   key: string
-  /** 正数 = 收入,负数 = 支出 */
-  amount: number
+  /**
+   * 正数 = 收入,负数 = 支出。
+   *
+   * 收 `number`(绝大多数场合),也收**台账自己的数** —— 灵石这类走大数的资源,
+   * 一笔收入可能就超过 double 能表示的整数范围,那时直接传 `T`。
+   */
+  amount: number | T
   /** 来源 / 去向标签(审计用);不填归到 "(未标)" */
   source?: string
 }
 
-export interface AppliedEntry extends ResourceEntry {
-  /** 实际发生的额(被上下限夹过之后;可能是 0) */
-  applied: number
+export interface AppliedEntry<T = number> extends ResourceEntry<T> {
+  /** 实际发生的额(被上下限夹过、必要时取整之后;可能是 0) */
+  applied: T
   /** 这一条被上下限动过? */
   clamped: boolean
 }
 
-export interface ResourceSummary {
-  income: number
-  expense: number
-  net: number
+export interface ResourceSummary<T = number> {
+  income: T
+  expense: T
+  net: T
 }
 
 export interface ResourceSystemConfig {
@@ -84,38 +96,44 @@ export function createResourceSystem<T = number>(
   const clampValue = (key: string, ledger: Ledger<T>, value: number): number => {
     const floor = floorOf(key)
     const cap = capOf(key, ledger)
-    return Math.min(cap, Math.max(floor, value))
+    const clamped = Math.min(cap, Math.max(floor, value))
+    return byKey.get(key)?.integer ? Math.floor(clamped) : clamped
   }
 
   /** 逐条落账;返回新账本(不改入参)与每条的实际发生额 */
+  /** 条目里的额可以是 number,也可以是台账自己的数(大数资源) */
+  const amountOf = (entry: ResourceEntry<T>): T => typeof entry.amount === 'number' ? numeric.from(entry.amount) : entry.amount
+
   const apply = (
     ledger: Ledger<T>,
-    entries: readonly ResourceEntry[]
-  ): { ledger: Ledger<T>; entries: AppliedEntry[]; rejected: ResourceEntry[] } => {
+    entries: readonly ResourceEntry<T>[]
+  ): { ledger: Ledger<T>; entries: AppliedEntry<T>[]; rejected: ResourceEntry<T>[] } => {
     const next: Ledger<T> = { ...ledger }
-    const applied: AppliedEntry[] = []
-    const rejected: ResourceEntry[] = []
+    const applied: AppliedEntry<T>[] = []
+    const rejected: ResourceEntry<T>[] = []
     for (const entry of entries) {
-      if (!entry || typeof entry.key !== 'string' || !Number.isFinite(entry.amount)) {
+      const amount = entry ? amountOf(entry) : zero
+      if (!entry || typeof entry.key !== 'string' || !Number.isFinite(numeric.toNumber(amount))) {
         // 内容写错不该让整场结算炸掉:这一条丢掉,其余照收照付
         if (entry) rejected.push(entry)
         continue
       }
       const before = numeric.toNumber(next[entry.key] ?? zero)
-      const after = clampValue(entry.key, next, before + entry.amount)
+      const after = clampValue(entry.key, next, before + numeric.toNumber(amount))
       const delta = after - before
       next[entry.key] = numeric.from(after)
-      applied.push({ ...entry, applied: delta, clamped: Math.abs(delta - entry.amount) > 1e-9 })
+      applied.push({ ...entry, applied: numeric.from(delta), clamped: Math.abs(delta - numeric.toNumber(amount)) > 1e-9 })
     }
     return { ledger: next, entries: applied, rejected }
   }
 
   /** 缺口:买不起时缺多少(逐项;只报正数) */
-  const shortfall = (ledger: Ledger<T>, costs: readonly ResourceEntry[]): { key: string; short: number }[] => {
+  const shortfall = (ledger: Ledger<T>, costs: readonly ResourceEntry<T>[]): { key: string; short: number }[] => {
     const need = new Map<string, number>()
     for (const cost of costs) {
-      if (cost && typeof cost.key === 'string' && Number.isFinite(cost.amount)) {
-        need.set(cost.key, (need.get(cost.key) ?? 0) + cost.amount)
+      const amount = cost ? numeric.toNumber(amountOf(cost)) : Number.NaN
+      if (cost && typeof cost.key === 'string' && Number.isFinite(amount)) {
+        need.set(cost.key, (need.get(cost.key) ?? 0) + amount)
       }
     }
     const out: { key: string; short: number }[] = []
@@ -126,7 +144,7 @@ export function createResourceSystem<T = number>(
     return out
   }
 
-  const canAfford = (ledger: Ledger<T>, costs: readonly ResourceEntry[]): boolean => shortfall(ledger, costs).length === 0
+  const canAfford = (ledger: Ledger<T>, costs: readonly ResourceEntry<T>[]): boolean => shortfall(ledger, costs).length === 0
 
   /**
    * 支出。
@@ -136,9 +154,9 @@ export function createResourceSystem<T = number>(
    */
   const pay = (
     ledger: Ledger<T>,
-    costs: readonly ResourceEntry[],
+    costs: readonly ResourceEntry<T>[],
     opts: { partial?: boolean } = {}
-  ): { ok: boolean; ledger: Ledger<T>; entries: AppliedEntry[]; shortfall: { key: string; short: number }[] } => {
+  ): { ok: boolean; ledger: Ledger<T>; entries: AppliedEntry<T>[]; shortfall: { key: string; short: number }[] } => {
     const lacking = shortfall(ledger, costs)
     if (lacking.length > 0 && !opts.partial) {
       return { ok: false, ledger, entries: [], shortfall: lacking }
@@ -146,13 +164,13 @@ export function createResourceSystem<T = number>(
     // 支出按"要付多少"写(正数),落账时才变成负的 —— 调用方不必自己记"这里得写负号"
     const result = apply(
       ledger,
-      costs.map(cost => ({ ...cost, amount: -Math.abs(cost.amount) }))
+      costs.map(cost => ({ ...cost, amount: numeric.mulN(amountOf(cost), -1) }))
     )
     return { ok: lacking.length === 0, ledger: result.ledger, entries: result.entries, shortfall: lacking }
   }
 
   /** 收入(照夹上限) */
-  const grant = (ledger: Ledger<T>, gains: readonly ResourceEntry[]): { ledger: Ledger<T>; entries: AppliedEntry[] } => {
+  const grant = (ledger: Ledger<T>, gains: readonly ResourceEntry<T>[]): { ledger: Ledger<T>; entries: AppliedEntry<T>[] } => {
     const result = apply(ledger, gains)
     return { ledger: result.ledger, entries: result.entries }
   }
@@ -166,11 +184,11 @@ export function createResourceSystem<T = number>(
   const produce = (
     ledger: Ledger<T>,
     steps: number,
-    perStep: readonly ResourceEntry[],
+    perStep: readonly ResourceEntry<T>[],
     opts: { source?: string } = {}
-  ): { ledger: Ledger<T>; entries: AppliedEntry[] } => {
+  ): { ledger: Ledger<T>; entries: AppliedEntry<T>[] } => {
     let current = ledger
-    const entries: AppliedEntry[] = []
+    const entries: AppliedEntry<T>[] = []
     const n = Math.max(0, Math.floor(steps))
     for (let i = 0; i < n; i += 1) {
       const step = perStep.map(e => ({ ...e, source: opts.source ?? e.source }))
@@ -182,14 +200,14 @@ export function createResourceSystem<T = number>(
   }
 
   /** 审计:按资源、按来源各汇总一份。明细恒等于合计 —— 这条由用例钉着 */
-  const audit = (entries: readonly AppliedEntry[]): { byKey: Record<string, ResourceSummary>; bySource: Record<string, ResourceSummary> } => {
-    const byKey: Record<string, ResourceSummary> = {}
-    const bySource: Record<string, ResourceSummary> = {}
-    const bump = (table: Record<string, ResourceSummary>, label: string, amount: number): void => {
-      const row = (table[label] ??= { income: 0, expense: 0, net: 0 })
-      if (amount >= 0) row.income += amount
-      else row.expense += -amount
-      row.net += amount
+  const audit = (entries: readonly AppliedEntry<T>[]): { byKey: Record<string, ResourceSummary<T>>; bySource: Record<string, ResourceSummary<T>> } => {
+    const byKey: Record<string, ResourceSummary<T>> = {}
+    const bySource: Record<string, ResourceSummary<T>> = {}
+    const bump = (table: Record<string, ResourceSummary<T>>, label: string, amount: T): void => {
+      const row = (table[label] ??= { income: zero, expense: zero, net: zero })
+      if (numeric.cmp(amount, zero) >= 0) row.income = numeric.add(row.income, amount)
+      else row.expense = numeric.add(row.expense, numeric.mulN(amount, -1))
+      row.net = numeric.add(row.net, amount)
     }
     for (const entry of entries) {
       bump(byKey, entry.key, entry.applied)

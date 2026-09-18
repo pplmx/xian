@@ -25,6 +25,11 @@
 | 炼制(成功率四乘区 / 越级惩罚 / 熟练度曲线) | `core/craftability` 与 `data/crafting` 的纯式走库的 crafting | 四维网格(掌握 × 认知 × 技艺 × 越级)逐点精确相等;真实丹方的材料表与技艺权重逐条相等 |
 | 任务 / 成就的达成判据与进度 | `core/progress.evalCond` 与 `core/questProgress` 走库的 goals | 全部真实条件(主线 / 每日 / 成就)× 若干状态与冻结旧判据逐个相同;品质型条件的"不与等级同路"也被钉住 |
 | 灵兽性格与词条 | `core/engineWorld` 的 `COMPANION_SYSTEM`;`core/petPersonality` 与 `stores/player` 的灵兽加成转发 | 14 只灵兽的性格系数逐项、自身词条逐只与冻结旧表相同;无灵兽 / 未知 id 一律中性 |
+| 资源收支与上下限(灵石 / 材料 / 灵气) | `stores/resources` 的动作转发到 `core/engineResources`(库的资源账本 + GNum 适配器) | `engineResourceParity.spec` 用**迁移前冻结的旧实现**当尺子:灵石收付逐位相等(1e40 不压成 double)、材料取整与不为负、灵气 QI_BANK_MULT 倍软顶,全网格比对 |
+
+资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
+材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,
+在这里第一次真的兑现了。
 
 ## 怎么引用
 
