@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 278,
+  "round": 279,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T18:24:37+00:00",
+  "updated_at": "2026-09-18T18:30:32+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -736,7 +736,7 @@
       "version": 1,
       "created_at": "2026-09-10T04:53:34+00:00",
       "updated_at": "2026-09-10T04:53:34+00:00",
-      "touched_round": 152,
+      "touched_round": 279,
       "summary": "洞府建筑系统(data/buildings + stores/dongfu + buildingService:等级闸门、离线收益上限、品类上限)"
     },
     "TASK-010": {
@@ -16406,7 +16406,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:20:53+00:00",
       "updated_at": "2026-09-18T18:20:53+00:00",
-      "touched_round": 278,
+      "touched_round": 279,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16473,6 +16473,69 @@
       "confidence": 0.85,
       "effort": 1,
       "summary": "丹药增益在\"叠时长且不设上限\"的口径下可被囤积:实测每 20 分钟吃一次 30 分钟的增益、连吃 24 小时后还剩 12 小时余量(间隔 10 分钟则余 48 小时)。这在经济上等价于\"限时增益可以按成本囤成半常驻\"。当前保留(丹药有真实成本、玩家用得多也该多得),但若要收住,库已支持 maxDurationSec 或 reset/longest;需要一次显式的平衡决定,而不是顺手改。"
+    },
+    "TASK-260": {
+      "id": "TASK-260",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:30:20+00:00",
+      "updated_at": "2026-09-18T18:30:20+00:00",
+      "touched_round": 279,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增投资点层:createPointPool(总容量与主副两档上限、换主位不作废已投点数、投不成什么都不改、效果与费用由内容给)。本作 core/engineVeins 接线 veinService 与 stores/dongfu 的 veinMods/veinTotal,store 增 setVeinState 整份写回;顺手修正\"首投自动认主发生在付费之前\"的旧坑(点了却没灵石也会把主脉定住)。继续攒批不发版。"
+    },
+    "CHG-342": {
+      "id": "CHG-342",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:30:20+00:00",
+      "updated_at": "2026-09-18T18:30:20+00:00",
+      "touched_round": 279,
+      "commit": "ab2a30b",
+      "summary": "库:新增 src/points.ts 与 points.spec.ts(12 例:首投认主、主副两档上限与单条覆盖、总容量、判定顺序、投不成不动状态、换主位只换方向、费用与效果、过期键占容量、坏值当 0、纯函数),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目。宿主:新增 core/engineVeins.ts(内容与换算层),veinService 的投点与改立主脉、stores/dongfu 的 veinMods/veinTotal 改走它并新增 setVeinState,新增 engineVeinParity.spec(9 例,冻结旧服务实现 + 一条有意修正),test-report 补分类,docs/engine.md 加一行并把引用数与导出数对回实际(47 处 / 66 个)。"
+    },
+    "EV-267": {
+      "id": "EV-267",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:30:24+00:00",
+      "updated_at": "2026-09-18T18:30:24+00:00",
+      "touched_round": 279,
+      "confidence": 0.96,
+      "source": "变更 CHG-342(ab2a30b)。bunx vitest run src/core/engineVeinParity.spec.ts(9 例);bunx vitest run src/core/veinService.spec.ts src/core/veinVisibility.spec.ts src/stores/dongfu.spec.ts src/core/effectWiring.spec.ts(39 例,迁移前那批契约用例照旧全绿);bun run check;bun run test(231 文件/2273 例);bun run test:report(2273 过/0 败);cd packages/engine && bun run check(31 文件/280 例);bun run check:engine(47 处引用);bun run check:engine:standalone",
+      "summary": "灵脉投点搬迁后与迁移前逐位一致:五条动作脚本(投到主脉上限 / 投满总容量 / 改立后被副位上限拦 / 改回去再投 / 反复换向)每一步的成败、点数、主脉、灵石余额与提示语全同;未开放时两边都静默;veinMods/veinTotal 与旧双重循环逐键相同。一处有意修正:旧写法把\"首投自动认主\"放在付费之前,点了却没灵石也会把主脉定在没投成的那条脉上(之后想投的那条反成副脉,还要付迁脉费),现在投不成不动状态。"
+    },
+    "ISS-233": {
+      "id": "ISS-233",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:30:29+00:00",
+      "updated_at": "2026-09-18T18:30:29+00:00",
+      "touched_round": 279,
+      "severity": 0.3,
+      "confidence": 1.0,
+      "effort": 1,
+      "summary": "灵脉投点的\"首投自动认主\"发生在付费之前:玩家点了第一点却没灵石时,主脉已被定在那条没投成的脉上 —— 想投的那条从此是副脉(上限 30 而非 70),还得另付迁脉费才能改回。已在 CHG-342 修正为\"投不成什么都不改\",并在 engineVeinParity 里把新旧两种行为都写明。"
+    },
+    "DEC-130": {
+      "id": "DEC-130",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:30:29+00:00",
+      "updated_at": "2026-09-18T18:30:29+00:00",
+      "touched_round": 279,
+      "summary": "投资点的两条口径:换主位只换方向、不作废已投点数;判定不过时状态必须原地不动(含\"首投自动认主\"只在投成功那一次生效)。",
+      "rationale": "\"加点\"里真正伤玩家的不是数值给少了,而是**悄悄改变他已投入的东西**。①换主位:玩家在主位投到 70 点后改立别的方向,那 70 点若被\"按副位上限截断\"就等于没收 —— 正确做法是只封住\"再投\",已投的照旧生效,代价由迁脉费表达,方向有代价但不锁死。②判定不过:门槛 / 容量 / 上限 / 缺钱任一不过时,状态必须一位不动;尤其\"首次投点自动认主\"这条便利规则,若放在付费之前,就会出现\"点了却没投成、主脉却被认下\"的怪状态 —— 玩家不仅没得到点数,还失去了往想投的方向加点的资格。故库的 contract 写成\"run 失败时原样返回同一份 state\"(连引用都不换,界面也不会因没发生的事重渲染)。",
+      "alternatives_rejected": "①改主位时把超出的点数退回或作废(玩家会觉得\"投过的被偷走了\";要退就该有显式的\"洗点\"功能,而不是换向的副作用);②首次投点先认主、再校验费用(这就是本作迁移前的写法,造出\"没投成却认了主\"的状态);③把费用校验也搬进库(库不认识灵石与货币来源,费用只该作为判定的一部分返回给调用方去付);④容量与上限只报一个笼统的\"不能投\"(玩家不知道该去清容量还是该换主位 —— 三句说法必须分开)。"
     }
   },
   "edges": [
@@ -25098,6 +25161,36 @@
       "to": "COMP-018",
       "type": "located_in",
       "created_at": "2026-09-18T18:24:37+00:00"
+    },
+    {
+      "from": "CHG-342",
+      "to": "TASK-260",
+      "type": "implements",
+      "created_at": "2026-09-18T18:30:32+00:00"
+    },
+    {
+      "from": "DEC-130",
+      "to": "TASK-260",
+      "type": "governs",
+      "created_at": "2026-09-18T18:30:32+00:00"
+    },
+    {
+      "from": "TASK-260",
+      "to": "TASK-259",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:30:32+00:00"
+    },
+    {
+      "from": "CHG-342",
+      "to": "ISS-233",
+      "type": "resolves",
+      "created_at": "2026-09-18T18:30:32+00:00"
+    },
+    {
+      "from": "ISS-233",
+      "to": "COMP-007",
+      "type": "located_in",
+      "created_at": "2026-09-18T18:30:32+00:00"
     }
   ]
 }
