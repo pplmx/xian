@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 222,
+  "round": 223,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T06:38:57+00:00",
+  "updated_at": "2026-09-18T06:53:39+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 222,
+      "touched_round": 223,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -13105,12 +13105,12 @@
       "id": "CHG-259",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T06:38:57+00:00",
-      "updated_at": "2026-09-18T06:38:57+00:00",
-      "touched_round": 222,
+      "updated_at": "2026-09-18T06:53:39+00:00",
+      "touched_round": 223,
       "commit": "224b582",
-      "summary": "新增 core/regionRevival.settleRegionRevivals(复聚唯一入口:旧主归来 + 镇压松开,聚合提示);worldMemory 的钟改为 regionTouchedAt(战斗/镇压/已靖三取较晚)+ isRegionRevived;adventure store 新增 clearedAt(显式已靖时刻,离线斩首也认)与 revived(markRevived/markCleared 互斥)并接入 sanitize 与读档补票;loreService 首领门槛改 ENEMY_LORE_BOSS_THRESHOLDS=[0,1,2,3];suppress 结算先跑复聚且挪到早退之前;AdventureView 画出复聚状态与\"再历一程即可复靖\";goal 排除复聚地界;layout-check 夹具补复聚态与第三十八件事;新增 core/regionRevival.spec(12 例)。"
+      "summary": "新增 core/regionRevival.settleRegionRevivals(复聚唯一入口:旧主归来 + 镇压松开,聚合提示);worldMemory 的钟改为 regionTouchedAt(战斗/镇压/已靖三取较晚)+ isRegionRevived;adventure store 新增 clearedAt(显式已靖时刻,离线斩首也认)与 revived(markRevived/markCleared 互斥)并接入 sanitize 与读档补票;loreService 首领门槛改 ENEMY_LORE_BOSS_THRESHOLDS=[0,1,2,3];suppress 结算先跑复聚且挪到早退之前,并把 revived 随收益回给调用方;offline 归来账目增「妖气复聚」一行;AdventureView 画出复聚状态与\"再历一程即可复靖\";goal 排除复聚地界;layout-check 夹具补复聚态与第三十八件事;新增 core/regionRevival.spec(14 例)与 offlineCap 的卷轴判据。"
     },
     "EV-205": {
       "id": "EV-205",
@@ -13147,6 +13147,18 @@
       "rationale": "挂机是这款游戏的核心体验(原则见 worldMemory 与镇压系统的头注):若复聚要求\"必须再打一次首领才恢复收益\",三天没上线就变成二十场必修课。故复聚只收走「已靖」,镇压资格保持永久、一键即可把收益接回来 —— 首领那份(4× 战利品与认知)变成\"想要就去拿\"的内容,而不是欠债。经济上界也支持这个尺度:复聚带来的首领战不超过历练收入的 0.4%,不足以影响任何一条收入线。",
       "alternatives_rejected": "①复聚后须再靖才恢复镇压(把节奏变成税,与\"不破坏挂机\"冲突);②复聚时把已靖地界整体回滚(惩罚性太强,且把\"世界记得你做过什么\"一起抹掉);③已靖永久、首领只在转世后重逢(就是现状:高界首领的认知与情报事实上不可达)。",
       "summary": "复聚不惩罚挂机:只收走「已靖」,镇压资格永久、一键接回收益;首领那份内容由玩家自行选择去取。"
+    },
+    "DEC-064": {
+      "id": "DEC-064",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T06:53:39+00:00",
+      "updated_at": "2026-09-18T06:53:39+00:00",
+      "touched_round": 223,
+      "rationale": "预告的目的是防损失;而复聚不是损失 —— 它只把「已靖」收回去,镇压资格永久、一键即可把收益接回,首领那份(4× 战利品与认知)是白送的重逢。给每一处已靖地界挂上倒计时,等于把这份机会写成\"还有 N 小时又要打一趟\"的待办,与\"不破坏挂机\"相冲突。故:镇压中的地界仍然预告(收益会被打断,那里才是防损失的地方),已靖的地界不预告,但**发生的那一刻必须在玩家正在看的地方说清**。",
+      "alternatives_rejected": "①每处已靖地界都挂倒计时(把内容写成待办,窄屏还多一处挤压风险);②复聚时弹一个说明窗(打断归来流程,而归来卷轴本就是说明这件事的地方);③只发提示条(实测归来时眼前是卷轴弹窗,提示条在跟它抢注意力);④干脆不解释(玩家会把\"已靖的地界旧主回来了\"当成丢档或 bug)。",
+      "summary": "妖气复聚不预告,但要在\"发生的那一刻、玩家正在看的地方\"说清:写进归来卷轴的账目(含\"再历一程即可复靖\"),而不是只发一条提示条。"
     }
   },
   "edges": [
@@ -19594,6 +19606,12 @@
       "to": "COMP-006",
       "type": "governs",
       "created_at": "2026-09-18T06:38:57+00:00"
+    },
+    {
+      "from": "DEC-064",
+      "to": "COMP-006",
+      "type": "governs",
+      "created_at": "2026-09-18T06:53:39+00:00"
     }
   ]
 }
