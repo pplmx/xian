@@ -58,6 +58,7 @@
 | 副本链(区域怎么开、打几场见首领、通关给什么) | `createDungeonSystem` | `dungeons.spec.ts` + `dungeons.sim.spec.ts`(两种节奏差一场、敌人随层级陡多少) |
 | 战斗骨架(护盾、反击、追击、技能标签) | `createCombatEngine` | `examples/combo-arts.ts` |
 | **把你自己那套战斗整段接进来** | `BattleConfig` 的 `skillFn` / `strikeFn` / `actFn` | `examples/combat-takeover.ts`(老口径 × 接管版,同 200 颗种子逐场相同) |
+| **换一种完全不同的战斗口径再试一次** | 同上三处主权 | `examples/arena-takeover.ts`(拳赛:体力 / 连击 / 确定性反打 —— 同 200 颗种子逐场相同) |
 | 掉落表(概率归一、保底、份数) | `createDropTable` | `drops.spec.ts` |
 | 炼制 / 合成的成功率(四乘区相乘 + 越级) | `composeCraftRate` / `leverFactor` / `overReachFactor` | `crafting.spec.ts` + `crafting.sim.spec.ts`(每个乘区值多少、越级多陡、练到九成要多久) |
 | 开炉之后实际发生什么(没开炉 / 失败保料 / 双成) | `createRecipeRunner` | `recipes.spec.ts` |
