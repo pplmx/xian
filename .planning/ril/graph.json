@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 290,
+  "round": 291,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:37:20+00:00",
+  "updated_at": "2026-09-18T19:41:35+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17057,7 +17057,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:37:14+00:00",
       "updated_at": "2026-09-18T19:37:14+00:00",
-      "touched_round": 290,
+      "touched_round": 291,
       "category": "core-feature",
       "severity": 0.45,
       "confidence": 0.9,
@@ -17099,6 +17099,56 @@
       "summary": "单模块语义之外还要有组合验收:跨模块只断言不变量(守恒、同源、单调幂等、判据唯一、可复现),而且验收用例要用\"另一套题材 + 只看文档拼一遍\"的方式写。",
       "rationale": "单模块用例证明\"每个零件对\",但用户拿到的是组合:一处产出的数字要经过产线、上限、回执、计数、任务/成就、再投资,中间任何一环各算一遍账目就会分叉 —— 这类错在单模块用例里永远看不见。更要紧的是写法:这份验收刻意用另一套题材(小工坊)、刻意只看 README 与签名去拼,于是它测的是\"文档能不能让人拼对\",而不是\"我记不记得这些 API\"。它第一次跑就抓出两处误读(ResourceDef.cap=0 的含义、evictable 的参数形状),这正是不变量之外的价值。",
       "alternatives_rejected": "①只靠示例程序(daily-loop / quest-loop 是我自己写的,按我的记忆拼,不会暴露文档的坑);②把组合验收写成\"跑一遍不报错\"(不断言不变量,等于只测类型);③在宿主里做组合验收(那测的是本作的内容装配,不是库的拼装说明);④为组合验收新增一个\"组合 API\"(把模块缝在一起会毁掉各自的边界,拼装本来就该由使用者做)。"
+    },
+    "TASK-272": {
+      "id": "TASK-272",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T19:41:29+00:00",
+      "updated_at": "2026-09-18T19:41:29+00:00",
+      "touched_round": 291,
+      "category": "docs",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增组装指南 docs/assembly.md:前置决定 / 依赖顺序 / 四条配方(放置修仙·学习打卡·抽卡收集·经营模拟)/ 三条纪律 / 十处易踩的坑 / 怎么验自己的装配;每条结论都指向可跑的示例或用例,并加两处机械判据防止腐烂(verify-dist 核对指南里的 create* 与路径;standalone 的示例清单改为从 package.json 读,quest-loop 原先漏检)。"
+    },
+    "CHG-354": {
+      "id": "CHG-354",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:41:29+00:00",
+      "updated_at": "2026-09-18T19:41:29+00:00",
+      "touched_round": 291,
+      "commit": "112d76c",
+      "summary": "库:新增 docs/assembly.md(约 150 行),verify-dist.mjs 加\"组装指南自检\"(25 个工厂 + 14 个工具 + 示例与用例路径,并修掉一处子目录用例的路径匹配),README 顶部与目录树指向它,CHANGELOG「未发布」加一条。宿主脚本:scripts/engine-standalone.mjs 的示例清单改为从 package.json 的 examples 脚本解析(顺手补上此前漏检的 quest-loop.ts)。"
+    },
+    "EV-279": {
+      "id": "EV-279",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:41:29+00:00",
+      "updated_at": "2026-09-18T19:41:29+00:00",
+      "touched_round": 291,
+      "confidence": 0.96,
+      "source": "变更 CHG-354(112d76c)。cd packages/engine && node scripts/verify-dist.mjs(组装指南自检通过:25 个工厂 + 14 个工具 + 示例与用例路径;产物自检通过);bun run check(46 文件/362 例);cd /workspace/xian && bun run test(245 文件/2403 例);bun run test:report(2403 过/0 败);bun run check:engine(59 处引用);bun run check:engine:standalone(示例清单 5 个全跑)。另核验:package.json 的 examples 脚本确实列出 5 个示例且文件都在。",
+      "summary": "组装指南落地且被两处机械判据盯着:①指南里的 25 个 create* 与 14 个工具函数逐个核对为公开导出(写错名字或拆了模块,verify-dist 当场红);②指南引用的示例与用例路径逐个核对存在(第一次跑就抓出 presets/presets.spec.ts 在子目录里,改成整树按文件名找);③standalone 自检的示例清单从硬编改成读 package.json,于是 quest-loop.ts 这类新增示例不会再漏检。"
+    },
+    "DEC-142": {
+      "id": "DEC-142",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:41:29+00:00",
+      "updated_at": "2026-09-18T19:41:29+00:00",
+      "touched_round": 291,
+      "summary": "文档也要有判据:指南里提到的每个模块名、每个示例与用例路径都由自检核对;能被机器核对的东西不靠人记得更新。",
+      "rationale": "文档最典型的腐烂方式不是\"写得不对\",而是**指向一个已经不存在的东西**(模块拆了、改名了、还没写)—— 抄的人会先怀疑自己,浪费的不是你的时间是别人的。这类腐烂完全可以机械化拦:指南里出现的 `create*` 必须是公开导出,出现的示例/用例路径必须存在,出现的数字(公开面计数、用例数)也由脚本产出。这样一来,\"文档与代码一致\"就不再依赖我在每次改动时记得同步 —— 忘了就红。这条与 DEC-135(示例必须进自检)是同一条纪律的延续:凡是\"给使用者看的东西\",都要有机器兜住。",
+      "alternatives_rejected": "①只写文字、靠人工维护(指南这类跨模块文档,改一次模块名就可能烂在一处,而没人会定期全篇重读);②把指南塞进 README(README 已经很长,而\"怎么搭\"与\"有什么\"是两类读者);③让指南只讲概念不指代码(那它就成了一份无法验证的叙述);④为指南单独写一个 spec 文件(它检验的是\"包与文档\",放在已有的产物自检里最自然,也不必让 vitest 去读文档)。"
     }
   },
   "edges": [
@@ -25970,6 +26020,24 @@
       "to": "TASK-266",
       "type": "depends_on",
       "created_at": "2026-09-18T19:37:20+00:00"
+    },
+    {
+      "from": "CHG-354",
+      "to": "TASK-272",
+      "type": "implements",
+      "created_at": "2026-09-18T19:41:35+00:00"
+    },
+    {
+      "from": "DEC-142",
+      "to": "TASK-272",
+      "type": "governs",
+      "created_at": "2026-09-18T19:41:35+00:00"
+    },
+    {
+      "from": "TASK-272",
+      "to": "TASK-271",
+      "type": "depends_on",
+      "created_at": "2026-09-18T19:41:35+00:00"
     }
   ]
 }
