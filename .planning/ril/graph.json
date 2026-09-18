@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 304,
+  "round": 305,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:44:18+00:00",
+  "updated_at": "2026-09-18T20:49:11+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -1545,7 +1545,7 @@
       "version": 1,
       "created_at": "2026-09-11T02:43:18+00:00",
       "updated_at": "2026-09-11T02:43:18+00:00",
-      "touched_round": 204,
+      "touched_round": 304,
       "summary": "掉落/拾取系统(loot.ts + equipGen + smartKeep)"
     },
     "TASK-027": {
@@ -17728,6 +17728,56 @@
       "confidence": 0.96,
       "source": "变更 CHG-367(cf2c405)。bunx vitest run src/economy.sim.spec.ts(5 例,打印区间表与\"扫过 401 个参数点:收入抖 ±10% 就改判的有 71 个(17.7%)\");cd packages/engine && bun run check(391 例 + 组装指南/定制表/发布包自检);cd /workspace/xian && bun run test(249 文件/2439 例);bun run test:report(2439 过 / 0 败);bun run check:engine;bun run check:engine:standalone",
       "summary": "消融结果可直接抄进内容设计:①\"资源吃紧\"的门槛是支出超收入 43%,不是 100%(阈值 0.7 的倒数);②过剩从支出低于收入 1/3 起算,只进不出从低于 1/10 起算;③阈值闭在宽的一侧(正好 0.7 是健康、正好 10 是过剩),六个边界点都用判据钉住;④在支出/收入 ∈ [0.5, 2] 这一带,收入抖 ±10% 就改判的参数占 17.7%(都贴着翻档点),提示\"贴着边界下结论\"要谨慎。"
+    },
+    "TASK-286": {
+      "id": "TASK-286",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:48:54+00:00",
+      "updated_at": "2026-09-18T20:48:54+00:00",
+      "touched_round": 304,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "掉落层消融实验(drops.sim.spec):把\"概率翻倍\"\"加保底\"\"份数翻倍\"\"多抽一次\"四种常见改法放进同一份内容量手感 —— 概率 ×2 恰好两倍产出、×4 只剩 2.45 倍(夹到 100%/撞 chanceCap);保底把最差从 0 抬到 1 且把期望抬到 1(5% 稀有物=20 倍期望),没人挂 guaranteed 时开关完全无效;份数倍率不多掷骰,多抽一次掷骰翻倍但波动更低(0.92→0.65)且能落在 0/1/2 三档。"
+    },
+    "CHG-368": {
+      "id": "CHG-368",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:49:09+00:00",
+      "updated_at": "2026-09-18T20:49:09+00:00",
+      "touched_round": 304,
+      "commit": "bd9226e",
+      "summary": "库:新增 src/drops.sim.spec.ts(5 例:概率倍率 / 保底 / 掷骰次数 / 份数倍率 / 两条翻倍路子的对照表与理论期望对账);CHANGELOG「未发布」记下四条结论与那张读数表;docs/assembly.md 的坑清单加三行(概率翻倍不等于产出翻倍、开了 guarantee 却没挂 guaranteed 是静默失效、想要翻倍却用 scalesWithAttempts 会改随机流),配方 C 表的判据列补上 drops.sim.spec.ts。宿主无改动。"
+    },
+    "EV-293": {
+      "id": "EV-293",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:49:09+00:00",
+      "updated_at": "2026-09-18T20:49:09+00:00",
+      "touched_round": 304,
+      "confidence": 0.96,
+      "source": "变更 CHG-368(bd9226e)。bunx vitest run src/drops.sim.spec.ts(5 例;打印读数表:基线 1.48 → 概率 ×2 2.97 → ×4 3.62;份数 ×2 与装备多抽一次同为 2.95,波动 2.69 / 2.61;只看装备那条波动 0.92 / 0.65);cd packages/engine && bun run check(396 例 / 43 文件 + 组装指南 25 工厂 / 定制表 99 名字 / 发布包自检);cd /workspace/xian && bun run test(2444 例)、bun run test:report(2444 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(83 个源文件)",
+      "summary": "四条可直接拿去定内容的数字:①概率倍率只在没撞上限时才是产出翻倍 —— 同一份内容 ×2 恰好两倍、×4 只剩 2.45 倍(材料 50%×4 被夹到 100%,装备 30%×4 被 chanceCap 封在 90%),给玩家看的该是封顶后那个数;②保底把最差那一档从 0 抬到 1,代价是期望被抬到 1(5% 稀有物 = 20 倍期望),而没人挂 guaranteed 时开关一位数字都不变(静默失效);③份数倍率不多掷一颗骰子(掷骰次数与不加倍率时相同);④同样叫翻倍,\\\"份数 ×2\\\"与\\\"多抽一次\\\"期望相同,后者掷骰翻倍、波动更低(装备 0.92→0.65)、档位从 0/2 变成 0/1/2。"
+    },
+    "DEC-149": {
+      "id": "DEC-149",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:49:09+00:00",
+      "updated_at": "2026-09-18T20:49:09+00:00",
+      "touched_round": 304,
+      "summary": "掉落层的\\\"翻倍\\\"默认只给份数倍率(countMult):要按\\\"次数\\\"翻倍必须显式开 scalesWithAttempts(= 多抽一次),因为它会改随机流,不能当默认。",
+      "rationale": "两条路期望相同、手感不同:份数 ×2 是\\\"把一次结果整体放大\\\"(档位只有 0/2,波动更高),多抽一次是两次独立判定(能落在 0/1/2,波动更低、更稳)但**掷骰次数翻倍**,后面的随机流随之改变 —— 而\\\"随机流是契约\\\"(同一颗种子跑两遍整条链一样)是库对使用者的承诺,任何会改随机流的开关都必须是显式的。实测(同一份内容 20_000 场):装备那条份数 ×2 得 0.92 波动、多抽一次得 0.65;同一颗种子下前者掷 1 次骰、后者掷 2 次。",
+      "alternatives_rejected": "①把 attempts 也默认吃 countMult(使用者的\\\"战利品翻倍\\\"会静默改掉随机流,是那种几个月后才以\\\"后半段战斗结果不一样\\\"现形的故障);②只留 countMult、砍掉 attempts 倍率(做不到\\\"多抽一次\\\"这种更稳的手感,而抽卡类内容正需要它);③在库层替使用方决定翻倍语义(键名/阈值/曲线属于内容,库只能给两条路与显式开关)。"
     }
   },
   "edges": [
@@ -26839,6 +26889,24 @@
       "to": "TASK-284",
       "type": "depends_on",
       "created_at": "2026-09-18T20:44:18+00:00"
+    },
+    {
+      "from": "CHG-368",
+      "to": "TASK-286",
+      "type": "implements",
+      "created_at": "2026-09-18T20:49:11+00:00"
+    },
+    {
+      "from": "DEC-149",
+      "to": "COMP-010",
+      "type": "governs",
+      "created_at": "2026-09-18T20:49:11+00:00"
+    },
+    {
+      "from": "DEC-149",
+      "to": "TASK-286",
+      "type": "governs",
+      "created_at": "2026-09-18T20:49:11+00:00"
     }
   ]
 }
