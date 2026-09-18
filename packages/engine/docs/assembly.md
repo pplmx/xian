@@ -52,6 +52,7 @@
 | --- | --- | --- |
 | 等级曲线、进阶、寿元 | `createRealmSystem` | `presets/xiuxian` + `presets.spec.ts` |
 | 掉装 / 洗练 / 装配 | `createEquipmentSystem` | `examples/quickstart.ts` |
+| 副本链(区域怎么开、打几场见首领、通关给什么) | `createDungeonSystem` | `dungeons.spec.ts` + `dungeons.sim.spec.ts`(两种节奏差一场、敌人随层级陡多少) |
 | 战斗骨架(护盾、反击、追击、技能标签) | `createCombatEngine` | `examples/combo-arts.ts` |
 | **把你自己那套战斗整段接进来** | `BattleConfig` 的 `skillFn` / `strikeFn` / `actFn` | `examples/combat-takeover.ts`(老口径 × 接管版,同 200 颗种子逐场相同) |
 | 掉落表(概率归一、保底、份数) | `createDropTable` | `drops.spec.ts` |
@@ -141,6 +142,8 @@
 | 以为熟练度有"练满" | 双曲饱和永远不到顶:9 × scale 才九成,99 分要 99 × scale —— 想要"练满"就在内容层按阈值判 | `crafting.sim.spec.ts` |
 | 给一条稀有分支配了 5% 权重就以为"玩家总会撞到" | 抽 100 次一次不出的概率约 0.6% —— 稀有内容要么多给机会,要么配保底 | `choices.sim.spec.ts` |
 | 以为"没选"就是取第一个选项 | 兜底是三级:标了默认且可选 → 第一条可选的 → 第一条;锁住的默认项不会被硬塞 | `choices.sim.spec.ts` |
+| 以为 `bossProgress` 一样的两种节奏是一回事 | `cycle` 第 4 场见首领、`once` 第 5 场(差一场,玩家能感觉出来) | `dungeons.sim.spec.ts` |
+| 以为见过首领之后次次见首领 | 首领倒下即**重新计数**;`once` 通关后更是再没有首领(刷本变纯刷素材) | `dungeons.sim.spec.ts` |
 | 以为"堆同名"最后自然没收益 | 六条同名 +10% 在 ranked 下是 30%、`max` 10%、`sum` 60% —— 三种是完全不同的内容政策 | `attributes.sim.spec.ts` |
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
 | 保底时跳过掷骰 | 照样掷,只改写结果 | `drops.spec.ts` / `pity.spec.ts` |
