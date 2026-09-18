@@ -88,8 +88,9 @@ import { evalGoal, goalProgress, type GoalEnv } from 'wanxiang-engine'
 import type { AchvCond } from '@/types'
 import { EVENTS } from '@/data/events'
 import { chainOfEvent } from '@/data/chains'
-import { deckPool, drawFrom, type DeckEntry } from 'wanxiang-engine'
+import { deckPool, drawFrom, drawMany, type DeckEntry } from 'wanxiang-engine'
 import { REGIONS as ALL_REGIONS } from '@/data/regions'
+import { TALENTS } from '@/data/talents'
 
 /**
  * 对账就用**应用运行时那一份**世界对象(ENGINE_WORLD),不再另装一份:
@@ -345,6 +346,17 @@ function refRegionEventPool(events: readonly RefEventLike[], regionTags: readonl
       return ev.tags.some(t => regionTags.includes(t))
     })
     .map(ev => ev.id)
+}
+
+/** 迁移前 core/reincarnation.drawTalents 的原式(加权、不重复、可排除) */
+function refDrawTalents(count: number, exclude: ReadonlySet<string>, rand: RandomService): string[] {
+  const out: string[] = []
+  for (let i = 0; i < count; i += 1) {
+    const pool = TALENTS.filter(t => !exclude.has(t.id) && !out.includes(t.id))
+    if (pool.length === 0) break
+    out.push(rand.weighted(pool, t => t.weight).id)
+  }
+  return out
 }
 
 /** 迁移前 data/affixes.affixValue 的原式(词条数值 = min + (max-min) × roll,按小数位取整) */
@@ -1023,6 +1035,31 @@ describe('对账 · 事件池(库的牌堆 与 冻结的旧筛法)', () => {
       }
     }
     expect(drawn).toBeGreaterThan(20)
+  })
+
+  it('抽 N 张:天赋抽取(加权 / 不重复 / 排除已拥有)与冻结旧口径逐项相同', () => {
+    // 与应用侧同构的牌堆视图(见 core/reincarnation 的 TALENT_DECK):抽到的不再重复 → once
+    const talentDeck = TALENTS.map(t => ({ def: t, id: t.id, weight: t.weight, once: true }))
+    const excludeCases: Set<string>[] = [new Set(), new Set(TALENTS.slice(0, 5).map(t => t.id)), new Set(TALENTS.slice(0, TALENTS.length - 2).map(t => t.id))]
+    let checked = 0
+    for (const count of [0, 1, 5, TALENTS.length + 3]) {
+      for (const exclude of excludeCases) {
+        for (let seed = 1; seed <= 20; seed += 1) {
+          const mineRng = new RandomService(mulberry32(seed))
+          const refRng = new RandomService(mulberry32(seed))
+          const mine = drawMany(talentDeck, { level: 0, tags: [], seen: [...exclude] }, mineRng, count).map(e => e.id)
+          const ref = refDrawTalents(count, exclude, refRng)
+          const where = `抽${count}·排除${exclude.size}·种子${seed}`
+          expect(mine, where).toEqual(ref)
+          expect(mineRng.next(), `${where}·随机流`).toBe(refRng.next())
+          checked += 1
+        }
+      }
+    }
+    expect(checked).toBe(240)
+    // 池子不够时不补齐(而不是硬凑到 N)
+    const almostAll = new Set(TALENTS.slice(0, TALENTS.length - 2).map(t => t.id))
+    expect(drawMany(talentDeck, { level: 0, tags: [], seen: [...almostAll] }, new RandomService(mulberry32(1)), 9).length).toBe(2)
   })
 })
 

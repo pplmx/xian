@@ -45,15 +45,22 @@ import { daoFruitGain } from './formulas'
 import { archiveLifeTrial } from './lifeTrialService'
 import { rerollMortalWorld } from './mortalWorldService'
 import { archiveBond } from './daoluService'
+import { drawMany } from 'wanxiang-engine'
 
+/**
+ * 天赋牌堆 —— 抽到的天赋不再重复出现,故每项都按"一次性"标记;
+ * 排除掉的那些(已拥有)通过 seen 传进去。字段名对上库的 DeckEntry。
+ */
+const TALENT_DECK = TALENTS.map(t => ({
+  def: t,
+  id: t.id,
+  weight: t.weight,
+  once: true
+}))
+
+/** 抽 N 项天赋:加权、不重复、可排除已拥有的 —— 抽取规则由库的牌堆给 */
 function drawTalents(count: number, exclude: Set<string>): string[] {
-  const out: string[] = []
-  for (let i = 0; i < count; i += 1) {
-    const pool = TALENTS.filter(t => !exclude.has(t.id) && !out.includes(t.id))
-    if (pool.length === 0) break
-    out.push(rng.weighted(pool, t => t.weight).id)
-  }
-  return out
+  return drawMany(TALENT_DECK, { level: 0, tags: [], seen: [...exclude] }, rng, count).map(e => e.id)
 }
 
 /** 结算刚过完的这一世:命题结局与本世所得宿慧 */
