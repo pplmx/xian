@@ -97,7 +97,14 @@ export function decodeSave<T>(text: string, format: SaveFormat<T>): SaveDecodeRe
 /** 同上,但输入已经是解析过的对象(例如从容器存储里读回来的一坨 JSON) */
 export function decodeSavePayload<T>(parsed: unknown, format: SaveFormat<T>): SaveDecodeResult<T> {
   const payload = asRecord<unknown>(parsed)
-  const version = typeof payload.version === 'number' && Number.isFinite(payload.version) ? Math.floor(payload.version) : 1
+  /**
+   * 版本号说不清(缺失 / NaN / 负数 / 0)时一律按**最老的一版**处理 —— 与 `runMigrations`
+   * 同一条口径:先一步一步补上来,而不是"跳过整条链"(后者会让旧档悄悄缺字段)。
+   */
+  const version =
+    typeof payload.version === 'number' && Number.isFinite(payload.version)
+      ? Math.max(1, Math.floor(payload.version))
+      : 1
   const savedAt = typeof payload.savedAt === 'number' && Number.isFinite(payload.savedAt) ? payload.savedAt : 0
   if (version > format.currentVersion) {
     return { ok: false, reason: 'future', message: `存档版本 ${version} 来自更新的版本(本作最高 ${format.currentVersion})` }
