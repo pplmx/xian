@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 318,
+  "round": 319,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:34:03+00:00",
+  "updated_at": "2026-09-18T21:36:30+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18331,6 +18331,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-382(c8f13bf)。bunx vitest run src/choices.sim.spec.ts(4 例,打印:20 万次抽取分布 69.99%/25.07%/4.93%;100 次一次不出 18/2000 = 0.90%(理论 0.59%);权重全 0 → 第 1 条;默认项被锁住 → 兜底落到第 2 项;回执 生效 1 条 / 跳过 0 条);cd packages/engine && bun run check(427 例 / 50 文件 + 八道自检,其中\"调参参考自检通过(10 份消融实验都被收进 docs/tuning.md)\"、用例文件数自检当场抓出 README 的 49→50);cd /workspace/xian && bun run test(257 文件 / 2475 例)、test:report(2475 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(90 个源文件)。",
       "summary": "抉择层的两条刻度:①稀有分支的\"抽不到\"是常态 —— 5% 权重下抽 100 次一次不出的概率约 0.6%(实测 0.9%),这直接支持\"稀有内容要多给机会或配保底\";②\"玩家没选\"不是取第一个选项,而是三级兜底,且被锁住的默认项不会被硬塞 —— 这条以前只有语义判据,现在有实测落点。"
+    },
+    "TASK-300": {
+      "id": "TASK-300",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:36:30+00:00",
+      "updated_at": "2026-09-18T21:36:30+00:00",
+      "touched_round": 318,
+      "category": "docs",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "新增从零装配示例 examples/from-zero.ts「边境邮差」:不 import 任何 presets/*,槽位/品质/词条/两段路/六个阻碍全写在一百多行里,跑通升任→掉行头→装配→遭遇→通关;作为\"别人接自己的数值系统\"的抄写起点,组装指南与 README 快速开始都指过去。"
+    },
+    "CHG-383": {
+      "id": "CHG-383",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:36:30+00:00",
+      "updated_at": "2026-09-18T21:36:30+00:00",
+      "touched_round": 318,
+      "commit": "05a1030",
+      "summary": "库:新增 examples/from-zero.ts(约 210 行,含完整 GameConfig 与一圈演示);package.json 的 examples 脚本把它排在最前(独立成库自检从该脚本读清单,新示例自动被搬走后真跑);docs/assembly.md 开头加\"要抄的话从这里开始\";README 快速开始加一行指针;CHANGELOG「未发布」记一节。宿主无改动。"
+    },
+    "EV-309": {
+      "id": "EV-309",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:36:30+00:00",
+      "updated_at": "2026-09-18T21:36:30+00:00",
+      "touched_round": 318,
+      "confidence": 0.95,
+      "source": "变更 CHG-383(05a1030)。bun examples/from-zero.ts(实测输出:境界 送信学徒 → 熟路邮差 → 翻山邮差 → 急件信使;升任 5 次;掉 6 件行头;遭遇逐个通过并\"平原官道 通关:经验 ×18、报酬 ×6\";收尾行统计 2 段路 / 4 个职级 / 4 条词条 / 6 个阻碍、通关 1 处);cd packages/engine && bun run check(427 例 / 50 文件 + 八道自检 + 9 份示例全跑);cd /workspace/xian && bun run test(257 文件 / 2475 例)、check:engine(59 处引用)、check:engine:standalone(90 个源文件 · 示例可跑)。",
+      "summary": "给\"别人引用库就能快速构建\"补上最直接的一件东西:一份不依赖任何内容包、可整份复制的起点。它与 presets 的关系是\"模板 vs 样例\"——presets 演示三款题材装出来的样子,from-zero 演示最短要写多少行。"
     }
   },
   "edges": [
@@ -27556,6 +27594,12 @@
       "to": "TASK-299",
       "type": "implements",
       "created_at": "2026-09-18T21:34:03+00:00"
+    },
+    {
+      "from": "CHG-383",
+      "to": "TASK-300",
+      "type": "implements",
+      "created_at": "2026-09-18T21:36:30+00:00"
     }
   ]
 }
