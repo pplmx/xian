@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- 阶梯读数是要给人看的 */
 /**
  * 境界称号的梯子 —— 每一大境界都得有一顶
  *
@@ -14,6 +15,7 @@ import { describe, expect, it } from 'vitest'
 import { ACHIEVEMENTS } from '@/data/achievements'
 import { TITLES, titleDef } from '@/data/titles'
 import { REALMS, MAX_MAJOR } from '@/data/realms'
+import { budgetOfMods } from './ruleBudget'
 
 /** 「突破某境」的成就:条件类型是 realm */
 const REALM_ACHIEVEMENTS = ACHIEVEMENTS.filter(a => a.cond.type === 'realm')
@@ -49,5 +51,36 @@ describe('境界称号 · 每一境都有一顶', () => {
     }
     expect(used.size, '境界称号数量与境界数对不上').toBe(MAX_MAJOR + 1)
     expect(TITLES.length).toBeGreaterThanOrEqual(used.size)
+  })
+
+  /**
+   * **荣誉阶梯不许回落** —— 玩家能佩戴一枚,所以"后一境的称号更弱"是直接可见的荒谬:
+   * 换来换去,发现证道混沌道祖那顶还比不上开天神魔。
+   *
+   * 实测(修前)的断口:
+   *   元婴大能(境3)0.3 < 金丹老祖(境2)0.4
+   *   万道之祖(境20)0.4 < 开天神魔(境19)0.6、神帝独尊 0.6
+   * 修法沿用保守方向:按境界 +0.02 预算一档,**只抬低于阶梯的**,已发出去的称号不削弱。
+   * 判据用"复杂度预算"(ruleBudget)当尺子,容差取它的取整粒度 0.1。
+   */
+  it('境界称号的预算随境界不降(只抬不削)+ 顶端配得上"证道道祖"', () => {
+    const rows = REALM_ACHIEVEMENTS.map(a => ({
+      major: (a.cond as { major: number }).major,
+      def: titleDef(a.reward!.titleId!)!
+    })).sort((x, y) => x.major - y.major)
+    console.log('\n—— 境界称号阶梯(预算;容差 0.1 为取整粒度) ——')
+    for (const r of rows) {
+      console.log(`  境${String(r.major).padStart(2)} ${REALMS[r.major]!.name.padEnd(5)} ${r.def.name.padEnd(6)} ${budgetOfMods(r.def.mods).toFixed(1)}`)
+    }
+    for (let i = 1; i < rows.length; i += 1) {
+      const prev = budgetOfMods(rows[i - 1]!.def.mods)
+      const cur = budgetOfMods(rows[i]!.def.mods)
+      expect(
+        cur,
+        `${REALMS[rows[i]!.major]!.name}的称号「${rows[i]!.def.name}」(${cur})弱于前一境「${rows[i - 1]!.def.name}」(${prev})`
+      ).toBeGreaterThanOrEqual(prev - 0.1 - 1e-9)
+    }
+    const top = budgetOfMods(rows[rows.length - 1]!.def.mods)
+    expect(top, '全境之极的称号不该比中段还轻').toBeGreaterThanOrEqual(0.7)
   })
 })
