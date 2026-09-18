@@ -13,7 +13,6 @@ import {
   BATTLE_EXP_SECS,
   EQUIP_DROP_CHANCE,
   EXPLORE_BATTLE_INTERVAL,
-  EXPLORE_BOSS_AFTER_WINS,
   EXPLORE_MODES,
   INSTANT_EXP_LAYER_CAP,
   LIFESPAN_CRITICAL_RATIO,
@@ -28,7 +27,7 @@ import { buildPlayerSnap } from './playerSnap'
 import { generateEquipment } from './equipGen'
 import { acquireEquipment, afterWin } from './loot'
 import { autoResolveEvent, regionEventPoolFor } from './eventEngine'
-import { clearRegionAndUnlockNext, exploreEventChance, dangerFactorFor, explorationRules } from './exploration'
+import { clearRegionAndUnlockNext, exploreEventChance, dangerFactorFor, explorationRules, winsUntilRegionBoss } from './exploration'
 import { currentRegionEvent, regionEventDef } from './regionEvent'
 import { placeContent } from './mortalWorldService'
 import { expFromSecs, stoneByTier } from './formulas'
@@ -300,7 +299,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
        * 而不是"这一段离线结算里赢了几场"—— 否则难模式(胜率低)在离线也见不到首领。
        */
       adventure.addRegionWins(region.id, wins)
-      if (!adventure.cleared.includes(region.id) && adventure.winsIn(region.id) >= EXPLORE_BOSS_AFTER_WINS) {
+      // 与在线同一个判据:门槛与节奏都由库的副本系统回答(见 winsUntilRegionBoss)
+      if (winsUntilRegionBoss(adventure.winsIn(region.id), adventure.cleared.includes(region.id)) === 0) {
         const bossDef = enemyDef(placeContent(region.id).boss)
         if (bossDef) {
           const bossDanger = dangerFactorFor(modeDef.dangerMult, region.danger, petDangerMult, regionEventDanger)

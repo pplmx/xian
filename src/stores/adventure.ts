@@ -3,7 +3,8 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { AdventureSession, CombatResult } from '@/types'
 import { persistConfig } from '@/utils/storage'
-import { regionDef, unlockClosure } from '@/data/regions'
+import { regionDef } from '@/data/regions'
+import { ENGINE_WORLD } from '@/core/engineWorld'
 import { gn } from '@/utils/gnum'
 import { asFiniteNumber, asNumberRecord, asObjectOrNull, asRecord, asStringArray } from '@/utils/saveShape'
 
@@ -169,7 +170,8 @@ export const useAdventureStore = defineStore(
      */
     function applyUnlockClosure(): string[] {
       const before = new Set(unlocked.value)
-      const next = unlockClosure(unlocked.value, cleared.value)
+      // 补票的不变量由库的副本系统实现(只补该补的、保留不认识的历史 id、幂等)
+      const next = ENGINE_WORLD.dungeons.prereqClosure(unlocked.value, cleared.value)
       unlocked.value = next
       return next.filter(id => !before.has(id))
     }

@@ -321,36 +321,12 @@ export function regionDef(id: string): RegionDef | undefined {
 }
 
 /**
- * 前置已靖 → 此地已开 —— 这条关系是**不变量**,不是一次性事件。
+ * 「前置已靖 → 此地已开」这条不变量的实现已搬进公共库的副本系统:
+ * `ENGINE_WORLD.dungeons.prereqClosure(unlocked, cleared)`(见 core/engineWorld)。
  *
- * 起因(玩家反馈:仙界之后那一处永远刷不出来):解锁从前只在击败某地之主的那一刻
- * 发生一次(exploration.clearRegionAndUnlockNext:markCleared 第二次就早退)。
- * 而境界扩界是后来才发的 —— 云海仙门(仙界入口)的 requireCleared = 鸿蒙裂隙,
- * 于是**扩界前就通关过人间界**的存档:鸿蒙裂隙已靖(那时的规矩是首领靖过便不复现),
- * 永远等不到第二次机会,云海仙门便永久挂着「需先击败鸿蒙裂隙之主」,仙界/神界/
- * 混沌海整片不可达。同一形状对任何「新加一段地界、而它的前置早已被清」的扩界都成立。
- *
- * 故把这条关系写成纯函数,在读档修形口按不变量补齐(见 stores/adventure.sanitize):
- *   · **只补该补的**:前置真在 cleared 里才开,不开旁支、不整表全开;
- *   · **保留不认识的历史 id**:不是"按表重算",玩家旧存档里的记录一条都不吞;
- *   · **幂等**:补过再补还是同一份;算到不动点,故顺序无关。
+ * 搬家的原因是它不只是本作的规则:任何"新加一段地界、而它的前置早在存档里通过"的
+ * 扩界都会踩同一个坑 —— 补齐必须只补该补的、保留不认识的历史 id、且幂等。
+ * 读档修形处(stores/adventure.sanitize)直接调库。
  */
-export function unlockClosure(unlocked: readonly string[], cleared: readonly string[]): string[] {
-  const out = [...unlocked]
-  const have = new Set(out)
-  const beaten = new Set(cleared)
-  let grew = true
-  while (grew) {
-    grew = false
-    for (const region of REGIONS) {
-      if (have.has(region.id) || !region.requireCleared) continue
-      if (!beaten.has(region.requireCleared)) continue
-      have.add(region.id)
-      out.push(region.id)
-      grew = true
-    }
-  }
-  return out
-}
 
 export const DANGER_NAMES = ['', '平缓', '寻常', '凶险', '大凶', '绝地'] as const

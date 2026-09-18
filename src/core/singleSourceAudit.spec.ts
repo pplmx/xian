@@ -14,7 +14,8 @@ const SOURCES = import.meta.glob(
     '../views/AdventureView.vue',
     '../components/adventure/CombatPanel.vue',
     '../core/exploration.ts',
-    '../core/offline.ts'
+    '../core/offline.ts',
+    '../core/engineWorld.ts'
   ],
   { query: '?raw', import: 'default', eager: true }
 ) as Record<string, string>
@@ -40,12 +41,19 @@ describe('同源审计 · 镇压速率', () => {
 })
 
 describe('同源审计 · 区域之主的门槛', () => {
-  it('在线与离线都不许再写死 10 胜,只认 EXPLORE_BOSS_AFTER_WINS', () => {
+  /**
+   * 门槛搬家了:它现在是**公共库副本系统的一份配置**(见 core/engineWorld 的
+   * bossProgress / bossRhythm),不再是两个模块各自比较一个常数。
+   * 判据跟着搬家,但意图不变 —— 而且更严了:常数只许在一处出现。
+   */
+  it('在线与离线都走 winsUntilRegionBoss,谁都不许再自己比一遍门槛', () => {
     for (const fileName of ['exploration.ts', 'offline.ts']) {
       const src = readSrc(fileName)
-      expect(src, `${fileName} 该引用具名常数`).toContain('EXPLORE_BOSS_AFTER_WINS')
+      expect(src, `${fileName} 该走 winsUntilRegionBoss(门槛与节奏的唯一入口)`).toContain('winsUntilRegionBoss')
+      expect(src, `${fileName} 不许再引用门槛常数 —— 它的唯一住处是公共库副本配置`).not.toContain('EXPLORE_BOSS_AFTER_WINS')
       expect(src, `${fileName} 里又出现了 wins >= 10 这种字面量`).not.toMatch(/wins\s*>=\s*10\b/)
     }
+    expect(readSrc('engineWorld.ts'), '门槛常数的唯一住处:装配公共库副本系统的那一处').toContain('EXPLORE_BOSS_AFTER_WINS')
   })
 
   it('战斗页的头目提示走 winsUntilRegionBoss,不自己比门槛', () => {

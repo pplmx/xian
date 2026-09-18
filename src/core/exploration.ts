@@ -10,7 +10,6 @@ import { regionDef } from '@/data/regions'
 import {
   EVENT_AUTO_RESOLVE_SECONDS,
   EXPLORE_BATTLE_INTERVAL,
-  EXPLORE_BOSS_AFTER_WINS,
   EXPLORE_EVENT_CHANCE,
   EXPLORE_MODES
 } from '@/data/constants'
@@ -27,6 +26,7 @@ import { afterWin } from './loot'
 import { autoResolveEvent, pickEventFor } from './eventEngine'
 import { eventTierDef, eventTierOf } from './eventTier'
 import { modOf } from './statsCalc'
+import { ENGINE_WORLD } from './engineWorld'
 import { track } from './progress'
 import { usePlayerStore } from '@/stores/player'
 import { useAdventureStore } from '@/stores/adventure'
@@ -230,8 +230,9 @@ export function explorationRules(): CombatRules | undefined {
  * @returns null = 此地之主已被击败(不再有首领);0 = 下一战即是首领
  */
 export function winsUntilRegionBoss(wins: number, cleared: boolean): number | null {
-  if (cleared) return null
-  return Math.max(0, EXPLORE_BOSS_AFTER_WINS - wins)
+  // 门槛与节奏由库的副本系统回答(见 core/engineWorld 的 bossProgress / bossRhythm),
+  // 界面提示、在线判定与离线自动挑战都问这一处 —— 谁也不许再自己比一遍
+  return ENGINE_WORLD.dungeons.winsUntilBoss(wins, cleared)
 }
 
 /** 战斗遭遇(含首领判定) */

@@ -34,6 +34,7 @@ import {
   EXP_BASE,
   EXP_MAJOR_GROWTH,
   EXP_SUB_GROWTH,
+  EXPLORE_BOSS_AFTER_WINS,
   LATE_COMBAT_GROWTH,
   LATE_EXP_GROWTH,
   SOFT_CAPS,
@@ -49,8 +50,9 @@ import { AFFIXES, affixValue } from '@/data/affixes'
 import { QUALITIES } from '@/data/qualities'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
 import { generateEquipment, resolveEquipStats } from './equipGen'
+import { winsUntilRegionBoss } from './exploration'
 import { ENEMIES } from '@/data/enemies'
-import { REGIONS, unlockClosure } from '@/data/regions'
+import { REGIONS } from '@/data/regions'
 import { STAT_NAMES } from '@/ui/statNames'
 import { mulberry32, RandomService } from '@/utils/random'
 import { QUALITY_OUT_OF_BAND, QUALITY_TIER_SHIFT } from '@/data/constants'
@@ -174,6 +176,33 @@ function refGenerateEquipment(
     chosen.push({ id: picked.id, roll: rng.next() })
   }
   return { uid: newUid(), templateId: template.id, quality: quality.id, tier, level: 0, affixes: chosen }
+}
+
+// ---- 迁移前 data/regions 的解锁补票 与 core/exploration 的首领门槛 ----
+
+/** 迁移前 data/regions.unlockClosure 的原式(含 while(grew) 的不动点写法) */
+function refUnlockClosure(unlocked: readonly string[], cleared: readonly string[]): string[] {
+  const out = [...unlocked]
+  const have = new Set(out)
+  const beaten = new Set(cleared)
+  let grew = true
+  while (grew) {
+    grew = false
+    for (const region of REGIONS) {
+      if (have.has(region.id) || !region.requireCleared) continue
+      if (!beaten.has(region.requireCleared)) continue
+      have.add(region.id)
+      out.push(region.id)
+      grew = true
+    }
+  }
+  return out
+}
+
+/** 迁移前 core/exploration.winsUntilRegionBoss 的原式 */
+function refWinsUntilRegionBoss(wins: number, cleared: boolean): number | null {
+  if (cleared) return null
+  return Math.max(0, EXPLORE_BOSS_AFTER_WINS - wins)
 }
 
 // ============ 等级 ============
@@ -555,12 +584,45 @@ describe('对账 · 副本系统(库 与 尚未迁移的 regions/enemies)', () =
     }
   })
 
-  it('解锁口径与 unlockClosure 一致(若干存档状态逐一比)', () => {
+  it('解锁口径与冻结的旧 unlockClosure 一致(若干存档状态逐一比)', () => {
     const cases: string[][] = [[], ['qingyun'], ['qingyun', 'luoxia'], ['qingyun', 'luoxia', 'heifeng'], ['luoxia'], ['guzhanchang', 'qingyun']]
     for (const cleared of cases) {
       const progress = { cleared, bossWins: {}, runs: {} }
-      expect(system.unlocked(progress, 99).map(r => r.id)).toEqual(unlockClosure(['qingyun'], cleared))
+      // ① 等级充裕时的解锁集合 = 旧口径的补票结果
+      expect(system.unlocked(progress, 99).map(r => r.id)).toEqual(refUnlockClosure(['qingyun'], cleared))
+      // ② 读档补票(不看等级)直接对库的 prereqClosure
+      expect(system.prereqClosure(['qingyun'], cleared)).toEqual(refUnlockClosure(['qingyun'], cleared))
     }
+  })
+
+  it('读档补票的不变量:只补该补的、保留不认识的历史 id、幂等', () => {
+    const cases: [string[], string[]][] = [
+      [['qingyun'], []],
+      [['qingyun', '鸿蒙裂隙(旧档)'], ['qingyun']],
+      [['qingyun'], ['luoxia']],
+      [['qingyun', 'luoxia'], ['qingyun', 'luoxia']]
+    ]
+    for (const [unlocked, cleared] of cases) {
+      const once = system.prereqClosure(unlocked, cleared)
+      expect(once).toEqual(refUnlockClosure(unlocked, cleared))
+      // 幂等:补过再补是同一份
+      expect(system.prereqClosure(once, cleared)).toEqual(once)
+    }
+  })
+
+  it('首领门槛与冻结的旧口径一致(online/offline 共用这一处)', () => {
+    for (let wins = 0; wins <= EXPLORE_BOSS_AFTER_WINS + 5; wins += 1) {
+      expect(system.winsUntilBoss(wins, false), `wins=${wins}`).toBe(refWinsUntilRegionBoss(wins, false))
+      expect(system.winsUntilBoss(wins, true), `wins=${wins} · cleared`).toBe(refWinsUntilRegionBoss(wins, true))
+    }
+    // 应用侧的入口确实经库计算
+    expect(winsUntilRegionBoss(EXPLORE_BOSS_AFTER_WINS - 3, false)).toBe(system.winsUntilBoss(EXPLORE_BOSS_AFTER_WINS - 3, false))
+    expect(winsUntilRegionBoss(0, true)).toBeNull()
+    // 本作是 once 节奏:攒够即出一次,通关后此地再无首领
+    const progress = { cleared: [], bossWins: { qingyun: EXPLORE_BOSS_AFTER_WINS }, runs: {} }
+    expect(system.nextEncounter('qingyun', progress, createRng(1)).kind).toBe('boss')
+    const cleared = { cleared: ['qingyun'], bossWins: { qingyun: 0 }, runs: {} }
+    expect(system.nextEncounter('qingyun', cleared, createRng(1)).kind).toBe('normal')
   })
 
   it('等级门槛:同一份通关记录,等级不到就开不了那张图', () => {

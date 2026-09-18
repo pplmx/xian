@@ -33,6 +33,7 @@ import {
   EQUIP_BASE_FACTOR,
   EQUIP_LEVEL_BONUS,
   EQUIP_QUALITY_FLAT_EXP,
+  EXPLORE_BOSS_AFTER_WINS,
   EXP_BASE,
   EXP_MAJOR_GROWTH,
   EXP_SUB_GROWTH,
@@ -218,7 +219,10 @@ export const ENGINE_WORLD_CONFIG: GameConfig = {
       archetype: e.archetype,
       tags: e.element ? [e.element] : undefined
     })),
-    bossProgress: 8,
+    // 区域之主的门槛与节奏:本作是"攒够 10 胜出一位首领,击败即通关、此后不再出"
+    // (妖气复聚会把「已靖」收回去,那是另一层的世界节律,不改变这条节奏)
+    bossProgress: EXPLORE_BOSS_AFTER_WINS,
+    bossRhythm: 'once',
     enemyPower: {
       baseHp: COMBAT_HP_BASE,
       baseAttack: COMBAT_ATK_BASE,

@@ -111,8 +111,9 @@ packages/engine/
 | 等级曲线（修为需求 / 基础三维 / 进阶率 / 跨界加价） | `src/core/engineWorld.ts` + `core/formulas` 转发 | 迁移前冻结的旧公式做 `toEqual` 精确相等，21 境 × 10 层逐个过 |
 | 词条合并（递减 × 软阈值） | `core/statsCalc` 转发到库的属性系统 | 200 组随机来源下与冻结旧口径逐键、逐来源明细相等 |
 | 装备生成（掉落池 / 品质窗口 / 词条筛选） | `core/equipGen` 转发到库的装备系统 | 6 档层级 × 40 种子逐字段相等，且**随机流消耗一致**（否则后续掉落整体错位） |
+| 副本规则（首领门槛与节奏 / 读档补票不变量） | `core/exploration` + `stores/adventure` 走库的副本系统 | 门槛逐胜场对冻结旧口径；补票不变量含"保留历史 id、幂等"两组断言 |
 
-装备的**数值解析**与副本调度尚未迁移（前者依赖本作的 GNum 战力表），仍由同一份对账判据（`src/core/engineParity.spec.ts`）钉着，下一步按同样方式换过去。
+四套系统的**规则**至此都由库承担；应用侧留下的是内容数据与依赖本作 GNum 战力表的数值解析。
 
 细节与接入方式见 [`packages/engine/README.md`](packages/engine/README.md)。
 
