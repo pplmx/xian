@@ -64,9 +64,9 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 尚未发布到 npm。按 tag 引用(**请用 tag,不要跟 `main`** —— 库还在长,`main` 随时会动):
 
 ```bash
-bun add github:pplmx/wanxiang-engine#v0.5.0
+bun add github:pplmx/wanxiang-engine#v0.1.5
 # 或
-npm  i github:pplmx/wanxiang-engine#v0.5.0
+npm  i github:pplmx/wanxiang-engine#v0.1.5
 ```
 
 ```ts
@@ -576,10 +576,11 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 
 ## 版本与发布
 
-- 当前版本 **0.5.0**(tag `v0.5.0`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
+- 当前版本 **0.1.5**(tag `v0.1.5`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
 - 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:
-  **公开面即承诺**,新增走 minor、破坏走 minor 并写明怎么改;
-  0.x 期间数值曲线不承诺不变,但没有显式配置时**默认行为逐位不变**。
+  **长线只加 patch**(0.1.1 → 0.1.2 → … → 0.1.34 这样走下去,minor 只在真有里程碑时跳);
+  0.x 期间**破坏性变更也发生在 patch 里**,但一定写清楚怎么改。
+  **公开面即承诺**;数值曲线不承诺不变,但没有显式配置时**默认行为逐位不变**。
 
 ## 开发
 
