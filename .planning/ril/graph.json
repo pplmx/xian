@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 341,
+  "round": 342,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:55:49+00:00",
+  "updated_at": "2026-09-18T23:00:10+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19217,6 +19217,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-405(4ab5bf5)。审计(逐模块查 examples/ 是否引用):初测 cycles/points/memory/choices 四个模块零示例,补完后为 0;bun examples/world-loop.ts(实测输出:十二天的行情/遭遇/本钱/加点/名声逐行,歇 40 小时剩 8 小时到线、歇 72 小时 decayed=true,小结\"行情共 4 种 · 门道 4/6 点(砍价 4 级) · 本钱 114\");cd packages/engine && bun run check(501 例 / 67 文件 + 十一道自检 + 11 份示例全跑);cd /workspace/xian && bun run test(274 文件 / 2549 例)、check:engine(59 处引用)、check:engine:standalone(107 个源文件)。",
       "summary": "补齐\"有判据但没示例\"的最后一处空白:四个模块(周期/抉择/投资点/世界记忆)此前只在用例与文档里出现过,使用者拿不到一份\"它们怎么配合\"的可跑程序。现在 11 份示例合起来覆盖了绝大多数公开层。"
+    },
+    "TASK-323": {
+      "id": "TASK-323",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T23:00:10+00:00",
+      "updated_at": "2026-09-18T23:00:10+00:00",
+      "touched_round": 341,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "宿主落地审计(src/core/engineAdoption.spec.ts):扫去注释与字符串后对库的 75 个导出逐个查\"本作有没有态度\" —— 实测按名字用 54 个(加上类型共导入 74 个)、经 defineGame 门面 9 个、本作有等价物 10 个、本作没这玩法 2 个(runIdle 与 createPityCounter);反向查\"表里写了不存在的导出\"与\"理由已过期\",防空转双向已验。"
+    },
+    "CHG-406": {
+      "id": "CHG-406",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:00:10+00:00",
+      "updated_at": "2026-09-18T23:00:10+00:00",
+      "touched_round": 341,
+      "commit": "75d740a",
+      "summary": "宿主:新增 src/core/engineAdoption.spec.ts(1 例,含三类归属表);scripts/test-report.mjs 的 Engine 分类补 engineAdoption(否则报告出现\"未分类用例\")。库无改动。"
+    },
+    "EV-332": {
+      "id": "EV-332",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:00:10+00:00",
+      "updated_at": "2026-09-18T23:00:10+00:00",
+      "touched_round": 341,
+      "confidence": 0.96,
+      "source": "变更 CHG-406(75d740a)。bunx vitest run src/core/engineAdoption.spec.ts → 打印\"库运行时导出 75 个:按名字用 54 个 · 经门面 9 个 · 本作有等价物 10 个 · 本作没这玩法 2 个\"并全过;防空转:删掉 runIdle 那条 → 用例红(既没用又没写理由),加一条 notARealExport → 用例红(表里写了不存在的导出),恢复 → 绿;bun run test(275 文件 / 2550 例)、bun run test:report(2550 过 / 0 败,Engine 696 过)、check:engine(60 处引用,比上轮多 1 —— 新用例用命名空间导入)、check:engine:standalone(107 个源文件)。",
+      "summary": "把\"我们是第一个定制用户\"从说法变成可复核的判据:75 个导出逐个有归属,新加导出若既没用又没写理由就红。实测也证实了库的抽象确实被用上 —— 本作按名字直接用掉 54 个导出,其余经 defineGame 门面或本作自有等价物接住,只有两个是\"这作品没有这个玩法\"。"
     }
   },
   "edges": [
@@ -28586,6 +28624,12 @@
       "to": "TASK-322",
       "type": "implements",
       "created_at": "2026-09-18T22:55:49+00:00"
+    },
+    {
+      "from": "CHG-406",
+      "to": "TASK-323",
+      "type": "implements",
+      "created_at": "2026-09-18T23:00:10+00:00"
     }
   ]
 }
