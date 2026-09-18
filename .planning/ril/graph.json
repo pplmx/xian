@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 297,
+  "round": 298,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:11:40+00:00",
+  "updated_at": "2026-09-18T20:18:17+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -11911,7 +11911,7 @@
       "version": 1,
       "created_at": "2026-09-16T01:27:53+00:00",
       "updated_at": "2026-09-16T01:27:53+00:00",
-      "touched_round": 201,
+      "touched_round": 298,
       "summary": "src/core/combat.ts + src/core/gauntlet.ts(造敌与来源说明:FoeOrigin / mortalFoeOrigin / celestialFoeOrigin)"
     },
     "CHG-238": {
@@ -17395,7 +17395,7 @@
       "version": 1,
       "created_at": "2026-09-18T20:11:30+00:00",
       "updated_at": "2026-09-18T20:11:30+00:00",
-      "touched_round": 297,
+      "touched_round": 298,
       "category": "core-feature",
       "severity": 0.55,
       "confidence": 0.9,
@@ -17437,6 +17437,57 @@
       "summary": "\"整段接管\"的完整清单是 skillFn + strikeFn + actFn 三处;而且只要作品那边掷了什么骰子(哪怕词条为 0),接管方就必须照掷 —— 随机流的消耗个数是契约的一部分。",
       "rationale": "DEC-119 认为缺两处主权,实测告诉我们还差第三处:命中/伤害都能对齐之后,一致率仍只有 72% —— 因为\"这一回合什么时候回血\"\"法宝什么时候出手\"\"震慑什么时候清\"这些**节奏**同样在消耗随机数。补上 actFn 之后 200/200 种子完全对齐。另一条更要紧的经验:接管时最容易漏的不是公式,而是**\"掷了但没用上\"的骰子** —— 本作每次出手后无条件掷反击/追击/震慑三颗(词条为 0 也掷),漏掉就是 28% 的差异,而且症状很怪(前几回合一样、后面全乱)。所以\"照抄公式\"不够,得**照抄随机消耗序列**;这条与掉落层\"保底照样掷骰\"是同一条纪律。",
       "alternatives_rejected": "①认为\"两处主权够了\"(实测 72%,证明不够);②只对齐公式与顺序、不数骰子(28% 的差异会一直被误判成\"公式还差一点\");③把三处主权再合并成一个大钩子 `battleFn`(那就是让作品自己写整套战斗,库连回合调度都不剩,失去\"开箱骨架\"的意义);④让本作战斗切到库上(能对齐了,但那是产品决策而不是库的演进 —— 本作战斗维持原样,库这边先把路铺平)。"
+    },
+    "TASK-279": {
+      "id": "TASK-279",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:18:10+00:00",
+      "updated_at": "2026-09-18T20:18:10+00:00",
+      "touched_round": 298,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.85,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "把战斗主权实验做到复杂格(带技能 + 护盾 + 反击):把本作口径整段写进三处钩子后,胜负一致率 58% → 92%,但回合数只 66% 相同 —— 剩下的分歧已定位到\"第二回合玩家那一击后的血线\",诊断方法(找对不上的种子 + 逐击列血线)留在用例里。"
+    },
+    "CHG-361": {
+      "id": "CHG-361",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:18:10+00:00",
+      "updated_at": "2026-09-18T20:18:10+00:00",
+      "touched_round": 298,
+      "commit": "abc5eeb",
+      "summary": "宿主:engineCombatAblation 增加\"完整主权版\"配置(按序选技 + multi 两段追打 + 出手后三颗骰子 + 反击/追击递归 + 开局护盾与上限)与诊断用例;断言写成\"主权版显著优于默认(≥90% 胜负一致)\"而不是\"应当 100%\"。库:CHANGELOG「未发布」如实记下复杂格的结果与剩下的分歧;组装指南坑清单加\"接管时只照抄公式不够,得照抄掷骰序列\"。"
+    },
+    "EV-286": {
+      "id": "EV-286",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:18:10+00:00",
+      "updated_at": "2026-09-18T20:18:10+00:00",
+      "touched_round": 298,
+      "confidence": 0.92,
+      "source": "变更 CHG-361(abc5eeb)。bunx vitest run src/core/engineCombatAblation.spec.ts(6 例,打印\"库(默认)胜负一致 58% · 库 + 三处主权(完整版)胜负一致 92%(回合数相同 66%)\"与诊断读数\"第一颗对不上的种子:2 / 我这边头 6 手:player#1.000 enemy#1.000 player#0.951 … / 本作头 6 手:player#1.000 山精#1.000 player#0.983 …\");cd packages/engine && bun run check(组装指南自检 + 定制表自检);cd /workspace/xian && bun run test(247 文件/2427 例);bun run test:report(2427 过/0 败)",
+      "summary": "复杂格实测:主权版把胜负一致率从 58% 抬到 92%(证明三处主权覆盖了大部分差异),但回合数只有 66% 相同 —— 说明随机消耗序列还差一处。诊断(找对不上的种子 + 逐击血线)已把第一处分歧定位到第二回合玩家首击后的血线(seed 2:我这 0.951 对本作 0.983)。另一条副作用证据:组装指南自检当场抓出我把宿主侧用例名写进了库内指南(文档自检确实在工作)。"
+    },
+    "ISS-235": {
+      "id": "ISS-235",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:18:11+00:00",
+      "updated_at": "2026-09-18T20:18:11+00:00",
+      "touched_round": 298,
+      "severity": 0.4,
+      "confidence": 0.85,
+      "effort": 2,
+      "summary": "带技能 / 护盾 / 反击的战斗格,接上三处主权(skillFn/strikeFn/actFn)后仍有约 8% 同种子对不上、回合数 66% 相同:第一处分歧落在第二回合玩家首击后的血线(seed 2,主权版 0.951 对本作 0.983,主权版伤害偏高)。怀疑与 multi 两段追打 / 反击递归里的随机消耗顺序或护盾结算时机有关。诊断方法已在 engineCombatAblation 的诊断用例里(找对不上的种子 + 逐击列血线)。"
     }
   },
   "edges": [
@@ -26440,6 +26491,24 @@
       "to": "DEC-119",
       "type": "supersedes",
       "created_at": "2026-09-18T20:11:40+00:00"
+    },
+    {
+      "from": "CHG-361",
+      "to": "TASK-279",
+      "type": "implements",
+      "created_at": "2026-09-18T20:18:17+00:00"
+    },
+    {
+      "from": "TASK-279",
+      "to": "TASK-278",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:18:17+00:00"
+    },
+    {
+      "from": "ISS-235",
+      "to": "COMP-023",
+      "type": "located_in",
+      "created_at": "2026-09-18T20:18:17+00:00"
     }
   ]
 }
