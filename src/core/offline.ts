@@ -16,6 +16,8 @@ import {
   EXPLORE_BOSS_AFTER_WINS,
   EXPLORE_MODES,
   INSTANT_EXP_LAYER_CAP,
+  LIFESPAN_CRITICAL_RATIO,
+  LIFESPAN_WARN_RATIO,
   OFFLINE_BOSS_REWARD_MULT,
   OFFLINE_EFFICIENCY,
   OFFLINE_CAP_HOURS,
@@ -348,6 +350,20 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   }
   if (player.expFull) notes.push('修为已至圆满,可尝试突破')
   if (summary.ageYears > 0) notes.push(`闭关期间寿元流逝 ${summary.ageYears} 载`)
+  /**
+   * **寿元告警** —— 修为与灵气现在不限时(见上面那段),所以"挂得越久收益越多"，
+   * 但寿元是按现实时间走的:一次长缺席可能把你直接送到油尽灯枯的边上。
+   * 只报"流逝了几年"不够 —— 玩家要的是"我还剩几年、危不危险"。
+   * 阈值沿用全局告警线(LIFESPAN_WARN_RATIO),与顶栏那条同源。
+   */
+  if (player.lifespanRatio <= LIFESPAN_WARN_RATIO) {
+    const remainYears = Math.max(0, Math.round(player.lifespanMax - player.age))
+    notes.push(
+      player.lifespanRatio <= LIFESPAN_CRITICAL_RATIO
+        ? `寿元将尽:仅余 ${remainYears} 载(寿限 ${player.lifespanMax})—— 再等下去就是油尽灯枯,届时入轮回`
+        : `寿元已薄:仅余 ${remainYears} 载(寿限 ${player.lifespanMax})—— 该安排突破了,或早做轮回的打算`
+    )
+  }
 
   /**
    * 在途的一次性内容**原样冻结** —— 这一点玩家看不见,得说一句。

@@ -112,6 +112,28 @@ describe('离线总结 · 变动了多少就报多少', () => {
     if (delta.qi > 0) expect(summary.notes.some(n => n.includes('寿元流逝')), '寿元流逝该有一句说明').toBe(true)
   })
 
+  /**
+   * **寿元告警**:修为与灵气已改成不限时(挂得越久收益越多),但寿元是按现实时间走的 ——
+   * 一次长缺席足以把人送到油尽灯枯的边上。只报"流逝了几年"不够,玩家要知道
+   * "我还剩几年、危不危险"。阈值与顶栏那条同源(LIFESPAN_WARN_RATIO / CRITICAL)。
+   */
+  it('长缺席把寿元压到告警线内时,归来结算要明确报警', () => {
+    setActivePinia(createPinia())
+    const game = useGameStore()
+    const player = usePlayerStore()
+    game.markStarted()
+    player.major = 0
+    player.sub = 0
+    player.age = 0
+    // 炼气寿限约 150 载;缺席 140 小时 = 老 140 岁 → 剩余约 7%,落在告警线内
+    game.lastActiveAt = Date.now() - 140 * 3600 * 1000
+    const summary = settleOffline(Date.now())
+    expect(summary, '离线未结算').not.toBeNull()
+    const warn = summary!.notes.find(n => n.includes('寿元将尽') || n.includes('寿元已薄'))
+    expect(warn, `寿元只剩 ${Math.round(player.lifespanRatio * 100)}% 却没报警:${summary!.notes.join(' / ')}`).toBeDefined()
+    expect(warn!, '告警该给出剩余载数,而不只是"流逝了多少"').toMatch(/仅余\s*\d+\s*载/)
+  })
+
   it('封顶也不改变「报的就是实际差额」:洞府 0 级时灵草只按 8 小时结', () => {
     setupBusySave()
     const dongfu = useDongfuStore()
