@@ -78,6 +78,10 @@ import type {
   DefineOptions,
   DrawManyOptions,
   DrawOptions,
+  DropEntry,
+  DropHit,
+  DropOptions,
+  DropTable,
   DungeonConfig,
   DungeonProgress,
   DungeonSystem,
@@ -182,6 +186,7 @@ const RUNTIME_EXPORTS = [
   'compareBy',
   'createChoiceSystem',
   'createCodex',
+  'createDropTable',
   'createEconomyReadings',
   'createIntake',
   'createSettlement',
@@ -319,6 +324,7 @@ type PublicTypes = {
   economy: [EconomyConfig, EconomyPeriod, EconomyReadings, EconomyVerdict, FlowInput, FlowReading, PeriodReading]
   intake: [IntakeConfig<SampleItem, number>, IntakeResult<SampleItem, number>, IntakeSystem<SampleItem, number>]
   settlement: [Settlement<number>, SettlementPlan<number>, SettlementReceipt<number>]
+  drops: [DropEntry, DropHit, DropOptions, DropTable]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

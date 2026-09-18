@@ -18,7 +18,8 @@ import {
   PILL_DROP_CHANCE
 } from '@/data/constants'
 import { generateEquipment } from './equipGen'
-import { createIntake, createSettlement } from 'wanxiang-engine'
+import type { DropEntry } from 'wanxiang-engine'
+import { clamp, createDropTable, createIntake, createSettlement } from 'wanxiang-engine'
 import { gnumNumeric } from './engineNumeric'
 import { STONE_LEDGER } from './engineResources'
 import { expFromSecs, stoneByTier } from './formulas'
@@ -210,15 +211,6 @@ export function randomDropArtifact(tier: number): string | null {
   return rng.weighted(pool, a => artifactDropWeight(a, tier)).id
 }
 
-/**
- * 概率输入钳到 [0,1]:rng.chance 不钳制(rand()<p),法宝 ×(isBoss?6:1)×(1+luck)、
- * doubleDropRate、书页/丹药倍率堆叠出界时,>1 会变成"必然掉落"、<0 会"永不掉落"。
- * 此处与 equipChance 的 Math.min(0.9, ...) 同一纪律:概率在进判定前先归一。
- */
-function capChance(p: number): number {
-  return Math.min(1, Math.max(0, p))
-}
-
 /** 战斗胜利掉落 */
 export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean): DropSummary {
   const player = usePlayerStore()
@@ -229,7 +221,8 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
   let items = 0
   const tier = region.tier
   const bossMult = isBoss ? 4 : 1
-  const doubled = rng.chance(capChance(modOf(mods, 'doubleDropRate'))) ? 2 : 1
+  // 福缘的翻倍判定同样先归一:倍率叠出 1 以上时,"翻倍"不该变成"必翻"
+  const doubled = rng.chance(clamp(modOf(mods, 'doubleDropRate'), 0, 1)) ? 2 : 1
   if (doubled === 2) lines.push('福缘深厚,战利品翻倍!')
 
   // 灵石
@@ -253,56 +246,106 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
   const exp = expFromSecs(player.expReq, expSecs, player.cultPerSec, INSTANT_EXP_LAYER_CAP)
   player.gainExp(exp)
 
-  // 材料 —— 数量进标量库存,同时抽出"你到底捡到了什么"推进认知
-  if (rng.chance(0.5)) {
-    const n = rng.int(1, 3) * doubled
-    resources.addSmall('herb', n)
-    harvestMaterials(tier, 'herb', n)
-  }
-  if (rng.chance(0.35)) {
-    const n = rng.int(1, 2) * doubled
-    resources.addSmall('ore', n)
-    harvestMaterials(tier, 'ore', n)
-  }
-  if (rng.chance(capChance(PAGE_DROP_CHANCE * rewardMult))) {
-    const n = rng.int(1, 2) * doubled
-    resources.addSmall('page', n)
-    lines.push(`功法残页×${n}`)
-    items += 1
-  }
-
-  // 装备 —— 品质 luck 并入灵兽性格的掉落倾向:
+  // 装备的品质倾向:品质 luck 并入灵兽性格的掉落倾向 ——
   // 贪宝(dropLuck>0)更易出稀有,谨慎(dropLuck<0)则稍稍寻常 —— 图鉴承诺,此处兑现
   const luck = modOf(mods, 'luck') + personalityEffects(player.petId).dropLuck
-  const equipChance = EQUIP_DROP_CHANCE * rewardMult * (1 + modOf(mods, 'dropRate')) * (isBoss ? 2.5 : 1)
-  for (let i = 0; i < doubled; i += 1) {
-    if (rng.chance(Math.min(0.9, equipChance)) || (isBoss && i === 0)) {
-      const inst = generateEquipment(tier, rng, { luck, minQualityRank: isBoss ? 1 : 0 })
-      lines.push(acquireEquipment(inst).line)
-      items += 1
-    }
-  }
 
-  // 丹药
-  if (rng.chance(capChance(PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1)))) {
-    const pillId = randomDropPill(player.major)
-    if (pillId) {
-      inventory.addPill(pillId, 1)
-      collect('pill', pillId)
-      const def = PILLS.find(p => p.id === pillId)
-      lines.push(`丹药「${def?.name ?? ''}」`)
-      items += 1
+  /**
+   * 掉落表 —— 概率掉落的判定统一走库的掉落层,三条本作口径写进条目:
+   *
+   *   · **概率在进判定前先钳到 [0,1]**:`rng.chance` 是 `rand() < p`,法宝 ×6、
+   *     福缘与掉落词条叠出 1.8 时和"必然掉落"在界面上看不出区别(ISS-030 就是这么来的);
+   *   · 装备另有 90% 上限 —— 不给"必出神品"的口子;
+   *   · 首领的**第一抽必出装备**用条目保底表达,而不是 `||` 短路:开不开保底,
+   *     掷骰次数都一样,随机流不被改写;
+   *   · "战利品翻倍"在本作是**多抽一次**装备(scalesWithAttempts),其余条目翻的是份数。
+   *
+   * 命中当场处理(onHit)也是必须的:生成装备自己还要吃随机数,若等整表掷完再统一生成,
+   * 那些掷骰就会挤到丹药/法宝之前 —— 同一场战斗的装备会凭空换一个模样。
+   */
+  const dropEntries = {
+    // 材料 —— 数量进标量库存,同时抽出"你到底捡到了什么"推进认知
+    herb: { key: 'herb', chance: 0.5, count: [1, 3] as const },
+    ore: { key: 'ore', chance: 0.35, count: [1, 2] as const },
+    page: { key: 'page', chance: PAGE_DROP_CHANCE * rewardMult, count: [1, 2] as const },
+    equipment: {
+      key: 'equipment',
+      chance: EQUIP_DROP_CHANCE * rewardMult * (1 + modOf(mods, 'dropRate')) * (isBoss ? 2.5 : 1),
+      chanceCap: 0.9,
+      attempts: 1,
+      scalesWithAttempts: true,
+      count: 1,
+      scalesWithCount: false,
+      guaranteed: true
+    },
+    pill: {
+      key: 'pill',
+      chance: PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1),
+      count: 1,
+      scalesWithCount: false
+    },
+    // 法宝(稀有)——(1+luck) 可被叠加的 luck 推高,必须进判定前归一到 [0,1](ISS-030)
+    artifact: {
+      key: 'artifact',
+      chance: ARTIFACT_DROP_CHANCE * (isBoss ? 6 : 1) * (1 + luck),
+      count: 1,
+      scalesWithCount: false
     }
-  }
+  } satisfies Record<string, DropEntry>
+  type DropKey = keyof typeof dropEntries
 
-  // 法宝(稀有)——(1+luck) 可被叠加的 luck 推高,必须进判定前归一到 [0,1](ISS-030)
-  if (rng.chance(capChance(ARTIFACT_DROP_CHANCE * (isBoss ? 6 : 1) * (1 + luck)))) {
-    const artId = randomDropArtifact(tier)
-    if (artId) {
-      lines.push(acquireArtifact(artId))
-      items += 1
+  createDropTable(Object.values(dropEntries)).roll(rng, {
+    countMult: doubled,
+    guarantee: isBoss,
+    onHit: (entry, n) => {
+      const key = entry.key as DropKey
+      switch (key) {
+        case 'herb':
+          resources.addSmall('herb', n)
+          harvestMaterials(tier, 'herb', n)
+          break
+        case 'ore':
+          resources.addSmall('ore', n)
+          harvestMaterials(tier, 'ore', n)
+          break
+        case 'page':
+          resources.addSmall('page', n)
+          lines.push(`功法残页×${n}`)
+          items += 1
+          break
+        case 'equipment': {
+          const inst = generateEquipment(tier, rng, { luck, minQualityRank: isBoss ? 1 : 0 })
+          lines.push(acquireEquipment(inst).line)
+          items += 1
+          break
+        }
+        case 'pill': {
+          const pillId = randomDropPill(player.major)
+          if (pillId) {
+            inventory.addPill(pillId, 1)
+            collect('pill', pillId)
+            const def = PILLS.find(p => p.id === pillId)
+            lines.push(`丹药「${def?.name ?? ''}」`)
+            items += 1
+          }
+          break
+        }
+        case 'artifact': {
+          const artId = randomDropArtifact(tier)
+          if (artId) {
+            lines.push(acquireArtifact(artId))
+            items += 1
+          }
+          break
+        }
+        default: {
+          // 表里加了条目却忘了在这里发下去:编译期就拦下来(掉落"静默不发生"最难查)
+          const unhandled: never = key
+          throw new Error(`未处理的掉落条目:${String(unhandled)}`)
+        }
+      }
     }
-  }
+  })
 
   return { lines, stone: stoneGained, exp, items }
 }

@@ -221,6 +221,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 经济读数 | `createEconomyReadings` | 哪一样不对劲:进/出比值的判词(瓶颈·健康·过剩·闲置)、分期读、带"没把握"标记 |
 | 入库漏斗 | `createIntake` | 收不下怎么办:先见证、按规则拒收、满了腾位、折算成别的东西 |
 | 结算回执 | `createSettlement` | 这一笔到底给了多少:合计取自账本实际入账,被截掉的部分另给一栏 |
+| 掉落表 | `createDropTable` | 这一场给不给、给几份:概率先归一(可另设上限)、保底不改随机流、翻倍翻的是份数、命中当场处理 |
 
 ### 战斗:副本的下半场
 
@@ -477,6 +478,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **经济体检**(哪个资源是瓶颈 / 烂在手里) | `createEconomyReadings({ bands?, labels? })` —— 进/出比值的判词(默认阈值 0.7 / 3 / 10)、分期读、带 `note` 的"没把握"标记;出为 0 时比值是无穷而不是 1 |
 | **掉落/奖励收不下怎么办** | `createIntake({ holding, accept?, evictable?, fallback, witness? })` —— 先见证再裁决、满了腾位(腾位失败不追回)、各条去路共用一条折算账、回执带人话与原因 |
 | **"本次所得"与账本对不上** | `createSettlement({ resources }, numeric?)` —— 回执里的每个数字都取自落账时的**实际发生额**,`clipped` 单独说明被上限截掉多少;想显示别的数就得绕过回执,那是显式越界 |
+| **掉率与保底的口径**(叠过 1 算必中 / 再高也不超过 90% / 首领第一抽必出) | `createDropTable(entries)`:`chanceCap` 另设上限、`guaranteed` 配 `guarantee` 开保底(开不开都不改随机流)、`scalesWithChance` / `scalesWithAttempts` / `scalesWithCount` 各自决定吃不吃倍率;`rollOne` 逐条掷、`roll` 整表掷,**顺序即声明顺序** |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
