@@ -47,6 +47,11 @@ import type {
   ChoiceOutcome,
   ChoiceReceipt,
   ChoiceSystem,
+  CodexConfig,
+  CodexStage,
+  CodexState,
+  CodexSystem,
+  CodexView,
   CycleSystem,
   CraftLevers,
   DamageContext,
@@ -158,6 +163,7 @@ const RUNTIME_EXPORTS = [
   'composeCraftRate',
   'compareBy',
   'createChoiceSystem',
+  'createCodex',
   'createCycleSystem',
   'createAttributeSystem',
   'createCombatEngine',
@@ -286,6 +292,7 @@ type PublicTypes = {
   triage: [TriageConfig<SampleItem>, TriageImpact, TriageOutcome, TriageRule<SampleItem>, TriageSystem<SampleItem>, TriageVerdict]
   cycles: [CycleConfig, CycleContext, CycleEntry, CycleSystem, ScheduledCycle]
   choices: [ChoiceConfig<number, number>, ChoiceDef<number>, ChoiceOutcome<number>, ChoiceReceipt<number>, ChoiceSystem<number, number>]
+  codex: [CodexConfig, CodexStage, CodexState, CodexSystem, CodexView]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

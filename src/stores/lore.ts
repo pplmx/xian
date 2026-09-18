@@ -10,11 +10,11 @@ import { computed, ref } from 'vue'
 import { LORE_MAX } from '@/data/materials'
 import { SKILL_IDS, skillLevelFromExp, type SkillId } from '@/data/crafting'
 import { persistConfig } from '@/utils/storage'
+import { codexAdvanceEnemyLoreIfDue, rememberEquip } from '@/core/engineCodex'
 
-/** 敌人认知层上限:0 未识 / 1 眼熟 / 2 知路数 / 3 洞悉 */
-export const ENEMY_LORE_MAX = 3
-
-export const ENEMY_LORE_STAGE_NAMES = ['未识', '眼熟', '知其路数', '洞悉'] as const
+// 档位表住在 core/loreThresholds(与图鉴的规则分开:规则在库、口径在本作);这里转出
+import { ENEMY_LORE_MAX } from '@/core/loreThresholds'
+export { ENEMY_LORE_MAX, ENEMY_LORE_STAGE_NAMES } from '@/core/loreThresholds'
 
 function emptySkillExp(): Record<SkillId, number> {
   return Object.fromEntries(SKILL_IDS.map(id => [id, 0])) as Record<SkillId, number>
@@ -83,12 +83,8 @@ export const useLoreStore = defineStore(
      * 图鉴的收录深度因此多了一档**可推进**的台阶(见 ui/codex 的装备梯子)。
      */
     function noteEquipUsed(templateId: string): void {
-      const cur = equipLore.value[templateId]
-      if (cur?.u) return
-      equipLore.value = {
-        ...equipLore.value,
-        [templateId]: { q: cur?.q ?? 0, t: cur?.t ?? 0, u: 1 }
-      }
+      const next = rememberEquip(equipLore.value, templateId, { u: 1 })
+      if (next.improved) equipLore.value = next.best
     }
 
     /**
@@ -98,14 +94,10 @@ export const useLoreStore = defineStore(
      * 谁更「好」要看用途。故两个维度各自刷新,谁也不冒充谁。
      */
     function noteEquipSeen(templateId: string, qualityRank: number, tier: number): void {
-      const cur = equipLore.value[templateId]
       const q = Math.max(0, Math.min(8, Math.floor(qualityRank || 0)))
       const t = Math.max(0, Math.floor(tier || 0))
-      if (cur && cur.q >= q && cur.t >= t) return
-      equipLore.value = {
-        ...equipLore.value,
-        [templateId]: { q: Math.max(cur?.q ?? 0, q), t: Math.max(cur?.t ?? 0, t), u: cur?.u ?? 0 }
-      }
+      const next = rememberEquip(equipLore.value, templateId, { q, t })
+      if (next.improved) equipLore.value = next.best
     }
 
     function seenOf(id: string): number {
@@ -178,6 +170,16 @@ export const useLoreStore = defineStore(
       if (next <= cur) return false
       enemyLore.value = { ...enemyLore.value, [id]: next }
       return true
+    }
+
+    /**
+     * 照面次数已记好,问一句"够门槛了吗" —— 判定交给库的图鉴层,
+     * 这里只把结果写回 `enemyLore`(存档形状不变)。
+     */
+    function advanceEnemyLoreIfDue(id: string): { advanced: boolean; stageIndex: number; stageName: string } {
+      const step = codexAdvanceEnemyLoreIfDue(enemySeen.value, enemyLore.value, id)
+      if (step.advanced) enemyLore.value = step.stage
+      return { advanced: step.advanced, stageIndex: step.stageIndex, stageName: step.stageName }
     }
 
     /** 存档修复:补齐新增技艺键、夹紧越界值 */
@@ -262,6 +264,7 @@ export const useLoreStore = defineStore(
       enemySeenOf,
       markEnemySeen,
       advanceEnemyLore,
+      advanceEnemyLoreIfDue,
       equipSeen,
       noteEquipSeen,
       noteEquipUsed,

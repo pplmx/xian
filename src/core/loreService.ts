@@ -12,7 +12,7 @@ import { recipeCraft, type SkillId } from '@/data/crafting'
 import { pillDef, PILLS } from '@/data/pills'
 import { enemyDef } from '@/data/enemies'
 import { bearableRank } from './craftability'
-import { ENEMY_LORE_MAX, useLoreStore } from '@/stores/lore'
+import { useLoreStore } from '@/stores/lore'
 import { useDongfuStore } from '@/stores/dongfu'
 import { usePlayerStore } from '@/stores/player'
 import { useUiStore } from '@/stores/ui'
@@ -41,29 +41,19 @@ export const NEW_RECIPE_START = 0.15
 /** 藏经阁翻得动的上限:够得着的,再往上够一阶 */
 export const STUDY_REACH_OVER = 1
 
-/**
- * 敌人认知的三道门槛(以「有效交手次数」计)。
- *
- * 1 眼熟:打过一次就记得它长什么样、有多硬。
- * 2 知其路数:交手够多,它惯用哪几招你已经数得出来。
- * 3 洞悉:连它残血变阵的那一手都在你意料之中。
- */
-export const ENEMY_LORE_THRESHOLDS = [0, 1, 5, 14] as const
-/**
- * 首领的认知门槛单独定档 —— **按「见到它的机会」定,不按它有多复杂**。
- *
- * 从前是普通门槛 ×2(2/10/28 次交手),那套假设首领会反复交手;而首领一条命只打一次
- * (已靖之后不再复现),于是「知其路数」(10 次)与「洞悉」(28 次)对首领永远够不着,
- * 专为首领写的两层情报(残血变阵 / 本相)没人看得到,层 2 那句
- * 「再多打几场,连它残血那一手也瞒不过你」也是一句空头承诺。
- *
- * 妖气复聚给了重逢的机会(每 72 小时最多一回,见 core/regionRevival),三次交手即洞悉,
- * 合计约一周半 —— 对"隔几天才见一面"的对手,这个节奏才配得上它的稀有度。
- * 败在它手里一次算三次(ENEMY_LORE_LOSS_WEIGHT),故打不过的人反而更快认清它。
- */
-export const ENEMY_LORE_BOSS_THRESHOLDS = [0, 1, 2, 3] as const
-/** 败在它手里,一次抵得上打赢数次 —— 疼过才记得牢 */
-export const ENEMY_LORE_LOSS_WEIGHT = 3
+// 档位与门槛住在 core/loreThresholds(单独一份,免得与 stores/lore 绕成环);这里转出,
+// 调用方与用例的 import 一行不用改
+import {
+  ENEMY_LORE_LOSS_WEIGHT,
+  ENEMY_LORE_MAX
+} from './loreThresholds'
+export {
+  ENEMY_LORE_BOSS_THRESHOLDS,
+  ENEMY_LORE_LOSS_WEIGHT,
+  ENEMY_LORE_MAX,
+  ENEMY_LORE_STAGE_NAMES,
+  ENEMY_LORE_THRESHOLDS
+} from './loreThresholds'
 
 // ============ 认知检定(纯函数,可独立测试) ============
 
@@ -175,24 +165,21 @@ export function noteMaterialUsed(id: string, succeeded: boolean): void {
  * 遭遇与战报界面据此逐层揭示元素、招式、残血变阵(见 ui/enemyLore.ts)。
  * 这份认知随神魂转世不灭 —— 第五世的你确实已经知道哪头妖物残血才发狂。
  *
- * @param win 本场是否取胜。败绩加倍计入:被打疼过的敌人记得最牢。
+ * 累计与升档交给库的图鉴层(见 core/engineCodex):本作只给"败绩算几次"与两张门槛表。
  * @returns 本次是否推进了认知层
  */
 export function noteEnemy(enemyId: string, win: boolean): boolean {
   const def = enemyDef(enemyId)
   if (!def) return false
   const lore = useLoreStore()
+  // 照面计数仍由 store 记(口径只有一处);"够门槛了吗"交给库的图鉴层判定
   lore.markEnemySeen(enemyId, win ? 1 : ENEMY_LORE_LOSS_WEIGHT)
-
-  const cur = lore.enemyLoreOf(enemyId)
-  if (cur >= ENEMY_LORE_MAX) return false
-  const need = (def.isBoss ? ENEMY_LORE_BOSS_THRESHOLDS : ENEMY_LORE_THRESHOLDS)[cur + 1]!
-  if (lore.enemySeenOf(enemyId) < need) return false
-  if (!lore.advanceEnemyLore(enemyId, cur + 1)) return false
+  const step = lore.advanceEnemyLoreIfDue(enemyId)
+  if (!step.advanced) return false
 
   const ui = useUiStore()
-  if (cur + 1 >= ENEMY_LORE_MAX) ui.toast(`你已洞悉「${def.name}」的路数`, 'rare')
-  else if (cur + 1 === 2) ui.toast(`你摸清了「${def.name}」惯用的招式`, 'info')
+  if (step.stageIndex >= ENEMY_LORE_MAX) ui.toast(`你已洞悉「${def.name}」的路数`, 'rare')
+  else if (step.stageIndex === 2) ui.toast(`你摸清了「${def.name}」惯用的招式`, 'info')
   return true
 }
 

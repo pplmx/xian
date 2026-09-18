@@ -216,6 +216,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 分流裁决 | `createTriage` | 这一件留还是不留?自动回收 / 自动分解的规则顺序与读数 |
 | 周期 | `createCycleSystem` | 每天 / 每赛季换一种环境:今天是什么、还有多久换、接下来几天分别是什么 |
 | 抉择 | `createChoiceSystem` | 事件选项 / 任务分支:能不能选、按权重掷哪种后果、效果由谁解释、没选时用哪条 |
+| 图鉴 | `createCodex` | 见过什么、懂到什么程度:照面累计升档、概率升档、用过才算真懂、只记见过的最好一件 |
 
 ### 战斗:副本的下半场
 
@@ -467,6 +468,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **行囊满了先挤掉谁** | `compareBy(比较器…)`:一串比较器依次比,前一层分出胜负就不再往下 |
 | **每日 / 每赛季的环境轮换**(天时、运势、节气、赛季规则) | `createCycleSystem({ periodSec, pools, pick?, seedOf? })` —— 由周期序号派生独立随机源(不碰全局随机流、不依赖现实时间),换池与预告都有;抽取规则与种子公式可接管 |
 | **事件的选项与后果**(加权结果、代价与收益、超时兜底) | `createChoiceSystem({ interpret })` —— 选项能不能选、后果按权重掷、效果逐条由你解释并收成回执、没选时的三级兜底;效果标签库一律不认 |
+| **图鉴 / 收集深度**(见过 → 眼熟 → 洞悉 / 用过才算真懂) | `createCodex({ stages, stagesOf? })` —— 累计照面升档(一次只进一层、可分组换门槛表)/ 概率升档 / 直接推到某档;`rememberBest` 只记见过的最好一件(各维度取高);`view` / `stats` 给"还差多少""已知几条" |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
