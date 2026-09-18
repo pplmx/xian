@@ -67,16 +67,31 @@ export interface GrowthCurve {
   lateRealmGrowth?: number
 }
 
+/**
+ * 每层成长需求的两条路:**用曲线**,或**自己接管**。
+ *
+ * `costFn` 一给,引擎就完全不猜 —— 手里有张手调的等级表(或一段非指数的公式)时,
+ * 直接写函数,不必把表硬塞成"倍率 × 倍率"的形状。
+ */
+export type RealmExpConfig =
+  | (GrowthCurve & { base: number; layerGrowth: number; worldStepMult?: number; costFn?: undefined })
+  | (GrowthCurve & { costFn: (major: number, layer: number) => number })
+
+/** 基础本值的两条路:曲线,或自己接管(引擎只要求"给我一个大境界+层 → 一组本值") */
+export type RealmCombatConfig =
+  | (GrowthCurve & { base: Record<string, number>; layerGrowth: number; statsFn?: undefined })
+  | (GrowthCurve & { statsFn: (major: number, layer: number) => Record<string, number> })
+
 export interface RealmSystemConfig {
   worlds: WorldConfig[]
   /** 小层名目,默认 ['一层'…'九层','圆满'] —— 顺序即小层序号 */
   layerNames?: readonly string[]
   /** 大境界与小层拼成一行字的模板,默认 '{realm}·{layer}' */
   labelFormat?: string
-  /** 修为需求 = base × 大境界因子 × layerGrowth^layer */
-  exp: GrowthCurve & { base: number; layerGrowth: number; worldStepMult?: number }
-  /** 基础本值 = base × 大境界因子 × layerGrowth^layer */
-  combat: GrowthCurve & { base: Record<string, number>; layerGrowth: number }
+  /** 每层成长需求:曲线,或 costFn 自己接管 */
+  exp: RealmExpConfig
+  /** 基础本值:曲线,或 statsFn 自己接管 */
+  combat: RealmCombatConfig
   breakthrough: {
     /** 小层进阶基础成功率与每层衰减 */
     layerBase: number
@@ -270,6 +285,8 @@ export function createRealmSystem<T = number>(
   const expCost = (major_: number, layer: number): T => {
     const m = clamp(major_, 0, maxMajor)
     const l = clamp(layer, 0, layerEnd)
+    // 自己接管需求曲线的:原样用它的数(引擎不插值、不缩放)
+    if (config.exp.costFn) return numeric.from(config.exp.costFn(m, l))
     const stepMult = isWorldStep(m, l) ? config.exp.worldStepMult ?? 1 : 1
     const majorFactor = realmFactor(m, config.exp, expLateFrom)
     return numeric.mulN(numeric.mul(majorFactor, numeric.powN(config.exp.layerGrowth, l)), config.exp.base * stepMult)
@@ -278,6 +295,11 @@ export function createRealmSystem<T = number>(
   const baseStats = (major_: number, layer: number): Record<string, T> => {
     const m = clamp(major_, 0, maxMajor)
     const l = clamp(layer, 0, layerEnd)
+    if (config.combat.statsFn) {
+      const out: Record<string, T> = {}
+      for (const [key, value] of Object.entries(config.combat.statsFn(m, l))) out[key] = numeric.from(value)
+      return out
+    }
     const factor = numeric.mul(realmFactor(m, config.combat, combatLateFrom), numeric.powN(config.combat.layerGrowth, l))
     const out: Record<string, T> = {}
     for (const [key, base] of Object.entries(config.combat.base)) out[key] = numeric.mulN(factor, base)

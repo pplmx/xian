@@ -56,8 +56,13 @@ export interface EnemyDef {
 export interface RewardDef {
   id: string
   name?: string
-  /** 基础数量 */
-  base: number
+  /**
+   * 自己接管数额(**可选**):给了它,base/tierGrowth 忽略(概率仍然生效)。
+   * 奖励曲线想按"层级 + 别的什么"算时用它。
+   */
+  amount?: (tier: number) => number
+  /** 基础数量;给了 `amount` 时可以不写 */
+  base?: number
   /** 每层级倍率:amount = base × tierGrowth^(tier-1) */
   tierGrowth?: number
   /** 概率(省略 = 必给) */
@@ -263,8 +268,9 @@ export function createDungeonSystem<T = number>(
   }
 
   const rewardAmount = (reward: RewardDef, tier: number): T => {
+    if (reward.amount) return numeric.from(reward.amount(tier))
     const growth = reward.tierGrowth ?? 1
-    return numeric.mulN(numeric.from(reward.base), growth ** Math.max(0, tier - 1))
+    return numeric.mulN(numeric.from(reward.base ?? 0), growth ** Math.max(0, tier - 1))
   }
 
   const onVictory = (

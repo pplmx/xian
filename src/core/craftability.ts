@@ -24,10 +24,12 @@ export const CRAFT_BASE_RATE = 0.95
  */
 const CRAFT_FORMULA = {
   baseRate: CRAFT_BASE_RATE,
-  mastery: { floor: 0.22, span: 0.78 },
-  lore: { floor: 0.42, span: 0.58 },
-  skill: { floor: 0.3, span: 0.7 },
-  overReach: { table: [1, 0.6, 0.35, 0.18], decay: 0.45 }
+  levers: {
+    mastery: { floor: 0.22, span: 0.78 },
+    lore: { floor: 0.42, span: 0.58 },
+    skill: { floor: 0.3, span: 0.7 }
+  },
+  overReach: { key: 'overReach', spec: { table: [1, 0.6, 0.35, 0.18], decay: 0.45 } }
 }
 
 export interface Craftability {
@@ -65,7 +67,7 @@ export function bearableRank(major: number): number {
  * 曲线由公共库算(表与衰减都在上面的公式里)。
  */
 export function overReachFactor(over: number): number {
-  return libOverReachFactor(over, CRAFT_FORMULA.overReach)
+  return libOverReachFactor(over, CRAFT_FORMULA.overReach.spec)
 }
 
 /** 方中灵材的平均认知度(0~1)—— 归一与平均由公共库算 */

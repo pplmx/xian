@@ -31,6 +31,10 @@
 **通用性**
 
 - `lifespan` 改为可选:日常/学习/经营这类没有生死的题材不必编一个寿元数(省略即无限)
+- `crafting.levers` 改成**任意个数与名字**的乘区表(原来是写死的掌握/认知/技艺三区),
+  每区可给自定义曲线;越级惩罚改为可选(不配就没有越级这回事)
+- 三处"写死的曲线"开成钩子:`realms.exp.costFn`、`realms.combat.statsFn`、
+  `skills.costs[].amount`、`dungeons.victoryRewards[].amount`
 
 **已验证**
 

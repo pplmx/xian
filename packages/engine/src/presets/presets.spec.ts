@@ -211,10 +211,10 @@ describe('内容包 —— 书桌与日常(跨题材通用性的判据)', () => 
     expect(companions.modsOf('deskmate')).toEqual({ attackPct: 0.03 })
     expect(companions.effectsOf(null).dropLuck).toBe(0)
 
-    // 做饭:火候足而且不越级时贴着基准率
-    const perfect = composeCraftRate({ mastery: 1, lore: 1, skill: 1, overReach: 0 }, DAILY_COOKING)
+    // 做饭:三项全满、不做超过能力的菜时贴着基准率
+    const perfect = composeCraftRate({ heat: 1, prep: 1, seasoning: 1, dishRank: 0 }, DAILY_COOKING)
     expect(perfect).toBeCloseTo(0.95, 10)
-    const hard = composeCraftRate({ mastery: 0.5, lore: 0.5, skill: 0.4, overReach: 2 }, DAILY_COOKING)
+    const hard = composeCraftRate({ heat: 0.5, prep: 0.5, seasoning: 0.4, dishRank: 2 }, DAILY_COOKING)
     expect(hard).toBeGreaterThan(0)
     expect(hard).toBeLessThan(0.4)
   })

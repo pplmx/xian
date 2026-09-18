@@ -173,11 +173,17 @@ export const DAILY_COMPANIONS: CompanionConfig = {
   ]
 }
 
-/** 做饭(即"炼制"):四乘区同样适用 —— 掌握(菜谱)、认知(食材)、技艺(厨艺)、越级(硬做难的菜) */
+/**
+ * 做饭(即"炼制"):**乘区的名字与个数都由这一款说了算** ——
+ * 火候 / 备料 / 调味 三区,再加"硬做难的菜"这一项越级。
+ * 与修仙包的"掌握 / 认知 / 技艺"毫无关系,却用的是同一段公式。
+ */
 export const DAILY_COOKING: CraftFormula = {
   baseRate: 0.95,
-  mastery: { floor: 0.25, span: 0.75 },
-  lore: { floor: 0.4, span: 0.6 },
-  skill: { floor: 0.3, span: 0.7 },
-  overReach: { table: [1, 0.65, 0.4, 0.2], decay: 0.5 }
+  levers: {
+    heat: { floor: 0.25, span: 0.75 },
+    prep: { floor: 0.4, span: 0.6 },
+    seasoning: { floor: 0.3, span: 0.7 }
+  },
+  overReach: { key: 'dishRank', spec: { table: [1, 0.65, 0.4, 0.2], decay: 0.5 } }
 }

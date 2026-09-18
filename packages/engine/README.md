@@ -209,6 +209,40 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 两份现成的内容包可以直接对照:`presets/xiuxian`(修仙)、`presets/demo`(科幻)、
 `presets/daily`(日常学习,含学科/伙伴/做饭三份配套配置)。
 
+## 自由定制:想改什么,改哪里
+
+库里"写死的"只有**结构**(有序的名字串、曲线的形状、区间与权重),
+凡是"具体长什么样"的地方,都留了配置字段或钩子:
+
+| 你想改的东西 | 怎么改 |
+| --- | --- |
+| 名字(境界 / 装备 / 属性 / 副本 / 技能 / 性格……) | 各处定义的 `name`;属性可用 `attributeDefs({ rename })` |
+| 属性维度(几个、叫什么) | `attributes.defs` + `core`;本值想有几个就几个 |
+| **每级需求完全自己定**(手调表、非指数公式) | `realms.exp.costFn(major, layer)` |
+| **基础属性完全自己定** | `realms.combat.statsFn(major, layer)` |
+| 不要"寿元"这回事 | 省略 `lifespan`(`lifespanOf` 返回 Infinity) |
+| 品质档数 / 槽位数量 / 每档词条条数 | `qualities[]` / `slots[]` / `QualityDef.affixes` |
+| 层级系数是张表而不是指数 | `equipment.power.tierFactors` |
+| **炼制乘区几个、叫什么、什么形状** | `crafting.levers`(任意键)+ 每区 `LeverSpec.curve`(自定义曲线)+ 可选 `overReach` |
+| 词条数值单位(百分点 / 分数) | `equipment.affixValueScale` 或单个词条的 `scale` |
+| **技能消耗完全自己定** | `skills.costs[].amount(level)`(折扣与下限仍生效) |
+| **奖励数额完全自己定** | `dungeons.victoryRewards[].amount(tier)`(概率仍生效) |
+| 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
+| 随机内容池的标签体系与区间 | `deck` 的 `tags` / `min` / `max` / `weight` / `once`,及 `weightMultiplier`(倾向而非门槛) |
+| 目标/成就条件 | `goals` 的 `counter \| level \| position \| rank \| custom`,自定义键用 `GoalEnv.custom` |
+| 伙伴性格的键名与中性值 | `companions.traits[].mods` + `companions.neutral`(缺中性值直接报错) |
+| **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改(宿主接 GNum 的例子见其 `engineNumeric`) |
+| 随机源(可复现 / 平台随机) | `Rng` 接口;库自带 mulberry32,可换 |
+| 存档介质与加密 | 库**不碰介质**:`encodeSave` 出字符串,写哪儿、要不要加密都归你 |
+| 内容校验的严格度 | `defineGame(config, { strict: true })` 把警告也当错误 |
+
+两条不变式(其余都能改):
+
+1. **机制键是接口,展示名是你的** —— `attack` 一直叫 `attack`(公式、存档、内容 gate 都认它),
+   但它显示成"攻击力""火力"还是"专注力",完全由你决定;
+2. **引擎要求的字段都是结构,不是题材** —— 它要的是"一串有序的世界名""每层的成长曲线"
+   "每个部位有几种成色",不是"你得叫它境界/装备"。
+
 ## 炼制:成功率是四个乘区相乘
 
 ```ts

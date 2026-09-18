@@ -101,47 +101,58 @@ export function overReachFactor(over: number, spec: OverReachSpec): number {
 export interface LeverSpec {
   floor: number
   span: number
+  /**
+   * 自定义曲线(**可选**):给了它就用它,`floor/span` 只当兜底。
+   *
+   * 默认曲线是线性的(下限 + 跨度 × clamp01),但"技艺越高越陡"、
+   * "前几级几乎没差别"这类手感需要别的形状 —— 直接给一条函数,不必让库猜。
+   * 契约:返回一个乘数,0~1 之间最自然(库不替你夹取)。
+   */
+  curve?: (value: number) => number
 }
 
 export function leverFactor(value: number, spec: LeverSpec): number {
+  if (spec.curve) return spec.curve(Math.max(0, Math.min(1, value)))
   return spec.floor + spec.span * Math.max(0, Math.min(1, value))
 }
 
 export interface CraftFormula {
   /** 各项皆满且不越级时的成功率上限 —— 剩下的留给天意 */
   baseRate: number
-  /** 配方掌握度(0~1)的乘区 */
-  mastery: LeverSpec
-  /** 材料认知度(0~1)的乘区 */
-  lore: LeverSpec
-  /** 技艺水平(已归一到 0~1)的乘区 */
-  skill: LeverSpec
-  /** 越级惩罚 */
-  overReach: OverReachSpec
+  /**
+   * 乘区表:**几个、叫什么,全由作品定**。
+   *
+   * 云隐修仙录用的是"掌握 / 认知 / 技艺"三区(再加越级),而换个题材可能完全不同 ——
+   * 做饭是"火候 / 备料 / 调味",铸剑是"炉温 / 锻打 / 淬火",写代码是"需求理解 /
+   * 设计与实现"。键名只是标签,引擎只做一件事:**按乘区表逐项取 `下限 + 跨度 × clamp01(值)`
+   * 再乘起来**(顺序即对象键的顺序,故结果可复现)。
+   */
+  levers: Record<string, LeverSpec>
+  /**
+   * 越级惩罚(可选):把某一项的值当作"越了几级"来陡峭折算,作为最后一个因子乘上去。
+   *
+   * `key` 指向输入里的哪一项(它不必出现在 `levers` 里);
+   * 不给就是没有越级这回事 —— 有些题材根本没有"越级"。
+   */
+  overReach?: { key: string; spec: OverReachSpec }
 }
 
 export interface CraftLevers {
-  /** 配方掌握度 0~1 */
-  mastery: number
-  /** 材料认知度 0~1 */
-  lore: number
-  /** 技艺水平 0~1(作品侧把 0~100 除以 100 再传进来) */
-  skill: number
-  /** 越级阶数,>0 即强炼 */
-  overReach: number
+  /** 乘区名 → 值(作品侧负责归一:0~100 的先除 100);越级那一项也放这里 */
+  [key: string]: number
 }
 
 /**
- * 合成成功率 = 基准 × 掌握 × 认知 × 技艺 × 越级。
+ * 合成成功率 = 基准 × Π(各乘区) × 越级因子。
  *
- * 乘法顺序与《云隐修仙录》一致(逐位对齐,迁移时数字一位不变)。
+ * 乘法顺序 = 基准、按 `formula.levers` 的键序、最后越级 ——
+ * 与《云隐修仙录》原式一致(逐位对齐,迁移时数字一位不变)。
  */
-export function composeCraftRate(levers: CraftLevers, formula: CraftFormula): number {
-  return (
-    formula.baseRate *
-    leverFactor(levers.mastery, formula.mastery) *
-    leverFactor(levers.lore, formula.lore) *
-    leverFactor(levers.skill, formula.skill) *
-    overReachFactor(levers.overReach, formula.overReach)
-  )
+export function composeCraftRate(values: CraftLevers, formula: CraftFormula): number {
+  let rate = formula.baseRate
+  for (const [key, spec] of Object.entries(formula.levers)) {
+    rate *= leverFactor(values[key] ?? 0, spec)
+  }
+  if (formula.overReach) rate *= overReachFactor(values[formula.overReach.key] ?? 0, formula.overReach.spec)
+  return rate
 }

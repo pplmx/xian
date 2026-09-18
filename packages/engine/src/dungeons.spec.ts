@@ -122,4 +122,18 @@ describe('副本系统 —— 区域链/遭遇/首领门槛/通关奖励', () =>
     expect(Number(sys.snapshot('b3').hp)).toBeCloseTo(500 * 4, 6)
     expect(sys.snapshot('b3').boss).toBe(true)
   })
+
+  it('奖励数额可以自己接管(给 amount 时不看 base/tierGrowth,概率仍生效)', () => {
+    const custom = createDungeonSystem({
+      ...CONFIG,
+      victoryRewards: [
+        { id: 'score', name: '分', amount: tier => tier * 10 },
+        { id: 'rare', name: '稀有', amount: () => 1, chance: 0 }
+      ]
+    })
+    const rng = createRng(5)
+    const out = custom.onVictory('r1', { regionId: 'r1', kind: 'boss', enemyId: 'b1' }, emptyProgress(), rng)
+    expect(out.rewards.find(r => r.id === 'score')?.amount).toBe(10)
+    expect(out.rewards.some(r => r.id === 'rare')).toBe(false) // chance 0 → 不给
+  })
 })

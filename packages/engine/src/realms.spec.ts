@@ -133,4 +133,20 @@ describe('等级体系 —— 名目、曲线、进阶、寿元', () => {
     expect(half.ready).toBe(false)
     expect(sys.progress({ major: 0, layer: 0, exp: cost }).ready).toBe(true)
   })
+
+  it('自己接管曲线:给 costFn / statsFn 时,引擎不猜、原样用你的数', () => {
+    // 一张手调的等级表(不是"倍率 × 倍率"那种形状)
+    const table: Record<string, number> = { '0-0': 7, '0-1': 13, '1-0': 99 }
+    const sys = makeSystem({
+      exp: { realmGrowth: 1, costFn: (major, layer) => table[`${major}-${layer}`] ?? 1 },
+      combat: { realmGrowth: 1, statsFn: (major, layer) => ({ attack: 10 + major * 100 + layer }) }
+    })
+    expect(Number(sys.expCost(0, 0))).toBe(7)
+    expect(Number(sys.expCost(0, 1))).toBe(13)
+    expect(Number(sys.expCost(1, 0))).toBe(99)
+    expect(Number(sys.baseStats(2, 3).attack)).toBe(10 + 200 + 3)
+    // 本值集合也由你定:想要几个维度就几个
+    const three = makeSystem({ combat: { realmGrowth: 1, statsFn: () => ({ power: 5, guard: 3, vitality: 40 }) } })
+    expect(Object.keys(three.baseStats(0, 0))).toEqual(['power', 'guard', 'vitality'])
+  })
 })

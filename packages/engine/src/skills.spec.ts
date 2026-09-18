@@ -78,4 +78,21 @@ describe('技能/功法 —— 等级曲线、消耗、满级分支、装配来�
     expect(() => createSkillSystem({ skills: [{ id: 'a', name: 'A', maxLevel: 1 }, { id: 'a', name: 'A2', maxLevel: 1 }] })).toThrow(/重复/)
     expect(() => createSkillSystem({ skills: [{ id: 'a', name: 'A', maxLevel: 0 }] })).toThrow(/maxLevel/)
   })
+
+  it('消耗项可以自己接管数额(手调价目表),折扣与下限仍然生效', () => {
+    const table = createSkillSystem({
+      skills: [
+        {
+          id: 's',
+          name: 'S',
+          maxLevel: 4,
+          costs: [{ key: 'coin', amount: lv => lv * lv + 1, discountable: true }]
+        }
+      ]
+    })
+    expect(table.costAt('s', 1)).toEqual([{ key: 'coin', amount: 2 }])
+    expect(table.costAt('s', 3)).toEqual([{ key: 'coin', amount: 10 }])
+    // 折扣照乘,但仍不低于下限 1
+    expect(table.costAt('s', 3, { discount: 1 })).toEqual([{ key: 'coin', amount: 1 }])
+  })
 })

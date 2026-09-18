@@ -20,6 +20,11 @@ import type { Mods } from './attributes.js'
 export interface SkillCostSpec {
   /** 资源名(悟道点、残页、金币……) */
   key: string
+  /**
+   * 自己接管这一项的数额(**可选**):给了它,base/growth/levelStep 全部忽略,
+   * 只保留折扣与下限。手里有张手调的价目表时用它。
+   */
+  amount?: (level: number) => number
   /** 基数;默认 0 */
   base?: number
   /** 每级倍率;默认 1(不随等级涨) */
@@ -134,7 +139,7 @@ export function createSkillSystem(config: SkillConfig): SkillSystem {
       const growth = spec.growth ?? 1
       const step = spec.levelStep ?? 0
       const factor = spec.discountable === false ? 1 : 1 - discount
-      const raw = (base * Math.pow(growth, lv) + step * lv) * factor
+      const raw = (spec.amount ? spec.amount(lv) : base * Math.pow(growth, lv) + step * lv) * factor
       return { key: spec.key, amount: Math.max(spec.min ?? 1, Math.ceil(raw)) }
     })
   }
