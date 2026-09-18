@@ -11,6 +11,24 @@
 > 独立仓库:<https://github.com/pplmx/wanxiang-engine>
 > 本目录是它的**上游**:宿主仓库(云隐修仙录)在这里开发,再按下面的方式同步过去。
 
+## 装到你的项目里
+
+还没有发 npm。按 tag 引用即可(**请用 tag,不要跟 `main`** —— 库还在长,`main` 随时会动):
+
+```bash
+bun add github:pplmx/wanxiang-engine#v0.1.0      # 或 npm i github:pplmx/wanxiang-engine#v0.1.0
+```
+
+```ts
+import { defineGame, createRng } from 'wanxiang-engine'
+import { XIUXIAN } from 'wanxiang-engine/presets/xiuxian'   // 三份内容包都可这样取
+import { DEMO } from 'wanxiang-engine/presets/demo'
+import { DAILY } from 'wanxiang-engine/presets/daily'
+```
+
+版本口径见 [CHANGELOG](./CHANGELOG.md):公开面是承诺,新增走 minor、破坏走 minor 并写明怎么改;
+0.x 期间数值曲线不承诺不变,但**没有显式配置时,默认行为逐位不变**。
+
 ```bash
 bun packages/engine/examples/minimal.ts   # 换皮后的完整一圈:修炼 → 掉装 → 打副本 → 通关
 ```
