@@ -24,7 +24,7 @@ const BASE_AT = 1767225600000
 
 function plainEnvelope(exportedAt: number): string {
   return JSON.stringify({
-    game: 'yunyin-xiuxian',
+    game: 'xuanshu',
     version: 2,
     exportedAt,
     data: { game: { started: true }, player: null }
@@ -49,7 +49,7 @@ describe('明文存档 · 不许被误当密文', () => {
   })
 
   it('真密文仍解得开 —— 修的是误判,不是把解密关掉', () => {
-    const plain = JSON.stringify({ game: 'yunyin-xiuxian', data: { x: 1 } })
+    const plain = JSON.stringify({ game: 'xuanshu', data: { x: 1 } })
     const cipher = encryptSave(plain)
     expect(cipher.startsWith('U2FsdGVkX1'), '本项目的密文都带 Salted__ 头').toBe(true)
     expect(decryptSave(cipher)).toBe(plain)

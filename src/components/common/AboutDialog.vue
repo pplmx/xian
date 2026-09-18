@@ -1,7 +1,7 @@
 <template>
   <BaseModal :open="open" title="关于我们" @close="$emit('close')">
     <div class="space-y-3 text-[12px] leading-relaxed">
-      <p class="text-ink-faint">《云隐修仙录》—— 一念修行,云深不知处。</p>
+      <p class="text-ink-faint">《玄枢录》—— 玄之又玄,众妙之门。</p>
       <div class="card-ink px-3 py-2">
         <p class="text-[10px] text-ink-faint">当前版本</p>
         <p class="font-kai text-[14px] text-ink tabular">v{{ version }}</p>

@@ -594,7 +594,7 @@ export const usePlayerStore = defineStore(
       /**
        * 数组类字段先补形,再谈内容 —— 存档可能被改坏、写坏或在旧版本里根本没有这一栏。
        * 此前只挡了 suppressQualified,没挡 suppressedRegions,于是坏档会在
-       * `for...of` 上直接抛出,玩家看到的是白屏而不是「回到云隐山下」。
+       * `for...of` 上直接抛出,玩家看到的是白屏而不是「回到玄枢山下」。
        */
       if (!Array.isArray(suppressedRegions.value)) suppressedRegions.value = []
       if (!Array.isArray(suppressQualified.value)) suppressQualified.value = []

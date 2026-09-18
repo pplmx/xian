@@ -3,7 +3,7 @@
     <div class="space-y-3 text-[12px] leading-relaxed">
       <section>
         <h4 class="mb-0.5 font-kai text-[13px] text-ink">一、简介</h4>
-        <p class="text-ink-faint">《云隐修仙录》是一款纯单机网页游戏。我们尊重并保护你的隐私,本政策说明游戏如何处理你的数据。</p>
+        <p class="text-ink-faint">《玄枢录》是一款纯单机网页游戏。我们尊重并保护你的隐私,本政策说明游戏如何处理你的数据。</p>
       </section>
       <section>
         <h4 class="mb-0.5 font-kai text-[13px] text-ink">二、数据收集</h4>

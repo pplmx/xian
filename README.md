@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="images/app/1.png" alt="云隐修仙录" title="云隐修仙录" width="720" />
+  <img src="images/app/1.png" alt="玄枢录" title="玄枢录" width="720" />
 
-  **一念修行 · 云深不知处**
+  **玄之又玄 · 众妙之门**
 
   一款文字版修仙放置游戏 —— 水墨国风,四界二十一境,
   后台预解算的回合制战斗,断网也能接着修。

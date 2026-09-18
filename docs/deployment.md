@@ -17,7 +17,7 @@
 ## Android
 
 CI 会把签好的 APK 作为 `android-apk` 产物上传;本地出包在
-`android/app/build/outputs/apk/release/yunyin-<版本号>.apk`。
+`android/app/build/outputs/apk/release/xuanshu-<版本号>.apk`。
 把 APK 传到手机后点击安装(系统会提示允许安装未知来源应用,放行即可);
 覆盖安装需签名一致 —— 自己构建的包与官方签名不同,要先卸载旧版。
 
@@ -29,10 +29,10 @@ bun run build:apk        # 直接出 Release APK
 ## Windows 桌面(Electron)
 
 ```bash
-bun run build:electron   # 输出 pkg/yunyin-<版本号>-win.zip
+bun run build:electron   # 输出 pkg/xuanshu-<版本号>-win.zip
 ```
 
-解压后运行其中的 `云隐修仙录.exe`。未签名 exe 被杀毒软件误报是通病,加入白名单即可。
+解压后运行其中的 `玄枢录.exe`。未签名 exe 被杀毒软件误报是通病,加入白名单即可。
 
 ## Docker
 
@@ -58,8 +58,8 @@ docker run -d -p 8080:80 ghcr.io/pplmx/xian:<commit-sha>
 ### 方式二:本地构建镜像
 
 ```bash
-docker build -t yunyin-xiuxian:latest .
-docker build -t yunyin-xiuxian:<version> .
+docker build -t xuanshu:latest .
+docker build -t xuanshu:<version> .
 ```
 
 ### 方式三:docker compose
@@ -133,32 +133,32 @@ HTTPS 两种做法:
 ## 健康检查与存档
 
 ```bash
-docker inspect --format='{{.State.Health.Status}}' yunyin-xiuxian   # 查看健康状态
-docker exec yunyin-xiuxian wget -qO- http://localhost/              # 手动探测
+docker inspect --format='{{.State.Health.Status}}' xuanshu   # 查看健康状态
+docker exec xuanshu wget -qO- http://localhost/              # 手动探测
 ```
 
-**存档在客户端浏览器 localStorage,不在容器内**(键名带 `yunyin.` 前缀),因此容器重建不影响存档;
+**存档在客户端浏览器 localStorage,不在容器内**(键名带 `xuanshu.` 前缀),因此容器重建不影响存档;
 换环境时用游戏内的导出 / 导入(`.save` 文件)迁移。
 
 ## 故障排查
 
 ```bash
-docker logs yunyin-xiuxian                 # 启动失败先看日志
-docker exec -it yunyin-xiuxian sh          # 进容器检查
+docker logs xuanshu                 # 启动失败先看日志
+docker exec -it xuanshu sh          # 进容器检查
 ls -lh /usr/share/nginx/html/
-docker run -p 3000:80 yunyin-xiuxian:latest   # 端口冲突时换映射
-docker stats yunyin-xiuxian                # 资源占用
+docker run -p 3000:80 xuanshu:latest   # 端口冲突时换映射
+docker stats xuanshu                # 资源占用
 ```
 
 - **页面白屏或资源 404**:先看 `docker logs` 与浏览器 Network 面板。`base: './'` 下资源走相对路径,
   子路径部署一般不会因此 404;若确实拉不到资源,多半是反向代理改写了 URL 前缀或没把整站交给容器;
 - **资源限制不够**:改 `docker-compose.yml` 的 `deploy.resources.limits`(例如 `cpus: '2'`、`memory: 1G`);
-- **清理**:`docker compose down`(停容器)、`docker rmi yunyin-xiuxian:latest`(删镜像)、
+- **清理**:`docker compose down`(停容器)、`docker rmi xuanshu:latest`(删镜像)、
   `docker system prune -a`(清理未使用的镜像与缓存)。
 
 ## CI/CD
 
-`.github/workflows/yunyin.yml` 在 push 到 `main`、打 `v*.*.*` 标签或手动触发时执行:
+`.github/workflows/xuanshu.yml` 在 push 到 `main`、打 `v*.*.*` 标签或手动触发时执行:
 `bun run check` + `bun run test` 全绿 → `bun run build` → 校验 `dist/index.html` →
 用 `Dockerfile.ci` 构建多架构镜像 → 推送 GHCR(`latest` / 版本号 / commit sha 三个标签);
 配置了 Docker Hub 凭据时同样推送一份。

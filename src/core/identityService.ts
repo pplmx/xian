@@ -113,7 +113,7 @@ export function buildIdentity(): CultivatorIdentity {
   const daoName = daoKey ? (daoPathDef(daoKey)?.name ?? null) : null
   const daoEpi = daoKey ? (DAO_EPITHETS[daoKey] ?? '问道') : null
   const mentorEpi = mentor ? MENTOR_EPITHETS[mentor.id] : null
-  const epithet = [daoEpi, mentorEpi].filter(Boolean).slice(0, 2).join('') || '云隐散人'
+  const epithet = [daoEpi, mentorEpi].filter(Boolean).slice(0, 2).join('') || '玄枢散人'
 
   const narrative = buildNarrative(
     { fortunes, mentor, daoPath: daoName, build: build?.displayName ?? null, branches },

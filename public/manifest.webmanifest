@@ -1,7 +1,7 @@
 {
-  "name": "云隐修仙录",
-  "short_name": "云隐修仙",
-  "description": "文字版修仙放置游戏。一念修行 · 云深不知处。",
+  "name": "玄枢录",
+  "short_name": "玄枢",
+  "description": "文字版修仙放置游戏。玄之又玄 · 众妙之门。",
   "lang": "zh-CN",
   "dir": "ltr",
   "start_url": "./",

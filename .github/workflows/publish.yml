@@ -135,8 +135,8 @@ jobs:
             VERSION=${{ steps.version.outputs.version }}
             COMMIT_SHA=${{ github.sha }}
           labels: |
-            org.opencontainers.image.title=云隐修仙录
-            org.opencontainers.image.description=云隐修仙录 - 一款修仙放置游戏
+            org.opencontainers.image.title=玄枢录
+            org.opencontainers.image.description=玄枢录 - 一款修仙放置游戏
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

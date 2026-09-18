@@ -18,7 +18,7 @@
     <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="云隐修仙录"
+      android:text="玄枢录"
       android:textColor="#c9554e"
       android:textSize="28sp"
       android:textStyle="bold"
@@ -28,7 +28,7 @@
     <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="一念修行 · 云深不知处"
+      android:text="玄之又玄 · 众妙之门"
       android:textColor="#8b949e"
       android:textSize="14sp"
       android:layout_marginBottom="32dp" />

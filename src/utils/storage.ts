@@ -6,7 +6,17 @@
 import type { StateTree } from 'pinia'
 import { encryptSave, readSaveText } from './crypto'
 
-export const SAVE_PREFIX = 'yunyin.'
+export const SAVE_PREFIX = 'xuanshu.'
+/**
+ * 更名前的存储前缀 —— **别删**。
+ *
+ * 玩家的进度按 `前缀 + store id` 落在 localStorage 里,改前缀等于换了一套键:
+ * 不迁移的话,老玩家打开游戏会看到"新号"。故 `migrateLegacyPrefix()` 在启动时
+ * 把旧前缀下的分片原样搬到新前缀(值本身就是密文,搬过去照样能解)。
+ */
+export const LEGACY_SAVE_PREFIX = 'yunyin.'
+/** 更名前导出文件里写的游戏标识(`buildExportPayload` 曾经写的就是它) */
+export const LEGACY_GAME_ID = 'yunyin-xiuxian'
 export const SAVE_VERSION = 2
 
 /** 参与持久化的 store id 列表(导出/导入/重置的键清单) */
@@ -265,6 +275,7 @@ export function migrateInventorySlice(data: Record<string, unknown>): Record<str
  */
 export function migrateLocalSchema(): void {
   try {
+    migrateLegacyPrefix()
     const key = storageKey('inventory')
     const raw = localStorage.getItem(key)
     if (raw === null) return
@@ -274,6 +285,36 @@ export function migrateLocalSchema(): void {
   } catch {
     // 损坏数据交由 preflightScan 兜底
   }
+}
+
+/**
+ * 更名迁移:把旧前缀下的分片搬到新前缀。
+ *
+ * 只在"新键不存在"时搬(玩家若已经在新闻名版本里玩过,新档优先);
+ * 值是密文,原样搬过去即可解开 —— 加密密钥(`utils/crypto.SAVE_SECRET`)刻意没有随名字改。
+ * 搬完删掉旧键:它们不会再被读,留着只会让"清空存档"看起来没清干净。
+ */
+export function migrateLegacyPrefix(): number {
+  let moved = 0
+  try {
+    const legacy: string[] = []
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(LEGACY_SAVE_PREFIX)) legacy.push(key)
+    }
+    for (const oldKey of legacy) {
+      const target = SAVE_PREFIX + oldKey.slice(LEGACY_SAVE_PREFIX.length)
+      const value = localStorage.getItem(oldKey)
+      if (value !== null && localStorage.getItem(target) === null) {
+        localStorage.setItem(target, value)
+        moved += 1
+      }
+      localStorage.removeItem(oldKey)
+    }
+  } catch {
+    // 配额不足 / 隐私模式禁写:交给 preflightScan 与后续兜底,别在这里炸启动
+  }
+  return moved
 }
 
 export interface ExportPayload {
@@ -297,14 +338,15 @@ export function buildExportPayload(): ExportPayload {
       }
     }
   }
-  return { game: 'yunyin-xiuxian', version: SAVE_VERSION, exportedAt: Date.now(), data }
+  return { game: 'xuanshu', version: SAVE_VERSION, exportedAt: Date.now(), data }
 }
 
 /** 校验导入数据结构,返回错误信息;null 表示通过 */
 export function validateImportPayload(obj: unknown): string | null {
   if (typeof obj !== 'object' || obj === null) return '存档内容不是有效对象'
   const p = obj as Partial<ExportPayload>
-  if (p.game !== 'yunyin-xiuxian') return '并非《云隐修仙录》的存档文件'
+  // 更名前导出的存档里写的是旧标识 —— 认它,老玩家手上那份 .save 不该因为改名而作废
+  if (p.game !== 'xuanshu' && p.game !== LEGACY_GAME_ID) return '并非《玄枢录》的存档文件'
   if (typeof p.version !== 'number') return '存档缺少版本号'
   if (p.version > SAVE_VERSION) return '存档版本高于当前游戏版本,无法导入'
   if (typeof p.data !== 'object' || p.data === null) return '存档数据段缺失'

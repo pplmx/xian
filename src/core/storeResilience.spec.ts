@@ -6,7 +6,7 @@
  *
  * 但「修」的前提是它自己别先炸。本轮实测:player.sanitize 只挡了
  * suppressQualified,没挡 suppressedRegions,于是 `for...of` 直接抛错 ——
- * 玩家看到的是白屏,而不是「回到云隐山下」。
+ * 玩家看到的是白屏,而不是「回到玄枢山下」。
  *
  * 故这里不看某一条字段有没有写进 sanitize,而是**逐个字段灌 undefined**:
  * 声明了 sanitize 的每个 store,每个持久化字段被抹掉后,sanitize 都必须跑完、

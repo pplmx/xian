@@ -6,8 +6,8 @@
     </div>
 
     <!-- 游戏名 -->
-    <h1 class="mt-6 font-kai text-[40px] leading-tight tracking-[0.3em] text-ink">云隐修仙录</h1>
-    <p class="mt-2 text-[12px] tracking-[0.5em] text-ink-faint">一念修行 · 云深不知处</p>
+    <h1 class="mt-6 font-kai text-[40px] leading-tight tracking-[0.3em] text-ink">玄枢录</h1>
+    <p class="mt-2 text-[12px] tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
 
     <!-- 开始按钮 -->
     <button class="btn-seal mt-10 w-full max-w-72 !py-3.5 text-[17px] tracking-[0.3em]" @click="onStart">开 始 游 戏</button>

@@ -127,7 +127,7 @@ describe('迁移 · 导入一份 v1 存档', () => {
 
   it('导得进来,法宝位有东西,旧字段不残留', () => {
     const payload = {
-      game: 'yunyin-xiuxian',
+      game: 'xuanshu',
       version: 1,
       exportedAt: Date.now(),
       data: { game: { started: true }, player: { major: 3 }, inventory: structuredClone(LEGACY_V1) }

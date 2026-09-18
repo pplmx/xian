@@ -139,7 +139,7 @@
     <button class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99" @click="identityOpen = true">
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修行画像</span>
-        <span class="block truncate text-[10px] text-ink-faint">「{{ identity?.epithet ?? '云隐散人' }}」 · {{ identity?.narrative ?? '足迹尚浅' }}</span>
+        <span class="block truncate text-[10px] text-ink-faint">「{{ identity?.epithet ?? '玄枢散人' }}」 · {{ identity?.narrative ?? '足迹尚浅' }}</span>
       </span>
       <span class="shrink-0 text-[11px] text-ink-soft">展卷 →</span>
     </button>
@@ -221,7 +221,7 @@
     </button>
 
     <!-- 修行画像弹窗(Phase 31.2) -->
-    <BaseModal :open="identityOpen" :title="`修行画像 · 「${identity?.epithet ?? '云隐散人'}」`" @close="identityOpen = false">
+    <BaseModal :open="identityOpen" :title="`修行画像 · 「${identity?.epithet ?? '玄枢散人'}」`" @close="identityOpen = false">
       <div v-if="identity" class="space-y-2.5">
         <p class="text-[12px] leading-relaxed text-ink-soft">{{ identity.narrative }}</p>
         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">

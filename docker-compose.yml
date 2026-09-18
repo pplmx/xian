@@ -1,15 +1,15 @@
 services:
-  yunyin-xiuxian:
+  xuanshu:
     build:
       context: .
       dockerfile: Dockerfile
-    image: yunyin-xiuxian:latest
-    container_name: yunyin-xiuxian
+    image: xuanshu:latest
+    container_name: xuanshu
     ports:
       - "8080:80"
     restart: unless-stopped
     networks:
-      - yunyin-net
+      - xuanshu-net
     environment:
       - TZ=Asia/Shanghai
     # 资源限制
@@ -29,5 +29,5 @@ services:
         max-file: "3"
 
 networks:
-  yunyin-net:
+  xuanshu-net:
     driver: bridge

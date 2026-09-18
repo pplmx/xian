@@ -117,7 +117,7 @@ if (LATE) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__smokeFixture', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
 }
 const page = await context.newPage()

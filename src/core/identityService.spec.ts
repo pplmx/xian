@@ -17,9 +17,9 @@ describe('修行身份(identityService)', () => {
     setActivePinia(createPinia())
   })
 
-  it('新人:无常识,默认为云隐散人', () => {
+  it('新人:无常识,默认为玄枢散人', () => {
     const id = buildIdentity()
-    expect(id.epithet).toBe('云隐散人')
+    expect(id.epithet).toBe('玄枢散人')
     expect(id.roots.fortunes.length).toBe(0)
     expect(id.traits.riskBias).toBeNull()
   })

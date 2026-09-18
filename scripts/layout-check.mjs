@@ -1174,7 +1174,7 @@ for (const vp of VIEWPORTS) {
     }
   }
   // 夹具 payload 只做一次,后面 320 那一遍复用;播种加闸(见第十四件事的坑)
-  const latePayload = Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+  const latePayload = Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   await ctx.addInitScript(decisivePayload => {
     if (localStorage.getItem('__layoutSeeded')) return
     for (const [k, v] of Object.entries(decisivePayload)) localStorage.setItem(k, v)
@@ -1441,7 +1441,7 @@ for (const vp of VIEWPORTS) {
     data => {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -1527,7 +1527,7 @@ for (const vp of VIEWPORTS) {
     data => {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -1638,7 +1638,7 @@ for (const vp of VIEWPORTS) {
     data => {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -1699,7 +1699,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -1707,7 +1707,7 @@ for (const vp of VIEWPORTS) {
   const savePath = '/tmp/layout-roundtrip.save'
   /** 磁盘上那一份灵石(解密 resources 分片;GNum 是 m×10^e) */
   const storedStone = async () => {
-    const cipher = await page.evaluate(() => localStorage.getItem('yunyin.resources') || '')
+    const cipher = await page.evaluate(() => localStorage.getItem('xuanshu.resources') || '')
     if (!cipher) return null
     const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8)
     if (!plain) return null
@@ -1830,7 +1830,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -1930,7 +1930,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2033,7 +2033,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2045,7 +2045,7 @@ for (const vp of VIEWPORTS) {
   /** 磁盘上的悟道点/灵石(等节流落盘,取精确值) */
   const readWal = async () => {
     await page.waitForTimeout(5600)
-    const cipher = await page.evaluate(() => localStorage.getItem('yunyin.resources') || '')
+    const cipher = await page.evaluate(() => localStorage.getItem('xuanshu.resources') || '')
     if (!cipher) return null
     const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8)
     if (!plain) return null
@@ -2116,7 +2116,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2130,7 +2130,7 @@ for (const vp of VIEWPORTS) {
    */
   const readOre = async () => {
     await page.waitForTimeout(5600)
-    const cipher = await page.evaluate(() => localStorage.getItem('yunyin.resources') || '')
+    const cipher = await page.evaluate(() => localStorage.getItem('xuanshu.resources') || '')
     if (!cipher) return { text: '(无分片)', value: null }
     const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8)
     if (!plain) return { text: '(解不开)', value: null }
@@ -2197,7 +2197,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2269,7 +2269,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2353,7 +2353,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2445,7 +2445,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2615,7 +2615,7 @@ for (const vp of VIEWPORTS) {
     data => {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2687,7 +2687,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2701,7 +2701,7 @@ for (const vp of VIEWPORTS) {
   await page.waitForTimeout(500)
   /** 磁盘上那一份灵石(解密 resources 分片) */
   const diskStone = async () => {
-    const cipher = await page.evaluate(() => localStorage.getItem('yunyin.resources') || '')
+    const cipher = await page.evaluate(() => localStorage.getItem('xuanshu.resources') || '')
     if (!cipher) return null
     const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8)
     if (!plain) return null
@@ -2807,7 +2807,7 @@ for (const vp of VIEWPORTS) {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2863,7 +2863,7 @@ for (const vp of VIEWPORTS) {
       }
       localStorage.setItem('__layoutSeeded', '1')
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`yunyin.${k}`, enc(v)]))
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
   )
   const page = await ctx.newPage()
   const pageErrors = []
@@ -2929,7 +2929,7 @@ for (const vp of VIEWPORTS) {
       inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
       endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
       settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-    }).map(([k, v]) => [`yunyin.${k}`, enc(v)])
+    }).map(([k, v]) => [`xuanshu.${k}`, enc(v)])
   )
   const openWith = async (userAgent, standalone = false) => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent })

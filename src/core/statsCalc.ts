@@ -8,7 +8,7 @@
  * 合计越过软阈值后超出部分折算;两道折算都摊回来源,故明细之和恒等于面板值。
  *
  * 留在这里的是本作自己的那部分:道果的另乘、灵根与灵气充盈并入修炼速度 ——
- * 那些是《云隐修仙录》的平衡设计,不是通用规则。
+ * 那些是《玄枢录》的平衡设计,不是通用规则。
  */
 import type { AnyStatKey, FinalStats, GNum, StatMods, StatSourceRow } from '@/types'
 import { add, mulN } from '@/utils/gnum'

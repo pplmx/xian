@@ -1,5 +1,5 @@
 /**
- * 云隐修仙录 Service Worker —— 离线缓存(见 RIL TASK-157 / DEC-033)
+ * 玄枢录 Service Worker —— 离线缓存(见 RIL TASK-157 / DEC-033)
  *
  * 策略(对内容哈希资产绝对安全):
  *  · 导航请求(= index.html,hash 路由下所有导航都落在它身上)走 network-first:
@@ -15,7 +15,7 @@
  * 离线回退仍会落到老页面。这是唯一需要人工记得的版本号,别在别处另设。
  */
 
-const CACHE_VERSION = 'yunyin-v1'
+const CACHE_VERSION = 'xuanshu-v1'
 
 self.addEventListener('install', () => {
   // 新 SW 就位后立刻接管,不等旧页签全部关闭

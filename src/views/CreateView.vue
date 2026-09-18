@@ -2,8 +2,8 @@
   <div class="stagger-in flex min-h-full flex-col px-6 py-8">
     <!-- 题字 -->
     <div class="mt-6 text-center">
-      <h1 class="font-kai text-[42px] leading-tight tracking-[0.35em] text-ink">云隐修仙录</h1>
-      <p class="mt-2 text-[12px] tracking-[0.5em] text-ink-faint">一念修行 · 云深不知处</p>
+      <h1 class="font-kai text-[42px] leading-tight tracking-[0.35em] text-ink">玄枢录</h1>
+      <p class="mt-2 text-[12px] tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
     </div>
 
     <!-- 道号 -->

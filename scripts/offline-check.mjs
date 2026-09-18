@@ -104,7 +104,7 @@ async function booted() {
 // 先在同一个 origin 上种一份"老版本缓存",看 activate 会不会把它清掉
 await page.goto(`${base}/privacy.html`, { waitUntil: 'load' })
 await page.evaluate(async () => {
-  const c = await caches.open('yunyin-v0-stale')
+  const c = await caches.open('xuanshu-v0-stale')
   await c.put('/stale-marker', new Response('old'))
 })
 
@@ -128,8 +128,8 @@ if (!afterReloadControlled) {
 const cachesNow = await page.evaluate(() => caches.keys())
 if (!cachesNow.includes(CACHE_VERSION)) failures.push(`缓存里没有 ${CACHE_VERSION}(现为:${cachesNow.join('、') || '空'})`)
 else pass.push(`缓存分片 ${CACHE_VERSION} 已建立`)
-if (cachesNow.includes('yunyin-v0-stale')) {
-  failures.push('activate 没有清理旧版本缓存(yunyin-v0-stale 还在)—— 改 CACHE_VERSION 也甩不掉老页面')
+if (cachesNow.includes('xuanshu-v0-stale')) {
+  failures.push('activate 没有清理旧版本缓存(xuanshu-v0-stale 还在)—— 改 CACHE_VERSION 也甩不掉老页面')
 } else {
   pass.push('旧版本缓存已被 activate 清掉')
 }

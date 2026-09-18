@@ -4,6 +4,13 @@
  */
 import CryptoJS from 'crypto-js'
 
+/**
+ * 存档加密口令 —— **这个名字别跟着游戏改名**。
+ *
+ * 它是一段密钥材料,不是展示文案:改了它,老玩家硬盘上那份密文就再也解不开。
+ * 游戏 2026-09 从旧名改为《玄枢录》时,这里的字符串刻意原样保留(存储前缀另有迁移,
+ * 见 utils/storage.migrateLegacyPrefix)。
+ */
 const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
 
 export function encryptSave(plain: string): string {
@@ -14,7 +21,7 @@ export function encryptSave(plain: string): string {
  * 解密失败返回 null。
  *
  * **必须先确认它长得像密文**:crypto-js 的 Base64 解析会**跳过**非法字符,
- * 于是明文 JSON(`{"game":"yunyin-xiuxian",…}`)也可能解出一段非空乱码 ——
+ * 于是明文 JSON(`{"game":"xuanshu",…}`)也可能解出一段非空乱码 ——
  * `toString(Utf8)` 不抛、`sigBytes` 也不是 0,decryptSave 就会把乱码当成明文返回。
  * 实测 500 条明文里约 3 条中招(约 0.6%),表现是「导入旧版明文存档」偶发失败,
  * 报「文件内容无法解析」——和输入内容有关、与运行环境无关,故极难复现。

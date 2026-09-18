@@ -22,7 +22,7 @@ export async function exportSaveToDevice(): Promise<string | null> {
       const perm = await Filesystem.requestPermissions()
       if (perm.publicStorage === 'denied') return '存储权限被拒绝,无法导出存档'
       const stamp = new Date().toISOString().slice(0, 10)
-      const file = `yunyin-xiuxian-${stamp}.save`
+      const file = `xuanshu-${stamp}.save`
       await Filesystem.writeFile({
         path: `Export/${file}`,
         data: text,
@@ -46,7 +46,7 @@ export async function exportSaveToDevice(): Promise<string | null> {
    * 失败必须说出来。
    */
   try {
-    saveAs(new Blob([text], { type: 'application/json' }), `yunyin-xiuxian-${new Date().toISOString().slice(0, 10)}.save`)
+    saveAs(new Blob([text], { type: 'application/json' }), `xuanshu-${new Date().toISOString().slice(0, 10)}.save`)
     return null
   } catch {
     // 别承诺做不到的事:导入只认文件,没有「粘贴文本」这条路,故只指可行的办法

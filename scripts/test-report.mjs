@@ -32,7 +32,7 @@ const CATEGORIES = [
   { name: 'Economy     资源经济', match: ['economySim', 'expIncome', 'lootSim', 'loot.spec', 'salvage', 'smartKeep', 'petLuck', 'pillValue', 'pillService', 'veinEconomyAudit', 'veinVisibility', 'resourceGuidance', 'offlineCap', 'offlineLedger', 'offlineParity', 'offlineScope', 'veinService', 'qiRepair'] },
   {
     name: 'Regression  服务与归因',
-    match: ['loadoutService', 'battleAnalysis', 'foeOrigin', 'loreService', 'contentReachability', 'contentDensity', 'mentorService', 'daoluService', 'bondEvents', 'bondTiming', 'bondIntent', 'bondCausality', 'worldMemory', 'phase31LinkAudit', 'suppress', 'game.spec', 'earlyGameService', 'earlyGameBuffs', 'savePlatform', 'saveRoundTrip', 'saveBackup', 'importCorruption', 'saveMigration', 'codexSource', 'achievementHint', 'titleLadder', 'artifactEffects', 'dataHeaderAudit', 'deadExportAudit', 'chainProgression', 'vocabularyCoverage', 'singleSourceAudit', 'effectWiring', 'uiLayering', 'itemText', 'kaiFontCoverage', 'fatePreview', 'goBack', 'storeResilience', 'cultivation.spec', 'diag.spec', 'platform.spec', 'rewardReachability', 'dataIntegrity', 'dataTextAudit', 'unlockChainSelfHeal', 'questProgress', 'firstStep']
+    match: ['loadoutService', 'battleAnalysis', 'foeOrigin', 'loreService', 'contentReachability', 'contentDensity', 'mentorService', 'daoluService', 'bondEvents', 'bondTiming', 'bondIntent', 'bondCausality', 'worldMemory', 'phase31LinkAudit', 'suppress', 'game.spec', 'earlyGameService', 'earlyGameBuffs', 'savePlatform', 'saveRoundTrip', 'saveBackup', 'importCorruption', 'saveMigration', 'codexSource', 'achievementHint', 'titleLadder', 'artifactEffects', 'dataHeaderAudit', 'deadExportAudit', 'chainProgression', 'vocabularyCoverage', 'singleSourceAudit', 'effectWiring', 'uiLayering', 'itemText', 'kaiFontCoverage', 'fatePreview', 'goBack', 'storeResilience', 'cultivation.spec', 'diag.spec', 'platform.spec', 'rewardReachability', 'dataIntegrity', 'dataTextAudit', 'unlockChainSelfHeal', 'questProgress', 'firstStep', 'rebrand']
   },
   { name: 'Celestial   真仙终局', match: ['celestialSim', 'celestialCaliber', 'endgameService', 'phase21', 'expedition', 'soulForge', 'souls.spec', 'rulesetEra', 'qimen'] },
   {
@@ -80,7 +80,7 @@ for (const file of report.testResults ?? []) {
   }
 }
 
-console.log('\n—— 《云隐修仙录》分类测试报告 ——\n')
+console.log('\n—— 《玄枢录》分类测试报告 ——\n')
 let totalPassed = 0
 let totalFailed = 0
 for (const row of rows) {

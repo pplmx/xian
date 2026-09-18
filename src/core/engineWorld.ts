@@ -93,7 +93,7 @@ function attributes(): AttributeDef[] {
 
 /** 一份完整的世界配置:内容全部来自本作的 data/,机制全部来自公共库 */
 export const ENGINE_WORLD_CONFIG: GameConfig<GNum> = {
-  name: '云隐修仙录',
+  name: '玄枢录',
   version: '1.33.0',
   attributes: {
     defs: attributes(),

@@ -48,7 +48,7 @@ function bootStores(): void {
 
 /** 一份包着坏数据的合法信封 */
 function envelope(data: Record<string, unknown>): string {
-  return JSON.stringify({ game: 'yunyin-xiuxian', version: 2, exportedAt: Date.now(), data })
+  return JSON.stringify({ game: 'xuanshu', version: 2, exportedAt: Date.now(), data })
 }
 
 const NASTY: { name: string; data: Record<string, unknown> }[] = [
