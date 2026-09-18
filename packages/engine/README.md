@@ -175,6 +175,32 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 - **装配汇总返回一组来源,而不是一个加总**:作品侧通常还要过自己的合并规则(递减、软上限),
   加总就把那层信息丢了。
 
+## 炼制:成功率是四个乘区相乘
+
+```ts
+import { composeCraftRate, overReachFactor, weightedSkill, averageLore, proficiencyFromExp, stageNameOf } from 'wanxiang-engine'
+
+const FORMULA = {
+  baseRate: 0.95, // 各项皆满、不越级时的上限 —— 剩下的留给天意
+  mastery: { floor: 0.22, span: 0.78 }, // 配方掌握度
+  lore: { floor: 0.42, span: 0.58 }, // 材料认知度
+  skill: { floor: 0.3, span: 0.7 }, // 技艺水平(调用方先归一到 0~1)
+  overReach: { table: [1, 0.6, 0.35, 0.18], decay: 0.45 } // 越级:表内查表,表外指数衰减
+}
+
+composeCraftRate({ mastery: 0.6, lore: 0.8, skill: 0.5, overReach: 1 }, FORMULA)
+proficiencyFromExp(5400, 600) // 90 —— 双曲饱和:逼近上限而不到顶
+stageNameOf(92, [{ min: 85, name: '通玄' }, { min: 0, name: '生疏' }])
+```
+
+为什么不是"够级就成"的硬门槛:硬门槛把"我准备得怎么样"压成一个布尔值,于是
+知识(记得多少配方)、材料(认不认得方中之物)、技艺(练到什么程度)、越级(方子高出我多少)
+这四条本可各自权衡的线,全被一条线吞掉。这里的写法是四区相乘、**各有下限** ——
+任何一项弱都不会把成功率归零,但四项全弱时自然低到不该开炉;"赌一把"于是始终是玩家的选择。
+
+配套两条:熟练度用双曲饱和(技艺没有"练满",想留口子就在上层按阈值判),
+分档给裸数字起名字(玩家读名字,不读数字)。
+
 ## 接进你自己的项目
 
 包内自带 `dist` 的编译与入口声明,但**还没有发到 npm**(发布是显式动作)。三种接法任选:
