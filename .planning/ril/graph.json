@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 317,
+  "round": 318,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:29:58+00:00",
+  "updated_at": "2026-09-18T21:34:03+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18293,6 +18293,44 @@
       "confidence": 0.9,
       "source": "更正 DEC-151 的 alternatives_rejected ② 里\"漏了半年也没人发现\"这句:没有量过这个缺陷存在了多久 —— 只知道 0.1.11 的 tag 上带着它,以及新加的类型消费者自检第一次运行就抓到了它(见 EV-306)。\"半年\"是随手写的、没有依据;结论不变(靠人记得写 .js 不可靠,必须有自检)。",
       "summary": "更正一处未经核实的表述:DEC-151 里说的\"漏了半年\"没有证据支持;缺陷存在时长未测量。"
+    },
+    "TASK-299": {
+      "id": "TASK-299",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:34:02+00:00",
+      "updated_at": "2026-09-18T21:34:02+00:00",
+      "touched_round": 317,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "事件选项消融(choices.sim.spec):量加权后果的长期分布与\"玩家没选\"的兜底 —— 70/25/5 权重 20 万次实测 69.99/25.07/4.93;5% 的后果抽 100 次一次不出的概率约 0.6%(实测 0.9%);权重全 0 取第一条不空转;兜底三级(默认且可选 → 第一条可选 → 第一条),默认项被锁住时落到第二条;回执把\"没发生\"的效果记进 skipped。"
+    },
+    "CHG-382": {
+      "id": "CHG-382",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:34:03+00:00",
+      "updated_at": "2026-09-18T21:34:03+00:00",
+      "touched_round": 317,
+      "commit": "c8f13bf",
+      "summary": "库:新增 src/choices.sim.spec.ts(4 例);CHANGELOG「未发布」记一节;docs/tuning.md 新增一节(第 10 份消融进参考表);docs/assembly.md 配方 B 补一行抉择、坑清单补两行(以为 5% 总会撞到、以为没选就是取第一个);README 用例数改 427/50。宿主无改动。"
+    },
+    "EV-308": {
+      "id": "EV-308",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:34:03+00:00",
+      "updated_at": "2026-09-18T21:34:03+00:00",
+      "touched_round": 317,
+      "confidence": 0.96,
+      "source": "变更 CHG-382(c8f13bf)。bunx vitest run src/choices.sim.spec.ts(4 例,打印:20 万次抽取分布 69.99%/25.07%/4.93%;100 次一次不出 18/2000 = 0.90%(理论 0.59%);权重全 0 → 第 1 条;默认项被锁住 → 兜底落到第 2 项;回执 生效 1 条 / 跳过 0 条);cd packages/engine && bun run check(427 例 / 50 文件 + 八道自检,其中\"调参参考自检通过(10 份消融实验都被收进 docs/tuning.md)\"、用例文件数自检当场抓出 README 的 49→50);cd /workspace/xian && bun run test(257 文件 / 2475 例)、test:report(2475 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(90 个源文件)。",
+      "summary": "抉择层的两条刻度:①稀有分支的\"抽不到\"是常态 —— 5% 权重下抽 100 次一次不出的概率约 0.6%(实测 0.9%),这直接支持\"稀有内容要多给机会或配保底\";②\"玩家没选\"不是取第一个选项,而是三级兜底,且被锁住的默认项不会被硬塞 —— 这条以前只有语义判据,现在有实测落点。"
     }
   },
   "edges": [
@@ -27512,6 +27550,12 @@
       "to": "TASK-298",
       "type": "governs",
       "created_at": "2026-09-18T21:29:50+00:00"
+    },
+    {
+      "from": "CHG-382",
+      "to": "TASK-299",
+      "type": "implements",
+      "created_at": "2026-09-18T21:34:03+00:00"
     }
   ]
 }
