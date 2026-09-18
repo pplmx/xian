@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 235,
+  "round": 236,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T14:35:00+00:00",
+  "updated_at": "2026-09-18T15:25:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14045,6 +14045,89 @@
       "rationale": "\"达成与否\"若在界面与发赏各写一遍,迟早出现\"界面说成了、领赏时不算\"(或反过来),而玩家只会把它当成吞奖励 —— 这类不一致最伤信任。故判据收成 evalGoal 一处,进度视图 goalProgress 与它共用同一份判断;环境由作品给(计数怎么存、等级怎么算、品阶何谓),库不碰存档。另有一条本作语义必须留在本作:品质成就由 checkQuality 显式触发、不与等级同路,故翻译层对 quality 显式返回 null,而不是硬翻成\"品阶达标\"。",
       "alternatives_rejected": "①库直接读某个约定的存档形状(把作品的数据结构固化进公共库);②界面自己再写一遍比较(正是要消掉的分叉);③把 quality 也翻成\"品阶达标\"(会改变本作语义:品质成就是由掉落事件触发的,不是看当前品阶)。",
       "summary": "达成判据收成 evalGoal + goalProgress 一处,环境由作品提供;作品特有的旁路(本作的 checkQuality)在翻译层显式排除。"
+    },
+    "TASK-215": {
+      "id": "TASK-215",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T15:25:00+00:00",
+      "updated_at": "2026-09-18T15:25:00+00:00",
+      "touched_round": 236,
+      "category": "core-feature",
+      "severity": 0.7,
+      "confidence": 0.95,
+      "effort": 4,
+      "unlock_factor": 1.0,
+      "summary": "按用户新方向推进:公共库朝着\"单独成 repo、单独迭代\"设计,他人只引用库就能搭出自己的基础数值系统。补齐库自己的测试配置与依赖、独立开发脚本、忽略清单与变更记录、README 的拆库路径;新增独立自检(整份复制到临时目录 → 断言无宿主引用 → 独立编译 → 独立跑用例 → 独立装配换皮世界)并接进三条流水线。另把\"内容牌堆\"(区间/标签/一次性/权重)收进库,并用本作 81 条真实事件与冻结旧筛法逐条对账。"
+    },
+    "CHG-283": {
+      "id": "CHG-283",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:25:00+00:00",
+      "updated_at": "2026-09-18T15:25:00+00:00",
+      "touched_round": 236,
+      "commit": "0de16c9",
+      "summary": "库侧新增 deck.ts/deck.spec.ts:LevelBand、DeckEntry、DeckContext、inBand、entryAllowed、deckPool、drawFrom(weightMultiplier 为倾向而非门槛;权重全 0 退回均匀);两条口径写进实现与用例。"
+    },
+    "CHG-284": {
+      "id": "CHG-284",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:25:00+00:00",
+      "updated_at": "2026-09-18T15:25:00+00:00",
+      "touched_round": 236,
+      "commit": "53bf0b5",
+      "summary": "库可单独成 repo:packages/engine 增 vitest.config.ts、devDependencies(typescript/vitest)与 test/check 脚本、.gitignore、CHANGELOG.md、README「单独成库」;新增 scripts/engine-standalone.mjs(复制到临时目录 → 无宿主引用断言 → 独立编译 → 独立用例 → 从 dist 装配换皮世界)并接进 deploy/build(两处)/yunyin 三条流水线。"
+    },
+    "CHG-285": {
+      "id": "CHG-285",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:25:00+00:00",
+      "updated_at": "2026-09-18T15:25:00+00:00",
+      "touched_round": 236,
+      "commit": "bb86d23",
+      "summary": "应用侧(证据而非接线):engineParity 增「事件池」对账 —— 81 条真实事件 × 若干区域 × 六个境界 × 两档见过,池中 id 与冻结旧筛法逐条相同;同种子抽牌与旧加权抽取同结果且随机流消耗一致。"
+    },
+    "EV-221": {
+      "id": "EV-221",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:25:00+00:00",
+      "updated_at": "2026-09-18T15:25:00+00:00",
+      "touched_round": 236,
+      "source": "bun run check:engine:standalone(32 源文件 · 现为 39 个发布文件)+ cd packages/engine && bun run check(14 文件 / 99 例)+ bun run check:engine(39 文件 / 64.0 KB)+ bun run test(197 文件 / 1990 例)+ bun run check",
+      "summary": "独立成库自检通过:整份复制到临时目录(不带 dist/node_modules),源码零宿主引用、独立编译出 dist、独立跑 99 个库内用例、从产物装配换皮世界并读到\"火力\";发布包内容自检通过;应用侧 1990 例全绿。牌堆另有真实内容对账(池逐条 + 抽牌同种子同结果 + 随机流一致)。"
+    },
+    "DEC-086": {
+      "id": "DEC-086",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:25:00+00:00",
+      "updated_at": "2026-09-18T15:25:00+00:00",
+      "touched_round": 236,
+      "rationale": "用户新方向:库要能单独成 repo、单独迭代,他人只引用库就能搭出一套自己的基础数值系统。判断\"能不能单独成库\"不能靠读代码,得机械验证:把整份目录复制到临时目录(不带构建产物与依赖),在那里独立编译、独立跑用例、独立 import 产物 —— 只要还有一处顺手用了宿主的别名或配置,这一步就会散架,而这种依赖待在同一个仓库里永远看不出来。故把它写成每条流水线都要过的判据。",
+      "alternatives_rejected": "①靠人记得\"别用宿主别名\"(没有闸,回归时无人重跑);②把库用例挪回宿主由宿主跑(那样库一旦拆出去就没有自己的测试);③用 workspace 让宿主替库解析依赖(依赖关系反了:库不该知道宿主存在)。",
+      "summary": "独立成库的判据是\"复制到临时目录后仍能独立编译/跑用例/装配\",并接进 CI;库自带测试配置与开发依赖,不借宿主。"
+    },
+    "DEC-087": {
+      "id": "DEC-087",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T15:25:00+00:00",
+      "updated_at": "2026-09-18T15:25:00+00:00",
+      "touched_round": 236,
+      "rationale": "牌堆把四件事拆开:区间(该不该现在出现)、场所标签(此处说不说得通)、一次性(是否只碰一次)、权重(谁更常见)。合在一起写时,\"这张牌为什么没出现\"就答不上来,而内容运营最常问的正是这个。另两条口径也是刻意的:情境加权是倾向而不是门槛(要\"完全不该出现\"用标签/区间表达);权重全为 0 时退回均匀抽取而不是抽空(运营把权重调没的那天,玩家不该什么都遇不到)。",
+      "alternatives_rejected": "①只给一个 weightedPick(使用方各自再写筛选,四件事又合回去);②把\"加权倍数=0\"当作删除(语义与标签重叠,排查时说不清);③权重全 0 时抛错或返回空(把配置错误变成玩家看不到内容)。",
+      "summary": "牌堆四件事分开(区间/标签/一次性/权重);情境加权是倾向不是门槛;权重全 0 退回均匀。"
     }
   },
   "edges": [
@@ -21200,6 +21283,78 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T14:35:00+00:00"
+    },
+    {
+      "from": "CHG-283",
+      "to": "TASK-215",
+      "type": "implements",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "CHG-284",
+      "to": "TASK-215",
+      "type": "implements",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "CHG-285",
+      "to": "TASK-215",
+      "type": "implements",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "CHG-283",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "CHG-284",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "EV-221",
+      "to": "CHG-284",
+      "type": "validates",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "EV-221",
+      "to": "CHG-283",
+      "type": "validates",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "EV-221",
+      "to": "CHG-285",
+      "type": "validates",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "TASK-215",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "TASK-215",
+      "to": "TASK-214",
+      "type": "depends_on",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "DEC-086",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T15:25:00+00:00"
+    },
+    {
+      "from": "DEC-087",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T15:25:00+00:00"
     }
   ]
 }
