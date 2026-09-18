@@ -7,7 +7,7 @@
   后台预解算的回合制战斗,断网也能接着修。
 
   [![CI](https://github.com/pplmx/xian/actions/workflows/deploy.yml/badge.svg)](https://github.com/pplmx/xian/actions/workflows/deploy.yml)
-  [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 </div>
 
 ## 这是什么
@@ -62,11 +62,11 @@ bun run check   # 类型检查 + ESLint
 
 等级(境界)、属性、装备、副本四套系统已经从本作里**抽成独立内核** —— 不依赖 Vue / Pinia / 浏览器 API,
 换一套名称与内容就能搭出自己的游戏。独立仓库与文档:
-<https://github.com/pplmx/wanxiang-engine>(版本 `v0.1.0`)。
+<https://github.com/pplmx/wanxiang-engine>(版本 `v0.1.1`)。
 
 ```jsonc
 // 别人引用它的方式(推荐按 tag,别跟 main)
-"wanxiang-engine": "github:pplmx/wanxiang-engine#v0.1.0"
+"wanxiang-engine": "github:pplmx/wanxiang-engine#v0.1.1"
 ```
 
 本作自己也只是一个使用者:源码里写的是 `from 'wanxiang-engine'`,开发期由 Vite / TS 的解析配置
@@ -91,9 +91,9 @@ bun run check   # 类型检查 + ESLint
 
 ## 许可证
 
-本项目采用 [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.zh-hans) 许可协议:
-允许自由共享和演绎,但 **未经作者书面授权,禁止用于任何商业目的**。详见 [LICENSE](LICENSE)。
+本项目采用 [MIT](https://opensource.org/licenses/MIT) 许可协议:可以自由使用、修改、分发,
+商用也可以,只需保留版权声明与许可文本。详见 [LICENSE](LICENSE)。
 
 **第三方资源**:内置的楷体子集取自 [霞鹜文楷 LXGW WenKai](https://github.com/lxgw/LxgwWenKai),
 按 SIL OFL 1.1 分发(协议全文随产物一起放在 `public/fonts/OFL.txt`)。它的授权与本项目的
-CC BY-NC 4.0 各自独立 —— 该字体允许商用,但再分发时请保留协议文本与字体名。
+MIT 各自独立 —— 再分发字体时请保留其协议文本与保留字体名。

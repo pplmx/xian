@@ -5,6 +5,7 @@
   "type": "module",
   "description": "云隐修仙录——一款文字修仙放置游戏",
   "author": "Mystvio",
+  "license": "MIT",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
