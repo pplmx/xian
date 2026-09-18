@@ -77,6 +77,7 @@
 | 你要的东西 | 接哪个 | 可跑的证据 |
 | --- | --- | --- |
 | 今日三件(按增量结算、换期幂等) | `createTaskBoard` | `examples/quest-loop.ts` |
+| 每日任务的目标值定多少 | `createTaskBoard` 的 `target` | `tasks.sim.spec.ts`(按休闲画像的六成定,别按活跃画像) |
 | 主线三节(一次结算连推多节) | `createChain` | `examples/quest-loop.ts` |
 | 成就 / 里程碑(只记一次) | `createUnlockRegistry` | `examples/quest-loop.ts` |
 | "本季多少" | `snapshotOf` / `deltaSince` | `examples/quest-loop.ts` 的本季段 |
