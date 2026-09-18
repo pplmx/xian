@@ -97,4 +97,28 @@ describe('存档封装 —— 版本、迁移链、编解码', () => {
     expect(asNumberRecord({ a: 1, b: 'x', c: Infinity })).toEqual({ a: 1 })
     expect(asRecordOf<number>({ a: 1, b: null }, x => typeof x === 'number')).toEqual({ a: 1 })
   })
+
+  it('编解码可自己接管:压缩/加密/换封套都行,迁移链与形状修复照旧', () => {
+    // 这里用一个可逆的假"加密":整体反转字符串 —— 只为验流程,不是真加密
+    const codec = {
+      encode: (payload: unknown) => JSON.stringify(payload).split('').reverse().join(''),
+      decode: (text: string) => JSON.parse(text.split('').reverse().join(''))
+    }
+    const fmt = defineSaveFormat<{ gold: number }>({
+      currentVersion: 2,
+      codec,
+      migrations: { 1: d => ({ gold: Number((d as { gold?: unknown }).gold ?? 0) }) },
+      revive: d => (typeof (d as { gold?: unknown }).gold === 'number' ? (d as { gold: number }) : null)
+    })
+    const text = encodeSave({ gold: 5 }, fmt)
+    expect(text.startsWith('{')).toBe(false) // 已经不是裸 JSON
+    const back = decodeSave(text, fmt)
+    expect(back.ok && back.state.gold).toBe(5)
+    // 旧版本的封套同样走编解码 + 迁移链
+    const oldText = codec.encode({ version: 1, savedAt: 0, data: { gold: '7' } })
+    const migrated = decodeSave(oldText, fmt)
+    expect(migrated.ok && migrated.state.gold).toBe(7)
+    // 解不开 → 归到 parse 这一类,而不是 shape
+    expect(decodeSave('这不是我写的格式', fmt)).toMatchObject({ ok: false, reason: 'parse' })
+  })
 })

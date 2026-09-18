@@ -29,6 +29,21 @@ export interface SaveFormat<T> {
   readonly currentVersion: number
   readonly migrations?: Readonly<Record<number, (data: unknown) => unknown>>
   readonly revive?: (data: unknown) => T | null
+  /**
+   * 自定义编解码(**可选**):想压缩、加密、或换一层封套时给这一对。
+   *
+   * 默认就是 `JSON.stringify` / `JSON.parse`。给了它们之后:
+   *   · `encode(payload)` 的返回值原样作为"存档文本"交给使用方落盘;
+   *   · `decode(text)` 的返回值当**已经是解析好的封套对象**,后续的版本检查、
+   *     迁移链与形状修复一律照旧 —— 编解码与迁移互不干涉。
+   *
+   * `decode` 抛错会被当作"内容不是存档"(reason: 'parse'),所以加密实现里
+   * 解密失败不必自己兜异常,直接抛即可。
+   */
+  readonly codec?: {
+    encode: (payload: SavePayload) => string
+    decode: (text: string) => unknown
+  }
 }
 
 export function defineSaveFormat<T>(format: SaveFormat<T>): SaveFormat<T> {
@@ -58,7 +73,7 @@ export type SaveDecodeResult<T> =
 /** 编码成一段文本(落盘/导出的内容就是这个) */
 export function encodeSave<T>(state: T, format: SaveFormat<T>, now: number = Date.now()): string {
   const payload: SavePayload = { version: format.currentVersion, savedAt: now, data: state }
-  return JSON.stringify(payload)
+  return format.codec ? format.codec.encode(payload) : JSON.stringify(payload)
 }
 
 /**
@@ -72,9 +87,9 @@ export function encodeSave<T>(state: T, format: SaveFormat<T>, now: number = Dat
 export function decodeSave<T>(text: string, format: SaveFormat<T>): SaveDecodeResult<T> {
   let parsed: unknown
   try {
-    parsed = JSON.parse(text)
+    parsed = format.codec ? format.codec.decode(text) : JSON.parse(text)
   } catch {
-    return { ok: false, reason: 'parse', message: '存档内容不是有效 JSON' }
+    return { ok: false, reason: 'parse', message: format.codec ? '存档内容解不开(编解码失败)' : '存档内容不是有效 JSON' }
   }
   return decodeSavePayload(parsed, format)
 }
