@@ -22,6 +22,12 @@ export interface SoftPity {
   step: number
   /** 最多加多少 —— 涨幅封顶 */
   cap: number
+  /**
+   * 从第几次开始涨(默认 1:第一次就算一份)。
+   * 抽卡常见的软保底是"从第 75 抽起才开始涨",那就是 `from: 75`;
+   * 本作的"照面次数"要的是一直涨,保持默认即可。
+   */
+  from?: number
   /** 概率下限(默认 0) */
   floor?: number
   /** 概率上限(默认 1) */
@@ -36,7 +42,10 @@ export interface SoftPity {
  */
 export function softChance(base: number, tries: number, pity: SoftPity): number {
   const seen = Number.isFinite(tries) ? Math.max(0, tries) : 0
-  const bump = Math.min(Math.max(0, pity.cap), seen * pity.step)
+  const from = pity.from !== undefined && pity.from >= 1 ? Math.floor(pity.from) : 1
+  // 从第 `from` 次起开始涨:第 from 次算第一份 —— 所以先减掉 from - 1
+  const counted = Math.max(0, seen - (from - 1))
+  const bump = Math.min(Math.max(0, pity.cap), counted * pity.step)
   const raw = (Number.isFinite(base) ? base : 0) + bump
   return Math.min(pity.ceil ?? 1, Math.max(pity.floor ?? 0, raw))
 }

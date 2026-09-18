@@ -505,7 +505,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **非计数器的"这一段"**(择定了几条路 / 雪耻几个宿敌) | `deltaOf(base, now)` —— 同一个夹取规则,不为整数单写一遍 |
 | **主线 / 章节 / 教程怎么推进** | `createChain({ nodes, done, maxSteps? })` —— `done(node, ctx)` 由内容给(库不认识境界 / 计数);一次能推多远推多远(默认最多 5 节,撞上守卫回报 `capped`),到链尾即停,推进不可逆 |
 | **"还剩几节 / 现在在哪一节"** | `current(state)` / `remaining(state)` / `indexOf(id)` / `nodeAt(index)` —— 界面读数与推进共用同一份;坏下标自动夹回合法范围 |
-| **"看/抽了多少次之后概率变高"**(软保底) | `softChance(base, tries, { step, cap, floor, ceil })` —— 涨多少、涨到哪儿封顶、概率夹在哪区间,一次说清(本作的照面次数保底就是这条:每多看一次 +3%、最多 +35%、夹在 4%~90%) |
+| **"看/抽了多少次之后概率变高"**(软保底) | `softChance(base, tries, { step, cap, from?, floor?, ceil? })` —— 涨多少、从第几次开始涨、涨到哪儿封顶、概率夹在哪区间,一次说清(本作的照面次数保底:每多看一次 +3%、最多 +35%、夹在 4%~90%;抽卡常见的"第 75 抽起每抽 +6%"写 `from: 75`) |
 | **"第 N 次必出"**(硬保底与计数) | `createPityCounter({ hardAt, resetOn })` —— `roll(state, pool, rng, base, soft?)` 掷一次并回报 `hit / pity / chance`;**保底照样掷骰**(随机流与开不开保底无关);`resetOn: 'hit' \| 'pity'` 决定什么时候清零,池子各记各的 |
 | **成就 / 里程碑 / 勋章**(达成过一次就永远算数) | `createUnlockRegistry({ entries })` —— `scan(state, ok)` 一次挑出"达成了且还没解开"的(顺序即声明顺序);`unlock(state, id)` 给"没有可判定的条件、只能由当时动作声明"的成就(同样去重,反复触发也只发一次);`list` 保留解锁顺序,成就墙按它排 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |

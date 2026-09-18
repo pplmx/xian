@@ -59,6 +59,18 @@ describe('软保底 —— 见得多了概率涨,但涨幅封顶', () => {
     expect(softChance(0.5, 100, { step: 0.1, cap: 1 })).toBe(1)
   })
 
+  it('从第几次开始涨由内容定:默认第一次就涨,抽卡常见的"第 75 抽起"写 from', () => {
+    const gacha = { step: 0.06, cap: 0.6, from: 75 }
+    // 第 74 抽还是基础概率,第 75 抽涨第一份
+    expect(softChance(0.006, 74, gacha)).toBeCloseTo(0.006, 12)
+    expect(softChance(0.006, 75, gacha)).toBeCloseTo(0.066, 12)
+    expect(softChance(0.006, 80, gacha)).toBeCloseTo(0.366, 12)
+    // 涨满之后封顶
+    expect(softChance(0.006, 200, gacha)).toBeCloseTo(0.606, 12)
+    // 与"自己先减掉窗口"的写法等价(同一份曲线,两种表达)
+    expect(softChance(0.006, 80, gacha)).toBe(softChance(0.006, 80 - 74, { step: 0.06, cap: 0.6 }))
+  })
+
   it('与"照面次数保底"那类写法同形:逐点等于手写公式', () => {
     for (const rank of [1, 3, 9]) {
       for (const level of [0, 40, 100]) {
