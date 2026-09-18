@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 215,
+  "round": 216,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T03:06:20+00:00",
+  "updated_at": "2026-09-18T04:28:25+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 214,
+      "touched_round": 216,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -12763,6 +12763,57 @@
       "confidence": 0.9,
       "effort": 1,
       "summary": "新手前 30 分钟仍有可做的一层:现在的引导靠\"目标 + 主线 + 每日\"三块并列,缺一条把三者串起来的显式第一步(例如首次进入修炼页/历练页时的一次性提示)。本轮只补了主线进度(读数),下一步可做\"第一次该点哪里\"的引导卡。"
+    },
+    "ISS-223": {
+      "id": "ISS-223",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T04:28:19+00:00",
+      "updated_at": "2026-09-18T04:28:19+00:00",
+      "touched_round": 216,
+      "severity": 0.7,
+      "confidence": 1.0,
+      "effort": 3,
+      "summary": "事件与境界不匹配(玩家报:元婴修士被一窝蚂蚁咬成重伤)。根因不是那一条写错,而是事件只有半截判据:只有 minRealm,且只有普通事件读它。于是两头都漏 —— 人间界的乡野小事躺在 'general' 标签里一路漏到混沌海(蚁穴藏珍/褴褛乞丐/迷路的小和尚/山下集市),而界外区域同样带 'general',道祖也会撞见「幼兽认主」「失传丹方」这类凡界机缘;界外的新境界内容在扩界时只补了下限,没有上限这一侧。同类逻辑另有四处:凡界世界生成把 immortal/god/chaos 标签也掷进了本世路线(炼气期撞上仙门古琴:仙品功法/太初丹落进凡界,镇压物产跟着涨);界外的寿元奖励写死绝对年数(仙桃延寿八百载,对寿元一亿载的金仙等于没有);道侣 startMajor(初见境界)只写在数据里没人读,化神初见的人会在炼气期拦路;区域动态事件在界外照搬人间界叫法(混沌海里没有「过路商队」)。"
+    },
+    "TASK-198": {
+      "id": "TASK-198",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T04:28:23+00:00",
+      "updated_at": "2026-09-18T04:28:25+00:00",
+      "touched_round": 216,
+      "category": "correctness",
+      "severity": 0.7,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "给事件补上境界带的两头:EventDef 加 maxRealm,引擎收成唯一入口 eventInRealmBand(普通池/机缘池/奇缘阶段/离线兜底池全过);数据按事件自身规模收口(蚁穴止于筑基、凡俗止于金丹、人间界遗迹止于渡劫,天地自然与道心之事不设上限并列入审计名单);机缘按界域分池;凡界世界生成只取人间界标签并按标签真正出处层级取近似;界外寿元奖励改按当前境界比例折算;道侣 startMajor 接线;区域动态事件按界域取文案。新增 core/eventRealmBand.spec 钉住。"
+    },
+    "CHG-254": {
+      "id": "CHG-254",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T04:28:23+00:00",
+      "updated_at": "2026-09-18T04:28:23+00:00",
+      "touched_round": 216,
+      "commit": "671ca9c",
+      "summary": "事件按境界带发牌:core/eventEngine.eventInRealmBand + EventDef.maxRealm(data/events 按规模收口,机缘收在人间界);mortalWorldGen 标签池去掉界外标签并按标签出处层级取近似;EventEffect.lifespan 支持 pct(界外按当前境界寿元折算);daoluService.candidatesFor 接线 startMajor;core/regionEvent 界域化文案(倍率不变);新增 core/eventRealmBand.spec(15 例)。"
+    },
+    "EV-199": {
+      "id": "EV-199",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T04:28:23+00:00",
+      "updated_at": "2026-09-18T04:28:23+00:00",
+      "touched_round": 216,
+      "source": "core/eventRealmBand.spec.ts(15 例)/全量 vitest 1815 用例 + vue-tsc + eslint 全绿",
+      "summary": "判据覆盖:境界带合法性;蒙特卡洛用真引擎抽 1 万+ 次,抽出来的事件恒在当前境界带内;人不带外之物(蚁穴藏珍在元婴被排除);每处地界在每个可进境界的池子≥4(实测最薄 12 条);收口没把任何事件收死;离线兜底池不含带上限的事件;界外寿元奖励必写比例。",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -19012,6 +19063,30 @@
       "to": "ISS-222",
       "type": "addresses",
       "created_at": "2026-09-18T03:06:20+00:00"
+    },
+    {
+      "from": "TASK-198",
+      "to": "ISS-223",
+      "type": "addresses",
+      "created_at": "2026-09-18T04:28:25+00:00"
+    },
+    {
+      "from": "ISS-223",
+      "to": "COMP-006",
+      "type": "located_in",
+      "created_at": "2026-09-18T04:28:25+00:00"
+    },
+    {
+      "from": "CHG-254",
+      "to": "ISS-223",
+      "type": "resolves",
+      "created_at": "2026-09-18T04:28:25+00:00"
+    },
+    {
+      "from": "CHG-254",
+      "to": "TASK-198",
+      "type": "implements",
+      "created_at": "2026-09-18T04:28:25+00:00"
     }
   ]
 }
