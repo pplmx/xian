@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 310,
+  "round": 311,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:06:01+00:00",
+  "updated_at": "2026-09-18T21:08:48+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17992,6 +17992,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-373(1818cab)。bunx vitest run src/deck.sim.spec.ts(5 例,打印:24 张全清 中位 24 / 平均 24.0 / 最慢 24;三档第一次出现中位抽号 常见 8 / 少见 16 / 罕见 22;只抽 10 抽见到罕见 22% vs 权重全 0 时 94%;抽干后连抽 5 次全 null;允许重复抽 5 张时 200 轮里 90 轮撞到重复);node scripts/verify-dist.mjs → 新增\"用例数自检通过(README 写的 45 个用例文件与实际一致)\";cd packages/engine && bun run check(405 例 / 45 文件 + 组装指南 25 工厂 + 定制表 99 名字 + 目录树 37 模块 / 4 文档 + 用例数 + 产物 75 导出 + 发布包);cd /workspace/xian && bun run test(2453 例)、bun run test:report(2453 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(85 个源文件 + 8 示例)。",
       "summary": "把\"权重\"这件事量清楚了:在一次性内容池里,权重**不影响清空成本**(清空恒等于张数,因为抽到即排除),它只决定先后;但当预算被限定(玩家一天只抽 10 次),先后就变成覆盖率 —— 同一批内容,见到\"罕见\"档的概率 22% vs 摊平权重 94%。这条口径决定了\"限定内容该配多少抽\"\"要不要加保底标签\"。另附一条工程判据:README 的用例文件数现在由自检盯着(静态可数),用例数仍人工核对。"
+    },
+    "TASK-292": {
+      "id": "TASK-292",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:08:48+00:00",
+      "updated_at": "2026-09-18T21:08:48+00:00",
+      "touched_round": 310,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "离线账消融(idle.sim.spec):量离线收益的边际曲线与上限口径 —— 上限 6 小时内每小时多 1 步、第 7 小时起恒为 0(6 小时与 72 小时拿到的一样,72 小时只计入 8%、吞掉 66 小时);上限是按\"每次结算\"施加而非按天累计(同样 8 小时,一次算完 6 步,拆成 4+4 得 8 步),所以\"分段与一次算完一致\"只在上限未被踩到时成立;maxSteps 兜底把超出部分完整留在余量里。"
+    },
+    "CHG-374": {
+      "id": "CHG-374",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:08:48+00:00",
+      "updated_at": "2026-09-18T21:08:48+00:00",
+      "touched_round": 310,
+      "commit": "1c4f8e4",
+      "summary": "库:新增 src/idle.sim.spec.ts(5 例);CHANGELOG「未发布」记下那张时长对照表与四条结论;docs/assembly.md 配方 D 补一行(离线时长账)、坑清单补一行(以为上限按天累计);README 用例数改 410/46。宿主无改动。"
+    },
+    "EV-300": {
+      "id": "EV-300",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:08:48+00:00",
+      "updated_at": "2026-09-18T21:08:48+00:00",
+      "touched_round": 310,
+      "confidence": 0.96,
+      "source": "变更 CHG-374(1c4f8e4)。bunx vitest run src/idle.sim.spec.ts(5 例,打印:1h→1 步 / 6h→6 步 / 7h→6 步(86%)/ 24h→6 步(25%)/ 72h→6 步(8%,吞 66h);边际 1h..6h 各 +1、7h 与 24h 为 0;8 小时一次算完 6 步 vs 4+4 结算 8 步(无上限时两者都是 8 步);12h/上限 6h/效率 0.5 → 计入 6h、有效 3h、3 步;maxSteps=90 → 90 步 + 余 270 分钟 = 有效 360 分钟);cd packages/engine && bun run check(410 例 / 46 文件 + 组装指南 25 工厂 + 定制表 99 名字 + 目录树 37 模块 / 4 文档 + 用例数自检 —— 这一轮它当场抓出 README 还写着 45 个文件 + 产物 75 导出 + 发布包);cd /workspace/xian && bun run test(2458 例)、bun run test:report(2458 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(86 个源文件)。",
+      "summary": "离线收益的两条口径被量化:①过了上限边际收益为 0(6 小时与 72 小时拿到的一样),这条曲线决定\"离线上限怎么卖\";②上限是\"每次结算\"施加的 —— 同样 8 小时,拆成 4+4 两次结算能多拿 2 步,所以长度不变量(分段与一次算完一致)只在没踩到上限时成立,真要封顶必须自己维护\"今天已计入多少\"。副产品:上一轮新加的\"用例文件数自检\"在这一轮立刻抓出 README 的数字漂移,证明自检本身有用。"
     }
   },
   "edges": [
@@ -27157,6 +27195,12 @@
       "to": "TASK-291",
       "type": "implements",
       "created_at": "2026-09-18T21:06:01+00:00"
+    },
+    {
+      "from": "CHG-374",
+      "to": "TASK-292",
+      "type": "implements",
+      "created_at": "2026-09-18T21:08:48+00:00"
     }
   ]
 }
