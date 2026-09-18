@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 298,
+  "round": 299,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:18:17+00:00",
+  "updated_at": "2026-09-18T20:22:09+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17445,7 +17445,7 @@
       "version": 1,
       "created_at": "2026-09-18T20:18:10+00:00",
       "updated_at": "2026-09-18T20:18:10+00:00",
-      "touched_round": 298,
+      "touched_round": 299,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.85,
@@ -17479,15 +17479,65 @@
     "ISS-235": {
       "id": "ISS-235",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-18T20:18:11+00:00",
-      "updated_at": "2026-09-18T20:18:11+00:00",
-      "touched_round": 298,
+      "updated_at": "2026-09-18T20:21:59+00:00",
+      "touched_round": 299,
       "severity": 0.4,
       "confidence": 0.85,
       "effort": 2,
-      "summary": "带技能 / 护盾 / 反击的战斗格,接上三处主权(skillFn/strikeFn/actFn)后仍有约 8% 同种子对不上、回合数 66% 相同:第一处分歧落在第二回合玩家首击后的血线(seed 2,主权版 0.951 对本作 0.983,主权版伤害偏高)。怀疑与 multi 两段追打 / 反击递归里的随机消耗顺序或护盾结算时机有关。诊断方法已在 engineCombatAblation 的诊断用例里(找对不上的种子 + 逐击列血线)。"
+      "summary": "(已解决,CHG-362)复杂格的分歧根因是实现侧把暴击基数写重了:主权版 strikeFn 自带 CRIT_BASE,场景里又套了一份 +0.05。去掉后胜负与回合数 200/200 与本作相同。"
+    },
+    "TASK-280": {
+      "id": "TASK-280",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:21:59+00:00",
+      "updated_at": "2026-09-18T20:21:59+00:00",
+      "touched_round": 299,
+      "category": "bug-fix",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "收掉 ISS-235:用诊断用例比对每一手的原始伤害,第一手就定位到根因 —— 主权版的 strikeFn 自带 CRIT_BASE,场景里又套了给\"用库默认暴击\"那份对照准备的 +0.05(暴击率 0.30 vs 本作 0.25)。去掉之后复杂格(带技能/护盾/反击)也到 100%(默认 58%)。"
+    },
+    "CHG-362": {
+      "id": "CHG-362",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:21:59+00:00",
+      "updated_at": "2026-09-18T20:21:59+00:00",
+      "touched_round": 299,
+      "commit": "59cf945",
+      "summary": "宿主:engineCombatAblation 的复杂格与诊断用例去掉重复的 bumpCrit,断言改为 100%;诊断用例补上两条注解(比原始伤害而非净失血;战报伤害是三位有效数字格式,末位差是格式差)并保留成工具。库:CHANGELOG 把\"复杂格还没到 100%\"改写成\"也对齐了\",并记下两个原因(少掷没用上的骰子、把某一部分写重了);README 与组装指南同步这条经验。"
+    },
+    "EV-287": {
+      "id": "EV-287",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:21:59+00:00",
+      "updated_at": "2026-09-18T20:21:59+00:00",
+      "touched_round": 299,
+      "confidence": 0.97,
+      "source": "变更 CHG-362(59cf945)。bunx vitest run src/core/engineCombatAblation.spec.ts(6 例;读数:\"库(默认)胜负一致 75% · 库 + 三处主权 胜负一致 100%(回合数相同 100%)\"与\"库(默认)胜负一致 58% · 库 + 三处主权(完整版)胜负一致 100%(回合数相同 100%)\");cd packages/engine && bun run check(组装指南与定制表自检);cd /workspace/xian && bun run test(247 文件/2427 例);bun run test:report(2427 过/0 败);bun run check:engine;bun run check:engine:standalone",
+      "summary": "两格都到 100%:纯公式格与复杂格(带技能/护盾/反击)各 200 颗种子,胜负与回合数全部与本作相同。诊断链条值得记住:①先比\"净失血\"看不出问题(开局护盾把前几手全吞了);②改比\"每一手的原始伤害\"后一眼看到 52.3 vs 34.9 = 暴击倍率;③根因是复刻时把 CRIT_BASE 加了两次(库默认那份 + 我钩子里那份)。这条与\"词条为 0 也要照掷骰子\"合起来,构成\"整段接管\"的两条通用经验。"
+    },
+    "DEC-148": {
+      "id": "DEC-148",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:22:04+00:00",
+      "updated_at": "2026-09-18T20:22:04+00:00",
+      "touched_round": 299,
+      "summary": "\"整段接管\"的第二条通用经验:接管时要把\"某一部分是谁加的\"一起搬 —— 库默认加的那一份(比如暴击基数)在接管之后不能再加一次。",
+      "rationale": "\"少掷没用的骰子\"与\"把某一部分写重\"是接管外部实现时的两种镜像错误:前者让随机流错位(症状是几回合之后全乱),后者让数值偏一份(症状是第一手就差一个倍率)。两者都极难从\"看起来差不多\"里发现 —— 前者要看随机消耗个数,后者要把每一手的原始数值列出来逐条比。故接管实验的标准做法应当是:同种子 + 逐手原始数值 + 随机消耗计数,三样一起对;只比胜负是发现不了的(92% 的胜负一致率掩盖了 100% 的回合数不一致)。",
+      "alternatives_rejected": "①只比胜负与血线(92% 看着\"差不多\",但回合数只有 66% —— 掩盖了系统性偏差);②比\"扣完护盾后的净失血\"(开局护盾会把前几手全吞掉,看不出差别);③认为\"库的实现有问题\"(实际两次都是实现侧的复刻写错:少掷骰子、把基数加两次);④把诊断用例当一次性工具删掉(它是这类分歧唯一高效的手段,留着下次直接用)。"
     }
   },
   "edges": [
@@ -26509,6 +26559,30 @@
       "to": "COMP-023",
       "type": "located_in",
       "created_at": "2026-09-18T20:18:17+00:00"
+    },
+    {
+      "from": "CHG-362",
+      "to": "TASK-280",
+      "type": "implements",
+      "created_at": "2026-09-18T20:22:09+00:00"
+    },
+    {
+      "from": "DEC-148",
+      "to": "TASK-280",
+      "type": "governs",
+      "created_at": "2026-09-18T20:22:09+00:00"
+    },
+    {
+      "from": "TASK-280",
+      "to": "TASK-279",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:22:09+00:00"
+    },
+    {
+      "from": "CHG-362",
+      "to": "ISS-235",
+      "type": "resolves",
+      "created_at": "2026-09-18T20:22:09+00:00"
     }
   ]
 }
