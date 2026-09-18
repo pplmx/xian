@@ -94,14 +94,16 @@ const battle = game.combat.resolve(
   {
     id: 'player',
     name: '玩家',
-    hp: stats.final.maxHp,
-    maxHp: stats.final.maxHp,
-    attack: stats.final.attack,
-    defense: stats.final.defense,
-    speed: 1,
+    stats: {
+      hp: stats.final.maxHp,
+      maxHp: stats.final.maxHp,
+      attack: stats.final.attack,
+      defense: stats.final.defense,
+      speed: 1
+    },
     mods: stats.mods
   },
-  { id: foe.id, name: foe.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, speed: foe.speed, mods: foe.mods, skills: foe.skills },
+  { id: foe.id, name: foe.name, stats: foe.stats, mods: foe.mods, skills: foe.skills },
   rng
 )
 assert.ok(Number.isFinite(Number(battle.playerHp)), '战斗结果应当是有限数')

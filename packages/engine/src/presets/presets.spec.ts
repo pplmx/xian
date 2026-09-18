@@ -88,14 +88,16 @@ describe('内容包 —— 仙侠与星港', () => {
       {
         id: 'player',
         name: '玩家',
-        hp: computed.final.maxHp ?? 0,
-        maxHp: computed.final.maxHp ?? 0,
-        attack: computed.final.attack ?? 0,
-        defense: computed.final.defense ?? 0,
-        speed: 1 + (computed.mods.speed ?? 0),
+        stats: {
+          hp: computed.final.maxHp ?? 0,
+          maxHp: computed.final.maxHp ?? 0,
+          attack: computed.final.attack ?? 0,
+          defense: computed.final.defense ?? 0,
+          speed: 1 + (computed.mods.speed ?? 0)
+        },
         mods: computed.mods
       },
-      { id: enemy.id, name: enemy.name, hp: enemy.hp, maxHp: enemy.hp, attack: enemy.attack, defense: enemy.defense, speed: enemy.speed, mods: enemy.mods, skills: enemy.skills },
+      { id: enemy.id, name: enemy.name, stats: enemy.stats, mods: enemy.mods, skills: enemy.skills },
       rng
     )
     expect(battle.events.length).toBeGreaterThan(0)
@@ -181,14 +183,16 @@ describe('内容包 —— 书桌与日常(跨题材通用性的判据)', () => 
       {
         id: 'me',
         name: '我',
-        hp: stats.final.maxHp ?? 0,
-        maxHp: stats.final.maxHp ?? 0,
-        attack: stats.final.attack ?? 0,
-        defense: stats.final.defense ?? 0,
-        speed: 1,
+        stats: {
+          hp: stats.final.maxHp ?? 0,
+          maxHp: stats.final.maxHp ?? 0,
+          attack: stats.final.attack ?? 0,
+          defense: stats.final.defense ?? 0,
+          speed: 1
+        },
         mods: stats.mods
       },
-      { id: foe.id, name: foe.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, speed: foe.speed, mods: foe.mods, skills: foe.skills },
+      { id: foe.id, name: foe.name, stats: foe.stats, mods: foe.mods, skills: foe.skills },
       rng
     )
     expect(Number.isFinite(Number(battle.playerHp))).toBe(true)

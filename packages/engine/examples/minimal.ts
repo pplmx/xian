@@ -65,14 +65,16 @@ for (let run = 0; run < 40 && progress.cleared.length < game.dungeons.regions.le
     {
       id: 'player',
       name: '玩家',
-      hp: stats.final.maxHp ?? 0,
-      maxHp: stats.final.maxHp ?? 0,
-      attack: stats.final.attack ?? 0,
-      defense: stats.final.defense ?? 0,
-      speed: 1,
+      stats: {
+        hp: stats.final.maxHp ?? 0,
+        maxHp: stats.final.maxHp ?? 0,
+        attack: stats.final.attack ?? 0,
+        defense: stats.final.defense ?? 0,
+        speed: 1
+      },
       mods: stats.mods
     },
-    { id: enemy.id, name: enemy.name, hp: enemy.hp, maxHp: enemy.hp, attack: enemy.attack, defense: enemy.defense, speed: enemy.speed, mods: enemy.mods, skills: enemy.skills },
+    { id: enemy.id, name: enemy.name, stats: enemy.stats, mods: enemy.mods, skills: enemy.skills },
     rng
   )
   if (!battle.win) {

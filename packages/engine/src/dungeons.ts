@@ -137,10 +137,13 @@ export interface VictoryOutcome<T> {
 export interface EnemySnapshot<T> {
   id: string
   name: string
-  hp: T
-  attack: T
-  defense: T
-  speed: number
+  /**
+   * 本值表 —— 与 `Combatant.stats` 同形,可直接喂给战斗引擎。
+   *
+   * 键名是引擎的接口词(attack/defense/hp/speed);想用自己的叫法,
+   * 在 `BattleConfig.keys` 里指过去即可(见 combat)。
+   */
+  stats: Record<string, T>
   mods: Mods
   skills: EnemySkillDef[]
   boss: boolean
@@ -316,10 +319,13 @@ export function createDungeonSystem<T = number>(
     return {
       id: def.id,
       name: def.name,
-      hp: numeric.mulN(numeric.from(power.baseHp * def.hpMult), factor),
-      attack: numeric.mulN(numeric.from(power.baseAttack * def.atkMult), factor),
-      defense: numeric.mulN(numeric.from(power.baseDefense * def.defMult), factor),
-      speed: def.speed,
+      stats: {
+        hp: numeric.mulN(numeric.from(power.baseHp * def.hpMult), factor),
+        maxHp: numeric.mulN(numeric.from(power.baseHp * def.hpMult), factor),
+        attack: numeric.mulN(numeric.from(power.baseAttack * def.atkMult), factor),
+        defense: numeric.mulN(numeric.from(power.baseDefense * def.defMult), factor),
+        speed: numeric.from(def.speed)
+      },
       mods: { ...(def.mods ?? {}) },
       skills: [...(def.skills ?? [])],
       boss: def.boss === true,

@@ -77,6 +77,21 @@ describe('内容牌堆 —— 区间、标签、一次性、权重', () => {
     expect(drawMany(ENTRIES, { ...forest, seen: ['d'] }, rng, 5).map(e => e.id)).toEqual(['a', 'e'])
   })
 
+  it('标签怎么算切题由情境说:默认相交,也可要求全中、或排除某些标签', () => {
+    const pool = [
+      { id: 'rainy', tags: ['rain', 'water'], weight: 1 },
+      { id: 'waterOnly', tags: ['water'], weight: 1 },
+      { id: 'rainOnly', tags: ['rain'], weight: 1 }
+    ]
+    expect(deckPool(pool, { level: 0, tags: ['water'] }).map(e => e.id)).toEqual(['rainy', 'waterOnly'])
+    // all = 这张牌要求的标签**全部在场**(牌的标签是情境的子集)
+    expect(deckPool(pool, { level: 0, tags: ['water'], match: 'all' }).map(e => e.id)).toEqual(['waterOnly'])
+    expect(deckPool(pool, { level: 0, tags: ['rain', 'water'], match: 'all' }).map(e => e.id)).toEqual(['rainy', 'waterOnly', 'rainOnly'])
+    expect(deckPool(pool, { level: 0, tags: ['rain'], match: 'all' }).map(e => e.id)).toEqual(['rainOnly'])
+    // 排除标签:命中任一即不进池
+    expect(deckPool(pool, { level: 0, tags: ['rain', 'water'], excludeTags: ['rain'] }).map(e => e.id)).toEqual(['waterOnly'])
+  })
+
   it('多抽与单抽共用同一套权重口径:同种子下逐张一致', () => {
     const a = createRng(21)
     const b = createRng(21)

@@ -3,16 +3,14 @@ import { createCombatEngine } from './combat.js'
 import { createRng } from './rng.js'
 
 function fighter(overrides: Record<string, unknown> = {}) {
+  // 本值收进一张表:键名是引擎的接口词,换题材时用 BattleConfig.keys 指过去
+  const { hp, maxHp, attack, defense, speed, ...rest } = overrides as Record<string, number | undefined> & Record<string, unknown>
   return {
     id: 'p',
     name: '甲',
-    hp: 100,
-    maxHp: 100,
-    attack: 20,
-    defense: 5,
-    speed: 1,
+    stats: { hp: hp ?? 100, maxHp: maxHp ?? 100, attack: attack ?? 20, defense: defense ?? 5, speed: speed ?? 1 },
     mods: {},
-    ...overrides
+    ...rest
   }
 }
 
@@ -84,5 +82,30 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     expect(result.win).toBe(true)
     expect(result.events.some(e => e.kind === 'lifesteal')).toBe(true)
     expect(Number(result.playerHp)).toBeGreaterThan(50)
+  })
+
+  it('本值键名由作品定:叫火力/装甲/结构值/迅捷,战斗逻辑一行不用改', () => {
+    const engine = createCombatEngine({
+      keys: { attack: 'power', defense: 'armor', hp: 'hull', maxHp: 'hullMax', speed: 'agility' }
+    })
+    const me = {
+      id: 'me',
+      name: '舰',
+      stats: { power: 200, armor: 4, hull: 300, hullMax: 300, agility: 2 },
+      mods: {}
+    }
+    const foe = {
+      id: 'foe',
+      name: '靶',
+      stats: { power: 10, armor: 0, hull: 40, hullMax: 40, agility: 1 },
+      mods: {}
+    }
+    const result = engine.resolve(me, foe, createRng(9))
+    expect(result.win).toBe(true)
+    expect(Number(result.enemyHp)).toBeLessThanOrEqual(0)
+    expect(Number(result.playerHp)).toBeLessThanOrEqual(300)
+    // 传进去的对象不被就地改动(内部拷一份再打)
+    expect(me.stats.hull).toBe(300)
+    expect(foe.stats.hull).toBe(40)
   })
 })

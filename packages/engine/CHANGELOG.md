@@ -35,6 +35,10 @@
   每区可给自定义曲线;越级惩罚改为可选(不配就没有越级这回事)
 - 三处"写死的曲线"开成钩子:`realms.exp.costFn`、`realms.combat.statsFn`、
   `skills.costs[].amount`、`dungeons.victoryRewards[].amount`
+- **战斗的本值改为一张表 + 可配键名**:`Combatant.stats`、`EnemySnapshot.stats`
+  (取代原先固定的 `hp/maxHp/attack/defense/speed` 字段),`BattleConfig.keys` 指定读哪几个键 ——
+  本值叫"火力/装甲/结构值"或"专注力/耐心/精力"都行。战斗不再就地改动传入对象(内部拷一份)。
+- 牌堆的标签语义可配:`DeckContext.match: 'any' | 'all'`(默认 any)与 `excludeTags`
 
 **已验证**
 

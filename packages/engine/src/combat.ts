@@ -14,20 +14,39 @@ import { numberNumeric } from './numeric.js'
 import type { Rng } from './rng.js'
 import type { EnemySkillDef } from './dungeons.js'
 
+/**
+ * 战斗读哪几个键 —— **键名由作品定**。
+ *
+ * 默认是 `attack / defense / hp / maxHp / speed`,这是引擎的接口词;
+ * 而一款游戏的"攻防血"叫火力/装甲/结构值,还是专注力/耐心/精力,都无所谓 ——
+ * 把它们指过来即可,战斗逻辑一行不用改。
+ */
+export interface CombatKeys {
+  /** 攻击键;默认 'attack' */
+  attack?: string
+  /** 防御键;默认 'defense' */
+  defense?: string
+  /** 当前生命键;默认 'hp' */
+  hp?: string
+  /** 生命上限键;默认 'maxHp' */
+  maxHp?: string
+  /** 先手键;默认 'speed' */
+  speed?: string
+}
+
 export interface Combatant<T> {
   id: string
   name: string
-  hp: T
-  maxHp: T
-  attack: T
-  defense: T
-  /** 先手判定基础值 */
-  speed: number
+  /** 本值表:键名由作品定,靠 `BattleConfig.keys` 告诉引擎哪个是攻/防/血/先手 */
+  stats: Record<string, T>
+  /** 词条(百分比/独立加成)—— 键名沿用引擎约定(见属性系统) */
   mods: Mods
   skills?: EnemySkillDef[]
 }
 
 export interface BattleConfig {
+  /** 本值键名(默认 attack / defense / hp / maxHp / speed) */
+  keys?: CombatKeys
   /** 回合上限,默认 30(打不完算守方胜) */
   maxRounds?: number
   /** 暴击基础倍率,默认 1.5 */
@@ -70,10 +89,22 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
   const variance = config.variance ?? 0.08
   const minDamageRatio = config.minDamageRatio ?? 0.05
   const regenBase = config.regenBase ?? 0
+  const keys = {
+    attack: config.keys?.attack ?? 'attack',
+    defense: config.keys?.defense ?? 'defense',
+    hp: config.keys?.hp ?? 'hp',
+    maxHp: config.keys?.maxHp ?? 'maxHp',
+    speed: config.keys?.speed ?? 'speed'
+  }
+  const stat = (c: Combatant<T>, key: string): T => c.stats[key] ?? numeric.zero
+  const statNum = (c: Combatant<T>, key: string): number => numeric.toNumber(stat(c, key))
+  const setStat = (c: Combatant<T>, key: string, value: T): void => {
+    c.stats[key] = value
+  }
 
   const rawDamage = (attacker: Combatant<T>, defender: Combatant<T>, mult: number, rng: Rng): number => {
-    const atk = numeric.toNumber(attacker.attack)
-    const def = numeric.toNumber(defender.defense)
+    const atk = statNum(attacker, keys.attack)
+    const def = statNum(defender, keys.defense)
     const base = atk <= 0 ? 0 : (atk * atk) / (atk + def)
     const jitter = 1 + rng.float(-variance, variance)
     const bonus = 1 + mod(attacker.mods, 'damageBonus')
@@ -101,8 +132,8 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
     const isCrit = !skill && rng.chance(critRate)
     const critMult = isCrit ? critMultiplier + mod(attacker.mods, 'critDamage') : 1
     const damage = rawDamage(attacker, defender, (skill?.mult ?? 1) * critMult, rng)
-    const dealt = Math.min(damage, numeric.toNumber(defender.hp))
-    defender.hp = numeric.max(numeric.zero, numeric.sub(defender.hp, numeric.from(damage)))
+    const dealt = Math.min(damage, statNum(defender, keys.hp))
+    setStat(defender, keys.hp, numeric.max(numeric.zero, numeric.sub(stat(defender, keys.hp), numeric.from(damage))))
     events.push({
       round,
       actor: attacker.name,
@@ -112,28 +143,29 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
     })
     const lifesteal = Math.max(0, mod(attacker.mods, 'lifesteal'))
     if (lifesteal > 0 && dealt > 0) {
-      const heal = Math.min(dealt * lifesteal, numeric.toNumber(numeric.sub(attacker.maxHp, attacker.hp)))
+      const heal = Math.min(dealt * lifesteal, statNum(attacker, keys.maxHp) - statNum(attacker, keys.hp))
       if (heal > 0) {
-        attacker.hp = numeric.add(attacker.hp, numeric.from(heal))
+        setStat(attacker, keys.hp, numeric.add(stat(attacker, keys.hp), numeric.from(heal)))
         events.push({ round, actor: attacker.name, kind: 'lifesteal', damage: 0, text: `${attacker.name} 汲取 ${Math.round(heal)} 生命` })
       }
     }
   }
 
-  const alive = (c: Combatant<T>): boolean => numeric.cmp(c.hp, numeric.zero) > 0
+  const alive = (c: Combatant<T>): boolean => numeric.cmp(stat(c, keys.hp), numeric.zero) > 0
 
+  /** 拷一份再打:调用方的对象不被就地改;本值表也要拷,否则两边共用同一张表 */
   const build = (a: Combatant<T>, b: Combatant<T>): [Combatant<T>, Combatant<T>] => [
-    { ...a, hp: a.hp },
-    { ...b, hp: b.hp, maxHp: b.maxHp }
+    { ...a, stats: { ...a.stats } },
+    { ...b, stats: { ...b.stats } }
   ]
 
   return {
-    /** 解算整场战斗。player 与 enemy 的 hp 会被就地消耗(返回值里也有) */
+    /** 解算整场战斗(不改动传进来的对象;结果里的 hp 在返回值与日志里) */
     resolve(player: Combatant<T>, enemy: Combatant<T>, rng: Rng): BattleResult<T> {
       const [p, e] = build(player, enemy)
       const events: BattleEvent[] = []
-      const pSpeed = p.speed * (1 + mod(p.mods, 'speed'))
-      const eSpeed = e.speed * (1 + mod(e.mods, 'speed'))
+      const pSpeed = statNum(p, keys.speed) * (1 + mod(p.mods, 'speed'))
+      const eSpeed = statNum(e, keys.speed) * (1 + mod(e.mods, 'speed'))
       const playerFirst = pSpeed >= eSpeed
       let round = 0
       while (round < maxRounds && alive(p) && alive(e)) {
@@ -158,10 +190,10 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
           if (!alive(c)) continue
           const regen = regenBase + mod(c.mods, 'regenPerRound')
           if (regen <= 0) continue
-          const missing = numeric.toNumber(numeric.sub(c.maxHp, c.hp))
-          const heal = Math.min(missing, numeric.toNumber(c.maxHp) * regen)
+          const missing = statNum(c, keys.maxHp) - statNum(c, keys.hp)
+          const heal = Math.min(missing, statNum(c, keys.maxHp) * regen)
           if (heal > 0) {
-            c.hp = numeric.add(c.hp, numeric.from(heal))
+            setStat(c, keys.hp, numeric.add(stat(c, keys.hp), numeric.from(heal)))
             events.push({ round, actor: c.name, kind: 'regen', damage: 0, text: `${c.name} 回复 ${Math.round(heal)} 生命` })
           }
         }
@@ -174,7 +206,7 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
         damage: 0,
         text: win ? `${p.name} 胜` : alive(e) ? `${e.name} 胜` : '两败俱伤'
       })
-      return { win, rounds: round, playerHp: p.hp, enemyHp: e.hp, events }
+      return { win, rounds: round, playerHp: stat(p, keys.hp), enemyHp: stat(e, keys.hp), events }
     }
   }
 }

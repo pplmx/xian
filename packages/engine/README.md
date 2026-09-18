@@ -228,7 +228,9 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
 | **技能消耗完全自己定** | `skills.costs[].amount(level)`(折扣与下限仍生效) |
 | **奖励数额完全自己定** | `dungeons.victoryRewards[].amount(tier)`(概率仍生效) |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
-| 随机内容池的标签体系与区间 | `deck` 的 `tags` / `min` / `max` / `weight` / `once`,及 `weightMultiplier`(倾向而非门槛) |
+| **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
+| **随机内容池的标签体系与区间** | `deck` 的 `tags` / `min` / `max` / `weight` / `once`,`weightMultiplier`(倾向而非门槛) |
+| 牌堆标签怎么算切题 | `DeckContext.match: 'any' \| 'all'`(相交 / 牌要求全中)、`excludeTags`(命中即排除) |
 | 目标/成就条件 | `goals` 的 `counter \| level \| position \| rank \| custom`,自定义键用 `GoalEnv.custom` |
 | 伙伴性格的键名与中性值 | `companions.traits[].mods` + `companions.neutral`(缺中性值直接报错) |
 | **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改(宿主接 GNum 的例子见其 `engineNumeric`) |
@@ -242,6 +244,10 @@ skills.sourcesOf([{ skillId: 'sword', level: 9, branchId: 'fast' }]) // 每部�
    但它显示成"攻击力""火力"还是"专注力",完全由你决定;
 2. **引擎要求的字段都是结构,不是题材** —— 它要的是"一串有序的世界名""每层的成长曲线"
    "每个部位有几种成色",不是"你得叫它境界/装备"。
+
+战斗与副本出的都是**本值表**(`{ stats: { … } }`),与属性系统的本值一一对应:
+键名按引擎的接口词(`attack/defense/hp/maxHp/speed`),想用自己的叫法就在 `BattleConfig.keys` 里指过去,
+战斗逻辑一行不用改。
 
 ## 炼制:成功率是四个乘区相乘
 

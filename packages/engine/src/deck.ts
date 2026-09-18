@@ -37,6 +37,14 @@ export interface DeckContext {
   tags: readonly string[]
   /** 已经见过的一次性牌 id(没有一次性机制时可省) */
   seen?: readonly string[]
+  /**
+   * 标签怎么算切题:
+   *   `any`(默认)—— 与情境标签**相交**即可(山里 + 通用,两者都进池);
+   *   `all`        —— 必须**全部**命中(要求"既是雨天又是水边"的牌)。
+   */
+  match?: 'any' | 'all'
+  /** 情境里**排除**的标签:命中任一即不进池(例如"瘟疫期间不出集市事件") */
+  excludeTags?: readonly string[]
 }
 
 /** 等级是否落在带内(两端可省;含端点) */
@@ -49,7 +57,12 @@ export function inBand(value: number, band: LevelBand): boolean {
 /** 这张牌此刻能不能进池(区间 + 场所标签 + 一次性) */
 export function entryAllowed(entry: DeckEntry, ctx: DeckContext): boolean {
   if (!inBand(ctx.level, entry)) return false
-  if (entry.tags !== undefined && entry.tags.length > 0 && !entry.tags.some(t => ctx.tags.includes(t))) return false
+  const tags = entry.tags ?? []
+  if (tags.length > 0) {
+    const hit = ctx.match === 'all' ? tags.every(t => ctx.tags.includes(t)) : tags.some(t => ctx.tags.includes(t))
+    if (!hit) return false
+  }
+  if (ctx.excludeTags !== undefined && tags.some(t => ctx.excludeTags!.includes(t))) return false
   if (entry.once === true && ctx.seen !== undefined && ctx.seen.includes(entry.id)) return false
   return true
 }

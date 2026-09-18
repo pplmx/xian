@@ -117,9 +117,11 @@ describe('副本系统 —— 区域链/遭遇/首领门槛/通关奖励', () =>
 
   it('敌人快照按层级放大,并带上自己的词条', () => {
     const sys = createDungeonSystem(CONFIG)
-    expect(Number(sys.snapshot('e1').hp)).toBeCloseTo(100, 6)
-    expect(Number(sys.snapshot('e3').hp)).toBeCloseTo(110 * 2, 6)
-    expect(Number(sys.snapshot('b3').hp)).toBeCloseTo(500 * 4, 6)
+    // 快照给的是**本值表**(与战斗的输入同形),键名是引擎的接口词
+    expect(Number(sys.snapshot('e1').stats.hp)).toBeCloseTo(100, 6)
+    expect(Number(sys.snapshot('e3').stats.hp)).toBeCloseTo(110 * 2, 6)
+    expect(Number(sys.snapshot('b3').stats.hp)).toBeCloseTo(500 * 4, 6)
+    expect(Number(sys.snapshot('e1').stats.maxHp)).toBeCloseTo(100, 6)
     expect(sys.snapshot('b3').boss).toBe(true)
   })
 
