@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 307,
+  "round": 308,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:57:01+00:00",
+  "updated_at": "2026-09-18T21:00:22+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17866,6 +17866,56 @@
       "confidence": 0.95,
       "source": "更正 EV-295 里的命令写法 —— 搬运一致性的实测是:搬运当时执行 cmp <(sed -n 199,561p README.md) <(tail -n +10 docs/usage.md),返回\"搬运一致:docs/usage.md 第 10 行起与 README 199-561 逐字节相同\"(即改动前的 README 段落);EV-295 里那句被工具描述写歪了,以本条为准。其余判据(库 check 396 例 / 43 文件、宿主 test 2444 例、test:report 0 败、check:engine 59 处引用、check:engine:standalone 83 源文件 + 8 示例)不变。",
       "summary": "更正:EV-295 的 source 字段里那条 cmp 命令写作有误(工具转述失准);真实执行的命令与输出见本条。搬运本身仍是逐字节一致,结论不变。"
+    },
+    "TASK-289": {
+      "id": "TASK-289",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:00:20+00:00",
+      "updated_at": "2026-09-18T21:00:20+00:00",
+      "touched_round": 307,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "清理规则顺序消融(triage.sim.spec):24 件真实仓库内容 × 三条规则全排列 —— 同一批货留 6 到留 13 件,7 件\"看顺序吃饭\"(被两条规则同时覆盖);\"某条规则没出手\"分两种且可分(被前一条全覆盖 vs 阈值写超内容值域),用 partition 数每条规则接走几件才看得出来(impact 的 byReason 只统计判掉的那些);出手次数分布说明谁在真的干活(判掉的两条接走 18 件,保护性规则只保下 5 件)。"
+    },
+    "CHG-371": {
+      "id": "CHG-371",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:00:20+00:00",
+      "updated_at": "2026-09-18T21:00:20+00:00",
+      "touched_round": 307,
+      "commit": "64c994e",
+      "summary": "库:新增 src/triage.sim.spec.ts(4 例:全排列翻面统计 / 死规则与被全覆盖 / 阈值超出值域 / 阈值效应防空转);CHANGELOG「未发布」记下那张顺序对照表与三条结论;docs/assembly.md 坑清单加两行(顺序即政策、规则装了不等于在生效);README 的用例数改为 400/44。宿主无改动。"
+    },
+    "EV-297": {
+      "id": "EV-297",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:00:20+00:00",
+      "updated_at": "2026-09-18T21:00:20+00:00",
+      "touched_round": 307,
+      "confidence": 0.96,
+      "source": "变更 CHG-371(64c994e)。bunx vitest run src/triage.sim.spec.ts(4 例,打印:基线 floor→qualityLine→coreAffix 留 6;qualityLine→floor→coreAffix 留 12(差 6 件);qualityLine→coreAffix→floor 留 13(差 7 件);coreAffix→floor→qualityLine 留 8(差 2 件);6 种顺序合计 7 件看顺序吃饭;出手次数 fallback×7 / floor×11 / qualityLine×4 / coreAffix×1 / skip×1;影子规则挪到最前接走 7 件;阈值写 5 品出手 0 次(内容最高 4 品);放宽 4 阶 vs 收紧 6 阶 → 扔 18 vs 19);cd packages/engine && bun run check(400 例 / 44 文件 + 组装指南 25 工厂 / 定制表 99 名字 / 产物 / 发布包自检);cd /workspace/xian && bun run test(2448 例)、bun run test:report(2448 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(84 个源文件)。",
+      "summary": "把\"规则顺序\"从风格问题变成可量的事故:同一批 24 件内容,顺序不同,玩家看到的\"留下/扔掉\"最多差 7 件(6 → 13);而且\"某条规则一次没出手\"能自动分诊 —— 被前一条全覆盖(挪位置即复活)vs 阈值超出内容值域(quality>=5 而内容最高 4 品)。方法上记一条:查\"规则有没有干活\"要看 partition 的 verdict.rule,**不能只看 impact 的 byReason** —— 后者只统计判掉的件,负责\"留下\"的保护性规则在里面永远是 0,会被误判成死规则。"
+    },
+    "DEC-150": {
+      "id": "DEC-150",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:00:20+00:00",
+      "updated_at": "2026-09-18T21:00:20+00:00",
+      "touched_round": 307,
+      "summary": "\"某条规则没出手\"要先用 partition 逐规则计数,再判是\"被全覆盖\"还是\"超出值域\";不能拿 impact().byReason 当\"规则生效表\"。",
+      "rationale": "真实返工:这次写消融实验时,第一版就照着 impact().byReason 推断\"三品以上当藏一次都没出手\",跑出来是 4 次 —— 因为 byReason 只统计**判掉**的件(见 triage.ts 的 impact 实现),凡是决定\"留下\"的规则永远不会出现在这张表里。按那个读数下结论,会把一条正常工作的保护性规则当成死规则删掉,而这正是\"自动清理把好东西扔了\"这类事故的温床。故:查规则是否生效,要用 partition 的 verdict.rule 逐规则计数(keep 与 junk 都算)。",
+      "alternatives_rejected": "①直接读 impact().byReason 当\"规则生效表\"(会把所有负责\"留下\"的规则显示成 0 次,误判成死规则);②给 impact 补一栏 keepByReason 改公开行为(现有语义是\"判掉的原因分布\",是界面文案要用的形状;改它等于改公开口径,而这次只需要一份诊断读法);③只做一个一次性脚本查规则(这类\"装了没生效\"的坑每次改内容都会再遇到,留成常驻用例更值)。"
     }
   },
   "edges": [
@@ -27007,6 +27057,18 @@
       "to": "TASK-288",
       "type": "implements",
       "created_at": "2026-09-18T20:57:01+00:00"
+    },
+    {
+      "from": "CHG-371",
+      "to": "TASK-289",
+      "type": "implements",
+      "created_at": "2026-09-18T21:00:22+00:00"
+    },
+    {
+      "from": "DEC-150",
+      "to": "TASK-289",
+      "type": "governs",
+      "created_at": "2026-09-18T21:00:22+00:00"
     }
   ]
 }
