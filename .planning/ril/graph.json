@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 251,
+  "round": 252,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T14:15:00+00:00",
+  "updated_at": "2026-09-18T14:18:38+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 251,
+      "touched_round": 252,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -14968,7 +14968,7 @@
       "version": 1,
       "created_at": "2026-09-18T14:14:31+00:00",
       "updated_at": "2026-09-18T14:14:31+00:00",
-      "touched_round": 251,
+      "touched_round": 252,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.95,
@@ -15010,6 +15010,56 @@
       "rationale": "「完全接管」类钩子若只给调用者空手,他就得把引擎已算过的概率/层级/合并逻辑重写一遍,等于把默认规则复制进业务代码。把默认结果放进 ctx 而不是让钩子自算,可让三件事同时成立:①不改也能用(返回 null);②改的是增量(基于默认加料)而非重写;③默认路径本身不被触碰(默认不变 + 显式开关,与 DEC-101 同一条纪律)。数额收 number 由 numeric.from 转 T,是为了让钩子写法与 victoryRewards[].amount 同形,大数实现者不必在钩子里碰 T。",
       "alternatives_rejected": "①只给 ctx 不给 defaultRewards(调用者要复刻概率与层级规则,极易与引擎口径漂移);②让钩子直接改传入数组(副作用式接管,与库「不就地改动传入对象」的既有取向冲突);③先算好但只给汇总值不给明细(按 id 加料做不了)。",
       "summary": "「完全接管」类钩子要先把默认结果算好放进 ctx 再交给调用者(可读、可改、可弃),而不是让他从零重写;数额统一收 number 由数值层转 T。"
+    },
+    "TASK-231": {
+      "id": "TASK-231",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:18:30+00:00",
+      "updated_at": "2026-09-18T14:18:30+00:00",
+      "touched_round": 252,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "让技能的效果标记可被作品自己解释:BattleConfig.skillEffectFn(ctx, rng) —— 库不认识 stun/drain/pierce/multi,只把标签交过来;返回 true 表示这次出手由调用方处理完,否则走默认。ctx 给的是引擎自己那条路上的原语(默认一击/只算不落账/落账/跳过下次出手/本场抽屉 state)。"
+    },
+    "CHG-312": {
+      "id": "CHG-312",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:18:32+00:00",
+      "updated_at": "2026-09-18T14:18:32+00:00",
+      "touched_round": 252,
+      "commit": "3447f60",
+      "summary": "packages/engine/src/combat.ts 加 BattleConfig.skillEffectFn(可选)与 SkillEffectContext:技能触发时由调用方决定这次出手;新增事件类型 skip(某方这一回合没出手);strike 改为返回实际伤害;EnemySkillDef.effect 的注释改成\"自由文本、库不解释\"。README 自由定制表与 CHANGELOG 同步补条目。"
+    },
+    "EV-237": {
+      "id": "EV-237",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:18:33+00:00",
+      "updated_at": "2026-09-18T14:18:33+00:00",
+      "touched_round": 252,
+      "confidence": 0.98,
+      "source": "变更 CHG-312(3447f60)。cd packages/engine && bun run check(15 文件/144 例 + 产物自检);bunx vitest run packages/engine/src/combat.spec.ts(11 例,含新增 3 例);bun run test(198 文件/2039 例);bun run check:engine(7 入口 + 发布包 + 25 处引用);bun run check:engine:standalone;gh run list -R pplmx/wanxiang-engine(35355334239 success)",
+      "summary": "skillEffectFn 三条路径各有判据:不配或返回空时 events 在同一 rng 下逐位相同(并确认钩子只在配了时被调用);基于默认改(用 state 记次数:第一击 30、之后 60,可读到默认倍率);完全另起一套(定身 + 固定 25 真伤,不再补默认那一下,挨打方下一回合记成 skip)。"
+    },
+    "DEC-104": {
+      "id": "DEC-104",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:18:37+00:00",
+      "updated_at": "2026-09-18T14:18:37+00:00",
+      "touched_round": 252,
+      "rationale": "让调用者\"完全接管\"时,如果他手里只有\"这件事你自己做\",就必须把引擎已有的命中判定/暴击/吸血/日志/扣血重写一遍,于是同一套口径出现两份、日后必然漂移。把引擎内部那条路上的原语摊进 ctx(默认那一击 strike、只算不落账 damage、落账 applyDamage、跳过下次出手 skipNextTurn、本场抽屉 state),调用者写的就是\"基于引擎的增量\",而引擎也不必为每个题材猜语义。这与 DEC-101(完全接管)与 DEC-103(先把默认算好再交出去)是同一族纪律:接管的是决定权,不是把引擎的职责复制一份。",
+      "alternatives_rejected": "①库内置一套 stun/drain/pierce 语义(等于给所有题材定死玩法词,与\"库只认结构不认题材\"冲突);②只给只读 ctx、让调用者返回一个\"补丁对象\"(表达力不够:定身要跨回合、真伤要绕开公式);③让调用者改传进来的战斗对象(与库\"不就地改动传入对象\"的取向冲突,且副本/离线批量结算会互相污染)。",
+      "summary": "「完全接管」类钩子的 ctx 要给调用者引擎同源的原语(默认执行、只算、落账、跳过出手、本场抽屉),让他写增量而不是复刻引擎;库对题材词(如 stun)永不表态。"
     }
   },
   "edges": [
@@ -22981,6 +23031,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T14:15:00+00:00"
+    },
+    {
+      "from": "CHG-312",
+      "to": "TASK-231",
+      "type": "implements",
+      "created_at": "2026-09-18T14:18:37+00:00"
+    },
+    {
+      "from": "TASK-231",
+      "to": "TASK-230",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:18:37+00:00"
+    },
+    {
+      "from": "DEC-104",
+      "to": "TASK-231",
+      "type": "governs",
+      "created_at": "2026-09-18T14:18:37+00:00"
+    },
+    {
+      "from": "DEC-104",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T14:18:38+00:00"
     }
   ]
 }
