@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 346,
+  "round": 347,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:19:18+00:00",
+  "updated_at": "2026-09-18T23:22:45+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19407,6 +19407,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-410(9d8afeb)。bunx vitest run src/integrationWorld.spec.ts(4 例全过;打印:30 天行情 clear/fog/wind/rain、抽到 30 次、铜钱 80、掷骰 60;多问 8 倍预告后仍是铜钱 80 / 掷骰 60;不切题 0 次;一次性牌 2 张遇 2 张、重复 0 次;效果之和 134 = 账本余额 134);cd packages/engine && bun run check(514 例 / 70 文件 + 十一道自检);cd /workspace/xian && bun run test(278 文件 / 2563 例)、test:report(2563 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(110 个源文件)。",
       "summary": "第七条链把\"会变的世界\"整段验收了:周期层不掷骰(所以问多少次都一样)、内容池按当天标签切题、抉择把后果变成账目。三条断言里最有价值的是\"多问 8 倍预告而账目一位不变\"—— 它是\"周期不消耗全局随机流\"在多模块下的样子。"
+    },
+    "TASK-328": {
+      "id": "TASK-328",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T23:22:45+00:00",
+      "updated_at": "2026-09-18T23:22:45+00:00",
+      "touched_round": 346,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.18:把三个库侧提交(规模实验/第六条链/第七条链)定成节点 —— 验收链 5 → 7 条,且\"批量模拟\"这句承诺第一次有了数字与闸门。公开面未动,行为与 0.1.17 逐位一致。"
+    },
+    "CHG-411": {
+      "id": "CHG-411",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:22:45+00:00",
+      "updated_at": "2026-09-18T23:22:45+00:00",
+      "touched_round": 346,
+      "commit": "d271193",
+      "summary": "发版五步:package.json 0.1.17 → 0.1.18;CHANGELOG「未发布」定稿成带日期的一节(列三件事);三处 tag 引用同步;宿主与 subtree 推送(engine main → c37bb19);gh release create v0.1.18 + gh api 核对。"
+    },
+    "EV-337": {
+      "id": "EV-337",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:22:45+00:00",
+      "updated_at": "2026-09-18T23:22:45+00:00",
+      "touched_round": 346,
+      "confidence": 0.97,
+      "source": "变更 CHG-411(d271193)。cd packages/engine && bun run check(514 例 / 70 文件 + 十一道自检 + 11 示例;发布包自检已是 wanxiang-engine-0.1.18.tgz);cd /workspace/xian && bun run test(278 文件 / 2563 例)、test:report(2563 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(110 个源文件);git push origin main(379cc67..d271193)、subtree push(→ c37bb19);gh api:tag v0.1.18 → c37bb19…、package.json version 0.1.18、release 非 draft / 非 prerelease、release 列表 Latest 为 v0.1.18。",
+      "summary": "0.1.18 让\"规模\"这条承诺有了证据(五条热路径的吞吐 + 闸门),并让跨模块验收链到七条(账目、时间×随机、状态×投资点×任务、老档、时间×状态、战斗→掉落→面板、周期×内容池×抉择)。"
     }
   },
   "edges": [
@@ -28806,6 +28844,12 @@
       "to": "TASK-327",
       "type": "implements",
       "created_at": "2026-09-18T23:19:17+00:00"
+    },
+    {
+      "from": "CHG-411",
+      "to": "TASK-328",
+      "type": "implements",
+      "created_at": "2026-09-18T23:22:45+00:00"
     }
   ]
 }
