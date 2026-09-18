@@ -6,18 +6,18 @@
  * 一处写错,游戏跑起来是"某张图永远掉不出装备"或"某件装备永远不出现"这种静默故障。
  * 所以装配时就逐条对账,把这类错误变成一句能读懂的报错。
  */
-import type { AttributeSystem, AttributeSystemConfig } from './attributes'
-import { createAttributeSystem } from './attributes'
-import type { Numeric } from './numeric'
-import { numberNumeric } from './numeric'
-import type { RealmSystem, RealmSystemConfig } from './realms'
-import { createRealmSystem } from './realms'
-import type { EquipmentConfig, EquipmentSystem } from './equipment'
-import { createEquipmentSystem } from './equipment'
-import type { DungeonConfig, DungeonSystem } from './dungeons'
-import { createDungeonSystem } from './dungeons'
-import type { BattleConfig, CombatEngine } from './combat'
-import { createCombatEngine } from './combat'
+import type { AttributeSystem, AttributeSystemConfig } from './attributes.js'
+import { createAttributeSystem } from './attributes.js'
+import type { Numeric } from './numeric.js'
+import { numberNumeric } from './numeric.js'
+import type { RealmSystem, RealmSystemConfig } from './realms.js'
+import { createRealmSystem } from './realms.js'
+import type { EquipmentConfig, EquipmentSystem } from './equipment.js'
+import { createEquipmentSystem } from './equipment.js'
+import type { DungeonConfig, DungeonSystem } from './dungeons.js'
+import { createDungeonSystem } from './dungeons.js'
+import type { BattleConfig, CombatEngine } from './combat.js'
+import { createCombatEngine } from './combat.js'
 
 export interface GameConfig<T = number> {
   /** 作品名 —— 引擎不会把它插进任何文案,只用来标识这份配置 */

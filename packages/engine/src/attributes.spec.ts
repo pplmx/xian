@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { attributeDefs, createAttributeSystem } from './attributes'
+import { attributeDefs, createAttributeSystem } from './attributes.js'
 
 function makeSystem() {
   return createAttributeSystem({

@@ -32,7 +32,8 @@
     "type-check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "tsc -p tsconfig.json --noEmit && vitest run && tsc -p tsconfig.build.json"
+    "verify:dist": "node scripts/verify-dist.mjs",
+    "check": "tsc -p tsconfig.json --noEmit && vitest run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs"
   },
   "devDependencies": {
     "typescript": "~6.0.3",

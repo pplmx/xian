@@ -9,7 +9,7 @@
  *   二 **未来的版本不许猜**。读到比当前更高的版本,拒绝加载并说明原因 ——
  *      猜错的后果是把新档写坏,而写坏比读不到严重得多。
  */
-import { asRecord } from './saveShape'
+import { asRecord } from './saveShape.js'
 
 /** 存档封套:版本 + 存档时刻 + 数据。savedAt 用于离线结算(知道"离开多久") */
 export interface SavePayload {

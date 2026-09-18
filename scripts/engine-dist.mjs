@@ -39,7 +39,22 @@ for (const entry of entries) {
 }
 console.log(`   ${entries.length} 个入口齐全`)
 
-console.log('③ 从产物 import(不走仓库别名、不走 src)')
+console.log('③ 从产物 import(不走仓库别名、不走 src;**用 node**,见下)')
+/*
+ * 这一步刻意用 node 而不是 bun:打包器与 bun 会宽容地解析无扩展名的相对导入,
+ * 而 Node 的 ESM 解析器要求 `./x.js`。这个差别骗过过一次 —— dist 在 bun 里好好的,
+ * 别人 `npm i` 之后 import 直接 ERR_MODULE_NOT_FOUND。故产物自检必须在 node 里跑。
+ */
+const nodeProbe = `
+  const engine = await import(${JSON.stringify(resolve(DIST, 'index.js'))})
+  const { DEMO } = await import(${JSON.stringify(resolve(DIST, 'presets/demo.js'))})
+  const { XIUXIAN } = await import(${JSON.stringify(resolve(DIST, 'presets/xiuxian.js'))})
+  const game = engine.defineGame(DEMO)
+  if (game.realms.label(0, 0) !== '见习船员 I 阶') throw new Error('换皮世界没装起来')
+  if (engine.defineGame(XIUXIAN).realms.realms.length !== 21) throw new Error('仙侠包没装起来')
+  console.log('   node 侧 import 通过(导出 ' + Object.keys(engine).length + ' 个)')
+`
+execFileSync('node', ['--input-type=module', '-e', nodeProbe], { cwd: ROOT, stdio: 'inherit' })
 const engine = await import(resolve(DIST, 'index.js'))
 const { DEMO } = await import(resolve(DIST, 'presets/demo.js'))
 const { XIUXIAN } = await import(resolve(DIST, 'presets/xiuxian.js'))

@@ -14,7 +14,7 @@
  * 装配汇总返回的是**一组来源**(每部功法一份),而不是一个加总 ——
  * 因为作品侧通常还要过一遍自己的合并规则(递减、软上限),加总就把那层信息丢了。
  */
-import type { Mods } from './attributes'
+import type { Mods } from './attributes.js'
 
 /** 一条升级消耗:`基数 × 倍率^等级 + 每级线性`,再乘折扣,最后向上取整 */
 export interface SkillCostSpec {

@@ -5,11 +5,11 @@
  * 名字没有一处相同,而两边都能算出等级、掉出装备、打完副本。
  */
 import { describe, expect, it } from 'vitest'
-import { defineGame } from '../config'
-import { emptyProgress } from '../dungeons'
-import { createRng } from '../rng'
-import { DEMO } from './demo'
-import { XIUXIAN } from './xiuxian'
+import { defineGame } from '../config.js'
+import { emptyProgress } from '../dungeons.js'
+import { createRng } from '../rng.js'
+import { DEMO } from './demo.js'
+import { XIUXIAN } from './xiuxian.js'
 
 describe('内容包 —— 仙侠与星港', () => {
   it('仙侠包:四界二十一境,六层装备,一条副本链', () => {

@@ -7,7 +7,7 @@ import {
   proficiencyFromExp,
   stageNameOf,
   weightedSkill
-} from './crafting'
+} from './crafting.js'
 
 const FORMULA = {
   baseRate: 0.95,

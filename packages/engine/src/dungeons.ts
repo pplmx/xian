@@ -17,10 +17,10 @@
  * 每次胜利固定给一份(修为/货币),再按 `dropChance` 掷掉落。
  * 引擎只负责"给了什么、给了多少",至于这些资源叫什么、怎么花,那是游戏自己的事。
  */
-import type { Mods } from './attributes'
-import type { Numeric } from './numeric'
-import { numberNumeric } from './numeric'
-import type { Rng } from './rng'
+import type { Mods } from './attributes.js'
+import type { Numeric } from './numeric.js'
+import { numberNumeric } from './numeric.js'
+import type { Rng } from './rng.js'
 
 export interface EnemySkillDef {
   name: string

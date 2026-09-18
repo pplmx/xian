@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createSkillSystem } from './skills'
+import { createSkillSystem } from './skills.js'
 
 const SYSTEM = createSkillSystem({
   skills: [

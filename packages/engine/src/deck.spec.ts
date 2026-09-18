@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createRng } from './rng'
-import { deckPool, drawFrom, drawMany, entryAllowed, inBand } from './deck'
+import { createRng } from './rng.js'
+import { deckPool, drawFrom, drawMany, entryAllowed, inBand } from './deck.js'
 
 const ENTRIES = [
   { id: 'a', tags: ['forest'], weight: 100, min: 0, max: 3 },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createDungeonSystem, emptyProgress } from './dungeons'
-import { createRng } from './rng'
+import { createDungeonSystem, emptyProgress } from './dungeons.js'
+import { createRng } from './rng.js'
 
 const CONFIG = {
   regions: [

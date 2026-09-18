@@ -19,8 +19,8 @@
  *   二 软阈值:合计越过 cap 后,超出部分按 diminish 折算(极端堆叠的第二道防线)。
  * 两道折算都能摊回来源(见 `mergeModsDetailed`),面板明细之和才会等于面板值。
  */
-import type { Numeric } from './numeric'
-import { numberNumeric } from './numeric'
+import type { Numeric } from './numeric.js'
+import { numberNumeric } from './numeric.js'
 
 /** 一组词条。值为 undefined 表示"这一来源没有该词条"(便于对象字面量里按需省略) */
 export type Mods = Record<string, number | undefined>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { defineSaveFormat, decodeSave, decodeSavePayload, encodeSave, runMigrations } from './save'
-import { asArray, asFiniteNumber, asNumberRecord, asRecordOf, asStringArray } from './saveShape'
+import { defineSaveFormat, decodeSave, decodeSavePayload, encodeSave, runMigrations } from './save.js'
+import { asArray, asFiniteNumber, asNumberRecord, asRecordOf, asStringArray } from './saveShape.js'
 
 interface State {
   gold: number

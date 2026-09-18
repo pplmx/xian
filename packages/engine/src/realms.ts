@@ -20,9 +20,9 @@
  * 前期靠大倍率撑起"越修越快"的手感,后期换成平坦倍率以免数字爆炸。
  * `lateFrom` 指定切换的序号,缺省是第一世界之后的那个境界。
  */
-import type { Numeric } from './numeric'
-import { clamp, numberNumeric } from './numeric'
-import type { Rng } from './rng'
+import type { Numeric } from './numeric.js'
+import { clamp, numberNumeric } from './numeric.js'
+import type { Rng } from './rng.js'
 
 export interface RealmEntry {
   id?: string

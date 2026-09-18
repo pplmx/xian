@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { GoalEnv } from './goals'
-import { evalGoal, goalProgress } from './goals'
+import type { GoalEnv } from './goals.js'
+import { evalGoal, goalProgress } from './goals.js'
 
 function env(over: Partial<GoalEnv> & { counters?: Record<string, number> } = {}): GoalEnv {
   const counters = over.counters ?? {}

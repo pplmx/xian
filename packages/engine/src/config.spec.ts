@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { GameConfig } from './config'
-import { defineGame, validateGame } from './config'
+import type { GameConfig } from './config.js'
+import { defineGame, validateGame } from './config.js'
 
 function baseConfig(): GameConfig {
   return {

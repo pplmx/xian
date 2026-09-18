@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import type { Numeric } from './numeric'
-import type { EquipmentConfig } from './equipment'
-import { createEquipmentSystem } from './equipment'
-import { createRng } from './rng'
+import type { Numeric } from './numeric.js'
+import type { EquipmentConfig } from './equipment.js'
+import { createEquipmentSystem } from './equipment.js'
+import { createRng } from './rng.js'
 
 const CONFIG: EquipmentConfig = {
   slots: [

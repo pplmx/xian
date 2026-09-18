@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createCombatEngine } from './combat'
-import { createRng } from './rng'
+import { createCombatEngine } from './combat.js'
+import { createRng } from './rng.js'
 
 function fighter(overrides: Record<string, unknown> = {}) {
   return {

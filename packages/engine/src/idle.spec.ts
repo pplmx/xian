@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { planIdle, runIdle } from './idle'
+import { planIdle, runIdle } from './idle.js'
 
 const HOUR = 3600_000
 

@@ -19,10 +19,10 @@
  * `templatesAtTier` 因此是**精确取层**,并为"某一层某部位没有内容"留了一次退档兜底
  * (掉错一件东西,好过在上千次掉落里突然抛错)。
  */
-import type { Mods } from './attributes'
-import type { Numeric } from './numeric'
-import { clamp, numberNumeric } from './numeric'
-import type { Rng } from './rng'
+import type { Mods } from './attributes.js'
+import type { Numeric } from './numeric.js'
+import { clamp, numberNumeric } from './numeric.js'
+import type { Rng } from './rng.js'
 
 export interface SlotDef {
   id: string

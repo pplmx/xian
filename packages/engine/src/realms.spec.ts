@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { RealmSystemConfig } from './realms'
-import { createRealmSystem } from './realms'
-import { createRng } from './rng'
+import type { RealmSystemConfig } from './realms.js'
+import { createRealmSystem } from './realms.js'
+import { createRng } from './rng.js'
 
 function makeSystem(overrides: Partial<RealmSystemConfig> = {}) {
   return createRealmSystem({

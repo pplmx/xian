@@ -5,11 +5,11 @@
  * 详细接法见 README 与 `src/presets/`,可跑的例子见 `examples/`。
  */
 
-export type { Numeric } from './numeric'
-export { numberNumeric, formatAmount, clamp } from './numeric'
+export type { Numeric } from './numeric.js'
+export { numberNumeric, formatAmount, clamp } from './numeric.js'
 
-export type { Rng } from './rng'
-export { createRng, mulberry32, seedFromString, randomRng } from './rng'
+export type { Rng } from './rng.js'
+export { createRng, mulberry32, seedFromString, randomRng } from './rng.js'
 
 export type {
   AttributeDef,
@@ -19,8 +19,8 @@ export type {
   Mods,
   OnTopMult,
   StatsInput
-} from './attributes'
-export { attributeDefs, createAttributeSystem, DEFAULT_ATTRIBUTES } from './attributes'
+} from './attributes.js'
+export { attributeDefs, createAttributeSystem, DEFAULT_ATTRIBUTES } from './attributes.js'
 
 export type {
   BreakthroughResult,
@@ -33,8 +33,8 @@ export type {
   RealmSystemConfig,
   WorldConfig,
   WorldDef
-} from './realms'
-export { createRealmSystem, DEFAULT_LAYER_NAMES, progressText } from './realms'
+} from './realms.js'
+export { createRealmSystem, DEFAULT_LAYER_NAMES, progressText } from './realms.js'
 
 export type {
   AffixDef,
@@ -52,8 +52,8 @@ export type {
   SetDef,
   SlotDef,
   TemplateDef
-} from './equipment'
-export { createEquipmentSystem, generateTemplates } from './equipment'
+} from './equipment.js'
+export { createEquipmentSystem, generateTemplates } from './equipment.js'
 
 export type {
   DungeonConfig,
@@ -66,17 +66,17 @@ export type {
   RegionDef,
   RewardDef,
   VictoryOutcome
-} from './dungeons'
-export { createDungeonSystem, emptyProgress } from './dungeons'
+} from './dungeons.js'
+export { createDungeonSystem, emptyProgress } from './dungeons.js'
 
-export type { BattleConfig, BattleEvent, BattleResult, CombatEngine, Combatant } from './combat'
-export { createCombatEngine } from './combat'
+export type { BattleConfig, BattleEvent, BattleResult, CombatEngine, Combatant } from './combat.js'
+export { createCombatEngine } from './combat.js'
 
-export type { IdleConfig, IdlePlan } from './idle'
-export { planIdle, runIdle } from './idle'
+export type { IdleConfig, IdlePlan } from './idle.js'
+export { planIdle, runIdle } from './idle.js'
 
-export type { SaveDecodeResult, SaveFormat, SavePayload } from './save'
-export { decodeSave, decodeSavePayload, defineSaveFormat, encodeSave, runMigrations } from './save'
+export type { SaveDecodeResult, SaveFormat, SavePayload } from './save.js'
+export { decodeSave, decodeSavePayload, defineSaveFormat, encodeSave, runMigrations } from './save.js'
 export {
   asArray,
   asFiniteNumber,
@@ -85,20 +85,20 @@ export {
   asRecord,
   asRecordOf,
   asStringArray
-} from './saveShape'
+} from './saveShape.js'
 
-export type { SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem } from './skills'
-export { createSkillSystem } from './skills'
+export type { SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem } from './skills.js'
+export { createSkillSystem } from './skills.js'
 
-export type { CraftFormula, CraftLevers, LeverSpec, OverReachSpec, StageDef } from './crafting'
-export { averageLore, composeCraftRate, leverFactor, overReachFactor, proficiencyFromExp, stageNameOf, weightedSkill } from './crafting'
+export type { CraftFormula, CraftLevers, LeverSpec, OverReachSpec, StageDef } from './crafting.js'
+export { averageLore, composeCraftRate, leverFactor, overReachFactor, proficiencyFromExp, stageNameOf, weightedSkill } from './crafting.js'
 
-export type { GoalCond, GoalEnv, GoalProgress } from './goals'
-export { evalGoal, goalProgress } from './goals'
+export type { GoalCond, GoalEnv, GoalProgress } from './goals.js'
+export { evalGoal, goalProgress } from './goals.js'
 
-export type { DeckContext, DeckEntry, DrawOptions, LevelBand } from './deck'
-export type { DrawManyOptions } from './deck'
-export { deckPool, drawFrom, drawMany, entryAllowed, inBand } from './deck'
+export type { DeckContext, DeckEntry, DrawOptions, LevelBand } from './deck.js'
+export type { DrawManyOptions } from './deck.js'
+export { deckPool, drawFrom, drawMany, entryAllowed, inBand } from './deck.js'
 
-export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config'
-export { defineGame, validateGame } from './config'
+export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config.js'
+export { defineGame, validateGame } from './config.js'

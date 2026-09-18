@@ -11,7 +11,7 @@
  * 分开写不是为了好看 —— 合在一起时,「这张牌为什么没出现」就没人答得上来;
  * 而这类问题恰恰是内容运营最常问的。
  */
-import type { Rng } from './rng'
+import type { Rng } from './rng.js'
 
 /** 等级带:两端都可省,含端点 */
 export interface LevelBand {

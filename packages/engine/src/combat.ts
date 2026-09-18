@@ -8,11 +8,11 @@
  * 设计上刻意"一次算完再回放":结算先跑完,日志只是记录。
  * 这样离线收益、批量模拟与界面播放共用同一份结果,不会出现两次算不一样的情况。
  */
-import type { Mods } from './attributes'
-import type { Numeric } from './numeric'
-import { numberNumeric } from './numeric'
-import type { Rng } from './rng'
-import type { EnemySkillDef } from './dungeons'
+import type { Mods } from './attributes.js'
+import type { Numeric } from './numeric.js'
+import { numberNumeric } from './numeric.js'
+import type { Rng } from './rng.js'
+import type { EnemySkillDef } from './dungeons.js'
 
 export interface Combatant<T> {
   id: string

@@ -7,7 +7,7 @@ import {
   asRecord,
   asRecordOf,
   asStringArray
-} from './saveShape'
+} from './saveShape.js'
 
 describe('存档形状修复 —— 形状不对就用兜底,而不是抛错', () => {
   it('asArray:不是数组给空数组,数组里的坏元素被滤掉,可自定义判据', () => {

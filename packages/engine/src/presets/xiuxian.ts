@@ -8,10 +8,10 @@
  * 这里**只收名目,不搬数值史**:境界曲线给了与云隐同源的参数,
  * 装备只到 6 层(手写的 288 件不是公共库该背的包袱 —— 那是作品的内容量)。
  */
-import type { GameConfig } from '../config'
-import { attributeDefs } from '../attributes'
-import type { AffixDef, QualityDef, SlotDef, TemplateDef } from '../equipment'
-import { generateTemplates } from '../equipment'
+import type { GameConfig } from '../config.js'
+import { attributeDefs } from '../attributes.js'
+import type { AffixDef, QualityDef, SlotDef, TemplateDef } from '../equipment.js'
+import { generateTemplates } from '../equipment.js'
 
 /** 四大界域 · 21 大境界(名目与云隐修仙录一致) */
 const WORLDS = [

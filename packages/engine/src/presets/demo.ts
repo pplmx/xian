@@ -5,10 +5,10 @@
  * 与仙侠包相比,这里名称全变(等级叫舱位等级、装备叫舰载模块、属性叫火力/装甲/结构值、
  * 副本叫星区),而机制、公式、系统**一行没改** —— 因为改的只是这份配置。
  */
-import type { GameConfig } from '../config'
-import { attributeDefs } from '../attributes'
-import type { QualityDef, SlotDef } from '../equipment'
-import { generateTemplates } from '../equipment'
+import type { GameConfig } from '../config.js'
+import { attributeDefs } from '../attributes.js'
+import type { QualityDef, SlotDef } from '../equipment.js'
+import { generateTemplates } from '../equipment.js'
 
 export const DEMO_SLOTS: SlotDef[] = [
   { id: 'weapon', name: '主武器', icon: 'crosshair', order: 1 },
