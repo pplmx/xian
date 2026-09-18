@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 248,
+  "round": 249,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T22:35:00+00:00",
+  "updated_at": "2026-09-18T23:05:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14840,6 +14840,77 @@
       "rationale": "组合条件与遭遇调度都属于\"把表达力补齐\"而不是\"改数值\":①一条目标只能挂一个条件时,\"既 A 又 B\"只能用 custom 绕过,而 custom 是给作品自判的逃生口,不该被当成常规表达手段;②遭遇只有两种节奏,而\"前几场必是杂兵、某阶段必出首领\"这类按进度编排的剧本很常见。两处都保持\"默认不变 + 显式开关\",并把边界写清楚:空 all/any 的语义、遭遇钩子与默认逻辑共用同一处挑敌人(避免随机流错位)。",
       "alternatives_rejected": "①让 custom 承担组合职责(逃生口被常规使用,语义与可测性都变差);②遭遇钩子自己写挑敌人逻辑(容易出现\"接管后随机流不一样\",那是最难查的一类错位);③空数组语义留白(使用方各自猜,行为不可预期)。",
       "summary": "表达力补齐也守\"默认不变 + 显式开关\";空数组语义与\"钩子与默认共用一处实现\"都写进实现与文档。"
+    },
+    "TASK-228": {
+      "id": "TASK-228",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T23:05:00+00:00",
+      "updated_at": "2026-09-18T23:05:00+00:00",
+      "touched_round": 249,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "又开三处:战斗伤害公式(BattleConfig.damageFn)、存档编解码(SaveFormat.codec)、词条取值曲线(AffixDef.valueCurve)。默认路径与既有实现一致。"
+    },
+    "CHG-307": {
+      "id": "CHG-307",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:05:00+00:00",
+      "updated_at": "2026-09-18T23:05:00+00:00",
+      "touched_round": 249,
+      "commit": "6e853cb",
+      "summary": "combat:BattleConfig.damageFn(ctx, rng) 完全接管伤害(地板与修正都归调用方);DamageContext 给出 attacker/defender/attack/defense/mult/variance/damageBonus/damageReduction。"
+    },
+    "CHG-308": {
+      "id": "CHG-308",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:05:00+00:00",
+      "updated_at": "2026-09-18T23:05:00+00:00",
+      "touched_round": 249,
+      "commit": "bd2300e",
+      "summary": "save:SaveFormat.codec{encode,decode} 接管\"文本长什么样\"(压缩/加密/换封套);decode 抛错归 reason:parse;版本检查、迁移链、形状修复一律照旧。"
+    },
+    "CHG-309": {
+      "id": "CHG-309",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:05:00+00:00",
+      "updated_at": "2026-09-18T23:05:00+00:00",
+      "touched_round": 249,
+      "commit": "f5e36c6",
+      "summary": "equipment:AffixDef.valueCurve(roll) 接管词条取值曲线(默认线性;凸/凹曲线可表达\"掷得满更值钱\"),返回的原始数值仍按 decimals 取整。README/CHANGELOG 同步(docs 提交)。"
+    },
+    "EV-234": {
+      "id": "EV-234",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:05:00+00:00",
+      "updated_at": "2026-09-18T23:05:00+00:00",
+      "touched_round": 249,
+      "source": "packages/engine（15 文件 / 138 例,含 Node 产物探测）+ bun run test（宿主 198 文件 / 2033 例）+ bun run check + bun run check:engine + 独立成库自检 + 库仓 CI（push success 19s）",
+      "summary": "判据:减法型伤害公式\"三击破敌\"且同种子可复现、自定义公式能读到默认量;假加密 codec 下不是裸 JSON、往返拿回状态、旧版本封套仍走迁移链、解不开归 parse;valueCurve 平方曲线端点和中档对账。默认路径仍由宿主冻结旧口径对账兜底。"
+    },
+    "DEC-101": {
+      "id": "DEC-101",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:05:00+00:00",
+      "updated_at": "2026-09-18T23:05:00+00:00",
+      "touched_round": 249,
+      "rationale": "三处都是\"计算结果或文本形态\"的写死,而它们恰好是最容易被题材与引擎需求拉开差距的地方:伤害公式(减法/除算/查表)、存档文本(压缩/加密/换封套)、词条取值(凸/凹曲线)。统一按\"完全接管\"处理:一旦给了函数,引擎不再叠加自己的规则(伤害不再压地板、编解码不再套 JSON、取值不再线性插值)——半接管最难讲清,而\"要么默认、要么全归你\"边界最清楚。",
+      "alternatives_rejected": "①半接管(比如自定义伤害后再压一次地板):两套规则叠加,使用方算不准;②只给参数不给函数(表达不了形状);③把 codec 做成固定几个选项(压缩/加密各自实现千差万别)。",
+      "summary": "计算结果/文本形态类钩子一律\"完全接管\":给了函数就不再叠加引擎自己的规则;默认路径逐位不变。"
     }
   },
   "edges": [
@@ -22679,6 +22750,78 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T22:35:00+00:00"
+    },
+    {
+      "from": "CHG-307",
+      "to": "TASK-228",
+      "type": "implements",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "CHG-308",
+      "to": "TASK-228",
+      "type": "implements",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "CHG-309",
+      "to": "TASK-228",
+      "type": "implements",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "CHG-307",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "CHG-308",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "CHG-309",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "EV-234",
+      "to": "CHG-307",
+      "type": "validates",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "EV-234",
+      "to": "CHG-308",
+      "type": "validates",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "EV-234",
+      "to": "CHG-309",
+      "type": "validates",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "TASK-228",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "TASK-228",
+      "to": "TASK-227",
+      "type": "depends_on",
+      "created_at": "2026-09-18T23:05:00+00:00"
+    },
+    {
+      "from": "DEC-101",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T23:05:00+00:00"
     }
   ]
 }
