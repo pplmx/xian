@@ -549,10 +549,12 @@
     tribPlan.value ? reliefElements(rootElements(player.linggen?.roots), tribPlan.value.kind) : []
   )
 
+  /**
+   * 状态胶囊 —— 直接读 store 的"此刻真正生效"那一份(`activeBuffs`),与属性汇总、心跳剪枝
+   * 共用库里的同一处判据:到期即散,不再出现"还剩 0 秒却还挂着"的一拍(见 ISS-231)。
+   */
   const activeBuffs = computed(() =>
-    cultivation.buffs
-      .map(b => ({ def: buffDef(b.defId), remain: Math.max(0, (b.endsAt - now.value) / 1000) }))
-      .filter(x => x.def !== undefined)
+    cultivation.activeBuffs.map(view => ({ def: view.def, remain: view.remainingSec }))
   )
 
   const learnedList = computed(() =>

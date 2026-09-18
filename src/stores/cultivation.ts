@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import type { BuffInstance, CombatSkill, StatMods } from '@/types'
 import { persistConfig } from '@/utils/storage'
 import { gongfaDef } from '@/data/gongfa'
-import { applyBuff, buffModSources, clearNegativeBuffList, pruneBuffList } from '@/core/engineBuffs'
+import { applyBuff, activeBuffsOf, clearNegativeBuffList, pruneBuffList } from '@/core/engineBuffs'
 import { gongfaBranchDef } from '@/data/gongfaBranches'
 import { GONGFA_SYSTEM } from '@/core/engineWorld'
 import { mergeMods } from '@/core/statsCalc'
@@ -60,9 +60,23 @@ export const useCultivationStore = defineStore(
       return mergeMods(sources)
     })
 
+    /**
+     * 状态读取用的时钟 —— 由**心跳**推进(引擎每拍 `pruneBuffs(now)`、施加状态时也校正一次)。
+     * 为什么不在这里读 `Date.now()`:computed 只认响应式依赖,读一个不随心跳变化的
+     * 时间戳会让它"只记住第一次算出的结果",到期的状态一直挂在身上;而在 getter 里
+     * 顺手 `useGameStore()` 之类的懒创建会往响应式系统里写东西,把整条属性链打成"每次读都重算"。
+     *
+     * 判据是"到期时刻 > 时钟",与心跳剪枝共用库里的同一处判定
+     * (ISS-231:从前这里问的是"列表里有没有",到期到下一拍之间那一秒仍会被算进属性)。
+     */
+    const buffClock = ref(Date.now())
+
+    /** 此刻真正生效的状态(过期即散) */
+    const activeBuffs = computed(() => activeBuffsOf(buffs.value, buffClock.value))
+
     const buffMods = computed<StatMods>(() => {
       // 生效状态的来源清单由库给出(顺序即实例顺序),合并仍是本作的属性汇总口径
-      return mergeMods(buffModSources(buffs.value))
+      return mergeMods(activeBuffs.value.map(view => view.def.mods as StatMods))
     })
 
     /** 主修功法附带的战斗技能 */
@@ -107,17 +121,20 @@ export const useCultivationStore = defineStore(
      * 「药力化开」承诺的时长足额兑现;已过期的实例以 now 为基准。
      */
     function addBuff(defId: string, now: number): void {
+      buffClock.value = now
       buffs.value = applyBuff(buffs.value, defId, now)
     }
 
     function hasBuff(defId: string): boolean {
-      return buffs.value.some(b => b.defId === defId)
+      return activeBuffs.value.some(view => view.def.id === defId)
     }
 
     /** 移除过期 Buff,返回是否有变化 */
     function pruneBuffs(now: number): boolean {
       const pruned = pruneBuffList(buffs.value, now)
       if (pruned.changed) buffs.value = pruned.list
+      // 身上有状态才推进时钟:没状态时不必让整条属性链每秒重算
+      if (buffs.value.length > 0) buffClock.value = now
       return pruned.changed
     }
 
@@ -140,6 +157,7 @@ export const useCultivationStore = defineStore(
       mainGongfa,
       subGongfa,
       buffs,
+      activeBuffs,
       gongfaBranch,
       gongfaMods,
       buffMods,

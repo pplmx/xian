@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BuffInstance, StatMods } from '@/types'
 import { buffDef, BUFFS } from '@/data/buffs'
-import { applyBuff, buffModSources, clearNegativeBuffList, pruneBuffList } from './engineBuffs'
+import { activeBuffsOf, applyBuff, clearNegativeBuffList, pruneBuffList } from './engineBuffs'
 import { mergeMods } from './statsCalc'
 
 /** 更早那版写法(已被修掉,留在这里当反面对照):`Math.max(旧, now + 时长)` = 刷新 */
@@ -141,12 +141,16 @@ describe('状态层对账 —— 逐字段、逐毫秒与迁移前一致', () =>
     }
   })
 
-  it('效果来源清单:逐条、逐顺序一致(喂给属性汇总的东西没变)', () => {
+  it('生效状态的效果来源:未过期的那些逐条、逐顺序一致(喂给属性汇总的还是同一串)', () => {
     for (const [label, list] of cases) {
-      expect(buffModSources(list), label).toEqual(legacyModSources(list))
+      const alive = list.filter(b => b.endsAt > NOW && buffDef(b.defId))
+      const mine = activeBuffsOf(list, NOW).map(view => view.def.mods)
+      expect(mine, label).toEqual(legacyModSources(alive))
     }
-    const list = cases[4]![1]
-    expect(mergeMods(buffModSources(list))).toEqual(mergeMods(legacyModSources(list)))
+    const list = cases[4]![1].filter(b => b.endsAt > NOW)
+    expect(mergeMods(activeBuffsOf(cases[4]![1], NOW).map(v => v.def.mods as StatMods))).toEqual(
+      mergeMods(legacyModSources(list))
+    )
   })
 
   it('内容表没被搬迁动过:库里的定义就是本作 BUFFS 的投影,条数与时长逐条对得上', () => {
@@ -156,12 +160,13 @@ describe('状态层对账 —— 逐字段、逐毫秒与迁移前一致', () =>
     expect(BUFFS.every(d => d.durationSec > 0)).toBe(true)
   })
 
-  it('已知差异写在明处:本作读取路径仍问"列表里有没有",库问的是"此刻还算不算数"', () => {
-    // 已过期但还没被心跳剪掉的一条:本作照旧算数(旧行为),库按此刻判不算数
+  it('有意修正(ISS-231):已过期但还没被心跳剪掉的那一条,不再算进属性', () => {
     const stale: BuffInstance[] = [{ defId: 'buff_juling', endsAt: NOW - 1 }]
-    expect(buffModSources(stale)).toEqual(legacyModSources(stale)) // 读取路径:与旧口径一致
-    expect(buffModSources(stale).length).toBe(1)
-    // 库侧的正确答案(未接线):此刻已经不算数了 —— 换过去会少算这一条,故单独一次改
+    // 旧口径问"列表里有没有"→ 这条照样进属性汇总(到期后到下一拍之间多算一秒)
+    expect(legacyModSources(stale)).toEqual([buffDef('buff_juling')!.mods])
+    // 现在问"此刻还算不算数":过期即散,与剪枝共用同一个判据
+    expect(activeBuffsOf(stale, NOW)).toEqual([])
+    expect(activeBuffsOf(stale, NOW - 2).length).toBe(1) // 过期之前仍然算数
     expect(pruneBuffList(stale, NOW).list).toEqual([])
   })
 })

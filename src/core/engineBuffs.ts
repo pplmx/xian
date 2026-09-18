@@ -6,14 +6,13 @@
  *     `clock: 'ms'` —— 库里的 `endsAt` 就是存档里的 `endsAt`,不再各处 ×1000;
  *   · 存档里的键叫 `defId`,库里叫 `id`(换名要动所有老档,不值当),进出口各转一次。
  *
- * 读取口径照旧:**到期与否由心跳剪掉**,这里只问"列表里有没有"。库给了更准的问法
- * (`active(list, now)` / `has(list, id, now)`),但换过去会让"还剩 0 秒"的那一拍少算一条
- * 状态 —— 那是行为变化,记在图谱里单独一次改,不混在这次搬迁里。
+ * 读取口径:**问的是"此刻还算不算数"**(库的 `active`,到期即散),而不是"列表里有没有" ——
+ * 列表里那些已经过期、还没被心跳剪掉的,不该继续算进属性(见 ISS-231)。
  */
-import type { BuffInstance, StatMods } from '@/types'
+import type { BuffDef, BuffInstance, StatMods } from '@/types'
 import type { BuffInstance as EngineBuffInstance } from 'wanxiang-engine'
 import { createBuffSystem } from 'wanxiang-engine'
-import { BUFFS } from '@/data/buffs'
+import { BUFFS, buffDef } from '@/data/buffs'
 
 const BUFFS_SYSTEM = createBuffSystem<StatMods>({
   defs: BUFFS.map(d => ({ id: d.id, durationSec: d.durationSec, kind: d.kind, mods: d.mods })),
@@ -52,12 +51,24 @@ export function clearNegativeBuffList(list: readonly BuffInstance[]): BuffInstan
   return fromEngine(BUFFS_SYSTEM.clear(toEngine(list), 'injury').instances)
 }
 
-/** 当前状态的效果来源(喂给本作的属性汇总 `mergeMods`)—— 顺序即实例顺序 */
-export function buffModSources(list: readonly BuffInstance[]): StatMods[] {
-  const sources: StatMods[] = []
-  for (const b of list) {
-    const def = BUFFS_SYSTEM.defOf(b.defId)
-    if (def?.mods) sources.push(def.mods)
+/** 一条生效中的状态:内容定义(带名字 / 图标)+ 实例 + 还剩多少秒 */
+export interface ActiveBuff {
+  def: BuffDef
+  instance: BuffInstance
+  remainingSec: number
+}
+
+/**
+ * 此刻真正生效的状态(顺序即实例顺序):过期的散掉、认不出的跳过,每条带上定义与剩余秒数。
+ * 属性汇总、"还在不在"与界面胶囊都用它 —— 与库的 `active` 同一判据。
+ */
+export function activeBuffsOf(list: readonly BuffInstance[], now: number): ActiveBuff[] {
+  const out: ActiveBuff[] = []
+  for (const view of BUFFS_SYSTEM.active(toEngine(list), now)) {
+    const def = buffDef(view.def.id)
+    if (def) {
+      out.push({ def, instance: { defId: view.instance.id, endsAt: view.instance.endsAt }, remainingSec: view.remainingSec })
+    }
   }
-  return sources
+  return out
 }
