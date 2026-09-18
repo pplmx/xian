@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 281,
+  "round": 282,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T18:44:12+00:00",
+  "updated_at": "2026-09-18T18:51:27+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16389,15 +16389,15 @@
     "ISS-231": {
       "id": "ISS-231",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-18T18:13:03+00:00",
-      "updated_at": "2026-09-18T18:13:03+00:00",
-      "touched_round": 277,
+      "updated_at": "2026-09-18T18:51:22+00:00",
+      "touched_round": 282,
       "severity": 0.2,
       "confidence": 0.9,
       "effort": 1,
-      "summary": "本作的状态读取路径仍问\"列表里有没有\",而不是\"此刻还算不算数\":buffMods 会把已经到期、但还没被心跳剪掉的那一拍的状态算进属性汇总(README 里的「疗伤中」同理)。库侧已给出正确判据(active/has/remainingSec,库用例钉着),换过去是一次显式的行为改动(到期那一拍少算一条),故与搬迁分开做。"
+      "summary": "(已解决,CHG-345)本作的状态读取路径曾问\"列表里有没有\"而不是\"此刻还算不算数\",于是到期到下一次心跳之间那一秒仍会被算进属性、\"疗伤中\"也多显示一拍。现已改读库的 active,时钟由心跳推进(buffClock),属性汇总与界面共用同一份。"
     },
     "TASK-259": {
       "id": "TASK-259",
@@ -16649,6 +16649,56 @@
       "summary": "\"打基准 + 算这一段\"只留一份实现(库的 counters 原语),\"立誓 / 立题\"这类一世一次的动作必须在库外由宿主显式撤旧题,再做幂等判定。",
       "rationale": "同一条减法(当前 − 基准,再夹到 ≥0)此前散在每日任务、本世计与分支/雪耻三处:夹取漏一处,回档那天就冒出负进度,而\"负进度\"不只是显示难看 —— 它会让\"够不够\"的判定永远为真(白送奖励)。故把这条规则收进库原语,任务板与本世计都用它。第二条来自 ISS-234:\"一世一次\"这类动作的幂等不能靠\"调用方小心\",也不能靠内容层的条件(内容会变),而要靠**状态本身**(有没有题)判定;代价是周期切换必须显式先撤旧题 —— 把这一步写在流程里(转世先 setVow(null)),\"新一世\"与\"同一世重进来一次\"这两件事才分得开。",
       "alternatives_rejected": "①在三处各写一遍 max(0, now - base)(现状,漏一处就出事);②给 beginLife 加一个\"强制重打\"参数让调用方决定(等于把幂等责任又推回调用方,而重进来的那条路径正是调用方没意识到的);③用时间戳判断是不是同一世(vow.at 与 now 差多少算同一世?阈值是猜的);④把本世计也做成 createTaskBoard 的一种(周期是\"世\",但本世的度量不止计数器(分支数、雪耻数、图鉴、技艺……),硬套会把不相关的维度塞进同一个模型)。"
+    },
+    "TASK-263": {
+      "id": "TASK-263",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:51:15+00:00",
+      "updated_at": "2026-09-18T18:51:15+00:00",
+      "touched_round": 282,
+      "category": "bug-fix",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "收掉 ISS-231:状态读取路径改为问\"此刻还算不算数\"(库的 active),时钟由心跳推进(store 的 buffClock),属性汇总/还在不在/界面胶囊三处共用同一份。"
+    },
+    "CHG-345": {
+      "id": "CHG-345",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:51:15+00:00",
+      "updated_at": "2026-09-18T18:51:15+00:00",
+      "touched_round": 282,
+      "commit": "afec82a",
+      "summary": "宿主:core/engineBuffs 的读取改为 activeBuffsOf(库 active + 内容定义 + 剩余秒数),stores/cultivation 增 buffClock 与 activeBuffs、buffMods/hasBuff 改读它,CultivationView 的状态胶囊改读 store 的 activeBuffs,engineBuffsParity 的\"已知差异\"改成\"有意修正\",docs/engine.md 那一行更新。库侧无改动(本轮不动 packages/engine)。"
+    },
+    "EV-270": {
+      "id": "EV-270",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:51:22+00:00",
+      "updated_at": "2026-09-18T18:51:22+00:00",
+      "touched_round": 282,
+      "confidence": 0.95,
+      "source": "变更 CHG-345(afec82a)。bunx vitest run src/core/engineBuffsParity.spec.ts(9 例);bun run check;bun run test(235 文件/2315 例);bun run test:report(2315 过/0 败);bun run check:engine(51 处引用);bun run check:engine:standalone",
+      "summary": "ISS-231 收掉:过期但还没被心跳剪掉的那一条不再进属性汇总、不再算\"还在\"(与剪枝共用库里同一判据),界面胶囊也不再出现\"还剩 0 秒却还挂着\";它在过期之前仍然算数(边界同一个判据,判据里两侧都钉住)。过程里查清一个响应式陷阱:在 computed 的 getter 里懒创建别的 store(试过 useGameStore())会往响应式系统里写东西,把整条属性链打成\"每次读都重算\" —— 表现为 finalStats 每次读取都是新对象,连 engineTriageParity 里\"注入 finalStats.mods\"的老手法都当场失效(测试红了才发现)。改用 store 里的 buffClock(由心跳推进、没状态时不推进)后,缓存与每秒更新都正常。"
+    },
+    "DEC-133": {
+      "id": "DEC-133",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:51:22+00:00",
+      "updated_at": "2026-09-18T18:51:22+00:00",
+      "touched_round": 282,
+      "summary": "状态的\"生效\"判据只有一处(库的 active:到期时刻 > 时钟);时钟由心跳推进(不读 Date.now()),且不在 computed 的 getter 里懒创建别的 store。",
+      "rationale": "\"到期了还算不算数\"这类判据一旦有第二处(一处用在显示、一处用在汇总),就必然出现\"界面说没了、属性里还在\"的不一致;而且两处判据的边界(> 还是 >=)迟早会各写各的。故唯一判据放在库里,宿主只提供时钟。时钟为什么由心跳推进而不是 `Date.now()`:computed 只认响应式依赖,读死时间戳会让它\"只记住第一次算出的结果\"(到期的状态永远挂着);而在 getter 里懒创建别的 store 更糟 —— 那次懒创建本身是一次响应式写入,会把整条属性链打成\"每次读都重算\"(实测:finalStats 每次读取都是新对象,连\"注入 mods\"的测试手法都失效)。附带一条性能口径:没有状态在身时不推进时钟,免得每秒白重算整条属性链。",
+      "alternatives_rejected": "①读取时直接 `Date.now()`(computed 不会因为时间流逝而失效,到期不散);②在 getter 里 `useGameStore().totalPlaySec` 借心跳(懒创建 = getter 内的响应式写入,属性链每次读都重算,且这种失效很难从症状上认出来);③保留\"列表里有没有\"的口径、靠更勤的剪枝兜住(那等于承认判据有两处,只是把不一致的窗口改小);④把时钟做成全局单例(测试与回放都难,且与 store 的响应式边界不一致)。"
     }
   },
   "edges": [
@@ -25352,6 +25402,24 @@
       "to": "ISS-234",
       "type": "resolves",
       "created_at": "2026-09-18T18:44:12+00:00"
+    },
+    {
+      "from": "CHG-345",
+      "to": "TASK-263",
+      "type": "implements",
+      "created_at": "2026-09-18T18:51:27+00:00"
+    },
+    {
+      "from": "DEC-133",
+      "to": "TASK-263",
+      "type": "governs",
+      "created_at": "2026-09-18T18:51:27+00:00"
+    },
+    {
+      "from": "CHG-345",
+      "to": "ISS-231",
+      "type": "resolves",
+      "created_at": "2026-09-18T18:51:27+00:00"
     }
   ]
 }
