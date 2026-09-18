@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 265,
+  "round": 266,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:53:03+00:00",
+  "updated_at": "2026-09-18T16:59:48+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 265,
+      "touched_round": 266,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15717,7 +15717,7 @@
       "version": 1,
       "created_at": "2026-09-18T16:52:57+00:00",
       "updated_at": "2026-09-18T16:52:57+00:00",
-      "touched_round": 265,
+      "touched_round": 266,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -15759,6 +15759,56 @@
       "rationale": "库里凡是\"同一件事会被两处用到\"的,必须共用一处实现:生成装备要掷词条,洗练也要掷词条,池子筛法/权重/掷点顺序若各写一份,迟早分叉成两套口径 —— 而玩家看到的是\"掉出来的\"和\"洗出来的\"不一致,却查不出为什么。故这一轮把 pickAffixes 抽成唯一实现,generate 与 rerollAffixes 都走它;判据那边也不只比结果,还比**随机源消耗数**(顺序或次数一变,整局之后的随机流都错位)。",
       "alternatives_rejected": "①让库的 reroll 与 generate 各写一份(短期省事,长期两套口径);②把洗练留在作品侧只抽\"掷词条\"这个函数出去(使用者仍要自己拼装池子/门槛/条数规则);③重掷时重算品质与层级(洗的应是词条构成,不是出身)。",
       "summary": "同一件事被两处用到时必须共用一处实现(生成与洗练共用掷词条);判据除结果外还比随机源消耗数,防止随机流错位。"
+    },
+    "TASK-246": {
+      "id": "TASK-246",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T16:59:41+00:00",
+      "updated_at": "2026-09-18T16:59:41+00:00",
+      "touched_round": 266,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "把\"自动去留\"抽成库的骨架(新模块 triage):有序规则链(第一条表态的说了算)+ 与裁决共用同一条链的读数(留下/扔掉/每条规则各判掉多少)+ compareBy 多级排序;本作 core/smartKeep 接过去(判据与文案仍是内容),用旧 if 链冻结对账(含理由文案与读数)。按新口径攒批,不发版。"
+    },
+    "CHG-328": {
+      "id": "CHG-328",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:59:42+00:00",
+      "updated_at": "2026-09-18T16:59:42+00:00",
+      "touched_round": 266,
+      "commit": "809d326",
+      "summary": "库:新增 src/triage.ts 与 triage.spec.ts(5 例:顺序即政策/豁免/读数与裁决同链/兜底/多级比较),index 与 publicApi.spec 导出(52 运行时导出),CHANGELOG「未发布」加条目,README 定制表与模块一览加行。宿主:core/smartKeep 的规则链、读数、挤位次序改为库驱动(对外 KeepVerdict 形状不变,上锁豁免留在调用侧),新增 engineTriageParity.spec(5 例),test-report 补分类,docs/engine.md 迁移表加一行。"
+    },
+    "EV-252": {
+      "id": "EV-252",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:59:47+00:00",
+      "updated_at": "2026-09-18T16:59:47+00:00",
+      "touched_round": 266,
+      "confidence": 0.96,
+      "source": "变更 CHG-328(809d326)。bunx vitest run src/core/engineTriageParity.spec.ts(5 例:十件样件×六套开关 keep 与理由逐字相同、有流派时的两条缘分规则、读数按理由分组一致、自动回收闸门与上锁豁免、挤位次序两两相同);bun run test(207 文件/2106 例);bun run test:report(2106 过/0 败);bunx vitest run src/core/smartKeep.spec.ts(15 例);cd packages/engine && bun run check(19 文件/187 例);bun run check:engine(28 处引用);bun run check:engine:standalone",
+      "summary": "智能收纳搬迁逐字对账:裁决赛与理由文案在六套开关下完全相同,读数与旧实现的按理由分组一致,挤位次序两两相同;探到并处理了一个口径细节 —— 上锁豁免属于\"自动回收那道闸门\",不属于 keepVerdict,故 triage 的 skip 没在本作启用。"
+    },
+    "DEC-118": {
+      "id": "DEC-118",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:59:48+00:00",
+      "updated_at": "2026-09-18T16:59:48+00:00",
+      "touched_round": 266,
+      "rationale": "自动去留这类功能翻车最多的不是判据本身,而是**顺序**与**可见性**:政策分散在两个入口时,玩家只记得自己设过的那个(实测:保留线设在灵品,另一个弹窗勾过玄品,玄品在保留线之上照旧被扔);开关一排而看不到\"关掉它要扔多少件\",玩家只能盲按。故库给的是两件事 —— 有序规则链(第一条表态的说了算、谁都不表态才兜底、豁免单独一层)与**按同一条链算出来的读数**,而不是判据本身:判据是内容,顺序与数字是骨架。",
+      "alternatives_rejected": "①把规则实现进库(库会替作品决定\"什么算废料\");②只给一个 filter 回调(顺序与读数又留给每家自己写,事故照旧);③读数另算一遍(界面显示与实际行为迟早分叉 —— 这一条是本仓库反复强调的\"同一件事只有一处实现\")。",
+      "summary": "自动去留的库形态:有序规则链 + 与裁决同源的读数;判据是内容、顺序与可见性是骨架。"
     }
   },
   "edges": [
@@ -24084,6 +24134,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:53:03+00:00"
+    },
+    {
+      "from": "CHG-328",
+      "to": "TASK-246",
+      "type": "implements",
+      "created_at": "2026-09-18T16:59:48+00:00"
+    },
+    {
+      "from": "TASK-246",
+      "to": "TASK-245",
+      "type": "depends_on",
+      "created_at": "2026-09-18T16:59:48+00:00"
+    },
+    {
+      "from": "DEC-118",
+      "to": "TASK-246",
+      "type": "governs",
+      "created_at": "2026-09-18T16:59:48+00:00"
+    },
+    {
+      "from": "DEC-118",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T16:59:48+00:00"
     }
   ]
 }
