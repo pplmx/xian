@@ -63,6 +63,7 @@
 | 炼制 / 合成的成功率(四乘区相乘 + 越级) | `composeCraftRate` / `leverFactor` / `overReachFactor` | `crafting.spec.ts` + `crafting.sim.spec.ts`(每个乘区值多少、越级多陡、练到九成要多久) |
 | 开炉之后实际发生什么(没开炉 / 失败保料 / 双成) | `createRecipeRunner` | `recipes.spec.ts` |
 | 建造 / 每小时产出 | `createFacilitySystem` + `accrue` | `examples/daily-loop.ts` 的设施段 |
+| 产线曲线与仓库上限怎么搭 | `createFacilitySystem` 的 `perHour` / `cap` | `facilities.sim.spec.ts`(装满后每小时白产多少、结算粒度对总量的影响) |
 | 加点(天赋 / 灵脉) | `createPointPool` | `points.spec.ts` |
 | 离线上限与步数 | `planIdle` / `runIdle` | `examples/daily-loop.ts` 的离线段 |
 | 限时增益 | `createBuffSystem` | `examples/daily-loop.ts` 的状态段 |
@@ -154,6 +155,7 @@
 | 以为世界记忆会逐级回落 | 到点**直接回最低档**(系数 1.15 → 1.00);差一点只掉一档是升档时的分级取,回落没有过渡 | `memory.sim.spec.ts` |
 | 以为折扣打在整本账上 | 只作用于可折项:声明三成折扣,整本只省 26.4%(不参与打折的那一项按原价收) | `skills.sim.spec.ts` |
 | 玩家报"背包满了",先想到加容量 | 先看他是不是没把新装备穿上 —— **装配不占背包位**,容量 20 的包装上 6 件就能再收 6 件 | `holding.sim.spec.ts` |
+| 产线"每秒结算一次"更精确 | 若每步向下取整,1.6 件/小时的产线按 10 分钟结算**一天一件都发不出**;正确做法是零头进累加器 | `facilities.sim.spec.ts` |
 | 以为洗练"总会给点新的" | 池子被门槛(部位 / 品阶 / 层级)筛空时给不出新的,只保留锁住的 —— 要不要允许这种"洗了等于没洗"由内容决定 | `equipment.sim.spec.ts` |
 | 以为"堆同名"最后自然没收益 | 六条同名 +10% 在 ranked 下是 30%、`max` 10%、`sum` 60% —— 三种是完全不同的内容政策 | `attributes.sim.spec.ts` |
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
