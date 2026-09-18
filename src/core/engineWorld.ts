@@ -47,11 +47,10 @@ import {
 import { AFFIXES } from '@/data/affixes'
 import { QUALITIES } from '@/data/qualities'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
-import { EQUIP_SETS } from './equipSet'
+import { EQUIP_SETS } from '@/data/equipSets'
 import { ENEMIES } from '@/data/enemies'
 import { REGIONS } from '@/data/regions'
 import { STAT_NAMES } from '@/ui/statNames'
-import { toNum } from '@/utils/gnum'
 import { uid } from '@/utils/id'
 import { powerScale } from './tierScale'
 import { gnumNumeric } from './engineNumeric'
@@ -83,7 +82,7 @@ function attributes(): AttributeDef[] {
 }
 
 /** 一份完整的世界配置:内容全部来自本作的 data/,机制全部来自公共库 */
-export const ENGINE_WORLD_CONFIG: GameConfig = {
+export const ENGINE_WORLD_CONFIG: GameConfig<GNum> = {
   name: '云隐修仙录',
   version: '1.33.0',
   attributes: {
@@ -178,10 +177,9 @@ export const ENGINE_WORLD_CONFIG: GameConfig = {
       qualityExponent: EQUIP_QUALITY_FLAT_EXP,
       levelBonus: EQUIP_LEVEL_BONUS,
       // 本作的层级系数不是一条指数曲线,而是一张按区域层级排的战力表(见 core/tierScale.powerScale)。
-      // 库允许整表覆盖,于是两边共用同一张表;指数式是留给新游戏的默认写法。
-      // 表以 number 投影过来(GNum → double):一致到相对 1e-15,只差在双精度的
-      // 第 16 位有效数字上 —— 装备平铺的显示与判定都看不出这一位。
-      tierFactors: Array.from({ length: Math.max(...EQUIPMENT_TEMPLATES.map(t => t.tier)) }, (_, i) => toNum(powerScale(i + 1)))
+      // 库允许整表覆盖,且允许表里就是**宿主的大数**(Numeric.of 收下),故这里直接给 GNum ——
+      // 不经过 double 投影,装备平铺与解析都能逐位一致。
+      tierFactors: Array.from({ length: Math.max(...EQUIPMENT_TEMPLATES.map(t => t.tier)) }, (_, i) => powerScale(i + 1))
     },
     // 词条按百分点书写(「攻击提升 4.2%」),入属性时统一 ÷100
     affixValueScale: 100,

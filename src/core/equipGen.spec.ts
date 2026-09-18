@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { mulberry32, RandomService } from '@/utils/random'
 import { QUALITIES, qualityDef } from '@/data/qualities'
-import { AFFIX_RARITY_RANK, affixDef } from '@/data/affixes'
+import { affixDef } from '@/data/affixes'
 import { equipmentTemplate } from '@/data/equipment'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
 import { isZero, toNum } from '@/utils/gnum'
-import { generateEquipment, resolveEquipStats, sortAffixLines } from './equipGen'
+import { generateEquipment, resolveEquipStats } from './equipGen'
 import { ENGINE_WORLD } from './engineWorld'
 import type { EquipmentInstance, QualityId } from '@/types'
 
 const seeded = (seed = 42): RandomService => new RandomService(mulberry32(seed))
+
+/** 稀有度的高低序 —— 机制侧的那份已进库;这里只用来校验展示序单调不升 */
+const RARITY_RANK: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3 }
 
 describe('装备生成', () => {
   it('品质下限约束生效', () => {
@@ -140,19 +143,26 @@ describe('装备生成', () => {
       const lines = resolveEquipStats(inst).affixLines
       expect(new Set(lines.map(l => l.id)), '排序不该改变词条集合').toEqual(new Set(inst.affixes.map(a => a.id)))
       for (let k = 1; k < lines.length; k += 1) {
-        const prev = AFFIX_RARITY_RANK[lines[k - 1]!.rarity]
-        const cur = AFFIX_RARITY_RANK[lines[k]!.rarity]
+        const prev = RARITY_RANK[lines[k - 1]!.rarity]!
+        const cur = RARITY_RANK[lines[k]!.rarity]!
         expect(prev, `第 ${k} 条比前一条更稀有,排序没生效`).toBeGreaterThanOrEqual(cur)
       }
     }
   })
 
-  it('同稀有度按成色降序,而 sortAffixLines 不改动入参', () => {
-    const rolls = [
-      { id: 'atk2', roll: 0.2 },
-      { id: 'def2', roll: 0.9 }
-    ]
-    expect(sortAffixLines(rolls).map(r => r.id)).toEqual(['def2', 'atk2'])
-    expect(rolls.map(r => r.id), '排序函数不该就地改数组').toEqual(['atk2', 'def2'])
+  it('同稀有度按成色降序(排序由库给出,经本作的解析入口读出来)', () => {
+    // def2 与 atk2 同为「稀有」档,掷得满的那条该排在前面
+    const inst: EquipmentInstance = {
+      uid: 'u1',
+      templateId: EQUIPMENT_TEMPLATES[0]!.id,
+      quality: 'divine',
+      tier: 1,
+      level: 0,
+      affixes: [
+        { id: 'atk2', roll: 0.2 },
+        { id: 'def2', roll: 0.9 }
+      ]
+    }
+    expect(resolveEquipStats(inst).affixLines.map(l => l.id)).toEqual(['def2', 'atk2'])
   })
 })

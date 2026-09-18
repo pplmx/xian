@@ -26,10 +26,14 @@ describe('装备共鸣(equipSet)', () => {
     expect(hasActiveSet(two, 'ironwall')).toBe(true)
   })
 
-  it('不同 set 互不干扰,各自计件', () => {
-    const mixed = [inst('a', 'w_xuantie'), inst('b', 'h_xuantie'), inst('c', 'h_xingchen'), inst('d', 'b_xingluo')]
-    const sets = activeSets(mixed)
-    expect(sets.length).toBe(2)
+  it('不同 set 互不干扰,各自计件(同槽位只算后装的那件)', () => {
+    const tiebi = [inst('a', 'w_xuantie'), inst('b', 'h_xuantie')]
+    const xingdou = [inst('c', 'h_xingchen'), inst('d', 'b_xingluo')]
+    expect(activeSets(tiebi).map(s => s.id)).toEqual(['s_tiebi'])
+    expect(activeSets(xingdou).map(s => s.id)).toEqual(['s_xingdou'])
+    // 两件都戴在头上的方案不存在(装配是一槽一件):库按槽位归并,后一件顶掉前一件
+    const both = [inst('a', 'w_xuantie'), inst('b', 'h_xuantie'), inst('c', 'h_xingchen'), inst('d', 'b_xingluo')]
+    expect(activeSets(both).map(s => s.id)).toEqual(['s_xingdou'])
   })
 
   it('已装备统计正确(未装备的不计)', () => {

@@ -6,60 +6,56 @@
  * 组内装备要求件数宽松(挂载中的同 set 件数 ≥2 即共鸣)。
  */
 import type { EquipmentInstance } from '@/types'
+import type { EquipmentInstance as EngineEquipmentInstance } from '@engine/index'
 import { equipmentTemplate } from '@/data/equipment'
+import type { EquipSetDef } from '@/data/equipSets'
+import { equipSetDef } from '@/data/equipSets'
+import { ENGINE_WORLD } from './engineWorld'
+import { toEngineInstance } from './equipGen'
 
-export interface EquipSetDef {
-  id: string
-  name: string
-  /** 触发所需件数 */
-  required: number
-  /** 机制效果文案 + 战斗钩子标记 */
-  effectDesc: string
-  /** 机制钩子 Id(战斗引擎可识别) */
-  hook: 'ironwall' | 'astral'
-}
+// 内容住在 data/equipSets(装配与查询都要读),这里原样转出,调用方不必改 import
+export type { EquipSetDef } from '@/data/equipSets'
+export { EQUIP_SETS, equipSetDef } from '@/data/equipSets'
 
 /** astral 共鸣:开战时护盾 = 最大生命的 5%(并入快照盾 mod,共三层同一常量) */
 export const ASTRAL_SET_SHIELD = 0.05
 
-const SET_DEFS: Map<string, EquipSetDef> = new Map([
-  ['s_tiebi', { id: 's_tiebi', name: '铁壁共鸣', required: 2, effectDesc: '受到致命伤害时,首次保留 1 点气血', hook: 'ironwall' }],
-  ['s_xingdou', { id: 's_xingdou', name: '星斗共鸣', required: 2, effectDesc: '每场战斗开始时获得一层星光护体(护盾+5%)', hook: 'astral' }],
-  // 界域装备共鸣(扩界):高界的套件沿用既有两条机制钩子,不新开体系
-  ['s_xianjia', { id: 's_xianjia', name: '仙甲共鸣', required: 2, effectDesc: '开战时仙光护体(护盾+5%)', hook: 'astral' }],
-  ['s_shenjia', { id: 's_shenjia', name: '神铠共鸣', required: 2, effectDesc: '受到致命伤害时,首次保留 1 点气血', hook: 'ironwall' }],
-  ['s_hundunjia', { id: 's_hundunjia', name: '混沌共鸣', required: 2, effectDesc: '开战时本源护体(护盾+5%)', hook: 'astral' }]
-])
-
 /**
- * 全部共鸣定义 —— 给公共库的装配用(见 core/engineWorld)。
+ * 已装备件 → 库的装配输入(槽位 → uid + uid → 实例)。
  *
- * 装备模板里写着 `set: 's_xingdou'`,而共鸣的效果住在这一张表里;
- * 把两处拼起来才能回答"这套装到底有没有定义" —— 引擎的交叉校验正是查这个。
+ * 「同组几件、哪些 hook 生效」这条规则由库的装备系统算
+ * (见 ENGINE_WORLD.equipment.resolveLoadout);本文件只留**内容**:
+ * 共鸣叫什么、机制文案是什么、hook 是哪一个。
  */
-export const EQUIP_SETS: EquipSetDef[] = [...SET_DEFS.values()]
-
-export function equipSetDef(setId: string): EquipSetDef | undefined {
-  return SET_DEFS.get(setId)
+function loadoutOf(equipped: EquipmentInstance[]): {
+  loadout: { equipped: Record<string, string | undefined> }
+  byUid: Map<string, EngineEquipmentInstance>
+} {
+  const byUid = new Map<string, EngineEquipmentInstance>(equipped.map(it => [it.uid, toEngineInstance(it)]))
+  const slots: Record<string, string> = {}
+  for (const it of equipped) {
+    const tpl = equipmentTemplate(it.templateId)
+    if (tpl) slots[tpl.slot] = it.uid
+  }
+  return { loadout: { equipped: slots }, byUid }
 }
 
 /** 已装备件中,同 set 的件数统计 */
 export function setCounts(equipped: EquipmentInstance[]): Map<string, number> {
-  const counts = new Map<string, number>()
-  for (const it of equipped) {
-    const tpl = equipmentTemplate(it.templateId)
-    if (tpl?.set) counts.set(tpl.set, (counts.get(tpl.set) ?? 0) + 1)
-  }
-  return counts
+  const { loadout, byUid } = loadoutOf(equipped)
+  const stats = ENGINE_WORLD.equipment.resolveLoadout(loadout, byUid)
+  return new Map(stats.sets.map(s => [s.id, s.pieces]))
 }
 
 /** 当前激活的共鸣(件数达标)列表 */
 export function activeSets(equipped: EquipmentInstance[]): EquipSetDef[] {
-  const counts = setCounts(equipped)
+  const { loadout, byUid } = loadoutOf(equipped)
+  const stats = ENGINE_WORLD.equipment.resolveLoadout(loadout, byUid)
   const out: EquipSetDef[] = []
-  for (const [setId, n] of counts) {
-    const def = SET_DEFS.get(setId)
-    if (def && n >= def.required) out.push(def)
+  for (const set of stats.sets) {
+    const def = equipSetDef(set.id)
+    // 库给出的 active 里带着生效的 hook;本作的共鸣定义恰好一条 hook,对上才算激活
+    if (def && set.active.some(a => a.hook === def.hook)) out.push(def)
   }
   return out
 }

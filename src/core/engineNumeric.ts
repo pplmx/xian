@@ -18,6 +18,8 @@ export const gnumNumeric: Numeric<GNum> = {
   zero: gnZero(),
   one: gn(1),
   from: gn,
+  // 宿主的大数原样收下;数字则先归一化成 GNum(配置里两种写法并存时用得上)
+  of: value => (typeof value === 'number' ? gn(value) : value),
   add,
   sub,
   mul,

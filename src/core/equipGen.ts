@@ -12,20 +12,18 @@
  * 连**掷完之后的随机流状态**都要对上 —— 生成同样的东西还不够,
  * 还得消耗同样多的随机数,否则同一种子后面的掉落会整体错位。
  *
- * ## 解析那半边仍住在这里
+ * ## 解析那半边也进库了
  *
- * resolveEquipStats 用的是本作自己的层级战力表(core/tierScale.powerScale,GNum)。
- * 库那边同一张表是以 number 投影进去的(见 engineWorld 注释),差在双精度末位;
- * 「玩家看到的数字一位不变」这条线要求解析仍走 GNum,故它留在这里。
+ * resolveEquipStats 曾经留在这里,理由是它用的是本作自己的层级战力表(GNum),
+ * 而库那时只收得下 number 表 —— 搬过去会在双精度末位上漂。
+ * 库现在允许配置里直接放**宿主的大数**(`Numeric.of`),故这条理由没有了:
+ * 解析改由库算,本作只做一次形状适配(quality → qualityId、补齐三个平铺键),
+ * 数字与迁移前逐位相同。
  */
-import type { AffixRarity, AnyStatKey, EquipmentInstance, EquipSlot, GNum, QualityDef, QualityId, StatMods } from '@/types'
+import type { AffixRarity, EquipmentInstance, EquipSlot, GNum, QualityDef, QualityId, StatMods } from '@/types'
+import type { EquipmentInstance as EngineEquipmentInstance } from '@engine/index'
 import type { RandomService } from '@/utils/random'
-import { gnZero, mulN, add } from '@/utils/gnum'
-import { AFFIX_RARITY_RANK, affixDef, affixValue } from '@/data/affixes'
-import { equipmentTemplate } from '@/data/equipment'
-import { qualityDef } from '@/data/qualities'
-import { EQUIP_BASE_FACTOR, EQUIP_LEVEL_BONUS, EQUIP_QUALITY_FLAT_EXP } from '@/data/constants'
-import { powerScale } from './formulas'
+import { gnZero } from '@/utils/gnum'
 import { ENGINE_WORLD } from './engineWorld'
 
 export interface GenOptions {
@@ -98,54 +96,34 @@ export interface ResolvedEquipStats {
  * 判据:玩家扫一眼装备卡片,第一条就该是这件东西最值钱的地方。
  * 稀有度写在词条定义里(权重推出来的),成色就是这一件的 roll —— 两者都是既有数据。
  */
-export function sortAffixLines<T extends { id: string; roll: number }>(rolls: readonly T[]): T[] {
-  return [...rolls].sort((a, b) => {
-    const ra = AFFIX_RARITY_RANK[affixDef(a.id)?.rarity ?? 'common']
-    const rb = AFFIX_RARITY_RANK[affixDef(b.id)?.rarity ?? 'common']
-    return rb - ra || b.roll - a.roll || a.id.localeCompare(b.id)
-  })
+/** 解析装备实例的实际数值 —— 实现已搬进公共库的装备系统,此处只做形状适配 */
+export function resolveEquipStats(inst: EquipmentInstance): ResolvedEquipStats {
+  const resolved = ENGINE_WORLD.equipment.resolve(toEngineInstance(inst))
+  return {
+    // 本作的三个平铺键恒定存在(取值处直接读 flats.attack),故补齐零值
+    flats: {
+      attack: resolved.flats.attack ?? gnZero(),
+      defense: resolved.flats.defense ?? gnZero(),
+      maxHp: resolved.flats.maxHp ?? gnZero()
+    },
+    mods: resolved.mods as StatMods,
+    affixLines: resolved.affixLines
+  }
 }
 
-/** 解析装备实例的实际数值 */
-export function resolveEquipStats(inst: EquipmentInstance): ResolvedEquipStats {
-  const template = equipmentTemplate(inst.templateId)
-  const flats = { attack: gnZero(), defense: gnZero(), maxHp: gnZero() }
-  const mods: StatMods = {}
-  const affixLines: ResolvedEquipStats['affixLines'] = []
-  if (!template) return { flats, mods, affixLines }
-
-  const q = qualityDef(inst.quality)
-  const scale = powerScale(inst.tier)
-  // 品质对平铺按 EQUIP_QUALITY_FLAT_EXP 压缩:高品质的价值主要体现在词条数量上,
-  // 而不是把平铺数值再翻几倍(Phase 33.2,详见常量处注释)
-  const factor = EQUIP_BASE_FACTOR * Math.pow(q.mult, EQUIP_QUALITY_FLAT_EXP) * (1 + inst.level * EQUIP_LEVEL_BONUS)
-
-  for (const key of ['attack', 'defense', 'maxHp'] as const) {
-    const weight = template.base[key]
-    if (weight) flats[key] = add(flats[key], mulN(scale, weight * factor))
+/**
+ * 本作的装备实例 → 库的装备实例(字段名不同:本作叫 quality,库叫 qualityId)。
+ *
+ * 只有这一处知道两种形状的对应关系,故凡要把本作的实例交给库的地方都走它 ——
+ * 少了这道转换,库读到的品质会是 undefined(静默退回凡品)。
+ */
+export function toEngineInstance(inst: EquipmentInstance): EngineEquipmentInstance {
+  return {
+    uid: inst.uid,
+    templateId: inst.templateId,
+    qualityId: inst.quality,
+    tier: inst.tier,
+    level: inst.level,
+    affixes: inst.affixes
   }
-  if (template.fixedMods) {
-    for (const k in template.fixedMods) {
-      const key = k as AnyStatKey
-      mods[key] = (mods[key] ?? 0) + (template.fixedMods[key] ?? 0)
-    }
-  }
-  for (const roll of sortAffixLines(inst.affixes)) {
-    const def = affixDef(roll.id)
-    if (!def) continue
-    const value = affixValue(def, roll.roll)
-    mods[def.key] = (mods[def.key] ?? 0) + value / 100
-    // desc 里 {v} 是数值的落点:切开它,界面才能只给数字加粗、并把它右对齐
-    const [before = '', after = ''] = def.desc.split('{v}')
-    affixLines.push({
-      id: def.id,
-      name: def.name,
-      desc: def.desc.replace('{v}', String(value)),
-      before,
-      value: String(value),
-      after,
-      rarity: def.rarity
-    })
-  }
-  return { flats, mods, affixLines }
 }

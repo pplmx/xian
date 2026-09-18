@@ -14,7 +14,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import type { AttributeDef } from '@engine/index'
-import { attributeDefs, createAttributeSystem, createDungeonSystem, createEquipmentSystem } from '@engine/index'
+import { attributeDefs } from '@engine/index'
 import { createRng } from '@engine/rng'
 import type { GNum, QualityId } from '@/types'
 import {
@@ -42,11 +42,11 @@ import {
   WORLD_STEP_EXP_MULT
 } from '@/data/constants'
 import { LIFESPAN_WORLDS, MAX_MAJOR, REALMS, SUB_NAMES, WORLDS, WORLD_BREAK_MAJOR, isWorldEntry, lifespanOf, realmLabel } from '@/data/realms'
-import { mul, mulN, powN, toNum } from '@/utils/gnum'
+import { mul, mulN, powN } from '@/utils/gnum'
 import { baseCombatStats, breakthroughBaseRate, expRequirement, powerScale } from './formulas'
 import { mergeMods } from './statsCalc'
 import { isSoftCapped, mergeModsDetailed, modDepth } from './statsCalc'
-import { AFFIXES, affixValue } from '@/data/affixes'
+import { AFFIXES } from '@/data/affixes'
 import { QUALITIES } from '@/data/qualities'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
 import { generateEquipment, resolveEquipStats } from './equipGen'
@@ -58,17 +58,24 @@ import { mulberry32, RandomService } from '@/utils/random'
 import { QUALITY_OUT_OF_BAND, QUALITY_TIER_SHIFT } from '@/data/constants'
 import type { EquipmentInstance, EquipSlot, QualityDef } from '@/types'
 import { uid as newUid } from '@/utils/id'
+import { add as gnAdd, mulN as gnMulN } from '@/utils/gnum'
+import { equipmentTemplate } from '@/data/equipment'
+import { affixDef as realAffixDef } from '@/data/affixes'
+import { qualityDef as realQualityDef } from '@/data/qualities'
+import { EQUIP_BASE_FACTOR, EQUIP_LEVEL_BONUS, EQUIP_QUALITY_FLAT_EXP } from '@/data/constants'
+import { powerScale as realPowerScale } from './tierScale'
+import { gnZero } from '@/utils/gnum'
+import type { ResolvedEquipStats } from './equipGen'
 import { ENGINE_WORLD, ENGINE_WORLD_CONFIG } from './engineWorld'
+import { activeSets, hasActiveSet, setCounts } from './equipSet'
+import { equipmentTemplate as realTemplate } from '@/data/equipment'
 
 /**
- * 同一份配置的 number 数值层 —— 属性/装备/副本三套尚未迁移,用 number 更好比数。
- * 这不是第二份实现:配置是那一份,只换库的数值层。
+ * 对账就用**应用运行时那一份**世界对象(ENGINE_WORLD),不再另装一份:
+ * 属性合并、装备生成与解析、副本规则都不依赖具体数值类型,
+ * 于是"判据比的就是玩家真正跑到的东西",没有中间层可以掩盖差异。
  */
-const NUM_WORLD = {
-  attributes: createAttributeSystem<number>(ENGINE_WORLD_CONFIG.attributes),
-  equipment: createEquipmentSystem<number>(ENGINE_WORLD_CONFIG.equipment),
-  dungeons: createDungeonSystem<number>(ENGINE_WORLD_CONFIG.dungeons)
-}
+const NUM_WORLD = ENGINE_WORLD
 
 // ============ 迁移前冻结的旧口径(不得 import core/formulas) ============
 
@@ -205,6 +212,68 @@ function refWinsUntilRegionBoss(wins: number, cleared: boolean): number | null {
   return Math.max(0, EXPLORE_BOSS_AFTER_WINS - wins)
 }
 
+/** 迁移前 data/affixes.affixValue 的原式(词条数值 = min + (max-min) × roll,按小数位取整) */
+function refAffixValue(def: { min: number; max: number; decimals: number }, roll: number): number {
+  const v = def.min + (def.max - def.min) * Math.max(0, Math.min(1, roll))
+  const f = Math.pow(10, def.decimals)
+  return Math.round(v * f) / f
+}
+
+/** 迁移前 core/equipSet 的统计口径(直接按数组里的件数计,不看槽位) */
+function refSetCounts(equipped: EquipmentInstance[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const it of equipped) {
+    const tpl = realTemplate(it.templateId)
+    if (tpl?.set) counts.set(tpl.set, (counts.get(tpl.set) ?? 0) + 1)
+  }
+  return counts
+}
+
+function refActiveSetIds(equipped: EquipmentInstance[]): string[] {
+  const out: string[] = []
+  for (const [setId, n] of refSetCounts(equipped)) {
+    // 本作五套共鸣的 required 都是 2
+    if (n >= 2) out.push(setId)
+  }
+  return out.sort()
+}
+
+/** 迁移前 core/equipGen.resolveEquipStats 的原式(平铺 / 固有词条 / 随机词条 / 展示行) */
+function refResolveEquipStats(inst: EquipmentInstance): ResolvedEquipStats {
+  const rarityRank: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3 }
+  const template = equipmentTemplate(inst.templateId)
+  const flats = { attack: gnZero(), defense: gnZero(), maxHp: gnZero() }
+  const mods: Record<string, number> = {}
+  const affixLines: ResolvedEquipStats['affixLines'] = []
+  if (!template) return { flats, mods, affixLines }
+
+  const q = realQualityDef(inst.quality)
+  const scale = realPowerScale(inst.tier)
+  const factor = EQUIP_BASE_FACTOR * Math.pow(q.mult, EQUIP_QUALITY_FLAT_EXP) * (1 + inst.level * EQUIP_LEVEL_BONUS)
+
+  for (const key of ['attack', 'defense', 'maxHp'] as const) {
+    const weight = template.base[key]
+    if (weight) flats[key] = gnAdd(flats[key], gnMulN(scale, weight * factor))
+  }
+  if (template.fixedMods) {
+    for (const k in template.fixedMods) mods[k] = (mods[k] ?? 0) + ((template.fixedMods as Record<string, number>)[k] ?? 0)
+  }
+  const sorted = [...inst.affixes].sort((a, b) => {
+    const ra = rarityRank[realAffixDef(a.id)?.rarity ?? 'common']!
+    const rb = rarityRank[realAffixDef(b.id)?.rarity ?? 'common']!
+    return rb - ra || b.roll - a.roll || a.id.localeCompare(b.id)
+  })
+  for (const roll of sorted) {
+    const def = realAffixDef(roll.id)
+    if (!def) continue
+    const value = refAffixValue(def, roll.roll)
+    mods[def.key] = (mods[def.key] ?? 0) + value / 100
+    const [before = '', after = ''] = def.desc.split('{v}')
+    affixLines.push({ id: def.id, name: def.name, desc: def.desc.replace('{v}', String(value)), before, value: String(value), after, rarity: def.rarity })
+  }
+  return { flats, mods, affixLines }
+}
+
 // ============ 等级 ============
 
 describe('对账 · 等级体系(库 与 冻结的旧口径)', () => {
@@ -290,8 +359,9 @@ describe('迁移接线 · app 的 formulas 确实经库计算', () => {
     const factors = ENGINE_WORLD_CONFIG.equipment.power.tierFactors ?? []
     const maxTier = Math.max(...EQUIPMENT_TEMPLATES.map(t => t.tier))
     expect(factors.length).toBe(maxTier)
+    // 表里就是 GNum(宿主的大数),故这里是**精确相等**,不是"接近"
     for (let tier = 1; tier <= factors.length; tier += 1) {
-      expect(factors[tier - 1]!).toBeCloseTo(toNum(powerScale(tier)), 12)
+      expect(factors[tier - 1]!).toEqual(powerScale(tier))
     }
   })
 })
@@ -503,7 +573,7 @@ describe('对账 · 装备系统(库 与 尚未迁移的 equipGen)', () => {
       expect(mine.minRank).toBe(def.minRank)
       expect(mine.slots).toEqual(def.slots)
       for (const roll of [0, 0.25, 0.5, 0.75, 1]) {
-        expect(system.affixValue(mine, roll)).toBe(affixValue(def, roll))
+        expect(system.affixValue(mine, roll)).toBe(refAffixValue(def, roll))
       }
     }
   })
@@ -521,7 +591,7 @@ describe('对账 · 装备系统(库 与 尚未迁移的 equipGen)', () => {
     }
   })
 
-  it('同一件装备的平铺与词条,与游戏 resolveEquipStats 逐项一致', () => {
+  it('同一件装备的解析与冻结的旧口径**精确相等**(平铺是 GNum,逐位比)', () => {
     const samples = EQUIPMENT_TEMPLATES.filter(t => (DROP_SLOTS as readonly string[]).includes(t.slot)).filter((_, i) => i % 7 === 0)
     const affixes = [
       { id: 'atk1', roll: 0.37 },
@@ -532,23 +602,64 @@ describe('对账 · 装备系统(库 与 尚未迁移的 equipGen)', () => {
       for (const quality of ['mortal', 'fine', 'divine']) {
         for (const level of [0, 5]) {
           const mine = system.resolve({ uid: 'u', templateId: template.id, qualityId: quality, tier: template.tier, level, affixes })
-          const game = resolveEquipStats({ uid: 'u', templateId: template.id, quality: quality as QualityId, tier: template.tier, level, affixes })
-          // 层级战力表以 double 投影进配置(见 engineWorld 注释),故这里是相对 1e-12 的一致
-          const rel = (a: number, b: GNum): void => {
-            const scale = Math.max(Math.abs(a), Math.abs(toNum(b)), 1)
-            expect(Math.abs(a - toNum(b)) / scale, `${template.id}/${quality}/${level}`).toBeLessThan(1e-12)
-          }
-          rel(Number(mine.flats.attack ?? 0), game.flats.attack)
-          rel(Number(mine.flats.defense ?? 0), game.flats.defense)
-          rel(Number(mine.flats.maxHp ?? 0), game.flats.maxHp)
-          const keys = new Set([...Object.keys(mine.mods), ...Object.keys(game.mods)])
+          const ref = refResolveEquipStats({ uid: 'u', templateId: template.id, quality: quality as QualityId, tier: template.tier, level, affixes })
+          const where = `${template.id}/${quality}/${level}`
+          expect(mine.flats.attack ?? gnZero(), where).toEqual(ref.flats.attack)
+          expect(mine.flats.defense ?? gnZero(), where).toEqual(ref.flats.defense)
+          expect(mine.flats.maxHp ?? gnZero(), where).toEqual(ref.flats.maxHp)
+          const keys = new Set([...Object.keys(mine.mods), ...Object.keys(ref.mods)])
           for (const key of keys) {
-            expect(mine.mods[key] ?? 0, `${template.id}/${quality}/${key}`).toBeCloseTo((game.mods as Record<string, number>)[key] ?? 0, 10)
+            expect(mine.mods[key] ?? 0, `${where} · ${key}`).toBe((ref.mods as Record<string, number>)[key] ?? 0)
           }
-          expect(mine.affixLines.map(l => l.value)).toEqual(game.affixLines.map(l => l.value))
+          expect(mine.affixLines.map(l => l.value), where).toEqual(ref.affixLines.map(l => l.value))
         }
       }
     }
+  })
+
+  it('迁移接线:app 的 resolveEquipStats 与库同一份结果(含缺模板时补零)', () => {
+    const inst: EquipmentInstance = {
+      uid: 'u',
+      templateId: EQUIPMENT_TEMPLATES[0]!.id,
+      quality: 'spirit',
+      tier: EQUIPMENT_TEMPLATES[0]!.tier,
+      level: 3,
+      affixes: [{ id: 'atk1', roll: 0.5 }]
+    }
+    const app = resolveEquipStats(inst)
+    const lib = system.resolve({ uid: inst.uid, templateId: inst.templateId, qualityId: inst.quality, tier: inst.tier, level: inst.level, affixes: inst.affixes })
+    expect(app.flats).toEqual({ attack: lib.flats.attack ?? gnZero(), defense: lib.flats.defense ?? gnZero(), maxHp: lib.flats.maxHp ?? gnZero() })
+    expect(app.mods).toEqual(lib.mods)
+    expect(app.affixLines.map(l => l.desc)).toEqual(lib.affixLines.map(l => l.desc))
+    // 模板不存在时:三个平铺键仍要在(调用处直接读 flats.attack),值为零
+    const missing = resolveEquipStats({ ...inst, templateId: '不存在的模板' })
+    expect(missing.flats).toEqual({ attack: gnZero(), defense: gnZero(), maxHp: gnZero() })
+    expect(missing.mods).toEqual({})
+    expect(missing.affixLines).toEqual([])
+  })
+
+  it('共鸣的件数与激活:与冻结的旧口径一致(真实装配是一槽一件)', () => {
+    const inst = (uid: string, templateId: string): EquipmentInstance => ({
+      uid,
+      templateId,
+      quality: 'fine' as QualityId,
+      tier: 3,
+      level: 0,
+      affixes: []
+    })
+    // 一槽一件的真实装配:玄铁重剑(武)+ 玄铁冠(头)= 铁壁两件
+    const tiebi = [inst('a', 'w_xuantie'), inst('b', 'h_xuantie')]
+    // 星辰冠(头)+ 星罗法衣(身)= 星斗两件
+    const xingdou = [inst('c', 'h_xingchen'), inst('d', 'b_xingluo')]
+    const tiebiThree = [...tiebi, inst('e', 'b_xuanwu')]
+    for (const equipped of [tiebi, xingdou, tiebiThree]) {
+      expect(setCounts(equipped), equipped.map(i => i.templateId).join('+')).toEqual(refSetCounts(equipped))
+      expect(activeSets(equipped).map(s => s.id).sort()).toEqual(refActiveSetIds(equipped))
+    }
+    expect(activeSets(tiebi).map(s => s.id)).toEqual(['s_tiebi'])
+    expect(hasActiveSet(tiebi, 'ironwall')).toBe(true)
+    expect(hasActiveSet(tiebi, 'astral')).toBe(false)
+    expect(hasActiveSet(xingdou, 'astral')).toBe(true)
   })
 })
 
