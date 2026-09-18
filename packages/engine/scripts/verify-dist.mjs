@@ -127,6 +127,21 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
     assert.ok(listedDocs.includes(doc), `README 的目录树里没有列 docs/${doc}.md`)
   }
   console.log(`目录树自检通过(${listedModules.length} 个模块文件 + ${actualDocs.length} 份文档都在图上)`)
+
+  /**
+   * 用例数自检 —— README 里那行"N 个用例 / M 个文件",文件数不许写错。
+   *
+   * 用例数每次加用例都会变,人工同步迟早会漏;但**文件数**是静态可数的,盯住它就能拦住
+   * 最常见的那种漂移(加了新 spec 文件但没改 README)。用例数仍靠人写,写的时候顺手跑一次
+   * `bun run test` 核对 —— 这条自检只保证"分母没写错"。
+   */
+  const specFiles = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).filter(
+    entry => typeof entry === 'string' && entry.endsWith('.spec.ts')
+  ).length
+  const countRow = readme.match(/(\d+) 个用例 \/ (\d+) 个文件/)
+  assert.ok(countRow, 'README 的判据表里找不到"用例 / 文件"那一行')
+  assert.equal(Number(countRow[2]), specFiles, `README 写的用例文件数与实际不符(实际 ${specFiles} 个)`)
+  console.log(`用例数自检通过(README 写的 ${countRow[2]} 个用例文件与实际一致)`)
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
