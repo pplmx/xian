@@ -19,6 +19,7 @@ import {
   createChain,
   createResourceSystem,
   createTaskBoard,
+  deltaOf,
   deltaSince,
   evalGoal,
   goalProgress,
@@ -163,6 +164,10 @@ console.log(
     .map(key => `${key} +${deltaSince(seasonBase, counters, key)}`)
     .join(' · ')}`
 )
+// 只拿两个数比一比时用 deltaOf:例如"这一周比上一周多背了多少词"
+const thisWeekWords = counters.words ?? 0
+const lastWeekWords = thisWeekWords - 20
+console.log(`  本周比上周多背 ${deltaOf(lastWeekWords, thisWeekWords)} 个词(deltaOf 只吃两个数,不需要快照)`)
 
 // 收尾:把用到的能力都真的用了一次(示例也是判据 —— 它进类型检查与两份自检)
 console.log(

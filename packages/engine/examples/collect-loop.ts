@@ -31,8 +31,10 @@ import {
   createTaskBoard,
   createUnlockRegistry,
   drawFrom,
+  drawMany,
   snapshotOf,
   deltaSince,
+  softChance,
   type DeckEntry
 } from '../src/index.js'
 
@@ -188,6 +190,19 @@ const report = readings.read([
 ])
 console.log(
   `体检:${report.map(r => `${r.key}=${r.verdict}${r.note ? `(${r.note})` : ''}`).join(' · ')}`
+)
+
+// 一次给几样:开盒 / 开局天赋这类"一口气抽 N 张、这一轮不重复"的用法
+const bundle = drawMany(CARDS, { level: 4, tags: ['市集'], seen: seenOnce }, rng, 3)
+console.log(`开盒三张(一轮不重复):${bundle.map(c => c.name).join(' / ')}`)
+
+// 软保底曲线本身也是公开的:想知道"下一抽的自然概率是多少"直接问它
+console.log(
+  `软保底曲线(从第 ${SOFT.from} 抽起每抽 +5%,封顶 +${SOFT.cap * 100}%):` +
+    [
+      `第 ${SOFT.from} 抽 ${(softChance(0.18, SOFT.from, SOFT) * 100).toFixed(1)}%`,
+      `第 ${SOFT.from + 4} 抽 ${(softChance(0.18, SOFT.from + 4, SOFT) * 100).toFixed(1)}%`
+    ].join(' · ')
 )
 
 console.log(
