@@ -30,6 +30,7 @@
 | 重铸(洗练词条 / 封存) | `core/reforge` 的重掷走库的 `equipment.rerollAffixes`(封存映射成 `keep`) | `engineReforgeParity.spec` 用旧循环当尺子:五组种子 × 四类装备,词条与掷点逐条相同,**随机源消耗数也相同**(否则整局之后的序列会错位) |
 | 智能收纳(自动去留裁决与读数) | `core/smartKeep` 的规则链与挤位次序走库的 `createTriage` / `compareBy`(判据与文案仍是本作内容) | `engineTriageParity.spec` 冻结旧 if 链:十件样件 × 六套开关,`keep` 与**理由文案**逐字相同;读数(按理由分组)与挤位次序也逐项对得上 |
 | 天时(每日确定性环境) | `core/weather` 的周期序号、种子派生与池子切换走库的 `createCycleSystem`(本作自己的种子公式与"清和 30%"抽取规则通过 `seedOf` / `pick` 原样保留) | `engineCycleParity.spec` 冻结旧实现逐日比:人间界 60 天、各界 × 每个境界各 12 天,天时 id 逐日相同;换界域换池子;另测库多出来的"还有多久换"与"明日天时"(界面已用) |
+| 事件结算(掷后果 / 效果解释 / 超时兜底) | `core/eventEngine` 的 `resolveEventChoice` 与 `autoResolveEvent` 走库的 `createChoiceSystem`(效果的语义仍由本作的 `applyEffect` 解释) | `engineChoiceParity.spec` 冻结旧实现:前 40 个事件的每个选项 × 20 颗种子,**掷中的后果与之后消耗的随机数**都逐次相同;三级兜底在两种玩家状态下与旧实现一致 |
 
 资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
 材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,

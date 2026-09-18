@@ -129,6 +129,9 @@ export { compareBy, createTriage } from './triage.js'
 export type { CycleConfig, CycleContext, CycleEntry, CycleSystem, ScheduledCycle } from './cycles.js'
 export { createCycleSystem } from './cycles.js'
 
+export type { ChoiceConfig, ChoiceDef, ChoiceOutcome, ChoiceReceipt, ChoiceSystem } from './choices.js'
+export { createChoiceSystem } from './choices.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

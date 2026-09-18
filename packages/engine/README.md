@@ -215,6 +215,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 资源账本 | `createResourceSystem` | 灵石 / 信用点 / 零花钱:收多少、付得起吗、上限多少、这批是哪来的? |
 | 分流裁决 | `createTriage` | 这一件留还是不留?自动回收 / 自动分解的规则顺序与读数 |
 | 周期 | `createCycleSystem` | 每天 / 每赛季换一种环境:今天是什么、还有多久换、接下来几天分别是什么 |
+| 抉择 | `createChoiceSystem` | 事件选项 / 任务分支:能不能选、按权重掷哪种后果、效果由谁解释、没选时用哪条 |
 
 ### 战斗:副本的下半场
 
@@ -465,6 +466,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **自动去留的规则顺序**(自动回收 / 自动分解 / 自动出售) | `createTriage({ rules, skip?, fallback? })`:第一条表态的说了算,谁都没表态才用兜底;`impact()` 给"每条规则各判掉多少"的读数,与裁决共用同一条链 |
 | **行囊满了先挤掉谁** | `compareBy(比较器…)`:一串比较器依次比,前一层分出胜负就不再往下 |
 | **每日 / 每赛季的环境轮换**(天时、运势、节气、赛季规则) | `createCycleSystem({ periodSec, pools, pick?, seedOf? })` —— 由周期序号派生独立随机源(不碰全局随机流、不依赖现实时间),换池与预告都有;抽取规则与种子公式可接管 |
+| **事件的选项与后果**(加权结果、代价与收益、超时兜底) | `createChoiceSystem({ interpret })` —— 选项能不能选、后果按权重掷、效果逐条由你解释并收成回执、没选时的三级兜底;效果标签库一律不认 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |

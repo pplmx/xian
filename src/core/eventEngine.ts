@@ -25,6 +25,7 @@ import { recordEvent } from './worldMemory'
 import { recordFortuneChoice } from './fortuneChain'
 import { modOf } from './statsCalc'
 import { deckPool, drawFrom, inBand } from 'wanxiang-engine'
+import { createChoiceSystem, type ChoiceDef } from 'wanxiang-engine'
 import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
 import { useInventoryStore } from '@/stores/inventory'
@@ -274,16 +275,30 @@ export interface EventResolution {
   lines: string[]
 }
 
+/**
+ * 事件结算走库的抉择层(见 packages/engine 的 choices):加权掷后果、逐条解释效果、
+ * 回执照收;效果怎么解释仍是本作的事(下面那个 `interpret`)。
+ */
+export const CHOICES = createChoiceSystem<EventEffect, number>({
+  interpret: (effect, tier) => applyEffect(effect, tier)
+})
+
+/** 本作的选项 → 库认的形状(只差一个"能不能选"的包装) */
+export function asChoice(choice: EventChoice, tier: number): ChoiceDef<EventEffect> {
+  return {
+    label: choice.label,
+    hint: choice.hint,
+    isDefault: choice.isDefault,
+    available: () => choiceAvailable(choice, tier),
+    outcomes: choice.outcomes
+  }
+}
+
 /** 结算某个选项 */
 export function resolveEventChoice(def: EventDef, choiceIdx: number, tier: number): EventResolution {
   const adventure = useAdventureStore()
   const choice = def.choices[choiceIdx] ?? def.choices[0]!
-  const outcome = rng.weighted(choice.outcomes, o => o.weight)
-  const lines: string[] = []
-  for (const effect of outcome.effects) {
-    const line = applyEffect(effect, tier)
-    if (line) lines.push(line)
-  }
+  const receipt = CHOICES.resolve(asChoice(choice, tier), tier, rng)
   if (def.once) adventure.markEventSeen(def.id)
   collect('event', def.id)
   track('events')
@@ -302,15 +317,14 @@ export function resolveEventChoice(def: EventDef, choiceIdx: number, tier: numbe
     const isDefault = def.choices[choiceIdx]?.isDefault ?? false
     recordFortuneChoice(def.id, isDefault ? 'leave' : 'take')
   }
-  return { outcomeText: outcome.text, lines }
+  return { outcomeText: receipt.text, lines: receipt.lines }
 }
 
 /** 离线/超时自动按默认选项结算 */
 export function autoResolveEvent(eventId: string, tier: number): EventResolution | null {
   const def = eventDef(eventId)
   if (!def) return null
-  let idx = def.choices.findIndex(c => c.isDefault && choiceAvailable(c, tier))
-  if (idx < 0) idx = def.choices.findIndex(c => choiceAvailable(c, tier))
-  if (idx < 0) idx = 0
+  // 三级兜底(默认且可选 → 第一条可选 → 第一条)由库回答,免得界面与离线各写一遍
+  const idx = CHOICES.defaultIndex(def.choices.map(c => asChoice(c, tier)), tier)
   return resolveEventChoice(def, idx, tier)
 }
