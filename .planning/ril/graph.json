@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 214,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T02:54:33+00:00",
+  "updated_at": "2026-09-18T02:55:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -12699,6 +12699,20 @@
       "touched_round": 214,
       "commit": "fb6a934",
       "summary": "归来结算新增寿元告警(仅余 X 载 + 该突破/该准备轮回),阈值与顶栏同源;offlineLedger.spec 新增「长缺席压到告警线内必须报警」判据。"
+    },
+    "TASK-196": {
+      "id": "TASK-196",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T02:55:00+00:00",
+      "updated_at": "2026-09-18T02:55:00+00:00",
+      "touched_round": 214,
+      "category": "stability",
+      "severity": 0.6,
+      "confidence": 1.0,
+      "effort": 1,
+      "summary": "归来结算的寿元告警:离线修为/灵气已不限时,而寿元按现实时间走 —— 长缺席可能把人送到油尽灯枯边上,旧文案只报\"流逝了多少\"(没说剩多少、也没说危不危险)。已补告警(阈值与顶栏同源)。"
     }
   },
   "edges": [
@@ -18924,6 +18938,12 @@
       "to": "COMP-025",
       "type": "governs",
       "created_at": "2026-09-18T02:54:33+00:00"
+    },
+    {
+      "from": "CHG-252",
+      "to": "TASK-196",
+      "type": "implements",
+      "created_at": "2026-09-18T02:55:00+00:00"
     }
   ]
 }
