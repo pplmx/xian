@@ -58,6 +58,7 @@
 | 背包 / 持有(容量、装配即腾位、满了怎么办) | `createHoldingSystem` | `holding.spec.ts` + `holding.sim.spec.ts`(装上 6 件就腾出 6 位) |
 | 副本链(区域怎么开、打几场见首领、通关给什么) | `createDungeonSystem` | `dungeons.spec.ts` + `dungeons.sim.spec.ts`(两种节奏差一场、敌人随层级陡多少) |
 | 战斗骨架(护盾、反击、追击、技能标签) | `createCombatEngine` | `examples/combo-arts.ts` |
+| 默认伤害公式的节奏(攻防比 → 几回合打完) | 同上 | `combat.sim.spec.ts`(攻翻倍伤害 2.67 倍;1000 血靶子:攻=防 20 回合 / 攻·4 只 4 回合) |
 | **把你自己那套战斗整段接进来** | `BattleConfig` 的 `skillFn` / `strikeFn` / `actFn` | `examples/combat-takeover.ts`(老口径 × 接管版,同 200 颗种子逐场相同) |
 | **换一种完全不同的战斗口径再试一次** | 同上三处主权 | `examples/arena-takeover.ts`(拳赛:体力 / 连击 / 确定性反打 —— 同 200 颗种子逐场相同) |
 | 掉落表(概率归一、保底、份数) | `createDropTable` | `drops.spec.ts` |
@@ -172,6 +173,7 @@
 | 开了 `guarantee` 却没看出变化 | 保底只对挂了 `guaranteed: true` 的条目生效 —— 没挂的条目开不开都一样 | `drops.sim.spec.ts` |
 | 想要产出翻倍,却用 `scalesWithAttempts` | 那是"多抽一次":期望一样,但**掷骰次数翻倍、后面的随机流全变**;不改随机流地翻倍用 `countMult` | `drops.sim.spec.ts` |
 | "没开炉"与"开炉失败"混成一个 false | 分成 `fired` 与 `succeeded` 两档 | `recipes.spec.ts` |
+| 以为"成功率"就等于"一炉的产量" | 期望产出 = 成功率 × (1 + 双成率);保料率决定失败是"慢"还是"亏" | `recipes.sim.spec.ts` |
 | 小数产出按拍取整 | 零头留累加器,够了整数才发 | `facilities.spec.ts` |
 | 接管战斗时只照抄公式、不照抄**掷骰序列** | 对方那边"掷了但没用上"的骰子(反击/追击/震慑,词条为 0 也照掷)必须照掷,否则后面全乱 | `combat.spec.ts`(三处主权)+ 你自己那份同种子对账 |
 | 接管时把"某一部分"写重了(两边各加一次暴击基数) | 整段接管要连"这一部分是**谁**加的"一起搬 —— 库默认加的那一份,接管之后就别再加 | 同上(主权版样例就在宿主侧的消融用例里) |
