@@ -63,6 +63,7 @@
 | **换一种完全不同的战斗口径再试一次** | 同上三处主权 | `examples/arena-takeover.ts`(拳赛:体力 / 连击 / 确定性反打 —— 同 200 颗种子逐场相同) |
 | 掉落表(概率归一、保底、份数) | `createDropTable` | `drops.spec.ts` |
 | 炼制 / 合成的成功率(四乘区相乘 + 越级) | `composeCraftRate` / `leverFactor` / `overReachFactor` | `crafting.spec.ts` + `crafting.sim.spec.ts`(每个乘区值多少、越级多陡、练到九成要多久) |
+| 技艺 → 采料 → 开炉 → 成品这一整条怎么串 | `createSkillSystem` + `createDropTable` + `createRecipeRunner` + `createCompanionSystem` | `examples/craft-loop.ts`(「药庐二十四炉」:技艺涨一炉就稳一分、保料把"亏"变成"慢"、灵药是瓶颈) |
 | 开炉之后实际发生什么(没开炉 / 失败保料 / 双成) | `createRecipeRunner` | `recipes.spec.ts` |
 | 建造 / 每小时产出 | `createFacilitySystem` + `accrue` | `examples/daily-loop.ts` 的设施段 |
 | 产线曲线与仓库上限怎么搭 | `createFacilitySystem` 的 `perHour` / `cap` | `facilities.sim.spec.ts`(装满后每小时白产多少、结算粒度对总量的影响) |
