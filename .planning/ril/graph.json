@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 266,
+  "round": 267,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:59:48+00:00",
+  "updated_at": "2026-09-18T17:06:17+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 266,
+      "touched_round": 267,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15767,7 +15767,7 @@
       "version": 1,
       "created_at": "2026-09-18T16:59:41+00:00",
       "updated_at": "2026-09-18T16:59:41+00:00",
-      "touched_round": 266,
+      "touched_round": 267,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -15809,6 +15809,94 @@
       "rationale": "自动去留这类功能翻车最多的不是判据本身,而是**顺序**与**可见性**:政策分散在两个入口时,玩家只记得自己设过的那个(实测:保留线设在灵品,另一个弹窗勾过玄品,玄品在保留线之上照旧被扔);开关一排而看不到\"关掉它要扔多少件\",玩家只能盲按。故库给的是两件事 —— 有序规则链(第一条表态的说了算、谁都不表态才兜底、豁免单独一层)与**按同一条链算出来的读数**,而不是判据本身:判据是内容,顺序与数字是骨架。",
       "alternatives_rejected": "①把规则实现进库(库会替作品决定\"什么算废料\");②只给一个 filter 回调(顺序与读数又留给每家自己写,事故照旧);③读数另算一遍(界面显示与实际行为迟早分叉 —— 这一条是本仓库反复强调的\"同一件事只有一处实现\")。",
       "summary": "自动去留的库形态:有序规则链 + 与裁决同源的读数;判据是内容、顺序与可见性是骨架。"
+    },
+    "TASK-247": {
+      "id": "TASK-247",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:06:04+00:00",
+      "updated_at": "2026-09-18T17:06:04+00:00",
+      "touched_round": 267,
+      "category": "correctness",
+      "severity": 0.6,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "对\"把本作战斗接进库\"做消融实验:把库的战斗按本作口径配好,同场景×200 种子对比胜负/回合/血线;结论是量级接近但不可互换(均势同种子一致率 58-75%),差的四处不是加钩子能补的,故本作战斗维持原样、库的战斗保持开箱骨架定位。"
+    },
+    "CHG-329": {
+      "id": "CHG-329",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:06:05+00:00",
+      "updated_at": "2026-09-18T17:06:05+00:00",
+      "touched_round": 267,
+      "commit": 8.564e+98,
+      "summary": "新增 src/core/engineCombatAblation.spec.ts(3 例):四场景×200 种子的对照读数(强弱悬殊一致 100%、均势 75%/58%)、强弱方向一致性判据、同种子一致率落在 30%-95% 的\"同一类模型但不是同一套实现\"判据;test-report 补 engineCombatAblation 分类。"
+    },
+    "TASK-248": {
+      "id": "TASK-248",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:06:05+00:00",
+      "updated_at": "2026-09-18T17:06:05+00:00",
+      "touched_round": 267,
+      "category": "docs",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "给库加第二种题材的完整小循环示例 examples/daily-loop.ts(书桌与日常:资源/离线逐步产出/持有/分流裁决/多级比较),一次用上最近四层且不提修仙;接进 examples 脚本、类型检查与两份自检。"
+    },
+    "CHG-330": {
+      "id": "CHG-330",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:06:10+00:00",
+      "updated_at": "2026-09-18T17:06:10+00:00",
+      "touched_round": 267,
+      "commit": "72f7767",
+      "summary": "packages/engine/examples/daily-loop.ts(书桌与日常小循环)并接进 bun run examples 与 engine-standalone 自检;CHANGELOG「未发布」加条目;顺手修消融实验 bumpCrit 的入参类型(Mods 不是 Record<string, number>)。"
+    },
+    "EV-253": {
+      "id": "EV-253",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:06:11+00:00",
+      "updated_at": "2026-09-18T17:06:11+00:00",
+      "touched_round": 267,
+      "confidence": 0.95,
+      "source": "变更 CHG-329(8564e95)。bunx vitest run src/core/engineCombatAblation.spec.ts --silent=false(四场景读数:100%/100%/75%/58% 一致率;胜率 83% vs 85%、38% vs 38%);bun run test(208 文件/2109 例)",
+      "summary": "读数证明\"量级接近但不可互换\":强弱悬殊两边 100% 一致且胜负方向相同(配置配对成功),均势场景同种子一致率 75%/58%,胜率却接近(83%/85%、38%/38%)——同一类战斗模型、两套实现。"
+    },
+    "EV-254": {
+      "id": "EV-254",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:06:11+00:00",
+      "updated_at": "2026-09-18T17:06:11+00:00",
+      "touched_round": 267,
+      "confidence": 0.97,
+      "source": "变更 CHG-330(72f7767)。cd packages/engine && bun run check(19 文件/187 例 + 四份示例全跑);bun run test(208 文件/2109 例);bun run check:engine:standalone(42 源文件,示例可跑);bun run test:report(2109 过/0 败)",
+      "summary": "第二个题材的示例跑通并进判据:离线逐步产出(精力到顶不再进)、买笔买不起整笔不扣并给缺口、批量收货挑出放不下的、自动清理给读数、按来源结账、多级比较器决定先退谁。"
+    },
+    "DEC-119": {
+      "id": "DEC-119",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:06:17+00:00",
+      "updated_at": "2026-09-18T17:06:17+00:00",
+      "touched_round": 267,
+      "rationale": "在动\"把 592 行战斗搬进库\"之前先做了消融:把库的战斗按本作口径尽量配好,同场景 × 200 种子对比。读数是**量级接近但不可互换** —— 均势场景胜率 83% vs 85%、38% vs 38%,可同一种子下的胜负只有 75% / 58% 一致。差的四处都不是\"加公式钩子\"能补的:①伤害公式形状(本作 攻击×系数 + 防/(防+攻×1.15) 封顶 75% vs 库 攻²/(攻+防) + 每击地板 5%);②一次出手的顺序(本作先掷浮动再判暴击,库相反);③技能选择(本作按序掷、第一个命中即用;库全掷一遍再抽 —— 随机流整体错位);④本作自己那批词条(背水/锋芒/罡盾/斩杀/先手/破甲/减伤/易伤)在库的公式里没有位置。另有调度细节(先手口径、Boss 阶段与长生印在回合开始触发而库的 tickFn 在回合结束)。结论:本作战斗维持原样;库的战斗保持\"给没有战斗实现的作品一套开箱骨架\"的定位。若将来真要统一,缺的是 `skillFn` / `strikeFn` 两处**主权**(把\"选哪一招\"\"这一招怎么算\"整段交还作品),而不是更多参数。",
+      "alternatives_rejected": "①硬把本作战斗换成库的(25% 的种子会给出不同胜负,平衡审计与玩家手感全动,而收益只是\"代码更统一\");②为了对齐而给库加一堆公式参数(参数永远追不上本作那套流水线,且库会长成那款游戏的复刻);③不做实验直接搬(等搬完才发现数字全变,代价最大)。",
+      "summary": "战斗不接库:消融证明两者量级接近但不可互换(同种子一致率 58-75%),差异源于公式形状/出手顺序/技能选择的随机流/本作独有词条;库的战斗保持开箱骨架定位,统一需要的是 skillFn 与 strikeFn 两处主权。"
     }
   },
   "edges": [
@@ -24158,6 +24246,36 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:59:48+00:00"
+    },
+    {
+      "from": "CHG-329",
+      "to": "TASK-247",
+      "type": "implements",
+      "created_at": "2026-09-18T17:06:17+00:00"
+    },
+    {
+      "from": "CHG-330",
+      "to": "TASK-248",
+      "type": "implements",
+      "created_at": "2026-09-18T17:06:17+00:00"
+    },
+    {
+      "from": "TASK-248",
+      "to": "TASK-246",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:06:17+00:00"
+    },
+    {
+      "from": "DEC-119",
+      "to": "TASK-247",
+      "type": "governs",
+      "created_at": "2026-09-18T17:06:17+00:00"
+    },
+    {
+      "from": "DEC-119",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:06:17+00:00"
     }
   ]
 }
