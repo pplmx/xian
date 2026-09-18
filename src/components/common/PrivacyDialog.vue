@@ -54,7 +54,7 @@
           若有疑问,可通过
           <!-- 同上:行内链接的命中区要够拇指点,不能只有字体那十几 px -->
           <a
-            href="https://github.com/setube/yunyin-xiuxian/issues"
+            href="https://github.com/pplmx/xian/issues"
             target="_blank"
             rel="noopener noreferrer"
             class="inline-block py-1.5 text-azure"

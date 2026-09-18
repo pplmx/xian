@@ -10,17 +10,13 @@
         <p class="text-[10px] text-ink-faint">开源仓库</p>
         <!-- 行内链接的实际命中区只有字体那 14px 高;补成内联块给拇指一个 30px 的靶面 -->
         <a
-          href="https://github.com/setube/yunyin-xiuxian"
+          href="https://github.com/pplmx/xian"
           target="_blank"
           rel="noopener noreferrer"
           class="inline-block py-1.5 text-azure underline break-all"
         >
-          github.com/setube/yunyin-xiuxian
+          github.com/pplmx/xian
         </a>
-      </div>
-      <div class="card-ink px-3 py-2">
-        <p class="text-[10px] text-ink-faint">QQ 交流群</p>
-        <p class="text-ink tabular">920930589</p>
       </div>
     </div>
     <template #footer>
