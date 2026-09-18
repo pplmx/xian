@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 213,
+  "round": 214,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T02:38:06+00:00",
+  "updated_at": "2026-09-18T02:54:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -425,7 +425,7 @@
       "version": 1,
       "created_at": "2026-09-09T14:46:51+00:00",
       "updated_at": "2026-09-09T14:46:51+00:00",
-      "touched_round": 137,
+      "touched_round": 214,
       "summary": "转世/轮回系统(reincarnation.ts + player store 跨世字段)"
     },
     "ISS-016": {
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 212,
+      "touched_round": 214,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -12128,7 +12128,7 @@
       "version": 1,
       "created_at": "2026-09-17T14:20:45+00:00",
       "updated_at": "2026-09-17T14:20:45+00:00",
-      "touched_round": 207,
+      "touched_round": 214,
       "summary": "数值审计工具链(economySim 经济闭环 / inflationAudit 战力膨胀 / expIncome 修为收入 / progressionSim 曲线 + 各自的 spec):用真实公式与真实数据估算各境界读数,经 bun run test:report 汇总;只度量不改数值"
     },
     "ISS-210": {
@@ -12666,6 +12666,39 @@
       "touched_round": 213,
       "commit": "f2de1a4",
       "summary": "17 顶境界称号按 +0.02/境重排预算(只抬不削,保留各自属性构成),万道之祖单独抬高居首;titleLadder.spec 新增阶梯不降与顶端判据。"
+    },
+    "DEC-055": {
+      "id": "DEC-055",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T02:54:20+00:00",
+      "updated_at": "2026-09-18T02:54:20+00:00",
+      "touched_round": 214,
+      "rationale": "复核 rebirthRoi 的「高频轮回是唯一数值最优解」:那只是**道果/小时**一条轴上的结论,而转世的收益面另有多条轴,且仓库的 shallowRebirthGains 已把口径写成明文——深修是\"阶段性内容投资\"(拿一次永久继承),浅轮回是\"快速道果农场\";永久资产逐项分类(道果/宿慧无上限、天赋/灵脉有顶、内容只能拿一次)。故本轮**不动轮回数值**:为一条已被承认的结构去改曲线,只会把\"内容投资\"那一半也压平。",
+      "alternatives_rejected": "①按道果/小时把深修拉到与浅轮回相当:需要道果曲线指数化(真仙要涨 ~700 倍),而道果是永久乘区,那会让一次深修直接跳穿后面所有境界;②给轮回加上冷却/成本去掐死浅轮回:那是禁掉一种被明文承认的玩法,不是修缺陷;③无视:下次还会有人重新发现并再判一遍。"
+    },
+    "DEC-056": {
+      "id": "DEC-056",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T02:54:20+00:00",
+      "updated_at": "2026-09-18T02:54:20+00:00",
+      "touched_round": 214,
+      "rationale": "离线两条账(修为/灵气不限时、产出受洞府上限)带来的新风险:修为收益随缺席时长无上限,而寿元按现实时间走——一次长缺席足以把人送到油尽灯枯边上(炼气寿限约 150 载,每现实小时老 1 岁)。故归来结算必须把\"还剩多少、危不危险\"说出来,阈值沿用顶栏那套(LIFESPAN_WARN/CRITICAL)不分叉。",
+      "alternatives_rejected": "①只报\"流逝了 N 载\":玩家算不出剩余与风险;②给离线修为重新加上限:玩家明确要求不限时,且修为只是积余(境界仍要亲手突破);③把寿元也改成不限时:寿元是这一世的时间预算,放开等于取消轮回的必要性。"
+    },
+    "CHG-252": {
+      "id": "CHG-252",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T02:54:20+00:00",
+      "updated_at": "2026-09-18T02:54:20+00:00",
+      "touched_round": 214,
+      "commit": "fb6a934",
+      "summary": "归来结算新增寿元告警(仅余 X 载 + 该突破/该准备轮回),阈值与顶栏同源;offlineLedger.spec 新增「长缺席压到告警线内必须报警」判据。"
     }
   },
   "edges": [
@@ -18873,6 +18906,24 @@
       "to": "ISS-221",
       "type": "resolves",
       "created_at": "2026-09-18T02:38:06+00:00"
+    },
+    {
+      "from": "DEC-055",
+      "to": "COMP-003",
+      "type": "governs",
+      "created_at": "2026-09-18T02:54:20+00:00"
+    },
+    {
+      "from": "DEC-056",
+      "to": "COMP-006",
+      "type": "governs",
+      "created_at": "2026-09-18T02:54:20+00:00"
+    },
+    {
+      "from": "DEC-056",
+      "to": "COMP-025",
+      "type": "governs",
+      "created_at": "2026-09-18T02:54:33+00:00"
     }
   ]
 }
