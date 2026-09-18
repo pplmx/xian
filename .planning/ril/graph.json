@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 241,
+  "round": 242,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T18:15:00+00:00",
+  "updated_at": "2026-09-18T18:50:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14453,6 +14453,55 @@
       "rationale": "伙伴这类\"数值之外还有行为倾向\"的东西,若把四项系数写死在库里(历练时长/危险度/掉落/损失),换个题材就得改库。故库只认\"一组有中性值的系数\",键名与中性值由作品给 —— 倍率的中性是 1、加法的中性是 0,引擎猜不出来,所以缺一个键就在装配时报错(而不是悄悄按 0 处理,那会让\"没带伙伴\"那天改变数值)。多只伙伴时性格系数取覆盖而非相乘:相乘会给出 1.05×1.1 这种没人预期过的数。",
       "alternatives_rejected": "①把四项系数固化成库的字段(题材耦合);②中性值默认按 0 处理(倍率类会归零,静默改变数值);③多只伙伴系数相乘(产生设计外的复合效果)。",
       "summary": "伙伴:库只认\"有中性值的一组系数\",键名与中性值由作品给(缺键即报错);性格覆盖式合并,自身词条相加。"
+    },
+    "TASK-221": {
+      "id": "TASK-221",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T18:50:00+00:00",
+      "updated_at": "2026-09-18T18:50:00+00:00",
+      "touched_round": 242,
+      "category": "core-feature",
+      "severity": 0.75,
+      "confidence": 0.95,
+      "effort": 4,
+      "unlock_factor": 1.0,
+      "summary": "按用户要求验\"跨题材通用\":再加一份与修仙无关的内容包(presets/daily 书桌与日常:学段/周次、专注力-耐心-精力、文具-耳机-书桌、图书馆-自习室-教室与期末考试、学科、朋友的性子、做饭),跑通同一条链路;过程中照出并修掉一处不够通用(寿元必填 → 改为可选);README 增题材对照表(修仙/武侠/日常学习)。"
+    },
+    "CHG-296": {
+      "id": "CHG-296",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:50:00+00:00",
+      "updated_at": "2026-09-18T18:50:00+00:00",
+      "touched_round": 242,
+      "commit": "a4cc8eb",
+      "summary": "库侧:新增 presets/daily.ts(GameConfig + 学科 SkillConfig + 伙伴 CompanionConfig + 做饭 CraftFormula);lifespan 改为可选(省略即 lifespanOf 返回 Infinity,境界 lifespanYears 亦为 Infinity);presets.spec 增跨题材判据(名称、机制键与仙侠包一个不差、完整一圈、三份配套配置);README 增「题材无关性」对照表;CHANGELOG 记这两项。"
+    },
+    "EV-227": {
+      "id": "EV-227",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:50:00+00:00",
+      "updated_at": "2026-09-18T18:50:00+00:00",
+      "touched_round": 242,
+      "source": "packages/engine src/presets/presets.spec.ts(8 例,含跨题材四例)+ bun run check(库独立 20 文件 / 108 例 + Node 产物探测)+ bun run test(宿主 198 文件 / 2006 例)+ 库仓 CI(gh run list:push success 21s)",
+      "summary": "跨题材判据全绿:①学习包的名称(启蒙班·第一周 → 高三·期末;专注力/精力/学习效率;文具/耳机/书桌/小摆件;图书馆/自习室/教室;期末考试);②机制键与仙侠包**一个不差**、改名的键名字全不一样;③完整一圈跑通(自习→升学→换文具→期末考→通关拿\"理解/零花钱\");④学科(曲线/消耗/分支)、伙伴性格、做饭四乘区三份配置都能装出来;⑤不配寿元时 lifetimeOf 为 Infinity。库仓 CI 对新提交 success。"
+    },
+    "DEC-094": {
+      "id": "DEC-094",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T18:50:00+00:00",
+      "updated_at": "2026-09-18T18:50:00+00:00",
+      "touched_round": 242,
+      "rationale": "用户明确要求\"抽的时候一定要能做到通用适配:武侠、日常生活、读书学习都要能用\"。判断通用不能靠自称,得**装一款题材完全不同的游戏并跑通** —— 这次装了学习/日常包,它逼出两处真问题:①寿元原是必填,而一款没有生死的游戏不该被迫编一个数字(改为可选,省略即无限);②README 从没把\"哪些词能换、哪些是结构\"写清楚(补题材对照表)。凡是\"引擎要求的字段\",都必须是结构(有序名字、曲线、区间、权重),而不是题材。",
+      "alternatives_rejected": "①只在文档里声称通用(没有证据,遇到具体题材才发现硬编码);②把题材词(修为/境界/敌人)当机制词保留(换题材时处处别扭);③为每个题材各写一套系统(正是抽取要消掉的东西)。",
+      "summary": "通用性用\"换题材内容包 + 跑通完整一圈\"来验;引擎只要求结构,不要求题材词;没有生死的题材不必配寿元。"
     }
   },
   "edges": [
@@ -21968,6 +22017,42 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T18:15:00+00:00"
+    },
+    {
+      "from": "CHG-296",
+      "to": "TASK-221",
+      "type": "implements",
+      "created_at": "2026-09-18T18:50:00+00:00"
+    },
+    {
+      "from": "CHG-296",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T18:50:00+00:00"
+    },
+    {
+      "from": "EV-227",
+      "to": "CHG-296",
+      "type": "validates",
+      "created_at": "2026-09-18T18:50:00+00:00"
+    },
+    {
+      "from": "TASK-221",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T18:50:00+00:00"
+    },
+    {
+      "from": "TASK-221",
+      "to": "TASK-220",
+      "type": "depends_on",
+      "created_at": "2026-09-18T18:50:00+00:00"
+    },
+    {
+      "from": "DEC-094",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T18:50:00+00:00"
     }
   ]
 }
