@@ -97,6 +97,7 @@
 | "本次所得"与账本对得上 | `createSettlement` | `settlement.spec.ts` |
 | 哪个资源是瓶颈 / 烂在手里 | `createEconomyReadings` | `economy.spec.ts` + `economy.sim.spec.ts`(默认阈值翻译成"支出/收入"区间,以及 ±10% 的敏感区有多宽) |
 | 自动清理规则链 | `createTriage` | `examples/daily-loop.ts` 的清理段 |
+| 清理规则"顺序换了会多扔几件" | 顺序即政策:重叠的规则谁在前谁定生死(同一批货留 6 件到留 13 件都有);"某条一次都没出手"要数每条规则接走几件才看得出来(被全覆盖 / 阈值超出内容值域) | `triage.sim.spec.ts` |
 | 整套经营闭环(产线 → 上限 → 卖出 → 体检 → 升级 → 清理 → 日常) | —— | `examples/shop-loop.ts`(一产一销的一间铺子:零头不丢、上限截断、离线时长账、两种升级选择各算一遍、清仓规则链,全在一份 200 行的小程序里) |
 | 跨模块自洽(账目) | —— | `integration.spec.ts`(守恒 / 同源 / 单调幂等 / 可复现) |
 | 跨模块自洽(时间 × 随机) | `planIdle` + `createCycleSystem` + `createPityCounter` | `integrationTime.spec.ts`(同种子同结果、问周期不消耗随机、保底不改未触发前的随机、分段与逐步一致) |
@@ -118,6 +119,8 @@
 | `cap: 0` 当"无上限" | **不写 `cap` 才是无上限**;写 `0` 就是上限 0 | `integration.spec.ts` |
 | 以为 `evictable` 是单件对单件 | 签名是 `evictable(items, incoming)` —— 拿到现有全部件再挑 | `intake.spec.ts` |
 | 用"清零计数器"实现每日刷新 | 打**基准快照**(`rollover`),计数器留给生涯成就 | `tasks.spec.ts` |
+| 把"清理规则的顺序"当风格问题 | 顺序即政策:重叠的规则换一下,同一批货会多留 7 件;改顺序要让玩家看得见 | `triage.sim.spec.ts` |
+| 规则装了就当它在生效 | 数每条规则接走几件:0 次要么是被前一条全覆盖,要么是阈值超出内容值域 | `triage.sim.spec.ts` |
 | 换期不幂等 | 同期再调一次必须原样返回(心跳每次都会问) | `tasks.spec.ts` |
 | 状态刷新吞掉剩余时长 | 叠时长:`max(旧到期, now) + 时长` | `buffs.spec.ts` |
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
