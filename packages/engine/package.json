@@ -51,10 +51,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "examples": "bun examples/quickstart.ts && bun examples/minimal.ts",
+    "type-check:examples": "tsc -p tsconfig.examples.json",
     "verify:dist": "node scripts/verify-dist.mjs",
-    "check": "tsc -p tsconfig.json --noEmit && vitest run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs && bun run examples"
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.examples.json && vitest run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs && bun run examples"
   },
   "devDependencies": {
+    "@types/node": "^22.13.0",
     "typescript": "~6.0.3",
     "vitest": "^5.0.0"
   },

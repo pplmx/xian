@@ -55,11 +55,17 @@ cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
 
 ```bash
 cd packages/engine
-bun install          # 只装 typescript + vitest(开发依赖)
+bun install          # 只装 typescript + vitest + @types/node(开发依赖)
 bun run check        # 类型检查 + 用例 + 出 dist + 产物自检 + 发布包自检 + 跑示例
 bun run build        # 只出 dist(含 .d.ts)
 bun run examples     # 跑 examples/ 下的示例
+bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json)
 ```
+
+示例是跑在 Node/Bun 上的命令行程序,所以单独一份 `tsconfig.examples.json` 给它们开 Node 类型;
+**库源码那份 tsconfig 刻意不引 Node 类型** —— 免得谁顺手在 `src` 里用了 `process` / `Buffer`
+还一路绿灯(库必须能在浏览器里跑)。这条差别是 CI 抓出来的:本地因为宿主把 `@types/node`
+提升到了根目录而看不出来,搬到独立仓库里一装就红。
 
 宿主仓库那边还有两条守着"拆得干净"的判据:
 

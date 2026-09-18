@@ -31,7 +31,7 @@ jobs:
           node -e "
             const pack = JSON.parse(require('node:fs').readFileSync('/tmp/pack.json', 'utf8'))[0]
             const files = pack.files.map(f => f.path)
-            const need = ['dist/index.js', 'dist/index.d.ts', 'dist/presets/demo.js', 'dist/presets/daily.js', 'dist/presets/xiuxian.js', 'README.md', 'LICENSE', 'package.json']
+            const need = ['dist/index.js', 'dist/index.d.ts', 'dist/presets/demo.js', 'dist/presets/daily.js', 'dist/presets/xiuxian.js', 'README.md', 'CHANGELOG.md', 'LICENSE', 'package.json', 'docs/development.md', 'docs/parity.md']
             const missing = need.filter(n => !files.includes(n))
             const leaked = files.filter(p => p.startsWith('src/'))
             if (missing.length || leaked.length) { console.error('发布包有问题', { missing, leaked }); process.exit(1) }
