@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 312,
+  "round": 313,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T21:11:36+00:00",
+  "updated_at": "2026-09-18T21:14:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -18068,6 +18068,44 @@
       "confidence": 0.96,
       "source": "变更 CHG-375(6a4792b)。bunx vitest run src/buffs.sim.spec.ts(5 例,打印:extend 有状态 720 分钟 / 尾部 260 分钟;longest 与 reset 均 490 / 30;差值 230 分钟 ≈ 7.67 剂;不重叠时三者均为 240 分钟;第 0 分钟服一剂到 30 分钟、第 150 分钟再服到 180 分钟;上限 45 分钟时四次叠加读数 45→45→45→45);cd packages/engine && bun run check(415 例 / 47 文件 + 组装指南 25 工厂 + 定制表 99 名字 + 目录树 37 模块 / 4 文档 + 用例数自检(当场抓出 README 还写 46)+ 产物 75 导出 + 发布包);cd /workspace/xian && bun run test(2463 例)、bun run test:report(2463 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(87 个源文件)。",
       "summary": "默认值\"叠时长\"的价格被量化了:同样 24 剂药,叠时长兑现 720 分钟、刷新只有 490 分钟(玩家视角:白吃 7.67 剂),而这只有在\"服用间隔小于药效\"时才体现 —— 间隔大于药效时三种算法一模一样。这条口径直接决定内容侧该把药效与服用频率怎么配。"
+    },
+    "TASK-294": {
+      "id": "TASK-294",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T21:14:20+00:00",
+      "updated_at": "2026-09-18T21:14:20+00:00",
+      "touched_round": 312,
+      "category": "docs",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "新增 docs/tuning.md《调参实测参考》:把七份消融实验的读数收成一页面向内容作者的刻度表(经济四档翻档点与 ±10% 敏感区、掉落倍率被夹/封顶吃掉多少、抽卡保底三档下场、清理顺序值几件、内容池权重真正影响什么、离线边际曲线、叠加算法兑现差),每条指回用例与复现命令;并新增\"参考表必须收全每一份 *.sim.spec.ts\"的自检(双向)。"
+    },
+    "CHG-376": {
+      "id": "CHG-376",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:14:20+00:00",
+      "updated_at": "2026-09-18T21:14:20+00:00",
+      "touched_round": 312,
+      "commit": "5705f72",
+      "summary": "库:新增 docs/tuning.md(约 140 行,七节 + 复现说明);README 目录树与\"定制\"段落加指针;docs/usage.md 开头加一条\"调数值前先看刻度表\";verify-dist.mjs 新增调参参考自检(必须收全 src/*.sim.spec.ts,且点到的用例必须存在),发布包必需文件补 docs/assembly.md 与 docs/tuning.md;CHANGELOG「未发布」记一节。宿主无改动。"
+    },
+    "EV-302": {
+      "id": "EV-302",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T21:14:20+00:00",
+      "updated_at": "2026-09-18T21:14:20+00:00",
+      "touched_round": 312,
+      "confidence": 0.96,
+      "source": "变更 CHG-376(5705f72)。文档里的每个数字都来自当场跑出来的输出(bunx vitest run src/economy.sim.spec.ts、pity.sim.spec.ts、drops.sim.spec.ts、triage.sim.spec.ts、deck.sim.spec.ts、idle.sim.spec.ts、buffs.sim.spec.ts);node scripts/verify-dist.mjs → 七道自检通过,其中新增\"调参参考自检通过(7 份消融实验都被收进 docs/tuning.md)\",且目录树自检当场抓出 README 树里少了 tuning.md;防空转:从表里删掉 buffs/idle 两份用例名 → AssertionError 列出这两份,加回 → 绿;cd packages/engine && bun run check(415 例 / 47 文件 + 全部自检);cd /workspace/xian && bun run test(2463 例)、test:report(2463 过 / 0 败)、check:engine(59 处引用)、check:engine:standalone(87 个源文件)。",
+      "summary": "消融实验从\"用例里打印数字\"升级为\"有一页人看的刻度表 + 一条不许漏收的自检\":内容作者不用翻 spec 就能看到离线上限怎么吃掉收益(72 小时 = 6 小时)、保底钉的是最差还是中位、权重在限定预算下的真实作用(22% vs 94%)。参考表本身也被判据盯着 —— 新加一份消融却忘了收录会红。"
     }
   },
   "edges": [
@@ -27245,6 +27283,12 @@
       "to": "TASK-293",
       "type": "implements",
       "created_at": "2026-09-18T21:11:36+00:00"
+    },
+    {
+      "from": "CHG-376",
+      "to": "TASK-294",
+      "type": "implements",
+      "created_at": "2026-09-18T21:14:20+00:00"
     }
   ]
 }
