@@ -95,7 +95,8 @@
 | "本次所得"与账本对得上 | `createSettlement` | `settlement.spec.ts` |
 | 哪个资源是瓶颈 / 烂在手里 | `createEconomyReadings` | `economy.spec.ts` |
 | 自动清理规则链 | `createTriage` | `examples/daily-loop.ts` 的清理段 |
-| 跨模块自洽 | —— | `integration.spec.ts`(守恒 / 同源 / 单调幂等 / 可复现) |
+| 跨模块自洽(账目) | —— | `integration.spec.ts`(守恒 / 同源 / 单调幂等 / 可复现) |
+| 跨模块自洽(时间 × 随机) | `planIdle` + `createCycleSystem` + `createPityCounter` | `integrationTime.spec.ts`(同种子同结果、问周期不消耗随机、保底不改未触发前的随机、分段与逐步一致) |
 
 ## 3 · 三条纪律
 
@@ -127,6 +128,8 @@
 
 1. **跨模块不变量**:照 `integration.spec.ts` 的写法,把"产出 → 入账 → 计数 → 目标 → 再投资"
    串起来,断言守恒(产出 = 入账 + 截断)、同源(账本增量 = 回执)、幂等与单调。
-2. **可复现**:同一颗种子跑两遍、整条链的账目一致(`integration.spec.ts` 最后一格就是这条)。
+2. **时间与随机也要一起验**:照 `integrationTime.spec.ts` 的写法,把"离线时长账 → 周期环境 →
+   掉落/保底 → 入库 → 回执"串起来,断言同种子两遍一致、问周期不消耗随机、
+   保底不改未触发之前的随机、分段走与一次算完一致。
 
 如果这两条都能过,你的数值层基本不会出现"玩家看得见、你算不出"的账。
