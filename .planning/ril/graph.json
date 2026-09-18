@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 239,
+  "round": 240,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:20:00+00:00",
+  "updated_at": "2026-09-18T17:55:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14297,6 +14297,102 @@
       "rationale": "用户明确要求\"单独成库、单独一个 repo,方便之后单独迭代开发\"。取包名同名(wanxiang-engine)作为仓库名,避免\"包名与仓库名两张皮\";用 git subtree split 而不是复制文件,是为了让库的提交历史跟着过去(以后查\"这条曲线为什么这样\"能在库自己的历史里查到);同时保留宿主侧的 packages/engine 作为上游(子树推送/拉取两条命令),因为本作仍在用它并会继续改。开发规则写明\"选一处开发\":两处都改必然分叉,subtree push 会拒绝,先 pull 合回来。",
       "alternatives_rejected": "①复制文件建新仓(丢历史,以后无法追因);②社区 fork 式双向开发(两仓同时改必分叉);③改名仓库(包名/仓库名不一致,使用者要多记一层映射);④等 npm 发布再拆(用户要的是\"现在能单独迭代\",发布是另一件事)。",
       "summary": "用 git subtree 拆成同名独立仓(保留历史),宿主包目录留作上游;两仓同步用 subtree push/pull,规则是\"选一处开发\"。"
+    },
+    "ISS-230": {
+      "id": "ISS-230",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:00+00:00",
+      "updated_at": "2026-09-18T17:55:00+00:00",
+      "touched_round": 240,
+      "severity": 0.8,
+      "confidence": 1.0,
+      "effort": 2,
+      "summary": "产物的相对导入没有扩展名(tsc + moduleResolution:bundler 原样保留 `from './numeric'`),于是 dist 只有打包器/bun 能用,Node 的 ESM 解析器直接 ERR_MODULE_NOT_FOUND。既有自检(库内 vitest、宿主 check:engine、独立成库自检)全在 bun/vite 里跑,一律被宽容解析骗过 —— 直到在空项目里按\"使用者\"的方式装一遍才发现。"
+    },
+    "TASK-219": {
+      "id": "TASK-219",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:00+00:00",
+      "updated_at": "2026-09-18T17:55:00+00:00",
+      "touched_round": 240,
+      "category": "core-feature",
+      "severity": 0.75,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "让\"别人只引用库\"真正成立:在空项目里按使用者视角实测(github: 依赖 → 自定义世界),据此修掉两处只有使用者才会撞到的问题(装 git 依赖没有 dist、dist 不能被 Node import),并把\"Node 视角\"接进库与宿主两道闸。"
+    },
+    "CHG-291": {
+      "id": "CHG-291",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:00+00:00",
+      "updated_at": "2026-09-18T17:55:00+00:00",
+      "touched_round": 240,
+      "commit": "88d9b06",
+      "summary": "package.json 增 \"prepare\": \"tsc -p tsconfig.build.json\" —— 装 git 依赖时自己把 dist 编出来(devDependencies 里的 typescript 在 prepare 前已就绪);README 补第四种引用方式(github:)与机制说明。发现路径:空项目 bun install github:pplmx/wanxiang-engine 后 import 报 Cannot find package。"
+    },
+    "CHG-292": {
+      "id": "CHG-292",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:00+00:00",
+      "updated_at": "2026-09-18T17:55:00+00:00",
+      "touched_round": 240,
+      "commit": "246c8ba",
+      "summary": "库内 102 处相对导入补 `.js`(tsc 认、Node 认、vitest 照常解析到 .ts);库自己的 check 末尾加 `node scripts/verify-dist.mjs`(import dist 与两份内容包、装配换皮世界);宿主 check:engine 第 ③ 步改为用 **node** 探产物(再交给 bun 走完整一圈)。顺带 npm pack 会触发 prepare,发布包里始终是新编的 dist。"
+    },
+    "CHG-293": {
+      "id": "CHG-293",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:00+00:00",
+      "updated_at": "2026-09-18T17:55:00+00:00",
+      "touched_round": 240,
+      "commit": "04fde1c",
+      "summary": "示例的相对导入也统一成 `.js`:源码、示例、产物三者写法一致(tsc/Node/bun/vite 都认)。"
+    },
+    "EV-225": {
+      "id": "EV-225",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:00+00:00",
+      "updated_at": "2026-09-18T17:55:00+00:00",
+      "touched_round": 240,
+      "source": "空项目 /tmp/consumer-npm:npm i github:pplmx/wanxiang-engine → node mygame.mjs(自定义世界\"灯塔与深海\":水压/壳甲/氧气、武器/潜水服、锈蚀/打磨、珊瑚礁/夜光海沟);库仓 CI(gh run list:pull_request 与 push 均 success,24s);/tmp/wanxiang-clone:bun install --frozen-lockfile + bun run check(14 文件 / 101 例)",
+      "summary": "使用者视角全部跑通:从 GitHub 装库(自动 prepare 出 dist)→ 用完全自定义的名字定义世界 → 修炼/进阶(浅层·二米)、掉装(锈蚀 鲸皮衣)、面板(战力 62)、副本遭遇与回合制战斗执行 → 境界表\"深渊·到底\"、属性名\"氧气\"、槽位\"武器、潜水服\"。修复前同一脚本在 node 下报 ERR_MODULE_NOT_FOUND,修复后通过;两条产物判据(库内 node verify + 宿主 node 探测)已进各自的 CI。"
+    },
+    "DEC-091": {
+      "id": "DEC-091",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:00+00:00",
+      "updated_at": "2026-09-18T17:55:00+00:00",
+      "touched_round": 240,
+      "rationale": "\"库能不能被用\"必须在**使用者的运行时**里验,而不是在自己的运行时里验:tsc 的 bundler 解析、bun、vite 都宽容地接受无扩展名相对导入,而 Node 的 ESM 解析器要求 `./x.js`。我们四道自检(bun 里跑用例、bun 里 import dist、bun 里独立拼装、bun 里跑宿主)全被这个宽容骗过去了,直到空项目里 node 报错。故产物自检一律用 node,并把它写进库与宿主两道闸。",
+      "alternatives_rejected": "①只修 .js 不加判据(同类问题还会再来);②在 bun 里 import dist 就算过(正是这次漏掉的形状);③把产物打成单文件 bundle 绕开问题(能解决但不是\"修因\",且多一个打包步骤与依赖)。",
+      "summary": "产物判据必须跑在 Node 里(使用者运行时);bun/vite 的宽容解析不能作为\"能用\"的证据。"
+    },
+    "DEC-092": {
+      "id": "DEC-092",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:55:00+00:00",
+      "updated_at": "2026-09-18T17:55:00+00:00",
+      "touched_round": 240,
+      "rationale": "从 git 装包时,仓库里没有 dist(产物不入库),故必须让包在安装时自己构建 —— `prepare` 就是干这个的。但工具链行为不一致:npm 会跑 prepare(并提示 allowScripts),Bun 默认**拦**生命周期脚本。与其把 dist 提交进仓库(把编译产物当源码养),不如保留 prepare + 在文档里写清两条路:npm 开箱可用;Bun 需 trustedDependencies 或改用 tgz/npm。",
+      "alternatives_rejected": "①把 dist 提交进仓库(产物与源码两份真相,还要在 CI 里防漂移);②只支持 npm 发布后再装(绕过 git 安装这条零成本路径);③让使用者自己 build(把成本推给使用者,而且没人会读 README 那一行)。",
+      "summary": "git 安装用 prepare 自动出产物;dist 不入库;Bun 的安全策略差异写进文档(trustedDependencies 或 tgz)。"
     }
   },
   "edges": [
@@ -21668,6 +21764,96 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "CHG-291",
+      "to": "ISS-230",
+      "type": "resolves",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "CHG-292",
+      "to": "ISS-230",
+      "type": "resolves",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "CHG-291",
+      "to": "TASK-219",
+      "type": "implements",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "CHG-292",
+      "to": "TASK-219",
+      "type": "implements",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "CHG-293",
+      "to": "TASK-219",
+      "type": "implements",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "ISS-230",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "CHG-291",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "CHG-292",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "EV-225",
+      "to": "CHG-292",
+      "type": "validates",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "EV-225",
+      "to": "CHG-291",
+      "type": "validates",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "EV-225",
+      "to": "TASK-219",
+      "type": "validates",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "TASK-219",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "TASK-219",
+      "to": "TASK-218",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "DEC-091",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:55:00+00:00"
+    },
+    {
+      "from": "DEC-092",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:55:00+00:00"
     }
   ]
 }
