@@ -282,4 +282,82 @@ describe('装备系统 —— 槽位/品质/模板/词条/套装', () => {
     expect(loot.tier).toBe(3)
     expect(loot.templateId).toBe('w1') // 第 3 层没写内容 → 拿第 1 层的顶上
   })
+
+  it('洗练(重掷词条):保留你指定的那些,其余换成新词条与新掷点', () => {
+    const sys = createEquipmentSystem(CONFIG)
+    const before = [
+      { id: 'a_atk', roll: 0.25 },
+      { id: 'a_crit', roll: 0.75 }
+    ]
+    const snapshot = JSON.parse(JSON.stringify(before))
+    const next = sys.rerollAffixes(before, {
+      rng: createRng(5),
+      quality: sys.quality('common'),
+      tier: 1,
+      slot: 'weapon',
+      keep: ['a_atk']
+    })
+    // 保留的连掷点都没变
+    expect(next[0]).toEqual({ id: 'a_atk', roll: 0.25 })
+    // 其余是新掷的;且至少留一条新的("洗了等于没洗"不该发生)
+    expect(next.length).toBeGreaterThan(1)
+    expect(next.length).toBeLessThanOrEqual(CONFIG.qualities[0]!.affixes[1] + 1)
+    expect(next.slice(1).every(a => a.id !== 'a_crit' || a.roll !== 0.75)).toBe(true)
+    // 纯函数:旧的没被就地改
+    expect(before).toEqual(snapshot)
+  })
+
+  it('洗练与生成共用同一份池子口径:部位与门槛说了算', () => {
+    const sys = createEquipmentSystem(CONFIG)
+    // a_hp 只出水部位、且要良品(minRank 1)以上;在武器上洗一百次都不该出现
+    const ids = new Set<string>()
+    for (let i = 0; i < 100; i += 1) {
+      const next = sys.rerollAffixes([], {
+        rng: createRng(i),
+        quality: sys.quality('common'),
+        tier: 1,
+        slot: 'weapon',
+        count: 2
+      })
+      for (const a of next) ids.add(a.id)
+    }
+    expect(ids.has('a_hp')).toBe(false)
+
+    // 良品 + 衣部位:a_hp 才进池
+    const onBody = new Set<string>()
+    for (let i = 0; i < 60; i += 1) {
+      for (const a of sys.rerollAffixes([], { rng: createRng(i), quality: sys.quality('fine'), tier: 1, slot: 'body', count: 2 })) {
+        onBody.add(a.id)
+      }
+    }
+    expect(onBody.has('a_hp')).toBe(true)
+  })
+
+  it('全封存时会尽量给出一条新的;池子被门槛排空时只保留你指定的那些', () => {
+    const sys = createEquipmentSystem(CONFIG)
+    const all = [
+      { id: 'a_atk', roll: 0.1 },
+      { id: 'a_crit', roll: 0.2 }
+    ]
+    // 武器 + 凡品:池子里只剩 a_atk / a_crit,两条都被保留 → 给不出新的
+    const exhausted = sys.rerollAffixes(all, {
+      rng: createRng(7),
+      quality: sys.quality('common'),
+      tier: 1,
+      slot: 'weapon',
+      keep: ['a_atk', 'a_crit']
+    })
+    expect(exhausted).toEqual(all)
+
+    // 换成衣部位(池子里还有 a_hp)→ 就能给出新的
+    const withFresh = sys.rerollAffixes(all, {
+      rng: createRng(7),
+      quality: sys.quality('fine'),
+      tier: 1,
+      slot: 'body',
+      keep: ['a_atk']
+    })
+    expect(withFresh.length).toBeGreaterThanOrEqual(2)
+    expect(withFresh[0]).toEqual(all[0])
+  })
 })

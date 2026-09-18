@@ -14,7 +14,7 @@
  */
 import type { EquipmentInstance, GNum } from '@/types'
 import { rng } from '@/utils/random'
-import { AFFIXES, affixDef } from '@/data/affixes'
+import { affixDef } from '@/data/affixes'
 import { equipmentTemplate } from '@/data/equipment'
 import { qualityDef } from '@/data/qualities'
 import {
@@ -25,6 +25,7 @@ import {
 } from '@/data/constants'
 import { stoneByTier } from './formulas'
 import { track } from './progress'
+import { ENGINE_WORLD } from './engineWorld'
 import { useInventoryStore } from '@/stores/inventory'
 import { useResourcesStore } from '@/stores/resources'
 import { useUiStore } from '@/stores/ui'
@@ -90,40 +91,32 @@ export function reforgeEquipment(uid: string): boolean {
     return false
   }
 
-  const template = equipmentTemplate(inst.templateId)
-  const quality = qualityDef(inst.quality)
-  const sealed = new Set(inst.sealedAffixIds ?? [])
-  const kept = inst.affixes.filter(a => sealed.has(a.id))
-  const [minCount, maxCount] = quality.affixes
-
   resources.spendStone(cost.stone)
   resources.spendSmall('dust', cost.dust)
 
-  // 条数:品质区间内重掷,但不低于「封存数 + 1」(总得留一条新的给它重掷)
-  const wantCount = Math.max(kept.length + 1, Math.min(maxCount, rng.int(minCount, maxCount)))
-  const used = new Set([...kept.map(a => a.id)])
-  const fresh: { id: string; roll: number }[] = []
-  let guard = 0
-  while (fresh.length < wantCount - kept.length && guard < 50) {
-    guard += 1
-    const pool = AFFIXES.filter(
-      a =>
-        !used.has(a.id) &&
-        (a.minRank === undefined || quality.rank >= a.minRank) &&
-        (a.slots === undefined || template === undefined || a.slots.includes(template.slot))
-    )
-    if (pool.length === 0) break
-    const picked = rng.weighted(pool, a => a.weight)
-    used.add(picked.id)
-    fresh.push({ id: picked.id, roll: rng.next() })
-  }
-  const affixes = [...kept, ...fresh]
+  /*
+   * 重掷本身交给库(见 packages/engine 的 equipment.rerollAffixes)——
+   * 池子怎么筛、权重怎么算、条数从哪来,与"掉出来的时候"共用同一处实现,
+   * 免得"掉出来的"与"洗出来的"有两套口径。
+   * 封存(sealedAffixIds)是本作的字段,这里翻译成库的 `keep`。
+   */
+  const template = equipmentTemplate(inst.templateId)
+  const sealed = inst.sealedAffixIds ?? []
+  const kept = inst.affixes.filter(a => sealed.includes(a.id))
+  const affixes = ENGINE_WORLD.equipment.rerollAffixes(inst.affixes, {
+    rng,
+    quality: qualityDef(inst.quality),
+    tier: inst.tier,
+    slot: template?.slot,
+    keep: sealed
+  })
   const before = inst.affixes.length
+  const sealedNote = kept.length > 0 ? `(封存 ${kept.length} 条未动)` : ''
+  const countNote = before === affixes.length ? `${affixes.length} 条` : `${before} → ${affixes.length} 条`
+
   inventory.replaceItem({ ...inst, affixes, reforgeCount: (inst.reforgeCount ?? 0) + 1 })
   track('upgrades')
 
-  const sealedNote = kept.length > 0 ? `(封存 ${kept.length} 条未动)` : ''
-  const countNote = before === affixes.length ? `${affixes.length} 条` : `${before} → ${affixes.length} 条`
   ui.toast(`重铸而成:词条 ${countNote}${sealedNote}`, 'success')
   return true
 }

@@ -50,6 +50,7 @@ export type {
   Loadout,
   LoadoutStats,
   QualityDef,
+  RerollOptions,
   ResolvedEquipment,
   RollOptions,
   SetDef,

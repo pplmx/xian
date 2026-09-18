@@ -459,6 +459,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **词条合并的算法本身** | `attributes.diminish`:默认按贡献降序打折,也可 `'max'`(只取最强)/ `'sum'`(直接相加)/ 自定义 `fold(values)` |
 | **强化加成曲线** | `equipment.power.levelBonusFn(level)`(默认每级 × `levelBonus`) |
 | **一件装备几条词条 / 每条词多重** | `equipment.affixCountFn(quality, tier, rng)`、`equipment.affixWeightFn(affix, quality, tier)` |
+| **洗练 / 重铸词条**(保留几条、其余推倒重来) | `equipment.rerollAffixes(affixes, { rng, quality, tier, slot, keep })` —— 与生成共用同一处掷词条实现;`keep` 就是"封存"的那几条,成本与次数上限归你 |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
@@ -577,8 +578,9 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 ## 版本与发布
 
 - 当前版本 **0.1.6**(tag `v0.1.6`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
-- 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:**版本跟着实际分量走** ——
-  默认只加 patch,不为发版而发版(几处小改动攒一版),真有里程碑才跳 minor 并写清为什么;
+- 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:
+  **攒批发布** —— 几十个改动攒一版是常态,期间它们记在「未发布」一节里;tag 是给外面的人
+  一个可 pin 的阶段性节点,不是改动的日记。版本跟着实际分量走,真有里程碑才跳 minor 并写清为什么;
   0.x 期间**破坏性变更也可能发生在 patch 里**,但一定写清楚怎么改。
   **公开面即承诺**;数值曲线不承诺不变,但没有显式配置时**默认行为逐位不变**。
 

@@ -237,6 +237,31 @@ export interface RollOptions {
   floorRank?: number
 }
 
+/**
+ * 重掷词条的选项 —— "洗练 / 重铸"那一类玩法的骨架。
+ *
+ * 库只管**怎么重掷**:保留哪些、掷几条、从哪个池里按什么权重掷、数值要不要重掷。
+ * 至于"洗一次花什么""能不能无限洗""封存上限几个" —— 那是内容,归作品。
+ */
+export interface RerollOptions {
+  rng: Rng
+  /** 品质:决定条数区间与词条门槛(与生成时同一把尺子) */
+  quality: QualityDef
+  /** 层级:用于词条的 `minTier` 门槛 */
+  tier: number
+  /** 部位:限定只出该部位的词条;不给则不限 */
+  slot?: string
+  /** 保留哪些词条 id(封存 / 锁定)—— 它们原样留下,不参与重掷 */
+  keep?: readonly string[]
+  /**
+   * 指定这一件重掷出几条;不给就在品质区间里掷。
+   * 目标条数取"品质区间"与"`keep.length + 1`"里较大的那个 —— **尽量**每次至少给一条新的;
+   * 若池子被门槛排空(部位 / 品阶都不合),那就给不出新的,只保留你指定的那些
+   * (要不要允许这种"洗了等于没洗",由作品的代价与判据决定)。
+   */
+  count?: number
+}
+
 export interface EquipmentSystem<T = number> {
   readonly slots: readonly SlotDef[]
   readonly qualities: readonly QualityDef[]
@@ -256,6 +281,14 @@ export interface EquipmentSystem<T = number> {
   /** 词条数值 = min + (max-min) × roll */
   affixValue(def: AffixDef, roll: number): number
   generate(rng: Rng, opts: RollOptions): EquipmentInstance
+  /**
+   * 重掷一件的词条(洗练 / 重铸):保留你指定的、其余换成新词条与新掷点。
+   *
+   * 与 `generate` **共用同一处掷词条的实现** —— 池子、门槛、权重、数值曲线都走同一份配置,
+   * 于是"掉出来的"与"洗出来的"不会有两套口径。纯函数:返回新的列表,入参不动,
+   * 品质 / 层级 / 部位也不动(洗的是词条构成,不是出身)。
+   */
+  rerollAffixes(affixes: readonly AffixRoll[], opts: RerollOptions): AffixRoll[]
   resolve(instance: EquipmentInstance): ResolvedEquipment<T>
   /** 装配:把一件装备放进对应槽位,返回新的装配方案 */
   equip(loadout: Loadout, instance: EquipmentInstance): Loadout
@@ -345,6 +378,36 @@ export function createEquipmentSystem<T = number>(
     return Math.round(v * f) / f
   }
 
+  /**
+   * 掷一批词条 —— `generate` 与 `rerollAffixes` 共用这一处。
+   *
+   * 池子怎么筛(minRank / minTier / 部位)、权重怎么算(`affixWeightFn`)、
+   * 每条掷点怎么来(`rng.next()`),都只写在这里一次:两处各写一份,迟早分叉成两套口径。
+   */
+  const pickAffixes = (
+    rng: Rng,
+    ctx: { tier: number; quality: QualityDef; slot?: string; count: number; exclude?: ReadonlySet<string> }
+  ): AffixRoll[] => {
+    const chosen: AffixRoll[] = []
+    const used = new Set<string>(ctx.exclude ?? [])
+    let guard = 0
+    while (chosen.length < ctx.count && guard < 60) {
+      guard += 1
+      const candidates = affixes.filter(
+        a =>
+          !used.has(a.id) &&
+          (a.minRank === undefined || ctx.quality.rank >= a.minRank) &&
+          (a.minTier === undefined || ctx.tier >= a.minTier) &&
+          (a.slots === undefined || ctx.slot === undefined || a.slots.includes(ctx.slot))
+      )
+      if (candidates.length === 0) break
+      const picked = rng.weighted(candidates, a => (config.affixWeightFn ? config.affixWeightFn(a, ctx.quality, ctx.tier) : a.weight))
+      used.add(picked.id)
+      chosen.push({ id: picked.id, roll: rng.next() })
+    }
+    return chosen
+  }
+
   const generate = (rng: Rng, opts: RollOptions): EquipmentInstance => {
     const tier = Math.max(1, opts.tier)
     const dropSlots = slots.filter(s => (s.dropWeight ?? 1) > 0)
@@ -369,24 +432,26 @@ export function createEquipmentSystem<T = number>(
     const [minA, maxA] = quality.affixes
     const wanted = config.affixCountFn ? config.affixCountFn(quality, tier, rng) : rng.int(minA, maxA)
     const count = Math.min(maxAffixCount, Math.max(0, Math.floor(wanted)))
-    const chosen: AffixRoll[] = []
-    const used = new Set<string>()
-    let guard = 0
-    while (chosen.length < count && guard < 60) {
-      guard += 1
-      const candidates = affixes.filter(
-        a =>
-          !used.has(a.id) &&
-          (a.minRank === undefined || quality.rank >= a.minRank) &&
-          (a.minTier === undefined || tier >= a.minTier) &&
-          (a.slots === undefined || a.slots.includes(slot))
-      )
-      if (candidates.length === 0) break
-      const picked = rng.weighted(candidates, a => (config.affixWeightFn ? config.affixWeightFn(a, quality, tier) : a.weight))
-      used.add(picked.id)
-      chosen.push({ id: picked.id, roll: rng.next() })
-    }
+    const chosen = pickAffixes(rng, { tier, quality, slot, count })
     return { uid: newUid(), templateId: template.id, qualityId: quality.id, tier, level: 0, affixes: chosen }
+  }
+
+  const rerollAffixes = (affixes: readonly AffixRoll[], opts: RerollOptions): AffixRoll[] => {
+    const keep = new Set(opts.keep ?? [])
+    const kept = affixes.filter(a => keep.has(a.id))
+    const [minCount, maxCount] = opts.quality.affixes
+    // 指定条数就用它;否则在品质区间里掷 —— 但无论哪种,都不少于"保留数 + 1":
+    // 每次重掷至少给你一条新的,否则"洗练"就成了花钱不办事
+    const band = Math.min(maxAffixCount, opts.count ?? opts.rng.int(minCount, maxCount))
+    const count = Math.max(kept.length + 1, band)
+    const fresh = pickAffixes(opts.rng, {
+      tier: opts.tier,
+      quality: opts.quality,
+      slot: opts.slot,
+      count: count - kept.length,
+      exclude: keep
+    })
+    return [...kept, ...fresh]
   }
 
   const rarityRank = (r: AffixLine['rarity']): number => (r === 'legendary' ? 3 : r === 'epic' ? 2 : r === 'rare' ? 1 : 0)
@@ -504,6 +569,7 @@ export function createEquipmentSystem<T = number>(
     rollQuality,
     affixValue,
     generate,
+    rerollAffixes,
     resolve,
     equip,
     resolveLoadout

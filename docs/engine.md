@@ -26,6 +26,8 @@
 | 任务 / 成就的达成判据与进度 | `core/progress.evalCond` 与 `core/questProgress` 走库的 goals | 全部真实条件(主线 / 每日 / 成就)× 若干状态与冻结旧判据逐个相同;品质型条件的"不与等级同路"也被钉住 |
 | 灵兽性格与词条 | `core/engineWorld` 的 `COMPANION_SYSTEM`;`core/petPersonality` 与 `stores/player` 的灵兽加成转发 | 14 只灵兽的性格系数逐项、自身词条逐只与冻结旧表相同;无灵兽 / 未知 id 一律中性 |
 | 资源收支与上下限(灵石 / 材料 / 灵气) | `stores/resources` 的动作转发到 `core/engineResources`(库的资源账本 + GNum 适配器) | `engineResourceParity.spec` 用**迁移前冻结的旧实现**当尺子:灵石收付逐位相等(1e40 不压成 double)、材料取整与不为负、灵气 QI_BANK_MULT 倍软顶,全网格比对 |
+| 背包持有(容量 / 占位 / 装配联动) | `stores/inventory` 的背包部分转发到 `core/engineHolding`(库的持有层) | `engineHoldingParity.spec` 冻结旧实现逐位比:容量边界、满了收不进、删件顺带卸下全部槽位、替换同 uid、装配表 |
+| 重铸(洗练词条 / 封存) | `core/reforge` 的重掷走库的 `equipment.rerollAffixes`(封存映射成 `keep`) | `engineReforgeParity.spec` 用旧循环当尺子:五组种子 × 四类装备,词条与掷点逐条相同,**随机源消耗数也相同**(否则整局之后的序列会错位) |
 
 资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
 材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,
