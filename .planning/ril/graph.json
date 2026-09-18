@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 238,
+  "round": 239,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:45:00+00:00",
+  "updated_at": "2026-09-18T17:20:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14237,6 +14237,66 @@
       "rationale": "牌堆这类\"通用机制 + 作品内容\"的结合处,界线要划在\"结构\"与\"内容\"之间:筛选与抽取是通用机制,进库;而\"先掷奇缘、再掷机缘、最后掷普通池\"是这一局的叙事结构 —— 它决定玩家遇到事情的先后与概率形状,换一款游戏可能完全不同。故把前三条分支顺序留在应用侧,只把每一支内部那套筛池与加权交出去,并用 weightMultiplier 表达\"同源更常见\"(倾向而非门槛)。",
       "alternatives_rejected": "①把整个 pickEventFor 收进库(叙事结构被固化,别的作品用不上);②只把筛选收进库、抽留在应用(权重口径会分叉,尤其\"全 0 退回均匀\"这类边界);③把机缘的元素倾向做成标签过滤(那样就变成门槛,违背\"没有一条路被灵根关掉\")。",
       "summary": "通用机制(筛池/权重)进库,叙事结构(几条分支的先后)留作品;元素倾向用 weightMultiplier 表达。"
+    },
+    "TASK-218": {
+      "id": "TASK-218",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:00+00:00",
+      "updated_at": "2026-09-18T17:20:00+00:00",
+      "touched_round": 239,
+      "category": "core-feature",
+      "severity": 0.75,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "按用户指示用 gh 把公共库真正拆成独立仓库:取包名同名的 pplmx/wanxiang-engine(public);用 git subtree split -P packages/engine 拆出保留库自身历史的 engine-standalone 分支并推送为 main;新仓自带 CI(装依赖 → check → 验发布包内容)与 bun.lock;宿主仓注册 engine remote 供日后 subtree push/pull;README 写明地址、四种引用方式与两仓同步方式。使用者视角验证:空目录克隆 → bun install --frozen-lockfile → bun run check,14 文件 / 101 例全绿并产出 dist;新仓 CI 首跑 success(16s)。"
+    },
+    "CHG-289": {
+      "id": "CHG-289",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:00+00:00",
+      "updated_at": "2026-09-18T17:20:00+00:00",
+      "touched_round": 239,
+      "commit": "329d37d",
+      "summary": "库侧:packages/engine/.github/workflows/ci.yml(库自己的 CI)、packages/engine/bun.lock(独立锁版本)、README 增独立仓库地址与两条开发路线(tree split 得来的历史 / subtree push 同步)。"
+    },
+    "CHG-290": {
+      "id": "CHG-290",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:00+00:00",
+      "updated_at": "2026-09-18T17:20:00+00:00",
+      "touched_round": 239,
+      "commit": "b282e7f",
+      "summary": "宿主侧:README 补独立仓库地址、四种引用方式(github: / file: / npm pack tgz / npm 版本)与两仓同步两条命令;注明\"选一处开发\"。仓库操作:git subtree split → 推 engine-standalone:main 到 pplmx/wanxiang-engine;gh repo edit 加 topics;git remote add engine。"
+    },
+    "EV-224": {
+      "id": "EV-224",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:00+00:00",
+      "updated_at": "2026-09-18T17:20:00+00:00",
+      "touched_round": 239,
+      "source": "git clone git@github.com:pplmx/wanxiang-engine.git(空目录)→ bun install --frozen-lockfile → bun run check(端点输出:Test Files 14 passed / Tests 101 passed);gh run list -R pplmx/wanxiang-engine(CI completed/success/16s);gh repo view(public,默认分支 main)",
+      "summary": "独立仓库可用性已按使用者视角验证:克隆即可装依赖并跑全量检查(101 例)与出 dist;仓库自带 CI 首跑成功;发布包内容与宿主引用方式两条自检在宿主侧继续守着。"
+    },
+    "DEC-090": {
+      "id": "DEC-090",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:20:00+00:00",
+      "updated_at": "2026-09-18T17:20:00+00:00",
+      "touched_round": 239,
+      "rationale": "用户明确要求\"单独成库、单独一个 repo,方便之后单独迭代开发\"。取包名同名(wanxiang-engine)作为仓库名,避免\"包名与仓库名两张皮\";用 git subtree split 而不是复制文件,是为了让库的提交历史跟着过去(以后查\"这条曲线为什么这样\"能在库自己的历史里查到);同时保留宿主侧的 packages/engine 作为上游(子树推送/拉取两条命令),因为本作仍在用它并会继续改。开发规则写明\"选一处开发\":两处都改必然分叉,subtree push 会拒绝,先 pull 合回来。",
+      "alternatives_rejected": "①复制文件建新仓(丢历史,以后无法追因);②社区 fork 式双向开发(两仓同时改必分叉);③改名仓库(包名/仓库名不一致,使用者要多记一层映射);④等 npm 发布再拆(用户要的是\"现在能单独迭代\",发布是另一件事)。",
+      "summary": "用 git subtree 拆成同名独立仓(保留历史),宿主包目录留作上游;两仓同步用 subtree push/pull,规则是\"选一处开发\"。"
     }
   },
   "edges": [
@@ -21554,6 +21614,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "CHG-289",
+      "to": "TASK-218",
+      "type": "implements",
+      "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "CHG-290",
+      "to": "TASK-218",
+      "type": "implements",
+      "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "CHG-289",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "CHG-290",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "EV-224",
+      "to": "CHG-290",
+      "type": "validates",
+      "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "EV-224",
+      "to": "CHG-289",
+      "type": "validates",
+      "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "TASK-218",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "TASK-218",
+      "to": "TASK-216",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:20:00+00:00"
+    },
+    {
+      "from": "DEC-090",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:20:00+00:00"
     }
   ]
 }
