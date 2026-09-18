@@ -51,6 +51,8 @@
 | 战斗骨架(护盾、反击、追击、技能标签) | `createCombatEngine` | `examples/combo-arts.ts` |
 | **把你自己那套战斗整段接进来** | `BattleConfig` 的 `skillFn` / `strikeFn` / `actFn` | `examples/combat-takeover.ts`(老口径 × 接管版,同 200 颗种子逐场相同) |
 | 掉落表(概率归一、保底、份数) | `createDropTable` | `drops.spec.ts` |
+| 炼制 / 合成的成功率(四乘区相乘 + 越级) | `composeCraftRate` / `leverFactor` / `overReachFactor` | `crafting.spec.ts` + `crafting.sim.spec.ts`(每个乘区值多少、越级多陡、练到九成要多久) |
+| 开炉之后实际发生什么(没开炉 / 失败保料 / 双成) | `createRecipeRunner` | `recipes.spec.ts` |
 | 建造 / 每小时产出 | `createFacilitySystem` + `accrue` | `examples/daily-loop.ts` 的设施段 |
 | 加点(天赋 / 灵脉) | `createPointPool` | `points.spec.ts` |
 | 离线上限与步数 | `planIdle` / `runIdle` | `examples/daily-loop.ts` 的离线段 |
@@ -130,6 +132,8 @@
 | 状态刷新吞掉剩余时长 | 叠时长:`max(旧到期, now) + 时长` | `buffs.spec.ts` |
 | 以为"叠时长 / 刷新"只是口味问题 | 重叠时差得很远:同样 24 剂药,叠时长兑现 720 分钟、刷新只有 490 分钟(≈ 白吃 7.7 剂);不重叠时两者一样 | `buffs.sim.spec.ts` |
 | 以为递减阶梯会一路衰减下去 | `[1, 0.75, 0.5, 0.25]` 只折前四条,第 5 条起恒定 25%;要真封顶得靠软阈值或 `max` | `attributes.sim.spec.ts` |
+| 以为乘区全弱成功率就是 0 | 下限是刻意的:全弱 ≈ 2%(低到不该开炉,但"赌一把"这个选择还在) | `crafting.sim.spec.ts` |
+| 以为熟练度有"练满" | 双曲饱和永远不到顶:9 × scale 才九成,99 分要 99 × scale —— 想要"练满"就在内容层按阈值判 | `crafting.sim.spec.ts` |
 | 以为"堆同名"最后自然没收益 | 六条同名 +10% 在 ranked 下是 30%、`max` 10%、`sum` 60% —— 三种是完全不同的内容政策 | `attributes.sim.spec.ts` |
 | 状态读取问"列表里有没有" | 问"此刻还算不算数"(到期时刻 > 时钟) | `buffs.spec.ts` |
 | 保底时跳过掷骰 | 照样掷,只改写结果 | `drops.spec.ts` / `pity.spec.ts` |
