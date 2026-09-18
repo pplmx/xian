@@ -10,7 +10,8 @@
  * 用法:`bun run check:engine`
  */
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, openSync, readFileSync, mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import assert from 'node:assert/strict'
 
@@ -102,4 +103,27 @@ const xian = engine.defineGame(XIUXIAN)
 assert.equal(xian.realms.realms.length, 21)
 
 console.log('④ 换皮世界跑通:修炼 → 进阶 → 掉装 → 装配 → 副本 → 通关奖励')
-console.log(`   产物自检通过(dist 可发布:${entries.length} 个入口 + 两份内容包 + 交叉校验)`)
+
+console.log('⑤ 校验发布包内容(npm pack --dry-run,离线可跑)')
+// npm 默认把缓存写在 ~/.npm;沙箱/CI 里那可能是只读的,故显式指向临时目录
+const npmCache = mkdtempSync(resolve(tmpdir(), 'wanxiang-pack-'))
+// 输出落到文件而不是管道:npm 在部分环境(mise 安装的 node / 非 TTY)下
+// 往管道写 --json 会静默给出空串,而重定向到文件是稳的
+const packJson = resolve(npmCache, 'pack.json')
+execFileSync('npm', ['pack', '--dry-run', '--json'], {
+  cwd: PKG_DIR,
+  env: { ...process.env, npm_config_cache: npmCache },
+  stdio: ['ignore', openSync(packJson, 'w'), 'inherit']
+})
+const pack = JSON.parse(readFileSync(packJson, 'utf8'))[0]
+const shipped = pack.files.map(f => f.path)
+for (const required of ['dist/index.js', 'dist/index.d.ts', 'dist/presets/demo.js', 'README.md', 'LICENSE', 'package.json']) {
+  assert.ok(shipped.includes(required), `发布包里少了 ${required}(实际:${shipped.slice(0, 8).join(', ')}…)`)
+}
+assert.ok(
+  !shipped.some(p => p.startsWith('src/')),
+  '发布包里混进了源码目录 —— 对外只该发 dist 与说明'
+)
+console.log(`   ${shipped.length} 个文件 · 打包 ${(pack.size / 1024).toFixed(1)} KB / 展开 ${((pack.unpackedSize ?? 0) / 1024).toFixed(1)} KB`)
+
+console.log(`产物自检通过:${entries.length} 个入口 + 两份内容包 + 交叉校验 + 发布包内容`)
