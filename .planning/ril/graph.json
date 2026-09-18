@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 301,
+  "round": 302,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:29:32+00:00",
+  "updated_at": "2026-09-18T20:36:02+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17107,7 +17107,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:41:29+00:00",
       "updated_at": "2026-09-18T19:41:29+00:00",
-      "touched_round": 293,
+      "touched_round": 302,
       "category": "docs",
       "severity": 0.4,
       "confidence": 0.95,
@@ -17614,6 +17614,44 @@
       "confidence": 0.98,
       "source": "变更 CHG-364(791c31e / engine db1b644)。cd packages/engine && bun run check(6 个示例全跑 + 组装指南自检 + 定制表自检 + 发布包自检报告 wanxiang-engine-0.1.10.tgz 可用);cd /workspace/xian && bun run test(247 文件/2427 例);bun run test:report(2427 过 / 0 败);bun run check:engine(59 处引用);bun run check:engine:standalone(80 个源文件);gh release view v0.1.10 + gh api 核对 tag 指向 db1b644 且该提交里 version 已是 0.1.10",
       "summary": "0.1.10 发布完成且逐项核对:release 页 https://github.com/pplmx/wanxiang-engine/releases/tag/v0.1.10,tag 指向 engine main 的 db1b644,包内 version 为 0.1.10,发布包自检按新版本号产出并\"真装一遍\"通过。发版前所有闸门全绿(库 379 例、宿主 2427 例、分类报告 2427 过 / 0 败、宿主 59 处引用全走公开入口)。发版说明按 CHANGELOG 的分节改写,含三处主权表、两格实测数字与两条接管经验。"
+    },
+    "TASK-283": {
+      "id": "TASK-283",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:35:56+00:00",
+      "updated_at": "2026-09-18T20:35:56+00:00",
+      "touched_round": 302,
+      "category": "docs",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增示例 examples/collect-loop.ts(星屑集册):抽卡收集类的完整小循环,把库较新的八层用进内容 —— 内容池(切题/一次性/权重)、跨次保底(软保底 + 12 抽必出 + resetOn 口径)、集册升档、重复折算、账本与回执、今日三件(按增量)、一次性成就、经济体检。前几份示例都是\"等级→掉装→副本\"骨架,这份补另一种玩法形状。"
+    },
+    "CHG-365": {
+      "id": "CHG-365",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:35:56+00:00",
+      "updated_at": "2026-09-18T20:35:56+00:00",
+      "touched_round": 302,
+      "commit": "ecacdb6",
+      "summary": "库:新增 examples/collect-loop.ts(约 200 行,零修仙词汇),package.json 的 examples 脚本加它(自检清单从那里读,所以自动进两份自检),README 目录树与组装指南\"配方 C · 抽卡收集\"表补上,CHANGELOG 新开「未发布」一条。宿主无改动。"
+    },
+    "EV-290": {
+      "id": "EV-290",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:35:56+00:00",
+      "updated_at": "2026-09-18T20:35:56+00:00",
+      "touched_round": 302,
+      "confidence": 0.96,
+      "source": "变更 CHG-365(ecacdb6)。bun packages/engine/examples/collect-loop.ts(输出显示:第 12/24 抽标「保底」、软保底把概率从 18% 推到 48%、重复的折成星屑、集册三种、今日三件全成、成就\"集齐三种\"、体检\"星屑只进不出\");cd packages/engine && bun run check(7 个示例全跑 + 组装指南自检 + 定制表自检 + 发布包自检);cd /workspace/xian && bun run test(247 文件/2427 例);bun run test:report(2427 过 / 0 败);bun run check:engine;bun run check:engine:standalone",
+      "summary": "示例实跑通过且把新层都演到了:①保底那两次标着「保底」,软保底让同一条内容池在第 18 抽时概率从 18% 涨到 48%;②重复卡走入库漏斗的折算去路(星屑从 0 变 8);③集册按照面累计升到「认得」;④今日三件按增量结算;⑤一次性成就\"集齐三种\"解锁;⑥经济体检把\"星屑只进不出\"说出来而不是显示成健康。过程中修掉两处小问题(示例里 counters 的索引访问类型、level band 字段名),类型检查与 lint 都当场拦住了。"
     }
   },
   "edges": [
@@ -26689,6 +26727,18 @@
       "to": "TASK-281",
       "type": "depends_on",
       "created_at": "2026-09-18T20:29:32+00:00"
+    },
+    {
+      "from": "CHG-365",
+      "to": "TASK-283",
+      "type": "implements",
+      "created_at": "2026-09-18T20:36:02+00:00"
+    },
+    {
+      "from": "TASK-283",
+      "to": "TASK-272",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:36:02+00:00"
     }
   ]
 }
