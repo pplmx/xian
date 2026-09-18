@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 272,
+  "round": 273,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T17:36:40+00:00",
+  "updated_at": "2026-09-18T17:42:26+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 272,
+      "touched_round": 273,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -16093,7 +16093,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:36:32+00:00",
       "updated_at": "2026-09-18T17:36:32+00:00",
-      "touched_round": 272,
+      "touched_round": 273,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16135,6 +16135,56 @@
       "rationale": "世界记忆(繁荣/好感/声望)最容易写成一个只增不减的计数器,而真实作品里的教训是:①只认计数会让另一条路永远算不出回报(本作的区域繁荣一度只能在镇压前刷胜场,\"守得住\"白守);②没有资格闸门,再能打的地界也会直接变\"繁荣\"(没镇压过的地界该只是混乱);③没有回落,守土就成了一劳永逸的税,而世界的记忆本该会淡;④\"多久没来\"的钟起点若取错(只挂在镇压上),从没镇压过的地界永远不触发世界节律。这四条都收进库,档位名与门槛仍归作品。",
       "alternatives_rejected": "①只给\"计数 → 档位\"的查表(另三条仍要每家自己写);②把回落做成\"定时器\"(需要外部驱动,离线一晚就漏);③让库自己决定\"多久算久\"(本作 48 小时是平衡出来的,别的题材可能 3 天或永不回落)。",
       "summary": "世界记忆档位层的四条规则收进库:多路门槛取先到、资格闸门、会回落、钟起点取最后一次打交道;档位名/门槛/时限仍是内容。"
+    },
+    "TASK-254": {
+      "id": "TASK-254",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T17:42:20+00:00",
+      "updated_at": "2026-09-18T17:42:20+00:00",
+      "touched_round": 273,
+      "category": "core-feature",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "新增经济读数层:createEconomyReadings 给\"哪一样不对劲\"的三条口径(进/出比值且出为0时是无穷、判词分档阈值可换、没把握就写 note),附 series 分期读与 summary 各档汇总;本作 economySim 的判词改走库(判词名仍用中文),21 个时代全表冻结对账。继续攒批不发版。"
+    },
+    "CHG-336": {
+      "id": "CHG-336",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:42:20+00:00",
+      "updated_at": "2026-09-18T17:42:20+00:00",
+      "touched_round": 273,
+      "commit": "e0101d3",
+      "summary": "库:新增 src/economy.ts 与 economy.spec.ts(5 例:比值为无穷的边界、判词压线、阈值与判词名可换、note 单独一栏、分期读),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 加条目。宿主:economySim.make() 的比值与判词走库(ECONOMY_READINGS 带中文 labels),新增 engineEconomyParity.spec(3 例:21 时代全表逐条、边界逐点、note 约定),test-report 补分类,docs/engine.md 加一行。"
+    },
+    "EV-260": {
+      "id": "EV-260",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:42:26+00:00",
+      "updated_at": "2026-09-18T17:42:26+00:00",
+      "touched_round": 273,
+      "confidence": 0.97,
+      "source": "变更 CHG-336(e0101d3)。bunx vitest run src/core/engineEconomyParity.spec.ts(3 例:21 个时代×每条资源流的比值与判词逐条相同、边界含出为 0/进为 0/恰好压在 0.7/3/10、note 约定仍在);bunx vitest run src/core/economySim.spec.ts(12 例);bun run test(218 文件/2161 例);bun run test:report(2161 过/0 败);cd packages/engine && bun run check(24 文件/220 例);bun run check:engine(36 处引用);bun run check:engine:standalone",
+      "summary": "经济读数搬迁逐条对账:全表(21 时代×8 资源)的比值与判词与冻结实现完全相同,边界逐点一致;判词名换成中文没有影响到数学;note 一栏(模型没把握的读数)仍在。"
+    },
+    "DEC-124": {
+      "id": "DEC-124",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T17:42:26+00:00",
+      "updated_at": "2026-09-18T17:42:26+00:00",
+      "touched_round": 273,
+      "rationale": "经济体检最容易出的错是**把\"没有出口\"读成\"刚刚好\"**:出为 0 时若按 ratio=1 处理,那种只进不出的资源会显示成健康,而它恰恰是要找出来的问题(烂在手里/纯噪音)。故口径写进库:比值 = 进/出,出为 0 即无穷。第二条是\"不许假装知道\":模型没覆盖的出口必须带 `note`,既不算健康也不算事故 —— 审计的价值全在\"读数可信\",而一个假装健康的读数比没有读数更坏。第三条是阈值与判词名都归作品:0.7/3/10 是某款作品的实测口径,别的题材可能完全不同,判词也该用它自己的说法。",
+      "alternatives_rejected": "①用绝对量而不是比值(资源量级差几个数量级,读不出松紧);②把出为 0 当成 ratio=1(最隐蔽的那种错);③把阈值与判词名写死进库(别的题材要改就得改库)。",
+      "summary": "经济读数三条口径进库:比值(出为 0 是无穷,不许当成\"刚刚好\")、没把握就写 note(不许假装知道)、阈值与判词名归作品。"
     }
   },
   "edges": [
@@ -24622,6 +24672,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T17:36:40+00:00"
+    },
+    {
+      "from": "CHG-336",
+      "to": "TASK-254",
+      "type": "implements",
+      "created_at": "2026-09-18T17:42:26+00:00"
+    },
+    {
+      "from": "TASK-254",
+      "to": "TASK-253",
+      "type": "depends_on",
+      "created_at": "2026-09-18T17:42:26+00:00"
+    },
+    {
+      "from": "DEC-124",
+      "to": "TASK-254",
+      "type": "governs",
+      "created_at": "2026-09-18T17:42:26+00:00"
+    },
+    {
+      "from": "DEC-124",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T17:42:26+00:00"
     }
   ]
 }
