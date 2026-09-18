@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 233,
+  "round": 234,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T13:05:00+00:00",
+  "updated_at": "2026-09-18T13:50:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13925,6 +13925,66 @@
       "rationale": "写功法对账时先照出一处我自己在库里引入的漂移:通用消耗模型把折扣乘到了**所有**消耗项上,而本作只有悟道点打折、残页不打。这类漂移不会红任何既有用例(没有用例覆盖\"折扣下的残页\"),只会让玩家发现\"升级时残页变少了\"。修法是给消耗项加 discountable(默认 true),并让本作如实声明 —— 通用模型不该假设\"折扣对整组消耗一视同仁\"。",
       "alternatives_rejected": "①让库对所有项打同样的折(把本作的平衡改掉,且违背\"数字一位不变\");②折扣留在应用侧自己乘(消耗曲线就要分成两处算);③给折扣写成逐项函数(配置里塞函数,不利于序列化与对账)。",
       "summary": "消耗折扣按项可选(discountable,默认 true);通用模型不假设\"折扣对整组一视同仁\"。"
+    },
+    "TASK-213": {
+      "id": "TASK-213",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T13:50:00+00:00",
+      "updated_at": "2026-09-18T13:50:00+00:00",
+      "touched_round": 234,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "\"等等\"里的炼制抽进公共库:成功率四乘区(掌握/认知/技艺/越级,各有下限)、越级惩罚(表内查表 + 表外指数衰减)、加权技艺与平均认知度、熟练度双曲饱和曲线、分档命名。本作 core/craftability 四式与 data/crafting 的两条曲线改为经库计算。"
+    },
+    "CHG-279": {
+      "id": "CHG-279",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T13:50:00+00:00",
+      "updated_at": "2026-09-18T13:50:00+00:00",
+      "touched_round": 234,
+      "commit": "a1d47b1",
+      "summary": "库侧新增 crafting.ts/crafting.spec.ts:overReachFactor(spec)、leverFactor(spec)、composeCraftRate(levers, formula)、weightedSkill、averageLore、proficiencyFromExp、stageNameOf;index 导出;README 补该模块与\"为什么不是硬门槛\"的说明。"
+    },
+    "CHG-280": {
+      "id": "CHG-280",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T13:50:00+00:00",
+      "updated_at": "2026-09-18T13:50:00+00:00",
+      "touched_round": 234,
+      "commit": "0b0f6a5",
+      "summary": "应用侧:craftability 的四式改调库(公式的数仍在本作:基准 0.95、三区 floor/span、越级表与衰减;bearableRank 这类本作语义留下);data/crafting 的 skillLevelFromExp/skillStageName 改调库;engineParity 补炼制对账(四维网格 6×4×5×6 逐点、真实丹方材料表五档认知逐条、加权技艺四档水平逐条、熟练度 7 点与分档 0~105 逐档)。"
+    },
+    "EV-219": {
+      "id": "EV-219",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T13:50:00+00:00",
+      "updated_at": "2026-09-18T13:50:00+00:00",
+      "touched_round": 234,
+      "source": "src/core/engineParity.spec.ts(37 例)+ packages/engine(97 例)+ bun run test(195 文件 / 1977 例)+ bun run check + bun run check:engine",
+      "summary": "炼制对账:成功率在掌握×认知×技艺×越级四维网格上逐点精确相等(含越级 -1/0/1/3/5/9);真实丹方的材料认知五档逐条相等、加权技艺四档逐条相等;熟练度曲线 7 点与分档 0~105 逐档相等;库内另有乘区下限(最坏 >0 且 <0.05)与各项皆满贴基准率的用例。全量闸门与产物自检(35 个文件 / 58.8 KB)全绿。"
+    },
+    "DEC-084": {
+      "id": "DEC-084",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T13:50:00+00:00",
+      "updated_at": "2026-09-18T13:50:00+00:00",
+      "touched_round": 234,
+      "rationale": "炼制在本作原是\"够级必成、不够级看不见方子\"的硬门槛,后来改成四乘区。抽库时保留的是**改后的形状**:四个乘区各有下限,任何一项弱都不把成功率归零,四项全弱时自然低到不该开炉 —— 于是\"赌一把\"始终是玩家的选择,而\"准备得怎么样\"能逐条权衡。库不做\"够级判定\":那是作品的知识门槛(知不知道有这张方子),不是通用机制。",
+      "alternatives_rejected": "①库提供\"等级 ≥ 配方阶\"的硬门槛判定(把已被否定的旧口径固化进公共库);②库只给一个成功率数值表(乘区语义丢失,使用方只能整段照抄);③把 bearableRank 也收进库(那是\"练气可稳承一阶\"这类作品设定)。",
+      "summary": "炼制:库给四乘区与越级曲线的形状与算法(各有下限),不提供硬门槛判定;知识门槛与承受阶位留在作品侧。"
     }
   },
   "edges": [
@@ -20972,6 +21032,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T13:05:00+00:00"
+    },
+    {
+      "from": "CHG-279",
+      "to": "TASK-213",
+      "type": "implements",
+      "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "CHG-280",
+      "to": "TASK-213",
+      "type": "implements",
+      "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "CHG-279",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "CHG-280",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "EV-219",
+      "to": "CHG-279",
+      "type": "validates",
+      "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "EV-219",
+      "to": "CHG-280",
+      "type": "validates",
+      "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "TASK-213",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "TASK-213",
+      "to": "TASK-212",
+      "type": "depends_on",
+      "created_at": "2026-09-18T13:50:00+00:00"
+    },
+    {
+      "from": "DEC-084",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T13:50:00+00:00"
     }
   ]
 }
