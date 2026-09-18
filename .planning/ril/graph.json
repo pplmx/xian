@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 348,
+  "round": 350,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:28:23+00:00",
+  "updated_at": "2026-09-18T23:35:25+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 275,
+      "touched_round": 349,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -19483,6 +19483,88 @@
       "confidence": 0.96,
       "source": "变更 CHG-412(f9e4d98)。审计(逐模块查 examples/ 是否引用):初测 skills/crafting/recipes/drops/companions 五个模块零示例,补完后为 0;bun examples/craft-loop.ts(实测输出:成功率 30% → 65.6% 随技艺上升;24 炉小结 采到料 24 趟 / 真开炉 23 / 没开炉 1 / 成丹 11(双成 1);失败退回草药 33 株;灵药只出不进用尽);cd packages/engine && bun run check(514 例 / 70 文件 + 十一道自检 + 12 份示例全跑);cd /workspace/xian && bun run test(278 文件 / 2563 例)、test:report(2563 过 / 0 败)、check:engine(60 处引用)、check:engine:standalone(110 个源文件)。",
       "summary": "技艺线第一次有可跑示例:五层各管一段(技艺给输入、帮手给系数、采药给材料、成算给概率、开炉给结果)。过程中还踩到一条真口径:乘区输入必须先归一(第一版给了 0.15~0.22 这种数,成功率只有 13%,二十炉颗粒无收),已写进示例注释。"
+    },
+    "TASK-330": {
+      "id": "TASK-330",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T23:32:05+00:00",
+      "updated_at": "2026-09-18T23:35:21+00:00",
+      "touched_round": 349,
+      "category": "docs",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1,
+      "summary": "把三个\"有签名、无示例\"的公开导出补进已有示例:drawMany(一次抽 N 张、一轮不重复)、softChance(软保底自然概率曲线)、deltaOf(两个数直接比,不需要快照)。不新增文件、不改运行时行为,只让用法在示例里可见。"
+    },
+    "CHG-413": {
+      "id": "CHG-413",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:32:05+00:00",
+      "updated_at": "2026-09-18T23:32:05+00:00",
+      "touched_round": 349,
+      "commit": "6888990",
+      "summary": "库:examples/collect-loop.ts 加 drawMany(CARDS, {level:4,tags:[市集]}, rng, 3) 与 softChance(0.18, 6|10, SOFT);examples/quest-loop.ts 加 deltaOf(lastWeekWords, thisWeekWords) 并对照同文件的 deltaSince。宿主无改动,公开面与版本号不变。"
+    },
+    "ISS-237": {
+      "id": "ISS-237",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-18T23:32:05+00:00",
+      "updated_at": "2026-09-18T23:35:21+00:00",
+      "touched_round": 349,
+      "summary": "示例覆盖的收口口径缺失:75 个公开导出里仍有 30 个没在任何示例里出现,此前只有\"有名字\"(publicApi.spec)和\"有用例\"两道判据,没有\"哪些导出本来就不该进示例\"的明确归属,导致每次审计都要重新人工过一遍。"
+    },
+    "EV-339": {
+      "id": "EV-339",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:32:11+00:00",
+      "updated_at": "2026-09-18T23:32:11+00:00",
+      "touched_round": 349,
+      "confidence": 0.95,
+      "source": "变更 CHG-413(6888990)。两次独立跑:bun examples/collect-loop.ts(输出 开盒三张(一轮不重复):玻璃珠 / 旧钱币 / 铜徽章;软保底第 6 抽 23.0% · 第 10 抽 43.0%)、bun examples/quest-loop.ts(输出 本周比上周多背 20 个词)。闸门:cd packages/engine && bun run check 全绿(tsc 主配置 + tsconfig.examples + vitest 514 例/70 文件 + build + verify-dist 11 道自检 + 12 份示例全跑)。首跑曾红一次:examples/quest-loop.ts(168,23) TS18048 counters.words 可能为 undefined(noUncheckedIndexedAccess),改成 (counters.words ?? 0) 后复跑全绿。",
+      "summary": "三个导出从\"只有签名\"变成\"示例里能看见用法\"。过程中确认一条签名口径:softChance 是 (base, tries, pity) —— 第一版按 (base, pity, tries) 写,第 6 抽算出 18%、第 10 抽 18%(曲线不动),改对后才是 23.0% / 43.0%。"
+    },
+    "DEC-153": {
+      "id": "DEC-153",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:32:11+00:00",
+      "updated_at": "2026-09-18T23:32:11+00:00",
+      "touched_round": 349,
+      "summary": "示例覆盖只承诺\"每个模块至少有一份示例走到\"与\"有争议/易错的用法有示例\",不承诺\"75 个导出逐个都有示例\"。剩余 30 个未出现在示例里的导出按归属分三类收口:①defineGame 门面装配(createRealmSystem / createAttributeSystem / createDungeonSystem / createEquipmentSystem / validateGame / deckPool 等)—— 示例与宿主都走门面,单个工厂由各自模块的用例覆盖;②宿主/文档层工具(clamp / formatAmount / asRecord / asArray / progressText / inBand / leverFactor / overReachFactor 等)—— 它们的用例在模块 spec 里,示例里出现反而会喧宾夺主;③随机源与种子(mulberry32 / seedFromString / randomRng)—— 属于\"换掉默认实现\"的说明项,已写在 docs/usage.md 的定制表里。判据:每个模块在 examples/ 下至少被引用一次(现为 37/37),加上 publicApi.spec 钉名字与用例钉行为两道,共三道。",
+      "rationale": "示例的价值是\"让人看懂怎么接\",不是把 75 个导出各写一行。硬凑出来的示例行既不会覆盖真实组合(它们本来就在模块用例里被逐条钉过),还会把示例从\"能读的小循环\"稀释成\"导出清单朗读\"。相反,按模块收口(37/37 有示例)是可验证的可红判据,能挡住\"整个模块没有任何示例\"这种真空白,而单个导出层面已经有 publicApi.spec + 各模块 spec 两道。",
+      "alternatives_rejected": "①要求 75 个导出逐个出现在示例里(会把示例稀释成清单,而且 clamp / asRecord 这类内部小工具没有可读的独立循环可讲);②干脆不设示例覆盖判据(那么\"某个模块整块没示例\"这类真空白没人发现,本轮的三个导出就是这种漏网);③按导出数量设阈值(阈值是拍出来的,且会鼓励凑数行,不如\"按模块 37/37\"这种自然零点)。"
+    },
+    "CHG-414": {
+      "id": "CHG-414",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:35:18+00:00",
+      "updated_at": "2026-09-18T23:35:18+00:00",
+      "touched_round": 349,
+      "commit": "9eb4c9a",
+      "summary": "库:新增 examples/realm-ladder.ts(「一梯三界」,约 190 行,第一次把 realms 与 numeric 接进示例);package.json 的 examples 脚本挂上它;README 目录树、docs/assembly.md 配方 A 各补一行;docs/usage.md 的示例份数口径从\"八份\"改成\"十几份\";CHANGELOG「未发布」记两节。运行时代码一行没动。"
+    },
+    "EV-340": {
+      "id": "EV-340",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T23:35:18+00:00",
+      "updated_at": "2026-09-18T23:35:18+00:00",
+      "touched_round": 349,
+      "confidence": 0.96,
+      "source": "变更 CHG-414(9eb4c9a)。逐模块审计脚本(按模块取导出名,在 examples/ 正文里匹配):改前 realms.ts 与 numeric.ts 为 0 个示例引用,改后 37/37 为 0 个空缺、examples 共 13 份。三次实跑:bun examples/realm-ladder.ts(学徒·见习 → 宗师·圆熟 871 天 / 进阶成功 28 / 失败 14 / 试炼 7;拧后段倍率 1.7→1.2、跨界 3→2 后同种子 660 天封顶;宗师·见习需求 6791.7 → 2388.8)。cd packages/engine && bun run check 全绿:tsc 主配置 + tsconfig.examples + vitest 514 例/70 文件 + build + verify-dist 11 道自检(组装指南 27 工厂 + 14 工具、公开面 75 导出都有人真用过、模块速查 37 模块、发布包 0.1.18.tgz 冷启动装配)+ 13 份示例全跑。宿主侧未改动,故未跑宿主闸门 —— 这一点如实记下:本轮没有宿主侧判据。",
+      "summary": "realms 与 numeric 两层第一次有可跑示例,示例覆盖从 35/37 收到 37/37。过程中写出一条可复用的示例写法:把循环抽成一个 run(sys, seed, maxDays) 函数,喂两张只差一行数的表,天数差本身就是判据(871 → 660),比任何断言都直观。"
     }
   },
   "edges": [
@@ -28894,6 +28976,42 @@
       "to": "TASK-329",
       "type": "implements",
       "created_at": "2026-09-18T23:28:23+00:00"
+    },
+    {
+      "from": "CHG-413",
+      "to": "TASK-330",
+      "type": "implements",
+      "created_at": "2026-09-18T23:35:21+00:00"
+    },
+    {
+      "from": "CHG-414",
+      "to": "TASK-330",
+      "type": "implements",
+      "created_at": "2026-09-18T23:35:21+00:00"
+    },
+    {
+      "from": "CHG-414",
+      "to": "ISS-237",
+      "type": "resolves",
+      "created_at": "2026-09-18T23:35:21+00:00"
+    },
+    {
+      "from": "ISS-237",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T23:35:21+00:00"
+    },
+    {
+      "from": "DEC-153",
+      "to": "TASK-330",
+      "type": "governs",
+      "created_at": "2026-09-18T23:35:21+00:00"
+    },
+    {
+      "from": "DEC-153",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T23:35:21+00:00"
     }
   ]
 }
