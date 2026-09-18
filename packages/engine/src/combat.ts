@@ -48,6 +48,30 @@ export interface BattleConfig {
   /** 本值键名(默认 attack / defense / hp / maxHp / speed) */
   keys?: CombatKeys
   /**
+   * 护盾池(**可选**,不配就没有"护盾"这回事)。
+   *
+   * 护盾先于生命挨打、总量有上限;溢出的治疗可以按比例转成护盾。
+   * 这三条是从一款真实作品的战斗里抽出来的骨架 —— 与题材无关:
+   * "护体灵光""能量护罩""体力缓冲"都是同一件事。
+   */
+  shield?: BattleShieldConfig
+  /**
+   * 反击与追击(**可选**,不配就不会有人反击)。
+   *
+   * 两者都读词条(默认 `counterRate`/`counterDamage`、`comboRate`/`comboDamage`):
+   * 概率触发,打一记打折的出手,且这记**不会**再触发反击与追击(否则会链到天上)。
+   */
+  followups?: BattleFollowupConfig
+  /**
+   * 技能效果标签的**默认解释**(**可选**)。
+   *
+   * 库不认识 `multi / stun / drain / shield / bleed / pierce`(见 `EnemySkillDef.effect`),
+   * 但可以给你一套"通行语义":多段追打、震慑跳过出手、吸取回血、给自己加盾、放血真伤、穿甲无视护盾。
+   * 不配 → 标签仍然只是标签(与既有行为逐位一致);配了 → 这些标签按下面的参数执行。
+   * 想完全自己解释,用 `skillEffectFn`(它优先于这里)。
+   */
+  skillEffects?: BattleSkillEffectsConfig | true
+  /**
    * 自己解释技能的 `effect`(**可选**)。
    *
    * 库**不认识** stun / drain / pierce / multi / bleed 这些标签 —— 它只把标签原样交过来,
@@ -80,6 +104,47 @@ export interface BattleConfig {
   minDamageRatio?: number
   /** 每回合结束回复比例(双方各有 mods.regenPerRound 时按各自算) */
   regenBase?: number
+}
+
+export interface BattleShieldConfig {
+  /** 护盾上限 = 最大生命 × 该比例,默认 0.5 */
+  capRatio?: number
+  /** 开局护盾的 mods 键(值为最大生命的比例),默认 'shieldOnStart' */
+  startKey?: string
+  /** 溢疗成盾的 mods 键(溢出治疗 × 该值 → 护盾),默认 'overhealShield' */
+  overhealKey?: string
+}
+
+export interface BattleFollowupConfig {
+  /** 反击概率的 mods 键,默认 'counterRate' */
+  counterRateKey?: string
+  /** 反击强度的 mods 键,默认 'counterDamage' */
+  counterDamageKey?: string
+  /** 反击基础倍率,默认 0.5 */
+  counterBase?: number
+  /** 追击概率的 mods 键,默认 'comboRate' */
+  comboRateKey?: string
+  /** 追击强度的 mods 键,默认 'comboDamage' */
+  comboDamageKey?: string
+  /** 追击基础倍率,默认 0.6 */
+  comboBase?: number
+}
+
+export interface BattleSkillEffectsConfig {
+  /** 多段:追打段数,默认 2 */
+  multiHits?: number
+  /** 多段:每段倍率(相对技能倍率),默认 0.45 */
+  multiMult?: number
+  /** 震慑:触发概率,默认 0.5 */
+  stunChance?: number
+  /** 吸取:回复自身最大生命的比例,默认 0.06 */
+  drainRatio?: number
+  /** 加盾:给自己加上最大生命的比例,默认 0.1 */
+  shieldRatio?: number
+  /** 放血:按攻击的比例直接造成伤害,默认 0.3 */
+  bleedRatio?: number
+  /** 哪些标签算"穿甲"(无视护盾),默认 ['pierce'] */
+  pierceTags?: readonly string[]
 }
 
 export interface DamageContext<T> {
@@ -127,6 +192,12 @@ export interface SkillEffectContext<T> {
   damage: (mult?: number) => number
   /** 落账:扣目标当前生命并记一条日志;返回实际扣掉的值 */
   applyDamage: (target: Combatant<T>, amount: number) => number
+  /** 目标当前的护盾余量(没配 `shield` 时恒为 0) */
+  shieldOf: (target: Combatant<T>) => number
+  /** 给目标加护盾(未配 `shield` 时什么都不做);返回实际加上去的量 */
+  gainShield: (target: Combatant<T>, amount: number) => number
+  /** 治疗:返回真正补上的生命与(溢疗成盾时)转化出的护盾 */
+  heal: (target: Combatant<T>, amount: number) => { applied: number; shielded: number }
   /** 让目标的下一次出手被跳过(定身/眩晕);重复调用不叠加 */
   skipNextTurn: (target: Combatant<T>) => void
   /** 记一条自己的日志(展示文本归你) */
@@ -141,6 +212,8 @@ export type BattleEventKind =
   | 'dodge'
   | 'skill'
   | 'counter'
+  | 'combo'
+  | 'shield'
   | 'lifesteal'
   | 'regen'
   | 'skip'
@@ -160,6 +233,9 @@ export interface BattleResult<T> {
   rounds: number
   playerHp: T
   enemyHp: T
+  /** 收场时的护盾余量(没配 `shield` 时恒为 0) */
+  playerShield: number
+  enemyShield: number
   events: BattleEvent[]
 }
 
@@ -202,46 +278,24 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
     return Math.max(atk * minDamageRatio, dmg)
   }
 
-  const strike = (
-    attacker: Combatant<T>,
-    defender: Combatant<T>,
-    round: number,
-    rng: Rng,
-    events: BattleEvent[],
-    skill?: EnemySkillDef
-  ): number => {
-    const kind: BattleEventKind = skill ? 'skill' : 'hit'
-    const label = skill ? `【${skill.name}】` : ''
-    const missChance = Math.max(0, Math.min(0.95, mod(defender.mods, 'dodgeRate') - mod(attacker.mods, 'accuracy')))
-    if (rng.chance(missChance)) {
-      events.push({ round, actor: attacker.name, kind: 'dodge', damage: 0, text: `${attacker.name} 出手,${defender.name} 闪开了` })
-      return 0
-    }
-    const critRate = Math.max(0, Math.min(1, mod(attacker.mods, 'critRate')))
-    const isCrit = !skill && rng.chance(critRate)
-    const critMult = isCrit ? critMultiplier + mod(attacker.mods, 'critDamage') : 1
-    const damage = rawDamage(attacker, defender, (skill?.mult ?? 1) * critMult, rng)
-    const dealt = Math.min(damage, statNum(defender, keys.hp))
-    setStat(defender, keys.hp, numeric.max(numeric.zero, numeric.sub(stat(defender, keys.hp), numeric.from(damage))))
-    events.push({
-      round,
-      actor: attacker.name,
-      kind: isCrit ? 'crit' : kind,
-      damage: dealt,
-      text: `${attacker.name} ${label}${isCrit ? '重击' : '命中'} ${defender.name},造成 ${Math.round(dealt)} 伤害`
-    })
-    const lifesteal = Math.max(0, mod(attacker.mods, 'lifesteal'))
-    if (lifesteal > 0 && dealt > 0) {
-      const heal = Math.min(dealt * lifesteal, statNum(attacker, keys.maxHp) - statNum(attacker, keys.hp))
-      if (heal > 0) {
-        setStat(attacker, keys.hp, numeric.add(stat(attacker, keys.hp), numeric.from(heal)))
-        events.push({ round, actor: attacker.name, kind: 'lifesteal', damage: 0, text: `${attacker.name} 汲取 ${Math.round(heal)} 生命` })
-      }
-    }
-    return dealt
-  }
-
   const alive = (c: Combatant<T>): boolean => numeric.cmp(stat(c, keys.hp), numeric.zero) > 0
+
+  /** 一次出手能带的东西 —— 默认出手、技能、反击、追击都走同一个函数,只有这几项不同 */
+  interface StrikeOptions {
+    skill?: EnemySkillDef
+    /** 倍率;默认取技能倍率或 1 */
+    mult?: number
+    /** 事件类型;默认技能算 skill,其余算 hit */
+    kind?: BattleEventKind
+    /** 事件文本前缀(如「反击」);默认技能名 */
+    label?: string
+    /** 无视护盾(穿甲/真伤) */
+    bypassShield?: boolean
+    /** 这一记不会再引发反击 */
+    noCounter?: boolean
+    /** 这一记不会再引发追击 */
+    noFollowups?: boolean
+  }
 
   /** 拷一份再打:调用方的对象不被就地改;本值表也要拷,否则两边共用同一张表 */
   const build = (a: Combatant<T>, b: Combatant<T>): [Combatant<T>, Combatant<T>] => [
@@ -259,20 +313,187 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
       /** 本场共用的小抽屉:钩子跨回合记状态用,引擎不解释 */
       const state: Record<string, unknown> = {}
 
-      const applyDamage = (target: Combatant<T>, amount: number): number => {
-        const dealt = Math.min(amount, statNum(target, keys.hp))
-        if (!(dealt > 0)) return 0
-        setStat(target, keys.hp, numeric.max(numeric.zero, numeric.sub(stat(target, keys.hp), numeric.from(amount))))
-        return dealt
+      /*
+       * 护盾池:按参战者各存一份,只活在这一场里。
+       *
+       * 没配 `config.shield` 时下面所有护盾原语都是空操作 —— 于是"没有护盾这件事"
+       * 与加这个功能之前逐位一致(判据里有一条专门盯着它)。
+       */
+      const shields = new Map<Combatant<T>, number>()
+      const shieldCap = config.shield?.capRatio ?? 0.5
+      const startKey = config.shield?.startKey ?? 'shieldOnStart'
+      const overhealKey = config.shield?.overhealKey ?? 'overhealShield'
+      const counterRateKey = config.followups?.counterRateKey ?? 'counterRate'
+      const counterDamageKey = config.followups?.counterDamageKey ?? 'counterDamage'
+      const comboRateKey = config.followups?.comboRateKey ?? 'comboRate'
+      const comboDamageKey = config.followups?.comboDamageKey ?? 'comboDamage'
+      const effectCfg = config.skillEffects === true ? {} : (config.skillEffects ?? null)
+      // 标签的解释权只在"开了这套解释"时交给引擎;没开就一个都不认(包括 pierce)
+      const pierceTags = effectCfg ? new Set(effectCfg.pierceTags ?? ['pierce']) : new Set<string>()
+
+      const shieldOf = (c: Combatant<T>): number => shields.get(c) ?? 0
+
+      /** 加护盾:受上限夹取;返回实际加上去的量 */
+      const gainShield = (c: Combatant<T>, amount: number): number => {
+        if (!config.shield || !(amount > 0)) return 0
+        const cap = Math.max(0, statNum(c, keys.maxHp) * shieldCap)
+        const before = shieldOf(c)
+        const after = Math.min(cap, before + amount)
+        shields.set(c, after)
+        return after - before
+      }
+
+      /** 治疗:先补生命,溢出的部分按 `overhealShield` 转成护盾(要配了 shield 才算) */
+      const heal = (c: Combatant<T>, amount: number): { applied: number; shielded: number } => {
+        if (!(amount > 0)) return { applied: 0, shielded: 0 }
+        const missing = Math.max(0, statNum(c, keys.maxHp) - statNum(c, keys.hp))
+        const applied = Math.min(missing, amount)
+        if (applied > 0) setStat(c, keys.hp, numeric.add(stat(c, keys.hp), numeric.from(applied)))
+        const overflow = amount - applied
+        const conv = config.shield ? Math.max(0, mod(c.mods, overhealKey)) : 0
+        const shielded = conv > 0 && overflow > 0 ? gainShield(c, overflow * conv) : 0
+        return { applied, shielded }
+      }
+
+      /** 落账:先扣护盾、再扣生命;返回各自吃掉多少 */
+      const damageDealt = (
+        target: Combatant<T>,
+        amount: number,
+        opts: { bypassShield?: boolean } = {}
+      ): { absorbed: number; lost: number } => {
+        let remain = amount
+        let absorbed = 0
+        if (config.shield && !opts.bypassShield && shieldOf(target) > 0) {
+          absorbed = Math.min(shieldOf(target), remain)
+          shields.set(target, shieldOf(target) - absorbed)
+          remain -= absorbed
+        }
+        const lost = Math.min(remain, statNum(target, keys.hp))
+        if (lost > 0) {
+          setStat(target, keys.hp, numeric.max(numeric.zero, numeric.sub(stat(target, keys.hp), numeric.from(lost))))
+        }
+        return { absorbed, lost }
+      }
+
+      const applyDamage = (target: Combatant<T>, amount: number, opts: { bypassShield?: boolean } = {}): number =>
+        damageDealt(target, amount, opts).lost
+
+      const emit = (round: number, actor: string, kind: BattleEventKind, text: string, damage = 0): void => {
+        events.push({ round, actor, kind, damage, text })
+      }
+
+      const strike = (attacker: Combatant<T>, defender: Combatant<T>, round: number, opts: StrikeOptions = {}): number => {
+        const skill = opts.skill
+        const mult = opts.mult ?? skill?.mult ?? 1
+        const kind: BattleEventKind = opts.kind ?? (skill ? 'skill' : 'hit')
+        const label = opts.label ?? (skill ? `【${skill.name}】` : '')
+        const missChance = Math.max(0, Math.min(0.95, mod(defender.mods, 'dodgeRate') - mod(attacker.mods, 'accuracy')))
+        if (rng.chance(missChance)) {
+          emit(round, attacker.name, 'dodge', `${attacker.name} 出手,${defender.name} 闪开了`)
+          return 0
+        }
+        const critRate = Math.max(0, Math.min(1, mod(attacker.mods, 'critRate')))
+        const isCrit = kind === 'hit' && rng.chance(critRate)
+        const critMult = isCrit ? critMultiplier + mod(attacker.mods, 'critDamage') : 1
+        const damage = rawDamage(attacker, defender, mult * critMult, rng)
+        const { absorbed, lost } = damageDealt(defender, damage, { bypassShield: opts.bypassShield })
+        const shieldNote = absorbed > 0 ? `(护盾挡下 ${Math.round(absorbed)})` : ''
+        emit(
+          round,
+          attacker.name,
+          isCrit ? 'crit' : kind,
+          `${attacker.name} ${label}${isCrit ? '重击' : '命中'} ${defender.name},造成 ${Math.round(lost)} 伤害${shieldNote}`,
+          lost
+        )
+
+        // 吸血
+        const lifesteal = Math.max(0, mod(attacker.mods, 'lifesteal'))
+        if (lifesteal > 0 && lost > 0) {
+          const { applied } = heal(attacker, lost * lifesteal)
+          if (applied > 0) emit(round, attacker.name, 'lifesteal', `${attacker.name} 汲取 ${Math.round(applied)} 生命`)
+        }
+
+        /*
+         * 反击与追击 —— 都只打一记,且这一记自己不再引发反击/追击。
+         *
+         * 顺序与那款真实作品一致:先反击(挨打方的反应),再追击(出手方的顺势)。
+         * 两者都读词条,没配 `followups` 就整段跳过。
+         */
+        if (config.followups && !opts.noCounter && alive(defender)) {
+          const rate = Math.max(0, Math.min(1, mod(defender.mods, counterRateKey)))
+          if (rng.chance(rate)) {
+            strike(defender, attacker, round, {
+              mult: (config.followups.counterBase ?? 0.5) * (1 + mod(defender.mods, counterDamageKey)),
+              kind: 'counter',
+              label: '反击',
+              noCounter: true,
+              noFollowups: true
+            })
+          }
+        }
+        if (config.followups && !opts.noFollowups && alive(attacker) && alive(defender)) {
+          const rate = Math.max(0, Math.min(1, mod(attacker.mods, comboRateKey)))
+          if (rng.chance(rate)) {
+            strike(attacker, defender, round, {
+              mult: (config.followups.comboBase ?? 0.6) * (1 + mod(attacker.mods, comboDamageKey)),
+              kind: 'combo',
+              label: '追击',
+              noCounter: true,
+              noFollowups: true
+            })
+          }
+        }
+        return lost
+      }
+
+      /**
+       * 技能标签的默认解释(只在配了 `skillEffects` 时执行)。
+       *
+       * 语义取自那款真实作品:multi 两段追打、stun 震慑到下一回合、drain 吸取回血、
+       * shield 给自己加盾、bleed 按攻击放血;pierce 在出手时就走"无视护盾"。
+       */
+      const applySkillEffects = (attacker: Combatant<T>, defender: Combatant<T>, round: number, skill: EnemySkillDef): void => {
+        const tag = skill.effect
+        if (!tag || !effectCfg || !alive(defender)) return
+        if (tag === 'multi') {
+          const hits = Math.max(0, Math.floor(effectCfg.multiHits ?? 2))
+          for (let i = 0; i < hits && alive(defender) && alive(attacker); i += 1) {
+            strike(attacker, defender, round, {
+              skill,
+              mult: skill.mult * (effectCfg.multiMult ?? 0.45),
+              noFollowups: true
+            })
+          }
+          return
+        }
+        if (tag === 'stun') {
+          if (rng.chance(Math.max(0, Math.min(1, effectCfg.stunChance ?? 0.5)))) {
+            skipping.add(defender)
+            emit(round, attacker.name, 'skill', `${defender.name} 被震慑,一时动弹不得`)
+          }
+          return
+        }
+        if (tag === 'drain') {
+          const { applied } = heal(attacker, statNum(attacker, keys.maxHp) * (effectCfg.drainRatio ?? 0.06))
+          if (applied > 0) emit(round, attacker.name, 'lifesteal', `${attacker.name} 吸取了 ${Math.round(applied)} 生命`)
+          return
+        }
+        if (tag === 'shield') {
+          const gained = gainShield(attacker, statNum(attacker, keys.maxHp) * (effectCfg.shieldRatio ?? 0.1))
+          if (gained > 0) emit(round, attacker.name, 'shield', `${attacker.name} 凝起一层护盾(吸收 ${Math.round(gained)})`)
+          return
+        }
+        if (tag === 'bleed') {
+          const attackerName = attacker.name
+          const lost = applyDamage(defender, statNum(attacker, keys.attack) * (effectCfg.bleedRatio ?? 0.3))
+          if (lost > 0) emit(round, attackerName, 'skill', `${defender.name} 血流不止,又损 ${Math.round(lost)} 生命`, lost)
+        }
       }
 
       /** 技能效果解释器:把引擎内部的出手/伤害/落账原语摊开给调用方,而不是让他另起一套 */
       const runEffect = (attacker: Combatant<T>, defender: Combatant<T>, round: number, skill: EnemySkillDef): boolean => {
         const fn = config.skillEffectFn
         if (!fn) return false
-        const emit = (kind: BattleEventKind, text: string, damage = 0, actor?: string): void => {
-          events.push({ round, actor: actor ?? attacker.name, kind, damage, text })
-        }
         const handled = fn(
           {
             round,
@@ -284,17 +505,24 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
             statOf: stat,
             setStat,
             num: statNum,
-            strike: (mult?: number): number => strike(attacker, defender, round, rng, events, { ...skill, mult: mult ?? skill.mult }),
+            strike: (mult?: number): number => strike(attacker, defender, round, { skill, mult: mult ?? skill.mult }),
             damage: (mult?: number): number => rawDamage(attacker, defender, mult ?? skill.mult, rng),
             applyDamage: (target: Combatant<T>, amount: number): number => {
               const dealt = applyDamage(target, amount)
-              if (dealt > 0) emit('skill', `${attacker.name} 【${skill.name}】命中 ${target.name},造成 ${Math.round(dealt)} 伤害`, dealt)
+              if (dealt > 0) {
+                emit(round, attacker.name, 'skill', `${attacker.name} 【${skill.name}】命中 ${target.name},造成 ${Math.round(dealt)} 伤害`, dealt)
+              }
               return dealt
             },
+            shieldOf,
+            gainShield,
+            heal,
             skipNextTurn: (target: Combatant<T>): void => {
               skipping.add(target)
             },
-            log: emit,
+            log: (kind: BattleEventKind, text: string, damage = 0, actor?: string): void => {
+              emit(round, actor ?? attacker.name, kind, text, damage)
+            },
             state
           },
           rng
@@ -305,6 +533,18 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
       const pSpeed = statNum(p, keys.speed) * (1 + mod(p.mods, 'speed'))
       const eSpeed = statNum(e, keys.speed) * (1 + mod(e.mods, 'speed'))
       const playerFirst = pSpeed >= eSpeed
+
+      // 开战护盾:读双方各自的 `shieldOnStart`(配了 shield 才算)
+      if (config.shield) {
+        for (const c of [p, e]) {
+          const pct = Math.max(0, mod(c.mods, startKey))
+          if (pct > 0) {
+            const gained = gainShield(c, statNum(c, keys.maxHp) * pct)
+            if (gained > 0) emit(0, c.name, 'shield', `${c.name} 开局凝起一层护盾(吸收 ${Math.round(gained)})`)
+          }
+        }
+      }
+
       let round = 0
       while (round < maxRounds && alive(p) && alive(e)) {
         round += 1
@@ -328,17 +568,24 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
           const skill = usable.length > 0 ? rng.pick(usable) : undefined
           // 有技能且调用方给了效果解释器:由他决定这一次出手怎么算;他说"没处理"才走默认
           if (skill && runEffect(attacker, defender, round, skill)) continue
-          strike(attacker, defender, round, rng, events, skill)
+          strike(attacker, defender, round, {
+            skill,
+            // 穿甲标签在出手时就生效:这一记无视护盾
+            bypassShield: skill?.effect !== undefined && pierceTags.has(skill.effect)
+          })
+          if (skill) applySkillEffects(attacker, defender, round, skill)
         }
         for (const c of [p, e]) {
           if (!alive(c)) continue
           const regen = regenBase + mod(c.mods, 'regenPerRound')
           if (regen <= 0) continue
-          const missing = statNum(c, keys.maxHp) - statNum(c, keys.hp)
-          const heal = Math.min(missing, statNum(c, keys.maxHp) * regen)
-          if (heal > 0) {
-            setStat(c, keys.hp, numeric.add(stat(c, keys.hp), numeric.from(heal)))
-            events.push({ round, actor: c.name, kind: 'regen', damage: 0, text: `${c.name} 回复 ${Math.round(heal)} 生命` })
+          // 传原始量让 heal 自己处理"补不满的部分":配了溢疗成盾时,多余的那部分会变成护盾
+          const healed = heal(c, statNum(c, keys.maxHp) * regen)
+          if (healed.applied > 0) {
+            emit(round, c.name, 'regen', `${c.name} 回复 ${Math.round(healed.applied)} 生命`)
+          }
+          if (healed.shielded > 0) {
+            emit(round, c.name, 'shield', `${c.name} 溢出的生机化为护盾(吸收 ${Math.round(healed.shielded)})`)
           }
         }
       }
@@ -350,7 +597,15 @@ export function createCombatEngine<T = number>(config: BattleConfig = {}, numeri
         damage: 0,
         text: win ? `${p.name} 胜` : alive(e) ? `${e.name} 胜` : '两败俱伤'
       })
-      return { win, rounds: round, playerHp: stat(p, keys.hp), enemyHp: stat(e, keys.hp), events }
+      return {
+        win,
+        rounds: round,
+        playerHp: stat(p, keys.hp),
+        enemyHp: stat(e, keys.hp),
+        playerShield: shieldOf(p),
+        enemyShield: shieldOf(e),
+        events
+      }
     }
   }
 }

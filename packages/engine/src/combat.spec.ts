@@ -208,4 +208,154 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     expect(firstRound.filter(e => e.damage > 0).length).toBe(1)
     expect(battle.win).toBe(true)
   })
+
+  it('护盾池:开局按词条凝盾、先于生命挨打、总量被上限夹住', () => {
+    const engine = createCombatEngine({ variance: 0, shield: { capRatio: 0.5 } })
+    const mk = (startPct: number) =>
+      engine.resolve(
+        fighter({ attack: 30, defense: 0, hp: 200, maxHp: 200, speed: 2, mods: { shieldOnStart: startPct } }),
+        fighter({ id: 'e', name: '乙', attack: 10, defense: 0, hp: 500, maxHp: 500, speed: 1 }),
+        createRng(21)
+      )
+
+    // 开局盾 = 最大生命 × 25% = 50;敌方每击 10,先被盾吃掉 → 生命不掉
+    const mild = mk(0.25)
+    expect(mild.events[0]!.kind).toBe('shield')
+    expect(mild.events[0]!.text).toContain('吸收 50')
+    const firstEnemyHit = mild.events.find(e => e.actor === '乙' && e.kind === 'hit')!
+    expect(firstEnemyHit.damage).toBe(0)
+    expect(firstEnemyHit.text).toContain('护盾挡下 10')
+
+    // 上限 50%:写 500% 也只凝 100
+    expect(mk(5).events[0]!.text).toContain('吸收 100')
+
+    // 没配 shield 就没有护盾这回事(默认不变)
+    const plain = createCombatEngine({ variance: 0 }).resolve(
+      fighter({ attack: 30, defense: 0, hp: 200, maxHp: 200, speed: 2, mods: { shieldOnStart: 5 } }),
+      fighter({ id: 'e', name: '乙', attack: 10, defense: 0, hp: 500, maxHp: 500, speed: 1 }),
+      createRng(21)
+    )
+    expect(plain.events.some(e => e.kind === 'shield')).toBe(false)
+    expect(plain.playerShield).toBe(0)
+    expect(plain.events.find(e => e.actor === '乙' && e.kind === 'hit')!.damage).toBe(10)
+  })
+
+  it('溢疗成盾:补不满的那部分按词条转成护盾', () => {
+    const engine = createCombatEngine({ variance: 0, shield: {}, regenBase: 0.1 })
+    const battle = engine.resolve(
+      fighter({ attack: 30, hp: 500, maxHp: 500, speed: 2, mods: { overhealShield: 0.5 } }),
+      fighter({ id: 'e', name: '乙', attack: 1, defense: 0, hp: 500, maxHp: 500, speed: 1 }),
+      createRng(3)
+    )
+    // 满血时每回合"回"10% = 50,全溢出 → 转 25 点护盾
+    const shieldEvents = battle.events.filter(e => e.kind === 'shield')
+    expect(shieldEvents.length).toBeGreaterThan(0)
+    expect(shieldEvents[0]!.text).toContain('吸收 25')
+    expect(battle.playerShield).toBeGreaterThan(0)
+  })
+
+  it('反击:打一记回去,且这一记不再引发反击(否则会链到天上)', () => {
+    const engine = createCombatEngine({ variance: 0, followups: {} })
+    const battle = engine.resolve(
+      fighter({ attack: 30, defense: 0, hp: 500, maxHp: 500, speed: 2, mods: { counterRate: 1 } }),
+      fighter({ id: 'e', name: '乙', attack: 10, defense: 0, hp: 500, maxHp: 500, speed: 1, mods: { counterRate: 1 } }),
+      createRng(7)
+    )
+    // 第一回合:双方各挨一次打 → 各反击一次;反击本身不再被反(否则会链到天上)
+    const round1 = battle.events.filter(e => e.round === 1 && e.kind === 'counter')
+    expect(round1.length).toBe(2)
+    expect(round1[0]!.actor).toBe('乙')
+    // 反击倍率 0.5:乙攻 10 → 5
+    expect(round1[0]!.damage).toBeCloseTo(5, 6)
+    // 整场里也没有"反击接反击"的链
+    for (let i = 1; i < battle.events.length; i += 1) {
+      if (battle.events[i]!.kind === 'counter') expect(battle.events[i - 1]!.kind).not.toBe('counter')
+    }
+
+    // 不配 followups:一次反击也没有(默认不变)
+    const plain = createCombatEngine({ variance: 0 }).resolve(
+      fighter({ attack: 30, hp: 500, maxHp: 500 }),
+      fighter({ id: 'e', name: '乙', attack: 10, defense: 0, hp: 500, maxHp: 500, mods: { counterRate: 1 } }),
+      createRng(7)
+    )
+    expect(plain.events.some(e => e.kind === 'counter')).toBe(false)
+  })
+
+  it('追击:概率触发一记打折出手,同样不再引发反击', () => {
+    const engine = createCombatEngine({ variance: 0, followups: {} })
+    const battle = engine.resolve(
+      fighter({ attack: 30, hp: 500, maxHp: 500, speed: 2, mods: { comboRate: 1, comboDamage: 0 } }),
+      fighter({ id: 'e', name: '乙', attack: 10, defense: 0, hp: 500, maxHp: 500, speed: 1, mods: { counterRate: 1 } }),
+      createRng(11)
+    )
+    const combo = battle.events.find(e => e.kind === 'combo')!
+    expect(combo.actor).toBe('甲')
+    expect(combo.damage).toBeCloseTo(18, 6) // 30 × 0.6
+    // 追击打完之后,没有"乙反击追击"这一出:追击本身不吃反击
+    const afterCombo = battle.events[battle.events.indexOf(combo) + 1]!
+    expect(afterCombo.kind).not.toBe('counter')
+  })
+
+  it('穿甲标签只在你开了"标签解释"之后才算数', () => {
+    const mk = (skillEffects?: { pierceTags?: readonly string[] } | true) =>
+      createCombatEngine({ variance: 0, shield: {}, ...(skillEffects === undefined ? {} : { skillEffects }) }).resolve(
+        fighter({
+          attack: 30,
+          hp: 300,
+          maxHp: 300,
+          speed: 2,
+          mods: { shieldOnStart: 0.5 },
+          skills: [{ name: '破甲斩', mult: 1, rate: 1, effect: 'pierce' }]
+        }),
+        fighter({ id: 'e', name: '乙', attack: 1, defense: 0, hp: 300, maxHp: 300, speed: 1, mods: { shieldOnStart: 0.5 } }),
+        createRng(5)
+      )
+    // 没开标签解释:pierce 只是标签,照旧被护盾吃掉
+    expect(mk().events.find(e => e.kind === 'skill' && e.actor === '甲')!.damage).toBe(0)
+    // 开了:`bypassShield` 生效,伤害落在生命上
+    expect(mk({}).events.find(e => e.kind === 'skill' && e.actor === '甲')!.damage).toBeGreaterThan(0)
+  })
+
+  it('技能标签的默认解释:多段 / 震慑 / 吸取 / 加盾 / 放血', () => {
+    const run = (effect: string) =>
+      createCombatEngine({ variance: 0, shield: {}, skillEffects: {} }).resolve(
+        fighter({
+          attack: 30,
+          hp: 500,
+          maxHp: 500,
+          speed: 2,
+          skills: [{ name: '试招', mult: 1, rate: 1, effect }]
+        }),
+        fighter({ id: 'e', name: '乙', attack: 1, defense: 0, hp: 500, maxHp: 500, speed: 1 }),
+        createRng(9)
+      )
+
+    // multi:第一回合 = 主手一击 + 两段 45% 追打 = 三记技能事件
+    expect(run('multi').events.filter(e => e.round === 1 && e.kind === 'skill' && e.actor === '甲').length).toBe(3)
+    // stun:震慑到下一回合 —— 乙出现"没有出手"
+    expect(run('stun').events.some(e => e.kind === 'skip' && e.actor === '乙')).toBe(true)
+    // drain:吸取回血(开打之后总会被蹭掉血,于是这一路必然出得来)
+    expect(run('drain').events.some(e => e.kind === 'lifesteal')).toBe(true)
+    // shield:给自己加盾(开局那一次不算,看第 1 回合施放后加的)
+    expect(run('shield').events.filter(e => e.kind === 'shield' && e.actor === '甲').length).toBeGreaterThan(0)
+    // bleed:按攻击放血 —— 每次出手后额外掉 9 点
+    const bleed = run('bleed').events.filter(e => e.kind === 'skill' && e.text.includes('血流不止'))
+    expect(bleed.length).toBeGreaterThan(0)
+    expect(bleed[0]!.damage).toBeCloseTo(9, 6)
+  })
+
+  it('护盾与反击都不配时,结算与从前逐位一致(只有多了两个恒为 0 的读数)', () => {
+    const build11 = () =>
+      createCombatEngine({ variance: 0 }).resolve(
+        fighter({ attack: 25, hp: 300, maxHp: 300, mods: { critRate: 0.5 } }),
+        fighter({ id: 'e', name: '乙', attack: 12, defense: 3, hp: 260, maxHp: 260, mods: { dodgeRate: 0.1, counterRate: 1 } }),
+        createRng(13)
+      )
+    const now = build11()
+    expect(now.playerShield).toBe(0)
+    expect(now.enemyShield).toBe(0)
+    expect(now.events.some(e => ['shield', 'counter', 'combo'].includes(e.kind))).toBe(false)
+    // 同一份配置两次结果一致(结算仍是纯函数)
+    expect(build11().events).toEqual(now.events)
+  })
 })

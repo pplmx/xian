@@ -60,9 +60,9 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 尚未发布到 npm。按 tag 引用(**请用 tag,不要跟 `main`** —— 库还在长,`main` 随时会动):
 
 ```bash
-bun add github:pplmx/wanxiang-engine#v0.1.1
+bun add github:pplmx/wanxiang-engine#v0.2.0
 # 或
-npm  i github:pplmx/wanxiang-engine#v0.1.1
+npm  i github:pplmx/wanxiang-engine#v0.2.0
 ```
 
 ```ts
@@ -410,6 +410,9 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
 | **战斗伤害公式完全自己定** | `BattleConfig.damageFn(ctx, rng)`(减法型/除算型/查表型都行;给了它,地板与修正都归你) |
 | **技能的效果标记怎么解释** | `BattleConfig.skillEffectFn(ctx, rng)` —— 库不认识 `stun/drain/pierce/multi`,只把标签交过来;返回 `true` 即"这次出手归我" |
+| **技能标签的通行解释**(多段 / 震慑 / 吸取 / 加盾 / 放血 / 穿甲) | `BattleConfig.skillEffects`(段数、概率、比例都可配;不配则一个标签都不解释,继续交给 `skillEffectFn`) |
+| **护盾池**(先吃盾再掉血 / 上限封顶 / 溢疗成盾) | `BattleConfig.shield`:上限 `capRatio`(默认 50%)、开局盾 `mods.shieldOnStart`、溢疗成盾 `mods.overhealShield`;不配就没有护盾这回事 |
+| **反击与追击** | `BattleConfig.followups`:各读一对词条(默认 `counterRate/counterDamage`、`comboRate/comboDamage`),概率触发一记打折出手,且这一记不再引发反击/追击 |
 | **技能消耗完全自己定** | `skills.costs[].amount(level)`(折扣与下限仍生效) |
 | **技能词条曲线完全自己定** | `SkillDef.modsFn(level)`(给了它,`baseMods`/`perLevelMods` 忽略) |
 | **炼制乘区几个、叫什么、什么形状** | `crafting.levers`(任意键)+ 每区 `LeverSpec.curve`(自定义曲线)+ 可选 `overReach` |
@@ -509,7 +512,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 
 ## 版本与发布
 
-- 当前版本 **0.1.1**(tag `v0.1.1`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
+- 当前版本 **0.2.0**(tag `v0.2.0`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
 - 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:
   **公开面即承诺**,新增走 minor、破坏走 minor 并写明怎么改;
   0.x 期间数值曲线不承诺不变,但没有显式配置时**默认行为逐位不变**。
