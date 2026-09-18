@@ -31,6 +31,14 @@ import type {
   BattleShieldConfig,
   BattleSkillEffectsConfig,
   BreakthroughResult,
+  BuffApply,
+  BuffChange,
+  BuffConfig,
+  BuffDef,
+  BuffInstance,
+  BuffStacking,
+  BuffSystem,
+  BuffView,
   Combatant,
   CombatEngine,
   CombatKeys,
@@ -193,6 +201,7 @@ const RUNTIME_EXPORTS = [
   'createStageMemory',
   'createCycleSystem',
   'createAttributeSystem',
+  'createBuffSystem',
   'createCombatEngine',
   'createCompanionSystem',
   'createDungeonSystem',
@@ -325,6 +334,7 @@ type PublicTypes = {
   intake: [IntakeConfig<SampleItem, number>, IntakeResult<SampleItem, number>, IntakeSystem<SampleItem, number>]
   settlement: [Settlement<number>, SettlementPlan<number>, SettlementReceipt<number>]
   drops: [DropEntry, DropHit, DropOptions, DropTable]
+  buffs: [BuffApply, BuffChange, BuffConfig<Mods>, BuffDef<Mods>, BuffInstance, BuffStacking, BuffSystem<Mods>, BuffView<Mods>]
   holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
   goals: [GoalCond, GoalEnv, GoalProgress]
   deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]

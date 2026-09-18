@@ -4,18 +4,20 @@
  *
  * 运行:`bun packages/engine/examples/daily-loop.ts`(或 `bun run examples`)
  *
- * 它一次用上最近做的四层,而且**没有一个字提到修仙**:
+ * 它一次用上五层,而且**没有一个字提到修仙**:
  *
  *   resources  精力 / 专注 / 零花钱 / 文具券(有上限、要取整、收支带来源)
  *   idle       离线三小时:先把时间账算清,再按步产出(精力到顶就不再进)
  *   holding    文具盒:容量、占位、替换
  *   triage     放学自动清理:哪些留、哪些换券,以及"关掉某条规则会少留几件"的读数
+ *   buffs      状态:自习的「专注」叠时长、熬夜的「瞌睡」按分类清掉、下一次变化在什么时候
  *
  * 想要的读法:一个不写得像"游戏引擎文档"的、能被抄走的最小闭环 ——
  * 换掉名字与数值,它就是另一款游戏。
  */
 import {
   compareBy,
+  createBuffSystem,
   createHoldingSystem,
   createResourceSystem,
   createTriage,
@@ -94,7 +96,44 @@ console.log(
 )
 wallet = bought.ledger
 
-// ——— 6. 一天掉两件文具,顺手过一遍自动清理 ———
+// ——— 6. 状态:自习的「专注」与熬夜的「瞌睡」 ———
+/**
+ * 时间单位由这一处声明(这份示例用秒,游戏里用 `Date.now()` 就写 `clock: 'ms'`)。
+ *
+ * 两条口径值得看清楚:
+ *   · 同一条状态再来一次是**叠时长**,不是刷新 —— 还剩 15 分钟时又上一节自习,
+ *     该有 40 分钟(15 + 25),而不是被清零重算成 25;
+ *   · "清除负面"只认你给的分类:库里不认识什么是负面,`clear(list, 'loss')` 才剪得掉。
+ */
+const mood = createBuffSystem<{ focusGain: number }>({
+  defs: [
+    { id: 'focus', durationSec: 25 * 60, kind: 'gain', mods: { focusGain: 0.2 }, maxDurationSec: 90 * 60 },
+    { id: 'sleepy', durationSec: 120 * 60, kind: 'loss', mods: { focusGain: -0.4 } }
+  ]
+})
+const studyAt = 19 * 3600 // 晚上七点,以"今天过了多少秒"当时钟
+let moodState = mood.apply([], 'sleepy', studyAt).instances
+moodState = mood.apply(moodState, 'focus', studyAt).instances
+const afterTenMin = studyAt + 600
+const again = mood.apply(moodState, 'focus', afterTenMin)
+console.log('—— 状态:现在还挂着什么 ——')
+console.log(`  自习一节:专注 25 分(10 分钟后就只剩 ${(mood.remainingSec(moodState, 'focus', afterTenMin) / 60).toFixed(0)} 分)`)
+console.log(
+  `  再上一节:专注还剩 ${(mood.remainingSec(again.instances, 'focus', afterTenMin) / 60).toFixed(0)} 分` +
+    `(叠上去的;若是刷新,只有 25 分)`
+)
+let stacked = moodState
+for (let i = 0; i < 4; i += 1) stacked = mood.apply(stacked, 'focus', afterTenMin).instances
+console.log(`  连上四节:封在 ${(mood.remainingSec(stacked, 'focus', afterTenMin) / 60).toFixed(0)} 分(设了上限)`)
+const washed = mood.clear(stacked, 'loss')
+console.log(`  洗把脸:清掉 ${washed.removed} 条负面(增益留着)`)
+const next = mood.nextExpiry(washed.instances, afterTenMin)
+console.log(
+  `  下一次状态变化:${next ? `${next.id} 在 ${(next.afterSec / 60).toFixed(0)} 分后` : '(没有)'}`
+)
+moodState = washed.instances
+
+// ——— 7. 一天掉两件文具,顺手过一遍自动清理 ———
 const drops: Stationery[] = [
   pen,
   { uid: 'e1', name: '橡皮', rarity: 0, level: 0 },
@@ -118,7 +157,7 @@ const impact = cleanup.impact(box.list(holding))
 console.log(`  清理读数:候选 ${impact.candidates} 件 · 留 ${impact.keep} · 换券 ${impact.junk}`)
 console.log(`    规则明细:${impact.byReason.map(r => `${r.reason}×${r.count}`).join(' / ')}`)
 
-// ——— 7. 这一天的账:每个来源各给了多少 ———
+// ——— 8. 这一天的账:每个来源各给了多少 ———
 const day = ledger.audit([...offline.entries, ...bought.entries, ...recycled.entries])
 console.log('\n—— 今天这笔账 ——')
 for (const [source, row] of Object.entries(day.bySource)) {
@@ -139,5 +178,6 @@ console.log(`\n盒子满了会先退:${[...box.list(holding)].sort(eviction)[0]?
 // 收尾:把用到的能力都真的用了一次(示例也是判据 —— 它进类型检查与两份自检)
 console.log(
   `\n没有一行提到修仙:资源(${ledger.defs.length} 种) · 持有(${box.count(holding)}/${box.capacityOf(holding)}) · ` +
-    `裁决(${cleanup.rules.length} 条规则) · 离线(${runIdle(plan, 0, n => n + 1)} 步)`
+    `裁决(${cleanup.rules.length} 条规则) · 离线(${runIdle(plan, 0, n => n + 1)} 步) · ` +
+    `状态(${mood.active(moodState, afterTenMin).length} 条生效)`
 )

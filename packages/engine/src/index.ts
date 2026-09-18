@@ -150,6 +150,18 @@ export { createSettlement } from './settlement.js'
 export type { DropEntry, DropHit, DropOptions, DropTable } from './drops.js'
 export { createDropTable } from './drops.js'
 
+export type {
+  BuffApply,
+  BuffChange,
+  BuffConfig,
+  BuffDef,
+  BuffInstance,
+  BuffStacking,
+  BuffSystem,
+  BuffView
+} from './buffs.js'
+export { createBuffSystem } from './buffs.js'
+
 export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
 export { createHoldingSystem } from './holding.js'
 

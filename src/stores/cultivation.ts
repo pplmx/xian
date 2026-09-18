@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import type { BuffInstance, CombatSkill, StatMods } from '@/types'
 import { persistConfig } from '@/utils/storage'
 import { gongfaDef } from '@/data/gongfa'
-import { buffDef } from '@/data/buffs'
+import { applyBuff, buffModSources, clearNegativeBuffList, pruneBuffList } from '@/core/engineBuffs'
 import { gongfaBranchDef } from '@/data/gongfaBranches'
 import { GONGFA_SYSTEM } from '@/core/engineWorld'
 import { mergeMods } from '@/core/statsCalc'
@@ -61,12 +61,8 @@ export const useCultivationStore = defineStore(
     })
 
     const buffMods = computed<StatMods>(() => {
-      const sources: StatMods[] = []
-      for (const b of buffs.value) {
-        const def = buffDef(b.defId)
-        if (def) sources.push(def.mods)
-      }
-      return mergeMods(sources)
+      // 生效状态的来源清单由库给出(顺序即实例顺序),合并仍是本作的属性汇总口径
+      return mergeMods(buffModSources(buffs.value))
     })
 
     /** 主修功法附带的战斗技能 */
@@ -106,26 +102,12 @@ export const useCultivationStore = defineStore(
     }
 
     /**
-     * 施加状态 —— 同一状态重复施加时**时长叠加**,不是取较长者刷新。
-     *
-     * 旧实现 Math.max(旧 endsAt, now + dur) 等价于「刷新」:buff 还剩 20 分钟时再服同一味丹,
-     * 那 20 分钟被清零重算,药力白丢。改为把新时长加到已有剩余时长上(尚在生效的实例以
-     * 旧 endsAt 为基准),「药力化开」这句承诺的时长才足额兑现。
-     *
-     * 已过期(理论上 pruneBuffs 已清,但离线/坏档可能残留)的实例以 now 为基准,
-     * 不把历史负剩余时间叠进来。
+     * 施加状态 —— 叠时长的口径(而不是"取较长者"的刷新)已搬进公共库,
+     * 本作只保留内容与换算(`core/engineBuffs`):同一状态重复施加时,
+     * 「药力化开」承诺的时长足额兑现;已过期的实例以 now 为基准。
      */
     function addBuff(defId: string, now: number): void {
-      const def = buffDef(defId)
-      if (!def) return
-      const add = def.durationSec * 1000
-      const existing = buffs.value.find(b => b.defId === defId)
-      if (existing) {
-        const endsAt = Math.max(existing.endsAt, now) + add
-        buffs.value = buffs.value.map(b => (b.defId === defId ? { ...b, endsAt } : b))
-      } else {
-        buffs.value = [...buffs.value, { defId, endsAt: now + add }]
-      }
+      buffs.value = applyBuff(buffs.value, defId, now)
     }
 
     function hasBuff(defId: string): boolean {
@@ -134,16 +116,13 @@ export const useCultivationStore = defineStore(
 
     /** 移除过期 Buff,返回是否有变化 */
     function pruneBuffs(now: number): boolean {
-      const next = buffs.value.filter(b => b.endsAt > now)
-      if (next.length !== buffs.value.length) {
-        buffs.value = next
-        return true
-      }
-      return false
+      const pruned = pruneBuffList(buffs.value, now)
+      if (pruned.changed) buffs.value = pruned.list
+      return pruned.changed
     }
 
     function clearNegativeBuffs(): void {
-      buffs.value = buffs.value.filter(b => buffDef(b.defId)?.kind !== 'injury')
+      buffs.value = clearNegativeBuffList(buffs.value)
     }
 
     // Phase 31 A3:选择功法悟道分支(满级后一次,不可改)

@@ -222,6 +222,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 入库漏斗 | `createIntake` | 收不下怎么办:先见证、按规则拒收、满了腾位、折算成别的东西 |
 | 结算回执 | `createSettlement` | 这一笔到底给了多少:合计取自账本实际入账,被截掉的部分另给一栏 |
 | 掉落表 | `createDropTable` | 这一场给不给、给几份:概率先归一(可另设上限)、保底不改随机流、翻倍翻的是份数、命中当场处理 |
+| 状态 / 时效增益 | `createBuffSystem` | 这一条还在不在、还剩多久、再叠一次怎样:叠时长而非刷新、过期不叠负剩余、生效与清理同一判据、按分类清除 |
 
 ### 战斗:副本的下半场
 
@@ -479,6 +480,11 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **掉落/奖励收不下怎么办** | `createIntake({ holding, accept?, evictable?, fallback, witness? })` —— 先见证再裁决、满了腾位(腾位失败不追回)、各条去路共用一条折算账、回执带人话与原因 |
 | **"本次所得"与账本对不上** | `createSettlement({ resources }, numeric?)` —— 回执里的每个数字都取自落账时的**实际发生额**,`clipped` 单独说明被上限截掉多少;想显示别的数就得绕过回执,那是显式越界 |
 | **掉率与保底的口径**(叠过 1 算必中 / 再高也不超过 90% / 首领第一抽必出) | `createDropTable(entries)`:`chanceCap` 另设上限、`guaranteed` 配 `guarantee` 开保底(开不开都不改随机流)、`scalesWithChance` / `scalesWithAttempts` / `scalesWithCount` 各自决定吃不吃倍率;`rollOne` 逐条掷、`roll` 整表掷,**顺序即声明顺序** |
+| **增益 / 减益的时长口径**(同一条再吃一次药:叠时长 / 取较长者 / 重新起算) | `createBuffSystem({ defs, stacking })` —— 默认 `'extend'`(剩余 + 新时长),`'longest'` 是取较长者(刷新,剩余被吞),`'reset'` 一律从现在起算;`maxDurationSec` 可给叠加上限 |
+| **"清除负面"清哪些** | `clear(list, kind)` —— 分类由内容给(库不认识什么是负面),只剪该分类并回报剪掉几条;中性、无分类的残留不动 |
+| **时间单位与时钟** | `clock: 'sec' \| 'ms'` —— 内容表里的 `durationSec` 永远是秒,`now` / `endsAt` 用哪个单位由这一处声明(毫秒对应 `Date.now()`);`remainingSec` 报给界面的永远是秒 |
+| **状态效果的合并** | `mods` 库不解释,`active(list, now)` 原样带出 —— 拿去喂你自己的属性汇总(本作是 `mergeMods`,递减口径仍在本作) |
+| **"下一次状态变化在什么时候"**(面板重算与倒计时) | `nextExpiry(list, now)` 给出最近到期的那一条(标识 + 到期时刻 + 还有多久);全空或全过期即 `null` |
 | 首领节奏(循环刷 / 一次通关) | `dungeons.bossRhythm: 'cycle' \| 'once'` |
 | **敌人数值曲线完全自己定** | `dungeons.enemyPower.scaleFn(tier)`(或给整表 `tierFactors`) |
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
@@ -583,7 +589,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 50 个运行时导出 + 90 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+| 公开面判据 | 63 个运行时导出 + 160 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
 
 ## 边界与兼容性
 

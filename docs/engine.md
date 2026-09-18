@@ -37,6 +37,7 @@
 | 装备入账漏斗(收 / 拒 / 腾位 / 折算) | `core/loot.acquireEquipment` 的四条去路走库的 `createIntake`(见闻、裁决、腾位与折算仍由本作给函数) | `engineIntakeParity.spec` 冻结旧口径:四条文案与去向(自动回收 / 行囊已满 / 收纳腾位 / 顺利入包)一一对应,含"见闻在裁决之前"与 `forceKeep` 跳过裁决;`loot.spec` 33 例照旧全绿 |
 | 战斗奖励结算(本次所得与账本同源) | `core/loot.afterWin` 的灵石落账与回执走库的 `createSettlement`(数值与概率仍是本作口径) | `engineSettlementParity.spec` 冻结算法与随机值:回执 = 冻结公式算出的那一笔;无别的进项时,**账本增量恰好等于回执**(首领档因保底装备带出成就奖励,只比公式) |
 | 战斗掉落表(这几件东西给不给、给几份) | `core/loot.afterWin` 的五类掉落判定走库的 `createDropTable`(基础概率、装备 90% 上限、首领保底与"翻倍=多抽一次装备"都是本作口径) | `engineDropsParity.spec` 冻结整段旧判定:四档战斗 × 两颗种子下,**随机调用逐条相同**(方法 + 参数 + 先后)、战报文案与拾获件数逐条相同;另钉"叠过 1 钳到 1、装备封 0.9"、"保底不改掷骰次数"、"残页翻份数 / 装备多抽一次"三组数字 |
+| 状态(增益 / 减益)的施加、剪过期与清负面 | `core/engineBuffs` 转发到库的 `createBuffSystem`(内容仍是 `data/buffs`,`{defId}` ↔ 库 `{id}` 与秒/毫秒的换算只在这一层) | `engineBuffsParity.spec` 冻结迁移前的 `addBuff` / `pruneBuffs` / `clearNegativeBuffs` / `buffMods`:五组状态 × 五种 id 下 `endsAt` **逐毫秒**相同,连加三次的累计一致,剪枝边界与"有没有变化"的返回值一致;另把两条已知差异(读取路径仍问"列表里有没有"、库的 `active` 按此刻判)写在明处 |
 
 资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
 材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,
@@ -51,7 +52,7 @@ import { emptyProgress } from 'wanxiang-engine'
 ```
 
 `bun run check:engine` 会守住这条:宿主源码里**只经公开入口引用**,内部别名、深层导入、
-相对路径钻内部三类做法各有一条断言拦着(当前 40 处引用全部合规)。
+相对路径钻内部三类做法各有一条断言拦着(当前 42 处引用全部合规)。
 
 ## 同步与自检
 
