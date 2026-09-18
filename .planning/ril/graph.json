@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 260,
+  "round": 261,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:07:58+00:00",
+  "updated_at": "2026-09-18T16:18:53+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 260,
+      "touched_round": 261,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15467,7 +15467,7 @@
       "version": 1,
       "created_at": "2026-09-18T16:07:51+00:00",
       "updated_at": "2026-09-18T16:07:51+00:00",
-      "touched_round": 260,
+      "touched_round": 261,
       "category": "core-feature",
       "severity": 0.55,
       "confidence": 0.9,
@@ -15509,6 +15509,56 @@
       "rationale": "往库里加机制时最容易犯的错是\"凭空发明一套语义\":设计师会照着自己的直觉写,结果别人拿到手发现名字对得上、含义对不上。这一轮改走了另一条路 —— 先把那款在运营作品里的实现读清楚(护体灵光的上限、反击的倍率与\"反击不再被反\"、震慑落在下一回合、吸取回血的百分比),再照着抽成配置项。于是库里的默认值不是拍脑袋,而是从真实战斗里量出来的;而且只有**与题材无关的骨架**进库(护盾池、反击、追击、标签语义),内容驱动的部分(流派组合技、法宝触发、Boss 阶段)留在钩子里让作品自己写。",
       "alternatives_rejected": "①凭空设计一套\"通用战斗\"(名字对得上、语义对不上,使用者要花时间猜);②把本作的组合技/法宝/Boss 阶段也塞进库(它们绑内容,塞进去只会把库变成那款游戏的复刻);③只留 skillEffectFn 让使用者从零写(每家用不同口径重复实现同一批机制)。",
       "summary": "往库里加机制要先读真实实现再抽(默认值来自实战而非直觉);只抽与题材无关的骨架,内容驱动的留在钩子。"
+    },
+    "TASK-241": {
+      "id": "TASK-241",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T16:18:47+00:00",
+      "updated_at": "2026-09-18T16:18:47+00:00",
+      "touched_round": 261,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "给\"内容驱动\"的三样(流派组合技/法宝触发/首领阶段)留接口形状而不实现规则:BattleConfig.tickFn(每回合末,流血/层数/冷却/阶段阈值)与 onEvent(每记完一条事件交给作品反应),两者共用 BattleHookContext(不绑交手双方的原语集)与防递归的 hookDepth。库 0.3.0。"
+    },
+    "CHG-323": {
+      "id": "CHG-323",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:18:48+00:00",
+      "updated_at": "2026-09-18T16:18:48+00:00",
+      "touched_round": 261,
+      "commit": "a8040b9",
+      "summary": "packages/engine/src/combat.ts 加 tickFn/onEvent 与 BattleHookContext/BattleChannel 原语;emit 在非钩子深度时回调 onEvent;tickFn 在每回合末调用;StrikeOptions 提为模块级公开类型;index.ts 与 publicApi.spec 同步新增公开类型;README 定制表与\"什么留在作品那一侧\"、CHANGELOG(0.2.0/0.3.0)、版本 0.3.0 同步。"
+    },
+    "EV-247": {
+      "id": "EV-247",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:18:53+00:00",
+      "updated_at": "2026-09-18T16:18:53+00:00",
+      "touched_round": 261,
+      "confidence": 0.96,
+      "source": "变更 CHG-323(a8040b9)。cd packages/engine && bun run check(16 文件/159 例,战斗 18→21,含\"不配钩子时同种子事件逐位一致\");bun run test(200 文件/2058 例);bun run check:engine;bun run check:engine:standalone;发布包自检 wanxiang-engine-0.3.0.tgz;gh release create v0.3.0 成功",
+      "summary": "回合钩子按层数累计掉血(5/10/15/20 四回合)且能读 state;事件反应\"会心即追加\"触发数=追加数、且追加那一记的会心没有再级联(总会心数更大而追加数不变);不配钩子时结算逐位一致。"
+    },
+    "DEC-113": {
+      "id": "DEC-113",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:18:53+00:00",
+      "updated_at": "2026-09-18T16:18:53+00:00",
+      "touched_round": 261,
+      "rationale": "有些机制不适合\"实现进库\":流派组合技、法宝触发、首领阶段都绑具体内容,一旦内建就等于把某个游戏的设计当成通用规则,别人拿到手反而要跟它绕。但它们需要的**能力**是通用的 —— 按回合推进、看到事件再反应。所以库的正确姿势是\"给形状不给规则\":提供 tickFn/onEvent 与一套原语,把\"什么时候追加一记\"\"破盾时触发什么\"留在作品侧。代价是使用者要多写十几行;收益是库不必猜题材,也不会因为某款游戏改玩法而被动。",
+      "alternatives_rejected": "①把组合技/法宝/Boss阶段内建成\"通用战斗系统\"(把一款游戏的设计固化成库的口径);②只提供 combat 全量接管钩子(使用者要重写命中/暴击/护盾/反击,等于放弃库);③什么都不给(每家自己重写一套回合推进与事件分发,口径各不同)。",
+      "summary": "绑内容的机制不实现进库,只给\"按回合推进 + 事件反应\"的接口形状与原语;库不猜题材,作品自己写规则。"
     }
   },
   "edges": [
@@ -23714,6 +23764,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:07:58+00:00"
+    },
+    {
+      "from": "CHG-323",
+      "to": "TASK-241",
+      "type": "implements",
+      "created_at": "2026-09-18T16:18:53+00:00"
+    },
+    {
+      "from": "TASK-241",
+      "to": "TASK-240",
+      "type": "depends_on",
+      "created_at": "2026-09-18T16:18:53+00:00"
+    },
+    {
+      "from": "DEC-113",
+      "to": "TASK-241",
+      "type": "governs",
+      "created_at": "2026-09-18T16:18:53+00:00"
+    },
+    {
+      "from": "DEC-113",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T16:18:53+00:00"
     }
   ]
 }
