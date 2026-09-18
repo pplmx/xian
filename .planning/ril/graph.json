@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 256,
+  "round": 257,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T14:48:43+00:00",
+  "updated_at": "2026-09-18T14:54:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 256,
+      "touched_round": 257,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -15206,7 +15206,7 @@
       "version": 1,
       "created_at": "2026-09-18T14:48:24+00:00",
       "updated_at": "2026-09-18T14:48:24+00:00",
-      "touched_round": 256,
+      "touched_round": 257,
       "category": "docs",
       "severity": 0.4,
       "confidence": 0.95,
@@ -15309,6 +15309,56 @@
       "rationale": "首次发布前,仓库里已经有一个几十分钟前打、且没有任何消费者(无 release、无 npm 包、无人 pin)的 v0.1.0 tag。若把它留在旧提交上,公开的第一版里 README 是刚被替换掉的旧稿、且不含发布前修掉的两处问题 —— 拿 tag 装的人会得到一个与仓库首页不一致的包。故在\"还没有 release 指向它\"的窗口内把 tag 移到最终提交;窗口一旦关闭(tag 已被 release/npm 引用),tag 视为不可变,后续改动一律走新版本号。",
       "alternatives_rejected": "①保留旧 tag、把两处修复留到下个版本(第一版带着已知的随机崩与旧 README);②删掉 tag 等以后再说(使用者无处可 pin);③以后也随手移动 tag(发布出去的那一版会被静默换掉,比旧 README 更糟)。",
       "summary": "发布前(尚无 release/npm 引用)允许把 tag 移到最终提交,让首版与仓库首页一致;一旦发布出去,tag 不可变,改动走新版本。"
+    },
+    "TASK-237": {
+      "id": "TASK-237",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T14:54:51+00:00",
+      "updated_at": "2026-09-18T14:54:51+00:00",
+      "touched_round": 257,
+      "category": "docs",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "把库对外的\"出处\"清掉:README / docs / CHANGELOG / LICENSE / 源码注释 / 独立仓简介 / release 说明里都不再点名某部作品,改用\"源工程 / 工程侧\"这类中性指代;LICENSE 版权人改为作者(与 package.json author 一致)。起因:用户指出\"万象中就没必要提这个\"。"
+    },
+    "CHG-319": {
+      "id": "CHG-319",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:54:52+00:00",
+      "updated_at": "2026-09-18T14:54:52+00:00",
+      "touched_round": 257,
+      "commit": "ccafb6e",
+      "summary": "packages/engine 下所有 云隐/修仙录 字样清零(README/CHANGELOG/LICENSE/docs/两处 preset 注释/attributes·crafting·equipment·numeric·realms·rng·saveShape·skills 注释);docs/parity.md 改题\"逐数字对账\"并把\"宿主\"改为\"源工程\";docs/development.md 的\"上游\"只指开发位置;LICENSE 版权人 2025 谦君;独立仓 description 与 v0.1.0 release notes 同步去掉作品名。"
+    },
+    "EV-243": {
+      "id": "EV-243",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:54:52+00:00",
+      "updated_at": "2026-09-18T14:54:52+00:00",
+      "touched_round": 257,
+      "confidence": 0.97,
+      "source": "变更 CHG-319(ccafb6e)。rg -n \"云隐|修仙录\" packages/engine(排除 node_modules/dist)→ 无命中;bun run check(16 文件/149 例 + 产物 + 发布包自检 + 示例);bun run check:engine(25 处引用全走公开入口);bun run check:engine:standalone;bun run test(199 文件/2044 例);独立仓 CI 35359040946 success;gh repo view 与 gh release view 复核文案",
+      "summary": "库的对外文字里已无该作品名(源码/文档/许可/仓库简介/release 说明),判据全绿;tag v0.1.0 未再移动(release 已存在,按 DEC-108 tag 由此不可变)。"
+    },
+    "DEC-109": {
+      "id": "DEC-109",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T14:54:57+00:00",
+      "updated_at": "2026-09-18T14:54:57+00:00",
+      "touched_round": 257,
+      "rationale": "公共库的对外文字里,出现\"从某部作品抽出来\"这类出处,对使用者没有价值(他们要知道的是这个库能做什么、凭什么信),却有三个副作用:①把自己写成别人的附属,读者会怀疑\"它离了母体还能不能活\";②把两边迭代绑在一起,母体改玩法时看起来像库也在改;③一旦有人拿库做别的题材,出处就是噪音(甚至像 IP 关联)。质量证据本身要留(与在运营作品逐数字对账),但只留事实、不留名字:用\"源工程 / 工程侧\"这一类中性指代。同理,LICENSE 的版权人应是作者本人/组织,而不是某部作品名。",
+      "alternatives_rejected": "①保留出处当卖点(把\"有实战检验\"与\"出身\"混为一谈 —— 前者该留,后者该去);②连对账事实一起删(等于丢掉最有分量的质量证据);③只改 README 不改源码注释与仓库简介/release 说明(.d.ts 会带着注释发给使用者,外面的人也会先看仓库简介)。",
+      "summary": "库的对外文字只留\"与在运营作品逐数字对账\"这个事实,不点作品名;出处不进对外表述,版权人写作者而不是作品名。"
     }
   },
   "edges": [
@@ -23418,6 +23468,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T14:48:43+00:00"
+    },
+    {
+      "from": "CHG-319",
+      "to": "TASK-237",
+      "type": "implements",
+      "created_at": "2026-09-18T14:54:57+00:00"
+    },
+    {
+      "from": "TASK-237",
+      "to": "TASK-235",
+      "type": "depends_on",
+      "created_at": "2026-09-18T14:54:57+00:00"
+    },
+    {
+      "from": "DEC-109",
+      "to": "TASK-237",
+      "type": "governs",
+      "created_at": "2026-09-18T14:54:57+00:00"
+    },
+    {
+      "from": "DEC-109",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T14:54:57+00:00"
     }
   ]
 }
