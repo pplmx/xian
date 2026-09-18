@@ -43,6 +43,23 @@
       </div>
     </div>
 
+    <!--
+      第一步(只在开局这一段出现,见 core/firstStep):目标 / 主线 / 每日三块各指一个页签,
+      却没人告诉新玩家先点哪儿 —— 这张卡把「历练 → 修为 → 突破」这条线说出来,并把入口递到手上。
+    -->
+    <RouterLink
+      v-if="firstStep"
+      :to="firstStep.to"
+      class="card-ink flex items-center gap-3 border-cinnabar/40 px-4 py-3 active:scale-99"
+    >
+      <GameIcon name="footprints" :size="14" class="shrink-0 text-cinnabar" />
+      <span class="min-w-0 flex-1">
+        <span class="block font-kai text-[13px] tracking-wider text-ink">{{ firstStep.text }}</span>
+        <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{ firstStep.hint }}</span>
+      </span>
+      <span class="shrink-0 text-[11px] text-cinnabar">{{ firstStep.label }} →</span>
+    </RouterLink>
+
     <!-- Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页) -->
     <div v-if="currentGoal" class="card-ink flex items-center gap-3 px-4 py-3">
       <GameIcon name="scroll" :size="14" class="shrink-0 text-jade" />
@@ -154,6 +171,7 @@
   import { todayWeather } from '@/core/weather'
   import { generateCurrentGoal, type Goal } from '@/core/goal'
   import { currentMainQuestProgress } from '@/core/questProgress'
+  import { currentFirstStep } from '@/core/firstStep'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
   import VeinInvestCard from '@/components/dongfu/VeinInvestCard.vue'
@@ -170,6 +188,8 @@
 
   // Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页)
   const currentGoal = computed<Goal | null>(() => generateCurrentGoal(player))
+  /** 新手第一步(开局这一段才有;给不给完全由存档推出来,没有"已看过"字段) */
+  const firstStep = computed(() => currentFirstStep())
 
   const statusText = computed(() => {
     if (player.dead) return '陨落'

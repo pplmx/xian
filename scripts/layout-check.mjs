@@ -72,6 +72,8 @@
  *      窄屏上句号就会独自占一行 —— 量的是渲染结果,比在源码里认标点准。
  *   三十六 敌人卡最挤的一档:名字最长 9 字 + 满标签(首领/宿敌/3 特性)+ 星级。
  *      巡页用的档里敌人名字都短、认知层为 0(特性根本不显示),这一档从前没被量过。
+ *   三十七 新手第一步卡:刚建号的人落在首页时,这张卡要在、要指向历练、要够高 ——
+ *      它把「目标 / 主线 / 每日」三块串成一条线,并递出第一个入口(见 core/firstStep)。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -677,6 +679,35 @@ for (const vp of VIEWPORTS) {
   await page.locator('input:not([type=file]):not([type=checkbox])').first().fill('排版自检')
   await page.getByRole('button', { name: /踏\s*入\s*仙\s*途/ }).first().click()
   await page.waitForTimeout(1200)
+
+  /**
+   * 新手第一步卡(见 core/firstStep)——「三块引导并列,却没人说先点哪儿」那个洞的补丁。
+   *
+   * 只在这一处核:卡由存档推出来(历练过一次 / 第一条主线达成即收卡),那些分支由
+   * firstStep.spec 逐条钉死;这里只问真浏览器一句 —— 刚建好号的首页上,它在不在、
+   * 指的方向对不对。**故意不点它**:点下去会跳进历练页,把那一页的随机际遇带进
+   * 这一轮巡页的取景(从前假红的老路数)。
+   *
+   * 先整页重载一次:建号结束停在哪个 hash 取决于灵根鉴定动画放完没有,判据不该赌它;
+   * 重载后 beforeEach 见存档已开,直接落在首页 —— 这才是"新玩家进游戏第一眼"。
+   */
+  await page.goto(INDEX, { waitUntil: 'load' })
+  await page.waitForTimeout(700)
+  {
+    const step = await page.evaluate(() => {
+      const a = [...document.querySelectorAll('a')].find(el => (el.textContent || '').includes('第一步'))
+      if (!a) return null
+      const r = a.getBoundingClientRect()
+      return { href: a.getAttribute('href') || '', height: Math.round(r.height) }
+    })
+    checked += 1
+    if (!step) {
+      failures.push(`[${vp.tag}] 开局首页没有「第一步」卡 —— 新玩家只能自己猜先点哪儿`)
+    } else {
+      if (step.href !== '#/adventure') failures.push(`[${vp.tag}] 「第一步」卡指向 ${step.href},开局该先指历练(#/adventure)`)
+      if (step.height < 28) failures.push(`[${vp.tag}] 「第一步」卡只有 ${step.height}px 高,低于 28px 触达下限`)
+    }
+  }
 
   for (const route of ROUTES) {
     await page.goto(INDEX + '#' + route, { waitUntil: 'load' })
