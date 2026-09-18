@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 306,
+  "round": 307,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T20:53:44+00:00",
+  "updated_at": "2026-09-18T20:57:01+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -17816,6 +17816,56 @@
       "confidence": 0.95,
       "source": "变更 CHG-369(cd83f51)。bun examples/shop-loop.ts(实测打印:8h→计入 6h→效率 0.8→4 步+余 48 分钟;每步出 3 份零头 0.2/0.4/0.6/0.8、卖 1 份、扔 2 份;小计卖 4 份/进账 12 文/截掉 8 份;体检 3.2/1=过剩→升灶台 6.4/1 仍过剩、升柜台 3.2/2 顺畅;升完再问被 capReason 挡住;清理留 2 扔 2,关掉隔夜规则变扔 0;今日三件 4/4、12/12、1/1 全勾);cd packages/engine && bun run check(396 例 + 组装指南 25 工厂 / 定制表 99 名字 / 发布包自检,示例路径核对通过);cd /workspace/xian && bun run test(2444 例)、bun run test:report(2444 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(83 个源文件 + 8 份示例在搬走后真跑)",
       "summary": "四条配方现在各有一份可跑的整套示例:A 快速上手/最小循环, B 战斗组合技与战斗接管, C 星屑集册, D 一角点心铺。经营这份同时把两处\"看起来该是 A 其实是 B\"的口径摆出来:①零头不丢在**累加器**而不是每步取整(3.2 份/小时每步只发 3,余数跨步累积);②\"产量不够\"未必是瓶颈 —— 本例 3.2 进 / 1 出被判过剩,填产出只会更过剩,该填的是出口(这一条直接决定先升哪座设施)。"
+    },
+    "TASK-288": {
+      "id": "TASK-288",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:56:53+00:00",
+      "updated_at": "2026-09-18T20:56:53+00:00",
+      "touched_round": 306,
+      "category": "docs",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "文档分层:把 README 的逐模块用法与\"想改什么改哪里\"定制表(363 行)整节搬进 docs/usage.md,README 从 707 行收到 375 行;顺带修正 README 里过期的用例数(147→396/43 文件)与目录树 docs/ 缩进;把 verify-dist.mjs 的定制表自检改为读 docs/usage.md(加\"找不到那一节就报错\"),发布包清单补 docs/usage.md。"
+    },
+    "CHG-370": {
+      "id": "CHG-370",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:56:53+00:00",
+      "updated_at": "2026-09-18T20:56:53+00:00",
+      "touched_round": 306,
+      "commit": 6403950,
+      "summary": "库:新增 docs/usage.md(372 行,含模块一览与定制表,搬运后与原段落 cmp 逐字节相同);README 精简(模块一览改成按事分组的 10 行速查表 + 定制摘要,各带指针);scripts/verify-dist.mjs 的定制表自检改读 docs/usage.md 并加存在性断言,发布包必需文件加 docs/usage.md;CHANGELOG「未发布」记一节。宿主无改动。"
+    },
+    "EV-295": {
+      "id": "EV-295",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:56:53+00:00",
+      "updated_at": "2026-09-18T20:56:53+00:00",
+      "touched_round": 306,
+      "confidence": 0.95,
+      "source": "变更 CHG-370(6403950)。cmp <(sed -n \"199,561p\" README^) <(tail -n +10 docs/usage.md)(搬运逐字节一致);cd packages/engine && bun run check(396 例 / 43 文件 + 组装指南自检 25 工厂 + 定制表自检 99 个名字(现在读 usage.md)+ Node 产物自检 75 导出 + 发布包自检);cd /workspace/xian && bun run test(2444 例)、bun run test:report(2444 过 / 0 败)、bun run check:engine(59 处引用)、bun run check:engine:standalone(83 个源文件 + 8 份示例)。",
+      "summary": "文档分层之后,README 只回答\"这是什么/怎么装/先跑哪个\",参考内容(模块一览、定制表)住 docs/usage.md,装配顺序住 docs/assembly.md,对账与开发各有专文。关键的一条是把**判据一起搬**:定制表自检原先只认 README 的那一节,搬运时若不同步脚本,这个自检会退化成\"读了个空字符串仍报通过\" —— 现在它会先断言那一节在 usage.md 里存在,再校验 99 个名字逐个有用例提到。"
+    },
+    "EV-296": {
+      "id": "EV-296",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:57:01+00:00",
+      "updated_at": "2026-09-18T20:57:01+00:00",
+      "touched_round": 306,
+      "confidence": 0.95,
+      "source": "更正 EV-295 里的命令写法 —— 搬运一致性的实测是:搬运当时执行 cmp <(sed -n 199,561p README.md) <(tail -n +10 docs/usage.md),返回\"搬运一致:docs/usage.md 第 10 行起与 README 199-561 逐字节相同\"(即改动前的 README 段落);EV-295 里那句被工具描述写歪了,以本条为准。其余判据(库 check 396 例 / 43 文件、宿主 test 2444 例、test:report 0 败、check:engine 59 处引用、check:engine:standalone 83 源文件 + 8 示例)不变。",
+      "summary": "更正:EV-295 的 source 字段里那条 cmp 命令写作有误(工具转述失准);真实执行的命令与输出见本条。搬运本身仍是逐字节一致,结论不变。"
     }
   },
   "edges": [
@@ -26951,6 +27001,12 @@
       "to": "TASK-287",
       "type": "implements",
       "created_at": "2026-09-18T20:53:41+00:00"
+    },
+    {
+      "from": "CHG-370",
+      "to": "TASK-288",
+      "type": "implements",
+      "created_at": "2026-09-18T20:57:01+00:00"
     }
   ]
 }
