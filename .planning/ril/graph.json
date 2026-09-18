@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 295,
+  "round": 296,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:57:17+00:00",
+  "updated_at": "2026-09-18T20:05:43+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16807,7 +16807,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:07:20+00:00",
       "updated_at": "2026-09-18T19:07:20+00:00",
-      "touched_round": 290,
+      "touched_round": 296,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -17337,6 +17337,56 @@
       "confidence": 0.98,
       "source": "变更 CHG-358(5437601 / engine cac5872)。cd packages/engine && bun run check(48 文件/376→发布前 372 例 + 组装指南与定制表自检 + 发布包自检报告 wanxiang-engine-0.1.9.tgz 可用);cd /workspace/xian && bun run test(247 文件/2417 例);bun run test:report(2417 过/0 败);bun run check:engine(59 处引用);bun run check:engine:standalone(80 个源文件);gh release view v0.1.9 + gh api 核对 tag 指向 cac5872 且该提交里 version 已是 0.1.9",
       "summary": "0.1.9 发布完成且逐项核对:release 页 https://github.com/pplmx/wanxiang-engine/releases/tag/v0.1.9,tag 指向 engine main 的 cac5872,包内 version 为 0.1.9,发布包自检按新版本号产出并\"真装一遍\"通过。发版前所有闸门全绿(库 372 例、宿主 2417 例、分类报告 2417 过/0 败、宿主 59 处引用全走公开入口)。发布说明按 CHANGELOG 的分节改写(tag 前后两版说明风格一致)。"
+    },
+    "TASK-277": {
+      "id": "TASK-277",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T20:05:37+00:00",
+      "updated_at": "2026-09-18T20:05:37+00:00",
+      "touched_round": 296,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "补上战斗的两处主权(DEC-119 记下的缺口):skillFn(选哪一招完全接管:返回技能/null/不返回三态)与 strikeFn(整次出手完全接管:自己掷自己 applyDamage,返回值即落账量);不配则默认路径逐位不变、连骰子数都不变。SkillPickContext / StrikeContext 进公开面。"
+    },
+    "CHG-359": {
+      "id": "CHG-359",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:05:37+00:00",
+      "updated_at": "2026-09-18T20:05:37+00:00",
+      "touched_round": 296,
+      "commit": "fabdf49",
+      "summary": "库:src/combat.ts 加 skillFn/strikeFn 与两个上下文接口(StrikeContext 给 damage/applyDamage/shieldOf/gainShield/heal/skipNextTurn/log/state;strikeFn 与其它钩子一样在 hookDepth 内调用,防递归),combat.spec 补 5 例(按序掷接管与随机消耗对比、null=不出技能、不返回逐位一致 ×2、整次接管自掷自扣),index/publicApi.spec 导出两个类型,CHANGELOG「未发布」新起一节写明与 DEC-119 的关系,README 定制表加两行(公开面计数 200 → 202 个类型)。宿主无改动(本作战斗维持原样)。"
+    },
+    "EV-284": {
+      "id": "EV-284",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:05:37+00:00",
+      "updated_at": "2026-09-18T20:05:37+00:00",
+      "touched_round": 296,
+      "confidence": 0.95,
+      "source": "变更 CHG-359(fabdf49)。bunx vitest run src/combat.spec.ts(28 例,含新增 5 例);cd packages/engine && bun run check(含定制表自检 93 个名字、组装指南自检、发布包自检);cd /workspace/xian && bun run test(247 文件/2422 例);bun run test:report(2422 过/0 败);bun run check:engine(59 处引用);bun run check:engine:standalone(80 个源文件)",
+      "summary": "两处主权落地且默认路径未动:①按序掷接管后,事件里选中的确实是第一个命中的那一招,且随机消耗显著少于默认(默认每回合\"每个技能各掷一颗 + 抽一个\");②返回 null 时该回合是普通出手(事件里没有 skill,只有 hit/crit);③skillFn 与 strikeFn 各有一条\"不返回即逐位一致\"(events + 胜负)的判据 —— 与库既有钩子(skillEffectFn/tickFn/onEvent)的纪律一致;④strikeFn 接管时事件文案与伤害都来自钩子自己落的账。公开面计数同步到 75 运行时导出 / 202 公开类型,定制表自检自动把两个新名字纳入核对(93 个)。"
+    },
+    "DEC-146": {
+      "id": "DEC-146",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T20:05:37+00:00",
+      "updated_at": "2026-09-18T20:05:37+00:00",
+      "touched_round": 296,
+      "summary": "\"钩子\"分两级:改一点用回调(damageFn/skillEffectFn),整段归我用主权(skillFn/strikeFn);主权钩子必须满足三条 —— 不配就不走、返回\"没处理\"逐位一致、绕过默认的路径自己落账并把量回报给引擎。",
+      "rationale": "DEC-119 的消融结论说得很清楚:要让另一款作品的战斗真正跑在库上,缺的不是更多参数,而是把\"选哪一招\"\"这一招怎么打\"整段交还 —— 因为那两处的差异落在**随机流的消耗顺序**上,调参数永远对不齐。但\"交还\"不能只是加两个函数:①不配时必须完全不走(否则默认行为会悄悄变);②返回\"没处理\"时也要逐位一致(钩子可以只接管一部分场景);③接管的那条路要能把结果回报回来(用 applyDamage 落账、引擎拿它的返回值继续串联反击/追击/钩子)—— 这三条合起来,主权才既彻底又不破坏既有作品的确定性。",
+      "alternatives_rejected": "①只加更多参数(暴击顺序、浮动顺序、技能选择策略各给一个开关)—— 组合爆炸,而且每加一个就要解释它与其它开关的先后;②让 skillFn 只管过滤(给可用技能表,仍由库抽)—— 随机流仍然对不齐,等于白加;③strikeFn 返回具体伤害数值(0 是合法伤害,无法与\"没处理\"区分)—— 故用布尔 + 落账回报;④把 strikeFn 放进 damageFn 的位置(那个只管伤害公式,管不了出手先后,而分歧恰恰在先后上)。"
     }
   },
   "edges": [
@@ -26298,6 +26348,24 @@
       "to": "TASK-275",
       "type": "depends_on",
       "created_at": "2026-09-18T19:57:17+00:00"
+    },
+    {
+      "from": "CHG-359",
+      "to": "TASK-277",
+      "type": "implements",
+      "created_at": "2026-09-18T20:05:43+00:00"
+    },
+    {
+      "from": "DEC-146",
+      "to": "TASK-277",
+      "type": "governs",
+      "created_at": "2026-09-18T20:05:43+00:00"
+    },
+    {
+      "from": "TASK-277",
+      "to": "TASK-266",
+      "type": "depends_on",
+      "created_at": "2026-09-18T20:05:43+00:00"
     }
   ]
 }
