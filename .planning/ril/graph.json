@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 285,
+  "round": 286,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:07:33+00:00",
+  "updated_at": "2026-09-18T19:14:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16544,7 +16544,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:36:06+00:00",
       "updated_at": "2026-09-18T18:36:06+00:00",
-      "touched_round": 283,
+      "touched_round": 286,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16707,7 +16707,7 @@
       "version": 1,
       "created_at": "2026-09-18T18:58:38+00:00",
       "updated_at": "2026-09-18T18:58:38+00:00",
-      "touched_round": 284,
+      "touched_round": 286,
       "category": "core-feature",
       "severity": 0.5,
       "confidence": 0.9,
@@ -16849,6 +16849,56 @@
       "summary": "软保底要涨也要封顶,概率一律夹在上下限内;硬保底是\"改写这一次的结果\"而不是跳过掷骰。",
       "rationale": "两条都是\"看着能用、数值上却在悄悄改写玩法\"的坑。①软保底不封顶:见得 / 抽得够多之后概率被抬到 1,于是\"越看越眼熟\"变成\"第 N 次必认出\" —— 中间那些次数的意义全没了,而且这种改写发生在玩家看不见的地方(他只会觉得\"最近怎么这么好出\")。上下限同理:下限保证\"再难也有 4% 的一线\",上限保证\"最容易也别变成走过场\"。②硬保底跳过掷骰:省事,但随机流会随\"开不开保底\"整体位移 —— 同一颗种子下,开了保底之后的每一次判定都换了值(与掉落层同一条纪律,DEC-127)。③清零时机是**玩法选择**而非实现细节:出货就清(常见)与只在保底顶出来时清(自然出货不消耗保底额度)两种作品都有,库把它写成 resetOn,而不是替作品决定。",
       "alternatives_rejected": "①软保底不封顶(后期等价于硬保底,且把\"概率曲线\"这件事藏起来);②只给上限不给下限(基础概率算出来是 0 时永远出不来,而玩家只会看到\"这东西根本抽不到\");③保底直接 `return true` 不掷骰(随机流错位);④把清零时机写死在库里(两种玩法都真实存在,写死就是把一种作品的习惯当成标准);⑤把软保底塞进掉落层(那一层管单次判定,跨次数的账与当时那一次的概率是两件事,混在一起之后\"这次概率多少\"就要去翻历史)。"
+    },
+    "TASK-267": {
+      "id": "TASK-267",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T19:14:49+00:00",
+      "updated_at": "2026-09-18T19:14:49+00:00",
+      "touched_round": 286,
+      "category": "core-feature",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 3,
+      "unlock_factor": 1.0,
+      "summary": "新增一次性解锁层:createUnlockRegistry(只登记一次、一次扫描可解多条且顺序稳定、未达成不登记、显式解锁也去重;附 has/list/count/remaining 与解锁顺序)。本作 core/engineUnlocks 接线 progress 的扫描与显式解锁、stores/quests.setAchieved 与两处界面读数。继续攒批不发版。"
+    },
+    "CHG-349": {
+      "id": "CHG-349",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:14:49+00:00",
+      "updated_at": "2026-09-18T19:14:49+00:00",
+      "touched_round": 286,
+      "commit": "c4d5d64",
+      "summary": "库:新增 src/unlocks.ts 与 unlocks.spec.ts(10 例),index/publicApi.spec 导出,CHANGELOG「未发布」与 README 两处加条目并补目录树。宿主:新增 core/engineUnlocks.ts(内容与存档形状的接入层),progress 的 unlockAchievement/checkAchievements 改走库、stores/quests 增 setAchieved 并去掉 unlockAchievement,CollectionView 与 CharacterView 的成就读数改走 achievementCounts,新增 engineUnlockParity.spec(10 例,冻结旧扫描与旧显式解锁),test-report 补分类,docs/engine.md 加一行并更新引用数与导出数(56 处 / 74 个)。"
+    },
+    "EV-274": {
+      "id": "EV-274",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:14:49+00:00",
+      "updated_at": "2026-09-18T19:14:49+00:00",
+      "touched_round": 286,
+      "confidence": 0.96,
+      "source": "变更 CHG-349(c4d5d64)。bunx vitest run src/core/engineUnlockParity.spec.ts(10 例);bunx vitest run src/core/rewardReachability.spec.ts src/core/achievementHint.spec.ts src/core/titleLadder.spec.ts src/stores/quests.spec.ts(18 例,迁移前那批成就契约);bun run check;bun run test(241 文件/2371 例);bun run test:report(2371 过/0 败);cd packages/engine && bun run check(41 文件/333 例);bun run check:engine(56 处引用);bun run check:engine:standalone",
+      "summary": "成就解锁搬迁后一位不差:四组玩家状态(刚开局 / 少量计数 / 境界拉满计数给足 / 小层圆满型)下新解锁的条目与顺序、成就表、提示语与顺序都与冻结口径相同;重复扫描与重复显式解锁不再发奖;品质型与境界型共用同一份账;认不出的 id 不进账。库侧 10 例另覆盖\"判据每枚只问一次\"与\"解锁顺序被记下\"。"
+    },
+    "DEC-137": {
+      "id": "DEC-137",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:14:56+00:00",
+      "updated_at": "2026-09-18T19:14:56+00:00",
+      "touched_round": 286,
+      "summary": "\"记多久\"决定用哪一层:周期任务板每期重来、顺序任务链一路往前、一次性解锁只记一次 —— 三者共用同一套\"扫描 + 顺序 + 状态回写\"的形状,区别只在重置与守卫。",
+      "rationale": "任务系统的四块(条件 goals / 周期 tasks / 顺序 chain / 一次性 unlocks)被拆开,是因为它们在**同一条轴上取值不同**:记多久。把这条轴写清楚,使用者才不用猜\"我这个需求该用哪个模块\"。四种取值的坑也各不相同:周期层怕换期不幂等(吞当期进度)、链层怕一次推太多(条件恒真跳完整条)/推得太少(玩家以为卡住)、解锁层怕重复发奖(同一枚跳两次、状态型成就每拍发一次)。共用同一套形状还有个直接好处:实现者读一个模块就能读懂另外三个,新作品接进来时只需要换\"记多久\"与判据。",
+      "alternatives_rejected": "①做一个万能\"任务系统\"参数化(四层的坑不同,合并之后每一层都要解释另外三层的边界,配置会长出分支);②把解锁层并进 codex(图鉴管\"见过什么、懂到什么程度\",成就管\"达成过一次\" —— 前者是分档的连续量,后者是一次性的布尔量,混在一起两边都要让步);③把去重留在 store 的一行 includes(状态型成就每拍都来敲门,去重是**规则**而不是顺手一行,收进库才能被用例钉住);④让库自己判定条件(库不认识境界 / 计数 / 物品)。"
     }
   },
   "edges": [
@@ -25624,6 +25674,30 @@
       "to": "TASK-260",
       "type": "depends_on",
       "created_at": "2026-09-18T19:07:33+00:00"
+    },
+    {
+      "from": "CHG-349",
+      "to": "TASK-267",
+      "type": "implements",
+      "created_at": "2026-09-18T19:14:56+00:00"
+    },
+    {
+      "from": "DEC-137",
+      "to": "TASK-267",
+      "type": "governs",
+      "created_at": "2026-09-18T19:14:57+00:00"
+    },
+    {
+      "from": "TASK-267",
+      "to": "TASK-264",
+      "type": "depends_on",
+      "created_at": "2026-09-18T19:14:57+00:00"
+    },
+    {
+      "from": "DEC-137",
+      "to": "TASK-261",
+      "type": "governs",
+      "created_at": "2026-09-18T19:14:57+00:00"
     }
   ]
 }
