@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 237,
+  "round": 238,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T16:05:00+00:00",
+  "updated_at": "2026-09-18T16:45:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -14177,6 +14177,66 @@
       "rationale": "\"别人只需要引用库\"这条目标,最先该在**本作自己的源码**里成立:若宿主还在用仓库内部别名,那说明\"引用\"是本仓库特有的便利,而不是库对外提供的接口。故把导入改成包名(与使用者写法一致),解析只留一行(开发期指向源码以免每次先 build);拆库那天改的就是这一行。同时把两件容易回潮的事(别名复活、绕开公开入口的深层导入)写成机械判据 —— 这类退化在同一个仓库里没人会注意到,直到别人拿去用才发现接的是私有路径。",
       "alternatives_rejected": "①继续用内部别名(源码看不出\"这是个外部库\",拆库时要改十几处);②直接引 dist(开发期每次都要先 build,迭代变慢);③只写进文档提醒(没有闸,迟早回潮)。",
       "summary": "宿主按包名引用库(源码即使用者写法),解析一行可换;别名与深层导入由机械判据禁止。"
+    },
+    "TASK-217": {
+      "id": "TASK-217",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:00+00:00",
+      "updated_at": "2026-09-18T16:45:00+00:00",
+      "touched_round": 238,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "把上轮进库的\"内容牌堆\"真正接到应用侧:core/eventEngine 的筛选(区间/场所标签/一次性)与两种抽取(普通池、机缘池)改走库的 deck;奇缘与机缘的叙事结构留在应用侧。"
+    },
+    "CHG-287": {
+      "id": "CHG-287",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:00+00:00",
+      "updated_at": "2026-09-18T16:45:00+00:00",
+      "touched_round": 238,
+      "commit": "e011314",
+      "summary": "库侧:DrawOptions 泛型化(DrawOptions<T extends DeckEntry>),情境加权的回调拿到具体条目类型,使用方不必强转。纯类型改动。"
+    },
+    "CHG-288": {
+      "id": "CHG-288",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:00+00:00",
+      "updated_at": "2026-09-18T16:45:00+00:00",
+      "touched_round": 238,
+      "commit": "944e385",
+      "summary": "应用侧:eventEngine 增 EVENT_DECK / FORTUNE_DECK(模块级构建,字段对上库的 min/max/tags/once/weight,奇缘阶段在构建时排除);eventInRealmBand→库 inBand;regionEventPoolFor→deckPool;普通抽取→drawFrom;机缘抽取→drawFrom + weightMultiplier(元素倾向写进调用处而非手写乘法)。"
+    },
+    "EV-223": {
+      "id": "EV-223",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:00+00:00",
+      "updated_at": "2026-09-18T16:45:00+00:00",
+      "touched_round": 238,
+      "source": "bun run test(197 文件 / 1990 例)+ bun run check + bun run check:engine(22 处引用全走公开入口)+ cd packages/engine && bun run test(14 文件 / 99 例)",
+      "summary": "接线后全绿:事件引擎既有用例(eventEngine/regionEvent/eventTier 等)全部保持通过,说明筛选与抽取的产物未变;上一轮的牌堆对账(真实 81 事件 × 区域 × 境界 × 见过两档 + 同种子抽牌与随机流)继续有效。"
+    },
+    "DEC-089": {
+      "id": "DEC-089",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T16:45:00+00:00",
+      "updated_at": "2026-09-18T16:45:00+00:00",
+      "touched_round": 238,
+      "rationale": "牌堆这类\"通用机制 + 作品内容\"的结合处,界线要划在\"结构\"与\"内容\"之间:筛选与抽取是通用机制,进库;而\"先掷奇缘、再掷机缘、最后掷普通池\"是这一局的叙事结构 —— 它决定玩家遇到事情的先后与概率形状,换一款游戏可能完全不同。故把前三条分支顺序留在应用侧,只把每一支内部那套筛池与加权交出去,并用 weightMultiplier 表达\"同源更常见\"(倾向而非门槛)。",
+      "alternatives_rejected": "①把整个 pickEventFor 收进库(叙事结构被固化,别的作品用不上);②只把筛选收进库、抽留在应用(权重口径会分叉,尤其\"全 0 退回均匀\"这类边界);③把机缘的元素倾向做成标签过滤(那样就变成门槛,违背\"没有一条路被灵根关掉\")。",
+      "summary": "通用机制(筛池/权重)进库,叙事结构(几条分支的先后)留作品;元素倾向用 weightMultiplier 表达。"
     }
   },
   "edges": [
@@ -21440,6 +21500,60 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T16:05:00+00:00"
+    },
+    {
+      "from": "CHG-287",
+      "to": "TASK-217",
+      "type": "implements",
+      "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "CHG-288",
+      "to": "TASK-217",
+      "type": "implements",
+      "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "CHG-287",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "CHG-288",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "EV-223",
+      "to": "CHG-288",
+      "type": "validates",
+      "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "EV-223",
+      "to": "CHG-287",
+      "type": "validates",
+      "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "TASK-217",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "TASK-217",
+      "to": "TASK-215",
+      "type": "depends_on",
+      "created_at": "2026-09-18T16:45:00+00:00"
+    },
+    {
+      "from": "DEC-089",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T16:45:00+00:00"
     }
   ]
 }
