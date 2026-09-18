@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 287,
+  "round": 288,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T19:19:55+00:00",
+  "updated_at": "2026-09-18T19:24:24+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -16907,7 +16907,7 @@
       "version": 1,
       "created_at": "2026-09-18T19:19:49+00:00",
       "updated_at": "2026-09-18T19:19:49+00:00",
-      "touched_round": 287,
+      "touched_round": 288,
       "category": "core-feature",
       "severity": 0.3,
       "confidence": 0.9,
@@ -16949,6 +16949,56 @@
       "summary": "保底的两个参数必须由内容显式给出并写成判据:硬保底(hardAt)是硬上限、软保底的涨幅必须封顶(cap)且起涨点(from)显式 —— 因为\"不封顶\"在数值上等价于偷偷换成硬保底。",
       "rationale": "封顶这件事值得单独记一笔:不封顶的软保底在纸面上是\"越抽越容易\",跑起来却是\"到某一次必然出货\" —— 第 92 抽的概率算到 1,与硬保底没有区别,但玩家与策划都会以为这是一条概率曲线。实测数字(基础 0.6%、第 75 抽起每抽 +6%):不封顶时第 92 抽 100%,封顶 0.6 时同一抽 60.6%。同理,起涨点必须显式:从第一次就涨与从第 75 抽涨,在第 80 抽的概率是 60.6% 与 36.6% —— 差着一个量级,而两种都常被叫作\"软保底\"。故库把 step / cap / from / floor / ceil 全列为显式参数,并让消融实验把这些后果写进 CHANGELOG。",
       "alternatives_rejected": "①只给 step(其余靠调用方自己夹):\"封顶\"与\"起涨点\"是区分软保底与硬保底的关键参数,不写出来就会在别处各写一遍、各漏一次;②默认 from = 0 或让 from 影响未触发前的概率(会改变现有内容的行为);③把不封顶当\"内容自由\"(实测它等价于硬保底,不是自由而是伪装);④只写用例不写数字(策划要的是\"配 90 抽必出之后平均落在哪\",那是判据里的常数、也是可以随时重跑的实测)。"
+    },
+    "TASK-269": {
+      "id": "TASK-269",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T19:24:19+00:00",
+      "updated_at": "2026-09-18T19:24:19+00:00",
+      "touched_round": 288,
+      "category": "release",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "攒批发版 0.1.8:v0.1.7 之后 39 个提交(14 层新骨架 + 计数器基准原语 + 两份示例 + 两场消融)集中成一版,只加 patch;CHANGELOG 的「未发布」定稿成 0.1.8 一节,README / docs/development / 根 README 的 tag 引用同步,engine 仓库创建 release 并核对 tag 指向。"
+    },
+    "CHG-351": {
+      "id": "CHG-351",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:24:19+00:00",
+      "updated_at": "2026-09-18T19:24:19+00:00",
+      "touched_round": 288,
+      "commit": "92579be",
+      "summary": "发版改动:packages/engine/package.json 0.1.7 → 0.1.8;CHANGELOG「未发布」→「0.1.8 — 2026-09-19」并补一段本批总述(14 层骨架、对账与消融用例 7→23 份、公开面 55→74 个运行时导出 / 120→196 个类型、库自身 337 例);README 的安装 tag 与版本块、docs/development 的装法、根 README 的引擎版本引用同步;gh release create v0.1.8(说明按 v0.1.7 的口径分主题写),tag 落在 engine main 的发版提交 705b0c8。"
+    },
+    "EV-276": {
+      "id": "EV-276",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:24:19+00:00",
+      "updated_at": "2026-09-18T19:24:19+00:00",
+      "touched_round": 288,
+      "confidence": 0.98,
+      "source": "变更 CHG-351(92579be / engine 705b0c8)。bun run check(库:类型 + 337 例 + dist + 产物/发布包自检 + 五个示例);bun run test(宿主 242 文件/2376 例);bun run test:report(2376 过/0 败);bun run check:engine(56 处引用,发布包自检报 wanxiang-engine-0.1.8.tgz 可用);bun run check:engine:standalone(75 个源文件独立成库自检);gh release view v0.1.8 + gh api 核对 tag 指向 705b0c8 且包内 version 已是 0.1.8",
+      "summary": "0.1.8 发版完成且可核对:release 页 https://github.com/pplmx/wanxiang-engine/releases/tag/v0.1.8,tag 指向 engine main 的发版提交 705b0c8,该提交里的 package.json 已是 0.1.8、CHANGELOG 已有 0.1.8 一节;发布包自检按新版本号产出 wanxiang-engine-0.1.8.tgz 并\"真装一遍\"通过。发版前所有闸门全绿:库 337 例、宿主 2376 例、分类报告 2376 过/0 败、宿主 56 处引用全走公开入口。"
+    },
+    "DEC-139": {
+      "id": "DEC-139",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T19:24:19+00:00",
+      "updated_at": "2026-09-18T19:24:19+00:00",
+      "touched_round": 288,
+      "summary": "发版流程固定成五步:改 package.json、把「未发布」定稿成带日期的版本一节、同步三处 tag 引用(engine README / engine docs/development / 根 README)、推宿主与子树、在 engine 仓库 gh release create 并按 CHANGELOG 分主题写说明。",
+      "rationale": "发布这件事最容易出的错不是\"发错版本号\",而是**说明与实际不一致**:tag 指向哪个提交、那个提交里的版本号是多少、发布包里装的是哪一版、README 让人 pin 的是哪个 tag —— 四处任意一处没同步,外面的人就会按着一份错的说明接库。故把流程固定成五步,并把\"核对 tag 指向 + 包内 version\"也当成发版的一部分(用 gh api 读 tag 里的 package.json,而不是凭本地印象)。节奏上继续按版本口径:攒批(39 个提交一版)、默认只加 patch、tag 是给外面人一个可 pin 的节点。",
+      "alternatives_rejected": "①改完就发(历史上的 0.1.2–0.1.5 一天连跳四次,已经按攒批口径纠正过一次);②只推 tag 不核对它指向哪(子树推送与 tag 是两步,顺序错了 tag 会落在旧提交上);③在宿主仓库打引擎 tag(库的 release 属于 engine 仓库,宿主有自己的 app 版本线 v1.35.0);④release 说明另写一份(与 CHANGELOG 各写各的迟早不一致;现在按 CHANGELOG 的分节改写,口径只有一份)。"
     }
   },
   "edges": [
@@ -25766,6 +25816,24 @@
       "to": "TASK-266",
       "type": "depends_on",
       "created_at": "2026-09-18T19:19:55+00:00"
+    },
+    {
+      "from": "CHG-351",
+      "to": "TASK-269",
+      "type": "implements",
+      "created_at": "2026-09-18T19:24:24+00:00"
+    },
+    {
+      "from": "DEC-139",
+      "to": "TASK-269",
+      "type": "governs",
+      "created_at": "2026-09-18T19:24:24+00:00"
+    },
+    {
+      "from": "TASK-269",
+      "to": "TASK-268",
+      "type": "depends_on",
+      "created_at": "2026-09-18T19:24:24+00:00"
     }
   ]
 }
