@@ -94,6 +94,16 @@ console.log(battle.win ? '胜' : '败', battle.rounds, '回合')
 
 战斗解算(`game.combat`)是副本的下半场:一场遭遇要分得出胜负。它同样只吃属性系统的输出。
 
+放置类游戏的另一半是**离线推进**:`planIdle` 只算时长账 ——
+过去多久、其中多少计入上限(`cappedMs`)、再乘效率(`effectiveMs`)、拆成多少步(`steps`)、
+余量与"被上限吃掉"的各是多少。每一步产出什么由你的游戏决定(`runIdle` 按步折叠):
+
+```ts
+const plan = planIdle(8 * 3600_000, { stepMs: 60_000, capMs: 6 * 3600_000, efficiency: 0.9 })
+// cappedMs 6h · effectiveMs 5.4h · steps 324 · overflowMs 2h
+const gained = runIdle(plan, 0, (total, i, stepMs) => total + stepMs)
+```
+
 ## 接进你自己的项目
 
 包内自带 `dist` 的编译与入口声明,但**还没有发到 npm**(发布是显式动作)。三种接法任选:

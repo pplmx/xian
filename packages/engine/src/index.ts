@@ -72,5 +72,8 @@ export { createDungeonSystem, emptyProgress } from './dungeons'
 export type { BattleConfig, BattleEvent, BattleResult, CombatEngine, Combatant } from './combat'
 export { createCombatEngine } from './combat'
 
+export type { IdleConfig, IdlePlan } from './idle'
+export { planIdle, runIdle } from './idle'
+
 export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config'
 export { defineGame, validateGame } from './config'

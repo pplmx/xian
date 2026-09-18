@@ -8,7 +8,7 @@
  * 它不依赖 Vue/Pinia,也不需要任何界面 —— 引擎是纯逻辑层,
  * 界面、存档、离线结算都由使用方自己决定。
  */
-import { createRng, defineGame, emptyProgress } from '../src/index'
+import { createRng, defineGame, emptyProgress, planIdle, runIdle } from '../src/index'
 import { DEMO } from '../src/presets/demo'
 
 const game = defineGame(DEMO)
@@ -92,3 +92,14 @@ for (let run = 0; run < 40 && progress.cleared.length < game.dungeons.regions.le
 
 console.log('----')
 console.log(`已通关:${progress.cleared.map(id => game.dungeons.region(id)?.name).join('、') || '(无)'}`)
+
+// 4. 离线推进:回来之后该补多少 —— 时长账由库算,每一步产出什么由游戏自己定
+const idle = planIdle(8 * 3600_000, { stepMs: 10 * 60_000, capMs: 6 * 3600_000, efficiency: 0.9 })
+const banked = runIdle(idle, 0, (total, _i, stepMs) => total + stepMs)
+console.log('----')
+console.log(
+    `离线 8 小时(上限 6 小时、效率 0.9):计入 ${(idle.cappedMs / 3600_000).toFixed(1)}h · ` +
+    `有效 ${(idle.effectiveMs / 3600_000).toFixed(1)}h · ${idle.steps} 步 · ` +
+    `超出未计 ${(idle.overflowMs / 3600_000).toFixed(1)}h · 不足一步的余量 ${Math.round(idle.remainderMs / 60_000)} 分`
+)
+console.log(`逐步累积(示例:每步 10 分钟)= ${(banked / 3600_000).toFixed(2)}h`)
