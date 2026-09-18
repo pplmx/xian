@@ -265,6 +265,67 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     expect(withFn.win).toBe(base.win)
   })
 
+  it('整回合的主权:回血节奏 / 按序选技 / 出手都可以自己拼,默认动作一样不做', () => {
+    const seen: string[] = []
+    const custom = createCombatEngine({
+      variance: 0,
+      actFn: (ctx, rng) => {
+        // 本作式节奏:自己回合开头回血 → 按序选技(第一个命中即用)→ 打一记
+        ctx.heal(ctx.self, 5)
+        let skill: { name: string; mult: number; rate: number } | undefined
+        for (const s of ctx.skills) {
+          if (rng.chance(s.rate)) {
+            skill = s
+            break
+          }
+        }
+        seen.push(`${ctx.round}:${skill?.name ?? '普攻'}`)
+        ctx.strike(ctx.self, ctx.foe, skill ? { skill, mult: skill.mult } : {})
+        return true
+      }
+    })
+    const out = custom.resolve(
+      fighter({ attack: 30, hp: 40, maxHp: 100 }),
+      fighter({
+        id: 'e',
+        name: '乙',
+        attack: 8,
+        defense: 0,
+        hp: 120,
+        maxHp: 120,
+        skills: [{ name: '扑击', mult: 1.5, rate: 1 }]
+      }),
+      createRng(3)
+    )
+    expect(seen.length).toBeGreaterThan(0)
+    // 按序掷:第一个命中即用 —— 敌人那一侧只掷到「扑击」这一颗为止
+    expect(seen).toContain('1:扑击')
+    expect(seen.filter(row => row.endsWith(':扑击')).length).toBeGreaterThan(0)
+    // 整回合接管之后,事件与默认那套不同(证明默认动作确实没发生)
+    const plain = createCombatEngine({ variance: 0 }).resolve(
+      fighter({ attack: 30, hp: 40, maxHp: 100 }),
+      fighter({
+        id: 'e',
+        name: '乙',
+        attack: 8,
+        defense: 0,
+        hp: 120,
+        maxHp: 120,
+        skills: [{ name: '扑击', mult: 1.5, rate: 1 }]
+      }),
+      createRng(3)
+    )
+    expect(out.events).not.toEqual(plain.events)
+  })
+
+  it('整回合不返回时交回默认:与不配这个钩子逐位一致', () => {
+    const foe = () => fighter({ id: 'e', name: '乙', attack: 8, defense: 0, hp: 120, maxHp: 120 })
+    const base = createCombatEngine({ variance: 0 }).resolve(fighter({ attack: 30 }), foe(), createRng(17))
+    const withFn = createCombatEngine({ variance: 0, actFn: () => undefined }).resolve(fighter({ attack: 30 }), foe(), createRng(17))
+    expect(withFn.events).toEqual(base.events)
+    expect(withFn.win).toBe(base.win)
+  })
+
   it('技能效果可基于默认改:多打几下、伤害翻倍,并且本场有个跨回合的抽屉', () => {
     // 玩家的技能:第一次按默认打,之后每次都翻倍(用 state 记"这是第几次")
     const engine = createCombatEngine({

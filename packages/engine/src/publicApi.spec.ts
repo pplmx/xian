@@ -15,6 +15,7 @@ import { describe, expect, it } from 'vitest'
 import * as engine from './index.js'
 import type {
   AppliedEntry,
+  ActContext,
   AffixDef,
   AffixLine,
   AffixRoll,
@@ -367,6 +368,7 @@ type PublicTypes = {
     BattleResult<number>,
     BattleShieldConfig,
     BattleSkillEffectsConfig,
+    ActContext<number>,
     Combatant<number>,
     CombatEngine,
     CombatKeys,

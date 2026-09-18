@@ -138,6 +138,22 @@ export interface BattleConfig<T = number> {
    */
   strikeFn?: (ctx: StrikeContext<T>, rng: Rng) => boolean | void
   /**
+   * 自己接管**某一方的整回合**(**可选**)—— "这一回合我这边做什么"的主权。
+   *
+   * 前两处主权(skillFn / strikeFn)管的是"出哪一招""这一招怎么打";但真实作品往往连
+   * **节奏**也自有一套:回合开始的回复、法宝的节拍(每 N 回合出手)、震慑在什么时候清、
+   * 连携与阶段切换发生在出手之前还是之后……这些差异同样落在随机流的消耗顺序上。
+   *
+   *   返回 `true` —— 这一回合归你(引擎不再做任何默认动作:不回血、不选技能、不出手、
+   *   不结算技能效果);默认动作要哪几样,自己用 `ctx.strike(mult, opts)` 与
+   *   `ctx.heal` / `ctx.gainShield` 拼出来。
+   *   返回别的(含什么都不返回)—— 引擎按默认走完这一回合(与不配时逐位一致)。
+   *
+   * 引擎仍然保留的是**回合调度与生命周期**:谁先手、一共几回合、什么时候算分出胜负、
+   * 事件怎么记。要连这些都换掉,那已经不是在用这套战斗,而是另写一套。
+   */
+  actFn?: (ctx: ActContext<T>, rng: Rng) => boolean | void
+  /**
    * 自己接管伤害公式(**可选**)。
    *
    * 默认是 `攻击² /(攻击+防御)` 再乘上浮动、增伤、减伤,并有"每击至少 × minDamageRatio"的地板。
@@ -331,6 +347,38 @@ export interface StrikeContext<T> {
   /** 让目标的下一次出手被跳过 */
   skipNextTurn: (target: Combatant<T>) => void
   /** 记一条自己的日志(展示文本归你) */
+  log: (kind: BattleEventKind, text: string, damage?: number, actor?: string) => void
+  /** 本场共用的小抽屉 */
+  state: Record<string, unknown>
+}
+
+/**
+ * 整回合的上下文 —— 轮到某一方时,引擎问"这一回合你这边做什么"。
+ *
+ * 原语与其它钩子同一套;另外给 `skills`(这一方的技能表)与 `strike`(按默认规则打一记),
+ * 于是"我要的节奏 = 回血 + 按序选技 + 打一记 + 结算标签"这几样都能自己拼出来。
+ */
+export interface ActContext<T> {
+  round: number
+  /** 轮到谁(引擎内部的副本) */
+  self: Combatant<T>
+  /** 对手(同上) */
+  foe: Combatant<T>
+  /** 这一方的技能表(原样) */
+  skills: readonly EnemySkillDef[]
+  /** 已按 `keys` 解析好的本值键名 */
+  keys: Required<CombatKeys>
+  statOf: (c: Combatant<T>, key: string) => T
+  setStat: (c: Combatant<T>, key: string, value: T) => void
+  num: (c: Combatant<T>, key: string) => number
+  shieldOf: (c: Combatant<T>) => number
+  gainShield: (c: Combatant<T>, amount: number) => number
+  heal: (c: Combatant<T>, amount: number) => { applied: number; shielded: number }
+  /** 按默认规则打一记(倍率 / 标签 / 穿甲可指定);返回扣掉的生命 */
+  strike: (attacker: Combatant<T>, defender: Combatant<T>, opts?: StrikeOptions) => number
+  /** 让目标的下一次出手被跳过 */
+  skipNextTurn: (target: Combatant<T>) => void
+  /** 记一条自己的日志 */
   log: (kind: BattleEventKind, text: string, damage?: number, actor?: string) => void
   /** 本场共用的小抽屉 */
   state: Record<string, unknown>
@@ -804,6 +852,39 @@ export function createCombatEngine<T = number>(config: BattleConfig<T> = {}, num
           if (skipping.delete(attacker)) {
             events.push({ round, actor: attacker.name, kind: 'skip', damage: 0, text: `${attacker.name} 这一回合没有出手` })
             continue
+          }
+          /**
+           * 整回合的主权(可选):返回 true 即这一回合归你 —— 引擎不再做默认的任何动作
+           * (回血、选技能、出手、结算标签都不做),要哪几样自己用 ctx.strike / ctx.heal 拼。
+           */
+          if (config.actFn) {
+            hookDepth += 1
+            let handled: boolean | void
+            try {
+              handled = config.actFn(
+                {
+                  round,
+                  self: attacker,
+                  foe: defender,
+                  skills: attacker.skills ?? [],
+                  keys,
+                  statOf: stat,
+                  setStat,
+                  num: statNum,
+                  shieldOf,
+                  gainShield,
+                  heal,
+                  strike: (a, d, opts) => strike(a, d, round, opts),
+                  skipNextTurn: (target: Combatant<T>) => skipping.add(target),
+                  log: (kind, text, damage, actor) => emit(round, actor ?? attacker.name, kind, text, damage),
+                  state
+                },
+                rng
+              )
+            } finally {
+              hookDepth -= 1
+            }
+            if (handled === true) continue
           }
           const skills = attacker.skills ?? []
           /**

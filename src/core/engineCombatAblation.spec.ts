@@ -18,8 +18,9 @@
  *     四 **本作自己那批词条**(背水/锋芒/罡盾/斩杀/先手/破甲/减伤/易伤)在库的公式里没有位置。
  *
  * 所以这一版**不动本作的战斗**:库的战斗保持"给需要的作品一套开箱骨架"的定位,
- * 不承担"复刻某个上线作品的战斗"这项义务。真要走通,缺的是两处**主权**而非公式钩子:
- *   `skillFn`(选技能完全接管)与 `strikeFn`(整次出手完全接管) —— 见本文件末尾的结论表。
+ * 不承担"复刻某个上线作品的战斗"这项义务。真要走通,缺的是**主权**而非公式钩子:
+ *   `skillFn`(选技能)/ `strikeFn`(整次出手)/ `actFn`(整回合)三处 ——
+ *   前两处已经落地;补上三处之后的一格实测见本文件末尾的续测(75% → 100%)。
  */
 import { describe, expect, it } from 'vitest'
 import { createCombatEngine, createRng, type Combatant, type Rng } from 'wanxiang-engine'
@@ -27,6 +28,13 @@ import type { CombatantSnap, EnemySkill } from '@/types'
 import { gn } from '@/utils/gnum'
 import { RandomService, mulberry32 } from '@/utils/random'
 import { resolveCombat } from './combat'
+import {
+  CRIT_BASE,
+  CRIT_DMG_BASE,
+  DAMAGE_VARIANCE,
+  MITIGATION_CAP,
+  MITIGATION_K
+} from '@/data/constants'
 
 /** 场景:两边各一个数值档,够看出"强弱悬殊时一致、均势时各自一套" */
 interface Scenario {
@@ -212,5 +220,86 @@ describe('消融实验 · 库的战斗 vs 本作的战斗', () => {
      */
     const gaps = ['伤害公式形状', '一次出手的顺序', '技能选择(随机流)', '本作独有的那批词条']
     expect(gaps.length).toBe(4)
+  })
+})
+
+/**
+ * 续测(DEC-119 留下的最后一问)—— 把 sovereignty 接上之后,库能不能与本作的战斗逐位对齐?
+ *
+ * `skillFn` / `strikeFn` 落地之后,那一问现在测得了:同一批场景与种子下,把本作的口径
+ * **整段写进钩子**(选技能按序掷、出手先掷浮动再判暴击、减伤 = 防/(防 + 攻×1.15) 封顶 75%),
+ * 看一致率能不能上去。本作战斗本身不动 —— 这里只是在实验里接一份"主权版"配置。
+ */
+describe('消融实验续 · 接上主权之后能对齐到哪一步', () => {
+  /** 主权版:选技能与出手都整段交还给"本作口径" */
+  function sovereignEngine() {
+    return createCombatEngine({
+      variance: 0,
+      maxRounds: 50,
+      // 这一格没有技能/护盾/反击,回合节奏本身没有分歧:每回合按默认打一记即可
+      actFn: (ctx, rng) => {
+        void rng
+        ctx.strike(ctx.self, ctx.foe, {})
+        return true
+      },
+      strikeFn: (ctx, rng) => {
+        const atk = ctx.num(ctx.attacker, 'attack')
+        const def = ctx.num(ctx.defender, 'defense')
+        const aMods = ctx.attacker.mods
+        const dMods = ctx.defender.mods
+        // 闪避:本作是"先判闪避"(命中抵掉闪避)。这一格恒 0,但骰子照掷 —— 随机流才对得齐
+        if (rng.chance(Math.max(0, (dMods.dodgeRate ?? 0) - (aMods.accuracy ?? 0)))) return true
+        let factor = 1 * (1 + (aMods.damageBonus ?? 0))
+        factor *= 1 + rng.float(-DAMAGE_VARIANCE, DAMAGE_VARIANCE) // 先掷浮动
+        const crit = rng.chance(CRIT_BASE + (aMods.critRate ?? 0)) // 再判暴击
+        if (crit) factor *= 1 + CRIT_DMG_BASE + (aMods.critDamage ?? 0)
+        const red = Math.min(MITIGATION_CAP, def / (def + atk * MITIGATION_K))
+        factor *= 1 - red
+        factor *= Math.max(0.1, 1 - (dMods.damageReduction ?? 0))
+        const lost = ctx.applyDamage(ctx.defender, atk * Math.max(0.02, factor))
+        /**
+         * 本作在每次出手之后还会掷三颗骰子:反击、追击、震慑。
+         * **词条是 0 也照掷** —— 少了这三颗,后面所有随机都对不上。
+         * (这条正是消融实验反复撞上的那种"不是公式差,而是消耗的随机个数差"。)
+         */
+        if (lost >= 0 && ctx.num(ctx.defender, ctx.keys.hp) > 0) {
+          rng.chance(Math.max(0, dMods.counterRate ?? 0))
+          rng.chance(Math.max(0, aMods.comboRate ?? 0))
+          rng.chance(Math.max(0, aMods.stunRate ?? 0))
+        }
+        return true
+      }
+    })
+  }
+
+  function sovereignResolve(s: Scenario, seed: number): { win: boolean; rounds: number; playerHpPct: number } {
+    const [p, e] = enginePair(s)
+    const battle = sovereignEngine().resolve(p, e, createRng(seed) as unknown as Rng)
+    return { win: battle.win, rounds: battle.rounds, playerHpPct: Number(battle.playerHp) / s.player.hp }
+  }
+
+  it('均势·无技能:接上主权后同种子逐位对齐(胜负与回合数全部相同)', () => {
+    const s = SCENARIOS[2]!
+    const SEEDS = Array.from({ length: 200 }, (_, i) => i + 1)
+    let agreeDefault = 0
+    let agreeSovereign = 0
+    let roundsMatch = 0
+    for (const seed of SEEDS) {
+      const host = hostResolve(s, seed)
+      if (host.win === libraryResolve(s, seed).win) agreeDefault += 1
+      const mine = sovereignResolve(s, seed)
+      if (host.win === mine.win) agreeSovereign += 1
+      if (host.rounds === mine.rounds) roundsMatch += 1
+    }
+    const pct = (n: number): string => `${Math.round((n / SEEDS.length) * 100)}%`
+    console.log(
+      `\n—— 接上主权之后(${s.name},200 颗种子)——\n  库(默认)胜负一致 ${pct(agreeDefault)} · ` +
+        `库 + 三处主权 胜负一致 ${pct(agreeSovereign)}(回合数相同 ${pct(roundsMatch)})\n`
+    )
+    // 接上主权之后,这一格(没有技能/护盾/反击的纯公式场景)应当完全对齐
+    expect(agreeSovereign).toBe(SEEDS.length)
+    expect(roundsMatch).toBe(SEEDS.length)
+    // 而不接主权时对不上 —— 说明"换过去"靠的确实是这两处主权,不是调参数
+    expect(agreeDefault).toBeLessThan(SEEDS.length)
   })
 })

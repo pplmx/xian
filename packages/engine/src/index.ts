@@ -82,6 +82,7 @@ export type {
   BattleResult,
   BattleShieldConfig,
   BattleSkillEffectsConfig,
+  ActContext,
   Combatant,
   CombatEngine,
   CombatKeys,
