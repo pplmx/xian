@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createCompanionSystem } from './companions'
+import { createCompanionSystem } from './companions.js'
 
 const NEUTRAL = { exploreDurMult: 1, dangerMult: 1, dropLuck: 0, lossReduction: 0 }
 

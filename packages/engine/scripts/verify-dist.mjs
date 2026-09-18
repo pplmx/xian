@@ -16,7 +16,7 @@
  */
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, renameSync } from 'node:fs'
+import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
@@ -160,6 +160,28 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
     assert.ok(simSpecs.includes(spec.replace('src/', '')), `调参参考指向了不存在的用例:${spec}`)
   }
   console.log(`调参参考自检通过(${simSpecs.length} 份消融实验都被收进 docs/tuning.md)`)
+
+  /**
+   * 相对导入自检 —— 源码里的相对导入必须带 `.js` 扩展名。
+   *
+   * 为什么这条值得单独立判据:它只在**产物**里现形,而且只对一类使用者现形 ——
+   * `moduleResolution: node16 / nodenext` 的人。TS 会把源码的导入原样搬进 `.d.ts`,
+   * 少一个 `.js`,`skipLibCheck: false` 的消费者就一编译就红(TS2835),
+   * 而发版这边一切正常(库自己的构建与用例都过得去)。
+   * 这次就是这么发现的:`companions.ts` 里一句 `from './attributes'` 漏了扩展名。
+   */
+  const srcFiles = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).filter(
+    entry => typeof entry === 'string' && entry.endsWith('.ts')
+  )
+  const badSpecs = []
+  for (const file of srcFiles) {
+    const text = readFileSync(resolve(ENGINE, 'src', file), 'utf-8')
+    for (const [, spec] of text.matchAll(/from\s+'(\.[^']*)'/g)) {
+      if (!spec.endsWith('.js')) badSpecs.push(`${file} → ${spec}`)
+    }
+  }
+  assert.deepEqual(badSpecs, [], `这些相对导入少了 .js 扩展名(消费者用 node16 解析时会红):${badSpecs.join('、')}`)
+  console.log(`相对导入自检通过(${srcFiles.length} 个源文件里的相对导入都带 .js)`)
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
@@ -271,4 +293,59 @@ const consumerProbe = `
   console.log('   按包名 import 通过(含两份子路径内容包)')
 `
 execFileSync('node', ['--input-type=module', '-e', consumerProbe], { cwd: app, stdio: 'inherit' })
-console.log(`发布包自检通过(${tgz} 装进临时项目后可用)`)
+
+/**
+ * 类型消费者自检 —— 使用者那边 `tsc --strict` 能不能过。
+ *
+ * 为什么还要这一步:运行时 import 成功只证明"装上能跑",而 TypeScript 使用者的第一道坎是
+ * `types` / `exports.types` 指向的文件能不能被解析、`.d.ts` 是不是自洽(泛型默认值、再导出、
+ * 子路径类型)。这些错了,包能跑但一编译就红 —— 而且只在**使用者**那边红,发版的人看不见。
+ * 所以这里真造一个 `.mts` 消费者,用严格模式 + 两种 moduleResolution 各编一遍。
+ */
+const tsc = resolve(ENGINE, 'node_modules/typescript/bin/tsc')
+if (existsSync(tsc)) {
+  writeFileSync(
+    resolve(app, 'probe.mts'),
+    `
+import { createRng, defineGame, planIdle, createDropTable, type IdlePlan, type Rng } from 'wanxiang-engine'
+import { DEMO } from 'wanxiang-engine/presets/demo'
+import { DAILY } from 'wanxiang-engine/presets/daily'
+import { XIUXIAN } from 'wanxiang-engine/presets/xiuxian'
+
+const rng: Rng = createRng('类型探针')
+const plan: IdlePlan = planIdle(8 * 3600_000, { stepMs: 3600_000, capMs: 6 * 3600_000 })
+const table = createDropTable([{ key: 'page', chance: 0.12, count: [1, 2] }])
+const hits: number = table.roll(rng, { chanceMult: 2 }).reduce((sum, hit) => sum + hit.count, 0)
+const games = [DEMO, DAILY, XIUXIAN].map(config => defineGame(config))
+export const probe = { plan, hits, worlds: games.map(g => g.realms.realms.length) }
+`
+  )
+  for (const [label, moduleResolution] of [
+    ['bundler', 'bundler'],
+    ['node16', 'node16']
+  ]) {
+    execFileSync(
+      'node',
+      [
+        tsc,
+        '--noEmit',
+        '--strict',
+        '--target',
+        'es2022',
+        '--module',
+        moduleResolution === 'node16' ? 'node16' : 'esnext',
+        '--moduleResolution',
+        moduleResolution,
+        '--skipLibCheck',
+        'false',
+        resolve(app, 'probe.mts')
+      ],
+      { cwd: app, stdio: 'inherit' }
+    )
+    console.log(`   使用者的 tsc --strict 通过(moduleResolution: ${label})`)
+  }
+} else {
+  console.log('   (跳过类型消费者自检:本地没有 typescript —— 先 bun install)')
+}
+
+console.log(`发布包自检通过(${tgz} 装进临时项目后可用 · 含使用者侧的 tsc 严格模式)`)

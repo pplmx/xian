@@ -20,6 +20,13 @@
 
 ## 未发布
 
+- **修:一个只在"使用者那边"现形的编译问题**(`companions.d.ts`)。`src/companions.ts` 里那句
+  `import type { Mods } from './attributes'` 少了 `.js` 扩展名,TypeScript 会把它原样搬进 `.d.ts`
+  —— 于是**库自己怎么跑都正常**(构建、用例、Node import 全过),而 `moduleResolution: node16 / nodenext`
+  且没开 `skipLibCheck` 的使用者一编译就红(TS2835)。现已补上扩展名,并加了两道防线:
+  ①**发布包自检里加了"类型消费者"一步** —— 真造一个 `.mts`,用 `tsc --strict` 按 `bundler` 与
+  `node16` 两种解析各编一遍(运行时 import 成功只说明"装上能跑",说明不了"能编");
+  ②**相对导入静态自检** —— 源码里任何相对导入少了 `.js` 都直接红。防空转已验:把那句改回去 → 红,改回 → 绿。
 - **消融实验:炼制的四个乘区各值多少**(`crafting.sim.spec.ts`)。`crafting.spec` 钉的是语义
   (乘区怎么乘、越级查表后接指数衰减、熟练度不到顶、分档取第一档);这一份量的是**刻度**:
 

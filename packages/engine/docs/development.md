@@ -63,6 +63,12 @@ bun run examples     # 跑 examples/ 下的示例
 bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json)
 ```
 
+`bun run check` 里的**发布包自检**做的不只是"装上能跑":它真 `npm pack`、摊进临时项目,
+再按包名 import 一次(含内容包子路径),然后**用一个 `.mts` 消费者跑 `tsc --strict`** ——
+`moduleResolution` 会试 `bundler` 与 `node16` 两种。多加这一步是因为踩过一次:
+`companions.d.ts` 里一句 `from './attributes'` 漏了 `.js`,库自己怎么跑都正常,
+而 `node16` 的使用者一编译就红(TS2835)。同一条纪律也做成了静态判据:源码里的相对导入必须带 `.js`。
+
 示例是跑在 Node/Bun 上的命令行程序,所以单独一份 `tsconfig.examples.json` 给它们开 Node 类型;
 **库源码那份 tsconfig 刻意不引 Node 类型** —— 免得谁顺手在 `src` 里用了 `process` / `Buffer`
 还一路绿灯(库必须能在浏览器里跑)。这条差别是 CI 抓出来的:在上游工程里因为根目录已经有
@@ -72,7 +78,7 @@ bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json
 
 | 命令 | 钉住的事 |
 | --- | --- |
-| `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"、工程侧 25 处引用全走公开入口 |
+| `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"(含使用者侧的 `tsc --strict`)、工程侧 59 处引用全走公开入口 |
 | `bun run check:engine:standalone` | 整份目录复制到临时目录(不带 dist 与 node_modules)后,独立编译、独立跑用例、独立 import 产物、跑示例,并断言源码里没有任何工程侧引用 |
 
 只要有一处"顺手用了工程侧的别名或配置",`check:engine:standalone` 就会红 ——

@@ -15,7 +15,7 @@
  * 作品常见的用法是"一次只带一只",但引擎不限制数量:`activeMods(ids)` 接受任意个,
  * 要不要限制是玩法层的事。
  */
-import type { Mods } from './attributes'
+import type { Mods } from './attributes.js'
 
 /** 一条性格:一组行为系数 */
 export interface TraitDef {
