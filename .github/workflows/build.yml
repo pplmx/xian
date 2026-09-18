@@ -51,7 +51,10 @@ jobs:
   ui-check:
     name: 浏览器自检(排版与交互)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 三条自检的时长(本机实测):排版 ~6 分 + 冒烟 ~5 分半 + 离线 ~1 分,另加装依赖与构建。
+    # 原先的 20 分钟在只有排版那一条时够用,现在贴得太近 —— 超时会让这道门偶发失败,
+    # 而一个会自己变红的门比没有门更糟。故留出余量。
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - name: 安装 Bun
@@ -76,6 +79,11 @@ jobs:
         run: bunx playwright install --with-deps chromium
       - name: 排版与交互自检
         run: bun scripts/layout-check.mjs
+      # 与排版自检的分工:那边量排版,这边戳交互 —— 逐页把按钮点一遍,看有没有
+      # 点炸(pageerror)、有没有 NaN/undefined 漏到正文。它和排版自检同属 ISS-188
+      # 里被点名的那两条,但当时只接上了排版与离线;发版门缺的正是这一条。
+      - name: 界面冒烟(逐页点按钮)
+        run: bun scripts/ui-smoke.mjs
       # Service Worker 只认安全上下文,故离线自检另起一个本地静态服务量同一份产物:
       # 断网可重开、旧缓存会被清、发版能接管(见 scripts/offline-check.mjs)。
       - name: 离线/发版接管自检

@@ -80,6 +80,7 @@
  * 仍需真机确认,故本脚本过绿不等于真机过绿。
  */
 import { chromium } from 'playwright'
+import { watchPageErrors } from './lib/pageErrors.mjs'
 import CryptoJS from 'crypto-js'
 import { mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -159,30 +160,6 @@ async function auditModalControls(page) {
       unnamed: rows.filter(r => !r.name).map(r => `${r.h}px`),
       small: rows.filter(r => r.h < 28).map(r => `${r.h}px «${r.name || '无名'}»`)
     }
-  })
-}
-
-/**
- * 收集页面异常 —— 只认本项目代码抛的。
- *
- * 站点里挂了一段第三方统计脚本(51.la)。它自己抛的异常与游戏无关,却会把
- * 「无 pageerror」判否掉 —— 实测:把 Math.random 钉成常量(为了确定性地触发
- * 引擎事件)之后,那段脚本会抛 `TypeError: Invalid UUID`,而游戏本身一切正常。
- * 故按堆栈里的脚本来路分流:第三方脚本的异常只打印、不计入失败。
- */
-function watchPageErrors(page, sink) {
-  let thirdPartyNoted = false
-  page.on('pageerror', e => {
-    const stack = String(e.stack || e.message || '')
-    if (/sdk\.51\.la/.test(stack)) {
-      // 逐页重载会把它重复抛出来,同一处只提一次,免得报告被噪声淹没
-      if (!thirdPartyNoted) {
-        thirdPartyNoted = true
-        console.log(`  (第三方统计脚本异常,不计入失败:${String(e.message).slice(0, 60)})`)
-      }
-      return
-    }
-    sink.push(String(e).slice(0, 160))
   })
 }
 

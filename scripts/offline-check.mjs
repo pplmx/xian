@@ -25,6 +25,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync 
 import { tmpdir } from 'node:os'
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { watchPageErrors } from './lib/pageErrors.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(ROOT, 'dist')
@@ -88,7 +89,7 @@ const browser = await chromium.launch()
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
 const page = await context.newPage()
 const pageErrors = []
-page.on('pageerror', e => pageErrors.push(String(e).slice(0, 140)))
+watchPageErrors(page, pageErrors)
 
 /** 应用真的起来了 —— 认"开始游戏"这扇门,不认某个 div 存不存在 */
 async function booted() {

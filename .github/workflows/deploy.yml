@@ -46,6 +46,9 @@ jobs:
         run: bunx playwright install --with-deps chromium
       - name: 浏览器自检(排版与交互)
         run: bun scripts/layout-check.mjs
+      # 逐页点按钮的冒烟(点炸了没有 / 有没有 NaN 漏到正文)——与排版自检同一道门的另一半
+      - name: 界面冒烟(逐页点按钮)
+        run: bun scripts/ui-smoke.mjs
       - name: 离线/发版接管自检
         run: bun scripts/offline-check.mjs
       # 前置条件:仓库需在 Settings → Pages → Build and deployment 里把 Source 选成

@@ -15,6 +15,9 @@
  *
  * 会跳过有破坏性的按钮(分解/删除/清空/重置/兵解/转世),免得把冒烟盘玩坏。
  * 发现 pageerror 即失败并打印堆栈前几行 —— 那通常就是一处真 bug。
+ * 它同时在 CI 里跑(见 .github/workflows/build.yml 的 ui-check job 与 deploy.yml),
+ * 与排版自检同属一道门:那边量排版,这边戳交互,红一条就不发布。
+ * 第三方统计脚本的异常不计入失败(见 lib/pageErrors.mjs:什么算我们的账只写一处)。
  *
  * ⚠ 夹具说明:存档密钥就写在包里(见 utils/crypto 的注释:并非安全边界),
  * 故这里能照同一套格式造一份"神人境"存档。它是**自检夹具**,不是作弊入口:
@@ -27,6 +30,7 @@ import { chromium } from 'playwright'
 import CryptoJS from 'crypto-js'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { ANALYTICS_BLOCKED_ARGS, watchPageErrors } from './lib/pageErrors.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const INDEX = `file://${join(ROOT, 'dist/index.html')}`
@@ -60,7 +64,14 @@ const NUMERIC_LEAK = ['NaN', 'Infinity', 'undefined']
 /** 破坏性/离开型按钮:冒烟盘上不点 */
 const SKIP = /分解|删除|清空|重置|兵解|转世|散尽|导出|导入|隐私|关于我们|出 秘 境|暂别/
 
-const browser = await chromium.launch({ args: ['--allow-file-access-from-files', '--disable-web-security'] })
+/**
+ * 分析脚本的域名在自检里断掉(见 lib/pageErrors.mjs 里那段实测说明):
+ * 不是为了省时间(本地量过,断不断都是一轮五分半 —— 时间花在点击与等待上),
+ * 而是不让第三方脚本的加载与异常掺进这道门。
+ */
+const browser = await chromium.launch({
+  args: ['--allow-file-access-from-files', '--disable-web-security', ...ANALYTICS_BLOCKED_ARGS]
+})
 const context = await browser.newContext({ viewport: { width: 375, height: 812 } })
 if (LATE) {
   const gn = (m, e) => ({ m, e })
@@ -144,7 +155,8 @@ async function fingerprint() {
     return `${text.length}:${full.length}:${hash}|${theme}|${pressed}|${document.querySelectorAll('.modal-panel').length}|${document.querySelectorAll('[class*=toast]').length}`
   })
 }
-page.on('pageerror', e => errors.push({ where: 'boot', msg: String(e).slice(0, 300) }))
+/** 页面异常分流 —— 与排版自检同一把尺子(第三方统计脚本抛的不算我们的账) */
+watchPageErrors(page, msg => errors.push({ where: 'boot', msg }))
 
 await page.goto(INDEX, { waitUntil: 'load' })
 if (!LATE) {
