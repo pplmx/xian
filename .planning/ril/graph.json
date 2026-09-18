@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 224,
+  "round": 225,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T07:20:00+00:00",
+  "updated_at": "2026-09-18T08:05:00+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13299,6 +13299,101 @@
       "rationale": "本作词条按百分点书写(「攻击提升 4.2%」→ min 2 / max 5),属性表用分数(0.042),两边差一个 100。这类单位换算必须是配置里的一条明文规矩 —— 靠「碰巧两边写法一致」迟早出事:引擎解析装备时就曾按原值入属性,算出「火力增幅 +980%」。同理,层级系数允许整表覆盖(tierFactors),因为接入既有曲线时指数式对不上。",
       "alternatives_rejected": "①在词条定义里逐条除以 100(散在内容里,改单位要动几百条);②引擎默认按百分点理解(把本作的口径当成通用口径)。",
       "summary": "词条数值的书写单位写成配置项 affixValueScale(默认 1;按百分点书写时填 100),层级系数支持 tierFactors 整表覆盖。"
+    },
+    "TASK-204": {
+      "id": "TASK-204",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-09-18T08:05:00+00:00",
+      "updated_at": "2026-09-18T08:05:00+00:00",
+      "touched_round": 225,
+      "category": "core-feature",
+      "severity": 0.65,
+      "confidence": 0.95,
+      "effort": 4,
+      "unlock_factor": 1.0,
+      "summary": "把本作接到公共库(第一段:等级曲线):core/engineWorld 用 data/ 的内容装配库世界(GNum 走 Numeric 适配器),formulas 的 expRequirement/baseCombatStats/breakthroughBaseRate 改为转发库的实现,层级战力表搬进 core/tierScale 断开环;数字一位没动,由「迁移前冻结旧口径 + toEqual 精确相等 + 迁移接线断言」证明(21 境 × 10 层逐个过)。"
+    },
+    "CHG-263": {
+      "id": "CHG-263",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:05:00+00:00",
+      "updated_at": "2026-09-18T08:05:00+00:00",
+      "touched_round": 225,
+      "commit": "5391900",
+      "summary": "库侧两处缺口(接本作时照出):Numeric 增加 powN(base:number,k:number),曲线一律走它 —— 宿主的 GNum 适配器直接落回 gnum.powN 的对数空间实现,避免\"先归一化成 {1.9,e:1} 再取幂\"的末位差;SetDef.bonuses 增加 hook?,把\"机制套\"(铁壁=首次致命伤留 1 点气血、星斗=开战护盾)与\"数值套\"收进同一套模型,validateGame 补套装 id 重复与件数门槛判据;平铺数值的乘法结合顺序照搬本作。"
+    },
+    "CHG-264": {
+      "id": "CHG-264",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:05:00+00:00",
+      "updated_at": "2026-09-18T08:05:00+00:00",
+      "touched_round": 225,
+      "commit": "50350af",
+      "summary": "应用侧接线:新增 core/engineNumeric(GNum 适配器:gn/add/sub/mul/mulN/div/powN/cmp/gnMax/toNum/formatExact)、core/engineWorld(内容→GameConfig→ENGINE_WORLD)、core/tierScale(层级映射与 powerScale 从 formulas 搬出,依赖单向化);formulas 三处转发;撤掉 isWorldStepLayer(已无调用方,判据归库);equipSet 导出 EQUIP_SETS 供装配校验(引擎先照出 14 处\"模板挂了未定义的套装\")。"
+    },
+    "EV-209": {
+      "id": "EV-209",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:05:00+00:00",
+      "updated_at": "2026-09-18T08:05:00+00:00",
+      "touched_round": 225,
+      "source": "src/core/engineParity.spec.ts(20 例)",
+      "summary": "对账:①库与迁移前冻结口径 —— 境界名/寿元/修为需求/基础三维/进阶成功率,21 境 × 10 层逐个,且修为与三维是 GNum toEqual 精确相等;②迁移接线 —— app 的 expRequirement/baseCombatStats/breakthroughBaseRate 与库同一份结果,并与冻结口径一致;③层级战力表与 core/tierScale.powerScale 一致;④属性合并(200 组随机来源对 statsCalc)、装备池/词条/结算(对 equipGen)、区域解锁(对 unlockClosure)仍未迁移的三套照旧对账。"
+    },
+    "EV-210": {
+      "id": "EV-210",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:05:00+00:00",
+      "updated_at": "2026-09-18T08:05:00+00:00",
+      "touched_round": 225,
+      "source": "bun run test(190 文件 / 1922 例)+ bun run check(vue-tsc + eslint src packages)+ bun run build",
+      "summary": "迁移后全绿。期间三条闸门各抓到一处真事:kaiFontCoverage 抓到新增源码里的「↔」不在字体子集;deadExportAudit 抓到 isWorldStepLayer 变成死导出、ENGINE_WORLD_NUM 只在 spec 里用;并提醒销账 —— gnum.div 因新适配器被运行时接上,SPEC_ONLY_ALLOWLIST 里的 div 条目按规矩删除。"
+    },
+    "DEC-068": {
+      "id": "DEC-068",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:05:00+00:00",
+      "updated_at": "2026-09-18T08:05:00+00:00",
+      "touched_round": 225,
+      "rationale": "\"把实现搬进库\"最容易变成\"看起来差不多\":谁都能把公式抄一份到库里去,而数字是否一位不变没人验。故迁移必须以判据先行:先把**迁移前的旧实现冻在用例里**(不 import 被迁移的模块,免得拿自己证明自己),再要求库的输出与它精确相等(大数用 toEqual,不是 toBeCloseTo),另加一节断言\"app 的入口确实经库计算\"。三条一起,才既有\"接线\"的证据,也有\"数值未漂移\"的证据。",
+      "alternatives_rejected": "①只断言 app 函数与库函数相等(迁移后二者同源,是循环证明);②只断言与旧值\"接近\"(放过末位漂移,而 GNum 的尾数就是玩家最终看到的数字);③先改代码再补判据(漂了就再也说不清是哪一步漂的)。",
+      "summary": "迁移判据 = 冻结前口径(不 import 被迁移模块)+ 精确相等 + 接线断言;全量闸门必须同绿。"
+    },
+    "DEC-069": {
+      "id": "DEC-069",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:05:00+00:00",
+      "updated_at": "2026-09-18T08:05:00+00:00",
+      "touched_round": 225,
+      "rationale": "大数库的幂通常在对数空间实现(gnum.powN = 10^(k·log10(base)))。若引擎先 numeric.from(19) 归一化成 {m:1.9,e:1} 再取幂,算的是 log10(1.9)+1,与 log10(19) 差一个 ulp,曲线上的需求数就会在尾数上漂。曲线里的倍率是配置常数,本可以按 number 传入 —— 故 Numeric 增加 powN(base:number,k:number),让宿主直接用自己的实现;number 默认实现即 base ** k,行为不变。",
+      "alternatives_rejected": "①让 GNum 适配器把 GNum 反解成 number 再 powN(大数会溢出);②接受尾数漂移(玩家看到的数字会变);③把倍率也写成 GNum(配置不再是纯数据,且仍躲不开归一化)。",
+      "summary": "成长曲线的幂走 Numeric.powN(number 底数),宿主的大数实现得以逐位对齐。"
+    },
+    "DEC-070": {
+      "id": "DEC-070",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-18T08:05:00+00:00",
+      "updated_at": "2026-09-18T08:05:00+00:00",
+      "touched_round": 225,
+      "rationale": "本作的装备共鸣是**机制套**(铁壁 = 首次致命伤保留 1 点气血、星斗 = 开战护盾),不是数值套。库原先把套装只建模成 bonuses[{pieces, mods}],于是接本作时只能把机制效果丢进 desc —— 那样\"件数够没够\"算了,但玩法层拿不到该生效的规则。补 hook?: string 之后,库只回答\"哪些 hook 生效\",解释权归玩法层:同一套模型既能表达 +10% 攻击的数值套,也能表达改规则的机制套。",
+      "alternatives_rejected": "①把机制套硬塞成 mods(表达不了\"首次致命伤留 1 血\");②在库里实现钩子语义(库不该认识 ironwall/astral 这种作品概念);③套装由作品自己算,不进库(件数与激活判定就要各写一份)。",
+      "summary": "套装分两层:mods 表数值、hook 表机制;库负责激活判定,解释归玩法层。已在 engineParity 中把本作的五套共鸣(铁壁/星斗/仙甲/神铠/混沌)接进配置。"
     }
   },
   "edges": [
@@ -19842,6 +19937,78 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-18T07:20:00+00:00"
+    },
+    {
+      "from": "TASK-204",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "TASK-204",
+      "to": "TASK-203",
+      "type": "depends_on",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "CHG-263",
+      "to": "TASK-204",
+      "type": "implements",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "CHG-263",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "CHG-264",
+      "to": "TASK-204",
+      "type": "implements",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "CHG-264",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "EV-209",
+      "to": "CHG-264",
+      "type": "validates",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "EV-209",
+      "to": "CHG-263",
+      "type": "validates",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "EV-210",
+      "to": "TASK-204",
+      "type": "validates",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "DEC-068",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "DEC-069",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T08:05:00+00:00"
+    },
+    {
+      "from": "DEC-070",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-18T08:05:00+00:00"
     }
   ]
 }
