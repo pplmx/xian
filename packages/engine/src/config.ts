@@ -123,6 +123,15 @@ export function validateGame(config: GameConfig): ValidationIssue[] {
     err('EQUIP_AFFIX_DUPLICATE', `词条 id 重复:${duplicates(config.equipment.affixes.map(a => a.id)).join('、')}`)
   }
   const setIds = new Set((config.equipment.sets ?? []).map(s => s.id))
+  if (duplicates((config.equipment.sets ?? []).map(s => s.id)).length > 0) {
+    err('EQUIP_SET_DUPLICATE', `套装 id 重复:${duplicates((config.equipment.sets ?? []).map(s => s.id)).join('、')}`)
+  }
+  for (const s of config.equipment.sets ?? []) {
+    if (s.bonuses.length === 0) warn('EQUIP_SET_EMPTY', `套装 ${s.id}(${s.name})没有任何件数效果`)
+    for (const b of s.bonuses) {
+      if (b.pieces < 1) err('EQUIP_SET_PIECES', `套装 ${s.id}(${s.name})的件数门槛必须 ≥ 1,当前 ${b.pieces}`)
+    }
+  }
   for (const t of config.equipment.templates) {
     if (!slotIds.has(t.slot)) err('EQUIP_TEMPLATE_SLOT', `装备模板 ${t.id}(${t.name})的槽位未定义:${t.slot}`)
     if (t.setId !== undefined && !setIds.has(t.setId)) {

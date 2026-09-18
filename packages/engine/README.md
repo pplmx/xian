@@ -138,6 +138,23 @@ console.log(battle.win ? '胜' : '败', battle.rounds, '回合')
 
 换句话说:本作可以逐步把自己的实现换成这套库,而玩家看到的数字不变。
 
+### 而且已经开始换了
+
+本作的成长曲线已经改成**经库计算**:`src/core/formulas.ts` 的
+`expRequirement` / `baseCombatStats` / `breakthroughBaseRate` / `isWorldStepLayer`
+现在转发到 `src/core/engineWorld.ts`(用 GNum 适配器装配的库世界)。
+
+这件事能被证明,而不是靠"我改了":
+
+1. `engineParity.spec.ts` 里留着**迁移前冻结的旧公式**(`refExpRequirement` 等三个),
+   与库的结果做 `toEqual`(GNum 精确相等)—— 21 境 × 10 层逐个过;
+2. 另有一节「迁移接线」直接断言 `formulas.expRequirement(major, sub)` 与
+   `ENGINE_WORLD.realms.expCost(major, sub)` 是同一份结果,并再次与冻结口径对账;
+3. 全量 1922 个用例、`vue-tsc`、ESLint 与生产构建全绿 —— 玩家侧的数字一位没动。
+
+尚未迁移的是属性合并、装备生成/解析与副本调度(`statsCalc` / `equipGen` / `regions`),
+它们仍与库并行存在,由同一份判据钉着;下一步按同样的方式逐个换过去。
+
 ## 目录
 
 ```

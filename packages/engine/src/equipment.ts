@@ -99,8 +99,15 @@ export interface SetDef {
   id: string
   name: string
   desc?: string
-  /** 件数 → 效果(达到该件数即生效) */
-  bonuses: { pieces: number; mods: Mods; desc?: string }[]
+  /**
+   * 件数 → 效果(达到该件数即生效)。
+   *
+   * `mods` 是**数值**效果;`hook` 是留给玩法层的**机制标记** ——
+   * 「两件套 = 首次致命伤保留 1 点气血」这类效果不是一组词条,而是一段规则。
+   * 引擎只负责"件数够了、这个 hook 生效了",至于 hook 怎么解释,那是游戏自己的事。
+   * 于是同一套套装模型既能表达数值套,也能表达机制套。
+   */
+  bonuses: { pieces: number; mods: Mods; desc?: string; hook?: string }[]
 }
 
 export interface EquipmentPowerConfig {
@@ -182,7 +189,7 @@ export interface LoadoutStats<T> {
   flats: Record<string, T>
   mods: Mods
   /** 生效的套装效果 */
-  sets: { id: string; name: string; pieces: number; active: { pieces: number; desc?: string; mods: Mods }[] }[]
+  sets: { id: string; name: string; pieces: number; active: { pieces: number; desc?: string; mods: Mods; hook?: string }[] }[]
 }
 
 export interface RollOptions {
@@ -252,10 +259,10 @@ export function createEquipmentSystem<T = number>(
   const slotById = new Map(slots.map(s => [s.id, s]))
   const setById = new Map(sets.map(s => [s.id, s]))
 
-  const tierScale = (tier: number): number => {
+  const tierScale = (tier: number): T => {
     const t = Math.max(1, tier)
     const override = config.power.tierFactors?.[t - 1]
-    return (override ?? config.power.tierGrowth ** (t - 1)) * baseFactor
+    return override !== undefined ? numeric.from(override) : numeric.powN(config.power.tierGrowth, t - 1)
   }
 
   const templatesAtTier = (tier: number, slot: string): TemplateDef[] =>
@@ -345,10 +352,12 @@ export function createEquipmentSystem<T = number>(
     if (!template) return { template, quality, flats, mods, affixLines }
 
     const scale = tierScale(instance.tier)
-    const factor = (1 + instance.level * levelBonus) * quality.mult ** qualityExp
+    // 与云隐修仙录同形:平铺 = 层级系数 × (基数 × 总预算系数 × 品质倍率 × 强化加成)
+    // —— 乘法的结合顺序也照搬,大数库下才能逐位一致
+    const factor = baseFactor * quality.mult ** qualityExp * (1 + instance.level * levelBonus)
     for (const [key, weight] of Object.entries(template.base ?? {})) {
       if (!weight) continue
-      flats[key] = numeric.add(flats[key] ?? numeric.zero, numeric.mulN(numeric.from(weight), scale * factor))
+      flats[key] = numeric.add(flats[key] ?? numeric.zero, numeric.mulN(scale, weight * factor))
     }
     for (const k in template.fixedMods) {
       const v = template.fixedMods[k]
@@ -417,10 +426,10 @@ export function createEquipmentSystem<T = number>(
     for (const [setId, count] of setCount) {
       const def = setById.get(setId)
       if (!def) continue
-      const active: { pieces: number; desc?: string; mods: Mods }[] = []
+      const active: { pieces: number; desc?: string; mods: Mods; hook?: string }[] = []
       for (const bonus of def.bonuses) {
         if (count < bonus.pieces) continue
-        active.push({ pieces: bonus.pieces, desc: bonus.desc, mods: bonus.mods })
+        active.push({ pieces: bonus.pieces, desc: bonus.desc, mods: bonus.mods, hook: bonus.hook })
         for (const k in bonus.mods) {
           const v = bonus.mods[k]
           if (typeof v === 'number') mods[k] = (mods[k] ?? 0) + v

@@ -219,10 +219,10 @@ export function createRealmSystem<T = number>(
     const e = Math.min(Math.max(0, i), lateFrom)
     return { early: e, late: Math.max(0, i - e) }
   }
-  const realmFactor = (i: number, curve: GrowthCurve, lateFrom: number): number => {
+  const realmFactor = (i: number, curve: GrowthCurve, lateFrom: number): T => {
     const seg = splitAt(i, lateFrom)
     const lateGrowth = curve.lateRealmGrowth ?? curve.realmGrowth
-    return Math.pow(curve.realmGrowth, seg.early) * Math.pow(lateGrowth, seg.late)
+    return numeric.mul(numeric.powN(curve.realmGrowth, seg.early), numeric.powN(lateGrowth, seg.late))
   }
 
   // ---- 寿元表:世界内复利,跨界为大跃 ----
@@ -263,17 +263,17 @@ export function createRealmSystem<T = number>(
   const expCost = (major_: number, layer: number): T => {
     const m = clamp(major_, 0, maxMajor)
     const l = clamp(layer, 0, layerEnd)
-    const majorFactor = realmFactor(m, config.exp, expLateFrom)
     const stepMult = isWorldStep(m, l) ? config.exp.worldStepMult ?? 1 : 1
-    return numeric.mulN(numeric.mulN(numeric.from(majorFactor), config.exp.layerGrowth ** l), config.exp.base * stepMult)
+    const majorFactor = realmFactor(m, config.exp, expLateFrom)
+    return numeric.mulN(numeric.mul(majorFactor, numeric.powN(config.exp.layerGrowth, l)), config.exp.base * stepMult)
   }
 
   const baseStats = (major_: number, layer: number): Record<string, T> => {
     const m = clamp(major_, 0, maxMajor)
     const l = clamp(layer, 0, layerEnd)
-    const factor = realmFactor(m, config.combat, combatLateFrom) * config.combat.layerGrowth ** l
+    const factor = numeric.mul(realmFactor(m, config.combat, combatLateFrom), numeric.powN(config.combat.layerGrowth, l))
     const out: Record<string, T> = {}
-    for (const [key, base] of Object.entries(config.combat.base)) out[key] = numeric.mulN(numeric.from(base), factor)
+    for (const [key, base] of Object.entries(config.combat.base)) out[key] = numeric.mulN(factor, base)
     return out
   }
 

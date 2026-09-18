@@ -17,7 +17,18 @@ export interface Numeric<T> {
   mul(a: T, b: T): T
   mulN(a: T, k: number): T
   div(a: T, b: T): T
+  /** 以 T 为底数的幂(整指数时与大数库的幂同形) */
   pow(a: T, k: number): T
+  /**
+   * 底数为普通数字的幂 —— 成长曲线一律走这一条。
+   *
+   * 为什么要专门留一个"number 底数"的幂:大数库的幂通常以对数空间实现
+   * (`10^(k·log10(base))`,见 gnum.powN),而 `pow(from(19), k)` 要先经历
+   * "19 → {m:1.9, e:1}" 的归一化,再取 log10(1.9)+1,末位与 log10(19) 差一个 ulp。
+   * 曲线里的倍率是**配置里的常数**,直接以 number 传入,才能与既有实现逐位对齐 ——
+   * 这决定了"把公式搬进库"是"数字一个不变"还是"看起来差不多"。
+   */
+  powN(base: number, k: number): T
   cmp(a: T, b: T): number
   max(a: T, b: T): T
   toNumber(a: T): number
@@ -60,6 +71,7 @@ export const numberNumeric: Numeric<number> = {
   mulN: (a, k) => a * k,
   div: (a, b) => (b === 0 ? 0 : a / b),
   pow: (a, k) => a ** k,
+  powN: (base, k) => base ** k,
   cmp: (a, b) => (a < b ? -1 : a > b ? 1 : 0),
   max: (a, b) => (a > b ? a : b),
   toNumber: a => a,
