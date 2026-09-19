@@ -39,7 +39,7 @@
         </p>
         <p v-for="row in fixedModRows" :key="row.label" class="flex justify-between text-[13px]">
           <span class="text-ink-soft">{{ row.label }}</span>
-          <span class="tabular text-azure">{{ row.value }}</span>
+          <span class="tabular text-qing">{{ row.value }}</span>
         </p>
       </div>
       <template v-if="resolved.affixLines.length">
@@ -85,7 +85,7 @@
             </span>
             <button
               v-if="canSealAffix(line.id)"
-              class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-azure active:scale-90 active:opacity-60"
+              class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-qing active:scale-90 active:opacity-60"
               :aria-label="`封存词条${line.name}`"
               @click="doSealAffix(line.id)"
             >
@@ -159,7 +159,7 @@
               </span>
             </p>
           </div>
-          <p v-if="whatIf.modChanges.length" class="mt-1 text-[10px] text-azure tabular">
+          <p v-if="whatIf.modChanges.length" class="mt-1 text-[10px] text-qing tabular">
             主要变化:{{ whatIf.modChanges.map(c => `${c.label} ${c.delta > 0 ? '+' : ''}${Math.round(c.delta * 100)}%`).join(' · ') }}
           </p>
           <p class="mt-0.5 text-[10px] text-ink-faint">推演只述局面,不替你定夺。</p>
@@ -177,7 +177,7 @@
                 {{ formatGN(reforgeCostVal.stone) }} · 尘×{{ reforgeCostVal.dust }}
               </span>
             </button>
-            <div v-if="sealCostVal" class="flex flex-1 items-center justify-center rounded-md border border-azure/20 bg-azure/5 px-2 py-1 text-azure">
+            <div v-if="sealCostVal" class="flex flex-1 items-center justify-center rounded-md border border-qing/20 bg-qing/5 px-2 py-1 text-qing">
               封存一词 {{ formatGN(sealCostVal) }}
             </div>
           </div>

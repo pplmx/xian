@@ -37,7 +37,7 @@
             <span class="text-[10px] tabular" :class="canPay(r) ? 'text-ink-faint' : 'text-cinnabar/80'">
               {{ entryCostText(r, player.major) }}
             </span>
-            <span class="ml-auto text-[10px] text-azure">入 境 →</span>
+            <span class="ml-auto text-[10px] text-qing">入 境 →</span>
           </span>
           <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{ r.desc }}</span>
         </button>

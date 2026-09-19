@@ -18,7 +18,7 @@
             :cx="p.x"
             :cy="p.y"
             :r="p.r"
-            :class="cleared(p.nodeId) ? 'text-jade' : unlocked(p.nodeId) ? 'text-azure' : 'text-ink-ghost'"
+            :class="cleared(p.nodeId) ? 'text-jade' : unlocked(p.nodeId) ? 'text-qing' : 'text-ink-ghost'"
             fill="currentColor"
             :fill-opacity="unlocked(p.nodeId) ? 0.85 : 0.35"
           />
@@ -36,14 +36,14 @@
         >
           <span
             class="grid h-9 w-9 shrink-0 place-items-center rounded-md"
-            :class="unlocked(p.nodeId) ? 'bg-azure/10 text-azure' : 'bg-ink/6 text-ink-ghost'"
+            :class="unlocked(p.nodeId) ? 'bg-qing/10 text-qing' : 'bg-ink/6 text-ink-ghost'"
           >
             <GameIcon :name="unlocked(p.nodeId) ? (regionDef(p.regionId)?.icon ?? 'mountain') : 'lock'" :size="16" />
           </span>
           <div class="min-w-0 grow">
             <p class="flex items-baseline gap-1.5">
               <span class="truncate font-kai text-[14px] text-ink">{{ p.name }}</span>
-              <span class="shrink-0 text-[11px] text-azure">{{ p.terrain }}</span>
+              <span class="shrink-0 text-[11px] text-qing">{{ p.terrain }}</span>
               <span v-if="cleared(p.nodeId)" class="shrink-0 text-[10px] text-jade">已通</span>
             </p>
             <p class="mt-0.5 flex items-center gap-2 text-[10px] text-ink-faint">
@@ -80,7 +80,7 @@
         </p>
         <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">
           此外诸界仍在,可回
-          <span class="text-azure">历练</span>
+          <span class="text-qing">历练</span>
           处另择他地,不必只走此路。
         </p>
       </div>

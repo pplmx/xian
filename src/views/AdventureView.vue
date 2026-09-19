@@ -8,15 +8,15 @@
     <!-- 选择区域 -->
     <template v-else>
       <!-- 本世之界:链接入口,详情另开一页。历练地图仍在下方,照旧可走 -->
-      <RouterLink to="/world" class="card-ink flex items-center gap-3 border-azure/30 px-4 py-3 active:scale-99">
-        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-azure/15 text-azure">
+      <RouterLink to="/world" class="card-ink flex items-center gap-3 border-qing/30 px-4 py-3 active:scale-99">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-qing/15 text-qing">
           <GameIcon name="cloud" :size="18" />
         </span>
         <span class="min-w-0 grow">
           <span class="block font-kai text-[14px] tracking-[0.2em] text-ink">本世之界</span>
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">{{ worldBrief }}</span>
         </span>
-        <span class="shrink-0 text-[11px] text-azure">观 象 →</span>
+        <span class="shrink-0 text-[11px] text-qing">观 象 →</span>
       </RouterLink>
 
       <SecretRealmCard />
@@ -90,7 +90,7 @@
                 <span
                   v-if="row.recall.prosperity !== 'chaos'"
                   class="chip-ink text-[9px]"
-                  :class="row.recall.prosperity === 'flourish' ? 'border-azure/60 text-azure' : 'border-jade/60 text-jade'"
+                  :class="row.recall.prosperity === 'flourish' ? 'border-qing/60 text-qing' : 'border-jade/60 text-jade'"
                 >
                   {{ prosperityName(row.recall.prosperity) }}
                 </span>

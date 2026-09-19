@@ -34,7 +34,7 @@
         <!-- 每条脉都要自陈作用:此前只显示名字与价格,玩家无从判断该投哪条 -->
         <p class="px-0.5 text-[10px] leading-relaxed text-ink-faint">
           {{ v.desc }}
-          <span v-if="currentLevel(v.id) > 0" class="text-azure">· {{ v.effectText(currentLevel(v.id)) }}</span>
+          <span v-if="currentLevel(v.id) > 0" class="text-qing">· {{ v.effectText(currentLevel(v.id)) }}</span>
         </p>
         <!-- 原主脉迁出后超额部分保留(效果不失,不可再投) -->
         <p v-if="surplusPoints(v.id) > 0" class="px-0.5 text-[10px] text-gold-ink">
@@ -51,7 +51,7 @@
       </div>
     </div>
 
-    <p class="mt-3 text-[10px] text-azure">
+    <p class="mt-3 text-[10px] text-qing">
       当前加成:
       <span v-if="!bonusRows.length" class="ml-1 text-ink-faint">尚无</span>
       <span v-for="row in bonusRows" :key="row.label" class="ml-1">

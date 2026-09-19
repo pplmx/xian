@@ -51,12 +51,12 @@
       <div v-if="showCultBreakdown" class="mt-2 rounded-md bg-paper-deep/60 px-2.5 py-2 text-[10px]">
         <p class="text-ink-soft">
           基础 {{ formatRate(cultBase) }}({{ player.realm.name }}{{ player.subName }}{{ player.linggen ? `·${player.linggen.gradeName}` : '' }})
-          × (1 + <span class="tabular text-azure">{{ formatPercent(cultMultiplier) }}</span>)
+          × (1 + <span class="tabular text-qing">{{ formatPercent(cultMultiplier) }}</span>)
           = <span class="tabular text-cinnabar">{{ formatRate(player.cultPerSec) }}</span>
         </p>
         <p v-for="row in cultSources" :key="row.name" class="mt-0.5 flex justify-between">
           <span class="text-ink-faint">{{ row.name }}</span>
-          <span class="tabular" :class="row.value > 0 ? 'text-azure' : 'text-cinnabar'">
+          <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
             {{ row.value > 0 ? '+' : '' }}{{ formatPercent(row.value) }}
           </span>
         </p>
@@ -79,7 +79,7 @@
                 行内照旧只给"看得懂的那一位":到标称容量就封顶(进度条也走这条线),
                 超出的部分用一个小「+」提示"还有积余",精确值点开看 —— 免得主行被顶成两行。
               -->
-              <span :class="qiOverCap ? 'text-azure' : ''">
+              <span :class="qiOverCap ? 'text-qing' : ''">
                 {{ formatNum(Math.min(Math.floor(resources.qi), player.qiCapValue)) }}<template v-if="qiOverCap">+</template>
               </span>
             </TapNumber>
@@ -89,12 +89,12 @@
               词收短到三字("已积至上限"在 320 宽后期档会把这一行顶折,自检当场量到过);
               完整的口径(上限值、不会再涨、怎么花)在点开的详情里。
             -->
-            <span v-if="resources.qi >= player.qiBankCapValue" class="text-azure">· 已封顶</span>
+            <span v-if="resources.qi >= player.qiBankCapValue" class="text-qing">· 已封顶</span>
           </span>
         </div>
         <ProgressBar
           :value="Math.min(1, resources.qi / Math.max(1, player.qiCapValue))"
-          color="var(--color-azure)"
+          color="var(--color-qing)"
           :height="8"
         />
         <!-- 以灵气疗伤(修复):灵气积余的用途,代价随境界指数增长 -->
@@ -331,7 +331,7 @@
             <span v-if="branchName(def!.id)" class="text-[10px] text-gold-ink">
               {{ branchName(def!.id) }}
             </span>
-            <span v-else-if="canEnlighten(def!.id)" class="text-[10px] text-azure">待悟道 →</span>
+            <span v-else-if="canEnlighten(def!.id)" class="text-[10px] text-qing">待悟道 →</span>
             <span v-else-if="isFull(def!.id)" class="text-[10px] text-ink-ghost">圆满</span>
             <span class="ml-auto text-[10px]" :class="equipStateOf(def!.id) ? 'text-jade' : 'text-ink-ghost'">
               {{ equipStateOf(def!.id) || '未装配' }}
@@ -531,7 +531,7 @@
   const PLAN_COLOR: Record<TribulationPlan['verdict'], string> = {
     danger: 'text-cinnabar',
     hard: 'text-amber-ink',
-    ok: 'text-azure',
+    ok: 'text-qing',
     easy: 'text-jade'
   }
   const PREP_NAMES = { guard: '护持', sustain: '恢复', resist: '抗性', burst: '爆发' } as const

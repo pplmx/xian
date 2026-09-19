@@ -11,7 +11,8 @@
     <meta property="og:title" content="隐私政策 · 玄枢录" />
     <meta property="og:description" content="存档只保存在你自己的设备上，不上传、不同步。" />
     <style>
-      /* 水墨色板 —— 与游戏内 style.css 的 @theme 保持一致 */
+      /* 水墨色板 —— 与游戏内 style.css 的 :root 保持一致(改那边就得改这边,
+         两处是手抄关系;游戏内的调色板判据会核对这张表的值) */
       :root {
         --paper: rgb(243 239 228);
         --paper-deep: rgb(234 228 211);
@@ -21,7 +22,7 @@
         --ink-faint: rgb(133 127 112);
         --ink-ghost: rgb(185 178 160);
         --cinnabar: rgb(168 63 57);
-        --qinghua: rgb(79 118 153);
+        --qing: rgb(44 90 125);
         --gold-ink: rgb(156 122 60);
         --jade: rgb(110 139 116);
       }
@@ -166,7 +167,7 @@
       }
 
       a {
-        color: var(--qinghua);
+        color: var(--qing);
         text-decoration-thickness: 1px;
         text-underline-offset: 3px;
         overflow-wrap: anywhere;
@@ -220,7 +221,7 @@
         margin: 0 0 0.85rem;
         padding: 0.85rem 1.1rem;
         background: var(--paper-deep);
-        border-left: 3px solid var(--qinghua);
+        border-left: 3px solid var(--qing);
         border-radius: 3px;
         font-size: 0.92rem;
       }

@@ -40,7 +40,7 @@
               <span class="font-kai text-[16px] tracking-widest text-ink">{{ currentDao.name }}</span>
             </p>
             <p class="mt-2 text-[11px] leading-relaxed text-ink-faint">{{ currentDao.desc }}</p>
-            <p v-for="(r, i) in currentDao.ruleText" :key="i" class="mt-0.5 text-[11px] text-azure">· {{ r }}</p>
+            <p v-for="(r, i) in currentDao.ruleText" :key="i" class="mt-0.5 text-[11px] text-qing">· {{ r }}</p>
             <p v-for="(r, i) in currentDao.deepText" :key="`d${i}`" class="mt-0.5 text-[11px] text-gold-ink">◈ {{ r }}</p>
             <p v-if="swordInfo" class="mt-1.5 text-[11px] text-violet-ink tabular">
               当前剑意 {{ swordInfo.layers }}/4 层({{
@@ -61,7 +61,7 @@
                 <span class="font-kai text-[14px] tracking-widest text-ink">{{ dao.name }}</span>
               </p>
               <p class="mt-1.5 text-[10px] leading-relaxed text-ink-faint">{{ dao.desc }}</p>
-              <p v-for="(r, i) in dao.ruleText" :key="i" class="mt-0.5 text-[10px] text-azure">· {{ r }}</p>
+              <p v-for="(r, i) in dao.ruleText" :key="i" class="mt-0.5 text-[10px] text-qing">· {{ r }}</p>
               <p v-for="(r, i) in dao.deepText" :key="`d${i}`" class="mt-0.5 text-[10px] text-gold-ink">◈ {{ r }}</p>
             </button>
           </div>
@@ -397,7 +397,7 @@
             <p class="text-[10px] tabular text-ink-ghost">
               规则纪元 {{ RULESET_VERSION }} · 天道共改过 {{ RULESET_CHANGELOG.length }} 次
             </p>
-            <button class="font-kai text-[10px] text-azure active:scale-95" @click="openEra(null)">纪元变迁史 →</button>
+            <button class="font-kai text-[10px] text-qing active:scale-95" @click="openEra(null)">纪元变迁史 →</button>
           </div>
           <!-- 今昔之比:与过去的自己对话 -->
           <div v-if="legacy.length" class="card-ink mt-2 px-4 py-3">
@@ -409,7 +409,7 @@
                 第{{ lc.lateLife }}世({{ lc.lateBuild }})
                 <span class="text-jade">{{ lc.lateText }}</span>
               </p>
-              <p v-if="lc.diffLines.length" class="text-[10px] text-azure tabular">{{ lc.diffLines.join(' · ') }}</p>
+              <p v-if="lc.diffLines.length" class="text-[10px] text-qing tabular">{{ lc.diffLines.join(' · ') }}</p>
             </div>
           </div>
           <div v-if="endgame.marks.length" class="card-ink mt-2 max-h-64 divide-y divide-ink/6 overflow-y-auto px-4">
@@ -663,7 +663,7 @@
       <template v-if="pendingDao">
         <p class="font-kai text-[14px] tracking-wider text-ink">{{ pendingDao.name }}</p>
         <p class="mt-1.5 text-[12px] leading-relaxed text-ink-soft">{{ pendingDao.desc }}</p>
-        <p v-for="(r, i) in pendingDao.ruleText" :key="i" class="mt-0.5 text-[11px] text-azure">· {{ r }}</p>
+        <p v-for="(r, i) in pendingDao.ruleText" :key="i" class="mt-0.5 text-[11px] text-qing">· {{ r }}</p>
         <p class="mt-3 border-l-2 border-cinnabar/60 pl-2 text-[11px] text-cinnabar">道途既定,此世不再更改;误选须待兵解转世方能重择</p>
       </template>
       <template #footer>
@@ -741,7 +741,7 @@
         <p class="font-kai text-ink">凡间所得,终有尽时。</p>
         <p class="text-ink-soft">
           玄铁、残页、灵石……到了此境,皆可献入
-          <a class="-my-2 inline-block py-2 text-azure" @click="tutorialOpen = false">天道熔炉</a>
+          <a class="-my-2 inline-block py-2 text-qing" @click="tutorialOpen = false">天道熔炉</a>
           ,熔作道源。
         </p>
         <p class="text-ink-soft">

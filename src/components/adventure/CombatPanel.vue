@@ -123,7 +123,7 @@
       <!-- 我方 -->
       <div class="relative mt-3" :class="[shakeCls.p, defeated === 'p' ? 'foe-defeated' : '']">
         <div class="flex items-center gap-2">
-          <span class="grid h-10 w-10 place-items-center rounded-full border border-azure/50 bg-azure/5 text-azure">
+          <span class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing">
             <GameIcon name="user" :size="18" />
           </span>
           <div class="grow">
@@ -157,7 +157,7 @@
         </button>
         <button
           v-if="analysis"
-          class="-my-2 inline-flex min-h-[28px] items-center px-1 text-azure active:opacity-60"
+          class="-my-2 inline-flex min-h-[28px] items-center px-1 text-qing active:opacity-60"
           @click="showAnalysis = !showAnalysis"
         >
           {{ showAnalysis ? '收起分析' : '战斗分析 »' }}
@@ -176,7 +176,7 @@
           <span v-if="lore.boosted" class="text-[10px] text-gold-ink">宿慧照见</span>
         </p>
         <p v-if="lore.elementName || lore.frame.length" class="mt-1 text-[11px] text-ink-soft">
-          <span v-if="lore.elementName" class="mr-1.5 text-azure">{{ lore.elementName }}属</span>
+          <span v-if="lore.elementName" class="mr-1.5 text-qing">{{ lore.elementName }}属</span>
           {{ lore.frame.join(' · ') }}
         </p>
         <p v-for="s in lore.skills" :key="s.name" class="mt-1 text-[11px] leading-relaxed text-ink-soft">
@@ -361,7 +361,7 @@
 
   const KIND_COLOR: Record<CombatLogEntry['t'], string> = {
     atk: 'text-ink-soft',
-    skill: 'text-azure',
+    skill: 'text-qing',
     crit: 'text-cinnabar',
     shield: 'text-gold-ink',
     heal: 'text-jade',

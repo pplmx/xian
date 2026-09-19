@@ -30,7 +30,7 @@
         </div>
         <p v-if="buildSourceNames.length" class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-ink-faint">
           <span>成路于:</span>
-          <span v-for="name in buildSourceNames" :key="name" class="text-azure">{{ name }}</span>
+          <span v-for="name in buildSourceNames" :key="name" class="text-qing">{{ name }}</span>
         </p>
         <!-- 五维评级(Phase 30.2):读懂构筑"形状",不看战力总数 -->
         <div class="mt-2.5 rounded-md bg-paper-deep/60 px-3 py-2">
@@ -53,7 +53,7 @@
                 </span>
                 <span v-for="t in l.terms" :key="t.label" class="mt-0.5 flex justify-between text-[10px]">
                   <span class="text-ink-faint">{{ t.label }}</span>
-                  <span class="tabular text-azure">+{{ t.contribution.toFixed(2) }}</span>
+                  <span class="tabular text-qing">+{{ t.contribution.toFixed(2) }}</span>
                 </span>
                 <span v-if="!l.terms.length" class="block text-[10px] text-ink-ghost">这一维还没有词条撑着。</span>
                 <span class="mt-1 block text-[9px] leading-relaxed text-ink-ghost">
@@ -171,7 +171,7 @@
               </span>
             </p>
           </div>
-          <p v-if="compareResult.diffLines.length" class="mt-1 text-[10px] text-azure tabular">
+          <p v-if="compareResult.diffLines.length" class="mt-1 text-[10px] text-qing tabular">
             彼相对于今:{{ compareResult.diffLines.join(' · ') }}
           </p>
           <p class="mt-0.5 text-[10px] text-ink-faint">两套方案各有其境,取舍在你。</p>

@@ -82,7 +82,7 @@
 
   const KIND_COLOR: Record<CombatLogEntry['t'], string> = {
     atk: 'text-ink-soft',
-    skill: 'text-azure',
+    skill: 'text-qing',
     crit: 'text-cinnabar',
     shield: 'text-gold-ink',
     heal: 'text-jade',

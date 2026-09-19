@@ -20,7 +20,7 @@
         <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">{{ tierDef.brief }}</p>
       </div>
       <!-- Phase 31.3 遗产回声:曾弃之缘,世界记得(叙事,无数值) -->
-      <p v-if="echo" class="mb-2 rounded-md border border-azure/30 bg-azure/5 px-3 py-2 text-[12px] leading-relaxed text-azure">
+      <p v-if="echo" class="mb-2 rounded-md border border-qing/30 bg-qing/5 px-3 py-2 text-[12px] leading-relaxed text-qing">
         {{ echo.line }}
       </p>
       <!-- 世界记忆:余波文本(曾经完成过的事件,再次遭遇时概率出现) -->

@@ -49,7 +49,7 @@
         <span class="text-[12px] text-ink-soft">
           我已阅读并同意
           <!-- 行内按钮的命中区只有 17px;补成内联块给拇指一个 30px 的靶面 -->
-          <button class="inline-block py-1.5 text-azure" @click.prevent="privacyOpen = true">《隐私政策》</button>
+          <button class="inline-block py-1.5 text-qing" @click.prevent="privacyOpen = true">《隐私政策》</button>
         </span>
       </label>
       <template #footer>

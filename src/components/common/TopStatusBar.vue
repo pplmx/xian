@@ -34,7 +34,7 @@
         {{ formatGN(resources.spiritStone) }}
       </span>
       <span class="flex items-center gap-1 whitespace-nowrap" title="灵气">
-        <GameIcon name="wind" :size="13" class="text-azure" />
+        <GameIcon name="wind" :size="13" class="text-qing" />
         {{ formatNum(Math.floor(resources.qi)) }}
       </span>
       <!-- 只有图标的入口必须自带名字:否则读屏只会念「链接」,自动化也点不着它 -->

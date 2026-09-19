@@ -87,7 +87,7 @@
               {{ row.label }}
               <span v-if="row.capped" class="ml-0.5 text-[9px] text-cinnabar/80">软</span>
             </span>
-            <span class="tabular" :class="row.value > 0 ? 'text-azure' : 'text-cinnabar'">
+            <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
               {{ row.value > 0 ? '+' : '' }}{{ formatPercent(row.value) }}
             </span>
           </button>
@@ -107,7 +107,7 @@
               {{ c.name }}
               <span v-if="c.onTop" class="ml-1 text-[9px] text-cinnabar/80">另乘</span>
             </span>
-            <span class="tabular" :class="c.value > 0 ? 'text-azure' : 'text-cinnabar'">
+            <span class="tabular" :class="c.value > 0 ? 'text-qing' : 'text-cinnabar'">
               {{ c.value > 0 ? '+' : '' }}{{ formatPercent(c.value) }}
             </span>
           </p>
@@ -162,7 +162,7 @@
           {{ mentorVer ? `${mentorVer.mentor?.name ?? ''}·${mentorVer.mentor?.title ?? ''} | ${mentorVer.line}` : '尚未拜师,可寻一位师尊' }}
         </span>
       </span>
-      <span class="shrink-0 text-[11px] text-azure">{{ mentorVer ? '求教 →' : '拜师 →' }}</span>
+      <span class="shrink-0 text-[11px] text-qing">{{ mentorVer ? '求教 →' : '拜师 →' }}</span>
     </button>
 
     <!-- 道侣(Phase 33.8):这一世遇见的人。只记关系与经历,不给任何属性 -->
@@ -179,7 +179,7 @@
           }}
         </span>
       </span>
-      <span class="shrink-0 text-[11px] text-azure">{{ bondDef ? '相知 →' : '履历 →' }}</span>
+      <span class="shrink-0 text-[11px] text-qing">{{ bondDef ? '相知 →' : '履历 →' }}</span>
     </button>
 
     <RouterLink to="/collection" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
@@ -342,7 +342,7 @@
         <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ bondDef.brief }}</p>
         <p class="mt-2 text-[11px] text-ink-soft">
           {{ TEMPER_NAMES[bondDef.temper] }} · {{ LEAN_NAMES[bondDef.lean] }}道
-          <span class="ml-1 text-azure">{{ STAGE_NAMES[bond.stage] }}</span>
+          <span class="ml-1 text-qing">{{ STAGE_NAMES[bond.stage] }}</span>
           <span v-if="bond.fallen" class="ml-1 text-cinnabar">已殁</span>
         </p>
 
@@ -351,7 +351,7 @@
           <p v-for="m in bondMeters" :key="m.label" class="flex items-center gap-2 text-[11px]">
             <span class="w-10 shrink-0 text-ink-faint">{{ m.label }}</span>
             <span class="h-1 grow rounded-full bg-ink/10">
-              <span class="block h-1 rounded-full bg-azure/70" :style="{ width: `${m.v}%` }" />
+              <span class="block h-1 rounded-full bg-qing/70" :style="{ width: `${m.v}%` }" />
             </span>
             <span class="w-8 shrink-0 text-right tabular text-ink-soft">{{ m.v }}</span>
           </p>
@@ -392,7 +392,7 @@
             <p class="font-kai text-[13px] tracking-widest text-ink">{{ pendingEvent.title }}</p>
             <p class="text-[10px] text-ink-ghost">因何而来:{{ pendingEventTriggers }}</p>
             <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">{{ pendingEvent.text }}</p>
-            <p class="mt-1.5 text-[11px] text-azure">{{ pendingEvent.herWish }}</p>
+            <p class="mt-1.5 text-[11px] text-qing">{{ pendingEvent.herWish }}</p>
             <p class="text-[10px] text-ink-faint">{{ pendingEvent.herLimit }}</p>
             <p v-if="herLine" class="mt-1.5 text-[11px] text-gold-ink">{{ herLine }}</p>
             <div class="mt-2.5 space-y-1.5">
@@ -457,7 +457,7 @@
         >
           <p class="flex items-baseline gap-2">
             <span class="font-kai text-[14px] text-ink">{{ m!.name }}</span>
-            <span class="text-[11px] text-azure">{{ m!.title }}</span>
+            <span class="text-[11px] text-qing">{{ m!.title }}</span>
             <span v-if="hintMentor === m!.id" class="chip-ink ml-1 border-cinnabar/50 text-[9px] text-cinnabar">机缘引荐</span>
             <span class="ml-auto text-[10px] text-ink-faint">{{ m!.master }}</span>
           </p>

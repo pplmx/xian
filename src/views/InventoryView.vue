@@ -17,7 +17,7 @@
       <div class="mt-3 flex items-center justify-between px-1">
         <span class="text-[11px] text-ink-faint tabular">藏品 {{ inventory.bagItems.length }} · 器灵尘 {{ resources.dust }}</span>
         <span class="flex gap-3">
-          <button class="-my-1.5 py-1.5 text-[11px] text-azure/90 active:opacity-60" @click="smartOpen = true">
+          <button class="-my-1.5 py-1.5 text-[11px] text-qing/90 active:opacity-60" @click="smartOpen = true">
             收纳{{ settings.smartKeep.enabled ? '·启' : '' }}
           </button>
           <button class="-my-1.5 py-1.5 text-[11px] text-cinnabar/80 active:opacity-60" @click="decomposeOpen = true">分解</button>
@@ -141,7 +141,7 @@
             <span class="ml-auto tabular text-[11px] text-gold-ink">{{ artifactLevelLabel(row.owned.level) }}</span>
           </div>
           <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">{{ row.def.desc }}</p>
-          <p class="mt-1 text-[11px] text-azure">{{ passiveLines(row.def.id, row.owned.level).join(' · ') }}</p>
+          <p class="mt-1 text-[11px] text-qing">{{ passiveLines(row.def.id, row.owned.level).join(' · ') }}</p>
           <!--
             神通说明按品阶与祭炼等级现算:效果随「品阶 × (1+0.08×重数)」走,
             文案不能停在基线那一句
@@ -202,7 +202,7 @@
         </div>
         <p class="mt-3 text-[12px] leading-relaxed text-ink-soft">{{ currentPill.def.desc }}</p>
         <!-- 效果与来路:丹药卡片此前只有风味与数量,服下去会怎样一个字都没说 -->
-        <p class="mt-2 whitespace-pre-line text-[12px] leading-relaxed text-azure">{{ pillFuncText(currentPill.def) }}</p>
+        <p class="mt-2 whitespace-pre-line text-[12px] leading-relaxed text-qing">{{ pillFuncText(currentPill.def) }}</p>
         <p v-if="pillMasteryText(currentPill.def.id)" class="mt-1 text-[11px] text-ink-faint">
           {{ pillMasteryText(currentPill.def.id) }}
         </p>
@@ -258,7 +258,7 @@
               </p>
               <p class="text-[11px] text-ink-faint tabular">灵草×{{ r.cost.herb }} · 灵石 {{ formatGN(r.cost.stone) }}</p>
               <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
-              <p class="text-[10px] leading-relaxed text-azure/80">{{ pillFuncText(r.def) }}</p>
+              <p class="text-[10px] leading-relaxed text-qing/80">{{ pillFuncText(r.def) }}</p>
             </div>
             <div class="shrink-0 text-right">
               <p class="tabular text-[13px]" :class="rateClass(r.able.successRate)">{{ formatPercent(r.able.successRate) }}</p>

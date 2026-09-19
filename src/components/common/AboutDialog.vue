@@ -13,7 +13,7 @@
           href="https://github.com/pplmx/xian"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-block py-1.5 text-azure underline break-all"
+          class="inline-block py-1.5 text-qing underline break-all"
         >
           github.com/pplmx/xian
         </a>

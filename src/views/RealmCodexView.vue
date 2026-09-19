@@ -88,7 +88,7 @@
         </div>
         <p class="mt-1.5 text-[11px] leading-relaxed text-ink-soft">{{ currentReading.hexagram.gist }}</p>
         <p v-for="(line, i) in counsel" :key="`c${i}`" class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ line }}</p>
-        <p class="mt-1.5 text-[11px] text-azure">在身之力:{{ powerText }}</p>
+        <p class="mt-1.5 text-[11px] text-qing">在身之力:{{ powerText }}</p>
       </div>
 
       <div class="mt-2.5 flex items-center gap-2">
@@ -120,7 +120,7 @@
     <section class="card-ink px-4 py-3">
       <button class="flex w-full items-center justify-between text-left" @click="showAllHex = !showAllHex">
         <span class="font-kai text-[13px] tracking-wider text-ink">{{ cnNumber(HEXAGRAMS.length) }}卦</span>
-        <span class="text-[10px] text-azure">{{ showAllHex ? '收起' : `展开查看 ${HEXAGRAMS.length} 卦 →` }}</span>
+        <span class="text-[10px] text-qing">{{ showAllHex ? '收起' : `展开查看 ${HEXAGRAMS.length} 卦 →` }}</span>
       </button>
       <div v-if="showAllHex" class="mt-2 max-h-72 divide-y divide-ink/6 overflow-y-auto">
         <div v-for="x in HEXAGRAMS" :key="x.order" class="flex items-baseline gap-2 py-2">
@@ -146,7 +146,7 @@
         卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
       </p>
       <p class="mt-2 font-kai text-[13px] leading-relaxed text-ink">{{ fateLordLineText }}</p>
-      <p class="mt-1 text-[11px] text-azure">命格之力:{{ fateModsText }}</p>
+      <p class="mt-1 text-[11px] text-qing">命格之力:{{ fateModsText }}</p>
       <div class="mt-2.5 divide-y divide-ink/6">
         <div v-for="row in fateRows" :key="row.palace.id" class="flex items-baseline gap-2 py-1.5">
           <span class="w-14 shrink-0 font-kai text-[12px] text-ink-soft">{{ row.palace.name }}</span>
@@ -174,10 +174,10 @@
         管用的是下面这条**游戏约定**:{{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{ imageWorldMap }}),
         值日之宿所属之象,所配界域今日际遇更易(乘在际遇概率上 +{{ Math.round(MANSION_EVENT_LUCK * 100) }}%),他处不加。
       </p>
-      <p class="mt-1.5 text-[11px] text-azure">
+      <p class="mt-1.5 text-[11px] text-qing">
         今日利 <span class="text-gold-ink">{{ favoredWorldName }}</span> —— 与天时不同:天时是全境之气,星象只利一方。
       </p>
-      <button class="mt-2 w-full text-left text-[10px] text-azure" @click="showAllMansions = !showAllMansions">
+      <button class="mt-2 w-full text-left text-[10px] text-qing" @click="showAllMansions = !showAllMansions">
         {{ showAllMansions ? `收起${cnNumber(MANSIONS.length)}宿` : `展开查看 ${MANSIONS.length} 宿 →` }}
       </button>
       <div v-if="showAllMansions" class="mt-2 divide-y divide-ink/6">

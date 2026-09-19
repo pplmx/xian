@@ -8,7 +8,7 @@
       · 设置页(permanent)—— 不显示关闭按钮,常驻可查:回头想装时找得到那两步。
         与坏档提示同一套做法:一次性的提醒之外,得有个地方能把话再读一遍。
   -->
-  <div v-if="visible" class="card-ink border-azure/30 px-4 py-3">
+  <div v-if="visible" class="card-ink border-qing/30 px-4 py-3">
     <p class="font-kai text-[13px] tracking-wider text-ink">把游戏「添加到主屏幕」</p>
     <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
       iOS 在网页七天没被打开之后会清掉它的本地数据 —— 存档就存在那里,连离线缓存一起。

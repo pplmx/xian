@@ -18,7 +18,7 @@
         <div class="space-y-1.5">
           <p v-for="row in modRows" :key="row.label" class="flex justify-between text-[13px]">
             <span class="text-ink-soft">{{ row.label }}</span>
-            <span class="tabular text-azure">{{ row.value }}</span>
+            <span class="tabular text-qing">{{ row.value }}</span>
           </p>
           <p v-if="def.skill" class="flex justify-between text-[13px]">
             <span class="text-ink-soft">附带神通「{{ def.skill.name }}」</span>
@@ -30,7 +30,7 @@
         </div>
         <!-- 每进一层的增量:进修要花悟道点与残页,值不值当得看得见 -->
         <p class="mt-2 text-[11px] text-ink-faint">
-          每进一层:<span class="tabular text-azure">{{ modsText(def.perLevelMods) }}</span>
+          每进一层:<span class="tabular text-qing">{{ modsText(def.perLevelMods) }}</span>
         </p>
         <p v-if="upCost" class="mt-3 text-right text-[11px] text-ink-faint tabular">
           进修需 悟道点×{{ upCost.wudao }} · 残页×{{ upCost.page }}
@@ -47,7 +47,7 @@
               <span class="font-kai text-[13px] text-gold-ink">{{ branchPicked.name }}</span>
               <span class="ml-2 text-[11px] text-ink-faint">{{ branchPicked.desc }}</span>
             </p>
-            <p class="tabular mt-0.5 text-[11px] text-azure">{{ modsText(branchPicked.mods) }}</p>
+            <p class="tabular mt-0.5 text-[11px] text-qing">{{ modsText(branchPicked.mods) }}</p>
           </div>
           <div v-else class="space-y-1.5">
             <button
@@ -59,9 +59,9 @@
               <span class="min-w-0">
                 <span class="font-kai text-[13px] text-ink">{{ b.name }}</span>
                 <span class="ml-2 text-[11px] text-ink-faint">{{ b.desc }}</span>
-                <span class="tabular mt-0.5 block text-[11px] text-azure">{{ modsText(b.mods) }}</span>
+                <span class="tabular mt-0.5 block text-[11px] text-qing">{{ modsText(b.mods) }}</span>
               </span>
-              <span class="shrink-0 text-[10px] text-azure">择此道 →</span>
+              <span class="shrink-0 text-[10px] text-qing">择此道 →</span>
             </button>
             <!-- 永久抉择二步确认:选了就改不了,按一下不该就此了结 -->
             <div v-if="branchConfirm" class="rounded-md bg-cinnabar/5 px-3 py-2">
@@ -88,7 +88,7 @@
         <div class="mt-1 space-y-1">
           <p v-for="row in previewRows" :key="row.label" class="flex justify-between text-[13px]">
             <span class="text-ink-faint">{{ row.label }}</span>
-            <span class="tabular text-azure/80">{{ row.value }}</span>
+            <span class="tabular text-qing/80">{{ row.value }}</span>
           </p>
           <p v-if="def.skill" class="flex justify-between text-[13px]">
             <span class="text-ink-faint">附带神通「{{ def.skill.name }}」</span>

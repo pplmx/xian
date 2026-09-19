@@ -49,7 +49,7 @@
             href="https://github.com/pplmx/xian/issues"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-block py-1.5 text-azure"
+            class="inline-block py-1.5 text-qing"
           >
             GitHub Issues
           </a>

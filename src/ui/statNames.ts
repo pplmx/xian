@@ -10,7 +10,7 @@ import type { AffixRarity, AnyStatKey, StatMods } from '@/types'
  */
 export const AFFIX_RARITY_META: Record<AffixRarity, { name: string; color: string }> = {
   common: { name: '常见', color: 'var(--color-ink-faint)' },
-  rare: { name: '稀有', color: 'var(--color-azure)' },
+  rare: { name: '稀有', color: 'var(--color-qing)' },
   epic: { name: '珍稀', color: 'var(--color-violet-ink)' },
   legendary: { name: '传世', color: 'var(--color-gold-ink)' }
 }
