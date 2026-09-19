@@ -1,0 +1,15 @@
+{
+  // Cloudflare Workers Builds 用这份配置部署线上站点(yunyin.wenzi.games)。
+  //
+  // 为什么必须有它:根 package.json 里有 `workspaces`(库在 packages/engine,见 docs/engine.md
+  // 的「怎么引用」),wrangler 的"应用自动探测"因此把仓库根当成**工作区根**、拒绝部署
+  // ("has been run in the root of a workspace instead of targeting a specific project")。
+  // 显式写明 name 与静态资源目录,就与"是不是工作区"无关了 —— 谁都不必为对方的探测规则让路。
+  "name": "xian",
+  "compatibility_date": "2026-09-19",
+  "assets": {
+    "directory": "./dist",
+    // 单页应用:找不到的文件回 index.html(路由由前端接管)
+    "not_found_handling": "single-page-application"
+  }
+}
