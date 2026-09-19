@@ -14,8 +14,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { ICONS } from './icons'
-import { INK_ICONS } from './inkIcons'
+import { iconOf, INK_ICONS } from './inkIcons'
 
 const ROOT = resolve(__dirname, '../..')
 /** 常驻界面:底部导航 + 顶栏。它们的图标最该先换,也最不该退回旧图形 */
@@ -41,7 +40,16 @@ function iconNamesIn(file: string): string[] {
   ]
 }
 
-/** 界面上真会用到的图标名 —— 数据里的 icon 字段 + 模板里写死的(含三元里的字面量) */
+/**
+ * 界面上真会用到的图标名。
+ *
+ * 找法故意糙一点:看这个字面量在 src 里有没有出现过(`'bell'`)。图标名不止从
+ * `icon: 'x'` 与模板 `:name` 两处来 —— 还有楼层数据那种按位置传参的写法
+ * (`f(4, 4, 'bell', …)`)、部位表(`body: 'shirt'`)、地形表(`r(…, 'castle', …)`),
+ * 逐种语法去认迟早漏一种。代价是可能把同名但不当图标用的字符串算进来(如风险等级
+ * `'watch'`),那是**偏保守**的一侧:判据拦的是"画了没人用",不是"用了没登记" ——
+ * 后者由下一条「写死的名字必须登记过」盯着。
+ */
 function usedIconNames(): Set<string> {
   const names = new Set<string>()
   const walk = (dir: string): void => {
@@ -50,10 +58,9 @@ function usedIconNames(): Set<string> {
       if (entry.isDirectory()) walk(path)
       else if (/\.(ts|vue)$/.test(entry.name) && !entry.name.endsWith('.spec.ts')) {
         const text = readFileSync(path, 'utf-8')
-        for (const m of text.matchAll(/icon: '([a-z-]+)'/g)) names.add(m[1]!)
-        for (const m of text.matchAll(/<GameIcon[^>]*?\bname="'?([a-z-]+)'?"/g)) names.add(m[1]!)
-        for (const m of text.matchAll(/<GameIcon[^>]*?:name="([^"]+)"/g)) {
-          for (const lit of m[1]!.matchAll(/'([a-z-]+)'/g)) names.add(lit[1]!)
+        for (const name of Object.keys(INK_ICONS)) {
+          // 单引号那套是数据与表达式里的写法,双引号那套是模板属性 `<GameIcon name="trash">`
+          if (text.includes(`'${name}'`) || text.includes(`"${name}"`)) names.add(name)
         }
       }
     }
@@ -68,7 +75,7 @@ describe('图标 · 常驻的那几处', () => {
     expect(names.length).toBe(8)
     for (const name of names) {
       expect(Object.keys(INK_ICONS), `${name} 还不是水墨版`).toContain(name)
-      expect(ICONS[name], `${name} 在注册表里被别的来源盖掉了(铺水墨那一步要放最后)`).toBe(INK_ICONS[name])
+      expect(iconOf(name), `${name} 在注册表里被别的来源盖掉了`).toBe(INK_ICONS[name])
     }
   })
 
@@ -105,10 +112,10 @@ describe('图标 · 名字都登记过', () => {
         if (entry.isDirectory()) walk(path)
         else if (/\.(ts|vue)$/.test(entry.name) && !entry.name.endsWith('.spec.ts')) {
           const text = readFileSync(path, 'utf-8')
-          for (const m of text.matchAll(/icon: '([a-z-]+)'/g)) if (!ICONS[m[1]!]) missing.add(m[1]!)
+          for (const m of text.matchAll(/icon: '([a-z-]+)'/g)) if (!INK_ICONS[m[1]!]) missing.add(m[1]!)
           // 模板里 :name="… ? 'x' : …" 这种(如镇压中的地界签)
           for (const m of text.matchAll(/<GameIcon[^>]*:name="([^"]+)"/g)) {
-            for (const lit of m[1]!.matchAll(/'([a-z-]+)'/g)) if (!ICONS[lit[1]!]) missing.add(lit[1]!)
+            for (const lit of m[1]!.matchAll(/'([a-z-]+)'/g)) if (!INK_ICONS[lit[1]!]) missing.add(lit[1]!)
           }
         }
       }

@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
-  import { iconOf } from '@/ui/icons'
+  import { iconOf } from '@/ui/inkIcons'
 
   const props = withDefaults(defineProps<{ name: string; size?: number }>(), { size: 16 })
 

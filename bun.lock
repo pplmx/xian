@@ -12,7 +12,6 @@
         "@types/crypto-js": "^4.2.2",
         "crypto-js": "^4.1.1",
         "file-saver": "^2.0.5",
-        "lucide-vue-next": "^0.577.0",
         "pinia": "^3.0.1",
         "pinia-plugin-persistedstate": "^4.2.0",
         "tone": "^15.1.22",
@@ -983,8 +982,6 @@
     "lowercase-keys": ["lowercase-keys@2.0.0", "https://registry.npmmirror.com/lowercase-keys/-/lowercase-keys-2.0.0.tgz", {}, "sha512-tqNXrS78oMOE73NMxK4EMLQsQowWf8jKooH9g7xPavRT706R6bkQJ6DY2Te7QukaZsulxa30wQ7bk0pm4XiHmA=="],
 
     "lru-cache": ["lru-cache@5.1.1", "https://registry.npmmirror.com/lru-cache/-/lru-cache-5.1.1.tgz", { "dependencies": { "yallist": "3.1.1" } }, "sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w=="],
-
-    "lucide-vue-next": ["lucide-vue-next@0.577.0", "https://registry.npmmirror.com/lucide-vue-next/-/lucide-vue-next-0.577.0.tgz", { "peerDependencies": { "vue": "3.5.42" } }, "sha512-py05bAfv9SHVJqscbiOnjcnLlEmOffA58a+7XhZuFxrs6txe1E8VoR1ngWGTYO+9aVKABAz8l3ee3PqiQN9QPA=="],
 
     "magic-string": ["magic-string@1.2.3", "https://registry.npmmirror.com/magic-string/-/magic-string-1.2.3.tgz", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-Bpb0W2TbLKOZ7vJnOUnVRGq3WL2p+ISV29M6hYPL1AFCpyKZpdr5ytiXoTSSxRVhg8YW7f65+6gbG8WG6PCa/g=="],
 
