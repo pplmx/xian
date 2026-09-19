@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 366,
+  "round": 367,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:55:33+00:00",
+  "updated_at": "2026-09-19T00:56:34+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20316,6 +20316,55 @@
       "summary": "对外分发只用 release 附件(tgz),不把 git tag 安装当推荐路径;仓库继续不提交 dist。附件由发版流程第 6 步 npm pack + gh release upload 生成,版本号在 URL 里由「版本引用自检」盯着。",
       "rationale": "git tag 安装依赖 prepare 现场编译,而构建工具不是运行时依赖:bun 默认拦脚本、放行后又没有 devDependencies;npm 行为不同(会先装 devDependencies)。把\"装得上\"建立在\"宿主环境恰好肯跑构建脚本\"上太脆。附件这条路:包里已经是产物、不跑任何脚本、两个包管理器行为一致,而且这份 tgz 早就是\"发布包自检\"反复验过的那一份 —— 同一个产物,验证过的东西就是发出去的东西。仓库不提交 dist 这条不变(它只该在打包/发布时生成)。",
       "alternatives_rejected": "①把 dist 提交进仓库(git 安装就不需要构建了 —— 但仓库里多一份产物、每次改动都要跟一遍,而且 diff 噪音大);②在 README 里教用户 bun pm trust / trustedDependencies(实测放行后仍然缺 tsc,而且把\"装个库先改自己的包清单\"当常规体验);③只推荐 npm(把 bun 用户排除在外,而本作自己就用 bun);④干脆把 typescript 挪进 dependencies 让 prepare 能跑(为构建工具背运行时依赖,违背\"零运行时依赖\")。"
+    },
+    "TASK-348": {
+      "id": "TASK-348",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:56:34+00:00",
+      "updated_at": "2026-09-19T00:56:34+00:00",
+      "touched_round": 366,
+      "category": "chore",
+      "severity": 0.3,
+      "confidence": 0.98,
+      "effort": 1,
+      "summary": "把误提交的 npm pack 产物(tgz)从仓库里去掉,并把 *.tgz 加进库与宿主的忽略名单;记下\"打包命令在仓库里跑,一个 git add -A 就带进去\"这个失误模式。"
+    },
+    "CHG-432": {
+      "id": "CHG-432",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:56:34+00:00",
+      "updated_at": "2026-09-19T00:56:34+00:00",
+      "touched_round": 366,
+      "commit": "1766af6",
+      "summary": "git rm --cached 掉 packages/engine/wanxiang-engine-0.1.19.tgz(并删文件);packages/engine/.gitignore 与宿主 .gitignore 各加 *.tgz 并注明它是 release 附件。"
+    },
+    "EV-358": {
+      "id": "EV-358",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:56:34+00:00",
+      "updated_at": "2026-09-19T00:56:34+00:00",
+      "touched_round": 366,
+      "confidence": 0.98,
+      "source": "变更 CHG-432(1766af6)。git ls-files 确认 tgz 已不在索引里;git status 干净;bun run check 全绿(发布包自检在临时目录里 npm pack,不落进仓库)。历史里仍保留该 blob(251 KB),未改写已推送历史。",
+      "summary": "一次自己造成的失误:上一步为了\"一次提交完\",用了 git add -A packages/engine,把刚打出来的发布包一起提交了。修复只做两件事(去产物 + 加忽略),不改写历史。"
+    },
+    "DEC-160": {
+      "id": "DEC-160",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:56:34+00:00",
+      "updated_at": "2026-09-19T00:56:34+00:00",
+      "touched_round": 366,
+      "summary": "发布包产物一律不进仓库:只在临时目录打(自检)或在发版时打(挂成 release 附件);.gitignore 用 *.tgz 兜住误提交。",
+      "rationale": "产物进库有两个坏处:仓库里多一份二进制(每次改都跟一遍),以及\"仓库里的那份\"与\"真正发出去的那份\"可能不是同一个版本 —— 而这条流水线的整套判据都建立在\"验过的东西就是发出去的东西\"上(发布包自检在临时目录 pack → 装一遍 → 编一遍)。误提交的实际路径很顺:打通用的命令必然在仓库里跑(npm pack),顺手一个 git add -A 就带进去了,所以光靠\"注意点\"不够,得让 git 帮我们兜住。",
+      "alternatives_rejected": "①改写历史把 blob 抹掉(需要 force-push 两个仓,而 tag 已经发布 —— 为了 251 KB 冒这个险不值);②允许提交产物(那就得同步维护它,而且会让\"发出去的是哪一份\"变得含糊);③只在库的 .gitignore 里加(宿主那层 git add 是宿主在做,两层都加才兜得住)。"
     }
   },
   "edges": [
@@ -29991,6 +30040,18 @@
       "to": "TASK-347",
       "type": "governs",
       "created_at": "2026-09-19T00:55:33+00:00"
+    },
+    {
+      "from": "CHG-432",
+      "to": "TASK-348",
+      "type": "implements",
+      "created_at": "2026-09-19T00:56:34+00:00"
+    },
+    {
+      "from": "DEC-160",
+      "to": "TASK-348",
+      "type": "governs",
+      "created_at": "2026-09-19T00:56:34+00:00"
     }
   ]
 }
