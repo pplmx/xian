@@ -76,6 +76,10 @@
  *      它把「目标 / 主线 / 每日」三块串成一条线,并递出第一个入口(见 core/firstStep)。
  *   三十八 妖气复聚那一行:旧主归来的旧地界要画出「妖气复聚」、要写清"再历一程即可复靖"、
  *      还要有「出发」(见 core/regionRevival)—— 它是这条世界节律唯一的可见面。
+ *   三十九 主值行不许折行:带 `data-value-row` 的「标签 + 值」行,右边那一块必须一行放得下。
+ *      起因是一次实测反馈:修炼页的灵气行把「积余 X / Y」这类**次要读数**留在主行里,
+ *      窄屏后期档上整块被顶到第二行(卡片没溢出、字也没被挤成竖排,前面所有判据都量不出来)。
+ *      次要读数该去哪儿:点开的详情里;主行只留「看得懂的那一位」。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -133,6 +137,8 @@ const ROUTES = [
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files', '--disable-web-security'] })
 const failures = []
 let checked = 0
+/** 量到过多少个 data-value-row —— 用来防这条判据"空转"(契约被删掉后依然全绿)。 */
+let valueRowsSeen = 0
 
 /**
  * 弹窗**里面**的控件也要过页面上那两条尺子:有可访问名、不小于 28px。
@@ -236,6 +242,8 @@ async function measurePage(page) {
       .map(el => `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]}@${Math.round(el.getBoundingClientRect().right)}`)
     return {
       hash: location.hash,
+      /** 这一页上有几个"主值行"(显式契约 data-value-row)—— 用于防空转 */
+      valueRowCount: document.querySelectorAll('[data-value-row]').length,
       horizontalOverflow: document.documentElement.scrollWidth > vw + 1,
       /**
        * 外壳(#app 的第一层)不能被滚偏,也不该有可滚的横向余量。
@@ -349,6 +357,37 @@ async function measurePage(page) {
           .filter(el => el.getBoundingClientRect().height > 24)
           .slice(0, 3)
           .map(el => `${Math.round(el.getBoundingClientRect().height)}px «${(el.textContent || '').trim().slice(0, 10)}»`)
+      })(),
+      /**
+       * 第三十九道:**主值行不许折行**(显式契约:`data-value-row`)。
+       *
+       * 起因是一次实测反馈:修炼页的灵气行把「积余 X / Y」这类**次要读数**留在主行里,
+       * 窄屏上右边整块被顶到第二行 —— 卡片没溢出、文字也没被挤成竖排,前面所有判据都量不出来,
+       * 可人一眼就看出"排面不齐"。同类的还有修为行的「(积 +X)」。
+       *
+       * 判据用**显式契约**而不是"所有 flex 行":哪些行是"标签 + 一个值"由模板说了算
+       * (与 data-region-card 同一套做法),不然整页散文里的正常换行都会被卷进来。
+       * 量法:取这一行**最后一个有文字的块**,数它占了几条行盒(inline 元素按 getClientRects
+       * 去重 top;块元素按高 ÷ 行高)—— 超过一行就是"次要读数把主行挤折了"。
+       */
+      valueRows: (() => {
+        const out = []
+        for (const row of document.querySelectorAll('[data-value-row]')) {
+          const blocks = [...row.children].filter(el => (el.textContent || '').trim().length > 0)
+          const last = blocks[blocks.length - 1]
+          if (!last) continue
+          const style = getComputedStyle(last)
+          const lineHeight = parseFloat(style.lineHeight) || 16
+          const rects = [...last.getClientRects()]
+          const lines =
+            style.display === 'inline' || style.display === 'inline-block'
+              ? new Set(rects.map(r => Math.round(r.top))).size
+              : Math.max(1, Math.round(last.getBoundingClientRect().height / lineHeight))
+          if (lines > 1) {
+            out.push(`${lines} 行 «${(last.textContent || '').trim().slice(0, 14)}»`)
+          }
+        }
+        return out.slice(0, 3)
       })(),
       /**
        * 地界卡不许把名字挤成竖排,也不许让操作块压到名字那一行。
@@ -631,6 +670,7 @@ function problemsOf(info) {
   if (info.dimDisabled.length) problems.push(`禁用态的字读不出来(对比度不足):${info.dimDisabled.join(' | ')}`)
   if (info.badGroups.length) problems.push(`选择组没选中态:${info.badGroups.join(' | ')}`)
   if (info.headerTall?.length) problems.push(`顶栏折行(数字断行看着像乱码):${info.headerTall.join(' | ')}`)
+  if (info.valueRows?.length) problems.push(`主值行被次要读数挤折行:${info.valueRows.join(' | ')}`)
   if (info.regionCards?.tall.length) problems.push(`地界名被挤成竖排:${info.regionCards.tall.join(' | ')}`)
   if (info.regionCards?.overlap.length) problems.push(`地界卡文字互相压住:${info.regionCards.overlap.join(' | ')}`)
   if (info.verticalTexts?.length) problems.push(`文字被挤成竖排:${info.verticalTexts.join(' | ')}`)
@@ -703,6 +743,7 @@ for (const vp of VIEWPORTS) {
     await page.waitForTimeout(700)
     const info = await measurePage(page)
     checked += 1
+    valueRowsSeen += info.valueRowCount ?? 0
     const problems = problemsOf(info)
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(' / ')}`)
     const rail = await measureTabRail(page)
@@ -3067,12 +3108,18 @@ await browser.close()
   }
 }
 
+// 主值行那条判据是"显式契约"式的:契约被删光(没人再写 data-value-row)时它会静默空转
+if (valueRowsSeen === 0) {
+  failures.push('data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)')
+}
+
 console.log(`\n排版自检:${checked} 个页面 × 视口组合`)
 if (failures.length === 0) {
   console.log('✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态')
   console.log('✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh')
   console.log('✓ 五处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界),且铺满内容区宽度')
   console.log('✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)')
+  console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`)
   console.log('✓ iOS 存档风险提示只在该出现的平台出现,关一次就不再唠叨')
   console.log('✓ 楷体三端统一(内置排栈首,系统楷体留作兜底),且真由内置字体渲染')
   console.log('✓ 提示条点得掉、弹窗焦点与外壳偏移正常、引擎事件弹窗也过同一套尺子')

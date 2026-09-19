@@ -118,9 +118,13 @@
 
     <!-- 法宝 -->
     <template v-else>
-      <p class="mt-3 px-1 text-[11px] text-ink-faint tabular">
-        法宝位 {{ inventory.equippedArtifacts.length }}/{{ artifactSlots }}
-        <template v-if="artifactSlots < ARTIFACT_MAX_SLOTS">· {{ artifactUnlockRealm }}境开启第{{ cnNumber(ARTIFACT_MAX_SLOTS) }}法宝位</template>
+      <!--
+        主值行只留读数;「几境开下一格」是**次要信息**,自己占一行 ——
+        挤在同一行里,窄屏上会被顶成两行(与修炼页那两行同一类)。
+      -->
+      <p class="mt-3 px-1 text-[11px] text-ink-faint tabular">法宝位 {{ inventory.equippedArtifacts.length }}/{{ artifactSlots }}</p>
+      <p v-if="artifactSlots < ARTIFACT_MAX_SLOTS" class="mt-0.5 px-1 text-[10px] text-ink-ghost">
+        {{ artifactUnlockRealm }}境开启第{{ cnNumber(ARTIFACT_MAX_SLOTS) }}法宝位
       </p>
       <!-- 祭炼到底给什么:数值都从上界常数来,不在界面里再写一份 -->
       <p class="mt-1 px-1 text-[10px] text-ink-ghost">

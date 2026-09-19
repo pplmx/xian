@@ -13,7 +13,7 @@
         </p>
       </div>
       <div class="mt-4">
-        <div class="mb-1 flex justify-between text-[11px] text-ink-faint tabular">
+        <div data-value-row class="mb-1 flex justify-between text-[11px] text-ink-faint tabular">
           <button class="-my-1 py-1.5 text-left active:opacity-60" @click="showCultBreakdown = !showCultBreakdown">
             修为 +{{ formatRate(player.cultPerSec) }}
             <span class="ml-0.5 text-[9px] text-ink-faint">{{ showCultBreakdown ? '▾' : '▸' }}来路</span>
@@ -36,10 +36,12 @@
               :note="expDetailNote"
             />
             / {{ formatGN(player.expReq) }}
-            <span v-if="player.expFull" class="text-jade">
-              · 圆满
-              <template v-if="player.expOverflow.m > 0">(积 +{{ formatGN(player.expOverflow) }})</template>
-            </span>
+            <!--
+              积余不进这一行:它是"次要读数",挤在主行上会把这一行顶成两行(窄屏尤其明显)——
+              点开修为那个数就能看到精确的积余与它的去路(突破时随境界带走)。
+              主行只留状态词(圆满),它短、而且解释"为什么这个数不再变"。
+            -->
+            <span v-if="player.expFull" class="text-jade">· 圆满</span>
           </span>
         </div>
         <div :class="player.expFull ? 'bar-charged' : ''">
@@ -64,21 +66,30 @@
       </div>
       </div>
       <div class="mt-3">
-        <div class="mb-1 flex justify-between text-[11px] text-ink-faint tabular">
+        <div data-value-row class="mb-1 flex justify-between text-[11px] text-ink-faint tabular">
           <span>灵气 +{{ formatRate(player.qiRegenPerSec) }}</span>
           <span>
             <TapNumber
-              :value="Math.floor(Math.min(resources.qi, player.qiCapValue))"
+              :value="Math.floor(resources.qi)"
               title="灵气"
               :rows="qiDetailRows"
               :note="qiDetailNote"
-            />
+            >
+              <!--
+                行内照旧只给"看得懂的那一位":到标称容量就封顶(进度条也走这条线),
+                超出的部分用一个小「+」提示"还有积余",精确值点开看 —— 免得主行被顶成两行。
+              -->
+              <span :class="qiOverCap ? 'text-azure' : ''">
+                {{ formatNum(Math.min(Math.floor(resources.qi), player.qiCapValue)) }}<template v-if="qiOverCap">+</template>
+              </span>
+            </TapNumber>
             / {{ formatNum(player.qiCapValue) }}
-            <span v-if="resources.qi > player.qiCapValue" class="text-azure">
-              · 积余 {{ formatNum(Math.floor(resources.qi)) }} / {{ formatNum(player.qiBankCapValue) }}
-            </span>
-            <!-- 灵气积到银行上限就不再涨 —— 不说明的话,玩家只会以为它坏了 -->
-            <span v-if="resources.qi >= player.qiBankCapValue" class="text-azure">· 已积至上限</span>
+            <!--
+              灵气积到银行上限就不再涨 —— 不说明的话,玩家只会以为它坏了。
+              词收短到三字("已积至上限"在 320 宽后期档会把这一行顶折,自检当场量到过);
+              完整的口径(上限值、不会再涨、怎么花)在点开的详情里。
+            -->
+            <span v-if="resources.qi >= player.qiBankCapValue" class="text-azure">· 已封顶</span>
           </span>
         </div>
         <ProgressBar
@@ -176,7 +187,7 @@
           灵根相应:{{ reliefRoots.map(e => ELEMENTS[e].name).join('、') }}——此劫为你留了一线,能走到哪一步仍看自身准备
         </p>
       </div>
-      <p class="mt-1 text-[11px] text-ink-faint tabular">
+      <p data-value-row class="mt-1 text-[11px] text-ink-faint tabular">
         耗灵气 {{ formatNum(btInfo.qiCost) }}
         <template v-if="btInfo.needTribulation">
           ·
@@ -376,7 +387,7 @@
   import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from '@/data/gongfaBranches'
   import { buffDef } from '@/data/buffs'
   import { pillDef } from '@/data/pills'
-  import { COMPREHEND_PAGE_COST } from '@/data/constants'
+  import { COMPREHEND_PAGE_COST, QI_BANK_MULT } from '@/data/constants'
   import { formatCountdown, formatDuration, formatGN, formatNum, formatPercent, formatRate } from '@/utils/format'
   import TapNumber from '@/components/common/TapNumber.vue'
   import { qualityDef } from '@/data/qualities'
@@ -424,6 +435,14 @@
       hint: player.expFull ? '已至圆满,可尝试突破' : `每秒 ${formatRate(player.cultPerSec)}`
     },
     /**
+     * 积余从主行挪进这里(玩家反馈:主行被它顶成两行)。
+     * 它是**跨境界带走的那部分** —— 卡境期间继续攒,突破时只扣本境需求,
+     * 所以这行不只是"多出来的数",还是一句"等待不白等"。
+     */
+    ...(toNum(player.expOverflow) > 0
+      ? [{ label: '积余', value: player.expOverflow, hint: '越过本境需求的部分;突破时随境界带走,不白攒' }]
+      : []),
+    /**
      * 玩家点名要的那一行:绝对值到「京」以后看不出涨落,**"还要多久"才看得见变化** ——
      * 它每天都在动。故把它从脚注提成独立一行(用 text 走时长格式,没有精确值可展开)。
      */
@@ -443,8 +462,20 @@
   })
 
   /** 灵气同理:回满还要多久 —— 突破、疗伤、炼丹都在等这条线 */
+  const qiOverCap = computed(() => resources.qi > player.qiCapValue)
+  /** 标称容量之外还攒了多少 —— 主行只挂一个「+」,精确值在点开的详情里 */
+  const qiBanked = computed(() => Math.max(0, Math.floor(resources.qi) - Math.floor(player.qiCapValue)))
   const qiDetailRows = computed(() => [
-    { label: '上限', value: player.qiCapValue, hint: `可积到 ${formatNum(player.qiBankCapValue)}` },
+    { label: '标称容量', value: player.qiCapValue, hint: '进度条与上限判定走的这条线' },
+    ...(qiBanked.value > 0
+      ? [
+          {
+            label: '积余',
+            value: qiBanked.value,
+            hint: `容量之外还在攒的部分;可积到 ${formatNum(player.qiBankCapValue)}(容量的 ${QI_BANK_MULT} 倍)`
+          }
+        ]
+      : []),
     {
       label: '还差',
       value: Math.max(0, Math.floor(player.qiCapValue - resources.qi)),
