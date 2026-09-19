@@ -86,7 +86,7 @@
  * 仍需真机确认,故本脚本过绿不等于真机过绿。
  */
 import { chromium } from 'playwright'
-import { watchPageErrors } from './lib/pageErrors.mjs'
+import { blockExternal, watchPageErrors } from './lib/pageErrors.mjs'
 import CryptoJS from 'crypto-js'
 import { mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -139,6 +139,8 @@ const failures = []
 let checked = 0
 /** 量到过多少个 data-value-row —— 用来防这条判据"空转"(契约被删掉后依然全绿)。 */
 let valueRowsSeen = 0
+/** 拦掉的外域请求数 —— 打印出来,顺带证明这条拦截是活的 */
+let externalBlocked = 0
 
 /**
  * 弹窗**里面**的控件也要过页面上那两条尺子:有可访问名、不小于 28px。
@@ -551,7 +553,7 @@ async function measurePage(page) {
             if (!parent) continue
             byParent.set(parent, [...(byParent.get(parent) ?? []), el])
           }
-          for (const [parent, els] of byParent) {
+          for (const [, els] of byParent) {
             if (els.length < 2) continue
             const on = els.filter(e => e.getAttribute(attr) === 'true').length
             if (on !== 1) out.push(`${attr} 组(${els.length} 项)里有 ${on} 个选中`)
@@ -687,6 +689,8 @@ function problemsOf(info) {
 
 for (const vp of VIEWPORTS) {
   const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.dpr })
+  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
+  const blockedExternal = await blockExternal(page)
   const pageErrors = []
   watchPageErrors(page, pageErrors)
 
@@ -756,12 +760,16 @@ for (const vp of VIEWPORTS) {
     }
   }
   if (pageErrors.length) failures.push(`[${vp.tag}] 页面异常:${[...new Set(pageErrors)].join(' | ')}`)
+  // 外域请求(统计脚本)一律拦掉:它们的服务器不该决定这道门的颜色(实测超时红过一次)
+  externalBlocked += blockedExternal()
   await page.close()
 }
 
 // ---- 第四件事:存档写不进去时,设置页必须说话 ----
 {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
+  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
+  await blockExternal(page)
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -794,6 +802,8 @@ for (const vp of VIEWPORTS) {
 // ---- 第五件事:弹窗的键盘与焦点 ----
 {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
+  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
+  await blockExternal(page)
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -889,6 +899,8 @@ for (const vp of VIEWPORTS) {
 // ---- 第六件事:Tab 焦点看得见吗 ----
 {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
+  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
+  await blockExternal(page)
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -935,6 +947,8 @@ for (const vp of VIEWPORTS) {
 // ---- 第七件事:浮出来的提示条能不能点掉 ----
 {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
+  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
+  await blockExternal(page)
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -989,6 +1003,8 @@ for (const vp of VIEWPORTS) {
  */
 {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
+  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
+  await blockExternal(page)
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -3113,7 +3129,7 @@ if (valueRowsSeen === 0) {
   failures.push('data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)')
 }
 
-console.log(`\n排版自检:${checked} 个页面 × 视口组合`)
+console.log(`\n排版自检:${checked} 个页面 × 视口组合(外域请求拦掉 ${externalBlocked} 个:统计脚本不参与这道门)`)
 if (failures.length === 0) {
   console.log('✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态')
   console.log('✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh')

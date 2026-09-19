@@ -34,13 +34,36 @@ export function watchPageErrors(page, sink) {
 }
 
 /**
- * 断掉分析脚本的域名解析 —— 给「不该被第三方牵着走」的调用方用。
+ * 拦掉外域请求 —— 三条浏览器自检共用。
  *
- * 说明(实测,别照抄想当然的理由):本地一轮冒烟 5 分 03 秒 → 断掉后 5 分 31 秒,
- * **并不省时间** —— 那五分钟花在 67 次点击与每处的等待上,与网络无关(本地无网,
- * 那段脚本本来就加载不出来)。留着它的理由是**确定性**:CI 有网,统计脚本会真的
- * 加载并跑起来(它在钉死 Math.random 的环境里会自己抛 Invalid UUID,见
- * layout-check 的同源记录),门里不该混进第三方的可用性问题 ——
- * 异常分流是兜底,能不让它进来就别让它进来。
+ * 为什么单立一条:页面里挂着第三方统计(`sdk.51.la`)。它挂在 `watchPageErrors` 那一层
+ * 已经被分流了(它的异常不计入失败),但它**卡住请求**这件事分流不了 ——
+ * `goto(..., { waitUntil: 'load' })` 要等 `defer` 脚本执行完,对方服务器慢一点(或 CI 出口被墙),
+ * 整条门就会以"30 秒超时"红掉。实测红过一次:排版自检跑到最后一段,页面 30 秒没到 load,
+ * 日志里满屏"第三方统计脚本异常" —— 那是别人的服务器在决定我们的门要不要绿。
+ *
+ * 这道门量的是**我们自己的排版与交互**,所以一律拦掉外域请求;真要放行的(比如离线自检的
+ * 本地 http 服务)用 `allow` 传前缀进来。
+ *
+ * 为什么不用"按域名断解析"(`--host-resolver-rules`)那套(冒烟从前用的就是它):
+ * ① 它只挡得住你**已经知道**的那个域名 —— 新接一个第三方,门又变脆;
+ * ② 实测断掉它并**不省时间**(本地一轮冒烟 5 分 03 秒 → 5 分 31 秒,那五分钟花在 67 次点击上),
+ *    留着它的理由从来是**确定性**,而不是快:
+ *    CI 有网,统计脚本会真的加载并跑起来(在钉死 Math.random 的环境里它自己抛 Invalid UUID),
+ *    门里不该混进第三方的可用性问题 —— 异常分流是兜底,能不让它进来就别让它进来。
+ * 现在收成一处:三条浏览器门都用这个,并且把拦下的条数印出来(证明这条拦截是活的)。
+ *
+ * @param pageOrContext playwright 的 Page 或 BrowserContext
+ * @param allow 允许的前缀(如 `['http://127.0.0.1']`)
  */
-export const ANALYTICS_BLOCKED_ARGS = ['--host-resolver-rules=MAP sdk.51.la ~NOTFOUND']
+export async function blockExternal(pageOrContext, allow = []) {
+  let blocked = 0
+  await pageOrContext.route('**/*', route => {
+    const url = route.request().url()
+    const allowed = /^(file|data|blob):/.test(url) || allow.some(prefix => url.startsWith(prefix))
+    if (allowed) return route.continue()
+    blocked += 1
+    return route.abort()
+  })
+  return () => blocked
+}

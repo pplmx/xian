@@ -25,7 +25,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync 
 import { tmpdir } from 'node:os'
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { watchPageErrors } from './lib/pageErrors.mjs'
+import { blockExternal, watchPageErrors } from './lib/pageErrors.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(ROOT, 'dist')
@@ -87,6 +87,8 @@ const base = `http://127.0.0.1:${server.address().port}`
 
 const browser = await chromium.launch()
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
+// 只放行本地静态服务,外域(统计脚本)一律拦掉
+const blockedExternal = await blockExternal(context, [base])
 const page = await context.newPage()
 const pageErrors = []
 watchPageErrors(page, pageErrors)
@@ -169,7 +171,9 @@ server.close()
 console.log('\n离线自检(Service Worker · localhost)')
 for (const p of pass) console.log(`✓ ${p}`)
 if (failures.length === 0) {
-  console.log('✓ 断网可重开、旧缓存会被清、发版能接管 —— 四件事都认结果')
+  console.log(
+    `✓ 断网可重开、旧缓存会被清、发版能接管 —— 四件事都认结果(外域请求拦掉 ${blockedExternal()} 个)`
+  )
 } else {
   for (const f of failures) console.log(`✗ ${f}`)
   process.exitCode = 1

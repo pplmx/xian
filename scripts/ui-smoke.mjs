@@ -30,7 +30,7 @@ import { chromium } from 'playwright'
 import CryptoJS from 'crypto-js'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ANALYTICS_BLOCKED_ARGS, watchPageErrors } from './lib/pageErrors.mjs'
+import { blockExternal, watchPageErrors } from './lib/pageErrors.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const INDEX = `file://${join(ROOT, 'dist/index.html')}`
@@ -70,9 +70,11 @@ const SKIP = /分解|删除|清空|重置|兵解|转世|散尽|导出|导入|隐
  * 而是不让第三方脚本的加载与异常掺进这道门。
  */
 const browser = await chromium.launch({
-  args: ['--allow-file-access-from-files', '--disable-web-security', ...ANALYTICS_BLOCKED_ARGS]
+  args: ['--allow-file-access-from-files', '--disable-web-security']
 })
 const context = await browser.newContext({ viewport: { width: 375, height: 812 } })
+// 外域请求一律拦掉(统计脚本卡住 = 我们的门超时,见 scripts/lib/pageErrors.mjs)
+const blockedExternal = await blockExternal(context)
 if (LATE) {
   const gn = (m, e) => ({ m, e })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
@@ -231,7 +233,7 @@ if (silent.length) {
   for (const s of silent.slice(0, 20)) console.log(`  · ${s}`)
 }
 if (errors.length === 0) {
-  console.log('✓ 无运行时异常')
+  console.log(`✓ 无运行时异常(外域请求拦掉 ${blockedExternal()} 个:统计脚本不参与这道门)`)
 } else {
   for (const e of errors) console.log(`✗ ${e.where}\n   ${e.msg.split('\n')[0]}`)
   process.exitCode = 1
