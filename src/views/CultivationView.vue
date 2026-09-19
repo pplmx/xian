@@ -8,7 +8,7 @@
         <p class="mt-0.5 font-kai text-[14px] tracking-[0.4em] text-cinnabar">{{ player.subName }}</p>
         <p class="mt-1 text-[11px] text-ink-faint">{{ player.realm.desc }}</p>
         <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-ghost">
+        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
           「{{ player.realm.basis }}」{{ player.realm.lore }}
         </p>
       </div>
@@ -60,7 +60,7 @@
             {{ row.value > 0 ? '+' : '' }}{{ formatPercent(row.value) }}
           </span>
         </p>
-        <p class="mt-1 text-[9px] leading-relaxed text-ink-ghost">
+        <p class="mt-1 text-[9px] leading-relaxed text-ink-faint">
           这些都是修行速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
         </p>
       </div>
@@ -135,7 +135,7 @@
               <template v-if="tribPlan.risks.length"> · {{ tribPlan.risks[0] }}</template>
             </p>
           </template>
-          <p v-else class="text-[16px] font-kai leading-tight text-ink-ghost">非大关</p>
+          <p v-else class="text-[16px] font-kai leading-tight text-ink-faint">非大关</p>
         </div>
       </div>
 
@@ -160,7 +160,7 @@
           {{ formatPercent(tribLedger.sustain, 1) }} · 开劫护持 {{ formatPercent(tribLedger.guard, 0) }}(气血折算
           {{ formatPercent(tribLedger.statGuard, 0) }})
         </p>
-        <p class="mt-0.5 text-[10px] text-ink-ghost">
+        <p class="mt-0.5 text-[10px] text-ink-faint">
           攻伐不进天劫公式;防御与气血按本境裸修为折算成上面的抗性与护持,各有上限 —— 血再厚也只能硬抗一部分,剩下的仍要抗性/减伤/恢复来补。进阶成功率与突破准备也只作用于小进阶,大关不看它们。
         </p>
         <!--
@@ -170,7 +170,7 @@
           那种误会不该靠失败去发现。
         -->
         <div v-if="worldStep" class="mt-2 rounded-md border border-cinnabar/30 bg-cinnabar/5 px-2.5 py-2">
-          <p class="text-[10px] leading-relaxed text-cinnabar/90">
+          <p class="text-[10px] leading-relaxed text-cinnabar">
             界膜之劫:跨界这一关血肉之厚一概不算 —— 防御与气血折算出的抗性、开劫护持在此作废,只认词条与准备。
           </p>
         </div>
@@ -180,7 +180,7 @@
           {{ formatPercent(tribWave.total, 0) }}),
           {{ tribPlan.def.waveShape === 'frontLoaded' ? '起手两道最重' : '逐道加重' }}
         </p>
-        <p class="mt-1 text-[10px] text-ink-soft">主要风险:<span class="text-cinnabar/80">{{ tribPlan.risks.join('; ') }}</span></p>
+        <p class="mt-1 text-[10px] text-ink-soft">主要风险:<span class="text-cinnabar">{{ tribPlan.risks.join('; ') }}</span></p>
         <p class="mt-1 text-[10px] text-ink-faint">{{ tribPlan.advice }}</p>
         <!-- Phase 32.2:灵根解开的那条路——说明这道劫为何对你不太一样(留一线,不是免死) -->
         <p v-if="reliefRoots.length" class="mt-1 text-[10px] text-jade">
@@ -307,14 +307,14 @@
           class="card-ink flex w-full items-center gap-3 px-3.5 py-3 text-left active:scale-99"
           @click="ui.gongfaDetailId = mainDef.id"
         >
-          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-cinnabar/10 font-kai text-cinnabar">主</span>
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-cinnabar/6 font-kai text-cinnabar">主</span>
           <span class="min-w-0 grow">
             <span class="block truncate font-kai text-[14px] text-ink">{{ mainDef.name }}</span>
             <span class="block text-[11px] text-ink-faint">
               第 {{ cultivation.learned[mainDef.id] }} 层 · {{ qualityDef(mainDef.quality).name }}
             </span>
           </span>
-          <GameIcon name="flame" :size="15" class="text-cinnabar/70" />
+          <GameIcon name="flame" :size="15" class="text-cinnabar" />
         </button>
 
         <!-- 已习得列表(限高滚动,功法过多不撑爆页面) -->
@@ -332,8 +332,8 @@
               {{ branchName(def!.id) }}
             </span>
             <span v-else-if="canEnlighten(def!.id)" class="text-[10px] text-qing">待悟道 →</span>
-            <span v-else-if="isFull(def!.id)" class="text-[10px] text-ink-ghost">圆满</span>
-            <span class="ml-auto text-[10px]" :class="equipStateOf(def!.id) ? 'text-jade' : 'text-ink-ghost'">
+            <span v-else-if="isFull(def!.id)" class="text-[10px] text-ink-faint">圆满</span>
+            <span class="ml-auto text-[10px]" :class="equipStateOf(def!.id) ? 'text-jade' : 'text-ink-faint'">
               {{ equipStateOf(def!.id) || '未装配' }}
             </span>
           </button>

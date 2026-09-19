@@ -80,6 +80,11 @@
  *      起因是一次实测反馈:修炼页的灵气行把「积余 X / Y」这类**次要读数**留在主行里,
  *      窄屏后期档上整块被顶到第二行(卡片没溢出、字也没被挤成竖排,前面所有判据都量不出来)。
  *      次要读数该去哪儿:点开的详情里;主行只留「看得懂的那一位」。
+ *   四十 正文字对比度 ≥AA:逐个带文本的元素,把祖先链上的背景层(含压在这块字下面的
+ *      绝对定位层,如页签的墨块)按 alpha 合成出真实的底,再算 WCAG 比值 —— 大字 3:1、
+ *      其余 4.5:1。**两套主题都量**:夜间主题的卡片比页面底色亮,浅色的字放上去最难。
+ *      它与调色板本体那套算法(src/ui/palette.spec.ts)是互补的:那边管色号,这边管
+ *      「半透明的字」与「带底色的方块」这两件只有真浏览器算得准的事。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -153,6 +158,8 @@ async function auditContext(options) {
 }
 const blockedTotal = () => blockedGetters.reduce((n, get) => n + get(), 0)
 const failures = []
+/** 正文对比度不足的读数(与排版问题分开攒,报告里单列一条) */
+const contrastFails = []
 let checked = 0
 /** 量到过多少个 data-value-row —— 用来防这条判据"空转"(契约被删掉后依然全绿)。 */
 let valueRowsSeen = 0
@@ -632,6 +639,108 @@ async function measurePage(page) {
 }
 
 /**
+ * 正文对比度 —— 量的是**合成之后**的颜色,不是配置里的色号
+ *
+ * 调色板本体按「纸 / 纸深 / 卡片」三张底算过一遍(src/ui/palette.spec.ts),但真界面上
+ * 还有两件它算不到的事:一是**半透明的字**(text-cinnabar/80 这种,实际颜色是字色与底
+ * 混出来的),二是**带底色的方块**(品阶方块是「底色 = 它自己 6% 的墨」)。这一条把这些
+ * 一并量掉,顺带守住以后新写的小字。
+ *
+ * 量法:逐个带直接文本的元素,把祖先链上所有背景层(含同层压在这块字下面的绝对定位层,
+ * 比如页签那个滑动的墨块)按 alpha 合成出真实的底,再与字色算 WCAG 比值。
+ * 阈值按字号分档:≥24px(或加粗 ≥18.66px)算大字 3:1,其余 4.5:1;
+ * 禁用态、aria-hidden、渐变底跳过(禁用态另有专门的 3:1 判据)。
+ * 两套主题都量:同一个页面上切 data-theme,不重新导航 —— 夜间主题的卡片比页面底色亮,
+ * 浅色的字放上去才是最难的那一档,只量日间会漏。
+ */
+async function measureTextContrast(page) {
+  const measure = async theme => {
+    await page.evaluate(t => {
+      document.documentElement.dataset.theme = t
+    }, theme)
+    await page.waitForTimeout(260) // 让 transition-colors 走完再量
+    return page.evaluate(() => {
+      const parse = c => {
+        const m = /rgba?\(([^)]+)\)/.exec(c)
+        if (!m) return null
+        const p = m[1].split(/[,\s/]+/).filter(Boolean).map(Number)
+        if (p.length < 3) return null
+        return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 }
+      }
+      const f = v => {
+        const s = v / 255
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+      }
+      const lum = c => (c === null ? null : 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]))
+      const over = (fg, bg) => [0, 1, 2].map(i => fg.rgb[i] * fg.a + bg[i] * (1 - fg.a))
+      /** 这块字底下真正被涂的是什么颜色:自身向上合成,外加覆盖它的绝对定位层 */
+      const paintUnder = (el, rect) => {
+        const layers = []
+        let node = el
+        while (node) {
+          for (const sib of node.parentElement?.children ?? []) {
+            if (sib === node) continue
+            const scs = getComputedStyle(sib)
+            if ((scs.position !== 'absolute' && scs.position !== 'fixed') || scs.display === 'none') continue
+            const b = parse(scs.backgroundColor)
+            if (!b || b.a <= 0) continue
+            const r = sib.getBoundingClientRect()
+            if (r.left <= rect.left + 1 && r.right >= rect.right - 1 && r.top <= rect.top + 1 && r.bottom >= rect.bottom - 1) layers.push(b)
+          }
+          const bg = parse(getComputedStyle(node).backgroundColor)
+          if (bg && bg.a > 0) {
+            layers.push(bg)
+            if (bg.a >= 0.999) break
+          }
+          node = node.parentElement
+        }
+        let base = [255, 255, 255]
+        for (let i = layers.length - 1; i >= 0; i -= 1) {
+          const { rgb, a } = layers[i]
+          base = [0, 1, 2].map(k => rgb[k] * a + base[k] * (1 - a))
+        }
+        return base
+      }
+      const out = []
+      for (const el of document.querySelectorAll('body *')) {
+        if (el.matches(':disabled') || el.closest('[aria-hidden="true"]')) continue
+        if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 1)) continue
+        const cs = getComputedStyle(el)
+        if (cs.visibility === 'hidden' || cs.display === 'none') continue
+        const r = el.getBoundingClientRect()
+        if (r.width < 2 || r.height < 2) continue
+        const fgRaw = parse(cs.color)
+        if (!fgRaw) continue
+        const base = paintUnder(el, r)
+        const fg = over(fgRaw, base)
+        const [hi, lo] = [lum(fg), lum(base)].sort((a, b) => b - a)
+        const ratio = (hi + 0.05) / (lo + 0.05)
+        const size = parseFloat(cs.fontSize)
+        const need = size >= 24 || (Number(cs.fontWeight) >= 700 && size >= 18.66) ? 3 : 4.5
+        if (ratio < need) {
+          out.push({
+            ratio: Math.round(ratio * 100) / 100,
+            need,
+            size,
+            text: (el.textContent || '').trim().slice(0, 14),
+            color: cs.color,
+            cls: String(el.className).slice(0, 32)
+          })
+        }
+      }
+      return out.slice(0, 4)
+    })
+  }
+  const light = await measure('light')
+  const dark = await measure('dark')
+  await page.evaluate(() => {
+    delete document.documentElement.dataset.theme
+  })
+  await page.waitForTimeout(260)
+  return [...light.map(x => ({ theme: '日间', ...x })), ...dark.map(x => ({ theme: '夜间', ...x }))]
+}
+
+/**
  * 页签栏(InkTabs 的外壳 .tab-rail)要吸顶 —— 内容滚下去,它钉在内容区顶上。
  *
  * 这几册(背包四册、图鉴、名号、界域志、天界)都是越往下越长的列表,页签跟着滚走
@@ -766,6 +875,15 @@ for (const vp of VIEWPORTS) {
     valueRowsSeen += info.valueRowCount ?? 0
     const problems = problemsOf(info)
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(' / ')}`)
+    /*
+     * 正文对比度只在最常用那一档视口上量(390):它与视口宽度无关,五档各量一遍只是把
+     * 巡页时间乘以五。两套主题都量,见 measureTextContrast。
+     */
+    if (vp.tag === '390') {
+      for (const bad of await measureTextContrast(page)) {
+        contrastFails.push(`[${vp.tag}] ${route} ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`)
+      }
+    }
     const rail = await measureTabRail(page)
     const railFails = railProblems(rail)
     if (rail) checked += 1
@@ -779,6 +897,8 @@ for (const vp of VIEWPORTS) {
   // 外域请求一律拦掉:一是量尺(应当恒为 0),二是别让别人的服务器决定我们的门要不要绿
   await page.close()
 }
+
+if (contrastFails.length) failures.push(`正文对比度不足 AA:${contrastFails.join(' | ')}`)
 
 // ---- 第四件事:存档写不进去时,设置页必须说话 ----
 {

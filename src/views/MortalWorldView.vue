@@ -18,7 +18,7 @@
             :cx="p.x"
             :cy="p.y"
             :r="p.r"
-            :class="cleared(p.nodeId) ? 'text-jade' : unlocked(p.nodeId) ? 'text-qing' : 'text-ink-ghost'"
+            :class="cleared(p.nodeId) ? 'text-jade' : unlocked(p.nodeId) ? 'text-qing' : 'text-ink-faint'"
             fill="currentColor"
             :fill-opacity="unlocked(p.nodeId) ? 0.85 : 0.35"
           />
@@ -36,7 +36,7 @@
         >
           <span
             class="grid h-9 w-9 shrink-0 place-items-center rounded-md"
-            :class="unlocked(p.nodeId) ? 'bg-qing/10 text-qing' : 'bg-ink/6 text-ink-ghost'"
+            :class="unlocked(p.nodeId) ? 'bg-qing/6 text-qing' : 'bg-ink/6 text-ink-faint'"
           >
             <GameIcon :name="unlocked(p.nodeId) ? (regionDef(p.regionId)?.icon ?? 'mountain') : 'lock'" :size="16" />
           </span>
@@ -53,7 +53,7 @@
               </span>
             </p>
             <!-- 锁住的地界要给一句"为什么现在去不了",而不是只画把锁 -->
-            <p v-if="!unlocked(p.nodeId)" class="mt-0.5 text-[10px] leading-relaxed text-cinnabar/80">
+            <p v-if="!unlocked(p.nodeId)" class="mt-0.5 text-[10px] leading-relaxed text-cinnabar">
               {{ blockReason(p.regionId) ?? '此境未开,须先走完这一世的来时路' }}
             </p>
           </div>

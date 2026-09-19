@@ -2,7 +2,7 @@
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
     <div class="flex items-center gap-2">
       <RouterLink to="/character" class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft">← 人物</RouterLink>
-      <span class="text-[11px] text-ink-ghost">·</span>
+      <span class="text-[11px] text-ink-faint">·</span>
       <span class="text-[12px] text-ink-soft">界域志</span>
     </div>
 
@@ -14,7 +14,7 @@
     <section v-for="row in worldRows" :key="row.world.id" class="card-ink px-4 py-3">
       <div class="flex items-baseline gap-2">
         <span class="font-kai text-[15px] tracking-[0.25em] text-ink">{{ row.world.name }}</span>
-        <span class="text-[10px] text-ink-ghost">第 {{ row.world.start + 1 }}–{{ row.world.end + 1 }} 境</span>
+        <span class="text-[10px] text-ink-faint">第 {{ row.world.start + 1 }}–{{ row.world.end + 1 }} 境</span>
       </div>
       <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ row.world.desc }}</p>
       <div class="mt-2 space-y-2">
@@ -22,7 +22,7 @@
           v-for="cell in row.realms"
           :key="cell.def.id"
           class="rounded-md px-2.5 py-2"
-          :class="cell.index === player.major ? 'bg-cinnabar/8' : 'bg-paper-deep/50'"
+          :class="cell.index === player.major ? 'bg-cinnabar/6' : 'bg-paper-deep/50'"
         >
           <p class="flex items-center gap-2">
             <span
@@ -81,7 +81,7 @@
             }}{{ currentReading.lower.symbol }}
           </span>
           <span v-if="currentReading.changed" class="chip-ink !text-[9px]">之{{ currentReading.changed.name }}</span>
-          <span class="ml-auto text-[10px] tabular text-ink-ghost">{{ remainText }}</span>
+          <span class="ml-auto text-[10px] tabular text-ink-faint">{{ remainText }}</span>
         </p>
         <div class="mt-1.5 space-y-0.5 font-kai text-[12px] tracking-[0.2em] text-ink-soft">
           <p v-for="(bar, i) in drawnLines" :key="i">{{ bar }}</p>
@@ -99,7 +99,7 @@
         >
           {{ player.activeDivination ? '卦在身,待其自过' : `问 卦(悟道点 ${DIVINATION_COST})` }}
         </button>
-        <span class="text-[10px] leading-relaxed text-ink-ghost">
+        <span class="text-[10px] leading-relaxed text-ink-faint">
           卜以决疑,不疑何卜 —— 一事不二卜,卦力随动爻而盛,亦随时而尽。
         </span>
       </div>
@@ -112,7 +112,7 @@
         <span class="w-[56px] shrink-0 text-[10px] text-ink-faint">象{{ t.image }} · {{ t.nature }}</span>
         <span class="min-w-0 grow text-[11px] leading-relaxed text-ink-soft">{{ t.gist }}</span>
         <span class="shrink-0 text-[10px] text-jade">宜{{ t.good }}</span>
-        <span class="shrink-0 text-[10px] text-cinnabar/80">忌{{ t.bad }}</span>
+        <span class="shrink-0 text-[10px] text-cinnabar">忌{{ t.bad }}</span>
       </div>
     </section>
 
@@ -124,7 +124,7 @@
       </button>
       <div v-if="showAllHex" class="mt-2 max-h-72 divide-y divide-ink/6 overflow-y-auto">
         <div v-for="x in HEXAGRAMS" :key="x.order" class="flex items-baseline gap-2 py-2">
-          <span class="w-6 shrink-0 tabular text-[10px] text-ink-ghost">{{ x.order }}</span>
+          <span class="w-6 shrink-0 tabular text-[10px] text-ink-faint">{{ x.order }}</span>
           <span class="w-14 shrink-0 font-kai text-[13px] text-ink">{{ x.name }}</span>
           <span class="w-16 shrink-0 text-[10px] text-ink-faint tabular">
             {{ trigramDef(x.upper)?.symbol }}{{ trigramDef(x.lower)?.symbol }}
@@ -150,12 +150,12 @@
       <div class="mt-2.5 divide-y divide-ink/6">
         <div v-for="row in fateRows" :key="row.palace.id" class="flex items-baseline gap-2 py-1.5">
           <span class="w-14 shrink-0 font-kai text-[12px] text-ink-soft">{{ row.palace.name }}</span>
-          <span class="w-24 shrink-0 text-[11px] text-cinnabar/90">{{ row.starNames }}</span>
+          <span class="w-24 shrink-0 text-[11px] text-cinnabar">{{ row.starNames }}</span>
           <span class="min-w-0 text-[11px] leading-relaxed text-ink-faint">{{ row.palace.domain }} · {{ row.palace.use }}</span>
         </div>
       </div>
       <div class="mt-2 border-t border-ink/10 pt-2">
-        <p class="text-[10px] text-ink-ghost">{{ cnNumber(STARS.length) }}主星</p>
+        <p class="text-[10px] text-ink-faint">{{ cnNumber(STARS.length) }}主星</p>
         <p v-for="s in STARS" :key="s.id" class="mt-1 text-[11px] leading-relaxed text-ink-soft">
           <span class="font-kai text-ink">{{ s.name }}</span>
           <span class="text-ink-faint"> · {{ s.nature }} · {{ s.gist }}</span>
@@ -182,11 +182,11 @@
       </button>
       <div v-if="showAllMansions" class="mt-2 divide-y divide-ink/6">
         <template v-for="img in IMAGES" :key="img.id">
-          <p class="pt-2 text-[10px] text-ink-ghost">{{ img.direction }}方 {{ img.name }} · 所配{{ worldName(img.world) }}</p>
+          <p class="pt-2 text-[10px] text-ink-faint">{{ img.direction }}方 {{ img.name }} · 所配{{ worldName(img.world) }}</p>
           <div v-for="m in mansionsOf(img.id)" :key="m.name" class="flex items-baseline gap-2 py-1.5">
             <span class="w-12 shrink-0 font-kai text-[13px] text-ink">{{ m.name }}</span>
             <span class="w-20 shrink-0 text-[10px] text-ink-faint">{{ m.fullName }}</span>
-            <span class="w-12 shrink-0 text-[10px] text-ink-ghost">{{ m.domain }}</span>
+            <span class="w-12 shrink-0 text-[10px] text-ink-faint">{{ m.domain }}</span>
             <span class="min-w-0 text-[11px] leading-relaxed text-ink-soft">{{ m.good }}</span>
           </div>
         </template>
@@ -212,7 +212,7 @@
           <span class="min-w-0 text-[11px] leading-relaxed text-ink-soft">{{ g.gist }}</span>
         </div>
       </div>
-      <p class="mt-2 text-[10px] leading-relaxed text-ink-ghost">
+      <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
         门的效果全部用既有的战斗规则表达,不另造字段 —— 不择门(走常道)时,规则与从前逐字相同。
       </p>
     </section>
@@ -225,7 +225,7 @@
         <span class="w-[104px] shrink-0 font-kai text-[12px] text-ink-soft">{{ p.name }}</span>
         <span class="text-[11px] leading-relaxed text-ink-faint">{{ p.note }}</span>
       </div>
-      <p class="py-2.5 text-[10px] leading-relaxed text-ink-ghost">
+      <p class="py-2.5 text-[10px] leading-relaxed text-ink-faint">
         这里只列尚未动的门类,不写空话 —— 真接上之后,它们会带着自己的典籍与玩法搬进来。
       </p>
       </section>

@@ -73,7 +73,7 @@
               class="mt-1 flex flex-wrap items-center gap-1.5"
             >
               <span v-if="battle.isBoss" class="chip-ink border-cinnabar/60 text-[9px] text-cinnabar">首领</span>
-              <span v-if="isNemesisFoe" class="chip-ink border-cinnabar/80 bg-cinnabar/10 text-[9px] text-cinnabar">宿敌</span>
+              <span v-if="isNemesisFoe" class="chip-ink border-cinnabar/80 bg-cinnabar/6 text-[9px] text-cinnabar">宿敌</span>
               <span v-for="t in shownTraits" :key="t" class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink">
                 {{ TRAIT_NAMES[t] }}
               </span>
@@ -116,7 +116,7 @@
             {{ entry.text }}
             <span v-if="entry.dmg" class="tabular" :class="entry.t === 'crit' ? 'text-cinnabar' : ''">{{ entry.dmg }}</span>
           </p>
-          <p v-if="displayed.length === 0" class="pt-16 text-center text-[12px] text-ink-ghost">山风掠过,四下无声……</p>
+          <p v-if="displayed.length === 0" class="pt-16 text-center text-[12px] text-ink-faint">山风掠过,四下无声……</p>
         </div>
       </div>
 
@@ -135,7 +135,7 @@
           v-for="f in floats.filter(x => x.side === 'p')"
           :key="f.id"
           class="pointer-events-none absolute right-2 top-0 tabular font-kai"
-          :class="f.crit ? 'animate-float-crit text-[17px] text-cinnabar' : 'animate-float-dmg text-[13px] text-cinnabar/80'"
+          :class="f.crit ? 'animate-float-crit text-[17px] text-cinnabar' : 'animate-float-dmg text-[13px] text-cinnabar'"
         >
           {{ f.text }}
         </span>
@@ -193,7 +193,7 @@
           </span>
           {{ lore.archetype }}
         </p>
-        <p v-if="lore.hint" class="mt-1.5 text-[10px] text-ink-ghost">{{ lore.hint }}</p>
+        <p v-if="lore.hint" class="mt-1.5 text-[10px] text-ink-faint">{{ lore.hint }}</p>
       </div>
       <!-- 战斗分析(战败自动展开;硬核数据供研究) -->
       <div v-if="showAnalysis && analysis" class="mt-2 rounded-md bg-ink/4 px-3 py-2.5">
@@ -211,7 +211,7 @@
         </p>
         <div v-if="analysis.dataRows.length" class="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 border-t border-ink/10 pt-1.5">
           <p v-for="row in analysis.dataRows" :key="row.label" class="flex justify-between text-[10px] tabular">
-            <span class="text-ink-ghost">{{ row.label }}</span>
+            <span class="text-ink-faint">{{ row.label }}</span>
             <span class="text-ink-soft">{{ row.value }}</span>
           </p>
         </div>

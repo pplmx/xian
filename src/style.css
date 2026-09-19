@@ -31,6 +31,21 @@
    后面六色是本来只写在 src/data 里的裸 hex(品阶、灵根、器魂那些色阶),现收进色板
    —— 数据层从此只引用变量,颜色只有这一处事实源。
 
+   ## 两条硬规则(判据见 src/ui/palette.spec.ts)
+
+   一 **承载文字的色必须在纸上 ≥4.5:1**(WCAG AA)。界面铺字的底只有「纸」与「纸深」
+   两张,故每档色按「纸深」上仍 ≥4.5 取 —— 这一轮把十一档偏浅的(石绿 2.95、藤黄 1.90、
+   琥珀 2.84、天青 2.54 …)统统压深了:国画颜料本来就是深色,压深反而更像颜料,
+   而它们此前全在做 10-13px 的说明文字(增益、品阶名、灵根名)。
+
+   二 **纸上的墨只有三档**。原先还有第四档 ink-ghost(#B9B2A0,1.66:1)当最淡的一层,
+   但纸上放不下第四档还能读的字:再淡一档就低于 AA,再深一档就与 ink-faint 重合。
+   故撤掉 ink-ghost —— 需要更淡的**装饰**(不是字),用墨的透明度写:`border-ink/15`。
+
+   印面(cinnabar-deep)是另一类:它当底托着固定奶油字 #f6f1e5,判据按「奶油字 ≥4.5」
+   取。暗色主题下这条与「朱砂当字要够亮」互相打架,故两边分工:朱砂当字(亮),
+   深朱当印面(深),见下方 html[data-theme='dark'] 里那两行 .btn-seal 覆盖。
+
    命名规则:语义色名取中国传统色/国画颜料名,不取西式色名(azure/amber 这类)。
    青 = 石青(次色:信息、增益、可前往)。 */
 :root {
@@ -39,22 +54,21 @@
   --color-paper-dark-rgb: 221 213 194;
   --color-ink-rgb: 41 39 34;
   --color-ink-soft-rgb: 74 70 61;
-  --color-ink-faint-rgb: 133 127 112;
-  --color-ink-ghost-rgb: 185 178 160;
+  --color-ink-faint-rgb: 105 100 88;
   --color-cinnabar-rgb: 168 63 57;
   --color-cinnabar-deep-rgb: 140 51 46;
   --color-qing-rgb: 44 90 125;
   --color-indigo-ink-rgb: 62 92 99;
-  --color-gold-ink-rgb: 156 122 60;
-  --color-jade-rgb: 110 139 116;
-  --color-violet-ink-rgb: 123 94 167;
-  --color-amber-ink-rgb: 176 125 43;
-  --color-zheshi-rgb: 168 92 63;
-  --color-tenghuang-rgb: 201 162 39;
-  --color-bise-rgb: 62 142 139;
-  --color-he-rgb: 138 111 77;
-  --color-cangqing-rgb: 94 140 138;
-  --color-tianqing-rgb: 109 147 184;
+  --color-gold-ink-rgb: 123 97 47;
+  --color-jade-rgb: 84 106 88;
+  --color-violet-ink-rgb: 115 87 156;
+  --color-amber-ink-rgb: 139 90 42;
+  --color-zheshi-rgb: 143 86 72;
+  --color-tenghuang-rgb: 113 101 28;
+  --color-bise-rgb: 45 111 103;
+  --color-he-rgb: 118 98 65;
+  --color-cangqing-rgb: 81 104 113;
+  --color-tianqing-rgb: 80 101 138;
 
   --color-paper: rgb(var(--color-paper-rgb));
   --color-paper-deep: rgb(var(--color-paper-deep-rgb));
@@ -62,7 +76,6 @@
   --color-ink: rgb(var(--color-ink-rgb));
   --color-ink-soft: rgb(var(--color-ink-soft-rgb));
   --color-ink-faint: rgb(var(--color-ink-faint-rgb));
-  --color-ink-ghost: rgb(var(--color-ink-ghost-rgb));
   --color-cinnabar: rgb(var(--color-cinnabar-rgb));
   --color-cinnabar-deep: rgb(var(--color-cinnabar-deep-rgb));
   --color-qing: rgb(var(--color-qing-rgb));
@@ -425,27 +438,44 @@ html[data-theme='dark'] {
   --color-paper-dark-rgb: 51 48 43;
   --color-ink-rgb: 232 226 210;
   --color-ink-soft-rgb: 198 191 169;
-  --color-ink-faint-rgb: 151 144 123;
-  --color-ink-ghost-rgb: 107 101 87;
-  --color-cinnabar-rgb: 201 85 78;
-  --color-cinnabar-deep-rgb: 212 105 95;
+  --color-ink-faint-rgb: 170 162 142;
+  /*
+   * 朱砂在暗色下分成两个角色 —— 两个要求在这张纸上互斥,一枚 token 满足不了:
+   *   当**字**用(底栏当前项、链接、战力数):要够亮,故 238 95 90(对暗纸 5.03:1);
+   *   当**印面**用(.btn-seal 的底,上面是固定奶油字 #f6f1e5):要够深,故 182 73 69。
+   * 亮红当印面时,奶油字只有 2.9:1 —— 读不出来的正是「踏入仙途」那句。
+   */
+  --color-cinnabar-rgb: 255 119 115;
+  --color-cinnabar-deep-rgb: 182 73 69;
   /* 石青的暗色档:同色相提亮(206° → 207°),对暗纸 6.38:1 —— 换的是明度,不是色相 */
   --color-qing-rgb: 124 166 200;
   --color-indigo-ink-rgb: 147 179 185;
   --color-gold-ink-rgb: 200 163 90;
   --color-jade-rgb: 147 175 149;
-  --color-violet-ink-rgb: 169 143 211;
+  --color-violet-ink-rgb: 178 150 220;
   --color-amber-ink-rgb: 207 154 69;
-  --color-zheshi-rgb: 213 116 80;
+  --color-zheshi-rgb: 229 138 115;
   --color-tenghuang-rgb: 214 179 76;
-  --color-bise-rgb: 68 156 152;
-  --color-he-rgb: 170 137 95;
-  --color-cangqing-rgb: 102 151 149;
-  --color-tianqing-rgb: 122 160 196;
+  --color-bise-rgb: 72 179 164;
+  --color-he-rgb: 190 158 104;
+  --color-cangqing-rgb: 131 168 181;
+  --color-tianqing-rgb: 129 164 223;
   --shadow-ink: rgb(8 7 5);
   --shadow-ink-rgb: 8 7 5;
   /* 暗色 paper 92% + white 8% 预计算 */
   --color-paper-lifted-rgb: 51 49 46;
+}
+
+/*
+ * 暗色主题的印面:取深朱(见上面对朱砂两个角色的说明)。
+ * 按下时同色叠一分透明 —— 而不是提亮成亮朱砂,亮底上的奶油字会掉到 2.9:1。
+ */
+html[data-theme='dark'] .btn-seal {
+  background: var(--color-cinnabar-deep);
+}
+
+html[data-theme='dark'] .btn-seal:active:not(:disabled) {
+  background: rgb(var(--color-cinnabar-deep-rgb) / 0.85);
 }
 
 #app {

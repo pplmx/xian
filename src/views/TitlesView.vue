@@ -11,14 +11,14 @@
           <span
             class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-kai"
             :class="
-              row.worn ? 'border-cinnabar text-cinnabar' : row.owned ? 'border-gold-ink text-gold-ink' : 'border-ink/15 text-ink-ghost'
+              row.worn ? 'border-cinnabar text-cinnabar' : row.owned ? 'border-gold-ink text-gold-ink' : 'border-ink/15 text-ink-faint'
             "
           >
             {{ row.worn ? '佩' : row.owned ? '藏' : '未' }}
           </span>
           <div class="min-w-0 grow">
             <p class="font-kai text-[13px]" :class="row.owned ? 'text-ink' : 'text-ink-faint'">{{ row.def.name }}</p>
-            <p class="truncate text-[10px] text-ink-ghost">{{ row.def.desc }}</p>
+            <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>
             <p v-if="row.owned && row.modText" class="text-[10px] text-qing tabular">{{ row.modText }}</p>
           </div>
           <button v-if="row.owned" class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-[11px]" @click="toggleTitle(row.def.id)">
@@ -39,21 +39,21 @@
               <span class="font-kai text-[13px]" :style="{ color: qualityDef(row.def.quality).color }">{{ row.def.name }}</span>
               <span v-if="row.active" class="text-[10px] text-jade">相伴中</span>
             </p>
-            <p class="truncate text-[10px] text-ink-ghost">{{ row.def.desc }}</p>
+            <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>
             <p v-if="row.modText" class="text-[10px] text-qing tabular">{{ row.modText }}</p>
             <!-- 性格是灵兽的"人味":它在历练里怎么表现,得让玩家看得见,而不是只看数值 -->
             <p class="text-[10px] text-violet-ink">
               {{ row.personalityName }} · <span class="text-ink-faint">{{ row.personalityDesc }}</span>
             </p>
             <!-- 定性的话之外还要给数:换不换这只伙伴,靠「更容易」三个字算不出来 -->
-            <p v-if="row.traitText" class="text-[10px] text-qing/80 tabular">{{ row.traitText }}</p>
+            <p v-if="row.traitText" class="text-[10px] text-qing tabular">{{ row.traitText }}</p>
           </div>
           <button class="btn-ghost shrink-0 !px-2.5 !py-1 !text-[11px]" @click="togglePet(row.def.id)">
             {{ row.active ? '暂别' : '唤来' }}
           </button>
         </div>
       </div>
-      <p v-else class="mt-10 text-center text-[12px] text-ink-ghost">
+      <p v-else class="mt-10 text-center text-[12px] text-ink-faint">
         尚无灵兽相伴
         <br />
         <span class="text-[11px]">灵兽多在历练际遇中结缘</span>

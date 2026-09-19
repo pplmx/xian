@@ -10,7 +10,7 @@
           <input v-model="settings.musicOn" type="checkbox" class="h-4 w-4 accent-cinnabar" />
         </label>
         <div v-if="settings.musicOn" class="mt-2 flex items-center gap-2">
-          <span class="text-[10px] text-ink-ghost">轻</span>
+          <span class="text-[10px] text-ink-faint">轻</span>
           <input v-model.number="settings.musicVol" type="range" min="0" max="100" aria-label="背景音乐音量" class="grow accent-cinnabar" />
           <span class="w-7 text-right text-[10px] tabular text-ink-faint">{{ settings.musicVol }}</span>
         </div>
@@ -21,7 +21,7 @@
           <input v-model="settings.sfxOn" type="checkbox" class="h-4 w-4 accent-cinnabar" />
         </label>
         <div v-if="settings.sfxOn" class="mt-2 flex items-center gap-2">
-          <span class="text-[10px] text-ink-ghost">轻</span>
+          <span class="text-[10px] text-ink-faint">轻</span>
           <input v-model.number="settings.sfxVol" type="range" min="0" max="100" aria-label="音效音量" class="grow accent-cinnabar" />
           <span class="w-7 text-right text-[10px] tabular text-ink-faint">{{ settings.sfxVol }}</span>
         </div>
@@ -77,7 +77,7 @@
         </span>
       </p>
       <!-- 写盘失败时这里必须说话:玩家可能正玩得兴起,却不知道进度没进档 -->
-      <p v-if="saveFailed" class="rounded-md border border-cinnabar/40 bg-cinnabar/8 px-2 py-1.5 text-[11px] leading-relaxed text-cinnabar">
+      <p v-if="saveFailed" class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-[11px] leading-relaxed text-cinnabar">
         上次写入存档失败 —— 浏览器存储可能已满。请先「导出存档」留一份,再清理浏览器数据或换设备导入。
       </p>
       <!--
@@ -87,7 +87,7 @@
       -->
       <p
         v-if="corruptedNotice.length"
-        class="rounded-md border border-cinnabar/40 bg-cinnabar/8 px-2 py-1.5 text-[11px] leading-relaxed text-cinnabar"
+        class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-[11px] leading-relaxed text-cinnabar"
       >
         启动时发现 {{ corruptedNotice.length }} 个存档分片损坏,已隔离修复:{{
           corruptedNotice.map(id => STORE_NAMES[id] ?? id).join('、')
@@ -121,7 +121,7 @@
         <span class="tabular text-ink-faint">{{ formatClock(latestError.at) }}</span>
         <span v-if="latestError.count > 1" class="ml-1 text-ink-faint">×{{ latestError.count }}</span>
         <span class="ml-1 break-all">{{ latestError.message }}</span>
-        <span v-if="latestError.route" class="ml-1 text-ink-ghost">{{ latestError.route }}</span>
+        <span v-if="latestError.route" class="ml-1 text-ink-faint">{{ latestError.route }}</span>
       </p>
       <div v-if="diag.errors.length" class="grid grid-cols-2 gap-2">
         <button class="btn-ghost !text-[12px]" @click="copyDiag">复制异常记录</button>

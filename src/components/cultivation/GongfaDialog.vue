@@ -65,7 +65,7 @@
             </button>
             <!-- 永久抉择二步确认:选了就改不了,按一下不该就此了结 -->
             <div v-if="branchConfirm" class="rounded-md bg-cinnabar/5 px-3 py-2">
-              <p class="text-[10px] leading-relaxed text-cinnabar/90">
+              <p class="text-[10px] leading-relaxed text-cinnabar">
                 道分歧路,一经择定<strong>终身不改</strong>(转世仍随你)。确认择【{{ gongfaBranchDef(branchConfirm)?.name ?? '' }}】?
               </p>
               <div class="mt-1.5 flex justify-end gap-2">
@@ -88,11 +88,11 @@
         <div class="mt-1 space-y-1">
           <p v-for="row in previewRows" :key="row.label" class="flex justify-between text-[13px]">
             <span class="text-ink-faint">{{ row.label }}</span>
-            <span class="tabular text-qing/80">{{ row.value }}</span>
+            <span class="tabular text-qing">{{ row.value }}</span>
           </p>
           <p v-if="def.skill" class="flex justify-between text-[13px]">
             <span class="text-ink-faint">附带神通「{{ def.skill.name }}」</span>
-            <span class="tabular text-cinnabar/80">
+            <span class="tabular text-cinnabar">
               出手 {{ Math.round(def.skill.rate * 100) }}% 几率 · {{ Math.round(def.skill.mult * 100) }}% 威力
             </span>
           </p>

@@ -85,7 +85,7 @@
           >
             <span class="text-ink-faint">
               {{ row.label }}
-              <span v-if="row.capped" class="ml-0.5 text-[9px] text-cinnabar/80">软</span>
+              <span v-if="row.capped" class="ml-0.5 text-[9px] text-cinnabar">软</span>
             </span>
             <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
               {{ row.value > 0 ? '+' : '' }}{{ formatPercent(row.value) }}
@@ -97,7 +97,7 @@
           进阶成功率的名字容易过度承诺:它只进小进阶那一次掷点,大关走天劫推演。
           有这一项时才提示 —— 没有这项的玩家不需要知道这个边界。
         -->
-        <p v-if="hasAdvanceRate" class="mt-0.5 text-[9px] leading-relaxed text-ink-ghost">
+        <p v-if="hasAdvanceRate" class="mt-0.5 text-[9px] leading-relaxed text-ink-faint">
           进阶成功率只作用于小进阶;大关须渡天劫,看的是劫型与四维准备度(护持/恢复/抗性/爆发)。
         </p>
         <div v-if="breakdownRows.length" class="mt-1.5 rounded-md bg-paper-deep/60 px-2.5 py-2">
@@ -105,17 +105,17 @@
           <p v-for="c in breakdownRows" :key="c.name" class="mt-0.5 flex justify-between text-[10px]">
             <span class="text-ink-faint">
               {{ c.name }}
-              <span v-if="c.onTop" class="ml-1 text-[9px] text-cinnabar/80">另乘</span>
+              <span v-if="c.onTop" class="ml-1 text-[9px] text-cinnabar">另乘</span>
             </span>
             <span class="tabular" :class="c.value > 0 ? 'text-qing' : 'text-cinnabar'">
               {{ c.value > 0 ? '+' : '' }}{{ formatPercent(c.value) }}
             </span>
           </p>
-          <p class="mt-1 text-[9px] leading-relaxed text-ink-ghost">
+          <p class="mt-1 text-[9px] leading-relaxed text-ink-faint">
             明细之和就是上面那个数;标「另乘」的不并入百分比,而是单独乘在攻防血上。
           </p>
         </div>
-        <p v-if="softCappedNotes.length" class="mt-1.5 text-[10px] leading-relaxed text-cinnabar/80">
+        <p v-if="softCappedNotes.length" class="mt-1.5 text-[10px] leading-relaxed text-cinnabar">
           标「软」者已达软上限:{{ softCappedNotes.join('、') }}。极限堆叠到此后收益递减,不是面板被削。
         </p>
       </div>
@@ -295,7 +295,7 @@
           >
             {{ t!.name }}
           </button>
-          <span v-if="!ownedTalents.length" class="text-[11px] text-ink-ghost">转世后可觉醒先天之姿</span>
+          <span v-if="!ownedTalents.length" class="text-[11px] text-ink-faint">转世后可觉醒先天之姿</span>
         </div>
         <p v-if="talentTap && tappedTalent" class="mt-1.5 text-[10px] leading-relaxed text-ink-faint">
           <span :style="{ color: TALENT_GRADE_COLORS[tappedTalent.grade] }">{{ tappedTalent.name }}</span>
@@ -324,7 +324,7 @@
         >
           <span class="flex items-baseline justify-between">
             <span class="font-kai text-[14px] text-ink">{{ t.seal }} · {{ t.name }}</span>
-            <span class="tabular text-[12px]" :class="player.reincarnation.daoFruit >= t.cost ? 'text-cinnabar' : 'text-ink-ghost'">
+            <span class="tabular text-[12px]" :class="player.reincarnation.daoFruit >= t.cost ? 'text-cinnabar' : 'text-ink-faint'">
               {{ t.cost }} 道果
             </span>
           </span>
@@ -372,7 +372,7 @@
             <p class="text-[12px] leading-relaxed text-gold-ink">{{ herIntent.line }}</p>
             <p class="mt-1 text-[10px] text-ink-faint">她所求:{{ herIntent.wish }}</p>
             <!-- 意图由经历催生,不是凭空的:把「因何而起」摆出来 -->
-            <p v-if="herIntentSparks" class="text-[10px] text-ink-ghost">因何而起:{{ herIntentSparks }}</p>
+            <p v-if="herIntentSparks" class="text-[10px] text-ink-faint">因何而起:{{ herIntentSparks }}</p>
             <div class="mt-2.5 flex gap-2">
               <button
                 v-for="r in INTENT_CHOICES"
@@ -390,7 +390,7 @@
         <template v-if="pendingEvent && !bond.fallen && !bond.departed">
           <div class="mt-4 border-t border-ink/10 pt-3">
             <p class="font-kai text-[13px] tracking-widest text-ink">{{ pendingEvent.title }}</p>
-            <p class="text-[10px] text-ink-ghost">因何而来:{{ pendingEventTriggers }}</p>
+            <p class="text-[10px] text-ink-faint">因何而来:{{ pendingEventTriggers }}</p>
             <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">{{ pendingEvent.text }}</p>
             <p class="mt-1.5 text-[11px] text-qing">{{ pendingEvent.herWish }}</p>
             <p class="text-[10px] text-ink-faint">{{ pendingEvent.herLimit }}</p>
@@ -404,7 +404,7 @@
                 @click="pickChoice(ch.id)"
               >
                 {{ ch.label }}
-                <span v-if="ch.peril" class="ml-1 text-[10px] text-cinnabar/80">〔共命之险〕</span>
+                <span v-if="ch.peril" class="ml-1 text-[10px] text-cinnabar">〔共命之险〕</span>
               </button>
             </div>
           </div>

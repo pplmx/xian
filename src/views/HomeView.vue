@@ -120,7 +120,7 @@
         <div class="ink-divider my-2.5" />
         <div class="space-y-1.5">
           <p v-for="t in dailyRows" :key="t.id" class="flex items-center justify-between text-[12px]">
-            <span :class="t.done ? 'text-ink-ghost line-through' : 'text-ink-soft'">{{ t.desc }}</span>
+            <span :class="t.done ? 'text-ink-faint line-through' : 'text-ink-soft'">{{ t.desc }}</span>
             <span class="tabular text-[11px]" :class="t.done ? 'text-jade' : 'text-ink-faint'">
               {{ t.done ? '已成' : `${t.progress}/${t.target}` }}
             </span>

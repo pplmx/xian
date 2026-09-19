@@ -9,7 +9,7 @@
     <template v-else>
       <!-- 本世之界:链接入口,详情另开一页。历练地图仍在下方,照旧可走 -->
       <RouterLink to="/world" class="card-ink flex items-center gap-3 border-qing/30 px-4 py-3 active:scale-99">
-        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-qing/15 text-qing">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-qing/6 text-qing">
           <GameIcon name="cloud" :size="18" />
         </span>
         <span class="min-w-0 grow">
@@ -56,7 +56,7 @@
           <div class="flex items-center gap-2 pt-1">
             <span class="font-kai text-[11px] tracking-[0.3em] text-ink-soft">{{ group.world.name }}</span>
             <span class="h-px grow bg-ink/10" />
-            <span class="text-[10px] text-ink-ghost">{{ group.rows.length }} 处</span>
+            <span class="text-[10px] text-ink-faint">{{ group.rows.length }} 处</span>
           </div>
         <div
           v-for="row in group.rows"
@@ -75,7 +75,7 @@
           <div class="flex items-start gap-3">
             <span
               class="grid h-10 w-10 shrink-0 place-items-center rounded-md"
-              :class="row.suppressed ? 'bg-gold-ink/15 text-gold-ink' : row.canEnter ? 'bg-indigo-ink/10 text-indigo-ink' : 'bg-ink/6 text-ink-ghost'"
+              :class="row.suppressed ? 'bg-gold-ink/6 text-gold-ink' : row.canEnter ? 'bg-indigo-ink/6 text-indigo-ink' : 'bg-ink/6 text-ink-faint'"
             >
               <GameIcon :name="row.suppressed ? 'shield-check' : row.canEnter ? row.def.icon : 'lock'" :size="18" />
             </span>
@@ -100,13 +100,13 @@
                 <span :class="row.def.danger >= 4 ? 'text-cinnabar' : ''">{{ DANGER_NAMES[row.def.danger] }}</span>
                 <span v-if="row.tooHard" class="ml-1 text-cinnabar">· 境界尚浅,恐有性命之忧</span>
                 <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
-                <span v-if="row.revived" class="ml-1 text-cinnabar/80">· 旧主归来,再历一程即可复靖</span>
+                <span v-if="row.revived" class="ml-1 text-cinnabar">· 旧主归来,再历一程即可复靖</span>
               </p>
               <!--
                 敌人的「层级补偿」此前只落在数值里:玩家看到的只是一只小怪,打起来却像换了一身装备。
                 此处与战后归因同源(regionFoeOrigin)—— 出行方式与灵兽之性那一半在出行弹窗里摊开。
               -->
-              <p v-if="row.foeOrigin.parts.length" data-region-foe-origin class="mt-0.5 text-[10px] leading-relaxed text-ink-ghost">
+              <p v-if="row.foeOrigin.parts.length" data-region-foe-origin class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
                 此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
               </p>
             </div>
@@ -133,7 +133,7 @@
             v-if="row.suppressed"
             data-region-action
             data-suppress-info
-            class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-gold-ink/10 px-2.5 py-1.5"
+            class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-gold-ink/6 px-2.5 py-1.5"
           >
             <span class="text-[11px] text-gold-ink tabular">自动产出 · {{ rateText(row.def, row.recall) }}</span>
             <!-- 守土之年:守得越久,兴衰越盛,产出随之上浮 -->
@@ -193,7 +193,7 @@
                 均受伤 {{ Math.round(row.progress.avgDamagePct * 100) }}%(需≤{{ Math.round(row.progress.maxAvgDamagePct * 100) }}%)
               </span>
             </template>
-            <span v-else class="ml-1.5 text-ink-ghost">尚无战绩</span>
+            <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
           </p>
           <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
           <p v-if="row.blockReason" class="mt-1 text-[11px] text-cinnabar">{{ row.blockReason }}</p>
@@ -250,7 +250,7 @@
             <span class="text-gold-ink">{{ starsText(rec.adaptation.stars) }}</span>
           </span>
         </p>
-        <p class="mt-1.5 text-[10px] text-ink-ghost tabular">
+        <p class="mt-1.5 text-[10px] text-ink-faint tabular">
           战力 {{ formatGN(player.finalStats.power) }} · 装备成色、词条与临场随机仍定成败
         </p>
       </div>

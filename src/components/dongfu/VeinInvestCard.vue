@@ -21,14 +21,14 @@
         >
           <span class="flex min-w-0 items-center gap-1.5">
             <span class="truncate">{{ v.name }}</span>
-            <span v-if="isMain(v.id)" class="shrink-0 rounded bg-cinnabar/15 px-1 py-0.5 text-[10px] leading-none text-cinnabar">主脉</span>
-            <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-[10px] text-ink-ghost">首投成主</span>
+            <span v-if="isMain(v.id)" class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-[10px] leading-none text-cinnabar">主脉</span>
+            <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-[10px] text-ink-faint">首投成主</span>
           </span>
           <span class="tabular text-[11px]">
             <span :class="currentLevel(v.id) >= cap(v.id) ? 'text-jade' : 'text-ink-faint'">
               {{ currentLevel(v.id) }}/{{ cap(v.id) }}
             </span>
-            <span class="ml-1.5 text-ink-ghost">{{ formatGN(investCost) }}</span>
+            <span class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }}</span>
           </span>
         </button>
         <!-- 每条脉都要自陈作用:此前只显示名字与价格,玩家无从判断该投哪条 -->
@@ -43,7 +43,7 @@
         <!-- 改立此脉为主脉:付费换向,已投点数不回收 -->
         <button
           v-if="canSwitchTo(v.id)"
-          class="ml-0.5 px-0.5 text-[10px] text-cinnabar/80 active:opacity-60"
+          class="ml-0.5 px-0.5 text-[10px] text-cinnabar active:opacity-60"
           @click="doSwitch(v.id)"
         >
           改立主脉 · {{ formatGN(switchCost) }}

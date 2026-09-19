@@ -2,7 +2,7 @@
   <BaseModal :open="def !== undefined" :title="def?.name ?? ''" @close="close">
     <template v-if="def">
       <p class="flex items-center gap-2">
-        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md" :class="isInjury ? 'bg-cinnabar/10 text-cinnabar' : 'bg-jade/10 text-jade'">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md" :class="isInjury ? 'bg-cinnabar/6 text-cinnabar' : 'bg-jade/6 text-jade'">
           <GameIcon :name="def.icon" :size="17" />
         </span>
         <span>
@@ -15,7 +15,7 @@
 
       <div class="ink-divider my-3" />
 
-      <p class="mb-1.5 text-[11px] tracking-widest text-ink-ghost">效果</p>
+      <p class="mb-1.5 text-[11px] tracking-widest text-ink-faint">效果</p>
       <div class="space-y-1">
         <p v-for="row in modRows" :key="row.key" class="flex justify-between text-[13px]">
           <span class="text-ink-soft">{{ row.label }}</span>

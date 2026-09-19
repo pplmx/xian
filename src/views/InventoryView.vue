@@ -17,10 +17,10 @@
       <div class="mt-3 flex items-center justify-between px-1">
         <span class="text-[11px] text-ink-faint tabular">藏品 {{ inventory.bagItems.length }} · 器灵尘 {{ resources.dust }}</span>
         <span class="flex gap-3">
-          <button class="-my-1.5 py-1.5 text-[11px] text-qing/90 active:opacity-60" @click="smartOpen = true">
+          <button class="-my-1.5 py-1.5 text-[11px] text-qing active:opacity-60" @click="smartOpen = true">
             收纳{{ settings.smartKeep.enabled ? '·启' : '' }}
           </button>
-          <button class="-my-1.5 py-1.5 text-[11px] text-cinnabar/80 active:opacity-60" @click="decomposeOpen = true">分解</button>
+          <button class="-my-1.5 py-1.5 text-[11px] text-cinnabar active:opacity-60" @click="decomposeOpen = true">分解</button>
         </span>
       </div>
       <div class="mt-2 grid grid-cols-3 gap-2">
@@ -30,7 +30,7 @@
           class="card-ink flex flex-col items-center gap-1 px-2 py-2.5 active:scale-95"
           @click="pickerSlot = row.slot"
         >
-          <span class="text-[9px] text-ink-ghost">
+          <span class="text-[9px] text-ink-faint">
             {{ row.name }}
             <template v-if="row.stock">· {{ row.stock }}</template>
           </span>
@@ -42,8 +42,8 @@
             </span>
           </template>
           <template v-else>
-            <span class="grid h-4 w-4 place-items-center text-ink-ghost">·</span>
-            <span class="text-[10px] text-ink-ghost">空悬</span>
+            <span class="grid h-4 w-4 place-items-center text-ink-faint">·</span>
+            <span class="text-[10px] text-ink-faint">空悬</span>
           </template>
         </button>
       </div>
@@ -98,7 +98,7 @@
           <span class="absolute bottom-0.5 right-1 text-[9px] leading-none text-ink-soft tabular">×{{ row.count }}</span>
         </button>
       </div>
-      <p v-else class="mt-10 text-center text-[12px] text-ink-ghost">丹匣空空</p>
+      <p v-else class="mt-10 text-center text-[12px] text-ink-faint">丹匣空空</p>
     </template>
 
     <!-- 材料 -->
@@ -126,11 +126,11 @@
         挤在同一行里,窄屏上会被顶成两行(与修炼页那两行同一类)。
       -->
       <p class="mt-3 px-1 text-[11px] text-ink-faint tabular">法宝位 {{ inventory.equippedArtifacts.length }}/{{ artifactSlots }}</p>
-      <p v-if="artifactSlots < ARTIFACT_MAX_SLOTS" class="mt-0.5 px-1 text-[10px] text-ink-ghost">
+      <p v-if="artifactSlots < ARTIFACT_MAX_SLOTS" class="mt-0.5 px-1 text-[10px] text-ink-faint">
         {{ artifactUnlockRealm }}境开启第{{ cnNumber(ARTIFACT_MAX_SLOTS) }}法宝位
       </p>
       <!-- 祭炼到底给什么:数值都从上界常数来,不在界面里再写一份 -->
-      <p class="mt-1 px-1 text-[10px] text-ink-ghost">
+      <p class="mt-1 px-1 text-[10px] text-ink-faint">
         祭炼一重,被动与神通各强 {{ formatPercent(ARTIFACT_LEVEL_BONUS) }},至多 {{ cnNumber(ARTIFACT_MAX_LEVEL) }} 重 ——
         顶到封顶的不再涨,卡片上标着
       </p>
@@ -178,7 +178,7 @@
           </div>
         </div>
       </div>
-      <p v-else class="mt-16 text-center text-[12px] text-ink-ghost">
+      <p v-else class="mt-16 text-center text-[12px] text-ink-faint">
         尚无法宝随身
         <br />
         <span class="text-[11px]">法宝多出自际遇与强敌之手</span>
@@ -227,7 +227,7 @@
           </span>
           <div class="min-w-0">
             <p class="font-kai text-[15px] text-ink tabular">{{ currentMaterial.full }}</p>
-            <p class="text-[10px] text-ink-ghost">现有</p>
+            <p class="text-[10px] text-ink-faint">现有</p>
           </div>
         </div>
         <p class="mt-3 text-[12px] leading-relaxed text-ink-soft">{{ currentMaterial.desc }}</p>
@@ -247,7 +247,7 @@
           <p v-for="s in skillRows" :key="s.id" class="flex items-baseline gap-2 text-[11px]">
             <span class="w-14 shrink-0 text-ink-faint">{{ s.daoName }}</span>
             <span class="w-12 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
-            <span class="w-12 shrink-0" :class="s.stage === '生疏' ? 'text-ink-ghost' : 'text-jade'">{{ s.stage }}</span>
+            <span class="w-12 shrink-0" :class="s.stage === '生疏' ? 'text-ink-faint' : 'text-jade'">{{ s.stage }}</span>
             <span class="min-w-0 text-[10px] leading-relaxed text-ink-faint">{{ s.desc }}</span>
           </p>
         </div>
@@ -259,20 +259,20 @@
             <div class="min-w-0 grow">
               <p class="flex items-center gap-2">
                 <span class="font-kai text-[13px] text-ink">{{ r.def.name }}</span>
-                <span class="text-[10px] text-ink-ghost">{{ r.able.rank }} 阶</span>
+                <span class="text-[10px] text-ink-faint">{{ r.able.rank }} 阶</span>
                 <span v-if="r.able.overReach > 0" class="text-[10px] text-cinnabar">越阶 {{ r.able.overReach }}</span>
               </p>
               <p class="text-[11px] text-ink-faint tabular">灵草×{{ r.cost.herb }} · 灵石 {{ formatGN(r.cost.stone) }}</p>
               <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
-              <p class="text-[10px] leading-relaxed text-qing/80">{{ pillFuncText(r.def) }}</p>
+              <p class="text-[10px] leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
             </div>
             <div class="shrink-0 text-right">
               <p class="tabular text-[13px]" :class="rateClass(r.able.successRate)">{{ formatPercent(r.able.successRate) }}</p>
-              <p class="text-[10px] text-ink-ghost">把握</p>
+              <p class="text-[10px] text-ink-faint">把握</p>
             </div>
             <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]" @click="craftPill(r.def.id)">炼制</button>
           </div>
-          <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-ghost">· {{ w }}</p>
+          <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-faint">· {{ w }}</p>
         </div>
       </div>
       <p v-else class="px-1 py-6 text-center text-[11px] leading-relaxed text-ink-faint">
@@ -311,7 +311,7 @@
         </div>
       </div>
       <p v-else class="py-8 text-center text-[12px] text-ink-faint">此部位尚无藏品,去历练中寻些机缘吧</p>
-      <p class="mt-2 text-center text-[10px] text-ink-ghost">点名称可查看详情与对比</p>
+      <p class="mt-2 text-center text-[10px] text-ink-faint">点名称可查看详情与对比</p>
     </BaseModal>
 
     <!-- 一键分解:勾选品质(记忆勾选) -->
@@ -345,7 +345,7 @@
           </span>
         </label>
       </div>
-      <p v-if="decomposeTotal > 0" class="mt-2 text-right text-[11px] text-cinnabar/90 tabular">
+      <p v-if="decomposeTotal > 0" class="mt-2 text-right text-[11px] text-cinnabar tabular">
         共 {{ decomposeTotal }} 件 → {{ batchYieldText(decomposePlanned) }}
       </p>
       <template #footer>
@@ -360,7 +360,7 @@
       <p class="text-[11px] leading-relaxed text-ink-faint">
         开启后,新掉落先过智能裁决:无缘之物直接化尘不入包;行囊满时,值得收藏的新件会挤掉包内最弱的无缘旧物(品质低的先走,同档看层级与词条)。识别不只看品质:流派核心词条、组合技部件、成套共鸣件、条条近满的词条都算值得留。
       </p>
-      <p class="mt-1 text-[11px] leading-relaxed text-ink-ghost">
+      <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">
         你强化过、重铸过、封存过词条的件,自动收纳一律不动 —— 要扔得你自己动手(单件分解,或勾选该品质的一键分解)。
       </p>
       <label class="mt-2 flex items-center justify-between py-1.5">
@@ -406,7 +406,7 @@
             {{ settings.smartKeep.minTier > 0 ? `${settings.smartKeep.minTier} 阶` : '关' }}
           </span>
           <button class="chip-ink !px-3" :disabled="settings.smartKeep.minTier >= 32" @click="bumpMinTier(1)">＋</button>
-          <span class="ml-1 text-[10px] text-ink-ghost">
+          <span class="ml-1 text-[10px] text-ink-faint">
             你当前可到 {{ playerTier }} 阶
           </span>
         </div>
@@ -432,7 +432,7 @@
         </p>
         <p v-for="row in impact.byReason" :key="row.reason" class="mt-0.5 flex justify-between tabular">
           <span class="text-ink-faint">{{ row.reason }}</span>
-          <span class="text-cinnabar/90">{{ row.count }} 件</span>
+          <span class="text-cinnabar">{{ row.count }} 件</span>
         </p>
         <p v-if="impact.byReason.length === 0" class="mt-0.5 text-ink-faint">眼下没有会被自动判掉的件</p>
       </div>

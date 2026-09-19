@@ -53,7 +53,7 @@
           <span>词 条</span>
           <span class="text-[10px] tracking-normal tabular">
             {{ inst.affixes.length }} / {{ affixCap }} 条
-            <span class="ml-1 text-ink-ghost">({{ qualityName }}上限)</span>
+            <span class="ml-1 text-ink-faint">({{ qualityName }}上限)</span>
           </span>
         </p>
         <!--
@@ -96,7 +96,7 @@
             </span>
           </li>
         </ul>
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-ghost">
+        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
           排序:稀有度(传世 → 常见)→ 掷点;左侧色边即这一条的成色
         </p>
       </template>
@@ -108,8 +108,8 @@
             <template v-if="buildPreview.before">
               <span class="text-ink-soft">{{ buildPreview.before.displayName }} {{ Math.round(buildPreview.before.affinity * 100) }}%</span>
             </template>
-            <template v-else><span class="text-ink-ghost">未成路</span></template>
-            <span class="mx-1 text-ink-ghost">→</span>
+            <template v-else><span class="text-ink-faint">未成路</span></template>
+            <span class="mx-1 text-ink-faint">→</span>
             <template v-if="buildPreview.after">
               <span
                 class="font-kai"
@@ -129,7 +129,7 @@
           <span class="tabular">器灵尘×{{ upCost.dust }} · 灵石 {{ formatGN(upCost.stone) }}</span>
         </p>
       </template>
-      <p v-if="salvage" class="mt-1 flex items-center justify-between text-[11px] text-ink-ghost">
+      <p v-if="salvage" class="mt-1 flex items-center justify-between text-[11px] text-ink-faint">
         <span>分解返还{{ inst.level > 0 ? '(含强化八成)' : '' }}</span>
         <span class="tabular">
           器灵尘×{{ salvage.dust }}
@@ -144,15 +144,15 @@
           <p class="mb-1.5 font-kai text-[12px] tracking-[0.3em] text-ink-faint">天机推演</p>
           <p class="text-[11px] text-ink-soft tabular">
             构筑:{{ whatIf.buildBefore?.displayName ?? '未成路' }}
-            <span class="text-ink-ghost">→</span>
+            <span class="text-ink-faint">→</span>
             {{ whatIf.buildAfter?.displayName ?? '流派散去' }}
           </p>
           <div class="mt-1 space-y-0.5">
             <p v-for="w in whatIf.worlds" :key="w.name" class="flex justify-between text-[11px]">
               <span class="text-ink-faint">{{ w.name }}</span>
               <span class="tabular">
-                <span class="text-ink-ghost">{{ w.beforeText }}</span>
-                <span class="mx-1 text-ink-ghost">→</span>
+                <span class="text-ink-faint">{{ w.beforeText }}</span>
+                <span class="mx-1 text-ink-faint">→</span>
                 <span :class="w.trend === 'up' ? 'text-jade' : w.trend === 'down' ? 'text-cinnabar' : 'text-ink-soft'">
                   {{ w.afterText }}
                 </span>
@@ -188,7 +188,7 @@
           <p v-if="reforgeCostVal" class="text-center text-[10px] leading-relaxed text-ink-faint">
             重掷未封存的词条:条数(≤{{ affixCap }} 条)与数值一并重掷,封存的不动 · 不限次数,成本随阶数与封存数走
           </p>
-          <p v-if="inst" class="text-center text-[10px] text-ink-ghost tabular">
+          <p v-if="inst" class="text-center text-[10px] text-ink-faint tabular">
             已重铸 {{ inst.reforgeCount ?? 0 }} 次 · 已封存 {{ (inst.sealedAffixIds ?? []).length }}/{{ sealCapacity(inst) }}
           </p>
         </template>

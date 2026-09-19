@@ -62,7 +62,7 @@
         </p>
         <p class="mt-2 flex items-center gap-2">
           <span class="font-kai text-[14px]" :class="view.stageAdvanced ? 'text-cinnabar' : 'text-ink'">{{ view.stageName }}</span>
-          <span v-if="view.stageAdvanced" class="rounded bg-cinnabar/10 px-1.5 py-0.5 text-[10px] text-cinnabar">境地已迁</span>
+          <span v-if="view.stageAdvanced" class="rounded bg-cinnabar/6 px-1.5 py-0.5 text-[10px] text-cinnabar">境地已迁</span>
         </p>
         <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">{{ view.stageDesc }}</p>
         <p v-if="view.toNextStage !== null" class="mt-1 text-[11px] text-ink-faint tabular">
@@ -81,7 +81,7 @@
       <div class="mt-3 rounded-lg border border-ink/15 px-3 py-2">
         <p class="text-[10px] text-ink-faint">此生交割 —— 留下的是「我是谁」,放下的是「我拥有多少」</p>
         <div v-for="g in heritageGroups()" :key="g.mode" class="mt-1.5">
-          <p class="text-[11px]" :class="g.mode === 'reset' ? 'text-ink-ghost' : 'text-ink-soft'">
+          <p class="text-[11px]" :class="g.mode === 'reset' ? 'text-ink-faint' : 'text-ink-soft'">
             {{ g.title }}
             <span class="ml-1 text-[10px] text-ink-faint">{{ g.rows.length }} 项</span>
           </p>
@@ -90,7 +90,7 @@
               v-for="r in g.rows"
               :key="r.id"
               class="chip-ink !text-[10px]"
-              :class="g.mode === 'full' ? 'border-jade/50 text-jade' : g.mode === 'partial' ? 'border-gold-ink/50 text-gold-ink' : 'border-ink/20 text-ink-ghost'"
+              :class="g.mode === 'full' ? 'border-jade/50 text-jade' : g.mode === 'partial' ? 'border-gold-ink/50 text-gold-ink' : 'border-ink/20 text-ink-faint'"
               :title="r.detail"
             >
               {{ r.name }}

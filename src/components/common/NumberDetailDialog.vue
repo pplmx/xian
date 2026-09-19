@@ -11,7 +11,7 @@
           <p class="flex items-baseline justify-between gap-2">
             <span class="shrink-0 text-[11px] text-ink-faint">{{ row.label }}</span>
             <span v-if="row.text" class="shrink-0 text-[13px] text-ink tabular">{{ row.text }}</span>
-            <span v-else class="shrink-0 text-[11px] text-ink-ghost tabular">{{ formatGN(row.value!) }}</span>
+            <span v-else class="shrink-0 text-[11px] text-ink-faint tabular">{{ formatGN(row.value!) }}</span>
           </p>
           <p v-if="row.text" class="mt-0.5 text-right text-[10px] leading-snug text-ink-faint">
             {{ row.hint ?? '由当前速率推算,会随构筑与加成变化' }}
@@ -24,7 +24,7 @@
             大数的"量级"读数:到了兆/京以上,玩家真正能横比的是数量级,而不是第几位数字。
             只在数够大时补这一句(小数字给了只会变成噪音)。
           -->
-          <p v-else-if="row.value !== undefined && magnitudeOf(row.value)" class="mt-0.5 text-right text-[10px] text-ink-ghost tabular">
+          <p v-else-if="row.value !== undefined && magnitudeOf(row.value)" class="mt-0.5 text-right text-[10px] text-ink-faint tabular">
             {{ magnitudeOf(row.value!) }}
           </p>
         </div>
@@ -36,7 +36,7 @@
         诚实说明:大数只带约 15 位有效数字,再往后是量级而不是精度。
         不写这句的话,那串尾部的 0 会被读成"精确到个位" —— 那是骗人。
       -->
-      <p class="mt-2 text-[10px] leading-relaxed text-ink-ghost">
+      <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
         数值以有效数字存储(约 15 位);超过 24 位的改用科学计数法,不再补零充当精度。
         同一页里的小号数字是缩写(万/亿/兆/京…),方便横比。
       </p>
