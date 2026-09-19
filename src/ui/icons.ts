@@ -1,23 +1,20 @@
 /** 图标注册表 —— 数据层用字符串键引用,统一在此映射 */
 import type { Component } from 'vue'
+import { INK_ICONS } from './inkIcons'
 import {
   Axe,
-  Backpack,
   Bell,
   Bird,
   BookOpen,
   Castle,
   CircleDot,
-  CircleUserRound,
   Cloud,
   Crown,
   Download,
   Droplets,
   Fish,
-  Flame,
   FlaskConical,
   Footprints,
-  Gem,
   Ghost,
   Hammer,
   Home,
@@ -25,12 +22,11 @@ import {
   Link,
   Lock,
   Moon,
-  Mountain,
   PawPrint,
   RefreshCw,
   Scroll,
-  Settings,
   Shield,
+  ShieldCheck,
   Shirt,
   Skull,
   Sparkles,
@@ -38,7 +34,6 @@ import {
   Star,
   Sunset,
   Sword,
-  Swords,
   Trash2,
   Trees,
   Unlock,
@@ -47,7 +42,6 @@ import {
   Wand,
   Watch,
   Waves,
-  Wind,
   X,
   Zap,
   Umbrella
@@ -55,22 +49,18 @@ import {
 
 export const ICONS: Record<string, Component> = {
   axe: Axe,
-  backpack: Backpack,
   bell: Bell,
   bird: Bird,
   book: BookOpen,
   castle: Castle,
   'circle-dot': CircleDot,
-  'circle-user': CircleUserRound,
   cloud: Cloud,
   crown: Crown,
   download: Download,
   droplets: Droplets,
   fish: Fish,
-  flame: Flame,
   flask: FlaskConical,
   footprints: Footprints,
-  gem: Gem,
   ghost: Ghost,
   hammer: Hammer,
   home: Home,
@@ -78,12 +68,12 @@ export const ICONS: Record<string, Component> = {
   link: Link,
   lock: Lock,
   moon: Moon,
-  mountain: Mountain,
   paw: PawPrint,
   refresh: RefreshCw,
   scroll: Scroll,
-  settings: Settings,
   shield: Shield,
+  /** 镇压中的地界签用的是 'shield-check',此前没登记,于是静静显示成一枚星芒 */
+  'shield-check': ShieldCheck,
   shirt: Shirt,
   skull: Skull,
   sparkles: Sparkles,
@@ -91,7 +81,6 @@ export const ICONS: Record<string, Component> = {
   star: Star,
   sunset: Sunset,
   sword: Sword,
-  swords: Swords,
   trash: Trash2,
   trees: Trees,
   unlock: Unlock,
@@ -100,10 +89,15 @@ export const ICONS: Record<string, Component> = {
   wand: Wand,
   watch: Watch,
   waves: Waves,
-  wind: Wind,
   x: X,
   zap: Zap,
-  umbrella: Umbrella
+  umbrella: Umbrella,
+  /*
+   * 水墨那八枚(底部导航五项 + 顶栏三项)在末尾铺进来,与上面的 lucide 图标同网格、
+   * 同线宽、同圆头圆角 —— 换的是形与笔,不是语言。同名键不在这里重复登记:
+   * 一个图标名只许有一个来源(详见 inkIcons.ts)。
+   */
+  ...INK_ICONS
 }
 
 export function iconOf(name: string): Component {
