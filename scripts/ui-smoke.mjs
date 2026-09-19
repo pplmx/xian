@@ -17,7 +17,7 @@
  * 发现 pageerror 即失败并打印堆栈前几行 —— 那通常就是一处真 bug。
  * 它同时在 CI 里跑(见 .github/workflows/build.yml 的 ui-check job 与 deploy.yml),
  * 与排版自检同属一道门:那边量排版,这边戳交互,红一条就不发布。
- * 第三方统计脚本的异常不计入失败(见 lib/pageErrors.mjs:什么算我们的账只写一处)。
+ * 页面异常一律计入失败;外域请求由 lib/pageErrors.mjs 的 blockExternal 拦掉并计数(应当恒为 0)。
  *
  * ⚠ 夹具说明:存档密钥就写在包里(见 utils/crypto 的注释:并非安全边界),
  * 故这里能照同一套格式造一份"神人境"存档。它是**自检夹具**,不是作弊入口:
@@ -73,7 +73,7 @@ const browser = await chromium.launch({
   args: ['--allow-file-access-from-files', '--disable-web-security']
 })
 const context = await browser.newContext({ viewport: { width: 375, height: 812 } })
-// 外域请求一律拦掉(统计脚本卡住 = 我们的门超时,见 scripts/lib/pageErrors.mjs)
+// 外域请求一律拦掉:一是量尺(应当恒为 0),二是别让别人的服务器决定我们的门要不要绿
 const blockedExternal = await blockExternal(context)
 if (LATE) {
   const gn = (m, e) => ({ m, e })
@@ -157,7 +157,7 @@ async function fingerprint() {
     return `${text.length}:${full.length}:${hash}|${theme}|${pressed}|${document.querySelectorAll('.modal-panel').length}|${document.querySelectorAll('[class*=toast]').length}`
   })
 }
-/** 页面异常分流 —— 与排版自检同一把尺子(第三方统计脚本抛的不算我们的账) */
+/** 页面异常收集 —— 与排版自检同一条口径(lib/pageErrors.mjs 只写一处) */
 watchPageErrors(page, msg => errors.push({ where: 'boot', msg }))
 
 await page.goto(INDEX, { waitUntil: 'load' })
@@ -233,7 +233,12 @@ if (silent.length) {
   for (const s of silent.slice(0, 20)) console.log(`  · ${s}`)
 }
 if (errors.length === 0) {
-  console.log(`✓ 无运行时异常(外域请求拦掉 ${blockedExternal()} 个:统计脚本不参与这道门)`)
+  if (blockedExternal() !== 0) {
+    console.log(`✗ 这一轮发起了 ${blockedExternal()} 个外域请求 —— 本站的决定是「零外部请求」`)
+    process.exitCode = 1
+  } else {
+    console.log('✓ 无运行时异常(外域请求 0 个:不接入任何第三方)')
+  }
 } else {
   for (const e of errors) console.log(`✗ ${e.where}\n   ${e.msg.split('\n')[0]}`)
   process.exitCode = 1

@@ -22,21 +22,13 @@
       <section>
         <h4 class="mb-0.5 font-kai text-[13px] text-ink">四、游戏本体不联网</h4>
         <p class="text-ink-faint">
-          游戏玩法完全在本机运行,不与任何游戏服务器通信,存档不上传。断网后除流量统计脚本无法加载外,全部功能正常。
+          游戏玩法完全在本机运行,不与任何服务器通信,存档不上传。页面<span class="text-ink">不加载任何外部脚本、不发任何外部请求</span> —— 断网与联网的表现完全一致。
         </p>
       </section>
       <section>
-        <h4 class="mb-0.5 font-kai text-[13px] text-ink">五、第三方流量统计</h4>
+        <h4 class="mb-0.5 font-kai text-[13px] text-ink">五、不接入任何第三方</h4>
         <p class="mb-1 text-ink-faint">
-          站点接入了 51.LA 网站统计,用于了解访问来源与访问量。它记录的是访问行为本身:
-        </p>
-        <ul class="ml-3 list-disc space-y-0.5 text-ink-faint">
-          <li>访问来路、页面路径、访问时间</li>
-          <li>IP 地址与由此推断的大致地区</li>
-          <li>浏览器、系统、分辨率等设备信息</li>
-        </ul>
-        <p class="mt-1 text-ink-faint">
-          <span class="text-ink">不包含你的任何游戏数据</span>——道号、境界、装备、存档一概不在其中。游戏不接入广告与推送 SDK。
+          没有流量统计、没有广告与推送 SDK、没有用户画像。要知道使用情况的话,只可能是<span class="text-ink">保存在你本机</span>的计数(在存档里,不上传)。
         </p>
       </section>
       <section>

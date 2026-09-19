@@ -7,7 +7,7 @@
  *  · /assets/* 是 vite 内容哈希命名的产物,不同构建永不重名,故 cache-first
  *    不存在"缓存错了版本"的可能
  *  · manifest / 图标 / 音频等 public/ 稳定文件 cache-first,离线下照样出声出图
- *  · 外部跨域(51.la 统计 SDK 等)一律不干预
+ *  · 外部跨域请求一律不干预(本站现在不发外部请求,这条是防线)
  *  · core 逻辑全部打在 web/app 窗口侧,这里只管能退化的缓存层
  *
  * 【发版提醒】改了需要换缓存内容的策略(如资产路径规则、导航回退行为)时,
@@ -63,7 +63,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request
   if (req.method !== 'GET') return
   const url = new URL(req.url)
-  // 只管自己源上的:跨域(统计脚本等)让浏览器默认处理
+  // 只管自己源上的:跨域让浏览器默认处理(本站不发外部请求,这条是防线)
   if (url.origin !== self.location.origin) return
   if (req.mode === 'navigate') {
     event.respondWith(networkFirst(req))

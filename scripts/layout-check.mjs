@@ -141,7 +141,8 @@ const browser = await chromium.launch({ args: ['--allow-file-access-from-files',
  *
  * 为什么放在 context 层:逐个建页点去挂是漏得起的活 —— 实测漏一处就够让门在 CI 里红。
  * 那一次红在"坏档也能进游戏"那个场景:它的页面由 `ctx.newPage()` 建出来,没被拦住,
- * 于是 CI 有网时统计脚本真的去加载,`goto(waitUntil: 'load')` 等它等到 30 秒超时。
+ * 于是 CI 有网时它真的去加载,`goto(waitUntil: 'load')` 等它等到 30 秒超时。
+ * 现在那个脚本已经删掉(不接入任何第三方),这条拦截反过来成了「零外部请求」的量尺。
  * 挂在 context 上,该上下文里**所有**页面(含后续新建的)自动覆盖。
  */
 const blockedGetters = []
@@ -775,7 +776,7 @@ for (const vp of VIEWPORTS) {
     }
   }
   if (pageErrors.length) failures.push(`[${vp.tag}] 页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  // 外域请求(统计脚本)一律拦掉:它们的服务器不该决定这道门的颜色(实测超时红过一次)
+  // 外域请求一律拦掉:一是量尺(应当恒为 0),二是别让别人的服务器决定我们的门要不要绿
   await page.close()
 }
 
@@ -3138,7 +3139,25 @@ if (valueRowsSeen === 0) {
   failures.push('data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)')
 }
 
-console.log(`\n排版自检:${checked} 个页面 × 视口组合(外域请求拦掉 ${blockedTotal()} 个:统计脚本不参与这道门)`)
+/**
+ * 产物层静态判据:**首页不许引用任何外链**。
+ *
+ * 上面那条量的是"跑起来时真的没发外部请求";这条补的是"就算不发,也不许把外链写进产物" ——
+ * 例如 `<link rel="preconnect">`、预加载、条件加载的外部脚本,运行时量不到,但它们同样是
+ * 对第三方的依赖(隐私声明第六节写着"零外部请求",这条替那句话守门)。
+ */
+{
+  const html = readFileSync(join(ROOT, 'dist/index.html'), 'utf8')
+  const external = [...html.matchAll(/(?:src|href)\s*=\s*["'](https?:\/\/[^"']+)["']/g)].map(m => m[1])
+  if (external.length > 0) {
+    failures.push(`首页引用了 ${external.length} 个外链 —— 本站的决定是"零外部请求":${external.slice(0, 3).join('、')}`)
+  }
+}
+
+console.log(`\n排版自检:${checked} 个页面 × 视口组合`)
+if (blockedTotal() !== 0) {
+  failures.push(`这 ${checked} 次页面加载里发起了 ${blockedTotal()} 个外域请求 —— 本站的决定是「零外部请求」(见 index.html 与隐私声明第六节)`)
+}
 if (failures.length === 0) {
   console.log('✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态')
   console.log('✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh')
