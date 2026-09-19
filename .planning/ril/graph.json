@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 384,
+  "round": 385,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T03:23:13+00:00",
+  "updated_at": "2026-09-19T03:26:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21413,7 +21413,7 @@
       "version": 1,
       "created_at": "2026-09-19T03:23:01+00:00",
       "updated_at": "2026-09-19T03:23:01+00:00",
-      "touched_round": 383,
+      "touched_round": 384,
       "summary": "库的功能边界到\"基础数值系统\"为止:四套系统 + 横切层 + 判据刻度 + 四份内容包进库;玩法层、界面与资源、存储与云同步、题材文案留在使用方。0.x 期间只做三件事 —— 修错、补判据、文档对齐;版本只加 patch;对外承诺以公开面清单为准。",
       "rationale": "这条口径此前只散在 CHANGELOG 的版本口径与各文档的只言片语里,使用者要么猜、要么把\"库没做\"当成\"库没做完\"。实测的信号很清楚:越到后面,能加的\"能力层\"越像某一款游戏的玩法(战斗演出、赛季规则),把那些塞进来会让库失去通用性 —— 而库的价值恰恰是\"换一套名字与数字就能变成另一款游戏\"。把边界写进 README,两边期待都不用猜:使用者知道该在库外组合,维护者也知道什么改动**不属于**这个库。",
       "alternatives_rejected": "①继续无限加层(通用性被某一款作品的玩法需求牵着走,最后没人能拿它搭别的题材);②只写\"这是内核不是框架\"(太笼统,读者仍不知道\"任务 / 图鉴 / 状态\"这些横切层算不算在内);③把边界写进 CHANGELOG 而不进 README(使用者先看 README,翻到版本记录已经很晚了);④承诺 1.0 与 API 冻结(现在是 0.x,冻结既不诚实也没必要 —— 真正的承诺是公开面清单,它已经被逐字钉住)。"
@@ -21441,6 +21441,43 @@
       "confidence": 0.95,
       "source": "变更 CHG-454(132a30a)与 release v0.1.22。① 库:bun run check 全绿 —— 591 例 / 80 文件 + 18 道自检(版本引用 14 处 = 0.1.22;14 段文档片段编过且真跑过;发布包自检真装一遍)。② 独立仓 CI:run 35418194168(6a0ba8c)success。③ 发布保险丝:run 35418204829(v0.1.22)success —— 第二次真考。④ 附件:wanxiang-engine-0.1.22.tgz(275774 字节,uploaded),空项目 npm i 后跑通(只装两层:学徒·粗活 / config.equipment===null:true;仙侠包体检 210 格 / 被碾 170 格),且包里 README 已含「到哪儿为止」一节。⑤ 宿主:部署门 run 35418184140 的\"静态检查 + 单元测试\"一步(含 bun run check + 全量用例 289 文件 / 2647 例 + check:engine + check:engine:standalone)success,构建 success。",
       "summary": "\"最小完备\"这条判断有据可查:库里齐、判据绿、边界写清、对外三条证据常态绿 —— 而且发版保险丝连跑两次都成功,附件这条路从此不靠人记得。"
+    },
+    "TASK-370": {
+      "id": "TASK-370",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T03:26:47+00:00",
+      "updated_at": "2026-09-19T03:26:57+00:00",
+      "touched_round": 384,
+      "category": "docs",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "收尾流程落地:开发文档新增「维护期(0.1.22 起)」(什么情况才动库 / 动前跑什么 / 动后看哪四条证据 / 只在攒够一批时发版);「文档引用」自检补上相对链接(按所在目录解析),当场抓到 docs/development.md 的 ./CHANGELOG.md 死链并修掉。"
+    },
+    "CHG-455": {
+      "id": "CHG-455",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:26:50+00:00",
+      "updated_at": "2026-09-19T03:26:50+00:00",
+      "touched_round": 384,
+      "commit": "52a1f0e",
+      "summary": "库:docs/development.md 新增「维护期(0.1.22 起)」一节并修掉 ./CHANGELOG.md 死链(改 ../CHANGELOG.md);verify-dist.mjs 的「文档引用」自检加入相对链接核对(按所在目录解析,共 64 条路径);CHANGELOG 记两条。"
+    },
+    "EV-378": {
+      "id": "EV-378",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:26:53+00:00",
+      "updated_at": "2026-09-19T03:26:53+00:00",
+      "touched_round": 384,
+      "confidence": 0.95,
+      "source": "变更 CHG-455(52a1f0e)。库 bun run check 全绿 —— 591 例 / 80 文件 + 18 道自检;新加入的相对链接核对当场抓到 docs/development.md 的 `./CHANGELOG.md` 死链(它指向 docs/ 下,实际在仓库根),修好后判据印「文档引用自检通过(26 条命令与 64 条路径都真实存在;上游工程那几条已显式豁免)」。宿主门:收尾版提交 132a30a 那次被下一推送按并发规则 cancelled(不是失败),最新一次在跑。",
+      "summary": "\"相对链接没人点\"这个盲区补上之后立刻抓到一处真死链 —— 判据不是装饰,是当场就有产出的。"
     }
   },
   "edges": [
@@ -31524,6 +31561,18 @@
       "to": "HYP-110",
       "type": "validates",
       "created_at": "2026-09-19T03:23:12+00:00"
+    },
+    {
+      "from": "CHG-455",
+      "to": "TASK-370",
+      "type": "implements",
+      "created_at": "2026-09-19T03:26:56+00:00"
+    },
+    {
+      "from": "DEC-169",
+      "to": "TASK-370",
+      "type": "governs",
+      "created_at": "2026-09-19T03:26:56+00:00"
     }
   ]
 }
