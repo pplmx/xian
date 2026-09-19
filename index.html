@@ -22,7 +22,72 @@
   </head>
 
   <body>
-    <div id="app"></div>
+    <!--
+      首帧占位:Vue 挂载时会整块替换 #app 的内容,这一块只在"脚本还没到位"的那一瞬间可见
+      —— 冷启动、首次装 PWA、慢网络、离线首开。那几百毫秒里玩家看到的不该是一张空白宣纸,
+      而是本作的名与印(与欢迎页同一副字、同一枚朱砂印)。
+      顺带兜一层底:脚本真挂了(解析失败、老浏览器不认模块),这页也不会是空白。
+
+      样式只能内联在这里:此刻还没有 CSS。颜色是色板的手抄值(见 palette.spec.ts 的
+      「两处手抄关系」那条,index.html 也算一处),暗色另给一套,按系统偏好先兜住一半
+      的闪白(玩家自己选的「夜间」存在存档里,首帧读不到)。
+    -->
+    <div id="app">
+      <div class="boot">
+        <span class="boot-seal">道</span>
+        <p class="boot-title">玄枢录</p>
+        <p class="boot-sub">玄之又玄 · 众妙之门</p>
+      </div>
+    </div>
+    <style>
+      #app {
+        --boot-paper: 243 239 228;
+        --boot-ink: 41 39 34;
+        --boot-cinnabar: 168 63 57;
+      }
+      @media (prefers-color-scheme: dark) {
+        #app {
+          --boot-paper: 33 31 28;
+          --boot-ink: 232 226 210;
+          --boot-cinnabar: 255 119 115;
+        }
+      }
+      #app .boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        background: rgb(var(--boot-paper));
+        font-family: 'Kaiti SC', STKaiti, KaiTi, 'Noto Serif SC', serif;
+      }
+      #app .boot-seal {
+        display: grid;
+        place-items: center;
+        width: 4.5rem;
+        height: 4.5rem;
+        border-radius: 0.75rem;
+        background: rgb(var(--boot-cinnabar));
+        color: rgb(var(--boot-paper));
+        font-size: 2.6rem;
+        line-height: 1;
+      }
+      #app .boot-title {
+        margin: 1rem 0 0;
+        color: rgb(var(--boot-ink));
+        font-size: 2.1rem;
+        letter-spacing: 0.3em;
+      }
+      #app .boot-sub {
+        margin: 0;
+        color: rgb(var(--boot-ink));
+        opacity: 0.62;
+        font-size: 0.75rem;
+        letter-spacing: 0.4em;
+      }
+    </style>
     <script type="module" src="/src/main.ts"></script>
     <!--
       这里**不挂任何外部统计** —— 页面不加载外部脚本、不发任何外部请求,

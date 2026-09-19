@@ -28,6 +28,7 @@ const CSS = readFileSync(resolve(ROOT, 'src/style.css'), 'utf-8')
 const TAILWIND = readFileSync(resolve(ROOT, 'tailwind.config.js'), 'utf-8')
 const THEME_TS = readFileSync(resolve(ROOT, 'src/core/theme.ts'), 'utf-8')
 const PRIVACY = readFileSync(resolve(ROOT, 'public/privacy.html'), 'utf-8')
+const INDEX_HTML = readFileSync(resolve(ROOT, 'index.html'), 'utf-8')
 
 type Rgb = readonly [number, number, number]
 
@@ -299,6 +300,30 @@ describe('调色板 · 两处手抄关系', () => {
       const mine = LIGHT.get(name!)
       expect(mine, `privacy.html 抄了 --${name},色板上没有这个 token`).toBeTruthy()
       expect([Number(r), Number(g), Number(b)]).toEqual([...mine!])
+    }
+  })
+
+  it('index.html 首帧那三个色也是手抄的,同样要对得上', () => {
+    /*
+     * 首帧占位必须在 CSS 到位之前就把颜色写进去(那时还没有变量),所以它是一处手抄。
+     * 抄的是 paper / ink / cinnabar 三色,明暗各一套。
+     */
+    const pairs: [string, 'light' | 'dark'][] = [
+      ['paper', 'light'],
+      ['ink', 'light'],
+      ['cinnabar', 'light'],
+      ['paper', 'dark'],
+      ['ink', 'dark'],
+      ['cinnabar', 'dark']
+    ]
+    for (const [token, theme] of pairs) {
+      // 先把两段作用域切出来:第一段是 :root 那半边,第二段是暗色媒体查询里那半边
+      const scope = theme === 'light' ? /#app \{([\s\S]*?)\n {6}\}/.exec(INDEX_HTML)?.[1] : /@media \(prefers-color-scheme: dark\) \{[\s\S]*?#app \{([\s\S]*?)\n {8}\}/.exec(INDEX_HTML)?.[1]
+      expect(scope, `index.html 的首帧色块变了形状(${theme}),判据要跟着改`).toBeTruthy()
+      const value = new RegExp(`--boot-${token}:\\s*(\\d+) (\\d+) (\\d+);`).exec(scope!)
+      expect(value, `index.html 首帧少了 --boot-${token}(${theme})`).toBeTruthy()
+      const mine = (theme === 'light' ? LIGHT : DARK).get(token)!
+      expect([Number(value![1]), Number(value![2]), Number(value![3])]).toEqual([...mine])
     }
   })
 })
