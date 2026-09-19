@@ -19,14 +19,17 @@ npm i ./wanxiang-engine-0.1.19.tgz
 #    把 packages/engine 加进根 package.json 的 workspaces 即可
 ```
 
+装**发布版压缩包**这条不跑任何脚本:包里已经是产物(`prepack` 在**打包时**把 `dist` 编译好),
+所以消费者那边不需要 `typescript`,也不需要允许任何安装脚本。
+
 **为什么不把 `bun add github:...#v0.1.19` 当首选**(实测过,不是猜测):
 
-* 那条路依赖 `prepare` 脚本**现场编译**(`"prepare": "tsc -p tsconfig.build.json"`);
+* 那条路要在**安装现场**编译,而构建工具不该是运行时依赖;
 * **bun** 默认拦掉依赖的安装脚本 —— 装完包里没有 `dist`,`import 'wanxiang-engine'` 直接报
   "Cannot find package";把包加进 `trustedDependencies` 放行之后,git 依赖**也不带
-  devDependencies**,于是 `tsc: command not found`(`prepare` 退出 127);
-* **npm** 能装上(它会先装 git 依赖的 devDependencies 再跑 `prepare`,新版本还会提示
-  "允许安装脚本"),所以"两个包管理器行为一致"这句不成立。
+  devDependencies**,于是 `tsc: command not found`);
+* **npm** 装得进去,但拿到的同样是**没有产物的源码**(构建脚本只在打包时跑),所以
+  "两个包管理器行为一致"这句不成立 —— 一致的是:**git tag 这条现在两边都不该用**。
 
 压缩包这条路没有这些问题:**包里已经是产物**,不跑任何脚本,谁装都一样。
 仓库里仍然刻意**不提交 dist** —— 它只在 `npm pack` / 发布时生成,作为 release 附件发出去。
