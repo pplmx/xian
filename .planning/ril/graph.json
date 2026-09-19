@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 358,
+  "round": 359,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:09:17+00:00",
+  "updated_at": "2026-09-19T00:16:05+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 357,
+      "touched_round": 358,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -19913,6 +19913,55 @@
       "confidence": 0.96,
       "source": "变更 CHG-422(fb438b0)。正向:库 bun run check 全绿(554 例 / 76 文件 + 14 道自检,新印\"版本引用自检通过(6 处引用都是 0.1.18)\");宿主 bun run check:engine 通过(印\"宿主文档里的库版本 2 处引用都是 0.1.18\")。反向:README 的 #v0.1.18 → #v0.1.17 时自检点名 README.md(已还原)。",
       "summary": "把\"发版时的那一步人工同步\"变成会红的判据。同时把发版流程从只存在于对话记忆里,落到 docs/development.md(含 gh --target 要写完整 SHA、不要盲等 CI 这两条踩过的坑)。"
+    },
+    "TASK-339": {
+      "id": "TASK-339",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:15:57+00:00",
+      "updated_at": "2026-09-19T00:16:05+00:00",
+      "touched_round": 358,
+      "category": "feature",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 3,
+      "summary": "新增第 38 个模块:曲线体检 createProgressionAudit —— 逐格量需求与面板的相邻格倍数、跨界单列(跳变记在落点)、玩家÷内容≥crushRatio 判碾压;强度/内容强度/价格曲线都由调用方给,不给内容强度就不判碾压。"
+    },
+    "CHG-423": {
+      "id": "CHG-423",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:15:57+00:00",
+      "updated_at": "2026-09-19T00:15:57+00:00",
+      "touched_round": 358,
+      "commit": "df24a0f",
+      "summary": "库:新增 src/progression.ts 与 progression.spec.ts(6 条);挂进 examples/realm-ladder.ts(体检当场抓到换界倒挂);usage.md 模块表与定制表、README 目录树与导出/类型计数、assembly.md、publicApi.spec、CHANGELOG 同步。宿主:engineAdoption.spec 登记归属(own:本作是内容相关的审计)。"
+    },
+    "EV-349": {
+      "id": "EV-349",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:16:01+00:00",
+      "updated_at": "2026-09-19T00:16:01+00:00",
+      "touched_round": 358,
+      "confidence": 0.92,
+      "source": "变更 CHG-423(df24a0f)。库:bun run check 全绿(560 例 / 77 文件 + 14 道自检:组装指南 28 工厂、目录树 38 模块、示例覆盖 37 模块、公开面 76 导出 + 208 类型)+ 13 份示例。示例实测:共 35 格,需求跳得最狠 掌柜·圆熟 ×4.50,换界两格 分号掌事·见习 需求 ×0.2 / 行首·见习 ×0.1(倒挂,被体检抓出),第一次碾压 0 格。宿主:bun run test 285 文件 / 2609 例全过、test:report 2609 过 0 败、check:engine 通过。",
+      "summary": "第一次给库加使用者直接用的工具,而不是又一道判据。设计上守了两条:强度与内容强度都由调用方给(引擎不认识战力怎么算);内容强度不给就不判碾压(宁可少报不要瞎报)。实测价值:在示例上当场抓到换到新界反而更便宜的倒挂(层内 1.5^4≈5.06 > 跨大境界 2.4)。"
+    },
+    "DEC-155": {
+      "id": "DEC-155",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:16:04+00:00",
+      "updated_at": "2026-09-19T00:16:04+00:00",
+      "touched_round": 358,
+      "summary": "数值审计分两份:引擎里放通用版(强度与内容强度由调用方给、不认识题材),宿主里保留内容相关版(inflationAudit / progressionSim,要区域强度与装备成型度档位)。两者不互相取代。",
+      "rationale": "通用版的判据是换任何题材都能跑:它只能认识调用方给的函数,看不到区域表、装备成型度、丹药灵脉这些内容建模;而宿主的审计要回答这一跃脱不脱节、哪一段内容被碾压,没有内容建模就答不了(内容强度不是境界的函数,是区域表的函数)。硬把两者合成一个,要么让引擎认识内容(违反抽象),要么让宿主降级成只看境界(丢掉结论)。",
+      "alternatives_rejected": "①把引擎的体检改造成带内容建模的(引擎会认识区域/装备这类题材概念,失去通用性);②让宿主的 inflationAudit 全部改写成调用引擎版(内容强度映射对不上,且会动到在运营的平衡工具,风险大于收益);③宿主那边不登记、只把库的导出当成没用上(落地审计会红,而且掩盖了两份审计口径不同这个真实边界)。"
     }
   },
   "edges": [
@@ -29480,6 +29529,24 @@
       "to": "COMP-027",
       "type": "located_in",
       "created_at": "2026-09-19T00:09:17+00:00"
+    },
+    {
+      "from": "CHG-423",
+      "to": "TASK-339",
+      "type": "implements",
+      "created_at": "2026-09-19T00:16:04+00:00"
+    },
+    {
+      "from": "DEC-155",
+      "to": "TASK-339",
+      "type": "governs",
+      "created_at": "2026-09-19T00:16:05+00:00"
+    },
+    {
+      "from": "DEC-155",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-19T00:16:05+00:00"
     }
   ]
 }
