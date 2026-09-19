@@ -16,7 +16,7 @@
  * 用法:`node scripts/verify-dist.mjs`(已挂在 `bun run check` 末尾)
  */
 import assert from 'node:assert/strict'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
@@ -1080,9 +1080,23 @@ export const custom = { config, resources, triage, bigintNumeric }
    * 示例还照旧 —— 而读者是照着抄的人。约定:块前面一行写 `<!-- compile-check -->`
    * (可以带一句说明),自检就把它抽出来当 `.mts` 编一遍。没标的不查 ——
    * 很多片段本来就是节选(中间写着省略号),硬查只会逼着文档写废话。
+   *
+   * 编过之后**还要真跑一遍**(用 bun,它直接读 TS):文档承诺的是"照抄能用",
+   * 而"能编译"到"跑起来是对的"之间还隔着一层 —— 默认值不对、空表崩掉、导出少一个,
+   * 都是编译期看不出来的。跑的是**装好的发布包**,不是仓库源码。
    */
   const docSources = ['README.md', ...readdirSync(resolve(ENGINE, 'docs')).map(name => `docs/${name}`)]
   let checkedBlocks = 0
+  let ranBlocks = 0
+  /** bun 不在就跳过"真跑"这一步(与上面 tsc 那条同样的取舍:不假装验过,但要说清跳过了什么)。 */
+  const bunBin = (() => {
+    try {
+      execFileSync('bun', ['--version'], { stdio: 'ignore' })
+      return 'bun'
+    } catch {
+      return undefined
+    }
+  })()
   for (const rel of docSources) {
     const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
     const marked = [...text.matchAll(/<!-- compile-check[^>]*-->\s*\n```(?:ts|typescript)\n([\s\S]*?)^```$/gm)]
@@ -1094,11 +1108,25 @@ export const custom = { config, resources, triage, bigintNumeric }
         [tsc, '--noEmit', '--strict', '--target', 'es2022', '--module', 'esnext', '--moduleResolution', 'bundler', '--skipLibCheck', 'false', file],
         { cwd: app, stdio: 'inherit' }
       )
+      // 编过不等于跑得对:再真跑一遍(输出只在失败时打出来,免得刷屏)
+      if (bunBin) {
+        const run = spawnSync(bunBin, [file], { cwd: app, encoding: 'utf-8' })
+        if (run.status !== 0) {
+          const tail = `${run.stdout ?? ''}${run.stderr ?? ''}`.trim().split('\n').slice(-6).join('\n')
+          assert.fail(`${rel} 里这段 compile-check 片段**编得过但跑不起来**:\n${tail}`)
+        }
+        ranBlocks += 1
+      }
       checkedBlocks += 1
     }
   }
   assert.ok(checkedBlocks >= 1, '文档里一个 compile-check 片段都没有?约定被删了?')
-  console.log(`   文档片段编译通过(${checkedBlocks} 段标了 compile-check 的代码块都对着发布包编过)`)
+  if (bunBin) assert.equal(ranBlocks, checkedBlocks, `有 ${checkedBlocks - ranBlocks} 段没跑成`)
+  console.log(
+    bunBin
+      ? `   文档片段通过(${checkedBlocks} 段标了 compile-check 的代码块:都对着发布包编过,而且都真跑了一遍)`
+      : `   文档片段编译通过(${checkedBlocks} 段对着发布包编过;本机没有 bun,没跑)`
+  )
 } else {
   console.log('   (跳过类型消费者自检:本地没有 typescript —— 先 bun install)')
 }
