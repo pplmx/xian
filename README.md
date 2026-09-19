@@ -63,11 +63,11 @@ bun run check   # 类型检查 + ESLint
 
 等级(境界)、属性、装备、副本四套系统已经从本作里**抽成独立内核** —— 不依赖 Vue / Pinia / 浏览器 API,
 换一套名称与内容就能搭出自己的游戏。独立仓库与文档:
-<https://github.com/pplmx/wanxiang-engine>(版本 `v0.1.21`)。
+<https://github.com/pplmx/wanxiang-engine>(版本 `v0.1.22`)。
 
 ```jsonc
 // 别人引用它的方式:装发布版压缩包(包里带编译好的 dist,不需要任何构建脚本)
-"wanxiang-engine": "https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.21/wanxiang-engine-0.1.21.tgz"
+"wanxiang-engine": "https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.22/wanxiang-engine-0.1.22.tgz"
 // 不要写成 github:pplmx/wanxiang-engine#vX.Y.Z —— 那条路依赖 prepare 现场编译,
 // bun 默认拦掉安装脚本、放行后又缺 devDependencies(tsc 不存在);原因与实测见库的 docs/development.md
 ```

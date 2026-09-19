@@ -64,16 +64,16 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 尚未发布到 npm。装**发布版的压缩包**(包里带编译好的 `dist`,不需要任何构建脚本):
 
 ```bash
-bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.21/wanxiang-engine-0.1.21.tgz
+bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.22/wanxiang-engine-0.1.22.tgz
 # 或
-npm  i https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.21/wanxiang-engine-0.1.21.tgz
+npm  i https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.22/wanxiang-engine-0.1.22.tgz
 ```
 
 发布包自检(`bun run check`)里那一步 `npm pack` 打出来的就是这个文件,**每次发版都会作为
 release 附件挂上去** —— 所以上面那条 URL 与版本号始终一致(有判据盯着,见
 [开发文档](./docs/development.md#接进你自己的项目))。
 
-> **为什么不直接 `bun add github:pplmx/wanxiang-engine#v0.1.21`?**
+> **为什么不直接 `bun add github:pplmx/wanxiang-engine#v0.1.22`?**
 > 实测过:那条路要在**安装现场**编译,而 bun 默认拦掉依赖的安装脚本(即使放行,
 > git 依赖也不带 devDependencies,`tsc` 根本不存在);npm 那边**装得进去,拿到的却是没有
 > 产物的源码**(构建脚本只在打包时跑)。压缩包这条路**谁装都一样**,因为包里已经是产物 ——
@@ -337,12 +337,39 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 界面、存储介质与账号云同步、音频与美术资源、服务端接口。
 存档的**版本迁移与形状修复**在库内,但写到哪里、要不要加密由你决定。
 
+### 到哪儿为止(库的职责边界)
+
+这句话在这里写清楚,是为了两边的期待都不用猜:**库到"基础数值系统"为止**。
+
+| 在库里 | 为什么是它 |
+| --- | --- |
+| 四套系统:等级(境界)/ 属性 / 装备 / 副本 | 一切数值游戏都绕不开的骨架;"没有这一层"也能写 `null` 明说 |
+| 横切层:账本 / 持有 / 任务 / 链 / 成就 / 图鉴 / 状态 / 设施 / 投资点 / 遴选 / 抽池 / 保底 / 掉落 / 经济读数 / 成长体检 …… | 都是"一层回答一个问题"的通用件,38 个模块各管一问 |
+| 判据与刻度:18 道常驻自检 + 31 份消融 + 对账口径 | "能用"不靠文档承诺,靠跑一遍就能看见 |
+| 内容包:`presets/xiuxian` / `demo` / `daily` / `minimal` | 三份换皮样例 + 一份只装两层的起点 |
+
+| 不在库里(按设计留在使用方) | 为什么不该进库 |
+| --- | --- |
+| 玩法层:战斗演出、赛季规则、活动的具体数值 | 那是**某一款游戏**的事;库给的是可组合的件 |
+| 界面 / 动画 / 美术与音频资源 | 与数值内核无关,也不该让库背上框架依赖 |
+| 存储介质、账号云同步、服务端接口 | 库给的是存档的**形状与迁移**,写到哪儿是你的选择 |
+| 具体题材的名字与文案 | 库只认机制键;展示名一律由内容给(包括 `formatAmount` 的数词) |
+
+### 维护口径(0.x 期间)
+
+- **不再新增能力层**:新玩法请在库外组合已有的层(配方见 [组装指南](./docs/assembly.md));
+  库自己只做三件事 —— 修错、补判据、让文档与实现一致;
+- **版本只加 patch**:0.1.x 往下走,不跳 minor、不追里程碑;真正的对外承诺是
+  **公开面清单**(78 个运行时导出 + 212 个公开类型,逐字钉在 `src/publicApi.spec.ts`);
+- **数值曲线不承诺不变**(换题材本来就要调),但**默认值与旧行为**在未显式配置时逐位一致,
+  由 `baseline.spec.ts` 的摘要与 `docs/parity.md` 的对账守着。
+
 **兼容性**:零运行时依赖;纯 ESM + `.d.ts`;Node ≥ 20 / Bun / Deno / Vite / webpack 直接可用,
 不需要任何构建器插件。库不依赖 Vue / Pinia / 浏览器 API —— 纯函数 + 数据驱动,服务端跑批量模拟也能直接用。
 
 ## 版本与发布
 
-- 当前版本 **0.1.21**(tag `v0.1.21`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
+- 当前版本 **0.1.22**(tag `v0.1.22`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
 - 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:
   **攒批发布** —— 几十个改动攒一版是常态,期间它们记在「未发布」一节里;tag 是给外面的人
   一个可 pin 的阶段性节点,不是改动的日记。版本跟着实际分量走,真有里程碑才跳 minor 并写清为什么;
