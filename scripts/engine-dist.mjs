@@ -202,6 +202,7 @@ console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
     for (const m of text.matchAll(/#v(\d+\.\d+\.\d+)/g)) refs.push([rel, m[1]])
     for (const m of text.matchAll(/版本 `v(\d+\.\d+\.\d+)`/g)) refs.push([rel, m[1]])
     for (const m of text.matchAll(/wanxiang-engine-(\d+\.\d+\.\d+)\.tgz/g)) refs.push([rel, m[1]])
+    for (const m of text.matchAll(/releases\/download\/v(\d+\.\d+\.\d+)\//g)) refs.push([rel, m[1]])
   }
   assert.ok(refs.length >= 1, '宿主文档里一处都没提库的版本号?')
   const stale = refs.filter(([, v]) => v !== engineVersion).map(([rel, v]) => `${rel} 写的是 ${v}`)

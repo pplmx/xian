@@ -3,24 +3,33 @@
 ## 接进你自己的项目
 
 ```bash
-# 一 · 按 tag 装(推荐;别跟 main,库还在长)
-bun add github:pplmx/wanxiang-engine#v0.1.19
+# 一 · 装发布版压缩包(推荐;每次发版都作为 release 附件挂上去)
+bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.19/wanxiang-engine-0.1.19.tgz
+npm  i https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.19/wanxiang-engine-0.1.19.tgz
 
 # 二 · 本地路径依赖
 #    package.json: "wanxiang-engine": "file:../packages/engine"
 bun run build              # 在 packages/engine 里先出一次产物
 
-# 三 · 打包成 tgz 再装
-cd packages/engine && npm pack        # 得到 wanxiang-engine-0.1.19.tgz
+# 三 · 自己打一份再装(离线 / 内网分发用这条)
+cd packages/engine && npm pack        # 得到 wanxiang-engine-0.1.19.tgz(就是上面那个附件)
 npm i ./wanxiang-engine-0.1.19.tgz
 
 # 四 · monorepo 工作区
 #    把 packages/engine 加进根 package.json 的 workspaces 即可
 ```
 
-装 git 依赖时,包会**自己跑一次 `prepare` 把 `dist` 编译出来** —— 这就是 `package.json` 里那行
-`"prepare": "tsc -p tsconfig.build.json"` 的用处。否则别人装到的是一份没有产物的源码,
-`import 'wanxiang-engine'` 会直接找不到入口。仓库里刻意**不提交 dist**,只让它在安装/发布时生成。
+**为什么不把 `bun add github:...#v0.1.19` 当首选**(实测过,不是猜测):
+
+* 那条路依赖 `prepare` 脚本**现场编译**(`"prepare": "tsc -p tsconfig.build.json"`);
+* **bun** 默认拦掉依赖的安装脚本 —— 装完包里没有 `dist`,`import 'wanxiang-engine'` 直接报
+  "Cannot find package";把包加进 `trustedDependencies` 放行之后,git 依赖**也不带
+  devDependencies**,于是 `tsc: command not found`(`prepare` 退出 127);
+* **npm** 能装上(它会先装 git 依赖的 devDependencies 再跑 `prepare`,新版本还会提示
+  "允许安装脚本"),所以"两个包管理器行为一致"这句不成立。
+
+压缩包这条路没有这些问题:**包里已经是产物**,不跑任何脚本,谁装都一样。
+仓库里仍然刻意**不提交 dist** —— 它只在 `npm pack` / 发布时生成,作为 release 附件发出去。
 
 ## 本目录与独立仓库的关系
 
@@ -69,13 +78,18 @@ git push origin main
 git subtree push --prefix=packages/engine engine main    # 或在独立仓库里直接推
 # 5 · 打 tag + 发 release(gh 的 --target 用完整 SHA,别用分支名)
 gh release create v0.1.19 --target "$(git -C packages/engine rev-parse main)" --title v0.1.19 --notes-file ...
-gh api repos/pplmx/wanxiang-engine/releases/tags/v0.1.19     # 核对 tag 与包内版本
+# 6 · 把打包产物挂成 release 附件 —— 使用者装的就是它(README 的首选安装方式就是这个 URL)
+cd packages/engine && npm pack && gh release upload v0.1.19 wanxiang-engine-0.1.19.tgz --clobber
+gh api repos/pplmx/wanxiang-engine/releases/tags/v0.1.19     # 核对 tag、包内版本与附件
 ```
 
 两条经验,都是真踩过的:
 
 - **`--target` 要写完整 SHA**:写分支名时,`gh` 打出来的 tag 可能落在旧提交上(而这个错误要到
   有人按 tag 装库时才现形);
+- **别忘了把 tgz 传上去**:README 的安装命令指向 release 附件,而这个 URL 里有两个版本号 ——
+  「版本引用自检」会盯住它们(含 `/download/vX.Y.Z/` 那一段),但附件本身得真的存在:
+  少了它,使用者拿到的是 404,而我们所有本地闸门照样全绿(`gh api` 那一行就是为这个核对的);
 - **别用 `gh run list` + sleep 轮询 CI**:慢且没必要 —— 判据在本地就能跑(`bun run check`),
   CI 只是把同一件事在干净环境里再做一遍;真要等,等一个具体对象(某次 run 的结论),不要盲等。
 

@@ -20,6 +20,16 @@
 
 ## 未发布
 
+- **修正:README 的安装方式换掉了 —— 原来那条对 bun 用户是坏的**(`docs/` 与根 README)。
+  实测(不是推断):`bun add github:pplmx/wanxiang-engine#v0.1.19` 装出来的包里**没有 `dist`**,
+  `import 'wanxiang-engine'` 直接报 "Cannot find package" —— 因为那条路依赖 `prepare` 现场编译,
+  而 bun 默认拦掉依赖的安装脚本;把它加进 `trustedDependencies` 放行之后,git 依赖**也不带
+  devDependencies**,于是 `tsc: command not found`(`prepare` 退出 127)。npm 那边能装上
+  (先装 devDependencies 再跑 `prepare`),但两家行为不一致,不适合当首选。
+  **现在首选是装 release 附件**(`releases/download/v0.1.19/wanxiang-engine-0.1.19.tgz`):
+  包里已经是产物、不跑任何脚本、谁装都一样。`v0.1.19` 的附件已经补传;
+  「版本引用自检」也扩到盯 URL 里的 `/download/vX.Y.Z/` 那一段,发版清单加了"别忘传附件"这一步。
+
 - **新判据:README 的"自检清单"**(`scripts/verify-dist.mjs`)—— README 现在把**十五道常驻自检**
   逐条列出来(上表只写最常被问到的五条,读者容易以为"判据就这几条")。清单本身也有判据:
   README 里写了几道,`scripts/verify-dist.mjs` 里就得真有那几道,名字对不上就红 ——

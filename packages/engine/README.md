@@ -61,13 +61,23 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 
 ## 安装
 
-尚未发布到 npm。按 tag 引用(**请用 tag,不要跟 `main`** —— 库还在长,`main` 随时会动):
+尚未发布到 npm。装**发布版的压缩包**(包里带编译好的 `dist`,不需要任何构建脚本):
 
 ```bash
-bun add github:pplmx/wanxiang-engine#v0.1.19
+bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.19/wanxiang-engine-0.1.19.tgz
 # 或
-npm  i github:pplmx/wanxiang-engine#v0.1.19
+npm  i https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.19/wanxiang-engine-0.1.19.tgz
 ```
+
+发布包自检(`bun run check`)里那一步 `npm pack` 打出来的就是这个文件,**每次发版都会作为
+release 附件挂上去** —— 所以上面那条 URL 与版本号始终一致(有判据盯着,见
+[开发文档](./docs/development.md#接进你自己的项目))。
+
+> **为什么不直接 `bun add github:pplmx/wanxiang-engine#v0.1.19`?**
+> 实测过:那条路**依赖 `prepare` 现场编译**,而 bun 默认拦掉依赖的安装脚本(即使放行,
+> git 依赖也不带 devDependencies,`tsc` 根本不存在);npm 那边能装上(它会先装
+> devDependencies 再跑 `prepare`,新版本还会提示你允许脚本),但两个包管理器行为不一致,
+> 不适合当首选。压缩包这条路**谁装都一样**,因为包里已经是产物。
 
 <!-- compile-check: 这段是"装上就能跑"的导入示例,自检会拿发布包把它编一遍 -->
 ```ts
@@ -80,7 +90,7 @@ import { DAILY }   from 'wanxiang-engine/presets/daily'     // 日常 · 学习
 ```
 
 其他接法(本地路径依赖 / tgz / monorepo 工作区)见[开发文档](./docs/development.md#接进你自己的项目)。
-装 git 依赖时包会自己跑一次 `prepare` 把 `dist` 编译出来,仓库里刻意不提交产物。
+仓库里刻意不提交 `dist`:它在 `npm pack` / 发版时生成,作为 release 附件发出去 —— 装的包里已经有产物。
 
 ## 快速开始
 

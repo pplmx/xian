@@ -189,6 +189,8 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
     for (const m of text.matchAll(/#v(\d+\.\d+\.\d+)/g)) versionRefs.push([rel, m[1]])
     for (const m of text.matchAll(/wanxiang-engine-(\d+\.\d+\.\d+)\.tgz/g)) versionRefs.push([rel, m[1]])
     for (const m of text.matchAll(/当前版本 \*\*(\d+\.\d+\.\d+)\*\*/g)) versionRefs.push([rel, m[1]])
+    // release 附件的下载路径也在引用版本号(装了才发现对不上就晚了)
+    for (const m of text.matchAll(/releases\/download\/v(\d+\.\d+\.\d+)\//g)) versionRefs.push([rel, m[1]])
   }
   assert.ok(versionRefs.length >= 4, `只找到 ${versionRefs.length} 处版本引用 —— 文档改了写法?`)
   const stale = versionRefs.filter(([, v]) => v !== version).map(([rel, v]) => `${rel} 写的是 ${v}`)

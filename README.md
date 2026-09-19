@@ -66,8 +66,10 @@ bun run check   # 类型检查 + ESLint
 <https://github.com/pplmx/wanxiang-engine>(版本 `v0.1.19`)。
 
 ```jsonc
-// 别人引用它的方式(推荐按 tag,别跟 main)
-"wanxiang-engine": "github:pplmx/wanxiang-engine#v0.1.19"
+// 别人引用它的方式:装发布版压缩包(包里带编译好的 dist,不需要任何构建脚本)
+"wanxiang-engine": "https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.19/wanxiang-engine-0.1.19.tgz"
+// 不要写成 github:pplmx/wanxiang-engine#vX.Y.Z —— 那条路依赖 prepare 现场编译,
+// bun 默认拦掉安装脚本、放行后又缺 devDependencies(tsc 不存在);原因与实测见库的 docs/development.md
 ```
 
 本作自己也只是一个使用者:源码里写的是 `from 'wanxiang-engine'`,开发期由 Vite / TS 的解析配置
