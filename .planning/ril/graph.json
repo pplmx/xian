@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 369,
+  "round": 370,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T01:03:06+00:00",
+  "updated_at": "2026-09-19T01:15:40+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20439,6 +20439,55 @@
       "confidence": 0.95,
       "source": "变更 CHG-434(d3aa2ad)。新自检首跑即抓到两条坏链接(我写的 <…tree/main/examples> 被当成目标 examples>;parity.md 指向本仓库并不存在的 src/core/engineParity.spec.ts —— 那条其实在源工程 pplmx/xian),修完后印\"文档链接自检通过(29 条指回仓库的链接都指向真实文件)\"。闸门:库 bun run check 全绿(570 例 / 79 文件 + 16 道自检 + 13 份示例),含\"自检清单自检通过(README 的 16 道与实跑的 16 道一一对得上)\"。",
       "summary": "用\"只读包里那几份文档\"的方式当一次 package-only 用户,发现\"可跑的证据\"那一列对包的读者等于不存在(示例与用例都不随包发布,路径还只是纯文本)。修法不是把示例塞进包(它们 import ../src,进包也跑不了),而是把路径写成指回仓库的链接,并给\"链接不许指空\"加判据。"
+    },
+    "TASK-351": {
+      "id": "TASK-351",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:15:39+00:00",
+      "updated_at": "2026-09-19T01:15:40+00:00",
+      "touched_round": 369,
+      "category": "test",
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "发布包探针扩成两只:定制表探针(十二类旋钮在临时项目里逐类拧一遍)+ 类型面探针(钩子按类型写一遍过 tsc --strict 两种解析);并修它拧出的三处:labelFormat 认 {world}、tierGrowth 改可选、capFn/accrue 两处文档说清。"
+    },
+    "CHG-435": {
+      "id": "CHG-435",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:15:39+00:00",
+      "updated_at": "2026-09-19T01:15:39+00:00",
+      "touched_round": 369,
+      "commit": "2413669",
+      "summary": "库:verify-dist 新增定制表探针与类型探针;realms.label 支持 {world};equipment/dungeons 的 tierGrowth 改为可选;realms.spec 补三条断言;docs/usage.md 三处说清;CHANGELOG 记三条。宿主无改动(仅跑了闸门)。"
+    },
+    "EV-361": {
+      "id": "EV-361",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:15:39+00:00",
+      "updated_at": "2026-09-19T01:15:39+00:00",
+      "touched_round": 369,
+      "confidence": 0.95,
+      "source": "变更 CHG-435(2413669)。发布包自检印:按包名 import 通过 / 从零装配通过 / **定制表探针通过(十二类旋钮都拧得动)** / 使用者的 tsc --strict 通过(bundler 与 node16)/ 文档片段 12 段编译 / 发布包自检通过。库 bun run check 全绿(570 例 / 79 文件 + 16 道自检;定制表 101 名字 / 167 旋钮)。宿主 bun run test 288 文件 / 2624 例全过、check:engine 通过。",
+      "summary": "探针的价值在于\"拧\"而不在于\"读\":写探针的过程里连续撞到六处假设不对(我自己的错)与三处库/文档的真问题(labelFormat 静默吞 {world}、tierGrowth 必填的冗余、capFn 与 accrue 的形状没说清)。前六处改探针,后三处改库与文档。"
+    },
+    "DEC-161": {
+      "id": "DEC-161",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:15:40+00:00",
+      "updated_at": "2026-09-19T01:15:40+00:00",
+      "touched_round": 369,
+      "summary": "发布包自检的探针分两只,各负责一类承诺:「从零装配探针」证明内容能换(自己写槽位/品质/词条/区域/敌人),「定制表探针 + 类型探针」证明机制能被接管(十二类钩子在包里拧得动、在 tsc --strict 下类型成立)。",
+      "rationale": "库对外的两句承诺是不一样的:一句是\"换内容就有一款游戏\",另一句是\"机制留了钩子可以接管\"。此前前者有判据(从零装配),后者只有仓库内的两条弱保障(定制表里的名字存在、库自己的用例覆盖)——都活在仓库里,验不到\"使用者拿着包照表改\"。探针一跑就证明这条缝是真的:labelFormat 吞掉 {world}、tierGrowth 逼人编数,这两件事在仓库里永远不会有人碰。",
+      "alternatives_rejected": "①只在仓库里加用例(证明不了\"从包里能不能用\",上一轮安装路径的坑就是这么漏的);②把定制表逐条写成示例(近百项,示例会变成清单朗读,而且仍然验不到包);③靠人读一遍文档(读不出\"{world} 被静默吞掉\"这种事实,只有真拧一次才知道)。"
     }
   },
   "edges": [
@@ -30138,6 +30187,18 @@
       "to": "TASK-350",
       "type": "implements",
       "created_at": "2026-09-19T01:03:06+00:00"
+    },
+    {
+      "from": "CHG-435",
+      "to": "TASK-351",
+      "type": "implements",
+      "created_at": "2026-09-19T01:15:40+00:00"
+    },
+    {
+      "from": "DEC-161",
+      "to": "TASK-351",
+      "type": "governs",
+      "created_at": "2026-09-19T01:15:40+00:00"
     }
   ]
 }
