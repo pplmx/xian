@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 390,
+  "round": 391,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T08:17:31+00:00",
+  "updated_at": "2026-09-19T09:14:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 389,
+      "touched_round": 390,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -21700,7 +21700,7 @@
       "version": 2,
       "created_at": "2026-09-19T08:17:18+00:00",
       "updated_at": "2026-09-19T08:17:31+00:00",
-      "touched_round": 389,
+      "touched_round": 390,
       "category": "privacy",
       "severity": 0.5,
       "confidence": 0.95,
@@ -21728,6 +21728,65 @@
       "touched_round": 389,
       "confidence": 0.95,
       "source": "变更 CHG-462(cebc952)。判据:排版自检 168 个页面×视口组合全绿(外域请求 0),界面冒烟 15 页 68 次点击且\"外域请求 0 个\",离线自检四件事都认(缓存 27 份、与联网表现一致);bun run check 通过(文档自检 44 条路径);bun run test 290 文件 / 2653 例全过;构建后 dist/index.html 里 rg 不到任何 http(s) 外链(实测为空)。全局 grep:除 pageErrors.mjs 的历史说明外,仓库里已无该统计域名。"
+    },
+    "ISS-251": {
+      "id": "ISS-251",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T09:14:48+00:00",
+      "updated_at": "2026-09-19T09:14:57+00:00",
+      "touched_round": 390,
+      "severity": 0.6,
+      "confidence": 0.95,
+      "summary": "上一轮给根 package.json 加 workspaces(把库声明成真依赖)之后,Cloudflare Workers Builds 的 `npx wrangler deploy` 把仓库根当成\"工作区根\"、拒绝部署(check \"Workers Builds: xian: failure\")——而这条线正是线上 xiuxian.yoooo.fun 的提供方。根因:wrangler 的\"应用自动探测\"在工作区根上会让路,而根目录此前没有任何 wrangler 配置。"
+    },
+    "TASK-375": {
+      "id": "TASK-375",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T09:14:48+00:00",
+      "updated_at": "2026-09-19T09:14:57+00:00",
+      "touched_round": 390,
+      "category": "ci",
+      "severity": 0.6,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "给 Cloudflare 一条显式目标:新增 wrangler.jsonc(name: xian + assets: ./dist + SPA 回退),让\"工作区(给包管理器看)\"与\"部署目标(给 wrangler 看)\"互不干扰;并核验线上:xiuxian.yoooo.fun 已是最新构建且无统计脚本。"
+    },
+    "CHG-463": {
+      "id": "CHG-463",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:14:56+00:00",
+      "updated_at": "2026-09-19T09:14:56+00:00",
+      "touched_round": 390,
+      "commit": "f70e1e9",
+      "summary": "宿主:新增 wrangler.jsonc(name: xian、assets: ./dist、not_found_handling: single-page-application),修掉\"加了 workspaces 之后 Cloudflare Workers Builds 拒绝在工作区根部署\"这条红;线上核验:xiuxian.yoooo.fun 随后即服务最新构建。"
+    },
+    "CHG-464": {
+      "id": "CHG-464",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:14:56+00:00",
+      "updated_at": "2026-09-19T09:14:56+00:00",
+      "touched_round": 390,
+      "commit": "14db81b",
+      "summary": "宿主:欢迎页那句\"站点接入的流量统计不包含任何游戏数据\"改掉(用户第一屏可见的错话);scripts/lib/pageErrors.mjs 里对第三方统计的历史说明一并清掉,只留规则(零外部请求,拦下的条数应当恒为 0)与两条实测教训。"
+    },
+    "EV-384": {
+      "id": "EV-384",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:14:56+00:00",
+      "updated_at": "2026-09-19T09:14:56+00:00",
+      "touched_round": 390,
+      "confidence": 0.95,
+      "source": "变更 CHG-463/464(f70e1e9 / 14db81b)。线上实测(三个地址逐个量):xiuxian.yoooo.fun(Cloudflare Worker xian)= assets/index-rWrkZI9b.js = 本地最新构建、统计脚本命中 0;blog.yoooo.fun/xian/(本仓库 GitHub Pages,CF 代理)= 绕开缓存(?v=时间戳)拿到同一份最新构建、命中 0,但直接访问仍被 CF 的 24h 缓存按住旧 HTML(age 2038);yunyin.wenzi.games = CNAME → setube.github.io(另一个账号的 Pages),仍停在 9/18 且带统计脚本。CI:Workers Builds xian 从 failure → success;本仓库 deploy 与 build-and-push 均绿;bk run check / bun run test(290 文件 2653 例)全过。"
     }
   },
   "edges": [
@@ -31943,6 +32002,30 @@
       "to": "COMP-016",
       "type": "governs",
       "created_at": "2026-09-19T08:17:31+00:00"
+    },
+    {
+      "from": "CHG-463",
+      "to": "ISS-251",
+      "type": "resolves",
+      "created_at": "2026-09-19T09:14:56+00:00"
+    },
+    {
+      "from": "CHG-463",
+      "to": "TASK-375",
+      "type": "implements",
+      "created_at": "2026-09-19T09:14:56+00:00"
+    },
+    {
+      "from": "CHG-464",
+      "to": "TASK-374",
+      "type": "implements",
+      "created_at": "2026-09-19T09:14:56+00:00"
+    },
+    {
+      "from": "ISS-251",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-19T09:14:56+00:00"
     }
   ]
 }
