@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 367,
+  "round": 368,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:56:34+00:00",
+  "updated_at": "2026-09-19T00:58:52+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20365,6 +20365,43 @@
       "summary": "发布包产物一律不进仓库:只在临时目录打(自检)或在发版时打(挂成 release 附件);.gitignore 用 *.tgz 兜住误提交。",
       "rationale": "产物进库有两个坏处:仓库里多一份二进制(每次改都跟一遍),以及\"仓库里的那份\"与\"真正发出去的那份\"可能不是同一个版本 —— 而这条流水线的整套判据都建立在\"验过的东西就是发出去的东西\"上(发布包自检在临时目录 pack → 装一遍 → 编一遍)。误提交的实际路径很顺:打通用的命令必然在仓库里跑(npm pack),顺手一个 git add -A 就带进去了,所以光靠\"注意点\"不够,得让 git 帮我们兜住。",
       "alternatives_rejected": "①改写历史把 blob 抹掉(需要 force-push 两个仓,而 tag 已经发布 —— 为了 251 KB 冒这个险不值);②允许提交产物(那就得同步维护它,而且会让\"发出去的是哪一份\"变得含糊);③只在库的 .gitignore 里加(宿主那层 git add 是宿主在做,两层都加才兜得住)。"
+    },
+    "TASK-349": {
+      "id": "TASK-349",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:58:51+00:00",
+      "updated_at": "2026-09-19T00:58:52+00:00",
+      "touched_round": 367,
+      "category": "ci",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 2,
+      "summary": "给 release 附件加保险丝:.github/workflows/release.yml 在 release 发布(或手动指定 tag)时 checkout 该 tag → bun run check → npm pack → gh release upload → 核对附件名与 README URL 一致。"
+    },
+    "CHG-433": {
+      "id": "CHG-433",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:58:51+00:00",
+      "updated_at": "2026-09-19T00:58:51+00:00",
+      "touched_round": 367,
+      "commit": "3e8d0ab",
+      "summary": "库:新增 .github/workflows/release.yml;docs/development.md 的发版清单注明\"本地那条是快路径、workflow 是保险丝、旧 tag 可手动补传\";CHANGELOG 记一条。"
+    },
+    "EV-359": {
+      "id": "EV-359",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:58:51+00:00",
+      "updated_at": "2026-09-19T00:58:51+00:00",
+      "touched_round": 367,
+      "confidence": 0.8,
+      "source": "变更 CHG-433(3e8d0ab)。已验:workflow 的每一步命令在本地实跑(npm pack → gh release upload --clobber v0.1.19 → gh release view assets 逐字匹配文件名);YAML 用解析器验过(释放/branch 触发与 attach job 都在);库 bun run check 全绿(570 例 / 79 文件 + 15 道自检)。未验:workflow 本身要等下一次发版才会真的跑 —— 这一条如实标注为\"待下次发版确认\"。",
+      "summary": "把\"忘了挂附件→使用者吃 404\"这个失败模式用 CI 兜住。这次只敢声称\"命令与结构验过\",不敢声称\"CI 跑通\" —— 后者得等下一次发版。"
     }
   },
   "edges": [
@@ -30052,6 +30089,12 @@
       "to": "TASK-348",
       "type": "governs",
       "created_at": "2026-09-19T00:56:34+00:00"
+    },
+    {
+      "from": "CHG-433",
+      "to": "TASK-349",
+      "type": "implements",
+      "created_at": "2026-09-19T00:58:51+00:00"
     }
   ]
 }
