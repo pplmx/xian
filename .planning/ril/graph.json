@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 392,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T10:21:58+00:00",
+  "updated_at": "2026-09-19T10:29:29+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22045,6 +22045,65 @@
       "summary": "色值只许有一份事实源:语义色变量定义在 src/style.css(明暗两套通道值),界面与数据一律引用 var(--color-*);公共库 packages/engine 的默认预设保留自己的 hex —— 它是给「别人换皮」看的示例,必须脱离宿主 CSS 独立可用,不属于宿主的色板。",
       "rationale": "同 DEC-174,但把库那条例外说准:库的预设不是宿主色板的第二份拷贝,而是它自己的内容;两者值相同只是曾经顺手抄成一样,不该由判据绑在一起(否则库改自己的示例色会红在宿主这边)。宿主这边真正的手抄只有 public/privacy.html(独立成篇的静态页,已由 palette.spec.ts 逐条核对)。",
       "alternatives_rejected": "①断言「库预设 == 宿主语义色」(把两个独立维护的东西绑死,库侧改示例就红);②把库预设改成引用 var(--color-*)(库必须能脱离宿主单独跑,不成立);③什么都不说(留下一条说不清的例外)。"
+    },
+    "COMP-029": {
+      "id": "COMP-029",
+      "type": "component",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:29:24+00:00",
+      "updated_at": "2026-09-19T10:29:24+00:00",
+      "touched_round": 392,
+      "summary": "图标注册表(src/ui/icons.ts 的 49 个 lucide 图标映射 + components/common/GameIcon.vue 这一处渲染出口):数据层用字符串键引用图标,统一在这里映射。"
+    },
+    "ISS-254": {
+      "id": "ISS-254",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:29:24+00:00",
+      "updated_at": "2026-09-19T10:29:24+00:00",
+      "touched_round": 392,
+      "summary": "界面图标仍是一套西式几何线性图标:src/ui/icons.ts 把 49 个 lucide 图标直接映射给数据层,GameIcon 一律 stroke-width=1.8、圆头圆角、等宽直线。与水墨底、楷体、印章按钮、五声音阶配乐放在一起,图标是唯一还带「现代 App」口音的一层。应用图标(public/icons/*.png)反倒是古风的(山、朱砂日、云),对比之下更明显。",
+      "severity": 0.4,
+      "confidence": 0.8,
+      "effort": 6
+    },
+    "EV-392": {
+      "id": "EV-392",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:29:24+00:00",
+      "updated_at": "2026-09-19T10:29:24+00:00",
+      "touched_round": 392,
+      "source": "rg 统计:src/ui/icons.ts 49 个 lucide 图标;GameIcon 在 17 个文件里出现 36 处(底部导航五项 + 顶栏三项 + 卡片角标);GameIcon.vue 仅有一行渲染,固定 stroke-width=1.8",
+      "summary": "图标面广(全站 36 处)且集中在唯一一个出口,改造点单一。",
+      "confidence": 1.0
+    },
+    "EV-393": {
+      "id": "EV-393",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:29:24+00:00",
+      "updated_at": "2026-09-19T10:29:24+00:00",
+      "touched_round": 392,
+      "source": "colors.json? 无 —— 证据是产物与素材:public/icons/icon-192.png 为山+朱砂日+云的水墨应用图标;docs/design.md 记字体(霞鹜文楷子集)/动效(墨点、雾)/音频(src/core/audio.ts:D 宫调式、古筝琵琶太鼓木鱼采样)",
+      "summary": "其它「古风」层面(应用图标/字体/动效/配乐)已经到位,缺口集中在界面图标这一层。",
+      "confidence": 1.0
+    },
+    "EV-394": {
+      "id": "EV-394",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:29:29+00:00",
+      "updated_at": "2026-09-19T10:29:29+00:00",
+      "touched_round": 392,
+      "source": "素材与实现清点:public/icons/icon-192.png 是山+朱砂日+云的水墨应用图标;docs/design.md 记字体(霞鹜文楷子集)、动效(墨点/雾)、无障碍;src/core/audio.ts 是 D 宫调式、古筝/琵琶/太鼓/木鱼采样、52BPM",
+      "summary": "其它「古风」层面(应用图标、字体、动效、配乐)已经到位,缺口集中在界面图标这一层。",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -32392,6 +32451,12 @@
       "to": "HYP-111",
       "type": "validates",
       "created_at": "2026-09-19T10:21:54+00:00"
+    },
+    {
+      "from": "ISS-254",
+      "to": "COMP-029",
+      "type": "located_in",
+      "created_at": "2026-09-19T10:29:24+00:00"
     }
   ]
 }
