@@ -17,7 +17,7 @@
  */
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 
@@ -196,6 +196,34 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   const stale = versionRefs.filter(([, v]) => v !== version).map(([rel, v]) => `${rel} 写的是 ${v}`)
   assert.deepEqual(stale, [], `这些文档里的版本与 package.json(${version})不一致:${stale.join('、')}`)
   console.log(`版本引用自检通过(${versionRefs.length} 处引用都是 ${version})`)
+
+  /**
+   * 文档链接自检 —— 文档里指向仓库的**绝对链接**必须真的存在。
+   *
+   * 为什么值得一条判据:文档里那些"可跑的证据"(示例与用例)都在仓库里、**不随包发布**,
+   * 所以它们一律写成指回仓库的绝对链接 —— 这样包的读者也点得开。代价是:改文件名、挪目录之后,
+   * 这些链接会静默变成 404,而 Markdown 里没有任何东西会因此变红。这里就把"链接指向的路径
+   * 在仓库里存在"变成判据(blob → 文件,tree → 目录)。
+   */
+  const linkDocs = ['README.md', ...readdirSync(resolve(ENGINE, 'docs')).map(name => `docs/${name}`)]
+  const base = 'https://github.com/pplmx/wanxiang-engine'
+  let linkCount = 0
+  const deadLinks = []
+  for (const rel of linkDocs) {
+    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
+    // 目标在 `)`、空白或 `>`(被 <…> 包起来的自动链接)处结束
+    for (const m of text.matchAll(new RegExp(`${base}/(blob|tree)/main/([^)\\s>]+)`, 'g'))) {
+      const [, kind, target] = m
+      linkCount += 1
+      const path = target.replace(/[#?].*$/, '')
+      const full = resolve(ENGINE, path)
+      const ok = kind === 'blob' ? existsSync(full) && statSync(full).isFile() : existsSync(full)
+      if (!ok) deadLinks.push(`${rel} → ${path}`)
+    }
+  }
+  assert.ok(linkCount >= 20, `只找到 ${linkCount} 条仓库链接 —— 链接写法变了?`)
+  assert.deepEqual(deadLinks, [], `这些文档链接指向仓库里不存在的地方:${deadLinks.join('、')}`)
+  console.log(`文档链接自检通过(${linkCount} 条指回仓库的链接都指向真实文件)`)
 
   /**
    * 目录树自检 —— README 里那棵树是使用者的地图,它必须**和仓库逐项对得上**。

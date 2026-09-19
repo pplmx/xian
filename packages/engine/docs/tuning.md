@@ -12,6 +12,10 @@
 3. 数字与"为什么"分开写:**为什么**在对应模块的文件头(每个模块文件开头都有一段"这层踩过什么坑"),
    这里是**多少**。
 
+> 实验文件(`src/*.sim.spec.ts`)住在仓库里,**不随包发布** —— 想跑这些读数就把仓库
+> clone 下来(`git clone` 之后 `bun install && bunx vitest run src/xxx.sim.spec.ts`)。
+> 仓库地址:<https://github.com/pplmx/wanxiang-engine>。
+
 ## 一页索引:你要调的那件事在哪一节
 
 30 份实测实验,每份一句结论。找到那一行之后,往下翻到同名小节看推导、表格与复现命令。

@@ -94,8 +94,12 @@ import { DAILY }   from 'wanxiang-engine/presets/daily'     // 日常 · 学习
 
 ## 快速开始
 
-一份完整可跑的程序在 [`examples/quickstart.ts`](./examples/quickstart.ts),用 `bun examples/quickstart.ts` 运行。
-**想直接抄起点**:[`examples/from-zero.ts`](./examples/from-zero.ts) 不引用任何内容包,一百多行装完一个世界。
+一份完整可跑的程序在 [`examples/quickstart.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/quickstart.ts),用 `bun examples/quickstart.ts` 运行。
+**想直接抄起点**:[`examples/from-zero.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/from-zero.ts) 不引用任何内容包,一百多行装完一个世界。
+
+> **包里只有 `dist` 与文档,不含 `examples/` 与 `src/`** —— 上面这些链接、以及文档里所有
+> "可跑的证据",都指向仓库:<https://github.com/pplmx/wanxiang-engine/tree/main/examples>。
+> 想把示例跑起来(或改着玩),把仓库 clone 下来即可:`git clone` 之后 `bun install && bun run examples`。
 **要动手搭自己的系统,先看[组装指南](./docs/assembly.md)**:它按"要做一个 X 类的游戏该接哪些模块"
 列了四条配方,每条都指到能跑的示例或判据用例。
 它装配一个自己的小世界,然后走完「修炼 → 进阶 → 掉装 → 装配 → 遭遇 → 通关结算」:
@@ -280,7 +284,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | `presets/daily` | 书桌与日常 | 学段与周次、专注力/精力、文具与书桌、图书馆与期末考试(**没有战斗世界观**的题材) |
 
 三者的**机制键完全一致**,名字没有一处相同,而都能跑完「修炼 → 进阶 → 掉装 → 装配 → 打副本 → 通关拿奖励」。
-这不是文档里的承诺,是 `src/presets/presets.spec.ts` 里的判据。
+这不是文档里的承诺,是 [`src/presets/presets.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/presets/presets.spec.ts) 里的判据。
 
 ## 装配时的校验
 
@@ -306,9 +310,9 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 76 个运行时导出 + 208 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+| 公开面判据 | 76 个运行时导出 + 208 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
 
-上表只是最常被问到的五条。真正跑起来的是**十五道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
+上表只是最常被问到的五条。真正跑起来的是**十六道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `文档链接` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
 
 每条对应一类"会悄悄腐烂的东西"(指南里的示例路径、定制表里承诺的开关、报错文案、
 文档里的 tag、目录树与正文的规模数、消融有没有收进参考表、相对导入的扩展名……),

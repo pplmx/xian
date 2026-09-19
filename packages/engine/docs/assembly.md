@@ -7,7 +7,11 @@
 与每个示例文件都会被自检核对(`scripts/verify-dist.mjs` 与 `scripts/engine-standalone.mjs`),
 所以它不会烂在文档里 —— 拆了模块、改了名字,自检当场就红。
 
-**要抄的话,从这里开始**:[`examples/from-zero.ts`](../examples/from-zero.ts) 是一份
+> 证据(**示例**与**用例**)住在仓库里,**不随包发布**(包里只有 `dist` 与文档)——
+> 所以这里的每条路径都写成了指回仓库的绝对链接,点开就能看/能跑:
+> <https://github.com/pplmx/wanxiang-engine>。
+
+**要抄的话,从这里开始**:[`examples/from-zero.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/from-zero.ts) 是一份
 **不引用任何内容包**、一百多行装完一个世界的程序(槽位 / 品质 / 词条 / 两段路 / 六个阻碍全写在里面),
 复制它、把名字与数字换成你的,就是你的游戏。下面四条配方是"按玩法形状挑模块"的索引。
 
@@ -53,26 +57,26 @@
 | 等级曲线、进阶、寿元 | `createRealmSystem` | `presets/xiuxian` + `presets.spec.ts` |
 | 等级曲线的手感(一层涨多少、跨境陡不陡、卡关卡几次) | 同上 | `realms.sim.spec.ts`(境内涨 14.9 倍而跨境只涨 1.28 倍;大关另走一条成功率线) |
 | **数值涨到多大就该换大数** | `Numeric<T>` 适配器 | `numeric.sim.spec.ts`(安全区到 2^53;面板先失真:同一个"1.0京"盖住 5e14;×1.5 每层到第 80 层、×3.2 到第 28 层;换成 bigint 的实测对照) |
-| **我这套曲线跑起来什么手感**(哪一格跳得最狠 / 什么时候开始碾压内容) | `createProgressionAudit` | `progression.spec.ts`(相邻格倍数、换界单列、碾压阈值可调)+ `examples/realm-ladder.ts`(体检当场抓到"换到新界反而更便宜"的倒挂) |
-| **自己写一张境界表**(世界分段 / 逐境层数 / 两段式需求 / 大关走试炼 / 换数值层) | `createRealmSystem` + `Numeric<T>` | `examples/realm-ladder.ts`(「一梯三界」:点心铺学徒 → 宗师,7 境 × 5 层、没配 lifespan 就等于无限、只拧一个后段倍率就从 871 天缩到 660 天) |
-| 掉装 / 洗练 / 装配 | `createEquipmentSystem` | `examples/quickstart.ts` |
+| **我这套曲线跑起来什么手感**(哪一格跳得最狠 / 什么时候开始碾压内容) | `createProgressionAudit` | `progression.spec.ts`(相邻格倍数、换界单列、碾压阈值可调)+ [`examples/realm-ladder.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/realm-ladder.ts)(体检当场抓到"换到新界反而更便宜"的倒挂) |
+| **自己写一张境界表**(世界分段 / 逐境层数 / 两段式需求 / 大关走试炼 / 换数值层) | `createRealmSystem` + `Numeric<T>` | [`examples/realm-ladder.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/realm-ladder.ts)(「一梯三界」:点心铺学徒 → 宗师,7 境 × 5 层、没配 lifespan 就等于无限、只拧一个后段倍率就从 871 天缩到 660 天) |
+| 掉装 / 洗练 / 装配 | `createEquipmentSystem` | [`examples/quickstart.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/quickstart.ts) |
 | 洗练 / 重铸(锁住几条、其余重掷) | `equipment.rerollAffixes` | `equipment.sim.spec.ts`(锁两条必定洗出三条;池子被门槛排空是唯一例外) |
 | 技能 / 功法(等级曲线、升级消耗、满级择路) | `createSkillSystem` | `skills.spec.ts` + `skills.sim.spec.ts`(练满总账、折扣只省可折项、分支值几级) |
 | 背包 / 持有(容量、装配即腾位、满了怎么办) | `createHoldingSystem` | `holding.spec.ts` + `holding.sim.spec.ts`(装上 6 件就腾出 6 位) |
 | 副本链(区域怎么开、打几场见首领、通关给什么) | `createDungeonSystem` | `dungeons.spec.ts` + `dungeons.sim.spec.ts`(两种节奏差一场、敌人随层级陡多少) |
-| 战斗骨架(护盾、反击、追击、技能标签) | `createCombatEngine` | `examples/combo-arts.ts` |
+| 战斗骨架(护盾、反击、追击、技能标签) | `createCombatEngine` | [`examples/combo-arts.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/combo-arts.ts) |
 | 默认伤害公式的节奏(攻防比 → 几回合打完) | 同上 | `combat.sim.spec.ts`(攻翻倍伤害 2.67 倍;1000 血靶子:攻=防 20 回合 / 攻·4 只 4 回合) |
-| **把你自己那套战斗整段接进来** | `BattleConfig` 的 `skillFn` / `strikeFn` / `actFn` | `examples/combat-takeover.ts`(老口径 × 接管版,同 200 颗种子逐场相同) |
-| **换一种完全不同的战斗口径再试一次** | 同上三处主权 | `examples/arena-takeover.ts`(拳赛:体力 / 连击 / 确定性反打 —— 同 200 颗种子逐场相同) |
+| **把你自己那套战斗整段接进来** | `BattleConfig` 的 `skillFn` / `strikeFn` / `actFn` | [`examples/combat-takeover.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/combat-takeover.ts)(老口径 × 接管版,同 200 颗种子逐场相同) |
+| **换一种完全不同的战斗口径再试一次** | 同上三处主权 | [`examples/arena-takeover.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/arena-takeover.ts)(拳赛:体力 / 连击 / 确定性反打 —— 同 200 颗种子逐场相同) |
 | 掉落表(概率归一、保底、份数) | `createDropTable` | `drops.spec.ts` |
 | 炼制 / 合成的成功率(四乘区相乘 + 越级) | `composeCraftRate` / `leverFactor` / `overReachFactor` | `crafting.spec.ts` + `crafting.sim.spec.ts`(每个乘区值多少、越级多陡、练到九成要多久) |
-| 技艺 → 采料 → 开炉 → 成品这一整条怎么串 | `createSkillSystem` + `createDropTable` + `createRecipeRunner` + `createCompanionSystem` | `examples/craft-loop.ts`(「药庐二十四炉」:技艺涨一炉就稳一分、保料把"亏"变成"慢"、灵药是瓶颈) |
+| 技艺 → 采料 → 开炉 → 成品这一整条怎么串 | `createSkillSystem` + `createDropTable` + `createRecipeRunner` + `createCompanionSystem` | [`examples/craft-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/craft-loop.ts)(「药庐二十四炉」:技艺涨一炉就稳一分、保料把"亏"变成"慢"、灵药是瓶颈) |
 | 开炉之后实际发生什么(没开炉 / 失败保料 / 双成) | `createRecipeRunner` | `recipes.spec.ts` |
-| 建造 / 每小时产出 | `createFacilitySystem` + `accrue` | `examples/daily-loop.ts` 的设施段 |
+| 建造 / 每小时产出 | `createFacilitySystem` + `accrue` | [`examples/daily-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/daily-loop.ts) 的设施段 |
 | 产线曲线与仓库上限怎么搭 | `createFacilitySystem` 的 `perHour` / `cap` | `facilities.sim.spec.ts`(装满后每小时白产多少、结算粒度对总量的影响) |
 | 加点(天赋 / 灵脉) | `createPointPool` | `points.spec.ts` |
-| 离线上限与步数 | `planIdle` / `runIdle` | `examples/daily-loop.ts` 的离线段 |
-| 限时增益 | `createBuffSystem` | `examples/daily-loop.ts` 的状态段 |
+| 离线上限与步数 | `planIdle` / `runIdle` | [`examples/daily-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/daily-loop.ts) 的离线段 |
+| 限时增益 | `createBuffSystem` | [`examples/daily-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/daily-loop.ts) 的状态段 |
 
 ### 配方 B · 学习打卡 / 日常(无战斗)
 
@@ -82,11 +86,11 @@
 
 | 你要的东西 | 接哪个 | 可跑的证据 |
 | --- | --- | --- |
-| 今日三件(按增量结算、换期幂等) | `createTaskBoard` | `examples/quest-loop.ts` |
+| 今日三件(按增量结算、换期幂等) | `createTaskBoard` | [`examples/quest-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/quest-loop.ts) |
 | 每日任务的目标值定多少 | `createTaskBoard` 的 `target` | `tasks.sim.spec.ts`(按休闲画像的六成定,别按活跃画像) |
-| 主线三节(一次结算连推多节) | `createChain` | `examples/quest-loop.ts` |
-| 成就 / 里程碑(只记一次) | `createUnlockRegistry` | `examples/quest-loop.ts` |
-| "本季多少" | `snapshotOf` / `deltaSince` | `examples/quest-loop.ts` 的本季段 |
+| 主线三节(一次结算连推多节) | `createChain` | [`examples/quest-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/quest-loop.ts) |
+| 成就 / 里程碑(只记一次) | `createUnlockRegistry` | [`examples/quest-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/quest-loop.ts) |
+| "本季多少" | `snapshotOf` / `deltaSince` | [`examples/quest-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/quest-loop.ts) 的本季段 |
 | 伙伴 / 随从(性格系数怎么合) | `createCompanionSystem` | `companions.spec.ts` + `companions.sim.spec.ts`(默认 override 只留最后一只;`add-relative` 才是相加) |
 | 抉择(事件选项 / 分支:能不能选、按权重掷哪种后果、没选时的兜底) | `createChoiceSystem` | `choices.spec.ts` + `choices.sim.spec.ts`(5% 的分支抽 100 次可能一次不出;兜底三级落到哪) |
 | 图鉴 / 见闻(见过什么、懂到什么程度) | `createCodex` | `codex.spec.ts` + `codex.sim.spec.ts`(门槛 3/8/20 次照面、概率升档的到位率) |
@@ -106,7 +110,7 @@
 | 软保底(越抽越容易)与第 N 次必出 | `createPityCounter` / `softChance` | `pity.spec.ts` + `pity.sim.spec.ts`(实测数字) |
 | 收集进度(照面 / 懂几成) | `createCodex` | `codex.spec.ts` |
 | 重复的怎么处理 | `createIntake` | `intake.spec.ts` |
-| 整套抽卡 + 图鉴 + 日常的闭环 | —— | `examples/collect-loop.ts`(内容池 / 保底 / 集册 / 折算 / 今日三件 / 成就 / 经济体检在一份 200 行的小程序里) |
+| 整套抽卡 + 图鉴 + 日常的闭环 | —— | [`examples/collect-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/collect-loop.ts)(内容池 / 保底 / 集册 / 折算 / 今日三件 / 成就 / 经济体检在一份 200 行的小程序里) |
 | 收不下怎么办(被拒 / 被挤掉 / 收不下,三条去路同一本折算账) | `createIntake` | `intake.spec.ts` + `intake.sim.spec.ts`(一次入库折算的是哪一件、见证与收纳分开) |
 
 ### 配方 D · 经营模拟
@@ -123,13 +127,13 @@
 | 离线时长账(上限 / 效率 / 步数) | `planIdle` / `runIdle` | `idle.spec.ts` + `idle.sim.spec.ts`(边际收益曲线,以及"上限是按每次结算施加的") |
 | "本次所得"与账本对得上 | `createSettlement` | `settlement.spec.ts` |
 | 哪个资源是瓶颈 / 烂在手里 | `createEconomyReadings` | `economy.spec.ts` + `economy.sim.spec.ts`(默认阈值翻译成"支出/收入"区间,以及 ±10% 的敏感区有多宽) |
-| 自动清理规则链 | `createTriage` | `examples/daily-loop.ts` 的清理段 |
+| 自动清理规则链 | `createTriage` | [`examples/daily-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/daily-loop.ts) 的清理段 |
 | 清理规则"顺序换了会多扔几件" | 顺序即政策:重叠的规则谁在前谁定生死(同一批货留 6 件到留 13 件都有);"某条一次都没出手"要数每条规则接走几件才看得出来(被全覆盖 / 阈值超出内容值域) | `triage.sim.spec.ts` |
-| 整套经营闭环(产线 → 上限 → 卖出 → 体检 → 升级 → 清理 → 日常) | —— | `examples/shop-loop.ts`(一产一销的一间铺子:零头不丢、上限截断、离线时长账、两种升级选择各算一遍、清仓规则链,全在一份 200 行的小程序里) |
+| 整套经营闭环(产线 → 上限 → 卖出 → 体检 → 升级 → 清理 → 日常) | —— | [`examples/shop-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/shop-loop.ts)(一产一销的一间铺子:零头不丢、上限截断、离线时长账、两种升级选择各算一遍、清仓规则链,全在一份 200 行的小程序里) |
 | 跨模块自洽(账目) | —— | `integration.spec.ts`(守恒 / 同源 / 单调幂等 / 可复现) |
 | 跨模块自洽(时间 × 随机) | `planIdle` + `createCycleSystem` + `createPityCounter` | `integrationTime.spec.ts`(同种子同结果、问周期不消耗随机、保底不改未触发前的随机、分段与逐步一致) |
 | 轮换的长期分布与"最长连着重复几天" | `createCycleSystem` | `cycles.sim.spec.ts`(权重摆好之后一年里的实测天数与最长连庄) |
-| 周期 + 抉择 + 投资点 + 世界记忆怎么串 | 四层各一 | `examples/world-loop.ts`(「行商十二日」:每天换行情、路上遇事、加点、名声回落) |
+| 周期 + 抉择 + 投资点 + 世界记忆怎么串 | 四层各一 | [`examples/world-loop.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/world-loop.ts)(「行商十二日」:每天换行情、路上遇事、加点、名声回落) |
 | 投资点的容量怎么分、换主位亏不亏 | `createPointPool` | `points.sim.spec.ts`(主位上限与总容量是两道闸;超额部分冻结) |
 | 跨模块自洽(状态 × 投资点 × 任务) | `createBuffSystem` + `createPointPool` + `createTaskBoard` | `integrationBuffs.spec.ts`(到期边界与剪枝顺序无关、加点不回溯、进度不回退、叠加是相乘) |
 | 跨模块自洽(战斗 → 掉落 → 入库 → 装配 → 面板) | 战斗 + 掉落 + 入库 + 装备 + 属性 | `integrationLoot.spec.ts`(件数守恒、折算同源、见证不漏、容量不越界、面板单调、同种子可复现) |

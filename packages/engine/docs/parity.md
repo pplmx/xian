@@ -37,8 +37,9 @@
 
 ## 库这一侧的"数字不变"判据
 
-上面那些对账跑在源工程里(`src/core/engineParity.spec.ts`),单独把这个库拿走就看不见了。
-所以库自己也留了一条**数字基线**(`src/baseline.spec.ts`):把三份内容包与一批
+上面那些对账跑在**源工程**里(`src/core/engineParity.spec.ts` 与那一批 `engine*Parity.spec.ts`,
+源码不在本仓库 —— 见 <https://github.com/pplmx/xian>),单独把这个库拿走就看不见了。
+所以库自己也留了一条**数字基线**([`src/baseline.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/baseline.spec.ts)):把三份内容包与一批
 "吃默认值"的配置算出来的数字压成摘要写死 —— 等级表逐格、属性合并、装备层 1~12 的
 模板/品质/词条、敌人快照、默认首领节奏、一场完整对局、体检四档分界、离线默认效率。
 

@@ -133,7 +133,7 @@ bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json
 (`scripts/verify-dist.mjs`)—— 注释、import 行、字符串字面量里的名字都不算。这条是审计出来的:
 75 个导出里曾有 9 个只在 `publicApi.spec.ts` 的名字清单里露过面(`clamp` / `formatAmount` /
 `numberNumeric` / `mulberry32` / `seedFromString` / `randomRng` / 两张默认表 / `progressText`),
-现已各配一条判据(`src/publicBehavior.spec.ts`),并让自检常驻。
+现已各配一条判据([`src/publicBehavior.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicBehavior.spec.ts)),并让自检常驻。
 
 文档里的代码块也有判据:**块前面一行写 `<!-- compile-check -->` 就会进自检** ——
 它被抽出来,在"真装了一遍发布包"的临时项目里用 `tsc --strict` 编一遍。
@@ -151,12 +151,12 @@ bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json
 | 判据 | 管什么 | 拦住的典型事故 |
 | --- | --- | --- |
 | **每个模块至少有一份示例走到**(`scripts/verify-dist.mjs` 的「示例覆盖自检」) | 模块级 | `realms` 与 `numeric` 曾整块零示例 —— 一个是等级体系的正门、一个是换大数实现的口子 |
-| **每个运行时导出都有人在代码位置用过**(同文件的「公开面行为判据自检」+ `src/publicBehavior.spec.ts`) | 导出级 | 9 个导出只在名字清单里露过面,改名会红、行为写错不会 |
+| **每个运行时导出都有人在代码位置用过**(同文件的「公开面行为判据自检」+ [`src/publicBehavior.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicBehavior.spec.ts)) | 导出级 | 9 个导出只在名字清单里露过面,改名会红、行为写错不会 |
 | **定制表里写出来的旋钮真的存在**(同文件的「定制表旋钮自检」) | 文档承诺级 | 表里写着 `costFn`、源码里却已改名 —— 读者照着写,然后对着编译错误怀疑自己 |
 | **每条 `throw` 都有人真的触发过**(同文件的「报错口径自检」) | 报错级 | 23 处抛错里曾有 15 处零触发:报错成了死代码、文案悄悄漂移(而使用者看到的第一句话往往就是它) |
-| **数字基线**(`src/baseline.spec.ts`) | 数值级 | 三份内容包与一批吃默认值的配置被压成摘要写死:曲线或默认值一变就红;有意改时要显式更新摘要 + 在 CHANGELOG 写清为什么 |
+| **数字基线**([`src/baseline.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/baseline.spec.ts)) | 数值级 | 三份内容包与一批吃默认值的配置被压成摘要写死:曲线或默认值一变就红;有意改时要显式更新摘要 + 在 CHANGELOG 写清为什么 |
 
 **不承诺**的是"每个导出都有一行示例":`clamp` / `asRecord` / `progressText` 这类小工具
 单独写一段没有真实循环可讲,示例会从"能读的小循环"稀释成"导出清单朗读";它们的判据在各自模块的
 用例里。内容包(`presets/`)另算出处:要么被示例 import,要么出现在 README / 本目录的装配片段里 ——
-`examples/from-zero.ts` 那份**故意不引用任何内容包**,正是要证明"自己写一份也能用"。
+[`examples/from-zero.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/examples/from-zero.ts) 那份**故意不引用任何内容包**,正是要证明"自己写一份也能用"。
