@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 393,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T14:01:14+00:00",
+  "updated_at": "2026-09-19T14:51:09+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22562,10 +22562,10 @@
     "ISS-259": {
       "id": "ISS-259",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T13:45:13+00:00",
-      "updated_at": "2026-09-19T13:45:13+00:00",
+      "updated_at": "2026-09-19T14:51:04+00:00",
       "touched_round": 393,
       "summary": "无障碍两处收口还欠着:①现有正文对比度判据明确跳过渐变底(法球、印章、纸纹那几处没被量过),渐变/图片底上的字是否过 AA 没有账;②没有字号放大到 200% 时的排版判据(现有量的是五档视口宽度,不是缩放档),放大后是否横向溢出、主值行会不会折,没人量。",
       "severity": 0.5,
@@ -22575,10 +22575,10 @@
     "TASK-386": {
       "id": "TASK-386",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T13:45:13+00:00",
-      "updated_at": "2026-09-19T13:45:13+00:00",
+      "updated_at": "2026-09-19T14:51:04+00:00",
       "touched_round": 393,
       "category": "correctness",
       "severity": 0.5,
@@ -22670,6 +22670,40 @@
       "touched_round": 393,
       "commit": "751c405",
       "summary": "敌人与灵宠按族类配形:新增 data/beastFamilies.ts(29 族对 29 枚形,形只此一处出口),enemies.ts 的 e() 第四参从 icon 改成 family(132 条)、pets.ts 14 条各归其族,inkIcons.ts 新画 15 枚形(wolf/fox/boar/bear/ape/deer/serpent/dragon/qilin/turtle/bat/puppet/demon/immortal/god);判据加「一枚形被一个以上族类共用即红」「同族共用同一枚形、数据不许自己写 icon」「族类表不留闲族」三条;docs/design.md 与 inkIcons.ts 的文件注释同步。"
+    },
+    "EV-411": {
+      "id": "EV-411",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T14:51:04+00:00",
+      "updated_at": "2026-09-19T14:51:04+00:00",
+      "touched_round": 393,
+      "source": "① bun scripts/layout-check.mjs(168 个页面×视口组合,全绿;报告里两行读数:两百档字号 15 页、渐变/图片底的 1196 处按屏幕像素采过);② 判据红过再绿的过程:云雾未改前独立采样脚本报出 26 处(全在夜间主题,5% 分位 1.93~4.41:1,底 rgb(54..112)),改 .mist 的夜间明度后同一脚本报 0 处;③ bun run test 293 文件 / 2681 例、bun run check(type-check+lint+docs-check)全过。",
+      "summary": "对比度那条判据第一次覆盖了渐变/图片底:采样屏幕像素量了 1196 处字,抓到「外壳云雾写死 bg-white/40、夜间把底色抬到 rgb(78 76 74),没进卡片的淡墨小字掉到 3.8:1 以下」这处一直没被量过的真事,修完为 0 处;200% 缩放的排版判据在 15 页上抓到并修掉两处(设置页 range 顶出 6px、修炼页修为行折行)。",
+      "confidence": 1.0
+    },
+    "CHG-475": {
+      "id": "CHG-475",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T14:51:04+00:00",
+      "updated_at": "2026-09-19T14:51:04+00:00",
+      "touched_round": 393,
+      "commit": "cb121a8",
+      "summary": "无障碍收口:layout-check.mjs 新增第四十一条(200% 缩放档:390÷2 = 195 CSS px,与巡页共用 measurePage 同一把尺子,判横向溢出/外壳滚偏/越界/主值行折行)与第四十二条(渐变/图片底采样真实像素量对比度:藏字拍图 + 逐像素算,读不出来的像素 >20% 即红,弹窗盖着时不量),两条都带防空转守卫;样式修正三处:App.vue 的云雾改 .mist/.mist-soft 按主题给明度(夜间 0.08/0.06)、SettingsView 两个 range 补 min-w-0、CultivationView 修为行加 flex-wrap;docs/design.md 无障碍一节补上这两条与抓到的三处。"
+    },
+    "HYP-115": {
+      "id": "HYP-115",
+      "type": "hypothesis",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T14:51:09+00:00",
+      "updated_at": "2026-09-19T14:51:09+00:00",
+      "touched_round": 393,
+      "summary": "渐变/纹理/图片底上的正文对比度一直没有判据 —— 声明色那套算法看不见背景图,于是「外壳云雾写死 bg-white/40、夜间把底色抬亮」这类事可以一直存在而不被任何门挡住。",
+      "confidence": 0.9
     }
   },
   "edges": [
@@ -33197,6 +33231,24 @@
       "to": "HYP-114",
       "type": "validates",
       "created_at": "2026-09-19T14:01:14+00:00"
+    },
+    {
+      "from": "CHG-475",
+      "to": "TASK-386",
+      "type": "implements",
+      "created_at": "2026-09-19T14:51:04+00:00"
+    },
+    {
+      "from": "CHG-475",
+      "to": "ISS-259",
+      "type": "resolves",
+      "created_at": "2026-09-19T14:51:04+00:00"
+    },
+    {
+      "from": "EV-411",
+      "to": "HYP-115",
+      "type": "validates",
+      "created_at": "2026-09-19T14:51:09+00:00"
     }
   ]
 }
