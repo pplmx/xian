@@ -12,9 +12,47 @@
 3. 数字与"为什么"分开写:**为什么**在对应模块的文件头(每个模块文件开头都有一段"这层踩过什么坑"),
    这里是**多少**。
 
+> **这份文档量的是库自带那三份内容包。要量你自己的表,不用抄这里的用例** ——
+> 库里有现成的工具,用法见下面「量自己的表」。
+
 > 实验文件(`src/*.sim.spec.ts`)住在仓库里,**不随包发布** —— 想跑这些读数就把仓库
 > clone 下来(`git clone` 之后 `bun install && bunx vitest run src/xxx.sim.spec.ts`)。
 > 仓库地址:<https://github.com/pplmx/wanxiang-engine>。
+
+### 量自己的表
+
+上面那些数字是**库自带内容包**的刻度;换成你的表,读数就跟着变。要量自己的曲线,
+把 `createProgressionAudit` 接上自己的门面即可 —— 强度与内容强度都由你给(引擎不认识它们是怎么算的):
+
+<!-- compile-check: 这段是对着**发布包**编过的,读者可以直接抄 -->
+```ts
+import { compareProgression, createProgressionAudit, defineGame, formatAmount } from 'wanxiang-engine'
+import { XIUXIAN } from 'wanxiang-engine/presets/xiuxian'
+
+const game = defineGame(XIUXIAN) // 换成你自己的配置
+
+// ① 一次体检:一张表 + "强度怎么算"(不给 power 就用面板之和兜底;不给 contentPower 就不判碾压)
+const audit = createProgressionAudit({
+  realms: game.realms,
+  power: (major, layer) => Number(game.realms.baseStats(major, layer).attack ?? 0),
+  contentPower: major => 20 * 3 ** major
+})
+
+// ② 三种读法:逐格(哪一步最陡)/ 分段(哪一段整体多长)/ 小结(最狠的跳变与第一次碾压)
+const steepest = audit.lines({ onlySteps: true })
+const segments = audit.segments() // segments('world') 可改按界域切
+const overview = audit.summary()
+
+// ③ 改完一个数,再比一次:逐段跨度变化倍数 + 全程跨度(段数不同时 mismatched 会说是)
+const tuned = createProgressionAudit({ realms: game.realms, contentPower: (major: number) => 20 * 3 ** major })
+const diff = compareProgression(audit, tuned)
+
+export const reading = { steepest, segments, overview, diff, cells: formatAmount(audit.steps.length) }
+```
+
+三条口径与上面每一节的实测同源:**跳变看相邻格**、**跨界单独报**(它本来就该跳一档)、
+**碾压看玩家 ÷ 内容**(默认阈值 3)。经济侧的"哪个资源是瓶颈"用 `createEconomyReadings`,
+它和这份文档里「经济读数」那一节的阈值是同一套。
 
 ## 一页索引:你要调的那件事在哪一节
 

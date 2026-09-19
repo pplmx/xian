@@ -249,6 +249,8 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 调数值之前先看 [**调参实测参考**](./docs/tuning.md):文首是**一页索引**(「你要调的东西 →
 在哪一节 → 一句话结论」,每份消融一行),后面是每份消融的推导、表格与复现命令 ——
 离线上限、保底、掉落倍率、内容池权重、状态叠加这些"配错了也看不出来"的地方,都在那里量成了数字。
+那份文档量的是**库自带的内容包**;**量你自己的表**用 [`createProgressionAudit`](https://github.com/pplmx/wanxiang-engine/blob/main/docs/tuning.md#量自己的表)
+(逐格 / 分段 / 两份配置对照三种读法,文档里有一段对着发布包编过的示例可以直接抄)。
 
 ## 题材无关性
 
