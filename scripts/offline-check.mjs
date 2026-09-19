@@ -25,7 +25,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync 
 import { tmpdir } from 'node:os'
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { blockExternal, watchPageErrors } from './lib/pageErrors.mjs'
+import { watchPageErrors } from './lib/pageErrors.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(ROOT, 'dist')
@@ -82,13 +82,26 @@ const pass = []
 // 用 dist 的副本:第四件事要改 index.html,不能动真产物
 const work = mkdtempSync(join(tmpdir(), 'offline-check-'))
 cpSync(DIST, work, { recursive: true })
+
+/**
+ * 把第三方统计的**外链脚本**从这份副本里摘掉。
+ *
+ * 为什么是"摘掉"而不是像另两条门那样用请求级拦截(`blockExternal`):这门有 Service Worker,
+ * 而请求级拦截会**连 SW 自己发起的抓取一起截走** —— 被截过的响应不再是 `basic` 类型,
+ * SW 里的 `cache.put` 会静默跳过,于是缓存空掉、断网重载落到 503 兜底页(实测:拦着跑 → 缓存 0 条;
+ * 不拦 → 27 条)。而这门量的正是缓存与发版接管,所以第三方脚本在这里的处理方式是**不让它进来**。
+ * 摘掉外链后,那段内联初始化用的是 `window.LA?.init(...)`,取不到就静默 —— 不影响被测路径。
+ */
+const strippedHtml = readFileSync(join(work, 'index.html'), 'utf8').replace(
+  /\s*<script[^>]*id="LA_COLLECT"[^>]*><\/script>/,
+  ''
+)
+writeFileSync(join(work, 'index.html'), strippedHtml)
 const server = await serve(work)
 const base = `http://127.0.0.1:${server.address().port}`
 
 const browser = await chromium.launch()
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
-// 只放行本地静态服务,外域(统计脚本)一律拦掉
-const blockedExternal = await blockExternal(context, [base])
 const page = await context.newPage()
 const pageErrors = []
 watchPageErrors(page, pageErrors)
@@ -171,9 +184,7 @@ server.close()
 console.log('\n离线自检(Service Worker · localhost)')
 for (const p of pass) console.log(`✓ ${p}`)
 if (failures.length === 0) {
-  console.log(
-    `✓ 断网可重开、旧缓存会被清、发版能接管 —— 四件事都认结果(外域请求拦掉 ${blockedExternal()} 个)`
-  )
+  console.log('✓ 断网可重开、旧缓存会被清、发版能接管 —— 四件事都认结果(副本里已摘掉第三方统计外链)')
 } else {
   for (const f of failures) console.log(`✗ ${f}`)
   process.exitCode = 1
