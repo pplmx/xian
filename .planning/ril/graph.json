@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 392,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T12:07:47+00:00",
+  "updated_at": "2026-09-19T12:33:30+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22262,10 +22262,10 @@
     "TASK-381": {
       "id": "TASK-381",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T11:48:47+00:00",
-      "updated_at": "2026-09-19T11:48:47+00:00",
+      "updated_at": "2026-09-19T12:33:30+00:00",
       "touched_round": 392,
       "category": "core-feature",
       "severity": 0.35,
@@ -22308,6 +22308,94 @@
       "source": "playwright 禁 JS 打开 dist/index.html:明暗两套各截一张,#app 文本为「道 | 玄枢录 | 玄之又玄 · 众妙之门」;正常挂载后 document.querySelectorAll('.boot').length === 0、首页 h1 仍是「玄枢录」、pageerror 0;排版自检 168 组合与界面冒烟 15 页(67 次点击)全绿",
       "summary": "首帧占位在两处都对:没脚本时看得见,有脚本时不残留。",
       "confidence": 1.0
+    },
+    "CHG-471": {
+      "id": "CHG-471",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:33:21+00:00",
+      "updated_at": "2026-09-19T12:33:21+00:00",
+      "touched_round": 392,
+      "commit": "6ff3a85",
+      "summary": "内容图标第二波:inkIcons.ts 增十二枚(兽爪/枯骨/横头斧/长枪/仙禽/草檐屋舍/锻锤/灵苗/典籍/星/雷/星芒);注册表去掉同名 lucide 十二项、兜底星芒改水墨;inkIcons.spec.ts 增两条判据(水墨图标必须在界面用得到、常驻八枚只是子集);设计规范的图标一节改写;规模数同步(293 spec / 2677 例)。"
+    },
+    "EV-402": {
+      "id": "EV-402",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:33:22+00:00",
+      "updated_at": "2026-09-19T12:33:22+00:00",
+      "touched_round": 392,
+      "source": "用后期夹具存档(神人境 + 战痕刀/雾隐长枪)在真浏览器里截背包页:斧与枪在 16px 格子里改前读成钩子/字母 P,改成横头斧与斜杆倒刺之后读得出;浅色与夜间各截一套,pageerror 0",
+      "summary": "内容图标在小尺寸里的可读性只能对着真格子判 —— 两枚都是比过两轮才定的。",
+      "confidence": 1.0
+    },
+    "EV-403": {
+      "id": "EV-403",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:33:22+00:00",
+      "updated_at": "2026-09-19T12:33:22+00:00",
+      "touched_round": 392,
+      "source": "bun run check、bun run test(293 spec / 2677 例)、test:report(九类全过、无未登记 spec)、bun scripts/layout-check.mjs(168 组合 + 十道门)、bun scripts/ui-smoke.mjs(15 页 72 次点击 0 异常)",
+      "summary": "换内容图标没有带来回归,两道浏览器门与全量用例都绿。",
+      "confidence": 1.0
+    },
+    "ISS-256": {
+      "id": "ISS-256",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:33:22+00:00",
+      "updated_at": "2026-09-19T12:33:22+00:00",
+      "touched_round": 392,
+      "summary": "图标词表偏粗:装备的 icon 字段只分了两类 —— 刀、戈、斧都写 'axe',枪、钩、戟都写 'wand'(幽海钩/雾隐长枪/雷泽枪/星陨枪 都是 wand;战痕刀/妖骨长刀/妖庭戈 都是 axe)。玩家看到的是「长刀配斧形图标、长枪配枪形图标」这种近似对得上、细看不对的情形。",
+      "severity": 0.25,
+      "confidence": 0.9,
+      "effort": 4
+    },
+    "DEC-178": {
+      "id": "DEC-178",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:33:22+00:00",
+      "updated_at": "2026-09-19T12:33:22+00:00",
+      "touched_round": 392,
+      "summary": "图标分三波换,且每一波都要对着真尺寸(16px / 20px)的真上下文(导航条、背包格、建筑卡)比过两轮才定稿;功能性图标(锁/解锁/分解/关闭/刷新/云/足迹/卷轴)留到最后单独一轮,且那一轮只改笔不改形 —— 它们的形状约定比意象重要。",
+      "rationale": "两轮实测的教训:斧与长枪在原型图上都像样,放进 16px 的格子就一个像钩子、一个像字母 P;不看真上下文,画出来的东西自己会觉得对。功能性图标反过来:把「锁」画成中式挂锁可以,画成别的意象就会让人找不到入口。",
+      "alternatives_rejected": "①一次换掉全部四十余枚(每枚都要比两轮,一轮里做不完,且这类判断会疲劳);②只按原型图定稿(已经证明会误判);③功能性图标也一起换意象(形状约定被破坏,入口认不出来)。"
+    },
+    "TASK-382": {
+      "id": "TASK-382",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:33:22+00:00",
+      "updated_at": "2026-09-19T12:33:22+00:00",
+      "touched_round": 392,
+      "category": "core-feature",
+      "severity": 0.3,
+      "confidence": 0.75,
+      "effort": 6,
+      "summary": "图标第三波(收尾):①把还剩下的 lucide 图标分类处置 —— 功能性那批(lock/unlock/trash/x/refresh/cloud/footprints/scroll/waves/shield/moon 等)按「只改笔不改形」重画;②内容的剩余几枚(sprout 已换,剩 flask/droplets/trees/leaf/fish/ghost/bell/crown/watch/sunset/castle/link/circle-dot/umbrella)按意象换。判据沿用:同网格同线宽、每枚都要在界面用得到、名字必须登记过。"
+    },
+    "TASK-383": {
+      "id": "TASK-383",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:33:22+00:00",
+      "updated_at": "2026-09-19T12:33:22+00:00",
+      "touched_round": 392,
+      "category": "core-feature",
+      "severity": 0.25,
+      "confidence": 0.8,
+      "effort": 4,
+      "summary": "内容侧图标词表细化:装备 icon 从两类(axe/wand)拆到四类以上(刀/枪/戈/锤/钩各归其形),并逐件核对 288 件模板对得上;数据改了要连图标一起核(见 ISS-256)。"
     }
   },
   "edges": [
@@ -32721,6 +32809,36 @@
       "to": "ISS-255",
       "type": "resolves",
       "created_at": "2026-09-19T12:07:47+00:00"
+    },
+    {
+      "from": "CHG-471",
+      "to": "TASK-381",
+      "type": "implements",
+      "created_at": "2026-09-19T12:33:22+00:00"
+    },
+    {
+      "from": "TASK-382",
+      "to": "ISS-254",
+      "type": "addresses",
+      "created_at": "2026-09-19T12:33:22+00:00"
+    },
+    {
+      "from": "ISS-256",
+      "to": "COMP-029",
+      "type": "located_in",
+      "created_at": "2026-09-19T12:33:22+00:00"
+    },
+    {
+      "from": "TASK-383",
+      "to": "ISS-256",
+      "type": "addresses",
+      "created_at": "2026-09-19T12:33:22+00:00"
+    },
+    {
+      "from": "DEC-178",
+      "to": "COMP-029",
+      "type": "governs",
+      "created_at": "2026-09-19T12:33:22+00:00"
     }
   ]
 }
