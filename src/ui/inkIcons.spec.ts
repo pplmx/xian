@@ -41,6 +41,27 @@ function iconNamesIn(file: string): string[] {
   ]
 }
 
+/** 界面上真会用到的图标名 —— 数据里的 icon 字段 + 模板里写死的(含三元里的字面量) */
+function usedIconNames(): Set<string> {
+  const names = new Set<string>()
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = resolve(dir, entry.name)
+      if (entry.isDirectory()) walk(path)
+      else if (/\.(ts|vue)$/.test(entry.name) && !entry.name.endsWith('.spec.ts')) {
+        const text = readFileSync(path, 'utf-8')
+        for (const m of text.matchAll(/icon: '([a-z-]+)'/g)) names.add(m[1]!)
+        for (const m of text.matchAll(/<GameIcon[^>]*?\bname="'?([a-z-]+)'?"/g)) names.add(m[1]!)
+        for (const m of text.matchAll(/<GameIcon[^>]*?:name="([^"]+)"/g)) {
+          for (const lit of m[1]!.matchAll(/'([a-z-]+)'/g)) names.add(lit[1]!)
+        }
+      }
+    }
+  }
+  walk(resolve(ROOT, 'src'))
+  return names
+}
+
 describe('图标 · 常驻的那几处', () => {
   it('底部导航与顶栏画的都是水墨版,而且注册表里没被别的来源盖掉', () => {
     const names = CHROME.flatMap(iconNamesIn)
@@ -51,9 +72,16 @@ describe('图标 · 常驻的那几处', () => {
     }
   })
 
-  it('水墨那八枚正好覆盖导航五项 + 顶栏三项,不多不少', () => {
+  it('常驻那八枚只是水墨集合的一部分(后来又把内容图标也换了过来)', () => {
     const chrome = [...new Set(CHROME.flatMap(iconNamesIn))].sort()
-    expect(chrome).toEqual(Object.keys(INK_ICONS).sort())
+    for (const name of chrome) expect(Object.keys(INK_ICONS)).toContain(name)
+    expect(Object.keys(INK_ICONS).length).toBeGreaterThan(chrome.length)
+  })
+
+  it('每一枚水墨图标都真在界面上用得到 —— 画了没人用只是多出来的第二种语言', () => {
+    const used = usedIconNames()
+    const dead = Object.keys(INK_ICONS).filter(name => !used.has(name))
+    expect(dead, '这些水墨图标没有任何数据或模板引用').toEqual([])
   })
 })
 

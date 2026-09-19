@@ -2,10 +2,7 @@
 import type { Component } from 'vue'
 import { INK_ICONS } from './inkIcons'
 import {
-  Axe,
   Bell,
-  Bird,
-  BookOpen,
   Castle,
   CircleDot,
   Cloud,
@@ -16,22 +13,15 @@ import {
   FlaskConical,
   Footprints,
   Ghost,
-  Hammer,
-  Home,
   Leaf,
   Link,
   Lock,
   Moon,
-  PawPrint,
   RefreshCw,
   Scroll,
   Shield,
   ShieldCheck,
   Shirt,
-  Skull,
-  Sparkles,
-  Sprout,
-  Star,
   Sunset,
   Sword,
   Trash2,
@@ -39,19 +29,14 @@ import {
   Unlock,
   Upload,
   User,
-  Wand,
   Watch,
   Waves,
   X,
-  Zap,
   Umbrella
 } from 'lucide-vue-next'
 
 export const ICONS: Record<string, Component> = {
-  axe: Axe,
   bell: Bell,
-  bird: Bird,
-  book: BookOpen,
   castle: Castle,
   'circle-dot': CircleDot,
   cloud: Cloud,
@@ -62,23 +47,16 @@ export const ICONS: Record<string, Component> = {
   flask: FlaskConical,
   footprints: Footprints,
   ghost: Ghost,
-  hammer: Hammer,
-  home: Home,
   leaf: Leaf,
   link: Link,
   lock: Lock,
   moon: Moon,
-  paw: PawPrint,
   refresh: RefreshCw,
   scroll: Scroll,
   shield: Shield,
   /** 镇压中的地界签用的是 'shield-check',此前没登记,于是静静显示成一枚星芒 */
   'shield-check': ShieldCheck,
   shirt: Shirt,
-  skull: Skull,
-  sparkles: Sparkles,
-  sprout: Sprout,
-  star: Star,
   sunset: Sunset,
   sword: Sword,
   trash: Trash2,
@@ -86,11 +64,9 @@ export const ICONS: Record<string, Component> = {
   unlock: Unlock,
   upload: Upload,
   user: User,
-  wand: Wand,
   watch: Watch,
   waves: Waves,
   x: X,
-  zap: Zap,
   umbrella: Umbrella,
   /*
    * 水墨那八枚(底部导航五项 + 顶栏三项)在末尾铺进来,与上面的 lucide 图标同网格、
@@ -101,5 +77,6 @@ export const ICONS: Record<string, Component> = {
 }
 
 export function iconOf(name: string): Component {
-  return ICONS[name] ?? Sparkles
+  // 兜底那枚也是水墨的星芒:认不出的图标名会静静落到它身上,不该在这里露出另一套语言
+  return ICONS[name] ?? INK_ICONS.sparkles!
 }
