@@ -189,4 +189,24 @@ assert.deepEqual(crawlUsers, [], `这些文件用相对路径直接钻进库内�
 assert.ok(byName > 0, '宿主一处都没引用库?那这份自检在验什么')
 console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
 
+// ⑥b 宿主文档里写的库版本,必须与库自己 package.json 里的版本一致。
+//     这句是给读者看的"本作用的是哪一版库":发版之后漏改,读者会照着一个旧版本去理解行为。
+{
+  const engineVersion = JSON.parse(readFileSync(resolve(PKG_DIR, 'package.json'), 'utf8')).version
+  const docs = ['README.md', ...readdirSync(resolve(ROOT, 'docs'), { withFileTypes: true })
+    .filter(entry => entry.isFile() && entry.name.endsWith('.md'))
+    .map(entry => `docs/${entry.name}`)]
+  const refs = []
+  for (const rel of docs) {
+    const text = readFileSync(resolve(ROOT, rel), 'utf8')
+    for (const m of text.matchAll(/#v(\d+\.\d+\.\d+)/g)) refs.push([rel, m[1]])
+    for (const m of text.matchAll(/版本 `v(\d+\.\d+\.\d+)`/g)) refs.push([rel, m[1]])
+    for (const m of text.matchAll(/wanxiang-engine-(\d+\.\d+\.\d+)\.tgz/g)) refs.push([rel, m[1]])
+  }
+  assert.ok(refs.length >= 1, '宿主文档里一处都没提库的版本号?')
+  const stale = refs.filter(([, v]) => v !== engineVersion).map(([rel, v]) => `${rel} 写的是 ${v}`)
+  assert.deepEqual(stale, [], `宿主文档里的库版本与 packages/engine(${engineVersion})不一致:${stale.join('、')}`)
+  console.log(`   宿主文档里的库版本 ${refs.length} 处引用都是 ${engineVersion}`)
+}
+
 console.log(`产物自检通过:${entries.length} 个入口 + 三份内容包 + 交叉校验 + 发布包内容 + 真装一遍 + 宿主引用方式`)

@@ -168,6 +168,33 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   console.log(`报错口径自检通过(${throwMessages.size} 条报错都有人真的触发过)`)
 
   /**
+   * 版本引用自检 —— 文档里指向的那个 tag,必须就是 `package.json` 里的版本。
+   *
+   * 为什么值得一条判据:使用者拿到库的第一件事就是**照抄安装那一行**
+   * (`bun add github:pplmx/wanxiang-engine#v0.1.18`)。发版时改了 `package.json` 却漏改文档,
+   * 那句命令要么指向一个不存在的 tag,要么把他按在一个旧版本上 —— 而这两件事都不会有任何报错。
+   * 版本号在库里出现在四个地方(README 的安装块 / README 的版本块 / development.md 的安装块 /
+   * development.md 的 npm pack 例),人工同步迟早会漏,这里一次全查。
+   *
+   * CHANGELOG 不算:那里出现的历史版本号是**应该**不一样的。
+   */
+  const version = JSON.parse(readFileSync(resolve(ENGINE, 'package.json'), 'utf-8')).version
+  const versionDocs = ['README.md', ...readdirSync(resolve(ENGINE, 'docs')).map(name => `docs/${name}`)].filter(
+    rel => !rel.endsWith('CHANGELOG.md')
+  )
+  const versionRefs = []
+  for (const rel of versionDocs) {
+    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
+    for (const m of text.matchAll(/#v(\d+\.\d+\.\d+)/g)) versionRefs.push([rel, m[1]])
+    for (const m of text.matchAll(/wanxiang-engine-(\d+\.\d+\.\d+)\.tgz/g)) versionRefs.push([rel, m[1]])
+    for (const m of text.matchAll(/当前版本 \*\*(\d+\.\d+\.\d+)\*\*/g)) versionRefs.push([rel, m[1]])
+  }
+  assert.ok(versionRefs.length >= 4, `只找到 ${versionRefs.length} 处版本引用 —— 文档改了写法?`)
+  const stale = versionRefs.filter(([, v]) => v !== version).map(([rel, v]) => `${rel} 写的是 ${v}`)
+  assert.deepEqual(stale, [], `这些文档里的版本与 package.json(${version})不一致:${stale.join('、')}`)
+  console.log(`版本引用自检通过(${versionRefs.length} 处引用都是 ${version})`)
+
+  /**
    * 目录树自检 —— README 里那棵树是使用者的地图,它必须**和仓库逐项对得上**。
    *
    * 两边都拦:新加一个模块却忘了写进树(地图少一块,读者以为库里没有这层),

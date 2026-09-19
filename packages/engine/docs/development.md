@@ -52,6 +52,33 @@ git push git@github.com:<你>/wanxiang-engine.git engine-main:main
 cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
 ```
 
+## 发版(五步,一步都不能省)
+
+版本口径见 [CHANGELOG](./CHANGELOG.md) 开头:**攒批发布、默认只加 patch** ——
+初期攒到几十个改动再发一个版本是常态,发出来的 tag 是给外面的使用者一个可 pin 的点。
+
+```bash
+# 1 · 改版本号(只加 patch,除非有对外口径变化)
+$EDITOR package.json                     # "version": "0.1.18" → "0.1.19"
+# 2 · CHANGELOG 的「未发布」那一节定稿成带日期的一节(## 0.1.19 — YYYY-MM-DD)
+$EDITOR CHANGELOG.md
+# 3 · 同步文档里的版本引用(README 的安装块与版本块、本文件的安装块与 npm pack 例)
+#     漏了会红:`bun run check` 里的「版本引用自检」按 package.json 逐处核对
+# 4 · 推两个仓库
+git push origin main
+git subtree push --prefix=packages/engine engine main    # 或在独立仓库里直接推
+# 5 · 打 tag + 发 release(gh 的 --target 用完整 SHA,别用分支名)
+gh release create v0.1.19 --target "$(git -C packages/engine rev-parse main)" --title v0.1.19 --notes-file ...
+gh api repos/pplmx/wanxiang-engine/releases/tags/v0.1.19     # 核对 tag 与包内版本
+```
+
+两条经验,都是真踩过的:
+
+- **`--target` 要写完整 SHA**:写分支名时,`gh` 打出来的 tag 可能落在旧提交上(而这个错误要到
+  有人按 tag 装库时才现形);
+- **别用 `gh run list` + sleep 轮询 CI**:慢且没必要 —— 判据在本地就能跑(`bun run check`),
+  CI 只是把同一件事在干净环境里再做一遍;真要等,等一个具体对象(某次 run 的结论),不要盲等。
+
 ## 常跑的命令
 
 ```bash
