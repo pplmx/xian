@@ -114,7 +114,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
 
   // ---- 5 阶 · 万妖林 ----
   t('w_yaogu', '妖骨长刀', 'weapon', 5, { attack: 13 }, '妖骨磨成的刀,刀口泛着骨白', {
-    icon: 'axe',
+    icon: 'saber',
     fixedMods: { critRate: 0.02 }
   }),
   t('h_yaoyu', '妖羽冠', 'head', 5, { defense: 5, maxHp: 20 }, '冠上插着一支妖鸟翎羽', { fixedMods: { critRate: 0.02 } }),
@@ -127,7 +127,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
   t('tl_quyao', '驱妖符', 'talisman', 5, { maxHp: 18 }, '朱砂画的驱妖纹,妖气近身自退', { fixedMods: { damageBonus: 0.03 } }),
 
   // ---- 6 阶 · 古战场遗迹 ----
-  t('w_chiyan', '战痕刀', 'weapon', 6, { attack: 14 }, '缺口累累的刀,每一道痕都是一场仗', { icon: 'axe', fixedMods: { damageBonus: 0.04 } }),
+  t('w_chiyan', '战痕刀', 'weapon', 6, { attack: 14 }, '缺口累累的刀,每一道痕都是一场仗', { icon: 'saber', fixedMods: { damageBonus: 0.04 } }),
   t('h_tieji', '铁脊冠', 'head', 6, { defense: 6, maxHp: 22 }, '铁脊锻成的冠,沉是沉了些,却压得住心神'),
   t('b_xuanwu', '玄武甲', 'body', 6, { defense: 10, maxHp: 42 }, '仿玄武之甲铸成,厚重难破', {
     fixedMods: { damageReduction: 0.04 },
@@ -144,7 +144,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
 
   // ---- 7 阶 · 赤炎火域 ----
   t('w_yanwen', '炎纹刀', 'weapon', 7, { attack: 14 }, '刀身缠着炎纹,越挥越烫', {
-    icon: 'axe',
+    icon: 'saber',
     fixedMods: { damageBonus: 0.04 }
   }),
   t('h_huowen', '火纹冠', 'head', 7, { defense: 6, maxHp: 22 }, '冠上的火纹经年不灭', { fixedMods: { attackPct: 0.04 } }),
@@ -158,7 +158,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
 
   // ---- 8 阶 · 幽冥海 ----
   t('w_youhai', '幽海钩', 'weapon', 8, { attack: 14 }, '海沟里捞起的弯钩,锈色发青', {
-    icon: 'wand',
+    icon: 'hook',
     fixedMods: { lifesteal: 0.02 }
   }),
   t('h_xingchen', '星辰冠', 'head', 8, { defense: 6, maxHp: 24 }, '嵌有陨星碎屑,夜里微光流动', {
@@ -176,7 +176,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
   t('tl_zhenhai', '镇海符', 'talisman', 8, { maxHp: 22, defense: 3 }, '压住海中妖气的旧符', { fixedMods: { damageReduction: 0.04 } }),
 
   // ---- 9 阶 · 迷雾沼泽 ----
-  t('w_zidian', '雾隐长枪', 'weapon', 9, { attack: 15 }, '枪身缠着湿漉漉的雾,出手无声', { icon: 'wand', fixedMods: { speed: 0.05 } }),
+  t('w_zidian', '雾隐长枪', 'weapon', 9, { attack: 15 }, '枪身缠着湿漉漉的雾,出手无声', { icon: 'spear', fixedMods: { speed: 0.05 } }),
   t('h_miwu', '迷雾纱', 'head', 9, { defense: 6, maxHp: 24 }, '一层轻纱,遮得住脸遮不住雾', { fixedMods: { dodgeRate: 0.03 } }),
   t('b_zhaoze', '沼泽皮甲', 'body', 9, { defense: 10, maxHp: 42 }, '沼兽皮缝的甲,防潮', { fixedMods: { defensePct: 0.04 } }),
   t('wr_zhaoteng', '沼藤护腕', 'wrist', 9, { attack: 4, defense: 4 }, '沼藤编的护腕,湿了也不霉', { fixedMods: { counterRate: 0.05 } }),
@@ -201,7 +201,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
 
   // ---- 11 阶 · 雷泽 ----
   t('w_leizeqiang', '雷泽枪', 'weapon', 11, { attack: 15 }, '雷泽里淬过雷的长枪,枪尖有焦痕', {
-    icon: 'wand',
+    icon: 'spear',
     fixedMods: { speed: 0.05 }
   }),
   t('h_leiweng', '雷纹冠', 'head', 11, { defense: 6, maxHp: 24 }, '冠上雷纹一响,胆气就壮', { fixedMods: { breakthroughRate: 0.01 } }),
@@ -228,7 +228,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
 
   // ---- 13 阶 · 荒古妖庭 ----
   t('w_yaoting', '妖庭戈', 'weapon', 13, { attack: 17 }, '荒古妖庭的仪戈,重得压手', {
-    icon: 'axe',
+    icon: 'halberd',
     fixedMods: { armorPen: 0.05 }
   }),
   t('h_yaotingguan', '妖庭冠', 'head', 13, { defense: 7, maxHp: 28 }, '冠上雕着妖庭的图腾', { fixedMods: { attackPct: 0.05 } }),
@@ -254,7 +254,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
   t('tl_gucheng', '古城符', 'talisman', 14, { maxHp: 30 }, '古城墙缝里抠出来的一枚旧符', { fixedMods: { damageReduction: 0.05 } }),
 
   // ---- 15 阶 · 蜃楼幻海 ----
-  t('w_shishen', '蜃影戟', 'weapon', 15, { attack: 18, maxHp: 15 }, '戟身随光变形,远看像另一件兵器', { icon: 'axe', fixedMods: { armorPen: 0.06 } }),
+  t('w_shishen', '蜃影戟', 'weapon', 15, { attack: 18, maxHp: 15 }, '戟身随光变形,远看像另一件兵器', { icon: 'halberd', fixedMods: { armorPen: 0.06 } }),
   t('h_shenguang', '蜃光冠', 'head', 15, { defense: 7, maxHp: 28 }, '冠上时有幻影流转,看着晃眼', { fixedMods: { accuracy: 0.04 } }),
   t('b_shenying', '蜃影衣', 'body', 15, { defense: 12, maxHp: 55 }, '衣色随光而变,远远看去像没人', { fixedMods: { dodgeRate: 0.04 } }),
   t('wr_xianjin', '海市护臂', 'wrist', 15, { attack: 6, defense: 6 }, '护臂上浮着一座海市,一晃就散', { fixedMods: { attackPct: 0.05 } }),
@@ -266,7 +266,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
 
   // ---- 16 阶 · 九幽魔渊 ----
   t('w_jiuyou', '九幽魔刀', 'weapon', 16, { attack: 18 }, '魔渊里浸过的刀,刀身不反光', {
-    icon: 'axe',
+    icon: 'saber',
     fixedMods: { executeDamage: 0.1 }
   }),
   t('h_jiuxiao', '幽霄冠', 'head', 16, { defense: 8, maxHp: 32 }, '冠上刻着九幽的阶次,越往上看越黑', { fixedMods: { breakthroughRate: 0.02 } }),
@@ -280,7 +280,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
 
   // ---- 17 阶 · 星陨荒原 ----
   t('w_xingyun', '星陨枪', 'weapon', 17, { attack: 18 }, '枪尖嵌着陨铁,挥动时带星痕', {
-    icon: 'wand',
+    icon: 'spear',
     fixedMods: { speed: 0.06 }
   }),
   t('h_xingyun', '星陨冠', 'head', 17, { defense: 8, maxHp: 32 }, '冠上嵌满陨星碎屑', { fixedMods: { cultivationSpeed: 0.06 } }),
