@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 375,
+  "round": 376,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T01:35:45+00:00",
+  "updated_at": "2026-09-19T01:48:44+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -12128,7 +12128,7 @@
       "version": 1,
       "created_at": "2026-09-17T14:20:45+00:00",
       "updated_at": "2026-09-17T14:20:45+00:00",
-      "touched_round": 214,
+      "touched_round": 375,
       "summary": "数值审计工具链(economySim 经济闭环 / inflationAudit 战力膨胀 / expIncome 修为收入 / progressionSim 曲线 + 各自的 spec):用真实公式与真实数据估算各境界读数,经 bun run test:report 汇总;只度量不改数值"
     },
     "ISS-210": {
@@ -20697,6 +20697,128 @@
       "confidence": 0.95,
       "source": "变更 CHG-440(fce4f9d)。单测:给 game 后第一格强度 150(= 30×3 + 12×2 + 240×0.15,与 attributes.compute().power 同源);自己给 power 时以自己给的为准(42);都不给时抛 \"成长体检:要么给 realms,要么给 game\"。powerWeights 用例:默认 3/2/0.15 = 400、只按血 = 1000、攻防并重 = 150、只按攻 = 100(未列出的键按 0)。闸门:库 bun run check 全绿(576 例 / 79 文件 + 16 道自检;定制表 105 名字 / 173 旋钮;报错口径 23 条)、宿主 288 文件 / 2630 例全过、check:engine 通过。",
       "summary": "把\"玩家强度\"这个输入从\"调用方自己想办法\"变成\"有默认答案\":有门面就用战力评分(权重可换),只有表就用面板之和,都没给就被拦住。另外这条改动让定制表自检把\"powerWeights 没人用过\"这个真空白顶了出来 —— 又一个\"承诺了却没人试\"的例子。"
+    },
+    "TASK-357": {
+      "id": "TASK-357",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:48:03+00:00",
+      "updated_at": "2026-09-19T01:48:44+00:00",
+      "touched_round": 376,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "库:内容强度可从副本区域表取(dungeonContentPower)——默认取\"该境界能打到的最强那一处\"的首领,按 attributes.compute().power 折算,没配内容就向下沿用,首领缺了就退回普通池;口径与挑法可换(powerOf/regionOf/enemyOf),大数实现另给 numeric。文档补「内容强度别手写」一节与可编译示例;另加第十七道自检「公开面数量」(README 的导出数/类型数当场数出来对账)。"
+    },
+    "TASK-358": {
+      "id": "TASK-358",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:48:05+00:00",
+      "updated_at": "2026-09-19T01:48:44+00:00",
+      "touched_round": 376,
+      "category": "test-quality",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "宿主:落地审计给新导出写归属(own),并把两套内容强度模型的差量出来钉住——本作战斗的敌人数值走 core/combat 解析式(powerScale × 三围基数 × 层级补偿),库的区域表读数走 snapshot(基数 × 倍率 × tierGrowth^(tier-1)),后期差 3 个数量级以上;docs/engine.md 的引用处数跟上 65。"
+    },
+    "CHG-441": {
+      "id": "CHG-441",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:48:08+00:00",
+      "updated_at": "2026-09-19T01:48:08+00:00",
+      "touched_round": 375,
+      "commit": "f5cfbb5",
+      "summary": "库:dungeons.ts 新增 DungeonContentPowerConfig + dungeonContentPower;index.ts 与 publicApi.spec 清单跟上;dungeons.spec 新增七条判据(默认口径/向下沿用/接属性系统/两个覆盖点/接上体检逐格对账与碾压格数变化/两条报错);docs/usage.md 三处、docs/tuning.md 新增「内容强度别手写」(带 compile-check)、README 数量与清单、CHANGELOG 两条;verify-dist.mjs 新增第十七道自检「公开面数量」。"
+    },
+    "CHG-442": {
+      "id": "CHG-442",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:48:10+00:00",
+      "updated_at": "2026-09-19T01:48:10+00:00",
+      "touched_round": 375,
+      "commit": "f5cfbb5",
+      "summary": "宿主:engineAdoption.spec 归属表新增 dungeonContentPower(own,附两套模型差异的理由);engineProgressionAudit.spec 新增一节两组判据(审计强度 == 战斗快照基准强度;库的区域表读数与本作那套的比值前段 >1、末境 <0.001);docs/engine.md 引用处数 59 → 65。"
+    },
+    "ISS-243": {
+      "id": "ISS-243",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:48:13+00:00",
+      "updated_at": "2026-09-19T01:48:13+00:00",
+      "touched_round": 375,
+      "severity": 0.45,
+      "confidence": 0.9,
+      "summary": "宿主 ENGINE_WORLD_CONFIG.dungeons.enemyPower 是一组死数:本作战斗的敌人数值走 core/combat.makeEnemySnap(powerScale(tier) × 三围基数 × 层级补偿),从不消费库的 dungeons.snapshot(基数 × 倍率 × tierGrowth^(tier-1))。实测两套模型后期差 3 个数量级以上(第 20 境 区域表 ÷ 战斗基准 ≈ 0.00x),配置位却写着 tierGrowth: 1.9 —— 现在无碍(没人读),但谁哪天把战斗换成库的 snapshot,内容强度会静默塌掉一个量级。"
+    },
+    "DEC-164": {
+      "id": "DEC-164",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:48:17+00:00",
+      "updated_at": "2026-09-19T01:48:17+00:00",
+      "touched_round": 375,
+      "summary": "内容强度这一层,库与本作各留一套:库用 dungeonContentPower 读区域表(给\"整场都用库的 snapshot\"的作品),本作用 inflationAudit.enemyPowerAt 走战斗解析式;不合并,并把两套的量级差写成判据。",
+      "rationale": "两套量的不是同一个量:库那份取的是\"该境界能打到的最强一处区域的首领\"(倍率 2.8~5 的 Boss),本作审计量的是\"这一层该有的基准敌人\"(三项倍率均为 1);层级曲线也同源不同路——本作是 powerScale(tier) × enemyGearFactor(tier),库是 tierGrowth^(tier-1)。实测前段库读数偏高 2~3 倍、末境反过来低 3 个数量级以上,硬合并只会让\"玩家 vs 内容\"这条读数与玩家真正打的敌人脱节,而脱节的审计比没有审计更坏。反过来,库那份对\"整场都用库\"的使用者是准的,不该为了迎合本作而去掉。",
+      "alternatives_rejected": "①把本作战斗改成读库的 snapshot(要复刻 powerScale × 层级补偿 × 危地系数,还要把 GNum 曲线塞进 scaleFn 的 number 口子,逐位对齐做不到,且玩家体感会变);②把库的区域表读数接进本作审计(读数立刻与玩家真正打的敌人差 3 个数量级);③删掉本作那份、只留库的(等于拿一条错曲线判\"内容没被碾\",正是这一轮要消灭的那种坏);④只写散文不写判据(理由会腐烂,故在 engineProgressionAudit 里钉住比值)。"
+    },
+    "EV-367": {
+      "id": "EV-367",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:48:20+00:00",
+      "updated_at": "2026-09-19T01:48:20+00:00",
+      "touched_round": 376,
+      "confidence": 0.95,
+      "source": "变更 CHG-441(f5cfbb5)。库 bun run check 全绿:583 例 / 79 文件;17 道自检逐条印出(公开面数量自检通过:78 个运行时导出 + 212 个公开类型;文档片段编译通过:14 段标了 compile-check 的代码块都对着**发布包**编过);定制表 111 名字 / 180 旋钮;报错口径 26 条;示例 13 份全跑通。",
+      "summary": "新增件与它的两条硬判据:默认读数接上体检后逐格 ratio == 玩家强度 / 区域表读数(证明体检真在逐格用它,不是缓存一次),内容厚度 /100 与 /10 两档的碾压格数不同(6 vs 0);两条报错都有人触发(要么给 powerOf 要么给 attributes、这个境界没有可用的区域)。公开面数量的自检当场抓住文档漂移(CHANGELOG 版本口径写着 75 / 203)。"
+    },
+    "EV-368": {
+      "id": "EV-368",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:48:22+00:00",
+      "updated_at": "2026-09-19T01:48:22+00:00",
+      "touched_round": 376,
+      "confidence": 0.9,
+      "source": "变更 CHG-442(f5cfbb5)。宿主 bun run test:288 文件 / 2639 例全过(新增两例);check:engine 通过(65 处引用全部走公开入口,宿主文档里的库版本 3 处一致);eslint 对两个改动文件零告警。量级读数:区域表 ÷ 战斗基准 —— 第 0 境 ×2.63、第 6 境 ×0.73、第 12 境 ×0.01、第 20 境 ×0.00003;库侧 mock 出\"首领不在敌人表里\"也走通了(退回普通池)。",
+      "summary": "两套内容强度模型的差被量出来并钉住(≥3 个数量级),归属表因此有了可核对的理由;同时证明本作审计用的强度 == 战斗快照基准强度(powerScore(makeEnemySnap(基准敌人,tier,1)) == enemyPowerAt(tier),5 档层级)。"
+    },
+    "HYP-100": {
+      "id": "HYP-100",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:48:35+00:00",
+      "updated_at": "2026-09-19T01:48:35+00:00",
+      "touched_round": 376,
+      "confidence": 0.9,
+      "summary": "内容强度的默认口径(该境界能打到的最强一处的首领,按属性系统战力评分折算)可以直接接上体检:逐格 ratio 就是 玩家强度 ÷ 该处读数,内容厚薄一改碾压格数就变;不需要使用者再手写一条曲线。",
+      "prediction": "若把 contentPower 换成 dungeonContentPower 的返回值,audit.steps 每一格的 ratio 应等于 power(major,layer) / byRegions(major);把内容整体缩小 10 倍或 100 倍,summary().crushing 应随之变化;而\"这一境没配内容\"的境界读数应等于向下最近一处(不出现 0 或外推)。"
+    },
+    "HYP-101": {
+      "id": "HYP-101",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:48:38+00:00",
+      "updated_at": "2026-09-19T01:48:38+00:00",
+      "touched_round": 376,
+      "confidence": 0.85,
+      "summary": "本作审计用的\"内容强度\"与库的区域表读数量的不是同一个量(基准敌人 vs 区域首领;两条层级曲线 powerScale × 层级补偿 vs tierGrowth^(tier-1)),因此两边不该合并 —— 合并会让审计读数与玩家真正打的敌人脱节。",
+      "prediction": "本作战斗快照(powerScale × 三围基数 × 层级补偿)的战力应等于 inflationAudit.enemyPowerAt(tier)(同一套解析式);而库的 dungeonContentPower 读出的值与本作 enemyPowerAt(maxTierForMajor(m)) 的比值应在前段 >1(库取首领、倍率更高)、后段 <0.001(两条曲线分道扬镳),即两套模型无法用一个数对齐。"
     }
   },
   "edges": [
@@ -30450,6 +30572,54 @@
       "to": "TASK-356",
       "type": "implements",
       "created_at": "2026-09-19T01:35:44+00:00"
+    },
+    {
+      "from": "CHG-441",
+      "to": "TASK-357",
+      "type": "implements",
+      "created_at": "2026-09-19T01:48:25+00:00"
+    },
+    {
+      "from": "CHG-442",
+      "to": "TASK-358",
+      "type": "implements",
+      "created_at": "2026-09-19T01:48:25+00:00"
+    },
+    {
+      "from": "DEC-164",
+      "to": "TASK-358",
+      "type": "governs",
+      "created_at": "2026-09-19T01:48:25+00:00"
+    },
+    {
+      "from": "DEC-164",
+      "to": "COMP-025",
+      "type": "governs",
+      "created_at": "2026-09-19T01:48:25+00:00"
+    },
+    {
+      "from": "ISS-243",
+      "to": "COMP-025",
+      "type": "located_in",
+      "created_at": "2026-09-19T01:48:25+00:00"
+    },
+    {
+      "from": "TASK-358",
+      "to": "ISS-243",
+      "type": "addresses",
+      "created_at": "2026-09-19T01:48:25+00:00"
+    },
+    {
+      "from": "EV-367",
+      "to": "HYP-100",
+      "type": "validates",
+      "created_at": "2026-09-19T01:48:40+00:00"
+    },
+    {
+      "from": "EV-368",
+      "to": "HYP-101",
+      "type": "validates",
+      "created_at": "2026-09-19T01:48:40+00:00"
     }
   ]
 }
