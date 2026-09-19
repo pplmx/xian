@@ -371,6 +371,10 @@ export function createEquipmentSystem<T = number>(
   }
 
   const rollQuality = (tier: number, rng: Rng, opts: RollOptions = { tier }): QualityDef => {
+    // 品质表是空的 = 这款游戏没有装备这一层(配置里写的是 equipment: null)。
+    // 这里必须出声:往下走会掷出一个 undefined 的品质,然后带着它去读 affixes ——
+    // 那种错会在很远的地方以"读不到属性"的样子出现,这里的这句话才是能用的话。
+    if (qualities.length === 0) throw new Error('装备系统:品质表是空的,没有可用的品质')
     const floor = Math.max(opts.minQualityRank ?? 0, opts.floorRank ?? 0)
     const pool = qualities.filter(q => q.rank >= floor)
     if (pool.length === 0) return qualities[qualities.length - 1]!
@@ -566,7 +570,14 @@ export function createEquipmentSystem<T = number>(
     affixes,
     sets,
     slot: id => slotById.get(id),
-    quality: id => qualityById.get(id) ?? qualities[0]!,
+    quality: id => {
+      const found = qualityById.get(id)
+      if (found) return found
+      // 表里有品质但认不出这个 id 时退到最弱那一档(旧存档里可能留着删掉的品质);
+      // 表本身就是空的(这游戏没有装备这一层)则要出声,不能返回一个 undefined
+      if (qualities.length === 0) throw new Error('装备系统:品质表是空的,没有可用的品质')
+      return qualities[0]!
+    },
     template: id => templateById.get(id),
     affix: id => affixById.get(id),
     templatesAtTier,

@@ -83,10 +83,11 @@ release 附件挂上去** —— 所以上面那条 URL 与版本号始终一致
 ```ts
 import { defineGame, createRng } from 'wanxiang-engine'
 
-// 三份现成的内容包也从包名起就能取到
+// 四份现成的内容包也从包名起就能取到
 import { XIUXIAN } from 'wanxiang-engine/presets/xiuxian'   // 修仙
 import { DEMO }    from 'wanxiang-engine/presets/demo'      // 科幻
 import { DAILY }   from 'wanxiang-engine/presets/daily'     // 日常 · 学习
+import { MINIMAL } from 'wanxiang-engine/presets/minimal'   // 只有等级与属性(没有装备与副本)
 ```
 
 其他接法(本地路径依赖 / tgz / monorepo 工作区)见[开发文档](./docs/development.md#接进你自己的项目)。
@@ -196,6 +197,11 @@ console.log(battle.win ? '胜' : '败', battle.rounds, '回合')
 console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progress, rng).rewards)
 ```
 
+**只装一半也行** —— 没有装备 / 没有副本的题材,把 `equipment` / `dungeons` 写成 `null` 就是
+"这款游戏没有这一层":门面里那一层仍在(是空系统:0 槽 0 件 / 0 区域),真去用它会当场说明白。
+最省事的起点是把 [`src/presets/minimal.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/presets/minimal.ts)
+抄走改名字 —— 六十行,只有等级与属性。
+
 ## 核心概念
 
 只有三条,其余都是它们的组合:
@@ -215,7 +221,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 ## 模块一览
 
-库按"一层回答一个问题"切开,`src/` 下 38 个模块文件各是一层(另有 3 份内容包)。
+库按"一层回答一个问题"切开,`src/` 下 38 个模块文件各是一层(另有 4 份内容包)。
 按**你要做的事**分组:
 
 | 这一组 | 回答什么 | 代表入口 |
@@ -277,15 +283,17 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 ## 内容包
 
-三份现成的内容包可以直接对照,也都从包名起就能取到:
+四份现成的内容包可以直接对照,也都从包名起就能取到:
 
 | 内容包 | 题材 | 看点 |
 | --- | --- | --- |
 | `presets/xiuxian` | 仙侠 | 四界二十一境、九档品质、六层装备、六个区域的完整链条 |
 | `presets/demo` | 星港科幻 | 舱位等级、舰载模块、火力/装甲/结构值 —— 换皮不换机制 |
 | `presets/daily` | 书桌与日常 | 学段与周次、专注力/精力、文具与书桌、图书馆与期末考试(**没有战斗世界观**的题材) |
+| `presets/minimal` | 手作工坊 | **只装两层**:只有等级与属性,`equipment` / `dungeons` 都写 `null` —— 拿来当"你的游戏第 0 版"抄最合适 |
 
-三者的**机制键完全一致**,名字没有一处相同,而都能跑完「修炼 → 进阶 → 掉装 → 装配 → 打副本 → 通关拿奖励」。
+前三者的**机制键完全一致**,名字没有一处相同,而都能跑完「修炼 → 进阶 → 掉装 → 装配 → 打副本 → 通关拿奖励」;
+第四份走另一条路:它证明**用得上几层就装几层** —— 没有装备与副本的题材,不必编空表,也不必在装配时崩掉。
 这不是文档里的承诺,是 [`src/presets/presets.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/presets/presets.spec.ts) 里的判据。
 
 ## 装配时的校验
@@ -308,10 +316,10 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 | 判据 | 钉住的事 | 在哪 |
 | --- | --- | --- |
-| 用例 | 公开面的行为,583 个用例 / 79 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
+| 用例 | 公开面的行为,588 个用例 / 79 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
-| 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
+| 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配四份内容包 | `scripts/verify-dist.mjs` |
 | 公开面判据 | 78 个运行时导出 + 212 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
 
 上表只是最常被问到的五条。真正跑起来的是**十七道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `文档链接` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `公开面数量` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
@@ -399,7 +407,7 @@ packages/engine/
     save.ts         defineSaveFormat / 迁移链 / 编解码
     saveShape.ts    形状修复原语
     config.ts       defineGame / validateGame(交叉校验)
-    presets/        仙侠 / 星港 / 日常学习三份内容包
+    presets/        仙侠 / 星港 / 日常学习 / 最小(只装两层)四份内容包
   examples/         可跑示例(从零装配 / 快速上手 / 最小循环 / 战斗组合技 / 一梯三界 / 书桌与日常 / 自习室的一天 / 星屑集册 / 一角点心铺 / 行商十二日 / 药庐二十四炉 / 战斗接管 / 拳赛接管)
   docs/
     usage.md        模块速查与定制点(每层回答什么、想改什么改哪里)

@@ -32,7 +32,8 @@ const entries = [
   pkg.exports['.'].import,
   pkg.exports['./presets/xiuxian'].import,
   pkg.exports['./presets/demo'].import,
-  pkg.exports['./presets/daily'].import
+  pkg.exports['./presets/daily'].import,
+  pkg.exports['./presets/minimal'].import
 ]
 for (const entry of entries) {
   assert.ok(entry, 'package.json 里少了一个入口声明')
@@ -141,6 +142,7 @@ for (const required of [
   'dist/presets/demo.js',
   'dist/presets/daily.js',
   'dist/presets/xiuxian.js',
+  'dist/presets/minimal.js',
   'README.md',
   'CHANGELOG.md',
   'LICENSE',
@@ -210,4 +212,4 @@ console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
   console.log(`   宿主文档里的库版本 ${refs.length} 处引用都是 ${engineVersion}`)
 }
 
-console.log(`产物自检通过:${entries.length} 个入口 + 三份内容包 + 交叉校验 + 发布包内容 + 真装一遍 + 宿主引用方式`)
+console.log(`产物自检通过:${entries.length} 个入口 + 四份内容包 + 交叉校验 + 发布包内容 + 真装一遍 + 宿主引用方式`)

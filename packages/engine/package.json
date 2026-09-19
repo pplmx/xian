@@ -36,6 +36,10 @@
     "./presets/daily": {
       "types": "./dist/presets/daily.d.ts",
       "import": "./dist/presets/daily.js"
+    },
+    "./presets/minimal": {
+      "types": "./dist/presets/minimal.d.ts",
+      "import": "./dist/presets/minimal.js"
     }
   },
   "files": [

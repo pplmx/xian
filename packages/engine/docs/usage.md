@@ -29,8 +29,8 @@
 | 存档 | `defineSaveFormat` 等 | 老档怎么升到新版本?形状坏了怎么补? |
 | 数值层 | `Numeric<T>` | 数值超过 double 怎么办? |
 | 存档形状修复 | `saveShape` 那一组(`asRecord` / `asStringArray` / `asFiniteNumber` …) | 存档里那一格是字符串 / null / 负数 / 超上限时,怎么兜回来?深结构里混了垃圾元素怎么办? |
-| 装配 | `defineGame` | 内容之间的引用是否自洽? |
-| 内容包 | `presets/*`(仙侠 / 星港 / 日常学习) | 想看"同一套内核换三套名字"长什么样?想抄一份现成内容? |
+| 装配 | `defineGame` | 内容之间的引用是否自洽?**这一层我有没有**(没有就写 `equipment: null` / `dungeons: null`)? |
+| 内容包 | `presets/*`(仙侠 / 星港 / 日常学习 / 最小) | 想看"同一套内核换三套名字"长什么样?想抄一份现成内容?**只装两层的那份**(`presets/minimal`:没有装备与副本)最适合当"你的游戏第 0 版"抄 |
 | 资源账本 | `createResourceSystem` | 灵石 / 信用点 / 零花钱:收多少、付得起吗、上限多少、这批是哪来的? |
 | 分流裁决 | `createTriage` | 这一件留还是不留?自动回收 / 自动分解的规则顺序与读数 |
 | 周期 | `createCycleSystem` | 每天 / 每赛季换一种环境:今天是什么、还有多久换、接下来几天分别是什么 |

@@ -23,7 +23,14 @@ import { resolve } from 'node:path'
 
 const ENGINE = resolve(import.meta.dirname, '..')
 const DIST = resolve(ENGINE, 'dist')
-for (const entry of ['index.js', 'index.d.ts', 'presets/demo.js', 'presets/xiuxian.js', 'presets/daily.js']) {
+for (const entry of [
+  'index.js',
+  'index.d.ts',
+  'presets/demo.js',
+  'presets/xiuxian.js',
+  'presets/daily.js',
+  'presets/minimal.js'
+]) {
   assert.ok(existsSync(resolve(DIST, entry)), `产物缺文件:dist/${entry} —— 先跑 bun run build`)
 }
 
@@ -31,6 +38,7 @@ const engine = await import(resolve(DIST, 'index.js'))
 const { DEMO } = await import(resolve(DIST, 'presets/demo.js'))
 const { XIUXIAN } = await import(resolve(DIST, 'presets/xiuxian.js'))
 const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
+const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
 
 /**
  * 组装指南自检 —— 文档里的每个 `create*` 与每个示例文件都必须真实存在。
@@ -567,6 +575,23 @@ assert.equal(engine.defineGame(XIUXIAN).realms.realms.length, 21)
   assert.ok(outcome.rewards.length > 0, '通关要给点东西(哪怕是"理解"与零花钱)')
 }
 
+// 第四个题材:**只装两层**的那种作品 —— 没有装备、没有副本,也要能装出一个能用的世界。
+// 这一段的用意是把"通用"落到最硬的地方:不是"四层都装满才好用",而是"用得上几层就装几层"。
+{
+  const game = engine.defineGame(MINIMAL)
+  assert.equal(game.config.equipment, null)
+  assert.equal(game.config.dungeons, null)
+  assert.equal(game.realms.label(0, 0), '学徒·粗活')
+  assert.equal(game.attributes.name('attack'), '手感')
+  const panel = game.realms.baseStats(0, 0)
+  assert.ok(panel.attack, '只装两层的世界照样有面板')
+  // 空的那两层:读结构是"有意义的空",真去用则当场说明白
+  assert.deepEqual(game.equipment.slots, [])
+  assert.deepEqual(game.dungeons.chain(), [])
+  assert.throws(() => game.dungeons.firstRegion(), /副本系统:区域表是空的/)
+  assert.throws(() => game.equipment.generate(engine.createRng('minimal'), { tier: 1 }), /装备系统:没有任何可掉落的槽位/)
+}
+
 console.log(`Node 产物自检通过(dist 可被 node ESM 直接 import:${Object.keys(engine).length} 个导出)`)
 
 // —— 使用者那一侧:装发布包,按包名 import ——
@@ -597,6 +622,7 @@ for (const required of [
   'dist/index.js',
   'dist/index.d.ts',
   'dist/presets/daily.js',
+  'dist/presets/minimal.js',
   'package.json',
   'README.md',
   'CHANGELOG.md',
@@ -616,11 +642,17 @@ const consumerProbe = `
   const engine = await import('wanxiang-engine')
   const { DEMO } = await import('wanxiang-engine/presets/demo')
   const { DAILY } = await import('wanxiang-engine/presets/daily')
+  const { MINIMAL } = await import('wanxiang-engine/presets/minimal')
   const game = engine.defineGame(DEMO)
   assert.equal(game.realms.label(0, 0), '见习船员 I 阶')
   assert.equal(engine.defineGame(DAILY).realms.label(8, 5), '高三·期末')
+  // "只装两层"的那份:装得起来,空的那两层当场说明白(而不是回一个 undefined)
+  const halfGame = engine.defineGame(MINIMAL)
+  assert.equal(halfGame.realms.label(0, 0), '学徒·粗活')
+  assert.equal(halfGame.config.equipment, null)
+  assert.throws(() => halfGame.dungeons.firstRegion(), /区域表是空的/)
   assert.equal(typeof engine.defineGame, 'function')
-  console.log('   按包名 import 通过(含两份子路径内容包)')
+  console.log('   按包名 import 通过(含三份子路径内容包,其中一份只有两层)')
 
   /**
    * 从零装一个世界 —— **不碰任何内容包**,只用包名导出的东西装配一份新题材。

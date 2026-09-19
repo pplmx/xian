@@ -506,7 +506,8 @@ describe('迁移接线 · app 的 formulas 确实经库计算', () => {
   })
 
   it('库里的层级战力表就是 core/tierScale.powerScale 的那张表', () => {
-    const factors = ENGINE_WORLD_CONFIG.equipment.power.tierFactors ?? []
+    // 本作四层都装着(没有那一层才写 null),所以这里断言非空
+    const factors = ENGINE_WORLD_CONFIG.equipment!.power.tierFactors ?? []
     const maxTier = Math.max(...EQUIPMENT_TEMPLATES.map(t => t.tier))
     expect(factors.length).toBe(maxTier)
     // 表里就是 GNum(宿主的大数),故这里是**精确相等**,不是"接近"

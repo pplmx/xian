@@ -11,6 +11,7 @@ import { createRng } from '../rng.js'
 import { DEMO } from './demo.js'
 import { XIUXIAN } from './xiuxian.js'
 import { DAILY, DAILY_COMPANIONS, DAILY_COOKING, DAILY_SKILLS } from './daily.js'
+import { MINIMAL } from './minimal.js'
 import { composeCraftRate } from '../crafting.js'
 import { createCompanionSystem } from '../companions.js'
 import { createSkillSystem } from '../skills.js'
@@ -221,5 +222,39 @@ describe('内容包 —— 书桌与日常(跨题材通用性的判据)', () => 
     const hard = composeCraftRate({ heat: 0.5, prep: 0.5, seasoning: 0.4, dishRank: 2 }, DAILY_COOKING)
     expect(hard).toBeGreaterThan(0)
     expect(hard).toBeLessThan(0.4)
+  })
+})
+
+/**
+ * 只装两层的那一份 —— 「没有战斗、没有装备的题材」在库里不是二等公民。
+ *
+ * 这份内容包的意义不是"再来一份样例",而是把通用性放到最硬的地方试一次:
+ * **用得上几层就装几层**,不必为了"这游戏没有副本"去编一张空表,更不该在装配时崩掉。
+ */
+describe('内容包 —— 只装两层的那一份(最小内容包)', () => {
+  it('没有装备与副本的世界照样装得起来、跑得动', () => {
+    const game = defineGame(MINIMAL)
+    expect(game.config.equipment).toBeNull()
+    expect(game.config.dungeons).toBeNull()
+    expect(game.realms.label(0, 0)).toBe('学徒·粗活')
+    expect(game.realms.label(3, 2)).toBe('名师·绝活')
+    // 机制键没换,换的只是展示名
+    expect(game.attributes.name('attack')).toBe('手感')
+    expect(game.attributes.name('maxHp')).toBe('名气')
+
+    // 升级这条主链看得见:满足需求 → 进阶 → 面板抬起来
+    const before = Number(game.realms.baseStats(0, 0)['attack'] ?? 0)
+    const state = game.realms.addExp({ major: 0, layer: 0, exp: 0 }, Number(game.realms.expCost(0, 0)))
+    expect(game.realms.progress(state).ready).toBe(true)
+    let step = game.realms.attemptBreakthrough(state, { rng: createRng('工坊'), bonusRate: 10 })
+    for (let i = 0; i < 50 && !step.ok; i += 1) {
+      step = game.realms.attemptBreakthrough(state, { rng: createRng(`工坊-${i}`), bonusRate: 10 })
+    }
+    expect(step.ok).toBe(true)
+    expect(Number(game.realms.baseStats(step.state.major, step.state.layer)['attack'] ?? 0)).toBeGreaterThan(before)
+
+    // 空的那两层:空链是读得懂的空答案;取第一处则当场说明白
+    expect(game.dungeons.chain()).toEqual([])
+    expect(() => game.dungeons.firstRegion()).toThrow('副本系统:区域表是空的,没有第一处区域')
   })
 })

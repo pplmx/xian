@@ -43,7 +43,8 @@ const realmConfig = (): RealmSystemConfig => ({
 })
 
 /** 装备那份骨架直接借预设(它有 power / 词条 / 品质这些必填项),只在上面改坏一处 */
-const equipmentConfig = () => structuredClone(DEMO.equipment)
+/** 预设内容包这两层一定写着 —— 用例要逐字段拧它们,所以这里断言非 null */
+const equipmentConfig = () => structuredClone(DEMO.equipment)!
 
 const dungeonConfig = (): DungeonConfig => ({
   regions: [{ id: 'pass', name: '山口', tier: 1, minRealm: 0, enemies: ['wolf'], boss: 'wolf' }],
@@ -193,7 +194,7 @@ describe('报错口径 —— 配置写错时,使用者拿到的是哪一句话'
   it('整份配置:defineGame 把每一处问题逐条列出来(不是只报第一处)', () => {
     // 拿预设改坏两处:一个未登记的槽位 + 一个未登记的属性键
     const broken = structuredClone(DEMO) as typeof DEMO
-    broken.equipment.templates[0]!.slot = 'nope'
+    broken.equipment!.templates[0]!.slot = 'nope'
     broken.attributes.defs.push({ key: 'weird', name: '怪词条', kind: 'percent', appliesTo: 'ghost' })
 
     let message = ''

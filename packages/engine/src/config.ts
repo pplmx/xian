@@ -25,8 +25,16 @@ export interface GameConfig<T = number> {
   version?: string
   attributes: AttributeSystemConfig
   realms: RealmSystemConfig
-  equipment: EquipmentConfig<T>
-  dungeons: DungeonConfig<T>
+  /**
+   * 装备这一层。**没有这一层就显式写 `null`**(门面里那一层仍然在,是"空系统":0 槽 0 件)。
+   *
+   * 为什么写成必填、而不是"省略就等于没有":省略是静默的 —— 一款本来要装装备的游戏漏了这一节,
+   * 会装出一个"永远掉不出装备"的世界,而这类故障在装配时看不出来(仓库里最想消灭的正是它)。
+   * 写成必填之后,"有"与"没有"都是一句明确的话;真去用空的那一层(抽一件)也会当场说明白。
+   */
+  equipment: EquipmentConfig<T> | null
+  /** 副本这一层:口径同 `equipment` —— 没有就写 `null`,门面里那一层是空系统 */
+  dungeons: DungeonConfig<T> | null
   combat?: BattleConfig<T>
 }
 
@@ -35,7 +43,9 @@ export interface Game<T = number> {
   readonly version: string
   readonly attributes: AttributeSystem<T>
   readonly realms: RealmSystem<T>
+  /** 装备层。配置里写 `equipment: null` 时这里是空系统(0 槽 0 件)—— 判读用 `config.equipment === null` */
   readonly equipment: EquipmentSystem<T>
+  /** 副本层。配置里写 `dungeons: null` 时这里是空系统(0 区域 0 敌人)—— 判读用 `config.dungeons === null` */
   readonly dungeons: DungeonSystem<T>
   readonly combat: CombatEngine<T>
   /** 装配用的原始配置(数值可能是宿主自己的类型,如 GNum 的层级表) */
@@ -68,6 +78,60 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
   const issues: ValidationIssue[] = []
   const err = (code: string, message: string): void => void issues.push({ level: 'error', code, message })
   const warn = (code: string, message: string): void => void issues.push({ level: 'warning', code, message })
+
+  /**
+   * ---- 节形状:先于一切 ----
+   *
+   * 为什么把这件放在最前面:下面那些对账是"逐字段互相引用"(槽位、属性键、区域、敌人),
+   * 一旦某一节整个缺了或形状错了,它们读到的是 `undefined.map(...)` —— 使用者拿到的不是
+   * "你少写了一节",而是一句 `Cannot read properties of undefined`。
+   *
+   * 两件事在这里定死:
+   *   ① **缺节 = 报错**,并告诉他"没有这一层就显式写 null"(省略是静默的,那正是要拦的);
+   *   ② **形状不对就到此为止** —— 后面的对账在没有形状的前提下没有意义,继续跑只会再崩一次。
+   */
+  const shapeOf = (name: string, value: unknown, fields: readonly { key: string; kind: 'array' | 'object' }[]): boolean => {
+    if (value === undefined) {
+      err('CONFIG_SECTION_MISSING', `配置里缺了 ${name} 这一节 —— 这款游戏没有这一层就显式写 ${name}: null`)
+      return false
+    }
+    if (value === null || typeof value !== 'object') {
+      err('CONFIG_SECTION_SHAPE', `${name} 必须是对象${name === 'equipment' || name === 'dungeons' ? '(没有这一层写 null)' : ''} —— 现在是 ${value === null ? 'null' : typeof value}`)
+      return false
+    }
+    let ok = true
+    for (const field of fields) {
+      const got = (value as Record<string, unknown>)[field.key]
+      const good = field.kind === 'array' ? Array.isArray(got) : got !== undefined && got !== null && typeof got === 'object'
+      if (!good) {
+        err('CONFIG_FIELD_SHAPE', `${name}.${field.key} 必须是${field.kind === 'array' ? '数组' : '对象'} —— 现在是 ${got === undefined ? '缺的' : Array.isArray(got) ? '数组' : typeof got}`)
+        ok = false
+      }
+    }
+    return ok
+  }
+  const realmsOk = shapeOf('realms', config.realms, [
+    { key: 'worlds', kind: 'array' },
+    { key: 'exp', kind: 'object' },
+    { key: 'combat', kind: 'object' }
+  ])
+  const attributesOk = shapeOf('attributes', config.attributes, [{ key: 'defs', kind: 'array' }])
+  // null = 明确说"没有这一层";undefined 由 shapeOf 报出来(省略是静默的)
+  const equipmentOk = config.equipment === null ? false : shapeOf('equipment', config.equipment, [
+    { key: 'slots', kind: 'array' },
+    { key: 'qualities', kind: 'array' },
+    { key: 'templates', kind: 'array' },
+    { key: 'affixes', kind: 'array' },
+    { key: 'power', kind: 'object' }
+  ])
+  const dungeonsOk = config.dungeons === null ? false : shapeOf('dungeons', config.dungeons, [
+    { key: 'regions', kind: 'array' },
+    { key: 'enemies', kind: 'array' }
+  ])
+  // 形状不对就不再往下逐条对账(继续跑只会以 TypeError 再崩一次)
+  if (!realmsOk || !attributesOk || config.equipment === undefined || config.dungeons === undefined) return issues
+  if (config.equipment !== null && !equipmentOk) return issues
+  if (config.dungeons !== null && !dungeonsOk) return issues
 
   // ---- 等级 ----
   const worldIds = new Set<string>()
@@ -110,114 +174,122 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
   }
 
   // ---- 装备 ----
-  const slotIds = new Set(config.equipment.slots.map(s => s.id))
-  if (duplicates(config.equipment.slots.map(s => s.id)).length > 0) {
-    err('EQUIP_SLOT_DUPLICATE', `槽位 id 重复:${duplicates(config.equipment.slots.map(s => s.id)).join('、')}`)
-  }
-  if (duplicates(config.equipment.qualities.map(q => q.id)).length > 0) {
-    err('EQUIP_QUALITY_DUPLICATE', `品质 id 重复:${duplicates(config.equipment.qualities.map(q => q.id)).join('、')}`)
-  }
-  if (duplicates(config.equipment.templates.map(t => t.id)).length > 0) {
-    err('EQUIP_TEMPLATE_DUPLICATE', `装备模板 id 重复:${duplicates(config.equipment.templates.map(t => t.id)).join('、')}`)
-  }
-  if (duplicates(config.equipment.affixes.map(a => a.id)).length > 0) {
-    err('EQUIP_AFFIX_DUPLICATE', `词条 id 重复:${duplicates(config.equipment.affixes.map(a => a.id)).join('、')}`)
-  }
-  const setIds = new Set((config.equipment.sets ?? []).map(s => s.id))
-  if (duplicates((config.equipment.sets ?? []).map(s => s.id)).length > 0) {
-    err('EQUIP_SET_DUPLICATE', `套装 id 重复:${duplicates((config.equipment.sets ?? []).map(s => s.id)).join('、')}`)
-  }
-  for (const s of config.equipment.sets ?? []) {
-    if (s.bonuses.length === 0) warn('EQUIP_SET_EMPTY', `套装 ${s.id}(${s.name})没有任何件数效果`)
-    for (const b of s.bonuses) {
-      if (b.pieces < 1) err('EQUIP_SET_PIECES', `套装 ${s.id}(${s.name})的件数门槛必须 ≥ 1,当前 ${b.pieces}`)
+  // `null` = 这款游戏没有装备这一层:不校验,也不抱怨(已由上面 shapeOf 判过)
+  if (config.equipment !== null) {
+    const equipment = config.equipment
+    const slotIds = new Set(equipment.slots.map(s => s.id))
+    if (duplicates(equipment.slots.map(s => s.id)).length > 0) {
+      err('EQUIP_SLOT_DUPLICATE', `槽位 id 重复:${duplicates(equipment.slots.map(s => s.id)).join('、')}`)
     }
-  }
-  for (const t of config.equipment.templates) {
-    if (!slotIds.has(t.slot)) err('EQUIP_TEMPLATE_SLOT', `装备模板 ${t.id}(${t.name})的槽位未定义:${t.slot}`)
-    if (t.setId !== undefined && !setIds.has(t.setId)) {
-      err('EQUIP_TEMPLATE_SET', `装备模板 ${t.id}(${t.name})指向未定义的套装:${t.setId}`)
+    if (duplicates(equipment.qualities.map(q => q.id)).length > 0) {
+      err('EQUIP_QUALITY_DUPLICATE', `品质 id 重复:${duplicates(equipment.qualities.map(q => q.id)).join('、')}`)
     }
-  }
-  for (const a of config.equipment.affixes) {
-    if (!attrKeys.has(a.key)) err('EQUIP_AFFIX_KEY', `词条 ${a.id}(${a.name})挂在未登记的属性键上:${a.key}`)
-    for (const s of a.slots ?? []) {
-      if (!slotIds.has(s)) err('EQUIP_AFFIX_SLOT', `词条 ${a.id}(${a.name})限定了一个未定义的槽位:${s}`)
+    if (duplicates(equipment.templates.map(t => t.id)).length > 0) {
+      err('EQUIP_TEMPLATE_DUPLICATE', `装备模板 id 重复:${duplicates(equipment.templates.map(t => t.id)).join('、')}`)
     }
-    if (a.min > a.max) err('EQUIP_AFFIX_RANGE', `词条 ${a.id}(${a.name})的 min > max:${a.min} > ${a.max}`)
-    if (a.weight <= 0) warn('EQUIP_AFFIX_WEIGHT', `词条 ${a.id}(${a.name})的权重为 ${a.weight},永远不会被抽到`)
-  }
-  for (const q of config.equipment.qualities) {
-    if (q.affixes[0] > q.affixes[1]) err('EQUIP_QUALITY_AFFIX_RANGE', `品质 ${q.id}(${q.name})的词条区间反了`)
-    if (q.weight <= 0) warn('EQUIP_QUALITY_WEIGHT', `品质 ${q.id}(${q.name})的权重为 ${q.weight},永远不会被抽到`)
-  }
-  for (const s of config.equipment.slots) {
-    const hasTemplate = config.equipment.templates.some(t => t.slot === s.id)
-    if (!hasTemplate) warn('EQUIP_SLOT_EMPTY', `槽位 ${s.id}(${s.name})没有任何装备模板`)
-  }
-  // 每个用到的层级,每个可掉落槽位都该有内容(否则会走退档兜底)
-  const tiers = [...new Set(config.equipment.templates.map(t => t.tier))].sort((a, b) => a - b)
-  for (const tier of tiers) {
-    for (const s of config.equipment.slots) {
-      if ((s.dropWeight ?? 1) <= 0) continue
-      if (!config.equipment.templates.some(t => t.tier === tier && t.slot === s.id)) {
-        warn('EQUIP_TIER_SLOT_GAP', `层级 ${tier} 的槽位 ${s.id}(${s.name})没有本层模板,会退档掉落`)
+    if (duplicates(equipment.affixes.map(a => a.id)).length > 0) {
+      err('EQUIP_AFFIX_DUPLICATE', `词条 id 重复:${duplicates(equipment.affixes.map(a => a.id)).join('、')}`)
+    }
+    const setIds = new Set((equipment.sets ?? []).map(s => s.id))
+    if (duplicates((equipment.sets ?? []).map(s => s.id)).length > 0) {
+      err('EQUIP_SET_DUPLICATE', `套装 id 重复:${duplicates((equipment.sets ?? []).map(s => s.id)).join('、')}`)
+    }
+    for (const s of equipment.sets ?? []) {
+      if (s.bonuses.length === 0) warn('EQUIP_SET_EMPTY', `套装 ${s.id}(${s.name})没有任何件数效果`)
+      for (const b of s.bonuses) {
+        if (b.pieces < 1) err('EQUIP_SET_PIECES', `套装 ${s.id}(${s.name})的件数门槛必须 ≥ 1,当前 ${b.pieces}`)
       }
     }
+    for (const t of equipment.templates) {
+      if (!slotIds.has(t.slot)) err('EQUIP_TEMPLATE_SLOT', `装备模板 ${t.id}(${t.name})的槽位未定义:${t.slot}`)
+      if (t.setId !== undefined && !setIds.has(t.setId)) {
+        err('EQUIP_TEMPLATE_SET', `装备模板 ${t.id}(${t.name})指向未定义的套装:${t.setId}`)
+      }
+    }
+    for (const a of equipment.affixes) {
+      if (!attrKeys.has(a.key)) err('EQUIP_AFFIX_KEY', `词条 ${a.id}(${a.name})挂在未登记的属性键上:${a.key}`)
+      for (const s of a.slots ?? []) {
+        if (!slotIds.has(s)) err('EQUIP_AFFIX_SLOT', `词条 ${a.id}(${a.name})限定了一个未定义的槽位:${s}`)
+      }
+      if (a.min > a.max) err('EQUIP_AFFIX_RANGE', `词条 ${a.id}(${a.name})的 min > max:${a.min} > ${a.max}`)
+      if (a.weight <= 0) warn('EQUIP_AFFIX_WEIGHT', `词条 ${a.id}(${a.name})的权重为 ${a.weight},永远不会被抽到`)
+    }
+    for (const q of equipment.qualities) {
+      if (q.affixes[0] > q.affixes[1]) err('EQUIP_QUALITY_AFFIX_RANGE', `品质 ${q.id}(${q.name})的词条区间反了`)
+      if (q.weight <= 0) warn('EQUIP_QUALITY_WEIGHT', `品质 ${q.id}(${q.name})的权重为 ${q.weight},永远不会被抽到`)
+    }
+    for (const s of equipment.slots) {
+      const hasTemplate = equipment.templates.some(t => t.slot === s.id)
+      if (!hasTemplate) warn('EQUIP_SLOT_EMPTY', `槽位 ${s.id}(${s.name})没有任何装备模板`)
+    }
+    // 每个用到的层级,每个可掉落槽位都该有内容(否则会走退档兜底)
+    const tiers = [...new Set(equipment.templates.map(t => t.tier))].sort((a, b) => a - b)
+    for (const tier of tiers) {
+      for (const s of equipment.slots) {
+        if ((s.dropWeight ?? 1) <= 0) continue
+        if (!equipment.templates.some(t => t.tier === tier && t.slot === s.id)) {
+          warn('EQUIP_TIER_SLOT_GAP', `层级 ${tier} 的槽位 ${s.id}(${s.name})没有本层模板,会退档掉落`)
+        }
+      }
+  }
   }
 
   // ---- 副本 ----
-  const enemyIds = new Set(config.dungeons.enemies.map(e => e.id))
-  const regionIds = new Set(config.dungeons.regions.map(r => r.id))
-  if (duplicates(config.dungeons.enemies.map(e => e.id)).length > 0) {
-    err('DUNGEON_ENEMY_DUPLICATE', `敌人 id 重复:${duplicates(config.dungeons.enemies.map(e => e.id)).join('、')}`)
-  }
-  if (duplicates(config.dungeons.regions.map(r => r.id)).length > 0) {
-    err('DUNGEON_REGION_DUPLICATE', `区域 id 重复:${duplicates(config.dungeons.regions.map(r => r.id)).join('、')}`)
-  }
-  for (const r of config.dungeons.regions) {
-    if (r.enemies.length === 0) warn('DUNGEON_REGION_NO_ENEMY', `区域 ${r.id}(${r.name})没有普通敌人,只会出首领`)
-    for (const id of r.enemies) {
-      if (!enemyIds.has(id)) err('DUNGEON_REGION_ENEMY', `区域 ${r.id}(${r.name})引用了不存在的敌人:${id}`)
+  // `null` = 这款游戏没有副本这一层:同上
+  if (config.dungeons !== null) {
+    const dungeons = config.dungeons
+    const enemyIds = new Set(dungeons.enemies.map(e => e.id))
+    const regionIds = new Set(dungeons.regions.map(r => r.id))
+    if (duplicates(dungeons.enemies.map(e => e.id)).length > 0) {
+      err('DUNGEON_ENEMY_DUPLICATE', `敌人 id 重复:${duplicates(dungeons.enemies.map(e => e.id)).join('、')}`)
     }
-    if (!enemyIds.has(r.boss)) err('DUNGEON_REGION_BOSS', `区域 ${r.id}(${r.name})的首领不存在:${r.boss}`)
-    const boss = config.dungeons.enemies.find(e => e.id === r.boss)
-    if (boss && boss.boss !== true) warn('DUNGEON_BOSS_FLAG', `区域 ${r.id} 的首领 ${r.boss}(${boss.name})没有标 boss:true`)
-    const prereqs = r.requireCleared === undefined ? [] : typeof r.requireCleared === 'string' ? [r.requireCleared] : r.requireCleared
-    for (const id of prereqs) {
-      if (!regionIds.has(id)) err('DUNGEON_REGION_CHAIN', `区域 ${r.id}(${r.name})的前置不存在:${id}`)
+    if (duplicates(dungeons.regions.map(r => r.id)).length > 0) {
+      err('DUNGEON_REGION_DUPLICATE', `区域 id 重复:${duplicates(dungeons.regions.map(r => r.id)).join('、')}`)
     }
-    if (r.requireMode === 'any' && prereqs.length < 2) {
-      warn('DUNGEON_REGION_MODE', `区域 ${r.id}(${r.name})写了 requireMode: 'any' 但前置不足两条,等价于默认`)
-    }
-    if (r.minRealm > majorCount - 1) {
-      err('DUNGEON_REGION_REALM', `区域 ${r.id}(${r.name})的推荐等级 ${r.minRealm} 超出境界范围 0..${majorCount - 1}`)
-    }
-    if (r.tier < 1) err('DUNGEON_REGION_TIER', `区域 ${r.id}(${r.name})的层级必须 ≥ 1`)
-  }
-  // 前置关系不能有环(多条前置时把每条边都走一遍)
-  const prereqList = (id: string): readonly string[] => {
-    const r = config.dungeons.regions.find(x => x.id === id)
-    if (!r || r.requireCleared === undefined) return []
-    return typeof r.requireCleared === 'string' ? [r.requireCleared] : r.requireCleared
-  }
-  for (const r of config.dungeons.regions) {
-    const stack: string[] = [...prereqList(r.id)]
-    const seen = new Set<string>()
-    while (stack.length > 0) {
-      const cur = stack.pop()!
-      if (cur === r.id) {
-        err('DUNGEON_REGION_CYCLE', `区域 ${r.id}(${r.name})的前置关系成环`)
-        break
+    for (const r of dungeons.regions) {
+      if (r.enemies.length === 0) warn('DUNGEON_REGION_NO_ENEMY', `区域 ${r.id}(${r.name})没有普通敌人,只会出首领`)
+      for (const id of r.enemies) {
+        if (!enemyIds.has(id)) err('DUNGEON_REGION_ENEMY', `区域 ${r.id}(${r.name})引用了不存在的敌人:${id}`)
       }
-      if (seen.has(cur)) continue
-      seen.add(cur)
-      stack.push(...prereqList(cur))
+      if (!enemyIds.has(r.boss)) err('DUNGEON_REGION_BOSS', `区域 ${r.id}(${r.name})的首领不存在:${r.boss}`)
+      const boss = dungeons.enemies.find(e => e.id === r.boss)
+      if (boss && boss.boss !== true) warn('DUNGEON_BOSS_FLAG', `区域 ${r.id} 的首领 ${r.boss}(${boss.name})没有标 boss:true`)
+      const prereqs = r.requireCleared === undefined ? [] : typeof r.requireCleared === 'string' ? [r.requireCleared] : r.requireCleared
+      for (const id of prereqs) {
+        if (!regionIds.has(id)) err('DUNGEON_REGION_CHAIN', `区域 ${r.id}(${r.name})的前置不存在:${id}`)
+      }
+      if (r.requireMode === 'any' && prereqs.length < 2) {
+        warn('DUNGEON_REGION_MODE', `区域 ${r.id}(${r.name})写了 requireMode: 'any' 但前置不足两条,等价于默认`)
+      }
+      if (r.minRealm > majorCount - 1) {
+        err('DUNGEON_REGION_REALM', `区域 ${r.id}(${r.name})的推荐等级 ${r.minRealm} 超出境界范围 0..${majorCount - 1}`)
+      }
+      if (r.tier < 1) err('DUNGEON_REGION_TIER', `区域 ${r.id}(${r.name})的层级必须 ≥ 1`)
     }
-  }
-  for (const e of config.dungeons.enemies) {
-    if (e.tier < 1) err('DUNGEON_ENEMY_TIER', `敌人 ${e.id}(${e.name})的层级必须 ≥ 1`)
-    if (e.hpMult <= 0) warn('DUNGEON_ENEMY_HP', `敌人 ${e.id}(${e.name})的 hpMult=${e.hpMult},打不死也打不痛`)
+    // 前置关系不能有环(多条前置时把每条边都走一遍)
+    const prereqList = (id: string): readonly string[] => {
+      const r = dungeons.regions.find(x => x.id === id)
+      if (!r || r.requireCleared === undefined) return []
+      return typeof r.requireCleared === 'string' ? [r.requireCleared] : r.requireCleared
+    }
+    for (const r of dungeons.regions) {
+      const stack: string[] = [...prereqList(r.id)]
+      const seen = new Set<string>()
+      while (stack.length > 0) {
+        const cur = stack.pop()!
+        if (cur === r.id) {
+          err('DUNGEON_REGION_CYCLE', `区域 ${r.id}(${r.name})的前置关系成环`)
+          break
+        }
+        if (seen.has(cur)) continue
+        seen.add(cur)
+        stack.push(...prereqList(cur))
+      }
+    }
+    for (const e of dungeons.enemies) {
+      if (e.tier < 1) err('DUNGEON_ENEMY_TIER', `敌人 ${e.id}(${e.name})的层级必须 ≥ 1`)
+      if (e.hpMult <= 0) warn('DUNGEON_ENEMY_HP', `敌人 ${e.id}(${e.name})的 hpMult=${e.hpMult},打不死也打不痛`)
+    }
   }
 
   return issues
@@ -229,6 +301,16 @@ export interface DefineOptions<T> {
   strict?: boolean
   newUid?: () => string
 }
+
+/**
+ * "没有装备这一层"与"没有副本这一层"装成的那两份空表。
+ *
+ * 它们的字段是照 `EquipmentConfig` / `DungeonConfig` 的最小合法形状写的 —— 目的是让
+ * "这款游戏没有这层"走**同一条装配路径**,而不是在门面上留一个 undefined:
+ * 门面里那一层的读数会是有意义的空(0 槽 0 件 / 0 区域),真去用它才会出错,且那句错说得明白。
+ */
+const EMPTY_EQUIPMENT = { slots: [], qualities: [], templates: [], affixes: [], power: {} } as EquipmentConfig<never>
+const EMPTY_DUNGEONS = { regions: [], enemies: [] } as DungeonConfig<never>
 
 /**
  * 装配一个世界:返回的四套系统是纯函数 + 数据驱动,不依赖任何框架,
@@ -244,8 +326,14 @@ export function defineGame<T = number>(config: GameConfig<T>, opts: DefineOption
   const numeric = opts.numeric ?? (numberNumeric as unknown as Numeric<T>)
   const attributes = createAttributeSystem<T>(config.attributes, numeric)
   const realms = createRealmSystem<T>(config.realms, numeric)
-  const equipment = createEquipmentSystem<T>(config.equipment, numeric, opts.newUid)
-  const dungeons = createDungeonSystem<T>(config.dungeons, numeric)
+  // 写了 null 的那一层装成"空系统":门面照常有这一层(读数都是 0 件 / 0 区域),
+  // 真去用它(抽一件 / 取第一处区域)会当场说明白 —— 而不是在门面上留一个 undefined。
+  const equipment = createEquipmentSystem<T>(
+    config.equipment ?? (EMPTY_EQUIPMENT as unknown as EquipmentConfig<T>),
+    numeric,
+    opts.newUid
+  )
+  const dungeons = createDungeonSystem<T>(config.dungeons ?? (EMPTY_DUNGEONS as unknown as DungeonConfig<T>), numeric)
   const combat = createCombatEngine<T>(config.combat, numeric)
   return {
     name: config.name,

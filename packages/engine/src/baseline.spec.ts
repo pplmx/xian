@@ -115,9 +115,14 @@ const equipmentRows = (config: GameConfig<number>) => {
   return rows
 }
 
-/** 副本面:区域表 + 每个敌人的快照数值 + 首领节奏(攒几场见首领) */
+/**
+ * 副本面:区域表 + 每个敌人的快照数值 + 首领节奏(攒几场见首领)。
+ *
+ * `config.dungeons!` 这个断言在基线里是安全的:读的三份内容包两层都写着
+ * (`GameConfig` 允许 null,那是"这款游戏没有这一层")。
+ */
 const dungeonRows = (config: GameConfig<number>) => {
-  const sys = createDungeonSystem(config.dungeons)
+  const sys = createDungeonSystem(config.dungeons!)
   const regions = sys.regions.map(r => [r.id, r.tier, r.minRealm, r.boss, r.enemies.length])
   const enemies = sys.enemies.map(e => {
     const snap = sys.snapshot(e.id)

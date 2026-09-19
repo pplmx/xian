@@ -197,7 +197,7 @@ for (let step = 0; step < 8; step += 1) {
 
 console.log(
   `\n从零到这一步:${CONFIG.name} —— 一共写了 ${CONFIG.realms.worlds.length} 段路 / ` +
-    `${game.realms.realms.length} 个职级 / ${CONFIG.equipment.affixes.length} 条词条 / ` +
-    `${CONFIG.dungeons.enemies.length} 个阻碍,通关 ${cleared} 处。`
+    `${game.realms.realms.length} 个职级 / ${game.equipment.affixes.length} 条词条 / ` +
+    `${game.dungeons.enemies.length} 个阻碍,通关 ${cleared} 处。`
 )
 console.log('没有引用任何内容包(不 import presets/*):这份文件本身就是"抄写起点"。')

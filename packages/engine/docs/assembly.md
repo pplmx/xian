@@ -96,6 +96,13 @@
 | 图鉴 / 见闻(见过什么、懂到什么程度) | `createCodex` | `codex.spec.ts` + `codex.sim.spec.ts`(门槛 3/8/20 次照面、概率升档的到位率) |
 | 世界记忆(区域繁荣 / 阵营好感:升档与回落) | `createStageMemory` | `memory.spec.ts` + `memory.sim.spec.ts`(两路门槛取先到、闲置到点即回落) |
 
+> **这一层我根本没有怎么办**:在 `defineGame` 的配置里写 `equipment: null` / `dungeons: null`,
+> 就是一句"这款游戏没有装备 / 没有副本"。门面里那一层仍在,但那是**空系统**(0 槽 0 件 / 0 区域):
+> 读结构给你有意义的空,真去用(抽一件、取第一处区域)会当场说明白。
+> **省略 ≠ 没有** —— 漏了一节会在装配时被拦下,因为"忘写了"和"故意没有"必须分得清。
+> 一份 60 行的骨架(只有等级与属性)可以照抄:
+> [`src/presets/minimal.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/presets/minimal.ts)。
+
 ### 配方 C · 抽卡收集
 
 ```

@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import type { GameConfig } from './config.js'
+import { emptyProgress, type DungeonConfig } from './dungeons.js'
+import type { EquipmentConfig } from './equipment.js'
 import { defineGame, validateGame } from './config.js'
+import { createRng } from './rng.js'
 
-function baseConfig(): GameConfig {
+/**
+ * 用例要**逐字段拧**这两层(改一个槽位、塞一个环),所以这里把类型写实:
+ * `GameConfig` 允许 `equipment: null`(那表示这款游戏没有这一层),而这份夹具两层都有。
+ */
+type SolidGameConfig = GameConfig & { equipment: EquipmentConfig<number>; dungeons: DungeonConfig<number> }
+
+function baseConfig(): SolidGameConfig {
   return {
     name: '测试世界',
     attributes: {
@@ -123,5 +132,64 @@ describe('世界装配 —— 交叉校验', () => {
     expect(game.attributes.name('attack')).toBe('攻击')
     expect(game.equipment.slots.length).toBe(1)
     expect(game.dungeons.firstRegion().id).toBe('r1')
+  })
+})
+
+/**
+ * 门面可以只装一半 —— 「这款游戏没有装备 / 没有副本」也是一句话。
+ *
+ * 为什么值得单独立判据:库要能被拿去搭完全不同的题材(读书打卡、经营、日常),
+ * 而"没有战斗、没有装备"的那些作品不该被迫编两张空表、更不该拿到一句
+ * `Cannot read properties of undefined`。这里钉三件事:
+ *   ① 没有的那一层写 `null` —— 装得起来,门面里那一层是**有意义的空**(0 槽 0 件 / 0 区域);
+ *   ② 真去用空的那一层 —— **当场说明白**(而不是给回一个 undefined);
+ *   ③ **省略**不是"没有":省了一节就是配置写错了,装配时给一句人话。
+ */
+describe('门面可以只装一半', () => {
+  const halfAssembled = (): GameConfig => ({ ...baseConfig(), equipment: null, dungeons: null })
+
+  it('只写等级与属性,照样装出一个世界;没有的那两层是空系统', () => {
+    const game = defineGame(halfAssembled())
+    expect(game.realms.realms.length).toBe(2)
+    expect(game.attributes.name('attack')).toBe('攻击')
+    // 空系统:读数是有意义的空,不是 undefined
+    expect(game.equipment.slots).toEqual([])
+    expect(game.equipment.qualities).toEqual([])
+    expect(game.equipment.poolAtTier(1)).toEqual([])
+    expect(game.dungeons.regions).toEqual([])
+    expect(game.dungeons.unlocked(emptyProgress(), 0)).toEqual([])
+    // "这层到底有没有"看配置里那句话就够了
+    expect(game.config.equipment).toBeNull()
+    expect(game.config.dungeons).toBeNull()
+  })
+
+  it('真去用空的那一层:当场说明白,而不是回一个 undefined', () => {
+    const game = defineGame(halfAssembled())
+    const rng = createRng(7)
+    expect(() => game.equipment.generate(rng, { tier: 1 })).toThrow('装备系统:没有任何可掉落的槽位')
+    expect(() => game.equipment.quality('common')).toThrow('装备系统:品质表是空的,没有可用的品质')
+    expect(() => game.equipment.rollQuality(1, rng)).toThrow('装备系统:品质表是空的,没有可用的品质')
+    expect(() => game.dungeons.firstRegion()).toThrow('副本系统:区域表是空的,没有第一处区域')
+    // 空链是读得懂的空答案:没有副本这一层时,"这一条链"就是空的
+    expect(game.dungeons.chain()).toEqual([])
+  })
+
+  it('省了一节 ≠ 没有这一层:装配时给一句人话,不是 Cannot read properties of undefined', () => {
+    const missing = { ...baseConfig() } as Record<string, unknown>
+    delete missing.equipment
+    const issues = validateGame(missing as unknown as GameConfig)
+    expect(issues.map(i => i.code)).toContain('CONFIG_SECTION_MISSING')
+    expect(issues.some(i => i.message.includes('配置里缺了 equipment 这一节'))).toBe(true)
+    expect(() => defineGame(missing as unknown as GameConfig)).toThrow(/配置里缺了 equipment 这一节/)
+  })
+
+  it('形状写坏了(少了 affixes / power):一样是装配报错,不是崩掉', () => {
+    const broken = {
+      ...baseConfig(),
+      equipment: { slots: [], qualities: [], templates: [] }
+    } as unknown as GameConfig
+    const codes = validateGame(broken).map(i => i.code)
+    expect(codes.filter(code => code === 'CONFIG_FIELD_SHAPE').length).toBe(2)
+    expect(() => defineGame(broken)).toThrow(/CONFIG_FIELD_SHAPE/)
   })
 })

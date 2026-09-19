@@ -284,12 +284,19 @@ export function createDungeonSystem<T = number>(
   }
 
   const firstRegion = (): RegionDef => {
+    // 区域表是空的 = 这款游戏没有副本这一层(配置里写的是 dungeons: null)。
+    // 出声说明白:原来这里回的是 `regions[0]`,空表时就是 undefined —— 拿到它的人会在
+    // 很远的地方以"读不到 id"的样子崩掉,而这句话才是能读懂的那句。
+    if (regions.length === 0) throw new Error('副本系统:区域表是空的,没有第一处区域')
     // 没有前置的,或前置指向了不认识的 id(内容被挪过) —— 都当作可作起点
     const head = regions.find(r => prereqsOf(r).every(id => !regionById.has(id)))
     return head ?? regions[0]!
   }
 
   const chain = (): RegionDef[] => {
+    // 空表 = 没有副本这一层:这条链就是**空链**(一个读得懂的空答案),
+    // 与 firstRegion() 不同 —— 那个要回一个"第一处区域",空表时没有诚实的值可回,故出声。
+    if (regions.length === 0) return []
     // 排序:按"被谁当作前置"建图,从起点出发做深度优先(多条前置时认第一条作为顺序依据)
     const byRequirement = new Map<string, RegionDef[]>()
     for (const r of regions) {
