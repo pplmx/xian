@@ -234,6 +234,42 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
   console.log(`文档链接自检通过(${linkCount} 条指回仓库的链接都指向真实文件)`)
 
   /**
+   * 文档引用自检 —— 文档里点名的**脚本与路径**必须真的存在。
+   *
+   * 为什么值得一条判据:链接那条只管 `https://github.com/...` 形式的绝对链接,
+   * 而文档里更多的是反引号写的 `bun run xxx` 与 `src/xxx.ts` —— 它们没有任何东西盯着:
+   * 脚本改了名、文件挪了位置,读者照着抄才发现(实测抓到过:assembly 里指着一份
+   * **上游工程**的脚本、development 里写着一个过时的引用处数)。
+   *
+   * 两类例外要写清楚,不然判据会逼文档撒谎:
+   *   ① `bun run check:engine*` 是**上游工程**侧的命令(文档里明确标着"它们在工程侧");
+   *   ② `src/core/...` 是**上游工程**的路径(parity.md 讲的是与源工程的对账)。
+   * 除这两类之外,凡文档里写出来的,都得在这个仓库里找得到。
+   */
+  const HOST_ONLY_SCRIPTS = new Set(['check:engine', 'check:engine:standalone'])
+  const pkgScripts = Object.keys(JSON.parse(readFileSync(resolve(ENGINE, 'package.json'), 'utf-8')).scripts)
+  let docCommands = 0
+  let docPaths = 0
+  const missingRefs = []
+  for (const rel of linkDocs) {
+    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
+    for (const [, name] of text.matchAll(/bun run ([a-zA-Z:_-]+)/g)) {
+      if (name.length < 2 || HOST_ONLY_SCRIPTS.has(name)) continue // 单字母是占位写法
+      docCommands += 1
+      if (!pkgScripts.includes(name)) missingRefs.push(`${rel}: bun run ${name}`)
+    }
+    for (const [, path] of text.matchAll(/`((?:src|scripts|examples|docs)\/[\w./@-]+)`/g)) {
+      if (path.includes('*') || path.endsWith('/') || path.startsWith('src/core/')) continue
+      docPaths += 1
+      if (!existsSync(resolve(ENGINE, path))) missingRefs.push(`${rel}: \`${path}\``)
+    }
+  }
+  assert.ok(docCommands >= 10, `只从文档里读出 ${docCommands} 条命令 —— 写法变了?`)
+  assert.ok(docPaths >= 20, `只从文档里读出 ${docPaths} 条路径 —— 写法变了?`)
+  assert.deepEqual(missingRefs, [], `文档里这些脚本/路径在这个仓库里找不到:${missingRefs.join('、')}`)
+  console.log(`文档引用自检通过(${docCommands} 条命令与 ${docPaths} 条路径都真实存在;上游工程那几条已显式豁免)`)
+
+  /**
    * 目录树自检 —— README 里那棵树是使用者的地图,它必须**和仓库逐项对得上**。
    *
    * 两边都拦:新加一个模块却忘了写进树(地图少一块,读者以为库里没有这层),

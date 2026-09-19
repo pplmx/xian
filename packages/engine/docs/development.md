@@ -129,7 +129,7 @@ bun run type-check:examples   # 只查示例的类型(走 tsconfig.examples.json
 
 | 命令 | 钉住的事 |
 | --- | --- |
-| `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"(含使用者侧的 `tsc --strict`)、工程侧 59 处引用全走公开入口 |
+| `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"(含使用者侧的 `tsc --strict`)、工程侧 65 处引用全走公开入口 |
 | `bun run check:engine:standalone` | 整份目录复制到临时目录(不带 dist 与 node_modules)后,独立编译、独立跑用例、独立 import 产物、跑示例,并断言源码里没有任何工程侧引用 |
 
 库这一侧还有一条与"公开面"有关的判据:**每个运行时导出都必须在代码位置上被真正用过**
