@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 356,
+  "round": 357,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:00:34+00:00",
+  "updated_at": "2026-09-19T00:04:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 355,
+      "touched_round": 356,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -19819,6 +19819,53 @@
       "confidence": 0.95,
       "source": "变更 CHG-420(395c462)。正向:bun run check 全绿,自检印\"报错口径自检通过(22 条报错都有人真的触发过)\"(23 处 throw 去重后 22 条,其中副本的\"没有这个区域\"在两个出口共用一句)。反向:临时往 src/rng.ts 的 createRng 加一句 throw,自检当场点名\"临时试探:这条报错没有用例触发过\"(已还原,git status 干净)。过程中还修掉两处我第一版写错的用例(装备的 poolAtTier 退档会让\"这一层没内容\"不报错;defineGame 的汇总报错要多列几行)。",
       "summary": "报错从\"没人管的东西\"变成有判据的东西。取值口径也踩了一次:先按模板串前缀匹配,结果像\"属性系统:${key} 的 appliesTo…\"这种以插值开头的消息退化成\"属性系统\"四个字(谁都能满足),改成\"按 ${} 切开取最长字面量\"才真正拦得住。"
+    },
+    "ISS-240": {
+      "id": "ISS-240",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:04:19+00:00",
+      "updated_at": "2026-09-19T00:04:20+00:00",
+      "touched_round": 356,
+      "summary": "CHANGELOG 写着\"默认值与旧行为在未显式配置时保持逐位一致\",但没有任何判据盯着它:重构或顺手改默认值都可能让使用者的数字悄悄变化,而按 tag 装库的人最怕这个;源工程那边的 parity 对账在独立仓里又跑不到。"
+    },
+    "TASK-337": {
+      "id": "TASK-337",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:04:19+00:00",
+      "updated_at": "2026-09-19T00:04:20+00:00",
+      "touched_round": 356,
+      "category": "test",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "补数字基线:baseline.spec.ts 把三份内容包与一批默认配置的数字压成摘要写死(等级表逐格 / 属性合并 / 装备层 1~12 / 敌人快照 / 默认节奏 / 一场对局 / 体检分界 / 离线默认),并留几行人能读的门面数值。"
+    },
+    "CHG-421": {
+      "id": "CHG-421",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:04:19+00:00",
+      "updated_at": "2026-09-19T00:04:19+00:00",
+      "touched_round": 356,
+      "commit": "0ef6420",
+      "summary": "库:新增 src/baseline.spec.ts(7 条);docs/parity.md 补\"库这一侧的判据\"一节;docs/development.md 判据表补一行;README 用例数 547/75 → 554/76;CHANGELOG 记一条。运行时代码与公开面未动。"
+    },
+    "EV-347": {
+      "id": "EV-347",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:04:19+00:00",
+      "updated_at": "2026-09-19T00:04:19+00:00",
+      "touched_round": 356,
+      "confidence": 0.95,
+      "source": "变更 CHG-421(0ef6420)。摘要(两个盐各哈希一次 + 长度):等级表 xiuxian 9f3b6d43-732077aa-16140 / demo 8c219e83-153b38ba-1304 / daily 846c5627-8650310e-3152;默认等级表 a7789efd-be448cc8-1440;属性 demo aeb5b91b-5f8bbdfa-306 / daily a80577cf-95128480-307;装备 demo aec8c54c-d21a2305-770 / xiuxian b668c394-f8f6f0e5-726;副本 demo 3a16269c-3b59263-565 / xiuxian 261668b-bbff56a0-1105;战斗 demo fa7b87a1-821c4c94-26 / xiuxian 2e5e7ab9-94ee9c40-26;默认值面 552f6f6a-a823a68f-220。门面读数:demo 第一场 [胜,16 回合,我剩血 2.889304388,敌 0,事件 33];体检分界 0.7 起 healthy、3 以上 surplus、10 以上 idle。闸门:bun run check 全绿(554 例 / 76 文件 + 14 道自检 + 13 份示例)。反向:demo base 60 → 61 时等级表摘要当场红(已还原)。",
+      "summary": "把\"逐位一致\"从一句话变成会红的摘要。口径上做了个取舍:不列几千个数字(没人 review),而是\"摘要 + 少量门面数值\" —— 摘要保证任何一位都藏不住,门面数值让人在 diff 里一眼看出改了哪一块。"
     }
   },
   "edges": [
@@ -29350,6 +29397,24 @@
       "to": "COMP-027",
       "type": "located_in",
       "created_at": "2026-09-19T00:00:33+00:00"
+    },
+    {
+      "from": "CHG-421",
+      "to": "TASK-337",
+      "type": "implements",
+      "created_at": "2026-09-19T00:04:19+00:00"
+    },
+    {
+      "from": "CHG-421",
+      "to": "ISS-240",
+      "type": "resolves",
+      "created_at": "2026-09-19T00:04:19+00:00"
+    },
+    {
+      "from": "ISS-240",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-19T00:04:20+00:00"
     }
   ]
 }
