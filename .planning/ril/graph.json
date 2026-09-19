@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 379,
+  "round": 380,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T02:09:57+00:00",
+  "updated_at": "2026-09-19T02:46:42+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10819,7 +10819,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 218,
+      "touched_round": 379,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 378,
+      "touched_round": 379,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -21064,6 +21064,152 @@
       "confidence": 0.95,
       "source": "变更 CHG-446 / CHG-447(801d616)。库 bun run check 全绿:591 例 / 80 文件 + 17 道自检;调参参考自检印\"31 份消融都在 docs/tuning.md,一页索引逐节点名,4 条复现命令都看得见读数\";bun run tuning 实测印出 126 段 stdout。读数(三份内容包):仙侠 210 格 / 21 境 / 4 界(需求最陡 渡劫·圆满 ×2.64、面板最陡 玄仙·一层 ×2.12、每境 12.2~24.3 倍、人间界整段 ×4.13e+11)、星港 25/5/1、日常 54/9/3;碾压阈值 2/3/5:仙侠 170/170/165 格、星港 8/5/5、日常 42/40/32;对照(晚段 1.7→1.2)11 段进门步 ×0.38→×0.10、段内不动、全程 ×7.66e+19→×2.92e+13。宿主 289 文件 / 2647 例全过。",
       "summary": "体检这条线第一次有了\"自己人量自己\"的刻度表:读者拿到的不再是\"体检能读出数\",而是\"读出来的数长什么样、哪个量级需要紧张\"。"
+    },
+    "ISS-246": {
+      "id": "ISS-246",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:45:56+00:00",
+      "updated_at": "2026-09-19T02:46:41+00:00",
+      "touched_round": 379,
+      "severity": 0.6,
+      "confidence": 0.95,
+      "summary": "独立仓 CI 连红多条提交(连 v0.1.20 的发布保险丝 release.yml 也跟着红):根因是 numeric.sim.spec 量\"第几层越界\"用的是 ** / Math.pow,而 ECMAScript 只要求它\"实现近似\" —— 本机 V8 给 80、CI 的 V8 给 81、Bun 的 JSC 在 3.2^n 上又是 29。边界读数因此随运行时漂移:本地全绿、CI 红。这是\"能单独成 repo\"这条硬主张的证据本身失效。"
+    },
+    "ISS-247": {
+      "id": "ISS-247",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:45:59+00:00",
+      "updated_at": "2026-09-19T02:46:41+00:00",
+      "touched_round": 379,
+      "severity": 0.4,
+      "confidence": 0.95,
+      "summary": "修炼页主值行又被次要读数挤折行(灵气行的「积余 X / Y」、修为行的「(积 +X)」):窄屏后期档 320 上右边整块被顶到第二行。前三十八道排版判据全量不出来(卡片没溢出、字没被挤成竖排、数字与量词也没分家)—— 这是一类\"人一眼看得出、脚本量不到\"的排版事故,且是复发(玩家第二次反馈)。"
+    },
+    "TASK-364": {
+      "id": "TASK-364",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:46:05+00:00",
+      "updated_at": "2026-09-19T02:46:41+00:00",
+      "touched_round": 379,
+      "category": "correctness",
+      "severity": 0.6,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "修独立仓 CI 连红:把 numeric.sim.spec 的边界读数从 ** 改成连乘(跨运行时一致),引擎那条 ** 的值当对照并只许差一层;三处文档数字同步;CHANGELOG 记一条教训(边界读数不能建在规范未规定的运算上)。"
+    },
+    "TASK-365": {
+      "id": "TASK-365",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:46:09+00:00",
+      "updated_at": "2026-09-19T02:46:41+00:00",
+      "touched_round": 379,
+      "category": "ux-contract",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "修修炼页主值行折行(积余 / 积余上限进点击详情,主行只留看得懂的那一位),顺手修灵气\"精确值\"给的是封顶值这处小谎;背包页法宝位那行同样拆开;排版自检加第三十九道\"主值行不许折行\"(data-value-row 显式契约 + 防空转计数),并留下红→绿的实测证据。"
+    },
+    "CHG-448": {
+      "id": "CHG-448",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:46:12+00:00",
+      "updated_at": "2026-09-19T02:46:12+00:00",
+      "touched_round": 379,
+      "commit": "671fe33",
+      "summary": "库:numeric.sim.spec.ts 的边界读数改用连乘(curveCostByMultiply + firstLevelWhereAddOneIsLost 收一个 cost 函数),** 那条当对照打印并断言最多差一层;docs/assembly.md、docs/tuning.md(含索引行与那一节新增一条读法)、docs/usage.md 三处 80 → 81;CHANGELOG 记 CI 修红一条。"
+    },
+    "CHG-449": {
+      "id": "CHG-449",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:46:15+00:00",
+      "updated_at": "2026-09-19T02:46:15+00:00",
+      "touched_round": 379,
+      "commit": "e025ce5",
+      "summary": "宿主:CultivationView 修为/灵气两行收口(积余与积余上限进 TapNumber 详情;灵气 TapNumber 的值改为真实值、行内用 slot 显示封顶值 + 超额时加「+」;状态词「已积至上限」→「已封顶」;耗灵气行加 data-value-row);InventoryView 法宝位行拆成两行;layout-check.mjs 新增第三十九道判据与防空转计数、头部清单加一条。"
+    },
+    "DEC-167": {
+      "id": "DEC-167",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:46:19+00:00",
+      "updated_at": "2026-09-19T02:46:19+00:00",
+      "touched_round": 379,
+      "summary": "凡是**边界读数**(从哪一层起 +1 不再改变数值、第几次越界、第几档翻档),一律用 IEEE 精确舍入的运算(连乘 / 比较)来量;** 与 Math.pow 只许当对照打印,不当判据。",
+      "rationale": "ECMAScript 对 ** / Math.pow 只要求\"实现近似\",末位各运行时自定 —— 实测同一条 1.5^n:本机 V8 给第 80 层、CI 的 V8 给第 81 层,Bun 的 JSC 在 3.2^n 上给第 29 层而 V8 给第 28 层。于是这类读数会随运行时漂移,表现为\"本地全绿、CI 红\"(真发生过,连发布保险丝一起红)。连乘是 IEEE 精确舍入的,跨运行时逐位一致,量的才是曲线的形状;要不要一致性,不该由\"用户装的是哪个 JS 引擎\"决定。",
+      "alternatives_rejected": "①把断言放宽成区间(80~81)(等于承认读数不确定:文档里那个数字就再也说不清了,而且下次还可能漂出区间);②把用例标成跳过/只在 CI 上不跑(那是拿质量换绿灯);③固定 Node 版本让 CI 与本机一致(只是把差异藏起来,使用者那边的运行时照样五花八门);④继续用 ** 但把容差放宽(读数与断言都不再有意义)。"
+    },
+    "DEC-168": {
+      "id": "DEC-168",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:46:23+00:00",
+      "updated_at": "2026-09-19T02:46:23+00:00",
+      "touched_round": 379,
+      "summary": "\"脚本量不到、人一眼看得出\"的排版事故,用**显式契约型判据**兜住:模板给这类行标 data-value-row,判据只量这些行,并加\"一处都没量到就红\"的防空转计数。",
+      "rationale": "这类事故(次要读数把主值行顶折)既不是横向溢出、也不是文字被挤成竖排,前三十八道判据全漏;而它是**复发**的(玩家第二次反馈同一页)。反过来,若把判据写成\"所有 flex justify-between 行都不许折行\",整页散文与本来就该换行的行会一起被卷进来,判据立刻没人看(与 data-region-card 那条同一套取舍:契约明确、误伤为零、防空洞靠计数)。",
+      "alternatives_rejected": "①通用规则覆盖所有 justify-between(误伤多,判据失去意义);②只改这一页、不加判据(复发过两次,第三次还会来);③靠人 review / 截图复核(没有触发条件,靠自觉);④把判据写成\"文本高度 > 行高就红\"而不带契约(把散文换行也算事故,噪声淹没信号)。"
+    },
+    "HYP-105": {
+      "id": "HYP-105",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:46:26+00:00",
+      "updated_at": "2026-09-19T02:46:26+00:00",
+      "touched_round": 379,
+      "confidence": 0.9,
+      "summary": "边界读数改用连乘后跨运行时一致;而 ** 的末位会随引擎/版本漂移(这正是 CI 连红的根因)。",
+      "prediction": "连乘量出的越界层在 node(V8)与 bun(JSC)上相同(1.5→81、3.2→28);** 量出的值允许差一层但不应差两层以上;CI 重跑应转绿。"
+    },
+    "HYP-106": {
+      "id": "HYP-106",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:46:29+00:00",
+      "updated_at": "2026-09-19T02:46:29+00:00",
+      "touched_round": 379,
+      "confidence": 0.9,
+      "summary": "带 data-value-row 契约的主值行判据能抓住\"次要读数挤折行\"这一类事故,并且不会误伤全站其余排版(168 个页面 × 视口组合全绿)。",
+      "prediction": "把契约加在改动前的灵气行上时,判据应在 320 宽后期档报出折行(红);收短状态词后应转绿;全量巡页应无新增失败,且防空转计数 > 0。"
+    },
+    "EV-372": {
+      "id": "EV-372",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:46:32+00:00",
+      "updated_at": "2026-09-19T02:46:32+00:00",
+      "touched_round": 379,
+      "confidence": 0.95,
+      "source": "变更 CHG-448(671fe33)。本地实测(同一段脚本、两个运行时):1.5^n 连乘 → node(V8)81 / bun(JSC)81,** → 80 / 80;3.2^n 连乘 → 28 / 28,** → 28 / 29。CI 侧日志:GitHub 的 V8 给 81(本机 80),断言 expect(80) 收到 81 —— 同一份代码、不同运行时。库 bun run check 全绿:591 例 / 80 文件 + 17 道自检。",
+      "summary": "\"边界读数随运行时漂移\"从一个推断变成了可复现的对照:连乘两边一致,** 两边不一致 —— 判据换成前者之后,CI 的差异不再是判据的一部分。"
+    },
+    "EV-373": {
+      "id": "EV-373",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:46:36+00:00",
+      "updated_at": "2026-09-19T02:46:36+00:00",
+      "touched_round": 379,
+      "confidence": 0.95,
+      "source": "变更 CHG-449(e025ce5)。红→绿:先只加判据不修词,320 宽后期档当场报「[320-late] /cultivation → 主值行被次要读数挤折行:2 行 «1.032兆+ / 1.03…»」;把「已积至上限」收成「已封顶」后重跑,168 个页面 × 视口组合全绿,判据自报「主值行一格一行(20 处带 data-value-row 的行没被次要读数挤折)」。另:界面冒烟 15 页 / 68 次点击无运行时异常;vue-tsc 通过;宿主 289 文件 / 2647 例全过。",
+      "summary": "判据既能抓到那一处(红了),又确实不误伤别处(全量转绿),并且有防空转计数(删光契约就红)。"
     }
   },
   "edges": [
@@ -30973,6 +31119,90 @@
       "to": "HYP-104",
       "type": "validates",
       "created_at": "2026-09-19T02:09:57+00:00"
+    },
+    {
+      "from": "CHG-448",
+      "to": "TASK-364",
+      "type": "implements",
+      "created_at": "2026-09-19T02:46:40+00:00"
+    },
+    {
+      "from": "CHG-449",
+      "to": "TASK-365",
+      "type": "implements",
+      "created_at": "2026-09-19T02:46:40+00:00"
+    },
+    {
+      "from": "CHG-448",
+      "to": "ISS-246",
+      "type": "resolves",
+      "created_at": "2026-09-19T02:46:40+00:00"
+    },
+    {
+      "from": "CHG-449",
+      "to": "ISS-247",
+      "type": "resolves",
+      "created_at": "2026-09-19T02:46:40+00:00"
+    },
+    {
+      "from": "ISS-246",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-19T02:46:40+00:00"
+    },
+    {
+      "from": "ISS-247",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-09-19T02:46:40+00:00"
+    },
+    {
+      "from": "TASK-364",
+      "to": "ISS-246",
+      "type": "addresses",
+      "created_at": "2026-09-19T02:46:41+00:00"
+    },
+    {
+      "from": "TASK-365",
+      "to": "ISS-247",
+      "type": "addresses",
+      "created_at": "2026-09-19T02:46:41+00:00"
+    },
+    {
+      "from": "DEC-167",
+      "to": "TASK-364",
+      "type": "governs",
+      "created_at": "2026-09-19T02:46:41+00:00"
+    },
+    {
+      "from": "DEC-167",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-19T02:46:41+00:00"
+    },
+    {
+      "from": "DEC-168",
+      "to": "TASK-365",
+      "type": "governs",
+      "created_at": "2026-09-19T02:46:41+00:00"
+    },
+    {
+      "from": "DEC-168",
+      "to": "COMP-019",
+      "type": "governs",
+      "created_at": "2026-09-19T02:46:41+00:00"
+    },
+    {
+      "from": "EV-372",
+      "to": "HYP-105",
+      "type": "validates",
+      "created_at": "2026-09-19T02:46:41+00:00"
+    },
+    {
+      "from": "EV-373",
+      "to": "HYP-106",
+      "type": "validates",
+      "created_at": "2026-09-19T02:46:41+00:00"
     }
   ]
 }
