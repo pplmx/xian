@@ -31,10 +31,10 @@ import { XIUXIAN } from 'wanxiang-engine/presets/xiuxian'
 
 const game = defineGame(XIUXIAN) // 换成你自己的配置
 
-// ① 一次体检:一张表 + "强度怎么算"(不给 power 就用面板之和兜底;不给 contentPower 就不判碾压)
+// ① 一次体检:①给门面(game),强度默认取属性系统的**战力评分**;
+//    不给 game 只给 realms 时,用"面板之和"兜底;contentPower 不给就不判碾压
 const audit = createProgressionAudit({
-  realms: game.realms,
-  power: (major, layer) => Number(game.realms.baseStats(major, layer).attack ?? 0),
+  game,
   contentPower: major => 20 * 3 ** major
 })
 
@@ -44,7 +44,7 @@ const segments = audit.segments() // segments('world') 可改按界域切
 const overview = audit.summary()
 
 // ③ 改完一个数,再比一次:逐段跨度变化倍数 + 全程跨度(段数不同时 mismatched 会说是)
-const tuned = createProgressionAudit({ realms: game.realms, contentPower: (major: number) => 20 * 3 ** major })
+const tuned = createProgressionAudit({ game, contentPower: (major: number) => 20 * 3 ** major })
 const diff = compareProgression(audit, tuned)
 
 export const reading = { steepest, segments, overview, diff, cells: formatAmount(audit.steps.length) }

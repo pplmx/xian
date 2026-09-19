@@ -6,6 +6,8 @@
  * "跨界不混进最大跳变""玩家/内容 ≥ 阈值才算碾"这些算法不该跟着变。
  */
 import { describe, expect, it } from 'vitest'
+import { attributeDefs } from './attributes.js'
+import { defineGame } from './config.js'
 import { compareProgression, createProgressionAudit } from './progression.js'
 import { createRealmSystem, type RealmSystemConfig } from './realms.js'
 
@@ -190,5 +192,43 @@ describe('成长体检 —— 跳变、跨界与碾压', () => {
     expect(diff.steps).toEqual({ before: 6, after: 8 })
     // 按界域比:两边界域数一样(都是两界),所以不算错位
     expect(compareProgression(base, withExtra, 'world').mismatched).toBe(false)
+  })
+
+  it('接上门面时,强度有标准答案:默认取属性系统的战力评分', () => {
+    const game = defineGame({
+      name: '体检题材',
+      attributes: { defs: attributeDefs({}), core: ['attack', 'defense', 'maxHp'] },
+      realms: { ...ladder(), combat: { base: { attack: 30, defense: 12, maxHp: 240 }, layerGrowth: 2, realmGrowth: 3 } },
+      equipment: {
+        slots: [{ id: 's', name: '槽' }],
+        qualities: [{ id: 'q', name: '凡', rank: 0, mult: 1, affixes: [0, 0], weight: 1 }],
+        templates: [{ id: 't', name: '物', slot: 's', tier: 1, base: { attack: 1 } }],
+        affixes: [],
+        power: { tierGrowth: 2, baseFactor: 1, qualityExponent: 1 }
+      },
+      dungeons: {
+        regions: [{ id: 'r', name: '区', tier: 1, minRealm: 0, enemies: ['e'], boss: 'e' }],
+        enemies: [{ id: 'e', name: '敌', tier: 1, hpMult: 1, atkMult: 1, defMult: 1, speed: 1 }],
+        enemyPower: { baseHp: 10, baseAttack: 1, baseDefense: 1, tierGrowth: 1 }
+      }
+    })
+    const withGame = createProgressionAudit({ game })
+    const panel = game.realms.baseStats(0, 0)
+    // 默认权重与源工程同一套:攻 ×3 + 防 ×2 + 血 ×0.15
+    const expected = Number(panel.attack ?? 0) * 3 + Number(panel.defense ?? 0) * 2 + Number(panel.maxHp ?? 0) * 0.15
+    expect(withGame.steps[0]!.power).toBeCloseTo(expected, 6)
+    // 与 attributes.compute 的结果同源(不是自己另算一遍)
+    expect(withGame.steps[0]!.power).toBeCloseTo(
+      Number(game.attributes.compute({ base: game.realms.baseStats(0, 0) }).power),
+      9
+    )
+    // 自己给 power 时以自己给的为准
+    const custom = createProgressionAudit({ game, power: () => 42 })
+    expect(custom.steps[0]!.power).toBe(42)
+    console.log(`  门面默认强度:第一格 ${withGame.steps[0]!.power}(面板之和是 ${Object.keys(panel).length} 项相加)`)
+  })
+
+  it('既不给 realms 也不给 game:报一句人话', () => {
+    expect(() => createProgressionAudit({})).toThrow(/成长体检:要么给 realms,要么给 game/)
   })
 })

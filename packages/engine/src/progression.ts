@@ -26,10 +26,20 @@
  */
 import type { RealmSystem } from './realms.js'
 import { numberNumeric, type Numeric } from './numeric.js'
+import type { Game } from './config.js'
 
 export interface ProgressionAuditConfig<T = number> {
-  /** 要体检的那张等级表 */
-  realms: RealmSystem<T>
+  /** 要体检的那张等级表(与 `game` 二选一) */
+  realms?: RealmSystem<T>
+  /**
+   * 整个门面(`defineGame(...)` 的产物)—— 与 `realms` 二选一。
+   *
+   * 给它的好处是**强度有了标准答案**:默认用属性系统的战力评分
+   * (`attributes.compute({ base: realms.baseStats(major, layer) }).power`,权重取自
+   * `powerWeights`,默认与源工程同一套 3/2/0.15),而不是"面板之和"这种保底口径。
+   * 想再细(把装备、词条、buff 一起算进去),照旧自己给 `power`。
+   */
+  game?: Game<T>
   /**
    * 玩家在这一格的**强度**(战力 / 总需求 / 你能想到的任何可比量)。
    * 不给时用等级表自己的面板之和(`baseStats` 的所有键相加)——那只是个保底口径,
@@ -162,13 +172,17 @@ export function createProgressionAudit<T = number>(
   numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>
 ) {
   const crushRatio = config.crushRatio ?? 3
-  const sys = config.realms
+  const sys = config.realms ?? config.game?.realms
+  if (!sys) throw new Error('成长体检:要么给 realms,要么给 game')
 
   /** 面板之和:没给 `power` 时的保底口径(键名不参与,只求和 —— 引擎不认识它们) */
   const panelSum = (major: number, layer: number): number =>
     Object.values(sys.baseStats(major, layer)).reduce<number>((sum, value) => sum + numeric.toNumber(value as T), 0)
 
-  const powerAt = config.power ?? panelSum
+  /** 给了门面就用属性系统的战力评分当默认强度(比"面板之和"更接近真实面板) */
+  const attributePower = (major: number, layer: number): number =>
+    numeric.toNumber(config.game!.attributes.compute({ base: sys.baseStats(major, layer) }).power)
+  const powerAt = config.power ?? (config.game ? attributePower : panelSum)
   const costAt = config.costOf ?? ((major: number, layer: number) => numeric.toNumber(sys.expCost(major, layer)))
 
   const steps: ProgressionStep[] = []

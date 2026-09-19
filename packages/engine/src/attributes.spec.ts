@@ -59,6 +59,20 @@ describe('属性系统 —— 换皮不改机制', () => {
     expect(out.power).toBeCloseTo((out.final.attack ?? 0) * 3 + (out.final.defense ?? 0) * 2 + (out.final.maxHp ?? 0) * 0.15, 4)
   })
 
+  it('战力权重可换:powerWeights 决定那一行"战力"怎么加权(默认 3 / 2 / 0.15)', () => {
+    const input = { base: { attack: 100, defense: 50, maxHp: 1000 } }
+    // 默认权重:与源工程同一套 —— 攻 ×3 + 防 ×2 + 血 ×0.15
+    expect(makeSystem().compute(input).power).toBeCloseTo(100 * 3 + 50 * 2 + 1000 * 0.15, 6)
+    // 换一套权重:比如"这游戏只看血"或"攻防并重"
+    const hpOnly = createAttributeSystem({ defs: attributeDefs({}), powerWeights: { maxHp: 1 } })
+    expect(hpOnly.compute(input).power).toBeCloseTo(1000, 6)
+    const even = createAttributeSystem({ defs: attributeDefs({}), powerWeights: { attack: 1, defense: 1 } })
+    expect(even.compute(input).power).toBeCloseTo(150, 6)
+    // 没写进 powerWeights 的核心键按 0 计(不报错、也不瞎猜):只想看某几项时就写那几项
+    const attackOnly = createAttributeSystem({ defs: attributeDefs({}), powerWeights: { attack: 1 } })
+    expect(attackOnly.compute(input).power).toBeCloseTo(100, 6)
+  })
+
   it('未登记的词条键不影响结算,也不会被当成核心本值', () => {
     const sys = makeSystem()
     const out = sys.compute({ base: { attack: 10 }, modSources: [{ 未知词条: 1 }] })
