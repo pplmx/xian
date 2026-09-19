@@ -64,16 +64,16 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 尚未发布到 npm。装**发布版的压缩包**(包里带编译好的 `dist`,不需要任何构建脚本):
 
 ```bash
-bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.19/wanxiang-engine-0.1.19.tgz
+bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.20/wanxiang-engine-0.1.20.tgz
 # 或
-npm  i https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.19/wanxiang-engine-0.1.19.tgz
+npm  i https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.20/wanxiang-engine-0.1.20.tgz
 ```
 
 发布包自检(`bun run check`)里那一步 `npm pack` 打出来的就是这个文件,**每次发版都会作为
 release 附件挂上去** —— 所以上面那条 URL 与版本号始终一致(有判据盯着,见
 [开发文档](./docs/development.md#接进你自己的项目))。
 
-> **为什么不直接 `bun add github:pplmx/wanxiang-engine#v0.1.19`?**
+> **为什么不直接 `bun add github:pplmx/wanxiang-engine#v0.1.20`?**
 > 实测过:那条路要在**安装现场**编译,而 bun 默认拦掉依赖的安装脚本(即使放行,
 > git 依赖也不带 devDependencies,`tsc` 根本不存在);npm 那边**装得进去,拿到的却是没有
 > 产物的源码**(构建脚本只在打包时跑)。压缩包这条路**谁装都一样**,因为包里已经是产物 ——
@@ -334,7 +334,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 ## 版本与发布
 
-- 当前版本 **0.1.19**(tag `v0.1.19`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
+- 当前版本 **0.1.20**(tag `v0.1.20`)。尚未发布到 npm,按 tag 引用:见[安装](#安装)。
 - 完整变更记录见 [CHANGELOG](./CHANGELOG.md),版本口径也写在那里:
   **攒批发布** —— 几十个改动攒一版是常态,期间它们记在「未发布」一节里;tag 是给外面的人
   一个可 pin 的阶段性节点,不是改动的日记。版本跟着实际分量走,真有里程碑才跳 minor 并写清为什么;
