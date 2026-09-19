@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 388,
+  "round": 389,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T05:47:27+00:00",
+  "updated_at": "2026-09-19T06:59:21+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10819,7 +10819,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 387,
+      "touched_round": 388,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -21624,6 +21624,62 @@
       "touched_round": 387,
       "confidence": 0.95,
       "source": "变更 CHG-458(fd41548)。CI 侧证据:run 35423386064 的排版自检在 goto(file:///.../dist/index.html, waitUntil: load) 上 30 秒超时,日志满屏\"第三方统计脚本异常:Invalid UUID\";本地同一份代码全绿(本地无网,脚本加载不出来)。本地验收:排版 168 个页面×视口组合绿且印\"外域请求拦掉 10 个\";界面冒烟 15 页 66 次点击、无运行时异常、印\"外域请求拦掉 1 个\";离线自检四件事全绿、印\"拦掉 4 个\";三个脚本 eslint 干净。"
+    },
+    "ISS-250": {
+      "id": "ISS-250",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T06:59:14+00:00",
+      "updated_at": "2026-09-19T06:59:21+00:00",
+      "touched_round": 388,
+      "severity": 0.6,
+      "confidence": 0.95,
+      "summary": "修\"浏览器门受第三方牵制\"这件事花了三次迭代,每次都在 CI 上才现形:① 第一版只挂在 browser.newPage 的 6 处,漏了 21 处 ctx.newPage(坏档那个场景没被拦住,照样超时);② 第二版统一成请求级拦截后,离线自检的 SW 缓存变成 0 条 —— 拦截会连 SW 自己的抓取一起截走,响应不再是 basic,SW 的 cache.put 静默跳过;③ 第三版离线自检改成\"从副本里摘掉外链\"后本地绿、CI 仍红:controller 非空但缓存 0 条(那一轮导航没经过 SW 的时序窗口)。"
+    },
+    "CHG-459": {
+      "id": "CHG-459",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T06:59:20+00:00",
+      "updated_at": "2026-09-19T06:59:20+00:00",
+      "touched_round": 388,
+      "commit": "cd62e90",
+      "summary": "宿主:拦截从\"逐页挂\"改成 context 层(auditContext 助手;21 处 browser.newContext 与 6 处 browser.newPage 统一走它;计数从各 context 汇总)。漏挂的场景(坏档等)因此覆盖。"
+    },
+    "CHG-460": {
+      "id": "CHG-460",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T06:59:20+00:00",
+      "updated_at": "2026-09-19T06:59:20+00:00",
+      "touched_round": 388,
+      "commit": "c8ffe05",
+      "summary": "宿主:离线自检不再用请求级拦截,改成在它自己的 dist 副本里摘掉统计外链(id=LA_COLLECT 那条;内联初始化用 window.LA?.init 取不到就静默);pageErrors.mjs 记下\"有 SW 的门不能用请求级拦截\"的实测取舍。"
+    },
+    "CHG-461": {
+      "id": "CHG-461",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T06:59:21+00:00",
+      "updated_at": "2026-09-19T06:59:21+00:00",
+      "touched_round": 388,
+      "commit": "ea93866",
+      "summary": "宿主:离线自检的缓存判定改成轮询(最多 4 轮 reload + 600ms),判据不变、不再拿时序当判据 —— 修掉 CI 上\"controller 非空但缓存 0 条\"的时序窗口。"
+    },
+    "EV-382": {
+      "id": "EV-382",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T06:59:21+00:00",
+      "updated_at": "2026-09-19T06:59:21+00:00",
+      "touched_round": 388,
+      "confidence": 0.95,
+      "source": "变更 CHG-459/460/461(cd62e90 / c8ffe05 / ea93866)。CI:run 35427361409(ea93866)整轮 success —— 安装依赖(冻结锁文件 + 工作区)、静态检查 + 单元测试、构建、浏览器自检(排版与交互)、界面冒烟、离线/发版接管自检、发布到 Pages 全绿。本地读数:排版 168 个页面×视口组合绿(外域拦掉 40 个)、冒烟绿(拦掉 1 个)、离线自检绿(缓存 27 份、副本已摘掉统计外链)。对照实验:离线自检里\"拦着跑 → 缓存 0 条;不拦 → 27 条\"。"
     }
   },
   "edges": [
@@ -31797,6 +31853,30 @@
       "to": "ISS-249",
       "type": "addresses",
       "created_at": "2026-09-19T05:47:27+00:00"
+    },
+    {
+      "from": "CHG-459",
+      "to": "ISS-250",
+      "type": "resolves",
+      "created_at": "2026-09-19T06:59:21+00:00"
+    },
+    {
+      "from": "CHG-460",
+      "to": "ISS-250",
+      "type": "resolves",
+      "created_at": "2026-09-19T06:59:21+00:00"
+    },
+    {
+      "from": "CHG-461",
+      "to": "ISS-250",
+      "type": "resolves",
+      "created_at": "2026-09-19T06:59:21+00:00"
+    },
+    {
+      "from": "ISS-250",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-09-19T06:59:21+00:00"
     }
   ]
 }
