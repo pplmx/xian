@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 392,
+  "round": 393,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T13:22:33+00:00",
+  "updated_at": "2026-09-19T14:01:14+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22208,7 +22208,7 @@
       "version": 1,
       "created_at": "2026-09-19T11:48:46+00:00",
       "updated_at": "2026-09-19T11:48:46+00:00",
-      "touched_round": 392,
+      "touched_round": 393,
       "summary": "像「注册表展开顺序被后面的同名项盖掉」这类错误,类型检查、lint 与单测都看不见(两边都合法),只有看真界面或写一条「问注册表要实物」的判据才拦得住。",
       "confidence": 0.85
     },
@@ -22502,6 +22502,174 @@
       "summary": "图标名目按件分,而不是「大类够用就行」:刀/戈戟/枪/钩/斧各一枚,长条法器(鞭、尺)归 wand。名目与数据里写死的 icon 字段一一对得上,不再出现「近似对得上、细看不对」。",
       "rationale": "十件装备配错形是粗词表的实际代价,而这一类错在界面上很显眼(长刀顶着一把斧)。分件的成本只是几枚笔路;反过来,一个名目覆盖四五种东西时,判据也拦不住「形与名不符」——因为两边都合法。",
       "alternatives_rejected": "①维持两类只把 axe/wand 的形画得更中性(中性等于都对不上);②按品类建十几枚(斧、锤、鞭、尺、幡……每样都得单独定稿,收益递减);③不改数据只改注释说明「勉强通用」(把已知的错说成设计)。"
+    },
+    "ISS-257": {
+      "id": "ISS-257",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T13:44:56+00:00",
+      "updated_at": "2026-09-19T14:01:11+00:00",
+      "touched_round": 393,
+      "summary": "敌人与灵宠的图标是「一格通用」而不是「一族一形」:131 只敌人只用了 19 枚图标 —— 46 只共用骷髅(独角妖狼、霞光巨蟒、黑风妖王、玄冰蛟、万妖林主…),18 只共用兽爪(野狼、野猪、石猿、灵狐、妖熊、霜狼 与「麒麟」同形),13 只共用幽魂;灵宠那边应龙与螭龙幼子是「星芒」、麒麟是「兽爪」、雪背小龟是「盾」。玩家看到的是「形对不上名物」——名字写着狼,画的是骷髅。",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 5
+    },
+    "TASK-384": {
+      "id": "TASK-384",
+      "type": "task",
+      "status": "resolved",
+      "version": 4,
+      "created_at": "2026-09-19T13:44:59+00:00",
+      "updated_at": "2026-09-19T14:01:14+00:00",
+      "touched_round": 393,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 5,
+      "unlock_factor": 1.2,
+      "summary": "敌人与灵宠的图标按族类配形:立一张「族类 → 形」的表(狼/狐/豕/熊/猿/鹿/蛇蛟/龙/麒麟/龟/蝠/禽/鱼/走兽/草木/水属/亡灵/傀儡/剑器/枪器/甲士/妖魔/仙/神/灵/星辰/雷/月华/天外/金玉),异族不再共用一枚形;重配 132 只敌人与 14 只灵宠的图标,并把「一枚图标被一个以上族类共用即红」立成判据。"
+    },
+    "ISS-258": {
+      "id": "ISS-258",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:45:13+00:00",
+      "updated_at": "2026-09-19T13:45:13+00:00",
+      "touched_round": 393,
+      "summary": "首屏太重、日常构建太慢:冷启动要传 2.6MB,其中楷体子集 1.8MB(woff2);JS 3.6MB 里含 legacy 双份产物;FCP 192ms(本地无头,真机 4G 会放大)。构建 32s 中 26.3s(82%)花在 legacy 后处理(106 次调用),而 legacy 是给 Chrome 51/Android 7 兜底的产物,日常开发与提交都要等它。",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 6
+    },
+    "TASK-385": {
+      "id": "TASK-385",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:45:13+00:00",
+      "updated_at": "2026-09-19T13:45:13+00:00",
+      "touched_round": 393,
+      "category": "performance",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 6,
+      "unlock_factor": 1.2,
+      "summary": "给首屏瘦身:字体按需/分片或 preload 的取舍要有真机实测依据(style.css 里那条未决问题),legacy 只在发布时打、日常构建走现代目标;并在 CI 里用真浏览器把冷启动传输字节、FCP、构建时长各立一条可复跑的上限,另留一条「legacy 产物仍出得来」的证据。"
+    },
+    "ISS-259": {
+      "id": "ISS-259",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:45:13+00:00",
+      "updated_at": "2026-09-19T13:45:13+00:00",
+      "touched_round": 393,
+      "summary": "无障碍两处收口还欠着:①现有正文对比度判据明确跳过渐变底(法球、印章、纸纹那几处没被量过),渐变/图片底上的字是否过 AA 没有账;②没有字号放大到 200% 时的排版判据(现有量的是五档视口宽度,不是缩放档),放大后是否横向溢出、主值行会不会折,没人量。",
+      "severity": 0.5,
+      "confidence": 0.85,
+      "effort": 3
+    },
+    "TASK-386": {
+      "id": "TASK-386",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:45:13+00:00",
+      "updated_at": "2026-09-19T13:45:13+00:00",
+      "touched_round": 393,
+      "category": "correctness",
+      "severity": 0.5,
+      "confidence": 0.85,
+      "effort": 3,
+      "summary": "无障碍收口:对比度判据扩到渐变/图片底(采样真实像素而不是只看声明色),新增「200% 字号下无横向溢出、主值行不折」的判据,并补上判据抓出来的样式问题。"
+    },
+    "ISS-260": {
+      "id": "ISS-260",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:45:14+00:00",
+      "updated_at": "2026-09-19T13:45:14+00:00",
+      "touched_round": 393,
+      "summary": "「可点元素不小于 28px」这条判据的量法不确定:1280×800 的 /adventure 报过一次 28px(四舍五入后与被测下限同值),定向复量 0 个、该元素声明的是 min-h-[28px]。量的是取整后的盒子高度,与被测下限同值时随机红一次,门就失去意义。",
+      "severity": 0.25,
+      "confidence": 0.6,
+      "effort": 2
+    },
+    "TASK-387": {
+      "id": "TASK-387",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:45:14+00:00",
+      "updated_at": "2026-09-19T13:45:14+00:00",
+      "touched_round": 393,
+      "category": "test-quality",
+      "severity": 0.25,
+      "confidence": 0.6,
+      "effort": 2,
+      "summary": "让 28px 这条量法确定下来:量声明值(读 computed min-height/height)或给半像素容差,并定向复量 1280×800 的 /adventure 取证;结案 HYP-112。"
+    },
+    "EV-409": {
+      "id": "EV-409",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:45:18+00:00",
+      "updated_at": "2026-09-19T13:45:18+00:00",
+      "touched_round": 393,
+      "source": "复跑:按 icon 字段对 src/data/enemies.ts 与 src/data/pets.ts 分组统计(python 正则取 e('id','name',tier,'icon' 与 pets 的 icon 字段)",
+      "summary": "132 只敌人只用了 19 枚图标:骷髅 46 只(独角妖狼、霞光巨蟒、黑风妖王、玄冰蛟、万妖林主、剑冢之主…)、兽爪 18 只、幽魂 13 只、盾 11 只;14 只灵宠里应龙与螭龙幼子是 sparkles(星芒)、麒麟是 paw(兽爪)、雪背小龟是 shield(盾)、三足金蟾是 gem(灵石)。",
+      "confidence": 1.0
+    },
+    "HYP-114": {
+      "id": "HYP-114",
+      "type": "hypothesis",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T13:45:18+00:00",
+      "updated_at": "2026-09-19T14:01:11+00:00",
+      "touched_round": 393,
+      "summary": "症结在于灵宠与敌人的 icon 只有 19 枚可选、且按「大类够用」分配:没有一张「族类 → 形」的表,于是狼、蛇蛟、龙、麒麟、鬼、傀儡、仙、神都只能挤进骷髅/兽爪/幽魂三枚形里。",
+      "confidence": 0.9
+    },
+    "DEC-181": {
+      "id": "DEC-181",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:45:26+00:00",
+      "updated_at": "2026-09-19T13:45:26+00:00",
+      "touched_round": 393,
+      "rationale": "按上一轮深度探索给出的建议,先开「敌人与灵宠按族类配形」这一条:证据现成(EV-409 一次分组统计就能复跑)、与刚落地的图标线(自绘水墨图标、兵器按件分形)直接接续,接手成本最低,且判据「一枚图标被一个以上族类共用即红」可以写成一条机械可复跑的门。",
+      "alternatives_rejected": "按 priority_score 先做 TASK-386(无障碍对比度与 200% 字号,2.45 分 > 本条 1.07 分):那条要先把 layout-check 的采样能力从「声明色」扩到「真像素」、再加一条缩放档,是一整条新判据线,留作下一轮;先做 TASK-387(28px 量法)也否掉 —— 它是收尾性的小活,单独一轮不划算。,",
+      "summary": "SELECT:先执行 TASK-384(敌人与灵宠按族类配形),TASK-386 排队其后。"
+    },
+    "EV-410": {
+      "id": "EV-410",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T14:01:11+00:00",
+      "updated_at": "2026-09-19T14:01:11+00:00",
+      "touched_round": 393,
+      "source": "① bunx vitest run src/ui/inkIcons.spec.ts(9 例全绿,含「图标 · 族类」四例);② 改坏处实测:把 beastFamilies.ts 的 qilin 取 paw 后同一份判据红,报 '这些形被多个族类共用…paw ← beast / qilin';③ 真尺寸核对:playwright 把 inkIcons.ts 的笔路按 16/18/20/24px 渲染成对照图,并按 enemies.ts/pets.ts 的真实数据渲染 146 条 / 29 族的「族类名册」(敌人 18px、灵宠 16px);④ bun run test 293 文件 2681 例全绿、bun run check(type-check+lint+docs-check)通过;⑤ bun run build + bun scripts/layout-check.mjs --shots:168 个页面×视口组合与真打一场战斗/渡劫/转世那一路全绿,截图在 /tmp/layout-shots。",
+      "summary": "按族类配形之后,账从「132 只敌人 19 枚形、最大一族 46 人(骷髅)」变成「146 条(132 敌 + 14 宠)29 族 29 枚形、最多的一族 18 人(妖魔)」;一族一形由判据机械可查,且新画的 15 枚形在 16px/18px 的真尺寸下核过。",
+      "confidence": 1.0
+    },
+    "CHG-474": {
+      "id": "CHG-474",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T14:01:11+00:00",
+      "updated_at": "2026-09-19T14:01:11+00:00",
+      "touched_round": 393,
+      "commit": "751c405",
+      "summary": "敌人与灵宠按族类配形:新增 data/beastFamilies.ts(29 族对 29 枚形,形只此一处出口),enemies.ts 的 e() 第四参从 icon 改成 family(132 条)、pets.ts 14 条各归其族,inkIcons.ts 新画 15 枚形(wolf/fox/boar/bear/ape/deer/serpent/dragon/qilin/turtle/bat/puppet/demon/immortal/god);判据加「一枚形被一个以上族类共用即红」「同族共用同一枚形、数据不许自己写 icon」「族类表不留闲族」三条;docs/design.md 与 inkIcons.ts 的文件注释同步。"
     }
   },
   "edges": [
@@ -32981,6 +33149,54 @@
       "to": "COMP-029",
       "type": "governs",
       "created_at": "2026-09-19T13:22:12+00:00"
+    },
+    {
+      "from": "TASK-384",
+      "to": "ISS-257",
+      "type": "addresses",
+      "created_at": "2026-09-19T13:45:18+00:00"
+    },
+    {
+      "from": "TASK-385",
+      "to": "ISS-258",
+      "type": "addresses",
+      "created_at": "2026-09-19T13:45:18+00:00"
+    },
+    {
+      "from": "TASK-386",
+      "to": "ISS-259",
+      "type": "addresses",
+      "created_at": "2026-09-19T13:45:18+00:00"
+    },
+    {
+      "from": "TASK-387",
+      "to": "ISS-260",
+      "type": "addresses",
+      "created_at": "2026-09-19T13:45:18+00:00"
+    },
+    {
+      "from": "EV-409",
+      "to": "HYP-114",
+      "type": "validates",
+      "created_at": "2026-09-19T13:45:25+00:00"
+    },
+    {
+      "from": "CHG-474",
+      "to": "TASK-384",
+      "type": "implements",
+      "created_at": "2026-09-19T14:01:14+00:00"
+    },
+    {
+      "from": "CHG-474",
+      "to": "ISS-257",
+      "type": "resolves",
+      "created_at": "2026-09-19T14:01:14+00:00"
+    },
+    {
+      "from": "EV-410",
+      "to": "HYP-114",
+      "type": "validates",
+      "created_at": "2026-09-19T14:01:14+00:00"
     }
   ]
 }
