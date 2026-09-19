@@ -11,6 +11,9 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vue-tsc -b && vite build",
+    "build:release": "vue-tsc -b && XIAN_LEGACY=1 vite build",
+    "check:legacy": "bun scripts/legacy-artifacts.mjs",
+    "check:first-paint": "bun scripts/first-paint.mjs",
     "preview": "vite preview",
     "lint": "eslint src packages",
     "test": "vitest run",
@@ -21,8 +24,8 @@
     "check:engine:standalone": "bun scripts/engine-standalone.mjs",
     "type-check": "vue-tsc -b",
     "check": "bun run type-check && bun run lint && bun scripts/docs-check.mjs",
-    "build:electron": "vue-tsc -b && vite build && esbuild electron/main.js --bundle --platform=node --format=esm --outfile=dist-electron/main.js --external:electron && esbuild electron/preload.js --bundle --platform=node --format=cjs --outfile=dist-electron/preload.js --external:electron && electron-builder",
-    "build:android": "bun run build && bunx cap sync android",
+    "build:electron": "bun run build:release && esbuild electron/main.js --bundle --platform=node --format=esm --outfile=dist-electron/main.js --external:electron && esbuild electron/preload.js --bundle --platform=node --format=cjs --outfile=dist-electron/preload.js --external:electron && electron-builder",
+    "build:android": "bun run build:release && bunx cap sync android",
     "build:apk": "bun run build:android && cd android && ./gradlew assembleRelease"
   },
   "dependencies": {

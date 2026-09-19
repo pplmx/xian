@@ -1,3 +1,7 @@
+/* 楷体那几份 @font-face 与 unicode-range 是生成物(按用法频次切片、按需下载),
+   由 scripts/fonts/build-kai-font.py 写出;里面的 .woff2 会经 Vite 改写带 hash。 */
+@import './assets/fonts/kai-subset.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -514,20 +518,17 @@ html[data-theme='dark'] .btn-seal:active:not(:disabled) {
  * 变成豆腐块;▬▸▾◈✧ 这几个装饰符号母体里就没有,一直由系统符号字体画(生成脚本里
  * 有一份显式名单,新增内容若用到别的、字体又画不出的字,脚本会当场报错)。
  *
- * 1.5MB 的来历与重做方式见 scripts/fonts/build-kai-font.py(24.4MB 的母体不入库,
- * 只入库子集);协议全文在 public/fonts/OFL.txt —— OFL 要求再分发时带着它,别删。
+ * 子集做成了**按需的几片**(每片一段 unicode-range,见 kai-subset.css):一份 1.8MB 的
+ * 子集在冷启动时是整份下载的,而首屏真正用到的字不过一两百个 —— 按用法频次切片之后,
+ * 浏览器只取「页面上真出现的字」所落的那几片。来历与重做方式见
+ * scripts/fonts/build-kai-font.py(24.4MB 的母体不入库,只入库切片);协议全文在
+ * public/fonts/OFL.txt —— OFL 要求再分发时带着它,别删。
  *
  * font-display: swap —— 先用回退字体把字显示出来,楷体到了再换,不白屏。
- * 没有加 preload:这份字体是首屏 JS+CSS 的二十倍,提前抢带宽反而可能拖慢可玩时间,
- * 而 swap 已经保证文字立刻可读(要不要上 preload 得拿真机实测那一下切换再说)。
+ * 没有加 preload:切片之后首屏要的那一份是几十 KB 量级,而 preload 会把**首屏用不到
+ * 的那一片**也提前拽下来。取舍与实测见 scripts/first-paint.mjs —— 它把 FCP 与「楷体
+ * 换上」两个时刻都量出来,并留了 --variant preload 对同一份产物做 A/B。
  */
-@font-face {
-  font-family: 'LXGW WenKai GB Screen';
-  src:
-    local('LXGW WenKai GB Screen'),
-    url('./assets/fonts/lxgw-wenkai-gb-screen-subset.woff2') format('woff2');
-  font-display: swap;
-}
 
 /*
  * 大屏:把窄栏收成一「册」
@@ -577,11 +578,11 @@ html[data-theme='dark'] .btn-seal:active:not(:disabled) {
 }
 
 html[data-theme='dark'] .mist {
-  background: rgb(255 255 255 / 0.08);
+  background: rgb(255 255 255 / 0.06);
 }
 
 html[data-theme='dark'] .mist-soft {
-  background: rgb(255 255 255 / 0.06);
+  background: rgb(255 255 255 / 0.04);
 }
 
 /* ================= 组件层 ================= */

@@ -918,7 +918,12 @@ async function measurePixelContrast(page, sampler, dpr) {
     }
     return n
   })
-  const shot = await page.screenshot()
+  /*
+   * `animations: 'disabled'`:两团云雾是无限循环的 CSS 动画,位置随时相在变 ——
+   * 不冻住的话,同一处字这次量到 4.31、下次量到 4.8,判据就成了掷骰子(实测正是
+   * 这样在 /inventory 上红过一次)。冻住之后每一次量到的都是同一帧。
+   */
+  const shot = await page.screenshot({ animations: 'disabled', caret: 'hide' })
   await page.evaluate(() => {
     for (const span of document.querySelectorAll('[data-pixel-probe]')) {
       const parent = span.parentNode

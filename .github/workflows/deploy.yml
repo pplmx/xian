@@ -35,8 +35,13 @@ jobs:
           bun run check:engine
           # 公共库还要"能单独成 repo":整份复制到临时目录,独立编译 + 独立跑用例 + 独立装配
           bun run check:engine:standalone
-      - name: 构建
-        run: bun run build
+      # 这一份是**要发到玩家面前**的:故走发布路径(带 legacy 兜底),日常构建
+      # (`bun run build`)只给开发与 PR 门用 —— legacy 每次构建要花掉大半个构建时长,
+      # 而现代浏览器一个字节都不会请求它。见 vite.config.ts 的 XIAN_LEGACY。
+      - name: 构建(发布路径:带 legacy 兜底)
+        run: bun run build:release
+      - name: 核 legacy 与现代化两份产物
+        run: bun run check:legacy
       # 浏览器自检放在**上传产物之前**:排版/触达区/对比度/焦点/弹窗语义/
       # 离屏回放那一整套判据,红一条就不发布这一版(与 build.yml 的 ui-check 同一套)。
       # playwright 锁在 devDependencies 里,浏览器二进制按需下并缓存(与 build.yml 同一步)。
@@ -51,6 +56,9 @@ jobs:
         run: bunx playwright install --with-deps chromium
       - name: 浏览器自检(排版与交互)
         run: bun scripts/layout-check.mjs
+      # 首屏预算:冷启动解码字节 / FCP / 楷体换上(见 scripts/first-paint.mjs)
+      - name: 首屏预算(冷启动字节 / FCP / 楷体换上)
+        run: bun scripts/first-paint.mjs
       # 逐页点按钮的冒烟(点炸了没有 / 有没有 NaN 漏到正文)——与排版自检同一道门的另一半
       - name: 界面冒烟(逐页点按钮)
         run: bun scripts/ui-smoke.mjs

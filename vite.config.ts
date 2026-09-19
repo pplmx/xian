@@ -22,10 +22,26 @@ export default defineConfig({
         }
       }
     }),
-    legacy({
-      targets: ['Chrome >= 51', 'Android >= 7'],
-      modernPolyfills: true
-    })
+    /*
+     * legacy 只在**发布**时打(XIAN_LEGACY=1,见 package.json 的 build:release)。
+     *
+     * 它是给 Chrome 51 / Android 7 那批老内核兜底的产物:每次构建都要把每个 chunk
+     * 再走一遍 babel + SystemJS 打包。实测本机 32s 的构建里 26s(82%)花在这一步、
+     * 106 次调用 —— 而开发、PR 门、单元测试都不需要它:那些环境跑的是现代浏览器,
+     * legacy 产物一个字节都不会被请求。
+     *
+     * 所以规矩是「**要发出去的那一份才带 legacy**」:Pages 部署、Electron、APK 都走
+     * build:release;日常构建与 CI 门走 build。legacy 还在不在,由
+     * `bun scripts/legacy-artifacts.mjs` 在发布路径上当场核(见 .github/workflows)。
+     */
+    ...(process.env.XIAN_LEGACY === '1'
+      ? [
+          legacy({
+            targets: ['Chrome >= 51', 'Android >= 7'],
+            modernPolyfills: true
+          })
+        ]
+      : [])
   ],
   resolve: {
     alias: {

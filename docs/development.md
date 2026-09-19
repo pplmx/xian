@@ -8,7 +8,8 @@ TypeScript、Vite、Vitest 等都在 `package.json` 里,`bun install` 一次就�
 ```bash
 bun install
 bun dev            # 开发服务器(vite --host)
-bun run build      # 类型检查 + 生产构建
+bun run build      # 类型检查 + 生产构建(现代目标:日常开发与 CI 门用这一条)
+bun run build:release  # 发布构建:多带一份 legacy 兜底(见「首屏与构建时长」)
 bun preview        # 预览构建结果
 ```
 
@@ -16,10 +17,13 @@ bun preview        # 预览构建结果
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 293 个 spec / 2677 例;本作自己那部分 213 个 / 2086 例) |
+| `bun run test` | 全量用例(全量 293 个 spec / 2682 例;本作自己那部分 213 个 / 2087 例) |
 | `bun run test:report` | 按系统分类的测试摘要;有未登记分类会直接红并列出文件 |
 | `bun run check` | 类型检查(`vue-tsc -b`)+ ESLint |
 | `bun run lint` | 只跑 ESLint |
+| `bun run build:release` | 发布构建(`XIAN_LEGACY=1`):每个 chunk 再走一遍 legacy 兜底 |
+| `bun run check:legacy` | 发布产物自检:legacy 那一套真的出得来吗(`scripts/legacy-artifacts.mjs`) |
+| `bun run check:first-paint` | 首屏预算:冷启动解码字节 / FCP / 楷体换上(`scripts/first-paint.mjs`) |
 | `bun run test:engine` | 只跑公共库(万象引擎)的用例 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 |
@@ -38,6 +42,47 @@ bun preview        # 预览构建结果
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
 | 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`) |
+| 首屏预算 | 冷启动解码字节 / FCP / 楷体换上三条上限(`scripts/first-paint.mjs`,自带静态服务与 4G 限速);发布产物还要核 legacy 那一套出得来(`legacy-artifacts.mjs`) |
+
+## 首屏与构建时长
+
+两条规矩:**要发出去的那一份才带 legacy**,以及**首屏传多少字节、第几毫秒看得见字,各有上限**。
+
+### 日常构建与发布构建
+
+legacy(`@vitejs/plugin-legacy`,给 Chrome 51 / Android 7 的兜底)只在 `XIAN_LEGACY=1` 时打
+(`bun run build:release`)。改之前它每次都打:本机 32s 的构建里 26s(82%、106 次调用)花在
+这一步,而开发、PR 门、单元测试跑的都是现代浏览器,legacy 产物一个字节都不会被请求。
+
+- 日常与 CI 门:`bun run build`(现代目标,本机约 16s);
+- 发布路径(Pages 部署、Electron、APK):`bun run build:release`,并跟一条
+  `bun run check:legacy` 当场核 legacy 与现代化两份产物都在、`index.html` 的 `nomodule`
+  兜底装载也接上了 —— 否则「老内核打开一片白屏」这种事会藏在绿着的门后面。
+
+### 首屏预算(实测:4G 档、390×844、冷缓存)
+
+| 读数 | 改前 | 现在 | 上限 |
+| --- | --- | --- | --- |
+| 冷启动解码字节 | 2681KB(楷体 1783KB) | 1124KB(楷体 236KB) | 1500KB |
+| FCP | 692ms | 1020ms | 1400ms |
+| 楷体换上(swap 那一刻) | 2255ms | 2159ms | 2800ms |
+
+两处改动:
+
+1. **楷体按需分片**。原先一份 1.8MB 的子集在冷启动时整份下载,而首屏真正用到的字不过
+   一两百个。现在按**用法频次**切成二十来片(每片一段 `unicode-range`,声明由
+   `scripts/fonts/build-kai-font.py` 生成到 `src/assets/fonts/kai-subset.css`),
+   浏览器只取「页面上真出现的字」所落的那几片:首屏 5 片 / 236KB;而「玩家起了个生僻名」
+   这种时候也只多拽一小片,不是一千多 KB 的储备整段。片多大是取舍(片越小越省字节、
+   请求越多),取 180 字/片是实测的口径。
+2. **不打 preload**。同一份产物只改 `index.html` 里那一条链接、各量 3 遍取中位:
+   不打 → FCP 1020ms · 楷体换上 2159ms;打 → FCP 1120ms · 楷体换上 2223ms。
+   提前拽第一片(31KB)没让楷体更早到(后面几片该来还得来),反而把首帧推后约 100ms ——
+   抢的是首屏 JS 的带宽。故只留 `font-display: swap`;`bun scripts/first-paint.mjs --variant preload`
+   可随时复量这个 A/B。
+
+判据接在两条流水线的浏览器自检段(`bun scripts/first-paint.mjs`),`build.yml` 另有
+`legacy-artifacts` 作业真打一次发布产物再核。
 | 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec / 2044 例时,实际已是 289 / 2647) |
 | 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
 | 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |

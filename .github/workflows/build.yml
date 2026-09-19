@@ -77,6 +77,12 @@ jobs:
             playwright-${{ runner.os }}-
       - name: 装浏览器
         run: bunx playwright install --with-deps chromium
+      # 首屏预算:冷启动解码字节 / FCP / 楷体换上,三条各有上限(scripts/first-paint.mjs)。
+      # 它自带一个静态服务器与 4G 限速 —— 本机回环上不量不出取舍(字体抢带宽那件事
+      # 只在慢网下才发生)。这也是「首屏瘦身」那条工作的门:字体切片掉了、或者哪天
+      # 又整份打进来,这里当场红。
+      - name: 首屏预算(冷启动字节 / FCP / 楷体换上)
+        run: bun scripts/first-paint.mjs
       - name: 排版与交互自检
         run: bun scripts/layout-check.mjs
       # 与排版自检的分工:那边量排版,这边戳交互 —— 逐页把按钮点一遍,看有没有
@@ -88,6 +94,30 @@ jobs:
       # 断网可重开、旧缓存会被清、发版能接管(见 scripts/offline-check.mjs)。
       - name: 离线/发版接管自检
         run: bun scripts/offline-check.mjs
+
+  # 发布产物:legacy 那一套还出得来吗
+  #
+  # legacy(Chrome 51 / Android 7 的兜底)从「每次构建都打」改成「只在发布路径上打」:
+  # vite.config 的 XIAN_LEGACY=1,由 `bun run build:release` 带上。日常构建与上面那道
+  # ui-check 门因此都看不到它 —— 万一那个开关坏了、插件升级换了注入方式,日常的门全是
+  # 绿的,直到老内核的玩家打开是一片白屏。故这里**真打一次发布产物**再核一遍
+  # (nomodule 兜底、SystemJS 装载、每页都有 legacy 那一份)。
+  legacy-artifacts:
+    name: 发布产物(legacy 兜底)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: 安装 Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: 安装依赖
+        run: bun install --frozen-lockfile
+      - name: 打发布产物(XIAN_LEGACY=1)
+        run: bun run build:release
+      - name: 核 legacy 与现代化两份产物
+        run: bun run check:legacy
 
   # 1. 构建 Electron 客户端
   build-electron:
@@ -212,7 +242,7 @@ jobs:
 
   # 3. 发布 Release
   release:
-    needs: [guard, build-electron, build-android]
+    needs: [guard, ui-check, legacy-artifacts, build-electron, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: write

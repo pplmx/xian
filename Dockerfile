@@ -13,8 +13,9 @@ RUN bun install --frozen-lockfile
 # 复制源代码
 COPY . .
 
-# 构建生产版本
-RUN bun run build
+# 构建生产版本 —— 这份产物是要发出去的,故走发布路径(带 legacy 兜底):
+# 日常构建(`bun run build`)不打 legacy,老内核的玩家会白屏(见 vite.config.ts 的 XIAN_LEGACY)
+RUN bun run build:release
 
 # ===== Stage 2: 生产阶段(Nginx 服务) =====
 FROM nginx:alpine

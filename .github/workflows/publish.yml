@@ -54,8 +54,13 @@ jobs:
           bun run check:engine
           bun run check:engine:standalone
 
-      - name: 构建项目
-        run: bun run build
+      # 镜像是要发出去的,故走发布路径(带 legacy 兜底);日常构建不打 legacy,
+      # 老内核的玩家会白屏。见 vite.config.ts 的 XIAN_LEGACY 与 docs/development.md。
+      - name: 构建项目(发布路径:带 legacy 兜底)
+        run: bun run build:release
+
+      - name: 核 legacy 与现代化两份产物
+        run: bun run check:legacy
 
       - name: 验证构建产物
         run: |
