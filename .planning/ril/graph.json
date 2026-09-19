@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 392,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T13:00:25+00:00",
+  "updated_at": "2026-09-19T13:22:12+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22386,10 +22386,10 @@
     "TASK-383": {
       "id": "TASK-383",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T12:33:22+00:00",
-      "updated_at": "2026-09-19T12:33:22+00:00",
+      "updated_at": "2026-09-19T13:22:03+00:00",
       "touched_round": 392,
       "category": "core-feature",
       "severity": 0.25,
@@ -22455,6 +22455,53 @@
       "source": "rg 清点:lucide 登记 31 枚 → 换掉 29 枚 + 删掉 2 枚从来没人用的(download/upload);src/ui/icons.ts 删除,图标只剩 src/ui/inkIcons.ts 一处;package.json 少了 lucide-vue-next",
       "summary": "图标层现在是清一色自己画的,「西式几何线性图标」这层口音消失。",
       "confidence": 1.0
+    },
+    "CHG-473": {
+      "id": "CHG-473",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:22:02+00:00",
+      "updated_at": "2026-09-19T13:22:02+00:00",
+      "touched_round": 392,
+      "commit": "ff4a895",
+      "summary": "兵器图标按件分开:新增 saber/halberd/spear/hook 四枚,wand 改成杖(直杆加刻痕,供鞭与尺),axe 保留(混沌开天斧本就对);equipment.ts 十件模板的 icon 从 axe/wand 改到对应名目;设计规范与判据同步。"
+    },
+    "EV-407": {
+      "id": "EV-407",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:22:02+00:00",
+      "updated_at": "2026-09-19T13:22:02+00:00",
+      "touched_round": 392,
+      "source": "按件清点:axe 6 件里其实是 4 刀(妖骨长刀/战痕刀/炎纹刀/九幽魔刀)+ 2 戈戟(妖庭戈/蜃影戟);wand 4 件里是 3 枪(雾隐长枪/雷泽枪/星陨枪)+ 1 钩(幽海钩);另有法宝两件(裂星=鞭、鸿蒙尺=尺)与一件(混沌开天斧)本来就用 axe。",
+      "summary": "粗词表的实际代价:10 件装备配错形,法宝那边倒是对的。",
+      "confidence": 1.0
+    },
+    "EV-408": {
+      "id": "EV-408",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:22:02+00:00",
+      "updated_at": "2026-09-19T13:22:02+00:00",
+      "touched_round": 392,
+      "source": "真浏览器截背包页(炎纹刀=刀形、雷泽枪=枪形,16/20px 都读得出);bun run check / test(293 spec / 2677 例)/ test:report / layout-check(168 组合 + 十道门)/ ui-smoke(15 页 0 异常)全绿",
+      "summary": "换名目之后,图标与件名对得上了,门也全绿。",
+      "confidence": 1.0
+    },
+    "DEC-180": {
+      "id": "DEC-180",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:22:12+00:00",
+      "updated_at": "2026-09-19T13:22:12+00:00",
+      "touched_round": 392,
+      "summary": "图标名目按件分,而不是「大类够用就行」:刀/戈戟/枪/钩/斧各一枚,长条法器(鞭、尺)归 wand。名目与数据里写死的 icon 字段一一对得上,不再出现「近似对得上、细看不对」。",
+      "rationale": "十件装备配错形是粗词表的实际代价,而这一类错在界面上很显眼(长刀顶着一把斧)。分件的成本只是几枚笔路;反过来,一个名目覆盖四五种东西时,判据也拦不住「形与名不符」——因为两边都合法。",
+      "alternatives_rejected": "①维持两类只把 axe/wand 的形画得更中性(中性等于都对不上);②按品类建十几枚(斧、锤、鞭、尺、幡……每样都得单独定稿,收益递减);③不改数据只改注释说明「勉强通用」(把已知的错说成设计)。"
     }
   },
   "edges": [
@@ -32916,6 +32963,24 @@
       "to": "COMP-029",
       "type": "governs",
       "created_at": "2026-09-19T13:00:20+00:00"
+    },
+    {
+      "from": "CHG-473",
+      "to": "TASK-383",
+      "type": "implements",
+      "created_at": "2026-09-19T13:22:02+00:00"
+    },
+    {
+      "from": "CHG-473",
+      "to": "ISS-256",
+      "type": "resolves",
+      "created_at": "2026-09-19T13:22:03+00:00"
+    },
+    {
+      "from": "DEC-180",
+      "to": "COMP-029",
+      "type": "governs",
+      "created_at": "2026-09-19T13:22:12+00:00"
     }
   ]
 }
