@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 385,
+  "round": 386,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T03:26:57+00:00",
+  "updated_at": "2026-09-19T04:37:40+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10531,7 +10531,7 @@
       "version": 1,
       "created_at": "2026-09-15T10:28:25+00:00",
       "updated_at": "2026-09-15T10:28:25+00:00",
-      "touched_round": 278,
+      "touched_round": 385,
       "summary": "状态(buff/负面状态)系统:data/buffs 定义 + cultivation store buffs 生命周期(施加/叠加/过期修剪) + BuffDialog/状态条展示",
       "path": "src/stores/cultivation.ts"
     },
@@ -16464,11 +16464,11 @@
     "ISS-232": {
       "id": "ISS-232",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-18T18:24:33+00:00",
-      "updated_at": "2026-09-18T18:24:33+00:00",
-      "touched_round": 278,
+      "updated_at": "2026-09-19T04:37:40+00:00",
+      "touched_round": 385,
       "severity": 0.25,
       "confidence": 0.85,
       "effort": 1,
@@ -20751,11 +20751,11 @@
     "ISS-243": {
       "id": "ISS-243",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T01:48:13+00:00",
-      "updated_at": "2026-09-19T01:48:13+00:00",
-      "touched_round": 375,
+      "updated_at": "2026-09-19T04:37:40+00:00",
+      "touched_round": 385,
       "severity": 0.45,
       "confidence": 0.9,
       "summary": "宿主 ENGINE_WORLD_CONFIG.dungeons.enemyPower 是一组死数:本作战斗的敌人数值走 core/combat.makeEnemySnap(powerScale(tier) × 三围基数 × 层级补偿),从不消费库的 dungeons.snapshot(基数 × 倍率 × tierGrowth^(tier-1))。实测两套模型后期差 3 个数量级以上(第 20 境 区域表 ÷ 战斗基准 ≈ 0.00x),配置位却写着 tierGrowth: 1.9 —— 现在无碍(没人读),但谁哪天把战斗换成库的 snapshot,内容强度会静默塌掉一个量级。"
@@ -21478,6 +21478,55 @@
       "confidence": 0.95,
       "source": "变更 CHG-455(52a1f0e)。库 bun run check 全绿 —— 591 例 / 80 文件 + 18 道自检;新加入的相对链接核对当场抓到 docs/development.md 的 `./CHANGELOG.md` 死链(它指向 docs/ 下,实际在仓库根),修好后判据印「文档引用自检通过(26 条命令与 64 条路径都真实存在;上游工程那几条已显式豁免)」。宿主门:收尾版提交 132a30a 那次被下一推送按并发规则 cancelled(不是失败),最新一次在跑。",
       "summary": "\"相对链接没人点\"这个盲区补上之后立刻抓到一处真死链 —— 判据不是装饰,是当场就有产出的。"
+    },
+    "DEC-170": {
+      "id": "DEC-170",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T04:36:52+00:00",
+      "updated_at": "2026-09-19T04:36:52+00:00",
+      "touched_round": 385,
+      "summary": "可消耗增益(丹药那类)的时长上限 = 单颗时长的 2 倍,并且是\"相对服药那一刻\"封的:吃得比时长勤仍能保持常驻,但攒不成半永久的余量;吃两颗刚好顶满,到顶时界面分三态说明(足额 / 只延续到顶 / 完全白费)。",
+      "rationale": "没有上限时(实测):20 分钟一颗、连吃 24 小时余 12 小时;10 分钟一颗余 48 小时 —— 等于把\"限时加速\"按材料成本换成\"半常驻\",而\"什么时候吃\"这个决策随之消失(最优解永远是\"能多勤就多勤\"),连\"药效过去\"这个节拍也感受不到。选 2× 而不是 1× 或刷新型:1× 下实测余量只剩 10 分钟,\"吃第二颗\"直接浪费;刷新型更硬;2× 下正常 20~30 分钟的节奏完全不受影响(连吃两颗顶满,余 40 分钟),只掐掉囤积。上限由 data/pills 推导(新增丹药自动生效),界面明写\"至多可攒\" —— 明改不暗改。",
+      "alternatives_rejected": "①不改(继续允许囤:那也是一种设计,但会让\"什么时候吃\"退化成\"能多勤就多勤\",且余量无上限时离线/回归的落差很怪);②改成刷新型 longest/reset(最硬,但吃得比时长勤就纯浪费,体验差);③效果递减(有策略深度,但要重新平衡所有丹药,现阶段不划算);④设 1× 上限(实测余量只剩 10 分钟,\"吃第二颗\"变成浪费,惩罚了正常玩家);⑤只在界面上提示\"别吃太多\"而不改机制(把成本推给玩家的自觉)。"
+    },
+    "TASK-371": {
+      "id": "TASK-371",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T04:37:01+00:00",
+      "updated_at": "2026-09-19T04:37:40+00:00",
+      "touched_round": 385,
+      "category": "economy",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "落地 ISS-232:可消耗增益加上限(单颗 2 倍,相对服药那一刻封),界面三态说明 + 状态详情写\"至多可攒\";新增落地判据 consumableBuffCap.spec(查真实内容:PILLS × BUFFS 16 味丹)、ablation 补三种上限取值的对照读数、对账用例记录这次有意修正;顺带把 ISS-243 的口径写进 engineWorld 注释。"
+    },
+    "CHG-456": {
+      "id": "CHG-456",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T04:37:16+00:00",
+      "updated_at": "2026-09-19T04:37:16+00:00",
+      "touched_round": 385,
+      "commit": "7a07865",
+      "summary": "宿主:core/engineBuffs 加上限口径(由 data/pills 推导,CONSUMABLE_BUFF_CAP_MULT=2)+ buffCapSec / buffOverflowOf 三态;core/pillService 按三态说话;BuffDialog 增\"至多可攒\"一行;新增 core/consumableBuffCap.spec.ts;engineBuffAblation 补 1×/2×/3× 对照;engineBuffsParity 记录有意修正;stores/cultivation.spec 改成封顶口径并补\"两次刚好顶满\";core/engineWorld 的 enemyPower 段补\"本作不读这组数\"的注释(ISS-243);scripts/test-report 登记新用例;README 与 docs/development 的规模数同步到 290 / 2653;docs/usage 的数值口径加一条。"
+    },
+    "EV-379": {
+      "id": "EV-379",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T04:37:23+00:00",
+      "updated_at": "2026-09-19T04:37:23+00:00",
+      "touched_round": 385,
+      "confidence": 0.95,
+      "source": "变更 CHG-456(7a07865)。读数(ablation):上限 1× → 20 分钟一颗余 10 分钟 · 2× → 余 40 分钟 · 3× → 余 70 分钟(无上限时 12 小时)。落地判据:16 味带状态的丹逐一验证\"攒不过上限且确实贴着上限\"(如 聚灵丹 60/60 分、凝神丹 20/20 分);三态提示在 余 2400 + 1800 > 3600 时判 partial、余量压到 3600 时判 full;不受管的状态(retreat / injury / bless_qingfeng)没有上限。全量:宿主 290 文件 / 2653 例全过、分类报告 0 败、bun run check 通过(文档自检 43 条路径,并当场抓到我自己新增 spec 导致的规模数漂移)、排版自检 168 个页面×视口组合全绿、vue-tsc 通过。",
+      "summary": "从\"能囤 12~48 小时\"变成\"最多攒 1 小时(单颗 2 倍)\",而且每一处都有读数与判据:机制、界面三态、对账里的有意修正记录、以及\"新增丹药自动受管\"的推导式口径。"
     }
   },
   "edges": [
@@ -31573,6 +31622,42 @@
       "to": "TASK-370",
       "type": "governs",
       "created_at": "2026-09-19T03:26:56+00:00"
+    },
+    {
+      "from": "CHG-456",
+      "to": "TASK-371",
+      "type": "implements",
+      "created_at": "2026-09-19T04:37:31+00:00"
+    },
+    {
+      "from": "CHG-456",
+      "to": "ISS-232",
+      "type": "resolves",
+      "created_at": "2026-09-19T04:37:31+00:00"
+    },
+    {
+      "from": "CHG-456",
+      "to": "ISS-243",
+      "type": "resolves",
+      "created_at": "2026-09-19T04:37:31+00:00"
+    },
+    {
+      "from": "DEC-170",
+      "to": "TASK-371",
+      "type": "governs",
+      "created_at": "2026-09-19T04:37:31+00:00"
+    },
+    {
+      "from": "DEC-170",
+      "to": "COMP-018",
+      "type": "governs",
+      "created_at": "2026-09-19T04:37:31+00:00"
+    },
+    {
+      "from": "TASK-371",
+      "to": "ISS-232",
+      "type": "addresses",
+      "created_at": "2026-09-19T04:37:31+00:00"
     }
   ]
 }
