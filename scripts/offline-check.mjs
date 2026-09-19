@@ -140,7 +140,28 @@ if (!afterReloadControlled) {
   pass.push('SW 已接管页面')
 }
 
-const cachesNow = await page.evaluate(() => caches.keys())
+/**
+ * 等缓存真被填上 —— **最多重试几轮**,而不是量一次就下结论。
+ *
+ * 为什么:SW 的"接管"与"这一轮导航是否已经走了它"之间有个窄窗口 —— 首次加载尤其如此。
+ * 实测(CI 上更明显)出现过 "controller 非空、缓存却是 0 条" 的形态:那一轮资源没经过 SW,
+ * 于是什么都没落下。判断"离线能不能用"不该取决于这个时序 ——
+ * 判据不变(缓存里必须有导航页与带 hash 的产物),只是不再拿运气当判据
+ * (与"坏档启动提示只活两秒多 → 轮询到它出现为止"同一条做法)。
+ */
+let cachesNow = await page.evaluate(() => caches.keys())
+for (let attempt = 0; attempt < 4; attempt += 1) {
+  const filled = await page.evaluate(async name => {
+    if (!(await caches.keys()).includes(name)) return 0
+    const c = await caches.open(name)
+    return (await c.keys()).length
+  }, CACHE_VERSION)
+  if (filled >= 3) break
+  await page.reload({ waitUntil: 'load' })
+  await page.waitForTimeout(600)
+  cachesNow = await page.evaluate(() => caches.keys())
+}
+
 if (!cachesNow.includes(CACHE_VERSION)) failures.push(`缓存里没有 ${CACHE_VERSION}(现为:${cachesNow.join('、') || '空'})`)
 else pass.push(`缓存分片 ${CACHE_VERSION} 已建立`)
 if (cachesNow.includes('xuanshu-v0-stale')) {
