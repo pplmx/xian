@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 393,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T15:00:49+00:00",
+  "updated_at": "2026-09-19T15:33:19+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22534,10 +22534,10 @@
     "ISS-258": {
       "id": "ISS-258",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T13:45:13+00:00",
-      "updated_at": "2026-09-19T13:45:13+00:00",
+      "updated_at": "2026-09-19T15:33:19+00:00",
       "touched_round": 393,
       "summary": "首屏太重、日常构建太慢:冷启动要传 2.6MB,其中楷体子集 1.8MB(woff2);JS 3.6MB 里含 legacy 双份产物;FCP 192ms(本地无头,真机 4G 会放大)。构建 32s 中 26.3s(82%)花在 legacy 后处理(106 次调用),而 legacy 是给 Chrome 51/Android 7 兜底的产物,日常开发与提交都要等它。",
       "severity": 0.6,
@@ -22547,10 +22547,10 @@
     "TASK-385": {
       "id": "TASK-385",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T13:45:13+00:00",
-      "updated_at": "2026-09-19T13:45:13+00:00",
+      "updated_at": "2026-09-19T15:33:19+00:00",
       "touched_round": 393,
       "category": "performance",
       "severity": 0.6,
@@ -22727,6 +22727,40 @@
       "touched_round": 393,
       "commit": "63d255e",
       "summary": "layout-check.mjs 四处 28px 触达下限的判法统一:声明的 min-height ≥ 28 时对 ≥27.5px 的盒子不判,报数改一位小数;docs/design.md 无障碍一节补上第四十三条的来龙去脉。"
+    },
+    "EV-413": {
+      "id": "EV-413",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T15:33:18+00:00",
+      "updated_at": "2026-09-19T15:33:18+00:00",
+      "touched_round": 393,
+      "source": "① bun scripts/first-paint.mjs(自带静态服务器 + CDP 4G 限速、冷缓存、390×844,3 遍取中位):改前 冷启动解码 2681KB(楷体 1783KB)/FCP 692ms/楷体换上 2255ms;改后 1124KB(楷体 236KB,首屏取 5 片)/FCP 1020ms/换上 2159ms,三条都在预算内(budget 1500KB/1400ms/2800ms);② preload A/B(同一份产物只改 index.html 一条链接,各 3 遍中位):不打 FCP 1020ms·换上 2159ms;打 FCP 1120ms·换上 2223ms —— 更慢,故不加;③ bun run build(现代)32s → 16s;bun run build:release + bun run check:legacy:54 个 legacy chunk 对 54 个现代 chunk、nomodule 与 SystemJS 都在;④ bun run test 293 spec / 2682 例、bun run check、浏览器自检 168 组合全绿;⑤ kaiFontCoverage.spec.ts 改坏一处 unicode-range 实测能红。",
+      "summary": "首屏与构建时长两件事都收掉:楷体从「一份 1.8MB 整传」变成「23 片按需、首屏 5 片 236KB」(冷启动 2681KB → 1124KB),legacy 只在发布路径打(构建 32s → 16s),三条读数(冷启动解码字节 / FCP / 楷体换上)立成预算并接进两条流水线,另有 legacy 产物自检真打一次发布构建。",
+      "confidence": 1.0
+    },
+    "CHG-477": {
+      "id": "CHG-477",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T15:33:18+00:00",
+      "updated_at": "2026-09-19T15:33:18+00:00",
+      "touched_round": 393,
+      "commit": "ca06b99",
+      "summary": "首屏瘦身与构建提速:fonts/build-kai-font.py 按用法频次把楷体切成 23 片并生成 kai-subset.css(unicode-range),style.css 改为 @import 生成物;vite.config.ts 的 legacy 只在 XIAN_LEGACY=1 时挂上,package.json 增 build:release / check:legacy / check:first-paint,要发出去的路径(Pages、Electron、APK、Docker、镜像流水线)全改走发布构建;新增 scripts/first-paint.mjs(冷启动字节 / FCP / 楷体换上 + preload A/B)与 scripts/legacy-artifacts.mjs,两条流水线各接一道;kaiFontCoverage.spec.ts 改成核 23 片的 sha256 与 @font-face 的 unicode-range;像素法量对比度时冻住动画、夜间云雾压到 0.06/0.04;docs 的 development/design/deployment 同步。"
+    },
+    "HYP-116": {
+      "id": "HYP-116",
+      "type": "hypothesis",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T15:33:19+00:00",
+      "updated_at": "2026-09-19T15:33:19+00:00",
+      "touched_round": 393,
+      "summary": "首屏那两笔账(楷体整份下载、legacy 每次构建都打)此前没有任何判据盯着 —— 于是「字体长到 1.8MB」「构建 82% 花在兜底产物上」都可以一直存在而门全绿。",
+      "confidence": 0.9
     }
   },
   "edges": [
@@ -33290,6 +33324,24 @@
       "to": "HYP-112",
       "type": "validates",
       "created_at": "2026-09-19T15:00:49+00:00"
+    },
+    {
+      "from": "CHG-477",
+      "to": "TASK-385",
+      "type": "implements",
+      "created_at": "2026-09-19T15:33:18+00:00"
+    },
+    {
+      "from": "CHG-477",
+      "to": "ISS-258",
+      "type": "resolves",
+      "created_at": "2026-09-19T15:33:19+00:00"
+    },
+    {
+      "from": "EV-413",
+      "to": "HYP-116",
+      "type": "validates",
+      "created_at": "2026-09-19T15:33:19+00:00"
     }
   ]
 }
