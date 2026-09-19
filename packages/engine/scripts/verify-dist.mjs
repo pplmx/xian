@@ -717,3 +717,27 @@ export const probe = { plan, hits, worlds: games.map(g => g.realms.realms.length
 }
 
 console.log(`发布包自检通过(${tgz} 装进临时项目后可用 · 含使用者侧的 tsc 严格模式)`)
+
+/**
+ * 自检清单自检 —— **README 里说有几道自检,这里就得真有那几道**。
+ *
+ * 为什么值得一条判据:"我们有一堆自检"是最容易变成空话的一句话 —— 加自检时忘了往 README 里
+ * 补,读者就以为只有几条;删自检时忘了划掉,读者就以为还有人在盯着。两边都靠这份文件里
+ * 那些「… 自检通过(…)」的日志行与 README 那段清单对账:名字集合必须一致(顺序不管),数量不到十道也红
+ * (说明正则或清单结构变了,这条判据自己先失灵)。
+ */
+{
+  const selfSource = readFileSync(new URL(import.meta.url), 'utf-8')
+  const declared = new Set([...selfSource.matchAll(/([\u4e00-\u9fa5A-Za-z][\u4e00-\u9fa5A-Za-z]*)\s*自检通过[（(]/g)].map(m => m[1]))
+  const readmeText = readFileSync(resolve(ENGINE, 'README.md'), 'utf-8')
+  // 只取那一行(清单必须写在一行里 —— 换行了这条判据就读不出来了,那时它自己会红)
+  const listedLine = readmeText.match(/真正跑起来的是\*\*[^*]*\*\*:([^\n]+)/)
+  assert.ok(listedLine, 'README 里找不到"真正跑起来的是**…常驻自检**:…"那一行')
+  const listed = new Set([...listedLine[1].matchAll(/`([^`]+)`/g)].map(m => m[1]))
+  assert.ok(declared.size >= 10, `只从 scripts/verify-dist.mjs 里读出 ${declared.size} 道自检 —— 写法变了?`)
+  const missing = [...declared].filter(name => !listed.has(name))
+  const extra = [...listed].filter(name => !declared.has(name))
+  assert.deepEqual(missing, [], `这些自检没写进 README 的清单:${missing.join('、')}`)
+  assert.deepEqual(extra, [], `README 的清单里写了不存在的自检:${extra.join('、')}`)
+  console.log(`自检清单自检通过(README 的 ${listed.size} 道与实跑的 ${declared.size} 道一一对得上)`)
+}

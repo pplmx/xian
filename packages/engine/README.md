@@ -216,6 +216,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 设施与投资 | 这一座几级、还能不能再升、投点往哪投、换位会不会作废 | `createFacilitySystem` / `createPointPool` |
 | 内容与存档 | 内容之间自洽吗、老档怎么升上来、形状坏了怎么补 | `defineGame` / `defineSaveFormat` |
 | 可复现 | 数值超过 double 怎么办、同一颗种子跑两遍一样吗 | `Numeric<T>` / `createRng` |
+| 读数与体检 | 哪个资源是瓶颈、哪一格跳得最狠、这一跃脱不脱节、什么时候该换大数 | `createEconomyReadings` / `createProgressionAudit` |
 
 每一层的"回答的问题"、最小用法与注意事项,都在 **[模块速查与定制点](./docs/usage.md)** ——
 那份文档里还有一张"想改什么、改哪里"的定制表(近一百个可改点)。
@@ -296,6 +297,15 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
 | 公开面判据 | 76 个运行时导出 + 208 个公开类型一字不差,少一个就红 | `src/publicApi.spec.ts` |
+
+上表只是最常被问到的五条。真正跑起来的是**十五道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
+
+每条对应一类"会悄悄腐烂的东西"(指南里的示例路径、定制表里承诺的开关、报错文案、
+文档里的 tag、目录树与正文的规模数、消融有没有收进参考表、相对导入的扩展名……),
+`bun run check` 会把它们逐条印出来。
+
+这条清单本身也有判据:README 里写了几道,`scripts/verify-dist.mjs` 里就得真有那几道 ——
+名字对不上就红(免得"我们有一堆自检"变成一句越来越虚的话)。
 
 ## 边界与兼容性
 
