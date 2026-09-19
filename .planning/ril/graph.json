@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 392,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T11:23:51+00:00",
+  "updated_at": "2026-09-19T11:48:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22178,16 +22178,100 @@
     "TASK-380": {
       "id": "TASK-380",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T11:23:51+00:00",
-      "updated_at": "2026-09-19T11:23:51+00:00",
+      "updated_at": "2026-09-19T11:48:51+00:00",
       "touched_round": 392,
       "category": "core-feature",
       "severity": 0.4,
       "confidence": 0.7,
       "effort": 6,
       "summary": "给界面图标一层水墨笔意:49 个 lucide 图标现在只经 src/ui/icons.ts 一个出口,先挑最常看的那几处下手(底部导航五项 + 顶栏三项 + 品质角标),而不是一次换 49 个。判据要一起定:图标要么仍是同一套线性语言,要么整套换 —— 混着来比现在更难看。"
+    },
+    "DEC-177": {
+      "id": "DEC-177",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:48:46+00:00",
+      "updated_at": "2026-09-19T11:48:46+00:00",
+      "touched_round": 392,
+      "summary": "图标层分两步走:先把常驻的八处(底部导航五项 + 顶栏三项)换成水墨笔意版,形改中式名物(丹炉/囊/打坐的人/云气/墨齿毂/山),笔留手写偏差,但保持同 24 网格、同线宽、同圆头圆角 —— 换的是形与笔,不是语言,故能与仍用 lucide 的内容图标并肩;列表里的内容图标留作第二波。",
+      "rationale": "图标是「全局古风」里最后一层西式口音,但一次换四十枚的风险是每枚都不够好:导航与顶栏每一屏都在,改它们一半的观感就到位了;内容图标(兽爪/头骨/斧)一屏出现次数少,且要在 16px 下认得出是什么东西,值得单独对着截图磨。保持同一套网格与线宽是为了让两波之间不出现两种语言 —— 混着看比现在更难看才是真风险。",
+      "alternatives_rejected": "①把导航图标换成单字印章(洞/修/历/囊/人):字与下面的标签重复,等于同一个信息说两遍;②整层沿用 lucide 只调线宽/颜色:换汤不换药,「现代 App 口音」来自名物与几何感;③一次换掉全部 49 枚:一屏可见的图形有限,先换看得见的那批,其余按老路走不影响观感。"
+    },
+    "HYP-113": {
+      "id": "HYP-113",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:48:46+00:00",
+      "updated_at": "2026-09-19T11:48:46+00:00",
+      "touched_round": 392,
+      "summary": "像「注册表展开顺序被后面的同名项盖掉」这类错误,类型检查、lint 与单测都看不见(两边都合法),只有看真界面或写一条「问注册表要实物」的判据才拦得住。",
+      "confidence": 0.85
+    },
+    "EV-398": {
+      "id": "EV-398",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:48:46+00:00",
+      "updated_at": "2026-09-19T11:48:46+00:00",
+      "touched_round": 392,
+      "source": "第一版把 ...INK_ICONS 铺在注册表最前面,构建与 lint 全绿;真浏览器截图(playwright 对 header/nav 截图)里底部导航仍是山/火焰/双剑/登山包/人像 —— 旧图标。改成末尾铺开后才换成功。",
+      "summary": "配置写对与产物对不对是两件事:这一处只有真界面能证伪。",
+      "confidence": 1.0
+    },
+    "EV-399": {
+      "id": "EV-399",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:48:46+00:00",
+      "updated_at": "2026-09-19T11:48:46+00:00",
+      "touched_round": 392,
+      "source": "rg 扫全仓:数据与模板里写死的图标名共 24 个;其中 'shield-check'(镇压中的地界签)不在注册表里,iconOf 回退成 sparkles —— 那枚盾牌一直在装着星芒。",
+      "summary": "一个静默回退吃掉了一个图标语义,静态扫一遍就能发现。",
+      "confidence": 1.0
+    },
+    "CHG-469": {
+      "id": "CHG-469",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:48:46+00:00",
+      "updated_at": "2026-09-19T11:48:46+00:00",
+      "touched_round": 392,
+      "commit": "e38eff0",
+      "summary": "新增 src/ui/inkIcons.ts(八枚水墨图标:山/丹炉/双剑/囊/打坐/灵石/云气/墨齿毂)与 inkIcons.spec.ts(常驻图标必须是水墨版、那八枚不多不少、笔路不越 24 网格、写死的图标名必须登记过);注册表末尾铺水墨版并去掉八个 lucide 同名项、补上 'shield-check';设计规范补图标一节;规模数同步(293 spec / 2675 例)。"
+    },
+    "EV-400": {
+      "id": "EV-400",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:48:47+00:00",
+      "updated_at": "2026-09-19T11:48:47+00:00",
+      "touched_round": 392,
+      "source": "bun run check(类型+ESLint+文档自检)、bun run test(293 spec / 2675 例)、bun run test:report(九类全过、无未登记 spec)、bun scripts/layout-check.mjs(168 组合 + 十道门)、bun scripts/ui-smoke.mjs(15 页 70 次点击 0 异常);浅色与夜间两套主题对底部导航与顶栏单独截图人工复核",
+      "summary": "换图标没有带来任何回归,两道浏览器门与全量用例都绿。",
+      "confidence": 1.0
+    },
+    "TASK-381": {
+      "id": "TASK-381",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:48:47+00:00",
+      "updated_at": "2026-09-19T11:48:47+00:00",
+      "touched_round": 392,
+      "category": "core-feature",
+      "severity": 0.35,
+      "confidence": 0.7,
+      "effort": 5,
+      "summary": "图标第二波:列表里的内容图标(兽爪 9 处、头骨 8、斧 6、鸟 5、杖 4、人 4,加品质角标与灵根/材料那几枚)照第一波的形与笔换成水墨版 —— 判据已就位(同网格/同线宽/名字必须登记),这一波要在 16px 下逐个对着截图确认认得出是什么,尤其兽爪与头骨(怪物图标,认错就影响刷怪判断)。"
     }
   },
   "edges": [
@@ -32571,6 +32655,30 @@
       "to": "ISS-254",
       "type": "addresses",
       "created_at": "2026-09-19T11:23:51+00:00"
+    },
+    {
+      "from": "CHG-469",
+      "to": "TASK-380",
+      "type": "implements",
+      "created_at": "2026-09-19T11:48:47+00:00"
+    },
+    {
+      "from": "TASK-381",
+      "to": "ISS-254",
+      "type": "addresses",
+      "created_at": "2026-09-19T11:48:47+00:00"
+    },
+    {
+      "from": "EV-398",
+      "to": "HYP-113",
+      "type": "validates",
+      "created_at": "2026-09-19T11:48:47+00:00"
+    },
+    {
+      "from": "DEC-177",
+      "to": "COMP-029",
+      "type": "governs",
+      "created_at": "2026-09-19T11:48:47+00:00"
     }
   ]
 }
