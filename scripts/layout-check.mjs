@@ -135,12 +135,28 @@ const ROUTES = [
 ]
 
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files', '--disable-web-security'] })
+
+/**
+ * 建"我们自己的"上下文 —— **外域请求一律拦掉**。
+ *
+ * 为什么放在 context 层:逐个建页点去挂是漏得起的活 —— 实测漏一处就够让门在 CI 里红。
+ * 那一次红在"坏档也能进游戏"那个场景:它的页面由 `ctx.newPage()` 建出来,没被拦住,
+ * 于是 CI 有网时统计脚本真的去加载,`goto(waitUntil: 'load')` 等它等到 30 秒超时。
+ * 挂在 context 上,该上下文里**所有**页面(含后续新建的)自动覆盖。
+ */
+const blockedGetters = []
+async function auditContext(options) {
+  const ctx = await browser.newContext(options)
+  blockedGetters.push(await blockExternal(ctx))
+  return ctx
+}
+const blockedTotal = () => blockedGetters.reduce((n, get) => n + get(), 0)
 const failures = []
 let checked = 0
 /** 量到过多少个 data-value-row —— 用来防这条判据"空转"(契约被删掉后依然全绿)。 */
 let valueRowsSeen = 0
 /** 拦掉的外域请求数 —— 打印出来,顺带证明这条拦截是活的 */
-let externalBlocked = 0
+// 外域请求拦截:计数在 context 层累积,收尾打印(见 auditContext)
 
 /**
  * 弹窗**里面**的控件也要过页面上那两条尺子:有可访问名、不小于 28px。
@@ -688,9 +704,8 @@ function problemsOf(info) {
 }
 
 for (const vp of VIEWPORTS) {
-  const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.dpr })
-  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
-  const blockedExternal = await blockExternal(page)
+  const auditCtx = await auditContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.dpr })
+  const page = await auditCtx.newPage()
   const pageErrors = []
   watchPageErrors(page, pageErrors)
 
@@ -761,15 +776,13 @@ for (const vp of VIEWPORTS) {
   }
   if (pageErrors.length) failures.push(`[${vp.tag}] 页面异常:${[...new Set(pageErrors)].join(' | ')}`)
   // 外域请求(统计脚本)一律拦掉:它们的服务器不该决定这道门的颜色(实测超时红过一次)
-  externalBlocked += blockedExternal()
   await page.close()
 }
 
 // ---- 第四件事:存档写不进去时,设置页必须说话 ----
 {
-  const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
-  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
-  await blockExternal(page)
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
+  const page = await auditCtx.newPage()
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -801,9 +814,8 @@ for (const vp of VIEWPORTS) {
 
 // ---- 第五件事:弹窗的键盘与焦点 ----
 {
-  const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
-  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
-  await blockExternal(page)
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
+  const page = await auditCtx.newPage()
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -898,9 +910,8 @@ for (const vp of VIEWPORTS) {
 
 // ---- 第六件事:Tab 焦点看得见吗 ----
 {
-  const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
-  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
-  await blockExternal(page)
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
+  const page = await auditCtx.newPage()
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -946,9 +957,8 @@ for (const vp of VIEWPORTS) {
 
 // ---- 第七件事:浮出来的提示条能不能点掉 ----
 {
-  const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
-  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
-  await blockExternal(page)
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
+  const page = await auditCtx.newPage()
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -1002,9 +1012,8 @@ for (const vp of VIEWPORTS) {
  * 的随机数不受影响)。
  */
 {
-  const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
-  // 外域请求一律拦掉:统计脚本卡住 = 我们的门超时(见 scripts/lib/pageErrors.mjs)
-  await blockExternal(page)
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
+  const page = await auditCtx.newPage()
   const pageErrors = []
   watchPageErrors(page, pageErrors)
   await page.goto(INDEX, { waitUntil: 'load' })
@@ -1060,7 +1069,7 @@ for (const vp of VIEWPORTS) {
  * 复现要用同一 context 里新开的一页:它共享存档(localStorage),但历史是全新的。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } })
+  const ctx = await auditContext({ viewport: { width: 375, height: 812 } })
   const boot = await ctx.newPage()
   await boot.goto(INDEX, { waitUntil: 'load' })
   await boot.getByRole('button', { name: /开\s*始\s*游\s*戏/ }).first().click()
@@ -1112,7 +1121,7 @@ for (const vp of VIEWPORTS) {
  * 走一遍后期档:先核归来卷轴,再逐页过同一把尺子。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -1447,7 +1456,7 @@ for (const vp of VIEWPORTS) {
    * 这个组合此前没量过,而这正是最容易撑破的地方(实测当前全绿,故这一条是防回归)。
    */
   {
-    const narrow = await browser.newContext({ viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })
+    const narrow = await auditContext({ viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })
     await narrow.addInitScript(decisivePayload => {
       if (localStorage.getItem('__layoutSeeded')) return
       for (const [k, v] of Object.entries(decisivePayload)) localStorage.setItem(k, v)
@@ -1481,7 +1490,7 @@ for (const vp of VIEWPORTS) {
  * 失败不许漏占位符,成功要与页面上的境界对得上。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -1559,7 +1568,7 @@ for (const vp of VIEWPORTS) {
  * 夹具把寿元写尽(一读档引擎就判定身故),然后一路点下去。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -1670,7 +1679,7 @@ for (const vp of VIEWPORTS) {
  * 而所有单测照样全绿。故这里真等两轮:灵气只给 1 点,看它自己涨不涨。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -1738,7 +1747,7 @@ for (const vp of VIEWPORTS) {
  * (addInitScript 每次导航都会跑,不加闸就会在重载时把刚导入的存档盖回夹具 —— 实测踩过)。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, acceptDownloads: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, acceptDownloads: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -1855,7 +1864,7 @@ for (const vp of VIEWPORTS) {
  *   二 点下去之后,留下的正好是那 3 件有投入的(行囊 5 → 3),且练过那件的「+3」还在。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -1960,7 +1969,7 @@ for (const vp of VIEWPORTS) {
  * (勾选仍然会被记住,并继续管着「此后拾取自动回收」;那条是不占行囊的入包裁决,与本题无关。)
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2072,7 +2081,7 @@ for (const vp of VIEWPORTS) {
  *   二 两种都按所写扣(读数取磁盘精确值,并等开局奖励落定)。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2155,7 +2164,7 @@ for (const vp of VIEWPORTS) {
  * 读数取自背包「材料」页(界面上的数),不去解密分片 —— 写盘是节流的,磁盘会落后。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2236,7 +2245,7 @@ for (const vp of VIEWPORTS) {
  * 冒烟夹具一律关掉声音,此前没走过。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2308,7 +2317,7 @@ for (const vp of VIEWPORTS) {
  * 判据三件:闭关真的起效(有倒计时)、出发当场被拦且不开模式窗、回修行页闭关还在。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2383,7 +2392,7 @@ for (const vp of VIEWPORTS) {
  * 灵石不在判据里 —— 同一段时间里任务/成就也会发灵石,拿它做差会被别处的收益搅乱。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2483,7 +2492,7 @@ for (const vp of VIEWPORTS) {
  * 战斗分析点得开且给得出数据面板(总输出/总承伤那一组)。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2600,7 +2609,7 @@ for (const vp of VIEWPORTS) {
  * 首领身份(→ 首领标签)、真仙境的敌人(→ 名字最长的那个)。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2726,7 +2735,7 @@ for (const vp of VIEWPORTS) {
  * 接不上,玩家切出去接个电话、回来时这一段时间就没了,而且是无声无息地没。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2846,7 +2855,7 @@ for (const vp of VIEWPORTS) {
  * 点下去既没文件、也没提示。故这里把下载能力打断,要求界面**说得出这句话**。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, acceptDownloads: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, acceptDownloads: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2899,7 +2908,7 @@ for (const vp of VIEWPORTS) {
  *    玩家多半是先发现「灵石怎么归零了」,再回来找原因。
  */
 {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
   const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
   const gn = (m, e) => ({ m, e })
@@ -2989,7 +2998,7 @@ for (const vp of VIEWPORTS) {
     }).map(([k, v]) => [`xuanshu.${k}`, enc(v)])
   )
   const openWith = async (userAgent, standalone = false) => {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent })
+    const ctx = await auditContext({ viewport: { width: 390, height: 844 }, userAgent })
     await ctx.addInitScript(([data, sa]) => {
       if (!localStorage.getItem('__layoutSeeded')) {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
@@ -3129,7 +3138,7 @@ if (valueRowsSeen === 0) {
   failures.push('data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)')
 }
 
-console.log(`\n排版自检:${checked} 个页面 × 视口组合(外域请求拦掉 ${externalBlocked} 个:统计脚本不参与这道门)`)
+console.log(`\n排版自检:${checked} 个页面 × 视口组合(外域请求拦掉 ${blockedTotal()} 个:统计脚本不参与这道门)`)
 if (failures.length === 0) {
   console.log('✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态')
   console.log('✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh')
