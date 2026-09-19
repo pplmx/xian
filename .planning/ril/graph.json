@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 362,
+  "round": 363,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:30:27+00:00",
+  "updated_at": "2026-09-19T00:36:17+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20085,6 +20085,92 @@
       "confidence": 0.95,
       "source": "变更 CHG-426(88d2a12)。实测:bun run check 全绿(570 例 / 79 文件 + 14 道自检 + 13 份示例)。链条读数(种子 同一条链):xiuxian 山间野猪 / demo 失控无人机 / daily 随堂习题(三份预设第一个人不同);第四份棋院联赛 面板键 power/guard/vitality/speed、遭遇对手并取胜;三份预设的展示名 = 攻击 / 火力 / 专注力,机器键都是 attack/defense/maxHp。",
       "summary": "把\"引擎不认识题材\"从一句话变成可执行的判据,并顺带确认两条真实的接缝:三份预设只换展示名(机器键不变);换键名的作品要靠 combat.keys,且副本给的敌人快照永远是引擎键,映射要在调用方那一层做一次。"
+    },
+    "TASK-343": {
+      "id": "TASK-343",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:36:02+00:00",
+      "updated_at": "2026-09-19T00:36:17+00:00",
+      "touched_round": 362,
+      "category": "docs",
+      "severity": 0.25,
+      "confidence": 0.95,
+      "effort": 1,
+      "summary": "README 正文的规模数(模块文件数 / 内容包数)纳入判据:发现它写着 36 而实际 38(判据只比目录树代码块,比不到正文那句),修数并扩一条自检。"
+    },
+    "CHG-427": {
+      "id": "CHG-427",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:36:02+00:00",
+      "updated_at": "2026-09-19T00:36:02+00:00",
+      "touched_round": 362,
+      "commit": "32edf13",
+      "summary": "库:README 36 → 38;verify-dist 的目录树自检扩展为同时核对正文那句里的两个数(正则失配也红);docs/development.md 去掉一处死数字;CHANGELOG 记一条。运行时代码未动。"
+    },
+    "EV-353": {
+      "id": "EV-353",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:36:02+00:00",
+      "updated_at": "2026-09-19T00:36:02+00:00",
+      "touched_round": 362,
+      "confidence": 0.95,
+      "source": "变更 CHG-427(32edf13)。反向:README 改回 36 时自检点名\"README 说 36 个模块文件,实际 38 个\"(已改回)。正向:目录树自检印\"38 个模块文件 + 5 份文档都在图上,正文的数量也对得上\"。",
+      "summary": "又一处\"判据有缝、数就漂了\":代码块里的树有判据、正文里那句话没有,于是它悄悄漂了两层。"
+    },
+    "TASK-344": {
+      "id": "TASK-344",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:36:08+00:00",
+      "updated_at": "2026-09-19T00:36:17+00:00",
+      "touched_round": 362,
+      "category": "release",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "发版 0.1.19:把自 0.1.18 起攒的 17 条(新模块曲线体检 / NaN 修正 / 四条新判据 / 三份消融 / 两条链 / 发布清单)定稿成带日期的一节,同步三处版本引用,推两个仓,打 tag 发 release 并核对。"
+    },
+    "CHG-428": {
+      "id": "CHG-428",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:36:08+00:00",
+      "updated_at": "2026-09-19T00:36:08+00:00",
+      "touched_round": 362,
+      "commit": "e3b1e5a",
+      "summary": "库:package.json 0.1.18 → 0.1.19;CHANGELOG「未发布」定稿成 ## 0.1.19 一节;README(安装块 + 版本块)与 docs/development.md(安装块 + npm pack 例)同步。宿主:README 的两处库版本引用跟到 v0.1.19(commit 246380c)。"
+    },
+    "EV-354": {
+      "id": "EV-354",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:36:08+00:00",
+      "updated_at": "2026-09-19T00:36:08+00:00",
+      "touched_round": 362,
+      "confidence": 0.98,
+      "source": "变更 CHG-428(e3b1e5a,宿主 246380c)。库:bun run check 全绿(570 例 / 79 文件 + 14 道自检),其中「版本引用自检」印 6 处引用都是 0.1.19、「发布包自检」真装 wanxiang-engine-0.1.19.tgz 并用使用者侧 tsc 严格模式两种 moduleResolution 编译。宿主:bun run check:engine 印 61 处引用 + 宿主文档里的库版本 2 处都是 0.1.19。发布:gh release create v0.1.19 --target db0a4a02ebad31e127d3575a5b7e697dd62e2b2e(完整 SHA);gh api 核对 tag=v0.1.19、draft=false、prerelease=false、published 2026-09-19、target 指向该 SHA,且该 tag 下 package.json 的 version = 0.1.19、exports 四个入口齐全。",
+      "summary": "第一次走完整五步发版(含新加的发版清单与版本引用自检):从定稿到核对都在一个回合内完成,没有再出现\"文档指向旧 tag\"或\"tag 落在旧提交\"这类以前靠记忆避免的问题。"
+    },
+    "DEC-157": {
+      "id": "DEC-157",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:36:16+00:00",
+      "updated_at": "2026-09-19T00:36:16+00:00",
+      "touched_round": 362,
+      "summary": "发版触发判据(0.x 期间):攒到\"有新对外件或对外可见的修正\"再加\"十几条以上\"就发一个 patch 版本;只有判据/文档/消融这类纯内部变化时继续攒。tag 是给外面的人一个可 pin 的点,不是改动的日记。",
+      "rationale": "这次的实际判断:自 0.1.18 起攒了 17 条,其中有一条运行时修正(成功率 NaN)、一个新模块(曲线体检)、四条新判据、三份消融与两条链 —— 前两条是外面人能感知的变化,值得给一个可 pin 的点;而如果只是又加了几条判据,继续攒更省事(每次发版都要动三处版本引用 + tag + release)。把\"什么时候发\"写成判据,是为了避免两个极端:改一次发一次(编号起飞),或者半年不发(tag 停在自己都不敢保证的旧状态)。",
+      "alternatives_rejected": "①按时间发(与\"有没有值得 pin 的东西\"无关,会发出只有内部变化的小版本);②按改动条数硬阈值发(条数不等于对外影响,一条 NaN 修正比十条文档改动更值得发);③不设判据、每次凭感觉(以前就是这样,结果每次都要重新讨论一次)。"
     }
   },
   "edges": [
@@ -29700,6 +29786,24 @@
       "to": "TASK-342",
       "type": "implements",
       "created_at": "2026-09-19T00:30:26+00:00"
+    },
+    {
+      "from": "CHG-427",
+      "to": "TASK-343",
+      "type": "implements",
+      "created_at": "2026-09-19T00:36:16+00:00"
+    },
+    {
+      "from": "CHG-428",
+      "to": "TASK-344",
+      "type": "implements",
+      "created_at": "2026-09-19T00:36:17+00:00"
+    },
+    {
+      "from": "DEC-157",
+      "to": "TASK-344",
+      "type": "governs",
+      "created_at": "2026-09-19T00:36:17+00:00"
     }
   ]
 }
