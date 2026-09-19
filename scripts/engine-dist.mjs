@@ -212,4 +212,33 @@ console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
   console.log(`   宿主文档里的库版本 ${refs.length} 处引用都是 ${engineVersion}`)
 }
 
-console.log(`产物自检通过:${entries.length} 个入口 + 四份内容包 + 交叉校验 + 发布包内容 + 真装一遍 + 宿主引用方式`)
+// ⑦ 宿主把库当**普通依赖**用:声明在 package.json 里,而且非 vite/tsc 的环境也解析得到。
+//
+//    为什么值得一条判据:宿主源码里写着 `from 'wanxiang-engine'`,可依赖表里没有它、
+//    node_modules 里也没有链接 —— 只有 vite 与 tsc 的两处别名看得见它。后果是工具链
+//    (npm ls / SBOM / IDE 分析)以为这个包不存在,node 侧的脚本解析不到,子路径导入更是
+//    没有任何通路。这不是"能不能跑"的问题(页面照样跑),是**引用方式说不圆**的问题。
+{
+  const hostPkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8'))
+  const declared = { ...(hostPkg.dependencies ?? {}), ...(hostPkg.devDependencies ?? {}) }['wanxiang-engine']
+  assert.ok(declared, "宿主的 package.json 里没声明 wanxiang-engine —— 而源码里在 import 它")
+  assert.match(
+    String(declared),
+    /^(workspace:|file:|link:)/,
+    `依赖写法 ${declared} 不是"指回仓库内那本库"(老 nginx 式的 git 依赖与裸版本号都不该出现在这里)`
+  )
+  const members = Array.isArray(hostPkg.workspaces) ? hostPkg.workspaces : []
+  assert.ok(members.some(m => m.includes('packages')), `workspaces 里没把 packages/* 纳进来:${JSON.stringify(members)}`)
+
+  // 解析这一关必须由 **node** 来回答:vite / tsc 都有自己的别名,它们绿不算数。
+  const depsProbe = `
+    const engine = await import('wanxiang-engine')
+    const { MINIMAL } = await import('wanxiang-engine/presets/minimal')
+    if (Object.keys(engine).length < 50) throw new Error('裸包名解析到了,但导出少得可疑')
+    if (!MINIMAL.name.includes('最小内容包')) throw new Error('子路径没解析到最小内容包')
+    console.log('   按普通依赖解析通过(裸包名 ' + Object.keys(engine).length + ' 个导出 + 子路径 presets/minimal,由 node 解析)')
+  `
+  execFileSync('node', ['--input-type=module', '-e', depsProbe], { cwd: ROOT, stdio: 'inherit' })
+}
+
+console.log(`产物自检通过:${entries.length} 个入口 + 四份内容包 + 交叉校验 + 发布包内容 + 真装一遍 + 宿主引用方式(公开入口 / 依赖声明 / node 侧解析)`)

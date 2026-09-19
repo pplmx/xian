@@ -55,14 +55,21 @@
 
 ## 怎么引用
 
-本作自己也只是一个使用者 —— 源码里写的是包名(开发期由 Vite / TS 的解析配置指向 `packages/engine` 源码):
+本作自己也只是一个使用者 —— 库是**一份普通依赖**,写法与别人装了包再用完全一样:
 
 ```ts
 import { emptyProgress } from 'wanxiang-engine'
 ```
 
-`bun run check:engine` 会守住这条:宿主源码里**只经公开入口引用**,内部别名、深层导入、
-相对路径钻内部三类做法各有一条断言拦着(当前 65 处引用全部合规)。
+接线只有三件事(都在仓库里,不靠"记得"):
+
+| 这一层 | 是什么 |
+| --- | --- |
+| `package.json` | `"workspaces": ["packages/*"]` + `"wanxiang-engine": "workspace:*"` —— 依赖是真的,`bun install` 建软链,工具链与 node 侧脚本都看得见它 |
+| `vite.config.ts` / `tsconfig.app.json` | 把包名指到 `packages/engine/src` 的**开发加速通路**:改库立刻热更新,不必先 build;去掉它也能用(那时解析 `dist`) |
+| `scripts/engine-dist.mjs` | 三条判据守着:**只经公开入口引用**(内部别名 / 深层导入 / 相对路径钻内部各一条断言)、**依赖声明存在且指回仓库内的库**、以及**由 node 解析裸包名与子路径**(vite/tsc 自己的别名绿了不算数) |
+
+当前状态:65 处引用全部走公开入口;node 侧解析出 78 个导出 + 子路径 `presets/minimal`。
 
 ## 同步与自检
 

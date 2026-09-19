@@ -34,8 +34,12 @@ export default defineConfig({
       '@': resolve(import.meta.dirname, 'src'),
       /*
        * 公共库按**包名**解析 —— 应用侧源码里写的就是 `from 'wanxiang-engine'`,
-       * 与"别人装了包再用"时一模一样。开发期指到源码(热更新快、不必先 build),
-       * 拆库之后把这一行换成真依赖即可,源码一个字不用改。
+       * 与"别人装了包再用"时一模一样。
+       *
+       * 依赖本身是真的:`package.json` 里声明了 `workspace:*`(库就在 `packages/engine`),
+       * `bun install` 会建软链,node 侧脚本与工具链都按普通依赖解析它(判据见
+       * `scripts/engine-dist.mjs` 的第 ⑦ 条)。**这一行只是开发加速通路**:指到源码,
+       * 改库立刻热更新,不必先 build。去掉它照样能用 —— 那时解析的是 `dist`(记得 build)。
        */
       'wanxiang-engine': resolve(import.meta.dirname, 'packages/engine/src/index.ts')
     }

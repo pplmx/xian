@@ -22,6 +22,10 @@
     "types": ["vite/client", "node"],
     "paths": {
       "@/*": ["./src/*"],
+      /*
+       * 库是**真依赖**(package.json 里 `workspace:*`,见 scripts/engine-dist.mjs 第 ⑦ 条);
+       * 这里指到源码只是让 tsc 与 vite 一样走"开发加速通路",不必先 build 库。
+       */
       "wanxiang-engine": ["./packages/engine/src/index.ts"]
     },
 
