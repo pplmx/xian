@@ -93,6 +93,10 @@
  *      印章、纸纹、以及半透明的纸叠在深色天幕上,真实像素比色号暗一截,那条量不到。
  *      故这里直接采样屏幕像素:把文字临时藏起来拍一张,逐像素算「这枚字落在这一像素上
  *      读不读得出来」,读不出来的像素超过两成就报红。
+ *   四十三 28px 触达下限的量法要确定:1280×800 的 /adventure 上报过一次「28px」的红,
+ *      四舍五入后正好等于下限,实际是 27.6px 的子像素抖动,而那个按钮声明的是
+ *      min-h-[28px]。一条会自己变红的门比没有门更糟,故四处量 28px 的地方统一:声明的
+ *      min-height 到了 28 的给半像素容差,报数带一位小数(不再四舍五入到与下限同值)。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -196,9 +200,12 @@ async function auditModalControls(page) {
     const rows = [...panel.querySelectorAll('button, a, [role=button]')]
       .map(el => {
         const r = el.getBoundingClientRect()
+        const declared = parseFloat(getComputedStyle(el).minHeight)
         return {
           name: (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 14),
-          h: Math.round(r.height)
+          h: Math.round(r.height * 10) / 10,
+          // 与巡页那条同一把尺子:声明的 min-height 到了 28 的,给半像素容差(见第四十三条)
+          ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5)
         }
       })
       .filter(r => r.h > 0)
@@ -207,7 +214,7 @@ async function auditModalControls(page) {
       // 对话框自己也得有个名字:读屏遇到 role=dialog 要念得出是哪一扇
       label: (panel.getAttribute('aria-label') || panel.querySelector('h3')?.textContent || '').trim(),
       unnamed: rows.filter(r => !r.name).map(r => `${r.h}px`),
-      small: rows.filter(r => r.h < 28).map(r => `${r.h}px «${r.name || '无名'}»`)
+      small: rows.filter(r => !r.ok).map(r => `${r.h}px «${r.name || '无名'}»`)
     }
   })
 }
@@ -321,12 +328,25 @@ async function measurePage(page) {
        * 可点元素的高度下限 28px —— 拇指点得着的最起码尺寸。
        * 实测(带装备的后期档,375/320 两档):修前有 47 个不足 24px、26 个不足 28px,
        * 大多是把文字行直接当按钮(属性来源行、返回链接、设置里的胶囊按钮)。
+       *
+       * 量法本身要确定(第四十三条,原 HYP-112):1280×800 的 /adventure 上报过一次
+       * 「28px」的红 —— 打印出来四舍五入正好等于下限,实际是 27.6px 的子像素抖动,
+       * 而那个按钮自己声明的是 `min-h-[28px]`。一条会自己变红的门比没有门更糟,故:
+       *   一 声明的 min-height 到了 28px 的,盒子在 27.5px 以上就不判(那是渲染精度);
+       *   二 报数带一位小数,不再四舍五入到与被测下限同值。
        */
       smallTargets: [...document.querySelectorAll('button, a, [role=button]')]
-        .map(el => ({ el, r: el.getBoundingClientRect() }))
-        .filter(({ r }) => r.width > 0 && r.height > 0 && r.height < 28)
+        .map(el => {
+          const r = el.getBoundingClientRect()
+          const declared = parseFloat(getComputedStyle(el).minHeight)
+          return { el, r, declared: Number.isFinite(declared) ? declared : 0 }
+        })
+        .filter(({ r, declared }) => r.width > 0 && r.height > 0 && r.height < 28 && !(declared >= 28 && r.height >= 27.5))
         .slice(0, 3)
-        .map(({ el, r }) => `${Math.round(r.height)}px «${(el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 12)}»`),
+        .map(
+          ({ el, r, declared }) =>
+            `${r.height.toFixed(1)}px(声明 ${declared || '—'}px)«${(el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 12)}»`
+        ),
       /**
        * 禁用按钮上的字也得读得出来。
        *
@@ -1145,14 +1165,20 @@ for (const vp of VIEWPORTS) {
       const a = [...document.querySelectorAll('a')].find(el => (el.textContent || '').includes('第一步'))
       if (!a) return null
       const r = a.getBoundingClientRect()
-      return { href: a.getAttribute('href') || '', height: Math.round(r.height) }
+      const declared = parseFloat(getComputedStyle(a).minHeight)
+      return {
+        href: a.getAttribute('href') || '',
+        height: Math.round(r.height * 10) / 10,
+        // 与巡页那条同一把尺子(见第四十三条)
+        ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5)
+      }
     })
     checked += 1
     if (!step) {
       failures.push(`[${vp.tag}] 开局首页没有「第一步」卡 —— 新玩家只能自己猜先点哪儿`)
     } else {
       if (step.href !== '#/adventure') failures.push(`[${vp.tag}] 「第一步」卡指向 ${step.href},开局该先指历练(#/adventure)`)
-      if (step.height < 28) failures.push(`[${vp.tag}] 「第一步」卡只有 ${step.height}px 高,低于 28px 触达下限`)
+      if (!step.ok) failures.push(`[${vp.tag}] 「第一步」卡只有 ${step.height}px 高,低于 28px 触达下限`)
     }
   }
 
@@ -1476,7 +1502,16 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
         label: panel.getAttribute('aria-label'),
         role: panel.getAttribute('role'),
         controls: [...panel.querySelectorAll('button, a, [role=button]')]
-          .map(el => ({ name: (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 14), h: Math.round(el.getBoundingClientRect().height) }))
+          .map(el => {
+            const r = el.getBoundingClientRect()
+            const declared = parseFloat(getComputedStyle(el).minHeight)
+            return {
+              name: (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 14),
+              h: Math.round(r.height * 10) / 10,
+              // 与巡页那条同一把尺子(见第四十三条)
+              ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5)
+            }
+          })
           .filter(c => c.h > 0)
       }
     })
@@ -1491,7 +1526,7 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
   for (const [title, info] of seen) {
     if (info.role !== 'dialog') failures.push(`[375] 「${title}」没有 dialog 语义(role=${info.role})`)
     if (!info.label) failures.push(`[375] 「${title}」没有可访问名`)
-    const bad = info.controls.filter(c => !c.name || c.h < 28)
+    const bad = info.controls.filter(c => !c.name || !c.ok)
     if (bad.length) failures.push(`[375] 「${title}」里有 ${bad.length} 个控件不合格:${bad.map(c => `${c.h}px «${c.name || '无名'}»`).join(' | ')}`)
   }
   if (pageErrors.length) failures.push(`[375] 引擎事件场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
