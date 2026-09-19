@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 377,
+  "round": 378,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T01:52:56+00:00",
+  "updated_at": "2026-09-19T02:03:15+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 365,
+      "touched_round": 377,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -20868,6 +20868,104 @@
       "confidence": 0.95,
       "source": "变更 CHG-443(17f592e)与 release v0.1.20。库 bun run check:版本引用自检通过(14 处引用都是 0.1.20)、583 例 / 79 文件、17 道自检、发布包自检(wanxiang-engine-0.1.20.tgz 真装进临时项目 + 使用者侧 tsc 严格模式两种解析)。宿主 check:engine:65 处引用合规、宿主文档里的库版本 3 处都是 0.1.20。gh api releases/tags/v0.1.20:tag v0.1.20 → target 2ae1cc1dd934f2d8977aa7a24898bf2965bccfba,附件 wanxiang-engine-0.1.20.tgz(264904 字节,uploaded)。端到端:空项目 bun add <release URL> 成功,node 里 import 新导出并装配 XIUXIAN 跑出——第 0 境内容强度 286、体检 210 格、碾压 170 格。",
       "summary": "发版这条路的每一步都有当场读数:两仓版本引用一致、tag 指向发版提交、附件在 release 上且能真装能跑。"
+    },
+    "ISS-244": {
+      "id": "ISS-244",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:02:48+00:00",
+      "updated_at": "2026-09-19T02:03:15+00:00",
+      "touched_round": 377,
+      "severity": 0.5,
+      "confidence": 0.9,
+      "summary": "装配期的两种\"没说清楚\":①缺节或形状写坏(equipment 少写 affixes/power)时,validateGame 读到 undefined.map 直接抛 Cannot read properties of undefined —— 使用者拿到的不是\"你少写了一节\";②空区域表时 dungeons.firstRegion() 静默返回 undefined(chain() 还会把它当成起点往下推),拿到它的人会在很远的地方崩。两者都让\"装配时把话说清楚\"这条纪律漏了口子。"
+    },
+    "TASK-360": {
+      "id": "TASK-360",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:02:51+00:00",
+      "updated_at": "2026-09-19T02:03:15+00:00",
+      "touched_round": 377,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "库:门面允许只装两层 —— GameConfig 的 equipment / dungeons 可显式写 null(门面里那一层是空系统;读结构给有意义的空,真去用当场说明白);缺节报 CONFIG_SECTION_MISSING、形状坏报 CONFIG_FIELD_SHAPE 并停止逐条对账;补五条用例(只装两层能装能跑、空层三种说法、漏节报错、形状报错)与 docs/assembly 配方 B 的指引。"
+    },
+    "TASK-361": {
+      "id": "TASK-361",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:02:53+00:00",
+      "updated_at": "2026-09-19T02:03:15+00:00",
+      "touched_round": 377,
+      "category": "dx",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 2,
+      "summary": "库:第四份内容包 presets/minimal(只装两层,六十行,当\"你的游戏第 0 版\"抄)—— 配 exports 子路径、README 内容包表与指引、发布包自检里的装配断言、宿主入口清单;证明\"用得上几层就装几层\"。"
+    },
+    "CHG-444": {
+      "id": "CHG-444",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:02:57+00:00",
+      "updated_at": "2026-09-19T02:02:57+00:00",
+      "touched_round": 377,
+      "commit": "9b5b2f6",
+      "summary": "库:config.ts(GameConfig 的 equipment/dungeons 可为 null + 节形状守卫 + 空系统装配)、equipment.ts(品质表空时 rollQuality/quality 出声)、dungeons.ts(firstRegion 空表出声,chain 回到空链)、config.spec 五条用例、errors.spec / baseline.spec 的夹具类型跟上、docs/assembly 与 docs/usage、README、CHANGELOG;宿主 scripts/engine-dist.mjs 入口清单、engineParity.spec 非空断言。"
+    },
+    "CHG-445": {
+      "id": "CHG-445",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:02:59+00:00",
+      "updated_at": "2026-09-19T02:02:59+00:00",
+      "touched_round": 377,
+      "commit": "9b5b2f6",
+      "summary": "库:新增 src/presets/minimal.ts(手作工坊:只有等级与属性,equipment/dungeons 写 null)、package.json 的 ./presets/minimal 子路径、verify-dist(dist 入口清单 + 第四个题材的世界装配与空层断言 + 发布包 required + 使用者探针)、presets.spec 一节、README 内容包表与目录树;宿主 engine-dist.mjs 发布包清单加 dist/presets/minimal.js。"
+    },
+    "DEC-165": {
+      "id": "DEC-165",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:03:04+00:00",
+      "updated_at": "2026-09-19T02:03:04+00:00",
+      "touched_round": 377,
+      "summary": "\"没有这一层\"必须在配置里写成一句明确的话(equipment: null / dungeons: null);**省略不等于没有** —— 省略与形状写坏都在装配时报错并说明怎么改。空系统保留在门面上,但它的语义是\"读结构给有意义的空,用内容当场说明白\"。",
+      "rationale": "三种写法各有代价:省略即默认空 → 一款本来要装装备的游戏漏了那一节会静默装出\"永远掉不出装备\"的世界(仓库最想消灭的静默故障);让 equipment 可选(undefined)同罪;不给\"没有\"的表达方式 → 没有战斗的题材被迫编空表,而此前那条路撞上 TypeError。于是把它写成**必填、可 null**:TS 逼配置作者表态(\"有\"或\"没有\"都是一句话),JS 用户漏节时由 validateGame 给人话;门面里保留空系统是为了让调用方不必到处 `?.` —— 判读用 config.equipment === null。",
+      "alternatives_rejected": "①省略(或可选)即视为\"没有这一层\"(最省事,但把\"忘写\"变成静默故障);②干脆不允许空、没有战斗的题材就别用 defineGame(等于把一半题材请出正门,与\"我们就是第一个定制用户\"矛盾);③空表照旧崩、让人自己 debug(正是 ISS-244);④让 game.equipment / game.dungeons 变成可选字段(调用方要处处判空,而\"有没有这一层\"其实是配置里的一句话,一次判清就够)。"
+    },
+    "HYP-103": {
+      "id": "HYP-103",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:03:07+00:00",
+      "updated_at": "2026-09-19T02:03:07+00:00",
+      "touched_round": 377,
+      "confidence": 0.9,
+      "summary": "只装两层的世界里,凡是\"有内容才有意义\"的操作都会当场报出可读的错,而凡是\"结构读数\"都给有意义的空 —— 于是没有装备/副本的题材不必编空表,也不必在装配时崩掉。",
+      "prediction": "defineGame({..., equipment: null, dungeons: null}) 应当装得起来且面板可用;game.dungeons.chain() 应返回空数组,firstRegion() 应抛\"区域表是空的\";game.equipment.generate() 应抛\"没有任何可掉落的槽位\"、quality/rollQuality 应抛\"品质表是空的\";漏掉 equipment 这一节时 validateGame 应给 CONFIG_SECTION_MISSING 而不是 TypeError。"
+    },
+    "EV-370": {
+      "id": "EV-370",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:03:10+00:00",
+      "updated_at": "2026-09-19T02:03:10+00:00",
+      "touched_round": 377,
+      "confidence": 0.95,
+      "source": "变更 CHG-444 / CHG-445(9b5b2f6)。库 bun run check 全绿:588 例 / 79 文件、17 道自检(报错口径 28 条 = 新增两条且都被用例触发;文档链接 32 条;示例覆盖 37 个模块 + 4 份内容包)、发布包自检里第四个题材走完整条路(装包 → 按子路径 import MINIMAL → defineGame → 断言 config.* === null、label 学徒·粗活、chain() 为空、firstRegion() 抛错、generate() 抛错)。新增用例读数:只装两层时 realms.realms.length=2、equipment.slots=[]、dungeons.unlocked(空进度,0)=[];漏节报 CONFIG_SECTION_MISSING(消息含\"配置里缺了 equipment 这一节\"),坏形状报两条 CONFIG_FIELD_SHAPE。宿主:vue-tsc 通过、288 文件 / 2644 例全过、check:engine 通过(9 个入口 + 四份内容包)。",
+      "summary": "\"只装两层\"这条主张从装配到发布包都跑通了:空层的读与用两种口径分开(有意义的空 vs 当场说明白),而\"省略/写坏\"被装配期拦住 —— 三种写法各有判据。"
     }
   },
   "edges": [
@@ -30681,6 +30779,54 @@
       "to": "HYP-102",
       "type": "validates",
       "created_at": "2026-09-19T01:52:56+00:00"
+    },
+    {
+      "from": "CHG-444",
+      "to": "TASK-360",
+      "type": "implements",
+      "created_at": "2026-09-19T02:03:14+00:00"
+    },
+    {
+      "from": "CHG-445",
+      "to": "TASK-361",
+      "type": "implements",
+      "created_at": "2026-09-19T02:03:14+00:00"
+    },
+    {
+      "from": "CHG-444",
+      "to": "ISS-244",
+      "type": "resolves",
+      "created_at": "2026-09-19T02:03:14+00:00"
+    },
+    {
+      "from": "ISS-244",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-19T02:03:14+00:00"
+    },
+    {
+      "from": "DEC-165",
+      "to": "TASK-360",
+      "type": "governs",
+      "created_at": "2026-09-19T02:03:15+00:00"
+    },
+    {
+      "from": "DEC-165",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-19T02:03:15+00:00"
+    },
+    {
+      "from": "EV-370",
+      "to": "HYP-103",
+      "type": "validates",
+      "created_at": "2026-09-19T02:03:15+00:00"
+    },
+    {
+      "from": "TASK-360",
+      "to": "ISS-244",
+      "type": "addresses",
+      "created_at": "2026-09-19T02:03:15+00:00"
     }
   ]
 }
