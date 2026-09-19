@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :open="open" title="关于我们" @close="$emit('close')">
+  <BaseModal :open="open" title="关于此作" @close="$emit('close')">
     <div class="space-y-3 text-[12px] leading-relaxed">
       <p class="text-ink-faint">《玄枢录》—— 玄之又玄,众妙之门。</p>
       <div class="card-ink px-3 py-2">

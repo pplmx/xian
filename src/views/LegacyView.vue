@@ -41,7 +41,7 @@
           <span class="text-cinnabar">{{ profile.weakWorld }}</span>
         </p>
       </div>
-      <p class="mt-1.5 text-[9px] text-ink-faint">画像全部来自真实道痕统计,不可人工修饰。</p>
+      <p class="mt-1.5 text-[9px] text-ink-faint">画像皆出自真实道痕,不可人工修饰。</p>
     </div>
     <p v-else class="card-ink px-4 py-6 text-center text-[11px] text-ink-faint">道痕未满{{ cnNumber(PROFILE_MIN_MARKS) }}则,画像尚不成形。</p>
 

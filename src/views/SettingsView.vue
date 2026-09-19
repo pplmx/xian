@@ -136,7 +136,7 @@
     <SectionTitle title="关于" />
     <div class="card-ink divide-y divide-ink/7 px-4">
       <button class="flex w-full items-center justify-between py-3 active:opacity-60" @click="aboutOpen = true">
-        <span class="text-[13px] text-ink-soft">关于我们</span>
+        <span class="text-[13px] text-ink-soft">关于此作</span>
         <span class="text-[11px] text-ink-faint">查看 →</span>
       </button>
       <button class="flex w-full items-center justify-between py-3 active:opacity-60" @click="privacyOpen = true">

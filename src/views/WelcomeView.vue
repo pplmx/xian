@@ -18,7 +18,7 @@
       <span class="text-ink-ghost/40">·</span>
       <button class="active:text-ink-soft" @click="importOpen = true">导入存档</button>
       <span class="text-ink-ghost/40">·</span>
-      <button class="active:text-ink-soft" @click="aboutOpen = true">关于我们</button>
+      <button class="active:text-ink-soft" @click="aboutOpen = true">关于此作</button>
     </div>
     <input ref="fileInput" type="file" accept="application/json,.save" class="hidden" @change="onFilePicked" />
 
