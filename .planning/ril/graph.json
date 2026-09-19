@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 361,
+  "round": 362,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:26:55+00:00",
+  "updated_at": "2026-09-19T00:30:27+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20048,6 +20048,43 @@
       "confidence": 0.95,
       "source": "变更 CHG-425(94c7c80)。实测(状态与时间戳写死在用例里):骨架 1153 字符;背包 100 件 13136 字符 / 200 件 25240;每件边际 121.0 字符;36 字符 uuid 每件 +33.1 字符;8 步迁移 20000 次 = 0.0039 ms/次(3.85 微秒);一万玩家 × 每天十次 = 1223 MB/天。闸门:bun run check 全绿(565 例 / 78 文件 + 14 道自检,含 30 份消融的一页索引逐节点名)。",
       "summary": "补上一直没量的那一格:存档的容量口径。最大的收获不是那几个数,而是把\"写入量\"从\"才十几 KB\"的直觉里拉出来 —— 一万玩家每天十次是 1.2 GB/天,这才是要不要压缩、要不要只在变更时落盘的依据。另外顺手证了一条小的:字符数不等于字节数(样本全 ASCII 所以相同,中文名一字 3 字节)。"
+    },
+    "TASK-342": {
+      "id": "TASK-342",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:30:26+00:00",
+      "updated_at": "2026-09-19T00:30:26+00:00",
+      "touched_round": 361,
+      "category": "test",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "补第十条验收链:同一段与题材无关的流程(装配→进阶→掉装→装配→打一场→通关奖励→入账→存档往返)对三份预设 + 一份连键名一起换的自定义内容各跑一遍,断言面板单调/账目守恒/存档往返/同种子可复现。"
+    },
+    "CHG-426": {
+      "id": "CHG-426",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:30:26+00:00",
+      "updated_at": "2026-09-19T00:30:26+00:00",
+      "touched_round": 361,
+      "commit": "88d2a12",
+      "summary": "库:新增 src/integrationGenres.spec.ts(5 条,含第四份自定义内容 power/guard/vitality 走 combat.keys);docs/assembly.md 验收清单补一行;README 用例数 565/78 → 570/79;CHANGELOG 记一条。运行时代码与公开面未动。"
+    },
+    "EV-352": {
+      "id": "EV-352",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:30:26+00:00",
+      "updated_at": "2026-09-19T00:30:26+00:00",
+      "touched_round": 361,
+      "confidence": 0.95,
+      "source": "变更 CHG-426(88d2a12)。实测:bun run check 全绿(570 例 / 79 文件 + 14 道自检 + 13 份示例)。链条读数(种子 同一条链):xiuxian 山间野猪 / demo 失控无人机 / daily 随堂习题(三份预设第一个人不同);第四份棋院联赛 面板键 power/guard/vitality/speed、遭遇对手并取胜;三份预设的展示名 = 攻击 / 火力 / 专注力,机器键都是 attack/defense/maxHp。",
+      "summary": "把\"引擎不认识题材\"从一句话变成可执行的判据,并顺带确认两条真实的接缝:三份预设只换展示名(机器键不变);换键名的作品要靠 combat.keys,且副本给的敌人快照永远是引擎键,映射要在调用方那一层做一次。"
     }
   },
   "edges": [
@@ -29657,6 +29694,12 @@
       "to": "TASK-341",
       "type": "implements",
       "created_at": "2026-09-19T00:26:54+00:00"
+    },
+    {
+      "from": "CHG-426",
+      "to": "TASK-342",
+      "type": "implements",
+      "created_at": "2026-09-19T00:30:26+00:00"
     }
   ]
 }
