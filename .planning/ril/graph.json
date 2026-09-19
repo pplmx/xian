@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 387,
+  "round": 388,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T05:13:31+00:00",
+  "updated_at": "2026-09-19T05:47:27+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10819,7 +10819,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 379,
+      "touched_round": 387,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -21576,6 +21576,54 @@
       "confidence": 0.95,
       "source": "变更 CHG-457(a3cd96b)。实测:node_modules/wanxiang-engine 是软链 → ../packages/engine;node -e import(\"wanxiang-engine\") 解析出 78 个导出;子路径 import(\"wanxiang-engine/presets/minimal\") 解析到「手作工坊(最小内容包)」。判据:bun run check:engine 通过并印出\"按普通依赖解析通过(裸包名 78 个导出 + 子路径 presets/minimal,由 node 解析)\";bun run check(文档自检 44 条路径)、bun run build、bun run test(290 文件 / 2653 例)全过。对照实验(file:/link:/workspaces 三种写法、npm 11 与 bun 1.4.2 各跑一遍)见 DEC-171 的 rationale。",
       "summary": "\"看起来像依赖\"终于变成\"真是依赖\":工具链看得见、node 侧解析得到、子路径也通了 —— 而且这条接线本身有判据守着,不再靠注释提醒。"
+    },
+    "ISS-249": {
+      "id": "ISS-249",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T05:47:15+00:00",
+      "updated_at": "2026-09-19T05:47:27+00:00",
+      "touched_round": 387,
+      "severity": 0.5,
+      "confidence": 0.95,
+      "summary": "宿主门红在排版自检:goto(waitUntil:load) 等页面 load,而页面挂着第三方统计(defer);CI 有网时会真的去加载它,对方一慢就 30 秒超时。本地绿、CI 红(本地无网)。更深一层:三条浏览器门对第三方脚本有\"两套半机制\" —— 冒烟按域名断解析、排版自检没有任何处理、只有 pageerror 分流兜底,于是挡不挡得住取决于你写了哪一套。"
+    },
+    "TASK-373": {
+      "id": "TASK-373",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T05:47:21+00:00",
+      "updated_at": "2026-09-19T05:47:27+00:00",
+      "touched_round": 387,
+      "category": "test-quality",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "让三道浏览器门不再受第三方脚本牵制:统一 blockExternal(拦非本地请求,而非只挡已知域名),三条门各自印出拦下的条数,删掉旧的按域名断解析,并把\"断掉不省时间、留着为确定性\"的实测注记搬进统一助手。"
+    },
+    "CHG-458": {
+      "id": "CHG-458",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T05:47:21+00:00",
+      "updated_at": "2026-09-19T05:47:21+00:00",
+      "touched_round": 387,
+      "commit": "fd41548",
+      "summary": "宿主:scripts/lib/pageErrors.mjs 新增 blockExternal(pageOrContext, allow) 并删掉 ANALYTICS_BLOCKED_ARGS;layout-check(6 处建页,主循环统计)与 offline-check(放行本地服务)、ui-smoke(改用统一机制并去掉启动参数)三处接入;layout-check 顺手修掉一处遗留 lint 错。"
+    },
+    "EV-381": {
+      "id": "EV-381",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T05:47:21+00:00",
+      "updated_at": "2026-09-19T05:47:21+00:00",
+      "touched_round": 387,
+      "confidence": 0.95,
+      "source": "变更 CHG-458(fd41548)。CI 侧证据:run 35423386064 的排版自检在 goto(file:///.../dist/index.html, waitUntil: load) 上 30 秒超时,日志满屏\"第三方统计脚本异常:Invalid UUID\";本地同一份代码全绿(本地无网,脚本加载不出来)。本地验收:排版 168 个页面×视口组合绿且印\"外域请求拦掉 10 个\";界面冒烟 15 页 66 次点击、无运行时异常、印\"外域请求拦掉 1 个\";离线自检四件事全绿、印\"拦掉 4 个\";三个脚本 eslint 干净。"
     }
   },
   "edges": [
@@ -31725,6 +31773,30 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-19T05:13:30+00:00"
+    },
+    {
+      "from": "CHG-458",
+      "to": "TASK-373",
+      "type": "implements",
+      "created_at": "2026-09-19T05:47:27+00:00"
+    },
+    {
+      "from": "CHG-458",
+      "to": "ISS-249",
+      "type": "resolves",
+      "created_at": "2026-09-19T05:47:27+00:00"
+    },
+    {
+      "from": "ISS-249",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-09-19T05:47:27+00:00"
+    },
+    {
+      "from": "TASK-373",
+      "to": "ISS-249",
+      "type": "addresses",
+      "created_at": "2026-09-19T05:47:27+00:00"
     }
   ]
 }
