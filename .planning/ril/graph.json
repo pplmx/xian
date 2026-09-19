@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 368,
+  "round": 369,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:58:52+00:00",
+  "updated_at": "2026-09-19T01:03:06+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20402,6 +20402,43 @@
       "confidence": 0.8,
       "source": "变更 CHG-433(3e8d0ab)。已验:workflow 的每一步命令在本地实跑(npm pack → gh release upload --clobber v0.1.19 → gh release view assets 逐字匹配文件名);YAML 用解析器验过(释放/branch 触发与 attach job 都在);库 bun run check 全绿(570 例 / 79 文件 + 15 道自检)。未验:workflow 本身要等下一次发版才会真的跑 —— 这一条如实标注为\"待下次发版确认\"。",
       "summary": "把\"忘了挂附件→使用者吃 404\"这个失败模式用 CI 兜住。这次只敢声称\"命令与结构验过\",不敢声称\"CI 跑通\" —— 后者得等下一次发版。"
+    },
+    "TASK-350": {
+      "id": "TASK-350",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:03:06+00:00",
+      "updated_at": "2026-09-19T01:03:06+00:00",
+      "touched_round": 368,
+      "category": "docs",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "文档里的可跑证据变成可点链接(指回仓库),README/组装指南/调参参考各加\"包里不含 examples 与 src\"的说明;新增第 16 道自检:文档里每条仓库链接指向的路径必须真实存在。"
+    },
+    "CHG-434": {
+      "id": "CHG-434",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:03:06+00:00",
+      "updated_at": "2026-09-19T01:03:06+00:00",
+      "touched_round": 368,
+      "commit": "d3aa2ad",
+      "summary": "库:README 与 docs/{assembly,development,parity}.md 的 29 条示例/用例路径改成指回仓库的绝对链接,三处加\"包里不含示例与源码\"的说明,parity 里两处指错仓库的链接修掉;verify-dist 增加「文档链接」自检;README 清单同步成十六道;CHANGELOG 记一条。"
+    },
+    "EV-360": {
+      "id": "EV-360",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:03:06+00:00",
+      "updated_at": "2026-09-19T01:03:06+00:00",
+      "touched_round": 368,
+      "confidence": 0.95,
+      "source": "变更 CHG-434(d3aa2ad)。新自检首跑即抓到两条坏链接(我写的 <…tree/main/examples> 被当成目标 examples>;parity.md 指向本仓库并不存在的 src/core/engineParity.spec.ts —— 那条其实在源工程 pplmx/xian),修完后印\"文档链接自检通过(29 条指回仓库的链接都指向真实文件)\"。闸门:库 bun run check 全绿(570 例 / 79 文件 + 16 道自检 + 13 份示例),含\"自检清单自检通过(README 的 16 道与实跑的 16 道一一对得上)\"。",
+      "summary": "用\"只读包里那几份文档\"的方式当一次 package-only 用户,发现\"可跑的证据\"那一列对包的读者等于不存在(示例与用例都不随包发布,路径还只是纯文本)。修法不是把示例塞进包(它们 import ../src,进包也跑不了),而是把路径写成指回仓库的链接,并给\"链接不许指空\"加判据。"
     }
   },
   "edges": [
@@ -30095,6 +30132,12 @@
       "to": "TASK-349",
       "type": "implements",
       "created_at": "2026-09-19T00:58:51+00:00"
+    },
+    {
+      "from": "CHG-434",
+      "to": "TASK-350",
+      "type": "implements",
+      "created_at": "2026-09-19T01:03:06+00:00"
     }
   ]
 }
