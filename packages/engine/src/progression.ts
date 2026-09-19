@@ -96,6 +96,32 @@ export interface ProgressionSummary {
   crushing: number
 }
 
+/**
+ * 一段的读数 —— **"这一境(或这一界)总共涨了多少倍"**。
+ *
+ * 逐格跳变回答"哪一步最陡",段读数回答"这一段整体有多长/多陡" —— 后者才是内容作者
+ * 排期时真正问的问题("前 3 境要多久、后面每境涨多少")。段可以按**大境界**切(默认),
+ * 也可以按**界域**切(多界域题材:人间界整段涨了多少)。
+ */
+export interface ProgressionSegment {
+  /** 段首那一格 */
+  from: ProgressionStep
+  /** 段末那一格 */
+  to: ProgressionStep
+  /** 段名(按大境界切是境界名,按界域切是界域名) */
+  name: string
+  /** 段内格数 */
+  cells: number
+  /** 段首 → 段末的需求倍数(段内只有一格时为 1) */
+  costSpan: number
+  /** 段首 → 段末的面板倍数(同上) */
+  powerSpan: number
+  /** **跨进这一段**那一步的倍数(第一段为 1) */
+  entryCostStep: number
+  /** 段内单步最大的需求跳变(不含跨进来的那一步) */
+  maxCostStep: number
+}
+
 const stepOf = (value: number, previous: number | undefined): number =>
   previous === undefined || previous === 0 ? 1 : value / previous
 
@@ -172,7 +198,40 @@ export function createProgressionAudit<T = number>(
         return `${step.label.padEnd(12, ' ')} 需求 ×${step.costStep.toFixed(2)} · 面板 ×${step.powerStep.toFixed(2)}${tail}`
       })
 
-  return { steps, summary, lines, crushRatio }
+  /**
+   * 按段读数:`by='major'` 每大境界一段(默认),`by='world'` 每界域一段。
+   *
+   * 两处口径写死在这里,免得每个人自己数一遍:
+   *   · `costSpan` 是**段末 ÷ 段首**(段内一格就是 1)—— 与"境内涨了多少倍"同一个意思;
+   *   · `entryCostStep` 单独给:**跨进这一段**那一步(跨大境界或换界),不算进 `maxCostStep` ——
+   *     否则每一段的最大跳变都会变成"进门那一下",段内谁最陡就看不出来了。
+   */
+  const segments = (by: 'major' | 'world' = 'major'): ProgressionSegment[] => {
+    const groups = new Map<string, ProgressionStep[]>()
+    for (const step of steps) {
+      const key = by === 'world' ? sys.worldOf(step.major).id : String(step.major)
+      const list = groups.get(key)
+      if (list) list.push(step)
+      else groups.set(key, [step])
+    }
+    return [...groups.values()].map(list => {
+      const from = list[0]!
+      const to = list[list.length - 1]!
+      const inner = list.slice(1)
+      return {
+        from,
+        to,
+        name: by === 'world' ? sys.worldOf(from.major).name : sys.realmAt(from.major).name,
+        cells: list.length,
+        costSpan: from.cost === 0 ? 1 : stepOf(to.cost, from.cost),
+        powerSpan: stepOf(to.power, from.power),
+        entryCostStep: from.costStep,
+        maxCostStep: inner.length === 0 ? 1 : Math.max(...inner.map(step => step.costStep))
+      }
+    })
+  }
+
+  return { steps, summary, lines, segments, crushRatio }
 }
 
 export type ProgressionAudit = ReturnType<typeof createProgressionAudit>

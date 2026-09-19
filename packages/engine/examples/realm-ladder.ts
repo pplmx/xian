@@ -208,6 +208,17 @@ console.log(
   `第一次碾压内容:${report.firstCrush ? `${report.firstCrush.label}(玩家/内容 ${report.firstCrush.ratio!.toFixed(1)},判词 ${report.firstCrush.verdict})` : '一次都没有'}` +
     ` · 一共 ${report.crushing} 格被碾`
 )
+// 逐格看"哪一步最陡",分段看"这一境整体有多长" —— 排期时问的通常是后者
+const segments = audit.segments()
+console.log(
+  `按境界分段:${segments.map(s => `${s.name} ${s.cells} 格 ×${s.costSpan.toFixed(1)}(进门 ×${s.entryCostStep.toFixed(1)})`).join(' · ')}`
+)
+console.log(
+  `  换界那两段单看更清楚:${audit
+    .segments('world')
+    .map(s => `${s.name} ×${s.costSpan.toFixed(1)}`)
+    .join(' · ')}(这样看就知道"整段总共涨多少",而不是只看单步)`
+)
 console.log(
   `  体检当场抓到一个真问题:换界那两格的需求倍数小于 1(换到新界反而更便宜)—— ` +
     `因为这张表的**层内**倍率 1.5 连着乘四层(≈5.06)已经超过跨大境界的 2.4。` +

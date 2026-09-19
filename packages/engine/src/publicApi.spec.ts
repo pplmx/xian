@@ -128,6 +128,7 @@ import type {
   IdlePlan,
   ProgressionAudit,
   ProgressionAuditConfig,
+  ProgressionSegment,
   ProgressionStep,
   ProgressionSummary,
   WorldStep,
@@ -385,7 +386,7 @@ type PublicTypes = {
     StrikeOptions
   ]
   idle: [IdleConfig, IdlePlan]
-  progression: [ProgressionAudit, ProgressionAuditConfig<number>, ProgressionStep, ProgressionSummary, WorldStep]
+  progression: [ProgressionAudit, ProgressionAuditConfig<number>, ProgressionSegment, ProgressionStep, ProgressionSummary, WorldStep]
   save: [SaveDecodeResult<number>, SaveFormat<number>, SavePayload]
   skills: [SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem]
   crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef]

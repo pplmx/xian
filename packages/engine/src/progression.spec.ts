@@ -115,4 +115,28 @@ describe('成长体检 —— 跳变、跨界与碾压', () => {
     expect(jumpy.some(line => line.includes('三段·一'))).toBe(true) // 换界那一行一定在
     console.log(`  ${jumpy.join('\n  ')}`)
   })
+
+  it('按段读数:每大境界一段(默认),也能按界域切', () => {
+    const audit = createProgressionAudit({ realms: sys() })
+    const byMajor = audit.segments()
+    expect(byMajor.map(s => s.name)).toEqual(['一段', '二段', '三段'])
+    expect(byMajor.map(s => s.cells)).toEqual([2, 2, 2])
+    expect(byMajor.reduce((n, s) => n + s.cells, 0)).toBe(audit.steps.length)
+    // 段跨度 = 段末 ÷ 段首:每一段都是"一层 ×2、二层 ×2" → 段末/段首 = 2
+    for (const seg of byMajor) expect(seg.costSpan).toBeCloseTo(2, 10)
+    // 段内单步最大 = 2;而**跨进来**那一步单独给:第二段 ×50(跨大境界),第三段 ×50(换界)
+    expect(byMajor.map(s => s.entryCostStep)).toEqual([1, 50, 50])
+    expect(byMajor.map(s => s.maxCostStep)).toEqual([2, 2, 2])
+    console.log(`  按境界:${byMajor.map(s => `${s.name}×${s.costSpan.toFixed(1)}(进门 ×${s.entryCostStep})`).join(' · ')}`)
+
+    // 按界域切:下界两段合成一段(4 格),上界一段(2 格)
+    const byWorld = audit.segments('world')
+    expect(byWorld.map(s => s.name)).toEqual(['下界', '上界'])
+    expect(byWorld.map(s => s.cells)).toEqual([4, 2])
+    // 段首→段末:一段·一 100 → 二段·二 20000(层间 ×2、境内跨大境界 ×50)→ ×200
+    expect(byWorld[0]!.costSpan).toBeCloseTo(200, 6)
+    expect(byWorld[1]!.costSpan).toBeCloseTo(2, 10)   // 三段两格之间只有层间 ×2
+    expect(byWorld[1]!.entryCostStep).toBeCloseTo(50, 10) // 换界那一步
+    console.log(`  按界域:${byWorld.map(s => `${s.name}×${s.costSpan.toFixed(1)}(进门 ×${s.entryCostStep})`).join(' · ')}`)
+  })
 })

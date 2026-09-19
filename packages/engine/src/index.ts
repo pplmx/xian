@@ -100,6 +100,7 @@ export { planIdle, runIdle } from './idle.js'
 export type {
   ProgressionAudit,
   ProgressionAuditConfig,
+  ProgressionSegment,
   ProgressionStep,
   ProgressionSummary,
   WorldStep
