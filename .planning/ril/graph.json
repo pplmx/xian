@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 392,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T10:29:29+00:00",
+  "updated_at": "2026-09-19T11:23:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -12001,10 +12001,10 @@
     "HYP-096": {
       "id": "HYP-096",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-17T13:52:34+00:00",
-      "updated_at": "2026-09-17T13:52:34+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 209,
       "confidence": 0.95,
       "summary": "历练修为失效挂机的根因是「按玩家自身数值缩放」的百分比口径 × 遭遇自动高频:奖励随需求指数上涨,而遭遇的代价(12 秒)恒定 —— 与丹药那处同源(已改),故同一把尺子(等效闭关时长)可以同时治两处。"
@@ -20799,10 +20799,10 @@
     "HYP-100": {
       "id": "HYP-100",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T01:48:35+00:00",
-      "updated_at": "2026-09-19T01:48:35+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 376,
       "confidence": 0.9,
       "summary": "内容强度的默认口径(该境界能打到的最强一处的首领,按属性系统战力评分折算)可以直接接上体检:逐格 ratio 就是 玩家强度 ÷ 该处读数,内容厚薄一改碾压格数就变;不需要使用者再手写一条曲线。",
@@ -20811,10 +20811,10 @@
     "HYP-101": {
       "id": "HYP-101",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T01:48:38+00:00",
-      "updated_at": "2026-09-19T01:48:38+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 376,
       "confidence": 0.85,
       "summary": "本作审计用的\"内容强度\"与库的区域表读数量的不是同一个量(基准敌人 vs 区域首领;两条层级曲线 powerScale × 层级补偿 vs tierGrowth^(tier-1)),因此两边不该合并 —— 合并会让审计读数与玩家真正打的敌人脱节。",
@@ -20848,10 +20848,10 @@
     "HYP-102": {
       "id": "HYP-102",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T01:52:51+00:00",
-      "updated_at": "2026-09-19T01:52:51+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 376,
       "confidence": 0.9,
       "summary": "对外分发仍然只有 release 附件这一条路可用:新版本从该 URL 直接 bun add 装得上,且装出来的包能 import 新导出并跑通体检。",
@@ -20946,10 +20946,10 @@
     "HYP-103": {
       "id": "HYP-103",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T02:03:07+00:00",
-      "updated_at": "2026-09-19T02:03:07+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 377,
       "confidence": 0.9,
       "summary": "只装两层的世界里,凡是\"有内容才有意义\"的操作都会当场报出可读的错,而凡是\"结构读数\"都给有意义的空 —— 于是没有装备/副本的题材不必编空表,也不必在装配时崩掉。",
@@ -21044,10 +21044,10 @@
     "HYP-104": {
       "id": "HYP-104",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T02:09:49+00:00",
-      "updated_at": "2026-09-19T02:09:49+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 378,
       "confidence": 0.9,
       "summary": "曲线体检的读法(逐格 / 分段 / 碾压 / 对照)在三份不同风格的内容包上都给得出可比较的刻度,并且\"最陡的一格不含换界\"\"阈值加严只增不减\"\"第一次碾压是最早那一格\"这些口径在真实内容上成立。",
@@ -21166,10 +21166,10 @@
     "HYP-105": {
       "id": "HYP-105",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T02:46:26+00:00",
-      "updated_at": "2026-09-19T02:46:26+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 379,
       "confidence": 0.9,
       "summary": "边界读数改用连乘后跨运行时一致;而 ** 的末位会随引擎/版本漂移(这正是 CI 连红的根因)。",
@@ -21178,10 +21178,10 @@
     "HYP-106": {
       "id": "HYP-106",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T02:46:29+00:00",
-      "updated_at": "2026-09-19T02:46:29+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 379,
       "confidence": 0.9,
       "summary": "带 data-value-row 契约的主值行判据能抓住\"次要读数挤折行\"这一类事故,并且不会误伤全站其余排版(168 个页面 × 视口组合全绿)。",
@@ -21239,10 +21239,10 @@
     "HYP-107": {
       "id": "HYP-107",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T02:52:07+00:00",
-      "updated_at": "2026-09-19T02:52:07+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 380,
       "confidence": 0.95,
       "summary": "发布保险丝(release.yml:release published 时 checkout 该 tag → bun run check → npm pack → gh release upload → 核对附件名)在真实发版时能跑通,于是\"忘了挂附件\"这件事有兜底。",
@@ -21288,10 +21288,10 @@
     "HYP-108": {
       "id": "HYP-108",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T02:56:32+00:00",
-      "updated_at": "2026-09-19T02:56:32+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 381,
       "confidence": 0.9,
       "summary": "文档里的 compile-check 片段不只是\"能编译\",而是照抄就能跑起来(对着真装过的发布包),并且这条判据能抓住\"编得过但跑不过\"的片段。",
@@ -22022,10 +22022,10 @@
     "TASK-379": {
       "id": "TASK-379",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T10:21:53+00:00",
-      "updated_at": "2026-09-19T10:21:53+00:00",
+      "updated_at": "2026-09-19T11:23:46+00:00",
       "touched_round": 392,
       "category": "core-feature",
       "severity": 0.5,
@@ -22104,6 +22104,90 @@
       "source": "素材与实现清点:public/icons/icon-192.png 是山+朱砂日+云的水墨应用图标;docs/design.md 记字体(霞鹜文楷子集)、动效(墨点/雾)、无障碍;src/core/audio.ts 是 D 宫调式、古筝/琵琶/太鼓/木鱼采样、52BPM",
       "summary": "其它「古风」层面(应用图标、字体、动效、配乐)已经到位,缺口集中在界面图标这一层。",
       "confidence": 1.0
+    },
+    "DEC-176": {
+      "id": "DEC-176",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:23:41+00:00",
+      "updated_at": "2026-09-19T11:23:41+00:00",
+      "touched_round": 392,
+      "summary": "小字可读性(AA)落地成三条写法规则 + 一处角色分工:①「底」按纸/纸深/卡片三张算(夜间卡片比页面亮,是最难的一张);②纸上的墨只有三档,要更淡的装饰用墨的透明度写,不再立第四档字色;③文字不叠透明度(写字就用整色),同色底最多 6%;④暗色主题里朱砂分两个字号 —— 当字要亮、当印面要深,因为亮红托奶油字只有 2.9:1。",
+      "rationale": "先量后改:用真浏览器逐页量合成后的颜色,量出的失败集中在三处(卡片底未纳入模型、十一个色号偏浅、三种写法本身漏光)。把这三条写成规则之后,以后新加的颜色/方块/半透明字都会被同一道门拦住,不必再靠人眼。取「三档墨」而不是把 ink-ghost 压深,是因为纸上放不下第四档还能读的字:再淡低于 AA,再深与 ink-faint 重合。",
+      "alternatives_rejected": "①把 ink-ghost 压深凑第四档(与 ink-faint 重合,等于两档并一档还多一个 token);②只改色号、不管同色底与半透明字(实测仍有 3.9-4.4:1 的漏网);③按 WCAG 大字的 3:1 放宽小字(10-13px 的说明文字正是最需要读清的一档);④保留浅色只把字号放大(排版自检刚钉过主值行不许折行,放大与它冲突)。"
+    },
+    "CHG-468": {
+      "id": "CHG-468",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:23:41+00:00",
+      "updated_at": "2026-09-19T11:23:41+00:00",
+      "touched_round": 392,
+      "commit": "bbe15b6",
+      "summary": "把 AA 落地:style.css 压深十一档浅色并改暗色四档(含朱砂拆角色 + .btn-seal 暗色覆盖),撤掉 ink-ghost;全站 118 处 ink-ghost 文字落到 ink-faint;text-*/70-90 的透明度去掉;同色底 /8 /10 /15 一律 6%;palette.spec.ts 的底模型改成纸/纸深/卡片并按档要求 AA;layout-check 新增第四十道门(真浏览器合成底算对比度,两套主题)。"
+    },
+    "HYP-112": {
+      "id": "HYP-112",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:23:41+00:00",
+      "updated_at": "2026-09-19T11:23:41+00:00",
+      "touched_round": 392,
+      "summary": "layout-check 那条「可点元素不小于 28px」在 1280×800 的 /adventure 上报过一次 28px(四舍五入后与被测下限同值),疑似子像素抖动而不是版面真的坏了。",
+      "confidence": 0.7
+    },
+    "EV-395": {
+      "id": "EV-395",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:23:41+00:00",
+      "updated_at": "2026-09-19T11:23:41+00:00",
+      "touched_round": 392,
+      "source": "定向复量(playwright,1280×800,/adventure,4 次 Esc 关弹窗后):document.querySelectorAll('button,a,[role=button]') 里高度 <29px 的元素为 0 个;该按钮声明的是 min-h-[28px]。下一次整轮排版自检(168 组合)也没再报。",
+      "summary": "那一次 28px 的红是量法抖动,不是 28px 下限失守 —— 但只此一次读数,还不足以结案。",
+      "confidence": 1.0
+    },
+    "EV-396": {
+      "id": "EV-396",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:23:42+00:00",
+      "updated_at": "2026-09-19T11:23:42+00:00",
+      "touched_round": 392,
+      "source": "真浏览器对账(/tmp/contrast-audit.mjs 逐页跑 15 个路由 × 两套主题):改前夜间 429 处低于 AA、浅色 4 处(其中 4 处是页签墨块的量法假阳,已用「同层绝对定位层」修正);改后夜间仅剩 2 处(codex 页 8% 同色底),降到 6% 后整轮排版自检 168 组合转绿。",
+      "summary": "失败数从 429 降到 0,且最后两处是判据自己抓出来的(我算漏的那种)。",
+      "confidence": 1.0
+    },
+    "EV-397": {
+      "id": "EV-397",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:23:42+00:00",
+      "updated_at": "2026-09-19T11:23:42+00:00",
+      "touched_round": 392,
+      "source": "bun run check(类型 + ESLint + 文档自检)、bun run test(292 spec / 2671 例)全绿;bun scripts/layout-check.mjs 168 组合 + 十道门全绿(含新增的正文对比度);bun scripts/ui-smoke.mjs 15 页 70 次点击 0 异常;浅色与夜间截图人工复核(create/character/inventory/cultivation/souls)",
+      "summary": "两道浏览器门与全量用例都绿。",
+      "confidence": 1.0
+    },
+    "TASK-380": {
+      "id": "TASK-380",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T11:23:51+00:00",
+      "updated_at": "2026-09-19T11:23:51+00:00",
+      "touched_round": 392,
+      "category": "core-feature",
+      "severity": 0.4,
+      "confidence": 0.7,
+      "effort": 6,
+      "summary": "给界面图标一层水墨笔意:49 个 lucide 图标现在只经 src/ui/icons.ts 一个出口,先挑最常看的那几处下手(底部导航五项 + 顶栏三项 + 品质角标),而不是一次换 49 个。判据要一起定:图标要么仍是同一套线性语言,要么整套换 —— 混着来比现在更难看。"
     }
   },
   "edges": [
@@ -32457,6 +32541,36 @@
       "to": "COMP-029",
       "type": "located_in",
       "created_at": "2026-09-19T10:29:24+00:00"
+    },
+    {
+      "from": "CHG-468",
+      "to": "TASK-379",
+      "type": "implements",
+      "created_at": "2026-09-19T11:23:42+00:00"
+    },
+    {
+      "from": "CHG-468",
+      "to": "ISS-253",
+      "type": "resolves",
+      "created_at": "2026-09-19T11:23:42+00:00"
+    },
+    {
+      "from": "DEC-176",
+      "to": "COMP-028",
+      "type": "governs",
+      "created_at": "2026-09-19T11:23:42+00:00"
+    },
+    {
+      "from": "EV-395",
+      "to": "HYP-112",
+      "type": "validates",
+      "created_at": "2026-09-19T11:23:42+00:00"
+    },
+    {
+      "from": "TASK-380",
+      "to": "ISS-254",
+      "type": "addresses",
+      "created_at": "2026-09-19T11:23:51+00:00"
     }
   ]
 }
