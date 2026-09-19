@@ -263,6 +263,14 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
       docPaths += 1
       if (!existsSync(resolve(ENGINE, path))) missingRefs.push(`${rel}: \`${path}\``)
     }
+    // 相对链接:点下去才发现是 404 的那种。目标是相对**这份文档所在目录**解析的。
+    for (const [, target] of text.matchAll(/\]\(([^)\s]+)\)/g)) {
+      if (/^(https?:|mailto:|#)/.test(target)) continue
+      const clean = target.split('#')[0]
+      if (clean === '') continue
+      docPaths += 1
+      if (!existsSync(resolve(ENGINE, rel, '..', clean))) missingRefs.push(`${rel}: 链接 \`${target}\``)
+    }
   }
   assert.ok(docCommands >= 10, `只从文档里读出 ${docCommands} 条命令 —— 写法变了?`)
   assert.ok(docPaths >= 20, `只从文档里读出 ${docPaths} 条路径 —— 写法变了?`)
