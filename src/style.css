@@ -559,6 +559,31 @@ html[data-theme='dark'] .btn-seal:active:not(:disabled) {
   mix-blend-mode: multiply;
 }
 
+/*
+ * 云雾(外壳角上那两团模糊白光)。
+ *
+ * 白天是纸上的湿气,一成多的白刚刚好;夜间这张纸是深墨(`paper` = 33 31 28),
+ * 同一份白雾会把底色一路抬到 rgb(78 76 74) 甚至更亮 —— 没进卡片的那些淡墨小字
+ * (章节副题、栏目标签、列表注脚)当场掉到 3.8:1 以下,而这一层原先在判据之外:
+ * 它是一张渐变层,「按声明色合成」那套算法根本看不见它(见 scripts/layout-check.mjs
+ * 第四十二条,采样真实像素才量得出来)。故暗色下只留两成不到的白。
+ */
+.mist {
+  background: rgb(255 255 255 / 0.4);
+}
+
+.mist-soft {
+  background: rgb(255 255 255 / 0.3);
+}
+
+html[data-theme='dark'] .mist {
+  background: rgb(255 255 255 / 0.08);
+}
+
+html[data-theme='dark'] .mist-soft {
+  background: rgb(255 255 255 / 0.06);
+}
+
 /* ================= 组件层 ================= */
 .card-ink {
   position: relative;

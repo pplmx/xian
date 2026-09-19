@@ -9,9 +9,13 @@
           <span class="text-[13px] text-ink-soft">背景音乐</span>
           <input v-model="settings.musicOn" type="checkbox" class="h-4 w-4 accent-cinnabar" />
         </label>
+        <!--
+          min-w-0:range 的原生宽度(约 129px)是它作为可替换元素的自动最小尺寸,
+          光有 grow 压不下去 —— 200% 字号(布局视口 195px)下整行会被它顶出去 6px。
+        -->
         <div v-if="settings.musicOn" class="mt-2 flex items-center gap-2">
           <span class="text-[10px] text-ink-faint">轻</span>
-          <input v-model.number="settings.musicVol" type="range" min="0" max="100" aria-label="背景音乐音量" class="grow accent-cinnabar" />
+          <input v-model.number="settings.musicVol" type="range" min="0" max="100" aria-label="背景音乐音量" class="min-w-0 grow accent-cinnabar" />
           <span class="w-7 text-right text-[10px] tabular text-ink-faint">{{ settings.musicVol }}</span>
         </div>
       </div>
@@ -22,7 +26,7 @@
         </label>
         <div v-if="settings.sfxOn" class="mt-2 flex items-center gap-2">
           <span class="text-[10px] text-ink-faint">轻</span>
-          <input v-model.number="settings.sfxVol" type="range" min="0" max="100" aria-label="音效音量" class="grow accent-cinnabar" />
+          <input v-model.number="settings.sfxVol" type="range" min="0" max="100" aria-label="音效音量" class="min-w-0 grow accent-cinnabar" />
           <span class="w-7 text-right text-[10px] tabular text-ink-faint">{{ settings.sfxVol }}</span>
         </div>
       </div>

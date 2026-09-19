@@ -16,9 +16,10 @@
       故装饰归装饰:外包一层 inset-0 overflow-hidden,越界部分在这里被裁掉,
       不再进入外壳的滚动区。
     -->
+    <!-- 云雾的明度分主题给:「bg-white/40」在夜间会把底色抬亮到淡墨小字读不出来(见 style.css 的 .mist) -->
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div class="absolute -top-24 -left-16 h-64 w-96 rounded-full bg-white/40 blur-3xl animate-mist" />
-      <div class="absolute top-1/3 -right-24 h-72 w-80 rounded-full bg-white/30 blur-3xl animate-mist-slow" />
+      <div class="mist absolute -top-24 -left-16 h-64 w-96 rounded-full blur-3xl animate-mist" />
+      <div class="mist-soft absolute top-1/3 -right-24 h-72 w-80 rounded-full blur-3xl animate-mist-slow" />
     </div>
 
     <TopStatusBar v-if="game.started && route.name !== 'create'" />

@@ -13,7 +13,12 @@
         </p>
       </div>
       <div class="mt-4">
-        <div data-value-row class="mb-1 flex justify-between text-[11px] text-ink-faint tabular">
+        <!--
+          flex-wrap 只在这一行:200% 字号(布局视口 195px)下,「修为 +x/秒 ▸来路」与
+          「现值 / 所需」加起来比这一行宽 —— 与其把右边的值折断(主值行折行 = 判据红),
+          不如让值整块落到第二行:值本身仍是一行,一个字都不少。
+        -->
+        <div data-value-row class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-faint tabular">
           <button class="-my-1 py-1.5 text-left active:opacity-60" @click="showCultBreakdown = !showCultBreakdown">
             修为 +{{ formatRate(player.cultPerSec) }}
             <span class="ml-0.5 text-[9px] text-ink-faint">{{ showCultBreakdown ? '▾' : '▸' }}来路</span>

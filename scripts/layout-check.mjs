@@ -85,6 +85,14 @@
  *      其余 4.5:1。**两套主题都量**:夜间主题的卡片比页面底色亮,浅色的字放上去最难。
  *      它与调色板本体那套算法(src/ui/palette.spec.ts)是互补的:那边管色号,这边管
  *      「半透明的字」与「带底色的方块」这两件只有真浏览器算得准的事。
+ *   四十一 两百档字号(200% 缩放)不许横向溢出、主值行不许折:390 宽的机型按 200%
+ *      放大后,布局视口只剩 195 CSS px —— 与五档视口是两回事(量的是缩放档,不是宽度档)。
+ *      起因:此前只守 320 这一档,而 390 的真机放大到 200% 比 320 还窄 125px,修炼页的
+ *      修为行就是在那一档被顶成两行的。量法与巡页共用 measurePage(同一把尺子)。
+ *   四十二 渐变/图片底上的正文对比度:上面那条只算得到**声明出来的色号** —— 法球、
+ *      印章、纸纹、以及半透明的纸叠在深色天幕上,真实像素比色号暗一截,那条量不到。
+ *      故这里直接采样屏幕像素:把文字临时藏起来拍一张,逐像素算「这枚字落在这一像素上
+ *      读不读得出来」,读不出来的像素超过两成就报红。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -160,9 +168,16 @@ const blockedTotal = () => blockedGetters.reduce((n, get) => n + get(), 0)
 const failures = []
 /** 正文对比度不足的读数(与排版问题分开攒,报告里单列一条) */
 const contrastFails = []
+/** 200% 缩放档上溢出的读数 */
+const zoomFails = []
+/** 渐变/图片底上采样像素量出来的对比度不足 */
+const pixelContrastFails = []
 let checked = 0
 /** 量到过多少个 data-value-row —— 用来防这条判据"空转"(契约被删掉后依然全绿)。 */
 let valueRowsSeen = 0
+/** 200% 缩放档量过几页、采样像素量过几处字 —— 同样防判据空转 */
+let zoomSeen = 0
+let pixelTextsSeen = 0
 /** 拦掉的外域请求数 —— 打印出来,顺带证明这条拦截是活的 */
 // 外域请求拦截:计数在 context 层累积,收尾打印(见 auditContext)
 
@@ -741,6 +756,280 @@ async function measureTextContrast(page) {
 }
 
 /**
+ * 两百档缩放(200%)—— 390 宽的机型放大到 200% 后,布局视口只剩 195 CSS px。
+ *
+ * 量法与巡页**共用同一把尺子**(measurePage):横向溢出、外壳被滚偏、越界元素、主值行折行。
+ * 与那五档视口的区别是「缩放档」不是「宽度档」:320 档量的是小屏真机,这一档量的是
+ * 常用机型上把字放大一倍之后的样子 —— 390÷2 = 195,比 320 还窄 125px。
+ *
+ * 量完把视口还原(后面的巡页与 --shots 都按原尺寸走)。
+ */
+async function measureZoomScale(page, vp) {
+  const width = Math.round(vp.width / 2)
+  const height = Math.round(vp.height / 2)
+  await page.setViewportSize({ width, height })
+  await page.waitForTimeout(420) // 让断点与 transition 走完再量
+  const info = await measurePage(page)
+  const innerWidth = await page.evaluate(() => window.innerWidth)
+  await page.setViewportSize({ width: vp.width, height: vp.height })
+  await page.waitForTimeout(260)
+  return { ...info, innerWidth }
+}
+
+/** 缩放档的读数 → 失败清单(只判:溢出、外壳被滚偏、越界元素、主值行折行) */
+function zoomProblems(info, tag) {
+  const problems = []
+  if (info.innerWidth !== undefined && Math.abs(info.innerWidth * 2 - Number(tag)) > 2) {
+    problems.push(`缩放档没量在 200% 上(布局视口 ${info.innerWidth}px)`)
+  }
+  if (info.horizontalOverflow) problems.push(`横向溢出(scrollWidth ${info.hash})`)
+  if (info.shellShift && (info.shellShift.scrollLeft !== 0 || info.shellShift.overflowX > 1)) {
+    problems.push(`外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`)
+  }
+  if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(', ')}`)
+  if (info.valueRows?.length) problems.push(`主值行在 200% 下折行:${info.valueRows.join(' | ')}`)
+  return problems
+}
+
+/**
+ * 渐变/图片底上的正文对比度 —— 采样真实像素,不看声明出来的色号。
+ *
+ * measureTextContrast 把祖先链上**声明出来**的背景色按 alpha 合成,那套算法对纯色卡片
+ * 是准的;一旦底是渐变、纹理或图片,它要么按最外层的默认白算,要么把半透明的纸当成不透明
+ * 的纸 —— 法球、印章、纸纹那几处,以及「半透明的纸叠在深色天幕上」这一整类,都是它量不到的。
+ * 这里改用屏幕像素:
+ *
+ *   一 只挑那些**真实的底沾了渐变/图片**的字(一路向上找不到不透明色层,或中途撞上
+ *      background-image):纯色卡片上的字交给上一条,不重复量;
+ *   二 把这一屏里这些字的文本节点临时包进 visibility:hidden 的 span,拍一张 ——
+ *      画面里剩下的就是「字底下到底是什么颜色」;
+ *   三 逐像素算对比度(半透明的字按它自己那一像素的底合成),报**读不出来的像素占多少**。
+ *      用比例而不是最差那一像素:一道装饰描边正好压在这块字的框里,不该把整块字判红;
+ *      底是渐变的则大片像素读不出来,照样红。
+ */
+async function measurePixelContrast(page, sampler, dpr) {
+  const targets = await page.evaluate(() => {
+    const parse = c => {
+      const m = /rgba?\(([^)]+)\)/.exec(c)
+      if (!m) return null
+      const p = m[1].split(/[,\s/]+/).filter(Boolean).map(Number)
+      return p.length < 3 ? null : { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 }
+    }
+    /**
+     * 这块字的底沾没沾渐变/图片 —— 一路向上,直到撞上不透明的色层。
+     *
+     * 三种都算:自己或祖先身上有 background-image(渐变、纸纹);
+     * 祖先的伪元素上挂了图(`.paper-grain::after` 那层宣纸颗粒就是);
+     * 以及压在这块字下面的绝对定位装饰层里有图(与 measureTextContrast 同一套判据)。
+     * 只要中途没有一层不透明的**色**把底盖死,声明色那套算法就看不到下面是渐变,
+     * 这一条就得靠像素。
+     */
+    const gradientBase = (el, rect) => {
+      for (let node = el; node; node = node.parentElement) {
+        const cs = getComputedStyle(node)
+        for (const pseudo of ['::before', '::after']) {
+          const ps = getComputedStyle(node, pseudo)
+          if (ps.content !== 'none' && ps.backgroundImage && ps.backgroundImage !== 'none') return true
+        }
+        if (cs.backgroundImage && cs.backgroundImage !== 'none') return true
+        for (const sibling of node.parentElement?.children ?? []) {
+          if (sibling === node) continue
+          const scs = getComputedStyle(sibling)
+          if (scs.position !== 'absolute' && scs.position !== 'fixed') continue
+          if (scs.display === 'none' || !scs.backgroundImage || scs.backgroundImage === 'none') continue
+          const box = sibling.getBoundingClientRect()
+          if (box.left <= rect.left + 1 && box.right >= rect.right - 1 && box.top <= rect.top + 1 && box.bottom >= rect.bottom - 1) return true
+        }
+        const bg = parse(cs.backgroundColor)
+        if (bg && bg.a >= 0.999) return false
+      }
+      return true // 一路到根都没有不透明的底 —— 真实的底是天幕那张渐变
+    }
+    const out = []
+    for (const el of document.querySelectorAll('body *')) {
+      if (el.matches(':disabled') || el.closest('[aria-hidden="true"]')) continue
+      const texts = [...el.childNodes].filter(n => n.nodeType === 3 && n.textContent.trim().length > 1)
+      if (!texts.length) continue
+      const cs = getComputedStyle(el)
+      if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) < 0.1) continue
+      const r = el.getBoundingClientRect()
+      if (r.width < 2 || r.height < 2) continue
+      if (!gradientBase(el, r)) continue
+      const range = document.createRange()
+      const rects = []
+      for (const node of texts) {
+        range.selectNodeContents(node)
+        for (const box of range.getClientRects()) {
+          if (box.width > 1 && box.height > 1 && box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth) {
+            rects.push([box.left, box.top, box.width, box.height])
+          }
+        }
+      }
+      if (!rects.length) continue
+      const size = parseFloat(cs.fontSize)
+      out.push({
+        rects,
+        color: cs.color,
+        size,
+        need: size >= 24 || (Number(cs.fontWeight) >= 700 && size >= 18.66) ? 3 : 4.5,
+        text: (el.textContent || '').trim().slice(0, 14),
+        cls: String(el.className).slice(0, 28)
+      })
+    }
+    return out
+  })
+  if (!targets.length) return []
+  // 把字藏起来再拍:剩下的像素就是字底下的底色(藏的是文本节点本身,不动盒子)
+  const hidden = await page.evaluate(() => {
+    let n = 0
+    for (const el of document.querySelectorAll('body *')) {
+      const texts = [...el.childNodes].filter(x => x.nodeType === 3 && x.textContent.trim().length > 1)
+      if (!texts.length) continue
+      const cs = getComputedStyle(el)
+      if (cs.visibility === 'hidden' || cs.display === 'none') continue
+      for (const node of texts) {
+        const span = document.createElement('span')
+        span.dataset.pixelProbe = '1'
+        span.style.visibility = 'hidden'
+        node.parentNode.replaceChild(span, node)
+        span.appendChild(node)
+        n += 1
+      }
+    }
+    return n
+  })
+  const shot = await page.screenshot()
+  await page.evaluate(() => {
+    for (const span of document.querySelectorAll('[data-pixel-probe]')) {
+      const parent = span.parentNode
+      parent.replaceChild(span.firstChild, span)
+      parent.normalize()
+    }
+  })
+  if (!hidden) return []
+  const stats = await sampler.evaluate(
+    async ({ png, list, scale }) => {
+      const img = new Image()
+      await new Promise((res, rej) => {
+        img.onload = res
+        img.onerror = rej
+        img.src = 'data:image/png;base64,' + png
+      })
+      const canvas = document.getElementById('c')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+      ctx.drawImage(img, 0, 0)
+      const f = v => {
+        const s = v / 255
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+      }
+      const lum = p => 0.2126 * f(p[0]) + 0.7152 * f(p[1]) + 0.0722 * f(p[2])
+      const out = []
+      for (const t of list) {
+        const parts = (t.color.match(/[\d.]+/g) || []).map(Number)
+        if (parts.length < 3) {
+          out.push(null)
+          continue
+        }
+        const alpha = parts.length > 3 ? parts[3] : 1
+        const ratios = []
+        for (const [x, y, w, h] of t.rects) {
+          const px = Math.max(0, Math.floor(x * scale))
+          const py = Math.max(0, Math.floor(y * scale))
+          const pw = Math.min(canvas.width - px, Math.max(1, Math.ceil(w * scale)))
+          const ph = Math.min(canvas.height - py, Math.max(1, Math.ceil(h * scale)))
+          if (pw <= 0 || ph <= 0) continue
+          const data = ctx.getImageData(px, py, pw, ph).data
+          for (let k = 0; k < data.length; k += 4) {
+            const bg = [data[k], data[k + 1], data[k + 2]]
+            const fg = [0, 1, 2].map(i => parts[i] * alpha + bg[i] * (1 - alpha))
+            const [hi, lo] = [lum(fg), lum(bg)].sort((a, b) => b - a)
+            ratios.push((hi + 0.05) / (lo + 0.05))
+          }
+        }
+        if (!ratios.length) {
+          out.push(null)
+          continue
+        }
+        ratios.sort((a, b) => a - b)
+        const bad = ratios.filter(r => r < t.need).length
+        out.push({
+          badPct: Math.round((bad / ratios.length) * 100),
+          p05: Math.round(ratios[Math.floor(ratios.length * 0.05)] * 100) / 100,
+          pixels: ratios.length
+        })
+      }
+      return out
+    },
+    { png: shot.toString('base64'), list: targets, scale: dpr }
+  )
+  const bad = []
+  targets.forEach((t, i) => {
+    const s = stats[i]
+    if (!s) return
+    pixelTextsSeen += 1
+    if (s.badPct >= 20) bad.push({ ...t, ...s })
+  })
+  return bad
+}
+
+/** 像素采样用的那张「画布页」—— 与受测页同一个 context:把截图喂给它解码取值 */
+let samplerPage = null
+async function pixelSampler(ctx) {
+  if (!samplerPage) {
+    samplerPage = await ctx.newPage()
+    await samplerPage.setContent('<canvas id="c"></canvas>')
+  }
+  return samplerPage
+}
+
+/**
+ * 一页的像素法对比度:两套主题 × 三档滚动位置(顶 / 中 / 底)。
+ *
+ * 为什么要滚:一屏只装得下眼前这些字,而渐变底的那几处(法球在首页、印章在结果弹窗上、
+ * 纸纹铺满卡片)分布在不同高度;只量首屏等于没量。三档够覆盖一屏多一点的内容,
+ * 再多就只是把同一批字量第二遍。
+ */
+async function pixelContrastOf(page, sampler) {
+  const out = []
+  const dpr = 3
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate(t => {
+      document.documentElement.dataset.theme = t
+    }, theme)
+    await page.waitForTimeout(260)
+    for (const fraction of [0, 0.5, 1]) {
+      await page.evaluate(f => {
+        const main = document.querySelector('main')
+        if (main) main.scrollTop = Math.max(0, (main.scrollHeight - main.clientHeight) * f)
+      }, fraction)
+      await page.waitForTimeout(160)
+      /*
+       * 弹窗盖上来的时候不量:BaseModal 的遮罩是「墨 45% + 2px 模糊」铺满整屏,
+       * 那一刻屏幕上的像素全都不是底色的像素 —— 量出来的会把整页报成假红(实测吃过一次)。
+       * 引擎每秒掷一次事件,弹窗随时可能出现,故每一步都现查一次。
+       */
+      for (let i = 0; i < 2 && (await page.locator('.modal-panel').count()) > 0; i += 1) {
+        await page.keyboard.press('Escape')
+        await page.waitForTimeout(200)
+      }
+      if ((await page.locator('.modal-panel').count()) > 0) continue
+      for (const bad of await measurePixelContrast(page, sampler, dpr)) out.push({ theme: theme === 'dark' ? '夜间' : '日间', ...bad })
+    }
+    await page.evaluate(() => {
+      const main = document.querySelector('main')
+      if (main) main.scrollTop = 0
+    })
+  }
+  await page.evaluate(() => {
+    delete document.documentElement.dataset.theme
+  })
+  await page.waitForTimeout(260)
+  return out
+}
+
+/**
  * 页签栏(InkTabs 的外壳 .tab-rail)要吸顶 —— 内容滚下去,它钉在内容区顶上。
  *
  * 这几册(背包四册、图鉴、名号、界域志、天界)都是越往下越长的列表,页签跟着滚走
@@ -883,11 +1172,36 @@ for (const vp of VIEWPORTS) {
       for (const bad of await measureTextContrast(page)) {
         contrastFails.push(`[${vp.tag}] ${route} ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`)
       }
+      /*
+       * 渐变/图片底那几处,上一条量不到(它只算得到声明出来的色号),这里采样真实像素。
+       * 弹窗盖着页面时不量:遮罩会把整页压暗,量出来的全会是假红(实测 /codex 上吃过一次)。
+       */
+      for (let i = 0; i < 3 && (await page.locator('.modal-panel').count()) > 0; i += 1) {
+        await page.keyboard.press('Escape')
+        await page.waitForTimeout(200)
+      }
+      if ((await page.locator('.modal-panel').count()) === 0) {
+        for (const bad of await pixelContrastOf(page, await pixelSampler(auditCtx))) {
+          pixelContrastFails.push(
+            `[${vp.tag}] ${route} ${bad.theme} 5% 分位 ${bad.p05}:1 · 读不出来 ${bad.badPct}%(需 ${bad.need})${bad.size}px «${bad.text}» ${bad.cls}`
+          )
+        }
+      }
     }
     const rail = await measureTabRail(page)
     const railFails = railProblems(rail)
     if (rail) checked += 1
     if (railFails.length) failures.push(`[${vp.tag}] ${route} → ${railFails.join(' / ')}`)
+    /*
+     * 两百档字号(200% 缩放)—— 放在这一页的最后:它要改视口,量完再还原,
+     * 免得把前面那些按原尺寸量的读数带偏。
+     */
+    if (vp.tag === '390') {
+      const zoom = await measureZoomScale(page, vp)
+      zoomSeen += 1
+      const zoomBad = zoomProblems(zoom, vp.tag)
+      if (zoomBad.length) zoomFails.push(`[${vp.tag}] ${route} → ${zoomBad.join(' / ')}`)
+    }
     if (SHOTS) {
       mkdirSync(SHOTS_DIR, { recursive: true })
       await page.screenshot({ path: join(SHOTS_DIR, `${vp.tag}${route.replace(/\//g, '_')}.png`), fullPage: true })
@@ -899,6 +1213,8 @@ for (const vp of VIEWPORTS) {
 }
 
 if (contrastFails.length) failures.push(`正文对比度不足 AA:${contrastFails.join(' | ')}`)
+if (pixelContrastFails.length) failures.push(`渐变/图片底上的字读不出来(采样真实像素):${pixelContrastFails.join(' | ')}`)
+if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.join(' | ')}`)
 
 // ---- 第四件事:存档写不进去时,设置页必须说话 ----
 {
@@ -3258,6 +3574,13 @@ await browser.close()
 if (valueRowsSeen === 0) {
   failures.push('data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)')
 }
+// 这两条同理:量不到东西时不许静默变绿
+if (zoomSeen === 0) {
+  failures.push('200% 缩放档一页都没量到 —— 那条判据空转了')
+}
+if (pixelTextsSeen === 0) {
+  failures.push('渐变/图片底上的字一处都没采到 —— 那条判据空转了(采样半径或底色判定写错了?)')
+}
 
 /**
  * 产物层静态判据:**首页不许引用任何外链**。
@@ -3284,6 +3607,8 @@ if (failures.length === 0) {
   console.log('✓ 五处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界),且铺满内容区宽度')
   console.log('✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)')
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`)
+  console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`)
+  console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`)
   console.log('✓ iOS 存档风险提示只在该出现的平台出现,关一次就不再唠叨')
   console.log('✓ 楷体三端统一(内置排栈首,系统楷体留作兜底),且真由内置字体渲染')
   console.log('✓ 提示条点得掉、弹窗焦点与外壳偏移正常、引擎事件弹窗也过同一套尺子')
