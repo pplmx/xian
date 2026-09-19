@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 374,
+  "round": 375,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T01:31:15+00:00",
+  "updated_at": "2026-09-19T01:35:45+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20660,6 +20660,43 @@
       "confidence": 0.95,
       "source": "变更 CHG-439(2f893c8)。文档片段自检从 12 段涨到 13 段(新示例对着发布包编过);文档链接自检 29 → 30 条;调参参考自检仍印\"30 份消融都在 docs/tuning.md,且一页索引逐节点名\"(新节做成 ### 不占索引)。闸门:库 bun run check 全绿(573 例 / 79 文件 + 16 道自检 + 13 份示例)。",
       "summary": "把\"这份文档只能看\"这个印象改掉:自带内容包的刻度 vs 量自己的表,现在文档里分得清,且那段示例是可编译的(不是伪代码)。过程中被判据拦了一次 —— 新节写成 ## 时,一页索引自检立刻报\"这些小节没进一页索引:量自己的表\",改成 ### 才对(索引行数被钉成消融份数,这点值得记住)。"
+    },
+    "TASK-356": {
+      "id": "TASK-356",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:35:44+00:00",
+      "updated_at": "2026-09-19T01:35:45+00:00",
+      "touched_round": 374,
+      "category": "feature",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "体检支持直接吃门面:createProgressionAudit({ game }) 默认用属性系统的战力评分当强度(权重走 powerWeights);两个入口都不给时抛一句人话。顺带补上被自检抓出的空白:powerWeights 此前无用例。"
+    },
+    "CHG-440": {
+      "id": "CHG-440",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:35:44+00:00",
+      "updated_at": "2026-09-19T01:35:44+00:00",
+      "touched_round": 374,
+      "commit": "fce4f9d",
+      "summary": "库:progression.ts 的 config 支持 game(realms/game 二选一 + 两者都不给时抛错);progression.spec 两节、attributes.spec 一节(powerWeights);docs/usage.md 与 docs/tuning.md 示例改口径;CHANGELOG 记一条。宿主无改动。"
+    },
+    "EV-366": {
+      "id": "EV-366",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:35:44+00:00",
+      "updated_at": "2026-09-19T01:35:44+00:00",
+      "touched_round": 374,
+      "confidence": 0.95,
+      "source": "变更 CHG-440(fce4f9d)。单测:给 game 后第一格强度 150(= 30×3 + 12×2 + 240×0.15,与 attributes.compute().power 同源);自己给 power 时以自己给的为准(42);都不给时抛 \"成长体检:要么给 realms,要么给 game\"。powerWeights 用例:默认 3/2/0.15 = 400、只按血 = 1000、攻防并重 = 150、只按攻 = 100(未列出的键按 0)。闸门:库 bun run check 全绿(576 例 / 79 文件 + 16 道自检;定制表 105 名字 / 173 旋钮;报错口径 23 条)、宿主 288 文件 / 2630 例全过、check:engine 通过。",
+      "summary": "把\"玩家强度\"这个输入从\"调用方自己想办法\"变成\"有默认答案\":有门面就用战力评分(权重可换),只有表就用面板之和,都没给就被拦住。另外这条改动让定制表自检把\"powerWeights 没人用过\"这个真空白顶了出来 —— 又一个\"承诺了却没人试\"的例子。"
     }
   },
   "edges": [
@@ -30407,6 +30444,12 @@
       "to": "TASK-355",
       "type": "implements",
       "created_at": "2026-09-19T01:31:15+00:00"
+    },
+    {
+      "from": "CHG-440",
+      "to": "TASK-356",
+      "type": "implements",
+      "created_at": "2026-09-19T01:35:44+00:00"
     }
   ]
 }
