@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- 这个脚本的产物就是它打印出来的自检结果 */
 /**
  * 产物自检(Node 视角)。
  *

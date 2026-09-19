@@ -15,7 +15,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AttributeDef } from 'wanxiang-engine'
 import { attributeDefs } from 'wanxiang-engine'
-import { createRng } from 'wanxiang-engine'
+import { createRng, seedFromString } from 'wanxiang-engine'
 import type { GNum, QualityId } from '@/types'
 import {
   BT_MAJOR_BASE_RATE,
@@ -1187,5 +1187,44 @@ describe('对账 · 副本系统(库 与 尚未迁移的 regions/enemies)', () =
     expect(low).toContain(gated.requireCleared!)
     expect(low).not.toContain(gated.id)
     expect(system.unlocked(progress, gated.minRealm).map(r => r.id)).toContain(gated.id)
+  })
+
+  it('随机源同序列:本作的 RandomService 与库的 createRng 是同一串数', () => {
+    /*
+     * 这条判据守的是一条**很容易被忽视、错了又极难查**的口径:两边各有一份随机源。
+     * 本作把 `new RandomService(mulberry32(seed))` 直接喂给库的函数(抽内容池、掷掉落……),
+     * 库那边则是 `createRng(seed)` —— 只要两条路的数一样,"同种子重演"就成立;
+     * 一旦谁顺手改了其中一处的实现(哪怕只挪一位),现象只是"某一局结果变了"。
+     *
+     * 现在本作这份 mulberry32 已经是**库的实现的同名转发**,所以这条判据同时也是
+     * "别再在应用侧复制一份"的提醒。
+     */
+    for (const seed of [0, 1, 7, 42, 20260919, 0x5eed, 4294967295]) {
+      const mine = new RandomService(mulberry32(seed))
+      const theirs = createRng(seed)
+      for (let i = 0; i < 40; i += 1) {
+        expect(mine.next(), `seed=${seed} 第 ${i} 个数`).toBe(theirs.next())
+      }
+      // 除了流本身,包装出来的几种掷法也必须同源(消耗的随机数个数也要一样)
+      const mineA = new RandomService(mulberry32(seed))
+      const theirsA = createRng(seed)
+      expect(mineA.int(3, 9)).toBe(theirsA.int(3, 9))
+      expect(mineA.float(0, 1)).toBe(theirsA.float(0, 1))
+      expect(mineA.chance(0.5)).toBe(theirsA.chance(0.5))
+      expect(mineA.pick(['a', 'b', 'c'])).toBe(theirsA.pick(['a', 'b', 'c']))
+      const items = [
+        { id: 'x', w: 3 },
+        { id: 'y', w: 1 },
+        { id: 'z', w: 6 }
+      ]
+      expect(mineA.weighted(items, it => it.w).id).toBe(theirsA.weighted(items, it => it.w).id)
+      expect(mineA.next()).toBe(theirsA.next()) // 掷法消耗的位置也不能差
+    }
+    // 换成字符串种子时同样成立(库这边走 seedFromString)
+    const mineS = new RandomService(mulberry32(seedFromString('青云山麓')))
+    const theirsS = createRng('青云山麓')
+    for (let i = 0; i < 16; i += 1) expect(mineS.next()).toBe(theirsS.next())
+    // 不同种子必须给不同的数(否则说明 seed 没接进去)
+    expect(new RandomService(mulberry32(1)).next()).not.toBe(new RandomService(mulberry32(2)).next())
   })
 })

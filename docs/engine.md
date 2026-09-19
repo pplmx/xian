@@ -47,6 +47,7 @@
 | 成就解锁(62 枚,含品质型 / 状态型 / 境界型) | `core/engineUnlocks` 转发到库的 `createUnlockRegistry`(内容与判据仍是 `data/achievements` + `progress.evalCond`,去重从 store 的一行 `includes` 收进库) | `engineUnlockParity.spec` 冻结迁移前的扫描与显式解锁:四组玩家状态下**新解锁的条目与顺序**、成就表、提示语与顺序全同;另钉"重复扫描不重复发奖""状态型成就每拍来敲门也只发一次""认不出的 id 不当成解锁"三条 |
 | 炼丹执行(开炉 / 扣料 / 成败 / 双成) | `core/engineCraft` 转发到库的 `createRecipeRunner`(成功率仍由 `core/craftability` 算,花费与保料仍是本作口径,双成上限 0.8 写进配置) | `engineCraftParity.spec` 冻结迁移前的 `craftPill`:成功 / 双成 / 失败 / 不知此方 / 材料不足五格下,**回报、扣掉的灵草与灵石、背包、计数器、技艺经验与配方熟练度、提示语、掷骰数**全同;另钉"没开炉不扣料不掷骰"与"失败保草不保石"两条 |
 | 曲线体检(相邻格跳变 / 换界那几格 / 面板与需求谁更陡) | `engineProgressionAudit.spec` 用库的 `createProgressionAudit` 跑本作那张**真表**(21 境 × 10 层,大数走 GNum 适配器) | 与数据表、常数表逐项对账:格数 = `REALMS.length × 10`;换界三格落在 `WORLDS` 的 `start`(9 / 14 / 18)且面板必涨;层内普通步 ×1.32(`EXP_SUB_GROWTH`)、界末圆满 ×2.64(= ×`WORLD_STEP_EXP_MULT`,与"把圆满抬成一道墙"的设计对上)、跨大境界最大 ×1.56;换界那三格需求**回落**(×0.78 / ×0.19)— 这条是记录在案的已知形状,改曲线就要重新面对 |
+| 随机源(种子 → 同一串数) | `utils/random` 的 `mulberry32` 改成**库实现的同名转发**(`RandomService` 照旧包在它上面,注入式构造一行没改) | `engineParity.spec` 的「随机源同序列」一节:7 颗种子 × 每颗 40 个数逐个相同,`int/float/chance/pick/weighted` 也同源且**消耗位置一致**;字符串种子经 `seedFromString` 后同样相同。这条判据守的是"两边可以交换种子对账"那句话 —— 以前本作自己抄了一份 PRNG,两份拷贝一旦分叉,所有"同种子重演"都会静默错位 |
 
 资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
 材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,
