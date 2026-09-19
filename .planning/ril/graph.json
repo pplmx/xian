@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 393,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T15:33:19+00:00",
+  "updated_at": "2026-09-19T15:35:49+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22535,11 +22535,11 @@
       "id": "ISS-258",
       "type": "issue",
       "status": "resolved",
-      "version": 2,
+      "version": 4,
       "created_at": "2026-09-19T13:45:13+00:00",
-      "updated_at": "2026-09-19T15:33:19+00:00",
+      "updated_at": "2026-09-19T15:35:49+00:00",
       "touched_round": 393,
-      "summary": "首屏太重、日常构建太慢:冷启动要传 2.6MB,其中楷体子集 1.8MB(woff2);JS 3.6MB 里含 legacy 双份产物;FCP 192ms(本地无头,真机 4G 会放大)。构建 32s 中 26.3s(82%)花在 legacy 后处理(106 次调用),而 legacy 是给 Chrome 51/Android 7 兜底的产物,日常开发与提交都要等它。",
+      "summary": "首屏太重、日常构建太慢:冷启动要传 2681KB(楷体 1783KB)、构建 32s 里 26s 花在 legacy 后处理。**复开一次**:首屏那条结案时只给「字节 / FCP / 楷体换上」立了预算,「构建时长」本身还没有门 —— 哪天 legacy 被接回日常构建,时长翻倍而门全绿。",
       "severity": 0.6,
       "confidence": 0.9,
       "effort": 6
@@ -22761,6 +22761,43 @@
       "touched_round": 393,
       "summary": "首屏那两笔账(楷体整份下载、legacy 每次构建都打)此前没有任何判据盯着 —— 于是「字体长到 1.8MB」「构建 82% 花在兜底产物上」都可以一直存在而门全绿。",
       "confidence": 0.9
+    },
+    "TASK-388": {
+      "id": "TASK-388",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T15:35:49+00:00",
+      "updated_at": "2026-09-19T15:35:49+00:00",
+      "touched_round": 393,
+      "category": "performance",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 1,
+      "summary": "把构建时长也立成 CI 判据:构建那一步顺带计时,超上限即红(现代 90s / 发布 240s),三条流水线的构建步骤都换成它。"
+    },
+    "EV-414": {
+      "id": "EV-414",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T15:35:49+00:00",
+      "updated_at": "2026-09-19T15:35:49+00:00",
+      "touched_round": 393,
+      "source": "① bun scripts/build-timed.mjs:本机现代构建 16.6s(上限 90s);② BUILD_BUDGET_S=10 bun scripts/build-timed.mjs:16s > 10s,当场红并打印原因(判据不是空转);③ 三条流水线(build.yml 两处、deploy.yml、publish.yml)的构建步骤都改指向它,构建与计时同一步。",
+      "summary": "构建时长从此有上限且真的会红(压到 10s 复量实测),三条发布路径的构建都在同一步里计时,不再可能悄悄把 legacy 接回日常构建。",
+      "confidence": 1.0
+    },
+    "CHG-478": {
+      "id": "CHG-478",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T15:35:49+00:00",
+      "updated_at": "2026-09-19T15:35:49+00:00",
+      "touched_round": 393,
+      "commit": 837450000.0,
+      "summary": "新增 scripts/build-timed.mjs(跑一遍构建并计时、超上限即红),build.yml / deploy.yml / publish.yml 的构建步骤全部换成它;docs/development.md 补上构建时长那一行与口径(上限按本机读数四到五倍给)。"
     }
   },
   "edges": [
@@ -33342,6 +33379,30 @@
       "to": "HYP-116",
       "type": "validates",
       "created_at": "2026-09-19T15:33:19+00:00"
+    },
+    {
+      "from": "CHG-478",
+      "to": "TASK-388",
+      "type": "implements",
+      "created_at": "2026-09-19T15:35:49+00:00"
+    },
+    {
+      "from": "TASK-388",
+      "to": "ISS-258",
+      "type": "addresses",
+      "created_at": "2026-09-19T15:35:49+00:00"
+    },
+    {
+      "from": "CHG-478",
+      "to": "ISS-258",
+      "type": "resolves",
+      "created_at": "2026-09-19T15:35:49+00:00"
+    },
+    {
+      "from": "EV-414",
+      "to": "HYP-116",
+      "type": "validates",
+      "created_at": "2026-09-19T15:35:49+00:00"
     }
   ]
 }
