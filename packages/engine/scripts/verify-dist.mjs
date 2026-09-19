@@ -321,7 +321,24 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
   )
   const missingFromIndex = sectionTitles.filter(title => !indexBlock.includes(title))
   assert.deepEqual(missingFromIndex, [], `这些小节没进一页索引:${missingFromIndex.join('、')}`)
-  console.log(`调参参考自检通过(${simSpecs.length} 份消融都在 docs/tuning.md,且一页索引逐节点名)`)
+  /**
+   * 复现命令自检 —— 文档给的命令必须**真能看见读数**。
+   *
+   * 这条判据来自一次实测:vitest 默认会把**通过用例**的 stdout 收走(单文件加
+   * `--silent=false` 有时能看到,多文件一定看不到),所以 `bunx vitest run src/x.sim.spec.ts`
+   * 跑完是"全绿、一片空白"。而这份文档的全部价值就是那些打印出来的读数 ——
+   * 命令少一个 `--reporter=verbose`,读者会以为实验没打印,而不是以为命令写错了。
+   */
+  const tuningCommands = [...tuning.matchAll(/bunx vitest run[^\n`]*/g)].map(m => m[0].trim())
+  const blind = tuningCommands.filter(cmd => !cmd.includes('--reporter=verbose'))
+  assert.deepEqual(
+    blind,
+    [],
+    `这些复现命令看不见读数(vitest 默认吞掉通过用例的 stdout):${blind.join('、')}`
+  )
+  console.log(
+    `调参参考自检通过(${simSpecs.length} 份消融都在 docs/tuning.md,一页索引逐节点名,${tuningCommands.length} 条复现命令都看得见读数)`
+  )
 
   /**
    * 相对导入自检 —— 源码里的相对导入必须带 `.js` 扩展名。
