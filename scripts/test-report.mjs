@@ -14,7 +14,7 @@ import { readFileSync, rmSync } from 'node:fs'
 const CATEGORIES = [
   {
     name: 'Engine      公共库内核',
-    match: ['packages/engine', 'engineAdoption', 'engineParity', 'engineResourceParity', 'engineHoldingParity', 'engineReforgeParity', 'engineTriageParity', 'engineCombatAblation', 'engineCycleParity', 'engineChoiceParity', 'engineCodexParity', 'engineMemoryParity', 'engineEconomyParity', 'engineIntakeParity', 'engineSettlementParity', 'engineDropsParity', 'engineBuffsParity', 'engineBuffAblation', 'engineFacilitiesParity', 'engineVeinParity', 'engineDailyParity', 'engineLifeParity', 'engineChainParity', 'enginePityParity', 'engineUnlockParity', 'engineCraftParity']
+    match: ['packages/engine', 'engineAdoption', 'engineParity', 'engineResourceParity', 'engineHoldingParity', 'engineReforgeParity', 'engineTriageParity', 'engineCombatAblation', 'engineCycleParity', 'engineChoiceParity', 'engineCodexParity', 'engineMemoryParity', 'engineEconomyParity', 'engineIntakeParity', 'engineSettlementParity', 'engineDropsParity', 'engineBuffsParity', 'engineBuffAblation', 'engineFacilitiesParity', 'engineVeinParity', 'engineDailyParity', 'engineLifeParity', 'engineChainParity', 'enginePityParity', 'engineUnlockParity', 'engineCraftParity', 'engineProgressionAudit']
   },
   {
     name: 'Unit        数值纯函数',
@@ -94,7 +94,17 @@ if (uncategorized > 0) {
   console.log(`  ✗ 未分类用例 ${uncategorized} 个 —— 请在 scripts/test-report.mjs 的 CATEGORIES 中补充映射:`)
   for (const o of orphans.sort((a, b) => b.count - a.count)) console.log(`      ${String(o.count).padStart(4)}  ${o.path}`)
 }
-console.log(`\n  共 ${totalPassed} 过 / ${totalFailed} 败\n`)
+console.log(`\n  共 ${totalPassed} 过 / ${totalFailed} 败${uncategorized > 0 ? ` · 另有 ${uncategorized} 个未分类` : ''}\n`)
+/**
+ * 退出码的**原因**要写在最后一行。
+ *
+ * 起因是一次真实的困惑:报告印着"0 败",脚本却以 1 退出 —— 当时只当成了偶发,连着跑了几次
+ * 全绿就搁下了。真正的机制是下面这第二条:**未分类也算失败**(漏登记的用例不计入任何一类,
+ * 报告就少算了它)。把原因印出来,"0 败 + 退出 1" 这种组合以后再也不会被误读成 flake。
+ */
+const failureReason =
+  totalFailed > 0 ? `有用例失败(${totalFailed} 个)` : uncategorized > 0 ? `有 ${uncategorized} 个用例没登记分类(报告会少算它们)` : ''
+if (failureReason) console.log(`  退出码 1 的原因:${failureReason}\n`)
 // 未分类也算失败:漏登记的用例不计入任何一类,报告便少算了它。
 // 只提示不拦截的话,这个数会一路悄悄涨上去(曾积到 225 个才被发现)。
 process.exit(totalFailed > 0 || uncategorized > 0 ? 1 : 0)

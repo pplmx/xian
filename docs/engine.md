@@ -46,6 +46,7 @@
 | 认知检定里的照面保底(软保底) | `core/loreService` 的 `discernChance` / `natureChance` 改走库的 `softChance`(基础概率、每步涨幅与上下限仍是本作口径) | `enginePityParity.spec` 冻结迁移前的两条公式:三档阶位 × 三档技艺 × 六档照面次数(药性另有门槛前后五档)下概率**逐点相同**;另钉"涨幅封顶"与"概率夹在 4%~90% / 2%~75%"两条 —— 不封顶的话后期概率会被抬到 1,"越看越眼熟"就成了"第 N 次必认出" |
 | 成就解锁(62 枚,含品质型 / 状态型 / 境界型) | `core/engineUnlocks` 转发到库的 `createUnlockRegistry`(内容与判据仍是 `data/achievements` + `progress.evalCond`,去重从 store 的一行 `includes` 收进库) | `engineUnlockParity.spec` 冻结迁移前的扫描与显式解锁:四组玩家状态下**新解锁的条目与顺序**、成就表、提示语与顺序全同;另钉"重复扫描不重复发奖""状态型成就每拍来敲门也只发一次""认不出的 id 不当成解锁"三条 |
 | 炼丹执行(开炉 / 扣料 / 成败 / 双成) | `core/engineCraft` 转发到库的 `createRecipeRunner`(成功率仍由 `core/craftability` 算,花费与保料仍是本作口径,双成上限 0.8 写进配置) | `engineCraftParity.spec` 冻结迁移前的 `craftPill`:成功 / 双成 / 失败 / 不知此方 / 材料不足五格下,**回报、扣掉的灵草与灵石、背包、计数器、技艺经验与配方熟练度、提示语、掷骰数**全同;另钉"没开炉不扣料不掷骰"与"失败保草不保石"两条 |
+| 曲线体检(相邻格跳变 / 换界那几格 / 面板与需求谁更陡) | `engineProgressionAudit.spec` 用库的 `createProgressionAudit` 跑本作那张**真表**(21 境 × 10 层,大数走 GNum 适配器) | 与数据表、常数表逐项对账:格数 = `REALMS.length × 10`;换界三格落在 `WORLDS` 的 `start`(9 / 14 / 18)且面板必涨;层内普通步 ×1.32(`EXP_SUB_GROWTH`)、界末圆满 ×2.64(= ×`WORLD_STEP_EXP_MULT`,与"把圆满抬成一道墙"的设计对上)、跨大境界最大 ×1.56;换界那三格需求**回落**(×0.78 / ×0.19)— 这条是记录在案的已知形状,改曲线就要重新面对 |
 
 资源这一层是**库的第一个真实使用场景**:接上去的过程照出两个缺口(收支条目原本只收 `number`、
 材料不会取整),库那边因此补了大数台账与 `integer` 定义 —— "我们自己就是第一个定制用户"这条,
