@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 392,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T11:48:51+00:00",
+  "updated_at": "2026-09-19T12:07:47+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22272,6 +22272,42 @@
       "confidence": 0.7,
       "effort": 5,
       "summary": "图标第二波:列表里的内容图标(兽爪 9 处、头骨 8、斧 6、鸟 5、杖 4、人 4,加品质角标与灵根/材料那几枚)照第一波的形与笔换成水墨版 —— 判据已就位(同网格/同线宽/名字必须登记),这一波要在 16px 下逐个对着截图确认认得出是什么,尤其兽爪与头骨(怪物图标,认错就影响刷怪判断)。"
+    },
+    "ISS-255": {
+      "id": "ISS-255",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:07:47+00:00",
+      "updated_at": "2026-09-19T12:07:47+00:00",
+      "touched_round": 392,
+      "summary": "冷启动的第一帧是一张空白宣纸:#app 里原本没有任何内容,脚本到位之前(冷启动、首次装 PWA、慢网络、离线首开)看到的是空页面;脚本真挂了(解析失败/老浏览器不认模块)更是一片空白 —— 对一款以「水墨国风」为门面的游戏,第一眼是空白页很亏。",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2
+    },
+    "CHG-470": {
+      "id": "CHG-470",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:07:47+00:00",
+      "updated_at": "2026-09-19T12:07:47+00:00",
+      "touched_round": 392,
+      "commit": "c0b06af",
+      "summary": "index.html 的 #app 里摆上欢迎页那副字(朱砂印「道」+ 玄枢录 + 玄之又玄·众妙之门),内联样式定义 --boot-paper/ink/cinnabar 明暗两套(暗色挂 prefers-color-scheme);Vue 挂载整块替换它;palette.spec.ts 的「手抄关系」那条扩到 index.html,六个值逐个与色板核。"
+    },
+    "EV-401": {
+      "id": "EV-401",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T12:07:47+00:00",
+      "updated_at": "2026-09-19T12:07:47+00:00",
+      "touched_round": 392,
+      "source": "playwright 禁 JS 打开 dist/index.html:明暗两套各截一张,#app 文本为「道 | 玄枢录 | 玄之又玄 · 众妙之门」;正常挂载后 document.querySelectorAll('.boot').length === 0、首页 h1 仍是「玄枢录」、pageerror 0;排版自检 168 组合与界面冒烟 15 页(67 次点击)全绿",
+      "summary": "首帧占位在两处都对:没脚本时看得见,有脚本时不残留。",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -32679,6 +32715,12 @@
       "to": "COMP-029",
       "type": "governs",
       "created_at": "2026-09-19T11:48:47+00:00"
+    },
+    {
+      "from": "CHG-470",
+      "to": "ISS-255",
+      "type": "resolves",
+      "created_at": "2026-09-19T12:07:47+00:00"
     }
   ]
 }
