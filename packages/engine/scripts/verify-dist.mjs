@@ -130,6 +130,44 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   console.log(`定制表旋钮自检通过(${knobs.length} 个旋钮在源码里都存在)`)
 
   /**
+   * 报错口径自检 —— 源码里的**每一条 `throw` 都得有人真的触发过**。
+   *
+   * 为什么值得一条判据:审计时发现 23 处抛错里 15 处没有任何用例触发过。两个后果都不是小事:
+   * **报错可能早就不会走到了**(参数改名、校验挪位置之后那句 throw 成了死代码,使用者写错配置
+   * 不再被拦住,而是拿到一个 NaN 或者半装好的世界),以及**文案会悄悄漂移** ——
+   * 文案本身就是给人看的,内容作者看到的第一句话往往就是它。
+   *
+   * 取值口径:模板串按 `${…}` 切开,取**最长的那一段字面量**(去掉首尾空白与破折号),
+   * 要求长度 ≥ 4 —— 因为有些报错以插值开头(`属性系统:${key} 的 …`),只取前缀会退化成
+   * "属性系统"这四个字,谁都能满足。最长段才是这句话里最认得出的部分。
+   */
+  const throwMessages = new Set()
+  const throwFiles = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).filter(
+    entry => typeof entry === 'string' && entry.endsWith('.ts')
+  )
+  for (const rel of throwFiles) {
+    if (rel.endsWith('.spec.ts')) continue
+    const text = readFileSync(resolve(ENGINE, 'src', rel), 'utf-8')
+    for (const m of text.matchAll(/throw new Error\((?:`([^`]*)`|'([^']*)'|"([^"]*)")\)/g)) {
+      const raw = m[1] ?? m[2] ?? m[3] ?? ''
+      const longest = raw
+        .replace(/\\n/g, ' ')
+        .split(/\$\{[^}]*\}/)
+        .map(part => part.replace(/^[\s:、,——-]+|[\s:、,——-]+$/g, ''))
+        .sort((a, b) => b.length - a.length)[0]
+      if (longest !== undefined && longest.length >= 4) throwMessages.add(longest)
+    }
+  }
+  assert.ok(throwMessages.size >= 20, `只从源码里读出 ${throwMessages.size} 条报错 —— throw 的写法变了?`)
+  // 匹配留一点余地:模板串切开之后,有些段会带一个多余的虚词(如"的 appliesTo 指向…"),
+  // 所以"整段命中"或"去掉首字命中"都算 —— 判据要拦的是"没人触发过",不是"措辞一字不差"
+  const untriggered = [...throwMessages].filter(
+    message => !specText.includes(message) && !specText.includes(message.slice(1))
+  )
+  assert.deepEqual(untriggered, [], `这些报错没有任何用例触发过(可能早就走不到,或者文案已经漂了):${untriggered.join('、')}`)
+  console.log(`报错口径自检通过(${throwMessages.size} 条报错都有人真的触发过)`)
+
+  /**
    * 目录树自检 —— README 里那棵树是使用者的地图,它必须**和仓库逐项对得上**。
    *
    * 两边都拦:新加一个模块却忘了写进树(地图少一块,读者以为库里没有这层),
