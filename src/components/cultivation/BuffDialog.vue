@@ -34,6 +34,14 @@
         <span class="text-ink-soft">全程</span>
         <span class="tabular text-ink-faint">{{ formatDuration(def.durationSec) }}</span>
       </p>
+      <!--
+        有上限的状态(可消耗的那一类)把上限明写出来:这是**明改不是暗改** ——
+        玩家看得到"还能攒到多久",也就不会在"吃了没变"时以为坏了(见 core/engineBuffs 的上限口径)。
+      -->
+      <p v-if="capSec" class="mt-1 flex justify-between text-[13px]">
+        <span class="text-ink-soft">至多可攒</span>
+        <span class="tabular text-ink-faint">{{ formatDuration(capSec) }}(单颗 {{ capMult }} 倍)</span>
+      </p>
       <ProgressBar class="mt-2" :value="remainRatio" :color="isInjury ? 'var(--color-cinnabar)' : 'var(--color-jade)'" :height="6" />
     </template>
   </BaseModal>
@@ -45,6 +53,7 @@
   import { useCultivationStore } from '@/stores/cultivation'
   import { useNow } from '@/composables/useNow'
   import { buffDef } from '@/data/buffs'
+  import { buffCapSec, CONSUMABLE_BUFF_CAP_MULT } from '@/core/engineBuffs'
   import { STAT_NAMES } from '@/ui/statNames'
   import { formatCountdown, formatDuration, formatPercent } from '@/utils/format'
   import type { AnyStatKey } from '@/types'
@@ -58,6 +67,9 @@
 
   const def = computed(() => (ui.buffDetailId ? buffDef(ui.buffDetailId) : undefined))
   const isInjury = computed(() => def.value?.kind === 'injury')
+  /** 有上限的状态才显示那一行;**上限是"能攒多久"的封顶**,不是覆盖全程的封顶 */
+  const capSec = computed(() => (ui.buffDetailId ? buffCapSec(ui.buffDetailId) : undefined))
+  const capMult = CONSUMABLE_BUFF_CAP_MULT
 
   const KIND_TEXT: Record<string, string> = {
     pill: '丹药之效',

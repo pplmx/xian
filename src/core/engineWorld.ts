@@ -231,6 +231,15 @@ export const ENGINE_WORLD_CONFIG: GameConfig<GNum> = {
     // (妖气复聚会把「已靖」收回去,那是另一层的世界节律,不改变这条节奏)
     bossProgress: EXPLORE_BOSS_AFTER_WINS,
     bossRhythm: 'once',
+    /*
+     * 这组数**本作一处都不读** —— 本作的敌人数值走 `core/combat.makeEnemySnap`
+     * (powerScale(层级) × 三围基数 × 层级补偿),与库的 `snapshot()`(基数 × 倍率 ×
+     * tierGrowth^(tier-1))不是同一个模型:两套后期差 3 个数量级(见 engineProgressionAudit
+     * 那一节实测)。它留着只为满足库的类型声明(库要求这一节存在),**别拿它当本作的内容强度**。
+     *
+     * 谁哪天真的改用 `game.dungeons.snapshot()`,上面那条判据会当场红 —— 那时再来对齐两套模型,
+     * 而不是现在为"将来可能用"先付利息。
+     */
     enemyPower: {
       baseHp: COMBAT_HP_BASE,
       baseAttack: COMBAT_ATK_BASE,

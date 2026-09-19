@@ -18,6 +18,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { createBuffSystem } from 'wanxiang-engine'
+import { CONSUMABLE_BUFF_CAP_MULT } from './engineBuffs'
 
 /** 内容取自本作的聚灵丹口径(30 分钟、修炼速度 +50%) */
 const defs = [{ id: 'jing', durationSec: 30 * 60, mods: { cultivationSpeed: 0.5 } }]
@@ -106,5 +107,34 @@ describe('消融实验 —— 丹药品鉴:吃得比时长勤会怎样', () => {
     console.log(`  停手后:叠时长还能吃 ${hoarder.toFixed(1)} 小时老本;取较长者的只剩 ${(refresher * 60).toFixed(0)} 分钟`)
     expect(hoarder).toBeGreaterThan(10)
     expect(refresher).toBeLessThanOrEqual(0.5)
+  })
+
+  /**
+   * 上限取几倍?—— ISS-232 的落地口径(本作选 **2× 单颗时长**,见 core/engineBuffs 的
+   * `CONSUMABLE_BUFF_CAP_MULT`)。这里把三种取值的读数摆在一起,方便日后回看这次决定:
+   * 上限越小越"收得住",但越小也越容易让正常节奏的玩家吃到"白费"。
+   */
+  it('上限取 1× / 2× / 3× 各是什么手感(落地口径的对照读数)', () => {
+    const cappedAt = (mult: number) =>
+      createBuffSystem({ defs: [{ ...defs[0]!, maxDurationSec: 30 * 60 * mult }], clock: 'ms' })
+
+    for (const mult of [1, 2, 3]) {
+      const r20 = simulate(cappedAt(mult), 20, 24)
+      const r10 = simulate(cappedAt(mult), 10, 24)
+      const capMin = 30 * mult
+      console.log(
+        `  上限 ${mult}× 单颗(${capMin} 分钟):20 分钟一颗 → 余 ${(r20.remainingHours * 60).toFixed(0)} 分钟 · ` +
+          `10 分钟一颗 → 余 ${(r10.remainingHours * 60).toFixed(0)} 分钟 · 覆盖率 ${(r20.coverage * 100).toFixed(1)}%`
+      )
+      // 收口判据一:余量不得超过上限(这是上限的定义,任何取值都不许破)
+      expect(r20.remainingHours * 3600).toBeLessThanOrEqual(capMin * 60 + 1)
+      expect(r10.remainingHours * 3600).toBeLessThanOrEqual(capMin * 60 + 1)
+      // 收口判据二:吃得比时长勤时,覆盖率仍是 100% —— 上限收的是"囤",不是"药效"
+      expect(r20.coverage).toBe(1)
+      expect(r10.coverage).toBe(1)
+    }
+
+    // 本作落地的就是这个数:2×(吃两颗刚好顶满,再吃才开始白费)
+    expect(CONSUMABLE_BUFF_CAP_MULT).toBe(2)
   })
 })

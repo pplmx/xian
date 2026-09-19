@@ -13,11 +13,45 @@ import type { BuffDef, BuffInstance, StatMods } from '@/types'
 import type { BuffInstance as EngineBuffInstance } from 'wanxiang-engine'
 import { createBuffSystem } from 'wanxiang-engine'
 import { BUFFS, buffDef } from '@/data/buffs'
+import { PILLS } from '@/data/pills'
+
+/**
+ * 可消耗增益的时长上限 —— **单颗时长的 2 倍**。
+ *
+ * 起因(ISS-232):丹药的叠法是"加上"(`'extend'`),吃得比时长勤就能攒 ——
+ * 实测 20 分钟一颗、连吃 24 小时后还剩 12 小时;10 分钟一颗则剩 48 小时。
+ * 那等于把"限时加速"按材料成本换成了"半常驻",而"什么时候吃"这个决策随之消失
+ * (最优解永远是"能多勤就多勤"),连"药效过去"这个节拍也感受不到了。
+ *
+ * 现在给**凡丹药能给的增益**加上这条上限:最长只能攒到"一次服药的两倍时长",
+ * 到顶之后再服只延续到上限 —— "连吃两颗把时间顶满"的顺手感还在,囤积则被封在一次服药节奏之内。
+ * 上限是**明说的**(界面上写着"至多 X"),不是暗改。
+ *
+ * 口径写在装配这一层、由数据推导,而不是逐个 def 手写:新增一味丹只要在 `data/pills` 里挂上
+ * `buffId`,上限自动生效 —— 少一处"记得改"的地方。判据见 `core/consumableBuffCap.spec.ts`。
+ */
+export const CONSUMABLE_BUFF_CAP_MULT = 2
+
+/** 凡能被丹药施加的增益 id —— 上限只对它们生效(事件祝福 / 闭关 / 惩罚不在此列) */
+const CONSUMABLE_BUFF_IDS = new Set(PILLS.map(p => p.buffId).filter((id): id is string => !!id))
 
 const BUFFS_SYSTEM = createBuffSystem<StatMods>({
-  defs: BUFFS.map(d => ({ id: d.id, durationSec: d.durationSec, kind: d.kind, mods: d.mods })),
+  defs: BUFFS.map(d => ({
+    id: d.id,
+    durationSec: d.durationSec,
+    kind: d.kind,
+    mods: d.mods,
+    // 丹药能吃出"囤"的那一类才封顶;其余状态的时长由内容或事件决定,不该被这里改口径
+    maxDurationSec: CONSUMABLE_BUFF_IDS.has(d.id) ? d.durationSec * CONSUMABLE_BUFF_CAP_MULT : undefined
+  })),
   clock: 'ms'
 })
+
+/** 某条增益的时长上限(秒);不受上限管的返回 `undefined` */
+export function buffCapSec(defId: string): number | undefined {
+  const def = buffDef(defId)
+  return def && CONSUMABLE_BUFF_IDS.has(defId) ? def.durationSec * CONSUMABLE_BUFF_CAP_MULT : undefined
+}
 
 /** 本作存的键是 `defId`,库里叫 `id`:`endsAt` 是同一个数,只换个键名 */
 const toEngine = (list: readonly BuffInstance[]): EngineBuffInstance[] =>
@@ -49,6 +83,28 @@ export function pruneBuffList(list: readonly BuffInstance[], now: number): { lis
 /** 清除负面状态(本作口径:分类为 `injury` 的那些,含心魔) */
 export function clearNegativeBuffList(list: readonly BuffInstance[]): BuffInstance[] {
   return fromEngine(BUFFS_SYSTEM.clear(toEngine(list), 'injury').instances)
+}
+
+/**
+ * 此刻再服一次,这一颗会被上限怎么对待 —— 给"服药"那条路用。
+ *
+ *   `full`    已经顶到上限:一点也加不上去,这一颗**白费**;
+ *   `partial` 加上去会越过上限:只延续到顶,剩余的那一截被削掉;
+ *   `none`    不受影响,足额兑现。
+ *
+ * 为什么要在界面上说:上限是"相对服药那一刻"封的,于是贴着上限连服时,
+ * 每一颗实际只延续几十秒 —— 玩家看到的是"药吃了,时间几乎没动",若不说清楚,
+ * 下一个结论就是"这游戏坏了"。容差 0.5 秒:剩余时间以毫秒在走,差半秒不算到顶。
+ */
+export type BuffOverflow = 'none' | 'partial' | 'full'
+
+export function buffOverflowOf(list: readonly BuffInstance[], defId: string, now: number): BuffOverflow {
+  const def = buffDef(defId)
+  const cap = buffCapSec(defId)
+  if (!def || cap === undefined) return 'none'
+  const remain = BUFFS_SYSTEM.remainingSec(toEngine(list), defId, now)
+  if (remain >= cap - 0.5) return 'full'
+  return remain + def.durationSec > cap ? 'partial' : 'none'
 }
 
 /** 一条生效中的状态:内容定义(带名字 / 图标)+ 实例 + 还剩多少秒 */

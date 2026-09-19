@@ -15,6 +15,7 @@ import { maxTierForMajor } from '@/data/regions'
 import { collect, track } from './progress'
 import { craftability, knownRecipes } from './craftability'
 import { runCraft, spentOf } from './engineCraft'
+import { buffOverflowOf } from './engineBuffs'
 import { noteMaterialUsed } from './loreService'
 import { noteTaboo } from './samsaraService'
 import { usePlayerStore } from '@/stores/player'
@@ -71,8 +72,16 @@ export function usePill(id: string): boolean {
       lines.push(`悟道点 +${def.instant.wudao}`)
     }
   } else if (def.buffId) {
+    // 贴着上限再服,药力会被削(甚至一点不加)—— 说出来,别让玩家自己猜"为什么没变"
+    const overflow = buffOverflowOf(cultivation.buffs, def.buffId, Date.now())
     cultivation.addBuff(def.buffId, Date.now())
-    lines.push('药力化开,状态加身')
+    lines.push(
+      overflow === 'full'
+        ? '药力已至上限,这一颗白费了'
+        : overflow === 'partial'
+          ? '药力已至上限,这一颗只延续到顶'
+          : '药力化开,状态加身'
+    )
   }
   track('pillsUsed')
   // Phase 32.5:「不假外物」之誓在按下这一刻就落空,不必等到转世才被告知

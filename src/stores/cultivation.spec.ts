@@ -50,14 +50,25 @@ describe('状态时长叠加(addBuff)', () => {
     expect(remainSec).toBe(600 + juling!.durationSec)
   })
 
-  it('连服 N 次 → 时长恰好是 N 倍(线性可预期)', () => {
+  it('连服 N 次 → 叠时长,但封在"单颗的 2 倍"上(ISS-232 的落地口径)', () => {
     const cultivation = useCultivationStore()
     const t0 = 5_000_000
     for (let i = 0; i < 3; i++) cultivation.addBuff('buff_juling', t0)
 
     expect(cultivation.buffs).toHaveLength(1)
     const remainSec = (cultivation.buffs[0]!.endsAt - t0) / SEC
-    expect(remainSec).toBe(juling!.durationSec * 3)
+    // 连服三次:第三次已顶到上限(2 × 1800 秒)—— 再服不再延长,界面会说"白费了"
+    expect(remainSec).toBe(juling!.durationSec * 2)
+  })
+
+  it('连服两次:正好叠到上限,一次也不浪费(上限不是来削正常节奏的)', () => {
+    const cultivation = useCultivationStore()
+    const t0 = 7_000_000
+    cultivation.addBuff('buff_juling', t0)
+    cultivation.addBuff('buff_juling', t0)
+
+    const remainSec = (cultivation.buffs[0]!.endsAt - t0) / SEC
+    expect(remainSec).toBe(juling!.durationSec * 2)
   })
 
   it('过期实例再施加:以 now 为基准,不吞历史负剩余', () => {

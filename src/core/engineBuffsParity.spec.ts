@@ -102,7 +102,7 @@ describe('状态层对账 —— 逐字段、逐毫秒与迁移前一致', () =>
     expect(next).toBe(list) // 连引用都不换:调用方不会因"没发生的事"重渲染
   })
 
-  it('连加三次:叠时长而不是刷新,累计结果与冻结口径一致', () => {
+  it('连加三次:仍是"叠时长"而不是刷新 —— 但多了上限(**有意修正**,见 ISS-232)', () => {
     let mine: BuffInstance[] = []
     let ours: BuffInstance[] = []
     for (let i = 0; i < 3; i += 1) {
@@ -110,9 +110,22 @@ describe('状态层对账 —— 逐字段、逐毫秒与迁移前一致', () =>
       mine = applyBuff(mine, 'buff_juling', at)
       ours = legacyExtendBuff(ours, 'buff_juling', at)
     }
-    expect(mine).toEqual(ours)
-    // 顺带把"叠"这件事本身钉住:三次 = 3 × 1800 秒,不是 1800 秒
-    expect(mine[0]!.endsAt - NOW).toBe(3 * 1800 * 1000)
+    /**
+     * **有意修正**:迁移前后唯一的差别就在这里 —— 冻结口径无上限(三次 = 3 × 1800 秒),
+     * 现在封在"单颗时长的 2 倍"(= 3600 秒)。
+     *
+     * 为什么改:丹药的叠法是"加上",吃得比时长勤就能攒(实测 20 分钟一颗、连吃 24 小时余 12 小时;
+     * 10 分钟一颗余 48 小时)—— 那等于把"限时加速"按材料成本换成"半常驻",
+     * 而"什么时候吃"这个决策随之消失。口径在 core/engineBuffs,判据在 core/consumableBuffCap.spec。
+     * 对账的其余部分(逐毫秒 / 逐字段)一位没动。
+     */
+    // 上限是**相对服药那一刻**封的:第三次服于 NOW+180s,故最多到 NOW+180s+3600s
+    expect(mine[0]!.endsAt - NOW).toBe(180_000 + 2 * 1800 * 1000)
+    expect(ours[0]!.endsAt - NOW).toBe(3 * 1800 * 1000)
+    // 没碰到上限之前(两次)与冻结口径仍然逐位一致 —— 修正只发生在封顶之后
+    const two = [0, 90_000].reduce((list, at) => applyBuff(list, 'buff_juling', NOW + at), [] as BuffInstance[])
+    const legacyTwo = [0, 90_000].reduce((list, at) => legacyExtendBuff(list, 'buff_juling', NOW + at), [] as BuffInstance[])
+    expect(two).toEqual(legacyTwo)
   })
 
   it('旧的"取较长者"写法仍在判据里:它今天的结果说明"刷新会吞掉剩余时长"', () => {
