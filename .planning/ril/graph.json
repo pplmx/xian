@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 355,
+  "round": 356,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-18T23:56:12+00:00",
+  "updated_at": "2026-09-19T00:00:34+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 352,
+      "touched_round": 355,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -19772,6 +19772,53 @@
       "confidence": 0.94,
       "source": "变更 CHG-419(1460b37)。实测(可复现:名字由 mulberry32(20260919) 生成):同长度只差一个字符 20 万 → 去重 200000(零碰撞,末位与中间位各测一次);长度不一 20 万 → 去重 199989(11 次);12 次实验的首次碰撞点 7071/25778/31753/33653/36866/42688/48568/54793/57461/65093/75274/77171,中位数 45628(理论 77163);每 1 万名字撞率 1%(对照原始 32 位 3%,理论 1.16%)。golden:seedFromString(\"\")=2166136261、(\"a\")=3826002220、(\"青云山麓\")=1955089564。闸门:bun run check 全绿(539 例 / 74 文件 + 13 道自检 + 13 份示例)。",
       "summary": "第一次量出\"哈希这一层\"的刻度。过程中差点把控制组写坏(用 mulberry32 的首个输出当\"随机 32 位\" → 首输出彼此相关,撞率虚高),重做对照后结论才站得住 —— 这条经验记在节点里:做碰撞实验,对照组必须真的独立。"
+    },
+    "ISS-239": {
+      "id": "ISS-239",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:00:33+00:00",
+      "updated_at": "2026-09-19T00:00:33+00:00",
+      "touched_round": 355,
+      "summary": "库里的报错是使用者看到的第一句话,却一条判据都没有:审计 23 处 throw,15 处没有任何用例触发过 —— 报错可能早就走不到(成了死代码),文案也会悄悄漂移,而错配置只会在下游变成 NaN 或半装好的世界。"
+    },
+    "TASK-336": {
+      "id": "TASK-336",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:00:33+00:00",
+      "updated_at": "2026-09-19T00:00:33+00:00",
+      "touched_round": 355,
+      "category": "test",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "补报错口径:新增 errors.spec.ts 把每条配置错误真的触发一次并点名是哪一处;verify-dist 加「报错口径自检」要求源码里每条 throw 都有 spec 触发过。"
+    },
+    "CHG-420": {
+      "id": "CHG-420",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:00:33+00:00",
+      "updated_at": "2026-09-19T00:00:33+00:00",
+      "touched_round": 355,
+      "commit": "395c462",
+      "summary": "库:新增 src/errors.spec.ts(8 条);scripts/verify-dist.mjs 增加第 14 道自检(报错口径);docs/development.md 判据表补一行;README 用例数 539/74 → 547/75;CHANGELOG 记一条。运行时代码与公开面未动。"
+    },
+    "EV-346": {
+      "id": "EV-346",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:00:33+00:00",
+      "updated_at": "2026-09-19T00:00:33+00:00",
+      "touched_round": 355,
+      "confidence": 0.95,
+      "source": "变更 CHG-420(395c462)。正向:bun run check 全绿,自检印\"报错口径自检通过(22 条报错都有人真的触发过)\"(23 处 throw 去重后 22 条,其中副本的\"没有这个区域\"在两个出口共用一句)。反向:临时往 src/rng.ts 的 createRng 加一句 throw,自检当场点名\"临时试探:这条报错没有用例触发过\"(已还原,git status 干净)。过程中还修掉两处我第一版写错的用例(装备的 poolAtTier 退档会让\"这一层没内容\"不报错;defineGame 的汇总报错要多列几行)。",
+      "summary": "报错从\"没人管的东西\"变成有判据的东西。取值口径也踩了一次:先按模板串前缀匹配,结果像\"属性系统:${key} 的 appliesTo…\"这种以插值开头的消息退化成\"属性系统\"四个字(谁都能满足),改成\"按 ${} 切开取最长字面量\"才真正拦得住。"
     }
   },
   "edges": [
@@ -29285,6 +29332,24 @@
       "to": "TASK-335",
       "type": "implements",
       "created_at": "2026-09-18T23:56:12+00:00"
+    },
+    {
+      "from": "CHG-420",
+      "to": "TASK-336",
+      "type": "implements",
+      "created_at": "2026-09-19T00:00:33+00:00"
+    },
+    {
+      "from": "CHG-420",
+      "to": "ISS-239",
+      "type": "resolves",
+      "created_at": "2026-09-19T00:00:33+00:00"
+    },
+    {
+      "from": "ISS-239",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-19T00:00:33+00:00"
     }
   ]
 }
