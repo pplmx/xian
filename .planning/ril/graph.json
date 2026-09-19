@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 386,
+  "round": 387,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T04:37:40+00:00",
+  "updated_at": "2026-09-19T05:13:31+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 383,
+      "touched_round": 386,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -21527,6 +21527,55 @@
       "confidence": 0.95,
       "source": "变更 CHG-456(7a07865)。读数(ablation):上限 1× → 20 分钟一颗余 10 分钟 · 2× → 余 40 分钟 · 3× → 余 70 分钟(无上限时 12 小时)。落地判据:16 味带状态的丹逐一验证\"攒不过上限且确实贴着上限\"(如 聚灵丹 60/60 分、凝神丹 20/20 分);三态提示在 余 2400 + 1800 > 3600 时判 partial、余量压到 3600 时判 full;不受管的状态(retreat / injury / bless_qingfeng)没有上限。全量:宿主 290 文件 / 2653 例全过、分类报告 0 败、bun run check 通过(文档自检 43 条路径,并当场抓到我自己新增 spec 导致的规模数漂移)、排版自检 168 个页面×视口组合全绿、vue-tsc 通过。",
       "summary": "从\"能囤 12~48 小时\"变成\"最多攒 1 小时(单颗 2 倍)\",而且每一处都有读数与判据:机制、界面三态、对账里的有意修正记录、以及\"新增丹药自动受管\"的推导式口径。"
+    },
+    "DEC-171": {
+      "id": "DEC-171",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T05:13:05+00:00",
+      "updated_at": "2026-09-19T05:13:05+00:00",
+      "touched_round": 386,
+      "summary": "宿主对库的引用口径:仓内用 **workspaces + workspace:***(包名引用 + 软链),开发期的 vite/tsconfig 别名降级为\"加速通路\";对外仍以发布包(release 附件/npm)为准,并由 CI 上\"像外人一样装包\"的两条自检守着。",
+      "rationale": "现状是\"看起来像依赖、实际没有依赖\":65 处 import 包名,但 package.json 与 node_modules 里都没有它,只有 vite/tsc 两处别名看得见 —— 工具链看不见、node 侧脚本解析不到、子路径导入没有通路。实测三种写法后选定 workspace:*:bun 建的是**软链**(改源码立即生效),file: 是硬链快照(新增文件不跟着变),link: 在本机 bun 直接解析失败;npm 11 也支持 workspace:*。这条口径与业界同形态(库 + 自家参考应用同仓、库另外对外发布)一致:仓内 workspace,对外真包,两条并存。",
+      "alternatives_rejected": "①维持现状(只看 vite/tsc 别名):省事,但\"引用说不圆\"的缝一直在,且子路径导入哪天冒出来就炸;②用 file:packages/engine(实测是硬链快照,新增 dist 要重装才可见);③用 link:(本机 bun 解析失败,不可移植);④宿主直接依赖 release 附件 URL(最像外人,但开发期改库要先发版 —— 等库进入只修错阶段再切,那时只改一行);⑤加 @engine 之类的私有别名(与\"别人怎么引用\"背道而驰,已有判据拦着)。"
+    },
+    "TASK-372": {
+      "id": "TASK-372",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T05:13:14+00:00",
+      "updated_at": "2026-09-19T05:13:30+00:00",
+      "touched_round": 386,
+      "category": "dx",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "把\"宿主怎么引用库\"从\"两处别名、没有依赖声明\"改成真依赖:package.json 声明 workspaces + workspace:*,别名降级为开发加速通路,engine-dist.mjs 新增第 ⑦ 条判据(声明存在且指回仓库内的库 + 由 node 解析裸包名与子路径),docs/engine.md 改成三层接线表。"
+    },
+    "CHG-457": {
+      "id": "CHG-457",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T05:13:23+00:00",
+      "updated_at": "2026-09-19T05:13:23+00:00",
+      "touched_round": 386,
+      "commit": "a3cd96b",
+      "summary": "宿主:package.json 加 workspaces 与 wanxiang-engine: workspace:*(bun.lock 只多 12 行);vite.config.ts 与 tsconfig.app.json 的别名注释改成\"开发加速通路\";scripts/engine-dist.mjs 新增第 ⑦ 条判据并更新收尾日志;docs/engine.md 的「怎么引用」改成三层接线表。"
+    },
+    "EV-380": {
+      "id": "EV-380",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T05:13:23+00:00",
+      "updated_at": "2026-09-19T05:13:23+00:00",
+      "touched_round": 386,
+      "confidence": 0.95,
+      "source": "变更 CHG-457(a3cd96b)。实测:node_modules/wanxiang-engine 是软链 → ../packages/engine;node -e import(\"wanxiang-engine\") 解析出 78 个导出;子路径 import(\"wanxiang-engine/presets/minimal\") 解析到「手作工坊(最小内容包)」。判据:bun run check:engine 通过并印出\"按普通依赖解析通过(裸包名 78 个导出 + 子路径 presets/minimal,由 node 解析)\";bun run check(文档自检 44 条路径)、bun run build、bun run test(290 文件 / 2653 例)全过。对照实验(file:/link:/workspaces 三种写法、npm 11 与 bun 1.4.2 各跑一遍)见 DEC-171 的 rationale。",
+      "summary": "\"看起来像依赖\"终于变成\"真是依赖\":工具链看得见、node 侧解析得到、子路径也通了 —— 而且这条接线本身有判据守着,不再靠注释提醒。"
     }
   },
   "edges": [
@@ -31658,6 +31707,24 @@
       "to": "ISS-232",
       "type": "addresses",
       "created_at": "2026-09-19T04:37:31+00:00"
+    },
+    {
+      "from": "CHG-457",
+      "to": "TASK-372",
+      "type": "implements",
+      "created_at": "2026-09-19T05:13:30+00:00"
+    },
+    {
+      "from": "DEC-171",
+      "to": "TASK-372",
+      "type": "governs",
+      "created_at": "2026-09-19T05:13:30+00:00"
+    },
+    {
+      "from": "DEC-171",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-19T05:13:30+00:00"
     }
   ]
 }
