@@ -38,8 +38,8 @@ jobs:
       # 这一份是**要发到玩家面前**的:故走发布路径(带 legacy 兜底),日常构建
       # (`bun run build`)只给开发与 PR 门用 —— legacy 每次构建要花掉大半个构建时长,
       # 而现代浏览器一个字节都不会请求它。见 vite.config.ts 的 XIAN_LEGACY。
-      - name: 构建(发布路径:带 legacy 兜底)
-        run: bun run build:release
+      - name: 构建(发布路径:带 legacy 兜底)· 带时长上限
+        run: bun scripts/build-timed.mjs --release
       - name: 核 legacy 与现代化两份产物
         run: bun run check:legacy
       # 浏览器自检放在**上传产物之前**:排版/触达区/对比度/焦点/弹窗语义/

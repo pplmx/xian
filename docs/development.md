@@ -66,6 +66,7 @@ legacy(`@vitejs/plugin-legacy`,给 Chrome 51 / Android 7 的兜底)只在 `XIAN_
 | 冷启动解码字节 | 2681KB(楷体 1783KB) | 1124KB(楷体 236KB) | 1500KB |
 | FCP | 692ms | 1020ms | 1400ms |
 | 楷体换上(swap 那一刻) | 2255ms | 2159ms | 2800ms |
+| 构建时长(现代 / 发布) | 32s / 41s | 16s / 41s | 90s / 240s |
 
 两处改动:
 
@@ -81,8 +82,10 @@ legacy(`@vitejs/plugin-legacy`,给 Chrome 51 / Android 7 的兜底)只在 `XIAN_
    抢的是首屏 JS 的带宽。故只留 `font-display: swap`;`bun scripts/first-paint.mjs --variant preload`
    可随时复量这个 A/B。
 
-判据接在两条流水线的浏览器自检段(`bun scripts/first-paint.mjs`),`build.yml` 另有
-`legacy-artifacts` 作业真打一次发布产物再核。
+三条首屏读数接在两条流水线的浏览器自检段(`bun scripts/first-paint.mjs`);构建时长接在
+**构建那一步本身**(`bun scripts/build-timed.mjs [--release]`,把构建跑一遍并计时,超上限
+即红 —— 只拦「成倍长回去」,上限按本机读数四到五倍给,CI 机器慢也吃得下);`build.yml`
+另有 `legacy-artifacts` 作业真打一次发布产物再核。
 | 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec / 2044 例时,实际已是 289 / 2647) |
 | 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
 | 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |
