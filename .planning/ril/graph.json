@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 389,
+  "round": 390,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T06:59:21+00:00",
+  "updated_at": "2026-09-19T08:17:31+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 382,
+      "touched_round": 389,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -21680,6 +21680,54 @@
       "touched_round": 388,
       "confidence": 0.95,
       "source": "变更 CHG-459/460/461(cd62e90 / c8ffe05 / ea93866)。CI:run 35427361409(ea93866)整轮 success —— 安装依赖(冻结锁文件 + 工作区)、静态检查 + 单元测试、构建、浏览器自检(排版与交互)、界面冒烟、离线/发版接管自检、发布到 Pages 全绿。本地读数:排版 168 个页面×视口组合绿(外域拦掉 40 个)、冒烟绿(拦掉 1 个)、离线自检绿(缓存 27 份、副本已摘掉统计外链)。对照实验:离线自检里\"拦着跑 → 缓存 0 条;不拦 → 27 条\"。"
+    },
+    "DEC-172": {
+      "id": "DEC-172",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T08:17:12+00:00",
+      "updated_at": "2026-09-19T08:17:12+00:00",
+      "touched_round": 389,
+      "summary": "**不做任何外部统计**:页面不加载外部脚本、不发任何外部请求(零外部请求),隐私声明如实写\"不接入任何第三方服务\";要看使用情况只允许**保存在用户本地**(存档里的计数器/本地遥测),并在文档里写明。",
+      "rationale": "这条第三方统计脚本带来的成本远大于收益:① 它把我们的门绑在别人的可用性上(CI 有网时 `goto(waitUntil:\"load\")` 等它等到 30 秒超时,本地还复现不出来);② 隐私声明要为它写一整节、解释 IP 与地区推断、给\"如何拦截\"的建议;③ 它是这个纯单机游戏唯一的网络通信,而\"断网也能玩\"本来是它最好的一句承诺。相比之下,想知道有多少人玩,用\"保存在本地的计数\"就够(存档里已有 pacingTelemetry 与 progress 计数器),要发出去是该由使用者自己决定的动作,不该由默认配置替他们做。",
+      "alternatives_rejected": "①保留统计 + 加拦截(前几轮走的路:拦截会连 SW 抓取一起截走、要分场景处理、还要维护\"摘除外链\"的补丁 —— 为一个可选功能付三处维护成本);②保留统计但改成\"仅统计聚合、不记 IP\"(仍要加载外部脚本、仍有第三方可用性与合规问题);③换成自建统计端点(更糟:变成我们要运维的服务器);④保留脚本但默认不初始化(脚本照样下载,隐私声明照样得写它)。"
+    },
+    "TASK-374": {
+      "id": "TASK-374",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T08:17:18+00:00",
+      "updated_at": "2026-09-19T08:17:31+00:00",
+      "touched_round": 389,
+      "category": "privacy",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "把外部统计整个拆掉:index.html 去掉外链脚本与内联初始化、隐私声明两处(HTML 第六节整节 + 弹窗两节 + 八处引用)改成\"不接入任何第三方\"、三道浏览器门去掉为它建的专用分流与补丁,并把\"零外部请求\"变成两条判据(运行时外域请求==0;产物 index.html 无任何 http(s) 外链)。"
+    },
+    "CHG-462": {
+      "id": "CHG-462",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T08:17:25+00:00",
+      "updated_at": "2026-09-19T08:17:25+00:00",
+      "touched_round": 389,
+      "commit": "cebc952",
+      "summary": "宿主:index.html 去掉统计脚本与内联初始化(换成\"要统计只走本地\"的说明);public/privacy.html 第六节整节改写 + 八处引用同步;PrivacyDialog.vue 四/五节改写;public/sw.js 注释更新;scripts/lib/pageErrors.mjs 去掉域名分流与无用 eslint 指令、说明改成\"零外部请求的量尺\";layout-check(断言外域==0 + 产物无外链静态判据)、ui-smoke(断言外域==0)、offline-check(删掉摘除外链那段)同步。"
+    },
+    "EV-383": {
+      "id": "EV-383",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T08:17:25+00:00",
+      "updated_at": "2026-09-19T08:17:25+00:00",
+      "touched_round": 389,
+      "confidence": 0.95,
+      "source": "变更 CHG-462(cebc952)。判据:排版自检 168 个页面×视口组合全绿(外域请求 0),界面冒烟 15 页 68 次点击且\"外域请求 0 个\",离线自检四件事都认(缓存 27 份、与联网表现一致);bun run check 通过(文档自检 44 条路径);bun run test 290 文件 / 2653 例全过;构建后 dist/index.html 里 rg 不到任何 http(s) 外链(实测为空)。全局 grep:除 pageErrors.mjs 的历史说明外,仓库里已无该统计域名。"
     }
   },
   "edges": [
@@ -31877,6 +31925,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-09-19T06:59:21+00:00"
+    },
+    {
+      "from": "CHG-462",
+      "to": "TASK-374",
+      "type": "implements",
+      "created_at": "2026-09-19T08:17:31+00:00"
+    },
+    {
+      "from": "DEC-172",
+      "to": "TASK-374",
+      "type": "governs",
+      "created_at": "2026-09-19T08:17:31+00:00"
+    },
+    {
+      "from": "DEC-172",
+      "to": "COMP-016",
+      "type": "governs",
+      "created_at": "2026-09-19T08:17:31+00:00"
     }
   ]
 }
