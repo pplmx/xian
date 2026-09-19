@@ -24,14 +24,33 @@ import { clamp, formatAmount, numberNumeric, type Numeric } from './numeric.js'
 /** `2^53` —— JS 里"再往后 +1 未必有效"的那个整数边界 */
 const UNSAFE_FROM = 2 ** 53
 
-/** 最常见的放置曲线:首层 100,每层 ×growth */
+/** 最常见的放置曲线:首层 100,每层 ×growth(走引擎自己的 `powN`,即 `**`) */
 const curveCost = (level: number, growth: number): number => numberNumeric.mulN(numberNumeric.powN(growth, level), 100)
 
+/**
+ * 同一条曲线,改用**连乘**算 —— 量"第几层越界"时用它。
+ *
+ * 为什么要多这一份:`**` / `Math.pow` 在 ECMAScript 里只要求"实现近似",末位各运行时自己定 ——
+ * 实测同一个 `1.5 ** n`,本机的 V8 与 CI 的 V8 相差一层(80 / 81),Bun 的 JSC 在 `3.2 ** n` 上又差一层。
+ * 于是"第几层越界"这种**边界读数**会随运行时而变:本地全绿、CI 红(这条用例真的这么红过一次)。
+ * 连乘是 IEEE 精确舍入的,跨运行时逐位一致 —— 边界读数用它,才是在量**曲线的形状**,
+ * 而不是在量"我这台机器的 `**` 末位长什么样"。引擎本身给的 `**` 值旁边另印一行作对照。
+ */
+const curveCostByMultiply = (level: number, growth: number): number => {
+  let value = 100
+  for (let i = 0; i < level; i += 1) value *= growth
+  return value
+}
+
 /** 一层层往上找:从哪一层开始,这个数"+1"不再改变它(找不到就 -1) */
-const firstLevelWhereAddOneIsLost = (growth: number, limit = 500): number => {
+const firstLevelWhereAddOneIsLost = (
+  growth: number,
+  cost: (level: number, growth: number) => number = curveCostByMultiply,
+  limit = 500
+): number => {
   for (let level = 0; level <= limit; level += 1) {
-    const cost = curveCost(level, growth)
-    if (numberNumeric.add(cost, 1) === cost) return level
+    const value = cost(level, growth)
+    if (numberNumeric.add(value, 1) === value) return level
   }
   return -1
 }
@@ -114,17 +133,25 @@ describe('消融实验 —— 数字什么时候不够用', () => {
     expect(hi).toBeLessThan(1e15)
   })
 
-  it('该换大数的时机:×1.5 到第 80 层、×3.2 到第 28 层', () => {
+  it('该换大数的时机:×1.5 到第 81 层、×3.2 到第 28 层', () => {
     const growth15 = firstLevelWhereAddOneIsLost(1.5)
     const growth32 = firstLevelWhereAddOneIsLost(3.2)
-    console.log(`  100 × 1.5^level 越界层           第 ${growth15} 层(${formatAmount(curveCost(growth15, 1.5))})`)
-    console.log(`  100 × 3.2^level 越界层           第 ${growth32} 层(${formatAmount(curveCost(growth32, 3.2))})`)
+    // 引擎自己那条路(`**`)的值:只作对照打印,不当判据 —— 它的末位随运行时变(见上面注释)
+    const pow15 = firstLevelWhereAddOneIsLost(1.5, curveCost)
+    const pow32 = firstLevelWhereAddOneIsLost(3.2, curveCost)
+    console.log(`  100 × 1.5^level 越界层(连乘)   第 ${growth15} 层(${formatAmount(curveCostByMultiply(growth15, 1.5))})`)
+    console.log(`  100 × 3.2^level 越界层(连乘)   第 ${growth32} 层(${formatAmount(curveCostByMultiply(growth32, 3.2))})`)
+    console.log(`  同一条曲线走引擎的 \`**\`:第 ${pow15} / ${pow32} 层 —— 与连乘最多差一层,差的不是曲线而是运行时末位`)
     // 曲线的形状决定"多久必须换":倍率越大,越早越界
-    expect(growth15).toBe(80)
+    expect(growth15).toBe(81)
     expect(growth32).toBe(28)
     expect(growth32).toBeLessThan(growth15)
     // 越界那一层起,"+1" 已经改变不了数 —— 也就是说"这一层涨了 1 点"在账上不存在
-    expect(numberNumeric.add(curveCost(growth32, 3.2), 1)).toBe(curveCost(growth32, 3.2))
+    const cost32 = curveCostByMultiply(growth32, 3.2)
+    expect(numberNumeric.add(cost32, 1)).toBe(cost32)
+    // 两条口径不许差得离谱(差一层是运行时末位;差两层以上说明曲线真的变了)
+    expect(Math.abs(pow15 - growth15)).toBeLessThanOrEqual(1)
+    expect(Math.abs(pow32 - growth32)).toBeLessThanOrEqual(1)
   })
 
   it('溢出:1e308 × 10 直接变成 Infinity,formatAmount 显示成 ∞', () => {
