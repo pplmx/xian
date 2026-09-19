@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 380,
+  "round": 381,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T02:46:42+00:00",
+  "updated_at": "2026-09-19T02:52:14+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21210,6 +21210,55 @@
       "confidence": 0.95,
       "source": "变更 CHG-449(e025ce5)。红→绿:先只加判据不修词,320 宽后期档当场报「[320-late] /cultivation → 主值行被次要读数挤折行:2 行 «1.032兆+ / 1.03…»」;把「已积至上限」收成「已封顶」后重跑,168 个页面 × 视口组合全绿,判据自报「主值行一格一行(20 处带 data-value-row 的行没被次要读数挤折)」。另:界面冒烟 15 页 / 68 次点击无运行时异常;vue-tsc 通过;宿主 289 文件 / 2647 例全过。",
       "summary": "判据既能抓到那一处(红了),又确实不误伤别处(全量转绿),并且有防空转计数(删光契约就红)。"
+    },
+    "TASK-366": {
+      "id": "TASK-366",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:52:01+00:00",
+      "updated_at": "2026-09-19T02:52:14+00:00",
+      "touched_round": 380,
+      "category": "release",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "发版 0.1.21:定稿 5 条(门面只装一半 / 最小内容包 / 第 31 份消融 / 复现命令可见 / CI 修红),同步四处版本引用,推两仓 + subtree,建 release + 挂 tgz,并从发布 URL 真装一遍;顺带完成发布保险丝(release.yml)的第一次真考试。"
+    },
+    "CHG-450": {
+      "id": "CHG-450",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:52:04+00:00",
+      "updated_at": "2026-09-19T02:52:04+00:00",
+      "touched_round": 380,
+      "commit": "8e7ec25",
+      "summary": "发版 0.1.21:package.json 0.1.20 → 0.1.21;CHANGELOG 的「未发布」定稿成 0.1.21 — 2026-09-19(补本批总述);四处版本引用同步(库 README 的安装块与版本块、docs/development.md 的安装块与 npm pack 例、宿主 README 两处);宿主的库版本引用 3 处跟到 0.1.21。"
+    },
+    "HYP-107": {
+      "id": "HYP-107",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:52:07+00:00",
+      "updated_at": "2026-09-19T02:52:07+00:00",
+      "touched_round": 380,
+      "confidence": 0.95,
+      "summary": "发布保险丝(release.yml:release published 时 checkout 该 tag → bun run check → npm pack → gh release upload → 核对附件名)在真实发版时能跑通,于是\"忘了挂附件\"这件事有兜底。",
+      "prediction": "v0.1.21 发布后,该 workflow 的 run 应完成且结论为 success,附件名与 README 里的安装 URL 一致(wanxiang-engine-0.1.21.tgz)。"
+    },
+    "EV-374": {
+      "id": "EV-374",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:52:11+00:00",
+      "updated_at": "2026-09-19T02:52:11+00:00",
+      "touched_round": 380,
+      "confidence": 0.95,
+      "source": "变更 CHG-450(8e7ec25)与 release v0.1.21。库 bun run check:版本引用自检 14 处都是 0.1.21、591 例 / 80 文件、17 道自检、发布包自检(wanxiang-engine-0.1.21.tgz 真装进临时项目 + 使用者侧 tsc 严格模式两种解析)。宿主 check:engine:9 个入口 + 四份内容包 + 65 处引用 + 宿主文档版本 3 处 = 0.1.21。gh api releases/tags/v0.1.21:target 9d163d455e9bc4c84a4050831bf153763d5879bc,附件 wanxiang-engine-0.1.21.tgz(273770 字节,uploaded)。端到端:空项目 bun add <release URL> 装上,node 里 import presets/minimal 与 dungeonContentPower —— 只装两层(学徒·粗活、config.equipment 为 null)、仙侠包体检 210 格 / 被碾 170 格。保险丝:release.yml run 35416849300 结论 success(56s,checkout tag → bun run check → pack → upload → 核对附件名);另:推 main 触发的 CI run 35416683589 也首次转绿。",
+      "summary": "这一版把\"对外分发的每一步都有当场证据\"补齐:CI 绿、tag 指向发版提交、附件在 release 上且能真装能跑、保险丝第一次真跑通 —— 从前那条\"待下次发版确认\"的待办清掉了。"
     }
   },
   "edges": [
@@ -31203,6 +31252,18 @@
       "to": "HYP-106",
       "type": "validates",
       "created_at": "2026-09-19T02:46:41+00:00"
+    },
+    {
+      "from": "CHG-450",
+      "to": "TASK-366",
+      "type": "implements",
+      "created_at": "2026-09-19T02:52:14+00:00"
+    },
+    {
+      "from": "EV-374",
+      "to": "HYP-107",
+      "type": "validates",
+      "created_at": "2026-09-19T02:52:14+00:00"
     }
   ]
 }
