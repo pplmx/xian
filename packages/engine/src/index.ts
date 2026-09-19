@@ -97,6 +97,15 @@ export { createCombatEngine } from './combat.js'
 export type { IdleConfig, IdlePlan } from './idle.js'
 export { planIdle, runIdle } from './idle.js'
 
+export type {
+  ProgressionAudit,
+  ProgressionAuditConfig,
+  ProgressionStep,
+  ProgressionSummary,
+  WorldStep
+} from './progression.js'
+export { createProgressionAudit } from './progression.js'
+
 export type { SaveDecodeResult, SaveFormat, SavePayload } from './save.js'
 export { decodeSave, decodeSavePayload, defineSaveFormat, encodeSave, runMigrations } from './save.js'
 export {

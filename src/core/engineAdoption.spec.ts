@@ -44,6 +44,10 @@ const NOT_BY_NAME: Record<string, { kind: 'facade' | 'own' | 'none'; why: string
   numberNumeric: { kind: 'own', why: '本作用大数(utils/gnum)自己实现 Numeric' },
   randomRng: { kind: 'own', why: '本作有 utils/random(RandomService)' },
   seedFromString: { kind: 'own', why: '种子由本作的字符串键走 createRng(已导入)' },
+  createProgressionAudit: {
+    kind: 'own',
+    why: '本作的数值审计(inflationAudit / progressionSim)要连内容一起建模(区域强度、装备成型度档位);引擎那份是通用版(强度与内容强度都由调用方给),两边口径不同,故各留一份'
+  },
   runIdle: { kind: 'none', why: '离线结算要按秒摊到多本账(修为/灵气/建筑/钻研/历练),没有"折叠成一步"的循环' },
   createPityCounter: { kind: 'none', why: '本作没有抽卡保底这套玩法' }
 }

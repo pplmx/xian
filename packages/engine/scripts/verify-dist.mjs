@@ -362,6 +362,7 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
     'deck.ts': 'drawFrom',
     'companions.ts': 'createCompanionSystem',
     'idle.ts': 'planIdle',
+    'progression.ts': 'createProgressionAudit',
     'save.ts': 'defineSaveFormat',
     'saveShape.ts': 'asRecord',
     'numeric.ts': 'Numeric<T>',

@@ -126,6 +126,11 @@ import type {
   HoldingSystem,
   IdleConfig,
   IdlePlan,
+  ProgressionAudit,
+  ProgressionAuditConfig,
+  ProgressionStep,
+  ProgressionSummary,
+  WorldStep,
   InvestInfo,
   InvestOutcome,
   IssueLevel,
@@ -255,6 +260,7 @@ const RUNTIME_EXPORTS = [
   'createHoldingSystem',
   'createPointPool',
   'createPityCounter',
+  'createProgressionAudit',
   'createRealmSystem',
   'createRecipeRunner',
   'createResourceSystem',
@@ -379,6 +385,7 @@ type PublicTypes = {
     StrikeOptions
   ]
   idle: [IdleConfig, IdlePlan]
+  progression: [ProgressionAudit, ProgressionAuditConfig<number>, ProgressionStep, ProgressionSummary, WorldStep]
   save: [SaveDecodeResult<number>, SaveFormat<number>, SavePayload]
   skills: [SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem]
   crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef]

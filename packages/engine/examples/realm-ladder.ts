@@ -17,6 +17,7 @@
  */
 import {
   clamp,
+  createProgressionAudit,
   createRealmSystem,
   createRng,
   formatAmount,
@@ -186,6 +187,32 @@ console.log(
 )
 
 // ——— 5 · 同一份骨架,换一套名字与数值层 ———
+
+// 曲线体检:不用自己写循环,把这张表量一遍 —— 哪一格跳得最狠、换了界之后是什么手感
+const audit = createProgressionAudit({
+  realms: shop,
+  power: (major, layer) => (shop.baseStats(major, layer)['手速'] ?? 0) + (shop.baseStats(major, layer)['声望'] ?? 0),
+  // 内容强度:按"该层的推荐战力"给一个自己定的曲线(引擎不认识它怎么来的)
+  contentPower: major => 20 * 3 ** major
+})
+const report = audit.summary()
+console.log('—— 曲线体检(不用自己写循环) ——')
+console.log(
+  `共 ${report.steps} 格 · 需求跳得最狠:${report.biggestCostStep.label} ×${report.biggestCostStep.costStep.toFixed(2)} · ` +
+    `面板跳得最狠:${report.biggestPowerStep.label} ×${report.biggestPowerStep.powerStep.toFixed(2)}`
+)
+console.log(
+  `换界那两格:${report.worldSteps.map(s => `${s.label} 需求 ×${s.costStep.toFixed(1)} / 面板 ×${s.powerStep.toFixed(2)}`).join(' · ')}`
+)
+console.log(
+  `第一次碾压内容:${report.firstCrush ? `${report.firstCrush.label}(玩家/内容 ${report.firstCrush.ratio!.toFixed(1)},判词 ${report.firstCrush.verdict})` : '一次都没有'}` +
+    ` · 一共 ${report.crushing} 格被碾`
+)
+console.log(
+  `  体检当场抓到一个真问题:换界那两格的需求倍数小于 1(换到新界反而更便宜)—— ` +
+    `因为这张表的**层内**倍率 1.5 连着乘四层(≈5.06)已经超过跨大境界的 2.4。` +
+    `要修就是两选一:层内倍率调小,或跨大境界/换界那一档调大(体检只报数,不动你的数值)。`
+)
 
 const numericImpl: Numeric<number> = numberNumeric // 想换大数实现,只要满足这个接口(加减乘除/比较/幂)
 const alt = createRealmSystem({
