@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 370,
+  "round": 371,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T01:15:40+00:00",
+  "updated_at": "2026-09-19T01:19:41+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20488,6 +20488,55 @@
       "summary": "发布包自检的探针分两只,各负责一类承诺:「从零装配探针」证明内容能换(自己写槽位/品质/词条/区域/敌人),「定制表探针 + 类型探针」证明机制能被接管(十二类钩子在包里拧得动、在 tsc --strict 下类型成立)。",
       "rationale": "库对外的两句承诺是不一样的:一句是\"换内容就有一款游戏\",另一句是\"机制留了钩子可以接管\"。此前前者有判据(从零装配),后者只有仓库内的两条弱保障(定制表里的名字存在、库自己的用例覆盖)——都活在仓库里,验不到\"使用者拿着包照表改\"。探针一跑就证明这条缝是真的:labelFormat 吞掉 {world}、tierGrowth 逼人编数,这两件事在仓库里永远不会有人碰。",
       "alternatives_rejected": "①只在仓库里加用例(证明不了\"从包里能不能用\",上一轮安装路径的坑就是这么漏的);②把定制表逐条写成示例(近百项,示例会变成清单朗读,而且仍然验不到包);③靠人读一遍文档(读不出\"{world} 被静默吞掉\"这种事实,只有真拧一次才知道)。"
+    },
+    "TASK-352": {
+      "id": "TASK-352",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:19:40+00:00",
+      "updated_at": "2026-09-19T01:19:41+00:00",
+      "touched_round": 370,
+      "category": "chore",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "实测 docs/development.md 的四种接法里没验过的三种(tgz 离线 / file: 路径 / monorepo 工作区),并据此把构建时机从 prepare 挪到 prepack —— 装包不再跑任何脚本。"
+    },
+    "CHG-436": {
+      "id": "CHG-436",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:19:40+00:00",
+      "updated_at": "2026-09-19T01:19:40+00:00",
+      "touched_round": 370,
+      "commit": "e17c9e1",
+      "summary": "库:package.json 的 prepare → prepack;README 与 docs/development.md 改口径(git tag 两边都拿不到产物;装包零脚本);CHANGELOG 记一条。宿主无改动。"
+    },
+    "EV-362": {
+      "id": "EV-362",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:19:40+00:00",
+      "updated_at": "2026-09-19T01:19:40+00:00",
+      "touched_round": 370,
+      "confidence": 0.95,
+      "source": "变更 CHG-436(e17c9e1)。实测三项:①tgz 离线装(npm i ./x.tgz --registry=http://127.0.0.1:1)→ 装上并跑通,改 prepack 后安装过程零警告;②file: 路径依赖 → bun install 后 import 成功(dist 已构建);③monorepo workspaces → 根 install + 子包 build 后 import+掉装跑通。包内 scripts 用 tar -xzOf 检查:有 prepack、无 prepare。闸门:库 bun run check 全绿(570 例 / 79 文件 + 16 道自检)、宿主 check:engine 通过(65 处引用)。",
+      "summary": "三种接法实测下来,只有\"装 tgz\"这条是完全干净的(零脚本、零警告),而它正是首选;另外两种(#2/#4)都要求使用者自己先构建一次,已在文档里写明。附带的收获:npm 11 对\"包里有安装脚本\"这件事会提示,而那个脚本对 tgz 安装毫无用处 —— 挪到打包时之后连提示都消失了。"
+    },
+    "DEC-162": {
+      "id": "DEC-162",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:19:40+00:00",
+      "updated_at": "2026-09-19T01:19:40+00:00",
+      "touched_round": 370,
+      "summary": "构建只发生在打包时(prepack),不发生在安装时:装包不跑任何脚本,消费者不需要编译工具,也不需要信任 postinstall。代价是 file: 与 monorepo 两条路上使用者要自己先 build 一次(文档已写明),git tag 安装不再可用(本来就不推荐)。",
+      "rationale": "运行时依赖为零是这个库的原则(engines/sideEffects/dependencies 都是干净的),而\"安装时要跑一次 tsc\"等于把构建工具变成事实上的依赖:消费者可能没装、可能被 npm 的脚本白名单拦住、也可能被企业的 install-scripts 策略拒绝。实测已经看到 npm 11 对 tgz 安装也提示安装脚本 —— 说明这条路在收紧。反过来,构建发生在打包时是**零成本**的:反正发版时要 pack 一次,那时构建能让包里永远是新鲜产物。",
+      "alternatives_rejected": "①保留 prepare 图省事(git 安装能自建,但消费者侧多一个会失败的脚本面;而且我们已决定不推荐 git 安装);②把 typescript 挪进 dependencies 让安装时总能编译(为构建工具背运行时依赖,违背零依赖);③把 dist 提交进仓库(git 安装也能用,但仓库里多一份产物、diff 噪音大 —— 上一轮刚为同类问题加了 *.tgz 忽略)。"
     }
   },
   "edges": [
@@ -30199,6 +30248,18 @@
       "to": "TASK-351",
       "type": "governs",
       "created_at": "2026-09-19T01:15:40+00:00"
+    },
+    {
+      "from": "CHG-436",
+      "to": "TASK-352",
+      "type": "implements",
+      "created_at": "2026-09-19T01:19:40+00:00"
+    },
+    {
+      "from": "DEC-162",
+      "to": "TASK-352",
+      "type": "governs",
+      "created_at": "2026-09-19T01:19:41+00:00"
     }
   ]
 }
