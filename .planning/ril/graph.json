@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 391,
+  "round": 392,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T09:14:57+00:00",
+  "updated_at": "2026-09-19T10:21:58+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21787,6 +21787,264 @@
       "touched_round": 390,
       "confidence": 0.95,
       "source": "变更 CHG-463/464(f70e1e9 / 14db81b)。线上实测(三个地址逐个量):xiuxian.yoooo.fun(Cloudflare Worker xian)= assets/index-rWrkZI9b.js = 本地最新构建、统计脚本命中 0;blog.yoooo.fun/xian/(本仓库 GitHub Pages,CF 代理)= 绕开缓存(?v=时间戳)拿到同一份最新构建、命中 0,但直接访问仍被 CF 的 24h 缓存按住旧 HTML(age 2038);yunyin.wenzi.games = CNAME → setube.github.io(另一个账号的 Pages),仍停在 9/18 且带统计脚本。CI:Workers Builds xian 从 failure → success;本仓库 deploy 与 build-and-push 均绿;bk run check / bun run test(290 文件 2653 例)全过。"
+    },
+    "ISS-252": {
+      "id": "ISS-252",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:46:53+00:00",
+      "updated_at": "2026-09-19T09:46:53+00:00",
+      "touched_round": 392,
+      "summary": "调色板的颜色既不够古风也不够清楚:①信息色 azure(#4F7699)在纸底 10-11px 小字上只有 4.17:1(纸深 3.77 / 纸暗 3.28),低于 WCAG AA 的 4.5 —— 而它正是全站 82 处小字(增益说明、属性数值、品阶名)的颜色;②azure 与 qinghua 同值两名,其中 qinghua/qinghua-light 在本作界面里零引用(死 token);③同一份色板在 src/data/qualities.ts、souls.ts、linggen.ts、talents.ts 里被手抄成裸 hex,与 style.css 的变量各说各话。",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3
+    },
+    "HYP-111": {
+      "id": "HYP-111",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:46:53+00:00",
+      "updated_at": "2026-09-19T09:46:53+00:00",
+      "touched_round": 392,
+      "summary": "青色承载不了小字,根因是「青」被当成装饰色(照搬西式 azure 的明度)而不是国画颜料里的石青/花青 —— 国画里这几个颜料本身是深色,压深即可过 AA,不必牺牲青的色相。",
+      "confidence": 0.75
+    },
+    "EV-385": {
+      "id": "EV-385",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:46:53+00:00",
+      "updated_at": "2026-09-19T09:46:53+00:00",
+      "touched_round": 392,
+      "source": "WCAG 对比度实测(python3 计算 sRGB 相对亮度):#4F7699 对 #F3EFE4=4.17、对 #EAE4D3=3.77、对 #DDD5C2=3.28;cinnabar=5.32/4.81/4.18;jade=3.26;gold-ink=3.47;ink-faint=3.47;violet-ink=4.57",
+      "summary": "青色现值是全站失败最明显的一档:既是小字主色,又是唯一同值两名 + 一名无引用的颜色。",
+      "confidence": 1.0
+    },
+    "EV-386": {
+      "id": "EV-386",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:46:53+00:00",
+      "updated_at": "2026-09-19T09:46:53+00:00",
+      "touched_round": 392,
+      "source": "rg -n 'qinghua' src public → 命中 style.css/tailwind.config.js 的定义与 public/privacy.html 的一份手抄;src 下的 .vue 零引用",
+      "summary": "qinghua/qinghua-light 是死 token,与 azure 同值。",
+      "confidence": 1.0
+    },
+    "EV-387": {
+      "id": "EV-387",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:46:53+00:00",
+      "updated_at": "2026-09-19T09:46:53+00:00",
+      "touched_round": 392,
+      "source": "rg -n '#[0-9a-fA-F]{6}' src/data → qualities.ts(9)/souls.ts(6)/linggen.ts(11)/talents.ts(1),同一批颜色在 style.css 里另有语义色变量",
+      "summary": "调色板存在第二份事实源。",
+      "confidence": 1.0
+    },
+    "TASK-376": {
+      "id": "TASK-376",
+      "type": "task",
+      "status": "resolved",
+      "version": 4,
+      "created_at": "2026-09-19T09:47:02+00:00",
+      "updated_at": "2026-09-19T10:21:58+00:00",
+      "touched_round": 392,
+      "category": "core-feature",
+      "severity": 0.6,
+      "confidence": 0.85,
+      "effort": 4,
+      "unlock_factor": 1.2,
+      "summary": "丹青配色第一步:把信息/次色从西式名的 azure 换成中国传统「青」——石青(定值 #2C5A7D,44 90 125,对纸/纸深/纸暗 6.38/5.77/5.01 全过 AA),删掉同值死 token qinghua/qinghua-light,暗色主题同步取轻档;全站 82 处 azure 一并改名,public/privacy.html 的手抄色板跟着对齐。"
+    },
+    "TASK-377": {
+      "id": "TASK-377",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T09:47:02+00:00",
+      "updated_at": "2026-09-19T10:21:57+00:00",
+      "touched_round": 392,
+      "category": "maintainability",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 3,
+      "summary": "丹青配色第二步:把调色板收成一份事实源 —— src/data 里 qualities/souls/linggen/talents 的裸 hex 改成引用语义色变量(缺的三档按国画颜料补名:赭石/藤黄/碧色),并加判据盯住「style.css ↔ tailwind.config 的 token 一一对应」「每个 token 明暗两套」「不存在同值异名」「承担小字的色过 AA」「src/data 不再出现裸 hex」。"
+    },
+    "DEC-173": {
+      "id": "DEC-173",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:47:02+00:00",
+      "updated_at": "2026-09-19T09:47:02+00:00",
+      "touched_round": 392,
+      "summary": "配色取「青」,不取蓝色系:次色定为中国传统石青一系,并且必须自己扛得住 10-11px 小字(AA 4.5),不做只能当装饰的浅蓝。",
+      "rationale": "一 题材:本作底色是水墨(宣纸+松烟墨),已有一个强色朱砂。国画里与朱砂并称的次色本就是青 —— 「丹青」这个词就是朱砂加青;蓝是青的深端(靛),不是另一套语言。二 可辨识:色板里已有 jade(石绿一系的绿),青必须落在偏蓝的一侧才分得开,故取石青而不是偏绿的竹青。三 可读:青色是全站小字主色(增益、数值、品阶),现值 #4F7699 只有 4.17:1,是照搬西式 azure 明度的结果;国画颜料里的石青/花青本身是深色,压深到 6.38:1 反而更接近颜料真身。取蓝则要牺牲水墨底上的柔和度(现代蓝 #2563EB 这类在暖纸上是异物),且同样解决不了小字对比度。",
+      "alternatives_rejected": "①蓝色系色卡(sky/blue/tailwind 那套):在暖宣纸底上读作网页超链接,与水墨气质冲突,且不解决小字对比度;②保留 azure 只把值压深:名字仍是西式色名,与本作「颜色也要古风」的取向相悖,也留着 azure/qinghua 同值两名的重复;③再加一档浅青(天青/缥)专门做装饰:当前界面里没有非它不可的位置,加一个没人用的 token 正是 qinghua 变成死 token 的老路。"
+    },
+    "COMP-028": {
+      "id": "COMP-028",
+      "type": "component",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T09:47:08+00:00",
+      "updated_at": "2026-09-19T09:47:08+00:00",
+      "touched_round": 392,
+      "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
+    },
+    "DEC-174": {
+      "id": "DEC-174",
+      "type": "decision",
+      "status": "superseded",
+      "version": 2,
+      "created_at": "2026-09-19T09:47:08+00:00",
+      "updated_at": "2026-09-19T10:21:58+00:00",
+      "touched_round": 392,
+      "summary": "色值只许有一份事实源:语义色变量定义在 src/style.css(明暗两套通道值),界面与数据一律引用 var(--color-*);唯一例外是公共库 packages/engine 的默认预设 —— 它必须脱离宿主 CSS 独立可用,故保留自己的 hex,并由宿主侧判据确认「库预设的色值 == 宿主语义色」。",
+      "rationale": "先前 style.css 是事实源,public/privacy.html 手抄一份,src/data 的 qualities/souls/linggen/talents 又手抄一份裸 hex —— 改一处颜色要记得改三处,漏掉的那两处不会报错,只会静静长歪(与 tailwind.config 注释里记的「配置改了产物纹丝不动」是同一类坑)。引用变量之后,换肤与调色都只动 style.css 一处。",
+      "alternatives_rejected": "①在数据层保留 hex 只加一条注释提醒同步(提醒不执行,照样会漂);②把颜色全搬进 TS 常量表、CSS 变量由脚本生成(为一处小色板引入一层代码生成,产物与源码又多一处可能有落差的地方);③让数据层存 token 名、渲染时再拼 var()(拼出来的字符串仍是 var,但每个使用点都要多一层解析,而 :style 注入 var(--color-*) 本来就合法)。"
+    },
+    "TASK-378": {
+      "id": "TASK-378",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T10:21:46+00:00",
+      "updated_at": "2026-09-19T10:21:58+00:00",
+      "touched_round": 392,
+      "category": "maintainability",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 1,
+      "summary": "文案语气审计:把界面文案按「本作语气」过一遍,改掉网站口吻与工程词。"
+    },
+    "EV-388": {
+      "id": "EV-388",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:46+00:00",
+      "updated_at": "2026-09-19T10:21:46+00:00",
+      "touched_round": 392,
+      "source": "脚本抽取 15 个 .vue 的 <template> 正文(去注释与绑定),按 34 个现代词表扫:命中 30 条,其中 28 条在隐私政策/存档/安装提示/设置(平台词 localStorage、主屏幕、分享按钮与法律措辞,精确性优先),只有 2 条是语气问题(关于我们 ×3 处、道痕画像说「统计」)。",
+      "summary": "界面文案已经整体是本作语气,剩下的是功能性措辞,不是风格债。",
+      "confidence": 1.0
+    },
+    "CHG-465": {
+      "id": "CHG-465",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:46+00:00",
+      "updated_at": "2026-09-19T10:21:46+00:00",
+      "touched_round": 392,
+      "commit": "859ea78",
+      "summary": "次色从西式 azure 换成中国传统石青:qinghua/qinghua-light/azure 三个 token 收成一个 qing(44 90 125),暗色档 124 166 200;24 个文件 82 处改名;privacy.html 手抄色板对齐;docs/design.md 配色章节改写。"
+    },
+    "CHG-466": {
+      "id": "CHG-466",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:46+00:00",
+      "updated_at": "2026-09-19T10:21:46+00:00",
+      "touched_round": 392,
+      "commit": "80c62c0",
+      "summary": "品阶/器魂/灵根/天赋四张表的 27 处裸 hex 改成 var(--color-*);补六色进色板(赭石/藤黄/碧色/褐/苍青/天青)与它们的夜间档;color + '55' 的非法拼接改走 colorWithAlpha;新增 palette.spec.ts(11 例)与 colorVar.spec.ts(4 例);文档与规模数同步。"
+    },
+    "CHG-467": {
+      "id": "CHG-467",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:46+00:00",
+      "updated_at": "2026-09-19T10:21:46+00:00",
+      "touched_round": 392,
+      "commit": "6dfb7ab",
+      "summary": "关于我们 → 关于此作(首页入口/设置页行/弹窗标题);道痕画像「统计」→「皆出自真实道痕」。"
+    },
+    "EV-389": {
+      "id": "EV-389",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:46+00:00",
+      "updated_at": "2026-09-19T10:21:46+00:00",
+      "touched_round": 392,
+      "source": "bun run check(类型 + ESLint + 文档自检:292 spec / 212 本作)与 bun run test 292 files / 2668 tests 全绿;bun run build 通过",
+      "summary": "静态门与全量用例全绿。",
+      "confidence": 1.0
+    },
+    "EV-390": {
+      "id": "EV-390",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:46+00:00",
+      "updated_at": "2026-09-19T10:21:46+00:00",
+      "touched_round": 392,
+      "source": "bun scripts/layout-check.mjs:168 个页面×视口组合、九道门全绿;bun scripts/ui-smoke.mjs:15 页 66 次点击、0 运行时异常、外域请求 0;另用 playwright 自截图核对浅色与夜间两套主题下的背包/人物/修炼页(pageerrors 0)",
+      "summary": "两道浏览器门与人工截图复核都过。",
+      "confidence": 1.0
+    },
+    "EV-391": {
+      "id": "EV-391",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:47+00:00",
+      "updated_at": "2026-09-19T10:21:47+00:00",
+      "touched_round": 392,
+      "source": "产物核对:dist CSS 里 --color-qing-rgb 浅色 44 90 125 / 暗色 124 166 200,旧的 79 118 153 已不在;六个新 token 的明暗值都在;dist JS 里再无品阶那几个裸 hex",
+      "summary": "改名与压深真的进了产物,不是只改了源码。",
+      "confidence": 1.0
+    },
+    "ISS-253": {
+      "id": "ISS-253",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:53+00:00",
+      "updated_at": "2026-09-19T10:21:53+00:00",
+      "touched_round": 392,
+      "summary": "色板还剩一笔读不清的账(实测自 palette.spec.ts 的 DEBT 表):浅色主题下 ink-faint 3.14、ink-ghost 1.66、jade 2.95、gold-ink 3.14、amber-ink 2.84、violet-ink 4.13、zheshi 3.87、tenghuang 1.90、bise 3.04、he 3.71、cangqing 2.96、tianqing 2.54;暗色主题下 cinnabar 3.51、cinnabar-deep 4.29。它们都在做 10-14px 的说明文字(品阶名/灵根名/增益/次级正文),却低于 WCAG AA 的 4.5。",
+      "severity": 0.5,
+      "confidence": 1.0,
+      "effort": 5
+    },
+    "TASK-379": {
+      "id": "TASK-379",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:53+00:00",
+      "updated_at": "2026-09-19T10:21:53+00:00",
+      "touched_round": 392,
+      "category": "core-feature",
+      "severity": 0.5,
+      "confidence": 0.8,
+      "effort": 5,
+      "unlock_factor": 1.1,
+      "summary": "把整块色板压到 AA:按色相不变、明度降到在「纸深」上 ≥4.5 重取那十二档浅色,暗色主题把朱砂与朱砂深提亮到暗纸上 ≥4.5;每改一档就把它从 palette.spec.ts 的 DEBT 划到 AA_OK。已知难点:琥珀/藤黄(地品/天品)压深后色相只差 8°,要顺手把两档的色相拉开(琥珀偏赤、藤黄偏橄榄),否则九品色阶一眼分不出相邻两档;ink-faint 压深后与 ink-soft 的层级会变窄,需一并复核。"
+    },
+    "DEC-175": {
+      "id": "DEC-175",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T10:21:53+00:00",
+      "updated_at": "2026-09-19T10:21:53+00:00",
+      "touched_round": 392,
+      "summary": "色值只许有一份事实源:语义色变量定义在 src/style.css(明暗两套通道值),界面与数据一律引用 var(--color-*);公共库 packages/engine 的默认预设保留自己的 hex —— 它是给「别人换皮」看的示例,必须脱离宿主 CSS 独立可用,不属于宿主的色板。",
+      "rationale": "同 DEC-174,但把库那条例外说准:库的预设不是宿主色板的第二份拷贝,而是它自己的内容;两者值相同只是曾经顺手抄成一样,不该由判据绑在一起(否则库改自己的示例色会红在宿主这边)。宿主这边真正的手抄只有 public/privacy.html(独立成篇的静态页,已由 palette.spec.ts 逐条核对)。",
+      "alternatives_rejected": "①断言「库预设 == 宿主语义色」(把两个独立维护的东西绑死,库侧改示例就红);②把库预设改成引用 var(--color-*)(库必须能脱离宿主单独跑,不成立);③什么都不说(留下一条说不清的例外)。"
     }
   },
   "edges": [
@@ -32026,6 +32284,114 @@
       "to": "COMP-016",
       "type": "located_in",
       "created_at": "2026-09-19T09:14:56+00:00"
+    },
+    {
+      "from": "TASK-376",
+      "to": "ISS-252",
+      "type": "addresses",
+      "created_at": "2026-09-19T09:47:02+00:00"
+    },
+    {
+      "from": "TASK-377",
+      "to": "ISS-252",
+      "type": "addresses",
+      "created_at": "2026-09-19T09:47:02+00:00"
+    },
+    {
+      "from": "EV-385",
+      "to": "HYP-111",
+      "type": "validates",
+      "created_at": "2026-09-19T09:47:02+00:00"
+    },
+    {
+      "from": "ISS-252",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-09-19T09:47:10+00:00"
+    },
+    {
+      "from": "DEC-173",
+      "to": "COMP-028",
+      "type": "governs",
+      "created_at": "2026-09-19T09:47:10+00:00"
+    },
+    {
+      "from": "DEC-174",
+      "to": "COMP-028",
+      "type": "governs",
+      "created_at": "2026-09-19T09:47:11+00:00"
+    },
+    {
+      "from": "DEC-175",
+      "to": "DEC-174",
+      "type": "supersedes",
+      "created_at": "2026-09-19T10:21:53+00:00"
+    },
+    {
+      "from": "TASK-378",
+      "to": "ISS-252",
+      "type": "addresses",
+      "created_at": "2026-09-19T10:21:53+00:00"
+    },
+    {
+      "from": "TASK-379",
+      "to": "ISS-253",
+      "type": "addresses",
+      "created_at": "2026-09-19T10:21:53+00:00"
+    },
+    {
+      "from": "ISS-253",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-09-19T10:21:53+00:00"
+    },
+    {
+      "from": "DEC-175",
+      "to": "COMP-028",
+      "type": "governs",
+      "created_at": "2026-09-19T10:21:53+00:00"
+    },
+    {
+      "from": "CHG-465",
+      "to": "TASK-376",
+      "type": "implements",
+      "created_at": "2026-09-19T10:21:53+00:00"
+    },
+    {
+      "from": "CHG-466",
+      "to": "TASK-377",
+      "type": "implements",
+      "created_at": "2026-09-19T10:21:54+00:00"
+    },
+    {
+      "from": "CHG-467",
+      "to": "TASK-378",
+      "type": "implements",
+      "created_at": "2026-09-19T10:21:54+00:00"
+    },
+    {
+      "from": "CHG-467",
+      "to": "ISS-252",
+      "type": "resolves",
+      "created_at": "2026-09-19T10:21:54+00:00"
+    },
+    {
+      "from": "EV-389",
+      "to": "HYP-111",
+      "type": "validates",
+      "created_at": "2026-09-19T10:21:54+00:00"
+    },
+    {
+      "from": "EV-390",
+      "to": "HYP-111",
+      "type": "validates",
+      "created_at": "2026-09-19T10:21:54+00:00"
+    },
+    {
+      "from": "EV-391",
+      "to": "HYP-111",
+      "type": "validates",
+      "created_at": "2026-09-19T10:21:54+00:00"
     }
   ]
 }
