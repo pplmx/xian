@@ -4,16 +4,16 @@
 
 ```bash
 # 一 · 装发布版压缩包(推荐;每次发版都作为 release 附件挂上去)
-bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.20/wanxiang-engine-0.1.20.tgz
-npm  i https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.20/wanxiang-engine-0.1.20.tgz
+bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.21/wanxiang-engine-0.1.21.tgz
+npm  i https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.21/wanxiang-engine-0.1.21.tgz
 
 # 二 · 本地路径依赖
 #    package.json: "wanxiang-engine": "file:../packages/engine"
 bun run build              # 在 packages/engine 里先出一次产物
 
 # 三 · 自己打一份再装(离线 / 内网分发用这条)
-cd packages/engine && npm pack        # 得到 wanxiang-engine-0.1.20.tgz(就是上面那个附件)
-npm i ./wanxiang-engine-0.1.20.tgz
+cd packages/engine && npm pack        # 得到 wanxiang-engine-0.1.21.tgz(就是上面那个附件)
+npm i ./wanxiang-engine-0.1.21.tgz
 
 # 四 · monorepo 工作区
 #    把 packages/engine 加进根 package.json 的 workspaces 即可
@@ -22,7 +22,7 @@ npm i ./wanxiang-engine-0.1.20.tgz
 装**发布版压缩包**这条不跑任何脚本:包里已经是产物(`prepack` 在**打包时**把 `dist` 编译好),
 所以消费者那边不需要 `typescript`,也不需要允许任何安装脚本。
 
-**为什么不把 `bun add github:...#v0.1.20` 当首选**(实测过,不是猜测):
+**为什么不把 `bun add github:...#v0.1.21` 当首选**(实测过,不是猜测):
 
 * 那条路要在**安装现场**编译,而构建工具不该是运行时依赖;
 * **bun** 默认拦掉依赖的安装脚本 —— 装完包里没有 `dist`,`import 'wanxiang-engine'` 直接报
@@ -71,8 +71,8 @@ cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
 
 ```bash
 # 1 · 改版本号(只加 patch,除非有对外口径变化)
-$EDITOR package.json                     # 例:"version": "0.1.20" → "0.1.21"(只加 patch)
-# 2 · CHANGELOG 的「未发布」那一节定稿成带日期的一节(## 0.1.20 — YYYY-MM-DD)
+$EDITOR package.json                     # 例:"version": "0.1.21" → "0.1.22"(只加 patch)
+# 2 · CHANGELOG 的「未发布」那一节定稿成带日期的一节(## 0.1.21 — YYYY-MM-DD)
 $EDITOR CHANGELOG.md
 # 3 · 同步文档里的版本引用(README 的安装块与版本块、本文件的安装块与 npm pack 例)
 #     漏了会红:`bun run check` 里的「版本引用自检」按 package.json 逐处核对
@@ -80,10 +80,10 @@ $EDITOR CHANGELOG.md
 git push origin main
 git subtree push --prefix=packages/engine engine main    # 或在独立仓库里直接推
 # 5 · 打 tag + 发 release(gh 的 --target 用完整 SHA,别用分支名)
-gh release create v0.1.20 --target "$(git -C packages/engine rev-parse main)" --title v0.1.20 --notes-file ...
+gh release create v0.1.21 --target "$(git -C packages/engine rev-parse main)" --title v0.1.21 --notes-file ...
 # 6 · 把打包产物挂成 release 附件 —— 使用者装的就是它(README 的首选安装方式就是这个 URL)
-cd packages/engine && npm pack && gh release upload v0.1.20 wanxiang-engine-0.1.20.tgz --clobber
-gh api repos/pplmx/wanxiang-engine/releases/tags/v0.1.20     # 核对 tag、包内版本与附件
+cd packages/engine && npm pack && gh release upload v0.1.21 wanxiang-engine-0.1.21.tgz --clobber
+gh api repos/pplmx/wanxiang-engine/releases/tags/v0.1.21     # 核对 tag、包内版本与附件
 ```
 
 第 6 步**忘了也不要紧**:`.github/workflows/release.yml` 会在 release 发布时自动做同一件事
