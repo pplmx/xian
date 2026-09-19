@@ -4,15 +4,15 @@
 
 ```bash
 # 一 · 按 tag 装(推荐;别跟 main,库还在长)
-bun add github:pplmx/wanxiang-engine#v0.1.18
+bun add github:pplmx/wanxiang-engine#v0.1.19
 
 # 二 · 本地路径依赖
 #    package.json: "wanxiang-engine": "file:../packages/engine"
 bun run build              # 在 packages/engine 里先出一次产物
 
 # 三 · 打包成 tgz 再装
-cd packages/engine && npm pack        # 得到 wanxiang-engine-0.1.18.tgz
-npm i ./wanxiang-engine-0.1.18.tgz
+cd packages/engine && npm pack        # 得到 wanxiang-engine-0.1.19.tgz
+npm i ./wanxiang-engine-0.1.19.tgz
 
 # 四 · monorepo 工作区
 #    把 packages/engine 加进根 package.json 的 workspaces 即可
@@ -59,7 +59,7 @@ cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
 
 ```bash
 # 1 · 改版本号(只加 patch,除非有对外口径变化)
-$EDITOR package.json                     # "version": "0.1.18" → "0.1.19"
+$EDITOR package.json                     # 例:"version": "0.1.19" → "0.1.20"(只加 patch)
 # 2 · CHANGELOG 的「未发布」那一节定稿成带日期的一节(## 0.1.19 — YYYY-MM-DD)
 $EDITOR CHANGELOG.md
 # 3 · 同步文档里的版本引用(README 的安装块与版本块、本文件的安装块与 npm pack 例)
