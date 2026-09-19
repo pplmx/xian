@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 365,
+  "round": 366,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:50:44+00:00",
+  "updated_at": "2026-09-19T00:55:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 358,
+      "touched_round": 365,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -20257,6 +20257,65 @@
       "summary": "宿主侧\"库导出落地\"的判据口径:只看应用侧代码(spec 不算),且\"用上\"必须是**从库真的拿过来**(import / export from)。用例里动过、本地同名定义,都不算接上;这类名字单独印出来供人判断。",
       "rationale": "两处实测:①本作的对账用例(engine*Parity 那一批)几乎把每个导出都 import 过一遍,把它们算作\"用过\"会让这条判据退化成\"库给自己写了个用例\",量不到应用侧到底接没接;②utils/random.ts 自己抄了一份 mulberry32,朴素的名字匹配照样把它记成\"用上了库的 mulberry32\" —— 库那份从头到尾没被引用。改成\"应用侧 + engine-bound\"之后读数从虚高的 54 降到诚实的 52,并额外暴露 4 个只在用例里被动过的名字(createCombatEngine / createProgressionAudit / createRng / seedFromString)。",
       "alternatives_rejected": "①保持原口径(数字好看,但\"每个导出都有态度\"这句话失去意义);②把用例也当成一种\"接上\"并要求写理由(表会迅速膨胀,而且把\"迁移对账\"与\"应用接线\"两件事混在一起);③干脆删掉这条审计、只留库侧的公开面判据(那就没人回答\"本作到底用了没\"这个只有第一个使用者才能回答的问题)。"
+    },
+    "ISS-242": {
+      "id": "ISS-242",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:55:32+00:00",
+      "updated_at": "2026-09-19T00:55:33+00:00",
+      "touched_round": 365,
+      "summary": "README 首选的安装方式 bun add github:pplmx/wanxiang-engine#vX 对 bun 用户是坏的:装出来的包没有 dist(prepare 被 bun 默认拦掉;放行后 git 依赖也不带 devDependencies,tsc 不存在),import 直接报 Cannot find package。所有本地闸门照样全绿,因为发布包自检只验 npm pack 那条路。"
+    },
+    "TASK-347": {
+      "id": "TASK-347",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:55:33+00:00",
+      "updated_at": "2026-09-19T00:55:33+00:00",
+      "touched_round": 365,
+      "category": "fix",
+      "severity": 0.6,
+      "confidence": 0.97,
+      "effort": 2,
+      "summary": "把安装方式改成 release 附件(包里已是产物、不跑脚本),补传 v0.1.19 附件;版本引用自检扩到盯 /download/vX.Y.Z/ 段;发版清单加\"传附件\"这一步。"
+    },
+    "CHG-431": {
+      "id": "CHG-431",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:55:33+00:00",
+      "updated_at": "2026-09-19T00:55:33+00:00",
+      "touched_round": 365,
+      "commit": "f749609",
+      "summary": "库:README 安装块改为 release 附件 + 为什么不推荐 git tag 的说明;docs/development.md 四种接法重写 + 发版清单第 6 步;verify-dist 版本引用正则加 /download/vX.Y.Z/;CHANGELOG 记一条。宿主:README 的依赖写法同步;scripts/engine-dist.mjs 的版本判据也加同一条正则。发布侧:gh release upload 补传 wanxiang-engine-0.1.19.tgz(251 KB)。"
+    },
+    "EV-357": {
+      "id": "EV-357",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:55:33+00:00",
+      "updated_at": "2026-09-19T00:55:33+00:00",
+      "touched_round": 365,
+      "confidence": 0.97,
+      "source": "变更 CHG-431(f749609)。实测(临时项目,对下载回来的包):bun add <附件 URL> 装上后 dist 齐全、defineGame(DAILY)+ 子路径 presets/daily + 掉装备跑通;使用者侧 tsc --strict 的 moduleResolution bundler 与 node16 双双通过。对照实验:bun add github:...#v0.1.19 无 dist(import 报 Cannot find package);加 trustedDependencies 后 prepare 退出 127(tsc: command not found);npm i github:...#v0.1.19 能装上(先装 devDependencies 再跑 prepare)。闸门:库 bun run check 全绿(570 例 / 79 文件 + 15 道自检;版本引用 14 处对齐),宿主 check:engine 通过(65 处引用 + 3 处版本)。gh api 核对 v0.1.19 release 的 assets 含该 tgz。",
+      "summary": "一次\"当外部用户装一遍\"的验证,抓到一条文档承诺但没判据覆盖的断头路。修法选了\"装附件\"而不是\"提交 dist\"或\"让用户 trust\":前者的产物本来就有(发布包自检一直在打),而且两个包管理器行为一致。"
+    },
+    "DEC-159": {
+      "id": "DEC-159",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:55:33+00:00",
+      "updated_at": "2026-09-19T00:55:33+00:00",
+      "touched_round": 365,
+      "summary": "对外分发只用 release 附件(tgz),不把 git tag 安装当推荐路径;仓库继续不提交 dist。附件由发版流程第 6 步 npm pack + gh release upload 生成,版本号在 URL 里由「版本引用自检」盯着。",
+      "rationale": "git tag 安装依赖 prepare 现场编译,而构建工具不是运行时依赖:bun 默认拦脚本、放行后又没有 devDependencies;npm 行为不同(会先装 devDependencies)。把\"装得上\"建立在\"宿主环境恰好肯跑构建脚本\"上太脆。附件这条路:包里已经是产物、不跑任何脚本、两个包管理器行为一致,而且这份 tgz 早就是\"发布包自检\"反复验过的那一份 —— 同一个产物,验证过的东西就是发出去的东西。仓库不提交 dist 这条不变(它只该在打包/发布时生成)。",
+      "alternatives_rejected": "①把 dist 提交进仓库(git 安装就不需要构建了 —— 但仓库里多一份产物、每次改动都要跟一遍,而且 diff 噪音大);②在 README 里教用户 bun pm trust / trustedDependencies(实测放行后仍然缺 tsc,而且把\"装个库先改自己的包清单\"当常规体验);③只推荐 npm(把 bun 用户排除在外,而本作自己就用 bun);④干脆把 typescript 挪进 dependencies 让 prepare 能跑(为构建工具背运行时依赖,违背\"零运行时依赖\")。"
     }
   },
   "edges": [
@@ -29908,6 +29967,30 @@
       "to": "TASK-346",
       "type": "governs",
       "created_at": "2026-09-19T00:50:44+00:00"
+    },
+    {
+      "from": "CHG-431",
+      "to": "TASK-347",
+      "type": "implements",
+      "created_at": "2026-09-19T00:55:33+00:00"
+    },
+    {
+      "from": "CHG-431",
+      "to": "ISS-242",
+      "type": "resolves",
+      "created_at": "2026-09-19T00:55:33+00:00"
+    },
+    {
+      "from": "ISS-242",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-19T00:55:33+00:00"
+    },
+    {
+      "from": "DEC-159",
+      "to": "TASK-347",
+      "type": "governs",
+      "created_at": "2026-09-19T00:55:33+00:00"
     }
   ]
 }
