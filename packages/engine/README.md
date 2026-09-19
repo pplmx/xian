@@ -230,7 +230,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 设施与投资 | 这一座几级、还能不能再升、投点往哪投、换位会不会作废 | `createFacilitySystem` / `createPointPool` |
 | 内容与存档 | 内容之间自洽吗、老档怎么升上来、形状坏了怎么补 | `defineGame` / `defineSaveFormat` |
 | 可复现 | 数值超过 double 怎么办、同一颗种子跑两遍一样吗 | `Numeric<T>` / `createRng` |
-| 读数与体检 | 哪个资源是瓶颈、哪一格跳得最狠、这一跃脱不脱节、什么时候该换大数 | `createEconomyReadings` / `createProgressionAudit` |
+| 读数与体检 | 哪个资源是瓶颈、哪一格跳得最狠、这一跃脱不脱节、内容那一侧从哪量、什么时候该换大数 | `createEconomyReadings` / `createProgressionAudit` / `dungeonContentPower` |
 
 每一层的"回答的问题"、最小用法与注意事项,都在 **[模块速查与定制点](./docs/usage.md)** ——
 那份文档里还有一张"想改什么、改哪里"的定制表(近一百个可改点)。
@@ -308,13 +308,13 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 | 判据 | 钉住的事 | 在哪 |
 | --- | --- | --- |
-| 用例 | 公开面的行为,570 个用例 / 79 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
+| 用例 | 公开面的行为,583 个用例 / 79 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 77 个运行时导出 + 211 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
+| 公开面判据 | 78 个运行时导出 + 212 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
 
-上表只是最常被问到的五条。真正跑起来的是**十六道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `文档链接` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
+上表只是最常被问到的五条。真正跑起来的是**十七道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `文档链接` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `公开面数量` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
 
 每条对应一类"会悄悄腐烂的东西"(指南里的示例路径、定制表里承诺的开关、报错文案、
 文档里的 tag、目录树与正文的规模数、消融有没有收进参考表、相对导入的扩展名……),

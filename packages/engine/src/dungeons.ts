@@ -17,7 +17,7 @@
  * 每次胜利固定给一份(修为/货币),再按 `dropChance` 掷掉落。
  * 引擎只负责"给了什么、给了多少",至于这些资源叫什么、怎么花,那是游戏自己的事。
  */
-import type { Mods } from './attributes.js'
+import type { AttributeSystem, Mods } from './attributes.js'
 import type { Numeric } from './numeric.js'
 import { numberNumeric } from './numeric.js'
 import type { Rng } from './rng.js'
@@ -452,5 +452,92 @@ export function createDungeonSystem<T = number>(
     nextEncounter,
     onVictory,
     snapshot
+  }
+}
+
+/**
+ * 内容强度 —— 把**副本系统里那张现成的区域表**读成"每个境界该打多硬的内容"。
+ *
+ * 为什么值得进库:成长体检有两半 —— 玩家那一半在等级表里,内容这一半在区域表里。
+ * 而区域表里本来就写着 `tier`(层级,与装备同一把尺子)与 `minRealm`(推荐境界),
+ * 于是"内容强度"根本不需要再手写一条曲线:手写就等于把已经写好的那一半抄一遍,
+ * 抄错了还看不出来 —— 体检会拿一条错的曲线告诉你"内容没被碾",那比不报还坏。
+ *
+ * 默认读数 = **该境界能打到的最强那一处区域的首领**,按你给的口径折算成可比数:
+ *
+ *   regionOf(major)  默认:minRealm ≤ major 的区域里 tier 最高的一处。
+ *                    于是"这一境还没配内容"时读数自动向下沿用上一处 —— 那本来就是玩家能打到的东西;
+ *   enemyOf(region)  默认:区域首领;首领不在敌人表里,退回该区第一个能用的普通敌人。
+ *
+ * 返回的函数只吃 `major`:**区域表的粒度就是一档一处,同一大境界里的内容强度是同一个数**。
+ * 想让内容随小层往上走(越深越强),在外面乘一个系数即可 —— 别改这里,那是你的口径。
+ */
+export interface DungeonContentPowerConfig<T = number> {
+  /** 副本系统 —— 区域表(层级 + 推荐境界)就是内容强度的坐标 */
+  dungeons: DungeonSystem<T>
+  /**
+   * 怎么把一份敌人快照读成一个可比数(战力)。
+   *
+   * 只有你自己知道"你的游戏里什么叫强",所以这一格的口径由你定;给了 `attributes` 就可以不写。
+   */
+  powerOf?: (snapshot: EnemySnapshot<T>) => number
+  /**
+   * 属性系统:给了它就默认取 `compute({ base: snapshot.stats }).power` ——
+   * 与体检里玩家那一侧**同源**的口径(别用"面板之和"当默认,那是保底,不是同一把尺子)。
+   */
+  attributes?: AttributeSystem<T>
+  /**
+   * 数值层:只有走 `attributes` 那条默认读数时用得上。
+   *
+   * 换了大数实现的作品要把它传进来 —— 战力是 T,而体检那边的强度读数是 number,
+   * 转回来这一步只有你的数值层做得了(`numeric.toNumber`)。
+   */
+  numeric?: Numeric<T>
+  /** 该境界挑哪一处代表(默认:minRealm ≤ major 里 tier 最高的那一处) */
+  regionOf?: (major: number) => RegionDef | undefined
+  /** 这处挑哪只敌人当强度(默认:区域首领) */
+  enemyOf?: (region: RegionDef) => string | undefined
+}
+
+export function dungeonContentPower<T = number>(
+  config: DungeonContentPowerConfig<T>
+): (major: number) => number {
+  const { dungeons } = config
+  if (!config.powerOf && !config.attributes) {
+    throw new Error('内容强度:要么给 powerOf,要么给 attributes —— 不给就不知道拿什么当战力')
+  }
+  const numeric = config.numeric ?? (numberNumeric as unknown as Numeric<T>)
+  const attributes = config.attributes
+  const powerOf =
+    config.powerOf ??
+    ((snapshot: EnemySnapshot<T>): number =>
+      numeric.toNumber(attributes!.compute({ base: snapshot.stats }).power))
+
+  /** 该境界能打到的最强一处:够格的里 tier 最大的;一处都不够格就取最浅的那处 */
+  const pick = (major: number): RegionDef | undefined => {
+    const reachable = dungeons.regions.filter(r => r.minRealm <= major)
+    const pool = reachable.length > 0 ? reachable : dungeons.regions
+    return pool.reduce<RegionDef | undefined>(
+      (best, r) => (best === undefined || r.tier >= best.tier ? r : best),
+      undefined
+    )
+  }
+
+  const enemyOf = config.enemyOf ?? ((region: RegionDef): string | undefined => region.boss)
+  const cache = new Map<number, number>()
+  return (major: number): number => {
+    const hit = cache.get(major)
+    if (hit !== undefined) return hit
+    const region = config.regionOf ? config.regionOf(major) : pick(major)
+    if (!region) throw new Error(`内容强度:这个境界没有可用的区域 —— 第 ${major} 境界`)
+    // 首领不在敌人表里(内容改过)时退回普通池:宁可给"这一处最弱的读数",也别让整条体检报错
+    const wanted = enemyOf(region)
+    const enemy =
+      (wanted ? dungeons.enemy(wanted) : undefined) ??
+      region.enemies.map(id => dungeons.enemy(id)).find((e): e is EnemyDef => e !== undefined)
+    if (!enemy) throw new Error(`内容强度:这处区域没有可用的敌人 —— ${region.id}`)
+    const value = powerOf(dungeons.snapshot(enemy.id))
+    cache.set(major, value)
+    return value
   }
 }

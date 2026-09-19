@@ -14,11 +14,17 @@
  * 这也是"第一个定制用户"该有的样子:库里的通用件,本作不是供着,而是真的拿来用。
  */
 import { describe, expect, it } from 'vitest'
-import { createProgressionAudit } from 'wanxiang-engine'
+import { createProgressionAudit, dungeonContentPower } from 'wanxiang-engine'
+import type { EnemyDef } from '@/types'
 import { EXP_SUB_GROWTH, WORLD_STEP_EXP_MULT } from '@/data/constants'
 import { MAX_MAJOR, REALMS, WORLDS } from '@/data/realms'
+import { maxTierForMajor } from '@/data/regions'
+import { toNum } from '@/utils/gnum'
+import { makeEnemySnap } from './combat'
 import { gnumNumeric } from './engineNumeric'
 import { ENGINE_WORLD } from './engineWorld'
+import { powerScore } from './formulas'
+import { enemyPowerAt } from './inflationAudit'
 
 /** 大数层要显式把 GNum 适配器交进去 —— 引擎默认只认 number */
 const audit = createProgressionAudit({ realms: ENGINE_WORLD.realms }, gnumNumeric)
@@ -92,5 +98,58 @@ describe('通用曲线体检 × 本作真表', () => {
     expect(first.power).toBeCloseTo(sum, 6)
     expect(first.label).toBe(ENGINE_WORLD.realms.label(0, 0))
     console.log(`\n第一格 ${first.label}:面板强度 ${first.power.toExponential(3)}(三维之和)`)
+  })
+})
+
+/**
+ * 内容强度 —— 本作那套 vs 库的区域表读法。
+ *
+ * 引擎这边从"体检"那一轮起多了一个通用件:`dungeonContentPower` 能把**区域表**
+ * (层级 + 推荐境界)直接读成"每个大境界该打多硬的内容"。本作**没有接**它,理由不是懒,
+ * 而是两套模型量的根本不是同一个东西 —— 这一节把这件事量出来钉住,免得两种情况悄悄发生:
+ *
+ *   ① 本作的审计强度与战斗强度脱节(审计说"内容还有威胁",玩家却在碾压);
+ *   ② 哪天有人把两套模型对齐了(或本作改用库的 snapshot),归属表却还写着"本作有等价物"。
+ */
+describe('内容强度:本作那套 vs 库的区域表读法', () => {
+  /** 基准敌人:三项倍率都是 1 —— 审计里的"这一层该有的敌人" */
+  const basis = (tier: number): EnemyDef => ({
+    id: 'basis',
+    name: '基准敌人',
+    icon: '',
+    tier,
+    hpMult: 1,
+    atkMult: 1,
+    defMult: 1,
+    speed: 1,
+    skills: []
+  })
+
+  it('本作审计用的内容强度 == 战斗快照的强度(同一套解析式,不是另抄一份表)', () => {
+    for (const tier of [1, 5, 12, 20, 24]) {
+      const snap = makeEnemySnap(basis(tier), tier, 1)
+      expect(toNum(powerScore(snap.attack, snap.defense, snap.maxHp))).toBeCloseTo(enemyPowerAt(tier), 6)
+    }
+    console.log(
+      `\n内容强度(基准敌人):${[1, 12, 24].map(t => `t${t} ${enemyPowerAt(t).toExponential(2)}`).join(' · ')}`
+    )
+  })
+
+  it('库的区域表读数不是本作战斗的内容强度 —— 两套模型后期差 3 个数量级以上', () => {
+    const byRegions = dungeonContentPower({
+      dungeons: ENGINE_WORLD.dungeons,
+      attributes: ENGINE_WORLD.attributes,
+      numeric: gnumNumeric
+    })
+    const ratio = (major: number): number => byRegions(major) / enemyPowerAt(maxTierForMajor(major))
+    // 前段库读数偏高(它取的是**首领**,本作取的是基准敌人),后段反过来低 3 个数量级:
+    // 本作的敌人曲线是 powerScale(tier) × 层级补偿,库的 snapshot 是 tierGrowth^(tier-1),
+    // 两条曲线只在 t1 附近相交。所以本作的内容强度仍用 core/combat 那套;
+    // 库那份留给"整场都用库的 snapshot"的作品(本作不用 snapshot:战斗走 core/combat)。
+    expect(ratio(0)).toBeGreaterThan(1)
+    expect(ratio(MAX_MAJOR)).toBeLessThan(0.001)
+    console.log(
+      `\n区域表读数 ÷ 战斗基准强度:${[0, 6, 12, MAX_MAJOR].map(m => `第 ${m} 境 ×${ratio(m).toFixed(3)}`).join(' · ')}`
+    )
   })
 })

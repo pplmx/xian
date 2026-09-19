@@ -101,6 +101,7 @@ import type {
   DropOptions,
   DropTable,
   DungeonConfig,
+  DungeonContentPowerConfig,
   DungeonProgress,
   DungeonSystem,
   Encounter,
@@ -282,6 +283,7 @@ const RUNTIME_EXPORTS = [
   'defineSaveFormat',
   'drawFrom',
   'drawMany',
+  'dungeonContentPower',
   'emptyProgress',
   'encodeSave',
   'entryAllowed',
@@ -359,6 +361,7 @@ type PublicTypes = {
   ]
   dungeon: [
     DungeonConfig,
+    DungeonContentPowerConfig<number>,
     DungeonProgress,
     DungeonSystem,
     Encounter,

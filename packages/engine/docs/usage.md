@@ -17,7 +17,7 @@
 | 随机源 | `createRng` / `mulberry32` / `seedFromString` / `randomRng` | 同一颗种子跑两遍一样吗?要"不可复现"的那一个时用哪个?字符串种子怎么变成数? |
 | 装备 | `game.equipment` | 这一层这一部位掉什么?这一件是什么品质、哪几条词条?装配后汇总多少? |
 | 背包 / 持有 | `createHoldingSystem` | 收得下吗?满了之后怎么办?装上去还占背包吗?同一件被挂在两个槽上怎么办? |
-| 副本 | `game.dungeons` | 哪些图开着?这次遇到谁?打几次出首领?通关给什么? |
+| 副本 | `game.dungeons` | 哪些图开着?这次遇到谁?打几次出首领?通关给什么?这一境的内容有多硬(体检的另一半)? |
 | 战斗 | `game.combat` | 这场遭遇谁赢?回合日志长什么样? |
 | 技能 | `createSkillSystem` | 练到第几级加多少?要花什么?满级选哪条路? |
 | 炼制 | `composeCraftRate` 等 | 这次能不能成?四个乘区各贡献多少? |
@@ -341,6 +341,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **经济体检**(哪个资源是瓶颈 / 烂在手里) | `createEconomyReadings({ bands?, labels? })` —— 进/出比值的判词(默认阈值 0.7 / 3 / 10,换算成"支出/收入":`< 1.43` 健康、`< 0.34` 过剩、`< 0.10` 只进不出)、分期读、带 `note` 的"没把握"标记;出为 0 时比值是无穷而不是 1 |
 | **曲线体检**(哪一格跳得最狠 / 哪一段整体最陡 / 玩家什么时候开始碾压内容 / **改一个数之后变的是哪一段**) | `createProgressionAudit({ game })` 或 `({ realms, power, contentPower, crushRatio })` —— 沿等级阶梯逐格量:需求与面板的**相邻格倍数**、**换界那几格**单列(跳变记在落点上)、玩家 ÷ 内容 ≥ `crushRatio`(默认 3)算"碾压"。强度三档来源:**给了 `game` 就用属性系统的战力评分**(标准答案,权重取自 `powerWeights`)/ 自己给 `power` / 都不给则用"面板之和"兜底。四种读法:`lines()` 一行一格、`segments()` **按段聚合**(默认按大境界,也能按界域 —— 段跨度 = 段末 ÷ 段首,"进门那一步"单独给,排期看的是这个)、`summary()` 给最狠的两处跳变与第一次碾压、`compareProgression(改前, 改后)` **两份配置并排比**(逐段跨度变化倍数 + 全程跨度;段数不同时它会明说 `mismatched`) |
 | **掉落/奖励收不下怎么办** | `createIntake({ holding, accept?(item, holding), evictable?(items, incoming) → 被挤掉那件, fallback, witness? })` —— 先见证再裁决、满了腾位(腾位失败不追回)、各条去路共用一条折算账、回执带人话与原因;`evictable` 拿到的是**现有全部件 + 新来的那件**(挑谁走由你比) |
+| **内容强度拿什么当尺子**(体检的另一半) | `dungeonContentPower({ dungeons, attributes })` —— 不用手写 `20 * 3 ** major` 那种曲线:直接从区域表(`tier` 层级 + `minRealm` 推荐境界)折算,默认取"该境界能打到的最强那一处"的**首领**,口径是属性系统的战力评分(与体检里玩家那一侧同源);这一境没配内容就向下沿用上一处。换口径给 `powerOf`、挑别处给 `regionOf`、挑别的敌人给 `enemyOf`,大数实现再把 `numeric` 一起给它 |
 | **"本次所得"与账本对不上** | `createSettlement({ resources }, numeric?)` —— 回执里的每个数字都取自落账时的**实际发生额**,`clipped` 单独说明被上限截掉多少;想显示别的数就得绕过回执,那是显式越界 |
 | **掉率与保底的口径**(叠过 1 算必中 / 再高也不超过 90% / 首领第一抽必出) | `createDropTable(entries)`:`chanceCap` 另设上限、`guaranteed` 配 `guarantee` 开保底(开不开都不改随机流)、`scalesWithChance` / `scalesWithAttempts` / `scalesWithCount` 各自决定吃不吃倍率;`rollOne` 逐条掷、`roll` 整表掷,**顺序即声明顺序** |
 | **增益 / 减益的时长口径**(同一条再吃一次药:叠时长 / 取较长者 / 重新起算) | `createBuffSystem({ defs, stacking })` —— 默认 `'extend'`(剩余 + 新时长),`'longest'` 是取较长者(刷新,剩余被吞),`'reset'` 一律从现在起算;`maxDurationSec` 可给叠加上限 |
@@ -370,6 +371,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **遭遇调度完全自己定** | `dungeons.encounterFn(ctx, rng)`(给出 region/progress/bossDue/pool;返回 `null` 即交回默认逻辑) |
 | **奖励数额完全自己定** | `dungeons.victoryRewards[].amount(tier)`(概率仍生效) |
 | **整场奖励完全自己接管** | `dungeons.rewardFn(ctx, rng)`(默认奖励已算好放在 `ctx.defaultRewards` 里,可以先看再决定;`null` 即交回默认) |
+| **内容强度拿什么当尺子**(体检的另一半) | `dungeonContentPower({ dungeons, powerOf / attributes, regionOf?, enemyOf?, numeric? })` —— 默认取"该境界能打到的最强那一处"的首领,按属性系统的战力评分折算(与体检里玩家那一侧同源);这一境没配内容就向下沿用上一处,不凭空外推 |
 | **区域多条前置**("两条线都通才开"/"任一即可") | `requireCleared: string \| string[]` + `requireMode: 'all' \| 'any'` |
 | **战斗读哪几个键** | `BattleConfig.keys: { attack, defense, hp, maxHp, speed }` —— 本值叫火力/装甲/结构值也能直接指过去 |
 | **战斗伤害公式完全自己定** | `BattleConfig.damageFn(ctx, rng)`(减法型/除算型/查表型都行;给了它,地板与修正都归你) |

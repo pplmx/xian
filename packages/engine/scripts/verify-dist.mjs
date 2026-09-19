@@ -384,6 +384,30 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   console.log(`公开面行为判据自检通过(${exportNames.length} 个导出都有人真用过)`)
 
   /**
+   * 公开面数量自检 —— README 里那两个数(运行时导出 / 公开类型)必须是真的。
+   *
+   * 为什么值得一条判据:"N 个运行时导出 + M 个公开类型一字不差"是 README 里最有说服力、
+   * 也最容易腐烂的一句 —— 实测它漂过:CHANGELOG 的版本口径那行还写着 75 / 203,
+   * 而 README 写 77 / 211(那时实际已是 78 / 212)。数量是**读者建立信任的第一眼**,
+   * 差一个就说明有东西改了没人管。
+   *
+   * 两个数都当场数出来:运行时导出 = `Object.keys(公开入口)`;
+   * 公开类型 = `publicApi.spec.ts` 里那份 `import type { … } from './index.js'` 清单的条目数 ——
+   * 那份清单的职责就是"每个模块的公开类型都从公开入口取得到",它的条目数就是公开类型的条目数。
+   */
+  const faceReadme = readFileSync(resolve(ENGINE, 'README.md'), 'utf-8')
+  const runtimeCount = Object.keys(engine).length
+  const apiSource = readFileSync(resolve(ENGINE, 'src/publicApi.spec.ts'), 'utf-8')
+  const typeBlock = apiSource.match(/import type \{([\s\S]*?)\} from '\.\/index\.js'/)
+  assert.ok(typeBlock, "publicApi.spec.ts 里找不到 import type { … } from './index.js' 那一块 —— 写法变了?")
+  const typeCount = typeBlock[1].split(',').filter(entry => entry.trim().length > 0).length
+  const faceClaim = faceReadme.match(/(\d+) 个运行时导出 \+ (\d+) 个公开类型/)
+  assert.ok(faceClaim, 'README 里找不到"N 个运行时导出 + M 个公开类型"那句 —— 措辞改了?')
+  assert.equal(Number(faceClaim[1]), runtimeCount, `README 说 ${faceClaim[1]} 个运行时导出,实际 ${runtimeCount} 个`)
+  assert.equal(Number(faceClaim[2]), typeCount, `README 说 ${faceClaim[2]} 个公开类型,实际清单里 ${typeCount} 条`)
+  console.log(`公开面数量自检通过(${runtimeCount} 个运行时导出 + ${typeCount} 个公开类型,与 README 写的一致)`)
+
+  /**
    * 模块速查覆盖自检 —— 每个模块文件都得在 `docs/usage.md` 的模块表里找得到。
    *
    * 这份表是使用者"要找某一层时"的入口:新加一个模块却忘了写进去,等于这层不存在

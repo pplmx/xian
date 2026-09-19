@@ -54,6 +54,37 @@ export const reading = { steepest, segments, overview, diff, cells: formatAmount
 **碾压看玩家 ÷ 内容**(默认阈值 3)。经济侧的"哪个资源是瓶颈"用 `createEconomyReadings`,
 它和这份文档里「经济读数」那一节的阈值是同一套。
 
+### 内容强度别手写:从区域表取
+
+体检有两半:玩家那一半在等级表里,**内容那一半本来就在区域表里** ——
+每个 `RegionDef` 上都写着 `tier`(层级,与装备同一把尺子)与 `minRealm`(推荐境界)。
+于是上面那段里的 `contentPower: major => 20 * 3 ** major` 是**不该写的一行**:
+手写等于把已经写好的那一半再抄一遍,抄错了还看不出来 —— 体检会拿一条错的曲线
+告诉你"内容没被碾",那比不报还坏。
+
+<!-- compile-check: 同样对着发布包编过,读者可以直接抄 -->
+```ts
+import { createProgressionAudit, defineGame, dungeonContentPower } from 'wanxiang-engine'
+import { XIUXIAN } from 'wanxiang-engine/presets/xiuxian'
+
+const game = defineGame(XIUXIAN)
+
+// 默认读数 = 该境界能打到的最强那一处区域的**首领**,按属性系统的战力评分折算。
+// 两侧同源(都是 compute().power)读数才有可比性;这一境还没配内容时,读数向下沿用上一处
+// (那本来就是玩家能打到的东西),而不是凭空外推。
+const contentPower = dungeonContentPower({ dungeons: game.dungeons, attributes: game.attributes })
+
+const audit = createProgressionAudit({ game, contentPower })
+
+// 换了自己的口径(战力怎么算 / 挑哪一处 / 挑哪只敌人)就照旧自己给 contentPower;
+// 想让内容随小层往上走,在外面乘系数即可 —— 别改库里那一段。
+export const reading = { crushRatio: audit.crushRatio, cells: audit.steps.length, first: audit.steps[0] }
+```
+
+三个旋钮的口径写在 `dungeonContentPower` 头上:`powerOf`(读成战力,或直接给 `attributes`)、
+`regionOf`(挑哪一处)、`enemyOf`(挑哪只敌人);换了大数实现的作品还要把 `numeric` 一起给它,
+否则 T 转不回体检要的 number。
+
 ## 一页索引:你要调的那件事在哪一节
 
 30 份实测实验,每份一句结论。找到那一行之后,往下翻到同名小节看推导、表格与复现命令。

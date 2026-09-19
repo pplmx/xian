@@ -61,6 +61,7 @@ export { createEquipmentSystem, generateTemplates } from './equipment.js'
 
 export type {
   DungeonConfig,
+  DungeonContentPowerConfig,
   DungeonProgress,
   DungeonSystem,
   Encounter,
@@ -71,7 +72,7 @@ export type {
   RewardDef,
   VictoryOutcome
 } from './dungeons.js'
-export { createDungeonSystem, emptyProgress } from './dungeons.js'
+export { createDungeonSystem, dungeonContentPower, emptyProgress } from './dungeons.js'
 
 export type {
   BattleConfig,

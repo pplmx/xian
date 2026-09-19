@@ -56,6 +56,10 @@ const NOT_BY_NAME: Record<string, { kind: 'facade' | 'own' | 'none'; why: string
   createCombatEngine: { kind: 'own', why: '自动战斗是应用侧那套(core/combat:护盾/反击/追击/战报节奏);库的战斗骨架只在 engineCombatAblation 里对合成键' },
   createProgressionAudit: { kind: 'own', why: '只在 engineProgressionAudit 这条对账用例里用(拿它核本作真表的结构);应用侧的数值审计仍走 inflationAudit 那套' },
   compareProgression: { kind: 'own', why: '调参对照:本作走 inflationAudit / progressionSim 那套内容审计(含装备成型度与区域强度),引擎这份通用对照留给未来的使用者' },
+  dungeonContentPower: {
+    kind: 'own',
+    why: '本作的内容强度是"战斗快照"那一套(core/combat.makeEnemySnap:powerScale(tier) × 三围基数 × 层级补偿),区域表读数走的是库的 snapshot(三围基数 × 倍率 × tierGrowth^(tier-1)) —— engineProgressionAudit 里量过:两套后期差 3 个数量级以上,量的不是同一个量。本作战斗不消费 snapshot,故审计仍用 enemyPowerAt;库这份留给整场都用库 snapshot 的作品'
+  },
   runIdle: { kind: 'none', why: '离线结算要按秒摊到多本账(修为/灵气/建筑/钻研/历练),没有"折叠成一步"的循环' },
   createPityCounter: { kind: 'none', why: '本作没有抽卡保底这套玩法' }
 }

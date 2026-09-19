@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { createDungeonSystem, emptyProgress } from './dungeons.js'
+import { attributeDefs, createAttributeSystem } from './attributes.js'
+import { createDungeonSystem, dungeonContentPower, emptyProgress, type EnemySnapshot } from './dungeons.js'
+import { createProgressionAudit } from './progression.js'
+import { createRealmSystem, type RealmSystemConfig } from './realms.js'
 import { createRng } from './rng.js'
 
 const CONFIG = {
@@ -236,5 +239,100 @@ describe('副本系统 —— 区域链/遭遇/首领门槛/通关奖励', () =>
     expect(custom.onVictory('r1', { regionId: 'r1', kind: 'normal', enemyId: 'e1' }, emptyProgress(), createRng(1)).rewards).toEqual([
       { id: 'star', name: '星', amount: 7 }
     ])
+  })
+})
+
+/**
+ * 内容强度 —— **体检的另一半**。
+ *
+ * 成长体检要两把尺子:玩家那一侧在等级表里,内容这一侧其实也在内容表里(区域的层级与
+ * 推荐境界)。手写一条 `20 * 3 ** major` 的曲线等于把已经写好的那一半抄一遍 ——
+ * 抄错了还看不出来,体检会拿一条错的曲线告诉你"内容没被碾"。这里钉的就是"别再手写":
+ * 口径、退化路径、以及"体检真的在逐格用它"。
+ */
+
+/** 一个看得出单调的保底口径(真实作品该接属性系统的 `compute().power`) */
+const crudePower = (snap: EnemySnapshot<number>): number =>
+  Number(snap.stats.hp) + Number(snap.stats.attack)
+
+/** 一张最小境界表(3 境 × 2 层,面板每层 ×2)—— 只用来把体检接起来 */
+const ladder = (): RealmSystemConfig => ({
+  worlds: [{ id: 'w', name: '一界', realms: ['一重', '二重', '三重'] }],
+  layerNames: ['上', '下'],
+  exp: { base: 100, layerGrowth: 2, realmGrowth: 3, lateRealmGrowth: 3 },
+  combat: { base: { attack: 10 }, layerGrowth: 2, realmGrowth: 3, lateRealmGrowth: 3 },
+  breakthrough: { layerBase: 0.9, layerDecay: 0.1, majorBase: 0.6, majorDecay: 0.1, min: 0.1, max: 0.9 }
+})
+
+describe('内容强度 —— 直接从副本区域表读', () => {
+  it('默认口径:该境界能打到的最强那一处区域,取它的首领', () => {
+    const sys = createDungeonSystem(CONFIG)
+    const content = dungeonContentPower({ dungeons: sys, powerOf: crudePower })
+    expect(content(0)).toBeCloseTo(crudePower(sys.snapshot('b1')), 10)
+    expect(content(1)).toBeCloseTo(crudePower(sys.snapshot('b2')), 10)
+    expect(content(5)).toBeCloseTo(crudePower(sys.snapshot('b3')), 10)
+  })
+
+  it('这一境还没配内容:读数向下沿用,不凭空外推', () => {
+    const sys = createDungeonSystem(CONFIG)
+    const content = dungeonContentPower({ dungeons: sys, powerOf: crudePower })
+    // 三图的 minRealm 是 5 —— 第 2~4 境区域表里没有新东西,能打到的最强一处仍是二图
+    for (const major of [2, 3, 4]) expect(content(major)).toBeCloseTo(crudePower(sys.snapshot('b2')), 10)
+    // 而且单调不减:内容不会因为你升了境界而变软
+    const series = [0, 1, 4, 5, 9].map(content)
+    expect(series).toEqual([...series].sort((a, b) => a - b))
+  })
+
+  it('接属性系统:与玩家那一侧同源(compute().power 的口径)', () => {
+    const sys = createDungeonSystem(CONFIG)
+    const attributes = createAttributeSystem({ defs: attributeDefs({}) })
+    const content = dungeonContentPower({ dungeons: sys, attributes })
+    expect(content(0)).toBeCloseTo(Number(attributes.compute({ base: sys.snapshot('b1').stats }).power), 10)
+  })
+
+  it('挑哪一处、挑哪只敌人都能自己接管', () => {
+    const sys = createDungeonSystem(CONFIG)
+    const content = dungeonContentPower({
+      dungeons: sys,
+      powerOf: crudePower,
+      regionOf: () => sys.region('r1'),
+      enemyOf: region => region.enemies[0]
+    })
+    expect(content(9)).toBeCloseTo(crudePower(sys.snapshot('e1')), 10)
+  })
+
+  it('接上体检:每一格的"玩家 ÷ 内容"就是拿这张区域表算的', () => {
+    const sys = createDungeonSystem(CONFIG)
+    const realms = createRealmSystem(ladder())
+    const content = dungeonContentPower({ dungeons: sys, powerOf: crudePower })
+    const power = (major: number, layer: number): number => Number(realms.baseStats(major, layer)['attack'] ?? 0)
+    const audit = createProgressionAudit({ realms, power, contentPower: content })
+    // 逐格对账:体检没有缓存第二次、也没有把内容当成"全局一个数"
+    for (const step of audit.steps) {
+      expect(step.ratio).toBeCloseTo(power(step.major, step.layer) / content(step.major), 10)
+    }
+    // 内容厚薄一改,碾压格数当场跟着变 —— 这一条是"体检真的在读它"的判据
+    const soft = createProgressionAudit({ realms, power, contentPower: major => content(major) / 100 })
+    const hard = createProgressionAudit({ realms, power, contentPower: major => content(major) / 10 })
+    expect(soft.summary().crushing).toBeGreaterThan(hard.summary().crushing)
+  })
+
+  it('不给口径就报错:不知道拿什么当战力', () => {
+    const sys = createDungeonSystem(CONFIG)
+    expect(() => dungeonContentPower({ dungeons: sys })).toThrow(
+      '内容强度:要么给 powerOf,要么给 attributes —— 不给就不知道拿什么当战力'
+    )
+  })
+
+  it('区域表是空的 / 这处一只敌人都没有:点名报错,而不是给个 NaN', () => {
+    const empty = createDungeonSystem({ regions: [], enemies: [] })
+    const emptyContent = dungeonContentPower({ dungeons: empty, powerOf: crudePower })
+    expect(() => emptyContent(0)).toThrow('内容强度:这个境界没有可用的区域 —— 第 0 境界')
+    const broken = createDungeonSystem({
+      regions: [{ id: 'x', name: '空图', tier: 1, minRealm: 0, enemies: ['nope'], boss: 'gone' }],
+      enemies: []
+    })
+    const brokenContent = dungeonContentPower({ dungeons: broken, powerOf: crudePower })
+    expect(() => brokenContent(0)).toThrow('内容强度:这处区域没有可用的敌人 —— x')
   })
 })
