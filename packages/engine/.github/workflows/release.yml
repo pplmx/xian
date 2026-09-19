@@ -1,0 +1,54 @@
+name: Release asset
+
+# 发版时**保证** release 上挂着打包产物。
+#
+# 为什么需要它:README 的首选安装方式就是那个 tgz 附件 —— 少了它,使用者拿到的是 404,
+# 而本地所有自检照样全绿(它们验的是"包里有什么",验不到"附件挂没挂")。
+# 所以这里做的是**兜底**:本地发版流程里那条 `gh release upload` 是快路径(立刻见效),
+# 这个 workflow 是保险丝(忘了传、传错了、换了机器,都会在同一分钟内补上)。
+#
+# 手动重跑:workflow_dispatch 给一个已存在的 tag —— 典型场景是"附件丢失/需要重传"。
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 要补附件的 tag(例如 v0.1.19)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - name: 安装 Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 校验这次要发的东西
+        run: |
+          bun install --frozen-lockfile
+          bun run check
+        # check 里已经包含"发布包自检":真装一遍 + 使用者侧 tsc 严格模式。
+        # 在这儿再跑一次,是为了保证**挂上去的就是验过的那一份**。
+
+      - name: 打包并挂到 release 上
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          npm pack
+          TGZ="wanxiang-engine-$(node -p "require('./package.json').version").tgz"
+          test -f "$TGZ" || { echo "打包产物没找到:$TGZ"; exit 1; }
+          # 附件名必须与 README 里的安装 URL 一致,否则使用者装到的还是 404
+          gh release upload "$TAG" "$TGZ" --clobber
+          gh release view "$TAG" --json assets --jq '.assets[].name' | tee /dev/stderr | grep -qx "$TGZ"

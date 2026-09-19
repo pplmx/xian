@@ -83,6 +83,11 @@ cd packages/engine && npm pack && gh release upload v0.1.19 wanxiang-engine-0.1.
 gh api repos/pplmx/wanxiang-engine/releases/tags/v0.1.19     # 核对 tag、包内版本与附件
 ```
 
+第 6 步**忘了也不要紧**:`.github/workflows/release.yml` 会在 release 发布时自动做同一件事
+(checkout 该 tag → `bun run check` → `npm pack` → `gh release upload` → 核对附件名),
+所以它是一根保险丝 —— 本地那条是快路径,workflow 那条保证"迟早会挂上"。
+要重传某个旧 tag 的附件,手动触发这个 workflow 并填 tag 即可。
+
 两条经验,都是真踩过的:
 
 - **`--target` 要写完整 SHA**:写分支名时,`gh` 打出来的 tag 可能落在旧提交上(而这个错误要到

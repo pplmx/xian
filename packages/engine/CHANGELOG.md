@@ -20,6 +20,12 @@
 
 ## 未发布
 
+- **发版附件有保险丝了**(`.github/workflows/release.yml`)。README 的首选安装方式就是 release 上那个
+  tgz 附件 —— 少了它,使用者拿到的是 404,而本地所有自检照样全绿(它们验"包里有什么",
+  验不到"附件挂没挂")。现在:release 一发布,workflow 就 checkout 那个 tag → `bun run check`
+  → `npm pack` → `gh release upload` → 核对附件名(必须与 README 里的 URL 一致),
+  手动触发时给个 tag 就能给旧版本补传。发版清单里的本地那条仍是快路径,两条互为兜底。
+
 - **修正:README 的安装方式换掉了 —— 原来那条对 bun 用户是坏的**(`docs/` 与根 README)。
   实测(不是推断):`bun add github:pplmx/wanxiang-engine#v0.1.19` 装出来的包里**没有 `dist`**,
   `import 'wanxiang-engine'` 直接报 "Cannot find package" —— 因为那条路依赖 `prepare` 现场编译,
