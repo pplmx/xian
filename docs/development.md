@@ -16,7 +16,7 @@ bun preview        # 预览构建结果
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(199 个 spec / 2044 例) |
+| `bun run test` | 全量用例(全量 289 个 spec / 2647 例;本作自己那部分 209 个 / 2056 例) |
 | `bun run test:report` | 按系统分类的测试摘要;有未登记分类会直接红并列出文件 |
 | `bun run check` | 类型检查(`vue-tsc -b`)+ ESLint |
 | `bun run lint` | 只跑 ESLint |
@@ -34,10 +34,11 @@ bun preview        # 预览构建结果
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 199 个 spec / 2044 个用例,按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红 |
+| 用例 | 全量 289 个 spec / 2647 个用例(本作自己那部分 209 个 / 2056 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
 | 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`) |
+| 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec / 2044 例时,实际已是 289 / 2647) |
 | 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
 | 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |
 
@@ -95,13 +96,14 @@ src/
 
 ```bash
 # 1. 先提 package.json 的版本号(它决定 APK 的 versionName / versionCode)
-# 2. 打 tag 并推上去
-git tag v1.34.0
-git push origin main v1.34.0
+# 2. 打 tag 并推上去(版本号以 package.json 为准,这里只是例子)
+git tag vX.Y.Z
+git push origin main vX.Y.Z
 ```
 
 这条流水线第一件事是核对 tag 与 package.json 是否同一个版本,对不上直接红掉 ——
-免得发出「Release 页写着 v1.34.0、装到手机上却是 1.33.0」的包。
+免得发出「Release 页写着 v1.35.0、装到手机上却是 1.34.0」的包(数字只是示例,
+判据看的是两者**相等**,不是某个具体版本)。
 
 ## 多端构建
 
