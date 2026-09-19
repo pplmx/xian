@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 359,
+  "round": 360,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:16:05+00:00",
+  "updated_at": "2026-09-19T00:22:50+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -19954,14 +19954,63 @@
     "DEC-155": {
       "id": "DEC-155",
       "type": "decision",
-      "status": "active",
-      "version": 1,
+      "status": "superseded",
+      "version": 2,
       "created_at": "2026-09-19T00:16:04+00:00",
-      "updated_at": "2026-09-19T00:16:04+00:00",
-      "touched_round": 358,
+      "updated_at": "2026-09-19T00:22:50+00:00",
+      "touched_round": 359,
       "summary": "数值审计分两份:引擎里放通用版(强度与内容强度由调用方给、不认识题材),宿主里保留内容相关版(inflationAudit / progressionSim,要区域强度与装备成型度档位)。两者不互相取代。",
       "rationale": "通用版的判据是换任何题材都能跑:它只能认识调用方给的函数,看不到区域表、装备成型度、丹药灵脉这些内容建模;而宿主的审计要回答这一跃脱不脱节、哪一段内容被碾压,没有内容建模就答不了(内容强度不是境界的函数,是区域表的函数)。硬把两者合成一个,要么让引擎认识内容(违反抽象),要么让宿主降级成只看境界(丢掉结论)。",
       "alternatives_rejected": "①把引擎的体检改造成带内容建模的(引擎会认识区域/装备这类题材概念,失去通用性);②让宿主的 inflationAudit 全部改写成调用引擎版(内容强度映射对不上,且会动到在运营的平衡工具,风险大于收益);③宿主那边不登记、只把库的导出当成没用上(落地审计会红,而且掩盖了两份审计口径不同这个真实边界)。"
+    },
+    "TASK-340": {
+      "id": "TASK-340",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:22:45+00:00",
+      "updated_at": "2026-09-19T00:22:50+00:00",
+      "touched_round": 359,
+      "category": "test",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "宿主用上引擎的通用曲线体检:拿 createProgressionAudit 跑本作 21 境 × 10 层真表(GNum 适配器),与数据表/常数表逐项对账;并修掉 test:report 的 0 败却退出 1(未分类用例也算失败,原因印在最后一行)。"
+    },
+    "CHG-424": {
+      "id": "CHG-424",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:22:45+00:00",
+      "updated_at": "2026-09-19T00:22:45+00:00",
+      "touched_round": 359,
+      "commit": "d80b982",
+      "summary": "宿主:新增 src/core/engineProgressionAudit.spec.ts;engineAdoption.spec 摘掉 createProgressionAudit 的等价物归属(现在按名字用上);scripts/test-report.mjs 登记新 spec 分类并把退出码原因印在最后一行;docs/engine.md 补一行。库:CHANGELOG 记一条(第一个使用者已用上)。"
+    },
+    "EV-350": {
+      "id": "EV-350",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:22:45+00:00",
+      "updated_at": "2026-09-19T00:22:45+00:00",
+      "touched_round": 359,
+      "confidence": 0.93,
+      "source": "变更 CHG-424(d80b982)。宿主实测:bun run test 286 文件 / 2613 例全过;test:report 2613 过 0 败、退出 0;check:engine 通过(61 处引用全走公开入口)。体检读数(本作真表):格数 210、换界三格 真仙·一层/神人·一层/混沌真灵·一层(需求 ×0.78/×0.19/×0.19,面板 ×1.75/×2.12/×2.12)、步长三层(层内普通 186 步 ×1.32、界末圆满 3 步 ×2.64、跨大境界 17 步 最大 ×1.56)。反向:摘掉新 spec 的分类映射后 test:report 印\"退出码 1 的原因:有 4 个用例没登记分类\"并以 1 退出(已还原)。库侧 bun run check 全绿(560 例 / 77 文件)。",
+      "summary": "两个发现:①通用体检在本作真表上跑出的结构与数据表、常数表逐项吻合(连 WORLD_STEP_EXP_MULT 那道墙都读出来了);②EV-335 记的那个\"0 败却退出 1\"的未复现问题这次抓到了机制 —— 未分类用例也算失败,而原因没印在最后一行,于是被误读成 flake。"
+    },
+    "DEC-156": {
+      "id": "DEC-156",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:22:50+00:00",
+      "updated_at": "2026-09-19T00:22:50+00:00",
+      "touched_round": 359,
+      "summary": "两份数值审计并存且都用:本作用引擎的 createProgressionAudit 做通用读数与结构对账(与数据表/常数表逐项核),内容相关的 inflationAudit / progressionSim 继续管结论(区域强度、装备成型度档位)。",
+      "rationale": "参考实现已经证明通用体检能认得本作的真表(210 格、换界落点、层内 1.32、界末圆满 2.64 全部对上),所以它不只是给外人用的:留着它做\"结构层对账\"最省事 —— 一眼能看出曲线形状有没有被改动。而\"哪一段内容被碾压\"这种结论需要内容建模,通用版给不了,所以宿主那份也不能撤。两份各司其职,不是二选一。",
+      "alternatives_rejected": "①只留通用版(丢掉内容相关结论,区域强度不是境界的函数);②只留宿主版(通用件无人验证,退化成\"写完就没人用过\"的外部件);③让通用版认识本作的内容(违反库的抽象边界)。"
     }
   },
   "edges": [
@@ -29547,6 +29596,24 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-09-19T00:16:05+00:00"
+    },
+    {
+      "from": "CHG-424",
+      "to": "TASK-340",
+      "type": "implements",
+      "created_at": "2026-09-19T00:22:50+00:00"
+    },
+    {
+      "from": "DEC-156",
+      "to": "TASK-340",
+      "type": "governs",
+      "created_at": "2026-09-19T00:22:50+00:00"
+    },
+    {
+      "from": "DEC-156",
+      "to": "DEC-155",
+      "type": "supersedes",
+      "created_at": "2026-09-19T00:22:50+00:00"
     }
   ]
 }
