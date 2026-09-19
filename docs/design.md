@@ -31,19 +31,27 @@
 | 主色(朱砂) | `cinnabar` | 5.32 | 4.81 |
 | 次色(石青) | `qing` | 6.38 | 5.77 |
 
-主色与次色都按 AA 4.5:1 取 —— 它们要扛小字。**尚未达标的是 `ink-faint`(3.47)、
-`jade`(3.26)、`gold-ink`(3.47) 三档**:它们同样在做 10–11px 的说明文字,是这次
-改动之外的一笔旧账,已单独记在待办里,不在这里假装已经解决。
+主色与次色都要扛 10–11px 的小字,故按 AA 4.5:1 取。**这份账还没还完**:浅色主题下
+还有十二档偏浅(`ink-faint` 3.14、`jade` 2.95、`gold-ink` 3.14、`amber-ink` 2.84、
+`violet-ink` 4.13、`tenghuang` 1.90 等),暗色主题下朱砂偏暗(3.51)、朱砂深(4.29)。
+它们同样在做小字,一并记在待办里(证据见 `palette.spec.ts` 的 `DEBT` 表),
+不在这里假装已经解决。
 
 ### 命名与事实源
 
 语义色名取中国传统色/国画颜料名,不取西式色名(`azure`/`amber` 这类):
 `cinnabar` 朱砂、`qing` 石青、`jade` 石绿、`gold-ink` 赭金、`indigo-ink` 靛、
-`violet-ink` 紫、`amber-ink` 琥珀。
+`violet-ink` 紫、`amber-ink` 琥珀、`zheshi` 赭石、`tenghuang` 藤黄、`bise` 碧色、
+`he` 褐、`cangqing` 苍青、`tianqing` 天青。
 
 一份事实源在 `src/style.css`,界面与数据一律引用 `var(--color-*)` / utility 类名。
+品阶九色(`qualities`)、器魂六阶(`souls`)、五行与特殊灵根(`linggen`)、天赋档位
+(`talents`)原先各自手抄一份裸 hex,现全部改成引用变量 —— 它们从此跟着色板换肤,
+也才有夜间档可言。
+
 `public/privacy.html` 是唯一的例外:它是**独立成篇**的静态页(离线也要能直接打开),
-只保留了它自己用到的几个颜色,与 `style.css` 是手抄关系 —— 改配色时两处都要动。
+只保留了它自己用到的几个颜色,与 `style.css` 是手抄关系 —— 改配色时两处都要动,
+故 `palette.spec.ts` 会把这张手抄表与色板逐条核对。
 
 ## 版式:竖版文字风格,移动端优先
 
@@ -77,3 +85,4 @@ uv run scripts/fonts/build-kai-font.py
 ## 无障碍
 
 `prefers-reduced-motion` 下全局禁用动画;交互元素保留可聚焦性与语义标签。
+小字的对比度账目(哪些一档过 AA、哪些还欠着)由 `src/ui/palette.spec.ts` 盯着。

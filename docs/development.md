@@ -16,7 +16,7 @@ bun preview        # 预览构建结果
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 290 个 spec / 2653 例;本作自己那部分 210 个 / 2062 例) |
+| `bun run test` | 全量用例(全量 292 个 spec / 2668 例;本作自己那部分 212 个 / 2077 例) |
 | `bun run test:report` | 按系统分类的测试摘要;有未登记分类会直接红并列出文件 |
 | `bun run check` | 类型检查(`vue-tsc -b`)+ ESLint |
 | `bun run lint` | 只跑 ESLint |
@@ -34,7 +34,7 @@ bun preview        # 预览构建结果
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 290 个 spec / 2653 个用例(本作自己那部分 210 个 / 2062 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红 |
+| 用例 | 全量 292 个 spec / 2668 个用例(本作自己那部分 212 个 / 2077 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
 | 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`) |

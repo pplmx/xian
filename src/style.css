@@ -22,6 +22,15 @@
    本身就是深色,压深到 #2C5A7D 得 6.38:1,反而更接近颜料真身。色板里已有 jade
    (石绿一系的绿),青必须落在偏蓝的一侧才分得开,故取石青而不是竹青。
 
+   ## 色名表(全部取自中国传统色/国画颜料)
+
+   纸 paper 宣纸 · 墨 ink 松烟墨 · 朱砂 cinnabar 主色 · 石青 qing 次色
+   石绿 jade · 靛 indigo-ink · 赭金 gold-ink · 紫 violet-ink · 琥珀 amber-ink
+   赭石 zheshi · 藤黄 tenghuang · 碧色 bise · 褐 he · 苍青 cangqing · 天青 tianqing
+
+   后面六色是本来只写在 src/data 里的裸 hex(品阶、灵根、器魂那些色阶),现收进色板
+   —— 数据层从此只引用变量,颜色只有这一处事实源。
+
    命名规则:语义色名取中国传统色/国画颜料名,不取西式色名(azure/amber 这类)。
    青 = 石青(次色:信息、增益、可前往)。 */
 :root {
@@ -40,6 +49,12 @@
   --color-jade-rgb: 110 139 116;
   --color-violet-ink-rgb: 123 94 167;
   --color-amber-ink-rgb: 176 125 43;
+  --color-zheshi-rgb: 168 92 63;
+  --color-tenghuang-rgb: 201 162 39;
+  --color-bise-rgb: 62 142 139;
+  --color-he-rgb: 138 111 77;
+  --color-cangqing-rgb: 94 140 138;
+  --color-tianqing-rgb: 109 147 184;
 
   --color-paper: rgb(var(--color-paper-rgb));
   --color-paper-deep: rgb(var(--color-paper-deep-rgb));
@@ -56,6 +71,12 @@
   --color-jade: rgb(var(--color-jade-rgb));
   --color-violet-ink: rgb(var(--color-violet-ink-rgb));
   --color-amber-ink: rgb(var(--color-amber-ink-rgb));
+  --color-zheshi: rgb(var(--color-zheshi-rgb));
+  --color-tenghuang: rgb(var(--color-tenghuang-rgb));
+  --color-bise: rgb(var(--color-bise-rgb));
+  --color-he: rgb(var(--color-he-rgb));
+  --color-cangqing: rgb(var(--color-cangqing-rgb));
+  --color-tianqing: rgb(var(--color-tianqing-rgb));
 
   /*
    * 楷体栈 —— **这里是唯一事实源**(tailwind.config 里的 kai/song 只是把它接成 utility)
@@ -415,6 +436,12 @@ html[data-theme='dark'] {
   --color-jade-rgb: 147 175 149;
   --color-violet-ink-rgb: 169 143 211;
   --color-amber-ink-rgb: 207 154 69;
+  --color-zheshi-rgb: 213 116 80;
+  --color-tenghuang-rgb: 214 179 76;
+  --color-bise-rgb: 68 156 152;
+  --color-he-rgb: 170 137 95;
+  --color-cangqing-rgb: 102 151 149;
+  --color-tianqing-rgb: 122 160 196;
   --shadow-ink: rgb(8 7 5);
   --shadow-ink-rgb: 8 7 5;
   /* 暗色 paper 92% + white 8% 预计算 */

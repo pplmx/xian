@@ -39,7 +39,13 @@ export default {
         'gold-ink': withAlpha('--color-gold-ink-rgb'),
         jade: withAlpha('--color-jade-rgb'),
         'violet-ink': withAlpha('--color-violet-ink-rgb'),
-        'amber-ink': withAlpha('--color-amber-ink-rgb')
+        'amber-ink': withAlpha('--color-amber-ink-rgb'),
+        zheshi: withAlpha('--color-zheshi-rgb'),
+        tenghuang: withAlpha('--color-tenghuang-rgb'),
+        bise: withAlpha('--color-bise-rgb'),
+        he: withAlpha('--color-he-rgb'),
+        cangqing: withAlpha('--color-cangqing-rgb'),
+        tianqing: withAlpha('--color-tianqing-rgb')
       },
       fontFamily: {
         /*
