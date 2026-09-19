@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 393,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T14:51:09+00:00",
+  "updated_at": "2026-09-19T15:00:49+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22131,11 +22131,11 @@
     "HYP-112": {
       "id": "HYP-112",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T11:23:41+00:00",
-      "updated_at": "2026-09-19T11:23:41+00:00",
-      "touched_round": 392,
+      "updated_at": "2026-09-19T15:00:49+00:00",
+      "touched_round": 393,
       "summary": "layout-check 那条「可点元素不小于 28px」在 1280×800 的 /adventure 上报过一次 28px(四舍五入后与被测下限同值),疑似子像素抖动而不是版面真的坏了。",
       "confidence": 0.7
     },
@@ -22589,10 +22589,10 @@
     "ISS-260": {
       "id": "ISS-260",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T13:45:14+00:00",
-      "updated_at": "2026-09-19T13:45:14+00:00",
+      "updated_at": "2026-09-19T15:00:49+00:00",
       "touched_round": 393,
       "summary": "「可点元素不小于 28px」这条判据的量法不确定:1280×800 的 /adventure 报过一次 28px(四舍五入后与被测下限同值),定向复量 0 个、该元素声明的是 min-h-[28px]。量的是取整后的盒子高度,与被测下限同值时随机红一次,门就失去意义。",
       "severity": 0.25,
@@ -22602,10 +22602,10 @@
     "TASK-387": {
       "id": "TASK-387",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T13:45:14+00:00",
-      "updated_at": "2026-09-19T13:45:14+00:00",
+      "updated_at": "2026-09-19T15:00:49+00:00",
       "touched_round": 393,
       "category": "test-quality",
       "severity": 0.25,
@@ -22704,6 +22704,29 @@
       "touched_round": 393,
       "summary": "渐变/纹理/图片底上的正文对比度一直没有判据 —— 声明色那套算法看不见背景图,于是「外壳云雾写死 bg-white/40、夜间把底色抬亮」这类事可以一直存在而不被任何门挡住。",
       "confidence": 0.9
+    },
+    "EV-412": {
+      "id": "EV-412",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T15:00:48+00:00",
+      "updated_at": "2026-09-19T15:00:48+00:00",
+      "touched_round": 393,
+      "source": "① 规则自证(六个边界读数,判法 = 高度 < 28 且非「声明 min-height ≥ 28 且高度 ≥ 27.5」):27.6/声明 28 → 绿,27.6/无声明 → 红,26/无声明 → 红,28/声明 28 → 绿,28/无声明 → 绿,27.4/声明 28 → 红;② 定向复量 1280×800 的 /adventure 连开四遍,高度 < 28.5px 的可点元素 0 个 —— 旧判据(裸 28px)、取整判据与新判据三种都会绿;③ bun scripts/layout-check.mjs 168 个页面×视口组合全绿(四处 28px 量法已统一)。",
+      "summary": "28px 那条量法从此确定:声明 min-height 到了 28 的给半像素容差、报数带一位小数,四种量法(逐页巡/弹窗/第一步卡/引擎事件弹窗)合成同一把尺子;六个边界读数自证区分得开「27.6 的子像素抖动」与「真的矮了」,1280×800 的 /adventure 定向复量 0 个边界元素。",
+      "confidence": 1.0
+    },
+    "CHG-476": {
+      "id": "CHG-476",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T15:00:48+00:00",
+      "updated_at": "2026-09-19T15:00:48+00:00",
+      "touched_round": 393,
+      "commit": "63d255e",
+      "summary": "layout-check.mjs 四处 28px 触达下限的判法统一:声明的 min-height ≥ 28 时对 ≥27.5px 的盒子不判,报数改一位小数;docs/design.md 无障碍一节补上第四十三条的来龙去脉。"
     }
   },
   "edges": [
@@ -33249,6 +33272,24 @@
       "to": "HYP-115",
       "type": "validates",
       "created_at": "2026-09-19T14:51:09+00:00"
+    },
+    {
+      "from": "CHG-476",
+      "to": "TASK-387",
+      "type": "implements",
+      "created_at": "2026-09-19T15:00:49+00:00"
+    },
+    {
+      "from": "CHG-476",
+      "to": "ISS-260",
+      "type": "resolves",
+      "created_at": "2026-09-19T15:00:49+00:00"
+    },
+    {
+      "from": "EV-412",
+      "to": "HYP-112",
+      "type": "validates",
+      "created_at": "2026-09-19T15:00:49+00:00"
     }
   ]
 }
