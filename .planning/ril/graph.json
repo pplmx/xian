@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 364,
+  "round": 365,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:42:09+00:00",
+  "updated_at": "2026-09-19T00:50:44+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20208,6 +20208,55 @@
       "confidence": 0.95,
       "source": "变更 CHG-429(8852b3d)。反向:从 README 清单删掉\"发布包\",自检点名\"这些自检没写进 README 的清单:发布包\"(已还原)。正向:bun run check 全绿(570 例 / 79 文件 + 15 道自检),末行印\"自检清单自检通过(README 的 15 道与实跑的 15 道一一对得上)\"。",
       "summary": "把\"判据数量\"也变成有判据的东西:README 说几道、代码里就得有几道。"
+    },
+    "TASK-346": {
+      "id": "TASK-346",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:50:43+00:00",
+      "updated_at": "2026-09-19T00:50:44+00:00",
+      "touched_round": 364,
+      "category": "refactor",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "随机源只留一份实现:本作 utils/random 的 mulberry32 改成为库实现的同名转发;并修正落地审计口径(只看应用侧、且必须真从库里 import),新增随机源同序列判据。"
+    },
+    "CHG-430": {
+      "id": "CHG-430",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:50:43+00:00",
+      "updated_at": "2026-09-19T00:50:43+00:00",
+      "touched_round": 364,
+      "commit": "fce5ced",
+      "summary": "宿主:utils/random.ts 的 mulberry32 改为库实现转发;engineParity.spec 新增「随机源同序列」一节;engineAdoption.spec 口径修正(排除 spec、要求 engine-bound)并新增 4 条归属;docs/engine.md 补一行。库:verify-dist.mjs 加 eslint-disable、integrationCraft.spec 去掉多余 disable(注释级)。"
+    },
+    "EV-356": {
+      "id": "EV-356",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:50:43+00:00",
+      "updated_at": "2026-09-19T00:50:43+00:00",
+      "touched_round": 364,
+      "confidence": 0.96,
+      "source": "变更 CHG-430(fce5ced)。随机源同序列:7 颗种子 × 每颗 40 个数逐个相同,int/float/chance/pick/weighted 同源且消耗位置一致,字符串种子经 seedFromString 亦同。落地审计新口径读数:76 个导出 —— 应用侧按名字用 52 · 经门面 9 · 本作有等价物 13 · 没这玩法 2;另有 4 个只在用例里被动过。闸门:宿主 bun run test 288 文件 / 2624 例全过、test:report 2624 过 0 败退出 0、vue-tsc 与 eslint 都干净(0 problems);库 bun run check 全绿(570 例 / 79 文件 + 15 道自检)。",
+      "summary": "两处都是审计口径踩出来的:①本作自己抄了一份 PRNG(库那份从未被引用,却一直被记成\"用上了\");②落地审计把用例里的 import 也算作\"应用侧用上\",于是几乎每个导出都\"有人用过\",判据形同虚设。"
+    },
+    "DEC-158": {
+      "id": "DEC-158",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:50:44+00:00",
+      "updated_at": "2026-09-19T00:50:44+00:00",
+      "touched_round": 364,
+      "summary": "宿主侧\"库导出落地\"的判据口径:只看应用侧代码(spec 不算),且\"用上\"必须是**从库真的拿过来**(import / export from)。用例里动过、本地同名定义,都不算接上;这类名字单独印出来供人判断。",
+      "rationale": "两处实测:①本作的对账用例(engine*Parity 那一批)几乎把每个导出都 import 过一遍,把它们算作\"用过\"会让这条判据退化成\"库给自己写了个用例\",量不到应用侧到底接没接;②utils/random.ts 自己抄了一份 mulberry32,朴素的名字匹配照样把它记成\"用上了库的 mulberry32\" —— 库那份从头到尾没被引用。改成\"应用侧 + engine-bound\"之后读数从虚高的 54 降到诚实的 52,并额外暴露 4 个只在用例里被动过的名字(createCombatEngine / createProgressionAudit / createRng / seedFromString)。",
+      "alternatives_rejected": "①保持原口径(数字好看,但\"每个导出都有态度\"这句话失去意义);②把用例也当成一种\"接上\"并要求写理由(表会迅速膨胀,而且把\"迁移对账\"与\"应用接线\"两件事混在一起);③干脆删掉这条审计、只留库侧的公开面判据(那就没人回答\"本作到底用了没\"这个只有第一个使用者才能回答的问题)。"
     }
   },
   "edges": [
@@ -29847,6 +29896,18 @@
       "to": "TASK-345",
       "type": "implements",
       "created_at": "2026-09-19T00:42:09+00:00"
+    },
+    {
+      "from": "CHG-430",
+      "to": "TASK-346",
+      "type": "implements",
+      "created_at": "2026-09-19T00:50:44+00:00"
+    },
+    {
+      "from": "DEC-158",
+      "to": "TASK-346",
+      "type": "governs",
+      "created_at": "2026-09-19T00:50:44+00:00"
     }
   ]
 }
