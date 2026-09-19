@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 376,
+  "round": 377,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T01:48:44+00:00",
+  "updated_at": "2026-09-19T01:52:56+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20819,6 +20819,55 @@
       "confidence": 0.85,
       "summary": "本作审计用的\"内容强度\"与库的区域表读数量的不是同一个量(基准敌人 vs 区域首领;两条层级曲线 powerScale × 层级补偿 vs tierGrowth^(tier-1)),因此两边不该合并 —— 合并会让审计读数与玩家真正打的敌人脱节。",
       "prediction": "本作战斗快照(powerScale × 三围基数 × 层级补偿)的战力应等于 inflationAudit.enemyPowerAt(tier)(同一套解析式);而库的 dungeonContentPower 读出的值与本作 enemyPowerAt(maxTierForMajor(m)) 的比值应在前段 >1(库取首领、倍率更高)、后段 <0.001(两条曲线分道扬镳),即两套模型无法用一个数对齐。"
+    },
+    "TASK-359": {
+      "id": "TASK-359",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:52:46+00:00",
+      "updated_at": "2026-09-19T01:52:56+00:00",
+      "touched_round": 376,
+      "category": "release",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "发版 0.1.20:把「未发布」那 7 条定稿(内容强度读区域表、体检吃门面、分段/对照两种读法、公开面数量与文档链接两道自检、prepare → prepack),同步四处版本引用,推两仓 + subtree,建 release(指向完整 SHA)+ 挂 tgz 附件,并从发布 URL 真装一遍验证。"
+    },
+    "CHG-443": {
+      "id": "CHG-443",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:52:48+00:00",
+      "updated_at": "2026-09-19T01:52:48+00:00",
+      "touched_round": 376,
+      "commit": "17f592e",
+      "summary": "发版 0.1.20:package.json 0.1.19 → 0.1.20;CHANGELOG 的「未发布」定稿成 0.1.20 — 2026-09-19(并补一段本批总述);四处版本引用同步(库 README 的安装块与版本块、docs/development.md 的安装块与 npm pack 例、宿主 README 两处);宿主的库版本引用 3 处跟到 0.1.20。"
+    },
+    "HYP-102": {
+      "id": "HYP-102",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:52:51+00:00",
+      "updated_at": "2026-09-19T01:52:51+00:00",
+      "touched_round": 376,
+      "confidence": 0.9,
+      "summary": "对外分发仍然只有 release 附件这一条路可用:新版本从该 URL 直接 bun add 装得上,且装出来的包能 import 新导出并跑通体检。",
+      "prediction": "在空项目里 bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.20/wanxiang-engine-0.1.20.tgz 应当装上且带 dist(不需要任何安装脚本);从该包 import dungeonContentPower/createProgressionAudit/defineGame 并装配 presets/xiuxian,应当直接跑出读数(体检 210 格)。"
+    },
+    "EV-369": {
+      "id": "EV-369",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:52:54+00:00",
+      "updated_at": "2026-09-19T01:52:54+00:00",
+      "touched_round": 376,
+      "confidence": 0.95,
+      "source": "变更 CHG-443(17f592e)与 release v0.1.20。库 bun run check:版本引用自检通过(14 处引用都是 0.1.20)、583 例 / 79 文件、17 道自检、发布包自检(wanxiang-engine-0.1.20.tgz 真装进临时项目 + 使用者侧 tsc 严格模式两种解析)。宿主 check:engine:65 处引用合规、宿主文档里的库版本 3 处都是 0.1.20。gh api releases/tags/v0.1.20:tag v0.1.20 → target 2ae1cc1dd934f2d8977aa7a24898bf2965bccfba,附件 wanxiang-engine-0.1.20.tgz(264904 字节,uploaded)。端到端:空项目 bun add <release URL> 成功,node 里 import 新导出并装配 XIUXIAN 跑出——第 0 境内容强度 286、体检 210 格、碾压 170 格。",
+      "summary": "发版这条路的每一步都有当场读数:两仓版本引用一致、tag 指向发版提交、附件在 release 上且能真装能跑。"
     }
   },
   "edges": [
@@ -30620,6 +30669,18 @@
       "to": "HYP-101",
       "type": "validates",
       "created_at": "2026-09-19T01:48:40+00:00"
+    },
+    {
+      "from": "CHG-443",
+      "to": "TASK-359",
+      "type": "implements",
+      "created_at": "2026-09-19T01:52:56+00:00"
+    },
+    {
+      "from": "EV-369",
+      "to": "HYP-102",
+      "type": "validates",
+      "created_at": "2026-09-19T01:52:56+00:00"
     }
   ]
 }
