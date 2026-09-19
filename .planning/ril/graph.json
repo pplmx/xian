@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 383,
+  "round": 384,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T03:03:57+00:00",
+  "updated_at": "2026-09-19T03:23:13+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 379,
+      "touched_round": 383,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -21380,6 +21380,67 @@
       "confidence": 0.95,
       "source": "变更 CHG-452(9c0fa02)与 CHG-453(835c08b)。库:bun run check 全绿 591 例 / 80 文件 + 18 道自检,新判据印「文档引用自检通过(23 条命令与 37 条路径都真实存在;上游工程那几条已显式豁免)」;敏感度:docs/tuning.md 里 bun run tuning → bun run tunings,当场红并指名该文件。宿主:bun run check 通过,新判据印「文档自检通过(8 份文档里的 33 条命令、41 条路径都真实存在;规模数对得上:全量 289 个 spec / 本作自己那部分 209 个)」;敏感度:README 的「全量 289 个 spec」改成 290,当场红并指名 README.md;两处漂移实测:199/2044(实际 289/2647)、v1.34.0 示例。",
       "summary": "两侧文档的\"引用类腐烂\"从此有判据;而且这两条判据的红都被真的演示过一次(不是永远绿的摆设)。"
+    },
+    "TASK-369": {
+      "id": "TASK-369",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T03:22:52+00:00",
+      "updated_at": "2026-09-19T03:23:13+00:00",
+      "touched_round": 383,
+      "category": "release",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "收尾版 0.1.22:把\"库到哪儿为止(职责边界)+ 维护口径(0.x 期间)\"写进 README,定稿三条(边界口径 / 文档片段真跑 / 第 18 道文档引用自检),发版并跑对外证据三连 —— 库仓 CI 绿、附件真装一遍、宿主全量用例绿。"
+    },
+    "CHG-454": {
+      "id": "CHG-454",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:22:56+00:00",
+      "updated_at": "2026-09-19T03:22:56+00:00",
+      "touched_round": 383,
+      "commit": "132a30a",
+      "summary": "发版 0.1.22(收尾版):README 新增「到哪儿为止(职责边界)」与「维护口径(0.x 期间)」两节;CHANGELOG 的「未发布」定稿成 0.1.22 — 2026-09-19;版本引用四处同步(库 README 安装块与版本块、development.md 安装块与 npm pack 例、宿主 README 两处);宿主文档版本 3 处跟到 0.1.22。"
+    },
+    "DEC-169": {
+      "id": "DEC-169",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:23:01+00:00",
+      "updated_at": "2026-09-19T03:23:01+00:00",
+      "touched_round": 383,
+      "summary": "库的功能边界到\"基础数值系统\"为止:四套系统 + 横切层 + 判据刻度 + 四份内容包进库;玩法层、界面与资源、存储与云同步、题材文案留在使用方。0.x 期间只做三件事 —— 修错、补判据、文档对齐;版本只加 patch;对外承诺以公开面清单为准。",
+      "rationale": "这条口径此前只散在 CHANGELOG 的版本口径与各文档的只言片语里,使用者要么猜、要么把\"库没做\"当成\"库没做完\"。实测的信号很清楚:越到后面,能加的\"能力层\"越像某一款游戏的玩法(战斗演出、赛季规则),把那些塞进来会让库失去通用性 —— 而库的价值恰恰是\"换一套名字与数字就能变成另一款游戏\"。把边界写进 README,两边期待都不用猜:使用者知道该在库外组合,维护者也知道什么改动**不属于**这个库。",
+      "alternatives_rejected": "①继续无限加层(通用性被某一款作品的玩法需求牵着走,最后没人能拿它搭别的题材);②只写\"这是内核不是框架\"(太笼统,读者仍不知道\"任务 / 图鉴 / 状态\"这些横切层算不算在内);③把边界写进 CHANGELOG 而不进 README(使用者先看 README,翻到版本记录已经很晚了);④承诺 1.0 与 API 冻结(现在是 0.x,冻结既不诚实也没必要 —— 真正的承诺是公开面清单,它已经被逐字钉住)。"
+    },
+    "HYP-110": {
+      "id": "HYP-110",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:23:04+00:00",
+      "updated_at": "2026-09-19T03:23:04+00:00",
+      "touched_round": 383,
+      "confidence": 0.9,
+      "summary": "库已到\"最小完备\"的边界:四套系统 + 横切层齐了、判据与刻度齐了、边界写清了,再往里加只能是某一款游戏的玩法;对外三件证据(独立仓 CI / 发布附件真装 / 宿主全量用例)都常态绿。",
+      "prediction": "库 bun run check 全绿(18 道自检);独立仓 CI 在发版提交上 success;v0.1.22 附件在空项目里真装能跑(含 presets/minimal 与 dungeonContentPower);宿主那道门里\"静态检查 + 单元测试\"一步 success。"
+    },
+    "EV-377": {
+      "id": "EV-377",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:23:09+00:00",
+      "updated_at": "2026-09-19T03:23:09+00:00",
+      "touched_round": 383,
+      "confidence": 0.95,
+      "source": "变更 CHG-454(132a30a)与 release v0.1.22。① 库:bun run check 全绿 —— 591 例 / 80 文件 + 18 道自检(版本引用 14 处 = 0.1.22;14 段文档片段编过且真跑过;发布包自检真装一遍)。② 独立仓 CI:run 35418194168(6a0ba8c)success。③ 发布保险丝:run 35418204829(v0.1.22)success —— 第二次真考。④ 附件:wanxiang-engine-0.1.22.tgz(275774 字节,uploaded),空项目 npm i 后跑通(只装两层:学徒·粗活 / config.equipment===null:true;仙侠包体检 210 格 / 被碾 170 格),且包里 README 已含「到哪儿为止」一节。⑤ 宿主:部署门 run 35418184140 的\"静态检查 + 单元测试\"一步(含 bun run check + 全量用例 289 文件 / 2647 例 + check:engine + check:engine:standalone)success,构建 success。",
+      "summary": "\"最小完备\"这条判断有据可查:库里齐、判据绿、边界写清、对外三条证据常态绿 —— 而且发版保险丝连跑两次都成功,附件这条路从此不靠人记得。"
     }
   },
   "edges": [
@@ -31439,6 +31500,30 @@
       "to": "HYP-109",
       "type": "validates",
       "created_at": "2026-09-19T03:03:57+00:00"
+    },
+    {
+      "from": "CHG-454",
+      "to": "TASK-369",
+      "type": "implements",
+      "created_at": "2026-09-19T03:23:12+00:00"
+    },
+    {
+      "from": "DEC-169",
+      "to": "TASK-369",
+      "type": "governs",
+      "created_at": "2026-09-19T03:23:12+00:00"
+    },
+    {
+      "from": "DEC-169",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-19T03:23:12+00:00"
+    },
+    {
+      "from": "EV-377",
+      "to": "HYP-110",
+      "type": "validates",
+      "created_at": "2026-09-19T03:23:12+00:00"
     }
   ]
 }
