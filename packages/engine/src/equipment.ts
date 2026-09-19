@@ -118,8 +118,14 @@ export interface SetDef {
 }
 
 export interface EquipmentPowerConfig<T = number> {
-  /** 层级系数:`tierGrowth^(tier-1)` */
-  tierGrowth: number
+  /**
+   * 层级系数:`tierGrowth^(tier-1)`。
+   *
+   * **给了 `tierFactors` 就可以不写** —— 查表的人不必再编一个用不上的倍率
+   * (与 `realms.exp.costFn` 那条先例一致:自己接管曲线,就不用再给倍率)。
+   * 两样都不给时按 1 处理(每一层平铺不变)。
+   */
+  tierGrowth?: number
   /** 总预算系数,压住整条曲线的绝对值 */
   baseFactor?: number
   /** 品质对平铺的放大指数 */
@@ -329,7 +335,7 @@ export function createEquipmentSystem<T = number>(
   const tierScale = (tier: number): T => {
     const t = Math.max(1, tier)
     const override = config.power.tierFactors?.[t - 1]
-    return override !== undefined ? numeric.of(override) : numeric.powN(config.power.tierGrowth, t - 1)
+    return override !== undefined ? numeric.of(override) : numeric.powN(config.power.tierGrowth ?? 1, t - 1)
   }
 
   const templatesAtTier = (tier: number, slot: string): TemplateDef[] =>

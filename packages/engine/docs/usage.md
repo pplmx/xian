@@ -317,7 +317,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 
 | 你想改的东西 | 怎么改 |
 | --- | --- |
-| 名字(境界 / 装备 / 属性 / 副本 / 技能 / 性格……) | 各处定义的 `name`;属性可用 `attributeDefs({ rename })` |
+| 名字(境界 / 装备 / 属性 / 副本 / 技能 / 性格……) | 各处定义的 `name`;属性可用 `attributeDefs({ rename })`;**境界标签的拼法**用 `realms.labelFormat`(占位符 `{world}` 界域 / `{realm}` 境界 / `{layer}` 小层,不认识的占位符原样保留) |
 | 属性维度(几个、叫什么) | `attributes.defs` + `core`;本值想有几个就几个 |
 | **每级需求完全自己定**(手调表、非指数公式) | `realms.exp.costFn(major, layer)` |
 | **基础属性完全自己定** | `realms.combat.statsFn(major, layer)` |
@@ -394,7 +394,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | 多只伙伴的性格怎么合 | `companions.stack: 'override'`(默认,覆盖)/ `'add-relative'`(各自相对中性那一份相加) |
 | 伙伴性格的键名与中性值 | `companions.traits[].mods` + `companions.neutral`(缺中性值直接报错) |
 | **大数实现**(数值超过 double) | `Numeric<T>` 适配器 —— 公式一行不用改;**该换的时机与边界**见[调参实测参考](./tuning.md)的「数字什么时候不够用」那一节(2^53 起 +1 会被吞;每层 ×1.5 打到第 80 层越界) |
-| **资源有哪些 / 叫什么 / 上限多少**(货币、材料、点数) | `createResourceSystem({ resources })`:键名与展示名分开,`cap` / `floor` 逐个给(**不写 `cap` 才是无上限**,写 `0` 就是上限 0);上限还能随账本变(`capFn`) |
+| **资源有哪些 / 叫什么 / 上限多少**(货币、材料、点数) | `createResourceSystem({ resources })`:键名与展示名分开,`cap` / `floor` 写在**每条资源**上(**不写 `cap` 才是无上限**,写 `0` 就是上限 0);要"上限随别的资源变"就把它写在**配置这一层**(不是资源条目上):`capFn` 的签名是 `(key, ledger)`,一给就以它为准 —— 例:`capFn: (k, l) => k === 'coin' ? Number(l.dust ?? 0) * 10 : undefined` |
 | **收支要不要带来源**(审计"这批是哪来的") | 每条收支都可带 `source`;`audit()` 按资源与按来源各汇总一份,明细恒等于合计 |
 | **买不起时怎么办** | `pay` 默认**整笔要么全成、要么不动**并给出缺口;要允许分次付就显式开 `partial` |
 | **挂机产出的上限** | `produce(ledger, steps, perStep)` 逐步夹上限 —— 一步乘完再加是算不出"中途到顶"的 |

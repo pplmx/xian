@@ -25,6 +25,12 @@ describe('等级体系 —— 名目、曲线、进阶、寿元', () => {
     expect(sys.label(3, 3)).toBe('铂金·圆满')
     const custom = makeSystem({ labelFormat: '{realm} {layer} 阶' })
     expect(custom.label(1, 2)).toBe('白银 三层 阶')
+    // {world} 是界域名(多界域题材常写「人间界·炼气·三层」);不认识的占位符原样留着
+    const withWorld = makeSystem({ labelFormat: '{world}/{realm}·{layer}' })
+    expect(withWorld.label(0, 0)).toBe('下界/青铜·一层')
+    expect(withWorld.label(3, 3)).toBe('上界/铂金·圆满')
+    const unknown = makeSystem({ labelFormat: '{realm}·{layer} {什么}' })
+    expect(unknown.label(0, 0)).toBe('青铜·一层 {什么}')
   })
 
   it('世界划分连续无缝,序号即境界序号', () => {

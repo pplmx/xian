@@ -123,7 +123,13 @@ export interface DungeonConfig<T = number> {
     baseHp: number
     baseAttack: number
     baseDefense: number
-    tierGrowth: number
+    /**
+     * 每层倍率:`tierGrowth^(tier-1)`。
+     *
+     * **给了 `tierFactors` 或 `scaleFn` 就可以不写** —— 自己接管曲线的人不必再编一个用不上的数
+     * (与装备那边的 `tierGrowth` 同一条口径)。两样都没给时按 1 处理。
+     */
+    tierGrowth?: number
     /** 直接给出每一层的缩放系数(第 i 项 = 层级 i+1) */
     tierFactors?: number[]
     /**
@@ -413,7 +419,7 @@ export function createDungeonSystem<T = number>(
     if (!def) throw new Error(`副本系统:没有这个敌人 —— ${enemyId}`)
     const factor = power.scaleFn
       ? power.scaleFn(def.tier)
-      : power.tierFactors?.[def.tier - 1] ?? power.tierGrowth ** Math.max(0, def.tier - 1)
+      : power.tierFactors?.[def.tier - 1] ?? (power.tierGrowth ?? 1) ** Math.max(0, def.tier - 1)
     return {
       id: def.id,
       name: def.name,

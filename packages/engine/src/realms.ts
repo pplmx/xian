@@ -352,7 +352,18 @@ export function createRealmSystem<T = number>(
   const label = (major_: number, layer: number): string => {
     const r = realms[clamp(major_, 0, maxMajor)]!
     const name = r.layers[clamp(layer, 0, r.layers.length - 1)] ?? String(layer)
-    return labelFormat.replace('{realm}', r.name).replace('{layer}', name)
+    /*
+     * 三个占位符:`{realm}` 境界名、`{layer}` 小层名、`{world}` 界域名。
+     *
+     * `{world}` 是后补的 —— 起因是"拿发布包按定制表改一遍"的探针写了 `{world}/{realm}/{layer}`,
+     * 结果标签里原样留着 `{world}` 四个字符:模板不认识它,也不报错。界域名字本来就是现成的
+     * (`worldOf(major).name`),而"人间界/炼气/三层"这种写法对多界域题材很常见,所以补上;
+     * **不认识的占位符仍然原样保留**(那是排版自由,不是错误)。
+     */
+    return labelFormat
+      .replace('{world}', worlds.find(w => r.major >= w.start && r.major <= w.end)?.name ?? '')
+      .replace('{realm}', r.name)
+      .replace('{layer}', name)
   }
 
   const progress = (state: RealmState<T>): ProgressView<T> => {

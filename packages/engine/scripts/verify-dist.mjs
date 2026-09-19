@@ -667,6 +667,208 @@ const consumerProbe = `
 execFileSync('node', ['--input-type=module', '-e', consumerProbe], { cwd: app, stdio: 'inherit' })
 
 /**
+ * 定制表探针 —— **文档承诺的每一类旋钮,使用者真能拧动吗**。
+ *
+ * `docs/usage.md` 那张定制表(近一百项)一直在承诺"这个可以改、那个可以接管",但它此前只有两条
+ * 弱保障:①表里的名字在源码里存在(「定制表旋钮自检」),②库自己的用例覆盖到。两条都活在仓库里,
+ * **验不到"使用者拿着包、照着表改"这条路**。这里补上:在临时项目里按定制表**逐类拧一遍** ——
+ * 曲线钩子、生成钩子、周期与抉择、账本上限、世界记忆、投资点、设施、体检、清理规则、存档迁移、
+ * 以及换数值层(`Numeric<bigint>`)—— 每拧一处就断言结果真的按内容走了。
+ *
+ * 与"从零装配"那段的分工:那段证明"内容能换",这段证明"**机制能被接管**"。
+ */
+const customizationProbe = `
+  const assert = (await import('node:assert/strict')).default
+  const engine = await import('wanxiang-engine')
+  const { createProgressionAudit, createRealmSystem, createAttributeSystem, createEquipmentSystem,
+          createDungeonSystem, createResourceSystem, createCycleSystem, createChoiceSystem,
+          createStageMemory, createPointPool, createFacilitySystem, createTriage, compareBy,
+          createEconomyReadings, defineSaveFormat, runMigrations, decodeSave, encodeSave,
+          attributeDefs, numberNumeric, createRng, accrue } = engine
+
+  // ① 等级:需求曲线 / 面板曲线 / 成功率三处全接管,逐境层数也能不一样
+  const handTuned = []
+  const realms = createRealmSystem({
+    worlds: [
+      { id: 'a', name: '一号院', realms: [{ name: '蒙学', layers: ['上', '下'] }, '经义'] },
+      { id: 'b', name: '二号院', realms: ['策问'] }
+    ],
+    labelFormat: '{world}/{realm}/{layer}',
+    exp: { realmGrowth: 1, costFn: (major, layer) => 10 + major * 100 + layer * 7 },
+    combat: { realmGrowth: 1, statsFn: (major, layer) => ({ attack: 10 + major * 5 + layer, guard: 3 }) },
+    breakthrough: { min: 0.1, max: 0.9, rateFn: () => Number.NaN, majorRequiresTrial: true }
+  })
+  const costs = realms.realms.map(r => realms.expCost(r.major, 0))
+  assert.deepEqual(costs, [10, 110, 210])            // costFn 原样用,不插值不缩放
+  assert.equal(realms.baseStats(1, 0).attack, 15)    // statsFn 同理
+  assert.equal(realms.breakthroughRate(0, 0), 0.1)   // NaN 被夹到 min(不再是"永远失败")
+  assert.equal(realms.label(0, 0), '一号院/蒙学/上')
+  assert.deepEqual([...realms.layersOf(0)], ['上', '下'])   // 逐境层数不同
+  assert.equal(realms.layersOf(1).length, 10)               // 没写 layers 的那一境仍用全局层名(默认十层)
+  assert.equal(realms.isWorldStep(1, 9), true)              // 走完"经义·圆满"(界末那一境)就换界
+
+  // ② 属性:换合并算法(只取最强)+ 关掉递减
+  // counterRate 在默认表里标了 diminishing,正好拿它比三种合并口径
+  const sources = [{ counterRate: 0.1 }, { counterRate: 0.3 }]
+  const ranked = createAttributeSystem({ defs: attributeDefs({}), core: ['attack'] })
+  assert.ok(Math.abs(ranked.mergeMods(sources).counterRate - 0.375) < 1e-9)   // 默认阶梯:按贡献降序打折
+  const maxed = createAttributeSystem({ defs: attributeDefs({}), core: ['attack'], diminish: { mode: 'max' } })
+  assert.equal(maxed.mergeMods(sources).counterRate.toFixed(6), '0.300000')   // 只取最强那一份
+  const folded = createAttributeSystem({ defs: attributeDefs({}), core: ['attack'], diminish: { fold: values => values.reduce((a, b) => a + b, 0) } })
+  assert.equal(folded.mergeMods(sources).counterRate.toFixed(6), '0.400000')  // fold 自己接管
+
+  // ③ 装备:层级系数给表、强化曲线自己接管、词条条数与权重都能接管;洗练能封存
+  let uid = 0
+  const gear = createEquipmentSystem({
+    slots: [{ id: 'weapon', name: '兵器' }],
+    qualities: [{ id: 'q', name: '凡', rank: 0, mult: 1, affixes: [0, 1], weight: 100 }],
+    templates: [{ id: 't1', name: '短棍', slot: 'weapon', tier: 1, base: { attack: 4 } }],
+    affixes: [{ id: 'a', name: '锐', key: 'attackPct', min: 1, max: 2, weight: 1, desc: 'x' },
+              { id: 'b', name: '坚', key: 'guardPct', min: 1, max: 2, weight: 99, desc: 'y' }],
+    power: { baseFactor: 1, qualityExponent: 1, tierFactors: [1, 9, 27], levelBonusFn: level => level * 0.1 },
+    affixValueScale: 100,
+    affixCountFn: () => 2,
+    affixWeightFn: affix => (affix.id === 'a' ? 1000 : 1)
+  }, numberNumeric, () => 'u' + (++uid))
+  const item = gear.generate(createRng('定制'), { tier: 3 })
+  assert.equal(item.tier, 3)
+  assert.equal(item.affixes.length, 2)
+  assert.equal(item.affixes[0].id, 'a')             // 权重接管:rare 那条被压成 1
+  assert.equal(Number(gear.resolve({ ...item, level: 0 }).flats.attack), 4 * 27)      // tierFactors 查表
+  assert.ok(Math.abs(Number(gear.resolve({ ...item, level: 3 }).flats.attack) - 4 * 27 * 1.3) < 1e-9)  // levelBonusFn 接管强化曲线
+  const rerolled = gear.rerollAffixes(item.affixes, { rng: createRng('洗'), quality: { id: 'q', name: '凡', rank: 0, mult: 1, affixes: [0, 1], weight: 100 }, tier: 3, keep: ['a'] })
+  assert.ok(rerolled.some(a => a.id === 'a'))       // 封存的那条还在
+
+  // ④ 副本:遭遇与奖励全接管,前置用 any,层级缩放给函数
+  let handPicked = 0
+  const dungeons = createDungeonSystem({
+    regions: [
+      { id: 'x', name: '甲道', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1' },
+      { id: 'y', name: '乙道', tier: 1, minRealm: 0, enemies: ['e1'], boss: 'b1', requireCleared: 'x' },
+      { id: 'z', name: '丙道', tier: 2, minRealm: 0, enemies: ['e1'], boss: 'b1', requireCleared: ['x', 'y'], requireMode: 'any' }
+    ],
+    enemies: [{ id: 'e1', name: '小怪', tier: 1, hpMult: 1, atkMult: 1, defMult: 1, speed: 1 },
+              { id: 'b1', name: '头目', tier: 1, hpMult: 2, atkMult: 1, defMult: 1, speed: 1, boss: true }],
+    bossProgress: 1, bossRhythm: 'cycle',
+    enemyPower: { baseHp: 10, baseAttack: 2, baseDefense: 1, tierGrowth: 2, scaleFn: tier => tier * 10 },
+    encounterFn: () => { handPicked += 1; return { kind: 'normal', enemyId: 'e1' } },
+    rewardFn: ({ tier }) => [{ id: 'coin', name: '钱', amount: tier * 3 }]
+  })
+  assert.equal(dungeons.snapshot('e1').stats.hp, 100)                    // scaleFn 接管层级缩放
+  assert.equal(dungeons.isUnlocked('z', { cleared: ['x'], bossWins: {}, runs: {} }, 0), true)  // any:通一条就开
+  const encounter = dungeons.nextEncounter('x', { cleared: [], bossWins: {}, runs: {} }, createRng('遭遇'))
+  assert.equal(handPicked, 1)
+  const victory = dungeons.onVictory('x', encounter, { cleared: [], bossWins: {}, runs: {} }, createRng('胜'))
+  assert.deepEqual(victory.rewards.map(r => r.amount), [3])              // rewardFn 接管奖励
+
+  // ⑤ 账本:上限随别的东西变 / 下限 / 取整 / 来源审计
+  const ledger = createResourceSystem({
+    resources: [
+      { key: 'dust', name: '尘', integer: true, cap: 1 },
+      { key: 'coin', name: '钱', integer: true, floor: 0 }
+    ],
+    // capFn 在**配置这一层**(不在资源条目上);一给就以它为准
+    capFn: (key, l) => (key === 'coin' ? Number(l.dust ?? 0) * 10 : undefined)
+  })
+  let wallet = ledger.create({ coin: 0, dust: 1 })
+  wallet = ledger.grant(wallet, [{ key: 'coin', amount: 12, source: '干活' }]).ledger
+  assert.equal(ledger.numberOf(wallet, 'coin'), 10)    // 动态上限:尘 ×10(capFn 接管)
+  assert.equal(ledger.numberOf(wallet, 'dust'), 1)     // 静态上限:写 1 就是 1
+  const audit = ledger.audit(ledger.grant(wallet, [{ key: 'coin', amount: 1, source: '干活' }]).entries)
+  assert.equal(Number(audit.bySource['干活'].net), 0)  // 满了之后加不进去(来源审计如实记 0)
+
+  // ⑥ 周期:池子与抽取规则都接管;抉择:效果与超时兜底由内容解释
+  const cycles = createCycleSystem({
+    periodSec: 3600,
+    pools: { morning: [{ id: 'sun', weight: 1 }], night: [{ id: 'moon', weight: 1 }] },
+    seedOf: (index, ctx) => index * 7 + (ctx.salt ?? 0)      // 种子公式可接管
+  })
+  assert.equal(cycles.entryAt(0, { pool: 'morning' }).id, 'sun')
+  assert.equal(cycles.at(3600, { pool: 'night' }).entry.id, 'moon')
+  assert.equal(cycles.seedAt(3, { pool: 'morning', salt: 1 }), 22)     // 3 × 7 + 1
+  assert.equal(cycles.indexAt(3600 * 2), 2)
+  const choices = createChoiceSystem({ interpret: effect => ({ key: effect.key, amount: effect.amount * 2 }) })
+  const receipt = choices.resolve(
+    { id: 'c1', name: '押注', outcomes: [{ weight: 1, effects: [{ key: 'coin', amount: 5 }] }] },
+    {},
+    createRng('抉择')
+  )
+  assert.deepEqual(receipt.lines[0], { key: 'coin', amount: 10 })      // interpret 接管了口径(5 → 10)
+
+  // ⑦ 世界记忆 / 投资点 / 设施 / 体检 / 清理
+  const memory = createStageMemory({ stages: [{ id: 'low', name: '生' }, { id: 'high', name: '熟', at: { count: 10 }, mult: 1.2 }], decayAfterHours: 48 })
+  assert.equal(memory.stateOf({ count: 10 }).id, 'high')
+  assert.equal(memory.stateOf({ count: 10, idleHours: 48 }).id, 'low')
+  const pool = createPointPool({ branches: [{ id: 'b1', name: '甲', mainCap: 2, sideCap: 1 }], total: 3, mainCap: 2, sideCap: 1 })
+  const invested = pool.invest({ points: {}, main: undefined }, 'b1', {})
+  assert.equal(invested.can, true)
+  assert.equal(invested.state.points.b1, 1)                            // 首投自动认主
+  assert.equal(invested.state.main, 'b1')
+  assert.equal(pool.capOf({ points: {}, main: 'b1' }, 'b1'), 2)        // 主位上限由内容给
+  assert.equal(pool.investInfo({ points: { b1: 2 }, main: 'b1' }, 'b1', {}).can, false)  // 顶到主位上限
+  const facilities = createFacilitySystem({
+    facilities: [{ id: 'f1', name: '窑', maxLevel: 3, costs: level => [{ key: 'coin', amount: level * 10 }],
+                   blocked: (_levels, level) => (level >= 3 ? '到头了' : undefined) }]
+  })
+  const info = facilities.upgradeInfo({ f1: 1 }, 'f1', {})
+  assert.equal(info.can, true)
+  assert.deepEqual(info.costs, [{ key: 'coin', amount: 10 }])          // 费用曲线由内容给
+  assert.equal(facilities.upgradeInfo({ f1: 3 }, 'f1', {}).reason, '到头了')
+  // 注意签名:frac 与 rates 都是「键 → 数」的字典(rates 的单位=每小时)
+  const accrued = accrue({}, { brick: 3 }, 1800)
+  assert.equal(accrued.whole.brick, 1)                                 // 半小时 1.5 份 → 发 1 留 0.5
+  assert.equal(accrued.frac.brick, 0.5)
+  const readings = createEconomyReadings({ labels: { tight: '紧' } })
+  assert.equal(readings.read([{ key: 'coin', income: 1, sink: 10 }])[0].verdict, '紧')
+  const triage = createTriage({
+    // 规则表态:返回 true/false,或 { keep, reason };返回 undefined = 这条不管
+    rules: [{ id: 'r1', decide: it => compareBy((a, b) => a.tier - b.tier)(it, { tier: 5 }) >= 0 }],
+    fallback: { keep: true, reason: '兜底' }
+  })
+  assert.deepEqual(triage.decide({ tier: 1, uid: 'x' }), { keep: false, rule: 'r1', reason: 'r1' })
+  assert.deepEqual(triage.decide({ tier: 9, uid: 'y' }), { keep: true, rule: 'r1', reason: 'r1' })
+  assert.deepEqual(
+    createTriage({ rules: [{ id: 'r2', decide: () => undefined }], fallback: { keep: true, reason: '兜底' } }).decide({ uid: 'z' }),
+    { keep: true, rule: 'fallback', reason: '兜底' }
+  )
+
+  // ⑧ 体检:强度与内容强度都由调用方给
+  const auditReport = createProgressionAudit({ realms, power: (m, l) => 10 + m * 5 + l, contentPower: () => 1, crushRatio: 3 })
+  const expectedSteps = realms.realms.reduce((n, r) => n + realms.layersOf(r.major).length, 0)
+  assert.equal(auditReport.steps.length, expectedSteps)   // 逐境层数不同时,格子数按各境自己的层数算
+  assert.ok(auditReport.summary().firstCrush)
+
+  // ⑨ 存档:迁移链 + 形状修复
+  const format = defineSaveFormat({ currentVersion: 3, migrations: { 1: d => ({ ...d, v2: true }), 2: d => ({ ...d, v3: true }) } })
+  const migrated = runMigrations({ base: 1 }, 1, format)
+  assert.deepEqual(migrated, { base: 1, v2: true, v3: true })
+  const round = decodeSave(encodeSave({ keep: 1 }, format, 1), format)
+  assert.equal(round.ok, true)
+
+  // ⑩ 换数值层:同一份公式喂 bigint 适配器(接口十五个成员,自己实现即可)
+  const bigintNumeric = {
+    zero: 0n, one: 1n, from: n => BigInt(Math.round(n)), of: v => (typeof v === 'bigint' ? v : BigInt(Math.round(v))),
+    add: (a, b) => a + b, sub: (a, b) => a - b, mul: (a, b) => a * b, mulN: (a, k) => a * BigInt(Math.round(k)),
+    div: (a, b) => (b === 0n ? 0n : a / b), pow: (a, k) => a ** BigInt(Math.round(k)),
+    powN: (base, k) => BigInt(Math.round(base)) ** BigInt(Math.round(k)),
+    cmp: (a, b) => (a < b ? -1 : a > b ? 1 : 0), max: (a, b) => (a > b ? a : b),
+    toNumber: a => Number(a), format: a => String(a)
+  }
+  const bigRealms = createRealmSystem({
+    worlds: [{ id: 'w', name: '大世界', realms: ['一', '二'] }],
+    layerNames: ['1'],
+    exp: { base: 3, realmGrowth: 3, layerGrowth: 3 },
+    combat: { base: { attack: 1 }, realmGrowth: 3, layerGrowth: 3 },
+    breakthrough: { layerBase: 0.5, layerDecay: 0, majorBase: 0.5, majorDecay: 0, min: 0.1, max: 0.9 }
+  }, bigintNumeric)
+  assert.equal(typeof bigRealms.expCost(1, 0), 'bigint')
+  assert.equal(bigRealms.expCost(1, 0), 9n)   // 3 × 3^1,精确到个位
+
+  console.log('   定制表探针通过(曲线/生成/周期/抉择/账本/记忆/投资点/设施/体检/清理/存档/数值层,十二类旋钮都拧得动)')
+`
+execFileSync('node', ['--input-type=module', '-e', customizationProbe], { cwd: app, stdio: 'inherit' })
+
+/**
  * 类型消费者自检 —— 使用者那边 `tsc --strict` 能不能过。
  *
  * 为什么还要这一步:运行时 import 成功只证明"装上能跑",而 TypeScript 使用者的第一道坎是
@@ -680,6 +882,16 @@ if (existsSync(tsc)) {
     resolve(app, 'probe.mts'),
     `
 import { createRng, defineGame, planIdle, createDropTable, type IdlePlan, type Rng } from 'wanxiang-engine'
+import type {
+  AttributeSystemConfig,
+  DungeonConfig,
+  EquipmentConfig,
+  GameConfig,
+  Numeric,
+  RealmSystemConfig,
+  ResourceSystemConfig,
+  TriageConfig
+} from 'wanxiang-engine'
 import { DEMO } from 'wanxiang-engine/presets/demo'
 import { DAILY } from 'wanxiang-engine/presets/daily'
 import { XIUXIAN } from 'wanxiang-engine/presets/xiuxian'
@@ -689,7 +901,78 @@ const plan: IdlePlan = planIdle(8 * 3600_000, { stepMs: 3600_000, capMs: 6 * 360
 const table = createDropTable([{ key: 'page', chance: 0.12, count: [1, 2] }])
 const hits: number = table.roll(rng, { chanceMult: 2 }).reduce((sum, hit) => sum + hit.count, 0)
 const games = [DEMO, DAILY, XIUXIAN].map(config => defineGame(config))
+
+/**
+ * 定制面的**类型**探针 —— 上面那些钩子在**包里**(dist 的 .d.ts)是不是也照样能用。
+ *
+ * 运行时能用、类型面缺胳膊少腿,是"文档说可以接管"最隐蔽的翻车方式:JS 用户拿它没辙,
+ * TS 用户会看见一堆隐式 any 或找不到类型。这里把定制表里最常用的那些钩子**逐条按类型写一遍** ——
+ * 写错了 tsc --strict 当场红。(注:这些探针正文是模板字符串的一部分 —— 里面**不要用反引号**)
+ */
+const realms: RealmSystemConfig = {
+  worlds: [{ id: 'w', name: '界', realms: [{ name: '一段', layers: ['上', '下'] }, '二段'] }],
+  layerNames: ['一', '二'],
+  labelFormat: '{world}/{realm}/{layer}',
+  exp: { realmGrowth: 1, costFn: (major: number, layer: number) => major * 10 + layer },
+  combat: { realmGrowth: 1, statsFn: (major: number, layer: number) => ({ attack: major + layer }) },
+  breakthrough: { min: 0.1, max: 0.9, rateFn: (major: number) => 0.5 + major * 0.01, majorRequiresTrial: true }
+}
+const gear: EquipmentConfig<number> = {
+  slots: [{ id: 's', name: '槽' }],
+  qualities: [{ id: 'q', name: '凡', rank: 0, mult: 1, affixes: [0, 1], weight: 1 }],
+  templates: [{ id: 't', name: '物', slot: 's', tier: 1, base: { attack: 1 } }],
+  affixes: [{ id: 'a', name: '词', key: 'attackPct', min: 1, max: 2, weight: 1, desc: 'x' }],
+  power: {
+    baseFactor: 1,
+    qualityExponent: 1,
+    tierFactors: [1, 2],
+    levelBonusFn: (level: number) => level * 0.1
+  },
+  affixValueScale: 100,
+  affixCountFn: (quality, tier, r) => r.int(0, Math.min(2, quality.rank + tier)),
+  affixWeightFn: (affix, quality) => (affix.min <= quality.rank ? 1 : 0)
+}
+const dungeons: DungeonConfig<number> = {
+  regions: [{ id: 'r', name: '区', tier: 1, minRealm: 0, enemies: ['e'], boss: 'e' }],
+  enemies: [{ id: 'e', name: '敌', tier: 1, hpMult: 1, atkMult: 1, defMult: 1, speed: 1 }],
+  enemyPower: { baseHp: 10, baseAttack: 1, baseDefense: 1, tierGrowth: 2, scaleFn: (tier: number) => tier },
+  encounterFn: ctx => (ctx.bossDue ? { kind: 'boss' } : { kind: 'normal', enemyId: ctx.pool[0] }),
+  rewardFn: ctx => ctx.defaultRewards.map(r => ({ id: r.id, amount: 1 }))
+}
+const resources: ResourceSystemConfig = {
+  resources: [{ key: 'coin', name: '钱', integer: true, cap: 10, floor: 0 }],
+  capFn: (key, ledger) => (key === 'coin' ? Number(ledger.coin ?? 0) * 2 : undefined)
+}
+const attributes: AttributeSystemConfig = {
+  defs: [{ key: 'attack', name: '攻', kind: 'flat' }],
+  core: ['attack'],
+  diminish: { fold: values => values.reduce((a, b) => a + b, 0) }
+}
+const triage: TriageConfig<{ uid: string }> = {
+  rules: [{ id: 'keep-all', decide: () => ({ keep: true, reason: '都留' }) }],
+  skip: item => item.uid === 'locked',
+  fallback: { keep: false, reason: '不要' }
+}
+const config: GameConfig<number> = { name: '类型题材', attributes, realms, equipment: gear, dungeons }
+const bigintNumeric: Numeric<bigint> = {
+  zero: 0n,
+  one: 1n,
+  from: n => BigInt(Math.round(n)),
+  of: v => (typeof v === 'bigint' ? v : BigInt(Math.round(v))),
+  add: (a, b) => a + b,
+  sub: (a, b) => a - b,
+  mul: (a, b) => a * b,
+  mulN: (a, k) => a * BigInt(Math.round(k)),
+  div: (a, b) => (b === 0n ? 0n : a / b),
+  pow: (a, k) => a ** BigInt(Math.round(k)),
+  powN: (base, k) => BigInt(Math.round(base)) ** BigInt(Math.round(k)),
+  cmp: (a, b) => (a < b ? -1 : a > b ? 1 : 0),
+  max: (a, b) => (a > b ? a : b),
+  toNumber: a => Number(a),
+  format: a => String(a)
+}
 export const probe = { plan, hits, worlds: games.map(g => g.realms.realms.length) }
+export const custom = { config, resources, triage, bigintNumeric }
 `
   )
   for (const [label, moduleResolution] of [
