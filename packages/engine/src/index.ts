@@ -100,12 +100,14 @@ export { planIdle, runIdle } from './idle.js'
 export type {
   ProgressionAudit,
   ProgressionAuditConfig,
+  ProgressionComparison,
+  ProgressionComparisonRow,
   ProgressionSegment,
   ProgressionStep,
   ProgressionSummary,
   WorldStep
 } from './progression.js'
-export { createProgressionAudit } from './progression.js'
+export { compareProgression, createProgressionAudit } from './progression.js'
 
 export type { SaveDecodeResult, SaveFormat, SavePayload } from './save.js'
 export { decodeSave, decodeSavePayload, defineSaveFormat, encodeSave, runMigrations } from './save.js'

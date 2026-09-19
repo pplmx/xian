@@ -310,7 +310,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配三份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 76 个运行时导出 + 208 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
+| 公开面判据 | 77 个运行时导出 + 211 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
 
 上表只是最常被问到的五条。真正跑起来的是**十六道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `文档链接` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
 

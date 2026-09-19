@@ -122,6 +122,38 @@ export interface ProgressionSegment {
   maxCostStep: number
 }
 
+/** 两份配置的**同一段**对照(按序号对齐;段名带上,方便看出"这一境改了名字") */
+export interface ProgressionComparisonRow {
+  name: string
+  beforeSpan: number
+  afterSpan: number
+  /** 跨度变化倍数(after ÷ before):>1 = 这一段变长了 */
+  spanRatio: number
+  /** 跨进这一段那一步的倍数(分段口径里"进门那一下") */
+  beforeEntryStep: number
+  afterEntryStep: number
+}
+
+/**
+ * 两份配置的对照读数 —— 调参时的真实动作:**改一个数,再看差在哪**。
+ *
+ * 边界写在数据里而不是抛错:两份配置的**段数不同**时(改过境界表)`mismatched` 为 true,
+ * `rows` 只比到较短的那一边 —— "加了一境"是常事,不该让对照功能直接罢工,
+ * 但也不能假装两边对得上。
+ */
+export interface ProgressionComparison {
+  by: 'major' | 'world'
+  rows: ProgressionComparisonRow[]
+  /** 格数(两边各自有几个格子) */
+  steps: { before: number; after: number }
+  /** 全程跨度(末格 ÷ 首格)与它的变化倍数 */
+  totalSpan: { before: number; after: number; ratio: number }
+  /** 被碾压的格数(没给内容强度时两边都是 0) */
+  crushing: { before: number; after: number }
+  /** 两份配置的段数不同(改过境界表 / 界域表) */
+  mismatched: boolean
+}
+
 const stepOf = (value: number, previous: number | undefined): number =>
   previous === undefined || previous === 0 ? 1 : value / previous
 
@@ -235,3 +267,42 @@ export function createProgressionAudit<T = number>(
 }
 
 export type ProgressionAudit = ReturnType<typeof createProgressionAudit>
+
+/**
+ * 把两份体检**并排比一比** —— 回答"我改了这一个数,哪一段变了、变多少"。
+ *
+ * 为什么值得单独一个函数(而不是让人自己拿两份读数相减):对照最容易错的地方是**对齐** ——
+ * 段要按序号对齐、格数要分开报、段数不一样要明说。这些口径写一次,大家就不会各错一次。
+ */
+export function compareProgression(
+  before: ProgressionAudit,
+  after: ProgressionAudit,
+  by: 'major' | 'world' = 'major'
+): ProgressionComparison {
+  const a = before.segments(by)
+  const b = after.segments(by)
+  /** 全程跨度:末格 ÷ 首格(把整张表当成一段看) */
+  const spanOf = (list: readonly ProgressionSegment[]): number =>
+    list.length === 0 ? 1 : stepOf(list[list.length - 1]!.to.cost, list[0]!.from.cost)
+  const rows: ProgressionComparisonRow[] = a.slice(0, Math.min(a.length, b.length)).map((seg, i) => {
+    const other = b[i]!
+    return {
+      name: seg.name,
+      beforeSpan: seg.costSpan,
+      afterSpan: other.costSpan,
+      spanRatio: stepOf(other.costSpan, seg.costSpan),
+      beforeEntryStep: seg.entryCostStep,
+      afterEntryStep: other.entryCostStep
+    }
+  })
+  const beforeTotal = spanOf(a)
+  const afterTotal = spanOf(b)
+  return {
+    by,
+    rows,
+    steps: { before: before.steps.length, after: after.steps.length },
+    totalSpan: { before: beforeTotal, after: afterTotal, ratio: stepOf(afterTotal, beforeTotal) },
+    crushing: { before: before.summary().crushing, after: after.summary().crushing },
+    mismatched: a.length !== b.length
+  }
+}

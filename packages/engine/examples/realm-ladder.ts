@@ -17,6 +17,7 @@
  */
 import {
   clamp,
+  compareProgression,
   createProgressionAudit,
   createRealmSystem,
   createRng,
@@ -176,6 +177,19 @@ const gentler = createRealmSystem({
 const second = run(gentler, '点心铺-学徒', 3000)
 const finished = second.state.major === gentler.maxMajor && second.state.layer === gentler.maxLayerOf(gentler.maxMajor)
 
+// 调参的第二步永远是"再看一眼差在哪":把两张表各量一遍,再并排比(体检本身在下一节细看)
+const audit = createProgressionAudit({
+  realms: shop,
+  power: (major, layer) => (shop.baseStats(major, layer)['手速'] ?? 0) + (shop.baseStats(major, layer)['声望'] ?? 0),
+  contentPower: major => 20 * 3 ** major
+})
+const gentlerAudit = createProgressionAudit({
+  realms: gentler,
+  power: (major, layer) => (gentler.baseStats(major, layer)['手速'] ?? 0) + (gentler.baseStats(major, layer)['声望'] ?? 0),
+  contentPower: major => 20 * 3 ** major
+})
+const diff = compareProgression(audit, gentlerAudit)
+
 console.log('\n—— 只把"后段倍率"从 1.7 拧到 1.2、跨界那一档 3 拧到 2 ——')
 console.log(
   `同一个种子、同一段循环:第一张表 ${first.day} 天封顶,这张 ${second.day} 天封顶` +
@@ -185,16 +199,19 @@ console.log(
   `差别只出在那一行数上:宗师·见习的需求从 ${formatAmount(shop.expCost(6, 0))} 降到 ` +
     `${formatAmount(gentler.expCost(6, 0))} —— 前段照旧陡,后段不再卡人`
 )
+console.log(
+  `  逐段对照:${diff.rows
+    .map(r => `${r.name} ${r.beforeSpan.toFixed(1)}→${r.afterSpan.toFixed(1)}(×${r.spanRatio.toFixed(2)})`)
+    .join(' · ')}`
+)
+console.log(
+  `  全程跨度 ${diff.totalSpan.before.toFixed(0)} → ${diff.totalSpan.after.toFixed(0)} 倍(×${diff.totalSpan.ratio.toFixed(2)})` +
+    ` · 段数对得上:${!diff.mismatched}`
+)
 
 // ——— 5 · 同一份骨架,换一套名字与数值层 ———
 
 // 曲线体检:不用自己写循环,把这张表量一遍 —— 哪一格跳得最狠、换了界之后是什么手感
-const audit = createProgressionAudit({
-  realms: shop,
-  power: (major, layer) => (shop.baseStats(major, layer)['手速'] ?? 0) + (shop.baseStats(major, layer)['声望'] ?? 0),
-  // 内容强度:按"该层的推荐战力"给一个自己定的曲线(引擎不认识它怎么来的)
-  contentPower: major => 20 * 3 ** major
-})
 const report = audit.summary()
 console.log('—— 曲线体检(不用自己写循环) ——')
 console.log(

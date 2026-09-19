@@ -128,6 +128,8 @@ import type {
   IdlePlan,
   ProgressionAudit,
   ProgressionAuditConfig,
+  ProgressionComparison,
+  ProgressionComparisonRow,
   ProgressionSegment,
   ProgressionStep,
   ProgressionSummary,
@@ -261,6 +263,7 @@ const RUNTIME_EXPORTS = [
   'createHoldingSystem',
   'createPointPool',
   'createPityCounter',
+  'compareProgression',
   'createProgressionAudit',
   'createRealmSystem',
   'createRecipeRunner',
@@ -386,7 +389,7 @@ type PublicTypes = {
     StrikeOptions
   ]
   idle: [IdleConfig, IdlePlan]
-  progression: [ProgressionAudit, ProgressionAuditConfig<number>, ProgressionSegment, ProgressionStep, ProgressionSummary, WorldStep]
+  progression: [ProgressionAudit, ProgressionAuditConfig<number>, ProgressionComparison, ProgressionComparisonRow, ProgressionSegment, ProgressionStep, ProgressionSummary, WorldStep]
   save: [SaveDecodeResult<number>, SaveFormat<number>, SavePayload]
   skills: [SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem]
   crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef]

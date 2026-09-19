@@ -6,7 +6,7 @@
  * "跨界不混进最大跳变""玩家/内容 ≥ 阈值才算碾"这些算法不该跟着变。
  */
 import { describe, expect, it } from 'vitest'
-import { createProgressionAudit } from './progression.js'
+import { compareProgression, createProgressionAudit } from './progression.js'
 import { createRealmSystem, type RealmSystemConfig } from './realms.js'
 
 /** 一张小心构造的表:普通格涨 2 倍,跨界那一格涨 100 倍(用来验"跨界单列") */
@@ -138,5 +138,57 @@ describe('成长体检 —— 跳变、跨界与碾压', () => {
     expect(byWorld[1]!.costSpan).toBeCloseTo(2, 10)   // 三段两格之间只有层间 ×2
     expect(byWorld[1]!.entryCostStep).toBeCloseTo(50, 10) // 换界那一步
     console.log(`  按界域:${byWorld.map(s => `${s.name}×${s.costSpan.toFixed(1)}(进门 ×${s.entryCostStep})`).join(' · ')}`)
+  })
+
+  it('两份配置对照:改一个数之后,哪一段变了、变多少', () => {
+    const base = createProgressionAudit({ realms: sys(), contentPower: () => 1000 })
+    // "后段倍率拧小":把 cross 那一档调低、把层内倍率调低 —— 模拟一次真实调参
+    const gentlerConfig = ladder()
+    gentlerConfig.exp = { base: 100, layerGrowth: 1.5, realmGrowth: 100, lateRealmGrowth: 100, worldStepMult: 1 }
+    const gentler = createProgressionAudit({ realms: createRealmSystem(gentlerConfig), contentPower: () => 1000 })
+
+    const diff = compareProgression(base, gentler)
+    expect(diff.by).toBe('major')
+    expect(diff.mismatched).toBe(false)
+    expect(diff.rows.map(r => r.name)).toEqual(['一段', '二段', '三段'])
+    // 三段跨度都从 ×2 降到 ×1.5(层内倍率 2 → 1.5)
+    for (const row of diff.rows) {
+      expect(row.beforeSpan).toBeCloseTo(2, 10)
+      expect(row.afterSpan).toBeCloseTo(1.5, 10)
+      expect(row.spanRatio).toBeCloseTo(0.75, 10)
+    }
+    // 进门那一步:第一段没变(都是 1),后两段从 ×50 变成 ×66.67(跨大境界 100 / 层内 1.5)
+    expect(diff.rows[0]!.afterEntryStep).toBe(1)
+    expect(diff.rows[1]!.beforeEntryStep).toBeCloseTo(50, 6)
+    expect(diff.rows[1]!.afterEntryStep).toBeCloseTo(66.6667, 3)
+    // 全程跨度与格数
+    expect(diff.steps).toEqual({ before: 6, after: 6 })
+    // 全程(末格 ÷ 首格):100 → 2_000_000 是 ×20000;调缓之后 100 → 1_500_000 是 ×15000
+    expect(diff.totalSpan.before).toBeCloseTo(20_000, 3)
+    expect(diff.totalSpan.after).toBeCloseTo(15_000, 3)
+    expect(diff.totalSpan.ratio).toBeCloseTo(0.75, 10)
+    // 内容强度没变(1000),两份都没被碾
+    expect(diff.crushing).toEqual({ before: 0, after: 0 })
+    console.log(`  对照:${diff.rows.map(r => `${r.name} 跨度 ${r.beforeSpan.toFixed(1)}→${r.afterSpan.toFixed(1)}(×${r.spanRatio.toFixed(2)})`).join(' · ')}`)
+    console.log(`  全程跨度 ${diff.totalSpan.before.toFixed(1)} → ${diff.totalSpan.after.toFixed(1)}(×${diff.totalSpan.ratio.toFixed(2)})`)
+  })
+
+  it('段数不同时明说:加了一境就不假装两边对得上', () => {
+    const base = createProgressionAudit({ realms: sys() })
+    const withExtra = createProgressionAudit({
+      realms: createRealmSystem({
+        ...ladder(),
+        worlds: [
+          { id: 'low', name: '下界', realms: ['一段', '二段'] },
+          { id: 'high', name: '上界', realms: ['三段', '四段'] }
+        ]
+      })
+    })
+    const diff = compareProgression(base, withExtra)
+    expect(diff.mismatched).toBe(true)
+    expect(diff.rows.length).toBe(3)          // 只比到较短的一边
+    expect(diff.steps).toEqual({ before: 6, after: 8 })
+    // 按界域比:两边界域数一样(都是两界),所以不算错位
+    expect(compareProgression(base, withExtra, 'world').mismatched).toBe(false)
   })
 })

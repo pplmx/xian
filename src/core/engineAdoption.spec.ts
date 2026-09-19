@@ -55,6 +55,7 @@ const NOT_BY_NAME: Record<string, { kind: 'facade' | 'own' | 'none'; why: string
   seedFromString: { kind: 'own', why: '字符串键→种子这条路由本作的随机服务自己接;库那份只在 parity 用例里参与对账' },
   createCombatEngine: { kind: 'own', why: '自动战斗是应用侧那套(core/combat:护盾/反击/追击/战报节奏);库的战斗骨架只在 engineCombatAblation 里对合成键' },
   createProgressionAudit: { kind: 'own', why: '只在 engineProgressionAudit 这条对账用例里用(拿它核本作真表的结构);应用侧的数值审计仍走 inflationAudit 那套' },
+  compareProgression: { kind: 'own', why: '调参对照:本作走 inflationAudit / progressionSim 那套内容审计(含装备成型度与区域强度),引擎这份通用对照留给未来的使用者' },
   runIdle: { kind: 'none', why: '离线结算要按秒摊到多本账(修为/灵气/建筑/钻研/历练),没有"折叠成一步"的循环' },
   createPityCounter: { kind: 'none', why: '本作没有抽卡保底这套玩法' }
 }
