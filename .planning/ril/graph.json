@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 371,
+  "round": 372,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T01:19:41+00:00",
+  "updated_at": "2026-09-19T01:23:09+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20537,6 +20537,43 @@
       "summary": "构建只发生在打包时(prepack),不发生在安装时:装包不跑任何脚本,消费者不需要编译工具,也不需要信任 postinstall。代价是 file: 与 monorepo 两条路上使用者要自己先 build 一次(文档已写明),git tag 安装不再可用(本来就不推荐)。",
       "rationale": "运行时依赖为零是这个库的原则(engines/sideEffects/dependencies 都是干净的),而\"安装时要跑一次 tsc\"等于把构建工具变成事实上的依赖:消费者可能没装、可能被 npm 的脚本白名单拦住、也可能被企业的 install-scripts 策略拒绝。实测已经看到 npm 11 对 tgz 安装也提示安装脚本 —— 说明这条路在收紧。反过来,构建发生在打包时是**零成本**的:反正发版时要 pack 一次,那时构建能让包里永远是新鲜产物。",
       "alternatives_rejected": "①保留 prepare 图省事(git 安装能自建,但消费者侧多一个会失败的脚本面;而且我们已决定不推荐 git 安装);②把 typescript 挪进 dependencies 让安装时总能编译(为构建工具背运行时依赖,违背零依赖);③把 dist 提交进仓库(git 安装也能用,但仓库里多一份产物、diff 噪音大 —— 上一轮刚为同类问题加了 *.tgz 忽略)。"
+    },
+    "TASK-353": {
+      "id": "TASK-353",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:23:09+00:00",
+      "updated_at": "2026-09-19T01:23:09+00:00",
+      "touched_round": 371,
+      "category": "feature",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "曲线体检补 segments():按大境界(默认)或界域聚合成段,给出格数 / 段跨度(段末÷段首)/ 进门那一步 / 段内最大单步 —— 回答\"这一境整体有多长\",此前只有源工程那套审计有这个读数。"
+    },
+    "CHG-437": {
+      "id": "CHG-437",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:23:09+00:00",
+      "updated_at": "2026-09-19T01:23:09+00:00",
+      "touched_round": 371,
+      "commit": "88db9d3",
+      "summary": "库:progression.ts 新增 ProgressionSegment 与 segments();progression.spec 加一节(断言段名/格数/跨度/进门步/段内最大);examples/realm-ladder 展示两种切法;publicApi 类型清单 + index 导出;usage.md 两处、CHANGELOG 记一条。宿主无改动。"
+    },
+    "EV-363": {
+      "id": "EV-363",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:23:09+00:00",
+      "updated_at": "2026-09-19T01:23:09+00:00",
+      "touched_round": 371,
+      "confidence": 0.95,
+      "source": "变更 CHG-437(88db9d3)。单测:三段各 2 格、跨度 ×2、进门 ×1/×50/×50、段内最大 ×2;按界域两段(4 格 / 2 格),跨度 ×200 与 ×2,第二段进门 ×50。示例实测:七境各 5 格、每境 ×5.1(掌柜与总号掌事 ×15.2),按界域 本铺 ×87.5 / 分号 ×25.8 / 同业 ×8.6。闸门:库 bun run check 全绿(571 例 / 79 文件 + 16 道自检)、宿主 bun run test 288 文件 / 2625 例全过、check:engine 通过。",
+      "summary": "把\"哪一步最陡\"与\"哪一段最长\"分成两种读法 —— 后者才是排期时的问题,而它此前只存在于作品侧那套审计里。"
     }
   },
   "edges": [
@@ -30260,6 +30297,12 @@
       "to": "TASK-352",
       "type": "governs",
       "created_at": "2026-09-19T01:19:41+00:00"
+    },
+    {
+      "from": "CHG-437",
+      "to": "TASK-353",
+      "type": "implements",
+      "created_at": "2026-09-19T01:23:09+00:00"
     }
   ]
 }
