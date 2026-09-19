@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 357,
+  "round": 358,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T00:04:20+00:00",
+  "updated_at": "2026-09-19T00:09:17+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 356,
+      "touched_round": 357,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -19866,6 +19866,53 @@
       "confidence": 0.95,
       "source": "变更 CHG-421(0ef6420)。摘要(两个盐各哈希一次 + 长度):等级表 xiuxian 9f3b6d43-732077aa-16140 / demo 8c219e83-153b38ba-1304 / daily 846c5627-8650310e-3152;默认等级表 a7789efd-be448cc8-1440;属性 demo aeb5b91b-5f8bbdfa-306 / daily a80577cf-95128480-307;装备 demo aec8c54c-d21a2305-770 / xiuxian b668c394-f8f6f0e5-726;副本 demo 3a16269c-3b59263-565 / xiuxian 261668b-bbff56a0-1105;战斗 demo fa7b87a1-821c4c94-26 / xiuxian 2e5e7ab9-94ee9c40-26;默认值面 552f6f6a-a823a68f-220。门面读数:demo 第一场 [胜,16 回合,我剩血 2.889304388,敌 0,事件 33];体检分界 0.7 起 healthy、3 以上 surplus、10 以上 idle。闸门:bun run check 全绿(554 例 / 76 文件 + 14 道自检 + 13 份示例)。反向:demo base 60 → 61 时等级表摘要当场红(已还原)。",
       "summary": "把\"逐位一致\"从一句话变成会红的摘要。口径上做了个取舍:不列几千个数字(没人 review),而是\"摘要 + 少量门面数值\" —— 摘要保证任何一位都藏不住,门面数值让人在 diff 里一眼看出改了哪一块。"
+    },
+    "ISS-241": {
+      "id": "ISS-241",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:09:17+00:00",
+      "updated_at": "2026-09-19T00:09:17+00:00",
+      "touched_round": 357,
+      "summary": "文档里指向的 tag 与 package.json 的版本没有任何判据盯着:发版漏改时安装那一行要么指向不存在的 tag,要么把人按在旧版本上,而两者都不会报错。版本号散在库内四处(README 安装块/版本块、开发文档安装块/npm pack 例)+ 宿主两处。"
+    },
+    "TASK-338": {
+      "id": "TASK-338",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T00:09:17+00:00",
+      "updated_at": "2026-09-19T00:09:17+00:00",
+      "touched_round": 357,
+      "category": "test",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1,
+      "summary": "补版本引用自检(库 + 宿主两侧)与发版清单:文档里的 #vX.Y.Z / tarball 名 / 当前版本 必须等于 package.json 的 version;并把发版五步与两条坑写进开发文档。"
+    },
+    "CHG-422": {
+      "id": "CHG-422",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:09:17+00:00",
+      "updated_at": "2026-09-19T00:09:17+00:00",
+      "touched_round": 357,
+      "commit": "fb438b0",
+      "summary": "库:scripts/verify-dist.mjs 新增「版本引用自检」(第 14 道);docs/development.md 新增「发版(五步)」;CHANGELOG 记一条。宿主:scripts/engine-dist.mjs 新增宿主文档 ↔ 库版本一致性检查。运行时代码与公开面未动。"
+    },
+    "EV-348": {
+      "id": "EV-348",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T00:09:17+00:00",
+      "updated_at": "2026-09-19T00:09:17+00:00",
+      "touched_round": 357,
+      "confidence": 0.96,
+      "source": "变更 CHG-422(fb438b0)。正向:库 bun run check 全绿(554 例 / 76 文件 + 14 道自检,新印\"版本引用自检通过(6 处引用都是 0.1.18)\");宿主 bun run check:engine 通过(印\"宿主文档里的库版本 2 处引用都是 0.1.18\")。反向:README 的 #v0.1.18 → #v0.1.17 时自检点名 README.md(已还原)。",
+      "summary": "把\"发版时的那一步人工同步\"变成会红的判据。同时把发版流程从只存在于对话记忆里,落到 docs/development.md(含 gh --target 要写完整 SHA、不要盲等 CI 这两条踩过的坑)。"
     }
   },
   "edges": [
@@ -29415,6 +29462,24 @@
       "to": "COMP-027",
       "type": "located_in",
       "created_at": "2026-09-19T00:04:20+00:00"
+    },
+    {
+      "from": "CHG-422",
+      "to": "TASK-338",
+      "type": "implements",
+      "created_at": "2026-09-19T00:09:17+00:00"
+    },
+    {
+      "from": "CHG-422",
+      "to": "ISS-241",
+      "type": "resolves",
+      "created_at": "2026-09-19T00:09:17+00:00"
+    },
+    {
+      "from": "ISS-241",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-19T00:09:17+00:00"
     }
   ]
 }
