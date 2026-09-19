@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 372,
+  "round": 373,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T01:23:09+00:00",
+  "updated_at": "2026-09-19T01:28:02+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -20574,6 +20574,55 @@
       "confidence": 0.95,
       "source": "变更 CHG-437(88db9d3)。单测:三段各 2 格、跨度 ×2、进门 ×1/×50/×50、段内最大 ×2;按界域两段(4 格 / 2 格),跨度 ×200 与 ×2,第二段进门 ×50。示例实测:七境各 5 格、每境 ×5.1(掌柜与总号掌事 ×15.2),按界域 本铺 ×87.5 / 分号 ×25.8 / 同业 ×8.6。闸门:库 bun run check 全绿(571 例 / 79 文件 + 16 道自检)、宿主 bun run test 288 文件 / 2625 例全过、check:engine 通过。",
       "summary": "把\"哪一步最陡\"与\"哪一段最长\"分成两种读法 —— 后者才是排期时的问题,而它此前只存在于作品侧那套审计里。"
+    },
+    "TASK-354": {
+      "id": "TASK-354",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T01:28:01+00:00",
+      "updated_at": "2026-09-19T01:28:02+00:00",
+      "touched_round": 372,
+      "category": "feature",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "曲线体检补 compareProgression(改前, 改后):逐段跨度与进门步的 before/after、全程跨度、格数与被碾格数;段数不同时用 mismatched 明说并只比到较短一边。"
+    },
+    "CHG-438": {
+      "id": "CHG-438",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:28:01+00:00",
+      "updated_at": "2026-09-19T01:28:01+00:00",
+      "touched_round": 372,
+      "commit": "117da73",
+      "summary": "库:progression.ts 新增 compareProgression 与两个类型;index 与 publicApi 清单同步(76 → 77 导出 / 208 → 211 类型);progression.spec 两节(对照与段数不同);examples/realm-ladder 展示;usage.md 与 CHANGELOG 更新。宿主:engineAdoption 登记该导出(own)。"
+    },
+    "EV-364": {
+      "id": "EV-364",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:28:01+00:00",
+      "updated_at": "2026-09-19T01:28:01+00:00",
+      "touched_round": 372,
+      "confidence": 0.95,
+      "source": "变更 CHG-438(117da73)。示例实测(后段倍率 1.7→1.2、跨界 3→2):逐段对照 掌柜 15.2→10.1(×0.67)、总号掌事 15.2→10.1(×0.67),其余五段 ×1.00;全程跨度 344 → 121 倍(×0.35)。单测:三段跨度 2.0→1.5(×0.75)、进门步 50→66.67、全程 20000→15000(×0.75);段数不同时 mismatched=true 且 rows 取较短一边(3 段/6 格 对 4 段/8 格),按界域比则对齐。闸门:库 bun run check 全绿(573 例 / 79 文件 + 16 道自检)、宿主 288 文件 / 2627 例全过、test:report 0 败、check:engine 通过。",
+      "summary": "体检从\"一次读数\"变成\"可对照\":逐格(哪一步陡)→ 分段(哪一段长)→ 对照(这次改动变了哪段)。三次递进都是同一类体会:把\"调参时人真正问的问题\"做成读法,而不是让人自己拼。"
+    },
+    "DEC-163": {
+      "id": "DEC-163",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T01:28:02+00:00",
+      "updated_at": "2026-09-19T01:28:02+00:00",
+      "touched_round": 372,
+      "summary": "体检的读数分三层,各回答一个问题:lines() 逐格(哪一步最陡)、segments() 分段(哪一段整体多长)、compareProgression() 对照(改一个数之后哪一段变了)。三层都只报数,不改数值。",
+      "rationale": "内容作者的三类问题在时间上分得很清楚:出问题时问\"哪一步陡\"、排期时问\"这一段多长\"、改完数问\"变了哪一段\"。此前第一类有读法,后两类要么没有、要么只存在于作品侧那套审计里。把三类都做成库里的读法,好处是口径统一(段跨度取末/首、进门步单独给、段数不同要说清),使用者不必各自定义一遍 —— 而口径不一致的代价,是两个人对着同一个曲线得出不同结论。",
+      "alternatives_rejected": "①只给逐格读数(排期与对照都要自己拼,而拼的口径各异);②把对照做成\"算两份配置的差值函数\"让调用方自己组合(对齐这件事最容易错,正是该由库兜住的);③段数不同时直接抛错(加一境是常事,抛错会让常见操作不可用 —— 改成在数据里明说 mismatched)。"
     }
   },
   "edges": [
@@ -30303,6 +30352,18 @@
       "to": "TASK-353",
       "type": "implements",
       "created_at": "2026-09-19T01:23:09+00:00"
+    },
+    {
+      "from": "CHG-438",
+      "to": "TASK-354",
+      "type": "implements",
+      "created_at": "2026-09-19T01:28:02+00:00"
+    },
+    {
+      "from": "DEC-163",
+      "to": "TASK-354",
+      "type": "governs",
+      "created_at": "2026-09-19T01:28:02+00:00"
     }
   ]
 }
