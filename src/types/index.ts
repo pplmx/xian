@@ -459,10 +459,51 @@ export interface BossPhase {
   label?: string
 }
 
+/**
+ * 敌人与灵宠的「族类」—— 一族共用一枚形,异族不共用同一枚。
+ *
+ * 数据里写的是族类(`family`),形由 `data/beastFamilies.ts` 的族类表给出;
+ * `inkIcons.spec.ts` 里那条「一枚图标被一个以上族类共用即红」盯着这张表。
+ * 狼不该画成骷髅,蛇蛟不该与龙共形,麒麟不该与野猪同爪。
+ */
+export type BeastFamily =
+  | 'wolf' // 狼
+  | 'fox' // 狐
+  | 'boar' // 豕(野猪一类)
+  | 'bear' // 熊
+  | 'ape' // 猿猴
+  | 'deer' // 鹿
+  | 'serpent' // 蛇蛟(蛇、蟒、蛟、九头蛇)
+  | 'dragon' // 龙(螭龙、应龙)
+  | 'qilin' // 麒麟(石麟一类)
+  | 'turtle' // 龟
+  | 'bat' // 蝠
+  | 'bird' // 羽禽(雀、鹰、鹤、鸾、鹏)
+  | 'fish' // 鱼鲛
+  | 'beast' // 走兽(没写名目的兽:陨铁兽、星空古兽、各方神兽)
+  | 'plant' // 草木
+  | 'water' // 水属(泥沼、渡厄仙槎)
+  | 'ghost' // 亡灵(魂、鬼、尸、影、残念)
+  | 'puppet' // 傀儡(傀儡、俑、石像、神像)
+  | 'sword' // 剑器之属
+  | 'spear' // 枪器之属
+  | 'guard' // 甲士(卫、兵、将、守卫、骑士、斥候)
+  | 'demon' // 妖魔(妖王、魔尊、妖圣、域主、古魔)
+  | 'immortal' // 仙道(仙翁、仙后、道童、道尊、仙子)
+  | 'god' // 神(神王、神帝、天主、神官、守者)
+  | 'spirit' // 灵(仙灵、真灵、游灵、本源)
+  | 'star' // 星辰之光(星君、仙光、神使)
+  | 'moon' // 月华之属
+  | 'outsider' // 天外之客
+  | 'treasure' // 金玉之精(金蟾、帝印神兽)
+
 export interface EnemyDef {
   id: string
   name: string
+  /** 图标名 —— 由 family 经 data/beastFamilies.ts 定出,不手写 */
   icon: string
+  /** 族类:一族共用一枚形,异族不共用 */
+  family: BeastFamily
   element?: ElementId
   tier: number
   hpMult: number
@@ -661,6 +702,8 @@ export interface PetDef {
   name: string
   desc: string
   icon: string
+  /** 族类:一族共用一枚形,异族不共用(见 data/beastFamilies.ts) */
+  family: BeastFamily
   quality: QualityId
   mods: StatMods
   /** Phase 31.0 S4:灵兽性格(贪宝/慢稳/好战/谨慎),影响历练行为倾向 */

@@ -210,6 +210,7 @@ describe('存档往返 · 导出再导入一模一样', () => {
       id: 'saved_foe',
       name: '石傀',
       icon: 'x',
+      family: 'puppet',
       tier: 9,
       hpMult: 1,
       atkMult: 1,

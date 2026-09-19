@@ -117,6 +117,7 @@ describe('内容强度:本作那套 vs 库的区域表读法', () => {
     id: 'basis',
     name: '基准敌人',
     icon: '',
+    family: 'beast',
     tier,
     hpMult: 1,
     atkMult: 1,

@@ -38,6 +38,7 @@ const DEF: EnemyDef = {
   id: 'test_foe',
   name: '试招石人',
   icon: 'x',
+  family: 'puppet',
   tier: 6,
   hpMult: 1,
   atkMult: 1,

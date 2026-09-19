@@ -130,6 +130,22 @@ uv run scripts/fonts/build-kai-font.py
 长条的鞭与尺归 `wand`。原先只分两类(刀戈斧都归 `axe`、枪钩戟都归 `wand`),于是
 「长刀配斧形图标、长枪配枪形图标」这种近似对得上、细看不对的情形一直在。
 
+敌人与灵宠的形按**族类**发(`src/data/beastFamilies.ts`),不按「大类够用」。原先是数据里
+直接写 icon,于是 132 只敌人只用了 19 枚形:46 只挤在一枚骷髅里(独角妖狼、霞光巨蟒、
+黑风妖王、玄冰蛟、万妖林主都是一枚骷髅),兽爪那一枚同时是野狼、野猪、石猿、灵狐 与
+「麒麟」;灵宠那边应龙与螭龙幼子是星芒、麒麟是兽爪、雪背小龟是一面盾。现在数据里写的是
+族类(`family`),形由 `BEAST_FAMILIES` 给出 —— 29 族对 29 枚形,146 条(132 名敌人 +
+14 只灵宠)各归其族:狼 `wolf`、狐 `fox`、豕 `boar`、熊 `bear`、猿 `ape`、鹿 `deer`、
+蛇蛟 `serpent`、龙 `dragon`、麒麟 `qilin`、龟 `turtle`、蝠 `bat`、羽禽 `bird`、鱼 `fish`、
+走兽 `paw`、草木 `leaf`、水属 `waves`、亡灵 `ghost`、傀儡 `puppet`、剑器 `sword`、枪器
+`spear`、甲士 `shield`、妖魔 `demon`、仙 `immortal`、神 `god`、灵 `sparkles`、星辰 `star`、
+月华 `moon`、天外 `cloud`、金玉 `gem`(雷属那一条没立:御雷猴的名物是猴,归 `ape`)。
+
+判据在 `inkIcons.spec.ts` 的「图标 · 族类」一节:**一枚形被一个以上族类共用即红**;另加
+「同族共用同一枚形、数据不许自己写 icon」与「族类表里不留闲族」两条。新画的十五枚形都
+在 16px(灵宠列表)与 18px(战斗面板)的真尺寸下核过 —— 走兽那一类形近,靠耳、角、吻、尾
+这类可辨的部件拉开,不是靠原型图上的细节(斧与长枪当年就是这么返工的)。
+
 ## 动效
 
 `rise-in` / `shimmer` / `pulse-ring` / `bar-grow` 等关键帧,`.stagger-in` 做入场序列;
