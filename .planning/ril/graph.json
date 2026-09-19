@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 392,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T12:33:30+00:00",
+  "updated_at": "2026-09-19T13:00:25+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22372,10 +22372,10 @@
     "TASK-382": {
       "id": "TASK-382",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-19T12:33:22+00:00",
-      "updated_at": "2026-09-19T12:33:22+00:00",
+      "updated_at": "2026-09-19T13:00:25+00:00",
       "touched_round": 392,
       "category": "core-feature",
       "severity": 0.3,
@@ -22396,6 +22396,65 @@
       "confidence": 0.8,
       "effort": 4,
       "summary": "内容侧图标词表细化:装备 icon 从两类(axe/wand)拆到四类以上(刀/枪/戈/锤/钩各归其形),并逐件核对 288 件模板对得上;数据改了要连图标一起核(见 ISS-256)。"
+    },
+    "CHG-472": {
+      "id": "CHG-472",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:00:19+00:00",
+      "updated_at": "2026-09-19T13:00:19+00:00",
+      "touched_round": 392,
+      "commit": "d688ea8",
+      "summary": "图标收尾:inkIcons.ts 补 29 枚(锁/开锁/分解/关闭/刷新、九个部位、钟/城/云/冠/水/鱼/葫芦/鬼/叶/月/文书/落日/林/伞/水纹),注册表与图标文件合并成一处(删 src/ui/icons.ts),判据的「用得到」改成扫字面量,全仓去掉 lucide 依赖(bun.lock 少一个包、产物不再带它)。"
+    },
+    "DEC-179": {
+      "id": "DEC-179",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:00:19+00:00",
+      "updated_at": "2026-09-19T13:00:19+00:00",
+      "touched_round": 392,
+      "summary": "图标从此全套自绘,不引第三方图标库;功能性图标(锁/开锁/分解/关闭/刷新)只改笔不改形,其余按中式名物换形;判据的「用得到」用扫字面量的保守写法,而不是逐种语法去认引用。",
+      "rationale": "西式几何线性图标是「全局古风」里最后一层口音,换完它界面里就没有外来的图形语言了。功能性图标保留形状约定是可用性取舍:入口认不出来比不好看更伤。判据偏保守是因为引用写法太多(icon 字段、按位置传参、部位表、地形表、模板属性),漏一种就会在真用到的图标上误报;误报的代价是假红,漏报的代价只是少拦一个死图标。",
+      "alternatives_rejected": "①留着 lucide 只把用到的几枚换成自绘(两套语言并存,正是要消掉的东西);②功能性图标也换意象(入口认不出);③判据逐种语法认引用(迟早漏一种,且每加一种数据写法就要改判据)。"
+    },
+    "EV-404": {
+      "id": "EV-404",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:00:19+00:00",
+      "updated_at": "2026-09-19T13:00:19+00:00",
+      "touched_round": 392,
+      "source": "真浏览器截图核对:背包页(战痕刀=横头斧、雾隐长枪=斜杆长矛,16/20px 都读得出)、界域页(沉沙古城=亭台、未开地界=锁)、顶栏与底栏(两套主题);另外逐枚 16/20px 的原型图比对过三轮(对象是斧、长枪、足迹、臂鞲、文书五枚)pageerror 0",
+      "summary": "剩下的 29 枚都在真尺寸下核过,五枚是比过才定稿的。",
+      "confidence": 1.0
+    },
+    "EV-405": {
+      "id": "EV-405",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:00:20+00:00",
+      "updated_at": "2026-09-19T13:00:20+00:00",
+      "touched_round": 392,
+      "source": "rg 全仓:除注释外再无 lucide 引用;bun install 后 1 package removed;bun run check / test(293 spec / 2677 例)/ layout-check(168 组合 + 十道门)/ ui-smoke(15 页 0 异常)全绿;dist 产物里检不到 lucide",
+      "summary": "依赖与产物都清干净了,门也全绿。",
+      "confidence": 1.0
+    },
+    "EV-406": {
+      "id": "EV-406",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T13:00:20+00:00",
+      "updated_at": "2026-09-19T13:00:20+00:00",
+      "touched_round": 392,
+      "source": "rg 清点:lucide 登记 31 枚 → 换掉 29 枚 + 删掉 2 枚从来没人用的(download/upload);src/ui/icons.ts 删除,图标只剩 src/ui/inkIcons.ts 一处;package.json 少了 lucide-vue-next",
+      "summary": "图标层现在是清一色自己画的,「西式几何线性图标」这层口音消失。",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -32839,6 +32898,24 @@
       "to": "COMP-029",
       "type": "governs",
       "created_at": "2026-09-19T12:33:22+00:00"
+    },
+    {
+      "from": "CHG-472",
+      "to": "TASK-382",
+      "type": "implements",
+      "created_at": "2026-09-19T13:00:20+00:00"
+    },
+    {
+      "from": "CHG-472",
+      "to": "ISS-254",
+      "type": "resolves",
+      "created_at": "2026-09-19T13:00:20+00:00"
+    },
+    {
+      "from": "DEC-179",
+      "to": "COMP-029",
+      "type": "governs",
+      "created_at": "2026-09-19T13:00:20+00:00"
     }
   ]
 }
