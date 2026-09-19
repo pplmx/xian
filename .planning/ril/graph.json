@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 378,
+  "round": 379,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T02:03:15+00:00",
+  "updated_at": "2026-09-19T02:09:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 377,
+      "touched_round": 378,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -20966,6 +20966,104 @@
       "confidence": 0.95,
       "source": "变更 CHG-444 / CHG-445(9b5b2f6)。库 bun run check 全绿:588 例 / 79 文件、17 道自检(报错口径 28 条 = 新增两条且都被用例触发;文档链接 32 条;示例覆盖 37 个模块 + 4 份内容包)、发布包自检里第四个题材走完整条路(装包 → 按子路径 import MINIMAL → defineGame → 断言 config.* === null、label 学徒·粗活、chain() 为空、firstRegion() 抛错、generate() 抛错)。新增用例读数:只装两层时 realms.realms.length=2、equipment.slots=[]、dungeons.unlocked(空进度,0)=[];漏节报 CONFIG_SECTION_MISSING(消息含\"配置里缺了 equipment 这一节\"),坏形状报两条 CONFIG_FIELD_SHAPE。宿主:vue-tsc 通过、288 文件 / 2644 例全过、check:engine 通过(9 个入口 + 四份内容包)。",
       "summary": "\"只装两层\"这条主张从装配到发布包都跑通了:空层的读与用两种口径分开(有意义的空 vs 当场说明白),而\"省略/写坏\"被装配期拦住 —— 三种写法各有判据。"
+    },
+    "ISS-245": {
+      "id": "ISS-245",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:09:31+00:00",
+      "updated_at": "2026-09-19T02:09:57+00:00",
+      "touched_round": 378,
+      "severity": 0.4,
+      "confidence": 0.95,
+      "summary": "docs/tuning.md 一直承诺\"每个数字都能自己跑出来(bunx vitest run src/xxx.sim.spec.ts)\",实测跑完是一片空白:vitest 默认会把**通过用例**的 stdout 收走(单文件加 --silent=false 有时能看到,多文件一定看不到)。于是读者会得出\"这些实验根本没打印\"的结论 —— 而打印出来的读数正是这份文档的全部价值。"
+    },
+    "TASK-362": {
+      "id": "TASK-362",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:09:34+00:00",
+      "updated_at": "2026-09-19T02:09:57+00:00",
+      "touched_round": 378,
+      "category": "test-quality",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "库:补第 31 份消融 progression.sim.spec.ts —— 拿三份内容包量曲线体检本身(跳变/段长/碾压阈值/对照),填掉\"唯一有真刻度却没量过\"的那个模块;docs/tuning.md 新增同名小节与索引行。"
+    },
+    "TASK-363": {
+      "id": "TASK-363",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T02:09:37+00:00",
+      "updated_at": "2026-09-19T02:09:57+00:00",
+      "touched_round": 378,
+      "category": "docs",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "库:把\"读数看得见\"变成可复现且可持续的 —— 四条复现命令带 --reporter=verbose、新增 bun run tuning(31 份一起跑边跑边印)、调参参考自检加一条判据(凡 bunx vitest run 命令没带 --reporter=verbose 就红)。"
+    },
+    "CHG-446": {
+      "id": "CHG-446",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:09:39+00:00",
+      "updated_at": "2026-09-19T02:09:39+00:00",
+      "touched_round": 378,
+      "commit": "801d616",
+      "summary": "库:新增 src/progression.sim.spec.ts(三节:跳变与段长 / 碾压与阈值 / 对照读数,含 8 条口径断言);docs/tuning.md 新增「曲线体检:三份内容包读出来什么样」小节、索引加一行、份数 30 → 31;README 用例数 588/79 → 591/80;CHANGELOG 记一条。"
+    },
+    "CHG-447": {
+      "id": "CHG-447",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:09:41+00:00",
+      "updated_at": "2026-09-19T02:09:41+00:00",
+      "touched_round": 378,
+      "commit": "801d616",
+      "summary": "库:package.json 新增 tuning 脚本(vitest run --reporter=verbose src/*.sim.spec.ts);docs/tuning.md 四处复现命令改成带 --reporter=verbose 并写清\"为什么不能省\";verify-dist.mjs 的调参参考自检新增复现命令判据(未带 --reporter=verbose 就红,并印出条数);CHANGELOG 记一条。"
+    },
+    "DEC-166": {
+      "id": "DEC-166",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:09:45+00:00",
+      "updated_at": "2026-09-19T02:09:45+00:00",
+      "touched_round": 378,
+      "summary": "文档里给出的**复现命令**必须真能把读数打出来:凡 `bunx vitest run` 一律带 `--reporter=verbose`(或走 `bun run tuning`),并由「调参参考自检」逐条核对。",
+      "rationale": "这份文档的全部价值是那些打印出来的读数,而 vitest 默认会把通过用例的 stdout 收走 —— 命令少一个参数,读者看到的是\"31 份全绿、一片空白\",他会以为实验没打印,而不是以为命令写错了(实测踩过一次)。把\"命令能看见输出\"变成机器判据,成本几乎为零,防的却是一整类\"文档说的和实际跑出来的不是一回事\"。",
+      "alternatives_rejected": "①只改文档、不立判据(下次有人重写命令又会漂);②把 vitest 配置改成默认打印全部 stdout(全量跑会刷屏,且宿主仓库另有自己的测试配置,库这边不该替使用者定这个);③在文档里让读者自己加 --silent=false(实测多文件下同样看不见,等于给了一个不灵的偏方);④干脆不承诺可复现(那份文档就只剩\"信我\"两个字)。"
+    },
+    "HYP-104": {
+      "id": "HYP-104",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:09:49+00:00",
+      "updated_at": "2026-09-19T02:09:49+00:00",
+      "touched_round": 378,
+      "confidence": 0.9,
+      "summary": "曲线体检的读法(逐格 / 分段 / 碾压 / 对照)在三份不同风格的内容包上都给得出可比较的刻度,并且\"最陡的一格不含换界\"\"阈值加严只增不减\"\"第一次碾压是最早那一格\"这些口径在真实内容上成立。",
+      "prediction": "三份内容包各自的格数=境界数×层数、段数=境界数/界域数、面板单调不减;换界那几格不进\"最陡\";阈值 2/3/5 下被碾格数单调不增;同一份表只改晚段倍率时,段内跨度不变而进门那一步变。"
+    },
+    "EV-371": {
+      "id": "EV-371",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T02:09:53+00:00",
+      "updated_at": "2026-09-19T02:09:53+00:00",
+      "touched_round": 378,
+      "confidence": 0.95,
+      "source": "变更 CHG-446 / CHG-447(801d616)。库 bun run check 全绿:591 例 / 80 文件 + 17 道自检;调参参考自检印\"31 份消融都在 docs/tuning.md,一页索引逐节点名,4 条复现命令都看得见读数\";bun run tuning 实测印出 126 段 stdout。读数(三份内容包):仙侠 210 格 / 21 境 / 4 界(需求最陡 渡劫·圆满 ×2.64、面板最陡 玄仙·一层 ×2.12、每境 12.2~24.3 倍、人间界整段 ×4.13e+11)、星港 25/5/1、日常 54/9/3;碾压阈值 2/3/5:仙侠 170/170/165 格、星港 8/5/5、日常 42/40/32;对照(晚段 1.7→1.2)11 段进门步 ×0.38→×0.10、段内不动、全程 ×7.66e+19→×2.92e+13。宿主 289 文件 / 2647 例全过。",
+      "summary": "体检这条线第一次有了\"自己人量自己\"的刻度表:读者拿到的不再是\"体检能读出数\",而是\"读出来的数长什么样、哪个量级需要紧张\"。"
     }
   },
   "edges": [
@@ -30827,6 +30925,54 @@
       "to": "ISS-244",
       "type": "addresses",
       "created_at": "2026-09-19T02:03:15+00:00"
+    },
+    {
+      "from": "CHG-446",
+      "to": "TASK-362",
+      "type": "implements",
+      "created_at": "2026-09-19T02:09:56+00:00"
+    },
+    {
+      "from": "CHG-447",
+      "to": "TASK-363",
+      "type": "implements",
+      "created_at": "2026-09-19T02:09:56+00:00"
+    },
+    {
+      "from": "CHG-447",
+      "to": "ISS-245",
+      "type": "resolves",
+      "created_at": "2026-09-19T02:09:56+00:00"
+    },
+    {
+      "from": "ISS-245",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-19T02:09:57+00:00"
+    },
+    {
+      "from": "TASK-363",
+      "to": "ISS-245",
+      "type": "addresses",
+      "created_at": "2026-09-19T02:09:57+00:00"
+    },
+    {
+      "from": "DEC-166",
+      "to": "TASK-363",
+      "type": "governs",
+      "created_at": "2026-09-19T02:09:57+00:00"
+    },
+    {
+      "from": "DEC-166",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-19T02:09:57+00:00"
+    },
+    {
+      "from": "EV-371",
+      "to": "HYP-104",
+      "type": "validates",
+      "created_at": "2026-09-19T02:09:57+00:00"
     }
   ]
 }
