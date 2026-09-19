@@ -44,3 +44,6 @@ core.[0-9]*
 !.dev.vars.example
 .env*
 # 本仓库构建不需要任何环境变量;.env.* 一律不上库(若将来需要模板,再补 !.env.example)
+
+# 库的发布包产物(packages/engine 打出来的 tgz)
+*.tgz

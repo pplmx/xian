@@ -1,3 +1,5 @@
 node_modules
 dist
 *.tsbuildinfo
+# npm pack 的产物(它作为 release 附件发布,不进仓库 —— 上一次就是这么误提交的)
+*.tgz
