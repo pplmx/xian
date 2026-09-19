@@ -219,7 +219,19 @@ const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
   for (const doc of actualDocs) {
     assert.ok(listedDocs.includes(doc), `README 的目录树里没有列 docs/${doc}.md`)
   }
-  console.log(`目录树自检通过(${listedModules.length} 个模块文件 + ${actualDocs.length} 份文档都在图上)`)
+  /**
+   * README 自己写的**数量**也要对上:正文里那句"`src/` 下 N 个模块文件(另有 M 份内容包)"
+   * 是读者建立规模感的第一句话,而它不在那棵代码块里,上面的树比不到它 —— 实测它已经漂过一次
+   * (写着 36、实际 38)。所以顺手一起查:数字改成手写的那一天起,就得有人盯着。
+   */
+  const countClaim = readme.match(/\`src\/\` 下 (\d+) 个模块文件[^(]*\(另有 (\d+) 份内容包\)/)
+  assert.ok(countClaim, 'README 里找不到"src/ 下 N 个模块文件(另有 M 份内容包)"这句 —— 措辞改了?')
+  assert.equal(Number(countClaim[1]), actualModules.length, `README 说 ${countClaim[1]} 个模块文件,实际 ${actualModules.length} 个`)
+  const actualPresets = readdirSync(resolve(ENGINE, 'src/presets')).filter(
+    name => name.endsWith('.ts') && !name.endsWith('.spec.ts')
+  ).length
+  assert.equal(Number(countClaim[2]), actualPresets, `README 说 ${countClaim[2]} 份内容包,实际 ${actualPresets} 份`)
+  console.log(`目录树自检通过(${listedModules.length} 个模块文件 + ${actualDocs.length} 份文档都在图上,正文的数量也对得上)`)
 
   /**
    * 用例数自检 —— README 里那行"N 个用例 / M 个文件",文件数不许写错。
