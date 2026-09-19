@@ -20,7 +20,7 @@
  */
 import { defineComponent, h, type Component, type PropType } from 'vue'
 
-/** 每个图标是一组 path 的 d;坐标系与 lucide 一致(0 0 24 24),便于与未换的并肩 */
+/** 每个图标是一组 path 的 d;坐标系 24×24,与全站图标的落位尺寸一致 */
 const INK: Record<string, string[]> = {
   // 洞府:两峰一笔,峰头收细 —— 山即洞府所在
   mountain: ['M2.4 19.8 C4.6 13.4 7 8.2 8.8 8.2 C10.8 8.2 12.4 13 13 15.4 C13.8 11.2 15.4 5.8 17.2 5.8 C19.2 5.8 21 12.8 21.8 19.8'],
@@ -238,7 +238,7 @@ const INK: Record<string, string[]> = {
   waves: ['M3.6 11.4 C6 8.6 8.4 8.6 10.8 11.4 C13.2 14.2 15.6 14.2 18 11.4', 'M3.6 16.6 C6 13.8 8.4 13.8 10.8 16.6 C13.2 19.4 15.6 19.4 18 16.6']
 }
 
-/** 把一组笔路包成组件:尺寸与线宽都由 GameIcon 传进来,与 lucide 那边同签名 */
+/** 把一组笔路包成组件:尺寸与线宽都由 GameIcon 传进来 */
 function inkIcon(paths: string[]): Component {
   return defineComponent({
     name: 'InkIcon',
@@ -248,8 +248,8 @@ function inkIcon(paths: string[]): Component {
     },
     setup(props) {
       /*
-       * 水墨笔路比几何直线细:同样线宽下,长弧线的视觉重量比短直线轻,照 lucide 的
-       * 1.8 画出来会显得发飘(对着 20px 的底栏比过)。故这里抬到 2 起步 ——
+       * 水墨笔路比几何直线细:同样线宽下,长弧线的视觉重量比短直线轻,按 1.8 画出来
+       * 会显得发飘(对着 20px 的底栏比过)。故这里抬到 2 起步 ——
        * 调用方要更粗仍可传更大的值。
        */
       const strokeWidth = Math.max(2, Number(props.strokeWidth) || 1.8)
