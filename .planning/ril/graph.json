@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 382,
+  "round": 383,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T02:56:39+00:00",
+  "updated_at": "2026-09-19T03:03:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 259,
+      "touched_round": 382,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -21308,6 +21308,78 @@
       "confidence": 0.95,
       "source": "变更 CHG-451(2f39bde)。① 门槛当前状态:临时项目 npm i v0.1.21 发布包后,把 README/docs 里 14 段 compile-check 片段逐一 bun 跑,全部退出码 0(README-2 打出「还差一点(failed)」等正常读数)。② 敏感度:给 README 那段末尾塞一句 throw 后,node scripts/verify-dist.mjs 当场红并印「README.md 里这段 compile-check 片段**编得过但跑不起来**」+ 该行代码;撤回后重跑绿。③ bun run check 全绿:591 例 / 80 文件 + 17 道自检,其中印「文档片段通过(14 段……都真跑了一遍)」;宿主 check:engine 通过。",
       "summary": "\"照抄能用\"从一句承诺变成了两道机器判据(编 + 跑),并且这条判据的红被真的演示过一次。"
+    },
+    "ISS-248": {
+      "id": "ISS-248",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T03:03:35+00:00",
+      "updated_at": "2026-09-19T03:03:57+00:00",
+      "touched_round": 382,
+      "severity": 0.4,
+      "confidence": 0.95,
+      "summary": "宿主与库的文档里都有一类\"没人盯着的引用\":反引号写的 `bun run xxx` 与 `src/xxx.ts`(链接那条判据只管绝对链接)。实测三处腐烂:宿主 README/development 写着「199 个 spec / 2044 例」(实际 289 / 2647,漂了 25%)、发版示例停在 v1.34.0;库的 assembly 指着一份上游工程的脚本、development 里\"59 处引用\"(实际 65)。"
+    },
+    "TASK-368": {
+      "id": "TASK-368",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-19T03:03:39+00:00",
+      "updated_at": "2026-09-19T03:03:57+00:00",
+      "touched_round": 382,
+      "category": "docs",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "两侧各加一道\"文档引用\"自检:库侧查命令与路径(上游工程那两条显式豁免),宿主侧查命令、路径、相对链接与\"全量 N 个 spec\"规模数,并各自把已腐烂的数字改对;都做了敏感度验证(改坏一处 → 判据红并指名文件)。"
+    },
+    "CHG-452": {
+      "id": "CHG-452",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:03:43+00:00",
+      "updated_at": "2026-09-19T03:03:43+00:00",
+      "touched_round": 382,
+      "commit": "9c0fa02",
+      "summary": "库:verify-dist.mjs 新增「文档引用」自检(第 18 道;命令与路径必须存在,check:engine* 与 src/core/… 显式豁免,防空转阈值);docs/assembly.md 去掉指向上游工程脚本的路径并说明它在工程仓库;docs/development.md 引用处数 59 → 65;README 常驻自检清单 17 → 18 道;CHANGELOG 记一条。"
+    },
+    "CHG-453": {
+      "id": "CHG-453",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:03:46+00:00",
+      "updated_at": "2026-09-19T03:03:46+00:00",
+      "touched_round": 382,
+      "commit": "835c08b",
+      "summary": "宿主:新增 scripts/docs-check.mjs(命令 / 路径 / 相对链接 / 「全量 N 个 spec」规模数,归档 docs/superpowers/plans 不查,防空转三条),并入 package.json 的 check(CI deploy.yml 会跑);README 与 docs/development.md 的 199/2044 改成全量 289/2647 与本作自己那部分 209/2056;发版示例 v1.34.0 → 占位 vX.Y.Z 并说明判据看的是相等;docs/development.md 判据表加一行。"
+    },
+    "HYP-109": {
+      "id": "HYP-109",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:03:50+00:00",
+      "updated_at": "2026-09-19T03:03:50+00:00",
+      "touched_round": 382,
+      "confidence": 0.9,
+      "summary": "文档里的命令 / 路径 / 规模数是\"能静态查的\",加一道判据就能既抓住腐烂又几乎不误伤;上游工程侧的引用要靠显式豁免,否则判据会逼文档撒谎。",
+      "prediction": "把任一处命令改名或把规模数改错,判据应当红并指名具体文档;全量跑应绿且读到足够多条命令与路径(防空转)。"
+    },
+    "EV-376": {
+      "id": "EV-376",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-19T03:03:53+00:00",
+      "updated_at": "2026-09-19T03:03:53+00:00",
+      "touched_round": 382,
+      "confidence": 0.95,
+      "source": "变更 CHG-452(9c0fa02)与 CHG-453(835c08b)。库:bun run check 全绿 591 例 / 80 文件 + 18 道自检,新判据印「文档引用自检通过(23 条命令与 37 条路径都真实存在;上游工程那几条已显式豁免)」;敏感度:docs/tuning.md 里 bun run tuning → bun run tunings,当场红并指名该文件。宿主:bun run check 通过,新判据印「文档自检通过(8 份文档里的 33 条命令、41 条路径都真实存在;规模数对得上:全量 289 个 spec / 本作自己那部分 209 个)」;敏感度:README 的「全量 289 个 spec」改成 290,当场红并指名 README.md;两处漂移实测:199/2044(实际 289/2647)、v1.34.0 示例。",
+      "summary": "两侧文档的\"引用类腐烂\"从此有判据;而且这两条判据的红都被真的演示过一次(不是永远绿的摆设)。"
     }
   },
   "edges": [
@@ -31325,6 +31397,48 @@
       "to": "HYP-108",
       "type": "validates",
       "created_at": "2026-09-19T02:56:39+00:00"
+    },
+    {
+      "from": "CHG-452",
+      "to": "TASK-368",
+      "type": "implements",
+      "created_at": "2026-09-19T03:03:56+00:00"
+    },
+    {
+      "from": "CHG-453",
+      "to": "TASK-368",
+      "type": "implements",
+      "created_at": "2026-09-19T03:03:56+00:00"
+    },
+    {
+      "from": "CHG-452",
+      "to": "ISS-248",
+      "type": "resolves",
+      "created_at": "2026-09-19T03:03:56+00:00"
+    },
+    {
+      "from": "CHG-453",
+      "to": "ISS-248",
+      "type": "resolves",
+      "created_at": "2026-09-19T03:03:57+00:00"
+    },
+    {
+      "from": "ISS-248",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-19T03:03:57+00:00"
+    },
+    {
+      "from": "TASK-368",
+      "to": "ISS-248",
+      "type": "addresses",
+      "created_at": "2026-09-19T03:03:57+00:00"
+    },
+    {
+      "from": "EV-376",
+      "to": "HYP-109",
+      "type": "validates",
+      "created_at": "2026-09-19T03:03:57+00:00"
     }
   ]
 }
