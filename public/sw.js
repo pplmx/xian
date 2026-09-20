@@ -39,8 +39,12 @@ async function networkFirst(request) {
     const fresh = await fetch(request)
     if (fresh.ok && fresh.type === 'basic') {
       await cache.put(request, fresh.clone())
+      return fresh
     }
-    return fresh
+    // 在线但拿到错误页(发版中 / 静态托管 5xx / 代理抖动):不要把它当"最新版"甩给玩家。
+    // 这时离线的价值恰恰是兜住你手上那份好用的缓存 —— 回退到已缓存的 index.html。
+    const cached = await cache.match(request)
+    return cached ?? fresh
   } catch {
     const cached = await cache.match(request)
     return cached ?? new Response('离线且无缓存副本', { status: 503 })

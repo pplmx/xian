@@ -46,6 +46,33 @@
   </Teleport>
 </template>
 
+<script lang="ts">
+  /**
+   * Esc 关闭 —— 只让最上面一层可关弹窗响应。
+   *
+   * 这段必须在**模块 scope** 的普通 <script> 里,不能放进 <script setup>:
+   * <script setup> 顶层代码每实例跑一遍,放那里 = 每个 BaseModal 都有一份自己的
+   * activeModals 与自己的 window keydown 监听。那会有两个毛病:
+   *   · 路由来回切几次,window 上堆一走廊永不回收的死监听(BaseModal 是大量视图
+   *     复用的浮层原语,导航进出一次就多一份);
+   *   · 各实例只看得到自己的 entry,叠放时(详情盖列表)按一次 Esc 所有实例的
+   *     监听都判定"自己是顶层"→ 整摞弹窗一层层全关,与"只退最上层"相悖。
+   * 收敛到模块级一份后:activeModals[last] 是全局真顶层,一次 Esc 只退一层;
+   * 监听也只有一份,不随实例增减,天然无泄漏。
+   */
+  type ModalEntry = { closable: boolean; close: () => void }
+  const activeModals: ModalEntry[] = []
+  function onWindowKey(e: KeyboardEvent): void {
+    if (e.key !== 'Escape') return
+    const top = activeModals[activeModals.length - 1]
+    if (top?.closable) {
+      e.preventDefault()
+      top.close()
+    }
+  }
+  if (typeof window !== 'undefined') window.addEventListener('keydown', onWindowKey)
+</script>
+
 <script setup lang="ts">
   import { nextTick, onUnmounted, ref, watch } from 'vue'
   import GameIcon from './GameIcon.vue'
@@ -119,21 +146,7 @@
     if (props.closable) emit('close')
   }
 
-  // ---- Esc 关闭:只让最上面一层可关弹窗响应 ----
-  // 多弹窗叠放(详情盖列表)时按一次 Esc 只能退最上层,不能逐层全退;
-  // 不可关的顶层(离线卷轴/转世确认 `closable=false`)挡在最上时,Esc 不越层去关底下的
-  type ModalEntry = { closable: boolean; close: () => void }
-  const activeModals: ModalEntry[] = []
-  function onWindowKey(e: KeyboardEvent): void {
-    if (e.key !== 'Escape') return
-    const top = activeModals[activeModals.length - 1]
-    if (top?.closable) {
-      e.preventDefault()
-      top.close()
-    }
-  }
-  if (typeof window !== 'undefined') window.addEventListener('keydown', onWindowKey)
-
+  // ---- Esc 关闭:模块级唯一栈 + 模块级唯一监听,见文件头注释 ----
   const entry: ModalEntry = { closable: props.closable, close: () => emit('close') }
   watch(
     () => props.open,
