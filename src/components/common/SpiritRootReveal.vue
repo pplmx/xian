@@ -70,6 +70,11 @@
   /** 展示灵根鉴定动画:随机闪现所有灵根品阶,结束时定格真实 gradeName */
   function show(gradeName: string, onDone?: () => void): void {
     if (unmounted) return // 卸载后不再起新一轮动画
+    // 重入防御:上一轮动画还没走完就被再次调用时,先清掉旧定时器,
+    // 否则旧的 100ms interval 与 2200ms doneTimeout 会脱离本轮直接失控
+    // (旧 interval 永远不清,持续每 100ms 改写 cycleIdx)。
+    if (stopTimers) stopTimers()
+    stopTimers = null
     realName = gradeName
     // 灵根品阶越高颜色越亮(从 GRADES 里找真实灵根对应的颜色)
     realColor = GRADES.find(g => g.name === gradeName)?.color ?? '#c9a959'
