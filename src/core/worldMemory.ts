@@ -167,7 +167,9 @@ export function recordEvent(
   return { ...memories, [eventId]: next }
 }
 
-/** 余波触发条件(纯函数):完成过(≥2次)且已完事件即可 */
+/** 余波触发条件(纯函数):该事件**完成过一次**(times≥1)即可,再按 AFTERMATH_CHANCE 抽。
+ * 注释勿写作「≥2次」—— worldMemory.spec 用 recordEvent 一次(times=1)即断言可触发,
+ * 行为以 spec 为准;这里写错会误导后人以为要等第二次。 */
 export function shouldTriggerAftermath(memories: Record<string, EventMemory>, eventId: string, rand: number): boolean {
   const m = memories[eventId]
   if (!m || m.times < 1) return false
