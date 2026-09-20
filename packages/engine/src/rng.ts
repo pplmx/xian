@@ -83,15 +83,19 @@ export const randomRng: Rng = {
   chance: p => Math.random() < p,
   pick: arr => arr[Math.floor(Math.random() * arr.length)]!,
   weighted: (items, weightOf) => {
+    // 先剔除零权重项:否则 roll===0(Math.random() 可能为 0)时首项即使权重 0 也满足
+    // roll<=0 被选中 —— 零权重本不该出现。掐掉后 selection 只在正权重里发生。
+    const positive = items.filter(it => Math.max(0, weightOf(it)) > 0)
+    if (positive.length === 0) return items[Math.floor(Math.random() * items.length)]!
     let total = 0
-    for (const it of items) total += Math.max(0, weightOf(it))
-    if (total <= 0) return items[Math.floor(Math.random() * items.length)]!
+    for (const it of positive) total += Math.max(0, weightOf(it))
+    if (total <= 0) return positive[Math.floor(Math.random() * positive.length)]!
     let roll = Math.random() * total
-    for (const it of items) {
+    for (const it of positive) {
       roll -= Math.max(0, weightOf(it))
-      if (roll <= 0) return it
+      if (roll < 0) return it
     }
-    return items[items.length - 1]!
+    return positive[positive.length - 1]!
   },
   shuffle: arr => {
     const out = [...arr]
