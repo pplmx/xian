@@ -50,6 +50,27 @@ describe('洞府巡游(Phase 28)', () => {
     expect(player.lastCaveEventDay).toBe(today)
     expect(mayTriggerCaveEvent()).toBeNull()
   })
+
+  it('成功触发即占用今日——玩家晾着不选不关,事件到点自清后当日不再重掷(回归)', () => {
+    const player = usePlayerStore()
+    vi.useFakeTimers()
+    try {
+      const today = todayLocalNum()
+      vi.spyOn(Math, 'random').mockReturnValue(0.1) // 确保触发成功
+      const ev = mayTriggerCaveEvent()
+      expect(ev).not.toBeNull()
+      // 成功触发的那一刻就把今日配额盖掉
+      expect(player.lastCaveEventDay).toBe(today)
+      // 玩家不选不关:2 分钟窗到点,getCurrentCaveEvent 自动清掉
+      vi.advanceTimersByTime(121_000)
+      expect(getCurrentCaveEvent()).toBeNull()
+      // 下一个轮询不得重掷 —— 今日已出
+      expect(mayTriggerCaveEvent()).toBeNull()
+    } finally {
+      vi.useRealTimers()
+      vi.restoreAllMocks()
+    }
+  })
 })
 
 describe('悟道顿悟(Phase 28)', () => {
