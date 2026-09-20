@@ -15,7 +15,7 @@
  * 归档不查:`docs/superpowers/plans/**` 是当时的计划存档,里面的路径是"当时打算建的文件",
  * 拿今天的仓库去校对历史计划,只会逼人改记录(那比留着一份旧计划更坏)。
  */
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
+import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 const ROOT = resolve(import.meta.dirname, '..')

@@ -170,7 +170,6 @@ async function coldStart(browser, origin) {
     downloadThroughput: (4 * 1024 * 1024) / 8,
     uploadThroughput: (3 * 1024 * 1024) / 8
   })
-  const typeOf = new Map()
   const encodedByType = new Map()
   let encodedBytes = 0
   /**
