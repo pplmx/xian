@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 403,
+  "round": 404,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T17:41:24+00:00",
+  "updated_at": "2026-09-20T18:06:21+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 223,
+      "touched_round": 403,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -22208,7 +22208,7 @@
       "version": 1,
       "created_at": "2026-09-19T11:48:46+00:00",
       "updated_at": "2026-09-19T11:48:46+00:00",
-      "touched_round": 401,
+      "touched_round": 403,
       "summary": "像「注册表展开顺序被后面的同名项盖掉」这类错误,类型检查、lint 与单测都看不见(两边都合法),只有看真界面或写一条「问注册表要实物」的判据才拦得住。",
       "confidence": 0.85
     },
@@ -23488,6 +23488,55 @@
       "touched_round": 402,
       "source": "check:engine:standalone",
       "summary": "引擎独立自检通过:122源文件独立编译+80用例591测+自定义世界装配+README示例可跑",
+      "confidence": 1.0
+    },
+    "TASK-405": {
+      "id": "TASK-405",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T18:05:21+00:00",
+      "updated_at": "2026-09-20T18:06:21+00:00",
+      "touched_round": 403,
+      "category": "stability",
+      "severity": 0.5,
+      "confidence": 0.85,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "startExploration 起新一程前未清历史残留 pendingEventId,坏档可致 wrong-tier autoResolve"
+    },
+    "ISS-278": {
+      "id": "ISS-278",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T18:05:21+00:00",
+      "updated_at": "2026-09-20T18:06:21+00:00",
+      "touched_round": 403,
+      "severity": 0.5,
+      "summary": "坏档(session=null 但 pendingEventId 为合法串)时 startExploration 不清残留事件"
+    },
+    "CHG-488": {
+      "id": "CHG-488",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T18:06:21+00:00",
+      "updated_at": "2026-09-20T18:06:21+00:00",
+      "touched_round": 403,
+      "commit": "ba835f1",
+      "summary": "startExploration 起新一程前清残留 pendingEventId + 回归用例"
+    },
+    "EV-426": {
+      "id": "EV-426",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T18:06:21+00:00",
+      "updated_at": "2026-09-20T18:06:21+00:00",
+      "touched_round": 403,
+      "source": "ba835f1:exploration.spec",
+      "summary": "坏档形态(session=null+pendingEventId 合法串)下 startExploration 后 pendingEventId 归零;用例 pre-fix 红 post-fix 绿",
       "confidence": 1.0
     }
   },
@@ -34538,6 +34587,36 @@
       "to": "HYP-113",
       "type": "validates",
       "created_at": "2026-09-20T16:32:38+00:00"
+    },
+    {
+      "from": "TASK-405",
+      "to": "ISS-278",
+      "type": "addresses",
+      "created_at": "2026-09-20T18:05:21+00:00"
+    },
+    {
+      "from": "ISS-278",
+      "to": "COMP-006",
+      "type": "located_in",
+      "created_at": "2026-09-20T18:05:21+00:00"
+    },
+    {
+      "from": "CHG-488",
+      "to": "TASK-405",
+      "type": "implements",
+      "created_at": "2026-09-20T18:06:21+00:00"
+    },
+    {
+      "from": "CHG-488",
+      "to": "ISS-278",
+      "type": "resolves",
+      "created_at": "2026-09-20T18:06:21+00:00"
+    },
+    {
+      "from": "EV-426",
+      "to": "HYP-113",
+      "type": "validates",
+      "created_at": "2026-09-20T18:06:21+00:00"
     }
   ]
 }
