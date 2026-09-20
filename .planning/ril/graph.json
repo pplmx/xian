@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 399,
+  "round": 400,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T15:38:33+00:00",
+  "updated_at": "2026-09-20T15:53:08+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -324,7 +324,7 @@
       "version": 1,
       "created_at": "2026-09-09T14:05:15+00:00",
       "updated_at": "2026-09-09T14:05:15+00:00",
-      "touched_round": 395,
+      "touched_round": 399,
       "summary": "悟道顿悟/洞府巡游事件系统(earlyGameService + 两个弹窗组件)"
     },
     "CHG-007": {
@@ -3096,7 +3096,7 @@
       "version": 1,
       "created_at": "2026-09-11T16:45:58+00:00",
       "updated_at": "2026-09-11T16:45:58+00:00",
-      "touched_round": 398,
+      "touched_round": 399,
       "summary": "属性汇总(statsCalc + player 各 mod 源:装备/功法/buff/建筑/灵脉/称号/师承/灵兽/天时/在身之卦/命格/天赋)"
     },
     "DEC-022": {
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 386,
+      "touched_round": 399,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -22208,7 +22208,7 @@
       "version": 1,
       "created_at": "2026-09-19T11:48:46+00:00",
       "updated_at": "2026-09-19T11:48:46+00:00",
-      "touched_round": 396,
+      "touched_round": 399,
       "summary": "像「注册表展开顺序被后面的同名项盖掉」这类错误,类型检查、lint 与单测都看不见(两边都合法),只有看真界面或写一条「问注册表要实物」的判据才拦得住。",
       "confidence": 0.85
     },
@@ -23143,7 +23143,7 @@
       "version": 2,
       "created_at": "2026-09-20T15:37:58+00:00",
       "updated_at": "2026-09-20T15:38:33+00:00",
-      "touched_round": 398,
+      "touched_round": 399,
       "confidence": 0.9,
       "summary": "未归一化 GNum($patch/手工构造/损坏存档)在量级悬殊时会绕过保护,需用有效指数 e+log10(|m|) 比较"
     },
@@ -23169,6 +23169,176 @@
       "touched_round": 398,
       "commit": "7f5b379",
       "summary": "gnum.cmp 远端分支有效指数比较修复"
+    },
+    "TASK-398": {
+      "id": "TASK-398",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:47:14+00:00",
+      "updated_at": "2026-09-20T15:52:41+00:00",
+      "touched_round": 399,
+      "category": "correctness",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "gnum mul/mulN 尾数上溢静默归零,应为折算进指数保住量级"
+    },
+    "ISS-270": {
+      "id": "ISS-270",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:47:14+00:00",
+      "updated_at": "2026-09-20T15:52:41+00:00",
+      "touched_round": 399,
+      "severity": 0.45,
+      "summary": "gnum mul/mulN normalize 对非有限尾数退回 {0,0} 抹掉巨值"
+    },
+    "TASK-399": {
+      "id": "TASK-399",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:47:14+00:00",
+      "updated_at": "2026-09-20T15:52:41+00:00",
+      "touched_round": 399,
+      "category": "correctness",
+      "severity": 0.4,
+      "confidence": 0.9,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "gnum cmp 对绕过 gn() 的 NaN 尾数按 0 归一,否则比谁都小、alive 误判"
+    },
+    "ISS-271": {
+      "id": "ISS-271",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:47:15+00:00",
+      "updated_at": "2026-09-20T15:52:41+00:00",
+      "touched_round": 399,
+      "severity": 0.4,
+      "summary": "gnum cmp 的 NaN 尾数全符号判断落空,alive() 误判带 NaN 血战斗者已死"
+    },
+    "EV-420": {
+      "id": "EV-420",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:47:32+00:00",
+      "updated_at": "2026-09-20T15:47:32+00:00",
+      "touched_round": 399,
+      "source": "self:verify",
+      "summary": "mulN(gn(9),1e308) 修复前{0,0}修复后保量级;cmp({m:NaN,e:0},gn(0)) 修复后=0 与 gn-scrub 一致;13 例 spec 全绿",
+      "confidence": 1.0
+    },
+    "TASK-400": {
+      "id": "TASK-400",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:52:05+00:00",
+      "updated_at": "2026-09-20T15:52:28+00:00",
+      "touched_round": 399,
+      "category": "correctness",
+      "severity": 0.3,
+      "confidence": 0.8,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "weighted() rand() 恰为 0 时选中零权重首项,应剔除零权重项"
+    },
+    "ISS-272": {
+      "id": "ISS-272",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:52:05+00:00",
+      "updated_at": "2026-09-20T15:52:28+00:00",
+      "touched_round": 399,
+      "severity": 0.3,
+      "summary": "weighted selection roll<=0 使零权重首项在 rand()=0 时可被选中"
+    },
+    "CHG-484": {
+      "id": "CHG-484",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:52:28+00:00",
+      "updated_at": "2026-09-20T15:52:28+00:00",
+      "touched_round": 399,
+      "commit": "da5d2cf",
+      "summary": "weighted 剔除零权重项,rand()=0 不再选中零权重首项"
+    },
+    "CHG-485": {
+      "id": "CHG-485",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:52:40+00:00",
+      "updated_at": "2026-09-20T15:52:40+00:00",
+      "touched_round": 399,
+      "commit": "43c62e0",
+      "summary": "gnum mul/mulN 上溢折进指数不归零 + cmp NaN 尾数按 0"
+    },
+    "ISS-273": {
+      "id": "ISS-273",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:52:54+00:00",
+      "updated_at": "2026-09-20T15:52:54+00:00",
+      "touched_round": 399,
+      "severity": 0.8,
+      "summary": "公共库 combat 引擎在 e>308 时 toNumber→Infinity→NaN,伤害/治疗/护盾全损坏(本作实机不可达)"
+    },
+    "DEC-182": {
+      "id": "DEC-182",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:52:54+00:00",
+      "updated_at": "2026-09-20T15:52:54+00:00",
+      "touched_round": 399,
+      "rationale": "公共库 createCombatEngine 是本作唯一走 toNumber 的路径,但实机战斗用 GNum 安全的 core/combat.ts,库 combat 仅被 parity/ablation spec 驱动,任何 e>308 都不可达;修复需把库伤害管线整体改到 Numeric<T> 空间,对已发布且被 parity 锁定的构件是高风险重构,且当前无消费者触发,故暂缓，作为库侧待办记录",
+      "alternatives_rejected": "就地给 rawDamage/heal/toNumber 加 Number.isFinite 截断:会改变库的既有返回语义,且在无真实触发下引入未验证的行为分支,拒绝"
+    },
+    "EV-421": {
+      "id": "EV-421",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:53:08+00:00",
+      "updated_at": "2026-09-20T15:53:08+00:00",
+      "touched_round": 399,
+      "source": "7f5b379:gnum.spec",
+      "summary": "cmp({m:1e20,e:0},{m:5,e:19}) 修复前-1 修复后 1;13 例 gnum spec 全绿",
+      "confidence": 1.0
+    },
+    "EV-422": {
+      "id": "EV-422",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:53:08+00:00",
+      "updated_at": "2026-09-20T15:53:08+00:00",
+      "touched_round": 399,
+      "source": "43c62e0:gnum.spec",
+      "summary": "mulN(gn(9),1e308) 修复前{0,0}修复后保量级;cmp NaN 尾数按 0;13 例全绿",
+      "confidence": 1.0
+    },
+    "EV-423": {
+      "id": "EV-423",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:53:08+00:00",
+      "updated_at": "2026-09-20T15:53:08+00:00",
+      "touched_round": 399,
+      "source": "da5d2cf:random.spec+parity",
+      "summary": "weighted 剔除零权重后,engineParity/exploration/craftability 共 84 例与全量 2684 例全绿",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -34008,6 +34178,114 @@
       "to": "ISS-269",
       "type": "resolves",
       "created_at": "2026-09-20T15:38:32+00:00"
+    },
+    {
+      "from": "TASK-398",
+      "to": "ISS-270",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:47:31+00:00"
+    },
+    {
+      "from": "ISS-270",
+      "to": "COMP-013",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:47:31+00:00"
+    },
+    {
+      "from": "TASK-399",
+      "to": "ISS-271",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:47:32+00:00"
+    },
+    {
+      "from": "ISS-271",
+      "to": "COMP-013",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:47:32+00:00"
+    },
+    {
+      "from": "EV-420",
+      "to": "HYP-118",
+      "type": "validates",
+      "created_at": "2026-09-20T15:47:32+00:00"
+    },
+    {
+      "from": "TASK-400",
+      "to": "ISS-272",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:52:05+00:00"
+    },
+    {
+      "from": "ISS-272",
+      "to": "COMP-002",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:52:05+00:00"
+    },
+    {
+      "from": "CHG-484",
+      "to": "TASK-400",
+      "type": "implements",
+      "created_at": "2026-09-20T15:52:28+00:00"
+    },
+    {
+      "from": "CHG-484",
+      "to": "ISS-272",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:52:28+00:00"
+    },
+    {
+      "from": "CHG-485",
+      "to": "TASK-398",
+      "type": "implements",
+      "created_at": "2026-09-20T15:52:40+00:00"
+    },
+    {
+      "from": "CHG-485",
+      "to": "ISS-270",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:52:41+00:00"
+    },
+    {
+      "from": "CHG-485",
+      "to": "TASK-399",
+      "type": "implements",
+      "created_at": "2026-09-20T15:52:41+00:00"
+    },
+    {
+      "from": "CHG-485",
+      "to": "ISS-271",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:52:41+00:00"
+    },
+    {
+      "from": "ISS-273",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:52:54+00:00"
+    },
+    {
+      "from": "DEC-182",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-09-20T15:53:00+00:00"
+    },
+    {
+      "from": "EV-421",
+      "to": "HYP-118",
+      "type": "validates",
+      "created_at": "2026-09-20T15:53:08+00:00"
+    },
+    {
+      "from": "EV-422",
+      "to": "HYP-118",
+      "type": "validates",
+      "created_at": "2026-09-20T15:53:08+00:00"
+    },
+    {
+      "from": "EV-423",
+      "to": "HYP-113",
+      "type": "validates",
+      "created_at": "2026-09-20T15:53:08+00:00"
     }
   ]
 }
