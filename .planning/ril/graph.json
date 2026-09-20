@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 398,
+  "round": 399,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T15:08:10+00:00",
+  "updated_at": "2026-09-20T15:38:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -3096,7 +3096,7 @@
       "version": 1,
       "created_at": "2026-09-11T16:45:58+00:00",
       "updated_at": "2026-09-11T16:45:58+00:00",
-      "touched_round": 221,
+      "touched_round": 398,
       "summary": "属性汇总(statsCalc + player 各 mod 源:装备/功法/buff/建筑/灵脉/称号/师承/灵兽/天时/在身之卦/命格/天赋)"
     },
     "DEC-022": {
@@ -23109,6 +23109,66 @@
       "source": "fa5bb9f",
       "summary": "bun run check 全绿:type-check+lint+docs-check 退出 0;两处死代码删除",
       "confidence": 1.0
+    },
+    "TASK-397": {
+      "id": "TASK-397",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:37:58+00:00",
+      "updated_at": "2026-09-20T15:38:32+00:00",
+      "touched_round": 398,
+      "category": "correctness",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "gnum.cmp 量级悬殊且尾数未归一化时照搬 a.e>b.e,1e20 vs 5e19 误判为小于"
+    },
+    "ISS-269": {
+      "id": "ISS-269",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:37:58+00:00",
+      "updated_at": "2026-09-20T15:38:32+00:00",
+      "touched_round": 398,
+      "severity": 0.35,
+      "summary": "gnum.cmp 远端分支不防未归一化尾数,{m:1e20,e:0} 与 {m:5,e:19} 比较结果恒为 -1"
+    },
+    "HYP-118": {
+      "id": "HYP-118",
+      "type": "hypothesis",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:37:58+00:00",
+      "updated_at": "2026-09-20T15:38:33+00:00",
+      "touched_round": 398,
+      "confidence": 0.9,
+      "summary": "未归一化 GNum($patch/手工构造/损坏存档)在量级悬殊时会绕过保护,需用有效指数 e+log10(|m|) 比较"
+    },
+    "EV-419": {
+      "id": "EV-419",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:38:06+00:00",
+      "updated_at": "2026-09-20T15:38:06+00:00",
+      "touched_round": 398,
+      "source": "self:verify",
+      "summary": "派失败用例 {m:1e20,e:0} vs {m:5,e:19}:老实现 cmp 返回 -1(应为 1);修复后为 1",
+      "confidence": 1.0
+    },
+    "CHG-483": {
+      "id": "CHG-483",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:38:32+00:00",
+      "updated_at": "2026-09-20T15:38:32+00:00",
+      "touched_round": 398,
+      "commit": "7f5b379",
+      "summary": "gnum.cmp 远端分支有效指数比较修复"
     }
   },
   "edges": [
@@ -33918,6 +33978,36 @@
       "to": "ISS-268",
       "type": "resolves",
       "created_at": "2026-09-20T15:08:05+00:00"
+    },
+    {
+      "from": "TASK-397",
+      "to": "ISS-269",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:38:06+00:00"
+    },
+    {
+      "from": "ISS-269",
+      "to": "COMP-013",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:38:06+00:00"
+    },
+    {
+      "from": "EV-419",
+      "to": "HYP-118",
+      "type": "validates",
+      "created_at": "2026-09-20T15:38:06+00:00"
+    },
+    {
+      "from": "CHG-483",
+      "to": "TASK-397",
+      "type": "implements",
+      "created_at": "2026-09-20T15:38:32+00:00"
+    },
+    {
+      "from": "CHG-483",
+      "to": "ISS-269",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:38:32+00:00"
     }
   ]
 }
