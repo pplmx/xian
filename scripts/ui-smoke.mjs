@@ -197,16 +197,23 @@ for (const route of ROUTES) {
    * 数字体检:正文里出现 NaN / Infinity / undefined 一律算失败。
    * 这类泄漏在单元测试里看不出来(函数返回了"数字"),到了百万级数值与
    * 除法密集的后期界面才现形 —— 后期夹具正是为它准备的。
+   *
+   * 且不能只扫开页时的正文:本作大量数值渲染在弹窗/交互之后才出现
+   * (炼丹、收纳、人物入口、天界册页),点开弹窗才现形的 NaN/undefined 不抛异常,
+   * watchPageErrors 逮不到 —— 故把同一判据搬进每次点击之后重跑。
    */
-  const leaked = await page.evaluate((patterns) => {
-    const text = document.body.innerText
-    return patterns.filter(p => text.includes(p)).map(p => {
-      const i = text.indexOf(p)
-      return `${p}@…${text.slice(Math.max(0, i - 24), i + 24).replace(/\n/g, '↵')}…`
-    })
-  }, NUMERIC_LEAK)
-  for (const l of leaked) errors.push({ where: `${route} 正文泄漏`, msg: l })
-  const buttons = await page.getByRole('button').all()
+  const scanNumericLeaks = async (where) => {
+    const leaked = await page.evaluate((patterns) => {
+      const text = document.body.innerText
+      return patterns.filter(p => text.includes(p)).map(p => {
+        const i = text.indexOf(p)
+        return `${p}@…${text.slice(Math.max(0, i - 24), i + 24).replace(/\n/g, '↵')}…`
+      })
+    }, NUMERIC_LEAK)
+    for (const l of leaked) errors.push({ where, msg: l })
+    return leaked.length
+  }
+  await scanNumericLeaks(`${route} 正文泄漏`)
   for (const b of buttons.slice(0, DEPTH)) {
     const label = ((await b.innerText().catch(() => '')) || '').replace(/\s+/g, ' ').trim()
     if (!label || SKIP.test(label)) continue
@@ -219,6 +226,7 @@ for (const route of ROUTES) {
     await page.waitForTimeout(160)
     if (errors.length > before) errors[errors.length - 1].where = `${route} 点「${label}」`
     else if ((await fingerprint()) === beforeFp) silent.push(`${route} 点「${label}」`)
+    await scanNumericLeaks(`${route} 点「${label}」后泄漏`)
     await clickInsideModal(route)
     // 点开弹窗后关掉,免得挡住后面的按钮
     await page.keyboard.press('Escape').catch(() => {})

@@ -46,10 +46,23 @@ const CATEGORIES = [
 
 const OUT = '.vitest-report.json'
 
+/**
+ * vitest 的退出码是"有没有失败"的唯一权威信号,不能丢。
+ * 之前把它吞掉,只靠 JSON 里的 status === 'failed' 重算 —— 那会漏两类情况:
+ *   · **被 .skip 的用例**:vitest 报 status='skipped'/'todo'/'disabled',既不算 passed
+ *     也不算 failed。开发为了过 CI 随手把挂掉的用例 .skip 一行,回归门就这样被拆除,
+ *     报告却印"0 败"、退出 0 —— 这是最危险的一种假绿。
+ *   · **文件级报错**(import/describe 阶段炸,assertionResults 为空):同样没有
+ *     'failed' 条目,重算法看不到。
+ * 故同时盯两路:childExitCode 兜住一切非零退出,JSON 重算兜住 skipped 等旁路状态。
+ */
+let childExitCode = 0
 try {
   execSync(`bunx vitest run --reporter=json --outputFile=${OUT}`, { stdio: 'pipe' })
-} catch {
-  // 有测试失败时 vitest 以非零码退出,报告文件仍会生成
+} catch (e) {
+  // 有测试失败时 vitest 以非零码退出,报告文件仍会生成;退出码从异常里取
+  const status = (typeof e === 'object' && e !== null && 'status' in e) ? Number(e.status) : NaN
+  childExitCode = Number.isInteger(status) ? status : 1
 }
 
 let report
@@ -70,7 +83,9 @@ for (const file of report.testResults ?? []) {
   const path = String(file.name ?? '')
   const row = rows.find(c => c.match.some(m => path.includes(m)))
   const passed = (file.assertionResults ?? []).filter(a => a.status === 'passed').length
-  const failed = (file.assertionResults ?? []).filter(a => a.status === 'failed').length
+  // skipped/todo/disabled/pending 一律算失败:一条守卫用例被 .skip,等于把关卡拆了,
+  // 它守护的回归从此不再被量。只报"0 败"会让人误以为真的全绿。
+  const failed = (file.assertionResults ?? []).filter(a => a.status === 'failed' || a.status === 'skipped' || a.status === 'todo' || a.status === 'disabled' || a.status === 'pending').length
   if (row) {
     row.passed += passed
     row.failed += failed
@@ -103,8 +118,15 @@ console.log(`\n  共 ${totalPassed} 过 / ${totalFailed} 败${uncategorized > 0 
  * 报告就少算了它)。把原因印出来,"0 败 + 退出 1" 这种组合以后再也不会被误读成 flake。
  */
 const failureReason =
-  totalFailed > 0 ? `有用例失败(${totalFailed} 个)` : uncategorized > 0 ? `有 ${uncategorized} 个用例没登记分类(报告会少算它们)` : ''
+  totalFailed > 0
+    ? `有用例失败或跳过(${totalFailed} 个)`
+    : childExitCode !== 0
+      ? `vitest 自身非零退出(码 ${childExitCode},可能是文件级报错)`
+      : uncategorized > 0
+        ? `有 ${uncategorized} 个用例没登记分类(报告会少算它们)`
+        : ''
 if (failureReason) console.log(`  退出码 1 的原因:${failureReason}\n`)
 // 未分类也算失败:漏登记的用例不计入任何一类,报告便少算了它。
 // 只提示不拦截的话,这个数会一路悄悄涨上去(曾积到 225 个才被发现)。
-process.exit(totalFailed > 0 || uncategorized > 0 ? 1 : 0)
+// childExitCode!==0 兜底:JSON 里没有 'failed' 条目的文件级报错也绝不假绿。
+process.exit(totalFailed > 0 || childExitCode !== 0 || uncategorized > 0 ? 1 : 0)

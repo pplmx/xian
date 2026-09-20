@@ -272,7 +272,12 @@ async function measurePage(page) {
     const overflows = [...document.querySelectorAll('body *')]
       .filter(el => {
         const r = el.getBoundingClientRect()
-        if (r.width <= 0 || r.right <= vw + 2) return false
+        // 越界=右缘冲出右界 或 左缘冲出左界(r.left < -1)。之前只查右缘:
+        // 一个被推离**左**缘的块(负 left / -mx-*)只要右缘仍落在视口内,
+        // scrollWidth 不涨、r.right 也不超,横向溢出判据整条失灵。
+        const rightOver = r.right > vw + 2
+        const leftOver = r.left < -1
+        if (r.width <= 0 || (!rightOver && !leftOver)) return false
         /*
          * 纯装饰层(墨爆 / 传送门 / 法球的三层旋转环)故意越过视口边缘,且不吃事件,不算排版事故。
          *
@@ -287,7 +292,11 @@ async function measurePage(page) {
         return true
       })
       .slice(0, 4)
-      .map(el => `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]}@${Math.round(el.getBoundingClientRect().right)}`)
+      .map(el => {
+        const r = el.getBoundingClientRect()
+        const side = r.left < -1 ? 'L' : r.right > vw + 2 ? 'R' : '?'
+        return `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]}@${side}${Math.round(r.left)}..${Math.round(r.right)}`
+      })
     return {
       hash: location.hash,
       /** 这一页上有几个"主值行"(显式契约 data-value-row)—— 用于防空转 */

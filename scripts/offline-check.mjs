@@ -142,7 +142,12 @@ for (let attempt = 0; attempt < 4; attempt += 1) {
     const c = await caches.open(name)
     return (await c.keys()).length
   }, CACHE_VERSION)
-  if (filled >= 3) break
+  if (filled >= 3) {
+    // 快路径:第一轮就量够了,直接 break —— 此时不能沿用循环外的旧快照,
+    // 那是在 SW 异步接管/填充/清理完成前抓的,会自己变红(缓存其实健康)。
+    cachesNow = await page.evaluate(() => caches.keys())
+    break
+  }
   await page.reload({ waitUntil: 'load' })
   await page.waitForTimeout(600)
   cachesNow = await page.evaluate(() => caches.keys())
