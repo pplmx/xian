@@ -194,4 +194,45 @@ describe('自动战斗', () => {
     expect(keen, `20 场累计落空:无命中 ${bare} 次,带四成命中 ${keen} 次 —— 命中没有换来出手`).toBeLessThan(bare)
     console.log(`\n幻影(闪避 55%)× 20 场:无命中落空 ${bare} 次,带四成命中落空 ${keen} 次`)
   })
+
+  /**
+   * 震慑 = 被震慑者这一手整个掐掉:回合回复、法宝自动触发都应被跳过。
+   *
+   * 曾把 stun 检查放在 act() 的回血与法宝循环之后 —— 于是被震慑的打手照样放法宝
+   * (伤害/吸命/护盾…)、照样吃 regenPerRound 回血,只是少了那记普通攻击,与
+   * 「震慑不是文案,它掐掉对方那一手」相悖。判据:面对 100% 震慑的敌手,
+   * 玩家从第 1 回合起就被无限震慑;若震慑真跳过了法宝,法宝只应在被震慑前的
+   * 那一手出手一次(interval=1 时 = 最多 1 击),而不是每个被震慑回合都发炮。
+   */
+  it('被震慑者不给回合回复,也不触发法宝(回血/伤害都被掐掉)', () => {
+    const e = playerSnap(1)
+    e.isPlayer = false
+    e.name = '慑魂敌'
+    e.attack = gn(1)
+    e.defense = gn(1e12)
+    e.maxHp = gn(1e12)
+    e.skills = []
+    e.mods = { stunRate: 1.0 } // 每一次出手都震慑
+    const p = playerSnap(1)
+    p.attack = gn(1)
+    p.defense = gn(1e12)
+    p.maxHp = gn(1e12)
+    p.skills = []
+    p.mods = { regenPerRound: 0.5 } // 若震慑没掐住,每回合都回大血
+    let lihuo = artifactDef('af_lihuo')!
+    // 浅克隆一层再改 interval:artifactDef 返回共享数据对象,直接改会污染数据源
+    const atom = { ...lihuo, active: { ...lihuo.active, interval: 1 } } // 每回合都该出手的伤害法宝
+    p.artifacts = [{ def: atom, level: 0 }]
+
+    let artifactFires = 0
+    for (let seed = 1; seed <= 15; seed += 1) {
+      const r = resolveCombat(p, e, seeded(seed), { maxRounds: 10 })
+      artifactFires += r.log.filter(l => l.side === 'p' && l.text.includes('自行出手')).length
+      // 每场玩家应被震慑若干次
+      expect(r.log.filter(l => l.side === 'e' && l.text.includes('你被震得')).length, '敌手没在震慑,判据失去对象').toBeGreaterThan(0)
+    }
+    // 震慑从第 1 回合起就生效:法宝最多在第 1 手(被震慑前)发一次;被震慑回合不该发炮
+    expect(artifactFires, '被震慑后法宝仍在自动出手(每场都≥2 次)—— 震慑没掐住法宝').toBeLessThanOrEqual(15)
+    console.log(`\n震慑(敌 100% 震慑率)× 15 场:玩家法宝出手 ${artifactFires} 次(应为≤15)`)
+  })
 })
