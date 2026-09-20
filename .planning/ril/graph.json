@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 393,
+  "round": 395,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-19T15:35:49+00:00",
+  "updated_at": "2026-09-20T14:32:23+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -6476,7 +6476,7 @@
       "version": 2,
       "created_at": "2026-09-12T04:35:19+00:00",
       "updated_at": "2026-09-12T05:26:30+00:00",
-      "touched_round": 182,
+      "touched_round": 394,
       "summary": "界面外壳与底部导航(App.vue 外壳 + TopStatusBar + BottomNavigation + 全局浮层 ToastHost + scripts/layout-check.mjs):承载所有页面的固定骨架,也是「真机排版」的观测面"
     },
     "ISS-099": {
@@ -11147,7 +11147,7 @@
       "version": 1,
       "created_at": "2026-09-15T13:23:43+00:00",
       "updated_at": "2026-09-15T13:23:43+00:00",
-      "touched_round": 190,
+      "touched_round": 394,
       "summary": "Service Worker 离线层(public/sw.js + main.ts 注册 + scripts/offline-check.mjs 验证)"
     },
     "EV-170": {
@@ -21360,10 +21360,10 @@
     "HYP-109": {
       "id": "HYP-109",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T03:03:50+00:00",
-      "updated_at": "2026-09-19T03:03:50+00:00",
+      "updated_at": "2026-09-20T13:58:26+00:00",
       "touched_round": 382,
       "confidence": 0.9,
       "summary": "文档里的命令 / 路径 / 规模数是\"能静态查的\",加一道判据就能既抓住腐烂又几乎不误伤;上游工程侧的引用要靠显式豁免,否则判据会逼文档撒谎。",
@@ -21421,10 +21421,10 @@
     "HYP-110": {
       "id": "HYP-110",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T03:23:04+00:00",
-      "updated_at": "2026-09-19T03:23:04+00:00",
+      "updated_at": "2026-09-20T13:58:26+00:00",
       "touched_round": 383,
       "confidence": 0.9,
       "summary": "库已到\"最小完备\"的边界:四套系统 + 横切层齐了、判据与刻度齐了、边界写清了,再往里加只能是某一款游戏的玩法;对外三件证据(独立仓 CI / 发布附件真装 / 宿主全量用例)都常态绿。",
@@ -22798,6 +22798,92 @@
       "touched_round": 393,
       "commit": 837450000.0,
       "summary": "新增 scripts/build-timed.mjs(跑一遍构建并计时、超上限即红),build.yml / deploy.yml / publish.yml 的构建步骤全部换成它;docs/development.md 补上构建时长那一行与口径(上限按本机读数四到五倍给)。"
+    },
+    "TASK-389": {
+      "id": "TASK-389",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T14:23:02+00:00",
+      "updated_at": "2026-09-20T14:32:19+00:00",
+      "touched_round": 394,
+      "category": "stability",
+      "severity": 0.7,
+      "confidence": 0.95,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "BaseModal 每实例注册 window keydown 监听从不移除,且 activeModals 为实例私有导致叠放时一次 Esc 关掉全部层"
+    },
+    "ISS-261": {
+      "id": "ISS-261",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T14:23:09+00:00",
+      "updated_at": "2026-09-20T14:32:20+00:00",
+      "touched_round": 394,
+      "severity": 0.7,
+      "summary": "BaseModal 每实例注册 window keydown 监听从不移除(泄漏),且 activeModals 实例私有导致叠放时一次 Esc 关掉全部"
+    },
+    "TASK-390": {
+      "id": "TASK-390",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T14:23:09+00:00",
+      "updated_at": "2026-09-20T14:32:19+00:00",
+      "touched_round": 394,
+      "category": "stability",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "Service Worker networkFirst 收到服务器 5xx 时直接返回错误体,不回退已缓存 index.html"
+    },
+    "ISS-262": {
+      "id": "ISS-262",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T14:23:09+00:00",
+      "updated_at": "2026-09-20T14:32:20+00:00",
+      "touched_round": 394,
+      "severity": 0.6,
+      "summary": "Service Worker networkFirst 对 non-ok 导航响应不落缓存也不回退缓存,发版/500 时玩家看到错误页"
+    },
+    "HYP-117": {
+      "id": "HYP-117",
+      "type": "hypothesis",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T14:23:24+00:00",
+      "updated_at": "2026-09-20T14:32:20+00:00",
+      "touched_round": 394,
+      "confidence": 0.9,
+      "summary": "BaseModal 焦点/Esc 管理把 window keydown 监听做成每实例一份,应提升为模块级单一监听+模块级 activeModals 栈"
+    },
+    "CHG-479": {
+      "id": "CHG-479",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T14:32:09+00:00",
+      "updated_at": "2026-09-20T14:32:09+00:00",
+      "touched_round": 394,
+      "commit": "ada8675",
+      "summary": "BaseModal Esc 模块级化 + SW networkFirst 错误页回退缓存"
+    },
+    "EV-415": {
+      "id": "EV-415",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T14:32:15+00:00",
+      "updated_at": "2026-09-20T14:32:15+00:00",
+      "touched_round": 394,
+      "source": "$HASH",
+      "summary": "浏览器挂载 30 个叠放可关 BaseModal,按一次 Esc 只关最上层;卸载后 Esc 不再触发(模块级栈排空),监听单份无泄漏",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -33403,6 +33489,60 @@
       "to": "HYP-116",
       "type": "validates",
       "created_at": "2026-09-19T15:35:49+00:00"
+    },
+    {
+      "from": "TASK-389",
+      "to": "ISS-261",
+      "type": "addresses",
+      "created_at": "2026-09-20T14:23:24+00:00"
+    },
+    {
+      "from": "ISS-261",
+      "to": "COMP-015",
+      "type": "located_in",
+      "created_at": "2026-09-20T14:23:24+00:00"
+    },
+    {
+      "from": "TASK-390",
+      "to": "ISS-262",
+      "type": "addresses",
+      "created_at": "2026-09-20T14:23:24+00:00"
+    },
+    {
+      "from": "ISS-262",
+      "to": "COMP-022",
+      "type": "located_in",
+      "created_at": "2026-09-20T14:23:24+00:00"
+    },
+    {
+      "from": "CHG-479",
+      "to": "TASK-389",
+      "type": "implements",
+      "created_at": "2026-09-20T14:32:15+00:00"
+    },
+    {
+      "from": "CHG-479",
+      "to": "TASK-390",
+      "type": "implements",
+      "created_at": "2026-09-20T14:32:15+00:00"
+    },
+    {
+      "from": "CHG-479",
+      "to": "ISS-261",
+      "type": "resolves",
+      "created_at": "2026-09-20T14:32:15+00:00"
+    },
+    {
+      "from": "CHG-479",
+      "to": "ISS-262",
+      "type": "resolves",
+      "created_at": "2026-09-20T14:32:15+00:00"
+    },
+    {
+      "from": "EV-415",
+      "to": "HYP-117",
+      "type": "validates",
+      "created_at": "2026-09-20T14:32:19+00:00"
     }
   ]
 }
