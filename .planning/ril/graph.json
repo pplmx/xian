@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 395,
+  "round": 396,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T14:32:23+00:00",
+  "updated_at": "2026-09-20T14:34:15+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -324,7 +324,7 @@
       "version": 1,
       "created_at": "2026-09-09T14:05:15+00:00",
       "updated_at": "2026-09-09T14:05:15+00:00",
-      "touched_round": 158,
+      "touched_round": 395,
       "summary": "悟道顿悟/洞府巡游事件系统(earlyGameService + 两个弹窗组件)"
     },
     "CHG-007": {
@@ -22884,6 +22884,55 @@
       "source": "$HASH",
       "summary": "浏览器挂载 30 个叠放可关 BaseModal,按一次 Esc 只关最上层;卸载后 Esc 不再触发(模块级栈排空),监听单份无泄漏",
       "confidence": 1.0
+    },
+    "TASK-391": {
+      "id": "TASK-391",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T14:33:30+00:00",
+      "updated_at": "2026-09-20T14:34:05+00:00",
+      "touched_round": 395,
+      "category": "stability",
+      "severity": 0.4,
+      "confidence": 0.9,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "SpiritRootReveal.show 重入时不清旧定时器,旧 100ms interval 失控泄漏"
+    },
+    "ISS-263": {
+      "id": "ISS-263",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T14:33:30+00:00",
+      "updated_at": "2026-09-20T14:34:05+00:00",
+      "touched_round": 395,
+      "severity": 0.4,
+      "summary": "SpiritRootReveal.show 在上一轮动画未结束时再调用,会丢旧 interval/timeout 引用,旧 100ms interval 永不停止"
+    },
+    "CHG-480": {
+      "id": "CHG-480",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T14:34:05+00:00",
+      "updated_at": "2026-09-20T14:34:05+00:00",
+      "touched_round": 395,
+      "commit": "14024b5",
+      "summary": "SpiritRootReveal.show 重入清旧定时器,堵 100ms interval 泄漏"
+    },
+    "EV-416": {
+      "id": "EV-416",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T14:34:05+00:00",
+      "updated_at": "2026-09-20T14:34:05+00:00",
+      "touched_round": 395,
+      "source": "14024b5",
+      "summary": "show 重入先 stopTimers(),旧 interval 在重新开始时被清理;类型检查与全量用例通过",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -33543,6 +33592,30 @@
       "to": "HYP-117",
       "type": "validates",
       "created_at": "2026-09-20T14:32:19+00:00"
+    },
+    {
+      "from": "TASK-391",
+      "to": "ISS-263",
+      "type": "addresses",
+      "created_at": "2026-09-20T14:33:37+00:00"
+    },
+    {
+      "from": "ISS-263",
+      "to": "COMP-002",
+      "type": "located_in",
+      "created_at": "2026-09-20T14:33:37+00:00"
+    },
+    {
+      "from": "CHG-480",
+      "to": "TASK-391",
+      "type": "implements",
+      "created_at": "2026-09-20T14:34:05+00:00"
+    },
+    {
+      "from": "CHG-480",
+      "to": "ISS-263",
+      "type": "resolves",
+      "created_at": "2026-09-20T14:34:05+00:00"
     }
   ]
 }
