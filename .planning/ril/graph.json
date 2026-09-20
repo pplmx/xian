@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 402,
+  "round": 403,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T16:32:38+00:00",
+  "updated_at": "2026-09-20T17:41:24+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -23476,6 +23476,18 @@
       "touched_round": 401,
       "source": "8f48e0b:combat.spec",
       "summary": "震慑回归:100%震慑率下 interval=1 法宝 pre-fix 每回合发炮≥2/场,post-fix≤1;pre-fix 红 post-fix 绿",
+      "confidence": 1.0
+    },
+    "EV-425": {
+      "id": "EV-425",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T17:40:52+00:00",
+      "updated_at": "2026-09-20T17:40:52+00:00",
+      "touched_round": 402,
+      "source": "check:engine:standalone",
+      "summary": "引擎独立自检通过:122源文件独立编译+80用例591测+自定义世界装配+README示例可跑",
       "confidence": 1.0
     }
   },
