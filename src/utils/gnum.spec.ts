@@ -41,6 +41,20 @@ describe('GameNumber 大数运算', () => {
     expect(mul(huge, huge).e).toBe(1000)
   })
 
+  it('尾数乘积上溢时折进指数,不静默归零', () => {
+    // mulN(9, 1e308):9e308 在 double 里是 Infinity,但量级仍可从标量对数恢复
+    const a = mulN(gn(9), 1e308)
+    expect(a.m === 0 && a.e === 0).toBe(false) // 不许抹成 0
+    expect(toNum(a)).toBe(Infinity) // 正确保持巨量
+    // 常规有限路径不受影响
+    expect(toNum(mulN(gn(50), 3))).toBeCloseTo(150)
+  })
+
+  it('NaN 尾数按 0 比较(与 gn() 的 scrubbing 一致)', () => {
+    expect(cmp({ m: NaN, e: 0 }, gn(1))).toBe(cmp(gn(0), gn(1)))
+    expect(cmp({ m: NaN, e: 0 }, gn(0))).toBe(0)
+  })
+
   it('比较', () => {
     expect(cmp(gn(100), gn(99))).toBe(1)
     expect(cmp(gn(1e20), gn(2e20))).toBe(-1)

@@ -64,12 +64,23 @@ export function subClamp(a: GNum, b: GNum): GNum {
 
 export function mul(a: GNum, b: GNum): GNum {
   if (a.m === 0 || b.m === 0) return gnZero()
-  return normalize(a.m * b.m, a.e + b.e)
+  const me = a.m * b.m
+  if (!Number.isFinite(me)) {
+    // 尾数乘积上溢(如 b 未归一化、尾数 ~1e309):不能静默归零 —— 会把一笔巨值抹成 0
+    // (0 伤害/0 资源/0 修为,且无任何报错)。用对数空间折算指数,保住量级。
+    return powN(10, (a.e + Math.log10(Math.abs(a.m))) + (b.e + Math.log10(Math.abs(b.m))))
+  }
+  return normalize(me, a.e + b.e)
 }
 
 export function mulN(a: GNum, n: number): GNum {
   if (n === 0 || a.m === 0) return gnZero()
-  return normalize(a.m * n, a.e)
+  const me = a.m * n
+  if (!Number.isFinite(me)) {
+    // 标量 n 上溢(如 n ~5e307)时同 mul:把溢出折进指数,不归零
+    return powN(10, (a.e + Math.log10(Math.abs(a.m))) + Math.log10(Math.abs(n)))
+  }
+  return normalize(me, a.e)
 }
 
 export function div(a: GNum, b: GNum): GNum {
@@ -88,6 +99,11 @@ export function powN(base: number, exp: number): GNum {
 
 /** 比较:a>b → 1, a<b → -1, 相等 → 0 */
 export function cmp(a: GNum, b: GNum): number {
+  // NaN 尾数按 0 处理 —— 与 gn() 的 scrubbing 一致(cmp 自称能扛绕过 gn() 的原始对象)。
+  // 否则 NaN 所有符号判断都落空、比谁都小(连 0 都"小于"),alive()=cmp(hp,0)>0 会把
+  // 带 NaN 血的战斗者误判成已死。这里先归一,后面各分支就都拿到确定的数。
+  if (typeof a.m === 'number' && Number.isNaN(a.m)) a = { m: 0, e: 0 }
+  if (typeof b.m === 'number' && Number.isNaN(b.m)) b = { m: 0, e: 0 }
   // 零永远排在正数之下、负数之上(不认 m===0 对象的指数)
   if (a.m === 0 && b.m === 0) return 0
   if (a.m === 0) return b.m > 0 ? -1 : 1
