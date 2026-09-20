@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 397,
+  "round": 398,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T15:04:51+00:00",
+  "updated_at": "2026-09-20T15:08:10+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 396,
+      "touched_round": 397,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -23060,6 +23060,55 @@
       "source": "41847c0",
       "summary": "注入 it.skip 用例运行 test-report:Unit 类 FAIL 1 败、退出码 1(修复前假绿);全量 2682 过",
       "confidence": 1.0
+    },
+    "TASK-396": {
+      "id": "TASK-396",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:08:05+00:00",
+      "updated_at": "2026-09-20T15:08:05+00:00",
+      "touched_round": 397,
+      "category": "maintainability",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "docs-check 未用 statSync 与 first-paint 未用 typeOf 让 check 门 lint 报错"
+    },
+    "ISS-268": {
+      "id": "ISS-268",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:08:05+00:00",
+      "updated_at": "2026-09-20T15:08:06+00:00",
+      "touched_round": 397,
+      "severity": 0.4,
+      "summary": "check 门 lint 两个死代码 error(未用导入/未用变量),让 bun run check 退出 1"
+    },
+    "CHG-482": {
+      "id": "CHG-482",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:08:05+00:00",
+      "updated_at": "2026-09-20T15:08:05+00:00",
+      "touched_round": 397,
+      "commit": "fa5bb9f",
+      "summary": "删 docs-check 未用 statSync、first-paint 未用 typeOf,check 门 lint 归零"
+    },
+    "EV-418": {
+      "id": "EV-418",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:08:10+00:00",
+      "updated_at": "2026-09-20T15:08:10+00:00",
+      "touched_round": 397,
+      "source": "fa5bb9f",
+      "summary": "bun run check 全绿:type-check+lint+docs-check 退出 0;两处死代码删除",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -33845,6 +33894,30 @@
       "to": "HYP-113",
       "type": "validates",
       "created_at": "2026-09-20T15:04:46+00:00"
+    },
+    {
+      "from": "TASK-396",
+      "to": "ISS-268",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:08:05+00:00"
+    },
+    {
+      "from": "ISS-268",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:08:05+00:00"
+    },
+    {
+      "from": "CHG-482",
+      "to": "TASK-396",
+      "type": "implements",
+      "created_at": "2026-09-20T15:08:05+00:00"
+    },
+    {
+      "from": "CHG-482",
+      "to": "ISS-268",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:08:05+00:00"
     }
   ]
 }
