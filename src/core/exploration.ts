@@ -110,6 +110,12 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
     itemGain: 0
   }
   adventure.setSession(session)
+  // 起新一程前清掉历史遗留的待处理事件。
+  // 正常情况下事件只能挂在「正在进行的会话」上(stopExploration/afterEventResolved 都会清),
+  // 但损坏存档里可能出现「会话被 sanitize 修成 null、pendingEventId 却仍是合法串」的形态 ——
+  // 若不清,这一程开打后 tickExploration 会拿旧事件(错误区域/层级的 tier)去 autoResolve 一次,
+  // 或阻塞新事件。归零后这程从干净状态开始。
+  adventure.setPendingEvent(null, Date.now())
   ui.toast(`你动身前往${region.name},开始${modeDef.name}`, 'info')
   // Phase 31 A2:出发时低频判定区域事件(妖潮等,30~120 分钟)
   const ev = rollRegionEvent(region)

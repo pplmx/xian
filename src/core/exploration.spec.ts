@@ -219,6 +219,23 @@ describe('闭关禁令:闭关期间不得进入历练(Phase 28 接线后)', () =
     expect(useAdventureStore().session).toBeNull()
     expect(useCultivationStore().hasBuff('retreat')).toBe(true)
   })
+
+  it('起新一程前清掉历史残留的待处理事件(坏档边缘:会话没了、事件串还在)', () => {
+    setActivePinia(createPinia())
+    const adventure = useAdventureStore()
+    const player = usePlayerStore()
+    player.initCharacter('清事件测试', { roots: [] } as never)
+    // 坏档形态:sanitize 把非法会话修成 null,却留下一个认为合法的 pendingEventId
+    adventure.$patch({ session: null, pendingEventId: 'ev_spring', pendingEventSince: Date.now() })
+    adventure.sanitize()
+    // 复现这一形态:会话确为 null,事件串仍在
+    expect(adventure.session).toBeNull()
+    expect(adventure.pendingEventId).toBe('ev_spring')
+    // 踏入新一程:残留事件必须被清掉,不能带到新会话里派 wrong-tier 的 autoResolve
+    expect(startExploration('qingyun', 'normal')).toBe(true)
+    expect(adventure.pendingEventId).toBeNull()
+    expect(adventure.pendingEventSince).toBe(0)
+  })
 })
 
 /**
