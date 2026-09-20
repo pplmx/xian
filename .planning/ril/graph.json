@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 401,
+  "round": 402,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T15:55:43+00:00",
+  "updated_at": "2026-09-20T16:32:38+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -324,7 +324,7 @@
       "version": 1,
       "created_at": "2026-09-09T14:05:15+00:00",
       "updated_at": "2026-09-09T14:05:15+00:00",
-      "touched_round": 399,
+      "touched_round": 401,
       "summary": "悟道顿悟/洞府巡游事件系统(earlyGameService + 两个弹窗组件)"
     },
     "CHG-007": {
@@ -11911,7 +11911,7 @@
       "version": 1,
       "created_at": "2026-09-16T01:27:53+00:00",
       "updated_at": "2026-09-16T01:27:53+00:00",
-      "touched_round": 298,
+      "touched_round": 401,
       "summary": "src/core/combat.ts + src/core/gauntlet.ts(造敌与来源说明:FoeOrigin / mortalFoeOrigin / celestialFoeOrigin)"
     },
     "CHG-238": {
@@ -22208,7 +22208,7 @@
       "version": 1,
       "created_at": "2026-09-19T11:48:46+00:00",
       "updated_at": "2026-09-19T11:48:46+00:00",
-      "touched_round": 399,
+      "touched_round": 401,
       "summary": "像「注册表展开顺序被后面的同名项盖掉」这类错误,类型检查、lint 与单测都看不见(两边都合法),只有看真界面或写一条「问注册表要实物」的判据才拦得住。",
       "confidence": 0.85
     },
@@ -23376,6 +23376,107 @@
       "touched_round": 400,
       "commit": "af009fc",
       "summary": "修正 worldMemory 余波注释为 times≥1"
+    },
+    "TASK-402": {
+      "id": "TASK-402",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T16:32:11+00:00",
+      "updated_at": "2026-09-20T16:32:37+00:00",
+      "touched_round": 401,
+      "category": "correctness",
+      "severity": 0.7,
+      "confidence": 0.9,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "combat.act 震慑检查在回血与法宝之后,被震慑者照样回血放法宝"
+    },
+    "ISS-275": {
+      "id": "ISS-275",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T16:32:12+00:00",
+      "updated_at": "2026-09-20T16:32:37+00:00",
+      "touched_round": 401,
+      "severity": 0.7,
+      "summary": "combat.act 被震慑者仍触发 regenPerRound 与法宝自动触发,与'震慑掐掉那一手'相悖"
+    },
+    "TASK-403": {
+      "id": "TASK-403",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T16:32:12+00:00",
+      "updated_at": "2026-09-20T16:32:38+00:00",
+      "touched_round": 401,
+      "category": "correctness",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "洞府巡游成功触发不盖当日,玩家晾着 2 分钟窗后 30s 轮询重掷全天轰炸"
+    },
+    "ISS-276": {
+      "id": "ISS-276",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T16:32:12+00:00",
+      "updated_at": "2026-09-20T16:32:38+00:00",
+      "touched_round": 401,
+      "severity": 0.6,
+      "summary": "mayTriggerCaveEvent 成功分支不 markCaveEventToday,过期不选则反复重掷"
+    },
+    "TASK-404": {
+      "id": "TASK-404",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T16:32:12+00:00",
+      "updated_at": "2026-09-20T16:32:38+00:00",
+      "touched_round": 401,
+      "category": "correctness",
+      "severity": 0.55,
+      "confidence": 0.9,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "EventDialog 余波用事件 id 固定 hash 当 roll,约八成事件永不出余波"
+    },
+    "ISS-277": {
+      "id": "ISS-277",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T16:32:12+00:00",
+      "updated_at": "2026-09-20T16:32:38+00:00",
+      "touched_round": 401,
+      "severity": 0.55,
+      "summary": "aftermath roll 为事件 id 确定性 hash,与'每次遭遇 20% 概率'承诺脱节"
+    },
+    "CHG-487": {
+      "id": "CHG-487",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T16:32:37+00:00",
+      "updated_at": "2026-09-20T16:32:37+00:00",
+      "touched_round": 401,
+      "commit": "f48e11d",
+      "summary": "震慑跳过前置+巡游成功即盖日+余波每次遭遇独立抽签"
+    },
+    "EV-424": {
+      "id": "EV-424",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T16:32:38+00:00",
+      "updated_at": "2026-09-20T16:32:38+00:00",
+      "touched_round": 401,
+      "source": "8f48e0b:combat.spec",
+      "summary": "震慑回归:100%震慑率下 interval=1 法宝 pre-fix 每回合发炮≥2/场,post-fix≤1;pre-fix 红 post-fix 绿",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -34347,6 +34448,84 @@
       "to": "ISS-274",
       "type": "resolves",
       "created_at": "2026-09-20T15:55:42+00:00"
+    },
+    {
+      "from": "TASK-402",
+      "to": "ISS-275",
+      "type": "addresses",
+      "created_at": "2026-09-20T16:32:12+00:00"
+    },
+    {
+      "from": "ISS-275",
+      "to": "COMP-023",
+      "type": "located_in",
+      "created_at": "2026-09-20T16:32:12+00:00"
+    },
+    {
+      "from": "TASK-403",
+      "to": "ISS-276",
+      "type": "addresses",
+      "created_at": "2026-09-20T16:32:12+00:00"
+    },
+    {
+      "from": "ISS-276",
+      "to": "COMP-002",
+      "type": "located_in",
+      "created_at": "2026-09-20T16:32:12+00:00"
+    },
+    {
+      "from": "TASK-404",
+      "to": "ISS-277",
+      "type": "addresses",
+      "created_at": "2026-09-20T16:32:12+00:00"
+    },
+    {
+      "from": "ISS-277",
+      "to": "COMP-002",
+      "type": "located_in",
+      "created_at": "2026-09-20T16:32:12+00:00"
+    },
+    {
+      "from": "CHG-487",
+      "to": "TASK-402",
+      "type": "implements",
+      "created_at": "2026-09-20T16:32:37+00:00"
+    },
+    {
+      "from": "CHG-487",
+      "to": "ISS-275",
+      "type": "resolves",
+      "created_at": "2026-09-20T16:32:37+00:00"
+    },
+    {
+      "from": "CHG-487",
+      "to": "TASK-403",
+      "type": "implements",
+      "created_at": "2026-09-20T16:32:37+00:00"
+    },
+    {
+      "from": "CHG-487",
+      "to": "ISS-276",
+      "type": "resolves",
+      "created_at": "2026-09-20T16:32:38+00:00"
+    },
+    {
+      "from": "CHG-487",
+      "to": "TASK-404",
+      "type": "implements",
+      "created_at": "2026-09-20T16:32:38+00:00"
+    },
+    {
+      "from": "CHG-487",
+      "to": "ISS-277",
+      "type": "resolves",
+      "created_at": "2026-09-20T16:32:38+00:00"
+    },
+    {
+      "from": "EV-424",
+      "to": "HYP-113",
+      "type": "validates",
+      "created_at": "2026-09-20T16:32:38+00:00"
     }
   ]
 }
