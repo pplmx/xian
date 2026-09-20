@@ -219,7 +219,7 @@ describe('自动战斗', () => {
     p.maxHp = gn(1e12)
     p.skills = []
     p.mods = { regenPerRound: 0.5 } // 若震慑没掐住,每回合都回大血
-    let lihuo = artifactDef('af_lihuo')!
+    const lihuo = artifactDef('af_lihuo')!
     // 浅克隆一层再改 interval:artifactDef 返回共享数据对象,直接改会污染数据源
     const atom = { ...lihuo, active: { ...lihuo.active, interval: 1 } } // 每回合都该出手的伤害法宝
     p.artifacts = [{ def: atom, level: 0 }]
