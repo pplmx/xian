@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 400,
+  "round": 401,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T15:53:08+00:00",
+  "updated_at": "2026-09-20T15:55:43+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -11006,7 +11006,7 @@
       "version": 1,
       "created_at": "2026-09-15T13:02:41+00:00",
       "updated_at": "2026-09-15T13:02:41+00:00",
-      "touched_round": 189,
+      "touched_round": 400,
       "summary": "道侣意图系统(bondIntent 数据 + daoluService.speakIntent/sparkIntent/respondIntent + 人物页意图卡)"
     },
     "CHG-219": {
@@ -23339,6 +23339,43 @@
       "source": "da5d2cf:random.spec+parity",
       "summary": "weighted 剔除零权重后,engineParity/exploration/craftability 共 84 例与全量 2684 例全绿",
       "confidence": 1.0
+    },
+    "TASK-401": {
+      "id": "TASK-401",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:55:37+00:00",
+      "updated_at": "2026-09-20T15:55:42+00:00",
+      "touched_round": 400,
+      "category": "maintainability",
+      "severity": 0.2,
+      "confidence": 0.95,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "worldMemory.shouldTriggerAftermath 注释写≥2次与 times≥1 行为相悖,修正"
+    },
+    "ISS-274": {
+      "id": "ISS-274",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:55:37+00:00",
+      "updated_at": "2026-09-20T15:55:43+00:00",
+      "touched_round": 400,
+      "severity": 0.2,
+      "summary": "worldMemory 余波注释与 spec 锁定的 times≥1 行为矛盾,误导后人"
+    },
+    "CHG-486": {
+      "id": "CHG-486",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:55:42+00:00",
+      "updated_at": "2026-09-20T15:55:42+00:00",
+      "touched_round": 400,
+      "commit": "af009fc",
+      "summary": "修正 worldMemory 余波注释为 times≥1"
     }
   },
   "edges": [
@@ -34286,6 +34323,30 @@
       "to": "HYP-113",
       "type": "validates",
       "created_at": "2026-09-20T15:53:08+00:00"
+    },
+    {
+      "from": "TASK-401",
+      "to": "ISS-274",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:55:37+00:00"
+    },
+    {
+      "from": "ISS-274",
+      "to": "COMP-021",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:55:37+00:00"
+    },
+    {
+      "from": "CHG-486",
+      "to": "TASK-401",
+      "type": "implements",
+      "created_at": "2026-09-20T15:55:42+00:00"
+    },
+    {
+      "from": "CHG-486",
+      "to": "ISS-274",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:55:42+00:00"
     }
   ]
 }
