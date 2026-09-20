@@ -405,6 +405,18 @@ export function resolveCombat(pSnap: CombatantSnap, eSnap: CombatantSnap, rng: R
     const name = self.snap.isPlayer ? '你' : `【${self.snap.name}】`
     const side = self.snap.isPlayer ? 'p' : 'e'
 
+    // 震慑跳过 —— 必须在回合回复与法宝自动触发**之前**。
+    // 震慑的语义是「这一手被掐掉」:被震慑者这一回合该什么都不做。
+    // 放在后面的话,被震慑者照样回血(regenPerRound)、照样放开法宝
+    // (伤害/吸命/护盾/治疗/破甲……),只是少了那一记普通攻击 ——
+    // 与「震慑不是文案,它掐掉对方那一手」的设计承诺相悖。
+    if (self.stunned) {
+      self.stunned = false
+      self.stats.stunnedTurns += 1
+      push('info', side, `${name}气血逆涌,这一招被生生打断。`)
+      return
+    }
+
     // 回合回复
     const regen = modOf(self.snap.mods, 'regenPerRound')
     if (regen > 0 && hpPct(self) < 1) {
@@ -451,13 +463,6 @@ export function resolveCombat(pSnap: CombatantSnap, eSnap: CombatantSnap, rng: R
       }
     }
     if (isZero(foe.hp)) return
-    // 震慑跳过
-    if (self.stunned) {
-      self.stunned = false
-      self.stats.stunnedTurns += 1
-      push('info', side, `${name}气血逆涌,这一招被生生打断。`)
-      return
-    }
     // 选择技能
     let mult = 1
     let label = self.snap.isPlayer ? '一记攻势' : '一记爪击'

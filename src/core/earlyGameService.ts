@@ -263,6 +263,11 @@ export function mayTriggerCaveEvent(): CaveEvent | null {
     triggeredAt: now,
     expiresAt: now + 120000 // 2分钟窗口
   }
+  // 成功触发即视为今日已出 —— 必须在这里就把 today 盖掉。
+  // 否则玩家把 2 分钟窗晾着不选不关,事件到点被 getCurrentCaveEvent 清掉,
+  // 但 lastCaveEventDay 仍是昨天 → 30s 轮询立刻重掷一枚新事件,全天反复轰炸。
+  // 盖掉后这一天的配额用完,等明天再说(与 roll-fail 分支同一条防稀释逻辑)。
+  player.markCaveEventToday(today)
   telemetry().record('cave_event', 'modal', `洞府:${event.title}`)
 
   return caveEvent

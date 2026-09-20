@@ -77,6 +77,16 @@
   /** 本次弹窗的回声 roll(打开时一次,会话内稳定) */
   let echoRolled = false
   let echoActive = false
+  /**
+   * 本次弹窗的余波 roll(打开时一次)。
+   * 余波是「再次遭遇时按 AFTERMATH_CHANCE 概率出现」的**每次遭遇独立**判定 ——
+   * 必须现场抽一个随机数。此前用事件 id 的固定 hash,同一事件怎么刷都恒大于/恒小于
+   * AFTERMATH_CHANCE(实测 ev_jade_slip hash≈0.79、ev_old_man≈0.17),于是约八成事件
+   * 永远不出余波、两成每次都出 —— 事件 id 不随完成次数变化,那个"20%"就退化成
+   * 一道写死的二进制门,与 worldMemory 的"概率出现"承诺脱节。改成打开时抽一次。
+   */
+  let aftermathRolled = false
+  let aftermathRoll = 0
 
   const def = computed(() => (adventure.pendingEventId ? eventDef(adventure.pendingEventId) : undefined))
   /**
@@ -121,9 +131,12 @@
     if (!def.value || result.value) return null
     const mem = adventure.eventMemories[def.value.id]
     if (!mem) return null
-    // 打开时由事件 id 的确定性 hash 决定(同一事件在整个会话内行为一致)
-    const roll = ((def.value.id.length * 31 + def.value.id.charCodeAt(0) * 7) % 100) / 100
-    if (!shouldTriggerAftermath(adventure.eventMemories, def.value.id, roll)) return null
+    // 打开时抽一次的独立 roll(见 file 头的 aftermathRolled 注释)
+    if (!aftermathRolled) {
+      aftermathRolled = true
+      aftermathRoll = Math.random()
+    }
+    if (!shouldTriggerAftermath(adventure.eventMemories, def.value.id, aftermathRoll)) return null
     return aftermathText(def.value.title, mem.times >= 3 ? 'good' : mem.times >= 2 ? 'echo' : 'silence')
   })
 
