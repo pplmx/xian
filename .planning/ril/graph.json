@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 396,
+  "round": 397,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T14:34:15+00:00",
+  "updated_at": "2026-09-20T15:04:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 390,
+      "touched_round": 396,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -22208,7 +22208,7 @@
       "version": 1,
       "created_at": "2026-09-19T11:48:46+00:00",
       "updated_at": "2026-09-19T11:48:46+00:00",
-      "touched_round": 393,
+      "touched_round": 396,
       "summary": "像「注册表展开顺序被后面的同名项盖掉」这类错误,类型检查、lint 与单测都看不见(两边都合法),只有看真界面或写一条「问注册表要实物」的判据才拦得住。",
       "confidence": 0.85
     },
@@ -22932,6 +22932,133 @@
       "touched_round": 395,
       "source": "14024b5",
       "summary": "show 重入先 stopTimers(),旧 interval 在重新开始时被清理;类型检查与全量用例通过",
+      "confidence": 1.0
+    },
+    "TASK-392": {
+      "id": "TASK-392",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:04:21+00:00",
+      "updated_at": "2026-09-20T15:04:45+00:00",
+      "touched_round": 396,
+      "category": "test-quality",
+      "severity": 0.85,
+      "confidence": 0.9,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "test-report.mjs 吞 vitest 退出码且不统计 skipped,被 .skip 的守卫用例假绿"
+    },
+    "TASK-393": {
+      "id": "TASK-393",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:04:21+00:00",
+      "updated_at": "2026-09-20T15:04:45+00:00",
+      "touched_round": 396,
+      "category": "test-quality",
+      "severity": 0.5,
+      "confidence": 0.85,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "offline-check.mjs 快路径 break 沿用旧 cachesNow 快照,健康构建可能自红"
+    },
+    "TASK-394": {
+      "id": "TASK-394",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:04:21+00:00",
+      "updated_at": "2026-09-20T15:04:45+00:00",
+      "touched_round": 396,
+      "category": "test-quality",
+      "severity": 0.6,
+      "confidence": 0.85,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "summary": "ui-smoke.mjs 数字泄漏只扫开页正文,点开弹窗才现形的 NaN/undefined 漏报"
+    },
+    "TASK-395": {
+      "id": "TASK-395",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:04:21+00:00",
+      "updated_at": "2026-09-20T15:04:46+00:00",
+      "touched_round": 396,
+      "category": "test-quality",
+      "severity": 0.5,
+      "confidence": 0.7,
+      "effort": 1,
+      "unlock_factor": 1.0,
+      "summary": "layout-check.mjs 越界判据只查右缘,左缘越界块整条失灵"
+    },
+    "ISS-264": {
+      "id": "ISS-264",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:04:21+00:00",
+      "updated_at": "2026-09-20T15:04:45+00:00",
+      "touched_round": 396,
+      "severity": 0.5,
+      "summary": "test-report 自检脚本真实缺陷"
+    },
+    "ISS-265": {
+      "id": "ISS-265",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:04:21+00:00",
+      "updated_at": "2026-09-20T15:04:45+00:00",
+      "touched_round": 396,
+      "severity": 0.5,
+      "summary": "offline-check 自检脚本真实缺陷"
+    },
+    "ISS-266": {
+      "id": "ISS-266",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:04:22+00:00",
+      "updated_at": "2026-09-20T15:04:45+00:00",
+      "touched_round": 396,
+      "severity": 0.5,
+      "summary": "ui-smoke 自检脚本真实缺陷"
+    },
+    "ISS-267": {
+      "id": "ISS-267",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-20T15:04:22+00:00",
+      "updated_at": "2026-09-20T15:04:45+00:00",
+      "touched_round": 396,
+      "severity": 0.5,
+      "summary": "layout-check 自检脚本真实缺陷"
+    },
+    "CHG-481": {
+      "id": "CHG-481",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:04:44+00:00",
+      "updated_at": "2026-09-20T15:04:44+00:00",
+      "touched_round": 396,
+      "commit": "41847c0",
+      "summary": "自检脚本四处缺陷:test-report 跳过不假绿 / offline 快照 / ui-smoke 点后重扫 / layout 左缘越界"
+    },
+    "EV-417": {
+      "id": "EV-417",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-20T15:04:46+00:00",
+      "updated_at": "2026-09-20T15:04:46+00:00",
+      "touched_round": 396,
+      "source": "41847c0",
+      "summary": "注入 it.skip 用例运行 test-report:Unit 类 FAIL 1 败、退出码 1(修复前假绿);全量 2682 过",
       "confidence": 1.0
     }
   },
@@ -33616,6 +33743,108 @@
       "to": "ISS-263",
       "type": "resolves",
       "created_at": "2026-09-20T14:34:05+00:00"
+    },
+    {
+      "from": "TASK-392",
+      "to": "ISS-264",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:04:21+00:00"
+    },
+    {
+      "from": "ISS-264",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:04:21+00:00"
+    },
+    {
+      "from": "TASK-393",
+      "to": "ISS-265",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:04:21+00:00"
+    },
+    {
+      "from": "ISS-265",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:04:21+00:00"
+    },
+    {
+      "from": "TASK-394",
+      "to": "ISS-266",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:04:22+00:00"
+    },
+    {
+      "from": "ISS-266",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:04:22+00:00"
+    },
+    {
+      "from": "TASK-395",
+      "to": "ISS-267",
+      "type": "addresses",
+      "created_at": "2026-09-20T15:04:22+00:00"
+    },
+    {
+      "from": "ISS-267",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-20T15:04:22+00:00"
+    },
+    {
+      "from": "CHG-481",
+      "to": "TASK-392",
+      "type": "implements",
+      "created_at": "2026-09-20T15:04:44+00:00"
+    },
+    {
+      "from": "CHG-481",
+      "to": "TASK-393",
+      "type": "implements",
+      "created_at": "2026-09-20T15:04:44+00:00"
+    },
+    {
+      "from": "CHG-481",
+      "to": "TASK-394",
+      "type": "implements",
+      "created_at": "2026-09-20T15:04:44+00:00"
+    },
+    {
+      "from": "CHG-481",
+      "to": "TASK-395",
+      "type": "implements",
+      "created_at": "2026-09-20T15:04:45+00:00"
+    },
+    {
+      "from": "CHG-481",
+      "to": "ISS-264",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:04:45+00:00"
+    },
+    {
+      "from": "CHG-481",
+      "to": "ISS-265",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:04:45+00:00"
+    },
+    {
+      "from": "CHG-481",
+      "to": "ISS-266",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:04:45+00:00"
+    },
+    {
+      "from": "CHG-481",
+      "to": "ISS-267",
+      "type": "resolves",
+      "created_at": "2026-09-20T15:04:45+00:00"
+    },
+    {
+      "from": "EV-417",
+      "to": "HYP-113",
+      "type": "validates",
+      "created_at": "2026-09-20T15:04:46+00:00"
     }
   ]
 }
