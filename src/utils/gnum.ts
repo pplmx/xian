@@ -107,8 +107,14 @@ export function cmp(a: GNum, b: GNum): number {
       if (am === b.m) return 0
       return bothNeg ? (am < b.m ? -1 : 1) : am > b.m ? 1 : -1
     }
-    if (a.e > b.e) return bothNeg ? -1 : 1
-    return bothNeg ? 1 : -1
+    // 量级悬殊:仍不能照搬 a.e>b.e —— 未归一化的尾数(如 {m:1e20,e:0})会让指数序失效。
+    // 用**有效指数** e+log10(|m|) 各算一次再比,与「对齐到较大指数比尾数」的短差分支同类
+    // (cmp 注释里声称能扛未归一化输入,远端分支也得一样扛,$patch / 手工构造 / 损坏存档来得)。
+    const ea = a.e + LOG10(Math.abs(a.m))
+    const eb = b.e + LOG10(Math.abs(b.m))
+    if (ea > eb) return bothNeg ? -1 : 1
+    if (ea < eb) return bothNeg ? 1 : -1
+    return 0
   }
   if (a.m === b.m) return 0
   return a.m > b.m ? 1 : -1

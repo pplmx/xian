@@ -57,6 +57,10 @@ describe('GameNumber 大数运算', () => {
     // 量级悬殊仍走指数序(NEGLIGIBLE_EXP_DIFF 之外)
     expect(cmp(gn(1e30), gn(1))).toBe(1)
     expect(cmp(gn(1), gn(1e30))).toBe(-1)
+    // 量级悬殊且尾数未归一化:有效指数必须各算对数,不能照搬 a.e>b.e
+    // 1e20 > 5e19,但 {m:1e20,e:0} 尾数没归一化,老实现误判为 -1
+    expect(cmp({ m: 1e20, e: 0 }, { m: 5, e: 19 })).toBe(1)
+    expect(cmp({ m: 5, e: 19 }, { m: 1e20, e: 0 })).toBe(-1)
   })
 
   it('同为负数时按数值序比较', () => {
