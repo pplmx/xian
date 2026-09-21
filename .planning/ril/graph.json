@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 408,
+  "round": 409,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-21T02:46:37+00:00",
+  "updated_at": "2026-09-21T02:57:58+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -23647,6 +23647,43 @@
       "source": "6be63aa",
       "confidence": 1,
       "summary": "负向验证:临时删掉 offline.ts 里 usePacingTelemetry().sanitize() 调用,storeResilience 判据立刻红;恢复后绿(88→90 例)。全量 VERIFY 绿,test:report 的例数闸把新用例数 2691 逼到文档同步"
+    },
+    "ISS-282": {
+      "id": "ISS-282",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-21T02:57:04+00:00",
+      "updated_at": "2026-09-21T02:57:58+00:00",
+      "touched_round": 408,
+      "severity": 0.4,
+      "summary": "InventoryView 智能收纳的品质 chip 与阶限步进无 aria-pressed/aria-label:选中档位只靠 borderColor 表达,读屏不辨所选;与 SettingsView 的 theme/battleSpeed 同处却两端不一"
+    },
+    "TASK-408": {
+      "id": "TASK-408",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-21T02:57:04+00:00",
+      "updated_at": "2026-09-21T02:57:58+00:00",
+      "touched_round": 408,
+      "category": "dx",
+      "severity": 0.4,
+      "confidence": 1,
+      "effort": 1,
+      "unlock_factor": 1,
+      "summary": "给智能收纳品质 chip 加 aria-pressed+group、阶限步进器加 aria-label,对齐 SettingsView 范式"
+    },
+    "CHG-491": {
+      "id": "CHG-491",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-21T02:57:58+00:00",
+      "updated_at": "2026-09-21T02:57:58+00:00",
+      "touched_round": 408,
+      "commit": "356708c",
+      "summary": "智能收纳品质线/阶限 a11y:aria-pressed + role=group + aria-label"
     }
   },
   "edges": [
@@ -34792,6 +34829,24 @@
       "to": "ISS-281",
       "type": "resolves",
       "created_at": "2026-09-21T02:46:37+00:00"
+    },
+    {
+      "from": "TASK-408",
+      "to": "ISS-282",
+      "type": "addresses",
+      "created_at": "2026-09-21T02:57:58+00:00"
+    },
+    {
+      "from": "CHG-491",
+      "to": "TASK-408",
+      "type": "implements",
+      "created_at": "2026-09-21T02:57:58+00:00"
+    },
+    {
+      "from": "CHG-491",
+      "to": "ISS-282",
+      "type": "resolves",
+      "created_at": "2026-09-21T02:57:58+00:00"
     }
   ]
 }
