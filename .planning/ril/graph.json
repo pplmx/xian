@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 405,
+  "round": 406,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-21T01:46:48+00:00",
+  "updated_at": "2026-09-21T01:50:39+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -23542,28 +23542,51 @@
     "ISS-279": {
       "id": "ISS-279",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-21T01:45:27+00:00",
-      "updated_at": "2026-09-21T01:45:27+00:00",
-      "touched_round": 404,
+      "updated_at": "2026-09-21T01:48:38+00:00",
+      "touched_round": 405,
       "severity": 0.5,
       "summary": "文档里三处测试例数/模块数声称与实际不符:README 与 docs/development 写 2677/2682/2086/2087 例,实际 2687/2096;core 目录写 110 模块+165 spec,实际 122+192。docs-check 只查 spec 文件数不查例数,round 402-404 加回归用例后静默锈掉"
     },
     "TASK-406": {
       "id": "TASK-406",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-21T01:46:02+00:00",
-      "updated_at": "2026-09-21T01:46:02+00:00",
-      "touched_round": 404,
+      "updated_at": "2026-09-21T01:48:38+00:00",
+      "touched_round": 405,
       "category": "docs",
       "severity": 0.5,
       "confidence": 1,
       "effort": 1,
       "unlock_factor": 1,
       "summary": "修正文档例数/模块数漂移并给 docs-check 补例数判据:例数真源(本次运行)由 test:report 核对,文档声称不一致即红;CI 四处 bun run test 换 test:report(等价完整测试少跑一遍)"
+    },
+    "CHG-489": {
+      "id": "CHG-489",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-21T01:48:16+00:00",
+      "updated_at": "2026-09-21T01:48:16+00:00",
+      "touched_round": 405,
+      "commit": "8b8264f",
+      "summary": "修正文档例数/模块数漂移(README·docs/development 四处数字);test:report 新增文档例数核对闸(全量/本作自己 vs UTF 声称),CI 三处 bun run test 换 test:report"
+    },
+    "EV-427": {
+      "id": "EV-427",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-21T01:50:08+00:00",
+      "updated_at": "2026-09-21T01:50:08+00:00",
+      "touched_round": 405,
+      "source": "8b8264f",
+      "confidence": 1,
+      "summary": "负向验证:把 README 例数临时改成 2677→9999/2096→7777,test:report 立刻以 退出码 1 拦下并点名 2 处;恢复后 0。全量 VERIFY type-check/lint/2687 tests 全绿"
     }
   },
   "edges": [
@@ -34655,6 +34678,18 @@
       "to": "COMP-016",
       "type": "located_in",
       "created_at": "2026-09-21T01:46:48+00:00"
+    },
+    {
+      "from": "CHG-489",
+      "to": "TASK-406",
+      "type": "implements",
+      "created_at": "2026-09-21T01:48:38+00:00"
+    },
+    {
+      "from": "CHG-489",
+      "to": "ISS-279",
+      "type": "resolves",
+      "created_at": "2026-09-21T01:48:38+00:00"
     }
   ]
 }
