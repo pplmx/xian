@@ -647,8 +647,8 @@
           </div>
           <!-- S3 链路:本次凝聚后,下世收益变化 -->
           <p class="mt-1 text-[10px] leading-relaxed text-ink-faint tabular">
-            当前 {{ fruitInfo.total }} 枚 · 有效 {{ fruitInfo.effective.toFixed(0) }} 枚
-            <span class="text-gold-ink">→ 凝后 {{ fruitInfo.nextEffective.toFixed(0) }} 枚(+{{ fruitInfo.deltaPct }}%)</span>
+            当前 {{ fruitInfo.total }} 枚 · 有效 {{ fruitInfo.effectiveText }} 枚
+            <span class="text-gold-ink">→ 凝后 {{ fruitInfo.nextEffectiveText }} 枚(+{{ fruitInfo.deltaPct }}%)</span>
             · 边际收益渐减
           </p>
         </div>

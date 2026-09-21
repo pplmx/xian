@@ -312,12 +312,14 @@
   import GameIcon from '@/components/common/GameIcon.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
   import CombatPanel from '@/components/adventure/CombatPanel.vue'
+  import { useNow } from '@/composables/useNow'
 
   const adventure = useAdventureStore()
   const route = useRoute()
   const router = useRouter()
   const player = usePlayerStore()
   const ui = useUiStore()
+  const now = useNow()
 
   const modeTarget = ref<RegionDef | null>(null)
 
@@ -391,7 +393,7 @@
         /** 镇压资格进度(三条判据的当前值/阈值) */
         progress: suppressionProgress(player.regionStats[r.id]),
         /** 距妖气复聚还剩几小时(未镇压为 0) */
-        reviveInHours: suppressed ? hoursUntilRevive(player.suppressedSince[r.id]) : 0,
+        reviveInHours: suppressed ? hoursUntilRevive(player.suppressedSince[r.id], now.value) : 0,
         tooHard: r.minRealm > player.major,
         /** 此地之敌的加成来源(层级补偿 × 地界凶险;出行方式那一档另算) */
         foeOrigin: regionFoeOrigin(r),
@@ -500,7 +502,7 @@
   function heldText(regionId: string): string {
     const since = player.suppressedSince[regionId]
     if (since === undefined) return '—'
-    const hours = Math.max(0, Math.floor((Date.now() - since) / 3_600_000))
+    const hours = Math.max(0, Math.floor((now.value - since) / 3_600_000))
     return hours < 24 ? `${hours} 时` : `${Math.floor(hours / 24)} 日`
   }
 </script>

@@ -20,6 +20,8 @@ import { useAdventureStore } from '@/stores/adventure'
 import { usePacingTelemetry } from '@/stores/pacingTelemetry'
 import { useLoreStore } from '@/stores/lore'
 import { useInventoryStore } from '@/stores/inventory'
+import { useCultivationStore } from '@/stores/cultivation'
+import { useQuestsStore } from '@/stores/quests'
 
 /**
  * store 清单**从源码倒推**,不再手写。
@@ -378,27 +380,181 @@ describe('坏档韧性 · 跨字段不一致(幽灵法宝占位)', () => {
   it('equippedArtifacts 指向不存在的法宝时,sanitize 必须清掉 —— 否则槽位被幽灵占满', () => {
     setActivePinia(createPinia())
     const inv = useInventoryStore()
-    // 坏档:artifacts 有一个真法宝(如 'zhuling'),equippedArtifacts 却指着一个不存在的 'ghost'
+    // 坏档:artifacts 有一个真法宝,equippedArtifacts 却指着一个不存在的 'ghost'
     inv.$patch({
-      artifacts: [{ defId: 'zhuling', level: 0 }],
+      artifacts: [{ defId: 'af_lihuo', level: 0 }],
       equippedArtifacts: ['ghost']
     } as never)
     inv.sanitize()
 
     expect(inv.equippedArtifacts, '幽灵法宝要被 sanitize 清掉,不占槽位').toEqual([])
     // 真法宝仍可自动佩戴(此前因幽灵占位,length!==0 而佩不上)
-    expect(inv.addArtifact('zhenqi'), '空槽时新法宝应能加进持有表').toBe(true)
-    expect(inv.equippedArtifacts).toEqual(['zhenqi'])
+    expect(inv.addArtifact('af_xuantian'), '空槽时新法宝应能加进持有表').toBe(true)
+    expect(inv.equippedArtifacts).toEqual(['af_xuantian'])
   })
 
   it('equippedArtifacts 指向真实存在的法宝时,保留且顺序不变', () => {
     setActivePinia(createPinia())
     const inv = useInventoryStore()
     inv.$patch({
-      artifacts: [{ defId: 'a', level: 0 }, { defId: 'b', level: 1 }],
-      equippedArtifacts: ['b', 'a']
+      artifacts: [
+        { defId: 'af_lihuo', level: 0 },
+        { defId: 'af_xuantian', level: 1 }
+      ],
+      equippedArtifacts: ['af_xuantian', 'af_lihuo']
     } as never)
     inv.sanitize()
-    expect(inv.equippedArtifacts).toEqual(['b', 'a'])
+    expect(inv.equippedArtifacts).toEqual(['af_xuantian', 'af_lihuo'])
+  })
+
+  it('artifacts / pills 不在表里时,sanitize 清掉,避免行囊页对 def 取 quality 炸白屏', () => {
+    setActivePinia(createPinia())
+    const inv = useInventoryStore()
+    inv.$patch({
+      artifacts: [
+        { defId: 'af_lihuo', level: 0 },
+        { defId: 'not-an-artifact', level: 3 }
+      ],
+      equippedArtifacts: ['not-an-artifact', 'af_lihuo'],
+      pills: { p_juling: 2, 'not-a-pill': 9 }
+    } as never)
+    inv.sanitize()
+    expect(inv.artifacts.map(a => a.defId)).toEqual(['af_lihuo'])
+    expect(inv.equippedArtifacts).toEqual(['af_lihuo'])
+    expect(inv.pills).toEqual({ p_juling: 2 })
+  })
+
+  it('equipped 指向不存在的装备 uid 时,sanitize 必须清掉', () => {
+    setActivePinia(createPinia())
+    const inv = useInventoryStore()
+    inv.$patch({
+      items: [{ uid: 'real', templateId: 'b_qingyun', quality: 'mortal', tier: 1, level: 0, affixes: [] }],
+      equipped: { weapon: 'ghost', body: 'real' }
+    } as never)
+    inv.sanitize()
+    expect(inv.equipped.weapon, '幽灵武器槽要被清掉').toBeUndefined()
+    expect(inv.equipped.body, '真实装备保留').toBe('real')
+  })
+
+  it('装备坐错槽或键不是部位时,sanitize 卸下,避免身上有加成槽上看不见', () => {
+    setActivePinia(createPinia())
+    const inv = useInventoryStore()
+    inv.$patch({
+      items: [{ uid: 'robe', templateId: 'b_qingyun', quality: 'mortal', tier: 1, level: 0, affixes: [] }],
+      equipped: { head: 'robe', notASlot: 'robe' }
+    } as never)
+    inv.sanitize()
+    expect(inv.equipped.head, '道袍不能戴在头冠上').toBeUndefined()
+    expect((inv.equipped as Record<string, string>).notASlot, '非法槽名要丢掉').toBeUndefined()
+    expect(inv.equipped.body).toBeUndefined()
+  })
+
+  it('templateId 不在装备表里时,sanitize 清掉并卸下,避免幽灵件占满行囊', () => {
+    setActivePinia(createPinia())
+    const inv = useInventoryStore()
+    inv.$patch({
+      items: [
+        { uid: 'real', templateId: 'b_qingyun', quality: 'mortal', tier: 1, level: 0, affixes: [] },
+        { uid: 'ghost', templateId: 'not-a-template', quality: 'mortal', tier: 1, level: 0, affixes: [] }
+      ],
+      equipped: { body: 'ghost' }
+    } as never)
+    inv.sanitize()
+    expect(inv.items.map(it => it.uid)).toEqual(['real'])
+    expect(inv.equipped.body, '幽灵装备卸下,不占槽位').toBeUndefined()
+  })
+})
+
+describe('坏档韧性 · 非法灵兽 / 称号 id', () => {
+  it('petId 不在灵兽表里时,sanitize 清成 null,避免静默丢加成', () => {
+    setActivePinia(createPinia())
+    const player = usePlayerStore()
+    player.setPet('not-a-real-pet')
+    expect(player.petId).toBe('not-a-real-pet')
+    player.sanitize()
+    expect(player.petId).toBeNull()
+  })
+
+  it('titleId 不在称号表里时,sanitize 清成 null,避免佩戴幽灵称号', () => {
+    setActivePinia(createPinia())
+    const player = usePlayerStore()
+    player.setTitle('not-a-real-title')
+    expect(player.titleId).toBe('not-a-real-title')
+    player.sanitize()
+    expect(player.titleId).toBeNull()
+  })
+
+  it('天赋 / 师承 id 不在表里时,sanitize 清掉,避免面板念出裸 id', () => {
+    setActivePinia(createPinia())
+    const player = usePlayerStore()
+    player.$patch({
+      reincarnation: { ...player.reincarnation, talents: ['t_jianxin', 'not-a-talent'] },
+      mentor: 'not-a-mentor'
+    } as never)
+    player.sanitize()
+    expect(player.reincarnation.talents).toEqual(['t_jianxin'])
+    expect(player.mentor).toBeNull()
+  })
+})
+
+describe('坏档韧性 · 非法功法 id', () => {
+  it('learned 里不在功法表的 id,sanitize 清掉,避免占着习得栏', () => {
+    setActivePinia(createPinia())
+    const cult = useCultivationStore()
+    cult.$patch({ learned: { m_taixuan: 2, 'not-a-gongfa': 9 }, mainGongfa: 'not-a-gongfa' } as never)
+    cult.sanitize()
+    expect(cult.learned).toEqual({ m_taixuan: 2 })
+    expect(cult.mainGongfa).toBeNull()
+  })
+
+  it('gongfaBranch 指向不存在的分支或未习得功法时,sanitize 清掉', () => {
+    setActivePinia(createPinia())
+    const cult = useCultivationStore()
+    cult.$patch({
+      learned: { m_taixuan: 9, m_lihuo: 3 },
+      gongfaBranch: {
+        m_taixuan: 'b_taixuan_sha',
+        m_lihuo: 'not-a-branch',
+        m_qingmu: 'b_qingmu_sheng',
+        'not-a-gongfa': 'b_taixuan_sha'
+      }
+    } as never)
+    cult.sanitize()
+    expect(cult.gongfaBranch).toEqual({ m_taixuan: 'b_taixuan_sha' })
+  })
+})
+
+describe('坏档韧性 · 图鉴 / 名号幽灵 id', () => {
+  it('titlesOwned 与 collections 不在表里时,sanitize 清掉,避免图鉴分子虚高', () => {
+    setActivePinia(createPinia())
+    const quests = useQuestsStore()
+    quests.$patch({
+      titlesOwned: ['ti_churu', 'ti_churu', 'not-a-title'],
+      achieved: ['a_r0', 'a_r0', 'not-an-achv'],
+      collections: {
+        equip: ['b_qingyun', 'b_qingyun', 'not-an-equip'],
+        gongfa: ['m_taixuan', 'm_taixuan', 'not-a-gongfa'],
+        pill: ['p_juling', 'not-a-pill'],
+        artifact: ['af_lihuo', 'not-an-artifact'],
+        pet: ['pet_qingyu', 'not-a-pet'],
+        event: ['wounded_fox_1', 'not-an-event'],
+        talent: ['t_jianxin', 'not-a-talent']
+      },
+      collectedAt: {
+        'gongfa:m_taixuan': 1_700_000_000_000,
+        'gongfa:not-a-gongfa': 1_700_000_000_000
+      }
+    } as never)
+    quests.sanitize()
+    expect(quests.titlesOwned).toEqual(['ti_churu'])
+    expect(quests.achieved).toEqual(['a_r0'])
+    expect(quests.collections.equip).toEqual(['b_qingyun'])
+    expect(quests.collections.gongfa).toEqual(['m_taixuan'])
+    expect(quests.collections.pill).toEqual(['p_juling'])
+    expect(quests.collections.artifact).toEqual(['af_lihuo'])
+    expect(quests.collections.pet).toEqual(['pet_qingyu'])
+    expect(quests.collections.event).toEqual(['wounded_fox_1'])
+    expect(quests.collections.talent).toEqual(['t_jianxin'])
+    expect(quests.collectedAt).toEqual({ 'gongfa:m_taixuan': 1_700_000_000_000 })
   })
 })

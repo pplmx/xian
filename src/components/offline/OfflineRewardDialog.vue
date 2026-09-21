@@ -73,6 +73,7 @@
     if (s.herb > 0) list.push({ icon: 'leaf', label: '灵草', value: `+${s.herb}` })
     if (s.ore > 0) list.push({ icon: 'mountain', label: '玄铁', value: `+${s.ore}` })
     if (s.wudao > 0) list.push({ icon: 'book', label: '悟道点', value: `+${s.wudao}` })
+    if (s.ageYears > 0) list.push({ icon: 'sunset', label: '寿元流逝', value: `${s.ageYears} 载` })
     if (s.battles > 0) list.push({ icon: 'swords', label: '历练战斗', value: `${s.wins} 胜 / ${s.battles} 战` })
     if (s.events > 0) list.push({ icon: 'star', label: '路遇际会', value: `${s.events} 次` })
     // 自动回收的产出不入行囊、只化器灵尘,单独成行,免得玩家以为掉了没捡到

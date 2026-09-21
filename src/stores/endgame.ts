@@ -116,7 +116,9 @@ export const useEndgameStore = defineStore(
         r => !!r && typeof r === 'object' && Number.isFinite((r as { value?: unknown }).value as number)
       )
       souls.value = asArray<SoulInstance>(souls.value, [], s => !!s && typeof (s as SoulInstance).uid === 'string')
-      equippedSouls.value = asStringArray(equippedSouls.value)
+      // Ghost uids still count toward SOUL_SLOTS in equipSoul; drop them here.
+      const ownedSoulUids = new Set(souls.value.map(s => s.uid))
+      equippedSouls.value = asStringArray(equippedSouls.value).filter(uid => ownedSoulUids.has(uid))
     }
 
     /** 已装配器魂(过滤掉已不存在的 uid) */
@@ -142,10 +144,11 @@ export const useEndgameStore = defineStore(
 
     /** 装配器魂;槽位已满或已装配则返回 false */
     function equipSoul(uid: string): boolean {
-      const equipped = Array.isArray(equippedSouls.value) ? equippedSouls.value : []
+      const owned = new Set(soulList.value.map(s => s.uid))
+      if (!owned.has(uid)) return false
+      const equipped = (Array.isArray(equippedSouls.value) ? equippedSouls.value : []).filter(id => owned.has(id))
       if (equipped.includes(uid)) return false
       if (equipped.length >= SOUL_SLOTS) return false
-      if (!soulList.value.some(s => s.uid === uid)) return false
       equippedSouls.value = [...equipped, uid]
       return true
     }

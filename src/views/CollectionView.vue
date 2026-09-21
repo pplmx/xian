@@ -154,7 +154,8 @@
         foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`${key}:${d.id}`]) }
       }))
       .sort((a, b) => b.stage - a.stage)
-    return { key, name, hint: `${ownedIds.length}/${defs.length}`, source: CODEX_SOURCES[key], entries }
+    const known = entries.filter(e => e.stage >= 1).length
+    return { key, name, hint: `${known}/${defs.length}`, source: CODEX_SOURCES[key], entries }
   }
 
   /**

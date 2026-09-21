@@ -6,6 +6,7 @@
  * 属性那一份仍在(道果与天赋照旧),但它已不再是玩家转世的理由。
  */
 import { rng } from '@/utils/random'
+import { yearsShown } from '@/utils/format'
 import { TALENTS } from '@/data/talents'
 import { TALENT_DRAW_DIV } from '@/data/constants'
 import { lifeThemeDef } from '@/data/lifeThemes'
@@ -75,7 +76,7 @@ function reviewLastLife(): LifeReview {
   return {
     index: player.reincarnation.count + 1,
     realmLabel: player.realmName,
-    age: Math.floor(player.age),
+    age: yearsShown(player.age),
     themeId: vow?.themeId ?? null,
     themeResult: result,
     themeCur: prog?.cur ?? 0,

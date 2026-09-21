@@ -8,7 +8,7 @@ import { usePlayerStore } from '@/stores/player'
 import { useQuestsStore } from '@/stores/quests'
 import { useCultivationStore } from '@/stores/cultivation'
 import { gn, toNum, gnZero } from '@/utils/gnum'
-import { currentFirstStep } from './firstStep'
+import { currentFirstStep, homeStatusText } from './firstStep'
 
 function newPlayer() {
   const player = usePlayerStore()
@@ -77,5 +77,33 @@ describe('第一步(新手起点)', () => {
     newPlayer()
     useCultivationStore().addBuff('retreat', Date.now())
     expect(currentFirstStep()).toBeNull()
+  })
+})
+
+describe('首页状态一行', () => {
+  const idle = {
+    dead: false,
+    exploringSecret: false,
+    expedition: false,
+    sessionActive: false,
+    regionName: '',
+    injured: false,
+    retreating: false
+  }
+
+  it('没事做时说修炼中,不把闲坐说成闭关', () => {
+    expect(homeStatusText(idle)).toBe('修炼中')
+  })
+
+  it('只有 retreat buff 才说闭关中', () => {
+    expect(homeStatusText({ ...idle, retreating: true })).toBe('闭关中')
+  })
+
+  it('历练 / 探秘 / 远征 / 疗伤 / 陨落各说各的', () => {
+    expect(homeStatusText({ ...idle, sessionActive: true, regionName: '青云山麓' })).toBe('历练中 · 青云山麓')
+    expect(homeStatusText({ ...idle, exploringSecret: true })).toBe('探秘中')
+    expect(homeStatusText({ ...idle, expedition: true })).toBe('远征中')
+    expect(homeStatusText({ ...idle, injured: true })).toBe('疗伤中')
+    expect(homeStatusText({ ...idle, dead: true })).toBe('陨落')
   })
 })

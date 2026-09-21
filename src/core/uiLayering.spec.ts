@@ -97,4 +97,29 @@ describe('界面分层 · 浮层只有一个出处', () => {
       .map(f => f.path)
     expect(offenders, '这些视图直接调了 back() —— 改用 @/router/goBack 的 goBack(router, 父页)').toEqual([])
   })
+
+  it('装备卡与连战场次按钮有稳定可访问名', () => {
+    const card = FILES.find(f => f.path === 'components/equipment/EquipmentCard.vue')
+    expect(card?.src, '装备卡要把截断名之外的佩/锁/共鸣写进 aria-label').toContain('aria-label')
+    expect(card?.src).toContain('佩戴中')
+    const gauntlet = FILES.find(f => f.path === 'components/celestial/GauntletPanel.vue')
+    expect(gauntlet?.src, '连战场次按钮不能只念一个数字').toContain('aria-label')
+    expect(gauntlet?.src).toMatch(/第 \$\{i \+ 1\} 场/)
+  })
+
+  it('问卦剩余与顿悟/巡游窗口在暂停时不空耗墙上时钟', () => {
+    const codex = FILES.find(f => f.path === 'views/RealmCodexView.vue')
+    expect(codex?.src).toContain('useNow')
+    expect(codex?.src).toMatch(/expiresAt - now\.value/)
+    const cave = FILES.find(f => f.path === 'components/dongfu/CaveEventModal.vue')
+    expect(cave?.src).toContain('gameNow')
+    const enlighten = FILES.find(f => f.path === 'components/cultivation/EnlightenmentModal.vue')
+    expect(enlighten?.src).toContain('gameNow')
+  })
+
+  it('历练页复聚/已守跟 useNow 走,倒计时不会定格', () => {
+    const adv = FILES.find(f => f.path === 'views/AdventureView.vue')
+    expect(adv?.src).toContain('useNow')
+    expect(adv?.src).toMatch(/hoursUntilRevive\([^)]*now\.value/)
+  })
 })

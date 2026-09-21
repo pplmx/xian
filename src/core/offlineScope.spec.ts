@@ -7,7 +7,9 @@
  * 「玩家亲手摆在那儿的局面」,缺席几个小时回来发现它们变了,比少拿点收益难受得多。
  *
  * 判据不写「哪些能动」的长清单(那会随内容增长而漏),而是写**闭集**:
- * 玩家分片里只许 {exp, age} 改变,终局分片一个键都不许动。多动一个键,报文直接点名。
+ * 玩家分片里只许 {exp, age, bond} 以及「战后语义」那几栏改变
+ * (regionStats / regionWins / 镇压资格,与在线 runBattle 同源),
+ * 终局分片一个键都不许动。多动一个键,报文直接点名。
  * 同时反过来要求「该动的真动了」,否则这段代码没跑,判据也全绿。
  *
  * 实测(60 小时离线,带在途秘境/远征/道侣/器魂/历练):
@@ -16,6 +18,8 @@
  * 故障注入:在 settleOffline 里加一行动 player.titleId 或 endgame.daoSource,本文件立刻红。
  */
 import { describe, expect, it, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { settleOffline } from './offline'
 import { useGameStore } from '@/stores/game'
@@ -182,8 +186,18 @@ describe('离线的作用域 · 在途的东西一律不动', () => {
     const endgameChanged = changedKeys(beforeEndgame, snap(endgame.$state))
     console.log(`\n60h 离线:player 变了 ${playerChanged.join('、') || '(无)'} · endgame 变了 ${endgameChanged.join('、') || '(无)'}`)
 
-    // 允许动的就这三个:修为、寿元,以及道侣的**机会点**(历练照跑,机会照攒)
-    expect(playerChanged, `离线多动了玩家状态:${playerChanged.join('、')}`).toEqual(['age', 'bond', 'exp'])
+    // Required: cultivation, lifespan, and bond opportunity points (explore still runs).
+    // Optional: post-battle semantics that online runBattle also writes.
+    const required = ['age', 'bond', 'exp']
+    const optional = ['regionStats', 'regionWins', 'suppressQualified', 'suppressedRegions', 'suppressedSince']
+    const allowed = new Set([...required, ...optional])
+    expect(
+      playerChanged.filter(k => !allowed.has(k)),
+      `离线多动了玩家状态:${playerChanged.join('、')}`
+    ).toEqual([])
+    for (const k of required) {
+      expect(playerChanged, `离线该动的 ${k} 没动`).toContain(k)
+    }
     expect(endgameChanged, `离线动了终局状态(远征/器魂/道源):${endgameChanged.join('、')}`).toEqual([])
 
     // 在途的局面逐项原样(逐条列出,失败时报文能说清是哪一样变了)
@@ -243,5 +257,16 @@ describe('离线的作用域 · 在途的东西一律不动', () => {
     const notes = summary.notes.join('\n')
     expect(notes).not.toContain('秘境之行原样留着')
     expect(notes).not.toContain('那趟远征仍在途')
+  })
+
+  it('主页状态文案要认在途秘境与远征,不能一律写成闭关', () => {
+    const home = readFileSync(resolve(__dirname, '../views/HomeView.vue'), 'utf8')
+    expect(home).toContain('homeStatusText')
+    expect(home).toContain('secretRealm')
+    expect(home).toContain('worldRun')
+    const status = readFileSync(resolve(__dirname, 'firstStep.ts'), 'utf8')
+    expect(status).toContain('探秘中')
+    expect(status).toContain('远征中')
+    expect(status).toContain("return '修炼中'")
   })
 })

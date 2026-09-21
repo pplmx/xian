@@ -14,10 +14,13 @@ import { useUiStore } from '@/stores/ui'
 import { tickExploration, stopExploration } from './exploration'
 import { settleOffline, sanitizeOfflineInputs } from './offline'
 import { checkStateAchievements, rolloverDailyIfNeeded } from './progress'
-import { mayTriggerEnlightenment, mayTriggerCaveEvent } from './earlyGameService'
+import { mayTriggerEnlightenment, mayTriggerCaveEvent, shiftEarlyGameWindows } from './earlyGameService'
 import { settleSuppressedRegions } from './suppress'
 import { studyTick, seedLoreIfNeeded } from './loreService'
 import { flushSaveWrites } from '@/utils/storage'
+import { enginePaused, pauseElapsedMs, setEnginePaused } from './enginePause'
+
+export { enginePaused } from './enginePause'
 
 const PERIODIC_CHECK_SEC = 30
 
@@ -27,7 +30,6 @@ class GameEngine {
   private lastStampAt = 0
   private periodicAccum = 0
   private deathAnnounced = false
-  private paused = false
 
   start(): void {
     const now = Date.now()
@@ -68,7 +70,7 @@ class GameEngine {
   private onVisibility = (): void => {
     const game = useGameStore()
     if (document.visibilityState === 'hidden') {
-      if (!this.paused) game.stampActive(Date.now())
+      if (!enginePaused.value) game.stampActive(Date.now())
       // 盖完时间戳再刷盘。storage 模块也监听了 visibilitychange,但它注册得更早,
       // 先跑完就轮到这里盖章,那一次盖章会留在待刷队列里没人写
       flushSaveWrites()
@@ -93,7 +95,7 @@ class GameEngine {
   private tick(): void {
     const game = useGameStore()
     const now = Date.now()
-    if (this.paused) {
+    if (enginePaused.value) {
       // 暂停期间只推平时间基准,不结算、不写档
       this.lastTickAt = now
       return
@@ -185,16 +187,43 @@ class GameEngine {
 
   /** 暂停心跳(如重置确认弹窗期间):不结算、不写档;入停前记录一次活跃时刻 */
   pause(): void {
-    useGameStore().stampActive(Date.now())
-    this.paused = true
+    if (enginePaused.value) return
+    const now = Date.now()
+    useGameStore().stampActive(now)
+    setEnginePaused(true)
   }
 
   resume(): void {
+    if (!enginePaused.value) return
     const now = Date.now()
+    this.shiftWallClocks(pauseElapsedMs(now))
     this.lastTickAt = now
     this.lastStampAt = now
     useGameStore().stampActive(now)
-    this.paused = false
+    setEnginePaused(false)
+  }
+
+  /**
+   * In-flight deadlines are wall-clock. Pause skips settle, so every stamp
+   * that would otherwise expire on Date.now() must slide forward — otherwise
+   * a reset-confirm dialog can eat a buff, a hexagram, a region event, or a
+   * 60s enlightenment window the player never "spent".
+   */
+  private shiftWallClocks(pausedMs: number): void {
+    if (pausedMs <= 0) return
+    const adventure = useAdventureStore()
+    const session = adventure.session
+    if (session) {
+      adventure.setSession({
+        ...session,
+        endsAt: session.endsAt + pausedMs,
+        nextBattleAt: session.nextBattleAt + pausedMs
+      })
+    }
+    useCultivationStore().shiftBuffEnds(pausedMs)
+    usePlayerStore().shiftTimedState(pausedMs)
+    useAdventureStore().shiftTimedState(pausedMs)
+    shiftEarlyGameWindows(pausedMs)
   }
 }
 

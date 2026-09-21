@@ -15,12 +15,24 @@
         </p>
       </div>
       <div class="mt-3 flex items-center justify-between px-1">
-        <span class="text-[11px] text-ink-faint tabular">藏品 {{ inventory.bagItems.length }} · 器灵尘 {{ resources.dust }}</span>
+        <span class="text-[11px] text-ink-faint tabular">行囊 {{ inventory.bagItems.length }} · 器灵尘 {{ resources.dust }}</span>
         <span class="flex gap-3">
-          <button class="-my-1.5 py-1.5 text-[11px] text-qing active:opacity-60" @click="smartOpen = true">
+          <button
+            class="-my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
+            aria-label="智能收纳设置"
+            :aria-expanded="smartOpen"
+            @click="smartOpen = true"
+          >
             收纳{{ settings.smartKeep.enabled ? '·启' : '' }}
           </button>
-          <button class="-my-1.5 py-1.5 text-[11px] text-cinnabar active:opacity-60" @click="decomposeOpen = true">分解</button>
+          <button
+            class="-my-1.5 py-1.5 text-[11px] text-cinnabar active:opacity-60"
+            aria-label="批量分解装备"
+            :aria-expanded="decomposeOpen"
+            @click="decomposeOpen = true"
+          >
+            分解
+          </button>
         </span>
       </div>
       <div class="mt-2 grid grid-cols-3 gap-2">
@@ -516,7 +528,7 @@
   import { equipSetDef, setCounts, type EquipSetDef } from '@/core/equipSet'
   import { useLoreStore } from '@/stores/lore'
   import { DAO_NAMES, SKILLS, skillStageName } from '@/data/crafting'
-  import { cnNumber, formatGN, formatNum, formatPercent } from '@/utils/format'
+  import { cnNumber, formatGN, formatNum, formatPercent, formatSignedPercent } from '@/utils/format'
   import { STAT_NAMES } from '@/ui/statNames'
   import { colorWithAlpha } from '@/ui/colorVar'
   import type { AnyStatKey, EquipSlot, GNum, PillDef } from '@/types'
@@ -590,8 +602,10 @@
     if (!slot) return []
     const equippedUid = inventory.equipped[slot]
     return inventory.items
-      .map(item => ({ item, template: equipmentTemplate(item.templateId)! }))
-      .filter(row => row.template?.slot === slot)
+      .map(item => ({ item, template: equipmentTemplate(item.templateId) }))
+      .filter((row): row is { item: (typeof inventory.items)[number]; template: NonNullable<ReturnType<typeof equipmentTemplate>> } =>
+        !!row.template && row.template.slot === slot
+      )
       .map(row => ({ ...row, equipped: row.item.uid === equippedUid }))
       .sort((a, b) => {
         if (a.equipped !== b.equipped) return Number(b.equipped) - Number(a.equipped)
@@ -696,12 +710,17 @@
 
   const artifactRows = computed(() =>
     inventory.artifacts
-      .map(a => ({
-        owned: a,
-        def: artifactDef(a.defId)!,
-        upCost: artifactUpCost(a.defId),
-        equipped: inventory.equippedArtifacts.includes(a.defId)
-      }))
+      .map(a => {
+        const def = artifactDef(a.defId)
+        if (!def) return null
+        return {
+          owned: a,
+          def,
+          upCost: artifactUpCost(a.defId),
+          equipped: inventory.equippedArtifacts.includes(a.defId)
+        }
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null)
       // 与行囊同一套排法:品质降序 → 祭炼高的在前(此前按入手先后排,越捡越乱)
       .sort(
         (a, b) =>
@@ -791,7 +810,7 @@
     if (!def) return []
     // 与属性汇总(store/inventory)同源:卡片上写多少,身上加的就是多少
     return Object.entries(artifactValue(def, level).passive).map(
-      ([k, v]) => `${STAT_NAMES[k as AnyStatKey] ?? k} +${formatPercent(v as number)}`
+      ([k, v]) => `${STAT_NAMES[k as AnyStatKey] ?? k} ${formatSignedPercent(v as number)}`
     )
   }
 

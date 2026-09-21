@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cnNumber, formatCountdown, formatDuration, formatExact, formatGN, formatPercent, formatScientific } from './format'
+import { cnNumber, formatCountdown, formatDuration, formatExact, formatGN, formatPercent, formatSignedPercent, formatScientific, formatYears, yearsDeltaShown, yearsLeftShown, yearsShown } from './format'
 import { gn, powN } from './gnum'
 
 describe('数值格式化', () => {
@@ -33,6 +33,9 @@ describe('数值格式化', () => {
     expect(formatDuration(65)).toBe('1分5秒')
     expect(formatDuration(3660)).toBe('1小时1分')
     expect(formatDuration(90000)).toBe('1天1小时')
+    // 差 1 秒到整点必须仍是 59 分,不能 round 成「60 分」或「1 时 60 分」
+    expect(formatDuration(3599)).toBe('59分59秒')
+    expect(formatDuration(7199)).toBe('1小时59分')
   })
 
   /**
@@ -93,6 +96,27 @@ describe('数值格式化', () => {
   it('百分比', () => {
     expect(formatPercent(0.125)).toBe('12.5%')
     expect(formatPercent(0.5)).toBe('50%')
+  })
+
+  it('寿元展示取整:与顶栏同一把尺,不四舍五入', () => {
+    expect(yearsShown(10.6)).toBe(10)
+    expect(yearsShown(10)).toBe(10)
+    expect(yearsShown(0.4)).toBe(0)
+    expect(yearsShown(NaN)).toBe(0)
+    expect(yearsShown(-3)).toBe(0)
+    expect(yearsDeltaShown(10, 10.6)).toBe(0)
+    expect(yearsDeltaShown(10, 11.6)).toBe(1)
+    expect(yearsDeltaShown(10.7, 11.3)).toBe(1)
+    expect(yearsLeftShown(99.6, 100)).toBe(1)
+    expect(yearsLeftShown(100, 100)).toBe(0)
+    expect(formatYears(150)).toBe('150载')
+    expect(formatYears(0.6)).toBe('0载')
+  })
+
+  it('带符号百分比:正数加 +,负数不拼出 +-', () => {
+    expect(formatSignedPercent(0.15)).toBe('+15%')
+    expect(formatSignedPercent(-0.15)).toBe('-15%')
+    expect(formatSignedPercent(0)).toBe('0%')
   })
 
   it('非法百分比显示 --', () => {

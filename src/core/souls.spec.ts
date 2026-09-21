@@ -174,6 +174,20 @@ describe('器魂 · 存档健壮性', () => {
     } as never)
     expect(endgame.activeSouls.map(s => s.uid)).toEqual(['real'])
   })
+
+  it('sanitize 清掉幽灵 uid,腾出槽位让真器魂装得上', () => {
+    const endgame = useEndgameStore()
+    endgame.$patch({
+      souls: [{ uid: 'real', type: 'gangdun', grade: 1, fromName: '玄铁冠' }],
+      equippedSouls: ['ghost', 'ghost2', 'ghost3']
+    } as never)
+    expect(endgame.equipSoul('real'), '幽灵占满 3 槽时,装配必须按真实持有判满').toBe(true)
+    endgame.unequipSoul('real')
+    endgame.$patch({ equippedSouls: ['ghost', 'ghost2', 'ghost3'] } as never)
+    endgame.sanitize()
+    expect(endgame.equippedSouls, 'sanitize 后幽灵不得占槽').toEqual([])
+    expect(endgame.equipSoul('real')).toBe(true)
+  })
 })
 
 describe('器魂 · 凝炼必须优于不凝', () => {

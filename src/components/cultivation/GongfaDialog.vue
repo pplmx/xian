@@ -125,7 +125,7 @@
   import { gongfaUpgradeCost, upgradeGongfa } from '@/core/gongfaService'
   import { gongfaAffinity, rootElements } from '@/core/linggenAffinity'
   import { gongfaModsAt } from '@/stores/cultivation'
-  import { formatPercent } from '@/utils/format'
+  import { formatSignedPercent } from '@/utils/format'
   import { STAT_NAMES, modsText } from '@/ui/statNames'
   import type { AnyStatKey } from '@/types'
   import BaseModal from '@/components/common/BaseModal.vue'
@@ -149,7 +149,7 @@
     const mods = gongfaModsAt(def.value.id, level.value)
     return Object.entries(mods).map(([k, v]) => ({
       label: STAT_NAMES[k as AnyStatKey] ?? k,
-      value: `+${formatPercent(v as number)}`
+      value: formatSignedPercent(v as number)
     }))
   })
 
@@ -160,7 +160,7 @@
     const mods = gongfaModsAt(d.id, d.maxLevel)
     return Object.entries(mods).map(([k, v]) => ({
       label: STAT_NAMES[k as AnyStatKey] ?? k,
-      value: `+${formatPercent(v as number)}`
+      value: formatSignedPercent(v as number)
     }))
   })
 

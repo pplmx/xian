@@ -3,6 +3,8 @@
  * 续:天时词条接线验证 —— 描述里承诺的战斗/掉落/渡劫影响必须真能流进游戏,
  * 而不是只在数据表里躺平(见 ISS-027:赤阳/月蚀/雷鸣三种天时曾零作用)
  */
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { todayWeather, weatherDef, WEATHERS, WORLD_WEATHERS } from './weather'
@@ -228,5 +230,11 @@ describe('界域天象(weather · 仙界及以上)', () => {
       (mods.attackPct ?? 0) > 0 ||
       (mods.luck ?? 0) > 0
     expect(anyPositive).toBe(true)
+  })
+
+  it('首页天时剩余走 formatDuration,不 round 出 60 分', () => {
+    const src = readFileSync(resolve(import.meta.dirname, '../views/HomeView.vue'), 'utf8')
+    expect(src).toContain('formatDuration(weatherRemainingSec())')
+    expect(src).not.toContain('Math.round((total % 3600) / 60)')
   })
 })

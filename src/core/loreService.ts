@@ -187,6 +187,36 @@ export function noteEnemy(enemyId: string, win: boolean): boolean {
   return true
 }
 
+/**
+ * 整段照面一次入账(离线整段结算用)。
+ *
+ * 照面权重与单场 `noteEnemy` 同式:胜 +1、负 +`ENEMY_LORE_LOSS_WEIGHT`。
+ * 升档循环到不再够门槛为止,toast 最多一声(报最高档),避免挂一夜弹几十条。
+ */
+export function noteEnemyMany(enemyId: string, wins: number, losses: number): boolean {
+  const def = enemyDef(enemyId)
+  if (!def) return false
+  const seen = Math.max(0, Math.floor(wins)) + Math.max(0, Math.floor(losses)) * ENEMY_LORE_LOSS_WEIGHT
+  if (seen <= 0) return false
+  const lore = useLoreStore()
+  // 照面计数仍由 store 记(口径只有一处);"够门槛了吗"交给库的图鉴层判定
+  lore.markEnemySeen(enemyId, seen)
+  let advanced = false
+  let lastStage = 0
+  for (;;) {
+    const step = lore.advanceEnemyLoreIfDue(enemyId)
+    if (!step.advanced) break
+    advanced = true
+    lastStage = step.stageIndex
+  }
+  if (!advanced) return false
+
+  const ui = useUiStore()
+  if (lastStage >= ENEMY_LORE_MAX) ui.toast(`你已洞悉「${def.name}」的路数`, 'rare')
+  else if (lastStage === 2) ui.toast(`你摸清了「${def.name}」惯用的招式`, 'info')
+  return true
+}
+
 /** 研读丹方(典籍、师承、事件都走这里) */
 export function studyRecipe(id: string, amount: number): number {
   return useLoreStore().addRecipeMastery(id, amount)

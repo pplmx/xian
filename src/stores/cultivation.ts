@@ -35,13 +35,18 @@ export const useCultivationStore = defineStore(
     function sanitize(): void {
       const fixedLearned: Record<string, number> = {}
       for (const [id, lv] of Object.entries(asNumberRecord(learned.value, 0))) {
-        if (lv > 0) fixedLearned[id] = Math.floor(lv)
+        if (lv > 0 && gongfaDef(id)) fixedLearned[id] = Math.floor(lv)
       }
       learned.value = fixedLearned
       if (typeof mainGongfa.value !== 'string' || !fixedLearned[mainGongfa.value]) mainGongfa.value = null
       subGongfa.value = asStringArray(subGongfa.value).filter(id => fixedLearned[id] !== undefined)
       buffs.value = asArray<BuffInstance>(buffs.value, [], b => !!b && typeof (b as BuffInstance).defId === 'string')
-      gongfaBranch.value = asRecord<string>(gongfaBranch.value)
+      const nextBranch: Record<string, string> = {}
+      for (const [gid, bid] of Object.entries(asRecord<string>(gongfaBranch.value))) {
+        const def = gongfaBranchDef(bid)
+        if (def && def.gongfaId === gid && fixedLearned[gid]) nextBranch[gid] = bid
+      }
+      gongfaBranch.value = nextBranch
     }
 
     const gongfaMods = computed<StatMods>(() => {
@@ -138,6 +143,12 @@ export const useCultivationStore = defineStore(
       return pruned.changed
     }
 
+    /** Slide every instance's endsAt (engine pause: wall clocks must not expire). */
+    function shiftBuffEnds(pausedMs: number): void {
+      if (pausedMs <= 0 || buffs.value.length === 0) return
+      buffs.value = buffs.value.map(b => ({ ...b, endsAt: b.endsAt + pausedMs }))
+    }
+
     function clearNegativeBuffs(): void {
       buffs.value = clearNegativeBuffList(buffs.value)
     }
@@ -169,6 +180,7 @@ export const useCultivationStore = defineStore(
       addBuff,
       hasBuff,
       pruneBuffs,
+      shiftBuffEnds,
       clearNegativeBuffs,
       chooseBranch,
       sanitize

@@ -4,11 +4,31 @@ import { computed, ref } from 'vue'
 import type { CounterKey } from '@/types'
 import { persistConfig } from '@/utils/storage'
 import { MAIN_QUESTS } from '@/data/quests'
+import { ACHIEVEMENTS } from '@/data/achievements'
+import { artifactDef } from '@/data/artifacts'
+import { equipmentTemplate } from '@/data/equipment'
+import { eventDef } from '@/data/events'
+import { gongfaDef } from '@/data/gongfa'
+import { petDef } from '@/data/pets'
+import { pillDef } from '@/data/pills'
+import { talentDef } from '@/data/talents'
+import { titleDef } from '@/data/titles'
 import { asFiniteNumber, asNumberRecord, asObjectOrNull, asRecord, asStringArray } from '@/utils/saveShape'
 import type { StoredDaily } from '@/core/engineDailies'
 import { dailyShapeOf, dailyStateOf, rolloverDailyBoard } from '@/core/engineDailies'
 
 export type CollectionCategory = 'equip' | 'gongfa' | 'pill' | 'artifact' | 'pet' | 'event' | 'talent'
+
+function uniqueKnown(ids: string[], exists: (id: string) => boolean): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const id of ids) {
+    if (!exists(id) || seen.has(id)) continue
+    seen.add(id)
+    out.push(id)
+  }
+  return out
+}
 
 export const useQuestsStore = defineStore(
   'quests',
@@ -37,7 +57,7 @@ export const useQuestsStore = defineStore(
     /** 存档修复:计数/图鉴表被写坏会让成就判定与图鉴页在渲染期抛错 */
     function sanitize(): void {
       counters.value = asNumberRecord(counters.value, 0)
-      achieved.value = asStringArray(achieved.value)
+      achieved.value = uniqueKnown(asStringArray(achieved.value), id => ACHIEVEMENTS.some(a => a.id === id))
       const maxIdx = Math.max(0, MAIN_QUESTS.length - 1)
       mainIdx.value = Math.min(Math.floor(asFiniteNumber(mainIdx.value, 0, 0)), maxIdx)
       const d = asObjectOrNull<{ date?: unknown; base?: unknown; done?: unknown }>(daily.value)
@@ -46,18 +66,26 @@ export const useQuestsStore = defineStore(
         base: asNumberRecord(d?.base, 0),
         done: asStringArray(d?.done)
       }
-      titlesOwned.value = asStringArray(titlesOwned.value)
+      titlesOwned.value = uniqueKnown(asStringArray(titlesOwned.value), id => !!titleDef(id))
       const cats = asRecord<string[]>(collections.value)
       collections.value = {
-        equip: asStringArray(cats.equip),
-        gongfa: asStringArray(cats.gongfa),
-        pill: asStringArray(cats.pill),
-        artifact: asStringArray(cats.artifact),
-        pet: asStringArray(cats.pet),
-        event: asStringArray(cats.event),
-        talent: asStringArray(cats.talent)
+        equip: uniqueKnown(asStringArray(cats.equip), id => !!equipmentTemplate(id)),
+        gongfa: uniqueKnown(asStringArray(cats.gongfa), id => !!gongfaDef(id)),
+        pill: uniqueKnown(asStringArray(cats.pill), id => !!pillDef(id)),
+        artifact: uniqueKnown(asStringArray(cats.artifact), id => !!artifactDef(id)),
+        pet: uniqueKnown(asStringArray(cats.pet), id => !!petDef(id)),
+        event: uniqueKnown(asStringArray(cats.event), id => !!eventDef(id)),
+        talent: uniqueKnown(asStringArray(cats.talent), id => !!talentDef(id))
       }
-      collectedAt.value = asNumberRecord(collectedAt.value, 0)
+      const keptKeys = new Set<string>()
+      for (const [cat, ids] of Object.entries(collections.value)) {
+        for (const id of ids) keptKeys.add(`${cat}:${id}`)
+      }
+      const nextAt: Record<string, number> = {}
+      for (const [key, ts] of Object.entries(asNumberRecord(collectedAt.value, 0))) {
+        if (keptKeys.has(key) && ts > 0) nextAt[key] = Math.floor(ts)
+      }
+      collectedAt.value = nextAt
     }
 
     const currentMainQuest = computed(() => MAIN_QUESTS[mainIdx.value])

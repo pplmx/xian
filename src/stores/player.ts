@@ -20,6 +20,7 @@ import { asFiniteNumber, asStringArray } from '@/utils/saveShape'
 import { SECRET_LAYERS, SECRET_MAX_LOSSES, SECRET_REALMS, SECRET_RULES } from '@/data/secretRealms'
 import { DAOLU, STAGE_ORDER } from '@/data/daolu'
 import { regionDef } from '@/data/regions'
+import { petDef } from '@/data/pets'
 import { fateChart, fateMods, fateSeed } from '@/core/fate'
 import type { FortuneChoice } from '@/core/fortuneChain'
 import { useInventoryStore } from './inventory'
@@ -28,6 +29,7 @@ import { useDongfuStore } from './dongfu'
 import { useResourcesStore } from './resources'
 import { useEndgameStore } from './endgame'
 import { useGameStore } from './game'
+import { gameNow } from '@/core/enginePause'
 
 export const usePlayerStore = defineStore(
   'player',
@@ -189,7 +191,7 @@ export const usePlayerStore = defineStore(
       // 读一次心跳:过期判定要随引擎推进被重新计算(见 engine 的 addPlayTime)
       void useGameStore().totalPlaySec
       const state = divination.value
-      return state && state.expiresAt > Date.now() ? state : null
+      return state && state.expiresAt > gameNow() ? state : null
     })
     const divinationMods = computed<StatMods>(() => {
       const state = activeDivination.value
@@ -604,13 +606,22 @@ export const usePlayerStore = defineStore(
       reincarnation.value = {
         count,
         daoFruit: Number.isFinite(r?.daoFruit) ? Math.max(0, r.daoFruit) : 0,
-        talents: Array.isArray(r?.talents) ? r.talents : [],
+        talents: Array.isArray(r?.talents)
+          ? r.talents.filter((id): id is string => typeof id === 'string' && !!talentDef(id))
+          : [],
         insight: Number.isFinite(r?.insight) ? Math.max(0, r.insight) : legacyInsightOf(count),
         lives: Array.isArray(r?.lives) ? r.lives : [],
         vow: r?.vow ?? null,
         trial: r?.trial ?? null,
         bonds: Array.isArray(r?.bonds) ? r.bonds : []
       }
+      // Ghost pet id: personalityEffects / companion mods fall back to neutral
+      // and the character row shows "no companion" — wipe the dangling id.
+      if (petId.value != null && !petDef(petId.value)) petId.value = null
+      // Ghost title: titleMods already fall back to {}, but the worn name
+      // still shows and load/equip paths treat the id as real — wipe it.
+      if (titleId.value != null && !titleDef(titleId.value)) titleId.value = null
+      if (mentor.value != null && !mentorDef(mentor.value)) mentor.value = null
     }
 
     // Phase 28 前期玩法动作
@@ -658,6 +669,34 @@ export const usePlayerStore = defineStore(
       }
 
       regionStats.value = { ...regionStats.value, [regionId]: newStats }
+    }
+
+    /**
+     * Apply N identical wins in one write. EMA matches N calls of updateRegionStats:
+     * avg' = avg * 0.7^n + x * (1 - 0.7^n). Also bumps regionWins (world memory).
+     */
+    function applyRegionWinBatch(regionId: string, n: number, rounds: number, damageTakenPct: number): void {
+      const count = Math.floor(n)
+      if (count <= 0) return
+      const current = regionStats.value[regionId] ?? {
+        consecutiveWins: 0,
+        totalFights: 0,
+        avgRounds: 0,
+        avgDamageTakenPct: 0,
+        lastUpdateAt: Date.now()
+      }
+      const decay = 0.7 ** count
+      regionStats.value = {
+        ...regionStats.value,
+        [regionId]: {
+          consecutiveWins: current.consecutiveWins + count,
+          totalFights: current.totalFights + count,
+          avgRounds: current.avgRounds * decay + rounds * (1 - decay),
+          avgDamageTakenPct: current.avgDamageTakenPct * decay + damageTakenPct * (1 - decay),
+          lastUpdateAt: Date.now()
+        }
+      }
+      regionWins.value = { ...regionWins.value, [regionId]: (regionWins.value[regionId] ?? 0) + count }
     }
 
     function suppressRegion(regionId: string): void {
@@ -733,6 +772,36 @@ export const usePlayerStore = defineStore(
     // ---------- Phase 31.1 机缘链 ----------
     function setFortuneChoices(choices: Record<string, FortuneChoice>): void {
       fortuneChoices.value = choices
+    }
+
+    /**
+     * Slide wall-clock timestamps that would otherwise expire during engine.pause.
+     * Hexagram / region event / breakthrough sit / enlightenment cooldown.
+     */
+    function shiftTimedState(pausedMs: number): void {
+      if (pausedMs <= 0) return
+      if (divination.value) {
+        divination.value = { ...divination.value, expiresAt: divination.value.expiresAt + pausedMs }
+      }
+      if (regionEvent.value) {
+        regionEvent.value = { ...regionEvent.value, endsAt: regionEvent.value.endsAt + pausedMs }
+      }
+      if (breakthroughPrep.value) {
+        breakthroughPrep.value = { ...breakthroughPrep.value, readyAt: breakthroughPrep.value.readyAt + pausedMs }
+      }
+      if (enlightenmentAt.value > 0) enlightenmentAt.value += pausedMs
+      // Duration clocks (held time / revival / prosperity idle) use "since"
+      // stamps. If they stay put, a pause eats revive hours and inflates 已守.
+      const nextSince: Record<string, number> = {}
+      for (const [id, at] of Object.entries(suppressedSince.value)) {
+        nextSince[id] = typeof at === 'number' && at > 0 ? at + pausedMs : at
+      }
+      suppressedSince.value = nextSince
+      const nextStats: Record<string, (typeof regionStats.value)[string]> = {}
+      for (const [id, st] of Object.entries(regionStats.value)) {
+        nextStats[id] = { ...st, lastUpdateAt: st.lastUpdateAt > 0 ? st.lastUpdateAt + pausedMs : st.lastUpdateAt }
+      }
+      regionStats.value = nextStats
     }
 
     return {
@@ -814,6 +883,7 @@ export const usePlayerStore = defineStore(
       resetWinStreak,
       markCaveEventToday,
       updateRegionStats,
+      applyRegionWinBatch,
       suppressRegion,
       unsuppressRegion,
       markSuppressQualified,
@@ -825,7 +895,8 @@ export const usePlayerStore = defineStore(
       setDivination,
       setBreakthroughPrep,
       setEnlightenmentAt,
-      setFortuneChoices
+      setFortuneChoices,
+      shiftTimedState
     }
   },
   { persist: persistConfig('player') }

@@ -30,6 +30,20 @@ describe('图鉴收录', () => {
     expect(quests.collectedAt['equip:same-id']).toBeDefined()
     expect(quests.collectedAt['pill:same-id']).toBeDefined()
   })
+
+  it('sanitize 后图鉴/名号只留表内且去重,分子不再虚高', () => {
+    const quests = useQuestsStore()
+    quests.$patch({
+      titlesOwned: ['ti_churu', 'ti_churu', 'not-a-title'],
+      collections: {
+        ...quests.collections,
+        gongfa: ['m_taixuan', 'm_taixuan', 'not-a-gongfa']
+      }
+    } as never)
+    quests.sanitize()
+    expect(quests.titlesOwned).toEqual(['ti_churu'])
+    expect(quests.collections.gongfa).toEqual(['m_taixuan'])
+  })
 })
 
 /**

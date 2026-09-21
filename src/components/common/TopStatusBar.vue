@@ -16,7 +16,7 @@
           <span>{{ player.realmName }}</span>
           <!-- 年龄:寿元将尽时转朱砂,顶栏常驻便于随时察觉 -->
           <span class="tabular" :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : ''">
-            {{ Math.floor(player.age) }}/{{ formatYears(player.lifespanMax) }}
+            {{ yearsShown(player.age) }}/{{ formatYears(player.lifespanMax) }}
           </span>
           <!--
             轮回次数:从主页人物卡移来,置于全局顶栏常驻。
@@ -52,7 +52,7 @@
 <script setup lang="ts">
   import { usePlayerStore } from '@/stores/player'
   import { useResourcesStore } from '@/stores/resources'
-  import { formatGN, formatNum, formatYears } from '@/utils/format'
+  import { formatGN, formatNum, formatYears, yearsShown } from '@/utils/format'
   import { LIFESPAN_WARN_RATIO } from '@/data/constants'
   import { Capacitor } from '@capacitor/core'
   import GameIcon from './GameIcon.vue'

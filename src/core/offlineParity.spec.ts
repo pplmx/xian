@@ -17,7 +17,11 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { explorationRules } from './exploration'
+import { settleOffline } from './offline'
 import { usePlayerStore } from '@/stores/player'
+import { useGameStore } from '@/stores/game'
+import { useAdventureStore } from '@/stores/adventure'
+import { useLoreStore } from '@/stores/lore'
 
 const src = (f: string) => resolve(__dirname, f)
 
@@ -79,5 +83,51 @@ describe('离线历练 · 区域事件加丰与加难成对(regReward)', () => {
     )
     expect(offline).toContain('modeDef.rewardMult * regionEventReward')
     expect(offline).toContain('EQUIP_DROP_CHANCE * regionEventReward')
+  })
+})
+
+describe('离线历练 · 战后语义与在线同源', () => {
+  beforeEach(() => setActivePinia(createPinia()))
+
+  it('离线普通战写入图鉴照面与区域统计,并走镇压判定', () => {
+    const offline = readFileSync(src('./offline.ts'), 'utf8')
+    expect(offline).toContain('noteEnemyMany')
+    expect(offline).toContain('applyRegionWinBatch')
+    expect(offline).toContain('checkSuppression')
+    expect(offline).toContain('noteEnemy(bossDef.id, bossResult.win)')
+  })
+
+  it('挂机归来后 regionStats / 图鉴照面随胜场推进', () => {
+    const game = useGameStore()
+    const player = usePlayerStore()
+    const adventure = useAdventureStore()
+    const lore = useLoreStore()
+    game.markStarted()
+    game.lastActiveAt = Date.now() - 60 * 3600 * 1000
+    player.major = 4
+    player.sub = 0
+    adventure.session = {
+      regionId: 'qingyun',
+      mode: 'normal',
+      startedAt: Date.now() - 60 * 3600 * 1000,
+      endsAt: Date.now() + 999 * 3600 * 1000,
+      nextBattleAt: 0,
+      wins: 0,
+      losses: 0,
+      events: 0,
+      stoneGain: { m: 0, e: 0 },
+      expGain: { m: 0, e: 0 },
+      itemGain: 0
+    } as typeof adventure.session
+
+    const summary = settleOffline(Date.now())
+    expect(summary, '这一档应当结算出离线收益').not.toBeNull()
+    expect(summary!.wins, '60 小时挂机不该一场没赢').toBeGreaterThan(0)
+    // summary.wins is regular fights only; a boss kill writes one extra region fight
+    const bossExtra = summary!.notes.some(n => n.includes('斩于剑下')) ? 1 : 0
+    expect(player.regionStats.qingyun?.totalFights, '离线胜场必须写入 regionStats').toBe(summary!.wins + bossExtra)
+    expect(player.regionWins.qingyun, '离线胜场必须写入区域兴衰').toBe(summary!.wins + bossExtra)
+    const seen = Object.values(lore.enemySeen).reduce((n, v) => n + v, 0)
+    expect(seen, '离线交手必须推进敌人图鉴').toBeGreaterThan(0)
   })
 })

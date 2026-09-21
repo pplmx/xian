@@ -6,7 +6,10 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { BUILD_PROFILES, buildSnap } from './buildSim'
 import { compareSnaps } from './compare'
-import { todayChallenge } from './dailyChallenge'
+import { todayChallenge, todayNumber } from './dailyChallenge'
+import { todayLocalNum } from '@/utils/time'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 describe('今日天道', () => {
   beforeEach(() => {
@@ -23,6 +26,14 @@ describe('今日天道', () => {
     expect(a!.verdict.reward).toBeGreaterThanOrEqual(30)
     expect(a!.verdict.reward).toBeLessThanOrEqual(90)
     expect(a!.verdict.ok).toBe(true)
+  })
+
+  it('今日天道的日号跟日课/巡游同一本地日历,不用 UTC 日', () => {
+    expect(todayNumber()).toBe(todayLocalNum())
+    expect(todayNumber(), 'UTC 序列日会在 UTC+8 早上八点才翻页').not.toBe(Math.floor(Date.now() / 86400000))
+    const src = readFileSync(resolve(__dirname, 'dailyChallenge.ts'), 'utf8')
+    expect(src).toContain('todayLocalNum')
+    expect(src).not.toMatch(/Date\.now\(\)\s*\/\s*86400000/)
   })
 })
 

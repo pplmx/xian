@@ -107,6 +107,11 @@ describe('用具 · 丹药', () => {
     expect(pillFuncText(huichun)).toContain(`灵气 +上限的 ${Math.round(huichun.instant!.qiPct! * 100)}%`)
   })
 
+  it('减益词条不写成 +-N%', () => {
+    expect(modsText({ cultivationSpeed: -0.15 })).toBe('修炼速度 -15%')
+    expect(modsText({ attackPct: 0.1 })).toBe('攻击 +10%')
+  })
+
   it('增益丹写出化开的增益、逐项数值与持续时长', () => {
     const buffPill = PILLS.find(p => p.kind === 'buff' && p.buffId && buffDef(p.buffId))!
     const buff = buffDef(buffPill.buffId!)!

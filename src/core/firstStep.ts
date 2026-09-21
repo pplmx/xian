@@ -37,6 +37,25 @@ export interface FirstStep {
  */
 const BEGINNER_MAIN_IDX = 0
 
+/** 首页人物卡那一行状态:闭关是 5 分钟 buff,不是「没出门就是闭关」。 */
+export function homeStatusText(input: {
+  dead: boolean
+  exploringSecret: boolean
+  expedition: boolean
+  sessionActive: boolean
+  regionName: string
+  injured: boolean
+  retreating: boolean
+}): string {
+  if (input.dead) return '陨落'
+  if (input.exploringSecret) return '探秘中'
+  if (input.expedition) return '远征中'
+  if (input.sessionActive) return `历练中 · ${input.regionName}`
+  if (input.injured) return '疗伤中'
+  if (input.retreating) return '闭关中'
+  return '修炼中'
+}
+
 export function currentFirstStep(): FirstStep | null {
   const player = usePlayerStore()
   const quests = useQuestsStore()

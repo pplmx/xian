@@ -13,6 +13,7 @@
               ? 'border border-ink/20 text-ink-faint'
               : 'border border-cinnabar/40 text-cinnabar'
         "
+        :aria-label="`第 ${i + 1} 场 · ${fight.win ? '胜' : '负'} · ${fight.foeName}`"
         @click="select(i)"
       >
         {{ i + 1 }}

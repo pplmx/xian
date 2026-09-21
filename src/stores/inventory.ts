@@ -9,6 +9,8 @@ import { resolveEquipStats } from '@/core/equipGen'
 import { mergeMods } from '@/core/statsCalc'
 import { useLoreStore } from '@/stores/lore'
 import { artifactDef, artifactValue } from '@/data/artifacts'
+import { EQUIP_SLOT_NAMES, equipmentTemplate } from '@/data/equipment'
+import { pillDef } from '@/data/pills'
 import { asArray, asNumberRecord, asRecord, asStringArray } from '@/utils/saveShape'
 
 export const useInventoryStore = defineStore(
@@ -23,10 +25,33 @@ export const useInventoryStore = defineStore(
 
     /** 存档修复:行囊/丹药/法宝被写坏时,装备合计与图鉴会在渲染期抛错 */
     function sanitize(): void {
-      items.value = asArray<EquipmentInstance>(items.value, [], it => !!it && typeof (it as EquipmentInstance).uid === 'string')
+      items.value = asArray<EquipmentInstance>(items.value, [], it => {
+        const item = it as EquipmentInstance
+        return !!item && typeof item.uid === 'string' && !!equipmentTemplate(item.templateId)
+      })
       equipped.value = asRecord<string>(equipped.value)
-      pills.value = asNumberRecord(pills.value, 0)
-      artifacts.value = asArray<ArtifactOwned>(artifacts.value, [], a => !!a && typeof (a as ArtifactOwned).defId === 'string')
+      // Dangling uid, unknown slot key, or a piece sitting in the wrong slot:
+      // the UI only walks real EquipSlots, but equippedUids is Object.values —
+      // a mismatched row still counts as worn (stats + bag occupancy) while
+      // slotRows never shows it.
+      const held = new Map(items.value.map(it => [it.uid, it]))
+      const nextEquipped: Partial<Record<EquipSlot, string>> = {}
+      for (const [slot, uid] of Object.entries(equipped.value)) {
+        if (typeof uid !== 'string' || !(slot in EQUIP_SLOT_NAMES)) continue
+        const item = held.get(uid)
+        if (!item) continue
+        if (equipmentTemplate(item.templateId)?.slot === slot) nextEquipped[slot as EquipSlot] = uid
+      }
+      equipped.value = nextEquipped
+      const nextPills: Record<string, number> = {}
+      for (const [id, n] of Object.entries(asNumberRecord(pills.value, 0))) {
+        if (n > 0 && pillDef(id)) nextPills[id] = Math.floor(n)
+      }
+      pills.value = nextPills
+      artifacts.value = asArray<ArtifactOwned>(artifacts.value, [], a => {
+        const art = a as ArtifactOwned
+        return !!art && typeof art.defId === 'string' && !!artifactDef(art.defId)
+      })
       // 佩戴表要先对过持有表:坏档可能让 equippedArtifacts 指向不存在的法宝,
       // 幽灵占位会把槽位占满(新法宝佩不上、也换不进来),见 inventory.spec 回归
       const ownedDefIds = new Set(artifacts.value.map(a => a.defId))

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getCurrentEnlightenment, chooseEnlightenment, dismissEnlightenment } from '@/core/earlyGameService'
+import { gameNow } from '@/core/enginePause'
 import type { EnlightenmentEvent } from '@/types'
 import BaseModal from '@/components/common/BaseModal.vue'
 
@@ -22,7 +23,7 @@ let timer: number | undefined
 function refresh() {
   event.value = getCurrentEnlightenment()
   if (event.value) {
-    remaining.value = Math.max(0, Math.ceil((event.value.expiresAt - Date.now()) / 1000))
+    remaining.value = Math.max(0, Math.ceil((event.value.expiresAt - gameNow()) / 1000))
   }
 }
 

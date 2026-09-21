@@ -47,10 +47,10 @@ export const useAdventureStore = defineStore(
     /**
      * 各地界的「已靖时刻」—— 妖气从这一刻起重新聚(见 core/regionRevival 的钟)。
      *
-     * 为什么要单独记这个:已靖可能发生在**离线结算**里,而离线那条路不写区域统计
-     * (见 offline.ts 只推进会话与斩杀,不碰 regionStats),于是"最后一次在当地战斗"
-     * 会停在很久以前 —— 拿它当钟,离线斩下的首领回来时立刻就会被判成复聚。
-     * 已靖本身就是一次打交道,故给它一个自己的、在 markCleared 里落下的时刻。
+     * 为什么要单独记这个:已靖可能发生在**离线结算**里。离线普通战现在也会写入
+     * regionStats(镇压进度与在线同源),但「已靖」本身是一次打交道,
+     * 仍给它一个自己的、在 markCleared 里落下的时刻 —— 复聚钟认这一栏,
+     * 不单靠最后一场战斗的 lastUpdateAt。
      */
     const clearedAt = ref<Record<string, number>>({})
     /**
@@ -218,6 +218,18 @@ export const useAdventureStore = defineStore(
       pendingEventSince.value = id ? now : 0
     }
 
+    function shiftTimedState(pausedMs: number): void {
+      if (pausedMs <= 0) return
+      const next: Record<string, number> = {}
+      for (const [id, at] of Object.entries(clearedAt.value)) {
+        next[id] = at > 0 ? at + pausedMs : at
+      }
+      clearedAt.value = next
+      // Auto-resolve is now - pendingEventSince > 120s. Pause skips the
+      // modal; if this stamp stays put, resume immediately picks for you.
+      if (pendingEventSince.value > 0) pendingEventSince.value += pausedMs
+    }
+
     function markEventSeen(id: string): void {
       if (!seenOnceEvents.value.includes(id)) {
         seenOnceEvents.value = [...seenOnceEvents.value, id]
@@ -269,6 +281,7 @@ export const useAdventureStore = defineStore(
       winsIn,
       setPendingEvent,
       markEventSeen,
+      shiftTimedState,
       recordBattle,
       sanitize
     }

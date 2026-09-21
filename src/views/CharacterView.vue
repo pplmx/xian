@@ -257,9 +257,9 @@
       <!-- S3 道果收益:有效值与软上限白话 -->
       <p class="mt-1 text-[11px] text-ink-faint tabular">
         有效收益
-        <span class="text-gold-ink">{{ fruitInfo.effective.toFixed(0) }} 枚</span>
+        <span class="text-gold-ink">{{ fruitInfo.effectiveText }} 枚</span>
         (边际渐减)·
-        {{ fruitInfo.total > 0 ? `当前修行 +${Math.round(fruitInfo.effective * DAO_FRUIT_CULT_BONUS * 100)}%` : '' }}
+        {{ fruitInfo.total > 0 ? `当前修行 ${fruitInfo.cultBonusText}` : '' }}
       </p>
       <!-- 逆旅契:道果的第一个消费出口。花道果换一世逆境,回报只有履历 -->
       <p class="mt-2 flex items-center justify-between text-[12px]">
@@ -589,15 +589,20 @@
   const currentPetName = computed(() => (player.petId ? petDef(player.petId)?.name : undefined))
   const ownedTalents = computed(() => player.reincarnation.talents.map(id => talentDef(id)).filter(t => t !== undefined))
 
+  const knownIn = (ids: string[], table: readonly { id: string }[]): number => {
+    const tableIds = new Set(table.map(row => row.id))
+    return new Set(ids.filter(id => tableIds.has(id))).size
+  }
+
   const collectHave = computed(
     () =>
-      quests.collections.equip.length +
-      quests.collections.gongfa.length +
-      quests.collections.pill.length +
-      quests.collections.artifact.length +
-      quests.collections.pet.length +
-      quests.collections.event.length +
-      quests.collections.talent.length +
+      knownIn(quests.collections.equip, EQUIPMENT_TEMPLATES) +
+      knownIn(quests.collections.gongfa, GONGFA) +
+      knownIn(quests.collections.pill, PILLS) +
+      knownIn(quests.collections.artifact, ARTIFACTS) +
+      knownIn(quests.collections.pet, PETS) +
+      knownIn(quests.collections.event, EVENTS) +
+      knownIn(quests.collections.talent, TALENTS) +
       // 图鉴页还有灵材谱与悟道录两类(派生视图,见 ui/codex.ts),计数要带上,否则两页对不上
       branchCodex().entries.filter(e => e.stage > 0).length +
       materialCodex().entries.filter(e => e.stage > 0).length

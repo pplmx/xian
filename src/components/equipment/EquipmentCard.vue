@@ -3,6 +3,7 @@
     class="relative aspect-square rounded-md border transition-transform active:scale-95"
     :style="{ borderColor: colorWithAlpha(quality.color, 0.33), background: colorWithAlpha(quality.color, 0.06) }"
     :data-uid="props.item.uid"
+    :aria-label="label"
     @click="emit('open', props.item.uid)"
   >
     <!-- 角标:佩戴 / 上锁 -->
@@ -49,4 +50,13 @@
   const template = computed(() => equipmentTemplate(props.item.templateId))
   const quality = computed(() => qualityDef(props.item.quality))
   const setName = computed(() => (template.value?.set ? equipSetDef(template.value.set)?.name ?? '' : ''))
+  /** Visible name is truncated; lock / worn / set marks are 8px chips. Spell the full card. */
+  const label = computed(() => {
+    const bits = [`${quality.value.name}·${template.value?.name ?? '未知'}`]
+    if (props.item.level > 0) bits.push(`+${props.item.level}`)
+    if (props.equipped) bits.push('佩戴中')
+    if (props.item.locked) bits.push('已锁定')
+    if (setName.value) bits.push(`共鸣${setName.value}`)
+    return bits.join(' ')
+  })
 </script>

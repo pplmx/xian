@@ -4,7 +4,7 @@
  */
 import type { EventDef, OfflineSummary } from '@/types'
 import { add, gn, gnZero, isZero, mulN, sub } from '@/utils/gnum'
-import { formatDuration, formatGN } from '@/utils/format'
+import { formatDuration, formatGN, formatYears, yearsDeltaShown, yearsLeftShown } from '@/utils/format'
 import { rng } from '@/utils/random'
 import { regionDef } from '@/data/regions'
 import { enemyDef } from '@/data/enemies'
@@ -32,8 +32,8 @@ import { currentRegionEvent, regionEventDef } from './regionEvent'
 import { placeContent } from './mortalWorldService'
 import { planIdle } from 'wanxiang-engine'
 import { expFromSecs, stoneByTier } from './formulas'
-import { settleSuppressedRegions } from './suppress'
-import { harvestMaterials, studyTick } from './loreService'
+import { checkSuppression, settleSuppressedRegions } from './suppress'
+import { harvestMaterials, noteEnemy, noteEnemyMany, studyTick } from './loreService'
 import { modOf } from './statsCalc'
 import { personalityEffects } from './petPersonality'
 import { track } from './progress'
@@ -280,6 +280,24 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         }
         track('kills', wins)
         track('battles', battles)
+        // Codex + region stats used to be online-only. Offline kills then never
+        // counted toward suppression (20 fights) or enemy lore — hang long enough
+        // and the Adventure page and 界域志 quietly drift from the ledger.
+        if (mobId) noteEnemyMany(mobId, wins, battles - wins)
+        if (wins > 0 && mobDef) {
+          const sampleFight = resolveCombat(
+            buildPlayerSnap(),
+            makeEnemySnap(mobDef, region.tier, dangerFactor),
+            rng,
+            explorationRules()
+          )
+          player.applyRegionWinBatch(region.id, wins, sampleFight.rounds, Math.max(0, 1 - sampleFight.playerHpPct))
+          if (checkSuppression(player, region.id) && !player.suppressQualified.includes(region.id)) {
+            player.markSuppressQualified(region.id)
+            player.suppressRegion(region.id)
+            notes.push(`你已彻底镇压${region.name},此地将自动产出资源`)
+          }
+        }
       }
       // 事件按默认选项自动结算
       const evCap = Math.min(events, 40)
@@ -317,6 +335,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         if (bossDef) {
           const bossDanger = dangerFactorFor(modeDef.dangerMult, region.danger, petDangerMult, regionEventDanger)
           const bossResult = resolveCombat(buildPlayerSnap(), makeEnemySnap(bossDef, region.tier, bossDanger), rng, explorationRules())
+          noteEnemy(bossDef.id, bossResult.win)
           if (bossResult.win) {
             // 首领战奖励同样并入事件加丰倍率(在线 boss 也是 mode×regReward,离线再叠收益折损)
             const drops = afterWin(region, modeDef.rewardMult * OFFLINE_BOSS_REWARD_MULT * regionEventReward, true)
@@ -325,6 +344,13 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             trip.items += drops.items
             track('kills')
             track('bossKills')
+            player.updateRegionStats(region.id, true, bossResult.rounds, Math.max(0, 1 - bossResult.playerHpPct))
+            player.recordRegionWin(region.id)
+            if (checkSuppression(player, region.id) && !player.suppressQualified.includes(region.id)) {
+              player.markSuppressQualified(region.id)
+              player.suppressRegion(region.id)
+              notes.push(`你已彻底镇压${region.name},此地将自动产出资源`)
+            }
             clearRegionAndUnlockNext(region.id)
             notes.push(`挂单之间,你已将【${bossDef.name}】斩于剑下(离线战果,收益折损)`)
           } else {
@@ -370,7 +396,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     herb: resources.herb - herbBefore,
     ore: resources.ore - oreBefore,
     wudao: resources.wudao - wudaoBefore,
-    ageYears: Math.round(player.age - ageBefore),
+    ageYears: yearsDeltaShown(ageBefore, player.age),
     battles,
     wins,
     events,
@@ -387,11 +413,11 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
    * 阈值沿用全局告警线(LIFESPAN_WARN_RATIO),与顶栏那条同源。
    */
   if (player.lifespanRatio <= LIFESPAN_WARN_RATIO) {
-    const remainYears = Math.max(0, Math.round(player.lifespanMax - player.age))
+    const remainYears = yearsLeftShown(player.age, player.lifespanMax)
     notes.push(
       player.lifespanRatio <= LIFESPAN_CRITICAL_RATIO
-        ? `寿元将尽:仅余 ${remainYears} 载(寿限 ${player.lifespanMax})—— 再等下去就是油尽灯枯,届时入轮回`
-        : `寿元已薄:仅余 ${remainYears} 载(寿限 ${player.lifespanMax})—— 该安排突破了,或早做轮回的打算`
+        ? `寿元将尽:仅余 ${remainYears} 载(寿限 ${formatYears(player.lifespanMax)})—— 再等下去就是油尽灯枯,届时入轮回`
+        : `寿元已薄:仅余 ${remainYears} 载(寿限 ${formatYears(player.lifespanMax)})—— 该安排突破了,或早做轮回的打算`
     )
   }
 

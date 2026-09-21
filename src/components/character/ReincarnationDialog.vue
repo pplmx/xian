@@ -6,7 +6,7 @@
       <p class="mt-3 text-[13px] leading-relaxed text-ink-soft">
         {{ player.name }}枯坐于蒲团之上,油尽灯枯。
         <br />
-        此生行至 {{ Math.floor(player.age) }} 载,止步于{{ player.realmName }}。
+        此生行至 {{ yearsShown(player.age) }} 载,止步于{{ player.realmName }}。
         <br />
         所幸神魂不灭,尚可入轮回,再启仙途。
       </p>
@@ -183,6 +183,7 @@
   import { lifeThemeDef, TABOO_NAMES } from '@/data/lifeThemes'
   import { heritageGroups } from '@/core/samsaraAudit'
   import { engine } from '@/core/engine'
+  import { yearsShown } from '@/utils/format'
   import BaseModal from '@/components/common/BaseModal.vue'
 
   const ui = useUiStore()

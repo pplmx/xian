@@ -20,7 +20,7 @@
 三条贯穿全程的取向:
 
 - **离线是常态,不是补丁** —— 挂机收益、自动挑战、读档补票都按"玩家可能一周没上线"设计;
-- **后台算完再回放** —— 在线、离线、批量模拟共用同一份结算,不会出现"两次算不一样";
+- **后台算完再回放** —— 在线逐场预解算;离线普通战按取样胜率做期望结算、首领战走同一份预解算。规则与公式同源,不会离线另起一套口径;
 - **规则与数值分开** —— 四套数值系统已抽成独立内核(见[万象引擎](#公共库万象引擎)),本作只写内容。
 
 玩法规模、系统一览与设计取向见 **[docs/usage.md](docs/usage.md)**。
@@ -42,7 +42,7 @@ bun install     # 安装依赖
 bun dev         # 开发服务器
 bun run build   # 类型检查 + 生产构建
 bun preview     # 预览构建结果
-bun run test    # 全量用例(全量 293 个 spec / 2691 例;本作自己那部分 213 个 / 2100 例)
+bun run test    # 全量用例(全量 293 个 spec / 2733 例;本作自己那部分 213 个 / 2142 例)
 bun run check   # 类型检查 + ESLint
 ```
 
@@ -89,7 +89,7 @@ bun run check   # 类型检查 + ESLint
 | Vue Router | 4 | 客户端路由(hash 模式) |
 | Tone.js | 15 | FluidR3 乐器采样播放(BGM + SFX) |
 | CryptoJS | 4 | 存档 AES 加密 |
-| Vitest | 5 | 单元测试与平衡审计(全量 293 个 spec / 2691 例,含公共库 `packages/engine` 的 80 / 591) |
+| Vitest | 5 | 单元测试与平衡审计(全量 293 个 spec / 2733 例,含公共库 `packages/engine` 的 80 / 591) |
 | Electron / Capacitor | 39 / 8 | Windows 桌面与 Android 打包 |
 
 ## 许可证

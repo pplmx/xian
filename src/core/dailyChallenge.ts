@@ -11,6 +11,7 @@ import { recordMilestone } from './identity'
 import type { ExpeditionResult } from './endgameService'
 import { useEndgameStore } from '@/stores/endgame'
 import { useUiStore } from '@/stores/ui'
+import { todayLocalNum } from '@/utils/time'
 
 export interface DailyChallenge {
   day: number
@@ -18,8 +19,13 @@ export interface DailyChallenge {
   verdict: ChallengeVerdict
 }
 
+/**
+ * 今日的日号。必须跟日课 / 洞府巡游同一套本地日历:
+ * UTC 日会在 UTC+8 的早上八点才翻页,玩家会在本地「今天」里看见两套天道,
+ * 或是午夜已了日课却仍卡在「昨日天道已成」。
+ */
 export function todayNumber(): number {
-  return Math.floor(Date.now() / 86400000)
+  return todayLocalNum()
 }
 
 /** 生成今日天道:日期种子确定性;裁判不受(无解/虚设)则顺延候选 */

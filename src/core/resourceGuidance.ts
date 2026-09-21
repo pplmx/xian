@@ -11,7 +11,9 @@
 import { useEndgameStore } from '@/stores/endgame'
 import { WORLD_BREAK_MAJOR } from '@/data/realms'
 import { usePlayerStore } from '@/stores/player'
-import { DAO_FRUIT_CULT_BONUS, DAO_FRUIT_SOFT_EXP } from '@/data/constants'
+import { DAO_FRUIT_CULT_BONUS } from '@/data/constants'
+import { effectiveDaoFruit } from '@/core/statsCalc'
+import { formatSignedPercent } from '@/utils/format'
 
 // ---------- S1 生命周期语义 ----------
 
@@ -65,15 +67,46 @@ export function daoFruitDialog(): ResourceDialogData {
 
 // ---------- S3 道源→道果视觉链路 ----------
 
+/** 有效道果给界面看的字:一位小数,整枚不带 .0。toFixed(0) 会把 7.94 写成 8。 */
+export function fruitEffectiveText(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return '0'
+  const t = n.toFixed(1)
+  return t.endsWith('.0') ? t.slice(0, -2) : t
+}
+
+/**
+ * Cultivation bonus from effective fruit. Keep one decimal — rounding
+ * 7.94×3% to 24% reintroduces the same lie fruitEffectiveText just retired.
+ */
+export function fruitCultBonusText(effective: number): string {
+  return formatSignedPercent(Math.max(0, effective) * DAO_FRUIT_CULT_BONUS)
+}
+
 /** 本次凝聚一枚道果后,当前有效道果收益变化(白话:边际收益) */
-export function fruitMarginalInfo(): { total: number; effective: number; nextEffective: number; deltaPct: string } {
+export function fruitMarginalInfo(): {
+  total: number
+  effective: number
+  nextEffective: number
+  effectiveText: string
+  nextEffectiveText: string
+  cultBonusText: string
+  deltaPct: string
+} {
   const player = usePlayerStore()
-  const fruit = player.reincarnation.daoFruit
-  const eff = Math.pow(fruit, DAO_FRUIT_SOFT_EXP)
-  const nextEff = Math.pow(fruit + 1, DAO_FRUIT_SOFT_EXP)
+  const fruit = Math.max(0, player.reincarnation.daoFruit)
+  const eff = effectiveDaoFruit(fruit)
+  const nextEff = effectiveDaoFruit(fruit + 1)
   // 下轮有效道果收益的增长率(当前为基础,展示边际递减)
   const delta = ((nextEff - eff) / Math.max(1, eff)) * 100
-  return { total: fruit, effective: eff, nextEffective: nextEff, deltaPct: delta.toFixed(2) }
+  return {
+    total: fruit,
+    effective: eff,
+    nextEffective: nextEff,
+    effectiveText: fruitEffectiveText(eff),
+    nextEffectiveText: fruitEffectiveText(nextEff),
+    cultBonusText: fruitCultBonusText(eff),
+    deltaPct: delta.toFixed(2)
+  }
 }
 
 /** 道果软上限白话文案 */

@@ -18,6 +18,7 @@ import {
 } from '@/data/earlyGame'
 import { gn } from '@/utils/gnum'
 import { todayLocalNum } from '@/utils/time'
+import { gameNow } from './enginePause'
 
 function telemetry(): ReturnType<typeof usePacingTelemetry> {
   return usePacingTelemetry()
@@ -29,8 +30,9 @@ let caveEvent: CaveEvent | null = null
 /** 获取当前悟道顿悟事件(60秒窗口) */
 export function getCurrentEnlightenment(): EnlightenmentEvent | null {
   if (!enlightenmentEvent) return null
-  const now = Date.now()
-  if (now > enlightenmentEvent.expiresAt) {
+  // gameNow() freezes at pause start so the 60s window cannot vanish
+  // while the heart is stopped (shiftEarlyGameWindows slides expiresAt on resume).
+  if (gameNow() > enlightenmentEvent.expiresAt) {
     enlightenmentEvent = null
     return null
   }
@@ -136,7 +138,7 @@ export function isRetreating(): boolean {
 }
 
 /** 闭关剩余秒数(已过期或未闭关为 0) */
-export function getRetreatRemainingSec(at: number = Date.now()): number {
+export function getRetreatRemainingSec(at: number = gameNow()): number {
   const inst = useCultivationStore().buffs.find(b => b.defId === 'retreat')
   if (!inst) return 0
   return Math.max(0, Math.ceil((inst.endsAt - at) / 1000))
@@ -194,7 +196,7 @@ export function breakthroughPrepState(): BreakthroughPrepView {
   void useGameStore().totalPlaySec
   const state = usePlayerStore().breakthroughPrep
   if (!state) return { sitting: false, remainingSec: 0, ready: false, bonus: 0, kind: null }
-  const remainSec = Math.ceil((state.readyAt - Date.now()) / 1000)
+  const remainSec = Math.ceil((state.readyAt - gameNow()) / 1000)
   if (remainSec > 0) {
     return { sitting: true, remainingSec: remainSec, ready: false, bonus: 0, kind: state.kind }
   }
@@ -276,12 +278,22 @@ export function mayTriggerCaveEvent(): CaveEvent | null {
 /** 获取当前洞府巡游事件 */
 export function getCurrentCaveEvent(): CaveEvent | null {
   if (!caveEvent) return null
-  const now = Date.now()
-  if (now > caveEvent.expiresAt) {
+  if (gameNow() > caveEvent.expiresAt) {
     caveEvent = null
     return null
   }
   return caveEvent
+}
+
+/** Slide modal windows so a paused heart does not consume their wall-clock. */
+export function shiftEarlyGameWindows(pausedMs: number): void {
+  if (pausedMs <= 0) return
+  if (enlightenmentEvent) {
+    enlightenmentEvent = { ...enlightenmentEvent, expiresAt: enlightenmentEvent.expiresAt + pausedMs }
+  }
+  if (caveEvent) {
+    caveEvent = { ...caveEvent, expiresAt: caveEvent.expiresAt + pausedMs }
+  }
 }
 
 /** 选择洞府巡游选项 */

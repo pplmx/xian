@@ -310,13 +310,13 @@ describe('轮回带走的那一份', () => {
   it('旧存档迁移补齐的宿慧,与折算口径一致', () => {
     const player = usePlayerStore()
     // 模拟 Phase 32.5 之前的存档:reincarnation 只有 count / daoFruit / talents 三项
-    const old: Record<string, unknown> = { count: 7, daoFruit: 3, talents: ['t_tiansheng'] }
+    const old: Record<string, unknown> = { count: 7, daoFruit: 3, talents: ['t_jianxin'] }
     player.reincarnation = old as typeof player.reincarnation
     player.sanitize()
     expect(player.reincarnation.insight).toBe(legacyInsightOf(7))
     expect(player.reincarnation.lives).toEqual([])
     expect(player.reincarnation.vow).toBeNull()
-    expect(player.reincarnation.talents).toEqual(['t_tiansheng'])
+    expect(player.reincarnation.talents).toEqual(['t_jianxin'])
     // 再清洗一次不该把已有宿慧重算回折算值
     player.addInsight(50)
     player.sanitize()

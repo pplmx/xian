@@ -233,7 +233,7 @@
   import { reforgeEquipment, reforgeCost, sealAffix, sealCapacity, sealCost } from '@/core/reforge'
   import { qualityDef } from '@/data/qualities'
   import { usePlayerStore } from '@/stores/player'
-  import { formatGN, formatPercent } from '@/utils/format'
+  import { formatGN, formatSignedPercent } from '@/utils/format'
   import { isZero, sub } from '@/utils/gnum'
   import type { AnyStatKey, GNum } from '@/types'
   import { AFFIX_RARITY_META, STAT_NAMES } from '@/ui/statNames'
@@ -363,7 +363,7 @@
     if (!t?.fixedMods) return []
     return Object.entries(t.fixedMods).map(([k, v]) => ({
       label: STAT_NAMES[k as AnyStatKey] ?? k,
-      value: `+${formatPercent(v as number)}`
+      value: formatSignedPercent(v as number)
     }))
   })
 

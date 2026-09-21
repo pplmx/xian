@@ -18,6 +18,7 @@ import { usePlayerStore } from '@/stores/player'
 import { rng } from '@/utils/random'
 import { worldOf } from '@/data/realms'
 import type { RegionDef, WorldId } from '@/types'
+import { gameNow } from './enginePause'
 
 export type RegionEventId = 'yaochao' | 'lingmai' | 'gumu' | 'shangdui'
 
@@ -117,7 +118,7 @@ const DURATION_MIN = [30, 60, 90, 120] as const
 /** 当前生效的区域事件(未过期;被过期清理) */
 export function currentRegionEvent(regionId: string): RegionEventState | null {
   const player = usePlayerStore()
-  const now = Date.now()
+  const now = gameNow()
   const ev = player.regionEvent
   if (!ev || ev.regionId !== regionId) return null
   if (ev.endsAt <= now) {
@@ -131,7 +132,7 @@ export function currentRegionEvent(regionId: string): RegionEventState | null {
 /** 尝试为某区域生成一次事件(低频:引擎周期性调用,按概率) */
 export function rollRegionEvent(region: RegionDef): RegionEventState | null {
   const player = usePlayerStore()
-  const now = Date.now()
+  const now = gameNow()
   // 已有未过期事件则不重复
   const cur = player.regionEvent
   if (cur && cur.endsAt > now) return null

@@ -8,6 +8,8 @@ import {
   daoSourceDialog,
   daoFruitDialog,
   fruitMarginalInfo,
+  fruitEffectiveText,
+  fruitCultBonusText,
   fruitSoftCapText,
   shouldShowEndgameTutorial,
   markEndgameTutorialSeen,
@@ -54,6 +56,20 @@ describe('S3 道果边际收益', () => {
     // 增量 = ((11^0.9)/(10^0.9) - 1) ≈ 8.96%(基本等同 1.1^0.9 - 1,不随基数骤变)
     expect(Number(info.deltaPct)).toBeGreaterThan(8)
     expect(Number(info.deltaPct)).toBeLessThan(10)
+    // 10^0.9 ≈ 7.94,11^0.9 ≈ 8.69 —— 四舍五入成 8 / 9 会让 +8.96% 看起来像 +12.5%
+    expect(info.effectiveText).toBe('7.9')
+    expect(info.nextEffectiveText).toBe('8.7')
+    // 7.94 × 3% = 23.8%,Math.round 会写成 24%
+    expect(info.cultBonusText).toBe('+23.8%')
+  })
+
+  it('有效道果文案留一位小数,不把 7.94 收成 8', () => {
+    expect(fruitEffectiveText(7.943)).toBe('7.9')
+    expect(fruitEffectiveText(8.687)).toBe('8.7')
+    expect(fruitEffectiveText(1)).toBe('1')
+    expect(fruitEffectiveText(0)).toBe('0')
+    expect(fruitCultBonusText(7.943)).toBe('+23.8%')
+    expect(fruitCultBonusText(0)).toBe('0%')
   })
 
   it('软上限白话文案', () => {

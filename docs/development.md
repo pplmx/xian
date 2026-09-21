@@ -17,7 +17,7 @@ bun preview        # 预览构建结果
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 293 个 spec / 2691 例;本作自己那部分 213 个 / 2100 例) |
+| `bun run test` | 全量用例(全量 293 个 spec / 2733 例;本作自己那部分 213 个 / 2142 例) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 类型检查(`vue-tsc -b`)+ ESLint |
 | `bun run lint` | 只跑 ESLint |
@@ -38,11 +38,14 @@ bun preview        # 预览构建结果
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 293 个 spec / 2691 例(本作自己那部分 213 个 / 2100 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红;例数由 `test:report` 对照本次运行实录核对,加删用例忘了改文档也会红 |
+| 用例 | 全量 293 个 spec / 2733 例(本作自己那部分 213 个 / 2142 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红;例数由 `test:report` 对照本次运行实录核对,加删用例忘了改文档也会红 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
 | 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`) |
 | 首屏预算 | 冷启动解码字节 / FCP / 楷体换上三条上限(`scripts/first-paint.mjs`,自带静态服务与 4G 限速);发布产物还要核 legacy 那一套出得来(`legacy-artifacts.mjs`) |
+| 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec / 2044 例时,实际已是 289 / 2647) |
+| 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
+| 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |
 
 ## 首屏与构建时长
 
@@ -86,9 +89,6 @@ legacy(`@vitejs/plugin-legacy`,给 Chrome 51 / Android 7 的兜底)只在 `XIAN_
 **构建那一步本身**(`bun scripts/build-timed.mjs [--release]`,把构建跑一遍并计时,超上限
 即红 —— 只拦「成倍长回去」,上限按本机读数四到五倍给,CI 机器慢也吃得下);`build.yml`
 另有 `legacy-artifacts` 作业真打一次发布产物再核。
-| 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec / 2044 例时,实际已是 289 / 2647) |
-| 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
-| 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |
 
 推送到 `main` 会走 GitHub Actions 同一道闸:类型检查、ESLint、用例全绿后才部署 Web / PWA 与镜像。
 

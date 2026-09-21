@@ -6,16 +6,30 @@
  * 免于重伤、不计败绩、历练继续。此前 lossReduction 只在 petPersonality 里
  * 定义了数值,从未接入 runBattle —— 描述即承诺,不生效就是欺骗。
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePlayerStore } from '@/stores/player'
 import { useAdventureStore } from '@/stores/adventure'
+import { useGameStore } from '@/stores/game'
+import { engine, enginePaused } from './engine'
 import { useCultivationStore } from '@/stores/cultivation'
 import { gnZero, sub, toNum } from '@/utils/gnum'
 import { useResourcesStore } from '@/stores/resources'
-import { EXPLORE_BOSS_AFTER_WINS } from '@/data/constants'
+import { EVENT_AUTO_RESOLVE_SECONDS, EXPLORE_BOSS_AFTER_WINS } from '@/data/constants'
 import { tickExploration, startExploration, winsUntilRegionBoss } from './exploration'
-import { startRetreat } from './earlyGameService'
+import {
+  startRetreat,
+  getCurrentEnlightenment,
+  mayTriggerEnlightenment,
+  dismissEnlightenment,
+  prepareBreakthrough,
+  breakthroughPrepState,
+  getRetreatRemainingSec
+} from './earlyGameService'
+import { currentRegionEvent } from './regionEvent'
+import { hoursUntilRevive, REVIVE_AFTER_HOURS } from './worldMemory'
 
 /**
  * 与 petPersonality.EFFECTS 里的 cautious 值保持一致(见 petPersonality.spec)。
@@ -344,5 +358,192 @@ describe('首领门槛 · 界面提示与战斗判定同源', () => {
     expect(adventure.winsIn('qingyun')).toBe(0)
     expect(adventure.winsIn('luoxia')).toBe(0)
     expect(adventure.winsIn('heifeng')).toBe(0)
+  })
+})
+
+describe('引擎暂停 · 历练墙上的截止时刻', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    engine.resume()
+  })
+  afterEach(() => {
+    engine.resume()
+    dismissEnlightenment()
+    vi.restoreAllMocks()
+  })
+
+  it('resume 把 endsAt / nextBattleAt 按暂停时长往后推', () => {
+    const t0 = 1_700_000_000_000
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(t0)
+    useGameStore().markStarted()
+    forgeSession(t0)
+    const before = { ...useAdventureStore().session! }
+
+    engine.pause()
+    expect(enginePaused.value).toBe(true)
+    nowSpy.mockReturnValue(t0 + 12_000)
+    engine.resume()
+    expect(enginePaused.value).toBe(false)
+
+    const after = useAdventureStore().session!
+    expect(after.endsAt, '暂停期间墙上的截止时刻必须跟着挪').toBe(before.endsAt + 12_000)
+    expect(after.nextBattleAt).toBe(before.nextBattleAt + 12_000)
+  })
+
+  it('重复 pause / resume 不叠加', () => {
+    const t0 = 1_700_000_000_000
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(t0)
+    useGameStore().markStarted()
+    forgeSession(t0)
+    const endsAt = useAdventureStore().session!.endsAt
+    engine.pause()
+    engine.pause()
+    nowSpy.mockReturnValue(t0 + 5_000)
+    engine.resume()
+    engine.resume()
+    expect(useAdventureStore().session!.endsAt).toBe(endsAt + 5_000)
+  })
+
+  it('useNow 在引擎暂停时不再推进墙上读数', () => {
+    const src = readFileSync(resolve(__dirname, '../composables/useNow.ts'), 'utf8')
+    expect(src).toContain('enginePaused')
+    expect(src).toContain('enginePause')
+  })
+
+  it('resume 把 Buff / 问卦 / 区域事件按暂停时长往后推', () => {
+    const t0 = 1_700_000_000_000
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(t0)
+    useGameStore().markStarted()
+    const cult = useCultivationStore()
+    const player = usePlayerStore()
+    cult.addBuff('retreat', t0)
+    const buffEnds = cult.buffs.find(b => b.defId === 'retreat')!.endsAt
+    player.setRegionEvent({ regionId: 'qingyun', eventId: 'yaochao', endsAt: t0 + 60_000 })
+    player.setDivination({
+      hexagram: '乾',
+      upper: 'qian',
+      lower: 'qian',
+      changed: null,
+      changing: 0,
+      changingAt: [],
+      lines: [7, 7, 7, 7, 7, 7],
+      castAt: t0,
+      expiresAt: t0 + 600_000
+    })
+
+    engine.pause()
+    nowSpy.mockReturnValue(t0 + 20_000)
+    engine.resume()
+
+    expect(cult.buffs.find(b => b.defId === 'retreat')!.endsAt).toBe(buffEnds + 20_000)
+    expect(player.regionEvent?.endsAt).toBe(t0 + 80_000)
+    expect(player.divination?.expiresAt).toBe(t0 + 620_000)
+  })
+
+  it('resume 把镇压 / 已靖起点往后推,复聚倒计时不因暂停缩短', () => {
+    const t0 = 1_700_000_000_000
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(t0)
+    useGameStore().markStarted()
+    const player = usePlayerStore()
+    const adventure = useAdventureStore()
+    player.suppressRegion('qingyun')
+    player.regionStats = {
+      qingyun: { totalFights: 20, avgRounds: 2, avgDamageTakenPct: 0.02, consecutiveWins: 20, lastUpdateAt: t0 }
+    }
+    adventure.$patch({ cleared: ['qingyun'], clearedAt: { qingyun: t0 } })
+
+    expect(hoursUntilRevive(player.suppressedSince.qingyun, t0)).toBeCloseTo(REVIVE_AFTER_HOURS, 6)
+
+    engine.pause()
+    nowSpy.mockReturnValue(t0 + 3_600_000)
+    engine.resume()
+
+    expect(player.suppressedSince.qingyun).toBe(t0 + 3_600_000)
+    expect(adventure.clearedAt.qingyun).toBe(t0 + 3_600_000)
+    expect(player.regionStats.qingyun?.lastUpdateAt).toBe(t0 + 3_600_000)
+    expect(hoursUntilRevive(player.suppressedSince.qingyun, t0 + 3_600_000), '暂停一小时后复聚倒计时仍是整段').toBeCloseTo(
+      REVIVE_AFTER_HOURS,
+      6
+    )
+  })
+
+  it('resume 把待处理际遇起点往后推,暂停超时不自动代选', () => {
+    const t0 = 1_700_000_000_000
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(t0)
+    useGameStore().markStarted()
+    const player = usePlayerStore()
+    player.initCharacter('际遇', { roots: [] } as never)
+    forgeSession(t0)
+    const adventure = useAdventureStore()
+    adventure.setPendingEvent('ev_spring', t0)
+
+    const pauseMs = (EVENT_AUTO_RESOLVE_SECONDS + 10) * 1000
+    engine.pause()
+    nowSpy.mockReturnValue(t0 + pauseMs)
+    engine.resume()
+
+    expect(adventure.pendingEventSince).toBe(t0 + pauseMs)
+    tickExploration(t0 + pauseMs)
+    expect(adventure.pendingEventId, '暂停把 120 秒窗口耗尽时不得代选').toBe('ev_spring')
+  })
+
+  it('暂停中顿悟窗口不过期,resume 后截止时刻跟着挪', () => {
+    const t0 = 1_700_000_000_000
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(t0)
+    vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    useGameStore().markStarted()
+    mayTriggerEnlightenment()
+    const ev = getCurrentEnlightenment()
+    expect(ev, '应当触发一扇顿悟').not.toBeNull()
+    const expires = ev!.expiresAt
+
+    engine.pause()
+    nowSpy.mockReturnValue(t0 + 90_000)
+    expect(getCurrentEnlightenment(), '暂停中不得因墙上时钟把窗口收掉').not.toBeNull()
+    engine.resume()
+    const after = getCurrentEnlightenment()
+    expect(after, '挪完截止后窗口还在').not.toBeNull()
+    expect(after!.expiresAt).toBe(expires + 90_000)
+  })
+
+  it('暂停中墙上时钟越过 expiresAt / endsAt / readyAt 也不散、不清、不转就绪', () => {
+    const t0 = 1_700_000_000_000
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(t0)
+    useGameStore().markStarted()
+    const player = usePlayerStore()
+    player.setRegionEvent({ regionId: 'qingyun', eventId: 'yaochao', endsAt: t0 + 30_000 })
+    player.setDivination({
+      hexagram: '乾',
+      upper: 'qian',
+      lower: 'qian',
+      changed: null,
+      changing: 0,
+      changingAt: [],
+      lines: [7, 7, 7, 7, 7, 7],
+      castAt: t0,
+      expiresAt: t0 + 60_000
+    })
+    expect(prepareBreakthrough('meditate')).toBe(true)
+    startRetreat()
+    expect(getRetreatRemainingSec()).toBe(300)
+
+    engine.pause()
+    nowSpy.mockReturnValue(t0 + 200_000)
+    // Force the divination computed to re-run (it keys off play-time, not Date.now).
+    useGameStore().addPlayTime(1)
+
+    expect(player.activeDivination, '暂停中卦力不得因墙上时钟散掉').not.toBeNull()
+    expect(currentRegionEvent('qingyun'), '暂停中不得清掉区域事件').not.toBeNull()
+    expect(player.regionEvent, '过期清理路径不得在暂停中写掉存档').not.toBeNull()
+    const prep = breakthroughPrepState()
+    expect(prep.sitting, '静坐不得在暂停中被墙上时钟判成就绪').toBe(true)
+    expect(prep.ready).toBe(false)
+    expect(getRetreatRemainingSec(), '闭关剩余也要冻住').toBe(300)
+
+    engine.resume()
+    expect(player.activeDivination, '挪完截止后卦还在').not.toBeNull()
+    expect(currentRegionEvent('qingyun'), '挪完截止后区域事件还在').not.toBeNull()
+    expect(breakthroughPrepState().sitting, '挪完截止后仍在静坐').toBe(true)
+    expect(getRetreatRemainingSec()).toBe(300)
   })
 })

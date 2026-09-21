@@ -1,5 +1,5 @@
 /** 属性中文名映射(展示层共用) */
-import { formatPercent } from '@/utils/format'
+import { formatSignedPercent } from '@/utils/format'
 import type { AffixRarity, AnyStatKey, StatMods } from '@/types'
 
 /**
@@ -87,6 +87,6 @@ export const STAT_NAMES: Record<AnyStatKey, string> = {
  */
 export function modsText(mods: StatMods): string {
   return Object.entries(mods)
-    .map(([k, v]) => `${STAT_NAMES[k as AnyStatKey] ?? k} +${formatPercent(v as number)}`)
+    .map(([k, v]) => `${STAT_NAMES[k as AnyStatKey] ?? k} ${formatSignedPercent(v as number)}`)
     .join(' · ')
 }

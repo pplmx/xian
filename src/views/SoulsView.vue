@@ -178,7 +178,7 @@
   import { computed, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { goBack } from '@/router/goBack'
-  import { formatNum } from '@/utils/format'
+  import { formatNum, formatSignedPercent } from '@/utils/format'
   import { STAT_NAMES } from '@/ui/statNames'
   import type { AnyStatKey } from '@/types'
   import { equipmentTemplate } from '@/data/equipment'
@@ -238,7 +238,7 @@
   function modsText(mods: Record<string, unknown>): string {
     return Object.entries(mods)
       .filter(([, v]) => typeof v === 'number' && v !== 0)
-      .map(([k, v]) => `${STAT_NAMES[k as AnyStatKey] ?? k} +${Math.round((v as number) * 100)}%`)
+      .map(([k, v]) => `${STAT_NAMES[k as AnyStatKey] ?? k} ${formatSignedPercent(v as number)}`)
       .join(' · ')
   }
 

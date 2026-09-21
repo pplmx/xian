@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getCurrentCaveEvent, chooseCaveOption, dismissCaveEvent } from '@/core/earlyGameService'
+import { gameNow } from '@/core/enginePause'
 import type { CaveEvent } from '@/types'
 import BaseModal from '@/components/common/BaseModal.vue'
 
@@ -24,7 +25,7 @@ const locationNames: Record<string, string> = {
 function refresh() {
   event.value = getCurrentCaveEvent()
   if (event.value) {
-    remaining.value = Math.max(0, Math.ceil((event.value.expiresAt - Date.now()) / 1000))
+    remaining.value = Math.max(0, Math.ceil((event.value.expiresAt - gameNow()) / 1000))
   }
 }
 

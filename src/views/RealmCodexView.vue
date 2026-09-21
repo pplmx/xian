@@ -235,6 +235,7 @@
 
 <script setup lang="ts">
   import { computed, ref } from 'vue'
+  import { useNow } from '@/composables/useNow'
   import { usePlayerStore } from '@/stores/player'
   import { useGameStore } from '@/stores/game'
   import { useUiStore } from '@/stores/ui'
@@ -258,6 +259,7 @@
   const player = usePlayerStore()
   const game = useGameStore()
   const ui = useUiStore()
+  const now = useNow()
 
   /** 分册:六门各占一册 —— 页越长越该分,免得一路拉到底找不着北 */
   type CodexTab = 'realm' | 'classics' | 'yi' | 'ziwei' | 'xiang' | 'qimen' | 'todo'
@@ -286,7 +288,7 @@
     void game.totalPlaySec
     const state = player.activeDivination
     if (!state) return ''
-    const ms = Math.max(0, state.expiresAt - Date.now())
+    const ms = Math.max(0, state.expiresAt - now.value)
     const m = Math.floor(ms / 60_000)
     const sec = Math.floor((ms % 60_000) / 1000)
     return m > 0 ? `尚余 ${m} 分 ${sec} 秒` : `尚余 ${sec} 秒`

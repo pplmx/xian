@@ -170,6 +170,15 @@ describe('文案数值对账 · 视图不手抄数字', () => {
     expect(view).not.toContain('修行 +3%')
     expect(view).not.toContain('道躯 +1.5%')
     expect(view, '边际收益里的 ×3 也是手抄的,应改成常数').not.toMatch(/effective \* 3\b/)
+    expect(view, '有效枚数 toFixed(0) 会把 7.94 写成 8').not.toContain('effective.toFixed(0)')
+    expect(view).toContain('effectiveText')
+    expect(view, '有效修行加成必须走 cultBonusText,不许再 Math.round 成整数%').toContain('cultBonusText')
+    expect(view).not.toMatch(/Math\.round\(fruitInfo\.effective/)
+    const celestial = src('../views/CelestialView.vue')
+    expect(celestial).not.toContain('effective.toFixed(0)')
+    expect(celestial).not.toContain('nextEffective.toFixed(0)')
+    expect(celestial).toContain('effectiveText')
+    expect(celestial).toContain('nextEffectiveText')
   })
 
   it('修行页的闭关文案取自 buffs.ts 的 retreat 本体', () => {

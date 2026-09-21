@@ -111,7 +111,7 @@ describe('妖气复聚 · 旧主归来', () => {
   it('离线斩下的首领也算数:已靖时刻落在 markCleared 上,不靠区域统计', () => {
     const adventure = useAdventureStore()
     const player = usePlayerStore()
-    // 离线那条路只推会话与斩杀,不写 regionStats(见 offline.ts)
+    // Even with empty regionStats, markCleared must start the revival clock.
     player.regionStats = {}
     adventure.cleared = []
     adventure.unlocked = ['hongmeng']

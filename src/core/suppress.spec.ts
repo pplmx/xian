@@ -384,3 +384,21 @@ describe('镇压速率:显示与结算同源', () => {
     expect(uiStonePerHour('qingyun')).toBeGreaterThan(toNum(suppressRateFor('qingyun')!.stonePerHour))
   })
 })
+
+describe('区域统计 · 离线整段胜场与单场同式', () => {
+  beforeEach(() => setActivePinia(createPinia()))
+
+  it('applyRegionWinBatch(n) 的 EMA / 场数 / 兴衰与连调 n 次 updateRegionStats 一致', () => {
+    const player = usePlayerStore()
+    for (let i = 0; i < 5; i += 1) player.updateRegionStats('loop', true, 3, 0.08)
+    player.applyRegionWinBatch('batch', 5, 3, 0.08)
+    const looped = player.regionStats.loop!
+    const batched = player.regionStats.batch!
+    expect(batched.totalFights).toBe(looped.totalFights)
+    expect(batched.consecutiveWins).toBe(looped.consecutiveWins)
+    expect(batched.avgRounds).toBeCloseTo(looped.avgRounds, 10)
+    expect(batched.avgDamageTakenPct).toBeCloseTo(looped.avgDamageTakenPct, 10)
+    expect(player.regionWins.batch).toBe(5)
+    expect(player.regionWins.loop).toBeUndefined()
+  })
+})

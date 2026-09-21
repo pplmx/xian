@@ -113,6 +113,11 @@ export function formatPercent(x: number, dp = 1): string {
   return `${trimZero(s)}%`
 }
 
+/** 带符号的比率:正数显 +,负数沿用 formatPercent 自带的 −,避免拼出「+-15%」 */
+export function formatSignedPercent(x: number, dp = 1): string {
+  return x > 0 ? `+${formatPercent(x, dp)}` : formatPercent(x, dp)
+}
+
 /** 时长:秒 → 中文可读;非法值(NaN/Infinity)显示 -- */
 export function formatDuration(totalSec: number): string {
   if (!Number.isFinite(totalSec)) return NOT_AVAILABLE
@@ -152,10 +157,32 @@ export function formatCountdown(totalSec: number): string {
   return `${pad2(m)}分${pad2(s)}秒`
 }
 
+/**
+ * Integer years the HUD shows. Same stick as the top bar (`age/max`)
+ * and the reincarnation scroll — fractional age is real for death, but
+ * every player-facing year count floors. Round would make a 36-minute
+ * absence report「流逝 1 载」while the bar still reads the old integer.
+ */
+export function yearsShown(y: number): number {
+  if (!Number.isFinite(y) || y <= 0) return 0
+  return Math.floor(y)
+}
+
+/** How many integer years the counter advanced (never negative). */
+export function yearsDeltaShown(before: number, after: number): number {
+  return Math.max(0, yearsShown(after) - yearsShown(before))
+}
+
+/** Remaining integer years implied by the HUD pair `age / max`. */
+export function yearsLeftShown(age: number, lifespanMax: number): number {
+  return Math.max(0, yearsShown(lifespanMax) - yearsShown(age))
+}
+
 /** 寿元年数展示 */
 export function formatYears(y: number): string {
-  if (y >= 10000) return formatNum(Math.floor(y)) + '载'
-  return `${Math.floor(y)}载`
+  const n = yearsShown(y)
+  if (n >= 10000) return formatNum(n) + '载'
+  return `${n}载`
 }
 
 /**

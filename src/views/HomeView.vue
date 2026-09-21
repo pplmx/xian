@@ -166,15 +166,19 @@
   import { usePlayerStore } from '@/stores/player'
   import { useAdventureStore } from '@/stores/adventure'
   import { useCultivationStore } from '@/stores/cultivation'
+  import { useEndgameStore } from '@/stores/endgame'
   import { useQuestsStore } from '@/stores/quests'
+  import { useNow } from '@/composables/useNow'
   import { MAIN_QUESTS } from '@/data/quests'
   import { VEIN_UNLOCK_MAJOR } from '@/data/constants'
   import { LIFESPAN_WARN_RATIO } from '@/data/constants'
   import { WORLD_BREAK_MAJOR } from '@/data/realms'
   import { todayWeather, upcomingWeather, weatherRemainingSec } from '@/core/weather'
+  import { formatDuration } from '@/utils/format'
   import { generateCurrentGoal, type Goal } from '@/core/goal'
   import { currentMainQuestProgress } from '@/core/questProgress'
-  import { currentFirstStep } from '@/core/firstStep'
+  import { currentFirstStep, homeStatusText } from '@/core/firstStep'
+  import { isRetreating } from '@/core/earlyGameService'
   import { dailyRowsOf, dailyStateOf } from '@/core/engineDailies'
   import { mainQuestAt } from '@/core/engineChain'
   import SectionTitle from '@/components/common/SectionTitle.vue'
@@ -189,19 +193,26 @@
   const veinOpen = ref(false)
   const adventure = useAdventureStore()
   const cultivation = useCultivationStore()
+  const endgame = useEndgameStore()
   const quests = useQuestsStore()
+  const now = useNow()
 
   // Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页)
   const currentGoal = computed<Goal | null>(() => generateCurrentGoal(player))
   /** 新手第一步(开局这一段才有;给不给完全由存档推出来,没有"已看过"字段) */
   const firstStep = computed(() => currentFirstStep())
 
-  const statusText = computed(() => {
-    if (player.dead) return '陨落'
-    if (adventure.sessionActive) return `历练中 · ${adventure.currentRegion?.name ?? ''}`
-    if (cultivation.hasBuff('injury')) return '疗伤中'
-    return '闭关修炼中'
-  })
+  const statusText = computed(() =>
+    homeStatusText({
+      dead: player.dead,
+      exploringSecret: Boolean(player.secretRealm && !player.secretRealm.finished),
+      expedition: Boolean(endgame.worldRun),
+      sessionActive: adventure.sessionActive,
+      regionName: adventure.currentRegion?.name ?? '',
+      injured: cultivation.hasBuff('injury'),
+      retreating: isRetreating()
+    })
+  )
 
   // Phase 31 A1:今日天时(确定性,refreshed 每游戏日)
   const weather = computed(() => todayWeather())
@@ -211,10 +222,8 @@
    *   明日是什么 —— 预告让"今天该做什么"变成可以规划的事,而不是开盲盒。
    */
   const weatherLeft = computed(() => {
-    const total = weatherRemainingSec()
-    const hours = Math.floor(total / 3600)
-    const minutes = Math.max(0, Math.round((total % 3600) / 60))
-    return hours > 0 ? `还有 ${hours} 时 ${minutes} 分` : `还有 ${minutes} 分`
+    void now.value
+    return `还有 ${formatDuration(weatherRemainingSec())}`
   })
   const tomorrowWeather = computed(() => upcomingWeather(2)[1])
 
