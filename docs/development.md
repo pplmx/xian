@@ -17,8 +17,8 @@ bun preview        # 预览构建结果
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 293 个 spec / 2682 例;本作自己那部分 213 个 / 2087 例) |
-| `bun run test:report` | 按系统分类的测试摘要;有未登记分类会直接红并列出文件 |
+| `bun run test` | 全量用例(全量 293 个 spec / 2687 例;本作自己那部分 213 个 / 2096 例) |
+| `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 类型检查(`vue-tsc -b`)+ ESLint |
 | `bun run lint` | 只跑 ESLint |
 | `bun run build:release` | 发布构建(`XIAN_LEGACY=1`):每个 chunk 再走一遍 legacy 兜底 |
@@ -38,7 +38,7 @@ bun preview        # 预览构建结果
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 293 个 spec / 2677 个用例(本作自己那部分 213 个 / 2086 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红 |
+| 用例 | 全量 293 个 spec / 2687 例(本作自己那部分 213 个 / 2096 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红;例数由 `test:report` 对照本次运行实录核对,加删用例忘了改文档也会红 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
 | 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`) |
@@ -116,7 +116,7 @@ src/
 │   ├── endgame.ts            # 道途 / 天界 / 试炼
 │   ├── mutators.ts           # 8 变数
 │   └── constants.ts          # 全局平衡参数
-├── core/                 # 逻辑层(110 个模块 + 165 个 spec,另有 *Sim.ts 平衡模拟器)
+├── core/                 # 逻辑层(122 个模块 + 192 个 spec,另有 *Sim.ts 平衡模拟器)
 │   ├── engine.ts             # 在线心跳驱动(1000ms)
 │   ├── offline.ts            # 离线收益结算
 │   ├── combat.ts             # 回合制战斗预解算

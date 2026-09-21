@@ -49,7 +49,8 @@ jobs:
       - name: 静态检查 + 单元测试
         run: |
           bun run check
-          bun run test
+          # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs)
+          bun run test:report
           # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
           bun run check:engine
           bun run check:engine:standalone

@@ -29,7 +29,8 @@ jobs:
       - name: 静态检查 + 单元测试
         run: |
           bun run check
-          bun run test
+          # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs)
+          bun run test:report
           # 公共库的发布产物也要自检:用例跑的是 src,这一条跑的是 dist ——
           # 空壳产物/漏文件/导出对不上,只会在别人 npm 装下来时才暴露,那时已经晚了
           bun run check:engine

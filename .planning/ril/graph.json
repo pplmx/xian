@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 404,
+  "round": 405,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-20T18:06:21+00:00",
+  "updated_at": "2026-09-21T01:46:48+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8772,7 +8772,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 397,
+      "touched_round": 404,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -23538,6 +23538,32 @@
       "source": "ba835f1:exploration.spec",
       "summary": "坏档形态(session=null+pendingEventId 合法串)下 startExploration 后 pendingEventId 归零;用例 pre-fix 红 post-fix 绿",
       "confidence": 1.0
+    },
+    "ISS-279": {
+      "id": "ISS-279",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-21T01:45:27+00:00",
+      "updated_at": "2026-09-21T01:45:27+00:00",
+      "touched_round": 404,
+      "severity": 0.5,
+      "summary": "文档里三处测试例数/模块数声称与实际不符:README 与 docs/development 写 2677/2682/2086/2087 例,实际 2687/2096;core 目录写 110 模块+165 spec,实际 122+192。docs-check 只查 spec 文件数不查例数,round 402-404 加回归用例后静默锈掉"
+    },
+    "TASK-406": {
+      "id": "TASK-406",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-21T01:46:02+00:00",
+      "updated_at": "2026-09-21T01:46:02+00:00",
+      "touched_round": 404,
+      "category": "docs",
+      "severity": 0.5,
+      "confidence": 1,
+      "effort": 1,
+      "unlock_factor": 1,
+      "summary": "修正文档例数/模块数漂移并给 docs-check 补例数判据:例数真源(本次运行)由 test:report 核对,文档声称不一致即红;CI 四处 bun run test 换 test:report(等价完整测试少跑一遍)"
     }
   },
   "edges": [
@@ -34617,6 +34643,18 @@
       "to": "HYP-113",
       "type": "validates",
       "created_at": "2026-09-20T18:06:21+00:00"
+    },
+    {
+      "from": "TASK-406",
+      "to": "ISS-279",
+      "type": "addresses",
+      "created_at": "2026-09-21T01:46:26+00:00"
+    },
+    {
+      "from": "ISS-279",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-09-21T01:46:48+00:00"
     }
   ]
 }

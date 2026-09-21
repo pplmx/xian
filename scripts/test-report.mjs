@@ -3,7 +3,11 @@
  * 用法: bun run test:report
  */
 import { execSync } from 'node:child_process'
-import { readFileSync, rmSync } from 'node:fs'
+import { readFileSync, rmSync, readdirSync } from 'node:fs'
+import { join, resolve } from 'node:path'
+
+const ROOT = resolve(import.meta.dirname, '..')
+const ENGINE_DIR = 'packages/engine'
 
 /**
  * 分类映射。匹配是路径子串,按数组顺序取第一个命中的分类,故有两条约束:
@@ -109,7 +113,52 @@ if (uncategorized > 0) {
   console.log(`  ✗ 未分类用例 ${uncategorized} 个 —— 请在 scripts/test-report.mjs 的 CATEGORIES 中补充映射:`)
   for (const o of orphans.sort((a, b) => b.count - a.count)) console.log(`      ${String(o.count).padStart(4)}  ${o.path}`)
 }
-console.log(`\n  共 ${totalPassed} 过 / ${totalFailed} 败${uncategorized > 0 ? ` · 另有 ${uncategorized} 个未分类` : ''}\n`)
+console.log(`\n  共 ${totalPassed} 过 / ${totalFailed} 败${uncategorized > 0 ? ` · 另有 ${uncategorized} 个未分类` : ''}`)
+
+// —— 文档里的「例数」声称也要守住 ——
+// docs-check.mjs 只数 spec 文件(静态可数);「例」只有跑完测试才知道,故放在这一头:
+// 全量例数 = 本次运行全部断言,本作自己那部分 = 去掉公共库(src 之外的 packages/engine)。
+// 文档(README / docs)若写着与本次运行不符的例数,当场红 —— 加删用例若不同步改文档,这就是它的闸门。
+const DOC_FILES = [{ rel: 'README.md', file: resolve(ROOT, 'README.md'), dir: resolve(ROOT) }].concat(
+  readdirSync(join(ROOT, 'docs'), { recursive: true, encoding: 'utf-8' })
+    .filter(name => typeof name === 'string' && name.endsWith('.md') && !name.includes('superpowers/plans'))
+    .map(name => ({ rel: `docs/${name}`, file: join(ROOT, 'docs', name), dir: join(ROOT, 'docs') }))
+)
+// vitest JSON 里的文件名是绝对路径(`/…/xian/src/…` / `/…/xian/packages/engine/…`),
+// 「本作自己那部分」= 不在公共库目录下的 spec(src 下,与 docs-check 的 hostOnly 同口径)。
+const isEngineFile = f => String(f.name ?? '').includes(`/${ENGINE_DIR}/`)
+const hostOnlyResults = (report.testResults ?? []).filter(f => !isEngineFile(f))
+const realSpecs = (report.testResults ?? []).length
+const realHostSpecs = hostOnlyResults.length
+const realCases = (report.testResults ?? []).reduce((acc, f) => acc + (f.assertionResults ?? []).length, 0)
+const realHostCases = hostOnlyResults.reduce((acc, f) => acc + (f.assertionResults ?? []).length, 0)
+
+const docFailures = []
+for (const { rel, file } of DOC_FILES) {
+  let text
+  try {
+    text = readFileSync(file, 'utf-8')
+  } catch {
+    continue
+  }
+  // 全量 N 个 spec / M 例
+  for (const [, specs, cases] of text.matchAll(/全量 (\d+) 个 spec \/ (\d+) 例/g)) {
+    if (Number(specs) !== realSpecs) docFailures.push(`${rel}: 写着「全量 ${specs} 个 spec」,实际 ${realSpecs} 个`)
+    if (Number(cases) !== realCases) docFailures.push(`${rel}: 写着「全量 ${specs} 个 spec / ${cases} 例」,实际 ${realCases} 例`)
+  }
+  // 本作自己那部分 N 个 / M 例(同一行连着写)
+  for (const [, specs, cases] of text.matchAll(/本作自己那部分 (\d+) 个 \/ (\d+) 例/g)) {
+    if (Number(specs) !== realHostSpecs) docFailures.push(`${rel}: 写着「本作自己那部分 ${specs} 个 spec」,实际 ${realHostSpecs} 个`)
+    if (Number(cases) !== realHostCases) docFailures.push(`${rel}: 写着「本作自己那部分 ${specs} 个 / ${cases} 例」,实际 ${realHostCases} 例`)
+  }
+}
+if (docFailures.length > 0) {
+  console.log('  ✗ 文档里的测试例数与本次运行对不上（加删用例后忘了同步文档）:')
+  for (const f of docFailures) console.log(`      ${f}`)
+}
+console.log('')
+
+/**
 /**
  * 退出码的**原因**要写在最后一行。
  *
@@ -117,6 +166,7 @@ console.log(`\n  共 ${totalPassed} 过 / ${totalFailed} 败${uncategorized > 0 
  * 全绿就搁下了。真正的机制是下面这第二条:**未分类也算失败**(漏登记的用例不计入任何一类,
  * 报告就少算了它)。把原因印出来,"0 败 + 退出 1" 这种组合以后再也不会被误读成 flake。
  */
+const docFailure = docFailures.length > 0 ? `文档里的测试例数与本次运行对不上(${docFailures.length} 处)` : ''
 const failureReason =
   totalFailed > 0
     ? `有用例失败或跳过(${totalFailed} 个)`
@@ -124,9 +174,10 @@ const failureReason =
       ? `vitest 自身非零退出(码 ${childExitCode},可能是文件级报错)`
       : uncategorized > 0
         ? `有 ${uncategorized} 个用例没登记分类(报告会少算它们)`
-        : ''
+        : docFailure
 if (failureReason) console.log(`  退出码 1 的原因:${failureReason}\n`)
 // 未分类也算失败:漏登记的用例不计入任何一类,报告便少算了它。
 // 只提示不拦截的话,这个数会一路悄悄涨上去(曾积到 225 个才被发现)。
 // childExitCode!==0 兜底:JSON 里没有 'failed' 条目的文件级报错也绝不假绿。
-process.exit(totalFailed > 0 || childExitCode !== 0 || uncategorized > 0 ? 1 : 0)
+// 文档例数不符同样拦截:加删用例而不同步文档,等于把判据写进文档又拆掉。
+process.exit(totalFailed > 0 || childExitCode !== 0 || uncategorized > 0 || docFailures.length > 0 ? 1 : 0)

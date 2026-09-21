@@ -144,9 +144,12 @@ jobs:
         run: |
           bun install --frozen-lockfile
           bun run check
-          bun run test
+          # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs);
+          # 失败/跳过/未登记分类/文档例数不符都会红,替代裸 `bun run test` 少跑一遍测试
+          bun run test:report
           # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
           bun run check:engine
+          # 公共库还要"能单独成 repo":整份复制到临时目录,独立编译 + 独立跑用例 + 独立装配
           bun run check:engine:standalone
 
       - name: 缓存 Electron Builder
@@ -197,7 +200,8 @@ jobs:
         run: |
           bun install --frozen-lockfile
           bun run check
-          bun run test
+          # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs)
+          bun run test:report
           # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
           bun run check:engine
           bun run check:engine:standalone

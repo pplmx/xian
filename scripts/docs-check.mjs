@@ -99,4 +99,4 @@ console.log(
   `文档自检通过(${docFiles.length} 份文档里的 ${commands} 条命令、${paths} 条路径都真实存在;` +
     `规模数对得上:全量 ${totalSpecs} 个 spec / 本作自己那部分 ${hostOnly} 个)`
 )
-console.log('  用例条数不在这里查(静态数不出来)—— 加删用例后顺手跑一次 `bun run test` 核对文档里的例数')
+console.log('  用例条数不在这里查(静态数不出来)—— 例数由 `bun run test:report` 对照本次运行实录核对(见 scripts/test-report.mjs)')
