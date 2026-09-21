@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 406,
+  "round": 407,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-21T01:50:39+00:00",
+  "updated_at": "2026-09-21T02:43:45+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -324,7 +324,7 @@
       "version": 1,
       "created_at": "2026-09-09T14:05:15+00:00",
       "updated_at": "2026-09-09T14:05:15+00:00",
-      "touched_round": 401,
+      "touched_round": 407,
       "summary": "悟道顿悟/洞府巡游事件系统(earlyGameService + 两个弹窗组件)"
     },
     "CHG-007": {
@@ -1545,7 +1545,7 @@
       "version": 1,
       "created_at": "2026-09-11T02:43:18+00:00",
       "updated_at": "2026-09-11T02:43:18+00:00",
-      "touched_round": 304,
+      "touched_round": 407,
       "summary": "掉落/拾取系统(loot.ts + equipGen + smartKeep)"
     },
     "TASK-027": {
@@ -23587,6 +23587,43 @@
       "source": "8b8264f",
       "confidence": 1,
       "summary": "负向验证:把 README 例数临时改成 2677→9999/2096→7777,test:report 立刻以 退出码 1 拦下并点名 2 处;恢复后 0。全量 VERIFY type-check/lint/2687 tests 全绿"
+    },
+    "ISS-280": {
+      "id": "ISS-280",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-21T02:41:56+00:00",
+      "updated_at": "2026-09-21T02:41:56+00:00",
+      "touched_round": 407,
+      "severity": 0.6,
+      "summary": "usePacingTelemetry 写了 sanitize() 却从未被调用:sanitizeOfflineInputs 修 13 个 store 唯独漏它。坏档 events=null 时,任意一次 record() 对 null 调 slice 抛 TypeError(Vue 事件路径弹\"出现异常\"),守望注释声称已修的遥测实际没修上"
+    },
+    "ISS-281": {
+      "id": "ISS-281",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-21T02:41:56+00:00",
+      "updated_at": "2026-09-21T02:41:56+00:00",
+      "touched_round": 407,
+      "severity": 0.5,
+      "summary": "inventory.equippedArtifacts 与 artifacts 从不互相校正:坏档可给前者的槽位塞不存在 defId,幽灵占位占满槽位后 addArtifact 不自动佩、toggleArtifact 换不进来,currentArtifacts 又悄悄过滤幽灵,玩家摸不着原因"
+    },
+    "TASK-407": {
+      "id": "TASK-407",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-21T02:42:47+00:00",
+      "updated_at": "2026-09-21T02:42:47+00:00",
+      "touched_round": 407,
+      "category": "stability",
+      "severity": 0.5,
+      "confidence": 1,
+      "effort": 1,
+      "unlock_factor": 1,
+      "summary": "把 pacingTelemetry 接进 sanitizeOfflineInputs + inventory sanitize 清幽灵法宝;各补回归用例,并在 storeResilience 加\"每个持久化 store 的 sanitize 必须被开机链路调用\"的静态判据"
     }
   },
   "edges": [
@@ -34690,6 +34727,30 @@
       "to": "ISS-279",
       "type": "resolves",
       "created_at": "2026-09-21T01:48:38+00:00"
+    },
+    {
+      "from": "TASK-407",
+      "to": "ISS-280",
+      "type": "addresses",
+      "created_at": "2026-09-21T02:43:44+00:00"
+    },
+    {
+      "from": "TASK-407",
+      "to": "ISS-281",
+      "type": "addresses",
+      "created_at": "2026-09-21T02:43:44+00:00"
+    },
+    {
+      "from": "ISS-280",
+      "to": "COMP-002",
+      "type": "located_in",
+      "created_at": "2026-09-21T02:43:44+00:00"
+    },
+    {
+      "from": "ISS-281",
+      "to": "COMP-010",
+      "type": "located_in",
+      "created_at": "2026-09-21T02:43:45+00:00"
     }
   ]
 }

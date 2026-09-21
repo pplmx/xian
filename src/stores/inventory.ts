@@ -27,7 +27,10 @@ export const useInventoryStore = defineStore(
       equipped.value = asRecord<string>(equipped.value)
       pills.value = asNumberRecord(pills.value, 0)
       artifacts.value = asArray<ArtifactOwned>(artifacts.value, [], a => !!a && typeof (a as ArtifactOwned).defId === 'string')
-      equippedArtifacts.value = asStringArray(equippedArtifacts.value)
+      // 佩戴表要先对过持有表:坏档可能让 equippedArtifacts 指向不存在的法宝,
+      // 幽灵占位会把槽位占满(新法宝佩不上、也换不进来),见 inventory.spec 回归
+      const ownedDefIds = new Set(artifacts.value.map(a => a.defId))
+      equippedArtifacts.value = asStringArray(equippedArtifacts.value).filter(id => ownedDefIds.has(id))
     }
 
     const equippedUids = computed(() => new Set(Object.values(equipped.value).filter(Boolean) as string[]))

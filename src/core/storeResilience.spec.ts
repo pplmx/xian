@@ -19,6 +19,7 @@ import { usePlayerStore } from '@/stores/player'
 import { useAdventureStore } from '@/stores/adventure'
 import { usePacingTelemetry } from '@/stores/pacingTelemetry'
 import { useLoreStore } from '@/stores/lore'
+import { useInventoryStore } from '@/stores/inventory'
 
 /**
  * store 清单**从源码倒推**,不再手写。
@@ -82,7 +83,36 @@ const PERSISTED = persistedStores()
 const STORES = PERSISTED.filter(s => {
   setActivePinia(createPinia())
   return typeof s.use().sanitize === 'function'
-}).map(s => ({ name: s.name, use: s.use as () => Store & { sanitize: () => void } }))
+}).map(s => ({
+  name: s.name,
+  use: s.use as () => Store & { sanitize: () => void },
+  /** 真实导出名(usePacingTelemetry 这种不带 Store 后缀的命名也按模块导出抓,不猜) */
+  useName: exportUseNameOf(STORE_MODULES[s.file] ?? {}) ?? s.name
+}))
+
+/**
+ * 从 store 模块里抓「真正取 store 的那个导出」的名字。
+ * 常规是 useXxxStore,但存在 usePacingTelemetry 这类不带 Store 后缀的 —— 猜后缀会猜错。
+ */
+function exportUseNameOf(mod: Record<string, unknown>): string | null {
+  for (const [name, value] of Object.entries(mod)) {
+    if (typeof value !== 'function' || !/^use[A-Z]\w+Store$/.test(name)) continue
+    return name
+  }
+  // 退而求其次:任何 use 开头、能返回带 $id 的 store 的导出(兼容无 Store 后缀的命名)
+  for (const [name, value] of Object.entries(mod)) {
+    if (typeof value !== 'function' || !/^use[A-Z]/.test(name)) continue
+    try {
+      setActivePinia(createPinia())
+      const store = (value as () => Store)()
+      if (store && typeof store.$id === 'string') return name
+    } catch {
+      // 不是 store 的 composable
+    }
+    setActivePinia(createPinia())
+  }
+  return null
+}
 
 describe('坏档韧性 · 清单从源码倒推', () => {
   it('每个持久化 store 都取得到,且都写了 sanitize', () => {
@@ -313,5 +343,62 @@ describe('坏档韧性 · 活状态(引擎每 tick 都读的那些)', () => {
     player.$patch({ regionEvent: { regionId: 'qingyun', eventId: 'yaochao', endsAt: NaN } } as never)
     player.sanitize()
     expect(player.regionEvent).toBeNull()
+  })
+})
+
+describe('坏档韧性 · sanitize 必须接进开机链路', () => {
+  /** 静态读 offline.ts 源码(sanitizeOfflineInputs 定义处)—— 不 import 重型依赖链 */
+  const OFFLINE_RAW = (import.meta.glob('./offline.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>)['./offline.ts']
+  const body = OFFLINE_RAW?.slice(OFFLINE_RAW.indexOf('export function sanitizeOfflineInputs'))
+
+  it('每个有 sanitize 的持久化 store,它的 sanitize 都被 sanitizeOfflineInputs 调到', () => {
+    // pacingTelemetry 正是这样漏掉的:分片落了盘、自己也写了 sanitize,
+    // 但开机链路(sanitizeOfflineInputs)忘了把它接进来 —— 修形永远不跑,
+    // 坏档 events=null 时第一次 record() 就对 null 调 slice 抛错。
+    // 调用形态是 useXxxStore()。为了不靠「文件名→名字」的正则猜导出名,
+    // 直接从 store 实例拿它的 $id 反查?不行 —— $id 是分片键,不是导出名。
+    // 故退一步:任何 `use…().sanitize()` 都不许漏 —— 用正则从源码抓全部调用,
+    // 与 STORES 清单逐项对。文件名 → useXxxStore 的映射偏差,落在报错文案里人工看。
+    const callsInBody = new Set(
+      [...(body?.matchAll(/use[A-Z]\w+\(\)\.sanitize\(\)/g) ?? [])].map(m => m[0])
+    )
+    const missing = STORES
+      .map(s => ({ name: s.name, call: `${s.useName}().sanitize()` }))
+      .filter(({ call }) => !callsInBody.has(call))
+      .map(({ name, call }) => `${name} → sanitizeOfflineInputs 里没有 ${call}`)
+    expect(missing, '有 store 的 sanitize 没接进开机链路:\n' + missing.join('\n')).toEqual([])
+  })
+
+  it('pacingTelemetry 的修形确实进了开机链路(回归钉)', () => {
+    expect(body).toContain('usePacingTelemetry().sanitize()')
+  })
+})
+
+describe('坏档韧性 · 跨字段不一致(幽灵法宝占位)', () => {
+  it('equippedArtifacts 指向不存在的法宝时,sanitize 必须清掉 —— 否则槽位被幽灵占满', () => {
+    setActivePinia(createPinia())
+    const inv = useInventoryStore()
+    // 坏档:artifacts 有一个真法宝(如 'zhuling'),equippedArtifacts 却指着一个不存在的 'ghost'
+    inv.$patch({
+      artifacts: [{ defId: 'zhuling', level: 0 }],
+      equippedArtifacts: ['ghost']
+    } as never)
+    inv.sanitize()
+
+    expect(inv.equippedArtifacts, '幽灵法宝要被 sanitize 清掉,不占槽位').toEqual([])
+    // 真法宝仍可自动佩戴(此前因幽灵占位,length!==0 而佩不上)
+    expect(inv.addArtifact('zhenqi'), '空槽时新法宝应能加进持有表').toBe(true)
+    expect(inv.equippedArtifacts).toEqual(['zhenqi'])
+  })
+
+  it('equippedArtifacts 指向真实存在的法宝时,保留且顺序不变', () => {
+    setActivePinia(createPinia())
+    const inv = useInventoryStore()
+    inv.$patch({
+      artifacts: [{ defId: 'a', level: 0 }, { defId: 'b', level: 1 }],
+      equippedArtifacts: ['b', 'a']
+    } as never)
+    inv.sanitize()
+    expect(inv.equippedArtifacts).toEqual(['b', 'a'])
   })
 })
