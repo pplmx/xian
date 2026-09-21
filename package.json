@@ -20,7 +20,7 @@
     "test:engine": "vitest run packages/engine",
     "test:report": "bun scripts/test-report.mjs",
     "build:engine": "tsc -p packages/engine/tsconfig.build.json",
-    "check:engine": "bun scripts/engine-dist.mjs",
+    "check:engine": "bun scripts/engine-dist.mjs && bun scripts/engine-sync.mjs",
     "check:engine:standalone": "bun scripts/engine-standalone.mjs",
     "type-check": "vue-tsc -b",
     "check": "bun run type-check && bun run lint && bun scripts/docs-check.mjs",

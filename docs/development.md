@@ -26,7 +26,7 @@ bun preview        # 预览构建结果
 | `bun run check:first-paint` | 首屏预算:冷启动解码字节 / FCP / 楷体换上(`scripts/first-paint.mjs`) |
 | `bun run test:engine` | 只跑公共库(万象引擎)的用例 |
 | `bun run build:engine` | 出公共库的 dist |
-| `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 |
+| `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
 
 > **别用 `bun test`。** 那是 Bun 自带的测试器,不读本仓库的路径别名(`@/…`),
@@ -179,6 +179,7 @@ git subtree push --prefix=packages/engine engine main   # 本作 → 库
 git subtree pull --prefix=packages/engine engine main   # 库 → 本作
 ```
 
+改完库先推独立仓。漏推时 `bun run check:engine` 会红(本仓与独立仓必须同树)。
 两边都改会让 `subtree push` 拒绝执行,那时先 `pull` 合回来。细节与对账清单见 [engine.md](./engine.md)。
 
 ## 设计规范

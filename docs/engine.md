@@ -79,9 +79,11 @@ git subtree push --prefix=packages/engine engine main   # 本作 → 库
 git subtree pull --prefix=packages/engine engine main   # 库 → 本作
 ```
 
+改完 `packages/engine` 之后**先推独立仓**,再推本仓。漏推会被 `bun run check:engine` 的第 ⑧ 步拦住:本仓 `packages/engine` 与独立仓 `main` 必须是同一棵树。
+
 | 命令 | 钉住的事 |
 | --- | --- |
-| `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"、宿主引用方式 |
+| `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"、宿主引用方式、**独立仓与本仓同树** |
 | `bun run check:engine:standalone` | 整份目录复制到临时目录(不带 dist 与 node_modules)后独立编译、跑用例、import 产物、跑示例,并断言源码里没有任何宿主引用 |
 
 库自身的说明、定制清单与已知边界见 [`packages/engine/README.md`](../packages/engine/README.md)。
