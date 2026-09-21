@@ -9,7 +9,7 @@ export type { Numeric } from './numeric.js'
 export { numberNumeric, formatAmount, clamp } from './numeric.js'
 
 export type { Rng } from './rng.js'
-export { createRng, mulberry32, seedFromString, randomRng } from './rng.js'
+export { createRng, mulberry32, pickWeighted, seedFromString, randomRng } from './rng.js'
 
 export type {
   AttributeDef,

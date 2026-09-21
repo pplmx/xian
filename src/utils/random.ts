@@ -2,7 +2,7 @@
  * 统一随机服务 —— 支持注入种子,保证概率逻辑可测试
  */
 
-import { mulberry32 as engineMulberry32 } from 'wanxiang-engine'
+import { mulberry32 as engineMulberry32, pickWeighted } from 'wanxiang-engine'
 
 export type RandFn = () => number
 
@@ -49,21 +49,9 @@ export class RandomService {
     return arr[Math.floor(this.rand() * arr.length)]!
   }
 
-  /** 权重随机:weightOf 返回每项权重 */
+  /** Weighted pick — same kernel as wanxiang-engine's `pickWeighted`. */
   weighted<T>(items: readonly T[], weightOf: (item: T) => number): T {
-    // 先剔除零权重项:否则 rand() 恰为 0 时首项即使权重 0 也满足 roll<=0 被选中 ——
-    // 零权重本不该出现。掐掉后 selection 只在正权重里发生。
-    const positive = items.filter(it => Math.max(0, weightOf(it)) > 0)
-    if (positive.length === 0) return this.pick(items)
-    let total = 0
-    for (const it of positive) total += Math.max(0, weightOf(it))
-    if (total <= 0) return this.pick(positive)
-    let roll = this.rand() * total
-    for (const it of positive) {
-      roll -= Math.max(0, weightOf(it))
-      if (roll <= 0) return it
-    }
-    return positive[positive.length - 1]!
+    return pickWeighted(items, weightOf, () => this.rand())
   }
 }
 

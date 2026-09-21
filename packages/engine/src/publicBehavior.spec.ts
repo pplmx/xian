@@ -17,7 +17,7 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_ATTRIBUTES, attributeDefs, createAttributeSystem } from './attributes.js'
 import { DEFAULT_LAYER_NAMES, createRealmSystem, progressText } from './realms.js'
 import { clamp, formatAmount, numberNumeric } from './numeric.js'
-import { createRng, mulberry32, randomRng, seedFromString } from './rng.js'
+import { createRng, mulberry32, pickWeighted, randomRng, seedFromString } from './rng.js'
 
 describe('公开面行为判据 —— 数值适配与展示', () => {
   it('clamp 夹的是开区间之外:边界值原样返回', () => {
@@ -122,6 +122,35 @@ describe('公开面行为判据 —— 随机源三件', () => {
     expect(randomRng.pick(['a'])).toBe('a')
     expect(randomRng.weighted([{ w: 0 }, { w: 1 }], x => x.w)).toEqual({ w: 1 })
     console.log(`  randomRng 100 次里有 ${new Set(values).size} 个不同的值(可复现源则会只有 1 个种子下的确定序列)`)
+  })
+
+  it('pickWeighted: next()===0 never selects a leading zero-weight item', () => {
+    const items = [
+      { id: 'zero', w: 0 },
+      { id: 'first-positive', w: 1 },
+      { id: 'second-positive', w: 1 }
+    ]
+    // next()===0 used to pick the first item even when its weight was 0
+    // (roll <= 0 after subtracting nothing). Half-open buckets skip it.
+    expect(pickWeighted(items, it => it.w, () => 0).id).toBe('first-positive')
+    expect(createRng(1).weighted(items, it => it.w).id).not.toBe('zero')
+
+    // Negative weights are treated as 0; all-nonpositive falls back to uniform.
+    const zeros = [
+      { id: 'a', w: 0 },
+      { id: 'b', w: -3 }
+    ]
+    expect(pickWeighted(zeros, it => it.w, () => 0).id).toBe('a')
+    expect(pickWeighted(zeros, it => it.w, () => 0.99).id).toBe('b')
+
+    // Exact bucket boundary belongs to the next positive item (half-open).
+    const two = [
+      { id: 'left', w: 1 },
+      { id: 'right', w: 1 }
+    ]
+    expect(pickWeighted(two, it => it.w, () => 0.5).id).toBe('right')
+    expect(pickWeighted(two, it => it.w, () => 0).id).toBe('left')
+    console.log('  pickWeighted: next()===0 + leading zero-weight → first positive')
   })
 })
 

@@ -69,7 +69,7 @@ import { emptyProgress } from 'wanxiang-engine'
 | `vite.config.ts` / `tsconfig.app.json` | 把包名指到 `packages/engine/src` 的**开发加速通路**:改库立刻热更新,不必先 build;去掉它也能用(那时解析 `dist`) |
 | `scripts/engine-dist.mjs` | 三条判据守着:**只经公开入口引用**(内部别名 / 深层导入 / 相对路径钻内部各一条断言)、**依赖声明存在且指回仓库内的库**、以及**由 node 解析裸包名与子路径**(vite/tsc 自己的别名绿了不算数) |
 
-当前状态:65 处引用全部走公开入口;node 侧解析出 78 个导出 + 子路径 `presets/minimal`。
+当前状态:65 处引用全部走公开入口;node 侧解析出 79 个导出 + 子路径 `presets/minimal`。
 
 ## 同步与自检
 

@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | 等级 | `game.realms` | 有哪些境界/层?升一层要多少修为?进阶成功率多少、寿元多少、基础属性多高? |
 | 属性 | `game.attributes` | 词条怎么合并(递减、软阈值)?本值 × 平铺 × 百分比 × 另乘 之后是多少? |
-| 随机源 | `createRng` / `mulberry32` / `seedFromString` / `randomRng` | 同一颗种子跑两遍一样吗?要"不可复现"的那一个时用哪个?字符串种子怎么变成数? |
+| 随机源 | `createRng` / `mulberry32` / `seedFromString` / `randomRng` / `pickWeighted` | 同一颗种子跑两遍一样吗?要"不可复现"的那一个时用哪个?字符串种子怎么变成数?只有一份 [0, 1) 源时怎么按权重抽? |
 | 装备 | `game.equipment` | 这一层这一部位掉什么?这一件是什么品质、哪几条词条?装配后汇总多少? |
 | 背包 / 持有 | `createHoldingSystem` | 收得下吗?满了之后怎么办?装上去还占背包吗?同一件被挂在两个槽上怎么办? |
 | 副本 | `game.dungeons` | 哪些图开着?这次遇到谁?打几次出首领?通关给什么?这一境的内容有多硬(体检的另一半)? |
@@ -400,7 +400,7 @@ companions.activeMods(['fox', 'turtle'])  // 带多只时的合并
 | **收支要不要带来源**(审计"这批是哪来的") | 每条收支都可带 `source`;`audit()` 按资源与按来源各汇总一份,明细恒等于合计 |
 | **买不起时怎么办** | `pay` 默认**整笔要么全成、要么不动**并给出缺口;要允许分次付就显式开 `partial` |
 | **挂机产出的上限** | `produce(ledger, steps, perStep)` 逐步夹上限 —— 一步乘完再加是算不出"中途到顶"的 |
-| 随机源(可复现 / 平台随机) | `Rng` 接口;库自带 mulberry32,可换 |
+| 随机源(可复现 / 平台随机) | `Rng` 接口;库自带 mulberry32,可换。加权抽取走 `pickWeighted`(任意 `[0,1)` 源),`createRng` / `randomRng` 共用这一份 |
 | 存档介质与加密 | 库**不碰介质**:`encodeSave` 出字符串,写哪儿、要不要加密都归你 |
 | **存档的编码格式** | `SaveFormat.codec: { encode, decode }`(压缩/加密/换封套都行;迁移链与形状修复照旧) |
 | 内容校验的严格度 | `defineGame(config, { strict: true })` 把警告也当错误 |

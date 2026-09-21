@@ -1,22 +1,26 @@
 /**
- * 随机服务 —— 概率逻辑必须可复现,否则「掉率不对」这类问题只能靠抽样猜。
- * 与上游工程的 `utils/random` 同形(mulberry32),所以两边可以交换种子对账。
+ * Reproducible randomness. Drop-rate bugs are undiagnosable if you cannot
+ * replay the same seed. Hosts that inject the same `next()` (or wrap
+ * {@link mulberry32}) stay sequence-aligned with {@link createRng}.
+ *
+ * `createRng` and `randomRng` share {@link pickWeighted} so a host
+ * RandomService can call the same kernel instead of keeping a second copy.
  */
 export interface Rng {
   next(): number
-  /** [min, max] 闭区间整数 */
+  /** [min, max] closed integer */
   int(min: number, max: number): number
-  /** [min, max) 浮点 */
+  /** [min, max) float */
   float(min: number, max: number): number
   chance(p: number): boolean
   pick<T>(arr: readonly T[]): T
   weighted<T>(items: readonly T[], weightOf: (item: T) => number): T
   /**
-   * 洗牌 —— **可选**。
+   * Shuffle — **optional**.
    *
-   * 引擎自己不用它;留成可选是为了让使用方**已有的随机服务**能直接接进来
-   * (例如上游工程的 RandomService 就没有 shuffle)。
-   * 接口越大,接进来要满足的条件越多,而库并不需要它。
+   * The engine never calls it. It stays optional so a host random service
+   * can plug in without growing to match a larger interface the library
+   * does not need.
    */
   shuffle?<T>(arr: readonly T[]): T[]
 }
@@ -43,6 +47,37 @@ export function seedFromString(s: string): number {
   return h >>> 0
 }
 
+/**
+ * Weighted pick against any `[0, 1)` source.
+ *
+ * - Negative weights are treated as 0.
+ * - Zero-weight items never win while any positive weight exists.
+ * - If every weight is ≤ 0, falls back to a uniform pick (same as `pick`).
+ * - Empty input returns `undefined` (typed as `T`) — same as `pick`.
+ * - Buckets are half-open: `next() === 0` selects the first **positive** weight.
+ *
+ * `createRng` / `randomRng` / a host RandomService should all call this so
+ * the algorithm cannot drift.
+ */
+export function pickWeighted<T>(
+  items: readonly T[],
+  weightOf: (item: T) => number,
+  next: () => number
+): T {
+  const positive = items.filter(it => Math.max(0, weightOf(it)) > 0)
+  const pool = positive.length > 0 ? positive : items
+  if (pool.length === 0) return items[0]!
+  if (positive.length === 0) return pool[Math.floor(next() * pool.length)]!
+  let total = 0
+  for (const it of positive) total += Math.max(0, weightOf(it))
+  let roll = next() * total
+  for (const it of positive) {
+    roll -= Math.max(0, weightOf(it))
+    if (roll < 0) return it
+  }
+  return positive[positive.length - 1]!
+}
+
 export function createRng(seed: number | string = 1): Rng {
   const rand = mulberry32(typeof seed === 'string' ? seedFromString(seed) : seed)
   return {
@@ -51,17 +86,7 @@ export function createRng(seed: number | string = 1): Rng {
     float: (min, max) => rand() * (max - min) + min,
     chance: p => rand() < p,
     pick: arr => arr[Math.floor(rand() * arr.length)]!,
-    weighted: (items, weightOf) => {
-      let total = 0
-      for (const it of items) total += Math.max(0, weightOf(it))
-      if (total <= 0) return items[Math.floor(rand() * items.length)]!
-      let roll = rand() * total
-      for (const it of items) {
-        roll -= Math.max(0, weightOf(it))
-        if (roll <= 0) return it
-      }
-      return items[items.length - 1]!
-    },
+    weighted: (items, weightOf) => pickWeighted(items, weightOf, rand),
     shuffle: arr => {
       const out = [...arr]
       for (let i = out.length - 1; i > 0; i -= 1) {
@@ -82,21 +107,7 @@ export const randomRng: Rng = {
   float: (min, max) => Math.random() * (max - min) + min,
   chance: p => Math.random() < p,
   pick: arr => arr[Math.floor(Math.random() * arr.length)]!,
-  weighted: (items, weightOf) => {
-    // 先剔除零权重项:否则 roll===0(Math.random() 可能为 0)时首项即使权重 0 也满足
-    // roll<=0 被选中 —— 零权重本不该出现。掐掉后 selection 只在正权重里发生。
-    const positive = items.filter(it => Math.max(0, weightOf(it)) > 0)
-    if (positive.length === 0) return items[Math.floor(Math.random() * items.length)]!
-    let total = 0
-    for (const it of positive) total += Math.max(0, weightOf(it))
-    if (total <= 0) return positive[Math.floor(Math.random() * positive.length)]!
-    let roll = Math.random() * total
-    for (const it of positive) {
-      roll -= Math.max(0, weightOf(it))
-      if (roll < 0) return it
-    }
-    return positive[positive.length - 1]!
-  },
+  weighted: (items, weightOf) => pickWeighted(items, weightOf, Math.random),
   shuffle: arr => {
     const out = [...arr]
     for (let i = out.length - 1; i > 0; i -= 1) {

@@ -316,11 +316,11 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 | 判据 | 钉住的事 | 在哪 |
 | --- | --- | --- |
-| 用例 | 公开面的行为,591 个用例 / 80 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
+| 用例 | 公开面的行为,592 个用例 / 80 个文件(零运行时依赖,`bun install && bun run test` 即可跑) | `src/**/*.spec.ts` |
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配四份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 78 个运行时导出 + 212 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
+| 公开面判据 | 79 个运行时导出 + 212 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
 
 上表只是最常被问到的五条。真正跑起来的是**十八道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `文档链接` / `文档引用` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `公开面数量` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
 
@@ -360,7 +360,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 - **不再新增能力层**:新玩法请在库外组合已有的层(配方见 [组装指南](./docs/assembly.md));
   库自己只做三件事 —— 修错、补判据、让文档与实现一致;
 - **版本只加 patch**:0.1.x 往下走,不跳 minor、不追里程碑;真正的对外承诺是
-  **公开面清单**(78 个运行时导出 + 212 个公开类型,逐字钉在 `src/publicApi.spec.ts`);
+  **公开面清单**(79 个运行时导出 + 212 个公开类型,逐字钉在 `src/publicApi.spec.ts`);
 - **数值曲线不承诺不变**(换题材本来就要调),但**默认值与旧行为**在未显式配置时逐位一致,
   由 `baseline.spec.ts` 的摘要与 `docs/parity.md` 的对账守着。
 
@@ -398,7 +398,7 @@ packages/engine/
   src/
     index.ts        公开入口(对外承诺的就是这里导出的东西,清单钉在 publicApi.spec.ts)
     numeric.ts      数值适配层(默认 number,大数库可插拔)
-    rng.ts          可复现随机(mulberry32,与源工程可交换种子对账)
+    rng.ts          可复现随机(mulberry32) + 题材无关的加权核 pickWeighted
     counters.ts     计数器基准快照(生涯 / 本期共用一份计数)
     attributes.ts   属性登记表 + 合并规则 + 最终属性结算
     buffs.ts        状态(时效增益):叠时长、过期即散、按分类清除

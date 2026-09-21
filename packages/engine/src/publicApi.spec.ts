@@ -296,6 +296,7 @@ const RUNTIME_EXPORTS = [
   'mulberry32',
   'numberNumeric',
   'overReachFactor',
+  'pickWeighted',
   'planIdle',
   'proficiencyFromExp',
   'progressText',
