@@ -2393,7 +2393,7 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
   checked += 1
   const bagCount = () =>
     page.evaluate(() => {
-      const m = /藏品\s*(\d+)/.exec(document.querySelector('main')?.innerText || '')
+      const m = /行囊\s*(\d+)/.exec(document.querySelector('main')?.innerText || '') || /藏品\s*(\d+)/.exec(document.querySelector('main')?.innerText || '')
       return m ? Number(m[1]) : null
     })
   const opened = await page
@@ -2494,7 +2494,7 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
   /** 行囊件数(只读 main;弹窗 Teleport 到 body,不在这棵子树里) */
   const bagCount = () =>
     page.evaluate(() => {
-      const m = /藏品\s*(\d+)/.exec(document.querySelector('main')?.innerText || '')
+      const m = /行囊\s*(\d+)/.exec(document.querySelector('main')?.innerText || '') || /藏品\s*(\d+)/.exec(document.querySelector('main')?.innerText || '')
       return m ? Number(m[1]) : null
     })
   /** 背包页顶上那栏「器灵尘 N」 */
@@ -2508,8 +2508,8 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
       [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|')
     )
   const opened = await page
-    .locator('main button', { hasText: /^分解$/ })
-    .first()
+    .locator('main')
+    .getByRole('button', { name: '批量分解装备' })
     .click({ timeout: 3000 })
     .then(() => true)
     .catch(() => false)
