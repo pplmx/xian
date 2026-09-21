@@ -376,11 +376,13 @@
           <span class="text-[12px] text-ink-soft">此品质起一律保留</span>
           <span class="text-[10px] text-ink-faint">低于它才交给缘分裁决</span>
         </div>
-        <div class="mt-1.5 flex flex-wrap gap-1">
+        <!-- 选中的档位只靠 borderColor 表达,读屏需要显式的按压态(与 SettingsView 的 theme/battleSpeed 同一范式) -->
+        <div class="mt-1.5 flex flex-wrap gap-1" role="group" aria-label="品质保留线">
           <button
             v-for="q in KEEP_QUALITY_CHOICES"
             :key="q.rank"
             class="chip-ink"
+            :aria-pressed="settings.smartKeep.minQuality === q.rank"
             :style="settings.smartKeep.minQuality === q.rank ? { color: q.color, borderColor: q.color } : {}"
             :class="settings.smartKeep.minQuality === q.rank ? '' : 'border-ink/25 text-ink-faint'"
             @click="settings.smartKeep.minQuality = q.rank"
@@ -400,12 +402,12 @@
             {{ settings.smartKeep.minTier > 0 ? `低于 ${settings.smartKeep.minTier} 阶:不问缘分` : '未启用' }}
           </span>
         </div>
-        <div class="mt-1.5 flex items-center gap-2">
-          <button class="chip-ink !px-3" :disabled="settings.smartKeep.minTier <= 0" @click="bumpMinTier(-1)">−</button>
+        <div class="mt-1.5 flex items-center gap-2" role="group" aria-label="此阶以下回收的下限">
+          <button class="chip-ink !px-3" :disabled="settings.smartKeep.minTier <= 0" aria-label="降低回收下限" @click="bumpMinTier(-1)">−</button>
           <span class="tabular w-14 text-center font-kai text-[15px] text-ink">
             {{ settings.smartKeep.minTier > 0 ? `${settings.smartKeep.minTier} 阶` : '关' }}
           </span>
-          <button class="chip-ink !px-3" :disabled="settings.smartKeep.minTier >= 32" @click="bumpMinTier(1)">＋</button>
+          <button class="chip-ink !px-3" :disabled="settings.smartKeep.minTier >= 32" aria-label="提高回收下限" @click="bumpMinTier(1)">＋</button>
           <span class="ml-1 text-[10px] text-ink-faint">
             你当前可到 {{ playerTier }} 阶
           </span>
