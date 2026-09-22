@@ -491,7 +491,14 @@ export function createCombatEngine<T = number>(config: BattleConfig<T> = {}, num
       // 自己接管:地板与全部修正都归调用方,引擎不再叠加
       return config.damageFn({ attacker, defender, attack: atk, defense: def, mult, variance, damageBonus, damageReduction }, rng)
     }
-    const base = atk <= 0 ? 0 : (atk * atk) / (atk + def)
+    /*
+     * 数值稳定的抗性公式断带: `atk*atk/(atk+def)` 在 atk 超过 ~1.3e154 时
+     * `atk*atk` 先溢出成 Infinity, 再 Infinity/Infinity → NaN(ISS-273)。
+     * 等价改写 `atk * (atk/(atk+def))`: `atk/(atk+def) ≤ 1` 恒成立,
+     * 有限 atk 永不溢出; atk=Infinity 时返回 Infinity, 下游 min(lost,hp) 收成击杀, 也不会 NaN。
+     */
+    const ratio = atk <= 0 ? 0 : atk / (atk + def)
+    const base = atk <= 0 ? 0 : atk * ratio
     const jitter = 1 + rng.float(-variance, variance)
     const dmg = base * mult * jitter * (1 + damageBonus) * (1 - damageReduction)
     return Math.max(atk * minDamageRatio, dmg)

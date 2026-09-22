@@ -72,6 +72,35 @@ describe('战斗解算 —— 副本遭遇要分得出胜负', () => {
     expect(damageOf(tanky)).toBeLessThan(damageOf(plain))
   })
 
+  it('超大数值(1e200 量级)不把伤害结算成 NaN —— ISS-273', () => {
+    const engine = createCombatEngine({ variance: 0 })
+    const result = engine.resolve(
+      fighter({ attack: 1e200, hp: 1e200, maxHp: 1e200 }),
+      fighter({ id: 'e', name: '乙', attack: 1e160, hp: 1e200, maxHp: 1e200, defense: 1e160 }),
+      createRng(4)
+    )
+    // 旧公式 atk*atk 溢出 → NaN, 遭成 hp 变 NaN 不说, 就连事件伤害都是 NaN。
+    // 数值稳定改写后必须全程有限。
+    for (const e of result.events) expect(Number.isFinite(e.damage)).toBe(true)
+    expect(Number.isFinite(Number(result.enemyHp))).toBe(true)
+    expect(Number.isFinite(Number(result.playerHp))).toBe(true)
+  })
+
+  it('护盾面对极限数值也保持有限,不污染结算', () => {
+    const engine = createCombatEngine({
+      variance: 0,
+      shield: { capRatio: 0.5 },
+      skillEffects: true
+    })
+    const result = engine.resolve(
+      fighter({ attack: 1e200, hp: 1e180, maxHp: 1e200, mods: {} }),
+      fighter({ id: 'e', name: '乙', attack: 1e190, hp: 1e200, maxHp: 1e200, defense: 0 }),
+      createRng(4)
+    )
+    expect(Number.isFinite(Number(result.enemyHp))).toBe(true)
+    expect(Number.isFinite(Number(result.playerHp))).toBe(true)
+  })
+
   it('吸血与回合回复都能把血量拉回来', () => {
     const engine = createCombatEngine()
     const result = engine.resolve(
