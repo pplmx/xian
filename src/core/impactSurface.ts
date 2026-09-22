@@ -325,4 +325,4 @@ export function mainVeinEverUsed(): boolean {
   return PROBES.some(p => veinPeakOf(p) > VEIN_SIDE_CAP)
 }
 
-export { VEIN_MAIN_CAPACITY, VEIN_SIDE_CAP, VEIN_TOTAL_CAPACITY, SAMSARA_STAGES, stageAt }
+export { VEIN_MAIN_CAPACITY, VEIN_SIDE_CAP, SAMSARA_STAGES, stageAt }

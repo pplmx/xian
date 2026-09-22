@@ -296,7 +296,6 @@ export function archiveBond(): BondRecord | null {
   return { daoluId: b.daoluId, name: def?.name ?? b.daoluId, stage: b.stage, ending, shared: b.shared }
 }
 
-export { DAOLU, daoluDef, stageIndex }
 
 // ============ 共同事件(Phase 33.9) ============
 

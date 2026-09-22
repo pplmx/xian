@@ -263,4 +263,4 @@ export function abandonRealm(): void {
   usePlayerStore().setSecretRealm(null)
 }
 
-export { SECRET_LAYERS, SECRET_MAX_LOSSES, SECRET_REALMS, secretRealmDef }
+export { SECRET_LAYERS, SECRET_MAX_LOSSES, SECRET_REALMS }

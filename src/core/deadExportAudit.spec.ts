@@ -131,7 +131,13 @@ interface DeadExport {
 }
 
 /** 全量扫描:顶层导出名 → 出现次数(声明处各计一次;spec 与运行时分开计) */
-function scanExports(): { dead: DeadExport[]; specOnly: DeadExport[]; scanned: number; exports: number } {
+function scanExports(): {
+  dead: DeadExport[]
+  specOnly: DeadExport[]
+  againDead: DeadExport[]
+  scanned: number
+  exports: number
+} {
   const files = walk(SRC)
   const declarations = new Map<string, number>()
   const declFile = new Map<string, string>()
@@ -200,6 +206,69 @@ function scanExports(): { dead: DeadExport[]; specOnly: DeadExport[]; scanned: n
   const dead: DeadExport[] = []
   const specOnly: DeadExport[] = []
   /**
+   * 裸再导出的活死判据与普通导出**不同**,得单独收集。
+   *
+   * 一个 `export { gn }`(不带 from)并不声明名字,只是把本模块里已有的名字
+   * 再许一个出口。它活着的唯一判据是:**有别的文件 import 它时走的是这个模块**。
+   * 词离开了 origin 模块(如 '@/utils/gnum')、也不从本模块取,那这个再导出就是
+   * 一层没人走的门面 —— 读者看见 `export { gn }` 会以为 gn 是这个模块的脸面,
+   * 改了 origin 也没人拦。旧版审计完全看不见它们(ExportDeclaration 既不算声明
+   * 也不算使用),腐烂的再导出就这么躲过了红线(本轮清掉的 14 个名字即此类)。
+   *
+   * 注意 `export { X } from './y'`(带 from 的转发)是另一回事:它是显式的
+   * 门面转发,一眼看得出名字本尊住哪,不在本判据之内。
+   */
+  /** 谁从模块 M import 了哪些(原名)名字:moduleFile → Set(名字) */
+  const importedFrom = new Map<string, Set<string>>()
+  /**
+   * 哪些名字以裸再导出出现在哪些模块里:moduleFile → Set(名字)。
+   * 与 importedFrom 对照:再导出但没人从该模块 import —— 死门面。
+   */
+  const againExportedFrom = new Map<string, Set<string>>()
+  /** 再导出名字对应的行号,报错时给精确位置:moduleFile → name → line */
+  const againExportLine = new Map<string, Map<string, number>>()
+
+  for (const file of files) {
+    const text = scriptOf(file)
+    if (!text.trim()) continue
+    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+    for (const stmt of sf.statements) {
+      if (!ts.isImportDeclaration(stmt) || !stmt.importClause || !ts.isStringLiteral(stmt.moduleSpecifier)) continue
+      const nb = stmt.importClause.namedBindings
+      if (!nb || !ts.isNamedImports(nb)) continue
+      const target = resolveImport(file, stmt.moduleSpecifier.text)
+      if (!target) continue
+      if (!importedFrom.has(target)) importedFrom.set(target, new Set())
+      for (const el of nb.elements) {
+        // 别名 `import { X as Y }` 里 X 才是这个模块真正拿出去的名字
+        importedFrom.get(target)!.add(el.propertyName ? el.propertyName.text : el.name.text)
+      }
+    }
+    const visit = (node: ts.Node): void => {
+      if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause) && !node.moduleSpecifier) {
+        const line = sf.getLineAndCharacterOfPosition(node.getStart()).line + 1
+        for (const el of node.exportClause.elements) {
+          const name = el.name.text
+          if (!againExportedFrom.has(file)) againExportedFrom.set(file, new Set())
+          againExportedFrom.get(file)!.add(name)
+          if (!againExportLine.has(file)) againExportLine.set(file, new Map())
+          againExportLine.get(file)!.set(name, line)
+        }
+      }
+      ts.forEachChild(node, visit)
+    }
+    visit(sf)
+  }
+
+  const againDead: DeadExport[] = []
+  for (const [file, names] of againExportedFrom) {
+    const got = importedFrom.get(file) ?? new Set()
+    for (const name of names) {
+      if (!got.has(name)) againDead.push({ name, file: `${posix(relative(SRC, file))}:${againExportLine.get(file)!.get(name)!}` })
+    }
+  }
+
+  /**
    * 哪些模块是"运行时模块":从入口(main.ts)出发、沿 import 传递可达的那些。
    *
    * 两条走过的弯路:
@@ -261,13 +330,14 @@ function scanExports(): { dead: DeadExport[]; specOnly: DeadExport[]; scanned: n
   return {
     dead: dead.sort(byName),
     specOnly: specOnly.sort(byName),
+    againDead: againDead.sort((a, b) => a.file.localeCompare(b.file) || a.name.localeCompare(b.name)),
     scanned: files.length,
     exports: declarations.size
   }
 }
 
 describe('死导出审计', () => {
-  const { dead, specOnly, scanned, exports } = scanExports()
+  const { dead, specOnly, againDead, scanned, exports } = scanExports()
   const deadNames = dead.map(d => d.name)
 
   it('扫描确实跑起来了(空库不算通过)', () => {
@@ -315,5 +385,28 @@ describe('死导出审计', () => {
     const names = specOnly.map(d => d.name)
     const stale = Object.keys(SPEC_ONLY_ALLOWLIST).filter(n => !names.includes(n))
     expect(stale, '这些已经不再是"只在 spec 里出现"了:请从 SPEC_ONLY_ALLOWLIST 删掉').toEqual([])
+  })
+
+  /**
+   * 裸再导出(`export { X }`,不带 from)的活死判据:
+   * 有人从**本模块** import 到 X 才算活 —— 否则 X 的出口是 origin 模块,
+   * 这层再导出是没人走的门面(本轮清掉 14 个,见各文件 diff)。
+   *
+   * 例外极少见,真要留也需要理由(如"为旧路径保留别名"),写进 AGAIN_ALLOWLIST。
+   */
+  const AGAIN_ALLOWLIST: Record<string, string> = {}
+
+  it('裸再导出不能是死门面:`export { X }` 必须有人从本模块 import 走', () => {
+    const unexpected = againDead.filter(d => !((d.file + ' → ' + d.name) in AGAIN_ALLOWLIST))
+    expect(
+      unexpected.map(d => `${d.file} → ${d.name}`),
+      '这些名字被裸再导出,却没人从本模块 import:要么删掉这层再导出(名字本尊另有出处),要么把 import 改道走本模块'
+    ).toEqual([])
+  })
+
+  it('裸再导出豁免不常驻:已接上或已删除的,从名单销账', () => {
+    const keys = new Set(againDead.map(d => `${d.file} → ${d.name}`))
+    const stale = Object.keys(AGAIN_ALLOWLIST).filter(k => !keys.has(k))
+    expect(stale, '这些再导出已经有人从本模块 import(或已删除):请从 AGAIN_ALLOWLIST 销账').toEqual([])
   })
 })

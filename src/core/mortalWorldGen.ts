@@ -21,7 +21,7 @@
  * 同一头妖物换个生态位、换个 Boss 机制家族、配一条不同的世界规则,
  * 玩家面对的就是一组新的解法空间。
  */
-import type { CombatRules, CombatantSnap, EnemyDef, StatMods } from '@/types'
+import type { CombatRules, CombatantSnap, EnemyDef } from '@/types'
 import { mulberry32, RandomService } from '@/utils/random'
 import { MORTAL_REGIONS, MORTAL_TIER_MAX } from '@/data/regions'
 import { ENEMIES, enemyDef } from '@/data/enemies'
@@ -577,4 +577,3 @@ export function materialCapacity(): MaterialCapacity {
 export const BIAS_POOL: readonly string[] = BIASES
 
 export { NOVELTY_MIN }
-export type { StatMods }

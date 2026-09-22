@@ -8,7 +8,7 @@
  * 库负责"查性格、叠加在中性值上、没带伙伴时给中性";本作只留内容
  * (四个性格叫什么、各改哪几项,见 data/petTraits)。
  */
-import { PERSONALITY_NAMES, personalityDesc, PET_TRAITS, type PetPersonalityId } from '@/data/petTraits'
+import { PERSONALITY_NAMES, personalityDesc, type PetPersonalityId } from '@/data/petTraits'
 import { COMPANION_SYSTEM } from './engineWorld'
 
 export interface PetPersonalityEffects {
@@ -25,7 +25,7 @@ export interface PetPersonalityEffects {
 export type PetPersonality = PetPersonalityId
 
 // 名字与说明是文案,仍在 data/petTraits;这里原样转出,调用方不必改 import
-export { PERSONALITY_NAMES, personalityDesc, PET_TRAITS }
+export { PERSONALITY_NAMES, personalityDesc }
 
 /** 陪行灵兽的性格效果(无灵兽时返回中性)—— 叠加规则由库的伙伴系统算 */
 export function personalityEffects(petId: string | null): PetPersonalityEffects {
