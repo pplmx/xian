@@ -99,12 +99,12 @@ export function eventTierOf(eventId: string): EventTier {
  * 判据 eventTier.spec 用真引擎做蒙特卡洛对账,两边不许分叉。
  */
 export function tierChances(stagePending: boolean): Record<EventTier, number> {
-  const any = EXPLORE_EVENT_CHANCE
+  const occurrence = EXPLORE_EVENT_CHANCE
   const chain = stagePending ? CHAIN_STAGE_CHANCE : 0
   return {
-    qiyuan: any * chain,
-    jiyuan: any * (1 - chain) * FORTUNE_CHANCE,
-    jingyu: any * (1 - chain) * (1 - FORTUNE_CHANCE)
+    qiyuan: occurrence * chain,
+    jiyuan: occurrence * (1 - chain) * FORTUNE_CHANCE,
+    jingyu: occurrence * (1 - chain) * (1 - FORTUNE_CHANCE)
   }
 }
 

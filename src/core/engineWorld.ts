@@ -13,6 +13,8 @@
 import type { Game, GameConfig } from 'wanxiang-engine'
 import { attributeDefs, defineGame } from 'wanxiang-engine'
 import type { AttributeDef } from 'wanxiang-engine'
+// 版本跟包走,不手抄字面量(手抄的 1.33.0 曾在仓库里躺到落后两个小版)
+import pkg from '@root/package.json'
 import type { GNum } from '@/types'
 import { LIFESPAN_WORLDS, REALMS, SUB_NAMES, WORLDS } from '@/data/realms'
 import { WORLD_BREAK_MAJOR } from '@/data/realms'
@@ -39,6 +41,7 @@ import {
   EXP_SUB_GROWTH,
   LATE_COMBAT_GROWTH,
   LATE_EXP_GROWTH,
+  POWER_WEIGHTS,
   QUALITY_OUT_OF_BAND,
   QUALITY_TIER_SHIFT,
   SOFT_CAPS,
@@ -94,12 +97,15 @@ function attributes(): AttributeDef[] {
 /** 一份完整的世界配置:内容全部来自本作的 data/,机制全部来自公共库 */
 export const ENGINE_WORLD_CONFIG: GameConfig<GNum> = {
   name: '玄枢录',
-  version: '1.33.0',
+  version: pkg.version,
   attributes: {
     defs: attributes(),
     // 递减阶梯的来源仍是 data/constants(平衡口径的唯一定义处)——
     // 传进去,而不是让库用它自己的默认值:哪天调平衡,这里跟得上。
-    diminishingWeights: DIMINISH_WEIGHTS
+    diminishingWeights: DIMINISH_WEIGHTS,
+    // 战力权重同一份(见 constants.POWER_WEIGHTS):引擎的 power 结算与本作
+    // core/formulas 的 powerScore 若都从这里读,改平衡不会出现两侧各改各的。
+    powerWeights: POWER_WEIGHTS
   },
   realms: {
     worlds: WORLDS.map(w => ({

@@ -2,11 +2,11 @@
  * 路线远征(Phase 21)—— 天道契约 × 逐层择路 × 道途深化 × 天道变数
  * 远征是状态机:入界战 → 三层二择其一 → 界主。层间可自由回凡界换构筑再续行
  */
-import type { CelestialWorldDef, CombatantSnap, CombatRules, PactDef, StatMods, WorldFoeShape, WorldRouteNode } from '@/types'
+import type { CelestialWorldDef, CombatantSnap, CombatRules, MutatorDef, PactDef, StatMods, WorldFoeShape, WorldRouteNode } from '@/types'
 import { rng } from '@/utils/random'
 import { mulberry32, RandomService } from '@/utils/random'
 import { celestialWorldDef } from '@/data/endgame'
-import { PACTS, pactDef } from '@/data/pacts'
+import { pactDef } from '@/data/pacts'
 import { MUTATORS } from '@/data/mutators'
 import { EXPEDITION_GUARDIAN_LAYER, EXPEDITION_ROUTE_LAYERS, MUTATION_FOES } from '@/data/endgame'
 import { buildPlayerSnap } from './playerSnap'
@@ -393,12 +393,22 @@ export function challengeMutation(mutatorIds: string[]): MutationResult | null {
     ui.toast('先择道途,方可应变数', 'warn')
     return null
   }
+  // 校验在花道源之前:规则池里查不到的变数不能静默跳过 —— 少一条规则就是少一档难度,
+  // 战报与入口界面都不会亮明。真丢了就退回,让玩家重新窥探,而不是带着残规则进场。
+  const muts: MutatorDef[] = []
+  for (const id of mutatorIds) {
+    const next = MUTATORS.find(m => m.id === id)
+    if (!next) {
+      ui.toast(`变数规则有缺失(${id}),请重新窥探`, 'warn')
+      return null
+    }
+    muts.push(next)
+  }
   if (!endgame.spendDaoSource(MUTATION_ENTRY_COST)) {
     ui.toast(`道源不足 ${MUTATION_ENTRY_COST}`, 'warn')
     return null
   }
-  const muts = mutatorIds.map(id => MUTATORS.find(m => m.id === id)).filter(m => m !== undefined)
-  const rules = chainRules(currentDaoRules(), ...muts.map(m => m!.rules))
+  const rules = chainRules(currentDaoRules(), ...muts.map(m => m.rules))
   const player = usePlayerStore()
   // 变数连战不属于任何一界:它站在阶梯最深处(与变数天界的锚点同档)
   const { ref, judgement } = celestialFoeCaliber(player.major, player.celestialStats.mods, VOID_ANCHOR_TIER)
@@ -538,4 +548,3 @@ export function forecastExpedition(worldId: string, pactId: string | null, gateI
   }
 }
 
-export { PACTS }

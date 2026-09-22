@@ -15,7 +15,7 @@ import { usePlayerStore } from '@/stores/player'
 import { useInventoryStore } from '@/stores/inventory'
 import { useEndgameStore } from '@/stores/endgame'
 import { CELESTIAL_WORLDS } from '@/data/endgame'
-import { forecastExpedition, startWorldExpedition, chooseRouteNode, challengeGuardian } from './expedition'
+import { forecastExpedition, startWorldExpedition, chooseRouteNode, challengeGuardian, challengeMutation } from './expedition'
 import { celestialJudgementLines } from './gauntlet'
 import type { EquipSlot, EquipmentInstance } from '@/types'
 
@@ -145,5 +145,15 @@ describe('远征 · 判定看得见', () => {
     expect(outcome!.judgementLines, '战报没交代这一战的判定').toEqual(
       celestialJudgementLines(player.celestialStats.mods, player.major, chiyan.anchorTier)
     )
+  })
+})
+
+describe('远征 · 天道变数', () => {
+  it('规则池里查不到的变数拒绝应战,且不扣道源(静默少一条规则是难度欺诈)', () => {
+    seated(9, MORTAL_TOP, 'heaven', 20)
+    const eg = useEndgameStore()
+    const before = eg.daoSource
+    expect(challengeMutation(['no_such_mutator']), '未知变数应弹回让玩家重窥探').toBeNull()
+    expect(eg.daoSource, '拒绝应战却扣了道源').toBe(before)
   })
 })

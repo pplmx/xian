@@ -51,6 +51,11 @@ function nerfMods(mods: StatMods, factor: number): StatMods {
  * 演化 N 轮:每轮把上一轮的最强流派全词条 ×0.75(累计),观察 Meta 是否温和轮换
  */
 export function runMetaEvolution(rounds = 5, runsPerWorld = 8): MetaRound[] {
+  // 每轮都要读「最强」与「次强」两档,少于两个流派时演化无从谈起 ——
+  // 与其在排序后的数组上撞 undefined,不如开场就把不成立的前提说破。
+  if (BUILD_PROFILES.length < 2) {
+    throw new Error(`meta 演化需要至少两个流派作最强/次强参照,当前只有 ${BUILD_PROFILES.length} 个`)
+  }
   const nerfLevel = new Map<string, number>()
   const result: MetaRound[] = []
   let lastTop: string | null = null

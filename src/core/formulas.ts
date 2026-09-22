@@ -44,6 +44,7 @@ import {
   BUILDING_COST_GROWTH,
   GONGFA_UP_GROWTH,
   GONGFA_UP_WUDAO_BASE,
+  POWER_WEIGHTS,
   UPGRADE_DUST_BASE,
   UPGRADE_DUST_GROWTH,
   UPGRADE_STONE_TIER_BASE
@@ -101,9 +102,9 @@ export function baseCombatStats(major: number, sub: number): { attack: GNum; def
   return { attack: stats.attack!, defense: stats.defense!, maxHp: stats.maxHp! }
 }
 
-/** 战力评分 */
+/** 战力评分 —— 权值单一来源 data/constants.POWER_WEIGHTS(引擎属性系统同用一份) */
 export function powerScore(attack: GNum, defense: GNum, maxHp: GNum): GNum {
-  return add(add(mulN(attack, 3), mulN(defense, 2)), mulN(maxHp, 0.15))
+  return add(add(mulN(attack, POWER_WEIGHTS.attack), mulN(defense, POWER_WEIGHTS.defense)), mulN(maxHp, POWER_WEIGHTS.maxHp))
 }
 
 /** 突破基础成功率(未计加成)—— 实现已搬进公共库的等级系统,此处转发 */
@@ -188,4 +189,3 @@ export function daoFruitGain(major: number, sub: number): number {
   return total + Math.floor(sub / 3)
 }
 
-export { gn }

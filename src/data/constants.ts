@@ -209,6 +209,14 @@ export const SHIELD_CAP_RATIO = 0.5
  * 目标:极端单词条堆叠边际递减,混合构筑相对更值;规则性加成(道途/剑意)不受此约束
  */
 export const DIMINISH_WEIGHTS = [1, 0.75, 0.5, 0.25] as const
+/**
+ * 战力权重(attack×3 + defense×2 + maxHp×0.15)。
+ *
+ * 权值是**战力口径的唯一定义处**:core/formulas 的 powerScore 从这里取,
+ * 引擎属性系统的 powerWeights 配置也由 engineWorld 显式传同一份 —— 两边都在动
+ * 平衡时不会各改各的(引擎的默认值恰好与此相同,但显式传入后改这里就够)。
+ */
+export const POWER_WEIGHTS = { attack: 3, defense: 2, maxHp: 0.15 } as const
 export const DIMINISH_KEYS = [
   'lowHpDamage',
   'lowHpReduction',

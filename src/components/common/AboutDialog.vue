@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
   import BaseModal from './BaseModal.vue'
-  import pkg from '../../../package.json'
+  import pkg from '@root/package.json'
 
   defineProps<{
     open: boolean

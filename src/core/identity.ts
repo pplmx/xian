@@ -2,8 +2,8 @@
  * 玩家身份与传奇(Phase 28)—— 这到底是谁的修仙录
  * 画像与叙事全部来自真实道痕统计,不能人工选择,不给任何属性
  */
-import type { DaoMark, DaoPathId } from '@/types'
-import { DAO_PATHS, daoPathDef, celestialWorldDef } from '@/data/endgame'
+import type { DaoMark, DaoPathId, MarkReplay } from '@/types'
+import { DAO_PATHS, celestialWorldDef } from '@/data/endgame'
 import { pactDef } from '@/data/pacts'
 import { usePlayerStore } from '@/stores/player'
 import { useEndgameStore } from '@/stores/endgame'
@@ -75,9 +75,11 @@ export function cultivatorProfile(marks: DaoMark[]): CultivatorProfile | null {
     .sort((a, b) => b.pct - a.pct)
 
   // 风险偏好:签契占比 × 平均倍率
-  const pactMarks = marks.filter(m => m.replay?.pactId)
+  // 用类型谓词把「filter 之后必有 replay.pactId」写进类型 —— 否则下面的读取全靠 !.
+  // 硬扛,哪天 filter 的判据一改、类型说不了话,这里就静默拿 undefined 乘倍率。
+  const pactMarks = marks.filter((m): m is DaoMark & { replay: MarkReplay & { pactId: string } } => !!m.replay?.pactId)
   const pactRate = pactMarks.length / marks.length
-  const avgMult = pactMarks.length ? pactMarks.reduce((s, m) => s + (pactDef(m.replay!.pactId!)?.sourceMult ?? 1), 0) / pactMarks.length : 1
+  const avgMult = pactMarks.length ? pactMarks.reduce((s, m) => s + (pactDef(m.replay.pactId)?.sourceMult ?? 1), 0) / pactMarks.length : 1
   const riskScore = pactRate * avgMult
   const riskText = riskScore >= 1.2 ? '高' : riskScore >= 0.5 ? '中' : '低'
 
@@ -85,7 +87,7 @@ export function cultivatorProfile(marks: DaoMark[]): CultivatorProfile | null {
   const mixedRate = marks.filter(m => m.buildName.includes('·')).length / marks.length
   const buildTendency = mixedRate >= 0.6 ? '道路常杂糅' : mixedRate >= 0.25 ? '中度专精' : '一门深入'
   const favoriteBuild = mode(marks.map(m => m.buildName)) ?? '杂学'
-  const favoritePacts = [...new Set(pactMarks.map(m => pactDef(m.replay!.pactId!)?.name).filter((x): x is string => !!x))].slice(0, 2)
+  const favoritePacts = [...new Set(pactMarks.map(m => pactDef(m.replay.pactId)?.name).filter((x): x is string => !!x))].slice(0, 2)
 
   // 最擅长 / 最薄弱世界(≥3 样本)
   const byWorld = new Map<string, { name: string; clears: number; total: number }>()
@@ -122,9 +124,11 @@ export function daoNarrative(daoId: DaoPathId | null, marks: DaoMark[], currentL
   const thisLife = marks.filter(m => m.life === currentLife)
   if (thisLife.length < 2) return null
   const builds = new Set(thisLife.map(m => m.buildName))
-  const pacted = thisLife.filter(m => m.replay?.pactId)
-  const heavyPacts = pacted.filter(m => (pactDef(m.replay!.pactId!)?.sourceMult ?? 1) >= 2.5)
-  const canPacts = pacted.filter(m => m.replay!.pactId === 'can' || m.replay!.pactId === 'xue')
+  // 与 cultivatorProfile 里同一手:用类型谓词把「filter 之后必有 replay.pactId」写进类型,
+  // 否则下面三次读取全靠 !. 硬扛 —— 判据一改,类型说不了话,这里就静默拿 undefined 比字面量。
+  const pacted = thisLife.filter((m): m is DaoMark & { replay: MarkReplay & { pactId: string } } => !!m.replay?.pactId)
+  const heavyPacts = pacted.filter(m => (pactDef(m.replay.pactId)?.sourceMult ?? 1) >= 2.5)
+  const canPacts = pacted.filter(m => m.replay.pactId === 'can' || m.replay.pactId === 'xue')
 
   switch (daoId) {
     case 'sword':
@@ -168,5 +172,3 @@ export function trackClearRecords(worldName: string, totalRounds: number, pactId
   if (reward > 0) endgame.updateRecord('biggest_reward', reward, life, worldName, 'max')
 }
 
-/** 供画像页显示道途名 */
-export { daoPathDef }

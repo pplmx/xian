@@ -17,7 +17,7 @@ bun preview        # 预览构建结果
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 293 个 spec / 2734 例;本作自己那部分 213 个 / 2142 例) |
+| `bun run test` | 全量用例(全量 295 个 spec / 2763 例;本作自己那部分 215 个 / 2171 例) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 类型检查(`vue-tsc -b`)+ ESLint |
 | `bun run lint` | 只跑 ESLint |
@@ -38,7 +38,7 @@ bun preview        # 预览构建结果
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 293 个 spec / 2734 例(本作自己那部分 213 个 / 2142 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红;例数由 `test:report` 对照本次运行实录核对,加删用例忘了改文档也会红 |
+| 用例 | 全量 295 个 spec / 2763 例(本作自己那部分 215 个 / 2171 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红;例数由 `test:report` 对照本次运行实录核对,加删用例忘了改文档也会红 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
 | 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`) |
@@ -175,11 +175,12 @@ bun run build:apk        # 直接出 Release APK
 本仓库的 `packages/engine` 是它的上游。**选一处开发,别两边同时改**:
 
 ```bash
-git subtree push --prefix=packages/engine engine main   # 本作 → 库
-git subtree pull --prefix=packages/engine engine main   # 库 → 本作
+bun run sync:engine                                    # 本作 → 库(一键,等义于下行)
+git subtree push --prefix=packages/engine engine main  # 本作 → 库
+git subtree pull --prefix=packages/engine engine main  # 库 → 本作
 ```
 
-改完库先推独立仓。漏推时 `bun run check:engine` 会红(本仓与独立仓必须同树)。
+改完库先推独立仓(`bun run sync:engine` 一行)。漏推时 `bun run check:engine` 会红(本仓与独立仓必须同树),而且报错信息里就把补救命令打印出来。
 两边都改会让 `subtree push` 拒绝执行,那时先 `pull` 合回来。细节与对账清单见 [engine.md](./engine.md)。
 
 ## 设计规范

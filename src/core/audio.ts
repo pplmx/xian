@@ -381,14 +381,19 @@ export function unlockAudio(): void {
     if (prefs.musicOn) startBgm()
     return
   }
-  initPromise ??= init()
-    .then(() => {
-      void T!.start()
-      applyPrefs()
-    })
-    .catch(err => {
-      console.error('[音频] 引擎加载失败', err)
-    })
+  if (!initPromise) {
+    initPromise = init()
+      .then(() => {
+        void T!.start()
+        applyPrefs()
+      })
+      .catch(err => {
+        // 若不把 initPromise 清回 null,`??=` 从此短路:一次瞬时失败(采样 404、资源没加载完)
+        // 就让整局音乐永久沉默,控制台之外毫无痕迹、也不再试。清了,下次交互自动重试。
+        console.error('[音频] 引擎加载失败,下次交互将重试', err)
+        initPromise = null
+      })
+  }
 }
 
 export function startBgm(): void {

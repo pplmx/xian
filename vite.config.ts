@@ -49,6 +49,11 @@ export default defineConfig({
       // (未来版本的默认值)不提供 CJS 那套变量,继续用 __dirname 会在切换后报错
       '@': resolve(import.meta.dirname, 'src'),
       /*
+       * 根别名:src 里想读仓库根的少数稳定文件(package.json 的 version 等)走它,
+       * 免得散落 `../../..` 这种跨目录相对导入。只读、不改,演进时别用熟。
+       */
+      '@root': resolve(import.meta.dirname),
+      /*
        * 公共库按**包名**解析 —— 应用侧源码里写的就是 `from 'wanxiang-engine'`,
        * 与"别人装了包再用"时一模一样。
        *
@@ -68,6 +73,10 @@ export default defineConfig({
     // 单个要跑上万次模拟,单独执行约 2 秒,但 97 个文件并行时互相抢 CPU 会顶到
     // vitest 的 5 秒默认上限 —— 切到 bun 后并行度更高,synergyScan 实测 5227ms 超时。
     // 放宽的是**并行竞争的余量**,不是掩盖变慢:该用例单跑仍是 1.8~2.0 秒
-    testTimeout: 20000
+    testTimeout: 20000,
+    // 把转译缓存落到磁盘,跨运行复用:vitest 实录里 transform 占了八成追踪时间,
+    // 而本仓 118k 行 + 293 份 spec 每次都要在「并行开跑前」整份重新转译一次。
+    // fsModuleCache 按内容哈希失效 —— 改过的文件照常重转,没改的不再重算。
+    fsModuleCache: true
   }
 })

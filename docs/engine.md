@@ -75,11 +75,12 @@ import { emptyProgress } from 'wanxiang-engine'
 
 ```bash
 # 选一处开发,别两边同时改 —— 两边都改会让 subtree 拒绝推送
-git subtree push --prefix=packages/engine engine main   # 本作 → 库
-git subtree pull --prefix=packages/engine engine main   # 库 → 本作
+bun run sync:engine                                    # 本作 → 库(等义于下行,见 package.json)
+git subtree push --prefix=packages/engine engine main  # 本作 → 库(改写时保留两种写法)
+git subtree pull --prefix=packages/engine engine main  # 库 → 本作
 ```
 
-改完 `packages/engine` 之后**先推独立仓**,再推本仓。漏推会被 `bun run check:engine` 的第 ⑧ 步拦住:本仓 `packages/engine` 与独立仓 `main` 必须是同一棵树。
+改完 `packages/engine` 之后**先推独立仓(一条 `bun run sync:engine`)**,再推本仓。漏推会被 `bun run check:engine` 的第 ⑧ 步拦住:本仓 `packages/engine` 与独立仓 `main` 必须是同一棵树 —— 且它报错时把补救命令 `sync:engine` 一起打印出来,照着敲就行。
 
 | 命令 | 钉住的事 |
 | --- | --- |

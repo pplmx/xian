@@ -42,7 +42,7 @@ assert.equal(
   `本仓 packages/engine 与独立仓 ${REF} 不是同一棵树\n` +
     `  本仓:   ${local}\n` +
     `  独立仓: ${remote}\n` +
-    '推过去:\n' +
-    '  git subtree push --prefix=packages/engine engine main'
+    '推过去(一键):\n' +
+    '  bun run sync:engine  (旧写法 git subtree push --prefix=packages/engine engine main 仍可用)'
 )
 console.log(`   同树 ${local.slice(0, 12)}(独立仓 ${REF})`)
