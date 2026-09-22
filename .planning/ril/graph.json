@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 421,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-22T11:37:44+00:00",
+  "updated_at": "2026-09-22T14:47:31+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -23296,11 +23296,11 @@
     "DEC-182": {
       "id": "DEC-182",
       "type": "decision",
-      "status": "active",
-      "version": 1,
+      "status": "superseded",
+      "version": 2,
       "created_at": "2026-09-20T15:52:54+00:00",
-      "updated_at": "2026-09-20T15:52:54+00:00",
-      "touched_round": 399,
+      "updated_at": "2026-09-22T14:47:31+00:00",
+      "touched_round": 421,
       "rationale": "公共库 createCombatEngine 是本作唯一走 toNumber 的路径,但实机战斗用 GNum 安全的 core/combat.ts,库 combat 仅被 parity/ablation spec 驱动,任何 e>308 都不可达;修复需把库伤害管线整体改到 Numeric<T> 空间,对已发布且被 parity 锁定的构件是高风险重构,且当前无消费者触发,故暂缓，作为库侧待办记录",
       "alternatives_rejected": "就地给 rawDamage/heal/toNumber 加 Number.isFinite 截断:会改变库的既有返回语义,且在无真实触发下引入未验证的行为分支,拒绝"
     },
@@ -24445,6 +24445,32 @@
       "touched_round": 421,
       "commit": "9cb5857",
       "summary": "combat rawDamage 抗性公式数值稳定改写, 修复大数溢出成 NaN"
+    },
+    "DEC-184": {
+      "id": "DEC-184",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-22T14:47:22+00:00",
+      "updated_at": "2026-09-22T14:47:22+00:00",
+      "touched_round": 421,
+      "title": "ISS-273 就地以数值稳定等价改写修复, 取代暂缓(DEC-182)",
+      "rationale": "DEC-182 曾将 createCombatEngine 的 e>308 溢出判为暂缓(库侧待办), 并否决『就地加 isFinite 截断』——因那会改变有限输入返回语义并引入未验证分支。本轮采用不同的方案: 把 (atk*atk)/(atk+def) 数值稳定等价改写为 atk*(atk/(atk+def))。该改写对有限输入数学等价(594 测试含多条 toEqual(base.events) 逐位一致断言全绿), 且不改变既有返回语义、不引入新行为分支, 故不落入 DEC-182 否决的 isFinite 截断类别。鉴于本作经 workspace:* 实跑此子树, 修复即时生效, 遂就地落地并结案 ISS-273。DEC-183『不擅自改公共库』的约束在此让步, 以『独立库同步为待办』承接。@用户拍板保留修复、正式演进决策",
+      "alternatives_rejected": "坚持暂缓(放任本作实跑的子树保留可复现的 NaN 缺陷); 再走 isFinite 截断(改变有限输入语义, 仍是 DEC-182 否决的类别)"
+    },
+    "TASK-428": {
+      "id": "TASK-428",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-22T14:47:25+00:00",
+      "updated_at": "2026-09-22T14:47:25+00:00",
+      "touched_round": 421,
+      "category": "maintainability",
+      "severity": 0.4,
+      "confidence": 0.9,
+      "effort": 2,
+      "summary": "把 ISS-273 的数值稳定修复(抗性公式 atk*(atk/(atk+def)))同步回独立仓 wanxiang-engine, 并解除对 DEC-182 暂缓的停留"
     }
   },
   "edges": [
@@ -35728,6 +35754,24 @@
       "to": "ISS-273",
       "type": "resolves",
       "created_at": "2026-09-22T11:37:38+00:00"
+    },
+    {
+      "from": "DEC-184",
+      "to": "DEC-182",
+      "type": "supersedes",
+      "created_at": "2026-09-22T14:47:28+00:00"
+    },
+    {
+      "from": "DEC-184",
+      "to": "TASK-428",
+      "type": "governs",
+      "created_at": "2026-09-22T14:47:28+00:00"
+    },
+    {
+      "from": "CHG-492",
+      "to": "TASK-428",
+      "type": "implements",
+      "created_at": "2026-09-22T14:47:28+00:00"
     }
   ]
 }
