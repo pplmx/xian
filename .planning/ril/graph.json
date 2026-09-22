@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 420,
+  "round": 421,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-21T05:14:22+00:00",
+  "updated_at": "2026-09-22T11:37:44+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -22204,10 +22204,10 @@
     "HYP-113": {
       "id": "HYP-113",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-09-19T11:48:46+00:00",
-      "updated_at": "2026-09-19T11:48:46+00:00",
+      "updated_at": "2026-09-22T11:34:59+00:00",
       "touched_round": 403,
       "summary": "像「注册表展开顺序被后面的同名项盖掉」这类错误,类型检查、lint 与单测都看不见(两边都合法),只有看真界面或写一条「问注册表要实物」的判据才拦得住。",
       "confidence": 0.85
@@ -23285,11 +23285,11 @@
     "ISS-273": {
       "id": "ISS-273",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-20T15:52:54+00:00",
-      "updated_at": "2026-09-20T15:52:54+00:00",
-      "touched_round": 399,
+      "updated_at": "2026-09-22T11:37:44+00:00",
+      "touched_round": 421,
       "severity": 0.8,
       "summary": "公共库 combat 引擎在 e>308 时 toNumber→Infinity→NaN,伤害/治疗/护盾全损坏(本作实机不可达)"
     },
@@ -24422,6 +24422,29 @@
       "source": "bun run check && bun run test:report — 2733 passed / 0 failed",
       "summary": "fruitCultBonusText + CharacterView cultBonusText. 10 fruit → +23.8% not +24%. dataTextAudit bans Math.round(fruitInfo.effective).",
       "confidence": 1.0
+    },
+    "EV-451": {
+      "id": "EV-451",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-22T11:37:33+00:00",
+      "updated_at": "2026-09-22T11:37:33+00:00",
+      "touched_round": 421,
+      "source": "9cb5857",
+      "summary": "rawDamage (atk*atk)/(atk+def) 在 atk=1e155 溢出成 Infinity→NaN(实测), 数值稳定改写 atk*(atk/(atk+def)) 后 1e200 量级全程有限, 594 测试全绿",
+      "confidence": 1.0
+    },
+    "CHG-492": {
+      "id": "CHG-492",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-22T11:37:35+00:00",
+      "updated_at": "2026-09-22T11:37:35+00:00",
+      "touched_round": 421,
+      "commit": "9cb5857",
+      "summary": "combat rawDamage 抗性公式数值稳定改写, 修复大数溢出成 NaN"
     }
   },
   "edges": [
@@ -35699,6 +35722,12 @@
       "to": "ISS-301",
       "type": "addresses",
       "created_at": "2026-09-21T05:12:53+00:00"
+    },
+    {
+      "from": "CHG-492",
+      "to": "ISS-273",
+      "type": "resolves",
+      "created_at": "2026-09-22T11:37:38+00:00"
     }
   ]
 }
