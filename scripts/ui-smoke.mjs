@@ -214,6 +214,9 @@ for (const route of ROUTES) {
     return leaked.length
   }
   await scanNumericLeaks(`${route} 正文泄漏`)
+  // 逐页按钮清单在导航之后再抓:goto 前抓会拿到上一页的数组(41847c0 把这一行
+  // 卷进 scanNumericLeaks 重构时丢过一次,门在首路由上直接 ReferenceError 崩掉)
+  const buttons = await page.getByRole('button').all()
   for (const b of buttons.slice(0, DEPTH)) {
     const label = ((await b.innerText().catch(() => '')) || '').replace(/\s+/g, ' ').trim()
     if (!label || SKIP.test(label)) continue
