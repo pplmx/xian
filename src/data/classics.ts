@@ -110,7 +110,7 @@ export const CLASSICS: ClassicDef[] = [
     title: '网文仙阶(无原典)',
     source: '当代网络文学',
     school: '网文',
-    gist: '玄仙、金仙、太乙、大罗,以及神将、神王、神帝诸阶,是当代仙侠最常用的阶位序列 —— 取自约定俗成,不攀经书。',
+    gist: '金仙、太乙、大罗,以及神将、神王、神帝诸阶,是当代仙侠最常用的阶位序列 —— 取自约定俗成,不攀经书。',
     realms: ['jinxian', 'taiyi', 'daluo', 'shenjiang', 'shenwang', 'shendi']
   }
 ]

@@ -34,7 +34,7 @@
 import type { CounterKey } from '@/types'
 import { type DaoLean, type DaoluDef } from '@/data/daolu'
 
-/** 关系冲突的类型 —— 六个事件各代表一种,不做重复 */
+/** 关系冲突的类型 —— 七个事件各代表一种,不做重复 */
 export type ConflictKind =
   /** 资源冲突:只有一份 */
   | 'resource'
@@ -152,7 +152,7 @@ function c(
 }
 
 /**
- * 六个共同事件,各代表一种关系冲突。
+ * 七个共同事件,各代表一种关系冲突。
  *
  * 刻意不做几十个 —— 类型齐比数量多重要
  */

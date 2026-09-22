@@ -110,7 +110,7 @@ export const EVENTS: EventDef[] = [
       c(
         '买下他的"仙缘"',
         [
-          o(40, '你花了灵石,换来一枚品相不俗的丹药。', { type: 'stone', tierAmount: -30 }, { type: 'pill', count: 2 }),
+          o(40, '你花了灵石,换来两枚品相不俗的丹药。', { type: 'stone', tierAmount: -30 }, { type: 'pill', count: 2 }),
           o(35, '竟真是好东西!一件灵光流转的法器。', { type: 'stone', tierAmount: -30 }, { type: 'equipment', minQualityRank: 2 }),
           o(25, '打开一看,不过是块顽石。你被骗了。', { type: 'stone', tierAmount: -30 })
         ],
