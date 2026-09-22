@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 421,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-22T14:47:31+00:00",
+  "updated_at": "2026-09-22T15:40:43+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10531,7 +10531,7 @@
       "version": 1,
       "created_at": "2026-09-15T10:28:25+00:00",
       "updated_at": "2026-09-15T10:28:25+00:00",
-      "touched_round": 385,
+      "touched_round": 421,
       "summary": "状态(buff/负面状态)系统:data/buffs 定义 + cultivation store buffs 生命周期(施加/叠加/过期修剪) + BuffDialog/状态条展示",
       "path": "src/stores/cultivation.ts"
     },
@@ -24471,6 +24471,40 @@
       "confidence": 0.9,
       "effort": 2,
       "summary": "把 ISS-273 的数值稳定修复(抗性公式 atk*(atk/(atk+def)))同步回独立仓 wanxiang-engine, 并解除对 DEC-182 暂缓的停留"
+    },
+    "ISS-302": {
+      "id": "ISS-302",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-22T15:40:33+00:00",
+      "updated_at": "2026-09-22T15:40:33+00:00",
+      "touched_round": 421,
+      "severity": 0.7,
+      "summary": "轮回经济:金丹浅修是绝对最优, 深修到真仙效率差约500倍(rebirthRoi/sec); 道果曲线无界(f^0.9), 需深修独有回报的系统层设计"
+    },
+    "ISS-303": {
+      "id": "ISS-303",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-22T15:40:33+00:00",
+      "updated_at": "2026-09-22T15:40:33+00:00",
+      "touched_round": 421,
+      "severity": 0.6,
+      "summary": "前期(0-3境)灵石/玄铁/悟道点三缺, 建筑与功法被卡死; 同期炼丹灵草过剩(4.5~13x) —— 资源流错位(economySim读数)"
+    },
+    "EV-452": {
+      "id": "EV-452",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-22T15:40:37+00:00",
+      "updated_at": "2026-09-22T15:40:37+00:00",
+      "touched_round": 421,
+      "source": "rebirthRoi.spec/economySim.spec (审计复算)",
+      "summary": "SS-302: 各转世点效率 金丹6.749(100%)→真仙0.013(≈0.2%); daoFruitCurve 500世单品耗时压到0.5%, 100→200世边际46%。ISS-303: 玄铁0-2境瓶颈0.3(消耗=产出3.3x), 悟道0境产出3/时耗170/境(缺口28x), 灵草同期闲置13.6。",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -35772,6 +35806,24 @@
       "to": "TASK-428",
       "type": "implements",
       "created_at": "2026-09-22T14:47:28+00:00"
+    },
+    {
+      "from": "ISS-302",
+      "to": "COMP-018",
+      "type": "located_in",
+      "created_at": "2026-09-22T15:40:40+00:00"
+    },
+    {
+      "from": "ISS-303",
+      "to": "COMP-018",
+      "type": "located_in",
+      "created_at": "2026-09-22T15:40:43+00:00"
+    },
+    {
+      "from": "ISS-302",
+      "to": "ISS-303",
+      "type": "causes",
+      "created_at": "2026-09-22T15:40:43+00:00"
     }
   ]
 }
