@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 422,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-23T03:17:03+00:00",
+  "updated_at": "2026-09-23T03:23:13+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24631,6 +24631,18 @@
       "touched_round": 422,
       "summary": "ISS-303 快赢落地:herbExchangeService(灵草兑灵石,防印钞)+engineFacilities 首级免玄铁+藏经阁保底4/h",
       "commit": "b530fdf"
+    },
+    "ISS-305": {
+      "id": "ISS-305",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T03:23:11+00:00",
+      "updated_at": "2026-09-23T03:23:11+00:00",
+      "touched_round": 422,
+      "summary": "悟道点前期瓶颈的真杠杆:功法进修成本下调(0~1境收益 vs 功法sink差20倍)",
+      "rationale": "ISS-303 快赢③(藏经阁保底4/h)已按拟定落地,但 economySim 实测:0~1 境悟道点收入仅 3~6/h,功法进修 sink 高达 85~121/h,缺口超 20 倍;收入侧保底数学上救不动(era-0 要达标需 14~28 倍产出,破坏等级线性)。真杠杆在 sink 侧:对 gongfaUpCost 前几阶(或早期境界)做进阶成本折扣。需产品拍板目标口径(0~1 境 ratio 提到 ~0.5 或 ~1 够学档)与折扣数值;落地会联动 engine 的 gongfaUpgradeCost discount 参数、progressionDoc/engineParity 增长断言,属独立平衡改动,故与 ISS-303 快赢分离跟踪",
+      "alternatives_rejected": "收入侧把藏经阁保底拉到 0~1境 达标(需 14~28 倍产出,荒谬且破坏等级线性);全局调低 GONGFA_UP_WUDAO_BASE(会推高 4 境后本就过剩的悟道点)"
     }
   },
   "edges": [
@@ -36028,6 +36040,12 @@
       "to": "TASK-430",
       "type": "implements",
       "created_at": "2026-09-23T03:16:49+00:00"
+    },
+    {
+      "from": "ISS-305",
+      "to": "ISS-303",
+      "type": "causes",
+      "created_at": "2026-09-23T03:23:13+00:00"
     }
   ]
 }
