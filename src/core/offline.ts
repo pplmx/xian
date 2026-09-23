@@ -193,7 +193,16 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const trip = { stone: gnZero(), exp: gnZero(), items: 0 }
   if (session) {
     const region = regionDef(session.regionId)
-    if (region) {
+    // 离线越界白嫖修复:会话若指向「境界不足」的区域(minRealm 只是软门槛,正常也能靠解锁链
+    // 残存进来),离线曾无条件按该区域 tier 全额发收益与高阶装备 —— major3 挂仙界 12h 净得
+    // 6 件高阶件,全因离线从不复查境界与区域是否匹配。离线期间玩家不在场,无从检验
+    // 「打不打得过」,故干脆不进冲突区:境界够不上该区域门槛,这一程就不结算、直接了结。
+    // (在线越界挑战的自由保留不动 —— 那里玩家在场、有风险、打过才有,这里只堵离线白嫖。)
+    if (region && region.minRealm > player.major) {
+      notes.push(`历练之地「${region.name}」须更高境界方可深入,你境界未足,此程未得收获`)
+      adventure.setSession(null)
+      track('explores')
+    } else if (region) {
       const modeDef = EXPLORE_MODES[session.mode]
       // 与在线同源:灵兽性格 × 区域事件(妖潮)修正危险,普通战与首领战共用——
       // 从前离线两处都漏,「好战更易走险路 / 谨慎避祸」离线毫无作用
