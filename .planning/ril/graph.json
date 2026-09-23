@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 422,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-23T02:20:50+00:00",
+  "updated_at": "2026-09-23T02:42:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -583,7 +583,7 @@
       "version": 1,
       "created_at": "2026-09-09T16:07:51+00:00",
       "updated_at": "2026-09-09T16:07:51+00:00",
-      "touched_round": 403,
+      "touched_round": 422,
       "summary": "历练系统(exploration.ts + offline.ts 会话结算)"
     },
     "CHG-010": {
@@ -24509,22 +24509,22 @@
     "ISS-304": {
       "id": "ISS-304",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-23T00:42:33+00:00",
-      "updated_at": "2026-09-23T00:42:33+00:00",
-      "touched_round": 421,
+      "updated_at": "2026-09-23T02:42:20+00:00",
+      "touched_round": 422,
       "severity": 0.55,
       "summary": "离线历练白嫖高阶区域: minRealm软门槛+离线不复查境界, 低境界(major3)挂仙界12h净得6件高阶装备; 已修(offline.ts境界门槛复查+offlineRealmGate.spec回归)"
     },
     "CHG-493": {
       "id": "CHG-493",
       "type": "change",
-      "status": "active",
-      "version": 1,
+      "status": "superseded",
+      "version": 2,
       "created_at": "2026-09-23T00:42:51+00:00",
-      "updated_at": "2026-09-23T00:42:51+00:00",
-      "touched_round": 421,
+      "updated_at": "2026-09-23T02:42:20+00:00",
+      "touched_round": 422,
       "commit": "9b838ee",
       "summary": "offline.ts 离线历练补 minRealm 境界复查"
     },
@@ -24572,9 +24572,9 @@
       "id": "TASK-430",
       "type": "task",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-23T02:20:38+00:00",
-      "updated_at": "2026-09-23T02:20:38+00:00",
+      "updated_at": "2026-09-23T02:23:56+00:00",
       "touched_round": 421,
       "category": "core-feature",
       "severity": 0.6,
@@ -24582,7 +24582,32 @@
       "effort": 2,
       "unlock_factor": 1.0,
       "priority_score": 2.0,
-      "summary": "落地ISS-303前期经济快赢:灵草兑灵石(防印钞限额度)+建筑首级免玄铁+藏经阁低级悟道点保底 — 待产品拍板数值后实施"
+      "summary": "落地ISS-303前期经济快赢:灵草兑灵石(防印钞限额度)+建筑首级免玄铁+藏经阁低级悟道点保底 — 待产品拍板数值后实施",
+      "lock_owner": "ses_f371a680dffeW2iwug3l5B5xSF",
+      "lock_until": "2026-09-23T02:53:56+00:00"
+    },
+    "DEC-187": {
+      "id": "DEC-187",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T02:41:59+00:00",
+      "updated_at": "2026-09-23T02:41:59+00:00",
+      "touched_round": 422,
+      "summary": "离线历练收益以「打不打得过」结算,摒弃 minRealm 境界门槛",
+      "rationale": "用户纠正上轮修复(CHG-493/9b838ee)的杠杆:能打过高阶副本掉高阶装备本就合理(在场、有风险、打过才有);真漏洞是 sampleWinRate 对三取样全负保底 0.08,离线按 场数×胜率 整段折算,打不过的号×海量挂机场次(12h≈3000战)也能积出百来胜→按 region.tier 掉高阶装备。境界门槛是错误近似(会误伤能越阶刷的高战号)。正确口径:离线胜率改用原始取样比例 sampleWinRateRaw,取样全负(打不过)胜场即 0、零掉落;能打赢照常结算,越阶能打也放行",
+      "alternatives_rejected": "继续用 minRealm 境界门槛(误伤能越阶刷的高战号,杠杆选错);全局改 sampleWinRate 0.08 保底(远征等长线内容仍依赖,会连带影响远征)"
+    },
+    "CHG-494": {
+      "id": "CHG-494",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T02:42:01+00:00",
+      "updated_at": "2026-09-23T02:42:01+00:00",
+      "touched_round": 422,
+      "commit": "2170afc",
+      "summary": "offline.sampleWinRateRaw 抛弃 0.08 保底+offline.ts 置代 minRealm 门槛"
     }
   },
   "edges": [
@@ -35950,6 +35975,18 @@
       "to": "COMP-025",
       "type": "governs",
       "created_at": "2026-09-23T02:20:48+00:00"
+    },
+    {
+      "from": "CHG-494",
+      "to": "ISS-304",
+      "type": "resolves",
+      "created_at": "2026-09-23T02:42:04+00:00"
+    },
+    {
+      "from": "DEC-187",
+      "to": "COMP-006",
+      "type": "governs",
+      "created_at": "2026-09-23T02:42:20+00:00"
     }
   ]
 }
