@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 421,
+  "round": 422,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-23T00:42:59+00:00",
+  "updated_at": "2026-09-23T02:20:50+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -425,7 +425,7 @@
       "version": 1,
       "created_at": "2026-09-09T14:46:51+00:00",
       "updated_at": "2026-09-09T14:46:51+00:00",
-      "touched_round": 280,
+      "touched_round": 421,
       "summary": "转世/轮回系统(reincarnation.ts + player store 跨世字段)"
     },
     "ISS-016": {
@@ -12128,7 +12128,7 @@
       "version": 1,
       "created_at": "2026-09-17T14:20:45+00:00",
       "updated_at": "2026-09-17T14:20:45+00:00",
-      "touched_round": 375,
+      "touched_round": 421,
       "summary": "数值审计工具链(economySim 经济闭环 / inflationAudit 战力膨胀 / expIncome 修为收入 / progressionSim 曲线 + 各自的 spec):用真实公式与真实数据估算各境界读数,经 bun run test:report 汇总;只度量不改数值"
     },
     "ISS-210": {
@@ -24527,6 +24527,62 @@
       "touched_round": 421,
       "commit": "9b838ee",
       "summary": "offline.ts 离线历练补 minRealm 境界复查"
+    },
+    "DEC-185": {
+      "id": "DEC-185",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T02:20:29+00:00",
+      "updated_at": "2026-09-23T02:20:29+00:00",
+      "touched_round": 421,
+      "summary": "轮回经济设计方向:深修「不可替代性」宿命传承(非倍率能力位,界域门槛,一世一悟)",
+      "rationale": "金丹浅修数学最优不可改(道果二次/耗时指数,效率必然单调崩塌);深修唯一缺的是「继续这一世」的理由。量补偿两种思路均实测发散:A案(道果追平时耗)真仙放大268倍制造新膨胀,B案(纯效率补偿)需267倍且指数发散——任何可折算成量的补偿都在同一陷阱。故改走高维:深修给金丹刷不到的「我是谁」遗产(境界门槛+一世至多一悟+非攻防倍率的能力位)。设计文档:docs/superpowers/specs/2026-09-23-rebirth-economy-deep-cultivation-legacy-design.md",
+      "alternatives_rejected": "A案(道果阶数追平时耗:真仙×268膨胀);B案(纯效率补偿:真仙267倍)/index发散;调KNEE/^0.9只改高度不改排序"
+    },
+    "DEC-186": {
+      "id": "DEC-186",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T02:20:33+00:00",
+      "updated_at": "2026-09-23T02:20:33+00:00",
+      "touched_round": 421,
+      "summary": "前期经济设计方向:平滑0~3境前期峰值+给死资源(灵草)出口,快赢三项优先",
+      "rationale": "economySim实读:0~3境玄铁(0.3)/悟道点(0.0~0.2)/灵石(0.5~0.9)三缺,同期灵草过剩(0境13.6x)。关键:这些是前期峰值,4境起stone/ore/page/wudao全转过剩/闲置——故不该全局降消耗(会加剧后期过剩),应平滑峰值+给过剩灵草一个出口,顺带缓灵石瓶颈(防印钞限额度)。设计文档:docs/superpowers/specs/2026-09-23-mortal-early-economy-mismatch-design.md",
+      "alternatives_rejected": "全局调低costOre/gongfaUpCost曲线(会加剧4境后过剩态,需重算整条流水,属另一档中风险改动);只调产出不放死资源出口(灵草仍死)"
+    },
+    "TASK-429": {
+      "id": "TASK-429",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T02:20:36+00:00",
+      "updated_at": "2026-09-23T02:20:36+00:00",
+      "touched_round": 421,
+      "category": "core-feature",
+      "severity": 0.7,
+      "confidence": 0.85,
+      "effort": 5,
+      "unlock_factor": 1.0,
+      "priority_score": 1.6,
+      "summary": "落地ISS-302宿命传承系统(8境传承,gateMajor门槛,一世一悟,非倍率能力位) — 待产品拍板数值与方向后实施,结构性平衡非本轮擅动"
+    },
+    "TASK-430": {
+      "id": "TASK-430",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T02:20:38+00:00",
+      "updated_at": "2026-09-23T02:20:38+00:00",
+      "touched_round": 421,
+      "category": "core-feature",
+      "severity": 0.6,
+      "confidence": 0.8,
+      "effort": 2,
+      "unlock_factor": 1.0,
+      "priority_score": 2.0,
+      "summary": "落地ISS-303前期经济快赢:灵草兑灵石(防印钞限额度)+建筑首级免玄铁+藏经阁低级悟道点保底 — 待产品拍板数值后实施"
     }
   },
   "edges": [
@@ -35858,6 +35914,42 @@
       "to": "ISS-302",
       "type": "causes",
       "created_at": "2026-09-23T00:42:59+00:00"
+    },
+    {
+      "from": "TASK-429",
+      "to": "ISS-302",
+      "type": "addresses",
+      "created_at": "2026-09-23T02:20:48+00:00"
+    },
+    {
+      "from": "TASK-430",
+      "to": "ISS-303",
+      "type": "addresses",
+      "created_at": "2026-09-23T02:20:48+00:00"
+    },
+    {
+      "from": "DEC-185",
+      "to": "TASK-429",
+      "type": "governs",
+      "created_at": "2026-09-23T02:20:48+00:00"
+    },
+    {
+      "from": "DEC-186",
+      "to": "TASK-430",
+      "type": "governs",
+      "created_at": "2026-09-23T02:20:48+00:00"
+    },
+    {
+      "from": "DEC-185",
+      "to": "COMP-003",
+      "type": "governs",
+      "created_at": "2026-09-23T02:20:48+00:00"
+    },
+    {
+      "from": "DEC-186",
+      "to": "COMP-025",
+      "type": "governs",
+      "created_at": "2026-09-23T02:20:48+00:00"
     }
   ]
 }
