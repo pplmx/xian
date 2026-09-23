@@ -12,6 +12,7 @@ import { titleDef } from '@/data/titles'
 import { COMPANION_SYSTEM } from '@/core/engineWorld'
 import { mentorDef } from '@/data/mentors'
 import { talentDef } from '@/data/talents'
+import { heritageDef } from '@/data/heritage'
 import { baseCultPerSec, baseQiRegen, expRequirement, qiCap } from '@/core/formulas'
 import { computeFinalStats, modOf } from '@/core/statsCalc'
 import { todayWeather } from '@/core/weather'
@@ -61,6 +62,8 @@ export const usePlayerStore = defineStore(
       count: 0,
       daoFruit: 0,
       talents: [] as string[],
+      /** 宿命传承(ISS-302):跨世永久的能力位,随神魂不灭 */
+      heritage: [] as string[],
       insight: 0,
       lives: [] as import('@/data/samsara').LifeRecord[],
       vow: null as import('@/data/samsara').LifeVow | null,
@@ -399,6 +402,16 @@ export const usePlayerStore = defineStore(
       }
     }
 
+    /** 宿命传承(ISS-302):永久持有,跨世不清零。重复锻造会被忽略 */
+    function addHeritage(id: string): void {
+      if (!reincarnation.value.heritage.includes(id)) {
+        reincarnation.value = {
+          ...reincarnation.value,
+          heritage: [...reincarnation.value.heritage, id]
+        }
+      }
+    }
+
     function addDaoFruit(n: number): void {
       reincarnation.value = { ...reincarnation.value, daoFruit: reincarnation.value.daoFruit + n }
     }
@@ -608,6 +621,9 @@ export const usePlayerStore = defineStore(
         daoFruit: Number.isFinite(r?.daoFruit) ? Math.max(0, r.daoFruit) : 0,
         talents: Array.isArray(r?.talents)
           ? r.talents.filter((id): id is string => typeof id === 'string' && !!talentDef(id))
+          : [],
+        heritage: Array.isArray(r?.heritage)
+          ? r.heritage.filter((id): id is string => typeof id === 'string' && !!heritageDef(id))
           : [],
         insight: Number.isFinite(r?.insight) ? Math.max(0, r.insight) : legacyInsightOf(count),
         lives: Array.isArray(r?.lives) ? r.lives : [],
@@ -865,6 +881,7 @@ export const usePlayerStore = defineStore(
       setTitle,
       setPet,
       addTalent,
+      addHeritage,
       addDaoFruit,
       addInsight,
       bond,

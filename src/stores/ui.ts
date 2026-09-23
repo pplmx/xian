@@ -74,6 +74,8 @@ export interface ReincarnationView {
   themeChoices: string[]
   /** 是否可从全部已开命题中自选(百世老修) */
   themeFree: boolean
+  /** ISS-302:这一世到达的最高未锻造传承(id);深修专属,无则 null */
+  heritageGained: string | null
 }
 
 let toastSeq = 1

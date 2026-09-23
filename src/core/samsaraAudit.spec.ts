@@ -238,8 +238,8 @@ describe('轮回审计 · 继承清单最小完备', () => {
     regionEvent: ['regionEvent'],
     regionStats: ['regions'],
     regionWins: ['regions'],
-    // 轮回对象是一整套(次数/道果/天赋/宿慧/履历/命题/契/道友),由下面几行共同覆盖
-    reincarnation: ['reincarnationCount', 'daoFruit', 'talents', 'insight', 'lives', 'vow', 'trial', 'bonds'],
+    // 轮回对象是一整套(次数/道果/天赋/宿慧/履历/命题/契/道友/传承),由下面几行共同覆盖
+    reincarnation: ['reincarnationCount', 'daoFruit', 'talents', 'heritage', 'insight', 'lives', 'vow', 'trial', 'bonds'],
     secretRealm: ['secretRealm'],
     sub: ['realm'],
     suppressQualified: ['suppress'],

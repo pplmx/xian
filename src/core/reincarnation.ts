@@ -47,6 +47,7 @@ import { archiveLifeTrial } from './lifeTrialService'
 import { rerollMortalWorld } from './mortalWorldService'
 import { archiveBond } from './daoluService'
 import { drawMany } from 'wanxiang-engine'
+import { lifeForge } from './heritageForge'
 
 /**
  * 天赋牌堆 —— 抽到的天赋不再重复出现,故每项都按"一次性"标记;
@@ -124,7 +125,9 @@ export function prepareReincarnation(): ReincarnationView {
     toNextStage: next ? next.insight - insightAfter : null,
     knownMaterials: carryLorePreview(stageAfter),
     themeChoices: (fresh.length > 0 ? fresh : pool).map(x => x.id),
-    themeFree: stageAfter.themeFreeChoice
+    themeFree: stageAfter.themeFreeChoice,
+    // ISS-302:这一世到的最高未锻造门槛 —— 深修的「我是谁」。只算不改,confirm 才落账
+    heritageGained: lifeForge(player.major)?.id ?? null
   }
   useUiStore().reincarnation = view
   return view
@@ -175,6 +178,8 @@ export function confirmReincarnation(chosenTalentId: string | null, chosenThemeI
     player.addTalent(id)
     collect('talent', id)
   }
+  // ISS-302:一世至多一悟 —— 本世到达的最高未锻造传承,在此一次性落账(随神魂不灭)
+  if (view.heritageGained) player.addHeritage(view.heritageGained)
 
   // 这一世的账:履历归档、宿慧落袋。二者都只在此处发生一次
   const r = view.review

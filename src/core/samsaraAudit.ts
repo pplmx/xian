@@ -151,6 +151,15 @@ export const HERITAGE: HeritageRow[] = [
     compressesGrowth: true
   },
   {
+    id: 'heritage',
+    name: '宿命传承',
+    mode: 'full',
+    detail: '一世至多一悟的跨世能力位(gateMajor 2..9);随神魂不灭,浅修金丹以下锻造不出。效果在信息/选择/容错/荣誉轴,非攻防/修速倍率(红线,见 heritageForge.spec)',
+    kind: 'legacy',
+    power: 'low',
+    compressesGrowth: false
+  },
+  {
     id: 'insight',
     name: '宿慧',
     mode: 'full',

@@ -138,6 +138,12 @@
         <span v-for="id in view.extraTalents" :key="id" class="mr-2 font-kai text-gold-ink">{{ talentDef(id)?.name }}</span>
       </p>
 
+      <!-- 这一世锻得的宿命传承(ISS-302):深修的「我是谁」,随神魂不灭 -->
+      <div v-if="view.heritageGained && heritageDef(view.heritageGained)" class="mt-4 rounded-lg border border-gold-ink/30 bg-gold-ink/5 px-3 py-2">
+        <p class="font-kai text-[13px] tracking-widest text-gold-ink">道统传承 · {{ heritageDef(view.heritageGained)!.name }}</p>
+        <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">{{ heritageDef(view.heritageGained)!.desc }}</p>
+      </div>
+
       <!-- 这一世的命题 -->
       <template v-if="view.themeChoices.length">
         <p class="mt-4 font-kai text-[13px] tracking-widest text-ink">
@@ -180,6 +186,7 @@
   import { usePlayerStore } from '@/stores/player'
   import { prepareReincarnation, confirmReincarnation } from '@/core/reincarnation'
   import { talentDef, TALENT_GRADE_COLORS, TALENT_GRADE_NAMES } from '@/data/talents'
+  import { heritageDef } from '@/data/heritage'
   import { lifeThemeDef, TABOO_NAMES } from '@/data/lifeThemes'
   import { heritageGroups } from '@/core/samsaraAudit'
   import { engine } from '@/core/engine'
