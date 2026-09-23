@@ -5,7 +5,7 @@ import { gn } from '@/utils/gnum'
 import { mulberry32, RandomService } from '@/utils/random'
 import { enemyDef } from '@/data/enemies'
 import { artifactDef } from '@/data/artifacts'
-import { makeEnemySnap, resolveCombat, sampleWinRate } from './combat'
+import { makeEnemySnap, resolveCombat, sampleWinRate, sampleWinRateRaw } from './combat'
 
 const seeded = (seed = 1): RandomService => new RandomService(mulberry32(seed))
 
@@ -89,6 +89,28 @@ describe('自动战斗', () => {
     const rate = sampleWinRate(playerSnap(1000), enemy, seeded(9), 5)
     expect(rate).toBe(0.93)
     expect(Number.isFinite(rate)).toBe(true)
+  })
+
+  it('离线原始胜率:打得过给正胜率,打不过给 0(不套 0.08 保底)', () => {
+    // 碾压级(战力差远超 3 取样能掩盖):原始胜率顶格 1
+    const crush = sampleWinRateRaw(playerSnap(1000), makeEnemySnap(wolf, 1, 1), seeded(9), 3)
+    expect(crush).toBe(1)
+    // 悬殊劣势(1 级裸装 vs 高阶小怪):原始胜率为 0 —— 打不过就 0,不给保底
+    const hopeless = sampleWinRateRaw(
+      { ...playerSnap(1), attack: gn(12), defense: gn(6), maxHp: gn(80) },
+      makeEnemySnap(wolf, 30, 1),
+      seeded(21),
+      3
+    )
+    expect(hopeless, '打不过的原始胜率应为 0').toBe(0)
+    // 对照:同一打不过局,带保底的 sampleWinRate 仍给了 0.08 —— 正是离线白嫖的根由
+    const floored = sampleWinRate(
+      { ...playerSnap(1), attack: gn(12), defense: gn(6), maxHp: gn(80) },
+      makeEnemySnap(wolf, 30, 1),
+      seeded(21),
+      3
+    )
+    expect(floored).toBe(0.08)
   })
 
   it('开局裸装带竹剑即可胜一层小怪(新手体验保护)', () => {

@@ -595,3 +595,22 @@ export function sampleWinRate(pSnap: CombatantSnap, eSnap: CombatantSnap, rng: R
   // 静默变 NaN,被调用方当作胜率一路传导(离线收益/远征)。表是 4 档,顶格就是 0.93
   return table[Math.min(table.length - 1, wins)]!
 }
+
+/**
+ * 取样的**原始胜率比例**(0..1,不套 0.08 保底)—— 专供离线历练结算。
+ *
+ * 为什么离线不能用带保底的 `sampleWinRate`:
+ *   它对「三取样全负」仍保底 0.08。离线按「战斗场数 × 胜率」整段折算,而场数随
+ *   挂机时长膨胀(12 小时可上万战)—— 打不过的号 × 海量场次,8% 也能积出上百"胜",
+ *   从而按 region.tier 掉高阶装备(实测 major3 挂仙界 12h 净得 6 件高阶件)。
+ *
+ *   离线的历练收益必须"打得过"才给:取样全负(打不过)就取到 0,没有胜场就没有掉落。
+ *   (远征等长线内容仍用带 0.08 保底的 `sampleWinRate`,那里节奏不同、不构成批量白嫖。)
+ */
+export function sampleWinRateRaw(pSnap: CombatantSnap, eSnap: CombatantSnap, rng: RandomService, samples = 3, rules?: CombatRules): number {
+  let wins = 0
+  for (let i = 0; i < samples; i += 1) {
+    if (resolveCombat(pSnap, eSnap, rng, rules).win) wins += 1
+  }
+  return samples > 0 ? wins / samples : 0
+}

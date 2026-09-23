@@ -22,7 +22,7 @@ import {
   OFFLINE_CAP_HOURS,
   OFFLINE_MODAL_MIN_SECONDS
 } from '@/data/constants'
-import { makeEnemySnap, resolveCombat, sampleWinRate } from './combat'
+import { makeEnemySnap, resolveCombat, sampleWinRateRaw } from './combat'
 import { buildPlayerSnap } from './playerSnap'
 import { generateEquipment } from './equipGen'
 import { acquireEquipment, afterWin } from './loot'
@@ -193,16 +193,15 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const trip = { stone: gnZero(), exp: gnZero(), items: 0 }
   if (session) {
     const region = regionDef(session.regionId)
-    // 离线越界白嫖修复:会话若指向「境界不足」的区域(minRealm 只是软门槛,正常也能靠解锁链
-    // 残存进来),离线曾无条件按该区域 tier 全额发收益与高阶装备 —— major3 挂仙界 12h 净得
-    // 6 件高阶件,全因离线从不复查境界与区域是否匹配。离线期间玩家不在场,无从检验
-    // 「打不打得过」,故干脆不进冲突区:境界够不上该区域门槛,这一程就不结算、直接了结。
-    // (在线越界挑战的自由保留不动 —— 那里玩家在场、有风险、打过才有,这里只堵离线白嫖。)
-    if (region && region.minRealm > player.major) {
-      notes.push(`历练之地「${region.name}」须更高境界方可深入,你境界未足,此程未得收获`)
-      adventure.setSession(null)
-      track('explores')
-    } else if (region) {
+    /**
+     * 离线历练的收益以「打不打得过」为准,而不是区域境界门槛(minRealm)。
+     * 能打过高阶副本、掉高阶装备,本就合理(获取代价在线在场);漏洞只在
+     * 打不过却靠离线白拿 —— 那是 `sampleWinRate` 的 0.08 保底 × 海量挂机场次
+     * 积出的虚假胜场(见 combat.sampleWinRateRaw 的说明)。故离线结算用**原始
+     * 取样胜率**:取样全负(打不过)胜场即 0、无掉落;真打得过的号(哪怕越阶)
+     * 照常结算。在线越界挑战的自由与此同源,一并保留。
+     */
+    if (region) {
       const modeDef = EXPLORE_MODES[session.mode]
       // 与在线同源:灵兽性格 × 区域事件(妖潮)修正危险,普通战与首领战共用——
       // 从前离线两处都漏,「好战更易走险路 / 谨慎避祸」离线毫无作用
@@ -231,8 +230,13 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         // 与在线同源:道途规则 × 本世逆旅契(explorationRules)一并生效——
         // 从前离线只带 currentDaoRules,四张逆旅契的加难在本世最大时段里落空
         const winRate = mobDef
-          ? sampleWinRate(buildPlayerSnap(), makeEnemySnap(mobDef, region.tier, dangerFactor), rng, 3, explorationRules())
+          ? sampleWinRateRaw(buildPlayerSnap(), makeEnemySnap(mobDef, region.tier, dangerFactor), rng, 3, explorationRules())
           : 0.3
+        // 打不过(取样全负、胜率贴 0):这一程零胜、零掉落。玩家挂机时既赢不了,
+        // 也就不该按 region.tier 凭空掉高阶装备。给句说明,免得满屏"失利"看不明。
+        if (winRate === 0) {
+          notes.push(`此地之敌远胜于你,离线切磋无一胜绩,未得收获`)
+        }
         wins = Math.round(battles * winRate)
 
         // 灵石与修为 —— 与在线 afterWin 同源:取胜奖励乘区域事件加丰倍率(rewardMult)
