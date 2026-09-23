@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 422,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-23T02:42:20+00:00",
+  "updated_at": "2026-09-23T03:17:03+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24486,11 +24486,11 @@
     "ISS-303": {
       "id": "ISS-303",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-22T15:40:33+00:00",
-      "updated_at": "2026-09-22T15:40:33+00:00",
-      "touched_round": 421,
+      "updated_at": "2026-09-23T03:17:03+00:00",
+      "touched_round": 422,
       "severity": 0.6,
       "summary": "前期(0-3境)灵石/玄铁/悟道点三缺, 建筑与功法被卡死; 同期炼丹灵草过剩(4.5~13x) —— 资源流错位(economySim读数)"
     },
@@ -24571,11 +24571,11 @@
     "TASK-430": {
       "id": "TASK-430",
       "type": "task",
-      "status": "active",
-      "version": 2,
+      "status": "resolved",
+      "version": 4,
       "created_at": "2026-09-23T02:20:38+00:00",
-      "updated_at": "2026-09-23T02:23:56+00:00",
-      "touched_round": 421,
+      "updated_at": "2026-09-23T03:17:03+00:00",
+      "touched_round": 422,
       "category": "core-feature",
       "severity": 0.6,
       "confidence": 0.8,
@@ -24583,8 +24583,8 @@
       "unlock_factor": 1.0,
       "priority_score": 2.0,
       "summary": "落地ISS-303前期经济快赢:灵草兑灵石(防印钞限额度)+建筑首级免玄铁+藏经阁低级悟道点保底 — 待产品拍板数值后实施",
-      "lock_owner": "ses_f371a680dffeW2iwug3l5B5xSF",
-      "lock_until": "2026-09-23T02:53:56+00:00"
+      "lock_owner": null,
+      "lock_until": null
     },
     "DEC-187": {
       "id": "DEC-187",
@@ -24608,6 +24608,29 @@
       "touched_round": 422,
       "commit": "2170afc",
       "summary": "offline.sampleWinRateRaw 抛弃 0.08 保底+offline.ts 置代 minRealm 门槛"
+    },
+    "DEC-188": {
+      "id": "DEC-188",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T03:16:44+00:00",
+      "updated_at": "2026-09-23T03:16:44+00:00",
+      "touched_round": 422,
+      "summary": "ISS-303 前期经济快赢三项落地参数:灵草兑灵石(12草:1石+每境额度500,防印钞双闸)+建筑首级免玄铁+藏经阁低级(lv<=3)悟道点保底4/h",
+      "rationale": "economySim 实测佐证快赢1是组合里唯一真正解决死资源的:0~3境灵草 13.6/8.9/7.1/6.4 → 1.0/1.0/1.2/2.9(健康/过剩),同时补灵石有硬金(每额÷换率÷摊销,必不构成主来源)。快赢2(首级免玄铁)在 sim 无读数(建筑模型自 2 级起摊),只救真实玩家首建。快赢3 保底对 0~1 境悟道缺口(收入约3~6/h vs sink 85~121/h,超20倍)杯水车薪——收入侧保底数学上救不动,真杠杆在 sink 侧:功法进修成本下调(gongfaUpCost 早期折扣)。stone 0境仍0.5(已>0.5阈,轻度瓶颈)未动,不属本次快赢目标。全程遵守:平滑前期峰值而非全局降消耗(4境后全过剩态未扰动),economySim 既有断言全绿",
+      "alternatives_rejected": "把灵草兑换额度/换率放大到足以填满 0~1 境灵石缺口(会变成印钞机,且 4 境后灵石本就闲置);用藏经阁保底硬拉到 wudao≥1(0~1 境需 14~28 倍产出,荒谬且破坏等级线性);全局调低 gongfaUpCost 曲线(需产品拍板数值+联动 engine 折扣参数,属下一档改动)"
+    },
+    "CHG-495": {
+      "id": "CHG-495",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T03:16:47+00:00",
+      "updated_at": "2026-09-23T03:16:47+00:00",
+      "touched_round": 422,
+      "summary": "ISS-303 快赢落地:herbExchangeService(灵草兑灵石,防印钞)+engineFacilities 首级免玄铁+藏经阁保底4/h",
+      "commit": "b530fdf"
     }
   },
   "edges": [
@@ -35987,6 +36010,24 @@
       "to": "COMP-006",
       "type": "governs",
       "created_at": "2026-09-23T02:42:20+00:00"
+    },
+    {
+      "from": "DEC-188",
+      "to": "TASK-430",
+      "type": "governs",
+      "created_at": "2026-09-23T03:16:49+00:00"
+    },
+    {
+      "from": "CHG-495",
+      "to": "ISS-303",
+      "type": "resolves",
+      "created_at": "2026-09-23T03:16:49+00:00"
+    },
+    {
+      "from": "CHG-495",
+      "to": "TASK-430",
+      "type": "implements",
+      "created_at": "2026-09-23T03:16:49+00:00"
     }
   ]
 }
