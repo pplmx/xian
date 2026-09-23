@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 422,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-23T03:23:13+00:00",
+  "updated_at": "2026-09-23T03:44:04+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24475,11 +24475,11 @@
     "ISS-302": {
       "id": "ISS-302",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-22T15:40:33+00:00",
-      "updated_at": "2026-09-22T15:40:33+00:00",
-      "touched_round": 421,
+      "updated_at": "2026-09-23T03:44:04+00:00",
+      "touched_round": 422,
       "severity": 0.7,
       "summary": "轮回经济:金丹浅修是绝对最优, 深修到真仙效率差约500倍(rebirthRoi/sec); 道果曲线无界(f^0.9), 需深修独有回报的系统层设计"
     },
@@ -24555,11 +24555,11 @@
     "TASK-429": {
       "id": "TASK-429",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 4,
       "created_at": "2026-09-23T02:20:36+00:00",
-      "updated_at": "2026-09-23T02:20:36+00:00",
-      "touched_round": 421,
+      "updated_at": "2026-09-23T03:44:04+00:00",
+      "touched_round": 422,
       "category": "core-feature",
       "severity": 0.7,
       "confidence": 0.85,
@@ -24643,6 +24643,29 @@
       "summary": "悟道点前期瓶颈的真杠杆:功法进修成本下调(0~1境收益 vs 功法sink差20倍)",
       "rationale": "ISS-303 快赢③(藏经阁保底4/h)已按拟定落地,但 economySim 实测:0~1 境悟道点收入仅 3~6/h,功法进修 sink 高达 85~121/h,缺口超 20 倍;收入侧保底数学上救不动(era-0 要达标需 14~28 倍产出,破坏等级线性)。真杠杆在 sink 侧:对 gongfaUpCost 前几阶(或早期境界)做进阶成本折扣。需产品拍板目标口径(0~1 境 ratio 提到 ~0.5 或 ~1 够学档)与折扣数值;落地会联动 engine 的 gongfaUpgradeCost discount 参数、progressionDoc/engineParity 增长断言,属独立平衡改动,故与 ISS-303 快赢分离跟踪",
       "alternatives_rejected": "收入侧把藏经阁保底拉到 0~1境 达标(需 14~28 倍产出,荒谬且破坏等级线性);全局调低 GONGFA_UP_WUDAO_BASE(会推高 4 境后本就过剩的悟道点)"
+    },
+    "DEC-189": {
+      "id": "DEC-189",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T03:43:37+00:00",
+      "updated_at": "2026-09-23T03:43:37+00:00",
+      "touched_round": 422,
+      "summary": "ISS-302宿命传承机制首刀:采纳8基线+一世一悟+非倍率红线;效果位分刀接线",
+      "rationale": "用户委派判断后推进ISS-302(TASK-429)。本轮交付机制结构:data/heritage(8个有界平直能力位,gateMajor 2..9)+heritageForge(forgeCandidate/lifeForge,浅修major<2永不返回)+reincarnation.heritage跨世持久+prepare/confirm转世交割+ReincarnationDialog展示+samsaraAudit登记+7条回归(含浅修反例/非倍率红线/经济不变量)。逐项效果的玩法接线(自选起始丹/保底不炸/渡劫不掉阶等)属另一类需配数值的改动,设计文档明言需配小型数值测试,故机制先行。非倍率红线用文字禁扫钉死(desc/effectDesc含攻/修速/倍率/加成/%即判负),防塌回deepCultivationRoi的267倍补偿陷阱。全量2783例测试与type/lint/docs/report全绿。",
+      "alternatives_rejected": "不做全套8项效果一次性接线(每项跨不同子系统需单独配数值,设计文档亦明言要小型数值测试,风险与噪音大);不把非倍率红线做成软约束(必须结构断言钉死,否则将来手滑就塌回补偿陷阱);不放宽禁词白名单去迁就文案(改为修正文案措辞,守卫保持从严)。"
+    },
+    "CHG-496": {
+      "id": "CHG-496",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T03:44:04+00:00",
+      "updated_at": "2026-09-23T03:44:04+00:00",
+      "touched_round": 422,
+      "summary": "ISS-302宿命传承系统机制落地:heritage数据(8能力位)+forge生命周期+跨世持久+转世交割+Dialog展示+samsaraAudit登记+非倍率红线+7条回归",
+      "commit": "3bf795c"
     }
   },
   "edges": [
@@ -36046,6 +36069,24 @@
       "to": "ISS-303",
       "type": "causes",
       "created_at": "2026-09-23T03:23:13+00:00"
+    },
+    {
+      "from": "DEC-189",
+      "to": "TASK-429",
+      "type": "governs",
+      "created_at": "2026-09-23T03:43:42+00:00"
+    },
+    {
+      "from": "CHG-496",
+      "to": "TASK-429",
+      "type": "implements",
+      "created_at": "2026-09-23T03:44:04+00:00"
+    },
+    {
+      "from": "CHG-496",
+      "to": "ISS-302",
+      "type": "resolves",
+      "created_at": "2026-09-23T03:44:04+00:00"
     }
   ]
 }
