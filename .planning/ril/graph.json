@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 421,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-22T15:40:43+00:00",
+  "updated_at": "2026-09-23T00:42:59+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24505,6 +24505,28 @@
       "source": "rebirthRoi.spec/economySim.spec (审计复算)",
       "summary": "SS-302: 各转世点效率 金丹6.749(100%)→真仙0.013(≈0.2%); daoFruitCurve 500世单品耗时压到0.5%, 100→200世边际46%。ISS-303: 玄铁0-2境瓶颈0.3(消耗=产出3.3x), 悟道0境产出3/时耗170/境(缺口28x), 灵草同期闲置13.6。",
       "confidence": 1.0
+    },
+    "ISS-304": {
+      "id": "ISS-304",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T00:42:33+00:00",
+      "updated_at": "2026-09-23T00:42:33+00:00",
+      "touched_round": 421,
+      "severity": 0.55,
+      "summary": "离线历练白嫖高阶区域: minRealm软门槛+离线不复查境界, 低境界(major3)挂仙界12h净得6件高阶装备; 已修(offline.ts境界门槛复查+offlineRealmGate.spec回归)"
+    },
+    "CHG-493": {
+      "id": "CHG-493",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-09-23T00:42:51+00:00",
+      "updated_at": "2026-09-23T00:42:51+00:00",
+      "touched_round": 421,
+      "commit": "9b838ee",
+      "summary": "offline.ts 离线历练补 minRealm 境界复查"
     }
   },
   "edges": [
@@ -35824,6 +35846,18 @@
       "to": "ISS-303",
       "type": "causes",
       "created_at": "2026-09-22T15:40:43+00:00"
+    },
+    {
+      "from": "CHG-493",
+      "to": "ISS-304",
+      "type": "resolves",
+      "created_at": "2026-09-23T00:42:55+00:00"
+    },
+    {
+      "from": "ISS-304",
+      "to": "ISS-302",
+      "type": "causes",
+      "created_at": "2026-09-23T00:42:59+00:00"
     }
   ]
 }
