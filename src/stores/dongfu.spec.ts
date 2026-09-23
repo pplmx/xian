@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useDongfuStore } from './dongfu'
 import { BUILDINGS } from '@/data/buildings'
-import { FORGE_LEVEL_PER_CAP } from '@/data/constants'
+import { FORGE_LEVEL_PER_CAP, LIBRARY_WUDAO_MIN_PER_HOUR } from '@/data/constants'
+import { libraryWudaoPerHour } from '@/core/engineFacilities'
 import type { BuildingId } from '@/types'
 
 describe('dongfu store · sanitize', () => {
@@ -109,11 +110,21 @@ describe('洞府产出 · 等级线性', () => {
     return { herb: dongfu.frac.herb, ore: dongfu.frac.ore, wudao: dongfu.frac.wudao }
   }
 
-  it('三级灵田/藏经阁的产出恰是一级的三倍(取整前看余数,避免被 floor 掩盖)', () => {
+  /** 只升藏经阁 —— 快赢3 的保底带(≤3 级)在灵田的低费率下测不出来,藏经阁单独看 */
+  const libFracAfter = (level: number, seconds: number): number => {
+    setActivePinia(createPinia())
+    const dongfu = useDongfuStore()
+    dongfu.levels.library = level
+    dongfu.produce(seconds)
+    return dongfu.frac.wudao
+  }
+
+  it('三级灵田/玄铁的产出恰是一级的三倍(取整前看余数,避免被 floor 掩盖)', () => {
     /**
      * 时长要短到"一份整产出都不满":produce 每次调用都会把整数量 floor 进资源,
      * 一旦某条产线凑够 1,余数就不再与总量成比例(实测 1332 秒时铁矿余数比只剩 0.75)。
-     * 120 秒下三条产线都不到 1,frac 就是总量本身,比值才干净。
+     * 120 秒下 field/ore 都不到 1,frac 就是总量本身,比值才干净。
+     * (藏经阁单独测 —— 低级的悟道点有保底带,1 级与 3 级在带内,见下一条)
      */
     const seconds = 120
     const one = fracAfter(1, seconds)
@@ -121,7 +132,17 @@ describe('洞府产出 · 等级线性', () => {
     expect(one.herb).toBeGreaterThan(0)
     expect(three.herb / one.herb).toBeCloseTo(3, 6)
     expect(three.ore / one.ore).toBeCloseTo(3, 6)
-    expect(three.wudao / one.wudao).toBeCloseTo(3, 6)
+  })
+
+  it('快赢3:藏经阁保底带(≤3 级)外产出按级线性,带内低级给起步保底', () => {
+    // 带外(4 级 vs 12 级,120 秒下都 <1):仍是"一级到三级"的线性 3 倍
+    expect(libFracAfter(12, 120) / libFracAfter(4, 120)).toBeCloseTo(3, 6)
+    // 带内(1 级):被保底抬到 LIBRARY_WUDAO_MIN_PER_HOUR,而不是自然速率 1.5/h。
+    // 600 秒产量 = MIN×1/6h,<1 不落整,frac 即产量本身
+    expect(libFracAfter(1, 600)).toBeCloseTo(LIBRARY_WUDAO_MIN_PER_HOUR * (600 / 3600), 6)
+    expect(libraryWudaoPerHour(1)).toBe(LIBRARY_WUDAO_MIN_PER_HOUR)
+    // 带内最高一级恰好到自然速率,再往上是纯线性
+    expect(libraryWudaoPerHour(4)).toBe(4 * 1.5)
   })
 
   it('零级不产出(升级是唯一来源,没有兜底白送)', () => {

@@ -42,10 +42,12 @@ import {
   EQUIP_DROP_CHANCE,
   FIELD_HERB_PER_HOUR,
   FIELD_ORE_PER_HOUR,
-  LIBRARY_WUDAO_PER_HOUR,
+  HERB_EXCHANGE_ERA_QUOTA,
+  HERB_TO_STONE_COST,
   PAGE_DROP_CHANCE
 } from '@/data/constants'
 import { buildingCost, gongfaUpCost, qiCap, baseQiRegen, stoneByTier, upgradeCost } from './formulas'
+import { libraryWudaoPerHour } from './engineFacilities'
 import { generateEquipment } from './equipGen'
 import { secondsForMajor } from './progressionSim'
 import { tripExpSecsPerHour, winsPerHour } from './expIncome'
@@ -82,6 +84,12 @@ export interface EraAudit {
   tier: number
   eraHours: number
   flows: ResourceFlow[]
+  /**
+   * 快赢1(ISS-303):灵草→灵石 兑换的量(每小时)。用于断言「防印钞」——
+   * 换出的灵石必有金(每境额度/换率),绝不为灵石主来源。
+   */
+  herbExchanged: number
+  stoneFromExchange: number
   /**
    * 界外专有:凝一枚道果需要多少小时的材料产出(道果价 ÷ 熔炉潜力)。
    *
@@ -135,7 +143,7 @@ export function auditEra(major: number): EraAudit {
   const oreIncome = winsThisHour * 0.35 * 1.5 + fieldLv * FIELD_ORE_PER_HOUR
   const pageIncome = winsThisHour * PAGE_DROP_CHANCE * 1.5
   const dustIncome = dropsPerHour * avgDustPerDrop(tier)
-  const wudaoIncome = libLv * LIBRARY_WUDAO_PER_HOUR
+  const wudaoIncome = libraryWudaoPerHour(libLv)
   /**
    * 修为收入 = 挂机(底:1.0× 修速 = 3600 等效秒/小时)+ 历练(战斗胜场与际遇),
    * 两条线都随修速缩放,故这一行的比值在任何境界都该是同一个数 —— 判据据此断。
@@ -168,6 +176,21 @@ export function auditEra(major: number): EraAudit {
   const dustSinkHour = UPGRADES_PER_HOUR * up.dust
   const stoneSinkHour = UPGRADES_PER_HOUR * toNum(up.stone) + CRAFTS_PER_HOUR * avgPillStone + stoneSinkEra / amortizeHours
   const herbSinkHour = CRAFTS_PER_HOUR * avgHerbCost
+  /**
+   * 快赢1 · 灵草→灵石 兑换出口(ISS-303):把「超出炼丹需要的过剩灵草」换成少量灵石。
+   *
+   * 目的:前期(0~3 境)灵草纯过剩(era0 闲置 13.6×)成了死资源,给个出口让它有用;
+   * 同时顺带小额缓解灵石。防印钞两道闸:低换率(HERB_TO_STONE_COST)+ 每境额度
+   * (HERB_EXCHANGE_ERA_QUOTA,随境界时长摊销到每小时)——换出的灵石只是小补,不是主来源。
+   *
+   * 模型口径:玩家把"不用来炼药的灵草"按额度上限兑换,换掉的部分计入灵草出口(沉没),
+   * 换出的灵石计入灵石收入。额度随 amortizeHours 分摊,故越长的境界每小时代兑越少
+   * (额度是"每境总量",不是无限印钞机)。4 境后额度摊薄、影响趋零,不扰动后期过剩态。
+   */
+  const herbExcess = Math.max(0, herbIncome - herbSinkHour)
+  const exchangedHerb = Math.min(herbExcess, HERB_EXCHANGE_ERA_QUOTA / amortizeHours)
+  const herbExchangeSink = exchangedHerb
+  const stoneExchange = exchangedHerb / HERB_TO_STONE_COST
   /**
    * 修为消耗 = 通关本境所需的等效闭关秒 ÷ 本境时长。
    *
@@ -254,10 +277,12 @@ export function auditEra(major: number): EraAudit {
     major,
     tier,
     eraHours,
+    herbExchanged: exchangedHerb,
+    stoneFromExchange: stoneExchange,
     ...(furnace ? { daoCostHours } : {}),
     flows: [
-      make('stone', stoneIncome, stoneSinkHour),
-      withFurnace('herb', herbIncome, herbSinkHour),
+      make('stone', stoneIncome + stoneExchange, stoneSinkHour),
+      withFurnace('herb', herbIncome, herbSinkHour + herbExchangeSink),
       withFurnace('ore', oreIncome, oreSinkEra / amortizeHours),
       withFurnace('page', pageIncome, pageSinkEra / amortizeHours),
       withFurnace('dust', dustIncome, dustSinkHour),

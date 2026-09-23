@@ -89,6 +89,21 @@
         <span class="shrink-0 text-[12px] text-ink-faint">›</span>
       </button>
 
+      <!-- 快赢1(ISS-303):灵草→灵石 兑换,给过剩灵草一个出口(救急不致富) -->
+      <button
+        class="card-ink mt-2 flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left active:scale-99"
+        @click="exchangeOneStone"
+      >
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-[15px] text-paper">集</span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-kai text-[13px] tracking-widest text-ink">灵草兑灵石</span>
+          <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
+            每 {{ HERB_TO_STONE_COST }} 株灵草换 1 灵石 · 本境尚可兑 {{ herbQuotaLeft }}
+          </span>
+        </span>
+        <span class="shrink-0 text-[12px] text-ink-faint">兑 ›</span>
+      </button>
+
       <!-- 丹匣:格子只给图标与名号,详情看弹窗 -->
       <div v-if="pillRows.length" class="mt-3 grid grid-cols-4 gap-1.5">
         <button
@@ -497,6 +512,8 @@
   import { qualityDef, QUALITIES } from '@/data/qualities'
   import { pillDef } from '@/data/pills'
   import { pillFuncText } from '@/ui/itemText'
+  import { HERB_TO_STONE_COST } from '@/data/constants'
+  import { exchangeHerbForStone, herbExchangeQuotaLeft } from '@/core/herbExchangeService'
   import {
     artifactActiveText,
     artifactDef,
@@ -541,9 +558,18 @@
 
   const inventory = useInventoryStore()
   const resources = useResourcesStore()
-  const player = usePlayerStore()
   const ui = useUiStore()
+  const player = usePlayerStore()
   const settings = useSettingsStore()
+
+  // 快赢1(ISS-303):灵草→灵石 兑换 —— 最小入口(一枚一枚兑,防印钞额度见服务层)
+  const herbQuotaLeft = computed(() => herbExchangeQuotaLeft())
+  function exchangeOneStone() {
+    const r = exchangeHerbForStone(1)
+    if (r.ok) ui.toast(`灵草兑灵石:花 ${r.herbsSpent} 株,得 ${r.stones} 灵石`, 'info')
+    else if (r.reason === 'noHerb') ui.toast('灵草不足', 'warn')
+    else if (r.reason === 'quota') ui.toast('本境兑换额度已尽', 'warn')
+  }
   const lore = useLoreStore()
 
   type Tab = 'equip' | 'pill' | 'material' | 'artifact'

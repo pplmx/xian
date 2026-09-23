@@ -1,7 +1,7 @@
 /* eslint-disable no-console -- 模拟器体检报告的正式输出(bun run test:report 依赖) */
 import { describe, expect, it } from 'vitest'
 import { fullEconomyAudit, qiFillSeconds } from './economySim'
-import { BT_QI_COST_RATIO } from '@/data/constants'
+import { BT_QI_COST_RATIO, HERB_EXCHANGE_ERA_QUOTA, HERB_TO_STONE_COST } from '@/data/constants'
 import { MAX_MAJOR, worldOf } from '@/data/realms'
 import { maxTierForMajor } from '@/data/regions'
 import { layerSeconds } from './pillValue'
@@ -121,6 +121,24 @@ describe('经济闭环审计(Phase 19 · Phase 40 补界外与修为)', () => {
     }
     const chronicallyIdle = [...chronic.entries()].filter(([, n]) => n >= mortal.length).map(([r]) => r)
     expect(chronicallyIdle.length, `长期闲置资源: ${chronicallyIdle.join(',')}`).toBeLessThanOrEqual(1)
+  })
+
+  /**
+   * 快赢1(ISS-303)红线:给前期过剩灵草一个出口,同时防印钞。
+   * - 0~3 境灵草从「闲置/过剩」拉到有真实去处(不再死资源);
+   * - 兑换补的灵石有硬金(每境额度/换率 ÷ 摊销),绝不成为灵石主来源。
+   */
+  it('快赢1:0~3 境灵草有了出口(不再死资源),兑换防印钞(补灵石被封顶)', () => {
+    for (const era of eras.slice(0, 4)) {
+      const herb = era.flows.find(f => f.resource === 'herb')!
+      expect(herb.verdict, `第${era.major}境灵草不再是死资源`).not.toBe('闲置')
+      expect(era.herbExchanged, `第${era.major}境小时代兑灵草`).toBeGreaterThanOrEqual(0)
+    }
+    // 防印钞硬金:小时代兑灵草 ≤ 每境额度 ÷ 最小摊销(2h),故补灵石每小时有顶
+    const perHourCap = HERB_EXCHANGE_ERA_QUOTA / HERB_TO_STONE_COST / 2
+    for (const era of eras) {
+      expect(era.stoneFromExchange + 1e-9, `第${era.major}境兑换补灵石`).toBeLessThanOrEqual(perHourCap)
+    }
   })
 
   it('界外:每样材料都有非零出口(熔炉),不再出现 ∞ 与死资源', () => {

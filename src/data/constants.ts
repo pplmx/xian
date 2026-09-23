@@ -505,9 +505,21 @@ export const FIELD_ORE_PER_HOUR = 2.4
 export const LIBRARY_WUDAO_PER_HOUR = 1.5
 /** 藏经阁参悟功法消耗残页 */
 export const COMPREHEND_PAGE_COST = 12
+
+// ============ 藏经阁低级保底(快赢3 / ISS-303) ============
+/** 享受保底的藏经阁等级上限(低级藏经阁给个起步产出,别让前期功法完全卡死) */
+export const LIBRARY_WUDAO_FLOOR_LEVEL = 3
+/** 保底每小时悟道点:lv≤LIBRARY_WUDAO_FLOOR_LEVEL 时至少产这么多 */
+export const LIBRARY_WUDAO_MIN_PER_HOUR = 4
 /** 功法升级基础悟道点 */
 export const GONGFA_UP_WUDAO_BASE = 4
 export const GONGFA_UP_GROWTH = 1.45
+
+// ============ 灵草→灵石 兑换(快赢1 / ISS-303) ============
+/** 兑换比:每 HERB_TO_STONE_COST 株灵草换 1 灵石 —— 低换率,防印钞 */
+export const HERB_TO_STONE_COST = 12
+/** 每境可兑换的灵草额度上限(株)—— 只救急不致富,换出的灵石只是小补 */
+export const HERB_EXCHANGE_ERA_QUOTA = 500
 
 // ============ 建筑 ============
 export const BUILDING_COST_GROWTH = 2.3

@@ -16,12 +16,11 @@ import type { BuildingId } from '@/types'
 import { BUILDINGS, buildingDef } from '@/data/buildings'
 import {
   FIELD_HERB_PER_HOUR,
-  FIELD_ORE_PER_HOUR,
-  LIBRARY_WUDAO_PER_HOUR
+  FIELD_ORE_PER_HOUR
 } from '@/data/constants'
 import { buildingUpgradeInfo } from './buildingService'
 import { buildingCost } from './formulas'
-import { produceOf } from './engineFacilities'
+import { libraryWudaoPerHour, produceOf } from './engineFacilities'
 import { formatExact } from '@/utils/format'
 import { useDongfuStore } from '@/stores/dongfu'
 import { usePlayerStore } from '@/stores/player'
@@ -34,7 +33,8 @@ function legacyUpgradeInfo(id: BuildingId, levels: LevelMap, major: number, leve
   const def = buildingDef(id)!
   const lv = levels[id] ?? 0
   const stone = buildingCost(def.costBase, lv)
-  const ore = def.costOre * (lv + 1)
+  // 快赢·首级免玄铁(ISS-303):0→1 级不掏玄铁 —— 冻结口径与 engineFacilities 同步
+  const ore = lv === 0 ? 0 : def.costOre * (lv + 1)
   let canUpgrade = true
   let reason = ''
   if (major < def.unlockRealm) {
@@ -64,7 +64,7 @@ function legacyProduce(
     frac.ore += (fieldLv * FIELD_ORE_PER_HOUR * dtSec) / 3600
   }
   if (libLv > 0) {
-    frac.wudao += (libLv * LIBRARY_WUDAO_PER_HOUR * dtSec) / 3600
+    frac.wudao += (libraryWudaoPerHour(libLv) * dtSec) / 3600
   }
   const whole: Record<string, number> = {}
   for (const key of ['herb', 'ore', 'wudao'] as const) {

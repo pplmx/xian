@@ -13,8 +13,21 @@ import type { BuildingId, GNum, StatMods } from '@/types'
 import type { UpgradeInfo } from 'wanxiang-engine'
 import { accrue, createFacilitySystem } from 'wanxiang-engine'
 import { BUILDINGS, buildingDef } from '@/data/buildings'
-import { FIELD_HERB_PER_HOUR, FIELD_ORE_PER_HOUR, LIBRARY_WUDAO_PER_HOUR } from '@/data/constants'
+import {
+  FIELD_HERB_PER_HOUR,
+  FIELD_ORE_PER_HOUR,
+  LIBRARY_WUDAO_FLOOR_LEVEL,
+  LIBRARY_WUDAO_MIN_PER_HOUR,
+  LIBRARY_WUDAO_PER_HOUR
+} from '@/data/constants'
 import { buildingCost } from './formulas'
+
+/** 藏经阁每级每小时悟道点 —— 低级(lv≤FLOOR_LEVEL)给保底起步(快赢3,ISS-303) */
+export function libraryWudaoPerHour(lv: number): number {
+  return lv <= LIBRARY_WUDAO_FLOOR_LEVEL
+    ? Math.max(LIBRARY_WUDAO_MIN_PER_HOUR, lv * LIBRARY_WUDAO_PER_HOUR)
+    : lv * LIBRARY_WUDAO_PER_HOUR
+}
 
 export interface FacilityCtx {
   /** 玩家当前境界 —— 只有"境界门槛"用得上它 */
@@ -44,7 +57,7 @@ export function capOfBuilding(id: BuildingId, levels: Record<string, number>): n
 /** 每小时的产出:内容写"每小时多少",库负责按秒推进与留零头 */
 const PER_HOUR: Partial<Record<BuildingId, (level: number) => Record<string, number>>> = {
   field: lv => ({ herb: lv * FIELD_HERB_PER_HOUR, ore: lv * FIELD_ORE_PER_HOUR }),
-  library: lv => ({ wudao: lv * LIBRARY_WUDAO_PER_HOUR })
+  library: lv => ({ wudao: libraryWudaoPerHour(lv) })
 }
 
 /** 建筑门槛里的境界说法(与迁移前的文案一致) */
@@ -66,10 +79,16 @@ const FACILITIES = createFacilitySystem<StatMods, FacilityCtx, GNum | number>({
           : level >= def.maxLevel
             ? '已至顶层'
             : undefined,
-      costs: level => [
-        { key: 'stone', amount: buildingCost(def.costBase, level) },
-        { key: 'ore', amount: def.costOre * (level + 1) }
-      ],
+      costs: level => {
+        const costs: Array<{ key: 'stone' | 'ore'; amount: number | GNum }> = [
+          { key: 'stone', amount: buildingCost(def.costBase, level) }
+        ]
+        // 快赢·首级免玄铁(ISS-303):从 0 级升 1 级不掏玄铁。
+        // 玄铁在 0~2 境是前期唯一卡建筑的资源(ratio≈0.3),首级豁免
+        // 让玩家先把门面立起来,又不改 3 境后的曲线(那里玄铁本就过剩)。
+        if (level > 0) costs.push({ key: 'ore', amount: def.costOre * (level + 1) })
+        return costs
+      },
       ...(def.mods ? { mods: (level: number) => def.mods!(level) } : {}),
       ...(perHour ? { perHour } : {})
     }

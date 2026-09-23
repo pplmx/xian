@@ -31,6 +31,11 @@ export const useResourcesStore = defineStore(
     const page = ref(0)
     const dust = ref(0)
 
+    // 快赢1(ISS-303):灵草→灵石 兑换额度 —— 每大境界可兑换的灵草株数已用/所属境界。
+    // 跨境界由 herbExchangeService.herbExchangeQuotaLeft 判断并自动重置。
+    const herbExchangeUsed = ref(0)
+    const herbExchangeRealm = ref(0)
+
     const smallRefs = { wudao, herb, ore, page, dust }
 
     /** 当前材料与灵气的一份快照(定制层要整本账,而这里按 ref 存) */
@@ -94,6 +99,8 @@ export const useResourcesStore = defineStore(
       ore,
       page,
       dust,
+      herbExchangeUsed,
+      herbExchangeRealm,
       addStone,
       spendStone,
       hasStone,

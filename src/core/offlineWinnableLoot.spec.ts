@@ -17,10 +17,9 @@ import { useGameStore } from '@/stores/game'
 import { usePlayerStore } from '@/stores/player'
 import { useDongfuStore } from '@/stores/dongfu'
 import { useAdventureStore } from '@/stores/adventure'
-import { useResourcesStore } from '@/stores/resources'
 import { gn } from '@/utils/gnum'
 import { REGIONS } from '@/data/regions'
-import type { AdventureSession } from '@/stores/adventure'
+import type { AdventureSession } from '@/types'
 
 const HOUR = 3600 * 1000
 
@@ -74,7 +73,6 @@ describe('离线历练 · 打不打得过才结算收益', () => {
 
   it('打不过的高阶历练不会掉出该区域高阶装备(装备账为零)', () => {
     setupSession(3, 9)
-    const stoneBefore = useResourcesStore().spiritStone
     const s = settleOffline(Date.now())
     // 装备是白嫖核心,严格为 0 —— 能打赢才有装备,来源从来不是「境界够不够」
     expect(s!.equipment?.length ?? 0).toBe(0)
