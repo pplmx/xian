@@ -137,23 +137,28 @@
     key: CollectionCategory,
     name: string,
     ownedIds: string[],
-    defs: { id: string; name: string; desc?: string; meta?: string; color?: string }[]
+    defs: { id: string; name: string; desc?: string; meta?: string; color?: string; rank?: number }[]
   ): CodexCat {
     const owned = new Set(ownedIds)
-    const entries: CodexEntry[] = defs
+    // 默认从好到差:品质 rank 降序(有品阶的一类喂 rank)→ 已收录置顶 → 名字
+    const rows = defs
       .map(d => ({
-        id: d.id,
-        name: d.name,
-        desc: d.desc ?? '',
-        meta: d.meta ?? '',
-        color: d.color,
-        stage: owned.has(d.id) ? 1 : 0,
-        stageName: '',
-        badge: '',
-        hint: '',
-        foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`${key}:${d.id}`]) }
+        rank: d.rank ?? 0,
+        entry: {
+          id: d.id,
+          name: d.name,
+          desc: d.desc ?? '',
+          meta: d.meta ?? '',
+          color: d.color,
+          stage: owned.has(d.id) ? 1 : 0,
+          stageName: '',
+          badge: '',
+          hint: '',
+          foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`${key}:${d.id}`]) }
+        }
       }))
-      .sort((a, b) => b.stage - a.stage)
+      .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.entry.name.localeCompare(b.entry.name))
+    const entries = rows.map(r => r.entry)
     const known = entries.filter(e => e.stage >= 1).length
     return { key, name, hint: `${known}/${defs.length}`, source: CODEX_SOURCES[key], entries }
   }
@@ -179,7 +184,8 @@
           name: g.name,
           desc: [g.desc, gongfaFuncText(g)].filter(Boolean).join('\n'),
           meta: gongfaMetaText(g),
-          color: qualityDef(g.quality).color
+          color: qualityDef(g.quality).color,
+          rank: qualityDef(g.quality).rank
         }))
       ),
       branchCodex(),
@@ -190,7 +196,14 @@
         'pet',
         '灵兽册',
         c.pet,
-        PETS.map(p => ({ id: p.id, name: p.name, desc: p.desc, meta: qualityDef(p.quality).name, color: qualityDef(p.quality).color }))
+        PETS.map(p => ({
+          id: p.id,
+          name: p.name,
+          desc: p.desc,
+          meta: qualityDef(p.quality).name,
+          color: qualityDef(p.quality).color,
+          rank: qualityDef(p.quality).rank
+        }))
       ),
       makeCat(
         'event',

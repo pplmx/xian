@@ -117,7 +117,12 @@
         personalityDesc: personalityDesc(def!.personality),
         traitText: petTraitText(def!)
       }))
-      .sort((a, b) => Number(b.active) - Number(a.active))
+      // 默认从好到差:品阶降序 → 当前相伴的置顶
+      .sort(
+        (a, b) =>
+          qualityDef(b.def.quality).rank - qualityDef(a.def.quality).rank ||
+          Number(b.active) - Number(a.active)
+      )
   )
 
   function togglePet(id: string): void {

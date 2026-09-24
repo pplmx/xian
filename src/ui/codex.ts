@@ -143,11 +143,22 @@ export function describeMaterial(def: MaterialDef, stage: number, seen: number):
 }
 
 /** 读当下所知,给出整本灵材谱 */
+/**
+ * 图鉴默认「从好到差」:品阶 rank 降序 → 收录深度降序 → 名字。
+ *
+ * 没有固有品阶的一类(装备册走见闻深度、悟道录走「已择优先」)不喂 rank,各守各的旧序。
+ */
+function byBest(rows: { entry: CodexEntry; rank: number }[]): CodexEntry[] {
+  return [...rows]
+    .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.entry.name.localeCompare(b.entry.name))
+    .map(r => r.entry)
+}
+
 export function materialCodex(): CodexCat {
   const lore = useLoreStore()
-  // sort 稳定,同层内保持 MATERIALS 原序(灵草在前、按阶位升序)
-  const entries = MATERIALS.map(def => describeMaterial(def, lore.loreOf(def.id), lore.seenOf(def.id))).sort(
-    (a, b) => b.stage - a.stage
+  // 从好到差:品阶高的灵材在前(太虚灵参这类顶格先露面),同阶内收录深的在前
+  const entries = byBest(
+    MATERIALS.map(def => ({ rank: def.rank, entry: describeMaterial(def, lore.loreOf(def.id), lore.seenOf(def.id)) }))
   )
   const known = entries.filter(e => e.stage >= 1).length
   const mastered = entries.filter(e => e.stage >= LORE_MAX).length
@@ -413,10 +424,15 @@ export function artifactCodex(): CodexCat {
   const quests = useQuestsStore()
   const owned = new Set(quests.collections.artifact)
   const levelOf = new Map(inventory.artifacts.map(a => [a.defId, a.level]))
-  const entries = ARTIFACTS.map(def => ({
-    ...describeArtifact(def, levelOf.get(def.id) ?? 0, owned.has(def.id)),
-    foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`artifact:${def.id}`]) }
-  })).sort((a, b) => b.stage - a.stage)
+  const entries = byBest(
+    ARTIFACTS.map(def => ({
+      rank: qualityDef(def.quality).rank,
+      entry: {
+        ...describeArtifact(def, levelOf.get(def.id) ?? 0, owned.has(def.id)),
+        foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`artifact:${def.id}`]) }
+      }
+    }))
+  )
   const seen = entries.filter(e => e.stage >= 1).length
   const full = entries.filter(e => e.stage >= ARTIFACT_STAGE_MAX).length
   return {
@@ -432,10 +448,15 @@ export function pillCodex(): CodexCat {
   const lore = useLoreStore()
   const quests = useQuestsStore()
   const owned = new Set(quests.collections.pill)
-  const entries = PILLS.map(def => ({
-    ...describePill(def, owned.has(def.id), lore.recipeMastery(def.id)),
-    foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`pill:${def.id}`]) }
-  })).sort((a, b) => b.stage - a.stage)
+  const entries = byBest(
+    PILLS.map(def => ({
+      rank: qualityDef(def.quality).rank,
+      entry: {
+        ...describePill(def, owned.has(def.id), lore.recipeMastery(def.id)),
+        foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`pill:${def.id}`]) }
+      }
+    }))
+  )
   const seen = entries.filter(e => e.stage >= 1).length
   const known = entries.filter(e => e.stage >= 2).length
   const mastered = entries.filter(e => e.stage >= PILL_STAGE_MAX).length
