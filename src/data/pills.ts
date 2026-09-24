@@ -1,11 +1,11 @@
 /**
- * 丹药库 —— 63 味。
+ * 丹药库 —— 65 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
  * 玩家问的从来不是"这个数是不是太大",而是"凭什么"。凭什么一味白捡的丹,
- * 比一炉四十味灵草炼出来的还管用?下面七条就是那个"凭什么",由
- * core/pillValue.spec.ts 逐条守住 —— 往后每添一味新丹,都得先过这七关。
+ * 比一炉四十味灵草炼出来的还管用?下面这一条条就是那个"凭什么",由
+ * core/pillValue.spec.ts 逐条守住 —— 往后每添一味新丹,都得先过全这套关。
  *
  * - **A 掉落上限**:掉落品的药力 ≤ 同族、规格不低于它的最近可炼对照 × 0.6。
  *   这个比例不是拍脑袋定的:寿元线上凤髓膏对千年延寿丹、蟠桃对万寿金丹,
@@ -15,15 +15,19 @@
  * - **C 增益唯一**:没有两味丹指向同一个 buff。共用等于零成本复制一张方子的产出。
  * - **D 计价单位**:固定点数(expFixed)只用于准入境界 0 的入门丹 —— 它每上一个
  *   大境界贬值 5.2 倍,配给高境界的丹等于让它在首次现身那一刻就已过期。
- * - **E 掉落非空**:每个大境界都掉得出东西。
+ * - **E 掉落非空 / E2 高界不掉入门**:每个大境界都掉得出东西,仙界以上不掉
+ *   入门丹的堆砌。
  * - **F 资源重置须可炼**:满额回资源(灵气 ≥80%)必须付出制备代价。灵气是突破的
  *   门槛资源,一枚回满即抵两次半突破 —— 战术上最强的即时效果不能是白捡的。
- * - **H 不碾压顶端**:掉落线顶端不越过同族可炼线顶端,否则炼丹在那条线上失去意义。
  * - **G 修为丹按「闭关时长」计价**(Phase 39):修为丹的药力写死成一段等效闭关时长
  *   (expSecs),不再按"当前一层需求的百分比"结算。旧口径的账算不平:
  *   同一枚丹的药力随境界指数上涨(需求每境 ×19),成本却冻结在它自己的准入境界,
  *   结果是"囤低阶丹、到高境界服"成为最优解,顺带把破界那一关也一并买通。
  *   详见 src/types 里 expSecs 字段上的那段。
+ * - **H 不碾压顶端**:掉落线顶端不越过同族可炼线顶端,否则炼丹在那条线上失去意义。
+ * - **I 可炼难度**:每张可炼方在准入境界处不高过一阶(过承受 ≤1),别让关键丹
+ *   在自己该出场的境界把成功率拖到 24% 的赌命线。
+ * - **I2 各族可炼厚度**:五条可折算时间的可炼线,每条 ≥3 味,不许中段开天窗。
  *
  * 五条计价轴随境界的走势各不相同(百分比恒定 / 固定点数指数贬值 / 寿元绝对值不变),
  * 所以跨丹比较必须统一到同一境界折算。折算口径见 core/pillValue.ts。
@@ -82,7 +86,7 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 10, stoneBase: 18 },
     alchemyLevel: 2
   }),
-  p('p_juling', '聚灵丹', 'excellent', 0, '一炷香内修炼倍增(30 分钟)', {
+  p('p_juling', '聚灵丹', 'excellent', 0, '一炷香内修炼提速五成(30 分钟)', {
     kind: 'buff',
     buffId: 'buff_juling',
     recipe: { herb: 14, stoneBase: 25 },
@@ -110,7 +114,7 @@ export const PILLS: PillDef[] = [
     kind: 'buff',
     buffId: 'buff_pojing',
     recipe: { herb: 30, stoneBase: 60 },
-    alchemyLevel: 4
+    alchemyLevel: 3
   }),
   /**
    * 修为线的计价单位是「等效闭关时长」(Phase 39,见文件头法则 G)。
@@ -150,7 +154,7 @@ export const PILLS: PillDef[] = [
   p('p_yanshou', '延寿丹', 'spirit', 2, '延寿三十载', {
     instant: { lifespanYears: 30 },
     recipe: { herb: 40, stoneBase: 80 },
-    alchemyLevel: 5
+    alchemyLevel: 4
   }),
   /**
    * 灵乳(Phase 32.6 从"仅掉落"改入可炼线)。
@@ -183,22 +187,22 @@ export const PILLS: PillDef[] = [
   p('p_wudaodan', '悟道丹', 'profound', 3, '服之如聆道音,悟道点 +20', {
     instant: { wudao: 20 },
     recipe: { herb: 45, stoneBase: 90 },
-    alchemyLevel: 6
+    alchemyLevel: 5
   }),
   p('p_qianshou', '千年延寿丹', 'profound', 4, '延寿两百载', {
     instant: { lifespanYears: 200 },
     recipe: { herb: 80, stoneBase: 160 },
-    alchemyLevel: 7
+    alchemyLevel: 6
   }),
   p('p_taixu', '太虚丹', 'earth', 5, '丹成有太虚幻境相随,服之如闭关半个时辰(1 小时)', {
     instant: { expSecs: 3600 },
     recipe: { herb: 90, stoneBase: 200 },
-    alchemyLevel: 8
+    alchemyLevel: 7
   }),
   p('p_wanshou', '万寿金丹', 'earth', 6, '延寿千载,金丹光华内蕴', {
     instant: { lifespanYears: 1000 },
     recipe: { herb: 150, stoneBase: 350 },
-    alchemyLevel: 9
+    alchemyLevel: 8
   }),
   p('p_jiuzhuan', '九转还魂丹', 'heaven', 7, '九转丹成,天地同贺,服之如闭关一个时辰(2 小时)', {
     instant: { expSecs: 7200 },
@@ -235,6 +239,22 @@ export const PILLS: PillDef[] = [
     buffId: 'buff_pofu',
     recipe: { herb: 28, stoneBase: 50 },
     alchemyLevel: 4
+  }),
+  // ---- 修速族中段补全(法则 I2):可炼线 1~17 境曾全空,只有精品聚灵/神品本源两端 ----
+  // 药力按 buff 时长 × 修速提升计:精品聚灵 15 分 < 玄品星驰 18 分 < 地品御风 22.5 分 < 神品本源 24 分(法则 B)。
+  // 价格就怕一件事:单位材料性价比不如开局聚灵(14 草 / 15 分 = 全场最高性价比之一),那新丹就是没人炼的
+  // 填充物。所以这两味靠**高强度 + 低草耗**跑赢聚灵 —— 玩家到 4/6 境有十足理由换一味更强的(见 buffs 同注)。
+  p('p_xingchi', '星驰丹', 'profound', 4, '服之如御星驰,一炷香(30 分钟)内修炼提速 60%', {
+    kind: 'buff',
+    buffId: 'buff_xingchi',
+    recipe: { herb: 24, stoneBase: 48 },
+    alchemyLevel: 4
+  }),
+  p('p_yufeng', '御风丹', 'earth', 6, '服之乘风御虚,一炷香(30 分钟)内修炼提速 75%', {
+    kind: 'buff',
+    buffId: 'buff_yufeng',
+    recipe: { herb: 30, stoneBase: 70 },
+    alchemyLevel: 6
   }),
   // ---- 仅掉落 / 事件 ----
   /**

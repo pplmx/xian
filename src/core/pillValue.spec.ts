@@ -19,8 +19,10 @@ import { describe, it, expect } from 'vitest'
 import { PILLS, pillDef } from '@/data/pills'
 import { buffDef } from '@/data/buffs'
 import { qualityDef } from '@/data/qualities'
+import { recipeCraft } from '@/data/crafting'
 import { MAX_MAJOR, WORLD_BREAK_MAJOR } from '@/data/realms'
 import { BATTLE_EXP_SECS, INSTANT_EXP_LAYER_CAP } from '@/data/constants'
+import { bearableRank } from './craftability'
 import {
   DROP_CRAFT_RATIO,
   craftBattlesOf,
@@ -360,6 +362,46 @@ describe('定价法则', () => {
       expect(dropPeak, `${FAMILY_NAME[fam]}族最强的一味是白捡的,炼丹在这条线上失去意义`).toBeLessThanOrEqual(
         craftPeak + 1e-9
       )
+    }
+  })
+
+  /**
+   * 【法则 I】可炼方在其准入境界处不可过难(overReach ≤ 1)。
+   *
+   * bearableRank(境界) = 境界 + 1:练气稳承一阶、每高一境多一阶。而一张方子的
+   * minRealm 就是它"该出场"的境界 —— 若它连自己的准入境界都要越两级去强炼
+   * (over = 2,审计基准下成功率只剩 24%),那它要么永远等玩家反超两三阶才值得炼,
+   * 要么干脆没人炼。审计总表里的毛刺正是这么来的:太虚丹(地 5)性价比塌到 1.41,
+   * 破境/延寿/千年/万寿/悟道丹全部挂在 24% 的"赌命成功率"上。
+   * 允许 over = 1(41%:超一阶尚有一搏),那是给"越境界强炼"留的余量;
+   * over = 2 就该回拨方子档位,而不是让玩家在自己该炼丹的境界里赌命。
+   */
+  it('I —— 可炼方在其准入境界 overReach ≤ 1', () => {
+    for (const def of PILLS.filter(p => p.recipe)) {
+      const craft = recipeCraft(def)
+      const over = Math.max(0, craft!.rank - bearableRank(def.minRealm))
+      expect(
+        over,
+        `${def.name}(准入境 ${def.minRealm},方子 ${craft!.rank} 阶) 在自己该出场的境界要越 ${over} 阶强炼`
+      ).toBeLessThanOrEqual(1)
+    }
+  })
+
+  /**
+   * 【法则 I2】各族可炼线都该有足够内容(≥3 味)。
+   *
+   * 修速族一度只有聚灵丹(精品 0)与本源丹(神 18)两味,中段 1~17 境全空——
+   * 法则 E 管的是"每境掉得出东西","该境界炼得出东西"却没人管,于是修速这一族
+   * 中段无丹可炼(中期玩家只能拿 造化丹 这一味白捡的兜底)。这条定:
+   * 五条可折算时间的可炼线,每条都至少三味,不许开天窗。
+   */
+  it('I2 —— 各族可炼线不少于三味(修速族不开天窗)', () => {
+    for (const fam of TIMED_FAMILIES) {
+      const craft = PILLS.filter(p => pillFamily(p) === fam && p.recipe)
+      expect(
+        craft.length,
+        `${FAMILY_NAME[fam]}族可炼线只有 ${craft.length} 味 —— 该族中段无丹可炼`
+      ).toBeGreaterThanOrEqual(3)
     }
   })
 })
