@@ -7,7 +7,9 @@
   "author": "Mystvio",
   "license": "MIT",
   "main": "dist-electron/main.js",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vue-tsc -b && vite build",
@@ -27,7 +29,8 @@
     "check": "bun run type-check && bun run lint && bun scripts/docs-check.mjs",
     "build:electron": "bun run build:release && esbuild electron/main.js --bundle --platform=node --format=esm --outfile=dist-electron/main.js --external:electron && esbuild electron/preload.js --bundle --platform=node --format=cjs --outfile=dist-electron/preload.js --external:electron && electron-builder",
     "build:android": "bun run build:release && bunx cap sync android",
-    "build:apk": "bun run build:android && cd android && ./gradlew assembleRelease"
+    "build:apk": "bun run build:android && cd android && ./gradlew assembleRelease",
+    "prepare": "husky"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",
@@ -46,6 +49,8 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.1",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.13.0",
     "@vitejs/plugin-legacy": "^8.2.3",
@@ -57,6 +62,7 @@
     "esbuild": "^0.28.0",
     "eslint": "^9.20.0",
     "eslint-plugin-vue": "^9.32.0",
+    "husky": "^9.1.7",
     "playwright": "1.63.0",
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.19",
