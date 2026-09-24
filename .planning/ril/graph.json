@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 422,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-24T08:25:40+00:00",
+  "updated_at": "2026-09-24T10:16:37+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24711,6 +24711,29 @@
       "touched_round": 422,
       "summary": "炼丹体系补短板落地:渡劫丹/真仙丹 断档 2 味 + 火候丹(炼制增益 buff_huohou) + 大罗/神寿/神将/神王/神帝/鸿蒙寿/开天 每境第二味 7 味;神将之威 稳压仙力加身;全量过七律与 timeUnits 对账",
       "commit": 338240000.0
+    },
+    "ISS-308": {
+      "id": "ISS-308",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-24T10:16:37+00:00",
+      "updated_at": "2026-09-24T10:16:37+00:00",
+      "touched_round": 422,
+      "severity": 0.5,
+      "summary": "炼丹体系 P1-3/P2-1 落地账:灵气线在仙泉玉液(11)后断档(神品/道品无一口回满);气运爆点缺位(天运丹只是被动 15%,无短窗高量级运气丹)",
+      "resolved_note": "由 CHG-499 落地"
+    },
+    "CHG-499": {
+      "id": "CHG-499",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-24T10:16:37+00:00",
+      "updated_at": "2026-09-24T10:16:37+00:00",
+      "touched_round": 422,
+      "summary": "灵气线补位:神泉丹(14)/道泉丹(18,道品草)qiPct=1;气运爆点:鸿运丹(8)+ buff 鸿运当头(luck 0.5/eventLuck 0.4,600s);丹数 60→63,全量过七律与时制对账",
+      "commit": "6a32927"
     }
   },
   "edges": [
@@ -36145,6 +36168,13 @@
       "type": "resolves",
       "created_at": "2026-09-24T08:24:23+00:00",
       "detail": "渡劫/真仙断档 + 每境第二味 + 调试增益,本次落地;计时段 6 味 + 状态 1 味"
+    },
+    {
+      "from": "CHG-499",
+      "to": "ISS-308",
+      "type": "resolves",
+      "created_at": "2026-09-24T10:16:37+00:00",
+      "detail": "神品/道品灵气丹 + 气运爆点,本轮落地"
     }
   ]
 }
