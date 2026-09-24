@@ -11,6 +11,8 @@
  *   3. 零消费会让阈值型出口最终失去决策意义
  */
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import {
   ALL_STAT_KEYS,
   EFFICIENCY_REACH,
@@ -44,6 +46,21 @@ describe('出口空间 · 效率链可达性', () => {
         `\n结论:禁止的不是某几个键,而是**整个 StatMods 命名空间** ——` +
         `\n任何以属性形式发放的道果出口都会重建回路`
     )
+  })
+
+  /**
+   * 堵住上面那条断言的**自证口**:`ALL_STAT_KEYS` 与 `statModsAllReachable` 同源,
+   * 一条新词条若只进了类型联合、忘了登记 VIA_RESOURCE,那条"没有一个安全键"
+   * 断言照样绿 —— 因为它检查的列表里根本不会有新键。这里从**类型声明**读全量
+   * 键再做并集覆盖:声明了却没登记效率路径 = 立红(docs/alchemy.md 声明的由来)。
+   */
+  it('声明的每个属性键都在效率链登记里(union ⊆ ALL_STAT_KEYS)—— 新词条漏登记立红', () => {
+    const types = readFileSync(resolve(__dirname, '../types/index.ts'), 'utf8')
+    const block = types.slice(types.indexOf('export type PercentStatKey'), types.indexOf('export type AnyStatKey'))
+    const declared = new Set([...block.matchAll(/'([A-Za-z]+)'/g)].map(m => m[1]!))
+    const registered = new Set<string>(ALL_STAT_KEYS.map(k => String(k)))
+    const missing = [...declared].filter(k => !registered.has(k))
+    expect(missing, `这些属性键只进了类型声明,没登记效率链路径:${missing.join('、')}`).toEqual([])
   })
 
   it('间接路径才是陷阱:换成资源同样闭合回路', () => {

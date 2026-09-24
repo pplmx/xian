@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 65 味。
+ * 丹药库 —— 66 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -255,6 +255,13 @@ export const PILLS: PillDef[] = [
     buffId: 'buff_yufeng',
     recipe: { herb: 30, stoneBase: 70 },
     alchemyLevel: 6
+  }),
+  // ---- 炼丹自增益第二味(齐火候丹成对):「做得多就精」的加速器 —— 一句话:心得泉涌,手艺见长 ----
+  p('p_cuidan', '淬炼丹', 'profound', 4, '凝神观炉,一刻(15 分钟)内炼丹技艺经验提升 30%', {
+    kind: 'buff',
+    buffId: 'buff_cuidan',
+    recipe: { herb: 40, stoneBase: 90 },
+    alchemyLevel: 4
   }),
   // ---- 仅掉落 / 事件 ----
   /**

@@ -42,7 +42,7 @@ bun install     # 安装依赖
 bun dev         # 开发服务器
 bun run build   # 类型检查 + 生产构建
 bun preview     # 预览构建结果
-bun run test    # 全量用例(全量 301 个 spec / 2803 例;本作自己那部分 221 个 / 2209 例)
+bun run test    # 全量用例(全量 301 个 spec / 2806 例;本作自己那部分 221 个 / 2212 例)
 bun run check   # 类型检查 + ESLint
 ```
 
@@ -89,7 +89,7 @@ bun run check   # 类型检查 + ESLint
 | Vue Router | 4 | 客户端路由(hash 模式) |
 | Tone.js | 15 | FluidR3 乐器采样播放(BGM + SFX) |
 | CryptoJS | 4 | 存档 AES 加密 |
-| Vitest | 5 | 单元测试与平衡审计(全量 301 个 spec / 2803 例,含公共库 `packages/engine` 的 80 / 594) |
+| Vitest | 5 | 单元测试与平衡审计(全量 301 个 spec / 2806 例,含公共库 `packages/engine` 的 80 / 594) |
 | Electron / Capacitor | 39 / 8 | Windows 桌面与 Android 打包 |
 
 ## 许可证

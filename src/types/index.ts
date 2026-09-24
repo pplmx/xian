@@ -106,6 +106,7 @@ export type PercentStatKey =
   | 'dropRate'
   | 'expGain'
   | 'alchemyYield'
+  | 'craftExpGain'
   | 'forgeDiscount'
   | 'qiCapPct'
   | 'beastPct'

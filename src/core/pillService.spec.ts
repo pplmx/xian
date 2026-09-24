@@ -25,7 +25,7 @@ import { pillDef } from '@/data/pills'
 import { PILLS } from '@/data/pills'
 import { maxTierForMajor } from '@/data/regions'
 import { MAX_MAJOR } from '@/data/realms'
-import { recipeCraft } from '@/data/crafting'
+import { recipeCraft, type SkillId } from '@/data/crafting'
 import { stoneByTier } from './formulas'
 import { expRequirement } from './formulas'
 import { INSTANT_EXP_LAYER_CAP } from '@/data/constants'
@@ -168,6 +168,42 @@ describe('炼丹 · 成与败各自的账', () => {
     for (const mid of recipeCraft(pillDef(ID)!)!.materials) {
       expect(lore.seenOf(mid), '用过的灵材该留下见过的记录').toBeGreaterThan(0)
     }
+  })
+
+  /**
+   * 淬炼丹(炼丹体系自己吃的第二味药,见 docs/alchemy.md):增益内生时,
+   * 同一炉开炉得的技艺经验 ×(1 + 30%)见长 —— 「做得多就精」的那份"更多"
+   * 此刻来自泉涌的心得,而不是开炉次数。
+   */
+  it('淬炼丹内生:同一炉的技艺经验照 1.3 倍长', () => {
+    mockRand = 0
+    knowRecipe()
+    giveMaterials()
+    const lore = useLoreStore()
+    const craft = recipeCraft(pillDef(ID)!)!
+    const s = Object.keys(craft.skills)[0] as SkillId
+    craftPill(ID)
+    const plain = lore.expOf(s)
+    expect(plain, '基线炉该长经验').toBeGreaterThan(0)
+    useCultivationStore().addBuff('buff_cuidan', Date.now())
+    craftPill(ID)
+    // 第二炉的**增量** = 基线炉增量 ×1.3(不是总经验 ×1.3 —— 第一炉的经验也要留着)
+    expect(lore.expOf(s) - plain, '淬炼丹内生后同一炉的经验增量应 ×1.3').toBeCloseTo(plain * 1.3, 6)
+  })
+
+  it('淬炼丹内生:失手那炉的经验增量同样 ×1.3(成与败走同一行乘数)', () => {
+    mockRand = 0.999
+    knowRecipe()
+    giveMaterials()
+    const lore = useLoreStore()
+    const craft = recipeCraft(pillDef(ID)!)!
+    const s = Object.keys(craft.skills)[0] as SkillId
+    craftPill(ID)
+    const plain = lore.expOf(s)
+    expect(plain, '失手也该长经验作为基线').toBeGreaterThan(0)
+    useCultivationStore().addBuff('buff_cuidan', Date.now())
+    craftPill(ID)
+    expect(lore.expOf(s) - plain, '失手炉的增量也该 ×1.3').toBeCloseTo(plain * 1.3, 6)
   })
 
   it('失手:灵石照扣、灵草按技艺保下一部分、技艺照长、丹不入包', () => {

@@ -51,6 +51,14 @@
 
 ## 炼丹的自增益(体系吃自己的药)
 
-火候丹(双成概率 +20%)已完成接线(`alchemyYield` 词条直连 `engineCraft.alchemyBonus`)。
-继续做「炼丹经验增益」「炸炉减损」等方向时,须为每个新词条过 `fruitOutlets` 的
-"StatMods 全命名空间可达效率链"红线 —— 这不是免费的,别顺手跳过。
+- **火候丹**(双成概率 +20%):`alchemyYield` 词条直连 `engineCraft.alchemyBonus`。
+- **淬炼丹**(炼丹心得 +30%):新增 `craftExpGain` 词条,在 `pillService.gainCraftExp`
+  处把开炉得的技艺经验 ×(1 + craftExpGain)接线上 —— 「做得多就精」的那份"更多",
+  此刻可以来自泉涌的心得,而不只是开炉次数。
+- **尚未做:炸炉减损**(保料比例提升)。方向已明,须为每个新词条过 `fruitOutlets`
+  的"StatMods 全命名空间可达效率链"红线(新词条要登记效率路径,否则该红线即红);
+  这条不免费,别顺手跳过。
+
+已登记并守护:`craftExpGain` 走通了 `types` 联合 → `statNames` 显示名 →
+`fruitOutlets.VIA_RESOURCE` 效率路径 → `pillService` 消费 四处接线,并被
+pillValue/dataIntegrity/vocabularyCoverage/fruitOutlets 四道门验证。

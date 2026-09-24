@@ -69,7 +69,10 @@ function legacyCraftPill(id: string): { ok: boolean; count: number; aborted?: bo
     resources.spendHerbs(cost.herbGrade, cost.herb - kept)
   }
   const lore = useLoreStore()
-  const base = (succeeded ? 10 : 6) * (1 + able.rank * 0.35)
+  // 淬炼丹(炼丹心得)同款乘数:冻结镜像跟随 pillService.gainCraftExp 的现口径,
+  // 否则将来一带 buff 的并存用例,两边一个 ×1.3 一个不乘,parity 无端变红
+  // (惯例同下一句的 alchemyYield:新修饰词必须镜像进冻结版,见 84 行)
+  const base = (succeeded ? 10 : 6) * (1 + able.rank * 0.35) * (1 + (player.finalStats.mods.craftExpGain ?? 0))
   for (const [k, w] of Object.entries(craft?.skills ?? {})) {
     if (w === undefined) continue
     lore.addSkillExp(k as never, base * w)

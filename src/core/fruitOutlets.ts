@@ -72,7 +72,9 @@ const VIA_COMBAT: readonly AnyStatKey[] = [
   'shieldPower',
   'comboDamage',
   'counterDamage',
-  'overhealShield'
+  'overhealShield',
+  // 命中:化解闪避 → 有效输出 → 清场提速(它声明已久却没进这张表——联合覆盖检查揪出来的漏)
+  'accuracy'
 ]
 
 /** 经资源抵达的键 —— 资源换装备/丹药/建筑,最终仍回到战力或速度 */
@@ -83,9 +85,13 @@ const VIA_RESOURCE: readonly { key: AnyStatKey; via: string }[] = [
   { key: 'eventLuck', via: '事件运 → 际遇收益 → 资源 → 战力' },
   { key: 'spiritStoneGain', via: '灵石 → 灵脉/建筑/强化 → 速度与战力' },
   { key: 'alchemyYield', via: '丹药产出 → 属性与修为' },
+  { key: 'craftExpGain', via: '炼丹心得 → 技艺成长 → 成功率/双成 → 丹药 → 修为与战力' },
   { key: 'forgeDiscount', via: '强化省耗 → 同等灵石换更多战力' },
   { key: 'breakRefund', via: '突破返还 → 灵气成本 → 突破等待' },
-  { key: 'explorationSpeed', via: '历练节奏 → 单位时间收益' }
+  { key: 'explorationSpeed', via: '历练节奏 → 单位时间收益' },
+  // 下面两个是联合覆盖检查揪出的漏登记:声明已久却没进效率表 —— 补上,「没有安全键」才机械成立
+  { key: 'beastPct', via: '灵兽效果 → 灵兽的修速/际遇加成 → 单位时间收益' },
+  { key: 'qiCapPct', via: '灵气上限 → 突破资源储备 → 突破节奏 → 境界推进' }
 ]
 
 /** 全部属性键到「轮回速度」的可达路径 */
