@@ -76,7 +76,12 @@ export const BUFFS: BuffDef[] = [
     '神将临阵,攻伐无双,攻击提升 45%,暴击伤害提升 30%,受伤降低 10%',
     { attackPct: 0.45, critDamage: 0.3, damageReduction: 0.1 },
     'sword'
-  )
+  ),
+  // ---- 气运爆点(P2 首落):不是天运的弱化版,是高量级短窗「赌一把」—— 天运 15% 它 50% ----
+  b('buff_yunji', '鸿运当头', 'pill', 600, '气运喷薄,鸿运齐天 —— 气运提升 50%,际遇概率提升 40%', {
+    luck: 0.5,
+    eventLuck: 0.4
+  }, 'star')
 ]
 
 const BY_ID = new Map(BUFFS.map(x => [x.id, x]))

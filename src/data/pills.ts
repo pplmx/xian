@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 60 味。
+ * 丹药库 —— 63 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -217,6 +217,13 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 240, stoneBase: 600 },
     alchemyLevel: 10
   }),
+  // ---- 气运爆点(P2):天运丹(3)之后的高量级短窗运气丹 —— 渡劫期赌一把大的 ----
+  p('p_yunbaodan', '鸿运丹', 'immortal', 8, '服之鸿运当头,气运喷薄如沸 —— 十成把握,就以十成去赌', {
+    kind: 'buff',
+    buffId: 'buff_yunji',
+    recipe: { herb: 120, stoneBase: 300 },
+    alchemyLevel: 9
+  }),
   p('p_gangqisan', '罡气散', 'excellent', 1, '服之罡气环身,盾出伤随', {
     kind: 'buff',
     buffId: 'buff_gangdun',
@@ -386,6 +393,17 @@ export const PILLS: PillDef[] = [
   p('p_kaitian', '开天丹', 'divine', 20, '开天辟地,道祖遗泽,服之如闭关三个半时辰(7 小时)', {
     instant: { expSecs: 25200 },
     recipe: { herb: 600, stoneBase: 1600 },
+    alchemyLevel: 10
+  }),
+  // ---- 神品/道品灵气丹(多维审视 P1-3):灵气线自仙泉玉液(11)断档 —— 神界/混沌海 一口回满补齐 ----
+  p('p_shenquan', '神泉丹', 'divine', 14, '神泉一盏,灵气涤尽复满 —— 神界泉眼,火候更难', {
+    instant: { qiPct: 1 },
+    recipe: { herb: 150, stoneBase: 420 },
+    alchemyLevel: 10
+  }),
+  p('p_daoquan', '道泉丹', 'divine', 18, '混沌初开的第一滴气,服之丹田即满 —— 道品灵泉,一味难求', {
+    instant: { qiPct: 1 },
+    recipe: { herb: 190, stoneBase: 560 },
     alchemyLevel: 10
   }),
 

@@ -105,7 +105,7 @@ src/
 │   ├── affixes.ts            # 113 词条
 │   ├── gongfa.ts             # 63 功法
 │   ├── gongfaBranches.ts     # 141 悟道分支
-│   ├── pills.ts              # 60 丹药
+│   ├── pills.ts              # 63 丹药
 │   ├── artifacts.ts          # 45 法宝
 │   ├── souls.ts              # 6 类 6 阶器魂
 │   ├── xiangxiu.ts           # 28 星宿 · 四象
