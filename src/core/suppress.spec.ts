@@ -7,7 +7,16 @@ import { DECOMPOSE_DUST } from '@/data/constants'
 import { qualityDef } from '@/data/qualities'
 import { sub, toNum } from '@/utils/gnum'
 import { RandomService } from '@/utils/random'
-import { checkSuppression, settleSuppressedRegions, suppressRateFor, suppressionProgress, suppressYield, type RegionStats } from './suppress'
+import {
+  checkSuppression,
+  settleSuppressedRegions,
+  suppressRateFor,
+  suppressionExpRate,
+  suppressionEquipmentLuck,
+  suppressionProgress,
+  suppressYield,
+  type RegionStats
+} from './suppress'
 import { prosperityYieldMult, regionRecallFor } from './worldMemory'
 
 describe('区域镇压系统', () => {
@@ -108,6 +117,39 @@ describe('区域镇压系统', () => {
       player.unsuppressRegion('luoxia')
       expect([...player.suppressedRegions].sort()).toEqual(['heifeng', 'qingyun'])
       expect(player.suppressQualified).toContain('luoxia')
+    })
+
+    /**
+     * 镇守道韵:镇压不再只回灵石/物产/装备 —— 每镇压一区,一小时按挂机修速 +8%
+     * 折算修为(封顶 +40%,5 区满)。同源挂机曲线,所以红利在任何境界都是挂机的固定加成。
+     */
+    describe('镇守道韵(修为红利)与老区装备成长', () => {
+      it('红利速率:每镇压一区 +8%,封顶 +40%', () => {
+        expect(suppressionExpRate(0)).toBe(0)
+        expect(suppressionExpRate(1)).toBeCloseTo(0.08, 9)
+        expect(suppressionExpRate(3)).toBeCloseTo(0.24, 9)
+        expect(suppressionExpRate(7)).toBeCloseTo(0.4, 9)
+      })
+
+      it('老区装备运气:镇满一天 +0.1,封顶 +0.8', () => {
+        const now = Date.now()
+        expect(suppressionEquipmentLuck(now, now)).toBe(0)
+        expect(suppressionEquipmentLuck(now - 86_400_000 * 2, now)).toBeCloseTo(0.2, 9)
+        expect(suppressionEquipmentLuck(now - 86_400_000 * 12, now)).toBeCloseTo(0.8, 9)
+      })
+
+      it('结算:镇压两区一小时,修为红利 = 修速 × 16%', () => {
+        const player = usePlayerStore()
+        player.suppressedRegions = ['qingyun', 'wanyao']
+        player.suppressedSince = { qingyun: Date.now(), wanyao: Date.now() }
+        const cult = player.cultPerSec
+        const before = toNum(player.exp)
+        const total = settleSuppressedRegions(3600)
+        expect(total).not.toBeNull()
+        const gained = toNum(player.exp) - before
+        expect(gained).toBeCloseTo(cult * 0.16, 6)
+        expect(toNum(total!.expGain)).toBeCloseTo(cult * 0.16, 6)
+      })
     })
 
     it('资格幂等:重复取得不会写重', () => {

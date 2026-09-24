@@ -12,7 +12,7 @@ import { stoneByTier } from '@/core/formulas'
 import { generateEquipment } from '@/core/equipGen'
 import { acquireEquipment } from '@/core/loot'
 import { rng, type RandomService } from '@/utils/random'
-import { gnZero, add } from '@/utils/gnum'
+import { gnZero, add, isZero, mulN, gn } from '@/utils/gnum'
 import type { GNum, QualityId } from '@/types'
 import { equipmentTemplate } from '@/data/equipment'
 import { deriveProsperity, prosperityYieldMult } from './worldMemory'
@@ -39,6 +39,25 @@ export const SUPPRESS_THRESHOLDS = {
 const SUPPRESS_YIELD_PER_HOUR = {
   stoneMultiplier: 150,       // 灵石倍率
   equipmentChance: 0.4,       // 装备掉落概率
+}
+
+/** 镇守道韵:每镇压一区,每小时按挂机修速 +8% 给修为;总封顶 +40%(5 区满) */
+export const SUPPRESS_EXP_PER_REGION = 0.08
+export const SUPPRESS_EXP_MAX = 0.4
+
+/** 老镇压区的装备成长:镇满一天,该区掉落的装备运气 +0.1,封顶 +0.8 */
+export const SUPPRESS_EQUIP_LUCK_CAP = 0.8
+export const SUPPRESS_EQUIP_LUCK_PER_DAY = 0.1
+
+/** 镇守道韵的挂机加成:每镇压一区 +8%,封顶 +40% —— 纯函数,便于断言 */
+export function suppressionExpRate(count: number): number {
+  return Math.min(count * SUPPRESS_EXP_PER_REGION, SUPPRESS_EXP_MAX)
+}
+
+/** 老镇压区的装备运气:镇满一天 +0.1,封顶 +0.8 —— 纯函数,便于断言 */
+export function suppressionEquipmentLuck(sinceMs: number, nowMs: number): number {
+  const days = Math.floor(Math.max(0, nowMs - sinceMs) / 86_400_000)
+  return Math.min(SUPPRESS_EQUIP_LUCK_CAP, days * SUPPRESS_EQUIP_LUCK_PER_DAY)
 }
 
 /**
@@ -174,6 +193,8 @@ export function suppressRateFor(regionId: string): SuppressRate | null {
  */
 export interface SuppressedYield {
   stone: GNum
+  /** 镇守道韵:这一段镇压折算的修为点数(与挂机同源,见 SUPPRESS_EXP_PER_REGION) */
+  expGain: GNum
   equipment: { name: string; quality: QualityId; recycled?: boolean }[]
   /** 未入包(自动回收/满包化尘)装备化作的器灵尘(由 acquireEquipment 记账) */
   recycledDust: number
@@ -193,7 +214,14 @@ export function settleSuppressedRegions(dt: number, service: RandomService = rng
   const resources = useResourcesStore()
 
   const hours = dt / 3600
-  const total: SuppressedYield = { stone: gnZero(), equipment: [], recycledDust: 0, resources: [], revived: [] }
+  const total: SuppressedYield = {
+    stone: gnZero(),
+    expGain: gnZero(),
+    equipment: [],
+    recycledDust: 0,
+    resources: [],
+    revived: []
+  }
   const now = Date.now()
 
   /**
@@ -212,6 +240,13 @@ export function settleSuppressedRegions(dt: number, service: RandomService = rng
 
   const active = player.suppressedRegions
   if (active.length === 0) return total
+
+  // ---- 镇守道韵:同源挂机曲线(cultPerSec × dt),每镇压一区 +8%,封顶 +40% ----
+  const expGain = mulN(gn(player.cultPerSec), suppressionExpRate(active.length) * hours)
+  if (!isZero(expGain)) {
+    player.gainExp(expGain)
+    total.expGain = add(total.expGain, expGain)
+  }
 
   for (const regionId of active) {
     const region = regionDef(regionId)
@@ -251,8 +286,13 @@ export function settleSuppressedRegions(dt: number, service: RandomService = rng
     // 零头与装备生成走同一个可注入随机源:从前这里裸调 Math.random(生成装备却用 rng),
     // 测试只能去 mock 全局 Math.random,而 rng 在构造时就把原函数抓走了 —— 注入才是可测的那条路
     const equipCount = Math.floor(equipChance) + (service.chance(equipChance - Math.floor(equipChance)) ? 1 : 0)
+    // 老镇压区:镇守满一天,该区掉落的装备运气 +0.1(封顶 +0.8) —— 镇的越久,出的越不只是粉尘
+    const tenureLuck =
+      player.suppressedSince[regionId] === undefined
+        ? 0
+        : suppressionEquipmentLuck(player.suppressedSince[regionId], now)
     for (let i = 0; i < equipCount; i += 1) {
-      const equip = generateEquipment(region.tier, service, { luck: 0, minQualityRank: 0 })
+      const equip = generateEquipment(region.tier, service, { luck: tenureLuck, minQualityRank: 0 })
       const res = acquireEquipment(equip, { quiet: true }) // quiet=true 避免镇压收益刷屏
       // 所得清单如实记下每一件产出:入包与否都列,未入包(自动回收/满包化尘)标注回收
       total.equipment.push({ name: equipmentTemplate(equip.templateId)?.name ?? '未知', quality: equip.quality, recycled: !res.bagged })

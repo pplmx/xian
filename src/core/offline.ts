@@ -171,7 +171,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   }
   if (suppressYield && !isZero(suppressYield.stone)) {
     const extra = suppressYield.resources.map(r => `${r.name} +${r.amount}`).join(' · ')
-    notes.push(`镇压诸域仍有余韵:灵石 +${formatGN(suppressYield.stone)}${extra ? ` · ${extra}` : ''}`)
+    const dao = isZero(suppressYield.expGain) ? '' : ` · 道韵修为 +${formatGN(suppressYield.expGain)}`
+    notes.push(`镇压诸域仍有余韵:灵石 +${formatGN(suppressYield.stone)}${extra ? ` · ${extra}` : ''}${dao}`)
     for (const eq of suppressYield.equipment) {
       equipmentGained.push(eq)
     }

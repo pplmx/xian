@@ -141,6 +141,8 @@ export function auditEra(major: number): EraAudit {
    * 两条线都随修速缩放,故这一行的比值在任何境界都该是同一个数 —— 判据据此断。
    * 速率与时长都取自 core/expIncome(同一把尺子)。
    */
+  // 镇压红利(镇守道韵)未入本表数值:同源挂机曲线(core/suppress,每区 +8%/小时、封顶 +40%),
+  // 任何境界都是挂机的固定加成,不改「比值恒平」的结论 —— 自报口径,不装健康。
   const expIncome = 3600 + tripExpSecsPerHour()
 
   // ---- 消耗(时期总量摊销到每小时) ----
