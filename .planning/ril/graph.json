@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 422,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-24T05:56:42+00:00",
+  "updated_at": "2026-09-24T08:25:40+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24688,6 +24688,29 @@
       "touched_round": 422,
       "commit": "5cd365f",
       "summary": "灵草五品分级 + 灵石购草(反转草→石):herb 五档库存、方子按品认草、buyHerbs 一千万封顶、economySim 储备口径、存档迁移"
+    },
+    "ISS-307": {
+      "id": "ISS-307",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-24T08:24:04+00:00",
+      "updated_at": "2026-09-24T08:25:40+00:00",
+      "touched_round": 422,
+      "severity": 0.6,
+      "summary": "炼丹体系多维度审视并落的账:渡劫(8)/真仙(9) 可炼断档、后期每境一味偏薄(9 境悬在 11 条薄于人间界地板)、炼丹增益缺位 —— P1/P2/P3 其余项(灵气丹/掉落状态线/气运爆点/奇缘授方/两把尺)仍记档",
+      "resolved_note": "由 CHG-498 落地;余项 P1-3/P2/P3 记档待后续"
+    },
+    "CHG-498": {
+      "id": "CHG-498",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-24T08:24:23+00:00",
+      "updated_at": "2026-09-24T08:25:40+00:00",
+      "touched_round": 422,
+      "summary": "炼丹体系补短板落地:渡劫丹/真仙丹 断档 2 味 + 火候丹(炼制增益 buff_huohou) + 大罗/神寿/神将/神王/神帝/鸿蒙寿/开天 每境第二味 7 味;神将之威 稳压仙力加身;全量过七律与 timeUnits 对账",
+      "commit": 338240000.0
     }
   },
   "edges": [
@@ -36115,6 +36138,13 @@
       "to": "ISS-306",
       "type": "resolves",
       "created_at": "2026-09-24T05:55:24+00:00"
+    },
+    {
+      "from": "CHG-498",
+      "to": "ISS-307",
+      "type": "resolves",
+      "created_at": "2026-09-24T08:24:23+00:00",
+      "detail": "渡劫/真仙断档 + 每境第二味 + 调试增益,本次落地;计时段 6 味 + 状态 1 味"
     }
   ]
 }
