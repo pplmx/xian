@@ -324,8 +324,19 @@
               <p class="tabular text-[13px]" :class="rateClass(r.able.successRate)">{{ formatPercent(r.able.successRate) }}</p>
               <p class="text-[10px] text-ink-faint">把握</p>
             </div>
-            <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]" @click="craftPill(r.def.id)">炼制</button>
+            <button
+              class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]"
+              :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
+              :disabled="r.shortHerb || r.shortStone"
+              @click="craftPill(r.def.id)"
+            >
+              炼制
+            </button>
           </div>
+          <p v-if="r.shortText" class="mt-1 pl-7 text-[10px] text-cinnabar tabular">
+            {{ r.shortText }}
+            <button v-if="r.shortHerb" class="underline" @click="marketOpen = true"> · 灵草坊可补 ›</button>
+          </p>
           <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-faint">· {{ w }}</p>
         </div>
       </div>
@@ -704,11 +715,29 @@
 
   const recipes = computed(() =>
     availableRecipes()
-      .map(id => ({ def: pillDef(id), cost: pillCraftCost(id), able: craftability(id) }))
-      .filter(
-        (x): x is { def: PillDef; cost: { herb: number; herbGrade: HerbGrade; stone: GNum }; able: Craftability } =>
-          x.def !== undefined && x.cost !== null && x.able !== null
-      )
+      .map(id => {
+        const def = pillDef(id)
+        const cost = pillCraftCost(id)
+        const able = craftability(id)
+        if (!def || !cost || !able) return null
+        // 分级后「灵草不足」太笼统:满兜仙品草也可能缺几株凡品 —— 逐案点名缺什么,
+        // 缺草的直接指路灵草坊(那是唯一买草的地方)
+        const shortHerb = !resources.hasHerbs(cost.herbGrade, cost.herb)
+        const shortStone = !resources.hasStone(cost.stone)
+        return {
+          def,
+          cost,
+          able,
+          shortHerb,
+          shortStone,
+          shortText: shortHerb
+            ? `缺${HERB_GRADE_NAMES[cost.herbGrade]},持 ${resources.herbOf(cost.herbGrade)}/${cost.herb}`
+            : shortStone
+              ? `灵石不足(需 ${formatGN(cost.stone)})`
+              : null
+        }
+      })
+      .filter((x): x is { def: PillDef; cost: { herb: number; herbGrade: HerbGrade; stone: GNum }; able: Craftability; shortHerb: boolean; shortStone: boolean; shortText: string | null } => x !== null)
       .sort((a, b) => a.able.rank - b.able.rank)
   )
 
