@@ -11,7 +11,7 @@ import * as market from './herbMarketService'
 import { buyHerbs, herbBuyPrice } from './herbMarketService'
 import { useResourcesStore } from '@/stores/resources'
 import { usePlayerStore } from '@/stores/player'
-import { HERB_BUY_PRICE, HERB_GRADE_NAMES } from '@/data/herbGrades'
+import { HERB_RARITY_GROWTH, HERB_GRADE_NAMES } from '@/data/herbGrades'
 
 describe('灵草坊 · 灵石购草(ISS-306)', () => {
   beforeEach(() => {
@@ -20,17 +20,16 @@ describe('灵草坊 · 灵石购草(ISS-306)', () => {
     resources.addStone({ m: 1, e: 3 }) // 1000 灵石
   })
 
-  it('五品明码标价:单价 = HERB_BUY_PRICE,且是 ×10 阶梯一路到一千万', () => {
+  it('五品明码标价:单价 = 购价算法(地价 × 珍贵倍率^品距),阶梯一路到一千万', () => {
     expect(herbBuyPrice(1)).toBe(1_000)
     expect(herbBuyPrice(2)).toBe(10_000)
     expect(herbBuyPrice(3)).toBe(100_000)
     expect(herbBuyPrice(4)).toBe(1_000_000)
     expect(herbBuyPrice(5)).toBe(10_000_000)
-    // 阶梯:每一品都是上一品的十倍 —— 「草比石贵的宣言」是一条刚性的曲线
-    expect(HERB_BUY_PRICE[2]).toBe(HERB_BUY_PRICE[1] * 10)
-    expect(HERB_BUY_PRICE[3]).toBe(HERB_BUY_PRICE[2] * 10)
-    expect(HERB_BUY_PRICE[4]).toBe(HERB_BUY_PRICE[3] * 10)
-    expect(HERB_BUY_PRICE[5]).toBe(HERB_BUY_PRICE[4] * 10)
+    // 阶梯:每一品都是上一品的 `HERB_RARITY_GROWTH` 倍 ——「草比石贵」是一条刚性曲线
+    for (let g = 1; g < 5; g += 1) {
+      expect(herbBuyPrice((g + 1) as 2 | 3 | 4 | 5)).toBe(herbBuyPrice(g as 1) * HERB_RARITY_GROWTH)
+    }
     expect(HERB_GRADE_NAMES[5]).toBe('道品灵草')
   })
 

@@ -98,7 +98,7 @@
         <span class="min-w-0 flex-1">
           <span class="block font-kai text-[13px] tracking-widest text-ink">灵草坊</span>
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
-            灵石买草 · 凡品千石起,道品一千万一株
+            灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 石起,道品 {{ formatGN(herbBuyPrice(5)) }} 石一株
           </span>
         </span>
         <span class="shrink-0 text-[12px] text-ink-faint">买 ›</span>
@@ -539,8 +539,8 @@
   import { qualityDef, QUALITIES } from '@/data/qualities'
   import { pillDef } from '@/data/pills'
   import { pillFuncText } from '@/ui/itemText'
-  import { HERB_GRADES, HERB_GRADE_NAMES, HERB_GRADE_SHORT, type HerbGrade } from '@/data/herbGrades'
-  import { buyHerbs, herbBuyPrice } from '@/core/herbMarketService'
+  import { HERB_GRADES, HERB_GRADE_NAMES, HERB_GRADE_SHORT, herbBuyPrice, type HerbGrade } from '@/data/herbGrades'
+  import { buyHerbs } from '@/core/herbMarketService'
   import {
     artifactActiveText,
     artifactDef,

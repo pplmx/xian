@@ -8,7 +8,7 @@
  *     整条可炼线会被封死(该品的草)或被绕过(低品草进高品炉)。全表钉死。
  */
 import { describe, expect, it } from 'vitest'
-import { HERB_BUY_PRICE, HERB_GRADE_BANDS, HERB_GRADES, herbGradeOfMajor } from './herbGrades'
+import { HERB_GROUND_PRICE, HERB_RARITY_GROWTH, HERB_GRADE_BANDS, HERB_GRADES, herbBuyPrice, herbGradeOfMajor } from './herbGrades'
 import { PILLS } from '@/data/pills'
 import { pillCraftCost } from '@/core/pillService'
 
@@ -39,11 +39,19 @@ describe('灵草五品(ISS-306)', () => {
     expect(HERB_GRADE_BANDS.at(-1)![1]).toBe(20)
   })
 
-  it('购价 ×10 阶梯,道品一千万封顶(草比石贵的宣言是刚性的)', () => {
+  it('购价是公式不是查表:地价 × 珍贵倍率^品距,顶价 = 公式产出,不另行封顶', () => {
+    expect(herbBuyPrice(1)).toBe(HERB_GROUND_PRICE)
     for (let i = 1; i < HERB_GRADES.length; i += 1) {
-      expect(HERB_BUY_PRICE[(i + 1) as 2 | 3 | 4 | 5]).toBe(HERB_BUY_PRICE[i as 1] * 10)
+      // 每高一品,价格 = 下一品 × 珍贵倍率(珍贵程度 = 品距,只此一套曲线)
+      expect(herbBuyPrice((i + 1) as 2 | 3 | 4 | 5)).toBe(herbBuyPrice(i as 1) * HERB_RARITY_GROWTH)
+      expect(herbBuyPrice(i as 1)).toBe(HERB_GROUND_PRICE * HERB_RARITY_GROWTH ** (i - 1))
     }
-    expect(HERB_BUY_PRICE[5]).toBe(10_000_000)
+    // 当前参数下的道品价 1000 × 10^4 = 1000 万 —— 这是公式的产出,不是独立的本
+    expect(herbBuyPrice(5)).toBe(10_000_000)
+    // 顶价跟着参数走:调珍贵倍率/地价,整条阶梯连同顶价一起动
+    const before = herbBuyPrice(5)
+    const shifted = HERB_GROUND_PRICE * (HERB_RARITY_GROWTH * 2) ** 4
+    expect(shifted).toBeGreaterThan(before)
   })
 
   it('每味可炼方烧的品阶 == 准入境界的品阶:新手村草进不了道祖丹的炉', () => {

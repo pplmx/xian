@@ -35,19 +35,39 @@ export const HERB_GRADE_SHORT: Record<HerbGrade, string> = {
 }
 
 /**
- * 灵石购价(株)—— ×10 阶梯:1 千 → 1 万 → 10 万 → 100 万 → 1000 万。
+ * 凡品草的地价(灵石/株)—— 购价算法的锚。
+ *
+ * 凡品是新手村的草:千万别说它贱到白给,它是「草比石贵」这一整条宣言的起点。
+ */
+export const HERB_GROUND_PRICE = 1_000
+
+/**
+ * 每一品的珍贵倍率:高一品,难采十倍。
+ *
+ * 「珍贵程度」在这里就是**品距**(herbBuyPrice 里的 `grade - 1`):每高一个品阶,
+ * 稀缺就多一个量级 —— 这一品的东西,是那一界花了十倍的界膜力气才长出来的。
+ * 只动这一个旋钮,整条阶梯连同顶价一起变。
+ */
+export const HERB_RARITY_GROWTH = 10
+
+/**
+ * 灵石购价算法(株):地价 × 珍贵倍率^品距 —— **不是查表,是公式**。
+ *
+ * 顶价 = 公式在道品上的产出(当前 1000 × 10^4 = 1000 万),**不另行封顶**:
+ * 想要不同的顶就想不同的地价或珍贵倍率,阶梯永远是同一条曲线。
  *
  * 这一串数字是「草比石贵的宣言」:石头是挂机油井,后期闲置;草是炼丹根本,
  * 高品稀缺。购价一律远超采集成本,不是给炼丹供料的常规渠道,而是
  * 「灵石多到没处花时才发现一颗道品草顶一条灵石矿」的泻口(烧钱不是印钱,
  * 故不设额度闸,价格本身就是闸)。
  */
-export const HERB_BUY_PRICE: Record<HerbGrade, number> = {
-  1: 1_000,
-  2: 10_000,
-  3: 100_000,
-  4: 1_000_000,
-  5: 10_000_000
+export function herbBuyPrice(grade: HerbGrade): number {
+  return HERB_GROUND_PRICE * HERB_RARITY_GROWTH ** (grade - 1)
+}
+
+/** 品阶是否合法(收外来源/存档校验用) */
+export function isHerbGrade(v: unknown): v is HerbGrade {
+  return v === 1 || v === 2 || v === 3 || v === 4 || v === 5
 }
 
 /**

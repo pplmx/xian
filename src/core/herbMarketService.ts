@@ -10,7 +10,7 @@
  * 结算以「株」为单位,单价 × 株数,一次结清;灵石不够即拒绝,不拆单。
  */
 import { gn, mulN } from '@/utils/gnum'
-import { HERB_BUY_PRICE, type HerbGrade } from '@/data/herbGrades'
+import { herbBuyPrice, isHerbGrade, type HerbGrade } from '@/data/herbGrades'
 import { useResourcesStore } from '@/stores/resources'
 
 export interface HerbBuyResult {
@@ -21,20 +21,20 @@ export interface HerbBuyResult {
   reason?: 'noStone' | 'badGrade' | 'badAmount'
 }
 
-export function herbBuyPrice(grade: HerbGrade): number {
-  return HERB_BUY_PRICE[grade]
-}
+/** 单价走 data/herbGrades 的购价算法(地价 × 珍贵倍率^品距,见那里的注释) */
+export { herbBuyPrice }
 
 /** 灵石买草:单价 × 株数,一次结清;草入对应品阶,灵石够才成交 */
 export function buyHerbs(grade: HerbGrade, herbs: number): HerbBuyResult {
   const resources = useResourcesStore()
-  if (!HERB_BUY_PRICE[grade]) return { ok: false, grade, herbs: 0, costPerHerb: 0, reason: 'badGrade' }
-  if (!Number.isInteger(herbs) || herbs < 1) return { ok: false, grade, herbs: 0, costPerHerb: HERB_BUY_PRICE[grade], reason: 'badAmount' }
-  const cost = mulN(gn(HERB_BUY_PRICE[grade]), herbs)
-  if (!resources.hasStone(cost)) return { ok: false, grade, herbs: 0, costPerHerb: HERB_BUY_PRICE[grade], reason: 'noStone' }
-  if (!resources.spendStone(cost)) return { ok: false, grade, herbs: 0, costPerHerb: HERB_BUY_PRICE[grade], reason: 'noStone' }
+  if (!isHerbGrade(grade)) return { ok: false, grade, herbs: 0, costPerHerb: 0, reason: 'badGrade' }
+  const price = herbBuyPrice(grade)
+  if (!Number.isInteger(herbs) || herbs < 1) return { ok: false, grade, herbs: 0, costPerHerb: price, reason: 'badAmount' }
+  const cost = mulN(gn(price), herbs)
+  if (!resources.hasStone(cost)) return { ok: false, grade, herbs: 0, costPerHerb: price, reason: 'noStone' }
+  if (!resources.spendStone(cost)) return { ok: false, grade, herbs: 0, costPerHerb: price, reason: 'noStone' }
   resources.grantHerbs(herbs, grade)
-  return { ok: true, grade, herbs, costPerHerb: HERB_BUY_PRICE[grade] }
+  return { ok: true, grade, herbs, costPerHerb: price }
 }
 
 /**
