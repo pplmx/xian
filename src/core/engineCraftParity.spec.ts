@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { PILLS, pillDef } from '@/data/pills'
 import { recipeCraft } from '@/data/crafting'
+import { herbGradeOfMajor } from '@/data/herbGrades'
 import { ACHIEVEMENTS } from '@/data/achievements'
 import { MAIN_QUESTS } from '@/data/quests'
 import { craftability } from './craftability'
@@ -53,7 +54,8 @@ function legacyCraftPill(id: string): { ok: boolean; count: number; aborted?: bo
     ui.toast(able.blockers[0]!, 'warn')
     return { ok: false, count: 0, aborted: true }
   }
-  if (!resources.hasSmall('herb', cost.herb) || !resources.hasStone(cost.stone)) {
+  // 草按品阶认(ISS-306):这张方子烧 cost.herbGrade 的草,不与玩家所在界混算
+  if (!resources.hasHerbs(cost.herbGrade, cost.herb) || !resources.hasStone(cost.stone)) {
     ui.toast('灵草或灵石不足', 'warn')
     return { ok: false, count: 0, aborted: true }
   }
@@ -61,10 +63,10 @@ function legacyCraftPill(id: string): { ok: boolean; count: number; aborted?: bo
   const succeeded = rng.chance(able.successRate)
   resources.spendStone(cost.stone)
   if (succeeded) {
-    resources.spendSmall('herb', cost.herb)
+    resources.spendHerbs(cost.herbGrade, cost.herb)
   } else {
     const kept = Math.floor(cost.herb * salvageRatio(able.skill))
-    resources.spendSmall('herb', cost.herb - kept)
+    resources.spendHerbs(cost.herbGrade, cost.herb - kept)
   }
   const lore = useLoreStore()
   const base = (succeeded ? 10 : 6) * (1 + able.rank * 0.35)
@@ -108,7 +110,8 @@ function prepare(opts: { mastery?: number; skill?: number; herb?: number; forget
   lore.addRecipeMastery(recipe.id, opts.forget ? 0 : (opts.mastery ?? 1))
   if (opts.skill) for (const key of ['discern', 'herbLore', 'flame'] as const) lore.addSkillExp(key, opts.skill)
   const resources = useResourcesStore()
-  resources.herb = opts.herb ?? 99
+  // 灵草五品:按这张方子要求的品阶备料(凡品聚气散就备凡品草)
+  resources.grantHerbs(opts.herb ?? 99, herbGradeOfMajor(recipe.minRealm))
   resources.spiritStone = gn(1e9)
   useInventoryStore().pills = {}
   usePlayerStore().major = 6

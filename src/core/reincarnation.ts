@@ -9,6 +9,7 @@ import { rng } from '@/utils/random'
 import { yearsShown } from '@/utils/format'
 import { TALENTS } from '@/data/talents'
 import { TALENT_DRAW_DIV } from '@/data/constants'
+import { HERB_GRADES } from '@/data/herbGrades'
 import { lifeThemeDef } from '@/data/lifeThemes'
 import { nextStageAfter, stageAt } from '@/data/samsara'
 import { rollLinggen } from './linggenGen'
@@ -203,7 +204,8 @@ export function confirmReincarnation(chosenTalentId: string | null, chosenThemeI
   resources.spiritStone = gnZero() as GNum
   resources.setQi(0, 1)
   resources.wudao = 0
-  resources.herb = 0
+  // 灵草五品一体清零(草是外物,不随轮回带走)
+  for (const g of HERB_GRADES) resources.spendHerbs(g, resources.herbOf(g))
   resources.ore = 0
   resources.page = 0
   resources.dust = 0

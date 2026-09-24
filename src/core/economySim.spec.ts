@@ -1,7 +1,7 @@
 /* eslint-disable no-console -- 模拟器体检报告的正式输出(bun run test:report 依赖) */
 import { describe, expect, it } from 'vitest'
 import { fullEconomyAudit, qiFillSeconds } from './economySim'
-import { BT_QI_COST_RATIO, HERB_EXCHANGE_ERA_QUOTA, HERB_TO_STONE_COST } from '@/data/constants'
+import { BT_QI_COST_RATIO } from '@/data/constants'
 import { MAX_MAJOR, worldOf } from '@/data/realms'
 import { maxTierForMajor } from '@/data/regions'
 import { layerSeconds } from './pillValue'
@@ -124,20 +124,24 @@ describe('经济闭环审计(Phase 19 · Phase 40 补界外与修为)', () => {
   })
 
   /**
-   * 快赢1(ISS-303)红线:给前期过剩灵草一个出口,同时防印钞。
-   * - 0~3 境灵草从「闲置/过剩」拉到有真实去处(不再死资源);
-   * - 兑换补的灵石有硬金(每境额度/换率 ÷ 摊销),绝不成为灵石主来源。
+   * ISS-306 设计闸:灵草→灵石 兑换已整体删除(方向反了 —— 草比石贵)。
+   * - 服务层哨兵常真(HERB_EXCHANGE_VETOED),禁止任何人加回草→石出口;
+   * - 审计不再把兑换当草出口:0~3 境灵草即使闲置/过剩,也要按「储备」口径自报
+   *   (参照界外悟道那条"出口未入模型就明说"的惯例),而不是被当成无人理睬的死资源;
+   * - 审计读数不再携带兑换字段。
    */
-  it('快赢1:0~3 境灵草有了出口(不再死资源),兑换防印钞(补灵石被封顶)', () => {
+  it('ISS-306:无任何草→石 兑换;前期闲置灵草是储备而非死资源', () => {
     for (const era of eras.slice(0, 4)) {
       const herb = era.flows.find(f => f.resource === 'herb')!
-      expect(herb.verdict, `第${era.major}境灵草不再是死资源`).not.toBe('闲置')
-      expect(era.herbExchanged, `第${era.major}境小时代兑灵草`).toBeGreaterThanOrEqual(0)
+      // 炼丹仍然吃草(这不是死资源 —— 它有本职去处)
+      expect(herb.sinkPerHour, `第${era.major}境炼丹还需灵草`).toBeGreaterThan(0)
+      if (herb.verdict === '闲置' || herb.verdict === '过剩') {
+        expect(herb.note, `第${era.major}境灵草闲置/过剩没有自报「储备」口径`).toContain('储备')
+      }
     }
-    // 防印钞硬金:小时代兑灵草 ≤ 每境额度 ÷ 最小摊销(2h),故补灵石每小时有顶
-    const perHourCap = HERB_EXCHANGE_ERA_QUOTA / HERB_TO_STONE_COST / 2
     for (const era of eras) {
-      expect(era.stoneFromExchange + 1e-9, `第${era.major}境兑换补灵石`).toBeLessThanOrEqual(perHourCap)
+      expect('herbExchanged' in era, '审计不再产出草→石 兑换读数').toBe(false)
+      expect('stoneFromExchange' in era, '审计不再产出兑换补石读数').toBe(false)
     }
   })
 

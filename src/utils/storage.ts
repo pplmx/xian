@@ -271,17 +271,50 @@ export function migrateInventorySlice(data: Record<string, unknown>): Record<str
 }
 
 /**
+ * (迁移前)灵草五品:旧版灵草是单标量,拆成五档后一律认凡品。
+ *
+ * ISS-306:老玩家攒下的草本来就是新手村时期采的,分品时全数作凡品(1)平账;
+ * 五档表可能缺档(旧档根本没这个形),逐档补 0;顺带清掉已删除的灵草→灵石
+ * 兑换额度残留(herbExchangeUsed / herbExchangeRealm)。
+ */
+export function migrateResourcesSlice(data: Record<string, unknown>): Record<string, unknown> {
+  const next = { ...data }
+  const legacy = next.herb
+  const existing = next.herbs
+  const herbs: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  if (typeof existing === 'object' && existing !== null) {
+    for (const k of [1, 2, 3, 4, 5]) {
+      const v = (existing as Record<string, unknown>)[String(k)]
+      if (typeof v === 'number' && Number.isFinite(v) && v >= 0) herbs[k] = Math.floor(v)
+    }
+  }
+  if (typeof legacy === 'number' && Number.isFinite(legacy) && legacy > 0) {
+    herbs[1] = (herbs[1] ?? 0) + Math.floor(legacy)
+  }
+  next.herbs = herbs
+  delete next.herb
+  delete next.herbExchangeUsed
+  delete next.herbExchangeRealm
+  return next
+}
+
+/**
  * 本地存档结构升级(在 Pinia 水合之前执行);顺带把旧明文档一次性转为密文
  */
 export function migrateLocalSchema(): void {
   try {
     migrateLegacyPrefix()
-    const key = storageKey('inventory')
-    const raw = localStorage.getItem(key)
-    if (raw === null) return
-    const data = JSON.parse(readSaveText(raw)) as Record<string, unknown>
-    const migrated = migrateInventorySlice(data)
-    localStorage.setItem(key, encryptSave(JSON.stringify(migrated)))
+    for (const [key, fn] of [
+      ['inventory', migrateInventorySlice],
+      ['resources', migrateResourcesSlice]
+    ] as const) {
+      const storeKey = storageKey(key)
+      const raw = localStorage.getItem(storeKey)
+      if (raw === null) continue
+      const data = JSON.parse(readSaveText(raw)) as Record<string, unknown>
+      const migrated = fn(data)
+      localStorage.setItem(storeKey, encryptSave(JSON.stringify(migrated)))
+    }
   } catch {
     // 损坏数据交由 preflightScan 兜底
   }

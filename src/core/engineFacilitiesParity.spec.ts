@@ -175,7 +175,7 @@ describe('设施对账 —— 每小时产出与零头', () => {
     const dongfu = useDongfuStore()
     const resources = useResourcesStore()
     dongfu.levels = { ...zeroLevels(), field: 3, library: 7 }
-    resources.herb = 0
+    resources.spendHerbs(1, resources.herbOf(1)) // 灵草见底(本测试玩家在人间界,产的是凡品)
     resources.ore = 0
     resources.wudao = 0
     dongfu.produce(600)

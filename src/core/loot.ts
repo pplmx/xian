@@ -23,6 +23,8 @@ import { clamp, createDropTable, createIntake, createSettlement } from 'wanxiang
 import { gnumNumeric } from './engineNumeric'
 import { STONE_LEDGER } from './engineResources'
 import { expFromSecs, stoneByTier } from './formulas'
+import { herbGradeOfMajor } from '@/data/herbGrades'
+import { tierMajor } from './tierScale'
 import { modOf } from './statsCalc'
 import { personalityEffects } from './petPersonality'
 import { compareEvictable, keepVerdict, shouldAutoRecycle, smartKeepEnabled } from './smartKeep'
@@ -301,7 +303,8 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
       const key = entry.key as DropKey
       switch (key) {
         case 'herb':
-          resources.addSmall('herb', n)
+          // 草按界域长品:这一片的层级是哪个界,采到的就是哪个品的草(ISS-306)
+          resources.grantHerbs(n, herbGradeOfMajor(tierMajor(tier)))
           harvestMaterials(tier, 'herb', n)
           break
         case 'ore':

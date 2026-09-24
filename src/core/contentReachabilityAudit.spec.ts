@@ -28,6 +28,7 @@ import { describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { PILLS, pillDef } from '@/data/pills'
 import { MATERIALS } from '@/data/materials'
+import { HERB_GRADES } from '@/data/herbGrades'
 import { ENEMIES } from '@/data/enemies'
 import { REGIONS } from '@/data/regions'
 import { GONGFA } from '@/data/gongfa'
@@ -236,7 +237,8 @@ describe('内容可达性 · 高界丹药真能开炉', () => {
     const resources = useResourcesStore()
     const player = usePlayerStore()
     player.major = MAX_MAJOR
-    resources.addSmall('herb', 10_000_000)
+    // 五品都要齐:新界的方子从仙品一路烧到道品,缺哪品哪品就开不了炉
+    for (const g of HERB_GRADES) resources.grantHerbs(2_000_000, g)
     // 高界丹方的灵石开销按层级折算(1.9^tier 量级),远高于元婴期的直觉数
     resources.addStone(gn(1e40))
 
@@ -318,7 +320,7 @@ describe('内容可达性 · 技艺', () => {
     seedLoreIfNeeded()
     const lore = useLoreStore()
     const resources = useResourcesStore()
-    resources.addSmall('herb', 9999)
+    resources.grantHerbs(9999, 1) // 聚气散烧凡品草
     resources.addStone(gn(1e6))
 
     const def = pillDef('p_jvqisan')!

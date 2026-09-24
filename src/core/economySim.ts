@@ -42,8 +42,6 @@ import {
   EQUIP_DROP_CHANCE,
   FIELD_HERB_PER_HOUR,
   FIELD_ORE_PER_HOUR,
-  HERB_EXCHANGE_ERA_QUOTA,
-  HERB_TO_STONE_COST,
   PAGE_DROP_CHANCE
 } from '@/data/constants'
 import { buildingCost, gongfaUpCost, qiCap, baseQiRegen, stoneByTier, upgradeCost } from './formulas'
@@ -84,12 +82,6 @@ export interface EraAudit {
   tier: number
   eraHours: number
   flows: ResourceFlow[]
-  /**
-   * 快赢1(ISS-303):灵草→灵石 兑换的量(每小时)。用于断言「防印钞」——
-   * 换出的灵石必有金(每境额度/换率),绝不为灵石主来源。
-   */
-  herbExchanged: number
-  stoneFromExchange: number
   /**
    * 界外专有:凝一枚道果需要多少小时的材料产出(道果价 ÷ 熔炉潜力)。
    *
@@ -177,21 +169,6 @@ export function auditEra(major: number): EraAudit {
   const stoneSinkHour = UPGRADES_PER_HOUR * toNum(up.stone) + CRAFTS_PER_HOUR * avgPillStone + stoneSinkEra / amortizeHours
   const herbSinkHour = CRAFTS_PER_HOUR * avgHerbCost
   /**
-   * 快赢1 · 灵草→灵石 兑换出口(ISS-303):把「超出炼丹需要的过剩灵草」换成少量灵石。
-   *
-   * 目的:前期(0~3 境)灵草纯过剩(era0 闲置 13.6×)成了死资源,给个出口让它有用;
-   * 同时顺带小额缓解灵石。防印钞两道闸:低换率(HERB_TO_STONE_COST)+ 每境额度
-   * (HERB_EXCHANGE_ERA_QUOTA,随境界时长摊销到每小时)——换出的灵石只是小补,不是主来源。
-   *
-   * 模型口径:玩家把"不用来炼药的灵草"按额度上限兑换,换掉的部分计入灵草出口(沉没),
-   * 换出的灵石计入灵石收入。额度随 amortizeHours 分摊,故越长的境界每小时代兑越少
-   * (额度是"每境总量",不是无限印钞机)。4 境后额度摊薄、影响趋零,不扰动后期过剩态。
-   */
-  const herbExcess = Math.max(0, herbIncome - herbSinkHour)
-  const exchangedHerb = Math.min(herbExcess, HERB_EXCHANGE_ERA_QUOTA / amortizeHours)
-  const herbExchangeSink = exchangedHerb
-  const stoneExchange = exchangedHerb / HERB_TO_STONE_COST
-  /**
    * 修为消耗 = 通关本境所需的等效闭关秒 ÷ 本境时长。
    *
    * 这里**不套 MIN_AMORTIZE_HOURS**:那道下限是给建筑的(「玩家用数小时慢慢补齐」),
@@ -273,16 +250,25 @@ export function auditEra(major: number): EraAudit {
     return make(resource, income, (income / rate.per) * furnaceShare)
   }
 
+  /**
+   * 灵草(ISS-306):不再有「灵草→灵石」出口 —— 那个方向被产品否了(草比石贵)。
+   * 过剩/闲置的灵草不是死资源,是**储备**:分级保值,只进不出,石头再多也换不来
+   * 新手村那株草的分量。参照界外悟道那条惯例(出口未入模型就自报口径,不装健康),
+   * 给闲置/过剩的草一行明说,免得审计读数被当成无人理睬的死资源。
+   */
+  const herbFlow = withFurnace('herb', herbIncome, herbSinkHour)
+  if (herbFlow.verdict === '闲置' || herbFlow.verdict === '过剩') {
+    herbFlow.note = '灵草即储备(分级保值,不设草→石出口)'
+  }
+
   return {
     major,
     tier,
     eraHours,
-    herbExchanged: exchangedHerb,
-    stoneFromExchange: stoneExchange,
     ...(furnace ? { daoCostHours } : {}),
     flows: [
-      make('stone', stoneIncome + stoneExchange, stoneSinkHour),
-      withFurnace('herb', herbIncome, herbSinkHour + herbExchangeSink),
+      make('stone', stoneIncome, stoneSinkHour),
+      herbFlow,
       withFurnace('ore', oreIncome, oreSinkEra / amortizeHours),
       withFurnace('page', pageIncome, pageSinkEra / amortizeHours),
       withFurnace('dust', dustIncome, dustSinkHour),

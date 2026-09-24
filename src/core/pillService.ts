@@ -12,6 +12,7 @@ import { formatDuration, formatGN } from '@/utils/format'
 import { recipeCraft, type SkillId } from '@/data/crafting'
 import { expFromSecs, stoneByTier } from './formulas'
 import { maxTierForMajor } from '@/data/regions'
+import { herbGradeOfMajor, type HerbGrade } from '@/data/herbGrades'
 import { collect, track } from './progress'
 import { craftability, knownRecipes } from './craftability'
 import { runCraft, spentOf } from './engineCraft'
@@ -92,8 +93,15 @@ export function usePill(id: string): boolean {
   return true
 }
 
-/** 炼丹消耗 */
-export function pillCraftCost(id: string): { herb: number; stone: GNum } | null {
+/** 炼丹消耗 —— 草按品阶认(ISS-306,品阶由方子准入境界推导,见 data/herbGrades) */
+export interface PillCraftCost {
+  herb: number
+  /** 这张方子烧哪个品阶的灵草:凡品聚气散到道品道祖丹,各按自己的界 */
+  herbGrade: HerbGrade
+  stone: GNum
+}
+
+export function pillCraftCost(id: string): PillCraftCost | null {
   const def = pillDef(id)
   if (!def?.recipe) return null
   /**
@@ -104,7 +112,7 @@ export function pillCraftCost(id: string): { herb: number; stone: GNum } | null 
    * 于是界外炼丹被自己的报价挡在门外(ISS-211)。层级只有一个事实源:区域表。
    */
   const tier = maxTierForMajor(def.minRealm)
-  return { herb: def.recipe.herb, stone: stoneByTier(tier, def.recipe.stoneBase / 10) }
+  return { herb: def.recipe.herb, herbGrade: herbGradeOfMajor(def.minRealm), stone: stoneByTier(tier, def.recipe.stoneBase / 10) }
 }
 
 /**
@@ -162,7 +170,8 @@ export function craftPill(id: string): CraftOutcome {
    * **"没开炉"与"开炉失败"从这里开始就是两件事** —— 前者什么都不发生,
    * 后者要扣料、长技艺、记失败。
    */
-  const canPay = resources.hasSmall('herb', cost.herb) && resources.hasStone(cost.stone)
+  // 草按品阶认:这张方子烧 cost.herbGrade 的草,新手村的凡品草进不了道祖丹的炉
+  const canPay = resources.hasHerbs(cost.herbGrade, cost.herb) && resources.hasStone(cost.stone)
   const roll = runCraft(id, { pillId: id, canPay }, rng)
   if (!roll.fired) {
     ui.toast(roll.reason, 'warn')
@@ -173,7 +182,7 @@ export function craftPill(id: string): CraftOutcome {
 
   // 无论成败,炉先开了,料先下了 —— 扣多少照回报记账,不再自己算一遍
   resources.spendStone(spentOf(roll, 'stone') as GNum)
-  resources.spendSmall('herb', spentOf(roll, 'herb') as number)
+  resources.spendHerbs(cost.herbGrade, spentOf(roll, 'herb') as number)
 
   gainCraftExp(craft?.skills ?? {}, able.rank, succeeded)
   for (const mid of able.materials) noteMaterialUsed(mid, succeeded)

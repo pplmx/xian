@@ -515,11 +515,8 @@ export const LIBRARY_WUDAO_MIN_PER_HOUR = 4
 export const GONGFA_UP_WUDAO_BASE = 4
 export const GONGFA_UP_GROWTH = 1.45
 
-// ============ 灵草→灵石 兑换(快赢1 / ISS-303) ============
-/** 兑换比:每 HERB_TO_STONE_COST 株灵草换 1 灵石 —— 低换率,防印钞 */
-export const HERB_TO_STONE_COST = 12
-/** 每境可兑换的灵草额度上限(株)—— 只救急不致富,换出的灵石只是小补 */
-export const HERB_EXCHANGE_ERA_QUOTA = 500
+// (灵草→灵石 兑换已于 ISS-306 删除:方向反了,灵草远比灵石珍贵。
+//  灵草五品与灵石购价见 data/herbGrades.ts。)
 
 // ============ 建筑 ============
 export const BUILDING_COST_GROWTH = 2.3

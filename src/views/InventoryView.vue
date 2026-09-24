@@ -89,19 +89,19 @@
         <span class="shrink-0 text-[12px] text-ink-faint">›</span>
       </button>
 
-      <!-- 快赢1(ISS-303):灵草→灵石 兑换,给过剩灵草一个出口(救急不致富) -->
+      <!-- 灵草坊(ISS-306):灵石购草 —— 草比石贵,想补哪一品,明码标价(极贵) -->
       <button
         class="card-ink mt-2 flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left active:scale-99"
-        @click="exchangeOneStone"
+        @click="marketOpen = true"
       >
-        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-[15px] text-paper">集</span>
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-[15px] text-paper">坊</span>
         <span class="min-w-0 flex-1">
-          <span class="block font-kai text-[13px] tracking-widest text-ink">灵草兑灵石</span>
+          <span class="block font-kai text-[13px] tracking-widest text-ink">灵草坊</span>
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
-            每 {{ HERB_TO_STONE_COST }} 株灵草换 1 灵石 · 本境尚可兑 {{ herbQuotaLeft }}
+            灵石买草 · 凡品千石起,道品一千万一株
           </span>
         </span>
-        <span class="shrink-0 text-[12px] text-ink-faint">兑 ›</span>
+        <span class="shrink-0 text-[12px] text-ink-faint">买 ›</span>
       </button>
 
       <!-- 丹匣:格子只给图标与名号,详情看弹窗 -->
@@ -264,6 +264,33 @@
       </template>
     </BaseModal>
 
+    <!-- 灵草坊(ISS-306):灵石购草 —— 五品明码标价,只进不出 -->
+    <BaseModal :open="marketOpen" title="灵草坊" @close="marketOpen = false">
+      <p class="mb-3 text-[11px] leading-relaxed text-ink-faint">
+        灵石买草,童叟无欺。<span class="text-ink-soft">草比石贵</span>——凡品千石一株,道品一千万一株,
+        越往上是十倍一翻。大把闲石没处去时,这里有一炉高品的念想。
+      </p>
+      <div class="space-y-1.5">
+        <div v-for="row in marketRows" :key="row.grade" class="flex items-center gap-2.5 rounded-md bg-paper-deep/70 px-3 py-2">
+          <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-[13px] text-paper">{{ row.grade }}</span>
+          <div class="min-w-0 grow">
+            <p class="font-kai text-[13px] text-ink">{{ row.name }}</p>
+            <p class="text-[10px] text-ink-faint tabular">持有 {{ row.held }} · 单价 {{ formatGN(row.price) }} 灵石</p>
+          </div>
+          <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]" :disabled="!row.affordable" @click="buyOne(row.grade)">
+            买1
+          </button>
+          <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px] !opacity-80" :disabled="!row.affordable" @click="buyTen(row.grade)">
+            买10
+          </button>
+        </div>
+      </div>
+      <p class="mt-3 text-[10px] leading-relaxed text-ink-faint">灵石不够的品阶按钮会沉下去 —— 那就去历练,别硬买。</p>
+      <template #footer>
+        <button class="btn-seal w-full" @click="marketOpen = false">收 市</button>
+      </template>
+    </BaseModal>
+
     <!-- 开炉炼丹 -->
     <BaseModal :open="craftOpen" title="开炉炼丹" wide @close="craftOpen = false">
       <p class="mb-2 text-[11px] text-ink-faint tabular">灵草 {{ resources.herb }} · 灵石 {{ formatGN(resources.spiritStone) }}</p>
@@ -289,7 +316,7 @@
                 <span class="text-[10px] text-ink-faint">{{ r.able.rank }} 阶</span>
                 <span v-if="r.able.overReach > 0" class="text-[10px] text-cinnabar">越阶 {{ r.able.overReach }}</span>
               </p>
-              <p class="text-[11px] text-ink-faint tabular">灵草×{{ r.cost.herb }} · 灵石 {{ formatGN(r.cost.stone) }}</p>
+              <p class="text-[11px] text-ink-faint tabular">{{ HERB_GRADE_SHORT[r.cost.herbGrade] }}灵草×{{ r.cost.herb }} · 灵石 {{ formatGN(r.cost.stone) }}</p>
               <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
               <p class="text-[10px] leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
             </div>
@@ -512,8 +539,8 @@
   import { qualityDef, QUALITIES } from '@/data/qualities'
   import { pillDef } from '@/data/pills'
   import { pillFuncText } from '@/ui/itemText'
-  import { HERB_TO_STONE_COST } from '@/data/constants'
-  import { exchangeHerbForStone, herbExchangeQuotaLeft } from '@/core/herbExchangeService'
+  import { HERB_GRADES, HERB_GRADE_NAMES, HERB_GRADE_SHORT, type HerbGrade } from '@/data/herbGrades'
+  import { buyHerbs, herbBuyPrice } from '@/core/herbMarketService'
   import {
     artifactActiveText,
     artifactDef,
@@ -562,13 +589,29 @@
   const player = usePlayerStore()
   const settings = useSettingsStore()
 
-  // 快赢1(ISS-303):灵草→灵石 兑换 —— 最小入口(一枚一枚兑,防印钞额度见服务层)
-  const herbQuotaLeft = computed(() => herbExchangeQuotaLeft())
-  function exchangeOneStone() {
-    const r = exchangeHerbForStone(1)
-    if (r.ok) ui.toast(`灵草兑灵石:花 ${r.herbsSpent} 株,得 ${r.stones} 灵石`, 'info')
-    else if (r.reason === 'noHerb') ui.toast('灵草不足', 'warn')
-    else if (r.reason === 'quota') ui.toast('本境兑换额度已尽', 'warn')
+  // 灵草坊(ISS-306):灵石购草 —— 五品明码标价,一次或十株,灵石够才成
+  const marketOpen = ref(false)
+  const marketRows = computed(() =>
+    HERB_GRADES.map(g => {
+      const price = herbBuyPrice(g)
+      return {
+        grade: g,
+        name: HERB_GRADE_NAMES[g],
+        held: resources.herbOf(g),
+        price: price < 1_000_000 ? price : price, // gn 都能打,格式在模板里走 formatGN
+        affordable: resources.spiritStone.m * 10 ** resources.spiritStone.e >= price
+      }
+    })
+  )
+  function buyOne(grade: HerbGrade) {
+    const r = buyHerbs(grade, 1)
+    if (r.ok) ui.toast(`灵草坊:花 ${r.costPerHerb} 灵石,得 ${HERB_GRADE_SHORT[grade]}灵草×${r.herbs}`, 'info')
+    else if (r.reason === 'noStone') ui.toast('灵石不足', 'warn')
+  }
+  function buyTen(grade: HerbGrade) {
+    const r = buyHerbs(grade, 10)
+    if (r.ok) ui.toast(`灵草坊:花 ${r.costPerHerb * 10} 灵石,得 ${HERB_GRADE_SHORT[grade]}灵草×${r.herbs}`, 'info')
+    else if (r.reason === 'noStone') ui.toast('灵石不足', 'warn')
   }
   const lore = useLoreStore()
 
@@ -663,7 +706,7 @@
     availableRecipes()
       .map(id => ({ def: pillDef(id), cost: pillCraftCost(id), able: craftability(id) }))
       .filter(
-        (x): x is { def: PillDef; cost: { herb: number; stone: GNum }; able: Craftability } =>
+        (x): x is { def: PillDef; cost: { herb: number; herbGrade: HerbGrade; stone: GNum }; able: Craftability } =>
           x.def !== undefined && x.cost !== null && x.able !== null
       )
       .sort((a, b) => a.able.rank - b.able.rank)

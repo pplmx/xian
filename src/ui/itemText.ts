@@ -21,6 +21,7 @@ import { buffDef } from '@/data/buffs'
 import { GONGFA_TYPE_NAMES } from '@/data/gongfa'
 import { ELEMENTS } from '@/data/linggen'
 import { REALMS } from '@/data/realms'
+import { HERB_GRADE_SHORT, herbGradeOfMajor } from '@/data/herbGrades'
 import { equipSetDef } from '@/core/equipSet'
 import { worldNameOfTier } from '@/core/formulas'
 import { gongfaModsAt } from '@/stores/cultivation'
@@ -133,7 +134,10 @@ export function pillFuncText(def: PillDef): string {
 
 /** 丹药的来路:有方子的说方子,没方子的明说「只能偶得」—— 免得玩家满世界找书 */
 export function pillSourceText(def: PillDef): string {
-  return def.recipe ? `有方:灵草×${def.recipe.herb},丹房可炼` : '无方,只在历练掉落与际遇里偶得'
+  if (!def.recipe) return '无方,只在历练掉落与际遇里偶得'
+  // 灵草分五品(ISS-306):方子烧哪一品就报哪一品 —— 新手村草进不了道祖丹的炉
+  const gradeName = HERB_GRADE_SHORT[herbGradeOfMajor(def.minRealm)]
+  return `有方:${gradeName}灵草×${def.recipe.herb},丹房可炼`
 }
 
 /** 丹药的出处一行:品质 · 类别 · 从哪一境起现世 */
