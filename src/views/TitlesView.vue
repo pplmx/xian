@@ -37,6 +37,8 @@
           <div class="min-w-0 grow">
             <p class="flex items-center gap-2">
               <span class="font-kai text-[13px]" :style="{ color: qualityDef(row.def.quality).color }">{{ row.def.name }}</span>
+              <!-- 品阶文字:数值按品阶重配过,名字旁的「神品/仙品…」让品质与效果一眼可对(见 petQuality.spec 两条不变量) -->
+              <span class="text-[9px] tracking-[0.2em]" :style="{ color: qualityDef(row.def.quality).color }">{{ qualityDef(row.def.quality).name }}</span>
               <span v-if="row.active" class="text-[10px] text-jade">相伴中</span>
             </p>
             <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>

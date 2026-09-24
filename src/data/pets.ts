@@ -7,6 +7,11 @@
  * 灵兽位只有一个,玩家要看的就是「这是只什么」,形对不上名物最刺眼。 */
 import type { PetDef } from '@/types'
 
+/**
+ * 品阶纪律:品质更高,总词条预算(各词条绝对值之和)与同一词条键的数值,都不许
+ * 比低品阶回落 —— 由 core/petQuality.spec 钉死(同法宝品阶阶梯的规矩)。加新灵兽
+ * 或调数值都会被那道测试卡住,别绕过它:高品却出低数,正是玩家一眼看穿的失配。
+ */
 export const PETS: PetDef[] = [
   {
     id: 'pet_qingyu',
@@ -45,7 +50,7 @@ export const PETS: PetDef[] = [
     icon: 'moon',
     family: 'moon',
     quality: 'spirit',
-    mods: { dodgeRate: 0.04, dropRate: 0.08 },
+    mods: { dodgeRate: 0.05, dropRate: 0.12 },
     personality: 'cautious'
   },
   {
@@ -65,7 +70,7 @@ export const PETS: PetDef[] = [
     icon: 'deer',
     family: 'deer',
     quality: 'profound',
-    mods: { cultivationSpeed: 0.08, qiRegen: 0.1 },
+    mods: { cultivationSpeed: 0.08, qiRegen: 0.12 },
     personality: 'steady'
   },
   {
@@ -75,7 +80,7 @@ export const PETS: PetDef[] = [
     icon: 'ape',
     family: 'ape',
     quality: 'profound',
-    mods: { tribulationResist: 0.1, attackPct: 0.06 },
+    mods: { tribulationResist: 0.1, attackPct: 0.1 },
     personality: 'fierce'
   },
   {
@@ -85,7 +90,7 @@ export const PETS: PetDef[] = [
     icon: 'dragon',
     family: 'dragon',
     quality: 'heaven',
-    mods: { attackPct: 0.1, maxHpPct: 0.1, cultivationSpeed: 0.06 },
+    mods: { attackPct: 0.1, maxHpPct: 0.1, cultivationSpeed: 0.1 },
     personality: 'fierce'
   },
   // ---- 仙界及以上神兽(仅由高界区域事件发放,见 data/events.ts) ----
@@ -126,7 +131,7 @@ export const PETS: PetDef[] = [
     icon: 'paw',
     family: 'beast',
     quality: 'divine',
-    mods: { cultivationSpeed: 0.15, breakthroughRate: 0.05, lifesteal: 0.04 },
+    mods: { cultivationSpeed: 0.24, breakthroughRate: 0.08, lifesteal: 0.1 },
     personality: 'fierce'
   },
   // ---- 补足:每个界域至少两只(灵兽位只有一个,一界只有一只 = 没有选择) ----
@@ -147,7 +152,7 @@ export const PETS: PetDef[] = [
     icon: 'paw',
     family: 'beast',
     quality: 'divine',
-    mods: { expGain: 0.18, breakthroughRate: 0.04, eventLuck: 0.15 },
+    mods: { expGain: 0.2, breakthroughRate: 0.06, eventLuck: 0.15 },
     personality: 'greedy'
   }
 ]
