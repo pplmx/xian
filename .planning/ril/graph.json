@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 422,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-23T03:44:04+00:00",
+  "updated_at": "2026-09-24T05:56:42+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24666,6 +24666,28 @@
       "touched_round": 422,
       "summary": "ISS-302宿命传承系统机制落地:heritage数据(8能力位)+forge生命周期+跨世持久+转世交割+Dialog展示+samsaraAudit登记+非倍率红线+7条回归",
       "commit": "3bf795c"
+    },
+    "ISS-306": {
+      "id": "ISS-306",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-24T03:31:01+00:00",
+      "updated_at": "2026-09-24T05:56:42+00:00",
+      "touched_round": 422,
+      "severity": 0.7,
+      "summary": "灵草换灵石 方向反了:灵草远比灵石珍贵,应是灵石购草、价格极高(10万/100万/1000万一级);灵草需分级,否则新手村草可炼混沌道祖的丹 —— Phase 32.4 灵材实体化的轻量先行"
+    },
+    "CHG-497": {
+      "id": "CHG-497",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-09-24T05:54:51+00:00",
+      "updated_at": "2026-09-24T05:56:42+00:00",
+      "touched_round": 422,
+      "commit": "5cd365f",
+      "summary": "灵草五品分级 + 灵石购草(反转草→石):herb 五档库存、方子按品认草、buyHerbs 一千万封顶、economySim 储备口径、存档迁移"
     }
   },
   "edges": [
@@ -36087,6 +36109,12 @@
       "to": "ISS-302",
       "type": "resolves",
       "created_at": "2026-09-23T03:44:04+00:00"
+    },
+    {
+      "from": "CHG-497",
+      "to": "ISS-306",
+      "type": "resolves",
+      "created_at": "2026-09-24T05:55:24+00:00"
     }
   ]
 }
