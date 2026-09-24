@@ -63,7 +63,20 @@ export const BUFFS: BuffDef[] = [
   b('buff_hundun', '本源归一', 'pill', 1800, '混沌本源入体,修炼速度提升 80%,进阶成功率提升 10%', {
     cultivationSpeed: 0.8,
     breakthroughRate: 0.1
-  }, 'sparkles')
+  }, 'sparkles'),
+  // ---- 炼丹增益(ISS-306 续):炼丹体系自己吃的第一味药 —— 丹房给双成,这味丹也补 -
+  b('buff_huohou', '火候通神', 'pill', 900, '炉火纯青,开炉双成概率 +20%', { alchemyYield: 0.2 }, 'flame'),
+  // ---- 神君补位(多维审视 P1):神将丹唯一增益,攻伐向,不与神威/仙力撞涌(法则 C) ----
+  // 压线设计:神品(15)须稳压仙品(10)的 仙力加身(攻 35%+暴伤 30%)——不再出现「拿神丹换仙丹」的下位替代
+  b(
+    'buff_shenjiang',
+    '神将之威',
+    'pill',
+    1200,
+    '神将临阵,攻伐无双,攻击提升 45%,暴击伤害提升 30%,受伤降低 10%',
+    { attackPct: 0.45, critDamage: 0.3, damageReduction: 0.1 },
+    'sword'
+  )
 ]
 
 const BY_ID = new Map(BUFFS.map(x => [x.id, x]))

@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 50 味。
+ * 丹药库 —— 60 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -205,6 +205,18 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 200, stoneBase: 500 },
     alchemyLevel: 10
   }),
+  // ---- 渡劫(8)/真仙(9) 可炼断档补齐(多维审视 P0-1:跨界前后各空一档;修为线续长) ----
+  // 注意:混沌丹(8)/仙药丹(9)对渡劫丹恰在法则 A 红线(0.6)上,余量为零 —— 再涨这档或提前插 9000+ 的仙品修为丹立刻转红
+  p('p_dujie', '渡劫丹', 'immortal', 8, '紫霄雷淬炼真身,仙门洞开前最后一口凝实,服之如闭关十刻(150 分钟)', {
+    instant: { expSecs: 9000 },
+    recipe: { herb: 225, stoneBase: 560 },
+    alchemyLevel: 10
+  }),
+  p('p_zhenxian', '真仙丹', 'immortal', 9, '仙凡一线,自此两隔,服之如闭关十一刻(165 分钟)', {
+    instant: { expSecs: 9900 },
+    recipe: { herb: 240, stoneBase: 600 },
+    alchemyLevel: 10
+  }),
   p('p_gangqisan', '罡气散', 'excellent', 1, '服之罡气环身,盾出伤随', {
     kind: 'buff',
     buffId: 'buff_gangdun',
@@ -329,6 +341,51 @@ export const PILLS: PillDef[] = [
     kind: 'buff',
     buffId: 'buff_hundun',
     recipe: { herb: 480, stoneBase: 1500 },
+    alchemyLevel: 10
+  }),
+  // ---- 炼丹增益(多维审视 P0-2):炼丹体系自己吃的第一味药,补 buff_huohou ----
+  p('p_huohou', '火候丹', 'immortal', 12, '服之火候通神,15 分钟内开炉双成概率 +20%', {
+    kind: 'buff',
+    buffId: 'buff_huohou',
+    recipe: { herb: 60, stoneBase: 150 },
+    alchemyLevel: 10
+  }),
+  // ---- 后期每境第二味(多维审视 P1:神界/混沌海 7 境曾一味独苗,悬在 11 条,薄于人间界地板)----
+  // 修为线律 G2:灵草 ≈ 秒数/10 场、控制在 2~5 倍 —— 大罗/神帝走悟道、神人走寿元、神将开新增益
+  p('p_daluo', '大罗丹', 'immortal', 13, '大罗天音,一念通玄,悟道点 +80', {
+    instant: { wudao: 80 },
+    recipe: { herb: 330, stoneBase: 850 },
+    alchemyLevel: 10
+  }),
+  p('p_shenshou', '神寿丹', 'divine', 14, '神人寿元绵长,增寿五千载', {
+    instant: { lifespanYears: 5000 },
+    recipe: { herb: 350, stoneBase: 900 },
+    alchemyLevel: 10
+  }),
+  p('p_shenjiang', '神将丹', 'divine', 15, '神将临阵,攻伐无双,二十分钟(20 分钟)内攻击提升 45%,暴击伤害提升 30%', {
+    kind: 'buff',
+    buffId: 'buff_shenjiang',
+    recipe: { herb: 320, stoneBase: 820 },
+    alchemyLevel: 10
+  }),
+  p('p_shenwang', '神王丹', 'divine', 16, '神域气运并入己身,服之如闭关十八刻(270 分钟)', {
+    instant: { expSecs: 16200 },
+    recipe: { herb: 500, stoneBase: 1250 },
+    alchemyLevel: 10
+  }),
+  p('p_shendi', '神帝丹', 'divine', 17, '神帝演道,言出法随,悟道点 +120', {
+    instant: { wudao: 120 },
+    recipe: { herb: 470, stoneBase: 1250 },
+    alchemyLevel: 10
+  }),
+  p('p_hongmeng', '鸿蒙寿丹', 'divine', 19, '鸿蒙初辟,寿与混沌同望,增寿二万载', {
+    instant: { lifespanYears: 20000 },
+    recipe: { herb: 540, stoneBase: 1500 },
+    alchemyLevel: 10
+  }),
+  p('p_kaitian', '开天丹', 'divine', 20, '开天辟地,道祖遗泽,服之如闭关三个半时辰(7 小时)', {
+    instant: { expSecs: 25200 },
+    recipe: { herb: 600, stoneBase: 1600 },
     alchemyLevel: 10
   }),
 
