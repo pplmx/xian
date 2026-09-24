@@ -142,13 +142,12 @@ export function describeMaterial(def: MaterialDef, stage: number, seen: number):
   }
 }
 
-/** 读当下所知,给出整本灵材谱 */
 /**
  * 图鉴默认「从好到差」:品阶 rank 降序 → 收录深度降序 → 名字。
  *
  * 没有固有品阶的一类(装备册走见闻深度、悟道录走「已择优先」)不喂 rank,各守各的旧序。
  */
-function byBest(rows: { entry: CodexEntry; rank: number }[]): CodexEntry[] {
+export function byBest(rows: { entry: CodexEntry; rank: number }[]): CodexEntry[] {
   return [...rows]
     .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.entry.name.localeCompare(b.entry.name))
     .map(r => r.entry)

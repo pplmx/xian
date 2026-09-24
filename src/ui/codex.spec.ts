@@ -31,6 +31,7 @@ import {
   describeMaterial,
   describePill,
   type EquipSeen,
+  byBest,
   equipStage,
   pillStage
 } from './codex'
@@ -274,5 +275,38 @@ describe('图鉴 · 用具三类的收录深度', () => {
       expect(describePill(p, false, 0).stage).toBe(0)
       expect(describePill(p, false, 0).desc).not.toBe('')
     }
+  })
+})
+
+describe('图鉴排序 · 从好到差', () => {
+  const entry = (id: string, stage = 0) => ({
+    id,
+    name: id,
+    desc: '',
+    meta: '',
+    color: undefined,
+    stage,
+    stageName: '',
+    badge: '',
+    hint: '',
+    foot: { label: '', value: '' }
+  })
+  it('品阶降序优先,同品阶内已收录在前,再同收录按原序稳定', () => {
+    const out = byBest([
+      { rank: 1, entry: entry('low') },
+      { rank: 3, entry: entry('top') },
+      { rank: 2, entry: entry('mid_seen', 1) },
+      { rank: 2, entry: entry('mid_raw', 0) }
+    ]).map(e => e.id)
+    expect(out).toEqual(['top', 'mid_seen', 'mid_raw', 'low'])
+  })
+  it('不改动传入数组(按副本排序)', () => {
+    const rows = [
+      { rank: 2, entry: entry('x') },
+      { rank: 1, entry: entry('y') }
+    ]
+    const before = rows.map(r => r.entry.id)
+    byBest(rows)
+    expect(rows.map(r => r.entry.id)).toEqual(before)
   })
 })

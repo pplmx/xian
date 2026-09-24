@@ -140,9 +140,11 @@
     defs: { id: string; name: string; desc?: string; meta?: string; color?: string; rank?: number }[]
   ): CodexCat {
     const owned = new Set(ownedIds)
-    // 默认从好到差:品质 rank 降序(有品阶的一类喂 rank)→ 已收录置顶 → 名字
+    // 默认从好到差:品质 rank 降序(有品阶的一类喂 rank)→ 已收录置顶 → 原序
+    // (没喂 rank 的一类同级里保住手排的叙事序,不按名字打乱)
     const rows = defs
-      .map(d => ({
+      .map((d, idx) => ({
+        idx,
         rank: d.rank ?? 0,
         entry: {
           id: d.id,
@@ -157,7 +159,7 @@
           foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`${key}:${d.id}`]) }
         }
       }))
-      .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.entry.name.localeCompare(b.entry.name))
+      .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.idx - b.idx)
     const entries = rows.map(r => r.entry)
     const known = entries.filter(e => e.stage >= 1).length
     return { key, name, hint: `${known}/${defs.length}`, source: CODEX_SOURCES[key], entries }
@@ -222,7 +224,14 @@
         'talent',
         '天赋鉴',
         c.talent,
-        TALENTS.map(t => ({ id: t.id, name: t.name, desc: t.desc, meta: '先天之姿', color: TALENT_GRADE_COLORS[t.grade] }))
+        TALENTS.map(t => ({
+          id: t.id,
+          name: t.name,
+          desc: t.desc,
+          meta: '先天之姿',
+          color: TALENT_GRADE_COLORS[t.grade],
+          rank: t.grade
+        }))
       )
     ]
   })
