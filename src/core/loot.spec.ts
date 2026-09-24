@@ -17,8 +17,7 @@ import {
 } from './loot'
 import { upgradeEquipment } from './forge'
 import { ARTIFACTS, artifactDef, artifactValue } from '@/data/artifacts'
-import type { ArtifactDef } from '@/types'
-import { budgetOfMods } from './ruleBudget'
+import type { ArtifactDef, StatMods } from '@/types'
 import { regionDef } from '@/data/regions'
 import { usePlayerStore } from '@/stores/player'
 import { shouldAutoRecycle } from './smartKeep'
@@ -193,41 +192,41 @@ describe('法宝掉落 · 高界的池子该像高界', () => {
 })
 
 /**
- * 品阶阶梯 —— 神品要稀缺,而池子仍要以近阶之物为主。
+ * 品阶阶梯 —— 名头是名头,稀缺是稀缺,强度是强度,各管各的。
  *
  * 品阶不是装饰标签:它同时定掉落权重(artifactDropWeight)与数值倍率
- * (data/artifacts.artifactQualityMult)。若 45 件里有一小半都挂着神品,
- * 「神品」二字就不携带任何信息,挂在它上面的倍率也就跟着失去意义。
+ * (data/artifacts.artifactQualityMult)。从前它按 fromTier 机械排成一条不降的
+ * 阶梯,于是混沌钟/造化玉碟这些生于神话顶点的至宝,只因其初见窗口在 t19/20,
+ * 就被打成了精品。如今反着来:名头定品阶 —— 至宝榜必为神品;稀缺由品质权重兜底;
+ * 「那一窗的强度」由基底重校保住,不许名头越窗。
  *
- * 于是标签按 (fromTier 升,同阶内预算升) 排成一条不降的阶梯,并钉住两条:
- *   一 不许倒挂 —— 深地界出的那件,品阶不低于浅地界出的;
- *   二 每个界域的池子里,神品的权重占比都是个位数百分比 —— 按件数算也一样。
- *
- * 故障注入:把这 45 件的品阶退回重排之前那一版(18 件神品),第二条立刻变红。
+ * 钉住三条:
+ *   一 至宝榜(混沌钟/造化玉碟/混沌开天斧/鸿蒙尺/神魔镜)必为神品,且神品留给
+ *      至宝榜(全表不超六件)——「神品」二字仍携带信息;
+ *   二 每个界域的池子里,神品的权重占比都是个位数百分比(按件数也算一遍);
+ *   三 换品阶不动有效强度:被动预算与重排前逐位相等(见「重排不动强度」)。
  */
 describe('法宝品阶 · 稀缺标签', () => {
-  it('标签跟着 fromTier 走:深地界出的那件,品阶不低于浅地界出的', () => {
+  it('至宝榜必为神品 —— 名头定品阶,不由掉落层机械排', () => {
+    const apex = new Set(['混沌钟', '造化玉碟', '混沌开天斧', '鸿蒙尺', '神魔镜'])
+    const wrong = ARTIFACTS.filter(a => apex.has(a.name) && a.quality !== 'divine')
+    expect(wrong, `至宝榜被降了格:${wrong.map(a => `${a.name}=${qualityDef(a.quality).name}`).join('、')}`).toEqual([])
+    expect(ARTIFACTS.filter(a => a.quality === 'divine').length, '神品超过六件,「神品」二字失去信息量').toBeLessThanOrEqual(6)
+    expect(ARTIFACTS.filter(a => a.quality === 'divine').length, '一件神品都没有,梯队缺了顶').toBeGreaterThan(0)
+  })
+
+  it('重排不动强度 —— 品相与稀缺换了,那一窗的强度预算原样保留', () => {
     /**
-     * 排序键是**玩家看到的**被动预算(artifactValue 之后的),不是数据里的基线 ——
-     * 品阶倍率是玩家看得见的那一层,承诺"标签=强度阶梯"就该用那一层的数去对。
-     * 同预算时按品阶排,避免"数组书写顺序"这种与玩家无关的东西决定成败。
+     * 混沌钟/造化玉碟由精品(×1.265)抬上神品(×3.082)、混沌开天斧/鸿蒙尺由天品
+     * (×2.236)抬上神品:基底同步重校,于是玩家看到的有效被动与重排前逐位相等 ——
+     * 名头给了稀缺与品相,不给越窗强度。
      */
-    const ranked = [...ARTIFACTS].sort(
-      (a, b) =>
-        a.fromTier - b.fromTier ||
-        budgetOfMods(artifactValue(a, 0).passive) - budgetOfMods(artifactValue(b, 0).passive) ||
-        qualityDef(a.quality).rank - qualityDef(b.quality).rank
-    )
-    const bad: string[] = []
-    for (let i = 1; i < ranked.length; i += 1) {
-      const prev = ranked[i - 1]!
-      const cur = ranked[i]!
-      if (qualityDef(cur.quality).rank < qualityDef(prev.quality).rank) {
-        bad.push(`「${prev.name}」(${prev.fromTier} 阶 · ${qualityDef(prev.quality).name}) → 「${cur.name}」(${cur.fromTier} 阶 · ${qualityDef(cur.quality).name})`)
-      }
-    }
-    expect(bad, `这些法宝的品阶与 fromTier 倒挂了:\n${bad.join('\n')}`).toEqual([])
-    expect(qualityDef(ranked[ranked.length - 1]!.quality).rank, '最深的那件不是最高档,阶梯形同虚设').toBe(8)
+    const eff = (id: string, key: keyof StatMods): number => artifactValue(artifactDef(id)!, 0).passive[key] ?? 0
+    expect(eff('af_hundun', 'attackPct')).toBeCloseTo(0.1606, 3)
+    expect(eff('af_hundun', 'defensePct')).toBeCloseTo(0.1606, 3)
+    expect(eff('af_zaohua', 'cultivationSpeed')).toBeCloseTo(0.2846, 3)
+    expect(eff('af_hundunfu', 'attackPct')).toBeCloseTo(0.1789, 3)
+    expect(eff('af_hongmengchi', 'armorPen')).toBeCloseTo(0.1342, 3)
   })
 
   it('每个界域的池子里,神品都只占个位数百分比(按权重与按件数都算一遍)', () => {
@@ -238,16 +237,26 @@ describe('法宝品阶 · 稀缺标签', () => {
       const total = pool.reduce((sum, a) => sum + artifactDropWeight(a, tier), 0)
       const divine = pool.filter(a => a.quality === 'divine')
       const share = divine.reduce((sum, a) => sum + artifactDropWeight(a, tier), 0) / total
-      expect(share, `${tier} 阶的池子里神品占了 ${(share * 100).toFixed(1)}%`).toBeLessThan(0.1)
-      expect(divine.length / pool.length, `${tier} 阶的池子里 ${divine.length}/${pool.length} 是神品`).toBeLessThan(0.1)
+      /**
+       * 至宝「初见面」的窗(混沌钟 t19/造化玉碟 t20 的近邻五阶)允许相对可见:
+       * 就近加成把这两阶的权重顶到 ~11% —— 玩家正是在这里第一次撞见神话至宝。
+       * 离开初见窗立刻稀回个位数:稀缺性仍在,只是不再把至宝压死。
+       */
+      const inPeakWindow = divine.some(a => Math.max(0, tier - a.fromTier) <= ARTIFACT_NEAR_WINDOW)
+      if (inPeakWindow) {
+        expect(share, `${tier} 阶(至宝初见窗)神品占了 ${(share * 100).toFixed(1)}%`).toBeLessThan(0.15)
+        expect(divine.length / pool.length, `${tier} 阶(至宝初见窗)${divine.length}/${pool.length} 是神品`).toBeLessThan(0.2)
+      } else {
+        expect(share, `${tier} 阶(无至宝近邻)神品却占了 ${(share * 100).toFixed(1)}%`).toBeLessThan(0.1)
+        expect(divine.length / pool.length, `${tier} 阶(无至宝近邻)${divine.length}/${pool.length} 是神品`).toBeLessThan(0.1)
+      }
       if (share > maxShare) {
         maxShare = share
         maxTier = tier
       }
     }
-    // 神品不能稀到不存在:最深的那一阶得至少有一件,否则这条阶梯的上端是空的
     expect(ARTIFACTS.filter(a => a.quality === 'divine').length, '一件神品都没有 —— 阶梯缺了顶端').toBeGreaterThan(0)
-    expect(maxShare, `神品在 ${maxTier} 阶占比最高,为 ${(maxShare * 100).toFixed(1)}%`).toBeLessThan(0.1)
+    expect(maxShare, `神品在 ${maxTier} 阶占比最高,为 ${(maxShare * 100).toFixed(1)}%`).toBeLessThan(0.15)
   })
 })
 

@@ -7,16 +7,21 @@
  * 由 artifactValue 施加(见那里的注释)。所以写着 30% 的那一件,若它是仙品,
  * 玩家拿到手就是 ×2.61 之后的数 —— desc 与 effect 描述的是基线,不是面板。
  *
- * ## 品阶(quality)是稀缺标签,也是强度阶梯
+ * ## 品阶(quality)是神话名头,也是稀缺标签 —— 不由掉落层机械排
  *
  * 品阶同时管两件事:掉落权重(core/loot.artifactDropWeight)与数值倍率
- * (artifactQualityMult)。故标签按 (fromTier 升,同阶内预算升) 排成一条**不降**的
- * 阶梯 —— 越深的地界越贵,同一阶之内预算大的更贵:
+ * (artifactQualityMult)。但它**不**再跟着 fromTier 走一条不降的阶梯:
+ * 名头该多重就多重 —— 混沌钟、造化玉碟、盘古斧(混沌开天斧)、鸿蒙尺、神魔镜,
+ * 生而神品;掉落层(fromTier)只决定「初见窗口」,稀缺由品质权重兜底。
  *
- *   凡 12(t1-12)· 良 6(t13-18)· 精 6(t19-23)· 灵 6(t23-27)
- *   · 玄 6(t28-29)· 地 5(t30-31)· 天 2(t31)· 仙 1(t32)· 神 1(t32)
+ *   凡 12(t1-12)· 良 6(t13-18)· 精 4(t19-23)· 灵 6(t23-27)
+ *   · 玄 6(t28-29)· 地 5(t30-31)· 天 0 · 仙 1(t32)· 神 5(t19/20/31/32)
  *
- * 于是四个界域各有自己的那一段:人间界凡→精、仙界精/灵、神界灵、混沌海玄→神。
+ * ## 名头给品相与稀缺,不给越窗的强度
+ *
+ * 换品阶时基底按 旧倍率/新倍率 重校,面板数值不变(混沌钟:精品×1.265 → 神品×3.082,
+ * 基底同步 ÷2.436)。于是早窗的神品仍是「这一窗该有的强度」—— 神品的意义在举世罕见
+ * 与顶格品相,不在 t19 就送一件吊打全图的神兵(见 loot.spec「重排不动强度」)。
  *
  * ## 为什么凡品占着头十二阶
  *
@@ -298,27 +303,27 @@ export const ARTIFACTS: ArtifactDef[] = [
   f(
     'af_hundun',
     '混沌钟',
-    'excellent',
+    'divine',
     19,
     '钟声荡开,时光都慢了半拍',
-    { attackPct: 0.127, defensePct: 0.127, maxHpPct: 0.127 },
+    { attackPct: 0.0521, defensePct: 0.0521, maxHpPct: 0.0521 },
     '混沌钟鸣',
-    '每 3 回合钟镇万物,造成 500% 攻击伤害',
+    '每 3 回合钟镇万物,造成 205% 攻击伤害',
     3,
-    { type: 'damage', mult: 5.0 },
+    { type: 'damage', mult: 2.05 },
     'bell'
   ),
   f(
     'af_zaohua',
     '造化玉碟',
-    'excellent',
+    'divine',
     20,
     '记载造化至理的残碟',
-    { cultivationSpeed: 0.225, breakthroughRate: 0.045, luck: 0.09 },
+    { cultivationSpeed: 0.0923, breakthroughRate: 0.0185, luck: 0.0369 },
     '造化',
-    '每 4 回合造化加身,回复 40% 生命',
+    '每 4 回合造化加身,回复 16% 生命',
     4,
-    { type: 'heal', pctMaxHp: 0.4 },
+    { type: 'heal', pctMaxHp: 0.16 },
     'star'
   ),
 
@@ -378,14 +383,14 @@ export const ARTIFACTS: ArtifactDef[] = [
   f(
     'af_hundunfu',
     '混沌开天斧',
-    'heaven',
+    'divine',
     31,
     '一切尚未开始时,它便在此',
-    { attackPct: 0.08, armorPen: 0.06 },
+    { attackPct: 0.058, armorPen: 0.0435 },
     '开天',
-    '每 3 回合开天一击,造成 286% 攻击伤害',
+    '每 3 回合开天一击,造成 208% 攻击伤害',
     3,
-    { type: 'damage', mult: 2.86 },
+    { type: 'damage', mult: 2.08 },
     'axe'
   ),
   f(
@@ -608,14 +613,14 @@ export const ARTIFACTS: ArtifactDef[] = [
   f(
     'af_hongmengchi',
     '鸿蒙尺',
-    'heaven',
+    'divine',
     31,
     '一尺量的是天地未判时的长短',
-    { armorPen: 0.06, damageBonus: 0.06 },
+    { armorPen: 0.0435, damageBonus: 0.0435 },
     '开天',
-    '每 3 回合开天一击,造成 290% 攻击伤害',
+    '每 3 回合开天一击,造成 210% 攻击伤害',
     3,
-    { type: 'damage', mult: 2.9 },
+    { type: 'damage', mult: 2.1 },
     'wand'
   ),
   f(
