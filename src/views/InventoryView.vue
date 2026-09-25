@@ -294,16 +294,29 @@
     <!-- 开炉炼丹 -->
     <BaseModal :open="craftOpen" title="开炉炼丹" wide @close="craftOpen = false">
       <p class="mb-2 text-[11px] text-ink-faint tabular">灵草 {{ resources.herb }} · 灵石 {{ formatGN(resources.spiritStone) }}</p>
-      <!-- 百工技艺:做得多就精。技艺一直在影响成丹,却从不显示 —— 玩家看不到自己在长 -->
+      <!-- 百工技艺:做得多就精。技艺一直在影响成丹 —— 境地与进度条都在这,看得见自己在长 -->
       <div v-if="skillRows.length" class="mb-2 rounded-md bg-paper-deep/60 px-3 py-2">
         <p class="text-[10px] text-ink-faint">技艺(按道分,做得多就精)</p>
-        <div class="mt-1 space-y-0.5">
-          <p v-for="s in skillRows" :key="s.id" class="flex items-baseline gap-2 text-[11px]">
-            <span class="w-14 shrink-0 text-ink-faint">{{ s.daoName }}</span>
-            <span class="w-12 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
-            <span class="w-12 shrink-0" :class="s.stage === '生疏' ? 'text-ink-faint' : 'text-jade'">{{ s.stage }}</span>
-            <span class="min-w-0 text-[10px] leading-relaxed text-ink-faint">{{ s.desc }}</span>
-          </p>
+        <div class="mt-1 space-y-1">
+          <div v-for="s in skillRows" :key="s.id">
+            <p class="flex items-baseline gap-2 text-[11px]">
+              <span class="w-14 shrink-0 text-ink-faint">{{ s.daoName }}</span>
+              <span class="w-12 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
+              <span class="w-12 shrink-0" :class="s.stage === '生疏' ? 'text-ink-faint' : 'text-jade'">{{ s.stage }}</span>
+              <span class="min-w-0 text-[10px] leading-relaxed text-ink-faint">{{ s.desc }}</span>
+            </p>
+            <!-- 离下一境还差多少:境地内线性进度(见 skillStageProgress) -->
+            <p class="mt-0.5 flex items-center gap-1.5 pl-14">
+              <span class="h-1 flex-1 overflow-hidden rounded-full bg-ink/10">
+                <span
+                  class="block h-full rounded-full transition-all duration-300"
+                  :class="s.stage === '生疏' ? 'bg-ink-faint/40' : 'bg-jade/70'"
+                  :style="{ width: `${Math.round(s.progress * 100)}%` }"
+                />
+              </span>
+              <span class="w-7 shrink-0 text-right text-[9px] tabular text-ink-faint">{{ Math.round(s.progress * 100) }}%</span>
+            </p>
+          </div>
         </div>
       </div>
       <div v-if="recipes.length" class="max-h-64 space-y-2 overflow-y-auto">
@@ -582,7 +595,7 @@
   import { maxTierForMajor } from '@/data/regions'
   import { equipSetDef, setCounts, type EquipSetDef } from '@/core/equipSet'
   import { useLoreStore } from '@/stores/lore'
-  import { DAO_NAMES, SKILLS, skillStageName } from '@/data/crafting'
+  import { DAO_NAMES, SKILLS, skillStageName, skillStageProgress } from '@/data/crafting'
   import { cnNumber, formatGN, formatNum, formatPercent, formatSignedPercent } from '@/utils/format'
   import { STAT_NAMES } from '@/ui/statNames'
   import { colorWithAlpha } from '@/ui/colorVar'
@@ -741,11 +754,14 @@
       .sort((a, b) => a.able.rank - b.able.rank)
   )
 
-  /** 技艺一览:名(DAO_NAMES 的道名 + 技艺名)、境地(skillStageName)、这项技艺管什么 */
+  /**
+   * 技艺一览:名(道名 + 技艺名)、境地(skillStageName)、境地内进度(0~1)、这项技艺管什么。
+   * lv/progress 喂给丹房的进度条 —— 「做得多就精」不再只是境地两个字,离下一境还差多少看得见。
+   */
   const skillRows = computed(() =>
     SKILLS.map(s => {
       const lv = lore.skillLevel(s.id)
-      return { id: s.id, daoName: DAO_NAMES[s.dao], name: s.name, stage: skillStageName(lv), desc: s.desc }
+      return { id: s.id, daoName: DAO_NAMES[s.dao], name: s.name, stage: skillStageName(lv), progress: skillStageProgress(lv), desc: s.desc }
     })
   )
 

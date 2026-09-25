@@ -95,6 +95,25 @@ export function skillStageName(level: number): string {
   return stageNameOf(level, SKILL_STAGES, '生疏')
 }
 
+/**
+ * 技艺在当下境地内的进度(0~1),给丹房进度条用。
+ *
+ * 境地按熟练度(level 0~100)切桶(见 SKILL_STAGES);同一境地内,在
+ * [本境地 min, 上一境地 min) 之间线性插值 —— 不是经验曲线本尊,但
+ * "离下一境地还差多少"读得准,而且只要 level,不用逆经验函数。
+ */
+export function skillStageProgress(level: number): number {
+  for (let i = 0; i < SKILL_STAGES.length; i += 1) {
+    const seg = SKILL_STAGES[i]!
+    if (level >= seg.min) {
+      if (i === 0) return 1 // 大成,已是头
+      const next = SKILL_STAGES[i - 1]!.min
+      return Math.min(1, Math.max(0, (level - seg.min) / (next - seg.min)))
+    }
+  }
+  return 0
+}
+
 // ============ 丹方工艺表 ============
 
 export interface RecipeCraft {

@@ -11,7 +11,7 @@ import { bearableRank, composeSuccessRate, CRAFT_BASE_RATE, materialLoreOf, over
 import { discernChance, natureChance, SEEN_FOR_NATURE } from './loreService'
 import { LORE_MAX, LORE_STAGE_NAMES, MATERIALS } from '@/data/materials'
 import { PILLS } from '@/data/pills'
-import { recipeCraft, skillLevelFromExp, skillStageName } from '@/data/crafting'
+import { recipeCraft, skillLevelFromExp, skillStageName, skillStageProgress } from '@/data/crafting'
 
 describe('Phase 32.3:成功率四乘区', () => {
   it('样样圆满且不越阶时逼近基准上限,但永远不到 100%', () => {
@@ -171,6 +171,24 @@ describe('Phase 32.3:技艺熟练度曲线', () => {
     }
     expect(skillStageName(0)).toBe('生疏')
     expect(skillStageName(99)).toBe('大成')
+  })
+
+  it('境地内进度:在 [本境 min, 上一境 min) 线性插值,大成恒为 1', () => {
+    // 各档起点(level 恰在自己的 min)→ 0:还没往下一境挪半步
+    expect(skillStageProgress(0)).toBe(0) // 生疏起点
+    expect(skillStageProgress(10)).toBe(0) // 初识起点
+    expect(skillStageProgress(40)).toBe(0) // 小成起点
+    expect(skillStageProgress(72)).toBe(0) // 精通起点
+    // 境中:拿得到"已走/总步"的线性比例,而不是只看段名
+    expect(skillStageProgress(50)).toBeCloseTo((50 - 40) / (58 - 40), 6) // 小成内 10/18
+    expect(skillStageProgress(80)).toBeCloseTo((80 - 72) / (85 - 72), 6) // 精通内 8/13
+    // 逼近上一境 → 无限接近 1,但只在大成(已经到头)才恒 1
+    expect(skillStageProgress(93.999)).toBeLessThan(1)
+    expect(skillStageProgress(94)).toBe(1) // 大成
+    expect(skillStageProgress(100)).toBe(1)
+    // 越界输入也稳:负数当生疏 0,超高人当大成满格
+    expect(skillStageProgress(-5)).toBe(0)
+    expect(skillStageProgress(1e9)).toBe(1)
   })
 })
 
