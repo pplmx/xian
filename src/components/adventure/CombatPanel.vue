@@ -130,7 +130,20 @@
           </span>
           <div class="grow">
             <p class="font-kai text-[14px] text-ink">{{ player.name }}</p>
-            <ProgressBar :value="php" color="var(--color-jade)" :height="6" class="mt-1" />
+            <ProgressBar
+              :value="php"
+              :color="hpBelowLine ? 'var(--color-cinnabar)' : 'var(--color-jade)'"
+              :height="6"
+              class="mt-1"
+            />
+            <!-- 三成血线:跌过线血条转危色;有背水/破釜类效果时把「正在生效」也摆出来 -->
+            <p
+              v-if="hpBelowLine"
+              class="mt-0.5 text-[9px] leading-none"
+              :class="lowHpGimmick ? 'text-cinnabar' : 'text-ink-faint'"
+            >
+              {{ lowHpGimmick ? '三成之下 · 背水类效果此刻生效' : '气血已降至三成之下' }}
+            </p>
           </div>
         </div>
         <span
@@ -230,7 +243,7 @@
   import { usePlayerStore } from '@/stores/player'
   import { useSettingsStore } from '@/stores/settings'
   import { stopExploration, winsUntilRegionBoss } from '@/core/exploration'
-  import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS, EXPLORE_MODES } from '@/data/constants'
+  import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS, EXPLORE_MODES, LOW_HP_THRESHOLD } from '@/data/constants'
   import { WIN_STREAK_REWARDS } from '@/data/earlyGame'
   import { formatCountdown, formatGN } from '@/utils/format'
   import { useNow } from '@/composables/useNow'
@@ -273,6 +286,18 @@
     if (s <= 0) return ''
     const next = WIN_STREAK_REWARDS.find(r => r.streak > s)
     return next ? `连胜 ${s} 场 · 距下一档赏赐还差 ${next.streak - s} 场` : `连胜 ${s} 场 · 已至连胜终赏`
+  })
+
+  /**
+   * 背水血线:我方生命跌过三成 —— 血条转危色,顺带把「此刻谁在生效」说出来。
+   * 阈值只从 combat.ts 的 LOW_HP_THRESHOLD 取,视图这边不写第二份 0.3;
+   * 破釜丹(buff_pofu)与背水一击系词缀都挂在 lowHpDamage / lowHpReduction 上,
+   * 有其一,即说明这套效果此刻真的在咬人 —— 不再是白挂着却看不见的隐形 buff。
+   */
+  const hpBelowLine = computed(() => php.value > 0 && php.value < LOW_HP_THRESHOLD)
+  const lowHpGimmick = computed(() => {
+    const m = player.finalStats.mods
+    return (m.lowHpDamage ?? 0) > 0 || (m.lowHpReduction ?? 0) > 0
   })
 
   /** 本次历练已得(灵石/修为)—— 取自会话里如实累计的入账数,不是期望值 */
