@@ -195,7 +195,10 @@ export function craftPill(id: string): CraftOutcome {
     useLoreStore().addRecipeMastery(id, 0.02)
     track('pillsFailed')
     playSfx('fail')
-    ui.toast(failLine(able.weakness), 'warn')
+    // 保料必须报数:定心丹「爆炸保料 +50%」与技艺的护料本钱,得让玩家用眼睛收账
+    const spent = spentOf(roll, 'herb') as number
+    const kept = cost.herb - spent
+    ui.toast(kept > 0 ? `${failLine(able.weakness)} 残料尚存,保得灵草 ×${kept}` : failLine(able.weakness), 'warn')
     return { ok: false, count: 0 }
   }
 

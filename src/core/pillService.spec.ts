@@ -35,6 +35,7 @@ import { useLoreStore } from '@/stores/lore'
 import { usePlayerStore } from '@/stores/player'
 import { useCultivationStore } from '@/stores/cultivation'
 import { useQuestsStore } from '@/stores/quests'
+import { useUiStore } from '@/stores/ui'
 import { toNum } from '@/utils/gnum'
 import { ACHIEVEMENTS } from '@/data/achievements'
 import { MAIN_QUESTS } from '@/data/quests'
@@ -259,11 +260,17 @@ describe('炼丹 · 成与败各自的账', () => {
     const keptPlain = cost.herb - (herbBefore - resources.herb)
     useCultivationStore().addBuff('buff_dingxin', Date.now())
     const herbBuff = resources.herb
+    const toast = vi.spyOn(useUiStore(), 'toast')
     craftPill(ID)
     const keptBuffed = cost.herb - (herbBuff - resources.herb)
     expect(keptPlain).toBe(Math.floor(cost.herb * salvage))
     expect(keptBuffed).toBe(Math.floor(cost.herb * salvage * 1.5))
     expect(keptBuffed, '同样的炸炉,稳炉丹该护下更多草').toBeGreaterThan(keptPlain)
+    // 保料必须报数:炸炉话术里带出保下的草数,玩家才对「定心护料」有账可收
+    expect(
+      toast.mock.calls.some(c => String(c[0]).includes(`保得灵草 ×${keptBuffed}`)),
+      '炸炉话术没有报出保料数字'
+    ).toBe(true)
   })
 
   it('技艺越高,失手时赔得越少(同一炉料,同一掷点)', () => {
