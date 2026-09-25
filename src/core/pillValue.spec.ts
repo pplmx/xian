@@ -277,6 +277,31 @@ describe('定价法则', () => {
   })
 
   /**
+   * 【法则 E3】0~2 掉落池不再单味 —— 炼丹主线收尾缺口的钉子。
+   *
+   * docs/alchemy.md 曾记:「掉落池 0~2 境只有妖血丹,池窄是内容缺口,
+   * 下一步是加丹,不是改妖血丹的数值。」补的正是这一账:0~2 期除妖血的
+   * 战斗续航外,还掉得出一撮悟性(灵犀丹) —— 若有人删了它或改了家族,
+   * 这条立刻红。
+   */
+  it('E3 —— 0~2 掉落池有悟道可捡(缺口已收)', () => {
+    const pool = dropPoolAt(2)
+    expect(pool.length, '0~2 掉落池该不只一味').toBeGreaterThanOrEqual(2)
+    expect(pool.some(p => p.id === 'p_yaoxue'), '妖血丹仍是入门常备').toBe(true)
+    const wudaoDrop = pool.find(p => pillFamily(p) === 'wudao')
+    expect(wudaoDrop, '0~2 期该掉得出悟道丹').toBeDefined()
+    // 六成压线重申一遍:白捡的悟道不许越过同阶可炼对照的六成(法则 A 的另一面)
+    const peer = craftPeerOf(wudaoDrop!)!
+    const at = Math.max(wudaoDrop!.minRealm, peer.minRealm)
+    const ratio = pillGainSecAt(wudaoDrop!, at) / pillGainSecAt(peer, at)
+    expect(ratio).toBeLessThanOrEqual(DROP_CRAFT_RATIO + 1e-9)
+    // 掉落悟道线品质序(法则 B):灵犀(spirit) 在仙尘散(earth) 之下,药力也别越界
+    const xianchen = PILLS.find(p => p.id === 'p_xianchen')!
+    expect(qualityDef(xianchen.quality).rank).toBeGreaterThan(qualityDef(wudaoDrop!.quality).rank)
+    expect(pillGainSecAt(wudaoDrop!, 0)).toBeLessThan(pillGainSecAt(xianchen, 0))
+  })
+
+  /**
    * 【法则 F】满额资源重置类必须是可炼品。
    *
    * 灵气是突破的门槛资源(突破耗去上限的四成),一枚回满即抵两次半突破。
