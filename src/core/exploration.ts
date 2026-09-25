@@ -5,6 +5,7 @@ import type { AdventureSession, CombatRules, ExploreMode, FoeOrigin, RegionDef }
 import { rng } from '@/utils/random'
 import { add, gnZero } from '@/utils/gnum'
 import { formatGN } from '@/utils/format'
+import { useResourcesStore } from '@/stores/resources'
 import { enemyDef } from '@/data/enemies'
 import { regionDef } from '@/data/regions'
 import {
@@ -107,7 +108,8 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
     events: 0,
     stoneGain: gnZero(),
     expGain: gnZero(),
-    itemGain: 0
+    itemGain: 0,
+    wudaoGain: 0
   }
   adventure.setSession(session)
   // 起新一程前清掉历史遗留的待处理事件。
@@ -146,8 +148,8 @@ export function stopExploration(reason: 'manual' | 'defeat' | 'complete'): void 
   // 总结带上这一趟的实际所得(会话账目即 afterWin 的真实入账):只说胜场与际遇,
   // 玩家还得自己去翻行囊才知道赚没赚
   const haul = `得灵石 ${formatGN(s.stoneGain)}、修为 ${formatGN(s.expGain)}${
-    s.itemGain > 0 ? `、拾获 ${s.itemGain} 件` : ''
-  }`
+    s.wudaoGain > 0 ? `、悟道 ${s.wudaoGain}` : ''
+  }${s.itemGain > 0 ? `、拾获 ${s.itemGain} 件` : ''}`
   if (reason === 'complete') {
     ui.toast(`此行${region?.name ?? ''}历练圆满,胜 ${s.wins} 场,际遇 ${s.events} 次;${haul}`, 'success')
   } else if (reason === 'defeat') {
@@ -317,7 +319,9 @@ function runBattle(now: number): void {
     track('kills')
     // 累计胜场:区域之主的门槛认它(见上面那段)——战败结束整趟,但这份进度不清零
     adventure.addRegionWins(region.id)
-    // Phase 28 连胜:再下一城,3/5/10 档发放只管奖(见 earlyGameService.recordWin)
+    // Phase 28 连胜:再下一城,3/5/10 档发放只管奖(见 earlyGameService.recordWin)。
+    // 档位赏的悟道同时写进本趟会话账 —— 结束总结要报,别让悟道只活在账本里(离线早有此数)
+    const wudaoBefore = useResourcesStore().wudao
     recordStreakWin()
     // Phase 31 A2:区域事件掉落修正(妖潮/古墓/商队更丰)
     const regReward = regEv ? (regionEventDef(regEv.eventId)?.rewardMult ?? 1) : 1
@@ -332,6 +336,7 @@ function runBattle(now: number): void {
       stoneGain: add(s.stoneGain, drops.stone),
       expGain: add(s.expGain, drops.exp),
       itemGain: s.itemGain + drops.items,
+      wudaoGain: s.wudaoGain + Math.max(0, useResourcesStore().wudao - wudaoBefore),
       nextBattleAt: nextBattleTime(now)
     })
     if (eDef.isBoss) {

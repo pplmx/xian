@@ -79,7 +79,8 @@ function forgeSession(now: number): void {
     events: 0,
     stoneGain: gnZero(),
     expGain: gnZero(),
-    itemGain: 0
+    itemGain: 0,
+    wudaoGain: 0
   })
 }
 
@@ -180,6 +181,18 @@ describe('连胜(TASK-022 接线 · runBattle 胜负驱动 player.winStreak)', (
     forgeSession(now)
     tickExploration(now)
     expect(player.winStreak).toBe(0)
+  })
+
+  it('连胜档赏的悟道并入本趟会话账(haul 要有数可报)', () => {
+    const player = usePlayerStore()
+    player.initCharacter('连胜测试', { roots: [] } as never)
+    player.winStreak = 2 // 再胜一场 → 3 档,赏悟道 1
+    combatWin.value = true
+    const now = Date.now()
+    forgeSession(now)
+    tickExploration(now)
+    expect(player.winStreak).toBe(3)
+    expect(useAdventureStore().session!.wudaoGain, '3 档赏的悟道该写进这一趟的会话账,结束总结才有得报').toBe(1)
   })
 })
 

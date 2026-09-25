@@ -1101,4 +1101,6 @@ export interface AdventureSession {
   stoneGain: GNum
   expGain: GNum
   itemGain: number
+  /** 本场累计所得悟道点(连胜档赏 + 际遇所给 + 重复法宝折化)—— 结束总结要报,不能只活在账本里 */
+  wudaoGain: number
 }

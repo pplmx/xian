@@ -297,8 +297,16 @@ export function asChoice(choice: EventChoice, tier: number): ChoiceDef<EventEffe
 /** 结算某个选项 */
 export function resolveEventChoice(def: EventDef, choiceIdx: number, tier: number): EventResolution {
   const adventure = useAdventureStore()
+  const resources = useResourcesStore()
   const choice = def.choices[choiceIdx] ?? def.choices[0]!
+  // 会话账:际遇给的悟道(含重复法宝折化)逐次写进这一趟 —— 结束总结才报得出数,离线早用同口径
+  const wudaoBefore = resources.wudao
   const receipt = CHOICES.resolve(asChoice(choice, tier), tier, rng)
+  const session = adventure.session
+  const gained = resources.wudao - wudaoBefore
+  if (session && gained > 0) {
+    adventure.setSession({ ...session, wudaoGain: session.wudaoGain + gained })
+  }
   if (def.once) adventure.markEventSeen(def.id)
   collect('event', def.id)
   track('events')

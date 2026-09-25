@@ -146,7 +146,8 @@ describe('离线的作用域 · 在途的东西一律不动', () => {
       events: 0,
       stoneGain: gnZero(),
       expGain: gnZero(),
-      itemGain: 0
+      itemGain: 0,
+      wudaoGain: 0
     }
     const stoneBefore = { ...adventure.session.stoneGain }
     const expBefore = { ...adventure.session.expGain }

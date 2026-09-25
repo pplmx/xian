@@ -14,6 +14,7 @@ import type { EventDef } from '@/types'
 import { add, gn, gte, mulN, sub } from '@/utils/gnum'
 import { useResourcesStore } from '@/stores/resources'
 import { useInventoryStore } from '@/stores/inventory'
+import { useAdventureStore } from '@/stores/adventure'
 import { eventDef } from '@/data/events'
 import { resolveEventChoice } from './eventEngine'
 import { stoneByTier } from './formulas'
@@ -59,5 +60,47 @@ describe('事件结算 · 灵石代价守恒', () => {
     expect(inventory.pills['p_daoyuan']).toBe(1)
     // 顺手确认这笔不是负值(300 灵石代价在等价档位下真实大于零,不是虚设)
     expect(gte(cost, gn(1))).toBe(true)
+  })
+})
+
+describe('事件悟道入会话账(haul 要有数可报)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('际遇给悟道时,计入正在跑的那趟会话(wudaoGain)', () => {
+    const resources = useResourcesStore()
+    const adventure = useAdventureStore()
+    adventure.$patch({
+      session: {
+        regionId: 'qingyun',
+        mode: 'normal',
+        startedAt: 0,
+        endsAt: 1_000_000,
+        nextBattleAt: 0,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: gn(0),
+        expGain: gn(0),
+        itemGain: 0,
+        wudaoGain: 0
+      }
+    })
+    const def = eventDef('ev_formation')!
+    const before = resources.wudao
+    resolveEventChoice(def, 1, 1) // 「研究阵纹」→ 悟道 4
+    expect(resources.wudao - before).toBe(4)
+    expect(adventure.session!.wudaoGain, '事件给的悟道该写进这趟会话账,结束总结才有得报').toBe(4)
+  })
+
+  it('无会话在跑时,事件照常发悟道,但不记会话账', () => {
+    const resources = useResourcesStore()
+    const adventure = useAdventureStore()
+    const def = eventDef('ev_formation')!
+    const before = resources.wudao
+    resolveEventChoice(def, 1, 1)
+    expect(resources.wudao - before).toBe(4)
+    expect(adventure.session).toBeNull()
   })
 })

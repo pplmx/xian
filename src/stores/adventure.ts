@@ -137,6 +137,7 @@ export const useAdventureStore = defineStore(
             losses: Math.floor(asFiniteNumber(s.losses, 0, 0)),
             events: Math.floor(asFiniteNumber(s.events, 0, 0)),
             itemGain: Math.floor(asFiniteNumber(s.itemGain, 0, 0)),
+            wudaoGain: Math.floor(asFiniteNumber(s.wudaoGain, 0, 0)),
             // 两个 GNum 累加器经 gn() 归一:null/原始数字/坏对象一律归零。
             // 漏掉这步的话,损坏档首胜时 exploration 的 add(s.stoneGain,…) 会在 .m 上炸,
             // 被 tickSafe 吞掉后每场胜利都抛、历练永久卡死
