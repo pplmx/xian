@@ -4,6 +4,7 @@ import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
 import { useCultivationStore } from '@/stores/cultivation'
 import { useAdventureStore } from '@/stores/adventure'
+import { useUiStore } from '@/stores/ui'
 import { gn, gnZero, toNum } from '@/utils/gnum'
 import { todayLocalNum } from '@/utils/time'
 import {
@@ -151,6 +152,38 @@ describe('连胜(Phase 28 · 曾经无调用方,TASK-022 接线后)', () => {
     player.winStreak = 7
     recordLoss()
     expect(player.winStreak).toBe(0)
+  })
+
+  it('奖励档 toast 出声:灵石与悟道报数,非档位不弹', () => {
+    const player = usePlayerStore()
+    const toast = vi.spyOn(useUiStore(), 'toast')
+    player.initCharacter('连胜测试', { roots: [] } as never)
+    toast.mockClear()
+    player.winStreak = 2
+    recordWin() // → 3 档
+    expect(
+      toast.mock.calls.some(
+        c => String(c[0]).includes('连胜 3 场') && String(c[0]).includes('灵石 20') && String(c[0]).includes('悟道 1')
+      ),
+      '3 档发奖该有 toast 报出灵石与悟道'
+    ).toBe(true)
+    toast.mockClear()
+    recordWin() // 4:非档位
+    expect(toast, '非档位不该弹连胜赏赐').not.toHaveBeenCalled()
+  })
+
+  it('连胜中断出声:连胜在时败北要告诉玩家断了;零连胜则不必吵', () => {
+    const player = usePlayerStore()
+    const toast = vi.spyOn(useUiStore(), 'toast')
+    player.initCharacter('连胜测试', { roots: [] } as never)
+    toast.mockClear()
+    player.winStreak = 7
+    recordLoss()
+    expect(player.winStreak).toBe(0)
+    expect(toast.mock.calls.some(c => String(c[0]).includes('连胜 7 场')), '断了利落,败也要败得明白').toBe(true)
+    toast.mockClear()
+    recordLoss() // 早已是零连胜
+    expect(toast, '零连胜的败北不必反复念叨').not.toHaveBeenCalled()
   })
 })
 

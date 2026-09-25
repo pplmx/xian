@@ -15,6 +15,8 @@
       <p class="mt-1 text-[11px] text-ink-faint tabular">
         胜 {{ session?.wins ?? 0 }} 场 · 际遇 {{ session?.events ?? 0 }} 次 · 拾获 {{ session?.itemGain ?? 0 }} 件
       </p>
+      <!-- 连胜与冲档:3/5/10 档的赏赐有 toast,距离也得看得见(见 streakLine) -->
+      <p v-if="streakLine" class="mt-0.5 text-[10px] text-gold-ink tabular">{{ streakLine }}</p>
       <!-- 本次所得:石头与修为此前只在挂机总结里出现,在线历练中玩家看不到这一趟赚了什么 -->
       <p v-if="gains" class="mt-0.5 text-[10px] text-ink-faint tabular">
         本次所得 · 灵石 <span class="text-gold-ink">+{{ gains.stone }}</span> · 修为
@@ -229,6 +231,7 @@
   import { useSettingsStore } from '@/stores/settings'
   import { stopExploration, winsUntilRegionBoss } from '@/core/exploration'
   import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS, EXPLORE_MODES } from '@/data/constants'
+  import { WIN_STREAK_REWARDS } from '@/data/earlyGame'
   import { formatCountdown, formatGN } from '@/utils/format'
   import { useNow } from '@/composables/useNow'
   import { detectBuild } from '@/core/buildDetect'
@@ -263,6 +266,14 @@
   const battle = computed(() => adventure.lastBattle)
   const timeLeft = computed(() => (session.value ? Math.max(0, (session.value.endsAt - now.value) / 1000) : 0))
   const modeName = computed(() => (session.value ? EXPLORE_MODES[session.value.mode].name : ''))
+
+  /** 连胜与下一档赏赐:冲档要有距离感 —— 3/5/10 档的赏赐发给谁,先得让人看得见自己在几连胜 */
+  const streakLine = computed(() => {
+    const s = player.winStreak
+    if (s <= 0) return ''
+    const next = WIN_STREAK_REWARDS.find(r => r.streak > s)
+    return next ? `连胜 ${s} 场 · 距下一档赏赐还差 ${next.streak - s} 场` : `连胜 ${s} 场 · 已至连胜终赏`
+  })
 
   /** 本次历练已得(灵石/修为)—— 取自会话里如实累计的入账数,不是期望值 */
   const gains = computed(() => {

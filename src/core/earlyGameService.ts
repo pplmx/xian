@@ -224,13 +224,19 @@ export function recordWin(): void {
     resources.addStone(gn(reward.stone))
     resources.addSmall('wudao', reward.wudao)
     telemetry().record('win_streak', 'notify', `连胜 ${streak} 场奖励`)
+    // 奖励必须报数:同一场战斗里镇压、雪耻都有 toast,唯独 3/5/10 档的赏赐
+    // 一直静默入袋 —— 白拿的灵石与悟道,账上要有声音(全库审计抓出的真缺口)
+    useUiStore().toast(`连胜 ${streak} 场,赏灵石 ${reward.stone} · 悟道 ${reward.wudao}`, 'rare')
   }
 }
 
 /** 记录失败(重置连胜) */
 export function recordLoss(): void {
   const player = usePlayerStore()
+  const streak = player.winStreak
   player.resetWinStreak()
+  // 贺有赏、断有音:连胜被掐断的那一下要出声(别让玩家某天回过神才发现 3 连胜没了)
+  if (streak > 0) useUiStore().toast(`连胜 ${streak} 场就此而止,前功须从头再积`, 'warn')
 }
 
 /** 触发洞府巡游(每日一次) */
