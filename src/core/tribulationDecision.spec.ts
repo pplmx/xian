@@ -11,12 +11,15 @@ import {
   rollTribulation,
   verdictLabel,
   statGuardOf,
+  settlementResist,
   tribulationWaveSpan,
-  NO_STAT_GUARD
+  NO_STAT_GUARD,
+  type TribStatGuard
 } from './tribulationDecision'
 import { baseCombatStats, tribulationWaveDamage } from './formulas'
 import { toNum } from '@/utils/gnum'
 import { TRIBULATIONS, tribulationDef } from '@/data/tribulations'
+import { NO_RELIEF } from '@/data/linggenAffinity'
 import { useGameStore } from '@/stores/game'
 import type { StatMods } from '@/types'
 
@@ -185,5 +188,19 @@ describe('⑦ 波形读数(道数 × 逐道加重)', () => {
     const high = tribulationWaveSpan(def, 8)
     expect(high.waves).toBeGreaterThan(low.waves)
     expect(high.first).toBeGreaterThan(low.first)
+  })
+})
+
+describe('④ 结算抗性口径(界面=结算,不许第二把尺子)', () => {
+  it('settlementResist:减伤 0.6 封顶、抗性 0.8 上限、三维折算参与', () => {
+    // 全局减伤 70% 超结算封顶 → 按 0.6 折算为 0;min(0.8, 0.35 + 0 + 0.1) = 0.45
+    const mods: StatMods = { tribulationResist: 0.35, damageReduction: 0.7 }
+    const stat: TribStatGuard = { resist: 0.1, guard: 0 }
+    expect(settlementResist(mods, NO_RELIEF, stat)).toBeCloseTo(0.45, 6)
+    // 减伤折算(厚土分担)同压进 0.8 上限:0.5 + min(0.6,0.9)×0.6 = 0.86 → 0.8
+    const heavy: StatMods = { tribulationResist: 0.5, damageReduction: 0.9 }
+    expect(settlementResist(heavy, { ...NO_RELIEF, reductionToResist: 0.6 }, NO_STAT_GUARD)).toBeCloseTo(0.8, 6)
+    // 无任何词条时,抗性 = 三维折算自身
+    expect(settlementResist({}, NO_RELIEF, { resist: 0.12, guard: 0 })).toBeCloseTo(0.12, 6)
   })
 })

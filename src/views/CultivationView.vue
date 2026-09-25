@@ -160,10 +160,10 @@
           摊开读数是因为玩家最容易在这里误判:一身厚血厚防站在劫前,却不知道自己缺什么。
         -->
         <p class="mt-1 text-[10px] text-ink-faint tabular">
-          此劫只认百分比 —— 天劫抗性 {{ formatPercent(tribLedger.resist, 0) }}(防御折算
-          {{ formatPercent(tribLedger.statResist, 0) }})· 减伤 {{ formatPercent(tribLedger.reduction, 0) }} · 每波恢复
-          {{ formatPercent(tribLedger.sustain, 1) }} · 开劫护持 {{ formatPercent(tribLedger.guard, 0) }}(气血折算
-          {{ formatPercent(tribLedger.statGuard, 0) }})
+          此劫只认百分比 —— 天劫抗性 {{ formatPercent(tribLedger?.resist ?? 0, 0) }}(防御折算
+          {{ formatPercent(tribLedger?.statResist ?? 0, 0) }})· 减伤 {{ formatPercent(tribLedger?.reduction ?? 0, 0) }} · 每波恢复
+          {{ formatPercent(tribLedger?.sustain ?? 0, 1) }} · 开劫护持 {{ formatPercent(tribLedger?.guard ?? 0, 0) }}(气血折算
+          {{ formatPercent(tribLedger?.statGuard ?? 0, 0) }})
         </p>
         <p class="mt-0.5 text-[10px] text-ink-faint">
           攻伐不进天劫公式;防御与气血按本境裸修为折算成上面的抗性与护持,各有上限 —— 血再厚也只能硬抗一部分,剩下的仍要抗性/减伤/恢复来补。进阶成功率与突破准备也只作用于小进阶,大关不看它们。
@@ -376,7 +376,11 @@
   import {
     currentStatGuard,
     currentTribulationPlan,
+    currentTribulationRelief,
+    guardScore,
+    settlementResist,
     statFoldAt,
+    sustainScore,
     tribulationWaveSpan,
     verdictLabel,
     type TribulationPlan
@@ -553,19 +557,25 @@
   const worldStep = computed(() => statFoldAt(tribTargetMajor.value) < 1)
 
   /**
-   * 渡劫账上的四项实际读数 —— 只摊天劫真的会读的那些(口径与 tribulationDecision 同源:
-   * 恢复 = regenPerRound + 吸血×0.3,与 sustainScore 对齐)。
-   * 摆出来是因为"血厚防高却过不去"几乎只可能来自一个误会:以为天劫看三维。
+   * 渡劫账上的四项实际读数 —— 只摊天劫真的会读的那些,恢复/护持/抗性直接调
+   * 结算的同一批函数(sustainScore / guardScore / settlementResist),界面不抄
+   * 第二份系数。曾抄过:0.3/0.8 字面量与 easeDiscount 折叠全对不上(逆流劫
+   * 界面报 30% 实际只有 19.5%),注释还写着「同源」—— 审计抓出来后根治。
+   * 玩家按这个数决定补词条、换灵根,看到的就是结算的。
    */
   const tribLedger = computed(() => {
+    if (!tribPlan.value) return null
     const mods = player.finalStats.mods
     const stat = currentStatGuard()
+    const def = tribPlan.value.def
+    const relief = currentTribulationRelief(tribPlan.value.kind)
     return {
-      resist: Math.min(0.8, modOf(mods, 'tribulationResist') + stat.resist),
+      resist: settlementResist(mods, relief, stat),
       statResist: stat.resist,
-      reduction: modOf(mods, 'damageReduction'),
-      sustain: modOf(mods, 'regenPerRound') + modOf(mods, 'lifesteal') * 0.3,
-      guard: modOf(mods, 'shieldOnStart') + stat.guard,
+      // 减伤同受结算的 0.6 上限:显示"此劫真的会读的"值,不拿全局裸减伤充数
+      reduction: Math.min(0.6, modOf(mods, 'damageReduction')),
+      sustain: sustainScore(mods, def, relief),
+      guard: guardScore(mods, def, relief) + stat.guard,
       statGuard: stat.guard
     }
   })

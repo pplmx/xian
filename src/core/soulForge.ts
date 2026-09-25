@@ -8,7 +8,7 @@ import type { EquipmentInstance, StatMods } from '@/types'
 import { uid } from '@/utils/id'
 import { qualityDef } from '@/data/qualities'
 import { equipmentTemplate } from '@/data/equipment'
-import { SOUL_TYPES, soulGradeOfQuality, type SoulInstance, type SoulTypeDef } from '@/data/souls'
+import { SOUL_TYPES, soulGradeOfQuality, soulModsFor, type SoulInstance, type SoulTypeDef } from '@/data/souls'
 import { resolveEquipStats } from './equipGen'
 
 /** 某装备在某类器魂的判定键上的合计权重 */
@@ -25,6 +25,8 @@ export interface SoulPreview {
   /** 将凝出的器魂类型;null 表示此器无形意可存(没有任何判定词条) */
   type: SoulTypeDef | null
   gradeRank: number
+  /** 将凝出的器魂的数值模组(type.mods × 品阶倍率)—— 与成魂同一函数,凝炼台确认前就能给玩家看 */
+  mods: StatMods
   /** 各类型的判定得分,供 UI 解释「为何是这一路」 */
   scores: { def: SoulTypeDef; score: number }[]
 }
@@ -39,9 +41,12 @@ export function previewSoul(inst: EquipmentInstance): SoulPreview {
   const scores = SOUL_TYPES.map(def => ({ def, score: typeScore(resolved.mods, def) })).sort((a, b) => b.score - a.score)
   const top = scores[0]
   const quality = qualityDef(inst.quality)
+  const gradeRank = soulGradeOfQuality(quality.rank).rank
   return {
     type: top && top.score > 0 ? top.def : null,
-    gradeRank: soulGradeOfQuality(quality.rank).rank,
+    gradeRank,
+    // 预览即成品:凝出来是多少,这里就先说多少(与 refineSoul→soulMods 同一把尺子)
+    mods: top && top.score > 0 ? soulModsFor(top.def.id, gradeRank) : {},
     scores
   }
 }

@@ -139,16 +139,21 @@ export interface SoulInstance {
 }
 
 /** 器魂实际提供的词条 = 类型基础 × 品阶倍率 */
-export function soulMods(soul: SoulInstance): StatMods {
-  const def = soulTypeDef(soul.type)
+/** 某型某级的器魂模组 —— 成魂与凝炼预览共用这一把尺子(预览即成品,不许另算一份) */
+export function soulModsFor(type: SoulTypeId, grade: number): StatMods {
+  const def = soulTypeDef(type)
   if (!def) return {}
-  const mult = soulGradeDef(soul.grade).mult
+  const mult = soulGradeDef(grade).mult
   const out: StatMods = {}
   for (const k in def.mods) {
     const key = k as keyof StatMods
     out[key] = (def.mods[key] ?? 0) * mult
   }
   return out
+}
+
+export function soulMods(soul: SoulInstance): StatMods {
+  return soulModsFor(soul.type, soul.grade)
 }
 
 export function soulName(soul: SoulInstance): string {

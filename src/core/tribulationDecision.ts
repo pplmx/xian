@@ -204,6 +204,18 @@ export function effectiveBurstTier(mods: StatMods, relief: TribulationRelief = N
   return Math.min(3, base + relief.burstTierBonus)
 }
 
+/**
+ * 结算口径的天劫抗性 —— waveDamage 与渡劫账 UI 共用同一份,界面不许另抄一个数。
+ *
+ * 三条约束都叠在这一个数里:减伤本身封顶 0.6、折算成的抗性与词条抗性同受
+ * 0.8 上限、三维折算(防御→抗性)同处一项。曾有一版界面行漏了减伤折算与
+ * 上限,读起来偏乐观/偏悲观,跟结算各走一头 —— 那正是要根治的病。
+ */
+export function settlementResist(mods: StatMods, relief: TribulationRelief, stat: TribStatGuard): number {
+  const reduction = Math.min(0.6, modOf(mods, 'damageReduction'))
+  return Math.min(0.8, modOf(mods, 'tribulationResist') + reduction * relief.reductionToResist + stat.resist)
+}
+
 /** 每波恢复量(prep.sustain 与结算共用;吸血按三成折算为持续恢复) */
 export function sustainScore(mods: StatMods, def: TribulationDef, relief: TribulationRelief = NO_RELIEF): number {
   return (modOf(mods, 'regenPerRound') + modOf(mods, 'lifesteal') * 0.3) * easeDiscount(def.healMult, relief.healRestore)
@@ -287,12 +299,7 @@ export function waveDamage(
   stat: TribStatGuard = NO_STAT_GUARD
 ): number {
   const reduction = Math.min(0.6, modOf(mods, 'damageReduction'))
-  // 厚土分担天罚:减伤按灵根亲和折算一部分为天劫抗性(无减伤者折算为零)
-  // 三维折算(防御→抗性)与词条抗性同处一项、同受 0.8 上限:血厚防高者由此硬抗一部分
-  const resist = Math.min(
-    0.8,
-    modOf(mods, 'tribulationResist') + reduction * relief.reductionToResist + stat.resist
-  )
+  const resist = settlementResist(mods, relief, stat)
   const lowHpRed = Math.min(0.6, modOf(mods, 'lowHpReduction'))
   const waves = tribulationWaves(targetMajor)
   let dmg = tribulationWaveDamage(targetMajor, wave, resist) * (1 - reduction) * waveMultiplier(def, wave, waves, relief)

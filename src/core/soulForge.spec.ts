@@ -16,7 +16,7 @@
 import { describe, expect, it } from 'vitest'
 import type { StatMods } from '@/types'
 import { modDepth } from './statsCalc'
-import { SOUL_GRADES, SOUL_SLOTS, SOUL_TYPES, soulMods, type SoulInstance } from '@/data/souls'
+import { SOUL_GRADES, SOUL_SLOTS, SOUL_TYPES, soulMods, soulModsFor, type SoulInstance } from '@/data/souls'
 import { celestialDepthScale, celestialJudgement } from './gauntlet'
 
 /** 按比例放大一组词条,模拟「同方向但堆得更厚」 */
@@ -40,6 +40,16 @@ describe('器魂 · 是加法的一层', () => {
       modDepth(soulMods(soulAt(SOUL_TYPES[0]!.id, 5, 'a'))) + modDepth(soulMods(soulAt(SOUL_TYPES[1]!.id, 5, 'b')))
     expect(one).toBeGreaterThan(0)
     expect(two).toBeGreaterThan(one)
+  })
+
+  it('soulModsFor == soulMods(成品):凝炼预览与成魂是同一把尺子', () => {
+    for (const t of SOUL_TYPES) {
+      for (const g of SOUL_GRADES) {
+        expect(soulModsFor(t.id, g.rank), `${t.id}@${g.rank} 预览模组与成品漂移`).toEqual(
+          soulMods(soulAt(t.id, g.rank))
+        )
+      }
+    }
   })
 
   it('品阶越高,器魂越厚(它现在是实打实的战力,不再只是形状)', () => {

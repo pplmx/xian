@@ -141,12 +141,18 @@
             <p class="truncate text-[10px] text-ink-faint">
               将凝出
               <span :style="{ color: soulGradeDef(row.gradeRank).color }">{{ soulGradeDef(row.gradeRank).name }}·{{ row.typeName }}</span>
+              <!-- 给什么要有数:魂效果是确定的,就在入炉前说出来(与闲置形意的读数同款) -->
+              <span v-if="modsText(row.mods)" class="ml-1 text-ink-soft">{{ modsText(row.mods) }}</span>
             </p>
             <!--
               同类隐患:自动收纳一律不动"已淬养"的件,而手动入炉会把它连同强化投入一起毁掉。
               手动动作不拦,但必须说清代价 —— 玩家不该在按下确认后才发现自己练过它。
+              投入要报数:尘几许、灵石几许(enhanceInvested 同款,不是一句定性)。
             -->
-            <p v-if="row.invested" class="truncate text-[10px] text-cinnabar">此器已淬养,入炉将连同强化投入一并失去</p>
+            <p v-if="row.invested && row.investedCost" class="truncate text-[10px] text-cinnabar">
+              此器已淬养,入炉将连同强化投入一并失去(器灵尘×{{ row.investedCost.dust }} · 灵石
+              {{ formatGN(row.investedCost.stone) }})
+            </p>
           </div>
           <!-- 入炉二步确认:毁的是原器,不按一个「入 炉」就直接交代了 -->
           <button
@@ -178,13 +184,14 @@
   import { computed, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { goBack } from '@/router/goBack'
-  import { formatNum, formatSignedPercent } from '@/utils/format'
+  import { formatGN, formatNum, formatSignedPercent } from '@/utils/format'
   import { STAT_NAMES } from '@/ui/statNames'
   import type { AnyStatKey } from '@/types'
   import { equipmentTemplate } from '@/data/equipment'
   import { SOUL_SLOTS, soulGradeDef, soulMods, soulName, soulTypeDef, type SoulInstance } from '@/data/souls'
   import { canRefine, dissolveSoul, previewSoul, refineEquipment, removeSoul, SOUL_REFINE_COST, wearSoul } from '@/core/soulService'
   import { hasInvestment } from '@/core/smartKeep'
+  import { enhanceInvested } from '@/core/salvage'
   import { endgameUnlocked } from '@/core/endgameService'
   import { useEndgameStore } from '@/stores/endgame'
   import { useInventoryStore } from '@/stores/inventory'
@@ -225,12 +232,17 @@
       .filter(it => !it.locked && !wearing.has(it.uid) && canRefine(it))
       .map(inst => {
         const preview = previewSoul(inst)
+        const invested = hasInvestment(inst)
         return {
           inst,
           name: equipmentTemplate(inst.templateId)?.name ?? '无名法器',
           typeName: preview.type?.name ?? '器魂',
           gradeRank: preview.gradeRank,
-          invested: hasInvestment(inst)
+          // 将凝出的器的数值模组 —— 预览即成品(soulForge.previewSoul.mods)
+          mods: preview.mods,
+          invested,
+          // 已淬养者的强化投入:不可逆确认里该有两笔具体的数(尘/灵石),不能只有一句定性
+          investedCost: invested ? enhanceInvested(inst) : null
         }
       })
   })
