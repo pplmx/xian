@@ -86,6 +86,7 @@ const VIA_RESOURCE: readonly { key: AnyStatKey; via: string }[] = [
   { key: 'spiritStoneGain', via: '灵石 → 灵脉/建筑/强化 → 速度与战力' },
   { key: 'alchemyYield', via: '丹药产出 → 属性与修为' },
   { key: 'craftExpGain', via: '炼丹心得 → 技艺成长 → 成功率/双成 → 丹药 → 修为与战力' },
+  { key: 'craftSalvage', via: '定心护料 → 手稳收草 → 省料 → 更多炼丹 → 修为与战力' },
   { key: 'forgeDiscount', via: '强化省耗 → 同等灵石换更多战力' },
   { key: 'breakRefund', via: '突破返还 → 灵气成本 → 突破等待' },
   { key: 'explorationSpeed', via: '历练节奏 → 单位时间收益' },

@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 66 味。
+ * 丹药库 —— 67 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -256,10 +256,18 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 30, stoneBase: 70 },
     alchemyLevel: 6
   }),
-  // ---- 炼丹自增益第二味(齐火候丹成对):「做得多就精」的加速器 —— 一句话:心得泉涌,手艺见长 ----
-  p('p_cuidan', '淬炼丹', 'profound', 4, '凝神观炉,一刻(15 分钟)内炼丹技艺经验提升 30%', {
+  // ---- 炼丹自增益三味(概念契约):通用状态丹,炼丹面只是其中一格 ----
+  // 澄心丹:心念澄澈 → 会心一击(通用) + 炼丹心得泉涌(炼丹面);"淬炼"一名已废。
+  p('p_chengxin', '澄心丹', 'profound', 4, '服之心念澄澈,出手如神 —— 暴击率提升 8%;炼丹心得泉涌,一刻(15 分钟)内技艺经验提升 30%', {
     kind: 'buff',
-    buffId: 'buff_cuidan',
+    buffId: 'buff_chengxin',
+    recipe: { herb: 40, stoneBase: 90 },
+    alchemyLevel: 4
+  }),
+  // 定心丹:心定则神闲 → 破境稳(通用) + 炼丹手稳护料(炼丹面);"稳炉"一名已废 —— 丹管不了炉子。
+  p('p_dingxin', '定心丹', 'profound', 4, '服之凝神定心,进阶成功率提升 8%;炸炉时手法不乱,一刻(15 分钟)内保住更多灵草(保料比例 +50%)', {
+    kind: 'buff',
+    buffId: 'buff_dingxin',
     recipe: { herb: 40, stoneBase: 90 },
     alchemyLevel: 4
   }),
@@ -377,8 +385,9 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 480, stoneBase: 1500 },
     alchemyLevel: 10
   }),
-  // ---- 炼丹增益(多维审视 P0-2):炼丹体系自己吃的第一味药,补 buff_huohou ----
-  p('p_huohou', '火候丹', 'immortal', 12, '服之火候通神,15 分钟内开炉双成概率 +20%', {
+  // ---- 炼丹增益(概念契约):安神丹 —— 神魂安泰(通用:回灵)+ 凝神观炉(炼丹面:双成)。
+  // "火候"是炼丹者的本事,不是丹能管的火 —— 此名已废,改走安神一路(id 沿旧)。 ----
+  p('p_huohou', '安神丹', 'immortal', 12, '服之神魂安泰,气息绵长 —— 灵气回复提升 25%;凝神观炉,15 分钟内开炉双成概率 +20%', {
     kind: 'buff',
     buffId: 'buff_huohou',
     recipe: { herb: 60, stoneBase: 150 },

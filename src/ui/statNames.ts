@@ -52,6 +52,7 @@ export const STAT_NAMES: Record<AnyStatKey, string> = {
   expGain: '战斗修为',
   alchemyYield: '炼丹产出',
   craftExpGain: '炼丹心得',
+  craftSalvage: '定心护料',
   forgeDiscount: '炼器减耗',
   qiCapPct: '灵气上限',
   beastPct: '灵兽效果',

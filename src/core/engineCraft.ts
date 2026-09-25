@@ -43,10 +43,16 @@ const RUNNER = createRecipeRunner<CraftCtx, number | GNum>({
   // 顺序即玩家先看到哪句话:先"知不知此方",再"料够不够"
   blocked: (_id, ctx) => craftability(ctx.pillId)?.blockers[0],
   affordable: (_id, ctx) => (ctx.canPay ? undefined : '灵草或灵石不足'),
-  // 失败时灵草按技艺保下一部分(手越稳赔得越少),灵石不退
+  // 失败时灵草按技艺保下一部分(手越稳赔得越少),灵石不退;
+  // 稳炉丹(稳炉护料)内生时,同一技艺的保料比例再按 (1 + craftSalvage) 倍
   spentOnFail: (cost, _id, ctx) =>
     cost.key === 'herb'
-      ? (cost.amount as number) - Math.floor((cost.amount as number) * salvageRatio(craftability(ctx.pillId)?.skill ?? 0))
+      ? (cost.amount as number) -
+        Math.floor(
+          (cost.amount as number) *
+            salvageRatio(craftability(ctx.pillId)?.skill ?? 0) *
+            (1 + modOf(usePlayerStore().finalStats.mods, 'craftSalvage'))
+        )
       : cost.amount,
   bonus: (_id, ctx) => alchemyBonus(ctx.pillId),
   bonusCap: ALCHEMY_BONUS_CAP

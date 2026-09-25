@@ -135,7 +135,7 @@ export function salvageRatio(skill: number): number {
 /** 开炉长的本事:成功长得快,失败也长——只是慢些,且偏向补最欠缺的一环 */
 function gainCraftExp(skills: Readonly<Partial<Record<SkillId, number>>>, rank: number, succeeded: boolean): void {
   const lore = useLoreStore()
-  // 淬炼丹(炼丹心得):增益内生时,同一炉的心得 ×(1 + craftExpGain)——
+  // 澄心丹(炼丹心得):增益内生时,同一炉的心得 ×(1 + craftExpGain)——
   // 「做得多就精」的加速器,词条经 finalStats.mods 同一把尺子进来(见 engineCraft)。
   const expBoost = 1 + (usePlayerStore().finalStats.mods.craftExpGain ?? 0)
   const base = (succeeded ? 10 : 6) * (1 + rank * 0.35) * expBoost

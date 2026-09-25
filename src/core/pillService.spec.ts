@@ -171,11 +171,11 @@ describe('炼丹 · 成与败各自的账', () => {
   })
 
   /**
-   * 淬炼丹(炼丹体系自己吃的第二味药,见 docs/alchemy.md):增益内生时,
+   * 澄心丹(炼丹体系自己吃的第二味药,见 docs/alchemy.md):增益内生时,
    * 同一炉开炉得的技艺经验 ×(1 + 30%)见长 —— 「做得多就精」的那份"更多"
    * 此刻来自泉涌的心得,而不是开炉次数。
    */
-  it('淬炼丹内生:同一炉的技艺经验照 1.3 倍长', () => {
+  it('澄心丹内生:同一炉的技艺经验照 1.3 倍长', () => {
     mockRand = 0
     knowRecipe()
     giveMaterials()
@@ -185,13 +185,13 @@ describe('炼丹 · 成与败各自的账', () => {
     craftPill(ID)
     const plain = lore.expOf(s)
     expect(plain, '基线炉该长经验').toBeGreaterThan(0)
-    useCultivationStore().addBuff('buff_cuidan', Date.now())
+    useCultivationStore().addBuff('buff_chengxin', Date.now())
     craftPill(ID)
     // 第二炉的**增量** = 基线炉增量 ×1.3(不是总经验 ×1.3 —— 第一炉的经验也要留着)
-    expect(lore.expOf(s) - plain, '淬炼丹内生后同一炉的经验增量应 ×1.3').toBeCloseTo(plain * 1.3, 6)
+    expect(lore.expOf(s) - plain, '澄心丹内生后同一炉的经验增量应 ×1.3').toBeCloseTo(plain * 1.3, 6)
   })
 
-  it('淬炼丹内生:失手那炉的经验增量同样 ×1.3(成与败走同一行乘数)', () => {
+  it('澄心丹内生:失手那炉的经验增量同样 ×1.3(成与败走同一行乘数)', () => {
     mockRand = 0.999
     knowRecipe()
     giveMaterials()
@@ -201,7 +201,7 @@ describe('炼丹 · 成与败各自的账', () => {
     craftPill(ID)
     const plain = lore.expOf(s)
     expect(plain, '失手也该长经验作为基线').toBeGreaterThan(0)
-    useCultivationStore().addBuff('buff_cuidan', Date.now())
+    useCultivationStore().addBuff('buff_chengxin', Date.now())
     craftPill(ID)
     expect(lore.expOf(s) - plain, '失手炉的增量也该 ×1.3').toBeCloseTo(plain * 1.3, 6)
   })
@@ -238,6 +238,32 @@ describe('炼丹 · 成与败各自的账', () => {
     }
     expect(lore.recipeMastery(ID)).toBeGreaterThan(mastery)
     expect(useQuestsStore().counter('pillsFailed')).toBe(1)
+  })
+
+  /**
+   * 定心丹(炼丹体系自增益第三味,见 docs/alchemy.md):增益内生时,
+   * 「炸炉保料」按 (1 + craftSalvage) 倍 —— 同一炉、同一技艺,护下更多草。
+   * exp 1000 → 技艺约 62,保料 0.3875;回灵丹 6 草取整后 保 2 vs 3,可判别。
+   */
+  it('定心丹内生:失手那炉按 1.5 倍比例保料', () => {
+    mockRand = 0.999
+    knowRecipe()
+    giveMaterials()
+    const lore = useLoreStore()
+    for (const k of Object.keys(recipeCraft(pillDef(ID)!)!.skills)) lore.addSkillExp(k as SkillId, 1000)
+    const resources = useResourcesStore()
+    const cost = pillCraftCost(ID)!
+    const salvage = salvageRatio(craftability(ID)!.skill)
+    const herbBefore = resources.herb
+    craftPill(ID)
+    const keptPlain = cost.herb - (herbBefore - resources.herb)
+    useCultivationStore().addBuff('buff_dingxin', Date.now())
+    const herbBuff = resources.herb
+    craftPill(ID)
+    const keptBuffed = cost.herb - (herbBuff - resources.herb)
+    expect(keptPlain).toBe(Math.floor(cost.herb * salvage))
+    expect(keptBuffed).toBe(Math.floor(cost.herb * salvage * 1.5))
+    expect(keptBuffed, '同样的炸炉,稳炉丹该护下更多草').toBeGreaterThan(keptPlain)
   })
 
   it('技艺越高,失手时赔得越少(同一炉料,同一掷点)', () => {

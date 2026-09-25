@@ -65,7 +65,8 @@ function legacyCraftPill(id: string): { ok: boolean; count: number; aborted?: bo
   if (succeeded) {
     resources.spendHerbs(cost.herbGrade, cost.herb)
   } else {
-    const kept = Math.floor(cost.herb * salvageRatio(able.skill))
+    // 稳炉丹(稳炉护料)同款乘数:冻结镜像跟随 engineCraft.spentOnFail(惯例同 craftExpGain)
+    const kept = Math.floor(cost.herb * salvageRatio(able.skill) * (1 + (player.finalStats.mods.craftSalvage ?? 0)))
     resources.spendHerbs(cost.herbGrade, cost.herb - kept)
   }
   const lore = useLoreStore()
