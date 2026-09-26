@@ -2,6 +2,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useQuestsStore } from '@/stores/quests'
+import { usePlayerStore } from '@/stores/player'
+import { petCodex } from '@/ui/codex'
 import { DAILY_TASKS, MAIN_QUESTS } from '@/data/quests'
 import { MAX_MAJOR } from '@/data/realms'
 
@@ -69,5 +71,54 @@ describe('主线任务链覆盖', () => {
 
   it('每日任务仍为三条(扩界不得挤占日课)', () => {
     expect(DAILY_TASKS.length).toBeGreaterThanOrEqual(3)
+  })
+})
+
+/**
+ * 灵兽册深浅的存档侧:曾相伴必须由**玩家自己做过的事**撑起,
+ * 不能凭空猜。setPet 唤伴即记档,暂别不清档 —— 换谁、放谁,册上都留名。
+ */
+describe('灵兽册相伴档', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('唤作伴的入册,暂别不除名', () => {
+    const quests = useQuestsStore()
+    const player = usePlayerStore()
+    expect(quests.petCompanions).toEqual([])
+    player.setPet('pet_qingyu')
+    expect(quests.petCompanions).toEqual(['pet_qingyu'])
+    player.setPet(null)
+    expect(quests.petCompanions).toEqual(['pet_qingyu'])
+  })
+
+  it('换伴不丢旧记录,重复唤不重复记', () => {
+    const quests = useQuestsStore()
+    const player = usePlayerStore()
+    player.setPet('pet_qingyu')
+    player.setPet('pet_xuegui')
+    player.setPet('pet_qingyu')
+    expect(new Set(quests.petCompanions)).toEqual(new Set(['pet_qingyu', 'pet_xuegui']))
+  })
+
+  it('sanitize 清理表内外的灵兽 id', () => {
+    const quests = useQuestsStore()
+    quests.$patch({ petCompanions: ['pet_qingyu', 'not-a-pet'] } as never)
+    quests.sanitize()
+    expect(quests.petCompanions).toEqual(['pet_qingyu'])
+  })
+
+  it('灵兽册深浅跟随真实相伴:收→唤→暂别', () => {
+    const quests = useQuestsStore()
+    const player = usePlayerStore()
+    quests.collect('pet', 'pet_qingyu')
+    expect(petCodex().entries.find(e => e.id === 'pet_qingyu')?.stage).toBe(1)
+    player.setPet('pet_qingyu')
+    const top = petCodex().entries.find(e => e.id === 'pet_qingyu')!
+    expect(top.stage).toBe(3)
+    expect(top.badge).toBe('伴')
+    player.setPet(null)
+    expect(petCodex().entries.find(e => e.id === 'pet_qingyu')?.stage).toBe(2)
   })
 })

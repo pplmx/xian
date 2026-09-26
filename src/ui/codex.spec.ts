@@ -30,11 +30,17 @@ import {
   describeEquipment,
   describeMaterial,
   describePill,
+  petStage,
+  describePet,
+  PET_STAGE_MAX,
+  PET_STAGE_NAMES,
   type EquipSeen,
   byBest,
   equipStage,
   pillStage
 } from './codex'
+import { petDef } from '@/data/pets'
+import { PERSONALITY_NAMES } from '@/core/petPersonality'
 import {
   ARTIFACT_LEVEL_BONUS,
   ARTIFACT_MAX_LEVEL,
@@ -308,5 +314,49 @@ describe('图鉴排序 · 从好到差', () => {
     const before = rows.map(r => r.entry.id)
     byBest(rows)
     expect(rows.map(r => r.entry.id)).toEqual(before)
+  })
+})
+
+/**
+ * 灵兽册:深度不是"知道它多少"而是"我与它同行到哪一步"。
+ *
+ * 深浅三档由真实相伴史撑起 —— 唤作伴(曾相伴)、此刻仍伴(相伴中)。
+ * 前两档的及格线是防御性的:即使传入状态有矛盾(如 current 但未结缘),
+ * 档位也不该产生"最大的那档看着像别的"的错位。
+ */
+describe('灵兽册:相伴即深浅', () => {
+  const qingyu = petDef('pet_qingyu')!
+
+  it('档位单调:相伴中 > 曾相伴 > 已结缘 > 未录', () => {
+    expect(petStage({ collected: false, wasCompanion: false, current: false })).toBe(0)
+    expect(petStage({ collected: true, wasCompanion: false, current: false })).toBe(1)
+    expect(petStage({ collected: true, wasCompanion: true, current: false })).toBe(2)
+    expect(petStage({ collected: true, wasCompanion: true, current: true })).toBe(3)
+  })
+
+  it('相伴中不可能跳过曾相伴:即便状态互相打架,最深档也建立在曾相伴之上', () => {
+    expect(petStage({ collected: false, wasCompanion: false, current: true })).toBe(0)
+    expect(petStage({ collected: true, wasCompanion: false, current: true })).toBe(2)
+  })
+
+  it('满档挂一字且不再指路,未满档给「还差什么」', () => {
+    expect(describePet(qingyu, 2, undefined).stageName).toBe('曾相伴')
+    expect(describePet(qingyu, 2, undefined).badge).toBe('')
+    expect(describePet(qingyu, 2, undefined).hint).toBeTruthy()
+    const top = describePet(qingyu, 3, undefined)
+    expect(top.stageName).toBe('相伴中')
+    expect(top.badge).toBe('伴')
+    expect(top.hint).toBe('')
+  })
+
+  it('结缘即见数与性格(名号页本就看全,图鉴不藏)', () => {
+    const e = describePet(qingyu, 1, undefined)
+    expect(e.desc).toContain('性格')
+    expect(e.desc).toContain(PERSONALITY_NAMES[qingyu.personality])
+  })
+
+  it('档表齐全,最深一档是「相伴中」', () => {
+    expect(PET_STAGE_NAMES).toEqual(['未录', '已结缘', '曾相伴', '相伴中'])
+    expect(PET_STAGE_MAX).toBe(3)
   })
 })

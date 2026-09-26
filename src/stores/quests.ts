@@ -53,6 +53,11 @@ export const useQuestsStore = defineStore(
     })
     /** 图鉴收录时刻,键为 `${category}:${id}`(旧档已收录条目无记录) */
     const collectedAt = ref<Record<string, number>>({})
+    /**
+     * 唤作过伴的灵兽 —— 灵兽册「曾相伴/相伴中」档的唯一来源。
+     * 由 player.setPet 唤伴时记档;暂别/换伴都不除名,册上留的是"此世同行过"。
+     */
+    const petCompanions = ref<string[]>([])
 
     /** 存档修复:计数/图鉴表被写坏会让成就判定与图鉴页在渲染期抛错 */
     function sanitize(): void {
@@ -67,6 +72,7 @@ export const useQuestsStore = defineStore(
         done: asStringArray(d?.done)
       }
       titlesOwned.value = uniqueKnown(asStringArray(titlesOwned.value), id => !!titleDef(id))
+      petCompanions.value = uniqueKnown(asStringArray(petCompanions.value), id => !!petDef(id))
       const cats = asRecord<string[]>(collections.value)
       collections.value = {
         equip: uniqueKnown(asStringArray(cats.equip), id => !!equipmentTemplate(id)),
@@ -130,6 +136,12 @@ export const useQuestsStore = defineStore(
       return true
     }
 
+    /** 唤伴即记档:同一只只记一次,暂别/换伴都不清 */
+    function recordPetCompanion(id: string): void {
+      if (!id || petCompanions.value.includes(id)) return
+      petCompanions.value = [...petCompanions.value, id]
+    }
+
     /**
      * 换期:把此刻的计数器记成本期基准。
      * 幂等由库保证(同一期再叫一次不会把当天已攒的进度清掉 —— 心跳每次都问"该换期了吗")。
@@ -160,6 +172,8 @@ export const useQuestsStore = defineStore(
       setMainIndex,
       ownTitle,
       collect,
+      recordPetCompanion,
+      petCompanions,
       rolloverDaily,
       setDailyState,
       sanitize

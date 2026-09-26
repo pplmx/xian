@@ -28,14 +28,26 @@ import { QUALITIES, qualityDef } from '@/data/qualities'
 import { ARTIFACTS, ARTIFACT_MAX_LEVEL } from '@/data/artifacts'
 import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
 import { PILLS } from '@/data/pills'
-import type { ArtifactDef, EquipmentTemplate, PillDef } from '@/types'
+import type { ArtifactDef, EquipmentTemplate, PetDef, PillDef } from '@/types'
 import { useInventoryStore } from '@/stores/inventory'
 import { useLoreStore } from '@/stores/lore'
 import { useCultivationStore } from '@/stores/cultivation'
 import { useQuestsStore } from '@/stores/quests'
+import { usePlayerStore } from '@/stores/player'
 import type { CollectionCategory } from '@/stores/quests'
+import { PETS } from '@/data/pets'
+import { PERSONALITY_NAMES, personalityDesc } from '@/core/petPersonality'
 import { modsText } from './statNames'
-import { artifactFuncText, artifactMetaText, equipFuncText, equipMetaText, pillFuncText, pillMetaText } from './itemText'
+import {
+  artifactFuncText,
+  artifactMetaText,
+  equipFuncText,
+  equipMetaText,
+  petFuncText,
+  petTraitText,
+  pillFuncText,
+  pillMetaText
+} from './itemText'
 
 /** 图鉴条目 —— 收藏图鉴九类共用的呈现形状 */
 export interface CodexEntry {
@@ -464,6 +476,95 @@ export function pillCodex(): CodexCat {
     name: '丹方录',
     hint: `已录 ${seen}/${PILLS.length} · 得方 ${known} · 通晓 ${mastered}`,
     source: CODEX_SOURCES.pill,
+    entries
+  }
+}
+
+// ============ 灵兽册 ============
+//
+// 灵兽册的深度不是"知道它多少"而是"我与它同行到哪一步" —— 玩家在名号页本就能
+// 看全一只灵兽的数与性格,图鉴不藏任何信息,深浅记的是一段真实相伴史:
+// 结缘之外,唤作过伴(曾相伴)、此刻仍伴(相伴中)。曾相伴一档由 player.setPet
+// 记进 quests.petCompanions(见灵兽册在 quests store 的配套字段),同一件事只记一处。
+
+/** 灵兽册收录深度:0 未录 / 1 已结缘 / 2 曾相伴 / 3 相伴中 */
+export const PET_STAGE_NAMES = ['未录', '已结缘', '曾相伴', '相伴中'] as const
+export const PET_STAGE_MAX = 3
+
+const PET_HINTS = [
+  '尚未结缘 —— 多在地界间走动。',
+  '结缘是头一档。唤它相伴一程,册上便记「曾相伴」。',
+  '曾唤以为伴。若此刻仍随你身侧,便是「相伴中」。',
+  ''
+] as const
+
+/**
+ * 档位的及格线:
+ * - 未结缘一律 0 —— current 再"真"也不发明一段相遇;
+ * - 相伴中(3)必须建立在**记过档的**曾相伴上,current 单独撑不起最深的档;
+ * - 正伴着的至少算「曾相伴」—— 哪怕曾相伴标记缺失,也不落回只结缘。
+ */
+export function petStage(status: { collected: boolean; wasCompanion: boolean; current: boolean }): number {
+  if (!status.collected) return 0
+  if (status.current && status.wasCompanion) return 3
+  if (status.wasCompanion) return 2
+  if (status.current) return 2
+  return 1
+}
+
+/** 灵兽册条目:风味 + 它给我什么 + 与玩家的相伴档 */
+export function describePet(def: PetDef, stage: number, collectedAt?: number): CodexEntry {
+  const lv = Math.max(0, Math.min(PET_STAGE_MAX, Math.floor(stage || 0)))
+  const q = qualityDef(def.quality)
+  return {
+    id: def.id,
+    name: def.name,
+    desc: [
+      def.desc,
+      petFuncText(def),
+      `性格 ${PERSONALITY_NAMES[def.personality]}:${personalityDesc(def.personality)}`,
+      petTraitText(def)
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    meta: q.name,
+    color: q.color,
+    stage: lv,
+    stageName: PET_STAGE_NAMES[lv]!,
+    badge: lv >= PET_STAGE_MAX ? '伴' : '',
+    hint: PET_HINTS[lv]!,
+    foot: { label: '收录时间', value: collectedTimeText(collectedAt) }
+  }
+}
+
+export function petCodex(): CodexCat {
+  const quests = useQuestsStore()
+  const player = usePlayerStore()
+  const collectedSet = new Set(quests.collections.pet)
+  const companionSet = new Set(quests.petCompanions)
+  // 品阶降序 → 相伴档降序 → 原序:同品阶内保住宠物表的手排叙事序
+  const rows = PETS.map((def, idx) => ({
+    idx,
+    rank: qualityDef(def.quality).rank,
+    entry: describePet(
+      def,
+      petStage({
+        collected: collectedSet.has(def.id),
+        wasCompanion: companionSet.has(def.id),
+        current: player.petId === def.id
+      }),
+      quests.collectedAt[`pet:${def.id}`]
+    )
+  }))
+  const entries = rows
+    .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.idx - b.idx)
+    .map(r => r.entry)
+  const known = entries.filter(e => e.stage >= 1).length
+  return {
+    key: 'pet',
+    name: '灵兽册',
+    hint: `已结缘 ${known}/${PETS.length}`,
+    source: CODEX_SOURCES.pet,
     entries
   }
 }

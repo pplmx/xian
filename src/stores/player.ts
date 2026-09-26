@@ -28,6 +28,7 @@ import { useInventoryStore } from './inventory'
 import { useCultivationStore } from './cultivation'
 import { useDongfuStore } from './dongfu'
 import { useResourcesStore } from './resources'
+import { useQuestsStore } from './quests'
 import { useEndgameStore } from './endgame'
 import { useGameStore } from './game'
 import { gameNow } from '@/core/enginePause'
@@ -391,6 +392,8 @@ export const usePlayerStore = defineStore(
 
     function setPet(id: string | null): void {
       petId.value = id
+      // 唤作伴便入册:灵兽册「相伴中/曾相伴」档从这里记(见 ui/codex 灵兽册)
+      if (id) useQuestsStore().recordPetCompanion(id)
     }
 
     function addTalent(id: string): void {

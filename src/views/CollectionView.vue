@@ -77,7 +77,6 @@
   import type { CollectionCategory } from '@/stores/quests'
   import { ACHIEVEMENTS } from '@/data/achievements'
   import { GONGFA } from '@/data/gongfa'
-  import { PETS } from '@/data/pets'
   import { EVENTS } from '@/data/events'
   import { chainOfEvent } from '@/data/chains'
   import { TALENTS, TALENT_GRADE_COLORS } from '@/data/talents'
@@ -89,12 +88,12 @@
     collectedTimeText,
     equipCodex,
     materialCodex,
+    petCodex,
     pillCodex,
     type CodexCat,
     type CodexEntry
   } from '@/ui/codex'
-  import { gongfaFuncText, gongfaMetaText, petFuncText, petTraitText } from '@/ui/itemText'
-  import { PERSONALITY_NAMES, personalityDesc } from '@/core/petPersonality'
+  import { gongfaFuncText, gongfaMetaText } from '@/ui/itemText'
   import { achievementDirection } from '@/ui/achievementHint'
   import { achievementCounts, achievementStateOf } from '@/core/engineUnlocks'
   import SectionTitle from '@/components/common/SectionTitle.vue'
@@ -195,28 +194,8 @@
       pillCodex(),
       materialCodex(),
       artifactCodex(),
-      makeCat(
-        'pet',
-        '灵兽册',
-        c.pet,
-        // 灵兽册是全图鉴里唯一只印一句风味的册子:点开不知加成与性格 ——
-        // 与其余五册同口径,desc 拼上「它给我什么」(petFuncText / petTraitText 复用)
-        PETS.map(p => ({
-          id: p.id,
-          name: p.name,
-          desc: [
-            p.desc,
-            petFuncText(p),
-            `性格 ${PERSONALITY_NAMES[p.personality]}:${personalityDesc(p.personality)}`,
-            petTraitText(p)
-          ]
-            .filter(Boolean)
-            .join('\n'),
-          meta: qualityDef(p.quality).name,
-          color: qualityDef(p.quality).color,
-          rank: qualityDef(p.quality).rank
-        }))
-      ),
+      // 灵兽册走深浅派生视图:结缘之外还有「曾相伴/相伴中」两档相伴史(见 ui/codex 灵兽册)
+      petCodex(),
       makeCat(
         'event',
         '见闻志',
