@@ -9,7 +9,7 @@
  * 唯一事实源:分档表在 `HERB_GRADE_BANDS`,`herbGradeOfMajor` 是唯一的换算口;
  * 业务代码不许再抄一段境界→品阶的 if 链(要新的界域就改这张表)。
  */
-import { MAX_MAJOR, WORLD_BREAK_MAJOR } from './realms'
+import { MAX_MAJOR, REALMS, WORLD_BREAK_MAJOR } from './realms'
 
 /** 灵草品阶:1 凡品 → 5 道品(混沌海之巅) */
 export type HerbGrade = 1 | 2 | 3 | 4 | 5
@@ -83,6 +83,20 @@ export const HERB_GRADE_BANDS: ReadonlyArray<readonly [number, number, HerbGrade
   [14, 17, 4],
   [18, MAX_MAJOR, 5]
 ]
+
+/**
+ * 某品阶做成一句「喂哪个境界的方子」—— 由 HERB_GRADE_BANDS 反查 + REALMS 境名,
+ * 给灵草坊的「这品草是干嘛的」用(不新立第二张分档表)。购价十倍一翻,买错品
+ * 就是大额沉没,落处不写明白,玩家只能靠猜。
+ */
+export function herbGradeBandLabel(grade: HerbGrade): string {
+  const band = HERB_GRADE_BANDS.find(b => b[2] === grade)
+  if (!band) return ''
+  const [from, to] = band
+  const fromName = REALMS[from]?.name
+  const toName = REALMS[to]?.name
+  return fromName && toName ? `${fromName}~${toName}境方子所用` : `第 ${from}~${to} 境方子所用`
+}
 
 /** 某大境界的灵草品阶(跨境即换品 —— 灵草跟着人走,不在原地等) */
 export function herbGradeOfMajor(major: number): HerbGrade {

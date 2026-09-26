@@ -8,7 +8,7 @@
  *     整条可炼线会被封死(该品的草)或被绕过(低品草进高品炉)。全表钉死。
  */
 import { describe, expect, it } from 'vitest'
-import { HERB_GROUND_PRICE, HERB_RARITY_GROWTH, HERB_GRADE_BANDS, HERB_GRADES, herbBuyPrice, herbGradeOfMajor } from './herbGrades'
+import { HERB_GROUND_PRICE, HERB_RARITY_GROWTH, HERB_GRADE_BANDS, HERB_GRADES, herbBuyPrice, herbGradeBandLabel, herbGradeOfMajor } from './herbGrades'
 import { PILLS } from '@/data/pills'
 import { pillCraftCost } from '@/core/pillService'
 
@@ -65,5 +65,13 @@ describe('灵草五品(ISS-306)', () => {
     expect(pillCraftCost('p_jvqisan')!.herbGrade).toBe(1)
     expect(pillCraftCost('p_daozu')!.herbGrade).toBe(5)
     expect(pillCraftCost('p_jvqisan')!.herb).not.toBe(pillCraftCost('p_daozu')!.herb)
+  })
+
+  it('herbGradeBandLabel:每品都说得清喂哪个境界(灵草坊的落处提示,口语跟境名走)', () => {
+    expect(herbGradeBandLabel(1)).toBe('炼气~化神境方子所用')
+    expect(herbGradeBandLabel(2)).toBe('炼虚~渡劫境方子所用')
+    expect(herbGradeBandLabel(3)).toBe('真仙~大罗境方子所用')
+    expect(herbGradeBandLabel(4)).toBe('神人~神帝境方子所用')
+    expect(herbGradeBandLabel(5)).toBe('混沌真灵~混沌道祖境方子所用')
   })
 })

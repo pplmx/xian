@@ -276,6 +276,8 @@
           <div class="min-w-0 grow">
             <p class="font-kai text-[13px] text-ink">{{ row.name }}</p>
             <p class="text-[10px] text-ink-faint tabular">持有 {{ row.held }} · 单价 {{ formatGN(row.price) }} 灵石</p>
+            <!-- 落处:买错品=大额沉没。「草比石贵」十倍一翻,先把这品草喂谁的方子摆出来 -->
+            <p class="text-[10px] text-qing/80">{{ row.usage }}</p>
           </div>
           <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]" :disabled="!row.affordable" @click="buyOne(row.grade)">
             买1
@@ -563,7 +565,7 @@
   import { qualityDef, QUALITIES } from '@/data/qualities'
   import { pillDef } from '@/data/pills'
   import { pillFuncText } from '@/ui/itemText'
-  import { HERB_GRADES, HERB_GRADE_NAMES, HERB_GRADE_SHORT, herbBuyPrice, type HerbGrade } from '@/data/herbGrades'
+  import { HERB_GRADES, HERB_GRADE_NAMES, HERB_GRADE_SHORT, herbBuyPrice, herbGradeBandLabel, type HerbGrade } from '@/data/herbGrades'
   import { buyHerbs } from '@/core/herbMarketService'
   import {
     artifactActiveText,
@@ -622,6 +624,8 @@
         grade: g,
         name: HERB_GRADE_NAMES[g],
         held: resources.herbOf(g),
+        // 这品草喂哪个境界的方子:十倍一翻的贵价,落处得写明白(读分档表,不另写)
+        usage: herbGradeBandLabel(g),
         price: price < 1_000_000 ? price : price, // gn 都能打,格式在模板里走 formatGN
         affordable: resources.spiritStone.m * 10 ** resources.spiritStone.e >= price
       }
