@@ -8,7 +8,9 @@ import BaseModal from '@/components/common/BaseModal.vue'
 /*
  * 洞府巡游 —— 与顿悟同一个毛病(自己铺 fixed inset-0):没有 dialog 语义、
  * 没有焦点管理、样式也自成一套。改用 BaseModal,行为一字不改:
- * 秒数照刷、到点由引擎收场、「离开」= 关掉即散(背板/Esc/关闭键同义)。
+ * 秒数照刷、到点由引擎收场。关掉即散=放弃当日巡游 —— 后果只挂在写明了
+ * 它的「离开」按钮上,故 :closable=false 禁掉 Esc/背板/X 的无声退出
+ * (随手一关与明确放弃代价相同却毫无提示,审计视为坑)。
  */
 const event = ref<CaveEvent | null>(null)
 const remaining = ref(0)
@@ -55,7 +57,7 @@ const locationLabel = computed(() =>
 </script>
 
 <template>
-  <BaseModal :open="show" title="洞府巡游" @close="handleIgnore">
+  <BaseModal :open="show" title="洞府巡游" :closable="false" @close="handleIgnore">
     <p class="flex items-center justify-between text-[11px] text-ink-faint">
       <span class="chip-ink !py-0 text-[10px] text-jade">{{ locationLabel }}</span>
       <span class="tabular text-gold-ink">{{ remaining }} 秒后自散</span>

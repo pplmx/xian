@@ -25,10 +25,12 @@
             <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-[10px] text-ink-faint">首投成主</span>
           </span>
           <span class="tabular text-[11px]">
-            <span :class="currentLevel(v.id) >= cap(v.id) ? 'text-jade' : 'text-ink-faint'">
+            <span :class="atCap(v.id) ? 'text-jade' : 'text-ink-faint'">
               {{ currentLevel(v.id) }}/{{ cap(v.id) }}
             </span>
-            <span class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }}</span>
+            <!-- 已满就不再印费用:每点价格摆着像还能投 -->
+            <span v-if="atCap(v.id)" class="ml-1.5 text-ink-faint">已满</span>
+            <span v-else class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }}</span>
           </span>
         </button>
         <!-- 每条脉都要自陈作用:此前只显示名字与价格,玩家无从判断该投哪条 -->
@@ -40,24 +42,29 @@
         <p v-if="surplusPoints(v.id) > 0" class="px-0.5 text-[10px] text-gold-ink">
           原主脉的 {{ surplusPoints(v.id) }} 点超额保留,效果不减,唯不再可投
         </p>
-        <!-- 改立此脉为主脉:付费换向,已投点数不回收 -->
+        <!-- 改立此脉为主脉:付费换向,现主脉点数转副(超额保留),按下前说清楚点数去向 -->
         <button
           v-if="canSwitchTo(v.id)"
           class="ml-0.5 px-0.5 text-[10px] text-cinnabar active:opacity-60"
           @click="doSwitch(v.id)"
         >
-          改立主脉 · {{ formatGN(switchCost) }}
+          改立主脉 · {{ formatGN(switchCost) }}(现主 {{ mainPoints }} 点转副)
         </button>
       </div>
     </div>
 
-    <p class="mt-3 text-[10px] text-qing">
-      当前加成:
-      <span v-if="!bonusRows.length" class="ml-1 text-ink-faint">尚无</span>
-      <span v-for="row in bonusRows" :key="row.label" class="ml-1">
+    <!-- 当前加成:一枚枚小 chip 收着,不再连排成 switch → 一加多就断行碎成流浪分号 -->
+    <p class="mt-3 text-[10px] text-ink-faint">当前加成</p>
+    <div class="mt-1 flex flex-wrap gap-1.5">
+      <span v-if="!bonusRows.length" class="text-[10px] text-ink-faint">尚无 —— 炼化灵石点亮某一脉</span>
+      <span
+        v-for="row in bonusRows"
+        :key="row.label"
+        class="chip-ink !py-0.5 !px-2 text-[10px] tabular text-qing"
+      >
         {{ row.label }} {{ row.sign }}{{ formatPercent(row.value) }}
       </span>
-    </p>
+    </div>
   </div>
 </template>
 
@@ -79,6 +86,8 @@
   const switchCost = computed(() => veinSwitchCost())
   const veinsUnlocked = computed(() => player.major >= VEIN_UNLOCK_MAJOR)
   const veinTotal = computed(() => dongfu.veinTotal)
+  /** 现主脉投了几点 —— 迁脉提示「现主 N 点转副」的依据 */
+  const mainPoints = computed(() => (dongfu.veinMain === null ? 0 : currentLevel(dongfu.veinMain)))
   /**
    * 当前加成 —— 必须把不走 StatMods 的那一条也算进来。
    *
@@ -111,6 +120,11 @@
 
   function currentLevel(veinId: VeinId): number {
     return dongfu.veinPoints[veinId] ?? 0
+  }
+
+  /** 该脉已投满(主 70 / 副 30):按钮禁用,行尾不再印费用 */
+  function atCap(veinId: VeinId): boolean {
+    return currentLevel(veinId) >= cap(veinId)
   }
 
   /** 原主脉迁出后超出副脉上限的部分 */
