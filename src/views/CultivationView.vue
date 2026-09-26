@@ -159,12 +159,28 @@
           攻伐不进公式;防御与气血只能按「本境裸修为」折算成抗性与开劫水位,且两条都有上限。
           摊开读数是因为玩家最容易在这里误判:一身厚血厚防站在劫前,却不知道自己缺什么。
         -->
-        <p class="mt-1 text-[10px] text-ink-faint tabular">
-          此劫只认百分比 —— 天劫抗性 {{ formatPercent(tribLedger?.resist ?? 0, 0) }}(防御折算
-          {{ formatPercent(tribLedger?.statResist ?? 0, 0) }})· 减伤 {{ formatPercent(tribLedger?.reduction ?? 0, 0) }} · 每波恢复
-          {{ formatPercent(tribLedger?.sustain ?? 0, 1) }} · 开劫护持 {{ formatPercent(tribLedger?.guard ?? 0, 0) }}(气血折算
-          {{ formatPercent(tribLedger?.statGuard ?? 0, 0) }})
-        </p>
+        <!-- 渡劫账:一排挤成串的读数改造成可扫读的 2×2 小网格 —— 四项各占一格,三维折算作小字跟在本格 -->
+        <p class="mt-1 text-[10px] text-ink-faint">此劫只认百分比 —— 此刻会读的几项:</p>
+        <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] tabular">
+          <p class="flex items-baseline gap-1">
+            <span class="text-ink-faint">天劫抗性</span>
+            <span class="text-ink-soft">{{ formatPercent(tribLedger?.resist ?? 0, 0) }}</span>
+            <span class="text-ink-faint">(防御折算 {{ formatPercent(tribLedger?.statResist ?? 0, 0) }})</span>
+          </p>
+          <p class="flex items-baseline gap-1">
+            <span class="text-ink-faint">减伤</span>
+            <span class="text-ink-soft">{{ formatPercent(tribLedger?.reduction ?? 0, 0) }}</span>
+          </p>
+          <p class="flex items-baseline gap-1">
+            <span class="text-ink-faint">每波恢复</span>
+            <span class="text-ink-soft">{{ formatPercent(tribLedger?.sustain ?? 0, 1) }}</span>
+          </p>
+          <p class="flex items-baseline gap-1">
+            <span class="text-ink-faint">开劫护持</span>
+            <span class="text-ink-soft">{{ formatPercent(tribLedger?.guard ?? 0, 0) }}</span>
+            <span class="text-ink-faint">(气血折算 {{ formatPercent(tribLedger?.statGuard ?? 0, 0) }})</span>
+          </p>
+        </div>
         <p class="mt-0.5 text-[10px] text-ink-faint">
           攻伐不进天劫公式;防御与气血按本境裸修为折算成上面的抗性与护持,各有上限 —— 血再厚也只能硬抗一部分,剩下的仍要抗性/减伤/恢复来补。进阶成功率与突破准备也只作用于小进阶,大关不看它们。
         </p>
@@ -295,7 +311,9 @@
           <GameIcon :name="p.def!.icon" :size="16" :style="{ color: qualityDef(p.def!.quality).color }" />
           <span class="min-w-0 grow">
             <span class="block truncate font-kai text-[12px] text-ink">{{ p.def!.name }}</span>
-            <span class="block text-[10px] text-ink-faint">存 {{ p.count }}</span>
+            <span class="block text-[10px] text-ink-faint tabular">
+              存 {{ p.count }}<template v-if="quickPillBrief(p.def!)"> · {{ quickPillBrief(p.def!) }}</template>
+            </span>
           </span>
           <span class="text-[11px] text-jade">服用</span>
         </button>
@@ -396,6 +414,7 @@
   import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from '@/data/gongfaBranches'
   import { buffDef } from '@/data/buffs'
   import { pillDef } from '@/data/pills'
+import type { PillDef } from '@/types'
   import { COMPREHEND_PAGE_COST, QI_BANK_MULT } from '@/data/constants'
   import { formatCountdown, formatDuration, formatGN, formatNum, formatPercent, formatRate } from '@/utils/format'
   import TapNumber from '@/components/common/TapNumber.vue'
@@ -616,6 +635,26 @@
   const comprehendLeft = computed(
     () => GONGFA.filter(g => g.minRealm <= player.major + 1 && !cultivation.learned[g.id]).length
   )
+
+  /**
+   * 快捷栏一枚丹的一行药效 —— 「以药辅道」不只看名字猜,服下去会怎样就地给。
+   * 读数取自 instant / buff 本体(与图鉴 itemText 同源,不另写一份)。
+   */
+  function quickPillBrief(def: PillDef): string {
+    const i = def.instant
+    if (def.kind === 'buff' && def.buffId) {
+      const b = buffDef(def.buffId)
+      if (b) return `增益 ${Math.round(b.durationSec / 60)} 分钟`
+    }
+    if (i) {
+      if (i.expSecs) return `修为·约抵闭关 ${formatDuration(i.expSecs)}`
+      if (i.expFixed) return `修为 +${formatNum(i.expFixed)}`
+      if (i.qiPct) return `灵气 +上限${Math.round(i.qiPct * 100)}%`
+      if (i.lifespanYears) return `寿元 +${formatNum(i.lifespanYears)}`
+      if (i.wudao) return `悟道点 +${formatNum(i.wudao)}`
+    }
+    return ''
+  }
 
   /** 修行相关丹药快捷栏:按品质降序,越珍稀的越靠前(原为插入序,先拿到什么显什么) */
   const quickPills = computed(() =>
