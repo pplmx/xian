@@ -307,15 +307,14 @@
               <span class="w-12 shrink-0" :class="s.stage === '生疏' ? 'text-ink-faint' : 'text-jade'">{{ s.stage }}</span>
               <span class="min-w-0 text-[10px] leading-relaxed text-ink-faint">{{ s.desc }}</span>
             </p>
-            <!-- 离下一境还差多少:境地内线性进度(见 skillStageProgress) -->
+            <!-- 离下一境还差多少:境地内线性进度(见 skillStageProgress),同其余进度条共一根 ProgressBar -->
             <p class="mt-0.5 flex items-center gap-1.5 pl-14">
-              <span class="h-1 flex-1 overflow-hidden rounded-full bg-ink/10">
-                <span
-                  class="block h-full rounded-full transition-all duration-300"
-                  :class="s.stage === '生疏' ? 'bg-ink-faint/40' : 'bg-jade/70'"
-                  :style="{ width: `${Math.round(s.progress * 100)}%` }"
-                />
-              </span>
+              <ProgressBar
+                :value="s.progress"
+                :color="s.stage === '生疏' ? 'var(--color-ink-faint)' : 'var(--color-jade)'"
+                :height="4"
+                class="flex-1"
+              />
               <span class="w-7 shrink-0 text-right text-[9px] tabular text-ink-faint">{{ Math.round(s.progress * 100) }}%</span>
             </p>
           </div>
@@ -566,6 +565,7 @@
   import { pillDef } from '@/data/pills'
   import { pillFuncText } from '@/ui/itemText'
   import { HERB_GRADES, HERB_GRADE_NAMES, HERB_GRADE_SHORT, herbBuyPrice, herbGradeBandLabel, type HerbGrade } from '@/data/herbGrades'
+  import ProgressBar from '@/components/common/ProgressBar.vue'
   import { buyHerbs } from '@/core/herbMarketService'
   import {
     artifactActiveText,

@@ -142,7 +142,7 @@
               class="mt-0.5 text-[9px] leading-none"
               :class="lowHpGimmick ? 'text-cinnabar' : 'text-ink-faint'"
             >
-              {{ lowHpGimmick ? '三成之下 · 背水类效果此刻生效' : '气血已降至三成之下' }}
+              {{ lowHpGimmick ? '三成以下 · 背水/破釜类效果此刻生效' : '气血已降至三成以下' }}
             </p>
           </div>
         </div>

@@ -68,10 +68,10 @@ describe('灵草五品(ISS-306)', () => {
   })
 
   it('herbGradeBandLabel:每品都说得清喂哪个境界(灵草坊的落处提示,口语跟境名走)', () => {
-    expect(herbGradeBandLabel(1)).toBe('炼气~化神境方子所用')
-    expect(herbGradeBandLabel(2)).toBe('炼虚~渡劫境方子所用')
-    expect(herbGradeBandLabel(3)).toBe('真仙~大罗境方子所用')
-    expect(herbGradeBandLabel(4)).toBe('神人~神帝境方子所用')
-    expect(herbGradeBandLabel(5)).toBe('混沌真灵~混沌道祖境方子所用')
+    expect(herbGradeBandLabel(1)).toBe('炼气~化神境的方子所用')
+    expect(herbGradeBandLabel(2)).toBe('炼虚~渡劫境的方子所用')
+    expect(herbGradeBandLabel(3)).toBe('真仙~大罗境的方子所用')
+    expect(herbGradeBandLabel(4)).toBe('神人~神帝境的方子所用')
+    expect(herbGradeBandLabel(5)).toBe('混沌真灵~混沌道祖境的方子所用')
   })
 })

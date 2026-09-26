@@ -95,7 +95,7 @@ export function herbGradeBandLabel(grade: HerbGrade): string {
   const [from, to] = band
   const fromName = REALMS[from]?.name
   const toName = REALMS[to]?.name
-  return fromName && toName ? `${fromName}~${toName}境方子所用` : `第 ${from}~${to} 境方子所用`
+  return fromName && toName ? `${fromName}~${toName}境的方子所用` : `第 ${from}~${to} 境的方子所用`
 }
 
 /** 某大境界的灵草品阶(跨境即换品 —— 灵草跟着人走,不在原地等) */
