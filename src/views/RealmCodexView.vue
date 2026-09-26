@@ -107,12 +107,15 @@
 
     <!-- 八卦 -->
     <section class="card-ink divide-y divide-ink/7 px-4">
-      <div v-for="t in TRIGRAMS" :key="t.id" class="flex items-start gap-2 py-2.5">
-        <span class="w-[52px] shrink-0 font-kai text-[15px] text-ink">{{ t.symbol }} {{ t.name }}</span>
-        <span class="w-[56px] shrink-0 text-[10px] text-ink-faint">象{{ t.image }} · {{ t.nature }}</span>
-        <span class="min-w-0 grow text-[11px] leading-relaxed text-ink-soft">{{ t.gist }}</span>
-        <span class="shrink-0 text-[10px] text-jade">宜{{ t.good }}</span>
-        <span class="shrink-0 text-[10px] text-cinnabar">忌{{ t.bad }}</span>
+      <!-- 320px 窄窗:卦辞挪到自己一行,宜/忌靠右 —— 卦名+象+宜忌一行,卦辞整行不被挤成一根线 -->
+      <div v-for="t in TRIGRAMS" :key="t.id" class="py-2.5">
+        <p class="flex flex-wrap items-start gap-x-2 gap-y-0.5">
+          <span class="w-[52px] shrink-0 font-kai text-[15px] text-ink">{{ t.symbol }} {{ t.name }}</span>
+          <span class="shrink-0 text-[10px] text-ink-faint">象{{ t.image }} · {{ t.nature }}</span>
+          <span class="ml-auto shrink-0 text-[10px] text-jade">宜{{ t.good }}</span>
+          <span class="shrink-0 text-[10px] text-cinnabar">忌{{ t.bad }}</span>
+        </p>
+        <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ t.gist }}</p>
       </div>
     </section>
 
