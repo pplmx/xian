@@ -52,6 +52,24 @@ describe('前期玩法 buff 数据完整性(防「无此定义→静默空转」
       }
     }
   })
+
+  it('巡游非跳过项的 effect 必报数(带数量才谈得上"选"——不能只写定性)', () => {
+    for (const location of Object.keys(CAVE_EVENT_POOL)) {
+      for (const ev of CAVE_EVENT_POOL[location as keyof typeof CAVE_EVENT_POOL]) {
+        for (const opt of ev.options) {
+          if (opt.effect === '无事发生') continue
+          expect(opt.effect, `巡游「${opt.label}」的效果只写了定性,没报数`).toMatch(/\d/)
+        }
+      }
+    }
+  })
+
+  it('锚定两条巡游报数格式(数量 + 时长),防回潮', () => {
+    const optOf = (loc: keyof typeof CAVE_EVENT_POOL, evIdx: number, optIdx: number): { effect: string } => CAVE_EVENT_POOL[loc][evIdx]!.options[optIdx]!
+    expect(optOf('field', 0, 0).effect).toBe('获得 50 修为')
+    expect(optOf('furnace', 0, 1).effect).toBe('修炼速度 +20%(10 分钟)')
+    expect(optOf('garden', 0, 0).effect).toBe('发现 3 灵草')
+  })
 })
 
 describe('悟道顿悟选择实际生效(修复前是纯空转)', () => {

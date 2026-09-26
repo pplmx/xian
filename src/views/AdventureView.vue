@@ -303,9 +303,8 @@
   import { EVENT_TIERS, tierOddsText } from '@/core/eventTier'
   import { pendingChainStages } from '@/core/eventEngine'
   import { foeOriginPartsText } from '@/core/battleAnalysis'
-  import { SUPPRESS_THRESHOLDS, suppressRateFor, suppressionProgress } from '@/core/suppress'
-  import { REVIVE_AFTER_HOURS, hoursUntilRevive, regionRecallFor, prosperityName, prosperityYieldMult } from '@/core/worldMemory'
-  import { mulN } from '@/utils/gnum'
+  import { SUPPRESS_THRESHOLDS, suppressRateLine, suppressionProgress } from '@/core/suppress'
+  import { REVIVE_AFTER_HOURS, hoursUntilRevive, regionRecallFor, prosperityName } from '@/core/worldMemory'
   import { detectBuild } from '@/core/buildDetect'
   import { detectionAdaptation, ecologyChips, ECO_LEVEL_NAMES, recommendForRegion, regionEcology, starsText } from '@/core/buildAdvisor'
   import { formatDuration, formatGN } from '@/utils/format'
@@ -482,14 +481,9 @@
    * 速率取自 suppress.ts 的唯一实现(从前这里手抄 150 并注释「= stoneMultiplier」,
    * 常量一改界面就开始撒谎),并乘上当前兴衰系数 —— 显示的数与真正入账的数同源。
    */
+  /** 产出行文案收进 core/suppress 的单源实现 —— 与「镇压达成」回执共用一份数字 */
   function rateText(r: RegionDef, recall: RegionRecall): string {
-    const rate = suppressRateFor(r.id)
-    if (!rate) return '—'
-    const mult = prosperityYieldMult(recall.prosperity)
-    const stone = `${formatGN(mulN(rate.stonePerHour, mult))}灵石/时`
-    if (!rate.resource) return stone
-    const perHour = Math.max(1, Math.round(rate.resource.perHour * mult))
-    return `${stone} · ${rate.resource.name}${perHour}/时`
+    return suppressRateLine(r.id, recall.prosperity)
   }
 
   /** 复聚倒计时文案:一天以上说日,一天以内说时 */

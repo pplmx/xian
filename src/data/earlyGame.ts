@@ -95,9 +95,9 @@ export const CAVE_EVENT_POOL = {
       title: '灵田异象',
       desc: '灵田中灵气波动异常',
       options: [
-        { label: '疏导灵气', effect: '获得少量修为', reward: { type: 'exp' as const, value: 50 } },
-        { label: '强行吸收', effect: '获得更多修为,但短时间修炼速度下降', reward: { type: 'exp' as const, value: 120 }, penalty: { type: 'cultivationSpeed' as const, value: -0.15, duration: 300 } },
-        { label: '观察记录', effect: '获得悟道点', reward: { type: 'wudao' as const, value: 3 } }
+        { label: '疏导灵气', effect: '获得 50 修为', reward: { type: 'exp' as const, value: 50 } },
+        { label: '强行吸收', effect: '获得 120 修为,但修炼速度 -15%(5 分钟)', reward: { type: 'exp' as const, value: 120 }, penalty: { type: 'cultivationSpeed' as const, value: -0.15, duration: 300 } },
+        { label: '观察记录', effect: '获得 3 悟道点', reward: { type: 'wudao' as const, value: 3 } }
       ]
     }
   ],
@@ -107,8 +107,8 @@ export const CAVE_EVENT_POOL = {
       title: '丹炉余温',
       desc: '丹炉中残留灵药气息',
       options: [
-        { label: '提炼残渣', effect: '获得少量灵石', reward: { type: 'stone' as const, value: 30 } },
-        { label: '吸纳药气', effect: '获得临时修炼加速', reward: { type: 'buff' as const, value: 'cave_furnace_cult' } },
+        { label: '提炼残渣', effect: '获得 30 灵石', reward: { type: 'stone' as const, value: 30 } },
+        { label: '吸纳药气', effect: '修炼速度 +20%(10 分钟)', reward: { type: 'buff' as const, value: 'cave_furnace_cult' } },
         { label: '清理炉体', effect: '获得 2 悟道点', reward: { type: 'wudao' as const, value: 2 } }
       ]
     }
@@ -119,8 +119,8 @@ export const CAVE_EVENT_POOL = {
       title: '藏经阁尘封古籍',
       desc: '书架深处有卷残破古籍',
       options: [
-        { label: '研读', effect: '获得悟道点', reward: { type: 'wudao' as const, value: 5 } },
-        { label: '抄录', effect: '获得大量悟道点但耗时', reward: { type: 'wudao' as const, value: 12 } },
+        { label: '研读', effect: '获得 5 悟道点', reward: { type: 'wudao' as const, value: 5 } },
+        { label: '抄录', effect: '获得 12 悟道点', reward: { type: 'wudao' as const, value: 12 } },
         { label: '略过', effect: '无事发生', reward: { type: 'stone' as const, value: 0 } }
       ]
     }
@@ -131,8 +131,8 @@ export const CAVE_EVENT_POOL = {
       title: '聚灵阵灵气逸散',
       desc: '聚灵阵中灵气不稳',
       options: [
-        { label: '修复阵法', effect: '提升灵气上限', reward: { type: 'buff' as const, value: 'cave_array_qicap' } },
-        { label: '导出灵气', effect: '立即获得修为', reward: { type: 'exp' as const, value: 80 } },
+        { label: '修复阵法', effect: '灵气上限 +25%(10 分钟)', reward: { type: 'buff' as const, value: 'cave_array_qicap' } },
+        { label: '导出灵气', effect: '获得 80 修为', reward: { type: 'exp' as const, value: 80 } },
         { label: '任其自然', effect: '无事发生', reward: { type: 'stone' as const, value: 0 } }
       ]
     }
@@ -143,8 +143,8 @@ export const CAVE_EVENT_POOL = {
       title: '灵兽园异动',
       desc: '灵兽园中传来奇异鸣叫',
       options: [
-        { label: '查看', effect: '发现灵草', reward: { type: 'herb' as const, value: 3 } },
-        { label: '安抚灵兽', effect: '提升灵兽效果', reward: { type: 'buff' as const, value: 'cave_garden_pet' } },
+        { label: '查看', effect: '发现 3 灵草', reward: { type: 'herb' as const, value: 3 } },
+        { label: '安抚灵兽', effect: '灵兽效果 +30%(10 分钟)', reward: { type: 'buff' as const, value: 'cave_garden_pet' } },
         { label: '离开', effect: '无事发生', reward: { type: 'stone' as const, value: 0 } }
       ]
     }

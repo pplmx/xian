@@ -23,6 +23,8 @@ import { craftPill, pillCraftCost, salvageRatio, usePill } from './pillService'
 import { craftability } from './craftability'
 import { pillDef } from '@/data/pills'
 import { PILLS } from '@/data/pills'
+import { buffDef } from '@/data/buffs'
+import { modsText } from '@/ui/statNames'
 import { maxTierForMajor } from '@/data/regions'
 import { MAX_MAJOR } from '@/data/realms'
 import { recipeCraft, type SkillId } from '@/data/crafting'
@@ -346,6 +348,40 @@ describe('服丹 · 丹从包里出去,药力真的落下', () => {
     const before = toNum(player.exp)
     expect(usePill('p_jvqidan')).toBe(true)
     expect(toNum(player.exp) - before).toBeCloseTo(80, 3)
+  })
+
+  it('服丹回执报数:即时丹与增益丹的 toast 都写数量,不只是一句「药力化开」', () => {
+    const toast = vi.spyOn(useUiStore(), 'toast')
+
+    // 即时·固定修为(妖血丹 expFixed=45):回执写「修为 +N 点」
+    toast.mockClear()
+    useInventoryStore().addPill('p_yaoxue', 1)
+    usePill('p_yaoxue')
+    expect(
+      toast.mock.calls.some(c => String(c[0]).includes('修为 +45 点')),
+      'expFixed 丹的回执该写「修为 +N 点」'
+    ).toBe(true)
+
+    // 即时·灵气(回春丹 qiPct):按上限比例报数
+    toast.mockClear()
+    const qi = pillDef('p_huichun')!.instant!
+    useInventoryStore().addPill('p_huichun', 1)
+    usePill('p_huichun')
+    expect(
+      toast.mock.calls.some(c => String(c[0]).includes(`灵气 +上限的 ${Math.round(qi.qiPct! * 100)}%`)),
+      'qiPct 丹的回执该报灵气占比'
+    ).toBe(true)
+
+    // 增益丹:名称、逐项数值与持续时长都进回执
+    toast.mockClear()
+    const buffPill = PILLS.find(p => p.kind === 'buff' && p.buffId && buffDef(p.buffId))!
+    useInventoryStore().addPill(buffPill.id, 1)
+    usePill(buffPill.id)
+    const msg = String(toast.mock.calls.at(-1)?.[0])
+    const buff = buffDef(buffPill.buffId!)!
+    expect(msg).toContain(`药力化开「${buff.name}」`)
+    expect(msg).toContain(modsText(buff.mods))
+    expect(msg).toContain(`持续 ${Math.round(buff.durationSec / 60)} 分钟`)
   })
 
   /**

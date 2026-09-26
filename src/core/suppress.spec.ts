@@ -5,12 +5,14 @@ import { useResourcesStore } from '@/stores/resources'
 import { useInventoryStore } from '@/stores/inventory'
 import { DECOMPOSE_DUST } from '@/data/constants'
 import { qualityDef } from '@/data/qualities'
-import { sub, toNum } from '@/utils/gnum'
+import { sub, toNum, mulN } from '@/utils/gnum'
+import { formatGN } from '@/utils/format'
 import { RandomService } from '@/utils/random'
 import {
   checkSuppression,
   settleSuppressedRegions,
   suppressRateFor,
+  suppressRateLine,
   suppressionExpRate,
   suppressionEquipmentLuck,
   suppressionProgress,
@@ -22,6 +24,18 @@ import { prosperityYieldMult, regionRecallFor } from './worldMemory'
 describe('区域镇压系统', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+  })
+
+  /**
+   * 镇压产出行文案(灵石/时 × 物产,乘兴衰):界面与「镇压达成」回执共用 suppressRateLine ——
+   * 无手抄的证据:开头那段灵石用的就是速率表同源数字(同一组原语算出来的)。
+   */
+  it('suppressRateLine:产出行带数,且与速率表同源', () => {
+    const id = 'wanyao' // 万妖林:forest → 灵草 6/h
+    const mult = prosperityYieldMult('flourish')
+    const line = suppressRateLine(id, 'flourish')
+    expect(line).toContain(`${formatGN(mulN(suppressRateFor(id)!.stonePerHour, mult))}灵石/时`)
+    expect(line).toMatch(/ · 灵草\d+\/时$/)
   })
 
   /**

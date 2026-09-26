@@ -20,6 +20,8 @@ import { makeEnemySnap, mortalFoeOriginFromParts, resolveCombat } from './combat
 import { petDef } from '@/data/pets'
 import type { RegionEventId } from './regionEvent'
 import { mergeRules } from './gauntlet'
+import { suppressRateLine } from './suppress'
+import { regionRecallFor } from './worldMemory'
 import { lifeTrialRules } from './lifeTrialService'
 import { buildPlayerSnap } from './playerSnap'
 import { currentDaoRules } from './endgameService'
@@ -355,7 +357,7 @@ function runBattle(now: number): void {
     if (suppressed && !player.suppressQualified.includes(region.id)) {
       player.markSuppressQualified(region.id)
       player.suppressRegion(region.id)
-      ui.toast(`你已彻底镇压${region.name},此地将自动产出资源`, 'rare')
+      ui.toast(`你已彻底镇压${region.name},此后将自动产出:${suppressRateLine(region.id, regionRecallFor(region.id).prosperity)}`, 'rare')
     }
 
     // Phase 30.9 S2: 击中宿敌 → 雪耻

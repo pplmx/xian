@@ -7,12 +7,14 @@
 import { gn } from '@/utils/gnum'
 import { rng } from '@/utils/random'
 import { pillDef } from '@/data/pills'
+import { buffDef } from '@/data/buffs'
 import { INSTANT_EXP_LAYER_CAP } from '@/data/constants'
-import { formatDuration, formatGN } from '@/utils/format'
+import { formatDuration, formatGN, formatNum } from '@/utils/format'
 import { recipeCraft, type SkillId } from '@/data/crafting'
 import { expFromSecs, stoneByTier } from './formulas'
 import { maxTierForMajor } from '@/data/regions'
 import { herbGradeOfMajor, type HerbGrade } from '@/data/herbGrades'
+import { modsText } from '@/ui/statNames'
 import { collect, track } from './progress'
 import { craftability, knownRecipes } from './craftability'
 import { runCraft, spentOf } from './engineCraft'
@@ -58,11 +60,11 @@ export function usePill(id: string): boolean {
     }
     if (def.instant.expFixed) {
       player.gainExp(gn(def.instant.expFixed))
-      lines.push('修为精进')
+      lines.push(`修为 +${formatNum(def.instant.expFixed)} 点`)
     }
     if (def.instant.qiPct) {
       resources.setQi(resources.qi + player.qiCapValue * def.instant.qiPct, player.qiCapValue)
-      lines.push('灵气充盈')
+      lines.push(`灵气 +上限的 ${Math.round(def.instant.qiPct * 100)}%`)
     }
     if (def.instant.lifespanYears) {
       player.addLifespan(def.instant.lifespanYears)
@@ -81,7 +83,7 @@ export function usePill(id: string): boolean {
         ? '药力已至上限,这一颗白费了'
         : overflow === 'partial'
           ? '药力已至上限,这一颗只延续到顶'
-          : '药力化开,状态加身'
+          : buffToastText(def.buffId)
     )
   }
   track('pillsUsed')
@@ -212,6 +214,12 @@ export function craftPill(id: string): CraftOutcome {
 }
 
 /** 炸炉话术:优先复述最要命的那条短板,让玩家知道该补什么 */
+/** 增益丹回执:名称 + 逐项数值 + 持续时长 —— 与图鉴同源,不另写一套数 */
+function buffToastText(buffId: string): string {
+  const buff = buffDef(buffId)
+  return buff ? `药力化开「${buff.name}」:${modsText(buff.mods)}(持续 ${Math.round(buff.durationSec / 60)} 分钟)` : '药力化开,状态加身'
+}
+
 function failLine(weakness: readonly string[]): string {
   const reason = weakness[0]
   return reason ? `炉中一声闷响,丹毁了。${reason}` : '炉中一声闷响,丹毁了——火候差了那么一线。'

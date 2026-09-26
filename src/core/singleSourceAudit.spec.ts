@@ -34,7 +34,7 @@ function readSrc(fileName: string): string {
 describe('同源审计 · 镇压速率', () => {
   it('历练页的镇压速率走 suppressRateFor,自己不许再算一遍 stoneByTier', () => {
     const src = readSrc('AdventureView.vue')
-    expect(src, '界面必须用唯一那份速率实现').toContain('suppressRateFor')
+    expect(src, '界面必须用唯一那份速率实现').toContain('suppressRateLine')
     // 判「有没有再算一遍」而不是「有没有提到这个词」:注释里解释这件事本身是好事
     expect(src, '界面自己算一遍就等于第二份真相源(调常数时界面开始撒谎)').not.toMatch(/stoneByTier\s*\(/)
   })
