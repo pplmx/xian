@@ -18,7 +18,7 @@ export interface PetPersonalityEffects {
   dangerMult: number
   /** 掉落品质修正(greedy 更高) */
   dropLuck: number
-  /** 战败率修正(cautious 更低) */
+  /** 护主免败:危急败北时按此概率被灵兽护住(cautious 有这项) */
   lossReduction: number
 }
 

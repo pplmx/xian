@@ -162,4 +162,14 @@ describe('用具 · 灵兽', () => {
     expect(personalityEffects(steady.id).dropLuck).toBe(0)
     expect(petTraitText(steady)).not.toContain('掉落气运')
   })
+
+  it('免败项写作「危急护主」,不叫「战败率」(是护住败绩的一次概率,不是战败率 - 点数)', () => {
+    const guarded = PETS.find(p => (personalityEffects(p.id).lossReduction ?? 0) > 0)
+    expect(guarded, '应存在带护主免败性格的灵兽').toBeDefined()
+    const e = personalityEffects(guarded!.id)
+    const text = petTraitText(guarded!)
+    expect(text).toContain('危急护主')
+    expect(text).toContain(formatPercent(e.lossReduction))
+    expect(text, '「战败率」三个字会让人读成"败得更少一点",机制却是护主免败').not.toContain('战败率')
+  })
 })

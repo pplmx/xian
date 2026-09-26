@@ -166,6 +166,8 @@ export function petTraitText(def: PetDef): string {
   if (e.exploreDurMult !== 1) parts.push(`历练时长 ${delta(e.exploreDurMult)}`)
   if (e.dangerMult !== 1) parts.push(`遇险 ${delta(e.dangerMult)}`)
   if (e.dropLuck !== 0) parts.push(`掉落气运 ${e.dropLuck > 0 ? '+' : ''}${formatPercent(e.dropLuck)}`)
-  if (e.lossReduction !== 0) parts.push(`战败率 ${e.lossReduction > 0 ? '−' : '+'}${formatPercent(Math.abs(e.lossReduction))}`)
+  // lossReduction 的真实机制是「危急时灵兽护主、免于败绩」的概率(exploration 败北分支),
+  // 不是战败率本身削 X 点 —— 名前不叫「战败率」,免得读出"这场败得更少一点"的错觉
+  if (e.lossReduction > 0) parts.push(`危急护主,免败 ${formatPercent(e.lossReduction)}`)
   return parts.join(' · ')
 }

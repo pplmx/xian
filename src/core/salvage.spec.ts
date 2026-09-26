@@ -11,8 +11,19 @@ import { DECOMPOSE_DUST, DECOMPOSE_REFUND_RATE } from '@/data/constants'
 import { qualityDef } from '@/data/qualities'
 import { cmp, gn, toNum } from '@/utils/gnum'
 import { upgradeCost } from './formulas'
-import { enhanceInvested, salvageOf } from './salvage'
+import { enhanceInvested, refundRateText, salvageOf } from './salvage'
 import { decomposeByRanks, decomposeEquipment, upgradeEquipment } from './forge'
+
+const CHENG_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+
+describe('分解文案 · 与常数同源', () => {
+  it('refundRateText 由 DECOMPOSE_REFUND_RATE 派生,不手写「八成」', () => {
+    const cheng = DECOMPOSE_REFUND_RATE * 10
+    const expected = `含强化${CHENG_NUM[cheng - 1]}成`
+    expect(refundRateText()).toBe(expected)
+    expect(refundRateText()).toBe('含强化八成') // 今天这张表的字面契约
+  })
+})
 import { useInventoryStore } from '@/stores/inventory'
 import { useResourcesStore } from '@/stores/resources'
 import { useUiStore } from '@/stores/ui'

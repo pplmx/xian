@@ -130,7 +130,7 @@
         </p>
       </template>
       <p v-if="salvage" class="mt-1 flex items-center justify-between text-[11px] text-ink-faint">
-        <span>分解返还{{ inst.level > 0 ? '(含强化八成)' : '' }}</span>
+        <span>分解返还{{ inst.level > 0 ? `(${refundRateText()})` : '' }}</span>
         <span class="tabular">
           器灵尘×{{ salvage.dust }}
           <template v-if="!isZero(salvage.stone)"> · 灵石 {{ formatGN(salvage.stone) }}</template>
@@ -226,7 +226,7 @@
   import { worldNameOfTier } from '@/core/formulas'
   import { resolveEquipStats } from '@/core/equipGen'
   import { decomposeEquipment, equipLevelCap, equipUpgradeCost, upgradeEquipment } from '@/core/forge'
-  import { salvageOf } from '@/core/salvage'
+  import { refundRateText, salvageOf } from '@/core/salvage'
   import { detectBuild } from '@/core/buildDetect'
   import { endgameUnlocked } from '@/core/endgameService'
   import { whatIfEquip, type WhatIfReport } from '@/core/lab'
@@ -250,7 +250,7 @@
   const resolved = computed(() => (inst.value ? resolveEquipStats(inst.value) : null))
   const isEquipped = computed(() => (inst.value && template.value ? inventory.equipped[template.value.slot] === inst.value.uid : false))
   const upCost = computed(() => (inst.value ? equipUpgradeCost(inst.value.uid) : null))
-  /** 分解返还:底材 + 强化投入的八成(练过的件拆了不至于血本无归,先把账摆出来) */
+  /** 分解返还:底材 + 强化投入的配比(文案走 refundRateText,与 DECOMPOSE_REFUND_RATE 同源,不手写「八成」) */
   const salvage = computed(() => (inst.value ? salvageOf(inst.value) : null))
 
   /**

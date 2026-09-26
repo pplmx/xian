@@ -44,3 +44,16 @@ export function salvageOf(item: EquipmentInstance): Salvage {
     stone: mulN(spent.stone, DECOMPOSE_REFUND_RATE)
   }
 }
+
+const CHENG_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+
+/**
+ * 分解返还的「强化投入」配比文案 —— 只从 DECOMPOSE_REFUND_RATE 派生。
+ * 曾有三处手写「八成」/「打折」文案,常数一改文字就与账本分家(第二轮审计存疑)。
+ * 0.8 → 「八成」;非整成(如 0.75)退化为百分比,不留半吊子中文数。
+ */
+export function refundRateText(): string {
+  const cheng = DECOMPOSE_REFUND_RATE * 10
+  if (Number.isInteger(cheng) && cheng >= 1 && cheng <= 10) return `含强化${CHENG_NUM[cheng - 1]}成`
+  return `含强化返还 ${Math.round(DECOMPOSE_REFUND_RATE * 100)}%`
+}
