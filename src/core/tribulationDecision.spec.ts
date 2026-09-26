@@ -12,6 +12,7 @@ import {
   verdictLabel,
   statGuardOf,
   settlementResist,
+  prepTier,
   tribulationWaveSpan,
   NO_STAT_GUARD,
   type TribStatGuard
@@ -202,5 +203,25 @@ describe('④ 结算抗性口径(界面=结算,不许第二把尺子)', () => {
     expect(settlementResist(heavy, { ...NO_RELIEF, reductionToResist: 0.6 }, NO_STAT_GUARD)).toBeCloseTo(0.8, 6)
     // 无任何词条时,抗性 = 三维折算自身
     expect(settlementResist({}, NO_RELIEF, { resist: 0.12, guard: 0 })).toBeCloseTo(0.12, 6)
+  })
+
+  it('抗性星直接吃结算口径:雷鸣减伤不再凭空折算半成', () => {
+    // 曾有一版:雷鸣劫把 减伤×0.5 折进抗性星(0.5 减伤→0.25 星值),结算却从不吃这份折算
+    // —— 星比结算高半截,正是「前端一套结算一套」;现在星就读 settlementResist。
+    const mods: StatMods = { damageReduction: 0.5 }
+    expect(settlementResist(mods, NO_RELIEF, NO_STAT_GUARD)).toBe(0) // 无抗性、无灵根通道
+    expect(
+      buildTribulationPlan(1, mods, 'thunder').prep.resist,
+      '雷鸣减伤不该凭白多出半成抗性星'
+    ).toBe(0)
+  })
+
+  it('凡显示为星者必为结算所吃:全劫型抗性星 = settlementResist 档位', () => {
+    const mods: StatMods = { tribulationResist: 0.2, damageReduction: 0.4 }
+    for (const def of TRIBULATIONS) {
+      const plan = buildTribulationPlan(3, mods, def.id)
+      const expected = prepTier('resist', settlementResist(mods, NO_RELIEF, NO_STAT_GUARD))
+      expect(plan.prep.resist, `${def.name}劫:抗性星与结算不同源`).toBe(expected)
+    }
   })
 })

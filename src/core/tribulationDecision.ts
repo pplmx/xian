@@ -226,16 +226,6 @@ export function guardScore(mods: StatMods, def: TribulationDef, relief: Tribulat
   return modOf(mods, 'shieldOnStart') * easeDiscount(def.shieldMult, relief.shieldRestore)
 }
 
-/** 减伤可折算为天劫抗性的比例(雷鸣劫本有五成;同源灵根再添几分) */
-function reductionToResistRate(def: TribulationDef, relief: TribulationRelief): number {
-  return (def.id === 'thunder' ? 0.5 : 0) + relief.reductionToResist
-}
-
-/** 天劫抗性度量(雷鸣劫下减伤也能顶一部分抗性缺口) */
-export function resistScore(mods: StatMods, def: TribulationDef, relief: TribulationRelief = NO_RELIEF): number {
-  return modOf(mods, 'tribulationResist') + modOf(mods, 'damageReduction') * reductionToResistRate(def, relief)
-}
-
 /**
  * 劫型波形:第 wave 波相对基础伤害的倍率(含 dmgMult)。
  *
@@ -383,8 +373,9 @@ export function buildTribulationPlan(
   const prep = {
     guard: prepTier('guard', guardScore(mods, def, relief)),
     sustain: prepTier('sustain', sustainScore(mods, def, relief)),
-    // 抗性这一维要把三维折算算进去 —— 结算吃了它,星级就必须看得见它
-    resist: prepTier('resist', resistScore(mods, def, relief) + stat.resist),
+    // 抗性这一维直接读结算口径(settlementResist)—— 结算是什么它就是什么;
+    // 曾把「雷鸣减伤按半成折算」算进星里而结算从不吃它,幻影随口径统一抹掉
+    resist: prepTier('resist', settlementResist(mods, relief, stat)),
     burst: prepTier('burst', burstScore(mods))
   }
 
