@@ -98,7 +98,7 @@
         <span class="min-w-0 flex-1">
           <span class="block font-kai text-[13px] tracking-widest text-ink">灵草坊</span>
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
-            灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 石起,道品 {{ formatGN(herbBuyPrice(5)) }} 石一株
+            灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 石一株,道品 {{ formatGN(herbBuyPrice(5)) }} 石一株
           </span>
         </span>
         <span class="shrink-0 text-[12px] text-ink-faint">买 ›</span>
@@ -267,8 +267,8 @@
     <!-- 灵草坊(ISS-306):灵石购草 —— 五品明码标价,只进不出 -->
     <BaseModal :open="marketOpen" title="灵草坊" @close="marketOpen = false">
       <p class="mb-3 text-[11px] leading-relaxed text-ink-faint">
-        灵石买草,童叟无欺。<span class="text-ink-soft">草比石贵</span>——凡品千石一株,道品一千万一株,
-        越往上是十倍一翻。大把闲石没处去时,这里有一炉高品的念想。
+        灵石买草,童叟无欺。<span class="text-ink-soft">草比石贵</span>——凡品 {{ formatGN(herbBuyPrice(1)) }} 石一株,
+        道品 {{ formatGN(herbBuyPrice(5)) }} 石一株,越往上是十倍一翻。大把闲石没处去时,这里有一炉高品的念想。
       </p>
       <div class="space-y-1.5">
         <div v-for="row in marketRows" :key="row.grade" class="flex items-center gap-2.5 rounded-md bg-paper-deep/70 px-3 py-2">
@@ -626,19 +626,19 @@
         held: resources.herbOf(g),
         // 这品草喂哪个境界的方子:十倍一翻的贵价,落处得写明白(读分档表,不另写)
         usage: herbGradeBandLabel(g),
-        price: price < 1_000_000 ? price : price, // gn 都能打,格式在模板里走 formatGN
+        price, // 单价 :number,模板里走 formatGN 排版(千→「1,000」,万→「1000万」)
         affordable: resources.spiritStone.m * 10 ** resources.spiritStone.e >= price
       }
     })
   )
   function buyOne(grade: HerbGrade) {
     const r = buyHerbs(grade, 1)
-    if (r.ok) ui.toast(`灵草坊:花 ${r.costPerHerb} 灵石,得 ${HERB_GRADE_SHORT[grade]}灵草×${r.herbs}`, 'info')
+    if (r.ok) ui.toast(`灵草坊:花 ${formatGN(r.costPerHerb)} 灵石,得 ${HERB_GRADE_SHORT[grade]}灵草×${r.herbs}`, 'info')
     else if (r.reason === 'noStone') ui.toast('灵石不足', 'warn')
   }
   function buyTen(grade: HerbGrade) {
     const r = buyHerbs(grade, 10)
-    if (r.ok) ui.toast(`灵草坊:花 ${r.costPerHerb * 10} 灵石,得 ${HERB_GRADE_SHORT[grade]}灵草×${r.herbs}`, 'info')
+    if (r.ok) ui.toast(`灵草坊:花 ${formatGN(r.costPerHerb * 10)} 灵石,得 ${HERB_GRADE_SHORT[grade]}灵草×${r.herbs}`, 'info')
     else if (r.reason === 'noStone') ui.toast('灵石不足', 'warn')
   }
   const lore = useLoreStore()
