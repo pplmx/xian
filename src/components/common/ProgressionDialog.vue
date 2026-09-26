@@ -10,12 +10,13 @@
       <div class="card-ink px-3 py-2">
         <p class="text-[10px] text-ink-faint">每境复利(人间界 / 界外)</p>
         <div class="mt-1.5 space-y-1.5">
-          <div v-for="a in PROGRESSION_AXES" :key="a.id" class="flex items-start gap-2">
+          <!-- 320px 窄窗:固定列不吃满行,注释列换到自己一行,不然字被挤成一根线 -->
+          <div v-for="a in PROGRESSION_AXES" :key="a.id" class="flex flex-wrap items-start gap-x-2 gap-y-0.5">
             <span class="w-[104px] shrink-0 text-ink-soft">{{ a.name }}</span>
             <span class="w-[92px] shrink-0 tabular text-ink">
               ×{{ a.mortal.toFixed(1) }} / ×{{ a.outer.toFixed(1) }}
             </span>
-            <span class="min-w-0 grow text-[10px] text-ink-faint">{{ a.note }}</span>
+            <span class="w-full text-[10px] leading-relaxed text-ink-faint">{{ a.note }}</span>
           </div>
         </div>
       </div>
@@ -37,10 +38,10 @@
       <div class="card-ink px-3 py-2">
         <p class="text-[10px] text-ink-faint">花费曲线(同为复利,非线性)</p>
         <div class="mt-1.5 space-y-1">
-          <div v-for="c in COST_CURVES" :key="c.id" class="flex items-start gap-2">
+          <div v-for="c in COST_CURVES" :key="c.id" class="flex flex-wrap items-start gap-x-2 gap-y-0.5">
             <span class="w-[92px] shrink-0 text-ink-soft">{{ c.name }}</span>
             <span class="w-[74px] shrink-0 tabular text-ink">×{{ c.growth.toFixed(2) }}/{{ c.unit.slice(-1) }}</span>
-            <span class="min-w-0 grow text-[10px] text-ink-faint">{{ c.note }}</span>
+            <span class="w-full text-[10px] leading-relaxed text-ink-faint">{{ c.note }}</span>
           </div>
         </div>
       </div>

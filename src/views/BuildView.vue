@@ -13,9 +13,7 @@
               <span class="text-[11px] text-cinnabar">{{ build.stageName }}</span>
               <span class="ml-auto tabular text-[12px] text-ink-soft">契合 {{ Math.round(build.affinity * 100) }}%</span>
             </p>
-            <div class="track-ink mt-1.5 h-1.25 w-full">
-              <div class="bar-fill" :style="{ width: `${build.affinity * 100}%`, background: 'var(--color-cinnabar)' }" />
-            </div>
+            <ProgressBar class="mt-1.5" :value="build.affinity" :height="5" color="var(--color-cinnabar)" />
             <p v-if="build.secondary" class="mt-1 text-[10px] text-ink-faint tabular">
               副体系:{{ build.secondary.style.name }} {{ Math.round(build.secondary.affinity * 100) }}% —— 修行无职业,道路可以不纯
             </p>
@@ -213,6 +211,7 @@
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import GameIcon from '@/components/common/GameIcon.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
+  import ProgressBar from '@/components/common/ProgressBar.vue'
 
   const player = usePlayerStore()
   const loadouts = useLoadoutsStore()

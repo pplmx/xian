@@ -350,9 +350,7 @@
         <div class="mt-3 space-y-1.5">
           <p v-for="m in bondMeters" :key="m.label" class="flex items-center gap-2 text-[11px]">
             <span class="w-10 shrink-0 text-ink-faint">{{ m.label }}</span>
-            <span class="h-1 grow rounded-full bg-ink/10">
-              <span class="block h-1 rounded-full bg-qing/70" :style="{ width: `${m.v}%` }" />
-            </span>
+            <ProgressBar :value="m.v / 100" class="grow" :height="4" color="var(--color-qing)" />
             <span class="w-8 shrink-0 text-right tabular text-ink-soft">{{ m.v }}</span>
           </p>
         </div>
@@ -511,6 +509,7 @@
   import { achievementCounts, achievementStateOf } from '@/core/engineUnlocks'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
+  import ProgressBar from '@/components/common/ProgressBar.vue'
 
   const player = usePlayerStore()
 

@@ -9,9 +9,7 @@
       <div class="mt-2 space-y-1">
         <p v-for="d in profile.daoShares" :key="d.name" class="flex items-center gap-2 text-[11px]">
           <span class="w-14 shrink-0 text-ink-faint">{{ d.name }}</span>
-          <span class="track-ink h-1.25 grow">
-            <span class="bar-fill block h-full" :style="{ width: `${d.pct}%`, background: 'var(--color-cinnabar)' }" />
-          </span>
+          <ProgressBar :value="d.pct / 100" class="grow" :height="5" color="var(--color-cinnabar)" />
           <span class="w-8 shrink-0 text-right tabular text-ink-soft">{{ d.pct }}%</span>
         </p>
       </div>
@@ -196,6 +194,7 @@
   import { chainProgressRows } from '@/core/eventEngine'
   import { formatDate } from '@/utils/time'
   import SectionTitle from '@/components/common/SectionTitle.vue'
+  import ProgressBar from '@/components/common/ProgressBar.vue'
 
   const endgame = useEndgameStore()
   const player = usePlayerStore()

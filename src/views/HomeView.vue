@@ -107,13 +107,14 @@
           -->
           <p v-if="mainProgress" class="mt-1 flex items-center justify-between tabular text-[11px]">
             <span :class="mainProgress.done ? 'text-jade' : 'text-ink-faint'">{{ mainProgress.text }}</span>
-            <span v-if="mainProgress.ratio !== null" class="ml-2 h-1 w-16 shrink-0 overflow-hidden rounded-full bg-ink/10">
-              <span
-                class="block h-full rounded-full"
-                :class="mainProgress.done ? 'bg-jade' : 'bg-cinnabar/70'"
-                :style="{ width: `${Math.round(mainProgress.ratio * 100)}%` }"
-              />
-            </span>
+            <ProgressBar
+              v-if="mainProgress.ratio !== null"
+              :value="mainProgress.ratio"
+              class="ml-2 shrink-0"
+              style="width: 4rem"
+              :height="4"
+              :color="mainProgress.done ? 'var(--color-jade)' : 'var(--color-cinnabar)'"
+            />
           </p>
         </template>
         <p v-else class="text-[12px] text-ink-faint">主线已尽,前路由你自己书写。</p>
@@ -185,6 +186,7 @@
   import BaseModal from '@/components/common/BaseModal.vue'
   import VeinInvestCard from '@/components/dongfu/VeinInvestCard.vue'
   import GameIcon from '@/components/common/GameIcon.vue'
+  import ProgressBar from '@/components/common/ProgressBar.vue'
   import CultivationOrb from '@/components/common/CultivationOrb.vue'
   import InstallToHomeNotice from '@/components/common/InstallToHomeNotice.vue'
 

@@ -28,12 +28,8 @@
         <span class="min-w-0 truncate text-right font-kai text-cinnabar">{{ row.foeName }}</span>
       </div>
       <div class="mt-1.5 flex items-center gap-2">
-        <div class="track-ink h-1.5 flex-1">
-          <div class="bar-fill h-full bg-jade" :style="{ width: `${Math.max(0, php * 100)}%` }" />
-        </div>
-        <div class="track-ink h-1.5 flex-1">
-          <div class="bar-fill h-full bg-cinnabar" :style="{ width: `${Math.max(0, ehp * 100)}%` }" />
-        </div>
+        <ProgressBar :value="php" class="flex-1" :height="6" color="var(--color-jade)" />
+        <ProgressBar :value="ehp" class="flex-1" :height="6" color="var(--color-cinnabar)" />
       </div>
     </div>
 
@@ -62,6 +58,7 @@
   import type { GauntletFightRow } from '@/core/gauntlet'
   import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS } from '@/data/constants'
   import { useSettingsStore } from '@/stores/settings'
+  import ProgressBar from '@/components/common/ProgressBar.vue'
 
   const props = defineProps<{
     rows: GauntletFightRow[]
