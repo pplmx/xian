@@ -255,6 +255,8 @@
         </p>
       </div>
       <p class="text-[12px] text-ink-faint">此行欲作何打算?</p>
+      <!-- 灵兽之性会改动出行时长与遇险:结算读了它,弹窗就必须摊开(见 exploration 的乘积) -->
+      <p v-if="petLine" class="mt-1 text-[10px] text-violet-ink tabular">{{ petLine }}</p>
       <div class="mt-3 space-y-2">
         <button
           v-for="m in MODE_LIST"
@@ -288,6 +290,8 @@
   import type { ExploreMode, RegionDef, RegionRecall } from '@/types'
   import { useAdventureStore } from '@/stores/adventure'
   import { usePlayerStore } from '@/stores/player'
+  import { petDef } from '@/data/pets'
+  import { personalityEffects } from '@/core/petPersonality'
   import { useUiStore } from '@/stores/ui'
   import { REGIONS, regionDef, DANGER_NAMES } from '@/data/regions'
   import { worldOf, type WorldDef } from '@/data/realms'
@@ -317,6 +321,19 @@
   const route = useRoute()
   const router = useRouter()
   const player = usePlayerStore()
+
+  /** 灵兽之性对出行的修正:慢稳更久、好战更险 —— 出行弹窗是最后一个算账点,选前要看得见 */
+  const petLine = computed(() => {
+    if (!player.petId) return ''
+    const pet = petDef(player.petId)
+    if (!pet) return ''
+    const e = personalityEffects(player.petId)
+    const f = (x: number): string => Number(x.toFixed(2)).toString()
+    const parts: string[] = []
+    if (e.exploreDurMult !== 1) parts.push(`时长 ×${f(e.exploreDurMult)}`)
+    if (e.dangerMult !== 1) parts.push(`遇险 ×${f(e.dangerMult)}`)
+    return `${pet.name}:${parts.join(' · ') || '性格不扰动此行'}`
+  })
   const ui = useUiStore()
   const now = useNow()
 

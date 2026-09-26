@@ -195,7 +195,12 @@
             >
               {{ row.equipped ? '收回法宝' : '祭炼随身' }}
             </button>
-            <button v-if="row.upCost" class="btn-ghost flex-1 !py-1.5 !text-[12px] tabular" @click="upgradeArtifact(row.def.id)">
+            <button
+              v-if="row.upCost"
+              class="btn-ghost flex-1 !py-1.5 !text-[12px] tabular"
+              :disabled="!row.upAffordable"
+              @click="upgradeArtifact(row.def.id)"
+            >
               <!--
                 两种代价都要写出来:炼化既扣悟道点、也扣灵石(见 forge.artifactUpCost),
                 而按钮此前只报悟道 —— 玩家按标签算账,回头发现灵石也少了一大截。
@@ -203,6 +208,11 @@
               炼化(悟道 {{ row.upCost.wudao }} · 灵石 {{ formatGN(row.upCost.stone) }})
             </button>
           </div>
+          <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完 -->
+          <p v-if="row.upCost && !row.upAffordable" class="mt-1.5 text-[10px] text-cinnabar tabular">
+            尚差 悟道 {{ Math.max(0, row.upCost.wudao - resources.wudao) }} · 灵石
+            {{ formatGN(Math.max(0, toNum(row.upCost.stone) - toNum(resources.spiritStone))) }}
+          </p>
         </div>
       </div>
       <p v-else class="mt-16 text-center text-[12px] text-ink-faint">
@@ -210,7 +220,7 @@
         <br />
         <span class="text-[11px]">法宝多出自际遇与强敌之手</span>
       </p>
-      <p v-if="player.petId" class="mt-4 text-center text-[11px] text-ink-faint">灵兽相伴,可前往「人物」页查看</p>
+      <p v-if="player.petId" class="mt-4 text-center text-[11px] text-ink-faint">灵兽相伴,可在「名号」页更替</p>
     </template>
 
     <!-- 丹药详情 -->
@@ -558,6 +568,7 @@
   import { computed, ref } from 'vue'
   import { useInventoryStore } from '@/stores/inventory'
   import { useResourcesStore } from '@/stores/resources'
+  import { toNum } from '@/utils/gnum'
   import { usePlayerStore } from '@/stores/player'
   import { useUiStore } from '@/stores/ui'
   import { useSettingsStore } from '@/stores/settings'
@@ -831,10 +842,13 @@
       .map(a => {
         const def = artifactDef(a.defId)
         if (!def) return null
+        const upCost = artifactUpCost(a.defId)
         return {
           owned: a,
           def,
-          upCost: artifactUpCost(a.defId),
+          upCost,
+          // 炼化既花悟道也花灵石:按下之前就得看得出付不付得起(见 forge.artifactUpCost)
+          upAffordable: !upCost || (resources.wudao >= upCost.wudao && toNum(resources.spiritStone) >= toNum(upCost.stone)),
           equipped: inventory.equippedArtifacts.includes(a.defId)
         }
       })

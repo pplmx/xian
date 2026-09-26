@@ -43,12 +43,11 @@
             </p>
             <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>
             <p v-if="row.modText" class="text-[10px] text-qing tabular">{{ row.modText }}</p>
-            <!-- 性格是灵兽的"人味":它在历练里怎么表现,得让玩家看得见,而不是只看数值 -->
+            <!-- 性格 + 数值并一行:定性的话之外还要给数(换不换这只伙伴,靠「更容易」三个字算不出来) -->
             <p class="text-[10px] text-violet-ink">
-              {{ row.personalityName }} · <span class="text-ink-faint">{{ row.personalityDesc }}</span>
+              {{ row.personalityName }} <span class="text-ink-faint">{{ row.personalityDesc }}</span>
+              <template v-if="row.traitText"> · <span class="text-qing tabular">{{ row.traitText }}</span></template>
             </p>
-            <!-- 定性的话之外还要给数:换不换这只伙伴,靠「更容易」三个字算不出来 -->
-            <p v-if="row.traitText" class="text-[10px] text-qing tabular">{{ row.traitText }}</p>
           </div>
           <button class="btn-ghost shrink-0 !px-2.5 !py-1 !text-[11px]" @click="togglePet(row.def.id)">
             {{ row.active ? '暂别' : '唤来' }}
@@ -71,6 +70,7 @@
   import { TITLES } from '@/data/titles'
   import { petDef, PETS } from '@/data/pets'
   import { PERSONALITY_NAMES, personalityDesc } from '@/core/petPersonality'
+  import type { StatMods } from '@/types'
   import { petTraitText } from '@/ui/itemText'
   import { qualityDef } from '@/data/qualities'
   import { modsText } from '@/ui/statNames'
@@ -107,6 +107,12 @@
   }
 
   // ---- 灵兽 ----
+  /** 相伴真值:read finalStats.breakdown 的「灵兽」行 —— 与人物页明细同源,不在本页另算一遍 */
+  const activePetMods = computed<StatMods | null>(() => {
+    const row = player.finalStats.breakdown.find(r => r.name === '灵兽')
+    return row ? row.mods : null
+  })
+
   const petRows = computed(() =>
     quests.collections.pet
       .map(id => petDef(id))
@@ -114,7 +120,9 @@
       .map(def => ({
         def: def!,
         active: player.petId === def!.id,
-        modText: modsText(def!.mods),
+        // 相伴中的显示放大后的真值(灵兽园 × 安抚,与人物页属性明细同源 —— 都是 finalStats 的「灵兽」行);
+        // 其余仍为基础值 —— 按表里数字决定"该换哪只"不会与实战打架
+        modText: modsText(def!.id === player.petId ? (activePetMods.value ?? def!.mods) : def!.mods),
         personalityName: PERSONALITY_NAMES[def!.personality],
         personalityDesc: personalityDesc(def!.personality),
         traitText: petTraitText(def!)
