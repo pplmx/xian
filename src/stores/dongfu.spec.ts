@@ -4,7 +4,8 @@ import { useDongfuStore } from './dongfu'
 import { BUILDINGS } from '@/data/buildings'
 import { FORGE_LEVEL_PER_CAP, LIBRARY_WUDAO_MIN_PER_HOUR } from '@/data/constants'
 import { libraryWudaoPerHour } from '@/core/engineFacilities'
-import type { BuildingId } from '@/types'
+import { STAT_NAMES } from '@/ui/statNames'
+import type { AnyStatKey, BuildingId } from '@/types'
 
 describe('dongfu store · sanitize', () => {
   beforeEach(() => {
@@ -150,5 +151,21 @@ describe('洞府产出 · 等级线性', () => {
     expect(zero.herb).toBe(0)
     expect(zero.ore).toBe(0)
     expect(zero.wudao).toBe(0)
+  })
+})
+
+describe('洞府建筑 · 卡面自陈(不许有隐词条)', () => {
+  it('每座带词条的建筑,effectText 都要点到自己 mods 的每一项', () => {
+    // 审计(洞府轮)抓到:洞府/藏经阁的 mods 里有 修炼速度/战斗修为,卡面文案却没写,
+    // 玩家决定升不升的依据缺一半。此后凡 mods 里有、effectText 不点的,一律红。
+    for (const b of BUILDINGS) {
+      const text = b.effectText(1)
+      for (const [key, value] of Object.entries(b.mods?.(1) ?? {})) {
+        if (!value) continue
+        const label = STAT_NAMES[key as AnyStatKey]
+        expect(label, `${b.name}:词条 ${key} 未在 statNames 挂名`).toBeTruthy()
+        expect(text, `${b.name}:mods 有 ${key}(${label}),卡面文案却没自陈`).toContain(label!)
+      }
+    }
   })
 })
