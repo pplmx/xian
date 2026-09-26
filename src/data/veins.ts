@@ -32,7 +32,7 @@ export const VEINS: VeinDef[] = [
     seal: '炼',
     desc: '地火淬器,强化耗材更省',
     perPoint: { forgeDiscount: 0.003 },
-    effectText: p => `炼器耗材 -${(p * 0.3).toFixed(1)}%`
+    effectText: p => `炼器消耗 -${(p * 0.3).toFixed(1)}%`
   },
   {
     id: 'alchemy',

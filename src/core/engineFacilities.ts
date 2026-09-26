@@ -12,22 +12,12 @@
 import type { BuildingId, GNum, StatMods } from '@/types'
 import type { UpgradeInfo } from 'wanxiang-engine'
 import { accrue, createFacilitySystem } from 'wanxiang-engine'
-import { BUILDINGS, buildingDef } from '@/data/buildings'
-import {
-  FIELD_HERB_PER_HOUR,
-  FIELD_ORE_PER_HOUR,
-  LIBRARY_WUDAO_FLOOR_LEVEL,
-  LIBRARY_WUDAO_MIN_PER_HOUR,
-  LIBRARY_WUDAO_PER_HOUR
-} from '@/data/constants'
+import { BUILDINGS, buildingDef, libraryWudaoPerHour } from '@/data/buildings'
+import { FIELD_HERB_PER_HOUR, FIELD_ORE_PER_HOUR } from '@/data/constants'
 import { buildingCost } from './formulas'
 
-/** 藏经阁每级每小时悟道点 —— 低级(lv≤FLOOR_LEVEL)给保底起步(快赢3,ISS-303) */
-export function libraryWudaoPerHour(lv: number): number {
-  return lv <= LIBRARY_WUDAO_FLOOR_LEVEL
-    ? Math.max(LIBRARY_WUDAO_MIN_PER_HOUR, lv * LIBRARY_WUDAO_PER_HOUR)
-    : lv * LIBRARY_WUDAO_PER_HOUR
-}
+/** 藏经阁每小时悟道点的唯一实现住在 data/buildings(卡片文案与产出同源) —— 此处转发,调用方零改动 */
+export { libraryWudaoPerHour }
 
 export interface FacilityCtx {
   /** 玩家当前境界 —— 只有"境界门槛"用得上它 */

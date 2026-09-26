@@ -1,6 +1,13 @@
 /** 洞府建筑 —— 7 座,长线成长 */
 import type { BuildingDef, BuildingId, StatMods } from '@/types'
-import { FIELD_HERB_PER_HOUR, FIELD_ORE_PER_HOUR, LIBRARY_WUDAO_PER_HOUR, OFFLINE_CAP_HOURS } from './constants'
+import {
+  FIELD_HERB_PER_HOUR,
+  FIELD_ORE_PER_HOUR,
+  LIBRARY_WUDAO_FLOOR_LEVEL,
+  LIBRARY_WUDAO_MIN_PER_HOUR,
+  LIBRARY_WUDAO_PER_HOUR,
+  OFFLINE_CAP_HOURS
+} from './constants'
 
 export const BUILDINGS: BuildingDef[] = [
   {
@@ -12,7 +19,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 0,
     costBase: 200,
     costOre: 20,
-    effectText: lv => `离线收益上限 ${OFFLINE_CAP_HOURS[Math.min(lv, OFFLINE_CAP_HOURS.length - 1)]} 小时;洞府每升一级其余建筑等级上限 +5,各建筑另有品类上限`,
+    effectText: lv => `离线收益上限 ${OFFLINE_CAP_HOURS[Math.min(lv, OFFLINE_CAP_HOURS.length - 1)]} 小时;洞府每升一级其余建筑等级上限 +5,各建筑另有品类上限;修炼速度 +${lv * 4}%`,
     mods: (lv): StatMods => ({ cultivationSpeed: lv * 0.04 })
   },
   {
@@ -37,7 +44,7 @@ export const BUILDINGS: BuildingDef[] = [
     costBase: 100,
     costOre: 10,
     // Phase 32.3 之后丹方不再由炉火高低"解锁",炉子只管出丹多寡 —— 成与不成看所知与手上功夫
-    effectText: lv => `炼丹产出 +${lv * 5}% —— 炉子只管出丹多寡,成与不成看你懂多少`,
+    effectText: lv => `炼丹双成率 +${lv * 5}% —— 炉子只管出丹多寡,成与不成看你懂多少`,
     mods: (lv): StatMods => ({ alchemyYield: lv * 0.05 })
   },
   {
@@ -61,7 +68,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 0,
     costBase: 80,
     costOre: 8,
-    effectText: lv => `每小时产灵草 ${(lv * FIELD_HERB_PER_HOUR).toFixed(0)} 株、玄铁 ${(lv * FIELD_ORE_PER_HOUR).toFixed(1)} 块`
+    effectText: lv => `每小时产灵草 ${(lv * FIELD_HERB_PER_HOUR).toFixed(0)} 株、玄铁 ${fmtHour(lv * FIELD_ORE_PER_HOUR)} 块`
   },
   {
     id: 'library',
@@ -74,7 +81,7 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 12,
     // 钻研丹方是藏经阁的第三桩职能(见 core/loreService.ts studyTick),不写出来玩家无从得知
     effectText: lv =>
-      `每小时产悟道点 ${(lv * LIBRARY_WUDAO_PER_HOUR).toFixed(1)},辅修栏 ${1 + Math.floor(lv / 3)} 个;日夜翻检,读熟手上丹方,进而翻出新方`,
+      `每小时产悟道点 ${fmtHour(libraryWudaoPerHour(lv))},辅修栏 ${1 + Math.floor(lv / 3)} 个,战斗修为 +${lv * 3}%;日夜翻检,读熟手上丹方,进而翻出新方`,
     mods: (lv): StatMods => ({ expGain: lv * 0.03 })
   },
   {
@@ -89,6 +96,20 @@ export const BUILDINGS: BuildingDef[] = [
     effectText: lv => `可驯养灵兽,灵兽属性效果 +${lv * 10}%`
   }
 ]
+
+/**
+ * 藏经阁每级每小时悟道点 —— 唯一实现住在这里(engineFacilities 转发):
+ * 低级(lv≤FLOOR_LEVEL)给保底起步(快赢3,ISS-303),卡片文案与产出同源,
+ * 不再出现"卡面印 1.5、实产 4"这类字面低于实情。
+ */
+export function libraryWudaoPerHour(lv: number): number {
+  return lv <= LIBRARY_WUDAO_FLOOR_LEVEL
+    ? Math.max(LIBRARY_WUDAO_MIN_PER_HOUR, lv * LIBRARY_WUDAO_PER_HOUR)
+    : lv * LIBRARY_WUDAO_PER_HOUR
+}
+
+/** 整量不印 .0:2.4 显示 2.4,12.0 显示 12 */
+const fmtHour = (n: number): string => String(n.toFixed(1).replace(/\.0$/, ''))
 
 const BY_ID = new Map(BUILDINGS.map(x => [x.id, x]))
 
