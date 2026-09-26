@@ -19,7 +19,11 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 0,
     costBase: 200,
     costOre: 20,
-    effectText: lv => `离线收益上限 ${OFFLINE_CAP_HOURS[Math.min(lv, OFFLINE_CAP_HOURS.length - 1)]} 小时;洞府每升一级其余建筑等级上限 +5,各建筑另有品类上限;修炼速度 +${lv * 4}%`,
+    effectText: lv => [
+      `离线收益上限 ${OFFLINE_CAP_HOURS[Math.min(lv, OFFLINE_CAP_HOURS.length - 1)]} 小时`,
+      '其余建筑等级上限 +5/级',
+      `修炼速度 +${lv * 4}%`
+    ],
     mods: (lv): StatMods => ({ cultivationSpeed: lv * 0.04 })
   },
   {
@@ -31,7 +35,11 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 0,
     costBase: 60,
     costOre: 6,
-    effectText: lv => `灵气恢复 +${lv * 10}%,灵气上限 +${lv * 8}%,修炼速度 +${lv * 3}%`,
+    effectText: lv => [
+      `灵气恢复 +${lv * 10}%`,
+      `灵气上限 +${lv * 8}%`,
+      `修炼速度 +${lv * 3}%`
+    ],
     mods: (lv): StatMods => ({ qiRegen: lv * 0.1, cultivationSpeed: lv * 0.03 })
   },
   {
@@ -44,7 +52,10 @@ export const BUILDINGS: BuildingDef[] = [
     costBase: 100,
     costOre: 10,
     // Phase 32.3 之后丹方不再由炉火高低"解锁",炉子只管出丹多寡 —— 成与不成看所知与手上功夫
-    effectText: lv => `炼丹双成率 +${lv * 5}% —— 炉子只管出丹多寡,成与不成看你懂多少`,
+    effectText: lv => [
+      `炼丹双成率 +${lv * 5}%`,
+      '炉子只管出丹多寡,成与不成看你懂多少'
+    ],
     mods: (lv): StatMods => ({ alchemyYield: lv * 0.05 })
   },
   {
@@ -56,7 +67,10 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 1,
     costBase: 150,
     costOre: 15,
-    effectText: lv => `强化上限 +${Math.floor(lv / 2)},炼器消耗 -${lv * 4}%`,
+    effectText: lv => [
+      `强化上限 +${Math.floor(lv / 2)}`,
+      `炼器消耗 -${lv * 4}%`
+    ],
     mods: (lv): StatMods => ({ forgeDiscount: lv * 0.04 })
   },
   {
@@ -68,7 +82,9 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 0,
     costBase: 80,
     costOre: 8,
-    effectText: lv => `每小时产灵草 ${(lv * FIELD_HERB_PER_HOUR).toFixed(0)} 株、玄铁 ${fmtHour(lv * FIELD_ORE_PER_HOUR)} 块`
+    effectText: lv => [
+      `每小时产灵草 ${(lv * FIELD_HERB_PER_HOUR).toFixed(0)} 株、玄铁 ${fmtHour(lv * FIELD_ORE_PER_HOUR)} 块`
+    ],
   },
   {
     id: 'library',
@@ -80,8 +96,11 @@ export const BUILDINGS: BuildingDef[] = [
     costBase: 120,
     costOre: 12,
     // 钻研丹方是藏经阁的第三桩职能(见 core/loreService.ts studyTick),不写出来玩家无从得知
-    effectText: lv =>
-      `每小时产悟道点 ${fmtHour(libraryWudaoPerHour(lv))},辅修栏 ${1 + Math.floor(lv / 3)} 个,战斗修为 +${lv * 3}%;日夜翻检,读熟手上丹方,进而翻出新方`,
+    effectText: lv => [
+      `每小时产悟道点 ${fmtHour(libraryWudaoPerHour(lv))}`,
+      `辅修栏 ${1 + Math.floor(lv / 3)} 个 · 战斗修为 +${lv * 3}%`,
+      '日夜翻检,读熟手上丹方,进而翻出新方'
+    ],
     mods: (lv): StatMods => ({ expGain: lv * 0.03 })
   },
   {
@@ -93,7 +112,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 2,
     costBase: 300,
     costOre: 30,
-    effectText: lv => `可驯养灵兽,灵兽属性效果 +${lv * 10}%`
+    effectText: lv => [`可驯养灵兽 · 灵兽属性效果 +${lv * 10}%`],
   }
 ]
 

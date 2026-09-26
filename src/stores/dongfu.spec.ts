@@ -159,7 +159,7 @@ describe('洞府建筑 · 卡面自陈(不许有隐词条)', () => {
     // 审计(洞府轮)抓到:洞府/藏经阁的 mods 里有 修炼速度/战斗修为,卡面文案却没写,
     // 玩家决定升不升的依据缺一半。此后凡 mods 里有、effectText 不点的,一律红。
     for (const b of BUILDINGS) {
-      const text = b.effectText(1)
+      const text = b.effectText(1).join('\n')
       for (const [key, value] of Object.entries(b.mods?.(1) ?? {})) {
         if (!value) continue
         const label = STAT_NAMES[key as AnyStatKey]

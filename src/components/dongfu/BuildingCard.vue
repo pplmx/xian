@@ -6,9 +6,13 @@
         {{ level > 0 ? `${level}/${cap} 级` : '未启用' }}
       </p>
     </div>
-    <p class="mt-2 grow text-[11px] leading-relaxed text-ink-faint">
-      {{ level > 0 ? props.def.effectText(level) : props.def.desc }}
-    </p>
+    <!-- 每项效果一行一条:320px 双列卡里散文不再堆成 4~5 行高墙,两列高度也齐 -->
+    <div class="mt-2 grow space-y-0.5 text-[11px] leading-relaxed text-ink-faint">
+      <template v-if="level > 0">
+        <p v-for="(line, i) in props.def.effectText(level)" :key="i">{{ line }}</p>
+      </template>
+      <p v-else>{{ props.def.desc }}</p>
+    </div>
     <button class="btn-ghost mt-2 w-full !py-1.5 !text-[12px]" :disabled="!info.canUpgrade" @click="upgradeBuilding(props.def.id)">
       <!--
         数与量词必须黏在一起:窄屏(320)上卡片只有 ~140px,浏览器会在数字与「石」之间断行,

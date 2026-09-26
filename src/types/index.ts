@@ -674,7 +674,8 @@ export interface BuildingDef {
   costBase: number
   costOre: number
   /** 每级效果文案 */
-  effectText: (lv: number) => string
+  /** 每项效果一行一条(卡面逐行渲染,320px 双列不堆高墙);desc 留作未启用时的补白 */
+  effectText: (lv: number) => string[]
   mods?: (lv: number) => StatMods
 }
 
