@@ -34,6 +34,11 @@ export function alchemyBonus(pillId: string): number {
   return able.bonusChance + modOf(usePlayerStore().finalStats.mods, 'alchemyYield')
 }
 
+/** 炉前实际双成率 = 双成概率夹在 0.8 —— 开炉幕的读数与掷骰同一口径,不许两本账 */
+export function alchemyBonusCapped(pillId: string): number {
+  return Math.min(ALCHEMY_BONUS_CAP, alchemyBonus(pillId))
+}
+
 const RUNNER = createRecipeRunner<CraftCtx, number | GNum>({
   costs: (_id, ctx) => {
     const cost = pillCraftCost(ctx.pillId)

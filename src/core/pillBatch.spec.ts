@@ -16,6 +16,10 @@ import { createPinia, setActivePinia } from 'pinia'
 import { readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { craftPillBatch, craftPill, usePillBatch, usePill } from './pillService'
+import { alchemyBonusCapped, ALCHEMY_BONUS_CAP } from './engineCraft'
+import { craftability } from './craftability'
+import { useCultivationStore } from '@/stores/cultivation'
+import { buffDef } from '@/data/buffs'
 import * as audio from './audio'
 import { pillDef } from '@/data/pills'
 import { recipeCraft } from '@/data/crafting'
@@ -208,6 +212,19 @@ describe('批量炼丹', () => {
     expect(toast.mock.calls.length, '空手也要让人知道差在哪').toBe(1)
     expect(resources.herb).toBe(0)
   })
+
+  it('炉前双成率 = 炉子份 + 炼丹产出词条,夹 0.8 —— 开炉幕读数与掷骰同一口径', () => {
+    mockRand = 0
+    knowRecipe(CR)
+    const base = alchemyBonusCapped(CR)
+    expect(base).toBeCloseTo(Math.min(ALCHEMY_BONUS_CAP, craftability(CR)!.bonusChance), 9)
+    // 安神入胃:alchemyYield 立刻顶进 finalStats.mods —— 双成读数原地涨它应给的那一截
+    useCultivationStore().addBuff('buff_huohou', Date.now())
+    const lift = alchemyBonusCapped(CR) - base
+    expect(lift).toBeCloseTo(buffDef('buff_huohou')?.mods?.alchemyYield ?? 0, 9)
+    expect(lift).toBeGreaterThan(0)
+    expect(base + lift).toBeLessThanOrEqual(ALCHEMY_BONUS_CAP)
+  })
 })
 
 describe('批量炼丹 · UI 收口', () => {
@@ -225,5 +242,12 @@ describe('批量炼丹 · UI 收口', () => {
     }
     expect(src).toContain('炼丹增益')
     expect(src).toContain('modsText')
+  })
+
+  it('开炉幕把双成率也亮出来:配方行报双成读数,走 alchemyBonusCapped 同一口径', () => {
+    const src = readFileSync(join(SRC, 'views/InventoryView.vue'), 'utf8')
+    expect(src).toContain('const doubleRate = alchemyBonusCapped(id)')
+    expect(src).toContain('formatPercent(r.doubleRate)')
+    expect(src).toContain(' 双成')
   })
 })

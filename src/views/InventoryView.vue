@@ -388,6 +388,8 @@
             <div class="shrink-0 text-right">
               <p class="tabular text-[13px]" :class="rateClass(r.able.successRate)">{{ formatPercent(r.able.successRate) }}</p>
               <p class="text-[10px] text-ink-faint">把握</p>
+              <!-- 双成率也亮在炉前:骰子不藏 —— 与掷骰同一口径(alchemyBonusCapped,见行构造器) -->
+              <p class="mt-0.5 tabular text-[10px] text-ink-soft">{{ formatPercent(r.doubleRate) }}<span class="ml-1 text-[9px] text-ink-faint">双成</span></p>
             </div>
             <div class="flex shrink-0 gap-1.5">
               <button
@@ -649,6 +651,7 @@
   import { BAG_CAPACITY } from '@/data/constants'
   import { usePill, usePillBatch, availableRecipes, craftPill, craftPillBatch, pillCraftCost } from '@/core/pillService'
   import { craftability, type Craftability } from '@/core/craftability'
+  import { alchemyBonusCapped } from '@/core/engineCraft'
   import {
     batchYieldText,
     decomposeBatch,
@@ -832,6 +835,8 @@
         const def = pillDef(id)
         const cost = pillCraftCost(id)
         const able = craftability(id)
+        // 双成率 = 掷骰同一口径(alchemyBonusCapped:炉子份 + 炼丹产出词条,夹 0.8)—— 不许在界面重算一份
+        const doubleRate = alchemyBonusCapped(id)
         if (!def || !cost || !able) return null
         // 分级后「灵草不足」太笼统:满兜仙品草也可能缺几株凡品 —— 逐案点名缺什么,
         // 缺草的直接指路灵草坊(那是唯一买草的地方)
@@ -841,6 +846,7 @@
           def,
           cost,
           able,
+          doubleRate,
           shortHerb,
           shortStone,
           shortText: shortHerb
@@ -850,7 +856,7 @@
               : null
         }
       })
-      .filter((x): x is { def: PillDef; cost: { herb: number; herbGrade: HerbGrade; stone: GNum }; able: Craftability; shortHerb: boolean; shortStone: boolean; shortText: string | null } => x !== null)
+      .filter((x): x is { def: PillDef; cost: { herb: number; herbGrade: HerbGrade; stone: GNum }; able: Craftability; doubleRate: number; shortHerb: boolean; shortStone: boolean; shortText: string | null } => x !== null)
       .sort((a, b) => a.able.rank - b.able.rank)
   )
 
