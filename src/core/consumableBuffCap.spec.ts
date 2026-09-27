@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest'
 import { PILLS } from '@/data/pills'
 import { buffDef } from '@/data/buffs'
-import { applyBuff, activeBuffsOf, buffCapSec, buffOverflowOf } from './engineBuffs'
+import { applyBuff, activeBuffsOf, buffCapSec, buffOverflowOf, buffStackHints } from './engineBuffs'
 import type { BuffInstance } from '@/types'
 
 const MIN_MS = 60_000
@@ -88,5 +88,35 @@ describe('丹药增益有上限(ISS-232 的落地判据)', () => {
       expect(buffCapSec(defId), `${defId} 不该有上限`).toBeUndefined()
       expect(buffOverflowOf([], defId, 0)).toBe('none')
     }
+  })
+})
+
+/**
+ * BuffDialog 的「现效合计」行 —— 干净的数:
+ *
+ * I2 的代价契约只兜住了「炼丹成本」那一边,叠加这件事本身要玩家自己算
+ * (聚灵+星驰+御风+本源 ≈ +265%,见 pillValue.spec)。这里把"合并后真值"摊开:
+ * 这个词条除了我自己,还有别的来源在供(叠加或对冲)时,才值得给一行。
+ */
+describe('buffStackHints:现效合计行的原料', () => {
+  it('独一份的词条不给行 —— 只有自己不算叠加', () => {
+    expect(buffStackHints({ cultivationSpeed: 0.3 }, { cultivationSpeed: 0.3 })).toEqual([])
+  })
+
+  it('两味修速同刻在效,给一行且取合并真值', () => {
+    // 自己的 +30% 之外,另有来源供了 +30% → 合计 +60%
+    expect(buffStackHints({ cultivationSpeed: 0.3 }, { cultivationSpeed: 0.6, qiCapPct: 0.2 })).toEqual([
+      { key: 'cultivationSpeed', owned: 0.3, total: 0.6 }
+    ])
+  })
+
+  it('对冲:别人的负值把净合下拉,照实报', () => {
+    const rows = buffStackHints({ cultivationSpeed: 0.3 }, { cultivationSpeed: -0.1 })
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ key: 'cultivationSpeed', owned: 0.3, total: -0.1 })
+  })
+
+  it('没查进别的键:只检查自己身上有的词条', () => {
+    expect(buffStackHints({ cultivationSpeed: 0.3 }, { qiCapPct: 0.5 })).toEqual([])
   })
 })

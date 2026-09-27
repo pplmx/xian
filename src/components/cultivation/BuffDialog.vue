@@ -23,6 +23,19 @@
         </p>
       </div>
 
+      <!--
+        现效合计:修速四味可同刻叠加(聚灵+星驰+御风+本源 ≈ +265%,见 core/pillValue I2),
+        单颗弹窗只报各颗自己的数,叠加吃到几成得自己心算 —— 这里把引擎合并的真值摊开,
+        与人物页「丹药与增益」行同一个数(读 cultivation.buffMods,不在弹窗另算)。
+      -->
+      <p v-if="stackRows.length" class="mb-1 mt-3 text-[10px] tracking-widest text-ink-faint">现效合计 · 所有状态同刻在效</p>
+      <div v-if="stackRows.length" class="space-y-1">
+        <p v-for="r in stackRows" :key="r.key" class="flex justify-between text-[12px]">
+          <span class="text-ink-soft">{{ r.label }}</span>
+          <span class="tabular" :class="r.total < 0 ? 'text-cinnabar' : 'text-jade'">{{ formatPercent(r.total) }}</span>
+        </p>
+      </div>
+
       <div class="ink-divider my-3" />
 
       <p class="flex justify-between text-[13px]">
@@ -53,10 +66,10 @@
   import { useCultivationStore } from '@/stores/cultivation'
   import { useNow } from '@/composables/useNow'
   import { buffDef } from '@/data/buffs'
-  import { buffCapSec, CONSUMABLE_BUFF_CAP_MULT } from '@/core/engineBuffs'
+  import { buffCapSec, buffStackHints, CONSUMABLE_BUFF_CAP_MULT } from '@/core/engineBuffs'
   import { STAT_NAMES } from '@/ui/statNames'
   import { formatCountdown, formatDuration, formatPercent } from '@/utils/format'
-  import type { AnyStatKey } from '@/types'
+  import type { AnyStatKey, StatMods } from '@/types'
   import BaseModal from '@/components/common/BaseModal.vue'
   import ProgressBar from '@/components/common/ProgressBar.vue'
   import GameIcon from '@/components/common/GameIcon.vue'
@@ -98,6 +111,18 @@
       return { key, label: STAT_NAMES[key as AnyStatKey] ?? key, text: formatPercent(v), good: v > 0 }
     })
   )
+
+  /** 现效合计行:词条里还有别的状态在供(叠加/对冲)的,给出合并后的真值 */
+  const stackRows = computed(() => {
+    const id = ui.buffDetailId
+    const def = id ? buffDef(id) : undefined
+    if (!def) return []
+    return buffStackHints(def.mods as StatMods, cultivation.buffMods).map(r => ({
+      key: r.key,
+      label: STAT_NAMES[r.key] ?? r.key,
+      total: r.total
+    }))
+  })
 
   function close(): void {
     ui.buffDetailId = null

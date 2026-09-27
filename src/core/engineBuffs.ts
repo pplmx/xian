@@ -9,7 +9,7 @@
  * 读取口径:**问的是"此刻还算不算数"**(库的 `active`,到期即散),而不是"列表里有没有" ——
  * 列表里那些已经过期、还没被心跳剪掉的,不该继续算进属性(见 ISS-231)。
  */
-import type { BuffDef, BuffInstance, StatMods } from '@/types'
+import type { AnyStatKey, BuffDef, BuffInstance, StatMods } from '@/types'
 import type { BuffInstance as EngineBuffInstance } from 'wanxiang-engine'
 import { createBuffSystem } from 'wanxiang-engine'
 import { BUFFS, buffDef } from '@/data/buffs'
@@ -83,6 +83,29 @@ export function pruneBuffList(list: readonly BuffInstance[], now: number): { lis
 /** 清除负面状态(本作口径:分类为 `injury` 的那些,含心魔) */
 export function clearNegativeBuffList(list: readonly BuffInstance[]): BuffInstance[] {
   return fromEngine(BUFFS_SYSTEM.clear(toEngine(list), 'injury').instances)
+}
+
+/**
+ * BuffDialog「现效合计」行的原料:这个词条里**还有别的来源在供**(叠加或对冲),
+ * 单颗自己的数已经讲不清"我实际吃到多少"了,亮出来才值得一行。
+ *
+ * @param own    这一颗/这个状态自己的 mods
+ * @param merged 此刻所有在效状态合并后的真值(与人物页「丹药与增益」行同源)
+ */
+export function buffStackHints(
+  own: StatMods,
+  merged: StatMods
+): { key: AnyStatKey; owned: number; total: number }[] {
+  const rows: { key: AnyStatKey; owned: number; total: number }[] = []
+  for (const k of Object.keys(own)) {
+    const key = k as AnyStatKey
+    const owned = own[key] ?? 0
+    // merged 里没有这个键 = 没有"别的来源"的证据(null 会被 `?? 0` 误报成"现效合计 0%")
+    const total = merged[key]
+    if (total === undefined || Math.abs(total - owned) < 1e-6) continue
+    rows.push({ key, owned, total })
+  }
+  return rows
 }
 
 /**
