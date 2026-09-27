@@ -187,6 +187,17 @@ describe('文案数值对账 · 视图不手抄数字', () => {
     expect(view).not.toContain('5 分钟,修炼速度 +150%')
     expect(view).not.toContain('5分钟 修炼 +150%')
   })
+
+  it('突破幕亮出破境增益:谁在顶这一阶一眼见,文案走 buff→modsText;大关幕不亮', () => {
+    const view = src('../views/CultivationView.vue')
+    expect(view).toContain('breakthroughBuffRows')
+    expect(view).toContain("k === 'breakthroughRate'")
+    expect(view).toContain('modsText')
+    expect(view).toContain('!btInfo.needTribulation')
+    for (const pill of ['破境', '凝神', '定心', '本源']) {
+      expect(view, `${pill} 没接进突破幕的破境增益`).toContain(pill)
+    }
+  })
 })
 
 /**

@@ -144,6 +144,23 @@
         </div>
       </div>
 
+      <!--
+        破境增益 · 此刻在身:小进阶的成功率是谁在顶,突破前一眼见 —— buff→modsText,
+        与开炉幕同款(不做两本账);大关不吃此益,故只在非天劫幕亮。
+      -->
+      <div v-if="!btInfo.needTribulation" class="mt-2 rounded-md bg-paper-deep/60 px-3 py-2">
+        <p class="text-[10px] text-ink-faint">破境增益 · 此刻在身</p>
+        <div v-if="breakthroughBuffRows.length" class="mt-1 space-y-0.5">
+          <p v-for="row in breakthroughBuffRows" :key="row.buffId" class="flex items-baseline gap-1.5 text-[11px]">
+            <span class="font-kai shrink-0" :class="row.rate > 0 ? 'text-qing' : 'text-cinnabar'">{{ row.name }}</span>
+            <span class="tabular text-ink-soft">{{ row.effect }}</span>
+          </p>
+        </div>
+        <p v-else class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+          身无破境增益 —— 备一味 <span class="text-qing">破境 · 凝神 · 定心 · 本源</span>,成功率即刻见涨
+        </p>
+      </div>
+
       <!-- Phase 32.0 劫势详情(决意前评估:风险维度 + 建议,信息给足,决定留给玩家) -->
       <div v-if="tribPlan" class="mt-2 rounded-md border border-violet-ink/25 bg-violet-ink/5 px-3 py-2">
         <p class="text-[11px] text-violet-ink">{{ tribPlan.desc }}</p>
@@ -431,6 +448,7 @@
   import { ELEMENTS } from '@/data/linggen'
   import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from '@/data/gongfaBranches'
   import { buffDef } from '@/data/buffs'
+  import { modsText } from '@/ui/statNames'
   import { pillDef } from '@/data/pills'
 import type { PillDef } from '@/types'
   import { COMPREHEND_PAGE_COST, QI_BANK_MULT } from '@/data/constants'
@@ -649,6 +667,21 @@ import type { PillDef } from '@/types'
         cultivation.activeBuffs.filter(v => v !== view).map(v => v.def.mods)
       )
     }))
+  )
+
+  /**
+   * 破境增益 · 此刻在身 —— 小进阶的成功率读 breakthroughRate,读数只是结果;
+   * 谁在顶、顶多少,突破前一眼见(遍历 activeBuffs 的面,文案走 modsText,与开炉幕同款)。
+   * 大关天劫不吃此事,整条只在非天劫幕亮(模板 v-if 于此)。
+   */
+  const breakthroughBuffRows = computed(() =>
+    activeBuffs.value
+      .map(({ def }) => {
+        const face = Object.fromEntries(Object.entries(def.mods ?? {}).filter(([k]) => k === 'breakthroughRate'))
+        const rate = (face as import('@/types').StatMods).breakthroughRate ?? 0
+        return rate !== 0 ? { buffId: def.id, name: def.name, rate, effect: modsText(face as import('@/types').StatMods) } : null
+      })
+      .filter((x): x is { buffId: string; name: string; rate: number; effect: string } => x !== null)
   )
 
   const learnedList = computed(() =>
