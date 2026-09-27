@@ -193,7 +193,10 @@ describe('文案数值对账 · 视图不手抄数字', () => {
     expect(view).toContain('breakthroughBuffRows')
     expect(view).toContain("k === 'breakthroughRate'")
     expect(view).toContain('modsText')
-    expect(view).toContain('!btInfo.needTribulation')
+    // 守卫必须跟在条本身旁边(±300 字符内),只 toContain 会被改名前那 6 处既有守卫穿透
+    expect(view, '大关守卫必须与破境条同块 —— 删条上 v-if 立刻红').toMatch(
+      /!btInfo\.needTribulation[\s\S]{0,300}breakthroughBuffRows\.length/
+    )
     for (const pill of ['破境', '凝神', '定心', '本源']) {
       expect(view, `${pill} 没接进突破幕的破境增益`).toContain(pill)
     }
