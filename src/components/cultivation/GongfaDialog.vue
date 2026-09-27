@@ -35,6 +35,14 @@
         <p v-if="upCost" class="mt-3 text-right text-[11px] text-ink-faint tabular">
           进修需 悟道点×{{ upCost.wudao }} · 残页×{{ upCost.page }}
         </p>
+        <!--
+          冲满的尽头要看得见:分支内容不预告(圆满才揭晓),但"这部功法是条有选择的
+          路"这个事实得先说 —— 不然冲哪部全靠名字猜,圆满了才发现没岔路可走。
+        -->
+        <p v-if="!fullLevel && branches.length" class="mt-2 text-[11px] text-ink-faint">
+          修至圆满,可循其中一条道走到底({{ branches.length }} 条道途)
+          <span class="text-cinnabar">—— 一经择定终身不改</span>
+        </p>
         <!-- Phase 31 A3:满级悟道,择一分支。文案须自解释——给什么、要不要慎重,按下之前就得看见 -->
         <div v-if="fullLevel && branches.length" class="mt-3">
           <p class="mb-1 font-kai text-[12px] tracking-[0.2em] text-ink-faint">功 行 圆 满 · 悟 道</p>
@@ -95,6 +103,11 @@
             <span class="tabular text-cinnabar">
               出手 {{ Math.round(def.skill.rate * 100) }}% 几率 · {{ Math.round(def.skill.mult * 100) }}% 威力
             </span>
+          </p>
+          <!-- 同上一行:满级账之外,把这功法的"尽头是条可择之路"一并预告 -->
+          <p v-if="branches.length" class="flex justify-between text-[13px]">
+            <span class="text-ink-faint">圆满后道途</span>
+            <span class="tabular text-gold-ink">共 {{ branches.length }} 条可择(终身不改)</span>
           </p>
         </div>
       </template>
