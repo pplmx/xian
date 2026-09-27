@@ -5,6 +5,7 @@
 import type { AchvCond, AchievementDef, CounterKey, RewardBundle } from '@/types'
 import { gte } from '@/utils/gnum'
 import { todayStr } from '@/utils/time'
+import { formatGN } from '@/utils/format'
 import { ACHIEVEMENTS } from '@/data/achievements'
 import { MAIN_QUESTS } from '@/data/quests'
 import { LIFESPAN_CRITICAL_RATIO } from '@/data/constants'
@@ -110,6 +111,27 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
     }
   }
   return lines
+}
+
+/**
+ * 一份奖励在指定掉落层级下的入账文案 —— 与 grantReward 同一套换算,
+ * 界面标的是实发额(灵石随层级折实,不是写死的固定数)。
+ */
+export function rewardTextAtTier(bundle: RewardBundle | undefined, tier: number): string {
+  if (!bundle) return ''
+  const parts: string[] = []
+  if (bundle.stoneTier) parts.push(`灵石 ${formatGN(stoneByTier(tier, bundle.stoneTier))}`)
+  if (bundle.wudao) parts.push(`悟道点×${bundle.wudao}`)
+  if (bundle.herb) parts.push(`灵草×${bundle.herb}`)
+  if (bundle.ore) parts.push(`玄铁×${bundle.ore}`)
+  if (bundle.page) parts.push(`残页×${bundle.page}`)
+  if (bundle.dust) parts.push(`器灵尘×${bundle.dust}`)
+  return parts.join(' · ')
+}
+
+/** 此刻的入账文案:掉落层级取玩家当前等效层级 */
+export function rewardText(bundle: RewardBundle | undefined): string {
+  return rewardTextAtTier(bundle, playerTier())
 }
 
 /**

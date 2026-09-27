@@ -21,7 +21,10 @@ import { PILLS, pillDef } from '@/data/pills'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePlayerStore } from '@/stores/player'
 import { useQuestsStore } from '@/stores/quests'
-import { trackRealm } from './progress'
+import { stoneByTier } from './formulas'
+import { dailyTaskDef } from './engineDailies'
+import { rewardTextAtTier, trackRealm, playerTier } from './progress'
+import { formatGN } from '@/utils/format'
 
 const SRC = resolve(__dirname, '..')
 
@@ -84,5 +87,42 @@ describe('奖励可达性 · 丹药与成就条件', () => {
     trackRealm()
     expect(quests.hasAchieved('a_lianqi_full')).toBe(true)
     expect(quests.titlesOwned).toContain('ti_lianqi')
+  })
+})
+
+/**
+ * 每日任务的奖励从没在界面上露过 —— 修行志只报进度,不报"这条日课能换什么"。
+ * 这里守两个口头约定:
+ *   一 三种日课皆有奖励文案,不许出现"做了却不知得什么"的哑巴任务;
+ *   二 文案里的数必须与 grantReward 的换算同一套(灵石按掉落层级折实),
+ *      界面标多少,结算就给多少,不准两本账。
+ */
+describe('每日任务:奖励要看得见', () => {
+  it('三种日课都有非空奖励文案', () => {
+    for (const t of DAILY_TASKS) {
+      expect(rewardTextAtTier(t.reward, 3), `${t.name} 缺奖励文案`).not.toBe('')
+    }
+  })
+
+  it('灵石随掉落层级折实 —— 文案与 grantReward 同一套换算', () => {
+    setActivePinia(createPinia())
+    const player = usePlayerStore()
+    player.major = 4 // 等效层级确定
+    const tier = playerTier()
+    const def = dailyTaskDef('d_kill')!
+    // 界面标的就是实发额:同一份 bundle,文案的数与 stonesByTier 折出的分毫不差
+    expect(rewardTextAtTier(def.reward, tier)).toBe(`灵石 ${formatGN(stoneByTier(tier, (def.reward as { stoneTier: number }).stoneTier!))}`)
+  })
+
+  it('层级越高,同一份 stoneTier 折出的灵石越多(标的是实发额,不是固定数)', () => {
+    const low = rewardTextAtTier({ stoneTier: 20 }, 3)
+    const high = rewardTextAtTier({ stoneTier: 20 }, 10)
+    const numOf = (s: string): number => Number(s.replace(/\D/g, ''))
+    expect(numOf(high)).toBeGreaterThan(numOf(low))
+  })
+
+  it('空 bundle 不给文案', () => {
+    expect(rewardTextAtTier(undefined, 3)).toBe('')
+    expect(rewardTextAtTier({}, 3)).toBe('')
   })
 })

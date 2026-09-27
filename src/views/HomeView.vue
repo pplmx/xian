@@ -120,9 +120,17 @@
         <p v-else class="text-[12px] text-ink-faint">主线已尽,前路由你自己书写。</p>
         <div class="ink-divider my-2.5" />
         <div class="space-y-1.5">
-          <p v-for="t in dailyRows" :key="t.id" class="flex items-center justify-between text-[12px]">
-            <span :class="t.done ? 'text-ink-faint line-through' : 'text-ink-soft'">{{ t.desc }}</span>
-            <span class="tabular text-[11px]" :class="t.done ? 'text-jade' : 'text-ink-faint'">
+          <p
+            v-for="t in dailyRows"
+            :key="t.id"
+            class="flex items-center justify-between gap-2 text-[12px]"
+          >
+            <span class="min-w-0">
+              <span :class="t.done ? 'text-ink-faint line-through' : 'text-ink-soft'">{{ t.desc }}</span>
+              <!-- 每条日课能换什么:奖励从没在界面上露过 —— 标的是实发额,记入账那套换算 -->
+              <span class="ml-1.5 text-[10px] text-ink-faint tabular">得 {{ rewardText(t.reward) }}</span>
+            </span>
+            <span class="shrink-0 tabular text-[11px]" :class="t.done ? 'text-jade' : 'text-ink-faint'">
               {{ t.done ? '已成' : `${t.progress}/${t.target}` }}
             </span>
           </p>
@@ -179,6 +187,7 @@
   import { generateCurrentGoal, type Goal } from '@/core/goal'
   import { currentMainQuestProgress } from '@/core/questProgress'
   import { currentFirstStep, homeStatusText } from '@/core/firstStep'
+  import { rewardText } from '@/core/progress'
   import { isRetreating } from '@/core/earlyGameService'
   import { dailyRowsOf, dailyStateOf } from '@/core/engineDailies'
   import { mainQuestAt } from '@/core/engineChain'
