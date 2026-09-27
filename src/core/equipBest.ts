@@ -44,24 +44,30 @@ function rollSum(i: EquipmentInstance): number {
 }
 
 /**
- * 一件装备的真实战斗价值 = 平铺 + 词条战力。
+ * 一件装备的真实战斗价值 = 平铺 × (1 + 词条加权分)。
  *
  * 平铺是引擎解析后的三围(层级 × 品质^1.8 × 强化全在里头,见 equipGen.resolveEquipStats);
- * 词条按战力面板同一张权重表折算,会心按联乘单列(与 ratePower 同口径)。
- * 成长类词条(修炼速度等)不在权重表上,战力不因它增减 —— 一键不为了修速换装。
+ * 词条按战力面板同一张权重表折算(百分比分,pct 尺度,会心按联乘单列)。
+ *
+ * 词条项**乘回这件装备自己的平铺**而不是裸加 —— 否则 5% 攻击这种 0.05 的百分比
+ * 加到 ~1e6 的平铺上等于 1e7 分之五,排序里纯是噪声,「词条算战力」就成了空话。
+ * 乘回基准后,一条 +5% 攻击正好值这件装备平铺的 5%:同阶/邻阶里词条能翻转胜负,
+ * 跨阶层级(约 1.9×/阶)仍然主导 —— 与「真实战力」的直觉一致。
+ * 成长类词条(修炼速度等)不在权重表上,分项为 0 —— 一键不为了修速换装。
  */
 export function equippablePower(i: EquipmentInstance): number {
   const r = resolveEquipStats(i)
   const f = r.flats
-  let value = toNum(f.attack) + toNum(f.defense) + toNum(f.maxHp) * HP_FLAT_WEIGHT
+  const base = toNum(f.attack) + toNum(f.defense) + toNum(f.maxHp) * HP_FLAT_WEIGHT
   const critRate = r.mods.critRate ?? 0
   const critDamage = r.mods.critDamage ?? 0
-  value += critRate * (1 + critDamage)
+  // 面板的百分比分(pct 尺度):会心联乘单列,其余键按权重表折
+  let pct = critRate * (1 + critDamage)
   for (const [k, raw] of Object.entries(r.mods)) {
     if (k === 'critRate' || k === 'critDamage' || raw === undefined) continue
-    value += (POWER_STAT_WEIGHTS[k as AnyStatKey] ?? 0) * raw
+    pct += (POWER_STAT_WEIGHTS[k as AnyStatKey] ?? 0) * raw
   }
-  return value
+  return base * (1 + pct)
 }
 
 /** a 是否严格强于 b(真实战力为主,同分回退到粗排 —— 不两败打转) */

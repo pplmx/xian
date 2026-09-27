@@ -132,17 +132,33 @@ describe('一键换装 · 「最强」按真实战力', () => {
     expect(equipBestFor('body'), '本就是最强,不该来回换').toBe(false)
   })
 
-  it('已穿的更强就不换(真实战力口径,不奉行「品质保底」)', () => {
+  it('已穿的更强就不换(真实战力口径)', () => {
     const inv = useInventoryStore()
     const worn = item('necklace', 'heaven', 12, 5)
-    const contender = item('necklace', 'mortal', 20)
-    add(inv, worn, contender)
+    const weaker = item('necklace', 'heaven', 11) // 同品低一阶、无强化、无词条 —— 三围处处更差
+    add(inv, worn, weaker)
     inv.equip(worn.uid, 'necklace')
-    // 两种口径下都以真实战力裁决:穿的那件若更强,断言不换;反之真换
-    const shouldSwap = equippablePower(contender) > equippablePower(worn)
-    const swapped = equipBestFor('necklace')
-    expect(swapped).toBe(shouldSwap)
-    expect(inv.equipped['necklace']).toBe(shouldSwap ? contender.uid : worn.uid)
+    expect(equippablePower(weaker)).toBeLessThan(equippablePower(worn))
+    expect(equipBestFor('necklace'), '已穿更强的,不该被更弱件换下').toBe(false)
+    expect(inv.equipped['necklace']).toBe(worn.uid)
+  })
+
+  it('词条能翻转近平铺的胜负:同品同阶同强化,词条好的那件胜出(词条不是噪声)', () => {
+    const inv = useInventoryStore()
+    const weak = item('weapon', 'heaven', 16, 0, [{ id: 'atk1', roll: 0.1 }])
+    const strong = item('weapon', 'heaven', 16, 0, [{ id: 'atk1', roll: 0.9 }])
+    add(inv, weak, strong)
+    expect(equippablePower(strong)).toBeGreaterThan(equippablePower(weak))
+    expect(bestEquipFor('weapon')!.uid, '词条在排序里要真的能赢').toBe(strong.uid)
+  })
+
+  it('词条只在同阶/邻阶翻转 —— 整体层级差距面前,平铺仍然主导', () => {
+    const inv = useInventoryStore()
+    const low = item('weapon', 'heaven', 14, 0, [{ id: 'atk1', roll: 0.9 }]) // 满攻击成色
+    const high = item('weapon', 'heaven', 17) // 高三阶裸件
+    add(inv, low, high)
+    expect(equippablePower(low)).toBeLessThan(equippablePower(high))
+    expect(bestEquipFor('weapon')!.uid, '层级差不该被一条好词条吞掉').toBe(high.uid)
   })
 
   it('一键全槽:每槽换上最强,返回换了几件', () => {
