@@ -5,7 +5,7 @@
  * 进攻 / 生存 / 身法 / 恢复 / 机制。
  * 星级基于词条合计的定性分段,不做精确排名——两个 4 星构筑谁强,由环境与相性决定。
  */
-import type { FinalStats, StatMods } from '@/types'
+import type { AnyStatKey, FinalStats, StatMods } from '@/types'
 import { detectBuild } from './buildDetect'
 import { modOf } from './statsCalc'
 
@@ -38,6 +38,38 @@ export interface PowerDimension {
   stars: number
   score: number
   terms: PowerTerm[]
+}
+
+/**
+ * 词条战力权重 —— 五维得分的线性项系数,单一来源。
+ *
+ * 战力面板的每一项(星级明细里的 contribution)与一键换装(equipBest.equippablePower)
+ * 从这里取 —— 两边不各编一套数字(不做两本账)。两个特例不进表:
+ *   · critRate 按「会心 ×(1+会心伤)」联乘,单独成式;
+ *   · 机制维的「成路」是流派契合度,不是词条,也不在表里。
+ */
+export const POWER_STAT_WEIGHTS: Partial<Record<AnyStatKey, number>> = {
+  // 进攻
+  attackPct: 1,
+  damageBonus: 1,
+  armorPen: 0.8,
+  executeDamage: 0.5,
+  // 生存
+  defensePct: 1,
+  maxHpPct: 1,
+  damageReduction: 2,
+  shieldOnStart: 1,
+  shieldPower: 0.5,
+  dodgeRate: 1.5,
+  // 身法
+  speed: 2,
+  firstStrike: 1,
+  comboRate: 1.5,
+  // 恢复(小数值键放大,量纲归一)
+  lifesteal: 8,
+  regenPerRound: 20,
+  overhealShield: 0.6,
+  lowHpReduction: 0.8
 }
 
 /** 分段:score 依次跨过阈值得 2/3/4/5 星(低于首档为 1 星) */
@@ -84,30 +116,35 @@ export function ratePower(stats: FinalStats): PowerRating {
     raw: critRaw,
     contribution: critRaw * (1 + v('critDamage'))
   }
+  const w = (k: AnyStatKey): number => POWER_STAT_WEIGHTS[k] ?? 0
   const attackTerms = [
-    term('攻击加成', v('attackPct')),
-    term('造成伤害', v('damageBonus')),
+    term('攻击加成', v('attackPct'), w('attackPct')),
+    term('造成伤害', v('damageBonus'), w('damageBonus')),
     critTerm,
-    term('破甲', v('armorPen'), 0.8),
-    term('处决伤害', v('executeDamage'), 0.5)
+    term('破甲', v('armorPen'), w('armorPen')),
+    term('处决伤害', v('executeDamage'), w('executeDamage'))
   ]
   // 生存:防御/生命/减伤/盾/闪避
   const survivalTerms = [
-    term('防御加成', v('defensePct')),
-    term('气血加成', v('maxHpPct')),
-    term('伤害减免', v('damageReduction'), 2),
-    term('开战护盾', v('shieldOnStart')),
-    term('护盾强度', v('shieldPower'), 0.5),
-    term('闪避率', v('dodgeRate'), 1.5)
+    term('防御加成', v('defensePct'), w('defensePct')),
+    term('气血加成', v('maxHpPct'), w('maxHpPct')),
+    term('伤害减免', v('damageReduction'), w('damageReduction')),
+    term('开战护盾', v('shieldOnStart'), w('shieldOnStart')),
+    term('护盾强度', v('shieldPower'), w('shieldPower')),
+    term('闪避率', v('dodgeRate'), w('dodgeRate'))
   ]
   // 身法:先手判定(阈值)/首回合伤害/连击率 —— 名字与 statNames 一致,面板与战力理由不许各叫各的
-  const speedTerms = [term('先手判定', v('speed'), 2), term('首回合伤害', v('firstStrike')), term('连击率', v('comboRate'), 1.5)]
+  const speedTerms = [
+    term('先手判定', v('speed'), w('speed')),
+    term('首回合伤害', v('firstStrike'), w('firstStrike')),
+    term('连击率', v('comboRate'), w('comboRate'))
+  ]
   // 恢复:吸血/回合回复/溢疗(量纲归一:小数值键放大)
   const recoveryTerms = [
-    term('吸血', v('lifesteal'), 8),
-    term('回合回复', v('regenPerRound'), 20),
-    term('溢疗转盾', v('overhealShield'), 0.6),
-    term('残血减伤', v('lowHpReduction'), 0.8)
+    term('吸血', v('lifesteal'), w('lifesteal')),
+    term('回合回复', v('regenPerRound'), w('regenPerRound')),
+    term('溢疗转盾', v('overhealShield'), w('overhealShield')),
+    term('残血减伤', v('lowHpReduction'), w('lowHpReduction'))
   ]
   // 机制:流派成路程度 + 混合副系
   const build = detectBuild(m)
@@ -132,17 +169,18 @@ export function ratePower(stats: FinalStats): PowerRating {
     mechanics: mechanicsTerms
   }
   /*
-   * 得分仍按原来的算式单独算一遍,不从 terms 反推 —— 否则「明细之和 = 得分」
-   * 成了同义反复:删掉一条词条,两边一起少,audit 永远红不了。
-   * 这里刻意让两条路各走各的,它们对不上就是有人改了算式没改明细。
+   * 得分与 terms 是两条独立的表达式,但**权重都从 POWER_STAT_WEIGHTS 取** ——
+   * 那不是同义反复:明细那一路仍要逐条列出键、得分这路仍要逐一列键,
+   * 哪边漏了键、或键不在表上,«明细之和 = 得分» 的判据立刻红。
+   * 权重表是唯一的事实源,不在这两处各写一遍数字。
    */
+  const linear = (keys: AnyStatKey[]): number => keys.reduce((s, k) => s + (POWER_STAT_WEIGHTS[k] ?? 0) * v(k), 0)
   const scores: Record<PowerDimKey, number> = {
-    attack:
-      v('attackPct') + v('damageBonus') + v('critRate') * (1 + v('critDamage')) + v('armorPen') * 0.8 + v('executeDamage') * 0.5,
-    survival:
-      v('defensePct') + v('maxHpPct') + v('damageReduction') * 2 + v('shieldOnStart') + v('shieldPower') * 0.5 + v('dodgeRate') * 1.5,
-    speed: v('speed') * 2 + v('firstStrike') + v('comboRate') * 1.5,
-    recovery: v('lifesteal') * 8 + v('regenPerRound') * 20 + v('overhealShield') * 0.6 + v('lowHpReduction') * 0.8,
+    // 会心是「会心 ×(1+会心伤)」的联乘,不进线性表;其余进攻项全走表
+    attack: v('critRate') * (1 + v('critDamage')) + linear(['attackPct', 'damageBonus', 'armorPen', 'executeDamage']),
+    survival: linear(['defensePct', 'maxHpPct', 'damageReduction', 'shieldOnStart', 'shieldPower', 'dodgeRate']),
+    speed: linear(['speed', 'firstStrike', 'comboRate']),
+    recovery: linear(['lifesteal', 'regenPerRound', 'overhealShield', 'lowHpReduction']),
     mechanics: build ? build.affinity + (build.secondary?.affinity ?? 0) * 0.6 : 0
   }
   const labels: PowerDimension[] = (Object.keys(DIM_NAMES) as PowerDimKey[]).map(key => {

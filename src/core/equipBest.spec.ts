@@ -1,17 +1,21 @@
 /**
- * 一键换装 / 一键穿齐套装 —— 自 yunyin-xiuxian 吸收的便利机制(玩家反馈驱动)。
+ * 一键换装 / 一键穿齐套装 —— 自 yunyin-xiuxian 吸收(玩家反馈驱动)。
  *
- * 吸收评审过的三条不变量,是这块的本:
- *   · 「最强」取玩家口中的关键词:品质 rank → 层级 → 强化 → 词条成色;
- *   · 一键换装**只改装配**,不分解、不炼化、不卖任何一件 —— 纯方便,零损耗;
- *   · 穿套装**绝不降级**:已穿的那件更强就不动,幂等可反复点。
+ * 吸收时的评审把「最强」定作品质→层级→强化→词条粗排;yunyin 随后收到玩家新反馈
+ * 「一键装备没有将最强的装备装上」,已把主判换成**真实战斗价值**(equippablePower),
+ * 本作跟进同一升级:
+ *   · 「最强」= 平铺(层级曲线 × 品质^1.8 × 强化加成,血按 1/6 折算)+ 词条战力
+ *     (权重与战力面板同一张 POWER_STAT_WEIGHTS,会心按会心×会心伤联乘);
+ *   · 粗排 betterEquip 降级为「同战力」的稳定裁决,不再当主判;
+ *   · 成长类词条(修速等)不进战力,一键不为了修速换装。
  *
- * 契约冲突:与 pillValue/hooks 零交集;与 inventory.equip 同语义(旧件自动回行囊)。
+ * 不变的旧三条:只改装配零损耗、穿套绝不降级、幂等可反复点。
  */
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useInventoryStore } from '@/stores/inventory'
-import { equipAllBest, equipBestFor, bestEquipFor, betterEquip, equipSetCombo } from './equipBest'
+import { equipAllBest, equipBestFor, bestEquipFor, betterEquip, equipSetCombo, equippablePower } from './equipBest'
+import { resolveEquipStats } from './equipGen'
 import { equipmentTemplate } from '@/data/equipment'
 import type { EquipmentInstance, EquipSlot, QualityId } from '@/types'
 
@@ -29,9 +33,10 @@ const TPL: Record<EquipSlot, string> = {
 }
 
 let seq = 0
-function item(slot: EquipSlot, quality: QualityId, tier: number, level = 0, rolls: number[] = [0]): EquipmentInstance {
+/** 词条用真实 id + roll(0~1):真实战力要吃引擎解析,假 id 会被整条忽略 */
+function item(slot: EquipSlot, quality: QualityId, tier: number, level = 0, affixes: { id: string; roll: number }[] = []): EquipmentInstance {
   seq += 1
-  return { uid: `eq-${seq}`, templateId: TPL[slot]!, quality, tier, level, affixes: rolls.map(roll => ({ id: 'atk', roll })) }
+  return { uid: `eq-${seq}`, templateId: TPL[slot]!, quality, tier, level, affixes }
 }
 
 function add(inv: ReturnType<typeof useInventoryStore>, ...items: EquipmentInstance[]): void {
@@ -42,34 +47,81 @@ function slotOf(itemInst: EquipmentInstance): EquipSlot {
   return equipmentTemplate(itemInst.templateId)!.slot
 }
 
-describe('一键换装', () => {
+describe('equippablePower —— 真实战斗价值', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
   })
 
-  it('按「品质 → 层级 → 强化 → 词条」择最强', () => {
-    const a = item('weapon', 'heaven', 3) // 天品 3 阶
-    const b = item('weapon', 'spirit', 8) // 灵品 8 阶
-    expect(slotOf(a)).toBe('weapon')
-    expect(betterEquip(a, b), '天品压过灵品,不以阶数论').toBe(true)
-    expect(betterEquip(b, a)).toBe(false)
-
-    const c = item('weapon', 'heaven', 4)
-    expect(betterEquip(c, a)).toBe(true)
-
-    const d = { ...item('weapon', 'heaven', 4), level: 3 }
-    expect(betterEquip(d, c)).toBe(true)
-
-    const e = { ...c, affixes: [{ id: 'atk', roll: 9 }] }
-    expect(betterEquip(e, c)).toBe(true)
+  it('平铺随强化放大:同件装备强化 10 胜过高 1 阶的裸件', () => {
+    const fresh = item('weapon', 'heaven', 18)
+    const leveled = { ...item('weapon', 'heaven', 17), level: 10 }
+    expect(betterEquip(fresh, leveled), '粗排仍按阶高取胜 —— 这正是玩家说没装上最强的那把尺').toBe(true)
+    expect(equippablePower(leveled), '强化 10 的平铺压过高一阶的裸件').toBeGreaterThan(equippablePower(fresh))
   })
 
-  it('空槽:把行囊里最强的一件换上', () => {
+  it('词条按战力权重计入且单调:同帧一条攻击% 的 roll 越高战力越高', () => {
+    const low = item('weapon', 'heaven', 17, 0, [{ id: 'atk1', roll: 0.1 }])
+    const high = { ...item('weapon', 'heaven', 17, 0, [{ id: 'atk1', roll: 0.9 }]) }
+    expect(equippablePower(high)).toBeGreaterThan(equippablePower(low))
+  })
+
+  it('会心按「会心 ×(1+会心伤)」联乘:暴伤单上不改战力,会心与会心伤同出才放大', () => {
+    const bare = item('weapon', 'heaven', 17)
+    const crit = item('weapon', 'heaven', 17, 0, [{ id: 'crit1', roll: 0.5 }])
+    const critDmg = item('weapon', 'heaven', 17, 0, [{ id: 'cdmg1', roll: 0.5 }])
+    const both = item('weapon', 'heaven', 17, 0, [
+      { id: 'crit1', roll: 0.5 },
+      { id: 'cdmg1', roll: 0.5 }
+    ])
+    expect(equippablePower(critDmg) - equippablePower(bare)).toBeCloseTo(0, 9)
+    expect(equippablePower(crit) - equippablePower(bare)).toBeGreaterThan(0)
+    // 联乘:双上比只上会心,增量 = 会心 × 暴伤
+    expect(equippablePower(both) - equippablePower(crit)).toBeGreaterThan(0)
+    expect(equippablePower(both)).toBeGreaterThan(equippablePower(critDmg))
+  })
+
+  it('成长类词条不进战力:带了修速,战力纹丝不动(一键不为了修速换装)', () => {
+    const bare = item('weapon', 'heaven', 17)
+    const withGrowth = item('weapon', 'heaven', 17, 0, [{ id: 'cult1', roll: 0.9 }])
+    expect(resolveEquipStats(withGrowth).mods.cultivationSpeed ?? 0).toBeGreaterThan(0)
+    expect(equippablePower(withGrowth) - equippablePower(bare)).toBeCloseTo(0, 9)
+  })
+})
+
+describe('一键换装 · 「最强」按真实战力', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('同品质:强化满的一件压过高 1 阶的裸件(旧粗排会选错)', () => {
     const inv = useInventoryStore()
-    add(inv, item('head', 'fine', 9), item('head', 'excellent', 6))
-    expect(equipBestFor('head'), '应换上更好的精品').toBe(true)
-    const uid = inv.equipped['head']
-    expect(inv.items.find(i => i.uid === uid)!.quality).toBe('excellent')
+    const fresh = item('weapon', 'heaven', 18) // 天品 18 阶,0 强化
+    const leveled = item('weapon', 'heaven', 17, 10) // 天品 17 阶,强化 10
+    add(inv, fresh, leveled)
+    expect(equippablePower(leveled)).toBeGreaterThan(equippablePower(fresh))
+    expect(bestEquipFor('weapon')!.uid, '该穿强化满的那件').toBe(leveled.uid)
+  })
+
+  it('跨品质跨阶:高阶玄品满强化胜过低阶地品裸件(玩家反馈的主诉场景)', () => {
+    const inv = useInventoryStore()
+    const earned = item('weapon', 'profound', 20, 10) // 玄品 20 阶,强化满
+    const polished = item('weapon', 'earth', 14) // 地品 14 阶,高一档品质
+    add(inv, earned, polished)
+    expect(slotOf(earned)).toBe('weapon')
+    expect(equippablePower(earned)).toBeGreaterThan(equippablePower(polished))
+    expect(bestEquipFor('weapon')!.uid, '玄品满强化是实打打来的战利').toBe(earned.uid)
+  })
+
+  it('空槽:把行囊里真实战力更强的一件换上', () => {
+    const inv = useInventoryStore()
+    const step = item('head', 'fine', 9)
+    const better = item('head', 'excellent', 6)
+    add(inv, step, better)
+    expect(equipBestFor('head'), '空槽应当上一件').toBe(true)
+    const picked = inv.items.find(i => i.uid === inv.equipped['head'])!
+    const other = picked === better ? step : better
+    // 真实战力为准:穿上去的那件就是更强的(不奉行「品质保底」)
+    expect(equippablePower(picked)).toBeGreaterThanOrEqual(equippablePower(other))
   })
 
   it('已是最强则不动(幂等)', () => {
@@ -80,13 +132,17 @@ describe('一键换装', () => {
     expect(equipBestFor('body'), '本就是最强,不该来回换').toBe(false)
   })
 
-  it('旧的最好,别把已穿的天品换成凡品', () => {
+  it('已穿的更强就不换(真实战力口径,不奉行「品质保底」)', () => {
     const inv = useInventoryStore()
     const worn = item('necklace', 'heaven', 12, 5)
-    add(inv, worn, item('necklace', 'mortal', 20))
+    const contender = item('necklace', 'mortal', 20)
+    add(inv, worn, contender)
     inv.equip(worn.uid, 'necklace')
-    expect(bestEquipFor('necklace')!.uid, '天品保底').toBe(worn.uid)
-    expect(equipBestFor('necklace')).toBe(false)
+    // 两种口径下都以真实战力裁决:穿的那件若更强,断言不换;反之真换
+    const shouldSwap = equippablePower(contender) > equippablePower(worn)
+    const swapped = equipBestFor('necklace')
+    expect(swapped).toBe(shouldSwap)
+    expect(inv.equipped['necklace']).toBe(shouldSwap ? contender.uid : worn.uid)
   })
 
   it('一键全槽:每槽换上最强,返回换了几件', () => {
@@ -97,6 +153,25 @@ describe('一键换装', () => {
     for (const slot of ['head', 'body', 'necklace', 'weapon'] as EquipSlot[]) {
       expect(inv.equipped[slot], `${slot} 槽应已穿上`).toBeTruthy()
     }
+  })
+})
+
+describe('betterEquip —— 仍是同战力的粗排裁决', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('品质 → 层级 → 强化 → 词条成色', () => {
+    const a = item('weapon', 'heaven', 3) // 天品 3 阶
+    const b = item('weapon', 'spirit', 8) // 灵品 8 阶
+    expect(betterEquip(a, b), '天品压过灵品,不以阶数论').toBe(true)
+    expect(betterEquip(b, a)).toBe(false)
+    const c = item('weapon', 'heaven', 4)
+    expect(betterEquip(c, a)).toBe(true)
+    const d = { ...item('weapon', 'heaven', 4), level: 3 }
+    expect(betterEquip(d, c)).toBe(true)
+    const e = { ...c, affixes: [{ id: 'atk1', roll: 0.9 }] }
+    expect(betterEquip(e, c)).toBe(true)
   })
 })
 
