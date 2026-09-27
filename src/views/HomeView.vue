@@ -100,7 +100,9 @@
             <span class="font-kai text-[13px] tracking-wider text-ink">{{ mainQuest.name }}</span>
             <span class="text-[10px] text-ink-faint">主线 {{ quests.mainIdx + 1 }}/{{ MAIN_QUESTS.length }}</span>
           </p>
-          <p class="mt-0.5 text-[11px] text-ink-faint">{{ mainQuest.desc }}(达成后自动领赏)</p>
+          <p class="mt-0.5 text-[11px] text-ink-faint">{{ mainQuest.desc }}</p>
+          <!-- 主线赏哪一口缝和日课一样:光说"自动领赏"不报赏,路线图的终点价得看得见 -->
+          <p class="mt-0.5 text-[11px] text-ink-soft tabular">奖 {{ rewardText(mainQuest.reward) }}(达成后自动领赏)</p>
           <!--
             主线只给"要做什么"不够 —— 新手第一天靠它当路线图,得知道自己走到哪了。
             进度文案与发赏判定同源(core/questProgress 读 progress.evalCond)。

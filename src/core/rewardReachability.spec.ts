@@ -126,3 +126,12 @@ describe('每日任务:奖励要看得见', () => {
     expect(rewardTextAtTier({}, 3)).toBe('')
   })
 })
+
+/** 主线卡要标「赏」—— 那赏必须每个都写得出来,不许出现「奖 」+ 空尾巴 */
+describe('主线任务:赏要写得出来', () => {
+  it('每一条主线的奖励都有非空文案', () => {
+    for (const q of MAIN_QUESTS) {
+      expect(rewardTextAtTier(q.reward, 5), `${q.name} 的赏写不出来`).not.toBe('')
+    }
+  })
+})
