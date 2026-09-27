@@ -307,6 +307,7 @@
           v-for="p in quickPills"
           :key="p.def!.id"
           class="card-ink flex items-center gap-2 px-3 py-2 text-left active:scale-98"
+          :disabled="p.overflow === 'full'"
           @click="usePill(p.def!.id)"
         >
           <GameIcon :name="p.def!.icon" :size="16" :style="{ color: qualityDef(p.def!.quality).color }" />
@@ -316,7 +317,13 @@
               存 {{ p.count }}<template v-if="quickPillBrief(p.def!)"> · {{ quickPillBrief(p.def!) }}</template>
             </span>
           </span>
-          <span class="text-[11px] text-jade">服用</span>
+          <!-- 顶满=白费,禁用并改口;续时=只剩尾巴可续,照吃但把话说清 -->
+          <span
+            class="shrink-0 text-[11px]"
+            :class="p.overflow === 'full' ? 'text-ink-faint' : p.overflow === 'partial' ? 'text-amber-ink' : 'text-jade'"
+          >
+            {{ p.overflow === 'full' ? '已顶' : p.overflow === 'partial' ? '续时' : '服用' }}
+          </span>
         </button>
       </div>
     </section>
@@ -387,7 +394,7 @@
   import { useCultivationStore } from '@/stores/cultivation'
   import { useInventoryStore } from '@/stores/inventory'
   import { useUiStore } from '@/stores/ui'
-  import { buffStackSize } from '@/core/engineBuffs'
+  import { buffOverflowOf, buffStackSize } from '@/core/engineBuffs'
   import { attemptBreakthrough, breakthroughInfo } from '@/core/breakthrough'
   import { prepareBreakthrough, startRetreat, isRetreating, getRetreatRemainingSec } from '@/core/earlyGameService'
   import { subClamp, toNum } from '@/utils/gnum'
@@ -672,6 +679,11 @@ import type { PillDef } from '@/types'
       .map(([id, count]) => ({ def: pillDef(id), count }))
       .filter(x => x.def !== undefined && x.count > 0)
       .filter(x => x.def!.kind === 'buff' || x.def!.instant?.expSecs || x.def!.instant?.expFixed || x.def!.instant?.qiPct)
+      .map(x => ({
+        ...x,
+        // 状态丹顶满再吃 = 白费(usePill 在 full 也照吃):卡面先把「已顶/续时」标出,别等 toast 才明白
+        overflow: x.def!.kind === 'buff' && x.def!.buffId ? buffOverflowOf(cultivation.buffs, x.def!.buffId, now.value) : 'none'
+      }))
       .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank)
       .slice(0, 4)
   )
