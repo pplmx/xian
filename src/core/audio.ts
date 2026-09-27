@@ -146,6 +146,15 @@ let initPromise: Promise<void> | null = null
 let unlocked = false
 let bgmPlaying = false
 let lastClickAt = 0
+/**
+ * 设备启动失败的冷却截止(epoch ms)。
+ *
+ * `T.start()` 在底层音频设备起不来时会以 `InvalidStateError: Failed to start
+ * the audio device` reject。此前两处 `void T.start()` 都不接这个承诺 —— 每次
+ * pointerdown 都重入 unlockAudio,一场会话能攒几十条 unhandledrejection。
+ * 且对着坏设备每击必试毫无意义:失败后冷却一小段再试,诚实重试而不刷屏。
+ */
+let startFailCooldownUntil = 0
 
 let musicBus: ToneNS.Gain | null = null
 let sfxBus: ToneNS.Gain | null = null
@@ -371,20 +380,29 @@ export function configureAudio(p: AudioPrefs): void {
   applyPrefs()
 }
 
+/** 在手势调用栈内恢复上下文;失败接住 + 冷却,绝不裸挂(见 startFailCooldownUntil) */
+function startTone(): void {
+  if (!T) return
+  if (Date.now() < startFailCooldownUntil) return
+  void T.start().catch(() => {
+    startFailCooldownUntil = Date.now() + 10_000
+  })
+}
+
 /** 首次用户交互时调用,加载引擎并解锁声音;每次交互重入无副作用 */
 export function unlockAudio(): void {
   if (typeof window === 'undefined' || typeof window.AudioContext === 'undefined') return
   unlocked = true
   if (T) {
     // 已就绪:在手势调用栈内直接恢复上下文
-    void T.start()
+    startTone()
     if (prefs.musicOn) startBgm()
     return
   }
   if (!initPromise) {
     initPromise = init()
       .then(() => {
-        void T!.start()
+        startTone()
         applyPrefs()
       })
       .catch(err => {
