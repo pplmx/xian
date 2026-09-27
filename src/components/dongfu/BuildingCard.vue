@@ -13,6 +13,10 @@
       </template>
       <p v-else>{{ props.def.desc }}</p>
     </div>
+    <!-- 灵兽园:把当前相伴的灵兽报在园子里 —— 别的建筑都是数值,这里是活物 -->
+    <p v-if="beastCompanionName" class="mt-1 flex items-center gap-1 text-[10px] text-jade">
+      <GameIcon name="paw" :size="11" />居园相伴 · {{ beastCompanionName }}
+    </p>
     <button class="btn-ghost mt-2 w-full !py-1.5 !text-[12px]" :disabled="!info.canUpgrade" @click="upgradeBuilding(props.def.id)">
       <!--
         数与量词必须黏在一起:窄屏(320)上卡片只有 ~140px,浏览器会在数字与「石」之间断行,
@@ -39,17 +43,25 @@
   import { computed, ref, watch } from 'vue'
   import type { BuildingDef } from '@/types'
   import { useDongfuStore } from '@/stores/dongfu'
+  import { usePlayerStore } from '@/stores/player'
+  import { petDef } from '@/data/pets'
   import { buildingUpgradeInfo, upgradeBuilding } from '@/core/buildingService'
+  import GameIcon from '@/components/common/GameIcon.vue'
   import { formatGN } from '@/utils/format'
 
   const props = defineProps<{ def: BuildingDef }>()
 
   const dongfu = useDongfuStore()
+  const player = usePlayerStore()
 
   const level = computed(() => dongfu.levels[props.def.id] ?? 0)
   /** 实际可达上限:洞府全局闸门与自身品类上限取小,洞府卡展现的是"提升到什么档"的依据 */
   const cap = computed(() => dongfu.buildingCap(props.def.id))
   const info = computed(() => buildingUpgradeInfo(props.def.id))
+  /** 灵兽园联动:洞府与宠物两系统彼此看见(只对 beast 这一座特例,其余建筑不理会) */
+  const beastCompanionName = computed(() =>
+    props.def.id === 'beast' && player.petId ? petDef(player.petId)?.name : undefined
+  )
 
   // 升级落成:整卡金光一闪(动画播完自清)
   const flashing = ref(false)
