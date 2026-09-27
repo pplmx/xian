@@ -128,6 +128,11 @@
           <span>强化 +{{ inst.level + 1 }} / 上限 {{ equipLevelCap() }}</span>
           <span class="tabular">器灵尘×{{ upCost.dust }} · 灵石 {{ formatGN(upCost.stone) }}</span>
         </p>
+        <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完(与法宝炼化同款) -->
+        <p v-if="!upAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
+          尚差 器灵尘×{{ Math.max(0, upCost.dust - resources.dust) }} · 灵石
+          {{ formatGN(Math.max(0, toNum(upCost.stone) - toNum(resources.spiritStone))) }}
+        </p>
       </template>
       <p v-if="salvage" class="mt-1 flex items-center justify-between text-[11px] text-ink-faint">
         <span>分解返还{{ inst.level > 0 ? `(${refundRateText()})` : '' }}</span>
@@ -194,7 +199,7 @@
         </template>
         <div class="flex gap-2">
           <button class="btn-seal flex-1" @click="toggleEquip">{{ isEquipped ? '卸 下' : '装 备' }}</button>
-          <button v-if="upCost" class="btn-ghost flex-1" @click="doUpgrade">强 化</button>
+          <button v-if="upCost" class="btn-ghost flex-1" :disabled="!upAffordable" @click="doUpgrade">强 化</button>
           <!-- 分解二步确认:一件淬养过的装备(强化/封存/重铸)误触垃圾桶不该直接没 -->
           <template v-if="decomposeArm !== inst?.uid">
             <button
@@ -226,6 +231,8 @@
   import { worldNameOfTier } from '@/core/formulas'
   import { resolveEquipStats } from '@/core/equipGen'
   import { decomposeEquipment, equipLevelCap, equipUpgradeCost, upgradeEquipment } from '@/core/forge'
+  import { useResourcesStore } from '@/stores/resources'
+  import { toNum } from '@/utils/gnum'
   import { refundRateText, salvageOf } from '@/core/salvage'
   import { detectBuild } from '@/core/buildDetect'
   import { endgameUnlocked } from '@/core/endgameService'
@@ -244,12 +251,19 @@
   const ui = useUiStore()
   const inventory = useInventoryStore()
   const player = usePlayerStore()
+  const resources = useResourcesStore()
 
   const inst = computed(() => (ui.equipDetailUid ? inventory.findItem(ui.equipDetailUid) : undefined))
   const template = computed(() => (inst.value ? equipmentTemplate(inst.value.templateId) : undefined))
   const resolved = computed(() => (inst.value ? resolveEquipStats(inst.value) : null))
   const isEquipped = computed(() => (inst.value && template.value ? inventory.equipped[template.value.slot] === inst.value.uid : false))
   const upCost = computed(() => (inst.value ? equipUpgradeCost(inst.value.uid) : null))
+  /** 付不起即灰:强化要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径) */
+  const upAffordable = computed(() => {
+    const c = upCost.value
+    if (!c) return false
+    return resources.hasSmall('dust', c.dust) && resources.hasStone(c.stone)
+  })
   /** 分解返还:底材 + 强化投入的配比(文案走 refundRateText,与 DECOMPOSE_REFUND_RATE 同源,不手写「八成」) */
   const salvage = computed(() => (inst.value ? salvageOf(inst.value) : null))
 
