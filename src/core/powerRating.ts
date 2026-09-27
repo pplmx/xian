@@ -54,6 +54,10 @@ export const POWER_STAT_WEIGHTS: Partial<Record<AnyStatKey, number>> = {
   damageBonus: 1,
   armorPen: 0.8,
   executeDamage: 0.5,
+  lowHpDamage: 0.5,
+  fullHpDamage: 0.5,
+  comboDamage: 0.4,
+  counterDamage: 0.4,
   // 生存
   defensePct: 1,
   maxHpPct: 1,
@@ -65,6 +69,7 @@ export const POWER_STAT_WEIGHTS: Partial<Record<AnyStatKey, number>> = {
   speed: 2,
   firstStrike: 1,
   comboRate: 1.5,
+  counterRate: 1.2,
   // 恢复(小数值键放大,量纲归一)
   lifesteal: 8,
   regenPerRound: 20,
@@ -122,7 +127,11 @@ export function ratePower(stats: FinalStats): PowerRating {
     term('造成伤害', v('damageBonus'), w('damageBonus')),
     critTerm,
     term('破甲', v('armorPen'), w('armorPen')),
-    term('处决伤害', v('executeDamage'), w('executeDamage'))
+    term('处决伤害', v('executeDamage'), w('executeDamage')),
+    term('背水增伤', v('lowHpDamage'), w('lowHpDamage')),
+    term('锋芒增伤', v('fullHpDamage'), w('fullHpDamage')),
+    term('追击威力', v('comboDamage'), w('comboDamage')),
+    term('反击威力', v('counterDamage'), w('counterDamage'))
   ]
   // 生存:防御/生命/减伤/盾/闪避
   const survivalTerms = [
@@ -137,7 +146,8 @@ export function ratePower(stats: FinalStats): PowerRating {
   const speedTerms = [
     term('先手判定', v('speed'), w('speed')),
     term('首回合伤害', v('firstStrike'), w('firstStrike')),
-    term('连击率', v('comboRate'), w('comboRate'))
+    term('连击率', v('comboRate'), w('comboRate')),
+    term('反击概率', v('counterRate'), w('counterRate'))
   ]
   // 恢复:吸血/回合回复/溢疗(量纲归一:小数值键放大)
   const recoveryTerms = [
@@ -177,9 +187,9 @@ export function ratePower(stats: FinalStats): PowerRating {
   const linear = (keys: AnyStatKey[]): number => keys.reduce((s, k) => s + (POWER_STAT_WEIGHTS[k] ?? 0) * v(k), 0)
   const scores: Record<PowerDimKey, number> = {
     // 会心是「会心 ×(1+会心伤)」的联乘,不进线性表;其余进攻项全走表
-    attack: v('critRate') * (1 + v('critDamage')) + linear(['attackPct', 'damageBonus', 'armorPen', 'executeDamage']),
+    attack: v('critRate') * (1 + v('critDamage')) + linear(['attackPct', 'damageBonus', 'armorPen', 'executeDamage', 'lowHpDamage', 'fullHpDamage', 'comboDamage', 'counterDamage']),
     survival: linear(['defensePct', 'maxHpPct', 'damageReduction', 'shieldOnStart', 'shieldPower', 'dodgeRate']),
-    speed: linear(['speed', 'firstStrike', 'comboRate']),
+    speed: linear(['speed', 'firstStrike', 'comboRate', 'counterRate']),
     recovery: linear(['lifesteal', 'regenPerRound', 'overhealShield', 'lowHpReduction']),
     mechanics: build ? build.affinity + (build.secondary?.affinity ?? 0) * 0.6 : 0
   }

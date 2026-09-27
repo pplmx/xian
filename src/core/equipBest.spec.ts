@@ -80,6 +80,13 @@ describe('equippablePower —— 真实战斗价值', () => {
     expect(equippablePower(both)).toBeGreaterThan(equippablePower(critDmg))
   })
 
+  it('条件伤害词条也进战力:背水一击(残血增伤)的件比裸件强,不再记 0', () => {
+    const bare = item('weapon', 'heaven', 17)
+    const withCond = item('weapon', 'heaven', 17, 0, [{ id: 'bs1', roll: 0.9 }])
+    expect(resolveEquipStats(withCond).mods.lowHpDamage ?? 0).toBeGreaterThan(0)
+    expect(equippablePower(withCond)).toBeGreaterThan(equippablePower(bare))
+  })
+
   it('成长类词条不进战力:带了修速,战力纹丝不动(一键不为了修速换装)', () => {
     const bare = item('weapon', 'heaven', 17)
     const withGrowth = item('weapon', 'heaven', 17, 0, [{ id: 'cult1', roll: 0.9 }])
