@@ -147,6 +147,14 @@
       <!-- Phase 32.0 劫势详情(决意前评估:风险维度 + 建议,信息给足,决定留给玩家) -->
       <div v-if="tribPlan" class="mt-2 rounded-md border border-violet-ink/25 bg-violet-ink/5 px-3 py-2">
         <p class="text-[11px] text-violet-ink">{{ tribPlan.desc }}</p>
+        <!--
+          天时是这场劫的第三个输入:劫型看境界×今日天时、结算 damage 再乘
+          tribulationMult —— verdict/建议早已吃进这一笔,但没摆成一行。
+          这里与主页天时卡同一口径(读 todayWeather,不另算),渡劫前一眼对上。
+        -->
+        <p class="mt-1 text-[10px] text-ink-faint tabular">
+          今日天时 · {{ tribWeather.name }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template>
+        </p>
         <p class="mt-1.5 text-[10px] text-ink-faint tabular">
           准备:
           <span class="text-ink-soft">{{ PREP_NAMES.guard }} {{ PREP_STARS[tribPlan.prep.guard] }}</span>
@@ -396,6 +404,7 @@
   import { useUiStore } from '@/stores/ui'
   import { buffOverflowOf, buffStackSize } from '@/core/engineBuffs'
   import { attemptBreakthrough, breakthroughInfo } from '@/core/breakthrough'
+  import { todayWeather } from '@/core/weather'
   import { prepareBreakthrough, startRetreat, isRetreating, getRetreatRemainingSec } from '@/core/earlyGameService'
   import { subClamp, toNum } from '@/utils/gnum'
   import { baseCultPerSec } from '@/core/formulas'
@@ -574,6 +583,9 @@ import type { PillDef } from '@/types'
   const PREP_NAMES = { guard: '护持', sustain: '恢复', resist: '抗性', burst: '爆发' } as const
   const PREP_STARS = ['·', '✧', '✧✧', '✧✧✧'] as const
   const tribPlan = computed(() => (btInfo.value.needTribulation ? currentTribulationPlan() : null))
+  /** 这天时是这场劫算进去的那一个(与结算/主页同源);倍率 >1 才挂字 */
+  const tribWeather = computed(() => todayWeather())
+  const tribWeatherMult = computed(() => (tribWeather.value.tribulationMult > 1 ? tribWeather.value.tribulationMult : null))
 
   /**
    * 这一劫是不是「界膜」那一关(人间→仙界 / 仙界→神界 / 神界→混沌海)。
