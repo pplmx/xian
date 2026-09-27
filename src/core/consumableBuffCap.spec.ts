@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest'
 import { PILLS } from '@/data/pills'
 import { buffDef } from '@/data/buffs'
-import { applyBuff, activeBuffsOf, buffCapSec, buffOverflowOf, buffStackHints } from './engineBuffs'
+import { applyBuff, activeBuffsOf, buffCapSec, buffOverflowOf, buffStackHints, buffStackSize } from './engineBuffs'
 import type { BuffInstance } from '@/types'
 
 const MIN_MS = 60_000
@@ -118,5 +118,27 @@ describe('buffStackHints:现效合计行的原料', () => {
 
   it('没查进别的键:只检查自己身上有的词条', () => {
     expect(buffStackHints({ cultivationSpeed: 0.3 }, { qiCapPct: 0.5 })).toEqual([])
+  })
+})
+
+/**
+ * 主屏「叠 N」角标 —— 与 buffStackHints 同一台账:
+ * 弹窗里报合并后的真值,胶囊上报"在叠的份数"。
+ * `others` 必须是**不含自己**的列表,免得把自己数进去。
+ */
+describe('buffStackSize:主屏「叠 N」角标', () => {
+  it('没人共享 → 1,不挂角标', () => {
+    expect(buffStackSize({ cultivationSpeed: 0.3 }, [])).toBe(1)
+    expect(buffStackSize({ cultivationSpeed: 0.3 }, [{ qiCapPct: 0.2 }])).toBe(1)
+  })
+
+  it('一人共享 → 2,多人共享 → 份数+1', () => {
+    expect(buffStackSize({ cultivationSpeed: 0.3 }, [{ cultivationSpeed: 0.6 }])).toBe(2)
+    expect(buffStackSize({ cultivationSpeed: 0.3 }, [{ cultivationSpeed: 0.6 }, { qiRegen: 0.5, cultivationSpeed: 0.1 }])).toBe(3)
+  })
+
+  it('自己没词条(空增益)不误报叠加', () => {
+    expect(buffStackSize({}, [{ cultivationSpeed: 0.6 }])).toBe(1)
+    expect(buffStackSize({}, [])).toBe(1)
   })
 })

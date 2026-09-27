@@ -109,6 +109,23 @@ export function buffStackHints(
 }
 
 /**
+ * 主屏状态胶囊的「叠 N」角标:同刻还有几份状态与它共享至少一条词条。
+ *
+ * `others` 是"除了自己之外"的在效状态 —— 含自己才拿 1 是"只有我",
+ * 若把自身也塞进来就会把自己数进去(调用方得先滤掉)。
+ * 与 BuffDialog 的「现效合计」同一台账:弹窗报合并后的真值,胶囊报"在叠的份数"。
+ */
+export function buffStackSize(own: StatMods, others: readonly StatMods[]): number {
+  if (Object.keys(own).length === 0) return 1
+  let n = 1
+  for (const other of others) {
+    const shares = Object.keys(other).some(k => (own[k as AnyStatKey] ?? 0) !== 0)
+    if (shares) n += 1
+  }
+  return n
+}
+
+/**
  * 此刻再服一次,这一颗会被上限怎么对待 —— 给"服药"那条路用。
  *
  *   `full`    已经顶到上限:一点也加不上去,这一颗**白费**;

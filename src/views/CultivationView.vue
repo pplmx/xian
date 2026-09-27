@@ -293,6 +293,7 @@
         >
           <GameIcon :name="b.def!.icon" :size="11" />
           {{ b.def!.name }}
+          <span v-if="b.stack > 1" class="text-[9px] opacity-80">×{{ b.stack }}</span>
           <span class="countdown-slot">{{ formatCountdown(b.remain) }}</span>
         </button>
       </div>
@@ -386,6 +387,7 @@
   import { useCultivationStore } from '@/stores/cultivation'
   import { useInventoryStore } from '@/stores/inventory'
   import { useUiStore } from '@/stores/ui'
+  import { buffStackSize } from '@/core/engineBuffs'
   import { attemptBreakthrough, breakthroughInfo } from '@/core/breakthrough'
   import { prepareBreakthrough, startRetreat, isRetreating, getRetreatRemainingSec } from '@/core/earlyGameService'
   import { subClamp, toNum } from '@/utils/gnum'
@@ -619,7 +621,15 @@ import type { PillDef } from '@/types'
    * 共用库里的同一处判据:到期即散,不再出现"还剩 0 秒却还挂着"的一拍(见 ISS-231)。
    */
   const activeBuffs = computed(() =>
-    cultivation.activeBuffs.map(view => ({ def: view.def, remain: view.remainingSec }))
+    cultivation.activeBuffs.map(view => ({
+      def: view.def,
+      remain: view.remainingSec,
+      // 同刻的同类叠加份数(含自己):叠了才挂角标 —— 主屏一眼可见,与 BuffDialog「现效合计」同一台账
+      stack: buffStackSize(
+        view.def.mods,
+        cultivation.activeBuffs.filter(v => v !== view).map(v => v.def.mods)
+      )
+    }))
   )
 
   const learnedList = computed(() =>
