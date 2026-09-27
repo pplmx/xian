@@ -128,8 +128,10 @@ function prepare(opts: { mastery?: number; skill?: number; herb?: number; forget
   quests.mainIdx = MAIN_QUESTS.length
 }
 
+// 只取结算相关的三键:引擎路径的失败回报多了 `salvaged`(批量收账用的元数据),
+// 冻结镜像没有它 —— 保料已由本文件里显式的 herb 断言覆盖,不比这一格。
 const snapshot = (outcome: Snapshot['outcome'], toasts: string[], draws: number): Snapshot => ({
-  outcome,
+  outcome: { ok: outcome.ok, count: outcome.count, ...(outcome.aborted !== undefined ? { aborted: outcome.aborted } : {}) },
   herb: useResourcesStore().herb,
   stone: formatExact(useResourcesStore().spiritStone),
   pills: useInventoryStore().pills[recipe.id] ?? 0,

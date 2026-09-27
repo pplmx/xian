@@ -31,7 +31,13 @@ import { playSfx } from './audio'
 import type { GNum } from '@/types'
 
 /** 服用丹药 */
-export function usePill(id: string): boolean {
+/**
+ * 服用一枚丹药。
+ *
+ * quiet=true 供批量服丹用:逐枚结算(修为/状态/计数/破题照旧),提示与音效
+ * 由批量那一层合为一条,免得连服十枚连弹十条。
+ */
+export function usePill(id: string, quiet = false): boolean {
   const player = usePlayerStore()
   const resources = useResourcesStore()
   const inventory = useInventoryStore()
@@ -40,7 +46,7 @@ export function usePill(id: string): boolean {
   const def = pillDef(id)
   if (!def) return false
   if (!inventory.spendPill(id)) {
-    ui.toast('丹药不足', 'warn')
+    if (!quiet) ui.toast('丹药不足', 'warn')
     return false
   }
   const lines: string[] = []
@@ -90,9 +96,39 @@ export function usePill(id: string): boolean {
   // Phase 32.5:「不假外物」之誓在按下这一刻就落空,不必等到转世才被告知
   noteTaboo('pill')
   collect('pill', id)
-  playSfx('success')
-  ui.toast(`服下「${def.name}」,${lines.join(',') || '药力温养周身'}`, 'success')
+  if (!quiet) {
+    playSfx('success')
+    ui.toast(`服下「${def.name}」,${lines.join(',') || '药力温养周身'}`, 'success')
+  }
   return true
+}
+
+/**
+ * 批量服丹(玩家反馈「批量吃丹」):连服至多 count 枚,存量见底就停。
+ * 与连点 count 下完全等价 —— 逐枚结算,只把提示合为一条。
+ *
+ * 增益丹(带 buffId)批量连服是陷阱:药力一顶,后面的全白费(涉策 buffOverflowOf),
+ * 这里退化为单服,UI 也不许给它们挂批量按钮。
+ * @returns 实际服下的枚数(0 = 一枚没服下)
+ */
+export function usePillBatch(id: string, count: number): number {
+  const def = pillDef(id)
+  if (!def) return 0
+  if (def.buffId) return usePill(id) ? 1 : 0
+  if (count <= 1) return usePill(id) ? 1 : 0
+  let eaten = 0
+  for (let i = 0; i < count; i += 1) {
+    if (!usePill(id, true)) break
+    eaten += 1
+  }
+  const ui = useUiStore()
+  if (eaten > 0) {
+    playSfx('success')
+    ui.toast(`连服 ${eaten} 枚「${def.name}」${eaten < count ? `(仅存 ${eaten} 枚)` : ''}`, 'success')
+  } else {
+    ui.toast('丹药不足', 'warn')
+  }
+  return eaten
 }
 
 /** 炼丹消耗 —— 草按品阶认(ISS-306,品阶由方子准入境界推导,见 data/herbGrades) */
@@ -153,6 +189,8 @@ export interface CraftOutcome {
   count: number
   /** 未开炉(材料不足/不知此方)时为 true —— 与"开炉失败"是两回事 */
   aborted?: boolean
+  /** 失败这一炉按技艺保下的灵草残料 —— 批量层要拿它收账,不许丢(见 pillBatch.spec) */
+  salvaged?: number
 }
 
 /**
@@ -161,7 +199,13 @@ export interface CraftOutcome {
  * 失败不是白费:料照赔(按技艺保下一部分),但技艺照长,
  * 而且失手对灵材的印象比顺手时更深(见 noteMaterialUsed)。
  */
-export function craftPill(id: string): CraftOutcome {
+/**
+ * 开炉炼丹。
+ *
+ * quiet=true 供批量炼丹用:逐炉结算照旧(耗材/技艺/计数/保料),提示与音效
+ * 由批量那一层合并;失败的保料数仍回在 CraftOutcome.salvaged 里供批量收账。
+ */
+export function craftPill(id: string, quiet = false): CraftOutcome {
   const resources = useResourcesStore()
   const inventory = useInventoryStore()
   const ui = useUiStore()
@@ -200,8 +244,8 @@ export function craftPill(id: string): CraftOutcome {
     // 保料必须报数:定心丹「爆炸保料 +50%」与技艺的护料本钱,得让玩家用眼睛收账
     const spent = spentOf(roll, 'herb') as number
     const kept = cost.herb - spent
-    ui.toast(kept > 0 ? `${failLine(able.weakness)} 残料尚存,保得灵草 ×${kept}` : failLine(able.weakness), 'warn')
-    return { ok: false, count: 0 }
+    if (!quiet) ui.toast(kept > 0 ? `${failLine(able.weakness)} 残料尚存,保得灵草 ×${kept}` : failLine(able.weakness), 'warn')
+    return { ok: false, count: 0, salvaged: kept }
   }
 
   const extra = roll.extra
@@ -209,8 +253,49 @@ export function craftPill(id: string): CraftOutcome {
   track('pillsCrafted', roll.produced)
   collect('pill', id)
   playSfx('success')
-  ui.toast(extra ? `丹成两枚!「${def.name}」品相极佳` : `炼成「${def.name}」×${roll.produced}`, extra ? 'rare' : 'success')
+  if (!quiet) {
+    ui.toast(extra ? `丹成两枚!「${def.name}」品相极佳` : `炼成「${def.name}」×${roll.produced}`, extra ? 'rare' : 'success')
+  }
   return { ok: true, count: roll.produced }
+}
+
+/**
+ * 批量炼丹(玩家反馈「批量炼丹」):连开至多 count 炉,材料见底就停。
+ * 逐炉结算与连点完全等价 —— 只把提示合为一条,成败之外保料账汇同一条报数。
+ * 材料一份都不够时,交给一次非静默开炉去说明真实阻塞理由。
+ * @returns 炉数 / 入包丹数 / 炸炉数
+ */
+export function craftPillBatch(id: string, count: number): { rounds: number; made: number; failed: number } {
+  if (count <= 1) {
+    const first = craftPill(id)
+    return { rounds: first.aborted ? 0 : 1, made: first.ok ? first.count : 0, failed: first.ok ? 0 : 1 }
+  }
+  let rounds = 0
+  let made = 0
+  let failed = 0
+  let salvaged = 0
+  for (let i = 0; i < count; i += 1) {
+    const out = craftPill(id, true)
+    if (out.aborted) break
+    rounds += 1
+    made += out.count
+    if (!out.ok) {
+      failed += 1
+      salvaged += out.salvaged ?? 0
+    }
+  }
+  const ui = useUiStore()
+  if (rounds === 0) {
+    // 材料一份都不够:非静默开一炉,让「差在哪」的阻塞理由浮上来
+    craftPill(id)
+    return { rounds: 0, made: 0, failed: 0 }
+  }
+  playSfx(failed > 0 && made === 0 ? 'fail' : 'success')
+  const parts = [`连炼 ${rounds} 炉,成 ${made}、败 ${failed}`]
+  if (salvaged > 0) parts.push(`残料保回 ×${salvaged}`)
+  if (rounds < count) parts.push('料尽而止')
+  ui.toast(parts.join(';'), failed > 0 && made === 0 ? 'warn' : 'success')
+  return { rounds, made, failed }
 }
 
 /** 炸炉话术:优先复述最要命的那条短板,让玩家知道该补什么 */

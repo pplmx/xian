@@ -270,7 +270,11 @@
         </p>
       </template>
       <template #footer>
-        <button class="btn-seal w-full" @click="onUsePill()">服 用</button>
+        <div class="flex gap-2">
+          <!-- 即时丹才许连服:增益丹药力一顶后面全白吃,不挂批量按钮(涉策 buffOverflowOf) -->
+          <button v-if="canBatchPill" class="btn-ghost flex-1" @click="onUsePillBatch()">连服 ×5</button>
+          <button class="btn-seal flex-1" @click="onUsePill()">服 用</button>
+        </div>
       </template>
     </BaseModal>
 
@@ -367,14 +371,25 @@
               <p class="tabular text-[13px]" :class="rateClass(r.able.successRate)">{{ formatPercent(r.able.successRate) }}</p>
               <p class="text-[10px] text-ink-faint">把握</p>
             </div>
-            <button
-              class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]"
-              :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
-              :disabled="r.shortHerb || r.shortStone"
-              @click="craftPill(r.def.id)"
-            >
-              炼制
-            </button>
+            <div class="flex shrink-0 gap-1.5">
+              <button
+                class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]"
+                :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
+                :disabled="r.shortHerb || r.shortStone"
+                @click="craftPill(r.def.id)"
+              >
+                炼制
+              </button>
+              <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
+              <button
+                class="btn-ghost shrink-0 !px-3 !py-1.5 !text-[12px]"
+                :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
+                :disabled="r.shortHerb || r.shortStone"
+                @click="craftBatch(r.def.id)"
+              >
+                连炼 ×5
+              </button>
+            </div>
           </div>
           <p v-if="r.shortText" class="mt-1 pl-7 text-[10px] text-cinnabar tabular">
             {{ r.shortText }}
@@ -612,7 +627,7 @@
   import { REALMS } from '@/data/realms'
   import { EQUIP_SLOT_NAMES, equipmentTemplate } from '@/data/equipment'
   import { BAG_CAPACITY } from '@/data/constants'
-  import { usePill, availableRecipes, craftPill, pillCraftCost } from '@/core/pillService'
+  import { usePill, usePillBatch, availableRecipes, craftPill, craftPillBatch, pillCraftCost } from '@/core/pillService'
   import { craftability, type Craftability } from '@/core/craftability'
   import {
     batchYieldText,
@@ -863,6 +878,24 @@
     if (!id) return
     usePill(id)
     if (!pillRows.value.some(r => r.def?.id === id)) pillDetail.value = null
+  }
+
+  /** 即时丹才许连服:增益丹药力一顶后面全白吃,不挂批量按钮(涉策 buffOverflowOf) */
+  const canBatchPill = computed(() => {
+    const def = currentPill.value?.def
+    return def ? !def.buffId : false
+  })
+
+  function onUsePillBatch(): void {
+    const id = pillDetail.value
+    if (!id) return
+    usePillBatch(id, 5)
+    if (!pillRows.value.some(r => r.def?.id === id)) pillDetail.value = null
+  }
+
+  /** 连炼 ×5 —— 批量开炉,料尽自停(成败与保料合一条提示) */
+  function craftBatch(id: string): void {
+    craftPillBatch(id, 5)
   }
 
   const artifactSlots = computed(() => artifactSlotsFor(player.major))
