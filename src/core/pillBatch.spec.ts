@@ -217,4 +217,13 @@ describe('批量炼丹 · UI 收口', () => {
     expect(src).toContain('连服 ×5')
     expect(src).toContain('!def.buffId')
   })
+
+  it('开炉幕挂出炼丹增益:三味状态丹的炼丹面在炉前可见,文案走 buff→modsText(不许另写一份)', () => {
+    const src = readFileSync(join(SRC, 'views/InventoryView.vue'), 'utf8')
+    for (const buffId of ['buff_huohou', 'buff_chengxin', 'buff_dingxin']) {
+      expect(src, `${buffId} 没接进开炉幕的炼丹增益`).toContain(buffId)
+    }
+    expect(src).toContain('炼丹增益')
+    expect(src).toContain('modsText')
+  })
 })

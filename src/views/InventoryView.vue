@@ -329,6 +329,24 @@
     <!-- 开炉炼丹 -->
     <BaseModal :open="craftOpen" title="开炉炼丹" wide @close="craftOpen = false">
       <p class="mb-2 text-[11px] text-ink-faint tabular">灵草 {{ resources.herb }} · 灵石 {{ formatGN(resources.spiritStone) }}</p>
+      <!--
+        炼丹增益:安神/澄心/定心是服下去的状态丹,「炼丹面」(双成/心得/护料)只在炉前
+        有意义 —— 吃没吃、加几成,开着炉就该看得见;没吃则给个引子,不许白吃白扛。
+        效果文案走 buff 的 mods → modsText,不在此处另写一份(见 pillBatch.spec 的收口)。
+      -->
+      <div v-if="alchemyBuffRows.length" class="mb-2 rounded-md bg-paper-deep/60 px-3 py-2">
+        <p class="text-[10px] text-ink-faint">炼丹增益 · 此刻在炉前生效</p>
+        <div class="mt-1 space-y-0.5">
+          <p v-for="row in alchemyBuffRows" :key="row.buffId" class="flex items-baseline gap-1.5 text-[11px]">
+            <span class="font-kai shrink-0 text-qing">{{ row.name }}</span>
+            <span class="tabular text-ink-soft">{{ row.effect }}</span>
+          </p>
+        </div>
+      </div>
+      <p v-else class="mb-2 text-[10px] leading-relaxed text-ink-faint">
+        炉前还是白身 —— 备一味
+        <span class="text-qing">安神 · 澄心 · 定心</span>,双成 / 心得 / 护料即刻各涨一截
+      </p>
       <!-- 百工技艺:做得多就精。技艺一直在影响成丹 —— 境地与进度条都在这,看得见自己在长 -->
       <div v-if="skillRows.length" class="mb-2 rounded-md bg-paper-deep/60 px-3 py-2">
         <p class="text-[10px] text-ink-faint">技艺(按道分,做得多就精)</p>
@@ -606,8 +624,10 @@
   import { usePlayerStore } from '@/stores/player'
   import { useUiStore } from '@/stores/ui'
   import { useSettingsStore } from '@/stores/settings'
+  import { useCultivationStore } from '@/stores/cultivation'
   import { qualityDef, QUALITIES } from '@/data/qualities'
   import { pillDef } from '@/data/pills'
+  import { buffDef } from '@/data/buffs'
   import { pillFuncText } from '@/ui/itemText'
   import { HERB_GRADES, HERB_GRADE_NAMES, HERB_GRADE_SHORT, herbBuyPrice, herbGradeBandLabel, type HerbGrade } from '@/data/herbGrades'
   import ProgressBar from '@/components/common/ProgressBar.vue'
@@ -645,7 +665,7 @@
   import { useLoreStore } from '@/stores/lore'
   import { DAO_NAMES, SKILLS, skillStageName, skillStageProgress } from '@/data/crafting'
   import { cnNumber, formatGN, formatNum, formatPercent, formatSignedPercent } from '@/utils/format'
-  import { STAT_NAMES } from '@/ui/statNames'
+  import { STAT_NAMES, modsText } from '@/ui/statNames'
   import { colorWithAlpha } from '@/ui/colorVar'
   import type { AnyStatKey, EquipSlot, GNum, PillDef } from '@/types'
   import SectionTitle from '@/components/common/SectionTitle.vue'
@@ -786,6 +806,24 @@
       .map(([id, count]) => ({ def: pillDef(id), count }))
       .filter(x => x.def !== undefined && x.count > 0)
       .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank)
+  )
+
+  // ---- 开炉幕 · 炼丹增益(机制可见:三味状态丹的炼丹面只在炉前有意义,不许白吃白扛) ----
+  const cult = useCultivationStore()
+  /** 炼丹面三键:双成 / 心得 / 护料。其余(回灵 / 会心 / 破境)是通用面,不进炉前这一格 */
+  const ALCHEMY_FACE_KEYS = new Set(['alchemyYield', 'craftExpGain', 'craftSalvage'])
+  const ALCHEMY_BUFF_PILLS = [
+    { buffId: 'buff_huohou', name: '安神' },
+    { buffId: 'buff_chengxin', name: '澄心' },
+    { buffId: 'buff_dingxin', name: '定心' }
+  ] as const
+  const alchemyBuffRows = computed(() =>
+    ALCHEMY_BUFF_PILLS.filter(({ buffId }) => cult.hasBuff(buffId)).map(({ buffId, name }) => {
+      const mods = buffDef(buffId)?.mods ?? {}
+      // 只取炼丹面;文案 = buff 自己的 mods → modsText,不在界面里另写一份
+      const face = Object.fromEntries(Object.entries(mods).filter(([k]) => ALCHEMY_FACE_KEYS.has(k)))
+      return { buffId, name, effect: Object.keys(face).length > 0 ? modsText(face as import('@/types').StatMods) : '' }
+    })
   )
 
   const recipes = computed(() =>
