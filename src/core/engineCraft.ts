@@ -34,9 +34,13 @@ export function alchemyBonus(pillId: string): number {
   return able.bonusChance + modOf(usePlayerStore().finalStats.mods, 'alchemyYield')
 }
 
-/** 炉前实际双成率 = 双成概率夹在 0.8 —— 开炉幕的读数与掷骰同一口径,不许两本账 */
+/**
+ * 炉前实际双成率 = 双成概率夹在 0.8 —— 开炉幕的读数与掷骰同一口径,不许两本账。
+ * 地板 max(0) 与引擎掷骰一拍不差(引擎带 max(0,·) 地板):将来若出负产出 debuff,
+ * 界面不许报出负双成。
+ */
 export function alchemyBonusCapped(pillId: string): number {
-  return Math.min(ALCHEMY_BONUS_CAP, alchemyBonus(pillId))
+  return Math.min(ALCHEMY_BONUS_CAP, Math.max(0, alchemyBonus(pillId)))
 }
 
 const RUNNER = createRecipeRunner<CraftCtx, number | GNum>({

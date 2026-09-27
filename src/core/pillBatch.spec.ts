@@ -16,9 +16,10 @@ import { createPinia, setActivePinia } from 'pinia'
 import { readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { craftPillBatch, craftPill, usePillBatch, usePill } from './pillService'
-import { alchemyBonusCapped, ALCHEMY_BONUS_CAP } from './engineCraft'
+import { alchemyBonus, alchemyBonusCapped, ALCHEMY_BONUS_CAP } from './engineCraft'
 import { craftability } from './craftability'
 import { useCultivationStore } from '@/stores/cultivation'
+import { useDongfuStore } from '@/stores/dongfu'
 import { buffDef } from '@/data/buffs'
 import * as audio from './audio'
 import { pillDef } from '@/data/pills'
@@ -224,6 +225,16 @@ describe('批量炼丹', () => {
     expect(lift).toBeCloseTo(buffDef('buff_huohou')?.mods?.alchemyYield ?? 0, 9)
     expect(lift).toBeGreaterThan(0)
     expect(base + lift).toBeLessThanOrEqual(ALCHEMY_BONUS_CAP)
+  })
+
+  it('双成率顶破也钉在 0.8:堆积产出到原始和超上限,读数不改(真上限,非恒真)', () => {
+    mockRand = 0
+    knowRecipe(CR)
+    // 炼丹炉满级(双成 +50%)+ 安神(+20%),原始和必超上限 —— 基线断言不许静默滑走
+    useDongfuStore().setLevel('alchemy', 10)
+    useCultivationStore().addBuff('buff_huohou', Date.now())
+    expect(alchemyBonus(CR), '原始双成和必须顶破上限,这条判据才有意义').toBeGreaterThan(ALCHEMY_BONUS_CAP)
+    expect(alchemyBonusCapped(CR), '读数钉在 0.8 —— 谁删掉 min(0.8,·) 这条立刻红').toBeCloseTo(ALCHEMY_BONUS_CAP, 9)
   })
 })
 
