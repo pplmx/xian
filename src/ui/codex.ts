@@ -57,6 +57,8 @@ export interface CodexEntry {
   desc: string
   /** 一行补充信息(阶位 / 所属功法等) */
   meta: string
+  /** 章形图标(灵兽册这类重在"貌"的条目带图标,已收录 chip 前置一枚小章) */
+  icon?: string
   color?: string
   /** 收录深度:0 未收录,≥1 已收录 */
   stage: number
@@ -528,6 +530,7 @@ export function describePet(def: PetDef, stage: number, collectedAt?: number): C
       .filter(Boolean)
       .join('\n'),
     meta: q.name,
+    icon: def.icon,
     color: q.color,
     stage: lv,
     stageName: PET_STAGE_NAMES[lv]!,

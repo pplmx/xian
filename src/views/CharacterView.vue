@@ -145,6 +145,13 @@
     </button>
 
     <RouterLink to="/titles" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+      <!-- 相伴灵兽的"脸":有伴时亮出一枚玉色印章,未伴时无印 —— 伙伴不该只是名字 -->
+      <span
+        v-if="currentPetIcon"
+        class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-jade/10 text-jade"
+      >
+        <GameIcon :name="currentPetIcon" :size="18" />
+      </span>
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">名号与灵兽</span>
         <span class="block truncate text-[10px] text-ink-faint">
@@ -509,6 +516,7 @@
   import { achievementCounts, achievementStateOf } from '@/core/engineUnlocks'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
+  import GameIcon from '@/components/common/GameIcon.vue'
   import ProgressBar from '@/components/common/ProgressBar.vue'
 
   const player = usePlayerStore()
@@ -586,6 +594,7 @@
 
   const currentTitleName = computed(() => (player.titleId ? titleDef(player.titleId)?.name : undefined))
   const currentPetName = computed(() => (player.petId ? petDef(player.petId)?.name : undefined))
+  const currentPetIcon = computed(() => (player.petId ? petDef(player.petId)?.icon : undefined))
   const ownedTalents = computed(() => player.reincarnation.talents.map(id => talentDef(id)).filter(t => t !== undefined))
 
   const knownIn = (ids: string[], table: readonly { id: string }[]): number => {

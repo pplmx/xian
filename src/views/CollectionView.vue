@@ -35,10 +35,12 @@
           <template v-for="entry in cat.entries" :key="entry.id">
             <button
               v-if="entry.stage >= 1"
-              class="chip-ink active:scale-95"
+              class="chip-ink flex items-center gap-1 active:scale-95"
               :style="{ color: entry.color }"
               @click="openDetail(cat, entry)"
             >
+              <!-- 灵兽册这类带 icon 的条目,已收录的 chip 前置一枚小章 —— 图鉴终于有貌 -->
+              <GameIcon v-if="entry.icon" :name="entry.icon" :size="11" />
               {{ entry.name }}
               <span v-if="entry.badge" class="text-[9px] opacity-70">{{ entry.badge }}</span>
             </button>
@@ -102,6 +104,7 @@
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import InkTabs from '@/components/common/InkTabs.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
+  import GameIcon from '@/components/common/GameIcon.vue'
 
   const quests = useQuestsStore()
 
