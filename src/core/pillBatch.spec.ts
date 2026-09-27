@@ -16,6 +16,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { craftPillBatch, craftPill, usePillBatch, usePill } from './pillService'
+import * as audio from './audio'
 import { pillDef } from '@/data/pills'
 import { recipeCraft } from '@/data/crafting'
 import { ACHIEVEMENTS } from '@/data/achievements'
@@ -169,12 +170,16 @@ describe('批量炼丹', () => {
     giveMaterials()
     const ui = useUiStore()
     const toast = vi.spyOn(ui, 'toast')
+    const sfx = vi.spyOn(audio, 'playSfx')
     const out = craftPillBatch(FAIL, 5)
     expect(out.rounds).toBe(5)
     expect(out.failed).toBe(5)
     expect(400 - useResourcesStore().herb).toBe(pointHerb)
     expect(useQuestsStore().counter('pillsFailed')).toBe(5)
     expect(String(toast.mock.calls.at(-1)?.[0])).toContain('残料保回')
+    // quiet 逐炉不出声,音效只有批量那一条(全败 = fail 一声,不叠 6 声)
+    expect(sfx.mock.calls.length).toBe(1)
+    expect(sfx.mock.calls[0]?.[0]).toBe('fail')
   })
 
   it('材料只够一炉:烧完即止,不赊不缺', () => {
@@ -199,7 +204,8 @@ describe('批量炼丹', () => {
     const out = craftPillBatch(CR, 5)
     expect(out.rounds).toBe(0)
     expect(out.made).toBe(0)
-    expect(toast.mock.calls.length, '空手也要让人知道差在哪').toBeGreaterThan(0)
+    // 阻塞理由只由那一次非静默开炉说明,不许 quiet 炉与 fallback 各弹一遍
+    expect(toast.mock.calls.length, '空手也要让人知道差在哪').toBe(1)
     expect(resources.herb).toBe(0)
   })
 })

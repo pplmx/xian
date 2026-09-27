@@ -30,7 +30,6 @@ import { useUiStore } from '@/stores/ui'
 import { playSfx } from './audio'
 import type { GNum } from '@/types'
 
-/** 服用丹药 */
 /**
  * 服用一枚丹药。
  *
@@ -194,16 +193,13 @@ export interface CraftOutcome {
 }
 
 /**
- * 炼制丹药。
- *
- * 失败不是白费:料照赔(按技艺保下一部分),但技艺照长,
- * 而且失手对灵材的印象比顺手时更深(见 noteMaterialUsed)。
- */
-/**
  * 开炉炼丹。
  *
  * quiet=true 供批量炼丹用:逐炉结算照旧(耗材/技艺/计数/保料),提示与音效
  * 由批量那一层合并;失败的保料数仍回在 CraftOutcome.salvaged 里供批量收账。
+ *
+ * 失败不是白费:料照赔(按技艺保下一部分),但技艺照长,
+ * 而且失手对灵材的印象比顺手时更深(见 noteMaterialUsed)。
  */
 export function craftPill(id: string, quiet = false): CraftOutcome {
   const resources = useResourcesStore()
@@ -223,7 +219,8 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
   const canPay = resources.hasHerbs(cost.herbGrade, cost.herb) && resources.hasStone(cost.stone)
   const roll = runCraft(id, { pillId: id, canPay }, rng)
   if (!roll.fired) {
-    ui.toast(roll.reason, 'warn')
+    // 批量里的"料尽"由批量那一层报「料尽而止」,阻塞理由只在非静默时单说一遍
+    if (!quiet) ui.toast(roll.reason, 'warn')
     return { ok: false, count: 0, aborted: true }
   }
   const craft = recipeCraft(def)
@@ -240,7 +237,7 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
     // 炸炉长记性:这张方子反而更熟了一点
     useLoreStore().addRecipeMastery(id, 0.02)
     track('pillsFailed')
-    playSfx('fail')
+    if (!quiet) playSfx('fail')
     // 保料必须报数:定心丹「爆炸保料 +50%」与技艺的护料本钱,得让玩家用眼睛收账
     const spent = spentOf(roll, 'herb') as number
     const kept = cost.herb - spent
@@ -252,8 +249,8 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
   inventory.addPill(id, roll.produced)
   track('pillsCrafted', roll.produced)
   collect('pill', id)
-  playSfx('success')
   if (!quiet) {
+    playSfx('success')
     ui.toast(extra ? `丹成两枚!「${def.name}」品相极佳` : `炼成「${def.name}」×${roll.produced}`, extra ? 'rare' : 'success')
   }
   return { ok: true, count: roll.produced }
