@@ -14,7 +14,8 @@ import { worldOf } from '@/data/realms'
 import { currentTribulationPlan, waveDamage } from './tribulationDecision'
 import { tribulationDef } from '@/data/tribulations'
 import { NO_RELIEF } from '@/data/linggenAffinity'
-import type { StatMods } from '@/types'
+import { STAT_NAMES } from '@/ui/statNames'
+import type { AnyStatKey, StatMods } from '@/types'
 
 describe('天时(weather)', () => {
   beforeEach(() => {
@@ -236,5 +237,19 @@ describe('界域天象(weather · 仙界及以上)', () => {
     const src = readFileSync(resolve(import.meta.dirname, '../views/HomeView.vue'), 'utf8')
     expect(src).toContain('formatDuration(weatherRemainingSec())')
     expect(src).not.toContain('Math.round((total % 3600) / 60)')
+  })
+
+  it('每种天时的词条都有规范名 —— 卡面要把确定数值标出来,不许落回裸键', () => {
+    // 天时卡升级为数值行之后,每个键都得写得成人话(STAT_NAMES),否则出现「攻击 5%」式裸键
+    for (const w of [...WEATHERS, ...Object.values(WORLD_WEATHERS).flat()]) {
+      for (const k of Object.keys(w.mods)) {
+        expect(STAT_NAMES[k as AnyStatKey], `${w.name} 的词条 ${k} 没有规范名`).toBeTruthy()
+      }
+    }
+  })
+
+  it('天时卡把确定数值标上行 —— 散文之外有效果行(modsText 呈现,不藏数字)', () => {
+    const src = readFileSync(resolve(import.meta.dirname, '../views/HomeView.vue'), 'utf8')
+    expect(src).toContain('modsText(weather')
   })
 })

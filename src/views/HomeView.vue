@@ -36,6 +36,14 @@
           <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
             {{ weather.desc }}<span v-if="tomorrowWeather"> · 明日{{ tomorrowWeather.name }}</span>
           </p>
+          <!--
+            天时的影响是确定性数值,却只写在散文里(「灵气恢复与修炼皆有裨益」) ——
+            渡劫前一天该不该等天时,靠一句「皆有裨益」算不出来。
+            效果行照 mods 真值摊开;渡劫倍率 >1 再挂一句险。
+          -->
+          <p v-if="weatherModText" class="mt-0.5 text-[10px] text-qing tabular">
+            {{ weatherModText }}<span v-if="weatherTribulation"> · 今日渡劫 ×{{ weatherTribulation }}</span>
+          </p>
         </div>
         <!-- 修炼法球 · 灵气法阵环绕 -->
         <div class="relative mr-1 -mt-1 h-35 w-35 shrink-0">
@@ -190,6 +198,7 @@
   import { currentMainQuestProgress } from '@/core/questProgress'
   import { currentFirstStep, homeStatusText } from '@/core/firstStep'
   import { rewardText } from '@/core/progress'
+  import { modsText } from '@/ui/statNames'
   import { isRetreating } from '@/core/earlyGameService'
   import { dailyRowsOf, dailyStateOf } from '@/core/engineDailies'
   import { mainQuestAt } from '@/core/engineChain'
@@ -229,6 +238,10 @@
 
   // Phase 31 A1:今日天时(确定性,refreshed 每游戏日)
   const weather = computed(() => todayWeather())
+  /** 天时的确定效果(照 mods 真值摊开;清和这类无词条的不显行) */
+  const weatherModText = computed(() => modsText(weather.value.mods))
+  /** 渡劫倍率 >1 才挂"更险"(仅雷鸣/仙劫日等) */
+  const weatherTribulation = computed(() => (weather.value.tribulationMult > 1 ? weather.value.tribulationMult : null))
   /**
    * 天时的两个读数(来自库的周期层):
    *   还有多久换 —— 天时是每天一次的确定性环境,玩家该知道它什么时候变;
