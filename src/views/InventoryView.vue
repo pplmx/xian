@@ -7,11 +7,30 @@
     <template v-if="tab === 'equip'">
       <!-- 装备共鸣:机制是活的,玩家却看不见 —— 同组两件即共鸣,（2/2）亮起 -->
       <div v-if="setRows.length" class="card-ink mt-3 px-4 py-2.5">
-        <p class="text-[10px] text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-[10px] text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
+          <!-- 一键穿最强:纯方便性动作(自 yunyin 吸收),只改装配,绝不把好换差 -->
+          <button
+            type="button"
+            class="shrink-0 -my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
+            @click="wearEquipBest"
+          >
+            一键 · 各部位换最强
+          </button>
+        </div>
         <p v-for="s in setRows" :key="s.def.id" class="mt-1 flex items-baseline gap-2 text-[11px]">
           <span class="font-kai" :class="s.active ? 'text-jade' : 'text-ink-soft'">{{ s.def.name }}</span>
           <span class="tabular" :class="s.active ? 'text-jade' : 'text-ink-faint'">{{ s.count }}/{{ s.def.required }}</span>
-          <span class="min-w-0 text-[10px] leading-relaxed text-ink-faint">{{ s.def.effectDesc }}</span>
+          <span class="min-w-0 grow text-[10px] leading-relaxed text-ink-faint">{{ s.def.effectDesc }}</span>
+          <!-- 穿齐该套:换上已持有里最强的套件,已穿更强者不动(绝不降级) -->
+          <button
+            type="button"
+            class="shrink-0 -my-1.5 py-1.5 font-kai text-[11px] text-cinnabar active:opacity-60"
+            :aria-label="`穿齐${s.def.name}`"
+            @click="wearSetOf(s.def.id)"
+          >
+            穿齐 →
+          </button>
         </p>
       </div>
       <div class="mt-3 flex items-center justify-between px-1">
@@ -603,6 +622,7 @@
     artifactUpCost,
     upgradeArtifact
   } from '@/core/forge'
+  import { equipAllBest, equipSetCombo } from '@/core/equipBest'
   import { keepVerdict } from '@/core/smartKeep'
   import { smartKeepImpact } from '@/core/smartKeep'
   import { maxTierForMajor } from '@/data/regions'
@@ -679,6 +699,18 @@
       .filter((row): row is { def: EquipSetDef; count: number; active: boolean } => row !== null)
       .sort((a, b) => Number(b.active) - Number(a.active) || b.count - a.count)
   })
+
+  /** 一键穿最强:换成几件就报几件,没换就说"已是最佳"(与核心同一套不降级口径) */
+  function wearEquipBest(): void {
+    const n = equipAllBest()
+    ui.toast(n > 0 ? `一键换装:换上 ${n} 件` : '已是最佳,无需更动', n > 0 ? 'success' : 'info')
+  }
+
+  /** 穿齐某套:换成几件报几件;已穿更强的不动,幂等 */
+  function wearSetOf(setId: string): void {
+    const n = equipSetCombo(setId)
+    ui.toast(n > 0 ? `穿齐共鸣:换上 ${n} 件` : '此套已是最佳,无需更动', n > 0 ? 'success' : 'info')
+  }
 
   const slotRows = computed(() =>
     SLOTS.map(slot => {

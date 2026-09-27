@@ -1,0 +1,137 @@
+/**
+ * 一键换装 / 一键穿齐套装 —— 自 yunyin-xiuxian 吸收的便利机制(玩家反馈驱动)。
+ *
+ * 吸收评审过的三条不变量,是这块的本:
+ *   · 「最强」取玩家口中的关键词:品质 rank → 层级 → 强化 → 词条成色;
+ *   · 一键换装**只改装配**,不分解、不炼化、不卖任何一件 —— 纯方便,零损耗;
+ *   · 穿套装**绝不降级**:已穿的那件更强就不动,幂等可反复点。
+ *
+ * 契约冲突:与 pillValue/hooks 零交集;与 inventory.equip 同语义(旧件自动回行囊)。
+ */
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { useInventoryStore } from '@/stores/inventory'
+import { equipAllBest, equipBestFor, bestEquipFor, betterEquip, equipSetCombo } from './equipBest'
+import { equipmentTemplate } from '@/data/equipment'
+import type { EquipmentInstance, EquipSlot, QualityId } from '@/types'
+
+const TPL: Record<EquipSlot, string> = {
+  weapon: 'w_hanfeng',
+  head: 'h_xuantie',
+  body: 'b_qingyun',
+  necklace: 'n_lingyu',
+  wrist: 'wr_shuangwen',
+  belt: 'bl_youtan',
+  boots: 'bo_kuaixue',
+  ring: 'r_xuanguang',
+  talisman: 'tl_ningshuang',
+  artifact: 'af_muyu' // 一键换装不碰法宝,此键只为吃满 Record<EquipSlot>
+}
+
+let seq = 0
+function item(slot: EquipSlot, quality: QualityId, tier: number, level = 0, rolls: number[] = [0]): EquipmentInstance {
+  seq += 1
+  return { uid: `eq-${seq}`, templateId: TPL[slot]!, quality, tier, level, affixes: rolls.map(roll => ({ id: 'atk', roll })) }
+}
+
+function add(inv: ReturnType<typeof useInventoryStore>, ...items: EquipmentInstance[]): void {
+  inv.items = [...inv.items, ...items]
+}
+
+function slotOf(itemInst: EquipmentInstance): EquipSlot {
+  return equipmentTemplate(itemInst.templateId)!.slot
+}
+
+describe('一键换装', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('按「品质 → 层级 → 强化 → 词条」择最强', () => {
+    const a = item('weapon', 'heaven', 3) // 天品 3 阶
+    const b = item('weapon', 'spirit', 8) // 灵品 8 阶
+    expect(slotOf(a)).toBe('weapon')
+    expect(betterEquip(a, b), '天品压过灵品,不以阶数论').toBe(true)
+    expect(betterEquip(b, a)).toBe(false)
+
+    const c = item('weapon', 'heaven', 4)
+    expect(betterEquip(c, a)).toBe(true)
+
+    const d = { ...item('weapon', 'heaven', 4), level: 3 }
+    expect(betterEquip(d, c)).toBe(true)
+
+    const e = { ...c, affixes: [{ id: 'atk', roll: 9 }] }
+    expect(betterEquip(e, c)).toBe(true)
+  })
+
+  it('空槽:把行囊里最强的一件换上', () => {
+    const inv = useInventoryStore()
+    add(inv, item('head', 'fine', 9), item('head', 'excellent', 6))
+    expect(equipBestFor('head'), '应换上更好的精品').toBe(true)
+    const uid = inv.equipped['head']
+    expect(inv.items.find(i => i.uid === uid)!.quality).toBe('excellent')
+  })
+
+  it('已是最强则不动(幂等)', () => {
+    const inv = useInventoryStore()
+    const best = item('body', 'immortal', 20, 5)
+    add(inv, best)
+    inv.equip(best.uid, 'body')
+    expect(equipBestFor('body'), '本就是最强,不该来回换').toBe(false)
+  })
+
+  it('旧的最好,别把已穿的天品换成凡品', () => {
+    const inv = useInventoryStore()
+    const worn = item('necklace', 'heaven', 12, 5)
+    add(inv, worn, item('necklace', 'mortal', 20))
+    inv.equip(worn.uid, 'necklace')
+    expect(bestEquipFor('necklace')!.uid, '天品保底').toBe(worn.uid)
+    expect(equipBestFor('necklace')).toBe(false)
+  })
+
+  it('一键全槽:每槽换上最强,返回换了几件', () => {
+    const inv = useInventoryStore()
+    add(inv, item('head', 'fine', 6), item('body', 'excellent', 8), item('necklace', 'mortal', 3), item('weapon', 'spirit', 10))
+    const changed = equipAllBest()
+    expect(changed).toBe(4)
+    for (const slot of ['head', 'body', 'necklace', 'weapon'] as EquipSlot[]) {
+      expect(inv.equipped[slot], `${slot} 槽应已穿上`).toBeTruthy()
+    }
+  })
+})
+
+/**
+ * 一键穿齐共鸣套:各槽换上该套已持有里的最强,已穿更强的那件不动。
+ * 铁壁套 s_tiebi = 玄铁重剑(weapon)+ 玄铁冠(head)。
+ */
+describe('一键穿齐套装', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('空槽换上套装里更强的一件,已穿更强的非套件不动', () => {
+    const inv = useInventoryStore()
+    const pieces: EquipmentInstance[] = [
+      { uid: 'sa', templateId: 'w_xuantie', quality: 'fine', tier: 2, level: 0, affixes: [] },
+      { uid: 'sb', templateId: 'w_xuantie', quality: 'heaven', tier: 4, level: 0, affixes: [] },
+      { uid: 'sc', templateId: 'h_xuantie', quality: 'excellent', tier: 4, level: 0, affixes: [] },
+      { uid: 'sd', templateId: 'h_xuantie', quality: 'divine', tier: 5, level: 0, affixes: [] }
+    ]
+    inv.items = pieces
+    inv.equip('sd', 'head')
+    const changed = equipSetCombo('s_tiebi')
+    expect(changed, '只该换武器槽').toBe(1)
+    expect(inv.equipped['weapon'], '换上天品重剑').toBe('sb')
+    expect(inv.equipped['head'], '已穿更强 divine 不该被降级').toBe('sd')
+  })
+
+  it('已穿齐:再点一次不动(幂等)', () => {
+    const inv = useInventoryStore()
+    const a: EquipmentInstance = { uid: 'sa', templateId: 'w_xuantie', quality: 'heaven', tier: 4, level: 0, affixes: [] }
+    const b: EquipmentInstance = { uid: 'sc', templateId: 'h_xuantie', quality: 'heaven', tier: 4, level: 0, affixes: [] }
+    inv.items = [a, b]
+    inv.equip(a.uid, 'weapon')
+    inv.equip(b.uid, 'head')
+    expect(equipSetCombo('s_tiebi'), '已穿齐,不应再动').toBe(0)
+  })
+})
