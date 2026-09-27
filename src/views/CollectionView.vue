@@ -17,6 +17,8 @@
           <div class="min-w-0">
             <p class="font-kai text-[12px]" :class="row.done ? 'text-ink' : 'text-ink-faint'">{{ row.name }}</p>
             <p class="truncate text-[10px] text-ink-faint">{{ row.desc }}</p>
+            <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏(见 rewardText 含 titleId) -->
+            <p v-if="row.done && row.rewardText" class="text-[10px] text-qing tabular">{{ row.rewardText }}</p>
           </div>
         </div>
       </div>
@@ -96,6 +98,7 @@
   import { gongfaFuncText, gongfaMetaText } from '@/ui/itemText'
   import { achievementDirection } from '@/ui/achievementHint'
   import { achievementCounts, achievementStateOf } from '@/core/engineUnlocks'
+  import { rewardText } from '@/core/progress'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import InkTabs from '@/components/common/InkTabs.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
@@ -124,7 +127,9 @@
         done,
         name: done ? a.name : '???',
         // 名字成时自现,但方向要给:六十多个「???」不给方向,这一页就是白纸
-        desc: done ? a.desc : `尚未达成 · 方向:${achievementDirection(a.cond)}`
+        desc: done ? a.desc : `尚未达成 · 方向:${achievementDirection(a.cond)}`,
+        // 达成才现赏:与名称同一披露节奏;rewardText 含称号(29/63 的大头),与发赏同一套换算
+        rewardText: done && a.reward ? rewardText(a.reward) : ''
       }
     }).sort((a, b) => Number(b.done) - Number(a.done))
   )

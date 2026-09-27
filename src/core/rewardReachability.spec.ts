@@ -135,3 +135,25 @@ describe('主线任务:赏要写得出来', () => {
     }
   })
 })
+
+/**
+ * 成就的赏是「称号」占大头(29/63),而称号没能写进 rewardText ——
+ * 达成后那一行只在名字与方向上,到手的东西一个字不露。
+ * 这里守:每一条给赏的成就都要写得出来,且带称号的要把称号写进去。
+ */
+describe('成就:赏要写得出来(含称号)', () => {
+  it('所有带赏的成就,赏文案非空', () => {
+    for (const a of ACHIEVEMENTS) {
+      if (!a.reward) continue
+      expect(rewardTextAtTier(a.reward, 5), `${a.name} 的赏写不出来`).not.toBe('')
+    }
+  })
+
+  it('带称号的成就,称号要写进文案', () => {
+    const withTitle = ACHIEVEMENTS.find(a => a.reward?.titleId)
+    expect(withTitle, '成就数据里应存在带称号的赏').toBeTruthy()
+    const text = rewardTextAtTier(withTitle!.reward!, 5)
+    expect(text).toContain(`称号「${titleDef(withTitle!.reward!.titleId!)!.name}」`)
+    expect(text).toContain('灵石')
+  })
+})
