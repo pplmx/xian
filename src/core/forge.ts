@@ -11,6 +11,7 @@ import { add, gnZero, isZero } from '@/utils/gnum'
 import { formatGN } from '@/utils/format'
 import { refundRateText, salvageOf } from './salvage'
 import { modOf } from './statsCalc'
+import { noteSmithingUsed } from './loreService'
 import { track } from './progress'
 import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
@@ -59,6 +60,8 @@ export function upgradeEquipment(uid: string): boolean {
   const t = equipmentTemplate(inst.templateId)
   // 强化过也算「亲手用过」——图鉴那一档由玩家自己推进,不看运气
   useLoreStore().noteEquipUsed(inst.templateId)
+  // 炼器也算上手一味矿材:矿石从此能推到「通晓」、锻造技艺照常涨(见 noteSmithingUsed)
+  noteSmithingUsed(inst.tier, true)
   ui.toast(`「${t?.name}」强化至 +${inst.level + 1}`, 'success')
   return true
 }
