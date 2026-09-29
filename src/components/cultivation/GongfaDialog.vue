@@ -20,12 +20,8 @@
             <span class="text-ink-soft">{{ row.label }}</span>
             <span class="tabular text-qing">{{ row.value }}</span>
           </p>
-          <p v-if="def.skill" class="flex justify-between text-[13px]">
-            <span class="text-ink-soft">附带神通「{{ def.skill.name }}」</span>
-            <!-- 威力与几率一起给:只说「150% 威力」看不出它多久出一次,两部功法便没得比 -->
-            <span class="tabular text-cinnabar">
-              出手 {{ Math.round(def.skill.rate * 100) }}% 几率 · {{ Math.round(def.skill.mult * 100) }}% 威力
-            </span>
+          <p v-if="def.skill" class="text-[13px] leading-relaxed text-cinnabar">
+            {{ gongfaSkillLine(def.skill) }}
           </p>
         </div>
         <!-- 每进一层的增量:进修要花悟道点与残页,值不值当得看得见 -->
@@ -98,11 +94,8 @@
             <span class="text-ink-faint">{{ row.label }}</span>
             <span class="tabular text-qing">{{ row.value }}</span>
           </p>
-          <p v-if="def.skill" class="flex justify-between text-[13px]">
-            <span class="text-ink-faint">附带神通「{{ def.skill.name }}」</span>
-            <span class="tabular text-cinnabar">
-              出手 {{ Math.round(def.skill.rate * 100) }}% 几率 · {{ Math.round(def.skill.mult * 100) }}% 威力
-            </span>
+          <p v-if="def.skill" class="text-[13px] leading-relaxed text-cinnabar">
+            {{ gongfaSkillLine(def.skill) }}
           </p>
           <!-- 同上一行:满级账之外,把这功法的"尽头是条可择之路"一并预告 -->
           <p v-if="branches.length" class="flex justify-between text-[13px]">
@@ -139,6 +132,7 @@
   import { gongfaAffinity, rootElements } from '@/core/linggenAffinity'
   import { gongfaModsAt } from '@/stores/cultivation'
   import { formatSignedPercent } from '@/utils/format'
+  import { gongfaSkillLine } from '@/ui/itemText'
   import { STAT_NAMES, modsText } from '@/ui/statNames'
   import type { AnyStatKey } from '@/types'
   import BaseModal from '@/components/common/BaseModal.vue'

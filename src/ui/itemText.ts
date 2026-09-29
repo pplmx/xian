@@ -88,11 +88,19 @@ export function artifactMetaText(a: ArtifactDef): string {
 export function gongfaFuncText(g: GongfaDef): string {
   const lines = [`圆满(${g.maxLevel} 层)可得:${modsText(gongfaModsAt(g.id, g.maxLevel))}`]
   if (g.skill) {
-    lines.push(
-      `附带神通「${g.skill.name}」:出手时 ${Math.round(g.skill.rate * 100)}% 几率,${Math.round(g.skill.mult * 100)}% 威力`
-    )
+    lines.push(gongfaSkillLine(g.skill))
   }
   return lines.join('\n')
+}
+
+/**
+ * 附带神通的展示行。几率与威力从功法表现算;未设主修则这一式不出手。
+ * 这句边界是从前各页面自己手写时最容易漏的一条(光看「出手 20%」会以为
+ * 随便装备哪部就在放,其实战斗只出主修的那一式)。
+ */
+export function gongfaSkillLine(skill: GongfaDef['skill'] | undefined): string {
+  if (!skill) return ''
+  return `附带神通「${skill.name}」:出手 ${formatPercent(skill.rate)} 几率,${formatPercent(skill.mult)} 威力。须设为主修,战斗只出这一式`
 }
 
 /** 功法的出处一行:类型 · 品质 · 属性 · 从哪一境起可参 */

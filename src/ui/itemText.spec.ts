@@ -27,6 +27,7 @@ import {
   equipMetaText,
   gongfaFuncText,
   gongfaMetaText,
+  gongfaSkillLine,
   petFuncText,
   petTraitText,
   pillFuncText,
@@ -77,6 +78,17 @@ describe('用具 · 装备/法宝/功法三类的功用行', () => {
       expect(meta).toContain(GONGFA_TYPE_NAMES[g.type])
       if (g.element) expect(meta).toContain('属性')
     }
+  })
+
+  it('神通行点明「须设为主修,战斗只出这一式」,无神通的功法不写这一句', () => {
+    const withSkill = GONGFA.find(g => g.skill)!
+    const line = gongfaSkillLine(withSkill.skill)
+    expect(line).toContain(`附带神通「${withSkill.skill!.name}」`)
+    expect(line).toContain('须设为主修')
+    expect(line).toContain('只出这一式')
+    // 光看「出手 X% 几率」会以为随便装哪部都在放,主修边界必须同句讲清
+    expect(gongfaSkillLine(withSkill.skill)).toContain('出手')
+    expect(gongfaSkillLine(undefined)).toBe('')
   })
 
   it('风化文本仍在,功用行是补上去的而不是顶替', () => {

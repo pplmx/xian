@@ -505,10 +505,14 @@ describe('文案数值对账 · 用具三类的界面读同源函数', () => {
     }
   })
 
-  it('功法的神通把几率与威力一起写出来', () => {
+  it('功法的神通把几率与威力一起写出来(读 gongfaSkillLine,与图鉴同一份)', () => {
     const dlg = src('../components/cultivation/GongfaDialog.vue')
-    expect(dlg, '只说「威力」看不出多久出一次').toContain('skill.rate')
+    expect(dlg, '神通文案应读 gongfaSkillLine,不散落界面各处').toContain('gongfaSkillLine(')
     expect(dlg, '未习得也要给得出圆满账').toContain('previewRows')
+    // 几率与威力收在 itemText 那一句里,「出手几回、威力多少」一次说清
+    const itemText = src('../ui/itemText.ts')
+    expect(itemText, '那一句该同时写几率,光说威力看不出多久出一次').toContain('skill.rate')
+    expect(itemText, '那一句该同时写威力').toContain('skill.mult')
   })
 
   it('丹药详情与丹方清单说得出「服下去会怎样」', () => {
