@@ -9,6 +9,7 @@
  * 且成功返回 null。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 
 /** node 测试环境无 localStorage,导出路径内部(buildExportPayload)要读它,补一个最小桩 */
 class MemStorage {
@@ -56,6 +57,7 @@ import { Capacitor } from '@capacitor/core'
 
 describe('savePlatform(Web 分支)', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     mocks.writeFile.mockClear()
     mocks.requestPermissions.mockClear()
   })

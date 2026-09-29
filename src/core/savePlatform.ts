@@ -38,19 +38,50 @@ export async function exportSaveToDevice(): Promise<string | null> {
     }
   }
   /*
-   * Web 端靠 `saveAs`(Blob + a[download])。
+   * Web 端靠 `saveAs`(Blob + a[download]) + **剪贴板兜底**。
    *
-   * 这条路不是处处都通:受限 WebView、部分应用内浏览器里 `URL.createObjectURL` 直接不可用,
-   * 于是 saveAs 抛错 —— 而调用方是 `void exportSaveToDevice()`(不 await、不看返回值),
-   * 结果玩家点「导出存档」既没文件也没提示,静默失败。导出是丢档前唯一的保险,
-   * 失败必须说出来。
+   * 下载本身不是处处都通:受限 WebView、应用内浏览器(taptap 也是其一)里
+   * a[download] 常被**静默吞掉** —— 不抛错、也没文件,旧实现于是像点了空气。
+   * 故在挂下载之外,一律把存档文本写进剪贴板:无论下载成不成,玩家都拿得走。
+   * 提示语把这条退路讲明,不再假装「已导出」。
+   *
+   * 成功语义:真落盘的下载才算数(返回 null → 记账「上次导出」);
+   * 只有剪贴板时返回提示(不记账 —— 文本躺在剪贴板里不算持久备份)。
    */
+  const file = `xuanshu-${new Date().toISOString().slice(0, 10)}.save`
+
+  // 下载先行:它是唯一真正的落盘路径,不能被剪贴板的等待拖住
+  // (有的 WebView 里 writeText 会弹权限询问而挂起,兜底不该卡住主路)。
+  let downloaded = false
   try {
-    saveAs(new Blob([text], { type: 'application/json' }), `xuanshu-${new Date().toISOString().slice(0, 10)}.save`)
-    return null
+    saveAs(new Blob([text], { type: 'application/json' }), file)
+    downloaded = true
   } catch {
-    // 别承诺做不到的事:导入只认文件,没有「粘贴文本」这条路,故只指可行的办法
-    useUiStore().toast('浏览器没能下载这份存档 —— 请换一个浏览器打开后再导出', 'warn')
-    return '浏览器不支持下载'
+    /* 下载被拦,看剪贴板 */
   }
+
+  // 剪贴板兜底:写它要有用户手势 + secure context,导出按钮的单击正好给足。
+  // 剪贴板不可用(非安全上下文/被禁)不影响下载那条路;download 被静默吞掉时这里是唯一退路。
+  let clipped = false
+  try {
+    await navigator.clipboard.writeText(text)
+    clipped = true
+  } catch {
+    /* 剪贴板不可用,静默 —— 下载路还在 */
+  }
+
+  if (downloaded && clipped) {
+    useUiStore().toast(`已导出「${file}」(存档文本也已复制到剪贴板备用)`, 'success')
+    return null
+  }
+  if (downloaded) {
+    useUiStore().toast(`已导出「${file}」`, 'success')
+    return null
+  }
+  if (clipped) {
+    useUiStore().toast('浏览器没能下载 —— 存档文本已复制到剪贴板,新建文本粘贴并另存为 .save 即可导入', 'warn')
+    return '存档已复制到剪贴板'
+  }
+  useUiStore().toast('浏览器既不能下载也复制不了存档,请换一个浏览器打开后再导出', 'warn')
+  return '浏览器不支持导出'
 }
