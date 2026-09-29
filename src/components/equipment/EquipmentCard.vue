@@ -32,6 +32,14 @@
     <span v-if="props.item.level > 0" class="absolute bottom-0.5 right-1 text-[9px] leading-none text-gold-ink tabular">
       +{{ props.item.level }}
     </span>
+
+    <!-- 玩家标记:同名装备按流派区分(详情弹窗里写,见 noteDraft)。 -->
+    <span
+      v-if="props.item.note"
+      class="absolute bottom-0.5 left-6 right-6 truncate text-center text-[8px] leading-none text-ink-faint"
+    >
+      {{ props.item.note }}
+    </span>
   </button>
 </template>
 
@@ -57,6 +65,7 @@
     if (props.equipped) bits.push('佩戴中')
     if (props.item.locked) bits.push('已锁定')
     if (setName.value) bits.push(`共鸣${setName.value}`)
+    if (props.item.note) bits.push(`标记${props.item.note}`)
     return bits.join(' ')
   })
 </script>
