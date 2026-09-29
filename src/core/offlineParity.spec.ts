@@ -82,7 +82,10 @@ describe('离线历练 · 区域事件加丰与加难成对(regReward)', () => {
       /afterWin\(region, modeDef\.rewardMult \* OFFLINE_BOSS_REWARD_MULT \* regionEventReward, true\)/
     )
     expect(offline).toContain('modeDef.rewardMult * regionEventReward')
-    expect(offline).toContain('EQUIP_DROP_CHANCE * regionEventReward')
+    expect(offline).toContain('EQUIP_DROP_CHANCE * modeDef.rewardMult * regionEventReward')
+    // 残页与在线同源:在线 page 掉落判定是 rng.chance(PAGE_DROP_CHANCE * rewardMult),
+    // rewardMult 参数含 mode×reg —— 离线残页若只写死 0.15、不吃模式倍率,高收益模式赌残页就落空
+    expect(offline).toContain('PAGE_DROP_CHANCE * 1.5 * modeDef.rewardMult * regionEventReward')
   })
 })
 
