@@ -40,6 +40,11 @@ export const useSettingsStore = defineStore(
     const lastExportAt = ref(0)
     /** iOS「添加到主屏幕」那张提示卡被玩家关掉过(关掉即不再出现,只劝一次) */
     const installNoticeDismissed = ref(false)
+    /**
+     * 遇事勿扰(玩家反馈「手动关闭际遇事件触发」):历练撞见际遇/机缘/奇缘时
+     * 不再弹窗,按默认好愿当场结清 —— 奖励照拿、不卡战斗窗口(见 exploration 的 dnd 分支)。
+     */
+    const dndEvents = ref(false)
 
     /** 存档修复:设置项被写坏会让音量/战斗速度算出 NaN,或让主题类名失效 */
     function sanitize(): void {
@@ -50,6 +55,7 @@ export const useSettingsStore = defineStore(
       if (!['auto', 'light', 'dark'].includes(theme.value)) theme.value = 'auto'
       lastExportAt.value = asFiniteNumber(lastExportAt.value, 0, 0)
       installNoticeDismissed.value = installNoticeDismissed.value === true
+      dndEvents.value = dndEvents.value === true
       decomposeRanks.value = asArray<number>(decomposeRanks.value).filter(n => typeof n === 'number' && Number.isFinite(n))
       const sk = asRecord<unknown>(smartKeep.value)
       /**
@@ -85,6 +91,7 @@ export const useSettingsStore = defineStore(
       theme,
       lastExportAt,
       installNoticeDismissed,
+      dndEvents,
       sanitize
     }
   },
