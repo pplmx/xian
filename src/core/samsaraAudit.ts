@@ -343,10 +343,10 @@ export const HERITAGE: HeritageRow[] = [
   },
   {
     id: 'name',
-    name: '姓名',
-    mode: 'full',
-    detail: 'rebirth() 不改 name —— 名与道号随神魂不灭',
-    kind: 'legacy',
+    name: '道号',
+    mode: 'reset',
+    detail: 'confirmReincarnation 以确认页掷出的随机道号 setName 重拟 —— 名号属「这一世如何自报家门」,每世一换(确认页可改回)',
+    kind: 'state',
     power: 'none',
     compressesGrowth: false
   },

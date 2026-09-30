@@ -386,6 +386,11 @@ export const usePlayerStore = defineStore(
       lifespanBonusYears.value += years
     }
 
+    /** 改道号/名号(非建号流程专用;转世重拟名号用) */
+    function setName(newName: string): void {
+      name.value = newName
+    }
+
     function setTitle(id: string | null): void {
       titleId.value = id
     }
@@ -896,6 +901,7 @@ export const usePlayerStore = defineStore(
       breakVow,
       recordLife,
       markDead,
+      setName,
       rebirth,
       sanitize,
       setEventChain,

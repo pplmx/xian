@@ -94,6 +94,23 @@ function reviewLastLife(): LifeReview {
  * 原因很实际:玩家可能在这一步刷新页面,重开后会再点一次「兵解转世」,
  * 若在此就发放宿慧,同一世的阅历会被记两遍。
  */
+// ============ 转世重拟名号 ============
+
+/** 道号词根(两字)与尾缀 —— 新一世换新名号,确认页可改回(玩家反馈「转世名字没重随机」) */
+export const DAOHAO_CORES = [
+  '清虚', '妙微', '抱朴', '守拙', '漱玉', '归真', '太虚', '玄真', '素心', '青冥',
+  '孤鸿', '静虚', '凌云', '白云', '回月', '灵犀', '紫电', '青锋', '归藏', '抱元',
+  '守一', '忘机', '澄澈', '栖霞', '望舒', '扶摇', '冲虚', '无涯', '观澜', '清风'
+]
+export const DAOHAO_SUFFIXES = ['真人', '道人', '散人', '子', '居士', '上人']
+
+/** 掷一个道号草稿(可注入随机源,便于测试钉死) */
+export function rollReincarnateName(rand: { pick: <T>(arr: T[]) => T | undefined } = rng): string {
+  const core = rand.pick(DAOHAO_CORES) ?? '守拙'
+  const suffix = rand.pick(DAOHAO_SUFFIXES) ?? '散人'
+  return `${core}${suffix}`
+}
+
 export function prepareReincarnation(): ReincarnationView {
   const player = usePlayerStore()
   const owned = new Set(player.reincarnation.talents)
@@ -128,7 +145,9 @@ export function prepareReincarnation(): ReincarnationView {
     themeChoices: (fresh.length > 0 ? fresh : pool).map(x => x.id),
     themeFree: stageAfter.themeFreeChoice,
     // ISS-302:这一世到的最高未锻造门槛 —— 深修的「我是谁」。只算不改,confirm 才落账
-    heritageGained: lifeForge(player.major)?.id ?? null
+    heritageGained: lifeForge(player.major)?.id ?? null,
+    // 新一世的随机道号草稿(确认页可改回)
+    nameDraft: rollReincarnateName()
   }
   useUiStore().reincarnation = view
   return view
@@ -160,8 +179,9 @@ function carryGongfa(learned: Readonly<Record<string, number>>, keepOne: boolean
  *
  * @param chosenTalentId 三选一的先天之姿
  * @param chosenThemeId 这一世立下的题(null 为不立题)
+ * @param nextName 这一世的名号(确认页的随机道号草稿,玩家可改;缺省则保持原名)
  */
-export function confirmReincarnation(chosenTalentId: string | null, chosenThemeId: string | null = null): void {
+export function confirmReincarnation(chosenTalentId: string | null, chosenThemeId: string | null = null, nextName?: string): void {
   const player = usePlayerStore()
   const resources = useResourcesStore()
   const inventory = useInventoryStore()
@@ -236,6 +256,9 @@ export function confirmReincarnation(chosenTalentId: string | null, chosenThemeI
   player.rebirth(rollLinggen(rng, aptitudeFloorNow()))
   // 新的一世:上一世的建号草稿作废,「逆天改命」额度归满
   useGameStore().resetCreateDraft()
+  // 新一世,新名号:确认页掷出的随机道号(玩家可改回)。「名随神魂不灭」让位给
+  // 「每世一换」—— 换的只是这一世如何自报家门,神魂所系之物依旧跨世
+  if (nextName && nextName.trim()) player.setName(nextName.trim())
   // 道途归还天地,道源与道痕随神魂不灭
   useEndgameStore().onRebirth()
   // 立下这一世的题。快照须在重置之后取,「本世」方才从此刻算起。

@@ -112,6 +112,22 @@
         <span class="text-cinnabar tabular">{{ view.daoFruitGained }}</span>
         枚,来世修行更进一步。
       </p>
+
+      <!-- 新一世的名号:每世一换,确认页可改回(玩家反馈「转世名字没重随机」) -->
+      <p class="mt-3 font-kai text-[13px] tracking-widest text-ink">新一世的名号</p>
+      <p class="mt-1 text-[11px] text-ink-faint">名号属「这一世如何自报家门」,随皮囊一同换过。</p>
+      <div class="mt-2 flex items-center gap-2">
+        <input
+          v-model="nameDraft"
+          maxlength="8"
+          class="w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-2 font-kai text-[15px] tracking-widest text-ink outline-none focus:border-cinnabar/50"
+          :placeholder="view.nameDraft"
+        />
+        <button class="btn-ghost shrink-0 !px-3" aria-label="随机取一个道号" @click="reRollName">
+          <GameIcon name="refresh" :size="15" />
+        </button>
+      </div>
+
       <p class="mt-3 font-kai text-[13px] tracking-widest text-ink">择一先天之姿</p>
       <p v-if="view.talentChoices.length === 0" class="mt-2 text-[11px] leading-relaxed text-ink-faint">
         先天之姿已尽数为你所有,此番再无可择——直取轮回便是。
@@ -184,7 +200,7 @@
   import { useRouter } from 'vue-router'
   import { useUiStore } from '@/stores/ui'
   import { usePlayerStore } from '@/stores/player'
-  import { prepareReincarnation, confirmReincarnation } from '@/core/reincarnation'
+  import { prepareReincarnation, confirmReincarnation, rollReincarnateName } from '@/core/reincarnation'
   import { talentDef, TALENT_GRADE_COLORS, TALENT_GRADE_NAMES } from '@/data/talents'
   import { heritageDef } from '@/data/heritage'
   import { lifeThemeDef, TABOO_NAMES } from '@/data/lifeThemes'
@@ -192,6 +208,7 @@
   import { engine } from '@/core/engine'
   import { yearsShown } from '@/utils/format'
   import BaseModal from '@/components/common/BaseModal.vue'
+  import GameIcon from '@/components/common/GameIcon.vue'
 
   const ui = useUiStore()
   const player = usePlayerStore()
@@ -210,6 +227,7 @@
 
   const chosen = ref<string | null>(null)
   const theme = ref<string | null>(null)
+  const nameDraft = ref('')
   const step = ref<'review' | 'next'>('review')
 
   const view = computed(() => ui.reincarnation)
@@ -223,19 +241,28 @@
    */
   const canConfirm = computed(() => (view.value?.talentChoices.length ?? 0) === 0 || chosen.value !== null)
 
-  // 每次新开轮回界面都从"回顾"这一程重新走起
+  // 每次新开轮回界面都从"回顾"这一程重新走起,名号草稿随新一世重掷
   watch(view, v => {
-    if (v) step.value = 'review'
+    if (v) {
+      step.value = 'review'
+      nameDraft.value = v.nameDraft
+    }
   })
 
   function beginRebirth(): void {
     prepareReincarnation()
   }
 
+  /** 对名号草稿不满意就再掷一次 */
+  function reRollName(): void {
+    nameDraft.value = rollReincarnateName()
+  }
+
   function confirm(): void {
-    confirmReincarnation(chosen.value, theme.value)
+    confirmReincarnation(chosen.value, theme.value, nameDraft.value)
     chosen.value = null
     theme.value = null
+    nameDraft.value = ''
     engine.resetDeathFlag()
     void router.push('/')
   }

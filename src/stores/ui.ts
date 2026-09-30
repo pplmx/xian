@@ -76,6 +76,8 @@ export interface ReincarnationView {
   themeFree: boolean
   /** ISS-302:这一世到达的最高未锻造传承(id);深修专属,无则 null */
   heritageGained: string | null
+  /** 转世重拟的道号草稿(随机掷出;确认页可改回) */
+  nameDraft: string
 }
 
 let toastSeq = 1
