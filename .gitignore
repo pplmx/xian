@@ -47,3 +47,6 @@ core.[0-9]*
 
 # 库的发布包产物(packages/engine 打出来的 tgz)
 *.tgz
+
+# vitest --reporter=json 的默认产物目录(排查计数时偶然生成,不该进库)
+.vitest/
