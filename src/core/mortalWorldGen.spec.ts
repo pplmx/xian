@@ -12,12 +12,14 @@ import { describe, expect, it } from 'vitest'
 import {
   BIAS_POOL,
   NOVELTY_MIN,
+  REGION_NAME_TIER_BAND,
   generateMortalWorld,
   generateSeries,
   materialCapacity,
   mortalNovelty,
   shuffleOnlyWorld
 } from './mortalWorldGen'
+import { REGIONS } from '@/data/regions'
 
 const SERIES = generateSeries(5, 20260904, 10)
 
@@ -195,5 +197,33 @@ describe('凡界生成 · 可行性结论', () => {
 判据本身的有效性由那条反例保证,与本条统计互为佐证`
     )
     expect(totalRejected).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('凡界生成 · 名实相符(名字的静态档与落座档不脱钩)', () => {
+  it('每个节点落座档都落在其名字静态档 ± REGION_NAME_TIER_BAND 内', () => {
+    // 玩家反馈:「在青云山麓里总是刷出鸿蒙古魔」——凡界把「青云山麓」这个名字
+    // (静态 1 阶,众人眼里的新手村)复用到 19/20 档,于是新手村名端出终局怪。
+    // 反例还有「鸿蒙裂隙」在 2~3 档冒充开场。名字与档位脱钩,两头都撒谎。
+    const home = new Map(REGIONS.map(r => [r.id, r.tier]))
+    const worlds = Array.from({ length: 240 }, (_, i) => generateMortalWorld((i + 1) * 7919))
+    const bad: string[] = []
+    for (const w of worlds) {
+      for (const p of w.chain) {
+        const h = home.get(p.fromId) ?? p.tier
+        if (Math.abs(p.tier - h) > REGION_NAME_TIER_BAND) {
+          bad.push(`${w.seed}:${p.name}@${p.tier}(本名档 ${h})`)
+        }
+      }
+    }
+    expect(bad, `名实不符 ${bad.length} 处(区域名与落座档脱钩):\n${bad.slice(0, 8).join('\n')}`).toEqual([])
+  })
+
+  it('用例锚点:青云山麓(静态 1 阶)绝不出现在后段(≤ 1+BAND)', () => {
+    for (let s = 1; s <= 120; s += 1) {
+      const w = generateMortalWorld(s)
+      const qy = w.chain.find(p => p.fromId === 'qingyun')
+      if (qy) expect(qy.tier, `青云山麓落在 ${qy.tier} 档`).toBeLessThanOrEqual(1 + REGION_NAME_TIER_BAND)
+    }
   })
 })

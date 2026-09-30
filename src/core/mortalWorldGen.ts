@@ -33,6 +33,13 @@ import { powerScale } from './formulas'
 import { mulN } from '@/utils/gnum'
 import { NOVELTY_MIN } from './worldGen'
 
+/**
+ * 落名的「名实相符」带宽:一个区域名字的静态档位,与它在凡界里的落座档
+ * 相差不得超过此值。青云山麓(静态 1 阶)只坐 1~4 档,鸿蒙裂隙只坐 17~20 档 ——
+ * 新手村名不再端出终局怪,鸿蒙名也不再冒充开场(玩家反馈「青云山麓刷鸿蒙古魔」的错位源头)。
+ */
+export const REGION_NAME_TIER_BAND = 3
+
 // ============ 一、世界结构 ============
 
 /** 重组后的一处地界 */
@@ -262,14 +269,26 @@ export function generateMortalWorld(seed: number): MortalWorld {
   // 资源偏向提前抽取,避免被后续 rng 消耗挤到同一取值(上一轮记下的弱点)
   const bias = BIASES[rng.int(0, BIASES.length - 1)]!
 
-  // 地界组合:从人间界 20 处里选 tiers.length 处
+  // 地界组合:按「名实相符」落名 —— 每一档只收静态档位邻近的区域,
+  // 免得青云山麓(静态 1 阶)坐进终局档刷出鸿蒙古魔,或鸿蒙裂隙冒充 2 档开场
   const picked: typeof MORTAL_REGIONS = []
   const usedRegion = new Set<string>()
-  while (picked.length < tiers.length) {
-    const r = MORTAL_REGIONS[rng.int(0, MORTAL_REGIONS.length - 1)]!
-    if (usedRegion.has(r.id)) continue
-    usedRegion.add(r.id)
-    picked.push(r)
+  for (let i = 0; i < tiers.length; i += 1) {
+    const seat = tiers[i]!
+    const near = MORTAL_REGIONS.filter(r => !usedRegion.has(r.id) && Math.abs(r.tier - seat) <= REGION_NAME_TIER_BAND)
+    if (near.length > 0) {
+      const r = near[rng.int(0, near.length - 1)]!
+      usedRegion.add(r.id)
+      picked.push(r)
+    } else {
+      // 邻近名用尽(罕见,链长远小于区域数):退到最接近的未用名,把偏差压到最小
+      const rest = MORTAL_REGIONS.filter(r => !usedRegion.has(r.id)).sort(
+        (a, b) => Math.abs(a.tier - seat) - Math.abs(b.tier - seat)
+      )
+      const r = rest[0]!
+      usedRegion.add(r.id)
+      picked.push(r)
+    }
   }
 
   const usedBossIds = new Set<string>()
