@@ -53,6 +53,20 @@ export function buffCapSec(defId: string): number | undefined {
   return def && CONSUMABLE_BUFF_IDS.has(defId) ? def.durationSec * CONSUMABLE_BUFF_CAP_MULT : undefined
 }
 
+/**
+ * 弹窗「已叠 N 份」—— 由剩余时长归出这一串状态是几颗堆起来的。
+ *
+ * 丹药增益的叠法是"加上"(extend),同一时刻连服两颗,剩余 = 2× 单颗时长;
+ * 所以 `ceil(剩余 ÷ 单颗)` 就是份数,封顶在「至多可攒」倍数。只对有上限的
+ * (丹药增益)报数:闭关/重伤/事件祝福不走叠法,报个数反而是错的。
+ */
+export function buffStackCount(defId: string, remainSec: number): number {
+  const cap = buffCapSec(defId)
+  const def = buffDef(defId)
+  if (cap === undefined || !def || def.durationSec <= 0) return 1
+  return Math.min(CONSUMABLE_BUFF_CAP_MULT, Math.max(1, Math.ceil(remainSec / def.durationSec)))
+}
+
 /** 本作存的键是 `defId`,库里叫 `id`:`endsAt` 是同一个数,只换个键名 */
 const toEngine = (list: readonly BuffInstance[]): EngineBuffInstance[] =>
   list.map(b => ({ id: b.defId, endsAt: b.endsAt }))

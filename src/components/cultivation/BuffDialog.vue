@@ -43,9 +43,18 @@
         <!-- 剩余每秒在走:定宽(见 utils/format.formatCountdown),否则这一行的数字一直在跳 -->
         <span class="countdown-slot tabular">{{ formatCountdown(remainSec) }}</span>
       </p>
+      <!--
+        已叠 N 份:丹药增益的叠法是"加上",同一状态连吃几颗 = 几份时长。
+        此前「剩余」看着比「全程」还长时(叠了两颗),玩家以为坏了 ——
+        份数把这一串是怎么堆起来的摊明白。
+      -->
+      <p v-if="stackCount > 1" class="mt-1 flex justify-between text-[13px]">
+        <span class="text-ink-soft">已叠</span>
+        <span class="tabular text-ink-faint">{{ stackCount }} 份</span>
+      </p>
       <p class="mt-1 flex justify-between text-[13px]">
         <span class="text-ink-soft">全程</span>
-        <span class="tabular text-ink-faint">{{ formatDuration(def.durationSec) }}</span>
+        <span class="tabular text-ink-faint">{{ formatDuration(totalSec) }}</span>
       </p>
       <!--
         有上限的状态(可消耗的那一类)把上限明写出来:这是**明改不是暗改** ——
@@ -66,7 +75,7 @@
   import { useCultivationStore } from '@/stores/cultivation'
   import { useNow } from '@/composables/useNow'
   import { buffDef } from '@/data/buffs'
-  import { buffCapSec, buffStackHints, CONSUMABLE_BUFF_CAP_MULT } from '@/core/engineBuffs'
+  import { buffCapSec, buffStackCount, buffStackHints, CONSUMABLE_BUFF_CAP_MULT } from '@/core/engineBuffs'
   import { STAT_NAMES } from '@/ui/statNames'
   import { formatCountdown, formatDuration, formatPercent } from '@/utils/format'
   import type { AnyStatKey, StatMods } from '@/types'
@@ -99,10 +108,14 @@
     return inst ? Math.max(0, (inst.endsAt - now.value) / 1000) : 0
   })
 
-  const remainRatio = computed(() => {
-    const total = def.value?.durationSec ?? 0
-    return total > 0 ? Math.min(1, remainSec.value / total) : 0
-  })
+  /** 已叠份数:丹药增益按剩余÷单颗归(见 engineBuffs.buffStackCount) */
+  const stackCount = computed(() =>
+    ui.buffDetailId && def.value ? buffStackCount(ui.buffDetailId, remainSec.value) : 1
+  )
+  /** 全程与进度条分母 = 该份数对应的时长;叠了两颗就不是「单颗 20 分」了 */
+  const totalSec = computed(() => (def.value?.durationSec ?? 0) * stackCount.value)
+
+  const remainRatio = computed(() => (totalSec.value > 0 ? Math.min(1, remainSec.value / totalSec.value) : 0))
 
   /** Buff 词条全为比率;正向增益记绿,减益记朱 */
   const modRows = computed(() =>
