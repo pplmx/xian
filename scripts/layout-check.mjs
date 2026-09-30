@@ -2132,8 +2132,10 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
 
   const next = await step('往生后(择姿立题)', /轮回/)
   if (next && !/道果/.test(next.text)) failures.push('[390] 转世场景:轮回那一程没有交代道果')
-  // 有先天之姿就先择一个(不择则「踏入轮回」是灰的)
-  const talent = page.locator('.modal-panel button').first()
+  // 有先天之姿就先择一个(不择则「踏入轮回」是灰的)。
+  // 按「赋」拣天赋卡,别按第一个按钮:轮回页上新晋了「道号重拟」的「换一个」
+  // (在天赋区之前),抓第一个按钮会点偏到改名上,天赋没选上、按钮一直是灰的。
+  const talent = page.locator('.modal-panel button', { hasText: /天赋|道赋|灵赋|凡赋/ }).first()
   if (next && next.buttons.some(b => /赋|姿/.test(b))) await talent.click({ timeout: 3000 }).catch(() => {})
   const confirm = page.locator('.modal-panel button', { hasText: /踏\s*入\s*轮\s*回/ }).first()
   if ((await confirm.count()) === 0) failures.push('[390] 转世场景:轮回那程没有「踏入轮回」')
@@ -2660,6 +2662,11 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
     resources: { spiritStone: gn(1, 7), qi: 1000, wudao: 10, herb: 5, ore: 90000, page: 2, dust: 2 },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
+    /*
+     * 洞府给个≥1 的档位:首级免玄铁(ISS-303)让「建造」(0→1)不涉铁,
+     * 测试对象得是「升级」才有铁账可对(第一枚按钮是洞府,优先升它)。
+     */
+    dongfu: { levels: { mansion: 1 }, offlineCapHours: 8 },
     settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
   }
   await ctx.addInitScript(
