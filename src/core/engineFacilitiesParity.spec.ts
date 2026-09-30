@@ -25,6 +25,7 @@ import { formatExact } from '@/utils/format'
 import { useDongfuStore } from '@/stores/dongfu'
 import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
+import { gn } from '@/utils/gnum'
 
 type LevelMap = Record<BuildingId, number>
 
@@ -92,6 +93,14 @@ beforeEach(() => {
 })
 
 describe('设施对账 —— 能不能升 / 为什么 / 要花什么', () => {
+  beforeEach(() => {
+    // 资源给足:把「付不起置灰+列差」那层(迁移后新增的 UX 层,见 buildingService.spec)
+    // 排除在迁移对账之外 —— 这里只对账「门槛判定与费用」,资源检查是另一条行为。
+    const resources = useResourcesStore()
+    resources.spiritStone = gn(1e15)
+    resources.ore = 999999
+  })
+
   it('七座建筑 × 五组等级 × 四档境界:门槛文案、下一级与费用逐位相同', () => {
     for (const [label, levels] of levelCases) {
       for (const major of [0, 1, 2, 3]) {
