@@ -102,9 +102,11 @@ describe('灵脉可见性 · 展示层覆盖全部通道', () => {
 
   it('每条脉的作用说明必须渲染出来,不能只显示名字和价格', () => {
     // 玩家反馈的另一半:「不知道寒冥灵脉的作用」。
-    // veins.ts 里 desc 与 effectText 都写好了,但此前只有审计测试在读,页面从未渲染
+    // veins.ts 里 desc 写好了,效果行收在 ui/veinText —— 页面此前从不渲染
     expect(CARD_SRC, '卡片没有渲染灵脉的 desc').toMatch(/\.desc/)
-    expect(CARD_SRC, '卡片没有渲染灵脉的 effectText').toMatch(/effectText\(/)
+    expect(CARD_SRC, '卡片没有渲染灵脉的效果行').toMatch(/veinEffectText\(/)
+    // 别让子串把我骗了:「effectText(」也是「veinEffectText(」的子串,得钉死是 UI 层那个
+    expect(CARD_SRC, '效果行该读 ui/veinText,不许改回读数据表闭包').not.toMatch(/v\.effectText\(/)
   })
 
   it('专用通道表与 veins.ts 保持同步:表里不能有已不存在的脉', () => {
