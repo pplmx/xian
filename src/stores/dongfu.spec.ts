@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { useDongfuStore } from './dongfu'
 import { BUILDINGS } from '@/data/buildings'
-import { FORGE_LEVEL_PER_CAP, LIBRARY_WUDAO_MIN_PER_HOUR } from '@/data/constants'
+import { ARRAY_QI_CAP_PER_LEVEL, BEAST_MULT_PER_LEVEL, FORGE_LEVEL_PER_CAP, LIBRARY_WUDAO_MIN_PER_HOUR } from '@/data/constants'
 import { libraryWudaoPerHour } from '@/core/engineFacilities'
 import { STAT_NAMES } from '@/ui/statNames'
 import type { AnyStatKey, BuildingId } from '@/types'
@@ -167,5 +169,38 @@ describe('洞府建筑 · 卡面自陈(不许有隐词条)', () => {
         expect(text, `${b.name}:mods 有 ${key}(${label}),卡面文案却没自陈`).toContain(label!)
       }
     }
+  })
+})
+
+describe('洞府建筑 · 专用通道与卡面同源(不许跨文件双写)', () => {
+  it('聚灵阵:灵气上限是专用通道,qiCapMult 与卡面都读 ARRAY_QI_CAP_PER_LEVEL', () => {
+    const dongfu = useDongfuStore()
+    dongfu.levels = { ...dongfu.levels, array: 5 }
+    expect(dongfu.qiCapMult).toBeCloseTo(1 + 5 * ARRAY_QI_CAP_PER_LEVEL, 10)
+    const text = BUILDINGS.find(b => b.id === 'array')!.effectText(5).join('\n')
+    expect(text).toContain(`灵气上限 +${Math.round(5 * ARRAY_QI_CAP_PER_LEVEL * 100)}%`)
+  })
+
+  it('灵兽园:beastMult 与卡面都读 BEAST_MULT_PER_LEVEL', () => {
+    const dongfu = useDongfuStore()
+    dongfu.levels = { ...dongfu.levels, beast: 4 }
+    expect(dongfu.beastMult).toBeCloseTo(1 + 4 * BEAST_MULT_PER_LEVEL, 10)
+    const text = BUILDINGS.find(b => b.id === 'beast')!.effectText(4).join('\n')
+    expect(text).toContain(`灵兽属性效果 +${Math.round(4 * BEAST_MULT_PER_LEVEL * 100)}%`)
+  })
+
+  it('炼器台:强化上限的档距是 FORGE_LEVEL_PER_CAP,卡面不许手写 /2', () => {
+    const text = BUILDINGS.find(b => b.id === 'forge')!.effectText(FORGE_LEVEL_PER_CAP * 4).join('\n')
+    expect(text).toContain(`强化上限 +4`)
+  })
+
+  it('硬编码回归:store 与数据表都不许再各写一份通道数字', () => {
+    const dongfuSrc = readFileSync(resolve(__dirname, './dongfu.ts'), 'utf8')
+    const buildingsSrc = readFileSync(resolve(__dirname, '../data/buildings.ts'), 'utf8')
+    expect(dongfuSrc, '聚灵阵的 0.08 已抽成常量,store 里再出现 `array * 0.x` 即回归').not.toMatch(/array \* 0\.\d+/)
+    expect(dongfuSrc, '灵兽园同理,不许回写 `beast * 0.1`').not.toMatch(/beast \* 0\.\d+/)
+    expect(buildingsSrc, '卡面的灵气上限该读常量').toContain('ARRAY_QI_CAP_PER_LEVEL')
+    expect(buildingsSrc, '卡面的灵兽效果该读常量').toContain('BEAST_MULT_PER_LEVEL')
+    expect(buildingsSrc, '卡面的强化上限该读 FORGE_LEVEL_PER_CAP,不许手写 /2').toContain('FORGE_LEVEL_PER_CAP')
   })
 })

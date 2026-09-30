@@ -386,6 +386,10 @@ export const EQUIP_LEVEL_BONUS = 0.12
 export const EQUIP_MAX_LEVEL_BASE = 10
 /** 炼器台每 2 级提高强化上限 1 */
 export const FORGE_LEVEL_PER_CAP = 2
+/** 聚灵阵每级抬高的灵气上限(乘在境界容量上,不进 StatMods —— 卡面与 dongfu.qiCapMult 都读它,不许各写一份) */
+export const ARRAY_QI_CAP_PER_LEVEL = 0.08
+/** 灵兽园每级放大的灵兽效果(乘数,不进 StatMods —— 卡面与 dongfu.beastMult 都读它,不许各写一份) */
+export const BEAST_MULT_PER_LEVEL = 0.1
 /** 强化成本:灵尘 */
 export const UPGRADE_DUST_BASE = 4
 export const UPGRADE_DUST_GROWTH = 1.5

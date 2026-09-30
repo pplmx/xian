@@ -1,8 +1,11 @@
 /** 洞府建筑 —— 7 座,长线成长 */
 import type { BuildingDef, BuildingId, StatMods } from '@/types'
 import {
+  ARRAY_QI_CAP_PER_LEVEL,
+  BEAST_MULT_PER_LEVEL,
   FIELD_HERB_PER_HOUR,
   FIELD_ORE_PER_HOUR,
+  FORGE_LEVEL_PER_CAP,
   LIBRARY_WUDAO_FLOOR_LEVEL,
   LIBRARY_WUDAO_MIN_PER_HOUR,
   LIBRARY_WUDAO_PER_HOUR,
@@ -37,7 +40,7 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 6,
     effectText: lv => [
       `灵气恢复 +${lv * 10}%`,
-      `灵气上限 +${lv * 8}%`,
+      `灵气上限 +${Math.round(lv * ARRAY_QI_CAP_PER_LEVEL * 100)}%`,
       `修炼速度 +${lv * 3}%`
     ],
     mods: (lv): StatMods => ({ qiRegen: lv * 0.1, cultivationSpeed: lv * 0.03 })
@@ -68,7 +71,7 @@ export const BUILDINGS: BuildingDef[] = [
     costBase: 150,
     costOre: 15,
     effectText: lv => [
-      `强化上限 +${Math.floor(lv / 2)}`,
+      `强化上限 +${Math.floor(lv / FORGE_LEVEL_PER_CAP)}`,
       `炼器消耗 -${lv * 4}%`
     ],
     mods: (lv): StatMods => ({ forgeDiscount: lv * 0.04 })
@@ -112,7 +115,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 2,
     costBase: 300,
     costOre: 30,
-    effectText: lv => [`可驯养灵兽 · 灵兽属性效果 +${lv * 10}%`],
+    effectText: lv => [`可驯养灵兽 · 灵兽属性效果 +${Math.round(lv * BEAST_MULT_PER_LEVEL * 100)}%`],
   }
 ]
 
