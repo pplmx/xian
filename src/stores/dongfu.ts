@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import type { BuildingId, SmallResourceId, StatMods } from '@/types'
 import type { VeinId } from '@/data/veins'
 import { persistConfig } from '@/utils/storage'
-import { BUILDINGS } from '@/data/buildings'
+import { BUILDINGS, librarySubGongfaSlots } from '@/data/buildings'
 import { INSIGHT_DISCOUNT_PER_POINT } from '@/data/veins'
 import { ARRAY_QI_CAP_PER_LEVEL, BEAST_MULT_PER_LEVEL, FORGE_LEVEL_PER_CAP, OFFLINE_CAP_HOURS } from '@/data/constants'
 import { mergeMods } from '@/core/statsCalc'
@@ -53,7 +53,7 @@ export const useDongfuStore = defineStore(
     function buildingCap(id: BuildingId): number {
       return capOfBuilding(id, levels.value)
     }
-    const subGongfaSlots = computed(() => 1 + Math.floor(levels.value.library / 3))
+    const subGongfaSlots = computed(() => librarySubGongfaSlots(levels.value.library))
     const alchemyLevel = computed(() => levels.value.alchemy)
     // 炼器台每 FORGE_LEVEL_PER_CAP 级提高强化上限 1(此前把 2 写死在业务代码里)
     const forgeCapBonus = computed(() => Math.floor(levels.value.forge / FORGE_LEVEL_PER_CAP))

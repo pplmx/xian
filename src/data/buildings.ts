@@ -1,5 +1,6 @@
 /** 洞府建筑 —— 7 座,长线成长 */
 import type { BuildingDef, BuildingId, StatMods } from '@/types'
+import { formatSignedPercent } from '@/utils/format'
 import {
   ARRAY_QI_CAP_PER_LEVEL,
   BEAST_MULT_PER_LEVEL,
@@ -11,6 +12,19 @@ import {
   LIBRARY_WUDAO_PER_HOUR,
   OFFLINE_CAP_HOURS
 } from './constants'
+
+/**
+ * 每级数值 —— **mods 与卡面同读这一处**。
+ *
+ * 此前卡面的「修炼速度 +4%」与 mods 的 `0.04 * lv` 相邻双写,一方改一方忘,
+ * 卡面就撒谎。抽出每级倍率常量后,两侧都从它现算 —— 数字只写这一份。
+ */
+const MANSION_CULT_SPEED_PER_LEVEL = 0.04
+const ARRAY_QI_REGEN_PER_LEVEL = 0.1
+const ARRAY_CULT_SPEED_PER_LEVEL = 0.03
+const ALCHEMY_YIELD_PER_LEVEL = 0.05
+const FORGE_DISCOUNT_PER_LEVEL = 0.04
+const LIBRARY_EXP_GAIN_PER_LEVEL = 0.03
 
 export const BUILDINGS: BuildingDef[] = [
   {
@@ -25,9 +39,9 @@ export const BUILDINGS: BuildingDef[] = [
     effectText: lv => [
       `离线收益上限 ${OFFLINE_CAP_HOURS[Math.min(lv, OFFLINE_CAP_HOURS.length - 1)]} 小时`,
       '其余建筑等级上限 +5/级',
-      `修炼速度 +${lv * 4}%`
+      `修炼速度 +${formatSignedPercent(lv * MANSION_CULT_SPEED_PER_LEVEL)}`
     ],
-    mods: (lv): StatMods => ({ cultivationSpeed: lv * 0.04 })
+    mods: (lv): StatMods => ({ cultivationSpeed: lv * MANSION_CULT_SPEED_PER_LEVEL })
   },
   {
     id: 'array',
@@ -39,11 +53,14 @@ export const BUILDINGS: BuildingDef[] = [
     costBase: 60,
     costOre: 6,
     effectText: lv => [
-      `灵气恢复 +${lv * 10}%`,
+      `灵气恢复 +${formatSignedPercent(lv * ARRAY_QI_REGEN_PER_LEVEL)}`,
       `灵气上限 +${Math.round(lv * ARRAY_QI_CAP_PER_LEVEL * 100)}%`,
-      `修炼速度 +${lv * 3}%`
+      `修炼速度 +${formatSignedPercent(lv * ARRAY_CULT_SPEED_PER_LEVEL)}`
     ],
-    mods: (lv): StatMods => ({ qiRegen: lv * 0.1, cultivationSpeed: lv * 0.03 })
+    mods: (lv): StatMods => ({
+      qiRegen: lv * ARRAY_QI_REGEN_PER_LEVEL,
+      cultivationSpeed: lv * ARRAY_CULT_SPEED_PER_LEVEL
+    })
   },
   {
     id: 'alchemy',
@@ -56,10 +73,10 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 10,
     // Phase 32.3 之后丹方不再由炉火高低"解锁",炉子只管出丹多寡 —— 成与不成看所知与手上功夫
     effectText: lv => [
-      `炼丹双成率 +${lv * 5}%`,
+      `炼丹双成率 +${formatSignedPercent(lv * ALCHEMY_YIELD_PER_LEVEL)}`,
       '炉子只管出丹多寡,成与不成看你懂多少'
     ],
-    mods: (lv): StatMods => ({ alchemyYield: lv * 0.05 })
+    mods: (lv): StatMods => ({ alchemyYield: lv * ALCHEMY_YIELD_PER_LEVEL })
   },
   {
     id: 'forge',
@@ -72,9 +89,9 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 15,
     effectText: lv => [
       `强化上限 +${Math.floor(lv / FORGE_LEVEL_PER_CAP)}`,
-      `炼器省耗 +${lv * 4}%`
+      `炼器省耗 +${formatSignedPercent(lv * FORGE_DISCOUNT_PER_LEVEL)}`
     ],
-    mods: (lv): StatMods => ({ forgeDiscount: lv * 0.04 })
+    mods: (lv): StatMods => ({ forgeDiscount: lv * FORGE_DISCOUNT_PER_LEVEL })
   },
   {
     id: 'field',
@@ -101,10 +118,10 @@ export const BUILDINGS: BuildingDef[] = [
     // 钻研丹方是藏经阁的第三桩职能(见 core/loreService.ts studyTick),不写出来玩家无从得知
     effectText: lv => [
       `每小时产悟道点 ${fmtHour(libraryWudaoPerHour(lv))}`,
-      `辅修栏 ${1 + Math.floor(lv / 3)} 个 · 战斗修为 +${lv * 3}%`,
+      `辅修栏 ${librarySubGongfaSlots(lv)} 个 · 战斗修为 +${formatSignedPercent(lv * LIBRARY_EXP_GAIN_PER_LEVEL)}`,
       '日夜翻检,读熟手上丹方,进而翻出新方'
     ],
-    mods: (lv): StatMods => ({ expGain: lv * 0.03 })
+    mods: (lv): StatMods => ({ expGain: lv * LIBRARY_EXP_GAIN_PER_LEVEL })
   },
   {
     id: 'beast',
@@ -128,6 +145,14 @@ export function libraryWudaoPerHour(lv: number): number {
   return lv <= LIBRARY_WUDAO_FLOOR_LEVEL
     ? Math.max(LIBRARY_WUDAO_MIN_PER_HOUR, lv * LIBRARY_WUDAO_PER_HOUR)
     : lv * LIBRARY_WUDAO_PER_HOUR
+}
+
+/**
+ * 藏经阁的辅修栏格数 —— 卡面与 store 同读这一处(每 3 级 +1,起始 1 格)。
+ * 此前 `1 + Math.floor(lv / 3)` 在卡面与 `subGongfaSlots` 各写一份,改格距只动一处会分叉。
+ */
+export function librarySubGongfaSlots(lv: number): number {
+  return 1 + Math.floor(lv / 3)
 }
 
 /** 整量不印 .0:2.4 显示 2.4,12.0 显示 12 */
