@@ -515,6 +515,12 @@ describe('文案数值对账 · 用具三类的界面读同源函数', () => {
     expect(itemText, '那一句该同时写威力').toContain('skill.mult')
   })
 
+  it('离线归来卷轴不写「闭关」——玩家是离开再回来,不是封洞修炼', () => {
+    const dlg = src('../components/offline/OfflineRewardDialog.vue')
+    expect(dlg, '离线归来走 settleOffline,写「闭关」会让人以为封洞了(或觉得闭关按钮没生效)').not.toContain('闭关')
+    expect(dlg, '离开归来应写「此去」(与退出确认同款用词)').toContain('此去')
+  })
+
   it('丹药详情与丹方清单说得出「服下去会怎样」', () => {
     const view = src('../views/InventoryView.vue')
     // 两处都要读同一份:丹药详情弹窗 + 开炉炼丹的方子清单

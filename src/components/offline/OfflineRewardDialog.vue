@@ -3,7 +3,7 @@
     <div v-if="summary" class="text-center">
       <p class="font-kai text-2xl tracking-[0.5em] text-ink mt-1 animate-ink-pop">归 来</p>
       <p class="mt-2 text-[12px] text-ink-faint">
-        闭关
+        此去
         <span class="font-kai text-[13px] text-ink">{{ formatDuration(summary.seconds) }}</span>
         <!--
           两条账分开报:被动修行(修为/灵气)不限时、全额;产出与派遣受洞府上限。
