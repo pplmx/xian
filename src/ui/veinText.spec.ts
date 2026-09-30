@@ -4,9 +4,10 @@
  * 此前这条文案写在数据表 veins.ts 的 effectText 闭包里,手写「p * 0.4」——
  * 那其实是 perPoint(cultivationSpeed 0.004)×100 的另一份;寒冥灵脉的
  * 「p * 0.4」更是 INSIGHT_DISCOUNT_PER_POINT 的复制。改每点加成那天若只
- * 动一处,卡片就会撒谎。故这里守:①输出与 perPoint 同源;②符号钉死
- * (forgeDiscount 正值是「省」,显示「-X%」,不许照抄「+X%」);③数据表
- * 回归纯声明,不许再背效果文案闭包。
+ * 动一处,卡片就会撒谎。故这里守:①输出与 perPoint 同源;②省耗词条的
+ * 命名决策 —— forgeDiscount 正值是「省」,名字必须带「省」字,让 +X%
+ * 读成「省耗 +X%」(从前叫「炼器消耗」得靠特例显示 -X%,modsText 默认
+ * 就错);③数据表回归纯声明,不许再背效果文案闭包。
  */
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -14,12 +15,13 @@ import { resolve } from 'node:path'
 import { INSIGHT_DISCOUNT_PER_POINT, veinDef } from '@/data/veins'
 import { formatPercent } from '@/utils/format'
 import { veinEffectText } from './veinText'
+import { STAT_NAMES } from './statNames'
 
 describe('灵脉效果行', () => {
   it('炼器脉的数值与 perPoint×点数同源(非整数路径也直接对账常量)', () => {
     // 3 点 → 0.003×3 = 0.009 → 0.9%;手写「×0.3」若与 perPoint 脱钩,这里不会说谎
     const raw = veinDef('craft').perPoint.forgeDiscount!
-    expect(veinEffectText(veinDef('craft'), 3)).toBe(`炼器消耗 -${formatPercent(3 * raw)}`)
+    expect(veinEffectText(veinDef('craft'), 3)).toBe(`炼器省耗 +${formatPercent(3 * raw)}`)
   })
 
   it('青木/玉髓走标准词条名与带符号格式', () => {
@@ -27,10 +29,11 @@ describe('灵脉效果行', () => {
     expect(veinEffectText(veinDef('alchemy'), 10)).toBe('炼丹双成率 +5%')
   })
 
-  it('炼器减的是消耗:正值显示成「-」而不是「+」,免得读成「多花 X%」', () => {
+  it('锻炉省的是消耗:名字必须是「炼器省耗」,正号才读成「省 +X%」', () => {
+    expect(STAT_NAMES.forgeDiscount, 'forgeDiscount 是省耗类词条,名字必须带「省」字,不然 +X% 会读成花销变多').toBe('炼器省耗')
     const t = veinEffectText(veinDef('craft'), 10)
-    expect(t).toContain('炼器消耗 -3%')
-    expect(t, '「炼器消耗 +X%」对玩家读起来是"花销变多",机制却是省耗').not.toMatch(/炼器消耗 \+/)
+    expect(t).toContain('炼器省耗 +3%')
+    expect(t, '「炼器消耗」这名从前逼得显示层写特例绕开 +X%,已作废').not.toContain('炼器消耗')
   })
 
   it('寒冥灵脉的折扣读 INSIGHT_DISCOUNT_PER_POINT 常量,不写死倍数', () => {

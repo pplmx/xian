@@ -156,8 +156,8 @@ export const AFFIXES: AffixDef[] = [
   // ---- 补充:炼丹/炼器 ----
   a('alc1', '丹心', 'alchemyYield', 5, 10, '炼丹双成率 {v}%', 40, { slots: J }),
   a('alc2', '丹圣', 'alchemyYield', 10, 20, '炼丹双成率 {v}%', 15, { slots: J, minRank: 4 }),
-  a('fg1', '巧手', 'forgeDiscount', 5, 10, '炼器消耗降低 {v}%', 40, { slots: J }),
-  a('fg2', '器道', 'forgeDiscount', 10, 20, '炼器消耗降低 {v}%', 15, { slots: J, minRank: 4 }),
+  a('fg1', '巧手', 'forgeDiscount', 5, 10, '炼器省耗 {v}%', 40, { slots: J }),
+  a('fg2', '器道', 'forgeDiscount', 10, 20, '炼器省耗 {v}%', 15, { slots: J, minRank: 4 }),
   // ---- 流派:背水 ----
   a('bs1', '背水一击', 'lowHpDamage', 15, 25, '生命低于三成时造成伤害提升 {v}%', 55, { slots: W, decimals: 0 }),
   a('bs2', '向死而生', 'lowHpDamage', 25, 40, '生命低于三成时造成伤害提升 {v}%', 22, { slots: W, minRank: 4, decimals: 0 }),

@@ -18,9 +18,9 @@ export function veinEffectText(def: VeinDef, points: number): string {
   const parts: string[] = []
   for (const [key, raw] of Object.entries(def.perPoint)) {
     const val = raw * points
-    // forgeDiscount 的值是「省」:正值做的是减法,显示要落成「-X%」,不能照抄 modsText 的 +X%
-    if (key === 'forgeDiscount') parts.push(`炼器消耗 -${formatPercent(val)}`)
-    else parts.push(`${STAT_NAMES[key as AnyStatKey] ?? key} ${formatSignedPercent(val)}`)
+    // 一律走 STAT_NAMES + formatSignedPercent:省耗词条(forgeDiscount)已改名「炼器省耗」,
+    // 正号读起来就是「省 +X%」,不再需要为它单开 -X% 特例 —— 显示层默认从此对
+    parts.push(`${STAT_NAMES[key as AnyStatKey] ?? key} ${formatSignedPercent(val)}`)
   }
   // 寒冥灵脉的 perPoint 是空对象,效果走参悟折扣这条专用通道,别把它写死在 strings 里(见 INSIGHT_DISCOUNT_PER_POINT)
   if (def.id === 'insight') {

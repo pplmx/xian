@@ -53,7 +53,15 @@ export const STAT_NAMES: Record<AnyStatKey, string> = {
   alchemyYield: '炼丹双成率',
   craftExpGain: '炼丹心得',
   craftSalvage: '定心护料',
-  forgeDiscount: '炼器消耗',
+  /**
+   * 「炼器省耗」—— 不是「炼器消耗」。
+   *
+   * forgeDiscount 的值是**省**:正值 = 耗材变少,数值上是折扣。名字若叫
+   * 「炼器消耗」,显示层照抄 `+X%` 就变成「花销变多」,veinText 当年只能
+   * 为它单开一个 -X% 特例。名字带「省」字,正号读起来才是「省耗 +X%」,
+   * 显示层默认(modsText / formatSignedPercent)从此对,不必特例。
+   */
+  forgeDiscount: '炼器省耗',
   qiCapPct: '灵气上限',
   beastPct: '灵兽效果',
   armorPen: '破甲',

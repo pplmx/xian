@@ -72,7 +72,7 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 15,
     effectText: lv => [
       `强化上限 +${Math.floor(lv / FORGE_LEVEL_PER_CAP)}`,
-      `炼器消耗 -${lv * 4}%`
+      `炼器省耗 +${lv * 4}%`
     ],
     mods: (lv): StatMods => ({ forgeDiscount: lv * 0.04 })
   },
