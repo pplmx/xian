@@ -19,6 +19,10 @@
     >
       共
     </span>
+    <!-- 新入包、还没开过背包看它:顶部中央挂「新」(佩在左、锁在右,这格谁都不占) -->
+    <span v-if="isNew" class="absolute left-1/2 top-0.5 -translate-x-1/2 font-kai text-[8px] leading-none text-cinnabar">
+      新
+    </span>
 
     <!-- 主图标 -->
     <span class="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1">
@@ -50,10 +54,15 @@
   import { qualityDef } from '@/data/qualities'
   import { colorWithAlpha } from '@/ui/colorVar'
   import { equipSetDef } from '@/core/equipSet'
+  import { useInventoryStore } from '@/stores/inventory'
   import GameIcon from '@/components/common/GameIcon.vue'
 
   const props = defineProps<{ item: EquipmentInstance; equipped?: boolean }>()
   const emit = defineEmits<{ open: [uid: string] }>()
+
+  const inventory = useInventoryStore()
+  /** 顶部中央那枚「新」:新入包、还没开过背包看它(账在 inventory store,见 inventorySeen.spec) */
+  const isNew = computed(() => inventory.isNewItem(props.item.uid))
 
   const template = computed(() => equipmentTemplate(props.item.templateId))
   const quality = computed(() => qualityDef(props.item.quality))

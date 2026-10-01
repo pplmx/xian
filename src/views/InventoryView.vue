@@ -620,7 +620,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import { computed, onUnmounted, ref } from 'vue'
   import { useInventoryStore } from '@/stores/inventory'
   import { useResourcesStore } from '@/stores/resources'
   import { toNum } from '@/utils/gnum'
@@ -680,6 +680,11 @@
   import EquipmentCard from '@/components/equipment/EquipmentCard.vue'
 
   const inventory = useInventoryStore()
+  // 「新」角标清账时机 = 离开背包那一刻(路由无 keep-alive,离开即卸载):
+  // 若在挂载时清,首帧会把刚渲染出来的「新」立刻抹掉,玩家看不见哪个是新入包的。
+  // 挂着背包的整段看下来,离开时才把这一批记为已见 —— 下次进背包,新角标只归
+  // 这次离包之后新入的那几件(见 inventorySeen.spec)。
+  onUnmounted(() => inventory.markInventorySeen())
   const resources = useResourcesStore()
   const ui = useUiStore()
   const player = usePlayerStore()

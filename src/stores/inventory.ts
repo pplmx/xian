@@ -23,6 +23,15 @@ export const useInventoryStore = defineStore(
     /** 已祭炼的法宝(元婴起可佩两件) */
     const equippedArtifacts = ref<string[]>([])
 
+    /**
+     * 背包「新」角标的已见账:最近一次打开背包时行囊里的那一批 uid。
+     * 新入包的 uid 不在账上,卡片挂「新」;开包(InventoryView onMounted)整批替换,
+     * 数组恒等于「上次开包时的行囊」,天然有界无需裁剪(见 inventorySeen.spec)。
+     */
+    const seenUids = ref<string[]>([])
+    /** 旧档播种标记:首次清洗把当时行囊整批当「已见」,此后不再覆盖账上已有的「新」 */
+    const seenSeeded = ref(false)
+
     /** 存档修复:行囊/丹药/法宝被写坏时,装备合计与图鉴会在渲染期抛错 */
     function sanitize(): void {
       items.value = asArray<EquipmentInstance>(items.value, [], it => {
@@ -56,6 +65,24 @@ export const useInventoryStore = defineStore(
       // 幽灵占位会把槽位占满(新法宝佩不上、也换不进来),见 inventory.spec 回归
       const ownedDefIds = new Set(artifacts.value.map(a => a.defId))
       equippedArtifacts.value = asStringArray(equippedArtifacts.value).filter(id => ownedDefIds.has(id))
+      // 「新」角标的账:写坏就洗成纯字符串表;旧档首次清洗把当时行囊整批播种为
+      // 已见 —— 不这样做,老玩家一开背包满屏假新。播种只一次(seenSeeded 落位),
+      // 此后再清洗也不会把账上新入包的「新」顺手抹平。
+      seenUids.value = asStringArray(seenUids.value)
+      if (!seenSeeded.value) {
+        seenUids.value = items.value.map(i => i.uid)
+        seenSeeded.value = true
+      }
+    }
+
+    /** 打开背包 = 这一批都看过了:整批替换,此后新入包的 uid 才挂「新」 */
+    function markInventorySeen(): void {
+      seenUids.value = items.value.map(i => i.uid)
+    }
+
+    /** 这一件是「新入包、还没开过包看它」吗(卡片挂「新」角标的唯一判据) */
+    function isNewItem(uid: string): boolean {
+      return !seenUids.value.includes(uid)
     }
 
     const equippedUids = computed(() => new Set(Object.values(equipped.value).filter(Boolean) as string[]))
@@ -180,6 +207,8 @@ export const useInventoryStore = defineStore(
     return {
       items,
       equipped,
+      seenUids,
+      seenSeeded,
       pills,
       artifacts,
       equippedArtifacts,
@@ -201,6 +230,8 @@ export const useInventoryStore = defineStore(
       addArtifact,
       levelUpArtifact,
       toggleArtifact,
+      markInventorySeen,
+      isNewItem,
       sanitize
     }
   },
