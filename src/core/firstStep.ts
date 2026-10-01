@@ -46,6 +46,8 @@ export function homeStatusText(input: {
   regionName: string
   injured: boolean
   retreating: boolean
+  /** 修为已满 —— 闲坐时该说「修为已满」,把突破那一步推到眼前 */
+  expFull: boolean
 }): string {
   if (input.dead) return '陨落'
   if (input.exploringSecret) return '探秘中'
@@ -53,6 +55,9 @@ export function homeStatusText(input: {
   if (input.sessionActive) return `历练中 · ${input.regionName}`
   if (input.injured) return '疗伤中'
   if (input.retreating) return '闭关中'
+  // 修为满了还写「修炼中」,等于告诉玩家「该干嘛还干嘛」—— 修为不会自己长,
+  // 该突破那一步得有人递到眼前
+  if (input.expFull) return '修为已满'
   return '修炼中'
 }
 

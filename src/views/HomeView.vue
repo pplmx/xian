@@ -243,7 +243,8 @@
       sessionActive: adventure.sessionActive,
       regionName: adventure.currentRegion?.name ?? '',
       injured: cultivation.hasBuff('injury'),
-      retreating: isRetreating()
+      retreating: isRetreating(),
+      expFull: player.expFull
     })
   )
 

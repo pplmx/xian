@@ -88,7 +88,8 @@ describe('首页状态一行', () => {
     sessionActive: false,
     regionName: '',
     injured: false,
-    retreating: false
+    retreating: false,
+    expFull: false
   }
 
   it('没事做时说修炼中,不把闲坐说成闭关', () => {
@@ -99,11 +100,17 @@ describe('首页状态一行', () => {
     expect(homeStatusText({ ...idle, retreating: true })).toBe('闭关中')
   })
 
-  it('历练 / 探秘 / 远征 / 疗伤 / 陨落各说各的', () => {
+  it('历练 / 探秘 / 远征 / 疗伤 / 修为满 / 陨落各说各的', () => {
     expect(homeStatusText({ ...idle, sessionActive: true, regionName: '青云山麓' })).toBe('历练中 · 青云山麓')
     expect(homeStatusText({ ...idle, exploringSecret: true })).toBe('探秘中')
     expect(homeStatusText({ ...idle, expedition: true })).toBe('远征中')
     expect(homeStatusText({ ...idle, injured: true })).toBe('疗伤中')
+    expect(homeStatusText({ ...idle, expFull: true })).toBe('修为已满')
     expect(homeStatusText({ ...idle, dead: true })).toBe('陨落')
+  })
+
+  it('修为满的提示不压过闭关:正在挂机闭关时,不必喊人去突破', () => {
+    // 「修为已满」是在闲坐时的引导;人已闭关(有时限、禁历练的 buff)则闭关优先
+    expect(homeStatusText({ ...idle, retreating: true, expFull: true })).toBe('闭关中')
   })
 })
