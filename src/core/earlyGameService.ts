@@ -8,7 +8,7 @@ import { useResourcesStore } from '@/stores/resources'
 import { useAdventureStore } from '@/stores/adventure'
 import { useUiStore } from '@/stores/ui'
 import { usePacingTelemetry } from '@/stores/pacingTelemetry'
-import type { EnlightenmentEvent, EnlightenmentOption, CaveEvent } from '@/types'
+import type { EnlightenmentEvent, EnlightenmentOption, CaveEvent, GNum } from '@/types'
 import {
   ENLIGHTENMENT_OPTIONS,
   CAVE_EVENT_POOL,
@@ -16,7 +16,7 @@ import {
   BREAKTHROUGH_PREP_OPTIONS,
   earlyEventDecay
 } from '@/data/earlyGame'
-import { gn } from '@/utils/gnum'
+import { gn, toNum } from '@/utils/gnum'
 import { todayLocalNum } from '@/utils/time'
 import { gameNow } from './enginePause'
 
@@ -162,6 +162,18 @@ export function prepareBreakthrough(optionId: string): boolean {
   })
   telemetry().record('breakthrough_prep', 'modal', `突破准备:${opt.label}`)
   return true
+}
+
+/**
+ * 聚气丹的灵石短差(付不起置灰 + 列差多少)。
+ * 药价只取自 BREAKTHROUGH_PREP_OPTIONS(无第二份魔法数)——
+ * 与 buildingService 的「尚差 X 石」同一纪律,按钮直显,不让玩家点下去才被弹 toast。
+ * 够付/多付一律回 0:不该在够付时还报缺。
+ */
+export function pillPrepShortfall(stone: GNum): number {
+  const pill = BREAKTHROUGH_PREP_OPTIONS.find(o => o.id === 'pill')!
+  const cost = pill.cost?.stone ?? 0
+  return Math.max(0, cost - toNum(stone))
 }
 
 /** 存进档的准备态:加成、就绪时刻、来源(见 player store 的注释) */

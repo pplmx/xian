@@ -267,7 +267,13 @@
             +{{ Math.round(prepMeditate.bonusRate * 100) }}%
           </button>
           <button type="button" class="chip-ink !py-1.5 text-[10px]" :disabled="!prepCanPill" @click="startPrep('pill')">
-            {{ prepPill.label }} · {{ prepPillCost }}灵石 +{{ Math.round(prepPill.bonusRate * 100) }}%
+            <!--
+              付不起时换口「尚差 X 石」(与建筑卡同款,价与加成只在买得起时念全):
+              更短才扛得住 200% 缩放档(390 放大一倍只剩 195 CSS px,chips 是 nowrap,
+              实测「服用聚气丹 · +5% 尚差 30 石」会把右缘顶到 211px 越界 16px)。
+            -->
+            <template v-if="prepCanPill">{{ prepPill.label }} · {{ prepPillCost }}灵石 +{{ Math.round(prepPill.bonusRate * 100) }}%</template>
+            <template v-else>聚气丹 · 尚差 {{ prepPillShort }} 石</template>
           </button>
         </div>
       </div>
@@ -424,7 +430,7 @@
   import { buffOverflowOf, buffStackSize } from '@/core/engineBuffs'
   import { attemptBreakthrough, breakthroughInfo } from '@/core/breakthrough'
   import { todayWeather } from '@/core/weather'
-  import { prepareBreakthrough, startRetreat, isRetreating, getRetreatRemainingSec } from '@/core/earlyGameService'
+  import { prepareBreakthrough, pillPrepShortfall, startRetreat, isRetreating, getRetreatRemainingSec } from '@/core/earlyGameService'
   import { subClamp, toNum } from '@/utils/gnum'
   import { baseCultPerSec } from '@/core/formulas'
   import { modOf } from '@/core/statsCalc'
@@ -568,6 +574,8 @@ import type { PillDef } from '@/types'
   const prepPill = BREAKTHROUGH_PREP_OPTIONS.find(o => o.id === 'pill')!
   const prepPillCost = prepPill.cost?.stone ?? 0
   const prepCanPill = computed(() => toNum(resources.spiritStone) >= prepPillCost)
+  // 付不起时直显「尚差 X 石」(与建筑升级同款纪律,短差从药价现算,无第二份魔法数)
+  const prepPillShort = computed(() => pillPrepShortfall(resources.spiritStone))
 
   function startPrep(option: 'meditate' | 'pill'): void {
     if (prepareBreakthrough(option)) {

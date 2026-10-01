@@ -19,6 +19,7 @@ import {
   prepareBreakthrough,
   breakthroughPrepState,
   consumeBreakthroughPrep,
+  pillPrepShortfall,
   startRetreat,
   isRetreating,
   getRetreatRemainingSec
@@ -268,6 +269,20 @@ describe('突破准备(Phase 28 · TASK-023 接线后)', () => {
     expect(player.breakthroughPrep).not.toBeNull()
     player.rebirth(player.linggen!)
     expect(player.breakthroughPrep).toBeNull()
+  })
+
+  it('聚气丹缺石的短差,与数据表的药价同源(付不起置灰+列差)', () => {
+    const pill = BREAKTHROUGH_PREP_OPTIONS.find(o => o.id === 'pill')!
+    const cost = pill.cost?.stone ?? 0
+    expect(cost).toBeGreaterThan(0)
+
+    // 够付:短差 0(不该在够付时还报缺)
+    expect(pillPrepShortfall(gn(cost))).toBe(0)
+    expect(pillPrepShortfall(gn(cost + 20))).toBe(0)
+    // 差一点:短差 = 药价 − 手上
+    expect(pillPrepShortfall(gn(cost - 30))).toBe(30)
+    // 身无一文:短差就是整付药价
+    expect(pillPrepShortfall(gn(0))).toBe(cost)
   })
 })
 
