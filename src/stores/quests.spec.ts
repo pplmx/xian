@@ -52,6 +52,53 @@ describe('图鉴收录', () => {
  * 主线任务链是游戏的脊梁:它曾只铺到化神(第 5 个大境界)。
  * 扩界后若忘了往下铺,玩家在 16 个新境界里会失去全部主线指引。
  */
+describe('图鉴新得', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('收录时刻落在「上次打开图鉴」之后才算新得;打开图鉴后即清', () => {
+    const quests = useQuestsStore()
+    quests.collectedAt = { 'pill:r_qingxin': 100 }
+    quests.lastCollectionViewAt = 50
+    expect(quests.isEntryNew('pill', 'r_qingxin'), '界后收录应挂新').toBe(true)
+    expect(quests.isEntryNew('pill', 'not-collected'), '无时间戳不挂新').toBe(false)
+
+    quests.markCollectionSeen()
+    expect(quests.isEntryNew('pill', 'r_qingxin'), '打开过图鉴后不再挂新').toBe(false)
+  })
+
+  it('收录发生在打开图鉴之前 → 不是新得', () => {
+    const quests = useQuestsStore()
+    quests.collectedAt = { 'pill:r_qingxin': 100 }
+    quests.lastCollectionViewAt = 200
+    expect(quests.isEntryNew('pill', 'r_qingxin')).toBe(false)
+  })
+
+  it('旧档播种:老档无 lastCollectionViewAt(=0)且已有收录 → 清洗把界抬到此刻,已收录不算新得', () => {
+    const quests = useQuestsStore()
+    quests.$patch({
+      // sanitize 会按 collections 的 keptKeys 裁剪 collectedAt,故两处都要给真数据
+      collections: { pill: ['r_qingxin'] },
+      collectedAt: { 'pill:r_qingxin': Date.now() },
+      lastCollectionViewAt: 0
+    } as never)
+    quests.sanitize()
+    expect(quests.lastCollectionViewAt).toBeGreaterThan(0)
+    expect(quests.isEntryNew('pill', 'r_qingxin'), '已收录的不该满页假新').toBe(false)
+    // 播种之后新收的仍挂新(界停在播种时刻,后续不会二次播种把真新抹平)
+    quests.collectedAt = { ...quests.collectedAt, 'pill:r_anding': Date.now() + 3_600_000 }
+    expect(quests.isEntryNew('pill', 'r_anding')).toBe(true)
+  })
+
+  it('坏值归一:lastCollectionViewAt 写成负数/NaN 会洗回 0 再由播种抬成正数', () => {
+    const quests = useQuestsStore()
+    quests.lastCollectionViewAt = -5 as never
+    quests.sanitize()
+    expect(quests.lastCollectionViewAt).toBeGreaterThan(0)
+  })
+})
+
 describe('主线任务链覆盖', () => {
   it('每一个大境界都有对应的主线节点,且最后一个落在当前最高境界', () => {
     const questRealms = MAIN_QUESTS.filter(q => q.cond.type === 'realm').map(q => (q.cond as { major: number }).major)

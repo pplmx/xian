@@ -54,6 +54,11 @@ export const useQuestsStore = defineStore(
     /** 图鉴收录时刻,键为 `${category}:${id}`(旧档已收录条目无记录) */
     const collectedAt = ref<Record<string, number>>({})
     /**
+     * 图鉴「新得」的界:上次打开图鉴的时刻。收录发生在界后的条目挂「新」,
+     * 打开图鉴(markCollectionSeen)把界推进到此刻 —— 新韵只这一遍见(见 quests.spec 图鉴新得)。
+     */
+    const lastCollectionViewAt = ref(0)
+    /**
      * 唤作过伴的灵兽 —— 灵兽册「曾相伴/相伴中」档的唯一来源。
      * 由 player.setPet 唤伴时记档;暂别/换伴都不除名,册上留的是"此世同行过"。
      */
@@ -92,6 +97,22 @@ export const useQuestsStore = defineStore(
         if (keptKeys.has(key) && ts > 0) nextAt[key] = Math.floor(ts)
       }
       collectedAt.value = nextAt
+      // 「新得」的界:坏值洗回 0;为 0 即老档尚无此字段 —— 播种把界抬到此刻,
+      // 已收录的一律不算新得,免得老玩家一开图鉴整页假新。播种后恒 > 0,天然只此一遍
+      lastCollectionViewAt.value = Math.floor(asFiniteNumber(lastCollectionViewAt.value, 0, 0))
+      if (lastCollectionViewAt.value === 0) lastCollectionViewAt.value = Date.now()
+    }
+
+    /** 收录时刻落在「上次打开图鉴」之后才挂「新」(无时间戳一律非新)。
+     * category 收 string:图鉴的 CodexCat.key 就是字符串,与 CollectionCategory 同字面量而非同型。 */
+    function isEntryNew(category: string, id: string): boolean {
+      const ts = collectedAt.value[`${category}:${id}`]
+      return typeof ts === 'number' && ts > lastCollectionViewAt.value
+    }
+
+    /** 打开图鉴 = 当前已收录这一批都看过了:界推进到此刻 */
+    function markCollectionSeen(): void {
+      lastCollectionViewAt.value = Date.now()
     }
 
     const currentMainQuest = computed(() => MAIN_QUESTS[mainIdx.value])
@@ -163,6 +184,9 @@ export const useQuestsStore = defineStore(
       titlesOwned,
       collections,
       collectedAt,
+      lastCollectionViewAt,
+      isEntryNew,
+      markCollectionSeen,
       currentMainQuest,
       counter,
       inc,

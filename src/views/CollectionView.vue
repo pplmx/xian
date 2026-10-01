@@ -43,6 +43,8 @@
               <GameIcon v-if="entry.icon" :name="entry.icon" :size="11" />
               {{ entry.name }}
               <span v-if="entry.badge" class="text-[9px] opacity-70">{{ entry.badge }}</span>
+              <!-- 新得:收录时刻在「上次打开图鉴」之后才露这一枚(判据在 quests store,见 quests.spec) -->
+              <span v-if="quests.isEntryNew(cat.key, entry.id)" class="text-[9px] text-cinnabar">新</span>
             </button>
             <span v-else class="chip-ink border-ink/15 text-ink-faint" :title="`尚未收录 · ${cat.source}`">???</span>
           </template>
@@ -76,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import { computed, onUnmounted, ref } from 'vue'
   import { useQuestsStore } from '@/stores/quests'
   import type { CollectionCategory } from '@/stores/quests'
   import { ACHIEVEMENTS } from '@/data/achievements'
@@ -107,6 +109,9 @@
   import GameIcon from '@/components/common/GameIcon.vue'
 
   const quests = useQuestsStore()
+  // 「新得」清账时机 = 离开图鉴那一刻(与背包「新」同款:挂载清会把首帧「新」立刻抹掉)。
+  // 挂在图鉴上的整段看下来,离开时才把界推进到此刻 —— 下次进来,新韵只归这之后新收的几件。
+  onUnmounted(() => quests.markCollectionSeen())
 
   type Tab = 'achievement' | 'collection'
   const tab = ref<Tab>('achievement')
