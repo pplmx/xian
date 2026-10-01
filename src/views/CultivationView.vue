@@ -285,6 +285,10 @@
       >
         {{ btInfo.ready ? (btInfo.needTribulation ? '引 劫 突 破' : '尝 试 突 破') : btInfo.reason }}
       </button>
+      <!-- 灵气不足是四个字,拦下的却是「还差多少、回够要多久」 —— 补齐直显,别让玩家点开灵气数才看见等待值(与修为 ETA 同款口径) -->
+      <p v-if="btQiBlock" class="mt-1 text-center text-[10px] leading-relaxed text-cinnabar tabular">
+        尚差 {{ btQiBlock.short }} 灵气,按当前回复{{ btQiBlock.eta }}
+      </p>
     </div>
 
     <!-- Phase 28 闭关:5 分钟 +150% 修炼,期间禁止历练(数值唯一来源 = buffs.ts retreat + earlyGameService) -->
@@ -491,6 +495,16 @@ import type { PillDef } from '@/types'
   const now = useNow()
 
   const btInfo = computed(() => breakthroughInfo())
+  /**
+   * 突破按钮的「灵气不足」补齐:reason 只报四字,不报还差多少、回够要多久。
+   * 站在按钮前的人不该再点开灵气数字才看见等待值 —— short 与 eta 现算,无 rebound。
+   */
+  const btQiBlock = computed(() => {
+    if (btInfo.value.ready || btInfo.value.reason !== '灵气不足') return null
+    const short = Math.max(0, Math.ceil(btInfo.value.qiCost - resources.qi))
+    const sec = player.qiRegenPerSec > 0 ? Math.ceil(short / player.qiRegenPerSec) : Number.POSITIVE_INFINITY
+    return { short, eta: Number.isFinite(sec) ? `约 ${formatDuration(sec)}` : '当前无回复' }
+  })
 
   /**
    * 修为数值详情的两行 + 一句人话。

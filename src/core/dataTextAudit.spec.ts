@@ -201,6 +201,14 @@ describe('文案数值对账 · 视图不手抄数字', () => {
       expect(view, `${pill} 没接进突破幕的破境增益`).toContain(pill)
     }
   })
+
+  it('突破按钮的「灵气不足」要补缺:还差多少、回够要多久直显,不许只给四字灰', () => {
+    const view = src('../views/CultivationView.vue')
+    // reason 报「灵气不足」时,按钮下方必须有 btQiBlock 的短差与 ETA;删/收缩成四字立刻红
+    expect(view).toContain("btInfo.value.reason !== '灵气不足'")
+    expect(view).toContain('v-if="btQiBlock"')
+    expect(view).toContain('尚差 {{ btQiBlock.short }}')
+  })
 })
 
 /**
