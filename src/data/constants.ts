@@ -14,6 +14,8 @@ export const OFFLINE_CAP_HOURS = [8, 12, 24, 48, 72] as const
 export const OFFLINE_EFFICIENCY = 0.9
 /** lastActiveAt 写入节流(毫秒) */
 export const ACTIVE_STAMP_MS = 5000
+/** 引擎弹窗(悟道顿悟/洞府巡游)倒计时低于该秒数转朱砂 —— 临散前得看得见「快选」(单源,勿双写) */
+export const URGENT_COUNTDOWN_SEC = 10
 
 // ============ 寿元 ============
 /** 每现实 1 小时增加的年龄(岁) */

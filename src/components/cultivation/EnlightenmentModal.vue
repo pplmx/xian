@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getCurrentEnlightenment, chooseEnlightenment, dismissEnlightenment } from '@/core/earlyGameService'
 import { gameNow } from '@/core/enginePause'
+import { URGENT_COUNTDOWN_SEC } from '@/data/constants'
 import type { EnlightenmentEvent } from '@/types'
 import BaseModal from '@/components/common/BaseModal.vue'
 
@@ -55,7 +56,7 @@ const show = computed(() => event.value !== null)
     <p class="flex items-center justify-between text-[11px] text-ink-faint">
       <span>灵光一闪,选择一项增益</span>
       <!-- 临散前转朱砂:限时增益,过了就白丢 —— 紧迫得用颜色说出来,不看倒计时也瞥见 -->
-      <span class="tabular" :class="remaining <= 10 ? 'text-cinnabar' : 'text-gold-ink'">{{ remaining }} 秒后自散</span>
+      <span class="tabular" :class="remaining <= URGENT_COUNTDOWN_SEC ? 'text-cinnabar' : 'text-gold-ink'">{{ remaining }} 秒后自散</span>
     </p>
     <div class="mt-3 space-y-2">
       <button

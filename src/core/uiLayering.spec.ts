@@ -119,11 +119,14 @@ describe('界面分层 · 浮层只有一个出处', () => {
 
   it('顿悟/巡游临散前转朱砂 —— 限时增益不许静默自散', () => {
     // 两扇引擎弹窗都有倒计时,但临散前若还是金色,读长文案的玩家会白丢这份
-    // 增益(巡游关掉当天就没了)。≤10 秒必须转朱砂,颜色本身就是「快选」。
+    // 增益(巡游关掉当天就没了)。阈值单源(URGENT_COUNTDOWN_SEC),颜色就是「快选」;
+    // 阈值双写或改回金身,下面这条都红。
     const cave = FILES.find(f => f.path === 'components/dongfu/CaveEventModal.vue')
-    expect(cave?.src).toContain(`remaining <= 10 ? 'text-cinnabar'`)
+    expect(cave?.src).toContain(`remaining <= URGENT_COUNTDOWN_SEC ? 'text-cinnabar'`)
     const enlighten = FILES.find(f => f.path === 'components/cultivation/EnlightenmentModal.vue')
-    expect(enlighten?.src).toContain(`remaining <= 10 ? 'text-cinnabar'`)
+    expect(enlighten?.src).toContain(`remaining <= URGENT_COUNTDOWN_SEC ? 'text-cinnabar'`)
+    const constants = readFileSync(resolve(__dirname, '../data/constants.ts'), 'utf-8')
+    expect(constants).toMatch(/URGENT_COUNTDOWN_SEC = 10/)
   })
 
   it('历练页复聚/已守跟 useNow 走,倒计时不会定格', () => {
