@@ -578,10 +578,12 @@ import type { PillDef } from '@/types'
   const prepPillShort = computed(() => pillPrepShortfall(resources.spiritStone))
 
   function startPrep(option: 'meditate' | 'pill'): void {
+    // 失败臂有意不给 toast:唯一真实失败路(灵石不足)已被按钮置灰 +「尚差 X 石」
+    // 内联拦下(与建筑升级同款),meditate 又不花钱恒成功 —— 此前的「灵石不足,
+    // 无以备药」在按钮加 disabled 后成了到不了的死路,留着会在未来新失败模式上
+    // 报错文案。prepareBreakthrough 返回 false 时安静放行即可。
     if (prepareBreakthrough(option)) {
       ui.toast(option === 'meditate' ? '你盘膝入定,静待调息完成' : '丹药入腹,气机已然蓄足', 'info')
-    } else {
-      ui.toast('灵石不足,无以备药', 'warn')
     }
   }
 
