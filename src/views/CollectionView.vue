@@ -43,7 +43,11 @@
               <GameIcon v-if="entry.icon" :name="entry.icon" :size="11" />
               {{ entry.name }}
               <span v-if="entry.badge" class="text-[9px] opacity-70">{{ entry.badge }}</span>
-              <!-- 新得:收录时刻在「上次打开图鉴」之后才露这一枚(判据在 quests store,见 quests.spec) -->
+              <!--
+                新得:收录时刻在「上次打开图鉴」之后才露这一枚(判据在 quests store,见 quests.spec)。
+                刻意不覆盖的两类:灵材谱(认知深浅)与悟道录(分支阶段)不经 quests.collect(),
+                collectedAt 无其时间戳、恒不挂 —— 它们是「深浅/已择」语义不是「新收录」,别误当漏标。
+              -->
               <span v-if="quests.isEntryNew(cat.key, entry.id)" class="text-[9px] text-cinnabar">新</span>
             </button>
             <span v-else class="chip-ink border-ink/15 text-ink-faint" :title="`尚未收录 · ${cat.source}`">???</span>
@@ -78,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onUnmounted, ref } from 'vue'
+  import { computed, onUnmounted, ref, watch } from 'vue'
   import { useQuestsStore } from '@/stores/quests'
   import type { CollectionCategory } from '@/stores/quests'
   import { ACHIEVEMENTS } from '@/data/achievements'
@@ -109,12 +113,20 @@
   import GameIcon from '@/components/common/GameIcon.vue'
 
   const quests = useQuestsStore()
-  // 「新得」清账时机 = 离开图鉴那一刻(与背包「新」同款:挂载清会把首帧「新」立刻抹掉)。
-  // 挂在图鉴上的整段看下来,离开时才把界推进到此刻 —— 下次进来,新韵只归这之后新收的几件。
-  onUnmounted(() => quests.markCollectionSeen())
 
   type Tab = 'achievement' | 'collection'
   const tab = ref<Tab>('achievement')
+  // 「新得」清账时机 = 离开图鉴那一刻(与背包「新」同款:挂载清会把首帧「新」立刻抹掉)。
+  // 但默认页签是「成就」,「新得」角标只画在「收藏」页签里 —— 只看成就就离开的人
+  // 没看过收藏,界不该推进,否则收藏页从未亮过的「新」被整批抹平(评审 MEDIUM-1)。
+  // 故只有「这一进来切到过收藏页签」才在离开时记账。
+  const sawCollectionTab = ref(false)
+  watch(tab, t => {
+    if (t === 'collection') sawCollectionTab.value = true
+  })
+  onUnmounted(() => {
+    if (sawCollectionTab.value) quests.markCollectionSeen()
+  })
   const TABS: { id: Tab; label: string }[] = [
     { id: 'achievement', label: '成就' },
     { id: 'collection', label: '收藏' }
