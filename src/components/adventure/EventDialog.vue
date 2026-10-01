@@ -38,7 +38,14 @@
           @click="choose(idx)"
         >
           {{ choice.label }}
-          <span v-if="choice.hint" class="ml-2 text-[11px] font-normal text-ink-faint">{{ choice.hint }}</span>
+          <!--
+            花费提示现算:「需要灵石」从不带数,买妖丹那句「需要较多灵石」玩家按
+            标签算账,真掷骰才知是梯度价。choiceHintText 按档位把花费(或区间、
+            「可能」、备足)直接亮出来(见 ui/eventText)。
+          -->
+          <span v-if="choiceHintText(choice, tier)" class="ml-2 text-[11px] font-normal text-ink-faint">
+            {{ choiceHintText(choice, tier) }}
+          </span>
         </button>
       </div>
     </template>
@@ -62,6 +69,7 @@
   import { computed, ref, watch } from 'vue'
   import { useAdventureStore } from '@/stores/adventure'
   import { eventDef } from '@/data/events'
+  import { choiceHintText } from '@/ui/eventText'
   import { choiceAvailable, resolveEventChoice, type EventResolution } from '@/core/eventEngine'
   import { pendingChainStages } from '@/core/eventEngine'
   import { usePlayerStore } from '@/stores/player'
