@@ -94,7 +94,7 @@
               词收短到三字("已积至上限"在 320 宽后期档会把这一行顶折,自检当场量到过);
               完整的口径(上限值、不会再涨、怎么花)在点开的详情里。
             -->
-            <span v-if="resources.qi >= player.qiBankCapValue" class="text-qing">· 已封顶</span>
+            <span v-if="resources.qi >= player.qiBankCapValue" class="text-amber-ink">· 已封顶</span>
           </span>
         </div>
         <ProgressBar

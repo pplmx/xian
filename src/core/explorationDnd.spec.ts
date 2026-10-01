@@ -4,6 +4,8 @@
  * 开启后历练撞见际遇/机缘/奇缘:按超时同一条路(默认好愿)当场结清 ——
  * 不置 pending 弹窗、事件照计、下一场战斗照排;关掉则恢复弹窗。
  */
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { tickExploration } from './exploration'
@@ -91,5 +93,14 @@ describe('遇事勿扰', () => {
     tickExploration(now)
     const adventure = useAdventureStore()
     expect(adventure.session?.events).toBe(0)
+  })
+
+  it('历练页露「遇事勿扰」并就地能关 —— 开着的状态要看得出(源审计)', () => {
+    // 勿扰是静默的:际遇自动结清、弹窗永不出现,开过就会忘(还以为是没际遇了)。
+    // 历练页必须有可见提示 + 就地关掉;只留设置页那个勾,本条红。
+    const src = readFileSync(resolve(__dirname, '../views/AdventureView.vue'), 'utf-8')
+    expect(src, '提示得挂在 settings.dndEvents 上').toContain('settings.dndEvents')
+    expect(src).toContain('遇事勿扰开启')
+    expect(src, '除提示外还要有就地关掉的按钮').toContain('关掉')
   })
 })

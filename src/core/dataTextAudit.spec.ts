@@ -209,6 +209,11 @@ describe('文案数值对账 · 视图不手抄数字', () => {
     expect(view).toContain('v-if="btQiBlock"')
     expect(view).toContain('尚差 {{ btQiBlock.short }}')
   })
+
+  it('灵气「已封顶」用琥珀色 —— qing 会读成祥和安好,实则攒到天花板', () => {
+    const view = src('../views/CultivationView.vue')
+    expect(view).toMatch(/text-amber-ink[\s\S]{0,80}已封顶/)
+  })
 })
 
 /**

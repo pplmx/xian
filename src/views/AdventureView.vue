@@ -43,6 +43,20 @@
         </span>
       </p>
       <!--
+        遇事勿扰是静默的:际遇自动结清、弹窗永不出现 —— 开着只在设置页留了个勾,
+        历练页毫无痕迹,玩家只会以为「际遇怎么没了」。故开着就得在出发前看得出、能顺手关。
+      -->
+      <p v-if="settings.dndEvents" class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-amber-ink">
+        <span>遇事勿扰开启 —— 途中际遇自动结清,不再弹窗</span>
+        <button
+          type="button"
+          class="-my-1.5 py-1.5 text-[10px] text-ink-faint underline active:opacity-60"
+          @click="settings.dndEvents = false"
+        >
+          关掉
+        </button>
+      </p>
+      <!--
         镇压规则压成一行:地界行里已经逐项写着「当前值 / 需≤阈值」,
         这里只交代一句总纲(四条长句堆在列表前面就是一堵文字墙)。
       -->
@@ -290,6 +304,7 @@
   import type { ExploreMode, RegionDef, RegionRecall } from '@/types'
   import { useAdventureStore } from '@/stores/adventure'
   import { usePlayerStore } from '@/stores/player'
+  import { useSettingsStore } from '@/stores/settings'
   import { petDef } from '@/data/pets'
   import { personalityEffects } from '@/core/petPersonality'
   import { useUiStore } from '@/stores/ui'
@@ -321,6 +336,7 @@
   const route = useRoute()
   const router = useRouter()
   const player = usePlayerStore()
+  const settings = useSettingsStore()
 
   /** 灵兽之性对出行的修正:慢稳更久、好战更险 —— 出行弹窗是最后一个算账点,选前要看得见 */
   const petLine = computed(() => {
