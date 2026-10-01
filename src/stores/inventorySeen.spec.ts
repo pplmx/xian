@@ -50,6 +50,18 @@ describe('背包「新」角标 · 标记语义', () => {
     inv.items = [inst('uA') as never]
     expect(inv.isNewItem('uA')).toBe(true)
   })
+
+  it('hasNewItem:行囊里有没看过的才亮 —— 开包即灭(底部导航新货点的判据)', () => {
+    const inv = useInventoryStore()
+    expect(inv.hasNewItem).toBe(false) // 空行囊
+    inv.items = [inst('uA') as never]
+    inv.markInventorySeen()
+    expect(inv.hasNewItem).toBe(false) // 都看过
+    inv.items = [inst('uA') as never, inst('uC') as never] // 新入包 C
+    expect(inv.hasNewItem).toBe(true)
+    inv.markInventorySeen() // 开包
+    expect(inv.hasNewItem).toBe(false)
+  })
 })
 
 describe('背包「新」角标 · 洗档纪律', () => {

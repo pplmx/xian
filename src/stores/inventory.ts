@@ -80,6 +80,9 @@ export const useInventoryStore = defineStore(
       seenUids.value = items.value.map(i => i.uid)
     }
 
+    /** 行囊里还有「新入包没开包看过」的件 —— 底部导航的背包页签点挂它(见 inventorySeen.spec) */
+    const hasNewItem = computed(() => items.value.some(i => !seenUids.value.includes(i.uid)))
+
     /** 这一件是「新入包、还没开过包看它」吗(卡片挂「新」角标的唯一判据) */
     function isNewItem(uid: string): boolean {
       return !seenUids.value.includes(uid)
@@ -232,6 +235,7 @@ export const useInventoryStore = defineStore(
       toggleArtifact,
       markInventorySeen,
       isNewItem,
+      hasNewItem,
       sanitize
     }
   },

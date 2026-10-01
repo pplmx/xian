@@ -17,8 +17,14 @@
         class="relative flex flex-col items-center gap-0.5 py-2 transition-colors short:gap-0 short:py-1"
         :class="route.name === tab.name ? 'text-cinnabar' : 'text-ink-faint active:text-ink-soft'"
       >
-        <span class="transition-transform duration-200" :class="route.name === tab.name ? '-translate-y-0.5 scale-110' : ''">
+        <span class="relative transition-transform duration-200" :class="route.name === tab.name ? '-translate-y-0.5 scale-110' : ''">
           <GameIcon :name="tab.icon" :size="20" />
+          <!-- 行囊有没看过的新件:背包页签挂新货点 —— 从任何页都看得见「有新货」,开包即隐 -->
+          <span
+            v-if="tab.name === 'inventory' && bagHasNew"
+            class="absolute -right-1 -top-0.5 h-1.5 w-1.5 rounded-full bg-cinnabar"
+            :class="route.name === 'inventory' ? '' : 'animate-breathe'"
+          />
         </span>
         <span class="font-kai text-[11px] tracking-[0.2em] short:text-[10px]">{{ tab.label }}</span>
       </RouterLink>
@@ -27,13 +33,17 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
   import { useRoute } from 'vue-router'
   import { useNativeInsets } from '@/composables/useNativeInsets'
+  import { useInventoryStore } from '@/stores/inventory'
   import GameIcon from './GameIcon.vue'
 
   const route = useRoute()
   /** 安卓三键导航实测占位(防底栏被系统按钮盖住,见 useNativeInsets) */
   const { bottom: navInset } = useNativeInsets()
+  /** 背包页签的新货点:行囊里有没开包看过的新件才亮(判据在 inventory store,见 inventorySeen.spec) */
+  const bagHasNew = computed(() => useInventoryStore().hasNewItem)
 
   const TABS = [
     { name: 'home', label: '洞府', icon: 'mountain', to: '/' },
