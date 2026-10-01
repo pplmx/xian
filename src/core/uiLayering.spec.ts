@@ -134,4 +134,17 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(adv?.src).toContain('useNow')
     expect(adv?.src).toMatch(/hoursUntilRevive\([^)]*now\.value/)
   })
+
+  it('「新」角标清账只发生在离开、且门掉没看过的分支 —— 别退回挂载即抹', () => {
+    // 两处「新」角标(背包/图鉴)共享同一清账纪律:挂载清会把首帧刚渲染的「新」
+    // 立刻抹掉;图鉴默认页签是成就,只看成就就离开也不该推进界(评审 MEDIUM-1)。
+    // 违反的两种回退(无条件挂载清 / 图鉴碑掉 sawCollectionTab 门)下面都红。
+    const bag = FILES.find(f => f.path === 'views/InventoryView.vue')
+    expect(bag?.src).toMatch(/onUnmounted\(\(\).*markInventorySeen\(\)/)
+    expect(bag?.src).not.toMatch(/onMounted\(\(\).*markInventorySeen/)
+    const codex = FILES.find(f => f.path === 'views/CollectionView.vue')
+    expect(codex?.src).toContain('sawCollectionTab')
+    expect(codex?.src).toMatch(/if \(sawCollectionTab\.value\) quests\.markCollectionSeen\(\)/)
+    expect(codex?.src).not.toMatch(/onMounted\(\(\).*markCollectionSeen/)
+  })
 })
