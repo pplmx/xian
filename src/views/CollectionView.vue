@@ -1,7 +1,7 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!-- 页签 -->
-    <InkTabs v-model="tab" :tabs="TABS" />
+    <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
+    <InkTabs v-model="tab" :tabs="tabRows" />
 
     <!-- 成就 -->
     <template v-if="tab === 'achievement'">
@@ -249,6 +249,13 @@
       )
     ]
   })
+
+  /** 收藏册里还有「新得」没看过 —— 图鉴默认落在「成就」页,不切进去也看不见有货,门口先亮一点 */
+  const collectionHasNew = computed(() =>
+    collectionCats.value.some(cat => cat.entries.some(e => quests.isEntryNew(cat.key, e.id)))
+  )
+  /** 页签行:在「收藏」上挂新得点(呼吸提醒),看过则隐 —— 与 CelestialView 的 exped 同款 */
+  const tabRows = computed(() => TABS.map(t => ({ ...t, dot: t.id === 'collection' && collectionHasNew.value })))
 
   // ---- 详情弹窗 ----
   // 脚注各类口径不同(旧七类记收录时日、灵材记照面回数、悟道记所属功法),

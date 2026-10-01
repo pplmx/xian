@@ -146,5 +146,7 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(codex?.src).toContain('sawCollectionTab')
     expect(codex?.src).toMatch(/if \(sawCollectionTab\.value\) quests\.markCollectionSeen\(\)/)
     expect(codex?.src).not.toMatch(/onMounted\(\(\).*markCollectionSeen/)
+    // 页签上也得露:默认在成就页不切进去看不见有货,「收藏」页签挂新得点(呼吸提醒)
+    expect(codex?.src).toContain(`dot: t.id === 'collection'`)
   })
 })
