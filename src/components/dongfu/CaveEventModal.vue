@@ -60,7 +60,8 @@ const locationLabel = computed(() =>
   <BaseModal :open="show" title="洞府巡游" :closable="false" @close="handleIgnore">
     <p class="flex items-center justify-between text-[11px] text-ink-faint">
       <span class="chip-ink !py-0 text-[10px] text-jade">{{ locationLabel }}</span>
-      <span class="tabular text-gold-ink">{{ remaining }} 秒后自散</span>
+      <!-- 临散前转朱砂:关掉=放弃当日巡游,紧迫得用颜色说出来 -->
+      <span class="tabular" :class="remaining <= 10 ? 'text-cinnabar' : 'text-gold-ink'">{{ remaining }} 秒后自散</span>
     </p>
     <p class="mt-3 font-kai text-[14px] tracking-widest text-ink">{{ event?.title }}</p>
     <p class="mt-1 text-[12px] leading-relaxed text-ink-soft">{{ event?.desc }}</p>
