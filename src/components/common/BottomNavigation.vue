@@ -1,7 +1,12 @@
 <template>
+  <!--
+    底部留白 = max(CSS 安全区, 原生实测占位):安卓 WebView 不把三键导航栏高度告诉
+    env(safe-area-inset-bottom)(恒 0),手势导航那根横杠半透明看不出问题 —— 真实占位
+    经 NativeApp 桥量来,桥缺位(网页/iOS/桌面)恒 0,max 退化成 env(),与旧渲染逐位相同。
+  -->
   <nav
     class="relative z-20 shrink-0 border-t border-ink/15 bg-paper-deep/95 backdrop-blur"
-    style="padding-bottom: env(safe-area-inset-bottom)"
+    :style="`padding-bottom: max(env(safe-area-inset-bottom), ${navInset}px)`"
   >
     <div class="ink-divider absolute -top-px inset-x-0" />
     <div class="grid grid-cols-5">
@@ -23,9 +28,12 @@
 
 <script setup lang="ts">
   import { useRoute } from 'vue-router'
+  import { useNativeInsets } from '@/composables/useNativeInsets'
   import GameIcon from './GameIcon.vue'
 
   const route = useRoute()
+  /** 安卓三键导航实测占位(防底栏被系统按钮盖住,见 useNativeInsets) */
+  const { bottom: navInset } = useNativeInsets()
 
   const TABS = [
     { name: 'home', label: '洞府', icon: 'mountain', to: '/' },
