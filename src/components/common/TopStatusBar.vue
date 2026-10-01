@@ -1,7 +1,7 @@
 <template>
   <header
     class="relative z-20 flex shrink-0 items-center justify-between gap-2 border-b border-ink/10 bg-paper-deep/90 px-4 py-2 backdrop-blur short:py-1"
-    :style="`padding-top: max(env(safe-area-inset-top), ${Capacitor.isNativePlatform() ? `20px` : `8px`})`"
+    :style="`padding-top: max(env(safe-area-inset-top), ${statusTopPad})`"
   >
     <!--
       窄屏不许折行:320 宽时右组的「9 兆」「25.33 亿」与左组的「3000/1000 亿载」
@@ -50,13 +50,23 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
   import { usePlayerStore } from '@/stores/player'
   import { useResourcesStore } from '@/stores/resources'
   import { formatGN, formatNum, formatYears, yearsShown } from '@/utils/format'
   import { LIFESPAN_WARN_RATIO } from '@/data/constants'
   import { Capacitor } from '@capacitor/core'
+  import { useNativeInsets } from '@/composables/useNativeInsets'
   import GameIcon from './GameIcon.vue'
 
   const player = usePlayerStore()
   const resources = useResourcesStore()
+  /**
+   * 状态栏占位:原生实测有值(安卓,见 useNativeInsets)就用实测;没有就退回
+   * 老的猜测 —— 原生 20px(沉浸式状态栏的近似)/ 网页 8px,web 渲染逐位不变。
+   */
+  const { top: statusInset } = useNativeInsets()
+  const statusTopPad = computed(() =>
+    statusInset.value > 0 ? `${statusInset.value}px` : Capacitor.isNativePlatform() ? '20px' : '8px'
+  )
 </script>
