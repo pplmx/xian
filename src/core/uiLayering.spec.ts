@@ -237,4 +237,15 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(inv?.src).toContain('row.delta !== null')
     expect(inv?.src).toContain('powerOf(occupant)')
   })
+
+  it('秘境付不起置灰+报差 —— 别只沉到底、点了才 toast', () => {
+    // 秘境入口曾用 opacity-60 假装灰(仍可点、点了才 toast 原因),不入「付不起置灰+列差」
+    // 的族规。钉死:付不起真禁用(disabled:opacity-40),行内代价换口「尚差 N 石/道源」。
+    const sr = FILES.find(f => f.path === 'components/adventure/SecretRealmCard.vue')
+    expect(sr?.src).toContain(':disabled="!canPay(r)"')
+    expect(sr?.src).toContain("'disabled:opacity-40': !canPay(r)")
+    expect(sr?.src).toContain('payText(r)')
+    expect(sr?.src).toMatch(/尚差 \$\{formatGN/)
+    expect(sr?.src).not.toMatch(/'opacity-60': !canPay/)
+  })
 })

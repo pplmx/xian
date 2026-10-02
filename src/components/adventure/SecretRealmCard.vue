@@ -29,13 +29,15 @@
           v-for="r in list"
           :key="r.id"
           class="w-full rounded-md bg-paper-deep/60 px-3 py-2 text-left active:scale-99"
-          :class="{ 'opacity-60': !canPay(r) }"
+          :class="{ 'disabled:opacity-40': !canPay(r) }"
+          :disabled="!canPay(r)"
           @click="enter(r.id)"
         >
           <span class="flex items-baseline gap-2">
             <span class="font-kai text-[13px] text-ink">{{ r.name }}</span>
+            <!-- 付不起就报差(与聚气丹/建筑/法宝同款):一盏灰灯不说差多少等于没说完 -->
             <span class="text-[10px] tabular" :class="canPay(r) ? 'text-ink-faint' : 'text-cinnabar'">
-              {{ entryCostText(r, player.major) }}
+              {{ payText(r) }}
             </span>
             <span class="ml-auto text-[10px] text-qing">入 境 →</span>
           </span>
@@ -54,7 +56,8 @@
   import { useUiStore } from '@/stores/ui'
   import { useEndgameStore } from '@/stores/endgame'
   import { secretRealmDef, type SecretRealmDef } from '@/data/secretRealms'
-  import { cnNumber } from '@/utils/format'
+  import { cnNumber, formatGN } from '@/utils/format'
+  import { toNum } from '@/utils/gnum'
   import {
     SECRET_LAYERS,
     abandonRealm,
@@ -82,6 +85,15 @@
   function canPay(r: SecretRealmDef): boolean {
     const c = entryCostOf(r, player.major)
     return c.kind === 'stone' ? resources.hasStone(c.stone) : endgame.daoSource >= c.daoSource
+  }
+
+  /** 行内代价:买得起念全价,付不起换口「尚差 N」(与聚气丹/建筑/法宝同款句式) */
+  function payText(r: SecretRealmDef): string {
+    const c = entryCostOf(r, player.major)
+    if (canPay(r)) return entryCostText(r, player.major)
+    return c.kind === 'stone'
+      ? `尚差 ${formatGN(Math.max(0, toNum(c.stone) - toNum(resources.spiritStone)))} 石`
+      : `尚差 ${Math.max(0, c.daoSource - endgame.daoSource)} 道源`
   }
 
   function enter(id: string): void {
