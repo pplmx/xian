@@ -319,5 +319,11 @@ describe('界面分层 · 浮层只有一个出处', () => {
     const rite = readFileSync(resolve(__dirname, '../components/common/WorldTransitionVeil.vue'), 'utf-8')
     expect(rite, '越界判据只许走 announceWorldEntry 纯函数').toContain('announceWorldEntry')
     expect(rite, '宣告遮罩不许拦操作(pointer-events-none)').toContain('pointer-events-none')
+    // 章节标题杆是全页高频的装饰 cue:每界各一色,别退回「只剩人间朱砂」
+    const section = readFileSync(resolve(__dirname, '../components/common/SectionTitle.vue'), 'utf-8')
+    expect(section, '标题杆要读世界色(--world-bar),不许写死朱砂').toContain('var(--world-bar)')
+    expect(css).toMatch(/data-world='immortal'\][\s\S]{0,80}--world-bar/)
+    expect(css).toMatch(/data-world='god'\][\s\S]{0,80}--world-bar/)
+    expect(css).toMatch(/data-world='chaos'\][\s\S]{0,80}--world-bar/)
   })
 })
