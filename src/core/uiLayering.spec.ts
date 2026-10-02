@@ -226,4 +226,15 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(inv?.src).toContain('formatGN(row.short10)')
     expect(inv?.src).not.toMatch(/:disabled="!row\.affordable"[\s\S]{0,40}buyTen/)
   })
+
+  it('部位候选行报「战 ±N」 —— 换装这件值不值,列表层就该看见,别等点开详情', () => {
+    // 换装是最重复的决策:候选行此前只报品质/阶/词条数,跟身上那件差多少要逐个
+    // 点开详情才对。行级差值必须vs 当前佩戴件(powerOf 线性差,与人物页战力同口径),
+    // 佩戴中的底行自己不报差(它即基线)、空槽不报差(无对比对象)。
+    const inv = FILES.find(f => f.path === 'views/InventoryView.vue')
+    expect(inv?.src).toContain('powerOf(row.item) - powerOf(occupant)')
+    expect(inv?.src).toContain('战 +${formatGN(Math.round(delta))}')
+    expect(inv?.src).toContain('row.delta !== null')
+    expect(inv?.src).toContain('powerOf(occupant)')
+  })
 })

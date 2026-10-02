@@ -456,6 +456,16 @@
               {{ row.item.affixes.length }}/{{ qualityDef(row.item.quality).affixes[1] }}
             </span>
           </button>
+          <!--
+            换装决策的行级读数:这一件跟身上那件差多少战力,picker 层就该看见 ——
+            不用每件点开详情才知道值不值得换(与人物页战力同一个数,pScore 线性差)。
+          -->
+          <span
+            v-if="row.delta !== null"
+            class="shrink-0 text-[10px] tabular"
+            :class="row.deltaCls"
+            :title="`vs 当前佩戴:${row.deltaText}`"
+          >{{ row.deltaText }}</span>
           <button v-if="row.equipped" class="btn-ghost shrink-0 !px-2.5 !py-1 !text-[11px]" @click="unequipSlot()">卸下</button>
           <button v-else class="btn-seal shrink-0 !px-2.5 !py-1 !text-[11px]" @click="equipItem(row.item.uid)">换上</button>
         </div>
@@ -630,6 +640,8 @@
   import { useInventoryStore } from '@/stores/inventory'
   import { useResourcesStore } from '@/stores/resources'
   import { gn, toNum } from '@/utils/gnum'
+  import { resolveEquipStats } from '@/core/equipGen'
+  import { powerScore } from '@/core/formulas'
   import { usePlayerStore } from '@/stores/player'
   import { useUiStore } from '@/stores/ui'
   import { useSettingsStore } from '@/stores/settings'
@@ -677,7 +689,7 @@
   import { cnNumber, formatGN, formatNum, formatPercent, formatSignedPercent } from '@/utils/format'
   import { STAT_NAMES, modsText } from '@/ui/statNames'
   import { colorWithAlpha } from '@/ui/colorVar'
-  import type { AnyStatKey, EquipSlot, GNum, PillDef } from '@/types'
+  import type { AnyStatKey, EquipSlot, EquipmentInstance, GNum, PillDef } from '@/types'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import InkTabs from '@/components/common/InkTabs.vue'
   import GameIcon from '@/components/common/GameIcon.vue'
@@ -797,12 +809,27 @@
     const slot = pickerSlot.value
     if (!slot) return []
     const equippedUid = inventory.equipped[slot]
+    // 这一槽当下的佩戴件 —— 每个候选的「战 ±N」都与它比(powerScore 是线性合计,
+    // 换装的战力差 = 新件三围分 − 旧件三围分,与人物页战力同一个数,无需重算总属性)
+    const occupant = equippedUid ? inventory.items.find(i => i.uid === equippedUid) : undefined
+    const powerOf = (i: EquipmentInstance): number => {
+      const f = resolveEquipStats(i).flats
+      return toNum(powerScore(f.attack, f.defense, f.maxHp))
+    }
     return inventory.items
       .map(item => ({ item, template: equipmentTemplate(item.templateId) }))
       .filter((row): row is { item: (typeof inventory.items)[number]; template: NonNullable<ReturnType<typeof equipmentTemplate>> } =>
         !!row.template && row.template.slot === slot
       )
-      .map(row => ({ ...row, equipped: row.item.uid === equippedUid }))
+      .map(row => {
+        const equipped = row.item.uid === equippedUid
+        // 佩戴中底行不报差(它自己就是基线);空槽的候选也不报(皆收益,无对比对象)
+        const delta = !equipped && occupant ? powerOf(row.item) - powerOf(occupant) : null
+        const deltaText =
+          delta === null ? '' : delta > 0 ? `战 +${formatGN(Math.round(delta))}` : delta < 0 ? `战 -${formatGN(Math.round(-delta))}` : '战 同'
+        const deltaCls = delta === null ? '' : delta > 0 ? 'text-jade' : delta < 0 ? 'text-cinnabar' : 'text-ink-faint'
+        return { ...row, equipped, delta, deltaText, deltaCls }
+      })
       .sort((a, b) => {
         if (a.equipped !== b.equipped) return Number(b.equipped) - Number(a.equipped)
         const dq = qualityDef(b.item.quality).rank - qualityDef(a.item.quality).rank
