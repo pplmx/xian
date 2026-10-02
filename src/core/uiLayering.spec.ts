@@ -214,4 +214,16 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(cult?.src).toMatch(/v-if="learnedList\.length"/)
     expect(cult?.src).toMatch(/v-else[\s\S]{0,120}尚无一部习得之法/)
   })
+
+  it('灵草坊买十用十株的门槛 + 付不起摆短差 —— 灯灰必须说出差多少', () => {
+    // 买10 曾拿单株价当门槛(够 1 株就亮),点了才弹「灵石不足」;付不起了也只
+    // 沉到底不报差,与同文件法宝炼化的「尚差」句式不一致。两者一起钉死:
+    // 十株有其自己的 affordability 判定与短差,买10 不许再退回单株价放行。
+    const inv = FILES.find(f => f.path === 'views/InventoryView.vue')
+    expect(inv?.src).toContain('affordable10')
+    expect(inv?.src).toContain(':disabled="!row.affordable10"')
+    expect(inv?.src).toContain('formatGN(row.short)')
+    expect(inv?.src).toContain('formatGN(row.short10)')
+    expect(inv?.src).not.toMatch(/:disabled="!row\.affordable"[\s\S]{0,40}buyTen/)
+  })
 })

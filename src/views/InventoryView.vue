@@ -312,11 +312,17 @@
             <p class="text-[10px] text-ink-faint tabular">持有 {{ row.held }} · 单价 {{ formatGN(row.price) }} 灵石</p>
             <!-- 落处:买错品=大额沉没。「草比石贵」十倍一翻,先把这品草喂谁的方子摆出来 -->
             <p class="text-[10px] text-qing/80">{{ row.usage }}</p>
+            <!--
+              付不起就把缺摆出来:买十的门槛是十株的价,值与买一口径同源 ——
+              一盏灰灯不告诉差多少等于没说完(法宝炼化同款句式)。
+            -->
+            <p v-if="!row.affordable" class="mt-0.5 text-[10px] text-cinnabar tabular">尚差 {{ formatGN(row.short) }} 灵石</p>
+            <p v-else-if="!row.affordable10" class="mt-0.5 text-[10px] text-cinnabar tabular">尚差 {{ formatGN(row.short10) }} 灵石 · 买十株</p>
           </div>
           <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]" :disabled="!row.affordable" @click="buyOne(row.grade)">
             买1
           </button>
-          <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px] !opacity-80" :disabled="!row.affordable" @click="buyTen(row.grade)">
+          <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]" :disabled="!row.affordable10" @click="buyTen(row.grade)">
             买10
           </button>
         </div>
@@ -623,7 +629,7 @@
   import { computed, onUnmounted, ref } from 'vue'
   import { useInventoryStore } from '@/stores/inventory'
   import { useResourcesStore } from '@/stores/resources'
-  import { toNum } from '@/utils/gnum'
+  import { gn, toNum } from '@/utils/gnum'
   import { usePlayerStore } from '@/stores/player'
   import { useUiStore } from '@/stores/ui'
   import { useSettingsStore } from '@/stores/settings'
@@ -702,7 +708,13 @@
         // 这品草喂哪个境界的方子:十倍一翻的贵价,落处得写明白(读分档表,不另写)
         usage: herbGradeBandLabel(g),
         price, // 单价 :number,模板里走 formatGN 排版(千→「1,000」,万→「1000万」)
-        affordable: resources.spiritStone.m * 10 ** resources.spiritStone.e >= price
+        // 可买性与购入口径同款(hasStone = buyHerbs 的判定);买十是十株的门槛,
+        // 拿单株价放行只会出现「买10 亮着、点了才弹灵石不足」(曾真这么坏过)
+        affordable: resources.hasStone(gn(price)),
+        affordable10: resources.hasStone(gn(price * 10)),
+        // 尚差:灰按钮不告诉差多少等于没说完(法宝炼化同款句式)
+        short: Math.max(0, price - toNum(resources.spiritStone)),
+        short10: Math.max(0, price * 10 - toNum(resources.spiritStone))
       }
     })
   )
