@@ -285,4 +285,20 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(css, 'enemy-enter 的帧定义被删了 —— 换敌退回硬切').toMatch(/@keyframes enemy-enter[\s\S]{0,120}translateY\(5px\)/)
     expect(css).toMatch(/\.enemy-enter[\s\S]{0,60}animation:\s*enemy-enter/)
   })
+
+  it('首领战有仪式感 —— 此地之主登场有显形,不许退回「只多个小标记」', () => {
+    // 首领战每 10 胜一轮,是历练的周期性高潮,却只比小怪多一圈红框。
+    // 三件套钉死:图标挂朱砂呼吸光环(animate-glow-pulse)、名字转朱砂(boss 名
+    // 不再与小怪同色)、登场宣告(boss-reveal 居中淡入定住再散,随 battle.at
+    // 键控重挂每场重放) —— 拆掉其中任何一件,下面红。
+    const fight = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
+    expect(fight?.src, '首领图标要有朱砂光环(animate-glow-pulse),与小怪图标分开').toMatch(
+      /battle\?\.isBoss \? .{0,90}animate-glow-pulse/
+    )
+    expect(fight?.src, '首领名要转朱砂 —— 名字是这一场的主角').toMatch(/data-foe-name[\s\S]{0,120}battle\?\.isBoss \? 'text-cinnabar'/)
+    expect(fight?.src, '登场宣告(boss-reveal)被拆了').toMatch(/v-if="battle\?\.isBoss"[\s\S]{0,160}boss-reveal/)
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'boss-reveal 的帧定义被删了 —— 首领登场退回硬切').toMatch(/@keyframes boss-reveal[\s\S]{0,140}opacity: 1/)
+    expect(css).toMatch(/\.boss-reveal[\s\S]{0,60}animation:\s*boss-reveal/)
+  })
 })

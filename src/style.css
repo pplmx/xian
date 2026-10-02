@@ -996,6 +996,33 @@ html[data-theme='dark'] .mist-soft {
   }
 }
 
+/*
+ * 首领现身:此地之主登场那一声 —— 居中宣告淡入定住再散。
+ * 只动 opacity/transform、fill 留在 opacity 0(退场后采样量不到、不占几何),
+ * reduced-motion 由全局 * 规则兜。
+ */
+.boss-reveal {
+  animation: boss-reveal 2.2s ease-out forwards;
+}
+
+@keyframes boss-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  16% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  76% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 /* 洞府营造:升级落成时金光一闪 */
 .card-flash {
   animation: card-flash 0.85s ease-out;

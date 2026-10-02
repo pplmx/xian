@@ -42,7 +42,7 @@
         <div class="flex items-start gap-2">
           <span
             class="grid h-10 w-10 shrink-0 place-items-center rounded-full border"
-            :class="battle?.isBoss ? 'border-cinnabar/70 text-cinnabar bg-cinnabar/5' : 'border-ink/25 text-ink-soft bg-ink/4'"
+            :class="battle?.isBoss ? 'border-cinnabar/70 text-cinnabar bg-cinnabar/5 animate-glow-pulse' : 'border-ink/25 text-ink-soft bg-ink/4'"
           >
             <GameIcon :name="battle?.enemyIcon ?? 'paw'" :size="18" />
           </span>
@@ -57,7 +57,7 @@
             -->
             <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-kai text-[14px] text-ink">
               <template v-if="battle">
-                <span data-foe-name class="whitespace-nowrap">{{ battle.enemyName }}</span>
+                <span data-foe-name class="whitespace-nowrap" :class="battle?.isBoss ? 'text-cinnabar' : ''">{{ battle.enemyName }}</span>
               </template>
               <template v-else>
                 <span class="whitespace-nowrap">搜寻猎物中</span>
@@ -88,6 +88,17 @@
             </p>
             <ProgressBar :value="ehp" color="var(--color-cinnabar)" :height="6" class="mt-1" />
           </div>
+        </div>
+        <!--
+          首领现身:此地之主登场那一声 —— 居中宣告淡入定住再散。
+          随外层 battle.at 键控重挂(每场首领战重放一遍),pointer-events-none 不挡操作、
+          absolute 不占几何;退场定在 opacity 0,采样量不到。
+        -->
+        <div
+          v-if="battle?.isBoss"
+          class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+        >
+          <span class="boss-reveal font-kai text-[16px] tracking-[0.35em] text-cinnabar">此地之主 · 现身</span>
         </div>
         </div>
         <span
