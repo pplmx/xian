@@ -62,7 +62,7 @@
       -->
       <p class="text-[10px] leading-relaxed text-ink-faint">
         镇压门槛:{{ SUPPRESS_THRESHOLDS.minFights }} 战 · 均
-        {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{ Math.round(SUPPRESS_THRESHOLDS.maxAvgDamageTaken * 100) }}%;
+        {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{ formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0) }};
         资格永久,守满 {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
       </p>
       <div class="space-y-2.5">
@@ -204,7 +204,7 @@
                 均 {{ row.progress.avgRounds.toFixed(1) }} 回合(需≤{{ row.progress.maxAvgRounds }})
               </span>
               <span class="ml-1.5" :class="row.progress.damageOk ? 'text-ink-faint' : 'text-cinnabar'">
-                均受伤 {{ Math.round(row.progress.avgDamagePct * 100) }}%(需≤{{ Math.round(row.progress.maxAvgDamagePct * 100) }}%)
+                均受伤 {{ formatPercent(row.progress.avgDamagePct, 0) }}(需≤{{ formatPercent(row.progress.maxAvgDamagePct, 0) }})
               </span>
             </template>
             <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
@@ -326,7 +326,7 @@
   import { REVIVE_AFTER_HOURS, hoursUntilRevive, regionRecallFor, prosperityName } from '@/core/worldMemory'
   import { detectBuild } from '@/core/buildDetect'
   import { detectionAdaptation, ecologyChips, ECO_LEVEL_NAMES, recommendForRegion, regionEcology, starsText } from '@/core/buildAdvisor'
-  import { formatDuration, formatGN } from '@/utils/format'
+  import { formatDuration, formatGN, formatPercent } from '@/utils/format'
   import GameIcon from '@/components/common/GameIcon.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
   import CombatPanel from '@/components/adventure/CombatPanel.vue'

@@ -78,7 +78,7 @@
         <p class="flex items-baseline justify-between gap-2">
           <span class="font-kai text-[13px] tracking-wider text-ink">{{ currentGoal.text }}</span>
           <span v-if="currentGoal.progress !== undefined" class="shrink-0 text-[10px] text-ink-faint tabular">
-            {{ Math.round(currentGoal.progress * 100) }}%
+            {{ formatPercent(currentGoal.progress, 0) }}
           </span>
         </p>
         <p v-if="currentGoal.hint" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">{{ currentGoal.hint }}</p>
@@ -200,7 +200,7 @@
   import { LIFESPAN_WARN_RATIO } from '@/data/constants'
   import { WORLD_BREAK_MAJOR } from '@/data/realms'
   import { todayWeather, upcomingWeather, weatherRemainingSec } from '@/core/weather'
-  import { formatDuration } from '@/utils/format'
+  import { formatDuration, formatPercent } from '@/utils/format'
   import { generateCurrentGoal, type Goal } from '@/core/goal'
   import { currentMainQuestProgress } from '@/core/questProgress'
   import { currentFirstStep, homeStatusText } from '@/core/firstStep'

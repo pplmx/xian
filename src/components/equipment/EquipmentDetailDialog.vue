@@ -117,7 +117,7 @@
           <span class="text-ink-faint">装备后流派</span>
           <span class="tabular">
             <template v-if="buildPreview.before">
-              <span class="text-ink-soft">{{ buildPreview.before.displayName }} {{ Math.round(buildPreview.before.affinity * 100) }}%</span>
+              <span class="text-ink-soft">{{ buildPreview.before.displayName }} {{ formatPercent(buildPreview.before.affinity, 0) }}</span>
             </template>
             <template v-else><span class="text-ink-faint">未成路</span></template>
             <span class="mx-1 text-ink-faint">→</span>
@@ -126,7 +126,7 @@
                 class="font-kai"
                 :class="buildPreview.after.affinity >= (buildPreview.before?.affinity ?? 0) ? 'text-jade' : 'text-cinnabar'"
               >
-                {{ buildPreview.after.displayName }} {{ Math.round(buildPreview.after.affinity * 100) }}%
+                {{ buildPreview.after.displayName }} {{ formatPercent(buildPreview.after.affinity, 0) }}
               </span>
             </template>
             <template v-else><span class="text-cinnabar">流派散去</span></template>
@@ -176,7 +176,7 @@
             </p>
           </div>
           <p v-if="whatIf.modChanges.length" class="mt-1 text-[10px] text-qing tabular">
-            主要变化:{{ whatIf.modChanges.map(c => `${c.label} ${c.delta > 0 ? '+' : ''}${Math.round(c.delta * 100)}%`).join(' · ') }}
+            主要变化:{{ whatIf.modChanges.map(c => `${c.label} ${c.delta > 0 ? '+' : ''}${formatPercent(c.delta, 0)}`).join(' · ') }}
           </p>
           <p class="mt-0.5 text-[10px] text-ink-faint">推演只述局面,不替你定夺。</p>
         </template>
@@ -207,7 +207,7 @@
             <p v-for="t in autoTargets" :key="t.affixId" class="flex items-center gap-2 text-[10px] text-ink-faint">
               <span class="w-10 shrink-0 font-kai text-ink-soft">{{ affixDef(t.affixId)?.name ?? t.affixId }}</span>
               <input v-model.number="t.minRoll" type="range" min="0" max="1" step="0.05" class="grow accent-cinnabar" />
-              <span class="w-12 shrink-0 text-right tabular">≥{{ Math.round((t.minRoll ?? 0) * 100) }}%</span>
+              <span class="w-12 shrink-0 text-right tabular">≥{{ formatPercent(t.minRoll ?? 0, 0) }}</span>
             </p>
           </div>
           <div class="mt-1.5 flex items-center gap-2">
@@ -301,7 +301,7 @@
   import { affixDef, AFFIXES } from '@/data/affixes'
   import { qualityDef } from '@/data/qualities'
   import { usePlayerStore } from '@/stores/player'
-  import { formatGN, formatSignedPercent } from '@/utils/format'
+  import { formatGN, formatPercent, formatSignedPercent } from '@/utils/format'
   import { isZero, sub } from '@/utils/gnum'
   import type { AnyStatKey, GNum } from '@/types'
   import { AFFIX_RARITY_META, STAT_NAMES } from '@/ui/statNames'
@@ -439,7 +439,7 @@
     const now = out.affixIds.map(id => affixDef(id)?.name ?? id).join('、') || '空'
     if (out.stop === 'target' && out.hit) {
       ui.toast(
-        `洗出「${affixDef(out.hit.id)?.name ?? out.hit.id}」值 ${Math.round(out.hit.roll * 100)}% —— 共洗 ${out.rolls} 次,${cost}`,
+        `洗出「${affixDef(out.hit.id)?.name ?? out.hit.id}」值 ${formatPercent(out.hit.roll, 0)} —— 共洗 ${out.rolls} 次,${cost}`,
         'success'
       )
     } else if (out.stop === 'budget') {

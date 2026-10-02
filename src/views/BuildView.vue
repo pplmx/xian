@@ -11,11 +11,11 @@
             <p class="flex items-baseline gap-2">
               <span class="font-kai text-[16px] tracking-widest text-ink">{{ build.displayName }}</span>
               <span class="text-[11px] text-cinnabar">{{ build.stageName }}</span>
-              <span class="ml-auto tabular text-[12px] text-ink-soft">契合 {{ Math.round(build.affinity * 100) }}%</span>
+              <span class="ml-auto tabular text-[12px] text-ink-soft">契合 {{ formatPercent(build.affinity, 0) }}</span>
             </p>
             <ProgressBar class="mt-1.5" :value="build.affinity" :height="5" color="var(--color-cinnabar)" />
             <p v-if="build.secondary" class="mt-1 text-[10px] text-ink-faint tabular">
-              副体系:{{ build.secondary.style.name }} {{ Math.round(build.secondary.affinity * 100) }}% —— 修行无职业,道路可以不纯
+              副体系:{{ build.secondary.style.name }} {{ formatPercent(build.secondary.affinity, 0) }} —— 修行无职业,道路可以不纯
             </p>
           </div>
         </div>
@@ -72,7 +72,7 @@
               组合技「{{ comboInfo.art.name }}」
             </span>
             <span class="text-[10px]" :class="comboInfo.active ? 'text-jade' : 'text-ink-faint'">
-              {{ comboInfo.active ? '已成' : `副体系至 ${Math.round(COMBO_SECONDARY_MIN * 100)}% 契合可成` }}
+              {{ comboInfo.active ? '已成' : `副体系至 ${formatPercent(COMBO_SECONDARY_MIN, 0)} 契合可成` }}
             </span>
           </p>
           <p class="mt-0.5 text-[11px] leading-relaxed" :class="comboInfo.active ? 'text-ink-soft' : 'text-ink-faint'">
@@ -94,7 +94,7 @@
               class="ml-auto shrink-0 whitespace-nowrap tabular"
               :class="resilience.retention >= 0.45 ? 'text-jade' : 'text-cinnabar'"
             >
-              胜率 {{ Math.round(resilience.normal * 100) }}% → {{ Math.round(resilience.sealed * 100) }}%
+              胜率 {{ formatPercent(resilience.normal, 0) }} → {{ formatPercent(resilience.sealed, 0) }}
             </span>
           </p>
           <p class="mt-0.5 text-[10px] text-ink-faint">{{ resilienceText(resilience) }}</p>

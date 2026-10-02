@@ -248,4 +248,16 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(sr?.src).toMatch(/尚差 \$\{formatGN/)
     expect(sr?.src).not.toMatch(/'opacity-60': !canPay/)
   })
+
+  it('百分比显示统走 formatPercent —— 不许再手写 Math.round(x*100)%', () => {
+    // 全库曾散着 ~24 处手写 `Math.round(x*100)%` 的百分比显示(契合/胜率/携血/词条/
+    // 熟练/道躯加成…),与 formatPercent 各写一份迟早分叉。统一后可见输出逐位等价
+    // (parity 探针含负数/半值/极小值 0 差异),还白得 NaN/Infinity→'--' 与极小值归 0。
+    // 允许存在的唯一一处 `Math.round(..*100)`:retreatPct 是数值型 compute(模板两处
+    // 引用同一个数,不是显示点) —— 除此之外再有手写百分比显示,下面红。
+    const offenders = FILES.filter(({ src }) => /Math\.round\([\s\S]{0,60}\* *100\)/.test(src)).map(f => f.path)
+    expect(offenders, `手写百分比残留:${offenders.join(',')}`).toEqual(['views/CultivationView.vue'])
+    const cult = FILES.find(f => f.path === 'views/CultivationView.vue')
+    expect(cult?.src).toMatch(/const retreatPct = Math\.round\(/)
+  })
 })

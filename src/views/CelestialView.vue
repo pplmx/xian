@@ -116,7 +116,7 @@
               </template>
             </div>
             <p class="text-[11px] text-ink-faint tabular">
-              已历 {{ run.rows.length }} 战 · 沿途道源 +{{ run.bonus }} · 携血 {{ Math.round(run.carriedHpPct * 100) }}%
+              已历 {{ run.rows.length }} 战 · 沿途道源 +{{ run.bonus }} · 携血 {{ formatPercent(run.carriedHpPct, 0) }}
               <template v-if="run.winStacks && (endgame.daoPath === 'sword' || endgame.daoPath === 'slaughter')">
                 · {{ endgame.daoPath === 'sword' ? '剑意' : '杀意' }} {{ run.winStacks }} 层
               </template>
@@ -126,7 +126,7 @@
                 <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
                   第{{ i + 1 }}战 {{ row.foeName }} · {{ row.win ? '胜' : '负' }}
                 </span>
-                <span class="tabular text-ink-faint">{{ row.rounds }}回合 · 余血{{ Math.round(row.hpLeftPct * 100) }}%</span>
+                <span class="tabular text-ink-faint">{{ row.rounds }}回合 · 余血{{ formatPercent(row.hpLeftPct, 0) }}</span>
               </p>
             </div>
             <div class="ink-divider my-2.5" />
@@ -582,7 +582,7 @@
             <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
               第{{ i + 1 }}战 · {{ row.foeName }} · {{ row.win ? '胜' : '负' }}
             </span>
-            <span class="tabular text-[11px] text-ink-faint">{{ row.rounds }}回合 · 余血{{ Math.round(row.hpLeftPct * 100) }}%</span>
+            <span class="tabular text-[11px] text-ink-faint">{{ row.rounds }}回合 · 余血{{ formatPercent(row.hpLeftPct, 0) }}</span>
           </p>
         </div>
         <!--
@@ -838,7 +838,7 @@
     type ChallengeDraft,
     type ChallengeVerdict
   } from '@/core/challenge'
-  import { cnNumber, formatGN, formatNum } from '@/utils/format'
+  import { cnNumber, formatGN, formatNum, formatPercent } from '@/utils/format'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import InkTabs from '@/components/common/InkTabs.vue'
   import BaseModal from '@/components/common/BaseModal.vue'

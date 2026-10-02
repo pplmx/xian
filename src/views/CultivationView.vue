@@ -255,7 +255,7 @@
           <span v-if="btInfo.prep.sitting" class="text-amber-ink tabular">
             调息中 · <span class="countdown-slot">{{ formatCountdown(btInfo.prep.remainingSec) }}</span>
           </span>
-          <span v-else-if="btInfo.prep.ready" class="text-jade">加成 +{{ Math.round(btInfo.prep.bonus * 100) }}% 就绪</span>
+          <span v-else-if="btInfo.prep.ready" class="text-jade">加成 +{{ formatPercent(btInfo.prep.bonus, 0) }} 就绪</span>
         </div>
         <!--
           两个准备选项并排,但 chip-ink 是 nowrap 的胶囊,320px 窄屏放不下两枚
@@ -264,7 +264,7 @@
         <div v-if="!btInfo.prep.sitting && !btInfo.prep.ready" class="mt-1.5 flex flex-wrap gap-1.5">
           <button type="button" class="chip-ink !py-1.5 text-[10px]" @click="startPrep('meditate')">
             {{ prepMeditate.label }} · {{ Math.round(prepMeditate.duration / 60) }}分钟
-            +{{ Math.round(prepMeditate.bonusRate * 100) }}%
+            +{{ formatPercent(prepMeditate.bonusRate, 0) }}
           </button>
           <button type="button" class="chip-ink !py-1.5 text-[10px]" :disabled="!prepCanPill" @click="startPrep('pill')">
             <!--
@@ -272,7 +272,7 @@
               更短才扛得住 200% 缩放档(390 放大一倍只剩 195 CSS px,chips 是 nowrap,
               实测「服用聚气丹 · +5% 尚差 30 石」会把右缘顶到 211px 越界 16px)。
             -->
-            <template v-if="prepCanPill">{{ prepPill.label }} · {{ prepPillCost }}灵石 +{{ Math.round(prepPill.bonusRate * 100) }}%</template>
+            <template v-if="prepCanPill">{{ prepPill.label }} · {{ prepPillCost }}灵石 +{{ formatPercent(prepPill.bonusRate, 0) }}</template>
             <template v-else>聚气丹 · 尚差 {{ prepPillShort }} 石</template>
           </button>
         </div>
@@ -741,7 +741,7 @@ import type { PillDef } from '@/types'
     if (i) {
       if (i.expSecs) return `修为·约抵闭关 ${formatDuration(i.expSecs)}`
       if (i.expFixed) return `修为 +${formatNum(i.expFixed)}`
-      if (i.qiPct) return `灵气 +上限${Math.round(i.qiPct * 100)}%`
+      if (i.qiPct) return `灵气 +上限${formatPercent(i.qiPct, 0)}`
       if (i.lifespanYears) return `寿元 +${formatNum(i.lifespanYears)}`
       if (i.wudao) return `悟道点 +${formatNum(i.wudao)}`
     }

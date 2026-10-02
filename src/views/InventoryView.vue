@@ -373,7 +373,7 @@
                 :height="4"
                 class="flex-1"
               />
-              <span class="w-7 shrink-0 text-right text-[9px] tabular text-ink-faint">{{ Math.round(s.progress * 100) }}%</span>
+              <span class="w-7 shrink-0 text-right text-[9px] tabular text-ink-faint">{{ formatPercent(s.progress, 0) }}</span>
             </p>
           </div>
         </div>
@@ -1157,6 +1157,6 @@
     const m = lore.recipeMastery(id)
     if (m <= 0) return '此方尚未到手 —— 去藏经阁翻书,或向师长讨教'
     if (m >= 1) return '此方已通晓:火候节点烂熟于心'
-    return `此方已得,熟练 ${Math.round(m * 100)}% —— 多炼几炉便到通晓`
+    return `此方已得,熟练 ${formatPercent(m, 0)} —— 多炼几炉便到通晓`
   }
 </script>

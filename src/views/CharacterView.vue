@@ -127,7 +127,7 @@
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">流 派</span>
         <span class="block truncate text-[10px] text-ink-faint tabular">
           <template v-if="build">
-            {{ build.displayName }} · 契合 {{ Math.round(build.affinity * 100) }}% · 快照 {{ loadouts.list.length }} 套
+            {{ build.displayName }} · 契合 {{ formatPercent(build.affinity, 0) }} · 快照 {{ loadouts.list.length }} 套
           </template>
           <template v-else>道途尚未成路,词条与功法凑成一派便见分晓</template>
         </span>
@@ -254,8 +254,8 @@
           道果
           <span class="ml-1 text-[10px] text-violet-ink">【永久积累】</span>
           <span class="block text-[10px] text-ink-faint">
-            每枚:修行 +{{ Math.round(DAO_FRUIT_CULT_BONUS * 100) }}%,道躯 +{{
-              Math.round(DAO_FRUIT_COMBAT_BONUS * 100)
+            每枚:修行 +{{ formatPercent(DAO_FRUIT_CULT_BONUS, 0) }},道躯 +{{
+              formatPercent(DAO_FRUIT_COMBAT_BONUS, 0)
             }}%;转世保留
           </span>
         </span>
@@ -593,7 +593,7 @@
   const softCappedNotes = computed(() =>
     modRows.value
       .filter(r => r.capped)
-      .map(r => `${r.label}(超出按 ${Math.round((SOFT_CAPS[r.key]?.diminish ?? 1) * 100)}% 计入)`)
+      .map(r => `${r.label}(超出按 ${formatPercent(SOFT_CAPS[r.key]?.diminish ?? 1, 0)} 计入)`)
   )
 
   const build = computed(() => detectBuild(stats.value.mods))

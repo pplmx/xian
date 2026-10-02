@@ -245,7 +245,7 @@
   import { stopExploration, winsUntilRegionBoss } from '@/core/exploration'
   import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS, EXPLORE_MODES, LOW_HP_THRESHOLD } from '@/data/constants'
   import { WIN_STREAK_REWARDS } from '@/data/earlyGame'
-  import { formatCountdown, formatGN } from '@/utils/format'
+  import { formatCountdown, formatGN, formatPercent } from '@/utils/format'
   import { useNow } from '@/composables/useNow'
   import { detectBuild } from '@/core/buildDetect'
   import { detectionAdaptation, enemyTraits, starsText, TRAIT_NAMES, type RegionEcology } from '@/core/buildAdvisor'
@@ -371,7 +371,7 @@
     const r = b.result
     // 结语只多四个字,却是每个玩家每场都会读到的一行:抢先 / 被抢先
     const first = r.firstMove ? (r.firstMove.playerFirst ? ' · 抢先' : ' · 被抢先') : ''
-    return `此战 ${r.rounds} 回合 · 战后气血 ${Math.round(r.playerHpPct * 100)}% · ${r.win ? '胜' : '负'}${first}`
+    return `此战 ${r.rounds} 回合 · 战后气血 ${formatPercent(r.playerHpPct, 0)} · ${r.win ? '胜' : '负'}${first}`
   })
 
   // ---- 战斗分析(第三层信息) ----

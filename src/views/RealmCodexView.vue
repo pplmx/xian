@@ -175,7 +175,7 @@
       <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">
         分野依《晋书·天文志》(诸家小异)只作来历读 —— 游戏里的地界不是九州。
         管用的是下面这条**游戏约定**:{{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{ imageWorldMap }}),
-        值日之宿所属之象,所配界域今日际遇更易(乘在际遇概率上 +{{ Math.round(MANSION_EVENT_LUCK * 100) }}%),他处不加。
+        值日之宿所属之象,所配界域今日际遇更易(乘在际遇概率上 +{{ formatPercent(MANSION_EVENT_LUCK, 0) }}),他处不加。
       </p>
       <p class="mt-1.5 text-[11px] text-qing">
         今日利 <span class="text-gold-ink">{{ favoredWorldName }}</span> —— 与天时不同:天时是全境之气,星象只利一方。
@@ -251,7 +251,7 @@
   import { fateLordLine } from '@/core/fate'
   import { IMAGES, MANSIONS, type ImageId } from '@/data/xiangxiu'
   import { GATES } from '@/data/qimen'
-  import { cnNumber, formatCountdown } from '@/utils/format'
+  import { cnNumber, formatCountdown, formatPercent } from '@/utils/format'
   import { MANSION_EVENT_LUCK, favoredWorld, todayMansion, todayMansionLine } from '@/core/astronomy'
   import { worldDef } from '@/data/realms'
   import type { WorldId } from '@/types'
