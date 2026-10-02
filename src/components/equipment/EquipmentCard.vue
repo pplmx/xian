@@ -20,7 +20,7 @@
       共
     </span>
     <!-- 新入包、还没开过背包看它:顶部中央挂「新」(佩在左、锁在右,这格谁都不占) -->
-    <span v-if="isNew" class="absolute left-1/2 top-0.5 -translate-x-1/2 font-kai text-[8px] leading-none text-cinnabar">
+    <span v-if="isNew" class="absolute left-1/2 top-0.5 -translate-x-1/2 font-kai text-[8px] leading-none text-cinnabar animate-new-pop">
       新
     </span>
 

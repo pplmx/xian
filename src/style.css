@@ -381,6 +381,27 @@
   }
 }
 
+/*
+ * 「新」角标入场:新件到手、再开背包/图鉴那一瞬,同一批新徽章齐齐弹起 ——
+ * 一眼扫到哪些是新入的。特意走独立 scale 属性、不碰 transform:
+ * 装备卡徽章靠 -translate-x-1/2 居中,凡动 transform 都会让它横跳;
+ * 也只动合成层,布局门量不到(不改变几何)。
+ */
+@keyframes new-pop {
+  from {
+    opacity: 0;
+    scale: 0.5;
+  }
+  70% {
+    opacity: 1;
+    scale: 1.16;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
 @keyframes glow-pulse {
   0%,
   100% {

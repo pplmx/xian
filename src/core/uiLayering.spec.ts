@@ -152,5 +152,15 @@ describe('界面分层 · 浮层只有一个出处', () => {
     const nav = FILES.find(f => f.path === 'components/common/BottomNavigation.vue')
     expect(nav?.src).toContain('bagHasNew')
     expect(nav?.src).toContain("tab.name === 'inventory'")
+    // 两枚「新」徽章(装备卡 / 图鉴 chip)都有入场动画:新件到手、再开包那一瞬齐齐弹起,
+    // 一眼扫到哪些是新入的。animate-new-pop 走独立 scale 属性、不碰 transform
+    // (装备卡徽章靠 -translate-x-1/2 居中,凡动 transform 都会横跳)—— 帧与映射删了下面都红。
+    const card = FILES.find(f => f.path === 'components/equipment/EquipmentCard.vue')
+    expect(card?.src, '装备卡「新」徽章要有入场动画(animate-new-pop)').toContain('animate-new-pop')
+    expect(codex?.src, '图鉴 chip 的「新」徽章要有入场动画(animate-new-pop)').toContain('animate-new-pop')
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'new-pop 的帧定义被删了 —— 徽章会退回瞬显').toMatch(/@keyframes new-pop[\s\S]{0,200}scale:\s*0\.5/)
+    const tw = readFileSync(resolve(__dirname, '../../tailwind.config.js'), 'utf-8')
+    expect(tw).toContain(`'new-pop': 'new-pop`)
   })
 })

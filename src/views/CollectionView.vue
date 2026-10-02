@@ -48,7 +48,7 @@
                 刻意不覆盖的两类:灵材谱(认知深浅)与悟道录(分支阶段)不经 quests.collect(),
                 collectedAt 无其时间戳、恒不挂 —— 它们是「深浅/已择」语义不是「新收录」,别误当漏标。
               -->
-              <span v-if="quests.isEntryNew(cat.key, entry.id)" class="text-[9px] text-cinnabar">新</span>
+              <span v-if="quests.isEntryNew(cat.key, entry.id)" class="text-[9px] text-cinnabar animate-new-pop">新</span>
             </button>
             <span v-else class="chip-ink border-ink/15 text-ink-faint" :title="`尚未收录 · ${cat.source}`">???</span>
           </template>
