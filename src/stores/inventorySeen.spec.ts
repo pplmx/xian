@@ -62,6 +62,18 @@ describe('背包「新」角标 · 标记语义', () => {
     inv.markInventorySeen() // 开包
     expect(inv.hasNewItem).toBe(false)
   })
+
+  it('newItemCount:没看过几件报几件 —— 开包归零(底部导航计数徽标的判据)', () => {
+    const inv = useInventoryStore()
+    expect(inv.newItemCount).toBe(0) // 空行囊
+    inv.items = [inst('uA') as never]
+    inv.markInventorySeen()
+    expect(inv.newItemCount).toBe(0) // 都看过
+    inv.items = [inst('uA') as never, inst('uC') as never, inst('uD') as never] // 新入包 C/D
+    expect(inv.newItemCount).toBe(2)
+    inv.markInventorySeen() // 开包
+    expect(inv.newItemCount).toBe(0)
+  })
 })
 
 describe('背包「新」角标 · 洗档纪律', () => {

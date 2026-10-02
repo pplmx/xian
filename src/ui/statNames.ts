@@ -94,9 +94,14 @@ export const STAT_NAMES: Record<AnyStatKey, string> = {
  *
  * 功法分支的词条既在择道界面出现,也在悟道录里出现 ——
  * 两处若各写一份格式化,措辞迟早分叉。
+ *
+ * 零值词条不显示:器魂这类现算模组(词条 × 品级系数)低品时会带 0 值键,
+ * 印出去就是「攻击 +0%」的噪音。过滤收在这一处,各调用方共用同一口径
+ * (曾有人为它另抄一份,见 uiLayering「界面不重造 modsText」审计)。
  */
 export function modsText(mods: StatMods): string {
   return Object.entries(mods)
+    .filter(([, v]) => v !== 0)
     .map(([k, v]) => `${STAT_NAMES[k as AnyStatKey] ?? k} ${formatSignedPercent(v as number)}`)
     .join(' · ')
 }

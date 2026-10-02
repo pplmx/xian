@@ -386,7 +386,7 @@
         </button>
 
         <!-- 已习得列表(限高滚动,功法过多不撑爆页面) -->
-        <div class="card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-1">
+        <div v-if="learnedList.length" class="card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-1">
           <button
             v-for="def in learnedList"
             :key="def!.id"
@@ -406,6 +406,10 @@
             </span>
           </button>
         </div>
+        <!-- 开局尚无一部习得功法:别让带边框的容器空着一块白板,说一句下一步在哪 -->
+        <p v-else class="card-ink px-4 py-3 text-center text-[11px] text-ink-faint">
+          尚无一部习得之法 —— 于下方藏经阁参悟,点亮道途
+        </p>
 
         <!--
           参悟池还剩几部也报出来:藏经阁是「花残页赌一部没见过的」,

@@ -81,7 +81,7 @@
             }}{{ currentReading.lower.symbol }}
           </span>
           <span v-if="currentReading.changed" class="chip-ink !text-[9px]">之{{ currentReading.changed.name }}</span>
-          <span class="ml-auto text-[10px] tabular text-ink-faint">{{ remainText }}</span>
+          <span class="ml-auto text-[10px] tabular text-ink-faint"><span class="countdown-slot">{{ remainText }}</span></span>
         </p>
         <div class="mt-1.5 space-y-0.5 font-kai text-[12px] tracking-[0.2em] text-ink-soft">
           <p v-for="(bar, i) in drawnLines" :key="i">{{ bar }}</p>
@@ -251,7 +251,7 @@
   import { fateLordLine } from '@/core/fate'
   import { IMAGES, MANSIONS, type ImageId } from '@/data/xiangxiu'
   import { GATES } from '@/data/qimen'
-  import { cnNumber } from '@/utils/format'
+  import { cnNumber, formatCountdown } from '@/utils/format'
   import { MANSION_EVENT_LUCK, favoredWorld, todayMansion, todayMansionLine } from '@/core/astronomy'
   import { worldDef } from '@/data/realms'
   import type { WorldId } from '@/types'
@@ -291,10 +291,11 @@
     void game.totalPlaySec
     const state = player.activeDivination
     if (!state) return ''
-    const ms = Math.max(0, state.expiresAt - now.value)
-    const m = Math.floor(ms / 60_000)
-    const sec = Math.floor((ms % 60_000) / 1000)
-    return m > 0 ? `尚余 ${m} 分 ${sec} 秒` : `尚余 ${sec} 秒`
+    const sec = Math.max(0, Math.floor((state.expiresAt - now.value) / 1000))
+    // 倒计时一律走 formatCountdown(定宽补零)+ .countdown-slot 槽 —— 秒表每秒心跳,
+    // 手拼的「尚余 5 分 3 秒 → 5 分 30 秒 → 9 秒」位数不定,行内会跟着跳
+    // (全库唯一漏网的手写秒表,其余倒计时都走同一条纪律,见 uiLayering 审计)。
+    return `尚余 ${formatCountdown(sec)}`
   })
 
   function ask(): void {

@@ -877,11 +877,15 @@
     })
   )
 
-  /** 把握度配色:七成以上放心开炉,三成以下是在赌 */
+  /**
+   * 把握度配色:七成以上放心开炉(石绿)、三成以下是在赌(朱砂)、中间档留意(赭金)。
+   * 色类必须是色板真类 —— 曾经写过 text-jade-ink / text-crimson-ink 两个不存在的类,
+   * 整条语义色静默落到继承色,「敢不敢开」的绿色信号从界面上消失了(见 uiLayering 审计)。
+   */
   function rateClass(rate: number): string {
-    if (rate >= 0.7) return 'text-jade-ink'
+    if (rate >= 0.7) return 'text-jade'
     if (rate >= 0.3) return 'text-gold-ink'
-    return 'text-crimson-ink'
+    return 'text-cinnabar'
   }
 
   const materialRows = computed(() => [

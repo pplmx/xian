@@ -148,10 +148,15 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(codex?.src).not.toMatch(/onMounted\(\(\).*markCollectionSeen/)
     // 页签上也得露:默认在成就页不切进去看不见有货,「收藏」页签挂新得点(呼吸提醒)
     expect(codex?.src).toContain(`dot: t.id === 'collection'`)
-    // 底部导航的背包点:任何页都看得见「有新货」,挂在 inventory.hasNewItem 上(删则全局退回看不见)
+    // 底部导航的背包点:任何页都看得见「有新货」,挂在 inventory.newItemCount 上(删则全局退回看不见)。
+    // 量价分档:恰好一件 = 原来的小点(轻晃不吵),≥2 件才升级成计数徽标「N」、9+ 封顶 ——
+    // 别退回「只有有没有量」的老点、也别把「1」也做成满格徽标(越吵越没人看)。
     const nav = FILES.find(f => f.path === 'components/common/BottomNavigation.vue')
-    expect(nav?.src).toContain('bagHasNew')
+    expect(nav?.src).toContain('bagNewCount')
     expect(nav?.src).toContain("tab.name === 'inventory'")
+    expect(nav?.src).toContain('bagNewCount >= 2')
+    expect(nav?.src).toContain("bagNewCount > 9 ? '9+'")
+    expect(nav?.src).toContain('bagNewCount === 1')
     // 两枚「新」徽章(装备卡 / 图鉴 chip)都有入场动画:新件到手、再开包那一瞬齐齐弹起,
     // 一眼扫到哪些是新入的。animate-new-pop 走独立 scale 属性、不碰 transform
     // (装备卡徽章靠 -translate-x-1/2 居中,凡动 transform 都会横跳)—— 帧与映射删了下面都红。
@@ -162,5 +167,51 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(css, 'new-pop 的帧定义被删了 —— 徽章会退回瞬显').toMatch(/@keyframes new-pop[\s\S]{0,200}scale:\s*0\.5/)
     const tw = readFileSync(resolve(__dirname, '../../tailwind.config.js'), 'utf-8')
     expect(tw).toContain(`'new-pop': 'new-pop`)
+  })
+
+  it('开炉幕「把握」的语义色是真类 —— 七成以上放心开炉不许落回继承色', () => {
+    // 把握度是全开炉决策里最关键的风险读数:「≥70% 放心开炉」的绿与「<30% 在赌」的红
+    // 若落进不存在的色类(text-jade-ink / text-crimson-ink),整条语义色就静默消失。
+    // 死类名全仓唯一出处就在这里 —— 改回真类(jade / gold-ink / cinnabar),改半截就红。
+    const inv = FILES.find(f => f.path === 'views/InventoryView.vue')
+    expect(inv?.src).not.toMatch(/text-(?:jade|crimson)-ink/)
+    expect(inv?.src).toMatch(/rate >= 0\.7[\s\S]{0,40}?text-jade[\s\S]{0,60}?rate >= 0\.3[\s\S]{0,40}?text-gold-ink[\s\S]{0,40}?text-cinnabar/)
+  })
+
+  it('界面不重造 modsText —— 词条文案的独一份事实源在 ui/statNames', () => {
+    // SoulsView 曾为「滤掉 0 值词条」自造一份本地 modsText,与库分叉成两套口径
+    // (器魂低品键会带 0 → 库版印「+0%」、本地版不印)。单源 = 过滤收进库(见
+    // statNames.spec),界面只 import。谁再在视图里起手 function modsText(,下面红。
+    const souls = FILES.find(f => f.path === 'views/SoulsView.vue')
+    expect(souls?.src).not.toMatch(/function modsText\(/)
+    expect(souls?.src).toMatch(/import[\s\S]{0,300}?modsText[\s\S]{0,80}?from ['"]@\/ui\/statNames/)
+  })
+
+  it('在身之卦的倒计时走 formatCountdown 定宽 —— 秒表不许手拼「X 分 Y 秒」', () => {
+    // 这是全库最后一个还手写"尚余 {m} 分 {sec} 秒"的倒计时:秒级心跳下位数不定
+    // (5分3秒→5分30秒→9秒),行内每秒都跳。其余倒计时(状态胶囊/突破准备/闭关)
+    // 早就统一进 formatCountdown + .countdown-slot 定宽槽,这里不许再退回去。
+    const codex = FILES.find(f => f.path === 'views/RealmCodexView.vue')
+    expect(codex?.src).toContain('formatCountdown(sec)')
+    expect(codex?.src).toContain('countdown-slot')
+    expect(codex?.src).not.toMatch(/尚余 \$\{m\} 分/)
+  })
+
+  it('逆旅契灰卡有理由 —— 已签报「此生已签」、道果不足报「尚差 N」', () => {
+    // 契签不下只有两个理由:本世已签过(整组灰)/道果不足。别退回只有灰没有话:
+    // 已签时应说「此生已签」,缺果子时按差数报「尚差 N 道果」(聚气丹/建筑同款)。
+    const charv = FILES.find(f => f.path === 'views/CharacterView.vue')
+    expect(charv?.src).toContain('此生已签')
+    expect(charv?.src).toMatch(/尚差 \$\{t\.cost - player\.reincarnation\.daoFruit\} 道果/)
+    expect(charv?.src).not.toMatch(/t\.cost \} 道果/)
+  })
+
+  it('已习得功法列表有空态 —— 开局一白板也是要填的话', () => {
+    // 习得列表若只有 v-for 没有空态,开局没参悟过任何功法时,这只带边框的
+    // max-h-64 容器就是一块空白(有的游戏开场就是一块能滚动的黑板)。空态给
+    // 一句「尚无一部习得之法」把下一步(参悟)递到手边。
+    const cult = FILES.find(f => f.path === 'views/CultivationView.vue')
+    expect(cult?.src).toMatch(/v-if="learnedList\.length"/)
+    expect(cult?.src).toMatch(/v-else[\s\S]{0,120}尚无一部习得之法/)
   })
 })

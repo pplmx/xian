@@ -19,9 +19,18 @@
       >
         <span class="relative transition-transform duration-200" :class="route.name === tab.name ? '-translate-y-0.5 scale-110' : ''">
           <GameIcon :name="tab.icon" :size="20" />
-          <!-- 行囊有没看过的新件:背包页签挂新货点 —— 从任何页都看得见「有新货」,开包即隐 -->
+          <!--
+            行囊有没看过的新件:从任何页都看得见「有新货」,开包即隐。量价分档 ——
+            恰好一件还是原来的小点(轻晃不吵),≥2 件升级成计数徽标「N」(9+ 封顶);
+            批量掉落那一刻的份量,单靠「有不有」说不出来。
+          -->
           <span
-            v-if="tab.name === 'inventory' && bagHasNew"
+            v-if="tab.name === 'inventory' && bagNewCount >= 2"
+            class="absolute -right-1.5 -top-1 grid h-[13px] min-w-[13px] place-items-center rounded-full bg-cinnabar px-[3px] font-kai text-[8px] leading-none text-paper"
+            :class="route.name === 'inventory' ? '' : 'animate-breathe'"
+          >{{ bagNewCount > 9 ? '9+' : bagNewCount }}</span>
+          <span
+            v-else-if="tab.name === 'inventory' && bagNewCount === 1"
             class="absolute -right-1 -top-0.5 h-1.5 w-1.5 rounded-full bg-cinnabar"
             :class="route.name === 'inventory' ? '' : 'animate-breathe'"
           />
@@ -42,8 +51,8 @@
   const route = useRoute()
   /** 安卓三键导航实测占位(防底栏被系统按钮盖住,见 useNativeInsets) */
   const { bottom: navInset } = useNativeInsets()
-  /** 背包页签的新货点:行囊里有没开包看过的新件才亮(判据在 inventory store,见 inventorySeen.spec) */
-  const bagHasNew = computed(() => useInventoryStore().hasNewItem)
+  /** 背包页签的新货量:没开包看过几件报几件(判据在 inventory store 的 newItemCount,见 inventorySeen.spec) */
+  const bagNewCount = computed(() => useInventoryStore().newItemCount)
 
   const TABS = [
     { name: 'home', label: '洞府', icon: 'mountain', to: '/' },

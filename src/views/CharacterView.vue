@@ -331,8 +331,14 @@
         >
           <span class="flex items-baseline justify-between">
             <span class="font-kai text-[14px] text-ink">{{ t.seal }} · {{ t.name }}</span>
-            <span class="tabular text-[12px]" :class="player.reincarnation.daoFruit >= t.cost ? 'text-cinnabar' : 'text-ink-faint'">
-              {{ t.cost }} 道果
+            <!--
+              哑巴灰的补齐:契签不下只有两个理由 —— 本世已签过 / 道果不足。
+              已签过整组都灰,报「此生已签」(此时再报尚差会指错方向);
+              道果不足照「尚差 N」报差数(与聚气丹/建筑同款纪律),不稳灰到底。
+            -->
+            <span v-if="signedTrial" class="shrink-0 tabular text-[12px] text-ink-faint">此生已签</span>
+            <span v-else class="shrink-0 tabular text-[12px] text-cinnabar">
+              {{ player.reincarnation.daoFruit >= t.cost ? `${t.cost} 道果` : `尚差 ${t.cost - player.reincarnation.daoFruit} 道果` }}
             </span>
           </span>
           <span class="mt-0.5 block text-[11px] leading-relaxed text-ink-soft">{{ t.desc }}</span>
