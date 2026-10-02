@@ -946,6 +946,35 @@ html[data-theme='dark'] .mist-soft {
     transform 0.9s ease;
 }
 
+/*
+ * 攻击方横踏:受击方已有震颤与浮伤,「谁在出手」却没有动作 ——
+ * 出手与挨打是同一因果环的两半,这一帧补上出手那半。
+ * 方向由 --strike-y 定:敌在上、我在下,我方出手往上踏(-5px)、
+ * 敌方出手往下踏(+5px),都朝战场正中那一线。
+ * 只动 transform(动画完毕归零),不改变几何,布局门量不到;
+ * reduced-motion 由全局 * 规则兜。
+ */
+.strike-e,
+.strike-p {
+  animation: strike 0.16s ease-out;
+}
+.strike-e {
+  --strike-y: 5px;
+}
+.strike-p {
+  --strike-y: -5px;
+}
+
+@keyframes strike {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(var(--strike-y));
+  }
+}
+
 /* 洞府营造:升级落成时金光一闪 */
 .card-flash {
   animation: card-flash 0.85s ease-out;

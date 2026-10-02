@@ -31,7 +31,7 @@
     <!-- 战斗面板 -->
     <div class="card-ink relative overflow-hidden px-4 py-4">
       <!-- 敌方 -->
-      <div class="relative" :class="[shakeCls.e, defeated === 'e' ? 'foe-defeated' : '']">
+      <div class="relative" :class="[shakeCls.e, strikeCls.e, defeated === 'e' ? 'foe-defeated' : '']">
         <!-- 图标与首行文字顶部对齐:名字+标签换行时,图标不该跟着往下沉 -->
         <div class="flex items-start gap-2">
           <span
@@ -123,7 +123,7 @@
       </div>
 
       <!-- 我方 -->
-      <div class="relative mt-3" :class="[shakeCls.p, defeated === 'p' ? 'foe-defeated' : '']">
+      <div class="relative mt-3" :class="[shakeCls.p, strikeCls.p, defeated === 'p' ? 'foe-defeated' : '']">
         <div class="flex items-center gap-2">
           <span class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing">
             <GameIcon name="user" :size="18" />
@@ -268,6 +268,11 @@
   const ehp = ref(1)
   const floats = ref<{ id: number; text: string; side: 'p' | 'e'; crit: boolean }[]>([])
   const shakeCls = ref<{ p: string; e: string }>({ p: '', e: '' })
+  /**
+   * 攻击方的横踏:浮伤与震颤都在受击方,「谁在出手」此前毫无动作 ——
+   * 同一因果环只剩下受击那半边,这半边(出手)补上才成环。
+   */
+  const strikeCls = ref<{ p: string; e: string }>({ p: '', e: '' })
   const defeated = ref<'p' | 'e' | null>(null)
   const logBox = ref<HTMLElement | null>(null)
 
@@ -454,7 +459,9 @@
         setTimeout(() => {
           floats.value = floats.value.filter(f => f.id !== id)
         }, 900)
+        // 受击方原样震颤(既有),攻击方同步横踏 —— 出手与挨打才成一对
         triggerShake(entry.side === 'p' ? 'e' : 'p', entry.t === 'crit')
+        triggerStrike(entry.side)
       }
       requestAnimationFrame(() => {
         logBox.value?.scrollTo({ top: logBox.value.scrollHeight })
@@ -468,6 +475,15 @@
     shakeCls.value = { ...shakeCls.value, [side]: '' }
     requestAnimationFrame(() => {
       shakeCls.value = { ...shakeCls.value, [side]: hard ? 'hit-shake-hard' : 'hit-shake' }
+    })
+  }
+
+  /** 攻击方朝敌阵横踏一步(与 triggerShake 同款的重放手法);sys 行没有出手方,不动 */
+  function triggerStrike(side: CombatLogEntry['side']): void {
+    if (side !== 'p' && side !== 'e') return
+    strikeCls.value = { ...strikeCls.value, [side]: '' }
+    requestAnimationFrame(() => {
+      strikeCls.value = { ...strikeCls.value, [side]: side === 'p' ? 'strike-p' : 'strike-e' }
     })
   }
 

@@ -260,4 +260,18 @@ describe('界面分层 · 浮层只有一个出处', () => {
     const cult = FILES.find(f => f.path === 'views/CultivationView.vue')
     expect(cult?.src).toMatch(/const retreatPct = Math\.round\(/)
   })
+
+  it('战斗双方都动 —— 攻击方横踏、受击方震颤,不许退回「只挨打那半边有反应」', () => {
+    // 出手与受击是同一因果环的两半:浮伤与震颤都挂在受击方,「谁在出手」此前完全静态。
+    // 这半边(攻击方 strike)朝敌阵横踏一步(方向见 style.css 的 --strike-y),与受击方
+    // 震颤成对 —— 删绑、把横踏挪到受击方、或卸掉帧定义,下面都红。
+    const fight = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
+    expect(fight?.src, '攻击方要有横踏绑点(strikeCls),不许只有受击方震颤').toContain('strikeCls.e')
+    expect(fight?.src).toContain('strikeCls.p')
+    expect(fight?.src, '横踏必须挂在出手方(entry.side)上 —— 挪到受击方就重复震颤了').toMatch(/triggerStrike\(entry\.side\)/)
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'strike 的帧定义被删了 —— 攻击方退回完全静态').toMatch(/@keyframes strike[\s\S]{0,160}translateY\(var\(--strike-y\)\)/)
+    expect(css).toMatch(/\.strike-e[\s\S]{0,40}--strike-y:\s*5px/)
+    expect(css).toMatch(/\.strike-p[\s\S]{0,40}--strike-y:\s*-5px/)
+  })
 })
