@@ -32,6 +32,12 @@
     <div class="card-ink relative overflow-hidden px-4 py-4">
       <!-- 敌方 -->
       <div class="relative" :class="[shakeCls.e, strikeCls.e, defeated === 'e' ? 'foe-defeated' : '']">
+        <!--
+          换敌入场:每场战罢新敌上台,前后两场长得未必一样,却没有任何「换了」的信号。
+          按 battle.at 键控重挂(换敌即重放入场动画);浮伤留在这层之外的锚点上,
+          不受重挂影响 —— 轻版淡入+上浮(enemy-enter),高速播放不闪眼。
+        -->
+        <div :key="battle?.at" class="enemy-enter">
         <!-- 图标与首行文字顶部对齐:名字+标签换行时,图标不该跟着往下沉 -->
         <div class="flex items-start gap-2">
           <span
@@ -82,6 +88,7 @@
             </p>
             <ProgressBar :value="ehp" color="var(--color-cinnabar)" :height="6" class="mt-1" />
           </div>
+        </div>
         </div>
         <span
           v-for="f in floats.filter(x => x.side === 'e')"

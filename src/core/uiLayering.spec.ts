@@ -274,4 +274,15 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(css).toMatch(/\.strike-e[\s\S]{0,40}--strike-y:\s*5px/)
     expect(css).toMatch(/\.strike-p[\s\S]{0,40}--strike-y:\s*-5px/)
   })
+
+  it('换敌有入场 —— 新敌上台带一声轻起,不许退回硬切', () => {
+    // 每场战罢敌角整个换人,却没有任何「换了」的信号;按 battle.at 键控重挂,
+    // 让入场动画在换敌那一瞬重放(enemy-enter 轻版:淡入+上浮)。删键控或删帧,下面红。
+    const fight = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
+    expect(fight?.src).toContain(':key="battle?.at"')
+    expect(fight?.src).toContain('enemy-enter')
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'enemy-enter 的帧定义被删了 —— 换敌退回硬切').toMatch(/@keyframes enemy-enter[\s\S]{0,120}translateY\(5px\)/)
+    expect(css).toMatch(/\.enemy-enter[\s\S]{0,60}animation:\s*enemy-enter/)
+  })
 })

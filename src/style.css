@@ -975,6 +975,27 @@ html[data-theme='dark'] .mist-soft {
   }
 }
 
+/*
+ * 换敌入场:每场战罢新敌上台,前后换得悄无声息 —— 这才是那个「换了」的信号。
+ * 轻版(enemy-enter 而非 ink-pop):淡入 + 5px 上浮,不开模糊、不压底,
+ * 高速播放时哪怕每场都重挂也不会晃眼。只动 transform/opacity,完毕归零,
+ * 布局门量不到;reduced-motion 由全局 * 规则兜。
+ */
+.enemy-enter {
+  animation: enemy-enter 0.3s ease-out;
+}
+
+@keyframes enemy-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* 洞府营造:升级落成时金光一闪 */
 .card-flash {
   animation: card-flash 0.85s ease-out;
