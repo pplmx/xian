@@ -3,6 +3,7 @@
   <div
     class="app-shell mx-auto flex max-w-107.5 flex-col overflow-hidden bg-paper shadow-[0_0_60px_rgba(0,0,0,0.45)] relative paper-grain"
     :class="{ 'reduce-motion': settings.reduceMotion }"
+    :data-world="player.world.id"
   >
     <!--
       云雾装饰 —— 必须关在自己的一层裁剪盒里。
@@ -46,6 +47,8 @@
     <!-- 修炼中偶发事件浮层(引擎触发、组件轮询展示;挂在全局才不会漏掉窗口期) -->
     <EnlightenmentModal v-if="game.started" />
     <CaveEventModal v-if="game.started" />
+    <!-- 世界变迁宣告:人间→仙界→神界→混沌,越界那一瞬的仪式(判据见 core/worldRite) -->
+    <WorldTransitionVeil />
   </div>
 </template>
 
@@ -53,6 +56,7 @@
   import { onMounted, onUnmounted, ref, watch } from 'vue'
   import { useRoute } from 'vue-router'
   import { useGameStore } from '@/stores/game'
+  import { usePlayerStore } from '@/stores/player'
   import { useUiStore } from '@/stores/ui'
   import { useSettingsStore } from '@/stores/settings'
   import { subscribeSaveWriteFailure } from '@/utils/storage'
@@ -71,8 +75,10 @@
   import ExitConfirmDialog from '@/components/common/ExitConfirmDialog.vue'
   import EnlightenmentModal from '@/components/cultivation/EnlightenmentModal.vue'
   import CaveEventModal from '@/components/dongfu/CaveEventModal.vue'
+  import WorldTransitionVeil from '@/components/common/WorldTransitionVeil.vue'
 
   const game = useGameStore()
+  const player = usePlayerStore()
   const ui = useUiStore()
   const settings = useSettingsStore()
   const route = useRoute()

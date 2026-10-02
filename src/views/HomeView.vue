@@ -8,8 +8,8 @@
 
     <!-- 人物水墨主视觉 -->
     <div class="card-ink relative overflow-hidden px-4 pb-4 pt-5">
-      <!-- 远山 -->
-      <svg class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-ink/8" viewBox="0 0 400 110" preserveAspectRatio="none">
+      <!-- 远山:墨色随世界微染(异地即异色,仍 8% 极淡、只在氛围层) -->
+      <svg class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8" viewBox="0 0 400 110" preserveAspectRatio="none">
         <path
           class="drift-far"
           d="M0 110 L60 40 Q80 20 100 45 L150 95 L200 30 Q215 12 235 38 L300 100 L340 55 Q355 38 372 60 L400 90 L400 110 Z"

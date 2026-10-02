@@ -606,6 +606,106 @@ html[data-theme='dark'] .mist-soft {
   background: rgb(255 255 255 / 0.04);
 }
 
+/* ================= 每一界的光与气 =================
+   世界由外壳的 data-world 标定(人间/仙界/神界/混沌)。
+   只在「氛围层」上换色 —— 雾(角上两团)、远山染色、越界光晕;
+   永不触碰承载文字的层,雾的透明度沿用既有基准(昼约四成、夜约一成),
+   只换色相与乳光,对比度审计与布局门不受影响。
+
+   人间界 = 默认态(宣纸的白雾),仙界 = 云上金庭的天青,神界 = 紫气东来,
+   混沌 = 玄冥深海的墨蓝(雾略收、光晕压暗)。 */
+
+.app-shell {
+  --world-glow-rgb: 168 63 57;
+  --world-mountain: rgb(var(--color-ink-rgb));
+}
+.app-shell[data-world='immortal'] {
+  --world-glow-rgb: 90 140 190;
+  --world-mountain: rgb(60 108 152);
+}
+.app-shell[data-world='god'] {
+  --world-glow-rgb: 130 100 190;
+  --world-mountain: rgb(112 84 160);
+}
+.app-shell[data-world='chaos'] {
+  --world-glow-rgb: 92 112 150;
+  --world-mountain: rgb(80 100 138);
+}
+
+.app-shell[data-world='immortal'] .mist {
+  background: rgb(206 226 240 / 0.42);
+}
+.app-shell[data-world='immortal'] .mist-soft {
+  background: rgb(228 240 248 / 0.32);
+}
+.app-shell[data-world='god'] .mist {
+  background: rgb(228 218 244 / 0.42);
+}
+.app-shell[data-world='god'] .mist-soft {
+  background: rgb(238 230 248 / 0.32);
+}
+.app-shell[data-world='chaos'] .mist {
+  background: rgb(132 150 172 / 0.28);
+}
+.app-shell[data-world='chaos'] .mist-soft {
+  background: rgb(152 164 182 / 0.20);
+}
+
+html[data-theme='dark'] .app-shell[data-world='immortal'] .mist {
+  background: rgb(140 190 220 / 0.08);
+}
+html[data-theme='dark'] .app-shell[data-world='immortal'] .mist-soft {
+  background: rgb(140 190 220 / 0.06);
+}
+html[data-theme='dark'] .app-shell[data-world='god'] .mist {
+  background: rgb(180 150 220 / 0.08);
+}
+html[data-theme='dark'] .app-shell[data-world='god'] .mist-soft {
+  background: rgb(180 150 220 / 0.06);
+}
+html[data-theme='dark'] .app-shell[data-world='chaos'] .mist {
+  background: rgb(120 150 170 / 0.06);
+}
+html[data-theme='dark'] .app-shell[data-world='chaos'] .mist-soft {
+  background: rgb(120 150 170 / 0.04);
+}
+
+/* 世界变迁宣告:越过界膜那一刻的光与印碑
+   光晕随世界色(见 --world-glow-rgb),只动 opacity/transform/background,
+   fill 停在 opacity 0;reduced-motion 由全局 * 规则兜。 */
+.veil-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 42%, rgb(var(--world-glow-rgb) / 0.20) 0%, transparent 62%);
+  animation: veil-glow 2.7s ease-out forwards;
+}
+@keyframes veil-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+.veil-plaque {
+  position: relative;
+  text-align: center;
+  padding: 22px 34px;
+}
+.veil-fade-enter-active,
+.veil-fade-leave-active {
+  transition: opacity 0.35s ease;
+}
+.veil-fade-enter-from,
+.veil-fade-leave-to {
+  opacity: 0;
+}
+
 /* ================= 组件层 ================= */
 .card-ink {
   position: relative;

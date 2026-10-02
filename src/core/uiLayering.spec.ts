@@ -301,4 +301,23 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(css, 'boss-reveal 的帧定义被删了 —— 首领登场退回硬切').toMatch(/@keyframes boss-reveal[\s\S]{0,140}opacity: 1/)
     expect(css).toMatch(/\.boss-reveal[\s\S]{0,60}animation:\s*boss-reveal/)
   })
+
+  it('每一界有自己的光 —— 世界氛围只换雾/山/越界光晕,不许掺进文字层', () => {
+    // 「换了个世界」的体感在氛围层:角雾换色相、远山换染色、越界那瞬的光晕。
+    // 三类全在低透明度层,永不触碰承载文字的层;谁把世界色写进字号/bg-paper,下面红。
+    const appSrc = readFileSync(resolve(__dirname, '../App.vue'), 'utf-8')
+    expect(appSrc, '外壳要标定 data-world,主题才分得出这是哪一界').toContain(':data-world="player.world.id"')
+    expect(appSrc, '越界宣告组件要挂在壳上').toContain('<WorldTransitionVeil')
+    const home = FILES.find(f => f.path === 'views/HomeView.vue')
+    expect(home?.src, '远山要读世界的山色变量(--world-mountain)').toContain('var(--world-mountain)')
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    // 三界都要有雾色覆盖 —— 缺了后两界就是「只做了仙界」的半成品
+    expect(css).toMatch(/data-world='immortal'\][\s\S]{0,60}\.mist/)
+    expect(css).toMatch(/data-world='god'\][\s\S]{0,60}\.mist/)
+    expect(css).toMatch(/data-world='chaos'\][\s\S]{0,60}\.mist/)
+    expect(css, '越界光晕要读世界色(veil-glow)').toMatch(/--world-glow-rgb/)
+    const rite = readFileSync(resolve(__dirname, '../components/common/WorldTransitionVeil.vue'), 'utf-8')
+    expect(rite, '越界判据只许走 announceWorldEntry 纯函数').toContain('announceWorldEntry')
+    expect(rite, '宣告遮罩不许拦操作(pointer-events-none)').toContain('pointer-events-none')
+  })
 })
