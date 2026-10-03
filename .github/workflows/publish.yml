@@ -10,9 +10,20 @@ permissions:
   contents: read
   packages: write
 
+# 同一分支的连续推送,多架构构建会互相抢同一批镜像标签(latest / 版本号)——
+# 两套 amd64+arm64 manifest 并发推写,latest 可能被撕成半套。按 ref 串行:
+# 同分支后来的推送排队等前面的落地完再推;永不打断在途推送(推一半被杀,
+# 在线跑的容器将拿到一撮中间态镜像)。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # 构建 + 双平台推镜像一条龙,长点没关系,但得有上限:卡在 QEMU 慢构建或
+    # Docker Hub 限速时,40 分钟后该推开路让位,而不是把 Runner 挂到平台去收尸。
+    timeout-minutes: 40
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       # 镜像名跟随仓库,不写死。此前写死成 yunyin-xiuxian:仓库改名或换 owner 后
