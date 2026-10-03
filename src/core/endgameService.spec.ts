@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
-import { useEndgameStore } from '@/stores/endgame'
+import { useEndgameStore, MAX_MARKS } from '@/stores/endgame'
+import type { DaoMark } from '@/types'
 import { FURNACE_RATES, DAO_SOURCE_PER_FRUIT } from '@/data/endgame'
 import { chooseDaoPath, condenseDaoFruit, currentDaoRules, endgameUnlocked, furnaceConvert } from './endgameService'
 import { resolveWorld, startWorldExpedition } from './expedition'
@@ -144,5 +145,37 @@ describe('真仙终局服务', () => {
     expect(view?.message).toContain('仙界')
     // 大关进阶时附上该境出处(可解释性):真仙取道教仙阶
     expect(view?.message).toContain('道教仙阶')
+  })
+
+  describe('道痕卷宗 · 60 则封顶', () => {
+    function mkMark(id: string): DaoMark {
+      return {
+        life: 1,
+        daoPathId: null,
+        targetId: id,
+        targetName: `痕${id}`,
+        cleared: true,
+        rounds: 10,
+        buildName: '心迹',
+        powerText: '',
+        at: 0
+      }
+    }
+
+    it('新痕从头部挤入;满 60 则后最古一痕被覆去(且 marksFull 如实报满)', () => {
+      const endgame = useEndgameStore()
+      expect(endgame.marksFull).toBe(false)
+      for (let i = 0; i < MAX_MARKS; i += 1) endgame.addMark(mkMark(String(i)))
+      expect(endgame.marks.length).toBe(MAX_MARKS)
+      expect(endgame.marks[0]?.targetId).toBe('59') // 最晚的在最前
+      expect(endgame.marksFull).toBe(true)
+
+      // 再添一则:总数不涨,最早的那则(0)被覆去
+      endgame.addMark(mkMark('60'))
+      expect(endgame.marks.length).toBe(MAX_MARKS)
+      expect(endgame.marks[0]?.targetId).toBe('60')
+      expect(endgame.marks.some(m => m.targetId === '0')).toBe(false)
+      expect(endgame.marksFull).toBe(true) // 满卷常驻(此后一直是满的)
+    })
   })
 })

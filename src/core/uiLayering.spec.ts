@@ -355,6 +355,20 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(col?.src, '判据必须读 entry.stage(收录/认知),不另起一套').toMatch(/every\(e => e\.stage >= 1\)/)
   })
 
+  it('道痕满卷有提示 —— 最古之痕将覆去,不许玩家蒙在鼓里', () => {
+    // 道痕 60 则封顶后,新痕从头部挤入、最古一痕被静默覆去,玩家根本不知道自己
+    // 最早的履历会无声消失。封顶 = 要留意(琥珀族,同突破已封顶/遇事勿扰),
+    // 判据必须读 store 的 marksFull(与 addMark 的封顶同源),不许视图另数一遍。
+    const cel = FILES.find(f => f.path === 'views/CelestialView.vue')
+    expect(cel?.src, '天界道痕区要挂满卷提示').toContain('endgame.marksFull')
+    expect(cel?.src, '满卷要是要留意的琥珀,不是普通淡字').toMatch(/endgame\.marksFull[\s\S]{0,80}text-amber-ink/)
+    expect(cel?.src, '判据必须读 store 的 marksFull,不许视图自己 <count 比较').not.toContain('marks.length >= MAX_MARKS')
+    expect(cel?.src, '覆去的话要直说(最古覆去),不许只报个数字').toContain('覆去')
+    const store = readFileSync(resolve(__dirname, '../stores/endgame.ts'), 'utf-8')
+    expect(store, 'marksFull 必须与 addMark 同源(同一 MAX_MARKS)').toMatch(/marksFull = computed\([\s\S]{0,80}MAX_MARKS/)
+    expect(store, 'MAX_MARKS 被改成私有会让提示失去同源判据').toContain('export const MAX_MARKS')
+  })
+
   it('归来卷轴配一枚印 —— 石绿「归」印,不走朱砂(那是里程碑的色)', () => {
     // 突破幕有朱砂「破」印 + 全屏墨浪/墨点/金环,归来卷轴此前只有一行淡字 ——
     // 表彰不该偏废:归总是「此行已结」的完成态,该有自己的印。语义色族规不变:

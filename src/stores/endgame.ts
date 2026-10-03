@@ -33,7 +33,7 @@ export interface WorldRunState {
   sealedMods?: StatMods
 }
 
-const MAX_MARKS = 60
+export const MAX_MARKS = 60
 
 export const useEndgameStore = defineStore(
   'endgame',
@@ -203,6 +203,9 @@ export const useEndgameStore = defineStore(
       marks.value = [mark, ...marks.value].slice(0, MAX_MARKS)
     }
 
+    /** 道痕写满 60 则:再添一痕,最古一痕将被覆去(机制生在天界页可见之前,别让玩家蒙在鼓里) */
+    const marksFull = computed(() => marks.value.length >= MAX_MARKS)
+
     function markDailyDone(day: number): void {
       dailyDoneDay.value = day
     }
@@ -259,6 +262,7 @@ export const useEndgameStore = defineStore(
       recordWorldClear,
       recordTrial,
       addMark,
+      marksFull,
       markDailyDone,
       addMilestone,
       updateRecord,

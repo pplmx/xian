@@ -393,6 +393,10 @@
         <!-- 道痕 -->
         <section>
           <SectionTitle title="道痕" :hint="`历代修行履历 · ${endgame.marks.length} 则`" />
+          <!-- 卷满六十则:最古之痕将被覆去 —— 该给一句,不然玩家不知道自己最早的履历会无声消失 -->
+          <p v-if="endgame.marksFull" class="mt-1.5 px-1 text-[10px] text-amber-ink">
+            卷已写满 {{ MAX_MARKS }} 则 —— 后续每一战,都会覆去最古的一道痕
+          </p>
           <div class="mt-2 flex items-center justify-between px-1">
             <p class="text-[10px] tabular text-ink-faint">
               规则纪元 {{ RULESET_VERSION }} · 天道共改过 {{ RULESET_CHANGELOG.length }} 次
@@ -774,7 +778,7 @@
   import { useResourcesStore } from '@/stores/resources'
   import { usePlayerStore } from '@/stores/player'
   import { useInventoryStore } from '@/stores/inventory'
-  import { useEndgameStore } from '@/stores/endgame'
+  import { useEndgameStore, MAX_MARKS } from '@/stores/endgame'
   import { SOUL_SLOTS } from '@/data/souls'
   import { REALMS } from '@/data/realms'
   import { tierMajor } from '@/core/formulas'
