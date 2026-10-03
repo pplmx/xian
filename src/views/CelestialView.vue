@@ -326,9 +326,16 @@
                 v-for="m in MUTATORS"
                 :key="m.id"
                 class="chip-ink"
-                :class="draft.mutatorIds.includes(m.id) ? 'border-violet-ink text-violet-ink' : 'border-ink/25 text-ink-faint'"
-                :title="m.text"
+                :class="
+                  draft.mutatorIds.includes(m.id)
+                    ? 'border-violet-ink text-violet-ink'
+                    : draftFull
+                      ? 'border-ink/15 text-ink-faint opacity-45'
+                      : 'border-ink/25 text-ink-faint'
+                "
+                :title="draft.mutatorIds.includes(m.id) ? m.text : draftFull ? '至多三条,已选满' : m.text"
                 :aria-pressed="draft.mutatorIds.includes(m.id)"
+                :disabled="!draft.mutatorIds.includes(m.id) && draftFull"
                 @click="toggleDraftMutator(m.id)"
               >
                 {{ m.name }}
@@ -1172,6 +1179,8 @@
   /** 已选变数(把效果正文亮到行内,移动端不靠 hover) */
   const selectedMutators = computed(() => MUTATORS.filter(m => draft.value.mutatorIds.includes(m.id)))
   const challengePact = computed(() => (draft.value.pactId ? pactDef(draft.value.pactId) ?? null : null))
+  /** 变数已选满(至多三条):未选中的芯片应置灰,不许静默点不动 */
+  const draftFull = computed(() => draft.value.mutatorIds.length >= CHALLENGE_MAX_MUTATORS)
 
   function setDraftWorld(id: string): void {
     draft.value = { ...draft.value, worldId: id }

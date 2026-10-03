@@ -442,6 +442,17 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(svc, '不足分支仍该留着(防御性兜底),但不许是唯一反馈').toContain('悟道点或残页不足')
   })
 
+  it('天道变数已满要置灰 —— 至多三条,不许静默点不动', () => {
+    // 挑战书选满第三枚后再点第四枚,此前 toggleDraftMutator 静默 return:
+    // 疯狂点选的人以为没点到,又是重复点。上限既然有(CHALLENGE_MAX_MUTATORS),
+    // 未选中的芯片在满员时就该置灰禁用 + title 说明 —— 别让「按了没反应」发生。
+    const cel = FILES.find(f => f.path === 'views/CelestialView.vue')
+    expect(cel?.src, '变数满员要有置灰判据(draftFull)').toContain('draftFull')
+    expect(cel?.src, '满员时未选芯片必须 disabled').toContain(':disabled="!draft.mutatorIds.includes(m.id) && draftFull"')
+    expect(cel?.src, '置灰要有 opacity 分隔,不许与正常态同灰').toContain('opacity-45')
+    expect(cel?.src, 'title 要直说「已选满」').toContain('已选满')
+  })
+
   it('世界越界有一声 —— 换一片天,不许静默揭幕', () => {
     // 越界是全流程最重大事件(入仙界/神界/混沌海),视觉有 2.8s 揭幕遮罩,
     // 从此却没有声音 —— 该响就响,不能让最高潮静静流过。判据:揭示触发
