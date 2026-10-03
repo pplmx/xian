@@ -19,6 +19,28 @@ const COUNT_FACTOR: Record<number, number> = { 1: 1.6, 2: 1.35, 3: 1.15, 4: 1.0,
 const SPECIAL_CHANCE = 0.1
 const CHAOS_CHANCE = 0.008
 
+/**
+ * 灵根品阶全集(名 + 展示色)—— 创角/转世鉴定的轮换动画与真实判定共用这一份。
+ * gradeName() 的每一个返回值都必须是此表的 name 之一(linggenGrade.spec 守着);
+ * 各界颜色沿用 Reveal 既有视觉(杂/伪=土褐、真/上=青苍、异/变异=紫气、
+ * 天=赭金、混沌=朱砂),不重新发明色板。
+ */
+export interface LinggenGrade {
+  name: string
+  color: string
+}
+
+export const LINGGEN_GRADES: LinggenGrade[] = [
+  { name: '杂灵根', color: '#857f70' },
+  { name: '伪灵根', color: '#857f70' },
+  { name: '真灵根', color: '#6e8b74' },
+  { name: '上灵根', color: '#4f7699' },
+  { name: '异灵根', color: '#7b5ea7' },
+  { name: '变异灵根', color: '#7b5ea7' },
+  { name: '天灵根', color: '#c9a227' },
+  { name: '混沌灵根', color: '#a83f39' }
+]
+
 export function rollLinggen(rng: RandomService, aptitudeFloor = 0): LinggenProfile {
   // 混沌灵根:极小概率单根成圣
   if (rng.chance(CHAOS_CHANCE)) {

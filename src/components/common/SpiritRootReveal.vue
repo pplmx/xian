@@ -34,24 +34,10 @@
 
 <script setup lang="ts">
   import { ref, computed, onUnmounted } from 'vue'
+  import { LINGGEN_GRADES as GRADES } from '@/core/linggenGen'
 
   const visible = ref(false)
   const animating = ref(false)
-
-  /**
-   * 灵根品阶全集(与 linggenGen.ts 的 gradeName 取值一致):
-   * 轮换期间从所有品阶随机闪现,结束时定格真实灵根
-   */
-  const GRADES: { name: string; color: string }[] = [
-    { name: '杂灵根', color: '#857f70' },
-    { name: '伪灵根', color: '#857f70' },
-    { name: '真灵根', color: '#6e8b74' },
-    { name: '上灵根', color: '#4f7699' },
-    { name: '异灵根', color: '#7b5ea7' },
-    { name: '变异灵根', color: '#7b5ea7' },
-    { name: '天灵根', color: '#c9a227' },
-    { name: '混沌灵根', color: '#a83f39' }
-  ]
 
   /** 当前轮换位置(轮换中随机,结束时定格为真实灵根;必须用 ref 才能触发 computed 重算) */
   const cycleIdx = ref(0)
