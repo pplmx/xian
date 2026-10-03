@@ -355,6 +355,18 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(col?.src, '判据必须读 entry.stage(收录/认知),不另起一套').toMatch(/every\(e => e\.stage >= 1\)/)
   })
 
+  it('名号尽收有完成感 —— 三十顶全齐的圆满,不许只沉在计数里', () => {
+    // 名号页此前只显「14/30 · 佩一枚」的计数,三十顶全齐也没有任何表示 ——
+    // 收集的终点(境界阶梯 + 成就赏走完)该有一声,与图鉴「尽收」同族。
+    // 判据必须读同一个 ownedCount(与标题计数同源),不许另起一套数法。
+    const tit = FILES.find(f => f.path === 'views/TitlesView.vue')
+    expect(tit?.src).toContain('titlesAllOwned')
+    expect(tit?.src, '名号尽收要与计数同源,不许另算一遍').toMatch(
+      /titlesAllOwned = computed\([\s\S]{0,80}ownedCount\.value === TITLES\.length/
+    )
+    expect(tit?.src, '全收后的那句「尽收」要直说(名号尽收),不许只有计数').toContain('名号尽收')
+  })
+
   it('道痕满卷有提示 —— 最古之痕将覆去,不许玩家蒙在鼓里', () => {
     // 道痕 60 则封顶后,新痕从头部挤入、最古一痕被静默覆去,玩家根本不知道自己
     // 最早的履历会无声消失。封顶 = 要留意(琥珀族,同突破已封顶/遇事勿扰),
