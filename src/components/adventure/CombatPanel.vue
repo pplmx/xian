@@ -31,7 +31,7 @@
     <!-- 战斗面板 -->
     <div class="card-ink relative overflow-hidden px-4 py-4">
       <!-- 敌方 -->
-      <div class="relative" :class="[shakeCls.e, strikeCls.e, flickerCls.e, defeated === 'e' ? 'foe-defeated' : '']">
+      <div class="relative" :class="[shakeCls.e, strikeCls.e, flickerCls.e, shieldCls.e, defeated === 'e' ? 'foe-defeated' : '']">
         <!--
           换敌入场:每场战罢新敌上台,前后两场长得未必一样,却没有任何「换了」的信号。
           按 battle.at 键控重挂(换敌即重放入场动画);浮伤留在这层之外的锚点上,
@@ -141,7 +141,7 @@
       </div>
 
       <!-- 我方 -->
-      <div class="relative mt-3" :class="[shakeCls.p, strikeCls.p, flickerCls.p, defeated === 'p' ? 'foe-defeated' : '']">
+      <div class="relative mt-3" :class="[shakeCls.p, strikeCls.p, flickerCls.p, shieldCls.p, defeated === 'p' ? 'foe-defeated' : '']">
         <div class="flex items-center gap-2">
           <span
             class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing"
@@ -291,6 +291,8 @@
   const shakeCls = ref<{ p: string; e: string }>({ p: '', e: '' })
   /** 闪避侧移:躲开 ≠ 挨打 —— 受击方不震颤,而是身形一晃侧让(见 flicker 帧) */
   const flickerCls = ref<{ p: string; e: string }>({ p: '', e: '' })
+  /** 护盾成形:开启护盾的一方筑起金色屏壁(见 shield-rise 帧) */
+  const shieldCls = ref<{ p: string; e: string }>({ p: '', e: '' })
   /**
    * 攻击方的横踏:浮伤与震颤都在受击方,「谁在出手」此前毫无动作 ——
    * 同一因果环只剩下受击那半边,这半边(出手)补上才成环。
@@ -492,6 +494,10 @@
         triggerStrike(entry.side)
         triggerFlicker(entry.side === 'p' ? 'e' : 'p')
       }
+      // 护盾成形:开启护盾的一方筑起屏壁 —— 给一道金色环光(shield 行无出手方,只亮护盾方)
+      if (entry.t === 'shield' && (entry.side === 'p' || entry.side === 'e')) {
+        triggerShield(entry.side)
+      }
       requestAnimationFrame(() => {
         logBox.value?.scrollTo({ top: logBox.value.scrollHeight })
       })
@@ -504,6 +510,14 @@
     shakeCls.value = { ...shakeCls.value, [side]: '' }
     requestAnimationFrame(() => {
       shakeCls.value = { ...shakeCls.value, [side]: hard ? 'hit-shake-hard' : 'hit-shake' }
+    })
+  }
+
+  /** 护盾成形:护盾方筑起金色屏壁(与 triggerShake 同款的重放手法,连叠可重放) */
+  function triggerShield(side: 'p' | 'e'): void {
+    shieldCls.value = { ...shieldCls.value, [side]: '' }
+    requestAnimationFrame(() => {
+      shieldCls.value = { ...shieldCls.value, [side]: 'shield-rise' }
     })
   }
 

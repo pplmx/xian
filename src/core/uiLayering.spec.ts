@@ -392,6 +392,20 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(css, 'flicker 的帧定义被删了 —— 闪避退回一动不动的淡字').toMatch(/@keyframes flicker/)
   })
 
+  it('护盾成形有屏壁 —— 筑盾是个动作,不许只沉在日志一行', () => {
+    // 战斗四向反馈已齐(攻击横踏/受击震颤/闪避侧让/胜方定音),唯独**护盾开启**
+    // 只落在日志一行淡字 —— 防御姿态的呈现本该是一道金色屏壁。判定:
+    // shield 行必须触发 triggerShield(护盾方亮 shield-rise),且不得误走横踏
+    // (shield 无出手方)或震颤(那是对「打中了」的反馈)。
+    const fight = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
+    expect(fight?.src, '护盾成形要有绑点(shieldCls)').toContain('shieldCls.e')
+    expect(fight?.src).toContain('shieldCls.p')
+    expect(fight?.src, 'shield 行必须触发护盾成形').toMatch(/entry\.t === 'shield'[\s\S]{0,120}triggerShield/)
+    expect(fight?.src, '护盾无出手方,不得跟着横踏').not.toMatch(/entry\.t === 'shield'[\s\S]{0,80}triggerStrike/)
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'shield-rise 的帧定义被删了 —— 护盾退回一行淡字').toMatch(/@keyframes shield-rise/)
+  })
+
   it('胜方有定音 —— 败方散墨,赢家也得有这一声', () => {
     // 战斗因果环:受击震颤/出手横踏/败亡散墨(灰化)都有了,唯独胜方没有任何
     // 「这一场我赢了」的视觉句点。光圈绕头像荡一圈收拢(victory-seal,
