@@ -367,6 +367,18 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(tit?.src, '全收后的那句「尽收」要直说(名号尽收),不许只有计数').toContain('名号尽收')
   })
 
+  it('胜方有定音 —— 败方散墨,赢家也得有这一声', () => {
+    // 战斗因果环:受击震颤/出手横踏/败亡散墨(灰化)都有了,唯独胜方没有任何
+    // 「这一场我赢了」的视觉句点。光圈绕头像荡一圈收拢(victory-seal,
+    // 石绿=胜/完成,与败方灰化成对) —— 只挂在敌败(defeated==='e')那侧,
+    // 自己输了不庆祝对手。拆了绑、挪了侧、或删了帧,下面红。
+    const fight = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
+    expect(fight?.src, '胜方要有定音(foe-victorious),不许只让败方灰化').toContain(`defeated === 'e' ? 'foe-victorious'`)
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'victory-seal 的帧定义被删了 —— 胜方退回无声').toMatch(/@keyframes victory-seal/)
+    expect(css).toMatch(/\.foe-victorious[\s\S]{0,60}animation:\s*victory-seal/)
+  })
+
   it('道痕满卷有提示 —— 最古之痕将覆去,不许玩家蒙在鼓里', () => {
     // 道痕 60 则封顶后,新痕从头部挤入、最古一痕被静默覆去,玩家根本不知道自己
     // 最早的履历会无声消失。封顶 = 要留意(琥珀族,同突破已封顶/遇事勿扰),

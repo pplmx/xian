@@ -1139,6 +1139,27 @@ html[data-theme='dark'] .app-shell[data-world='chaos'] .mist-soft {
 }
 
 /*
+ * 胜方定音:败方灰化散墨,胜方此前却毫无动作 —— 「这一场我赢了」的视觉句点。
+ * 石绿光圈(jade=胜/完成语义)在头像上荡一圈收拢,与败方灰化成为一对;
+ * 只动 box-shadow 合层,布局量不到;reduced-motion 由全局 * 规则兜。
+ * 只给"玩家胜"挂(败时不庆祝对手),故钉在 defeated==='e' 那侧。
+ */
+.foe-victorious {
+  border-radius: 999px;
+  animation: victory-seal 0.9s ease-out;
+}
+
+@keyframes victory-seal {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(147 175 149 / 0);
+  }
+  45% {
+    box-shadow: 0 0 20px 4px rgb(147 175 149 / 0.5);
+  }
+}
+
+/*
  * 换敌入场:每场战罢新敌上台,前后换得悄无声息 —— 这才是那个「换了」的信号。
  * 轻版(enemy-enter 而非 ink-pop):淡入 + 5px 上浮,不开模糊、不压底,
  * 高速播放时哪怕每场都重挂也不会晃眼。只动 transform/opacity,完毕归零,

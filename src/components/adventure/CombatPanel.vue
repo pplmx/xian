@@ -143,7 +143,10 @@
       <!-- 我方 -->
       <div class="relative mt-3" :class="[shakeCls.p, strikeCls.p, defeated === 'p' ? 'foe-defeated' : '']">
         <div class="flex items-center gap-2">
-          <span class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing">
+          <span
+            class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing"
+            :class="defeated === 'e' ? 'foe-victorious' : ''"
+          >
             <GameIcon name="user" :size="18" />
           </span>
           <div class="grow">
