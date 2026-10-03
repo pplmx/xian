@@ -430,6 +430,18 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(dlg?.src, '技艺要有进度条可读').toContain('<ProgressBar')
   })
 
+  it('功法进修付不起置灰+列差 —— 缺哪样、差多少,按钮上直说', () => {
+    // 「进修」曾永不置灰,资源不足只弹一句笼统 toast「悟道点或残页不足」,
+    // 不报缺哪样也不说差多少 —— 与全仓“付不起置灰+列差”族规脱节。修法与
+    // 聚气丹/建筑/法宝同款:按钮 disabled + 行内「尚差 N 悟道 · M 残页」。
+    const gongfa = FILES.find(f => f.path === 'components/cultivation/GongfaDialog.vue')
+    expect(gongfa?.src, '进修按钮必须有 disabled(upAffordable)').toContain(':disabled="!upAffordable"')
+    expect(gongfa?.src, '付不起要换口「尚差」,不许只弹笼统 toast').toContain('尚差 {{ upShort }}')
+    expect(gongfa?.src, '双缺要报差数(upShort),不沉到底').toContain('upShort')
+    const svc = readFileSync(resolve(__dirname, '../core/gongfaService.ts'), 'utf-8')
+    expect(svc, '不足分支仍该留着(防御性兜底),但不许是唯一反馈').toContain('悟道点或残页不足')
+  })
+
   it('世界越界有一声 —— 换一片天,不许静默揭幕', () => {
     // 越界是全流程最重大事件(入仙界/神界/混沌海),视觉有 2.8s 揭幕遮罩,
     // 从此却没有声音 —— 该响就响,不能让最高潮静静流过。判据:揭示触发

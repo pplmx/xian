@@ -113,7 +113,16 @@
         <button v-else class="btn-seal flex-1" @click="toggleSub">
           {{ isSub ? '卸下辅修' : '设为辅修' }}
         </button>
-        <button v-if="upCost" class="btn-ghost flex-1" @click="def && upgradeGongfa(def.id)">进 修</button>
+        <!-- 进修付不起就置灰+列差:缺哪样、差多少都在按钮上直说(与聚气丹/建筑同款纪律) -->
+        <button
+          v-if="upCost"
+          class="btn-ghost flex-1"
+          :disabled="!upAffordable"
+          @click="def && upgradeGongfa(def.id)"
+        >
+          <template v-if="upAffordable">进 修 · {{ upCost.wudao }} 悟道 · {{ upCost.page }} 残页</template>
+          <template v-else>进修 · 尚差 {{ upShort }}</template>
+        </button>
       </div>
     </template>
   </BaseModal>
@@ -125,6 +134,7 @@
   import { useCultivationStore } from '@/stores/cultivation'
   import { useDongfuStore } from '@/stores/dongfu'
   import { usePlayerStore } from '@/stores/player'
+  import { useResourcesStore } from '@/stores/resources'
   import { gongfaDef, GONGFA_TYPE_NAMES } from '@/data/gongfa'
   import { ELEMENTS } from '@/data/linggen'
   import { branchesFor, gongfaBranchDef } from '@/data/gongfaBranches'
@@ -142,11 +152,28 @@
   const cultivation = useCultivationStore()
   const dongfu = useDongfuStore()
   const player = usePlayerStore()
+  const resources = useResourcesStore()
 
   const def = computed(() => (ui.gongfaDetailId ? gongfaDef(ui.gongfaDetailId) : undefined))
   const level = computed(() => (def.value ? (cultivation.learned[def.value.id] ?? 0) : 0))
   const learned = computed(() => level.value > 0)
   const upCost = computed(() => (def.value ? gongfaUpgradeCost(def.value.id) : null))
+  /** 进修付不起即灰:悟道点与残页两道账,缺一不可(与 upgradeGongfa 失败臂同口径) */
+  const upAffordable = computed(() => {
+    const c = upCost.value
+    if (!c) return false
+    return resources.hasSmall('wudao', c.wudao) && resources.hasSmall('page', c.page)
+  })
+  /** 尚差文案:双缺用「·」粘连(与建筑卡同款) */
+  const upShort = computed(() => {
+    const c = upCost.value
+    if (!c) return ''
+    const wudaoShort = Math.max(0, c.wudao - resources.wudao)
+    const pageShort = Math.max(0, c.page - resources.page)
+    if (wudaoShort > 0 && pageShort > 0) return `${wudaoShort} 悟道 · ${pageShort} 残页`
+    if (wudaoShort > 0) return `${wudaoShort} 悟道`
+    return `${pageShort} 残页`
+  })
 
   /** 与灵根同源?判据直接取自参悟权重函数,标签与实际权重不可能分叉 */
   const sameRoot = computed(() => gongfaAffinity(def.value?.element, rootElements(player.linggen?.roots)) > 1)
