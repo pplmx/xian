@@ -145,6 +145,18 @@
             </span>
           </p>
         </div>
+        <!--
+          今日日课全毕的关闭感:三条都做完只各显一个「已成」,但没有一句「今天
+          做完了」—— 放置玩家要知道今天没漏事、可以放手挂机。判据与发赏同源
+          (每行 done = 已结算),不另起一套。
+        -->
+        <p
+          v-if="dailyAllDone"
+          class="mt-2 flex items-center gap-1.5 border-t border-ink/10 pt-2 text-[11px] text-jade"
+        >
+          <span class="chip-ink border-jade/60 text-[10px] text-jade">今日已毕</span>
+          日课全做完了,该收的都收了 —— 可安心挂机
+        </p>
       </div>
     </section>
 
@@ -273,4 +285,6 @@
     // 与发赏判定同源:进度 = 今日增量,`done` = 本期已经结算过
     dailyRowsOf(dailyStateOf(quests.daily), quests.counters)
   )
+  /** 今日日课是否全毕:三条各结清才算(不给唯一解 —— 没定义日课就不报) */
+  const dailyAllDone = computed(() => dailyRows.value.length > 0 && dailyRows.value.every(r => r.done))
 </script>

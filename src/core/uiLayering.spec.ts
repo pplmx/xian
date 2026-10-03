@@ -335,4 +335,13 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(css, 'world-label 要跟 --world-accent 走,不另写一套').toMatch(/\.world-label[\s\S]{0,40}var\(--world-accent\)/)
     expect(css).toMatch(/\.codex-current[\s\S]{0,80}var\(--color-qing\)/)
   })
+
+  it('今日日课全毕有关闭感 —— 「今天做完了」不许再哑掉', () => {
+    // 三条日课都结清后只有各自一个「已成」,没有「今天没漏事」的一句话 ——
+    // 放置玩家的"可以放手挂机"该有一声。判据与发赏同源(每行 done),不许另起一套。
+    const home = FILES.find(f => f.path === 'views/HomeView.vue')
+    expect(home?.src).toContain('dailyAllDone')
+    expect(home?.src).toContain('今日已毕')
+    expect(home?.src, '判据必须读日课行的 done(= 已结算),不自己数进度').toMatch(/every\(r => r\.done\)/)
+  })
 })
