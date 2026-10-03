@@ -558,4 +558,13 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(create?.src, '观察对象要是只增不减的 rollSeq').toMatch(/watch\(rollSeq/)
     expect(create?.src, '播报句要念出「重掷得」(新牌开场白)').toContain('重掷得')
   })
+
+  it('问卦付不起就置灰+列差 —— 缺哪样、直说,不许点了才弹', () => {
+    // 此前按只在「卦在身」时限灰:悟道点不足时照常可点,点下去才弹 warn toast。
+    // 与进修/熔炉同款纪律:付不起的按钮当场置灰、内联写出差额(防御臂仍在 core)。
+    const codex = FILES.find(f => f.path === 'views/RealmCodexView.vue')
+    expect(codex?.src, '按钮要绑合成的 disabled(卦在身或不足都灰)').toMatch(/:disabled="askDisabled"/)
+    expect(codex?.src, '置灰文案要与判据同源(同一个 askShort 算出来)').toMatch(/askShort = computed\(/)
+    expect(codex?.src, '置灰时按钮要直说差几枚悟道').toContain('尚差')
+  })
 })

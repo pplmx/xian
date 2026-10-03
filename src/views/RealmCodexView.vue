@@ -99,10 +99,10 @@
       <div class="mt-2.5 flex items-center gap-2">
         <button
           class="btn-ghost !py-1.5 !text-[12px]"
-          :disabled="!!player.activeDivination"
+          :disabled="askDisabled"
           @click="ask"
         >
-          {{ player.activeDivination ? '卦在身,待其自过' : `问 卦(悟道点 ${DIVINATION_COST})` }}
+          {{ askLabel }}
         </button>
         <span class="text-[10px] leading-relaxed text-ink-faint">
           卜以决疑,不疑何卜 —— 一事不二卜,卦力随动爻而盛,亦随时而尽。
@@ -247,6 +247,7 @@
   import { usePlayerStore } from '@/stores/player'
   import { useGameStore } from '@/stores/game'
   import { useUiStore } from '@/stores/ui'
+  import { useResourcesStore } from '@/stores/resources'
   import { REALMS, WORLDS, realmDef } from '@/data/realms'
   import { CLASSICS, PLANNED_SCHOOLS, classicsForRealm } from '@/data/classics'
   import { HEXAGRAMS, TRIGRAMS, trigramDef } from '@/data/yijing'
@@ -267,6 +268,7 @@
   const player = usePlayerStore()
   const game = useGameStore()
   const ui = useUiStore()
+  const resources = useResourcesStore()
   const now = useNow()
 
   /** 分册:六门各占一册 —— 页越长越该分,免得一路拉到底找不着北 */
@@ -316,6 +318,16 @@
   watch(hasReading, (nv, ov) => {
     if (nv || !ov) return
     readingAnnounce.value = '卦力已散,可再问一卦'
+  })
+
+  /** 问卦付不起就置灰+列差:与进修/熔炉同款纪律 —— 按钮上直说差几枚悟道
+   * (判据与 core/divinationService 的 hasSmall 同一本账:短额 = 现有 - 需扣) */
+  const askShort = computed(() => Math.max(0, DIVINATION_COST - resources.wudao))
+  const askDisabled = computed(() => !!player.activeDivination || askShort.value > 0)
+  const askLabel = computed(() => {
+    if (player.activeDivination) return '卦在身,待其自过'
+    if (askShort.value > 0) return `问卦 · 尚差 ${askShort.value} 悟道`
+    return `问 卦(悟道点 ${DIVINATION_COST})`
   })
 
   function ask(): void {
