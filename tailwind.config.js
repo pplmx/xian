@@ -101,8 +101,6 @@ export default {
         'new-pop': 'new-pop 0.42s cubic-bezier(0.22, 1, 0.36, 1) both',
         'glow-pulse': 'glow-pulse 2.4s ease-in-out infinite',
         'seal-breathe': 'seal-breathe 2.8s ease-in-out infinite',
-        'spin-slow': 'spin-slow 14s linear infinite',
-        'spin-slower': 'spin-slower 22s linear infinite'
       }
     }
   },
