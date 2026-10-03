@@ -418,6 +418,18 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(css).toMatch(/\.foe-victorious[\s\S]{0,60}animation:\s*victory-seal/)
   })
 
+  it('炼器技艺露在铁砧前 —— 在哪儿长,就在哪儿看得见', () => {
+    // 锻打/铭纹的经验正是在装备强化/重铸界面长的,此前却只在炼丹弹窗的全局
+    // 技艺表里看得到 —— 炼器的地方看不见自己在长,等于没长。钉死:装备详情
+    // 弹窗必须有锻打/铭纹两项的技艺进度,判据与技艺表同源(skillStageName/
+    // skillStageProgress),不许退回「去丹房翻」。
+    const dlg = FILES.find(f => f.path === 'components/equipment/EquipmentDetailDialog.vue')
+    expect(dlg?.src, '装备详情要有炼器技艺进度(forgeSkills)').toContain('forgeSkills')
+    expect(dlg?.src, '必须含锻打与铭纹两项(set of smithing/inscribe)').toContain("'smithing', 'inscribe'")
+    expect(dlg?.src, '判据必须与技艺表同源(skillStageProgress),不另起一套').toContain('skillStageProgress')
+    expect(dlg?.src, '技艺要有进度条可读').toContain('<ProgressBar')
+  })
+
   it('世界越界有一声 —— 换一片天,不许静默揭幕', () => {
     // 越界是全流程最重大事件(入仙界/神界/混沌海),视觉有 2.8s 揭幕遮罩,
     // 从此却没有声音 —— 该响就响,不能让最高潮静静流过。判据:揭示触发

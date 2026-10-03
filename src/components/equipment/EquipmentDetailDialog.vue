@@ -133,6 +133,21 @@
           </span>
         </p>
       </template>
+      <!--
+        炼器技艺的进度就该露在铁砧前:锻打/铭纹的经验正是在这里(强化/重铸)长的,
+        此前却只在炼丹弹窗的全局技艺表里看得到 —— 在炼器的地方看不见自己在长,
+        等于没长。两行小进度,与技艺表同源(skillLevel/skillStageName/skillStageProgress),
+        不做第二份出处的判定。
+      -->
+      <div v-if="forgeSkills.length" class="ink-divider my-3" />
+      <div v-if="forgeSkills.length" class="space-y-1">
+        <p v-for="s in forgeSkills" :key="s.id" class="flex items-center gap-2 text-[10px] text-ink-faint">
+          <span class="w-10 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
+          <span class="w-12 shrink-0 tabular" :class="s.stage === '生疏' ? '' : 'text-jade'">{{ s.stage }}</span>
+          <ProgressBar :value="s.progress" :color="s.stage === '生疏' ? 'var(--color-ink-faint)' : 'var(--color-jade)'" :height="3" class="flex-1" />
+          <span class="w-7 shrink-0 text-right tabular">{{ formatPercent(s.progress, 0) }}</span>
+        </p>
+      </div>
       <template v-if="upCost">
         <div class="ink-divider my-3" />
         <p class="flex items-center justify-between text-[12px] text-ink-faint">
@@ -308,11 +323,25 @@
   import BaseModal from '@/components/common/BaseModal.vue'
   import QualityTag from '@/components/common/QualityTag.vue'
   import GameIcon from '@/components/common/GameIcon.vue'
+  import ProgressBar from '@/components/common/ProgressBar.vue'
+  import { useLoreStore } from '@/stores/lore'
+  import { SKILLS, skillStageName, skillStageProgress } from '@/data/crafting'
 
   const ui = useUiStore()
   const inventory = useInventoryStore()
   const player = usePlayerStore()
   const resources = useResourcesStore()
+
+  const loreStore = useLoreStore()
+
+  /** 炼器技艺进度:锻打/铭纹正是在这个界面(强化/重铸)里长的 —— 露在铁砧前(与 DanFang 技艺表同源) */
+  const forgeSkills = computed(() => {
+    const ids = new Set(['smithing', 'inscribe'])
+    return SKILLS.filter(s => ids.has(s.id)).map(s => {
+      const lv = loreStore.skillLevel(s.id)
+      return { id: s.id, name: s.name, stage: skillStageName(lv), progress: skillStageProgress(lv) }
+    })
+  })
 
   const inst = computed(() => (ui.equipDetailUid ? inventory.findItem(ui.equipDetailUid) : undefined))
   const template = computed(() => (inst.value ? equipmentTemplate(inst.value.templateId) : undefined))
