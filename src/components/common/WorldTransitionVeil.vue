@@ -24,6 +24,7 @@
   import { onUnmounted, ref, watch } from 'vue'
   import { usePlayerStore } from '@/stores/player'
   import { announceWorldEntry } from '@/core/worldRite'
+  import { playSfx } from '@/core/audio'
   import type { WorldDef } from '@/data/realms'
 
   /** 此刻宣告的这一界;null = 无宣告在场 */
@@ -41,6 +42,8 @@
       const w = announceWorldEntry(prev, next)
       if (!w) return
       rite.value = w
+      // 换一片天,得有一声 —— 深钟开鸣的庄重;判据与揭示同源(同一 w)
+      playSfx('worldRise')
       window.clearTimeout(timer)
       timer = window.setTimeout(() => {
         rite.value = null

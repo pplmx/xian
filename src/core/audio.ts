@@ -9,7 +9,7 @@
  */
 import type * as ToneNS from 'tone'
 
-export type SfxName = 'click' | 'success' | 'warn' | 'info' | 'rare' | 'win' | 'lose' | 'breakthrough' | 'fail'
+export type SfxName = 'click' | 'success' | 'warn' | 'info' | 'rare' | 'win' | 'lose' | 'breakthrough' | 'fail' | 'worldRise'
 
 export interface AudioPrefs {
   musicOn: boolean
@@ -475,6 +475,13 @@ export function playSfx(name: SfxName): void {
     case 'fail':
       gliss(['A3', 'E3', 'D3'], 0.24, 0.5)
       taiko?.triggerAttackRelease('C2', '2n', now + 0.8, 0.55)
+      break
+    case 'worldRise':
+      // 越界揭幕:深钟先鸣、大跨度上行刮奏 —— 比 breakthrough 更宽更缓的庄重
+      bellSampler?.triggerAttackRelease('A2', '2n', now, 0.8)
+      taiko?.triggerAttackRelease('C2', '2n', now + 0.1, 0.6)
+      gliss(['A2', 'C3', 'D3', 'E3', 'F#3', 'A3', 'C4', 'D4', 'E4'], 0.13, 0.7)
+      bellSampler?.triggerAttackRelease('D5', '1n', now + 1.1, 0.75)
       break
   }
 }

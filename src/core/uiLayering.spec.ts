@@ -418,6 +418,18 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(css).toMatch(/\.foe-victorious[\s\S]{0,60}animation:\s*victory-seal/)
   })
 
+  it('世界越界有一声 —— 换一片天,不许静默揭幕', () => {
+    // 越界是全流程最重大事件(入仙界/神界/混沌海),视觉有 2.8s 揭幕遮罩,
+    // 从此却没有声音 —— 该响就响,不能让最高潮静静流过。判据:揭示触发
+    // 时必须 playSfx('worldRise')(与判据 announceWorldEntry 同一触发点),音效
+    // 引擎里 worldRise 要有自己的庄严谱(深钟+大跨度上行),不许退回 breakthrough。
+    const veil = readFileSync(resolve(__dirname, '../components/common/WorldTransitionVeil.vue'), 'utf-8')
+    expect(veil, '越界宣告必须有配乐唤醒').toContain(`playSfx('worldRise')`)
+    const audio = readFileSync(resolve(__dirname, '../core/audio.ts'), 'utf-8')
+    expect(audio, 'worldRise 要进 SfxName 联合').toContain(`| 'worldRise'`)
+    expect(audio, 'worldRise 要有自己的谱,不许退回其他音效').toMatch(/case 'worldRise':/)
+  })
+
   it('道痕满卷有提示 —— 最古之痕将覆去,不许玩家蒙在鼓里', () => {
     // 道痕 60 则封顶后,新痕从头部挤入、最古一痕被静默覆去,玩家根本不知道自己
     // 最早的履历会无声消失。封顶 = 要留意(琥珀族,同突破已封顶/遇事勿扰),
