@@ -645,15 +645,27 @@
         </div>
         <div class="flex items-center justify-between py-2.5">
           <span class="text-[12px] text-ink-soft">灵石(存 {{ formatGN(resources.spiritStone) }})</span>
-          <button class="btn-ghost !px-3 !py-1 !text-[11px] tabular" @click="furnaceConvertStone()">
-            {{ formatGN(furnaceStoneCost()) }} → 5 道源
+          <!-- 灵石不足置灰+列差:值与差异都现算(与熔尽本包/其余消费点同款纪律) -->
+          <button
+            class="btn-ghost !px-3 !py-1 !text-[11px] tabular"
+            :disabled="stoneShort > 0"
+            @click="furnaceConvertStone()"
+          >
+            <template v-if="stoneShort > 0">尚差 {{ formatGN(stoneShort) }} 石</template>
+            <template v-else>{{ formatGN(furnaceStoneCost()) }} → 5 道源</template>
           </button>
         </div>
         <div class="py-2.5">
           <div class="flex items-center justify-between">
             <span class="text-[12px] text-ink-soft">道源凝道果(跨世保留)</span>
-            <button class="btn-ghost !px-3 !py-1 !text-[11px] tabular" @click="doCondense()">
-              {{ DAO_SOURCE_PER_FRUIT }} 道源 → 道果 +1
+            <!-- 道源不足置灰+列差:差多少现算(与灵石行同款) -->
+            <button
+              class="btn-ghost !px-3 !py-1 !text-[11px] tabular"
+              :disabled="daoShort > 0"
+              @click="doCondense()"
+            >
+              <template v-if="daoShort > 0">尚差 {{ daoShort }} 道源</template>
+              <template v-else>{{ DAO_SOURCE_PER_FRUIT }} 道源 → 道果 +1</template>
             </button>
           </div>
           <!-- S3 链路:本次凝聚后,下世收益变化 -->
@@ -896,6 +908,10 @@
   function furnacePreview(rate: FurnaceRate): number {
     return Math.floor(resources[rate.resource] / rate.per)
   }
+  /** 熔灵石差多少(付不起置灰):现算,不点下去才知道缺 */
+  const stoneShort = computed(() => Math.max(0, furnaceStoneCost().m - resources.spiritStone.m))
+  /** 凝道果差多少(付不起置灰):与 spendDaoSource 拒绝臂同口径 */
+  const daoShort = computed(() => Math.max(0, DAO_SOURCE_PER_FRUIT - endgame.daoSource))
   function doFurnace(rate: FurnaceRate): void {
     furnaceConfirm.value = null
     furnaceConvert(rate)

@@ -453,6 +453,18 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(cel?.src, 'title 要直说「已选满」').toContain('已选满')
   })
 
+  it('天道熔炉付不起置灰+列差 —— 三样燃料不许只有一句笼统 toast', () => {
+    // 熔炉三个消费按钮曾口径不一:「熔尽本包」disabled 亮 0 道源,而「灵石→道源」
+    // 与「道源→道果」永远可点、点了才 toast「灵石不足/道源不足 N」。
+    // 与其余消费点同族:付不起置灰 + 内联「尚差 N 石/道源」,不许只有点了才响。
+    const cel = FILES.find(f => f.path === 'views/CelestialView.vue')
+    expect(cel?.src, '灵石行付不起要置灰(stoneShort)').toContain(':disabled="stoneShort > 0"')
+    expect(cel?.src, '灵石行要换口「尚差 N 石」').toContain('尚差 {{ formatGN(stoneShort) }} 石')
+    expect(cel?.src, '道果行付不起要置灰(daoShort)').toContain(':disabled="daoShort > 0"')
+    expect(cel?.src, '道果行要换口「尚差 N 道源」').toContain('尚差 {{ daoShort }} 道源')
+    expect(cel?.src, '判据必须现算,不许再永远可点').toContain('endgame.daoSource')
+  })
+
   it('世界越界有一声 —— 换一片天,不许静默揭幕', () => {
     // 越界是全流程最重大事件(入仙界/神界/混沌海),视觉有 2.8s 揭幕遮罩,
     // 从此却没有声音 —— 该响就响,不能让最高潮静静流过。判据:揭示触发
