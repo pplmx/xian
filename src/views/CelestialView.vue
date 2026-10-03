@@ -256,6 +256,14 @@
             </button>
           </div>
         </section>
+        <!-- 未择道途时「今日天道」是为空的一格:区段常驻,别让玩家以为它消失了 ——
+             择了道途它就在这儿(判据与上方 daily 同源) -->
+        <section v-else>
+          <SectionTitle title="今日天道" hint="日出而题,日落而息" />
+          <div class="card-ink mt-2 px-4 py-4 text-center text-[11px] leading-relaxed text-ink-faint">
+            今日天道随道途而定 —— 于道途一页择定「此世之路」后,自会在此展开。
+          </div>
+        </section>
 
         <!-- 天道变数 -->
         <section>

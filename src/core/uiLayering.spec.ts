@@ -465,6 +465,16 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(cel?.src, '判据必须现算,不许再永远可点').toContain('endgame.daoSource')
   })
 
+  it('今日天道有占位 —— 未择道途,也要说出它去哪了', () => {
+    // 「今日天道」区块 v-if="daily",而 daily 依赖 endgame.daoPath —— 刚登真仙
+    // 未择道途时整块消失,玩家切到试炼页找不到今日天道,会以为 bug。类目下
+    // 「天道变数/试炼」都常驻,唯独这块没空态。补一句「择定道途后在此展开」。
+    const cel = FILES.find(f => f.path === 'views/CelestialView.vue')
+    expect(cel?.src, '今日天道未择道途要有占位(v-else)').toMatch(/<section v-else>/)
+    expect(cel?.src, '占位要直说「随道途而定」').toContain('今日天道随道途而定')
+    expect(cel?.src, '占位要指明去道途页择定').toContain('择定')
+  })
+
   it('世界越界有一声 —— 换一片天,不许静默揭幕', () => {
     // 越界是全流程最重大事件(入仙界/神界/混沌海),视觉有 2.8s 揭幕遮罩,
     // 从此却没有声音 —— 该响就响,不能让最高潮静静流过。判据:揭示触发
