@@ -463,6 +463,11 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(cel?.src, '道果行付不起要置灰(daoShort)').toContain(':disabled="daoShort > 0"')
     expect(cel?.src, '道果行要换口「尚差 N 道源」').toContain('尚差 {{ daoShort }} 道源')
     expect(cel?.src, '判据必须现算,不许再永远可点').toContain('endgame.daoSource')
+    // 数值语义(回归审查 HIGH):灵石持平与花费都是 GNum,短额若只减尾数(.m - .m)
+    // 会丢掉指数 —— 6.1 万价、30 万持有曾被错置灰且报「尚差 3 石」三位数错。
+    // 必须走 GNum 指数感知减法(subClamp 与 spendStone 同账 + toNum 落普通数)。
+    expect(cel?.src, '尚差必须走 GNum 指数感知减法').toContain('toNum(subClamp(furnaceStoneCost(), resources.spiritStone))')
+    expect(cel?.src, '不许用尾数直接相减当短额(会丢指数)').not.toMatch(/furnaceStoneCost\(\)\.m - resources\.spiritStone\.m/)
   })
 
   it('今日天道有占位 —— 未择道途,也要说出它去哪了', () => {

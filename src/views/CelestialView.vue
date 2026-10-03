@@ -870,6 +870,7 @@
     type ChallengeVerdict
   } from '@/core/challenge'
   import { cnNumber, formatGN, formatNum, formatPercent } from '@/utils/format'
+  import { subClamp, toNum } from '@/utils/gnum'
   import SectionTitle from '@/components/common/SectionTitle.vue'
   import InkTabs from '@/components/common/InkTabs.vue'
   import BaseModal from '@/components/common/BaseModal.vue'
@@ -917,7 +918,13 @@
     return Math.floor(resources[rate.resource] / rate.per)
   }
   /** 熔灵石差多少(付不起置灰):现算,不点下去才知道缺 */
-  const stoneShort = computed(() => Math.max(0, furnaceStoneCost().m - resources.spiritStone.m))
+  /**
+   * 灵石→道源 尚差:必须走 GNum 指数感知减法 —— 尾数直接相减(.m - .m)会丢掉指数,
+   * 跨数量级时错置灰(6.1 万价、30 万持有曾被判成「差 3 石」)且报「尚差」错三位数。
+   * subClamp = 与 spendStone 同一本账的减法并保底零,toNum 落成普通数
+   * 给模板的 `> 0` 比较与 formatGN 显示(判据与消费点同源)。
+   */
+  const stoneShort = computed(() => toNum(subClamp(furnaceStoneCost(), resources.spiritStone)))
   /** 凝道果差多少(付不起置灰):与 spendDaoSource 拒绝臂同口径 */
   const daoShort = computed(() => Math.max(0, DAO_SOURCE_PER_FRUIT - endgame.daoSource))
   function doFurnace(rate: FurnaceRate): void {
