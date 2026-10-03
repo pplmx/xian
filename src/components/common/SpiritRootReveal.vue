@@ -107,19 +107,6 @@
 </script>
 
 <style>
-  /* 只给读屏念、不给任何视觉(本作无 sr-only 工具类,就地写一份) */
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
   /* 灵根鉴定全屏特效 */
   .root-overlay {
     position: fixed;

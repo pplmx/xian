@@ -527,4 +527,35 @@ describe('界面分层 · 浮层只有一个出处', () => {
     const tw = readFileSync(resolve(__dirname, '../../tailwind.config.js'), 'utf-8')
     expect(tw, 'seal-breathe 的映射被拆了 —— 归来印失去呼吸').toContain(`'seal-breathe': 'seal-breathe`)
   })
+
+  it('提示条全库开口 —— toast 承载动作结果,不许对读屏全哑', () => {
+    // toast 几乎通报了每一笔获得与每一处不足,ToastHost 却没有 live region ——
+    // 视觉玩家有滑入的音画,读屏玩家点完只听个静默。挂在容器上:TransitionGroup
+    // + :key=id 保证新 toast 只新增一个节点,念出的是新条;旧条移除不发声。
+    const host = FILES.find(f => f.path === 'components/common/ToastHost.vue')
+    expect(host?.src, 'toast 容器要挂 aria-live=polite').toContain('aria-live="polite"')
+  })
+
+  it('在身之卦散卦要自报 —— 整块消失不许对读屏无声', () => {
+    // 散卦是后台随心跳自散的:整块 v-if=currentReading 安静消失、按钮随之复活,
+    // 没有 toast 可依 —— 不念一句,读屏玩家就只知道它没了。以「有无」布尔为
+    // 观察对象(每秒心跳都在换新对象,watch 身份只会每秒误触发),只在真→假那
+    // 一瞬开口。成卦有 toast(live 区落地即念),不重报。
+    const codex = FILES.find(f => f.path === 'views/RealmCodexView.vue')
+    expect(codex?.src, '散卦要用有无布尔翻转触发,不许 watch 每秒心跳换的对象').toMatch(/watch\(hasReading/)
+    expect(codex?.src, '播报区要 aria-live=polite + sr-only').toContain('aria-live="polite"')
+    expect(codex?.src, '散卦要念「卦力已散」').toContain('卦力已散')
+    expect(codex?.src, '成卦 toast 要附带存续时长(卦是自散的,先得知道活多久)').toContain('分自散')
+  })
+
+  it('逆天改命重掷要念出新牌 —— 灵根鉴定的中间态不许哑', () => {
+    // 定格有 SpiritRootReveal 的播报,途中「逆天改命」重掷却只换画面不出声 ——
+    // 同一个交互族的一半开了口、一半还哑着。rollSeq 只在成功重掷自增,以它为
+    // 观察对象:每次重掷念一遍新牌。
+    const create = FILES.find(f => f.path === 'views/CreateView.vue')
+    expect(create?.src, '重掷结果要挂 aria-live=polite 播报区').toContain('aria-live="polite"')
+    expect(create?.src, '播报区要视觉隐藏(用 Tailwind 全局 sr-only)').toContain('sr-only')
+    expect(create?.src, '观察对象要是只增不减的 rollSeq').toMatch(/watch\(rollSeq/)
+    expect(create?.src, '播报句要念出「重掷得」(新牌开场白)').toContain('重掷得')
+  })
 })

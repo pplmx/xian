@@ -7,7 +7,16 @@
     此前只有外框写了 pointer-events-none,按钮继承成 none:
     dismissToast 从来没有被触发过,提示条只能等超时自己消失。
   -->
-  <div class="pointer-events-none fixed inset-x-0 top-12 z-70 flex flex-col items-center gap-1.5 px-6">
+  <!--
+    aria-live=polite:toast 承载了几乎每一下动作的结果(得了什么/缺了什么/成了与否),
+    它前面却没有任何 live region —— 视觉玩家有滑入音画,读屏玩家点完只听个静默。
+    TransitionGroup + :key=id 保证新 toast 只新增一个节点,念出的就是新条;
+    旧条移除不发声,不会成片重读。
+  -->
+  <div
+    aria-live="polite"
+    class="pointer-events-none fixed inset-x-0 top-12 z-70 flex flex-col items-center gap-1.5 px-6"
+  >
     <TransitionGroup name="toast-slide" :duration="TOAST_ANIM_MS">
       <button
         v-for="t in ui.toasts"

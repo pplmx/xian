@@ -93,6 +93,9 @@
         <p class="mt-1.5 text-[11px] text-qing">在身之力:{{ powerText }}</p>
       </div>
 
+      <!-- 读屏:散卦没有 toast 可依,整块消失的那一瞬必须自报(成卦由 toast 落地即念) -->
+      <p aria-live="polite" class="sr-only">{{ readingAnnounce }}</p>
+
       <div class="mt-2.5 flex items-center gap-2">
         <button
           class="btn-ghost !py-1.5 !text-[12px]"
@@ -239,7 +242,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useNow } from '@/composables/useNow'
   import { usePlayerStore } from '@/stores/player'
   import { useGameStore } from '@/stores/game'
@@ -247,7 +250,7 @@
   import { REALMS, WORLDS, realmDef } from '@/data/realms'
   import { CLASSICS, PLANNED_SCHOOLS, classicsForRealm } from '@/data/classics'
   import { HEXAGRAMS, TRIGRAMS, trigramDef } from '@/data/yijing'
-  import { DIVINATION_COST, drawLines, readingCounsel, readingFromState } from '@/core/divination'
+  import { DIVINATION_COST, drawLines, readingCounsel, readingFromState, readingMinutes } from '@/core/divination'
   import { askDivination } from '@/core/divinationService'
   import { PALACES, STARS } from '@/data/ziwei'
   import { fateLordLine } from '@/core/fate'
@@ -300,6 +303,21 @@
     return `尚余 ${formatCountdown(sec)}`
   })
 
+  /**
+   * 读屏只管「有→无」的散卦:卦是后台随时间自散的,整块 v-if=currentReading
+   * 会在某一跳里安静消失、按钮随之复活 —— 无 toast 可依,散的那一瞬不念一句,
+   * 读屏玩家就只知道它没了。以「有无」布尔为观察对象:当前卦每秒心跳都在换新
+   * 对象,watch 身份只会每秒误触发;`!currentReading` 只在成卦(假→真)与散卦
+   * (真→假)两个瞬间翻转。成卦由 toast 落地即念(ToastHost 已全库开口),这里
+   * 只报散卦,不重报。
+   */
+  const hasReading = computed(() => !!currentReading.value)
+  const readingAnnounce = ref('')
+  watch(hasReading, (nv, ov) => {
+    if (nv || !ov) return
+    readingAnnounce.value = '卦力已散,可再问一卦'
+  })
+
   function ask(): void {
     const out = askDivination()
     if (!out.ok) {
@@ -307,7 +325,8 @@
       return
     }
     const r = out.reading!
-    ui.toast(`得「${r.hexagram.name}」卦${r.changed ? `,之${r.changed.name}` : ''}`, 'info')
+    // 播报(toast live 区)附带存续时长:卦是自散的,散之前玩家先得知道它活多久
+    ui.toast(`得「${r.hexagram.name}」卦${r.changed ? `,之${r.changed.name}` : ''},约 ${readingMinutes(r)} 分自散`, 'info')
   }
 
   // 命格:一世不变的一张盘(转世重算),故不必计时,直接读 player 的派生值

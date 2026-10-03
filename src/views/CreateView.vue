@@ -50,6 +50,8 @@
           <span>{{ t.text }}</span>
         </p>
       </div>
+      <!-- 读屏:重掷结果念出来(最终定格有 SpiritRootReveal 播报,途中逆天改命不许哑) -->
+      <p aria-live="polite" class="sr-only">{{ rerollAnnounce }}</p>
       <button class="btn-ghost mt-4 w-full" :disabled="starting" @click="reroll">{{ rerollLabel }}</button>
       <p v-if="unlimitedReroll" class="mt-2 text-center text-[11px] text-ink-faint">
         不满意就一直改,改到掷中你认的那副牌为止
@@ -67,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useRouter } from 'vue-router'
   import { rng } from '@/utils/random'
   import { rollLinggen } from '@/core/linggenGen'
@@ -106,6 +108,17 @@
   )
   /** 重掷序号:额度不再是动画的开关,重放掷牌动画要另有一个只增不减的计数器 */
   const rollSeq = ref(0)
+  /**
+   * 重掷播报:「逆天改命」是「灵根鉴定」同族的中间态 —— 最终定格有 SpiritRootReveal
+   * 的读屏播报,途中重掷却只换画面、不出一声。rollSeq 只在成功重掷时自增(额度
+   * 不足/鉴定动画中都不动),以它为观察对象,每次重掷把新牌念一遍。
+   */
+  const rerollAnnounce = ref('')
+  watch(rollSeq, () => {
+    const p = profile.value
+    const rootsText = p.roots.map(r => `${ELEMENTS[r.element].name}${r.aptitude}`).join('、')
+    rerollAnnounce.value = `重掷得「${p.gradeName}」灵根,${rootsText},修行倍率 ×${p.growthMult.toFixed(2)}`
+  })
   const revealRef = ref<InstanceType<typeof SpiritRootReveal> | null>(null)
   /** 鉴定动画进行中(约 2.6s):防连点导致重复建号、重复发新手馈赠 */
   const starting = ref(false)
