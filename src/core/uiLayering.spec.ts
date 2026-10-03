@@ -377,6 +377,21 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(dlg?.src, '大境章要直说「大境」').toContain('大 境')
   })
 
+  it('闪避有侧让 —— 躲开 ≠ 被打中,不许让闪避也走震颤', () => {
+    // 战斗里闪避此前只落在日志的一行淡字:攻击方横踏照走,受击方纹丝不动,
+    // 「这一击被躲过了」没有画面。而若随手让闪避也走 hit-shake,就成了
+    // 「打中了但没伤害」的假反馈。故盯死:闪避(dodge)必须触发受击方 flicker
+    // 侧让、且不得走震颤那半边(triggerShake)。
+    const fight = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
+    expect(fight?.src, '闪避要有侧让绑点(flickerCls)').toContain('flickerCls.e')
+    expect(fight?.src).toContain('flickerCls.p')
+    expect(fight?.src, 'dodge 行必须触发侧让').toMatch(/entry\.t === 'dodge'[\s\S]{0,120}triggerFlicker/)
+    expect(fight?.src, '闪避不得走震颤(躲开≠被打中)').not.toMatch(/entry\.t === 'dodge'[\s\S]{0,80}triggerShake/)
+    expect(fight?.src, '闪避时攻击方仍该横踏(出手确实出手了)').toMatch(/entry\.t === 'dodge'[\s\S]{0,80}triggerStrike/)
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'flicker 的帧定义被删了 —— 闪避退回一动不动的淡字').toMatch(/@keyframes flicker/)
+  })
+
   it('胜方有定音 —— 败方散墨,赢家也得有这一声', () => {
     // 战斗因果环:受击震颤/出手横踏/败亡散墨(灰化)都有了,唯独胜方没有任何
     // 「这一场我赢了」的视觉句点。光圈绕头像荡一圈收拢(victory-seal,

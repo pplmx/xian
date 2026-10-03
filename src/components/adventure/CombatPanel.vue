@@ -31,7 +31,7 @@
     <!-- 战斗面板 -->
     <div class="card-ink relative overflow-hidden px-4 py-4">
       <!-- 敌方 -->
-      <div class="relative" :class="[shakeCls.e, strikeCls.e, defeated === 'e' ? 'foe-defeated' : '']">
+      <div class="relative" :class="[shakeCls.e, strikeCls.e, flickerCls.e, defeated === 'e' ? 'foe-defeated' : '']">
         <!--
           换敌入场:每场战罢新敌上台,前后两场长得未必一样,却没有任何「换了」的信号。
           按 battle.at 键控重挂(换敌即重放入场动画);浮伤留在这层之外的锚点上,
@@ -141,7 +141,7 @@
       </div>
 
       <!-- 我方 -->
-      <div class="relative mt-3" :class="[shakeCls.p, strikeCls.p, defeated === 'p' ? 'foe-defeated' : '']">
+      <div class="relative mt-3" :class="[shakeCls.p, strikeCls.p, flickerCls.p, defeated === 'p' ? 'foe-defeated' : '']">
         <div class="flex items-center gap-2">
           <span
             class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing"
@@ -289,6 +289,8 @@
   const ehp = ref(1)
   const floats = ref<{ id: number; text: string; side: 'p' | 'e'; crit: boolean }[]>([])
   const shakeCls = ref<{ p: string; e: string }>({ p: '', e: '' })
+  /** 闪避侧移:躲开 ≠ 挨打 —— 受击方不震颤,而是身形一晃侧让(见 flicker 帧) */
+  const flickerCls = ref<{ p: string; e: string }>({ p: '', e: '' })
   /**
    * 攻击方的横踏:浮伤与震颤都在受击方,「谁在出手」此前毫无动作 ——
    * 同一因果环只剩下受击那半边,这半边(出手)补上才成环。
@@ -484,6 +486,12 @@
         triggerShake(entry.side === 'p' ? 'e' : 'p', entry.t === 'crit')
         triggerStrike(entry.side)
       }
+      // 闪避:攻击方照常横踏(出手是出手了),受击方却身形一晃侧让而非挨震 ——
+      // 躲开和被打中是两种画面,不许让闪避也走震颤(那是"打中了"的反馈)
+      if (entry.t === 'dodge') {
+        triggerStrike(entry.side)
+        triggerFlicker(entry.side === 'p' ? 'e' : 'p')
+      }
       requestAnimationFrame(() => {
         logBox.value?.scrollTo({ top: logBox.value.scrollHeight })
       })
@@ -496,6 +504,14 @@
     shakeCls.value = { ...shakeCls.value, [side]: '' }
     requestAnimationFrame(() => {
       shakeCls.value = { ...shakeCls.value, [side]: hard ? 'hit-shake-hard' : 'hit-shake' }
+    })
+  }
+
+  /** 闪避侧移:受击方身形一晃侧让(与 triggerShake 同款的重放手法,连避可重放) */
+  function triggerFlicker(side: 'p' | 'e'): void {
+    flickerCls.value = { ...flickerCls.value, [side]: '' }
+    requestAnimationFrame(() => {
+      flickerCls.value = { ...flickerCls.value, [side]: 'flicker' }
     })
   }
 

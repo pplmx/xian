@@ -202,6 +202,33 @@
   }
 }
 
+/*
+ * 闪避侧移:躲开 ≠ 被打中 —— 受击方不该震颤(那是挨打了),而是身形一晃侧让。
+ * 只动 transform 合层,完毕归零;reduced-motion 由全局 * 规则兜。
+ */
+.flicker {
+  animation: flicker 0.28s ease-out;
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  30% {
+    opacity: 0.5;
+    transform: translateX(7px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes float-crit {
   0% {
     opacity: 0;
