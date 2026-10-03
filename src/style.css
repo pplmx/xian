@@ -620,21 +620,64 @@ html[data-theme='dark'] .mist-soft {
   --world-mountain: rgb(var(--color-ink-rgb));
   /* 章节标题杆(全页高频的装饰色) —— 人间=朱砂、仙界=石青、神界=紫、混沌=幽蓝 */
   --world-bar: rgb(var(--color-cinnabar-rgb) / 0.8);
+  /* 世界的「此刻」文字色(世界名 / 地图上你现在的位置) —— 取色板里过 AA 的现存色 */
+  --world-accent: var(--color-cinnabar);
 }
 .app-shell[data-world='immortal'] {
   --world-glow-rgb: 90 140 190;
   --world-mountain: rgb(60 108 152);
   --world-bar: rgb(76 132 178 / 0.85);
+  --world-accent: var(--color-qing);
 }
 .app-shell[data-world='god'] {
   --world-glow-rgb: 130 100 190;
   --world-mountain: rgb(112 84 160);
   --world-bar: rgb(140 108 200 / 0.85);
+  --world-accent: var(--color-violet-ink);
 }
 .app-shell[data-world='chaos'] {
   --world-glow-rgb: 92 112 150;
   --world-mountain: rgb(80 100 138);
   --world-bar: rgb(96 120 158 / 0.85);
+  --world-accent: var(--color-cangqing);
+}
+
+/* 修炼页顶部「此刻所处的界」—— 随当前世界(外壳 --world-accent)亮它的信标色 */
+.world-label {
+  color: var(--world-accent);
+}
+
+/* 界域志·界域地图:每个世界段的名字带它自己的色(不是"当前界",是"这一界本身")。
+   用 .card-ink 前缀收紧作用域 —— 外壳也有 data-world,裸 [data-world] 会选择到祖先 */
+.world-seal {
+  color: var(--color-ink);
+}
+.card-ink[data-world='immortal'] .world-seal {
+  color: var(--color-qing);
+}
+.card-ink[data-world='god'] .world-seal {
+  color: var(--color-violet-ink);
+}
+.card-ink[data-world='chaos'] .world-seal {
+  color: var(--color-cangqing);
+}
+
+/* 界域志·此刻在此的格子:底色+字随你所处的世界(继承外壳 data-world) */
+.codex-current {
+  color: var(--color-cinnabar);
+  background: rgb(var(--color-cinnabar-rgb) / 0.06);
+}
+.app-shell[data-world='immortal'] .codex-current {
+  color: var(--color-qing);
+  background: rgb(var(--color-qing-rgb) / 0.07);
+}
+.app-shell[data-world='god'] .codex-current {
+  color: var(--color-violet-ink);
+  background: rgb(var(--color-violet-ink-rgb) / 0.07);
+}
+.app-shell[data-world='chaos'] .codex-current {
+  color: var(--color-cangqing);
+  background: rgb(var(--color-cangqing-rgb) / 0.06);
 }
 
 .app-shell[data-world='immortal'] .mist {

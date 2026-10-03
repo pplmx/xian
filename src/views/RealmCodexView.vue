@@ -11,9 +11,11 @@
 
     <template v-if="codexTab === 'realm'">
     <!-- 界域与境界:逐境写明出处与承接 -->
-    <section v-for="row in worldRows" :key="row.world.id" class="card-ink px-4 py-3">
+    <!-- 每一界的段名字带它自己的色(人间朱/仙青/神紫/混沌蓝) —— 这条路历过几界,色卡一样摊开;
+         此刻所在的格子随你身处之界的信标色亮起(见 .codex-current) -->
+    <section v-for="row in worldRows" :key="row.world.id" class="card-ink px-4 py-3" :data-world="row.world.id">
       <div class="flex items-baseline gap-2">
-        <span class="font-kai text-[15px] tracking-[0.25em] text-ink">{{ row.world.name }}</span>
+        <span class="world-seal font-kai text-[15px] tracking-[0.25em]">{{ row.world.name }}</span>
         <span class="text-[10px] text-ink-faint">第 {{ row.world.start + 1 }}–{{ row.world.end + 1 }} 境</span>
       </div>
       <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ row.world.desc }}</p>
@@ -22,17 +24,17 @@
           v-for="cell in row.realms"
           :key="cell.def.id"
           class="rounded-md px-2.5 py-2"
-          :class="cell.index === player.major ? 'bg-cinnabar/6' : 'bg-paper-deep/50'"
+          :class="cell.index === player.major ? 'codex-current' : 'bg-paper-deep/50'"
         >
           <p class="flex items-center gap-2">
             <span
               class="font-kai text-[14px] tracking-wider"
-              :class="cell.index === player.major ? 'text-cinnabar' : cell.index < player.major ? 'text-ink-soft' : 'text-ink-faint'"
+              :class="cell.index === player.major ? '' : cell.index < player.major ? 'text-ink-soft' : 'text-ink-faint'"
             >
               {{ cell.def.name }}
             </span>
             <span class="chip-ink !text-[9px]">{{ cell.def.basis }}</span>
-            <span v-if="cell.index === player.major" class="text-[9px] text-cinnabar">此刻在此</span>
+            <span v-if="cell.index === player.major" class="text-[9px]">此刻在此</span>
           </p>
           <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ cell.def.desc }}</p>
           <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">{{ cell.def.lore }}</p>
