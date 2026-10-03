@@ -354,4 +354,20 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(col?.src).toContain('尽收')
     expect(col?.src, '判据必须读 entry.stage(收录/认知),不另起一套').toMatch(/every\(e => e\.stage >= 1\)/)
   })
+
+  it('归来卷轴配一枚印 —— 石绿「归」印,不走朱砂(那是里程碑的色)', () => {
+    // 突破幕有朱砂「破」印 + 全屏墨浪/墨点/金环,归来卷轴此前只有一行淡字 ——
+    // 表彰不该偏废:归总是「此行已结」的完成态,该有自己的印。语义色族规不变:
+    // 朱砂=里程碑(突破/首领),石绿=完成/结清(今日已毕/尽收/归来) —— 谁把
+    // 归来印换成朱砂,或者把印拆回一行字,下面红。
+    const dlg = FILES.find(f => f.path === 'components/offline/OfflineRewardDialog.vue')
+    expect(dlg?.src, '归来卷轴要有石绿「归」印(animate-seal-breathe + border-jade)').toContain('animate-seal-breathe')
+    expect(dlg?.src).toContain('border-jade')
+    expect(dlg?.src, '归 来不能退回一行淡字 —— 完成态要有印身').toContain('h-16 w-16')
+    expect(dlg?.src).not.toContain('border-cinnabar')
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'seal-breathe 的帧定义被删了 —— 归来印退回瞬显').toMatch(/@keyframes seal-breathe/)
+    const tw = readFileSync(resolve(__dirname, '../../tailwind.config.js'), 'utf-8')
+    expect(tw, 'seal-breathe 的映射被拆了 —— 归来印失去呼吸').toContain(`'seal-breathe': 'seal-breathe`)
+  })
 })

@@ -1,7 +1,14 @@
 <template>
   <BaseModal :open="summary !== null" :closable="false" aria-label="离线归来结算">
     <div v-if="summary" class="text-center">
-      <p class="font-kai text-2xl tracking-[0.5em] text-ink mt-1 animate-ink-pop">归 来</p>
+      <!-- 归来印信:此行结清盖一枚石绿「归」印 —— 突破是里程碑盖朱砂,归总是完成态盖石绿 -->
+      <div class="relative mx-auto mt-1 h-16 w-16" aria-hidden="true">
+        <div
+          class="grid h-16 w-16 place-items-center rounded-full border-2 border-jade bg-jade/5 font-kai text-3xl text-jade animate-ink-pop animate-seal-breathe"
+        >
+          归
+        </div>
+      </div>
       <p class="mt-2 text-[12px] text-ink-faint">
         此去
         <span class="font-kai text-[13px] text-ink">{{ formatDuration(summary.seconds) }}</span>
