@@ -367,6 +367,16 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(tit?.src, '全收后的那句「尽收」要直说(名号尽收),不许只有计数').toContain('名号尽收')
   })
 
+  it('大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸', () => {
+    // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
+    // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)
+    // 钉在印下,小破不显示;拆了 v-if、或改成与小破同色,下面红。
+    const dlg = FILES.find(f => f.path === 'components/cultivation/BreakthroughResultDialog.vue')
+    expect(dlg?.src, '大境成功要有金章区分,不许只靠朱砂破印').toContain(`view.success && view.isMajor`)
+    expect(dlg?.src, '大境章要是金色(gold-ink),与朱砂破印同列而更高').toContain('text-gold-ink')
+    expect(dlg?.src, '大境章要直说「大境」').toContain('大 境')
+  })
+
   it('胜方有定音 —— 败方散墨,赢家也得有这一声', () => {
     // 战斗因果环:受击震颤/出手横踏/败亡散墨(灰化)都有了,唯独胜方没有任何
     // 「这一场我赢了」的视觉句点。光圈绕头像荡一圈收拢(victory-seal,

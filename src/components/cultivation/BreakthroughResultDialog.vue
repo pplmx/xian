@@ -23,6 +23,16 @@
       <p class="mt-3 font-kai text-lg tracking-[0.3em] text-ink">
         {{ view.success ? '突破成功' : '突破失败' }}
       </p>
+      <!--
+        大境之槛:一境一次的里程碑,与每层小推进共用同一枚「破」印还不够 ——
+        天劫既渡,这声该更重。金色「大境」章钉在印下(金=里程碑赏,不动破印本体)。
+      -->
+      <p
+        v-if="view.success && view.isMajor"
+        class="mx-auto mt-1.5 w-fit animate-ink-pop rounded border border-gold-ink/60 bg-gold-ink/8 px-2 py-0.5 font-kai text-[11px] tracking-[0.3em] text-gold-ink"
+      >
+        大 境
+      </p>
       <p class="mt-1 text-[13px] text-ink-soft">
         {{ view.fromLabel }}
         <span class="mx-1 text-ink-faint">→</span>
