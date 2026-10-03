@@ -29,8 +29,16 @@
     <template v-else>
       <section v-for="cat in collectionCats" :key="cat.key">
         <SectionTitle :title="cat.name" :hint="cat.hint" />
-        <!-- 未收录的条目只是一片「???」—— 得告诉玩家去哪儿找,否则这一册只能干瞪眼 -->
-        <p class="mt-1 text-[10px] text-ink-faint">{{ cat.source }}</p>
+        <!--
+          未收录的条目只是一片「???」—— 得告诉玩家去哪儿找,否则这一册只能干瞪眼。
+          全收齐的那一目,「去哪儿找」就没了意义,替换成石绿的「尽收」完成感
+          —— 收集的圆满是这册自己该说的话。
+        -->
+        <p v-if="catComplete(cat)" class="mt-1 text-[10px] text-jade">
+          <span class="chip-ink border-jade/60 text-[9px] text-jade">尽收</span>
+          此目已无未识之物 —— 见之者皆入册
+        </p>
+        <p v-else class="mt-1 text-[10px] text-ink-faint">{{ cat.source }}</p>
         <div class="card-ink mt-2 flex flex-wrap gap-1.5 px-3.5 py-3">
           <template v-for="entry in cat.entries" :key="entry.id">
             <button
@@ -254,6 +262,15 @@
   const collectionHasNew = computed(() =>
     collectionCats.value.some(cat => cat.entries.some(e => quests.isEntryNew(cat.key, e.id)))
   )
+
+  /**
+   * 「这一目集齐了」:所有条目都至少到 stage 1(收没收藏 / 知没知道)。
+   * 灵材谱(认知深浅)与悟道录(分支)也是同一把尺 —— 全体 entry.stage >= 1
+   * 即「都认得/都见过」,对它们同样是圆满。空目不算集齐。
+   */
+  function catComplete(cat: CodexCat): boolean {
+    return cat.entries.length > 0 && cat.entries.every(e => e.stage >= 1)
+  }
   /** 页签行:在「收藏」上挂新得点(呼吸提醒),看过则隐 —— 与 CelestialView 的 exped 同款 */
   const tabRows = computed(() => TABS.map(t => ({ ...t, dot: t.id === 'collection' && collectionHasNew.value })))
 

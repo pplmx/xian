@@ -344,4 +344,14 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(home?.src).toContain('今日已毕')
     expect(home?.src, '判据必须读日课行的 done(= 已结算),不自己数进度').toMatch(/every\(r => r\.done\)/)
   })
+
+  it('图鉴一目尽收有完成感 —— 集齐的那一册要自己说话', () => {
+    // 分目进度只有「12/20」的淡暗计数,集齐也没有任何表示 —— 收集的圆满
+    // 是该册自己说的话。判据 = 全体条目 stage>=1(空目不算),全收后「去哪儿找」
+    // 让位给石绿「尽收」行。
+    const col = FILES.find(f => f.path === 'views/CollectionView.vue')
+    expect(col?.src).toContain('catComplete')
+    expect(col?.src).toContain('尽收')
+    expect(col?.src, '判据必须读 entry.stage(收录/认知),不另起一套').toMatch(/every\(e => e\.stage >= 1\)/)
+  })
 })
