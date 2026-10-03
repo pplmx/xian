@@ -22,6 +22,16 @@
           <div class="root-ring ring-r3" />
         </div>
 
+        <!--
+          鉴定结果必须说给读屏:全屏定格是核心结果播报,却对屏幕阅读器完全无声
+          (动画期间 pointer-events:none、无 aria-live)。这边藏一块 polite 播报区,
+          定格那一瞬(animating=false)把真名念出来 —— 别让视障玩家看完一屏动画
+          仍不知道测出了哪条根。
+        -->
+        <p aria-live="polite" class="sr-only">
+          <template v-if="!animating">{{ settleText }}</template>
+        </p>
+
         <!-- 检测文字 -->
         <div v-if="animating" class="root-text">
           <p class="root-title">正在测定灵根……</p>
@@ -48,6 +58,8 @@
 
   const currentName = computed(() => (animating.value ? (GRADES[cycleIdx.value]?.name ?? '?') : realName))
   const currentColor = computed(() => (animating.value ? (GRADES[cycleIdx.value]?.color ?? '#c9a959') : realColor))
+  /** 读屏播报的定稿句(动画未完时为空,不抢读) */
+  const settleText = computed(() => (animating.value ? '' : `灵根鉴定完毕:${realName}`))
 
   /** 真实灵根(结束时定格显示) */
   let realName = '?'
@@ -95,6 +107,19 @@
 </script>
 
 <style>
+  /* 只给读屏念、不给任何视觉(本作无 sr-only 工具类,就地写一份) */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
   /* 灵根鉴定全屏特效 */
   .root-overlay {
     position: fixed;

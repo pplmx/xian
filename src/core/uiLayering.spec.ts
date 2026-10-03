@@ -475,6 +475,17 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(cel?.src, '占位要指明去道途页择定').toContain('择定')
   })
 
+  it('灵根鉴定结果说给读屏 —— 全屏定格不许对屏幕阅读器无声', () => {
+    // 创角「灵根鉴定」全屏定格是核心结果播报,却对读屏完全无声(动画期间
+    // pointer-events:none、无 aria-live)—— 视障玩家看完一屏动画仍不知道
+    // 测出哪条根。定格那一瞬(animating=false)必须用 aria-live=polite 念真名。
+    const reveal = FILES.find(f => f.path === 'components/common/SpiritRootReveal.vue')
+    expect(reveal?.src, '鉴定结果必须挂 aria-live 播报区').toContain('aria-live="polite"')
+    expect(reveal?.src, '播报区必须在定稿件时出现(animating=false)').toMatch(/v-if="!animating"/)
+    expect(reveal?.src, '要念出「灵根鉴定完毕」的真名').toContain('灵根鉴定完毕')
+    expect(reveal?.src, '读屏专用区必须视觉隐藏(sr-only)').toContain('sr-only')
+  })
+
   it('世界越界有一声 —— 换一片天,不许静默揭幕', () => {
     // 越界是全流程最重大事件(入仙界/神界/混沌海),视觉有 2.8s 揭幕遮罩,
     // 从此却没有声音 —— 该响就响,不能让最高潮静静流过。判据:揭示触发
