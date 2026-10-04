@@ -1414,11 +1414,21 @@ button.chip-ink:active:not(:disabled) {
   transform: scale(0.97);
 }
 
+/*
+ * 减少动效要点:时长压到 0.01ms + 延迟清零 —— 两者缺一不可。
+ *
+ * 只压 duration 不够:stagger-in 把入场拆成 8 档、每档各挂 0.02–0.36s 的
+ * animation-delay,WarpPortal / SpiritRootReveal 还有整串 0.05–1s 的延迟。
+ * duration=0.01ms 时动画瞬间完成,但「该 0.36s 后出现」的元素仍要等到
+ * 那个延迟才闪现 —— 步子全收过一次,却依然一档一档往外跳,减了个寂寞。
+ * 故两条规则都把 delay 一并清零:一切动画即刻到位,页面一次成型。
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
@@ -1429,6 +1439,7 @@ button.chip-ink:active:not(:disabled) {
 .reduce-motion *::before,
 .reduce-motion *::after {
   animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
 }

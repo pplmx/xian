@@ -676,4 +676,19 @@ describe('界面分层 · 浮层只有一个出处', () => {
       expect(src, `${f} 返回行要写「← 人物」`).toContain('← 人物')
     }
   })
+
+  it('减少动效要连延迟一起清零 —— 只压时长,入场还会一档一档往外跳', () => {
+    // 全局 reduce-motion 规则把 animation-duration 压到 0.01ms,却不碰
+    // animation-delay:stagger-in 每档挂 0.02–0.36s、WarpPortal/SpiritRootReveal
+    // 还有整串 0.05–1s 的延迟 —— 时长压到零延迟还在,内容照旧分步闪现,
+    // 「减少动效」减了个寂寞。系统偏好与「减少动效」设置项两条规则
+    // 都必须把 delay 一并清零:动效省略 = 时长 + 延迟双双归零。
+    // 故障注入:删掉任一规则的 animation-delay → 红。
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, '清零对象要真实存在 —— 先有分步入场的多档延迟,才谈得上把它清零').toMatch(/\.stagger-in[\s\S]{0,400}animation-delay:/)
+    const delayKills = css.match(/animation-delay:\s*0s\s*!important;/g) ?? []
+    expect(delayKills, '系统偏好与「减少动效」设置项各要一处 delay 清零').toHaveLength(2)
+    const durKills = css.match(/animation-duration:\s*0\.01ms\s*!important;/g) ?? []
+    expect(durKills, 'reduce-motion 仍要压时长 —— 只清 delay 不清时长,就是还留着动画、只是没了次序').toHaveLength(2)
+  })
 })
