@@ -1,5 +1,10 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+    <div class="flex items-center gap-2">
+      <RouterLink to="/character" class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft">← 人物</RouterLink>
+      <span class="text-[11px] text-ink-faint">·</span>
+      <span class="text-[12px] text-ink-soft">流派</span>
+    </div>
     <SectionTitle title="流派" hint="道路由构筑自然成形" />
     <div class="card-ink px-4 py-3">
       <template v-if="build">

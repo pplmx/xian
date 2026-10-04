@@ -101,6 +101,10 @@ export const useUiStore = defineStore('ui', () => {
   const deathDialog = ref(false)
   const reincarnation = ref<ReincarnationView | null>(null)
   const corruptedNotice = ref<string[]>([])
+  /** 踏入仙途那一瞬要交接给首页宣读的起手句 —— 灵根鉴定定格播报(aria-live polite)
+   *  定格后 400ms 就随路由跳转把弹窗页卸载,读屏可能当场切断;首页挂载时若带着
+   *  这句,用自家 aria-live 补上,读完即清(只在创角→首页这一趟念)。 */
+  const worldEnter = ref<string | null>(null)
 
   function toast(text: string, kind: Toast['kind'] = 'info'): void {
     const id = toastSeq
@@ -129,6 +133,7 @@ export const useUiStore = defineStore('ui', () => {
     deathDialog,
     reincarnation,
     corruptedNotice,
+    worldEnter,
     toast,
     dismissToast
   }

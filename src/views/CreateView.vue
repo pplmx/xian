@@ -157,6 +157,9 @@
     game.markStarted()
     trackRealm()
     ui.toast('云深不知处,仙路自此始', 'rare')
+    // 起手句交给首页宣:灵根鉴定的 aria-live 定格播报在路由跳转时会被切断,
+    // 首页挂载补念(见 HomeView 的 worldEnter 读屏区),读完即清
+    ui.worldEnter = `你已入此世 —— 灵根「${profile.value.gradeName}」,修行倍率 ×${profile.value.growthMult.toFixed(2)}`
     // 灵根鉴定动画:随机闪现所有灵根品阶,最后定格真实灵根(gradeName)
     revealRef.value?.show(profile.value.gradeName, () => {
       void router.push('/')

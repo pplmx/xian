@@ -1,5 +1,7 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+    <!-- 读屏起手句:创角踏入仙途后补念「你已入此世…」,只在那一趟有值(CreateView 交接、读完即清) -->
+    <p aria-live="polite" class="sr-only">{{ bootLine }}</p>
     <!--
       iOS 上「加进主屏幕」这件事得主动说一次:不说,玩家不会知道七天不打开就会丢档。
       只在 iOS 且未安装时出现,「知道了」之后永不再露(设置页里还留着一份常驻的,随时可查)。
@@ -198,8 +200,9 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import { computed, ref, onMounted } from 'vue'
   import { usePlayerStore } from '@/stores/player'
+  import { useUiStore } from '@/stores/ui'
   import { useDongfuStore } from '@/stores/dongfu'
   import { BUILDINGS } from '@/data/buildings'
   import { useAdventureStore } from '@/stores/adventure'
@@ -230,6 +233,15 @@
   import InstallToHomeNotice from '@/components/common/InstallToHomeNotice.vue'
 
   const player = usePlayerStore()
+  const ui = useUiStore()
+  /** 创角→首页的读屏起手句:灵根鉴定定格播报被路由跳转切断了,这里补念(读完即清) */
+  const bootLine = ref('')
+  onMounted(() => {
+    if (ui.worldEnter) {
+      bootLine.value = ui.worldEnter
+      ui.worldEnter = null
+    }
+  })
   const dongfu = useDongfuStore()
   /** 洞府入口右侧实况:离线可攒小时 + 已营座数(与洞府页纪要同源现算) */
   const offlineHrs = computed(() => dongfu.offlineCapHours)

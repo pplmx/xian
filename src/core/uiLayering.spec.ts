@@ -612,4 +612,29 @@ describe('界面分层 · 浮层只有一个出处', () => {
     const cult = readFileSync(resolve(__dirname, '../views/CultivationView.vue'), 'utf-8')
     expect(cult, '聚气丹按钮两态要同念「石」(380 缩放纪律)').not.toContain('灵石 +{{')
   })
+
+  it('踏入仙途要有到首页的读屏起手句 —— 鉴定播报不随路由跳转断档', () => {
+    // 灵根鉴定定格播报(aria-live polite)定格后 400ms 就随 router.push('/') 卸载,
+    // 读屏可能当场切断;而首页此前全无 aria-live。CreateView 跳转前把起手句交给
+    // ui store(worldEnter),首页挂载时用自家 aria-live 补念,读完即清 ——
+    // 只在创角→首页这一趟念,日常回首页不重复。
+    const create = FILES.find(f => f.path === 'views/CreateView.vue')
+    expect(create?.src, '跳转前要把起手句交给 ui store').toContain('ui.worldEnter =')
+    const home = FILES.find(f => f.path === 'views/HomeView.vue')
+    expect(home?.src, '首页要挂 aria-live 播报区').toContain('aria-live="polite"')
+    expect(home?.src, '首页要读 ui store 的 worldEnter').toContain('ui.worldEnter')
+    const ui = readFileSync(resolve(__dirname, '../stores/ui.ts'), 'utf-8')
+    expect(ui, 'ui store 要有一枚一次性交接旗').toContain('worldEnter')
+  })
+
+  it('人物子页返回控件齐 —— 兄弟页有「← 人物」,这四个不许裸奔', () => {
+    // /titles /collection /build /legacy 都是 CharacterView 的子目标,与 Dongfu/
+    // RealmCodex/Souls 同类 —— 后三者都有返回行,这四个首行即 SectionTitle 无返回
+    // (底栏五格兜底但不高亮它们)。按兄弟页同款补「← 人物」,不许再裸。
+    for (const f of ['TitlesView', 'CollectionView', 'BuildView', 'LegacyView']) {
+      const src = FILES.find(x => x.path === `views/${f}.vue`)?.src ?? ''
+      expect(src, `${f} 要有回人物的返回行`).toContain('to="/character"')
+      expect(src, `${f} 返回行要写「← 人物」`).toContain('← 人物')
+    }
+  })
 })
