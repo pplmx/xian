@@ -225,7 +225,7 @@
         </div>
         <!-- 天威本身的长相:道数随境界涨、单波逐道加重,摊出来才知道护持该留到哪一段 -->
         <p v-if="tribWave" class="mt-0.5 text-[10px] text-ink-faint tabular">
-          共 {{ tribWave.waves }} 道,单波 {{ formatPercent(tribWave.min, 0) }}–{{ formatPercent(tribWave.max, 0) }} 最大生命(合计约
+          共 {{ tribWave.waves }} 道,单波 {{ formatPercent(tribWave.min, 0) }}–{{ formatPercent(tribWave.max, 0) }} 最大气血(合计约
           {{ formatPercent(tribWave.total, 0) }}),
           {{ tribPlan.def.waveShape === 'frontLoaded' ? '起手两道最重' : '逐道加重' }}
         </p>
