@@ -48,7 +48,7 @@ describe('buildingUpgradeInfo · 资源检查与列差', () => {
 
     const info = buildingUpgradeInfo('array')
     expect(info.canUpgrade).toBe(false)
-    expect(info.reason).toContain('玄铁')
+    expect(info.reason).toContain('铁')
     expect(info.reason).toMatch(/\d/)
   })
 
@@ -72,7 +72,7 @@ describe('buildingUpgradeInfo · 资源检查与列差', () => {
     const info = buildingUpgradeInfo('array')
     expect(info.canUpgrade).toBe(false)
     expect(info.reason).toContain('石')
-    expect(info.reason).toContain('玄铁')
+    expect(info.reason).toContain('铁')
     expect(info.reason).toContain('·')
   })
 })

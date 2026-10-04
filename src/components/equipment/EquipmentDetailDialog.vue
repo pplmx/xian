@@ -234,7 +234,7 @@
               max="500"
               class="w-16 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[11px] tabular"
             />
-            <span class="text-[10px] text-ink-faint tabular">次 · 每洗 {{ formatGN(reforgeCostVal.stone) }} 尘×{{ reforgeCostVal.dust }}</span>
+            <span class="text-[10px] text-ink-faint tabular">次 · 每洗 器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}</span>
             <button
               class="btn-seal ml-auto !px-3 !py-1 !text-[11px]"
               :disabled="!autoTargets.length"
@@ -251,7 +251,7 @@
             <button v-if="reforgeCostVal" class="btn-ghost flex-1 !py-1" @click="doReforge">
               重铸词条
               <span class="ml-1 tabular text-[10px] text-ink-faint">
-                {{ formatGN(reforgeCostVal.stone) }} · 尘×{{ reforgeCostVal.dust }}
+                器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
               </span>
             </button>
             <div v-if="sealCostVal" class="flex flex-1 items-center justify-center rounded-md border border-qing/20 bg-qing/5 px-2 py-1 text-qing">
@@ -462,7 +462,7 @@
     const targets = autoTargets.value
     const budget = Math.min(500, Math.max(1, Math.floor(autoBudget.value || 0)))
     const out = autoReforge(inst.value.uid, targets, budget)
-    const cost = `花 ${formatGN(out.stone)} · 尘×${out.dust}`
+    const cost = `花 器灵尘×${out.dust} · 灵石 ${formatGN(out.stone)}`
     // 「没洗到目标」不等于「没洗动」:每次重铸词条都尽数重掷,结账要报清现在这一身落在哪
     const wanted = autoTargets.value.map(t => affixDef(t.affixId)?.name ?? t.affixId).join('、')
     const now = out.affixIds.map(id => affixDef(id)?.name ?? id).join('、') || '空'

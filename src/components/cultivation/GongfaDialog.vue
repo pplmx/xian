@@ -120,7 +120,7 @@
           :disabled="!upAffordable"
           @click="def && upgradeGongfa(def.id)"
         >
-          <template v-if="upAffordable">进 修 · {{ upCost.wudao }} 悟道 · {{ upCost.page }} 残页</template>
+          <template v-if="upAffordable">进 修 · {{ upCost.wudao }} 悟道点 · {{ upCost.page }} 残页</template>
           <template v-else>进修 · 尚差 {{ upShort }}</template>
         </button>
       </div>
@@ -170,8 +170,8 @@
     if (!c) return ''
     const wudaoShort = Math.max(0, c.wudao - resources.wudao)
     const pageShort = Math.max(0, c.page - resources.page)
-    if (wudaoShort > 0 && pageShort > 0) return `${wudaoShort} 悟道 · ${pageShort} 残页`
-    if (wudaoShort > 0) return `${wudaoShort} 悟道`
+    if (wudaoShort > 0 && pageShort > 0) return `${wudaoShort} 悟道点 · ${pageShort} 残页`
+    if (wudaoShort > 0) return `${wudaoShort} 悟道点`
     return `${pageShort} 残页`
   })
 

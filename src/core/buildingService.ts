@@ -39,7 +39,7 @@ export function buildingUpgradeInfo(id: BuildingId): BuildingUpgradeInfo {
     if (stoneShort.m > 0 || oreShort > 0) {
       const parts: string[] = []
       if (stoneShort.m > 0) parts.push(`尚差 ${formatGN(stoneShort)} 石`)
-      if (oreShort > 0) parts.push(`玄铁 ${oreShort} 块`)
+      if (oreShort > 0) parts.push(`${oreShort} 铁`)
       return { canUpgrade: false, reason: parts.join(' · '), stone, ore, nextLevel }
     }
   }

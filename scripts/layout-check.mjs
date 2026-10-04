@@ -2615,7 +2615,7 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
   if ((await btn.count()) === 0) failures.push('[390] 炼化场景:背包「法宝」页找不到「炼化」入口')
   else {
     const label = ((await btn.textContent()) || '').replace(/\s+/g, ' ').trim()
-    const wantWudao = Number((/悟道\s*([\d,]+)/.exec(label.replace(/,/g, '')) || [])[1] ?? NaN)
+    const wantWudao = Number((/悟道点?\s*([\d,]+)/.exec(label.replace(/,/g, '')) || [])[1] ?? NaN)
     const stoneText = (/灵石\s*([\d,.]+)\s*(万|亿|兆)?/.exec(label) || [])[0] ?? ''
     const sm = /([\d,.]+)\s*(万|亿|兆)?/.exec(stoneText)
     const unit = sm?.[2] === '万' ? 1e4 : sm?.[2] === '亿' ? 1e8 : sm?.[2] === '兆' ? 1e12 : 1

@@ -326,7 +326,7 @@
   const askDisabled = computed(() => !!player.activeDivination || askShort.value > 0)
   const askLabel = computed(() => {
     if (player.activeDivination) return '卦在身,待其自过'
-    if (askShort.value > 0) return `问卦 · 尚差 ${askShort.value} 悟道`
+    if (askShort.value > 0) return `问卦 · 尚差 ${askShort.value} 悟道点`
     return `问 卦(悟道点 ${DIVINATION_COST})`
   })
 

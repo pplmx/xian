@@ -613,6 +613,26 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(cult, '聚气丹按钮两态要同念「石」(380 缩放纪律)').not.toContain('灵石 +{{')
   })
 
+  it('资源叫法全库一贯 —— 散文全称、紧凑按钮/尚差简称,不许同面板混排', () => {
+    // 资源名术语族收口:读数散文/名称位=全称(灵石/悟道点/器灵尘/玄铁/功法残页),
+    // 紧凑按钮与「尚差」行=已注释简称(石/铁)。曾裂：灵草坊价目灵石+尚差灵石
+    // (破全球「尚差 X 石」)、进修按钮悟道 vs 顶部悟道点、建筑卡 50 铁 vs 玄铁 N 块、
+    // 装备重铸 尘×N vs 强化 器灵尘×N(同 toast 前后脚)。
+    const inv = FILES.find(f => f.path === 'views/InventoryView.vue')
+    expect(inv?.src, '灵草坊尚差要跟全球「尚差 N 石」口风').toMatch(/尚差 \{\{ formatGN\(row\.short\) \}\} 石/)
+    expect(inv?.src, '灵草坊价目行要全称「灵石」').toContain('单价 {{ formatGN(row.price) }} 灵石')
+    const gongfa = FILES.find(f => f.path === 'components/cultivation/GongfaDialog.vue')
+    expect(gongfa?.src, '进修按钮与横幅都要全称「悟道点」').toContain('悟道点 · {{ upCost.page }} 残页')
+    const equip = FILES.find(f => f.path === 'components/equipment/EquipmentDetailDialog.vue')
+    expect(equip?.src, '重铸行要用全称「器灵尘」').toContain('器灵尘×{{ reforgeCostVal.dust }}')
+    expect(equip?.src, '不许重铸再退回裸「尘×」').toContain('花 器灵尘×')
+    const service = readFileSync(resolve(__dirname, '../core/buildingService.ts'), 'utf-8')
+    expect(service, '建筑尚差两臂同用简称「铁」').toContain('} 铁`')
+    expect(service, '不许尚差里又冒回「玄铁 N 块」').not.toMatch(/玄铁 `|玄铁 \$\{/)
+    const cel = FILES.find(f => f.path === 'views/CelestialView.vue')
+    expect(cel?.src, '真仙导览散文要用全称「功法残页」').toContain('功法残页、灵石')
+  })
+
   it('踏入仙途要有到首页的读屏起手句 —— 鉴定播报不随路由跳转断档', () => {
     // 灵根鉴定定格播报(aria-live polite)定格后 400ms 就随 router.push('/') 卸载,
     // 读屏可能当场切断;而首页此前全无 aria-live。CreateView 跳转前把起手句交给

@@ -118,7 +118,7 @@
         <span class="min-w-0 flex-1">
           <span class="block font-kai text-[13px] tracking-widest text-ink">灵草坊</span>
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
-            灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 石一株,道品 {{ formatGN(herbBuyPrice(5)) }} 石一株
+            灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,道品 {{ formatGN(herbBuyPrice(5)) }} 灵石一株
           </span>
         </span>
         <span class="shrink-0 text-[12px] text-ink-faint">买 ›</span>
@@ -225,12 +225,12 @@
                 两种代价都要写出来:炼化既扣悟道点、也扣灵石(见 forge.artifactUpCost),
                 而按钮此前只报悟道 —— 玩家按标签算账,回头发现灵石也少了一大截。
               -->
-              炼化(悟道 {{ row.upCost.wudao }} · 灵石 {{ formatGN(row.upCost.stone) }})
+              炼化(悟道点 {{ row.upCost.wudao }} · 灵石 {{ formatGN(row.upCost.stone) }})
             </button>
           </div>
           <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完 -->
           <p v-if="row.upCost && !row.upAffordable" class="mt-1.5 text-[10px] text-cinnabar tabular">
-            尚差 悟道 {{ Math.max(0, row.upCost.wudao - resources.wudao) }} · 灵石
+            尚差 悟道点 {{ Math.max(0, row.upCost.wudao - resources.wudao) }} · 灵石
             {{ formatGN(Math.max(0, toNum(row.upCost.stone) - toNum(resources.spiritStone))) }}
           </p>
         </div>
@@ -301,8 +301,8 @@
     <!-- 灵草坊(ISS-306):灵石购草 —— 五品明码标价,只进不出 -->
     <BaseModal :open="marketOpen" title="灵草坊" @close="marketOpen = false">
       <p class="mb-3 text-[11px] leading-relaxed text-ink-faint">
-        灵石买草,童叟无欺。<span class="text-ink-soft">草比石贵</span>——凡品 {{ formatGN(herbBuyPrice(1)) }} 石一株,
-        道品 {{ formatGN(herbBuyPrice(5)) }} 石一株,越往上是十倍一翻。大把闲石没处去时,这里有一炉高品的念想。
+        灵石买草,童叟无欺。<span class="text-ink-soft">草比石贵</span>——凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,
+        道品 {{ formatGN(herbBuyPrice(5)) }} 灵石一株,越往上是十倍一翻。大把闲石没处去时,这里有一炉高品的念想。
       </p>
       <div class="space-y-1.5">
         <div v-for="row in marketRows" :key="row.grade" class="flex items-center gap-2.5 rounded-md bg-paper-deep/70 px-3 py-2">
@@ -316,8 +316,8 @@
               付不起就把缺摆出来:买十的门槛是十株的价,值与买一口径同源 ——
               一盏灰灯不告诉差多少等于没说完(法宝炼化同款句式)。
             -->
-            <p v-if="!row.affordable" class="mt-0.5 text-[10px] text-cinnabar tabular">尚差 {{ formatGN(row.short) }} 灵石</p>
-            <p v-else-if="!row.affordable10" class="mt-0.5 text-[10px] text-cinnabar tabular">尚差 {{ formatGN(row.short10) }} 灵石 · 买十株</p>
+            <p v-if="!row.affordable" class="mt-0.5 text-[10px] text-cinnabar tabular">尚差 {{ formatGN(row.short) }} 石</p>
+            <p v-else-if="!row.affordable10" class="mt-0.5 text-[10px] text-cinnabar tabular">尚差 {{ formatGN(row.short10) }} 石 · 买十株</p>
           </div>
           <button class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]" :disabled="!row.affordable" @click="buyOne(row.grade)">
             买1
