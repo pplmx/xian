@@ -30,7 +30,8 @@ export function buildingUpgradeInfo(id: BuildingId): BuildingUpgradeInfo {
   const nextLevel = info.nextLevel
   // 付不起要先置灰、把差多少列出来(纪律:「付不起置灰 + 列差多少」)。
   // 境界/顶层/洞府辖限已由库的 info.can/reason 判定;这里只补资源这一层 ——
-  // 石头不足写「尚差 X 石」,玄铁不足写「玄铁 Y 块」,双缺用「 · 」粘连成一句。
+  // 石头不足写「尚差 X 石」,玄铁不足写「Y 铁」(两臂同用简称,与卡片按钮一致),
+  // 双缺用「 · 」粘连成一句。
   // BuildingCard 按钮直显 reason,不再让玩家点下去才被弹一句宽泛 toast。
   if (info.can) {
     const resources = useResourcesStore()
