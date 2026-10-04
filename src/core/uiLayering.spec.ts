@@ -584,4 +584,17 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(explore, '勿扰仍走 autoResolveEvent(不弹阻塞弹窗)').toContain('autoResolveEvent(ev.id, region.tier)')
     expect(explore, 'helper 要从 eventTier 取档,不另写判据').toContain('eventTierDef(eventTierOf(ev.id))')
   })
+
+  it('显式主题首帧定格 —— 暗色玩家冷启动不许闪一帧亮白', () => {
+    // boot 内联色块此前只见系统偏好:亲手选了「夜间」而系统是亮色的玩家,冷启动
+    // 首帧仍闪亮白(存档分片加密首帧读不到;主题偏好非敏感,单独落一枚不加密小键)。
+    // 机制三端缺一即红:theme.ts 写/删键 + index.html 内联脚本绘制前读键定
+    // data-theme + boot 样式按 data-theme 给显式暗/亮。
+    const theme = readFileSync(resolve(__dirname, '../core/theme.ts'), 'utf-8')
+    expect(theme, 'applyTheme 要把显式选择写成首帧小键').toContain('setItem(BOOT_THEME_KEY, theme)')
+    expect(theme, 'auto 不写(首帧按系统偏好走)').toContain('removeItem(BOOT_THEME_KEY)')
+    const html = readFileSync(resolve(__dirname, '../../index.html'), 'utf-8')
+    expect(html, '首帧要在绘制前读小键定 data-theme').toContain('document.documentElement.dataset.theme = _bt')
+    expect(html, 'boot 样式要按 data-theme 给显式暗/亮').toContain("html[data-theme='dark'] #app")
+  })
 })

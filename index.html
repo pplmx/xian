@@ -19,6 +19,14 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <title>玄枢录</title>
+    <script>
+      // 首帧主题锁:显式「夜间/日间」由 theme.ts 写在独立小键(存档分片加密,首帧读不到),
+      // 绘制前定一下 <html data-theme>,别让暗色玩家的第一帧闪亮白。auto 不写,首帧走系统偏好。
+      try {
+        var _bt = localStorage.getItem('xuanshu.boot-theme')
+        if (_bt === 'dark' || _bt === 'light') document.documentElement.dataset.theme = _bt
+      } catch (_e) {}
+    </script>
   </head>
 
   <body>
@@ -29,8 +37,8 @@
       顺带兜一层底:脚本真挂了(解析失败、老浏览器不认模块),这页也不会是空白。
 
       样式只能内联在这里:此刻还没有 CSS。颜色是色板的手抄值(见 palette.spec.ts 的
-      「两处手抄关系」那条,index.html 也算一处),暗色另给一套,按系统偏好先兜住一半
-      的闪白(玩家自己选的「夜间」存在存档里,首帧读不到)。
+      「两处手抄关系」那条,index.html 也算一处),暗色另给一套。显式「夜间/日间」
+      由 head 内联脚本读独立小键定 data-theme(见下);auto 不写键,按系统偏好走。
     -->
     <div id="app">
       <div class="boot">
@@ -51,6 +59,20 @@
           --boot-ink: 232 226 210;
           --boot-cinnabar: 255 119 115;
         }
+      }
+      /* 显式暗/亮(见 head 内联脚本):压住系统偏好的反例 —— 亲手选了「夜间」而系统是
+         亮色,首帧不能闪白;选了「日间」而系统是暗色,首帧也不能给暗。auto 不写键,
+         首帧走系统偏好,上面 @media 那块照旧生效。色值与上方手抄块同源(palette.spec
+         按「首次出现」锚取,这两块追加在其后,不扰动判据)。 */
+      html[data-theme='dark'] #app {
+        --boot-paper: 33 31 28;
+        --boot-ink: 232 226 210;
+        --boot-cinnabar: 255 119 115;
+      }
+      html[data-theme='light'] #app {
+        --boot-paper: 243 239 228;
+        --boot-ink: 41 39 34;
+        --boot-cinnabar: 168 63 57;
       }
       #app .boot {
         position: fixed;
