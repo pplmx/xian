@@ -367,6 +367,23 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(tit?.src, '全收后的那句「尽收」要直说(名号尽收),不许只有计数').toContain('名号尽收')
   })
 
+  it('洞府营造尽善有完成感 —— 七座俱至顶的圆满,不许只沉在各自卡面', () => {
+    // 各卡到了顶只会各自说「已至顶档」,整座洞府全满却没有一句话 —— 家业
+    // 经营到头的圆满该有一声(与图鉴尽收/名号尽收同族)。判据读 store 的
+    // allBuildingsMaxed(与卡面 N/M 的 capOfBuilding 同源),不许视图另数一遍。
+    const dv = FILES.find(f => f.path === 'views/DongfuView.vue')
+    expect(dv?.src, '视图必须读 store 的全满 boolean,不许自己数一遍').toContain('dongfu.allBuildingsMaxed')
+    expect(dv?.src, '那句「营造尽善」要直说,不许退回只有各自卡面').toContain('营造尽善')
+    const dongfuStore = readFileSync(resolve(__dirname, '../stores/dongfu.ts'), 'utf8')
+    expect(dongfuStore, 'store 端映射必须走引擎的判据,不许另起一套').toMatch(
+      /allBuildingsMaxed = computed\([\s\S]{0,40}allDongfuMaxed\(levels\.value\)\)/
+    )
+    const engine = readFileSync(resolve(__dirname, '../core/engineFacilities.ts'), 'utf8')
+    expect(engine, '判据必须逐座比 capOfBuilding 的同一个 cap(BUILDINGS 全表)').toMatch(
+      /BUILDINGS\.every\(b => \(levels\[b\.id\] \?\? 0\) >= capOfBuilding\(b\.id, levels\)\)/
+    )
+  })
+
   it('大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸', () => {
     // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
     // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)

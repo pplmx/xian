@@ -22,6 +22,18 @@
         <BuildingCard v-if="mansionDef" :def="mansionDef" class="col-span-2" />
         <BuildingCard v-for="def in otherBuildings" :key="def.id" :def="def" />
       </div>
+      <!--
+        营造尽善的完成感:各卡到了顶只会各自说「已至顶档」,七座全满的圆满
+        没有一句话 —— 家业经营到头的这一天,与图鉴「尽收」/名号尽收同族。
+        判据读 store 的 allBuildingsMaxed(与卡面的 N/M 同源),不另数一遍。
+      -->
+      <p
+        v-if="dongfu.allBuildingsMaxed"
+        class="mt-2 flex items-center gap-1.5 px-1 text-[11px] text-jade"
+      >
+        <span class="chip-ink border-jade/60 text-[10px] text-jade">营造尽善</span>
+        七座建筑俱已至顶 —— 此间经营,已然圆满
+      </p>
     </section>
 
     <!--

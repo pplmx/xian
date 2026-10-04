@@ -8,7 +8,7 @@ import { BUILDINGS, librarySubGongfaSlots } from '@/data/buildings'
 import { INSIGHT_DISCOUNT_PER_POINT } from '@/data/veins'
 import { ARRAY_QI_CAP_PER_LEVEL, BEAST_MULT_PER_LEVEL, FORGE_LEVEL_PER_CAP, OFFLINE_CAP_HOURS } from '@/data/constants'
 import { mergeMods } from '@/core/statsCalc'
-import { buildingLevelCapOf, buildingModSources, capOfBuilding, produceOf } from '@/core/engineFacilities'
+import { allDongfuMaxed, buildingLevelCapOf, buildingModSources, capOfBuilding, produceOf } from '@/core/engineFacilities'
 import { veinModsOf, veinStateOf, veinTotalOf } from '@/core/engineVeins'
 import { useResourcesStore } from './resources'
 
@@ -53,6 +53,8 @@ export const useDongfuStore = defineStore(
     function buildingCap(id: BuildingId): number {
       return capOfBuilding(id, levels.value)
     }
+    /** 整座洞府尽善:七座俱已至顶(判据走引擎的 allDongfuMaxed,与 buildingCap 同源) */
+    const allBuildingsMaxed = computed(() => allDongfuMaxed(levels.value))
     const subGongfaSlots = computed(() => librarySubGongfaSlots(levels.value.library))
     const alchemyLevel = computed(() => levels.value.alchemy)
     // 炼器台每 FORGE_LEVEL_PER_CAP 级提高强化上限 1(此前把 2 写死在业务代码里)
@@ -140,6 +142,7 @@ export const useDongfuStore = defineStore(
       offlineCapHours,
       buildingLevelCap,
       buildingCap,
+      allBuildingsMaxed,
       subGongfaSlots,
       alchemyLevel,
       forgeCapBonus,

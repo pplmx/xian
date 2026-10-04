@@ -44,6 +44,14 @@ export function capOfBuilding(id: BuildingId, levels: Record<string, number>): n
   return Math.min(def.maxLevel, buildingLevelCapOf(levels.mansion ?? 0))
 }
 
+/**
+ * 整座洞府是否已尽善:七座建筑俱已至顶 —— 洞府(枢纽)自己也要在顶档。
+ * 判据与卡面的「N/M 级」同源(逐座比 capOfBuilding 的同一个 cap),不另起一套数法。
+ */
+export function allDongfuMaxed(levels: Record<string, number>): boolean {
+  return BUILDINGS.every(b => (levels[b.id] ?? 0) >= capOfBuilding(b.id, levels))
+}
+
 /** 每小时的产出:内容写"每小时多少",库负责按秒推进与留零头 */
 const PER_HOUR: Partial<Record<BuildingId, (level: number) => Record<string, number>>> = {
   field: lv => ({ herb: lv * FIELD_HERB_PER_HOUR, ore: lv * FIELD_ORE_PER_HOUR }),

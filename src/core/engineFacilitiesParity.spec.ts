@@ -20,7 +20,7 @@ import {
 } from '@/data/constants'
 import { buildingUpgradeInfo } from './buildingService'
 import { buildingCost } from './formulas'
-import { libraryWudaoPerHour, produceOf } from './engineFacilities'
+import { allDongfuMaxed, libraryWudaoPerHour, produceOf } from './engineFacilities'
 import { formatExact } from '@/utils/format'
 import { useDongfuStore } from '@/stores/dongfu'
 import { usePlayerStore } from '@/stores/player'
@@ -197,5 +197,40 @@ describe('设施对账 —— 每小时产出与零头', () => {
     expect(resources.herb).toBe(3)
     expect(resources.ore).toBe(1)
     expect(resources.wudao).toBe(1)
+  })
+})
+
+describe('设施对账 —— 整座洞府尽善', () => {
+  it('空档/零级:一座都没建,谈不上尽善', () => {
+    expect(allDongfuMaxed(zeroLevels())).toBe(false)
+  })
+
+  it('七座俱已至顶才算:洞府 4 + 其余各自品类上限', () => {
+    expect(
+      allDongfuMaxed({ ...zeroLevels(), mansion: 4, array: 20, alchemy: 10, forge: 10, field: 15, library: 12, beast: 8 })
+    ).toBe(true)
+  })
+
+  it('还差一座就不尽善(藏经阁 11/12,其余全满)', () => {
+    expect(
+      allDongfuMaxed({ ...zeroLevels(), mansion: 4, array: 20, alchemy: 10, forge: 10, field: 15, library: 11, beast: 8 })
+    ).toBe(false)
+  })
+
+  it('洞府(枢纽)自己也在顶档才算:其余全满、洞府 3 级,仍未尽善', () => {
+    expect(
+      allDongfuMaxed({ ...zeroLevels(), mansion: 3, array: 20, alchemy: 10, forge: 10, field: 15, library: 12, beast: 8 })
+    ).toBe(false)
+  })
+
+  it('判的是"实际可达上限"而非"自身上限":坏档级超限数据照样判满', () => {
+    // 洞府 0 级时其余实际止步 (0+1)×5=5;即便灵兽园坏档到 8、各座都 ≥5,洞府 0 仍不满足
+    expect(
+      allDongfuMaxed({ ...zeroLevels(), mansion: 0, array: 5, alchemy: 5, forge: 5, field: 5, library: 5, beast: 8 })
+    ).toBe(false)
+    // 洞府 4 级后 (4+1)×5=25 覆盖全部品类上限,灵兽园超出自身 8 级也按 cap 判满
+    expect(
+      allDongfuMaxed({ ...zeroLevels(), mansion: 4, array: 20, alchemy: 10, forge: 10, field: 15, library: 12, beast: 20 })
+    ).toBe(true)
   })
 })
