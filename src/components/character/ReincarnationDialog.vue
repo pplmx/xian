@@ -113,9 +113,9 @@
         枚,来世修行更进一步。
       </p>
 
-      <!-- 新一世的名号:每世一换,确认页可改回(玩家反馈「转世名字没重随机」) -->
-      <p class="mt-3 font-kai text-[13px] tracking-widest text-ink">新一世的名号</p>
-      <p class="mt-1 text-[11px] text-ink-faint">名号属「这一世如何自报家门」,随皮囊一同换过。</p>
+      <!-- 新一世的道号:每世一换,确认页可改回(玩家反馈「转世名字没重随机」) -->
+      <p class="mt-3 font-kai text-[13px] tracking-widest text-ink">新一世的道号</p>
+      <p class="mt-1 text-[11px] text-ink-faint">道号属「这一世如何自报家门」,随皮囊一同换过。</p>
       <div class="mt-2 flex items-center gap-2">
         <input
           v-model="nameDraft"
@@ -150,7 +150,7 @@
         </button>
       </div>
       <p v-if="view.extraTalents.length" class="mt-3 text-[11px] text-ink-faint">
-        另有天资自开:
+        另有先天之姿自开:
         <span v-for="id in view.extraTalents" :key="id" class="mr-2 font-kai text-gold-ink">{{ talentDef(id)?.name }}</span>
       </p>
 

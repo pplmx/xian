@@ -273,7 +273,7 @@
               更短才扛得住 200% 缩放档(390 放大一倍只剩 195 CSS px,chips 是 nowrap,
               实测「服用聚气丹 · +5% 尚差 30 石」会把右缘顶到 211px 越界 16px)。
             -->
-            <template v-if="prepCanPill">{{ prepPill.label }} · {{ prepPillCost }}灵石 +{{ formatPercent(prepPill.bonusRate, 0) }}</template>
+            <template v-if="prepCanPill">{{ prepPill.label }} · {{ prepPillCost }}石 +{{ formatPercent(prepPill.bonusRate, 0) }}</template>
             <template v-else>聚气丹 · 尚差 {{ prepPillShort }} 石</template>
           </button>
         </div>

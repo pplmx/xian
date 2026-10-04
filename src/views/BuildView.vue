@@ -184,7 +184,7 @@
         v-model="saveName"
         maxlength="8"
         class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-2 font-kai text-[14px] tracking-widest text-ink outline-none focus:border-cinnabar/50"
-        placeholder="给这套构筑起个名号"
+        placeholder="给这套构筑起个名字"
       />
       <template #footer>
         <button class="btn-seal w-full" @click="confirmSave">存 入</button>

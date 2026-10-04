@@ -597,4 +597,19 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(html, '首帧要在绘制前读小键定 data-theme').toContain('document.documentElement.dataset.theme = _bt')
     expect(html, 'boot 样式要按 data-theme 给显式暗/亮').toContain("html[data-theme='dark'] #app")
   })
+
+  it('道号与名号各归其位 —— 玩家的道名只叫道号,称号系统才叫名号', () => {
+    // 一词多义互串过:玩家道名(DaoHao 常量/创角「道 号」)被转世弹窗叫「名号」、
+    // 构筑名也叫「名号」,而「名号」本是称号系统(TitlesView 三十顶)的正名。
+    // 统一:道名一律「道号」,称号页保留「名号」,构筑名用「名字」。
+    const reinc = readFileSync(resolve(__dirname, '../components/character/ReincarnationDialog.vue'), 'utf-8')
+    expect(reinc, '道名要叫「道号」').toContain('新一世的道号')
+    expect(reinc, '不许把道名叫成「名号」').not.toContain('新一世的名号')
+    expect(reinc, '转世天赋要统一叫「先天之姿」(核心规范名)').toContain('另有先天之姿自开')
+    expect(reinc, '不许冒出孤例「天资」').not.toContain('另有天资自开')
+    const build = readFileSync(resolve(__dirname, '../views/BuildView.vue'), 'utf-8')
+    expect(build, '构筑名不用「名号」消歧').not.toContain('起个名号')
+    const cult = readFileSync(resolve(__dirname, '../views/CultivationView.vue'), 'utf-8')
+    expect(cult, '聚气丹按钮两态要同念「石」(380 缩放纪律)').not.toContain('灵石 +{{')
+  })
 })

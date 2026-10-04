@@ -1,6 +1,6 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!-- 基本信息:名号、境界、年龄、世数皆在全局顶栏常驻,此处不再重复 -->
+    <!-- 基本信息:道号、境界、年龄、世数皆在全局顶栏常驻,此处不再重复 -->
     <div class="card-ink px-4 py-4">
       <div data-value-row class="flex items-center justify-between">
         <span class="text-[10px] tracking-[0.3em] text-ink-faint">战 力</span>
