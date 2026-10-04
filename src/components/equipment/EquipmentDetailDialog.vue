@@ -543,7 +543,7 @@
     }
     push('攻击', r.flats.attack, curFlats?.attack ?? null)
     push('防御', r.flats.defense, curFlats?.defense ?? null)
-    push('生命', r.flats.maxHp, curFlats?.maxHp ?? null)
+    push('气血', r.flats.maxHp, curFlats?.maxHp ?? null)
     return rows
   })
 

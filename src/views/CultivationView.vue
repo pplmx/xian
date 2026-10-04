@@ -157,10 +157,10 @@
             <span class="tabular text-ink-soft">{{ row.effect }}</span>
           </p>
           <!-- 诚实收口:这条只列「状态」来源 —— 装备/称号/天时等别的源头在大数字里,不在条里重抄 -->
-          <p class="pt-0.5 text-[9px] leading-relaxed text-ink-faint">只列状态来源 —— 装备·称号·天时等见上值</p>
+          <p class="pt-0.5 text-[9px] leading-relaxed text-ink-faint">只列状态来源 —— 装备·名号·天时等见上值</p>
         </div>
         <p v-else class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
-          此刻身无破境状态 —— 备一味 <span class="text-qing">破境 · 凝神 · 定心 · 本源</span>,成功率即刻见涨
+          此刻身无破境状态 —— 备一味 <span class="text-qing">破境 · 凝神 · 定心 · 本源归一</span>,成功率即刻见涨
         </p>
       </div>
 

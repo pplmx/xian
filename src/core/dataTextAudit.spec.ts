@@ -197,7 +197,8 @@ describe('文案数值对账 · 视图不手抄数字', () => {
     expect(view, '大关守卫必须与破境条同块 —— 删条上 v-if 立刻红').toMatch(
       /!btInfo\.needTribulation[\s\S]{0,300}breakthroughBuffRows\.length/
     )
-    for (const pill of ['破境', '凝神', '定心', '本源']) {
+    // 四味都用 buff 全名 —— 第四味真名是「本源归一」,只写「本源」会把它缩成别名
+    for (const pill of ['破境', '凝神', '定心', '本源归一']) {
       expect(view, `${pill} 没接进突破幕的破境增益`).toContain(pill)
     }
   })

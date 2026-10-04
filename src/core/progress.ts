@@ -106,8 +106,8 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
   }
   if (bundle.titleId && titleDef(bundle.titleId)) {
     if (quests.ownTitle(bundle.titleId)) {
-      lines.push(`称号「${titleDef(bundle.titleId)!.name}」`)
-      if (!quiet) ui.toast(`获得称号「${titleDef(bundle.titleId)!.name}」`, 'rare')
+      lines.push(`名号「${titleDef(bundle.titleId)!.name}」`)
+      if (!quiet) ui.toast(`获得名号「${titleDef(bundle.titleId)!.name}」`, 'rare')
     }
   }
   return lines
@@ -127,7 +127,7 @@ export function rewardTextAtTier(bundle: RewardBundle | undefined, tier: number)
   if (bundle.page) parts.push(`残页×${bundle.page}`)
   if (bundle.dust) parts.push(`器灵尘×${bundle.dust}`)
   if (bundle.pillId && pillDef(bundle.pillId)) parts.push(`丹药「${pillDef(bundle.pillId)!.name}」`)
-  if (bundle.titleId && titleDef(bundle.titleId)) parts.push(`称号「${titleDef(bundle.titleId)!.name}」`)
+  if (bundle.titleId && titleDef(bundle.titleId)) parts.push(`名号「${titleDef(bundle.titleId)!.name}」`)
   return parts.join(' · ')
 }
 

@@ -32,7 +32,7 @@ import { modsText } from './statNames'
 // ============ 装备 ============
 
 /** 平铺三围的中文名(装备的「所主」用) */
-const FLAT_NAMES = { attack: '攻击', defense: '防御', maxHp: '生命' } as const
+const FLAT_NAMES = { attack: '攻击', defense: '防御', maxHp: '气血' } as const
 
 /**
  * 装备的功用:所主(它主加哪一维)+ 固有机制 + 所属共鸣。

@@ -117,7 +117,9 @@
   watch(rollSeq, () => {
     const p = profile.value
     const rootsText = p.roots.map(r => `${ELEMENTS[r.element].name}${r.aptitude}`).join('、')
-    rerollAnnounce.value = `重掷得「${p.gradeName}」灵根,${rootsText},修行倍率 ×${p.growthMult.toFixed(2)}`
+    // gradeName 恒以「灵根」收尾(杂/伪/真/上/异/变异/天/混沌灵根),句尾再缀一个
+    // 「灵根」,读屏便念成「重掷得『天灵根』灵根」—— 疑为两物。去掉句尾那一个。
+    rerollAnnounce.value = `重掷得「${p.gradeName}」,${rootsText},修行倍率 ×${p.growthMult.toFixed(2)}`
   })
   const revealRef = ref<InstanceType<typeof SpiritRootReveal> | null>(null)
   /** 鉴定动画进行中(约 2.6s):防连点导致重复建号、重复发新手馈赠 */

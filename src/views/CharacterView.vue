@@ -155,7 +155,7 @@
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">名号与灵兽</span>
         <span class="block truncate text-[10px] text-ink-faint">
-          {{ currentTitleName ?? '未佩称号' }} · {{ currentPetName ?? '未伴灵兽' }}
+          {{ currentTitleName ?? '未佩名号' }} · {{ currentPetName ?? '未伴灵兽' }}
         </span>
       </span>
       <span class="text-[11px] text-jade">整理 →</span>

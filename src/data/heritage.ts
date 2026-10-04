@@ -102,8 +102,8 @@ export const HERITAGE_DEFS: HeritageDef[] = [
     gateMajor: 9,
     effect: 'bounded-flat',
     axis: 'honor',
-    desc: '跨世保留一个称号 / 道痕效果位',
-    effectDesc: '真仙专属称号/道痕位随神魂不灭(纯荣誉开放位)'
+    desc: '跨世保留一个名号 / 道痕效果位',
+    effectDesc: '真仙专属名号/道痕位随神魂不灭(纯荣誉开放位)'
   }
 ]
 

@@ -677,6 +677,30 @@ describe('界面分层 · 浮层只有一个出处', () => {
     }
   })
 
+  it('同物一名回潮就红 —— 名号/气血/灵根念白的用户面命名不许分叉', () => {
+    // 跨屏审计抓到的四处「同一物两处念法」,统一起见一律以画面旧有者为准:
+    // ① 可佩戴荣誉:荣誉页/人物页都叫「名号」,奖励 toast 与达成赏不许再叫「称号」;
+    // ② 最大生命值:人物页/战斗叫「气血」,装备详情与图鉴不许再叫「生命」(上限亦然);
+    // ③ 灵根念白:gradeName 已以「灵根」结尾,重掷播报句尾不许再缀一个「灵根」。
+    // 故障注入:任一改回别名(称号/生命/句尾灵根) → 红。
+    const progress = readFileSync(resolve(__dirname, '../core/progress.ts'), 'utf-8')
+    expect(progress, '成就赏与 toast 要写字面「名号」').toContain('名号「')
+    expect(progress, '赏赐 toast 要念「获得名号」').toContain('获得名号「')
+    const char = FILES.find(f => f.path === 'views/CharacterView.vue')
+    expect(char?.src, '人物页无称号时的占位要写「未佩名号」').toContain('未佩名号')
+    const itemText = readFileSync(resolve(__dirname, '../ui/itemText.ts'), 'utf-8')
+    expect(itemText, '装备/图鉴的属性平铺 maxHp 要写「气血」').toContain("maxHp: '气血'")
+    const statNames = readFileSync(resolve(__dirname, '../ui/statNames.ts'), 'utf-8')
+    expect(statNames, '气血上限与气血同一族 —— maxHpPct 不许单独留在「生命上限」').toContain("maxHpPct: '气血上限'")
+    const equip = FILES.find(f => f.path === 'components/equipment/EquipmentDetailDialog.vue')
+    expect(equip?.src, '装备详情的三围平铺要随全票叫「气血」').toContain("push('气血', r.flats.maxHp")
+    const cult = FILES.find(f => f.path === 'views/CultivationView.vue')
+    expect(cult?.src, '破境益的散文脚注也要说「名号」,不许留「装备·称号」混排').toContain('装备·名号·天时')
+    const create = FILES.find(f => f.path === 'views/CreateView.vue')
+    expect(create?.src, '重掷念白要读 gradeName,不许句尾再缀「灵根」').toMatch(/重掷得「\$\{p\.gradeName\}」,/)
+    expect(create?.src, '「天灵根」灵根的口吃念法不许回来').not.toMatch(/」灵根,/)
+  })
+
   it('减少动效要连延迟一起清零 —— 只压时长,入场还会一档一档往外跳', () => {
     // 全局 reduce-motion 规则把 animation-duration 压到 0.01ms,却不碰
     // animation-delay:stagger-in 每档挂 0.02–0.36s、WarpPortal/SpiritRootReveal

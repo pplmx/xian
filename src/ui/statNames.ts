@@ -18,7 +18,7 @@ export const AFFIX_RARITY_META: Record<AffixRarity, { name: string; color: strin
 export const STAT_NAMES: Record<AnyStatKey, string> = {
   attackPct: '攻击',
   defensePct: '防御',
-  maxHpPct: '生命上限',
+  maxHpPct: '气血上限',
   critRate: '暴击率',
   critDamage: '暴击伤害',
   /**

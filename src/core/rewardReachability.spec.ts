@@ -149,11 +149,11 @@ describe('成就:赏要写得出来(含称号)', () => {
     }
   })
 
-  it('带称号的成就,称号要写进文案', () => {
+  it('带名号的成就,名号要写进文案', () => {
     const withTitle = ACHIEVEMENTS.find(a => a.reward?.titleId)
-    expect(withTitle, '成就数据里应存在带称号的赏').toBeTruthy()
+    expect(withTitle, '成就数据里应存在带名号的赏').toBeTruthy()
     const text = rewardTextAtTier(withTitle!.reward!, 5)
-    expect(text).toContain(`称号「${titleDef(withTitle!.reward!.titleId!)!.name}」`)
+    expect(text).toContain(`名号「${titleDef(withTitle!.reward!.titleId!)!.name}」`)
     expect(text).toContain('灵石')
   })
 })
