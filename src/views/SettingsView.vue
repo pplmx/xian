@@ -101,7 +101,7 @@
           corruptedNotice.map(id => STORE_NAMES[id] ?? id).join('、')
         }}。损坏的原档没有删除,仍留在本机(键名
         <span class="break-all">{{ corruptKeys }}</span>)—— 若手上还有导出的备份,可在此导入恢复。
-        <button class="mt-1 block text-ink-faint underline" @click="ui.corruptedNotice = []">知道了</button>
+        <button class="mt-1 block text-ink-faint underline active:opacity-60" @click="ui.corruptedNotice = []">知道了</button>
       </p>
       <div class="grid grid-cols-2 gap-2">
         <button class="btn-ghost !text-[12px]" @click="onExport">导出存档</button>

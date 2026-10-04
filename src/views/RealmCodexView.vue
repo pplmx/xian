@@ -126,7 +126,7 @@
 
     <!-- 六十四卦:全表可查,但不必时时铺开 -->
     <section class="card-ink px-4 py-3">
-      <button class="flex w-full items-center justify-between text-left" @click="showAllHex = !showAllHex">
+      <button class="flex w-full items-center justify-between text-left active:opacity-60" @click="showAllHex = !showAllHex">
         <span class="font-kai text-[13px] tracking-wider text-ink">{{ cnNumber(HEXAGRAMS.length) }}卦</span>
         <span class="text-[10px] text-qing">{{ showAllHex ? '收起' : `展开查看 ${HEXAGRAMS.length} 卦 →` }}</span>
       </button>
@@ -185,7 +185,7 @@
       <p class="mt-1.5 text-[11px] text-qing">
         今日利 <span class="text-gold-ink">{{ favoredWorldName }}</span> —— 与天时不同:天时是全境之气,星象只利一方。
       </p>
-      <button class="mt-2 w-full text-left text-[10px] text-qing" @click="showAllMansions = !showAllMansions">
+      <button class="mt-2 w-full text-left text-[10px] text-qing active:opacity-60" @click="showAllMansions = !showAllMansions">
         {{ showAllMansions ? `收起${cnNumber(MANSIONS.length)}宿` : `展开查看 ${MANSIONS.length} 宿 →` }}
       </button>
       <div v-if="showAllMansions" class="mt-2 divide-y divide-ink/6">

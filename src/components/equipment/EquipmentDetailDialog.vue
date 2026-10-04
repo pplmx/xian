@@ -211,7 +211,7 @@
             <button
               v-for="af in affixOptions"
               :key="af.id"
-              class="rounded px-1 py-1 text-[10px] leading-tight"
+              class="rounded px-1 py-1 text-[10px] leading-tight active:opacity-60"
               :class="isAutoTarget(af.id) ? 'border border-cinnabar text-cinnabar' : 'bg-ink/4 text-ink-faint'"
               @click="toggleAutoTarget(af.id)"
             >

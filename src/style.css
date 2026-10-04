@@ -901,6 +901,19 @@ html[data-theme='dark'] .app-shell[data-world='chaos'] .mist-soft {
   border: 1px solid currentColor;
   line-height: 1.5;
   white-space: nowrap;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease;
+}
+
+/*
+ * chip-ink :active —— 全库最常见的微动作按钮(服丹/闭关/灵脉/设置 chips),
+ * 此前按下零反馈(只有 btn-seal / btn-ghost 两个基类自带 :active)。同 btn-ghost
+ * 口径:轻缩 + 淡染,禁用的 chip(如付不起的聚气丹)不触发(它有 :not(:disabled))。
+ */
+.chip-ink:active:not(:disabled) {
+  transform: scale(0.96);
+  background: rgb(var(--shadow-ink-rgb) / 0.06);
 }
 
 /*

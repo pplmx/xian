@@ -18,7 +18,7 @@
         <p class="font-kai text-[15px] tracking-[0.3em] text-ink">天 界</p>
         <div class="flex items-center gap-2">
           <span class="chip-ink border-cinnabar/50 text-[9px] text-cinnabar">此世消耗</span>
-          <button class="text-left" @click="openDaoSourceDialog()">
+          <button class="text-left active:opacity-60" @click="openDaoSourceDialog()">
             <span class="block text-[10px] leading-tight text-ink-faint">叩问天道·试一试</span>
             <span class="block tabular font-kai text-[17px] leading-tight text-cinnabar">{{ formatNum(endgame.daoSource) }}</span>
           </button>
@@ -493,7 +493,7 @@
         </p>
         <div class="mt-2 space-y-1.5">
           <button
-            class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left"
+            class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left active:opacity-70"
             :class="prepPact === null ? 'bg-jade/10 border border-jade/40' : 'bg-paper-deep/60 border border-transparent'"
             @click="prepPact = null"
           >
@@ -503,7 +503,7 @@
           <button
             v-for="pact in PACTS"
             :key="pact.id"
-            class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left"
+            class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left active:opacity-70"
             :class="prepPact === pact.id ? 'bg-cinnabar/10 border border-cinnabar/40' : 'bg-paper-deep/60 border border-transparent'"
             @click="prepPact = pact.id"
           >
@@ -520,7 +520,7 @@
         </p>
         <div class="mt-1.5 grid grid-cols-4 gap-1.5">
           <button
-            class="rounded-md px-1 py-1.5 text-center text-[11px]"
+            class="rounded-md px-1 py-1.5 text-center text-[11px] active:opacity-70"
             :class="prepGate === null ? 'bg-jade/10 border border-jade/40 text-ink-soft' : 'bg-paper-deep/60 border border-transparent text-ink-faint'"
             @click="prepGate = null"
           >
@@ -529,7 +529,7 @@
           <button
             v-for="g in GATES"
             :key="g.id"
-            class="rounded-md px-1 py-1.5 text-center text-[11px]"
+            class="rounded-md px-1 py-1.5 text-center text-[11px] active:opacity-70"
             :class="prepGate === g.id ? 'bg-violet-ink/10 border border-violet-ink/40 text-ink' : 'bg-paper-deep/60 border border-transparent text-ink-faint'"
             :title="`${g.fullName}(${g.kind}) · ${g.gua}${g.direction}${g.palace}宫 —— ${g.desc}`"
             @click="prepGate = g.id"

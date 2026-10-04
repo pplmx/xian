@@ -6,7 +6,7 @@
         冷启动直接落在这一页时(书签 / deep link / 恢复上次路由),站内没有上一页,
         裸 router.back() 会退到 about:blank 把游戏一起带走 —— 故走 goBack(父页兜底)
       -->
-      <button class="-my-1.5 py-1.5 text-left text-[12px] text-ink-faint" @click="goBack(router, { name: 'home' })">← 返回</button>
+      <button class="-my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft" @click="goBack(router, { name: 'home' })">← 返回</button>
       <div class="min-w-0 text-center">
         <p class="font-kai text-[15px] tracking-[0.3em] text-ink">洞府营造</p>
         <p class="text-[10px] text-ink-faint">经营家业,道途更稳</p>

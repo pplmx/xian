@@ -420,7 +420,7 @@
           </div>
           <p v-if="r.shortText" class="mt-1 pl-7 text-[10px] text-cinnabar tabular">
             {{ r.shortText }}
-            <button v-if="r.shortHerb" class="underline" @click="marketOpen = true"> · 灵草坊可补 ›</button>
+            <button v-if="r.shortHerb" class="underline active:opacity-60" @click="marketOpen = true"> · 灵草坊可补 ›</button>
           </p>
           <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-faint">· {{ w }}</p>
         </div>

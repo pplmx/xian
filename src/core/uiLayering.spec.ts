@@ -633,6 +633,17 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(cel?.src, '真仙导览散文要用全称「功法残页」').toContain('功法残页、灵石')
   })
 
+  it('按下要有回声 —— chip-ink 基类自带按压反馈,裸按钮不许全无声', () => {
+    // 全库最常见的微动作按钮是 chip-ink(服丹/闭关/灵脉/设置 chips),此前只有
+    // btn-seal/btn-ghost 两个基类自带 :active —— chips 按下零反馈。补基类规则
+    // (轻缩+淡染,disabled 不触发),再扫一圈裸按钮逐一补 active:opacity/scale。
+    const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
+    expect(css, 'chip-ink 基类要有 :active 按压反馈').toMatch(/\.chip-ink:active:not\(:disabled\)/)
+    expect(css, 'chip-ink 要带 transition(弹簧感,与 btn-ghost 同款)').toMatch(/\.chip-ink \{[\s\S]{0,300}transition:/)
+    const char = FILES.find(f => f.path === 'views/CharacterView.vue')
+    expect(char?.src, '卡状可点元素(试炼卡)也要带按压反馈').toContain('active:scale-99')
+  })
+
   it('踏入仙途要有到首页的读屏起手句 —— 鉴定播报不随路由跳转断档', () => {
     // 灵根鉴定定格播报(aria-live polite)定格后 400ms 就随 router.push('/') 卸载,
     // 读屏可能当场切断;而首页此前全无 aria-live。CreateView 跳转前把起手句交给
