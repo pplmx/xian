@@ -697,6 +697,7 @@ describe('界面分层 · 浮层只有一个出处', () => {
     const cult = FILES.find(f => f.path === 'views/CultivationView.vue')
     expect(cult?.src, '破境益的散文脚注也要说「名号」,不许留「装备·称号」混排').toContain('装备·名号·天时')
     expect(cult?.src, '劫势单波那行也要说「最大气血」,气血一族不许残留「最大生命」').not.toContain('最大生命')
+    expect(cult?.src, '修炼速度一族全票认 canonical(STAT_NAMES),修行速度/修为速率不许回来').not.toMatch(/修行速度|修为速率/)
     const create = FILES.find(f => f.path === 'views/CreateView.vue')
     expect(create?.src, '重掷念白要读 gradeName,不许句尾再缀「灵根」').toMatch(/重掷得「\$\{p\.gradeName\}」,/)
     expect(create?.src, '「天灵根」灵根的口吃念法不许回来').not.toMatch(/」灵根,/)
