@@ -1,7 +1,7 @@
 /**
  * 历练服务 —— 历练会话 / 遭遇循环 / 战斗与事件调度
  */
-import type { AdventureSession, CombatRules, ExploreMode, FoeOrigin, RegionDef } from '@/types'
+import type { AdventureSession, CombatRules, EventDef, ExploreMode, FoeOrigin, RegionDef } from '@/types'
 import { rng } from '@/utils/random'
 import { add, gnZero } from '@/utils/gnum'
 import { formatGN } from '@/utils/format'
@@ -471,6 +471,18 @@ export function exploreEventChance(regionId: string, mods: StatMods): number {
 }
 
 /** 每 Tick 推进历练(由引擎调用) */
+/**
+ * 三档各报各的名 —— 正常路径与遇事勿扰共用。
+ * 勿扰只拦「阻塞的弹窗」,不拦稀有档的宣布:机缘/奇缘是千分之几的稀有度,
+ * 被自动结清却毫无知觉 = 稀有度在体感上等于零。弹窗不给,名号要给。
+ * 档名与颜色取自 core/eventTier,不在这里另写一份判据。
+ */
+function announceEventTier(ev: EventDef): void {
+  const tier = eventTierDef(eventTierOf(ev.id))
+  if (tier.id === 'jiyuan') useUiStore().toast(`千载难逢 —— 机缘「${ev.title}」`, 'rare')
+  else if (tier.id === 'qiyuan') useUiStore().toast(`缘分再续 —— 「${ev.title}」`, 'info')
+}
+
 export function tickExploration(now: number): void {
   const adventure = useAdventureStore()
   const player = usePlayerStore()
@@ -505,24 +517,19 @@ export function tickExploration(now: number): void {
          * 遇事勿扰(玩家反馈「手动关闭际遇事件触发」)关闭弹窗:
          * 撞见际遇/机缘/奇缘时按超时同一条路(默认好愿)当场结清 ——
          * 奖励照拿、不卡手、也不把这一 Tick 的战斗窗口吞掉。
+         * 勿扰只拦「阻塞的弹窗」:稀有档的宣布照念(announceEventTier),
+         * 别把千分之几的机缘/奇缘连名号一起吞掉。
          */
         autoResolveEvent(ev.id, region.tier)
+        announceEventTier(ev)
         const cur = adventure.session
         if (cur) adventure.setSession({ ...cur, events: cur.events + 1, nextBattleAt: nextBattleTime(now) })
         return
       }
       if (ev) {
         adventure.setPendingEvent(ev.id, now)
-        /**
-         * 三档各报各的名。
-         *
-         * 弹窗是从「际遇」这个入口弹出来的,机缘与奇缘若不吭声,玩家看到的
-         * 就只是又一次寻常遭遇 —— 千分之几的稀有度在体感上等于零。
-         * 档名与颜色取自 core/eventTier,不在这里另写一份判据。
-         */
-        const tier = eventTierDef(eventTierOf(ev.id))
-        if (tier.id === 'jiyuan') useUiStore().toast(`千载难逢 —— 机缘「${ev.title}」`, 'rare')
-        else if (tier.id === 'qiyuan') useUiStore().toast(`缘分再续 —— 「${ev.title}」`, 'info')
+        // 三档各报各的名(与勿扰路径共用 helper,档名颜色取自 core/eventTier)
+        announceEventTier(ev)
         return
       }
     }

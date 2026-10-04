@@ -572,4 +572,16 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(codex?.src, '置灰文案要与判据同源(同一个 askShort 算出来)').toMatch(/askShort = computed\(/)
     expect(codex?.src, '置灰时按钮要直说差几枚悟道').toContain('尚差')
   })
+
+  it('遇事勿扰只拦弹窗,不吞稀有档宣布 —— 机缘/奇缘的名号要给', () => {
+    // 勿扰路径此前 autoResolveEvent 后直接 return:机缘/奇缘被自动结清却全程无声
+    // (正常路径对这两档各有「千载难逢/缘分再续」toast)。抽 announceEventTier 共用:
+    // 勿扰照样 autoResolve(不给阻塞弹窗),但两档的名号照念 —— 千分之几的稀有度
+    // 不吭声 = 体感归零。helper 从 core/eventTier 取档,不另写一份判据。
+    const explore = readFileSync(resolve(__dirname, '../core/exploration.ts'), 'utf-8')
+    expect(explore, '要抽出共用的 announceEventTier helper').toContain('function announceEventTier')
+    expect(explore.match(/announceEventTier\(ev\)/g)?.length ?? 0, '勿扰与正常两条路径都要念档名(helper 至少两处调用)').toBeGreaterThanOrEqual(2)
+    expect(explore, '勿扰仍走 autoResolveEvent(不弹阻塞弹窗)').toContain('autoResolveEvent(ev.id, region.tier)')
+    expect(explore, 'helper 要从 eventTier 取档,不另写判据').toContain('eventTierDef(eventTierOf(ev.id))')
+  })
 })
