@@ -164,7 +164,7 @@ describe('连胜(Phase 28 · 曾经无调用方,TASK-022 接线后)', () => {
     recordWin() // → 3 档
     expect(
       toast.mock.calls.some(
-        c => String(c[0]).includes('连胜 3 场') && String(c[0]).includes('灵石 20') && String(c[0]).includes('悟道 1')
+        c => String(c[0]).includes('连胜 3 场') && String(c[0]).includes('灵石 20') && String(c[0]).includes('悟道点 1')
       ),
       '3 档发奖该有 toast 报出灵石与悟道'
     ).toBe(true)

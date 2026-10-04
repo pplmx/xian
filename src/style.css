@@ -910,8 +910,10 @@ html[data-theme='dark'] .app-shell[data-world='chaos'] .mist-soft {
  * chip-ink :active —— 全库最常见的微动作按钮(服丹/闭关/灵脉/设置 chips),
  * 此前按下零反馈(只有 btn-seal / btn-ghost 两个基类自带 :active)。同 btn-ghost
  * 口径:轻缩 + 淡染,禁用的 chip(如付不起的聚气丹)不触发(它有 :not(:disabled))。
+ * 选择器限 button:装饰性 chip(品阶/首领/宿敌等标签)是 span,若让它也有按压态,
+ * 点标签会无端闪一下;交互 chip 目前又全在 button 上,scope 掉没有损失。
  */
-.chip-ink:active:not(:disabled) {
+button.chip-ink:active:not(:disabled) {
   transform: scale(0.96);
   background: rgb(var(--shadow-ink-rgb) / 0.06);
 }

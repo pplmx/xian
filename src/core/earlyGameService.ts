@@ -238,7 +238,7 @@ export function recordWin(): void {
     telemetry().record('win_streak', 'notify', `连胜 ${streak} 场奖励`)
     // 奖励必须报数:同一场战斗里镇压、雪耻都有 toast,唯独 3/5/10 档的赏赐
     // 一直静默入袋 —— 白拿的灵石与悟道,账上要有声音(全库审计抓出的真缺口)
-    useUiStore().toast(`连胜 ${streak} 场,赏灵石 ${reward.stone} · 悟道 ${reward.wudao}`, 'rare')
+    useUiStore().toast(`连胜 ${streak} 场,赏灵石 ${reward.stone} · 悟道点 ${reward.wudao}`, 'rare')
   }
 }
 

@@ -631,6 +631,14 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(service, '不许尚差里又冒回「玄铁 N 块」').not.toMatch(/玄铁 `|玄铁 \$\{/)
     const cel = FILES.find(f => f.path === 'views/CelestialView.vue')
     expect(cel?.src, '真仙导览散文要用全称「功法残页」').toContain('功法残页、灵石')
+    // 散文 toast 里的读数同样全称 —— 连胜赏赐与历练回执都曾写「悟道 N」,
+    // 与 d7783ee 收口的「混排零容忍」同类(同 toast 里灵石=N、悟道=N 直接展示裂痕)
+    const early = readFileSync(resolve(__dirname, '../core/earlyGameService.ts'), 'utf-8')
+    expect(early, '连胜赏赐散文 toast 要全称「悟道点」').toContain('· 悟道点 ${reward.wudao}')
+    expect(early, '连胜 toast 不许再写裸「悟道 N」').not.toContain('悟道 ${reward.wudao}')
+    const explore = readFileSync(resolve(__dirname, '../core/exploration.ts'), 'utf-8')
+    expect(explore, '历练回执散文要全称「悟道点」').toContain('、悟道点 ${s.wudaoGain}')
+    expect(explore, '历练回执不许写裸「、悟道 N」').not.toContain('、悟道 ${s.wudaoGain}')
   })
 
   it('按下要有回声 —— chip-ink 基类自带按压反馈,裸按钮不许全无声', () => {
@@ -638,7 +646,7 @@ describe('界面分层 · 浮层只有一个出处', () => {
     // btn-seal/btn-ghost 两个基类自带 :active —— chips 按下零反馈。补基类规则
     // (轻缩+淡染,disabled 不触发),再扫一圈裸按钮逐一补 active:opacity/scale。
     const css = readFileSync(resolve(__dirname, '../style.css'), 'utf-8')
-    expect(css, 'chip-ink 基类要有 :active 按压反馈').toMatch(/\.chip-ink:active:not\(:disabled\)/)
+    expect(css, 'chip-ink 基类要有 :active 按压反馈(限 button —— 装饰性 chip 是 span,不该有按压态)').toMatch(/button\.chip-ink:active:not\(:disabled\)/)
     expect(css, 'chip-ink 要带 transition(弹簧感,与 btn-ghost 同款)').toMatch(/\.chip-ink \{[\s\S]{0,300}transition:/)
     const char = FILES.find(f => f.path === 'views/CharacterView.vue')
     expect(char?.src, '卡状可点元素(试炼卡)也要带按压反馈').toContain('active:scale-99')

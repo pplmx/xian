@@ -151,7 +151,7 @@ export function stopExploration(reason: 'manual' | 'defeat' | 'complete'): void 
   // 总结带上这一趟的实际所得(会话账目即 afterWin 的真实入账):只说胜场与际遇,
   // 玩家还得自己去翻行囊才知道赚没赚
   const haul = `得灵石 ${formatGN(s.stoneGain)}、修为 ${formatGN(s.expGain)}${
-    s.wudaoGain > 0 ? `、悟道 ${s.wudaoGain}` : ''
+    s.wudaoGain > 0 ? `、悟道点 ${s.wudaoGain}` : ''
   }${s.itemGain > 0 ? `、拾获 ${s.itemGain} 件` : ''}`
   if (reason === 'complete') {
     ui.toast(`此行${region?.name ?? ''}历练圆满,胜 ${s.wins} 场,际遇 ${s.events} 次;${haul}`, 'success')

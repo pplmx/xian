@@ -34,7 +34,7 @@
           <span v-if="info.ore > 0" class="whitespace-nowrap">· {{ info.ore }} 铁</span>
         </span>
       </template>
-      <template v-else>{{ info.reason }}</template>
+      <template v-else><span class="whitespace-nowrap">{{ info.reason }}</span></template>
     </button>
   </div>
 </template>
