@@ -1344,6 +1344,22 @@ button.chip-ink:active:not(:disabled) {
   outline-offset: 2px;
 }
 
+/*
+ * 主题化的「末里」:纸墨已成画,唯独这两处还留浏览器默认。
+ *
+ *  · ::selection —— 在设置/关于/诊断这类长文里选中文字,弹出来的是一块系统蓝;
+ *    换半透明朱砂,两套主题下纸底与墨字都不打架(rgb 随主题转亮)。
+ *  · -webkit-tap-highlight-color —— 点按先闪一块系统灰盒,再播自己的按压反馈;
+ *    全站交互元素都自带 active 按压(缩放/淡出),系统那一下反而冲出画外。
+ */
+::selection {
+  background: rgb(var(--color-cinnabar-rgb) / 0.22);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* 滚动条 */
 *::-webkit-scrollbar {
   width: 3px;

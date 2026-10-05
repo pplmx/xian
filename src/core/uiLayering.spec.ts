@@ -438,6 +438,16 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(modal?.src, '弹窗标题要挂世界色 brush-bar').toMatch(/<span v-if="props\.title" class="brush-bar h-3 w-0\.75 rounded bg-\[var\(--world-bar\)\]" aria-hidden="true" \/>/)
   })
 
+  it('主题化的末里 —— 文字选中与点按高亮不许留浏览器默认', () => {
+    // 全站纸墨成画,唯独两处还露着浏览器默认:长文里选中文字闪系统蓝、
+    // 点按先弹灰盒再播按压反馈。选中改半透明朱砂(rgb 随主题转亮,两套主题
+    // 都不打架),点按高亮压 transparent(全站交互元素自带 active 按压,
+    // 系统那一下反而冲出画外)。退回去,下面红。
+    const style = readFileSync(resolve(__dirname, '../style.css'), 'utf8')
+    expect(style, '选中文字要朱砂浸染').toMatch(/::selection \{\n  background: rgb\(var\(--color-cinnabar-rgb\) \/ 0\.22\);/)
+    expect(style, '点按高亮不许弹系统灰盒').toMatch(/-webkit-tap-highlight-color: transparent;/)
+  })
+
   it('闭关开始有这一闪 —— 闭关是这张卡自己的事,不许只换文字', () => {
     // 闭关开始只有 toast + 倒计时补上,卡片本身毫无反应(对照 BuildingCard 升级
     // 有 card-flash)。「这件事发生在我这张卡上」的 idiom 对闭关同样成立 ——
