@@ -239,10 +239,23 @@
         <template v-if="analysis.findings.length">
           <p v-for="(f, i) in analysis.findings" :key="i" class="mt-1 text-[11px] leading-relaxed text-ink-soft">· {{ f.text }}</p>
         </template>
+        <!--
+          可借力的方向:60 行前的适配理由同款 —— 手机没有 hover,「为什么看好这个方向」
+          此前只挂在 :title 上,点了没反应 = 对触屏玩家死提示。方向名改可点、理由点开
+          直出(与「此物所知/战斗分析」同款行内按钮 idiom)。
+        -->
         <p v-if="analysis.directions.length" class="mt-1.5 text-[10px] text-ink-faint">
           可借力的方向(非唯一解):
-          <span v-for="d in analysis.directions" :key="d.styleName" class="ml-1 text-violet-ink" :title="d.reason">
-            {{ d.styleName }}
+          <span v-for="d in analysis.directions" :key="d.styleName" class="ml-1">
+            <button
+              type="button"
+              class="-my-2 inline-flex min-h-[28px] items-center px-1 text-violet-ink underline underline-offset-2 active:opacity-60"
+              :aria-expanded="directionTap === d.styleName"
+              @click="directionTap = directionTap === d.styleName ? null : d.styleName"
+            >
+              {{ d.styleName }}
+            </button>
+            <span v-if="directionTap === d.styleName" class="text-violet-ink"> —— {{ d.reason }}</span>
           </span>
         </p>
         <div v-if="analysis.dataRows.length" class="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 border-t border-ink/10 pt-1.5">
@@ -407,6 +420,8 @@
   // ---- 战斗分析(第三层信息) ----
   const showAnalysis = ref(false)
   const showLore = ref(false)
+  /** 方向上点开的是哪一系(理由内联展开);换敌时复位,免得挂着上一战的旧名 */
+  const directionTap = ref<string | null>(null)
 
   const analysis = computed(() => {
     const b = battle.value
@@ -546,7 +561,10 @@
   watch(
     () => battle.value?.at,
     (at, oldAt) => {
-      if (at !== undefined && at !== oldAt) playBattle(false)
+      if (at !== undefined && at !== oldAt) {
+        playBattle(false)
+        directionTap.value = null
+      }
     }
   )
 

@@ -441,6 +441,17 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(adv?.src, '区域列表那一支必须有单一根 div(single root 才吃得到过渡)').toContain('v-else class="space-y-4"')
   })
 
+  it('战斗分析的方向要能在手机上看理由 —— 不许只藏 hover title', () => {
+    // 「可借力的方向」只会出现在败局分析里,「为什么看好这个方向」此前只挂在
+    // 非交互 span 的 :title 上,触屏上点了没反应 = 死提示。方向名改可点、理由
+    // 内联展开(与适配理由/天赋芯片同族);退回 span + title,下面红。
+    const cp = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
+    expect(cp?.src, '方向名要是带展开语义的可点按钮').toContain(':aria-expanded="directionTap === d.styleName"')
+    expect(cp?.src, '理由要在展开里直出,不许只挂 :title').toMatch(
+      /v-if="directionTap === d\.styleName"[\s\S]{0,80}\{\{ d\.reason \}\}/
+    )
+  })
+
   it('大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸', () => {
     // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
     // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)
