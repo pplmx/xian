@@ -19,7 +19,14 @@
         >
           <!-- 卷轴上缘 -->
           <header v-if="props.title || props.closable" class="relative z-10 flex items-center justify-between px-5 pt-4 pb-1 shrink-0">
-            <h3 class="font-kai text-lg tracking-[0.2em] text-ink">{{ props.title }}</h3>
+            <!--
+              弹窗标题此前是悬空一行楷体:页面每节都有世界色笔杆(brush-bar)当家,
+              弹窗是全库复用的浮层原语,标题却没有这根杆 —— 全库所有弹窗统一补上。
+            -->
+            <h3 class="flex items-center gap-2 font-kai text-lg tracking-[0.2em] text-ink">
+              <span v-if="props.title" class="brush-bar h-3 w-0.75 rounded bg-[var(--world-bar)]" aria-hidden="true" />
+              {{ props.title }}
+            </h3>
             <!--
               关闭键此前只有一枚图标:读屏只念「按钮」(没有可访问名),
               而且连内外边距只有 26px —— 拇指够得着的那条线是 28px。

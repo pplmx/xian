@@ -430,6 +430,14 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(home?.src, '法球要有同世界色的落地影').toMatch(/bg-\[var\(--world-mountain\)\]/)
   })
 
+  it('全库弹窗标题统一笔杆 —— 页面每节有世界色 brush-bar,弹窗标题不许孤悬', () => {
+    // 页面章节头(SectionTitle)都有一根世界色笔杆当家;BaseModal 是全库复用的浮层
+    // 原语,标题此前是悬空一行楷体。弹窗标题必须带同一根杆 —— 一处改动罩住全库
+    // 每个弹窗;拆掉杆(或挪到别处),下面红。
+    const modal = FILES.find(f => f.path === 'components/common/BaseModal.vue')
+    expect(modal?.src, '弹窗标题要挂世界色 brush-bar').toMatch(/<span v-if="props\.title" class="brush-bar h-3 w-0\.75 rounded bg-\[var\(--world-bar\)\]" aria-hidden="true" \/>/)
+  })
+
   it('闭关开始有这一闪 —— 闭关是这张卡自己的事,不许只换文字', () => {
     // 闭关开始只有 toast + 倒计时补上,卡片本身毫无反应(对照 BuildingCard 升级
     // 有 card-flash)。「这件事发生在我这张卡上」的 idiom 对闭关同样成立 ——
