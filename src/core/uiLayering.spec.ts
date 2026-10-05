@@ -475,6 +475,14 @@ describe('界面分层 · 浮层只有一个出处', () => {
     )
   })
 
+  it('适配星级的理由也点得开 —— 同方向族,不许退回 hover 死提示', () => {
+    // 敌名行那颗「★★★」的适配星级同样把原因只挂 :title —— 手机无 hover 就是死提示。
+    // 星级改可点、原因在名字行下直出;退回 span + title,下面红。
+    const cp = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
+    expect(cp?.src, '星级要带上展开语义').toContain(':aria-expanded="adaptTap === foeAdaptation.stars"')
+    expect(cp?.src, '理由要在名字行下直出,不许只挂 :title').toMatch(/foeAdaptation\.value\.reasons\.join/)
+  })
+
   it('大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸', () => {
     // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
     // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)

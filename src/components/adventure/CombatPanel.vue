@@ -67,14 +67,25 @@
                   <span />
                 </span>
               </template>
+              <!--
+                适配星级:星是结果,「为什么」是原因 —— 手机没有 hover,原因此前只挂
+                :title 上(与方向理由同类死提示)。星级改可点,原因在名字行下直出。
+              -->
               <span
                 v-if="foeAdaptation"
                 class="ml-auto shrink-0 text-[10px] font-normal text-gold-ink tabular"
-                :title="foeAdaptation.reasons.join(';')"
               >
-                {{ starsText(foeAdaptation.stars) }}
+                <button
+                  type="button"
+                  class="-my-2 -ml-1 inline-flex min-h-[28px] items-center px-1 active:opacity-60"
+                  :aria-expanded="adaptTap === foeAdaptation.stars"
+                  @click="adaptTap = adaptTap === foeAdaptation.stars ? null : foeAdaptation.stars"
+                >
+                  {{ starsText(foeAdaptation.stars) }}
+                </button>
               </span>
             </p>
+            <p v-if="adaptReveal" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular">{{ adaptReveal }}</p>
             <!-- 标签行:首领 / 宿敌 / 敌人路数(特性)—— 有几个就排几个,放不下就在这一行里换行 -->
             <p
               v-if="battle && (battle.isBoss || isNemesisFoe || shownTraits.length)"
@@ -422,6 +433,11 @@
   const showLore = ref(false)
   /** 方向上点开的是哪一系(理由内联展开);换敌时复位,免得挂着上一战的旧名 */
   const directionTap = ref<string | null>(null)
+  /** 适配星级点开的理由(与方向理由同族,换敌复位) */
+  const adaptTap = ref<number | null>(null)
+  const adaptReveal = computed(() =>
+    adaptTap.value === null || !foeAdaptation.value ? null : foeAdaptation.value.reasons.join(' · ')
+  )
 
   const analysis = computed(() => {
     const b = battle.value
@@ -564,6 +580,7 @@
       if (at !== undefined && at !== oldAt) {
         playBattle(false)
         directionTap.value = null
+        adaptTap.value = null
       }
     }
   )
