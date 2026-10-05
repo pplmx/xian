@@ -9,8 +9,9 @@
     <h1 class="mt-6 font-kai text-[40px] leading-tight tracking-[0.3em] text-ink">玄枢录</h1>
     <p class="mt-2 text-[12px] tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
 
-    <!-- 开始按钮 -->
-    <button class="btn-seal mt-10 w-full max-w-72 !py-3.5 text-[17px] tracking-[0.3em]" @click="onStart">开 始 游 戏</button>
+    <!-- 开始按钮:首屏主钮 —— 一缕柔辉呼吸着请玩家按(与突破就绪的朱砂辉光同族,
+         只动 box-shadow 合层,reduce-motion 全局兜) -->
+    <button class="btn-seal animate-glow-pulse mt-10 w-full max-w-72 !py-3.5 text-[17px] tracking-[0.3em]" @click="onStart">开 始 游 戏</button>
 
     <!-- 底部:隐私政策 / 导出导入恢复 / 关于 -->
     <div class="mt-6 flex items-center gap-3 text-[11px] text-ink-faint">

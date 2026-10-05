@@ -817,6 +817,9 @@ html[data-theme='dark'] .app-shell[data-world='chaos'] .mist-soft {
   box-shadow:
     0 1px 2px rgb(var(--shadow-ink-rgb) / 0.06),
     0 4px 14px rgb(var(--shadow-ink-rgb) / 0.05);
+  /* 触感统一:btn-seal/btn-ghost/chip-ink 按压早已 0.12s 滑移,唯独拿 card-ink
+     当按钮/Link 的地方(active:scale-98/99)是硬跳 —— 一条规则帽全库的微动作。 */
+  transition: transform 0.12s ease;
 }
 
 .btn-seal {

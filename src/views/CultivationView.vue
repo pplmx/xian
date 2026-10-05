@@ -5,7 +5,16 @@
       <div class="text-center">
         <!-- 世界名带它的信标色(仙界=石青/神界=紫/混沌=幽蓝):修炼页是平时最常开的面,「这是哪一界」一眼可见 -->
         <p class="world-label font-kai text-[11px] tracking-[0.5em]">{{ player.worldName }}</p>
-        <p class="font-kai text-[30px] tracking-[0.3em] text-ink">{{ player.realm.name }}</p>
+        <!--
+          境界名是这一页的主角字 —— 两侧衬两条世界色短横,像匾额两端的框墨。
+          只在宽裕的视口出现(min-360px):200% 缩放档有效视口只有 ~195px,
+          横杆会让名字折成竖排反而挤 —— 窄了就让名字独行,回归原样。
+        -->
+        <p class="mt-1 flex items-center justify-center gap-2.5">
+          <span class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline" aria-hidden="true" />
+          <span class="font-kai text-[30px] tracking-[0.3em] text-ink">{{ player.realm.name }}</span>
+          <span class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline" aria-hidden="true" />
+        </p>
         <p class="mt-0.5 font-kai text-[14px] tracking-[0.4em] text-cinnabar">{{ player.subName }}</p>
         <p class="mt-1 text-[11px] text-ink-faint">{{ player.realm.desc }}</p>
         <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->

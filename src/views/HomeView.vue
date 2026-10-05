@@ -54,6 +54,11 @@
         </div>
         <!-- 修炼法球 · 灵气法阵环绕 -->
         <div class="relative mr-1 -mt-1 h-35 w-35 shrink-0">
+          <!-- 落地影:球浮着也得有个「歇脚处」 —— 远山同色的淡淡一痕,把球按回画里 -->
+          <span
+            class="pointer-events-none absolute bottom-0 left-1/2 h-1.5 w-14 -translate-x-1/2 rounded-[50%] bg-[var(--world-mountain)] opacity-20"
+            aria-hidden="true"
+          />
           <CultivationOrb :active="true" :full="player.expFull" :progress="player.expProgress">
             <span class="text-[17px]">☯</span>
           </CultivationOrb>

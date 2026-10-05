@@ -416,6 +416,20 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(rows.length, '修为/灵气/耗灵气主值行都要在 ink-soft 或更上').toBeGreaterThanOrEqual(3)
   })
 
+  it('全面墨感 · 触感与主位 —— 按压滑移、匾额框墨、首屏主钮辉光、法球落地影', () => {
+    // 全面美化批:btn-seal/ghost/chip 早已 0.12s 滑移,唯 card-ink 交互卡硬跳;
+    // 境界名加世界色横杆(匾额)、欢迎页主钮起朱砂柔辉、首页法球加远山同色落地影。
+    // 四件各退一件,下面红 —— 不许拆回「卡一按就跳、主角字光秃秃」。
+    const style = readFileSync(resolve(__dirname, '../style.css'), 'utf8')
+    expect(style, 'card-ink 要带按压滑移').toMatch(/\.card-ink \{[\s\S]{0,400}transition: transform 0\.12s ease;/)
+    const cult = FILES.find(f => f.path === 'views/CultivationView.vue')
+    expect(cult?.src, '境界名要用世界色横杆框墨').toMatch(/bg-\[var\(--world-bar\)\]/m)
+    const wel = FILES.find(f => f.path === 'views/WelcomeView.vue')
+    expect(wel?.src, '首屏主钮要有柔辉').toMatch(/btn-seal animate-glow-pulse/)
+    const home = FILES.find(f => f.path === 'views/HomeView.vue')
+    expect(home?.src, '法球要有同世界色的落地影').toMatch(/bg-\[var\(--world-mountain\)\]/)
+  })
+
   it('闭关开始有这一闪 —— 闭关是这张卡自己的事,不许只换文字', () => {
     // 闭关开始只有 toast + 倒计时补上,卡片本身毫无反应(对照 BuildingCard 升级
     // 有 card-flash)。「这件事发生在我这张卡上」的 idiom 对闭关同样成立 ——
