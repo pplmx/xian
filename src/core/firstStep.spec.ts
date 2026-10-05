@@ -2,115 +2,117 @@
  * 第一步(新手引导的起点)判据 —— 它是一张「说错就会把人带偏」的卡,故逐条钉死:
  * 什么时候给、给到哪儿、什么时候必须闭嘴。
  */
-import { describe, it, expect, beforeEach } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
-import { usePlayerStore } from '@/stores/player'
-import { useQuestsStore } from '@/stores/quests'
-import { useCultivationStore } from '@/stores/cultivation'
-import { gn, toNum, gnZero } from '@/utils/gnum'
-import { currentFirstStep, homeStatusText } from './firstStep'
+import { describe, it, expect, beforeEach } from "vite-plus/test";
+import { setActivePinia, createPinia } from "pinia";
+import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
+import { useCultivationStore } from "@/stores/cultivation";
+import { gn, toNum, gnZero } from "@/utils/gnum";
+import { currentFirstStep, homeStatusText } from "./firstStep";
 
 function newPlayer() {
-  const player = usePlayerStore()
-  player.initCharacter('新手', { roots: [] } as never)
-  player.exp = gnZero()
-  return player
+  const player = usePlayerStore();
+  player.initCharacter("新手", { roots: [] } as never);
+  player.exp = gnZero();
+  return player;
 }
 
-describe('第一步(新手起点)', () => {
+describe("第一步(新手起点)", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-  })
+    setActivePinia(createPinia());
+  });
 
-  it('开局新手 → 指向历练,且写清为什么', () => {
-    newPlayer()
-    const step = currentFirstStep()!
-    expect(step.to).toBe('/adventure')
-    expect(step.label).toBe('去历练')
-    expect(step.text).toContain('历练')
-    expect(step.hint).toContain('突破') // 把"历练 → 修为 → 突破"这条线说出来
-  })
+  it("开局新手 → 指向历练,且写清为什么", () => {
+    newPlayer();
+    const step = currentFirstStep()!;
+    expect(step.to).toBe("/adventure");
+    expect(step.label).toBe("去历练");
+    expect(step.text).toContain("历练");
+    expect(step.hint).toContain("突破"); // 把"历练 → 修为 → 突破"这条线说出来
+  });
 
-  it('修为圆满 → 改指修炼页突破(这时还往历练赶是错的)', () => {
-    const player = newPlayer()
-    player.exp = gn(toNum(player.expReq)) // 圆满
-    expect(player.expFull).toBe(true)
-    const step = currentFirstStep()!
-    expect(step.to).toBe('/cultivation')
-    expect(step.label).toBe('去突破')
-    expect(step.text).toContain('圆满')
+  it("修为圆满 → 改指修炼页突破(这时还往历练赶是错的)", () => {
+    const player = newPlayer();
+    player.exp = gn(toNum(player.expReq)); // 圆满
+    expect(player.expFull).toBe(true);
+    const step = currentFirstStep()!;
+    expect(step.to).toBe("/cultivation");
+    expect(step.label).toBe("去突破");
+    expect(step.text).toContain("圆满");
     // 指向的境界是"下一层",而不是脚下这一层
-    expect(step.text).toContain('二层')
-  })
+    expect(step.text).toContain("二层");
+  });
 
-  it('修为未满 → 仍指历练(圆满那一支不该提前触发)', () => {
-    const player = newPlayer()
-    player.exp = gn(Math.floor(toNum(player.expReq) * 0.9))
-    expect(currentFirstStep()!.to).toBe('/adventure')
-  })
+  it("修为未满 → 仍指历练(圆满那一支不该提前触发)", () => {
+    const player = newPlayer();
+    player.exp = gn(Math.floor(toNum(player.expReq) * 0.9));
+    expect(currentFirstStep()!.to).toBe("/adventure");
+  });
 
-  it('已经历练过一次 → 收卡(第一步走过了)', () => {
-    newPlayer()
-    useQuestsStore().inc('explores', 1)
-    expect(currentFirstStep()).toBeNull()
-  })
+  it("已经历练过一次 → 收卡(第一步走过了)", () => {
+    newPlayer();
+    useQuestsStore().inc("explores", 1);
+    expect(currentFirstStep()).toBeNull();
+  });
 
-  it('第一条主线达成 → 收卡(出师)', () => {
-    newPlayer()
-    useQuestsStore().mainIdx = 1
-    expect(currentFirstStep()).toBeNull()
-  })
+  it("第一条主线达成 → 收卡(出师)", () => {
+    newPlayer();
+    useQuestsStore().mainIdx = 1;
+    expect(currentFirstStep()).toBeNull();
+  });
 
-  it('已突破到筑基以上 → 收卡(老档兜底:没有计数也没有主线下标时不再当新玩家)', () => {
-    const player = newPlayer()
-    player.major = 1
-    expect(currentFirstStep()).toBeNull()
-  })
+  it("已突破到筑基以上 → 收卡(老档兜底:没有计数也没有主线下标时不再当新玩家)", () => {
+    const player = newPlayer();
+    player.major = 1;
+    expect(currentFirstStep()).toBeNull();
+  });
 
-  it('陨落 → 不给第一步(首页那时该说的是生死大事)', () => {
-    const player = newPlayer()
-    player.markDead()
-    expect(currentFirstStep()).toBeNull()
-  })
+  it("陨落 → 不给第一步(首页那时该说的是生死大事)", () => {
+    const player = newPlayer();
+    player.markDead();
+    expect(currentFirstStep()).toBeNull();
+  });
 
   it('闭关中 → 不给"去历练":那条路会被当场拦下,指过去等于白点一次', () => {
-    newPlayer()
-    useCultivationStore().addBuff('retreat', Date.now())
-    expect(currentFirstStep()).toBeNull()
-  })
-})
+    newPlayer();
+    useCultivationStore().addBuff("retreat", Date.now());
+    expect(currentFirstStep()).toBeNull();
+  });
+});
 
-describe('首页状态一行', () => {
+describe("首页状态一行", () => {
   const idle = {
     dead: false,
     exploringSecret: false,
     expedition: false,
     sessionActive: false,
-    regionName: '',
+    regionName: "",
     injured: false,
     retreating: false,
-    expFull: false
-  }
+    expFull: false,
+  };
 
-  it('没事做时说修炼中,不把闲坐说成闭关', () => {
-    expect(homeStatusText(idle)).toBe('修炼中')
-  })
+  it("没事做时说修炼中,不把闲坐说成闭关", () => {
+    expect(homeStatusText(idle)).toBe("修炼中");
+  });
 
-  it('只有 retreat buff 才说闭关中', () => {
-    expect(homeStatusText({ ...idle, retreating: true })).toBe('闭关中')
-  })
+  it("只有 retreat buff 才说闭关中", () => {
+    expect(homeStatusText({ ...idle, retreating: true })).toBe("闭关中");
+  });
 
-  it('历练 / 探秘 / 远征 / 疗伤 / 修为满 / 陨落各说各的', () => {
-    expect(homeStatusText({ ...idle, sessionActive: true, regionName: '青云山麓' })).toBe('历练中 · 青云山麓')
-    expect(homeStatusText({ ...idle, exploringSecret: true })).toBe('探秘中')
-    expect(homeStatusText({ ...idle, expedition: true })).toBe('远征中')
-    expect(homeStatusText({ ...idle, injured: true })).toBe('疗伤中')
-    expect(homeStatusText({ ...idle, expFull: true })).toBe('修为已满')
-    expect(homeStatusText({ ...idle, dead: true })).toBe('陨落')
-  })
+  it("历练 / 探秘 / 远征 / 疗伤 / 修为满 / 陨落各说各的", () => {
+    expect(homeStatusText({ ...idle, sessionActive: true, regionName: "青云山麓" })).toBe(
+      "历练中 · 青云山麓",
+    );
+    expect(homeStatusText({ ...idle, exploringSecret: true })).toBe("探秘中");
+    expect(homeStatusText({ ...idle, expedition: true })).toBe("远征中");
+    expect(homeStatusText({ ...idle, injured: true })).toBe("疗伤中");
+    expect(homeStatusText({ ...idle, expFull: true })).toBe("修为已满");
+    expect(homeStatusText({ ...idle, dead: true })).toBe("陨落");
+  });
 
-  it('修为满的提示不压过闭关:正在挂机闭关时,不必喊人去突破', () => {
+  it("修为满的提示不压过闭关:正在挂机闭关时,不必喊人去突破", () => {
     // 「修为已满」是在闲坐时的引导;人已闭关(有时限、禁历练的 buff)则闭关优先
-    expect(homeStatusText({ ...idle, retreating: true, expFull: true })).toBe('闭关中')
-  })
-})
+    expect(homeStatusText({ ...idle, retreating: true, expFull: true })).toBe("闭关中");
+  });
+});

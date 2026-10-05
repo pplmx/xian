@@ -12,16 +12,16 @@
  * 声明了 sanitize 的每个 store,每个持久化字段被抹掉后,sanitize 都必须跑完、
  * 且结果仍可 JSON 序列化。将来新增字段忘了兜底,这里会先红。
  */
-import { describe, expect, it } from 'vitest'
-import { createPinia, setActivePinia, type Store } from 'pinia'
-import type { BondState } from '@/core/daoluService'
-import { usePlayerStore } from '@/stores/player'
-import { useAdventureStore } from '@/stores/adventure'
-import { usePacingTelemetry } from '@/stores/pacingTelemetry'
-import { useLoreStore } from '@/stores/lore'
-import { useInventoryStore } from '@/stores/inventory'
-import { useCultivationStore } from '@/stores/cultivation'
-import { useQuestsStore } from '@/stores/quests'
+import { describe, expect, it } from "vite-plus/test";
+import { createPinia, setActivePinia, type Store } from "pinia";
+import type { BondState } from "@/core/daoluService";
+import { usePlayerStore } from "@/stores/player";
+import { useAdventureStore } from "@/stores/adventure";
+import { usePacingTelemetry } from "@/stores/pacingTelemetry";
+import { useLoreStore } from "@/stores/lore";
+import { useInventoryStore } from "@/stores/inventory";
+import { useCultivationStore } from "@/stores/cultivation";
+import { useQuestsStore } from "@/stores/quests";
 
 /**
  * store 清单**从源码倒推**,不再手写。
@@ -34,27 +34,39 @@ import { useQuestsStore } from '@/stores/quests'
  *   一 用 ?raw 读每个 store 源码,凡调过 persistConfig('x') 的都是持久化 store;
  *   二 用整模块取它的 useXxxStore 导出 —— 对不上就说明命名变了(也当红)。
  */
-const STORE_SRC = import.meta.glob('../stores/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
-const STORE_MODULES = import.meta.glob('../stores/*.ts', { eager: true }) as Record<string, Record<string, unknown>>
+const STORE_SRC = import.meta.glob("../stores/*.ts", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+const STORE_MODULES = import.meta.glob("../stores/*.ts", { eager: true }) as Record<
+  string,
+  Record<string, unknown>
+>;
 
 interface StoreEntry {
-  name: string
-  file: string
+  name: string;
+  file: string;
   /** 该分片的存档键(persistConfig 的实参) */
-  slice: string
-  use: () => Store & { sanitize?: () => void }
+  slice: string;
+  use: () => Store & { sanitize?: () => void };
 }
 
 function persistedStores(): StoreEntry[] {
-  const out: StoreEntry[] = []
+  const out: StoreEntry[] = [];
   for (const [file, src] of Object.entries(STORE_SRC)) {
-    if (file.endsWith('.spec.ts')) continue
-    const slice = /persistConfig\(\s*'([a-zA-Z]+)'\s*\)/.exec(src)?.[1]
-    if (!slice) continue
-    const mod = STORE_MODULES[file]
-    out.push({ name: file.split('/').pop()!.replace('.ts', ''), file, slice, use: storeExportOf(mod ?? {}) })
+    if (file.endsWith(".spec.ts")) continue;
+    const slice = /persistConfig\(\s*'([a-zA-Z]+)'\s*\)/.exec(src)?.[1];
+    if (!slice) continue;
+    const mod = STORE_MODULES[file];
+    out.push({
+      name: file.split("/").pop()!.replace(".ts", ""),
+      file,
+      slice,
+      use: storeExportOf(mod ?? {}),
+    });
   }
-  return out.sort((a, b) => a.name.localeCompare(b.name))
+  return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /**
@@ -65,32 +77,32 @@ function persistedStores(): StoreEntry[] {
  */
 function storeExportOf(mod: Record<string, unknown>): () => Store & { sanitize?: () => void } {
   for (const [name, value] of Object.entries(mod)) {
-    if (typeof value !== 'function' || !/^use[A-Z]/.test(name)) continue
+    if (typeof value !== "function" || !/^use[A-Z]/.test(name)) continue;
     try {
-      setActivePinia(createPinia())
-      const store = (value as () => Store)()
-      if (store && typeof store === 'object' && typeof store.$id === 'string') {
-        return value as () => Store & { sanitize?: () => void }
+      setActivePinia(createPinia());
+      const store = (value as () => Store)();
+      if (store && typeof store === "object" && typeof store.$id === "string") {
+        return value as () => Store & { sanitize?: () => void };
       }
     } catch {
       // 不是 store 的 composable,跳过
     }
   }
-  return () => ({ $id: '' }) as unknown as Store & { sanitize?: () => void }
+  return () => ({ $id: "" }) as unknown as Store & { sanitize?: () => void };
 }
 
-const PERSISTED = persistedStores()
+const PERSISTED = persistedStores();
 
 /** 有 sanitize 的那些 —— 韧性用例按这份清单跑 */
-const STORES = PERSISTED.filter(s => {
-  setActivePinia(createPinia())
-  return typeof s.use().sanitize === 'function'
-}).map(s => ({
+const STORES = PERSISTED.filter((s) => {
+  setActivePinia(createPinia());
+  return typeof s.use().sanitize === "function";
+}).map((s) => ({
   name: s.name,
   use: s.use as () => Store & { sanitize: () => void },
   /** 真实导出名(usePacingTelemetry 这种不带 Store 后缀的命名也按模块导出抓,不猜) */
-  useName: exportUseNameOf(STORE_MODULES[s.file] ?? {}) ?? s.name
-}))
+  useName: exportUseNameOf(STORE_MODULES[s.file] ?? {}) ?? s.name,
+}));
 
 /**
  * 从 store 模块里抓「真正取 store 的那个导出」的名字。
@@ -98,262 +110,351 @@ const STORES = PERSISTED.filter(s => {
  */
 function exportUseNameOf(mod: Record<string, unknown>): string | null {
   for (const [name, value] of Object.entries(mod)) {
-    if (typeof value !== 'function' || !/^use[A-Z]\w+Store$/.test(name)) continue
-    return name
+    if (typeof value !== "function" || !/^use[A-Z]\w+Store$/.test(name)) continue;
+    return name;
   }
   // 退而求其次:任何 use 开头、能返回带 $id 的 store 的导出(兼容无 Store 后缀的命名)
   for (const [name, value] of Object.entries(mod)) {
-    if (typeof value !== 'function' || !/^use[A-Z]/.test(name)) continue
+    if (typeof value !== "function" || !/^use[A-Z]/.test(name)) continue;
     try {
-      setActivePinia(createPinia())
-      const store = (value as () => Store)()
-      if (store && typeof store.$id === 'string') return name
+      setActivePinia(createPinia());
+      const store = (value as () => Store)();
+      if (store && typeof store.$id === "string") return name;
     } catch {
       // 不是 store 的 composable
     }
-    setActivePinia(createPinia())
+    setActivePinia(createPinia());
   }
-  return null
+  return null;
 }
 
-describe('坏档韧性 · 清单从源码倒推', () => {
-  it('每个持久化 store 都取得到,且都写了 sanitize', () => {
-    expect(PERSISTED.length, '一个持久化 store 都没扫到,断言形同虚设').toBeGreaterThan(8)
+describe("坏档韧性 · 清单从源码倒推", () => {
+  it("每个持久化 store 都取得到,且都写了 sanitize", () => {
+    expect(PERSISTED.length, "一个持久化 store 都没扫到,断言形同虚设").toBeGreaterThan(8);
     for (const s of PERSISTED) {
-      setActivePinia(createPinia())
-      const store = s.use()
-      expect(store.$id, `${s.file} 里找不到 store 导出(导出名是否改过?)`).toBeTruthy()
+      setActivePinia(createPinia());
+      const store = s.use();
+      expect(store.$id, `${s.file} 里找不到 store 导出(导出名是否改过?)`).toBeTruthy();
       expect(
         typeof store.sanitize,
-        `${s.file} 落了盘却没有 sanitize —— 这一片坏档时没人兜(用例也永远测不到它)`
-      ).toBe('function')
+        `${s.file} 落了盘却没有 sanitize —— 这一片坏档时没人兜(用例也永远测不到它)`,
+      ).toBe("function");
     }
-  })
+  });
 
-  it('清单与存档分片对得上:每个持久化 store 的键都真在存档范围里', () => {
+  it("清单与存档分片对得上:每个持久化 store 的键都真在存档范围里", () => {
     for (const s of PERSISTED) {
-      expect(s.slice, `${s.file} 的分片键没解析出来`).toMatch(/^[a-zA-Z]+$/)
+      expect(s.slice, `${s.file} 的分片键没解析出来`).toMatch(/^[a-zA-Z]+$/);
     }
-    const keys = PERSISTED.map(s => s.slice).sort()
-    expect(new Set(keys).size, `两个 store 共用同一个分片键:${keys.join('、')}`).toBe(keys.length)
-  })
+    const keys = PERSISTED.map((s) => s.slice).sort();
+    expect(new Set(keys).size, `两个 store 共用同一个分片键:${keys.join("、")}`).toBe(keys.length);
+  });
 
-  it('遥测:events 被写坏后,sanitize 修形,record 仍能继续记', () => {
+  it("遥测:events 被写坏后,sanitize 修形,record 仍能继续记", () => {
     // 这条是这轮补 sanitize 的动机:record() 直接对 events 调 slice,
     // 分片被写坏(null / 数组里塞 null)时,任何一次互动记录都会抛错
-    setActivePinia(createPinia())
-    const t = usePacingTelemetry()
+    setActivePinia(createPinia());
+    const t = usePacingTelemetry();
     t.$patch({
-      events: [{ type: 'x', kind: 'modal', label: '好的那条', at: 1 }, null, { at: 'x' }, { type: 'y', kind: '乱写' }] as never,
-      enabled: 'yes' as never
-    })
-    t.sanitize()
-    expect(t.events.map(e => e.label), '只该留下形状完整的那条').toEqual(['好的那条'])
-    expect(t.enabled).toBe(true)
-    t.record('enlightenment', 'modal', '顿悟')
-    expect(t.events.length, '修形之后仍要能继续记录').toBe(2)
-  })
+      events: [
+        { type: "x", kind: "modal", label: "好的那条", at: 1 },
+        null,
+        { at: "x" },
+        { type: "y", kind: "乱写" },
+      ] as never,
+      enabled: "yes" as never,
+    });
+    t.sanitize();
+    expect(
+      t.events.map((e) => e.label),
+      "只该留下形状完整的那条",
+    ).toEqual(["好的那条"]);
+    expect(t.enabled).toBe(true);
+    t.record("enlightenment", "modal", "顿悟");
+    expect(t.events.length, "修形之后仍要能继续记录").toBe(2);
+  });
 
-  it('装备见闻:条目形状烂掉就整条丢掉,不冒充「见过一件凡品 · 0 阶」', () => {
-    setActivePinia(createPinia())
-    const lore = useLoreStore()
+  it("装备见闻:条目形状烂掉就整条丢掉,不冒充「见过一件凡品 · 0 阶」", () => {
+    setActivePinia(createPinia());
+    const lore = useLoreStore();
     lore.$patch({
-      equipLore: { good: { q: 3, t: 9, u: 1 }, nullq: { q: null, t: 2 }, text: 'nope', half: { q: 1 }, badu: { q: 1, t: 2, u: 9 } } as never
-    })
-    lore.sanitize()
-    expect(Object.keys(lore.equipLore).sort(), '只该留下形状完整的条目').toEqual(['badu', 'good'])
-    expect(lore.equipSeen('good')).toEqual({ q: 3, t: 9, u: 1 })
-    expect(lore.equipSeen('badu')!.u, 'u 只认 1,别的值一律归零').toBe(0)
-  })
-})
+      equipLore: {
+        good: { q: 3, t: 9, u: 1 },
+        nullq: { q: null, t: 2 },
+        text: "nope",
+        half: { q: 1 },
+        badu: { q: 1, t: 2, u: 9 },
+      } as never,
+    });
+    lore.sanitize();
+    expect(Object.keys(lore.equipLore).sort(), "只该留下形状完整的条目").toEqual(["badu", "good"]);
+    expect(lore.equipSeen("good")).toEqual({ q: 3, t: 9, u: 1 });
+    expect(lore.equipSeen("badu")!.u, "u 只认 1,别的值一律归零").toBe(0);
+  });
+});
 
-describe('坏档韧性 · 每个字段被抹掉后 sanitize 都要跑得完', () => {
+describe("坏档韧性 · 每个字段被抹掉后 sanitize 都要跑得完", () => {
   for (const { name, use } of STORES) {
     it(`${name}:逐个字段灌 undefined,不炸且仍可序列化`, () => {
-      setActivePinia(createPinia())
-      const keys = Object.keys(use().$state)
-      expect(keys.length, `${name} 取不到持久化字段,断言形同虚设`).toBeGreaterThan(0)
+      setActivePinia(createPinia());
+      const keys = Object.keys(use().$state);
+      expect(keys.length, `${name} 取不到持久化字段,断言形同虚设`).toBeGreaterThan(0);
 
-      const failures: string[] = []
+      const failures: string[] = [];
       for (const key of keys) {
-        setActivePinia(createPinia())
-        const store = use()
+        setActivePinia(createPinia());
+        const store = use();
         try {
-          store.$patch({ [key]: undefined } as never)
-          store.sanitize()
-          JSON.stringify(store.$state)
+          store.$patch({ [key]: undefined } as never);
+          store.sanitize();
+          JSON.stringify(store.$state);
           /**
            * 只跑 sanitize 不够:真正的白屏发生在**渲染期读 computed** 的时候
            * (如 cultivation.gongfaMods 对 null 的 gongfaBranch 调 Object.entries)。
            * 故这里把 store 上每个非函数属性都读一遍 —— 等价于把这个页面渲染一次。
            */
           for (const prop of Object.keys(store)) {
-            const v = (store as unknown as Record<string, unknown>)[prop]
-            if (typeof v === 'function') continue
+            const v = (store as unknown as Record<string, unknown>)[prop];
+            if (typeof v === "function") continue;
             try {
-              JSON.stringify(v)
+              JSON.stringify(v);
             } catch {
               // 循环引用(如 ref 自身)不是坏档问题;这里只为触发 computed 求值
             }
           }
         } catch (e) {
-          failures.push(`${key}: ${(e as Error).message}`)
+          failures.push(`${key}: ${(e as Error).message}`);
         }
       }
-      expect(failures, `${name}.sanitize 在这些字段缺失时会抛错:\n${failures.join('\n')}`).toEqual([])
-    })
+      expect(failures, `${name}.sanitize 在这些字段缺失时会抛错:\n${failures.join("\n")}`).toEqual(
+        [],
+      );
+    });
   }
-})
+});
 
 /** 坏档不只"缺字段":也可能是形状对、内容是垃圾(数组里塞 null、记录值塞 null) */
-const HOSTILE: unknown[] = [null, 0, -1, NaN, '', 'x', [], {}, [null], { a: null }, true, [{ uid: null }]]
+const HOSTILE: unknown[] = [
+  null,
+  0,
+  -1,
+  NaN,
+  "",
+  "x",
+  [],
+  {},
+  [null],
+  { a: null },
+  true,
+  [{ uid: null }],
+];
 
-describe('坏档韧性 · 恶意值也不该炸', () => {
+describe("坏档韧性 · 恶意值也不该炸", () => {
   for (const { name, use } of STORES) {
     it(`${name}:每个字段灌一遍恶意值,sanitize + 计算属性都不许抛`, () => {
-      setActivePinia(createPinia())
-      const keys = Object.keys(use().$state)
+      setActivePinia(createPinia());
+      const keys = Object.keys(use().$state);
 
-      const failures: string[] = []
+      const failures: string[] = [];
       for (const key of keys) {
         for (const hostile of HOSTILE) {
-          setActivePinia(createPinia())
-          const store = use()
+          setActivePinia(createPinia());
+          const store = use();
           try {
-            store.$patch({ [key]: hostile } as never)
-            store.sanitize()
+            store.$patch({ [key]: hostile } as never);
+            store.sanitize();
             for (const prop of Object.keys(store)) {
-              const v = (store as unknown as Record<string, unknown>)[prop]
-              if (typeof v === 'function') continue
+              const v = (store as unknown as Record<string, unknown>)[prop];
+              if (typeof v === "function") continue;
               try {
-                JSON.stringify(v)
+                JSON.stringify(v);
               } catch {
                 // 循环引用不是坏档问题
               }
             }
           } catch (e) {
-            failures.push(`${key} = ${JSON.stringify(hostile) ?? String(hostile)} → ${(e as Error).message}`)
+            failures.push(
+              `${key} = ${JSON.stringify(hostile) ?? String(hostile)} → ${(e as Error).message}`,
+            );
           }
         }
       }
-      expect(failures, `${name} 在这些恶意值下会抛错:\n${[...new Set(failures)].join('\n')}`).toEqual([])
-    })
+      expect(
+        failures,
+        `${name} 在这些恶意值下会抛错:\n${[...new Set(failures)].join("\n")}`,
+      ).toEqual([]);
+    });
   }
-})
+});
 
 describe('坏档韧性 · 复杂状态的值也要修回来(不只是"不炸")', () => {
-  it('道侣:三维夹回 0~100、坏 id 作废、坏意图整块丢掉', () => {
-    setActivePinia(createPinia())
-    const player = usePlayerStore()
+  it("道侣:三维夹回 0~100、坏 id 作废、坏意图整块丢掉", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
     const bad = {
-      daoluId: 'dl_qingli',
-      stage: 'nope',
+      daoluId: "dl_qingli",
+      stage: "nope",
       fate: 999,
       trust: NaN,
       accord: -5,
       shared: -3,
       metAt: -1,
-      fallen: 'x',
-      doneEvents: ['be_relic', 42],
+      fallen: "x",
+      doneEvents: ["be_relic", 42],
       opportunities: -2,
       nextEventAt: NaN,
-      intent: { wish: 1, sparks: 'bad' }
-    } as unknown as BondState
-    player.$patch({ bond: bad })
-    player.sanitize()
-    const b = player.bond!
-    expect(b.fate).toBe(100)
-    expect(b.trust).toBe(0)
-    expect(b.accord).toBe(0)
-    expect(b.stage).toBe('met')
-    expect(b.shared).toBe(0)
-    expect(b.doneEvents).toEqual(['be_relic'])
-    expect(b.intent).toBeNull()
-    expect(b.fallen).toBe(false)
+      intent: { wish: 1, sparks: "bad" },
+    } as unknown as BondState;
+    player.$patch({ bond: bad });
+    player.sanitize();
+    const b = player.bond!;
+    expect(b.fate).toBe(100);
+    expect(b.trust).toBe(0);
+    expect(b.accord).toBe(0);
+    expect(b.stage).toBe("met");
+    expect(b.shared).toBe(0);
+    expect(b.doneEvents).toEqual(["be_relic"]);
+    expect(b.intent).toBeNull();
+    expect(b.fallen).toBe(false);
 
-    player.$patch({ bond: { ...b, daoluId: 'dl_nope' } as unknown as BondState })
-    player.sanitize()
-    expect(player.bond).toBeNull()
-  })
+    player.$patch({ bond: { ...b, daoluId: "dl_nope" } as unknown as BondState });
+    player.sanitize();
+    expect(player.bond).toBeNull();
+  });
 
-  it('寿元加算:非数字被修回 0,坏档不再把 lifespanMax 烧成 NaN', () => {
+  it("寿元加算:非数字被修回 0,坏档不再把 lifespanMax 烧成 NaN", () => {
     // lifespanMax = floor(base×(1+pct) + lifespanBonusYears);字段一旦是字符串/NaN,
     // 结果变 NaN,而引擎死亡判据是 `age < lifespanMax` 恒为 false → 下一拍即「油尽灯枯」。
     // sanitize 此前逐字段修形,唯独漏了这一栏(写坏/导入坏档的必死路径)。
-    setActivePinia(createPinia())
-    const player = usePlayerStore()
-    player.$patch({ lifespanBonusYears: 'abc' } as never)
-    player.sanitize()
-    expect(player.lifespanBonusYears).toBe(0)
-    expect(Number.isFinite(player.lifespanMax)).toBe(true)
-    expect(player.lifespanMax).toBeGreaterThan(0)
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    player.$patch({ lifespanBonusYears: "abc" } as never);
+    player.sanitize();
+    expect(player.lifespanBonusYears).toBe(0);
+    expect(Number.isFinite(player.lifespanMax)).toBe(true);
+    expect(player.lifespanMax).toBeGreaterThan(0);
 
-    player.$patch({ lifespanBonusYears: NaN } as never)
-    player.sanitize()
-    expect(player.lifespanBonusYears).toBe(0)
-    expect(Number.isFinite(player.lifespanMax)).toBe(true)
+    player.$patch({ lifespanBonusYears: NaN } as never);
+    player.sanitize();
+    expect(player.lifespanBonusYears).toBe(0);
+    expect(Number.isFinite(player.lifespanMax)).toBe(true);
 
     // 合法的延寿数值(丹药/事件给的 +X 载)不因守卫被误伤
-    player.$patch({ lifespanBonusYears: 200 } as never)
-    player.sanitize()
-    expect(player.lifespanBonusYears).toBe(200)
-  })
-})
+    player.$patch({ lifespanBonusYears: 200 } as never);
+    player.sanitize();
+    expect(player.lifespanBonusYears).toBe(200);
+  });
+});
 
-describe('坏档韧性 · 活状态(引擎每 tick 都读的那些)', () => {
-  it('历练会话:区域认不得或时间戳坏了就结束会话,不硬撑', () => {
-    setActivePinia(createPinia())
-    const adventure = useAdventureStore()
+describe("坏档韧性 · 活状态(引擎每 tick 都读的那些)", () => {
+  it("历练会话:区域认不得或时间戳坏了就结束会话,不硬撑", () => {
+    setActivePinia(createPinia());
+    const adventure = useAdventureStore();
     adventure.$patch({
-      session: { regionId: 'nope', mode: 'normal', startedAt: 1, endsAt: 2, nextBattleAt: 3, wins: -1, losses: NaN, events: -5, stoneGain: {}, expGain: {}, itemGain: -2 }
-    } as never)
-    adventure.sanitize()
-    expect(adventure.session).toBeNull()
+      session: {
+        regionId: "nope",
+        mode: "normal",
+        startedAt: 1,
+        endsAt: 2,
+        nextBattleAt: 3,
+        wins: -1,
+        losses: NaN,
+        events: -5,
+        stoneGain: {},
+        expGain: {},
+        itemGain: -2,
+      },
+    } as never);
+    adventure.sanitize();
+    expect(adventure.session).toBeNull();
 
     adventure.$patch({
-      session: { regionId: 'qingyun', mode: '怪', startedAt: -1, endsAt: NaN, nextBattleAt: 3, wins: -1, losses: 2.7, events: -5, stoneGain: {}, expGain: {}, itemGain: -2 }
-    } as never)
-    adventure.sanitize()
-    expect(adventure.session).toBeNull()
-  })
+      session: {
+        regionId: "qingyun",
+        mode: "怪",
+        startedAt: -1,
+        endsAt: NaN,
+        nextBattleAt: 3,
+        wins: -1,
+        losses: 2.7,
+        events: -5,
+        stoneGain: {},
+        expGain: {},
+        itemGain: -2,
+      },
+    } as never);
+    adventure.sanitize();
+    expect(adventure.session).toBeNull();
+  });
 
-  it('历练会话:stoneGain/expGain 损坏(null/裸数字)被 gn() 归一,不再让首胜崩', () => {
-    setActivePinia(createPinia())
-    const adventure = useAdventureStore()
+  it("历练会话:stoneGain/expGain 损坏(null/裸数字)被 gn() 归一,不再让首胜崩", () => {
+    setActivePinia(createPinia());
+    const adventure = useAdventureStore();
     // null 形状:旧版 sanitize 经 ...s 原样保留,首胜 add(null,…) 读 .m 抛 TypeError、
     // 被 tickSafe 吞掉后历练永久卡死;现在必须归一为合法 GNum
     adventure.$patch({
-      session: { regionId: 'qingyun', mode: 'normal', startedAt: 1, endsAt: 2, nextBattleAt: 3, wins: 0, losses: 0, events: 0, stoneGain: null, expGain: null, itemGain: 0 }
-    } as never)
-    adventure.sanitize()
-    expect(adventure.session).not.toBeNull()
-    expect(adventure.session!.stoneGain).toEqual({ m: 0, e: 0 })
-    expect(adventure.session!.expGain).toEqual({ m: 0, e: 0 })
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: 1,
+        endsAt: 2,
+        nextBattleAt: 3,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: null,
+        expGain: null,
+        itemGain: 0,
+      },
+    } as never);
+    adventure.sanitize();
+    expect(adventure.session).not.toBeNull();
+    expect(adventure.session!.stoneGain).toEqual({ m: 0, e: 0 });
+    expect(adventure.session!.expGain).toEqual({ m: 0, e: 0 });
 
     // 裸数字:也归一成 GNum,而不是 (123).m → undefined 的静默归零路径
     adventure.$patch({
-      session: { regionId: 'qingyun', mode: 'normal', startedAt: 1, endsAt: 2, nextBattleAt: 3, wins: 0, losses: 0, events: 0, stoneGain: 123, expGain: 456, itemGain: 0 }
-    } as never)
-    adventure.sanitize()
-    expect(adventure.session!.stoneGain.m).toBeCloseTo(1.23, 10)
-    expect(adventure.session!.expGain.m).toBeCloseTo(4.56, 10)
-  })
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: 1,
+        endsAt: 2,
+        nextBattleAt: 3,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: 123,
+        expGain: 456,
+        itemGain: 0,
+      },
+    } as never);
+    adventure.sanitize();
+    expect(adventure.session!.stoneGain.m).toBeCloseTo(1.23, 10);
+    expect(adventure.session!.expGain.m).toBeCloseTo(4.56, 10);
+  });
 
-  it('区域动态事件:endsAt 坏了就清掉(否则要么永不失效要么当场失效)', () => {
-    setActivePinia(createPinia())
-    const player = usePlayerStore()
-    player.$patch({ regionEvent: { regionId: 'qingyun', eventId: 'yaochao', endsAt: NaN } } as never)
-    player.sanitize()
-    expect(player.regionEvent).toBeNull()
-  })
-})
+  it("区域动态事件:endsAt 坏了就清掉(否则要么永不失效要么当场失效)", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    player.$patch({
+      regionEvent: { regionId: "qingyun", eventId: "yaochao", endsAt: NaN },
+    } as never);
+    player.sanitize();
+    expect(player.regionEvent).toBeNull();
+  });
+});
 
-describe('坏档韧性 · sanitize 必须接进开机链路', () => {
+describe("坏档韧性 · sanitize 必须接进开机链路", () => {
   /** 静态读 offline.ts 源码(sanitizeOfflineInputs 定义处)—— 不 import 重型依赖链 */
-  const OFFLINE_RAW = (import.meta.glob('./offline.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>)['./offline.ts']
-  const body = OFFLINE_RAW?.slice(OFFLINE_RAW.indexOf('export function sanitizeOfflineInputs'))
+  const OFFLINE_RAW = (
+    import.meta.glob("./offline.ts", { query: "?raw", import: "default", eager: true }) as Record<
+      string,
+      string
+    >
+  )["./offline.ts"];
+  const body = OFFLINE_RAW?.slice(OFFLINE_RAW.indexOf("export function sanitizeOfflineInputs"));
 
-  it('每个有 sanitize 的持久化 store,它的 sanitize 都被 sanitizeOfflineInputs 调到', () => {
+  it("每个有 sanitize 的持久化 store,它的 sanitize 都被 sanitizeOfflineInputs 调到", () => {
     // pacingTelemetry 正是这样漏掉的:分片落了盘、自己也写了 sanitize,
     // 但开机链路(sanitizeOfflineInputs)忘了把它接进来 —— 修形永远不跑,
     // 坏档 events=null 时第一次 record() 就对 null 调 slice 抛错。
@@ -362,199 +463,212 @@ describe('坏档韧性 · sanitize 必须接进开机链路', () => {
     // 故退一步:任何 `use…().sanitize()` 都不许漏 —— 用正则从源码抓全部调用,
     // 与 STORES 清单逐项对。文件名 → useXxxStore 的映射偏差,落在报错文案里人工看。
     const callsInBody = new Set(
-      [...(body?.matchAll(/use[A-Z]\w+\(\)\.sanitize\(\)/g) ?? [])].map(m => m[0])
-    )
-    const missing = STORES
-      .map(s => ({ name: s.name, call: `${s.useName}().sanitize()` }))
+      [...(body?.matchAll(/use[A-Z]\w+\(\)\.sanitize\(\)/g) ?? [])].map((m) => m[0]),
+    );
+    const missing = STORES.map((s) => ({ name: s.name, call: `${s.useName}().sanitize()` }))
       .filter(({ call }) => !callsInBody.has(call))
-      .map(({ name, call }) => `${name} → sanitizeOfflineInputs 里没有 ${call}`)
-    expect(missing, '有 store 的 sanitize 没接进开机链路:\n' + missing.join('\n')).toEqual([])
-  })
+      .map(({ name, call }) => `${name} → sanitizeOfflineInputs 里没有 ${call}`);
+    expect(missing, "有 store 的 sanitize 没接进开机链路:\n" + missing.join("\n")).toEqual([]);
+  });
 
-  it('pacingTelemetry 的修形确实进了开机链路(回归钉)', () => {
-    expect(body).toContain('usePacingTelemetry().sanitize()')
-  })
-})
+  it("pacingTelemetry 的修形确实进了开机链路(回归钉)", () => {
+    expect(body).toContain("usePacingTelemetry().sanitize()");
+  });
+});
 
-describe('坏档韧性 · 跨字段不一致(幽灵法宝占位)', () => {
-  it('equippedArtifacts 指向不存在的法宝时,sanitize 必须清掉 —— 否则槽位被幽灵占满', () => {
-    setActivePinia(createPinia())
-    const inv = useInventoryStore()
+describe("坏档韧性 · 跨字段不一致(幽灵法宝占位)", () => {
+  it("equippedArtifacts 指向不存在的法宝时,sanitize 必须清掉 —— 否则槽位被幽灵占满", () => {
+    setActivePinia(createPinia());
+    const inv = useInventoryStore();
     // 坏档:artifacts 有一个真法宝,equippedArtifacts 却指着一个不存在的 'ghost'
     inv.$patch({
-      artifacts: [{ defId: 'af_lihuo', level: 0 }],
-      equippedArtifacts: ['ghost']
-    } as never)
-    inv.sanitize()
+      artifacts: [{ defId: "af_lihuo", level: 0 }],
+      equippedArtifacts: ["ghost"],
+    } as never);
+    inv.sanitize();
 
-    expect(inv.equippedArtifacts, '幽灵法宝要被 sanitize 清掉,不占槽位').toEqual([])
+    expect(inv.equippedArtifacts, "幽灵法宝要被 sanitize 清掉,不占槽位").toEqual([]);
     // 真法宝仍可自动佩戴(此前因幽灵占位,length!==0 而佩不上)
-    expect(inv.addArtifact('af_xuantian'), '空槽时新法宝应能加进持有表').toBe(true)
-    expect(inv.equippedArtifacts).toEqual(['af_xuantian'])
-  })
+    expect(inv.addArtifact("af_xuantian"), "空槽时新法宝应能加进持有表").toBe(true);
+    expect(inv.equippedArtifacts).toEqual(["af_xuantian"]);
+  });
 
-  it('equippedArtifacts 指向真实存在的法宝时,保留且顺序不变', () => {
-    setActivePinia(createPinia())
-    const inv = useInventoryStore()
+  it("equippedArtifacts 指向真实存在的法宝时,保留且顺序不变", () => {
+    setActivePinia(createPinia());
+    const inv = useInventoryStore();
     inv.$patch({
       artifacts: [
-        { defId: 'af_lihuo', level: 0 },
-        { defId: 'af_xuantian', level: 1 }
+        { defId: "af_lihuo", level: 0 },
+        { defId: "af_xuantian", level: 1 },
       ],
-      equippedArtifacts: ['af_xuantian', 'af_lihuo']
-    } as never)
-    inv.sanitize()
-    expect(inv.equippedArtifacts).toEqual(['af_xuantian', 'af_lihuo'])
-  })
+      equippedArtifacts: ["af_xuantian", "af_lihuo"],
+    } as never);
+    inv.sanitize();
+    expect(inv.equippedArtifacts).toEqual(["af_xuantian", "af_lihuo"]);
+  });
 
-  it('artifacts / pills 不在表里时,sanitize 清掉,避免行囊页对 def 取 quality 炸白屏', () => {
-    setActivePinia(createPinia())
-    const inv = useInventoryStore()
+  it("artifacts / pills 不在表里时,sanitize 清掉,避免行囊页对 def 取 quality 炸白屏", () => {
+    setActivePinia(createPinia());
+    const inv = useInventoryStore();
     inv.$patch({
       artifacts: [
-        { defId: 'af_lihuo', level: 0 },
-        { defId: 'not-an-artifact', level: 3 }
+        { defId: "af_lihuo", level: 0 },
+        { defId: "not-an-artifact", level: 3 },
       ],
-      equippedArtifacts: ['not-an-artifact', 'af_lihuo'],
-      pills: { p_juling: 2, 'not-a-pill': 9 }
-    } as never)
-    inv.sanitize()
-    expect(inv.artifacts.map(a => a.defId)).toEqual(['af_lihuo'])
-    expect(inv.equippedArtifacts).toEqual(['af_lihuo'])
-    expect(inv.pills).toEqual({ p_juling: 2 })
-  })
+      equippedArtifacts: ["not-an-artifact", "af_lihuo"],
+      pills: { p_juling: 2, "not-a-pill": 9 },
+    } as never);
+    inv.sanitize();
+    expect(inv.artifacts.map((a) => a.defId)).toEqual(["af_lihuo"]);
+    expect(inv.equippedArtifacts).toEqual(["af_lihuo"]);
+    expect(inv.pills).toEqual({ p_juling: 2 });
+  });
 
-  it('equipped 指向不存在的装备 uid 时,sanitize 必须清掉', () => {
-    setActivePinia(createPinia())
-    const inv = useInventoryStore()
-    inv.$patch({
-      items: [{ uid: 'real', templateId: 'b_qingyun', quality: 'mortal', tier: 1, level: 0, affixes: [] }],
-      equipped: { weapon: 'ghost', body: 'real' }
-    } as never)
-    inv.sanitize()
-    expect(inv.equipped.weapon, '幽灵武器槽要被清掉').toBeUndefined()
-    expect(inv.equipped.body, '真实装备保留').toBe('real')
-  })
-
-  it('装备坐错槽或键不是部位时,sanitize 卸下,避免身上有加成槽上看不见', () => {
-    setActivePinia(createPinia())
-    const inv = useInventoryStore()
-    inv.$patch({
-      items: [{ uid: 'robe', templateId: 'b_qingyun', quality: 'mortal', tier: 1, level: 0, affixes: [] }],
-      equipped: { head: 'robe', notASlot: 'robe' }
-    } as never)
-    inv.sanitize()
-    expect(inv.equipped.head, '道袍不能戴在头冠上').toBeUndefined()
-    expect((inv.equipped as Record<string, string>).notASlot, '非法槽名要丢掉').toBeUndefined()
-    expect(inv.equipped.body).toBeUndefined()
-  })
-
-  it('templateId 不在装备表里时,sanitize 清掉并卸下,避免幽灵件占满行囊', () => {
-    setActivePinia(createPinia())
-    const inv = useInventoryStore()
+  it("equipped 指向不存在的装备 uid 时,sanitize 必须清掉", () => {
+    setActivePinia(createPinia());
+    const inv = useInventoryStore();
     inv.$patch({
       items: [
-        { uid: 'real', templateId: 'b_qingyun', quality: 'mortal', tier: 1, level: 0, affixes: [] },
-        { uid: 'ghost', templateId: 'not-a-template', quality: 'mortal', tier: 1, level: 0, affixes: [] }
+        { uid: "real", templateId: "b_qingyun", quality: "mortal", tier: 1, level: 0, affixes: [] },
       ],
-      equipped: { body: 'ghost' }
-    } as never)
-    inv.sanitize()
-    expect(inv.items.map(it => it.uid)).toEqual(['real'])
-    expect(inv.equipped.body, '幽灵装备卸下,不占槽位').toBeUndefined()
-  })
-})
+      equipped: { weapon: "ghost", body: "real" },
+    } as never);
+    inv.sanitize();
+    expect(inv.equipped.weapon, "幽灵武器槽要被清掉").toBeUndefined();
+    expect(inv.equipped.body, "真实装备保留").toBe("real");
+  });
 
-describe('坏档韧性 · 非法灵兽 / 称号 id', () => {
-  it('petId 不在灵兽表里时,sanitize 清成 null,避免静默丢加成', () => {
-    setActivePinia(createPinia())
-    const player = usePlayerStore()
-    player.setPet('not-a-real-pet')
-    expect(player.petId).toBe('not-a-real-pet')
-    player.sanitize()
-    expect(player.petId).toBeNull()
-  })
+  it("装备坐错槽或键不是部位时,sanitize 卸下,避免身上有加成槽上看不见", () => {
+    setActivePinia(createPinia());
+    const inv = useInventoryStore();
+    inv.$patch({
+      items: [
+        { uid: "robe", templateId: "b_qingyun", quality: "mortal", tier: 1, level: 0, affixes: [] },
+      ],
+      equipped: { head: "robe", notASlot: "robe" },
+    } as never);
+    inv.sanitize();
+    expect(inv.equipped.head, "道袍不能戴在头冠上").toBeUndefined();
+    expect((inv.equipped as Record<string, string>).notASlot, "非法槽名要丢掉").toBeUndefined();
+    expect(inv.equipped.body).toBeUndefined();
+  });
 
-  it('titleId 不在称号表里时,sanitize 清成 null,避免佩戴幽灵称号', () => {
-    setActivePinia(createPinia())
-    const player = usePlayerStore()
-    player.setTitle('not-a-real-title')
-    expect(player.titleId).toBe('not-a-real-title')
-    player.sanitize()
-    expect(player.titleId).toBeNull()
-  })
+  it("templateId 不在装备表里时,sanitize 清掉并卸下,避免幽灵件占满行囊", () => {
+    setActivePinia(createPinia());
+    const inv = useInventoryStore();
+    inv.$patch({
+      items: [
+        { uid: "real", templateId: "b_qingyun", quality: "mortal", tier: 1, level: 0, affixes: [] },
+        {
+          uid: "ghost",
+          templateId: "not-a-template",
+          quality: "mortal",
+          tier: 1,
+          level: 0,
+          affixes: [],
+        },
+      ],
+      equipped: { body: "ghost" },
+    } as never);
+    inv.sanitize();
+    expect(inv.items.map((it) => it.uid)).toEqual(["real"]);
+    expect(inv.equipped.body, "幽灵装备卸下,不占槽位").toBeUndefined();
+  });
+});
 
-  it('天赋 / 师承 id 不在表里时,sanitize 清掉,避免面板念出裸 id', () => {
-    setActivePinia(createPinia())
-    const player = usePlayerStore()
+describe("坏档韧性 · 非法灵兽 / 称号 id", () => {
+  it("petId 不在灵兽表里时,sanitize 清成 null,避免静默丢加成", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    player.setPet("not-a-real-pet");
+    expect(player.petId).toBe("not-a-real-pet");
+    player.sanitize();
+    expect(player.petId).toBeNull();
+  });
+
+  it("titleId 不在称号表里时,sanitize 清成 null,避免佩戴幽灵称号", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    player.setTitle("not-a-real-title");
+    expect(player.titleId).toBe("not-a-real-title");
+    player.sanitize();
+    expect(player.titleId).toBeNull();
+  });
+
+  it("天赋 / 师承 id 不在表里时,sanitize 清掉,避免面板念出裸 id", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
     player.$patch({
-      reincarnation: { ...player.reincarnation, talents: ['t_jianxin', 'not-a-talent'] },
-      mentor: 'not-a-mentor'
-    } as never)
-    player.sanitize()
-    expect(player.reincarnation.talents).toEqual(['t_jianxin'])
-    expect(player.mentor).toBeNull()
-  })
-})
+      reincarnation: { ...player.reincarnation, talents: ["t_jianxin", "not-a-talent"] },
+      mentor: "not-a-mentor",
+    } as never);
+    player.sanitize();
+    expect(player.reincarnation.talents).toEqual(["t_jianxin"]);
+    expect(player.mentor).toBeNull();
+  });
+});
 
-describe('坏档韧性 · 非法功法 id', () => {
-  it('learned 里不在功法表的 id,sanitize 清掉,避免占着习得栏', () => {
-    setActivePinia(createPinia())
-    const cult = useCultivationStore()
-    cult.$patch({ learned: { m_taixuan: 2, 'not-a-gongfa': 9 }, mainGongfa: 'not-a-gongfa' } as never)
-    cult.sanitize()
-    expect(cult.learned).toEqual({ m_taixuan: 2 })
-    expect(cult.mainGongfa).toBeNull()
-  })
+describe("坏档韧性 · 非法功法 id", () => {
+  it("learned 里不在功法表的 id,sanitize 清掉,避免占着习得栏", () => {
+    setActivePinia(createPinia());
+    const cult = useCultivationStore();
+    cult.$patch({
+      learned: { m_taixuan: 2, "not-a-gongfa": 9 },
+      mainGongfa: "not-a-gongfa",
+    } as never);
+    cult.sanitize();
+    expect(cult.learned).toEqual({ m_taixuan: 2 });
+    expect(cult.mainGongfa).toBeNull();
+  });
 
-  it('gongfaBranch 指向不存在的分支或未习得功法时,sanitize 清掉', () => {
-    setActivePinia(createPinia())
-    const cult = useCultivationStore()
+  it("gongfaBranch 指向不存在的分支或未习得功法时,sanitize 清掉", () => {
+    setActivePinia(createPinia());
+    const cult = useCultivationStore();
     cult.$patch({
       learned: { m_taixuan: 9, m_lihuo: 3 },
       gongfaBranch: {
-        m_taixuan: 'b_taixuan_sha',
-        m_lihuo: 'not-a-branch',
-        m_qingmu: 'b_qingmu_sheng',
-        'not-a-gongfa': 'b_taixuan_sha'
-      }
-    } as never)
-    cult.sanitize()
-    expect(cult.gongfaBranch).toEqual({ m_taixuan: 'b_taixuan_sha' })
-  })
-})
+        m_taixuan: "b_taixuan_sha",
+        m_lihuo: "not-a-branch",
+        m_qingmu: "b_qingmu_sheng",
+        "not-a-gongfa": "b_taixuan_sha",
+      },
+    } as never);
+    cult.sanitize();
+    expect(cult.gongfaBranch).toEqual({ m_taixuan: "b_taixuan_sha" });
+  });
+});
 
-describe('坏档韧性 · 图鉴 / 名号幽灵 id', () => {
-  it('titlesOwned 与 collections 不在表里时,sanitize 清掉,避免图鉴分子虚高', () => {
-    setActivePinia(createPinia())
-    const quests = useQuestsStore()
+describe("坏档韧性 · 图鉴 / 名号幽灵 id", () => {
+  it("titlesOwned 与 collections 不在表里时,sanitize 清掉,避免图鉴分子虚高", () => {
+    setActivePinia(createPinia());
+    const quests = useQuestsStore();
     quests.$patch({
-      titlesOwned: ['ti_churu', 'ti_churu', 'not-a-title'],
-      achieved: ['a_r0', 'a_r0', 'not-an-achv'],
+      titlesOwned: ["ti_churu", "ti_churu", "not-a-title"],
+      achieved: ["a_r0", "a_r0", "not-an-achv"],
       collections: {
-        equip: ['b_qingyun', 'b_qingyun', 'not-an-equip'],
-        gongfa: ['m_taixuan', 'm_taixuan', 'not-a-gongfa'],
-        pill: ['p_juling', 'not-a-pill'],
-        artifact: ['af_lihuo', 'not-an-artifact'],
-        pet: ['pet_qingyu', 'not-a-pet'],
-        event: ['wounded_fox_1', 'not-an-event'],
-        talent: ['t_jianxin', 'not-a-talent']
+        equip: ["b_qingyun", "b_qingyun", "not-an-equip"],
+        gongfa: ["m_taixuan", "m_taixuan", "not-a-gongfa"],
+        pill: ["p_juling", "not-a-pill"],
+        artifact: ["af_lihuo", "not-an-artifact"],
+        pet: ["pet_qingyu", "not-a-pet"],
+        event: ["wounded_fox_1", "not-an-event"],
+        talent: ["t_jianxin", "not-a-talent"],
       },
       collectedAt: {
-        'gongfa:m_taixuan': 1_700_000_000_000,
-        'gongfa:not-a-gongfa': 1_700_000_000_000
-      }
-    } as never)
-    quests.sanitize()
-    expect(quests.titlesOwned).toEqual(['ti_churu'])
-    expect(quests.achieved).toEqual(['a_r0'])
-    expect(quests.collections.equip).toEqual(['b_qingyun'])
-    expect(quests.collections.gongfa).toEqual(['m_taixuan'])
-    expect(quests.collections.pill).toEqual(['p_juling'])
-    expect(quests.collections.artifact).toEqual(['af_lihuo'])
-    expect(quests.collections.pet).toEqual(['pet_qingyu'])
-    expect(quests.collections.event).toEqual(['wounded_fox_1'])
-    expect(quests.collections.talent).toEqual(['t_jianxin'])
-    expect(quests.collectedAt).toEqual({ 'gongfa:m_taixuan': 1_700_000_000_000 })
-  })
-})
+        "gongfa:m_taixuan": 1_700_000_000_000,
+        "gongfa:not-a-gongfa": 1_700_000_000_000,
+      },
+    } as never);
+    quests.sanitize();
+    expect(quests.titlesOwned).toEqual(["ti_churu"]);
+    expect(quests.achieved).toEqual(["a_r0"]);
+    expect(quests.collections.equip).toEqual(["b_qingyun"]);
+    expect(quests.collections.gongfa).toEqual(["m_taixuan"]);
+    expect(quests.collections.pill).toEqual(["p_juling"]);
+    expect(quests.collections.artifact).toEqual(["af_lihuo"]);
+    expect(quests.collections.pet).toEqual(["pet_qingyu"]);
+    expect(quests.collections.event).toEqual(["wounded_fox_1"]);
+    expect(quests.collections.talent).toEqual(["t_jianxin"]);
+    expect(quests.collectedAt).toEqual({ "gongfa:m_taixuan": 1_700_000_000_000 });
+  });
+});

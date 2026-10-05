@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- 体检读数就是要打印出来给人看的 */
+/* oxlint-disable no-console -- 体检读数就是要打印出来给人看的 */
 /**
  * 用引擎的**通用体检**跑本作那张真表(21 境 × 10 层)。
  *
@@ -13,93 +13,103 @@
  *
  * 这也是"第一个定制用户"该有的样子:库里的通用件,本作不是供着,而是真的拿来用。
  */
-import { describe, expect, it } from 'vitest'
-import { createProgressionAudit, dungeonContentPower } from 'wanxiang-engine'
-import type { EnemyDef } from '@/types'
-import { EXP_SUB_GROWTH, WORLD_STEP_EXP_MULT } from '@/data/constants'
-import { MAX_MAJOR, REALMS, WORLDS } from '@/data/realms'
-import { maxTierForMajor } from '@/data/regions'
-import { toNum } from '@/utils/gnum'
-import { makeEnemySnap } from './combat'
-import { gnumNumeric } from './engineNumeric'
-import { ENGINE_WORLD } from './engineWorld'
-import { powerScore } from './formulas'
-import { enemyPowerAt } from './inflationAudit'
+import { describe, expect, it } from "vite-plus/test";
+import { createProgressionAudit, dungeonContentPower } from "wanxiang-engine";
+import type { EnemyDef } from "@/types";
+import { EXP_SUB_GROWTH, WORLD_STEP_EXP_MULT } from "@/data/constants";
+import { MAX_MAJOR, REALMS, WORLDS } from "@/data/realms";
+import { maxTierForMajor } from "@/data/regions";
+import { toNum } from "@/utils/gnum";
+import { makeEnemySnap } from "./combat";
+import { gnumNumeric } from "./engineNumeric";
+import { ENGINE_WORLD } from "./engineWorld";
+import { powerScore } from "./formulas";
+import { enemyPowerAt } from "./inflationAudit";
 
 /** 大数层要显式把 GNum 适配器交进去 —— 引擎默认只认 number */
-const audit = createProgressionAudit({ realms: ENGINE_WORLD.realms }, gnumNumeric)
+const audit = createProgressionAudit({ realms: ENGINE_WORLD.realms }, gnumNumeric);
 
-describe('通用曲线体检 × 本作真表', () => {
-  it('格数与换界落点与数据表逐项对得上', () => {
-    const summary = audit.summary()
+describe("通用曲线体检 × 本作真表", () => {
+  it("格数与换界落点与数据表逐项对得上", () => {
+    const summary = audit.summary();
     // 21 境 × 10 层
-    expect(summary.steps).toBe(REALMS.length * ENGINE_WORLD.realms.layerNames.length)
-    expect(REALMS.length).toBe(MAX_MAJOR + 1)
+    expect(summary.steps).toBe(REALMS.length * ENGINE_WORLD.realms.layerNames.length);
+    expect(REALMS.length).toBe(MAX_MAJOR + 1);
 
     // 换界那三格:仙界 / 神界 / 混沌海的起点(与 WORLDS 的 start 一致)
-    const starts = WORLDS.slice(1).map(w => w.start)
-    const entries = audit.steps.filter(s => s.isWorldEntry)
-    expect(entries.map(s => s.major)).toEqual(starts)
+    const starts = WORLDS.slice(1).map((w) => w.start);
+    const entries = audit.steps.filter((s) => s.isWorldEntry);
+    expect(entries.map((s) => s.major)).toEqual(starts);
     for (const entry of entries) {
-      expect(entry.layer).toBe(0)
-      expect(entry.label).toBe(ENGINE_WORLD.realms.label(entry.major, 0))
-      expect(entry.label.startsWith(REALMS[entry.major]!.name)).toBe(true)
+      expect(entry.layer).toBe(0);
+      expect(entry.label).toBe(ENGINE_WORLD.realms.label(entry.major, 0));
+      expect(entry.label.startsWith(REALMS[entry.major]!.name)).toBe(true);
     }
-    console.log(`\n换界三格:${entries.map(s => `${s.label}(需求 ×${s.costStep.toFixed(2)} · 面板 ×${s.powerStep.toFixed(2)})`).join(' · ')}`)
-  })
+    console.log(
+      `\n换界三格:${entries.map((s) => `${s.label}(需求 ×${s.costStep.toFixed(2)} · 面板 ×${s.powerStep.toFixed(2)})`).join(" · ")}`,
+    );
+  });
 
-  it('步长与常数表逐项对账:层内 ×1.32、界末圆满 ×1.32×2、跨大境界与换界各有各的口径', () => {
-    const sys = ENGINE_WORLD.realms
+  it("步长与常数表逐项对账:层内 ×1.32、界末圆满 ×1.32×2、跨大境界与换界各有各的口径", () => {
+    const sys = ENGINE_WORLD.realms;
     // 层号 > 0 的格子 = "同一大境界内的小层"(落点是第 1~9 层);层号 = 0 的格子 = 跨大境界。
     // 两种步长的口径不同,所以要按落点分层看,不能混在一起断言。
-    const within = audit.steps.filter(s => s.layer > 0)
-    const plain = within.filter(s => !sys.isWorldStep(s.major, s.layer))
-    const worldEnds = within.filter(s => sys.isWorldStep(s.major, s.layer))
+    const within = audit.steps.filter((s) => s.layer > 0);
+    const plain = within.filter((s) => !sys.isWorldStep(s.major, s.layer));
+    const worldEnds = within.filter((s) => sys.isWorldStep(s.major, s.layer));
 
-    for (const step of plain) expect(step.costStep).toBeCloseTo(EXP_SUB_GROWTH, 6)
-    expect(worldEnds.length).toBe(WORLDS.length - 1) // 三个界末的"圆满"
+    for (const step of plain) expect(step.costStep).toBeCloseTo(EXP_SUB_GROWTH, 6);
+    expect(worldEnds.length).toBe(WORLDS.length - 1); // 三个界末的"圆满"
     // 界末的圆满被抬成一道墙(常数表的 WORLD_STEP_EXP_MULT):抬的是**这一层**,不是整个境界
-    for (const step of worldEnds) expect(step.costStep).toBeCloseTo(EXP_SUB_GROWTH * WORLD_STEP_EXP_MULT, 6)
+    for (const step of worldEnds)
+      expect(step.costStep).toBeCloseTo(EXP_SUB_GROWTH * WORLD_STEP_EXP_MULT, 6);
 
-    const summary = audit.summary()
-    expect(summary.biggestCostStep.isWorldEntry).toBe(false)
+    const summary = audit.summary();
+    expect(summary.biggestCostStep.isWorldEntry).toBe(false);
     // 排除第一格(它是起点,没有"上一步"可言)
-    const majors = audit.steps.filter((s, index) => index > 0 && s.layer === 0 && !s.isWorldEntry)
-    expect(majors.length).toBe(REALMS.length - WORLDS.length)
+    const majors = audit.steps.filter((s, index) => index > 0 && s.layer === 0 && !s.isWorldEntry);
+    expect(majors.length).toBe(REALMS.length - WORLDS.length);
     console.log(
       `\n步长三层:层内普通 ${plain.length} 步 ×${EXP_SUB_GROWTH} · ` +
         `界末圆满 ${worldEnds.length} 步 ×${(EXP_SUB_GROWTH * WORLD_STEP_EXP_MULT).toFixed(2)} · ` +
-        `跨大境界 ${majors.length} 步(最大 ×${Math.max(...majors.map(s => s.costStep)).toFixed(2)}) · ` +
-        `换界 3 步(都 <1)`
-    )
-    console.log(`最大跳变 ${summary.biggestCostStep.label} 需求 ×${summary.biggestCostStep.costStep.toFixed(2)}`)
-  })
+        `跨大境界 ${majors.length} 步(最大 ×${Math.max(...majors.map((s) => s.costStep)).toFixed(2)}) · ` +
+        `换界 3 步(都 <1)`,
+    );
+    console.log(
+      `最大跳变 ${summary.biggestCostStep.label} 需求 ×${summary.biggestCostStep.costStep.toFixed(2)}`,
+    );
+  });
 
-  it('换界的形状:面板一定涨,需求按已知形状回落(回落是记录在案的设计,不是事故)', () => {
-    const entries = audit.steps.filter(s => s.isWorldEntry)
-    expect(entries.length).toBe(3)
+  it("换界的形状:面板一定涨,需求按已知形状回落(回落是记录在案的设计,不是事故)", () => {
+    const entries = audit.steps.filter((s) => s.isWorldEntry);
+    expect(entries.length).toBe(3);
     for (const entry of entries) {
       // 换界必须变强:面板(攻/防/血之和)不许下降
-      expect(entry.powerStep).toBeGreaterThan(1)
+      expect(entry.powerStep).toBeGreaterThan(1);
       // 需求回落:层内复利(1.32^9 ≈ 12.4)比跨大境界那一下更陡。
       // 这条是**已知形状** —— 改了曲线(层内倍率、跨境界倍率、换界那一档)就要重新面对它。
-      expect(entry.costStep).toBeLessThan(1)
+      expect(entry.costStep).toBeLessThan(1);
     }
-    console.log(`\n换界需求倍数:${entries.map(s => `第 ${s.major} 境 ×${s.costStep.toFixed(3)}`).join(' · ')}`)
-  })
+    console.log(
+      `\n换界需求倍数:${entries.map((s) => `第 ${s.major} 境 ×${s.costStep.toFixed(3)}`).join(" · ")}`,
+    );
+  });
 
   it('读数行一行一格;面板强度取的是"本值之和"这条兜底口径', () => {
-    const lines = audit.lines()
-    expect(lines.length).toBe(audit.steps.length)
+    const lines = audit.lines();
+    expect(lines.length).toBe(audit.steps.length);
     // 兜底口径 = baseStats 所有键相加(引擎不认识键名);本作的面板是三维,故第一格 = 攻+防+血
-    const first = audit.steps[0]!
-    const stats = ENGINE_WORLD.realms.baseStats(0, 0)
-    const sum = Object.values(stats).reduce<number>((acc, value) => acc + gnumNumeric.toNumber(value), 0)
-    expect(first.power).toBeCloseTo(sum, 6)
-    expect(first.label).toBe(ENGINE_WORLD.realms.label(0, 0))
-    console.log(`\n第一格 ${first.label}:面板强度 ${first.power.toExponential(3)}(三维之和)`)
-  })
-})
+    const first = audit.steps[0]!;
+    const stats = ENGINE_WORLD.realms.baseStats(0, 0);
+    const sum = Object.values(stats).reduce<number>(
+      (acc, value) => acc + gnumNumeric.toNumber(value),
+      0,
+    );
+    expect(first.power).toBeCloseTo(sum, 6);
+    expect(first.label).toBe(ENGINE_WORLD.realms.label(0, 0));
+    console.log(`\n第一格 ${first.label}:面板强度 ${first.power.toExponential(3)}(三维之和)`);
+  });
+});
 
 /**
  * 内容强度 —— 本作那套 vs 库的区域表读法。
@@ -111,46 +121,50 @@ describe('通用曲线体检 × 本作真表', () => {
  *   ① 本作的审计强度与战斗强度脱节(审计说"内容还有威胁",玩家却在碾压);
  *   ② 哪天有人把两套模型对齐了(或本作改用库的 snapshot),归属表却还写着"本作有等价物"。
  */
-describe('内容强度:本作那套 vs 库的区域表读法', () => {
+describe("内容强度:本作那套 vs 库的区域表读法", () => {
   /** 基准敌人:三项倍率都是 1 —— 审计里的"这一层该有的敌人" */
   const basis = (tier: number): EnemyDef => ({
-    id: 'basis',
-    name: '基准敌人',
-    icon: '',
-    family: 'beast',
+    id: "basis",
+    name: "基准敌人",
+    icon: "",
+    family: "beast",
     tier,
     hpMult: 1,
     atkMult: 1,
     defMult: 1,
     speed: 1,
-    skills: []
-  })
+    skills: [],
+  });
 
-  it('本作审计用的内容强度 == 战斗快照的强度(同一套解析式,不是另抄一份表)', () => {
+  it("本作审计用的内容强度 == 战斗快照的强度(同一套解析式,不是另抄一份表)", () => {
     for (const tier of [1, 5, 12, 20, 24]) {
-      const snap = makeEnemySnap(basis(tier), tier, 1)
-      expect(toNum(powerScore(snap.attack, snap.defense, snap.maxHp))).toBeCloseTo(enemyPowerAt(tier), 6)
+      const snap = makeEnemySnap(basis(tier), tier, 1);
+      expect(toNum(powerScore(snap.attack, snap.defense, snap.maxHp))).toBeCloseTo(
+        enemyPowerAt(tier),
+        6,
+      );
     }
     console.log(
-      `\n内容强度(基准敌人):${[1, 12, 24].map(t => `t${t} ${enemyPowerAt(t).toExponential(2)}`).join(' · ')}`
-    )
-  })
+      `\n内容强度(基准敌人):${[1, 12, 24].map((t) => `t${t} ${enemyPowerAt(t).toExponential(2)}`).join(" · ")}`,
+    );
+  });
 
-  it('库的区域表读数不是本作战斗的内容强度 —— 两套模型后期差 3 个数量级以上', () => {
+  it("库的区域表读数不是本作战斗的内容强度 —— 两套模型后期差 3 个数量级以上", () => {
     const byRegions = dungeonContentPower({
       dungeons: ENGINE_WORLD.dungeons,
       attributes: ENGINE_WORLD.attributes,
-      numeric: gnumNumeric
-    })
-    const ratio = (major: number): number => byRegions(major) / enemyPowerAt(maxTierForMajor(major))
+      numeric: gnumNumeric,
+    });
+    const ratio = (major: number): number =>
+      byRegions(major) / enemyPowerAt(maxTierForMajor(major));
     // 前段库读数偏高(它取的是**首领**,本作取的是基准敌人),后段反过来低 3 个数量级:
     // 本作的敌人曲线是 powerScale(tier) × 层级补偿,库的 snapshot 是 tierGrowth^(tier-1),
     // 两条曲线只在 t1 附近相交。所以本作的内容强度仍用 core/combat 那套;
     // 库那份留给"整场都用库的 snapshot"的作品(本作不用 snapshot:战斗走 core/combat)。
-    expect(ratio(0)).toBeGreaterThan(1)
-    expect(ratio(MAX_MAJOR)).toBeLessThan(0.001)
+    expect(ratio(0)).toBeGreaterThan(1);
+    expect(ratio(MAX_MAJOR)).toBeLessThan(0.001);
     console.log(
-      `\n区域表读数 ÷ 战斗基准强度:${[0, 6, 12, MAX_MAJOR].map(m => `第 ${m} 境 ×${ratio(m).toFixed(3)}`).join(' · ')}`
-    )
-  })
-})
+      `\n区域表读数 ÷ 战斗基准强度:${[0, 6, 12, MAX_MAJOR].map((m) => `第 ${m} 境 ×${ratio(m).toFixed(3)}`).join(" · ")}`,
+    );
+  });
+});

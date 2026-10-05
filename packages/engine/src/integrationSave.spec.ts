@@ -14,7 +14,7 @@
  *   四 **升级后的世界与"同状态新开"一致**:推同样几轮,逐字段相同 ——
  *      老玩家不该因为"档老"而走上一条不同的曲线。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { decodeSave, decodeSavePayload, defineSaveFormat, encodeSave, runMigrations } from './save.js'
 import { asArray, asNumberRecord, asRecord, asStringArray } from './saveShape.js'
 import { createResourceSystem } from './resources.js'

@@ -4,146 +4,147 @@
  * 尘与灵石退回八成;账以实例上记的投入为准,老档按标价补算。
  * 不该有的(X):返还超过实际投入 —— 那会变成「强化再拆」的套利。
  */
-import { beforeEach, describe, expect, it } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
-import type { EquipmentInstance, QualityId } from '@/types'
-import { DECOMPOSE_DUST, DECOMPOSE_REFUND_RATE } from '@/data/constants'
-import { qualityDef } from '@/data/qualities'
-import { cmp, gn, toNum } from '@/utils/gnum'
-import { upgradeCost } from './formulas'
-import { enhanceInvested, refundRateText, salvageOf } from './salvage'
-import { decomposeByRanks, decomposeEquipment, upgradeEquipment } from './forge'
+import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { createPinia, setActivePinia } from "pinia";
+import type { EquipmentInstance, QualityId } from "@/types";
+import { DECOMPOSE_DUST, DECOMPOSE_REFUND_RATE } from "@/data/constants";
+import { qualityDef } from "@/data/qualities";
+import { cmp, gn, toNum } from "@/utils/gnum";
+import { upgradeCost } from "./formulas";
+import { enhanceInvested, refundRateText, salvageOf } from "./salvage";
+import { decomposeByRanks, decomposeEquipment, upgradeEquipment } from "./forge";
 
-const CHENG_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+const CHENG_NUM = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
 
-describe('分解文案 · 与常数同源', () => {
-  it('refundRateText 由 DECOMPOSE_REFUND_RATE 派生,不手写「八成」', () => {
-    const cheng = DECOMPOSE_REFUND_RATE * 10
-    const expected = `含强化${CHENG_NUM[cheng - 1]}成`
-    expect(refundRateText()).toBe(expected)
-    expect(refundRateText()).toBe('含强化八成') // 今天这张表的字面契约
-  })
-})
-import { useInventoryStore } from '@/stores/inventory'
-import { useResourcesStore } from '@/stores/resources'
-import { useUiStore } from '@/stores/ui'
+describe("分解文案 · 与常数同源", () => {
+  it("refundRateText 由 DECOMPOSE_REFUND_RATE 派生,不手写「八成」", () => {
+    const cheng = DECOMPOSE_REFUND_RATE * 10;
+    const expected = `含强化${CHENG_NUM[cheng - 1]}成`;
+    expect(refundRateText()).toBe(expected);
+    expect(refundRateText()).toBe("含强化八成"); // 今天这张表的字面契约
+  });
+});
+import { useInventoryStore } from "@/stores/inventory";
+import { useResourcesStore } from "@/stores/resources";
+import { useUiStore } from "@/stores/ui";
 
 function mk(uid: string, quality: QualityId, level = 0, tier = 5): EquipmentInstance {
-  return { uid, templateId: 'b_qingyun', quality, tier, level, affixes: [] }
+  return { uid, templateId: "b_qingyun", quality, tier, level, affixes: [] };
 }
 
-describe('分解返还 · 强化投入的八成随件退回', () => {
+describe("分解返还 · 强化投入的八成随件退回", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-  })
+    setActivePinia(createPinia());
+  });
 
-  it('0 级的件只给底材,不涉及灵石', () => {
-    const got = salvageOf(mk('a', 'profound'))
-    expect(got.dust).toBe(DECOMPOSE_DUST[qualityDef('profound').rank])
-    expect(toNum(got.stone)).toBe(0)
-  })
+  it("0 级的件只给底材,不涉及灵石", () => {
+    const got = salvageOf(mk("a", "profound"));
+    expect(got.dust).toBe(DECOMPOSE_DUST[qualityDef("profound").rank]);
+    expect(toNum(got.stone)).toBe(0);
+  });
 
-  it('练过的件:尘与灵石各退投入的八成', () => {
-    for (const quality of ['fine', 'profound', 'heaven'] as const) {
+  it("练过的件:尘与灵石各退投入的八成", () => {
+    for (const quality of ["fine", "profound", "heaven"] as const) {
       for (const level of [1, 3, 7]) {
-        const item = mk('b', quality, level, 9)
-        const spent = enhanceInvested(item)
-        const got = salvageOf(item)
-        const base = DECOMPOSE_DUST[qualityDef(quality).rank] ?? 0
-        expect(got.dust).toBe(base + Math.floor(spent.dust * DECOMPOSE_REFUND_RATE))
-        expect(toNum(got.stone)).toBeCloseTo(toNum(spent.stone) * DECOMPOSE_REFUND_RATE, 6)
-        expect(toNum(got.stone)).toBeGreaterThan(0)
+        const item = mk("b", quality, level, 9);
+        const spent = enhanceInvested(item);
+        const got = salvageOf(item);
+        const base = DECOMPOSE_DUST[qualityDef(quality).rank] ?? 0;
+        expect(got.dust).toBe(base + Math.floor(spent.dust * DECOMPOSE_REFUND_RATE));
+        expect(toNum(got.stone)).toBeCloseTo(toNum(spent.stone) * DECOMPOSE_REFUND_RATE, 6);
+        expect(toNum(got.stone)).toBeGreaterThan(0);
       }
     }
-  })
+  });
 
-  it('老档(件上没记账)按标价补算 —— 与逐级标价之和一致', () => {
-    const level = 4
-    const spent = enhanceInvested(mk('c', 'spirit', level, 7))
-    let dust = 0
-    for (let lv = 0; lv < level; lv += 1) dust += upgradeCost(lv, 7, qualityDef('spirit').rank, 0).dust
-    expect(spent.dust).toBe(dust)
-  })
+  it("老档(件上没记账)按标价补算 —— 与逐级标价之和一致", () => {
+    const level = 4;
+    const spent = enhanceInvested(mk("c", "spirit", level, 7));
+    let dust = 0;
+    for (let lv = 0; lv < level; lv += 1)
+      dust += upgradeCost(lv, 7, qualityDef("spirit").rank, 0).dust;
+    expect(spent.dust).toBe(dust);
+  });
 
-  it('任何等级与品质下,返还都不超过投入(「强化再拆」不套利)', () => {
-    for (const quality of ['mortal', 'excellent', 'earth', 'divine'] as const) {
+  it("任何等级与品质下,返还都不超过投入(「强化再拆」不套利)", () => {
+    for (const quality of ["mortal", "excellent", "earth", "divine"] as const) {
       for (const tier of [1, 6, 15]) {
         for (let level = 0; level <= 12; level += 1) {
-          const item = mk('d', quality, level, tier)
-          const spent = enhanceInvested(item)
-          const got = salvageOf(item)
-          const base = DECOMPOSE_DUST[qualityDef(quality).rank] ?? 0
+          const item = mk("d", quality, level, tier);
+          const spent = enhanceInvested(item);
+          const got = salvageOf(item);
+          const base = DECOMPOSE_DUST[qualityDef(quality).rank] ?? 0;
           // 底材之外退回来的那份,必须小于投入本身(八成)
-          expect(got.dust - base).toBeLessThanOrEqual(spent.dust)
-          expect(cmp(got.stone, spent.stone)).toBeLessThan(1)
+          expect(got.dust - base).toBeLessThanOrEqual(spent.dust);
+          expect(cmp(got.stone, spent.stone)).toBeLessThan(1);
           // 反方向也要管:练过就该退回来,不能一分不退
           if (spent.dust > 0) {
-            expect(got.dust - base).toBeGreaterThan(0)
-            expect(toNum(got.stone)).toBeGreaterThan(0)
+            expect(got.dust - base).toBeGreaterThan(0);
+            expect(toNum(got.stone)).toBeGreaterThan(0);
           }
         }
       }
     }
-  })
+  });
 
-  it('强化会把这笔账记在件上,数额与实扣一致', () => {
-    const inventory = useInventoryStore()
-    const resources = useResourcesStore()
-    inventory.addEquipment(mk('e', 'earth', 0, 8))
-    resources.addSmall('dust', 100000)
-    resources.addStone(gn(1e9))
-    let spentDust = 0
+  it("强化会把这笔账记在件上,数额与实扣一致", () => {
+    const inventory = useInventoryStore();
+    const resources = useResourcesStore();
+    inventory.addEquipment(mk("e", "earth", 0, 8));
+    resources.addSmall("dust", 100000);
+    resources.addStone(gn(1e9));
+    let spentDust = 0;
     for (let i = 0; i < 3; i += 1) {
-      spentDust += upgradeCost(i, 8, qualityDef('earth').rank, 0).dust
-      expect(upgradeEquipment('e')).toBe(true)
+      spentDust += upgradeCost(i, 8, qualityDef("earth").rank, 0).dust;
+      expect(upgradeEquipment("e")).toBe(true);
     }
-    const after = inventory.findItem('e')!
-    expect(after.level).toBe(3)
-    expect(after.invested?.dust).toBe(spentDust)
-  })
+    const after = inventory.findItem("e")!;
+    expect(after.level).toBe(3);
+    expect(after.invested?.dust).toBe(spentDust);
+  });
 
-  it('分解一件练过的件:到账的就是预告那份(尘 + 灵石)', () => {
-    const inventory = useInventoryStore()
-    const resources = useResourcesStore()
+  it("分解一件练过的件:到账的就是预告那份(尘 + 灵石)", () => {
+    const inventory = useInventoryStore();
+    const resources = useResourcesStore();
     // 先烧掉一次性成就奖励(「初窥仙途」那类会往灵石里加一笔),免得混进这笔账
-    inventory.addEquipment(mk('warmup', 'profound', 5, 9))
-    decomposeEquipment('warmup')
-    const item = { ...mk('f', 'profound', 5, 9), invested: { dust: 300, stone: { m: 2, e: 5 } } }
-    inventory.addEquipment(item)
-    const want = salvageOf(item)
-    const dustBefore = resources.dust
-    const stoneBefore = toNum(resources.spiritStone)
-    expect(decomposeEquipment('f')).toBe(true)
-    expect(resources.dust - dustBefore).toBe(want.dust)
-    expect(toNum(resources.spiritStone) - stoneBefore).toBeCloseTo(toNum(want.stone), 6)
-    expect(inventory.findItem('f')).toBeUndefined()
-  })
+    inventory.addEquipment(mk("warmup", "profound", 5, 9));
+    decomposeEquipment("warmup");
+    const item = { ...mk("f", "profound", 5, 9), invested: { dust: 300, stone: { m: 2, e: 5 } } };
+    inventory.addEquipment(item);
+    const want = salvageOf(item);
+    const dustBefore = resources.dust;
+    const stoneBefore = toNum(resources.spiritStone);
+    expect(decomposeEquipment("f")).toBe(true);
+    expect(resources.dust - dustBefore).toBe(want.dust);
+    expect(toNum(resources.spiritStone) - stoneBefore).toBeCloseTo(toNum(want.stone), 6);
+    expect(inventory.findItem("f")).toBeUndefined();
+  });
 
-  it('上锁的件不分解', () => {
-    const inventory = useInventoryStore()
-    inventory.addEquipment({ ...mk('g', 'fine'), locked: true })
-    expect(decomposeEquipment('g')).toBe(false)
-    expect(inventory.findItem('g')).toBeDefined()
-  })
+  it("上锁的件不分解", () => {
+    const inventory = useInventoryStore();
+    inventory.addEquipment({ ...mk("g", "fine"), locked: true });
+    expect(decomposeEquipment("g")).toBe(false);
+    expect(inventory.findItem("g")).toBeDefined();
+  });
 
-  it('一键分解:按一次总账报出来,数字与逐件之和一致', () => {
-    const inventory = useInventoryStore()
-    const resources = useResourcesStore()
-    const ui = useUiStore()
+  it("一键分解:按一次总账报出来,数字与逐件之和一致", () => {
+    const inventory = useInventoryStore();
+    const resources = useResourcesStore();
+    const ui = useUiStore();
     // 同上:一次性成就奖励先烧掉
-    inventory.addEquipment(mk('warmup', 'fine', 0, 6))
-    decomposeEquipment('warmup')
-    for (const t of [...ui.toasts]) ui.dismissToast(t.id)
-    const targets = [mk('h1', 'fine', 2, 6), mk('h2', 'fine', 0, 6), mk('h3', 'fine', 4, 6)]
-    for (const it of targets) inventory.addEquipment(it)
-    inventory.addEquipment(mk('keep', 'heaven', 3, 6)) // 没勾选的档,动不得
-    const want = targets.reduce((sum, it) => sum + salvageOf(it).dust, 0)
-    const dustBefore = resources.dust
-    expect(decomposeByRanks([qualityDef('fine').rank])).toBe(3)
-    expect(resources.dust - dustBefore).toBe(want)
-    expect(inventory.findItem('keep')).toBeDefined()
+    inventory.addEquipment(mk("warmup", "fine", 0, 6));
+    decomposeEquipment("warmup");
+    for (const t of [...ui.toasts]) ui.dismissToast(t.id);
+    const targets = [mk("h1", "fine", 2, 6), mk("h2", "fine", 0, 6), mk("h3", "fine", 4, 6)];
+    for (const it of targets) inventory.addEquipment(it);
+    inventory.addEquipment(mk("keep", "heaven", 3, 6)); // 没勾选的档,动不得
+    const want = targets.reduce((sum, it) => sum + salvageOf(it).dust, 0);
+    const dustBefore = resources.dust;
+    expect(decomposeByRanks([qualityDef("fine").rank])).toBe(3);
+    expect(resources.dust - dustBefore).toBe(want);
+    expect(inventory.findItem("keep")).toBeDefined();
     // 逐件弹提示只会互相顶掉(提示窗只留 5 条),批量只报一条总账
-    expect(ui.toasts.filter(t => /分解得器灵尘/.test(t.text))).toHaveLength(0)
-    expect(ui.toasts.some(t => /已分解 3 件装备,得器灵尘×\d+/.test(t.text))).toBe(true)
-  })
-})
+    expect(ui.toasts.filter((t) => /分解得器灵尘/.test(t.text))).toHaveLength(0);
+    expect(ui.toasts.some((t) => /已分解 3 件装备,得器灵尘×\d+/.test(t.text))).toBe(true);
+  });
+});

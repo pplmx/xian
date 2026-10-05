@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vite-plus'
 
 /**
  * 库自己的测试配置 —— 不依赖宿主仓库的任何设置。

@@ -19,7 +19,7 @@
  *   五 **面板单调**:换上一件更好的装备之后,面板的核心值不会下降;
  *   六 **可复现**:同一颗种子跑两遍,整条链的账目逐字段一致。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import { createDropTable } from './drops.js'
 import { createCombatEngine } from './combat.js'

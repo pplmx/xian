@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { GameConfig } from './config.js'
 import { emptyProgress, type DungeonConfig } from './dungeons.js'
 import type { EquipmentConfig } from './equipment.js'

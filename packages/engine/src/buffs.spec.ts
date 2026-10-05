@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { BuffInstance } from './buffs.js'
 import { createBuffSystem } from './buffs.js'
 

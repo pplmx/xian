@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { defineSaveFormat, decodeSave, decodeSavePayload, encodeSave, runMigrations } from './save.js'
 import { asArray, asFiniteNumber, asNumberRecord, asRecordOf, asStringArray } from './saveShape.js'
 

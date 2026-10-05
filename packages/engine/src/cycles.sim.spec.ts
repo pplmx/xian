@@ -15,7 +15,7 @@
  *   ③ **换池只影响"用哪个池",不影响"第几个周期"**:同一个序号在两个池里给出不同结果,
  *      但各自可复现;`remainingSec` 在周期起点给整周期长、终点前 1 秒给 1。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import { createCycleSystem } from './cycles.js'
 

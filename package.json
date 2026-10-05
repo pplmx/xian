@@ -1,25 +1,25 @@
 {
   "name": "xuanshu",
-  "private": true,
   "version": "1.35.0",
-  "type": "module",
+  "private": true,
   "description": "玄枢录——一款文字修仙放置游戏",
-  "author": "Mystvio",
   "license": "MIT",
-  "main": "dist-electron/main.js",
+  "author": "Mystvio",
   "workspaces": [
     "packages/*"
   ],
+  "type": "module",
+  "main": "dist-electron/main.js",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "vue-tsc -b && vite build",
-    "build:release": "vue-tsc -b && XIAN_LEGACY=1 vite build",
+    "dev": "vp dev --host 0.0.0.0",
+    "build": "vue-tsc -b && vp build",
+    "build:release": "vue-tsc -b && XIAN_LEGACY=1 vp build",
     "check:legacy": "bun scripts/legacy-artifacts.mjs",
     "check:first-paint": "bun scripts/first-paint.mjs",
-    "preview": "vite preview",
-    "lint": "eslint src packages",
-    "test": "vitest run",
-    "test:engine": "vitest run packages/engine",
+    "preview": "vp preview",
+    "lint": "vp lint src packages",
+    "test": "vp test run",
+    "test:engine": "vp test run packages/engine",
     "test:report": "bun scripts/test-report.mjs",
     "build:engine": "tsc -p packages/engine/tsconfig.build.json",
     "check:engine": "bun scripts/engine-dist.mjs && bun scripts/engine-sync.mjs",
@@ -60,17 +60,17 @@
     "electron": "^39.2.7",
     "electron-builder": "^26.0.12",
     "esbuild": "^0.28.0",
-    "eslint": "^9.20.0",
-    "eslint-plugin-vue": "^9.32.0",
     "husky": "^9.1.7",
     "playwright": "1.63.0",
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.19",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.24.0",
-    "vite": "^8.2.2",
-    "vitest": "^5.0.0",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
     "vue-tsc": "^3.3.11"
+  },
+  "overrides": {
+    "vite": "catalog:"
   },
   "browserslist": [
     "Chrome >= 51",
@@ -78,6 +78,9 @@
     "iOS >= 12",
     "Safari >= 12"
   ],
+  "engines": {
+    "node": ">=22.18"
+  },
   "build": {
     "appId": "com.mystvio.xuanshu",
     "productName": "玄枢录",
@@ -96,5 +99,9 @@
       "icon": "public/favicon.ico",
       "artifactName": "xuanshu-${version}-win.${ext}"
     }
+  },
+  "catalog": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vite-plus": "1.0.0"
   }
 }

@@ -17,7 +17,7 @@
  * 所以"叠出来的概率"进骰子之前必须先自己判 `Number.isFinite` —— `recipes` 与 `realms`
  * 都是这么做的,这一条由 `realms.spec.ts` 的回归用例守着。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRealmSystem } from './realms.js'
 import { clamp, formatAmount, numberNumeric, type Numeric } from './numeric.js'
 

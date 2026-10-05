@@ -52,18 +52,18 @@
     "build": "tsc -p tsconfig.build.json",
     "prepack": "tsc -p tsconfig.build.json",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "tuning": "vitest run --reporter=verbose src/*.sim.spec.ts",
-    "test:watch": "vitest",
+    "test": "vp test run",
+    "tuning": "vp test run --reporter=verbose src/*.sim.spec.ts",
+    "test:watch": "vp test",
     "examples": "bun examples/from-zero.ts && bun examples/quickstart.ts && bun examples/minimal.ts && bun examples/combo-arts.ts && bun examples/daily-loop.ts && bun examples/quest-loop.ts && bun examples/collect-loop.ts && bun examples/shop-loop.ts && bun examples/world-loop.ts && bun examples/craft-loop.ts && bun examples/realm-ladder.ts && bun examples/combat-takeover.ts && bun examples/arena-takeover.ts",
     "type-check:examples": "tsc -p tsconfig.examples.json",
     "verify:dist": "node scripts/verify-dist.mjs",
-    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.examples.json && vitest run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs && bun run examples"
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.examples.json && vp test run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs && bun run examples"
   },
   "devDependencies": {
     "@types/node": "^22.13.0",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.0"
+    "vite-plus": "1.0.0"
   },
   "keywords": [
     "game-engine",

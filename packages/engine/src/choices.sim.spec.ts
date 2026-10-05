@@ -15,7 +15,7 @@
  *      实测"默认项被锁住"时会落到第一条可选的,而不是硬塞那个选不了的
  *      (硬塞的结果是玩家离线回来发现自己选了明确不能选的那项)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import type { ChoiceDef } from './choices.js'
 import { createChoiceSystem } from './choices.js'

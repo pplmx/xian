@@ -15,7 +15,7 @@
  *   ③ **没资格与太久没来是两回事**:`eligible: false` 停在最低档但**不标 `decayed`**
  *      (是"没谈成",不是"忘了"),界面上的说法不同。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createStageMemory } from './memory.js'
 
 const HOUR = 3600_000

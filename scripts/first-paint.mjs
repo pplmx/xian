@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- 自检脚本的产出就是给人看的报告 */
+/* oxlint-disable no-console -- 自检脚本的产出就是给人看的报告 */
 /**
  * 首屏自检 —— 冷启动要传多少字节、第几毫秒看得见字、楷体第几毫秒换上
  *
@@ -34,14 +34,14 @@
  * 提前拽第一片(31KB)没让楷体更早到(后面几片该来还得来),反而把首帧推后约 100ms ——
  * 抢的是首屏 JS 的带宽。故 index.html 里**不加** preload,只留 font-display: swap。
  */
-import { createServer } from 'node:http'
-import { readFileSync, mkdirSync, readdirSync } from 'node:fs'
-import { dirname, extname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { chromium } from 'playwright'
+import { createServer } from "node:http";
+import { readFileSync, mkdirSync, readdirSync } from "node:fs";
+import { dirname, extname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const DIST = join(ROOT, 'dist')
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const DIST = join(ROOT, "dist");
 
 /**
  * 三条上限(4G 档、冷缓存、390×844)。
@@ -62,31 +62,31 @@ const BUDGETS = {
   /** FCP 上限:ms */
   fcp: Number(process.env.FIRST_PAINT_BUDGET_FCP ?? 1400),
   /** 楷体换上的时刻上限:ms */
-  fontSwap: Number(process.env.FIRST_PAINT_BUDGET_FONT ?? 2800)
-}
+  fontSwap: Number(process.env.FIRST_PAINT_BUDGET_FONT ?? 2800),
+};
 
-const args = process.argv.slice(2)
+const args = process.argv.slice(2);
 const argOf = (name, fallback) => {
-  const i = args.indexOf(name)
-  return i >= 0 && args[i + 1] ? args[i + 1] : fallback
-}
-const VARIANT = argOf('--variant', 'built') // built | preload
-const REPEAT = Number(argOf('--repeat', '1'))
+  const i = args.indexOf(name);
+  return i >= 0 && args[i + 1] ? args[i + 1] : fallback;
+};
+const VARIANT = argOf("--variant", "built"); // built | preload
+const REPEAT = Number(argOf("--repeat", "1"));
 
 const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.woff2': 'font/woff2',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.txt': 'text/plain; charset=utf-8',
-  '.webmanifest': 'application/manifest+json'
-}
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".woff2": "font/woff2",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".txt": "text/plain; charset=utf-8",
+  ".webmanifest": "application/manifest+json",
+};
 
 /**
  * 产物里的楷体切片名(带 hash),preload 变体要拿它写 <link rel=preload>。
@@ -95,11 +95,11 @@ const MIME = {
  * 「要不要 preload」这个取舍的关键:preload 只会提前拽第一片,后面几片该来还得来。
  */
 function fontFile() {
-  const cssDir = join(DIST, 'assets')
-  const files = readdirSync(cssDir).filter(f => f.endsWith('.woff2'))
-  if (!files.length) throw new Error('产物里没有 woff2 —— 字体没进 dist,先 bun run build')
-  const first = files.find(f => /subset-1-/.test(f))
-  return first ?? files[0]
+  const cssDir = join(DIST, "assets");
+  const files = readdirSync(cssDir).filter((f) => f.endsWith(".woff2"));
+  if (!files.length) throw new Error("产物里没有 woff2 —— 字体没进 dist,先 bun run build");
+  const first = files.find((f) => /subset-1-/.test(f));
+  return first ?? files[0];
 }
 
 /**
@@ -108,38 +108,42 @@ function fontFile() {
  * 那一条链接的差,不掺构建差异。
  */
 function startServer() {
-  const preload = VARIANT === 'preload'
-  const font = preload ? fontFile() : null
-  return new Promise(resolveServer => {
+  const preload = VARIANT === "preload";
+  const font = preload ? fontFile() : null;
+  return new Promise((resolveServer) => {
     const server = createServer((req, res) => {
-      const url = decodeURIComponent((req.url || '/').split('?')[0])
-      const rel = url === '/' ? 'index.html' : url.replace(/^\/+/, '')
-      if (rel.includes('..')) {
-        res.writeHead(400).end('bad path')
-        return
+      const url = decodeURIComponent((req.url || "/").split("?")[0]);
+      const rel = url === "/" ? "index.html" : url.replace(/^\/+/, "");
+      if (rel.includes("..")) {
+        res.writeHead(400).end("bad path");
+        return;
       }
-      let body
+      let body;
       try {
-        body = readFileSync(join(DIST, rel))
+        body = readFileSync(join(DIST, rel));
       } catch {
-        res.writeHead(404).end('not found')
-        return
+        res.writeHead(404).end("not found");
+        return;
       }
-      const type = MIME[extname(rel)] ?? 'application/octet-stream'
-      if (rel === 'index.html' && preload && font) {
+      const type = MIME[extname(rel)] ?? "application/octet-stream";
+      if (rel === "index.html" && preload && font) {
         const html = body
-          .toString('utf-8')
+          .toString("utf-8")
           .replace(
-            '</head>',
-            `  <link rel="preload" href="./assets/${font}" as="font" type="font/woff2" crossorigin>\n  </head>`
-          )
-        body = Buffer.from(html, 'utf-8')
+            "</head>",
+            `  <link rel="preload" href="./assets/${font}" as="font" type="font/woff2" crossorigin>\n  </head>`,
+          );
+        body = Buffer.from(html, "utf-8");
       }
-      res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store', 'content-length': body.length })
-      res.end(body)
-    })
-    server.listen(0, '127.0.0.1', () => resolveServer(server))
-  })
+      res.writeHead(200, {
+        "content-type": type,
+        "cache-control": "no-store",
+        "content-length": body.length,
+      });
+      res.end(body);
+    });
+    server.listen(0, "127.0.0.1", () => resolveServer(server));
+  });
 }
 
 /** 一趟冷启动:清缓存 → 限速 4G → 打开首页 → 收字节与时刻 */
@@ -148,30 +152,30 @@ async function coldStart(browser, origin) {
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 3,
     // 每次都是新 context:HTTP 缓存天然是空的,故"冷启动"名副其实
-  })
-  const page = await ctx.newPage()
+  });
+  const page = await ctx.newPage();
   await page.addInitScript(() => {
     // swap 那一瞬间:楷体第一次可用(loadingdone)
-    window.__kaiSwap = null
+    window.__kaiSwap = null;
     try {
-      document.fonts.addEventListener('loadingdone', () => {
-        if (window.__kaiSwap === null) window.__kaiSwap = performance.now()
-      })
+      document.fonts.addEventListener("loadingdone", () => {
+        if (window.__kaiSwap === null) window.__kaiSwap = performance.now();
+      });
     } catch {
       /* 老的 WebView 没有 FontFaceSet:那就不量这一条,下面会报 null */
     }
-  })
-  const cdp = await ctx.newCDPSession(page)
-  await cdp.send('Network.enable')
+  });
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Network.enable");
   // DevTools 的 4G 档:下行 4Mbps、上行 3Mbps、RTT 100ms
-  await cdp.send('Network.emulateNetworkConditions', {
+  await cdp.send("Network.emulateNetworkConditions", {
     offline: false,
     latency: 100,
     downloadThroughput: (4 * 1024 * 1024) / 8,
-    uploadThroughput: (3 * 1024 * 1024) / 8
-  })
-  const encodedByType = new Map()
-  let encodedBytes = 0
+    uploadThroughput: (3 * 1024 * 1024) / 8,
+  });
+  const encodedByType = new Map();
+  let encodedBytes = 0;
   /**
    * 字节账:逐个响应量两遍 —— 线传看 `content-length`(上了 gzip/br 就是压缩后的大小),
    * 解码看响应体长度(浏览器真正要解析的)。
@@ -180,37 +184,40 @@ async function coldStart(browser, origin) {
    * 那一趟直接把字体算成 0 字节(实测踩过)。另一版改用 CDP 的 encodedDataLength 也一样
    * 漏掉了字体 —— 同一份账用同一个来源算,比两处各记一份更不容易分叉。
    */
-  const decodedByType = new Map()
-  let decodedBytes = 0
-  const resources = []
-  page.on('response', async resp => {
+  const decodedByType = new Map();
+  let decodedBytes = 0;
+  const resources = [];
+  page.on("response", async (resp) => {
     try {
-      const body = await resp.body()
-      const req = resp.request()
-      const type = req.resourceType() === 'document' ? 'Document' : `${req.resourceType()[0].toUpperCase()}${req.resourceType().slice(1)}`
-      const wire = Number(resp.headers()['content-length'] ?? 0) || body.length
-      decodedBytes += body.length
-      decodedByType.set(type, (decodedByType.get(type) ?? 0) + body.length)
-      encodedBytes += wire
-      encodedByType.set(type, (encodedByType.get(type) ?? 0) + wire)
-      resources.push({ type, url: resp.url(), bytes: body.length })
+      const body = await resp.body();
+      const req = resp.request();
+      const type =
+        req.resourceType() === "document"
+          ? "Document"
+          : `${req.resourceType()[0].toUpperCase()}${req.resourceType().slice(1)}`;
+      const wire = Number(resp.headers()["content-length"] ?? 0) || body.length;
+      decodedBytes += body.length;
+      decodedByType.set(type, (decodedByType.get(type) ?? 0) + body.length);
+      encodedBytes += wire;
+      encodedByType.set(type, (encodedByType.get(type) ?? 0) + wire);
+      resources.push({ type, url: resp.url(), bytes: body.length });
     } catch {
       /* 预检/中止的请求拿不到体,忽略 */
     }
-  })
-  const t0 = Date.now()
-  await page.goto(origin, { waitUntil: 'load' })
+  });
+  const t0 = Date.now();
+  await page.goto(origin, { waitUntil: "load" });
   // 等字体落定(swap 那一瞬间在这里发生);拿不到就按 6 秒封顶
   await page
-    .evaluate(() => Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 6000))]))
-    .catch(() => {})
-  await page.waitForTimeout(400) // 让最后几个响应体结算
+    .evaluate(() => Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 6000))]))
+    .catch(() => {});
+  await page.waitForTimeout(400); // 让最后几个响应体结算
   const marks = await page.evaluate(async () => {
-    const fcp = performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? null
-    let ready = null
+    const fcp = performance.getEntriesByName("first-contentful-paint")[0]?.startTime ?? null;
+    let ready = null;
     try {
-      await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))])
-      ready = performance.now()
+      await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 3000))]);
+      ready = performance.now();
     } catch {
       /* ignore */
     }
@@ -219,11 +226,11 @@ async function coldStart(browser, origin) {
       fontReady: ready,
       fontSwap: window.__kaiSwap,
       kaiUsable: document.fonts?.check?.('12px "LXGW WenKai GB Screen"') ?? null,
-      title: document.title
-    }
-  })
-  const wall = Date.now() - t0
-  await ctx.close()
+      title: document.title,
+    };
+  });
+  const wall = Date.now() - t0;
+  await ctx.close();
   return {
     decodedBytes,
     encodedBytes,
@@ -231,54 +238,68 @@ async function coldStart(browser, origin) {
     encodedByType: [...encodedByType].sort((a, b) => b[1] - a[1]),
     resources,
     marks,
-    wall
-  }
+    wall,
+  };
 }
 
-const kb = n => `${Math.round(n / 1024)}KB`
-const ms = n => (n === null || n === undefined ? '—' : `${Math.round(n)}ms`)
-const median = xs => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]
+const kb = (n) => `${Math.round(n / 1024)}KB`;
+const ms = (n) => (n === null || n === undefined ? "—" : `${Math.round(n)}ms`);
+const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 
-mkdirSync(DIST, { recursive: true })
-const server = await startServer()
-const origin = `http://127.0.0.1:${server.address().port}/`
-const browser = await chromium.launch()
-const runs = []
-for (let i = 0; i < REPEAT; i += 1) runs.push(await coldStart(browser, origin))
-await browser.close()
-server.close()
+mkdirSync(DIST, { recursive: true });
+const server = await startServer();
+const origin = `http://127.0.0.1:${server.address().port}/`;
+const browser = await chromium.launch();
+const runs = [];
+for (let i = 0; i < REPEAT; i += 1) runs.push(await coldStart(browser, origin));
+await browser.close();
+server.close();
 
-const total = runs.map(r => r.decodedBytes)
-const wire = runs.map(r => r.encodedBytes)
-const fcp = runs.map(r => r.marks.fcp ?? Infinity)
-const swap = runs.map(r => r.marks.fontSwap ?? Infinity)
-const decodedOf = Object.fromEntries(runs[0].byType)
-const encodedOf = Object.fromEntries(runs[0].encodedByType)
+const total = runs.map((r) => r.decodedBytes);
+const wire = runs.map((r) => r.encodedBytes);
+const fcp = runs.map((r) => r.marks.fcp ?? Infinity);
+const swap = runs.map((r) => r.marks.fontSwap ?? Infinity);
+const decodedOf = Object.fromEntries(runs[0].byType);
+const encodedOf = Object.fromEntries(runs[0].encodedByType);
 const types = [...new Set([...Object.keys(decodedOf), ...Object.keys(encodedOf)])].sort(
-  (a, b) => (decodedOf[b] ?? 0) - (decodedOf[a] ?? 0)
-)
-console.log(`首屏自检(变体 ${VARIANT}${REPEAT > 1 ? `,${REPEAT} 遍取中位` : ''} · 390×844 · 冷缓存 · 4G 档)`)
-console.log(`  冷启动解码字节 ${kb(median(total))}  —— 预算 ${kb(BUDGETS.bytes * 1024)}(线传 ${kb(median(wire))})`)
-for (const type of types) console.log(`    ${type.padEnd(10)} 解码 ${kb(decodedOf[type] ?? 0).padStart(6)} · 线传 ${kb(encodedOf[type] ?? 0).padStart(6)}`)
-console.log(`  FCP       ${ms(median(fcp))}  —— 预算 ${ms(BUDGETS.fcp)}`)
-console.log(`  楷体换上   ${ms(median(swap))}  —— 预算 ${ms(BUDGETS.fontSwap)}`)
-console.log(`  楷体可用:${runs[0].marks.kaiUsable ? '是' : '否'} · 字体就绪 ${ms(runs[0].marks.fontReady)}`)
+  (a, b) => (decodedOf[b] ?? 0) - (decodedOf[a] ?? 0),
+);
+console.log(
+  `首屏自检(变体 ${VARIANT}${REPEAT > 1 ? `,${REPEAT} 遍取中位` : ""} · 390×844 · 冷缓存 · 4G 档)`,
+);
+console.log(
+  `  冷启动解码字节 ${kb(median(total))}  —— 预算 ${kb(BUDGETS.bytes * 1024)}(线传 ${kb(median(wire))})`,
+);
+for (const type of types)
+  console.log(
+    `    ${type.padEnd(10)} 解码 ${kb(decodedOf[type] ?? 0).padStart(6)} · 线传 ${kb(encodedOf[type] ?? 0).padStart(6)}`,
+  );
+console.log(`  FCP       ${ms(median(fcp))}  —— 预算 ${ms(BUDGETS.fcp)}`);
+console.log(`  楷体换上   ${ms(median(swap))}  —— 预算 ${ms(BUDGETS.fontSwap)}`);
+console.log(
+  `  楷体可用:${runs[0].marks.kaiUsable ? "是" : "否"} · 字体就绪 ${ms(runs[0].marks.fontReady)}`,
+);
 // 首屏到底取了哪几片楷体 —— 「按需」这件事要看得出证据,不然切片白切了也不知道
-const fontReqs = runs[0].resources.filter(r => r.type === 'Font')
-console.log(`  楷体切片:取了 ${fontReqs.length} 份 · ${kb(fontReqs.reduce((n, r) => n + r.bytes, 0))}`)
-for (const r of fontReqs) console.log(`    ${kb(r.bytes).padStart(6)}  ${r.url.split('/').pop()}`)
+const fontReqs = runs[0].resources.filter((r) => r.type === "Font");
+console.log(
+  `  楷体切片:取了 ${fontReqs.length} 份 · ${kb(fontReqs.reduce((n, r) => n + r.bytes, 0))}`,
+);
+for (const r of fontReqs) console.log(`    ${kb(r.bytes).padStart(6)}  ${r.url.split("/").pop()}`);
 
-const failures = []
-if (median(total) > BUDGETS.bytes * 1024) failures.push(`冷启动解码字节 ${kb(median(total))} 超过预算 ${kb(BUDGETS.bytes * 1024)}`)
-if (median(fcp) > BUDGETS.fcp) failures.push(`FCP ${ms(median(fcp))} 超过预算 ${ms(BUDGETS.fcp)}`)
-if (median(swap) > BUDGETS.fontSwap) failures.push(`楷体换上太晚:${ms(median(swap))} 超过预算 ${ms(BUDGETS.fontSwap)}`)
+const failures = [];
+if (median(total) > BUDGETS.bytes * 1024)
+  failures.push(`冷启动解码字节 ${kb(median(total))} 超过预算 ${kb(BUDGETS.bytes * 1024)}`);
+if (median(fcp) > BUDGETS.fcp) failures.push(`FCP ${ms(median(fcp))} 超过预算 ${ms(BUDGETS.fcp)}`);
+if (median(swap) > BUDGETS.fontSwap)
+  failures.push(`楷体换上太晚:${ms(median(swap))} 超过预算 ${ms(BUDGETS.fontSwap)}`);
 // 防空转:量不到楷体(字体没进产物/名字写错)时,那条预算永远绿
-if (!runs[0].marks.kaiUsable) failures.push('楷体没被用上(dist 里没有字体、或 family 名对不上)—— 字体那条预算空转了')
-if (runs[0].marks.fcp === null) failures.push('拿不到 FCP —— 判据空转了')
+if (!runs[0].marks.kaiUsable)
+  failures.push("楷体没被用上(dist 里没有字体、或 family 名对不上)—— 字体那条预算空转了");
+if (runs[0].marks.fcp === null) failures.push("拿不到 FCP —— 判据空转了");
 
 if (failures.length) {
-  for (const f of failures) console.log(`✗ ${f}`)
-  process.exitCode = 1
+  for (const f of failures) console.log(`✗ ${f}`);
+  process.exitCode = 1;
 } else {
-  console.log('✓ 首屏三条读数都在预算内')
+  console.log("✓ 首屏三条读数都在预算内");
 }

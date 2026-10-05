@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { attributeDefs, createAttributeSystem } from './attributes.js'
 import { createDungeonSystem, dungeonContentPower, emptyProgress, type EnemySnapshot } from './dungeons.js'
 import { createProgressionAudit } from './progression.js'

@@ -14,49 +14,51 @@
  * 尺子只压「高品不弱于低品」这一个方向。同品内部专精不同(金蟾聚财、摇光鹿
  * 修速),总预算允许拉开 —— 那是取舍,不是失配。
  */
-import { describe, expect, it } from 'vitest'
-import { PETS } from '@/data/pets'
-import { qualityDef } from '@/data/qualities'
-import type { AnyStatKey, PetDef } from '@/types'
+import { describe, expect, it } from "vite-plus/test";
+import { PETS } from "@/data/pets";
+import { qualityDef } from "@/data/qualities";
+import type { AnyStatKey, PetDef } from "@/types";
 
 /** 粗略会计:Σ|词条数值|。不引 ruleBudget —— 那把尺子的 KEY_REFS 只覆盖战斗词条 */
 const petBudget = (p: PetDef): number =>
-  Object.values(p.mods).reduce((s, v) => s + Math.abs(v ?? 0), 0)
+  Object.values(p.mods).reduce((s, v) => s + Math.abs(v ?? 0), 0);
 
-describe('灵兽品质 ↔ 效果匹配(预算)', () => {
-  it('每只灵兽都有词条效果,不是纯观赏位', () => {
+describe("灵兽品质 ↔ 效果匹配(预算)", () => {
+  it("每只灵兽都有词条效果,不是纯观赏位", () => {
     for (const p of PETS) {
-      expect(Object.keys(p.mods).length, `${p.name} 无效果词条`).toBeGreaterThan(0)
+      expect(Object.keys(p.mods).length, `${p.name} 无效果词条`).toBeGreaterThan(0);
     }
-  })
+  });
 
-  it('总预算随品阶不回落:高品阶单只 ≥ 任意低品阶单只', () => {
+  it("总预算随品阶不回落:高品阶单只 ≥ 任意低品阶单只", () => {
     for (const hi of PETS) {
       for (const lo of PETS) {
-        const hr = qualityDef(hi.quality).rank
-        const lr = qualityDef(lo.quality).rank
-        if (hr <= lr) continue
-        expect(petBudget(hi), `${hi.name}(${hi.quality},预算 ${petBudget(hi)}) < ${lo.name}(${lo.quality},预算 ${petBudget(lo)})`).toBeGreaterThanOrEqual(
-          petBudget(lo) - 1e-9
-        )
+        const hr = qualityDef(hi.quality).rank;
+        const lr = qualityDef(lo.quality).rank;
+        if (hr <= lr) continue;
+        expect(
+          petBudget(hi),
+          `${hi.name}(${hi.quality},预算 ${petBudget(hi)}) < ${lo.name}(${lo.quality},预算 ${petBudget(lo)})`,
+        ).toBeGreaterThanOrEqual(petBudget(lo) - 1e-9);
       }
     }
-  })
+  });
 
-  it('同一词条键跨品阶不回落:高品阶数值 ≥ 低品阶同键数值', () => {
+  it("同一词条键跨品阶不回落:高品阶数值 ≥ 低品阶同键数值", () => {
     for (const hi of PETS) {
       for (const lo of PETS) {
-        const hr = qualityDef(hi.quality).rank
-        const lr = qualityDef(lo.quality).rank
-        if (hr <= lr) continue
-        const shared = Object.keys(lo.mods).filter(k => hi.mods[k as AnyStatKey] !== undefined)
+        const hr = qualityDef(hi.quality).rank;
+        const lr = qualityDef(lo.quality).rank;
+        if (hr <= lr) continue;
+        const shared = Object.keys(lo.mods).filter((k) => hi.mods[k as AnyStatKey] !== undefined);
         for (const k of shared) {
-          const key = k as AnyStatKey
-          expect(hi.mods[key]!, `${hi.name}(${hi.quality}) 的 ${k} ${hi.mods[key]} < ${lo.name}(${lo.quality}) 的 ${lo.mods[key]}`).toBeGreaterThanOrEqual(
-            lo.mods[key]! - 1e-9
-          )
+          const key = k as AnyStatKey;
+          expect(
+            hi.mods[key]!,
+            `${hi.name}(${hi.quality}) 的 ${k} ${hi.mods[key]} < ${lo.name}(${lo.quality}) 的 ${lo.mods[key]}`,
+          ).toBeGreaterThanOrEqual(lo.mods[key]! - 1e-9);
         }
       }
     }
-  })
-})
+  });
+});

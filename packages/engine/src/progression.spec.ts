@@ -5,7 +5,7 @@
  * 这份用例钉的是**口径**,不是某份内容的数字:换题材会换掉表里的数,但"相邻格的倍数"
  * "跨界不混进最大跳变""玩家/内容 ≥ 阈值才算碾"这些算法不该跟着变。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { attributeDefs } from './attributes.js'
 import { defineGame } from './config.js'
 import { compareProgression, createProgressionAudit } from './progression.js'

@@ -19,7 +19,7 @@
  *   四 **存档往返**:编码再解码之后的状态逐字段相同(存档不挑题材);
  *   五 **同种子可复现**:三份包各自再跑一遍,逐字段一致 —— 换内容不该带来"随机的样子不一样"。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { defineGame, type Game, type GameConfig } from './config.js'
 import { createRng } from './rng.js'
 import { createResourceSystem, type Ledger } from './resources.js'

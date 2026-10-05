@@ -415,6 +415,8 @@ export interface GearAsymmetry {
 export function gearAsymmetry(): GearAsymmetry {
   const low = QUALITIES[qualityQuantileAt(1, 0.5)]!
   const high = QUALITIES[qualityQuantileAt(MORTAL_TIER_MAX, 0.5)]!
+  // 两枚极值是同一式子的两端:强化 0 叠(0 * 0.12)与满 10 叠(10 * 0.12),分式写真自明。
+  // oxlint-disable-next-line oxc/erasing-op
   const playerLow = Math.pow(low.mult, EQUIP_QUALITY_FLAT_EXP) * (1 + 0 * 0.12)
   const playerHigh = Math.pow(high.mult, EQUIP_QUALITY_FLAT_EXP) * (1 + 10 * 0.12)
   const enemyLow = enemyGearFactor(1)

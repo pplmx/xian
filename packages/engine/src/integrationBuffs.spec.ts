@@ -12,7 +12,7 @@
  *
  * 题材仍与修仙无关:一间"矿场",每小时出货,挂两小时,中间吃一瓶"专注"、投两点"产线"。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createBuffSystem } from './buffs.js'
 import { createPointPool } from './points.js'
 import { createTaskBoard } from './tasks.js'

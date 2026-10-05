@@ -15,7 +15,7 @@
  *   ③ **中性值少一个键就直接报错**:这是刻意的 —— 中性值靠猜会出现"没带伙伴反而更穷",
  *      所以"少写一个键"必须当场炸,而不是拿 0 当默认(0 对倍率是灾难性的)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createCompanionSystem } from './companions.js'
 
 const neutral = { exploreDurMult: 1, dangerMult: 1, dropLuck: 0, lossReduction: 0 }

@@ -14,7 +14,7 @@
  *   ③ **层级倍率是乘出来的**:`tierGrowth` 管底子,每条敌人自己的 `hpMult/atkMult/defMult`
  *      再乘上去 —— 高一级的敌人血厚一倍多,首领再乘一层,量出来才看得清"这一级难多少"。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import type { DungeonConfig } from './dungeons.js'
 import { createDungeonSystem, emptyProgress } from './dungeons.js'

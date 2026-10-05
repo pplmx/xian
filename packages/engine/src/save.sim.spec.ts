@@ -18,7 +18,7 @@
  *      这个数量级才是要不要压缩、要不要"只在变更时落盘"的依据(编解码可以换:
  *      `codec` 那一对就是留给压缩/加密的)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createResourceSystem } from './resources.js'
 import { defineSaveFormat, encodeSave, runMigrations } from './save.js'
 

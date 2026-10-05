@@ -12,7 +12,7 @@
  *   ③ **有地板**:`minDamageRatio` 默认 5%,所以"攻击远低于防御"也打得出伤害
  *      (实测攻 10 / 防 10000 时每击仍是 0.5),不会出现"永远打不动"的死局。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import type { Combatant } from './combat.js'
 import { createCombatEngine } from './combat.js'

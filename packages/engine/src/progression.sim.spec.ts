@@ -13,7 +13,7 @@
  *   ③ **碾压**:把区域表接成内容强度后,第一次碾压出现在哪一格、一共几格,
  *      以及阈值从 3 拧到 2 / 5 时结论怎么变(这一条最容易被误读成"内容没问题")。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { defineGame } from './config.js'
 import { dungeonContentPower } from './dungeons.js'
 import { compareProgression, createProgressionAudit } from './progression.js'

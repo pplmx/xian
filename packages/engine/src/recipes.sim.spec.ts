@@ -13,7 +13,7 @@
  *   ③ **没开炉与开炉失败在随机流上完全不同**:没开炉一颗骰子不掷(实测消耗 0),
  *      开炉则先掷成败(1 颗),成功了才掷双成(再 1 颗)—— 这条是"同种子可复现"的前提。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import type { Rng } from './rng.js'
 import { createRecipeRunner } from './recipes.js'

@@ -47,5 +47,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "packages/engine/src/**/*.ts"]
+  /*
+   * env.d.ts 显式收录:vp migrate 把「*.vue 模块 shim」写进了根目录 env.d.ts
+   * (oxlint 在 typeCheck 下按 tsconfig include 组程序,不收录就永远看不到这枚
+   * ambient 声明 → 对 ./App.vue 与 @/views/*.vue 报 TS2307 假阳性)。vue-tsc
+   * 原生解析 .vue 用不到它,这里是为 oxlint 的类型程序补齐同一份声明。
+   */
+  "include": ["env.d.ts", "src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "packages/engine/src/**/*.ts"]
 }

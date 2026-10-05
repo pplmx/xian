@@ -21,7 +21,7 @@
  *   · 经济体检的默认阈值 0.7 / 3 / 10(四档判词的分界)
  *   · 离线的默认效率(1)与"不设上限就不截"
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createAttributeSystem, type AttributeSystemConfig } from './attributes.js'
 import { defineGame, type GameConfig } from './config.js'
 import { createDungeonSystem } from './dungeons.js'

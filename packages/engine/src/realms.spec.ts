@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { RealmSystemConfig } from './realms.js'
 import { createRealmSystem } from './realms.js'
 import { createRng } from './rng.js'

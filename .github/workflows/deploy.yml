@@ -20,10 +20,13 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v7
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 设置 Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: latest
+          version: "1.0.0"
+          node-version: "22"
+          cache: true
+          run-install: false
       - name: 安装依赖
         run: bun install --frozen-lockfile
       - name: 静态检查 + 单元测试

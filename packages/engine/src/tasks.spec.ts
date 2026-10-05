@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { TaskBoardState } from './tasks.js'
 import { createTaskBoard } from './tasks.js'
 

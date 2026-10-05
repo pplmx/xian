@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { PointState } from './points.js'
 import { createPointPool } from './points.js'
 

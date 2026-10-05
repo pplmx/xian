@@ -14,7 +14,7 @@
  *   ③ **换期与结算各自幂等**:同一期再调一次 `rollover` 原样返回(心跳每次都问),
  *      已结算的任务再 `settle` 不会重复发 —— 两条路(自动结算 / 手动领取)共用同一份 `claimed`。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createTaskBoard } from './tasks.js'
 
 interface Persona {

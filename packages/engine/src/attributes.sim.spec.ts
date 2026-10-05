@@ -15,7 +15,7 @@
  *   ③ **软阈值是第二道防线**:会心率越过 75% 之后,每 +1% 只值 +0.5%
  *      —— 堆到 100% 也只有 87.5%,堆到 200% 是 137.5%(永远不会"必暴")。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createAttributeSystem } from './attributes.js'
 import type { Mods } from './attributes.js'
 

@@ -14,7 +14,7 @@
  *   ③ **同一件上不会撞名**:洗 200 次、每次若干条,同名重复出现 0 次(池子按已选 id 排除);
  *      且洗出来的数值覆盖 `min~max` 全区间,均值落在中点上(默认线性曲线)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import type { AffixRoll, QualityDef, SlotDef } from './equipment.js'
 import { createEquipmentSystem, generateTemplates } from './equipment.js'

@@ -13,7 +13,7 @@
  *      理论 32.3%)能推到顶档 —— 要推两层、三层就得掷中相应次数,成本是**乘起来**的;
  *   ③ **推进不可逆**:`advanceTo` 只增不减,"用过才算真懂"这条路由行为推开,不会因为卸载装备而掉档。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import { createCodex } from './codex.js'
 

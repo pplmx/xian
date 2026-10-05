@@ -14,7 +14,7 @@
  *   ③ **`force` 是"明知超载也要收"**:收进来之后 `count > capacity` 一直成立 ——
  *      它是给"邮件补发 / 回收站"这类场景用的,不是"悄悄多留几件"。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createHoldingSystem } from './holding.js'
 
 interface Gear {

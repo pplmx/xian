@@ -4,7 +4,7 @@
  * 这份用例同时是"换皮"这条主张的判据:仙侠包与星港包的**机制键完全一致**,
  * 名字没有一处相同,而两边都能算出等级、掉出装备、打完副本。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { defineGame } from '../config.js'
 import { emptyProgress } from '../dungeons.js'
 import { createRng } from '../rng.js'

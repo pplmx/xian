@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { deltaOf, deltaSince, snapshotOf } from './counters.js'
 
 describe('基准快照 —— 同一份计数器同时回答"生涯"与"这一段"', () => {

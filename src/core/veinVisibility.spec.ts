@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- 灵脉可见性契约,需要打印通道归属 */
+/* oxlint-disable no-console -- 灵脉可见性契约,需要打印通道归属 */
 /**
  * 灵脉可见性契约
  *
@@ -17,102 +17,109 @@
  *
  * 将来若新增第五条脉、或把某条脉挪去别的通道,这里会先红。
  */
-import { beforeEach, describe, expect, it } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { INSIGHT_DISCOUNT_PER_POINT, VEINS, type VeinDef, type VeinId } from '@/data/veins'
-import { useDongfuStore } from '@/stores/dongfu'
+import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { createPinia, setActivePinia } from "pinia";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { INSIGHT_DISCOUNT_PER_POINT, VEINS, type VeinDef, type VeinId } from "@/data/veins";
+import { useDongfuStore } from "@/stores/dongfu";
 
 /**
  * 不走 StatMods、另有专用通道的灵脉。
  * 键是脉 id,值是该通道在 store 上的 getter 名 —— 展示层必须逐个接上
  */
 const DEDICATED_CHANNELS: Readonly<Record<string, string>> = {
-  insight: 'insightDiscount'
-}
+  insight: "insightDiscount",
+};
 
 /** 一条脉是否有任何可观测通道(判据本体,便于故障注入) */
 function hasObservableChannel(def: VeinDef, channels: Readonly<Record<string, string>>): boolean {
-  return Object.keys(def.perPoint).length > 0 || def.id in channels
+  return Object.keys(def.perPoint).length > 0 || def.id in channels;
 }
 
 /** 去掉注释,免得注释里提一嘴就算「接上了」 */
 function stripComments(src: string): string {
   return src
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\/\/[^\n]*/g, '')
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/[^\n]*/g, "");
 }
 
 const CARD_SRC = stripComments(
-  readFileSync(resolve(__dirname, '../components/dongfu/VeinInvestCard.vue'), 'utf8')
-)
+  readFileSync(resolve(__dirname, "../components/dongfu/VeinInvestCard.vue"), "utf8"),
+);
 
-describe('灵脉可见性 · 通道归属', () => {
-  it('每条脉都有可观测通道,不存在「投了点什么都不变」的脉', () => {
-    console.log('\n灵脉        通道')
+describe("灵脉可见性 · 通道归属", () => {
+  it("每条脉都有可观测通道,不存在「投了点什么都不变」的脉", () => {
+    console.log("\n灵脉        通道");
     for (const def of VEINS) {
-      const via = Object.keys(def.perPoint).length > 0 ? `veinMods(${Object.keys(def.perPoint).join(',')})` : `专用 ${DEDICATED_CHANNELS[def.id]}`
-      console.log(`${def.name.padEnd(10)} ${via}`)
-      expect(hasObservableChannel(def, DEDICATED_CHANNELS), `${def.name} 没有任何可观测通道`).toBe(true)
+      const via =
+        Object.keys(def.perPoint).length > 0
+          ? `veinMods(${Object.keys(def.perPoint).join(",")})`
+          : `专用 ${DEDICATED_CHANNELS[def.id]}`;
+      console.log(`${def.name.padEnd(10)} ${via}`);
+      expect(hasObservableChannel(def, DEDICATED_CHANNELS), `${def.name} 没有任何可观测通道`).toBe(
+        true,
+      );
     }
-  })
+  });
 
-  it('故障注入:抽掉专用通道声明后,寒冥灵脉立刻判为不可观测', () => {
+  it("故障注入:抽掉专用通道声明后,寒冥灵脉立刻判为不可观测", () => {
     // 若不做这一步,上一条断言可能只是「恰好都为真」而非在起作用
-    const insight = VEINS.find(v => v.id === 'insight')!
-    expect(Object.keys(insight.perPoint).length).toBe(0)
-    expect(hasObservableChannel(insight, {})).toBe(false)
-    console.log('\n把 insight 从专用通道表里删掉 → 判为不可观测,判据确实是活的')
-  })
-})
+    const insight = VEINS.find((v) => v.id === "insight")!;
+    expect(Object.keys(insight.perPoint).length).toBe(0);
+    expect(hasObservableChannel(insight, {})).toBe(false);
+    console.log("\n把 insight 从专用通道表里删掉 → 判为不可观测,判据确实是活的");
+  });
+});
 
-describe('灵脉可见性 · 通道本身是活的', () => {
+describe("灵脉可见性 · 通道本身是活的", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-  })
+    setActivePinia(createPinia());
+  });
 
-  it('投悟道脉会推动 insightDiscount,且不进 veinMods', () => {
-    const dongfu = useDongfuStore()
-    expect(dongfu.insightDiscount).toBe(0)
+  it("投悟道脉会推动 insightDiscount,且不进 veinMods", () => {
+    const dongfu = useDongfuStore();
+    expect(dongfu.insightDiscount).toBe(0);
 
-    dongfu.veinPoints.insight = 30
-    expect(dongfu.insightDiscount).toBeCloseTo(30 * INSIGHT_DISCOUNT_PER_POINT, 10)
+    dongfu.veinPoints.insight = 30;
+    expect(dongfu.insightDiscount).toBeCloseTo(30 * INSIGHT_DISCOUNT_PER_POINT, 10);
     // 这正是问题的根源:它确实没有、也不该出现在 veinMods 里
-    expect(Object.keys(dongfu.veinMods)).toHaveLength(0)
-    console.log(`\n悟道脉 30 点 → insightDiscount ${(dongfu.insightDiscount * 100).toFixed(1)}%,veinMods 仍为空`)
-  })
+    expect(Object.keys(dongfu.veinMods)).toHaveLength(0);
+    console.log(
+      `\n悟道脉 30 点 → insightDiscount ${(dongfu.insightDiscount * 100).toFixed(1)}%,veinMods 仍为空`,
+    );
+  });
 
-  it('走 veinMods 的脉照旧进 veinMods', () => {
-    const dongfu = useDongfuStore()
-    dongfu.veinPoints.gather = 30
-    expect(dongfu.veinMods.cultivationSpeed).toBeGreaterThan(0)
-  })
-})
+  it("走 veinMods 的脉照旧进 veinMods", () => {
+    const dongfu = useDongfuStore();
+    dongfu.veinPoints.gather = 30;
+    expect(dongfu.veinMods.cultivationSpeed).toBeGreaterThan(0);
+  });
+});
 
-describe('灵脉可见性 · 展示层覆盖全部通道', () => {
-  it('卡片的加成展示同时读取 veinMods 与每一条专用通道', () => {
-    expect(CARD_SRC).toContain('veinMods')
+describe("灵脉可见性 · 展示层覆盖全部通道", () => {
+  it("卡片的加成展示同时读取 veinMods 与每一条专用通道", () => {
+    expect(CARD_SRC).toContain("veinMods");
     for (const [veinId, getter] of Object.entries(DEDICATED_CHANNELS)) {
-      expect(CARD_SRC, `${veinId} 的通道 ${getter} 没有出现在卡片代码里`).toContain(getter)
+      expect(CARD_SRC, `${veinId} 的通道 ${getter} 没有出现在卡片代码里`).toContain(getter);
     }
-    console.log(`\n卡片已接入 veinMods + ${Object.values(DEDICATED_CHANNELS).join('、')}`)
-  })
+    console.log(`\n卡片已接入 veinMods + ${Object.values(DEDICATED_CHANNELS).join("、")}`);
+  });
 
-  it('每条脉的作用说明必须渲染出来,不能只显示名字和价格', () => {
+  it("每条脉的作用说明必须渲染出来,不能只显示名字和价格", () => {
     // 玩家反馈的另一半:「不知道寒冥灵脉的作用」。
     // veins.ts 里 desc 写好了,效果行收在 ui/veinText —— 页面此前从不渲染
-    expect(CARD_SRC, '卡片没有渲染灵脉的 desc').toMatch(/\.desc/)
-    expect(CARD_SRC, '卡片没有渲染灵脉的效果行').toMatch(/veinEffectText\(/)
+    expect(CARD_SRC, "卡片没有渲染灵脉的 desc").toMatch(/\.desc/);
+    expect(CARD_SRC, "卡片没有渲染灵脉的效果行").toMatch(/veinEffectText\(/);
     // 别让子串把我骗了:「effectText(」也是「veinEffectText(」的子串,得钉死是 UI 层那个
-    expect(CARD_SRC, '效果行该读 ui/veinText,不许改回读数据表闭包').not.toMatch(/v\.effectText\(/)
-  })
+    expect(CARD_SRC, "效果行该读 ui/veinText,不许改回读数据表闭包").not.toMatch(/v\.effectText\(/);
+  });
 
-  it('专用通道表与 veins.ts 保持同步:表里不能有已不存在的脉', () => {
-    const ids = new Set<VeinId>(VEINS.map(v => v.id))
+  it("专用通道表与 veins.ts 保持同步:表里不能有已不存在的脉", () => {
+    const ids = new Set<VeinId>(VEINS.map((v) => v.id));
     for (const key of Object.keys(DEDICATED_CHANNELS)) {
-      expect(ids.has(key as VeinId), `专用通道表里的 ${key} 已不在 VEINS 中`).toBe(true)
+      expect(ids.has(key as VeinId), `专用通道表里的 ${key} 已不在 VEINS 中`).toBe(true);
     }
-  })
-})
+  });
+});

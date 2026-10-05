@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- 自检脚本的产出就是给人看的报告 */
+/* oxlint-disable no-console -- 自检脚本的产出就是给人看的报告 */
 /**
  * 离线自检 —— 「断网还能重开」这句承诺,真的兑现了吗
  *
@@ -19,111 +19,117 @@
  *   bunx playwright install chromium
  *   bun scripts/offline-check.mjs
  */
-import { chromium } from 'playwright'
-import { createServer } from 'node:http'
-import { cpSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { dirname, extname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { watchPageErrors } from './lib/pageErrors.mjs'
+import { chromium } from "playwright";
+import { createServer } from "node:http";
+import { cpSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, extname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { watchPageErrors } from "./lib/pageErrors.mjs";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const DIST = join(ROOT, 'dist')
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const DIST = join(ROOT, "dist");
 
-if (!existsSync(join(DIST, 'index.html'))) {
-  console.error('dist/index.html 不存在 —— 先跑 `bun run build`(自检量的是构建产物)')
-  process.exit(1)
+if (!existsSync(join(DIST, "index.html"))) {
+  console.error("dist/index.html 不存在 —— 先跑 `bun run build`(自检量的是构建产物)");
+  process.exit(1);
 }
 
 /** SW 的缓存版本号就是它唯一的"人工记得"的旋钮,从源码读,免得判据自己抄一份 */
-const CACHE_VERSION = /CACHE_VERSION\s*=\s*'([^']+)'/.exec(readFileSync(join(ROOT, 'public/sw.js'), 'utf8'))?.[1]
+const CACHE_VERSION = /CACHE_VERSION\s*=\s*'([^']+)'/.exec(
+  readFileSync(join(ROOT, "public/sw.js"), "utf8"),
+)?.[1];
 if (!CACHE_VERSION) {
-  console.error('从 public/sw.js 里读不到 CACHE_VERSION —— 判据无从下手')
-  process.exit(1)
+  console.error("从 public/sw.js 里读不到 CACHE_VERSION —— 判据无从下手");
+  process.exit(1);
 }
 
 const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.webmanifest': 'application/manifest+json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2',
-  '.mp3': 'audio/mpeg'
-}
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
+  ".mp3": "audio/mpeg",
+};
 
 /** 起一个够用的静态服务:根路径回 index.html,带扩展名的 404 就直接 404 */
 function serve(dir) {
   const server = createServer((req, res) => {
-    const url = decodeURIComponent((req.url || '/').split('?')[0])
-    const target = join(dir, url === '/' ? 'index.html' : url)
+    const url = decodeURIComponent((req.url || "/").split("?")[0]);
+    const target = join(dir, url === "/" ? "index.html" : url);
     if (!target.startsWith(dir) || !existsSync(target) || statSync(target).isDirectory()) {
       if (extname(url)) {
-        res.writeHead(404).end('not found')
-        return
+        res.writeHead(404).end("not found");
+        return;
       }
-      res.writeHead(200, { 'content-type': MIME['.html'] })
-      res.end(readFileSync(join(dir, 'index.html')))
-      return
+      res.writeHead(200, { "content-type": MIME[".html"] });
+      res.end(readFileSync(join(dir, "index.html")));
+      return;
     }
-    res.writeHead(200, { 'content-type': MIME[extname(target)] ?? 'application/octet-stream' })
-    res.end(readFileSync(target))
-  })
-  return new Promise(ok => server.listen(0, '127.0.0.1', () => ok(server)))
+    res.writeHead(200, { "content-type": MIME[extname(target)] ?? "application/octet-stream" });
+    res.end(readFileSync(target));
+  });
+  return new Promise((ok) => server.listen(0, "127.0.0.1", () => ok(server)));
 }
 
-const failures = []
-const pass = []
+const failures = [];
+const pass = [];
 
 // 用 dist 的副本:第四件事要改 index.html,不能动真产物
-const work = mkdtempSync(join(tmpdir(), 'offline-check-'))
-cpSync(DIST, work, { recursive: true })
+const work = mkdtempSync(join(tmpdir(), "offline-check-"));
+cpSync(DIST, work, { recursive: true });
 
-const server = await serve(work)
-const base = `http://127.0.0.1:${server.address().port}`
+const server = await serve(work);
+const base = `http://127.0.0.1:${server.address().port}`;
 
-const browser = await chromium.launch()
-const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
-const page = await context.newPage()
-const pageErrors = []
-watchPageErrors(page, pageErrors)
+const browser = await chromium.launch();
+const context = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  isMobile: true,
+  hasTouch: true,
+});
+const page = await context.newPage();
+const pageErrors = [];
+watchPageErrors(page, pageErrors);
 
 /** 应用真的起来了 —— 认"开始游戏"这扇门,不认某个 div 存不存在 */
 async function booted() {
   return page.evaluate(() => {
-    const text = document.body?.innerText || ''
-    const door = /开\s*始\s*游\s*戏/.test(text)
-    return { door, blank: text.trim().length === 0, swError: /离线且无缓存副本/.test(text) }
-  })
+    const text = document.body?.innerText || "";
+    const door = /开\s*始\s*游\s*戏/.test(text);
+    return { door, blank: text.trim().length === 0, swError: /离线且无缓存副本/.test(text) };
+  });
 }
 
 // ---- 一 首次联网访问:SW 接管 + 缓存落盘 ----
 // 先在同一个 origin 上种一份"老版本缓存",看 activate 会不会把它清掉
-await page.goto(`${base}/privacy.html`, { waitUntil: 'load' })
+await page.goto(`${base}/privacy.html`, { waitUntil: "load" });
 await page.evaluate(async () => {
-  const c = await caches.open('xuanshu-v0-stale')
-  await c.put('/stale-marker', new Response('old'))
-})
+  const c = await caches.open("xuanshu-v0-stale");
+  await c.put("/stale-marker", new Response("old"));
+});
 
-await page.goto(`${base}/`, { waitUntil: 'load' })
+await page.goto(`${base}/`, { waitUntil: "load" });
 const controlled = await page
   .evaluate(async () => {
-    await navigator.serviceWorker.ready
-    return !!navigator.serviceWorker.controller
+    await navigator.serviceWorker.ready;
+    return !!navigator.serviceWorker.controller;
   })
-  .catch(() => false)
+  .catch(() => false);
 
 // 首次加载时 SW 刚接管,页面本身可能还没被控制;刷新一次就该是它了
-if (!controlled) await page.reload({ waitUntil: 'load' })
-const afterReloadControlled = await page.evaluate(() => !!navigator.serviceWorker.controller)
+if (!controlled) await page.reload({ waitUntil: "load" });
+const afterReloadControlled = await page.evaluate(() => !!navigator.serviceWorker.controller);
 if (!afterReloadControlled) {
-  failures.push('SW 没能接管页面(navigator.serviceWorker.controller 为空)—— 没接管就没有离线')
+  failures.push("SW 没能接管页面(navigator.serviceWorker.controller 为空)—— 没接管就没有离线");
 } else {
-  pass.push('SW 已接管页面')
+  pass.push("SW 已接管页面");
 }
 
 /**
@@ -135,69 +141,83 @@ if (!afterReloadControlled) {
  * 判据不变(缓存里必须有导航页与带 hash 的产物),只是不再拿运气当判据
  * (与"坏档启动提示只活两秒多 → 轮询到它出现为止"同一条做法)。
  */
-let cachesNow = await page.evaluate(() => caches.keys())
+let cachesNow = await page.evaluate(() => caches.keys());
 for (let attempt = 0; attempt < 4; attempt += 1) {
-  const filled = await page.evaluate(async name => {
-    if (!(await caches.keys()).includes(name)) return 0
-    const c = await caches.open(name)
-    return (await c.keys()).length
-  }, CACHE_VERSION)
+  const filled = await page.evaluate(async (name) => {
+    if (!(await caches.keys()).includes(name)) return 0;
+    const c = await caches.open(name);
+    return (await c.keys()).length;
+  }, CACHE_VERSION);
   if (filled >= 3) {
     // 快路径:第一轮就量够了,直接 break —— 此时不能沿用循环外的旧快照,
     // 那是在 SW 异步接管/填充/清理完成前抓的,会自己变红(缓存其实健康)。
-    cachesNow = await page.evaluate(() => caches.keys())
-    break
+    cachesNow = await page.evaluate(() => caches.keys());
+    break;
   }
-  await page.reload({ waitUntil: 'load' })
-  await page.waitForTimeout(600)
-  cachesNow = await page.evaluate(() => caches.keys())
+  await page.reload({ waitUntil: "load" });
+  await page.waitForTimeout(600);
+  cachesNow = await page.evaluate(() => caches.keys());
 }
 
-if (!cachesNow.includes(CACHE_VERSION)) failures.push(`缓存里没有 ${CACHE_VERSION}(现为:${cachesNow.join('、') || '空'})`)
-else pass.push(`缓存分片 ${CACHE_VERSION} 已建立`)
-if (cachesNow.includes('xuanshu-v0-stale')) {
-  failures.push('activate 没有清理旧版本缓存(xuanshu-v0-stale 还在)—— 改 CACHE_VERSION 也甩不掉老页面')
+if (!cachesNow.includes(CACHE_VERSION))
+  failures.push(`缓存里没有 ${CACHE_VERSION}(现为:${cachesNow.join("、") || "空"})`);
+else pass.push(`缓存分片 ${CACHE_VERSION} 已建立`);
+if (cachesNow.includes("xuanshu-v0-stale")) {
+  failures.push(
+    "activate 没有清理旧版本缓存(xuanshu-v0-stale 还在)—— 改 CACHE_VERSION 也甩不掉老页面",
+  );
 } else {
-  pass.push('旧版本缓存已被 activate 清掉')
+  pass.push("旧版本缓存已被 activate 清掉");
 }
 
-const cachedCount = await page.evaluate(async name => {
-  const c = await caches.open(name)
-  return (await c.keys()).length
-}, CACHE_VERSION)
-if (cachedCount < 3) failures.push(`缓存里只有 ${cachedCount} 条(导航页 + 静态产物至少该有几条)—— 离线必然缺件`)
-else pass.push(`缓存里已备下 ${cachedCount} 份资源`)
+const cachedCount = await page.evaluate(async (name) => {
+  const c = await caches.open(name);
+  return (await c.keys()).length;
+}, CACHE_VERSION);
+if (cachedCount < 3)
+  failures.push(`缓存里只有 ${cachedCount} 条(导航页 + 静态产物至少该有几条)—— 离线必然缺件`);
+else pass.push(`缓存里已备下 ${cachedCount} 份资源`);
 
 // ---- 二 断网重载:玩家在飞机/地铁上要的那一下 ----
-await context.setOffline(true)
-await page.reload({ waitUntil: 'load' }).catch(() => {})
-await page.waitForTimeout(1500)
-const off = await booted()
-if (off.swError) failures.push('断网重载落到了 SW 的 503 兜底页(「离线且无缓存副本」)—— 缓存里缺导航页')
-else if (!off.door || off.blank) failures.push('断网重载之后应用没起来(白屏/没出现入口)—— 离线可重开这句承诺没兑现')
-else pass.push('断网重载:应用照常起得来')
-await context.setOffline(false)
+await context.setOffline(true);
+await page.reload({ waitUntil: "load" }).catch(() => {});
+await page.waitForTimeout(1500);
+const off = await booted();
+if (off.swError)
+  failures.push("断网重载落到了 SW 的 503 兜底页(「离线且无缓存副本」)—— 缓存里缺导航页");
+else if (!off.door || off.blank)
+  failures.push("断网重载之后应用没起来(白屏/没出现入口)—— 离线可重开这句承诺没兑现");
+else pass.push("断网重载:应用照常起得来");
+await context.setOffline(false);
 
 // ---- 三 发版接管:线上换了 index.html,玩家必须看到新的那份 ----
-const stamp = Date.now()
-const marker = `deploy-${stamp}`
-writeFileSync(join(work, 'index.html'), readFileSync(join(work, 'index.html'), 'utf8').replace('</head>', `<!-- ${marker} --></head>`))
-await page.reload({ waitUntil: 'load' })
-await page.waitForTimeout(800)
-const gotNew = await page.evaluate(m => document.documentElement.innerHTML.includes(m), marker)
-if (!gotNew) failures.push('线上换了 index.html,再次访问仍是旧页面 —— 导航请求没有走 network-first,玩家会被钉在旧版本')
-else pass.push('发版接管:导航请求拿到了新的 index.html')
+const stamp = Date.now();
+const marker = `deploy-${stamp}`;
+writeFileSync(
+  join(work, "index.html"),
+  readFileSync(join(work, "index.html"), "utf8").replace("</head>", `<!-- ${marker} --></head>`),
+);
+await page.reload({ waitUntil: "load" });
+await page.waitForTimeout(800);
+const gotNew = await page.evaluate((m) => document.documentElement.innerHTML.includes(m), marker);
+if (!gotNew)
+  failures.push(
+    "线上换了 index.html,再次访问仍是旧页面 —— 导航请求没有走 network-first,玩家会被钉在旧版本",
+  );
+else pass.push("发版接管:导航请求拿到了新的 index.html");
 
-if (pageErrors.length) failures.push(`离线自检页面异常:${[...new Set(pageErrors)].join(' | ')}`)
+if (pageErrors.length) failures.push(`离线自检页面异常:${[...new Set(pageErrors)].join(" | ")}`);
 
-await browser.close()
-server.close()
+await browser.close();
+server.close();
 
-console.log('\n离线自检(Service Worker · localhost)')
-for (const p of pass) console.log(`✓ ${p}`)
+console.log("\n离线自检(Service Worker · localhost)");
+for (const p of pass) console.log(`✓ ${p}`);
 if (failures.length === 0) {
-  console.log('✓ 断网可重开、旧缓存会被清、发版能接管 —— 四件事都认结果(与联网时表现一致:不发任何外部请求)')
+  console.log(
+    "✓ 断网可重开、旧缓存会被清、发版能接管 —— 四件事都认结果(与联网时表现一致:不发任何外部请求)",
+  );
 } else {
-  for (const f of failures) console.log(`✗ ${f}`)
-  process.exitCode = 1
+  for (const f of failures) console.log(`✗ ${f}`);
+  process.exitCode = 1;
 }

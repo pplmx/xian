@@ -15,7 +15,7 @@
  *   ③ **累加器让粒度无关**:按小时 / 10 分钟 / 1 分钟各结算一天,总量与余量**完全一致**
  *      (24 小时都是 38 件 + 余 0.4 件),这条是"零头不丢"最硬的判据。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { accrue, createFacilitySystem } from './facilities.js'
 
 const HOUR = 3600

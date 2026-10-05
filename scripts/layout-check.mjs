@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- 自检脚本的产出就是给人看的报告 */
+/* oxlint-disable no-console -- 自检脚本的产出就是给人看的报告 */
 /**
  * 排版自检 —— 手机尺寸下逐页量一遍「有没有横向溢出」
  *
@@ -102,56 +102,58 @@
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
  * 仍需真机确认,故本脚本过绿不等于真机过绿。
  */
-import { chromium } from 'playwright'
-import { blockExternal, watchPageErrors } from './lib/pageErrors.mjs'
-import CryptoJS from 'crypto-js'
-import { mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { chromium } from "playwright";
+import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
+import CryptoJS from "crypto-js";
+import { mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const INDEX = `file://${join(ROOT, 'dist/index.html')}`
-const SHOTS_DIR = '/tmp/layout-shots'
-const SHOTS = process.argv.includes('--shots')
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const INDEX = `file://${join(ROOT, "dist/index.html")}`;
+const SHOTS_DIR = "/tmp/layout-shots";
+const SHOTS = process.argv.includes("--shots");
 
 const VIEWPORTS = [
   // 390×844 = iPhone 12/13/14/15 的标称宽度,当下最常见的一档;
   // 375/320 是旧机型与极窄档。三档一起量,免得只守住了其中一档。
   // dpr 只影响截图栅格化(1px 边框、字体抗锯齿),不影响 CSS 布局与判据 ——
   // 但 --shots 存下来的图因此更接近真机看到的密度,便于人眼复核。
-  { width: 390, height: 844, tag: '390', dpr: 3 },
-  { width: 375, height: 812, tag: '375', dpr: 3 },
-  { width: 320, height: 568, tag: '320', dpr: 2 },
+  { width: 390, height: 844, tag: "390", dpr: 3 },
+  { width: 375, height: 812, tag: "375", dpr: 3 },
+  { width: 320, height: 568, tag: "320", dpr: 2 },
   // 两档「不是手机竖屏」的设备。它们各自暴露过一类毛病,故各占一档:
   //   横屏 844×390 —— 上下两栏吃掉 22% 的高度(改前 26%),而宽度只用掉一半;
   //   桌面 1280×800 —— 窄栏顶天立地;不在大屏上收成一册,它就只是一条带子。
   // 安卓壳与桌面客户端都能转到这两档;PWA manifest 锁了竖屏,浏览器里随意缩窗。
-  { width: 844, height: 390, tag: '844x390', dpr: 2 },
-  { width: 1280, height: 800, tag: '1280x800', dpr: 1 }
-]
+  { width: 844, height: 390, tag: "844x390", dpr: 2 },
+  { width: 1280, height: 800, tag: "1280x800", dpr: 1 },
+];
 /**
  * 全量路由 —— 从前只巡八页,于是设置页与收藏页的排版与选中态从未被量过。
  * 页面各有各的布局风险,漏一页等于那一页没有守卫(加进来只多几秒)。
  */
 const ROUTES = [
-  '/',
-  '/cultivation',
-  '/adventure',
-  '/inventory',
-  '/character',
-  '/codex',
-  '/souls',
-  '/titles',
-  '/settings',
-  '/build',
-  '/collection',
-  '/legacy',
-  '/dongfu',
-  '/world',
-  '/celestial'
-]
+  "/",
+  "/cultivation",
+  "/adventure",
+  "/inventory",
+  "/character",
+  "/codex",
+  "/souls",
+  "/titles",
+  "/settings",
+  "/build",
+  "/collection",
+  "/legacy",
+  "/dongfu",
+  "/world",
+  "/celestial",
+];
 
-const browser = await chromium.launch({ args: ['--allow-file-access-from-files', '--disable-web-security'] })
+const browser = await chromium.launch({
+  args: ["--allow-file-access-from-files", "--disable-web-security"],
+});
 
 /**
  * 建"我们自己的"上下文 —— **外域请求一律拦掉**。
@@ -162,26 +164,26 @@ const browser = await chromium.launch({ args: ['--allow-file-access-from-files',
  * 现在那个脚本已经删掉(不接入任何第三方),这条拦截反过来成了「零外部请求」的量尺。
  * 挂在 context 上,该上下文里**所有**页面(含后续新建的)自动覆盖。
  */
-const blockedGetters = []
+const blockedGetters = [];
 async function auditContext(options) {
-  const ctx = await browser.newContext(options)
-  blockedGetters.push(await blockExternal(ctx))
-  return ctx
+  const ctx = await browser.newContext(options);
+  blockedGetters.push(await blockExternal(ctx));
+  return ctx;
 }
-const blockedTotal = () => blockedGetters.reduce((n, get) => n + get(), 0)
-const failures = []
+const blockedTotal = () => blockedGetters.reduce((n, get) => n + get(), 0);
+const failures = [];
 /** 正文对比度不足的读数(与排版问题分开攒,报告里单列一条) */
-const contrastFails = []
+const contrastFails = [];
 /** 200% 缩放档上溢出的读数 */
-const zoomFails = []
+const zoomFails = [];
 /** 渐变/图片底上采样像素量出来的对比度不足 */
-const pixelContrastFails = []
-let checked = 0
+const pixelContrastFails = [];
+let checked = 0;
 /** 量到过多少个 data-value-row —— 用来防这条判据"空转"(契约被删掉后依然全绿)。 */
-let valueRowsSeen = 0
+let valueRowsSeen = 0;
 /** 200% 缩放档量过几页、采样像素量过几处字 —— 同样防判据空转 */
-let zoomSeen = 0
-let pixelTextsSeen = 0
+let zoomSeen = 0;
+let pixelTextsSeen = 0;
 /** 拦掉的外域请求数 —— 打印出来,顺带证明这条拦截是活的 */
 // 外域请求拦截:计数在 context 层累积,收尾打印(见 auditContext)
 
@@ -195,28 +197,35 @@ let pixelTextsSeen = 0
  */
 async function auditModalControls(page) {
   return page.evaluate(() => {
-    const panel = document.querySelector('.modal-panel')
-    if (!panel) return null
-    const rows = [...panel.querySelectorAll('button, a, [role=button]')]
-      .map(el => {
-        const r = el.getBoundingClientRect()
-        const declared = parseFloat(getComputedStyle(el).minHeight)
+    const panel = document.querySelector(".modal-panel");
+    if (!panel) return null;
+    const rows = [...panel.querySelectorAll("button, a, [role=button]")]
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        const declared = parseFloat(getComputedStyle(el).minHeight);
         return {
-          name: (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 14),
+          name: (el.getAttribute("aria-label") || el.textContent || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .slice(0, 14),
           h: Math.round(r.height * 10) / 10,
           // 与巡页那条同一把尺子:声明的 min-height 到了 28 的,给半像素容差(见第四十三条)
-          ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5)
-        }
+          ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5),
+        };
       })
-      .filter(r => r.h > 0)
+      .filter((r) => r.h > 0);
     return {
       count: rows.length,
       // 对话框自己也得有个名字:读屏遇到 role=dialog 要念得出是哪一扇
-      label: (panel.getAttribute('aria-label') || panel.querySelector('h3')?.textContent || '').trim(),
-      unnamed: rows.filter(r => !r.name).map(r => `${r.h}px`),
-      small: rows.filter(r => !r.ok).map(r => `${r.h}px «${r.name || '无名'}»`)
-    }
-  })
+      label: (
+        panel.getAttribute("aria-label") ||
+        panel.querySelector("h3")?.textContent ||
+        ""
+      ).trim(),
+      unnamed: rows.filter((r) => !r.name).map((r) => `${r.h}px`),
+      small: rows.filter((r) => !r.ok).map((r) => `${r.h}px «${r.name || "无名"}»`),
+    };
+  });
 }
 
 /**
@@ -228,9 +237,9 @@ async function auditModalControls(page) {
  */
 async function clearOverlays(page) {
   await page.evaluate(() => {
-    for (const b of document.querySelectorAll('.pointer-events-none.fixed button')) b.click()
-    Math.random = () => 1
-  })
+    for (const b of document.querySelectorAll(".pointer-events-none.fixed button")) b.click();
+    Math.random = () => 1;
+  });
   /*
    * 关掉**已经浮起来**的浮层,并且等够一轮。
    *
@@ -240,24 +249,28 @@ async function clearOverlays(page) {
    * 有窗就按 Esc 收掉,没窗就等着 —— 反正随机源已钉死,等到的只会是**之前那一扇**。
    */
   for (let i = 0; i < 6; i += 1) {
-    if ((await page.locator('.modal-panel').count()) > 0) await page.keyboard.press('Escape')
-    await page.waitForTimeout(350)
+    if ((await page.locator(".modal-panel").count()) > 0) await page.keyboard.press("Escape");
+    await page.waitForTimeout(350);
   }
-  return page.evaluate(() => [...document.querySelectorAll('.modal-panel')].map(p => (p.querySelector('h3')?.textContent || p.getAttribute('aria-label') || '?').trim()))
+  return page.evaluate(() =>
+    [...document.querySelectorAll(".modal-panel")].map((p) =>
+      (p.querySelector("h3")?.textContent || p.getAttribute("aria-label") || "?").trim(),
+    ),
+  );
 }
 
 /** 把 formatGN 渲染出来的文本还原成数值(万/亿/兆…按 10^4 递进) */
 async function readFormatted(page, title) {
-  return page.evaluate(t => {
-    const el = document.querySelector(`[title="${t}"]`)
-    if (!el) return { text: `(找不到 ${t})`, value: null }
-    const text = (el.textContent || '').trim().replace(/,/g, '')
-    const UNITS = ['万', '亿', '兆', '京', '垓', '秭', '穰', '沟', '涧', '正', '载', '极']
-    const m = /([\d][\d]*(?:\.\d+)?)\s*(万|亿|兆|京|垓|秭|穰|沟|涧|正|载|极)?/.exec(text)
-    if (!m) return { text, value: null }
-    const unit = m[2] ? Math.pow(10, 4 * (UNITS.indexOf(m[2]) + 1)) : 1
-    return { text, value: parseFloat(m[1]) * unit }
-  }, title)
+  return page.evaluate((t) => {
+    const el = document.querySelector(`[title="${t}"]`);
+    if (!el) return { text: `(找不到 ${t})`, value: null };
+    const text = (el.textContent || "").trim().replace(/,/g, "");
+    const UNITS = ["万", "亿", "兆", "京", "垓", "秭", "穰", "沟", "涧", "正", "载", "极"];
+    const m = /([\d][\d]*(?:\.\d+)?)\s*(万|亿|兆|京|垓|秭|穰|沟|涧|正|载|极)?/.exec(text);
+    if (!m) return { text, value: null };
+    const unit = m[2] ? Math.pow(10, 4 * (UNITS.indexOf(m[2]) + 1)) : 1;
+    return { text, value: parseFloat(m[1]) * unit };
+  }, title);
 }
 
 /**
@@ -268,16 +281,16 @@ async function readFormatted(page, title) {
  */
 async function measurePage(page) {
   return page.evaluate(() => {
-    const vw = window.innerWidth
-    const overflows = [...document.querySelectorAll('body *')]
-      .filter(el => {
-        const r = el.getBoundingClientRect()
+    const vw = window.innerWidth;
+    const overflows = [...document.querySelectorAll("body *")]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
         // 越界=右缘冲出右界 或 左缘冲出左界(r.left < -1)。之前只查右缘:
         // 一个被推离**左**缘的块(负 left / -mx-*)只要右缘仍落在视口内,
         // scrollWidth 不涨、r.right 也不超,横向溢出判据整条失灵。
-        const rightOver = r.right > vw + 2
-        const leftOver = r.left < -1
-        if (r.width <= 0 || (!rightOver && !leftOver)) return false
+        const rightOver = r.right > vw + 2;
+        const leftOver = r.left < -1;
+        if (r.width <= 0 || (!rightOver && !leftOver)) return false;
         /*
          * 纯装饰层(墨爆 / 传送门 / 法球的三层旋转环)故意越过视口边缘,且不吃事件,不算排版事故。
          *
@@ -287,20 +300,20 @@ async function measurePage(page) {
          * —— 那是量法在抖,不是排版在坏(曾让 v1.34.0 的发版流水线红在 375px 首页上)。
          */
         for (let node = el; node; node = node.parentElement) {
-          if (getComputedStyle(node).pointerEvents === 'none') return false
+          if (getComputedStyle(node).pointerEvents === "none") return false;
         }
-        return true
+        return true;
       })
       .slice(0, 4)
-      .map(el => {
-        const r = el.getBoundingClientRect()
-        const side = r.left < -1 ? 'L' : r.right > vw + 2 ? 'R' : '?'
-        return `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]}@${side}${Math.round(r.left)}..${Math.round(r.right)}`
-      })
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        const side = r.left < -1 ? "L" : r.right > vw + 2 ? "R" : "?";
+        return `${el.tagName.toLowerCase()}.${String(el.className).split(" ")[0]}@${side}${Math.round(r.left)}..${Math.round(r.right)}`;
+      });
     return {
       hash: location.hash,
       /** 这一页上有几个"主值行"(显式契约 data-value-row)—— 用于防空转 */
-      valueRowCount: document.querySelectorAll('[data-value-row]').length,
+      valueRowCount: document.querySelectorAll("[data-value-row]").length,
       horizontalOverflow: document.documentElement.scrollWidth > vw + 1,
       /**
        * 外壳(#app 的第一层)不能被滚偏,也不该有可滚的横向余量。
@@ -314,25 +327,28 @@ async function measurePage(page) {
        * 故这里直接量外壳自己:scrollLeft 必须为 0,且不该有横向可滚区间。
        */
       shellShift: (() => {
-        const shell = document.getElementById('app')?.firstElementChild
-        if (!shell) return null
-        return { scrollLeft: Math.round(shell.scrollLeft), overflowX: Math.round(shell.scrollWidth - shell.clientWidth) }
+        const shell = document.getElementById("app")?.firstElementChild;
+        if (!shell) return null;
+        return {
+          scrollLeft: Math.round(shell.scrollLeft),
+          overflowX: Math.round(shell.scrollWidth - shell.clientWidth),
+        };
       })(),
       overflows,
-      navItems: document.querySelectorAll('nav button, nav a').length,
+      navItems: document.querySelectorAll("nav button, nav a").length,
       /**
        * 只有图标的控件必须自带可访问名(aria-label / 可见文字)。
        * 没有名字,读屏只会念「按钮」「链接」,自动化也无从按名字点它。
        */
-      unnamed: [...document.querySelectorAll('button, a, [role=button]')]
-        .filter(el => {
-          const name = (el.getAttribute('aria-label') || el.textContent || '').trim()
-          if (name) return false
-          const r = el.getBoundingClientRect()
-          return r.width > 0 && r.height > 0
+      unnamed: [...document.querySelectorAll("button, a, [role=button]")]
+        .filter((el) => {
+          const name = (el.getAttribute("aria-label") || el.textContent || "").trim();
+          if (name) return false;
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
         })
         .slice(0, 3)
-        .map(el => el.outerHTML.slice(0, 80).replace(/\s+/g, ' ')),
+        .map((el) => el.outerHTML.slice(0, 80).replace(/\s+/g, " ")),
       /**
        * 可点元素的高度下限 28px —— 拇指点得着的最起码尺寸。
        * 实测(带装备的后期档,375/320 两档):修前有 47 个不足 24px、26 个不足 28px,
@@ -344,17 +360,20 @@ async function measurePage(page) {
        *   一 声明的 min-height 到了 28px 的,盒子在 27.5px 以上就不判(那是渲染精度);
        *   二 报数带一位小数,不再四舍五入到与被测下限同值。
        */
-      smallTargets: [...document.querySelectorAll('button, a, [role=button]')]
-        .map(el => {
-          const r = el.getBoundingClientRect()
-          const declared = parseFloat(getComputedStyle(el).minHeight)
-          return { el, r, declared: Number.isFinite(declared) ? declared : 0 }
+      smallTargets: [...document.querySelectorAll("button, a, [role=button]")]
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          const declared = parseFloat(getComputedStyle(el).minHeight);
+          return { el, r, declared: Number.isFinite(declared) ? declared : 0 };
         })
-        .filter(({ r, declared }) => r.width > 0 && r.height > 0 && r.height < 28 && !(declared >= 28 && r.height >= 27.5))
+        .filter(
+          ({ r, declared }) =>
+            r.width > 0 && r.height > 0 && r.height < 28 && !(declared >= 28 && r.height >= 27.5),
+        )
         .slice(0, 3)
         .map(
           ({ el, r, declared }) =>
-            `${r.height.toFixed(1)}px(声明 ${declared || '—'}px)«${(el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 12)}»`
+            `${r.height.toFixed(1)}px(声明 ${declared || "—"}px)«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}»`,
         ),
       /**
        * 禁用按钮上的字也得读得出来。
@@ -363,57 +382,63 @@ async function measurePage(page) {
        * 而它此前用最淡的 ink-ghost 打底 + 75% 白字 —— 实测对比度 1.79:1,
        * 在手机上基本看不见。这里量的是**算出来的**前景/背景对比度(两条都是不透明色)。
        */
-      dimDisabled: [...document.querySelectorAll('.btn-seal:disabled, .btn-ghost:disabled')]
-        .map(el => {
-          const cs = getComputedStyle(el)
-          const lum = c => {
-            if (!c) return null
-            const f = v => {
-              const s = v / 255
-              return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
-            }
-            return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2])
-          }
+      dimDisabled: [...document.querySelectorAll(".btn-seal:disabled, .btn-ghost:disabled")]
+        .map((el) => {
+          const cs = getComputedStyle(el);
+          const lum = (c) => {
+            if (!c) return null;
+            const f = (v) => {
+              const s = v / 255;
+              return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+          };
           /**
            * 把一层层半透明底色**合成**成实际看到的颜色。
            *
            * .btn-ghost:disabled 的底是 rgb(ink / 0.04),只看这一层的 RGB 会当成纯黑,
            * 于是浅字对它算出 2.46:1 的假红。真实观感是「卡片色 + 4% 墨」,约 4:1。
            */
-          const parse = c => {
-            const m = /rgba?\(([^)]+)\)/.exec(c)
-            if (!m) return null
-            const p = m[1].split(/[,\s/]+/).filter(Boolean).map(Number)
-            if (p.length < 3) return null
-            return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 }
-          }
-          const paintOf = start => {
-            const layers = []
-            let n = start
+          const parse = (c) => {
+            const m = /rgba?\(([^)]+)\)/.exec(c);
+            if (!m) return null;
+            const p = m[1]
+              .split(/[,\s/]+/)
+              .filter(Boolean)
+              .map(Number);
+            if (p.length < 3) return null;
+            return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 };
+          };
+          const paintOf = (start) => {
+            const layers = [];
+            let n = start;
             while (n) {
-              const c = parse(getComputedStyle(n).backgroundColor)
+              const c = parse(getComputedStyle(n).backgroundColor);
               if (c && c.a > 0) {
-                layers.push(c)
-                if (c.a >= 0.999) break
+                layers.push(c);
+                if (c.a >= 0.999) break;
               }
-              n = n.parentElement
+              n = n.parentElement;
             }
-            let base = [255, 255, 255]
+            let base = [255, 255, 255];
             for (let i = layers.length - 1; i >= 0; i -= 1) {
-              const { rgb, a } = layers[i]
-              base = [0, 1, 2].map(k => rgb[k] * a + base[k] * (1 - a))
+              const { rgb, a } = layers[i];
+              base = [0, 1, 2].map((k) => rgb[k] * a + base[k] * (1 - a));
             }
-            return base
-          }
-          const lf = lum(parse(cs.color)?.rgb ?? null)
-          const lb = lum(paintOf(el))
-          if (lf === null || lb === null) return null
-          const ratio = (Math.max(lf, lb) + 0.05) / (Math.min(lf, lb) + 0.05)
-          return { ratio: Math.round(ratio * 100) / 100, text: (el.textContent || '').trim().slice(0, 12) }
+            return base;
+          };
+          const lf = lum(parse(cs.color)?.rgb ?? null);
+          const lb = lum(paintOf(el));
+          if (lf === null || lb === null) return null;
+          const ratio = (Math.max(lf, lb) + 0.05) / (Math.min(lf, lb) + 0.05);
+          return {
+            ratio: Math.round(ratio * 100) / 100,
+            text: (el.textContent || "").trim().slice(0, 12),
+          };
         })
-        .filter(x => x && x.ratio < 3)
+        .filter((x) => x && x.ratio < 3)
         .slice(0, 3)
-        .map(x => `${x.ratio}:1 «${x.text}»`),
+        .map((x) => `${x.ratio}:1 «${x.text}»`),
       /**
        * 顶栏里的字都只能占一行。
        *
@@ -421,12 +446,15 @@ async function measurePage(page) {
        * 看着就像乱码,顶栏还从 46px 涨到 58px。故逐格量高:超过一行(≈24px)就是又折了。
        */
       headerTall: (() => {
-        const header = document.querySelector('header')
-        if (!header) return []
-        return [...header.querySelectorAll('span, p')]
-          .filter(el => el.getBoundingClientRect().height > 24)
+        const header = document.querySelector("header");
+        if (!header) return [];
+        return [...header.querySelectorAll("span, p")]
+          .filter((el) => el.getBoundingClientRect().height > 24)
           .slice(0, 3)
-          .map(el => `${Math.round(el.getBoundingClientRect().height)}px «${(el.textContent || '').trim().slice(0, 10)}»`)
+          .map(
+            (el) =>
+              `${Math.round(el.getBoundingClientRect().height)}px «${(el.textContent || "").trim().slice(0, 10)}»`,
+          );
       })(),
       /**
        * 第三十九道:**主值行不许折行**(显式契约:`data-value-row`)。
@@ -441,23 +469,23 @@ async function measurePage(page) {
        * 去重 top;块元素按高 ÷ 行高)—— 超过一行就是"次要读数把主行挤折了"。
        */
       valueRows: (() => {
-        const out = []
-        for (const row of document.querySelectorAll('[data-value-row]')) {
-          const blocks = [...row.children].filter(el => (el.textContent || '').trim().length > 0)
-          const last = blocks[blocks.length - 1]
-          if (!last) continue
-          const style = getComputedStyle(last)
-          const lineHeight = parseFloat(style.lineHeight) || 16
-          const rects = [...last.getClientRects()]
+        const out = [];
+        for (const row of document.querySelectorAll("[data-value-row]")) {
+          const blocks = [...row.children].filter((el) => (el.textContent || "").trim().length > 0);
+          const last = blocks[blocks.length - 1];
+          if (!last) continue;
+          const style = getComputedStyle(last);
+          const lineHeight = parseFloat(style.lineHeight) || 16;
+          const rects = [...last.getClientRects()];
           const lines =
-            style.display === 'inline' || style.display === 'inline-block'
-              ? new Set(rects.map(r => Math.round(r.top))).size
-              : Math.max(1, Math.round(last.getBoundingClientRect().height / lineHeight))
+            style.display === "inline" || style.display === "inline-block"
+              ? new Set(rects.map((r) => Math.round(r.top))).size
+              : Math.max(1, Math.round(last.getBoundingClientRect().height / lineHeight));
           if (lines > 1) {
-            out.push(`${lines} 行 «${(last.textContent || '').trim().slice(0, 14)}»`)
+            out.push(`${lines} 行 «${(last.textContent || "").trim().slice(0, 14)}»`);
           }
         }
-        return out.slice(0, 3)
+        return out.slice(0, 3);
       })(),
       /**
        * 地界卡不许把名字挤成竖排,也不许让操作块压到名字那一行。
@@ -467,27 +495,27 @@ async function measurePage(page) {
        * 故直接量两块元素的位置关系(名字高度 + 头部与操作块是否相交)。
        */
       regionCards: (() => {
-        const tall = []
-        const overlap = []
-        for (const card of document.querySelectorAll('[data-region-card]')) {
-          const name = card.querySelector('[data-region-name]')
-          const label = (name?.textContent || '').trim()
+        const tall = [];
+        const overlap = [];
+        for (const card of document.querySelectorAll("[data-region-card]")) {
+          const name = card.querySelector("[data-region-name]");
+          const label = (name?.textContent || "").trim();
           if (name) {
-            const h = Math.round(name.getBoundingClientRect().height)
+            const h = Math.round(name.getBoundingClientRect().height);
             // 15px 楷体单行约 22px;超过 30px 就是折行了(竖排四行能到 88px)
-            if (h > 30) tall.push(`${h}px «${label}»`)
+            if (h > 30) tall.push(`${h}px «${label}»`);
           }
-          const head = card.querySelector('[data-region-head]')
-          if (!head) continue
-          const a = head.getBoundingClientRect()
-          for (const act of card.querySelectorAll('[data-region-action]')) {
-            const b = act.getBoundingClientRect()
+          const head = card.querySelector("[data-region-head]");
+          if (!head) continue;
+          const a = head.getBoundingClientRect();
+          for (const act of card.querySelectorAll("[data-region-action]")) {
+            const b = act.getBoundingClientRect();
             if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) {
-              overlap.push(`«${label}» 与操作块重叠`)
+              overlap.push(`«${label}» 与操作块重叠`);
             }
           }
         }
-        return { tall: tall.slice(0, 3), overlap: overlap.slice(0, 3) }
+        return { tall: tall.slice(0, 3), overlap: overlap.slice(0, 3) };
       })(),
       /**
        * 通用挤压判据之一:**被挤成竖排的文字**。
@@ -496,18 +524,21 @@ async function measurePage(page) {
        * 于是「青云山麓」一字一行 —— 卡片并没有溢出,横向溢出查不出来。
        * 判据取「宽度 < 40px 且折成 3 行以上」:正常的排版不会出现这种盒子。
        */
-      verticalTexts: [...document.querySelectorAll('span, p, div, h1, h2, h3, button')]
-        .filter(el => {
-          const text = (el.textContent || '').trim()
-          if (text.length < 3) return false
-          if (el.querySelector('span, p, div, button, a')) return false // 只看最内层文字
-          const r = el.getBoundingClientRect()
-          if (r.width <= 0 || r.width >= 40) return false
-          const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 16
-          return r.height > lineHeight * 2.5
+      verticalTexts: [...document.querySelectorAll("span, p, div, h1, h2, h3, button")]
+        .filter((el) => {
+          const text = (el.textContent || "").trim();
+          if (text.length < 3) return false;
+          if (el.querySelector("span, p, div, button, a")) return false; // 只看最内层文字
+          const r = el.getBoundingClientRect();
+          if (r.width <= 0 || r.width >= 40) return false;
+          const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 16;
+          return r.height > lineHeight * 2.5;
         })
         .slice(0, 3)
-        .map(el => `${Math.round(el.getBoundingClientRect().width)}px 宽 «${(el.textContent || '').trim().slice(0, 10)}»`),
+        .map(
+          (el) =>
+            `${Math.round(el.getBoundingClientRect().width)}px 宽 «${(el.textContent || "").trim().slice(0, 10)}»`,
+        ),
       /**
        * 通用挤压判据之二:**数字与量词分家**。
        *
@@ -515,45 +546,45 @@ async function measurePage(page) {
        * 数与单位跨行看着像两个数。用 Range 逐字取矩形,量出「数字|量词」是否被换行拆开。
        */
       unitBreaks: (() => {
-        const UNITS = '石铁尘株张载年次件层场阶枚缕时日'
+        const UNITS = "石铁尘株张载年次件层场阶枚缕时日";
         const rectAt = (node, i) => {
-          const r = document.createRange()
-          r.setStart(node, i)
-          r.setEnd(node, i + 1)
-          const box = r.getBoundingClientRect()
-          return box.width > 0 || box.height > 0 ? box : null
-        }
-        const out = []
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
-        let node = walker.nextNode()
+          const r = document.createRange();
+          r.setStart(node, i);
+          r.setEnd(node, i + 1);
+          const box = r.getBoundingClientRect();
+          return box.width > 0 || box.height > 0 ? box : null;
+        };
+        const out = [];
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node = walker.nextNode();
         while (node && out.length < 3) {
-          const t = node.nodeValue || ''
+          const t = node.nodeValue || "";
           if (!/[\d,.][\s]*[石铁尘株张载年次件层场阶枚缕]/.test(t)) {
-            node = walker.nextNode()
-            continue
+            node = walker.nextNode();
+            continue;
           }
           // 只量**标签/代价**这类短文本(≤24 字):长句子里的正常换行不算事故,
           // 否则整页散文都会被卷进来,判据就没人看了
           if (t.trim().length > 24) {
-            node = walker.nextNode()
-            continue
+            node = walker.nextNode();
+            continue;
           }
           for (let i = 1; i < t.length; i += 1) {
-            const ch = t[i]
-            if (!UNITS.includes(ch)) continue
-            let j = i - 1
-            while (j >= 0 && /\s/.test(t[j])) j -= 1
-            if (j < 0 || !/[\d,.]/.test(t[j])) continue
-            const a = rectAt(node, j)
-            const b = rectAt(node, i)
+            const ch = t[i];
+            if (!UNITS.includes(ch)) continue;
+            let j = i - 1;
+            while (j >= 0 && /\s/.test(t[j])) j -= 1;
+            if (j < 0 || !/[\d,.]/.test(t[j])) continue;
+            const a = rectAt(node, j);
+            const b = rectAt(node, i);
             if (a && b && Math.abs(a.top - b.top) > 4) {
-              out.push(`«${t.trim().slice(0, 14)}»`)
-              break
+              out.push(`«${t.trim().slice(0, 14)}»`);
+              break;
             }
           }
-          node = walker.nextNode()
+          node = walker.nextNode();
         }
-        return out
+        return out;
       })(),
       /**
        * 通用挤压判据之三:**孤零零的标点**。
@@ -563,48 +594,50 @@ async function measurePage(page) {
        * 与同一父节点里其余文字不在同一行。
        */
       orphanPunctuation: (() => {
-        const out = []
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
-        let node = walker.nextNode()
+        const out = [];
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node = walker.nextNode();
         while (node && out.length < 3) {
-          const t = node.nodeValue || ''
-          const trimmed = t.trim()
+          const t = node.nodeValue || "";
+          const trimmed = t.trim();
           // 只认中文标点:半角「?」这类是占位符(未知装备就写着「?」),不是折行事故
           if (!/^[。、,]{1,2}$/.test(trimmed)) {
-            node = walker.nextNode()
-            continue
+            node = walker.nextNode();
+            continue;
           }
-          const parent = node.parentElement
+          const parent = node.parentElement;
           if (!parent) {
-            node = walker.nextNode()
-            continue
+            node = walker.nextNode();
+            continue;
           }
           // 父节点里必须还有别的文字 —— 整块内容只有标点(装饰)不算孤字
-          const siblings = [...parent.childNodes].filter(n => n !== node && n.nodeType === Node.TEXT_NODE && (n.nodeValue || '').trim())
+          const siblings = [...parent.childNodes].filter(
+            (n) => n !== node && n.nodeType === Node.TEXT_NODE && (n.nodeValue || "").trim(),
+          );
           if (siblings.length === 0) {
-            node = walker.nextNode()
-            continue
+            node = walker.nextNode();
+            continue;
           }
-          const r = document.createRange()
-          r.setStart(node, 0)
-          r.setEnd(node, t.length)
-          const box = r.getBoundingClientRect()
+          const r = document.createRange();
+          r.setStart(node, 0);
+          r.setEnd(node, t.length);
+          const box = r.getBoundingClientRect();
           if (box.width <= 0 && box.height <= 0) {
-            node = walker.nextNode()
-            continue
+            node = walker.nextNode();
+            continue;
           }
           // 同一父节点里,有没有别的文字落在同一行(±4px)
-          const alone = siblings.every(sn => {
-            const sr = document.createRange()
-            sr.setStart(sn, 0)
-            sr.setEnd(sn, (sn.nodeValue || '').length)
-            const sb = sr.getBoundingClientRect()
-            return Math.abs(sb.top - box.top) > 4
-          })
-          if (alone) out.push(`«${(parent.textContent || '').trim().slice(0, 16)}»`)
-          node = walker.nextNode()
+          const alone = siblings.every((sn) => {
+            const sr = document.createRange();
+            sr.setStart(sn, 0);
+            sr.setEnd(sn, (sn.nodeValue || "").length);
+            const sb = sr.getBoundingClientRect();
+            return Math.abs(sb.top - box.top) > 4;
+          });
+          if (alone) out.push(`«${(parent.textContent || "").trim().slice(0, 16)}»`);
+          node = walker.nextNode();
         }
-        return out
+        return out;
       })(),
       /**
        * 选择型控件的选中态要对机器可读,且**每组恰有一个**。
@@ -613,38 +646,39 @@ async function measurePage(page) {
        * (上一轮补了 aria-label/aria-pressed,这里把「恰好一个」钉住)。
        */
       badGroups: (() => {
-        const out = []
-        for (const attr of ['aria-pressed', 'aria-selected']) {
-          const byParent = new Map()
+        const out = [];
+        for (const attr of ["aria-pressed", "aria-selected"]) {
+          const byParent = new Map();
           for (const el of document.querySelectorAll(`[${attr}]`)) {
-            const parent = el.parentElement
-            if (!parent) continue
-            byParent.set(parent, [...(byParent.get(parent) ?? []), el])
+            const parent = el.parentElement;
+            if (!parent) continue;
+            byParent.set(parent, [...(byParent.get(parent) ?? []), el]);
           }
           for (const [, els] of byParent) {
-            if (els.length < 2) continue
-            const on = els.filter(e => e.getAttribute(attr) === 'true').length
-            if (on !== 1) out.push(`${attr} 组(${els.length} 项)里有 ${on} 个选中`)
+            if (els.length < 2) continue;
+            const on = els.filter((e) => e.getAttribute(attr) === "true").length;
+            if (on !== 1) out.push(`${attr} 组(${els.length} 项)里有 ${on} 个选中`);
           }
         }
         // 页签:每一组(同一父容器下 ≥2 个 role=tab)恰有一个 aria-selected=true
-        const tabsByParent = new Map()
-        for (const el of document.querySelectorAll('[role=tab]')) {
-          const parent = el.parentElement
-          if (!parent) continue
-          tabsByParent.set(parent, [...(tabsByParent.get(parent) ?? []), el])
+        const tabsByParent = new Map();
+        for (const el of document.querySelectorAll("[role=tab]")) {
+          const parent = el.parentElement;
+          if (!parent) continue;
+          tabsByParent.set(parent, [...(tabsByParent.get(parent) ?? []), el]);
         }
         for (const [, els] of tabsByParent) {
-          if (els.length < 2) continue
-          const on = els.filter(e => e.getAttribute('aria-selected') === 'true').length
-          if (on !== 1) out.push(`页签组(${els.length} 项)里有 ${on} 个选中`)
+          if (els.length < 2) continue;
+          const on = els.filter((e) => e.getAttribute("aria-selected") === "true").length;
+          if (on !== 1) out.push(`页签组(${els.length} 项)里有 ${on} 个选中`);
         }
         // 设置页的两组选择(主题、战报速度)是明文约定:少了哪一组这里就红
-        if (location.hash.startsWith('#/settings')) {
-          const pressed = document.querySelectorAll('[aria-pressed]').length
-          if (pressed < 6) out.push(`设置页的选择控件只有 ${pressed} 个带 aria-pressed(主题 3 + 速度 3)`)
+        if (location.hash.startsWith("#/settings")) {
+          const pressed = document.querySelectorAll("[aria-pressed]").length;
+          if (pressed < 6)
+            out.push(`设置页的选择控件只有 ${pressed} 个带 aria-pressed(主题 3 + 速度 3)`);
         }
-        return out.slice(0, 3)
+        return out.slice(0, 3);
       })(),
       /**
        * 顶栏与底栏必须钉死 —— 滚一遍,两栏一步都不许动。
@@ -656,30 +690,30 @@ async function measurePage(page) {
        * 只能量它的**机制**:文档层有可滚余量,且滚窗口时两栏真的位移了。
        */
       railDrift: (() => {
-        const main = document.querySelector('main')
-        const header = document.querySelector('header')
-        const nav = document.querySelector('nav')
-        if (!main || !header || !nav) return null
-        const doc = document.documentElement
-        const windowOverflow = Math.round(doc.scrollHeight - doc.clientHeight)
+        const main = document.querySelector("main");
+        const header = document.querySelector("header");
+        const nav = document.querySelector("nav");
+        if (!main || !header || !nav) return null;
+        const doc = document.documentElement;
+        const windowOverflow = Math.round(doc.scrollHeight - doc.clientHeight);
         const at = () => ({
           top: Math.round(header.getBoundingClientRect().top),
-          bottom: Math.round(nav.getBoundingClientRect().bottom)
-        })
-        const before = at()
-        const back = window.scrollY
-        window.scrollTo(0, windowOverflow + 4000)
-        const after = at()
-        const moved = Math.round(window.scrollY - back)
-        window.scrollTo(0, back)
+          bottom: Math.round(nav.getBoundingClientRect().bottom),
+        });
+        const before = at();
+        const back = window.scrollY;
+        window.scrollTo(0, windowOverflow + 4000);
+        const after = at();
+        const moved = Math.round(window.scrollY - back);
+        window.scrollTo(0, back);
         return {
           windowOverflow,
           moved,
-          drift: Math.max(Math.abs(before.top - after.top), Math.abs(before.bottom - after.bottom))
-        }
-      })()
-    }
-  })
+          drift: Math.max(Math.abs(before.top - after.top), Math.abs(before.bottom - after.bottom)),
+        };
+      })(),
+    };
+  });
 }
 
 /**
@@ -698,90 +732,105 @@ async function measurePage(page) {
  * 浅色的字放上去才是最难的那一档,只量日间会漏。
  */
 async function measureTextContrast(page) {
-  const measure = async theme => {
-    await page.evaluate(t => {
-      document.documentElement.dataset.theme = t
-    }, theme)
-    await page.waitForTimeout(260) // 让 transition-colors 走完再量
+  const measure = async (theme) => {
+    await page.evaluate((t) => {
+      document.documentElement.dataset.theme = t;
+    }, theme);
+    await page.waitForTimeout(260); // 让 transition-colors 走完再量
     return page.evaluate(() => {
-      const parse = c => {
-        const m = /rgba?\(([^)]+)\)/.exec(c)
-        if (!m) return null
-        const p = m[1].split(/[,\s/]+/).filter(Boolean).map(Number)
-        if (p.length < 3) return null
-        return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 }
-      }
-      const f = v => {
-        const s = v / 255
-        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
-      }
-      const lum = c => (c === null ? null : 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]))
-      const over = (fg, bg) => [0, 1, 2].map(i => fg.rgb[i] * fg.a + bg[i] * (1 - fg.a))
+      const parse = (c) => {
+        const m = /rgba?\(([^)]+)\)/.exec(c);
+        if (!m) return null;
+        const p = m[1]
+          .split(/[,\s/]+/)
+          .filter(Boolean)
+          .map(Number);
+        if (p.length < 3) return null;
+        return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 };
+      };
+      const f = (v) => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      const lum = (c) =>
+        c === null ? null : 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+      const over = (fg, bg) => [0, 1, 2].map((i) => fg.rgb[i] * fg.a + bg[i] * (1 - fg.a));
       /** 这块字底下真正被涂的是什么颜色:自身向上合成,外加覆盖它的绝对定位层 */
       const paintUnder = (el, rect) => {
-        const layers = []
-        let node = el
+        const layers = [];
+        let node = el;
         while (node) {
           for (const sib of node.parentElement?.children ?? []) {
-            if (sib === node) continue
-            const scs = getComputedStyle(sib)
-            if ((scs.position !== 'absolute' && scs.position !== 'fixed') || scs.display === 'none') continue
-            const b = parse(scs.backgroundColor)
-            if (!b || b.a <= 0) continue
-            const r = sib.getBoundingClientRect()
-            if (r.left <= rect.left + 1 && r.right >= rect.right - 1 && r.top <= rect.top + 1 && r.bottom >= rect.bottom - 1) layers.push(b)
+            if (sib === node) continue;
+            const scs = getComputedStyle(sib);
+            if ((scs.position !== "absolute" && scs.position !== "fixed") || scs.display === "none")
+              continue;
+            const b = parse(scs.backgroundColor);
+            if (!b || b.a <= 0) continue;
+            const r = sib.getBoundingClientRect();
+            if (
+              r.left <= rect.left + 1 &&
+              r.right >= rect.right - 1 &&
+              r.top <= rect.top + 1 &&
+              r.bottom >= rect.bottom - 1
+            )
+              layers.push(b);
           }
-          const bg = parse(getComputedStyle(node).backgroundColor)
+          const bg = parse(getComputedStyle(node).backgroundColor);
           if (bg && bg.a > 0) {
-            layers.push(bg)
-            if (bg.a >= 0.999) break
+            layers.push(bg);
+            if (bg.a >= 0.999) break;
           }
-          node = node.parentElement
+          node = node.parentElement;
         }
-        let base = [255, 255, 255]
+        let base = [255, 255, 255];
         for (let i = layers.length - 1; i >= 0; i -= 1) {
-          const { rgb, a } = layers[i]
-          base = [0, 1, 2].map(k => rgb[k] * a + base[k] * (1 - a))
+          const { rgb, a } = layers[i];
+          base = [0, 1, 2].map((k) => rgb[k] * a + base[k] * (1 - a));
         }
-        return base
-      }
-      const out = []
-      for (const el of document.querySelectorAll('body *')) {
-        if (el.matches(':disabled') || el.closest('[aria-hidden="true"]')) continue
-        if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 1)) continue
-        const cs = getComputedStyle(el)
-        if (cs.visibility === 'hidden' || cs.display === 'none') continue
-        const r = el.getBoundingClientRect()
-        if (r.width < 2 || r.height < 2) continue
-        const fgRaw = parse(cs.color)
-        if (!fgRaw) continue
-        const base = paintUnder(el, r)
-        const fg = over(fgRaw, base)
-        const [hi, lo] = [lum(fg), lum(base)].sort((a, b) => b - a)
-        const ratio = (hi + 0.05) / (lo + 0.05)
-        const size = parseFloat(cs.fontSize)
-        const need = size >= 24 || (Number(cs.fontWeight) >= 700 && size >= 18.66) ? 3 : 4.5
+        return base;
+      };
+      const out = [];
+      for (const el of document.querySelectorAll("body *")) {
+        if (el.matches(":disabled") || el.closest('[aria-hidden="true"]')) continue;
+        if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1))
+          continue;
+        const cs = getComputedStyle(el);
+        if (cs.visibility === "hidden" || cs.display === "none") continue;
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) continue;
+        const fgRaw = parse(cs.color);
+        if (!fgRaw) continue;
+        const base = paintUnder(el, r);
+        const fg = over(fgRaw, base);
+        const [hi, lo] = [lum(fg), lum(base)].sort((a, b) => b - a);
+        const ratio = (hi + 0.05) / (lo + 0.05);
+        const size = parseFloat(cs.fontSize);
+        const need = size >= 24 || (Number(cs.fontWeight) >= 700 && size >= 18.66) ? 3 : 4.5;
         if (ratio < need) {
           out.push({
             ratio: Math.round(ratio * 100) / 100,
             need,
             size,
-            text: (el.textContent || '').trim().slice(0, 14),
+            text: (el.textContent || "").trim().slice(0, 14),
             color: cs.color,
-            cls: String(el.className).slice(0, 32)
-          })
+            cls: String(el.className).slice(0, 32),
+          });
         }
       }
-      return out.slice(0, 4)
-    })
-  }
-  const light = await measure('light')
-  const dark = await measure('dark')
+      return out.slice(0, 4);
+    });
+  };
+  const light = await measure("light");
+  const dark = await measure("dark");
   await page.evaluate(() => {
-    delete document.documentElement.dataset.theme
-  })
-  await page.waitForTimeout(260)
-  return [...light.map(x => ({ theme: '日间', ...x })), ...dark.map(x => ({ theme: '夜间', ...x }))]
+    delete document.documentElement.dataset.theme;
+  });
+  await page.waitForTimeout(260);
+  return [
+    ...light.map((x) => ({ theme: "日间", ...x })),
+    ...dark.map((x) => ({ theme: "夜间", ...x })),
+  ];
 }
 
 /**
@@ -794,30 +843,32 @@ async function measureTextContrast(page) {
  * 量完把视口还原(后面的巡页与 --shots 都按原尺寸走)。
  */
 async function measureZoomScale(page, vp) {
-  const width = Math.round(vp.width / 2)
-  const height = Math.round(vp.height / 2)
-  await page.setViewportSize({ width, height })
-  await page.waitForTimeout(420) // 让断点与 transition 走完再量
-  const info = await measurePage(page)
-  const innerWidth = await page.evaluate(() => window.innerWidth)
-  await page.setViewportSize({ width: vp.width, height: vp.height })
-  await page.waitForTimeout(260)
-  return { ...info, innerWidth }
+  const width = Math.round(vp.width / 2);
+  const height = Math.round(vp.height / 2);
+  await page.setViewportSize({ width, height });
+  await page.waitForTimeout(420); // 让断点与 transition 走完再量
+  const info = await measurePage(page);
+  const innerWidth = await page.evaluate(() => window.innerWidth);
+  await page.setViewportSize({ width: vp.width, height: vp.height });
+  await page.waitForTimeout(260);
+  return { ...info, innerWidth };
 }
 
 /** 缩放档的读数 → 失败清单(只判:溢出、外壳被滚偏、越界元素、主值行折行) */
 function zoomProblems(info, tag) {
-  const problems = []
+  const problems = [];
   if (info.innerWidth !== undefined && Math.abs(info.innerWidth * 2 - Number(tag)) > 2) {
-    problems.push(`缩放档没量在 200% 上(布局视口 ${info.innerWidth}px)`)
+    problems.push(`缩放档没量在 200% 上(布局视口 ${info.innerWidth}px)`);
   }
-  if (info.horizontalOverflow) problems.push(`横向溢出(scrollWidth ${info.hash})`)
+  if (info.horizontalOverflow) problems.push(`横向溢出(scrollWidth ${info.hash})`);
   if (info.shellShift && (info.shellShift.scrollLeft !== 0 || info.shellShift.overflowX > 1)) {
-    problems.push(`外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`)
+    problems.push(
+      `外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`,
+    );
   }
-  if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(', ')}`)
-  if (info.valueRows?.length) problems.push(`主值行在 200% 下折行:${info.valueRows.join(' | ')}`)
-  return problems
+  if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
+  if (info.valueRows?.length) problems.push(`主值行在 200% 下折行:${info.valueRows.join(" | ")}`);
+  return problems;
 }
 
 /**
@@ -838,12 +889,15 @@ function zoomProblems(info, tag) {
  */
 async function measurePixelContrast(page, sampler, dpr) {
   const targets = await page.evaluate(() => {
-    const parse = c => {
-      const m = /rgba?\(([^)]+)\)/.exec(c)
-      if (!m) return null
-      const p = m[1].split(/[,\s/]+/).filter(Boolean).map(Number)
-      return p.length < 3 ? null : { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 }
-    }
+    const parse = (c) => {
+      const m = /rgba?\(([^)]+)\)/.exec(c);
+      if (!m) return null;
+      const p = m[1]
+        .split(/[,\s/]+/)
+        .filter(Boolean)
+        .map(Number);
+      return p.length < 3 ? null : { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 };
+    };
     /**
      * 这块字的底沾没沾渐变/图片 —— 一路向上,直到撞上不透明的色层。
      *
@@ -855,167 +909,187 @@ async function measurePixelContrast(page, sampler, dpr) {
      */
     const gradientBase = (el, rect) => {
       for (let node = el; node; node = node.parentElement) {
-        const cs = getComputedStyle(node)
-        for (const pseudo of ['::before', '::after']) {
-          const ps = getComputedStyle(node, pseudo)
-          if (ps.content !== 'none' && ps.backgroundImage && ps.backgroundImage !== 'none') return true
+        const cs = getComputedStyle(node);
+        for (const pseudo of ["::before", "::after"]) {
+          const ps = getComputedStyle(node, pseudo);
+          if (ps.content !== "none" && ps.backgroundImage && ps.backgroundImage !== "none")
+            return true;
         }
-        if (cs.backgroundImage && cs.backgroundImage !== 'none') return true
+        if (cs.backgroundImage && cs.backgroundImage !== "none") return true;
         for (const sibling of node.parentElement?.children ?? []) {
-          if (sibling === node) continue
-          const scs = getComputedStyle(sibling)
-          if (scs.position !== 'absolute' && scs.position !== 'fixed') continue
-          if (scs.display === 'none' || !scs.backgroundImage || scs.backgroundImage === 'none') continue
-          const box = sibling.getBoundingClientRect()
-          if (box.left <= rect.left + 1 && box.right >= rect.right - 1 && box.top <= rect.top + 1 && box.bottom >= rect.bottom - 1) return true
+          if (sibling === node) continue;
+          const scs = getComputedStyle(sibling);
+          if (scs.position !== "absolute" && scs.position !== "fixed") continue;
+          if (scs.display === "none" || !scs.backgroundImage || scs.backgroundImage === "none")
+            continue;
+          const box = sibling.getBoundingClientRect();
+          if (
+            box.left <= rect.left + 1 &&
+            box.right >= rect.right - 1 &&
+            box.top <= rect.top + 1 &&
+            box.bottom >= rect.bottom - 1
+          )
+            return true;
         }
-        const bg = parse(cs.backgroundColor)
-        if (bg && bg.a >= 0.999) return false
+        const bg = parse(cs.backgroundColor);
+        if (bg && bg.a >= 0.999) return false;
       }
-      return true // 一路到根都没有不透明的底 —— 真实的底是天幕那张渐变
-    }
-    const out = []
-    for (const el of document.querySelectorAll('body *')) {
-      if (el.matches(':disabled') || el.closest('[aria-hidden="true"]')) continue
-      const texts = [...el.childNodes].filter(n => n.nodeType === 3 && n.textContent.trim().length > 1)
-      if (!texts.length) continue
-      const cs = getComputedStyle(el)
-      if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) < 0.1) continue
-      const r = el.getBoundingClientRect()
-      if (r.width < 2 || r.height < 2) continue
-      if (!gradientBase(el, r)) continue
-      const range = document.createRange()
-      const rects = []
+      return true; // 一路到根都没有不透明的底 —— 真实的底是天幕那张渐变
+    };
+    const out = [];
+    for (const el of document.querySelectorAll("body *")) {
+      if (el.matches(":disabled") || el.closest('[aria-hidden="true"]')) continue;
+      const texts = [...el.childNodes].filter(
+        (n) => n.nodeType === 3 && n.textContent.trim().length > 1,
+      );
+      if (!texts.length) continue;
+      const cs = getComputedStyle(el);
+      if (cs.visibility === "hidden" || cs.display === "none" || parseFloat(cs.opacity) < 0.1)
+        continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) continue;
+      if (!gradientBase(el, r)) continue;
+      const range = document.createRange();
+      const rects = [];
       for (const node of texts) {
-        range.selectNodeContents(node)
+        range.selectNodeContents(node);
         for (const box of range.getClientRects()) {
-          if (box.width > 1 && box.height > 1 && box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth) {
-            rects.push([box.left, box.top, box.width, box.height])
+          if (
+            box.width > 1 &&
+            box.height > 1 &&
+            box.top >= 0 &&
+            box.bottom <= innerHeight &&
+            box.left >= 0 &&
+            box.right <= innerWidth
+          ) {
+            rects.push([box.left, box.top, box.width, box.height]);
           }
         }
       }
-      if (!rects.length) continue
-      const size = parseFloat(cs.fontSize)
+      if (!rects.length) continue;
+      const size = parseFloat(cs.fontSize);
       out.push({
         rects,
         color: cs.color,
         size,
         need: size >= 24 || (Number(cs.fontWeight) >= 700 && size >= 18.66) ? 3 : 4.5,
-        text: (el.textContent || '').trim().slice(0, 14),
-        cls: String(el.className).slice(0, 28)
-      })
+        text: (el.textContent || "").trim().slice(0, 14),
+        cls: String(el.className).slice(0, 28),
+      });
     }
-    return out
-  })
-  if (!targets.length) return []
+    return out;
+  });
+  if (!targets.length) return [];
   // 把字藏起来再拍:剩下的像素就是字底下的底色(藏的是文本节点本身,不动盒子)
   const hidden = await page.evaluate(() => {
-    let n = 0
-    for (const el of document.querySelectorAll('body *')) {
-      const texts = [...el.childNodes].filter(x => x.nodeType === 3 && x.textContent.trim().length > 1)
-      if (!texts.length) continue
-      const cs = getComputedStyle(el)
-      if (cs.visibility === 'hidden' || cs.display === 'none') continue
+    let n = 0;
+    for (const el of document.querySelectorAll("body *")) {
+      const texts = [...el.childNodes].filter(
+        (x) => x.nodeType === 3 && x.textContent.trim().length > 1,
+      );
+      if (!texts.length) continue;
+      const cs = getComputedStyle(el);
+      if (cs.visibility === "hidden" || cs.display === "none") continue;
       for (const node of texts) {
-        const span = document.createElement('span')
-        span.dataset.pixelProbe = '1'
-        span.style.visibility = 'hidden'
-        node.parentNode.replaceChild(span, node)
-        span.appendChild(node)
-        n += 1
+        const span = document.createElement("span");
+        span.dataset.pixelProbe = "1";
+        span.style.visibility = "hidden";
+        node.parentNode.replaceChild(span, node);
+        span.appendChild(node);
+        n += 1;
       }
     }
-    return n
-  })
+    return n;
+  });
   /*
    * `animations: 'disabled'`:两团云雾是无限循环的 CSS 动画,位置随时相在变 ——
    * 不冻住的话,同一处字这次量到 4.31、下次量到 4.8,判据就成了掷骰子(实测正是
    * 这样在 /inventory 上红过一次)。冻住之后每一次量到的都是同一帧。
    */
-  const shot = await page.screenshot({ animations: 'disabled', caret: 'hide' })
+  const shot = await page.screenshot({ animations: "disabled", caret: "hide" });
   await page.evaluate(() => {
-    for (const span of document.querySelectorAll('[data-pixel-probe]')) {
-      const parent = span.parentNode
-      parent.replaceChild(span.firstChild, span)
-      parent.normalize()
+    for (const span of document.querySelectorAll("[data-pixel-probe]")) {
+      const parent = span.parentNode;
+      parent.replaceChild(span.firstChild, span);
+      parent.normalize();
     }
-  })
-  if (!hidden) return []
+  });
+  if (!hidden) return [];
   const stats = await sampler.evaluate(
     async ({ png, list, scale }) => {
-      const img = new Image()
+      const img = new Image();
       await new Promise((res, rej) => {
-        img.onload = res
-        img.onerror = rej
-        img.src = 'data:image/png;base64,' + png
-      })
-      const canvas = document.getElementById('c')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d', { willReadFrequently: true })
-      ctx.drawImage(img, 0, 0)
-      const f = v => {
-        const s = v / 255
-        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
-      }
-      const lum = p => 0.2126 * f(p[0]) + 0.7152 * f(p[1]) + 0.0722 * f(p[2])
-      const out = []
+        img.onload = res;
+        img.onerror = rej;
+        img.src = "data:image/png;base64," + png;
+      });
+      const canvas = document.getElementById("c");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      const f = (v) => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      const lum = (p) => 0.2126 * f(p[0]) + 0.7152 * f(p[1]) + 0.0722 * f(p[2]);
+      const out = [];
       for (const t of list) {
-        const parts = (t.color.match(/[\d.]+/g) || []).map(Number)
+        const parts = (t.color.match(/[\d.]+/g) || []).map(Number);
         if (parts.length < 3) {
-          out.push(null)
-          continue
+          out.push(null);
+          continue;
         }
-        const alpha = parts.length > 3 ? parts[3] : 1
-        const ratios = []
+        const alpha = parts.length > 3 ? parts[3] : 1;
+        const ratios = [];
         for (const [x, y, w, h] of t.rects) {
-          const px = Math.max(0, Math.floor(x * scale))
-          const py = Math.max(0, Math.floor(y * scale))
-          const pw = Math.min(canvas.width - px, Math.max(1, Math.ceil(w * scale)))
-          const ph = Math.min(canvas.height - py, Math.max(1, Math.ceil(h * scale)))
-          if (pw <= 0 || ph <= 0) continue
-          const data = ctx.getImageData(px, py, pw, ph).data
+          const px = Math.max(0, Math.floor(x * scale));
+          const py = Math.max(0, Math.floor(y * scale));
+          const pw = Math.min(canvas.width - px, Math.max(1, Math.ceil(w * scale)));
+          const ph = Math.min(canvas.height - py, Math.max(1, Math.ceil(h * scale)));
+          if (pw <= 0 || ph <= 0) continue;
+          const data = ctx.getImageData(px, py, pw, ph).data;
           for (let k = 0; k < data.length; k += 4) {
-            const bg = [data[k], data[k + 1], data[k + 2]]
-            const fg = [0, 1, 2].map(i => parts[i] * alpha + bg[i] * (1 - alpha))
-            const [hi, lo] = [lum(fg), lum(bg)].sort((a, b) => b - a)
-            ratios.push((hi + 0.05) / (lo + 0.05))
+            const bg = [data[k], data[k + 1], data[k + 2]];
+            const fg = [0, 1, 2].map((i) => parts[i] * alpha + bg[i] * (1 - alpha));
+            const [hi, lo] = [lum(fg), lum(bg)].sort((a, b) => b - a);
+            ratios.push((hi + 0.05) / (lo + 0.05));
           }
         }
         if (!ratios.length) {
-          out.push(null)
-          continue
+          out.push(null);
+          continue;
         }
-        ratios.sort((a, b) => a - b)
-        const bad = ratios.filter(r => r < t.need).length
+        ratios.sort((a, b) => a - b);
+        const bad = ratios.filter((r) => r < t.need).length;
         out.push({
           badPct: Math.round((bad / ratios.length) * 100),
           p05: Math.round(ratios[Math.floor(ratios.length * 0.05)] * 100) / 100,
-          pixels: ratios.length
-        })
+          pixels: ratios.length,
+        });
       }
-      return out
+      return out;
     },
-    { png: shot.toString('base64'), list: targets, scale: dpr }
-  )
-  const bad = []
+    { png: shot.toString("base64"), list: targets, scale: dpr },
+  );
+  const bad = [];
   targets.forEach((t, i) => {
-    const s = stats[i]
-    if (!s) return
-    pixelTextsSeen += 1
-    if (s.badPct >= 20) bad.push({ ...t, ...s })
-  })
-  return bad
+    const s = stats[i];
+    if (!s) return;
+    pixelTextsSeen += 1;
+    if (s.badPct >= 20) bad.push({ ...t, ...s });
+  });
+  return bad;
 }
 
 /** 像素采样用的那张「画布页」—— 与受测页同一个 context:把截图喂给它解码取值 */
-let samplerPage = null
+let samplerPage = null;
 async function pixelSampler(ctx) {
   if (!samplerPage) {
-    samplerPage = await ctx.newPage()
-    await samplerPage.setContent('<canvas id="c"></canvas>')
+    samplerPage = await ctx.newPage();
+    await samplerPage.setContent('<canvas id="c"></canvas>');
   }
-  return samplerPage
+  return samplerPage;
 }
 
 /**
@@ -1026,41 +1100,42 @@ async function pixelSampler(ctx) {
  * 再多就只是把同一批字量第二遍。
  */
 async function pixelContrastOf(page, sampler) {
-  const out = []
-  const dpr = 3
-  for (const theme of ['light', 'dark']) {
-    await page.evaluate(t => {
-      document.documentElement.dataset.theme = t
-    }, theme)
-    await page.waitForTimeout(260)
+  const out = [];
+  const dpr = 3;
+  for (const theme of ["light", "dark"]) {
+    await page.evaluate((t) => {
+      document.documentElement.dataset.theme = t;
+    }, theme);
+    await page.waitForTimeout(260);
     for (const fraction of [0, 0.5, 1]) {
-      await page.evaluate(f => {
-        const main = document.querySelector('main')
-        if (main) main.scrollTop = Math.max(0, (main.scrollHeight - main.clientHeight) * f)
-      }, fraction)
-      await page.waitForTimeout(160)
+      await page.evaluate((f) => {
+        const main = document.querySelector("main");
+        if (main) main.scrollTop = Math.max(0, (main.scrollHeight - main.clientHeight) * f);
+      }, fraction);
+      await page.waitForTimeout(160);
       /*
        * 弹窗盖上来的时候不量:BaseModal 的遮罩是「墨 45% + 2px 模糊」铺满整屏,
        * 那一刻屏幕上的像素全都不是底色的像素 —— 量出来的会把整页报成假红(实测吃过一次)。
        * 引擎每秒掷一次事件,弹窗随时可能出现,故每一步都现查一次。
        */
-      for (let i = 0; i < 2 && (await page.locator('.modal-panel').count()) > 0; i += 1) {
-        await page.keyboard.press('Escape')
-        await page.waitForTimeout(200)
+      for (let i = 0; i < 2 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(200);
       }
-      if ((await page.locator('.modal-panel').count()) > 0) continue
-      for (const bad of await measurePixelContrast(page, sampler, dpr)) out.push({ theme: theme === 'dark' ? '夜间' : '日间', ...bad })
+      if ((await page.locator(".modal-panel").count()) > 0) continue;
+      for (const bad of await measurePixelContrast(page, sampler, dpr))
+        out.push({ theme: theme === "dark" ? "夜间" : "日间", ...bad });
     }
     await page.evaluate(() => {
-      const main = document.querySelector('main')
-      if (main) main.scrollTop = 0
-    })
+      const main = document.querySelector("main");
+      if (main) main.scrollTop = 0;
+    });
   }
   await page.evaluate(() => {
-    delete document.documentElement.dataset.theme
-  })
-  await page.waitForTimeout(260)
-  return out
+    delete document.documentElement.dataset.theme;
+  });
+  await page.waitForTimeout(260);
+  return out;
 }
 
 /**
@@ -1077,89 +1152,115 @@ async function pixelContrastOf(page, sampler) {
  */
 async function measureTabRail(page) {
   return page.evaluate(() => {
-    const main = document.querySelector('main')
-    const rail = document.querySelector('.tab-rail')
-    const root = main?.querySelector('.stagger-in') ?? main?.firstElementChild
-    if (!main || !rail || !root) return null
-    const spacer = document.createElement('div')
-    spacer.style.height = '1200px'
-    root.appendChild(spacer)
-    const mainBox = main.getBoundingClientRect()
-    main.scrollTop = 600
-    const box = rail.getBoundingClientRect()
+    const main = document.querySelector("main");
+    const rail = document.querySelector(".tab-rail");
+    const root = main?.querySelector(".stagger-in") ?? main?.firstElementChild;
+    if (!main || !rail || !root) return null;
+    const spacer = document.createElement("div");
+    spacer.style.height = "1200px";
+    root.appendChild(spacer);
+    const mainBox = main.getBoundingClientRect();
+    main.scrollTop = 600;
+    const box = rail.getBoundingClientRect();
     const out = {
       scrolled: Math.round(main.scrollTop),
       drift: Math.round(box.top - main.getBoundingClientRect().top),
-      bleed: Math.round(box.left - mainBox.left) + Math.round(mainBox.right - box.right)
-    }
-    main.scrollTop = 0
-    spacer.remove()
-    return out
-  })
+      bleed: Math.round(box.left - mainBox.left) + Math.round(mainBox.right - box.right),
+    };
+    main.scrollTop = 0;
+    spacer.remove();
+    return out;
+  });
 }
 
 /** 页签吸顶读数 → 失败清单(null = 这一页没有页签栏,不判) */
 function railProblems(rail) {
-  const out = []
-  if (!rail) return out
-  if (rail.scrolled < 500) out.push(`页签吸顶没量到:内容只滚了 ${rail.scrolled}px(占位没垫进容器?)`)
-  if (rail.drift !== 0) out.push(`页签栏没吸顶:滚 ${rail.scrolled}px 后偏离内容区顶 ${rail.drift}px`)
-  if (rail.bleed > 0) out.push(`页签栏没铺满内容区宽度,两侧共留 ${rail.bleed}px 缝(内容会从缝里穿过去)`)
-  return out
+  const out = [];
+  if (!rail) return out;
+  if (rail.scrolled < 500)
+    out.push(`页签吸顶没量到:内容只滚了 ${rail.scrolled}px(占位没垫进容器?)`);
+  if (rail.drift !== 0)
+    out.push(`页签栏没吸顶:滚 ${rail.scrolled}px 后偏离内容区顶 ${rail.drift}px`);
+  if (rail.bleed > 0)
+    out.push(`页签栏没铺满内容区宽度,两侧共留 ${rail.bleed}px 缝(内容会从缝里穿过去)`);
+  return out;
 }
 
 /** 一页量出来的读数 → 失败清单(两遍巡页共用同一套判据) */
 function problemsOf(info) {
-  const problems = []
-  if (info.horizontalOverflow) problems.push(`横向溢出(scrollWidth ${info.hash})`)
+  const problems = [];
+  if (info.horizontalOverflow) problems.push(`横向溢出(scrollWidth ${info.hash})`);
   if (info.shellShift && (info.shellShift.scrollLeft !== 0 || info.shellShift.overflowX > 1)) {
-    problems.push(`外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`)
+    problems.push(
+      `外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`,
+    );
   }
-  if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(', ')}`)
-  if (info.unnamed.length) problems.push(`无名控件:${info.unnamed.join(' | ')}`)
-  if (info.smallTargets.length) problems.push(`可点元素过小:${info.smallTargets.join(' | ')}`)
-  if (info.dimDisabled.length) problems.push(`禁用态的字读不出来(对比度不足):${info.dimDisabled.join(' | ')}`)
-  if (info.badGroups.length) problems.push(`选择组没选中态:${info.badGroups.join(' | ')}`)
-  if (info.headerTall?.length) problems.push(`顶栏折行(数字断行看着像乱码):${info.headerTall.join(' | ')}`)
-  if (info.valueRows?.length) problems.push(`主值行被次要读数挤折行:${info.valueRows.join(' | ')}`)
-  if (info.regionCards?.tall.length) problems.push(`地界名被挤成竖排:${info.regionCards.tall.join(' | ')}`)
-  if (info.regionCards?.overlap.length) problems.push(`地界卡文字互相压住:${info.regionCards.overlap.join(' | ')}`)
-  if (info.verticalTexts?.length) problems.push(`文字被挤成竖排:${info.verticalTexts.join(' | ')}`)
-  if (info.unitBreaks?.length) problems.push(`数字与量词被换行拆开:${info.unitBreaks.join(' | ')}`)
-  if (info.orphanPunctuation?.length) problems.push(`标点被折成孤字:${info.orphanPunctuation.join(' | ')}`)
-  if (info.navItems !== 5) problems.push(`底部导航 ${info.navItems} 项(应为 5)`)
+  if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
+  if (info.unnamed.length) problems.push(`无名控件:${info.unnamed.join(" | ")}`);
+  if (info.smallTargets.length) problems.push(`可点元素过小:${info.smallTargets.join(" | ")}`);
+  if (info.dimDisabled.length)
+    problems.push(`禁用态的字读不出来(对比度不足):${info.dimDisabled.join(" | ")}`);
+  if (info.badGroups.length) problems.push(`选择组没选中态:${info.badGroups.join(" | ")}`);
+  if (info.headerTall?.length)
+    problems.push(`顶栏折行(数字断行看着像乱码):${info.headerTall.join(" | ")}`);
+  if (info.valueRows?.length) problems.push(`主值行被次要读数挤折行:${info.valueRows.join(" | ")}`);
+  if (info.regionCards?.tall.length)
+    problems.push(`地界名被挤成竖排:${info.regionCards.tall.join(" | ")}`);
+  if (info.regionCards?.overlap.length)
+    problems.push(`地界卡文字互相压住:${info.regionCards.overlap.join(" | ")}`);
+  if (info.verticalTexts?.length) problems.push(`文字被挤成竖排:${info.verticalTexts.join(" | ")}`);
+  if (info.unitBreaks?.length) problems.push(`数字与量词被换行拆开:${info.unitBreaks.join(" | ")}`);
+  if (info.orphanPunctuation?.length)
+    problems.push(`标点被折成孤字:${info.orphanPunctuation.join(" | ")}`);
+  if (info.navItems !== 5) problems.push(`底部导航 ${info.navItems} 项(应为 5)`);
   if (info.railDrift && (info.railDrift.windowOverflow > 1 || info.railDrift.drift > 1)) {
     problems.push(
-      `文档层可滚 ${info.railDrift.windowOverflow}px、滚窗后两栏位移 ${info.railDrift.drift}px(顶栏底栏没钉住)`
-    )
+      `文档层可滚 ${info.railDrift.windowOverflow}px、滚窗后两栏位移 ${info.railDrift.drift}px(顶栏底栏没钉住)`,
+    );
   }
-  return problems
+  return problems;
 }
 
 for (const vp of VIEWPORTS) {
-  const auditCtx = await auditContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.dpr })
-  const page = await auditCtx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
+  const auditCtx = await auditContext({
+    viewport: { width: vp.width, height: vp.height },
+    deviceScaleFactor: vp.dpr,
+  });
+  const page = await auditCtx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
 
-  await page.goto(INDEX, { waitUntil: 'load' })
+  await page.goto(INDEX, { waitUntil: "load" });
   // 建号:同意隐私 → 传送门(约 2.5s)→ 命名 → 踏入仙途
-  await page.getByRole('button', { name: /开\s*始\s*游\s*戏/ }).first().click()
+  await page
+    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .first()
+    .click();
   // 隐私弹窗也是弹窗:它的控件同样要过那两条尺子(页面上巡不到它)
   {
-    const audit = await auditModalControls(page)
-    checked += 1
-    if (!audit || audit.count === 0) failures.push(`[${vp.tag}] 隐私弹窗里一个控件都没数到,判据没跑到东西`)
-    if (audit && !audit.label) failures.push(`[${vp.tag}] 隐私弹窗没有可访问名(读屏只会念「对话框」)`)
-    if (audit?.unnamed.length) failures.push(`[${vp.tag}] 隐私弹窗里有 ${audit.unnamed.length} 个无名控件`)
-    if (audit?.small.length) failures.push(`[${vp.tag}] 隐私弹窗里可点元素过小:${audit.small.join(' | ')}`)
+    const audit = await auditModalControls(page);
+    checked += 1;
+    if (!audit || audit.count === 0)
+      failures.push(`[${vp.tag}] 隐私弹窗里一个控件都没数到,判据没跑到东西`);
+    if (audit && !audit.label)
+      failures.push(`[${vp.tag}] 隐私弹窗没有可访问名(读屏只会念「对话框」)`);
+    if (audit?.unnamed.length)
+      failures.push(`[${vp.tag}] 隐私弹窗里有 ${audit.unnamed.length} 个无名控件`);
+    if (audit?.small.length)
+      failures.push(`[${vp.tag}] 隐私弹窗里可点元素过小:${audit.small.join(" | ")}`);
   }
-  await page.locator('input[type=checkbox]').first().check()
-  await page.getByRole('button', { name: /同意并开始/ }).first().click()
-  await page.waitForTimeout(3200)
-  await page.locator('input:not([type=file]):not([type=checkbox])').first().fill('排版自检')
-  await page.getByRole('button', { name: /踏\s*入\s*仙\s*途/ }).first().click()
-  await page.waitForTimeout(1200)
+  await page.locator("input[type=checkbox]").first().check();
+  await page
+    .getByRole("button", { name: /同意并开始/ })
+    .first()
+    .click();
+  await page.waitForTimeout(3200);
+  await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("排版自检");
+  await page
+    .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+    .first()
+    .click();
+  await page.waitForTimeout(1200);
 
   /**
    * 新手第一步卡(见 core/firstStep)——「三块引导并列,却没人说先点哪儿」那个洞的补丁。
@@ -1172,141 +1273,171 @@ for (const vp of VIEWPORTS) {
    * 先整页重载一次:建号结束停在哪个 hash 取决于灵根鉴定动画放完没有,判据不该赌它;
    * 重载后 beforeEach 见存档已开,直接落在首页 —— 这才是"新玩家进游戏第一眼"。
    */
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.waitForTimeout(700)
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(700);
   {
     const step = await page.evaluate(() => {
-      const a = [...document.querySelectorAll('a')].find(el => (el.textContent || '').includes('第一步'))
-      if (!a) return null
-      const r = a.getBoundingClientRect()
-      const declared = parseFloat(getComputedStyle(a).minHeight)
+      const a = [...document.querySelectorAll("a")].find((el) =>
+        (el.textContent || "").includes("第一步"),
+      );
+      if (!a) return null;
+      const r = a.getBoundingClientRect();
+      const declared = parseFloat(getComputedStyle(a).minHeight);
       return {
-        href: a.getAttribute('href') || '',
+        href: a.getAttribute("href") || "",
         height: Math.round(r.height * 10) / 10,
         // 与巡页那条同一把尺子(见第四十三条)
-        ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5)
-      }
-    })
-    checked += 1
+        ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5),
+      };
+    });
+    checked += 1;
     if (!step) {
-      failures.push(`[${vp.tag}] 开局首页没有「第一步」卡 —— 新玩家只能自己猜先点哪儿`)
+      failures.push(`[${vp.tag}] 开局首页没有「第一步」卡 —— 新玩家只能自己猜先点哪儿`);
     } else {
-      if (step.href !== '#/adventure') failures.push(`[${vp.tag}] 「第一步」卡指向 ${step.href},开局该先指历练(#/adventure)`)
-      if (!step.ok) failures.push(`[${vp.tag}] 「第一步」卡只有 ${step.height}px 高,低于 28px 触达下限`)
+      if (step.href !== "#/adventure")
+        failures.push(`[${vp.tag}] 「第一步」卡指向 ${step.href},开局该先指历练(#/adventure)`);
+      if (!step.ok)
+        failures.push(`[${vp.tag}] 「第一步」卡只有 ${step.height}px 高,低于 28px 触达下限`);
     }
   }
 
   for (const route of ROUTES) {
-    await page.goto(INDEX + '#' + route, { waitUntil: 'load' })
-    await page.waitForTimeout(700)
-    const info = await measurePage(page)
-    checked += 1
-    valueRowsSeen += info.valueRowCount ?? 0
-    const problems = problemsOf(info)
-    if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(' / ')}`)
+    await page.goto(INDEX + "#" + route, { waitUntil: "load" });
+    await page.waitForTimeout(700);
+    const info = await measurePage(page);
+    checked += 1;
+    valueRowsSeen += info.valueRowCount ?? 0;
+    const problems = problemsOf(info);
+    if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
     /*
      * 正文对比度只在最常用那一档视口上量(390):它与视口宽度无关,五档各量一遍只是把
      * 巡页时间乘以五。两套主题都量,见 measureTextContrast。
      */
-    if (vp.tag === '390') {
+    if (vp.tag === "390") {
       for (const bad of await measureTextContrast(page)) {
-        contrastFails.push(`[${vp.tag}] ${route} ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`)
+        contrastFails.push(
+          `[${vp.tag}] ${route} ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
+        );
       }
       /*
        * 渐变/图片底那几处,上一条量不到(它只算得到声明出来的色号),这里采样真实像素。
        * 弹窗盖着页面时不量:遮罩会把整页压暗,量出来的全会是假红(实测 /codex 上吃过一次)。
        */
-      for (let i = 0; i < 3 && (await page.locator('.modal-panel').count()) > 0; i += 1) {
-        await page.keyboard.press('Escape')
-        await page.waitForTimeout(200)
+      for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(200);
       }
-      if ((await page.locator('.modal-panel').count()) === 0) {
+      if ((await page.locator(".modal-panel").count()) === 0) {
         for (const bad of await pixelContrastOf(page, await pixelSampler(auditCtx))) {
           pixelContrastFails.push(
-            `[${vp.tag}] ${route} ${bad.theme} 5% 分位 ${bad.p05}:1 · 读不出来 ${bad.badPct}%(需 ${bad.need})${bad.size}px «${bad.text}» ${bad.cls}`
-          )
+            `[${vp.tag}] ${route} ${bad.theme} 5% 分位 ${bad.p05}:1 · 读不出来 ${bad.badPct}%(需 ${bad.need})${bad.size}px «${bad.text}» ${bad.cls}`,
+          );
         }
       }
     }
-    const rail = await measureTabRail(page)
-    const railFails = railProblems(rail)
-    if (rail) checked += 1
-    if (railFails.length) failures.push(`[${vp.tag}] ${route} → ${railFails.join(' / ')}`)
+    const rail = await measureTabRail(page);
+    const railFails = railProblems(rail);
+    if (rail) checked += 1;
+    if (railFails.length) failures.push(`[${vp.tag}] ${route} → ${railFails.join(" / ")}`);
     /*
      * 两百档字号(200% 缩放)—— 放在这一页的最后:它要改视口,量完再还原,
      * 免得把前面那些按原尺寸量的读数带偏。
      */
-    if (vp.tag === '390') {
-      const zoom = await measureZoomScale(page, vp)
-      zoomSeen += 1
-      const zoomBad = zoomProblems(zoom, vp.tag)
-      if (zoomBad.length) zoomFails.push(`[${vp.tag}] ${route} → ${zoomBad.join(' / ')}`)
+    if (vp.tag === "390") {
+      const zoom = await measureZoomScale(page, vp);
+      zoomSeen += 1;
+      const zoomBad = zoomProblems(zoom, vp.tag);
+      if (zoomBad.length) zoomFails.push(`[${vp.tag}] ${route} → ${zoomBad.join(" / ")}`);
     }
     if (SHOTS) {
-      mkdirSync(SHOTS_DIR, { recursive: true })
-      await page.screenshot({ path: join(SHOTS_DIR, `${vp.tag}${route.replace(/\//g, '_')}.png`), fullPage: true })
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({
+        path: join(SHOTS_DIR, `${vp.tag}${route.replace(/\//g, "_")}.png`),
+        fullPage: true,
+      });
     }
   }
-  if (pageErrors.length) failures.push(`[${vp.tag}] 页面异常:${[...new Set(pageErrors)].join(' | ')}`)
+  if (pageErrors.length)
+    failures.push(`[${vp.tag}] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   // 外域请求一律拦掉:一是量尺(应当恒为 0),二是别让别人的服务器决定我们的门要不要绿
-  await page.close()
+  await page.close();
 }
 
-if (contrastFails.length) failures.push(`正文对比度不足 AA:${contrastFails.join(' | ')}`)
-if (pixelContrastFails.length) failures.push(`渐变/图片底上的字读不出来(采样真实像素):${pixelContrastFails.join(' | ')}`)
-if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.join(' | ')}`)
+if (contrastFails.length) failures.push(`正文对比度不足 AA:${contrastFails.join(" | ")}`);
+if (pixelContrastFails.length)
+  failures.push(`渐变/图片底上的字读不出来(采样真实像素):${pixelContrastFails.join(" | ")}`);
+if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.join(" | ")}`);
 
 // ---- 第四件事:存档写不进去时,设置页必须说话 ----
 {
-  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
-  const page = await auditCtx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.getByRole('button', { name: /开\s*始\s*游\s*戏/ }).first().click()
-  await page.locator('input[type=checkbox]').first().check()
-  await page.getByRole('button', { name: /同意并开始/ }).first().click()
-  await page.waitForTimeout(3200)
-  await page.locator('input:not([type=file]):not([type=checkbox])').first().fill('存档自检')
-  await page.getByRole('button', { name: /踏\s*入\s*仙\s*途/ }).first().click()
-  await page.waitForTimeout(1200)
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } });
+  const page = await auditCtx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page
+    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .first()
+    .click();
+  await page.locator("input[type=checkbox]").first().check();
+  await page
+    .getByRole("button", { name: /同意并开始/ })
+    .first()
+    .click();
+  await page.waitForTimeout(3200);
+  await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("存档自检");
+  await page
+    .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+    .first()
+    .click();
+  await page.waitForTimeout(1200);
 
   // 卡死存储:此后任何写盘都抛配额错误(引擎每秒仍在改状态,故几秒内必然撞上一次刷盘)
   await page.evaluate(() => {
     Storage.prototype.setItem = function () {
-      throw new DOMException('quota', 'QuotaExceededError')
-    }
-  })
-  await page.waitForTimeout(6500)
+      throw new DOMException("quota", "QuotaExceededError");
+    };
+  });
+  await page.waitForTimeout(6500);
   await page.evaluate(() => {
-    location.hash = '#/settings'
-  })
-  await page.waitForTimeout(800)
-  const warned = await page.evaluate(() => document.body.innerText.includes('上次写入存档失败'))
-  checked += 1
-  if (!warned) failures.push('[375] /settings → 存档写失败时设置页没有提示(静默丢档)')
-  if (pageErrors.length) failures.push(`[375] 存档失败场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await page.close()
+    location.hash = "#/settings";
+  });
+  await page.waitForTimeout(800);
+  const warned = await page.evaluate(() => document.body.innerText.includes("上次写入存档失败"));
+  checked += 1;
+  if (!warned) failures.push("[375] /settings → 存档写失败时设置页没有提示(静默丢档)");
+  if (pageErrors.length)
+    failures.push(`[375] 存档失败场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await page.close();
 }
 
 // ---- 第五件事:弹窗的键盘与焦点 ----
 {
-  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
-  const page = await auditCtx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.getByRole('button', { name: /开\s*始\s*游\s*戏/ }).first().click()
-  await page.locator('input[type=checkbox]').first().check()
-  await page.getByRole('button', { name: /同意并开始/ }).first().click()
-  await page.waitForTimeout(3200)
-  await page.locator('input:not([type=file]):not([type=checkbox])').first().fill('焦点自检')
-  await page.getByRole('button', { name: /踏\s*入\s*仙\s*途/ }).first().click()
-  await page.waitForTimeout(1200)
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } });
+  const page = await auditCtx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page
+    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .first()
+    .click();
+  await page.locator("input[type=checkbox]").first().check();
+  await page
+    .getByRole("button", { name: /同意并开始/ })
+    .first()
+    .click();
+  await page.waitForTimeout(3200);
+  await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("焦点自检");
+  await page
+    .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+    .first()
+    .click();
+  await page.waitForTimeout(1200);
   await page.evaluate(() => {
-    location.hash = '#/settings'
-  })
-  await page.waitForTimeout(700)
+    location.hash = "#/settings";
+  });
+  await page.waitForTimeout(700);
 
   /*
    * 先把浮出来的提示条收掉再点「关于」。
@@ -1316,167 +1447,211 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * (实测偶发:waitFor 过了、click 超时)。要测的是弹窗焦点,不是提示条 ——
    * 提示条自己那条判据在下面单独跑。
    */
-  const stillOpen = await clearOverlays(page)
-  if (stillOpen.length) failures.push(`[375] 弹窗焦点场景:动手前还开着浮层 —— ${stillOpen.join('、')}(取景没收拾干净)`)
+  const stillOpen = await clearOverlays(page);
+  if (stillOpen.length)
+    failures.push(`[375] 弹窗焦点场景:动手前还开着浮层 —— ${stillOpen.join("、")}(取景没收拾干净)`);
 
-  const trigger = page.getByRole('button', { name: /关于/ }).first()
+  const trigger = page.getByRole("button", { name: /关于/ }).first();
   // 先等它真的画出来:懒加载的分包 + 页面淡入都要时间,直接点会得到
   // 「点了没反应」的假红(实测偶发),而这条判据要抓的是真问题,不是抢跑
   try {
-    await trigger.waitFor({ state: 'visible', timeout: 10000 })
-    await trigger.click({ timeout: 5000 })
+    await trigger.waitFor({ state: "visible", timeout: 10000 });
+    await trigger.click({ timeout: 5000 });
   } catch (err) {
     // 把真实原因与**挡路的是谁**一起写进报告 —— 「页面没就绪?」这种猜测曾让人白跑两趟,
     // 第二次才发现挡路的是一层随机浮上来的浮盖。抓不到线索的判据等于没有判据。
     const blocked = await page.evaluate(() => {
-      const b = [...document.querySelectorAll('button')].find(x => (x.textContent || '').includes('关于'))
-      if (!b) return '(页面上找不到「关于」)'
-      const r = b.getBoundingClientRect()
-      const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
-      const modals = [...document.querySelectorAll('.modal-panel')].map(p => (p.querySelector('h3')?.textContent || '(无标题)').trim())
-      return `挡路:${at ? `${at.tagName.toLowerCase()}.${String(at.className).slice(0, 40)}` : '无'} / 开着的弹窗:${modals.join('、') || '无'}`
-    })
-    failures.push(`[375] 弹窗焦点场景:「关于」入口点不开(${String(err).split('\n')[0]?.slice(0, 80)};${blocked})`)
+      const b = [...document.querySelectorAll("button")].find((x) =>
+        (x.textContent || "").includes("关于"),
+      );
+      if (!b) return "(页面上找不到「关于」)";
+      const r = b.getBoundingClientRect();
+      const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      const modals = [...document.querySelectorAll(".modal-panel")].map((p) =>
+        (p.querySelector("h3")?.textContent || "(无标题)").trim(),
+      );
+      return `挡路:${at ? `${at.tagName.toLowerCase()}.${String(at.className).slice(0, 40)}` : "无"} / 开着的弹窗:${modals.join("、") || "无"}`;
+    });
+    failures.push(
+      `[375] 弹窗焦点场景:「关于」入口点不开(${String(err).split("\n")[0]?.slice(0, 80)};${blocked})`,
+    );
   }
-  await page.waitForTimeout(350)
+  await page.waitForTimeout(350);
   const opened = await page.evaluate(() => {
-    const panel = document.querySelector('.modal-panel')
-    const active = document.activeElement
+    const panel = document.querySelector(".modal-panel");
+    const active = document.activeElement;
     return {
-      role: panel?.getAttribute('role'),
-      modal: panel?.getAttribute('aria-modal'),
-      inside: !!(panel && active && panel.contains(active))
-    }
-  })
-  checked += 1
-  if (opened.role !== 'dialog' || opened.modal !== 'true') failures.push('[375] 弹窗没有 dialog 语义(role/aria-modal)')
-  if (!opened.inside) failures.push('[375] 弹窗打开后焦点没进去 —— 键盘用户不知道弹窗开了')
+      role: panel?.getAttribute("role"),
+      modal: panel?.getAttribute("aria-modal"),
+      inside: !!(panel && active && panel.contains(active)),
+    };
+  });
+  checked += 1;
+  if (opened.role !== "dialog" || opened.modal !== "true")
+    failures.push("[375] 弹窗没有 dialog 语义(role/aria-modal)");
+  if (!opened.inside) failures.push("[375] 弹窗打开后焦点没进去 —— 键盘用户不知道弹窗开了");
 
-  const inModal = await auditModalControls(page)
-  checked += 1
-  if (!inModal || inModal.count === 0) failures.push('[375] 弹窗场景:面板里一个控件都没数到,判据没跑到东西')
-  if (inModal && !inModal.label) failures.push('[375] 弹窗场景:对话框没有可访问名(读屏只会念「对话框」)')
-  if (inModal?.unnamed.length) failures.push(`[375] 弹窗场景:面板里有 ${inModal.unnamed.length} 个无名控件(读屏只会念「按钮」)`)
-  if (inModal?.small.length) failures.push(`[375] 弹窗场景:面板里可点元素过小:${inModal.small.join(' | ')}`)
+  const inModal = await auditModalControls(page);
+  checked += 1;
+  if (!inModal || inModal.count === 0)
+    failures.push("[375] 弹窗场景:面板里一个控件都没数到,判据没跑到东西");
+  if (inModal && !inModal.label)
+    failures.push("[375] 弹窗场景:对话框没有可访问名(读屏只会念「对话框」)");
+  if (inModal?.unnamed.length)
+    failures.push(
+      `[375] 弹窗场景:面板里有 ${inModal.unnamed.length} 个无名控件(读屏只会念「按钮」)`,
+    );
+  if (inModal?.small.length)
+    failures.push(`[375] 弹窗场景:面板里可点元素过小:${inModal.small.join(" | ")}`);
 
   // 连按六次 Tab:焦点必须一直在弹窗里(此前会一路跑到页面与底部导航)
-  let escaped = false
+  let escaped = false;
   for (let i = 0; i < 6; i++) {
-    await page.keyboard.press('Tab')
+    await page.keyboard.press("Tab");
     const inside = await page.evaluate(() => {
-      const panel = document.querySelector('.modal-panel')
-      const active = document.activeElement
-      return !!(panel && active && panel.contains(active))
-    })
-    if (!inside) escaped = true
+      const panel = document.querySelector(".modal-panel");
+      const active = document.activeElement;
+      return !!(panel && active && panel.contains(active));
+    });
+    if (!inside) escaped = true;
   }
-  if (escaped) failures.push('[375] 弹窗里按 Tab 会跑到背后的页面(焦点没有被困住)')
+  if (escaped) failures.push("[375] 弹窗里按 Tab 会跑到背后的页面(焦点没有被困住)");
 
-  await page.keyboard.press('Escape')
-  await page.waitForTimeout(300)
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
   const afterEsc = await page.evaluate(() => ({
-    stillOpen: !!document.querySelector('.modal-panel'),
-    backOnTrigger: (document.activeElement?.textContent || '').includes('关于')
-  }))
-  if (afterEsc.stillOpen) failures.push('[375] Esc 没能关掉弹窗')
-  if (!afterEsc.backOnTrigger) failures.push('[375] 关掉弹窗后焦点没还给打开它的那个按钮')
+    stillOpen: !!document.querySelector(".modal-panel"),
+    backOnTrigger: (document.activeElement?.textContent || "").includes("关于"),
+  }));
+  if (afterEsc.stillOpen) failures.push("[375] Esc 没能关掉弹窗");
+  if (!afterEsc.backOnTrigger) failures.push("[375] 关掉弹窗后焦点没还给打开它的那个按钮");
 
-  if (pageErrors.length) failures.push(`[375] 弹窗焦点场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await page.close()
+  if (pageErrors.length)
+    failures.push(`[375] 弹窗焦点场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await page.close();
 }
 
 // ---- 第六件事:Tab 焦点看得见吗 ----
 {
-  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
-  const page = await auditCtx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.getByRole('button', { name: /开\s*始\s*游\s*戏/ }).first().click()
-  await page.locator('input[type=checkbox]').first().check()
-  await page.getByRole('button', { name: /同意并开始/ }).first().click()
-  await page.waitForTimeout(3200)
-  await page.locator('input:not([type=file]):not([type=checkbox])').first().fill('焦点可见自检')
-  await page.getByRole('button', { name: /踏\s*入\s*仙\s*途/ }).first().click()
-  await page.waitForTimeout(1200)
-  checked += 1
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } });
+  const page = await auditCtx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page
+    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .first()
+    .click();
+  await page.locator("input[type=checkbox]").first().check();
+  await page
+    .getByRole("button", { name: /同意并开始/ })
+    .first()
+    .click();
+  await page.waitForTimeout(3200);
+  await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("焦点可见自检");
+  await page
+    .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+    .first()
+    .click();
+  await page.waitForTimeout(1200);
+  checked += 1;
 
-  for (const route of ['/cultivation', '/settings']) {
-    await page.evaluate(r => {
-      location.hash = `#${r}`
-    }, route)
-    await page.waitForTimeout(650)
+  for (const route of ["/cultivation", "/settings"]) {
+    await page.evaluate((r) => {
+      location.hash = `#${r}`;
+    }, route);
+    await page.waitForTimeout(650);
     // 从「没有焦点」的干净状态开始数 Tab,免得把上一页残留的焦点算进来
-    await page.evaluate(() => document.activeElement?.blur())
-    const seen = []
+    await page.evaluate(() => document.activeElement?.blur());
+    const seen = [];
     for (let i = 0; i < 6; i++) {
-      await page.keyboard.press('Tab')
+      await page.keyboard.press("Tab");
       const info = await page.evaluate(() => {
-        const el = document.activeElement
-        if (!el || el === document.body || el === document.documentElement) return { blind: null, label: '(body)' }
-        const cs = getComputedStyle(el)
+        const el = document.activeElement;
+        if (!el || el === document.body || el === document.documentElement)
+          return { blind: null, label: "(body)" };
+        const cs = getComputedStyle(el);
         // 透明的轮廓等于没有 —— 只看「有没有一圈线」会把 outline:transparent 也算通过
-        const hiddenOutline = cs.outlineColor === 'transparent' || /rgba\([^)]*,\s*0\)$/.test(cs.outlineColor)
+        const hiddenOutline =
+          cs.outlineColor === "transparent" || /rgba\([^)]*,\s*0\)$/.test(cs.outlineColor);
         const ring =
-          (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0 && !hiddenOutline) || cs.boxShadow !== 'none'
-        const label = `${el.tagName.toLowerCase()} «${(el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 12)}»`
-        return { blind: ring ? null : label, label }
-      })
-      seen.push(info.label)
-      if (info.blind) failures.push(`[375] ${route} 第 ${i + 1} 个 Tab 落点看不见焦点:${info.blind}`)
+          (cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0 && !hiddenOutline) ||
+          cs.boxShadow !== "none";
+        const label = `${el.tagName.toLowerCase()} «${(el.getAttribute("aria-label") || el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 12)}»`;
+        return { blind: ring ? null : label, label };
+      });
+      seen.push(info.label);
+      if (info.blind)
+        failures.push(`[375] ${route} 第 ${i + 1} 个 Tab 落点看不见焦点:${info.blind}`);
     }
     // 落点一个没数到 = 这段判据没跑到东西,也要红
-    if (seen.filter(s => s !== '(body)').length === 0) failures.push(`[375] ${route} 的 Tab 落点一个都没数到`)
+    if (seen.filter((s) => s !== "(body)").length === 0)
+      failures.push(`[375] ${route} 的 Tab 落点一个都没数到`);
   }
-  if (pageErrors.length) failures.push(`[375] 焦点可见场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await page.close()
+  if (pageErrors.length)
+    failures.push(`[375] 焦点可见场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await page.close();
 }
 
 // ---- 第七件事:浮出来的提示条能不能点掉 ----
 {
-  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
-  const page = await auditCtx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.getByRole('button', { name: /开\s*始\s*游\s*戏/ }).first().click()
-  await page.locator('input[type=checkbox]').first().check()
-  await page.getByRole('button', { name: /同意并开始/ }).first().click()
-  await page.waitForTimeout(3200)
-  await page.locator('input:not([type=file]):not([type=checkbox])').first().fill('浮层自检')
-  await page.getByRole('button', { name: /踏\s*入\s*仙\s*途/ }).first().click()
-  await page.waitForTimeout(1200)
-  const hostSel = '.pointer-events-none.fixed'
-  const before = await page.evaluate(sel => {
-    const buttons = [...document.querySelectorAll(`${sel} button`)]
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } });
+  const page = await auditCtx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page
+    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .first()
+    .click();
+  await page.locator("input[type=checkbox]").first().check();
+  await page
+    .getByRole("button", { name: /同意并开始/ })
+    .first()
+    .click();
+  await page.waitForTimeout(3200);
+  await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("浮层自检");
+  await page
+    .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+    .first()
+    .click();
+  await page.waitForTimeout(1200);
+  const hostSel = ".pointer-events-none.fixed";
+  const before = await page.evaluate((sel) => {
+    const buttons = [...document.querySelectorAll(`${sel} button`)];
     return {
       count: buttons.length,
       // 判据是**计算出来的** pointer-events:外框写 none 时按钮会继承成 none,
       // 于是 @click 挂在那儿却永远收不到事件 —— 写了不生效,等于没写
-      blocked: buttons.filter(b => getComputedStyle(b).pointerEvents === 'none').length
-    }
-  }, hostSel)
-  checked += 1
-  if (before.count === 0) failures.push('[375] 浮层场景:一条提示都没浮出来,这条判据没跑到东西')
-  if (before.blocked > 0) failures.push(`[375] 浮层场景:${before.blocked} 条提示条点了没反应(pointer-events 被外框的 none 继承)`)
+      blocked: buttons.filter((b) => getComputedStyle(b).pointerEvents === "none").length,
+    };
+  }, hostSel);
+  checked += 1;
+  if (before.count === 0) failures.push("[375] 浮层场景:一条提示都没浮出来,这条判据没跑到东西");
+  if (before.blocked > 0)
+    failures.push(
+      `[375] 浮层场景:${before.blocked} 条提示条点了没反应(pointer-events 被外框的 none 继承)`,
+    );
   if (before.count > 0 && before.blocked === 0) {
-    const first = page.locator(`${hostSel} button`).first()
-    const text = ((await first.textContent()) ?? '').trim()
-    await first.click({ timeout: 3000 })
+    const first = page.locator(`${hostSel} button`).first();
+    const text = ((await first.textContent()) ?? "").trim();
+    await first.click({ timeout: 3000 });
     /*
      * 「点了要收」还得看它**多快**收:提示条带 glow-pulse 无限动画时,过渡探测
      * 会把 2.4 秒当成离场时长,点掉之后原地杵两秒才没(实测 460ms 仍在原地)。
      * 故给一个 1 秒的窗口 —— 它短于最短的提示寿命(2.6 秒),不会把「自己超时消失」错认成点掉了。
      */
-    let gone = false
+    let gone = false;
     for (let i = 0; i < 20 && !gone; i += 1) {
-      await page.waitForTimeout(50)
-      gone = (await page.locator(`${hostSel} button`, { hasText: text }).count()) === 0
+      await page.waitForTimeout(50);
+      gone = (await page.locator(`${hostSel} button`, { hasText: text }).count()) === 0;
     }
-    if (!gone) failures.push(`[375] 浮层场景:点了「${text.slice(0, 12)}」1 秒内没消失(还挂在屏幕上)`)
+    if (!gone)
+      failures.push(`[375] 浮层场景:点了「${text.slice(0, 12)}」1 秒内没消失(还挂在屏幕上)`);
   }
-  if (pageErrors.length) failures.push(`[375] 浮层场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await page.close()
+  if (pageErrors.length)
+    failures.push(`[375] 浮层场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await page.close();
 }
 
 // ---- 第八件事:引擎按概率触发的两扇弹窗(顿悟 / 洞府巡游) ----
@@ -1489,62 +1664,80 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 的随机数不受影响)。
  */
 {
-  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } })
-  const page = await auditCtx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.getByRole('button', { name: /开\s*始\s*游\s*戏/ }).first().click()
-  await page.locator('input[type=checkbox]').first().check()
-  await page.getByRole('button', { name: /同意并开始/ }).first().click()
-  await page.waitForTimeout(3200)
-  await page.locator('input:not([type=file]):not([type=checkbox])').first().fill('引擎事件自检')
-  await page.getByRole('button', { name: /踏\s*入\s*仙\s*途/ }).first().click()
-  await page.waitForTimeout(1500)
+  const auditCtx = await auditContext({ viewport: { width: 375, height: 812 } });
+  const page = await auditCtx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page
+    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .first()
+    .click();
+  await page.locator("input[type=checkbox]").first().check();
+  await page
+    .getByRole("button", { name: /同意并开始/ })
+    .first()
+    .click();
+  await page.waitForTimeout(3200);
+  await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("引擎事件自检");
+  await page
+    .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+    .first()
+    .click();
+  await page.waitForTimeout(1500);
   await page.evaluate(() => {
-    for (const b of document.querySelectorAll('.pointer-events-none.fixed button')) b.click()
-    Math.random = () => 0
-  })
-  const seen = new Map()
+    for (const b of document.querySelectorAll(".pointer-events-none.fixed button")) b.click();
+    Math.random = () => 0;
+  });
+  const seen = new Map();
   for (let i = 0; i < 40 && seen.size < 2; i += 1) {
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(500);
     const info = await page.evaluate(() => {
-      const panel = document.querySelector('.modal-panel')
-      if (!panel) return null
+      const panel = document.querySelector(".modal-panel");
+      if (!panel) return null;
       return {
-        title: (panel.querySelector('h3')?.textContent || '').trim() || '(无标题)',
-        label: panel.getAttribute('aria-label'),
-        role: panel.getAttribute('role'),
-        controls: [...panel.querySelectorAll('button, a, [role=button]')]
-          .map(el => {
-            const r = el.getBoundingClientRect()
-            const declared = parseFloat(getComputedStyle(el).minHeight)
+        title: (panel.querySelector("h3")?.textContent || "").trim() || "(无标题)",
+        label: panel.getAttribute("aria-label"),
+        role: panel.getAttribute("role"),
+        controls: [...panel.querySelectorAll("button, a, [role=button]")]
+          .map((el) => {
+            const r = el.getBoundingClientRect();
+            const declared = parseFloat(getComputedStyle(el).minHeight);
             return {
-              name: (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 14),
+              name: (el.getAttribute("aria-label") || el.textContent || "")
+                .trim()
+                .replace(/\s+/g, " ")
+                .slice(0, 14),
               h: Math.round(r.height * 10) / 10,
               // 与巡页那条同一把尺子(见第四十三条)
-              ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5)
-            }
+              ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5),
+            };
           })
-          .filter(c => c.h > 0)
-      }
-    })
+          .filter((c) => c.h > 0),
+      };
+    });
     if (info && !seen.has(info.title)) {
-      seen.set(info.title, info)
-      await page.keyboard.press('Escape')
-      await page.waitForTimeout(600)
+      seen.set(info.title, info);
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(600);
     }
   }
-  checked += 1
-  if (seen.size === 0) failures.push('[375] 引擎事件场景:概率钉成必中之后,两扇弹窗一扇都没浮出来(触发接线断了?)')
+  checked += 1;
+  if (seen.size === 0)
+    failures.push("[375] 引擎事件场景:概率钉成必中之后,两扇弹窗一扇都没浮出来(触发接线断了?)");
   for (const [title, info] of seen) {
-    if (info.role !== 'dialog') failures.push(`[375] 「${title}」没有 dialog 语义(role=${info.role})`)
-    if (!info.label) failures.push(`[375] 「${title}」没有可访问名`)
-    const bad = info.controls.filter(c => !c.name || !c.ok)
-    if (bad.length) failures.push(`[375] 「${title}」里有 ${bad.length} 个控件不合格:${bad.map(c => `${c.h}px «${c.name || '无名'}»`).join(' | ')}`)
+    if (info.role !== "dialog")
+      failures.push(`[375] 「${title}」没有 dialog 语义(role=${info.role})`);
+    if (!info.label) failures.push(`[375] 「${title}」没有可访问名`);
+    const bad = info.controls.filter((c) => !c.name || !c.ok);
+    if (bad.length)
+      failures.push(
+        `[375] 「${title}」里有 ${bad.length} 个控件不合格:${bad.map((c) => `${c.h}px «${c.name || "无名"}»`).join(" | ")}`,
+      );
   }
-  if (pageErrors.length) failures.push(`[375] 引擎事件场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await page.close()
+  if (pageErrors.length)
+    failures.push(`[375] 引擎事件场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await page.close();
 }
 
 // ---- 第九件事:冷启动落在子页时,「返回」不该把人送出游戏 ----
@@ -1555,47 +1748,61 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 复现要用同一 context 里新开的一页:它共享存档(localStorage),但历史是全新的。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 375, height: 812 } })
-  const boot = await ctx.newPage()
-  await boot.goto(INDEX, { waitUntil: 'load' })
-  await boot.getByRole('button', { name: /开\s*始\s*游\s*戏/ }).first().click()
-  await boot.locator('input[type=checkbox]').first().check()
-  await boot.getByRole('button', { name: /同意并开始/ }).first().click()
-  await boot.waitForTimeout(3200)
-  await boot.locator('input:not([type=file]):not([type=checkbox])').first().fill('返回自检')
-  await boot.getByRole('button', { name: /踏\s*入\s*仙\s*途/ }).first().click()
-  await boot.waitForTimeout(1200)
-  await boot.close()
+  const ctx = await auditContext({ viewport: { width: 375, height: 812 } });
+  const boot = await ctx.newPage();
+  await boot.goto(INDEX, { waitUntil: "load" });
+  await boot
+    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .first()
+    .click();
+  await boot.locator("input[type=checkbox]").first().check();
+  await boot
+    .getByRole("button", { name: /同意并开始/ })
+    .first()
+    .click();
+  await boot.waitForTimeout(3200);
+  await boot.locator("input:not([type=file]):not([type=checkbox])").first().fill("返回自检");
+  await boot
+    .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+    .first()
+    .click();
+  await boot.waitForTimeout(1200);
+  await boot.close();
 
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
   // 这一页的第一次导航就是子页 —— 正是冷启动的处境
-  await page.goto(INDEX + '#/dongfu', { waitUntil: 'load' })
-  await page.waitForTimeout(1800)
+  await page.goto(INDEX + "#/dongfu", { waitUntil: "load" });
+  await page.waitForTimeout(1800);
   // 同上:别让随机浮上来的引擎事件挡住「返回」
-  await clearOverlays(page)
-  checked += 1
+  await clearOverlays(page);
+  checked += 1;
   const coldBack = await page.evaluate(() => ({
     back: (window.history.state || {}).back ?? null,
-    hasBack: !!document.querySelector('main button')
-  }))
-  if (coldBack.back) failures.push(`[375] 冷启动场景:第一次导航就落在子页,history.state.back 竟是 ${coldBack.back}(复现条件没搭对)`)
-  const backBtn = page.locator('main button', { hasText: /返\s*回/ }).first()
+    hasBack: !!document.querySelector("main button"),
+  }));
+  if (coldBack.back)
+    failures.push(
+      `[375] 冷启动场景:第一次导航就落在子页,history.state.back 竟是 ${coldBack.back}(复现条件没搭对)`,
+    );
+  const backBtn = page.locator("main button", { hasText: /返\s*回/ }).first();
   if ((await backBtn.count()) === 0) {
-    failures.push('[375] 冷启动场景:子页上没有「返回」入口,判据没跑到东西')
+    failures.push("[375] 冷启动场景:子页上没有「返回」入口,判据没跑到东西");
   } else {
-    await backBtn.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(900)
+    await backBtn.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(900);
     const after = await page.evaluate(() => ({
       hash: location.hash,
-      alive: !!document.querySelector('#app')?.firstElementChild
-    }))
-    if (!after.alive) failures.push('[375] 冷启动场景:点「返回」把游戏退出了(界面没了,退到站外)')
-    else if (after.hash !== '#/' && after.hash !== '') failures.push(`[375] 冷启动场景:点「返回」落在 ${after.hash},父页应是 #/`)
+      alive: !!document.querySelector("#app")?.firstElementChild,
+    }));
+    if (!after.alive) failures.push("[375] 冷启动场景:点「返回」把游戏退出了(界面没了,退到站外)");
+    else if (after.hash !== "#/" && after.hash !== "")
+      failures.push(`[375] 冷启动场景:点「返回」落在 ${after.hash},父页应是 #/`);
   }
-  if (pageErrors.length) failures.push(`[375] 冷启动场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[375] 冷启动场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第十件事:后期档的逐页复核(空档量不出长数字与满屏内容) ----
@@ -1607,12 +1814,25 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 走一遍后期档:先核归来卷轴,再逐页过同一把尺子。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now() - 86400000 * 30, lastActiveAt: Date.now() - 9 * 3600000, totalPlaySec: 0, createRerolls: 8, createProfile: null },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now() - 86400000 * 30,
+      lastActiveAt: Date.now() - 9 * 3600000,
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
     player: {
       major: 14,
       sub: 0,
@@ -1620,7 +1840,16 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
       age: 3000,
       lifespanBonusYears: 0,
       dead: false,
-      reincarnation: { count: 2, daoFruit: 12, talents: [], insight: 400, lives: [], vow: null, trial: null, bonds: [] },
+      reincarnation: {
+        count: 2,
+        daoFruit: 12,
+        talents: [],
+        insight: 400,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
       /*
        * 五系杂灵根:灵根行最挤的一档(名字 + 五个圆环 + ×倍率)。
        * 空档抽到「双灵根」时不挤,「杂灵根」被压成竖排的事故就靠运气才撞得到 ——
@@ -1628,90 +1857,152 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
        */
       linggen: {
         roots: [
-          { element: 'fire', aptitude: 42 },
-          { element: 'water', aptitude: 38 },
-          { element: 'wood', aptitude: 51 },
-          { element: 'metal', aptitude: 33 },
-          { element: 'earth', aptitude: 29 }
+          { element: "fire", aptitude: 42 },
+          { element: "water", aptitude: 38 },
+          { element: "wood", aptitude: 51 },
+          { element: "metal", aptitude: 33 },
+          { element: "earth", aptitude: 29 },
         ],
-        gradeName: '杂灵根',
-        growthMult: 0.85
+        gradeName: "杂灵根",
+        growthMult: 0.85,
       },
       /*
        * 镇压三态都要在夹具里出现 —— 此前夹具一个镇压区域都没有,
        * 于是「自动产出」那条长信息把地界名挤成竖排的事故,这脚本从来没量过(玩家先看到的)。
        * qingyun 守了 7 小时(稳定)、wanyao 守到 71 小时(倒计时转红)、guzhanchang 守满一日(繁盛)。
        */
-      suppressedRegions: ['qingyun', 'wanyao', 'guzhanchang'],
-      suppressQualified: ['qingyun', 'wanyao', 'guzhanchang', 'heifeng'],
+      suppressedRegions: ["qingyun", "wanyao", "guzhanchang"],
+      suppressQualified: ["qingyun", "wanyao", "guzhanchang", "heifeng"],
       suppressedSince: {
         qingyun: Date.now() - 7 * 3600000,
         wanyao: Date.now() - 71 * 3600000,
-        guzhanchang: Date.now() - 30 * 3600000
+        guzhanchang: Date.now() - 30 * 3600000,
       },
       regionStats: {
-        qingyun: { totalFights: 40, avgRounds: 2.1, avgDamageTakenPct: 0.05, consecutiveWins: 9, lastUpdateAt: Date.now() - 3600000 },
-        wanyao: { totalFights: 60, avgRounds: 2.4, avgDamageTakenPct: 0.06, consecutiveWins: 4, lastUpdateAt: Date.now() - 3600000 },
-        guzhanchang: { totalFights: 55, avgRounds: 2.8, avgDamageTakenPct: 0.09, consecutiveWins: 3, lastUpdateAt: Date.now() - 3600000 },
+        qingyun: {
+          totalFights: 40,
+          avgRounds: 2.1,
+          avgDamageTakenPct: 0.05,
+          consecutiveWins: 9,
+          lastUpdateAt: Date.now() - 3600000,
+        },
+        wanyao: {
+          totalFights: 60,
+          avgRounds: 2.4,
+          avgDamageTakenPct: 0.06,
+          consecutiveWins: 4,
+          lastUpdateAt: Date.now() - 3600000,
+        },
+        guzhanchang: {
+          totalFights: 55,
+          avgRounds: 2.8,
+          avgDamageTakenPct: 0.09,
+          consecutiveWins: 3,
+          lastUpdateAt: Date.now() - 3600000,
+        },
         // 黑风林:已取得镇压资格但当前仍在历练态(「转为镇压收益」那条要画出来)
-        heifeng: { totalFights: 14, avgRounds: 3.9, avgDamageTakenPct: 0.18, consecutiveWins: 2, lastUpdateAt: Date.now() - 600000 }
+        heifeng: {
+          totalFights: 14,
+          avgRounds: 3.9,
+          avgDamageTakenPct: 0.18,
+          consecutiveWins: 2,
+          lastUpdateAt: Date.now() - 600000,
+        },
       },
       // 在途秘境:归来卷轴要说「原样留着」,历练页也要画出「在境中」那一版
-      secretRealm: { realmId: 'sr_kurong', enteredAt: Date.now() - 600000, layer: 2, wins: 1, losses: 0, spoils: ['灵石少许'], rules: ['治疗减半'], carriedHpPct: 0.7, finished: false }
+      secretRealm: {
+        realmId: "sr_kurong",
+        enteredAt: Date.now() - 600000,
+        layer: 2,
+        wins: 1,
+        losses: 0,
+        spoils: ["灵石少许"],
+        rules: ["治疗减半"],
+        carriedHpPct: 0.7,
+        finished: false,
+      },
     },
-    resources: { spiritStone: gn(9, 12), qi: 5000, wudao: 800, herb: 900, ore: 900, page: 300, dust: 500 },
+    resources: {
+      spiritStone: gn(9, 12),
+      qi: 5000,
+      wudao: 800,
+      herb: 900,
+      ore: 900,
+      page: 300,
+      dust: 500,
+    },
     inventory: {
       items: [
-        { uid: 'late_w', templateId: 'w_zidian', quality: 'heaven', tier: 20, level: 0, affixes: [{ id: 'bs3', roll: 1 }] },
-        { uid: 'late_a', templateId: 'b_xingluo', quality: 'heaven', tier: 20, level: 0, affixes: [{ id: 'low2', roll: 1 }] }
+        {
+          uid: "late_w",
+          templateId: "w_zidian",
+          quality: "heaven",
+          tier: 20,
+          level: 0,
+          affixes: [{ id: "bs3", roll: 1 }],
+        },
+        {
+          uid: "late_a",
+          templateId: "b_xingluo",
+          quality: "heaven",
+          tier: 20,
+          level: 0,
+          affixes: [{ id: "low2", roll: 1 }],
+        },
       ],
-      equipped: { weapon: 'late_w', body: 'late_a' },
+      equipped: { weapon: "late_w", body: "late_a" },
       pills: { p_jvqidan: 5, p_huichun: 3 },
-      artifacts: [{ defId: 'af_qinglian', level: 3 }, { defId: 'af_wuxiangzhu', level: 2 }],
-      equippedArtifacts: ['af_qinglian', 'af_wuxiangzhu']
+      artifacts: [
+        { defId: "af_qinglian", level: 3 },
+        { defId: "af_wuxiangzhu", level: 2 },
+      ],
+      equippedArtifacts: ["af_qinglian", "af_wuxiangzhu"],
     },
     endgame: {
-      daoPath: 'sword',
+      daoPath: "sword",
       daoSource: 1200,
-      souls: [{ uid: 'late_s1', type: 'fengmang', grade: 1, fromName: '旧剑' }],
-      equippedSouls: ['late_s1'],
+      souls: [{ uid: "late_s1", type: "fengmang", grade: 1, fromName: "旧剑" }],
+      equippedSouls: ["late_s1"],
       // 在途远征:归来卷轴要说「原样留着」,天界页也要画出「走到第二重」那一版
       worldRun: {
-        worldId: 'chiyan',
+        worldId: "chiyan",
         pactId: null,
         gateId: null,
         layer: 1,
         bonus: 12,
-        rows: [{ foeName: '焰魄', win: true, rounds: 7, hpLeftPct: 0.62 }],
+        rows: [{ foeName: "焰魄", win: true, rounds: 7, hpLeftPct: 0.62 }],
         carriedHpPct: 0.62,
         totalRounds: 7,
-        winStacks: 1
-      }
+        winStacks: 1,
+      },
     },
     // 地界表:解锁到黑风林一带,好让「镇压中 / 已取得资格」两种卡片都渲染出来
     adventure: {
-      unlocked: ['qingyun', 'luoxia', 'heifeng', 'wanyao', 'cangwu', 'guzhanchang'],
+      unlocked: ["qingyun", "luoxia", "heifeng", "wanyao", "cangwu", "guzhanchang"],
       // luoxia 不在 cleared 里 —— 它已「妖气复聚」,旧主归来(见下一行的 revived)
-      cleared: ['qingyun', 'heifeng', 'wanyao'],
+      cleared: ["qingyun", "heifeng", "wanyao"],
       /*
        * 妖气复聚那一行(见 core/regionRevival):旧主归来、此地处不再「已靖」。
        * 它要进夹具,是因为它是这条设计唯一的可见面 —— 而「名字 + 已靖/复聚标签 +
        * 简介 + 该怎么办」正是这一行最挤的一档,窄屏上最容易把字挤成竖排。
        */
-      revived: ['luoxia'],
+      revived: ["luoxia"],
       mortalCleared: [],
       session: null,
       pendingEventId: null,
       pendingEventSince: 0,
       seenOnceEvents: [],
       lastBattle: null,
-      eventMemories: {}
+      eventMemories: {},
     },
     /*
      * 洞府等级:升级按钮上的代价是「数 + 量词」(2,798 石 · 50 铁),
      * 空档只有「200 石 20 铁」这种短数字,量不出「数字与量词被换行拆开」那条判据。
      */
-    dongfu: { levels: { mansion: 4, field: 5, alchemy: 5, forge: 4, library: 4 }, offlineCapHours: 24 },
+    dongfu: {
+      levels: { mansion: 4, field: 5, alchemy: 5, forge: 4, library: 4 },
+      offlineCapHours: 24,
+    },
     settings: {
       privacyAccepted: true,
       sfxOn: false,
@@ -1722,67 +2013,82 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
       battleSpeed: 4,
       decomposeRanks: [],
       smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
-      theme: 'dark'
-    }
-  }
+      theme: "dark",
+    },
+  };
   // 夹具 payload 只做一次,后面 320 那一遍复用;播种加闸(见第十四件事的坑)
-  const latePayload = Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  await ctx.addInitScript(decisivePayload => {
-    if (localStorage.getItem('__layoutSeeded')) return
-    for (const [k, v] of Object.entries(decisivePayload)) localStorage.setItem(k, v)
-    localStorage.setItem('__layoutSeeded', '1')
-  }, latePayload)
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.waitForTimeout(2600)
+  const latePayload = Object.fromEntries(
+    Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]),
+  );
+  await ctx.addInitScript((decisivePayload) => {
+    if (localStorage.getItem("__layoutSeeded")) return;
+    for (const [k, v] of Object.entries(decisivePayload)) localStorage.setItem(k, v);
+    localStorage.setItem("__layoutSeeded", "1");
+  }, latePayload);
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(2600);
 
   // (一)隔夜归来第一眼:数字不许漏 NaN,收下之后要真的关掉
-  checked += 1
+  checked += 1;
   const offline = await page.evaluate(() => {
-    const panel = document.querySelector('.modal-panel')
-    if (!panel) return null
-    const text = panel.innerText || ''
+    const panel = document.querySelector(".modal-panel");
+    if (!panel) return null;
+    const text = panel.innerText || "";
     return {
-      label: panel.getAttribute('aria-label'),
+      label: panel.getAttribute("aria-label"),
       text: text.slice(0, 200),
       leaks: /NaN|undefined|Infinity/.test(text),
-      rows: text.split('\n').filter(l => l.includes('+')).length
-    }
-  })
+      rows: text.split("\n").filter((l) => l.includes("+")).length,
+    };
+  });
   if (!offline) {
-    failures.push('[390] 后期档:隔夜 9 小时开局,「归来卷轴」没有弹出来')
+    failures.push("[390] 后期档:隔夜 9 小时开局,「归来卷轴」没有弹出来");
   } else {
-    if (!offline.label) failures.push('[390] 后期档:归来卷轴没有可访问名')
-    if (offline.leaks) failures.push(`[390] 后期档:归来卷轴漏出占位符 —— ${offline.text.slice(0, 60)}`)
-    if (offline.rows === 0) failures.push('[390] 后期档:归来卷轴一条收益都没列')
-    const take = page.locator('.modal-panel button', { hasText: /收\s*下/ }).first()
-    if ((await take.count()) === 0) failures.push('[390] 后期档:归来卷轴没有「收下」')
+    if (!offline.label) failures.push("[390] 后期档:归来卷轴没有可访问名");
+    if (offline.leaks)
+      failures.push(`[390] 后期档:归来卷轴漏出占位符 —— ${offline.text.slice(0, 60)}`);
+    if (offline.rows === 0) failures.push("[390] 后期档:归来卷轴一条收益都没列");
+    const take = page.locator(".modal-panel button", { hasText: /收\s*下/ }).first();
+    if ((await take.count()) === 0) failures.push("[390] 后期档:归来卷轴没有「收下」");
     else {
-      await take.click({ timeout: 3000 }).catch(() => {})
-      await page.waitForTimeout(700)
-      if (await page.locator('.modal-panel').count()) failures.push('[390] 后期档:点了「收下」归来卷轴没关掉')
+      await take.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(700);
+      if (await page.locator(".modal-panel").count())
+        failures.push("[390] 后期档:点了「收下」归来卷轴没关掉");
     }
   }
 
   // (二)后期档逐页:与空档同一把尺子
   await page.evaluate(() => {
-    for (const b of document.querySelectorAll('.pointer-events-none.fixed button')) b.click()
-    Math.random = () => 1
-  })
-  await page.waitForTimeout(400)
-  for (const route of ['/', '/cultivation', '/adventure', '/inventory', '/character', '/celestial', '/souls', '/collection', '/build', '/dongfu']) {
-    await page.goto(INDEX + '#' + route, { waitUntil: 'load' })
-    await page.waitForTimeout(700)
-    const info = await measurePage(page)
-    checked += 1
-    const problems = problemsOf(info)
-    if (problems.length) failures.push(`[390-late] ${route} → ${problems.join(' / ')}`)
-    const rail = await measureTabRail(page)
-    const railFails = railProblems(rail)
-    if (rail) checked += 1
-    if (railFails.length) failures.push(`[390-late] ${route} → ${railFails.join(' / ')}`)
+    for (const b of document.querySelectorAll(".pointer-events-none.fixed button")) b.click();
+    Math.random = () => 1;
+  });
+  await page.waitForTimeout(400);
+  for (const route of [
+    "/",
+    "/cultivation",
+    "/adventure",
+    "/inventory",
+    "/character",
+    "/celestial",
+    "/souls",
+    "/collection",
+    "/build",
+    "/dongfu",
+  ]) {
+    await page.goto(INDEX + "#" + route, { waitUntil: "load" });
+    await page.waitForTimeout(700);
+    const info = await measurePage(page);
+    checked += 1;
+    const problems = problemsOf(info);
+    if (problems.length) failures.push(`[390-late] ${route} → ${problems.join(" / ")}`);
+    const rail = await measureTabRail(page);
+    const railFails = railProblems(rail);
+    if (rail) checked += 1;
+    if (railFails.length) failures.push(`[390-late] ${route} → ${railFails.join(" / ")}`);
   }
 
   /*
@@ -1792,20 +2098,25 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * 已靖是安静的状态,复聚是**要玩家动手的状态** —— 只写「妖气复聚」而不写
    * 「再历一程即可复靖」,玩家看到的就是一处忽然变回锁着的地界(实测过同类抱怨)。
    */
-  await page.goto(INDEX + '#/adventure', { waitUntil: 'load' })
-  await page.waitForTimeout(700)
-  checked += 1
+  await page.goto(INDEX + "#/adventure", { waitUntil: "load" });
+  await page.waitForTimeout(700);
+  checked += 1;
   const reviveCard = await page.evaluate(() => {
-    const card = [...document.querySelectorAll('[data-region-card]')].find(c => (c.innerText || '').includes('妖气复聚'))
-    return { found: Boolean(card), text: (card?.innerText || '').replace(/\s+/g, ' ') }
-  })
+    const card = [...document.querySelectorAll("[data-region-card]")].find((c) =>
+      (c.innerText || "").includes("妖气复聚"),
+    );
+    return { found: Boolean(card), text: (card?.innerText || "").replace(/\s+/g, " ") };
+  });
   if (!reviveCard.found) {
-    failures.push('[390-late] 历练页:夹具里那处妖气复聚的旧地界没画出「妖气复聚」')
+    failures.push("[390-late] 历练页:夹具里那处妖气复聚的旧地界没画出「妖气复聚」");
   } else {
-    if (!reviveCard.text.includes('再历一程即可复靖')) {
-      failures.push('[390-late] 历练页:复聚那一行只说了「妖气复聚」,没说该怎么办(再历一程即可复靖)')
+    if (!reviveCard.text.includes("再历一程即可复靖")) {
+      failures.push(
+        "[390-late] 历练页:复聚那一行只说了「妖气复聚」,没说该怎么办(再历一程即可复靖)",
+      );
     }
-    if (!/出发/.test(reviveCard.text)) failures.push('[390-late] 历练页:复聚的地界没有「出发」入口 —— 旧主回来却进不去')
+    if (!/出发/.test(reviveCard.text))
+      failures.push("[390-late] 历练页:复聚的地界没有「出发」入口 —— 旧主回来却进不去");
   }
 
   /*
@@ -1816,30 +2127,34 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * 夹具身上带着一趟打到第二层的秘境,故这里真点一次:要么浮出战报,
    * 要么卡片状态前移(层数/败次/探尽),两者必有其一。
    */
-  await page.goto(INDEX + '#' + '/adventure', { waitUntil: 'load' })
-  await page.waitForTimeout(800)
-  checked += 1
-  const beforeText = await page.evaluate(() => document.querySelector('main')?.innerText || '')
-  const fightAgain = page.locator('main button', { hasText: /再\s*入\s*一\s*层/ }).first()
+  await page.goto(INDEX + "#" + "/adventure", { waitUntil: "load" });
+  await page.waitForTimeout(800);
+  checked += 1;
+  const beforeText = await page.evaluate(() => document.querySelector("main")?.innerText || "");
+  const fightAgain = page.locator("main button", { hasText: /再\s*入\s*一\s*层/ }).first();
   if ((await fightAgain.count()) === 0) {
-    failures.push('[390-late] 历练页:在途秘境没有「再入一层」入口 —— 夹具的秘境没被读出来?')
+    failures.push("[390-late] 历练页:在途秘境没有「再入一层」入口 —— 夹具的秘境没被读出来?");
   } else {
-    await fightAgain.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(900)
+    await fightAgain.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(900);
     const after = await page.evaluate(() => ({
-      text: document.querySelector('main')?.innerText || '',
-      toasts: [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim())
-    }))
+      text: document.querySelector("main")?.innerText || "",
+      toasts: [...document.querySelectorAll(".pointer-events-none.fixed button")].map((b) =>
+        (b.textContent || "").trim(),
+      ),
+    }));
     if (after.toasts.length === 0 && after.text === beforeText) {
-      failures.push('[390-late] 历练页:点了「再入一层」既没战报也没变化(点了没反应)')
+      failures.push("[390-late] 历练页:点了「再入一层」既没战报也没变化(点了没反应)");
     }
-    if (/NaN|undefined/.test(after.text + after.toasts.join(' '))) failures.push('[390-late] 历练页:秘境推进后漏出占位符')
+    if (/NaN|undefined/.test(after.text + after.toasts.join(" ")))
+      failures.push("[390-late] 历练页:秘境推进后漏出占位符");
     console.log(
-      `  在途秘境推进一步:${after.toasts.length ? `战报「${after.toasts[0]?.slice(0, 26)}」` : '卡片状态前移'}` +
-        `${after.toasts.length > 1 ? ` 等 ${after.toasts.length} 条` : ''}`
-    )
+      `  在途秘境推进一步:${after.toasts.length ? `战报「${after.toasts[0]?.slice(0, 26)}」` : "卡片状态前移"}` +
+        `${after.toasts.length > 1 ? ` 等 ${after.toasts.length} 条` : ""}`,
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 后期档页面异常:${[...new Set(pageErrors)].join(' | ')}`)
+  if (pageErrors.length)
+    failures.push(`[390] 后期档页面异常:${[...new Set(pageErrors)].join(" | ")}`);
 
   /*
    * (四)在途远征也要真的走得动。
@@ -1848,92 +2163,114 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * 从没有人看过。夹具身上带着一趟打到第二重的赤炎天远征(天界页会直接开在远征册上),
    * 故这里真点一次择路:要么浮出战报、要么行程点列前移,并查占位符与页面异常。
    */
-  await page.goto(INDEX + '#' + '/celestial', { waitUntil: 'load' })
-  await page.waitForTimeout(900)
-  checked += 1
-  const runBefore = await page.evaluate(() => document.querySelector('main')?.innerText || '')
+  await page.goto(INDEX + "#" + "/celestial", { waitUntil: "load" });
+  await page.waitForTimeout(900);
+  checked += 1;
+  const runBefore = await page.evaluate(() => document.querySelector("main")?.innerText || "");
   /*
    * 入口怎么认:两条路各自的按钮上写着「道源 +N」(层号那行是独立的文本,不在按钮里);
    * 若这一趟已经走到界主,入口换成「决战」。两者必有其一 —— 都找不到就是真没入口。
    */
-  const pickNode = page.locator('main button', { hasText: /道源 \+\d+/ }).first()
-  const runEntry = (await pickNode.count()) > 0 ? pickNode : page.locator('main button', { hasText: /决\s*战/ }).first()
+  const pickNode = page.locator("main button", { hasText: /道源 \+\d+/ }).first();
+  const runEntry =
+    (await pickNode.count()) > 0
+      ? pickNode
+      : page.locator("main button", { hasText: /决\s*战/ }).first();
   if (!/远征 ·/.test(runBefore)) {
-    failures.push('[390-late] 天界页:在途远征没有渲染出来(夹具的 worldRun 没被读出来?)')
+    failures.push("[390-late] 天界页:在途远征没有渲染出来(夹具的 worldRun 没被读出来?)");
   } else if ((await runEntry.count()) === 0) {
-    failures.push('[390-late] 天界页:在途远征没有可推进一步的入口(既无择路也无决战)')
+    failures.push("[390-late] 天界页:在途远征没有可推进一步的入口(既无择路也无决战)");
   } else {
-    const clicked = ((await runEntry.textContent()) || '').replace(/\s+/g, ' ').trim().slice(0, 18)
-    await runEntry.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(900)
+    const clicked = ((await runEntry.textContent()) || "").replace(/\s+/g, " ").trim().slice(0, 18);
+    await runEntry.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(900);
     const after = await page.evaluate(() => ({
-      text: document.querySelector('main')?.innerText || '',
-      toasts: [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()),
+      text: document.querySelector("main")?.innerText || "",
+      toasts: [...document.querySelectorAll(".pointer-events-none.fixed button")].map((b) =>
+        (b.textContent || "").trim(),
+      ),
       // 打输会开战报弹窗(赢了只是行程点列前移,不开弹窗)
-      report: (document.querySelector('.modal-panel h3')?.textContent || '').trim()
-    }))
+      report: (document.querySelector(".modal-panel h3")?.textContent || "").trim(),
+    }));
     if (!after.report && after.toasts.length === 0 && after.text === runBefore) {
-      failures.push('[390-late] 天界页:点了远征的推进入口既没战报也没变化(点了没反应)')
+      failures.push("[390-late] 天界页:点了远征的推进入口既没战报也没变化(点了没反应)");
     }
     /*
      * 开出来的战报必须**叫得出这一界**:标题得在动手前取。
      * 从前先打后读 runWorld,而收尾那一场会把 worldRun 清空,标题就退成「远征」。
      */
-    if (after.report && after.report !== '赤炎天') {
-      failures.push(`[390-late] 天界页:远征战报弹窗标题是「${after.report}」,应为这一界的名字(赤炎天)`)
+    if (after.report && after.report !== "赤炎天") {
+      failures.push(
+        `[390-late] 天界页:远征战报弹窗标题是「${after.report}」,应为这一界的名字(赤炎天)`,
+      );
     }
-    if (/NaN|undefined/.test(after.text + after.toasts.join(' ') + after.report)) failures.push('[390-late] 天界页:远征推进一步后漏出占位符')
+    if (/NaN|undefined/.test(after.text + after.toasts.join(" ") + after.report))
+      failures.push("[390-late] 天界页:远征推进一步后漏出占位符");
     console.log(
       `  在途远征推进一步(点了「${clicked}」):` +
-        (after.report ? `战报弹窗「${after.report}」` : after.toasts.length ? `战报「${after.toasts[0]?.slice(0, 24)}」` : '行程点列前移')
-    )
+        (after.report
+          ? `战报弹窗「${after.report}」`
+          : after.toasts.length
+            ? `战报「${after.toasts[0]?.slice(0, 24)}」`
+            : "行程点列前移"),
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 后期档页面异常(远征):${[...new Set(pageErrors)].join(' | ')}`)
+  if (pageErrors.length)
+    failures.push(`[390] 后期档页面异常(远征):${[...new Set(pageErrors)].join(" | ")}`);
 
   /*
    * (四续)天道试炼:第三条终局产线,同样只在单元用例里跑过。
    * 切到「试炼」册,真按一次应试,要求开出战报、且写清止步/功成与赏格、不漏占位符。
    */
-  await page.goto(INDEX + '#' + '/celestial', { waitUntil: 'load' })
-  await page.waitForTimeout(900)
+  await page.goto(INDEX + "#" + "/celestial", { waitUntil: "load" });
+  await page.waitForTimeout(900);
   // 上一步的远征战报还开着(它是一层遮罩),先收掉再切册 —— 否则点不动、还查不出原因
-  const leftover = await clearOverlays(page)
-  if (leftover.length) failures.push(`[390-late] 天界页:切试炼册前还开着浮层 —— ${leftover.join('、')}`)
-  const trialTab = page.getByRole('tab', { name: /试\s*炼/ }).first()
-  if ((await trialTab.count()) === 0) failures.push('[390-late] 天界页:找不到「试炼」册')
+  const leftover = await clearOverlays(page);
+  if (leftover.length)
+    failures.push(`[390-late] 天界页:切试炼册前还开着浮层 —— ${leftover.join("、")}`);
+  const trialTab = page.getByRole("tab", { name: /试\s*炼/ }).first();
+  if ((await trialTab.count()) === 0) failures.push("[390-late] 天界页:找不到「试炼」册");
   else {
-    await trialTab.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(500)
-    checked += 1
-    const trialBtn = page.locator('main button', { hasText: /应\s*试/ }).first()
-    if ((await trialBtn.count()) === 0) failures.push('[390-late] 试炼册里没有「应试」入口(判据没跑到东西)')
+    await trialTab.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    checked += 1;
+    const trialBtn = page.locator("main button", { hasText: /应\s*试/ }).first();
+    if ((await trialBtn.count()) === 0)
+      failures.push("[390-late] 试炼册里没有「应试」入口(判据没跑到东西)");
     else {
-      const trialName = ((await trialBtn.textContent()) || '').replace(/\s+/g, ' ').trim().slice(0, 20)
-      await trialBtn.click({ timeout: 4000 }).catch(() => {})
-      await page.waitForTimeout(2200)
+      const trialName = ((await trialBtn.textContent()) || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 20);
+      await trialBtn.click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(2200);
       const after = await page.evaluate(() => {
-        const panel = document.querySelector('.modal-panel')
-        const text = panel?.innerText || ''
+        const panel = document.querySelector(".modal-panel");
+        const text = panel?.innerText || "";
         return {
-          title: (panel?.querySelector('h3')?.textContent || '').trim(),
-          text: text.replace(/\n+/g, ' ').slice(0, 90),
-          rows: panel ? panel.querySelectorAll('p, li').length : 0,
-          leaks: /NaN|undefined|Infinity/.test(text)
-        }
-      })
-      if (!after.title) failures.push(`[390-late] 试炼:点了「${trialName}」没有开出战报`)
+          title: (panel?.querySelector("h3")?.textContent || "").trim(),
+          text: text.replace(/\n+/g, " ").slice(0, 90),
+          rows: panel ? panel.querySelectorAll("p, li").length : 0,
+          leaks: /NaN|undefined|Infinity/.test(text),
+        };
+      });
+      if (!after.title) failures.push(`[390-late] 试炼:点了「${trialName}」没有开出战报`);
       else {
         // 战报的两种口径:全捷(打通)或止步第 N 战
-        if (!/全捷|止步第/.test(after.text)) failures.push(`[390-late] 试炼:战报没写清结果 —— ${after.text}`)
-        if (after.leaks) failures.push('[390-late] 试炼:战报漏出占位符')
-        console.log(`  天道试炼(点了「${trialName}」):战报「${after.title}」· ${after.text.slice(0, 34)}…`)
-        await page.keyboard.press('Escape')
-        await page.waitForTimeout(400)
+        if (!/全捷|止步第/.test(after.text))
+          failures.push(`[390-late] 试炼:战报没写清结果 —— ${after.text}`);
+        if (after.leaks) failures.push("[390-late] 试炼:战报漏出占位符");
+        console.log(
+          `  天道试炼(点了「${trialName}」):战报「${after.title}」· ${after.text.slice(0, 34)}…`,
+        );
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(400);
       }
     }
   }
-  if (pageErrors.length) failures.push(`[390] 后期档页面异常(试炼):${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 后期档页面异常(试炼):${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 
   /*
    * (五)同一份后期档在 320 窄屏再过一遍。
@@ -1942,28 +2279,33 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * 这个组合此前没量过,而这正是最容易撑破的地方(实测当前全绿,故这一条是防回归)。
    */
   {
-    const narrow = await auditContext({ viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })
-    await narrow.addInitScript(decisivePayload => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(decisivePayload)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
-    }, latePayload)
-    const p = await narrow.newPage()
-    const errs = []
-    watchPageErrors(p, errs)
-    await p.goto(INDEX, { waitUntil: 'load' })
-    await p.waitForTimeout(2400)
-    await clearOverlays(p)
+    const narrow = await auditContext({
+      viewport: { width: 320, height: 568 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+    });
+    await narrow.addInitScript((decisivePayload) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(decisivePayload)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    }, latePayload);
+    const p = await narrow.newPage();
+    const errs = [];
+    watchPageErrors(p, errs);
+    await p.goto(INDEX, { waitUntil: "load" });
+    await p.waitForTimeout(2400);
+    await clearOverlays(p);
     for (const route of ROUTES) {
-      await p.goto(INDEX + '#' + route, { waitUntil: 'load' })
-      await p.waitForTimeout(600)
-      const info = await measurePage(p)
-      checked += 1
-      const problems = problemsOf(info)
-      if (problems.length) failures.push(`[320-late] ${route} → ${problems.join(' / ')}`)
+      await p.goto(INDEX + "#" + route, { waitUntil: "load" });
+      await p.waitForTimeout(600);
+      const info = await measurePage(p);
+      checked += 1;
+      const problems = problemsOf(info);
+      if (problems.length) failures.push(`[320-late] ${route} → ${problems.join(" / ")}`);
     }
-    if (errs.length) failures.push(`[320] 后期档页面异常:${[...new Set(errs)].join(' | ')}`)
-    await narrow.close()
+    if (errs.length) failures.push(`[320] 后期档页面异常:${[...new Set(errs)].join(" | ")}`);
+    await narrow.close();
   }
 }
 
@@ -1976,75 +2318,138 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 失败不许漏占位符,成功要与页面上的境界对得上。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
     // 炼气·圆满(大关)+ 修为灵气给足 + 寿元留够(寿元已尽会被「寿元将尽」截住)
-    player: { major: 0, sub: 9, exp: gn(9, 30), age: 16, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 30, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'fire', aptitude: 90 }], gradeName: '单灵根', growthMult: 1.2 } },
-    resources: { spiritStone: gn(3, 6), qi: 9999999, wudao: 300, herb: 400, ore: 400, page: 90, dust: 120 },
+    player: {
+      major: 0,
+      sub: 9,
+      exp: gn(9, 30),
+      age: 16,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 30,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "fire", aptitude: 90 }], gradeName: "单灵根", growthMult: 1.2 },
+    },
+    resources: {
+      spiritStone: gn(3, 6),
+      qi: 9999999,
+      wudao: 300,
+      herb: 400,
+      ore: 400,
+      page: 90,
+      dust: 120,
+    },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX + '#' + '/cultivation', { waitUntil: 'load' })
-  await page.waitForTimeout(2200)
-  await clearOverlays(page)
-  checked += 1
-  const tribBtn = page.locator('main button', { hasText: /引\s*劫\s*突\s*破/ }).first()
+  };
+  await ctx.addInitScript(
+    (data) => {
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX + "#" + "/cultivation", { waitUntil: "load" });
+  await page.waitForTimeout(2200);
+  await clearOverlays(page);
+  checked += 1;
+  const tribBtn = page.locator("main button", { hasText: /引\s*劫\s*突\s*破/ }).first();
   if ((await tribBtn.count()) === 0) {
-    failures.push('[390] 渡劫场景:修为灵气给足、卡在炼气圆满,却没出现「引劫突破」(判据没跑到东西)')
+    failures.push("[390] 渡劫场景:修为灵气给足、卡在炼气圆满,却没出现「引劫突破」(判据没跑到东西)");
   } else {
-    await tribBtn.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(1600)
+    await tribBtn.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(1600);
     const view = await page.evaluate(() => {
       // 只认**突破结果**那一扇:屏幕上可能同时浮着别的(顿悟/巡游),拿错扇就诊断错人
-      const panels = [...document.querySelectorAll('.modal-panel')]
-      const panel = panels.find(p => /突破成功|突破失败/.test(p.innerText || '')) ?? null
-      const text = panel?.innerText || ''
+      const panels = [...document.querySelectorAll(".modal-panel")];
+      const panel = panels.find((p) => /突破成功|突破失败/.test(p.innerText || "")) ?? null;
+      const text = panel?.innerText || "";
       return {
         found: !!panel,
         // 没开出来时,把「此刻开着的到底是谁」写进报告 —— 上一次注入就是靠这句才能一眼看懂
-        others: panels.map(p => (p.querySelector('h3')?.textContent || p.getAttribute('aria-label') || '无标题').trim()).join('、'),
+        others: panels
+          .map((p) =>
+            (p.querySelector("h3")?.textContent || p.getAttribute("aria-label") || "无标题").trim(),
+          )
+          .join("、"),
         text,
-        label: panel?.getAttribute('aria-label') ?? null,
-        outcome: /突破成功/.test(text) ? '成功' : /突破失败/.test(text) ? '失败' : null,
+        label: panel?.getAttribute("aria-label") ?? null,
+        outcome: /突破成功/.test(text) ? "成功" : /突破失败/.test(text) ? "失败" : null,
         hasWave: /共\s*\d+\s*道/.test(text),
         // 页面上当前境界(成功之后应当已经换名)
-        realm: (document.body.innerText.match(/炼气|筑基/) || [''])[0]
-      }
-    })
-    if (!view.found) failures.push(`[390] 渡劫场景:点了「引劫突破」没有开出结果弹窗(此刻开着的是:${view.others || '无'})`)
+        realm: (document.body.innerText.match(/炼气|筑基/) || [""])[0],
+      };
+    });
+    if (!view.found)
+      failures.push(
+        `[390] 渡劫场景:点了「引劫突破」没有开出结果弹窗(此刻开着的是:${view.others || "无"})`,
+      );
     if (view.found) {
-      if (!view.outcome) failures.push(`[390] 渡劫场景:结果弹窗没写清成败 —— ${view.text.slice(0, 40)}`)
-      if (!view.hasWave) failures.push('[390] 渡劫场景:渡劫结果里没有雷数(「共 N 道」)')
-      if (/NaN|undefined|Infinity/.test(view.text)) failures.push('[390] 渡劫场景:结果弹窗漏出占位符')
-      if (view.outcome === '成功' && view.realm !== '筑基') {
-        failures.push(`[390] 渡劫场景:弹窗说成功,页面上的境界却还是「${view.realm}」`)
+      if (!view.outcome)
+        failures.push(`[390] 渡劫场景:结果弹窗没写清成败 —— ${view.text.slice(0, 40)}`);
+      if (!view.hasWave) failures.push("[390] 渡劫场景:渡劫结果里没有雷数(「共 N 道」)");
+      if (/NaN|undefined|Infinity/.test(view.text))
+        failures.push("[390] 渡劫场景:结果弹窗漏出占位符");
+      if (view.outcome === "成功" && view.realm !== "筑基") {
+        failures.push(`[390] 渡劫场景:弹窗说成功,页面上的境界却还是「${view.realm}」`);
       }
-      const close = page.locator('.modal-panel button', { hasText: /继续问道|收拾心情/ }).first()
-      if ((await close.count()) === 0) failures.push('[390] 渡劫场景:结果弹窗没有收尾按钮')
+      const close = page.locator(".modal-panel button", { hasText: /继续问道|收拾心情/ }).first();
+      if ((await close.count()) === 0) failures.push("[390] 渡劫场景:结果弹窗没有收尾按钮");
       else {
-        await close.click({ timeout: 3000 }).catch(() => {})
-        await page.waitForTimeout(600)
-        if (await page.locator('.modal-panel').count()) failures.push('[390] 渡劫场景:点了收尾按钮弹窗没关掉')
+        await close.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(600);
+        if (await page.locator(".modal-panel").count())
+          failures.push("[390] 渡劫场景:点了收尾按钮弹窗没关掉");
       }
     }
-    console.log(`\n渡劫突破:${view.outcome ?? '(没写成败)'} · 雷数${view.hasWave ? '有' : '缺'} · 页面境界 ${view.realm}`)
+    console.log(
+      `\n渡劫突破:${view.outcome ?? "(没写成败)"} · 雷数${view.hasWave ? "有" : "缺"} · 页面境界 ${view.realm}`,
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 渡劫场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 渡劫场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第十二件事:走完一次转世(寿元将尽 → 此生已矣 → 轮回 → 新的一世) ----
@@ -2054,12 +2459,25 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 夹具把寿元写尽(一读档引擎就判定身故),然后一路点下去。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now() - 86400000 * 60, lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now() - 86400000 * 60,
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
     player: {
       major: 5,
       sub: 3,
@@ -2067,96 +2485,146 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
       age: 99999,
       lifespanBonusYears: 0,
       dead: false,
-      reincarnation: { count: 1, daoFruit: 9, talents: [], insight: 120, lives: [], vow: null, trial: null, bonds: [] },
-      linggen: { roots: [{ element: 'fire', aptitude: 90 }], gradeName: '单灵根', growthMult: 1.2 }
+      reincarnation: {
+        count: 1,
+        daoFruit: 9,
+        talents: [],
+        insight: 120,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "fire", aptitude: 90 }], gradeName: "单灵根", growthMult: 1.2 },
     },
-    resources: { spiritStone: gn(4, 6), qi: 4000, wudao: 500, herb: 300, ore: 300, page: 60, dust: 80 },
+    resources: {
+      spiritStone: gn(4, 6),
+      qi: 4000,
+      wudao: 500,
+      herb: 300,
+      ore: 300,
+      page: 60,
+      dust: 80,
+    },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.waitForTimeout(2600)
+  };
+  await ctx.addInitScript(
+    (data) => {
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(2600);
   /*
    * 钉死随机源、收掉提示条 —— 但**不要**去关弹窗:这一屏正开着「寿元将尽」,
    * 它就是本场景的起点(而且它故意不可关)。钉随机的用意是免得引擎在转世途中
    * 掷出一个顿悟/巡游浮层,把「关没关干净」的判据搅红(实测偶发)。
    */
   await page.evaluate(() => {
-    for (const b of document.querySelectorAll('.pointer-events-none.fixed button')) b.click()
-    Math.random = () => 1
-  })
-  await page.waitForTimeout(400)
+    for (const b of document.querySelectorAll(".pointer-events-none.fixed button")) b.click();
+    Math.random = () => 1;
+  });
+  await page.waitForTimeout(400);
 
   /** 读一扇弹窗的形状:标题、正文、按钮、有没有漏占位符 */
   const readPanel = () =>
     page.evaluate(() => {
-      const p = document.querySelector('.modal-panel')
-      if (!p) return null
+      const p = document.querySelector(".modal-panel");
+      if (!p) return null;
       return {
-        title: (p.querySelector('h3')?.textContent || p.getAttribute('aria-label') || '').trim(),
-        text: (p.innerText || '').replace(/\n+/g, ' '),
-        buttons: [...p.querySelectorAll('button')].map(b => (b.textContent || '').trim())
-      }
-    })
+        title: (p.querySelector("h3")?.textContent || p.getAttribute("aria-label") || "").trim(),
+        text: (p.innerText || "").replace(/\n+/g, " "),
+        buttons: [...p.querySelectorAll("button")].map((b) => (b.textContent || "").trim()),
+      };
+    });
   const step = async (label, expect) => {
-    checked += 1
-    const p = await readPanel()
+    checked += 1;
+    const p = await readPanel();
     if (!p) {
-      failures.push(`[390] 转世场景:${label}没有弹出对应的窗`)
-      return null
+      failures.push(`[390] 转世场景:${label}没有弹出对应的窗`);
+      return null;
     }
-    if (!expect.test(p.title)) failures.push(`[390] 转世场景:${label}的窗标题是「${p.title}」,不是预期的${expect}`)
-    if (/NaN|undefined|Infinity/.test(p.text)) failures.push(`[390] 转世场景:${label}漏出占位符 —— ${p.text.slice(0, 50)}`)
-    return p
-  }
+    if (!expect.test(p.title))
+      failures.push(`[390] 转世场景:${label}的窗标题是「${p.title}」,不是预期的${expect}`);
+    if (/NaN|undefined|Infinity/.test(p.text))
+      failures.push(`[390] 转世场景:${label}漏出占位符 —— ${p.text.slice(0, 50)}`);
+    return p;
+  };
 
-  const death = await step('读档后(身故)', /寿元将尽/)
-  if (death && !/兵解转世/.test(death.buttons.join(' '))) failures.push('[390] 转世场景:身故那屏没有「兵解转世」')
-  await page.locator('.modal-panel button', { hasText: /兵\s*解\s*转\s*世/ }).first().click({ timeout: 3000 }).catch(() => {})
-  await page.waitForTimeout(900)
+  const death = await step("读档后(身故)", /寿元将尽/);
+  if (death && !/兵解转世/.test(death.buttons.join(" ")))
+    failures.push("[390] 转世场景:身故那屏没有「兵解转世」");
+  await page
+    .locator(".modal-panel button", { hasText: /兵\s*解\s*转\s*世/ })
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => {});
+  await page.waitForTimeout(900);
 
-  const review = await step('兵解后(回顾)', /此生已矣/)
-  if (review && !/宿慧/.test(review.text)) failures.push('[390] 转世场景:回顾那一程没有交代宿慧')
-  await page.locator('.modal-panel button', { hasText: /往\s*生/ }).first().click({ timeout: 3000 }).catch(() => {})
-  await page.waitForTimeout(800)
+  const review = await step("兵解后(回顾)", /此生已矣/);
+  if (review && !/宿慧/.test(review.text)) failures.push("[390] 转世场景:回顾那一程没有交代宿慧");
+  await page
+    .locator(".modal-panel button", { hasText: /往\s*生/ })
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => {});
+  await page.waitForTimeout(800);
 
-  const next = await step('往生后(择姿立题)', /轮回/)
-  if (next && !/道果/.test(next.text)) failures.push('[390] 转世场景:轮回那一程没有交代道果')
+  const next = await step("往生后(择姿立题)", /轮回/);
+  if (next && !/道果/.test(next.text)) failures.push("[390] 转世场景:轮回那一程没有交代道果");
   // 有先天之姿就先择一个(不择则「踏入轮回」是灰的)。
   // 按「赋」拣天赋卡,别按第一个按钮:轮回页上新晋了「道号重拟」的「换一个」
   // (在天赋区之前),抓第一个按钮会点偏到改名上,天赋没选上、按钮一直是灰的。
-  const talent = page.locator('.modal-panel button', { hasText: /天赋|道赋|灵赋|凡赋/ }).first()
-  if (next && next.buttons.some(b => /赋|姿/.test(b))) await talent.click({ timeout: 3000 }).catch(() => {})
-  const confirm = page.locator('.modal-panel button', { hasText: /踏\s*入\s*轮\s*回/ }).first()
-  if ((await confirm.count()) === 0) failures.push('[390] 转世场景:轮回那程没有「踏入轮回」')
+  const talent = page.locator(".modal-panel button", { hasText: /天赋|道赋|灵赋|凡赋/ }).first();
+  if (next && next.buttons.some((b) => /赋|姿/.test(b)))
+    await talent.click({ timeout: 3000 }).catch(() => {});
+  const confirm = page.locator(".modal-panel button", { hasText: /踏\s*入\s*轮\s*回/ }).first();
+  if ((await confirm.count()) === 0) failures.push("[390] 转世场景:轮回那程没有「踏入轮回」");
   else {
-    if (await confirm.isDisabled()) failures.push('[390] 转世场景:择了先天之姿,「踏入轮回」仍是灰的')
-    await confirm.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(1800)
+    if (await confirm.isDisabled())
+      failures.push("[390] 转世场景:择了先天之姿,「踏入轮回」仍是灰的");
+    await confirm.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(1800);
     const after = await page.evaluate(() => ({
       // 判据是「转世那几扇窗关干净了」,不是「一扇窗都没有」——新的一世里
       // 引擎随时可能浮出顿悟/巡游,那是正常玩法,不该被算作转世没走完
-      rebirthStillOpen: [...document.querySelectorAll('.modal-panel')]
-        .map(p => (p.querySelector('h3')?.textContent || p.getAttribute('aria-label') || '').trim())
-        .filter(t => /寿元将尽|此生已矣|轮回/.test(t)),
-      text: (document.querySelector('main')?.innerText || '').replace(/\n+/g, ' ').slice(0, 200)
-    }))
-    if (after.rebirthStillOpen.length) failures.push(`[390] 转世场景:点「踏入轮回」之后还留着转世的窗 —— ${after.rebirthStillOpen.join('、')}`)
-    if (/炼虚|99999/.test(after.text)) failures.push('[390] 转世场景:转世之后页面上还写着上一世的境界/寿数')
-    console.log(`\n转世:${[death?.title, review?.title, next?.title].filter(Boolean).join(' → ')} → 新的一世(${after.text.slice(0, 24)}…)`)
+      rebirthStillOpen: [...document.querySelectorAll(".modal-panel")]
+        .map((p) =>
+          (p.querySelector("h3")?.textContent || p.getAttribute("aria-label") || "").trim(),
+        )
+        .filter((t) => /寿元将尽|此生已矣|轮回/.test(t)),
+      text: (document.querySelector("main")?.innerText || "").replace(/\n+/g, " ").slice(0, 200),
+    }));
+    if (after.rebirthStillOpen.length)
+      failures.push(
+        `[390] 转世场景:点「踏入轮回」之后还留着转世的窗 —— ${after.rebirthStillOpen.join("、")}`,
+      );
+    if (/炼虚|99999/.test(after.text))
+      failures.push("[390] 转世场景:转世之后页面上还写着上一世的境界/寿数");
+    console.log(
+      `\n转世:${[death?.title, review?.title, next?.title].filter(Boolean).join(" → ")} → 新的一世(${after.text.slice(0, 24)}…)`,
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 转世场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 转世场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第十三件事:挂机游戏真的在挂着跑(页面上的数自己在涨) ----
@@ -2167,12 +2635,25 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 而所有单测照样全绿。故这里真等两轮:灵气只给 1 点,看它自己涨不涨。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
     player: {
       major: 5,
       sub: 3,
@@ -2180,45 +2661,70 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
       age: 40,
       lifespanBonusYears: 0,
       dead: false,
-      reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] },
-      linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 }
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
     },
     resources: { spiritStone: gn(1, 5), qi: 1, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.waitForTimeout(2200)
-  await clearOverlays(page)
-  checked += 1
+  };
+  await ctx.addInitScript(
+    (data) => {
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(2200);
+  await clearOverlays(page);
+  checked += 1;
   /** 读顶栏灵气:文本按 formatGN 的档位(万/亿/兆…)还原成数值 */
-  const readQi = () => readFormatted(page, '灵气')
-  const first = await readQi()
-  await page.waitForTimeout(3200)
-  const second = await readQi()
-  await page.waitForTimeout(3200)
-  const third = await readQi()
-  const nums = [first.value, second.value, third.value]
-  if (nums.some(v => v === null || !Number.isFinite(v))) {
-    failures.push(`[390] 挂机场景:顶栏灵气读数解析不出来 —— ${[first, second, third].map(x => x.text).join(' / ')}`)
+  const readQi = () => readFormatted(page, "灵气");
+  const first = await readQi();
+  await page.waitForTimeout(3200);
+  const second = await readQi();
+  await page.waitForTimeout(3200);
+  const third = await readQi();
+  const nums = [first.value, second.value, third.value];
+  if (nums.some((v) => v === null || !Number.isFinite(v))) {
+    failures.push(
+      `[390] 挂机场景:顶栏灵气读数解析不出来 —— ${[first, second, third].map((x) => x.text).join(" / ")}`,
+    );
   } else if (!(nums[2] > nums[0] && nums[0] <= nums[1] && nums[1] <= nums[2])) {
     // 判据是「一直在涨、至少涨了一截」——不要求每步都严格变大:灵气涨到上限会平下来
-    failures.push(`[390] 挂机场景:灵气没有在涨(页面上的数冻住了 —— 引擎没跑?) ${nums.join(' → ')}`)
+    failures.push(`[390] 挂机场景:灵气没有在涨(页面上的数冻住了 —— 引擎没跑?) ${nums.join(" → ")}`);
   } else {
-    console.log(`\n挂机 6 秒:灵气 ${first.text} → ${second.text} → ${third.text}(页面上的数自己在涨)`)
+    console.log(
+      `\n挂机 6 秒:灵气 ${first.text} → ${second.text} → ${third.text}(页面上的数自己在涨)`,
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 挂机场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 挂机场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第十四件事:导出 → 改动 → 导入回来(存档备份这条路真的走得通吗) ----
@@ -2235,111 +2741,184 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * (addInitScript 每次导航都会跑,不加闸就会在重载时把刚导入的存档盖回夹具 —— 实测踩过)。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, acceptDownloads: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    acceptDownloads: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '存读自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "存读自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  const savePath = '/tmp/layout-roundtrip.save'
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  const savePath = "/tmp/layout-roundtrip.save";
   /** 磁盘上那一份灵石(解密 resources 分片;GNum 是 m×10^e) */
   const storedStone = async () => {
-    const cipher = await page.evaluate(() => localStorage.getItem('xuanshu.resources') || '')
-    if (!cipher) return null
-    const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8)
-    if (!plain) return null
-    const v = JSON.parse(plain).spiritStone
-    return typeof v === 'number' ? v : v.m * Math.pow(10, v.e)
-  }
-  await page.goto(INDEX + '#' + '/settings', { waitUntil: 'load' })
-  await page.waitForTimeout(2200)
-  await clearOverlays(page)
-  checked += 1
-  const s0 = await readFormatted(page, '灵石')
-  let downloaded = ''
+    const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
+    if (!cipher) return null;
+    const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+    if (!plain) return null;
+    const v = JSON.parse(plain).spiritStone;
+    return typeof v === "number" ? v : v.m * Math.pow(10, v.e);
+  };
+  await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
+  await page.waitForTimeout(2200);
+  await clearOverlays(page);
+  checked += 1;
+  const s0 = await readFormatted(page, "灵石");
+  let downloaded = "";
   try {
     const [download] = await Promise.all([
-      page.waitForEvent('download', { timeout: 8000 }),
-      page.getByRole('button', { name: /导出存档/ }).first().click()
-    ])
-    downloaded = download.suggestedFilename()
-    await download.saveAs(savePath)
+      page.waitForEvent("download", { timeout: 8000 }),
+      page
+        .getByRole("button", { name: /导出存档/ })
+        .first()
+        .click(),
+    ]);
+    downloaded = download.suggestedFilename();
+    await download.saveAs(savePath);
   } catch (err) {
-    failures.push(`[390] 存读场景:点「导出存档」没有拿到下载(${String(err).split('\n')[0]?.slice(0, 60)})`)
+    failures.push(
+      `[390] 存读场景:点「导出存档」没有拿到下载(${String(err).split("\n")[0]?.slice(0, 60)})`,
+    );
   }
-  if (downloaded && !/\.save$/.test(downloaded)) failures.push(`[390] 存读场景:导出的文件名不像存档(${downloaded})`)
+  if (downloaded && !/\.save$/.test(downloaded))
+    failures.push(`[390] 存读场景:导出的文件名不像存档(${downloaded})`);
 
   // 动一下不会自己变的数:投一点灵脉,把灵石花掉
-  await page.goto(INDEX + '#' + '/', { waitUntil: 'load' })
-  await page.waitForTimeout(900)
-  await page.getByRole('button', { name: /灵脉投资/ }).first().click({ timeout: 3000 }).catch(() => {})
-  await page.waitForTimeout(400)
-  const invest = page.locator('.modal-panel button.btn-ghost:not([disabled])').first()
-  let spent = null
-  if ((await invest.count()) === 0) failures.push('[390] 存读场景:灵脉弹窗里没有可投的脉(判据没跑到东西)')
+  await page.goto(INDEX + "#" + "/", { waitUntil: "load" });
+  await page.waitForTimeout(900);
+  await page
+    .getByRole("button", { name: /灵脉投资/ })
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => {});
+  await page.waitForTimeout(400);
+  const invest = page.locator(".modal-panel button.btn-ghost:not([disabled])").first();
+  let spent = null;
+  if ((await invest.count()) === 0)
+    failures.push("[390] 存读场景:灵脉弹窗里没有可投的脉(判据没跑到东西)");
   else {
-    await invest.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(700)
-    await page.keyboard.press('Escape')
-    await page.waitForTimeout(300)
-    spent = await readFormatted(page, '灵石')
+    await invest.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(700);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+    spent = await readFormatted(page, "灵石");
     if (!(spent.value < s0.value)) {
-      failures.push(`[390] 存读场景:投了灵脉灵石却没少(${s0.text} → ${spent.text}),后面的导入就证明不了什么`)
+      failures.push(
+        `[390] 存读场景:投了灵脉灵石却没少(${s0.text} → ${spent.text}),后面的导入就证明不了什么`,
+      );
     }
     /*
      * 关键一步:等节流把这次改动**真写进磁盘**再导入。
      * 否则「导入后回到 S0」与「压根没写进去」在读数上分不出来 —— 注入验证时正是这么骗过判据的
      * (跳掉导入落盘,状态照样显示 100万,因为那次投入还躺在待刷队列里)。
      */
-    await page.waitForTimeout(5600)
-    const onDisk = await storedStone()
-    if (spent.value !== null && (onDisk === null || Math.abs(onDisk - spent.value) > spent.value * 0.01)) {
-      failures.push(`[390] 存读场景:投入之后磁盘上的灵石是 ${onDisk},页面上是 ${spent.text} —— 改动没落盘,这条判据没搭对`)
+    await page.waitForTimeout(5600);
+    const onDisk = await storedStone();
+    if (
+      spent.value !== null &&
+      (onDisk === null || Math.abs(onDisk - spent.value) > spent.value * 0.01)
+    ) {
+      failures.push(
+        `[390] 存读场景:投入之后磁盘上的灵石是 ${onDisk},页面上是 ${spent.text} —— 改动没落盘,这条判据没搭对`,
+      );
     }
   }
 
   // 导入回来:应当回到导出那一刻(灵石回到 S0)
-  await page.goto(INDEX + '#' + '/settings', { waitUntil: 'load' })
-  await page.waitForTimeout(1000)
+  await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
+  await page.waitForTimeout(1000);
   await page.evaluate(() => {
-    window.__beforeImport = 'alive'
-  })
-  await page.locator('input[type=file]').first().setInputFiles(savePath)
-  await page.waitForTimeout(700)
-  const toast = await page.evaluate(() => [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|'))
-  await page.waitForTimeout(2600)
-  const after = await readFormatted(page, '灵石')
-  const reloaded = await page.evaluate(() => window.__beforeImport === undefined)
-  if (!/导入成功/.test(toast)) failures.push(`[390] 存读场景:导入没有成功提示(${toast || '无提示'})`)
-  if (!reloaded) failures.push('[390] 存读场景:导入之后没有重新入定(页面没重载,内存里还是旧的一世)')
+    window.__beforeImport = "alive";
+  });
+  await page.locator("input[type=file]").first().setInputFiles(savePath);
+  await page.waitForTimeout(700);
+  const toast = await page.evaluate(() =>
+    [...document.querySelectorAll(".pointer-events-none.fixed button")]
+      .map((b) => (b.textContent || "").trim())
+      .join("|"),
+  );
+  await page.waitForTimeout(2600);
+  const after = await readFormatted(page, "灵石");
+  const reloaded = await page.evaluate(() => window.__beforeImport === undefined);
+  if (!/导入成功/.test(toast))
+    failures.push(`[390] 存读场景:导入没有成功提示(${toast || "无提示"})`);
+  if (!reloaded)
+    failures.push("[390] 存读场景:导入之后没有重新入定(页面没重载,内存里还是旧的一世)");
   if (spent && after.value !== null && Math.abs(after.value - s0.value) > s0.value * 0.001) {
-    failures.push(`[390] 存读场景:导入后灵石 ${after.text},导出时是 ${s0.text}(存档没救回来)`)
+    failures.push(`[390] 存读场景:导入后灵石 ${after.text},导出时是 ${s0.text}(存档没救回来)`);
   }
-  const diskAfter = await storedStone()
+  const diskAfter = await storedStone();
   if (spent && diskAfter !== null && Math.abs(diskAfter - s0.value) > s0.value * 0.001) {
-    failures.push(`[390] 存读场景:导入后磁盘上的灵石是 ${diskAfter},导出时是 ${s0.value}(写盘那份没换回来)`)
+    failures.push(
+      `[390] 存读场景:导入后磁盘上的灵石是 ${diskAfter},导出时是 ${s0.value}(写盘那份没换回来)`,
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 存读场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  console.log(`\n存读往返:导出时 ${s0.text} → 投脉后 ${spent?.text ?? '(没投成)'} → 导入后 ${after.text}`)
-  rmSync(savePath, { force: true })
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 存读场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  console.log(
+    `\n存读往返:导出时 ${s0.text} → 投脉后 ${spent?.text ?? "(没投成)"} → 导入后 ${after.text}`,
+  );
+  rmSync(savePath, { force: true });
+  await ctx.close();
 }
 
 // ---- 第二十六件事:智能收纳不替玩家扔「有投入的件」 ----
@@ -2352,95 +2931,199 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  *   二 点下去之后,留下的正好是那 3 件有投入的(行囊 5 → 3),且练过那件的「+3」还在。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '收纳自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "收纳自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 0 },
     inventory: {
       items: [
         // 两件该走的:凡品、不带套、没词条 / 或词条拉胯
-        { uid: 'j1', templateId: 'b_qingyun', quality: 'mortal', tier: 3, level: 0, affixes: [] },
-        { uid: 'j2', templateId: 'b_qingyun', quality: 'mortal', tier: 3, level: 0, affixes: [{ id: 'atk1', roll: 0.12 }] },
+        { uid: "j1", templateId: "b_qingyun", quality: "mortal", tier: 3, level: 0, affixes: [] },
+        {
+          uid: "j2",
+          templateId: "b_qingyun",
+          quality: "mortal",
+          tier: 3,
+          level: 0,
+          affixes: [{ id: "atk1", roll: 0.12 }],
+        },
         // 三件该留的:练过(有投入)/ 成套共鸣 / 词条条条近满
-        { uid: 'k_lv', templateId: 'b_qingyun', quality: 'mortal', tier: 3, level: 3, affixes: [], invested: { dust: 40, stone: gn(2, 3) } },
-        { uid: 'k_set', templateId: 'w_xuantie', quality: 'mortal', tier: 3, level: 0, affixes: [] },
-        { uid: 'k_roll', templateId: 'h_muzan', quality: 'mortal', tier: 3, level: 0, affixes: [{ id: 'atk1', roll: 0.95 }, { id: 'def1', roll: 0.9 }] }
+        {
+          uid: "k_lv",
+          templateId: "b_qingyun",
+          quality: "mortal",
+          tier: 3,
+          level: 3,
+          affixes: [],
+          invested: { dust: 40, stone: gn(2, 3) },
+        },
+        {
+          uid: "k_set",
+          templateId: "w_xuantie",
+          quality: "mortal",
+          tier: 3,
+          level: 0,
+          affixes: [],
+        },
+        {
+          uid: "k_roll",
+          templateId: "h_muzan",
+          quality: "mortal",
+          tier: 3,
+          level: 0,
+          affixes: [
+            { id: "atk1", roll: 0.95 },
+            { id: "def1", roll: 0.9 },
+          ],
+        },
       ],
       equipped: {},
       pills: {},
       artifacts: [],
-      equippedArtifacts: []
+      equippedArtifacts: [],
     },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true, keepPerfectRolls: true, keepSetPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: {
+        enabled: true,
+        minQuality: 3,
+        keepCoreAffix: true,
+        keepComboPiece: true,
+        keepPerfectRolls: true,
+        keepSetPiece: true,
+      },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX + '#' + '/inventory', { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
-  await clearOverlays(page)
-  checked += 1
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX + "#" + "/inventory", { waitUntil: "load" });
+  await page.waitForTimeout(2400);
+  await clearOverlays(page);
+  checked += 1;
   const bagCount = () =>
     page.evaluate(() => {
-      const m = /行囊\s*(\d+)/.exec(document.querySelector('main')?.innerText || '') || /藏品\s*(\d+)/.exec(document.querySelector('main')?.innerText || '')
-      return m ? Number(m[1]) : null
-    })
+      const m =
+        /行囊\s*(\d+)/.exec(document.querySelector("main")?.innerText || "") ||
+        /藏品\s*(\d+)/.exec(document.querySelector("main")?.innerText || "");
+      return m ? Number(m[1]) : null;
+    });
   const opened = await page
-    .locator('main button', { hasText: /收纳/ })
+    .locator("main button", { hasText: /收纳/ })
     .first()
     .click({ timeout: 3000 })
     .then(() => true)
-    .catch(() => false)
-  if (!opened) failures.push('[390] 收纳场景:行囊页找不到「收纳」入口')
+    .catch(() => false);
+  if (!opened) failures.push("[390] 收纳场景:行囊页找不到「收纳」入口");
   else {
-    await page.waitForTimeout(400)
-    const before = await bagCount()
-    if (before !== 5) failures.push(`[390] 收纳场景:夹具没铺好 —— 开局行囊 ${before} 件(应为 5)`)
+    await page.waitForTimeout(400);
+    const before = await bagCount();
+    if (before !== 5) failures.push(`[390] 收纳场景:夹具没铺好 —— 开局行囊 ${before} 件(应为 5)`);
     const armed = await page
-      .locator('.modal-panel button', { hasText: /依此规则清理行囊/ })
+      .locator(".modal-panel button", { hasText: /依此规则清理行囊/ })
       .first()
       .click({ timeout: 3000 })
       .then(() => true)
-      .catch(() => false)
-    if (!armed) failures.push('[390] 收纳场景:找不到「依此规则清理行囊」按钮')
-    await page.waitForTimeout(300)
-    const warn = await page.evaluate(() => (document.querySelector('.modal-panel')?.innerText || '').replace(/\n+/g, ' '))
-    const promisedCount = Number((/共\s*(\d+)\s*件/.exec(warn) || [])[1] ?? NaN)
+      .catch(() => false);
+    if (!armed) failures.push("[390] 收纳场景:找不到「依此规则清理行囊」按钮");
+    await page.waitForTimeout(300);
+    const warn = await page.evaluate(() =>
+      (document.querySelector(".modal-panel")?.innerText || "").replace(/\n+/g, " "),
+    );
+    const promisedCount = Number((/共\s*(\d+)\s*件/.exec(warn) || [])[1] ?? NaN);
     if (promisedCount !== 2) {
-      failures.push(`[390] 收纳场景:该清的只有 2 件废物,确认框写的是 ${promisedCount} 件 —— 练过/成套/近满的件被算进了清理名单(${warn.slice(0, 90)})`)
+      failures.push(
+        `[390] 收纳场景:该清的只有 2 件废物,确认框写的是 ${promisedCount} 件 —— 练过/成套/近满的件被算进了清理名单(${warn.slice(0, 90)})`,
+      );
     }
-    await page.locator('.modal-panel button', { hasText: /清理化尘/ }).first().click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(900)
-    const after = await bagCount()
-    const body = await page.evaluate(() => (document.querySelector('main')?.innerText || '').replace(/\n+/g, ' '))
+    await page
+      .locator(".modal-panel button", { hasText: /清理化尘/ })
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(900);
+    const after = await bagCount();
+    const body = await page.evaluate(() =>
+      (document.querySelector("main")?.innerText || "").replace(/\n+/g, " "),
+    );
     const toast = await page.evaluate(() =>
-      [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|')
-    )
-    if (after !== 3) failures.push(`[390] 收纳场景:清理后行囊剩 ${after} 件(应为 3 —— 那 3 件有投入的必须留下)`)
-    if (!/收纳毕:2 件/.test(toast)) failures.push(`[390] 收纳场景:清理后的交代不对(${toast || '无提示'})`)
-    for (const [uid, name] of [['k_set', '玄铁重剑'], ['k_roll', '桃木簪']]) {
-      if (!body.includes(name)) failures.push(`[390] 收纳场景:${name}(${uid})被自动清理了`)
+      [...document.querySelectorAll(".pointer-events-none.fixed button")]
+        .map((b) => (b.textContent || "").trim())
+        .join("|"),
+    );
+    if (after !== 3)
+      failures.push(`[390] 收纳场景:清理后行囊剩 ${after} 件(应为 3 —— 那 3 件有投入的必须留下)`);
+    if (!/收纳毕:2 件/.test(toast))
+      failures.push(`[390] 收纳场景:清理后的交代不对(${toast || "无提示"})`);
+    for (const [uid, name] of [
+      ["k_set", "玄铁重剑"],
+      ["k_roll", "桃木簪"],
+    ]) {
+      if (!body.includes(name)) failures.push(`[390] 收纳场景:${name}(${uid})被自动清理了`);
     }
-    if (!/\+3/.test(body)) failures.push('[390] 收纳场景:练过的那件(+3)被自动清理了')
+    if (!/\+3/.test(body)) failures.push("[390] 收纳场景:练过的那件(+3)被自动清理了");
     if (after === 3 && promisedCount === 2) {
-      console.log(`\n智能收纳:行囊 5 件 → 确认框「共 ${promisedCount} 件」→ 清理后 ${after} 件(练过/成套/近满三件都留下)`)
+      console.log(
+        `\n智能收纳:行囊 5 件 → 确认框「共 ${promisedCount} 件」→ 清理后 ${after} 件(练过/成套/近满三件都留下)`,
+      );
     }
   }
-  if (pageErrors.length) failures.push(`[390] 收纳场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 收纳场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第二十五件事:一键分解要「先勾后点」,勾品质不许当场把东西烧了 ----
@@ -2457,108 +3140,199 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * (勾选仍然会被记住,并继续管着「此后拾取自动回收」;那条是不占行囊的入包裁决,与本题无关。)
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '分解自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "分解自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 0 },
     inventory: {
       items: [
-        { uid: 'b_1', templateId: 'b_qingyun', quality: 'excellent', tier: 3, level: 0, affixes: [] },
-        { uid: 'b_2', templateId: 'b_qingyun', quality: 'excellent', tier: 3, level: 4, affixes: [], invested: { dust: 100, stone: gn(8, 3) } }
+        {
+          uid: "b_1",
+          templateId: "b_qingyun",
+          quality: "excellent",
+          tier: 3,
+          level: 0,
+          affixes: [],
+        },
+        {
+          uid: "b_2",
+          templateId: "b_qingyun",
+          quality: "excellent",
+          tier: 3,
+          level: 4,
+          affixes: [],
+          invested: { dust: 100, stone: gn(8, 3) },
+        },
       ],
       equipped: {},
       pills: {},
       artifacts: [],
-      equippedArtifacts: []
+      equippedArtifacts: [],
     },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX + '#' + '/inventory', { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
-  await clearOverlays(page)
-  checked += 1
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX + "#" + "/inventory", { waitUntil: "load" });
+  await page.waitForTimeout(2400);
+  await clearOverlays(page);
+  checked += 1;
   /** 行囊件数(只读 main;弹窗 Teleport 到 body,不在这棵子树里) */
   const bagCount = () =>
     page.evaluate(() => {
-      const m = /行囊\s*(\d+)/.exec(document.querySelector('main')?.innerText || '') || /藏品\s*(\d+)/.exec(document.querySelector('main')?.innerText || '')
-      return m ? Number(m[1]) : null
-    })
+      const m =
+        /行囊\s*(\d+)/.exec(document.querySelector("main")?.innerText || "") ||
+        /藏品\s*(\d+)/.exec(document.querySelector("main")?.innerText || "");
+      return m ? Number(m[1]) : null;
+    });
   /** 背包页顶上那栏「器灵尘 N」 */
   const dustCount = () =>
     page.evaluate(() => {
-      const m = /器灵尘\s*(\d+)/.exec(document.querySelector('main')?.innerText || '')
-      return m ? Number(m[1]) : null
-    })
+      const m = /器灵尘\s*(\d+)/.exec(document.querySelector("main")?.innerText || "");
+      return m ? Number(m[1]) : null;
+    });
   const toasts = () =>
     page.evaluate(() =>
-      [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|')
-    )
+      [...document.querySelectorAll(".pointer-events-none.fixed button")]
+        .map((b) => (b.textContent || "").trim())
+        .join("|"),
+    );
   const opened = await page
-    .locator('main')
-    .getByRole('button', { name: '批量分解装备' })
+    .locator("main")
+    .getByRole("button", { name: "批量分解装备" })
     .click({ timeout: 3000 })
     .then(() => true)
-    .catch(() => false)
-  if (!opened) failures.push('[390] 分解场景:行囊页找不到「分解」入口')
+    .catch(() => false);
+  if (!opened) failures.push("[390] 分解场景:行囊页找不到「分解」入口");
   else {
-    await page.waitForTimeout(400)
-    const before = await bagCount()
-    if (before !== 2) failures.push(`[390] 分解场景:夹具没铺好 —— 开局行囊 ${before} 件(应为 2)`)
-    const box = page.locator('.modal-panel label', { hasText: '精品' }).locator('input[type=checkbox]').first()
+    await page.waitForTimeout(400);
+    const before = await bagCount();
+    if (before !== 2) failures.push(`[390] 分解场景:夹具没铺好 —— 开局行囊 ${before} 件(应为 2)`);
+    const box = page
+      .locator(".modal-panel label", { hasText: "精品" })
+      .locator("input[type=checkbox]")
+      .first();
     const ticked = await box
       .click({ timeout: 3000 })
       .then(() => true)
-      .catch(() => false)
-    if (!ticked) failures.push('[390] 分解场景:弹窗里找不到「精品」的勾选框')
-    await page.waitForTimeout(900)
-    const marked = await bagCount()
-    const markedToast = await toasts()
-    if (marked !== 2) failures.push(`[390] 分解场景:只勾了「精品」,行囊就从 ${before} 件变成 ${marked} 件 —— 勾选把东西当场烧了(应先标记、等「分 解」)`)
-    if (/化作器灵尘/.test(markedToast)) failures.push(`[390] 分解场景:勾选品质就弹了销毁交代(${markedToast})—— 玩家还没点「分 解」`)
-    const footLabel = ((await page.locator('.modal-panel footer button').first().textContent().catch(() => '')) || '').replace(/\s+/g, ' ').trim()
+      .catch(() => false);
+    if (!ticked) failures.push("[390] 分解场景:弹窗里找不到「精品」的勾选框");
+    await page.waitForTimeout(900);
+    const marked = await bagCount();
+    const markedToast = await toasts();
+    if (marked !== 2)
+      failures.push(
+        `[390] 分解场景:只勾了「精品」,行囊就从 ${before} 件变成 ${marked} 件 —— 勾选把东西当场烧了(应先标记、等「分 解」)`,
+      );
+    if (/化作器灵尘/.test(markedToast))
+      failures.push(`[390] 分解场景:勾选品质就弹了销毁交代(${markedToast})—— 玩家还没点「分 解」`);
+    const footLabel = (
+      (await page
+        .locator(".modal-panel footer button")
+        .first()
+        .textContent()
+        .catch(() => "")) || ""
+    )
+      .replace(/\s+/g, " ")
+      .trim();
     if (!/分\s*解\s*\(2\s*件\)/.test(footLabel)) {
-      failures.push(`[390] 分解场景:勾选后按钮没写出「会拆几件」——「${footLabel}」`)
+      failures.push(`[390] 分解场景:勾选后按钮没写出「会拆几件」——「${footLabel}」`);
     }
     if (marked === 2) {
-      const dustBefore = await dustCount()
-      await page.locator('.modal-panel footer button').first().click({ timeout: 3000 }).catch(() => {})
-      await page.waitForTimeout(900)
-      const after = await bagCount()
-      const afterToast = await toasts()
-      if (after !== 0) failures.push(`[390] 分解场景:点了「分 解」行囊还剩 ${after} 件(两件精品都该拆掉)`)
-      if (!/已分解\s*2\s*件/.test(afterToast)) failures.push(`[390] 分解场景:点「分 解」之后没有交代(${afterToast || '无提示'})`)
-      const promised = Number((/得器灵尘×(\d+)/.exec(afterToast) || [])[1] ?? NaN)
-      const dustAfter = await dustCount()
+      const dustBefore = await dustCount();
+      await page
+        .locator(".modal-panel footer button")
+        .first()
+        .click({ timeout: 3000 })
+        .catch(() => {});
+      await page.waitForTimeout(900);
+      const after = await bagCount();
+      const afterToast = await toasts();
+      if (after !== 0)
+        failures.push(`[390] 分解场景:点了「分 解」行囊还剩 ${after} 件(两件精品都该拆掉)`);
+      if (!/已分解\s*2\s*件/.test(afterToast))
+        failures.push(`[390] 分解场景:点「分 解」之后没有交代(${afterToast || "无提示"})`);
+      const promised = Number((/得器灵尘×(\d+)/.exec(afterToast) || [])[1] ?? NaN);
+      const dustAfter = await dustCount();
       if (promised !== 88) {
-        failures.push(`[390] 分解场景:两件精品(其中一件 +4,记账投入尘 100)该退 88 尘,提示写的是 ${promised}`)
+        failures.push(
+          `[390] 分解场景:两件精品(其中一件 +4,记账投入尘 100)该退 88 尘,提示写的是 ${promised}`,
+        );
       }
-      if (!/退灵石\s*6,400/.test(afterToast)) failures.push(`[390] 分解场景:练过的件没退灵石(记了 8000,该退 6400)—— ${afterToast}`)
+      if (!/退灵石\s*6,400/.test(afterToast))
+        failures.push(`[390] 分解场景:练过的件没退灵石(记了 8000,该退 6400)—— ${afterToast}`);
       if (dustBefore === null || dustAfter === null || dustAfter - dustBefore !== promised) {
-        failures.push(`[390] 分解场景:提示说给 ${promised} 尘,器灵尘那一栏 ${dustBefore} → ${dustAfter}(所见非所得)`)
+        failures.push(
+          `[390] 分解场景:提示说给 ${promised} 尘,器灵尘那一栏 ${dustBefore} → ${dustAfter}(所见非所得)`,
+        );
       }
       if (promised === 88 && dustAfter - dustBefore === 88) {
-        console.log(`\n一键分解:勾「精品」行囊仍是 ${marked} 件(未烧) · 「${footLabel}」→ 行囊 ${after} 件 · 得尘 ${promised}(对上,含强化八成)· 退灵石 6,400`)
+        console.log(
+          `\n一键分解:勾「精品」行囊仍是 ${marked} 件(未烧) · 「${footLabel}」→ 行囊 ${after} 件 · 得尘 ${promised}(对上,含强化八成)· 退灵石 6,400`,
+        );
       }
     }
   }
-  if (pageErrors.length) failures.push(`[390] 分解场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 分解场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第二十四件事:法宝「炼化」的两笔账,一笔都不能少写 ----
@@ -2569,79 +3343,139 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  *   二 两种都按所写扣(读数取磁盘精确值,并等开局奖励落定)。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '炼化自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
-    resources: { spiritStone: gn(1, 7), qi: 1000, wudao: 5000, herb: 5, ore: 5, page: 2, dust: 2 },
-    inventory: { items: [], equipped: {}, pills: {}, artifacts: [{ defId: 'af_lihuo', level: 0 }], equippedArtifacts: [] },
-    endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
-  await clearOverlays(page)
-  checked += 1
+    player: {
+      name: "炼化自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
+    resources: { spiritStone: gn(1, 7), qi: 1000, wudao: 5000, herb: 5, ore: 5, page: 2, dust: 2 },
+    inventory: {
+      items: [],
+      equipped: {},
+      pills: {},
+      artifacts: [{ defId: "af_lihuo", level: 0 }],
+      equippedArtifacts: [],
+    },
+    endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
+    },
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(2400);
+  await clearOverlays(page);
+  checked += 1;
   /** 磁盘上的悟道点/灵石(等节流落盘,取精确值) */
   const readWal = async () => {
-    await page.waitForTimeout(5600)
-    const cipher = await page.evaluate(() => localStorage.getItem('xuanshu.resources') || '')
-    if (!cipher) return null
-    const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8)
-    if (!plain) return null
-    const r = JSON.parse(plain)
-    const num = v => (typeof v === 'number' ? v : v.m * Math.pow(10, v.e))
-    return { wudao: r.wudao, stone: num(r.spiritStone) }
-  }
-  await page.goto(INDEX + '#' + '/inventory', { waitUntil: 'load' })
-  await page.waitForTimeout(900)
-  await page.getByRole('tab', { name: /法\s*宝/ }).first().click({ timeout: 3000 }).catch(() => {})
-  await page.waitForTimeout(400)
-  const btn = page.locator('main button', { hasText: /炼\s*化/ }).first()
-  if ((await btn.count()) === 0) failures.push('[390] 炼化场景:背包「法宝」页找不到「炼化」入口')
+    await page.waitForTimeout(5600);
+    const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
+    if (!cipher) return null;
+    const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+    if (!plain) return null;
+    const r = JSON.parse(plain);
+    const num = (v) => (typeof v === "number" ? v : v.m * Math.pow(10, v.e));
+    return { wudao: r.wudao, stone: num(r.spiritStone) };
+  };
+  await page.goto(INDEX + "#" + "/inventory", { waitUntil: "load" });
+  await page.waitForTimeout(900);
+  await page
+    .getByRole("tab", { name: /法\s*宝/ })
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => {});
+  await page.waitForTimeout(400);
+  const btn = page.locator("main button", { hasText: /炼\s*化/ }).first();
+  if ((await btn.count()) === 0) failures.push("[390] 炼化场景:背包「法宝」页找不到「炼化」入口");
   else {
-    const label = ((await btn.textContent()) || '').replace(/\s+/g, ' ').trim()
-    const wantWudao = Number((/悟道点?\s*([\d,]+)/.exec(label.replace(/,/g, '')) || [])[1] ?? NaN)
-    const stoneText = (/灵石\s*([\d,.]+)\s*(万|亿|兆)?/.exec(label) || [])[0] ?? ''
-    const sm = /([\d,.]+)\s*(万|亿|兆)?/.exec(stoneText)
-    const unit = sm?.[2] === '万' ? 1e4 : sm?.[2] === '亿' ? 1e8 : sm?.[2] === '兆' ? 1e12 : 1
-    const wantStone = sm ? parseFloat(sm[1].replace(/,/g, '')) * unit : NaN
+    const label = ((await btn.textContent()) || "").replace(/\s+/g, " ").trim();
+    const wantWudao = Number((/悟道点?\s*([\d,]+)/.exec(label.replace(/,/g, "")) || [])[1] ?? NaN);
+    const stoneText = (/灵石\s*([\d,.]+)\s*(万|亿|兆)?/.exec(label) || [])[0] ?? "";
+    const sm = /([\d,.]+)\s*(万|亿|兆)?/.exec(stoneText);
+    const unit = sm?.[2] === "万" ? 1e4 : sm?.[2] === "亿" ? 1e8 : sm?.[2] === "兆" ? 1e12 : 1;
+    const wantStone = sm ? parseFloat(sm[1].replace(/,/g, "")) * unit : NaN;
     if (!/灵石/.test(label)) {
-      failures.push(`[390] 炼化场景:按钮只写了悟道、没写灵石 —— 实际两种都要扣(「${label}」)`)
+      failures.push(`[390] 炼化场景:按钮只写了悟道、没写灵石 —— 实际两种都要扣(「${label}」)`);
     }
-    const before = await readWal()
-    await btn.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(400)
-    const after = await readWal()
+    const before = await readWal();
+    await btn.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    const after = await readWal();
     if (before && after) {
       if (before.wudao - after.wudao !== wantWudao) {
-        failures.push(`[390] 炼化场景:按钮写悟道 ${wantWudao},实际 ${before.wudao} → ${after.wudao}`)
+        failures.push(
+          `[390] 炼化场景:按钮写悟道 ${wantWudao},实际 ${before.wudao} → ${after.wudao}`,
+        );
       }
       // 灵石是浮点(stoneByTier 会乘倍率),比较留一点容差
       if (!(Math.abs(before.stone - after.stone - wantStone) < 0.01)) {
-        failures.push(`[390] 炼化场景:按钮写灵石 ${wantStone},实际 ${before.stone} → ${after.stone}`)
+        failures.push(
+          `[390] 炼化场景:按钮写灵石 ${wantStone},实际 ${before.stone} → ${after.stone}`,
+        );
       }
-      console.log(`\n法宝炼化:「${label}」→ 悟道 ${before.wudao} → ${after.wudao} · 灵石 ${before.stone} → ${after.stone}`)
+      console.log(
+        `\n法宝炼化:「${label}」→ 悟道 ${before.wudao} → ${after.wudao} · 灵石 ${before.stone} → ${after.stone}`,
+      );
     } else {
-      failures.push('[390] 炼化场景:读不到资源分片(判据没跑到东西)')
+      failures.push("[390] 炼化场景:读不到资源分片(判据没跑到东西)");
     }
   }
-  if (pageErrors.length) failures.push(`[390] 炼化场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 炼化场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第二十三件事:洞府营造的账目 —— 卡上写多少料,就扣多少料 ----
@@ -2652,14 +3486,54 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 读数取自背包「材料」页(界面上的数),不去解密分片 —— 写盘是节流的,磁盘会落后。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '营造自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
-    resources: { spiritStone: gn(1, 7), qi: 1000, wudao: 10, herb: 5, ore: 90000, page: 2, dust: 2 },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "营造自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
+    resources: {
+      spiritStone: gn(1, 7),
+      qi: 1000,
+      wudao: 10,
+      herb: 5,
+      ore: 90000,
+      page: 2,
+      dust: 2,
+    },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
     /*
@@ -2667,20 +3541,31 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
      * 测试对象得是「升级」才有铁账可对(第一枚按钮是洞府,优先升它)。
      */
     dongfu: { levels: { mansion: 1 }, offlineCapHours: 8 },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  checked += 1
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  checked += 1;
   /**
    * 玄铁余额:**磁盘那一份**(精确到个位)。
    *
@@ -2688,44 +3573,57 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * 实测把造价 +1 的注入就这样混过去了。故这里等节流落盘后解密比对,不取显示值。
    */
   const readOre = async () => {
-    await page.waitForTimeout(5600)
-    const cipher = await page.evaluate(() => localStorage.getItem('xuanshu.resources') || '')
-    if (!cipher) return { text: '(无分片)', value: null }
-    const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8)
-    if (!plain) return { text: '(解不开)', value: null }
-    const v = JSON.parse(plain).ore
-    const n = typeof v === 'number' ? v : v.m * Math.pow(10, v.e)
-    return { text: String(n), value: n }
-  }
+    await page.waitForTimeout(5600);
+    const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
+    if (!cipher) return { text: "(无分片)", value: null };
+    const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+    if (!plain) return { text: "(解不开)", value: null };
+    const v = JSON.parse(plain).ore;
+    const n = typeof v === "number" ? v : v.m * Math.pow(10, v.e);
+    return { text: String(n), value: n };
+  };
   // 先落到页面上:任何 localStorage 读数都要有 document 在(localStorage 才能读)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
-  await clearOverlays(page)
-  const oreBefore = await readOre()
-  await page.goto(INDEX + '#' + '/dongfu', { waitUntil: 'load' })
-  await page.waitForTimeout(900)
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(2400);
+  await clearOverlays(page);
+  const oreBefore = await readOre();
+  await page.goto(INDEX + "#" + "/dongfu", { waitUntil: "load" });
+  await page.waitForTimeout(900);
   // 正则留出空白余量:卡片上的代价换行(数 + 量词 nowrap)会在「·」后断行
-  const buildBtn = page.locator('main button', { hasText: /建\s*造\s*·|升\s*级\s*·/ }).first()
+  const buildBtn = page.locator("main button", { hasText: /建\s*造\s*·|升\s*级\s*·/ }).first();
   if ((await buildBtn.count()) === 0) {
-    failures.push('[390] 营造场景:洞府页没有可动工的建筑(判据没跑到东西)')
+    failures.push("[390] 营造场景:洞府页没有可动工的建筑(判据没跑到东西)");
   } else {
-    const label = ((await buildBtn.textContent()) || '').replace(/\s+/g, ' ').trim()
-    const oreCost = Number((/([\d,]+)\s*铁/.exec(label.replace(/,/g, '')) || [])[1] ?? NaN)
-    await buildBtn.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(800)
+    const label = ((await buildBtn.textContent()) || "").replace(/\s+/g, " ").trim();
+    const oreCost = Number((/([\d,]+)\s*铁/.exec(label.replace(/,/g, "")) || [])[1] ?? NaN);
+    await buildBtn.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(800);
     const toast = await page.evaluate(() =>
-      [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|')
-    )
-    const oreAfter = await readOre()
-    if (!Number.isFinite(oreCost)) failures.push(`[390] 营造场景:读不出卡片上的玄铁价(「${label}」)`)
-    else if (oreBefore.value === null || oreAfter.value === null || oreBefore.value - oreAfter.value !== oreCost) {
-      failures.push(`[390] 营造场景:卡片写「${label}」,玄铁实际 ${oreBefore.text} → ${oreAfter.text}(所见非所付)`)
+      [...document.querySelectorAll(".pointer-events-none.fixed button")]
+        .map((b) => (b.textContent || "").trim())
+        .join("|"),
+    );
+    const oreAfter = await readOre();
+    if (!Number.isFinite(oreCost))
+      failures.push(`[390] 营造场景:读不出卡片上的玄铁价(「${label}」)`);
+    else if (
+      oreBefore.value === null ||
+      oreAfter.value === null ||
+      oreBefore.value - oreAfter.value !== oreCost
+    ) {
+      failures.push(
+        `[390] 营造场景:卡片写「${label}」,玄铁实际 ${oreBefore.text} → ${oreAfter.text}(所见非所付)`,
+      );
     }
-    if (!/升至|落成|建造/.test(toast)) failures.push(`[390] 营造场景:动工之后没有任何交代(${toast || '无提示'})`)
-    console.log(`\n洞府营造:${label} → 玄铁 ${oreBefore.text} → ${oreAfter.text}(应扣 ${Number.isFinite(oreCost) ? oreCost : '?'})`)
+    if (!/升至|落成|建造/.test(toast))
+      failures.push(`[390] 营造场景:动工之后没有任何交代(${toast || "无提示"})`);
+    console.log(
+      `\n洞府营造:${label} → 玄铁 ${oreBefore.text} → ${oreAfter.text}(应扣 ${Number.isFinite(oreCost) ? oreCost : "?"})`,
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 营造场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 营造场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第二十二件事:减少动效真的减到了(顺带在音效开着的情况下点一路按钮) ----
@@ -2738,68 +3636,124 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 冒烟夹具一律关掉声音,此前没走过。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '音画自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "音画自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: true, musicOn: true, musicVol: 60, sfxVol: 60, reduceMotion: false, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: true,
+      musicOn: true,
+      musicVol: 60,
+      sfxVol: 60,
+      reduceMotion: false,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
-  await clearOverlays(page)
-  checked += 1
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(2400);
+  await clearOverlays(page);
+  checked += 1;
   /** 还会动的元素:名字在不算,要看时长与次数 */
   const movingCount = () =>
-    page.evaluate(() =>
-      [...document.querySelectorAll('body *')].filter(el => {
-        const cs = getComputedStyle(el)
-        if (cs.animationName === 'none') return false
-        const dur = cs.animationDuration.split(',').map(d => parseFloat(d))
-        const iter = cs.animationIterationCount.split(',')
-        return dur.some(d => d > 0.05) || iter.some(i => i === 'infinite')
-      }).length
-    )
-  const before = await movingCount()
-  if (before === 0) failures.push('[390] 减动效场景:默认设置下界面本来就不动,这条判据证明不了什么')
+    page.evaluate(
+      () =>
+        [...document.querySelectorAll("body *")].filter((el) => {
+          const cs = getComputedStyle(el);
+          if (cs.animationName === "none") return false;
+          const dur = cs.animationDuration.split(",").map((d) => parseFloat(d));
+          const iter = cs.animationIterationCount.split(",");
+          return dur.some((d) => d > 0.05) || iter.some((i) => i === "infinite");
+        }).length,
+    );
+  const before = await movingCount();
+  if (before === 0) failures.push("[390] 减动效场景:默认设置下界面本来就不动,这条判据证明不了什么");
   // 音效开着,一路点点按钮(每次点击都会走 unlockAudio + playSfx)
   for (const b of [0, 1, 2]) {
-    await page.locator('main button').nth(b).click({ timeout: 2000 }).catch(() => {})
-    await page.waitForTimeout(150)
+    await page
+      .locator("main button")
+      .nth(b)
+      .click({ timeout: 2000 })
+      .catch(() => {});
+    await page.waitForTimeout(150);
   }
-  await page.goto(INDEX + '#' + '/settings', { waitUntil: 'load' })
-  await page.waitForTimeout(700)
-  const box = page.locator('label', { hasText: /减少动效/ }).locator('input[type=checkbox]').first()
-  if ((await box.count()) === 0) failures.push('[390] 减动效场景:设置页找不到「减少动效」开关')
+  await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
+  await page.waitForTimeout(700);
+  const box = page
+    .locator("label", { hasText: /减少动效/ })
+    .locator("input[type=checkbox]")
+    .first();
+  if ((await box.count()) === 0) failures.push("[390] 减动效场景:设置页找不到「减少动效」开关");
   else {
-    await box.check({ timeout: 2500 }).catch(() => {})
-    await page.waitForTimeout(400)
-    const off = await movingCount()
-    if (off !== 0) failures.push(`[390] 减动效场景:开了「减少动效」仍有 ${off} 个元素在动(开关是摆设)`)
-    await box.uncheck({ timeout: 2500 }).catch(() => {})
-    await page.waitForTimeout(400)
-    const back = await movingCount()
-    if (back === 0) failures.push('[390] 减动效场景:关掉「减少动效」之后界面也一动不动(判据两向都得立得住)')
-    console.log(`\n减动效:默认 ${before} 个在动 → 打开开关 ${off} 个 → 关回 ${back} 个(音效开着点了一路,无异常)`)
+    await box.check({ timeout: 2500 }).catch(() => {});
+    await page.waitForTimeout(400);
+    const off = await movingCount();
+    if (off !== 0)
+      failures.push(`[390] 减动效场景:开了「减少动效」仍有 ${off} 个元素在动(开关是摆设)`);
+    await box.uncheck({ timeout: 2500 }).catch(() => {});
+    await page.waitForTimeout(400);
+    const back = await movingCount();
+    if (back === 0)
+      failures.push("[390] 减动效场景:关掉「减少动效」之后界面也一动不动(判据两向都得立得住)");
+    console.log(
+      `\n减动效:默认 ${before} 个在动 → 打开开关 ${off} 个 → 关回 ${back} 个(音效开着点了一路,无异常)`,
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 减动效场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 减动效场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第二十一件事:闭关的跨页承诺 —— 闭关中不许历练,而且当场就说 ----
@@ -2810,69 +3764,127 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 判据三件:闭关真的起效(有倒计时)、出发当场被拦且不开模式窗、回修行页闭关还在。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '闭关自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "闭关自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX + '#' + '/cultivation', { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
-  await clearOverlays(page)
-  checked += 1
-  const retreatBtn = page.locator('main button', { hasText: /闭\s*关/ }).first()
-  if ((await retreatBtn.count()) === 0) failures.push('[390] 闭关场景:修行页找不到「闭关」入口')
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX + "#" + "/cultivation", { waitUntil: "load" });
+  await page.waitForTimeout(2400);
+  await clearOverlays(page);
+  checked += 1;
+  const retreatBtn = page.locator("main button", { hasText: /闭\s*关/ }).first();
+  if ((await retreatBtn.count()) === 0) failures.push("[390] 闭关场景:修行页找不到「闭关」入口");
   else {
-    await retreatBtn.click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(800)
+    await retreatBtn.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(800);
     const started = await page.evaluate(() => ({
-      toast: [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|'),
-      countdown: /闭关中 · /.test(document.querySelector('main')?.innerText || '')
-    }))
-    if (!started.countdown) failures.push('[390] 闭关场景:点了闭关,修行页没有出现「闭关中」的倒计时')
-    if (!/闭关/.test(started.toast)) failures.push(`[390] 闭关场景:闭关没有任何交代(${started.toast || '无提示'})`)
+      toast: [...document.querySelectorAll(".pointer-events-none.fixed button")]
+        .map((b) => (b.textContent || "").trim())
+        .join("|"),
+      countdown: /闭关中 · /.test(document.querySelector("main")?.innerText || ""),
+    }));
+    if (!started.countdown)
+      failures.push("[390] 闭关场景:点了闭关,修行页没有出现「闭关中」的倒计时");
+    if (!/闭关/.test(started.toast))
+      failures.push(`[390] 闭关场景:闭关没有任何交代(${started.toast || "无提示"})`);
     // 去历练页点出发:应当当场被拦,且不开模式窗
-    await page.goto(INDEX + '#' + '/adventure', { waitUntil: 'load' })
-    await page.waitForTimeout(900)
-    await page.locator('main button', { hasText: /出\s*发/ }).first().click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(600)
+    await page.goto(INDEX + "#" + "/adventure", { waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await page
+      .locator("main button", { hasText: /出\s*发/ })
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(600);
     const blocked = await page.evaluate(() => ({
-      toast: [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|'),
-      modal: !!document.querySelector('.modal-panel'),
-      running: /余 \d+分\d+秒/.test(document.querySelector('main')?.innerText || '')
-    }))
-    if (!/闭关/.test(blocked.toast)) failures.push(`[390] 闭关场景:闭关期间点出发,出面没有说「正在闭关」(${blocked.toast || '无提示'})`)
-    if (blocked.modal) failures.push('[390] 闭关场景:闭关期间点出发,还开出了模式窗(该当场拦下,不让玩家白走一步)')
-    if (blocked.running) failures.push('[390] 闭关场景:闭关期间居然真的出发了')
+      toast: [...document.querySelectorAll(".pointer-events-none.fixed button")]
+        .map((b) => (b.textContent || "").trim())
+        .join("|"),
+      modal: !!document.querySelector(".modal-panel"),
+      running: /余 \d+分\d+秒/.test(document.querySelector("main")?.innerText || ""),
+    }));
+    if (!/闭关/.test(blocked.toast))
+      failures.push(
+        `[390] 闭关场景:闭关期间点出发,出面没有说「正在闭关」(${blocked.toast || "无提示"})`,
+      );
+    if (blocked.modal)
+      failures.push("[390] 闭关场景:闭关期间点出发,还开出了模式窗(该当场拦下,不让玩家白走一步)");
+    if (blocked.running) failures.push("[390] 闭关场景:闭关期间居然真的出发了");
     // 回修行页:闭关还在
-    await page.goto(INDEX + '#' + '/cultivation', { waitUntil: 'load' })
-    await page.waitForTimeout(800)
+    await page.goto(INDEX + "#" + "/cultivation", { waitUntil: "load" });
+    await page.waitForTimeout(800);
     const back = await page.evaluate(() => {
-      const text = document.querySelector('main')?.innerText || ''
-      return { still: /闭关中 · /.test(text), line: (text.match(/闭关中 · [^\r\n]*/) || [''])[0] }
-    })
-    if (!back.still) failures.push('[390] 闭关场景:换页回来闭关状态就丢了')
-    console.log(`\n闭关:起效「${back.line}」 · 历练当场被拦(未开模式窗) · 换页仍在`)
+      const text = document.querySelector("main")?.innerText || "";
+      return { still: /闭关中 · /.test(text), line: (text.match(/闭关中 · [^\r\n]*/) || [""])[0] };
+    });
+    if (!back.still) failures.push("[390] 闭关场景:换页回来闭关状态就丢了");
+    console.log(`\n闭关:起效「${back.line}」 · 历练当场被拦(未开模式窗) · 换页仍在`);
   }
-  if (pageErrors.length) failures.push(`[390] 闭关场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 闭关场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第二十件事:背包里的账目 —— 显示多少就扣/给多少 ----
@@ -2885,48 +3897,98 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 灵石不在判据里 —— 同一段时间里任务/成就也会发灵石,拿它做差会被别处的收益搅乱。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '锻造自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "锻造自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 5000 },
     inventory: {
       items: [
-        { uid: 'p_w', templateId: 'w_zidian', quality: 'heaven', tier: 20, level: 4, affixes: [] },
-        { uid: 'b_1', templateId: 'b_qingyun', quality: 'excellent', tier: 3, level: 0, affixes: [] }
+        { uid: "p_w", templateId: "w_zidian", quality: "heaven", tier: 20, level: 4, affixes: [] },
+        {
+          uid: "b_1",
+          templateId: "b_qingyun",
+          quality: "excellent",
+          tier: 3,
+          level: 0,
+          affixes: [],
+        },
       ],
-      equipped: { weapon: 'p_w' },
+      equipped: { weapon: "p_w" },
       pills: {},
       artifacts: [],
-      equippedArtifacts: []
+      equippedArtifacts: [],
     },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX + '#' + '/inventory', { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
-  await clearOverlays(page)
-  checked += 1
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX + "#" + "/inventory", { waitUntil: "load" });
+  await page.waitForTimeout(2400);
+  await clearOverlays(page);
+  checked += 1;
   /** 背包页顶上那栏「器灵尘 N」 */
   const readDust = () =>
     page.evaluate(() => {
-      const m = /器灵尘\s*(\d+)/.exec(document.querySelector('main')?.innerText || '')
-      return m ? Number(m[1]) : null
-    })
+      const m = /器灵尘\s*(\d+)/.exec(document.querySelector("main")?.innerText || "");
+      return m ? Number(m[1]) : null;
+    });
   /**
    * 打开背包里那件(未装备、未锁定)——按 **uid** 找,不按名字找。
    *
@@ -2934,47 +3996,74 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * 点击就静默落空,场景报的是「判据没跑到东西」,而真相只是名字变了。
    * 装备卡带上 data-uid(见 EquipmentCard),这一处从此与命名无关。
    */
-  const BAG_UID = 'b_1'
-  await page.locator(`main button[data-uid="${BAG_UID}"]`).first().click({ timeout: 3000 })
-  await page.waitForTimeout(500)
+  const BAG_UID = "b_1";
+  await page.locator(`main button[data-uid="${BAG_UID}"]`).first().click({ timeout: 3000 });
+  await page.waitForTimeout(500);
   const costLine = await page.evaluate(() => {
-    const p = document.querySelector('.modal-panel')
-    const m = /器灵尘×(\d+)/.exec(p?.innerText || '')
-    return m ? Number(m[1]) : null
-  })
-  if (costLine === null) failures.push('[390] 锻造场景:详情里没写出强化的器灵尘价(判据没跑到东西)')
+    const p = document.querySelector(".modal-panel");
+    const m = /器灵尘×(\d+)/.exec(p?.innerText || "");
+    return m ? Number(m[1]) : null;
+  });
+  if (costLine === null) failures.push("[390] 锻造场景:详情里没写出强化的器灵尘价(判据没跑到东西)");
   else {
-    const before = await readDust()
-    await page.locator('.modal-panel button', { hasText: /强\s*化/ }).first().click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(600)
-    const after = await readDust()
+    const before = await readDust();
+    await page
+      .locator(".modal-panel button", { hasText: /强\s*化/ })
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(600);
+    const after = await readDust();
     if (before === null || after === null || before - after !== costLine) {
-      failures.push(`[390] 锻造场景:强化写着扣 ${costLine} 尘,实际 ${before} → ${after}(所见非所付)`)
+      failures.push(
+        `[390] 锻造场景:强化写着扣 ${costLine} 尘,实际 ${before} → ${after}(所见非所付)`,
+      );
     }
     // 接着分解同一件:提示里说给多少尘,就该给多少 —— 而且这件要从包里消失
-    const dustBeforeSplit = await readDust()
-    await page.locator('.modal-panel footer button').filter({ hasText: /^$/ }).first().click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(300)
-    await page.locator('.modal-panel button', { hasText: /分解\?/ }).first().click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(700)
+    const dustBeforeSplit = await readDust();
+    await page
+      .locator(".modal-panel footer button")
+      .filter({ hasText: /^$/ })
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(300);
+    await page
+      .locator(".modal-panel button", { hasText: /分解\?/ })
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(700);
     const toast = await page.evaluate(() =>
-      [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|')
-    )
-    const promised = Number((/分解得器灵尘×(\d+)/.exec(toast) || [])[1] ?? NaN)
-    const dustAfterSplit = await readDust()
-    const stillInBag = await page.evaluate(uid => !!document.querySelector(`main button[data-uid="${uid}"]`), BAG_UID)
+      [...document.querySelectorAll(".pointer-events-none.fixed button")]
+        .map((b) => (b.textContent || "").trim())
+        .join("|"),
+    );
+    const promised = Number((/分解得器灵尘×(\d+)/.exec(toast) || [])[1] ?? NaN);
+    const dustAfterSplit = await readDust();
+    const stillInBag = await page.evaluate(
+      (uid) => !!document.querySelector(`main button[data-uid="${uid}"]`),
+      BAG_UID,
+    );
     if (Number.isFinite(promised)) {
-      if (dustBeforeSplit === null || dustAfterSplit === null || dustAfterSplit - dustBeforeSplit !== promised) {
-        failures.push(`[390] 锻造场景:分解说给 ${promised} 尘,实际 ${dustBeforeSplit} → ${dustAfterSplit}`)
+      if (
+        dustBeforeSplit === null ||
+        dustAfterSplit === null ||
+        dustAfterSplit - dustBeforeSplit !== promised
+      ) {
+        failures.push(
+          `[390] 锻造场景:分解说给 ${promised} 尘,实际 ${dustBeforeSplit} → ${dustAfterSplit}`,
+        );
       }
-      if (stillInBag) failures.push('[390] 锻造场景:分解之后那件还留在背包里')
-      console.log(`\n背包账目:强化扣尘 ${costLine}(对上) · 分解得尘 ${promised}(对上,且件已出包)`)
+      if (stillInBag) failures.push("[390] 锻造场景:分解之后那件还留在背包里");
+      console.log(`\n背包账目:强化扣尘 ${costLine}(对上) · 分解得尘 ${promised}(对上,且件已出包)`);
     } else {
-      failures.push(`[390] 锻造场景:分解没有给出「分解得器灵尘×N」的交代(${toast || '无提示'})`)
+      failures.push(`[390] 锻造场景:分解没有给出「分解得器灵尘×N」的交代(${toast || "无提示"})`);
     }
   }
-  if (pageErrors.length) failures.push(`[390] 锻造场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 锻造场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第十九件事:真打一场历练战斗,看战报回放与战斗分析 ----
@@ -2985,66 +4074,127 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 战斗分析点得开且给得出数据面板(总输出/总承伤那一组)。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '战斗自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "战斗自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
     // 一件高 Tier 的武器:让首战打得赢、回放短,判据才不至于看运气
-    inventory: { items: [{ uid: 'p_w', templateId: 'w_zidian', quality: 'heaven', tier: 20, level: 4, affixes: [] }], equipped: { weapon: 'p_w' }, pills: {}, artifacts: [], equippedArtifacts: [] },
-    endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    inventory: {
+      items: [
+        { uid: "p_w", templateId: "w_zidian", quality: "heaven", tier: 20, level: 4, affixes: [] },
+      ],
+      equipped: { weapon: "p_w" },
+      pills: {},
+      artifacts: [],
+      equippedArtifacts: [],
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX + '#' + '/adventure', { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
-  await clearOverlays(page)
-  checked += 1
-  await page.locator('main button', { hasText: /出\s*发/ }).first().click({ timeout: 3000 }).catch(() => {})
-  await page.waitForTimeout(600)
+    endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
+    },
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX + "#" + "/adventure", { waitUntil: "load" });
+  await page.waitForTimeout(2400);
+  await clearOverlays(page);
+  checked += 1;
+  await page
+    .locator("main button", { hasText: /出\s*发/ })
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => {});
+  await page.waitForTimeout(600);
   // 「出发」先开模式窗:此行欲作何打算
-  await page.locator('.modal-panel button', { hasText: /寻常游历/ }).first().click({ timeout: 3000 }).catch(() => {})
+  await page
+    .locator(".modal-panel button", { hasText: /寻常游历/ })
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => {});
   /*
    * 把这一页拉到前台:后台页面的定时器会被浏览器节流(setInterval 从 1 秒拖到 1 分钟),
    * 而引擎的心跳正是 1 秒一拍 —— 实测不拉前台时,45 秒里一场都没打(「胜 0 场」)。
    */
-  await page.bringToFront()
+  await page.bringToFront();
   // 首战间隔 12 秒 ÷ 历练速度,故最多等 30 秒
-  let summary = ''
-  let logLines = 0
-  let lastTail = ''
+  let summary = "";
+  let logLines = 0;
+  let lastTail = "";
   // 停下来的条件要带上「战报有行」:回放是逐行画出来的,结语先出现、行随后才铺满 ——
   // 只看结语就收工,会偶发地在那一瞬数出 0 行(实测撞到过一次),把好代码判成坏代码
   for (let i = 0; i < 60 && !(summary && logLines > 0); i += 1) {
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1000);
     /*
      * 历练的第一步未必是战斗:引擎每个战斗槽位都会先掷一次「际遇」,中了就弹事件窗,
      * 而事件窗挡着战斗(超时才会自动按默认选项处理)—— 实测这就是「等了 45 秒 0 场」的原因。
      * 故这里遇到事件窗就当场选第一个选项把它了结,让历练继续往下走。
      */
-    const modalChoice = page.locator('.modal-panel button').nth(0)
-    if ((await page.locator('.modal-panel').count()) > 0 && (await modalChoice.count()) > 0) {
-      const evTitle = await page.evaluate(() => (document.querySelector('.modal-panel h3')?.textContent || '').trim())
-      await modalChoice.click({ timeout: 2000 }).catch(() => {})
-      console.log(`  (历练中遇到际遇「${evTitle}」,已按第一个选项了结,继续等战斗)`)
-      await page.waitForTimeout(600)
-      continue
+    const modalChoice = page.locator(".modal-panel button").nth(0);
+    if ((await page.locator(".modal-panel").count()) > 0 && (await modalChoice.count()) > 0) {
+      const evTitle = await page.evaluate(() =>
+        (document.querySelector(".modal-panel h3")?.textContent || "").trim(),
+      );
+      await modalChoice.click({ timeout: 2000 }).catch(() => {});
+      console.log(`  (历练中遇到际遇「${evTitle}」,已按第一个选项了结,继续等战斗)`);
+      await page.waitForTimeout(600);
+      continue;
     }
     const info = await page.evaluate(() => {
-      const text = document.querySelector('main')?.innerText || ''
+      const text = document.querySelector("main")?.innerText || "";
       return {
         running: /余 \d+分\d+秒/.test(text),
         /*
@@ -3053,42 +4203,54 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
          * 「会心一击!…受创甚重」,五个词一个不沾;一击暴击定胜负的战斗(实测碰到过,
          * 战后气血 100%)于是被误判成「回放没出内容」,红得毫无道理。
          */
-        lines: document.querySelectorAll('[data-battle-log]').length,
-        summary: (text.match(/此战 \d+ 回合[^\r\n]*/) || [''])[0],
-        tail: text.replace(/\s+/g, ' ').slice(-80)
-      }
-    })
-    logLines = Math.max(logLines, info.lines)
-    summary = info.summary
-    lastTail = info.tail
-    if (i === 0 && !info.running) failures.push('[390] 战斗场景:点了「出发」并择了模式,历练却没跑起来')
+        lines: document.querySelectorAll("[data-battle-log]").length,
+        summary: (text.match(/此战 \d+ 回合[^\r\n]*/) || [""])[0],
+        tail: text.replace(/\s+/g, " ").slice(-80),
+      };
+    });
+    logLines = Math.max(logLines, info.lines);
+    summary = info.summary;
+    lastTail = info.tail;
+    if (i === 0 && !info.running)
+      failures.push("[390] 战斗场景:点了「出发」并择了模式,历练却没跑起来");
   }
   // 兜底再等一拍:真的没有战报行时,这里仍然是 0,断言照旧会红
   if (summary && logLines === 0) {
-    await page.waitForTimeout(1500)
-    logLines = await page.evaluate(() => document.querySelectorAll('[data-battle-log]').length)
+    await page.waitForTimeout(1500);
+    logLines = await page.evaluate(() => document.querySelectorAll("[data-battle-log]").length);
   }
   // 首战间隔 12 秒 ÷ 历练速度;45 秒还没等到,就把当前页面写进报告(「搜寻猎物中」还是「胜 N 场」一看便知)
-  if (!summary) failures.push(`[390] 战斗场景:等了 60 秒也没等到一场的结语(战报回放没走完?) 当前页面:${lastTail}`)
+  if (!summary)
+    failures.push(
+      `[390] 战斗场景:等了 60 秒也没等到一场的结语(战报回放没走完?) 当前页面:${lastTail}`,
+    );
   else {
-    if (logLines === 0) failures.push('[390] 战斗场景:有结语却没有战报行(回放没出内容)')
-    if (!/胜|负/.test(summary)) failures.push(`[390] 战斗场景:结语没写清胜负 —— ${summary}`)
+    if (logLines === 0) failures.push("[390] 战斗场景:有结语却没有战报行(回放没出内容)");
+    if (!/胜|负/.test(summary)) failures.push(`[390] 战斗场景:结语没写清胜负 —— ${summary}`);
     // 战斗分析:点开要看得到数据面板
-    const analysisBtn = page.locator('main button', { hasText: /战斗分析/ }).first()
-    if ((await analysisBtn.count()) === 0) failures.push('[390] 战斗场景:找不到「战斗分析」入口')
+    const analysisBtn = page.locator("main button", { hasText: /战斗分析/ }).first();
+    if ((await analysisBtn.count()) === 0) failures.push("[390] 战斗场景:找不到「战斗分析」入口");
     else {
-      await analysisBtn.click({ timeout: 3000 }).catch(() => {})
-      await page.waitForTimeout(400)
-      const analysisText = await page.evaluate(() => document.querySelector('main')?.innerText || '')
-      if (!/总输出|总承伤/.test(analysisText)) failures.push('[390] 战斗场景:点开战斗分析也没看到数据面板(总输出/总承伤)')
-      else console.log(`\n战斗回放:${summary} · 战报 ${logLines} 行 · 分析面板可开`)
+      await analysisBtn.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(400);
+      const analysisText = await page.evaluate(
+        () => document.querySelector("main")?.innerText || "",
+      );
+      if (!/总输出|总承伤/.test(analysisText))
+        failures.push("[390] 战斗场景:点开战斗分析也没看到数据面板(总输出/总承伤)");
+      else console.log(`\n战斗回放:${summary} · 战报 ${logLines} 行 · 分析面板可开`);
     }
   }
-  if (/NaN|undefined|Infinity/.test(await page.evaluate(() => document.querySelector('main')?.innerText || ''))) {
-    failures.push('[390] 战斗场景:战报里漏出占位符')
+  if (
+    /NaN|undefined|Infinity/.test(
+      await page.evaluate(() => document.querySelector("main")?.innerText || ""),
+    )
+  ) {
+    failures.push("[390] 战斗场景:战报里漏出占位符");
   }
-  if (pageErrors.length) failures.push(`[390] 战斗场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[390] 战斗场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第三十六件事:敌人卡的最挤一档(长名字 + 满标签) ----
@@ -3102,33 +4264,89 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 首领身份(→ 首领标签)、真仙境的敌人(→ 名字最长的那个)。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
-  const now = Date.now()
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
+  const now = Date.now();
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: now - 86400000, lastActiveAt: now, totalPlaySec: 600, createRerolls: 8, createProfile: null },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: now - 86400000,
+      lastActiveAt: now,
+      totalPlaySec: 600,
+      createRerolls: 8,
+      createProfile: null,
+    },
     player: {
-      name: '战斗卡自检',
+      name: "战斗卡自检",
       major: 12,
       sub: 3,
       exp: gn(1, 3),
       age: 300,
       dead: false,
-      nemeses: [{ enemyId: 'e_icefairy', enemyName: '堕落冰魄仙子', regionId: 'leichi', lossCount: 3, lastLossAt: now }],
-      reincarnation: { count: 1, daoFruit: 3, talents: [], insight: 50, lives: [], vow: null, trial: null, bonds: [] },
-      linggen: { roots: [{ element: 'ice', aptitude: 90 }], gradeName: '单灵根', growthMult: 1.2 }
+      nemeses: [
+        {
+          enemyId: "e_icefairy",
+          enemyName: "堕落冰魄仙子",
+          regionId: "leichi",
+          lossCount: 3,
+          lastLossAt: now,
+        },
+      ],
+      reincarnation: {
+        count: 1,
+        daoFruit: 3,
+        talents: [],
+        insight: 50,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "ice", aptitude: 90 }], gradeName: "单灵根", growthMult: 1.2 },
     },
-    resources: { spiritStone: gn(8, 7), qi: 5000, wudao: 200, herb: 100, ore: 100, page: 20, dust: 40 },
+    resources: {
+      spiritStone: gn(8, 7),
+      qi: 5000,
+      wudao: 200,
+      herb: 100,
+      ore: 100,
+      page: 20,
+      dust: 40,
+    },
     inventory: {
-      items: [{ uid: 'w1', templateId: 'w_zidian', quality: 'heaven', tier: 12, level: 2, affixes: [{ id: 'bs3', roll: 1 }, { id: 'low2', roll: 1 }] }],
-      equipped: { weapon: 'w1' },
+      items: [
+        {
+          uid: "w1",
+          templateId: "w_zidian",
+          quality: "heaven",
+          tier: 12,
+          level: 2,
+          affixes: [
+            { id: "bs3", roll: 1 },
+            { id: "low2", roll: 1 },
+          ],
+        },
+      ],
+      equipped: { weapon: "w1" },
       pills: {},
       artifacts: [],
-      equippedArtifacts: []
+      equippedArtifacts: [],
     },
-    cultivation: { learned: { g_qingyun: 6 }, mainGongfa: 'g_qingyun', subGongfa: [], buffs: [], gongfaBranch: {} },
+    cultivation: {
+      learned: { g_qingyun: 6 },
+      mainGongfa: "g_qingyun",
+      subGongfa: [],
+      buffs: [],
+      gongfaBranch: {},
+    },
     lore: {
       materialLore: {},
       materialSeen: {},
@@ -3138,48 +4356,71 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
       enemyLore: { e_icefairy: 2 }, // 知其路数 → 特性标签会显示
       enemySeen: { e_icefairy: 6 },
       studyFrac: 0,
-      seeded: true
+      seeded: true,
     },
     adventure: {
-      unlocked: ['qingyun', 'luoxia', 'heifeng', 'leichi'],
-      cleared: ['qingyun', 'luoxia'],
+      unlocked: ["qingyun", "luoxia", "heifeng", "leichi"],
+      cleared: ["qingyun", "luoxia"],
       mortalCleared: [],
-      session: { regionId: 'leichi', mode: 'risky', startedAt: now - 60000, endsAt: now + 3600000, nextBattleAt: now + 12000, wins: 4, losses: 0, events: 1, stoneGain: gn(1.2, 6), expGain: gn(3.4, 6), itemGain: 3 },
+      session: {
+        regionId: "leichi",
+        mode: "risky",
+        startedAt: now - 60000,
+        endsAt: now + 3600000,
+        nextBattleAt: now + 12000,
+        wins: 4,
+        losses: 0,
+        events: 1,
+        stoneGain: gn(1.2, 6),
+        expGain: gn(3.4, 6),
+        itemGain: 3,
+      },
       pendingEventId: null,
       pendingEventSince: 0,
       seenOnceEvents: [],
       lastBattle: {
-        enemyName: '残魂·堕落冰魄仙子',
-        enemyIcon: 'snowflake',
-        enemyId: 'e_icefairy',
+        enemyName: "残魂·堕落冰魄仙子",
+        enemyIcon: "snowflake",
+        enemyId: "e_icefairy",
         isBoss: true,
         result: {
           win: true,
           rounds: 7,
           playerHpPct: 0.62,
           log: [
-            { t: 'atk', text: '你挥剑直取,', php: 1, ehp: 0.8 },
-            { t: 'crit', text: '会心一击!', dmg: '12', php: 1, ehp: 0.4 },
-            { t: 'win', text: '你胜了。', php: 0.62, ehp: 0 }
-          ]
+            { t: "atk", text: "你挥剑直取,", php: 1, ehp: 0.8 },
+            { t: "crit", text: "会心一击!", dmg: "12", php: 1, ehp: 0.4 },
+            { t: "win", text: "你胜了。", php: 0.62, ehp: 0 },
+          ],
         },
         at: now - 3000,
-        loot: ['功法残页×2', '玄冰剑']
+        loot: ["功法残页×2", "玄冰剑"],
       },
-      eventMemories: {}
+      eventMemories: {},
     },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'dark' }
-  }
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "dark",
+    },
+  };
   await ctx.addInitScript(
-    data => {
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
+    (data) => {
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX + '#/adventure', { waitUntil: 'load' })
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX + "#/adventure", { waitUntil: "load" });
   /**
    * 等敌人卡出现,而不是固定等 2200ms 再读一次。
    *
@@ -3187,37 +4428,40 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * 于是这条判据报的是「夹具没读出来」,而真相只是「还没画到」。判据本身不变:
    * 卡必须出现,名字必须单行,标签必须够四枚。只是把「读一次」改成「等到出现为止」。
    */
-  await page
-    .waitForSelector('[data-foe-name]', { timeout: 8000 })
-    .catch(() => undefined)
+  await page.waitForSelector("[data-foe-name]", { timeout: 8000 }).catch(() => undefined);
   await page.evaluate(() => {
-    Math.random = () => 1
-  })
+    Math.random = () => 1;
+  });
   const foe = await page.evaluate(() => {
-    const name = document.querySelector('[data-foe-name]')
-    if (!name) return { found: false }
-    const r = name.getBoundingClientRect()
-    const chips = [...document.querySelectorAll('.chip-ink')].filter(el => (el.textContent || '').trim())
+    const name = document.querySelector("[data-foe-name]");
+    if (!name) return { found: false };
+    const r = name.getBoundingClientRect();
+    const chips = [...document.querySelectorAll(".chip-ink")].filter((el) =>
+      (el.textContent || "").trim(),
+    );
     return {
       found: true,
-      label: (name.textContent || '').trim(),
+      label: (name.textContent || "").trim(),
       height: Math.round(r.height),
       lineHeight: parseFloat(getComputedStyle(name).lineHeight) || 16,
-      chips: chips.length
-    }
-  })
-  checked += 1
+      chips: chips.length,
+    };
+  });
+  checked += 1;
   if (!foe.found) {
-    failures.push('[320-battle] 敌人卡场景:战斗面板没渲染出来(夹具没被读出来?)')
+    failures.push("[320-battle] 敌人卡场景:战斗面板没渲染出来(夹具没被读出来?)");
   } else {
-    const lines = Math.round(foe.height / foe.lineHeight)
-    if (lines > 1) failures.push(`[320-battle] 敌人名字被折成 ${lines} 行:«${foe.label}»(${foe.height}px)`)
-    if (foe.chips < 4) failures.push(`[320-battle] 敌人卡场景:标签只有 ${foe.chips} 枚(夹具该摆出首领+宿敌+3 特性)`)
-    const info = await measurePage(page)
-    for (const p of problemsOf(info)) failures.push(`[320-battle] /adventure → ${p}`)
+    const lines = Math.round(foe.height / foe.lineHeight);
+    if (lines > 1)
+      failures.push(`[320-battle] 敌人名字被折成 ${lines} 行:«${foe.label}»(${foe.height}px)`);
+    if (foe.chips < 4)
+      failures.push(`[320-battle] 敌人卡场景:标签只有 ${foe.chips} 枚(夹具该摆出首领+宿敌+3 特性)`);
+    const info = await measurePage(page);
+    for (const p of problemsOf(info)) failures.push(`[320-battle] /adventure → ${p}`);
   }
-  if (pageErrors.length) failures.push(`[320-battle] 敌人卡场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+  if (pageErrors.length)
+    failures.push(`[320-battle] 敌人卡场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第十八件事:切后台/离开页面时,待刷的存档要立刻落盘 ----
@@ -3228,55 +4472,106 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 接不上,玩家切出去接个电话、回来时这一段时间就没了,而且是无声无息地没。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '落盘自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "落盘自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  await page.waitForTimeout(2400)
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(2400);
   await page.evaluate(() => {
-    for (const b of document.querySelectorAll('.pointer-events-none.fixed button')) b.click()
-    Math.random = () => 1
-  })
-  await page.waitForTimeout(500)
+    for (const b of document.querySelectorAll(".pointer-events-none.fixed button")) b.click();
+    Math.random = () => 1;
+  });
+  await page.waitForTimeout(500);
   /** 磁盘上那一份灵石(解密 resources 分片) */
   const diskStone = async () => {
-    const cipher = await page.evaluate(() => localStorage.getItem('xuanshu.resources') || '')
-    if (!cipher) return null
-    const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8)
-    if (!plain) return null
-    const v = JSON.parse(plain).spiritStone
-    return typeof v === 'number' ? v : v.m * Math.pow(10, v.e)
-  }
+    const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
+    if (!cipher) return null;
+    const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+    if (!plain) return null;
+    const v = JSON.parse(plain).spiritStone;
+    return typeof v === "number" ? v : v.m * Math.pow(10, v.e);
+  };
   const investOnce = async () => {
-    await page.getByRole('button', { name: /灵脉投资/ }).first().click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(400)
-    await page.locator('.modal-panel button.btn-ghost:not([disabled])').first().click({ timeout: 3000 }).catch(() => {})
-    await page.waitForTimeout(500)
-    await page.keyboard.press('Escape')
-    await page.waitForTimeout(300)
-    return readFormatted(page, '灵石')
-  }
-  checked += 1
+    await page
+      .getByRole("button", { name: /灵脉投资/ })
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(400);
+    await page
+      .locator(".modal-panel button.btn-ghost:not([disabled])")
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(500);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+    return readFormatted(page, "灵石");
+  };
+  checked += 1;
   /**
    * 先自己落一次盘,再投入 —— 否则这条判据是在跟别人的定时器赛跑。
    *
@@ -3293,51 +4588,84 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    * 顺带补两条前提:盘上得真是投入前的数、这笔投入得真花了钱 —— 少了它们,
    * 读数不成立(比如页面值没读出来)时判据会静默空过,看着绿其实什么都没证。
    */
-  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
-  await page.waitForTimeout(300)
-  const start = await readFormatted(page, '灵石')
-  const startDisk = await diskStone()
+  await page.evaluate(() => window.dispatchEvent(new Event("pagehide")));
+  await page.waitForTimeout(300);
+  const start = await readFormatted(page, "灵石");
+  const startDisk = await diskStone();
   // 前提:盘上得真是投入前的数。这一条不成立,后面「没立刻变」什么都证明不了
-  if (startDisk === null || start.value === null || Math.abs(startDisk - start.value) > start.value * 0.001) {
-    failures.push(`[390] 落盘场景:派发 pagehide 之后磁盘还是 ${startDisk},页面已是 ${start.text} —— 待刷存档没落盘`)
+  if (
+    startDisk === null ||
+    start.value === null ||
+    Math.abs(startDisk - start.value) > start.value * 0.001
+  ) {
+    failures.push(
+      `[390] 落盘场景:派发 pagehide 之后磁盘还是 ${startDisk},页面已是 ${start.text} —— 待刷存档没落盘`,
+    );
   }
-  const afterInvest = await investOnce()
-  const onDiskBefore = await diskStone()
+  const afterInvest = await investOnce();
+  const onDiskBefore = await diskStone();
   // 这一笔得真的花掉了钱 —— 否则「盘上没有跟着变」只是因为什么都没发生
-  if (start.value !== null && afterInvest.value !== null && Math.abs(afterInvest.value - start.value) < start.value * 0.001) {
-    failures.push('[390] 落盘场景:投脉之后页面上的灵石没变 —— 这一步没真花掉钱,后面两条判据都不作数')
+  if (
+    start.value !== null &&
+    afterInvest.value !== null &&
+    Math.abs(afterInvest.value - start.value) < start.value * 0.001
+  ) {
+    failures.push(
+      "[390] 落盘场景:投脉之后页面上的灵石没变 —— 这一步没真花掉钱,后面两条判据都不作数",
+    );
   }
   // 节流在起作用:投入之后这一瞬,盘上还该停在投入前的数(而不是跟着页面一起变)
-  if (startDisk === null || onDiskBefore === null || Math.abs(onDiskBefore - startDisk) > startDisk * 0.001) {
-    failures.push(`[390] 落盘场景:投入之后磁盘立刻从 ${startDisk} 变成 ${onDiskBefore} —— 节流没起作用(这笔投入本该还躺在待刷队列里)`)
+  if (
+    startDisk === null ||
+    onDiskBefore === null ||
+    Math.abs(onDiskBefore - startDisk) > startDisk * 0.001
+  ) {
+    failures.push(
+      `[390] 落盘场景:投入之后磁盘立刻从 ${startDisk} 变成 ${onDiskBefore} —— 节流没起作用(这笔投入本该还躺在待刷队列里)`,
+    );
   }
   // ① 切后台
   await page.evaluate(() => {
-    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
-    document.dispatchEvent(new Event('visibilitychange'))
-  })
-  await page.waitForTimeout(400)
-  const afterHidden = await diskStone()
-  if (afterInvest.value !== null && (afterHidden === null || Math.abs(afterHidden - afterInvest.value) > afterInvest.value * 0.01)) {
-    failures.push(`[390] 落盘场景:切后台(visibilitychange→hidden)之后磁盘还是 ${afterHidden},页面已是 ${afterInvest.text} —— 待刷存档没落盘`)
+    Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForTimeout(400);
+  const afterHidden = await diskStone();
+  if (
+    afterInvest.value !== null &&
+    (afterHidden === null || Math.abs(afterHidden - afterInvest.value) > afterInvest.value * 0.01)
+  ) {
+    failures.push(
+      `[390] 落盘场景:切后台(visibilitychange→hidden)之后磁盘还是 ${afterHidden},页面已是 ${afterInvest.text} —— 待刷存档没落盘`,
+    );
   }
   // ② 离开页面(pagehide)
-  const second = await investOnce()
-  if (afterInvest.value !== null && second.value !== null && Math.abs(second.value - afterInvest.value) < afterInvest.value * 0.001) {
-    failures.push('[390] 落盘场景:第二次投脉之后页面上的灵石没变 —— 这一条同样不作数')
+  const second = await investOnce();
+  if (
+    afterInvest.value !== null &&
+    second.value !== null &&
+    Math.abs(second.value - afterInvest.value) < afterInvest.value * 0.001
+  ) {
+    failures.push("[390] 落盘场景:第二次投脉之后页面上的灵石没变 —— 这一条同样不作数");
   }
-  await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
-  await page.waitForTimeout(400)
-  const afterHide = await diskStone()
-  if (second.value !== null && (afterHide === null || Math.abs(afterHide - second.value) > second.value * 0.01)) {
-    failures.push(`[390] 落盘场景:pagehide 之后磁盘还是 ${afterHide},页面已是 ${second.text} —— 待刷存档没落盘`)
+  await page.evaluate(() => window.dispatchEvent(new Event("pagehide")));
+  await page.waitForTimeout(400);
+  const afterHide = await diskStone();
+  if (
+    second.value !== null &&
+    (afterHide === null || Math.abs(afterHide - second.value) > second.value * 0.01)
+  ) {
+    failures.push(
+      `[390] 落盘场景:pagehide 之后磁盘还是 ${afterHide},页面已是 ${second.text} —— 待刷存档没落盘`,
+    );
   }
-  if (pageErrors.length) failures.push(`[390] 落盘场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
+  if (pageErrors.length)
+    failures.push(`[390] 落盘场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   console.log(
     `\n落盘时机:开局 ${start.text}(盘上 ${startDisk})→ 投脉后页面 ${afterInvest.text}` +
-      `(盘上仍 ${onDiskBefore},节流中)→ 切后台落盘 ${afterHidden} · 再投一次 ${second.text} → pagehide 落盘 ${afterHide}`
-  )
-  await ctx.close()
+      `(盘上仍 ${onDiskBefore},节流中)→ 切后台落盘 ${afterHidden} · 再投一次 ${second.text} → pagehide 落盘 ${afterHide}`,
+  );
+  await ctx.close();
 }
 
 // ---- 第十七件事:导出失败必须说出来(打断浏览器的下载能力再点一次) ----
@@ -3348,48 +4676,101 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  * 点下去既没文件、也没提示。故这里把下载能力打断,要求界面**说得出这句话**。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, acceptDownloads: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    acceptDownloads: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '导出自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "导出自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
-  await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
-      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-      localStorage.setItem('__layoutSeeded', '1')
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX + '#' + '/settings', { waitUntil: 'load' })
-  await page.waitForTimeout(2200)
-  await clearOverlays(page)
-  checked += 1
+  };
+  await ctx.addInitScript(
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      localStorage.setItem("__layoutSeeded", "1");
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
+  await page.waitForTimeout(2200);
+  await clearOverlays(page);
+  checked += 1;
   // 把下载这条路打断 —— 受限 WebView / 应用内浏览器正是这样
   await page.evaluate(() => {
     URL.createObjectURL = () => {
-      throw new Error('createObjectURL is not available')
-    }
-  })
-  await page.getByRole('button', { name: /导出存档/ }).first().click()
-  await page.waitForTimeout(1500)
+      throw new Error("createObjectURL is not available");
+    };
+  });
+  await page
+    .getByRole("button", { name: /导出存档/ })
+    .first()
+    .click();
+  await page.waitForTimeout(1500);
   const said = await page.evaluate(() =>
-    [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|')
-  )
-  if (!/导出|下载/.test(said)) failures.push(`[390] 导出失败场景:下载能力不可用时点了「导出存档」,界面一声不响(${said || '无提示'})`)
-  else console.log(`\n导出失败也说话:「${said.split('|')[0]}」`)
-  if (pageErrors.length) failures.push(`[390] 导出失败场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
-  await ctx.close()
+    [...document.querySelectorAll(".pointer-events-none.fixed button")]
+      .map((b) => (b.textContent || "").trim())
+      .join("|"),
+  );
+  if (!/导出|下载/.test(said))
+    failures.push(
+      `[390] 导出失败场景:下载能力不可用时点了「导出存档」,界面一声不响(${said || "无提示"})`,
+    );
+  else console.log(`\n导出失败也说话:「${said.split("|")[0]}」`);
+  if (pageErrors.length)
+    failures.push(`[390] 导出失败场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
 }
 
 // ---- 第十六件事:坏档也能进游戏,而且要说得清哪一片坏了 ----
@@ -3401,34 +4782,77 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  *    玩家多半是先发现「灵石怎么归零了」,再回来找原因。
  */
 {
-  const ctx = await auditContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const slices = {
-    game: { started: true, saveVersion: 2, createdAt: Date.now(), lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-    player: { name: '坏档自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "坏档自检",
+      major: 5,
+      sub: 3,
+      exp: gn(1, 2),
+      age: 40,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 0,
+        daoFruit: 0,
+        talents: [],
+        insight: 0,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: { roots: [{ element: "wood", aptitude: 70 }], gradeName: "单灵根", growthMult: 1.1 },
+    },
     resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
     inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
     endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-    settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-  }
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "light",
+    },
+  };
   await ctx.addInitScript(
-    data => {
-      if (localStorage.getItem('__layoutSeeded')) return
+    (data) => {
+      if (localStorage.getItem("__layoutSeeded")) return;
       for (const [k, v] of Object.entries(data)) {
         // 故意写坏一个分片(既不是本游戏密文,也不是合法 JSON)
-        localStorage.setItem(k, k.endsWith('.resources') ? '这不是存档' : v)
+        localStorage.setItem(k, k.endsWith(".resources") ? "这不是存档" : v);
       }
-      localStorage.setItem('__layoutSeeded', '1')
+      localStorage.setItem("__layoutSeeded", "1");
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]))
-  )
-  const page = await ctx.newPage()
-  const pageErrors = []
-  watchPageErrors(page, pageErrors)
-  await page.goto(INDEX, { waitUntil: 'load' })
-  checked += 1
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+  await page.goto(INDEX, { waitUntil: "load" });
+  checked += 1;
   /**
    * 启动提示只活两秒多,而冷启动到首帧的耗时是浮动的 —— 固定读一次会偶发读空
    * (实测同一份产物两次跑,一次读到、一次读到空串)。故轮询到它出现为止:
@@ -3436,29 +4860,38 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
    */
   await page
     .waitForFunction(() => /损坏|异常|隔离/.test(document.body.innerText), { timeout: 8000 })
-    .catch(() => undefined)
+    .catch(() => undefined);
   const boot = await page.evaluate(() => ({
-    alive: !!document.querySelector('#app')?.firstElementChild,
+    alive: !!document.querySelector("#app")?.firstElementChild,
     hash: location.hash,
-    toasts: [...document.querySelectorAll('.pointer-events-none.fixed button')].map(b => (b.textContent || '').trim()).join('|'),
-    backedUp: Object.keys(localStorage).some(k => k.startsWith('corrupt.'))
-  }))
-  if (!boot.alive) failures.push('[390] 坏档场景:坏掉一个分片之后界面都没起来(白屏)')
-  if (!/损坏|异常|隔离/.test(boot.toasts)) failures.push(`[390] 坏档场景:启动时没有交代坏档(${boot.toasts || '无提示'})`)
-  if (!boot.backedUp) failures.push('[390] 坏档场景:坏掉的分片没有被隔离备份(原档直接丢了)')
-  await page.goto(INDEX + '#' + '/settings', { waitUntil: 'load' })
-  await page.waitForTimeout(900)
+    toasts: [...document.querySelectorAll(".pointer-events-none.fixed button")]
+      .map((b) => (b.textContent || "").trim())
+      .join("|"),
+    backedUp: Object.keys(localStorage).some((k) => k.startsWith("corrupt.")),
+  }));
+  if (!boot.alive) failures.push("[390] 坏档场景:坏掉一个分片之后界面都没起来(白屏)");
+  if (!/损坏|异常|隔离/.test(boot.toasts))
+    failures.push(`[390] 坏档场景:启动时没有交代坏档(${boot.toasts || "无提示"})`);
+  if (!boot.backedUp) failures.push("[390] 坏档场景:坏掉的分片没有被隔离备份(原档直接丢了)");
+  await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
+  await page.waitForTimeout(900);
   const notice = await page.evaluate(() => {
-    const card = [...document.querySelectorAll('.card-ink')].find(c => (c.textContent || '').includes('存档版本'))
-    return (card?.innerText || '').replace(/\n+/g, ' ')
-  })
-  if (!/分片损坏/.test(notice)) failures.push('[390] 坏档场景:设置页没有常驻交代(只说一次两秒的提示,玩家回头找不到原因)')
-  if (!/资源/.test(notice)) failures.push(`[390] 坏档场景:设置页没说出坏的是哪一片 —— ${notice.slice(0, 80)}`)
-  if (!/corrupt\./.test(notice)) failures.push('[390] 坏档场景:设置页没说出原档备份在哪(玩家/帮他的人找不回来)')
-  if (pageErrors.length) failures.push(`[390] 坏档场景页面异常:${[...new Set(pageErrors)].join(' | ')}`)
+    const card = [...document.querySelectorAll(".card-ink")].find((c) =>
+      (c.textContent || "").includes("存档版本"),
+    );
+    return (card?.innerText || "").replace(/\n+/g, " ");
+  });
+  if (!/分片损坏/.test(notice))
+    failures.push("[390] 坏档场景:设置页没有常驻交代(只说一次两秒的提示,玩家回头找不到原因)");
+  if (!/资源/.test(notice))
+    failures.push(`[390] 坏档场景:设置页没说出坏的是哪一片 —— ${notice.slice(0, 80)}`);
+  if (!/corrupt\./.test(notice))
+    failures.push("[390] 坏档场景:设置页没说出原档备份在哪(玩家/帮他的人找不回来)");
+  if (pageErrors.length)
+    failures.push(`[390] 坏档场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   console.log(`
-坏档开局:界面照常起来 · 启动提示「${boot.toasts.split('|')[0] ?? '无'}」 · 设置页「${notice.slice(0, 46)}…」`)
-  await ctx.close()
+坏档开局:界面照常起来 · 启动提示「${boot.toasts.split("|")[0] ?? "无"}」 · 设置页「${notice.slice(0, 46)}…」`);
+  await ctx.close();
 }
 
 // ---- 第三十一件事:iOS 的存档风险提示,该说的说、不该说的一个字不说 ----
@@ -3474,117 +4907,181 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
  */
 {
   const UA_IOS =
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
   const UA_DESKTOP =
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-  const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
-  const enc = o => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString()
-  const gn = (m, e) => ({ m, e })
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
   const save = Object.fromEntries(
     Object.entries({
-      game: { started: true, saveVersion: 2, createdAt: Date.now() - 40 * 86400000, lastActiveAt: Date.now(), totalPlaySec: 0, createRerolls: 8, createProfile: null },
-      player: { name: 'iOS 自检', major: 5, sub: 3, exp: gn(1, 2), age: 40, lifespanBonusYears: 0, dead: false, reincarnation: { count: 0, daoFruit: 0, talents: [], insight: 0, lives: [], vow: null, trial: null, bonds: [] }, linggen: { roots: [{ element: 'wood', aptitude: 70 }], gradeName: '单灵根', growthMult: 1.1 } },
+      game: {
+        started: true,
+        saveVersion: 2,
+        createdAt: Date.now() - 40 * 86400000,
+        lastActiveAt: Date.now(),
+        totalPlaySec: 0,
+        createRerolls: 8,
+        createProfile: null,
+      },
+      player: {
+        name: "iOS 自检",
+        major: 5,
+        sub: 3,
+        exp: gn(1, 2),
+        age: 40,
+        lifespanBonusYears: 0,
+        dead: false,
+        reincarnation: {
+          count: 0,
+          daoFruit: 0,
+          talents: [],
+          insight: 0,
+          lives: [],
+          vow: null,
+          trial: null,
+          bonds: [],
+        },
+        linggen: {
+          roots: [{ element: "wood", aptitude: 70 }],
+          gradeName: "单灵根",
+          growthMult: 1.1,
+        },
+      },
       resources: { spiritStone: gn(1, 6), qi: 1000, wudao: 10, herb: 5, ore: 5, page: 2, dust: 2 },
       inventory: { items: [], equipped: {}, pills: {}, artifacts: [], equippedArtifacts: [] },
       endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
-      settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0, reduceMotion: true, battleSpeed: 4, decomposeRanks: [], smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true }, theme: 'light' }
-    }).map(([k, v]) => [`xuanshu.${k}`, enc(v)])
-  )
+      settings: {
+        privacyAccepted: true,
+        sfxOn: false,
+        musicOn: false,
+        musicVol: 0,
+        sfxVol: 0,
+        reduceMotion: true,
+        battleSpeed: 4,
+        decomposeRanks: [],
+        smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+        theme: "light",
+      },
+    }).map(([k, v]) => [`xuanshu.${k}`, enc(v)]),
+  );
   const openWith = async (userAgent, standalone = false) => {
-    const ctx = await auditContext({ viewport: { width: 390, height: 844 }, userAgent })
-    await ctx.addInitScript(([data, sa]) => {
-      if (!localStorage.getItem('__layoutSeeded')) {
-        for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v)
-        localStorage.setItem('__layoutSeeded', '1')
-      }
-      if (sa) Object.defineProperty(navigator, 'standalone', { get: () => true })
-    }, [save, standalone])
-    const page = await ctx.newPage()
-    return { ctx, page }
-  }
+    const ctx = await auditContext({ viewport: { width: 390, height: 844 }, userAgent });
+    await ctx.addInitScript(
+      ([data, sa]) => {
+        if (!localStorage.getItem("__layoutSeeded")) {
+          for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+          localStorage.setItem("__layoutSeeded", "1");
+        }
+        if (sa) Object.defineProperty(navigator, "standalone", { get: () => true });
+      },
+      [save, standalone],
+    );
+    const page = await ctx.newPage();
+    return { ctx, page };
+  };
   /** 提示卡的标题就是它唯一的文案锚点 */
-  const cardCount = page => page.locator('text=把游戏「添加到主屏幕」').count()
+  const cardCount = (page) => page.locator("text=把游戏「添加到主屏幕」").count();
 
   {
-    const { ctx, page } = await openWith(UA_IOS)
-    await page.goto(INDEX, { waitUntil: 'load' })
-    await page.waitForTimeout(1500)
+    const { ctx, page } = await openWith(UA_IOS);
+    await page.goto(INDEX, { waitUntil: "load" });
+    await page.waitForTimeout(1500);
 
     /*
      * 同一条已开局的页面,顺手把「楷体由谁画」也量了(再开一套存档不值当)。
      * 查的是运行时那一半:产物里的次序对,不代表字体真加载成功 —— 文件坏了、因 base
      * 变形而 404,都会安静地回退到系统字体,界面看着只是「有点不一样」,没人报错。
      */
-    checked += 1
+    checked += 1;
     const kaiFonts = await (async () => {
-      const cdp = await ctx.newCDPSession(page)
-      await cdp.send('DOM.enable')
-      await cdp.send('CSS.enable')
-      const { root } = await cdp.send('DOM.getDocument')
-      const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: 'header .font-kai' })
-      if (!nodeId) return null
-      const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId })
-      await cdp.detach()
-      return fonts.map(f => f.familyName)
-    })()
-    if (!kaiFonts) failures.push('[楷体] 顶栏里找不到 font-kai 的元素,判据没量到东西')
+      const cdp = await ctx.newCDPSession(page);
+      await cdp.send("DOM.enable");
+      await cdp.send("CSS.enable");
+      const { root } = await cdp.send("DOM.getDocument");
+      const { nodeId } = await cdp.send("DOM.querySelector", {
+        nodeId: root.nodeId,
+        selector: "header .font-kai",
+      });
+      if (!nodeId) return null;
+      const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId });
+      await cdp.detach();
+      return fonts.map((f) => f.familyName);
+    })();
+    if (!kaiFonts) failures.push("[楷体] 顶栏里找不到 font-kai 的元素,判据没量到东西");
     // 只认前缀:字形分支可能换(原版 / GB / 屏幕阅读版),但「用的是我们内置那一支」不许变
-    else if (!kaiFonts.some(f => f.startsWith('LXGW WenKai'))) {
-      failures.push(`[楷体] 楷体文字不是内置字体画的(实际 ${kaiFonts.join(' + ')})—— 字体没加载成功?`)
+    else if (!kaiFonts.some((f) => f.startsWith("LXGW WenKai"))) {
+      failures.push(
+        `[楷体] 楷体文字不是内置字体画的(实际 ${kaiFonts.join(" + ")})—— 字体没加载成功?`,
+      );
     } else {
-      console.log(`\n楷体统一:顶栏名字由 ${kaiFonts.join(' + ')} 渲染`)
+      console.log(`\n楷体统一:顶栏名字由 ${kaiFonts.join(" + ")} 渲染`);
     }
 
-    checked += 1
-    const onHome = await cardCount(page)
-    if (onHome === 0) failures.push('[iOS] 未安装时主页没有出现「添加到主屏幕」提示 —— 七天不打开就会被清档,而玩家不会知道')
-    const dismiss = page.locator('button', { hasText: '知道了' }).first()
-    if ((await dismiss.count()) === 0) failures.push('[iOS] 提示卡没有「知道了」—— 劝一次就得能关掉,不能变成常驻横幅')
+    checked += 1;
+    const onHome = await cardCount(page);
+    if (onHome === 0)
+      failures.push(
+        "[iOS] 未安装时主页没有出现「添加到主屏幕」提示 —— 七天不打开就会被清档,而玩家不会知道",
+      );
+    const dismiss = page.locator("button", { hasText: "知道了" }).first();
+    if ((await dismiss.count()) === 0)
+      failures.push("[iOS] 提示卡没有「知道了」—— 劝一次就得能关掉,不能变成常驻横幅");
     else {
-      await dismiss.click()
-      await page.waitForTimeout(200)
+      await dismiss.click();
+      await page.waitForTimeout(200);
     }
-    if ((await cardCount(page)) !== 0) failures.push('[iOS] 点了「知道了」之后提示还在')
-    await page.reload({ waitUntil: 'load' })
-    await page.waitForTimeout(1500)
-    if ((await cardCount(page)) !== 0) failures.push('[iOS] 关掉之后重载又冒出来了(关掉这个动作没落盘)')
-    await page.goto(INDEX + '#/settings', { waitUntil: 'load' })
-    await page.waitForTimeout(700)
-    if ((await cardCount(page)) !== 1) failures.push('[iOS] 设置页没有常驻那一份 —— 玩家回头想装时找不到那两步')
+    if ((await cardCount(page)) !== 0) failures.push("[iOS] 点了「知道了」之后提示还在");
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(1500);
+    if ((await cardCount(page)) !== 0)
+      failures.push("[iOS] 关掉之后重载又冒出来了(关掉这个动作没落盘)");
+    await page.goto(INDEX + "#/settings", { waitUntil: "load" });
+    await page.waitForTimeout(700);
+    if ((await cardCount(page)) !== 1)
+      failures.push("[iOS] 设置页没有常驻那一份 —— 玩家回头想装时找不到那两步");
     const backup = await page.evaluate(() => {
-      const el = [...document.querySelectorAll('p')].find(p => (p.textContent || '').includes('上次导出备份'))
-      return (el?.innerText || '').replace(/\s+/g, ' ')
-    })
-    if (!/上次导出备份/.test(backup)) failures.push('[iOS] 设置页没有「上次导出备份」那一行')
-    else if (!/从未导出|天前|今天/.test(backup)) failures.push(`[iOS] 备份那一行读不出时间:「${backup}」`)
-    console.log(`\niOS 存档提示:主页出现一次并可关闭、关掉后重载不再出现、设置页常驻 · 备份行「${backup.slice(0, 28)}…」`)
-    await ctx.close()
+      const el = [...document.querySelectorAll("p")].find((p) =>
+        (p.textContent || "").includes("上次导出备份"),
+      );
+      return (el?.innerText || "").replace(/\s+/g, " ");
+    });
+    if (!/上次导出备份/.test(backup)) failures.push("[iOS] 设置页没有「上次导出备份」那一行");
+    else if (!/从未导出|天前|今天/.test(backup))
+      failures.push(`[iOS] 备份那一行读不出时间:「${backup}」`);
+    console.log(
+      `\niOS 存档提示:主页出现一次并可关闭、关掉后重载不再出现、设置页常驻 · 备份行「${backup.slice(0, 28)}…」`,
+    );
+    await ctx.close();
   }
   {
-    const { ctx, page } = await openWith(UA_IOS, true)
-    await page.goto(INDEX, { waitUntil: 'load' })
-    await page.waitForTimeout(1500)
-    checked += 1
-    if ((await cardCount(page)) !== 0) failures.push('[iOS] 已经是主屏幕应用了还在劝安装 —— 它早就不吃那条清存储规则')
-    await ctx.close()
+    const { ctx, page } = await openWith(UA_IOS, true);
+    await page.goto(INDEX, { waitUntil: "load" });
+    await page.waitForTimeout(1500);
+    checked += 1;
+    if ((await cardCount(page)) !== 0)
+      failures.push("[iOS] 已经是主屏幕应用了还在劝安装 —— 它早就不吃那条清存储规则");
+    await ctx.close();
   }
   {
-    const { ctx, page } = await openWith(UA_DESKTOP)
-    await page.goto(INDEX, { waitUntil: 'load' })
-    await page.waitForTimeout(1500)
-    const onHome = await cardCount(page)
-    await page.goto(INDEX + '#/settings', { waitUntil: 'load' })
-    await page.waitForTimeout(700)
-    const onSettings = await cardCount(page)
-    checked += 1
+    const { ctx, page } = await openWith(UA_DESKTOP);
+    await page.goto(INDEX, { waitUntil: "load" });
+    await page.waitForTimeout(1500);
+    const onHome = await cardCount(page);
+    await page.goto(INDEX + "#/settings", { waitUntil: "load" });
+    await page.waitForTimeout(700);
+    const onSettings = await cardCount(page);
+    checked += 1;
     if (onHome + onSettings !== 0) {
-      failures.push('[桌面] 非 iOS 上出现了「iOS 会清掉存档」的提示 —— 那是胡说,玩家会当成游戏出错')
+      failures.push(
+        "[桌面] 非 iOS 上出现了「iOS 会清掉存档」的提示 —— 那是胡说,玩家会当成游戏出错",
+      );
     }
-    await ctx.close()
+    await ctx.close();
   }
 }
 
-await browser.close()
+await browser.close();
 
 // ---- 第二十七件事:外壳高度认 dvh,不认 vh ----
 /*
@@ -3593,21 +5090,22 @@ await browser.close()
  * 底栏被压在工具栏底下。所以这条退一步查**构建产物**:外壳高度得写成 dvh。
  */
 {
-  checked += 1
-  const dir = join(ROOT, 'dist/assets')
+  checked += 1;
+  const dir = join(ROOT, "dist/assets");
   const css = readdirSync(dir)
-    .filter(f => f.endsWith('.css'))
-    .map(f => readFileSync(join(dir, f), 'utf8'))
-    .join('\n')
+    .filter((f) => f.endsWith(".css"))
+    .map((f) => readFileSync(join(dir, f), "utf8"))
+    .join("\n");
   // 认这个高度的选择器要凑齐四层 —— 少一层,那点差值就成了文档层的可滚余量
   // (压缩器会把连着的选择器并进一条规则,所以这里是按选择器查,不是按声明数数)
   const covered = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
-    .filter(([, , body]) => body.includes('height:var(--app-shell-height)'))
-    .flatMap(([, sel]) => sel.split(',').map(s => s.trim()))
-  const missing = ['html', 'body', '#app', '.app-shell'].filter(s => !covered.includes(s))
-  if (missing.length) failures.push(`外壳高度没铺满四层,缺 ${missing.join(' / ')}(少一层就攒出可滚余量)`)
-  if (!css.includes('100dvh')) {
-    failures.push('外壳高度没走 dvh(手机浏览器地址栏挂在外面时,底栏会被压住)')
+    .filter(([, , body]) => body.includes("height:var(--app-shell-height)"))
+    .flatMap(([, sel]) => sel.split(",").map((s) => s.trim()));
+  const missing = ["html", "body", "#app", ".app-shell"].filter((s) => !covered.includes(s));
+  if (missing.length)
+    failures.push(`外壳高度没铺满四层,缺 ${missing.join(" / ")}(少一层就攒出可滚余量)`);
+  if (!css.includes("100dvh")) {
+    failures.push("外壳高度没走 dvh(手机浏览器地址栏挂在外面时,底栏会被压住)");
   }
   /*
    * 楷体栈:内置那份必须**排第一**。
@@ -3616,26 +5114,28 @@ await browser.close()
    * 选中 —— 绿得毫无信息。而真机上的差别恰恰全在次序里(iOS 会命中华文楷体、Windows
    * 会命中楷体,三端于是三种字形)。谁要是「顺手优化」把次序换回系统优先,只有这条拦得住。
    */
-  const kaiRule = /--font-kai:([^;}]*)/.exec(css)
+  const kaiRule = /--font-kai:([^;}]*)/.exec(css);
   if (!kaiRule) {
-    failures.push('构建产物里找不到 --font-kai(字体栈的唯一事实源在 src/style.css)')
+    failures.push("构建产物里找不到 --font-kai(字体栈的唯一事实源在 src/style.css)");
   } else if (!/^\s*"?LXGW WenKai"?/.test(kaiRule[1])) {
-    failures.push(`楷体栈第一位不是内置字体(现在是${kaiRule[1].slice(0, 40)}…)—— 三端会各用各的系统楷体`)
+    failures.push(
+      `楷体栈第一位不是内置字体(现在是${kaiRule[1].slice(0, 40)}…)—— 三端会各用各的系统楷体`,
+    );
   } else if (!/Kaiti SC|KaiTi/.test(kaiRule[1])) {
-    failures.push('楷体栈里没了系统楷体兜底 —— 子集外的生僻字会直接掉到衬线')
+    failures.push("楷体栈里没了系统楷体兜底 —— 子集外的生僻字会直接掉到衬线");
   }
 }
 
 // 主值行那条判据是"显式契约"式的:契约被删光(没人再写 data-value-row)时它会静默空转
 if (valueRowsSeen === 0) {
-  failures.push('data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)')
+  failures.push("data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)");
 }
 // 这两条同理:量不到东西时不许静默变绿
 if (zoomSeen === 0) {
-  failures.push('200% 缩放档一页都没量到 —— 那条判据空转了')
+  failures.push("200% 缩放档一页都没量到 —— 那条判据空转了");
 }
 if (pixelTextsSeen === 0) {
-  failures.push('渐变/图片底上的字一处都没采到 —— 那条判据空转了(采样半径或底色判定写错了?)')
+  failures.push("渐变/图片底上的字一处都没采到 —— 那条判据空转了(采样半径或底色判定写错了?)");
 }
 
 /**
@@ -3646,30 +5146,36 @@ if (pixelTextsSeen === 0) {
  * 对第三方的依赖(隐私声明第六节写着"零外部请求",这条替那句话守门)。
  */
 {
-  const html = readFileSync(join(ROOT, 'dist/index.html'), 'utf8')
-  const external = [...html.matchAll(/(?:src|href)\s*=\s*["'](https?:\/\/[^"']+)["']/g)].map(m => m[1])
+  const html = readFileSync(join(ROOT, "dist/index.html"), "utf8");
+  const external = [...html.matchAll(/(?:src|href)\s*=\s*["'](https?:\/\/[^"']+)["']/g)].map(
+    (m) => m[1],
+  );
   if (external.length > 0) {
-    failures.push(`首页引用了 ${external.length} 个外链 —— 本站的决定是"零外部请求":${external.slice(0, 3).join('、')}`)
+    failures.push(
+      `首页引用了 ${external.length} 个外链 —— 本站的决定是"零外部请求":${external.slice(0, 3).join("、")}`,
+    );
   }
 }
 
-console.log(`\n排版自检:${checked} 个页面 × 视口组合`)
+console.log(`\n排版自检:${checked} 个页面 × 视口组合`);
 if (blockedTotal() !== 0) {
-  failures.push(`这 ${checked} 次页面加载里发起了 ${blockedTotal()} 个外域请求 —— 本站的决定是「零外部请求」(见 index.html 与隐私声明第六节)`)
+  failures.push(
+    `这 ${checked} 次页面加载里发起了 ${blockedTotal()} 个外域请求 —— 本站的决定是「零外部请求」(见 index.html 与隐私声明第六节)`,
+  );
 }
 if (failures.length === 0) {
-  console.log('✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态')
-  console.log('✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh')
-  console.log('✓ 五处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界),且铺满内容区宽度')
-  console.log('✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)')
-  console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`)
-  console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`)
-  console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`)
-  console.log('✓ iOS 存档风险提示只在该出现的平台出现,关一次就不再唠叨')
-  console.log('✓ 楷体三端统一(内置排栈首,系统楷体留作兜底),且真由内置字体渲染')
-  console.log('✓ 提示条点得掉、弹窗焦点与外壳偏移正常、引擎事件弹窗也过同一套尺子')
-  if (SHOTS) console.log(`  截图已存 ${SHOTS_DIR}`)
+  console.log("✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态");
+  console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
+  console.log("✓ 五处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界),且铺满内容区宽度");
+  console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
+  console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
+  console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);
+  console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`);
+  console.log("✓ iOS 存档风险提示只在该出现的平台出现,关一次就不再唠叨");
+  console.log("✓ 楷体三端统一(内置排栈首,系统楷体留作兜底),且真由内置字体渲染");
+  console.log("✓ 提示条点得掉、弹窗焦点与外壳偏移正常、引擎事件弹窗也过同一套尺子");
+  if (SHOTS) console.log(`  截图已存 ${SHOTS_DIR}`);
 } else {
-  for (const f of failures) console.log(`✗ ${f}`)
-  process.exitCode = 1
+  for (const f of failures) console.log(`✗ ${f}`);
+  process.exitCode = 1;
 }

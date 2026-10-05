@@ -12,7 +12,7 @@
  *   ③ **给出"一晚上能跑多少"**:内容作者真正关心的是"我跑一遍全服模拟要多久",所以每条都换算了
  *      一个可感的规模(十万次掉落 / 一万场战斗 / 一百万步离线)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import { createDropTable } from './drops.js'
 import { createCombatEngine } from './combat.js'

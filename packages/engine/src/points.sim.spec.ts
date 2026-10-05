@@ -14,7 +14,7 @@
  *   ③ **投不成什么都不改**:门槛没过 / 容量已尽 / 这条已到上限,三种失败都不动状态
  *      (包括"首次投点自动认主"也不认)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { PointState } from './points.js'
 import { createPointPool } from './points.js'
 

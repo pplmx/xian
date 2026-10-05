@@ -15,46 +15,46 @@
  *
  * 故障注入:去掉 decryptSave 开头的密文头检查,第一条立刻红(实测 2000 条里 11 条中招)。
  */
-import { describe, expect, it } from 'vitest'
-import { decryptSave, encryptSave, readSaveText } from './crypto'
-import { SAVE_SERIALIZER } from './storage'
+import { describe, expect, it } from "vite-plus/test";
+import { decryptSave, encryptSave, readSaveText } from "./crypto";
+import { SAVE_SERIALIZER } from "./storage";
 
 /** 2026-01-01 起的毫秒基准 —— 每条样本都长这样,只有时间戳不同 */
-const BASE_AT = 1767225600000
+const BASE_AT = 1767225600000;
 
 function plainEnvelope(exportedAt: number): string {
   return JSON.stringify({
-    game: 'xuanshu',
+    game: "xuanshu",
     version: 2,
     exportedAt,
-    data: { game: { started: true }, player: null }
-  })
+    data: { game: { started: true }, player: null },
+  });
 }
 
-describe('明文存档 · 不许被误当密文', () => {
-  it('一批明文(时间戳逐条变化)全部原样读回', () => {
+describe("明文存档 · 不许被误当密文", () => {
+  it("一批明文(时间戳逐条变化)全部原样读回", () => {
     // 中招率实测约 0.4%(500 条里 2 条),2000 条足以稳定暴露
-    const bad: string[] = []
+    const bad: string[] = [];
     for (let i = 0; i < 2000; i++) {
-      const text = plainEnvelope(BASE_AT + i)
-      if (readSaveText(text) !== text) bad.push(String(BASE_AT + i))
+      const text = plainEnvelope(BASE_AT + i);
+      if (readSaveText(text) !== text) bad.push(String(BASE_AT + i));
     }
-    expect(bad, `这些明文被误读了:${bad.slice(0, 5).join('、')}`).toEqual([])
-  })
+    expect(bad, `这些明文被误读了:${bad.slice(0, 5).join("、")}`).toEqual([]);
+  });
 
-  it('明文根本不进解密 —— 不会被「解」出任何东西', () => {
-    const text = plainEnvelope(BASE_AT)
-    expect(decryptSave(text), '明文不该被当密文解出乱码').toBeNull()
-    expect(() => JSON.parse(readSaveText(text))).not.toThrow()
-  })
+  it("明文根本不进解密 —— 不会被「解」出任何东西", () => {
+    const text = plainEnvelope(BASE_AT);
+    expect(decryptSave(text), "明文不该被当密文解出乱码").toBeNull();
+    expect(() => JSON.parse(readSaveText(text))).not.toThrow();
+  });
 
-  it('真密文仍解得开 —— 修的是误判,不是把解密关掉', () => {
-    const plain = JSON.stringify({ game: 'xuanshu', data: { x: 1 } })
-    const cipher = encryptSave(plain)
-    expect(cipher.startsWith('U2FsdGVkX1'), '本项目的密文都带 Salted__ 头').toBe(true)
-    expect(decryptSave(cipher)).toBe(plain)
-    expect(readSaveText(cipher)).toBe(plain)
-  })
+  it("真密文仍解得开 —— 修的是误判,不是把解密关掉", () => {
+    const plain = JSON.stringify({ game: "xuanshu", data: { x: 1 } });
+    const cipher = encryptSave(plain);
+    expect(cipher.startsWith("U2FsdGVkX1"), "本项目的密文都带 Salted__ 头").toBe(true);
+    expect(decryptSave(cipher)).toBe(plain);
+    expect(readSaveText(cipher)).toBe(plain);
+  });
 
   /**
    * 上面两条测的是 readSaveText;这条测**真正被调用的那一段**。
@@ -64,9 +64,9 @@ describe('明文存档 · 不许被误当密文', () => {
    * 也就是 readSaveText 外面还包了一层 JSON.parse。修复只钉在 readSaveText 上,
    * 若哪天有人在序列化器里另写一套解码(绕过 readSaveText),旧病会直接复发。
    */
-  it('存档序列化器读明文也不许翻车(真正被 store 调用的那一段)', () => {
-    const data = { game: { started: true }, player: { exp: 42 } }
-    expect(SAVE_SERIALIZER.deserialize(plainEnvelope(BASE_AT))).toMatchObject({ version: 2 })
-    expect(SAVE_SERIALIZER.deserialize(SAVE_SERIALIZER.serialize(data))).toEqual(data)
-  })
-})
+  it("存档序列化器读明文也不许翻车(真正被 store 调用的那一段)", () => {
+    const data = { game: { started: true }, player: { exp: 42 } };
+    expect(SAVE_SERIALIZER.deserialize(plainEnvelope(BASE_AT))).toMatchObject({ version: 2 });
+    expect(SAVE_SERIALIZER.deserialize(SAVE_SERIALIZER.serialize(data))).toEqual(data);
+  });
+});

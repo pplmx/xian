@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { LevelMap } from './facilities.js'
 import { accrue, createFacilitySystem } from './facilities.js'
 

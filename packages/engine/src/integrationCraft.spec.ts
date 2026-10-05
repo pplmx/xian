@@ -16,7 +16,7 @@
  *      并且"只出不进"的灵药是瓶颈、"只进不出"的成品是烂在手里 —— 这两件事要看得出来;
  *   六 **同种子可复现**:整条链跑两遍,账本、每炉成功率、产出逐字段一致。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { composeCraftRate, type CraftFormula } from './crafting.js'
 import { createCompanionSystem } from './companions.js'
 import { createDropTable } from './drops.js'

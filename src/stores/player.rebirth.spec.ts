@@ -6,17 +6,17 @@
  *   - 保留:镇压与区域兴衰(「成长改变世界」的世界记忆)、机缘选择记忆
  *     (fortuneChoices,「世界记得你的选择」)、奇遇连锁(eventChains)
  */
-import { describe, it, expect, beforeEach } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
-import { usePlayerStore } from '@/stores/player'
-import { useDongfuStore } from '@/stores/dongfu'
-import type { SecretRealmState } from '@/core/secretRealm'
+import { describe, it, expect, beforeEach } from "vite-plus/test";
+import { setActivePinia, createPinia } from "pinia";
+import { usePlayerStore } from "@/stores/player";
+import { useDongfuStore } from "@/stores/dongfu";
+import type { SecretRealmState } from "@/core/secretRealm";
 
 function seedPlayer(p: ReturnType<typeof usePlayerStore>): void {
-  p.winStreak = 7
-  p.lastCaveEventDay = 5
+  p.winStreak = 7;
+  p.lastCaveEventDay = 5;
   p.secretRealm = {
-    realmId: 'sr_kurong',
+    realmId: "sr_kurong",
     enteredAt: 1,
     layer: 2,
     wins: 5,
@@ -24,68 +24,71 @@ function seedPlayer(p: ReturnType<typeof usePlayerStore>): void {
     spoils: [],
     rules: [],
     carriedHpPct: 1,
-    finished: false
-  } as SecretRealmState
-  p.regionEvent = { regionId: 'qingyun', eventId: 'ev_raiders', endsAt: 9e15 } as never
+    finished: false,
+  } as SecretRealmState;
+  p.regionEvent = { regionId: "qingyun", eventId: "ev_raiders", endsAt: 9e15 } as never;
   // 跨世记忆:全保留
-  p.suppressedRegions = ['qingyun']
-  p.fortuneChoices = { ft_sword_remnant: 'take' }
-  p.eventChains = { old_man_stone: 2 }
+  p.suppressedRegions = ["qingyun"];
+  p.fortuneChoices = { ft_sword_remnant: "take" };
+  p.eventChains = { old_man_stone: 2 };
 }
 
-describe('player.rebirth 转世状态重置', () => {
+describe("player.rebirth 转世状态重置", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-  })
+    setActivePinia(createPinia());
+  });
 
-  it('清空本世进程:连胜/当日巡游/秘境/区域事件', () => {
-    const p = usePlayerStore()
-    p.initCharacter('测试道友', { roots: [] } as never)
-    seedPlayer(p)
+  it("清空本世进程:连胜/当日巡游/秘境/区域事件", () => {
+    const p = usePlayerStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    seedPlayer(p);
 
-    p.rebirth({ roots: [] } as never)
+    p.rebirth({ roots: [] } as never);
 
-    expect(p.winStreak).toBe(0)
-    expect(p.lastCaveEventDay).toBe(0)
-    expect(p.secretRealm).toBeNull()
-    expect(p.regionEvent).toBeNull()
-  })
+    expect(p.winStreak).toBe(0);
+    expect(p.lastCaveEventDay).toBe(0);
+    expect(p.secretRealm).toBeNull();
+    expect(p.regionEvent).toBeNull();
+  });
 
-  it('保留跨世记忆:镇压/机缘选择/奇遇连锁', () => {
-    const p = usePlayerStore()
-    p.initCharacter('测试道友', { roots: [] } as never)
-    seedPlayer(p)
+  it("保留跨世记忆:镇压/机缘选择/奇遇连锁", () => {
+    const p = usePlayerStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    seedPlayer(p);
 
-    p.rebirth({ roots: [] } as never)
+    p.rebirth({ roots: [] } as never);
 
     // 「成长改变世界」:镇压过的区域仍记住你
-    expect(p.suppressedRegions).toEqual(['qingyun'])
+    expect(p.suppressedRegions).toEqual(["qingyun"]);
     // 「世界记得你的选择」:机缘取/弃记忆不随转世清空
-    expect(p.fortuneChoices).toEqual({ ft_sword_remnant: 'take' })
-    expect(p.eventChains).toEqual({ old_man_stone: 2 })
-  })
+    expect(p.fortuneChoices).toEqual({ ft_sword_remnant: "take" });
+    expect(p.eventChains).toEqual({ old_man_stone: 2 });
+  });
 
   /**
    * 「灵魂/记忆留下,外物归零」:灵兽、洞府建筑、灵脉投资都是外物,
    * 不得随转世带走 —— 否则每一世都从半成品起步,「重新经历」名存实亡。
    */
-  it('外物归零:灵兽/洞府建筑/灵脉投资', () => {
-    const p = usePlayerStore()
-    const dongfu = useDongfuStore()
-    p.initCharacter('测试道友', { roots: [] } as never)
-    p.setPet('pet_yueying')
-    dongfu.setLevel('field', 8)
-    dongfu.setLevel('library', 6)
-    dongfu.setVeinMain('gather')
-    dongfu.addVeinPoint('gather', 30)
-    dongfu.addVeinPoint('insight', 12)
+  it("外物归零:灵兽/洞府建筑/灵脉投资", () => {
+    const p = usePlayerStore();
+    const dongfu = useDongfuStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    p.setPet("pet_yueying");
+    dongfu.setLevel("field", 8);
+    dongfu.setLevel("library", 6);
+    dongfu.setVeinMain("gather");
+    dongfu.addVeinPoint("gather", 30);
+    dongfu.addVeinPoint("insight", 12);
 
-    p.rebirth({ roots: [] } as never)
+    p.rebirth({ roots: [] } as never);
 
-    expect(p.petId, '灵兽应随皮囊散去').toBeNull()
-    expect(dongfu.levels.field, '洞府建筑应归零').toBe(0)
-    expect(dongfu.levels.library).toBe(0)
-    expect(dongfu.veinMain, '灵脉主脉应清空').toBeNull()
-    expect(Object.values(dongfu.veinPoints).every(v => v === 0), '灵脉投点应清零').toBe(true)
-  })
-})
+    expect(p.petId, "灵兽应随皮囊散去").toBeNull();
+    expect(dongfu.levels.field, "洞府建筑应归零").toBe(0);
+    expect(dongfu.levels.library).toBe(0);
+    expect(dongfu.veinMain, "灵脉主脉应清空").toBeNull();
+    expect(
+      Object.values(dongfu.veinPoints).every((v) => v === 0),
+      "灵脉投点应清零",
+    ).toBe(true);
+  });
+});

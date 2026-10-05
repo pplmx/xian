@@ -17,7 +17,7 @@
  *      否则玩家会遇到"什么都没发生"(权重的第四档"退回均匀"也不改这一点,它只保证不抛错)。
  * 另附:`drawMany` 一轮不重复,与单抽共用同一套权重口径。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import type { DeckEntry } from './deck.js'
 import { drawFrom, drawMany } from './deck.js'

@@ -21,7 +21,7 @@
  * 另外钉一组 **golden 值**:把 `seedFromString` 前四个样本的输出写死 —— 换实现、改哈希都会红,
  * 因为种子一变,所有旧存档的"同种子重演"就全都不成立了。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { mulberry32, seedFromString } from './rng.js'
 
 /** 可复现的"随机名字":8 位 36 进制,像玩家昵称那样没有结构 */

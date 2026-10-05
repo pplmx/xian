@@ -14,7 +14,7 @@
  *
  * 用的是另一套题材(小工坊),与修仙无关 —— 这也顺带证明这些层确实与题材解耦。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import type { Ledger } from './resources.js'
 import { createResourceSystem } from './resources.js'

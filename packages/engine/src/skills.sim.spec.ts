@@ -14,7 +14,7 @@
  *   ③ **满级分支按"每级贡献"折算才看得出来贵贱**:+5% 攻击(每级 +2%)相当于 2.5 级,
  *      +3% 会心(每级 +0.5%)相当于 6 级 —— 同一个"满级再选一次"的位置,两条路差一倍多。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createSkillSystem } from './skills.js'
 
 /** 一部功法:六级满,入门给 4% 攻击,每级再给 2% 攻击与 0.5% 会心 */

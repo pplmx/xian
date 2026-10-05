@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { Numeric } from './numeric.js'
 import type { EquipmentConfig } from './equipment.js'
 import { createEquipmentSystem } from './equipment.js'

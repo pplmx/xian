@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createResourceSystem } from './resources.js'
 import { createSettlement } from './settlement.js'
 

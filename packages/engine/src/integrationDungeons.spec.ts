@@ -17,7 +17,7 @@
  *   五 **奖励逐场入账,与配置曲线同源**:每场的奖励数额由内容曲线算,回执照抄不重算;
  *   六 **同种子可复现**。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createCombatEngine } from './combat.js'
 import { createDungeonSystem, emptyProgress, type DungeonProgress } from './dungeons.js'
 import { createStageMemory } from './memory.js'

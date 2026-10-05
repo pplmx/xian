@@ -11,7 +11,7 @@
  *   二、每个模块的公开类型都能**从公开入口**取到(只 import './index.js',不碰内部模块),
  *       漏一个 `export type` 这条就编译不过。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import * as engine from './index.js'
 import type {
   AppliedEntry,

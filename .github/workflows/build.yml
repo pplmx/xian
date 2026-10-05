@@ -57,10 +57,13 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 设置 Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: latest
+          version: "1.0.0"
+          node-version: "22"
+          cache: true
+          run-install: false
       - name: 安装依赖
         run: bun install --frozen-lockfile
       # 构建计时:这一步既是「构建产物(自检量的是 dist)」,也顺带把**构建时长**量成判据
@@ -110,10 +113,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 设置 Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: latest
+          version: "1.0.0"
+          node-version: "22"
+          cache: true
+          run-install: false
       - name: 安装依赖
         run: bun install --frozen-lockfile
       - name: 打发布产物(XIAN_LEGACY=1)· 带时长上限
@@ -134,10 +140,13 @@ jobs:
             platform: win
     steps:
       - uses: actions/checkout@v7
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 设置 Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: latest
+          version: "1.0.0"
+          node-version: "22"
+          cache: true
+          run-install: false
 
       # 过闸才继续:lint/类型检查/单测任意一条红,构建与发布都停在这
       - name: 静态检查 + 单元测试
@@ -191,10 +200,13 @@ jobs:
       KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 设置 Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: latest
+          version: "1.0.0"
+          node-version: "22"
+          cache: true
+          run-install: false
 
       - name: 静态检查 + 单元测试
         run: |
@@ -254,10 +266,13 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v7
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 设置 Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: latest
+          version: "1.0.0"
+          node-version: "22"
+          cache: true
+          run-install: false
 
       - name: 获取版本号
         id: get_version

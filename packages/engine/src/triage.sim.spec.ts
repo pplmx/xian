@@ -16,7 +16,7 @@
  *   ③ **出手次数分布 = 谁在真的干活**:23 件候选里,判掉的两条规则接走 18 件,
  *      两条"保护性"规则一共只保下 5 件 —— 内容作者以为的主要保护,往往只是边角。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import type { TriageRule } from './triage.js'
 import { createTriage } from './triage.js'

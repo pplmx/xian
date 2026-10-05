@@ -11,7 +11,7 @@
  *   ② **翻档点本身**:比值正好 0.7 / 3 / 10 时分在哪一档(边界写错一格,判词就全体偏一档);
  *   ③ **±10% 的敏感区有多宽**:收入抖一成就会改判的参数占比 —— 在这个区间里下结论要谨慎。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createEconomyReadings } from './economy.js'
 
 const readings = createEconomyReadings()

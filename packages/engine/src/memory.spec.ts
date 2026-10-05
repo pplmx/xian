@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createStageMemory, type StageSpec } from './memory.js'
 
 /** 本作的口径:混乱 → 稳定 → 繁盛,两路门槛(胜场 / 守着多久),48 小时不打交道回落 */

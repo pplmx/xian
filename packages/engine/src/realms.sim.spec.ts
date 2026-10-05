@@ -15,7 +15,7 @@
  *      实测 1000 颗种子与理论值对得上,最长连败 9 次(长尾是真的)。
  * 另附一个内容侧有用的总数:这份配置里"从第一境第一层升到最后一境最后一层"要 57 亿点修为。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import { createRealmSystem } from './realms.js'
 

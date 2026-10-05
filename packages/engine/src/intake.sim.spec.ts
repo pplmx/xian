@@ -15,7 +15,7 @@
  *   ③ **见证与收纳是两件事**:被规则拒收的件**也进了图鉴** —— 玩家明明看见过它,
  *      不能因为"没进包"就不算见过。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createHoldingSystem } from './holding.js'
 import { createIntake } from './intake.js'
 

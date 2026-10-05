@@ -13,7 +13,7 @@
  * 这一份给这 9 个各配一条最小判据(默认值 / 边界 / 与内容包的配合),
  * 并让 `scripts/verify-dist.mjs` 常驻盯着"每个导出都得有人真用过"。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { DEFAULT_ATTRIBUTES, attributeDefs, createAttributeSystem } from './attributes.js'
 import { DEFAULT_LAYER_NAMES, createRealmSystem, progressText } from './realms.js'
 import { clamp, formatAmount, numberNumeric } from './numeric.js'

@@ -14,7 +14,7 @@
  * `createDropTable`(单次掉落)、`createPityCounter`(跨次保底)、`createIntake`(入库)与
  * `createSettlement`(回执)串成"挂机一晚",只断言这些不变量。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { Rng } from './rng.js'
 import { createRng } from './rng.js'
 import { planIdle, runIdle } from './idle.js'

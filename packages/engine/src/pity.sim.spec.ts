@@ -15,7 +15,7 @@
  * 另外钉一条**结构性质**:保底没触发之前,随机流与"完全没有保底"逐抽相同 ——
  * 这是"保底改写结果、不跳过掷骰"在模拟层面的样子(与掉落层同一条纪律)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { Rng } from './rng.js'
 import { createRng } from './rng.js'
 import { createPityCounter, softChance } from './pity.js'

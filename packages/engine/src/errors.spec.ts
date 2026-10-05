@@ -18,7 +18,7 @@
  * 常驻判据:`scripts/verify-dist.mjs` 的「报错口径自检」按源码里的 `throw new Error(...)`
  * 逐个查"有没有 spec 触发过它";新加一条抛错却忘了配用例,当场红。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { attributeDefs, createAttributeSystem } from './attributes.js'
 import { createCompanionSystem, type CompanionConfig } from './companions.js'
 import { defineGame } from './config.js'

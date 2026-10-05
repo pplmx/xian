@@ -14,7 +14,7 @@
  *
  * 另外两条通用不变量也一并验:**同种子两遍逐字段一致**、**账目守恒**(每天效果的金额之和 = 账本增量)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createRng } from './rng.js'
 import { createCycleSystem } from './cycles.js'
 import { drawFrom } from './deck.js'

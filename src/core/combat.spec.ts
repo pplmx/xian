@@ -1,37 +1,37 @@
-/* eslint-disable no-console -- 命中对闪避是"落空次数少了几成"的读数,打印出来便于复核 */
-import { describe, expect, it } from 'vitest'
-import type { CombatantSnap } from '@/types'
-import { gn } from '@/utils/gnum'
-import { mulberry32, RandomService } from '@/utils/random'
-import { enemyDef } from '@/data/enemies'
-import { artifactDef } from '@/data/artifacts'
-import { makeEnemySnap, resolveCombat, sampleWinRate, sampleWinRateRaw } from './combat'
+/* oxlint-disable no-console -- 命中对闪避是"落空次数少了几成"的读数,打印出来便于复核 */
+import { describe, expect, it } from "vite-plus/test";
+import type { CombatantSnap } from "@/types";
+import { gn } from "@/utils/gnum";
+import { mulberry32, RandomService } from "@/utils/random";
+import { enemyDef } from "@/data/enemies";
+import { artifactDef } from "@/data/artifacts";
+import { makeEnemySnap, resolveCombat, sampleWinRate, sampleWinRateRaw } from "./combat";
 
-const seeded = (seed = 1): RandomService => new RandomService(mulberry32(seed))
+const seeded = (seed = 1): RandomService => new RandomService(mulberry32(seed));
 
 function playerSnap(power: number): CombatantSnap {
   return {
-    name: '测试道人',
-    icon: 'user',
+    name: "测试道人",
+    icon: "user",
     isPlayer: true,
     attack: gn(30 * power),
     defense: gn(15 * power),
     maxHp: gn(400 * power),
     speed: 1,
     mods: {},
-    skills: [{ name: '试剑', mult: 1.6, rate: 0.25 }]
-  }
+    skills: [{ name: "试剑", mult: 1.6, rate: 0.25 }],
+  };
 }
 
-describe('自动战斗', () => {
-  const wolf = enemyDef('e_wolf')!
+describe("自动战斗", () => {
+  const wolf = enemyDef("e_wolf")!;
 
-  it('碾压级战力必胜,战报以胜利收尾', () => {
-    const enemy = makeEnemySnap(wolf, 1, 1)
-    const result = resolveCombat(playerSnap(100), enemy, seeded(3))
-    expect(result.win).toBe(true)
-    expect(result.log[result.log.length - 1]!.t).toBe('win')
-  })
+  it("碾压级战力必胜,战报以胜利收尾", () => {
+    const enemy = makeEnemySnap(wolf, 1, 1);
+    const result = resolveCombat(playerSnap(100), enemy, seeded(3));
+    expect(result.win).toBe(true);
+    expect(result.log[result.log.length - 1]!.t).toBe("win");
+  });
 
   /**
    * 先手判定随战斗结果带出(供战后分析讲清「差多少」)。
@@ -39,97 +39,97 @@ describe('自动战斗', () => {
    * 判据是**阈值**语义本身:1 + 先手判定修正 ≥ 对手速度 才算抢先,差一点就是没有 ——
    * 这条一旦被写成连续收益,词条文案与分析面板就又要开始撒谎。
    */
-  it('先手判定如实带出:恰好持平也算抢先,差一点就不算', () => {
-    const enemy = { ...makeEnemySnap(wolf, 1, 1), speed: 1.1 }
-    const atPar = resolveCombat({ ...playerSnap(10), mods: { speed: 0.1 } }, enemy, seeded(7))
-    expect(atPar.firstMove, '战果里应当带上先手判定').toBeDefined()
-    expect(atPar.firstMove!.playerSpeed).toBeCloseTo(1.1, 10)
-    expect(atPar.firstMove!.enemySpeed).toBeCloseTo(1.1, 10)
-    expect(atPar.firstMove!.playerFirst, '持平即抢先(≥)').toBe(true)
+  it("先手判定如实带出:恰好持平也算抢先,差一点就不算", () => {
+    const enemy = { ...makeEnemySnap(wolf, 1, 1), speed: 1.1 };
+    const atPar = resolveCombat({ ...playerSnap(10), mods: { speed: 0.1 } }, enemy, seeded(7));
+    expect(atPar.firstMove, "战果里应当带上先手判定").toBeDefined();
+    expect(atPar.firstMove!.playerSpeed).toBeCloseTo(1.1, 10);
+    expect(atPar.firstMove!.enemySpeed).toBeCloseTo(1.1, 10);
+    expect(atPar.firstMove!.playerFirst, "持平即抢先(≥)").toBe(true);
 
-    const justShort = resolveCombat({ ...playerSnap(10), mods: { speed: 0.09 } }, enemy, seeded(7))
-    expect(justShort.firstMove!.playerFirst, '差 0.01 就是没抢先').toBe(false)
-    expect(justShort.firstMove!.playerSpeed).toBeCloseTo(1.09, 10)
-  })
+    const justShort = resolveCombat({ ...playerSnap(10), mods: { speed: 0.09 } }, enemy, seeded(7));
+    expect(justShort.firstMove!.playerFirst, "差 0.01 就是没抢先").toBe(false);
+    expect(justShort.firstMove!.playerSpeed).toBeCloseTo(1.09, 10);
+  });
 
-  it('战力悬殊过大则败,不会死循环', () => {
-    const enemy = makeEnemySnap(enemyDef('e_hmdemon')!, 20, 2)
-    const result = resolveCombat(playerSnap(1), enemy, seeded(4))
-    expect(result.win).toBe(false)
-    expect(result.rounds).toBeLessThanOrEqual(50)
-  })
+  it("战力悬殊过大则败,不会死循环", () => {
+    const enemy = makeEnemySnap(enemyDef("e_hmdemon")!, 20, 2);
+    const result = resolveCombat(playerSnap(1), enemy, seeded(4));
+    expect(result.win).toBe(false);
+    expect(result.rounds).toBeLessThanOrEqual(50);
+  });
 
-  it('血量百分比始终在 0~1 之间', () => {
-    const enemy = makeEnemySnap(wolf, 1, 1)
-    const result = resolveCombat(playerSnap(2), enemy, seeded(5))
+  it("血量百分比始终在 0~1 之间", () => {
+    const enemy = makeEnemySnap(wolf, 1, 1);
+    const result = resolveCombat(playerSnap(2), enemy, seeded(5));
     for (const entry of result.log) {
-      expect(entry.php).toBeGreaterThanOrEqual(0)
-      expect(entry.php).toBeLessThanOrEqual(1)
-      expect(entry.ehp).toBeGreaterThanOrEqual(0)
-      expect(entry.ehp).toBeLessThanOrEqual(1)
+      expect(entry.php).toBeGreaterThanOrEqual(0);
+      expect(entry.php).toBeLessThanOrEqual(1);
+      expect(entry.ehp).toBeGreaterThanOrEqual(0);
+      expect(entry.ehp).toBeLessThanOrEqual(1);
     }
-  })
+  });
 
-  it('同层级适度成长即可取胜(数值曲线体检)', () => {
+  it("同层级适度成长即可取胜(数值曲线体检)", () => {
     // 玩家基础 ×2.5(相当于同大境界内数层成长 + 装备),应能击败同层小怪
-    const enemy = makeEnemySnap(wolf, 1, 1)
+    const enemy = makeEnemySnap(wolf, 1, 1);
     const p: CombatantSnap = {
       ...playerSnap(1),
       attack: gn(30),
       defense: gn(17),
-      maxHp: gn(500)
-    }
-    const rate = sampleWinRate(p, enemy, seeded(9), 3)
-    expect(rate).toBeGreaterThan(0.3)
-  })
+      maxHp: gn(500),
+    };
+    const rate = sampleWinRate(p, enemy, seeded(9), 3);
+    expect(rate).toBeGreaterThan(0.3);
+  });
 
-  it('sampleWinRate 取样数超表长时顶格,不越界取到 undefined→NaN', () => {
+  it("sampleWinRate 取样数超表长时顶格,不越界取到 undefined→NaN", () => {
     // 表是 4 档(0.08/0.4/0.72/0.93),samples=5 且全胜时旧代码算 table[5] → NaN
-    const enemy = makeEnemySnap(wolf, 1, 1)
-    const rate = sampleWinRate(playerSnap(1000), enemy, seeded(9), 5)
-    expect(rate).toBe(0.93)
-    expect(Number.isFinite(rate)).toBe(true)
-  })
+    const enemy = makeEnemySnap(wolf, 1, 1);
+    const rate = sampleWinRate(playerSnap(1000), enemy, seeded(9), 5);
+    expect(rate).toBe(0.93);
+    expect(Number.isFinite(rate)).toBe(true);
+  });
 
-  it('离线原始胜率:打得过给正胜率,打不过给 0(不套 0.08 保底)', () => {
+  it("离线原始胜率:打得过给正胜率,打不过给 0(不套 0.08 保底)", () => {
     // 碾压级(战力差远超 3 取样能掩盖):原始胜率顶格 1
-    const crush = sampleWinRateRaw(playerSnap(1000), makeEnemySnap(wolf, 1, 1), seeded(9), 3)
-    expect(crush).toBe(1)
+    const crush = sampleWinRateRaw(playerSnap(1000), makeEnemySnap(wolf, 1, 1), seeded(9), 3);
+    expect(crush).toBe(1);
     // 悬殊劣势(1 级裸装 vs 高阶小怪):原始胜率为 0 —— 打不过就 0,不给保底
     const hopeless = sampleWinRateRaw(
       { ...playerSnap(1), attack: gn(12), defense: gn(6), maxHp: gn(80) },
       makeEnemySnap(wolf, 30, 1),
       seeded(21),
-      3
-    )
-    expect(hopeless, '打不过的原始胜率应为 0').toBe(0)
+      3,
+    );
+    expect(hopeless, "打不过的原始胜率应为 0").toBe(0);
     // 对照:同一打不过局,带保底的 sampleWinRate 仍给了 0.08 —— 正是离线白嫖的根由
     const floored = sampleWinRate(
       { ...playerSnap(1), attack: gn(12), defense: gn(6), maxHp: gn(80) },
       makeEnemySnap(wolf, 30, 1),
       seeded(21),
-      3
-    )
-    expect(floored).toBe(0.08)
-  })
+      3,
+    );
+    expect(floored).toBe(0.08);
+  });
 
-  it('开局裸装带竹剑即可胜一层小怪(新手体验保护)', () => {
+  it("开局裸装带竹剑即可胜一层小怪(新手体验保护)", () => {
     // 炼气二层近似:基础三维 + 一柄凡品竹剑
     const p: CombatantSnap = {
       ...playerSnap(1),
       attack: gn(24),
       defense: gn(8),
       maxHp: gn(165),
-      skills: [{ name: '太玄一气', mult: 1.5, rate: 0.2 }]
-    }
-    const enemy = makeEnemySnap(wolf, 1, 1)
-    const rate = sampleWinRate(p, enemy, seeded(21), 3)
-    expect(rate).toBeGreaterThan(0.6)
-  })
+      skills: [{ name: "太玄一气", mult: 1.5, rate: 0.2 }],
+    };
+    const enemy = makeEnemySnap(wolf, 1, 1);
+    const rate = sampleWinRate(p, enemy, seeded(21), 3);
+    expect(rate).toBeGreaterThan(0.6);
+  });
 
-  it('特殊词条不会让战斗崩溃', () => {
-    const enemy = makeEnemySnap(wolf, 1, 1)
-    const p = playerSnap(2)
+  it("特殊词条不会让战斗崩溃", () => {
+    const enemy = makeEnemySnap(wolf, 1, 1);
+    const p = playerSnap(2);
     p.mods = {
       armorPen: 0.2,
       lifesteal: 0.1,
@@ -146,39 +146,39 @@ describe('自动战斗', () => {
       shieldPower: 0.25,
       comboDamage: 0.5,
       counterDamage: 0.6,
-      overhealShield: 0.8
-    }
-    const result = resolveCombat(p, enemy, seeded(12))
-    expect(result.log.length).toBeGreaterThan(2)
-    expect(typeof result.win).toBe('boolean')
-  })
+      overhealShield: 0.8,
+    };
+    const result = resolveCombat(p, enemy, seeded(12));
+    expect(result.log.length).toBeGreaterThan(2);
+    expect(typeof result.win).toBe("boolean");
+  });
 
-  it('流派机制生效:罡盾+满血增伤使输出显著提升(统计性)', () => {
-    const base = playerSnap(1.2)
+  it("流派机制生效:罡盾+满血增伤使输出显著提升(统计性)", () => {
+    const base = playerSnap(1.2);
     const build: CombatantSnap = {
       ...playerSnap(1.2),
-      mods: { shieldOnStart: 0.3, shieldPower: 0.4, fullHpDamage: 0.3 }
-    }
-    let baseRounds = 0
-    let buildRounds = 0
+      mods: { shieldOnStart: 0.3, shieldPower: 0.4, fullHpDamage: 0.3 },
+    };
+    let baseRounds = 0;
+    let buildRounds = 0;
     for (let i = 0; i < 20; i += 1) {
-      baseRounds += resolveCombat(base, makeEnemySnap(wolf, 1, 1), seeded(100 + i)).rounds
-      buildRounds += resolveCombat(build, makeEnemySnap(wolf, 1, 1), seeded(100 + i)).rounds
+      baseRounds += resolveCombat(base, makeEnemySnap(wolf, 1, 1), seeded(100 + i)).rounds;
+      buildRounds += resolveCombat(build, makeEnemySnap(wolf, 1, 1), seeded(100 + i)).rounds;
     }
     // 有流派加成的一方平均更快结束战斗
-    expect(buildRounds).toBeLessThan(baseRounds)
-  })
+    expect(buildRounds).toBeLessThan(baseRounds);
+  });
 
-  it('双法宝均会自动施展', () => {
-    const p = playerSnap(3)
+  it("双法宝均会自动施展", () => {
+    const p = playerSnap(3);
     p.artifacts = [
-      { def: artifactDef('af_lihuo')!, level: 0 },
-      { def: artifactDef('af_xuantian')!, level: 0 }
-    ]
-    const result = resolveCombat(p, makeEnemySnap(enemyDef('e_bwking')!, 3, 1.2), seeded(7))
-    const text = result.log.map(l => l.text).join('')
-    expect(text.includes('离火珠') || text.includes('玄天镜')).toBe(true)
-  })
+      { def: artifactDef("af_lihuo")!, level: 0 },
+      { def: artifactDef("af_xuantian")!, level: 0 },
+    ];
+    const result = resolveCombat(p, makeEnemySnap(enemyDef("e_bwking")!, 3, 1.2), seeded(7));
+    const text = result.log.map((l) => l.text).join("");
+    expect(text.includes("离火珠") || text.includes("玄天镜")).toBe(true);
+  });
 
   /**
    * 命中对闪避 —— 幻影类敌手此前是无解的。
@@ -187,35 +187,38 @@ describe('自动战斗', () => {
    * 面对这些敌手只能眼看一半的出手落空,战后分析还会说「连击与暴击难以衔接」。
    * 故这里量同一批种子的出手落空数:带命中必须明显更少,且不是靠别的数值赢。
    */
-  it('命中按百分点抵掉闪避:同一批种子,带命中的一方落空更少', () => {
+  it("命中按百分点抵掉闪避:同一批种子,带命中的一方落空更少", () => {
     /** 一只「只会闪、打不动、也打不死」的幻影靶子 */
     const phantom = (): CombatantSnap => {
-      const e = makeEnemySnap(enemyDef('e_shen')!, 15, 1)
-      e.mods = { dodgeRate: 0.55 }
-      e.attack = gn(1)
-      e.defense = gn(1e12)
-      e.maxHp = gn(1e12)
-      e.skills = []
-      return e
-    }
+      const e = makeEnemySnap(enemyDef("e_shen")!, 15, 1);
+      e.mods = { dodgeRate: 0.55 };
+      e.attack = gn(1);
+      e.defense = gn(1e12);
+      e.maxHp = gn(1e12);
+      e.skills = [];
+      return e;
+    };
     const misses = (accuracy: number): number => {
-      let out = 0
+      let out = 0;
       for (let seed = 1; seed <= 20; seed += 1) {
-        const p = playerSnap(1)
-        p.mods = accuracy > 0 ? { accuracy } : {}
-        p.attack = gn(1)
-        p.maxHp = gn(1e12)
-        p.defense = gn(1e12)
-        out += resolveCombat(p, phantom(), seeded(seed)).stats!.player.missedHits
+        const p = playerSnap(1);
+        p.mods = accuracy > 0 ? { accuracy } : {};
+        p.attack = gn(1);
+        p.maxHp = gn(1e12);
+        p.defense = gn(1e12);
+        out += resolveCombat(p, phantom(), seeded(seed)).stats!.player.missedHits;
       }
-      return out
-    }
-    const bare = misses(0)
-    const keen = misses(0.4)
-    expect(bare, '幻影一次都没闪开,这条判据失去对象').toBeGreaterThan(0)
-    expect(keen, `20 场累计落空:无命中 ${bare} 次,带四成命中 ${keen} 次 —— 命中没有换来出手`).toBeLessThan(bare)
-    console.log(`\n幻影(闪避 55%)× 20 场:无命中落空 ${bare} 次,带四成命中落空 ${keen} 次`)
-  })
+      return out;
+    };
+    const bare = misses(0);
+    const keen = misses(0.4);
+    expect(bare, "幻影一次都没闪开,这条判据失去对象").toBeGreaterThan(0);
+    expect(
+      keen,
+      `20 场累计落空:无命中 ${bare} 次,带四成命中 ${keen} 次 —— 命中没有换来出手`,
+    ).toBeLessThan(bare);
+    console.log(`\n幻影(闪避 55%)× 20 场:无命中落空 ${bare} 次,带四成命中落空 ${keen} 次`);
+  });
 
   /**
    * 震慑 = 被震慑者这一手整个掐掉:回合回复、法宝自动触发都应被跳过。
@@ -226,35 +229,41 @@ describe('自动战斗', () => {
    * 玩家从第 1 回合起就被无限震慑;若震慑真跳过了法宝,法宝只应在被震慑前的
    * 那一手出手一次(interval=1 时 = 最多 1 击),而不是每个被震慑回合都发炮。
    */
-  it('被震慑者不给回合回复,也不触发法宝(回血/伤害都被掐掉)', () => {
-    const e = playerSnap(1)
-    e.isPlayer = false
-    e.name = '慑魂敌'
-    e.attack = gn(1)
-    e.defense = gn(1e12)
-    e.maxHp = gn(1e12)
-    e.skills = []
-    e.mods = { stunRate: 1.0 } // 每一次出手都震慑
-    const p = playerSnap(1)
-    p.attack = gn(1)
-    p.defense = gn(1e12)
-    p.maxHp = gn(1e12)
-    p.skills = []
-    p.mods = { regenPerRound: 0.5 } // 若震慑没掐住,每回合都回大血
-    const lihuo = artifactDef('af_lihuo')!
+  it("被震慑者不给回合回复,也不触发法宝(回血/伤害都被掐掉)", () => {
+    const e = playerSnap(1);
+    e.isPlayer = false;
+    e.name = "慑魂敌";
+    e.attack = gn(1);
+    e.defense = gn(1e12);
+    e.maxHp = gn(1e12);
+    e.skills = [];
+    e.mods = { stunRate: 1.0 }; // 每一次出手都震慑
+    const p = playerSnap(1);
+    p.attack = gn(1);
+    p.defense = gn(1e12);
+    p.maxHp = gn(1e12);
+    p.skills = [];
+    p.mods = { regenPerRound: 0.5 }; // 若震慑没掐住,每回合都回大血
+    const lihuo = artifactDef("af_lihuo")!;
     // 浅克隆一层再改 interval:artifactDef 返回共享数据对象,直接改会污染数据源
-    const atom = { ...lihuo, active: { ...lihuo.active, interval: 1 } } // 每回合都该出手的伤害法宝
-    p.artifacts = [{ def: atom, level: 0 }]
+    const atom = { ...lihuo, active: { ...lihuo.active, interval: 1 } }; // 每回合都该出手的伤害法宝
+    p.artifacts = [{ def: atom, level: 0 }];
 
-    let artifactFires = 0
+    let artifactFires = 0;
     for (let seed = 1; seed <= 15; seed += 1) {
-      const r = resolveCombat(p, e, seeded(seed), { maxRounds: 10 })
-      artifactFires += r.log.filter(l => l.side === 'p' && l.text.includes('自行出手')).length
+      const r = resolveCombat(p, e, seeded(seed), { maxRounds: 10 });
+      artifactFires += r.log.filter((l) => l.side === "p" && l.text.includes("自行出手")).length;
       // 每场玩家应被震慑若干次
-      expect(r.log.filter(l => l.side === 'e' && l.text.includes('你被震得')).length, '敌手没在震慑,判据失去对象').toBeGreaterThan(0)
+      expect(
+        r.log.filter((l) => l.side === "e" && l.text.includes("你被震得")).length,
+        "敌手没在震慑,判据失去对象",
+      ).toBeGreaterThan(0);
     }
     // 震慑从第 1 回合起就生效:法宝最多在第 1 手(被震慑前)发一次;被震慑回合不该发炮
-    expect(artifactFires, '被震慑后法宝仍在自动出手(每场都≥2 次)—— 震慑没掐住法宝').toBeLessThanOrEqual(15)
-    console.log(`\n震慑(敌 100% 震慑率)× 15 场:玩家法宝出手 ${artifactFires} 次(应为≤15)`)
-  })
-})
+    expect(
+      artifactFires,
+      "被震慑后法宝仍在自动出手(每场都≥2 次)—— 震慑没掐住法宝",
+    ).toBeLessThanOrEqual(15);
+    console.log(`\n震慑(敌 100% 震慑率)× 15 场:玩家法宝出手 ${artifactFires} 次(应为≤15)`);
+  });
+});

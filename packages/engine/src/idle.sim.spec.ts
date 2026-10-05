@@ -14,7 +14,7 @@
  *   ④ `maxSteps` 是防御性的兜底(防 stepMs 设得过小跑爆),代价是超出的步数会留在
  *      `remainderMs` 里 —— 它不是"少发",是"这次不发"。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { IdlePlan } from './idle.js'
 import { planIdle, runIdle } from './idle.js'
 

@@ -17,7 +17,7 @@
  *      波动**更低**(更稳);份数 ×2 是把一次结果整体放大,拿不到"刚好一件"这一档
  *      (装备那条只有 0 或 2,而多抽一次能落在 0 / 1 / 2)。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { Rng } from './rng.js'
 import { createRng } from './rng.js'
 import type { DropEntry, DropOptions } from './drops.js'

@@ -14,7 +14,7 @@
  *   ③ **pay 的分界线是"够不够"而不是"够多少"**:缺 1 点也整笔不扣(默认),
  *      要允许分次付得显式开 `partial` —— 这两种口径在账上留下的是两种完全不同的记录。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { createResourceSystem } from './resources.js'
 
 const res = createResourceSystem({

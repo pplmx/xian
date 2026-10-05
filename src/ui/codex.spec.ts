@@ -9,10 +9,10 @@
  * 只测纯函数(describeXxx / branchStage),不挂 Pinia —— materialCodex 与
  * branchCodex 只是读 store 再转调这几个函数的薄封装,没有独立逻辑可测。
  */
-import { describe, it, expect } from 'vitest'
-import { LORE_MAX, LORE_STAGE_NAMES, MATERIALS, materialDef } from '@/data/materials'
-import { GONGFA_BRANCHES, gongfaBranchDef } from '@/data/gongfaBranches'
-import { gongfaDef } from '@/data/gongfa'
+import { describe, it, expect } from "vite-plus/test";
+import { LORE_MAX, LORE_STAGE_NAMES, MATERIALS, materialDef } from "@/data/materials";
+import { GONGFA_BRANCHES, gongfaBranchDef } from "@/data/gongfaBranches";
+import { gongfaDef } from "@/data/gongfa";
 import {
   ARTIFACT_STAGE_MAX,
   ARTIFACT_STAGE_NAMES,
@@ -37,145 +37,149 @@ import {
   type EquipSeen,
   byBest,
   equipStage,
-  pillStage
-} from './codex'
-import { petDef } from '@/data/pets'
-import { PERSONALITY_NAMES } from '@/core/petPersonality'
+  pillStage,
+} from "./codex";
+import { petDef } from "@/data/pets";
+import { PERSONALITY_NAMES } from "@/core/petPersonality";
 import {
   ARTIFACT_LEVEL_BONUS,
   ARTIFACT_MAX_LEVEL,
   ARTIFACTS,
   artifactDef,
-  artifactQualityMult
-} from '@/data/artifacts'
-import { EQUIPMENT_TEMPLATES, equipmentTemplate } from '@/data/equipment'
-import { PILLS } from '@/data/pills'
-import { qualityDef } from '@/data/qualities'
-import type { QualityId } from '@/types'
-import { formatPercent } from '@/utils/format'
+  artifactQualityMult,
+} from "@/data/artifacts";
+import { EQUIPMENT_TEMPLATES, equipmentTemplate } from "@/data/equipment";
+import { PILLS } from "@/data/pills";
+import { qualityDef } from "@/data/qualities";
+import type { QualityId } from "@/types";
+import { formatPercent } from "@/utils/format";
 
-const qingzhi = materialDef('mat_qingzhi')!
-const chiyan = materialDef('mat_chiyan')!
-const youming = materialDef('mat_youming')!
+const qingzhi = materialDef("mat_qingzhi")!;
+const chiyan = materialDef("mat_chiyan")!;
+const youming = materialDef("mat_youming")!;
 
-describe('灵材谱:按认知层渐进披露', () => {
+describe("灵材谱:按认知层渐进披露", () => {
   it('未识时不给任何正文,只给一句"还差什么"', () => {
-    const e = describeMaterial(qingzhi, 0, 0)
-    expect(e.desc).toBe('')
-    expect(e.badge, '未识不该有满层标记').toBe('')
-    expect(e.hint).toBeTruthy()
-    expect(e.stageName).toBe(LORE_STAGE_NAMES[0])
-  })
+    const e = describeMaterial(qingzhi, 0, 0);
+    expect(e.desc).toBe("");
+    expect(e.badge, "未识不该有满层标记").toBe("");
+    expect(e.hint).toBeTruthy();
+    expect(e.stageName).toBe(LORE_STAGE_NAMES[0]);
+  });
 
-  it('每高一层多揭一句,不多不少', () => {
+  it("每高一层多揭一句,不多不少", () => {
     for (let lv = 0; lv <= LORE_MAX; lv += 1) {
-      const lines = describeMaterial(qingzhi, lv, 0).desc.split('\n').filter(Boolean)
+      const lines = describeMaterial(qingzhi, lv, 0).desc.split("\n").filter(Boolean);
       // 前 lv 句 lore,外加"已知性"起附上的两行数值
-      expect(lines.length, `第 ${lv} 层揭示的行数不对`).toBe(lv + (lv >= 2 ? 2 : 0))
-      for (let i = 0; i < lv; i += 1) expect(lines[i]).toBe(qingzhi.lore[i])
+      expect(lines.length, `第 ${lv} 层揭示的行数不对`).toBe(lv + (lv >= 2 ? 2 : 0));
+      for (let i = 0; i < lv; i += 1) expect(lines[i]).toBe(qingzhi.lore[i]);
     }
-  })
+  });
 
-  it('药性与器性数值到「已知性」才摊开 —— 那正是这一层的字面意思', () => {
-    expect(describeMaterial(chiyan, 1, 9).desc).not.toContain('药性')
-    const known = describeMaterial(chiyan, 2, 9).desc
-    expect(known).toContain(`药力 ${chiyan.medicinal.potency}`)
-    expect(known).toContain(`硬度 ${chiyan.forging.hardness}`)
-  })
+  it("药性与器性数值到「已知性」才摊开 —— 那正是这一层的字面意思", () => {
+    expect(describeMaterial(chiyan, 1, 9).desc).not.toContain("药性");
+    const known = describeMaterial(chiyan, 2, 9).desc;
+    expect(known).toContain(`药力 ${chiyan.medicinal.potency}`);
+    expect(known).toContain(`硬度 ${chiyan.forging.hardness}`);
+  });
 
-  it('性味评语与数值同向', () => {
+  it("性味评语与数值同向", () => {
     // 赤炎灵芝 thermal 34 / 玄阴藤 thermal -30 —— 两端各取一个
-    expect(describeMaterial(chiyan, LORE_MAX, 0).desc).toContain('大热')
-    expect(describeMaterial(materialDef('mat_xuanyin')!, LORE_MAX, 0).desc).toContain('至寒')
-    expect(describeMaterial(youming, LORE_MAX, 0).desc, '幽冥花毒性 46,不该轻描淡写').toContain('剧毒')
-    expect(describeMaterial(qingzhi, LORE_MAX, 0).desc).toContain('无毒')
-  })
+    expect(describeMaterial(chiyan, LORE_MAX, 0).desc).toContain("大热");
+    expect(describeMaterial(materialDef("mat_xuanyin")!, LORE_MAX, 0).desc).toContain("至寒");
+    expect(describeMaterial(youming, LORE_MAX, 0).desc, "幽冥花毒性 46,不该轻描淡写").toContain(
+      "剧毒",
+    );
+    expect(describeMaterial(qingzhi, LORE_MAX, 0).desc).toContain("无毒");
+  });
 
-  it('到顶才有「通」字,也才不再提示还差什么', () => {
-    const top = describeMaterial(qingzhi, LORE_MAX, 12)
-    expect(top.badge).toBe('通')
-    expect(top.hint, '已到顶还催人上进就是噪音').toBe('')
-    expect(top.stageName).toBe(LORE_STAGE_NAMES[LORE_MAX])
-  })
+  it("到顶才有「通」字,也才不再提示还差什么", () => {
+    const top = describeMaterial(qingzhi, LORE_MAX, 12);
+    expect(top.badge).toBe("通");
+    expect(top.hint, "已到顶还催人上进就是噪音").toBe("");
+    expect(top.stageName).toBe(LORE_STAGE_NAMES[LORE_MAX]);
+  });
 
-  it('越界的层数被钳回合法区间,不至于把界面撑穿', () => {
-    expect(describeMaterial(qingzhi, 99, 0).stage).toBe(LORE_MAX)
-    expect(describeMaterial(qingzhi, -5, 0).stage).toBe(0)
-    expect(describeMaterial(qingzhi, 2.9, 0).stage).toBe(2)
-  })
+  it("越界的层数被钳回合法区间,不至于把界面撑穿", () => {
+    expect(describeMaterial(qingzhi, 99, 0).stage).toBe(LORE_MAX);
+    expect(describeMaterial(qingzhi, -5, 0).stage).toBe(0);
+    expect(describeMaterial(qingzhi, 2.9, 0).stage).toBe(2);
+  });
 
-  it('脚注记的是照面回数 —— 认知推进的底料', () => {
-    expect(describeMaterial(qingzhi, 1, 0).foot.value).toBe('未曾照面')
-    expect(describeMaterial(qingzhi, 1, 7).foot.value).toBe('7 回')
-  })
+  it("脚注记的是照面回数 —— 认知推进的底料", () => {
+    expect(describeMaterial(qingzhi, 1, 0).foot.value).toBe("未曾照面");
+    expect(describeMaterial(qingzhi, 1, 7).foot.value).toBe("7 回");
+  });
 
-  it('十六味灵材各有三句可揭之言,没有半途而废的条目', () => {
+  it("十六味灵材各有三句可揭之言,没有半途而废的条目", () => {
     for (const def of MATERIALS) {
-      expect(def.lore.length, `${def.name} 的认知文本不足三句`).toBe(3)
-      expect(describeMaterial(def, LORE_MAX, 1).desc.split('\n').length).toBe(5)
+      expect(def.lore.length, `${def.name} 的认知文本不足三句`).toBe(3);
+      expect(describeMaterial(def, LORE_MAX, 1).desc.split("\n").length).toBe(5);
     }
-  })
-})
+  });
+});
 
-describe('悟道录:未见 / 已见 / 已择', () => {
-  const branch = GONGFA_BRANCHES[0]!
-  const sibling = GONGFA_BRANCHES.find(x => x.gongfaId === branch.gongfaId && x.id !== branch.id)!
-  const fullLevel = gongfaDef(branch.gongfaId)!.maxLevel ?? 9
+describe("悟道录:未见 / 已见 / 已择", () => {
+  const branch = GONGFA_BRANCHES[0]!;
+  const sibling = GONGFA_BRANCHES.find(
+    (x) => x.gongfaId === branch.gongfaId && x.id !== branch.id,
+  )!;
+  const fullLevel = gongfaDef(branch.gongfaId)!.maxLevel ?? 9;
 
-  it('功法未满级则歧路未现', () => {
-    expect(branchStage(branch, { [branch.gongfaId]: fullLevel - 1 }, {})).toBe(0)
-    expect(branchStage(branch, {}, {})).toBe(0)
-  })
+  it("功法未满级则歧路未现", () => {
+    expect(branchStage(branch, { [branch.gongfaId]: fullLevel - 1 }, {})).toBe(0);
+    expect(branchStage(branch, {}, {})).toBe(0);
+  });
 
-  it('功法满级,诸路皆现', () => {
-    expect(branchStage(branch, { [branch.gongfaId]: fullLevel }, {})).toBe(1)
-  })
+  it("功法满级,诸路皆现", () => {
+    expect(branchStage(branch, { [branch.gongfaId]: fullLevel }, {})).toBe(1);
+  });
 
-  it('择了一条,另一条仍留在录上 —— 没走的那条路也是路', () => {
-    const learned = { [branch.gongfaId]: fullLevel }
-    const picked = { [branch.gongfaId]: branch.id }
-    expect(branchStage(branch, learned, picked)).toBe(BRANCH_STAGE_MAX)
-    expect(branchStage(sibling, learned, picked), '未择的分支不该退回未见').toBe(1)
-  })
+  it("择了一条,另一条仍留在录上 —— 没走的那条路也是路", () => {
+    const learned = { [branch.gongfaId]: fullLevel };
+    const picked = { [branch.gongfaId]: branch.id };
+    expect(branchStage(branch, learned, picked)).toBe(BRANCH_STAGE_MAX);
+    expect(branchStage(sibling, learned, picked), "未择的分支不该退回未见").toBe(1);
+  });
 
-  it('未见时不泄露分支给什么', () => {
-    const e = describeBranch(branch, 0)
-    expect(e.desc).toBe('')
-    expect(e.badge).toBe('')
-    expect(e.stageName).toBe(BRANCH_STAGE_NAMES[0])
-    expect(e.hint).toBeTruthy()
-  })
+  it("未见时不泄露分支给什么", () => {
+    const e = describeBranch(branch, 0);
+    expect(e.desc).toBe("");
+    expect(e.badge).toBe("");
+    expect(e.stageName).toBe(BRANCH_STAGE_NAMES[0]);
+    expect(e.hint).toBeTruthy();
+  });
 
-  it('已见即摊开立意与词条 —— 择前就得看得见', () => {
-    const e = describeBranch(branch, 1)
-    expect(e.desc).toContain(branch.desc)
-    expect(e.desc, '词条须是人话,不是键名').toContain('攻击')
-    expect(e.hint, '「一经择定不可更改」这句必须在按下之前出现').toContain('不可更改')
-  })
+  it("已见即摊开立意与词条 —— 择前就得看得见", () => {
+    const e = describeBranch(branch, 1);
+    expect(e.desc).toContain(branch.desc);
+    expect(e.desc, "词条须是人话,不是键名").toContain("攻击");
+    expect(e.hint, "「一经择定不可更改」这句必须在按下之前出现").toContain("不可更改");
+  });
 
-  it('已择的那条标「择」、着金色,且不再提示', () => {
-    const e = describeBranch(branch, BRANCH_STAGE_MAX)
-    expect(e.badge).toBe('择')
-    expect(e.color).toContain('gold')
-    expect(e.hint).toBe('')
-  })
+  it("已择的那条标「择」、着金色,且不再提示", () => {
+    const e = describeBranch(branch, BRANCH_STAGE_MAX);
+    expect(e.badge).toBe("择");
+    expect(e.color).toContain("gold");
+    expect(e.hint).toBe("");
+  });
 
-  it('分支重名时,靠所属功法辨认', () => {
-    const dupes = new Map<string, number>()
-    for (const b of GONGFA_BRANCHES) dupes.set(b.name, (dupes.get(b.name) ?? 0) + 1)
-    const repeated = [...dupes].filter(([, n]) => n > 1)
-    expect(repeated.length, '本表确有重名分支,脚注给功法名才有意义').toBeGreaterThan(0)
-    expect(describeBranch(branch, 1).foot.value).toBe(gongfaDef(branch.gongfaId)!.name)
-  })
+  it("分支重名时,靠所属功法辨认", () => {
+    const dupes = new Map<string, number>();
+    for (const b of GONGFA_BRANCHES) dupes.set(b.name, (dupes.get(b.name) ?? 0) + 1);
+    const repeated = [...dupes].filter(([, n]) => n > 1);
+    expect(repeated.length, "本表确有重名分支,脚注给功法名才有意义").toBeGreaterThan(0);
+    expect(describeBranch(branch, 1).foot.value).toBe(gongfaDef(branch.gongfaId)!.name);
+  });
 
-  it('七十七条分支都挂得上一部实有的功法', () => {
+  it("七十七条分支都挂得上一部实有的功法", () => {
     for (const b of GONGFA_BRANCHES) {
-      expect(gongfaDef(b.gongfaId), `${b.name} 指向不存在的功法 ${b.gongfaId}`).toBeDefined()
-      expect(describeBranch(b, 1).meta, `${b.name} 在悟道录里没有出处`).not.toBe('')
-      expect(gongfaBranchDef(b.id), `${b.name} 的 id 查不回自身`).toBeDefined()
+      expect(gongfaDef(b.gongfaId), `${b.name} 指向不存在的功法 ${b.gongfaId}`).toBeDefined();
+      expect(describeBranch(b, 1).meta, `${b.name} 在悟道录里没有出处`).not.toBe("");
+      expect(gongfaBranchDef(b.id), `${b.name} 的 id 查不回自身`).toBeDefined();
     }
-  })
-})
+  });
+});
 
 /**
  * 用具三类的收录深度 —— 与灵材谱同规:不回写一份「第几层」,而是按已有状态分层揭示。
@@ -184,138 +188,145 @@ describe('悟道录:未见 / 已见 / 已择', () => {
  * 丹方看掌握度(lore.recipeLore)。三条梯子各自的顶都要给得出下一步该做什么,
  * 到顶则闭嘴;而无方之丹要明说自己没有方子 —— 那是玩家一辈子也推不动的那一档。
  */
-describe('图鉴 · 用具三类的收录深度', () => {
-  it('装备:没见过就没收录;见过一件即入门;上手一档由玩家推进;天品看运气', () => {
-    const t = equipmentTemplate('w_xuantie')!
-    expect(equipStage(undefined, false)).toBe(0)
+describe("图鉴 · 用具三类的收录深度", () => {
+  it("装备:没见过就没收录;见过一件即入门;上手一档由玩家推进;天品看运气", () => {
+    const t = equipmentTemplate("w_xuantie")!;
+    expect(equipStage(undefined, false)).toBe(0);
     // 旧档:收录过但没有成色记录 —— 仍算入目,只是记不下最好的一件
-    expect(equipStage(undefined, true)).toBe(1)
-    const seen = (quality: QualityId, tier: number): EquipSeen => ({ q: qualityDef(quality).rank, t: tier })
-    expect(equipStage(seen('mortal', 30), true)).toBe(1)
+    expect(equipStage(undefined, true)).toBe(1);
+    const seen = (quality: QualityId, tier: number): EquipSeen => ({
+      q: qualityDef(quality).rank,
+      t: tier,
+    });
+    expect(equipStage(seen("mortal", 30), true)).toBe(1);
     // 第二档不看成色,看「你有没有亲手用过它」——强化或装备过即算
-    expect(equipStage({ ...seen('mortal', 30), u: 1 }, true)).toBe(2)
-    expect(equipStage({ ...seen('excellent', 12), u: 1 }, true)).toBe(2)
-    expect(equipStage(seen('heaven', 12), true)).toBe(3)
-    expect(describeEquipment(t, seen('heaven', 18), true).desc).toContain('见过最好的:天品 · 18 阶')
-    expect(describeEquipment(t, undefined, true).badge).toBe('')
-    expect(describeEquipment(t, seen('heaven', 18), true).stageName).toBe(EQUIP_STAGE_NAMES[EQUIP_STAGE_MAX])
-  })
+    expect(equipStage({ ...seen("mortal", 30), u: 1 }, true)).toBe(2);
+    expect(equipStage({ ...seen("excellent", 12), u: 1 }, true)).toBe(2);
+    expect(equipStage(seen("heaven", 12), true)).toBe(3);
+    expect(describeEquipment(t, seen("heaven", 18), true).desc).toContain(
+      "见过最好的:天品 · 18 阶",
+    );
+    expect(describeEquipment(t, undefined, true).badge).toBe("");
+    expect(describeEquipment(t, seen("heaven", 18), true).stageName).toBe(
+      EQUIP_STAGE_NAMES[EQUIP_STAGE_MAX],
+    );
+  });
 
-  it('装备:到顶才给「极」字,未到顶都给得出还差什么', () => {
-    const t = equipmentTemplate('w_zhuqing')!
-    const top = describeEquipment(t, { q: qualityDef('divine').rank, t: 32 }, true)
-    expect(top.badge).toBe('极')
-    expect(top.hint, '到顶了还催人上进就是噪音').toBe('')
+  it("装备:到顶才给「极」字,未到顶都给得出还差什么", () => {
+    const t = equipmentTemplate("w_zhuqing")!;
+    const top = describeEquipment(t, { q: qualityDef("divine").rank, t: 32 }, true);
+    expect(top.badge).toBe("极");
+    expect(top.hint, "到顶了还催人上进就是噪音").toBe("");
     const cases: { stage: number; seen?: EquipSeen; collected: boolean }[] = [
       { stage: 0, collected: false },
-      { stage: 1, seen: { q: qualityDef('mortal').rank, t: 3 }, collected: true },
-      { stage: 2, seen: { q: qualityDef('excellent').rank, t: 5, u: 1 }, collected: true }
-    ]
+      { stage: 1, seen: { q: qualityDef("mortal").rank, t: 3 }, collected: true },
+      { stage: 2, seen: { q: qualityDef("excellent").rank, t: 5, u: 1 }, collected: true },
+    ];
     for (const { stage, seen, collected } of cases) {
-      const e = describeEquipment(t, seen, collected)
-      expect(e.stage).toBe(stage)
-      expect(e.hint, `第 ${stage} 层没有给出下一步`).not.toBe('')
+      const e = describeEquipment(t, seen, collected);
+      expect(e.stage).toBe(stage);
+      expect(e.hint, `第 ${stage} 层没有给出下一步`).not.toBe("");
     }
-  })
+  });
 
-  it('法宝:祭炼重数决定深度,到九重封顶;功用行给的是本人那一份', () => {
-    const fuchen = artifactDef('af_xuanxu')!
-    expect(artifactStage(0, false)).toBe(0)
-    expect(artifactStage(0, true)).toBe(1)
-    expect(artifactStage(3, true)).toBe(2)
-    expect(artifactStage(ARTIFACT_MAX_LEVEL, true)).toBe(ARTIFACT_STAGE_MAX)
-    const mid = describeArtifact(fuchen, 3, true)
-    expect(mid.foot.value).toBe(`3/${ARTIFACT_MAX_LEVEL} 重`)
+  it("法宝:祭炼重数决定深度,到九重封顶;功用行给的是本人那一份", () => {
+    const fuchen = artifactDef("af_xuanxu")!;
+    expect(artifactStage(0, false)).toBe(0);
+    expect(artifactStage(0, true)).toBe(1);
+    expect(artifactStage(3, true)).toBe(2);
+    expect(artifactStage(ARTIFACT_MAX_LEVEL, true)).toBe(ARTIFACT_STAGE_MAX);
+    const mid = describeArtifact(fuchen, 3, true);
+    expect(mid.foot.value).toBe(`3/${ARTIFACT_MAX_LEVEL} 重`);
     /**
      * 吸命伤害的基线是 230%,乘上它自己的品阶(玄虚拂尘是灵品),再按祭炼三重
      * ×(1+0.08×3)—— 图鉴给的必须是这一份,不是表里那行基线数字。
      */
-    const scaled = 2.3 * artifactQualityMult(fuchen.quality) * (1 + 3 * ARTIFACT_LEVEL_BONUS)
-    expect(mid.desc, '图鉴里的数得按玩家自己的品阶与祭炼重数算').toContain(formatPercent(scaled))
-    expect(describeArtifact(fuchen, ARTIFACT_MAX_LEVEL, true).badge).toBe('满')
-    expect(describeArtifact(fuchen, ARTIFACT_MAX_LEVEL, true).hint).toBe('')
-  })
+    const scaled = 2.3 * artifactQualityMult(fuchen.quality) * (1 + 3 * ARTIFACT_LEVEL_BONUS);
+    expect(mid.desc, "图鉴里的数得按玩家自己的品阶与祭炼重数算").toContain(formatPercent(scaled));
+    expect(describeArtifact(fuchen, ARTIFACT_MAX_LEVEL, true).badge).toBe("满");
+    expect(describeArtifact(fuchen, ARTIFACT_MAX_LEVEL, true).hint).toBe("");
+  });
 
-  it('丹方:已录 → 已得方 → 通晓;无方之丹到「已录」即顶并说明缘由', () => {
-    const craftable = PILLS.find(p => p.recipe)!
-    expect(pillStage(craftable, false, 0)).toBe(0)
-    expect(pillStage(craftable, true, 0)).toBe(1)
-    expect(pillStage(craftable, true, 0.4)).toBe(2)
-    expect(pillStage(craftable, true, 1)).toBe(PILL_STAGE_MAX)
+  it("丹方:已录 → 已得方 → 通晓;无方之丹到「已录」即顶并说明缘由", () => {
+    const craftable = PILLS.find((p) => p.recipe)!;
+    expect(pillStage(craftable, false, 0)).toBe(0);
+    expect(pillStage(craftable, true, 0)).toBe(1);
+    expect(pillStage(craftable, true, 0.4)).toBe(2);
+    expect(pillStage(craftable, true, 1)).toBe(PILL_STAGE_MAX);
 
-    const drop = PILLS.find(p => !p.recipe)!
-    expect(pillStage(drop, true, 1), '无方之丹没有「得方」这一档').toBe(1)
-    const e = describePill(drop, true, 1)
-    expect(e.hint, '无方之丹要明说自己无方').toBe(PILL_NO_RECIPE_HINT)
-    expect(e.badge).toBe('')
-    expect(e.foot.value).toBe('偶得')
-  })
+    const drop = PILLS.find((p) => !p.recipe)!;
+    expect(pillStage(drop, true, 1), "无方之丹没有「得方」这一档").toBe(1);
+    const e = describePill(drop, true, 1);
+    expect(e.hint, "无方之丹要明说自己无方").toBe(PILL_NO_RECIPE_HINT);
+    expect(e.badge).toBe("");
+    expect(e.foot.value).toBe("偶得");
+  });
 
-  it('丹方:掌握度写进脚注,未到手与通晓各自给一句话', () => {
-    const craftable = PILLS.find(p => p.recipe)!
-    expect(describePill(craftable, true, 0.42).foot.value).toBe('42%')
-    expect(describePill(craftable, true, 0).hint).toContain('方子还没到手')
-    const top = describePill(craftable, true, 1)
-    expect(top.stageName).toBe(PILL_STAGE_NAMES[PILL_STAGE_MAX])
-    expect(top.badge).toBe('通')
-    expect(top.hint).toBe('')
-  })
+  it("丹方:掌握度写进脚注,未到手与通晓各自给一句话", () => {
+    const craftable = PILLS.find((p) => p.recipe)!;
+    expect(describePill(craftable, true, 0.42).foot.value).toBe("42%");
+    expect(describePill(craftable, true, 0).hint).toContain("方子还没到手");
+    const top = describePill(craftable, true, 1);
+    expect(top.stageName).toBe(PILL_STAGE_NAMES[PILL_STAGE_MAX]);
+    expect(top.badge).toBe("通");
+    expect(top.hint).toBe("");
+  });
 
-  it('三张梯子的层数与名目一一对得上(界面拿 stageName 直接显示)', () => {
-    expect(EQUIP_STAGE_NAMES.length).toBe(EQUIP_STAGE_MAX + 1)
-    expect(ARTIFACT_STAGE_NAMES.length).toBe(ARTIFACT_STAGE_MAX + 1)
-    expect(PILL_STAGE_NAMES.length).toBe(PILL_STAGE_MAX + 1)
-  })
+  it("三张梯子的层数与名目一一对得上(界面拿 stageName 直接显示)", () => {
+    expect(EQUIP_STAGE_NAMES.length).toBe(EQUIP_STAGE_MAX + 1);
+    expect(ARTIFACT_STAGE_NAMES.length).toBe(ARTIFACT_STAGE_MAX + 1);
+    expect(PILL_STAGE_NAMES.length).toBe(PILL_STAGE_MAX + 1);
+  });
 
-  it('未收录的条目不会凭空有深度,但正文照样写得出来', () => {
+  it("未收录的条目不会凭空有深度,但正文照样写得出来", () => {
     for (const t of EQUIPMENT_TEMPLATES) {
-      const e = describeEquipment(t, undefined, false)
-      expect(e.stage).toBe(0)
-      expect(e.desc, '未收录也要留着风味与功用,收录之后才有对比').not.toBe('')
+      const e = describeEquipment(t, undefined, false);
+      expect(e.stage).toBe(0);
+      expect(e.desc, "未收录也要留着风味与功用,收录之后才有对比").not.toBe("");
     }
     for (const a of ARTIFACTS) {
-      expect(describeArtifact(a, 0, false).stage).toBe(0)
-      expect(describeArtifact(a, 0, false).desc).not.toBe('')
+      expect(describeArtifact(a, 0, false).stage).toBe(0);
+      expect(describeArtifact(a, 0, false).desc).not.toBe("");
     }
     for (const p of PILLS) {
-      expect(describePill(p, false, 0).stage).toBe(0)
-      expect(describePill(p, false, 0).desc).not.toBe('')
+      expect(describePill(p, false, 0).stage).toBe(0);
+      expect(describePill(p, false, 0).desc).not.toBe("");
     }
-  })
-})
+  });
+});
 
-describe('图鉴排序 · 从好到差', () => {
+describe("图鉴排序 · 从好到差", () => {
   const entry = (id: string, stage = 0) => ({
     id,
     name: id,
-    desc: '',
-    meta: '',
+    desc: "",
+    meta: "",
     color: undefined,
     stage,
-    stageName: '',
-    badge: '',
-    hint: '',
-    foot: { label: '', value: '' }
-  })
-  it('品阶降序优先,同品阶内已收录在前,再同收录按原序稳定', () => {
+    stageName: "",
+    badge: "",
+    hint: "",
+    foot: { label: "", value: "" },
+  });
+  it("品阶降序优先,同品阶内已收录在前,再同收录按原序稳定", () => {
     const out = byBest([
-      { rank: 1, entry: entry('low') },
-      { rank: 3, entry: entry('top') },
-      { rank: 2, entry: entry('mid_seen', 1) },
-      { rank: 2, entry: entry('mid_raw', 0) }
-    ]).map(e => e.id)
-    expect(out).toEqual(['top', 'mid_seen', 'mid_raw', 'low'])
-  })
-  it('不改动传入数组(按副本排序)', () => {
+      { rank: 1, entry: entry("low") },
+      { rank: 3, entry: entry("top") },
+      { rank: 2, entry: entry("mid_seen", 1) },
+      { rank: 2, entry: entry("mid_raw", 0) },
+    ]).map((e) => e.id);
+    expect(out).toEqual(["top", "mid_seen", "mid_raw", "low"]);
+  });
+  it("不改动传入数组(按副本排序)", () => {
     const rows = [
-      { rank: 2, entry: entry('x') },
-      { rank: 1, entry: entry('y') }
-    ]
-    const before = rows.map(r => r.entry.id)
-    byBest(rows)
-    expect(rows.map(r => r.entry.id)).toEqual(before)
-  })
-})
+      { rank: 2, entry: entry("x") },
+      { rank: 1, entry: entry("y") },
+    ];
+    const before = rows.map((r) => r.entry.id);
+    byBest(rows);
+    expect(rows.map((r) => r.entry.id)).toEqual(before);
+  });
+});
 
 /**
  * 灵兽册:深度不是"知道它多少"而是"我与它同行到哪一步"。
@@ -324,39 +335,39 @@ describe('图鉴排序 · 从好到差', () => {
  * 前两档的及格线是防御性的:即使传入状态有矛盾(如 current 但未结缘),
  * 档位也不该产生"最大的那档看着像别的"的错位。
  */
-describe('灵兽册:相伴即深浅', () => {
-  const qingyu = petDef('pet_qingyu')!
+describe("灵兽册:相伴即深浅", () => {
+  const qingyu = petDef("pet_qingyu")!;
 
-  it('档位单调:相伴中 > 曾相伴 > 已结缘 > 未录', () => {
-    expect(petStage({ collected: false, wasCompanion: false, current: false })).toBe(0)
-    expect(petStage({ collected: true, wasCompanion: false, current: false })).toBe(1)
-    expect(petStage({ collected: true, wasCompanion: true, current: false })).toBe(2)
-    expect(petStage({ collected: true, wasCompanion: true, current: true })).toBe(3)
-  })
+  it("档位单调:相伴中 > 曾相伴 > 已结缘 > 未录", () => {
+    expect(petStage({ collected: false, wasCompanion: false, current: false })).toBe(0);
+    expect(petStage({ collected: true, wasCompanion: false, current: false })).toBe(1);
+    expect(petStage({ collected: true, wasCompanion: true, current: false })).toBe(2);
+    expect(petStage({ collected: true, wasCompanion: true, current: true })).toBe(3);
+  });
 
-  it('相伴中不可能跳过曾相伴:即便状态互相打架,最深档也建立在曾相伴之上', () => {
-    expect(petStage({ collected: false, wasCompanion: false, current: true })).toBe(0)
-    expect(petStage({ collected: true, wasCompanion: false, current: true })).toBe(2)
-  })
+  it("相伴中不可能跳过曾相伴:即便状态互相打架,最深档也建立在曾相伴之上", () => {
+    expect(petStage({ collected: false, wasCompanion: false, current: true })).toBe(0);
+    expect(petStage({ collected: true, wasCompanion: false, current: true })).toBe(2);
+  });
 
-  it('满档挂一字且不再指路,未满档给「还差什么」', () => {
-    expect(describePet(qingyu, 2, undefined).stageName).toBe('曾相伴')
-    expect(describePet(qingyu, 2, undefined).badge).toBe('')
-    expect(describePet(qingyu, 2, undefined).hint).toBeTruthy()
-    const top = describePet(qingyu, 3, undefined)
-    expect(top.stageName).toBe('相伴中')
-    expect(top.badge).toBe('伴')
-    expect(top.hint).toBe('')
-  })
+  it("满档挂一字且不再指路,未满档给「还差什么」", () => {
+    expect(describePet(qingyu, 2, undefined).stageName).toBe("曾相伴");
+    expect(describePet(qingyu, 2, undefined).badge).toBe("");
+    expect(describePet(qingyu, 2, undefined).hint).toBeTruthy();
+    const top = describePet(qingyu, 3, undefined);
+    expect(top.stageName).toBe("相伴中");
+    expect(top.badge).toBe("伴");
+    expect(top.hint).toBe("");
+  });
 
-  it('结缘即见数与性格(名号页本就看全,图鉴不藏)', () => {
-    const e = describePet(qingyu, 1, undefined)
-    expect(e.desc).toContain('性格')
-    expect(e.desc).toContain(PERSONALITY_NAMES[qingyu.personality])
-  })
+  it("结缘即见数与性格(名号页本就看全,图鉴不藏)", () => {
+    const e = describePet(qingyu, 1, undefined);
+    expect(e.desc).toContain("性格");
+    expect(e.desc).toContain(PERSONALITY_NAMES[qingyu.personality]);
+  });
 
-  it('档表齐全,最深一档是「相伴中」', () => {
-    expect(PET_STAGE_NAMES).toEqual(['未录', '已结缘', '曾相伴', '相伴中'])
-    expect(PET_STAGE_MAX).toBe(3)
-  })
-})
+  it("档表齐全,最深一档是「相伴中」", () => {
+    expect(PET_STAGE_NAMES).toEqual(["未录", "已结缘", "曾相伴", "相伴中"]);
+    expect(PET_STAGE_MAX).toBe(3);
+  });
+});

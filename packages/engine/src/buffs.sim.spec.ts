@@ -16,7 +16,7 @@
  *
  * 另附一条边界:封顶(`maxDurationSec`)是封在 `now + 上限`,叠到顶就不再涨。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { BuffStacking } from './buffs.js'
 import { createBuffSystem } from './buffs.js'
 

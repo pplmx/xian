@@ -14,7 +14,7 @@
  *   ③ **越级陡得很快**:高三阶 18%、高六阶 2.3%、高十阶 0.14%(表外每阶再乘 0.5);
  *      熟练度是双曲饱和:经验 100 到 50 分、900 才到 90 分,**永远不到 100**。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import type { CraftFormula } from './crafting.js'
 import { composeCraftRate, overReachFactor, proficiencyFromExp, stageNameOf } from './crafting.js'
 
