@@ -293,7 +293,8 @@
     </div>
 
     <!-- Phase 28 闭关:5 分钟 +150% 修炼,期间禁止历练(数值唯一来源 = buffs.ts retreat + earlyGameService) -->
-    <div class="card-ink px-4 py-3">
+    <!-- 开始那瞬整卡一闪(与 BuildingCard 升级同款 card-flash)——「这件事发生在我这张卡上」 -->
+    <div class="card-ink px-4 py-3" :class="retreatFlash ? 'card-flash' : ''" @animationend.self="retreatFlash = false">
       <div class="flex items-center justify-between">
         <span class="text-[11px] text-ink-soft">闭关参悟</span>
         <span v-if="retreating" class="text-[10px] text-amber-ink tabular">
@@ -430,7 +431,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { usePlayerStore } from '@/stores/player'
   import { useResourcesStore } from '@/stores/resources'
   import { useCultivationStore } from '@/stores/cultivation'
@@ -621,6 +622,14 @@ import type { PillDef } from '@/types'
       ui.toast('你封洞闭关,心不外骛', 'info')
     }
   }
+  /** 闭关开始那瞬卡片一闪(Watch 到 retreating 真值成立;5 分钟一到整卡随之回落,不再闪) */
+  const retreatFlash = ref(false)
+  watch(
+    () => retreating.value,
+    (nv, ov) => {
+      if (nv && !ov) retreatFlash.value = true
+    }
+  )
 
   // Phase 32.0 天劫决策:劫型 + 准备度(仅大关天劫时)
   const PLAN_COLOR: Record<TribulationPlan['verdict'], string> = {

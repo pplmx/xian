@@ -416,6 +416,15 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(rows.length, '修为/灵气/耗灵气主值行都要在 ink-soft 或更上').toBeGreaterThanOrEqual(3)
   })
 
+  it('闭关开始有这一闪 —— 闭关是这张卡自己的事,不许只换文字', () => {
+    // 闭关开始只有 toast + 倒计时补上,卡片本身毫无反应(对照 BuildingCard 升级
+    // 有 card-flash)。「这件事发生在我这张卡上」的 idiom 对闭关同样成立 ——
+    // 拆掉 card-flash、或把触发改成别的时机,下面红。
+    const cult = FILES.find(f => f.path === 'views/CultivationView.vue')
+    expect(cult?.src, '闭关卡要挂 card-flash').toMatch(/retreatFlash \? 'card-flash'/)
+    expect(cult?.src, '闪的触发是 retreating 由假转真那一瞬(5 分钟到时不再闪)').toMatch(/nv && !ov\) retreatFlash\.value = true/)
+  })
+
   it('境遇结算收益行要逐行晕开 —— 与离线卷轴同款节奏,不许瞬时同现', () => {
     // 结果句已经 animate-ink-pop,紧随的收益列表却裸 `space-y-1.5` 瞬时同现;
     // 同一语义(收益清点)离线卷轴有 stagger-in,这里没有就是不一致。拆掉,红。
