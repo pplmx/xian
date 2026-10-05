@@ -431,6 +431,16 @@ describe('界面分层 · 浮层只有一个出处', () => {
     expect(col?.src, '详情那扇要亮出 icon 色章(有才渲染)').toMatch(/v-if="detail\.entry\.icon"[\s\S]{0,80}grid h-12 w-12/)
   })
 
+  it('战斗进出有过渡 —— 进战与收兵不许硬切', () => {
+    // 历练页在「战斗面板 / 区域列表」之间切换,是这页最大的一次同页置换,从前
+    // 整屏闪变;两分支要包进同一扇 page-fade 过渡,列表分支还得有单一根(div)——
+    // Transition 不给 fragment 上动画。
+    const adv = FILES.find(f => f.path === 'views/AdventureView.vue')
+    expect(adv?.src, '两分支要包进同一扇 page-fade 过渡').toContain('<Transition name="page-fade" mode="out-in">')
+    expect(adv?.src, '主战面板那一支把 v-if 收在组件上').toContain('CombatPanel v-if="adventure.sessionActive"')
+    expect(adv?.src, '区域列表那一支必须有单一根 div(single root 才吃得到过渡)').toContain('v-else class="space-y-4"')
+  })
+
   it('大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸', () => {
     // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
     // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)

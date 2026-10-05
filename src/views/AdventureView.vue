@@ -1,245 +1,247 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!-- 历练中 -->
-    <template v-if="adventure.sessionActive">
-      <CombatPanel />
-    </template>
+    <!--
+      历练中 / 选择区域:这页最大的同页切换(进战斗、收兵回府)不该硬切 ——
+      复用全局 page-fade,让来去有呼吸(纯 opacity/transform,布局门量不到)。
+    -->
+    <Transition name="page-fade" mode="out-in">
+      <CombatPanel v-if="adventure.sessionActive" />
 
-    <!-- 选择区域 -->
-    <template v-else>
-      <!-- 本世之界:链接入口,详情另开一页。历练地图仍在下方,照旧可走 -->
-      <RouterLink to="/world" class="card-ink flex items-center gap-3 border-qing/30 px-4 py-3 active:scale-99">
-        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-qing/6 text-qing">
-          <GameIcon name="cloud" :size="18" />
-        </span>
-        <span class="min-w-0 grow">
-          <span class="block font-kai text-[14px] tracking-[0.2em] text-ink">本世之界</span>
-          <span class="block truncate text-[10px] leading-relaxed text-ink-faint">{{ worldBrief }}</span>
-        </span>
-        <span class="shrink-0 text-[11px] text-qing">观 象 →</span>
-      </RouterLink>
-
-      <SecretRealmCard />
-
-      <SectionTitle title="历练" hint="行万里路,炼一颗心" />
-      <p class="text-[10px] leading-relaxed text-violet-ink">
-        今日星象:{{ mansionLine }} —— 利
-        <span class="text-gold-ink">{{ favoredWorldName }}</span>
-        ,在其地历练际遇更易(他处不加)。
-      </p>
-      <p v-if="player.suppressedRegions.length > 0" class="text-[10px] text-gold-ink">
-        镇压收益中 {{ player.suppressedRegions.length }} 处 —— 与历练互不冲突,可同时收取;一次只能历练一处。
-      </p>
-      <!--
-        途中三档:际遇 / 奇缘 / 机缘。
-        从前它们在弹窗里长得一模一样(标题都叫「际遇」),低概率的机缘等于白设了稀有度。
-        这三枚胶囊把档位、稀有度与一句话摆在**出发之前**,名字与概率全部取自 core/eventTier,
-        与事件引擎真正掷的那条乘法链同源(见 data/constants 那段)。
-      -->
-      <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
-        <span class="text-ink-faint">途中三档:</span>
-        <span v-for="t in EVENT_TIERS" :key="t.id" class="chip-ink text-[10px]" :style="{ color: t.color }">
-          {{ t.name }} · {{ tierOddsText(t.id, chainPending) }}
-        </span>
-      </p>
-      <!--
-        遇事勿扰是静默的:际遇自动结清、弹窗永不出现 —— 开着只在设置页留了个勾,
-        历练页毫无痕迹,玩家只会以为「际遇怎么没了」。故开着就得在出发前看得出、能顺手关。
-      -->
-      <p v-if="settings.dndEvents" class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-amber-ink">
-        <span>遇事勿扰开启 —— 途中际遇自动结清,不再弹窗</span>
-        <button
-          type="button"
-          class="-my-1.5 py-1.5 text-[10px] text-ink-faint underline active:opacity-60"
-          @click="settings.dndEvents = false"
-        >
-          关掉
-        </button>
-      </p>
-      <!--
-        镇压规则压成一行:地界行里已经逐项写着「当前值 / 需≤阈值」,
-        这里只交代一句总纲(四条长句堆在列表前面就是一堵文字墙)。
-      -->
-      <p class="text-[10px] leading-relaxed text-ink-faint">
-        镇压门槛:{{ SUPPRESS_THRESHOLDS.minFights }} 战 · 均
-        {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{ formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0) }};
-        资格永久,守满 {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
-      </p>
-      <div class="space-y-2.5">
-        <template v-for="group in groupedRows" :key="group.world.id">
-          <div class="flex items-center gap-2 pt-1">
-            <span class="font-kai text-[11px] tracking-[0.3em] text-ink-soft">{{ group.world.name }}</span>
-            <span class="h-px grow bg-ink/10" />
-            <span class="text-[10px] text-ink-faint">{{ group.rows.length }} 处</span>
-          </div>
-        <div
-          v-for="row in group.rows"
-          :key="row.def.id"
-          data-region-card
-          class="card-ink px-4 py-3"
-          :class="{ 'opacity-70': !row.canEnter, '!border-gold-ink/30 bg-gold-ink/5': row.suppressed }"
-        >
-          <!--
-            第一行只放「图标 + 名字 + 标签 + 一个短动作」。
-
-            产出速率、守土时长、复聚倒计时这些**长信息一律下移成整行** —— 从前它们和名字挤在同一行,
-            右侧那一列 `shrink-0` 把左边的名字压到只剩一个字宽,「青云山麓」当场变成竖排,
-            标签还会盖到产出字上(无头浏览器量的「横向溢出」抓不到这种挤压:它不溢出,只是挤)。
-          -->
-          <div class="flex items-start gap-3">
-            <span
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-md"
-              :class="row.suppressed ? 'bg-gold-ink/6 text-gold-ink' : row.canEnter ? 'bg-indigo-ink/6 text-indigo-ink' : 'bg-ink/6 text-ink-faint'"
-            >
-              <GameIcon :name="row.suppressed ? 'shield-check' : row.canEnter ? row.def.icon : 'lock'" :size="18" />
-            </span>
-            <div data-region-head class="min-w-0 grow">
-              <!-- 标签与名字同排但**可换行**:窄屏上宁可标签绕到下一行,也不许把名字挤成竖排 -->
-              <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span data-region-name class="font-kai text-[15px] tracking-wider text-ink">{{ row.def.name }}</span>
-                <span v-if="row.suppressed" class="chip-ink border-gold-ink/60 text-[9px] text-gold-ink">已镇压</span>
-                <span v-else-if="row.revived" class="chip-ink border-cinnabar/60 text-[9px] text-cinnabar">妖气复聚</span>
-                <span v-else-if="row.cleared" class="chip-ink border-jade/60 text-[9px] text-jade">已靖</span>
-                <!-- 世界记忆(Phase 30.9):区域兴衰状态 -->
-                <span
-                  v-if="row.recall.prosperity !== 'chaos'"
-                  class="chip-ink text-[9px]"
-                  :class="row.recall.prosperity === 'flourish' ? 'border-qing/60 text-qing' : 'border-jade/60 text-jade'"
-                >
-                  {{ prosperityName(row.recall.prosperity) }}
-                </span>
-              </p>
-              <p class="mt-0.5 text-[11px] text-ink-faint">
-                {{ REALMS[row.def.minRealm]?.name }}境相宜 ·
-                <span :class="row.def.danger >= 4 ? 'text-cinnabar' : ''">{{ DANGER_NAMES[row.def.danger] }}</span>
-                <span v-if="row.tooHard" class="ml-1 text-cinnabar">· 境界尚浅,恐有性命之忧</span>
-                <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
-                <span v-if="row.revived" class="ml-1 text-cinnabar">· 旧主归来,再历一程即可复靖</span>
-              </p>
-              <!--
-                敌人的「层级补偿」此前只落在数值里:玩家看到的只是一只小怪,打起来却像换了一身装备。
-                此处与战后归因同源(regionFoeOrigin)—— 出行方式与灵兽之性那一半在出行弹窗里摊开。
-              -->
-              <p v-if="row.foeOrigin.parts.length" data-region-foe-origin class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
-                此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
-              </p>
+      <div v-else class="space-y-4">
+        <!-- 本世之界:链接入口,详情另开一页。历练地图仍在下方,照旧可走 -->
+        <RouterLink to="/world" class="card-ink flex items-center gap-3 border-qing/30 px-4 py-3 active:scale-99">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-qing/6 text-qing">
+            <GameIcon name="cloud" :size="18" />
+          </span>
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.2em] text-ink">本世之界</span>
+            <span class="block truncate text-[10px] leading-relaxed text-ink-faint">{{ worldBrief }}</span>
+          </span>
+          <span class="shrink-0 text-[11px] text-qing">观 象 →</span>
+        </RouterLink>
+  
+        <SecretRealmCard />
+  
+        <SectionTitle title="历练" hint="行万里路,炼一颗心" />
+        <p class="text-[10px] leading-relaxed text-violet-ink">
+          今日星象:{{ mansionLine }} —— 利
+          <span class="text-gold-ink">{{ favoredWorldName }}</span>
+          ,在其地历练际遇更易(他处不加)。
+        </p>
+        <p v-if="player.suppressedRegions.length > 0" class="text-[10px] text-gold-ink">
+          镇压收益中 {{ player.suppressedRegions.length }} 处 —— 与历练互不冲突,可同时收取;一次只能历练一处。
+        </p>
+        <!--
+          途中三档:际遇 / 奇缘 / 机缘。
+          从前它们在弹窗里长得一模一样(标题都叫「际遇」),低概率的机缘等于白设了稀有度。
+          这三枚胶囊把档位、稀有度与一句话摆在**出发之前**,名字与概率全部取自 core/eventTier,
+          与事件引擎真正掷的那条乘法链同源(见 data/constants 那段)。
+        -->
+        <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+          <span class="text-ink-faint">途中三档:</span>
+          <span v-for="t in EVENT_TIERS" :key="t.id" class="chip-ink text-[10px]" :style="{ color: t.color }">
+            {{ t.name }} · {{ tierOddsText(t.id, chainPending) }}
+          </span>
+        </p>
+        <!--
+          遇事勿扰是静默的:际遇自动结清、弹窗永不出现 —— 开着只在设置页留了个勾,
+          历练页毫无痕迹,玩家只会以为「际遇怎么没了」。故开着就得在出发前看得出、能顺手关。
+        -->
+        <p v-if="settings.dndEvents" class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-amber-ink">
+          <span>遇事勿扰开启 —— 途中际遇自动结清,不再弹窗</span>
+          <button
+            type="button"
+            class="-my-1.5 py-1.5 text-[10px] text-ink-faint underline active:opacity-60"
+            @click="settings.dndEvents = false"
+          >
+            关掉
+          </button>
+        </p>
+        <!--
+          镇压规则压成一行:地界行里已经逐项写着「当前值 / 需≤阈值」,
+          这里只交代一句总纲(四条长句堆在列表前面就是一堵文字墙)。
+        -->
+        <p class="text-[10px] leading-relaxed text-ink-faint">
+          镇压门槛:{{ SUPPRESS_THRESHOLDS.minFights }} 战 · 均
+          {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{ formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0) }};
+          资格永久,守满 {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
+        </p>
+        <div class="space-y-2.5">
+          <template v-for="group in groupedRows" :key="group.world.id">
+            <div class="flex items-center gap-2 pt-1">
+              <span class="font-kai text-[11px] tracking-[0.3em] text-ink-soft">{{ group.world.name }}</span>
+              <span class="h-px grow bg-ink/10" />
+              <span class="text-[10px] text-ink-faint">{{ group.rows.length }} 处</span>
             </div>
+          <div
+            v-for="row in group.rows"
+            :key="row.def.id"
+            data-region-card
+            class="card-ink px-4 py-3"
+            :class="{ 'opacity-70': !row.canEnter, '!border-gold-ink/30 bg-gold-ink/5': row.suppressed }"
+          >
             <!--
-              已通关的地界仍可再历 —— 「已靖」只是标记,不是封路。
-              首领已清之后进去仍能刷杂兵、拾遗、碰机缘;而旧地界放久了妖气复聚
-              (见 core/regionRevival),旧主会回来,那时它又是一处有首领的地界
+              第一行只放「图标 + 名字 + 标签 + 一个短动作」。
+  
+              产出速率、守土时长、复聚倒计时这些**长信息一律下移成整行** —— 从前它们和名字挤在同一行,
+              右侧那一列 `shrink-0` 把左边的名字压到只剩一个字宽,「青云山麓」当场变成竖排,
+              标签还会盖到产出字上(无头浏览器量的「横向溢出」抓不到这种挤压:它不溢出,只是挤)。
             -->
-            <button
-              v-if="row.canEnter && !row.suppressed"
+            <div class="flex items-start gap-3">
+              <span
+                class="grid h-10 w-10 shrink-0 place-items-center rounded-md"
+                :class="row.suppressed ? 'bg-gold-ink/6 text-gold-ink' : row.canEnter ? 'bg-indigo-ink/6 text-indigo-ink' : 'bg-ink/6 text-ink-faint'"
+              >
+                <GameIcon :name="row.suppressed ? 'shield-check' : row.canEnter ? row.def.icon : 'lock'" :size="18" />
+              </span>
+              <div data-region-head class="min-w-0 grow">
+                <!-- 标签与名字同排但**可换行**:窄屏上宁可标签绕到下一行,也不许把名字挤成竖排 -->
+                <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span data-region-name class="font-kai text-[15px] tracking-wider text-ink">{{ row.def.name }}</span>
+                  <span v-if="row.suppressed" class="chip-ink border-gold-ink/60 text-[9px] text-gold-ink">已镇压</span>
+                  <span v-else-if="row.revived" class="chip-ink border-cinnabar/60 text-[9px] text-cinnabar">妖气复聚</span>
+                  <span v-else-if="row.cleared" class="chip-ink border-jade/60 text-[9px] text-jade">已靖</span>
+                  <!-- 世界记忆(Phase 30.9):区域兴衰状态 -->
+                  <span
+                    v-if="row.recall.prosperity !== 'chaos'"
+                    class="chip-ink text-[9px]"
+                    :class="row.recall.prosperity === 'flourish' ? 'border-qing/60 text-qing' : 'border-jade/60 text-jade'"
+                  >
+                    {{ prosperityName(row.recall.prosperity) }}
+                  </span>
+                </p>
+                <p class="mt-0.5 text-[11px] text-ink-faint">
+                  {{ REALMS[row.def.minRealm]?.name }}境相宜 ·
+                  <span :class="row.def.danger >= 4 ? 'text-cinnabar' : ''">{{ DANGER_NAMES[row.def.danger] }}</span>
+                  <span v-if="row.tooHard" class="ml-1 text-cinnabar">· 境界尚浅,恐有性命之忧</span>
+                  <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
+                  <span v-if="row.revived" class="ml-1 text-cinnabar">· 旧主归来,再历一程即可复靖</span>
+                </p>
+                <!--
+                  敌人的「层级补偿」此前只落在数值里:玩家看到的只是一只小怪,打起来却像换了一身装备。
+                  此处与战后归因同源(regionFoeOrigin)—— 出行方式与灵兽之性那一半在出行弹窗里摊开。
+                -->
+                <p v-if="row.foeOrigin.parts.length" data-region-foe-origin class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+                  此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
+                </p>
+              </div>
+              <!--
+                已通关的地界仍可再历 —— 「已靖」只是标记,不是封路。
+                首领已清之后进去仍能刷杂兵、拾遗、碰机缘;而旧地界放久了妖气复聚
+                (见 core/regionRevival),旧主会回来,那时它又是一处有首领的地界
+              -->
+              <button
+                v-if="row.canEnter && !row.suppressed"
+                data-region-action
+                class="btn-seal shrink-0 !px-4 !py-2 !text-[13px]"
+                @click="chooseMode(row.def)"
+              >
+                出发
+              </button>
+            </div>
+  
+            <!--
+              镇压中的产出条:整行铺开、可换行。
+              速率放在这里而不是右上角,长数字(1.2 亿灵石/时 · 玄铁 12/时)才有地方舒展
+            -->
+            <div
+              v-if="row.suppressed"
               data-region-action
-              class="btn-seal shrink-0 !px-4 !py-2 !text-[13px]"
-              @click="chooseMode(row.def)"
+              data-suppress-info
+              class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-gold-ink/6 px-2.5 py-1.5"
             >
-              出发
-            </button>
-          </div>
-
-          <!--
-            镇压中的产出条:整行铺开、可换行。
-            速率放在这里而不是右上角,长数字(1.2 亿灵石/时 · 玄铁 12/时)才有地方舒展
-          -->
-          <div
-            v-if="row.suppressed"
-            data-region-action
-            data-suppress-info
-            class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-gold-ink/6 px-2.5 py-1.5"
-          >
-            <span class="text-[11px] text-gold-ink tabular">自动产出 · {{ rateText(row.def, row.recall) }}</span>
-            <!-- 守土之年:守得越久,兴衰越盛,产出随之上浮 -->
-            <span class="text-[10px] text-ink-faint tabular">已守 {{ heldText(row.def.id) }}</span>
-            <!-- 复聚有确定期限,就该有倒计时:否则玩家只会看到镇压某天突然消失 -->
-            <span class="text-[10px] tabular" :class="row.reviveInHours <= 12 ? 'text-cinnabar' : 'text-ink-faint'">
-              妖气 {{ reviveText(row.reviveInHours) }}后复聚
-            </span>
-            <!-- 停取收益是次级动作:放在产出条里,不跟名字抢那一行 -->
-            <button
-              class="ml-auto inline-flex min-h-[28px] items-center px-1 text-[10px] text-ink-faint underline underline-offset-2 active:scale-95 active:text-ink"
-              @click.stop="unsuppress(row.def.id)"
-            >
-              停取收益,改去历练
-            </button>
-          </div>
-
-          <!--
-            已取得镇压资格、眼前正在历练的地界:转收益的入口与产出同样整行铺开,
-            不去挤右上角那枚「出发」
-          -->
-          <div
-            v-else-if="row.canEnter && row.qualified"
-            data-region-action
-            class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-ink/4 px-2.5 py-1.5"
-          >
-            <span class="text-[10px] text-ink-faint">已取得镇压资格</span>
-            <span class="text-[10px] text-gold-ink tabular">{{ rateText(row.def, row.recall) }}</span>
-            <button
-              class="ml-auto chip-ink min-h-[28px] !text-[10px] active:scale-95"
-              @click.stop="suppress(row.def.id)"
-            >
-              转为镇压收益
-            </button>
-          </div>
-          <p class="mt-2 text-[11px] leading-relaxed text-ink-faint">
-            <template v-if="row.canEnter">{{ row.def.desc }}</template>
-            <template v-else>需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。</template>
-          </p>
-          <!--
-            镇压资格进度:只显示「能不能镇压」时,玩家打够了场数却压不住,
-            只能猜自己差在哪 —— 这里把三条判据的当前值与阈值并排摆出来,未达标项标红
-          -->
-          <p
-            v-if="row.canEnter && !row.suppressed && !row.qualified"
-            class="mt-1 text-[10px] leading-relaxed tabular"
-          >
-            <span class="text-ink-soft">镇压资格</span>
-            <span class="ml-1" :class="row.progress.fightsOk ? 'text-jade' : 'text-ink-soft'">
-              {{ row.progress.fights }}/{{ row.progress.needFights }} 战
-            </span>
-            <template v-if="row.progress.hasStats">
-              <span class="ml-1.5" :class="row.progress.roundsOk ? 'text-ink-faint' : 'text-cinnabar'">
-                均 {{ row.progress.avgRounds.toFixed(1) }} 回合(需≤{{ row.progress.maxAvgRounds }})
+              <span class="text-[11px] text-gold-ink tabular">自动产出 · {{ rateText(row.def, row.recall) }}</span>
+              <!-- 守土之年:守得越久,兴衰越盛,产出随之上浮 -->
+              <span class="text-[10px] text-ink-faint tabular">已守 {{ heldText(row.def.id) }}</span>
+              <!-- 复聚有确定期限,就该有倒计时:否则玩家只会看到镇压某天突然消失 -->
+              <span class="text-[10px] tabular" :class="row.reviveInHours <= 12 ? 'text-cinnabar' : 'text-ink-faint'">
+                妖气 {{ reviveText(row.reviveInHours) }}后复聚
               </span>
-              <span class="ml-1.5" :class="row.progress.damageOk ? 'text-ink-faint' : 'text-cinnabar'">
-                均受伤 {{ formatPercent(row.progress.avgDamagePct, 0) }}(需≤{{ formatPercent(row.progress.maxAvgDamagePct, 0) }})
+              <!-- 停取收益是次级动作:放在产出条里,不跟名字抢那一行 -->
+              <button
+                class="ml-auto inline-flex min-h-[28px] items-center px-1 text-[10px] text-ink-faint underline underline-offset-2 active:scale-95 active:text-ink"
+                @click.stop="unsuppress(row.def.id)"
+              >
+                停取收益,改去历练
+              </button>
+            </div>
+  
+            <!--
+              已取得镇压资格、眼前正在历练的地界:转收益的入口与产出同样整行铺开,
+              不去挤右上角那枚「出发」
+            -->
+            <div
+              v-else-if="row.canEnter && row.qualified"
+              data-region-action
+              class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-ink/4 px-2.5 py-1.5"
+            >
+              <span class="text-[10px] text-ink-faint">已取得镇压资格</span>
+              <span class="text-[10px] text-gold-ink tabular">{{ rateText(row.def, row.recall) }}</span>
+              <button
+                class="ml-auto chip-ink min-h-[28px] !text-[10px] active:scale-95"
+                @click.stop="suppress(row.def.id)"
+              >
+                转为镇压收益
+              </button>
+            </div>
+            <p class="mt-2 text-[11px] leading-relaxed text-ink-faint">
+              <template v-if="row.canEnter">{{ row.def.desc }}</template>
+              <template v-else>需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。</template>
+            </p>
+            <!--
+              镇压资格进度:只显示「能不能镇压」时,玩家打够了场数却压不住,
+              只能猜自己差在哪 —— 这里把三条判据的当前值与阈值并排摆出来,未达标项标红
+            -->
+            <p
+              v-if="row.canEnter && !row.suppressed && !row.qualified"
+              class="mt-1 text-[10px] leading-relaxed tabular"
+            >
+              <span class="text-ink-soft">镇压资格</span>
+              <span class="ml-1" :class="row.progress.fightsOk ? 'text-jade' : 'text-ink-soft'">
+                {{ row.progress.fights }}/{{ row.progress.needFights }} 战
               </span>
-            </template>
-            <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
-          </p>
-          <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
-          <p v-if="row.blockReason" class="mt-1 text-[11px] text-cinnabar">{{ row.blockReason }}</p>
-          <div v-if="row.canEnter && (row.chips.length || row.adaptation)" class="mt-2 flex flex-wrap items-center gap-1.5">
-            <span
-              v-for="chip in row.chips"
-              :key="chip.trait"
-              class="chip-ink !text-[10px]"
-              :class="chip.level >= 3 ? 'border-cinnabar/50 text-cinnabar' : 'border-ink/25 text-ink-faint'"
-            >
-              {{ chip.name }}·{{ ECO_LEVEL_NAMES[chip.level] }}
-            </span>
-            <!-- 适配原因点按展开:手机没有 hover,得知道自己为什么被看好/看衰 -->
-            <!-- min-h-[28px] 是排版自检的尺子:展开按钮此前只有 15px 高,拇指点不着 -->
-            <button
-              v-if="row.adaptation"
-              class="ml-auto inline-flex min-h-[28px] items-center text-[10px] text-ink-soft tabular active:scale-95"
-              :title="row.adaptation.reasons.join(';')"
-              :aria-expanded="adaptExpand === row.def.id"
-              @click="adaptExpand = adaptExpand === row.def.id ? null : row.def.id"
-            >
-              适配
-              <span class="text-gold-ink">{{ starsText(row.adaptation.stars) }}</span>
-            </button>
+              <template v-if="row.progress.hasStats">
+                <span class="ml-1.5" :class="row.progress.roundsOk ? 'text-ink-faint' : 'text-cinnabar'">
+                  均 {{ row.progress.avgRounds.toFixed(1) }} 回合(需≤{{ row.progress.maxAvgRounds }})
+                </span>
+                <span class="ml-1.5" :class="row.progress.damageOk ? 'text-ink-faint' : 'text-cinnabar'">
+                  均受伤 {{ formatPercent(row.progress.avgDamagePct, 0) }}(需≤{{ formatPercent(row.progress.maxAvgDamagePct, 0) }})
+                </span>
+              </template>
+              <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
+            </p>
+            <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
+            <p v-if="row.blockReason" class="mt-1 text-[11px] text-cinnabar">{{ row.blockReason }}</p>
+            <div v-if="row.canEnter && (row.chips.length || row.adaptation)" class="mt-2 flex flex-wrap items-center gap-1.5">
+              <span
+                v-for="chip in row.chips"
+                :key="chip.trait"
+                class="chip-ink !text-[10px]"
+                :class="chip.level >= 3 ? 'border-cinnabar/50 text-cinnabar' : 'border-ink/25 text-ink-faint'"
+              >
+                {{ chip.name }}·{{ ECO_LEVEL_NAMES[chip.level] }}
+              </span>
+              <!-- 适配原因点按展开:手机没有 hover,得知道自己为什么被看好/看衰 -->
+              <!-- min-h-[28px] 是排版自检的尺子:展开按钮此前只有 15px 高,拇指点不着 -->
+              <button
+                v-if="row.adaptation"
+                class="ml-auto inline-flex min-h-[28px] items-center text-[10px] text-ink-soft tabular active:scale-95"
+                :title="row.adaptation.reasons.join(';')"
+                :aria-expanded="adaptExpand === row.def.id"
+                @click="adaptExpand = adaptExpand === row.def.id ? null : row.def.id"
+              >
+                适配
+                <span class="text-gold-ink">{{ starsText(row.adaptation.stars) }}</span>
+              </button>
+            </div>
+            <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
+              <p v-for="(r, i) in row.adaptation.reasons" :key="i" class="text-[10px] leading-relaxed text-ink-faint">· {{ r }}</p>
+            </div>
           </div>
-          <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
-            <p v-for="(r, i) in row.adaptation.reasons" :key="i" class="text-[10px] leading-relaxed text-ink-faint">· {{ r }}</p>
-          </div>
+          </template>
         </div>
-        </template>
       </div>
-    </template>
+    </Transition>
 
     <!-- 模式选择 + 战斗前预览 -->
     <BaseModal :open="modeTarget !== null" :title="modeTarget?.name ?? ''" @close="modeTarget = null">
