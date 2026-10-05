@@ -384,6 +384,53 @@ describe('界面分层 · 浮层只有一个出处', () => {
     )
   })
 
+  it('首页状态行不许退回最弱档 —— 主角位「此刻状态」不该比次要天时还哑', () => {
+    // 主页 hero 的「现在在干嘛」(修炼/闭关/历练…)此前整行 text-ink-faint,紧邻
+    // 下方的次要天时反而 font-kai 披金 —— 层级倒挂。提一档 ink-soft 并配楷体,
+    // 寿元告急那一路仍走朱砂;退回 faint 或拆掉 kai,下面红。
+    const home = FILES.find(f => f.path === 'views/HomeView.vue')
+    expect(home?.src, '状态行要配楷体与对位主角比肩').toMatch(/class="font-kai text-\[11px\]"/)
+    expect(home?.src, '非告急那一路不许退回最弱档(ink-faint)').toMatch(/text-cinnabar' : 'text-ink-soft'/)
+  })
+
+  it('修炼页主值行不许退回最弱档 —— 修为/灵气是这页最常盯的数', () => {
+    // 修为与灵气的当前值此前与「+x/秒 ▸来路」同档 faint,数值本身反而被弱化;
+    // 主值行整个提到 ink-soft(不动字号,200% 折行判据不受影响)。少一行就说明
+    // 有人把某个主值行悄悄降回 faint。
+    const cult = FILES.find(f => f.path === 'views/CultivationView.vue')
+    const rows = (cult?.src.match(/data-value-row class="[^"]*text-ink-soft/g) ?? [])
+    expect(rows.length, '修为/灵气/耗灵气主值行都要在 ink-soft 或更上').toBeGreaterThanOrEqual(3)
+  })
+
+  it('境遇结算收益行要逐行晕开 —— 与离线卷轴同款节奏,不许瞬时同现', () => {
+    // 结果句已经 animate-ink-pop,紧随的收益列表却裸 `space-y-1.5` 瞬时同现;
+    // 同一语义(收益清点)离线卷轴有 stagger-in,这里没有就是不一致。拆掉,红。
+    const ev = FILES.find(f => f.path === 'components/adventure/EventDialog.vue')
+    expect(ev?.src, '收益列表必须走 stagger-in').toMatch(/ul v-if="result\.lines\.length" class="stagger-in /)
+  })
+
+  it('器魂顶栏标题锁居中 —— 不许随道源位数左右游移', () => {
+    // 左侧「← 天界」固定、右侧道源数字随位数伸缩,justify-between 下标题永远
+    // 不居中且游移;用 1fr_auto_1fr 网格让两侧均分、标题落点锁死。
+    const souls = FILES.find(f => f.path === 'views/SoulsView.vue')
+    expect(souls?.src, '顶栏必须用两侧均分网格').toContain('grid-cols-[1fr_auto_1fr]')
+    expect(souls?.src, '右侧信息块贴右,标题守着正中').toContain('justify-self-end')
+  })
+
+  it('洞府离线存续当前档要实底点亮 —— 不许退回淡染的哑当前态', () => {
+    // 离线上限阶梯「现在第几档」曾只有 6% 底 + 50% 边框,是全库最哑的当前态
+    // 指示器(对照 InkTabs 实心墨块 / 行程点实底呼吸)。当前档改实底 paper 字。
+    const dv = FILES.find(f => f.path === 'views/DongfuView.vue')
+    expect(dv?.src, '当前档必须实底 + paper 字 + 楷体').toMatch(/bg-cinnabar text-paper font-kai/)
+  })
+
+  it('图鉴详情要有视觉锚 —— 带 icon 的收录物,详情不许丢章', () => {
+    // 灵兽册这类带 icon 的条目,收集 chip 上有枚小章,点开详情却整块丢成纯文字;
+    // 详情的头部就该亮出这一枚(与丹房/材料详情同构,有 icon 才渲染)。
+    const col = FILES.find(f => f.path === 'views/CollectionView.vue')
+    expect(col?.src, '详情那扇要亮出 icon 色章(有才渲染)').toMatch(/v-if="detail\.entry\.icon"[\s\S]{0,80}grid h-12 w-12/)
+  })
+
   it('大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸', () => {
     // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
     // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)

@@ -48,7 +48,7 @@
           v-for="(h, i) in OFFLINE_CAP_HOURS"
           :key="i"
           class="flex-1 rounded-t-sm border px-0.5 pb-1 pt-2 text-center text-[10px] tabular"
-          :class="i <= mansionLevel ? 'border-cinnabar/50 bg-cinnabar/6 text-cinnabar' : 'border-ink/15 text-ink-faint'"
+          :class="i <= mansionLevel ? 'border-cinnabar bg-cinnabar text-paper font-kai' : 'border-ink/15 text-ink-faint'"
           :title="`洞府 ${i} 级可攒 ${h} 小时`"
         >
           {{ h }}时

@@ -26,7 +26,12 @@
       </svg>
       <div class="relative z-10 flex items-start justify-between">
         <div class="min-w-0 flex-1">
-          <p class="text-[11px]" :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : 'text-ink-faint'">
+          <!--
+            主角位是「玩家此刻状态」,却落在最弱档(text-ink-faint),下方次要的今日天时
+            反而 font-kai 披金 —— 层级倒挂。提一档到 ink-soft 并配楷体(不动字号,
+            200% 缩放判据不受影响);寿元告急那一路仍走朱砂。
+          -->
+          <p class="font-kai text-[11px]" :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : 'text-ink-soft'">
             {{ statusText }}
           </p>
           <!-- 今日天时:确定性环境,影响当日产出与渡劫 -->

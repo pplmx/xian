@@ -73,6 +73,14 @@
     <!-- 图鉴详情 -->
     <BaseModal :open="detail !== null" :title="detail?.entry.name ?? ''" @close="detail = null">
       <div v-if="detail">
+        <!-- 详情同查一件收录物,却有 icon 的条目(灵兽册等)只在收集 chip 上有、详情里整块丢了 ——
+             补一枚色章做视觉锚(有 icon 才渲染,与丹房/材料详情同构) -->
+        <div
+          v-if="detail.entry.icon"
+          class="mb-3 grid h-12 w-12 place-items-center rounded-md bg-ink/5"
+        >
+          <GameIcon :name="detail.entry.icon" :size="24" :style="{ color: detail.entry.color ?? 'var(--color-ink-soft)' }" />
+        </div>
         <p class="flex flex-wrap items-center gap-2">
           <span class="chip-ink border-current" :style="{ color: detail.entry.color ?? 'var(--color-ink-soft)' }">
             {{ detail.catName }}

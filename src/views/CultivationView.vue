@@ -19,7 +19,7 @@
           「现值 / 所需」加起来比这一行宽 —— 与其把右边的值折断(主值行折行 = 判据红),
           不如让值整块落到第二行:值本身仍是一行,一个字都不少。
         -->
-        <div data-value-row class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-faint tabular">
+        <div data-value-row class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-soft tabular">
           <button class="-my-1 py-1.5 text-left active:opacity-60" @click="showCultBreakdown = !showCultBreakdown">
             修为 +{{ formatRate(player.cultPerSec) }}
             <span class="ml-0.5 text-[9px] text-ink-faint">{{ showCultBreakdown ? '▾' : '▸' }}来路</span>
@@ -72,7 +72,7 @@
       </div>
       </div>
       <div class="mt-3">
-        <div data-value-row class="mb-1 flex justify-between text-[11px] text-ink-faint tabular">
+        <div data-value-row class="mb-1 flex justify-between text-[11px] text-ink-soft tabular">
           <span>灵气 +{{ formatRate(player.qiRegenPerSec) }}</span>
           <span>
             <TapNumber
@@ -236,7 +236,7 @@
           灵根相应:{{ reliefRoots.map(e => ELEMENTS[e].name).join('、') }}——此劫为你留了一线,能走到哪一步仍看自身准备
         </p>
       </div>
-      <p data-value-row class="mt-1 text-[11px] text-ink-faint tabular">
+      <p data-value-row class="mt-1 text-[11px] text-ink-soft tabular">
         耗灵气 {{ formatNum(btInfo.qiCost) }}
         <template v-if="btInfo.needTribulation">
           ·

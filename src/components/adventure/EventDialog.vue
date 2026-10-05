@@ -53,7 +53,8 @@
     <template v-else-if="result">
       <p class="mb-1.5 text-[10px] text-ink-faint">{{ tierDef.name }} · {{ tierDef.brief }}</p>
       <p class="text-[13px] leading-relaxed text-ink-soft animate-ink-pop">{{ result.outcomeText }}</p>
-      <ul v-if="result.lines.length" class="mt-3 space-y-1.5">
+      <!-- 收益清点逐行晕开(与离线归来卷轴同款 stagger-in);结果句已 animate-ink-pop,列表不让它单着 -->
+      <ul v-if="result.lines.length" class="stagger-in mt-3 space-y-1.5">
         <li v-for="(line, i) in result.lines" :key="i" class="rounded bg-paper-deep/70 px-3 py-1.5 text-[12px] text-ink tabular">
           {{ line }}
         </li>

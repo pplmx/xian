@@ -13,12 +13,14 @@
     </div>
 
     <template v-else>
-      <!-- 抬头 -->
-      <div class="card-ink flex items-center justify-between gap-2 px-4 py-3">
+      <!-- 抬头:标题要永远居中 —— 左侧「← 天界」固定、右侧道源数字随位数伸缩,
+           justify-between 下标题随右侧宽窄左右游移;改用 1fr_auto_1fr 网格,
+           两侧均分,中间的「器 魂」落点锁死,与洞府同型顶栏同款体验 -->
+      <div class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3">
         <!-- 同洞府:标签写着「天界」,冷启动时也得真的去天界,而不是退出游戏 -->
-        <button class="-my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft" @click="goBack(router, { name: 'celestial' })">← 天界</button>
+        <button class="-my-1.5 justify-self-start py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft" @click="goBack(router, { name: 'celestial' })">← 天界</button>
         <p class="font-kai text-[15px] tracking-[0.3em] text-ink">器 魂</p>
-        <div class="text-right">
+        <div class="justify-self-end text-right">
           <span class="block text-[10px] leading-tight text-ink-faint">道源</span>
           <span class="block tabular font-kai text-[15px] leading-tight text-cinnabar">{{ formatNum(endgame.daoSource) }}</span>
         </div>
