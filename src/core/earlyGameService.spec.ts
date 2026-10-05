@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vite-plus/test'
 import { setActivePinia, createPinia } from 'pinia'
 import { usePlayerStore } from '@/stores/player'
 import { useResourcesStore } from '@/stores/resources'
@@ -12,6 +12,7 @@ import {
   dismissEnlightenment,
   getCurrentCaveEvent,
   getCurrentEnlightenment,
+  resetCaveEvent,
   mayTriggerCaveEvent,
   mayTriggerEnlightenment,
   recordWin,
@@ -29,6 +30,7 @@ import { BREAKTHROUGH_PREP_OPTIONS } from '@/data/earlyGame'
 describe('洞府巡游(Phase 28)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    resetCaveEvent() // 巡游是模块态当下弹窗,不随 pinia 重置而清 —— 每例先清,防残留闪红
   })
 
   it('当日已巡游后不再触发', () => {
@@ -327,6 +329,7 @@ describe('突破准备数据源(BREAKTHROUGH_PREP_OPTIONS · TASK-029 接线后)
 describe('前期事件衰减(EARLY_EVENT_DECAY · TASK-028 接线后)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    resetCaveEvent()
   })
 
   // 顿悟的 5 分钟冷却 Phase 34.6 起存在 player store(随档),不再跨用例泄漏 ——

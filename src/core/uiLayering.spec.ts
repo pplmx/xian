@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- 分层审计的产出是给人看的清单 */
+/* oxlint-disable no-console -- 分层审计的产出是给人看的清单 */
 /**
  * 界面分层审计 —— 浮层只该有一个出处,弹窗只该有一套契约
  *
@@ -18,7 +18,7 @@
  * 故障注入:把 EnlightenmentModal 改回自己铺浮层 → 第一条红;
  * 把某个 title 删掉 → 第二条红;把 @close 删掉 → 第三条红。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 
@@ -513,6 +513,33 @@ describe('界面分层 · 浮层只有一个出处', () => {
     const cp = FILES.find(f => f.path === 'components/adventure/CombatPanel.vue')
     expect(cp?.src, '星级要带上展开语义').toContain(':aria-expanded="adaptTap === foeAdaptation.stars"')
     expect(cp?.src, '理由要在名字行下直出,不许只挂 :title').toMatch(/foeAdaptation\.value\.reasons\.join/)
+  })
+
+  it('展开/收纳的控制要把状态报给读屏 —— disclosure 全要 aria-expanded', () => {
+    // 折叠/展开的按钮若只换文本箭头、不把展开态报给读屏,屏幕阅读器分不清
+    // 现在到底收没收。方向名/星级(上面两条)早已钉;修为来路、卦/宿全览、
+    // 战斗所知/分析仍在裸 button,一并在这一条钉死,不许再退回。
+    const checks: [string, string][] = [
+      ['views/CultivationView.vue', ':aria-expanded="showCultBreakdown"'],
+      ['views/RealmCodexView.vue', ':aria-expanded="showAllHex"'],
+      ['views/RealmCodexView.vue', ':aria-expanded="showAllMansions"'],
+      ['components/adventure/CombatPanel.vue', ':aria-expanded="showLore"'],
+      ['components/adventure/CombatPanel.vue', ':aria-expanded="showAnalysis"']
+    ]
+    for (const [path, needle] of checks) {
+      const f = FILES.find(x => x.path === path)
+      expect(f?.src, `${path} 的展开控制要带上 aria-expanded,不许退回裸 button`).toContain(needle)
+    }
+  })
+
+  it('页签条是整套 tab 模式 —— role=tablist + roving tabindex + 方向键漫游', () => {
+    // InkTabs 供 5 个页共用,此前只贴了 role=tab / aria-selected,缺外壳 tablist、
+    // 每次只留一个在 Tab 序、以及方向键漫游 —— 半套 tab 模式对读屏是残缺的。
+    const tabs = FILES.find(f => f.path === 'components/common/InkTabs.vue')
+    expect(tabs?.src, '外壳要有 role=tablist,不许裸 div 装着 tab').toContain('role="tablist"')
+    expect(tabs?.src, '每次只留一个页签在 Tab 序(roving tabindex)').toContain(':tabindex="model === t.id ? 0 : -1"')
+    expect(tabs?.src, '方向键要在页签间漫游').toContain('ArrowRight')
+    expect(tabs?.src, '焦点要跟着选中一起走').toContain('target.focus()')
   })
 
   it('大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸', () => {

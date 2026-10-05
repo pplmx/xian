@@ -21,7 +21,7 @@
  * 判据用 TypeScript 语法树,不是正则 —— 注释与字符串里的名字不算使用,
  * `obj.foo` 的属性名 / 接口字段名也不算,免得"提过一嘴"冒充"接线"。
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import ts from 'typescript'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
@@ -370,7 +370,11 @@ describe('死导出审计', () => {
     reliefKinds: '审计汇总:把灵根的劫型解法通道列出来,供渡劫审计与灵根角色审计读',
     winChanceFromRatio: '审计公式:胜率换算只作审计口径,不进战斗结算',
     lt: '数值原语:gNum 比较,供公式单调性用例读',
-    gt: '数值原语:gNum 比较,与 lt 成对'
+    gt: '数值原语:gNum 比较,与 lt 成对',
+    // 洞府巡游的测试隔离钩子:caveEvent 是模块态「当下弹窗」,不随 pinia 重置而清,
+    // 用例间残留让「今日已出/未触发」洞府用例间歇闪红(earlyGameService.spec)。
+    // 销账:把 caveEvent 移进 player store(随 store 重置即得隔离)后删除本导出并移出此表。
+    resetCaveEvent: '测试隔离钩子:清空模块态巡游弹窗,供早期服务洞府用例在 beforeEach 里重置,防跨用例残留闪红'
   }
 
   it('运行时模块里的导出,不能只被 spec 用到 —— 那是骨架空转的样子', () => {

@@ -42,12 +42,12 @@ bun install     # 安装依赖
 bun dev         # 开发服务器
 bun run build   # 类型检查 + 生产构建
 bun preview     # 预览构建结果
-bun run test    # 全量用例(全量 320 个 spec / 3059 例;本作自己那部分 240 个 / 2465 例)
-bun run check   # 类型检查 + ESLint
+bun run test    # 全量用例(全量 320 个 spec / 3061 例;本作自己那部分 240 个 / 2467 例)
+bun run check   # 类型检查 + Oxlint
 ```
 
-> 注意用 `bun run test`,不要用 `bun test` —— 后者会调 Bun 自带的测试器而不是 Vitest,
-> 且不读本仓库的路径别名,会整片报"找不到模块"。
+> 工具链是 Vite+(`vp`):`dev/build/preview/lint/test` 都经它跑,ESLint 已迁移为
+> Oxlint(`vp lint`),Vitest 5 由 `vp test` 托管。依赖安装与锁文件仍走 bun。
 
 ## 文档
 
@@ -89,7 +89,7 @@ bun run check   # 类型检查 + ESLint
 | Vue Router | 4 | 客户端路由(hash 模式) |
 | Tone.js | 15 | FluidR3 乐器采样播放(BGM + SFX) |
 | CryptoJS | 4 | 存档 AES 加密 |
-| Vitest | 5 | 单元测试与平衡审计(全量 320 个 spec / 3059 例,含公共库 `packages/engine` 的 80 / 594) |
+| Vitest | 5 | 单元测试与平衡审计(全量 320 个 spec / 3061 例,含公共库 `packages/engine` 的 80 / 594) |
 | Electron / Capacitor | 39 / 8 | Windows 桌面与 Android 打包 |
 
 ## 许可证

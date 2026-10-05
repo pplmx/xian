@@ -135,7 +135,11 @@
 
     <!-- 凝炼台 -->
     <BaseModal :open="forgeOpen" title="凝炼台" @close="forgeOpen = false">
-      <p class="mb-2 text-[11px] leading-relaxed text-ink-faint">入炉即毁原器,耗道源 {{ SOUL_REFINE_COST }}。</p>
+      <p class="mb-2 text-[11px] leading-relaxed text-ink-faint">
+        入炉即毁原器,耗道源 {{ SOUL_REFINE_COST }}。
+        <!-- 付不起置灰+列差(与秘境道源/聚气丹同款):灰按钮不告诉差多少等于没说完 -->
+        <span v-if="!canAffordRefine" class="text-cinnabar">尚差 {{ SOUL_REFINE_COST - endgame.daoSource }} 道源</span>
+      </p>
       <div v-if="refinable.length > 0" class="card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4">
         <div v-for="row in refinable" :key="row.inst.uid" class="flex items-center justify-between gap-2 py-2.5">
           <div class="min-w-0">
@@ -160,6 +164,8 @@
           <button
             v-if="pendingRefineUid !== row.inst.uid"
             class="btn-ghost !px-3 !py-1 !text-[11px]"
+            :class="{ 'disabled:opacity-40': !canAffordRefine }"
+            :disabled="!canAffordRefine"
             @click="pendingRefineUid = row.inst.uid"
           >
             入 炉
@@ -210,6 +216,9 @@
   const pendingRefineUid = ref<string | null>(null)
   /** 散去形意同样二步确认:器魂是花道源与一件法器凝出来的,一脚碎掉连个反悔都没有 */
   const pendingDissolveUid = ref<string | null>(null)
+
+  /** 道源不够 20 置灰凝炼入口 —— 正是秘境/聚气丹同款的「付不起要直说」 */
+  const canAffordRefine = computed(() => endgame.daoSource >= SOUL_REFINE_COST)
 
   /** 二步确认后真正入炉;成功后收拢确认态 */
   function doRefine(uid: string): void {

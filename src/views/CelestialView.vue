@@ -221,15 +221,19 @@
                   <button class="btn-seal flex-1 !py-2 !text-[13px]" :disabled="run !== null" @click="openPrep('void')">
                     {{ run ? '远征在途' : `启 程(破界底赏 ${endgame.voidWorld.rewardDaoSource})` }}
                   </button>
-                  <button class="btn-ghost !px-3 !text-[12px]" @click="rerollVoidWorld()">再窥({{ VOID_REROLL_COST }})</button>
+                  <button class="btn-ghost !px-3 !text-[12px]" :disabled="voidRerollShort > 0" @click="rerollVoidWorld()">
+                    <template v-if="voidRerollShort > 0">尚差 {{ voidRerollShort }} 道源</template>
+                    <template v-else>再窥({{ VOID_REROLL_COST }})</template>
+                  </button>
                 </div>
               </template>
               <template v-else>
                 <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
                   天道以变数织界:随机规则、随机敌阵、随机路线,经天机推演过审方能成形——每一座虚界都独一无二。
                 </p>
-                <button class="btn-ghost mt-2.5 w-full !py-2 !text-[12px]" @click="rerollVoidWorld()">
-                  窥探虚界(道源 {{ VOID_REROLL_COST }})
+                <button class="btn-ghost mt-2.5 w-full !py-2 !text-[12px]" :disabled="voidRerollShort > 0" @click="rerollVoidWorld()">
+                  <template v-if="voidRerollShort > 0">尚差 {{ voidRerollShort }} 道源</template>
+                  <template v-else>窥探虚界(道源 {{ VOID_REROLL_COST }})</template>
                 </button>
               </template>
             </div>
@@ -251,8 +255,14 @@
               <span v-for="m in dailyMutators" :key="m!.id">◇ {{ m!.name }}:{{ m!.text }}</span>
               <span v-if="dailyPact" class="text-cinnabar">契·{{ dailyPact.name }}</span>
             </p>
-            <button class="btn-seal mt-2 w-full !py-1.5 !text-[12px]" :disabled="endgame.dailyDoneDay === daily.day" @click="goDaily">
-              {{ endgame.dailyDoneDay === daily.day ? '今日已成,明日再会' : `应 战(道源 ${CHALLENGE_ENTRY_COST})` }}
+            <button
+              class="btn-seal mt-2 w-full !py-1.5 !text-[12px]"
+              :disabled="endgame.dailyDoneDay === daily.day || challengeDaoShort > 0"
+              @click="goDaily"
+            >
+              <template v-if="challengeDaoShort > 0">尚差 {{ challengeDaoShort }} 道源</template>
+              <template v-else-if="endgame.dailyDoneDay === daily.day">今日已成,明日再会</template>
+              <template v-else>应 战(道源 {{ CHALLENGE_ENTRY_COST }})</template>
             </button>
           </div>
         </section>
@@ -272,8 +282,9 @@
             <template v-if="mutationDraw.length">
               <p v-for="m in mutationRows" :key="m!.id" class="text-[11px] text-violet-ink">◇ {{ m!.name }}:{{ m!.text }}</p>
               <div class="mt-2 flex gap-2">
-                <button class="btn-seal flex-1 !py-2 !text-[12px]" @click="goMutation">
-                  应 战(道源 {{ MUTATION_ENTRY_COST }} · 破解得 {{ MUTATION_BASE_REWARD }})
+                <button class="btn-seal flex-1 !py-2 !text-[12px]" :disabled="mutationDaoShort > 0" @click="goMutation">
+                  <template v-if="mutationDaoShort > 0">尚差 {{ mutationDaoShort }} 道源</template>
+                  <template v-else>应 战(道源 {{ MUTATION_ENTRY_COST }} · 破解得 {{ MUTATION_BASE_REWARD }})</template>
                 </button>
                 <button class="btn-ghost !px-3 !text-[12px]" @click="mutationDraw = rollMutators()">再探</button>
               </div>
@@ -303,8 +314,9 @@
               <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
                 <span v-for="(r, i) in trial.ruleText" :key="i">{{ r }}</span>
               </p>
-              <button class="btn-ghost mt-2.5 w-full !py-2 !text-[13px]" @click="goTrial(trial.id)">
-                应 试(道源 {{ trial.entryCost }} · 功成得 {{ trial.rewardDaoSource }})
+              <button class="btn-ghost mt-2.5 w-full !py-2 !text-[13px]" :disabled="trialDaoShort(trial) > 0" @click="goTrial(trial.id)">
+                <template v-if="trialDaoShort(trial) > 0">尚差 {{ trialDaoShort(trial) }} 道源</template>
+                <template v-else>应 试(道源 {{ trial.entryCost }} · 功成得 {{ trial.rewardDaoSource }})</template>
               </button>
             </div>
           </div>
@@ -396,8 +408,9 @@
             </div>
             <div class="mt-2 flex gap-2">
               <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="doVerify">验 约</button>
-              <button class="btn-seal flex-1 !py-1.5 !text-[12px]" :disabled="!challengeVerdict?.ok || run !== null" @click="doUndertake">
-                立 约(道源 {{ CHALLENGE_ENTRY_COST }})
+              <button class="btn-seal flex-1 !py-1.5 !text-[12px]" :disabled="!challengeVerdict?.ok || run !== null || challengeDaoShort > 0" @click="doUndertake">
+                <template v-if="challengeDaoShort > 0">尚差 {{ challengeDaoShort }} 道源</template>
+                <template v-else>立 约(道源 {{ CHALLENGE_ENTRY_COST }})</template>
               </button>
             </div>
           </div>
@@ -474,9 +487,12 @@
                 v-else-if="mark.cleared && mark.replay"
                 class="shrink-0 rounded border border-cinnabar/40 px-2 py-1 font-kai text-[10px] text-cinnabar active:scale-90"
                 :title="`以今日之你重打此战,快过 ${mark.rounds} 回合即【胜于旧我】`"
+                :class="{ 'disabled:opacity-40': rewriteShort > 0 }"
+                :disabled="rewriteShort > 0"
                 @click="rewriteConfirm = i"
               >
-                写(道源{{ REWRITE_ENTRY_COST }})
+                <template v-if="rewriteShort > 0">尚差 {{ rewriteShort }} 道源</template>
+                <template v-else>写(道源{{ REWRITE_ENTRY_COST }})</template>
               </button>
             </div>
           </div>
@@ -575,7 +591,10 @@
         </p>
       </template>
       <template #footer>
-        <button class="btn-seal w-full" @click="depart">启 程{{ selectedPact ? `(携「${selectedPact.name}」)` : '' }}</button>
+        <button class="btn-seal w-full" :disabled="expeditionEntryShort > 0" @click="depart">
+          <template v-if="expeditionEntryShort > 0">尚差 {{ expeditionEntryShort }} 道源</template>
+          <template v-else>启 程{{ selectedPact ? `(携「${selectedPact.name}」)` : '' }}</template>
+        </button>
       </template>
     </BaseModal>
 
@@ -927,6 +946,24 @@
   const stoneShort = computed(() => toNum(subClamp(furnaceStoneCost(), resources.spiritStone)))
   /** 凝道果差多少(付不起置灰):与 spendDaoSource 拒绝臂同口径 */
   const daoShort = computed(() => Math.max(0, DAO_SOURCE_PER_FRUIT - endgame.daoSource))
+  /** 道源入口差多少(付不起置灰+列差):与 spendDaoSource 拒绝臂同口径;天道三入口共用 */
+  function daoEntryShort(cost: number): number {
+    return Math.max(0, cost - endgame.daoSource)
+  }
+  /** 今日天道/挑战书入口同价:门票都取自 CHALLENGE_ENTRY_COST */
+  const challengeDaoShort = computed(() => daoEntryShort(CHALLENGE_ENTRY_COST))
+  /** 天道变数入口的道源短差 */
+  const mutationDaoShort = computed(() => daoEntryShort(MUTATION_ENTRY_COST))
+  /** 试炼入口道源短差(各试炼一道门票) */
+  function trialDaoShort(trial: (typeof TRIALS)[number]): number {
+    return daoEntryShort(trial.entryCost)
+  }
+  /** 远征入界差多少(付不起置灰):与 startWorldExpedition 拒绝臂同口径 */
+  const expeditionEntryShort = computed(() => daoEntryShort(prepWorld.value?.entryCost ?? 0))
+  /** 虚界再窥差多少(付不起置灰):VOID_REROLL_COST 同源 */
+  const voidRerollShort = computed(() => daoEntryShort(VOID_REROLL_COST))
+  /** 忆战重写差多少(付不起置灰):REWRITE_ENTRY_COST 同源 */
+  const rewriteShort = computed(() => daoEntryShort(REWRITE_ENTRY_COST))
   function doFurnace(rate: FurnaceRate): void {
     furnaceConfirm.value = null
     furnaceConvert(rate)

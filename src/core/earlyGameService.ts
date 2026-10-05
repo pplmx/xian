@@ -371,6 +371,16 @@ export function dismissCaveEvent(): void {
   caveEvent = null
 }
 
+/**
+ * 清空未处理的洞府巡游弹窗(测试隔离钩子)。
+ * 巡游是模块态「当下的弹窗」,不随 pinia 重置而清 —— 用例间残留会让
+ * 断言「今日已出 / 未触发」的洞府用例间歇读到上一枚,闪红。beforeEach 清一次,
+ * 每个用例从干净态出发,与生产语义(重开即无)一致。已登记 deadExportAudit ALLOWLIST。
+ */
+export function resetCaveEvent(): void {
+  caveEvent = null
+}
+
 function applyCaveBuff(buffId: string, cult: ReturnType<typeof useCultivationStore>, now: number) {
   cult.addBuff(buffId, now)
 }

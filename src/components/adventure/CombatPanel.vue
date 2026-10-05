@@ -198,6 +198,7 @@
         <button
           v-if="lore"
           class="-my-2 inline-flex min-h-[28px] items-center px-1 text-violet-ink active:opacity-60"
+          :aria-expanded="showLore"
           @click="showLore = !showLore"
         >
           {{ showLore ? '收起所知' : '此物所知 »' }}
@@ -205,6 +206,7 @@
         <button
           v-if="analysis"
           class="-my-2 inline-flex min-h-[28px] items-center px-1 text-qing active:opacity-60"
+          :aria-expanded="showAnalysis"
           @click="showAnalysis = !showAnalysis"
         >
           {{ showAnalysis ? '收起分析' : '战斗分析 »' }}

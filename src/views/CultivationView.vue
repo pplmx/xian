@@ -29,7 +29,7 @@
           不如让值整块落到第二行:值本身仍是一行,一个字都不少。
         -->
         <div data-value-row class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-soft tabular">
-          <button class="-my-1 py-1.5 text-left active:opacity-60" @click="showCultBreakdown = !showCultBreakdown">
+          <button class="-my-1 py-1.5 text-left active:opacity-60" :aria-expanded="showCultBreakdown" @click="showCultBreakdown = !showCultBreakdown">
             修为 +{{ formatRate(player.cultPerSec) }}
             <span class="ml-0.5 text-[9px] text-ink-faint">{{ showCultBreakdown ? '▾' : '▸' }}来路</span>
           </button>

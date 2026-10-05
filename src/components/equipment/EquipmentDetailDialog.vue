@@ -248,7 +248,7 @@
         <!-- 重铸与封存 (Phase 30.1) -->
         <template v-if="reforgeCostVal || sealCostVal">
           <div class="flex gap-2 text-[11px]">
-            <button v-if="reforgeCostVal" class="btn-ghost flex-1 !py-1" @click="doReforge">
+            <button v-if="reforgeCostVal" class="btn-ghost flex-1 !py-1" :disabled="!reforgeAffordable" @click="doReforge">
               重铸词条
               <span class="ml-1 tabular text-[10px] text-ink-faint">
                 器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
@@ -258,6 +258,11 @@
               封存一词 {{ formatGN(sealCostVal) }}
             </div>
           </div>
+          <!-- 付不起就把缺摆出来(与强化同款):重铸同样器灵尘+灵石两道账,缺谁明说谁 -->
+          <p v-if="reforgeCostVal && !reforgeAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
+            尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
+            {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
+          </p>
           <!--
             重铸到底做什么,得在按下之前说清:条数与数值一并重掷(封存的不动),
             不限次数、成本只随「阶数」与「封存数」走 —— 与旧版"越洗越贵、上限十次"不同。
@@ -372,6 +377,12 @@
 
   // ---- 重铸与封存 (Phase 30.1) ----
   const reforgeCostVal = computed(() => (inst.value ? reforgeCost(inst.value) : null))
+  /** 付不起即灰:重铸要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径) */
+  const reforgeAffordable = computed(() => {
+    const c = reforgeCostVal.value
+    if (!c) return false
+    return resources.hasSmall('dust', c.dust) && resources.hasStone(c.stone)
+  })
   const sealCostVal = computed(() => (inst.value ? sealCost(inst.value) : null))
   /** 这一件按品质能有多少条词条:上限来自品质表,不在界面里另写一份 */
   const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).affixes[1] : 0))
