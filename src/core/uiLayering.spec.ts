@@ -384,6 +384,20 @@ describe('界面分层 · 浮层只有一个出处', () => {
     )
   })
 
+  it('洞府页自报已营几座 —— 座数只许 store 数一遍,两页同读', () => {
+    // 已营座数此前只在首页入口右侧现算,洞府页自己反倒没有(「家业总览」的主角位
+    // 缺一角)。收进 store 的 builtCount,洞府营造题头与首页入口同读 —— 退回任何
+    // 一处自己 filter 一遍,下面红。
+    const dv = FILES.find(f => f.path === 'views/DongfuView.vue')
+    expect(dv?.src, '营造题头要挂上已营座数').toContain('dongfu.builtCount')
+    const home = FILES.find(f => f.path === 'views/HomeView.vue')
+    expect(home?.src, '首页入口也读 store,不许自己数一遍').toMatch(/已营 \{\{ dongfu\.builtCount \}\}/)
+    const dongfuStore = readFileSync(resolve(__dirname, '../stores/dongfu.ts'), 'utf8')
+    expect(dongfuStore, 'store 端有唯一一份 builtCount').toMatch(
+      /builtCount = computed\(\(\) => BUILDINGS\.filter\(b => \(levels\.value\[b\.id\] \?\? 0\) > 0\)\.length\)/
+    )
+  })
+
   it('首页状态行不许退回最弱档 —— 主角位「此刻状态」不该比次要天时还哑', () => {
     // 主页 hero 的「现在在干嘛」(修炼/闭关/历练…)此前整行 text-ink-faint,紧邻
     // 下方的次要天时反而 font-kai 披金 —— 层级倒挂。提一档 ink-soft 并配楷体,

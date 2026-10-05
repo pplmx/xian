@@ -176,7 +176,7 @@
       <!-- 右侧实况:离线可攒小时 + 已营座数,与洞府页纪要同一口径现算;数字比副题更能勾人起身 -->
       <span class="flex shrink-0 flex-col items-end gap-0.5 text-[10px]">
         <span class="tabular text-gold-ink">离线 {{ offlineHrs }} 时</span>
-        <span class="tabular text-ink-faint">已营 {{ builtCount }}/{{ BUILDINGS.length }}</span>
+        <span class="tabular text-ink-faint">已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }}</span>
       </span>
       <span class="shrink-0 text-[12px] text-ink-faint">›</span>
     </RouterLink>
@@ -248,9 +248,8 @@
     }
   })
   const dongfu = useDongfuStore()
-  /** 洞府入口右侧实况:离线可攒小时 + 已营座数(与洞府页纪要同源现算) */
+  /** 洞府入口右侧实况:离线可攒小时 + 已营座数 —— 座数读 store 的 builtCount(与洞府页同源) */
   const offlineHrs = computed(() => dongfu.offlineCapHours)
-  const builtCount = computed(() => BUILDINGS.filter(b => (dongfu.levels[b.id] ?? 0) > 0).length)
   /** 灵脉投资弹窗 —— 卡片自洞府页移来,紧随洞府营造 */
   const veinOpen = ref(false)
   const adventure = useAdventureStore()

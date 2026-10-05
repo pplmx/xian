@@ -16,7 +16,8 @@
 
     <!-- 建筑 -->
     <section>
-      <SectionTitle title="营造" hint="各司其职,日夜不辍" />
+      <!-- 家业总览的一份子:已营几座在首页入口可见,洞府页自己反倒没有 —— 补进营造题头 -->
+      <SectionTitle title="营造" :hint="`已营 ${dongfu.builtCount}/${BUILDINGS.length} · 各司其职,日夜不辍`" />
       <!-- 洞府是其余建筑等级上限的枢纽:提为整宽主卡置顶,其余 6 座排 2 列 3 行 -->
       <div class="mt-2 grid grid-cols-2 gap-2.5">
         <BuildingCard v-if="mansionDef" :def="mansionDef" class="col-span-2" />

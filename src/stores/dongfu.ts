@@ -55,6 +55,8 @@ export const useDongfuStore = defineStore(
     }
     /** 整座洞府尽善:七座俱已至顶(判据走引擎的 allDongfuMaxed,与 buildingCap 同源) */
     const allBuildingsMaxed = computed(() => allDongfuMaxed(levels.value))
+    /** 已启用(等级 > 0)的座数 —— 首页入口与洞府页抬头同读这一份,不许两处各数一遍 */
+    const builtCount = computed(() => BUILDINGS.filter(b => (levels.value[b.id] ?? 0) > 0).length)
     const subGongfaSlots = computed(() => librarySubGongfaSlots(levels.value.library))
     const alchemyLevel = computed(() => levels.value.alchemy)
     // 炼器台每 FORGE_LEVEL_PER_CAP 级提高强化上限 1(此前把 2 写死在业务代码里)
@@ -143,6 +145,7 @@ export const useDongfuStore = defineStore(
       buildingLevelCap,
       buildingCap,
       allBuildingsMaxed,
+      builtCount,
       subGongfaSlots,
       alchemyLevel,
       forgeCapBonus,
