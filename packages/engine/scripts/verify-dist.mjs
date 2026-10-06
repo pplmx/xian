@@ -548,7 +548,7 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
   const faceReadme = readFileSync(resolve(ENGINE, "README.md"), "utf-8");
   const runtimeCount = Object.keys(engine).length;
   const apiSource = readFileSync(resolve(ENGINE, "src/publicApi.spec.ts"), "utf-8");
-  const typeBlock = apiSource.match(/import type \{([\s\S]*?)\} from '\.\/index\.js'/);
+  const typeBlock = apiSource.match(/import type \{([\s\S]*?)\} from ["']\.\/index\.js["']/);
   assert.ok(
     typeBlock,
     "publicApi.spec.ts 里找不到 import type { … } from './index.js' 那一块 —— 写法变了?",
