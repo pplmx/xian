@@ -65,6 +65,7 @@ const CATEGORIES = [
       "reforge",
       "theme",
       "savePersistence",
+      "enginePause",
       "dongfu.spec",
       "ui.spec",
     ],
