@@ -17,7 +17,7 @@
     "check:legacy": "bun scripts/legacy-artifacts.mjs",
     "check:first-paint": "bun scripts/first-paint.mjs",
     "preview": "vp preview",
-    "lint": "vp lint src packages",
+    "lint": "vp lint",
     "test": "vp test run",
     "test:engine": "vp test run packages/engine",
     "test:report": "bun scripts/test-report.mjs",
