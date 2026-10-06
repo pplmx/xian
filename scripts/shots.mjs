@@ -93,8 +93,8 @@ async function toWebp(png, quality) {
 }
 
 /** 拍一张并写成 webp,回报落盘后的字节数 */
-async function shot(page, name) {
-  const png = await page.screenshot();
+async function shot(page, name, opts = {}) {
+  const png = await page.screenshot(opts);
   const webp = await toWebp(png, QUALITY);
   writeFileSync(join(OUT, `${name}.webp`), webp);
   console.log(`✓ ${name}.webp  ${(webp.length / 1024).toFixed(0)}KB`);
@@ -207,6 +207,131 @@ async function banner() {
   rmSync(tmp, { force: true });
 }
 await banner();
+
+// ---- 四、配色卡:把 style.css 的色票画成一张图,给 docs/design.md 用 ----
+/*
+ * 色值不在这里重写一遍 —— 页面直接读运行时的 --color-*-rgb。
+ * 「两本账」是文档最会锈的地方:改了 style.css 而配色卡忘改,读者先信哪一份?
+ * 读同一份变量就没有这个问题。
+ */
+async function palette() {
+  const css = readdirSync(join(ROOT, "dist/assets")).find((f) => /^index-.*\.css$/.test(f));
+  if (!css) throw new Error("dist/assets 里找不到产物 CSS,先 bun run build");
+  const tmp = join(ROOT, "dist/_palette.html");
+  writeFileSync(
+    tmp,
+    [
+      '<!doctype html><html><head><meta charset="utf-8">',
+      '<link rel="stylesheet" href="assets/' + css + '">',
+      "<style>",
+      "*{box-sizing:border-box}html,body{margin:0;background:#f3efe4}",
+      ".page{padding:46px 54px}",
+      "h1{font-family:var(--font-kai);font-size:42px;letter-spacing:.22em;color:#2b2723;margin:0 0 8px}",
+      ".sub{font-size:15px;color:#6f664f;letter-spacing:.05em;margin:0 0 32px}",
+      ".theme{margin:0 0 34px}",
+      ".theme h2{font-family:var(--font-kai);font-size:22px;letter-spacing:.2em;color:#4a463d;margin:0 0 16px;padding-left:12px;border-left:4px solid #a83f39}",
+      ".group{margin:0 0 12px}",
+      ".glabel{font-size:13px;letter-spacing:.24em;color:#8a8270;margin:0 0 8px}",
+      ".row{display:flex;flex-wrap:wrap;gap:10px}",
+      ".chip{width:132px;height:92px;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 4px rgba(41,39,34,.14)}",
+      ".chip .n{font-size:13px;letter-spacing:.04em}.chip .x{font-size:12px;opacity:.82;font-variant-numeric:tabular-nums}",
+      '</style></head><body><div class="page">',
+      "<h1>丹青 · 配色</h1>",
+      '<p class="sub">色值直读 src/style.css 的 --color-*-rgb —— 界面用哪一份,这里就是哪一份。</p>',
+      '<div id="root"></div></div></body></html>',
+    ].join("\n"),
+  );
+  const ctx = await browser.newContext({
+    viewport: { width: 1360, height: 900 },
+    deviceScaleFactor: 1,
+  });
+  const page = await ctx.newPage();
+  await page.goto(`file://${tmp}`, { waitUntil: "load" });
+  // 等样式表应用与楷体落定,再读变量 —— 否则读到的全是空串
+  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(
+    (GROUPS) => {
+      const f = (v) => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      const lum = (c) => 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+      const root = document.getElementById("root");
+      for (const th of [
+        ["日间", "light"],
+        ["夜间", "dark"],
+      ]) {
+        document.documentElement.dataset.theme = th[1];
+        const cs = getComputedStyle(document.documentElement);
+        const sec = document.createElement("section");
+        sec.className = "theme";
+        const h = document.createElement("h2");
+        h.textContent = th[0];
+        sec.appendChild(h);
+        for (const grp of GROUPS) {
+          const wrap = document.createElement("div");
+          wrap.className = "group";
+          const gl = document.createElement("div");
+          gl.className = "glabel";
+          gl.textContent = grp.title;
+          wrap.appendChild(gl);
+          const row = document.createElement("div");
+          row.className = "row";
+          for (const key of grp.keys) {
+            const raw = cs
+              .getPropertyValue("--color-" + key + "-rgb")
+              .trim()
+              .split(/\s+/)
+              .map(Number);
+            if (raw.length < 3 || raw.some((v) => Number.isNaN(v))) continue;
+            const chip = document.createElement("div");
+            chip.className = "chip";
+            chip.style.background = "rgb(" + raw.join(",") + ")";
+            chip.style.color = lum(raw) > 0.42 ? "#2b2723" : "#f6f1e5";
+            const n = document.createElement("div");
+            n.className = "n";
+            n.textContent = key;
+            const x = document.createElement("div");
+            x.className = "x";
+            x.textContent = "#" + raw.map((v) => v.toString(16).padStart(2, "0")).join("");
+            chip.appendChild(n);
+            chip.appendChild(x);
+            row.appendChild(chip);
+          }
+          wrap.appendChild(row);
+          sec.appendChild(wrap);
+        }
+        root.appendChild(sec);
+      }
+      document.documentElement.dataset.theme = "light";
+    },
+    [
+      { title: "底", keys: ["paper", "paper-deep", "paper-dark", "paper-lifted"] },
+      { title: "墨(正文)", keys: ["ink", "ink-soft", "ink-faint"] },
+      { title: "主色 · 朱砂", keys: ["cinnabar", "cinnabar-deep"] },
+      { title: "次色 · 石青", keys: ["qing", "cangqing", "tianqing"] },
+      {
+        title: "诸色",
+        keys: [
+          "jade",
+          "gold-ink",
+          "amber-ink",
+          "violet-ink",
+          "indigo-ink",
+          "zheshi",
+          "tenghuang",
+          "bise",
+          "he",
+        ],
+      },
+    ],
+  );
+  await page.waitForTimeout(400);
+  await shot(page, "palette", { fullPage: true });
+  await ctx.close();
+  rmSync(tmp, { force: true });
+}
+await palette();
 
 await canvasCtx.close();
 await browser.close();

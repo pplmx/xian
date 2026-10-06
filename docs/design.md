@@ -2,6 +2,11 @@
 
 ## 配色:丹青 —— 水墨为底、朱砂为主、石青为次
 
+![丹青配色 · 日间与夜间](../images/app/palette.webp)
+
+> 上日间、下夜间。色值直读 `src/style.css` 的 `--color-*-rgb`(`bun run shots` 生成),
+> 与界面同源 —— 改色只改一处,这张图跟着变。
+
 `style.css` 存裸 RGB 通道变量(`--color-x-rgb`),`tailwind.config.js` 用
 `rgb(var(...) / <alpha-value>)` 合成语义色 —— 斜杠透明度与 `color-mix` 两条路径共用一份变量。
 夜间主题只覆盖通道值一处,就能同时换肤。
