@@ -49,8 +49,8 @@ beforeEach(() => {
  * 允许保留旧名的位置 —— 只有"技术身份",没有一处展示文案:
  *
  *   · `utils/crypto.ts` 的加密口令:密钥材料,改了老档解不开;
- *   · `android/` 的 applicationId 与 Java 包名:换了等于换一个 App,
- *     老安装不能覆盖升级、WebView 里的本地存档也会另起一份(要换得单独做一次并盯构建);
+ *   · `android/`:keystore 的 keyAlias(与物理密钥库绑定,改了签名就断)与
+ *     SaveMigrator 里认旧存档键的 `yunyinxiang_save_` 迁移字符串;
  *   · 存档迁移相关:旧前缀 / 旧标识常量本身就是"为了认出来"才留的;
  *   · `scripts/*-check.mjs` 里的同一段加密口令:脚本要造出能被游戏解开的夹具。
  */
@@ -64,7 +64,6 @@ const ALLOWED = [
   "scripts/ui-smoke.mjs",
   "scripts/offline-check.mjs",
   "android/",
-  "capacitor.config.ts",
   "bun.lock",
   "data/equipment.ts", // 「云英护腕」是装备名,与旧标题无关
 ];

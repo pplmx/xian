@@ -2,6 +2,6 @@
 <resources>
   <string name="app_name">玄枢录</string>
   <string name="title_activity_main">玄枢录</string>
-  <string name="package_name">com.games.wenzi.yunyin</string>
-  <string name="custom_url_scheme">com.games.wenzi.yunyin</string>
+  <string name="package_name">com.mystvio.xuanshu</string>
+  <string name="custom_url_scheme">com.mystvio.xuanshu</string>
 </resources>

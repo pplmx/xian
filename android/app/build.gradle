@@ -46,7 +46,7 @@ if (!signingAvailable) {
 }
 
 android {
-    namespace = "com.games.wenzi.yunyin"
+    namespace = "com.mystvio.xuanshu"
     compileSdk = rootProject.ext.compileSdkVersion
 
     signingConfigs {
@@ -63,7 +63,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.games.wenzi.yunyin"
+        applicationId "com.mystvio.xuanshu"
         minSdkVersion 26
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode appVersionCode
@@ -87,7 +87,7 @@ android {
     }
     applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "yunyin-${variant.versionName}.apk"
+            outputFileName = "xuanshu-${variant.versionName}.apk"
         }
     }
 }
