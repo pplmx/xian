@@ -25,6 +25,7 @@ bun preview        # 预览构建结果
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
 | `bun run check:first-paint` | 首屏预算:冷启动解码字节 / FCP / 楷体换上(`scripts/first-paint.mjs`) |
+| `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run test:engine` | 只跑公共库(万象引擎)的用例 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
@@ -44,7 +45,7 @@ bun preview        # 预览构建结果
 | 用例 | 全量 320 个 spec / 3061 例(本作自己那部分 240 个 / 2467 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红;例数由 `test:report` 对照本次运行实录核对,加删用例忘了改文档也会红 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
-| 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`) |
+| 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`)。前两者**并发**跑(30 / 15 个独立任务,`--jobs` 或 `LAYOUT_JOBS` / `UI_SMOKE_JOBS` 调路数,默认按核数、上限 8)—— 一轮从约 17 分钟压到约 5 分钟 |
 | 首屏预算 | 冷启动解码字节 / FCP / 楷体换上三条上限(`scripts/first-paint.mjs`,自带静态服务与 4G 限速) |
 | 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec / 2044 例时,实际已是 289 / 2647) |
 | 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
@@ -101,7 +102,7 @@ bun preview        # 预览构建结果
 ```text
 packages/engine/          # 公共库:万象引擎(等级/属性/装备/副本四套系统的可配置内核)
 src/
-├── data/                 # 内容层:纯静态声明式定义(51 个模块)
+├── data/                 # 内容层:纯静态声明式定义(54 个模块)
 │   ├── realms.ts             # 4 界域 · 21 境界
 │   ├── regions.ts            # 44 区域
 │   ├── enemies.ts            # 132 敌人
@@ -120,7 +121,7 @@ src/
 │   ├── endgame.ts            # 道途 / 天界 / 试炼
 │   ├── mutators.ts           # 8 变数
 │   └── constants.ts          # 全局平衡参数
-├── core/                 # 逻辑层(122 个模块 + 192 个 spec,另有 *Sim.ts 平衡模拟器)
+├── core/                 # 逻辑层(127 个模块 + 210 个 spec,另有 *Sim.ts 平衡模拟器)
 │   ├── engine.ts             # 在线心跳驱动(1000ms)
 │   ├── offline.ts            # 离线收益结算
 │   ├── combat.ts             # 回合制战斗预解算
@@ -134,7 +135,7 @@ src/
 │   └── *Service.ts           # 各系统服务
 ├── stores/               # Pinia 状态(15 个,绝大部分自动持久化)
 ├── views/                # 17 个页面
-├── components/           # 34 个组件(8 组)
+├── components/           # 35 个组件(8 组)
 ├── ui/                   # 图标、词条名、图鉴与提示等展示层数据
 ├── utils/                # GNum 大数(m×10^e)/ 格式化 / 随机 / 存档底层
 ├── composables/          # useNow 等

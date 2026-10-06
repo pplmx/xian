@@ -3,6 +3,15 @@
 这份文档回答"这游戏有什么、怎么玩、数值怎么算"。开发、部署与发版见
 [development.md](./development.md) 与 [deployment.md](./deployment.md)。
 
+## 界面速览
+
+| 首页 · 下一步 | 修行 · 突破 | 历练 · 派遣 | 背包 · 装备 |
+| :-: | :-: | :-: | :-: |
+| ![首页](../images/app/home.webp) | ![修行](../images/app/cultivation.webp) | ![历练](../images/app/adventure.webp) | ![背包](../images/app/inventory.webp) |
+| 天时、修行志与入口 | 闭关、突破与渡劫 | 秘境、地界与镇压 | 九部位与全部藏品 |
+
+更多界面见 [README 的「界面一览」](../README.md#界面一览)。
+
 ## 开局长什么样
 
 新建一世 → 测灵根、定天赋 → 引气入体,进入第一层。

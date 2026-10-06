@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="images/app/1.png" alt="玄枢录" title="玄枢录" width="720" />
+  <img src="images/app/banner.webp" alt="玄枢录 —— 玄之又玄,众妙之门" title="玄枢录" width="880" />
 
   **玄之又玄 · 众妙之门**
 
@@ -25,13 +25,25 @@
 
 玩法规模、系统一览与设计取向见 **[docs/usage.md](docs/usage.md)**。
 
-## 截图
+## 界面一览
 
-| | |
-| --- | --- |
-| ![界面](images/1.png) | ![界面](images/2.png) |
+> 手机竖屏(390×844)。图由 `bun run shots` 从当前构建生成(存档是一份真仙期展品档)——
+> 改完界面重跑一次即可换新,不必手工截图。
 
-更多界面见 [images/app/](images/app)。
+| 首页 | 修行 | 历练 | 背包 |
+| :-: | :-: | :-: | :-: |
+| ![首页](images/app/home.webp) | ![修行](images/app/cultivation.webp) | ![历练](images/app/adventure.webp) | ![背包](images/app/inventory.webp) |
+| 天时 · 修行志 · 入口 | 闭关 · 突破 · 渡劫 | 秘境 · 地界 · 镇压 | 装备 · 丹药 · 法宝 |
+
+| 人物 | 洞府 | 界域志 | 本世之界 |
+| :-: | :-: | :-: | :-: |
+| ![人物](images/app/character.webp) | ![洞府](images/app/dongfu.webp) | ![界域志](images/app/codex.webp) | ![本世之界](images/app/world.webp) |
+| 属性 · 流派 · 名号 | 营造 · 灵脉 · 灵兽 | 境界与典籍的来处 | 世界节律 · 地界 |
+
+| 建号 | 踏入 |
+| :-: | :-: |
+| ![建号](images/app/create.webp) | ![踏入](images/app/welcome.webp) |
+| 道号与灵根鉴定 | 开局一屏 |
 
 ## 快速开始
 
