@@ -5,6 +5,10 @@
 [Bun](https://bun.sh) 1.4.2(与 `package.json` 的 `packageManager` 一致,CI 与 Docker 都按它装;过低会被 `scripts/env-check.mjs` 拦下)。
 TypeScript、Vite、Vitest 等都在 `package.json` 里,`vp install` 一次就够。
 
+> `vue-tsc` 钉在 3.3.11:3.3.12 的模板类型检查有回归(把普通 `Record` 常量当 ref,
+> 对 `ELEMENTS[e].name` / `STORE_NAMES[id]` 误报 `.value` 与索引类型错误)。
+> 待上游修复后再放开。
+
 ```bash
 vp install
 bun dev            # 开发服务器(vite --host)

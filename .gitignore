@@ -8,8 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 CLAUDE.md
 AGENTS.md
-chars.txt
-extract_chars.py
 
 node_modules
 dist
