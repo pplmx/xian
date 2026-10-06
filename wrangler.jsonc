@@ -1,5 +1,5 @@
 {
-  // Cloudflare Workers Builds 用这份配置部署线上站点(yunyin.wenzi.games)。
+  // Cloudflare Workers Builds 用这份配置部署线上站点。
   //
   // 为什么必须有它:根 package.json 里有 `workspaces`(库在 packages/engine,见 docs/engine.md
   // 的「怎么引用」),wrangler 的"应用自动探测"因此把仓库根当成**工作区根**、拒绝部署

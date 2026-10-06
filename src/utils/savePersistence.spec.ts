@@ -114,13 +114,13 @@ describe("存档写盘 · 省下的电不能拿存档换", () => {
   it("落盘内容是最后一次变更,且能被反序列化读回", () => {
     const { storage, serializer, key } = persistConfig("player");
     for (let i = 0; i < 10; i += 1)
-      storage.setItem(key, serializer.serialize({ exp: i, name: "云隐" }));
+      storage.setItem(key, serializer.serialize({ exp: i, name: "无名散修" }));
     vi.advanceTimersByTime(SAVE_FLUSH_MS);
     const raw = probe.disk.get(key);
     expect(raw).toBeDefined();
     // 磁盘上必须是密文(明文落盘等于把加密改没了)
-    expect(raw).not.toContain("云隐");
-    expect(serializer.deserialize(raw!)).toEqual({ exp: 9, name: "云隐" });
+    expect(raw).not.toContain("无名散修");
+    expect(serializer.deserialize(raw!)).toEqual({ exp: 9, name: "无名散修" });
   });
 
   it("读己所写:尚未落盘也能立刻读回最新值", () => {

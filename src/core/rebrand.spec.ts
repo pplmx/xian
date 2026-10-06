@@ -57,14 +57,10 @@ beforeEach(() => {
 const ALLOWED = [
   "utils/crypto.ts",
   "utils/storage.ts",
-  "utils/savePlaintext.spec.ts",
   "core/rebrand.spec.ts",
-  "core/saveMigration.spec.ts",
   "scripts/layout-check.mjs",
   "scripts/ui-smoke.mjs",
-  "scripts/offline-check.mjs",
   "android/",
-  "bun.lock",
   "data/equipment.ts", // 「云英护腕」是装备名,与旧标题无关
 ];
 

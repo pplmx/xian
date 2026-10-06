@@ -31,7 +31,7 @@
 - 全量闸门:type-check、full test、`test:report`(含 README.md + docs/development.md 计数同步)
   全绿才提交;commit 走 conventional。
 
-## 跨仓吸收纪律(读 /workspace/yunyin-xiuxian 等参考仓时)
+## 跨仓吸收纪律(读参考仓时)
 
 - **只读对比,不照抄**:产出带 `file:line` 证据的候选短名单,不做任何改动。
 - **吸收三道关**,过了才吸收:

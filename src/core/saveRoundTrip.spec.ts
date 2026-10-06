@@ -163,7 +163,7 @@ describe("存档往返 · 导出再导入一模一样", () => {
     for (const id of exportedIds) {
       const raw = localStorage.getItem(storageKey(id));
       expect(raw, `导入后 ${id} 分片不见了`).not.toBeNull();
-      expect(raw!, `${id} 分片内容与导出的不一致`).not.toContain("云隐");
+      expect(raw!, `${id} 分片内容与导出的不一致`).not.toContain("无名散修");
       const stored = JSON.parse(readSaveText(raw!)) as Record<string, unknown>;
       if (id === "game") {
         // 唯一刻意例外:导入把 lastActiveAt 重戳为「现在」(save.ts migrate),

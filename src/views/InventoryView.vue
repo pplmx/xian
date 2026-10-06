@@ -9,7 +9,7 @@
       <div v-if="setRows.length" class="card-ink mt-3 px-4 py-2.5">
         <div class="flex items-center justify-between gap-2">
           <p class="text-[10px] text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
-          <!-- 一键穿最强:纯方便性动作(自 yunyin 吸收),只改装配,绝不把好换差 -->
+          <!-- 一键穿最强:纯方便性动作,只改装配,绝不把好换差 -->
           <button
             type="button"
             class="shrink-0 -my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
