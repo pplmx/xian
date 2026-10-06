@@ -220,7 +220,8 @@ console.log(`   ${byName} 处引用全部走公开入口 'wanxiang-engine'`)
 //    没有任何通路。这不是"能不能跑"的问题(页面照样跑),是**引用方式说不圆**的问题。
 {
   const hostPkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8'))
-  const declared = { ...(hostPkg.dependencies ?? {}), ...(hostPkg.devDependencies ?? {}) }['wanxiang-engine']
+  // 对象展开里 ?? {} 是死代码:展开 undefined 本就等于什么都没展开,oxlint 直接抓
+  const declared = { ...hostPkg.dependencies, ...hostPkg.devDependencies }['wanxiang-engine']
   assert.ok(declared, "宿主的 package.json 里没声明 wanxiang-engine —— 而源码里在 import 它")
   assert.match(
     String(declared),

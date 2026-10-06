@@ -2839,7 +2839,7 @@ if (zoomFails.length) failures.push(`200% 缩放档上版面坏了:${zoomFails.j
       `[390] 存读场景:点「导出存档」没有拿到下载(${String(err).split("\n")[0]?.slice(0, 60)})`,
     );
   }
-  if (downloaded && !/\.save$/.test(downloaded))
+  if (downloaded && !downloaded.endsWith(".save"))
     failures.push(`[390] 存读场景:导出的文件名不像存档(${downloaded})`);
 
   // 动一下不会自己变的数:投一点灵脉,把灵石花掉

@@ -30,7 +30,7 @@ const files = readdirSync(ASSETS);
 const legacyJs = files.filter((f) => /-legacy-[A-Za-z0-9_-]+\.js$/.test(f));
 const polyfills = files.filter((f) => /^polyfills-legacy-.*\.js$/.test(f));
 const modernJs = files.filter(
-  (f) => /\.js$/.test(f) && !/-legacy-/.test(f) && !/^polyfills-legacy/.test(f),
+  (f) => f.endsWith(".js") && !/-legacy-/.test(f) && !f.startsWith("polyfills-legacy"),
 );
 const indexHtml = readFileSync(join(DIST, "index.html"), "utf-8");
 const hasNoModule = /<script[^>]*nomodule/.test(indexHtml);

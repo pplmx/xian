@@ -171,7 +171,10 @@ const createWindow = () => {
   })
 
   createAppMenu()
-  win.loadFile(path.join(distPath, 'index.html'))
+  // loadFile 失败(如开发态没先 build 出 dist)要给一句实话,别让拒绝静默飘走
+  win.loadFile(path.join(distPath, 'index.html')).catch((err) =>
+    console.error('主页面载入失败:', err)
+  )
 
   // WebDAV CORS 绕过：对所有非同源请求注入 CORS 响应头
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
@@ -229,17 +232,25 @@ ipcMain.handle('quit-app', () => {
   app.quit()
 })
 
-app.whenReady().then(() => {
-  createWindow()
+// 引导期:就绪后再建窗。void 表明这是一条"点火后不再等"的链;引导失败要显式
+// 退出,不留一个没内容的半启动窗口挂着(玩家只会看到黑屏)
+void app
+  .whenReady()
+  .then(() => {
+    createWindow()
 
-  // 如果启用了托盘功能，创建托盘
-  if (settings.closeToTray) {
-    createTray()
-  }
+    // 如果启用了托盘功能，创建托盘
+    if (settings.closeToTray) {
+      createTray()
+    }
 
-  // 应用开机自启动设置
-  setAutoLaunch(settings.autoLaunch)
-})
+    // 应用开机自启动设置
+    setAutoLaunch(settings.autoLaunch)
+  })
+  .catch((err) => {
+    console.error('应用启动失败:', err)
+    app.quit()
+  })
 
 app.on('before-quit', () => {
   isQuitting = true

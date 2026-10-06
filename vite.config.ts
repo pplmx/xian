@@ -1,4 +1,3 @@
-/// <reference types="vite-plus" />
 import { resolve } from "node:path";
 import { defineConfig, lazyPlugins } from "vite-plus";
 import vue from "@vitejs/plugin-vue";
@@ -868,12 +867,29 @@ export default defineConfig({
         },
       },
       {
-        /* 字形覆盖审计的夹具:注释里那一串全角空格(如「　-〿」)是它要证明的
-           字面范围端点,oxlint 的 no-irregular-whitespace 会误判为笔误 —— 真改
-           掉这行注释,审计文档就失真了。按类别放行这一条,别按「修注释」处理。 */
+        /* 字形覆盖审计的夹具:spec 注释里有它要证明的字面全角空格(U+3000 起),
+           那才是夹具本体 —— oxlint 的 no-irregular-whitespace 会把它误判为笔误,
+           真改掉那行注释,审计文档就失真了。按类别放行这一条,别按「修注释」处理。 */
         files: ["src/ui/kaiFontCoverage.spec.ts"],
         rules: {
           "no-irregular-whitespace": "off",
+        },
+      },
+      {
+        /* CLI 脚本的输出通道就是 console:docs-check/test-report/engine-* 的打印
+           是给人跟 CI 读的契约,不是调试残留,也不该改走日志库(那是纯搅动)。
+           只放行 scripts/ 目录——src 侧若冒出 console 照旧被钉。 */
+        files: ["scripts/**"],
+        rules: {
+          "no-console": "off",
+        },
+      },
+      {
+        /* Electron 沙箱 preload 只能用 CommonJS:BrowserWindow 未开 sandbox:false
+           时 ESM preload 根本不加载 —— 这句 require 是平台强制的形态,不是残留。 */
+        files: ["electron/preload.js"],
+        rules: {
+          "no-require-imports": "off",
         },
       },
       {
