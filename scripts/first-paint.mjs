@@ -61,8 +61,25 @@ const BUDGETS = {
   bytes: Number(process.env.FIRST_PAINT_BUDGET_KB ?? 1500),
   /** FCP 上限:ms */
   fcp: Number(process.env.FIRST_PAINT_BUDGET_FCP ?? 1400),
-  /** 楷体换上的时刻上限:ms */
-  fontSwap: Number(process.env.FIRST_PAINT_BUDGET_FONT ?? 2800),
+  /**
+   * 楷体换上的时刻上限:ms —— 时序是**二级**信号,量级守卫看 fontBytes。
+   *
+   * 2026-10-06 重校准:2800 → 3400。旧值 2800 源自 migration 前文档里"本机无
+   * preload 2159ms"的读数,而 CI 量的是**发布构建(legacy)且随代码量增长**
+   * 的排版 —— 迁移前后一致稳定落在 ~2922-2952ms(9c739b9 迁移前就是 2922),
+   * 预算比实测还低,门连红数推、线上 Pages 一直没更新。3400 给 ~15% 余量;
+   * 「整份 1.8MB 楷体打进来」那种量级回归由 fontBytes 断言确定性拦截,
+   * 这一条只守"字体加载奇慢"。
+   */
+  fontSwap: Number(process.env.FIRST_PAINT_BUDGET_FONT ?? 3400),
+  /**
+   * 楷体**子集**总字节上限:KB —— 反「整份打进来」的硬判据。
+   *
+   * 当前子集 5 片 ~236KB;整份字体 ~1.8MB。600KB 上限给足合法生长空间(字形
+   * 加字只长一半也放行),十倍于头的量级回归当场红。这一条**确定性**、
+   * 与机器快慢无关 —— 时序预算可以松,它不能松。
+   */
+  fontBytes: Number(process.env.FIRST_PAINT_BUDGET_FONT_KB ?? 600),
 };
 
 const args = process.argv.slice(2);
@@ -279,11 +296,11 @@ console.log(`  楷体换上   ${ms(median(swap))}  —— 预算 ${ms(BUDGETS.fo
 console.log(
   `  楷体可用:${runs[0].marks.kaiUsable ? "是" : "否"} · 字体就绪 ${ms(runs[0].marks.fontReady)}`,
 );
-// 首屏到底取了哪几片楷体 —— 「按需」这件事要看得出证据,不然切片白切了也不知道
+// 首屏到底取了哪几片楷体 —— 「按需」这件事要看得出证据,不然切片白切了也不知道;
+// 总字节同时是反「整份打进来」的确定性判据(见 BUDGETS.fontBytes 的说明)
 const fontReqs = runs[0].resources.filter((r) => r.type === "Font");
-console.log(
-  `  楷体切片:取了 ${fontReqs.length} 份 · ${kb(fontReqs.reduce((n, r) => n + r.bytes, 0))}`,
-);
+const fontBytes = fontReqs.reduce((n, r) => n + r.bytes, 0);
+console.log(`  楷体切片:取了 ${fontReqs.length} 份 · ${kb(fontBytes)}`);
 for (const r of fontReqs) console.log(`    ${kb(r.bytes).padStart(6)}  ${r.url.split("/").pop()}`);
 
 const failures = [];
@@ -296,6 +313,8 @@ if (median(swap) > BUDGETS.fontSwap)
 if (!runs[0].marks.kaiUsable)
   failures.push("楷体没被用上(dist 里没有字体、或 family 名对不上)—— 字体那条预算空转了");
 if (runs[0].marks.fcp === null) failures.push("拿不到 FCP —— 判据空转了");
+if (fontBytes > BUDGETS.fontBytes * 1024)
+  failures.push(`楷体子集 ${kb(fontBytes)} 超过预算 ${kb(BUDGETS.fontBytes * 1024)} —— 「整份打进来」的回归在这里红,与机器快慢无关`);
 
 if (failures.length) {
   for (const f of failures) console.log(`✗ ${f}`);
