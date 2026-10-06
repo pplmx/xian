@@ -35,15 +35,15 @@
 
 ## 快速开始
 
-需要 [Bun](https://bun.sh) 1.2+。
+需要 [Bun](https://bun.sh) 1.4.2(与 `package.json` 的 `packageManager` 一致)。
 
 ```bash
-bun install     # 安装依赖
+vp install      # 安装依赖
 bun dev         # 开发服务器
 bun run build   # 类型检查 + 生产构建
 bun preview     # 预览构建结果
 bun run test    # 全量用例(全量 320 个 spec / 3061 例;本作自己那部分 240 个 / 2467 例)
-bun run check   # 类型检查 + Oxlint
+bun run check   # 环境/类型/文档自检 + Oxlint
 ```
 
 > 工具链是 Vite+(`vp`):`dev/build/preview/lint/test` 都经它跑,ESLint 已迁移为
@@ -83,7 +83,7 @@ bun run check   # 类型检查 + Oxlint
 | --- | --- | --- |
 | Vue 3 | 3.5 | 组合式 API + `<script setup>` |
 | TypeScript | 6.0 | strict 严格类型检查 |
-| Vite | 8 | 构建与开发服务器(legacy 插件兜旧 WebView) |
+| Vite | 8 | 构建与开发服务器 |
 | Pinia | 3 | 状态管理(15 个 store,绝大部分自动持久化) |
 | Tailwind CSS | 3.4 | 水墨色系语义色与暗色主题 |
 | Vue Router | 4 | 客户端路由(hash 模式) |

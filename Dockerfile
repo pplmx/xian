@@ -1,5 +1,7 @@
 # ===== Stage 1: 构建阶段 =====
-FROM oven/bun:1-alpine AS builder
+# 钉死与 package.json 的 packageManager(bun@1.4.2)一致:浮动的 :1 标签
+# 会在 bun 出新版时悄悄换基础镜像,而锁文件与安装行为都可能随之漂移。
+FROM oven/bun:1.4.2-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -13,9 +15,8 @@ RUN bun install --frozen-lockfile
 # 复制源代码
 COPY . .
 
-# 构建生产版本 —— 这份产物是要发出去的,故走发布路径(带 legacy 兜底):
-# 日常构建(`bun run build`)不打 legacy,老内核的玩家会白屏(见 vite.config.ts 的 XIAN_LEGACY)
-RUN bun run build:release
+# 构建生产版本
+RUN bun run build
 
 # ===== Stage 2: 生产阶段(Nginx 服务) =====
 FROM nginx:alpine

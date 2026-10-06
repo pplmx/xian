@@ -5,10 +5,7 @@
 
 ## Web / PWA
 
-把 `bun run build:release` 产出的 `dist/` 交给任意静态服务器即可(或走下方 Docker 镜像)。
-发布路径用 `build:release` 而不是 `build`:它多带一份 legacy 兜底(Chrome 51 / Android 7
-那批老内核),并跟一条 `bun run check:legacy` 核两份产物都在 —— 日常构建不带 legacy,
-那是给开发与 CI 门用的(见 [development.md](./development.md) 的「首屏与构建时长」)。
+把 `bun run build` 产出的 `dist/` 交给任意静态服务器即可(或走下方 Docker 镜像)。
 
 - 移动浏览器打开即玩,可「添加到主屏幕」;
 - Service Worker 会缓存静态资源:**首次在线打开后,断网重开也能进游戏**;
@@ -81,7 +78,7 @@ Compose v1 的旧 CLI 把命令换成 `docker-compose` 即可(`docker-compose.ym
 
 ## 镜像架构
 
-- **构建阶段**:`oven/bun:1-alpine`,`bun install --frozen-lockfile` 后跑 `bun run build:release`;
+- **构建阶段**:`oven/bun:1.4.2-alpine`(与 `packageManager` 一致),`bun install --frozen-lockfile` 后跑 `bun run build`;
 - **生产阶段**:`nginx:alpine` + `dist/`(约 4MB 静态产物)+ `nginx.conf`,多阶段构建让最终镜像
   只比基础 nginx 多这一份产物;
 - **CI 镜像**:`Dockerfile.ci` 不在容器内构建 —— 前端由 runner 上的 Bun 构建好,镜像只负责把
@@ -169,10 +166,9 @@ docker stats xuanshu                # 资源占用
 要在自己的 fork 里发布镜像,把上面这套步骤照抄即可:
 
 ```yaml
-      - run: bun install --frozen-lockfile
+      - run: vp install --frozen-lockfile
       - run: bun run check && bun run test
-      - run: bun run build:release      # 发布路径:带 legacy 兜底
-      - run: bun run check:legacy       # 核两份产物都在
+      - run: bun run build
       - run: cp .dockerignore.ci .dockerignore
       - uses: docker/build-push-action@v7
         with:

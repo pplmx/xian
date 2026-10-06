@@ -65,13 +65,13 @@ jobs:
           cache: true
           run-install: false
       - name: 安装依赖
-        run: bun install --frozen-lockfile
+        run: vp install --frozen-lockfile
       # 构建计时:这一步既是「构建产物(自检量的是 dist)」,也顺带把**构建时长**量成判据
-      # (现代目标上限 90s)。legacy 一旦被接回日常构建,时长会成倍长回去,这里当场红。
+      # (上限 90s)。构建一旦被塞回重型后处理,时长会成倍长回去,这里当场红。
       - name: 构建产物(自检量的是 dist)· 带时长上限
         run: bun scripts/build-timed.mjs
       # playwright 锁在 devDependencies 里(版本真源 = bun.lock,不再手抄进命令)。
-      # 它没有 postinstall:bun install 只带 ~19MB 的 JS 本体,占地的浏览器二进制
+      # 它没有 postinstall:vp install 只带 ~19MB 的 JS 本体,占地的浏览器二进制
       # 只由下面这一句按需下,落在 ~/.cache/ms-playwright —— 故给缓存,别每次重下。
       - name: 缓存浏览器
         uses: actions/cache@v6
@@ -100,33 +100,6 @@ jobs:
       - name: 离线/发版接管自检
         run: bun scripts/offline-check.mjs
 
-  # 发布产物:legacy 那一套还出得来吗
-  #
-  # legacy(Chrome 51 / Android 7 的兜底)从「每次构建都打」改成「只在发布路径上打」:
-  # vite.config 的 XIAN_LEGACY=1,由 `bun run build:release` 带上。日常构建与上面那道
-  # ui-check 门因此都看不到它 —— 万一那个开关坏了、插件升级换了注入方式,日常的门全是
-  # 绿的,直到老内核的玩家打开是一片白屏。故这里**真打一次发布产物**再核一遍
-  # (nomodule 兜底、SystemJS 装载、每页都有 legacy 那一份)。
-  legacy-artifacts:
-    name: 发布产物(legacy 兜底)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7
-      - name: 设置 Vite+
-        uses: voidzero-dev/setup-vp@v1.21.1
-        with:
-          version: "1.0.0"
-          node-version: "22"
-          cache: true
-          run-install: false
-      - name: 安装依赖
-        run: bun install --frozen-lockfile
-      - name: 打发布产物(XIAN_LEGACY=1)· 带时长上限
-        run: bun scripts/build-timed.mjs --release
-      - name: 核 legacy 与现代化两份产物
-        run: bun run check:legacy
-
   # 1. 构建 Electron 客户端
   build-electron:
     name: 构建 Electron (${{ matrix.os }})
@@ -151,7 +124,7 @@ jobs:
       # 过闸才继续:lint/类型检查/单测任意一条红,构建与发布都停在这
       - name: 静态检查 + 单元测试
         run: |
-          bun install --frozen-lockfile
+          vp install --frozen-lockfile
           bun run check
           # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs);
           # 失败/跳过/未登记分类/文档例数不符都会红,替代裸 `bun run test` 少跑一遍测试
@@ -210,7 +183,7 @@ jobs:
 
       - name: 静态检查 + 单元测试
         run: |
-          bun install --frozen-lockfile
+          vp install --frozen-lockfile
           bun run check
           # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs)
           bun run test:report
@@ -260,7 +233,7 @@ jobs:
 
   # 3. 发布 Release
   release:
-    needs: [guard, ui-check, legacy-artifacts, build-electron, build-android]
+    needs: [guard, ui-check, build-electron, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: write

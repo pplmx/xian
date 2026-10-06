@@ -2,14 +2,13 @@
 
 ## 环境
 
-[Bun](https://bun.sh) 1.2+(本仓库的包管理、测试与脚本都走它)。
-TypeScript、Vite、Vitest 等都在 `package.json` 里,`bun install` 一次就够。
+[Bun](https://bun.sh) 1.4.2(与 `package.json` 的 `packageManager` 一致,CI 与 Docker 都按它装;过低会被 `scripts/env-check.mjs` 拦下)。
+TypeScript、Vite、Vitest 等都在 `package.json` 里,`vp install` 一次就够。
 
 ```bash
-bun install
+vp install
 bun dev            # 开发服务器(vite --host)
-bun run build      # 类型检查 + 生产构建(现代目标:日常开发与 CI 门用这一条)
-bun run build:release  # 发布构建:多带一份 legacy 兜底(见「首屏与构建时长」)
+bun run build      # 类型检查 + 生产构建
 bun preview        # 预览构建结果
 ```
 
@@ -19,16 +18,14 @@ bun preview        # 预览构建结果
 | --- | --- |
 | `bun run test` | 全量用例(全量 320 个 spec / 3061 例;本作自己那部分 240 个 / 2467 例) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
-| `bun run check` | 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置) |
+| `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
-| `bun run build:release` | 发布构建(`XIAN_LEGACY=1`):每个 chunk 再走一遍 legacy 兜底 |
-| `bun run check:legacy` | 发布产物自检:legacy 那一套真的出得来吗(`scripts/legacy-artifacts.mjs`) |
 | `bun run check:first-paint` | 首屏预算:冷启动解码字节 / FCP / 楷体换上(`scripts/first-paint.mjs`) |
 | `bun run test:engine` | 只跑公共库(万象引擎)的用例 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
-| `vp run verify` | 一键整链:确认 → 全量测试 → 例数对账 → 生产/legacy 双构建 → 引擎同树 → 独立仓模拟(cache:false 每次都真跑;提交/推送前跑它,最不会漏的就是后两项) |
+| `vp run verify` | 一键整链:确认 → 全量测试 → 例数对账 → 生产构建 → 引擎同树 → 独立仓模拟(cache:false 每次都真跑;提交/推送前跑它,最不会漏的就是后两项) |
 | `vp check` | Vite+ 内置:全仓格式 + lint + 类型一次过(不是 `bun run check` 脚本) |
 
 > **别用 `bun test`。** 那是 Bun 自带的测试器,不读本仓库的路径别名(`@/…`),
@@ -44,25 +41,20 @@ bun preview        # 预览构建结果
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
 | 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`)、Service Worker 离线层(`offline-check.mjs`) |
-| 首屏预算 | 冷启动解码字节 / FCP / 楷体换上三条上限(`scripts/first-paint.mjs`,自带静态服务与 4G 限速);发布产物还要核 legacy 那一套出得来(`legacy-artifacts.mjs`) |
+| 首屏预算 | 冷启动解码字节 / FCP / 楷体换上三条上限(`scripts/first-paint.mjs`,自带静态服务与 4G 限速) |
 | 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec / 2044 例时,实际已是 289 / 2647) |
 | 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
 | 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |
 
 ## 首屏与构建时长
 
-两条规矩:**要发出去的那一份才带 legacy**,以及**首屏传多少字节、第几毫秒看得见字,各有上限**。
+首屏传多少字节、第几毫秒看得见字、构建跑多快,各有上限。
 
-### 日常构建与发布构建
+### 构建
 
-legacy(`@vitejs/plugin-legacy`,给 Chrome 51 / Android 7 的兜底)只在 `XIAN_LEGACY=1` 时打
-(`bun run build:release`)。改之前它每次都打:本机 32s 的构建里 26s(82%、106 次调用)花在
-这一步,而开发、PR 门、单元测试跑的都是现代浏览器,legacy 产物一个字节都不会被请求。
-
-- 日常与 CI 门:`bun run build`(现代目标,本机约 16s);
-- 发布路径(Pages 部署、Electron、APK):`bun run build:release`,并跟一条
-  `bun run check:legacy` 当场核 legacy 与现代化两份产物都在、`index.html` 的 `nomodule`
-  兜底装载也接上了 —— 否则「老内核打开一片白屏」这种事会藏在绿着的门后面。
+生产构建就是 `bun run build`(类型检查 + `vp build`)。曾经为了 Chrome 51 / Android 7
+那批老内核,发布路径还要多跑一遍 legacy 兜底(本机 32s 的构建里 26s 花在这一步)——
+对个人项目纯属死重,已整条拆除:没有 `build:release`,也没有 `XIAN_LEGACY` 开关。
 
 ### 首屏预算(实测:4G 档、390×844、冷缓存)
 
@@ -72,10 +64,10 @@ legacy(`@vitejs/plugin-legacy`,给 Chrome 51 / Android 7 的兜底)只在 `XIAN_
 | FCP | 692ms | 1020ms | 1400ms |
 | 楷体换上(swap 那一刻) | 2255ms | 2159ms | 3400ms |
 | 楷体子集总字节 | — | 236KB(5 片) | 600KB |
-| 构建时长(现代 / 发布) | 32s / 41s | 16s / 41s | 90s / 240s |
+| 构建时长 | 32s | 16s | 90s |
 
 > 2026-10-06 重校准:楷体换上上限 2800 → 3400 —— 旧值按"本机无 preload 2159ms"
-> 定的,而 CI 量的是**发布构建(legacy)且随代码量增长**的排版,迁移前后稳定落在
+> 定的,而 CI 量的是随代码量增长的排版,迁移前后稳定落在
 > ~2922-2952ms(9c739b9 迁移前就 2922),预算比实测还低,Pages 连红数推。
 > 反「整份 1.8MB 打进来」的量级守卫改由**楷体子集字节断言(≤600KB)**确定性承担,
 > 与机器快慢无关;时序这条只守"字体加载奇慢"。
@@ -95,9 +87,8 @@ legacy(`@vitejs/plugin-legacy`,给 Chrome 51 / Android 7 的兜底)只在 `XIAN_
    可随时复量这个 A/B。
 
 三条首屏读数接在两条流水线的浏览器自检段(`bun scripts/first-paint.mjs`);构建时长接在
-**构建那一步本身**(`bun scripts/build-timed.mjs [--release]`,把构建跑一遍并计时,超上限
-即红 —— 只拦「成倍长回去」,上限按本机读数四到五倍给,CI 机器慢也吃得下);`build.yml`
-另有 `legacy-artifacts` 作业真打一次发布产物再核。
+**构建那一步本身**(`bun scripts/build-timed.mjs`,把构建跑一遍并计时,超上限即红 ——
+只拦「成倍长回去」,上限按本机读数四到五倍给,CI 机器慢也吃得下)。
 
 推送到 `main` 会走 GitHub Actions 同一道闸:类型检查、Oxlint、用例全绿后才部署 Web / PWA 与镜像(CI 用 `voidzero-dev/setup-vp` 装 Vite+ 工具链,Node 22)。
 
