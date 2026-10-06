@@ -187,6 +187,7 @@ const CATEGORIES = [
       "battleAnalysis",
       "foeOrigin",
       "loreService",
+      "soulService",
       "smithingLore",
       "inventoryNote",
       "titleReunlock",
