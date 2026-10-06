@@ -137,7 +137,7 @@ bun run tuning    # 31 份消融的读数(只有改了数值或曲线时才需�
 
 ```bash
 cd packages/engine
-bun install          # 只装 typescript + vitest + @types/node(开发依赖)
+bun install          # 只装 typescript + vite-plus + @types/node(开发依赖)
 bun run check        # 类型检查 + 用例 + 出 dist + 产物自检 + 发布包自检 + 跑示例
 bun run build        # 只出 dist(含 .d.ts)
 bun run examples     # 跑 examples/ 下的示例
