@@ -9,6 +9,9 @@
  *   bun scripts/shots.mjs --device desktop
  *   bun scripts/shots.mjs --out /tmp/shots
  *
+ * 除逐页界面图外,还产出:宽幅题图 banner.webp(场景画当底 + 游戏自己的楷体重排标题)
+ * 与配色卡 palette.webp(直读 style.css 的 --color-*-rgb,给 design.md 用)。
+ *
  * 为什么单独一个脚本、而不是复用 layout-check 的 --shots:
  *   layout-check 的截图是**判据的副产品**(逐页巡页时顺手存),视角、主题、存档
  *   都由那条自检决定,拍出来的东西不为「给人看」服务;文档图要的是干净、有内容、
