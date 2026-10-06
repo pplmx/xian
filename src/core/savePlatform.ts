@@ -11,7 +11,7 @@ import { Capacitor } from "@capacitor/core";
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
 import { saveAs } from "file-saver";
 import { exportSaveText } from "./save";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 /** 本机存档导出:按平台落到可被用户取走的地方,成功返回提示,失败返回 null */
 export async function exportSaveToDevice(): Promise<string | null> {
@@ -29,11 +29,11 @@ export async function exportSaveToDevice(): Promise<string | null> {
         directory: Directory.Documents,
         encoding: Encoding.UTF8,
       });
-      useUiStore().toast(`已导出到「文档/Export/${file}」`, "success");
+      notify(`已导出到「文档/Export/${file}」`, "success");
       return null;
     } catch {
       // 写盘失败(存储不可用/权限异常)明确告知,不静默
-      useUiStore().toast("存档导出失败,请检查存储空间后重试", "warn");
+      notify("存档导出失败,请检查存储空间后重试", "warn");
       return "导出失败";
     }
   }
@@ -71,20 +71,17 @@ export async function exportSaveToDevice(): Promise<string | null> {
   }
 
   if (downloaded && clipped) {
-    useUiStore().toast(`已导出「${file}」(存档文本也已复制到剪贴板备用)`, "success");
+    notify(`已导出「${file}」(存档文本也已复制到剪贴板备用)`, "success");
     return null;
   }
   if (downloaded) {
-    useUiStore().toast(`已导出「${file}」`, "success");
+    notify(`已导出「${file}」`, "success");
     return null;
   }
   if (clipped) {
-    useUiStore().toast(
-      "浏览器没能下载 —— 存档文本已复制到剪贴板,新建文本粘贴并另存为 .save 即可导入",
-      "warn",
-    );
+    notify("浏览器没能下载 —— 存档文本已复制到剪贴板,新建文本粘贴并另存为 .save 即可导入", "warn");
     return "存档已复制到剪贴板";
   }
-  useUiStore().toast("浏览器既不能下载也复制不了存档,请换一个浏览器打开后再导出", "warn");
+  notify("浏览器既不能下载也复制不了存档,请换一个浏览器打开后再导出", "warn");
   return "浏览器不支持导出";
 }

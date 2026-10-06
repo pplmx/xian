@@ -11,7 +11,7 @@
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 /** 一次修复耗去标称灵气容量的比例 */
 export const QI_REPAIR_COST_RATIO = 0.35;
@@ -44,18 +44,17 @@ export function repairWithQi(): boolean {
   const player = usePlayerStore();
   const resources = useResourcesStore();
   const cultivation = useCultivationStore();
-  const ui = useUiStore();
   if (!isInjured()) {
-    ui.toast("你并无伤势在身", "warn");
+    notify("你并无伤势在身", "warn");
     return false;
   }
   const cost = qiRepairCost();
   if (resources.qi < cost) {
-    ui.toast(`灵气不足,静养需 ${Math.ceil(cost)} 缕灵气`, "warn");
+    notify(`灵气不足,静养需 ${Math.ceil(cost)} 缕灵气`, "warn");
     return false;
   }
   resources.setQi(resources.qi - cost, player.qiCapValue);
   cultivation.clearNegativeBuffs();
-  ui.toast(`你引灵气静养,伤势尽复(耗灵气 ${Math.ceil(cost)})`, "success");
+  notify(`你引灵气静养,伤势尽复(耗灵气 ${Math.ceil(cost)})`, "success");
   return true;
 }

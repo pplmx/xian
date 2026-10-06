@@ -28,6 +28,7 @@ import { settleSuppressedRegions } from "./suppress";
 import { studyTick, seedLoreIfNeeded } from "./loreService";
 import { flushSaveWrites } from "@/utils/storage";
 import { enginePaused, pauseElapsedMs, setEnginePaused } from "./enginePause";
+import { notify } from "./notify";
 
 export { enginePaused } from "./enginePause";
 
@@ -185,7 +186,7 @@ class GameEngine {
     if (!this.deathAnnounced) {
       this.deathAnnounced = true;
       ui.deathDialog = true;
-      ui.toast("油尽灯枯,大限已至……", "warn");
+      notify("油尽灯枯,大限已至……", "warn");
     }
   }
 

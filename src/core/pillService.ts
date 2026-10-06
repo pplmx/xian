@@ -26,9 +26,9 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useLoreStore } from "@/stores/lore";
-import { useUiStore } from "@/stores/ui";
 import { playSfx } from "./audio";
 import type { GNum } from "@/types";
+import { notify } from "./notify";
 
 /**
  * 服用一枚丹药。
@@ -41,11 +41,10 @@ export function usePill(id: string, quiet = false): boolean {
   const resources = useResourcesStore();
   const inventory = useInventoryStore();
   const cultivation = useCultivationStore();
-  const ui = useUiStore();
   const def = pillDef(id);
   if (!def) return false;
   if (!inventory.spendPill(id)) {
-    if (!quiet) ui.toast("丹药不足", "warn");
+    if (!quiet) notify("丹药不足", "warn");
     return false;
   }
   const lines: string[] = [];
@@ -102,7 +101,7 @@ export function usePill(id: string, quiet = false): boolean {
   collect("pill", id);
   if (!quiet) {
     playSfx("success");
-    ui.toast(`服下「${def.name}」,${lines.join(",") || "药力温养周身"}`, "success");
+    notify(`服下「${def.name}」,${lines.join(",") || "药力温养周身"}`, "success");
   }
   return true;
 }
@@ -125,15 +124,14 @@ export function usePillBatch(id: string, count: number): number {
     if (!usePill(id, true)) break;
     eaten += 1;
   }
-  const ui = useUiStore();
   if (eaten > 0) {
     playSfx("success");
-    ui.toast(
+    notify(
       `连服 ${eaten} 枚「${def.name}」${eaten < count ? `(仅存 ${eaten} 枚)` : ""}`,
       "success",
     );
   } else {
-    ui.toast("丹药不足", "warn");
+    notify("丹药不足", "warn");
   }
   return eaten;
 }
@@ -220,7 +218,6 @@ export interface CraftOutcome {
 export function craftPill(id: string, quiet = false): CraftOutcome {
   const resources = useResourcesStore();
   const inventory = useInventoryStore();
-  const ui = useUiStore();
   const def = pillDef(id);
   const able = craftability(id);
   const cost = pillCraftCost(id);
@@ -236,7 +233,7 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
   const roll = runCraft(id, { pillId: id, canPay }, rng);
   if (!roll.fired) {
     // 批量里的"料尽"由批量那一层报「料尽而止」,阻塞理由只在非静默时单说一遍
-    if (!quiet) ui.toast(roll.reason, "warn");
+    if (!quiet) notify(roll.reason, "warn");
     return { ok: false, count: 0, aborted: true };
   }
   const craft = recipeCraft(def);
@@ -258,7 +255,7 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
     const spent = spentOf(roll, "herb") as number;
     const kept = cost.herb - spent;
     if (!quiet)
-      ui.toast(
+      notify(
         kept > 0
           ? `${failLine(able.weakness)} 残料尚存,保得灵草 ×${kept}`
           : failLine(able.weakness),
@@ -273,7 +270,7 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
   collect("pill", id);
   if (!quiet) {
     playSfx("success");
-    ui.toast(
+    notify(
       extra ? `丹成两枚!「${def.name}」品相极佳` : `炼成「${def.name}」×${roll.produced}`,
       extra ? "rare" : "success",
     );
@@ -313,7 +310,6 @@ export function craftPillBatch(
       salvaged += out.salvaged ?? 0;
     }
   }
-  const ui = useUiStore();
   if (rounds === 0) {
     // 材料一份都不够:非静默开一炉,让「差在哪」的阻塞理由浮上来
     craftPill(id);
@@ -323,7 +319,7 @@ export function craftPillBatch(
   const parts = [`连炼 ${rounds} 炉,成 ${made}、败 ${failed}`];
   if (salvaged > 0) parts.push(`残料保回 ×${salvaged}`);
   if (rounds < count) parts.push("料尽而止");
-  ui.toast(parts.join(";"), failed > 0 && made === 0 ? "warn" : "success");
+  notify(parts.join(";"), failed > 0 && made === 0 ? "warn" : "success");
   return { rounds, made, failed };
 }
 

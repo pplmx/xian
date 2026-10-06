@@ -35,7 +35,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 export interface DropSummary {
   /** 战报文案(含「战利品翻倍」这类提示) */
@@ -135,7 +135,6 @@ export function acquireEquipment(
 ): AcquireResult {
   const { quiet = false, forceKeep = false } = opts;
   const inventory = useInventoryStore();
-  const ui = useUiStore();
   const q = qualityDef(inst.quality);
   const t = equipmentTemplate(inst.templateId);
   const label = `${q.name}·${t?.name ?? "不明之物"}`;
@@ -156,7 +155,7 @@ export function acquireEquipment(
       };
     }
     if (!quiet && q.rank >= 3) {
-      ui.toast(`灵光乍现,拾得「${label}」`, "rare");
+      notify(`灵光乍现,拾得「${label}」`, "rare");
     }
     return { line: label, bagged: true, dust: 0, stone: gnZero() };
   }
@@ -168,7 +167,6 @@ export function acquireEquipment(
 export function acquireArtifact(defId: string, quiet = false): string {
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const def = artifactDef(defId);
   if (!def) return "";
   collect("artifact", defId);
@@ -176,7 +174,7 @@ export function acquireArtifact(defId: string, quiet = false): string {
     resources.addSmall("wudao", 10);
     return `法宝「${def.name}」(已拥有,化作悟道点×10)`;
   }
-  if (!quiet) ui.toast(`天降机缘!获得法宝「${def.name}」`, "rare");
+  if (!quiet) notify(`天降机缘!获得法宝「${def.name}」`, "rare");
   return `法宝「${def.name}」`;
 }
 

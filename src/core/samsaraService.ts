@@ -51,9 +51,9 @@ import { ENEMY_LORE_MAX, useLoreStore } from "@/stores/lore";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { useCultivationStore } from "@/stores/cultivation";
-import { useUiStore } from "@/stores/ui";
 import type { CounterKey } from "@/types";
 import { deltaOf, deltaSince, snapshotOf } from "wanxiang-engine";
+import { notify } from "./notify";
 
 // ============ 宿慧折算(纯函数,可独立测试) ============
 
@@ -260,7 +260,7 @@ export function noteTaboo(taboo: LifeTaboo): void {
   const def = lifeThemeDef(vow.themeId);
   if (def?.taboo !== taboo) return;
   player.breakVow();
-  useUiStore().toast(`【破题】你曾立誓「${def.vow}」——这一世的话,没能说到底`, "warn");
+  notify(`【破题】你曾立誓「${def.vow}」——这一世的话,没能说到底`, "warn");
 }
 
 /**

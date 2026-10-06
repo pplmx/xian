@@ -22,7 +22,7 @@ import { softChance } from "wanxiang-engine";
 import { useLoreStore } from "@/stores/lore";
 import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 /** 认知层 1→2 所需的照面次数 */
 export const SEEN_FOR_NATURE = 4;
@@ -133,8 +133,7 @@ export function encounterMaterial(id: string, quiet = false): boolean {
   lore.addSkillExp("discern", 4 + def.rank * 1.5);
   if (stage === 1) lore.addSkillExp(craftSkillOf(def), 3 + def.rank);
   if (!quiet) {
-    const ui = useUiStore();
-    ui.toast(stage === 0 ? `辨出一味灵材:「${def.name}」` : `已知「${def.name}」药性`, "rare");
+    notify(stage === 0 ? `辨出一味灵材:「${def.name}」` : `已知「${def.name}」药性`, "rare");
   }
   return true;
 }
@@ -171,7 +170,7 @@ export function noteMaterialUsed(id: string, succeeded: boolean): void {
   if (!rng.chance(chance)) return;
   if (lore.advanceLore(id, LORE_MAX)) {
     lore.addSkillExp(craftSkillOf(def), 6 + def.rank * 2);
-    useUiStore().toast(`已通晓「${def.name}」的用法`, "rare");
+    notify(`已通晓「${def.name}」的用法`, "rare");
   }
 }
 
@@ -212,9 +211,8 @@ export function noteEnemy(enemyId: string, win: boolean): boolean {
   const step = lore.advanceEnemyLoreIfDue(enemyId);
   if (!step.advanced) return false;
 
-  const ui = useUiStore();
-  if (step.stageIndex >= ENEMY_LORE_MAX) ui.toast(`你已洞悉「${def.name}」的路数`, "rare");
-  else if (step.stageIndex === 2) ui.toast(`你摸清了「${def.name}」惯用的招式`, "info");
+  if (step.stageIndex >= ENEMY_LORE_MAX) notify(`你已洞悉「${def.name}」的路数`, "rare");
+  else if (step.stageIndex === 2) notify(`你摸清了「${def.name}」惯用的招式`, "info");
   return true;
 }
 
@@ -243,9 +241,8 @@ export function noteEnemyMany(enemyId: string, wins: number, losses: number): bo
   }
   if (!advanced) return false;
 
-  const ui = useUiStore();
-  if (lastStage >= ENEMY_LORE_MAX) ui.toast(`你已洞悉「${def.name}」的路数`, "rare");
-  else if (lastStage === 2) ui.toast(`你摸清了「${def.name}」惯用的招式`, "info");
+  if (lastStage >= ENEMY_LORE_MAX) notify(`你已洞悉「${def.name}」的路数`, "rare");
+  else if (lastStage === 2) notify(`你摸清了「${def.name}」惯用的招式`, "info");
   return true;
 }
 
@@ -320,7 +317,7 @@ export function studyTick(dtSec: number): void {
   }
   lore.studyFrac -= NEW_RECIPE_COST;
   studyRecipe(found.id, NEW_RECIPE_START);
-  useUiStore().toast(`藏经阁中翻出一张丹方:「${found.name}」`, "rare");
+  notify(`藏经阁中翻出一张丹方:「${found.name}」`, "rare");
 }
 
 /** 入门修士都会的三张方子 —— 不会做这几样,连炉都开不了 */

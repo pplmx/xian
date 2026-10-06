@@ -15,8 +15,8 @@ import {
 import { recordMilestone } from "./identity";
 import type { ExpeditionResult } from "./endgameService";
 import { useEndgameStore } from "@/stores/endgame";
-import { useUiStore } from "@/stores/ui";
 import { todayLocalNum } from "@/utils/time";
+import { notify } from "./notify";
 
 export interface DailyChallenge {
   day: number;
@@ -55,9 +55,8 @@ export function todayChallenge(): DailyChallenge | null {
 /** 应战今日天道:当日限领一次赏,失败可自费重试 */
 export function undertakeDaily(daily: DailyChallenge): ExpeditionResult | null {
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   if (endgame.dailyDoneDay === daily.day) {
-    ui.toast("今日天道已了,明日再会", "info");
+    notify("今日天道已了,明日再会", "info");
     return null;
   }
   const result = undertakeChallenge(daily.draft, daily.verdict);

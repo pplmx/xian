@@ -24,10 +24,10 @@ import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
-import { useUiStore } from "@/stores/ui";
 import type { CollectionCategory } from "@/stores/quests";
 import type { GoalCond, GoalEnv } from "wanxiang-engine";
 import { evalGoal } from "wanxiang-engine";
+import { notify } from "./notify";
 
 /**
  * 本作的条件 → 库的条件。
@@ -78,7 +78,6 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
   const resources = useResourcesStore();
   const quests = useQuestsStore();
   const inventory = useInventoryStore();
-  const ui = useUiStore();
   const lines: string[] = [];
   if (bundle.stoneTier) {
     const v = stoneByTier(playerTier(), bundle.stoneTier);
@@ -112,7 +111,7 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
   if (bundle.titleId && titleDef(bundle.titleId)) {
     if (quests.ownTitle(bundle.titleId)) {
       lines.push(`名号「${titleDef(bundle.titleId)!.name}」`);
-      if (!quiet) ui.toast(`获得名号「${titleDef(bundle.titleId)!.name}」`, "rare");
+      if (!quiet) notify(`获得名号「${titleDef(bundle.titleId)!.name}」`, "rare");
     }
   }
   return lines;
@@ -173,9 +172,8 @@ function unlockAchievement(id: string): void {
 
 /** 发奖 + 报喜(顺序与迁移前一致:先发赏,再提示) */
 function announceAchievement(def: AchievementDef): void {
-  const ui = useUiStore();
   if (def.reward) grantReward(def.reward, true);
-  ui.toast(`成就达成「${def.name}」`, "rare");
+  notify(`成就达成「${def.name}」`, "rare");
 }
 
 /** 检查所有可自动判定的成就 */
@@ -229,7 +227,6 @@ export function checkStateAchievements(): void {
 
 function checkMainQuest(): void {
   const quests = useQuestsStore();
-  const ui = useUiStore();
   /**
    * 一次结算可以连推多节(玩家一口气满足后面几节是常事),守卫是 5 节 ——
    * 顺序与迁移前一致:逐节"发赏 → 提示",再把下标一次落账(见 core/engineChain)。
@@ -240,7 +237,7 @@ function checkMainQuest(): void {
   });
   for (const def of out.advanced) {
     grantReward(def.reward, true);
-    ui.toast(`任务完成「${def.name}」`, "success");
+    notify(`任务完成「${def.name}」`, "success");
   }
   if (out.index !== quests.mainIdx) quests.setMainIndex(out.index);
   if (out.capped) {
@@ -255,7 +252,6 @@ function checkMainQuest(): void {
 
 function checkDaily(): void {
   const quests = useQuestsStore();
-  const ui = useUiStore();
   // 一次结算"达成且本期没领过"的(顺序即 DAILY_TASKS 顺序),先记账再发赏 ——
   // 发赏若又牵动 track,重新进来也认得出"已经领过"了
   const settled = settleDailies(dailyStateOf(quests.daily), quests.counters);
@@ -265,7 +261,7 @@ function checkDaily(): void {
     const def = dailyTaskDef(row.task.id);
     if (!def) continue;
     grantReward(def.reward, true);
-    ui.toast(`日课已成「${def.name}」`, "success");
+    notify(`日课已成「${def.name}」`, "success");
   }
 }
 

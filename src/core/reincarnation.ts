@@ -38,6 +38,7 @@ import type { LifeReview, ReincarnationView } from "@/stores/ui";
 import type { GNum } from "@/types";
 import { recordMilestone } from "./identity";
 import { gnZero } from "@/utils/gnum";
+import { notify } from "./notify";
 
 /** 至少金丹境方可主动兵解 */
 export const MANUAL_REBIRTH_MIN_MAJOR = 2;
@@ -307,7 +308,7 @@ export function confirmReincarnation(
   track("reincarnations");
   ui.reincarnation = null;
   ui.deathDialog = false;
-  ui.toast("一梦轮回,你在玄枢山下再度睁开双眼", "rare");
-  if (view.stageAdvanced) ui.toast(`宿慧渐厚,你已是「${view.stageName}」`, "rare");
-  if (recognized > 0) ui.toast(`睁眼之际,${recognized} 味灵材的名字自行浮上心头`, "info");
+  notify("一梦轮回,你在玄枢山下再度睁开双眼", "rare");
+  if (view.stageAdvanced) notify(`宿慧渐厚,你已是「${view.stageName}」`, "rare");
+  if (recognized > 0) notify(`睁眼之际,${recognized} 味灵材的名字自行浮上心头`, "info");
 }

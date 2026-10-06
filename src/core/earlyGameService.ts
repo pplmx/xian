@@ -6,7 +6,6 @@ import { useGameStore } from "@/stores/game";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useResourcesStore } from "@/stores/resources";
 import { useAdventureStore } from "@/stores/adventure";
-import { useUiStore } from "@/stores/ui";
 import { usePacingTelemetry } from "@/stores/pacingTelemetry";
 import type { EnlightenmentEvent, EnlightenmentOption, CaveEvent, GNum } from "@/types";
 import {
@@ -19,6 +18,7 @@ import {
 import { gn, toNum } from "@/utils/gnum";
 import { todayLocalNum } from "@/utils/time";
 import { gameNow } from "./enginePause";
+import { notify } from "./notify";
 
 function telemetry(): ReturnType<typeof usePacingTelemetry> {
   return usePacingTelemetry();
@@ -84,17 +84,16 @@ export function chooseEnlightenment(optionIndex: number): void {
   if (!enlightenmentEvent || optionIndex >= enlightenmentEvent.options.length) return;
   const opt = enlightenmentEvent.options[optionIndex]!;
   const cult = useCultivationStore();
-  const ui = useUiStore();
   const now = Date.now();
 
   // 即时奖励(如灵机一动直接给悟道点)或挂 buff;buff 未注册时 addBuff 会静默……
   // 但那不再是"选项该有的样子"——守卫在这里兜住,让漏注册显式为错误而不是静默空转
   if (opt.reward) {
     useResourcesStore().addSmall("wudao", opt.reward.value);
-    ui.toast(`灵机一动,悟道点 +${opt.reward.value}`, "success");
+    notify(`灵机一动,悟道点 +${opt.reward.value}`, "success");
   } else if (opt.buffId) {
     cult.addBuff(opt.buffId, now);
-    ui.toast(opt.desc, "success");
+    notify(opt.desc, "success");
   }
 
   telemetry().record("enlightenment_choose", "modal", `悟道:${opt.label}`);
@@ -122,7 +121,7 @@ export function startRetreat(): boolean {
 
   const adventure = useAdventureStore();
   if (adventure.session) {
-    useUiStore().toast("你正在历练途中,先了结眼下这一程", "warn");
+    notify("你正在历练途中,先了结眼下这一程", "warn");
     return false;
   }
 
@@ -238,7 +237,7 @@ export function recordWin(): void {
     telemetry().record("win_streak", "notify", `连胜 ${streak} 场奖励`);
     // 奖励必须报数:同一场战斗里镇压、雪耻都有 toast,唯独 3/5/10 档的赏赐
     // 一直静默入袋 —— 白拿的灵石与悟道,账上要有声音(全库审计抓出的真缺口)
-    useUiStore().toast(`连胜 ${streak} 场,赏灵石 ${reward.stone} · 悟道点 ${reward.wudao}`, "rare");
+    notify(`连胜 ${streak} 场,赏灵石 ${reward.stone} · 悟道点 ${reward.wudao}`, "rare");
   }
 }
 
@@ -248,7 +247,7 @@ export function recordLoss(): void {
   const streak = player.winStreak;
   player.resetWinStreak();
   // 贺有赏、断有音:连胜被掐断的那一下要出声(别让玩家某天回过神才发现 3 连胜没了)
-  if (streak > 0) useUiStore().toast(`连胜 ${streak} 场就此而止,前功须从头再积`, "warn");
+  if (streak > 0) notify(`连胜 ${streak} 场就此而止,前功须从头再积`, "warn");
 }
 
 /** 触发洞府巡游(每日一次) */
@@ -356,7 +355,7 @@ export function chooseCaveOption(optionIndex: number): void {
   const today = todayLocalNum();
   player.markCaveEventToday(today);
   // 选完给一句回执——此前选完弹窗直接关,拿到什么全凭感觉
-  useUiStore().toast(`洞府巡游·${opt.effect}`, "success");
+  notify(`洞府巡游·${opt.effect}`, "success");
   telemetry().record("cave_choose", "modal", `洞府选择:${opt.label}`);
   caveEvent = null;
 }

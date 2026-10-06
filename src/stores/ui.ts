@@ -1,6 +1,7 @@
 /** 瞬态 UI 状态 —— Toast / 各类 Modal(不持久化) */
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { setNotifier } from "@/core/notify";
 import type { OfflineSummary } from "@/types";
 
 export interface Toast {
@@ -115,6 +116,17 @@ export const useUiStore = defineStore("ui", () => {
       toasts.value = toasts.value.filter((t) => t.id !== id);
     }, ttl);
   }
+
+  /*
+   * 把自己接上 core 的通知端口(见 core/notify.ts)。core 那二十几个模块从此只说
+   * `notify(...)`,不再 import 本 store;换一套 UI(或测试里换 Pinia)只要 store
+   * 被 setup 过一次,落点就切过来。
+   *
+   * 走 `useUiStore().toast(...)` 而不是直接闭包 `toast`:这样**测试里
+   * `vi.spyOn(useUiStore(), "toast")` 仍然拦得住** core 发出的提示(现有一批
+   * 对账用例就是这么截提示语的),落点也始终是当前 active 的那份 pinia。
+   */
+  setNotifier({ toast: (text, kind) => useUiStore().toast(text, kind) });
 
   /** 手动关闭某条提示(点按 toast 即收,不等超时) */
   function dismissToast(id: number): void {

@@ -10,7 +10,7 @@ import { track } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useDongfuStore } from "@/stores/dongfu";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 export interface BuildingUpgradeInfo {
   canUpgrade: boolean;
@@ -52,21 +52,20 @@ export function buildingUpgradeInfo(id: BuildingId): BuildingUpgradeInfo {
 export function upgradeBuilding(id: BuildingId): boolean {
   const dongfu = useDongfuStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const def = buildingDef(id)!;
   const info = buildingUpgradeInfo(id);
   if (!info.canUpgrade) {
-    ui.toast(info.reason, "warn");
+    notify(info.reason, "warn");
     return false;
   }
   if (!resources.hasStone(info.stone) || !resources.hasSmall("ore", info.ore)) {
-    ui.toast("灵石或玄铁不足", "warn");
+    notify("灵石或玄铁不足", "warn");
     return false;
   }
   resources.spendStone(info.stone);
   resources.spendSmall("ore", info.ore);
   dongfu.setLevel(id, info.nextLevel);
   track("buildingUpgrades");
-  ui.toast(`${def.name}升至 ${info.nextLevel} 级`, "success");
+  notify(`${def.name}升至 ${info.nextLevel} 级`, "success");
   return true;
 }

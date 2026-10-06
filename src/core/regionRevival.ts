@@ -24,8 +24,8 @@
 import { REGIONS, regionDef } from "@/data/regions";
 import { useAdventureStore } from "@/stores/adventure";
 import { usePlayerStore } from "@/stores/player";
-import { useUiStore } from "@/stores/ui";
 import { isRegionRevived, regionTouchedAt } from "./worldMemory";
+import { notify } from "./notify";
 
 /** 提示里最多点名几处 —— 回来一次撞上二十处复聚时,别糊一屏名字 */
 const LITANY_LIMIT = 3;
@@ -69,12 +69,11 @@ export function settleRegionRevivals(now: number = Date.now()): string[] {
     }
   }
 
-  const ui = useUiStore();
   if (returned.length > 0) {
-    ui.toast(`仙路日久,妖气复聚:${litany(returned)}的旧主归来 —— 再历一程即可复靖`, "info");
+    notify(`仙路日久,妖气复聚:${litany(returned)}的旧主归来 —— 再历一程即可复靖`, "info");
   }
   if (loosened.length > 0) {
-    ui.toast(`${litany(loosened)}妖气复聚,镇压松动 —— 此地重新成为历练之地`, "info");
+    notify(`${litany(loosened)}妖气复聚,镇压松动 —— 此地重新成为历练之地`, "info");
   }
   return returned;
 }

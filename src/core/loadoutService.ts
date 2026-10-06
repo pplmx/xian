@@ -11,8 +11,8 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useLoadoutsStore, MAX_LOADOUTS, type Loadout } from "@/stores/loadouts";
-import { useUiStore } from "@/stores/ui";
 import { detectBuild } from "./buildDetect";
+import { notify } from "./notify";
 
 /** 保存当前构筑为快照 */
 export function captureLoadout(name: string): Loadout | null {
@@ -20,9 +20,8 @@ export function captureLoadout(name: string): Loadout | null {
   const cultivation = useCultivationStore();
   const player = usePlayerStore();
   const loadouts = useLoadoutsStore();
-  const ui = useUiStore();
   if (loadouts.list.length >= MAX_LOADOUTS) {
-    ui.toast(`构筑最多保存 ${MAX_LOADOUTS} 套,请先删去一套`, "warn");
+    notify(`构筑最多保存 ${MAX_LOADOUTS} 套,请先删去一套`, "warn");
     return null;
   }
   const detected = detectBuild(player.finalStats.mods);
@@ -37,7 +36,7 @@ export function captureLoadout(name: string): Loadout | null {
     savedAt: Date.now(),
   };
   loadouts.add(loadout);
-  ui.toast(`构筑「${loadout.name}」已存入行囊`, "success");
+  notify(`构筑「${loadout.name}」已存入行囊`, "success");
   return loadout;
 }
 
@@ -48,7 +47,6 @@ export function applyLoadout(id: string): boolean {
   const dongfu = useDongfuStore();
   const player = usePlayerStore();
   const loadouts = useLoadoutsStore();
-  const ui = useUiStore();
   const loadout = loadouts.list.find((l) => l.id === id);
   if (!loadout) return false;
   let missing = 0;
@@ -86,7 +84,7 @@ export function applyLoadout(id: string): boolean {
   missing += loadout.artifactIds.length - validArts.length;
   inventory.equippedArtifacts = validArts;
 
-  ui.toast(
+  notify(
     missing > 0
       ? `已切换至「${loadout.name}」(${missing} 处部件缺失,已跳过)`
       : `已切换至「${loadout.name}」`,

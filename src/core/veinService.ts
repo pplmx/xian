@@ -22,7 +22,7 @@ import { playerTier } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 /** 灵脉是否开放(金丹起) */
 export function veinsUnlocked(): boolean {
@@ -52,19 +52,18 @@ export function veinSwitchCost(): GNum {
 export function investVein(id: VeinId): boolean {
   const dongfu = useDongfuStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const info = investVeinIn(veinStateOf(dongfu.veinPoints, dongfu.veinMain), id, {
     major: usePlayerStore().major,
     tier: playerTier(),
   });
   if (!info.can) {
     // 空字符串 = 这个门槛不该打扰玩家(未开放就是这样)
-    if (info.reason !== "") ui.toast(info.reason, "warn");
+    if (info.reason !== "") notify(info.reason, "warn");
     return false;
   }
   const cost = info.costs[0]!.amount;
   if (!resources.hasStone(cost)) {
-    ui.toast("灵石不足", "warn");
+    notify("灵石不足", "warn");
     return false;
   }
   resources.spendStone(cost);
@@ -77,7 +76,6 @@ export function investVein(id: VeinId): boolean {
 export function switchMainVein(id: VeinId): boolean {
   const dongfu = useDongfuStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const info = switchVeinMainIn(veinStateOf(dongfu.veinPoints, dongfu.veinMain), id, {
     major: usePlayerStore().major,
     tier: playerTier(),
@@ -86,11 +84,11 @@ export function switchMainVein(id: VeinId): boolean {
   if (!info.can) return false;
   const cost = info.costs[0]!.amount;
   if (!resources.hasStone(cost)) {
-    ui.toast("灵石不足,迁脉非小事", "warn");
+    notify("灵石不足,迁脉非小事", "warn");
     return false;
   }
   resources.spendStone(cost);
   dongfu.setVeinState(info.state);
-  ui.toast(`主脉改走「${veinDef(id).name}」`, "success");
+  notify(`主脉改走「${veinDef(id).name}」`, "success");
   return true;
 }

@@ -43,7 +43,6 @@ import { useAdventureStore } from "@/stores/adventure";
 import type { LastBattleView } from "@/stores/adventure";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useSettingsStore } from "@/stores/settings";
-import { useUiStore } from "@/stores/ui";
 import { checkSuppression, memorialLine, MEMORIAL_CHANCE } from "./suppress";
 import {
   recordLoss,
@@ -55,6 +54,7 @@ import {
   ECHO_GHOST_CHANCE,
 } from "./worldMemory";
 import { personalityEffects } from "./petPersonality";
+import { notify } from "./notify";
 // 连胜与宿敌各有一个 recordLoss,一个管连胜清空、一个管宿敌(败北阈值):
 // 前者来自 Phase 28 前期玩法(earlyGameService),后者来自世界记忆(worldMemory),
 // 这里都走别名,免得互相遮蔽
@@ -94,21 +94,20 @@ function routeAllows(regionId: string): boolean {
 export function startExploration(regionId: string, mode: ExploreMode): boolean {
   const adventure = useAdventureStore();
   const player = usePlayerStore();
-  const ui = useUiStore();
   const region = regionDef(regionId);
   if (!region || player.dead) return false;
   // Phase 28 闭关禁令:闭关期间不得外出历练(与 startRetreat 的互斥守卫配对,双向互斥)
   if (isRetreating()) {
-    ui.toast("你正在闭关静修,心无旁骛,暂勿外出历练", "warn");
+    notify("你正在闭关静修,心无旁骛,暂勿外出历练", "warn");
     return false;
   }
   // 拒绝必须让玩家看见 —— 静默 return false 在界面上等同于「点了没反应」
   if (adventure.session) {
-    ui.toast("你正在历练途中,先了结眼下这一程", "warn");
+    notify("你正在历练途中,先了结眼下这一程", "warn");
     return false;
   }
   if (!routeAllows(regionId)) {
-    ui.toast(entryBlockReason(regionId) ?? `${region.name}此时去不得`, "warn");
+    notify(entryBlockReason(regionId) ?? `${region.name}此时去不得`, "warn");
     return false;
   }
   // 踏入一处新地界 —— 眼前是没走过的路,她可能有话要说
@@ -140,25 +139,24 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
   // 若不清,这一程开打后 tickExploration 会拿旧事件(错误区域/层级的 tier)去 autoResolve 一次,
   // 或阻塞新事件。归零后这程从干净状态开始。
   adventure.setPendingEvent(null, Date.now());
-  ui.toast(`你动身前往${region.name},开始${modeDef.name}`, "info");
+  notify(`你动身前往${region.name},开始${modeDef.name}`, "info");
   // Phase 31 A2:出发时低频判定区域事件(妖潮等,30~120 分钟)
   const ev = rollRegionEvent(region);
   if (ev) {
     // 界域化的叫法:人间界是「妖潮/商队遇袭」,混沌海是「凶兽潮/掠夺者」
     const def = regionEventDef(ev.eventId, player.major);
-    ui.toast(`${region.name}风云突变——${def?.name ?? "异象"}!`, "warn");
+    notify(`${region.name}风云突变——${def?.name ?? "异象"}!`, "warn");
   }
   // Phase 31.4 区域凭吊:重访已镇压之地,低概率世界说起你的旧事
   if (player.suppressedRegions.includes(region.id) && rng.chance(MEMORIAL_CHANCE)) {
     const line = memorialLine(region.id, player);
-    if (line) ui.toast(line, "info");
+    if (line) notify(line, "info");
   }
   return true;
 }
 
 export function stopExploration(reason: "manual" | "defeat" | "complete"): void {
   const adventure = useAdventureStore();
-  const ui = useUiStore();
   const s = adventure.session;
   if (!s) return;
   const region = regionDef(s.regionId);
@@ -173,14 +171,14 @@ export function stopExploration(reason: "manual" | "defeat" | "complete"): void 
     s.wudaoGain > 0 ? `、悟道点 ${s.wudaoGain}` : ""
   }${s.itemGain > 0 ? `、拾获 ${s.itemGain} 件` : ""}`;
   if (reason === "complete") {
-    ui.toast(
+    notify(
       `此行${region?.name ?? ""}历练圆满,胜 ${s.wins} 场,际遇 ${s.events} 次;${haul}`,
       "success",
     );
   } else if (reason === "defeat") {
-    ui.toast(`你身负重伤,不得不中断历练归来疗伤;此行${haul}`, "warn");
+    notify(`你身负重伤,不得不中断历练归来疗伤;此行${haul}`, "warn");
   } else {
-    ui.toast(`你收拾行囊,提前结束了这次历练;此行${haul}`, "info");
+    notify(`你收拾行囊,提前结束了这次历练;此行${haul}`, "info");
   }
 }
 
@@ -300,7 +298,7 @@ function runBattle(now: number): void {
   const ghost = rng.chance(ECHO_GHOST_CHANCE) ? ghostOf(player.nemeses, eDef.id) : null;
   if (ghost) {
     ghostLead = ghostLeadIn(ghost);
-    useUiStore().toast(ghostLead, "info");
+    notify(ghostLead, "info");
   }
 
   // Phase 31 S4:灵兽性格修正危险(好战更高,谨慎更低)
@@ -372,7 +370,6 @@ function runBattle(now: number): void {
 
     // Phase 30: 更新区域统计并判定镇压
     const damageTakenPct = 1 - result.playerHpPct;
-    const ui = useUiStore();
     player.updateRegionStats(region.id, result.win, result.rounds, damageTakenPct);
     player.recordRegionWin(region.id);
     // 取得镇压资格即永久:「镇压过就不必再镇压」。
@@ -381,7 +378,7 @@ function runBattle(now: number): void {
     if (suppressed && !player.suppressQualified.includes(region.id)) {
       player.markSuppressQualified(region.id);
       player.suppressRegion(region.id);
-      ui.toast(
+      notify(
         `你已彻底镇压${region.name},此后将自动产出:${suppressRateLine(region.id, regionRecallFor(region.id).prosperity)}`,
         "rare",
       );
@@ -390,16 +387,15 @@ function runBattle(now: number): void {
     // Phase 30.9 S2: 击中宿敌 → 雪耻
     if (isNemesis(player.nemeses, eDef.id)) {
       player.setNemeses(markAvenged(player.nemeses, eDef.id, now));
-      ui.toast(`【雪耻】宿敌${eDef.name}已被斩于剑下!`, "rare");
+      notify(`【雪耻】宿敌${eDef.name}已被斩于剑下!`, "rare");
     }
   } else {
     // Phase 31 S4:灵兽护主 —— 慢稳/谨慎的灵兽(lossReduction>0)在危急时低概率
     // 护住这一击:免于重伤、不计败绩、历练继续(「失败率下降」落到实处)。
     // 好战型 lossReduction=0,恒不触发,与无灵兽行为一致
-    const ui = useUiStore();
     if (rng.chance(personalityEffects(player.petId).lossReduction)) {
       adventure.setSession({ ...s, nextBattleAt: nextBattleTime(now) });
-      ui.toast("灵兽机警,替你挡开了这一击,历练继续", "info");
+      notify("灵兽机警,替你挡开了这一击,历练继续", "info");
       return;
     }
     cultivation.addBuff("injury", now);
@@ -411,7 +407,7 @@ function runBattle(now: number): void {
     const { list, becameNemesis } = recordLoss(player.nemeses, eDef.id, eDef.name, region.id, now);
     if (becameNemesis) {
       player.setNemeses(list);
-      ui.toast(`【宿敌】你已在${eDef.name}手下败北三次——此敌已成你的宿敌!`, "warn");
+      notify(`【宿敌】你已在${eDef.name}手下败北三次——此敌已成你的宿敌!`, "warn");
     } else {
       player.setNemeses(list);
     }
@@ -466,20 +462,19 @@ function maybeEncounter(regionId: string): void {
 /** 标记区域首领已清并连锁解锁后续区域(在线/离线共用) */
 export function clearRegionAndUnlockNext(regionId: string): void {
   const adventure = useAdventureStore();
-  const ui = useUiStore();
   if (!adventure.markCleared(regionId)) return;
   const region = regionDef(regionId);
-  ui.toast(`你击败了${region?.name ?? ""}之主!`, "rare");
+  notify(`你击败了${region?.name ?? ""}之主!`, "rare");
   // 击破首领 —— 打开了本不该开的地方
   offerBondEvent("bossDefeated");
   // 也可能翻出与她未了之事有关的东西
   if (rng.chance(0.5)) sparkIntent("omen");
   // 本世路线推进:通过这一段,下一段自开
   const nextPlace = advanceRoute(regionId);
-  if (nextPlace) ui.toast(`此世前路已明——${nextPlace}`, "rare");
+  if (nextPlace) notify(`此世前路已明——${nextPlace}`, "rare");
   // 前置已靖 → 此地已开:与读档补票同一把尺子(见 stores/adventure.applyUnlockClosure)
   for (const id of adventure.applyUnlockClosure()) {
-    ui.toast(`新的历练之地已开放——${regionDef(id)?.name ?? ""}`, "rare");
+    notify(`新的历练之地已开放——${regionDef(id)?.name ?? ""}`, "rare");
   }
 }
 
@@ -509,8 +504,8 @@ export function exploreEventChance(regionId: string, mods: StatMods): number {
  */
 function announceEventTier(ev: EventDef): void {
   const tier = eventTierDef(eventTierOf(ev.id));
-  if (tier.id === "jiyuan") useUiStore().toast(`千载难逢 —— 机缘「${ev.title}」`, "rare");
-  else if (tier.id === "qiyuan") useUiStore().toast(`缘分再续 —— 「${ev.title}」`, "info");
+  if (tier.id === "jiyuan") notify(`千载难逢 —— 机缘「${ev.title}」`, "rare");
+  else if (tier.id === "qiyuan") notify(`缘分再续 —— 「${ev.title}」`, "info");
 }
 
 export function tickExploration(now: number): void {

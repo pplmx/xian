@@ -23,7 +23,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
 import { useDongfuStore } from "@/stores/dongfu";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 export function equipLevelCap(): number {
   return EQUIP_MAX_LEVEL_BASE + useDongfuStore().forgeCapBonus;
@@ -41,15 +41,14 @@ export function equipUpgradeCost(uid: string): { dust: number; stone: GNum } | n
 export function upgradeEquipment(uid: string): boolean {
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const inst = inventory.findItem(uid);
   const cost = equipUpgradeCost(uid);
   if (!inst || !cost) {
-    ui.toast("已达强化上限", "warn");
+    notify("已达强化上限", "warn");
     return false;
   }
   if (!resources.hasSmall("dust", cost.dust) || !resources.hasStone(cost.stone)) {
-    ui.toast("器灵尘或灵石不足", "warn");
+    notify("器灵尘或灵石不足", "warn");
     return false;
   }
   resources.spendSmall("dust", cost.dust);
@@ -67,14 +66,13 @@ export function upgradeEquipment(uid: string): boolean {
   useLoreStore().noteEquipUsed(inst.templateId);
   // 炼器也算上手一味矿材:矿石从此能推到「通晓」、锻造技艺照常涨(见 noteSmithingUsed)
   noteSmithingUsed(inst.tier, true);
-  ui.toast(`「${t?.name}」强化至 +${inst.level + 1}`, "success");
+  notify(`「${t?.name}」强化至 +${inst.level + 1}`, "success");
   return true;
 }
 
 export function decomposeEquipment(uid: string, opts: { quiet?: boolean } = {}): boolean {
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const inst = inventory.findItem(uid);
   if (!inst || inst.locked) return false;
   const gain = salvageOf(inst);
@@ -83,7 +81,7 @@ export function decomposeEquipment(uid: string, opts: { quiet?: boolean } = {}):
   resources.addStone(gain.stone);
   track("decomposed");
   if (!opts.quiet) {
-    ui.toast(
+    notify(
       isZero(gain.stone)
         ? `分解得器灵尘×${gain.dust}`
         : `分解得器灵尘×${gain.dust} · 退灵石 ${formatGN(gain.stone)}(${refundRateText()})`,
@@ -144,9 +142,8 @@ export function decomposePreview(ranks: readonly number[]): DecomposeBatch {
 
 /** 一键分解:行囊中勾选品质 rank 的未锁定装备,按一次总账报出来,返回分解件数 */
 export function decomposeByRanks(ranks: readonly number[]): number {
-  const ui = useUiStore();
   const got = decomposeBatch(decomposeTargets(ranks));
-  if (got.count > 0) ui.toast(`已分解 ${got.count} 件装备,${batchYieldText(got)}`, "info");
+  if (got.count > 0) notify(`已分解 ${got.count} 件装备,${batchYieldText(got)}`, "info");
   return got.count;
 }
 
@@ -168,20 +165,19 @@ export function artifactUpCost(defId: string): { wudao: number; stone: GNum } | 
 export function upgradeArtifact(defId: string): boolean {
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const cost = artifactUpCost(defId);
   const def = artifactDef(defId);
   if (!cost || !def) {
-    ui.toast("此法宝已臻圆满", "warn");
+    notify("此法宝已臻圆满", "warn");
     return false;
   }
   if (!resources.hasSmall("wudao", cost.wudao) || !resources.hasStone(cost.stone)) {
-    ui.toast("悟道点或灵石不足", "warn");
+    notify("悟道点或灵石不足", "warn");
     return false;
   }
   resources.spendSmall("wudao", cost.wudao);
   resources.spendStone(cost.stone);
   inventory.levelUpArtifact(defId);
-  ui.toast(`「${def.name}」炼化精进`, "success");
+  notify(`「${def.name}」炼化精进`, "success");
   return true;
 }

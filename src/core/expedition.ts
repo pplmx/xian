@@ -42,7 +42,7 @@ import { SIM_REFERENCE } from "./celestialSim";
 import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore, type WorldRunState } from "@/stores/endgame";
 import { gateDef } from "@/data/qimen";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 /** 单场战果 */
 export interface StepOutcome {
@@ -162,7 +162,6 @@ function settle(
   pactBroken: boolean,
 ): number {
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   let reward = 0;
   if (cleared) {
     const pact = run.pactId ? pactDef(run.pactId) : undefined;
@@ -179,14 +178,14 @@ function settle(
     if (run.pactId === "wushang") recordMilestone("first_wushang");
     if (world.id === "void") recordMilestone("first_void");
     trackClearRecords(world.name, run.totalRounds, run.pactId, reward);
-    ui.toast(
+    notify(
       `你踏破${world.name}!道源 +${reward}${speedBonus > 0 ? "(含杀伐速战之赏)" : ""}`,
       "rare",
     );
   } else if (pactBroken) {
-    ui.toast(`契约崩碎,天道将你逐出${world.name}`, "warn");
+    notify(`契约崩碎,天道将你逐出${world.name}`, "warn");
   } else {
-    ui.toast(`${world.name}将你逐出天门`, "warn");
+    notify(`${world.name}将你逐出天门`, "warn");
   }
   // 所择之门记进道痕环境:忆战/重写要按当年的门重打这一趟
   recordMark(
@@ -285,15 +284,14 @@ export function startWorldExpedition(
   gateId: string | null = null,
 ): StepOutcome | null {
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   const world = resolveWorld(worldId);
   if (!world || !endgameUnlocked()) return null;
   if (!endgame.daoPath) {
-    ui.toast("先择道途,方可踏天", "warn");
+    notify("先择道途,方可踏天", "warn");
     return null;
   }
   if (endgame.worldRun) {
-    ui.toast("已有远征在途,先了结眼前的路", "warn");
+    notify("已有远征在途,先了结眼前的路", "warn");
     return null;
   }
   const pact = pactId ? pactDef(pactId) : undefined;
@@ -302,13 +300,13 @@ export function startWorldExpedition(
   if (pact?.special === "sealCore") {
     const sealed = sealCoreMods();
     if (!sealed) {
-      ui.toast("道途尚未成路,逆命契无从封印", "warn");
+      notify("道途尚未成路,逆命契无从封印", "warn");
       return null;
     }
     sealedMods = sealed;
   }
   if (!endgame.spendDaoSource(world.entryCost)) {
-    ui.toast(`道源不足 ${world.entryCost}(天道熔炉可献祭闲置资财)`, "warn");
+    notify(`道源不足 ${world.entryCost}(天道熔炉可献祭闲置资财)`, "warn");
     return null;
   }
   const rules = chainRules(currentDaoRules(), world.rules, pactRules(pact), gateRulesOf(gate?.id));
@@ -324,8 +322,8 @@ export function startWorldExpedition(
     winStacks: 0,
     sealedMods,
   };
-  if (pact) ui.toast(`你与天道立下「${pact.name}」`, "info");
-  if (gate) ui.toast(`你自「${gate.fullName}」入界 —— ${gate.desc}`, "info");
+  if (pact) notify(`你与天道立下「${pact.name}」`, "info");
+  if (gate) notify(`你自「${gate.fullName}」入界 —— ${gate.desc}`, "info");
   return fightStep(run, world, world.foes[0]!);
 }
 
@@ -359,7 +357,7 @@ export function abandonExpedition(): void {
   const world = resolveWorld(run.worldId);
   if (world) {
     recordMark(world.id, world.name, false, run.totalRounds);
-    useUiStore().toast(`你退出了${world.name},此行道源尽付东流`, "info");
+    notify(`你退出了${world.name},此行道源尽付东流`, "info");
   }
   endgame.worldRun = null;
 }
@@ -482,9 +480,8 @@ export interface MutationResult {
 /** 应战天道变数:随机规则 × 六连战 */
 export function challengeMutation(mutatorIds: string[]): MutationResult | null {
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   if (!endgameUnlocked() || !endgame.daoPath) {
-    ui.toast("先择道途,方可应变数", "warn");
+    notify("先择道途,方可应变数", "warn");
     return null;
   }
   // 校验在花道源之前:规则池里查不到的变数不能静默跳过 —— 少一条规则就是少一档难度,
@@ -493,13 +490,13 @@ export function challengeMutation(mutatorIds: string[]): MutationResult | null {
   for (const id of mutatorIds) {
     const next = MUTATORS.find((m) => m.id === id);
     if (!next) {
-      ui.toast(`变数规则有缺失(${id}),请重新窥探`, "warn");
+      notify(`变数规则有缺失(${id}),请重新窥探`, "warn");
       return null;
     }
     muts.push(next);
   }
   if (!endgame.spendDaoSource(MUTATION_ENTRY_COST)) {
-    ui.toast(`道源不足 ${MUTATION_ENTRY_COST}`, "warn");
+    notify(`道源不足 ${MUTATION_ENTRY_COST}`, "warn");
     return null;
   }
   const rules = chainRules(currentDaoRules(), ...muts.map((m) => m.rules));
@@ -528,9 +525,9 @@ export function challengeMutation(mutatorIds: string[]): MutationResult | null {
   if (report.cleared) {
     reward = MUTATION_BASE_REWARD;
     endgame.addDaoSource(reward);
-    ui.toast(`天道变数尽数破解!道源 +${reward}`, "rare");
+    notify(`天道变数尽数破解!道源 +${reward}`, "rare");
   } else {
-    ui.toast(`变数难测,你止步第 ${report.fightsWon + 1} 战`, "warn");
+    notify(`变数难测,你止步第 ${report.fightsWon + 1} 战`, "warn");
   }
   recordMark("mutation", "天道变数", report.cleared, report.totalRounds, null, { mutatorIds });
   return { report, rewardDaoSource: reward };
@@ -543,28 +540,27 @@ export const VOID_REROLL_COST = 10;
 /** 窥探虚界:花道源生成一个裁判过审的临时世界(进行中远征在虚界时不可重摇) */
 export function rerollVoidWorld(): boolean {
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   if (!endgameUnlocked() || !endgame.daoPath) {
-    ui.toast("先择道途,方可窥探虚界", "warn");
+    notify("先择道途,方可窥探虚界", "warn");
     return false;
   }
   if (endgame.worldRun?.worldId === "void") {
-    ui.toast("虚界远征在途,此界尚不能散去", "warn");
+    notify("虚界远征在途,此界尚不能散去", "warn");
     return false;
   }
   if (!endgame.spendDaoSource(VOID_REROLL_COST)) {
-    ui.toast(`道源不足 ${VOID_REROLL_COST}`, "warn");
+    notify(`道源不足 ${VOID_REROLL_COST}`, "warn");
     return false;
   }
   const generated = generateApprovedWorld(Date.now() % 999983, 40, voidHistory());
   if (!generated) {
     // 极端情形兜底:裁判连续否决,退款
     endgame.addDaoSource(VOID_REROLL_COST);
-    ui.toast("天机紊乱,虚界未能成形(道源已退还)", "warn");
+    notify("天机紊乱,虚界未能成形(道源已退还)", "warn");
     return false;
   }
   endgame.voidWorld = generated.world;
-  ui.toast(
+  notify(
     `虚界「${generated.world.name}」成形(迥异诸天 ${Math.round(generated.novelty * 100)}%,推演淘汰 ${generated.rejected} 个候选)`,
     "rare",
   );

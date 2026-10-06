@@ -31,7 +31,7 @@ import { ENGINE_WORLD } from "./engineWorld";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
 import { useResourcesStore } from "@/stores/resources";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 export interface ReforgeCost {
   stone: GNum;
@@ -81,16 +81,15 @@ export function sealCapacity(inst: EquipmentInstance): number {
 export function reforgeEquipment(uid: string, quiet = false): boolean {
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const inst = inventory.findItem(uid);
   if (!inst) return false;
   const cost = reforgeCost(inst);
   if (!cost) {
-    if (!quiet) ui.toast("此物已无重铸余地", "warn");
+    if (!quiet) notify("此物已无重铸余地", "warn");
     return false;
   }
   if (!resources.hasStone(cost.stone) || !resources.hasSmall("dust", cost.dust)) {
-    if (!quiet) ui.toast("灵石或器灵尘不足", "warn");
+    if (!quiet) notify("灵石或器灵尘不足", "warn");
     return false;
   }
 
@@ -126,7 +125,7 @@ export function reforgeEquipment(uid: string, quiet = false): boolean {
   // 新版本没看到新系统」),真正「刻纹引灵」的活儿就该长这门手艺
   useLoreStore().addSkillExp("inscribe", 10 * (1 + inst.tier * 0.2));
 
-  if (!quiet) ui.toast(`重铸而成:词条 ${countNote}${sealedNote}`, "success");
+  if (!quiet) notify(`重铸而成:词条 ${countNote}${sealedNote}`, "success");
   return true;
 }
 
@@ -142,24 +141,23 @@ export function sealCost(inst: EquipmentInstance): GNum | null {
 export function sealAffix(uid: string, affixId: string): boolean {
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const inst = inventory.findItem(uid);
   if (!inst) return false;
   if (!inst.affixes.some((a) => a.id === affixId)) return false;
   if ((inst.sealedAffixIds ?? []).includes(affixId)) return false;
   const cost = sealCost(inst);
   if (!cost) {
-    ui.toast("至少须留一个词条随天意流转", "warn");
+    notify("至少须留一个词条随天意流转", "warn");
     return false;
   }
   if (!resources.hasStone(cost)) {
-    ui.toast("灵石不足", "warn");
+    notify("灵石不足", "warn");
     return false;
   }
   resources.spendStone(cost);
   inventory.replaceItem({ ...inst, sealedAffixIds: [...(inst.sealedAffixIds ?? []), affixId] });
   const name = affixDef(affixId)?.name ?? "词条";
-  ui.toast(`「${name}」已封存,重铸不移`, "success");
+  notify(`「${name}」已封存,重铸不移`, "success");
   return true;
 }
 

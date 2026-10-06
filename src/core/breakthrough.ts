@@ -31,6 +31,7 @@ import { useUiStore } from "@/stores/ui";
 import type { BreakthroughView } from "@/stores/ui";
 import type { StatMods } from "@/types";
 import { playSfx } from "./audio";
+import { notify } from "./notify";
 // Phase 28 突破准备:静坐/服丹的一次性加成(见 earlyGameService;仅无劫突破受益)
 import {
   breakthroughPrepState,
@@ -190,7 +191,7 @@ export function attemptBreakthrough(): BreakthroughView | null {
   const ui = useUiStore();
   const info = breakthroughInfo();
   if (!info.ready) {
-    ui.toast(info.reason, "warn");
+    notify(info.reason, "warn");
     return null;
   }
   const fromLabel = player.realmName;

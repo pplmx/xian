@@ -30,8 +30,8 @@ import { generateEquipment } from "./equipGen";
 import { acquireEquipment } from "./loot";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
-import { useUiStore } from "@/stores/ui";
 import { useEndgameStore } from "@/stores/endgame";
+import { notify } from "./notify";
 
 export interface SecretRealmState {
   /** 秘境定义 id */
@@ -105,7 +105,6 @@ export function enterSecretRealm(defId: string): EnterResult {
   const player = usePlayerStore();
   const resources = useResourcesStore();
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   const def = secretRealmDef(defId);
   if (!def) return { ok: false, reason: "此境不存在" };
   if (player.major < def.minMajor) return { ok: false, reason: `${def.name}需更高境界` };
@@ -113,13 +112,13 @@ export function enterSecretRealm(defId: string): EnterResult {
   const cost = entryCostOf(def, player.major);
   if (cost.kind === "stone") {
     if (!resources.hasStone(cost.stone)) {
-      ui.toast(`灵石不足 ${formatGN(cost.stone)}`, "warn");
+      notify(`灵石不足 ${formatGN(cost.stone)}`, "warn");
       return { ok: false, reason: "灵石不足" };
     }
     resources.spendStone(cost.stone);
   } else {
     if (!endgame.spendDaoSource(cost.daoSource)) {
-      ui.toast(`道源不足 ${cost.daoSource}`, "warn");
+      notify(`道源不足 ${cost.daoSource}`, "warn");
       return { ok: false, reason: "道源不足" };
     }
   }
@@ -223,7 +222,6 @@ export function secretLayerReward(
 export function fightSecretLayer(): SecretLayerResult | null {
   const player = usePlayerStore();
   const resources = useResourcesStore();
-  const ui = useUiStore();
   const state = player.secretRealm;
   if (!state) return null;
   const def = secretRealmDef(state.realmId);
@@ -250,7 +248,7 @@ export function fightSecretLayer(): SecretLayerResult | null {
       resources.addSmall("wudao", 3);
       lines.push("悟道点 +3");
       player.setSecretRealm(null);
-      ui.toast(`${def.name}已探尽`, "rare");
+      notify(`${def.name}已探尽`, "rare");
       return { win: true, finished: true, cleared: true, lines };
     }
     const carried = Math.min(1, result.playerHpPct + def.healBetweenPct);
@@ -269,7 +267,7 @@ export function fightSecretLayer(): SecretLayerResult | null {
   if (losses >= SECRET_MAX_LOSSES) {
     player.setSecretRealm(null);
     lines.push("连败两场,被逐出秘境");
-    ui.toast("你被逐出了秘境", "warn");
+    notify("你被逐出了秘境", "warn");
     return { win: false, finished: true, cleared: false, lines };
   }
   player.setSecretRealm({

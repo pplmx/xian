@@ -12,7 +12,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useDongfuStore } from "@/stores/dongfu";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 /** 随机习得一部功法(事件/掉落),返回功法名;无可学返回 null */
 export function learnRandomGongfa(specificId?: string): string | null {
@@ -45,22 +45,21 @@ export function learnRandomGongfa(specificId?: string): string | null {
 /** 藏经阁参悟:消耗残页随机习得 */
 export function comprehendGongfa(): boolean {
   const resources = useResourcesStore();
-  const ui = useUiStore();
   if (!resources.hasSmall("page", COMPREHEND_PAGE_COST)) {
-    ui.toast("功法残页不足", "warn");
+    notify("功法残页不足", "warn");
     return false;
   }
   const player = usePlayerStore();
   const cultivation = useCultivationStore();
   const pool = GONGFA.filter((g) => g.minRealm <= player.major + 1 && !cultivation.learned[g.id]);
   if (pool.length === 0) {
-    ui.toast("当前境界的功法已尽数参悟", "info");
+    notify("当前境界的功法已尽数参悟", "info");
     return false;
   }
   resources.spendSmall("page", COMPREHEND_PAGE_COST);
   const name = learnRandomGongfa();
   if (name) {
-    ui.toast(`残卷拼合,你参悟出《${name}》`, "rare");
+    notify(`残卷拼合,你参悟出《${name}》`, "rare");
     return true;
   }
   return false;
@@ -86,17 +85,16 @@ export function gongfaUpgradeCost(id: string): { wudao: number; page: number } |
 export function upgradeGongfa(id: string): boolean {
   const resources = useResourcesStore();
   const cultivation = useCultivationStore();
-  const ui = useUiStore();
   const cost = gongfaUpgradeCost(id);
   if (!cost) return false;
   if (!resources.hasSmall("wudao", cost.wudao) || !resources.hasSmall("page", cost.page)) {
-    ui.toast("悟道点或残页不足", "warn");
+    notify("悟道点或残页不足", "warn");
     return false;
   }
   resources.spendSmall("wudao", cost.wudao);
   resources.spendSmall("page", cost.page);
   cultivation.upgrade(id);
   const def = gongfaDef(id);
-  ui.toast(`《${def?.name}》修炼至第 ${cultivation.learned[id]} 层`, "success");
+  notify(`《${def?.name}》修炼至第 ${cultivation.learned[id]} 层`, "success");
   return true;
 }

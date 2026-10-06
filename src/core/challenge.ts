@@ -30,7 +30,7 @@ import { recordMilestone } from "./identity";
 import { SLAUGHTER_PER_WIN, SWORD_PER_WIN } from "./daoDepth";
 import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 export const CHALLENGE_ENTRY_COST = 15;
 export const CHALLENGE_MAX_MUTATORS = 3;
@@ -122,10 +122,9 @@ export function undertakeChallenge(
   verdict: ChallengeVerdict,
 ): ExpeditionResult | null {
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   if (!endgameUnlocked() || !endgame.daoPath || !verdict.ok) return null;
   if (!endgame.spendDaoSource(CHALLENGE_ENTRY_COST)) {
-    ui.toast(`道源不足 ${CHALLENGE_ENTRY_COST}`, "warn");
+    notify(`道源不足 ${CHALLENGE_ENTRY_COST}`, "warn");
     return null;
   }
   const player = usePlayerStore();
@@ -164,9 +163,9 @@ export function undertakeChallenge(
     recordMilestone("first_custom");
     const player2 = usePlayerStore();
     endgame.updateRecord("best_custom", reward, player2.reincarnation.count + 1, name, "max");
-    ui.toast(`挑战书《${name}》功成!道源 +${reward}`, "rare");
+    notify(`挑战书《${name}》功成!道源 +${reward}`, "rare");
   } else {
-    ui.toast(`《${name}》未竟,止步第 ${report.fightsWon + 1} 战`, "warn");
+    notify(`《${name}》未竟,止步第 ${report.fightsWon + 1} 战`, "warn");
   }
   recordMark("custom", `挑战书·${name}`, report.cleared, report.totalRounds, draft.pactId, {
     worldId: draft.worldId,

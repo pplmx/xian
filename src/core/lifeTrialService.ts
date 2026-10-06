@@ -21,9 +21,9 @@
  */
 import type { CombatRules } from "@/types";
 import { type LifeTrialDef, isPurelyAdverse, lifeTrialDef } from "@/data/lifeTrials";
+import { notify } from "./notify";
 export type { LifeTrialState } from "@/data/lifeTrials";
 import { usePlayerStore } from "@/stores/player";
-import { useUiStore } from "@/stores/ui";
 
 /** 当前这一世的契;未签为 null */
 export function activeLifeTrial(): LifeTrialDef | null {
@@ -54,21 +54,20 @@ export function canSignLifeTrial(id: string): boolean {
  */
 export function signLifeTrial(id: string): boolean {
   const player = usePlayerStore();
-  const ui = useUiStore();
   const def = lifeTrialDef(id);
   if (!def) return false;
   if (player.reincarnation.trial) {
-    ui.toast("此生已有契在身", "warn");
+    notify("此生已有契在身", "warn");
     return false;
   }
   // 规则不合法则拒签:契约只许加难,这是硬约束
   if (!isPurelyAdverse(def.rules)) return false;
   if (!player.spendDaoFruit(def.cost)) {
-    ui.toast("道果不足", "warn");
+    notify("道果不足", "warn");
     return false;
   }
   player.setLifeTrial({ trialId: def.id, at: Date.now(), paid: def.cost });
-  ui.toast(`「${def.name}」既立,此生再无回头路`, "rare");
+  notify(`「${def.name}」既立,此生再无回头路`, "rare");
   return true;
 }
 

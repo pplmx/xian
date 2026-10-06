@@ -52,8 +52,8 @@ import {
 } from "@/data/bondIntent";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
-import { useUiStore } from "@/stores/ui";
 import { rng, type RandomService } from "@/utils/random";
+import { notify } from "./notify";
 
 /** 本世与某人的关系(存档结构) */
 export interface BondState {
@@ -188,7 +188,7 @@ export function meet(daoluId: string, now = Date.now()): boolean {
     nextEventAt: EVENT_GAP,
     lastKind: null,
   });
-  useUiStore().toast(`途中遇见一人——${def.name}`, "info");
+  notify(`途中遇见一人——${def.name}`, "info");
   return true;
 }
 
@@ -224,7 +224,7 @@ export function advanceBond(delta: BondDelta): BondState | null {
   player.setBond(next);
   if (stageIndex(next.stage) > stageIndex(b.stage)) {
     const def = daoluDef(b.daoluId);
-    useUiStore().toast(`你与${def?.name ?? "她"}的关系更进一步`, "rare");
+    notify(`你与${def?.name ?? "她"}的关系更进一步`, "rare");
   }
   return next;
 }
@@ -263,7 +263,7 @@ export function fall(): BondRecord | null {
   if (!b || b.fallen) return null;
   const def = daoluDef(b.daoluId);
   player.setBond({ ...b, fallen: true });
-  useUiStore().toast(`${def?.name ?? "她"}没能走完这一世`, "warn");
+  notify(`${def?.name ?? "她"}没能走完这一世`, "warn");
   return {
     daoluId: b.daoluId,
     name: def?.name ?? b.daoluId,
@@ -387,7 +387,7 @@ export function offerBondEvent(
   }
   const picked = rand.weighted(pool, (e) => weightFor(e, b));
   player.setBond({ ...b, opportunities: b.opportunities + 1, pendingEventId: picked.id });
-  useUiStore().toast(`${currentDaolu()?.name ?? "她"}似乎有话要说`, "info");
+  notify(`${currentDaolu()?.name ?? "她"}似乎有话要说`, "info");
   return picked;
 }
 
@@ -482,7 +482,7 @@ export function chooseBondEvent(eventId: string, choiceId: string): ChoiceResult
         : "neutral";
 
   if (left) {
-    useUiStore().toast(`${def.name}离你而去`, "warn");
+    notify(`${def.name}离你而去`, "warn");
     player.setBond({ ...after, departed: true });
   }
   return { text: out.text, left, reaction };
@@ -545,7 +545,7 @@ export function speakIntent(): BondIntent | null {
   if (!willSpeak(b.intent, def.temper)) return null;
   const next: BondIntent = { ...b.intent, raised: b.intent.raised + 1 };
   player.setBond({ ...b, intent: next, intentPending: true });
-  useUiStore().toast(next.line, "rare");
+  notify(next.line, "rare");
   return next;
 }
 

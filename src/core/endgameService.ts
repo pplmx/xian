@@ -36,7 +36,7 @@ import {
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useEndgameStore } from "@/stores/endgame";
-import { useUiStore } from "@/stores/ui";
+import { notify } from "./notify";
 
 /**
  * 真仙(仙界门槛)方可踏足天界。
@@ -58,16 +58,15 @@ export function currentDaoRules(): CombatRules | undefined {
 
 export function chooseDaoPath(id: DaoPathId): boolean {
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   if (!endgameUnlocked()) return false;
   const def = daoPathDef(id);
   if (!def) return false;
   if (!endgame.chooseDao(id)) {
-    ui.toast("此生道途已定,来世方可另择", "warn");
+    notify("此生道途已定,来世方可另择", "warn");
     return false;
   }
   recordMilestone("first_dao");
-  ui.toast(`你于天穹之下立誓——此生行${def.name}`, "rare");
+  notify(`你于天穹之下立誓——此生行${def.name}`, "rare");
   return true;
 }
 
@@ -76,16 +75,15 @@ export function chooseDaoPath(id: DaoPathId): boolean {
 export function furnaceConvert(rate: FurnaceRate): number {
   const resources = useResourcesStore();
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   const have = resources[rate.resource];
   const daoSource = Math.floor(have / rate.per);
   if (daoSource <= 0) {
-    ui.toast(`${rate.name}不足 ${rate.per},不够熔铸一缕道源`, "warn");
+    notify(`${rate.name}不足 ${rate.per},不够熔铸一缕道源`, "warn");
     return 0;
   }
   resources.spendSmall(rate.resource, daoSource * rate.per);
   endgame.addDaoSource(daoSource);
-  ui.toast(`${rate.name}×${daoSource * rate.per} 熔作道源 +${daoSource}`, "success");
+  notify(`${rate.name}×${daoSource * rate.per} 熔作道源 +${daoSource}`, "success");
   return daoSource;
 }
 
@@ -106,14 +104,13 @@ export function furnaceStoneCost(): ReturnType<typeof stoneByTier> {
 export function furnaceConvertStone(): boolean {
   const resources = useResourcesStore();
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   const cost = furnaceStoneCost();
   if (!resources.spendStone(cost)) {
-    ui.toast("灵石不足", "warn");
+    notify("灵石不足", "warn");
     return false;
   }
   endgame.addDaoSource(FURNACE_STONE_DAO_SOURCE);
-  ui.toast(`灵石 ${formatGN(cost)} 熔作道源 +${FURNACE_STONE_DAO_SOURCE}`, "success");
+  notify(`灵石 ${formatGN(cost)} 熔作道源 +${FURNACE_STONE_DAO_SOURCE}`, "success");
   return true;
 }
 
@@ -121,16 +118,15 @@ export function furnaceConvertStone(): boolean {
 export function condenseDaoFruit(): boolean {
   const endgame = useEndgameStore();
   const player = usePlayerStore();
-  const ui = useUiStore();
   if (!endgame.spendDaoSource(DAO_SOURCE_PER_FRUIT)) {
-    ui.toast(`道源不足 ${DAO_SOURCE_PER_FRUIT}`, "warn");
+    notify(`道源不足 ${DAO_SOURCE_PER_FRUIT}`, "warn");
     return false;
   }
   player.addDaoFruit(1);
   const first = !endgame.daoFruitTutorialSeen;
   if (first) endgame.daoFruitTutorialSeen = true;
   // S5 首次道果教学:即时因果解释,建立"现在拿道果 = 以后更强"
-  ui.toast(
+  notify(
     first
       ? "百缕道源凝作一枚道果——此物不随此身而灭,转世仍归你所有,来世修行更快。"
       : "百缕道源凝作一枚道果",
@@ -252,14 +248,13 @@ function markTarget(mark: DaoMark): {
 
 /** 忆战:以道痕中冻结的当世构筑,重打当年的界或试炼(无奖励,不再留痕) */
 export function replayMark(mark: DaoMark): ExpeditionResult | null {
-  const ui = useUiStore();
   if (!mark.replay) {
-    ui.toast("此痕年代久远,战况已不可考", "warn");
+    notify("此痕年代久远,战况已不可考", "warn");
     return null;
   }
   const { world, trial } = markTarget(mark);
   if (!world && !trial) {
-    ui.toast("此界早已散于天道,无从重临", "warn");
+    notify("此界早已散于天道,无从重临", "warn");
     return null;
   }
   const r = mark.replay;
@@ -296,10 +291,7 @@ export function replayMark(mark: DaoMark): ExpeditionResult | null {
   const era = isStaleRuleset(mark.ruleset)
     ? `(此战录于规则纪元 ${mark.ruleset},今为 ${RULESET_VERSION},天道已变)`
     : "";
-  ui.toast(
-    report.cleared ? "忆战功成——当年的你,如今依旧能赢" : "忆战未竟,当年之勇亦有时运",
-    "info",
-  );
+  notify(report.cleared ? "忆战功成——当年的你,如今依旧能赢" : "忆战未竟,当年之勇亦有时运", "info");
   return {
     title: `忆战 · ${mark.targetName}`,
     report,
@@ -316,15 +308,14 @@ export const REWRITE_ENTRY_COST = 10;
  */
 export function rewriteMark(mark: DaoMark): ExpeditionResult | null {
   const endgame = useEndgameStore();
-  const ui = useUiStore();
   if (!mark.cleared || !mark.replay) return null;
   const { world, trial } = markTarget(mark);
   if (!world && !trial) {
-    ui.toast("此界早已散于天道,无从重写", "warn");
+    notify("此界早已散于天道,无从重写", "warn");
     return null;
   }
   if (!endgame.spendDaoSource(REWRITE_ENTRY_COST)) {
-    ui.toast(`道源不足 ${REWRITE_ENTRY_COST}`, "warn");
+    notify(`道源不足 ${REWRITE_ENTRY_COST}`, "warn");
     return null;
   }
   const player = usePlayerStore();
@@ -374,14 +365,14 @@ export function rewriteMark(mark: DaoMark): ExpeditionResult | null {
   if (beaten) {
     recordMilestone("first_rewrite");
     trackClearRecords(mark.targetName, report.totalRounds, mark.replay.pactId, 0);
-    ui.toast(
+    notify(
       `【胜于旧我】${mark.targetName}:${mark.rounds} 回合 → ${report.totalRounds} 回合`,
       "rare",
     );
   } else if (report.cleared) {
-    ui.toast(`重写功成,但未快过当年(${report.totalRounds} vs ${mark.rounds} 回合)`, "info");
+    notify(`重写功成,但未快过当年(${report.totalRounds} vs ${mark.rounds} 回合)`, "info");
   } else {
-    ui.toast("重写未竟——当年之你,并不好胜过", "warn");
+    notify("重写未竟——当年之你,并不好胜过", "warn");
   }
   recordMark(
     mark.targetId,
@@ -407,15 +398,14 @@ export function rewriteMark(mark: DaoMark): ExpeditionResult | null {
 export function challengeTrial(trialId: string): ExpeditionResult | null {
   const endgame = useEndgameStore();
   const player = usePlayerStore();
-  const ui = useUiStore();
   const trial = trialDef(trialId);
   if (!trial || !endgameUnlocked()) return null;
   if (!endgame.daoPath) {
-    ui.toast("先择道途,方可赴试炼", "warn");
+    notify("先择道途,方可赴试炼", "warn");
     return null;
   }
   if (!endgame.spendDaoSource(trial.entryCost)) {
-    ui.toast(`道源不足 ${trial.entryCost}`, "warn");
+    notify(`道源不足 ${trial.entryCost}`, "warn");
     return null;
   }
   const stats = player.celestialStats;
@@ -451,14 +441,14 @@ export function challengeTrial(trialId: string): ExpeditionResult | null {
     if (trial.id === "qisha") recordMilestone("first_qisha");
     const prevBest = endgame.trialRecords[trial.id]?.bestRounds;
     endgame.recordTrial(trial.id, report.totalRounds);
-    ui.toast(
+    notify(
       prevBest !== undefined && report.totalRounds < prevBest
         ? `${trial.name}新纪录!${report.totalRounds} 回合(原 ${prevBest})`
         : `${trial.name}功成,道源 +${reward}`,
       "rare",
     );
   } else {
-    ui.toast(`${trial.name}未竟(第 ${report.fightsWon + 1} 战失利)`, "warn");
+    notify(`${trial.name}未竟(第 ${report.fightsWon + 1} 战失利)`, "warn");
   }
   recordMark(trial.id, trial.name, report.cleared, report.totalRounds);
   return {
