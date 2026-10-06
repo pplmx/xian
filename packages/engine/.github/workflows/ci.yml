@@ -17,10 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: 安装 Bun
-        uses: oven-sh/setup-bun@v2
+      - name: 设置 Vite+
+        uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          bun-version: latest
+          version: "1.0.0"
+          node-version: "22"
+          cache: true
+          run-install: false
       - name: 安装依赖
         run: bun install --frozen-lockfile
       - name: 类型检查 + 用例 + 出产物
