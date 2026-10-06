@@ -199,6 +199,7 @@ const CATEGORIES = [
       "bondCausality",
       "worldMemory",
       "phase31LinkAudit",
+      "layeringAudit",
       "suppress",
       "game.spec",
       "earlyGameService",
