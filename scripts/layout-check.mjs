@@ -329,6 +329,27 @@ async function unfreezeTransitions(page) {
   });
 }
 
+/**
+ * 量对比度前把浮层清干净。
+ *
+ * 引擎事件弹窗的遮罩(墨 45%)与成就提示条都压在被量的字上面 —— 遮罩会改写整页的底,
+ * 提示条会盖住页眉那一行,量出来全是假红。巡页前虽然钉了随机源(clearOverlays),
+ * 但**成就**是按状态判定的:切到某一页正好达成一条,照样弹,与随机无关。
+ * 故每次量之前现清一遍:点掉提示条、Esc 收掉弹窗,直到两样都没有(最多转四圈)。
+ */
+async function quiesceOverlays(page) {
+  for (let i = 0; i < 4; i += 1) {
+    const left = await page.evaluate(() => {
+      const toasts = [...document.querySelectorAll(".pointer-events-none.fixed button")];
+      for (const b of toasts) b.click();
+      return { toasts: toasts.length, modal: document.querySelectorAll(".modal-panel").length };
+    });
+    if (left.modal > 0) await page.keyboard.press("Escape");
+    if (left.toasts === 0 && left.modal === 0) return;
+    await page.waitForTimeout(150);
+  }
+}
+
 async function measurePage(page) {
   return page.evaluate(() => {
     const vw = window.innerWidth;
@@ -1418,6 +1439,9 @@ async function taskPageTour(vp) {
      * 巡页时间乘以五。两套主题都量,见 measureTextContrast。
      */
     if (vp.tag === "390") {
+      // 先清浮层再量:题条盖住页眉、弹窗遮罩压暗整页,都会把对比度量成假红
+      await quiesceOverlays(page);
+      await settleVisuals(page);
       for (const bad of await measureTextContrast(page)) {
         contrastFails.push(
           `[${vp.tag}] ${route} ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
@@ -1431,6 +1455,7 @@ async function taskPageTour(vp) {
         await page.keyboard.press("Escape");
         await page.waitForTimeout(200);
       }
+      await quiesceOverlays(page);
       if ((await page.locator(".modal-panel").count()) === 0) {
         for (const bad of await pixelContrastOf(page, await pixelSampler(auditCtx))) {
           pixelContrastFails.push(
