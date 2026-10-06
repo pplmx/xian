@@ -114,7 +114,7 @@ describe("楷体子集 · 覆盖", () => {
     // 一条 @font-face 读成 { 文件名, unicode-range }
     const declared = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => {
       const body = m[1]!;
-      const file = /url\('\.\/([^']+)'\)/.exec(body)?.[1] ?? "";
+      const file = /url\(["']\.\/([^"']+)["']\)/.exec(body)?.[1] ?? "";
       const range = /unicode-range:\s*([^;]+);/.exec(body)?.[1]?.replace(/\s+/g, " ").trim() ?? "";
       return { file, range };
     });

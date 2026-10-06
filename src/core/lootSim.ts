@@ -8,49 +8,55 @@
  *   不可用于:宣称"某玩家每小时掉 N 件"(实况取决于其构筑与是否打首领)。
  *   与 samsaraAudit 的绝对值警告同理:比值可用,绝对值不可用。
  */
-import { mulberry32, RandomService } from '@/utils/random'
-import { qualityDef, QUALITIES } from '@/data/qualities'
-import { BAG_CAPACITY, EQUIP_DROP_CHANCE, EXPLORE_BATTLE_INTERVAL, EXPLORE_EVENT_CHANCE, DECOMPOSE_DUST } from '@/data/constants'
-import { generateEquipment } from './equipGen'
+import { mulberry32, RandomService } from "@/utils/random";
+import { qualityDef, QUALITIES } from "@/data/qualities";
+import {
+  BAG_CAPACITY,
+  EQUIP_DROP_CHANCE,
+  EXPLORE_BATTLE_INTERVAL,
+  EXPLORE_EVENT_CHANCE,
+  DECOMPOSE_DUST,
+} from "@/data/constants";
+import { generateEquipment } from "./equipGen";
 
-const WIN_RATE = 0.85
+const WIN_RATE = 0.85;
 
 export interface LootPressure {
-  tier: number
-  dropsPerHour: number
-  hoursToFillBag: number
+  tier: number;
+  dropsPerHour: number;
+  hoursToFillBag: number;
   /** 按品质序号的占比(0~8) */
-  rankShare: number[]
-  avgRank: number
+  rankShare: number[];
+  avgRank: number;
   /** 全部分解可得器灵尘/日 */
-  dustPerDay: number
-  dropsPer24h: number
-  dropsPer7d: number
-  dropsPer30d: number
+  dustPerDay: number;
+  dropsPer24h: number;
+  dropsPer7d: number;
+  dropsPer30d: number;
 }
 
 export function simulateLootPressure(tier: number, samples = 600): LootPressure {
-  const rng = new RandomService(mulberry32(tier * 977))
-  const rankCounts = Array.from({ length: QUALITIES.length }, () => 0)
-  let dustSum = 0
+  const rng = new RandomService(mulberry32(tier * 977));
+  const rankCounts = Array.from({ length: QUALITIES.length }, () => 0);
+  let dustSum = 0;
   for (let i = 0; i < samples; i += 1) {
-    const inst = generateEquipment(tier, rng)
-    const rank = qualityDef(inst.quality).rank
-    rankCounts[rank]! += 1
-    dustSum += DECOMPOSE_DUST[rank] ?? 1
+    const inst = generateEquipment(tier, rng);
+    const rank = qualityDef(inst.quality).rank;
+    rankCounts[rank]! += 1;
+    dustSum += DECOMPOSE_DUST[rank] ?? 1;
   }
-  const winsPerHour = (3600 / EXPLORE_BATTLE_INTERVAL) * (1 - EXPLORE_EVENT_CHANCE) * WIN_RATE
-  const dropsPerHour = winsPerHour * EQUIP_DROP_CHANCE
-  const avgRank = rankCounts.reduce((s, n, r) => s + n * r, 0) / samples
+  const winsPerHour = (3600 / EXPLORE_BATTLE_INTERVAL) * (1 - EXPLORE_EVENT_CHANCE) * WIN_RATE;
+  const dropsPerHour = winsPerHour * EQUIP_DROP_CHANCE;
+  const avgRank = rankCounts.reduce((s, n, r) => s + n * r, 0) / samples;
   return {
     tier,
     dropsPerHour,
     hoursToFillBag: BAG_CAPACITY / dropsPerHour,
-    rankShare: rankCounts.map(n => n / samples),
+    rankShare: rankCounts.map((n) => n / samples),
     avgRank,
     dustPerDay: (dustSum / samples) * dropsPerHour * 24,
     dropsPer24h: dropsPerHour * 24,
     dropsPer7d: dropsPerHour * 24 * 7,
-    dropsPer30d: dropsPerHour * 24 * 30
-  }
+    dropsPer30d: dropsPerHour * 24 * 30,
+  };
 }

@@ -1,9 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <meta name="description" content="一款文字版修仙放置游戏。玄之又玄 · 众妙之门。" />
     <!-- theme-color 由 src/core/theme.ts 在启动与主题切换时动态同步(亮/暗各一色) -->
     <meta name="theme-color" content="#F3EFE4" />
@@ -23,8 +25,8 @@
       // 首帧主题锁:显式「夜间/日间」由 theme.ts 写在独立小键(存档分片加密,首帧读不到),
       // 绘制前定一下 <html data-theme>,别让暗色玩家的第一帧闪亮白。auto 不写,首帧走系统偏好。
       try {
-        var _bt = localStorage.getItem('xuanshu.boot-theme')
-        if (_bt === 'dark' || _bt === 'light') document.documentElement.dataset.theme = _bt
+        var _bt = localStorage.getItem("xuanshu.boot-theme");
+        if (_bt === "dark" || _bt === "light") document.documentElement.dataset.theme = _bt;
       } catch (_e) {}
     </script>
   </head>
@@ -64,12 +66,12 @@
          亮色,首帧不能闪白;选了「日间」而系统是暗色,首帧也不能给暗。auto 不写键,
          首帧走系统偏好,上面 @media 那块照旧生效。色值与上方手抄块同源(palette.spec
          按「首次出现」锚取,这两块追加在其后,不扰动判据)。 */
-      html[data-theme='dark'] #app {
+      html[data-theme="dark"] #app {
         --boot-paper: 33 31 28;
         --boot-ink: 232 226 210;
         --boot-cinnabar: 255 119 115;
       }
-      html[data-theme='light'] #app {
+      html[data-theme="light"] #app {
         --boot-paper: 243 239 228;
         --boot-ink: 41 39 34;
         --boot-cinnabar: 168 63 57;
@@ -83,7 +85,7 @@
         justify-content: center;
         gap: 0.35rem;
         background: rgb(var(--boot-paper));
-        font-family: 'Kaiti SC', STKaiti, KaiTi, 'Noto Serif SC', serif;
+        font-family: "Kaiti SC", STKaiti, KaiTi, "Noto Serif SC", serif;
       }
       #app .boot-seal {
         display: grid;
@@ -119,5 +121,4 @@
       不上传、不联网;真要发出去,那是使用者自己的决定,不该由默认配置替他们做。
     -->
   </body>
-
 </html>

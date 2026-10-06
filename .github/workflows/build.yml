@@ -10,7 +10,7 @@ name: 构建多平台程序 (Electron & Android)
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 # 同一个 tag 只留一条流水线。两个 run 同时进 release job,会在同一个 tag 下
 # 「先删旧资产、再传新资产」,互相删掉对方刚传的文件,Release 里就会缺东西。
@@ -221,8 +221,8 @@ jobs:
       - name: 配置 Java
         uses: actions/setup-java@v6
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: "temurin"
+          java-version: "21"
       - name: 配置 Android SDK
         uses: android-actions/setup-android@v4
 

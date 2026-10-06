@@ -1,33 +1,39 @@
 /** 历练状态 —— 区域解锁 / 历练会话 / 待处理事件 / 最近战报 */
-import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
-import type { AdventureSession, CombatResult } from '@/types'
-import { persistConfig } from '@/utils/storage'
-import { regionDef } from '@/data/regions'
-import { ENGINE_WORLD } from '@/core/engineWorld'
-import { gn } from '@/utils/gnum'
-import { asFiniteNumber, asNumberRecord, asObjectOrNull, asRecord, asStringArray } from '@/utils/saveShape'
+import { defineStore } from "pinia";
+import { computed, ref } from "vue";
+import type { AdventureSession, CombatResult } from "@/types";
+import { persistConfig } from "@/utils/storage";
+import { regionDef } from "@/data/regions";
+import { ENGINE_WORLD } from "@/core/engineWorld";
+import { gn } from "@/utils/gnum";
+import {
+  asFiniteNumber,
+  asNumberRecord,
+  asObjectOrNull,
+  asRecord,
+  asStringArray,
+} from "@/utils/saveShape";
 
 export interface LastBattleView {
-  enemyName: string
-  enemyIcon: string
+  enemyName: string;
+  enemyIcon: string;
   /** 敌人定义 id(供适配度展示;旧存档可能缺失) */
-  enemyId?: string
-  isBoss: boolean
-  result: CombatResult
-  at: number
+  enemyId?: string;
+  isBoss: boolean;
+  result: CombatResult;
+  at: number;
   /**
    * 这一场的战利品明细(残页/装备/丹药/法宝;翻倍提示也在内)。
    * 线上一向只把掉落条数记进会话、把文案丢掉,玩家打完看不到自己得了什么。
    * 旧存档没有这一栏,消费方按缺省空数组处理。
    */
-  loot?: string[]
+  loot?: string[];
 }
 
 export const useAdventureStore = defineStore(
-  'adventure',
+  "adventure",
   () => {
-    const unlocked = ref<string[]>(['qingyun'])
+    const unlocked = ref<string[]>(["qingyun"]);
     /**
      * 本世之界(Phase 34)—— 这一世的世界气象。
      *
@@ -35,15 +41,15 @@ export const useAdventureStore = defineStore(
      * 目前只承载展示:让玩家在打第一场之前就知道「这一世不是上一世那一套」。
      * 实际历练仍走 REGIONS,两者通过 fromId 对应
      */
-    const mortalWorld = ref<import('@/core/mortalWorldGen').MortalWorld | null>(null)
+    const mortalWorld = ref<import("@/core/mortalWorldGen").MortalWorld | null>(null);
     /**
      * 本世已通的路线节点。
      *
      * 与 cleared(旧 REGIONS 通关记录)分开:本世路线的推进只认这里,
      * 转世换界时清空 —— 新的天地要从第一段重新走
      */
-    const mortalCleared = ref<string[]>([])
-    const cleared = ref<string[]>([])
+    const mortalCleared = ref<string[]>([]);
+    const cleared = ref<string[]>([]);
     /**
      * 各地界的「已靖时刻」—— 妖气从这一刻起重新聚(见 core/regionRevival 的钟)。
      *
@@ -52,14 +58,14 @@ export const useAdventureStore = defineStore(
      * 仍给它一个自己的、在 markCleared 里落下的时刻 —— 复聚钟认这一栏,
      * 不单靠最后一场战斗的 lastUpdateAt。
      */
-    const clearedAt = ref<Record<string, number>>({})
+    const clearedAt = ref<Record<string, number>>({});
     /**
      * 妖气复聚 —— 当前「旧主归来、尚未再靖」的地界(见 core/regionRevival)。
      *
      * 与 cleared 互斥:一地不在两处。它要落盘,因为"这块地现在还有没有旧主"是
      * 世界状态(玩家下次打开游戏得看到同一件事)。
      */
-    const revived = ref<string[]>([])
+    const revived = ref<string[]>([]);
     /**
      * 各地界的**累计胜场** —— 区域之主的门槛认它,不是"这一趟"的连胜。
      *
@@ -69,34 +75,36 @@ export const useAdventureStore = defineStore(
      * 首领该是"对这一地界熟到能叩门",不是"一趟不输" —— 故改成按地界累计。
      * 与 mortalCleared 一样随换世清空:换了天地,旧地界的门路要重新蹚。
      */
-    const regionWins = ref<Record<string, number>>({})
-    const session = ref<AdventureSession | null>(null)
-    const pendingEventId = ref<string | null>(null)
-    const pendingEventSince = ref(0)
-    const seenOnceEvents = ref<string[]>([])
-    const lastBattle = ref<LastBattleView | null>(null)
+    const regionWins = ref<Record<string, number>>({});
+    const session = ref<AdventureSession | null>(null);
+    const pendingEventId = ref<string | null>(null);
+    const pendingEventSince = ref(0);
+    const seenOnceEvents = ref<string[]>([]);
+    const lastBattle = ref<LastBattleView | null>(null);
     /** Phase 30.9 世界记忆:已完成事件的结果记录 */
-    const eventMemories = ref<Record<string, import('@/types').EventMemory>>({})
+    const eventMemories = ref<Record<string, import("@/types").EventMemory>>({});
 
     /** 存档修复:历练会话/解锁表/事件记忆被写坏会让历练页在渲染期抛错 */
     function sanitize(): void {
-      unlocked.value = asStringArray(unlocked.value)
-      if (unlocked.value.length === 0) unlocked.value = ['qingyun']
-      mortalCleared.value = asStringArray(mortalCleared.value)
-      cleared.value = asStringArray(cleared.value)
+      unlocked.value = asStringArray(unlocked.value);
+      if (unlocked.value.length === 0) unlocked.value = ["qingyun"];
+      mortalCleared.value = asStringArray(mortalCleared.value);
+      cleared.value = asStringArray(cleared.value);
       /**
        * 复聚表:只留表上认得、且此刻确实没靖的那些。两者同时出现(坏档或旧版本
        * 写坏)时以 cleared 为准 —— 「已靖」是更硬的事实,复聚只是它的反面。
        */
-      revived.value = asStringArray(revived.value).filter(id => regionDef(id) !== undefined && !cleared.value.includes(id))
+      revived.value = asStringArray(revived.value).filter(
+        (id) => regionDef(id) !== undefined && !cleared.value.includes(id),
+      );
       // 已靖时刻:只留此刻确实已靖的那些(与 cleared 同一份事实,不许多出一份)
-      const clearedAtRaw = asNumberRecord(clearedAt.value, 0)
-      const clearedAtNext: Record<string, number> = {}
+      const clearedAtRaw = asNumberRecord(clearedAt.value, 0);
+      const clearedAtNext: Record<string, number> = {};
       for (const id of cleared.value) {
-        const at = clearedAtRaw[id]
-        if (at !== undefined && at > 0) clearedAtNext[id] = at
+        const at = clearedAtRaw[id];
+        if (at !== undefined && at > 0) clearedAtNext[id] = at;
       }
-      clearedAt.value = clearedAtNext
+      clearedAt.value = clearedAtNext;
       /**
        * 前置已靖 → 此地已开:补票(见 data/regions.unlockClosure)。
        *
@@ -105,31 +113,32 @@ export const useAdventureStore = defineStore(
        * 是因为读档修形是唯一的入口:开局(engine.start → sanitizeOfflineInputs)与
        * 导入存档都会过它,玩家不需要做任何事。
        */
-      applyUnlockClosure()
+      applyUnlockClosure();
       // 累计胜场:形状不对就修成"全是有限非负数",坏值一律归零(它决定首领何时出现)
-      const winsRaw = asRecord<unknown>(regionWins.value)
-      const wins: Record<string, number> = {}
+      const winsRaw = asRecord<unknown>(regionWins.value);
+      const wins: Record<string, number> = {};
       for (const [id, n] of Object.entries(winsRaw)) {
-        const v = Math.floor(asFiniteNumber(n, 0, 0))
-        if (v > 0) wins[id] = v
+        const v = Math.floor(asFiniteNumber(n, 0, 0));
+        if (v > 0) wins[id] = v;
       }
-      regionWins.value = wins
-      session.value = asObjectOrNull<AdventureSession>(session.value)
+      regionWins.value = wins;
+      session.value = asObjectOrNull<AdventureSession>(session.value);
       /**
        * 历练会话是引擎每 tick 都要读的活状态:endsAt/nextBattleAt 若为 NaN,
        * 历练会永远不停(或立刻结束);regionId 认不得则整场都取不到区域。
        * 故除形状外,值也要修 —— 认不得的区域直接结束会话,不硬撑。
        */
       if (session.value) {
-        const s = session.value
-        const regionOk = !!regionDef(s.regionId)
-        const endsAt = asFiniteNumber(s.endsAt, 0, 0)
+        const s = session.value;
+        const regionOk = !!regionDef(s.regionId);
+        const endsAt = asFiniteNumber(s.endsAt, 0, 0);
         if (!regionOk || endsAt <= 0) {
-          session.value = null
+          session.value = null;
         } else {
           session.value = {
             ...s,
-            mode: s.mode === 'deep' || s.mode === 'risky' || s.mode === 'prolonged' ? s.mode : 'normal',
+            mode:
+              s.mode === "deep" || s.mode === "risky" || s.mode === "prolonged" ? s.mode : "normal",
             startedAt: asFiniteNumber(s.startedAt, 0, 0),
             endsAt,
             nextBattleAt: asFiniteNumber(s.nextBattleAt, 0, 0),
@@ -142,25 +151,29 @@ export const useAdventureStore = defineStore(
             // 漏掉这步的话,损坏档首胜时 exploration 的 add(s.stoneGain,…) 会在 .m 上炸,
             // 被 tickSafe 吞掉后每场胜利都抛、历练永久卡死
             stoneGain: gn(s.stoneGain),
-            expGain: gn(s.expGain)
-          }
+            expGain: gn(s.expGain),
+          };
         }
       }
-      pendingEventId.value = typeof pendingEventId.value === 'string' ? pendingEventId.value : null
-      pendingEventSince.value = asFiniteNumber(pendingEventSince.value, 0, 0)
-      seenOnceEvents.value = asStringArray(seenOnceEvents.value)
+      pendingEventId.value = typeof pendingEventId.value === "string" ? pendingEventId.value : null;
+      pendingEventSince.value = asFiniteNumber(pendingEventSince.value, 0, 0);
+      seenOnceEvents.value = asStringArray(seenOnceEvents.value);
       // 战报的 loot 是新增栏:形状不对就清成空表,别让损坏档在战报渲染里炸
-      const lb = asObjectOrNull<LastBattleView>(lastBattle.value)
-      lastBattle.value = lb ? { ...lb, loot: lb.loot === undefined ? undefined : asStringArray(lb.loot) } : null
-      eventMemories.value = asRecord(eventMemories.value)
-      mortalWorld.value = asObjectOrNull(mortalWorld.value)
+      const lb = asObjectOrNull<LastBattleView>(lastBattle.value);
+      lastBattle.value = lb
+        ? { ...lb, loot: lb.loot === undefined ? undefined : asStringArray(lb.loot) }
+        : null;
+      eventMemories.value = asRecord(eventMemories.value);
+      mortalWorld.value = asObjectOrNull(mortalWorld.value);
     }
 
-    const sessionActive = computed(() => session.value !== null)
-    const currentRegion = computed(() => (session.value ? regionDef(session.value.regionId) : undefined))
+    const sessionActive = computed(() => session.value !== null);
+    const currentRegion = computed(() =>
+      session.value ? regionDef(session.value.regionId) : undefined,
+    );
 
     function setSession(s: AdventureSession | null): void {
-      session.value = s
+      session.value = s;
     }
 
     /**
@@ -170,21 +183,22 @@ export const useAdventureStore = defineStore(
      * 免得下次扩界时其中一条又忘了走(那正是这次这个 bug 的形状)。
      */
     function applyUnlockClosure(): string[] {
-      const before = new Set(unlocked.value)
+      const before = new Set(unlocked.value);
       // 补票的不变量由库的副本系统实现(只补该补的、保留不认识的历史 id、幂等)
-      const next = ENGINE_WORLD.dungeons.prereqClosure(unlocked.value, cleared.value)
-      unlocked.value = next
-      return next.filter(id => !before.has(id))
+      const next = ENGINE_WORLD.dungeons.prereqClosure(unlocked.value, cleared.value);
+      unlocked.value = next;
+      return next.filter((id) => !before.has(id));
     }
 
     function markCleared(regionId: string): boolean {
-      if (cleared.value.includes(regionId)) return false
-      cleared.value = [...cleared.value, regionId]
+      if (cleared.value.includes(regionId)) return false;
+      cleared.value = [...cleared.value, regionId];
       // 已靖即起钟:妖气从这一刻重新聚(离线斩首也走这里,故离线也认得这个起点)
-      clearedAt.value = { ...clearedAt.value, [regionId]: Date.now() }
+      clearedAt.value = { ...clearedAt.value, [regionId]: Date.now() };
       // 再靖:这处地界的「妖气复聚」随之收掉(它不再等旧主归来,而是已经归过了)
-      if (revived.value.includes(regionId)) revived.value = revived.value.filter(id => id !== regionId)
-      return true
+      if (revived.value.includes(regionId))
+        revived.value = revived.value.filter((id) => id !== regionId);
+      return true;
     }
 
     /**
@@ -194,66 +208,66 @@ export const useAdventureStore = defineStore(
      * 单独做,玩家一键就能把收益接回来,复聚不构成对挂机的惩罚。
      */
     function markRevived(regionId: string): boolean {
-      if (revived.value.includes(regionId)) return false
-      cleared.value = cleared.value.filter(id => id !== regionId)
-      const nextAt = { ...clearedAt.value }
-      delete nextAt[regionId]
-      clearedAt.value = nextAt
-      revived.value = [...revived.value, regionId]
-      return true
+      if (revived.value.includes(regionId)) return false;
+      cleared.value = cleared.value.filter((id) => id !== regionId);
+      const nextAt = { ...clearedAt.value };
+      delete nextAt[regionId];
+      clearedAt.value = nextAt;
+      revived.value = [...revived.value, regionId];
+      return true;
     }
 
     /** 记一场胜 —— 区域之主的门槛按这个累计,与"这一趟"无关 */
     function addRegionWins(regionId: string, n = 1): void {
-      if (n <= 0) return
-      regionWins.value = { ...regionWins.value, [regionId]: (regionWins.value[regionId] ?? 0) + n }
+      if (n <= 0) return;
+      regionWins.value = { ...regionWins.value, [regionId]: (regionWins.value[regionId] ?? 0) + n };
     }
 
     /** 某地界的累计胜场(界面与结算都读它,不各自再数一遍) */
     function winsIn(regionId: string): number {
-      return regionWins.value[regionId] ?? 0
+      return regionWins.value[regionId] ?? 0;
     }
 
     function setPendingEvent(id: string | null, now: number): void {
-      pendingEventId.value = id
-      pendingEventSince.value = id ? now : 0
+      pendingEventId.value = id;
+      pendingEventSince.value = id ? now : 0;
     }
 
     function shiftTimedState(pausedMs: number): void {
-      if (pausedMs <= 0) return
-      const next: Record<string, number> = {}
+      if (pausedMs <= 0) return;
+      const next: Record<string, number> = {};
       for (const [id, at] of Object.entries(clearedAt.value)) {
-        next[id] = at > 0 ? at + pausedMs : at
+        next[id] = at > 0 ? at + pausedMs : at;
       }
-      clearedAt.value = next
+      clearedAt.value = next;
       // Auto-resolve is now - pendingEventSince > 120s. Pause skips the
       // modal; if this stamp stays put, resume immediately picks for you.
-      if (pendingEventSince.value > 0) pendingEventSince.value += pausedMs
+      if (pendingEventSince.value > 0) pendingEventSince.value += pausedMs;
     }
 
     function markEventSeen(id: string): void {
       if (!seenOnceEvents.value.includes(id)) {
-        seenOnceEvents.value = [...seenOnceEvents.value, id]
+        seenOnceEvents.value = [...seenOnceEvents.value, id];
       }
     }
 
     function recordBattle(view: LastBattleView): void {
-      lastBattle.value = view
+      lastBattle.value = view;
     }
 
-    function setMortalWorld(w: import('@/core/mortalWorldGen').MortalWorld | null): void {
-      mortalWorld.value = w
+    function setMortalWorld(w: import("@/core/mortalWorldGen").MortalWorld | null): void {
+      mortalWorld.value = w;
       // 换界即换路:本世进度不跨界继承
-      mortalCleared.value = []
+      mortalCleared.value = [];
       // 门路也是本世的:换一片天地,旧地界的叩门资格不再作数
-      regionWins.value = {}
+      regionWins.value = {};
     }
 
     /** 标记本世某节点已通;已通过则返回 false */
     function markNodeCleared(nodeId: string): boolean {
-      if (mortalCleared.value.includes(nodeId)) return false
-      mortalCleared.value = [...mortalCleared.value, nodeId]
-      return true
+      if (mortalCleared.value.includes(nodeId)) return false;
+      mortalCleared.value = [...mortalCleared.value, nodeId];
+      return true;
     }
 
     return {
@@ -284,8 +298,8 @@ export const useAdventureStore = defineStore(
       markEventSeen,
       shiftTimedState,
       recordBattle,
-      sanitize
-    }
+      sanitize,
+    };
   },
-  { persist: persistConfig('adventure') }
-)
+  { persist: persistConfig("adventure") },
+);

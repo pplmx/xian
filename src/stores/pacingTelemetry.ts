@@ -20,76 +20,77 @@
  * - P90 间隔 < 30s → 事件过密,弹窗会互相抢注意力
  * - burstCount > 6 次/30分钟 → 存在"连弹风暴"
  */
-import { ref } from 'vue'
-import { persistConfig } from '@/utils/storage'
-import { asArray } from '@/utils/saveShape'
-import { defineStore } from 'pinia'
+import { ref } from "vue";
+import { persistConfig } from "@/utils/storage";
+import { asArray } from "@/utils/saveShape";
+import { defineStore } from "pinia";
 
-export type InteractionKind = 'modal' | 'notify' | 'ambient'
+export type InteractionKind = "modal" | "notify" | "ambient";
 
 export interface InteractionEvent {
   /** 事件类型 ID(如 enlightenment / caveEvent / winStreak) */
-  type: string
-  kind: InteractionKind
+  type: string;
+  kind: InteractionKind;
   /** 可读描述(用于报告输出) */
-  label: string
-  at: number
+  label: string;
+  at: number;
 }
 
 interface DensityReport {
-  total: number
-  avgInterval: number
-  p50: number
-  p90: number
-  minInterval: number
-  burstCount: number
-  maxConsecutive: number
-  byKind: Record<InteractionKind, number>
+  total: number;
+  avgInterval: number;
+  p50: number;
+  p90: number;
+  minInterval: number;
+  burstCount: number;
+  maxConsecutive: number;
+  byKind: Record<InteractionKind, number>;
 }
 
 /** 峰值前 30 分钟滚动窗口的遥测 */
 export const usePacingTelemetry = defineStore(
-  'pacingTelemetry',
+  "pacingTelemetry",
   () => {
     /** 实际记录的事件时间戳序列(最近 120 条,滚动) */
-    const events = ref<InteractionEvent[]>([])
+    const events = ref<InteractionEvent[]>([]);
     /** 玩家是否已同意遥测(默认开启) */
-    const enabled = ref(true)
+    const enabled = ref(true);
 
     function record(type: string, kind: InteractionKind, label: string): void {
-      if (!enabled.value) return
-      const now = Date.now()
-      events.value = [...events.value.slice(-119), { type, kind, label, at: now }]
+      if (!enabled.value) return;
+      const now = Date.now();
+      events.value = [...events.value.slice(-119), { type, kind, label, at: now }];
     }
 
     /** 生成密度报告(基于最近 30 分钟) */
     function buildReport(): DensityReport | null {
-      const now = Date.now()
-      const recent = events.value.filter(e => now - e.at < 30 * 60 * 1000)
-      if (recent.length < 3) return null
+      const now = Date.now();
+      const recent = events.value.filter((e) => now - e.at < 30 * 60 * 1000);
+      if (recent.length < 3) return null;
 
-      const intervals: number[] = []
+      const intervals: number[] = [];
       for (let i = 1; i < recent.length; i += 1) {
-        intervals.push(recent[i]!.at - recent[i - 1]!.at)
+        intervals.push(recent[i]!.at - recent[i - 1]!.at);
       }
-      intervals.sort((a, b) => a - b)
+      intervals.sort((a, b) => a - b);
 
-      const pct = (p: number): number => intervals[Math.min(intervals.length - 1, Math.floor(intervals.length * p))]!
+      const pct = (p: number): number =>
+        intervals[Math.min(intervals.length - 1, Math.floor(intervals.length * p))]!;
       const burstCount = recent.reduce((count, e, i) => {
-        if (i === 0) return count
-        const gap = e.at - recent[i - 1]!.at
-        return gap < 60 * 1000 ? count + 1 : count
-      }, 0)
+        if (i === 0) return count;
+        const gap = e.at - recent[i - 1]!.at;
+        return gap < 60 * 1000 ? count + 1 : count;
+      }, 0);
 
-      let maxConsecutive = 0
-      let consecutive = 0
+      let maxConsecutive = 0;
+      let consecutive = 0;
       for (let i = 1; i < recent.length; i += 1) {
-        const gap = recent[i]!.at - recent[i - 1]!.at
+        const gap = recent[i]!.at - recent[i - 1]!.at;
         if (gap < 60 * 1000) {
-          consecutive += 1
-          maxConsecutive = Math.max(maxConsecutive, consecutive)
+          consecutive += 1;
+          maxConsecutive = Math.max(maxConsecutive, consecutive);
         } else {
-          consecutive = 0
+          consecutive = 0;
         }
       }
 
@@ -102,16 +103,16 @@ export const usePacingTelemetry = defineStore(
         burstCount,
         maxConsecutive,
         byKind: {
-          modal: recent.filter(e => e.kind === 'modal').length,
-          notify: recent.filter(e => e.kind === 'notify').length,
-          ambient: recent.filter(e => e.kind === 'ambient').length
-        }
-      }
+          modal: recent.filter((e) => e.kind === "modal").length,
+          notify: recent.filter((e) => e.kind === "notify").length,
+          ambient: recent.filter((e) => e.kind === "ambient").length,
+        },
+      };
     }
 
     /** 全部清空(新赛季/测试) */
     function clear(): void {
-      events.value = []
+      events.value = [];
     }
 
     /**
@@ -122,21 +123,21 @@ export const usePacingTelemetry = defineStore(
      * 漂成非法项的历史记录对密度报告没有价值,故只留形状完整的那些。
      */
     function sanitize(): void {
-      events.value = asArray<InteractionEvent>(events.value, [], e => {
-        const it = e as Partial<InteractionEvent> | null
+      events.value = asArray<InteractionEvent>(events.value, [], (e) => {
+        const it = e as Partial<InteractionEvent> | null;
         return (
           !!it &&
-          typeof it.type === 'string' &&
-          typeof it.label === 'string' &&
-          (it.kind === 'modal' || it.kind === 'notify' || it.kind === 'ambient') &&
-          typeof it.at === 'number' &&
+          typeof it.type === "string" &&
+          typeof it.label === "string" &&
+          (it.kind === "modal" || it.kind === "notify" || it.kind === "ambient") &&
+          typeof it.at === "number" &&
           Number.isFinite(it.at)
-        )
-      })
-      if (typeof enabled.value !== 'boolean') enabled.value = true
+        );
+      });
+      if (typeof enabled.value !== "boolean") enabled.value = true;
     }
 
-    return { events, enabled, record, buildReport, clear, sanitize }
+    return { events, enabled, record, buildReport, clear, sanitize };
   },
-  { persist: persistConfig('pacing') }
-)
+  { persist: persistConfig("pacing") },
+);

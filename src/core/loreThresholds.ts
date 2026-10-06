@@ -6,9 +6,9 @@
  */
 
 /** 认知层上限:0 未识 / 1 眼熟 / 2 知路数 / 3 洞悉 */
-export const ENEMY_LORE_MAX = 3
+export const ENEMY_LORE_MAX = 3;
 
-export const ENEMY_LORE_STAGE_NAMES = ['未识', '眼熟', '知其路数', '洞悉'] as const
+export const ENEMY_LORE_STAGE_NAMES = ["未识", "眼熟", "知其路数", "洞悉"] as const;
 
 /**
  * 敌人认知的三道门槛(以「有效交手次数」计)。
@@ -17,7 +17,7 @@ export const ENEMY_LORE_STAGE_NAMES = ['未识', '眼熟', '知其路数', '洞�
  * 2 知其路数:交手够多,它惯用哪几招你已经数得出来。
  * 3 洞悉:连它残血变阵的那一手都在你意料之中。
  */
-export const ENEMY_LORE_THRESHOLDS = [0, 1, 5, 14] as const
+export const ENEMY_LORE_THRESHOLDS = [0, 1, 5, 14] as const;
 
 /**
  * 首领的认知门槛单独定档 —— **按「见到它的机会」定,不按它有多复杂**。
@@ -30,7 +30,7 @@ export const ENEMY_LORE_THRESHOLDS = [0, 1, 5, 14] as const
  * 妖气复聚给了重逢的机会(每 72 小时最多一回,见 core/regionRevival),三次交手即洞悉,
  * 合计约一周半 —— 对"隔几天才见一面"的对手,这个节奏才配得上它的稀有度。
  */
-export const ENEMY_LORE_BOSS_THRESHOLDS = [0, 1, 2, 3] as const
+export const ENEMY_LORE_BOSS_THRESHOLDS = [0, 1, 2, 3] as const;
 
 /** 败在它手里,一次抵得上打赢数次 —— 疼过才记得牢 */
-export const ENEMY_LORE_LOSS_WEIGHT = 3
+export const ENEMY_LORE_LOSS_WEIGHT = 3;

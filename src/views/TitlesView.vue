@@ -1,7 +1,11 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
     <div class="flex items-center gap-2">
-      <RouterLink to="/character" class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft">← 人物</RouterLink>
+      <RouterLink
+        to="/character"
+        class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft"
+        >← 人物</RouterLink
+      >
       <span class="text-[11px] text-ink-faint">·</span>
       <span class="text-[12px] text-ink-soft">名号</span>
     </div>
@@ -25,18 +29,30 @@
           <span
             class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-kai"
             :class="
-              row.worn ? 'border-cinnabar text-cinnabar' : row.owned ? 'border-gold-ink text-gold-ink' : 'border-ink/15 text-ink-faint'
+              row.worn
+                ? 'border-cinnabar text-cinnabar'
+                : row.owned
+                  ? 'border-gold-ink text-gold-ink'
+                  : 'border-ink/15 text-ink-faint'
             "
           >
-            {{ row.worn ? '佩' : row.owned ? '藏' : '未' }}
+            {{ row.worn ? "佩" : row.owned ? "藏" : "未" }}
           </span>
           <div class="min-w-0 grow">
-            <p class="font-kai text-[13px]" :class="row.owned ? 'text-ink' : 'text-ink-faint'">{{ row.def.name }}</p>
+            <p class="font-kai text-[13px]" :class="row.owned ? 'text-ink' : 'text-ink-faint'">
+              {{ row.def.name }}
+            </p>
             <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>
-            <p v-if="row.owned && row.modText" class="text-[10px] text-qing tabular">{{ row.modText }}</p>
+            <p v-if="row.owned && row.modText" class="text-[10px] text-qing tabular">
+              {{ row.modText }}
+            </p>
           </div>
-          <button v-if="row.owned" class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-[11px]" @click="toggleTitle(row.def.id)">
-            {{ row.worn ? '卸下' : '佩戴' }}
+          <button
+            v-if="row.owned"
+            class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-[11px]"
+            @click="toggleTitle(row.def.id)"
+          >
+            {{ row.worn ? "卸下" : "佩戴" }}
           </button>
         </div>
       </div>
@@ -47,24 +63,42 @@
       <SectionTitle title="灵兽" :hint="`${petRows.length}/${PETS.length} · 伴一只`" />
       <div v-if="petRows.length" class="card-ink divide-y divide-ink/6 px-4">
         <div v-for="row in petRows" :key="row.def.id" class="flex items-center gap-3 py-2.5">
-          <GameIcon :name="row.def.icon" :size="18" :style="{ color: qualityDef(row.def.quality).color }" />
+          <GameIcon
+            :name="row.def.icon"
+            :size="18"
+            :style="{ color: qualityDef(row.def.quality).color }"
+          />
           <div class="min-w-0 grow">
             <p class="flex items-center gap-2">
-              <span class="font-kai text-[13px]" :style="{ color: qualityDef(row.def.quality).color }">{{ row.def.name }}</span>
+              <span
+                class="font-kai text-[13px]"
+                :style="{ color: qualityDef(row.def.quality).color }"
+                >{{ row.def.name }}</span
+              >
               <!-- 品阶文字:数值按品阶重配过,名字旁的「神品/仙品…」让品质与效果一眼可对(见 petQuality.spec 两条不变量) -->
-              <span class="text-[9px] tracking-[0.2em]" :style="{ color: qualityDef(row.def.quality).color }">{{ qualityDef(row.def.quality).name }}</span>
+              <span
+                class="text-[9px] tracking-[0.2em]"
+                :style="{ color: qualityDef(row.def.quality).color }"
+                >{{ qualityDef(row.def.quality).name }}</span
+              >
               <span v-if="row.active" class="text-[10px] text-jade">相伴中</span>
             </p>
             <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>
             <p v-if="row.modText" class="text-[10px] text-qing tabular">{{ row.modText }}</p>
             <!-- 性格 + 数值并一行:定性的话之外还要给数(换不换这只伙伴,靠「更容易」三个字算不出来) -->
             <p class="text-[10px] text-violet-ink">
-              {{ row.personalityName }} <span class="text-ink-faint">{{ row.personalityDesc }}</span>
-              <template v-if="row.traitText"> · <span class="text-qing tabular">{{ row.traitText }}</span></template>
+              {{ row.personalityName }}
+              <span class="text-ink-faint">{{ row.personalityDesc }}</span>
+              <template v-if="row.traitText">
+                · <span class="text-qing tabular">{{ row.traitText }}</span></template
+              >
             </p>
           </div>
-          <button class="btn-ghost shrink-0 !px-2.5 !py-1 !text-[11px]" @click="togglePet(row.def.id)">
-            {{ row.active ? '暂别' : '唤来' }}
+          <button
+            class="btn-ghost shrink-0 !px-2.5 !py-1 !text-[11px]"
+            @click="togglePet(row.def.id)"
+          >
+            {{ row.active ? "暂别" : "唤来" }}
           </button>
         </div>
       </div>
@@ -78,80 +112,82 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
-  import { usePlayerStore } from '@/stores/player'
-  import { useQuestsStore } from '@/stores/quests'
-  import { TITLES } from '@/data/titles'
-  import { petDef, PETS } from '@/data/pets'
-  import { PERSONALITY_NAMES, personalityDesc } from '@/core/petPersonality'
-  import type { StatMods } from '@/types'
-  import { petTraitText } from '@/ui/itemText'
-  import { qualityDef } from '@/data/qualities'
-  import { modsText } from '@/ui/statNames'
-  import SectionTitle from '@/components/common/SectionTitle.vue'
-  import InkTabs from '@/components/common/InkTabs.vue'
-  import GameIcon from '@/components/common/GameIcon.vue'
+import { computed, ref } from "vue";
+import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
+import { TITLES } from "@/data/titles";
+import { petDef, PETS } from "@/data/pets";
+import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
+import type { StatMods } from "@/types";
+import { petTraitText } from "@/ui/itemText";
+import { qualityDef } from "@/data/qualities";
+import { modsText } from "@/ui/statNames";
+import SectionTitle from "@/components/common/SectionTitle.vue";
+import InkTabs from "@/components/common/InkTabs.vue";
+import GameIcon from "@/components/common/GameIcon.vue";
 
-  const player = usePlayerStore()
-  const quests = useQuestsStore()
+const player = usePlayerStore();
+const quests = useQuestsStore();
 
-  type Tab = 'title' | 'pet'
-  const tab = ref<Tab>('title')
-  const TABS: { id: Tab; label: string }[] = [
-    { id: 'title', label: '名号' },
-    { id: 'pet', label: '灵兽' }
-  ]
+type Tab = "title" | "pet";
+const tab = ref<Tab>("title");
+const TABS: { id: Tab; label: string }[] = [
+  { id: "title", label: "名号" },
+  { id: "pet", label: "灵兽" },
+];
 
-  // ---- 名号 ----
-  const ownedCount = computed(() => TITLES.filter(def => quests.titlesOwned.includes(def.id)).length)
-  /** 名号尽收:三十顶全齐才算(与标题计数同源,不另起一套判据) */
-  const titlesAllOwned = computed(() => ownedCount.value === TITLES.length && TITLES.length > 0)
+// ---- 名号 ----
+const ownedCount = computed(
+  () => TITLES.filter((def) => quests.titlesOwned.includes(def.id)).length,
+);
+/** 名号尽收:三十顶全齐才算(与标题计数同源,不另起一套判据) */
+const titlesAllOwned = computed(() => ownedCount.value === TITLES.length && TITLES.length > 0);
 
-  /** 全量陈列:佩戴中 > 已拥有 > 未获得 */
-  const titleRows = computed(() => {
-    const ownedSet = new Set(quests.titlesOwned)
-    return TITLES.map(def => ({
-      def,
-      owned: ownedSet.has(def.id),
-      worn: player.titleId === def.id,
-      modText: modsText(def.mods)
-    })).sort((a, b) => Number(b.worn) - Number(a.worn) || Number(b.owned) - Number(a.owned))
-  })
+/** 全量陈列:佩戴中 > 已拥有 > 未获得 */
+const titleRows = computed(() => {
+  const ownedSet = new Set(quests.titlesOwned);
+  return TITLES.map((def) => ({
+    def,
+    owned: ownedSet.has(def.id),
+    worn: player.titleId === def.id,
+    modText: modsText(def.mods),
+  })).sort((a, b) => Number(b.worn) - Number(a.worn) || Number(b.owned) - Number(a.owned));
+});
 
-  function toggleTitle(id: string): void {
-    player.setTitle(player.titleId === id ? null : id)
-  }
+function toggleTitle(id: string): void {
+  player.setTitle(player.titleId === id ? null : id);
+}
 
-  // ---- 灵兽 ----
-  /** 相伴真值:read finalStats.breakdown 的「灵兽」行 —— 与人物页明细同源,不在本页另算一遍 */
-  const activePetMods = computed<StatMods | null>(() => {
-    const row = player.finalStats.breakdown.find(r => r.name === '灵兽')
-    return row ? row.mods : null
-  })
+// ---- 灵兽 ----
+/** 相伴真值:read finalStats.breakdown 的「灵兽」行 —— 与人物页明细同源,不在本页另算一遍 */
+const activePetMods = computed<StatMods | null>(() => {
+  const row = player.finalStats.breakdown.find((r) => r.name === "灵兽");
+  return row ? row.mods : null;
+});
 
-  const petRows = computed(() =>
-    quests.collections.pet
-      .map(id => petDef(id))
-      .filter(def => def !== undefined)
-      .map(def => ({
-        def: def!,
-        active: player.petId === def!.id,
-        // 相伴中的显示放大后的真值(灵兽园 × 安抚,与人物页属性明细同源 —— 都是 finalStats 的「灵兽」行);
-        // 其余仍为基础值 —— 按表里数字决定"该换哪只"不会与实战打架
-        modText: modsText(def!.id === player.petId ? (activePetMods.value ?? def!.mods) : def!.mods),
-        personalityName: PERSONALITY_NAMES[def!.personality],
-        personalityDesc: personalityDesc(def!.personality),
-        traitText: petTraitText(def!)
-      }))
-      // 默认从好到差:品阶降序 → 当前相伴的置顶
-      .sort(
-        (a, b) =>
-          qualityDef(b.def.quality).rank - qualityDef(a.def.quality).rank ||
-          Number(b.active) - Number(a.active)
-      )
-  )
+const petRows = computed(() =>
+  quests.collections.pet
+    .map((id) => petDef(id))
+    .filter((def) => def !== undefined)
+    .map((def) => ({
+      def: def!,
+      active: player.petId === def!.id,
+      // 相伴中的显示放大后的真值(灵兽园 × 安抚,与人物页属性明细同源 —— 都是 finalStats 的「灵兽」行);
+      // 其余仍为基础值 —— 按表里数字决定"该换哪只"不会与实战打架
+      modText: modsText(def!.id === player.petId ? (activePetMods.value ?? def!.mods) : def!.mods),
+      personalityName: PERSONALITY_NAMES[def!.personality],
+      personalityDesc: personalityDesc(def!.personality),
+      traitText: petTraitText(def!),
+    }))
+    // 默认从好到差:品阶降序 → 当前相伴的置顶
+    .sort(
+      (a, b) =>
+        qualityDef(b.def.quality).rank - qualityDef(a.def.quality).rank ||
+        Number(b.active) - Number(a.active),
+    ),
+);
 
-  function togglePet(id: string): void {
-    player.setPet(player.petId === id ? null : id)
-  }
+function togglePet(id: string): void {
+  player.setPet(player.petId === id ? null : id);
+}
 </script>

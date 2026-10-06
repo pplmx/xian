@@ -10,42 +10,42 @@
  * 老档(本次改动之前强化过的件)没有这本账,退回标价 —— 顶多让带折扣的旧档多退一点;
  * 新账一律按实付记,故「强化再拆」永远拿不回本(八成 < 十成),不构成套利。
  */
-import type { EquipmentInstance, GNum } from '@/types'
-import { DECOMPOSE_DUST, DECOMPOSE_REFUND_RATE } from '@/data/constants'
-import { qualityDef } from '@/data/qualities'
-import { add, gn, gnZero, mulN } from '@/utils/gnum'
-import { upgradeCost } from './formulas'
+import type { EquipmentInstance, GNum } from "@/types";
+import { DECOMPOSE_DUST, DECOMPOSE_REFUND_RATE } from "@/data/constants";
+import { qualityDef } from "@/data/qualities";
+import { add, gn, gnZero, mulN } from "@/utils/gnum";
+import { upgradeCost } from "./formulas";
 
 export interface Salvage {
-  dust: number
-  stone: GNum
+  dust: number;
+  stone: GNum;
 }
 
 /** 一件装备累计花掉的强化成本(尘 / 灵石) */
 export function enhanceInvested(item: EquipmentInstance): Salvage {
-  if (item.invested) return { dust: item.invested.dust, stone: gn(item.invested.stone) }
-  const rank = qualityDef(item.quality).rank
-  let dust = 0
-  let stone = gnZero()
+  if (item.invested) return { dust: item.invested.dust, stone: gn(item.invested.stone) };
+  const rank = qualityDef(item.quality).rank;
+  let dust = 0;
+  let stone = gnZero();
   for (let level = 0; level < item.level; level += 1) {
-    const cost = upgradeCost(level, item.tier, rank, 0)
-    dust += cost.dust
-    stone = add(stone, cost.stone)
+    const cost = upgradeCost(level, item.tier, rank, 0);
+    dust += cost.dust;
+    stone = add(stone, cost.stone);
   }
-  return { dust, stone }
+  return { dust, stone };
 }
 
 /** 分解 / 回收一件装备的返还:底材 + 强化投入的八成 */
 export function salvageOf(item: EquipmentInstance): Salvage {
-  const base = DECOMPOSE_DUST[qualityDef(item.quality).rank] ?? 1
-  const spent = enhanceInvested(item)
+  const base = DECOMPOSE_DUST[qualityDef(item.quality).rank] ?? 1;
+  const spent = enhanceInvested(item);
   return {
     dust: base + Math.floor(spent.dust * DECOMPOSE_REFUND_RATE),
-    stone: mulN(spent.stone, DECOMPOSE_REFUND_RATE)
-  }
+    stone: mulN(spent.stone, DECOMPOSE_REFUND_RATE),
+  };
 }
 
-const CHENG_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+const CHENG_NUM = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
 
 /**
  * 分解返还的「强化投入」配比文案 —— 只从 DECOMPOSE_REFUND_RATE 派生。
@@ -53,7 +53,8 @@ const CHENG_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九'
  * 0.8 → 「八成」;非整成(如 0.75)退化为百分比,不留半吊子中文数。
  */
 export function refundRateText(): string {
-  const cheng = DECOMPOSE_REFUND_RATE * 10
-  if (Number.isInteger(cheng) && cheng >= 1 && cheng <= 10) return `含强化${CHENG_NUM[cheng - 1]}成`
-  return `含强化返还 ${Math.round(DECOMPOSE_REFUND_RATE * 100)}%`
+  const cheng = DECOMPOSE_REFUND_RATE * 10;
+  if (Number.isInteger(cheng) && cheng >= 1 && cheng <= 10)
+    return `含强化${CHENG_NUM[cheng - 1]}成`;
+  return `含强化返还 ${Math.round(DECOMPOSE_REFUND_RATE * 100)}%`;
 }

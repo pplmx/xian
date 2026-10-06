@@ -44,7 +44,7 @@ function unionMembers(startMarker: string, endMarker: string): string[] {
   expect(from, `types/index.ts 里找不到 ${startMarker}`).toBeGreaterThanOrEqual(0);
   const to = TYPES_SRC.indexOf(endMarker, from);
   const block = TYPES_SRC.slice(from, to > 0 ? to : undefined);
-  return [...new Set([...block.matchAll(/'([A-Za-z]+)'/g)].map((m) => m[1]!))];
+  return [...new Set([...block.matchAll(/["']([A-Za-z]+)["']/g)].map((m) => m[1]!))];
 }
 
 /**
@@ -61,7 +61,7 @@ function taggedTypes(startMarker: string): string[] {
   const rest = TYPES_SRC.slice(from);
   const nextExport = rest.slice(1).search(/\nexport /);
   const block = nextExport > 0 ? rest.slice(0, nextExport + 1) : rest;
-  return [...new Set([...block.matchAll(/type:\s*'([A-Za-z]+)'/g)].map((m) => m[1]!))];
+  return [...new Set([...block.matchAll(/type:\s*["']([A-Za-z]+)["']/g)].map((m) => m[1]!))];
 }
 
 /** 除数据与类型之外的全部源码(实现层) */
@@ -78,14 +78,14 @@ describe("声明即承诺 · 事件词汇", () => {
   it("每种事件效果都有引擎实现(不靠兜底文案蒙混)", () => {
     expect(effectTypes.length).toBeGreaterThanOrEqual(8);
     for (const t of effectTypes) {
-      expect(engineSrc, `事件效果 ${t} 没有 case`).toContain(`case '${t}'`);
+      expect(engineSrc, `事件效果 ${t} 没有 case`).toContain(`case "${t}"`);
     }
   });
 
   it("每种选项条件都有校验(不靠默认放行蒙混)", () => {
     expect(condTypes.length).toBeGreaterThanOrEqual(3);
     for (const t of condTypes) {
-      expect(engineSrc, `选项条件 ${t} 没有 case`).toContain(`case '${t}'`);
+      expect(engineSrc, `选项条件 ${t} 没有 case`).toContain(`case "${t}"`);
     }
   });
 });
@@ -96,7 +96,7 @@ describe("声明即承诺 · 计数与属性", () => {
 
   it("每个计数器都有写入方 —— 否则引用它的成就永远拿不到", () => {
     expect(counters.length).toBeGreaterThanOrEqual(10);
-    const unbacked = counters.filter((k) => !implCorpus.includes(`track('${k}'`));
+    const unbacked = counters.filter((k) => !implCorpus.includes(`track("${k}"`));
     expect(unbacked, `这些计数器没有任何 track 写入点`).toEqual([]);
   });
 

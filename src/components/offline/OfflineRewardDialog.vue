@@ -16,11 +16,18 @@
           两条账分开报:被动修行(修为/灵气)不限时、全额;产出与派遣受洞府上限。
           从前只写一句"收益按 X 结算",玩家看到的是"挂了一周没怎么变",却不知道哪一条被砍了。
         -->
-        <template v-if="summary.capped">(修为与灵气全额入账;产出与历练按 {{ formatDuration(summary.cappedSeconds) }} 结算)</template>
+        <template v-if="summary.capped"
+          >(修为与灵气全额入账;产出与历练按
+          {{ formatDuration(summary.cappedSeconds) }} 结算)</template
+        >
       </p>
       <div class="ink-divider my-3" />
       <ul class="stagger-in space-y-2 text-left">
-        <li v-for="row in rows" :key="row.label" class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2">
+        <li
+          v-for="row in rows"
+          :key="row.label"
+          class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2"
+        >
           <span class="flex items-center gap-2 text-[13px] text-ink-soft">
             <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
             {{ row.label }}
@@ -44,7 +51,9 @@
           </p>
         </li>
       </ul>
-      <p v-for="(note, i) in summary.notes" :key="i" class="mt-2 text-[11px] text-ink-faint">{{ note }}</p>
+      <p v-for="(note, i) in summary.notes" :key="i" class="mt-2 text-[11px] text-ink-faint">
+        {{ note }}
+      </p>
     </div>
     <template #footer>
       <button class="btn-seal w-full" @click="close">收 下</button>
@@ -53,48 +62,53 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, watch } from 'vue'
-  import { useUiStore } from '@/stores/ui'
-  import { formatDuration, formatGN } from '@/utils/format'
-  import { qualityDef } from '@/data/qualities'
-  import { playSfx } from '@/core/audio'
-  import BaseModal from '@/components/common/BaseModal.vue'
-  import GameIcon from '@/components/common/GameIcon.vue'
+import { computed, watch } from "vue";
+import { useUiStore } from "@/stores/ui";
+import { formatDuration, formatGN } from "@/utils/format";
+import { qualityDef } from "@/data/qualities";
+import { playSfx } from "@/core/audio";
+import BaseModal from "@/components/common/BaseModal.vue";
+import GameIcon from "@/components/common/GameIcon.vue";
 
-  const ui = useUiStore()
+const ui = useUiStore();
 
-  const summary = computed(() => ui.offlineSummary)
+const summary = computed(() => ui.offlineSummary);
 
-  // 归来一声钟磬,与收益清点同起
-  watch(summary, (nv, ov) => {
-    if (nv && !ov) playSfx('success')
-  })
+// 归来一声钟磬,与收益清点同起
+watch(summary, (nv, ov) => {
+  if (nv && !ov) playSfx("success");
+});
 
-  const rows = computed(() => {
-    const s = summary.value
-    if (!s) return []
-    const list: { icon: string; label: string; value: string }[] = []
-    if (s.exp.m > 0) list.push({ icon: 'flame', label: '修为', value: `+${formatGN(s.exp)}` })
-    if (s.stone.m > 0) list.push({ icon: 'gem', label: '灵石', value: `+${formatGN(s.stone)}` })
-    if (s.qi > 0) list.push({ icon: 'wind', label: '灵气', value: `+${s.qi}` })
-    if (s.herb > 0) list.push({ icon: 'leaf', label: '灵草', value: `+${s.herb}` })
-    if (s.ore > 0) list.push({ icon: 'mountain', label: '玄铁', value: `+${s.ore}` })
-    if (s.wudao > 0) list.push({ icon: 'book', label: '悟道点', value: `+${s.wudao}` })
-    if (s.ageYears > 0) list.push({ icon: 'sunset', label: '寿元流逝', value: `${s.ageYears} 载` })
-    if (s.battles > 0) list.push({ icon: 'swords', label: '历练战斗', value: `${s.wins} 胜 / ${s.battles} 战` })
-    if (s.events > 0) list.push({ icon: 'star', label: '路遇际会', value: `${s.events} 次` })
-    // 自动回收的产出不入行囊、只化器灵尘,单独成行,免得玩家以为掉了没捡到
-    if (s.recycledDust > 0) {
-      const recycled = s.equipment.filter(e => e.recycled).length
-      list.push({ icon: 'sparkles', label: '回收化尘', value: `${recycled} 件 · 器灵尘+${s.recycledDust}` })
-    }
-    return list
-  })
-
-  /** 真正入行囊的装备(回收件已并入"回收化尘"行,不在此重复列出) */
-  const savedEquipment = computed(() => summary.value?.equipment.filter(e => !e.recycled) ?? [])
-
-  function close(): void {
-    ui.offlineSummary = null
+const rows = computed(() => {
+  const s = summary.value;
+  if (!s) return [];
+  const list: { icon: string; label: string; value: string }[] = [];
+  if (s.exp.m > 0) list.push({ icon: "flame", label: "修为", value: `+${formatGN(s.exp)}` });
+  if (s.stone.m > 0) list.push({ icon: "gem", label: "灵石", value: `+${formatGN(s.stone)}` });
+  if (s.qi > 0) list.push({ icon: "wind", label: "灵气", value: `+${s.qi}` });
+  if (s.herb > 0) list.push({ icon: "leaf", label: "灵草", value: `+${s.herb}` });
+  if (s.ore > 0) list.push({ icon: "mountain", label: "玄铁", value: `+${s.ore}` });
+  if (s.wudao > 0) list.push({ icon: "book", label: "悟道点", value: `+${s.wudao}` });
+  if (s.ageYears > 0) list.push({ icon: "sunset", label: "寿元流逝", value: `${s.ageYears} 载` });
+  if (s.battles > 0)
+    list.push({ icon: "swords", label: "历练战斗", value: `${s.wins} 胜 / ${s.battles} 战` });
+  if (s.events > 0) list.push({ icon: "star", label: "路遇际会", value: `${s.events} 次` });
+  // 自动回收的产出不入行囊、只化器灵尘,单独成行,免得玩家以为掉了没捡到
+  if (s.recycledDust > 0) {
+    const recycled = s.equipment.filter((e) => e.recycled).length;
+    list.push({
+      icon: "sparkles",
+      label: "回收化尘",
+      value: `${recycled} 件 · 器灵尘+${s.recycledDust}`,
+    });
   }
+  return list;
+});
+
+/** 真正入行囊的装备(回收件已并入"回收化尘"行,不在此重复列出) */
+const savedEquipment = computed(() => summary.value?.equipment.filter((e) => !e.recycled) ?? []);
+
+function close(): void {
+  ui.offlineSummary = null;
+}
 </script>

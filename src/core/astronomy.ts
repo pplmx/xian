@@ -10,36 +10,36 @@
  *
  * 确定性:由游戏总秒数派生,同一游戏日固定,无现实时间依赖(与天时同法)。
  */
-import { useGameStore } from '@/stores/game'
-import { MANSIONS, imageDef, type MansionDef } from '@/data/xiangxiu'
-import { regionDef } from '@/data/regions'
-import { worldOf } from '@/data/realms'
-import type { WorldId } from '@/types'
+import { useGameStore } from "@/stores/game";
+import { MANSIONS, imageDef, type MansionDef } from "@/data/xiangxiu";
+import { regionDef } from "@/data/regions";
+import { worldOf } from "@/data/realms";
+import type { WorldId } from "@/types";
 
 /** 值日之宿所利界域的际遇加成(乘在际遇概率上) */
-export const MANSION_EVENT_LUCK = 0.1
+export const MANSION_EVENT_LUCK = 0.1;
 
 /** 游戏日 → 值日之宿(28 日一轮) */
 export function mansionOfDay(day: number): MansionDef {
-  const idx = ((Math.floor(day) % MANSIONS.length) + MANSIONS.length) % MANSIONS.length
-  return MANSIONS[idx]!
+  const idx = ((Math.floor(day) % MANSIONS.length) + MANSIONS.length) % MANSIONS.length;
+  return MANSIONS[idx]!;
 }
 
 /** 今日值日之宿 */
 export function todayMansion(): MansionDef {
-  return mansionOfDay(Math.floor(useGameStore().totalPlaySec / 86400))
+  return mansionOfDay(Math.floor(useGameStore().totalPlaySec / 86400));
 }
 
 /** 此宿所利之界域(四象配四界的游戏约定) */
 export function favoredWorld(mansion: MansionDef): WorldId {
-  return imageDef(mansion.image)?.world ?? 'mortal'
+  return imageDef(mansion.image)?.world ?? "mortal";
 }
 
 /** 某地界今日是否得星象之利 */
 export function isFavoredRegion(regionId: string): boolean {
-  const region = regionDef(regionId)
-  if (!region) return false
-  return favoredWorld(todayMansion()) === worldOf(region.minRealm).id
+  const region = regionDef(regionId);
+  if (!region) return false;
+  return favoredWorld(todayMansion()) === worldOf(region.minRealm).id;
 }
 
 /**
@@ -47,12 +47,12 @@ export function isFavoredRegion(regionId: string): boolean {
  * 值日之宿本身不加全局数值 —— 否则它就成了第二个天时。
  */
 export function mansionEventLuck(regionId: string): number {
-  return isFavoredRegion(regionId) ? MANSION_EVENT_LUCK : 0
+  return isFavoredRegion(regionId) ? MANSION_EVENT_LUCK : 0;
 }
 
 /** 今日星象一句话(展示层直接用,不另写一份) */
 export function todayMansionLine(): string {
-  const m = todayMansion()
-  const img = imageDef(m.image)
-  return `${m.fullName}直日 · ${img?.name ?? ''}${img?.direction ?? ''}方 · 分野${m.domain} —— 宜${m.good}`
+  const m = todayMansion();
+  const img = imageDef(m.image);
+  return `${m.fullName}直日 · ${img?.name ?? ""}${img?.direction ?? ""}方 · 分野${m.domain} —— 宜${m.good}`;
 }

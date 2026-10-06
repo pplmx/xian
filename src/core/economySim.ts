@@ -21,52 +21,66 @@
  * (玄铁/残页/器灵尘 → 道源)。本模型尚未把熔炉出口计入,故界外读到的高闲置
  * 是「没有出口模型」的读数,不等于「这些资源真的没用」—— 见 ISS-210。
  */
-import { toNum } from '@/utils/gnum'
-import { mulberry32, RandomService } from '@/utils/random'
-import { BUILDINGS } from '@/data/buildings'
-import { PILLS } from '@/data/pills'
-import { qualityDef } from '@/data/qualities'
-import { MAX_MAJOR } from '@/data/realms'
-import { WORLD_BREAK_MAJOR } from '@/data/realms'
-import { maxTierForMajor } from '@/data/regions'
-import { createEconomyReadings } from 'wanxiang-engine'
+import { toNum } from "@/utils/gnum";
+import { mulberry32, RandomService } from "@/utils/random";
+import { BUILDINGS } from "@/data/buildings";
+import { PILLS } from "@/data/pills";
+import { qualityDef } from "@/data/qualities";
+import { MAX_MAJOR } from "@/data/realms";
+import { WORLD_BREAK_MAJOR } from "@/data/realms";
+import { maxTierForMajor } from "@/data/regions";
+import { createEconomyReadings } from "wanxiang-engine";
 import {
   DAO_SOURCE_PER_FRUIT,
   FURNACE_RATES,
   FURNACE_STONE_DAO_SOURCE,
-  FURNACE_STONE_TIER_AMOUNT
-} from '@/data/endgame'
+  FURNACE_STONE_TIER_AMOUNT,
+} from "@/data/endgame";
 import {
   COMPREHEND_PAGE_COST,
   DECOMPOSE_DUST,
   EQUIP_DROP_CHANCE,
   FIELD_HERB_PER_HOUR,
   FIELD_ORE_PER_HOUR,
-  PAGE_DROP_CHANCE
-} from '@/data/constants'
-import { buildingCost, gongfaUpCost, qiCap, baseQiRegen, stoneByTier, upgradeCost } from './formulas'
-import { libraryWudaoPerHour } from './engineFacilities'
-import { generateEquipment } from './equipGen'
-import { secondsForMajor } from './progressionSim'
-import { tripExpSecsPerHour, winsPerHour } from './expIncome'
-
+  PAGE_DROP_CHANCE,
+} from "@/data/constants";
+import {
+  buildingCost,
+  gongfaUpCost,
+  qiCap,
+  baseQiRegen,
+  stoneByTier,
+  upgradeCost,
+} from "./formulas";
+import { libraryWudaoPerHour } from "./engineFacilities";
+import { generateEquipment } from "./equipGen";
+import { secondsForMajor } from "./progressionSim";
+import { tripExpSecsPerHour, winsPerHour } from "./expIncome";
 
 // ---- 挂机行为假设 ----
-const UPGRADES_PER_HOUR = 3
-const CRAFTS_PER_HOUR = 2
-const GONGFA_UPS_PER_ERA = 6
-const REAL_TIME_FACTOR = 2 // 真实体感 ≈ 纯修炼估算 ×2
+const UPGRADES_PER_HOUR = 3;
+const CRAFTS_PER_HOUR = 2;
+const GONGFA_UPS_PER_ERA = 6;
+const REAL_TIME_FACTOR = 2; // 真实体感 ≈ 纯修炼估算 ×2
 /** 沉没成本摊销的最小时长:早期时期极短,玩家实际用数小时慢慢补齐建筑 */
-const MIN_AMORTIZE_HOURS = 2
+const MIN_AMORTIZE_HOURS = 2;
 
-export type AuditResource = 'stone' | 'herb' | 'ore' | 'page' | 'dust' | 'wudao' | 'exp' | 'daoSource'
+export type AuditResource =
+  | "stone"
+  | "herb"
+  | "ore"
+  | "page"
+  | "dust"
+  | "wudao"
+  | "exp"
+  | "daoSource";
 
 export interface ResourceFlow {
-  resource: AuditResource
-  incomePerHour: number
-  sinkPerHour: number
-  ratio: number
-  verdict: '瓶颈' | '健康' | '过剩' | '闲置'
+  resource: AuditResource;
+  incomePerHour: number;
+  sinkPerHour: number;
+  ratio: number;
+  verdict: "瓶颈" | "健康" | "过剩" | "闲置";
   /**
    * 这条读数的口径附注 —— 只在"模型没把握"时出现。
    *
@@ -74,24 +88,24 @@ export interface ResourceFlow {
    * 界外的悟道点就是这种情形(它的真出口是功法进修与法宝炼化,本模型没算全),
    * 于是这一栏明说「出口待补」,而不是让 ratio 报一个吓人的闲置数。
    */
-  note?: string
+  note?: string;
 }
 
 export interface EraAudit {
-  major: number
-  tier: number
-  eraHours: number
-  flows: ResourceFlow[]
+  major: number;
+  tier: number;
+  eraHours: number;
+  flows: ResourceFlow[];
   /**
    * 界外专有:凝一枚道果需要多少小时的材料产出(道果价 ÷ 熔炉潜力)。
    *
    * 这是终局的进度杠杆 —— 应当**不随层级漂移**;漂移即有人把某一段价格冻死了。
    */
-  daoCostHours?: number
+  daoCostHours?: number;
 }
 
 function buildingLevel(major: number, maxLevel: number): number {
-  return Math.min(maxLevel, 2 + 2 * major)
+  return Math.min(maxLevel, 2 + 2 * major);
 }
 
 /**
@@ -99,43 +113,43 @@ function buildingLevel(major: number, maxLevel: number): number {
  * "没把握就写 note"的口径都在那儿;本作只给判词的说法(瓶颈 / 健康 / 过剩 / 闲置)。
  */
 const ECONOMY_READINGS = createEconomyReadings({
-  labels: { tight: '瓶颈', healthy: '健康', surplus: '过剩', idle: '闲置' }
-})
+  labels: { tight: "瓶颈", healthy: "健康", surplus: "过剩", idle: "闲置" },
+});
 
 /** 该层级掉落装备的平均分解灵尘(真实生成取样) */
 export function avgDustPerDrop(tier: number, samples = 200): number {
-  const rng = new RandomService(mulberry32(tier * 131))
-  let total = 0
+  const rng = new RandomService(mulberry32(tier * 131));
+  let total = 0;
   for (let i = 0; i < samples; i += 1) {
-    const inst = generateEquipment(tier, rng)
-    total += DECOMPOSE_DUST[qualityDef(inst.quality).rank] ?? 1
+    const inst = generateEquipment(tier, rng);
+    total += DECOMPOSE_DUST[qualityDef(inst.quality).rank] ?? 1;
   }
-  return total / samples
+  return total / samples;
 }
 
 /** 单个境界时期的资源流审计 */
 export function auditEra(major: number): EraAudit {
-  const tier = maxTierForMajor(major)
-  const eraHours = (secondsForMajor(major, 0) / 3600) * REAL_TIME_FACTOR || 0.1
-  const amortizeHours = Math.max(eraHours, MIN_AMORTIZE_HOURS)
+  const tier = maxTierForMajor(major);
+  const eraHours = (secondsForMajor(major, 0) / 3600) * REAL_TIME_FACTOR || 0.1;
+  const amortizeHours = Math.max(eraHours, MIN_AMORTIZE_HOURS);
   /**
    * 遭遇速率取自 core/expIncome —— 那是"一次遭遇值多少"的唯一口径所在地,
    * 这里再写一遍就会出现两个「全时历练 = ×N」的说法(本审计第一版正是如此:
    * 一处按全胜算、一处按 0.85 胜率算,同一句话读出 1.64 与 1.51 两个数)。
    */
-  const winsThisHour = winsPerHour()
-  const dropsPerHour = winsThisHour * EQUIP_DROP_CHANCE
+  const winsThisHour = winsPerHour();
+  const dropsPerHour = winsThisHour * EQUIP_DROP_CHANCE;
 
-  const fieldLv = buildingLevel(major, 15)
-  const libLv = buildingLevel(major, 12)
+  const fieldLv = buildingLevel(major, 15);
+  const libLv = buildingLevel(major, 12);
 
   // ---- 生产 ----
-  const stoneIncome = winsThisHour * toNum(stoneByTier(tier, 10))
-  const herbIncome = winsThisHour * 0.5 * 2 + fieldLv * FIELD_HERB_PER_HOUR
-  const oreIncome = winsThisHour * 0.35 * 1.5 + fieldLv * FIELD_ORE_PER_HOUR
-  const pageIncome = winsThisHour * PAGE_DROP_CHANCE * 1.5
-  const dustIncome = dropsPerHour * avgDustPerDrop(tier)
-  const wudaoIncome = libraryWudaoPerHour(libLv)
+  const stoneIncome = winsThisHour * toNum(stoneByTier(tier, 10));
+  const herbIncome = winsThisHour * 0.5 * 2 + fieldLv * FIELD_HERB_PER_HOUR;
+  const oreIncome = winsThisHour * 0.35 * 1.5 + fieldLv * FIELD_ORE_PER_HOUR;
+  const pageIncome = winsThisHour * PAGE_DROP_CHANCE * 1.5;
+  const dustIncome = dropsPerHour * avgDustPerDrop(tier);
+  const wudaoIncome = libraryWudaoPerHour(libLv);
   /**
    * 修为收入 = 挂机(底:1.0× 修速 = 3600 等效秒/小时)+ 历练(战斗胜场与际遇),
    * 两条线都随修速缩放,故这一行的比值在任何境界都该是同一个数 —— 判据据此断。
@@ -143,40 +157,48 @@ export function auditEra(major: number): EraAudit {
    */
   // 镇压红利(镇守道韵)未入本表数值:同源挂机曲线(core/suppress,每区 +8%/小时、封顶 +40%),
   // 任何境界都是挂机的固定加成,不改「比值恒平」的结论 —— 自报口径,不装健康。
-  const expIncome = 3600 + tripExpSecsPerHour()
+  const expIncome = 3600 + tripExpSecsPerHour();
 
   // ---- 消耗(时期总量摊销到每小时) ----
-  let stoneSinkEra = 0
-  let oreSinkEra = 0
+  let stoneSinkEra = 0;
+  let oreSinkEra = 0;
   for (const b of BUILDINGS) {
-    const from = buildingLevel(major, b.maxLevel)
-    const to = buildingLevel(major + 1, b.maxLevel)
+    const from = buildingLevel(major, b.maxLevel);
+    const to = buildingLevel(major + 1, b.maxLevel);
     for (let lv = from; lv < to; lv += 1) {
-      stoneSinkEra += toNum(buildingCost(b.costBase, lv))
-      oreSinkEra += b.costOre * (lv + 1)
+      stoneSinkEra += toNum(buildingCost(b.costBase, lv));
+      oreSinkEra += b.costOre * (lv + 1);
     }
   }
   // 功法进修
-  const wudaoSinkEra = GONGFA_UPS_PER_ERA * gongfaUpCost(2, 3 + major) + 8
-  const pageSinkEra = COMPREHEND_PAGE_COST + GONGFA_UPS_PER_ERA * (3 + major)
+  const wudaoSinkEra = GONGFA_UPS_PER_ERA * gongfaUpCost(2, 3 + major) + 8;
+  const pageSinkEra = COMPREHEND_PAGE_COST + GONGFA_UPS_PER_ERA * (3 + major);
   // 炼丹(取该时期可炼配方的平均成本)
-  const recipes = PILLS.filter(p => p.recipe && p.minRealm <= major)
-  const avgHerbCost = recipes.length ? recipes.reduce((s, p) => s + p.recipe!.herb, 0) / recipes.length : 0
+  const recipes = PILLS.filter((p) => p.recipe && p.minRealm <= major);
+  const avgHerbCost = recipes.length
+    ? recipes.reduce((s, p) => s + p.recipe!.herb, 0) / recipes.length
+    : 0;
   const avgPillStone = recipes.length
-    ? recipes.reduce((s, p) => s + toNum(stoneByTier(maxTierForMajor(p.minRealm), p.recipe!.stoneBase / 10)), 0) / recipes.length
-    : 0
+    ? recipes.reduce(
+        (s, p) => s + toNum(stoneByTier(maxTierForMajor(p.minRealm), p.recipe!.stoneBase / 10)),
+        0,
+      ) / recipes.length
+    : 0;
   // 装备强化
-  const up = upgradeCost(3, tier, 3, 0)
-  const dustSinkHour = UPGRADES_PER_HOUR * up.dust
-  const stoneSinkHour = UPGRADES_PER_HOUR * toNum(up.stone) + CRAFTS_PER_HOUR * avgPillStone + stoneSinkEra / amortizeHours
-  const herbSinkHour = CRAFTS_PER_HOUR * avgHerbCost
+  const up = upgradeCost(3, tier, 3, 0);
+  const dustSinkHour = UPGRADES_PER_HOUR * up.dust;
+  const stoneSinkHour =
+    UPGRADES_PER_HOUR * toNum(up.stone) +
+    CRAFTS_PER_HOUR * avgPillStone +
+    stoneSinkEra / amortizeHours;
+  const herbSinkHour = CRAFTS_PER_HOUR * avgHerbCost;
   /**
    * 修为消耗 = 通关本境所需的等效闭关秒 ÷ 本境时长。
    *
    * 这里**不套 MIN_AMORTIZE_HOURS**:那道下限是给建筑的(「玩家用数小时慢慢补齐」),
    * 而修为需求本来就摊在本境这一段时长里,早期一境只有十几分钟也照摊。
    */
-  const expSinkHour = secondsForMajor(major, 0) / eraHours
+  const expSinkHour = secondsForMajor(major, 0) / eraHours;
 
   /**
    * 界外的出口:天道熔炉。
@@ -196,17 +218,17 @@ export function auditEra(major: number): EraAudit {
    * 漂移就说明有人把某一段的价格又冻死了(ISS-214 的旧病)。
    */
   const furnace = ((): { potential: number; demand: number } | null => {
-    if (major < WORLD_BREAK_MAJOR) return null
+    if (major < WORLD_BREAK_MAJOR) return null;
     const byResource: Partial<Record<AuditResource, number>> = {
       ore: oreIncome,
       page: pageIncome,
       herb: herbIncome,
-      dust: dustIncome
-    }
-    let potential = 0
+      dust: dustIncome,
+    };
+    let potential = 0;
     for (const rate of FURNACE_RATES) {
-      const income = byResource[rate.resource as AuditResource]
-      if (income) potential += income / rate.per
+      const income = byResource[rate.resource as AuditResource];
+      if (income) potential += income / rate.per;
     }
     /**
      * 灵石熔铸:一份灵石换 FURNACE_STONE_DAO_SOURCE 缕道源。
@@ -215,42 +237,49 @@ export function auditEra(major: number): EraAudit {
      * 从前两边都写死第 20 层:灵石收入按 1.9^层级 涨,价格却不动,
      * 于是到混沌海一条石脉就能换来满地道果(ISS-214)。
      */
-    const stonePerDao = toNum(stoneByTier(tier, FURNACE_STONE_TIER_AMOUNT))
-    if (stonePerDao > 0) potential += (stoneIncome / stonePerDao) * FURNACE_STONE_DAO_SOURCE
-    return { potential, demand: DAO_SOURCE_PER_FRUIT / Math.max(eraHours, 1) }
-  })()
+    const stonePerDao = toNum(stoneByTier(tier, FURNACE_STONE_TIER_AMOUNT));
+    if (stonePerDao > 0) potential += (stoneIncome / stonePerDao) * FURNACE_STONE_DAO_SOURCE;
+    return { potential, demand: DAO_SOURCE_PER_FRUIT / Math.max(eraHours, 1) };
+  })();
 
   /**
    * 界外的材料按「有什么投什么」分摊熔炉需求:每样材料的有效出口
    * = 自己的道源潜力 × (需求 / 总潜力)。故四者与道源流的比值是同一个数 ——
    * 它说的正是「材料总量是终局需求的几倍」。
    */
-  const furnaceShare = furnace && furnace.potential > 0 ? Math.min(1, furnace.demand / furnace.potential) : 0
+  const furnaceShare =
+    furnace && furnace.potential > 0 ? Math.min(1, furnace.demand / furnace.potential) : 0;
 
   /**
    * 凝一枚道果要多少小时的材料产出 = 道果价(道源) ÷ 熔炉潜力(道源/小时)。
    * 这是终局的进度杠杆:它是常数,说明"材料 → 道果"的换算在整条长尾上同一个价。
    */
-  const daoCostHours = furnace && furnace.potential > 0 ? DAO_SOURCE_PER_FRUIT / furnace.potential : 0
+  const daoCostHours =
+    furnace && furnace.potential > 0 ? DAO_SOURCE_PER_FRUIT / furnace.potential : 0;
 
-  const make = (resource: AuditResource, income: number, sink: number, note?: string): ResourceFlow => {
-    const [reading] = ECONOMY_READINGS.read([{ key: resource, income, sink, note }])
+  const make = (
+    resource: AuditResource,
+    income: number,
+    sink: number,
+    note?: string,
+  ): ResourceFlow => {
+    const [reading] = ECONOMY_READINGS.read([{ key: resource, income, sink, note }]);
     return {
       resource,
       incomePerHour: income,
       sinkPerHour: sink,
       ratio: reading!.ratio,
-      verdict: reading!.verdict as ResourceFlow['verdict'],
-      note
-    }
-  }
+      verdict: reading!.verdict as ResourceFlow["verdict"],
+      note,
+    };
+  };
 
   /** 界外:这几样材料的出口改认熔炉(人间界照旧走各自的去处) */
   const withFurnace = (resource: AuditResource, income: number, baseSink: number): ResourceFlow => {
-    if (!furnace) return make(resource, income, baseSink)
-    const rate = FURNACE_RATES.find(r => r.resource === resource)!
-    return make(resource, income, (income / rate.per) * furnaceShare)
-  }
+    if (!furnace) return make(resource, income, baseSink);
+    const rate = FURNACE_RATES.find((r) => r.resource === resource)!;
+    return make(resource, income, (income / rate.per) * furnaceShare);
+  };
 
   /**
    * 灵草(ISS-306):不再有「灵草→灵石」出口 —— 那个方向被产品否了(草比石贵)。
@@ -258,9 +287,9 @@ export function auditEra(major: number): EraAudit {
    * 新手村那株草的分量。参照界外悟道那条惯例(出口未入模型就自报口径,不装健康),
    * 给闲置/过剩的草一行明说,免得审计读数被当成无人理睬的死资源。
    */
-  const herbFlow = withFurnace('herb', herbIncome, herbSinkHour)
-  if (herbFlow.verdict === '闲置' || herbFlow.verdict === '过剩') {
-    herbFlow.note = '灵草即储备(分级保值,不设草→石出口)'
+  const herbFlow = withFurnace("herb", herbIncome, herbSinkHour);
+  if (herbFlow.verdict === "闲置" || herbFlow.verdict === "过剩") {
+    herbFlow.note = "灵草即储备(分级保值,不设草→石出口)";
   }
 
   return {
@@ -269,32 +298,30 @@ export function auditEra(major: number): EraAudit {
     eraHours,
     ...(furnace ? { daoCostHours } : {}),
     flows: [
-      make('stone', stoneIncome, stoneSinkHour),
+      make("stone", stoneIncome, stoneSinkHour),
       herbFlow,
-      withFurnace('ore', oreIncome, oreSinkEra / amortizeHours),
-      withFurnace('page', pageIncome, pageSinkEra / amortizeHours),
-      withFurnace('dust', dustIncome, dustSinkHour),
+      withFurnace("ore", oreIncome, oreSinkEra / amortizeHours),
+      withFurnace("page", pageIncome, pageSinkEra / amortizeHours),
+      withFurnace("dust", dustIncome, dustSinkHour),
       make(
-        'wudao',
+        "wudao",
         wudaoIncome,
         wudaoSinkEra / amortizeHours,
-        furnace ? '界外出口(功法进修 / 法宝炼化)未入模型 —— 读数待补' : undefined
+        furnace ? "界外出口(功法进修 / 法宝炼化)未入模型 —— 读数待补" : undefined,
       ),
-      make('exp', expIncome, expSinkHour),
-      ...(furnace
-        ? [make('daoSource', furnace.potential, furnace.demand)]
-        : [])
-    ]
-  }
+      make("exp", expIncome, expSinkHour),
+      ...(furnace ? [make("daoSource", furnace.potential, furnace.demand)] : []),
+    ],
+  };
 }
 
 export function fullEconomyAudit(): EraAudit[] {
-  const out: EraAudit[] = []
-  for (let m = 0; m <= MAX_MAJOR; m += 1) out.push(auditEra(m))
-  return out
+  const out: EraAudit[] = [];
+  for (let m = 0; m <= MAX_MAJOR; m += 1) out.push(auditEra(m));
+  return out;
 }
 
 /** 灵气结构体检:回满时长(秒) */
 export function qiFillSeconds(major: number): number {
-  return qiCap(major, 0) / baseQiRegen(major)
+  return qiCap(major, 0) / baseQiRegen(major);
 }

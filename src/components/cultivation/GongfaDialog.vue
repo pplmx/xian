@@ -8,11 +8,20 @@
           {{ ELEMENTS[def.element].name }}属性
         </span>
         <!-- Phase 32.2:同源功法参悟时更易撞见(倾向,非独占;无此灵根照样学得到) -->
-        <span v-if="sameRoot" class="chip-ink border-gold-ink/40 text-gold-ink" title="与你的灵根同源,藏经阁参悟时更易撞见">同源</span>
-        <span v-if="learned" class="ml-auto tabular text-[12px] text-gold-ink">第 {{ level }}/{{ def.maxLevel }} 层</span>
+        <span
+          v-if="sameRoot"
+          class="chip-ink border-gold-ink/40 text-gold-ink"
+          title="与你的灵根同源,藏经阁参悟时更易撞见"
+          >同源</span
+        >
+        <span v-if="learned" class="ml-auto tabular text-[12px] text-gold-ink"
+          >第 {{ level }}/{{ def.maxLevel }} 层</span
+        >
       </div>
       <p class="mt-2 text-[12px] leading-relaxed text-ink-faint">{{ def.desc }}</p>
-      <p v-if="def.minRealm > player.major" class="mt-1 text-[11px] text-cinnabar">需更高境界方可参悟其精义</p>
+      <p v-if="def.minRealm > player.major" class="mt-1 text-[11px] text-cinnabar">
+        需更高境界方可参悟其精义
+      </p>
       <div class="ink-divider my-3" />
       <template v-if="learned">
         <div class="space-y-1.5">
@@ -41,7 +50,9 @@
         </p>
         <!-- Phase 31 A3:满级悟道,择一分支。文案须自解释——给什么、要不要慎重,按下之前就得看见 -->
         <div v-if="fullLevel && branches.length" class="mt-3">
-          <p class="mb-1 font-kai text-[12px] tracking-[0.2em] text-ink-faint">功 行 圆 满 · 悟 道</p>
+          <p class="mb-1 font-kai text-[12px] tracking-[0.2em] text-ink-faint">
+            功 行 圆 满 · 悟 道
+          </p>
           <p class="mb-2 text-[11px] leading-relaxed text-ink-faint">
             此功已修至顶层,可就其中一条道走到底,永久追加下方词条(转世不失)。
             <span class="text-cinnabar">道分歧路,一经择定终身不改。</span>
@@ -63,24 +74,34 @@
               <span class="min-w-0">
                 <span class="font-kai text-[13px] text-ink">{{ b.name }}</span>
                 <span class="ml-2 text-[11px] text-ink-faint">{{ b.desc }}</span>
-                <span class="tabular mt-0.5 block text-[11px] text-qing">{{ modsText(b.mods) }}</span>
+                <span class="tabular mt-0.5 block text-[11px] text-qing">{{
+                  modsText(b.mods)
+                }}</span>
               </span>
               <span class="shrink-0 text-[10px] text-qing">择此道 →</span>
             </button>
             <!-- 永久抉择二步确认:选了就改不了,按一下不该就此了结 -->
             <div v-if="branchConfirm" class="rounded-md bg-cinnabar/5 px-3 py-2">
               <p class="text-[10px] leading-relaxed text-cinnabar">
-                道分歧路,一经择定<strong>终身不改</strong>(转世仍随你)。确认择【{{ gongfaBranchDef(branchConfirm)?.name ?? '' }}】?
+                道分歧路,一经择定<strong>终身不改</strong>(转世仍随你)。确认择【{{
+                  gongfaBranchDef(branchConfirm)?.name ?? ""
+                }}】?
               </p>
               <div class="mt-1.5 flex justify-end gap-2">
-                <button class="btn-ghost !px-3 !py-1 !text-[11px]" @click="branchConfirm = null">再想想</button>
-                <button class="btn-seal !px-3 !py-1 !text-[11px]" @click="confirmBranch()">确认择道</button>
+                <button class="btn-ghost !px-3 !py-1 !text-[11px]" @click="branchConfirm = null">
+                  再想想
+                </button>
+                <button class="btn-seal !px-3 !py-1 !text-[11px]" @click="confirmBranch()">
+                  确认择道
+                </button>
               </div>
             </div>
           </div>
         </div>
         <!-- 满级却无分支:也要交代一句,免得玩家满世界找入口 -->
-        <p v-else-if="fullLevel" class="mt-3 text-[11px] text-ink-faint">此功已修至顶层,一以贯之,别无歧路可择。</p>
+        <p v-else-if="fullLevel" class="mt-3 text-[11px] text-ink-faint">
+          此功已修至顶层,一以贯之,别无歧路可择。
+        </p>
       </template>
       <!--
         未习得也要给得出「学它做什么」:参悟是花残页的抉择,池子里若只写着风味,
@@ -107,11 +128,16 @@
     </div>
     <template v-if="learned" #footer>
       <div class="flex gap-2">
-        <button v-if="def?.type === 'main'" class="btn-seal flex-1" :disabled="isMain" @click="setMain">
-          {{ isMain ? '主修中' : '设为主修' }}
+        <button
+          v-if="def?.type === 'main'"
+          class="btn-seal flex-1"
+          :disabled="isMain"
+          @click="setMain"
+        >
+          {{ isMain ? "主修中" : "设为主修" }}
         </button>
         <button v-else class="btn-seal flex-1" @click="toggleSub">
-          {{ isSub ? '卸下辅修' : '设为辅修' }}
+          {{ isSub ? "卸下辅修" : "设为辅修" }}
         </button>
         <!-- 进修付不起就置灰+列差:缺哪样、差多少都在按钮上直说(与聚气丹/建筑同款纪律) -->
         <button
@@ -120,7 +146,9 @@
           :disabled="!upAffordable"
           @click="def && upgradeGongfa(def.id)"
         >
-          <template v-if="upAffordable">进 修 · {{ upCost.wudao }} 悟道点 · {{ upCost.page }} 残页</template>
+          <template v-if="upAffordable"
+            >进 修 · {{ upCost.wudao }} 悟道点 · {{ upCost.page }} 残页</template
+          >
           <template v-else>进修 · 尚差 {{ upShort }}</template>
         </button>
       </div>
@@ -129,118 +157,120 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref, watch } from 'vue'
-  import { useUiStore } from '@/stores/ui'
-  import { useCultivationStore } from '@/stores/cultivation'
-  import { useDongfuStore } from '@/stores/dongfu'
-  import { usePlayerStore } from '@/stores/player'
-  import { useResourcesStore } from '@/stores/resources'
-  import { gongfaDef, GONGFA_TYPE_NAMES } from '@/data/gongfa'
-  import { ELEMENTS } from '@/data/linggen'
-  import { branchesFor, gongfaBranchDef } from '@/data/gongfaBranches'
-  import { gongfaUpgradeCost, upgradeGongfa } from '@/core/gongfaService'
-  import { gongfaAffinity, rootElements } from '@/core/linggenAffinity'
-  import { gongfaModsAt } from '@/stores/cultivation'
-  import { formatSignedPercent } from '@/utils/format'
-  import { gongfaSkillLine } from '@/ui/itemText'
-  import { STAT_NAMES, modsText } from '@/ui/statNames'
-  import type { AnyStatKey } from '@/types'
-  import BaseModal from '@/components/common/BaseModal.vue'
-  import QualityTag from '@/components/common/QualityTag.vue'
+import { computed, ref, watch } from "vue";
+import { useUiStore } from "@/stores/ui";
+import { useCultivationStore } from "@/stores/cultivation";
+import { useDongfuStore } from "@/stores/dongfu";
+import { usePlayerStore } from "@/stores/player";
+import { useResourcesStore } from "@/stores/resources";
+import { gongfaDef, GONGFA_TYPE_NAMES } from "@/data/gongfa";
+import { ELEMENTS } from "@/data/linggen";
+import { branchesFor, gongfaBranchDef } from "@/data/gongfaBranches";
+import { gongfaUpgradeCost, upgradeGongfa } from "@/core/gongfaService";
+import { gongfaAffinity, rootElements } from "@/core/linggenAffinity";
+import { gongfaModsAt } from "@/stores/cultivation";
+import { formatSignedPercent } from "@/utils/format";
+import { gongfaSkillLine } from "@/ui/itemText";
+import { STAT_NAMES, modsText } from "@/ui/statNames";
+import type { AnyStatKey } from "@/types";
+import BaseModal from "@/components/common/BaseModal.vue";
+import QualityTag from "@/components/common/QualityTag.vue";
 
-  const ui = useUiStore()
-  const cultivation = useCultivationStore()
-  const dongfu = useDongfuStore()
-  const player = usePlayerStore()
-  const resources = useResourcesStore()
+const ui = useUiStore();
+const cultivation = useCultivationStore();
+const dongfu = useDongfuStore();
+const player = usePlayerStore();
+const resources = useResourcesStore();
 
-  const def = computed(() => (ui.gongfaDetailId ? gongfaDef(ui.gongfaDetailId) : undefined))
-  const level = computed(() => (def.value ? (cultivation.learned[def.value.id] ?? 0) : 0))
-  const learned = computed(() => level.value > 0)
-  const upCost = computed(() => (def.value ? gongfaUpgradeCost(def.value.id) : null))
-  /** 进修付不起即灰:悟道点与残页两道账,缺一不可(与 upgradeGongfa 失败臂同口径) */
-  const upAffordable = computed(() => {
-    const c = upCost.value
-    if (!c) return false
-    return resources.hasSmall('wudao', c.wudao) && resources.hasSmall('page', c.page)
-  })
-  /** 尚差文案:双缺用「·」粘连(与建筑卡同款) */
-  const upShort = computed(() => {
-    const c = upCost.value
-    if (!c) return ''
-    const wudaoShort = Math.max(0, c.wudao - resources.wudao)
-    const pageShort = Math.max(0, c.page - resources.page)
-    if (wudaoShort > 0 && pageShort > 0) return `${wudaoShort} 悟道点 · ${pageShort} 残页`
-    if (wudaoShort > 0) return `${wudaoShort} 悟道点`
-    return `${pageShort} 残页`
-  })
+const def = computed(() => (ui.gongfaDetailId ? gongfaDef(ui.gongfaDetailId) : undefined));
+const level = computed(() => (def.value ? (cultivation.learned[def.value.id] ?? 0) : 0));
+const learned = computed(() => level.value > 0);
+const upCost = computed(() => (def.value ? gongfaUpgradeCost(def.value.id) : null));
+/** 进修付不起即灰:悟道点与残页两道账,缺一不可(与 upgradeGongfa 失败臂同口径) */
+const upAffordable = computed(() => {
+  const c = upCost.value;
+  if (!c) return false;
+  return resources.hasSmall("wudao", c.wudao) && resources.hasSmall("page", c.page);
+});
+/** 尚差文案:双缺用「·」粘连(与建筑卡同款) */
+const upShort = computed(() => {
+  const c = upCost.value;
+  if (!c) return "";
+  const wudaoShort = Math.max(0, c.wudao - resources.wudao);
+  const pageShort = Math.max(0, c.page - resources.page);
+  if (wudaoShort > 0 && pageShort > 0) return `${wudaoShort} 悟道点 · ${pageShort} 残页`;
+  if (wudaoShort > 0) return `${wudaoShort} 悟道点`;
+  return `${pageShort} 残页`;
+});
 
-  /** 与灵根同源?判据直接取自参悟权重函数,标签与实际权重不可能分叉 */
-  const sameRoot = computed(() => gongfaAffinity(def.value?.element, rootElements(player.linggen?.roots)) > 1)
+/** 与灵根同源?判据直接取自参悟权重函数,标签与实际权重不可能分叉 */
+const sameRoot = computed(
+  () => gongfaAffinity(def.value?.element, rootElements(player.linggen?.roots)) > 1,
+);
 
-  const modRows = computed(() => {
-    if (!def.value || !learned.value) return []
-    const mods = gongfaModsAt(def.value.id, level.value)
-    return Object.entries(mods).map(([k, v]) => ({
-      label: STAT_NAMES[k as AnyStatKey] ?? k,
-      value: formatSignedPercent(v as number)
-    }))
-  })
+const modRows = computed(() => {
+  if (!def.value || !learned.value) return [];
+  const mods = gongfaModsAt(def.value.id, level.value);
+  return Object.entries(mods).map(([k, v]) => ({
+    label: STAT_NAMES[k as AnyStatKey] ?? k,
+    value: formatSignedPercent(v as number),
+  }));
+});
 
-  /** 未习得时的满级预览 —— 与习得后同一套算法(满级 = maxLevel 层) */
-  const previewRows = computed(() => {
-    const d = def.value
-    if (!d) return []
-    const mods = gongfaModsAt(d.id, d.maxLevel)
-    return Object.entries(mods).map(([k, v]) => ({
-      label: STAT_NAMES[k as AnyStatKey] ?? k,
-      value: formatSignedPercent(v as number)
-    }))
-  })
+/** 未习得时的满级预览 —— 与习得后同一套算法(满级 = maxLevel 层) */
+const previewRows = computed(() => {
+  const d = def.value;
+  if (!d) return [];
+  const mods = gongfaModsAt(d.id, d.maxLevel);
+  return Object.entries(mods).map(([k, v]) => ({
+    label: STAT_NAMES[k as AnyStatKey] ?? k,
+    value: formatSignedPercent(v as number),
+  }));
+});
 
-  const isMain = computed(() => def.value && cultivation.mainGongfa === def.value.id)
-  const isSub = computed(() => def.value && cultivation.subGongfa.includes(def.value.id))
+const isMain = computed(() => def.value && cultivation.mainGongfa === def.value.id);
+const isSub = computed(() => def.value && cultivation.subGongfa.includes(def.value.id));
 
-  // Phase 31 A3:满级悟道分支
-  const fullLevel = computed(() => (def.value ? level.value >= (def.value.maxLevel ?? 9) : false))
-  const branches = computed(() => (def.value ? branchesFor(def.value.id) : []))
-  const branchPicked = computed(() => {
-    if (!def.value) return undefined
-    const id = cultivation.gongfaBranch[def.value.id]
-    return id ? gongfaBranchDef(id) : undefined
-  })
+// Phase 31 A3:满级悟道分支
+const fullLevel = computed(() => (def.value ? level.value >= (def.value.maxLevel ?? 9) : false));
+const branches = computed(() => (def.value ? branchesFor(def.value.id) : []));
+const branchPicked = computed(() => {
+  if (!def.value) return undefined;
+  const id = cultivation.gongfaBranch[def.value.id];
+  return id ? gongfaBranchDef(id) : undefined;
+});
 
-  /** 悟道分岔确认态(按分支 id):永久抉择先确认。换功法/关弹窗即复位 */
-  const branchConfirm = ref<string | null>(null)
-  watch(def, () => {
-    branchConfirm.value = null
-  })
+/** 悟道分岔确认态(按分支 id):永久抉择先确认。换功法/关弹窗即复位 */
+const branchConfirm = ref<string | null>(null);
+watch(def, () => {
+  branchConfirm.value = null;
+});
 
-  function choose(branchId: string): void {
-    if (!def.value) return
-    if (cultivation.chooseBranch(def.value.id, branchId)) {
-      ui.toast(`已悟道「${gongfaBranchDef(branchId)?.name ?? ''}」`, 'rare')
-    }
+function choose(branchId: string): void {
+  if (!def.value) return;
+  if (cultivation.chooseBranch(def.value.id, branchId)) {
+    ui.toast(`已悟道「${gongfaBranchDef(branchId)?.name ?? ""}」`, "rare");
   }
+}
 
-  function confirmBranch(): void {
-    if (!branchConfirm.value) return
-    const id = branchConfirm.value
-    branchConfirm.value = null
-    choose(id)
-  }
+function confirmBranch(): void {
+  if (!branchConfirm.value) return;
+  const id = branchConfirm.value;
+  branchConfirm.value = null;
+  choose(id);
+}
 
-  function close(): void {
-    ui.gongfaDetailId = null
-  }
+function close(): void {
+  ui.gongfaDetailId = null;
+}
 
-  function setMain(): void {
-    if (def.value) cultivation.equipMain(def.value.id)
-  }
+function setMain(): void {
+  if (def.value) cultivation.equipMain(def.value.id);
+}
 
-  function toggleSub(): void {
-    if (!def.value) return
-    const ok = cultivation.toggleSub(def.value.id, dongfu.subGongfaSlots)
-    if (!ok) ui.toast(`辅修栏已满(${dongfu.subGongfaSlots} 个,升级藏经阁可扩容)`, 'warn')
-  }
+function toggleSub(): void {
+  if (!def.value) return;
+  const ok = cultivation.toggleSub(def.value.id, dongfu.subGongfaSlots);
+  if (!ok) ui.toast(`辅修栏已满(${dongfu.subGongfaSlots} 个,升级藏经阁可扩容)`, "warn");
+}
 </script>

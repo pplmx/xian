@@ -1,6 +1,6 @@
 /* 楷体那几份 @font-face 与 unicode-range 是生成物(按用法频次切片、按需下载),
    由 scripts/fonts/build-kai-font.py 写出;里面的 .woff2 会经 Vite 改写带 hash。 */
-@import './assets/fonts/kai-subset.css';
+@import "./assets/fonts/kai-subset.css";
 
 @tailwind base;
 @tailwind components;
@@ -106,8 +106,8 @@
    * (玥 玦 燊 龑 这类 GBK 扩展字)任何合理体积的子集都盖不住 —— iOS 上由华文楷体接住
    * (还是楷体),安卓上落到系统衬线。这条退路删不得。
    */
-  --font-kai: 'LXGW WenKai GB Screen', 'Kaiti SC', 'STKaiti', KaiTi, 'Noto Serif SC', serif;
-  --font-song: 'Noto Serif SC', 'Source Han Serif SC', STSong, SimSun, 'Kaiti SC', serif;
+  --font-kai: "LXGW WenKai GB Screen", "Kaiti SC", "STKaiti", KaiTi, "Noto Serif SC", serif;
+  --font-song: "Noto Serif SC", "Source Han Serif SC", STSong, SimSun, "Kaiti SC", serif;
 
   /* 明暗通用阴影色(暗色主题下重定义) */
   --shadow-ink: rgb(41 39 34);
@@ -511,7 +511,7 @@ body {
    只覆盖 -rgb 通道值:Tailwind 工具类(text-ink / bg-paper 等)读的是通道值,
    :root 里的派生变量 --color-x 也是从通道值算出来的,组件层的 color-mix
    与模板里的 var(--color-*) 随之自动更新,整体换肤无需逐个组件改动 */
-html[data-theme='dark'] {
+html[data-theme="dark"] {
   --color-paper-rgb: 33 31 28;
   --color-paper-deep-rgb: 41 38 34;
   --color-paper-dark-rgb: 51 48 43;
@@ -549,11 +549,11 @@ html[data-theme='dark'] {
  * 暗色主题的印面:取深朱(见上面对朱砂两个角色的说明)。
  * 按下时同色叠一分透明 —— 而不是提亮成亮朱砂,亮底上的奶油字会掉到 2.9:1。
  */
-html[data-theme='dark'] .btn-seal {
+html[data-theme="dark"] .btn-seal {
   background: var(--color-cinnabar-deep);
 }
 
-html[data-theme='dark'] .btn-seal:active:not(:disabled) {
+html[data-theme="dark"] .btn-seal:active:not(:disabled) {
   background: rgb(var(--color-cinnabar-deep-rgb) / 0.85);
 }
 
@@ -626,7 +626,7 @@ html[data-theme='dark'] .btn-seal:active:not(:disabled) {
 
 /* 宣纸颗粒 */
 .paper-grain::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -652,11 +652,11 @@ html[data-theme='dark'] .btn-seal:active:not(:disabled) {
   background: rgb(255 255 255 / 0.3);
 }
 
-html[data-theme='dark'] .mist {
+html[data-theme="dark"] .mist {
   background: rgb(255 255 255 / 0.06);
 }
 
-html[data-theme='dark'] .mist-soft {
+html[data-theme="dark"] .mist-soft {
   background: rgb(255 255 255 / 0.04);
 }
 
@@ -677,19 +677,19 @@ html[data-theme='dark'] .mist-soft {
   /* 世界的「此刻」文字色(世界名 / 地图上你现在的位置) —— 取色板里过 AA 的现存色 */
   --world-accent: var(--color-cinnabar);
 }
-.app-shell[data-world='immortal'] {
+.app-shell[data-world="immortal"] {
   --world-glow-rgb: 90 140 190;
   --world-mountain: rgb(60 108 152);
   --world-bar: rgb(76 132 178 / 0.85);
   --world-accent: var(--color-qing);
 }
-.app-shell[data-world='god'] {
+.app-shell[data-world="god"] {
   --world-glow-rgb: 130 100 190;
   --world-mountain: rgb(112 84 160);
   --world-bar: rgb(140 108 200 / 0.85);
   --world-accent: var(--color-violet-ink);
 }
-.app-shell[data-world='chaos'] {
+.app-shell[data-world="chaos"] {
   --world-glow-rgb: 92 112 150;
   --world-mountain: rgb(80 100 138);
   --world-bar: rgb(96 120 158 / 0.85);
@@ -706,13 +706,13 @@ html[data-theme='dark'] .mist-soft {
 .world-seal {
   color: var(--color-ink);
 }
-.card-ink[data-world='immortal'] .world-seal {
+.card-ink[data-world="immortal"] .world-seal {
   color: var(--color-qing);
 }
-.card-ink[data-world='god'] .world-seal {
+.card-ink[data-world="god"] .world-seal {
   color: var(--color-violet-ink);
 }
-.card-ink[data-world='chaos'] .world-seal {
+.card-ink[data-world="chaos"] .world-seal {
   color: var(--color-cangqing);
 }
 
@@ -721,54 +721,54 @@ html[data-theme='dark'] .mist-soft {
   color: var(--color-cinnabar);
   background: rgb(var(--color-cinnabar-rgb) / 0.06);
 }
-.app-shell[data-world='immortal'] .codex-current {
+.app-shell[data-world="immortal"] .codex-current {
   color: var(--color-qing);
   background: rgb(var(--color-qing-rgb) / 0.07);
 }
-.app-shell[data-world='god'] .codex-current {
+.app-shell[data-world="god"] .codex-current {
   color: var(--color-violet-ink);
   background: rgb(var(--color-violet-ink-rgb) / 0.07);
 }
-.app-shell[data-world='chaos'] .codex-current {
+.app-shell[data-world="chaos"] .codex-current {
   color: var(--color-cangqing);
   background: rgb(var(--color-cangqing-rgb) / 0.06);
 }
 
-.app-shell[data-world='immortal'] .mist {
+.app-shell[data-world="immortal"] .mist {
   background: rgb(206 226 240 / 0.42);
 }
-.app-shell[data-world='immortal'] .mist-soft {
+.app-shell[data-world="immortal"] .mist-soft {
   background: rgb(228 240 248 / 0.32);
 }
-.app-shell[data-world='god'] .mist {
+.app-shell[data-world="god"] .mist {
   background: rgb(228 218 244 / 0.42);
 }
-.app-shell[data-world='god'] .mist-soft {
+.app-shell[data-world="god"] .mist-soft {
   background: rgb(238 230 248 / 0.32);
 }
-.app-shell[data-world='chaos'] .mist {
+.app-shell[data-world="chaos"] .mist {
   background: rgb(132 150 172 / 0.28);
 }
-.app-shell[data-world='chaos'] .mist-soft {
-  background: rgb(152 164 182 / 0.20);
+.app-shell[data-world="chaos"] .mist-soft {
+  background: rgb(152 164 182 / 0.2);
 }
 
-html[data-theme='dark'] .app-shell[data-world='immortal'] .mist {
+html[data-theme="dark"] .app-shell[data-world="immortal"] .mist {
   background: rgb(140 190 220 / 0.08);
 }
-html[data-theme='dark'] .app-shell[data-world='immortal'] .mist-soft {
+html[data-theme="dark"] .app-shell[data-world="immortal"] .mist-soft {
   background: rgb(140 190 220 / 0.06);
 }
-html[data-theme='dark'] .app-shell[data-world='god'] .mist {
+html[data-theme="dark"] .app-shell[data-world="god"] .mist {
   background: rgb(180 150 220 / 0.08);
 }
-html[data-theme='dark'] .app-shell[data-world='god'] .mist-soft {
+html[data-theme="dark"] .app-shell[data-world="god"] .mist-soft {
   background: rgb(180 150 220 / 0.06);
 }
-html[data-theme='dark'] .app-shell[data-world='chaos'] .mist {
+html[data-theme="dark"] .app-shell[data-world="chaos"] .mist {
   background: rgb(120 150 170 / 0.06);
 }
-html[data-theme='dark'] .app-shell[data-world='chaos'] .mist-soft {
+html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
   background: rgb(120 150 170 / 0.04);
 }
 
@@ -778,7 +778,11 @@ html[data-theme='dark'] .app-shell[data-world='chaos'] .mist-soft {
 .veil-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 42%, rgb(var(--world-glow-rgb) / 0.20) 0%, transparent 62%);
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    rgb(var(--world-glow-rgb) / 0.2) 0%,
+    transparent 62%
+  );
   animation: veil-glow 2.7s ease-out forwards;
 }
 @keyframes veil-glow {
@@ -865,7 +869,7 @@ html[data-theme='dark'] .app-shell[data-world='chaos'] .mist-soft {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.30);
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.3);
   color: var(--color-ink-soft);
   font-family: var(--font-kai);
   border-radius: 8px;
@@ -948,7 +952,7 @@ button.chip-ink:active:not(:disabled) {
   backdrop-filter: blur(6px);
 }
 .tab-rail::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 100% 0 auto;
   height: 0.75rem;
@@ -962,7 +966,7 @@ button.chip-ink:active:not(:disabled) {
 }
 
 .track-ink {
-  background: rgb(var(--shadow-ink-rgb) / 0.10);
+  background: rgb(var(--shadow-ink-rgb) / 0.1);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -977,7 +981,7 @@ button.chip-ink:active:not(:disabled) {
 
 /* 进度条流光:灵气在条内缓缓游走 */
 .bar-fill::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   bottom: 0;
@@ -1043,7 +1047,12 @@ button.chip-ink:active:not(:disabled) {
   inset: 0;
   z-index: 60;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 28%, rgb(200 160 60 / 0.3), rgb(200 160 60 / 0.08) 45%, transparent 72%);
+  background: radial-gradient(
+    ellipse at 50% 28%,
+    rgb(200 160 60 / 0.3),
+    rgb(200 160 60 / 0.08) 45%,
+    transparent 72%
+  );
   animation: rare-flash 1.1s ease-out forwards;
 }
 
@@ -1139,7 +1148,13 @@ button.chip-ink:active:not(:disabled) {
   margin-top: -65vmin;
   border-radius: 999px;
   pointer-events: none;
-  background: radial-gradient(circle, transparent 30%, rgb(168 63 57 / 0.28) 46%, rgb(var(--shadow-ink-rgb) / 0.22) 60%, transparent 72%);
+  background: radial-gradient(
+    circle,
+    transparent 30%,
+    rgb(168 63 57 / 0.28) 46%,
+    rgb(var(--shadow-ink-rgb) / 0.22) 60%,
+    transparent 72%
+  );
   animation: ink-wave 1.15s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
 }
 
@@ -1302,7 +1317,7 @@ button.chip-ink:active:not(:disabled) {
   position: relative;
 }
 .pulse-ready::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   border-radius: inherit;

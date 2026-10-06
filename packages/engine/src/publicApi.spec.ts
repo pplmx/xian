@@ -11,8 +11,8 @@
  *   二、每个模块的公开类型都能**从公开入口**取到(只 import './index.js',不碰内部模块),
  *       漏一个 `export type` 这条就编译不过。
  */
-import { describe, expect, it } from 'vite-plus/test'
-import * as engine from './index.js'
+import { describe, expect, it } from "vite-plus/test";
+import * as engine from "./index.js";
 import type {
   AppliedEntry,
   ActContext,
@@ -225,91 +225,91 @@ import type {
   ValidationIssue,
   VictoryOutcome,
   WorldConfig,
-  WorldDef
-} from './index.js'
+  WorldDef,
+} from "./index.js";
 
 /** 运行时导出清单:改动这里 = 改动对外承诺,所以必须显式改一次 */
 const RUNTIME_EXPORTS = [
-  'DEFAULT_ATTRIBUTES',
-  'DEFAULT_LAYER_NAMES',
-  'asArray',
-  'asFiniteNumber',
-  'asNumberRecord',
-  'asObjectOrNull',
-  'asRecord',
-  'asRecordOf',
-  'asStringArray',
-  'attributeDefs',
-  'averageLore',
-  'accrue',
-  'clamp',
-  'composeCraftRate',
-  'compareBy',
-  'createChoiceSystem',
-  'createChain',
-  'createCodex',
-  'createDropTable',
-  'createEconomyReadings',
-  'createIntake',
-  'createSettlement',
-  'createStageMemory',
-  'createCycleSystem',
-  'createAttributeSystem',
-  'createBuffSystem',
-  'createCombatEngine',
-  'createCompanionSystem',
-  'createDungeonSystem',
-  'createEquipmentSystem',
-  'createFacilitySystem',
-  'createHoldingSystem',
-  'createPointPool',
-  'createPityCounter',
-  'compareProgression',
-  'createProgressionAudit',
-  'createRealmSystem',
-  'createRecipeRunner',
-  'createResourceSystem',
-  'createRng',
-  'createSkillSystem',
-  'createTaskBoard',
-  'createTriage',
-  'createUnlockRegistry',
-  'deltaOf',
-  'deltaSince',
-  'deckPool',
-  'decodeSave',
-  'decodeSavePayload',
-  'defineGame',
-  'defineSaveFormat',
-  'drawFrom',
-  'drawMany',
-  'dungeonContentPower',
-  'emptyProgress',
-  'encodeSave',
-  'entryAllowed',
-  'evalGoal',
-  'formatAmount',
-  'generateTemplates',
-  'goalProgress',
-  'inBand',
-  'leverFactor',
-  'mulberry32',
-  'numberNumeric',
-  'overReachFactor',
-  'pickWeighted',
-  'planIdle',
-  'proficiencyFromExp',
-  'progressText',
-  'randomRng',
-  'runIdle',
-  'runMigrations',
-  'seedFromString',
-  'snapshotOf',
-  'softChance',
-  'stageNameOf',
-  'validateGame',
-  'weightedSkill'
-] as const
+  "DEFAULT_ATTRIBUTES",
+  "DEFAULT_LAYER_NAMES",
+  "asArray",
+  "asFiniteNumber",
+  "asNumberRecord",
+  "asObjectOrNull",
+  "asRecord",
+  "asRecordOf",
+  "asStringArray",
+  "attributeDefs",
+  "averageLore",
+  "accrue",
+  "clamp",
+  "composeCraftRate",
+  "compareBy",
+  "createChoiceSystem",
+  "createChain",
+  "createCodex",
+  "createDropTable",
+  "createEconomyReadings",
+  "createIntake",
+  "createSettlement",
+  "createStageMemory",
+  "createCycleSystem",
+  "createAttributeSystem",
+  "createBuffSystem",
+  "createCombatEngine",
+  "createCompanionSystem",
+  "createDungeonSystem",
+  "createEquipmentSystem",
+  "createFacilitySystem",
+  "createHoldingSystem",
+  "createPointPool",
+  "createPityCounter",
+  "compareProgression",
+  "createProgressionAudit",
+  "createRealmSystem",
+  "createRecipeRunner",
+  "createResourceSystem",
+  "createRng",
+  "createSkillSystem",
+  "createTaskBoard",
+  "createTriage",
+  "createUnlockRegistry",
+  "deltaOf",
+  "deltaSince",
+  "deckPool",
+  "decodeSave",
+  "decodeSavePayload",
+  "defineGame",
+  "defineSaveFormat",
+  "drawFrom",
+  "drawMany",
+  "dungeonContentPower",
+  "emptyProgress",
+  "encodeSave",
+  "entryAllowed",
+  "evalGoal",
+  "formatAmount",
+  "generateTemplates",
+  "goalProgress",
+  "inBand",
+  "leverFactor",
+  "mulberry32",
+  "numberNumeric",
+  "overReachFactor",
+  "pickWeighted",
+  "planIdle",
+  "proficiencyFromExp",
+  "progressText",
+  "randomRng",
+  "runIdle",
+  "runMigrations",
+  "seedFromString",
+  "snapshotOf",
+  "softChance",
+  "stageNameOf",
+  "validateGame",
+  "weightedSkill",
+] as const;
 
 /**
  * 类型清单:上面 import 的每个名字都要能**只从公开入口**取到。
@@ -317,11 +317,19 @@ const RUNTIME_EXPORTS = [
  */
 /** 持有层的样例件:库只要求 uid,其余随便 */
 interface SampleItem extends HoldingItem {
-  name?: string
+  name?: string;
 }
 
 type PublicTypes = {
-  attribute: [AttributeDef, AttributeSystem, AttributeSystemConfig, ComputedStats<number>, Mods, OnTopMult, StatsInput<number>]
+  attribute: [
+    AttributeDef,
+    AttributeSystem,
+    AttributeSystemConfig,
+    ComputedStats<number>,
+    Mods,
+    OnTopMult,
+    StatsInput<number>,
+  ];
   realm: [
     RealmDef,
     RealmEntry,
@@ -335,8 +343,8 @@ type PublicTypes = {
     WorldConfig,
     GrowthCurve,
     ProgressView<number>,
-    BreakthroughResult<number>
-  ]
+    BreakthroughResult<number>,
+  ];
   equipment: [
     AffixDef,
     AffixLine,
@@ -347,19 +355,19 @@ type PublicTypes = {
     EquipmentSystem,
     Loadout,
     LoadoutStats<number>,
-  RerollOptions,
-  QualityDef,
-  ResourceDef,
-  ResourceEntry,
-  ResourceSummary,
-  ResourceSystem,
-  ResourceSystemConfig,
+    RerollOptions,
+    QualityDef,
+    ResourceDef,
+    ResourceEntry,
+    ResourceSummary,
+    ResourceSystem,
+    ResourceSystemConfig,
     ResolvedEquipment<number>,
     RollOptions,
     SetDef,
     SlotDef,
-    TemplateDef
-  ]
+    TemplateDef,
+  ];
   dungeon: [
     DungeonConfig,
     DungeonContentPowerConfig<number>,
@@ -371,8 +379,8 @@ type PublicTypes = {
     EnemySnapshot<number>,
     RegionDef,
     RewardDef,
-    VictoryOutcome<number>
-  ]
+    VictoryOutcome<number>,
+  ];
   combat: [
     BattleConfig,
     BattleEvent,
@@ -390,62 +398,153 @@ type PublicTypes = {
     SkillEffectContext<number>,
     SkillPickContext<number>,
     StrikeContext<number>,
-    StrikeOptions
-  ]
-  idle: [IdleConfig, IdlePlan]
-  progression: [ProgressionAudit, ProgressionAuditConfig<number>, ProgressionComparison, ProgressionComparisonRow, ProgressionSegment, ProgressionStep, ProgressionSummary, WorldStep]
-  save: [SaveDecodeResult<number>, SaveFormat<number>, SavePayload]
-  skills: [SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem]
-  crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef]
-  resources: [AppliedEntry, Ledger<number>, ResourceDef, ResourceEntry, ResourceSummary, ResourceSystem, ResourceSystemConfig]
-  triage: [TriageConfig<SampleItem>, TriageImpact, TriageOutcome, TriageRule<SampleItem>, TriageSystem<SampleItem>, TriageVerdict]
-  cycles: [CycleConfig, CycleContext, CycleEntry, CycleSystem, ScheduledCycle]
-  choices: [ChoiceConfig<number, number>, ChoiceDef<number>, ChoiceOutcome<number>, ChoiceReceipt<number>, ChoiceSystem<number, number>]
-  codex: [CodexConfig, CodexStage, CodexState, CodexSystem, CodexView]
-  memory: [StageMemory, StageMemoryConfig, StageMemoryInput, StageMemoryState, StageSpec]
-  economy: [EconomyConfig, EconomyPeriod, EconomyReadings, EconomyVerdict, FlowInput, FlowReading, PeriodReading]
-  intake: [IntakeConfig<SampleItem, number>, IntakeResult<SampleItem, number>, IntakeSystem<SampleItem, number>]
-  settlement: [Settlement<number>, SettlementPlan<number>, SettlementReceipt<number>]
-  drops: [DropEntry, DropHit, DropOptions, DropTable]
-  buffs: [BuffApply, BuffChange, BuffConfig<Mods>, BuffDef<Mods>, BuffInstance, BuffStacking, BuffSystem<Mods>, BuffView<Mods>]
-  facilities: [FacilityCost<number>, FacilityDef<Mods, { realm: number }, number>, FacilitySystem<Mods, { realm: number }, number>, LevelMap, UpgradeInfo<number>]
-  points: [InvestInfo<number>, InvestOutcome<number>, PointBranch<Mods>, PointCost<number>, PointPool<Mods, { open: boolean }, number>, PointState, PointsConfig<Mods, { open: boolean }, number>, SwitchInfo<number>, SwitchOutcome<number>]
-  tasks: [ClaimOutcome, SettleResult, TaskBoard, TaskBoardState, TaskProgress, TaskSpec]
-  counters: [CounterMap]
-  chain: [Chain<{ open: boolean }>, ChainAdvance, ChainConfig<{ open: boolean }>, ChainNode, ChainState]
-  pity: [PityConfig, PityCounter, PityRoll, PityState, SoftPity]
-  unlocks: [UnlockEntry, UnlockOutcome, UnlockRegistry, UnlockScan, UnlockState]
-  recipes: [CraftCost<number>, CraftOutcome<number>, RecipeRunner<{ herb: number }>, RecipeRunnerConfig<{ herb: number }>]
-  holding: [AddFailure, Holding<SampleItem>, HoldingConfig<SampleItem>, HoldingItem, HoldingSystem<SampleItem>, SlotMap]
-  goals: [GoalCond, GoalEnv, GoalProgress]
-  deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand]
-  companions: [CompanionConfig, CompanionDef, CompanionSystem, TraitDef]
-  config: [DefineOptions<number>, Game, GameConfig, IssueLevel, ValidationIssue]
-  misc: [Numeric<number>, Rng]
-}
+    StrikeOptions,
+  ];
+  idle: [IdleConfig, IdlePlan];
+  progression: [
+    ProgressionAudit,
+    ProgressionAuditConfig<number>,
+    ProgressionComparison,
+    ProgressionComparisonRow,
+    ProgressionSegment,
+    ProgressionStep,
+    ProgressionSummary,
+    WorldStep,
+  ];
+  save: [SaveDecodeResult<number>, SaveFormat<number>, SavePayload];
+  skills: [SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem];
+  crafting: [CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef];
+  resources: [
+    AppliedEntry,
+    Ledger<number>,
+    ResourceDef,
+    ResourceEntry,
+    ResourceSummary,
+    ResourceSystem,
+    ResourceSystemConfig,
+  ];
+  triage: [
+    TriageConfig<SampleItem>,
+    TriageImpact,
+    TriageOutcome,
+    TriageRule<SampleItem>,
+    TriageSystem<SampleItem>,
+    TriageVerdict,
+  ];
+  cycles: [CycleConfig, CycleContext, CycleEntry, CycleSystem, ScheduledCycle];
+  choices: [
+    ChoiceConfig<number, number>,
+    ChoiceDef<number>,
+    ChoiceOutcome<number>,
+    ChoiceReceipt<number>,
+    ChoiceSystem<number, number>,
+  ];
+  codex: [CodexConfig, CodexStage, CodexState, CodexSystem, CodexView];
+  memory: [StageMemory, StageMemoryConfig, StageMemoryInput, StageMemoryState, StageSpec];
+  economy: [
+    EconomyConfig,
+    EconomyPeriod,
+    EconomyReadings,
+    EconomyVerdict,
+    FlowInput,
+    FlowReading,
+    PeriodReading,
+  ];
+  intake: [
+    IntakeConfig<SampleItem, number>,
+    IntakeResult<SampleItem, number>,
+    IntakeSystem<SampleItem, number>,
+  ];
+  settlement: [Settlement<number>, SettlementPlan<number>, SettlementReceipt<number>];
+  drops: [DropEntry, DropHit, DropOptions, DropTable];
+  buffs: [
+    BuffApply,
+    BuffChange,
+    BuffConfig<Mods>,
+    BuffDef<Mods>,
+    BuffInstance,
+    BuffStacking,
+    BuffSystem<Mods>,
+    BuffView<Mods>,
+  ];
+  facilities: [
+    FacilityCost<number>,
+    FacilityDef<Mods, { realm: number }, number>,
+    FacilitySystem<Mods, { realm: number }, number>,
+    LevelMap,
+    UpgradeInfo<number>,
+  ];
+  points: [
+    InvestInfo<number>,
+    InvestOutcome<number>,
+    PointBranch<Mods>,
+    PointCost<number>,
+    PointPool<Mods, { open: boolean }, number>,
+    PointState,
+    PointsConfig<Mods, { open: boolean }, number>,
+    SwitchInfo<number>,
+    SwitchOutcome<number>,
+  ];
+  tasks: [ClaimOutcome, SettleResult, TaskBoard, TaskBoardState, TaskProgress, TaskSpec];
+  counters: [CounterMap];
+  chain: [
+    Chain<{ open: boolean }>,
+    ChainAdvance,
+    ChainConfig<{ open: boolean }>,
+    ChainNode,
+    ChainState,
+  ];
+  pity: [PityConfig, PityCounter, PityRoll, PityState, SoftPity];
+  unlocks: [UnlockEntry, UnlockOutcome, UnlockRegistry, UnlockScan, UnlockState];
+  recipes: [
+    CraftCost<number>,
+    CraftOutcome<number>,
+    RecipeRunner<{ herb: number }>,
+    RecipeRunnerConfig<{ herb: number }>,
+  ];
+  holding: [
+    AddFailure,
+    Holding<SampleItem>,
+    HoldingConfig<SampleItem>,
+    HoldingItem,
+    HoldingSystem<SampleItem>,
+    SlotMap,
+  ];
+  goals: [GoalCond, GoalEnv, GoalProgress];
+  deck: [DeckContext, DeckEntry, DrawOptions, DrawManyOptions, LevelBand];
+  companions: [CompanionConfig, CompanionDef, CompanionSystem, TraitDef];
+  config: [DefineOptions<number>, Game, GameConfig, IssueLevel, ValidationIssue];
+  misc: [Numeric<number>, Rng];
+};
 
 // 只为了让 PublicTypes 真的被解析一次(纯类型层,运行时没有这一行做的事)
-type _PublicTypesUsed = PublicTypes
+type _PublicTypesUsed = PublicTypes;
 
-describe('公开面 —— 使用者看到的库长什么样', () => {
-  it('运行时导出与清单一字不差(增删都要在这里显式改)', () => {
+describe("公开面 —— 使用者看到的库长什么样", () => {
+  it("运行时导出与清单一字不差(增删都要在这里显式改)", () => {
     const actual = Object.keys(engine)
-      .filter(k => k !== 'default')
-      .sort()
-    expect(actual).toEqual([...RUNTIME_EXPORTS].sort())
-  })
+      .filter((k) => k !== "default")
+      .sort();
+    expect(actual).toEqual([...RUNTIME_EXPORTS].sort());
+  });
 
-  it('公开类型只在类型层(不会被当成运行时导出)', () => {
+  it("公开类型只在类型层(不会被当成运行时导出)", () => {
     // 类型不存在于运行时,顺带证明入口没有把"类型"误发成值
-    const values = new Set(Object.keys(engine))
-    for (const name of ['SkillEffectContext', 'CombatKeys', 'RealmExpConfig', 'ProficiencyConfig', 'BattleConfig']) {
-      expect(values.has(name)).toBe(false)
+    const values = new Set(Object.keys(engine));
+    for (const name of [
+      "SkillEffectContext",
+      "CombatKeys",
+      "RealmExpConfig",
+      "ProficiencyConfig",
+      "BattleConfig",
+    ]) {
+      expect(values.has(name)).toBe(false);
     }
-  })
+  });
 
   it('公开面里的类型清单本身是"用得上"的(编译期判据,运行到这里即通过)', () => {
     // _PublicTypesUsed 由 tsc 校验:上面 import 的每一个类型都必须从 './index.js' 取得到
-    const used: _PublicTypesUsed | null = null
-    expect(used).toBeNull()
-  })
-})
+    const used: _PublicTypesUsed | null = null;
+    expect(used).toBeNull();
+  });
+});

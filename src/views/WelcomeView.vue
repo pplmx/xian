@@ -1,7 +1,9 @@
 <template>
   <div class="stagger-in flex min-h-full flex-col items-center justify-center px-8 py-10">
     <!-- 游戏图标 -->
-    <div class="grid h-24 w-24 place-items-center rounded-2xl bg-cinnabar shadow-lg shadow-cinnabar/30">
+    <div
+      class="grid h-24 w-24 place-items-center rounded-2xl bg-cinnabar shadow-lg shadow-cinnabar/30"
+    >
       <span class="font-kai text-[56px] leading-none text-paper">道</span>
     </div>
 
@@ -11,7 +13,12 @@
 
     <!-- 开始按钮:首屏主钮 —— 一缕柔辉呼吸着请玩家按(与突破就绪的朱砂辉光同族,
          只动 box-shadow 合层,reduce-motion 全局兜) -->
-    <button class="btn-seal animate-glow-pulse mt-10 w-full max-w-72 !py-3.5 text-[17px] tracking-[0.3em]" @click="onStart">开 始 游 戏</button>
+    <button
+      class="btn-seal animate-glow-pulse mt-10 w-full max-w-72 !py-3.5 text-[17px] tracking-[0.3em]"
+      @click="onStart"
+    >
+      开 始 游 戏
+    </button>
 
     <!-- 底部:隐私政策 / 导出导入恢复 / 关于 -->
     <div class="mt-6 flex items-center gap-3 text-[11px] text-ink-faint">
@@ -21,7 +28,13 @@
       <span class="text-ink-faint/40">·</span>
       <button class="active:text-ink-soft" @click="aboutOpen = true">关于此作</button>
     </div>
-    <input ref="fileInput" type="file" accept="application/json,.save" class="hidden" @change="onFilePicked" />
+    <input
+      ref="fileInput"
+      type="file"
+      accept="application/json,.save"
+      class="hidden"
+      @change="onFilePicked"
+    />
 
     <!-- 导入存档:确认文案 -->
     <BaseModal :open="importOpen" title="导入存档" @close="importOpen = false">
@@ -50,13 +63,20 @@
         <span class="text-[12px] text-ink-soft">
           我已阅读并同意
           <!-- 行内按钮的命中区只有 17px;补成内联块给拇指一个 30px 的靶面 -->
-          <button class="inline-block py-1.5 text-qing active:opacity-60" @click.prevent="privacyOpen = true">《隐私政策》</button>
+          <button
+            class="inline-block py-1.5 text-qing active:opacity-60"
+            @click.prevent="privacyOpen = true"
+          >
+            《隐私政策》
+          </button>
         </span>
       </label>
       <template #footer>
         <div class="flex gap-2">
           <button class="btn-ghost flex-1" @click="agreeOpen = false">再想想</button>
-          <button class="btn-seal flex-1" :disabled="!agreed" @click="confirmStart">同意并开始</button>
+          <button class="btn-seal flex-1" :disabled="!agreed" @click="confirmStart">
+            同意并开始
+          </button>
         </div>
       </template>
     </BaseModal>
@@ -67,71 +87,71 @@
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { useSettingsStore } from '@/stores/settings'
-  import { useUiStore } from '@/stores/ui'
-  import { importSaveText, reloadGame, sealStorageWrites } from '@/core/save'
-  import { engine } from '@/core/engine'
-  import BaseModal from '@/components/common/BaseModal.vue'
-  import PrivacyDialog from '@/components/common/PrivacyDialog.vue'
-  import AboutDialog from '@/components/common/AboutDialog.vue'
-  import WarpPortal from '@/components/common/WarpPortal.vue'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useSettingsStore } from "@/stores/settings";
+import { useUiStore } from "@/stores/ui";
+import { importSaveText, reloadGame, sealStorageWrites } from "@/core/save";
+import { engine } from "@/core/engine";
+import BaseModal from "@/components/common/BaseModal.vue";
+import PrivacyDialog from "@/components/common/PrivacyDialog.vue";
+import AboutDialog from "@/components/common/AboutDialog.vue";
+import WarpPortal from "@/components/common/WarpPortal.vue";
 
-  const router = useRouter()
-  const settings = useSettingsStore()
-  const ui = useUiStore()
+const router = useRouter();
+const settings = useSettingsStore();
+const ui = useUiStore();
 
-  const privacyOpen = ref(false)
-  const agreeOpen = ref(false)
-  const agreed = ref(false)
-  const importOpen = ref(false)
-  const aboutOpen = ref(false)
-  const fileInput = ref<HTMLInputElement | null>(null)
-  const warpRef = ref<InstanceType<typeof WarpPortal> | null>(null)
+const privacyOpen = ref(false);
+const agreeOpen = ref(false);
+const agreed = ref(false);
+const importOpen = ref(false);
+const aboutOpen = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
+const warpRef = ref<InstanceType<typeof WarpPortal> | null>(null);
 
-  function onStart(): void {
-    if (settings.privacyAccepted) {
-      void router.push('/create')
-      return
+function onStart(): void {
+  if (settings.privacyAccepted) {
+    void router.push("/create");
+    return;
+  }
+  agreeOpen.value = true;
+}
+
+function confirmStart(): void {
+  settings.privacyAccepted = true;
+  agreeOpen.value = false;
+  // 穿梭传送门:播放约 2.5s 后进入建号页
+  warpRef.value?.show({ title: "云深不知处", subtitle: "一念修行 · 仙路自此始" });
+  setTimeout(() => {
+    void router.push("/create");
+  }, 2500);
+}
+
+// ---- 导入存档(与设置页同流程:先停引擎,导完重载) ----
+function triggerImport(): void {
+  fileInput.value?.click();
+}
+
+function onFilePicked(e: Event): void {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result ?? "");
+    engine.pause();
+    const err = importSaveText(text);
+    if (err) {
+      ui.toast(err, "warn");
+      engine.resume(); // 导入失败时恢复引擎
+      return;
     }
-    agreeOpen.value = true
-  }
-
-  function confirmStart(): void {
-    settings.privacyAccepted = true
-    agreeOpen.value = false
-    // 穿梭传送门:播放约 2.5s 后进入建号页
-    warpRef.value?.show({ title: '云深不知处', subtitle: '一念修行 · 仙路自此始' })
-    setTimeout(() => {
-      void router.push('/create')
-    }, 2500)
-  }
-
-  // ---- 导入存档(与设置页同流程:先停引擎,导完重载) ----
-  function triggerImport(): void {
-    fileInput.value?.click()
-  }
-
-  function onFilePicked(e: Event): void {
-    const file = (e.target as HTMLInputElement).files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      const text = String(reader.result ?? '')
-      engine.pause()
-      const err = importSaveText(text)
-      if (err) {
-        ui.toast(err, 'warn')
-        engine.resume() // 导入失败时恢复引擎
-        return
-      }
-      ui.toast('存档导入成功,即将重入仙途', 'success')
-      // 导入已写盘,立即封存:阻止 persist 插件把欢迎页旧内存(started=false)回写覆盖
-      sealStorageWrites()
-      setTimeout(reloadGame, 800)
-    }
-    reader.readAsText(file)
-    if (fileInput.value) fileInput.value.value = ''
-  }
+    ui.toast("存档导入成功,即将重入仙途", "success");
+    // 导入已写盘,立即封存:阻止 persist 插件把欢迎页旧内存(started=false)回写覆盖
+    sealStorageWrites();
+    setTimeout(reloadGame, 800);
+  };
+  reader.readAsText(file);
+  if (fileInput.value) fileInput.value.value = "";
+}
 </script>

@@ -2,9 +2,9 @@
  * 统一随机服务 —— 支持注入种子,保证概率逻辑可测试
  */
 
-import { mulberry32 as engineMulberry32, pickWeighted } from 'wanxiang-engine'
+import { mulberry32 as engineMulberry32, pickWeighted } from "wanxiang-engine";
 
-export type RandFn = () => number
+export type RandFn = () => number;
 
 /**
  * 伪随机数生成器(测试用种子)—— **实现搬进了公共库**,这里保留同名转发。
@@ -16,44 +16,44 @@ export type RandFn = () => number
  *
  * 「两条路同序列」由 `core/engineParity.spec.ts` 的随机源那一节逐点钉着。
  */
-export const mulberry32 = (seed: number): RandFn => engineMulberry32(seed)
+export const mulberry32 = (seed: number): RandFn => engineMulberry32(seed);
 
 export class RandomService {
   /** 显式声明 + 构造体内赋值:参数属性(`constructor(private rand)`)不是可擦除语法,过不了 erasableSyntaxOnly */
-  private readonly rand: RandFn
+  private readonly rand: RandFn;
 
   constructor(rand: RandFn = Math.random) {
-    this.rand = rand
+    this.rand = rand;
   }
 
   next(): number {
-    return this.rand()
+    return this.rand();
   }
 
   /** [min, max] 闭区间整数 */
   int(min: number, max: number): number {
-    return Math.floor(this.rand() * (max - min + 1)) + min
+    return Math.floor(this.rand() * (max - min + 1)) + min;
   }
 
   /** [min, max) 浮点数 */
   float(min: number, max: number): number {
-    return this.rand() * (max - min) + min
+    return this.rand() * (max - min) + min;
   }
 
   /** 概率判定 */
   chance(p: number): boolean {
-    return this.rand() < p
+    return this.rand() < p;
   }
 
   pick<T>(arr: readonly T[]): T {
-    return arr[Math.floor(this.rand() * arr.length)]!
+    return arr[Math.floor(this.rand() * arr.length)]!;
   }
 
   /** Weighted pick — same kernel as wanxiang-engine's `pickWeighted`. */
   weighted<T>(items: readonly T[], weightOf: (item: T) => number): T {
-    return pickWeighted(items, weightOf, () => this.rand())
+    return pickWeighted(items, weightOf, () => this.rand());
   }
 }
 
 /** 全局默认随机实例 */
-export const rng = new RandomService()
+export const rng = new RandomService();

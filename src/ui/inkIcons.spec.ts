@@ -38,7 +38,7 @@ const CHROME = [
 function inkPathsFromSource(): Record<string, string> {
   const text = readFileSync(resolve(ROOT, "src/ui/inkIcons.ts"), "utf-8");
   const out: Record<string, string> = {};
-  for (const m of text.matchAll(/'([MLHVCASmlhvcasZz0-9 .,-]*M[MLHVCASmlhvcasZz0-9 .,-]*)'/g))
+  for (const m of text.matchAll(/["']([MLHVCASmlhvcasZz0-9 .,-]*M[MLHVCASmlhvcasZz0-9 .,-]*)["']/g))
     out[m[1]!] = m[1]!;
   return out;
 }
@@ -47,7 +47,7 @@ function iconNamesIn(file: string): string[] {
   const text = readFileSync(resolve(ROOT, file), "utf-8");
   // 两种写法都要认:页签表里的 `icon: 'mountain'`,模板里的 `<GameIcon name="gem">`
   return [
-    ...[...text.matchAll(/icon: '([a-z-]+)'/g)].map((m) => m[1]!),
+    ...[...text.matchAll(/icon: ["']([a-z-]+)["']/g)].map((m) => m[1]!),
     ...[...text.matchAll(/<GameIcon\s+name="([a-z-]+)"/g)].map((m) => m[1]!),
   ];
 }
@@ -128,7 +128,7 @@ describe("图标 · 名字都登记过", () => {
             if (!INK_ICONS[m[1]!]) missing.add(m[1]!);
           // 模板里 :name="… ? 'x' : …" 这种(如镇压中的地界签)
           for (const m of text.matchAll(/<GameIcon[^>]*:name="([^"]+)"/g)) {
-            for (const lit of m[1]!.matchAll(/'([a-z-]+)'/g))
+            for (const lit of m[1]!.matchAll(/["']([a-z-]+)["']/g))
               if (!INK_ICONS[lit[1]!]) missing.add(lit[1]!);
           }
         }

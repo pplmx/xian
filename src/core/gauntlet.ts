@@ -1,18 +1,27 @@
 /**
  * 连战解算(纯函数)—— 特殊世界与天道试炼共用,亦被终局模拟器直接验证
  */
-import type { CombatantSnap, CombatLogEntry, CombatRules, FoeOrigin, FoeOriginPart, GNum, StatMods, WorldFoeShape } from '@/types'
-import type { RandomService } from '@/utils/random'
-import { mulN } from '@/utils/gnum'
-import { modDepth } from './statsCalc'
-import { resolveCombat } from './combat'
-import { COMBAT_ATK_BASE, COMBAT_DEF_BASE, COMBAT_HP_BASE } from '@/data/constants'
-import { powerScale, tierMajor } from './formulas'
+import type {
+  CombatantSnap,
+  CombatLogEntry,
+  CombatRules,
+  FoeOrigin,
+  FoeOriginPart,
+  GNum,
+  StatMods,
+  WorldFoeShape,
+} from "@/types";
+import type { RandomService } from "@/utils/random";
+import { mulN } from "@/utils/gnum";
+import { modDepth } from "./statsCalc";
+import { resolveCombat } from "./combat";
+import { COMBAT_ATK_BASE, COMBAT_DEF_BASE, COMBAT_HP_BASE } from "@/data/constants";
+import { powerScale, tierMajor } from "./formulas";
 
 export interface ReferenceStats {
-  attack: GNum
-  defense: GNum
-  maxHp: GNum
+  attack: GNum;
+  defense: GNum;
+  maxHp: GNum;
 }
 
 /**
@@ -29,12 +38,12 @@ export interface ReferenceStats {
  * 现在把这份表达权还给玩家,改由**敌人一侧的判定**去管堆叠(见 celestialJudgement)。
  */
 export function celestialAnchor(anchorTier: number): ReferenceStats {
-  const scale = powerScale(anchorTier)
+  const scale = powerScale(anchorTier);
   return {
     attack: mulN(scale, COMBAT_ATK_BASE),
     defense: mulN(scale, COMBAT_DEF_BASE),
-    maxHp: mulN(scale, COMBAT_HP_BASE)
-  }
+    maxHp: mulN(scale, COMBAT_HP_BASE),
+  };
 }
 
 /**
@@ -48,16 +57,21 @@ export function celestialAnchor(anchorTier: number): ReferenceStats {
  */
 export interface CelestialJudgement {
   /** 三维加厚(≥1) */
-  thicken: number
+  thicken: number;
   /** 守关者增伤 */
-  damageBonus: number
+  damageBonus: number;
   /** 守关者减伤 */
-  damageReduction: number
+  damageReduction: number;
   /** 境界压制是否生效(未及本界锚点境界)—— 报账时要能与「道之理解」分开说 */
-  suppressed: boolean
+  suppressed: boolean;
 }
 
-export const NO_JUDGEMENT: CelestialJudgement = { thicken: 1, damageBonus: 0, damageReduction: 0, suppressed: false }
+export const NO_JUDGEMENT: CelestialJudgement = {
+  thicken: 1,
+  damageBonus: 0,
+  damageReduction: 0,
+  suppressed: false,
+};
 
 /**
  * 天界词条对称基准(Phase 33.2)。
@@ -79,18 +93,18 @@ export const NO_JUDGEMENT: CelestialJudgement = { thicken: 1, damageBonus: 0, da
  * 不触发任何判定;越过基准才叫「堆得太厚」,守关者才据此加厚与增减伤。
  * (数值与 33.2 那一轮相同,只是它的角色从「抵消玩家三维」变成「敌人加厚」。)
  */
-export const CELESTIAL_BASE_DEPTH = 2.6
+export const CELESTIAL_BASE_DEPTH = 2.6;
 /** 每超出基准一倍,守关者增伤/减伤各加这么多 */
-export const CELESTIAL_JUDGE_RATE = 0.15
+export const CELESTIAL_JUDGE_RATE = 0.15;
 /** 增伤与减伤各自的封顶 —— 判定是让它难缠,不是把你打回原点 */
-export const CELESTIAL_JUDGE_CAP = 0.35
+export const CELESTIAL_JUDGE_CAP = 0.35;
 /** 境界压制:未及这一界锚点境界者,守关者额外增伤 */
-export const CELESTIAL_SUPPRESS_BONUS = 0.25
+export const CELESTIAL_SUPPRESS_BONUS = 0.25;
 
 /** 构筑深度对应的加厚系数(不低于 1,浅构筑不会反被削)—— 判定的第一样 */
 export function celestialDepthScale(playerMods: StatMods): number {
-  const depth = modDepth(playerMods)
-  return depth <= CELESTIAL_BASE_DEPTH ? 1 : depth / CELESTIAL_BASE_DEPTH
+  const depth = modDepth(playerMods);
+  return depth <= CELESTIAL_BASE_DEPTH ? 1 : depth / CELESTIAL_BASE_DEPTH;
 }
 
 /**
@@ -99,18 +113,23 @@ export function celestialDepthScale(playerMods: StatMods): number {
  * @param playerMajor 玩家此刻的大境界(用于境界压制)
  * @param anchorTier  本界锚点层级(它的境界即本界「该有的境界」)
  */
-export function celestialJudgement(playerMods: StatMods, playerMajor: number, anchorTier: number): CelestialJudgement {
-  const thicken = celestialDepthScale(playerMods)
-  const over = thicken - 1
-  const judge = Math.min(CELESTIAL_JUDGE_CAP, over * CELESTIAL_JUDGE_RATE)
+export function celestialJudgement(
+  playerMods: StatMods,
+  playerMajor: number,
+  anchorTier: number,
+): CelestialJudgement {
+  const thicken = celestialDepthScale(playerMods);
+  const over = thicken - 1;
+  const judge = Math.min(CELESTIAL_JUDGE_CAP, over * CELESTIAL_JUDGE_RATE);
   // 境界压制:还没走到这一界该有的境界,守关者额外增伤(规则文案里会写明)
-  const suppressed = playerMajor < tierMajor(anchorTier)
-  const suppress = suppressed ? CELESTIAL_SUPPRESS_BONUS : 0
-  return { thicken, damageBonus: judge + suppress, damageReduction: judge, suppressed }
+  const suppressed = playerMajor < tierMajor(anchorTier);
+  const suppress = suppressed ? CELESTIAL_SUPPRESS_BONUS : 0;
+  return { thicken, damageBonus: judge + suppress, damageReduction: judge, suppressed };
 }
 
 /** 判定的去向语 —— 战前预估与战后归因读的是同一句(两处各写一句,迟早分叉) */
-export const JUDGEMENT_DIRECTION = '判定随你的厚度与境界而来 —— 换个方向而非继续堆,或再破一境,它自会退回去。'
+export const JUDGEMENT_DIRECTION =
+  "判定随你的厚度与境界而来 —— 换个方向而非继续堆,或再破一境,它自会退回去。";
 
 /**
  * 天界敌人的加成来源 —— 供战后分析归因(与凡界的 mortalFoeOrigin 同一形状、同一用途)。
@@ -120,18 +139,21 @@ export const JUDGEMENT_DIRECTION = '判定随你的厚度与境界而来 —— 
  * 两者混进同一个列表,读的人就分不清「×1.4」是加厚还是增伤。
  */
 export function celestialFoeOrigin(j: CelestialJudgement): FoeOrigin {
-  const parts: FoeOriginPart[] = j.thicken > 1 ? [{ label: '道之理解', ratio: j.thicken }] : []
-  const names: string[] = []
-  if (j.thicken > 1) names.push('道之理解')
-  if (j.suppressed) names.push('境界压制')
+  const parts: FoeOriginPart[] = j.thicken > 1 ? [{ label: "道之理解", ratio: j.thicken }] : [];
+  const names: string[] = [];
+  if (j.thicken > 1) names.push("道之理解");
+  if (j.suppressed) names.push("境界压制");
   return {
-    label: names.length === 0 ? '无判定' : names.join(' · '),
+    label: names.length === 0 ? "无判定" : names.join(" · "),
     ratio: j.thicken,
     damageBonus: j.damageBonus,
     damageReduction: j.damageReduction,
     parts,
-    note: names.length === 0 ? '这一界对你没有额外判定 —— 胜败只由三维与构筑形状决定。' : JUDGEMENT_DIRECTION
-  }
+    note:
+      names.length === 0
+        ? "这一界对你没有额外判定 —— 胜败只由三维与构筑形状决定。"
+        : JUDGEMENT_DIRECTION,
+  };
 }
 
 /**
@@ -144,25 +166,29 @@ export function celestialFoeOrigin(j: CelestialJudgement): FoeOrigin {
 export function celestialJudgementLines(
   playerMods: StatMods,
   playerMajor: number,
-  anchorTier: number
+  anchorTier: number,
 ): string[] {
-  const j = celestialJudgement(playerMods, playerMajor, anchorTier)
-  const lines: string[] = []
+  const j = celestialJudgement(playerMods, playerMajor, anchorTier);
+  const lines: string[] = [];
   if (j.thicken > 1) {
     lines.push(
-      `道之理解:你的构筑厚度 ${(modDepth(playerMods)).toFixed(1)}(基准 ${CELESTIAL_BASE_DEPTH})—— 守关者三维 ×${j.thicken.toFixed(2)}`
-    )
+      `道之理解:你的构筑厚度 ${modDepth(playerMods).toFixed(1)}(基准 ${CELESTIAL_BASE_DEPTH})—— 守关者三维 ×${j.thicken.toFixed(2)}`,
+    );
   }
-  const judgeOnly = Math.min(CELESTIAL_JUDGE_CAP, (j.thicken - 1) * CELESTIAL_JUDGE_RATE)
+  const judgeOnly = Math.min(CELESTIAL_JUDGE_CAP, (j.thicken - 1) * CELESTIAL_JUDGE_RATE);
   if (judgeOnly > 0) {
-    lines.push(`道之理解:路数被看破 —— 守关者增伤 +${Math.round(judgeOnly * 100)}%、减伤 +${Math.round(judgeOnly * 100)}%`)
+    lines.push(
+      `道之理解:路数被看破 —— 守关者增伤 +${Math.round(judgeOnly * 100)}%、减伤 +${Math.round(judgeOnly * 100)}%`,
+    );
   }
   if (playerMajor < tierMajor(anchorTier)) {
-    lines.push(`境界压制:未及此界该有的境界 —— 守关者额外增伤 +${Math.round(CELESTIAL_SUPPRESS_BONUS * 100)}%`)
+    lines.push(
+      `境界压制:未及此界该有的境界 —— 守关者额外增伤 +${Math.round(CELESTIAL_SUPPRESS_BONUS * 100)}%`,
+    );
   }
   // 报了病因,也要给方向:两条判定各有自己的解法(一个改形状,一个抬境界)
-  if (lines.length > 0) lines.push(JUDGEMENT_DIRECTION)
-  return lines
+  if (lines.length > 0) lines.push(JUDGEMENT_DIRECTION);
+  return lines;
 }
 
 /**
@@ -175,12 +201,12 @@ export function celestialJudgementLines(
 export function celestialFoeCaliber(
   playerMajor: number,
   playerMods: StatMods,
-  anchorTier: number
+  anchorTier: number,
 ): { ref: ReferenceStats; judgement: CelestialJudgement } {
   return {
     ref: celestialAnchor(anchorTier),
-    judgement: celestialJudgement(playerMods, playerMajor, anchorTier)
-  }
+    judgement: celestialJudgement(playerMods, playerMajor, anchorTier),
+  };
 }
 
 /**
@@ -194,99 +220,111 @@ export function worldFoeSnap(
   shape: WorldFoeShape,
   ref: ReferenceStats,
   escalation = 1,
-  judgement: CelestialJudgement = NO_JUDGEMENT
+  judgement: CelestialJudgement = NO_JUDGEMENT,
 ): CombatantSnap {
-  const mods: StatMods = { ...shape.mods }
-  if (judgement.damageBonus > 0) mods.damageBonus = (mods.damageBonus ?? 0) + judgement.damageBonus
-  if (judgement.damageReduction > 0) mods.damageReduction = (mods.damageReduction ?? 0) + judgement.damageReduction
-  const thicken = escalation * judgement.thicken
+  const mods: StatMods = { ...shape.mods };
+  if (judgement.damageBonus > 0) mods.damageBonus = (mods.damageBonus ?? 0) + judgement.damageBonus;
+  if (judgement.damageReduction > 0)
+    mods.damageReduction = (mods.damageReduction ?? 0) + judgement.damageReduction;
+  const thicken = escalation * judgement.thicken;
   // 加成来源随快照带走:expedition 把战果交给战后分析时,不必回头重建这一份判定
-  const origin = celestialFoeOrigin(judgement)
+  const origin = celestialFoeOrigin(judgement);
   return {
     name: shape.name,
     icon: shape.icon,
     isPlayer: false,
     // 连战的逐场加码(escalation)也如实写进来源,不然「第三场怎么突然更凶」又成了谜
-    origin: escalation === 1 ? origin : { ...origin, ratio: origin.ratio * escalation, parts: [...origin.parts, { label: '连战加码', ratio: escalation }] },
+    origin:
+      escalation === 1
+        ? origin
+        : {
+            ...origin,
+            ratio: origin.ratio * escalation,
+            parts: [...origin.parts, { label: "连战加码", ratio: escalation }],
+          },
     attack: mulN(ref.attack, shape.atkR * thicken),
     defense: mulN(ref.defense, shape.defR * thicken),
     maxHp: mulN(ref.maxHp, shape.hpR * thicken),
     speed: shape.speed,
     mods,
-    skills: shape.skills.map(s => ({ ...s }))
-  }
+    skills: shape.skills.map((s) => ({ ...s })),
+  };
 }
 
 /** 合并道途规则与世界/试炼规则 */
 export function mergeRules(a?: CombatRules, b?: CombatRules): CombatRules | undefined {
-  if (!a) return b
-  if (!b) return a
+  if (!a) return b;
+  if (!b) return a;
   const mods = (x?: StatMods, y?: StatMods): StatMods | undefined => {
-    if (!x) return y
-    if (!y) return x
-    const out: StatMods = { ...x }
+    if (!x) return y;
+    if (!y) return x;
+    const out: StatMods = { ...x };
     for (const k in y) {
-      const key = k as keyof StatMods
-      out[key] = (out[key] ?? 0) + (y[key] ?? 0)
+      const key = k as keyof StatMods;
+      out[key] = (out[key] ?? 0) + (y[key] ?? 0);
     }
-    return out
-  }
+    return out;
+  };
   return {
     maxRounds:
-      a.maxRounds !== undefined || b.maxRounds !== undefined ? Math.min(a.maxRounds ?? Infinity, b.maxRounds ?? Infinity) : undefined,
+      a.maxRounds !== undefined || b.maxRounds !== undefined
+        ? Math.min(a.maxRounds ?? Infinity, b.maxRounds ?? Infinity)
+        : undefined,
     playerAtkMult: (a.playerAtkMult ?? 1) * (b.playerAtkMult ?? 1),
     enemyAtkMult: (a.enemyAtkMult ?? 1) * (b.enemyAtkMult ?? 1),
     enemyHpMult: (a.enemyHpMult ?? 1) * (b.enemyHpMult ?? 1),
     healMult: (a.healMult ?? 1) * (b.healMult ?? 1),
     shieldCapRatio:
-      a.shieldCapRatio !== undefined || b.shieldCapRatio !== undefined ? Math.min(a.shieldCapRatio ?? 1, b.shieldCapRatio ?? 1) : undefined,
+      a.shieldCapRatio !== undefined || b.shieldCapRatio !== undefined
+        ? Math.min(a.shieldCapRatio ?? 1, b.shieldCapRatio ?? 1)
+        : undefined,
     playerExtraMods: mods(a.playerExtraMods, b.playerExtraMods),
     enemyExtraMods: mods(a.enemyExtraMods, b.enemyExtraMods),
     playerStartHpPct: Math.min(a.playerStartHpPct ?? 1, b.playerStartHpPct ?? 1),
-    perRounds: a.perRounds ?? b.perRounds
-  }
+    perRounds: a.perRounds ?? b.perRounds,
+  };
 }
 
 export interface GauntletFightRow {
-  foeName: string
-  win: boolean
-  rounds: number
-  hpLeftPct: number
+  foeName: string;
+  win: boolean;
+  rounds: number;
+  hpLeftPct: number;
   /**
    * 该场的逐回合战报。
    * 仅供即时播放,**不可写入道痕等持久化结构**——道痕存的是构筑快照(replay),
    * 每场几十条日志乘上 60 条道痕会把存档撑爆
    */
-  logs?: CombatLogEntry[]
+  logs?: CombatLogEntry[];
   /** 该场敌人快照(播放时显示血条与名号) */
-  foe?: CombatantSnap
+  foe?: CombatantSnap;
 }
 
 export interface GauntletReport {
-  cleared: boolean
-  fightsWon: number
-  totalRounds: number
-  rows: GauntletFightRow[]
+  cleared: boolean;
+  fightsWon: number;
+  totalRounds: number;
+  rows: GauntletFightRow[];
   /** 因契约违背而终止(如无伤契) */
-  pactBroken?: boolean
+  pactBroken?: boolean;
 }
 
 export interface GauntletOpts {
   /** 无伤契:每场战后气血低于此值即判违契终止 */
-  minHpAfterFight?: number
+  minHpAfterFight?: number;
   /** 剑意/杀意:每胜一场,玩家词条叠加一层 */
-  perWinPlayerMods?: StatMods
+  perWinPlayerMods?: StatMods;
 }
 
 /** 词条叠加 n 层 */
 function stackMods(base: StatMods, extra: StatMods, n: number): StatMods {
-  if (n <= 0) return base
-  const out: StatMods = { ...base }
+  if (n <= 0) return base;
+  const out: StatMods = { ...base };
   for (const k in extra) {
-    const key = k as keyof StatMods
-    out[key] = (out[key] ?? 0) + (extra[key] ?? 0) * n
+    const key = k as keyof StatMods;
+    out[key] = (out[key] ?? 0) + (extra[key] ?? 0) * n;
   }
-  return out
+  return out;
 }
 
 /**
@@ -299,29 +337,36 @@ export function runGauntlet(
   rules: CombatRules | undefined,
   healBetweenPct: number,
   rng: RandomService,
-  opts: GauntletOpts = {}
+  opts: GauntletOpts = {},
 ): GauntletReport {
-  const rows: GauntletFightRow[] = []
-  const startCap = rules?.playerStartHpPct ?? 1
-  let carried = startCap
-  let totalRounds = 0
-  let fightsWon = 0
+  const rows: GauntletFightRow[] = [];
+  const startCap = rules?.playerStartHpPct ?? 1;
+  let carried = startCap;
+  let totalRounds = 0;
+  let fightsWon = 0;
   for (const foe of foes) {
     const snap: CombatantSnap = opts.perWinPlayerMods
       ? { ...player, mods: stackMods(player.mods, opts.perWinPlayerMods, fightsWon) }
-      : player
-    const fightRules: CombatRules = { ...rules, playerStartHpPct: Math.min(startCap, carried) }
-    const result = resolveCombat(snap, foe, rng, fightRules)
-    totalRounds += result.rounds
-    rows.push({ foeName: foe.name, win: result.win, rounds: result.rounds, hpLeftPct: result.playerHpPct, logs: result.log, foe })
+      : player;
+    const fightRules: CombatRules = { ...rules, playerStartHpPct: Math.min(startCap, carried) };
+    const result = resolveCombat(snap, foe, rng, fightRules);
+    totalRounds += result.rounds;
+    rows.push({
+      foeName: foe.name,
+      win: result.win,
+      rounds: result.rounds,
+      hpLeftPct: result.playerHpPct,
+      logs: result.log,
+      foe,
+    });
     if (!result.win) {
-      return { cleared: false, fightsWon, totalRounds, rows }
+      return { cleared: false, fightsWon, totalRounds, rows };
     }
     if (opts.minHpAfterFight !== undefined && result.playerHpPct < opts.minHpAfterFight) {
-      return { cleared: false, fightsWon, totalRounds, rows, pactBroken: true }
+      return { cleared: false, fightsWon, totalRounds, rows, pactBroken: true };
     }
-    fightsWon += 1
-    carried = Math.min(startCap, result.playerHpPct + healBetweenPct)
+    fightsWon += 1;
+    carried = Math.min(startCap, result.playerHpPct + healBetweenPct);
   }
-  return { cleared: true, fightsWon, totalRounds, rows }
+  return { cleared: true, fightsWon, totalRounds, rows };
 }

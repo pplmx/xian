@@ -9,12 +9,12 @@
  * 结算口径与 reincarnation.ts 一致:"只算不改" —— 本文件只回答"这一世能/会锻造哪个",
  * 落账(写进 player)发生在 confirmReincarnation(见它的 heritageGained 提交)。
  */
-import { HERITAGE_DEFS, type HeritageDef, type HeritageId } from '@/data/heritage'
-import { usePlayerStore } from '@/stores/player'
+import { HERITAGE_DEFS, type HeritageDef, type HeritageId } from "@/data/heritage";
+import { usePlayerStore } from "@/stores/player";
 
 /** 已锻造的传承 id(跨世永久,取自神魂不灭的 reincarnation.heritage) */
 export function ownedHeritage(): HeritageId[] {
-  return usePlayerStore().reincarnation.heritage
+  return usePlayerStore().reincarnation.heritage;
 }
 
 /**
@@ -22,10 +22,10 @@ export function ownedHeritage(): HeritageId[] {
  * 浅修农场(major < 2)永远返回空 —— 金丹以下锻造不出任何传承。
  */
 export function forgeCandidate(major: number): HeritageDef[] {
-  const owned = new Set(ownedHeritage())
-  return HERITAGE_DEFS.filter(d => d.gateMajor <= major && !owned.has(d.id)).sort(
-    (a, b) => a.gateMajor - b.gateMajor
-  )
+  const owned = new Set(ownedHeritage());
+  return HERITAGE_DEFS.filter((d) => d.gateMajor <= major && !owned.has(d.id)).sort(
+    (a, b) => a.gateMajor - b.gateMajor,
+  );
 }
 
 /**
@@ -33,6 +33,6 @@ export function forgeCandidate(major: number): HeritageDef[] {
  * 无候选 → null。
  */
 export function lifeForge(major: number): HeritageDef | null {
-  const cands = forgeCandidate(major)
-  return cands.length > 0 ? cands[cands.length - 1]! : null
+  const cands = forgeCandidate(major);
+  return cands.length > 0 ? cands[cands.length - 1]! : null;
 }

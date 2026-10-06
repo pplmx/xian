@@ -11,65 +11,68 @@
  * 分开写不是为了好看 —— 合在一起时,「这张牌为什么没出现」就没人答得上来;
  * 而这类问题恰恰是内容运营最常问的。
  */
-import type { Rng } from './rng.js'
+import type { Rng } from "./rng.js";
 
 /** 等级带:两端都可省,含端点 */
 export interface LevelBand {
-  min?: number
-  max?: number
+  min?: number;
+  max?: number;
 }
 
 /** 一张牌需要提供的信息(其余字段由使用方自己保留) */
 export interface DeckEntry extends LevelBand {
-  id: string
+  id: string;
   /** 场所标签;与情境标签**相交**即算切题(空标签表示不限场所) */
-  tags?: readonly string[]
+  tags?: readonly string[];
   /** 抽取权重;≤0 视为不参与 */
-  weight: number
+  weight: number;
   /** 一次性:见过就不再出现 */
-  once?: boolean
+  once?: boolean;
 }
 
 export interface DeckContext {
   /** 当前等级(用于区间判定) */
-  level: number
+  level: number;
   /** 当前场所的标签 */
-  tags: readonly string[]
+  tags: readonly string[];
   /** 已经见过的一次性牌 id(没有一次性机制时可省) */
-  seen?: readonly string[]
+  seen?: readonly string[];
   /**
    * 标签怎么算切题:
    *   `any`(默认)—— 与情境标签**相交**即可(山里 + 通用,两者都进池);
    *   `all`        —— 必须**全部**命中(要求"既是雨天又是水边"的牌)。
    */
-  match?: 'any' | 'all'
+  match?: "any" | "all";
   /** 情境里**排除**的标签:命中任一即不进池(例如"瘟疫期间不出集市事件") */
-  excludeTags?: readonly string[]
+  excludeTags?: readonly string[];
 }
 
 /** 等级是否落在带内(两端可省;含端点) */
 export function inBand(value: number, band: LevelBand): boolean {
-  if (band.min !== undefined && value < band.min) return false
-  if (band.max !== undefined && value > band.max) return false
-  return true
+  if (band.min !== undefined && value < band.min) return false;
+  if (band.max !== undefined && value > band.max) return false;
+  return true;
 }
 
 /** 这张牌此刻能不能进池(区间 + 场所标签 + 一次性) */
 export function entryAllowed(entry: DeckEntry, ctx: DeckContext): boolean {
-  if (!inBand(ctx.level, entry)) return false
-  const tags = entry.tags ?? []
+  if (!inBand(ctx.level, entry)) return false;
+  const tags = entry.tags ?? [];
   if (tags.length > 0) {
-    const hit = ctx.match === 'all' ? tags.every(t => ctx.tags.includes(t)) : tags.some(t => ctx.tags.includes(t))
-    if (!hit) return false
+    const hit =
+      ctx.match === "all"
+        ? tags.every((t) => ctx.tags.includes(t))
+        : tags.some((t) => ctx.tags.includes(t));
+    if (!hit) return false;
   }
-  if (ctx.excludeTags !== undefined && tags.some(t => ctx.excludeTags!.includes(t))) return false
-  if (entry.once === true && ctx.seen !== undefined && ctx.seen.includes(entry.id)) return false
-  return true
+  if (ctx.excludeTags !== undefined && tags.some((t) => ctx.excludeTags!.includes(t))) return false;
+  if (entry.once === true && ctx.seen !== undefined && ctx.seen.includes(entry.id)) return false;
+  return true;
 }
 
 /** 筛出这一池 —— 保持传入顺序(判据要能直接问"池子里有谁") */
 export function deckPool<T extends DeckEntry>(entries: readonly T[], ctx: DeckContext): T[] {
-  return entries.filter(entry => entryAllowed(entry, ctx))
+  return entries.filter((entry) => entryAllowed(entry, ctx));
 }
 
 export interface DrawOptions<T extends DeckEntry = DeckEntry> {
@@ -80,7 +83,7 @@ export interface DrawOptions<T extends DeckEntry = DeckEntry> {
    * 返回 0 表示这张牌这次不参与;但要"完全不该出现",请用 tags/区间表达:
    * 那两样回答的是"该不该有",倍数只回答"多不多"。
    */
-  weightMultiplier?: (entry: T) => number
+  weightMultiplier?: (entry: T) => number;
 }
 
 /**
@@ -89,22 +92,32 @@ export interface DrawOptions<T extends DeckEntry = DeckEntry> {
  * 权重按 `weight × weightMultiplier` 计;全为 0 时退回**均匀抽取**
  * (而不是抛错或永远返回空:内容运营把权重全调成 0 的那天,玩家不该什么都遇不到)。
  */
-export function drawFrom<T extends DeckEntry>(entries: readonly T[], ctx: DeckContext, rng: Rng, opts: DrawOptions<T> = {}): T | null {
-  const pool = deckPool(entries, ctx)
-  if (pool.length === 0) return null
-  return pickOne(pool, rng, opts.weightMultiplier)
+export function drawFrom<T extends DeckEntry>(
+  entries: readonly T[],
+  ctx: DeckContext,
+  rng: Rng,
+  opts: DrawOptions<T> = {},
+): T | null {
+  const pool = deckPool(entries, ctx);
+  if (pool.length === 0) return null;
+  return pickOne(pool, rng, opts.weightMultiplier);
 }
 
 /** 权重与"全 0 退回均匀"的口径只此一处 —— 单抽与多抽共用 */
-function pickOne<T extends DeckEntry>(pool: readonly T[], rng: Rng, weightMultiplier?: (entry: T) => number): T {
-  const weightOf = (entry: T): number => Math.max(0, entry.weight * (weightMultiplier?.(entry) ?? 1))
-  const total = pool.reduce((acc, entry) => acc + weightOf(entry), 0)
-  return total <= 0 ? rng.pick(pool) : rng.weighted(pool, weightOf)
+function pickOne<T extends DeckEntry>(
+  pool: readonly T[],
+  rng: Rng,
+  weightMultiplier?: (entry: T) => number,
+): T {
+  const weightOf = (entry: T): number =>
+    Math.max(0, entry.weight * (weightMultiplier?.(entry) ?? 1));
+  const total = pool.reduce((acc, entry) => acc + weightOf(entry), 0);
+  return total <= 0 ? rng.pick(pool) : rng.weighted(pool, weightOf);
 }
 
 export interface DrawManyOptions<T extends DeckEntry = DeckEntry> extends DrawOptions<T> {
   /** 一轮之内不重复(默认 true);关掉它等于独立抽 N 次,可能抽到同一张 */
-  distinct?: boolean
+  distinct?: boolean;
   /**
    * 保底:保证这一轮里**至少 `min` 张带 `tag`**。
    *
@@ -112,7 +125,7 @@ export interface DrawManyOptions<T extends DeckEntry = DeckEntry> extends DrawOp
    * 没有可替换的位置(比如抽数本来就少于 min)就往后再抽几张。
    * 池子里带该标签的牌不够时,**有多少补多少** —— 保底不凭空造牌。
    */
-  guarantee?: { tag: string; min: number }
+  guarantee?: { tag: string; min: number };
 }
 
 /**
@@ -126,36 +139,40 @@ export function drawMany<T extends DeckEntry>(
   ctx: DeckContext,
   rng: Rng,
   count: number,
-  opts: DrawManyOptions<T> = {}
+  opts: DrawManyOptions<T> = {},
 ): T[] {
-  const distinct = opts.distinct ?? true
-  const out: T[] = []
-  const taken = new Set<string>()
+  const distinct = opts.distinct ?? true;
+  const out: T[] = [];
+  const taken = new Set<string>();
   for (let i = 0; i < Math.max(0, Math.floor(count)); i += 1) {
-    const pool = deckPool(entries, ctx).filter(entry => !distinct || !taken.has(entry.id))
-    if (pool.length === 0) break
-    const picked = pickOne(pool, rng, opts.weightMultiplier)
-    out.push(picked)
-    taken.add(picked.id)
+    const pool = deckPool(entries, ctx).filter((entry) => !distinct || !taken.has(entry.id));
+    if (pool.length === 0) break;
+    const picked = pickOne(pool, rng, opts.weightMultiplier);
+    out.push(picked);
+    taken.add(picked.id);
   }
   if (opts.guarantee && opts.guarantee.min > 0) {
-    const tag = opts.guarantee.tag
-    const hasTag = (e: T): boolean => (e.tags ?? []).includes(tag)
-    const spare = (): T[] => deckPool(entries, ctx).filter(e => hasTag(e) && !taken.has(e.id))
-    let matching = out.filter(hasTag).length
-    let pool = spare()
+    const tag = opts.guarantee.tag;
+    const hasTag = (e: T): boolean => (e.tags ?? []).includes(tag);
+    const spare = (): T[] => deckPool(entries, ctx).filter((e) => hasTag(e) && !taken.has(e.id));
+    let matching = out.filter(hasTag).length;
+    let pool = spare();
     while (matching < opts.guarantee.min && pool.length > 0) {
       // 先从末尾换掉一张不带标签的
-      let replaceAt = -1
-      for (let i = out.length - 1; i >= 0; i -= 1) if (!hasTag(out[i]!)) { replaceAt = i; break }
-      const picked = pickOne(pool, rng, opts.weightMultiplier)
-      pool = pool.filter(e => e.id !== picked.id)
-      if (replaceAt >= 0) taken.delete(out[replaceAt]!.id)
-      if (replaceAt >= 0) out[replaceAt] = picked
-      else out.push(picked)
-      taken.add(picked.id)
-      matching += 1
+      let replaceAt = -1;
+      for (let i = out.length - 1; i >= 0; i -= 1)
+        if (!hasTag(out[i]!)) {
+          replaceAt = i;
+          break;
+        }
+      const picked = pickOne(pool, rng, opts.weightMultiplier);
+      pool = pool.filter((e) => e.id !== picked.id);
+      if (replaceAt >= 0) taken.delete(out[replaceAt]!.id);
+      if (replaceAt >= 0) out[replaceAt] = picked;
+      else out.push(picked);
+      taken.add(picked.id);
+      matching += 1;
     }
   }
-  return out
+  return out;
 }

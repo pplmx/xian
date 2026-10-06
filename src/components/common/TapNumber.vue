@@ -17,29 +17,29 @@
 </template>
 
 <script setup lang="ts">
-  import { useUiStore } from '@/stores/ui'
-  import { formatGN } from '@/utils/format'
-  import type { GNum } from '@/types'
+import { useUiStore } from "@/stores/ui";
+import { formatGN } from "@/utils/format";
+import type { GNum } from "@/types";
 
-  const props = defineProps<{
-    /** 被点的那个数 */
-    value: GNum | number
-    /** 浮层标题(如「修为」) */
-    title: string
-    /** 同族的其它读数(所需 / 还需 / 每秒…)—— 按传入顺序排在"精确值"之后 */
-    rows?: { label: string; value?: GNum | number; text?: string; hint?: string }[]
-    /** 一句人话(如「按当前速率还需 3 天 2 时」) */
-    note?: string
-  }>()
+const props = defineProps<{
+  /** 被点的那个数 */
+  value: GNum | number;
+  /** 浮层标题(如「修为」) */
+  title: string;
+  /** 同族的其它读数(所需 / 还需 / 每秒…)—— 按传入顺序排在"精确值"之后 */
+  rows?: { label: string; value?: GNum | number; text?: string; hint?: string }[];
+  /** 一句人话(如「按当前速率还需 3 天 2 时」) */
+  note?: string;
+}>();
 
-  const ui = useUiStore()
+const ui = useUiStore();
 
-  function open(): void {
-    ui.numberDetail = {
-      title: props.title,
-      // 第一行永远是"这个数本身",其余由调用方给 —— 这样每个接入点都能说自己那一族的口径
-      rows: [{ label: '精确值', value: props.value }, ...(props.rows ?? [])],
-      note: props.note
-    }
-  }
+function open(): void {
+  ui.numberDetail = {
+    title: props.title,
+    // 第一行永远是"这个数本身",其余由调用方给 —— 这样每个接入点都能说自己那一族的口径
+    rows: [{ label: "精确值", value: props.value }, ...(props.rows ?? [])],
+    note: props.note,
+  };
+}
 </script>

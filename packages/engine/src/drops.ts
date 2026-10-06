@@ -20,44 +20,44 @@
  *   · **顺序即声明顺序** —— 想让掉落表不改变随机流,就按声明顺序掷(逐条 `rollOne`),
  *     需要额外随机(生成装备、抽内容池)时用 `onHit` **在命中当场**做,别攒到最后。
  */
-import type { Rng } from './rng.js'
+import type { Rng } from "./rng.js";
 
 export interface DropEntry {
   /** 掉落键(资源键、实物键都行 —— 库里不解释它是什么) */
-  key: string
+  key: string;
   /** 基础概率(会先钳到 [0,1],再乘 `chanceMult`) */
-  chance: number
+  chance: number;
   /** 概率上限(可选):例如"再高也不超过 90%" */
-  chanceCap?: number
+  chanceCap?: number;
   /** 概率是否吃 `chanceMult`(默认吃 —— 有些基础掉落不该被福缘放大) */
-  scalesWithChance?: boolean
+  scalesWithChance?: boolean;
   /** 试几次(默认 1;默认不吃 `countMult`) */
-  attempts?: number
+  attempts?: number;
   /** 试的次数是否吃 `countMult`(默认**不吃** —— 翻倍通常翻的是份数) */
-  scalesWithAttempts?: boolean
+  scalesWithAttempts?: boolean;
   /** 每次命中给几份:固定数或 `[min, max]` 闭区间(默认 1) */
-  count?: number | readonly [number, number]
+  count?: number | readonly [number, number];
   /** 份数是否吃 `countMult`(默认吃) */
-  scalesWithCount?: boolean
+  scalesWithCount?: boolean;
   /** 保底:调用方开 `guarantee` 时,这条的**第一次尝试必中** */
-  guaranteed?: boolean
+  guaranteed?: boolean;
 }
 
 export interface DropHit {
-  key: string
+  key: string;
   /** 试了几次里中了几次 */
-  hits: number
+  hits: number;
   /** 一共给了几份(命中次数 × 每次份数) */
-  count: number
+  count: number;
 }
 
 export interface DropOptions {
   /** 概率倍率(福缘 / 幸运 / 活动) */
-  chanceMult?: number
+  chanceMult?: number;
   /** 数量倍率(战利品翻倍 / 首领) */
-  countMult?: number
+  countMult?: number;
   /** 开保底(首领第一抽必出这类规则) */
-  guarantee?: boolean
+  guarantee?: boolean;
   /**
    * 命中当场处理 —— 第二参是**这一次命中得到的份数**。
    *
@@ -65,56 +65,56 @@ export interface DropOptions {
    * 若等整张表掷完再统一生成,那些掷骰就会挤到别的判定之后,随机流与手写实现
    * 从此错位("明明只改了掉落表的写法,战斗后半段的随机结果全变了")。
    */
-  onHit?: (entry: DropEntry, count: number) => void
+  onHit?: (entry: DropEntry, count: number) => void;
 }
 
 export function createDropTable(entries: readonly DropEntry[]) {
   const effectiveChance = (entry: DropEntry, opts: DropOptions): number => {
-    const mult = (entry.scalesWithChance ?? true) ? (opts.chanceMult ?? 1) : 1
-    const raw = (entry.chance || 0) * mult
-    const capped = entry.chanceCap === undefined ? raw : Math.min(entry.chanceCap, raw)
+    const mult = (entry.scalesWithChance ?? true) ? (opts.chanceMult ?? 1) : 1;
+    const raw = (entry.chance || 0) * mult;
+    const capped = entry.chanceCap === undefined ? raw : Math.min(entry.chanceCap, raw);
     // 进判定之前一定先夹到 [0,1]:叠出来的概率不能不合法
-    return Math.min(1, Math.max(0, capped))
-  }
+    return Math.min(1, Math.max(0, capped));
+  };
 
   const attemptsOf = (entry: DropEntry, opts: DropOptions): number => {
-    const base = Math.max(0, Math.floor(entry.attempts ?? 1))
-    const mult = (entry.scalesWithAttempts ?? false) ? (opts.countMult ?? 1) : 1
-    return Math.max(0, Math.floor(base * mult))
-  }
+    const base = Math.max(0, Math.floor(entry.attempts ?? 1));
+    const mult = (entry.scalesWithAttempts ?? false) ? (opts.countMult ?? 1) : 1;
+    return Math.max(0, Math.floor(base * mult));
+  };
 
   const countPerHit = (entry: DropEntry, rng: Rng, opts: DropOptions): number => {
-    const spec = entry.count ?? 1
-    const rolled = typeof spec === 'number' ? spec : rng.int(spec[0], spec[1])
-    const mult = (entry.scalesWithCount ?? true) ? (opts.countMult ?? 1) : 1
-    return Math.max(0, Math.floor(rolled * mult))
-  }
+    const spec = entry.count ?? 1;
+    const rolled = typeof spec === "number" ? spec : rng.int(spec[0], spec[1]);
+    const mult = (entry.scalesWithCount ?? true) ? (opts.countMult ?? 1) : 1;
+    return Math.max(0, Math.floor(rolled * mult));
+  };
 
   /** 掷一条(供"掷一条、处理一条"的用法 —— 这样随机流顺序与手写一致) */
   const rollOne = (entry: DropEntry, rng: Rng, opts: DropOptions = {}): DropHit => {
-    const chance = effectiveChance(entry, opts)
-    const attempts = attemptsOf(entry, opts)
-    let hits = 0
-    let count = 0
+    const chance = effectiveChance(entry, opts);
+    const attempts = attemptsOf(entry, opts);
+    let hits = 0;
+    let count = 0;
     for (let i = 0; i < attempts; i += 1) {
       // 先掷、再看保底:保底是"改写这一次的结果",不是"跳过这一次的骰子"
-      const rolled = rng.chance(chance)
-      const forced = i === 0 && entry.guaranteed === true && (opts.guarantee ?? false)
+      const rolled = rng.chance(chance);
+      const forced = i === 0 && entry.guaranteed === true && (opts.guarantee ?? false);
       if (rolled || forced) {
-        const gained = countPerHit(entry, rng, opts)
-        hits += 1
-        count += gained
-        opts.onHit?.(entry, gained)
+        const gained = countPerHit(entry, rng, opts);
+        hits += 1;
+        count += gained;
+        opts.onHit?.(entry, gained);
       }
     }
-    return { key: entry.key, hits, count }
-  }
+    return { key: entry.key, hits, count };
+  };
 
   /** 掷整张表(没有额外随机时用;顺序即声明顺序) */
   const roll = (rng: Rng, opts: DropOptions = {}): DropHit[] =>
-    entries.map(entry => rollOne(entry, rng, opts)).filter(hit => hit.hits > 0)
+    entries.map((entry) => rollOne(entry, rng, opts)).filter((hit) => hit.hits > 0);
 
-  return { entries, rollOne, roll, effectiveChance }
+  return { entries, rollOne, roll, effectiveChance };
 }
 
-export type DropTable = ReturnType<typeof createDropTable>
+export type DropTable = ReturnType<typeof createDropTable>;

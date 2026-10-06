@@ -3,11 +3,11 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import type { QualityId } from '@/types'
-  import { qualityDef } from '@/data/qualities'
+import { computed } from "vue";
+import type { QualityId } from "@/types";
+import { qualityDef } from "@/data/qualities";
 
-  const props = defineProps<{ quality: QualityId }>()
+const props = defineProps<{ quality: QualityId }>();
 
-  const def = computed(() => qualityDef(props.quality))
+const def = computed(() => qualityDef(props.quality));
 </script>

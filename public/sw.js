@@ -15,63 +15,63 @@
  * 离线回退仍会落到老页面。这是唯一需要人工记得的版本号,别在别处另设。
  */
 
-const CACHE_VERSION = 'xuanshu-v1'
+const CACHE_VERSION = "xuanshu-v1";
 
-self.addEventListener('install', () => {
+self.addEventListener("install", () => {
   // 新 SW 就位后立刻接管,不等旧页签全部关闭
-  self.skipWaiting()
-})
+  self.skipWaiting();
+});
 
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      const keys = await caches.keys()
-      await Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)))
-      await self.clients.claim()
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)));
+      await self.clients.claim();
     })(),
-  )
-})
+  );
+});
 
 /** 在线取最新,失败才回退缓存(导航页专用) */
 async function networkFirst(request) {
-  const cache = await caches.open(CACHE_VERSION)
+  const cache = await caches.open(CACHE_VERSION);
   try {
-    const fresh = await fetch(request)
-    if (fresh.ok && fresh.type === 'basic') {
-      await cache.put(request, fresh.clone())
-      return fresh
+    const fresh = await fetch(request);
+    if (fresh.ok && fresh.type === "basic") {
+      await cache.put(request, fresh.clone());
+      return fresh;
     }
     // 在线但拿到错误页(发版中 / 静态托管 5xx / 代理抖动):不要把它当"最新版"甩给玩家。
     // 这时离线的价值恰恰是兜住你手上那份好用的缓存 —— 回退到已缓存的 index.html。
-    const cached = await cache.match(request)
-    return cached ?? fresh
+    const cached = await cache.match(request);
+    return cached ?? fresh;
   } catch {
-    const cached = await cache.match(request)
-    return cached ?? new Response('离线且无缓存副本', { status: 503 })
+    const cached = await cache.match(request);
+    return cached ?? new Response("离线且无缓存副本", { status: 503 });
   }
 }
 
 /** 缓存优先,未命中才请求并落缓存(带 hash 的产物 / 稳定公共文件) */
 async function cacheFirst(request) {
-  const cache = await caches.open(CACHE_VERSION)
-  const cached = await cache.match(request)
-  if (cached) return cached
-  const res = await fetch(request)
-  if (res.ok && res.type === 'basic') {
-    await cache.put(request, res.clone())
+  const cache = await caches.open(CACHE_VERSION);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const res = await fetch(request);
+  if (res.ok && res.type === "basic") {
+    await cache.put(request, res.clone());
   }
-  return res
+  return res;
 }
 
-self.addEventListener('fetch', (event) => {
-  const req = event.request
-  if (req.method !== 'GET') return
-  const url = new URL(req.url)
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
   // 只管自己源上的:跨域让浏览器默认处理(本站不发外部请求,这条是防线)
-  if (url.origin !== self.location.origin) return
-  if (req.mode === 'navigate') {
-    event.respondWith(networkFirst(req))
-    return
+  if (url.origin !== self.location.origin) return;
+  if (req.mode === "navigate") {
+    event.respondWith(networkFirst(req));
+    return;
   }
-  event.respondWith(cacheFirst(req))
-})
+  event.respondWith(cacheFirst(req));
+});

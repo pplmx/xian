@@ -9,20 +9,20 @@
  * 二 兼容非 token 的颜色。有些颜色来自存档里的旧数据或用户导入的文本,拿到的仍是
  *    `#RRGGBB`,那种就照老办法拼十六进制 alpha,别把颜色弄丢。
  */
-const TOKEN_RE = /^var\(--color-([a-z0-9-]+)\)$/
-const HEX_RE = /^#[0-9a-fA-F]{6}$/
+const TOKEN_RE = /^var\(--color-([a-z0-9-]+)\)$/;
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 /** 把 `var(--color-x)` / `#RRGGBB` 叠上 0..1 的透明度;认不出来的原样返回 */
 export function colorWithAlpha(color: string, alpha: number): string {
-  const a = Math.min(1, Math.max(0, alpha))
-  const value = color.trim()
-  const token = TOKEN_RE.exec(value)
-  if (token) return `rgb(var(--color-${token[1]}-rgb) / ${a})`
+  const a = Math.min(1, Math.max(0, alpha));
+  const value = color.trim();
+  const token = TOKEN_RE.exec(value);
+  if (token) return `rgb(var(--color-${token[1]}-rgb) / ${a})`;
   if (HEX_RE.test(value)) {
     const byte = Math.round(a * 255)
       .toString(16)
-      .padStart(2, '0')
-    return `${value}${byte}`
+      .padStart(2, "0");
+    return `${value}${byte}`;
   }
-  return value
+  return value;
 }

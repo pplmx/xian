@@ -14,14 +14,16 @@
         <div
           class="grid h-20 w-20 place-items-center rounded-full border-2 font-kai text-4xl animate-ink-pop"
           :class="
-            view.success ? 'border-cinnabar text-cinnabar bg-cinnabar/5 animate-glow-pulse' : 'border-ink-faint text-ink-faint bg-ink/5'
+            view.success
+              ? 'border-cinnabar text-cinnabar bg-cinnabar/5 animate-glow-pulse'
+              : 'border-ink-faint text-ink-faint bg-ink/5'
           "
         >
-          {{ view.success ? '破' : '滞' }}
+          {{ view.success ? "破" : "滞" }}
         </div>
       </div>
       <p class="mt-3 font-kai text-lg tracking-[0.3em] text-ink">
-        {{ view.success ? '突破成功' : '突破失败' }}
+        {{ view.success ? "突破成功" : "突破失败" }}
       </p>
       <!--
         大境之槛:一境一次的里程碑,与每层小推进共用同一枚「破」印还不够 ——
@@ -36,31 +38,42 @@
       <p class="mt-1 text-[13px] text-ink-soft">
         {{ view.fromLabel }}
         <span class="mx-1 text-ink-faint">→</span>
-        <span :class="view.success ? 'text-cinnabar font-kai' : 'text-ink-faint'">{{ view.toLabel }}</span>
+        <span :class="view.success ? 'text-cinnabar font-kai' : 'text-ink-faint'">{{
+          view.toLabel
+        }}</span>
       </p>
-      <div v-if="view.tribulationLog.length" class="mt-3 max-h-40 overflow-y-auto rounded-md bg-ink/4 px-3 py-2 text-left">
-        <p v-for="(line, i) in view.tribulationLog" :key="i" class="py-0.5 text-[12px] leading-relaxed text-ink-soft">
+      <div
+        v-if="view.tribulationLog.length"
+        class="mt-3 max-h-40 overflow-y-auto rounded-md bg-ink/4 px-3 py-2 text-left"
+      >
+        <p
+          v-for="(line, i) in view.tribulationLog"
+          :key="i"
+          class="py-0.5 text-[12px] leading-relaxed text-ink-soft"
+        >
           {{ line }}
         </p>
       </div>
       <p class="mt-3 text-[12px] leading-relaxed text-ink-faint">{{ view.message }}</p>
     </div>
     <template #footer>
-      <button class="btn-seal w-full" @click="close">{{ view?.success ? '继续问道' : '收拾心情' }}</button>
+      <button class="btn-seal w-full" @click="close">
+        {{ view?.success ? "继续问道" : "收拾心情" }}
+      </button>
     </template>
   </BaseModal>
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import { useUiStore } from '@/stores/ui'
-  import BaseModal from '@/components/common/BaseModal.vue'
+import { computed } from "vue";
+import { useUiStore } from "@/stores/ui";
+import BaseModal from "@/components/common/BaseModal.vue";
 
-  const ui = useUiStore()
+const ui = useUiStore();
 
-  const view = computed(() => ui.breakthrough)
+const view = computed(() => ui.breakthrough);
 
-  function close(): void {
-    ui.breakthrough = null
-  }
+function close(): void {
+  ui.breakthrough = null;
+}
 </script>

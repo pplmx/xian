@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-  defineProps<{ title: string; hint?: string }>()
+defineProps<{ title: string; hint?: string }>();
 </script>

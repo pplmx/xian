@@ -15,14 +15,20 @@
         <p class="flex items-center gap-1.5 whitespace-nowrap text-[10px] text-ink-faint">
           <span>{{ player.realmName }}</span>
           <!-- 年龄:寿元将尽时转朱砂,顶栏常驻便于随时察觉 -->
-          <span class="tabular" :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : ''">
+          <span
+            class="tabular"
+            :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : ''"
+          >
             {{ yearsShown(player.age) }}/{{ formatYears(player.lifespanMax) }}
           </span>
           <!--
             轮回次数:从主页人物卡移来,置于全局顶栏常驻。
             但它是最闲的一格 —— 340px 以下宁可不要,也不能把灵石与灵气挤走。
           -->
-          <span v-if="player.reincarnation.count > 0" class="hidden text-violet-ink min-[340px]:inline">
+          <span
+            v-if="player.reincarnation.count > 0"
+            class="hidden text-violet-ink min-[340px]:inline"
+          >
             {{ player.reincarnation.count }} 世
           </span>
         </p>
@@ -50,23 +56,23 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import { usePlayerStore } from '@/stores/player'
-  import { useResourcesStore } from '@/stores/resources'
-  import { formatGN, formatNum, formatYears, yearsShown } from '@/utils/format'
-  import { LIFESPAN_WARN_RATIO } from '@/data/constants'
-  import { Capacitor } from '@capacitor/core'
-  import { useNativeInsets } from '@/composables/useNativeInsets'
-  import GameIcon from './GameIcon.vue'
+import { computed } from "vue";
+import { usePlayerStore } from "@/stores/player";
+import { useResourcesStore } from "@/stores/resources";
+import { formatGN, formatNum, formatYears, yearsShown } from "@/utils/format";
+import { LIFESPAN_WARN_RATIO } from "@/data/constants";
+import { Capacitor } from "@capacitor/core";
+import { useNativeInsets } from "@/composables/useNativeInsets";
+import GameIcon from "./GameIcon.vue";
 
-  const player = usePlayerStore()
-  const resources = useResourcesStore()
-  /**
-   * 状态栏占位:原生实测有值(安卓,见 useNativeInsets)就用实测;没有就退回
-   * 老的猜测 —— 原生 20px(沉浸式状态栏的近似)/ 网页 8px,web 渲染逐位不变。
-   */
-  const { top: statusInset } = useNativeInsets()
-  const statusTopPad = computed(() =>
-    statusInset.value > 0 ? `${statusInset.value}px` : Capacitor.isNativePlatform() ? '20px' : '8px'
-  )
+const player = usePlayerStore();
+const resources = useResourcesStore();
+/**
+ * 状态栏占位:原生实测有值(安卓,见 useNativeInsets)就用实测;没有就退回
+ * 老的猜测 —— 原生 20px(沉浸式状态栏的近似)/ 网页 8px,web 渲染逐位不变。
+ */
+const { top: statusInset } = useNativeInsets();
+const statusTopPad = computed(() =>
+  statusInset.value > 0 ? `${statusInset.value}px` : Capacitor.isNativePlatform() ? "20px" : "8px",
+);
 </script>

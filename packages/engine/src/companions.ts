@@ -15,36 +15,36 @@
  * 作品常见的用法是"一次只带一只",但引擎不限制数量:`activeMods(ids)` 接受任意个,
  * 要不要限制是玩法层的事。
  */
-import type { Mods } from './attributes.js'
+import type { Mods } from "./attributes.js";
 
 /** 一条性格:一组行为系数 */
 export interface TraitDef {
-  id: string
-  name?: string
-  desc?: string
+  id: string;
+  name?: string;
+  desc?: string;
   /** 键 → 系数/增量;**绝对取值**,不是相对中性的增量 */
-  mods: Record<string, number>
+  mods: Record<string, number>;
 }
 
 export interface CompanionDef {
-  id: string
-  name: string
+  id: string;
+  name: string;
   /** 所属性格;省略即"没有性格"(取中性) */
-  traitId?: string
+  traitId?: string;
   /** 伙伴自身的词条 */
-  mods?: Mods
+  mods?: Mods;
   /** 分类标签(元素/阵营/稀有度之类),引擎只存不判 */
-  tags?: readonly string[]
+  tags?: readonly string[];
 }
 
 export interface CompanionConfig {
-  companions: CompanionDef[]
-  traits: TraitDef[]
+  companions: CompanionDef[];
+  traits: TraitDef[];
   /**
    * 中性基线 —— 每一个可能出现在性格表里的键都要有一个中性值。
    * 没有伙伴(或伙伴没性格)时返回它;返回的是拷贝,调用方改不动配置。
    */
-  neutral: Record<string, number>
+  neutral: Record<string, number>;
   /**
    * 多只伙伴的性格系数怎么合(默认 `override`):
    *
@@ -54,84 +54,94 @@ export interface CompanionConfig {
    *                     倍率类 1 + (0.05 + 0.10) = 1.15;加法类 0 + (0.06 + 0.02) = 0.08。
    *                     同一个开关对两类键都成立,故不必为它们各写一套。
    */
-  stack?: 'override' | 'add-relative'
+  stack?: "override" | "add-relative";
 }
 
 export interface CompanionSystem {
-  readonly defs: readonly CompanionDef[]
-  readonly traits: readonly TraitDef[]
-  def(id: string): CompanionDef | undefined
-  trait(id: string): TraitDef | undefined
+  readonly defs: readonly CompanionDef[];
+  readonly traits: readonly TraitDef[];
+  def(id: string): CompanionDef | undefined;
+  trait(id: string): TraitDef | undefined;
   /** 某伙伴的性格系数(与中性基线合并后的**完整**一组);null/未知 → 中性 */
-  effectsOf(id: string | null): Record<string, number>
+  effectsOf(id: string | null): Record<string, number>;
   /** 某伙伴自身的词条(不叠加性格) */
-  modsOf(id: string | null): Mods
+  modsOf(id: string | null): Mods;
   /** 伙伴自身词条 + 性格系数合并(可带多只;重复 id 只算一次) */
-  activeMods(ids: readonly (string | null)[]): Record<string, number>
+  activeMods(ids: readonly (string | null)[]): Record<string, number>;
 }
 
 export function createCompanionSystem(config: CompanionConfig): CompanionSystem {
-  const defs = [...config.companions]
-  const traits = [...config.traits]
-  const byId = new Map<string, CompanionDef>()
-  const traitById = new Map<string, TraitDef>()
+  const defs = [...config.companions];
+  const traits = [...config.traits];
+  const byId = new Map<string, CompanionDef>();
+  const traitById = new Map<string, TraitDef>();
   for (const c of defs) {
-    if (byId.has(c.id)) throw new Error(`伙伴系统:id 重复 —— ${c.id}`)
-    byId.set(c.id, c)
+    if (byId.has(c.id)) throw new Error(`伙伴系统:id 重复 —— ${c.id}`);
+    byId.set(c.id, c);
   }
   for (const t of traits) {
-    if (traitById.has(t.id)) throw new Error(`伙伴系统:性格 id 重复 —— ${t.id}`)
-    traitById.set(t.id, t)
+    if (traitById.has(t.id)) throw new Error(`伙伴系统:性格 id 重复 —— ${t.id}`);
+    traitById.set(t.id, t);
   }
   for (const c of defs) {
     if (c.traitId !== undefined && !traitById.has(c.traitId)) {
-      throw new Error(`伙伴系统:${c.id} 指向未定义的性格 —— ${c.traitId}`)
+      throw new Error(`伙伴系统:${c.id} 指向未定义的性格 —— ${c.traitId}`);
     }
   }
-  const neutral = { ...config.neutral }
-  const stack = config.stack ?? 'override'
+  const neutral = { ...config.neutral };
+  const stack = config.stack ?? "override";
   for (const t of traits) {
     for (const key of Object.keys(t.mods)) {
       if (!(key in neutral)) {
-        throw new Error(`伙伴系统:性格 ${t.id} 用了没有中性值的键 —— ${key};请把它加进 neutral`)
+        throw new Error(`伙伴系统:性格 ${t.id} 用了没有中性值的键 —— ${key};请把它加进 neutral`);
       }
     }
   }
 
   const effectsOf = (id: string | null): Record<string, number> => {
-    const out: Record<string, number> = { ...neutral }
-    const trait = id === null ? undefined : traitById.get(byId.get(id)?.traitId ?? '')
-    if (!trait) return out
-    for (const [key, value] of Object.entries(trait.mods)) out[key] = value
-    return out
-  }
+    const out: Record<string, number> = { ...neutral };
+    const trait = id === null ? undefined : traitById.get(byId.get(id)?.traitId ?? "");
+    if (!trait) return out;
+    for (const [key, value] of Object.entries(trait.mods)) out[key] = value;
+    return out;
+  };
 
   const modsOf = (id: string | null): Mods => {
-    if (id === null) return {}
-    return { ...byId.get(id)?.mods }
-  }
+    if (id === null) return {};
+    return { ...byId.get(id)?.mods };
+  };
 
   const activeMods = (ids: readonly (string | null)[]): Record<string, number> => {
-    const out: Record<string, number> = { ...neutral }
-    const seen = new Set<string>()
+    const out: Record<string, number> = { ...neutral };
+    const seen = new Set<string>();
     for (const id of ids) {
-      if (id === null || seen.has(id)) continue
-      seen.add(id)
-      const trait = traitById.get(byId.get(id)?.traitId ?? '')
+      if (id === null || seen.has(id)) continue;
+      seen.add(id);
+      const trait = traitById.get(byId.get(id)?.traitId ?? "");
       if (trait) {
         for (const [key, value] of Object.entries(trait.mods)) {
           out[key] =
-            stack === 'add-relative' ? (out[key] ?? neutral[key] ?? 0) + (value - (neutral[key] ?? 0)) : value
+            stack === "add-relative"
+              ? (out[key] ?? neutral[key] ?? 0) + (value - (neutral[key] ?? 0))
+              : value;
         }
       }
-      const own = byId.get(id)?.mods
+      const own = byId.get(id)?.mods;
       for (const [key, value] of Object.entries(own ?? {})) {
-        if (typeof value !== 'number') continue
-        out[key] = (out[key] ?? 0) + value
+        if (typeof value !== "number") continue;
+        out[key] = (out[key] ?? 0) + value;
       }
     }
-    return out
-  }
+    return out;
+  };
 
-  return { defs, traits, def: id => byId.get(id), trait: id => traitById.get(id), effectsOf, modsOf, activeMods }
+  return {
+    defs,
+    traits,
+    def: (id) => byId.get(id),
+    trait: (id) => traitById.get(id),
+    effectsOf,
+    modsOf,
+    activeMods,
+  };
 }

@@ -5,15 +5,15 @@
  * "把这一世的所知所历带走":归档履历、结算命题、折算宿慧、补齐认知、立下新题。
  * 属性那一份仍在(道果与天赋照旧),但它已不再是玩家转世的理由。
  */
-import { rng } from '@/utils/random'
-import { yearsShown } from '@/utils/format'
-import { TALENTS } from '@/data/talents'
-import { TALENT_DRAW_DIV } from '@/data/constants'
-import { HERB_GRADES } from '@/data/herbGrades'
-import { lifeThemeDef } from '@/data/lifeThemes'
-import { nextStageAfter, stageAt } from '@/data/samsara'
-import { rollLinggen } from './linggenGen'
-import { collect, track } from './progress'
+import { rng } from "@/utils/random";
+import { yearsShown } from "@/utils/format";
+import { TALENTS } from "@/data/talents";
+import { TALENT_DRAW_DIV } from "@/data/constants";
+import { HERB_GRADES } from "@/data/herbGrades";
+import { lifeThemeDef } from "@/data/lifeThemes";
+import { nextStageAfter, stageAt } from "@/data/samsara";
+import { rollLinggen } from "./linggenGen";
+import { collect, track } from "./progress";
 import {
   aptitudeFloorNow,
   beginLife,
@@ -24,57 +24,59 @@ import {
   offerThemes,
   totalInsight,
   vowProgress,
-  vowResult
-} from './samsaraService'
-import { usePlayerStore } from '@/stores/player'
-import { useResourcesStore } from '@/stores/resources'
-import { useInventoryStore } from '@/stores/inventory'
-import { useCultivationStore } from '@/stores/cultivation'
-import { useAdventureStore } from '@/stores/adventure'
-import { useEndgameStore } from '@/stores/endgame'
-import { useGameStore } from '@/stores/game'
-import { useUiStore } from '@/stores/ui'
-import type { LifeReview, ReincarnationView } from '@/stores/ui'
-import type { GNum } from '@/types'
-import { recordMilestone } from './identity'
-import { gnZero } from '@/utils/gnum'
+  vowResult,
+} from "./samsaraService";
+import { usePlayerStore } from "@/stores/player";
+import { useResourcesStore } from "@/stores/resources";
+import { useInventoryStore } from "@/stores/inventory";
+import { useCultivationStore } from "@/stores/cultivation";
+import { useAdventureStore } from "@/stores/adventure";
+import { useEndgameStore } from "@/stores/endgame";
+import { useGameStore } from "@/stores/game";
+import { useUiStore } from "@/stores/ui";
+import type { LifeReview, ReincarnationView } from "@/stores/ui";
+import type { GNum } from "@/types";
+import { recordMilestone } from "./identity";
+import { gnZero } from "@/utils/gnum";
 
 /** 至少金丹境方可主动兵解 */
-export const MANUAL_REBIRTH_MIN_MAJOR = 2
+export const MANUAL_REBIRTH_MIN_MAJOR = 2;
 
-export { daoFruitGain } from './formulas'
-import { daoFruitGain } from './formulas'
-import { archiveLifeTrial } from './lifeTrialService'
-import { rerollMortalWorld } from './mortalWorldService'
-import { archiveBond } from './daoluService'
-import { drawMany } from 'wanxiang-engine'
-import { lifeForge } from './heritageForge'
+export { daoFruitGain } from "./formulas";
+import { daoFruitGain } from "./formulas";
+import { archiveLifeTrial } from "./lifeTrialService";
+import { rerollMortalWorld } from "./mortalWorldService";
+import { archiveBond } from "./daoluService";
+import { drawMany } from "wanxiang-engine";
+import { lifeForge } from "./heritageForge";
 
 /**
  * 天赋牌堆 —— 抽到的天赋不再重复出现,故每项都按"一次性"标记;
  * 排除掉的那些(已拥有)通过 seen 传进去。字段名对上库的 DeckEntry。
  */
-const TALENT_DECK = TALENTS.map(t => ({
+const TALENT_DECK = TALENTS.map((t) => ({
   def: t,
   id: t.id,
   weight: t.weight,
-  once: true
-}))
+  once: true,
+}));
 
 /** 抽 N 项天赋:加权、不重复、可排除已拥有的 —— 抽取规则由库的牌堆给 */
 function drawTalents(count: number, exclude: Set<string>): string[] {
-  return drawMany(TALENT_DECK, { level: 0, tags: [], seen: [...exclude] }, rng, count).map(e => e.id)
+  return drawMany(TALENT_DECK, { level: 0, tags: [], seen: [...exclude] }, rng, count).map(
+    (e) => e.id,
+  );
 }
 
 /** 结算刚过完的这一世:命题结局与本世所得宿慧 */
 function reviewLastLife(): LifeReview {
-  const player = usePlayerStore()
-  const vow = player.reincarnation.vow
-  const result = vowResult()
-  const def = vow ? lifeThemeDef(vow.themeId) : undefined
-  const prog = vowProgress()
+  const player = usePlayerStore();
+  const vow = player.reincarnation.vow;
+  const result = vowResult();
+  const def = vow ? lifeThemeDef(vow.themeId) : undefined;
+  const prog = vowProgress();
   // 命题只在真正走到底时给宿慧;未竟与破题都不给,但也不扣
-  const themeInsight = result === 'done' && def ? def.insight : 0
+  const themeInsight = result === "done" && def ? def.insight : 0;
   return {
     index: player.reincarnation.count + 1,
     realmLabel: player.realmName,
@@ -83,8 +85,8 @@ function reviewLastLife(): LifeReview {
     themeResult: result,
     themeCur: prog?.cur ?? 0,
     themeNeed: prog?.need ?? 0,
-    insightGained: lifeInsight(player.major) + themeInsight
-  }
+    insightGained: lifeInsight(player.major) + themeInsight,
+  };
 }
 
 /**
@@ -98,36 +100,65 @@ function reviewLastLife(): LifeReview {
 
 /** 道号词根(两字)与尾缀 —— 新一世换新名号,确认页可改回(玩家反馈「转世名字没重随机」) */
 export const DAOHAO_CORES = [
-  '清虚', '妙微', '抱朴', '守拙', '漱玉', '归真', '太虚', '玄真', '素心', '青冥',
-  '孤鸿', '静虚', '凌云', '白云', '回月', '灵犀', '紫电', '青锋', '归藏', '抱元',
-  '守一', '忘机', '澄澈', '栖霞', '望舒', '扶摇', '冲虚', '无涯', '观澜', '清风'
-]
-export const DAOHAO_SUFFIXES = ['真人', '道人', '散人', '子', '居士', '上人']
+  "清虚",
+  "妙微",
+  "抱朴",
+  "守拙",
+  "漱玉",
+  "归真",
+  "太虚",
+  "玄真",
+  "素心",
+  "青冥",
+  "孤鸿",
+  "静虚",
+  "凌云",
+  "白云",
+  "回月",
+  "灵犀",
+  "紫电",
+  "青锋",
+  "归藏",
+  "抱元",
+  "守一",
+  "忘机",
+  "澄澈",
+  "栖霞",
+  "望舒",
+  "扶摇",
+  "冲虚",
+  "无涯",
+  "观澜",
+  "清风",
+];
+export const DAOHAO_SUFFIXES = ["真人", "道人", "散人", "子", "居士", "上人"];
 
 /** 掷一个道号草稿(可注入随机源,便于测试钉死) */
 export function rollReincarnateName(rand: { pick: <T>(arr: T[]) => T | undefined } = rng): string {
-  const core = rand.pick(DAOHAO_CORES) ?? '守拙'
-  const suffix = rand.pick(DAOHAO_SUFFIXES) ?? '散人'
-  return `${core}${suffix}`
+  const core = rand.pick(DAOHAO_CORES) ?? "守拙";
+  const suffix = rand.pick(DAOHAO_SUFFIXES) ?? "散人";
+  return `${core}${suffix}`;
 }
 
 export function prepareReincarnation(): ReincarnationView {
-  const player = usePlayerStore()
-  const owned = new Set(player.reincarnation.talents)
-  const draws = 1 + Math.floor(player.major / TALENT_DRAW_DIV)
-  const choices = drawTalents(3, owned)
-  const extras = draws > 1 ? drawTalents(draws - 1, new Set([...owned, ...choices])) : []
+  const player = usePlayerStore();
+  const owned = new Set(player.reincarnation.talents);
+  const draws = 1 + Math.floor(player.major / TALENT_DRAW_DIV);
+  const choices = drawTalents(3, owned);
+  const extras = draws > 1 ? drawTalents(draws - 1, new Set([...owned, ...choices])) : [];
 
-  const review = reviewLastLife()
-  const stageBefore = currentStage()
-  const insightAfter = totalInsight() + review.insightGained
-  const stageAfter = stageAt(insightAfter)
-  const next = nextStageAfter(insightAfter)
+  const review = reviewLastLife();
+  const stageBefore = currentStage();
+  const insightAfter = totalInsight() + review.insightGained;
+  const stageAfter = stageAt(insightAfter);
+  const next = nextStageAfter(insightAfter);
 
   // 走到底过的题不再重复出现 —— 第五世不该还在琢磨"这一世先把丹结了"
-  const done = new Set(player.reincarnation.lives.filter(l => l.themeResult === 'done').map(l => l.themeId))
-  const pool = offerThemes(stageAfter, arr => rng.pick(arr))
-  const fresh = pool.filter(x => !done.has(x.id))
+  const done = new Set(
+    player.reincarnation.lives.filter((l) => l.themeResult === "done").map((l) => l.themeId),
+  );
+  const pool = offerThemes(stageAfter, (arr) => rng.pick(arr));
+  const fresh = pool.filter((x) => !done.has(x.id));
 
   const view: ReincarnationView = {
     daoFruitGained: daoFruitGain(player.major, player.sub),
@@ -142,15 +173,15 @@ export function prepareReincarnation(): ReincarnationView {
     stageAdvanced: stageAfter.index > stageBefore.index,
     toNextStage: next ? next.insight - insightAfter : null,
     knownMaterials: carryLorePreview(stageAfter),
-    themeChoices: (fresh.length > 0 ? fresh : pool).map(x => x.id),
+    themeChoices: (fresh.length > 0 ? fresh : pool).map((x) => x.id),
     themeFree: stageAfter.themeFreeChoice,
     // ISS-302:这一世到的最高未锻造门槛 —— 深修的「我是谁」。只算不改,confirm 才落账
     heritageGained: lifeForge(player.major)?.id ?? null,
     // 新一世的随机道号草稿(确认页可改回)
-    nameDraft: rollReincarnateName()
-  }
-  useUiStore().reincarnation = view
-  return view
+    nameDraft: rollReincarnateName(),
+  };
+  useUiStore().reincarnation = view;
+  return view;
 }
 
 /**
@@ -160,18 +191,21 @@ export function prepareReincarnation(): ReincarnationView {
  * 到了「百世老修」这一阶,修为最深的那一门可以完整带走 ——
  * 练过百世的东西,不至于连怎么起手都忘了。
  */
-function carryGongfa(learned: Readonly<Record<string, number>>, keepOne: boolean): Record<string, number> {
-  let keptId: string | null = null
+function carryGongfa(
+  learned: Readonly<Record<string, number>>,
+  keepOne: boolean,
+): Record<string, number> {
+  let keptId: string | null = null;
   if (keepOne) {
     for (const [id, lv] of Object.entries(learned)) {
-      if (keptId === null || lv > (learned[keptId] ?? 0)) keptId = id
+      if (keptId === null || lv > (learned[keptId] ?? 0)) keptId = id;
     }
   }
-  const out: Record<string, number> = {}
+  const out: Record<string, number> = {};
   for (const [id, lv] of Object.entries(learned)) {
-    out[id] = id === keptId ? lv : 1
+    out[id] = id === keptId ? lv : 1;
   }
-  return out
+  return out;
 }
 
 /**
@@ -181,29 +215,33 @@ function carryGongfa(learned: Readonly<Record<string, number>>, keepOne: boolean
  * @param chosenThemeId 这一世立下的题(null 为不立题)
  * @param nextName 这一世的名号(确认页的随机道号草稿,玩家可改;缺省则保持原名)
  */
-export function confirmReincarnation(chosenTalentId: string | null, chosenThemeId: string | null = null, nextName?: string): void {
-  const player = usePlayerStore()
-  const resources = useResourcesStore()
-  const inventory = useInventoryStore()
-  const cultivation = useCultivationStore()
-  const adventure = useAdventureStore()
-  const ui = useUiStore()
-  const view = ui.reincarnation
-  if (!view) return
+export function confirmReincarnation(
+  chosenTalentId: string | null,
+  chosenThemeId: string | null = null,
+  nextName?: string,
+): void {
+  const player = usePlayerStore();
+  const resources = useResourcesStore();
+  const inventory = useInventoryStore();
+  const cultivation = useCultivationStore();
+  const adventure = useAdventureStore();
+  const ui = useUiStore();
+  const view = ui.reincarnation;
+  if (!view) return;
 
   // 永久收获
-  player.addDaoFruit(view.daoFruitGained)
-  const gained = [...view.extraTalents]
-  if (chosenTalentId && view.talentChoices.includes(chosenTalentId)) gained.push(chosenTalentId)
+  player.addDaoFruit(view.daoFruitGained);
+  const gained = [...view.extraTalents];
+  if (chosenTalentId && view.talentChoices.includes(chosenTalentId)) gained.push(chosenTalentId);
   for (const id of gained) {
-    player.addTalent(id)
-    collect('talent', id)
+    player.addTalent(id);
+    collect("talent", id);
   }
   // ISS-302:一世至多一悟 —— 本世到达的最高未锻造传承,在此一次性落账(随神魂不灭)
-  if (view.heritageGained) player.addHeritage(view.heritageGained)
+  if (view.heritageGained) player.addHeritage(view.heritageGained);
 
   // 这一世的账:履历归档、宿慧落袋。二者都只在此处发生一次
-  const r = view.review
+  const r = view.review;
   player.recordLife({
     index: r.index,
     major: player.major,
@@ -214,62 +252,62 @@ export function confirmReincarnation(chosenTalentId: string | null, chosenThemeI
     insight: r.insightGained,
     // 逆旅契入履历 —— 这是契约唯一的回报:被记住,且不进任何计算
     trialId: archiveLifeTrial(),
-    at: Date.now()
-  })
-  player.addInsight(r.insightGained)
+    at: Date.now(),
+  });
+  player.addInsight(r.insightGained);
   // 契随皮囊一同散去,下一世要签得重新花道果
-  player.setLifeTrial(null)
+  player.setLifeTrial(null);
 
   // 重置今生
-  resources.spiritStone = gnZero() as GNum
-  resources.setQi(0, 1)
-  resources.wudao = 0
+  resources.spiritStone = gnZero() as GNum;
+  resources.setQi(0, 1);
+  resources.wudao = 0;
   // 灵草五品一体清零(草是外物,不随轮回带走)
-  for (const g of HERB_GRADES) resources.spendHerbs(g, resources.herbOf(g))
-  resources.ore = 0
-  resources.page = 0
-  resources.dust = 0
-  inventory.items = []
-  inventory.equipped = {}
-  inventory.pills = {}
+  for (const g of HERB_GRADES) resources.spendHerbs(g, resources.herbOf(g));
+  resources.ore = 0;
+  resources.page = 0;
+  resources.dust = 0;
+  inventory.items = [];
+  inventory.equipped = {};
+  inventory.pills = {};
   // 法宝亦是外物,随皮囊一同散去——留下的只有认知(丹方、药性、器纹皆在 lore)
-  inventory.artifacts = []
-  inventory.equippedArtifacts = []
+  inventory.artifacts = [];
+  inventory.equippedArtifacts = [];
   // 已习功法保留但层数折半(顶阶可留一门不折)
-  const stage = stageAt(view.insightAfter)
-  cultivation.learned = carryGongfa(cultivation.learned, stage.keepOneGongfa)
-  cultivation.buffs = []
-  adventure.setSession(null)
-  adventure.setPendingEvent(null, 0)
-  adventure.unlocked = ['qingyun']
+  const stage = stageAt(view.insightAfter);
+  cultivation.learned = carryGongfa(cultivation.learned, stage.keepOneGongfa);
+  cultivation.buffs = [];
+  adventure.setSession(null);
+  adventure.setPendingEvent(null, 0);
+  adventure.unlocked = ["qingyun"];
   // 新的一世,新的天地:换一个本世之界(与上一世去重)
-  rerollMortalWorld()
+  rerollMortalWorld();
   // 关系归档:历史留下,人不留下。只写一条记录,不产出任何资源
-  const bondRec = archiveBond()
-  if (bondRec) player.recordBond(bondRec)
-  adventure.cleared = []
-  adventure.lastBattle = null
+  const bondRec = archiveBond();
+  if (bondRec) player.recordBond(bondRec);
+  adventure.cleared = [];
+  adventure.lastBattle = null;
   // (洞府/灵脉/灵兽的归零在 player.rebirth() 里,与其余「本世进程」同处一地)
 
   // 认知不因转世清零,只按阶补齐:该认得的药,睁眼就该认得
-  const recognized = carryLore(stage)
-  player.rebirth(rollLinggen(rng, aptitudeFloorNow()))
+  const recognized = carryLore(stage);
+  player.rebirth(rollLinggen(rng, aptitudeFloorNow()));
   // 新的一世:上一世的建号草稿作废,「逆天改命」额度归满
-  useGameStore().resetCreateDraft()
+  useGameStore().resetCreateDraft();
   // 新一世,新名号:确认页掷出的随机道号(玩家可改回)。「名随神魂不灭」让位给
   // 「每世一换」—— 换的只是这一世如何自报家门,神魂所系之物依旧跨世
-  if (nextName && nextName.trim()) player.setName(nextName.trim())
+  if (nextName && nextName.trim()) player.setName(nextName.trim());
   // 道途归还天地,道源与道痕随神魂不灭
-  useEndgameStore().onRebirth()
+  useEndgameStore().onRebirth();
   // 立下这一世的题。快照须在重置之后取,「本世」方才从此刻算起。
   // 先撤上一世的题:立誓一世一次,beginLife 靠"有没有题"认出这一世已经立过(见 samsaraService)
-  player.setVow(null)
-  beginLife(view.themeChoices.includes(chosenThemeId ?? '') ? chosenThemeId : null)
-  recordMilestone('first_rebirth')
-  track('reincarnations')
-  ui.reincarnation = null
-  ui.deathDialog = false
-  ui.toast('一梦轮回,你在玄枢山下再度睁开双眼', 'rare')
-  if (view.stageAdvanced) ui.toast(`宿慧渐厚,你已是「${view.stageName}」`, 'rare')
-  if (recognized > 0) ui.toast(`睁眼之际,${recognized} 味灵材的名字自行浮上心头`, 'info')
+  player.setVow(null);
+  beginLife(view.themeChoices.includes(chosenThemeId ?? "") ? chosenThemeId : null);
+  recordMilestone("first_rebirth");
+  track("reincarnations");
+  ui.reincarnation = null;
+  ui.deathDialog = false;
+  ui.toast("一梦轮回,你在玄枢山下再度睁开双眼", "rare");
+  if (view.stageAdvanced) ui.toast(`宿慧渐厚,你已是「${view.stageName}」`, "rare");
+  if (recognized > 0) ui.toast(`睁眼之际,${recognized} 味灵材的名字自行浮上心头`, "info");
 }

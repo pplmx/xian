@@ -15833,7 +15833,7 @@
       "created_at": "2026-09-18T17:06:05+00:00",
       "updated_at": "2026-09-18T17:06:05+00:00",
       "touched_round": 267,
-      "commit": 8.564e+98,
+      "commit": 8.564e98,
       "summary": "新增 src/core/engineCombatAblation.spec.ts(3 例):四场景×200 种子的对照读数(强弱悬殊一致 100%、均势 75%/58%)、强弱方向一致性判据、同种子一致率落在 30%-95% 的\"同一类模型但不是同一套实现\"判据;test-report 补 engineCombatAblation 分类。"
     },
     "TASK-248": {
@@ -18975,7 +18975,7 @@
       "created_at": "2026-09-18T22:32:00+00:00",
       "updated_at": "2026-09-18T22:32:00+00:00",
       "touched_round": 334,
-      "commit": 8.546e+98,
+      "commit": 8.546e98,
       "summary": "库:新增 src/cycles.sim.spec.ts 与 src/points.sim.spec.ts(各 4 例);CHANGELOG「未发布」记两节;docs/tuning.md 新增两节(第 21、22 份消融进参考表);docs/assembly.md 补两行;README 用例数改 485/63。宿主无改动。"
     },
     "EV-325": {

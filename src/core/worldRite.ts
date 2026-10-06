@@ -1,4 +1,4 @@
-import { isWorldEntry, worldOf, type WorldDef } from '@/data/realms'
+import { isWorldEntry, worldOf, type WorldDef } from "@/data/realms";
 
 /**
  * 世界变迁宣告判据 —— 「进入了一个新的世界」要不要有那一声响。
@@ -13,9 +13,9 @@ import { isWorldEntry, worldOf, type WorldDef } from '@/data/realms'
  * 要不要响、响的是哪一界,单测钉死,别让视图自己猜。
  */
 export function announceWorldEntry(prevMajor: number, nextMajor: number): WorldDef | null {
-  if (nextMajor <= prevMajor) return null
-  if (!isWorldEntry(nextMajor)) return null
-  const w = worldOf(nextMajor)
-  if (w.id === 'mortal') return null
-  return w
+  if (nextMajor <= prevMajor) return null;
+  if (!isWorldEntry(nextMajor)) return null;
+  const w = worldOf(nextMajor);
+  if (w.id === "mortal") return null;
+  return w;
 }

@@ -44,9 +44,9 @@
  * 零重 134% 被截到九成、神魔镜(神品)回补零重就吃满十成 —— 它们之后祭炼只涨被动。
  * 这不是漏乘:把无相念珠的标签压回凡品,它要炼到第 4 重才摸到九成。
  */
-import type { AnyStatKey, ArtifactDef, ArtifactEffect, QualityId, StatMods } from '@/types'
-import { formatPercent } from '@/utils/format'
-import { qualityDef } from './qualities'
+import type { AnyStatKey, ArtifactDef, ArtifactEffect, QualityId, StatMods } from "@/types";
+import { formatPercent } from "@/utils/format";
+import { qualityDef } from "./qualities";
 
 function f(
   id: string,
@@ -59,596 +59,605 @@ function f(
   activeDesc: string,
   interval: number,
   effect: ArtifactEffect,
-  icon = 'sparkles'
+  icon = "sparkles",
 ): ArtifactDef {
-  return { id, name, desc, icon, quality, fromTier, passive, active: { name: activeName, desc: activeDesc, interval, effect } }
+  return {
+    id,
+    name,
+    desc,
+    icon,
+    quality,
+    fromTier,
+    passive,
+    active: { name: activeName, desc: activeDesc, interval, effect },
+  };
 }
 
 export const ARTIFACTS: ArtifactDef[] = [
   f(
-    'af_muyu',
-    '墨玉葫芦',
-    'mortal',
+    "af_muyu",
+    "墨玉葫芦",
+    "mortal",
     1,
-    '装过仙酿的葫芦,酒气化作生机',
+    "装过仙酿的葫芦,酒气化作生机",
     { maxHpPct: 0.05 },
-    '琼浆',
-    '每 4 回合回复 12% 生命',
+    "琼浆",
+    "每 4 回合回复 12% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.12 },
-    'flask'
+    { type: "heal", pctMaxHp: 0.12 },
+    "flask",
   ),
   f(
-    'af_lihuo',
-    '离火珠',
-    'mortal',
+    "af_lihuo",
+    "离火珠",
+    "mortal",
     2,
-    '内封一点离火之精',
+    "内封一点离火之精",
     { attackPct: 0.05 },
-    '焚天',
-    '每 3 回合喷吐真火,造成 220% 攻击伤害',
+    "焚天",
+    "每 3 回合喷吐真火,造成 220% 攻击伤害",
     3,
-    { type: 'damage', mult: 2.2 },
-    'flame'
+    { type: "damage", mult: 2.2 },
+    "flame",
   ),
   f(
-    'af_xuantian',
-    '玄天镜',
-    'mortal',
+    "af_xuantian",
+    "玄天镜",
+    "mortal",
     3,
-    '镜光所照,邪魔退避',
+    "镜光所照,邪魔退避",
     { defensePct: 0.06 },
-    '镜光护体',
-    '每 4 回合获得 18% 生命护盾',
+    "镜光护体",
+    "每 4 回合获得 18% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.18 },
-    'shield'
+    { type: "shield", pctMaxHp: 0.18 },
+    "shield",
   ),
   f(
-    'af_fuyao',
-    '缚妖索',
-    'mortal',
+    "af_fuyao",
+    "缚妖索",
+    "mortal",
     4,
-    '捆过大妖的绳索,妖气犹存',
+    "捆过大妖的绳索,妖气犹存",
     { speed: 0.05 },
-    '缚妖',
-    '每 4 回合束缚敌人,其攻击降低 20%',
+    "缚妖",
+    "每 4 回合束缚敌人,其攻击降低 20%",
     4,
-    { type: 'weaken', pct: 0.2 },
-    'link'
+    { type: "weaken", pct: 0.2 },
+    "link",
   ),
   f(
-    'af_leiyin',
-    '雷音锤',
-    'mortal',
+    "af_leiyin",
+    "雷音锤",
+    "mortal",
     5,
-    '锤落有雷音滚滚',
+    "锤落有雷音滚滚",
     { critRate: 0.03 },
-    '雷击',
-    '每 3 回合降下雷霆,造成 260% 攻击伤害',
+    "雷击",
+    "每 3 回合降下雷霆,造成 260% 攻击伤害",
     3,
-    { type: 'damage', mult: 2.6 },
-    'zap'
+    { type: "damage", mult: 2.6 },
+    "zap",
   ),
   f(
-    'af_yujing',
-    '玉净瓶',
-    'mortal',
+    "af_yujing",
+    "玉净瓶",
+    "mortal",
     6,
-    '瓶中甘露,可涤荡伤痕',
+    "瓶中甘露,可涤荡伤痕",
     { maxHpPct: 0.08, qiRegen: 0.06, overhealShield: 0.3 },
-    '甘露',
-    '每 4 回合回复 20% 生命',
+    "甘露",
+    "每 4 回合回复 20% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.2 },
-    'flask'
+    { type: "heal", pctMaxHp: 0.2 },
+    "flask",
   ),
   f(
-    'af_bagua',
-    '八卦炉',
-    'mortal',
+    "af_bagua",
+    "八卦炉",
+    "mortal",
     7,
-    '炉中真火昼夜不熄',
+    "炉中真火昼夜不熄",
     { attackPct: 0.08, alchemyYield: 0.1 },
-    '炉火纯青',
-    '每 3 回合喷出三昧真火,造成 300% 攻击伤害',
+    "炉火纯青",
+    "每 3 回合喷出三昧真火,造成 300% 攻击伤害",
     3,
-    { type: 'damage', mult: 3.0 },
-    'flame'
+    { type: "damage", mult: 3.0 },
+    "flame",
   ),
   f(
-    'af_dinghai',
-    '定海珠',
-    'mortal',
+    "af_dinghai",
+    "定海珠",
+    "mortal",
     8,
-    '一珠定四海,风浪不兴',
+    "一珠定四海,风浪不兴",
     { defensePct: 0.08, damageReduction: 0.04 },
-    '定海',
-    '每 4 回合获得 22% 生命护盾',
+    "定海",
+    "每 4 回合获得 22% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.22 },
-    'droplets'
+    { type: "shield", pctMaxHp: 0.22 },
+    "droplets",
   ),
   f(
-    'af_youming',
-    '幽冥幡',
-    'mortal',
+    "af_youming",
+    "幽冥幡",
+    "mortal",
     9,
-    '幡动之处,阴风怒号',
+    "幡动之处,阴风怒号",
     { damageBonus: 0.06, lowHpDamage: 0.1 },
-    '摄魂',
-    '每 4 回合摄敌心魂,其攻击降低 25%',
+    "摄魂",
+    "每 4 回合摄敌心魂,其攻击降低 25%",
     4,
-    { type: 'weaken', pct: 0.25 },
-    'ghost'
+    { type: "weaken", pct: 0.25 },
+    "ghost",
   ),
   f(
-    'af_qianji',
-    '千机伞',
-    'mortal',
+    "af_qianji",
+    "千机伞",
+    "mortal",
     10,
-    '伞骨千机,开合皆杀阵',
+    "伞骨千机,开合皆杀阵",
     { dodgeRate: 0.05, defensePct: 0.06, shieldPower: 0.08 },
-    '伞阵',
-    '每 4 回合获得 26% 生命护盾',
+    "伞阵",
+    "每 4 回合获得 26% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.26 },
-    'umbrella'
+    { type: "shield", pctMaxHp: 0.26 },
+    "umbrella",
   ),
   f(
-    'af_zhenyue',
-    '镇岳印',
-    'mortal',
+    "af_zhenyue",
+    "镇岳印",
+    "mortal",
     11,
-    '大印如山,落下时天地都沉了沉',
+    "大印如山,落下时天地都沉了沉",
     { attackPct: 0.175 },
-    '镇岳',
-    '每 3 回合大印镇压,造成 340% 攻击伤害',
+    "镇岳",
+    "每 3 回合大印镇压,造成 340% 攻击伤害",
     3,
-    { type: 'damage', mult: 3.4 },
-    'mountain'
+    { type: "damage", mult: 3.4 },
+    "mountain",
   ),
   f(
-    'af_shehun',
-    '摄魂铃',
-    'mortal',
+    "af_shehun",
+    "摄魂铃",
+    "mortal",
     12,
-    '铃声入耳,神魂欲裂',
+    "铃声入耳,神魂欲裂",
     { critDamage: 0.175 },
-    '摄魂音',
-    '每 4 回合铃音慑敌,其攻击降低 30%',
+    "摄魂音",
+    "每 4 回合铃音慑敌,其攻击降低 30%",
     4,
-    { type: 'weaken', pct: 0.3 },
-    'bell'
+    { type: "weaken", pct: 0.3 },
+    "bell",
   ),
   f(
-    'af_xingpan',
-    '周天星盘',
-    'fine',
+    "af_xingpan",
+    "周天星盘",
+    "fine",
     13,
-    '推演周天,窥探命数',
+    "推演周天,窥探命数",
     // 推演得见的,自然打得中 —— 这是本池里唯一带命中的法宝,专治幻影(见 SpecialKey accuracy)
     { luck: 0.06, cultivationSpeed: 0.06, accuracy: 0.06 },
-    '星辉',
-    '每 4 回合引星辉入体,回复 24% 生命',
+    "星辉",
+    "每 4 回合引星辉入体,回复 24% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.24 },
-    'star'
+    { type: "heal", pctMaxHp: 0.24 },
+    "star",
   ),
   f(
-    'af_chixiao',
-    '赤霄鼎',
-    'fine',
+    "af_chixiao",
+    "赤霄鼎",
+    "fine",
     14,
-    '鼎中可炼万物,亦可炼敌',
+    "鼎中可炼万物,亦可炼敌",
     { attackPct: 0.12, maxHpPct: 0.08 },
-    '鼎炼',
-    '每 3 回合鼎压四方,造成 380% 攻击伤害',
+    "鼎炼",
+    "每 3 回合鼎压四方,造成 380% 攻击伤害",
     3,
-    { type: 'damage', mult: 3.8 },
-    'flame'
+    { type: "damage", mult: 3.8 },
+    "flame",
   ),
   f(
-    'af_bishui',
-    '碧水珠',
-    'fine',
+    "af_bishui",
+    "碧水珠",
+    "fine",
     15,
-    '珠内自有一方碧海',
+    "珠内自有一方碧海",
     { maxHpPct: 0.216, qiRegen: 0.18 },
-    '碧波',
-    '每 4 回合碧波洗身,回复 28% 生命',
+    "碧波",
+    "每 4 回合碧波洗身,回复 28% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.28 },
-    'droplets'
+    { type: "heal", pctMaxHp: 0.28 },
+    "droplets",
   ),
   f(
-    'af_shiling',
-    '噬灵幡',
-    'fine',
+    "af_shiling",
+    "噬灵幡",
+    "fine",
     16,
-    '幡面绣着无数张开的口',
+    "幡面绣着无数张开的口",
     { damageBonus: 0.1, lifesteal: 0.04 },
-    '噬灵',
-    '每 3 回合幡卷灵力,造成 400% 攻击伤害',
+    "噬灵",
+    "每 3 回合幡卷灵力,造成 400% 攻击伤害",
     3,
-    { type: 'damage', mult: 4.0 },
-    'ghost'
+    { type: "damage", mult: 4.0 },
+    "ghost",
   ),
   f(
-    'af_taixu',
-    '太虚镜',
-    'fine',
+    "af_taixu",
+    "太虚镜",
+    "fine",
     17,
-    '照见太虚,万法无所遁形',
+    "照见太虚,万法无所遁形",
     { defensePct: 0.216, damageReduction: 0.093 },
-    '太虚照影',
-    '每 4 回合获得 32% 生命护盾',
+    "太虚照影",
+    "每 4 回合获得 32% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.32 },
-    'shield'
+    { type: "shield", pctMaxHp: 0.32 },
+    "shield",
   ),
   f(
-    'af_zhanxian',
-    '斩仙飞刀',
-    'fine',
+    "af_zhanxian",
+    "斩仙飞刀",
+    "fine",
     18,
-    '刀出请君入瓮,仙人亦难幸免',
+    "刀出请君入瓮,仙人亦难幸免",
     { critRate: 0.06, critDamage: 0.25 },
-    '斩仙',
-    '每 3 回合飞刀取首,造成 460% 攻击伤害',
+    "斩仙",
+    "每 3 回合飞刀取首,造成 460% 攻击伤害",
     3,
-    { type: 'damage', mult: 4.6 },
-    'sword'
+    { type: "damage", mult: 4.6 },
+    "sword",
   ),
   f(
-    'af_hundun',
-    '混沌钟',
-    'divine',
+    "af_hundun",
+    "混沌钟",
+    "divine",
     19,
-    '钟声荡开,时光都慢了半拍',
+    "钟声荡开,时光都慢了半拍",
     { attackPct: 0.0521, defensePct: 0.0521, maxHpPct: 0.0521 },
-    '混沌钟鸣',
-    '每 3 回合钟镇万物,造成 205% 攻击伤害',
+    "混沌钟鸣",
+    "每 3 回合钟镇万物,造成 205% 攻击伤害",
     3,
-    { type: 'damage', mult: 2.05 },
-    'bell'
+    { type: "damage", mult: 2.05 },
+    "bell",
   ),
   f(
-    'af_zaohua',
-    '造化玉碟',
-    'divine',
+    "af_zaohua",
+    "造化玉碟",
+    "divine",
     20,
-    '记载造化至理的残碟',
+    "记载造化至理的残碟",
     { cultivationSpeed: 0.0923, breakthroughRate: 0.0185, luck: 0.0369 },
-    '造化',
+    "造化",
     // pctMaxHp 取 0.164:基底 × 神品倍率 3.082 ≈ 原 0.4 × 精品倍率 1.265(神通 -0.1% 内,与其它重排件同级)
-    '每 4 回合造化加身,回复 16.4% 生命',
+    "每 4 回合造化加身,回复 16.4% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.164 },
-    'star'
+    { type: "heal", pctMaxHp: 0.164 },
+    "star",
   ),
 
   // ============ 仙界及以上法宝(tier 21+)============
   f(
-    'af_xianding',
-    '仙鼎',
-    'excellent',
+    "af_xianding",
+    "仙鼎",
+    "excellent",
     23,
-    '一鼎仙火不熄,药气缭绕可愈百伤',
+    "一鼎仙火不熄,药气缭绕可愈百伤",
     { maxHpPct: 0.18, qiRegen: 0.18 },
-    '仙火回春',
-    '每 4 回合仙火护主,回复 40% 生命',
+    "仙火回春",
+    "每 4 回合仙火护主,回复 40% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.4 },
-    'flask'
+    { type: "heal", pctMaxHp: 0.4 },
+    "flask",
   ),
   f(
-    'af_xianqin',
-    '仙琴',
-    'excellent',
+    "af_xianqin",
+    "仙琴",
+    "excellent",
     23,
-    '琴音出则万籁寂,敌势为之一挫',
+    "琴音出则万籁寂,敌势为之一挫",
     { attackPct: 0.06, luck: 0.04 },
-    '摄心',
-    '每 4 回合琴音摄神,打断敌人这一手',
+    "摄心",
+    "每 4 回合琴音摄神,打断敌人这一手",
     4,
-    { type: 'stun' },
-    'scroll'
+    { type: "stun" },
+    "scroll",
   ),
   f(
-    'af_shenzhong',
-    '神钟',
-    'profound',
+    "af_shenzhong",
+    "神钟",
+    "profound",
     28,
-    '钟声一响,神域同震',
+    "钟声一响,神域同震",
     { defensePct: 0.132, damageReduction: 0.076 },
-    '神钟护体',
-    '每 4 回合神钟自成壁垒,获得 23% 生命护盾',
+    "神钟护体",
+    "每 4 回合神钟自成壁垒,获得 23% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.23 },
-    'bell'
+    { type: "shield", pctMaxHp: 0.23 },
+    "bell",
   ),
   f(
-    'af_shenbian',
-    '神鞭',
-    'profound',
+    "af_shenbian",
+    "神鞭",
+    "profound",
     28,
-    '一鞭抽落星辰,余响三日不绝',
+    "一鞭抽落星辰,余响三日不绝",
     { attackPct: 0.07, speed: 0.05 },
-    '裂星',
-    '每 4 回合挥鞭裂其护体,余下回合敌人防御降低 30%',
+    "裂星",
+    "每 4 回合挥鞭裂其护体,余下回合敌人防御降低 30%",
     4,
-    { type: 'sunder', pct: 0.3 },
-    'wand'
+    { type: "sunder", pct: 0.3 },
+    "wand",
   ),
   f(
-    'af_hundunfu',
-    '混沌开天斧',
-    'divine',
+    "af_hundunfu",
+    "混沌开天斧",
+    "divine",
     31,
-    '一切尚未开始时,它便在此',
+    "一切尚未开始时,它便在此",
     { attackPct: 0.058, armorPen: 0.0435 },
-    '开天',
-    '每 3 回合开天一击,造成 208% 攻击伤害',
+    "开天",
+    "每 3 回合开天一击,造成 208% 攻击伤害",
     3,
-    { type: 'damage', mult: 2.08 },
-    'axe'
+    { type: "damage", mult: 2.08 },
+    "axe",
   ),
   f(
-    'af_benyuanzhu',
-    '本源珠',
-    'earth',
+    "af_benyuanzhu",
+    "本源珠",
+    "earth",
     31,
-    '珠中一界,自成生灭',
+    "珠中一界,自成生灭",
     { cultivationSpeed: 0.138, maxHpPct: 0.104 },
-    '本源滋养',
-    '每 4 回合本源涌动,回复 27% 生命',
+    "本源滋养",
+    "每 4 回合本源涌动,回复 27% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.27 },
-    'gem'
+    { type: "heal", pctMaxHp: 0.27 },
+    "gem",
   ),
   // 高界补两件:法宝位只有两个,一个界域若只给两件,「带上就完事」——取舍就没有了
   f(
-    'af_xianjian',
-    '青锋仙剑',
-    'spirit',
+    "af_xianjian",
+    "青锋仙剑",
+    "spirit",
     23,
-    '剑光过处,仙庭无声',
+    "剑光过处,仙庭无声",
     { attackPct: 0.142, critRate: 0.071 },
-    '斩尘',
-    '每 3 回合剑气纵横,造成 440% 攻击伤害',
+    "斩尘",
+    "每 3 回合剑气纵横,造成 440% 攻击伤害",
     3,
-    { type: 'damage', mult: 4.4 },
-    'sword'
+    { type: "damage", mult: 4.4 },
+    "sword",
   ),
   f(
-    'af_yunwen',
-    '云纹仙印',
-    'spirit',
+    "af_yunwen",
+    "云纹仙印",
+    "spirit",
     23,
-    '印上云纹流动,身随云走',
+    "印上云纹流动,身随云走",
     { speed: 0.073, dodgeRate: 0.059 },
-    '云行',
-    '每 4 回合踏云掠影,获得 26% 生命护盾',
+    "云行",
+    "每 4 回合踏云掠影,获得 26% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.26 },
-    'wind'
+    { type: "shield", pctMaxHp: 0.26 },
+    "wind",
   ),
   f(
-    'af_zhenshen',
-    '镇神印',
-    'profound',
+    "af_zhenshen",
+    "镇神印",
+    "profound",
     28,
-    '一印落下,神域皆静',
+    "一印落下,神域皆静",
     { damageReduction: 0.05, maxHpPct: 0.07 },
-    '镇神',
-    '每 4 回合镇压四方,定住敌人这一手',
+    "镇神",
+    "每 4 回合镇压四方,定住敌人这一手",
     4,
-    { type: 'stun' },
-    'gem'
+    { type: "stun" },
+    "gem",
   ),
   f(
-    'af_shenlei',
-    '神雷珠',
-    'profound',
+    "af_shenlei",
+    "神雷珠",
+    "profound",
     28,
-    '珠内藏一道不散的神雷',
+    "珠内藏一道不散的神雷",
     { attackPct: 0.127, damageBonus: 0.127 },
-    '雷殛',
-    '每 3 回合引雷加身,造成 382% 攻击伤害',
+    "雷殛",
+    "每 3 回合引雷加身,造成 382% 攻击伤害",
     3,
-    { type: 'damage', mult: 3.82 },
-    'zap'
+    { type: "damage", mult: 3.82 },
+    "zap",
   ),
   f(
-    'af_qinglian',
-    '混沌青莲',
-    'earth',
+    "af_qinglian",
+    "混沌青莲",
+    "earth",
     31,
-    '莲开于混沌未判之时,不染不灭',
+    "莲开于混沌未判之时,不染不灭",
     { cultivationSpeed: 0.113, qiRegen: 0.113 },
-    '莲开',
-    '每 4 回合青莲护身,获得 21% 生命护盾',
+    "莲开",
+    "每 4 回合青莲护身,获得 21% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.21 },
-    'leaf'
+    { type: "shield", pctMaxHp: 0.21 },
+    "leaf",
   ),
   f(
-    'af_xujiesuo',
-    '虚界梭',
-    'earth',
+    "af_xujiesuo",
+    "虚界梭",
+    "earth",
     31,
-    '一梭穿虚,来去皆不留痕',
+    "一梭穿虚,来去皆不留痕",
     { luck: 0.06, dropRate: 0.06, explorationSpeed: 0.06 },
-    '虚空挪移',
-    '每 4 回合挪移虚界,敌人伤害降低 20%',
+    "虚空挪移",
+    "每 4 回合挪移虚界,敌人伤害降低 20%",
     4,
-    { type: 'weaken', pct: 0.2 },
-    'sparkles'
+    { type: "weaken", pct: 0.2 },
+    "sparkles",
   ),
 
   // ============ 仙界初段(21-25 阶)============
   // 与装备同一条理由:仙界原本四件法宝全在 23 阶,刚飞升的真仙一路上捡到的东西
   // 与「过仙门者方称仙人」毫无关系。此为仙界两端补上本界域的名目与手艺。
   f(
-    'af_yunhai',
-    '云海幡',
-    'excellent',
+    "af_yunhai",
+    "云海幡",
+    "excellent",
     21,
-    '幡一展,周身便是过仙门那一日的云海',
+    "幡一展,周身便是过仙门那一日的云海",
     { dodgeRate: 0.057, speed: 0.071 },
-    '云障',
-    '每 4 回合云海四合,获得 29% 生命护盾',
+    "云障",
+    "每 4 回合云海四合,获得 29% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.29 },
-    'cloud'
+    { type: "shield", pctMaxHp: 0.29 },
+    "cloud",
   ),
   f(
-    'af_xinggui',
-    '星轨盘',
-    'excellent',
+    "af_xinggui",
+    "星轨盘",
+    "excellent",
     22,
-    '盘上星轨自行转动,转一圈便是一劫',
+    "盘上星轨自行转动,转一圈便是一劫",
     { accuracy: 0.063, critRate: 0.032 },
-    '星陨',
-    '每 3 回合引星陨落,造成 500% 攻击伤害',
+    "星陨",
+    "每 3 回合引星陨落,造成 500% 攻击伤害",
     3,
-    { type: 'damage', mult: 5 },
-    'star'
+    { type: "damage", mult: 5 },
+    "star",
   ),
   f(
-    'af_xuanxu',
-    '玄虚拂尘',
-    'spirit',
+    "af_xuanxu",
+    "玄虚拂尘",
+    "spirit",
     24,
-    '拂尘一扬,扫落的不只是尘',
+    "拂尘一扬,扫落的不只是尘",
     { attackPct: 0.06, damageBonus: 0.05 },
-    '拂尘',
-    '每 3 回合扫落敌人气机,造成 230% 攻击伤害并回复其中 60%',
+    "拂尘",
+    "每 3 回合扫落敌人气机,造成 230% 攻击伤害并回复其中 60%",
     3,
-    { type: 'drain', mult: 2.3, healPct: 0.6 },
-    'wind'
+    { type: "drain", mult: 2.3, healPct: 0.6 },
+    "wind",
   ),
   f(
-    'af_yujingyin',
-    '玉京道印',
-    'spirit',
+    "af_yujingyin",
+    "玉京道印",
+    "spirit",
     25,
-    '玉京山上的一枚旧印,落印处仙兵皆伏',
+    "玉京山上的一枚旧印,落印处仙兵皆伏",
     { defensePct: 0.07, shieldPower: 0.08 },
-    '玉京',
-    '每 4 回合玉京垂护,敌人伤害降低 21%',
+    "玉京",
+    "每 4 回合玉京垂护,敌人伤害降低 21%",
     4,
-    { type: 'weaken', pct: 0.21 },
-    'gem'
+    { type: "weaken", pct: 0.21 },
+    "gem",
   ),
 
   // ============ 神界初段(26-29 阶)============
   f(
-    'af_shenyuling',
-    '神域令旗',
-    'spirit',
+    "af_shenyuling",
+    "神域令旗",
+    "spirit",
     26,
-    '旗出则一方神域随旗而动',
+    "旗出则一方神域随旗而动",
     { attackPct: 0.184, speed: 0.132 },
-    '神域',
-    '每 3 回合神域压落,造成 440% 攻击伤害',
+    "神域",
+    "每 3 回合神域压落,造成 440% 攻击伤害",
     3,
-    { type: 'damage', mult: 4.4 },
-    'shield'
+    { type: "damage", mult: 4.4 },
+    "shield",
   ),
   f(
-    'af_yunshengu',
-    '陨神战鼓',
-    'spirit',
+    "af_yunshengu",
+    "陨神战鼓",
+    "spirit",
     27,
-    '鼓面蒙的是陨神之皮,一响便摄人心神',
+    "鼓面蒙的是陨神之皮,一响便摄人心神",
     { damageBonus: 0.06, critDamage: 0.12 },
-    '战鼓',
-    '每 3 回合鼓声催战,造成 250% 攻击伤害并回复其中 50%',
+    "战鼓",
+    "每 3 回合鼓声催战,造成 250% 攻击伤害并回复其中 50%",
     3,
-    { type: 'drain', mult: 2.5, healPct: 0.5 },
-    'bell'
+    { type: "drain", mult: 2.5, healPct: 0.5 },
+    "bell",
   ),
   f(
-    'af_wanshendeng',
-    '万神灯',
-    'profound',
+    "af_wanshendeng",
+    "万神灯",
+    "profound",
     28,
-    '灯里燃的是万神殿堂聚了万年的香火',
+    "灯里燃的是万神殿堂聚了万年的香火",
     { maxHpPct: 0.07, regenPerRound: 0.01 },
-    '香火',
-    '每 4 回合香火回照,回复 31% 生命',
+    "香火",
+    "每 4 回合香火回照,回复 31% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.31 },
-    'flame'
+    { type: "heal", pctMaxHp: 0.31 },
+    "flame",
   ),
   f(
-    'af_diquefu',
-    '帝阙神符',
-    'profound',
+    "af_diquefu",
+    "帝阙神符",
+    "profound",
     29,
-    '符上只有一个字,却是帝阙之下九千级天阶的凭据',
+    "符上只有一个字,却是帝阙之下九千级天阶的凭据",
     { breakthroughRate: 0.108, luck: 0.145 },
-    '帝威',
-    '每 4 回合帝威加身,获得 24% 生命护盾',
+    "帝威",
+    "每 4 回合帝威加身,获得 24% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.24 },
-    'scroll'
+    { type: "shield", pctMaxHp: 0.24 },
+    "scroll",
   ),
 
   // ============ 混沌海(30-32 阶)============
   f(
-    'af_zhenlingfan',
-    '真灵幡',
-    'earth',
+    "af_zhenlingfan",
+    "真灵幡",
+    "earth",
     30,
-    '幡上真灵浮沉,似是徘徊又似在守着什么',
+    "幡上真灵浮沉,似是徘徊又似在守着什么",
     { cultivationSpeed: 0.117, qiRegen: 0.134 },
-    '真灵',
-    '每 4 回合真灵回照,回复 27% 生命',
+    "真灵",
+    "每 4 回合真灵回照,回复 27% 生命",
     4,
-    { type: 'heal', pctMaxHp: 0.27 },
-    'ghost'
+    { type: "heal", pctMaxHp: 0.27 },
+    "ghost",
   ),
   f(
-    'af_hongmengchi',
-    '鸿蒙尺',
-    'divine',
+    "af_hongmengchi",
+    "鸿蒙尺",
+    "divine",
     31,
-    '一尺量的是天地未判时的长短',
+    "一尺量的是天地未判时的长短",
     { armorPen: 0.0435, damageBonus: 0.0435 },
-    '开天',
-    '每 3 回合开天一击,造成 210% 攻击伤害',
+    "开天",
+    "每 3 回合开天一击,造成 210% 攻击伤害",
     3,
-    { type: 'damage', mult: 2.1 },
-    'wand'
+    { type: "damage", mult: 2.1 },
+    "wand",
   ),
   f(
-    'af_benyuanlian',
-    '本源莲台',
-    'immortal',
+    "af_benyuanlian",
+    "本源莲台",
+    "immortal",
     32,
-    '莲台托着一点本源,任劫火也烧不动',
+    "莲台托着一点本源,任劫火也烧不动",
     { defensePct: 0.08, damageReduction: 0.05 },
-    '本源',
-    '每 4 回合本源护持,获得 17% 生命护盾',
+    "本源",
+    "每 4 回合本源护持,获得 17% 生命护盾",
     4,
-    { type: 'shield', pctMaxHp: 0.17 },
-    'leaf'
+    { type: "shield", pctMaxHp: 0.17 },
+    "leaf",
   ),
   f(
-    'af_shenmojing',
-    '神魔镜',
-    'divine',
+    "af_shenmojing",
+    "神魔镜",
+    "divine",
     32,
-    '镜里照出的是魔,镜外站着的是神',
+    "镜里照出的是魔,镜外站着的是神",
     { accuracy: 0.06, damageBonus: 0.05 },
-    '神魔',
-    '每 3 回合神魔噬影,造成 260% 攻击伤害并回复其中 60%',
+    "神魔",
+    "每 3 回合神魔噬影,造成 260% 攻击伤害并回复其中 60%",
     3,
-    { type: 'drain', mult: 2.6, healPct: 0.6 },
-    'circle-dot'
+    { type: "drain", mult: 2.6, healPct: 0.6 },
+    "circle-dot",
   ),
 
   /*
@@ -660,31 +669,31 @@ export const ARTIFACTS: ArtifactDef[] = [
    * interval 记 1:它不是「每 N 回合出手」,而是随身常在(见 combat.tryStun)。
    */
   f(
-    'af_wuxiangzhu',
-    '无相念珠',
-    'earth',
+    "af_wuxiangzhu",
+    "无相念珠",
+    "earth",
     31,
-    '一串旧念珠,珠子已被摩得发亮',
+    "一串旧念珠,珠子已被摩得发亮",
     { damageReduction: 0.05, maxHpPct: 0.06 },
-    '定念',
-    '受慑时以七成概率当场挣脱,那一手照出',
+    "定念",
+    "受慑时以七成概率当场挣脱,那一手照出",
     1,
-    { type: 'purge', pct: 0.7 },
-    'circle-dot'
-  )
-]
+    { type: "purge", pct: 0.7 },
+    "circle-dot",
+  ),
+];
 
-const BY_ID = new Map(ARTIFACTS.map(x => [x.id, x]))
+const BY_ID = new Map(ARTIFACTS.map((x) => [x.id, x]));
 
 export function artifactDef(id: string): ArtifactDef | undefined {
-  return BY_ID.get(id)
+  return BY_ID.get(id);
 }
 
 /** 法宝每级对被动/主动数值的增幅 */
-export const ARTIFACT_LEVEL_BONUS = 0.08
-export const ARTIFACT_MAX_LEVEL = 9
-export const ARTIFACT_UP_WUDAO_BASE = 6
-export const ARTIFACT_UP_STONE_TIER = 40
+export const ARTIFACT_LEVEL_BONUS = 0.08;
+export const ARTIFACT_MAX_LEVEL = 9;
+export const ARTIFACT_UP_WUDAO_BASE = 6;
+export const ARTIFACT_UP_STONE_TIER = 40;
 
 /**
  * 单项效果的封顶 —— 数值只写在这里,战斗与界面文案都读它。
@@ -706,10 +715,10 @@ export const ARTIFACT_UP_STONE_TIER = 40
  * 硬顶 MITIGATION_CAP 0.75),再往上,一件法宝就把敌人变成木桩。故一样定死,
  * 也正因为定死,高品阶的破甲件零重就在顶上,祭炼只涨它的被动。
  */
-export const ARTIFACT_WEAKEN_CAP = 0.5
-export const ARTIFACT_SUNDER_CAP = 0.5
-export const ARTIFACT_PURGE_CAP = 0.9
-export const ARTIFACT_DRAIN_HEAL_CAP = 1
+export const ARTIFACT_WEAKEN_CAP = 0.5;
+export const ARTIFACT_SUNDER_CAP = 0.5;
+export const ARTIFACT_PURGE_CAP = 0.9;
+export const ARTIFACT_DRAIN_HEAL_CAP = 1;
 
 /**
  * 品阶对法宝数值的放大指数。
@@ -719,31 +728,31 @@ export const ARTIFACT_DRAIN_HEAL_CAP = 1
  * 0.5 的指数把品质倍率(凡 1.0 → 神 9.5)开方成 1.0 → 3.08:每高一档约 ×1.14,
  * 同一件法宝,神品约等于凡品的三个 —— 品阶拉开了台阶,却没盖过「越深的地界越强」这条主轴。
  */
-export const ARTIFACT_QUALITY_EXP = 0.5
+export const ARTIFACT_QUALITY_EXP = 0.5;
 
 /** 品阶倍率(凡品 1.0 → 神品 ≈3.08;品质倍率的开方,见 ARTIFACT_QUALITY_EXP) */
 export function artifactQualityMult(quality: QualityId): number {
-  return Math.pow(qualityDef(quality).mult, ARTIFACT_QUALITY_EXP)
+  return Math.pow(qualityDef(quality).mult, ARTIFACT_QUALITY_EXP);
 }
 
 /** 祭炼等级带来的效果倍率(越界等级钳回 0..上限) */
 export function artifactLevelMult(level: number): number {
-  const lv = Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)))
-  return 1 + lv * ARTIFACT_LEVEL_BONUS
+  const lv = Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)));
+  return 1 + lv * ARTIFACT_LEVEL_BONUS;
 }
 
 export interface ArtifactValue {
   /** 被动(凡品零重基线 × 品阶 × 祭炼) */
-  passive: StatMods
+  passive: StatMods;
   /** 神通(同一倍率,并含封顶) */
-  active: ArtifactEffectValues
+  active: ArtifactEffectValues;
 }
 
 export interface ArtifactEffectValues {
   /** 主体数值(伤害倍率 / 生命百分比 / 削弱破甲比例,小数口径) */
-  amount: number
+  amount: number;
   /** 吸命的回血比例(只有 drain 有) */
-  heal?: number
+  heal?: number;
 }
 
 /**
@@ -759,13 +768,13 @@ export interface ArtifactEffectValues {
  * 谁改了增幅率都得改四回 —— 漏掉的那一处就会安静地说错话。
  */
 export function artifactValue(def: ArtifactDef, level = 0): ArtifactValue {
-  const mult = artifactQualityMult(def.quality) * artifactLevelMult(level)
-  const passive: StatMods = {}
+  const mult = artifactQualityMult(def.quality) * artifactLevelMult(level);
+  const passive: StatMods = {};
   for (const k in def.passive) {
-    const key = k as keyof StatMods
-    passive[key] = (def.passive[key] ?? 0) * mult
+    const key = k as keyof StatMods;
+    passive[key] = (def.passive[key] ?? 0) * mult;
   }
-  return { passive, active: effectValuesAt(def.active.effect, mult) }
+  return { passive, active: effectValuesAt(def.active.effect, mult) };
 }
 
 /**
@@ -776,27 +785,30 @@ export function artifactValue(def: ArtifactDef, level = 0): ArtifactValue {
  */
 function effectValuesAt(eff: ArtifactEffect, mult: number): ArtifactEffectValues {
   switch (eff.type) {
-    case 'damage':
-      return { amount: eff.mult * mult }
-    case 'drain':
-      return { amount: eff.mult * mult, heal: Math.min(ARTIFACT_DRAIN_HEAL_CAP, eff.healPct * mult) }
-    case 'heal':
-    case 'shield':
-      return { amount: eff.pctMaxHp * mult }
-    case 'weaken':
-      return { amount: Math.min(ARTIFACT_WEAKEN_CAP, eff.pct * mult) }
-    case 'sunder':
-      return { amount: Math.min(ARTIFACT_SUNDER_CAP, eff.pct * mult) }
-    case 'purge':
-      return { amount: Math.min(ARTIFACT_PURGE_CAP, eff.pct * mult) }
-    case 'stun':
+    case "damage":
+      return { amount: eff.mult * mult };
+    case "drain":
+      return {
+        amount: eff.mult * mult,
+        heal: Math.min(ARTIFACT_DRAIN_HEAL_CAP, eff.healPct * mult),
+      };
+    case "heal":
+    case "shield":
+      return { amount: eff.pctMaxHp * mult };
+    case "weaken":
+      return { amount: Math.min(ARTIFACT_WEAKEN_CAP, eff.pct * mult) };
+    case "sunder":
+      return { amount: Math.min(ARTIFACT_SUNDER_CAP, eff.pct * mult) };
+    case "purge":
+      return { amount: Math.min(ARTIFACT_PURGE_CAP, eff.pct * mult) };
+    case "stun":
       // 震慑没有数值 —— 它掐掉的是敌手那一手,不是打掉多少血
-      return { amount: 0 }
+      return { amount: 0 };
   }
 }
 
 /** 中文成数(净念写的是「七成」而不是「70%」,缩放后得换同一个字的说法) */
-const CHENG_WORDS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'] as const
+const CHENG_WORDS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"] as const;
 
 /**
  * 法宝神通在某祭炼等级下的说明。
@@ -807,51 +819,54 @@ const CHENG_WORDS = ['一', '二', '三', '四', '五', '六', '七', '八', '�
  * 品阶高于凡品的那几件,零重就与 desc 不同,那正是这套算法的意思。
  */
 export function artifactActiveText(def: ArtifactDef, level = 0): string {
-  const values = artifactValue(def, level).active
-  const eff = def.active.effect
-  if (eff.type === 'stun') return def.active.desc
-  if (eff.type === 'purge') {
-    const cheng = CHENG_WORDS[Math.max(0, Math.min(CHENG_WORDS.length - 1, Math.round(values.amount * 10) - 1))]!
-    return def.active.desc.replace(/[一二三四五六七八九十]成/, `${cheng}成`)
+  const values = artifactValue(def, level).active;
+  const eff = def.active.effect;
+  if (eff.type === "stun") return def.active.desc;
+  if (eff.type === "purge") {
+    const cheng =
+      CHENG_WORDS[
+        Math.max(0, Math.min(CHENG_WORDS.length - 1, Math.round(values.amount * 10) - 1))
+      ]!;
+    return def.active.desc.replace(/[一二三四五六七八九十]成/, `${cheng}成`);
   }
   // 主体数值:吸命有两个百分数(打出的、回补的),其余只有一个
-  const pct = formatPercent(values.amount)
-  let text = def.active.desc.replace(/(\d+(?:\.\d+)?)\s*%/, pct)
-  if (eff.type === 'drain' && values.heal !== undefined) {
-    text = text.replace(/(回复其中\s*)(\d+(?:\.\d+)?)\s*%/, `$1${formatPercent(values.heal)}`)
+  const pct = formatPercent(values.amount);
+  let text = def.active.desc.replace(/(\d+(?:\.\d+)?)\s*%/, pct);
+  if (eff.type === "drain" && values.heal !== undefined) {
+    text = text.replace(/(回复其中\s*)(\d+(?:\.\d+)?)\s*%/, `$1${formatPercent(values.heal)}`);
   }
-  return text
+  return text;
 }
 
 /** 法宝祭炼等级的说法 —— 「阶」是区域层级与装备层级的词,这里另立一名免得两件事混作一件 */
 export function artifactLevelLabel(level: number): string {
-  const lv = Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)))
-  return `祭炼 ${lv}/${ARTIFACT_MAX_LEVEL} 重`
+  const lv = Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)));
+  return `祭炼 ${lv}/${ARTIFACT_MAX_LEVEL} 重`;
 }
 
 /** 某类效果的封顶(没有封顶的返回 undefined)—— 与 effectValuesAt 用的是同一批常数 */
 function effectCap(eff: ArtifactEffect): number | undefined {
   switch (eff.type) {
-    case 'weaken':
-      return ARTIFACT_WEAKEN_CAP
-    case 'sunder':
-      return ARTIFACT_SUNDER_CAP
-    case 'purge':
-      return ARTIFACT_PURGE_CAP
+    case "weaken":
+      return ARTIFACT_WEAKEN_CAP;
+    case "sunder":
+      return ARTIFACT_SUNDER_CAP;
+    case "purge":
+      return ARTIFACT_PURGE_CAP;
     default:
-      return undefined
+      return undefined;
   }
 }
 
 export interface ArtifactNextLevelGain {
   /** 目标重数(即 level + 1) */
-  level: number
+  level: number;
   /** 各被动项的现值 → 下一重值 */
-  passive: { key: AnyStatKey; from: number; to: number }[]
+  passive: { key: AnyStatKey; from: number; to: number }[];
   /** 神通主体数值;震慑没有数值,故为 null */
-  active: { from: number; to: number; capped: boolean } | null
+  active: { from: number; to: number; capped: boolean } | null;
   /** 吸命的回补比例(只有吸命有) */
-  heal?: { from: number; to: number; capped: boolean }
+  heal?: { from: number; to: number; capped: boolean };
 }
 
 /**
@@ -863,30 +878,34 @@ export interface ArtifactNextLevelGain {
  * 已至满重返回 null。
  */
 export function artifactNextLevelGain(def: ArtifactDef, level = 0): ArtifactNextLevelGain | null {
-  const lv = Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)))
-  if (lv >= ARTIFACT_MAX_LEVEL) return null
-  const next = lv + 1
-  const now = artifactValue(def, lv)
-  const later = artifactValue(def, next)
-  const from = now.active
-  const to = later.active
-  const passive = Object.keys(def.passive).map(k => {
-    const key = k as AnyStatKey
-    return { key, from: now.passive[key] ?? 0, to: later.passive[key] ?? 0 }
-  })
-  const cap = effectCap(def.active.effect)
+  const lv = Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)));
+  if (lv >= ARTIFACT_MAX_LEVEL) return null;
+  const next = lv + 1;
+  const now = artifactValue(def, lv);
+  const later = artifactValue(def, next);
+  const from = now.active;
+  const to = later.active;
+  const passive = Object.keys(def.passive).map((k) => {
+    const key = k as AnyStatKey;
+    return { key, from: now.passive[key] ?? 0, to: later.passive[key] ?? 0 };
+  });
+  const cap = effectCap(def.active.effect);
   return {
     level: next,
     passive,
     active:
-      def.active.effect.type === 'stun'
+      def.active.effect.type === "stun"
         ? null
-        : { from: from.amount, to: to.amount, capped: cap !== undefined && to.amount >= cap - 1e-9 },
+        : {
+            from: from.amount,
+            to: to.amount,
+            capped: cap !== undefined && to.amount >= cap - 1e-9,
+          },
     heal:
       to.heal === undefined
         ? undefined
-        : { from: from.heal ?? 0, to: to.heal, capped: to.heal >= ARTIFACT_DRAIN_HEAL_CAP - 1e-9 }
-  }
+        : { from: from.heal ?? 0, to: to.heal, capped: to.heal >= ARTIFACT_DRAIN_HEAL_CAP - 1e-9 },
+  };
 }
 
 /**
@@ -896,10 +915,10 @@ export function artifactNextLevelGain(def: ArtifactDef, level = 0): ArtifactNext
  * 界面还会把门槛写成「元婴境开启第二法宝位」——境界改名或门槛挪动,文案就撒谎。
  * 故门槛与上限一并放这里,两边都读同一份。
  */
-export const ARTIFACT_SLOT_UNLOCK_MAJOR = 3
-export const ARTIFACT_MAX_SLOTS = 2
+export const ARTIFACT_SLOT_UNLOCK_MAJOR = 3;
+export const ARTIFACT_MAX_SLOTS = 2;
 
 /** 某大境界下可用几个法宝位 */
 export function artifactSlotsFor(major: number): number {
-  return major >= ARTIFACT_SLOT_UNLOCK_MAJOR ? ARTIFACT_MAX_SLOTS : 1
+  return major >= ARTIFACT_SLOT_UNLOCK_MAJOR ? ARTIFACT_MAX_SLOTS : 1;
 }

@@ -5,9 +5,12 @@
         <QualityTag :quality="inst.quality" />
         <!-- 界域 + 阶位:同一句「23 阶」在人间界与仙界完全不是一回事,故写清是哪一界 -->
         <span class="text-[11px] text-ink-faint">
-          {{ EQUIP_SLOT_NAMES[template.slot] }} · {{ worldNameOfTier(inst.tier) }} · {{ inst.tier }} 阶
+          {{ EQUIP_SLOT_NAMES[template.slot] }} · {{ worldNameOfTier(inst.tier) }} ·
+          {{ inst.tier }} 阶
         </span>
-        <span v-if="inst.level > 0" class="text-[11px] text-gold-ink tabular">+{{ inst.level }}</span>
+        <span v-if="inst.level > 0" class="text-[11px] text-gold-ink tabular"
+          >+{{ inst.level }}</span
+        >
         <button
           class="-m-1.5 flex min-h-[28px] min-w-[28px] items-center justify-center p-1.5 text-ink-faint active:scale-90"
           :aria-label="inst.locked ? '解锁' : '锁定'"
@@ -26,7 +29,13 @@
           class="min-w-0 grow rounded-md border border-ink/15 bg-paper-deep/60 px-2 py-1 text-[12px] text-ink outline-none placeholder:text-ink-faint focus:border-azure"
           @change="applyNote"
         />
-        <button v-if="noteDraft" class="-my-1 px-1 py-1 text-[11px] text-ink-faint active:opacity-60" @click="clearNote">清除</button>
+        <button
+          v-if="noteDraft"
+          class="-my-1 px-1 py-1 text-[11px] text-ink-faint active:opacity-60"
+          @click="clearNote"
+        >
+          清除
+        </button>
       </div>
       <!--
         共鸣是机制而非数值,但装备卡片此前一个字都不提:玩家在「要不要换掉这件」时,
@@ -39,13 +48,20 @@
         <span class="ml-1 text-ink-faint">{{ setInfo.def.effectDesc }}</span>
       </p>
       <div class="ink-divider my-3" />
-      <p v-if="compareTarget" class="mb-1.5 text-[10px] text-ink-faint tabular">对比当前佩戴:「{{ compareTarget.name }}」(绿升红降)</p>
+      <p v-if="compareTarget" class="mb-1.5 text-[10px] text-ink-faint tabular">
+        对比当前佩戴:「{{ compareTarget.name }}」(绿升红降)
+      </p>
       <div class="space-y-1.5">
         <p v-for="row in flatRows" :key="row.label" class="flex justify-between text-[13px]">
           <span class="text-ink-soft">{{ row.label }}</span>
           <span class="tabular text-ink">
             {{ row.value }}
-            <span v-if="row.diff" class="ml-1 text-[11px]" :class="row.up ? 'text-jade' : 'text-cinnabar'">({{ row.diff }})</span>
+            <span
+              v-if="row.diff"
+              class="ml-1 text-[11px]"
+              :class="row.up ? 'text-jade' : 'text-cinnabar'"
+              >({{ row.diff }})</span
+            >
           </span>
         </p>
         <p v-for="row in fixedModRows" :key="row.label" class="flex justify-between text-[13px]">
@@ -60,7 +76,9 @@
           一件装备的"上限"就在它的品质里,而重铸可以重掷条数 —— 只有把它摊在明面上,
           「要不要为这件洗下去」才算得清。
         -->
-        <p class="mb-1.5 flex items-baseline justify-between font-kai text-[12px] tracking-[0.3em] text-ink-faint">
+        <p
+          class="mb-1.5 flex items-baseline justify-between font-kai text-[12px] tracking-[0.3em] text-ink-faint"
+        >
           <span>词 条</span>
           <span class="text-[10px] tracking-normal tabular">
             {{ inst.affixes.length }} / {{ affixCap }} 条
@@ -85,14 +103,21 @@
             :class="i > 0 ? 'border-t border-violet-ink/12' : ''"
             :style="{ borderLeft: `2px solid ${AFFIX_RARITY_META[line.rarity].color}` }"
           >
-            <span class="shrink-0 font-kai text-[12px]" :style="{ color: AFFIX_RARITY_META[line.rarity].color }">
+            <span
+              class="shrink-0 font-kai text-[12px]"
+              :style="{ color: AFFIX_RARITY_META[line.rarity].color }"
+            >
               「{{ line.name }}」
             </span>
-            <span class="shrink-0 text-[9px] opacity-80" :style="{ color: AFFIX_RARITY_META[line.rarity].color }">
+            <span
+              class="shrink-0 text-[9px] opacity-80"
+              :style="{ color: AFFIX_RARITY_META[line.rarity].color }"
+            >
               {{ AFFIX_RARITY_META[line.rarity].name }}
             </span>
             <span class="ml-auto min-w-0 text-right text-[11px] leading-snug text-ink-soft">
-              {{ line.before }}<span class="tabular font-medium text-ink">{{ line.value }}</span>{{ line.after }}
+              {{ line.before }}<span class="tabular font-medium text-ink">{{ line.value }}</span
+              >{{ line.after }}
             </span>
             <button
               v-if="canSealAffix(line.id)"
@@ -102,7 +127,12 @@
             >
               封存
             </button>
-            <span v-else-if="isAffixSealed(line.id)" class="shrink-0 text-jade" role="img" aria-label="这条词条已封存">
+            <span
+              v-else-if="isAffixSealed(line.id)"
+              class="shrink-0 text-jade"
+              role="img"
+              aria-label="这条词条已封存"
+            >
               <GameIcon name="lock" :size="12" />
             </span>
           </li>
@@ -117,16 +147,24 @@
           <span class="text-ink-faint">装备后流派</span>
           <span class="tabular">
             <template v-if="buildPreview.before">
-              <span class="text-ink-soft">{{ buildPreview.before.displayName }} {{ formatPercent(buildPreview.before.affinity, 0) }}</span>
+              <span class="text-ink-soft"
+                >{{ buildPreview.before.displayName }}
+                {{ formatPercent(buildPreview.before.affinity, 0) }}</span
+              >
             </template>
             <template v-else><span class="text-ink-faint">未成路</span></template>
             <span class="mx-1 text-ink-faint">→</span>
             <template v-if="buildPreview.after">
               <span
                 class="font-kai"
-                :class="buildPreview.after.affinity >= (buildPreview.before?.affinity ?? 0) ? 'text-jade' : 'text-cinnabar'"
+                :class="
+                  buildPreview.after.affinity >= (buildPreview.before?.affinity ?? 0)
+                    ? 'text-jade'
+                    : 'text-cinnabar'
+                "
               >
-                {{ buildPreview.after.displayName }} {{ formatPercent(buildPreview.after.affinity, 0) }}
+                {{ buildPreview.after.displayName }}
+                {{ formatPercent(buildPreview.after.affinity, 0) }}
               </span>
             </template>
             <template v-else><span class="text-cinnabar">流派散去</span></template>
@@ -141,10 +179,21 @@
       -->
       <div v-if="forgeSkills.length" class="ink-divider my-3" />
       <div v-if="forgeSkills.length" class="space-y-1">
-        <p v-for="s in forgeSkills" :key="s.id" class="flex items-center gap-2 text-[10px] text-ink-faint">
+        <p
+          v-for="s in forgeSkills"
+          :key="s.id"
+          class="flex items-center gap-2 text-[10px] text-ink-faint"
+        >
           <span class="w-10 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
-          <span class="w-12 shrink-0 tabular" :class="s.stage === '生疏' ? '' : 'text-jade'">{{ s.stage }}</span>
-          <ProgressBar :value="s.progress" :color="s.stage === '生疏' ? 'var(--color-ink-faint)' : 'var(--color-jade)'" :height="3" class="flex-1" />
+          <span class="w-12 shrink-0 tabular" :class="s.stage === '生疏' ? '' : 'text-jade'">{{
+            s.stage
+          }}</span>
+          <ProgressBar
+            :value="s.progress"
+            :color="s.stage === '生疏' ? 'var(--color-ink-faint)' : 'var(--color-jade)'"
+            :height="3"
+            class="flex-1"
+          />
           <span class="w-7 shrink-0 text-right tabular">{{ formatPercent(s.progress, 0) }}</span>
         </p>
       </div>
@@ -161,7 +210,7 @@
         </p>
       </template>
       <p v-if="salvage" class="mt-1 flex items-center justify-between text-[11px] text-ink-faint">
-        <span>分解返还{{ inst.level > 0 ? `(${refundRateText()})` : '' }}</span>
+        <span>分解返还{{ inst.level > 0 ? `(${refundRateText()})` : "" }}</span>
         <span class="tabular">
           器灵尘×{{ salvage.dust }}
           <template v-if="!isZero(salvage.stone)"> · 灵石 {{ formatGN(salvage.stone) }}</template>
@@ -170,13 +219,15 @@
       <!-- 修士实验室:反事实换装推演(真仙可用) -->
       <template v-if="canWhatIf">
         <div class="ink-divider my-3" />
-        <button v-if="!whatIf" class="btn-ghost w-full !py-1.5 !text-[12px]" @click="runWhatIf">天机推演 · 若换此装,四天局面如何?</button>
+        <button v-if="!whatIf" class="btn-ghost w-full !py-1.5 !text-[12px]" @click="runWhatIf">
+          天机推演 · 若换此装,四天局面如何?
+        </button>
         <template v-else>
           <p class="mb-1.5 font-kai text-[12px] tracking-[0.3em] text-ink-faint">天机推演</p>
           <p class="text-[11px] text-ink-soft tabular">
-            构筑:{{ whatIf.buildBefore?.displayName ?? '未成路' }}
+            构筑:{{ whatIf.buildBefore?.displayName ?? "未成路" }}
             <span class="text-ink-faint">→</span>
-            {{ whatIf.buildAfter?.displayName ?? '流派散去' }}
+            {{ whatIf.buildAfter?.displayName ?? "流派散去" }}
           </p>
           <div class="mt-1 space-y-0.5">
             <p v-for="w in whatIf.worlds" :key="w.name" class="flex justify-between text-[11px]">
@@ -184,14 +235,26 @@
               <span class="tabular">
                 <span class="text-ink-faint">{{ w.beforeText }}</span>
                 <span class="mx-1 text-ink-faint">→</span>
-                <span :class="w.trend === 'up' ? 'text-jade' : w.trend === 'down' ? 'text-cinnabar' : 'text-ink-soft'">
+                <span
+                  :class="
+                    w.trend === 'up'
+                      ? 'text-jade'
+                      : w.trend === 'down'
+                        ? 'text-cinnabar'
+                        : 'text-ink-soft'
+                  "
+                >
                   {{ w.afterText }}
                 </span>
               </span>
             </p>
           </div>
           <p v-if="whatIf.modChanges.length" class="mt-1 text-[10px] text-qing tabular">
-            主要变化:{{ whatIf.modChanges.map(c => `${c.label} ${c.delta > 0 ? '+' : ''}${formatPercent(c.delta, 0)}`).join(' · ') }}
+            主要变化:{{
+              whatIf.modChanges
+                .map((c) => `${c.label} ${c.delta > 0 ? "+" : ""}${formatPercent(c.delta, 0)}`)
+                .join(" · ")
+            }}
           </p>
           <p class="mt-0.5 text-[10px] text-ink-faint">推演只述局面,不替你定夺。</p>
         </template>
@@ -205,24 +268,46 @@
           v-if="canWhatIf" 段;重铸是凡人也在用的功能,若嵌在里面,普通玩家点开
           开关只会变字、词条格子与「开洗」永远不渲染(实测即玩家反馈的「没生效」)。
         -->
-        <div v-if="autoOpen && reforgeCostVal" class="mt-3 rounded-md border border-ink/15 bg-paper-deep/50 px-3 py-2">
+        <div
+          v-if="autoOpen && reforgeCostVal"
+          class="mt-3 rounded-md border border-ink/15 bg-paper-deep/50 px-3 py-2"
+        >
           <p class="mb-1 text-[11px] text-ink-soft">洗到这些词条出现就停(任一命中即停,至多 3 条)</p>
           <div class="grid max-h-36 grid-cols-3 gap-1 overflow-y-auto">
             <button
               v-for="af in affixOptions"
               :key="af.id"
               class="rounded px-1 py-1 text-[10px] leading-tight active:opacity-60"
-              :class="isAutoTarget(af.id) ? 'border border-cinnabar text-cinnabar' : 'bg-ink/4 text-ink-faint'"
+              :class="
+                isAutoTarget(af.id)
+                  ? 'border border-cinnabar text-cinnabar'
+                  : 'bg-ink/4 text-ink-faint'
+              "
               @click="toggleAutoTarget(af.id)"
             >
               {{ af.name }}
             </button>
           </div>
           <div v-if="autoTargets.length" class="mt-1.5 space-y-0.5">
-            <p v-for="t in autoTargets" :key="t.affixId" class="flex items-center gap-2 text-[10px] text-ink-faint">
-              <span class="w-10 shrink-0 font-kai text-ink-soft">{{ affixDef(t.affixId)?.name ?? t.affixId }}</span>
-              <input v-model.number="t.minRoll" type="range" min="0" max="1" step="0.05" class="grow accent-cinnabar" />
-              <span class="w-12 shrink-0 text-right tabular">≥{{ formatPercent(t.minRoll ?? 0, 0) }}</span>
+            <p
+              v-for="t in autoTargets"
+              :key="t.affixId"
+              class="flex items-center gap-2 text-[10px] text-ink-faint"
+            >
+              <span class="w-10 shrink-0 font-kai text-ink-soft">{{
+                affixDef(t.affixId)?.name ?? t.affixId
+              }}</span>
+              <input
+                v-model.number="t.minRoll"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                class="grow accent-cinnabar"
+              />
+              <span class="w-12 shrink-0 text-right tabular"
+                >≥{{ formatPercent(t.minRoll ?? 0, 0) }}</span
+              >
             </p>
           </div>
           <div class="mt-1.5 flex items-center gap-2">
@@ -234,7 +319,10 @@
               max="500"
               class="w-16 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[11px] tabular"
             />
-            <span class="text-[10px] text-ink-faint tabular">次 · 每洗 器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}</span>
+            <span class="text-[10px] text-ink-faint tabular"
+              >次 · 每洗 器灵尘×{{ reforgeCostVal.dust }} · 灵石
+              {{ formatGN(reforgeCostVal.stone) }}</span
+            >
             <button
               class="btn-seal ml-auto !px-3 !py-1 !text-[11px]"
               :disabled="!autoTargets.length"
@@ -248,18 +336,29 @@
         <!-- 重铸与封存 (Phase 30.1) -->
         <template v-if="reforgeCostVal || sealCostVal">
           <div class="flex gap-2 text-[11px]">
-            <button v-if="reforgeCostVal" class="btn-ghost flex-1 !py-1" :disabled="!reforgeAffordable" @click="doReforge">
+            <button
+              v-if="reforgeCostVal"
+              class="btn-ghost flex-1 !py-1"
+              :disabled="!reforgeAffordable"
+              @click="doReforge"
+            >
               重铸词条
               <span class="ml-1 tabular text-[10px] text-ink-faint">
                 器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
               </span>
             </button>
-            <div v-if="sealCostVal" class="flex flex-1 items-center justify-center rounded-md border border-qing/20 bg-qing/5 px-2 py-1 text-qing">
+            <div
+              v-if="sealCostVal"
+              class="flex flex-1 items-center justify-center rounded-md border border-qing/20 bg-qing/5 px-2 py-1 text-qing"
+            >
               封存一词 {{ formatGN(sealCostVal) }}
             </div>
           </div>
           <!-- 付不起就把缺摆出来(与强化同款):重铸同样器灵尘+灵石两道账,缺谁明说谁 -->
-          <p v-if="reforgeCostVal && !reforgeAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
+          <p
+            v-if="reforgeCostVal && !reforgeAffordable"
+            class="mt-1 text-[10px] text-cinnabar tabular"
+          >
             尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
             {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
           </p>
@@ -268,18 +367,33 @@
             不限次数、成本只随「阶数」与「封存数」走 —— 与旧版"越洗越贵、上限十次"不同。
           -->
           <p v-if="reforgeCostVal" class="text-center text-[10px] leading-relaxed text-ink-faint">
-            重掷未封存的词条:条数(≤{{ affixCap }} 条)与数值一并重掷,封存的不动 · 不限次数,成本随阶数与封存数走
+            重掷未封存的词条:条数(≤{{ affixCap }} 条)与数值一并重掷,封存的不动 ·
+            不限次数,成本随阶数与封存数走
           </p>
           <p v-if="inst" class="text-center text-[10px] text-ink-faint tabular">
-            已重铸 {{ inst.reforgeCount ?? 0 }} 次 · 已封存 {{ (inst.sealedAffixIds ?? []).length }}/{{ sealCapacity(inst) }}
+            已重铸 {{ inst.reforgeCount ?? 0 }} 次 · 已封存
+            {{ (inst.sealedAffixIds ?? []).length }}/{{ sealCapacity(inst) }}
           </p>
-          <button v-if="reforgeCostVal" class="btn-ghost w-full !py-1 !text-[11px]" @click="autoOpen = !autoOpen">
-            {{ autoOpen ? '收起自动重铸' : '自动重铸 · 洗到指定词条即停' }}
+          <button
+            v-if="reforgeCostVal"
+            class="btn-ghost w-full !py-1 !text-[11px]"
+            @click="autoOpen = !autoOpen"
+          >
+            {{ autoOpen ? "收起自动重铸" : "自动重铸 · 洗到指定词条即停" }}
           </button>
         </template>
         <div class="flex gap-2">
-          <button class="btn-seal flex-1" @click="toggleEquip">{{ isEquipped ? '卸 下' : '装 备' }}</button>
-          <button v-if="upCost" class="btn-ghost flex-1" :disabled="!upAffordable" @click="doUpgrade">强 化</button>
+          <button class="btn-seal flex-1" @click="toggleEquip">
+            {{ isEquipped ? "卸 下" : "装 备" }}
+          </button>
+          <button
+            v-if="upCost"
+            class="btn-ghost flex-1"
+            :disabled="!upAffordable"
+            @click="doUpgrade"
+          >
+            强 化
+          </button>
           <!-- 分解二步确认:一件淬养过的装备(强化/封存/重铸)误触垃圾桶不该直接没 -->
           <template v-if="decomposeArm !== inst?.uid">
             <button
@@ -293,7 +407,9 @@
           </template>
           <template v-else>
             <button class="btn-seal !px-2.5 !text-[11px]" @click="doDecompose">分解?</button>
-            <button class="btn-ghost px-2 text-[11px] text-ink-faint" @click="decomposeArm = null">算了</button>
+            <button class="btn-ghost px-2 text-[11px] text-ink-faint" @click="decomposeArm = null">
+              算了
+            </button>
           </template>
         </div>
       </div>
@@ -302,310 +418,335 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import { ref, watch } from 'vue'
-  import { useUiStore } from '@/stores/ui'
-  import { useInventoryStore } from '@/stores/inventory'
-  import { equipmentTemplate, EQUIP_SLOT_NAMES } from '@/data/equipment'
-  import { equipSetDef, setCounts } from '@/core/equipSet'
-  import { worldNameOfTier } from '@/core/formulas'
-  import { resolveEquipStats } from '@/core/equipGen'
-  import { decomposeEquipment, equipLevelCap, equipUpgradeCost, upgradeEquipment } from '@/core/forge'
-  import { useResourcesStore } from '@/stores/resources'
-  import { toNum } from '@/utils/gnum'
-  import { refundRateText, salvageOf } from '@/core/salvage'
-  import { detectBuild } from '@/core/buildDetect'
-  import { endgameUnlocked } from '@/core/endgameService'
-  import { whatIfEquip, type WhatIfReport } from '@/core/lab'
-  import { autoReforge, reforgeEquipment, reforgeCost, sealAffix, sealCapacity, sealCost, type ReforgeTarget } from '@/core/reforge'
-  import { affixDef, AFFIXES } from '@/data/affixes'
-  import { qualityDef } from '@/data/qualities'
-  import { usePlayerStore } from '@/stores/player'
-  import { formatGN, formatPercent, formatSignedPercent } from '@/utils/format'
-  import { isZero, sub } from '@/utils/gnum'
-  import type { AnyStatKey, GNum } from '@/types'
-  import { AFFIX_RARITY_META, STAT_NAMES } from '@/ui/statNames'
-  import BaseModal from '@/components/common/BaseModal.vue'
-  import QualityTag from '@/components/common/QualityTag.vue'
-  import GameIcon from '@/components/common/GameIcon.vue'
-  import ProgressBar from '@/components/common/ProgressBar.vue'
-  import { useLoreStore } from '@/stores/lore'
-  import { SKILLS, skillStageName, skillStageProgress } from '@/data/crafting'
+import { computed } from "vue";
+import { ref, watch } from "vue";
+import { useUiStore } from "@/stores/ui";
+import { useInventoryStore } from "@/stores/inventory";
+import { equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
+import { equipSetDef, setCounts } from "@/core/equipSet";
+import { worldNameOfTier } from "@/core/formulas";
+import { resolveEquipStats } from "@/core/equipGen";
+import {
+  decomposeEquipment,
+  equipLevelCap,
+  equipUpgradeCost,
+  upgradeEquipment,
+} from "@/core/forge";
+import { useResourcesStore } from "@/stores/resources";
+import { toNum } from "@/utils/gnum";
+import { refundRateText, salvageOf } from "@/core/salvage";
+import { detectBuild } from "@/core/buildDetect";
+import { endgameUnlocked } from "@/core/endgameService";
+import { whatIfEquip, type WhatIfReport } from "@/core/lab";
+import {
+  autoReforge,
+  reforgeEquipment,
+  reforgeCost,
+  sealAffix,
+  sealCapacity,
+  sealCost,
+  type ReforgeTarget,
+} from "@/core/reforge";
+import { affixDef, AFFIXES } from "@/data/affixes";
+import { qualityDef } from "@/data/qualities";
+import { usePlayerStore } from "@/stores/player";
+import { formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
+import { isZero, sub } from "@/utils/gnum";
+import type { AnyStatKey, GNum } from "@/types";
+import { AFFIX_RARITY_META, STAT_NAMES } from "@/ui/statNames";
+import BaseModal from "@/components/common/BaseModal.vue";
+import QualityTag from "@/components/common/QualityTag.vue";
+import GameIcon from "@/components/common/GameIcon.vue";
+import ProgressBar from "@/components/common/ProgressBar.vue";
+import { useLoreStore } from "@/stores/lore";
+import { SKILLS, skillStageName, skillStageProgress } from "@/data/crafting";
 
-  const ui = useUiStore()
-  const inventory = useInventoryStore()
-  const player = usePlayerStore()
-  const resources = useResourcesStore()
+const ui = useUiStore();
+const inventory = useInventoryStore();
+const player = usePlayerStore();
+const resources = useResourcesStore();
 
-  const loreStore = useLoreStore()
+const loreStore = useLoreStore();
 
-  /** 炼器技艺进度:锻打/铭纹正是在这个界面(强化/重铸)里长的 —— 露在铁砧前(与 DanFang 技艺表同源) */
-  const forgeSkills = computed(() => {
-    const ids = new Set(['smithing', 'inscribe'])
-    return SKILLS.filter(s => ids.has(s.id)).map(s => {
-      const lv = loreStore.skillLevel(s.id)
-      return { id: s.id, name: s.name, stage: skillStageName(lv), progress: skillStageProgress(lv) }
-    })
-  })
+/** 炼器技艺进度:锻打/铭纹正是在这个界面(强化/重铸)里长的 —— 露在铁砧前(与 DanFang 技艺表同源) */
+const forgeSkills = computed(() => {
+  const ids = new Set(["smithing", "inscribe"]);
+  return SKILLS.filter((s) => ids.has(s.id)).map((s) => {
+    const lv = loreStore.skillLevel(s.id);
+    return { id: s.id, name: s.name, stage: skillStageName(lv), progress: skillStageProgress(lv) };
+  });
+});
 
-  const inst = computed(() => (ui.equipDetailUid ? inventory.findItem(ui.equipDetailUid) : undefined))
-  const template = computed(() => (inst.value ? equipmentTemplate(inst.value.templateId) : undefined))
-  const resolved = computed(() => (inst.value ? resolveEquipStats(inst.value) : null))
-  const isEquipped = computed(() => (inst.value && template.value ? inventory.equipped[template.value.slot] === inst.value.uid : false))
-  const upCost = computed(() => (inst.value ? equipUpgradeCost(inst.value.uid) : null))
-  /** 付不起即灰:强化要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径) */
-  const upAffordable = computed(() => {
-    const c = upCost.value
-    if (!c) return false
-    return resources.hasSmall('dust', c.dust) && resources.hasStone(c.stone)
-  })
-  /** 分解返还:底材 + 强化投入的配比(文案走 refundRateText,与 DECOMPOSE_REFUND_RATE 同源,不手写「八成」) */
-  const salvage = computed(() => (inst.value ? salvageOf(inst.value) : null))
+const inst = computed(() =>
+  ui.equipDetailUid ? inventory.findItem(ui.equipDetailUid) : undefined,
+);
+const template = computed(() =>
+  inst.value ? equipmentTemplate(inst.value.templateId) : undefined,
+);
+const resolved = computed(() => (inst.value ? resolveEquipStats(inst.value) : null));
+const isEquipped = computed(() =>
+  inst.value && template.value ? inventory.equipped[template.value.slot] === inst.value.uid : false,
+);
+const upCost = computed(() => (inst.value ? equipUpgradeCost(inst.value.uid) : null));
+/** 付不起即灰:强化要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径) */
+const upAffordable = computed(() => {
+  const c = upCost.value;
+  if (!c) return false;
+  return resources.hasSmall("dust", c.dust) && resources.hasStone(c.stone);
+});
+/** 分解返还:底材 + 强化投入的配比(文案走 refundRateText,与 DECOMPOSE_REFUND_RATE 同源,不手写「八成」) */
+const salvage = computed(() => (inst.value ? salvageOf(inst.value) : null));
 
-  /**
-   * 这件装备所属的共鸣与其当前件数(只数已佩戴的 —— 共鸣看的是挂载,不是行囊)。
-   * 未佩戴时也照实显示「1/2」,让玩家在按下装备之前就看得见差几件。
-   */
-  const setInfo = computed(() => {
-    const setId = template.value?.set
-    if (!setId) return null
-    const def = equipSetDef(setId)
-    if (!def) return null
-    const count = setCounts(inventory.equippedItems).get(setId) ?? 0
-    return { def, count, active: count >= def.required }
-  })
+/**
+ * 这件装备所属的共鸣与其当前件数(只数已佩戴的 —— 共鸣看的是挂载,不是行囊)。
+ * 未佩戴时也照实显示「1/2」,让玩家在按下装备之前就看得见差几件。
+ */
+const setInfo = computed(() => {
+  const setId = template.value?.set;
+  if (!setId) return null;
+  const def = equipSetDef(setId);
+  if (!def) return null;
+  const count = setCounts(inventory.equippedItems).get(setId) ?? 0;
+  return { def, count, active: count >= def.required };
+});
 
-  // ---- 重铸与封存 (Phase 30.1) ----
-  const reforgeCostVal = computed(() => (inst.value ? reforgeCost(inst.value) : null))
-  /** 付不起即灰:重铸要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径) */
-  const reforgeAffordable = computed(() => {
-    const c = reforgeCostVal.value
-    if (!c) return false
-    return resources.hasSmall('dust', c.dust) && resources.hasStone(c.stone)
-  })
-  const sealCostVal = computed(() => (inst.value ? sealCost(inst.value) : null))
-  /** 这一件按品质能有多少条词条:上限来自品质表,不在界面里另写一份 */
-  const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).affixes[1] : 0))
-  const qualityName = computed(() => (inst.value ? qualityDef(inst.value.quality).name : ''))
+// ---- 重铸与封存 (Phase 30.1) ----
+const reforgeCostVal = computed(() => (inst.value ? reforgeCost(inst.value) : null));
+/** 付不起即灰:重铸要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径) */
+const reforgeAffordable = computed(() => {
+  const c = reforgeCostVal.value;
+  if (!c) return false;
+  return resources.hasSmall("dust", c.dust) && resources.hasStone(c.stone);
+});
+const sealCostVal = computed(() => (inst.value ? sealCost(inst.value) : null));
+/** 这一件按品质能有多少条词条:上限来自品质表,不在界面里另写一份 */
+const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).affixes[1] : 0));
+const qualityName = computed(() => (inst.value ? qualityDef(inst.value.quality).name : ""));
 
-  function isAffixSealed(affixId: string): boolean {
-    return (inst.value?.sealedAffixIds ?? []).includes(affixId)
-  }
+function isAffixSealed(affixId: string): boolean {
+  return (inst.value?.sealedAffixIds ?? []).includes(affixId);
+}
 
-  function canSealAffix(affixId: string): boolean {
-    return inst.value !== undefined && sealCostVal.value !== null && !isAffixSealed(affixId)
-  }
+function canSealAffix(affixId: string): boolean {
+  return inst.value !== undefined && sealCostVal.value !== null && !isAffixSealed(affixId);
+}
 
-  function doSealAffix(affixId: string): void {
-    if (inst.value) sealAffix(inst.value.uid, affixId)
-  }
+function doSealAffix(affixId: string): void {
+  if (inst.value) sealAffix(inst.value.uid, affixId);
+}
 
-  function doReforge(): void {
-    if (inst.value) reforgeEquipment(inst.value.uid)
-  }
+function doReforge(): void {
+  if (inst.value) reforgeEquipment(inst.value.uid);
+}
 
-  // ---- 装备标记(玩家反馈:同名装备想按不同流派区分)。草稿随当前件走,空串 = 清除 ----
-  const noteDraft = ref('')
-  watch(
-    () => inst.value?.note,
-    (n, old) => {
-      // 只在来源变化时同步草稿;自己写回(applyNote)引发的同一值回灌不迭代
-      if (n === noteDraft.value || n === old) return
-      noteDraft.value = n ?? ''
-    },
-    { immediate: true }
-  )
+// ---- 装备标记(玩家反馈:同名装备想按不同流派区分)。草稿随当前件走,空串 = 清除 ----
+const noteDraft = ref("");
+watch(
+  () => inst.value?.note,
+  (n, old) => {
+    // 只在来源变化时同步草稿;自己写回(applyNote)引发的同一值回灌不迭代
+    if (n === noteDraft.value || n === old) return;
+    noteDraft.value = n ?? "";
+  },
+  { immediate: true },
+);
 
-  function applyNote(): void {
-    if (!inst.value) return
-    const note = noteDraft.value.trim()
-    inventory.replaceItem({ ...inst.value, note: note.length > 0 ? note.slice(0, 4) : undefined })
-  }
+function applyNote(): void {
+  if (!inst.value) return;
+  const note = noteDraft.value.trim();
+  inventory.replaceItem({ ...inst.value, note: note.length > 0 ? note.slice(0, 4) : undefined });
+}
 
-  function clearNote(): void {
-    noteDraft.value = ''
-    applyNote()
-  }
+function clearNote(): void {
+  noteDraft.value = "";
+  applyNote();
+}
 
-  // ---- 自动重铸(玩家反馈:一键重铸多次,洗到指定词条就停) ----
-  const autoOpen = ref(false)
-  const autoBudget = ref(50)
-  /** 停止条件:任一命中即停;minRoll 给「数值范围」那一嘴 */
-  const autoTargets = ref<ReforgeTarget[]>([])
+// ---- 自动重铸(玩家反馈:一键重铸多次,洗到指定词条就停) ----
+const autoOpen = ref(false);
+const autoBudget = ref(50);
+/** 停止条件:任一命中即停;minRoll 给「数值范围」那一嘴 */
+const autoTargets = ref<ReforgeTarget[]>([]);
 
-  /**
-   * 可选的停止词条:当前装备**真能洗到**的那些 —— 与重铸抽取池同规则
-   * (槽位匹配 + 品质门槛不高于当前),而不是全 113 条里按权重取前 24。
-   * 否则连「想洗的词条在 24 名开外」都选不进去,自动重铸就等于承诺了
-   * 一份它兑现不了的面板。
-   */
-  const affixOptions = computed(() => {
-    if (!inst.value) return []
-    const tpl = equipmentTemplate(inst.value.templateId)
-    const q = inst.value && qualityDef(inst.value.quality)
-    if (!tpl || !q) return []
-    return [...AFFIXES]
-      .filter(
-        a =>
-          (a.slots === undefined || a.slots.includes(tpl.slot)) &&
-          (a.minRank === undefined || q.rank >= a.minRank)
-      )
-      .sort((a, b) => b.weight - a.weight)
-  })
+/**
+ * 可选的停止词条:当前装备**真能洗到**的那些 —— 与重铸抽取池同规则
+ * (槽位匹配 + 品质门槛不高于当前),而不是全 113 条里按权重取前 24。
+ * 否则连「想洗的词条在 24 名开外」都选不进去,自动重铸就等于承诺了
+ * 一份它兑现不了的面板。
+ */
+const affixOptions = computed(() => {
+  if (!inst.value) return [];
+  const tpl = equipmentTemplate(inst.value.templateId);
+  const q = inst.value && qualityDef(inst.value.quality);
+  if (!tpl || !q) return [];
+  return [...AFFIXES]
+    .filter(
+      (a) =>
+        (a.slots === undefined || a.slots.includes(tpl.slot)) &&
+        (a.minRank === undefined || q.rank >= a.minRank),
+    )
+    .sort((a, b) => b.weight - a.weight);
+});
 
-  function isAutoTarget(id: string): boolean {
-    return autoTargets.value.some(t => t.affixId === id)
-  }
+function isAutoTarget(id: string): boolean {
+  return autoTargets.value.some((t) => t.affixId === id);
+}
 
-  function toggleAutoTarget(id: string): void {
-    if (isAutoTarget(id)) autoTargets.value = autoTargets.value.filter(t => t.affixId !== id)
-    // 默认先求「高值」(≥50%);拉到底 0% 即回到「出现就行」
-    else if (autoTargets.value.length < 3) autoTargets.value = [...autoTargets.value, { affixId: id, minRoll: 0.5 }]
-  }
+function toggleAutoTarget(id: string): void {
+  if (isAutoTarget(id)) autoTargets.value = autoTargets.value.filter((t) => t.affixId !== id);
+  // 默认先求「高值」(≥50%);拉到底 0% 即回到「出现就行」
+  else if (autoTargets.value.length < 3)
+    autoTargets.value = [...autoTargets.value, { affixId: id, minRoll: 0.5 }];
+}
 
-  function closeAuto(): void {
-    autoOpen.value = false
-    autoTargets.value = []
-  }
+function closeAuto(): void {
+  autoOpen.value = false;
+  autoTargets.value = [];
+}
 
-  function runAutoReforge(): void {
-    if (!inst.value) return
-    const targets = autoTargets.value
-    const budget = Math.min(500, Math.max(1, Math.floor(autoBudget.value || 0)))
-    const out = autoReforge(inst.value.uid, targets, budget)
-    const cost = `花 器灵尘×${out.dust} · 灵石 ${formatGN(out.stone)}`
-    // 「没洗到目标」不等于「没洗动」:每次重铸词条都尽数重掷,结账要报清现在这一身落在哪
-    const wanted = autoTargets.value.map(t => affixDef(t.affixId)?.name ?? t.affixId).join('、')
-    const now = out.affixIds.map(id => affixDef(id)?.name ?? id).join('、') || '空'
-    if (out.stop === 'target' && out.hit) {
-      ui.toast(
-        `洗出「${affixDef(out.hit.id)?.name ?? out.hit.id}」值 ${formatPercent(out.hit.roll, 0)} —— 共洗 ${out.rolls} 次,${cost}`,
-        'success'
-      )
-    } else if (out.stop === 'budget') {
-      ui.toast(`定好的次数用完了:连洗 ${out.rolls} 次,未能撞上「${wanted}」。如今这一身是:${now},${cost}`, 'warn')
-    } else if (out.stop === 'broke') {
-      if (out.rolls === 0) {
-        ui.toast(`灵石或器灵尘未足,难开这一炉,${cost}`, 'warn')
-      } else {
-        ui.toast(`灵石/器灵尘见底,洗了 ${out.rolls} 次即止;今一身为 ${now},${cost}`, 'warn')
-      }
+function runAutoReforge(): void {
+  if (!inst.value) return;
+  const targets = autoTargets.value;
+  const budget = Math.min(500, Math.max(1, Math.floor(autoBudget.value || 0)));
+  const out = autoReforge(inst.value.uid, targets, budget);
+  const cost = `花 器灵尘×${out.dust} · 灵石 ${formatGN(out.stone)}`;
+  // 「没洗到目标」不等于「没洗动」:每次重铸词条都尽数重掷,结账要报清现在这一身落在哪
+  const wanted = autoTargets.value.map((t) => affixDef(t.affixId)?.name ?? t.affixId).join("、");
+  const now = out.affixIds.map((id) => affixDef(id)?.name ?? id).join("、") || "空";
+  if (out.stop === "target" && out.hit) {
+    ui.toast(
+      `洗出「${affixDef(out.hit.id)?.name ?? out.hit.id}」值 ${formatPercent(out.hit.roll, 0)} —— 共洗 ${out.rolls} 次,${cost}`,
+      "success",
+    );
+  } else if (out.stop === "budget") {
+    ui.toast(
+      `定好的次数用完了:连洗 ${out.rolls} 次,未能撞上「${wanted}」。如今这一身是:${now},${cost}`,
+      "warn",
+    );
+  } else if (out.stop === "broke") {
+    if (out.rolls === 0) {
+      ui.toast(`灵石或器灵尘未足,难开这一炉,${cost}`, "warn");
     } else {
-      // frozen 一档兼两种收法:无位可洗(全封存/无词条),或装备已不在行囊
-      const gone = inst.value !== undefined && !inventory.findItem(inst.value.uid)
-      ui.toast(gone ? '此物已不在行囊,重铸无从谈起' : '此物已无未封存词条,无从重铸', 'info')
+      ui.toast(`灵石/器灵尘见底,洗了 ${out.rolls} 次即止;今一身为 ${now},${cost}`, "warn");
     }
-    // 结账即收板:结果已写在 toast 与装备词条上,想再调条件重开一次即可
-    closeAuto()
+  } else {
+    // frozen 一档兼两种收法:无位可洗(全封存/无词条),或装备已不在行囊
+    const gone = inst.value !== undefined && !inventory.findItem(inst.value.uid);
+    ui.toast(gone ? "此物已不在行囊,重铸无从谈起" : "此物已无未封存词条,无从重铸", "info");
   }
+  // 结账即收板:结果已写在 toast 与装备词条上,想再调条件重开一次即可
+  closeAuto();
+}
 
-  // ---- 修士实验室:反事实换装推演 ----
-  const whatIf = ref<WhatIfReport | null>(null)
-  const canWhatIf = computed(() => endgameUnlocked() && !isEquipped.value && inst.value !== undefined)
+// ---- 修士实验室:反事实换装推演 ----
+const whatIf = ref<WhatIfReport | null>(null);
+const canWhatIf = computed(
+  () => endgameUnlocked() && !isEquipped.value && inst.value !== undefined,
+);
 
-  function runWhatIf(): void {
-    if (inst.value) whatIf.value = whatIfEquip(inst.value.uid)
-  }
+function runWhatIf(): void {
+  if (inst.value) whatIf.value = whatIfEquip(inst.value.uid);
+}
 
-  watch(inst, () => {
-    whatIf.value = null
-  })
+watch(inst, () => {
+  whatIf.value = null;
+});
 
-  /** 换装流派预览:契合度 当前 → 装备后 */
-  const buildPreview = computed(() => {
-    if (!inst.value || !template.value || isEquipped.value) return null
-    const slot = template.value.slot
-    const mods = { ...player.finalStats.mods }
-    const applyDelta = (source: Record<string, number | undefined>, sign: 1 | -1): void => {
-      for (const k in source) {
-        const key = k as keyof typeof mods
-        mods[key] = (mods[key] ?? 0) + sign * (source[k] ?? 0)
-      }
+/** 换装流派预览:契合度 当前 → 装备后 */
+const buildPreview = computed(() => {
+  if (!inst.value || !template.value || isEquipped.value) return null;
+  const slot = template.value.slot;
+  const mods = { ...player.finalStats.mods };
+  const applyDelta = (source: Record<string, number | undefined>, sign: 1 | -1): void => {
+    for (const k in source) {
+      const key = k as keyof typeof mods;
+      mods[key] = (mods[key] ?? 0) + sign * (source[k] ?? 0);
     }
-    const currentUid = inventory.equipped[slot]
-    if (currentUid) {
-      const currentItem = inventory.findItem(currentUid)
-      if (currentItem) applyDelta(resolveEquipStats(currentItem).mods, -1)
+  };
+  const currentUid = inventory.equipped[slot];
+  if (currentUid) {
+    const currentItem = inventory.findItem(currentUid);
+    if (currentItem) applyDelta(resolveEquipStats(currentItem).mods, -1);
+  }
+  applyDelta(resolveEquipStats(inst.value).mods, 1);
+  const before = detectBuild(player.finalStats.mods);
+  const after = detectBuild(mods);
+  if (!before && !after) return null;
+  return { before, after };
+});
+
+const flatRows = computed(() => {
+  const r = resolved.value;
+  if (!r) return [];
+  // 与当前佩戴同部位件对比(自身已佩则不对比)
+  const cur = compareTarget.value;
+  const curFlats = cur ? resolveEquipStats(cur.item).flats : null;
+  const rows: { label: string; value: string; diff: string; up: boolean }[] = [];
+  const push = (label: string, mine: GNum, theirs: GNum | null): void => {
+    if (isZero(mine) && (theirs === null || isZero(theirs))) return;
+    let diff = "";
+    let up = true;
+    if (theirs !== null) {
+      const d = sub(mine, theirs);
+      up = d.m >= 0;
+      if (!isZero(d)) diff = `${up ? "+" : "-"}${formatGN({ m: Math.abs(d.m), e: d.e })}`;
     }
-    applyDelta(resolveEquipStats(inst.value).mods, 1)
-    const before = detectBuild(player.finalStats.mods)
-    const after = detectBuild(mods)
-    if (!before && !after) return null
-    return { before, after }
-  })
+    rows.push({ label, value: `+${formatGN(mine)}`, diff, up });
+  };
+  push("攻击", r.flats.attack, curFlats?.attack ?? null);
+  push("防御", r.flats.defense, curFlats?.defense ?? null);
+  push("气血", r.flats.maxHp, curFlats?.maxHp ?? null);
+  return rows;
+});
 
-  const flatRows = computed(() => {
-    const r = resolved.value
-    if (!r) return []
-    // 与当前佩戴同部位件对比(自身已佩则不对比)
-    const cur = compareTarget.value
-    const curFlats = cur ? resolveEquipStats(cur.item).flats : null
-    const rows: { label: string; value: string; diff: string; up: boolean }[] = []
-    const push = (label: string, mine: GNum, theirs: GNum | null): void => {
-      if (isZero(mine) && (theirs === null || isZero(theirs))) return
-      let diff = ''
-      let up = true
-      if (theirs !== null) {
-        const d = sub(mine, theirs)
-        up = d.m >= 0
-        if (!isZero(d)) diff = `${up ? '+' : '-'}${formatGN({ m: Math.abs(d.m), e: d.e })}`
-      }
-      rows.push({ label, value: `+${formatGN(mine)}`, diff, up })
-    }
-    push('攻击', r.flats.attack, curFlats?.attack ?? null)
-    push('防御', r.flats.defense, curFlats?.defense ?? null)
-    push('气血', r.flats.maxHp, curFlats?.maxHp ?? null)
-    return rows
-  })
+/** 对比对象:同部位当前佩戴件 */
+const compareTarget = computed(() => {
+  if (!inst.value || !template.value || isEquipped.value) return null;
+  const curUid = inventory.equipped[template.value.slot];
+  if (!curUid || curUid === inst.value.uid) return null;
+  const item = inventory.findItem(curUid);
+  if (!item) return null;
+  return { item, name: equipmentTemplate(item.templateId)?.name ?? "当前佩戴" };
+});
 
-  /** 对比对象:同部位当前佩戴件 */
-  const compareTarget = computed(() => {
-    if (!inst.value || !template.value || isEquipped.value) return null
-    const curUid = inventory.equipped[template.value.slot]
-    if (!curUid || curUid === inst.value.uid) return null
-    const item = inventory.findItem(curUid)
-    if (!item) return null
-    return { item, name: equipmentTemplate(item.templateId)?.name ?? '当前佩戴' }
-  })
+const fixedModRows = computed(() => {
+  const t = template.value;
+  if (!t?.fixedMods) return [];
+  return Object.entries(t.fixedMods).map(([k, v]) => ({
+    label: STAT_NAMES[k as AnyStatKey] ?? k,
+    value: formatSignedPercent(v as number),
+  }));
+});
 
-  const fixedModRows = computed(() => {
-    const t = template.value
-    if (!t?.fixedMods) return []
-    return Object.entries(t.fixedMods).map(([k, v]) => ({
-      label: STAT_NAMES[k as AnyStatKey] ?? k,
-      value: formatSignedPercent(v as number)
-    }))
-  })
+function close(): void {
+  ui.equipDetailUid = null;
+}
 
-  function close(): void {
-    ui.equipDetailUid = null
+function toggleEquip(): void {
+  if (!inst.value || !template.value) return;
+  if (isEquipped.value) {
+    inventory.unequip(template.value.slot);
+  } else {
+    inventory.equip(inst.value.uid, template.value.slot);
   }
+}
 
-  function toggleEquip(): void {
-    if (!inst.value || !template.value) return
-    if (isEquipped.value) {
-      inventory.unequip(template.value.slot)
-    } else {
-      inventory.equip(inst.value.uid, template.value.slot)
-    }
+function doUpgrade(): void {
+  if (inst.value) upgradeEquipment(inst.value.uid);
+}
+
+const decomposeArm = ref<string | null>(null);
+
+function doDecompose(): void {
+  if (!inst.value) return;
+  if (decomposeEquipment(inst.value.uid)) {
+    decomposeArm.value = null;
+    close();
   }
+}
 
-  function doUpgrade(): void {
-    if (inst.value) upgradeEquipment(inst.value.uid)
-  }
-
-  const decomposeArm = ref<string | null>(null)
-
-  function doDecompose(): void {
-    if (!inst.value) return
-    if (decomposeEquipment(inst.value.uid)) {
-      decomposeArm.value = null
-      close()
-    }
-  }
-
-  function toggleLock(): void {
-    if (!inst.value) return
-    inventory.replaceItem({ ...inst.value, locked: !inst.value.locked })
-  }
+function toggleLock(): void {
+  if (!inst.value) return;
+  inventory.replaceItem({ ...inst.value, locked: !inst.value.locked });
+}
 </script>

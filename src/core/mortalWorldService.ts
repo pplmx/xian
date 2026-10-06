@@ -17,15 +17,15 @@
  * - **不向玩家暴露算法**:骨架模板名(短促/匀进/长尾…)与事件密度数字
  *   都是内部概念,UI 只呈现视觉差异。
  */
-import type { MortalWorld } from './mortalWorldGen'
-import { generateGatedMortal } from './mortalGate'
-import { terrainOf, worldIdentity } from './mortalIdentity'
-import { REGIONS } from '@/data/regions'
-import { useAdventureStore } from '@/stores/adventure'
+import type { MortalWorld } from "./mortalWorldGen";
+import { generateGatedMortal } from "./mortalGate";
+import { terrainOf, worldIdentity } from "./mortalIdentity";
+import { REGIONS } from "@/data/regions";
+import { useAdventureStore } from "@/stores/adventure";
 
 /** 生成本世世界所用的历史(暂只与自身去重,跨世历史留待接入轮回时补) */
 function historyOf(cur: MortalWorld | null): MortalWorld[] {
-  return cur ? [cur] : []
+  return cur ? [cur] : [];
 }
 
 /**
@@ -35,21 +35,21 @@ function historyOf(cur: MortalWorld | null): MortalWorld[] {
  * 不能假定一定拿得到
  */
 export function ensureMortalWorld(): MortalWorld | null {
-  const adventure = useAdventureStore()
-  if (adventure.mortalWorld) return adventure.mortalWorld
-  const got = generateGatedMortal(Date.now() % 1_000_003, [], 200, 8)
-  if (!got) return null
-  adventure.setMortalWorld(got.report.world)
-  return got.report.world
+  const adventure = useAdventureStore();
+  if (adventure.mortalWorld) return adventure.mortalWorld;
+  const got = generateGatedMortal(Date.now() % 1_000_003, [], 200, 8);
+  if (!got) return null;
+  adventure.setMortalWorld(got.report.world);
+  return got.report.world;
 }
 
 /** 换一个本世之界(转世时调用) */
 export function rerollMortalWorld(): MortalWorld | null {
-  const adventure = useAdventureStore()
-  const prev = adventure.mortalWorld
-  const got = generateGatedMortal(Date.now() % 1_000_003, historyOf(prev), 200, 8)
-  adventure.setMortalWorld(got?.report.world ?? null)
-  return got?.report.world ?? null
+  const adventure = useAdventureStore();
+  const prev = adventure.mortalWorld;
+  const got = generateGatedMortal(Date.now() % 1_000_003, historyOf(prev), 200, 8);
+  adventure.setMortalWorld(got?.report.world ?? null);
+  return got?.report.world ?? null;
 }
 
 // ============ 本世路线的可达性 ============
@@ -63,19 +63,19 @@ export function rerollMortalWorld(): MortalWorld | null {
  * 直接与路线顺序矛盾。层级是路线的**特征**,不是解锁顺序。
  */
 export function canEnterNode(nodeId: string): boolean {
-  const adventure = useAdventureStore()
-  const w = adventure.mortalWorld
-  if (!w) return false
-  const i = w.chain.findIndex(p => p.nodeId === nodeId)
-  if (i < 0) return false
+  const adventure = useAdventureStore();
+  const w = adventure.mortalWorld;
+  if (!w) return false;
+  const i = w.chain.findIndex((p) => p.nodeId === nodeId);
+  if (i < 0) return false;
   // 首段天然可进入,与旧 REGIONS 解锁链无关
-  if (i === 0) return true
-  return adventure.mortalCleared.includes(w.chain[i - 1]!.nodeId)
+  if (i === 0) return true;
+  return adventure.mortalCleared.includes(w.chain[i - 1]!.nodeId);
 }
 
 /** 本世某节点是否已通 */
 export function isNodeCleared(nodeId: string): boolean {
-  return useAdventureStore().mortalCleared.includes(nodeId)
+  return useAdventureStore().mortalCleared.includes(nodeId);
 }
 
 /**
@@ -99,10 +99,10 @@ export function isNodeCleared(nodeId: string): boolean {
  * 路线顺序对旧链为空的新号仍然完全生效,那才是它该起作用的地方。
  */
 export function canEnterRegion(regionId: string): boolean {
-  const adventure = useAdventureStore()
-  const node = adventure.mortalWorld?.chain.find(p => p.fromId === regionId)
-  if (node && canEnterNode(node.nodeId)) return true
-  return adventure.unlocked.includes(regionId)
+  const adventure = useAdventureStore();
+  const node = adventure.mortalWorld?.chain.find((p) => p.fromId === regionId);
+  if (node && canEnterNode(node.nodeId)) return true;
+  return adventure.unlocked.includes(regionId);
 }
 
 /**
@@ -115,11 +115,11 @@ export function canEnterRegion(regionId: string): boolean {
  * 路线外的地界返回 null,由界面沿用旧链话术「需先击败某某之主」
  */
 export function entryBlockReason(regionId: string): string | null {
-  if (canEnterRegion(regionId)) return null
-  const w = useAdventureStore().mortalWorld
-  if (!w || !w.chain.some(p => p.fromId === regionId)) return null
-  const next = w.chain.find(p => canEnterNode(p.nodeId) && !isNodeCleared(p.nodeId))
-  return next ? `本世路线尚未行至此处,眼下该往「${next.name}」。` : null
+  if (canEnterRegion(regionId)) return null;
+  const w = useAdventureStore().mortalWorld;
+  if (!w || !w.chain.some((p) => p.fromId === regionId)) return null;
+  const next = w.chain.find((p) => canEnterNode(p.nodeId) && !isNodeCleared(p.nodeId));
+  return next ? `本世路线尚未行至此处,眼下该往「${next.name}」。` : null;
 }
 
 /**
@@ -129,15 +129,15 @@ export function entryBlockReason(regionId: string): string | null {
  * 一条路线内区域不重复,故 fromId 可唯一定位节点
  */
 export function advanceRoute(regionId: string): string | null {
-  const adventure = useAdventureStore()
-  const w = adventure.mortalWorld
-  if (!w) return null
-  const node = w.chain.find(p => p.fromId === regionId)
-  if (!node) return null
-  if (!adventure.markNodeCleared(node.nodeId)) return null
-  const i = w.chain.findIndex(p => p.nodeId === node.nodeId)
-  const next = w.chain[i + 1]
-  return next ? next.name : null
+  const adventure = useAdventureStore();
+  const w = adventure.mortalWorld;
+  if (!w) return null;
+  const node = w.chain.find((p) => p.fromId === regionId);
+  if (!node) return null;
+  if (!adventure.markNodeCleared(node.nodeId)) return null;
+  const i = w.chain.findIndex((p) => p.nodeId === node.nodeId);
+  const next = w.chain[i + 1];
+  return next ? next.name : null;
 }
 
 // ============ 本世内容:节点是唯一事实来源 ============
@@ -153,11 +153,11 @@ export function advanceRoute(regionId: string): string | null {
  * 这是兼容路径,不是并行路径
  */
 export interface PlaceContent {
-  enemies: readonly string[]
-  boss: string
-  eventTags: readonly string[]
+  enemies: readonly string[];
+  boss: string;
+  eventTags: readonly string[];
   /** true 表示走的是老存档兼容路径 */
-  fromLegacy: boolean
+  fromLegacy: boolean;
 }
 
 /**
@@ -168,18 +168,18 @@ export interface PlaceContent {
  * 那等于绕过世界边界(见 core/overviewNecessity.ts)
  */
 export function placeContent(regionId: string): PlaceContent {
-  const w = useAdventureStore().mortalWorld
-  const node = w?.chain.find(p => p.fromId === regionId)
+  const w = useAdventureStore().mortalWorld;
+  const node = w?.chain.find((p) => p.fromId === regionId);
   if (node) {
-    return { enemies: node.enemies, boss: node.boss, eventTags: node.eventTags, fromLegacy: false }
+    return { enemies: node.enemies, boss: node.boss, eventTags: node.eventTags, fromLegacy: false };
   }
-  const r = REGIONS.find(x => x.id === regionId)
+  const r = REGIONS.find((x) => x.id === regionId);
   return {
     enemies: r?.enemies ?? [],
-    boss: r?.boss ?? '',
+    boss: r?.boss ?? "",
     eventTags: r?.eventTags ?? [],
-    fromLegacy: true
-  }
+    fromLegacy: true,
+  };
 }
 
 // ============ 翻译成玩家看得懂的东西 ============
@@ -193,39 +193,39 @@ export function placeContent(regionId: string): PlaceContent {
  */
 export interface PlaceView {
   /** 路线节点 id —— 可达性的凭据 */
-  nodeId: string
+  nodeId: string;
   /** 对应的真实区域 id —— 战斗数据仍取自它 */
-  regionId: string
-  name: string
+  regionId: string;
+  name: string;
   /** 地貌轴,玩家可见的分类 */
-  terrain: string
+  terrain: string;
   /** SVG 横坐标(0~VIEW_W) */
-  x: number
+  x: number;
   /** SVG 纵坐标:层级越高越靠上 */
-  y: number
+  y: number;
   /** 节点半径,按**世界内相对**事件密度归一化 —— 平稳节奏也仍有层级 */
-  r: number
+  r: number;
   /** 事件多寡:1~5,列表里用点数表达 */
-  eventLevel: number
+  eventLevel: number;
   /** 首领名 */
-  bossName: string
+  bossName: string;
 }
 
 /** 路线图的 viewBox 尺寸 */
-export const VIEW_W = 300
-export const VIEW_H = 64
+export const VIEW_W = 300;
+export const VIEW_H = 64;
 
 export interface WorldView {
   /** 世界身份,玩家第一眼看到的那句话 */
-  title: string
-  summary: string
+  title: string;
+  summary: string;
   /** 贯穿本世的规则(玩家可见) */
-  ruleText: string
-  places: PlaceView[]
+  ruleText: string;
+  places: PlaceView[];
 }
 
 function regionName(id: string): string {
-  return REGIONS.find(r => r.id === id)?.name ?? id
+  return REGIONS.find((r) => r.id === id)?.name ?? id;
 }
 
 /**
@@ -236,32 +236,32 @@ function regionName(id: string): string {
  * 只需要看出路线长得不一样
  */
 export function worldView(w: MortalWorld, bossNameOf: (id: string) => string): WorldView {
-  const id = worldIdentity(w)
-  const tiers = w.chain.map(p => p.tier)
-  const lo = Math.min(...tiers)
-  const hi = Math.max(...tiers)
-  const range = Math.max(1, hi - lo)
+  const id = worldIdentity(w);
+  const tiers = w.chain.map((p) => p.tier);
+  const lo = Math.min(...tiers);
+  const hi = Math.max(...tiers);
+  const range = Math.max(1, hi - lo);
 
   // 横坐标按累积路程:跨度大的一段占更宽的横向距离。
   // 不设固定最小间距 —— 固定基础宽度会把跨度差异整个压平
-  const spans = w.chain.map((p, i) => (i === 0 ? 0 : Math.abs(p.tier - w.chain[i - 1]!.tier)))
-  const total = spans.reduce((a, b) => a + b, 0) || 1
-  let acc = 0
-  const xs = spans.map(sp => {
-    acc += sp
-    return acc / total
-  })
+  const spans = w.chain.map((p, i) => (i === 0 ? 0 : Math.abs(p.tier - w.chain[i - 1]!.tier)));
+  const total = spans.reduce((a, b) => a + b, 0) || 1;
+  let acc = 0;
+  const xs = spans.map((sp) => {
+    acc += sp;
+    return acc / total;
+  });
 
   // 节点半径按**世界内相对**密度:平稳节奏(密度全等)也给一个居中的统一尺寸,
   // 而不是让绝对值决定 —— 否则「点大处事多」在平稳世界里完全失效
-  const dens = w.chain.map(p => p.eventTags.length)
-  const dlo = Math.min(...dens)
-  const dhi = Math.max(...dens)
-  const drange = dhi - dlo
+  const dens = w.chain.map((p) => p.eventTags.length);
+  const dlo = Math.min(...dens);
+  const dhi = Math.max(...dens);
+  const drange = dhi - dlo;
 
-  const pad = 12
+  const pad = 12;
   const places: PlaceView[] = w.chain.map((p, i) => {
-    const rel = drange === 0 ? 0.5 : (dens[i]! - dlo) / drange
+    const rel = drange === 0 ? 0.5 : (dens[i]! - dlo) / drange;
     return {
       nodeId: p.nodeId,
       regionId: p.fromId,
@@ -272,8 +272,8 @@ export function worldView(w: MortalWorld, bossNameOf: (id: string) => string): W
       y: VIEW_H - pad - ((p.tier - lo) / range) * (VIEW_H - pad * 2),
       r: 3 + rel * 3.5,
       eventLevel: Math.max(1, Math.min(5, p.eventTags.length)),
-      bossName: bossNameOf(p.boss)
-    }
-  })
-  return { title: id.name, summary: id.summary, ruleText: w.ruleName, places }
+      bossName: bossNameOf(p.boss),
+    };
+  });
+  return { title: id.name, summary: id.summary, ruleText: w.ruleName, places };
 }

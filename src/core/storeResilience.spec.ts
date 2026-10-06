@@ -56,7 +56,7 @@ function persistedStores(): StoreEntry[] {
   const out: StoreEntry[] = [];
   for (const [file, src] of Object.entries(STORE_SRC)) {
     if (file.endsWith(".spec.ts")) continue;
-    const slice = /persistConfig\(\s*'([a-zA-Z]+)'\s*\)/.exec(src)?.[1];
+    const slice = /persistConfig\(\s*["']([a-zA-Z]+)["']\s*\)/.exec(src)?.[1];
     if (!slice) continue;
     const mod = STORE_MODULES[file];
     out.push({

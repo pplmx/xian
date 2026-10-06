@@ -9,13 +9,13 @@
  *   二 **未来的版本不许猜**。读到比当前更高的版本,拒绝加载并说明原因 ——
  *      猜错的后果是把新档写坏,而写坏比读不到严重得多。
  */
-import { asRecord } from './saveShape.js'
+import { asRecord } from "./saveShape.js";
 
 /** 存档封套:版本 + 存档时刻 + 数据。savedAt 用于离线结算(知道"离开多久") */
 export interface SavePayload {
-  version: number
-  savedAt: number
-  data: unknown
+  version: number;
+  savedAt: number;
+  data: unknown;
 }
 
 /**
@@ -26,9 +26,9 @@ export interface SavePayload {
  * 它返回 null 表示这份存档不可用(坏得修不回来),调用方据此走兜底。
  */
 export interface SaveFormat<T> {
-  readonly currentVersion: number
-  readonly migrations?: Readonly<Record<number, (data: unknown) => unknown>>
-  readonly revive?: (data: unknown) => T | null
+  readonly currentVersion: number;
+  readonly migrations?: Readonly<Record<number, (data: unknown) => unknown>>;
+  readonly revive?: (data: unknown) => T | null;
   /**
    * 自定义编解码(**可选**):想压缩、加密、或换一层封套时给这一对。
    *
@@ -41,39 +41,43 @@ export interface SaveFormat<T> {
    * 解密失败不必自己兜异常,直接抛即可。
    */
   readonly codec?: {
-    encode: (payload: SavePayload) => string
-    decode: (text: string) => unknown
-  }
+    encode: (payload: SavePayload) => string;
+    decode: (text: string) => unknown;
+  };
 }
 
 export function defineSaveFormat<T>(format: SaveFormat<T>): SaveFormat<T> {
   if (!Number.isInteger(format.currentVersion) || format.currentVersion < 1) {
-    throw new Error('存档格式:currentVersion 必须是 ≥1 的整数')
+    throw new Error("存档格式:currentVersion 必须是 ≥1 的整数");
   }
-  return format
+  return format;
 }
 
 /** 按链式迁移把数据从 fromVersion 带到当前版本(缺失的跳按"形状没变"处理) */
-export function runMigrations(data: unknown, fromVersion: number, format: SaveFormat<unknown>): unknown {
-  let cur = data
+export function runMigrations(
+  data: unknown,
+  fromVersion: number,
+  format: SaveFormat<unknown>,
+): unknown {
+  let cur = data;
   // 版本号不认识(缺失/NaN/负数)时按**最老**的一版处理:一步一步补上来,
   // 而不是"跳过整条链" —— 后者会让旧档悄悄缺字段,而缺字段是读档期白屏的常见起因
-  const start = Number.isFinite(fromVersion) ? Math.max(1, Math.floor(fromVersion)) : 1
+  const start = Number.isFinite(fromVersion) ? Math.max(1, Math.floor(fromVersion)) : 1;
   for (let v = start; v < format.currentVersion; v += 1) {
-    const step = format.migrations?.[v]
-    if (step) cur = step(cur)
+    const step = format.migrations?.[v];
+    if (step) cur = step(cur);
   }
-  return cur
+  return cur;
 }
 
 export type SaveDecodeResult<T> =
   | { ok: true; state: T; version: number; fromVersion: number; migrated: boolean; savedAt: number }
-  | { ok: false; reason: 'parse' | 'future' | 'shape'; message: string }
+  | { ok: false; reason: "parse" | "future" | "shape"; message: string };
 
 /** 编码成一段文本(落盘/导出的内容就是这个) */
 export function encodeSave<T>(state: T, format: SaveFormat<T>, now: number = Date.now()): string {
-  const payload: SavePayload = { version: format.currentVersion, savedAt: now, data: state }
-  return format.codec ? format.codec.encode(payload) : JSON.stringify(payload)
+  const payload: SavePayload = { version: format.currentVersion, savedAt: now, data: state };
+  return format.codec ? format.codec.encode(payload) : JSON.stringify(payload);
 }
 
 /**
@@ -85,34 +89,50 @@ export function encodeSave<T>(state: T, format: SaveFormat<T>, now: number = Dat
  *   shape  —— 迁移之后仍然修不好(真损坏)。
  */
 export function decodeSave<T>(text: string, format: SaveFormat<T>): SaveDecodeResult<T> {
-  let parsed: unknown
+  let parsed: unknown;
   try {
-    parsed = format.codec ? format.codec.decode(text) : JSON.parse(text)
+    parsed = format.codec ? format.codec.decode(text) : JSON.parse(text);
   } catch {
-    return { ok: false, reason: 'parse', message: format.codec ? '存档内容解不开(编解码失败)' : '存档内容不是有效 JSON' }
+    return {
+      ok: false,
+      reason: "parse",
+      message: format.codec ? "存档内容解不开(编解码失败)" : "存档内容不是有效 JSON",
+    };
   }
-  return decodeSavePayload(parsed, format)
+  return decodeSavePayload(parsed, format);
 }
 
 /** 同上,但输入已经是解析过的对象(例如从容器存储里读回来的一坨 JSON) */
 export function decodeSavePayload<T>(parsed: unknown, format: SaveFormat<T>): SaveDecodeResult<T> {
-  const payload = asRecord<unknown>(parsed)
+  const payload = asRecord<unknown>(parsed);
   /**
    * 版本号说不清(缺失 / NaN / 负数 / 0)时一律按**最老的一版**处理 —— 与 `runMigrations`
    * 同一条口径:先一步一步补上来,而不是"跳过整条链"(后者会让旧档悄悄缺字段)。
    */
   const version =
-    typeof payload.version === 'number' && Number.isFinite(payload.version)
+    typeof payload.version === "number" && Number.isFinite(payload.version)
       ? Math.max(1, Math.floor(payload.version))
-      : 1
-  const savedAt = typeof payload.savedAt === 'number' && Number.isFinite(payload.savedAt) ? payload.savedAt : 0
+      : 1;
+  const savedAt =
+    typeof payload.savedAt === "number" && Number.isFinite(payload.savedAt) ? payload.savedAt : 0;
   if (version > format.currentVersion) {
-    return { ok: false, reason: 'future', message: `存档版本 ${version} 来自更新的版本(本作最高 ${format.currentVersion})` }
+    return {
+      ok: false,
+      reason: "future",
+      message: `存档版本 ${version} 来自更新的版本(本作最高 ${format.currentVersion})`,
+    };
   }
-  const migrated = runMigrations(payload.data, version, format as SaveFormat<unknown>)
-  const state = format.revive ? format.revive(migrated) : (migrated as T)
+  const migrated = runMigrations(payload.data, version, format as SaveFormat<unknown>);
+  const state = format.revive ? format.revive(migrated) : (migrated as T);
   if (state === null || state === undefined) {
-    return { ok: false, reason: 'shape', message: '存档内容修补不回来' }
+    return { ok: false, reason: "shape", message: "存档内容修补不回来" };
   }
-  return { ok: true, state, version: format.currentVersion, fromVersion: version, migrated: version < format.currentVersion, savedAt }
+  return {
+    ok: true,
+    state,
+    version: format.currentVersion,
+    fromVersion: version,
+    migrated: version < format.currentVersion,
+    savedAt,
+  };
 }

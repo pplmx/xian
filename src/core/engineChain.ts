@@ -9,51 +9,54 @@
  *     不 import progress,免得绕成环;
  *   · 结果换算回本作的内容定义,调用方直接拿去发赏与提示。
  */
-import type { ChainAdvance, ChainNode } from 'wanxiang-engine'
-import { createChain } from 'wanxiang-engine'
-import type { QuestDef } from '@/types'
-import { MAIN_QUESTS } from '@/data/quests'
+import type { ChainAdvance, ChainNode } from "wanxiang-engine";
+import { createChain } from "wanxiang-engine";
+import type { QuestDef } from "@/types";
+import { MAIN_QUESTS } from "@/data/quests";
 
 /** 一次结算最多推进几节 —— 守卫,不是配额 */
-export const MAIN_CHAIN_MAX_STEPS = 5
+export const MAIN_CHAIN_MAX_STEPS = 5;
 
-const QUEST_BY_ID = new Map(MAIN_QUESTS.map(q => [q.id, q]))
+const QUEST_BY_ID = new Map(MAIN_QUESTS.map((q) => [q.id, q]));
 
 const MAIN_CHAIN = createChain({
-  nodes: MAIN_QUESTS.map(q => ({ id: q.id, name: q.name })),
+  nodes: MAIN_QUESTS.map((q) => ({ id: q.id, name: q.name })),
   maxSteps: MAIN_CHAIN_MAX_STEPS,
   // 判据不在这里:advance 的 ctx 就是"这一节达成了吗"
-  done: (node: ChainNode, ctx: (node: ChainNode) => boolean) => ctx(node)
-})
+  done: (node: ChainNode, ctx: (node: ChainNode) => boolean) => ctx(node),
+});
 
 export interface MainChainAdvance {
   /** 推进后的下标(没推进则原样) */
-  index: number
+  index: number;
   /** 这一次走过的节点(顺序即链上顺序),已换算回本作的内容定义 */
-  advanced: QuestDef[]
+  advanced: QuestDef[];
   /** 到链尾了吗 */
-  atEnd: boolean
+  atEnd: boolean;
   /** 撞上限了吗(还有下一节满足条件,但这一轮按守停下了) */
-  capped: boolean
+  capped: boolean;
 }
 
 /** 推进主线链:能推多远推多远(最多 5 节) */
-export function advanceMainChain(index: number, done: (node: ChainNode) => boolean): MainChainAdvance {
-  const out: ChainAdvance = MAIN_CHAIN.advance({ index }, done)
-  const advanced: QuestDef[] = []
+export function advanceMainChain(
+  index: number,
+  done: (node: ChainNode) => boolean,
+): MainChainAdvance {
+  const out: ChainAdvance = MAIN_CHAIN.advance({ index }, done);
+  const advanced: QuestDef[] = [];
   for (const node of out.advanced) {
-    const def = QUEST_BY_ID.get(node.id)
-    if (def) advanced.push(def)
+    const def = QUEST_BY_ID.get(node.id);
+    if (def) advanced.push(def);
   }
-  return { index: out.state.index, advanced, atEnd: out.atEnd, capped: out.capped }
+  return { index: out.state.index, advanced, atEnd: out.atEnd, capped: out.capped };
 }
 
 /** 第几节是哪条任务(界面与判据共用) */
 export function mainQuestAt(index: number): QuestDef | undefined {
-  return MAIN_QUESTS[index]
+  return MAIN_QUESTS[index];
 }
 
 /** 按 id 找这一节(判据与发赏都按 id 认) */
 export function mainQuestDefById(id: string): QuestDef | undefined {
-  return QUEST_BY_ID.get(id)
+  return QUEST_BY_ID.get(id);
 }

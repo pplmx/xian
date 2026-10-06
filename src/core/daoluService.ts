@@ -27,8 +27,8 @@ import {
   type DaoluDef,
   STAGE_GATES,
   daoluDef,
-  stageIndex
-} from '@/data/daolu'
+  stageIndex,
+} from "@/data/daolu";
 import {
   BOND_EVENTS,
   type BondEventDef,
@@ -36,9 +36,9 @@ import {
   type BondTrigger,
   leanFromCounters,
   resolveChoice,
-  sheDecidesNow
-} from '@/data/bondEvents'
-import type { DaoLean } from '@/data/daolu'
+  sheDecidesNow,
+} from "@/data/bondEvents";
+import type { DaoLean } from "@/data/daolu";
 import {
   type BondIntent,
   INTENT_MIN_STAGE,
@@ -48,76 +48,76 @@ import {
   intentFor,
   respondTo,
   sparkDelta,
-  willSpeak
-} from '@/data/bondIntent'
-import { usePlayerStore } from '@/stores/player'
-import { useQuestsStore } from '@/stores/quests'
-import { useUiStore } from '@/stores/ui'
-import { rng, type RandomService } from '@/utils/random'
+  willSpeak,
+} from "@/data/bondIntent";
+import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
+import { useUiStore } from "@/stores/ui";
+import { rng, type RandomService } from "@/utils/random";
 
 /** 本世与某人的关系(存档结构) */
 export interface BondState {
-  daoluId: string
-  stage: BondStage
+  daoluId: string;
+  stage: BondStage;
   /** 缘分 0~100 */
-  fate: number
+  fate: number;
   /** 信任 0~100 */
-  trust: number
+  trust: number;
   /** 道心契合 0~100 */
-  accord: number
+  accord: number;
   /** 共历次数 */
-  shared: number
+  shared: number;
   /** 初遇时刻 */
-  metAt: number
+  metAt: number;
   /** 她是否已陨落 */
-  fallen: boolean
+  fallen: boolean;
   /** 本世已经历的共同事件 */
-  doneEvents: string[]
+  doneEvents: string[];
   /** 当下待决的事件;由历练情境写入,不由打开界面触发 */
-  pendingEventId?: string | null
+  pendingEventId?: string | null;
   /** 已累积的机会点(每次历练情境 +1) */
-  opportunities: number
+  opportunities: number;
   /** 下一次可提供事件的机会点门槛 —— 防止刷成 farming loop */
-  nextEventAt: number
+  nextEventAt: number;
   /** 上一次冲突的类型,用于避免连续同类 */
-  lastKind?: string | null
+  lastKind?: string | null;
   /** 她是否已离开(关系冻结,履历仍记) */
-  departed?: boolean
+  departed?: boolean;
   /** 她自己的意图(Phase 34.1);由经历催生,与世界情境无关 */
-  intent?: BondIntent | null
+  intent?: BondIntent | null;
   /** 她已开口,正等你的回应 */
-  intentPending?: boolean
+  intentPending?: boolean;
 }
 
 /** 一世结束后留在履历里的那一笔 */
 export interface BondRecord {
-  daoluId: string
-  name: string
-  stage: BondStage
-  ending: BondEnding
-  shared: number
+  daoluId: string;
+  name: string;
+  stage: BondStage;
+  ending: BondEnding;
+  shared: number;
 }
 
-const CAP = 100
+const CAP = 100;
 /**
  * 两件共同事件之间至少相隔多少个机会点。
  *
  * 用「机会点」而非时间:走得多才有更多机会,挂机久不会自动刷出一堆关系事件
  */
-const EVENT_GAP = 6
+const EVENT_GAP = 6;
 
 function clamp(n: number): number {
-  return Math.max(0, Math.min(CAP, Math.round(n)))
+  return Math.max(0, Math.min(CAP, Math.round(n)));
 }
 
 /** 本世的关系;未遇见任何人时为 null */
 export function currentBond(): BondState | null {
-  return usePlayerStore().bond
+  return usePlayerStore().bond;
 }
 
 export function currentDaolu(): DaoluDef | null {
-  const b = currentBond()
-  return b ? (daoluDef(b.daoluId) ?? null) : null
+  const b = currentBond();
+  return b ? (daoluDef(b.daoluId) ?? null) : null;
 }
 
 // ============ 相遇 ============
@@ -137,10 +137,11 @@ export function currentDaolu(): DaoluDef | null {
  *          「写在哪儿」与「在哪儿能被撞见」必须是同一件事。
  */
 export function candidatesFor(terrains: readonly string[], major: number): DaoluDef[] {
-  const seen = new Set(terrains)
+  const seen = new Set(terrains);
   return DAOLU.filter(
-    d => d.startMajor <= major && (d.terrains.length === 0 || d.terrains.some(t => seen.has(t)))
-  )
+    (d) =>
+      d.startMajor <= major && (d.terrains.length === 0 || d.terrains.some((t) => seen.has(t))),
+  );
 }
 
 /**
@@ -151,29 +152,29 @@ export function candidatesFor(terrains: readonly string[], major: number): Daolu
 export function destinedCandidate(
   history: readonly BondRecord[],
   terrains: readonly string[],
-  major: number
+  major: number,
 ): DaoluDef | null {
-  const deep = history.filter(r => stageIndex(r.stage) >= stageIndex('pledged'))
-  if (deep.length === 0) return null
+  const deep = history.filter((r) => stageIndex(r.stage) >= stageIndex("pledged"));
+  if (deep.length === 0) return null;
   // 走得越深,重逢的可能越大,但永远不满
-  const chance = Math.min(0.35, 0.08 * deep.length)
-  if (!rng.chance(chance)) return null
-  const pick = deep[rng.int(0, deep.length - 1)]!
-  const def = daoluDef(pick.daoluId)
-  if (!def) return null
+  const chance = Math.min(0.35, 0.08 * deep.length);
+  if (!rng.chance(chance)) return null;
+  const pick = deep[rng.int(0, deep.length - 1)]!;
+  const def = daoluDef(pick.daoluId);
+  if (!def) return null;
   // 仍要她愿意出现在这一世的地界上
-  return candidatesFor(terrains, major).some(c => c.id === def.id) ? def : null
+  return candidatesFor(terrains, major).some((c) => c.id === def.id) ? def : null;
 }
 
 /** 初遇:记住这个人 */
 export function meet(daoluId: string, now = Date.now()): boolean {
-  const player = usePlayerStore()
-  if (player.bond) return false
-  const def = daoluDef(daoluId)
-  if (!def) return false
+  const player = usePlayerStore();
+  if (player.bond) return false;
+  const def = daoluDef(daoluId);
+  if (!def) return false;
   player.setBond({
     daoluId,
-    stage: 'met',
+    stage: "met",
     fate: 10,
     trust: 5,
     accord: 30,
@@ -185,21 +186,21 @@ export function meet(daoluId: string, now = Date.now()): boolean {
     opportunities: 0,
     // 初遇之后要走一段路才会有第一件事
     nextEventAt: EVENT_GAP,
-    lastKind: null
-  })
-  useUiStore().toast(`途中遇见一人——${def.name}`, 'info')
-  return true
+    lastKind: null,
+  });
+  useUiStore().toast(`途中遇见一人——${def.name}`, "info");
+  return true;
 }
 
 // ============ 关系推进 ============
 
 /** 一次互动对三维的影响 */
 export interface BondDelta {
-  fate?: number
-  trust?: number
-  accord?: number
+  fate?: number;
+  trust?: number;
+  accord?: number;
   /** 是否记为一次共历 */
-  shared?: boolean
+  shared?: boolean;
 }
 
 /**
@@ -209,70 +210,83 @@ export interface BondDelta {
  * 一次道途分歧可以在缘分很深时让契合骤降
  */
 export function advanceBond(delta: BondDelta): BondState | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  if (!b || b.fallen || b.departed) return null
+  const player = usePlayerStore();
+  const b = player.bond;
+  if (!b || b.fallen || b.departed) return null;
   const next: BondState = {
     ...b,
     fate: clamp(b.fate + (delta.fate ?? 0)),
     trust: clamp(b.trust + (delta.trust ?? 0)),
     accord: clamp(b.accord + (delta.accord ?? 0)),
-    shared: b.shared + (delta.shared ? 1 : 0)
-  }
-  next.stage = highestReachable(next)
-  player.setBond(next)
+    shared: b.shared + (delta.shared ? 1 : 0),
+  };
+  next.stage = highestReachable(next);
+  player.setBond(next);
   if (stageIndex(next.stage) > stageIndex(b.stage)) {
-    const def = daoluDef(b.daoluId)
-    useUiStore().toast(`你与${def?.name ?? '她'}的关系更进一步`, 'rare')
+    const def = daoluDef(b.daoluId);
+    useUiStore().toast(`你与${def?.name ?? "她"}的关系更进一步`, "rare");
   }
-  return next
+  return next;
 }
 
 /** 当前三维能支撑到哪一阶 */
 export function highestReachable(b: BondState): BondStage {
-  let out: BondStage = 'met'
+  let out: BondStage = "met";
   for (const g of STAGE_GATES) {
-    if (b.fate >= g.fate && b.trust >= g.trust && b.accord >= g.accord && b.shared >= g.shared) out = g.stage
+    if (b.fate >= g.fate && b.trust >= g.trust && b.accord >= g.accord && b.shared >= g.shared)
+      out = g.stage;
   }
-  return out
+  return out;
 }
 
 /** 距离下一阶还差什么(供界面提示,不给数值奖励) */
 export function nextGateHint(): { stage: BondStage; lacking: string[] } | null {
-  const b = currentBond()
-  if (!b) return null
-  const i = stageIndex(b.stage)
-  const next = STAGE_GATES.find(g => stageIndex(g.stage) === i + 1)
-  if (!next) return null
-  const lacking: string[] = []
-  if (b.fate < next.fate) lacking.push('缘分尚浅')
-  if (b.trust < next.trust) lacking.push('信任未足')
-  if (b.accord < next.accord) lacking.push('道心未契')
-  if (b.shared < next.shared) lacking.push('共历太少')
-  return { stage: next.stage, lacking }
+  const b = currentBond();
+  if (!b) return null;
+  const i = stageIndex(b.stage);
+  const next = STAGE_GATES.find((g) => stageIndex(g.stage) === i + 1);
+  if (!next) return null;
+  const lacking: string[] = [];
+  if (b.fate < next.fate) lacking.push("缘分尚浅");
+  if (b.trust < next.trust) lacking.push("信任未足");
+  if (b.accord < next.accord) lacking.push("道心未契");
+  if (b.shared < next.shared) lacking.push("共历太少");
+  return { stage: next.stage, lacking };
 }
 
 // ============ 分离与结局 ============
 
 /** 她陨落于这一世 */
 export function fall(): BondRecord | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  if (!b || b.fallen) return null
-  const def = daoluDef(b.daoluId)
-  player.setBond({ ...b, fallen: true })
-  useUiStore().toast(`${def?.name ?? '她'}没能走完这一世`, 'warn')
-  return { daoluId: b.daoluId, name: def?.name ?? b.daoluId, stage: b.stage, ending: 'perished', shared: b.shared }
+  const player = usePlayerStore();
+  const b = player.bond;
+  if (!b || b.fallen) return null;
+  const def = daoluDef(b.daoluId);
+  player.setBond({ ...b, fallen: true });
+  useUiStore().toast(`${def?.name ?? "她"}没能走完这一世`, "warn");
+  return {
+    daoluId: b.daoluId,
+    name: def?.name ?? b.daoluId,
+    stage: b.stage,
+    ending: "perished",
+    shared: b.shared,
+  };
 }
 
 /** 主动分道 */
 export function part(): BondRecord | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  if (!b) return null
-  const def = daoluDef(b.daoluId)
-  player.setBond(null)
-  return { daoluId: b.daoluId, name: def?.name ?? b.daoluId, stage: b.stage, ending: 'parted', shared: b.shared }
+  const player = usePlayerStore();
+  const b = player.bond;
+  if (!b) return null;
+  const def = daoluDef(b.daoluId);
+  player.setBond(null);
+  return {
+    daoluId: b.daoluId,
+    name: def?.name ?? b.daoluId,
+    stage: b.stage,
+    ending: "parted",
+    shared: b.shared,
+  };
 }
 
 /**
@@ -281,21 +295,26 @@ export function part(): BondRecord | null {
  * 由 confirmReincarnation 调用。**只产出一条记录,不产出任何资源**
  */
 export function archiveBond(): BondRecord | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  if (!b) return null
-  const def = daoluDef(b.daoluId)
+  const player = usePlayerStore();
+  const b = player.bond;
+  if (!b) return null;
+  const def = daoluDef(b.daoluId);
   const ending: BondEnding = b.fallen
-    ? 'perished'
+    ? "perished"
     : b.departed
-      ? 'parted'
-      : stageIndex(b.stage) >= stageIndex('pledged')
-        ? 'accompanied'
-        : 'missed'
-  player.setBond(null)
-  return { daoluId: b.daoluId, name: def?.name ?? b.daoluId, stage: b.stage, ending, shared: b.shared }
+      ? "parted"
+      : stageIndex(b.stage) >= stageIndex("pledged")
+        ? "accompanied"
+        : "missed";
+  player.setBond(null);
+  return {
+    daoluId: b.daoluId,
+    name: def?.name ?? b.daoluId,
+    stage: b.stage,
+    ending,
+    shared: b.shared,
+  };
 }
-
 
 // ============ 共同事件(Phase 33.9) ============
 
@@ -307,18 +326,18 @@ export function archiveBond(): BondRecord | null {
  * 现在契合终于是**行为的结果**
  */
 export function playerLean(): DaoLean | null {
-  const quests = useQuestsStore()
-  return leanFromCounters(k => quests.counter(k))
+  const quests = useQuestsStore();
+  return leanFromCounters((k) => quests.counter(k));
 }
 
 /** 这一世还没经历过的共同事件 */
 export function availableBondEvents(): BondEventDef[] {
-  const player = usePlayerStore()
-  const b = player.bond
-  if (!b || b.fallen) return []
-  const done = new Set(b.doneEvents)
-  const si = stageIndex(b.stage)
-  return BOND_EVENTS.filter(e => !done.has(e.id) && si >= e.minStageIndex)
+  const player = usePlayerStore();
+  const b = player.bond;
+  if (!b || b.fallen) return [];
+  const done = new Set(b.doneEvents);
+  const si = stageIndex(b.stage);
+  return BOND_EVENTS.filter((e) => !done.has(e.id) && si >= e.minStageIndex);
 }
 
 /**
@@ -328,13 +347,13 @@ export function availableBondEvents(): BondEventDef[] {
  * 缘分浅时多来共历,信任低时多来风险与承担,契合低时多来道途与价值观
  */
 function weightFor(ev: BondEventDef, b: BondState): number {
-  let w = 1
-  if (b.fate < 45 && (ev.kind === 'risk' || ev.kind === 'resource')) w += 1.2
-  if (b.trust < 45 && (ev.kind === 'risk' || ev.kind === 'sacrifice')) w += 1.5
-  if (b.accord < 45 && (ev.kind === 'path' || ev.kind === 'value')) w += 1.5
+  let w = 1;
+  if (b.fate < 45 && (ev.kind === "risk" || ev.kind === "resource")) w += 1.2;
+  if (b.trust < 45 && (ev.kind === "risk" || ev.kind === "sacrifice")) w += 1.5;
+  if (b.accord < 45 && (ev.kind === "path" || ev.kind === "value")) w += 1.5;
   // 同类冲突刚发生过则降权,避免连续两次同一种考验
-  if (b.lastKind === ev.kind) w *= 0.35
-  return w
+  if (b.lastKind === ev.kind) w *= 0.35;
+  return w;
 }
 
 /**
@@ -347,50 +366,53 @@ function weightFor(ev: BondEventDef, b: BondState): number {
  * 「哪条路真的够得着」必须能被确定性地钉住,不然又会退化成
  * 「功能写了但没人见过」(道侣陨落曾经就是这个病,见 RIL TASK-049)。
  */
-export function offerBondEvent(trigger: BondTrigger, rand: RandomService = rng): BondEventDef | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  if (!b || b.fallen || b.departed) return null
+export function offerBondEvent(
+  trigger: BondTrigger,
+  rand: RandomService = rng,
+): BondEventDef | null {
+  const player = usePlayerStore();
+  const b = player.bond;
+  if (!b || b.fallen || b.departed) return null;
   // 已有待决事件时不再叠加 —— 一次只面对一个问题
-  if (b.pendingEventId) return null
+  if (b.pendingEventId) return null;
   // 机会点冷却:走得多才有更多机会,但不能连着来
   if (b.opportunities < b.nextEventAt) {
-    player.setBond({ ...b, opportunities: b.opportunities + 1 })
-    return null
+    player.setBond({ ...b, opportunities: b.opportunities + 1 });
+    return null;
   }
-  const pool = availableBondEvents().filter(e => e.triggers.includes(trigger))
+  const pool = availableBondEvents().filter((e) => e.triggers.includes(trigger));
   if (pool.length === 0) {
-    player.setBond({ ...b, opportunities: b.opportunities + 1 })
-    return null
+    player.setBond({ ...b, opportunities: b.opportunities + 1 });
+    return null;
   }
-  const picked = rand.weighted(pool, e => weightFor(e, b))
-  player.setBond({ ...b, opportunities: b.opportunities + 1, pendingEventId: picked.id })
-  useUiStore().toast(`${currentDaolu()?.name ?? '她'}似乎有话要说`, 'info')
-  return picked
+  const picked = rand.weighted(pool, (e) => weightFor(e, b));
+  player.setBond({ ...b, opportunities: b.opportunities + 1, pendingEventId: picked.id });
+  useUiStore().toast(`${currentDaolu()?.name ?? "她"}似乎有话要说`, "info");
+  return picked;
 }
 
 /** 当下待决的共同事件(供界面读取,不再由打开弹窗触发) */
 export function pendingBondEvent(): BondEventDef | null {
-  const id = currentBond()?.pendingEventId
-  return id ? (bondEventDef(id) ?? null) : null
+  const id = currentBond()?.pendingEventId;
+  return id ? (bondEventDef(id) ?? null) : null;
 }
 
 /** 她此刻是否会先自己表态 */
 export function herStance(ev: BondEventDef): string | null {
-  const b = currentBond()
-  const def = currentDaolu()
-  if (!b || !def) return null
-  return sheDecidesNow(ev, b, def.temper)
+  const b = currentBond();
+  const def = currentDaolu();
+  if (!b || !def) return null;
+  return sheDecidesNow(ev, b, def.temper);
 }
 
 export interface ChoiceResult {
-  text: string
+  text: string;
   /** 她是否因此离开 */
-  left: boolean
+  left: boolean;
   /** 她是否因此殒落(只有「共命之险」那条路会走到这里) */
-  perished?: boolean
+  perished?: boolean;
   /** 三维实际变化,供界面显示「她的反应」而非裸数字 */
-  reaction: 'closer' | 'neutral' | 'strained' | 'broken'
+  reaction: "closer" | "neutral" | "strained" | "broken";
 }
 
 /**
@@ -400,8 +422,8 @@ export interface ChoiceResult {
  * 选项 label 里已写明「她未必撑得住」,另有两条不会死人的路可选。
  * 这是本项目对「不可逆后果」的一贯口径:可以重,但必须是你选的、且事先说清。
  */
-export const PERIL_SAFE_TRUST = 55
-export const PERIL_SAFE_ACCORD = 45
+export const PERIL_SAFE_TRUST = 55;
+export const PERIL_SAFE_ACCORD = 45;
 
 /**
  * 玩家做出选择。
@@ -409,17 +431,17 @@ export const PERIL_SAFE_ACCORD = 45
  * **不产出任何 StatMods / 资源 / 道果 / 宿慧** —— 只改关系与叙事
  */
 export function chooseBondEvent(eventId: string, choiceId: string): ChoiceResult | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  const def = currentDaolu()
-  if (!b || !def || b.fallen) return null
-  const ev = bondEventDef(eventId)
-  const ch = ev?.choices.find(x => x.id === choiceId)
-  if (!ev || !ch) return null
+  const player = usePlayerStore();
+  const b = player.bond;
+  const def = currentDaolu();
+  if (!b || !def || b.fallen) return null;
+  const ev = bondEventDef(eventId);
+  const ch = ev?.choices.find((x) => x.id === choiceId);
+  if (!ev || !ch) return null;
   // 一世一事:同一段经历不重复发生
-  if (b.doneEvents.includes(ev.id)) return null
+  if (b.doneEvents.includes(ev.id)) return null;
 
-  const out = resolveChoice(def, ch, playerLean())
+  const out = resolveChoice(def, ch, playerLean());
   // 记事件已历、清待决、记本次冲突类型,并把下一次机会点推远
   // —— 事件是人生节点,不是每日任务
   player.setBond({
@@ -427,43 +449,43 @@ export function chooseBondEvent(eventId: string, choiceId: string): ChoiceResult
     doneEvents: [...b.doneEvents, ev.id],
     pendingEventId: null,
     lastKind: ev.kind,
-    nextEventAt: b.opportunities + EVENT_GAP
-  })
-  advanceBond({ fate: out.fate, trust: out.trust, accord: out.accord, shared: true })
+    nextEventAt: b.opportunities + EVENT_GAP,
+  });
+  advanceBond({ fate: out.fate, trust: out.trust, accord: out.accord, shared: true });
 
   // 这次选择也是一段经历 —— 它会推动或压回她自己的那个念头
-  if (ch.supportsHer) sparkIntent('supported')
-  if (ch.crossesTaboo) sparkIntent('crossed')
+  if (ch.supportsHer) sparkIntent("supported");
+  if (ch.crossesTaboo) sparkIntent("crossed");
 
-  const after = player.bond!
+  const after = player.bond!;
   // 共命之险:关系够深则同生,不够则她殒落(唯一会死人的一条路,且玩家事先被 warning 过)
   if (ch.peril && !(after.trust >= PERIL_SAFE_TRUST && after.accord >= PERIL_SAFE_ACCORD)) {
-    fall()
+    fall();
     return {
       text: `${out.text}——可你回头时,劫云里已经没有第二个人了。`,
       left: false,
       perished: true,
-      reaction: 'broken'
-    }
+      reaction: "broken",
+    };
   }
-  let left = false
+  let left = false;
   // 她离开:选项直接导致,或信任与契合双双崩塌
   if (out.leaves || (after.trust < 15 && after.accord < 20)) {
-    left = true
+    left = true;
   }
-  const reaction: ChoiceResult['reaction'] = left
-    ? 'broken'
+  const reaction: ChoiceResult["reaction"] = left
+    ? "broken"
     : out.trust + out.accord >= 10
-      ? 'closer'
+      ? "closer"
       : out.trust + out.accord <= -10
-        ? 'strained'
-        : 'neutral'
+        ? "strained"
+        : "neutral";
 
   if (left) {
-    useUiStore().toast(`${def.name}离你而去`, 'warn')
-    player.setBond({ ...after, departed: true })
+    useUiStore().toast(`${def.name}离你而去`, "warn");
+    player.setBond({ ...after, departed: true });
   }
-  return { text: out.text, left, reaction }
+  return { text: out.text, left, reaction };
 }
 
 // ============ 她自己的意图(Phase 34.1) ============
@@ -475,11 +497,11 @@ export function chooseBondEvent(eventId: string, choiceId: string): ChoiceResult
  * 意图在关系够近之后自行形成,不需要世界安排
  */
 export function sparkIntent(spark: IntentSpark): BondIntent | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  const def = currentDaolu()
-  if (!b || !def || b.fallen || b.departed) return null
-  if (stageIndex(b.stage) < stageIndex(INTENT_MIN_STAGE)) return null
+  const player = usePlayerStore();
+  const b = player.bond;
+  const def = currentDaolu();
+  if (!b || !def || b.fallen || b.departed) return null;
+  if (stageIndex(b.stage) < stageIndex(INTENT_MIN_STAGE)) return null;
 
   const cur: BondIntent = b.intent ?? {
     daoluId: def.id,
@@ -488,16 +510,16 @@ export function sparkIntent(spark: IntentSpark): BondIntent | null {
     sparks: [],
     raised: 0,
     responses: [],
-    settled: false
-  }
-  if (cur.settled) return cur
+    settled: false,
+  };
+  if (cur.settled) return cur;
   const next: BondIntent = {
     ...cur,
     ripeness: Math.max(0, cur.ripeness + sparkDelta(spark, def.temper)),
-    sparks: [...cur.sparks, spark]
-  }
-  player.setBond({ ...b, intent: next })
-  return next
+    sparks: [...cur.sparks, spark],
+  };
+  player.setBond({ ...b, intent: next });
+  return next;
 }
 
 /**
@@ -507,10 +529,10 @@ export function sparkIntent(spark: IntentSpark): BondIntent | null {
  * offerBondEvent(trigger) 的分野:那是世界安排,这是她自己
  */
 export function speakIntent(): BondIntent | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  const def = currentDaolu()
-  if (!b || !def || !b.intent) return null
+  const player = usePlayerStore();
+  const b = player.bond;
+  const def = currentDaolu();
+  if (!b || !def || !b.intent) return null;
   /**
    * 她已经在等你回应了 —— 不重复开口。
    *
@@ -519,18 +541,18 @@ export function speakIntent(): BondIntent | null {
    * 同一句话会每十几秒 toast 一次、「已开口」次数一路涨到几十 —— 玩家体感是
    * 「这句话触发概率怎么这么高」,其实是一次都没被回应。
    */
-  if (b.intentPending) return null
-  if (!willSpeak(b.intent, def.temper)) return null
-  const next: BondIntent = { ...b.intent, raised: b.intent.raised + 1 }
-  player.setBond({ ...b, intent: next, intentPending: true })
-  useUiStore().toast(next.line, 'rare')
-  return next
+  if (b.intentPending) return null;
+  if (!willSpeak(b.intent, def.temper)) return null;
+  const next: BondIntent = { ...b.intent, raised: b.intent.raised + 1 };
+  player.setBond({ ...b, intent: next, intentPending: true });
+  useUiStore().toast(next.line, "rare");
+  return next;
 }
 
 /** 她是否正在等你的回应 */
 export function pendingIntent(): BondIntent | null {
-  const b = currentBond()
-  return b?.intentPending ? (b.intent ?? null) : null
+  const b = currentBond();
+  return b?.intentPending ? (b.intent ?? null) : null;
 }
 
 /**
@@ -540,19 +562,24 @@ export function pendingIntent(): BondIntent | null {
  * 再三不作声,她会自己去,然后不再指望你
  */
 export function respondIntent(response: IntentResponse): IntentAftermath | null {
-  const player = usePlayerStore()
-  const b = player.bond
-  const def = currentDaolu()
-  if (!b || !def || !b.intent || !b.intentPending) return null
-  const after = respondTo(def, b.intent, response)
+  const player = usePlayerStore();
+  const b = player.bond;
+  const def = currentDaolu();
+  if (!b || !def || !b.intent || !b.intentPending) return null;
+  const after = respondTo(def, b.intent, response);
   const next: BondIntent = {
     ...b.intent,
     responses: [...b.intent.responses, response],
     settled: after.settled,
     // 回应过后重新酝酿:未了结的意图会再次浮上来
-    ripeness: after.settled ? 0 : b.intent.ripeness * 0.4
-  }
-  player.setBond({ ...b, intent: next, intentPending: false })
-  advanceBond({ fate: after.fate, trust: after.trust, accord: after.accord, shared: response === 'accept' })
-  return after
+    ripeness: after.settled ? 0 : b.intent.ripeness * 0.4,
+  };
+  player.setBond({ ...b, intent: next, intentPending: false });
+  advanceBond({
+    fate: after.fate,
+    trust: after.trust,
+    accord: after.accord,
+    shared: response === "accept",
+  });
+  return after;
 }

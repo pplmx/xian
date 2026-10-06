@@ -109,7 +109,7 @@ describe("联动审计 · ④共鸣非最优套装化", () => {
     expect(hooks.length).toBeGreaterThanOrEqual(2);
     for (const hook of hooks) {
       expect(
-        src.includes(`'${hook}'`),
+        src.includes(`"${hook}"`),
         `playerSnap 未物化共鸣钩子 \`${hook}\` —— 套装声明了效果,战斗却不会兑现`,
       ).toBe(true);
     }

@@ -5,11 +5,11 @@
  * 详细接法见 README 与 `src/presets/`,可跑的例子见 `examples/`。
  */
 
-export type { Numeric } from './numeric.js'
-export { numberNumeric, formatAmount, clamp } from './numeric.js'
+export type { Numeric } from "./numeric.js";
+export { numberNumeric, formatAmount, clamp } from "./numeric.js";
 
-export type { Rng } from './rng.js'
-export { createRng, mulberry32, pickWeighted, seedFromString, randomRng } from './rng.js'
+export type { Rng } from "./rng.js";
+export { createRng, mulberry32, pickWeighted, seedFromString, randomRng } from "./rng.js";
 
 export type {
   AttributeDef,
@@ -18,9 +18,9 @@ export type {
   ComputedStats,
   Mods,
   OnTopMult,
-  StatsInput
-} from './attributes.js'
-export { attributeDefs, createAttributeSystem, DEFAULT_ATTRIBUTES } from './attributes.js'
+  StatsInput,
+} from "./attributes.js";
+export { attributeDefs, createAttributeSystem, DEFAULT_ATTRIBUTES } from "./attributes.js";
 
 export type {
   BreakthroughResult,
@@ -35,9 +35,9 @@ export type {
   RealmSystem,
   RealmSystemConfig,
   WorldConfig,
-  WorldDef
-} from './realms.js'
-export { createRealmSystem, DEFAULT_LAYER_NAMES, progressText } from './realms.js'
+  WorldDef,
+} from "./realms.js";
+export { createRealmSystem, DEFAULT_LAYER_NAMES, progressText } from "./realms.js";
 
 export type {
   AffixDef,
@@ -55,9 +55,9 @@ export type {
   RollOptions,
   SetDef,
   SlotDef,
-  TemplateDef
-} from './equipment.js'
-export { createEquipmentSystem, generateTemplates } from './equipment.js'
+  TemplateDef,
+} from "./equipment.js";
+export { createEquipmentSystem, generateTemplates } from "./equipment.js";
 
 export type {
   DungeonConfig,
@@ -70,9 +70,9 @@ export type {
   EnemySnapshot,
   RegionDef,
   RewardDef,
-  VictoryOutcome
-} from './dungeons.js'
-export { createDungeonSystem, dungeonContentPower, emptyProgress } from './dungeons.js'
+  VictoryOutcome,
+} from "./dungeons.js";
+export { createDungeonSystem, dungeonContentPower, emptyProgress } from "./dungeons.js";
 
 export type {
   BattleConfig,
@@ -91,12 +91,12 @@ export type {
   SkillEffectContext,
   SkillPickContext,
   StrikeContext,
-  StrikeOptions
-} from './combat.js'
-export { createCombatEngine } from './combat.js'
+  StrikeOptions,
+} from "./combat.js";
+export { createCombatEngine } from "./combat.js";
 
-export type { IdleConfig, IdlePlan } from './idle.js'
-export { planIdle, runIdle } from './idle.js'
+export type { IdleConfig, IdlePlan } from "./idle.js";
+export { planIdle, runIdle } from "./idle.js";
 
 export type {
   ProgressionAudit,
@@ -106,12 +106,18 @@ export type {
   ProgressionSegment,
   ProgressionStep,
   ProgressionSummary,
-  WorldStep
-} from './progression.js'
-export { compareProgression, createProgressionAudit } from './progression.js'
+  WorldStep,
+} from "./progression.js";
+export { compareProgression, createProgressionAudit } from "./progression.js";
 
-export type { SaveDecodeResult, SaveFormat, SavePayload } from './save.js'
-export { decodeSave, decodeSavePayload, defineSaveFormat, encodeSave, runMigrations } from './save.js'
+export type { SaveDecodeResult, SaveFormat, SavePayload } from "./save.js";
+export {
+  decodeSave,
+  decodeSavePayload,
+  defineSaveFormat,
+  encodeSave,
+  runMigrations,
+} from "./save.js";
 export {
   asArray,
   asFiniteNumber,
@@ -119,14 +125,36 @@ export {
   asObjectOrNull,
   asRecord,
   asRecordOf,
-  asStringArray
-} from './saveShape.js'
+  asStringArray,
+} from "./saveShape.js";
 
-export type { SkillBranchDef, SkillConfig, SkillCostSpec, SkillDef, SkillState, SkillSystem } from './skills.js'
-export { createSkillSystem } from './skills.js'
+export type {
+  SkillBranchDef,
+  SkillConfig,
+  SkillCostSpec,
+  SkillDef,
+  SkillState,
+  SkillSystem,
+} from "./skills.js";
+export { createSkillSystem } from "./skills.js";
 
-export type { CraftFormula, CraftLevers, LeverSpec, OverReachSpec, ProficiencyConfig, StageDef } from './crafting.js'
-export { averageLore, composeCraftRate, leverFactor, overReachFactor, proficiencyFromExp, stageNameOf, weightedSkill } from './crafting.js'
+export type {
+  CraftFormula,
+  CraftLevers,
+  LeverSpec,
+  OverReachSpec,
+  ProficiencyConfig,
+  StageDef,
+} from "./crafting.js";
+export {
+  averageLore,
+  composeCraftRate,
+  leverFactor,
+  overReachFactor,
+  proficiencyFromExp,
+  stageNameOf,
+  weightedSkill,
+} from "./crafting.js";
 
 export type {
   AppliedEntry,
@@ -135,36 +163,69 @@ export type {
   ResourceEntry,
   ResourceSummary,
   ResourceSystem,
-  ResourceSystemConfig
-} from './resources.js'
-export { createResourceSystem } from './resources.js'
+  ResourceSystemConfig,
+} from "./resources.js";
+export { createResourceSystem } from "./resources.js";
 
-export type { TriageConfig, TriageImpact, TriageOutcome, TriageRule, TriageSystem, TriageVerdict } from './triage.js'
-export { compareBy, createTriage } from './triage.js'
+export type {
+  TriageConfig,
+  TriageImpact,
+  TriageOutcome,
+  TriageRule,
+  TriageSystem,
+  TriageVerdict,
+} from "./triage.js";
+export { compareBy, createTriage } from "./triage.js";
 
-export type { CycleConfig, CycleContext, CycleEntry, CycleSystem, ScheduledCycle } from './cycles.js'
-export { createCycleSystem } from './cycles.js'
+export type {
+  CycleConfig,
+  CycleContext,
+  CycleEntry,
+  CycleSystem,
+  ScheduledCycle,
+} from "./cycles.js";
+export { createCycleSystem } from "./cycles.js";
 
-export type { ChoiceConfig, ChoiceDef, ChoiceOutcome, ChoiceReceipt, ChoiceSystem } from './choices.js'
-export { createChoiceSystem } from './choices.js'
+export type {
+  ChoiceConfig,
+  ChoiceDef,
+  ChoiceOutcome,
+  ChoiceReceipt,
+  ChoiceSystem,
+} from "./choices.js";
+export { createChoiceSystem } from "./choices.js";
 
-export type { CodexConfig, CodexStage, CodexState, CodexSystem, CodexView } from './codex.js'
-export { createCodex } from './codex.js'
+export type { CodexConfig, CodexStage, CodexState, CodexSystem, CodexView } from "./codex.js";
+export { createCodex } from "./codex.js";
 
-export type { StageMemory, StageMemoryConfig, StageMemoryInput, StageMemoryState, StageSpec } from './memory.js'
-export { createStageMemory } from './memory.js'
+export type {
+  StageMemory,
+  StageMemoryConfig,
+  StageMemoryInput,
+  StageMemoryState,
+  StageSpec,
+} from "./memory.js";
+export { createStageMemory } from "./memory.js";
 
-export type { EconomyConfig, EconomyPeriod, EconomyReadings, EconomyVerdict, FlowInput, FlowReading, PeriodReading } from './economy.js'
-export { createEconomyReadings } from './economy.js'
+export type {
+  EconomyConfig,
+  EconomyPeriod,
+  EconomyReadings,
+  EconomyVerdict,
+  FlowInput,
+  FlowReading,
+  PeriodReading,
+} from "./economy.js";
+export { createEconomyReadings } from "./economy.js";
 
-export type { IntakeConfig, IntakeResult, IntakeSystem } from './intake.js'
-export { createIntake } from './intake.js'
+export type { IntakeConfig, IntakeResult, IntakeSystem } from "./intake.js";
+export { createIntake } from "./intake.js";
 
-export type { Settlement, SettlementPlan, SettlementReceipt } from './settlement.js'
-export { createSettlement } from './settlement.js'
+export type { Settlement, SettlementPlan, SettlementReceipt } from "./settlement.js";
+export { createSettlement } from "./settlement.js";
 
-export type { DropEntry, DropHit, DropOptions, DropTable } from './drops.js'
-export { createDropTable } from './drops.js'
+export type { DropEntry, DropHit, DropOptions, DropTable } from "./drops.js";
+export { createDropTable } from "./drops.js";
 
 export type {
   BuffApply,
@@ -174,18 +235,18 @@ export type {
   BuffInstance,
   BuffStacking,
   BuffSystem,
-  BuffView
-} from './buffs.js'
-export { createBuffSystem } from './buffs.js'
+  BuffView,
+} from "./buffs.js";
+export { createBuffSystem } from "./buffs.js";
 
 export type {
   FacilityCost,
   FacilityDef,
   FacilitySystem,
   LevelMap,
-  UpgradeInfo
-} from './facilities.js'
-export { accrue, createFacilitySystem } from './facilities.js'
+  UpgradeInfo,
+} from "./facilities.js";
+export { accrue, createFacilitySystem } from "./facilities.js";
 
 export type {
   InvestInfo,
@@ -196,9 +257,9 @@ export type {
   PointState,
   PointsConfig,
   SwitchInfo,
-  SwitchOutcome
-} from './points.js'
-export { createPointPool } from './points.js'
+  SwitchOutcome,
+} from "./points.js";
+export { createPointPool } from "./points.js";
 
 export type {
   ClaimOutcome,
@@ -206,37 +267,50 @@ export type {
   TaskBoard,
   TaskBoardState,
   TaskProgress,
-  TaskSpec
-} from './tasks.js'
-export { createTaskBoard } from './tasks.js'
+  TaskSpec,
+} from "./tasks.js";
+export { createTaskBoard } from "./tasks.js";
 
-export type { CounterMap } from './counters.js'
-export { deltaOf, deltaSince, snapshotOf } from './counters.js'
+export type { CounterMap } from "./counters.js";
+export { deltaOf, deltaSince, snapshotOf } from "./counters.js";
 
-export type { Chain, ChainAdvance, ChainConfig, ChainNode, ChainState } from './chain.js'
-export { createChain } from './chain.js'
+export type { Chain, ChainAdvance, ChainConfig, ChainNode, ChainState } from "./chain.js";
+export { createChain } from "./chain.js";
 
-export type { PityConfig, PityCounter, PityRoll, PityState, SoftPity } from './pity.js'
-export { createPityCounter, softChance } from './pity.js'
+export type { PityConfig, PityCounter, PityRoll, PityState, SoftPity } from "./pity.js";
+export { createPityCounter, softChance } from "./pity.js";
 
-export type { UnlockEntry, UnlockOutcome, UnlockRegistry, UnlockScan, UnlockState } from './unlocks.js'
-export { createUnlockRegistry } from './unlocks.js'
+export type {
+  UnlockEntry,
+  UnlockOutcome,
+  UnlockRegistry,
+  UnlockScan,
+  UnlockState,
+} from "./unlocks.js";
+export { createUnlockRegistry } from "./unlocks.js";
 
-export type { CraftCost, CraftOutcome, RecipeRunner, RecipeRunnerConfig } from './recipes.js'
-export { createRecipeRunner } from './recipes.js'
+export type { CraftCost, CraftOutcome, RecipeRunner, RecipeRunnerConfig } from "./recipes.js";
+export { createRecipeRunner } from "./recipes.js";
 
-export type { AddFailure, Holding, HoldingConfig, HoldingItem, HoldingSystem, SlotMap } from './holding.js'
-export { createHoldingSystem } from './holding.js'
+export type {
+  AddFailure,
+  Holding,
+  HoldingConfig,
+  HoldingItem,
+  HoldingSystem,
+  SlotMap,
+} from "./holding.js";
+export { createHoldingSystem } from "./holding.js";
 
-export type { GoalCond, GoalEnv, GoalProgress } from './goals.js'
-export { evalGoal, goalProgress } from './goals.js'
+export type { GoalCond, GoalEnv, GoalProgress } from "./goals.js";
+export { evalGoal, goalProgress } from "./goals.js";
 
-export type { DeckContext, DeckEntry, DrawOptions, LevelBand } from './deck.js'
-export type { DrawManyOptions } from './deck.js'
-export { deckPool, drawFrom, drawMany, entryAllowed, inBand } from './deck.js'
+export type { DeckContext, DeckEntry, DrawOptions, LevelBand } from "./deck.js";
+export type { DrawManyOptions } from "./deck.js";
+export { deckPool, drawFrom, drawMany, entryAllowed, inBand } from "./deck.js";
 
-export type { CompanionConfig, CompanionDef, CompanionSystem, TraitDef } from './companions.js'
-export { createCompanionSystem } from './companions.js'
+export type { CompanionConfig, CompanionDef, CompanionSystem, TraitDef } from "./companions.js";
+export { createCompanionSystem } from "./companions.js";
 
-export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from './config.js'
-export { defineGame, validateGame } from './config.js'
+export type { DefineOptions, Game, GameConfig, IssueLevel, ValidationIssue } from "./config.js";
+export { defineGame, validateGame } from "./config.js";

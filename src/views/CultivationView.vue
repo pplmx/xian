@@ -11,11 +11,21 @@
           横杆会让名字折成竖排反而挤 —— 窄了就让名字独行,回归原样。
         -->
         <p class="mt-1 flex items-center justify-center gap-2.5">
-          <span class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline" aria-hidden="true" />
-          <span class="font-kai text-[30px] tracking-[0.3em] text-ink">{{ player.realm.name }}</span>
-          <span class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline" aria-hidden="true" />
+          <span
+            class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline"
+            aria-hidden="true"
+          />
+          <span class="font-kai text-[30px] tracking-[0.3em] text-ink">{{
+            player.realm.name
+          }}</span>
+          <span
+            class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline"
+            aria-hidden="true"
+          />
         </p>
-        <p class="mt-0.5 font-kai text-[14px] tracking-[0.4em] text-cinnabar">{{ player.subName }}</p>
+        <p class="mt-0.5 font-kai text-[14px] tracking-[0.4em] text-cinnabar">
+          {{ player.subName }}
+        </p>
         <p class="mt-1 text-[11px] text-ink-faint">{{ player.realm.desc }}</p>
         <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->
         <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
@@ -28,10 +38,19 @@
           「现值 / 所需」加起来比这一行宽 —— 与其把右边的值折断(主值行折行 = 判据红),
           不如让值整块落到第二行:值本身仍是一行,一个字都不少。
         -->
-        <div data-value-row class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-soft tabular">
-          <button class="-my-1 py-1.5 text-left active:opacity-60" :aria-expanded="showCultBreakdown" @click="showCultBreakdown = !showCultBreakdown">
+        <div
+          data-value-row
+          class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-soft tabular"
+        >
+          <button
+            class="-my-1 py-1.5 text-left active:opacity-60"
+            :aria-expanded="showCultBreakdown"
+            @click="showCultBreakdown = !showCultBreakdown"
+          >
             修为 +{{ formatRate(player.cultPerSec) }}
-            <span class="ml-0.5 text-[9px] text-ink-faint">{{ showCultBreakdown ? '▾' : '▸' }}来路</span>
+            <span class="ml-0.5 text-[9px] text-ink-faint"
+              >{{ showCultBreakdown ? "▾" : "▸" }}来路</span
+            >
           </button>
           <!--
             修为数可点:缩写照旧(排版不动),点开看精确值。
@@ -60,25 +79,29 @@
           </span>
         </div>
         <div :class="player.expFull ? 'bar-charged' : ''">
-        <ProgressBar :value="player.expProgress" color="var(--color-cinnabar)" :height="8" />
-      </div>
-      <!-- 修炼速度是玩家最常盯的数,故在它自己那一行就地摊开:基础 × (1 + 各来源) -->
-      <div v-if="showCultBreakdown" class="mt-2 rounded-md bg-paper-deep/60 px-2.5 py-2 text-[10px]">
-        <p class="text-ink-soft">
-          基础 {{ formatRate(cultBase) }}({{ player.realm.name }}{{ player.subName }}{{ player.linggen ? `·${player.linggen.gradeName}` : '' }})
-          × (1 + <span class="tabular text-qing">{{ formatPercent(cultMultiplier) }}</span>)
-          = <span class="tabular text-cinnabar">{{ formatRate(player.cultPerSec) }}</span>
-        </p>
-        <p v-for="row in cultSources" :key="row.name" class="mt-0.5 flex justify-between">
-          <span class="text-ink-faint">{{ row.name }}</span>
-          <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
-            {{ row.value > 0 ? '+' : '' }}{{ formatPercent(row.value) }}
-          </span>
-        </p>
-        <p class="mt-1 text-[9px] leading-relaxed text-ink-faint">
-          这些都是修炼速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
-        </p>
-      </div>
+          <ProgressBar :value="player.expProgress" color="var(--color-cinnabar)" :height="8" />
+        </div>
+        <!-- 修炼速度是玩家最常盯的数,故在它自己那一行就地摊开:基础 × (1 + 各来源) -->
+        <div
+          v-if="showCultBreakdown"
+          class="mt-2 rounded-md bg-paper-deep/60 px-2.5 py-2 text-[10px]"
+        >
+          <p class="text-ink-soft">
+            基础 {{ formatRate(cultBase) }}({{ player.realm.name }}{{ player.subName
+            }}{{ player.linggen ? `·${player.linggen.gradeName}` : "" }}) × (1 +
+            <span class="tabular text-qing">{{ formatPercent(cultMultiplier) }}</span
+            >) = <span class="tabular text-cinnabar">{{ formatRate(player.cultPerSec) }}</span>
+          </p>
+          <p v-for="row in cultSources" :key="row.name" class="mt-0.5 flex justify-between">
+            <span class="text-ink-faint">{{ row.name }}</span>
+            <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
+              {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
+            </span>
+          </p>
+          <p class="mt-1 text-[9px] leading-relaxed text-ink-faint">
+            这些都是修炼速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
+          </p>
+        </div>
       </div>
       <div class="mt-3">
         <div data-value-row class="mb-1 flex justify-between text-[11px] text-ink-soft tabular">
@@ -95,7 +118,8 @@
                 超出的部分用一个小「+」提示"还有积余",精确值点开看 —— 免得主行被顶成两行。
               -->
               <span :class="qiOverCap ? 'text-qing' : ''">
-                {{ formatNum(Math.min(Math.floor(resources.qi), player.qiCapValue)) }}<template v-if="qiOverCap">+</template>
+                {{ formatNum(Math.min(Math.floor(resources.qi), player.qiCapValue))
+                }}<template v-if="qiOverCap">+</template>
               </span>
             </TapNumber>
             / {{ formatNum(player.qiCapValue) }}
@@ -104,7 +128,9 @@
               词收短到三字("已积至上限"在 320 宽后期档会把这一行顶折,自检当场量到过);
               完整的口径(上限值、不会再涨、怎么花)在点开的详情里。
             -->
-            <span v-if="resources.qi >= player.qiBankCapValue" class="text-amber-ink">· 已封顶</span>
+            <span v-if="resources.qi >= player.qiBankCapValue" class="text-amber-ink"
+              >· 已封顶</span
+            >
           </span>
         </div>
         <ProgressBar
@@ -120,7 +146,11 @@
           :disabled="!repair.affordable"
           @click="repairWithQi()"
         >
-          {{ repair.affordable ? `引气疗伤 · 耗灵气 ${formatNum(repair.cost)}` : `灵气不足(需 ${formatNum(repair.cost)})` }}
+          {{
+            repair.affordable
+              ? `引气疗伤 · 耗灵气 ${formatNum(repair.cost)}`
+              : `灵气不足(需 ${formatNum(repair.cost)})`
+          }}
         </button>
       </div>
 
@@ -135,14 +165,20 @@
       <div class="mt-2 grid gap-2" :class="btInfo.needTribulation ? 'grid-cols-1' : 'grid-cols-2'">
         <div v-if="!btInfo.needTribulation" class="rounded-md bg-paper-deep/60 px-2.5 py-1.5">
           <p class="text-[10px] text-ink-faint">进阶成功率(小进阶)</p>
-          <p class="tabular text-[16px] font-kai leading-tight" :class="btInfo.rate >= 0.7 ? 'text-jade' : 'text-cinnabar'">
+          <p
+            class="tabular text-[16px] font-kai leading-tight"
+            :class="btInfo.rate >= 0.7 ? 'text-jade' : 'text-cinnabar'"
+          >
             {{ btInfo.rateText }}
           </p>
         </div>
         <div class="rounded-md bg-paper-deep/60 px-2.5 py-1.5">
-          <p class="text-[10px] text-ink-faint">{{ btInfo.needTribulation ? '此劫' : '渡劫' }}</p>
+          <p class="text-[10px] text-ink-faint">{{ btInfo.needTribulation ? "此劫" : "渡劫" }}</p>
           <template v-if="tribPlan">
-            <p class="tabular text-[16px] font-kai leading-tight" :class="PLAN_COLOR[tribPlan.verdict]">
+            <p
+              class="tabular text-[16px] font-kai leading-tight"
+              :class="PLAN_COLOR[tribPlan.verdict]"
+            >
               {{ tribPlan.title }}
             </p>
             <p class="text-[10px] text-ink-faint">
@@ -161,20 +197,32 @@
       <div v-if="!btInfo.needTribulation" class="mt-2 rounded-md bg-paper-deep/60 px-3 py-2">
         <p class="text-[10px] text-ink-faint">破境增益 · 此刻在身</p>
         <div v-if="breakthroughBuffRows.length" class="mt-1 space-y-0.5">
-          <p v-for="row in breakthroughBuffRows" :key="row.buffId" class="flex items-baseline gap-1.5 text-[11px]">
-            <span class="font-kai shrink-0" :class="row.rate > 0 ? 'text-qing' : 'text-cinnabar'">{{ row.name }}</span>
+          <p
+            v-for="row in breakthroughBuffRows"
+            :key="row.buffId"
+            class="flex items-baseline gap-1.5 text-[11px]"
+          >
+            <span class="font-kai shrink-0" :class="row.rate > 0 ? 'text-qing' : 'text-cinnabar'">{{
+              row.name
+            }}</span>
             <span class="tabular text-ink-soft">{{ row.effect }}</span>
           </p>
           <!-- 诚实收口:这条只列「状态」来源 —— 装备/称号/天时等别的源头在大数字里,不在条里重抄 -->
-          <p class="pt-0.5 text-[9px] leading-relaxed text-ink-faint">只列状态来源 —— 装备·名号·天时等见上值</p>
+          <p class="pt-0.5 text-[9px] leading-relaxed text-ink-faint">
+            只列状态来源 —— 装备·名号·天时等见上值
+          </p>
         </div>
         <p v-else class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
-          此刻身无破境状态 —— 备一味 <span class="text-qing">破境 · 凝神 · 定心 · 本源归一</span>,成功率即刻见涨
+          此刻身无破境状态 —— 备一味
+          <span class="text-qing">破境 · 凝神 · 定心 · 本源归一</span>,成功率即刻见涨
         </p>
       </div>
 
       <!-- Phase 32.0 劫势详情(决意前评估:风险维度 + 建议,信息给足,决定留给玩家) -->
-      <div v-if="tribPlan" class="mt-2 rounded-md border border-violet-ink/25 bg-violet-ink/5 px-3 py-2">
+      <div
+        v-if="tribPlan"
+        class="mt-2 rounded-md border border-violet-ink/25 bg-violet-ink/5 px-3 py-2"
+      >
         <p class="text-[11px] text-violet-ink">{{ tribPlan.desc }}</p>
         <!--
           天时是这场劫的第三个输入:劫型看境界×今日天时、结算 damage 再乘
@@ -182,14 +230,17 @@
           这里与主页天时卡同一口径(读 todayWeather,不另算),渡劫前一眼对上。
         -->
         <p class="mt-1 text-[10px] text-ink-faint tabular">
-          今日天时 · {{ tribWeather.name }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template>
+          今日天时 · {{ tribWeather.name
+          }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template>
         </p>
         <p class="mt-1.5 text-[10px] text-ink-faint tabular">
           准备:
-          <span class="text-ink-soft">{{ PREP_NAMES.guard }} {{ PREP_STARS[tribPlan.prep.guard] }}</span>
-          · {{ PREP_NAMES.sustain }} {{ PREP_STARS[tribPlan.prep.sustain] }}
-          · {{ PREP_NAMES.resist }} {{ PREP_STARS[tribPlan.prep.resist] }}
-          · {{ PREP_NAMES.burst }} {{ PREP_STARS[tribPlan.prep.burst] }}
+          <span class="text-ink-soft"
+            >{{ PREP_NAMES.guard }} {{ PREP_STARS[tribPlan.prep.guard] }}</span
+          >
+          · {{ PREP_NAMES.sustain }} {{ PREP_STARS[tribPlan.prep.sustain] }} ·
+          {{ PREP_NAMES.resist }} {{ PREP_STARS[tribPlan.prep.resist] }} · {{ PREP_NAMES.burst }}
+          {{ PREP_STARS[tribPlan.prep.burst] }}
         </p>
         <!--
           天劫是**按最大生命百分比**扣血的(见 core/formulas.tribulationWaveDamage),
@@ -202,7 +253,9 @@
           <p class="flex items-baseline gap-1">
             <span class="text-ink-faint">天劫抗性</span>
             <span class="text-ink-soft">{{ formatPercent(tribLedger?.resist ?? 0, 0) }}</span>
-            <span class="text-ink-faint">(防御折算 {{ formatPercent(tribLedger?.statResist ?? 0, 0) }})</span>
+            <span class="text-ink-faint"
+              >(防御折算 {{ formatPercent(tribLedger?.statResist ?? 0, 0) }})</span
+            >
           </p>
           <p class="flex items-baseline gap-1">
             <span class="text-ink-faint">减伤</span>
@@ -215,11 +268,14 @@
           <p class="flex items-baseline gap-1">
             <span class="text-ink-faint">开劫护持</span>
             <span class="text-ink-soft">{{ formatPercent(tribLedger?.guard ?? 0, 0) }}</span>
-            <span class="text-ink-faint">(气血折算 {{ formatPercent(tribLedger?.statGuard ?? 0, 0) }})</span>
+            <span class="text-ink-faint"
+              >(气血折算 {{ formatPercent(tribLedger?.statGuard ?? 0, 0) }})</span
+            >
           </p>
         </div>
         <p class="mt-0.5 text-[10px] text-ink-faint">
-          攻伐不进天劫公式;防御与气血按本境裸修为折算成上面的抗性与护持,各有上限 —— 血再厚也只能硬抗一部分,剩下的仍要抗性/减伤/恢复来补。进阶成功率与突破准备也只作用于小进阶,大关不看它们。
+          攻伐不进天劫公式;防御与气血按本境裸修为折算成上面的抗性与护持,各有上限 ——
+          血再厚也只能硬抗一部分,剩下的仍要抗性/减伤/恢复来补。进阶成功率与突破准备也只作用于小进阶,大关不看它们。
         </p>
         <!--
           界膜之劫:这一版对跨界那一关的规则加难(见 data/constants 的
@@ -227,22 +283,32 @@
           上一版玩家吃过"护持明明写着有,过劫时却像没有"的亏,
           那种误会不该靠失败去发现。
         -->
-        <div v-if="worldStep" class="mt-2 rounded-md border border-cinnabar/30 bg-cinnabar/5 px-2.5 py-2">
+        <div
+          v-if="worldStep"
+          class="mt-2 rounded-md border border-cinnabar/30 bg-cinnabar/5 px-2.5 py-2"
+        >
           <p class="text-[10px] leading-relaxed text-cinnabar">
-            界膜之劫:跨界这一关血肉之厚一概不算 —— 防御与气血折算出的抗性、开劫护持在此作废,只认词条与准备。
+            界膜之劫:跨界这一关血肉之厚一概不算 ——
+            防御与气血折算出的抗性、开劫护持在此作废,只认词条与准备。
           </p>
         </div>
         <!-- 天威本身的长相:道数随境界涨、单波逐道加重,摊出来才知道护持该留到哪一段 -->
         <p v-if="tribWave" class="mt-0.5 text-[10px] text-ink-faint tabular">
-          共 {{ tribWave.waves }} 道,单波 {{ formatPercent(tribWave.min, 0) }}–{{ formatPercent(tribWave.max, 0) }} 最大气血(合计约
-          {{ formatPercent(tribWave.total, 0) }}),
-          {{ tribPlan.def.waveShape === 'frontLoaded' ? '起手两道最重' : '逐道加重' }}
+          共 {{ tribWave.waves }} 道,单波 {{ formatPercent(tribWave.min, 0) }}–{{
+            formatPercent(tribWave.max, 0)
+          }}
+          最大气血(合计约 {{ formatPercent(tribWave.total, 0) }}),
+          {{ tribPlan.def.waveShape === "frontLoaded" ? "起手两道最重" : "逐道加重" }}
         </p>
-        <p class="mt-1 text-[10px] text-ink-soft">主要风险:<span class="text-cinnabar">{{ tribPlan.risks.join('; ') }}</span></p>
+        <p class="mt-1 text-[10px] text-ink-soft">
+          主要风险:<span class="text-cinnabar">{{ tribPlan.risks.join("; ") }}</span>
+        </p>
         <p class="mt-1 text-[10px] text-ink-faint">{{ tribPlan.advice }}</p>
         <!-- Phase 32.2:灵根解开的那条路——说明这道劫为何对你不太一样(留一线,不是免死) -->
         <p v-if="reliefRoots.length" class="mt-1 text-[10px] text-jade">
-          灵根相应:{{ reliefRoots.map(e => ELEMENTS[e].name).join('、') }}——此劫为你留了一线,能走到哪一步仍看自身准备
+          灵根相应:{{
+            reliefRoots.map((e) => ELEMENTS[e].name).join("、")
+          }}——此劫为你留了一线,能走到哪一步仍看自身准备
         </p>
       </div>
       <p data-value-row class="mt-1 text-[11px] text-ink-soft tabular">
@@ -255,7 +321,10 @@
       </p>
 
       <!-- Phase 28 突破准备:静坐调息 / 服聚气丹(无劫突破时,一次性加成) -->
-      <div v-if="!btInfo.needTribulation" class="mt-2 rounded-md border border-ink/10 bg-paper-deep/50 px-2.5 py-2">
+      <div
+        v-if="!btInfo.needTribulation"
+        class="mt-2 rounded-md border border-ink/10 bg-paper-deep/50 px-2.5 py-2"
+      >
         <div class="flex items-center justify-between text-[10px] text-ink-faint">
           <span>突破准备(一次有效)</span>
           <!--
@@ -263,26 +332,42 @@
             后者每秒都可能改宽度,这枚胶囊一涨一缩,同一行的其余内容会跟着跳。
           -->
           <span v-if="btInfo.prep.sitting" class="text-amber-ink tabular">
-            调息中 · <span class="countdown-slot">{{ formatCountdown(btInfo.prep.remainingSec) }}</span>
+            调息中 ·
+            <span class="countdown-slot">{{ formatCountdown(btInfo.prep.remainingSec) }}</span>
           </span>
-          <span v-else-if="btInfo.prep.ready" class="text-jade">加成 +{{ formatPercent(btInfo.prep.bonus, 0) }} 就绪</span>
+          <span v-else-if="btInfo.prep.ready" class="text-jade"
+            >加成 +{{ formatPercent(btInfo.prep.bonus, 0) }} 就绪</span
+          >
         </div>
         <!--
           两个准备选项并排,但 chip-ink 是 nowrap 的胶囊,320px 窄屏放不下两枚
           (实测第二枚右缘到 331px,越界 11px)。故允许换行:宽屏并排、窄屏上下。
         -->
-        <div v-if="!btInfo.prep.sitting && !btInfo.prep.ready" class="mt-1.5 flex flex-wrap gap-1.5">
+        <div
+          v-if="!btInfo.prep.sitting && !btInfo.prep.ready"
+          class="mt-1.5 flex flex-wrap gap-1.5"
+        >
           <button type="button" class="chip-ink !py-1.5 text-[10px]" @click="startPrep('meditate')">
-            {{ prepMeditate.label }} · {{ Math.round(prepMeditate.duration / 60) }}分钟
-            +{{ formatPercent(prepMeditate.bonusRate, 0) }}
+            {{ prepMeditate.label }} · {{ Math.round(prepMeditate.duration / 60) }}分钟 +{{
+              formatPercent(prepMeditate.bonusRate, 0)
+            }}
           </button>
-          <button type="button" class="chip-ink !py-1.5 text-[10px]" :disabled="!prepCanPill" @click="startPrep('pill')">
+          <button
+            type="button"
+            class="chip-ink !py-1.5 text-[10px]"
+            :disabled="!prepCanPill"
+            @click="startPrep('pill')"
+          >
             <!--
               付不起时换口「尚差 X 石」(与建筑卡同款,价与加成只在买得起时念全):
               更短才扛得住 200% 缩放档(390 放大一倍只剩 195 CSS px,chips 是 nowrap,
               实测「服用聚气丹 · +5% 尚差 30 石」会把右缘顶到 211px 越界 16px)。
             -->
-            <template v-if="prepCanPill">{{ prepPill.label }} · {{ prepPillCost }}石 +{{ formatPercent(prepPill.bonusRate, 0) }}</template>
+            <template v-if="prepCanPill"
+              >{{ prepPill.label }} · {{ prepPillCost }}石 +{{
+                formatPercent(prepPill.bonusRate, 0)
+              }}</template
+            >
             <template v-else>聚气丹 · 尚差 {{ prepPillShort }} 石</template>
           </button>
         </div>
@@ -293,17 +378,26 @@
         :disabled="!btInfo.ready"
         @click="attemptBreakthrough()"
       >
-        {{ btInfo.ready ? (btInfo.needTribulation ? '引 劫 突 破' : '尝 试 突 破') : btInfo.reason }}
+        {{
+          btInfo.ready ? (btInfo.needTribulation ? "引 劫 突 破" : "尝 试 突 破") : btInfo.reason
+        }}
       </button>
       <!-- 灵气不足是四个字,拦下的却是「还差多少、回够要多久」 —— 补齐直显,别让玩家点开灵气数才看见等待值(与修为 ETA 同款口径) -->
-      <p v-if="btQiBlock" class="mt-1 text-center text-[10px] leading-relaxed text-cinnabar tabular">
+      <p
+        v-if="btQiBlock"
+        class="mt-1 text-center text-[10px] leading-relaxed text-cinnabar tabular"
+      >
         尚差 {{ btQiBlock.short }} 灵气,按当前回复{{ btQiBlock.eta }}
       </p>
     </div>
 
     <!-- Phase 28 闭关:5 分钟 +150% 修炼,期间禁止历练(数值唯一来源 = buffs.ts retreat + earlyGameService) -->
     <!-- 开始那瞬整卡一闪(与 BuildingCard 升级同款 card-flash)——「这件事发生在我这张卡上」 -->
-    <div class="card-ink px-4 py-3" :class="retreatFlash ? 'card-flash' : ''" @animationend.self="retreatFlash = false">
+    <div
+      class="card-ink px-4 py-3"
+      :class="retreatFlash ? 'card-flash' : ''"
+      @animationend.self="retreatFlash = false"
+    >
       <div class="flex items-center justify-between">
         <span class="text-[11px] text-ink-soft">闭关参悟</span>
         <span v-if="retreating" class="text-[10px] text-amber-ink tabular">
@@ -317,7 +411,12 @@
         -->
         静坐片刻({{ retreatMinutes }} 分钟),修炼速度 +{{ retreatPct }}%;闭关期间无法外出历练。
       </p>
-      <button v-if="!retreating" type="button" class="chip-ink mt-2 w-full !py-1.5 text-[11px]" @click="beginRetreat">
+      <button
+        v-if="!retreating"
+        type="button"
+        class="chip-ink mt-2 w-full !py-1.5 text-[11px]"
+        @click="beginRetreat"
+      >
         闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)
       </button>
     </div>
@@ -336,7 +435,11 @@
           :key="b.def!.id"
           type="button"
           class="chip-ink tabular transition-transform active:scale-95"
-          :class="b.def!.kind === 'injury' ? 'border-cinnabar/60 text-cinnabar' : 'border-jade/60 text-jade'"
+          :class="
+            b.def!.kind === 'injury'
+              ? 'border-cinnabar/60 text-cinnabar'
+              : 'border-jade/60 text-jade'
+          "
           @click="ui.buffDetailId = b.def!.id"
         >
           <GameIcon :name="b.def!.icon" :size="11" />
@@ -358,19 +461,30 @@
           :disabled="p.overflow === 'full'"
           @click="usePill(p.def!.id)"
         >
-          <GameIcon :name="p.def!.icon" :size="16" :style="{ color: qualityDef(p.def!.quality).color }" />
+          <GameIcon
+            :name="p.def!.icon"
+            :size="16"
+            :style="{ color: qualityDef(p.def!.quality).color }"
+          />
           <span class="min-w-0 grow">
             <span class="block truncate font-kai text-[12px] text-ink">{{ p.def!.name }}</span>
             <span class="block text-[10px] text-ink-faint tabular">
-              存 {{ p.count }}<template v-if="quickPillBrief(p.def!)"> · {{ quickPillBrief(p.def!) }}</template>
+              存 {{ p.count
+              }}<template v-if="quickPillBrief(p.def!)"> · {{ quickPillBrief(p.def!) }}</template>
             </span>
           </span>
           <!-- 顶满=白费,禁用并改口;续时=只剩尾巴可续,照吃但把话说清 -->
           <span
             class="shrink-0 text-[11px]"
-            :class="p.overflow === 'full' ? 'text-ink-faint' : p.overflow === 'partial' ? 'text-amber-ink' : 'text-jade'"
+            :class="
+              p.overflow === 'full'
+                ? 'text-ink-faint'
+                : p.overflow === 'partial'
+                  ? 'text-amber-ink'
+                  : 'text-jade'
+            "
           >
-            {{ p.overflow === 'full' ? '已顶' : p.overflow === 'partial' ? '续时' : '服用' }}
+            {{ p.overflow === "full" ? "已顶" : p.overflow === "partial" ? "续时" : "服用" }}
           </span>
         </button>
       </div>
@@ -386,7 +500,10 @@
           class="card-ink flex w-full items-center gap-3 px-3.5 py-3 text-left active:scale-99"
           @click="ui.gongfaDetailId = mainDef.id"
         >
-          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-cinnabar/6 font-kai text-cinnabar">主</span>
+          <span
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-cinnabar/6 font-kai text-cinnabar"
+            >主</span
+          >
           <span class="min-w-0 grow">
             <span class="block truncate font-kai text-[14px] text-ink">{{ mainDef.name }}</span>
             <span class="block text-[11px] text-ink-faint">
@@ -397,14 +514,19 @@
         </button>
 
         <!-- 已习得列表(限高滚动,功法过多不撑爆页面) -->
-        <div v-if="learnedList.length" class="card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-1">
+        <div
+          v-if="learnedList.length"
+          class="card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-1"
+        >
           <button
             v-for="def in learnedList"
             :key="def!.id"
             class="flex w-full items-center gap-3 px-2.5 py-2.5 text-left active:bg-ink/4"
             @click="ui.gongfaDetailId = def!.id"
           >
-            <span class="font-kai text-[13px]" :style="{ color: qualityDef(def!.quality).color }">{{ def!.name }}</span>
+            <span class="font-kai text-[13px]" :style="{ color: qualityDef(def!.quality).color }">{{
+              def!.name
+            }}</span>
             <span class="text-[10px] text-ink-faint">{{ cultivation.learned[def!.id] }} 层</span>
             <!-- Phase 31 A3:已选分支显示道名;确有歧路可择时才招手,否则只报「圆满」 -->
             <span v-if="branchName(def!.id)" class="text-[10px] text-gold-ink">
@@ -412,8 +534,11 @@
             </span>
             <span v-else-if="canEnlighten(def!.id)" class="text-[10px] text-qing">待悟道 →</span>
             <span v-else-if="isFull(def!.id)" class="text-[10px] text-ink-faint">圆满</span>
-            <span class="ml-auto text-[10px]" :class="equipStateOf(def!.id) ? 'text-jade' : 'text-ink-faint'">
-              {{ equipStateOf(def!.id) || '未装配' }}
+            <span
+              class="ml-auto text-[10px]"
+              :class="equipStateOf(def!.id) ? 'text-jade' : 'text-ink-faint'"
+            >
+              {{ equipStateOf(def!.id) || "未装配" }}
             </span>
           </button>
         </div>
@@ -428,7 +553,9 @@
         -->
         <button class="btn-ghost w-full" @click="comprehendGongfa()">
           于藏经阁参悟功法(残页×{{ COMPREHEND_PAGE_COST }})
-          <span v-if="comprehendLeft > 0" class="ml-1 text-[10px] text-ink-faint">· 池中尚有 {{ comprehendLeft }} 部未参</span>
+          <span v-if="comprehendLeft > 0" class="ml-1 text-[10px] text-ink-faint"
+            >· 池中尚有 {{ comprehendLeft }} 部未参</span
+          >
           <span v-else class="ml-1 text-[10px] text-ink-faint">· 此境功法已尽数参悟</span>
         </button>
       </div>
@@ -440,367 +567,411 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref, watch } from 'vue'
-  import { usePlayerStore } from '@/stores/player'
-  import { useResourcesStore } from '@/stores/resources'
-  import { useCultivationStore } from '@/stores/cultivation'
-  import { useInventoryStore } from '@/stores/inventory'
-  import { useUiStore } from '@/stores/ui'
-  import { buffOverflowOf, buffStackSize } from '@/core/engineBuffs'
-  import { attemptBreakthrough, breakthroughInfo } from '@/core/breakthrough'
-  import { todayWeather } from '@/core/weather'
-  import { prepareBreakthrough, pillPrepShortfall, startRetreat, isRetreating, getRetreatRemainingSec } from '@/core/earlyGameService'
-  import { subClamp, toNum } from '@/utils/gnum'
-  import { baseCultPerSec } from '@/core/formulas'
-  import { modOf } from '@/core/statsCalc'
-  import {
-    currentStatGuard,
-    currentTribulationPlan,
-    currentTribulationRelief,
-    guardScore,
-    settlementResist,
-    statFoldAt,
-    sustainScore,
-    tribulationWaveSpan,
-    verdictLabel,
-    type TribulationPlan
-  } from '@/core/tribulationDecision'
-  import { reliefElements, rootElements } from '@/core/linggenAffinity'
-  import { comprehendGongfa } from '@/core/gongfaService'
-  import { usePill } from '@/core/pillService'
-  import { qiRepairView, repairWithQi } from '@/core/qiRepair'
-  import { useNow } from '@/composables/useNow'
-  import { BREAKTHROUGH_PREP_OPTIONS } from '@/data/earlyGame'
-  import { GONGFA, gongfaDef } from '@/data/gongfa'
-  import { ELEMENTS } from '@/data/linggen'
-  import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from '@/data/gongfaBranches'
-  import { buffDef } from '@/data/buffs'
-  import { modsText } from '@/ui/statNames'
-  import { pillDef } from '@/data/pills'
-import type { PillDef } from '@/types'
-  import { COMPREHEND_PAGE_COST, QI_BANK_MULT } from '@/data/constants'
-  import { formatCountdown, formatDuration, formatGN, formatNum, formatPercent, formatRate } from '@/utils/format'
-  import TapNumber from '@/components/common/TapNumber.vue'
-  import { qualityDef } from '@/data/qualities'
-  import SectionTitle from '@/components/common/SectionTitle.vue'
-  import ProgressBar from '@/components/common/ProgressBar.vue'
-  import GameIcon from '@/components/common/GameIcon.vue'
-  import GongfaDialog from '@/components/cultivation/GongfaDialog.vue'
-  import BuffDialog from '@/components/cultivation/BuffDialog.vue'
+import { computed, ref, watch } from "vue";
+import { usePlayerStore } from "@/stores/player";
+import { useResourcesStore } from "@/stores/resources";
+import { useCultivationStore } from "@/stores/cultivation";
+import { useInventoryStore } from "@/stores/inventory";
+import { useUiStore } from "@/stores/ui";
+import { buffOverflowOf, buffStackSize } from "@/core/engineBuffs";
+import { attemptBreakthrough, breakthroughInfo } from "@/core/breakthrough";
+import { todayWeather } from "@/core/weather";
+import {
+  prepareBreakthrough,
+  pillPrepShortfall,
+  startRetreat,
+  isRetreating,
+  getRetreatRemainingSec,
+} from "@/core/earlyGameService";
+import { subClamp, toNum } from "@/utils/gnum";
+import { baseCultPerSec } from "@/core/formulas";
+import { modOf } from "@/core/statsCalc";
+import {
+  currentStatGuard,
+  currentTribulationPlan,
+  currentTribulationRelief,
+  guardScore,
+  settlementResist,
+  statFoldAt,
+  sustainScore,
+  tribulationWaveSpan,
+  verdictLabel,
+  type TribulationPlan,
+} from "@/core/tribulationDecision";
+import { reliefElements, rootElements } from "@/core/linggenAffinity";
+import { comprehendGongfa } from "@/core/gongfaService";
+import { usePill } from "@/core/pillService";
+import { qiRepairView, repairWithQi } from "@/core/qiRepair";
+import { useNow } from "@/composables/useNow";
+import { BREAKTHROUGH_PREP_OPTIONS } from "@/data/earlyGame";
+import { GONGFA, gongfaDef } from "@/data/gongfa";
+import { ELEMENTS } from "@/data/linggen";
+import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from "@/data/gongfaBranches";
+import { buffDef } from "@/data/buffs";
+import { modsText } from "@/ui/statNames";
+import { pillDef } from "@/data/pills";
+import type { PillDef } from "@/types";
+import { COMPREHEND_PAGE_COST, QI_BANK_MULT } from "@/data/constants";
+import {
+  formatCountdown,
+  formatDuration,
+  formatGN,
+  formatNum,
+  formatPercent,
+  formatRate,
+} from "@/utils/format";
+import TapNumber from "@/components/common/TapNumber.vue";
+import { qualityDef } from "@/data/qualities";
+import SectionTitle from "@/components/common/SectionTitle.vue";
+import ProgressBar from "@/components/common/ProgressBar.vue";
+import GameIcon from "@/components/common/GameIcon.vue";
+import GongfaDialog from "@/components/cultivation/GongfaDialog.vue";
+import BuffDialog from "@/components/cultivation/BuffDialog.vue";
 
-  const player = usePlayerStore()
-  const resources = useResourcesStore()
+const player = usePlayerStore();
+const resources = useResourcesStore();
 
+/**
+ * 修炼速度的来路 —— 玩家最常盯的就是这一行,故就地摊开:
+ *   基础(境界/层) × (1 + 各来源之和)
+ * 来源取自 finalStats.breakdown,与人物页属性明细同源,不在界面里另算一遍。
+ */
+const showCultBreakdown = ref(false);
+const cultBase = computed(() => baseCultPerSec(player.major, player.sub));
+const cultSources = computed(() =>
+  player.finalStats.breakdown
+    .map((r) => ({ name: r.name, value: r.mods.cultivationSpeed ?? 0 }))
+    .filter((r) => r.value !== 0),
+);
+const cultMultiplier = computed(() => modOf(player.finalStats.mods, "cultivationSpeed"));
+const cultivation = useCultivationStore();
+const inventory = useInventoryStore();
+const ui = useUiStore();
+const now = useNow();
+
+const btInfo = computed(() => breakthroughInfo());
+/**
+ * 突破按钮的「灵气不足」补齐:reason 只报四字,不报还差多少、回够要多久。
+ * 站在按钮前的人不该再点开灵气数字才看见等待值 —— short 与 eta 现算,无 rebound。
+ */
+const btQiBlock = computed(() => {
+  if (btInfo.value.ready || btInfo.value.reason !== "灵气不足") return null;
+  const short = Math.max(0, Math.ceil(btInfo.value.qiCost - resources.qi));
+  const sec =
+    player.qiRegenPerSec > 0 ? Math.ceil(short / player.qiRegenPerSec) : Number.POSITIVE_INFINITY;
+  return { short, eta: Number.isFinite(sec) ? `约 ${formatDuration(sec)}` : "当前无回复" };
+});
+
+/**
+ * 修为数值详情的两行 + 一句人话。
+ *
+ * 「还需」用 subClamp 算(不足则为 0),预计耗时 = 还需 ÷ 当前修为速度 ——
+ * 到「京」这一档之后,绝对值本身看不出涨落,而这句"还需 3 天 2 时"每天都变,
+ * 玩家据此判断自己是不是在前进。已圆满时不再报时间(那是在等突破,不是等修为)。
+ */
+const expDetailRows = computed(() => [
+  { label: "所需", value: player.expReq, hint: "当前这一层的需求" },
+  {
+    label: "还需",
+    value: subClamp(player.expReq, player.exp),
+    hint: player.expFull ? "已至圆满,可尝试突破" : `每秒 ${formatRate(player.cultPerSec)}`,
+  },
   /**
-   * 修炼速度的来路 —— 玩家最常盯的就是这一行,故就地摊开:
-   *   基础(境界/层) × (1 + 各来源之和)
-   * 来源取自 finalStats.breakdown,与人物页属性明细同源,不在界面里另算一遍。
+   * 积余从主行挪进这里(玩家反馈:主行被它顶成两行)。
+   * 它是**跨境界带走的那部分** —— 卡境期间继续攒,突破时只扣本境需求,
+   * 所以这行不只是"多出来的数",还是一句"等待不白等"。
    */
-  const showCultBreakdown = ref(false)
-  const cultBase = computed(() => baseCultPerSec(player.major, player.sub))
-  const cultSources = computed(() =>
-    player.finalStats.breakdown
-      .map(r => ({ name: r.name, value: r.mods.cultivationSpeed ?? 0 }))
-      .filter(r => r.value !== 0)
-  )
-  const cultMultiplier = computed(() => modOf(player.finalStats.mods, 'cultivationSpeed'))
-  const cultivation = useCultivationStore()
-  const inventory = useInventoryStore()
-  const ui = useUiStore()
-  const now = useNow()
-
-  const btInfo = computed(() => breakthroughInfo())
+  ...(toNum(player.expOverflow) > 0
+    ? [
+        {
+          label: "积余",
+          value: player.expOverflow,
+          hint: "越过本境需求的部分;突破时随境界带走,不白攒",
+        },
+      ]
+    : []),
   /**
-   * 突破按钮的「灵气不足」补齐:reason 只报四字,不报还差多少、回够要多久。
-   * 站在按钮前的人不该再点开灵气数字才看见等待值 —— short 与 eta 现算,无 rebound。
+   * 玩家点名要的那一行:绝对值到「京」以后看不出涨落,**"还要多久"才看得见变化** ——
+   * 它每天都在动。故把它从脚注提成独立一行(用 text 走时长格式,没有精确值可展开)。
    */
-  const btQiBlock = computed(() => {
-    if (btInfo.value.ready || btInfo.value.reason !== '灵气不足') return null
-    const short = Math.max(0, Math.ceil(btInfo.value.qiCost - resources.qi))
-    const sec = player.qiRegenPerSec > 0 ? Math.ceil(short / player.qiRegenPerSec) : Number.POSITIVE_INFINITY
-    return { short, eta: Number.isFinite(sec) ? `约 ${formatDuration(sec)}` : '当前无回复' }
-  })
+  { label: "预计", text: expEtaText.value, hint: "按当前修炼速度;未计战斗所得与丹药" },
+]);
+/** 修为见满还需多久(已满/无速率时说人话,不给假时长) */
+const expEtaText = computed(() => {
+  if (player.expFull) return "已满 —— 下一步是突破";
+  const remain = toNum(subClamp(player.expReq, player.exp));
+  if (remain <= 0) return "就要满了";
+  if (player.cultPerSec <= 0) return "当前无修为进项";
+  return `约 ${formatDuration(remain / player.cultPerSec)}`;
+});
+const expDetailNote = computed(() => {
+  if (player.expFull) return "修为已满 —— 下一步是突破,不是再攒。";
+  return undefined;
+});
 
-  /**
-   * 修为数值详情的两行 + 一句人话。
-   *
-   * 「还需」用 subClamp 算(不足则为 0),预计耗时 = 还需 ÷ 当前修为速度 ——
-   * 到「京」这一档之后,绝对值本身看不出涨落,而这句"还需 3 天 2 时"每天都变,
-   * 玩家据此判断自己是不是在前进。已圆满时不再报时间(那是在等突破,不是等修为)。
-   */
-  const expDetailRows = computed(() => [
-    { label: '所需', value: player.expReq, hint: '当前这一层的需求' },
-    {
-      label: '还需',
-      value: subClamp(player.expReq, player.exp),
-      hint: player.expFull ? '已至圆满,可尝试突破' : `每秒 ${formatRate(player.cultPerSec)}`
-    },
-    /**
-     * 积余从主行挪进这里(玩家反馈:主行被它顶成两行)。
-     * 它是**跨境界带走的那部分** —— 卡境期间继续攒,突破时只扣本境需求,
-     * 所以这行不只是"多出来的数",还是一句"等待不白等"。
-     */
-    ...(toNum(player.expOverflow) > 0
-      ? [{ label: '积余', value: player.expOverflow, hint: '越过本境需求的部分;突破时随境界带走,不白攒' }]
-      : []),
-    /**
-     * 玩家点名要的那一行:绝对值到「京」以后看不出涨落,**"还要多久"才看得见变化** ——
-     * 它每天都在动。故把它从脚注提成独立一行(用 text 走时长格式,没有精确值可展开)。
-     */
-    { label: '预计', text: expEtaText.value, hint: '按当前修炼速度;未计战斗所得与丹药' }
-  ])
-  /** 修为见满还需多久(已满/无速率时说人话,不给假时长) */
-  const expEtaText = computed(() => {
-    if (player.expFull) return '已满 —— 下一步是突破'
-    const remain = toNum(subClamp(player.expReq, player.exp))
-    if (remain <= 0) return '就要满了'
-    if (player.cultPerSec <= 0) return '当前无修为进项'
-    return `约 ${formatDuration(remain / player.cultPerSec)}`
-  })
-  const expDetailNote = computed(() => {
-    if (player.expFull) return '修为已满 —— 下一步是突破,不是再攒。'
-    return undefined
-  })
+/** 灵气同理:回满还要多久 —— 突破、疗伤、炼丹都在等这条线 */
+const qiOverCap = computed(() => resources.qi > player.qiCapValue);
+/** 标称容量之外还攒了多少 —— 主行只挂一个「+」,精确值在点开的详情里 */
+const qiBanked = computed(() =>
+  Math.max(0, Math.floor(resources.qi) - Math.floor(player.qiCapValue)),
+);
+const qiDetailRows = computed(() => [
+  { label: "标称容量", value: player.qiCapValue, hint: "进度条与上限判定走的这条线" },
+  ...(qiBanked.value > 0
+    ? [
+        {
+          label: "积余",
+          value: qiBanked.value,
+          hint: `容量之外还在攒的部分;可积到 ${formatNum(player.qiBankCapValue)}(容量的 ${QI_BANK_MULT} 倍)`,
+        },
+      ]
+    : []),
+  {
+    label: "还差",
+    value: Math.max(0, Math.floor(player.qiCapValue - resources.qi)),
+    hint: `每秒 ${formatRate(player.qiRegenPerSec)}`,
+  },
+  { label: "预计回满", text: qiEtaText.value, hint: "按当前回复速度" },
+]);
+const qiEtaText = computed(() => {
+  const gap = player.qiCapValue - resources.qi;
+  if (gap <= 0) return "已满";
+  if (player.qiRegenPerSec <= 0) return "当前无回复";
+  return `约 ${formatDuration(gap / player.qiRegenPerSec)}`;
+});
+const qiDetailNote = computed(() => {
+  if (resources.qi >= player.qiBankCapValue) {
+    return `灵气已积到上限(${formatNum(player.qiBankCapValue)} = 容量的 10 倍)——不会再涨;突破、疗伤与炼丹会消耗它。`;
+  }
+  if (player.qiCapValue - resources.qi <= 0) return "灵气已满(标称容量),继续积余到上限为止。";
+  return undefined;
+});
 
-  /** 灵气同理:回满还要多久 —— 突破、疗伤、炼丹都在等这条线 */
-  const qiOverCap = computed(() => resources.qi > player.qiCapValue)
-  /** 标称容量之外还攒了多少 —— 主行只挂一个「+」,精确值在点开的详情里 */
-  const qiBanked = computed(() => Math.max(0, Math.floor(resources.qi) - Math.floor(player.qiCapValue)))
-  const qiDetailRows = computed(() => [
-    { label: '标称容量', value: player.qiCapValue, hint: '进度条与上限判定走的这条线' },
-    ...(qiBanked.value > 0
-      ? [
-          {
-            label: '积余',
-            value: qiBanked.value,
-            hint: `容量之外还在攒的部分;可积到 ${formatNum(player.qiBankCapValue)}(容量的 ${QI_BANK_MULT} 倍)`
+// Phase 28 突破准备:按钮文案/耗时/药价全部来自 BREAKTHROUGH_PREP_OPTIONS,不再在视图里写第二份
+const prepMeditate = BREAKTHROUGH_PREP_OPTIONS.find((o) => o.id === "meditate")!;
+const prepPill = BREAKTHROUGH_PREP_OPTIONS.find((o) => o.id === "pill")!;
+const prepPillCost = prepPill.cost?.stone ?? 0;
+const prepCanPill = computed(() => toNum(resources.spiritStone) >= prepPillCost);
+// 付不起时直显「尚差 X 石」(与建筑升级同款纪律,短差从药价现算,无第二份魔法数)
+const prepPillShort = computed(() => pillPrepShortfall(resources.spiritStone));
+
+function startPrep(option: "meditate" | "pill"): void {
+  // 失败臂有意不给 toast:唯一真实失败路(灵石不足)已被按钮置灰 +「尚差 X 石」
+  // 内联拦下(与建筑升级同款),meditate 又不花钱恒成功 —— 此前的「灵石不足,
+  // 无以备药」在按钮加 disabled 后成了到不了的死路,留着会在未来新失败模式上
+  // 报错文案。prepareBreakthrough 返回 false 时安静放行即可。
+  if (prepareBreakthrough(option)) {
+    ui.toast(option === "meditate" ? "你盘膝入定,静待调息完成" : "丹药入腹,气机已然蓄足", "info");
+  }
+}
+
+// Phase 28 闭关:状态与倒计时接 earlyGameService(buff 为真相源,重载后依旧可信)
+const retreating = computed(() => isRetreating());
+const retreatRemaining = computed(() => getRetreatRemainingSec(now.value)); // now 每秒刷新,倒计时走动
+/**
+ * 闭关的时长与加成取自 buffs.ts 的 retreat 本体(不在这里手抄 5 分钟 / +150%)。
+ * 之前注释写着"数值唯一来源 = buffs.ts",但文案里的数字是手打的 —— 改常数就会撒谎。
+ */
+const retreatDef = buffDef("retreat");
+const retreatMinutes = Math.round((retreatDef?.durationSec ?? 0) / 60);
+const retreatPct = Math.round((retreatDef?.mods.cultivationSpeed ?? 0) * 100);
+function beginRetreat(): void {
+  if (startRetreat()) {
+    ui.toast("你封洞闭关,心不外骛", "info");
+  }
+}
+/** 闭关开始那瞬卡片一闪(Watch 到 retreating 真值成立;5 分钟一到整卡随之回落,不再闪) */
+const retreatFlash = ref(false);
+watch(
+  () => retreating.value,
+  (nv, ov) => {
+    if (nv && !ov) retreatFlash.value = true;
+  },
+);
+
+// Phase 32.0 天劫决策:劫型 + 准备度(仅大关天劫时)
+const PLAN_COLOR: Record<TribulationPlan["verdict"], string> = {
+  danger: "text-cinnabar",
+  hard: "text-amber-ink",
+  ok: "text-qing",
+  easy: "text-jade",
+};
+const PREP_NAMES = { guard: "护持", sustain: "恢复", resist: "抗性", burst: "爆发" } as const;
+const PREP_STARS = ["·", "✧", "✧✧", "✧✧✧"] as const;
+const tribPlan = computed(() => (btInfo.value.needTribulation ? currentTribulationPlan() : null));
+/** 这天时是这场劫算进去的那一个(与结算/主页同源);倍率 >1 才挂字 */
+const tribWeather = computed(() => todayWeather());
+const tribWeatherMult = computed(() =>
+  tribWeather.value.tribulationMult > 1 ? tribWeather.value.tribulationMult : null,
+);
+
+/**
+ * 这一劫是不是「界膜」那一关(人间→仙界 / 仙界→神界 / 神界→混沌海)。
+ *
+ * 判据取自 tribulationDecision.statFoldAt(三维折算的折扣):
+ * 界面与结算读的必须是同一个数,否则又会出现"显示有护持、结算没有"。
+ */
+const tribTargetMajor = computed(() => (player.isMajorStep ? player.major + 1 : player.major));
+const worldStep = computed(() => statFoldAt(tribTargetMajor.value) < 1);
+
+/**
+ * 渡劫账上的四项实际读数 —— 只摊天劫真的会读的那些,恢复/护持/抗性直接调
+ * 结算的同一批函数(sustainScore / guardScore / settlementResist),界面不抄
+ * 第二份系数。曾抄过:0.3/0.8 字面量与 easeDiscount 折叠全对不上(逆流劫
+ * 界面报 30% 实际只有 19.5%),注释还写着「同源」—— 审计抓出来后根治。
+ * 玩家按这个数决定补词条、换灵根,看到的就是结算的。
+ */
+const tribLedger = computed(() => {
+  if (!tribPlan.value) return null;
+  const mods = player.finalStats.mods;
+  const stat = currentStatGuard();
+  const def = tribPlan.value.def;
+  const relief = currentTribulationRelief(tribPlan.value.kind);
+  return {
+    resist: settlementResist(mods, relief, stat),
+    statResist: stat.resist,
+    // 减伤同受结算的 0.6 上限:显示"此劫真的会读的"值,不拿全局裸减伤充数
+    reduction: Math.min(0.6, modOf(mods, "damageReduction")),
+    sustain: sustainScore(mods, def, relief),
+    guard: guardScore(mods, def, relief) + stat.guard,
+    statGuard: stat.guard,
+  };
+});
+
+/** 天威本身的长相(道数 + 单波区间):与结算同一批函数,不在界面里另算一遍 */
+const tribWave = computed(() =>
+  tribPlan.value
+    ? tribulationWaveSpan(tribPlan.value.def, player.isMajorStep ? player.major + 1 : player.major)
+    : null,
+);
+
+/** 灵气疗伤(修复)状态:负伤时才出现入口,代价随灵气容量指数增长 */
+const repair = computed(() => qiRepairView());
+
+/** Phase 32.2 与此劫气机相应的灵根:判据取自 tribulationRelief,界面说的与结算做的同源 */
+const reliefRoots = computed(() =>
+  tribPlan.value ? reliefElements(rootElements(player.linggen?.roots), tribPlan.value.kind) : [],
+);
+
+/**
+ * 状态胶囊 —— 直接读 store 的"此刻真正生效"那一份(`activeBuffs`),与属性汇总、心跳剪枝
+ * 共用库里的同一处判据:到期即散,不再出现"还剩 0 秒却还挂着"的一拍(见 ISS-231)。
+ */
+const activeBuffs = computed(() =>
+  cultivation.activeBuffs.map((view) => ({
+    def: view.def,
+    remain: view.remainingSec,
+    // 同刻的同类叠加份数(含自己):叠了才挂角标 —— 主屏一眼可见,与 BuffDialog「现效合计」同一台账
+    stack: buffStackSize(
+      view.def.mods,
+      cultivation.activeBuffs.filter((v) => v !== view).map((v) => v.def.mods),
+    ),
+  })),
+);
+
+/**
+ * 破境增益 · 此刻在身 —— 小进阶的成功率读 breakthroughRate,读数只是结果;
+ * 谁在顶、顶多少,突破前一眼见(遍历 activeBuffs 的面,文案走 modsText,与开炉幕同款)。
+ * 大关天劫不吃此事,整条只在非天劫幕亮(模板 v-if 于此)。
+ */
+const breakthroughBuffRows = computed(() =>
+  activeBuffs.value
+    .map(({ def }) => {
+      const face = Object.fromEntries(
+        Object.entries(def.mods ?? {}).filter(([k]) => k === "breakthroughRate"),
+      );
+      const rate = (face as import("@/types").StatMods).breakthroughRate ?? 0;
+      return rate !== 0
+        ? {
+            buffId: def.id,
+            name: def.name,
+            rate,
+            effect: modsText(face as import("@/types").StatMods),
           }
-        ]
-      : []),
-    {
-      label: '还差',
-      value: Math.max(0, Math.floor(player.qiCapValue - resources.qi)),
-      hint: `每秒 ${formatRate(player.qiRegenPerSec)}`
-    },
-    { label: '预计回满', text: qiEtaText.value, hint: '按当前回复速度' }
-  ])
-  const qiEtaText = computed(() => {
-    const gap = player.qiCapValue - resources.qi
-    if (gap <= 0) return '已满'
-    if (player.qiRegenPerSec <= 0) return '当前无回复'
-    return `约 ${formatDuration(gap / player.qiRegenPerSec)}`
-  })
-  const qiDetailNote = computed(() => {
-    if (resources.qi >= player.qiBankCapValue) {
-      return `灵气已积到上限(${formatNum(player.qiBankCapValue)} = 容量的 10 倍)——不会再涨;突破、疗伤与炼丹会消耗它。`
-    }
-    if (player.qiCapValue - resources.qi <= 0) return '灵气已满(标称容量),继续积余到上限为止。'
-    return undefined
-  })
+        : null;
+    })
+    .filter((x): x is { buffId: string; name: string; rate: number; effect: string } => x !== null),
+);
 
-  // Phase 28 突破准备:按钮文案/耗时/药价全部来自 BREAKTHROUGH_PREP_OPTIONS,不再在视图里写第二份
-  const prepMeditate = BREAKTHROUGH_PREP_OPTIONS.find(o => o.id === 'meditate')!
-  const prepPill = BREAKTHROUGH_PREP_OPTIONS.find(o => o.id === 'pill')!
-  const prepPillCost = prepPill.cost?.stone ?? 0
-  const prepCanPill = computed(() => toNum(resources.spiritStone) >= prepPillCost)
-  // 付不起时直显「尚差 X 石」(与建筑升级同款纪律,短差从药价现算,无第二份魔法数)
-  const prepPillShort = computed(() => pillPrepShortfall(resources.spiritStone))
+const learnedList = computed(() =>
+  Object.keys(cultivation.learned)
+    .map((id) => gongfaDef(id))
+    .filter((d) => d !== undefined)
+    .sort((a, b) => qualityDef(b!.quality).rank - qualityDef(a!.quality).rank),
+);
 
-  function startPrep(option: 'meditate' | 'pill'): void {
-    // 失败臂有意不给 toast:唯一真实失败路(灵石不足)已被按钮置灰 +「尚差 X 石」
-    // 内联拦下(与建筑升级同款),meditate 又不花钱恒成功 —— 此前的「灵石不足,
-    // 无以备药」在按钮加 disabled 后成了到不了的死路,留着会在未来新失败模式上
-    // 报错文案。prepareBreakthrough 返回 false 时安静放行即可。
-    if (prepareBreakthrough(option)) {
-      ui.toast(option === 'meditate' ? '你盘膝入定,静待调息完成' : '丹药入腹,气机已然蓄足', 'info')
-    }
+const mainDef = computed(() =>
+  cultivation.mainGongfa ? gongfaDef(cultivation.mainGongfa) : undefined,
+);
+
+/** 参悟池里还剩几部 —— 与 comprehendGongfa 的池条件同源(minRealm ≤ 当前 + 1 且未习得) */
+const comprehendLeft = computed(
+  () => GONGFA.filter((g) => g.minRealm <= player.major + 1 && !cultivation.learned[g.id]).length,
+);
+
+/**
+ * 快捷栏一枚丹的一行药效 —— 「以药辅道」不只看名字猜,服下去会怎样就地给。
+ * 读数取自 instant / buff 本体(与图鉴 itemText 同源,不另写一份)。
+ */
+function quickPillBrief(def: PillDef): string {
+  const i = def.instant;
+  if (def.kind === "buff" && def.buffId) {
+    const b = buffDef(def.buffId);
+    if (b) return `增益 ${Math.round(b.durationSec / 60)} 分钟`;
   }
-
-  // Phase 28 闭关:状态与倒计时接 earlyGameService(buff 为真相源,重载后依旧可信)
-  const retreating = computed(() => isRetreating())
-  const retreatRemaining = computed(() => getRetreatRemainingSec(now.value)) // now 每秒刷新,倒计时走动
-  /**
-   * 闭关的时长与加成取自 buffs.ts 的 retreat 本体(不在这里手抄 5 分钟 / +150%)。
-   * 之前注释写着"数值唯一来源 = buffs.ts",但文案里的数字是手打的 —— 改常数就会撒谎。
-   */
-  const retreatDef = buffDef('retreat')
-  const retreatMinutes = Math.round((retreatDef?.durationSec ?? 0) / 60)
-  const retreatPct = Math.round((retreatDef?.mods.cultivationSpeed ?? 0) * 100)
-  function beginRetreat(): void {
-    if (startRetreat()) {
-      ui.toast('你封洞闭关,心不外骛', 'info')
-    }
+  if (i) {
+    if (i.expSecs) return `修为·约抵闭关 ${formatDuration(i.expSecs)}`;
+    if (i.expFixed) return `修为 +${formatNum(i.expFixed)}`;
+    if (i.qiPct) return `灵气 +上限${formatPercent(i.qiPct, 0)}`;
+    if (i.lifespanYears) return `寿元 +${formatNum(i.lifespanYears)}`;
+    if (i.wudao) return `悟道点 +${formatNum(i.wudao)}`;
   }
-  /** 闭关开始那瞬卡片一闪(Watch 到 retreating 真值成立;5 分钟一到整卡随之回落,不再闪) */
-  const retreatFlash = ref(false)
-  watch(
-    () => retreating.value,
-    (nv, ov) => {
-      if (nv && !ov) retreatFlash.value = true
-    }
-  )
+  return "";
+}
 
-  // Phase 32.0 天劫决策:劫型 + 准备度(仅大关天劫时)
-  const PLAN_COLOR: Record<TribulationPlan['verdict'], string> = {
-    danger: 'text-cinnabar',
-    hard: 'text-amber-ink',
-    ok: 'text-qing',
-    easy: 'text-jade'
-  }
-  const PREP_NAMES = { guard: '护持', sustain: '恢复', resist: '抗性', burst: '爆发' } as const
-  const PREP_STARS = ['·', '✧', '✧✧', '✧✧✧'] as const
-  const tribPlan = computed(() => (btInfo.value.needTribulation ? currentTribulationPlan() : null))
-  /** 这天时是这场劫算进去的那一个(与结算/主页同源);倍率 >1 才挂字 */
-  const tribWeather = computed(() => todayWeather())
-  const tribWeatherMult = computed(() => (tribWeather.value.tribulationMult > 1 ? tribWeather.value.tribulationMult : null))
-
-  /**
-   * 这一劫是不是「界膜」那一关(人间→仙界 / 仙界→神界 / 神界→混沌海)。
-   *
-   * 判据取自 tribulationDecision.statFoldAt(三维折算的折扣):
-   * 界面与结算读的必须是同一个数,否则又会出现"显示有护持、结算没有"。
-   */
-  const tribTargetMajor = computed(() => (player.isMajorStep ? player.major + 1 : player.major))
-  const worldStep = computed(() => statFoldAt(tribTargetMajor.value) < 1)
-
-  /**
-   * 渡劫账上的四项实际读数 —— 只摊天劫真的会读的那些,恢复/护持/抗性直接调
-   * 结算的同一批函数(sustainScore / guardScore / settlementResist),界面不抄
-   * 第二份系数。曾抄过:0.3/0.8 字面量与 easeDiscount 折叠全对不上(逆流劫
-   * 界面报 30% 实际只有 19.5%),注释还写着「同源」—— 审计抓出来后根治。
-   * 玩家按这个数决定补词条、换灵根,看到的就是结算的。
-   */
-  const tribLedger = computed(() => {
-    if (!tribPlan.value) return null
-    const mods = player.finalStats.mods
-    const stat = currentStatGuard()
-    const def = tribPlan.value.def
-    const relief = currentTribulationRelief(tribPlan.value.kind)
-    return {
-      resist: settlementResist(mods, relief, stat),
-      statResist: stat.resist,
-      // 减伤同受结算的 0.6 上限:显示"此劫真的会读的"值,不拿全局裸减伤充数
-      reduction: Math.min(0.6, modOf(mods, 'damageReduction')),
-      sustain: sustainScore(mods, def, relief),
-      guard: guardScore(mods, def, relief) + stat.guard,
-      statGuard: stat.guard
-    }
-  })
-
-  /** 天威本身的长相(道数 + 单波区间):与结算同一批函数,不在界面里另算一遍 */
-  const tribWave = computed(() =>
-    tribPlan.value
-      ? tribulationWaveSpan(tribPlan.value.def, player.isMajorStep ? player.major + 1 : player.major)
-      : null
-  )
-
-  /** 灵气疗伤(修复)状态:负伤时才出现入口,代价随灵气容量指数增长 */
-  const repair = computed(() => qiRepairView())
-
-  /** Phase 32.2 与此劫气机相应的灵根:判据取自 tribulationRelief,界面说的与结算做的同源 */
-  const reliefRoots = computed(() =>
-    tribPlan.value ? reliefElements(rootElements(player.linggen?.roots), tribPlan.value.kind) : []
-  )
-
-  /**
-   * 状态胶囊 —— 直接读 store 的"此刻真正生效"那一份(`activeBuffs`),与属性汇总、心跳剪枝
-   * 共用库里的同一处判据:到期即散,不再出现"还剩 0 秒却还挂着"的一拍(见 ISS-231)。
-   */
-  const activeBuffs = computed(() =>
-    cultivation.activeBuffs.map(view => ({
-      def: view.def,
-      remain: view.remainingSec,
-      // 同刻的同类叠加份数(含自己):叠了才挂角标 —— 主屏一眼可见,与 BuffDialog「现效合计」同一台账
-      stack: buffStackSize(
-        view.def.mods,
-        cultivation.activeBuffs.filter(v => v !== view).map(v => v.def.mods)
-      )
+/** 修行相关丹药快捷栏:按品质降序,越珍稀的越靠前(原为插入序,先拿到什么显什么) */
+const quickPills = computed(() =>
+  Object.entries(inventory.pills)
+    .map(([id, count]) => ({ def: pillDef(id), count }))
+    .filter((x) => x.def !== undefined && x.count > 0)
+    .filter(
+      (x) =>
+        x.def!.kind === "buff" ||
+        x.def!.instant?.expSecs ||
+        x.def!.instant?.expFixed ||
+        x.def!.instant?.qiPct,
+    )
+    .map((x) => ({
+      ...x,
+      // 状态丹顶满再吃 = 白费(usePill 在 full 也照吃):卡面先把「已顶/续时」标出,别等 toast 才明白
+      overflow:
+        x.def!.kind === "buff" && x.def!.buffId
+          ? buffOverflowOf(cultivation.buffs, x.def!.buffId, now.value)
+          : "none",
     }))
-  )
+    .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank)
+    .slice(0, 4),
+);
 
-  /**
-   * 破境增益 · 此刻在身 —— 小进阶的成功率读 breakthroughRate,读数只是结果;
-   * 谁在顶、顶多少,突破前一眼见(遍历 activeBuffs 的面,文案走 modsText,与开炉幕同款)。
-   * 大关天劫不吃此事,整条只在非天劫幕亮(模板 v-if 于此)。
-   */
-  const breakthroughBuffRows = computed(() =>
-    activeBuffs.value
-      .map(({ def }) => {
-        const face = Object.fromEntries(Object.entries(def.mods ?? {}).filter(([k]) => k === 'breakthroughRate'))
-        const rate = (face as import('@/types').StatMods).breakthroughRate ?? 0
-        return rate !== 0 ? { buffId: def.id, name: def.name, rate, effect: modsText(face as import('@/types').StatMods) } : null
-      })
-      .filter((x): x is { buffId: string; name: string; rate: number; effect: string } => x !== null)
-  )
+function equipStateOf(id: string): string {
+  if (cultivation.mainGongfa === id) return "主修";
+  if (cultivation.subGongfa.includes(id)) return "辅修";
+  return "";
+}
 
-  const learnedList = computed(() =>
-    Object.keys(cultivation.learned)
-      .map(id => gongfaDef(id))
-      .filter(d => d !== undefined)
-      .sort((a, b) => qualityDef(b!.quality).rank - qualityDef(a!.quality).rank)
-  )
+/** 功行是否已至顶层 */
+function isFull(id: string): boolean {
+  return (cultivation.learned[id] ?? 0) >= (gongfaDef(id)?.maxLevel ?? 9);
+}
 
-  const mainDef = computed(() => (cultivation.mainGongfa ? gongfaDef(cultivation.mainGongfa) : undefined))
+/** 是否真能悟道(判据取自 gongfaBranches,界面提示与实际可选项同源) */
+function canEnlighten(id: string): boolean {
+  return canEnlightenGongfa(id, cultivation.learned[id] ?? 0);
+}
 
-  /** 参悟池里还剩几部 —— 与 comprehendGongfa 的池条件同源(minRealm ≤ 当前 + 1 且未习得) */
-  const comprehendLeft = computed(
-    () => GONGFA.filter(g => g.minRealm <= player.major + 1 && !cultivation.learned[g.id]).length
-  )
-
-  /**
-   * 快捷栏一枚丹的一行药效 —— 「以药辅道」不只看名字猜,服下去会怎样就地给。
-   * 读数取自 instant / buff 本体(与图鉴 itemText 同源,不另写一份)。
-   */
-  function quickPillBrief(def: PillDef): string {
-    const i = def.instant
-    if (def.kind === 'buff' && def.buffId) {
-      const b = buffDef(def.buffId)
-      if (b) return `增益 ${Math.round(b.durationSec / 60)} 分钟`
-    }
-    if (i) {
-      if (i.expSecs) return `修为·约抵闭关 ${formatDuration(i.expSecs)}`
-      if (i.expFixed) return `修为 +${formatNum(i.expFixed)}`
-      if (i.qiPct) return `灵气 +上限${formatPercent(i.qiPct, 0)}`
-      if (i.lifespanYears) return `寿元 +${formatNum(i.lifespanYears)}`
-      if (i.wudao) return `悟道点 +${formatNum(i.wudao)}`
-    }
-    return ''
-  }
-
-  /** 修行相关丹药快捷栏:按品质降序,越珍稀的越靠前(原为插入序,先拿到什么显什么) */
-  const quickPills = computed(() =>
-    Object.entries(inventory.pills)
-      .map(([id, count]) => ({ def: pillDef(id), count }))
-      .filter(x => x.def !== undefined && x.count > 0)
-      .filter(x => x.def!.kind === 'buff' || x.def!.instant?.expSecs || x.def!.instant?.expFixed || x.def!.instant?.qiPct)
-      .map(x => ({
-        ...x,
-        // 状态丹顶满再吃 = 白费(usePill 在 full 也照吃):卡面先把「已顶/续时」标出,别等 toast 才明白
-        overflow: x.def!.kind === 'buff' && x.def!.buffId ? buffOverflowOf(cultivation.buffs, x.def!.buffId, now.value) : 'none'
-      }))
-      .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank)
-      .slice(0, 4)
-  )
-
-  function equipStateOf(id: string): string {
-    if (cultivation.mainGongfa === id) return '主修'
-    if (cultivation.subGongfa.includes(id)) return '辅修'
-    return ''
-  }
-
-  /** 功行是否已至顶层 */
-  function isFull(id: string): boolean {
-    return (cultivation.learned[id] ?? 0) >= (gongfaDef(id)?.maxLevel ?? 9)
-  }
-
-  /** 是否真能悟道(判据取自 gongfaBranches,界面提示与实际可选项同源) */
-  function canEnlighten(id: string): boolean {
-    return canEnlightenGongfa(id, cultivation.learned[id] ?? 0)
-  }
-
-  /** 已择分支的道名;未择、或旧存档留着一个已下线的分支 id,都算没有 */
-  function branchName(id: string): string | undefined {
-    const branchId = cultivation.gongfaBranch[id]
-    return branchId ? gongfaBranchDef(branchId)?.name : undefined
-  }
+/** 已择分支的道名;未择、或旧存档留着一个已下线的分支 id,都算没有 */
+function branchName(id: string): string | undefined {
+  const branchId = cultivation.gongfaBranch[id];
+  return branchId ? gongfaBranchDef(branchId)?.name : undefined;
+}
 </script>

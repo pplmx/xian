@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite-plus'
+import { defineConfig } from "vite-plus";
 
 /**
  * 库自己的测试配置 —— 不依赖宿主仓库的任何设置。
@@ -8,8 +8,8 @@ import { defineConfig } from 'vite-plus'
  */
 export default defineConfig({
   test: {
-    environment: 'node',
-    include: ['src/**/*.spec.ts'],
-    testTimeout: 20000
-  }
-})
+    environment: "node",
+    include: ["src/**/*.spec.ts"],
+    testTimeout: 20000,
+  },
+});

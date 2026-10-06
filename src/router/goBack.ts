@@ -1,4 +1,4 @@
-import type { RouteLocationRaw, Router } from 'vue-router'
+import type { RouteLocationRaw, Router } from "vue-router";
 
 /**
  * 返回:有站内来路就退回去,没有就回它的父页。
@@ -13,7 +13,7 @@ import type { RouteLocationRaw, Router } from 'vue-router'
  * 有它才说明站内确实有上一页,那一页才退得;没有就老老实实去父页。
  */
 export function goBack(router: Router, fallback: RouteLocationRaw): void {
-  const state = window.history.state as { back?: string | null } | null
-  if (state?.back) router.back()
-  else void router.push(fallback)
+  const state = window.history.state as { back?: string | null } | null;
+  if (state?.back) router.back();
+  else void router.push(fallback);
 }

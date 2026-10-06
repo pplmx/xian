@@ -24,13 +24,13 @@
  * 引擎在 0.x 期间不承诺"曲线一定合理",承诺的是**读数口径一致**:同一份配置,
  * 谁跑都给同一张表;换题材只换内容,表就跟着变。
  */
-import type { RealmSystem } from './realms.js'
-import { numberNumeric, type Numeric } from './numeric.js'
-import type { Game } from './config.js'
+import type { RealmSystem } from "./realms.js";
+import { numberNumeric, type Numeric } from "./numeric.js";
+import type { Game } from "./config.js";
 
 export interface ProgressionAuditConfig<T = number> {
   /** 要体检的那张等级表(与 `game` 二选一) */
-  realms?: RealmSystem<T>
+  realms?: RealmSystem<T>;
   /**
    * 整个门面(`defineGame(...)` 的产物)—— 与 `realms` 二选一。
    *
@@ -39,71 +39,71 @@ export interface ProgressionAuditConfig<T = number> {
    * `powerWeights`,默认与源工程同一套 3/2/0.15),而不是"面板之和"这种保底口径。
    * 想再细(把装备、词条、buff 一起算进去),照旧自己给 `power`。
    */
-  game?: Game<T>
+  game?: Game<T>;
   /**
    * 玩家在这一格的**强度**(战力 / 总需求 / 你能想到的任何可比量)。
    * 不给时用等级表自己的面板之和(`baseStats` 的所有键相加)——那只是个保底口径,
    * 真做体检建议接上属性系统,把装备与词条一起算进去。
    */
-  power?: (major: number, layer: number) => number
+  power?: (major: number, layer: number) => number;
   /**
    * 内容在这一格的强度(该层敌人 / 该区域的推荐战力)。
    * **不给就不做碾压判定** —— 宁可少报,不要瞎报。
    */
-  contentPower?: (major: number, layer: number) => number
+  contentPower?: (major: number, layer: number) => number;
   /** 碾压阈值:玩家 ÷ 内容 ≥ 这个数算"内容被碾"(默认 3,与源工程的 `CRUSH_RATIO` 同口径) */
-  crushRatio?: number
+  crushRatio?: number;
   /** 自定义"这一格要多少"的读数(默认 `expCost`);返回普通数字即可,读数是给人看的 */
-  costOf?: (major: number, layer: number) => number
+  costOf?: (major: number, layer: number) => number;
 }
 
 export interface ProgressionStep {
-  major: number
-  layer: number
-  label: string
+  major: number;
+  layer: number;
+  label: string;
   /** 走完这一步就跨大境界 */
-  isMajorStep: boolean
+  isMajorStep: boolean;
   /** 走完这一步就换世界(界域) */
-  isWorldStep: boolean
+  isWorldStep: boolean;
   /**
    * **这一格是新世界的头一格**(跳变都落在它身上)。
    *
    * 与 `isWorldStep` 一对:那个说的是"走完上一格就换界",这个说的是"我已经在新界里了" ——
    * 读表时真正要看的是这一格,因为**需求与面板的跳变都记在落点上**。
    */
-  isWorldEntry: boolean
+  isWorldEntry: boolean;
   /** 这一格的价格(默认修为需求) */
-  cost: number
+  cost: number;
   /** 与上一格的倍数(第一格为 1) */
-  costStep: number
+  costStep: number;
   /** 玩家在这一格的强度 */
-  power: number
+  power: number;
   /** 与上一格的倍数(第一格为 1) */
-  powerStep: number
+  powerStep: number;
   /** 玩家 ÷ 内容;没给 `contentPower` 时是 `undefined` */
-  ratio?: number
+  ratio?: number;
   /** 碾压判定:只在给了 `contentPower` 时有值 */
-  verdict?: 'crush' | 'even' | 'wall'
+  verdict?: "crush" | "even" | "wall";
 }
 
 export interface WorldStep {
-  label: string
-  costStep: number
-  powerStep: number
+  label: string;
+  costStep: number;
+  powerStep: number;
 }
 
 export interface ProgressionSummary {
-  steps: number
+  steps: number;
   /** 需求涨得最狠的那一格(跨界格单独看,不混进来) */
-  biggestCostStep: ProgressionStep
+  biggestCostStep: ProgressionStep;
   /** 面板涨得最狠的那一格(同上) */
-  biggestPowerStep: ProgressionStep
+  biggestPowerStep: ProgressionStep;
   /** 每一处跨界的跳变 */
-  worldSteps: WorldStep[]
+  worldSteps: WorldStep[];
   /** 玩家第一次碾压内容的那一格;一次都没有就是 `undefined` */
-  firstCrush?: ProgressionStep
+  firstCrush?: ProgressionStep;
   /** 被碾压的格数 */
-  crushing: number
+  crushing: number;
 }
 
 /**
@@ -115,33 +115,33 @@ export interface ProgressionSummary {
  */
 export interface ProgressionSegment {
   /** 段首那一格 */
-  from: ProgressionStep
+  from: ProgressionStep;
   /** 段末那一格 */
-  to: ProgressionStep
+  to: ProgressionStep;
   /** 段名(按大境界切是境界名,按界域切是界域名) */
-  name: string
+  name: string;
   /** 段内格数 */
-  cells: number
+  cells: number;
   /** 段首 → 段末的需求倍数(段内只有一格时为 1) */
-  costSpan: number
+  costSpan: number;
   /** 段首 → 段末的面板倍数(同上) */
-  powerSpan: number
+  powerSpan: number;
   /** **跨进这一段**那一步的倍数(第一段为 1) */
-  entryCostStep: number
+  entryCostStep: number;
   /** 段内单步最大的需求跳变(不含跨进来的那一步) */
-  maxCostStep: number
+  maxCostStep: number;
 }
 
 /** 两份配置的**同一段**对照(按序号对齐;段名带上,方便看出"这一境改了名字") */
 export interface ProgressionComparisonRow {
-  name: string
-  beforeSpan: number
-  afterSpan: number
+  name: string;
+  beforeSpan: number;
+  afterSpan: number;
   /** 跨度变化倍数(after ÷ before):>1 = 这一段变长了 */
-  spanRatio: number
+  spanRatio: number;
   /** 跨进这一段那一步的倍数(分段口径里"进门那一下") */
-  beforeEntryStep: number
-  afterEntryStep: number
+  beforeEntryStep: number;
+  afterEntryStep: number;
 }
 
 /**
@@ -152,46 +152,51 @@ export interface ProgressionComparisonRow {
  * 但也不能假装两边对得上。
  */
 export interface ProgressionComparison {
-  by: 'major' | 'world'
-  rows: ProgressionComparisonRow[]
+  by: "major" | "world";
+  rows: ProgressionComparisonRow[];
   /** 格数(两边各自有几个格子) */
-  steps: { before: number; after: number }
+  steps: { before: number; after: number };
   /** 全程跨度(末格 ÷ 首格)与它的变化倍数 */
-  totalSpan: { before: number; after: number; ratio: number }
+  totalSpan: { before: number; after: number; ratio: number };
   /** 被碾压的格数(没给内容强度时两边都是 0) */
-  crushing: { before: number; after: number }
+  crushing: { before: number; after: number };
   /** 两份配置的段数不同(改过境界表 / 界域表) */
-  mismatched: boolean
+  mismatched: boolean;
 }
 
 const stepOf = (value: number, previous: number | undefined): number =>
-  previous === undefined || previous === 0 ? 1 : value / previous
+  previous === undefined || previous === 0 ? 1 : value / previous;
 
 export function createProgressionAudit<T = number>(
   config: ProgressionAuditConfig<T>,
-  numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>
+  numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>,
 ) {
-  const crushRatio = config.crushRatio ?? 3
-  const sys = config.realms ?? config.game?.realms
-  if (!sys) throw new Error('成长体检:要么给 realms,要么给 game')
+  const crushRatio = config.crushRatio ?? 3;
+  const sys = config.realms ?? config.game?.realms;
+  if (!sys) throw new Error("成长体检:要么给 realms,要么给 game");
 
   /** 面板之和:没给 `power` 时的保底口径(键名不参与,只求和 —— 引擎不认识它们) */
   const panelSum = (major: number, layer: number): number =>
-    Object.values(sys.baseStats(major, layer)).reduce<number>((sum, value) => sum + numeric.toNumber(value as T), 0)
+    Object.values(sys.baseStats(major, layer)).reduce<number>(
+      (sum, value) => sum + numeric.toNumber(value as T),
+      0,
+    );
 
   /** 给了门面就用属性系统的战力评分当默认强度(比"面板之和"更接近真实面板) */
   const attributePower = (major: number, layer: number): number =>
-    numeric.toNumber(config.game!.attributes.compute({ base: sys.baseStats(major, layer) }).power)
-  const powerAt = config.power ?? (config.game ? attributePower : panelSum)
-  const costAt = config.costOf ?? ((major: number, layer: number) => numeric.toNumber(sys.expCost(major, layer)))
+    numeric.toNumber(config.game!.attributes.compute({ base: sys.baseStats(major, layer) }).power);
+  const powerAt = config.power ?? (config.game ? attributePower : panelSum);
+  const costAt =
+    config.costOf ??
+    ((major: number, layer: number) => numeric.toNumber(sys.expCost(major, layer)));
 
-  const steps: ProgressionStep[] = []
-  let prevCost: number | undefined
-  let prevPower: number | undefined
+  const steps: ProgressionStep[] = [];
+  let prevCost: number | undefined;
+  let prevPower: number | undefined;
   for (let major = 0; major <= sys.maxMajor; major += 1) {
     for (let layer = 0; layer <= sys.maxLayerOf(major); layer += 1) {
-      const cost = costAt(major, layer)
-      const power = powerAt(major, layer)
+      const cost = costAt(major, layer);
+      const power = powerAt(major, layer);
       const row: ProgressionStep = {
         major,
         layer,
@@ -202,16 +207,16 @@ export function createProgressionAudit<T = number>(
         cost,
         costStep: stepOf(cost, prevCost),
         power,
-        powerStep: stepOf(power, prevPower)
-      }
+        powerStep: stepOf(power, prevPower),
+      };
       if (config.contentPower) {
-        const content = config.contentPower(major, layer)
-        row.ratio = content > 0 ? power / content : Number.POSITIVE_INFINITY
-        row.verdict = row.ratio >= crushRatio ? 'crush' : row.ratio >= 1 ? 'even' : 'wall'
+        const content = config.contentPower(major, layer);
+        row.ratio = content > 0 ? power / content : Number.POSITIVE_INFINITY;
+        row.verdict = row.ratio >= crushRatio ? "crush" : row.ratio >= 1 ? "even" : "wall";
       }
-      steps.push(row)
-      prevCost = cost
-      prevPower = power
+      steps.push(row);
+      prevCost = cost;
+      prevPower = power;
     }
   }
 
@@ -219,30 +224,33 @@ export function createProgressionAudit<T = number>(
   const summary = (): ProgressionSummary => {
     // 换界那一格本来就该跳一档,所以"最大跳变"只在普通格里挑 —— 否则它会把结论带偏。
     // 注意挑的是**落点**(跳变记在新世界的头一格上),不是"走完就换界"的那一格。
-    const plain = steps.slice(1).filter(step => !step.isWorldEntry)
-    const biggest = (key: 'costStep' | 'powerStep'): ProgressionStep =>
-      plain.reduce((best, step) => (step[key] > best[key] ? step : best), plain[0] ?? steps[0]!)
-    const crushing = steps.filter(step => step.verdict === 'crush')
+    const plain = steps.slice(1).filter((step) => !step.isWorldEntry);
+    const biggest = (key: "costStep" | "powerStep"): ProgressionStep =>
+      plain.reduce((best, step) => (step[key] > best[key] ? step : best), plain[0] ?? steps[0]!);
+    const crushing = steps.filter((step) => step.verdict === "crush");
     return {
       steps: steps.length,
-      biggestCostStep: biggest('costStep'),
-      biggestPowerStep: biggest('powerStep'),
+      biggestCostStep: biggest("costStep"),
+      biggestPowerStep: biggest("powerStep"),
       worldSteps: steps
-        .filter(step => step.isWorldEntry)
-        .map(step => ({ label: step.label, costStep: step.costStep, powerStep: step.powerStep })),
+        .filter((step) => step.isWorldEntry)
+        .map((step) => ({ label: step.label, costStep: step.costStep, powerStep: step.powerStep })),
       firstCrush: crushing[0],
-      crushing: crushing.length
-    }
-  }
+      crushing: crushing.length,
+    };
+  };
 
   /** 一行一格的读数(界面 / 控制台都能直接用) */
   const lines = (opts: { onlySteps?: boolean } = {}): string[] =>
     steps
-      .filter(step => !opts.onlySteps || step.costStep > 1.5 || step.powerStep > 1.5)
-      .map(step => {
-        const tail = step.verdict === undefined ? '' : ` · 玩家/内容 ${step.ratio!.toFixed(2)}(${step.verdict})`
-        return `${step.label.padEnd(12, ' ')} 需求 ×${step.costStep.toFixed(2)} · 面板 ×${step.powerStep.toFixed(2)}${tail}`
-      })
+      .filter((step) => !opts.onlySteps || step.costStep > 1.5 || step.powerStep > 1.5)
+      .map((step) => {
+        const tail =
+          step.verdict === undefined
+            ? ""
+            : ` · 玩家/内容 ${step.ratio!.toFixed(2)}(${step.verdict})`;
+        return `${step.label.padEnd(12, " ")} 需求 ×${step.costStep.toFixed(2)} · 面板 ×${step.powerStep.toFixed(2)}${tail}`;
+      });
 
   /**
    * 按段读数:`by='major'` 每大境界一段(默认),`by='world'` 每界域一段。
@@ -252,35 +260,35 @@ export function createProgressionAudit<T = number>(
    *   · `entryCostStep` 单独给:**跨进这一段**那一步(跨大境界或换界),不算进 `maxCostStep` ——
    *     否则每一段的最大跳变都会变成"进门那一下",段内谁最陡就看不出来了。
    */
-  const segments = (by: 'major' | 'world' = 'major'): ProgressionSegment[] => {
-    const groups = new Map<string, ProgressionStep[]>()
+  const segments = (by: "major" | "world" = "major"): ProgressionSegment[] => {
+    const groups = new Map<string, ProgressionStep[]>();
     for (const step of steps) {
-      const key = by === 'world' ? sys.worldOf(step.major).id : String(step.major)
-      const list = groups.get(key)
-      if (list) list.push(step)
-      else groups.set(key, [step])
+      const key = by === "world" ? sys.worldOf(step.major).id : String(step.major);
+      const list = groups.get(key);
+      if (list) list.push(step);
+      else groups.set(key, [step]);
     }
-    return [...groups.values()].map(list => {
-      const from = list[0]!
-      const to = list[list.length - 1]!
-      const inner = list.slice(1)
+    return [...groups.values()].map((list) => {
+      const from = list[0]!;
+      const to = list[list.length - 1]!;
+      const inner = list.slice(1);
       return {
         from,
         to,
-        name: by === 'world' ? sys.worldOf(from.major).name : sys.realmAt(from.major).name,
+        name: by === "world" ? sys.worldOf(from.major).name : sys.realmAt(from.major).name,
         cells: list.length,
         costSpan: from.cost === 0 ? 1 : stepOf(to.cost, from.cost),
         powerSpan: stepOf(to.power, from.power),
         entryCostStep: from.costStep,
-        maxCostStep: inner.length === 0 ? 1 : Math.max(...inner.map(step => step.costStep))
-      }
-    })
-  }
+        maxCostStep: inner.length === 0 ? 1 : Math.max(...inner.map((step) => step.costStep)),
+      };
+    });
+  };
 
-  return { steps, summary, lines, segments, crushRatio }
+  return { steps, summary, lines, segments, crushRatio };
 }
 
-export type ProgressionAudit = ReturnType<typeof createProgressionAudit>
+export type ProgressionAudit = ReturnType<typeof createProgressionAudit>;
 
 /**
  * 把两份体检**并排比一比** —— 回答"我改了这一个数,哪一段变了、变多少"。
@@ -291,32 +299,34 @@ export type ProgressionAudit = ReturnType<typeof createProgressionAudit>
 export function compareProgression(
   before: ProgressionAudit,
   after: ProgressionAudit,
-  by: 'major' | 'world' = 'major'
+  by: "major" | "world" = "major",
 ): ProgressionComparison {
-  const a = before.segments(by)
-  const b = after.segments(by)
+  const a = before.segments(by);
+  const b = after.segments(by);
   /** 全程跨度:末格 ÷ 首格(把整张表当成一段看) */
   const spanOf = (list: readonly ProgressionSegment[]): number =>
-    list.length === 0 ? 1 : stepOf(list[list.length - 1]!.to.cost, list[0]!.from.cost)
-  const rows: ProgressionComparisonRow[] = a.slice(0, Math.min(a.length, b.length)).map((seg, i) => {
-    const other = b[i]!
-    return {
-      name: seg.name,
-      beforeSpan: seg.costSpan,
-      afterSpan: other.costSpan,
-      spanRatio: stepOf(other.costSpan, seg.costSpan),
-      beforeEntryStep: seg.entryCostStep,
-      afterEntryStep: other.entryCostStep
-    }
-  })
-  const beforeTotal = spanOf(a)
-  const afterTotal = spanOf(b)
+    list.length === 0 ? 1 : stepOf(list[list.length - 1]!.to.cost, list[0]!.from.cost);
+  const rows: ProgressionComparisonRow[] = a
+    .slice(0, Math.min(a.length, b.length))
+    .map((seg, i) => {
+      const other = b[i]!;
+      return {
+        name: seg.name,
+        beforeSpan: seg.costSpan,
+        afterSpan: other.costSpan,
+        spanRatio: stepOf(other.costSpan, seg.costSpan),
+        beforeEntryStep: seg.entryCostStep,
+        afterEntryStep: other.entryCostStep,
+      };
+    });
+  const beforeTotal = spanOf(a);
+  const afterTotal = spanOf(b);
   return {
     by,
     rows,
     steps: { before: before.steps.length, after: after.steps.length },
     totalSpan: { before: beforeTotal, after: afterTotal, ratio: stepOf(afterTotal, beforeTotal) },
     crushing: { before: before.summary().crushing, after: after.summary().crushing },
-    mismatched: a.length !== b.length
-  }
+    mismatched: a.length !== b.length,
+  };
 }

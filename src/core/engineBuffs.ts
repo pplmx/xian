@@ -9,11 +9,11 @@
  * 读取口径:**问的是"此刻还算不算数"**(库的 `active`,到期即散),而不是"列表里有没有" ——
  * 列表里那些已经过期、还没被心跳剪掉的,不该继续算进属性(见 ISS-231)。
  */
-import type { AnyStatKey, BuffDef, BuffInstance, StatMods } from '@/types'
-import type { BuffInstance as EngineBuffInstance } from 'wanxiang-engine'
-import { createBuffSystem } from 'wanxiang-engine'
-import { BUFFS, buffDef } from '@/data/buffs'
-import { PILLS } from '@/data/pills'
+import type { AnyStatKey, BuffDef, BuffInstance, StatMods } from "@/types";
+import type { BuffInstance as EngineBuffInstance } from "wanxiang-engine";
+import { createBuffSystem } from "wanxiang-engine";
+import { BUFFS, buffDef } from "@/data/buffs";
+import { PILLS } from "@/data/pills";
 
 /**
  * 可消耗增益的时长上限 —— **单颗时长的 2 倍**。
@@ -30,27 +30,31 @@ import { PILLS } from '@/data/pills'
  * 口径写在装配这一层、由数据推导,而不是逐个 def 手写:新增一味丹只要在 `data/pills` 里挂上
  * `buffId`,上限自动生效 —— 少一处"记得改"的地方。判据见 `core/consumableBuffCap.spec.ts`。
  */
-export const CONSUMABLE_BUFF_CAP_MULT = 2
+export const CONSUMABLE_BUFF_CAP_MULT = 2;
 
 /** 凡能被丹药施加的增益 id —— 上限只对它们生效(事件祝福 / 闭关 / 惩罚不在此列) */
-const CONSUMABLE_BUFF_IDS = new Set(PILLS.map(p => p.buffId).filter((id): id is string => !!id))
+const CONSUMABLE_BUFF_IDS = new Set(PILLS.map((p) => p.buffId).filter((id): id is string => !!id));
 
 const BUFFS_SYSTEM = createBuffSystem<StatMods>({
-  defs: BUFFS.map(d => ({
+  defs: BUFFS.map((d) => ({
     id: d.id,
     durationSec: d.durationSec,
     kind: d.kind,
     mods: d.mods,
     // 丹药能吃出"囤"的那一类才封顶;其余状态的时长由内容或事件决定,不该被这里改口径
-    maxDurationSec: CONSUMABLE_BUFF_IDS.has(d.id) ? d.durationSec * CONSUMABLE_BUFF_CAP_MULT : undefined
+    maxDurationSec: CONSUMABLE_BUFF_IDS.has(d.id)
+      ? d.durationSec * CONSUMABLE_BUFF_CAP_MULT
+      : undefined,
   })),
-  clock: 'ms'
-})
+  clock: "ms",
+});
 
 /** 某条增益的时长上限(秒);不受上限管的返回 `undefined` */
 export function buffCapSec(defId: string): number | undefined {
-  const def = buffDef(defId)
-  return def && CONSUMABLE_BUFF_IDS.has(defId) ? def.durationSec * CONSUMABLE_BUFF_CAP_MULT : undefined
+  const def = buffDef(defId);
+  return def && CONSUMABLE_BUFF_IDS.has(defId)
+    ? def.durationSec * CONSUMABLE_BUFF_CAP_MULT
+    : undefined;
 }
 
 /**
@@ -61,17 +65,17 @@ export function buffCapSec(defId: string): number | undefined {
  * (丹药增益)报数:闭关/重伤/事件祝福不走叠法,报个数反而是错的。
  */
 export function buffStackCount(defId: string, remainSec: number): number {
-  const cap = buffCapSec(defId)
-  const def = buffDef(defId)
-  if (cap === undefined || !def || def.durationSec <= 0) return 1
-  return Math.min(CONSUMABLE_BUFF_CAP_MULT, Math.max(1, Math.ceil(remainSec / def.durationSec)))
+  const cap = buffCapSec(defId);
+  const def = buffDef(defId);
+  if (cap === undefined || !def || def.durationSec <= 0) return 1;
+  return Math.min(CONSUMABLE_BUFF_CAP_MULT, Math.max(1, Math.ceil(remainSec / def.durationSec)));
 }
 
 /** 本作存的键是 `defId`,库里叫 `id`:`endsAt` 是同一个数,只换个键名 */
 const toEngine = (list: readonly BuffInstance[]): EngineBuffInstance[] =>
-  list.map(b => ({ id: b.defId, endsAt: b.endsAt }))
+  list.map((b) => ({ id: b.defId, endsAt: b.endsAt }));
 const fromEngine = (list: readonly EngineBuffInstance[]): BuffInstance[] =>
-  list.map(i => ({ defId: i.id, endsAt: i.endsAt }))
+  list.map((i) => ({ defId: i.id, endsAt: i.endsAt }));
 
 /**
  * 施加一条状态:**同一状态重复施加时叠时长,不是刷新**。
@@ -83,20 +87,27 @@ const fromEngine = (list: readonly EngineBuffInstance[]): BuffInstance[] =>
  * 查无此定义时**原样返回同一个数组** —— 旧实现是静默返回:内容改名后老档里的 id
  * 不该让存档炸,也不该被当成"施加成功"。
  */
-export function applyBuff(list: readonly BuffInstance[], defId: string, now: number): BuffInstance[] {
-  const applied = BUFFS_SYSTEM.apply(toEngine(list), defId, now)
-  return applied.applied ? fromEngine(applied.instances) : (list as BuffInstance[])
+export function applyBuff(
+  list: readonly BuffInstance[],
+  defId: string,
+  now: number,
+): BuffInstance[] {
+  const applied = BUFFS_SYSTEM.apply(toEngine(list), defId, now);
+  return applied.applied ? fromEngine(applied.instances) : (list as BuffInstance[]);
 }
 
 /** 剪掉过期状态:返回新列表与"有没有变化"(没变化时调用方不必改 ref) */
-export function pruneBuffList(list: readonly BuffInstance[], now: number): { list: BuffInstance[]; changed: boolean } {
-  const pruned = BUFFS_SYSTEM.prune(toEngine(list), now)
-  return { list: fromEngine(pruned.instances), changed: pruned.removed > 0 }
+export function pruneBuffList(
+  list: readonly BuffInstance[],
+  now: number,
+): { list: BuffInstance[]; changed: boolean } {
+  const pruned = BUFFS_SYSTEM.prune(toEngine(list), now);
+  return { list: fromEngine(pruned.instances), changed: pruned.removed > 0 };
 }
 
 /** 清除负面状态(本作口径:分类为 `injury` 的那些,含心魔) */
 export function clearNegativeBuffList(list: readonly BuffInstance[]): BuffInstance[] {
-  return fromEngine(BUFFS_SYSTEM.clear(toEngine(list), 'injury').instances)
+  return fromEngine(BUFFS_SYSTEM.clear(toEngine(list), "injury").instances);
 }
 
 /**
@@ -108,18 +119,18 @@ export function clearNegativeBuffList(list: readonly BuffInstance[]): BuffInstan
  */
 export function buffStackHints(
   own: StatMods,
-  merged: StatMods
+  merged: StatMods,
 ): { key: AnyStatKey; owned: number; total: number }[] {
-  const rows: { key: AnyStatKey; owned: number; total: number }[] = []
+  const rows: { key: AnyStatKey; owned: number; total: number }[] = [];
   for (const k of Object.keys(own)) {
-    const key = k as AnyStatKey
-    const owned = own[key] ?? 0
+    const key = k as AnyStatKey;
+    const owned = own[key] ?? 0;
     // merged 里没有这个键 = 没有"别的来源"的证据(null 会被 `?? 0` 误报成"现效合计 0%")
-    const total = merged[key]
-    if (total === undefined || Math.abs(total - owned) < 1e-6) continue
-    rows.push({ key, owned, total })
+    const total = merged[key];
+    if (total === undefined || Math.abs(total - owned) < 1e-6) continue;
+    rows.push({ key, owned, total });
   }
-  return rows
+  return rows;
 }
 
 /**
@@ -130,13 +141,13 @@ export function buffStackHints(
  * 与 BuffDialog 的「现效合计」同一台账:弹窗报合并后的真值,胶囊报"在叠的份数"。
  */
 export function buffStackSize(own: StatMods, others: readonly StatMods[]): number {
-  if (Object.keys(own).length === 0) return 1
-  let n = 1
+  if (Object.keys(own).length === 0) return 1;
+  let n = 1;
   for (const other of others) {
-    const shares = Object.keys(other).some(k => (own[k as AnyStatKey] ?? 0) !== 0)
-    if (shares) n += 1
+    const shares = Object.keys(other).some((k) => (own[k as AnyStatKey] ?? 0) !== 0);
+    if (shares) n += 1;
   }
-  return n
+  return n;
 }
 
 /**
@@ -150,22 +161,26 @@ export function buffStackSize(own: StatMods, others: readonly StatMods[]): numbe
  * 每一颗实际只延续几十秒 —— 玩家看到的是"药吃了,时间几乎没动",若不说清楚,
  * 下一个结论就是"这游戏坏了"。容差 0.5 秒:剩余时间以毫秒在走,差半秒不算到顶。
  */
-export type BuffOverflow = 'none' | 'partial' | 'full'
+export type BuffOverflow = "none" | "partial" | "full";
 
-export function buffOverflowOf(list: readonly BuffInstance[], defId: string, now: number): BuffOverflow {
-  const def = buffDef(defId)
-  const cap = buffCapSec(defId)
-  if (!def || cap === undefined) return 'none'
-  const remain = BUFFS_SYSTEM.remainingSec(toEngine(list), defId, now)
-  if (remain >= cap - 0.5) return 'full'
-  return remain + def.durationSec > cap ? 'partial' : 'none'
+export function buffOverflowOf(
+  list: readonly BuffInstance[],
+  defId: string,
+  now: number,
+): BuffOverflow {
+  const def = buffDef(defId);
+  const cap = buffCapSec(defId);
+  if (!def || cap === undefined) return "none";
+  const remain = BUFFS_SYSTEM.remainingSec(toEngine(list), defId, now);
+  if (remain >= cap - 0.5) return "full";
+  return remain + def.durationSec > cap ? "partial" : "none";
 }
 
 /** 一条生效中的状态:内容定义(带名字 / 图标)+ 实例 + 还剩多少秒 */
 export interface ActiveBuff {
-  def: BuffDef
-  instance: BuffInstance
-  remainingSec: number
+  def: BuffDef;
+  instance: BuffInstance;
+  remainingSec: number;
 }
 
 /**
@@ -173,12 +188,16 @@ export interface ActiveBuff {
  * 属性汇总、"还在不在"与界面胶囊都用它 —— 与库的 `active` 同一判据。
  */
 export function activeBuffsOf(list: readonly BuffInstance[], now: number): ActiveBuff[] {
-  const out: ActiveBuff[] = []
+  const out: ActiveBuff[] = [];
   for (const view of BUFFS_SYSTEM.active(toEngine(list), now)) {
-    const def = buffDef(view.def.id)
+    const def = buffDef(view.def.id);
     if (def) {
-      out.push({ def, instance: { defId: view.instance.id, endsAt: view.instance.endsAt }, remainingSec: view.remainingSec })
+      out.push({
+        def,
+        instance: { defId: view.instance.id, endsAt: view.instance.endsAt },
+        remainingSec: view.remainingSec,
+      });
     }
   }
-  return out
+  return out;
 }

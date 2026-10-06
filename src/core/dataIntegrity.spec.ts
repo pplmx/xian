@@ -30,7 +30,9 @@ const STAT_BLOCK = TYPES_SRC.slice(
   TYPES_SRC.indexOf("export type PercentStatKey"),
   TYPES_SRC.indexOf("export type AnyStatKey"),
 );
-const DECLARED_STAT_KEYS = new Set([...STAT_BLOCK.matchAll(/'([A-Za-z]+)'/g)].map((m) => m[1]!));
+const DECLARED_STAT_KEYS = new Set(
+  [...STAT_BLOCK.matchAll(/["']([A-Za-z]+)["']/g)].map((m) => m[1]!),
+);
 
 function dataFiles(): string[] {
   return readdirSync(DATA_DIR)

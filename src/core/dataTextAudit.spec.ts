@@ -197,7 +197,7 @@ describe("文案数值对账 · 视图不手抄数字", () => {
 
   it("修行页的闭关文案取自 buffs.ts 的 retreat 本体", () => {
     const view = src("../views/CultivationView.vue");
-    expect(view, "闭关时长与加成应读 buff 定义").toContain("buffDef('retreat')");
+    expect(view, "闭关时长与加成应读 buff 定义").toContain('buffDef("retreat")');
     expect(view).not.toContain("5 分钟,修炼速度 +150%");
     expect(view).not.toContain("5分钟 修炼 +150%");
   });
@@ -205,7 +205,7 @@ describe("文案数值对账 · 视图不手抄数字", () => {
   it("突破幕亮出破境增益:谁在顶这一阶一眼见,文案走 buff→modsText;大关幕不亮", () => {
     const view = src("../views/CultivationView.vue");
     expect(view).toContain("breakthroughBuffRows");
-    expect(view).toContain("k === 'breakthroughRate'");
+    expect(view).toContain('k === "breakthroughRate"');
     expect(view).toContain("modsText");
     // 守卫必须跟在条本身旁边(±300 字符内),只 toContain 会被改名前那 6 处既有守卫穿透
     expect(view, "大关守卫必须与破境条同块 —— 删条上 v-if 立刻红").toMatch(
@@ -220,7 +220,7 @@ describe("文案数值对账 · 视图不手抄数字", () => {
   it("突破按钮的「灵气不足」要补缺:还差多少、回够要多久直显,不许只给四字灰", () => {
     const view = src("../views/CultivationView.vue");
     // reason 报「灵气不足」时,按钮下方必须有 btQiBlock 的短差与 ETA;删/收缩成四字立刻红
-    expect(view).toContain("btInfo.value.reason !== '灵气不足'");
+    expect(view).toContain('btInfo.value.reason !== "灵气不足"');
     expect(view).toContain('v-if="btQiBlock"');
     expect(view).toContain("尚差 {{ btQiBlock.short }}");
   });
@@ -426,7 +426,7 @@ describe("术语一致性 · 用户可见文本", () => {
           const body = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
           out.push({
             file: rel,
-            text: [...body.matchAll(/'([^'\\\n]{2,})'/g)].map((m) => m[1]!).join("\n"),
+            text: [...body.matchAll(/["']([^"'\\\n]{2,})["']/g)].map((m) => m[1]!).join("\n"),
           });
         }
       }

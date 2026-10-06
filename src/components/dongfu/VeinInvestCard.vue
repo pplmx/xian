@@ -9,7 +9,8 @@
     <p class="mb-3 text-[11px] leading-relaxed text-ink-soft">
       炼化灵石永久强化洞府灵脉,获得全局属性加成。主脉可投
       <span class="text-cinnabar">{{ VEIN_MAIN_CAPACITY }} 点</span>,副脉各
-      <span class="text-cinnabar">{{ VEIN_SIDE_CAP }} 点</span>,总容量 {{ VEIN_TOTAL_CAPACITY }}——不能全部点满,方向即取舍。
+      <span class="text-cinnabar">{{ VEIN_SIDE_CAP }} 点</span>,总容量
+      {{ VEIN_TOTAL_CAPACITY }}——不能全部点满,方向即取舍。
     </p>
 
     <div class="space-y-2.5">
@@ -21,8 +22,14 @@
         >
           <span class="flex min-w-0 items-center gap-1.5">
             <span class="truncate">{{ v.name }}</span>
-            <span v-if="isMain(v.id)" class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-[10px] leading-none text-cinnabar">主脉</span>
-            <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-[10px] text-ink-faint">首投成主</span>
+            <span
+              v-if="isMain(v.id)"
+              class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-[10px] leading-none text-cinnabar"
+              >主脉</span
+            >
+            <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-[10px] text-ink-faint"
+              >首投成主</span
+            >
           </span>
           <span class="tabular text-[11px]">
             <span :class="atCap(v.id) ? 'text-jade' : 'text-ink-faint'">
@@ -36,7 +43,9 @@
         <!-- 每条脉都要自陈作用:此前只显示名字与价格,玩家无从判断该投哪条 -->
         <p class="px-0.5 text-[10px] leading-relaxed text-ink-faint">
           {{ v.desc }}
-          <span v-if="currentLevel(v.id) > 0" class="text-qing">· {{ veinEffectText(v, currentLevel(v.id)) }}</span>
+          <span v-if="currentLevel(v.id) > 0" class="text-qing"
+            >· {{ veinEffectText(v, currentLevel(v.id)) }}</span
+          >
         </p>
         <!-- 原主脉迁出后超额部分保留(效果不失,不可再投) -->
         <p v-if="surplusPoints(v.id) > 0" class="px-0.5 text-[10px] text-gold-ink">
@@ -56,7 +65,9 @@
     <!-- 当前加成:一枚枚小 chip 收着,不再连排成 switch → 一加多就断行碎成流浪分号 -->
     <p class="mt-3 text-[10px] text-ink-faint">当前加成</p>
     <div class="mt-1 flex flex-wrap gap-1.5">
-      <span v-if="!bonusRows.length" class="text-[10px] text-ink-faint">尚无 —— 炼化灵石点亮某一脉</span>
+      <span v-if="!bonusRows.length" class="text-[10px] text-ink-faint"
+        >尚无 —— 炼化灵石点亮某一脉</span
+      >
       <span
         v-for="row in bonusRows"
         :key="row.label"
@@ -69,88 +80,93 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import { useDongfuStore } from '@/stores/dongfu'
-  import { usePlayerStore } from '@/stores/player'
-  import { VEINS, type VeinId } from '@/data/veins'
-  import { investVein, veinPointCost, veinSwitchCost, switchMainVein } from '@/core/veinService'
-  import { VEIN_MAIN_CAPACITY, VEIN_SIDE_CAP, VEIN_TOTAL_CAPACITY, VEIN_UNLOCK_MAJOR } from '@/data/constants'
-  import { STAT_NAMES } from '@/ui/statNames'
-  import { veinEffectText } from '@/ui/veinText'
-  import { formatGN, formatPercent } from '@/utils/format'
-  import type { AnyStatKey } from '@/types'
+import { computed } from "vue";
+import { useDongfuStore } from "@/stores/dongfu";
+import { usePlayerStore } from "@/stores/player";
+import { VEINS, type VeinId } from "@/data/veins";
+import { investVein, veinPointCost, veinSwitchCost, switchMainVein } from "@/core/veinService";
+import {
+  VEIN_MAIN_CAPACITY,
+  VEIN_SIDE_CAP,
+  VEIN_TOTAL_CAPACITY,
+  VEIN_UNLOCK_MAJOR,
+} from "@/data/constants";
+import { STAT_NAMES } from "@/ui/statNames";
+import { veinEffectText } from "@/ui/veinText";
+import { formatGN, formatPercent } from "@/utils/format";
+import type { AnyStatKey } from "@/types";
 
-  const dongfu = useDongfuStore()
-  const player = usePlayerStore()
+const dongfu = useDongfuStore();
+const player = usePlayerStore();
 
-  const investCost = computed(() => veinPointCost())
-  const switchCost = computed(() => veinSwitchCost())
-  const veinsUnlocked = computed(() => player.major >= VEIN_UNLOCK_MAJOR)
-  const veinTotal = computed(() => dongfu.veinTotal)
-  /** 现主脉投了几点 —— 迁脉提示「现主 N 点转副」的依据 */
-  const mainPoints = computed(() => (dongfu.veinMain === null ? 0 : currentLevel(dongfu.veinMain)))
-  /**
-   * 当前加成 —— 必须把不走 StatMods 的那一条也算进来。
-   *
-   * 寒冥灵脉的 perPoint 是空对象:它的效果是「功法参悟省悟道点」,
-   * 走 dongfu.insightDiscount,不进 veinMods。此前这里只读 veinMods,
-   * 于是投了满脉也一个字都不显示 —— 玩家因此不知道它有没有用
-   */
-  const bonusRows = computed(() => {
-    const rows: { label: string; value: number; sign: string }[] = []
-    for (const [k, v] of Object.entries(dongfu.veinMods)) {
-      if (typeof v === 'number' && v > 0) {
-        rows.push({ label: STAT_NAMES[k as AnyStatKey] ?? k, value: v, sign: '+' })
-      }
+const investCost = computed(() => veinPointCost());
+const switchCost = computed(() => veinSwitchCost());
+const veinsUnlocked = computed(() => player.major >= VEIN_UNLOCK_MAJOR);
+const veinTotal = computed(() => dongfu.veinTotal);
+/** 现主脉投了几点 —— 迁脉提示「现主 N 点转副」的依据 */
+const mainPoints = computed(() => (dongfu.veinMain === null ? 0 : currentLevel(dongfu.veinMain)));
+/**
+ * 当前加成 —— 必须把不走 StatMods 的那一条也算进来。
+ *
+ * 寒冥灵脉的 perPoint 是空对象:它的效果是「功法参悟省悟道点」,
+ * 走 dongfu.insightDiscount,不进 veinMods。此前这里只读 veinMods,
+ * 于是投了满脉也一个字都不显示 —— 玩家因此不知道它有没有用
+ */
+const bonusRows = computed(() => {
+  const rows: { label: string; value: number; sign: string }[] = [];
+  for (const [k, v] of Object.entries(dongfu.veinMods)) {
+    if (typeof v === "number" && v > 0) {
+      rows.push({ label: STAT_NAMES[k as AnyStatKey] ?? k, value: v, sign: "+" });
     }
-    // 参悟折扣是减耗,故记负号
-    if (dongfu.insightDiscount > 0) {
-      rows.push({ label: '参悟省耗', value: Math.min(0.5, dongfu.insightDiscount), sign: '−' })
-    }
-    return rows
-  })
-
-  function isMain(veinId: VeinId): boolean {
-    return dongfu.veinMain === veinId
   }
-
-  /** 该脉实际可投上限:主脉 70,副脉 30 */
-  function cap(veinId: VeinId): number {
-    return isMain(veinId) ? VEIN_MAIN_CAPACITY : VEIN_SIDE_CAP
+  // 参悟折扣是减耗,故记负号
+  if (dongfu.insightDiscount > 0) {
+    rows.push({ label: "参悟省耗", value: Math.min(0.5, dongfu.insightDiscount), sign: "−" });
   }
+  return rows;
+});
 
-  function currentLevel(veinId: VeinId): number {
-    return dongfu.veinPoints[veinId] ?? 0
-  }
+function isMain(veinId: VeinId): boolean {
+  return dongfu.veinMain === veinId;
+}
 
-  /** 该脉已投满(主 70 / 副 30):按钮禁用,行尾不再印费用 */
-  function atCap(veinId: VeinId): boolean {
-    return currentLevel(veinId) >= cap(veinId)
-  }
+/** 该脉实际可投上限:主脉 70,副脉 30 */
+function cap(veinId: VeinId): number {
+  return isMain(veinId) ? VEIN_MAIN_CAPACITY : VEIN_SIDE_CAP;
+}
 
-  /** 原主脉迁出后超出副脉上限的部分 */
-  function surplusPoints(veinId: VeinId): number {
-    if (isMain(veinId)) return 0
-    return Math.max(0, currentLevel(veinId) - VEIN_SIDE_CAP)
-  }
+function currentLevel(veinId: VeinId): number {
+  return dongfu.veinPoints[veinId] ?? 0;
+}
 
-  function canInvest(veinId: VeinId): boolean {
-    if (!veinsUnlocked.value) return false
-    if (currentLevel(veinId) >= cap(veinId)) return false
-    return veinTotal.value < VEIN_TOTAL_CAPACITY
-  }
+/** 该脉已投满(主 70 / 副 30):按钮禁用,行尾不再印费用 */
+function atCap(veinId: VeinId): boolean {
+  return currentLevel(veinId) >= cap(veinId);
+}
 
-  function canSwitchTo(veinId: VeinId): boolean {
-    if (!veinsUnlocked.value || isMain(veinId)) return false
-    // 尚无主脉时首投即成主脉,不必单独给"立主脉"入口
-    return dongfu.veinMain !== null
-  }
+/** 原主脉迁出后超出副脉上限的部分 */
+function surplusPoints(veinId: VeinId): number {
+  if (isMain(veinId)) return 0;
+  return Math.max(0, currentLevel(veinId) - VEIN_SIDE_CAP);
+}
 
-  function doInvest(veinId: VeinId): void {
-    investVein(veinId)
-  }
+function canInvest(veinId: VeinId): boolean {
+  if (!veinsUnlocked.value) return false;
+  if (currentLevel(veinId) >= cap(veinId)) return false;
+  return veinTotal.value < VEIN_TOTAL_CAPACITY;
+}
 
-  function doSwitch(veinId: VeinId): void {
-    switchMainVein(veinId)
-  }
+function canSwitchTo(veinId: VeinId): boolean {
+  if (!veinsUnlocked.value || isMain(veinId)) return false;
+  // 尚无主脉时首投即成主脉,不必单独给"立主脉"入口
+  return dongfu.veinMain !== null;
+}
+
+function doInvest(veinId: VeinId): void {
+  investVein(veinId);
+}
+
+function doSwitch(veinId: VeinId): void {
+  switchMainVein(veinId);
+}
 </script>

@@ -9,17 +9,17 @@
  * 若反过来先 `gn(19)` 归一化成 {m:1.9, e:1} 再取幂,末位会差一个 ulp,
  * "把公式搬进库"就从"数字一个不变"退化成"看起来差不多"。
  */
-import type { GNum } from '@/types'
-import type { Numeric } from 'wanxiang-engine'
-import { add, cmp, div, gn, gnMax, gnZero, mul, mulN, powN, sub, toNum } from '@/utils/gnum'
-import { formatExact } from '@/utils/format'
+import type { GNum } from "@/types";
+import type { Numeric } from "wanxiang-engine";
+import { add, cmp, div, gn, gnMax, gnZero, mul, mulN, powN, sub, toNum } from "@/utils/gnum";
+import { formatExact } from "@/utils/format";
 
 export const gnumNumeric: Numeric<GNum> = {
   zero: gnZero(),
   one: gn(1),
   from: gn,
   // 宿主的大数原样收下;数字则先归一化成 GNum(配置里两种写法并存时用得上)
-  of: value => (typeof value === 'number' ? gn(value) : value),
+  of: (value) => (typeof value === "number" ? gn(value) : value),
   add,
   sub,
   mul,
@@ -33,16 +33,19 @@ export const gnumNumeric: Numeric<GNum> = {
    * 只在库内部以 T 为底数的场合用到(如用户自定义的复合曲线)。
    */
   pow: (a, k) => {
-    if (a.m === 0) return gnZero()
-    const negative = a.m < 0 && Number.isInteger(k) && Math.abs(k % 2) === 1
-    const mantissa = powN(Math.abs(a.m), k)
-    const shift = a.e * k
-    const whole = Math.floor(shift)
-    return gn({ m: mantissa.m * Math.pow(10, shift - whole) * (negative ? -1 : 1), e: mantissa.e + whole })
+    if (a.m === 0) return gnZero();
+    const negative = a.m < 0 && Number.isInteger(k) && Math.abs(k % 2) === 1;
+    const mantissa = powN(Math.abs(a.m), k);
+    const shift = a.e * k;
+    const whole = Math.floor(shift);
+    return gn({
+      m: mantissa.m * Math.pow(10, shift - whole) * (negative ? -1 : 1),
+      e: mantissa.e + whole,
+    });
   },
   powN: (base, k) => powN(base, k),
   cmp,
   max: gnMax,
   toNumber: toNum,
-  format: a => formatExact(a)
-}
+  format: (a) => formatExact(a),
+};

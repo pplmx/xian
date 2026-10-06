@@ -3,32 +3,32 @@
  */
 
 // ============ 引擎 ============
-export const TICK_MS = 1000
+export const TICK_MS = 1000;
 /** 距上次心跳超过该秒数则走离线结算流程 */
-export const OFFLINE_MIN_SECONDS = 120
+export const OFFLINE_MIN_SECONDS = 120;
 /** 离线超过该秒数才弹出「归来」卷轴 */
-export const OFFLINE_MODAL_MIN_SECONDS = 300
+export const OFFLINE_MODAL_MIN_SECONDS = 300;
 /** 洞府各级离线收益上限(小时),下标为洞府等级换挡 */
-export const OFFLINE_CAP_HOURS = [8, 12, 24, 48, 72] as const
+export const OFFLINE_CAP_HOURS = [8, 12, 24, 48, 72] as const;
 /** 离线收益效率 */
-export const OFFLINE_EFFICIENCY = 0.9
+export const OFFLINE_EFFICIENCY = 0.9;
 /** lastActiveAt 写入节流(毫秒) */
-export const ACTIVE_STAMP_MS = 5000
+export const ACTIVE_STAMP_MS = 5000;
 /** 引擎弹窗(悟道顿悟/洞府巡游)倒计时低于该秒数转朱砂 —— 临散前得看得见「快选」(单源,勿双写) */
-export const URGENT_COUNTDOWN_SEC = 10
+export const URGENT_COUNTDOWN_SEC = 10;
 
 // ============ 寿元 ============
 /** 每现实 1 小时增加的年龄(岁) */
-export const AGE_YEARS_PER_HOUR = 1
-export const START_AGE = 16
+export const AGE_YEARS_PER_HOUR = 1;
+export const START_AGE = 16;
 /** 寿元低于该比例即进入告警色(界面) */
-export const LIFESPAN_WARN_RATIO = 0.15
+export const LIFESPAN_WARN_RATIO = 0.15;
 /** 寿元低于该比例记为「寿元低位」(成就口径,较告警更危急) */
-export const LIFESPAN_CRITICAL_RATIO = 0.1
+export const LIFESPAN_CRITICAL_RATIO = 0.1;
 
 // ============ 修炼曲线 ============
 /** 炼气一层突破需求 */
-export const EXP_BASE = 40
+export const EXP_BASE = 40;
 /**
  * 每大境界需求倍率 / 基础速度倍率
  *
@@ -37,15 +37,15 @@ export const EXP_BASE = 40
  * 两头一起动,是因为只动一边会挪走整条曲线的形状(前期秒过、后期陡崖)——
  * 「每一境慢多少」这个数只由两者的比决定。终局口径见 progressionSim 的里程碑与长尾两条。
  */
-export const EXP_MAJOR_GROWTH = 19
+export const EXP_MAJOR_GROWTH = 19;
 /** 每小层需求倍率 */
-export const EXP_SUB_GROWTH = 1.32
+export const EXP_SUB_GROWTH = 1.32;
 /** 基础修为/秒 —— Phase 39 由 1.6 降到 1.3(灵气修为的获取速度整体压一档) */
-export const CULT_BASE_SPEED = 1.3
+export const CULT_BASE_SPEED = 1.3;
 /** 每大境界基础速度倍率 */
-export const CULT_MAJOR_SPEED_GROWTH = 5.2
+export const CULT_MAJOR_SPEED_GROWTH = 5.2;
 /** 每小层基础速度倍率 */
-export const CULT_SUB_SPEED_GROWTH = 1.06
+export const CULT_SUB_SPEED_GROWTH = 1.06;
 
 /**
  * 界外成长节奏(仙界/神界/混沌海,即 major > WORLD_BREAK_MAJOR)。
@@ -69,11 +69,11 @@ export const CULT_SUB_SPEED_GROWTH = 1.06
  * 「上界太快、快到顶」—— 每境净耗时 1.375 → 1.44 倍。仍受两条判据约束:
  * 每境增幅 <2 倍、长尾相对真仙有界(见 progressionSim.spec)。
  */
-export const LATE_EXP_GROWTH = 4.6
-export const LATE_CULT_SPEED_GROWTH = 3.2
-export const LATE_COMBAT_GROWTH = 4.6
-export const LATE_QI_CAP_GROWTH = 4.0
-export const LATE_QI_REGEN_GROWTH = 3.2
+export const LATE_EXP_GROWTH = 4.6;
+export const LATE_CULT_SPEED_GROWTH = 3.2;
+export const LATE_COMBAT_GROWTH = 4.6;
+export const LATE_QI_CAP_GROWTH = 4.0;
+export const LATE_QI_REGEN_GROWTH = 3.2;
 
 /**
  * 跨界那一境的修为需求倍率 —— 人间→仙界、仙界→神界、神界→混沌海。
@@ -85,7 +85,7 @@ export const LATE_QI_REGEN_GROWTH = 3.2
  * 只抬圆满那一层,不抬整个界末境界:前面九层仍按正常曲线走,
  * 玩家能清楚感到「最后一步忽然重了」,而不是「这一境莫名其妙地长」。
  */
-export const WORLD_STEP_EXP_MULT = 2
+export const WORLD_STEP_EXP_MULT = 2;
 /**
  * 灵气「积余」上限(相对标称容量的倍数)。
  *
@@ -93,33 +93,33 @@ export const WORLD_STEP_EXP_MULT = 2
  * 存到该倍数(用于连续尝试突破、平复伤势、供奉/修复等)。上界的灵气开销本就是
  * 指数级的,固守一个标称容量会让「等待」变成纯粹的浪费。
  */
-export const QI_BANK_MULT = 10
+export const QI_BANK_MULT = 10;
 /** 小境界数量(9 层 + 圆满) */
-export const SUB_LEVELS = 10
+export const SUB_LEVELS = 10;
 
 // ============ 灵气 ============
-export const QI_BASE_CAP = 100
-export const QI_CAP_MAJOR_GROWTH = 6
-export const QI_CAP_SUB_GROWTH = 1.12
+export const QI_BASE_CAP = 100;
+export const QI_CAP_MAJOR_GROWTH = 6;
+export const QI_CAP_SUB_GROWTH = 1.12;
 /** 基础灵气回复/秒 —— Phase 39 由 1.2 降到 0.9(灵气这条线一并收慢) */
-export const QI_BASE_REGEN = 0.9
-export const QI_REGEN_MAJOR_GROWTH = 5.2
+export const QI_BASE_REGEN = 0.9;
+export const QI_REGEN_MAJOR_GROWTH = 5.2;
 /** 灵气高于上限一半时,修炼速度额外加成 */
-export const QI_RICH_BONUS = 0.15
+export const QI_RICH_BONUS = 0.15;
 
 // ============ 突破 ============
-export const BT_SUB_BASE_RATE = 0.95
-export const BT_SUB_DECAY = 0.03
-export const BT_MAJOR_BASE_RATE = 0.78
-export const BT_MAJOR_DECAY = 0.05
-export const BT_MIN_RATE = 0.15
-export const BT_MAX_RATE = 0.98
+export const BT_SUB_BASE_RATE = 0.95;
+export const BT_SUB_DECAY = 0.03;
+export const BT_MAJOR_BASE_RATE = 0.78;
+export const BT_MAJOR_DECAY = 0.05;
+export const BT_MIN_RATE = 0.15;
+export const BT_MAX_RATE = 0.98;
 /** 突破失败损失修为比例 */
-export const BT_FAIL_EXP_LOSS = 0.18
+export const BT_FAIL_EXP_LOSS = 0.18;
 /** 突破消耗灵气(占上限比例) */
-export const BT_QI_COST_RATIO = 0.4
+export const BT_QI_COST_RATIO = 0.4;
 /** 天劫波次基数(实际 = 基数 + 大境界序号) */
-export const TRIBULATION_BASE_WAVES = 3
+export const TRIBULATION_BASE_WAVES = 3;
 /**
  * 天劫单波伤害那一条式子:
  *   单波(占最大生命) = TRIB_WAVE_BASE + TRIB_WAVE_MAJOR × 境界(封顶) + TRIB_WAVE_STEP × 第几道
@@ -128,9 +128,9 @@ export const TRIBULATION_BASE_WAVES = 3
  * 设计记录(docs/superpowers/specs/2026-09-17-*)三处都要能对着同一组数说话。
  * 从前它们是 formulas 里的一行字面量,记录一写下来就只能靠人去核。
  */
-export const TRIB_WAVE_BASE = 0.155
-export const TRIB_WAVE_MAJOR = 0.02
-export const TRIB_WAVE_STEP = 0.031
+export const TRIB_WAVE_BASE = 0.155;
+export const TRIB_WAVE_MAJOR = 0.02;
+export const TRIB_WAVE_STEP = 0.031;
 /**
  * 跨界那一劫对「三维折算」的态度 —— 人间→仙界、仙界→神界、神界→混沌海。
  *
@@ -145,7 +145,7 @@ export const TRIB_WAVE_STEP = 0.031
  *     而不是把解题空间挤掉:三条非满配之路(抗性/减伤/恢复)一条不少。
  * 界膜之前,血肉之厚不算数;要过去,得真备好那几样。
  */
-export const TRIB_WORLD_STEP_STAT_FOLD = 0
+export const TRIB_WORLD_STEP_STAT_FOLD = 0;
 /**
  * 天劫的三维折算 —— 血厚防高者允许**硬抗**,但两条都有绝对上限。
  *
@@ -164,10 +164,10 @@ export const TRIB_WORLD_STEP_STAT_FOLD = 0
  * 那已不是兜底,而是把渡劫的四维解法空间挤掉一半 —— 也正是"渡劫又太容易"的来源之一。
  * 三维仍作数(不至于白堆),但补不满"准备"那一半。
  */
-export const TRIB_DEF_RESIST_PER_SURPLUS = 0.04
-export const TRIB_DEF_RESIST_CAP = 0.18
-export const TRIB_HP_GUARD_PER_SURPLUS = 0.04
-export const TRIB_HP_GUARD_CAP = 0.35
+export const TRIB_DEF_RESIST_PER_SURPLUS = 0.04;
+export const TRIB_DEF_RESIST_CAP = 0.18;
+export const TRIB_HP_GUARD_PER_SURPLUS = 0.04;
+export const TRIB_HP_GUARD_CAP = 0.35;
 /**
  * 天劫难度的境界封顶点(扩界)。
  *
@@ -189,28 +189,28 @@ export const TRIB_HP_GUARD_CAP = 0.35
  * 加完之后必须仍然过得了 tribulationSpace.spec 的五道门(四维皆优必可渡、
  * 每境每种劫型都还剩一条非满配之路)—— 那是这次改难的**上限**,不是可选项。
  */
-export const TRIBULATION_DIFFICULTY_CAP_MAJOR = 9
+export const TRIBULATION_DIFFICULTY_CAP_MAJOR = 9;
 
 // ============ 战斗基础 ============
-export const COMBAT_ATK_BASE = 12
-export const COMBAT_DEF_BASE = 7
-export const COMBAT_HP_BASE = 150
-export const COMBAT_MAJOR_GROWTH = 3.8
-export const COMBAT_SUB_GROWTH = 1.09
-export const CRIT_BASE = 0.05
-export const CRIT_DMG_BASE = 0.5
-export const MAX_COMBAT_ROUNDS = 50
+export const COMBAT_ATK_BASE = 12;
+export const COMBAT_DEF_BASE = 7;
+export const COMBAT_HP_BASE = 150;
+export const COMBAT_MAJOR_GROWTH = 3.8;
+export const COMBAT_SUB_GROWTH = 1.09;
+export const CRIT_BASE = 0.05;
+export const CRIT_DMG_BASE = 0.5;
+export const MAX_COMBAT_ROUNDS = 50;
 /** 流派阈值:低血/满血判定线 */
-export const LOW_HP_THRESHOLD = 0.3
-export const FULL_HP_THRESHOLD = 0.9
+export const LOW_HP_THRESHOLD = 0.3;
+export const FULL_HP_THRESHOLD = 0.9;
 /** 护盾总量上限(占最大生命比例)——护体灵光有极限,防盾系滚雪球 */
-export const SHIELD_CAP_RATIO = 0.5
+export const SHIELD_CAP_RATIO = 0.5;
 /**
  * 词条叠加递减(Phase 19.5):同一条件/触发词条来自多个来源时,
  * 按贡献降序以 100%/75%/50%/25% 计入(第 5 个来源起均 25%)。
  * 目标:极端单词条堆叠边际递减,混合构筑相对更值;规则性加成(道途/剑意)不受此约束
  */
-export const DIMINISH_WEIGHTS = [1, 0.75, 0.5, 0.25] as const
+export const DIMINISH_WEIGHTS = [1, 0.75, 0.5, 0.25] as const;
 /**
  * 战力权重(attack×3 + defense×2 + maxHp×0.15)。
  *
@@ -218,32 +218,32 @@ export const DIMINISH_WEIGHTS = [1, 0.75, 0.5, 0.25] as const
  * 引擎属性系统的 powerWeights 配置也由 engineWorld 显式传同一份 —— 两边都在动
  * 平衡时不会各改各的(引擎的默认值恰好与此相同,但显式传入后改这里就够)。
  */
-export const POWER_WEIGHTS = { attack: 3, defense: 2, maxHp: 0.15 } as const
+export const POWER_WEIGHTS = { attack: 3, defense: 2, maxHp: 0.15 } as const;
 export const DIMINISH_KEYS = [
-  'lowHpDamage',
-  'lowHpReduction',
-  'fullHpDamage',
-  'firstStrike',
-  'executeDamage',
-  'shieldOnStart',
-  'shieldPower',
-  'overhealShield',
-  'counterRate',
-  'counterDamage',
-  'comboRate',
-  'comboDamage',
-  'lifesteal',
-  'regenPerRound',
-  'stunRate',
-  'critRate',
-  'critDamage',
-  'dodgeRate',
-  'accuracy',
-  'armorPen'
-] as const
+  "lowHpDamage",
+  "lowHpReduction",
+  "fullHpDamage",
+  "firstStrike",
+  "executeDamage",
+  "shieldOnStart",
+  "shieldPower",
+  "overhealShield",
+  "counterRate",
+  "counterDamage",
+  "comboRate",
+  "comboDamage",
+  "lifesteal",
+  "regenPerRound",
+  "stunRate",
+  "critRate",
+  "critDamage",
+  "dodgeRate",
+  "accuracy",
+  "armorPen",
+] as const;
 /** 战报播放基础间隔(毫秒),实际 = 基础 / 播放倍速 */
-export const COMBAT_PLAYBACK_BASE_MS = 460
-export const COMBAT_PLAYBACK_MIN_MS = 90
+export const COMBAT_PLAYBACK_BASE_MS = 460;
+export const COMBAT_PLAYBACK_MIN_MS = 90;
 
 // ============ Phase 30.4 属性软阈值 ============
 /**
@@ -251,26 +251,28 @@ export const COMBAT_PLAYBACK_MIN_MS = 90
  * 合计值越过 cap 后,超出部分按 diminish 折算。
  * cap 取在"正常构筑达不到、极端堆叠才触及"的位置,不影响现行生态。
  */
-export const SOFT_CAPS: Partial<Record<import('@/types').AnyStatKey, { cap: number; diminish: number }>> = {
+export const SOFT_CAPS: Partial<
+  Record<import("@/types").AnyStatKey, { cap: number; diminish: number }>
+> = {
   critRate: { cap: 0.75, diminish: 0.5 },
   dodgeRate: { cap: 0.55, diminish: 0.4 },
   // 与闪避对称:命中越上限也按四折计入 —— 堆满只够抹平同级的幻影,不该白送
   accuracy: { cap: 0.55, diminish: 0.4 },
   damageReduction: { cap: 0.55, diminish: 0.4 },
-  shieldOnStart: { cap: 0.8, diminish: 0.5 }
-}
+  shieldOnStart: { cap: 0.8, diminish: 0.5 },
+};
 
 // ============ Phase 30.3 洞府灵脉投资 ============
 /** 灵脉总容量(点) */
-export const VEIN_TOTAL_CAPACITY = 100
+export const VEIN_TOTAL_CAPACITY = 100;
 /** 主脉容量(独占) */
-export const VEIN_MAIN_CAPACITY = 70
+export const VEIN_MAIN_CAPACITY = 70;
 /** 副脉单条上限 */
-export const VEIN_SIDE_CAP = 30
+export const VEIN_SIDE_CAP = 30;
 /** 每点投资灵石倍率(stoneByTier 按玩家层级) */
-export const VEIN_POINT_STONE = 25
+export const VEIN_POINT_STONE = 25;
 /** 灵脉开放境界(金丹) */
-export const VEIN_UNLOCK_MAJOR = 2
+export const VEIN_UNLOCK_MAJOR = 2;
 
 // ============ 装备重铸与词条封存 ============
 /**
@@ -286,13 +288,13 @@ export const VEIN_UNLOCK_MAJOR = 2
  * 而每一次重铸都可能重掷词条**条数**(见 core/reforge.reforgeEquipment)。
  */
 /** 重铸基础灵石(stoneByTier 倍率,按装备阶数) */
-export const REFORGE_STONE_BASE = 40
+export const REFORGE_STONE_BASE = 40;
 /** 每封存一个词条,重铸成本上浮的份额 */
-export const REFORGE_SEAL_LOAD = 0.6
+export const REFORGE_SEAL_LOAD = 0.6;
 /** 重铸器灵尘消耗 = 基础 × (1 + 封存数)(器灵尘另有来路,故不叠阶数) */
-export const REFORGE_DUST_BASE = 30
+export const REFORGE_DUST_BASE = 30;
 /** 封存一个词条的灵石倍率(第 n 次封存 ×n) */
-export const SEAL_STONE_BASE = 200
+export const SEAL_STONE_BASE = 200;
 
 /**
  * 敌人相对玩家裸装的补偿系数:随层级指数跟随。
@@ -320,14 +322,14 @@ export const SEAL_STONE_BASE = 200
  *   ② 顶区战力比全程 < 12(区域战斗不许失去意义)
  * 1.18 是同时满足这两条的档位;1.13 会让常规档在真仙就推完全图。
  */
-export const ENEMY_GEAR_BASE = 0.9
-export const ENEMY_GEAR_GROWTH = 1.18
+export const ENEMY_GEAR_BASE = 0.9;
+export const ENEMY_GEAR_GROWTH = 1.18;
 /** 防御减伤上限 */
-export const MITIGATION_CAP = 0.75
+export const MITIGATION_CAP = 0.75;
 /** 减伤公式系数:red = def / (def + atk × K) */
-export const MITIGATION_K = 1.15
+export const MITIGATION_K = 1.15;
 /** 伤害随机浮动 ±10% */
-export const DAMAGE_VARIANCE = 0.1
+export const DAMAGE_VARIANCE = 0.1;
 
 // ============ 装备 ============
 // (原「每掉落层级数值倍率 EQUIP_TIER_GROWTH」已于 Phase 33.2 停用:
@@ -343,7 +345,7 @@ export const DAMAGE_VARIANCE = 0.1
  * Phase 37 再收一档(0.6 → 0.5):品质那一侧涨了(见 EQUIP_QUALITY_FLAT_EXP),
  * 总预算就得跟着收 —— 让**神品**值钱,而不是让「装备」整体更值钱。
  */
-export const EQUIP_BASE_FACTOR = 0.5
+export const EQUIP_BASE_FACTOR = 0.5;
 /**
  * 品质对「平铺数值」的放大指数 —— 品质这条阶梯**陡不陡**。
  *
@@ -370,7 +372,7 @@ export const EQUIP_BASE_FACTOR = 0.5
  * 注意这条阶梯是**指数**,不是常数:调节它等于同时调节所有品质的相对关系,
  * 而装备总预算由 EQUIP_BASE_FACTOR 兜住(见那里的注释)。
  */
-export const EQUIP_QUALITY_FLAT_EXP = 1.8
+export const EQUIP_QUALITY_FLAT_EXP = 1.8;
 /**
  * 品质窗口外的掉落权重**按距离指数衰减**的底数(见 data/qualities 的 fromTier/toTier)。
  *
@@ -382,28 +384,28 @@ export const EQUIP_QUALITY_FLAT_EXP = 1.8
  * 为什么不直接关掉(0):图鉴要补得齐,际遇也该有惊喜 ——
  * 人间界掉出一件仙品,那是故事,不是数值事故,只是它一年碰不到一次。
  */
-export const QUALITY_OUT_OF_BAND = 0.1
+export const QUALITY_OUT_OF_BAND = 0.1;
 /** 每强化一级基础属性 +12% */
-export const EQUIP_LEVEL_BONUS = 0.12
-export const EQUIP_MAX_LEVEL_BASE = 10
+export const EQUIP_LEVEL_BONUS = 0.12;
+export const EQUIP_MAX_LEVEL_BASE = 10;
 /** 炼器台每 2 级提高强化上限 1 */
-export const FORGE_LEVEL_PER_CAP = 2
+export const FORGE_LEVEL_PER_CAP = 2;
 /** 聚灵阵每级抬高的灵气上限(乘在境界容量上,不进 StatMods —— 卡面与 dongfu.qiCapMult 都读它,不许各写一份) */
-export const ARRAY_QI_CAP_PER_LEVEL = 0.08
+export const ARRAY_QI_CAP_PER_LEVEL = 0.08;
 /** 灵兽园每级放大的灵兽效果(乘数,不进 StatMods —— 卡面与 dongfu.beastMult 都读它,不许各写一份) */
-export const BEAST_MULT_PER_LEVEL = 0.1
+export const BEAST_MULT_PER_LEVEL = 0.1;
 /** 强化成本:灵尘 */
-export const UPGRADE_DUST_BASE = 4
-export const UPGRADE_DUST_GROWTH = 1.5
+export const UPGRADE_DUST_BASE = 4;
+export const UPGRADE_DUST_GROWTH = 1.5;
 /** 强化成本:灵石(按层级换算) */
-export const UPGRADE_STONE_TIER_BASE = 15
+export const UPGRADE_STONE_TIER_BASE = 15;
 /** 分解所得灵尘(按品质序号) */
-export const DECOMPOSE_DUST = [1, 2, 4, 8, 16, 32, 64, 128, 256] as const
+export const DECOMPOSE_DUST = [1, 2, 4, 8, 16, 32, 64, 128, 256] as const;
 /** 分解/回收时返还强化投入的比例(尘与灵石同率) */
-export const DECOMPOSE_REFUND_RATE = 0.8
+export const DECOMPOSE_REFUND_RATE = 0.8;
 /** 智能收纳:词条 roll 达到此线才算「近满」(条条达标才当藏) */
-export const SMART_KEEP_PERFECT_ROLL = 0.85
-export const BAG_CAPACITY = 120
+export const SMART_KEEP_PERFECT_ROLL = 0.85;
+export const BAG_CAPACITY = 120;
 
 // ============ 掉落 ============
 /**
@@ -419,16 +421,16 @@ export const BAG_CAPACITY = 120
  * (旧口径:神品 0.1%、且凡品良品还在掉)。「手枪」是可以有的,但得自己攒出来。
  * 「手枪」是可以有的,但得自己攒出来。
  */
-export const QUALITY_WEIGHTS = [5000, 3000, 1500, 400, 80, 15, 2.5, 0.5, 0.05] as const
+export const QUALITY_WEIGHTS = [5000, 3000, 1500, 400, 80, 15, 2.5, 0.5, 0.05] as const;
 /** 层级每 +1,高品质权重乘数 */
-export const QUALITY_TIER_SHIFT = 1.18
-export const EQUIP_DROP_CHANCE = 0.3
-export const PILL_DROP_CHANCE = 0.08
-export const PAGE_DROP_CHANCE = 0.12
-export const ARTIFACT_DROP_CHANCE = 0.015
+export const QUALITY_TIER_SHIFT = 1.18;
+export const EQUIP_DROP_CHANCE = 0.3;
+export const PILL_DROP_CHANCE = 0.08;
+export const PAGE_DROP_CHANCE = 0.12;
+export const ARTIFACT_DROP_CHANCE = 0.015;
 /** 战斗灵石基础掉落(按层级指数放大) */
-export const STONE_DROP_BASE = 12
-export const STONE_TIER_GROWTH = 1.9
+export const STONE_DROP_BASE = 12;
+export const STONE_TIER_GROWTH = 1.9;
 /**
  * 修为的**唯一计价单位:等效闭关时长**。
  *
@@ -455,7 +457,7 @@ export const STONE_TIER_GROWTH = 1.9
  * 因为三条线都随"修速"缩放:修速词条、洞府、灵脉、闭关、丹药增益因此对
  * **两条收入线同时有效** —— 这正是修好之后的性质,也是修之前丢掉的性质。
  */
-export const BATTLE_EXP_SECS = 12
+export const BATTLE_EXP_SECS = 12;
 /**
  * 任何即时修为(丹药 / 一场遭遇 / 一次际遇)**都不得填满当前这一层**。
  *
@@ -463,18 +465,18 @@ export const BATTLE_EXP_SECS = 12
  * 不封顶的话一枚丹就能连跳几层。封顶只认"一层"这个与境界无关的自然刻度,
  * 故它不会随境界改变任何东西 —— 高境界一层以日计,这条几乎用不到。
  */
-export const INSTANT_EXP_LAYER_CAP = 0.9
+export const INSTANT_EXP_LAYER_CAP = 0.9;
 
 // ============ 历练 ============
-export const EXPLORE_BATTLE_INTERVAL = 12
+export const EXPLORE_BATTLE_INTERVAL = 12;
 /**
  * 一场历练里攒够多少胜,才有资格挑战区域之主。
  *
  * 在线(runBattle)与离线结算(settleOffline 的自动挑战)必须共用这一个门槛 ——
  * 从前两边各写一遍字面量 10,改一处就会让离线抢跑解锁下一区。
  */
-export const EXPLORE_BOSS_AFTER_WINS = 10
-export const EXPLORE_EVENT_CHANCE = 0.16
+export const EXPLORE_BOSS_AFTER_WINS = 10;
+export const EXPLORE_EVENT_CHANCE = 0.16;
 /**
  * 历练里三档触发的概率 —— **一条乘法链,不是一个一个独立数字**。
  *
@@ -490,62 +492,62 @@ export const EXPLORE_EVENT_CHANCE = 0.16
  * 界面口径见 core/eventTier.tierChances(逐字复刻引擎的掷法),
  * 对账见 core/eventTier.spec(用真引擎做蒙特卡洛)。
  */
-export const CHAIN_STAGE_CHANCE = 0.3
-export const FORTUNE_CHANCE = 0.02
+export const CHAIN_STAGE_CHANCE = 0.3;
+export const FORTUNE_CHANCE = 0.02;
 /** 事件搁置超过该秒数后自动按默认选项处理 */
-export const EVENT_AUTO_RESOLVE_SECONDS = 120
+export const EVENT_AUTO_RESOLVE_SECONDS = 120;
 export const EXPLORE_MODES = {
-  normal: { name: '寻常游历', durationSec: 1800, rewardMult: 1, dangerMult: 1 },
-  deep: { name: '深入探寻', durationSec: 3600, rewardMult: 1.4, dangerMult: 1.45 },
-  risky: { name: '涉险求机', durationSec: 7200, rewardMult: 1.9, dangerMult: 2.1 },
-  prolonged: { name: '长线云游', durationSec: 14400, rewardMult: 2.4, dangerMult: 2.6 }
-} as const
+  normal: { name: "寻常游历", durationSec: 1800, rewardMult: 1, dangerMult: 1 },
+  deep: { name: "深入探寻", durationSec: 3600, rewardMult: 1.4, dangerMult: 1.45 },
+  risky: { name: "涉险求机", durationSec: 7200, rewardMult: 1.9, dangerMult: 2.1 },
+  prolonged: { name: "长线云游", durationSec: 14400, rewardMult: 2.4, dangerMult: 2.6 },
+} as const;
 /** 战败重伤 Buff 持续秒数 */
-export const INJURY_DURATION = 150
+export const INJURY_DURATION = 150;
 
 // ============ 炼丹 / 藏经阁 ============
 /** 灵田每级每小时产灵草 */
-export const FIELD_HERB_PER_HOUR = 6
+export const FIELD_HERB_PER_HOUR = 6;
 /** 灵田每级每小时产玄铁 */
-export const FIELD_ORE_PER_HOUR = 2.4
+export const FIELD_ORE_PER_HOUR = 2.4;
 /** 藏经阁每级每小时产悟道点 */
-export const LIBRARY_WUDAO_PER_HOUR = 1.5
+export const LIBRARY_WUDAO_PER_HOUR = 1.5;
 /** 藏经阁参悟功法消耗残页 */
-export const COMPREHEND_PAGE_COST = 12
+export const COMPREHEND_PAGE_COST = 12;
 
 // ============ 藏经阁低级保底(快赢3 / ISS-303) ============
 /** 享受保底的藏经阁等级上限(低级藏经阁给个起步产出,别让前期功法完全卡死) */
-export const LIBRARY_WUDAO_FLOOR_LEVEL = 3
+export const LIBRARY_WUDAO_FLOOR_LEVEL = 3;
 /** 保底每小时悟道点:lv≤LIBRARY_WUDAO_FLOOR_LEVEL 时至少产这么多 */
-export const LIBRARY_WUDAO_MIN_PER_HOUR = 4
+export const LIBRARY_WUDAO_MIN_PER_HOUR = 4;
 /** 功法升级基础悟道点 */
-export const GONGFA_UP_WUDAO_BASE = 4
-export const GONGFA_UP_GROWTH = 1.45
+export const GONGFA_UP_WUDAO_BASE = 4;
+export const GONGFA_UP_GROWTH = 1.45;
 
 // (灵草→灵石 兑换已于 ISS-306 删除:方向反了,灵草远比灵石珍贵。
 //  灵草五品与灵石购价见 data/herbGrades.ts。)
 
 // ============ 建筑 ============
-export const BUILDING_COST_GROWTH = 2.3
+export const BUILDING_COST_GROWTH = 2.3;
 
 // ============ 转世 ============
 /** 每达成一个大境界积累道果 = (序号+1) × 系数 */
-export const DAO_FRUIT_PER_MAJOR = 3
+export const DAO_FRUIT_PER_MAJOR = 3;
 /** 每颗有效道果永久加成 */
-export const DAO_FRUIT_CULT_BONUS = 0.03
-export const DAO_FRUIT_COMBAT_BONUS = 0.015
+export const DAO_FRUIT_CULT_BONUS = 0.03;
+export const DAO_FRUIT_COMBAT_BONUS = 0.015;
 /** 道果收益软上限指数(有效道果 = 道果^该指数),抑制多周目无限加速 */
-export const DAO_FRUIT_SOFT_EXP = 0.9
+export const DAO_FRUIT_SOFT_EXP = 0.9;
 /** 转世天赋抽取数 = 1 + floor(major / 2) */
-export const TALENT_DRAW_DIV = 2
+export const TALENT_DRAW_DIV = 2;
 /** 转世后灵根资质保底提升 */
-export const REINCARNATE_APTITUDE_FLOOR = 5
+export const REINCARNATE_APTITUDE_FLOOR = 5;
 // (原「转世后已习功法层数折半」的系数已撤:门类保留、层数归零回一层,
 //  不再有折半比例可调 —— 见 core/reincarnation 的 carryGongfa。)
 
 // ============ 离线首领 ============
 /** 离线自动挑战区域首领的收益折损系数 */
-export const OFFLINE_BOSS_REWARD_MULT = 0.75
+export const OFFLINE_BOSS_REWARD_MULT = 0.75;
 
 // ============ 创角 ============
 /**
@@ -555,4 +557,4 @@ export const OFFLINE_BOSS_REWARD_MULT = 0.75
  * 不必为「还剩几次」分心。转世另说 —— 转世的灵根仍是系统发下来的一张牌,没有挑选界面。
  * 要收紧为有限次数时改成具体数字即可:store 的扣减/耗尽分支与界面文案都读这一个常量。
  */
-export const CREATE_REROLL_QUOTA: number | null = null
+export const CREATE_REROLL_QUOTA: number | null = null;

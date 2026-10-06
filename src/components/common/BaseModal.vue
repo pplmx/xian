@@ -18,13 +18,20 @@
           @keydown="onPanelKeydown"
         >
           <!-- 卷轴上缘 -->
-          <header v-if="props.title || props.closable" class="relative z-10 flex items-center justify-between px-5 pt-4 pb-1 shrink-0">
+          <header
+            v-if="props.title || props.closable"
+            class="relative z-10 flex items-center justify-between px-5 pt-4 pb-1 shrink-0"
+          >
             <!--
               弹窗标题此前是悬空一行楷体:页面每节都有世界色笔杆(brush-bar)当家,
               弹窗是全库复用的浮层原语,标题却没有这根杆 —— 全库所有弹窗统一补上。
             -->
             <h3 class="flex items-center gap-2 font-kai text-lg tracking-[0.2em] text-ink">
-              <span v-if="props.title" class="brush-bar h-3 w-0.75 rounded bg-[var(--world-bar)]" aria-hidden="true" />
+              <span
+                v-if="props.title"
+                class="brush-bar h-3 w-0.75 rounded bg-[var(--world-bar)]"
+                aria-hidden="true"
+              />
               {{ props.title }}
             </h3>
             <!--
@@ -54,135 +61,137 @@
 </template>
 
 <script lang="ts">
-  /**
-   * Esc 关闭 —— 只让最上面一层可关弹窗响应。
-   *
-   * 这段必须在**模块 scope** 的普通 <script> 里,不能放进 <script setup>:
-   * <script setup> 顶层代码每实例跑一遍,放那里 = 每个 BaseModal 都有一份自己的
-   * activeModals 与自己的 window keydown 监听。那会有两个毛病:
-   *   · 路由来回切几次,window 上堆一走廊永不回收的死监听(BaseModal 是大量视图
-   *     复用的浮层原语,导航进出一次就多一份);
-   *   · 各实例只看得到自己的 entry,叠放时(详情盖列表)按一次 Esc 所有实例的
-   *     监听都判定"自己是顶层"→ 整摞弹窗一层层全关,与"只退最上层"相悖。
-   * 收敛到模块级一份后:activeModals[last] 是全局真顶层,一次 Esc 只退一层;
-   * 监听也只有一份,不随实例增减,天然无泄漏。
-   */
-  type ModalEntry = { closable: boolean; close: () => void }
-  const activeModals: ModalEntry[] = []
-  function onWindowKey(e: KeyboardEvent): void {
-    if (e.key !== 'Escape') return
-    const top = activeModals[activeModals.length - 1]
-    if (top?.closable) {
-      e.preventDefault()
-      top.close()
-    }
+/**
+ * Esc 关闭 —— 只让最上面一层可关弹窗响应。
+ *
+ * 这段必须在**模块 scope** 的普通 <script> 里,不能放进 <script setup>:
+ * <script setup> 顶层代码每实例跑一遍,放那里 = 每个 BaseModal 都有一份自己的
+ * activeModals 与自己的 window keydown 监听。那会有两个毛病:
+ *   · 路由来回切几次,window 上堆一走廊永不回收的死监听(BaseModal 是大量视图
+ *     复用的浮层原语,导航进出一次就多一份);
+ *   · 各实例只看得到自己的 entry,叠放时(详情盖列表)按一次 Esc 所有实例的
+ *     监听都判定"自己是顶层"→ 整摞弹窗一层层全关,与"只退最上层"相悖。
+ * 收敛到模块级一份后:activeModals[last] 是全局真顶层,一次 Esc 只退一层;
+ * 监听也只有一份,不随实例增减,天然无泄漏。
+ */
+type ModalEntry = { closable: boolean; close: () => void };
+const activeModals: ModalEntry[] = [];
+function onWindowKey(e: KeyboardEvent): void {
+  if (e.key !== "Escape") return;
+  const top = activeModals[activeModals.length - 1];
+  if (top?.closable) {
+    e.preventDefault();
+    top.close();
   }
-  if (typeof window !== 'undefined') window.addEventListener('keydown', onWindowKey)
+}
+if (typeof window !== "undefined") window.addEventListener("keydown", onWindowKey);
 </script>
 
 <script setup lang="ts">
-  import { nextTick, onUnmounted, ref, watch } from 'vue'
-  import GameIcon from './GameIcon.vue'
+import { nextTick, onUnmounted, ref, watch } from "vue";
+import GameIcon from "./GameIcon.vue";
 
-  const props = withDefaults(
-    defineProps<{
-      open: boolean
-      title?: string
-      closable?: boolean
-      wide?: boolean
-      /**
-       * 无标题弹窗的可访问名。
-       *
-       * 有的弹窗自带一张大标题卡(归来 / 寿元将尽 / 突破结果 / 灵脉),
-       * 再让 BaseModal 画一遍标题就是重复。但**对话框自己**总得有个名字 ——
-       * 不给的话 role=dialog 读出来就是光秃秃一句「对话框」。
-       */
-      ariaLabel?: string
-      /** 顶层弹窗:叠在普通弹窗(z-50)之上,用于详情盖列表等场景 */
-      top?: boolean
-    }>(),
-    { title: '', closable: true, wide: false, top: false, ariaLabel: '' }
-  )
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    title?: string;
+    closable?: boolean;
+    wide?: boolean;
+    /**
+     * 无标题弹窗的可访问名。
+     *
+     * 有的弹窗自带一张大标题卡(归来 / 寿元将尽 / 突破结果 / 灵脉),
+     * 再让 BaseModal 画一遍标题就是重复。但**对话框自己**总得有个名字 ——
+     * 不给的话 role=dialog 读出来就是光秃秃一句「对话框」。
+     */
+    ariaLabel?: string;
+    /** 顶层弹窗:叠在普通弹窗(z-50)之上,用于详情盖列表等场景 */
+    top?: boolean;
+  }>(),
+  { title: "", closable: true, wide: false, top: false, ariaLabel: "" },
+);
 
-  const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: [] }>();
 
-  /**
-   * 焦点管理 —— 弹窗打开时,键盘焦点必须跟着进去,且不许跑出去。
-   *
-   * 此前弹窗只管 Esc:打开后焦点仍留在背后的按钮上,按 Tab 会一路跑到页面与底部导航
-   * (实测连按六次,六次全在弹窗外),读屏用户甚至不知道有个弹窗开了。故:
-   *   · 打开时记住是谁打开的,把焦点移进面板(role=dialog + aria-modal);
-   *   · Tab/Shift+Tab 在面板内循环,首尾相接;
-   *   · 关闭后把焦点还给打开它的那个元素。
-   */
-  const panelRef = ref<HTMLElement | null>(null)
-  let lastFocused: HTMLElement | null = null
+/**
+ * 焦点管理 —— 弹窗打开时,键盘焦点必须跟着进去,且不许跑出去。
+ *
+ * 此前弹窗只管 Esc:打开后焦点仍留在背后的按钮上,按 Tab 会一路跑到页面与底部导航
+ * (实测连按六次,六次全在弹窗外),读屏用户甚至不知道有个弹窗开了。故:
+ *   · 打开时记住是谁打开的,把焦点移进面板(role=dialog + aria-modal);
+ *   · Tab/Shift+Tab 在面板内循环,首尾相接;
+ *   · 关闭后把焦点还给打开它的那个元素。
+ */
+const panelRef = ref<HTMLElement | null>(null);
+let lastFocused: HTMLElement | null = null;
 
-  function focusablesIn(root: HTMLElement): HTMLElement[] {
-    return [...root.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(
-      el => !el.hasAttribute('disabled') && el.offsetParent !== null
-    )
+function focusablesIn(root: HTMLElement): HTMLElement[] {
+  return [
+    ...root.querySelectorAll<HTMLElement>(
+      'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  ].filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null);
+}
+
+function onPanelKeydown(e: KeyboardEvent): void {
+  if (e.key !== "Tab") return;
+  const panel = panelRef.value;
+  if (!panel) return;
+  const items = focusablesIn(panel);
+  if (items.length === 0) {
+    e.preventDefault();
+    panel.focus();
+    return;
   }
-
-  function onPanelKeydown(e: KeyboardEvent): void {
-    if (e.key !== 'Tab') return
-    const panel = panelRef.value
-    if (!panel) return
-    const items = focusablesIn(panel)
-    if (items.length === 0) {
-      e.preventDefault()
-      panel.focus()
-      return
+  const first = items[0]!;
+  const last = items[items.length - 1]!;
+  const active = document.activeElement as HTMLElement | null;
+  const outside = !active || !panel.contains(active);
+  if (e.shiftKey) {
+    if (outside || active === first) {
+      e.preventDefault();
+      last.focus();
     }
-    const first = items[0]!
-    const last = items[items.length - 1]!
-    const active = document.activeElement as HTMLElement | null
-    const outside = !active || !panel.contains(active)
-    if (e.shiftKey) {
-      if (outside || active === first) {
-        e.preventDefault()
-        last.focus()
-      }
-    } else if (outside || active === last) {
-      e.preventDefault()
-      first.focus()
-    }
+  } else if (outside || active === last) {
+    e.preventDefault();
+    first.focus();
   }
+}
 
-  function onBackdrop(): void {
-    if (props.closable) emit('close')
-  }
+function onBackdrop(): void {
+  if (props.closable) emit("close");
+}
 
-  // ---- Esc 关闭:模块级唯一栈 + 模块级唯一监听,见文件头注释 ----
-  const entry: ModalEntry = { closable: props.closable, close: () => emit('close') }
-  watch(
-    () => props.open,
-    open => {
-      if (open) {
-        activeModals.push(entry)
-        // 记住是谁打开的,关闭后把焦点还回去(键盘用户不会"掉到页面顶端")
-        lastFocused = document.activeElement as HTMLElement | null
-        void nextTick(() => panelRef.value?.focus())
-      } else {
-        const i = activeModals.indexOf(entry)
-        if (i >= 0) activeModals.splice(i, 1)
-        const back = lastFocused
-        lastFocused = null
-        void nextTick(() => {
-          if (back && back.isConnected) back.focus()
-        })
-      }
-    },
-    { immediate: true }
-  )
-  watch(
-    () => props.closable,
-    c => {
-      entry.closable = c
+// ---- Esc 关闭:模块级唯一栈 + 模块级唯一监听,见文件头注释 ----
+const entry: ModalEntry = { closable: props.closable, close: () => emit("close") };
+watch(
+  () => props.open,
+  (open) => {
+    if (open) {
+      activeModals.push(entry);
+      // 记住是谁打开的,关闭后把焦点还回去(键盘用户不会"掉到页面顶端")
+      lastFocused = document.activeElement as HTMLElement | null;
+      void nextTick(() => panelRef.value?.focus());
+    } else {
+      const i = activeModals.indexOf(entry);
+      if (i >= 0) activeModals.splice(i, 1);
+      const back = lastFocused;
+      lastFocused = null;
+      void nextTick(() => {
+        if (back && back.isConnected) back.focus();
+      });
     }
-  )
-  onUnmounted(() => {
-    const i = activeModals.indexOf(entry)
-    if (i >= 0) activeModals.splice(i, 1)
-  })
+  },
+  { immediate: true },
+);
+watch(
+  () => props.closable,
+  (c) => {
+    entry.closable = c;
+  },
+);
+onUnmounted(() => {
+  const i = activeModals.indexOf(entry);
+  if (i >= 0) activeModals.splice(i, 1);
+});
 </script>

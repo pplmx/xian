@@ -314,7 +314,9 @@ if (!runs[0].marks.kaiUsable)
   failures.push("楷体没被用上(dist 里没有字体、或 family 名对不上)—— 字体那条预算空转了");
 if (runs[0].marks.fcp === null) failures.push("拿不到 FCP —— 判据空转了");
 if (fontBytes > BUDGETS.fontBytes * 1024)
-  failures.push(`楷体子集 ${kb(fontBytes)} 超过预算 ${kb(BUDGETS.fontBytes * 1024)} —— 「整份打进来」的回归在这里红,与机器快慢无关`);
+  failures.push(
+    `楷体子集 ${kb(fontBytes)} 超过预算 ${kb(BUDGETS.fontBytes * 1024)} —— 「整份打进来」的回归在这里红,与机器快慢无关`,
+  );
 
 if (failures.length) {
   for (const f of failures) console.log(`✗ ${f}`);

@@ -4,31 +4,31 @@
  * Phase 32.3 起,炼制不再是「够级必成」的兑换按钮:
  * 成败由认知与技艺决定(见 core/craftability.ts),失手要赔料,但也长本事。
  */
-import { gn } from '@/utils/gnum'
-import { rng } from '@/utils/random'
-import { pillDef } from '@/data/pills'
-import { buffDef } from '@/data/buffs'
-import { INSTANT_EXP_LAYER_CAP } from '@/data/constants'
-import { formatDuration, formatGN, formatNum } from '@/utils/format'
-import { recipeCraft, type SkillId } from '@/data/crafting'
-import { expFromSecs, stoneByTier } from './formulas'
-import { maxTierForMajor } from '@/data/regions'
-import { herbGradeOfMajor, type HerbGrade } from '@/data/herbGrades'
-import { modsText } from '@/ui/statNames'
-import { collect, track } from './progress'
-import { craftability, knownRecipes } from './craftability'
-import { runCraft, spentOf } from './engineCraft'
-import { buffOverflowOf } from './engineBuffs'
-import { noteMaterialUsed } from './loreService'
-import { noteTaboo } from './samsaraService'
-import { usePlayerStore } from '@/stores/player'
-import { useResourcesStore } from '@/stores/resources'
-import { useInventoryStore } from '@/stores/inventory'
-import { useCultivationStore } from '@/stores/cultivation'
-import { useLoreStore } from '@/stores/lore'
-import { useUiStore } from '@/stores/ui'
-import { playSfx } from './audio'
-import type { GNum } from '@/types'
+import { gn } from "@/utils/gnum";
+import { rng } from "@/utils/random";
+import { pillDef } from "@/data/pills";
+import { buffDef } from "@/data/buffs";
+import { INSTANT_EXP_LAYER_CAP } from "@/data/constants";
+import { formatDuration, formatGN, formatNum } from "@/utils/format";
+import { recipeCraft, type SkillId } from "@/data/crafting";
+import { expFromSecs, stoneByTier } from "./formulas";
+import { maxTierForMajor } from "@/data/regions";
+import { herbGradeOfMajor, type HerbGrade } from "@/data/herbGrades";
+import { modsText } from "@/ui/statNames";
+import { collect, track } from "./progress";
+import { craftability, knownRecipes } from "./craftability";
+import { runCraft, spentOf } from "./engineCraft";
+import { buffOverflowOf } from "./engineBuffs";
+import { noteMaterialUsed } from "./loreService";
+import { noteTaboo } from "./samsaraService";
+import { usePlayerStore } from "@/stores/player";
+import { useResourcesStore } from "@/stores/resources";
+import { useInventoryStore } from "@/stores/inventory";
+import { useCultivationStore } from "@/stores/cultivation";
+import { useLoreStore } from "@/stores/lore";
+import { useUiStore } from "@/stores/ui";
+import { playSfx } from "./audio";
+import type { GNum } from "@/types";
 
 /**
  * 服用一枚丹药。
@@ -37,19 +37,19 @@ import type { GNum } from '@/types'
  * 由批量那一层合为一条,免得连服十枚连弹十条。
  */
 export function usePill(id: string, quiet = false): boolean {
-  const player = usePlayerStore()
-  const resources = useResourcesStore()
-  const inventory = useInventoryStore()
-  const cultivation = useCultivationStore()
-  const ui = useUiStore()
-  const def = pillDef(id)
-  if (!def) return false
+  const player = usePlayerStore();
+  const resources = useResourcesStore();
+  const inventory = useInventoryStore();
+  const cultivation = useCultivationStore();
+  const ui = useUiStore();
+  const def = pillDef(id);
+  if (!def) return false;
   if (!inventory.spendPill(id)) {
-    if (!quiet) ui.toast('丹药不足', 'warn')
-    return false
+    if (!quiet) ui.toast("丹药不足", "warn");
+    return false;
   }
-  const lines: string[] = []
-  if (def.kind === 'instant' && def.instant) {
+  const lines: string[] = [];
+  if (def.kind === "instant" && def.instant) {
     /**
      * 修为丹:药力 = 服丹者当下的修炼速度 × 等效闭关秒数,封顶在「不满一层」。
      *
@@ -59,47 +59,52 @@ export function usePill(id: string, quiet = false): boolean {
      * 就该是他自己的一时(功法/建筑/状态/增益都在里头)。
      */
     if (def.instant.expSecs) {
-      const gain = expFromSecs(player.expReq, def.instant.expSecs, player.cultPerSec, INSTANT_EXP_LAYER_CAP)
-      player.gainExp(gain)
-      lines.push(`修为 +${formatGN(gain)}(约抵闭关 ${formatDuration(def.instant.expSecs)})`)
+      const gain = expFromSecs(
+        player.expReq,
+        def.instant.expSecs,
+        player.cultPerSec,
+        INSTANT_EXP_LAYER_CAP,
+      );
+      player.gainExp(gain);
+      lines.push(`修为 +${formatGN(gain)}(约抵闭关 ${formatDuration(def.instant.expSecs)})`);
     }
     if (def.instant.expFixed) {
-      player.gainExp(gn(def.instant.expFixed))
-      lines.push(`修为 +${formatNum(def.instant.expFixed)} 点`)
+      player.gainExp(gn(def.instant.expFixed));
+      lines.push(`修为 +${formatNum(def.instant.expFixed)} 点`);
     }
     if (def.instant.qiPct) {
-      resources.setQi(resources.qi + player.qiCapValue * def.instant.qiPct, player.qiCapValue)
-      lines.push(`灵气 +上限的 ${Math.round(def.instant.qiPct * 100)}%`)
+      resources.setQi(resources.qi + player.qiCapValue * def.instant.qiPct, player.qiCapValue);
+      lines.push(`灵气 +上限的 ${Math.round(def.instant.qiPct * 100)}%`);
     }
     if (def.instant.lifespanYears) {
-      player.addLifespan(def.instant.lifespanYears)
-      lines.push(`寿元 +${def.instant.lifespanYears} 载`)
+      player.addLifespan(def.instant.lifespanYears);
+      lines.push(`寿元 +${def.instant.lifespanYears} 载`);
     }
     if (def.instant.wudao) {
-      resources.addSmall('wudao', def.instant.wudao)
-      lines.push(`悟道点 +${def.instant.wudao}`)
+      resources.addSmall("wudao", def.instant.wudao);
+      lines.push(`悟道点 +${def.instant.wudao}`);
     }
   } else if (def.buffId) {
     // 贴着上限再服,药力会被削(甚至一点不加)—— 说出来,别让玩家自己猜"为什么没变"
-    const overflow = buffOverflowOf(cultivation.buffs, def.buffId, Date.now())
-    cultivation.addBuff(def.buffId, Date.now())
+    const overflow = buffOverflowOf(cultivation.buffs, def.buffId, Date.now());
+    cultivation.addBuff(def.buffId, Date.now());
     lines.push(
-      overflow === 'full'
-        ? '药力已至上限,这一颗白费了'
-        : overflow === 'partial'
-          ? '药力已至上限,这一颗只延续到顶'
-          : buffToastText(def.buffId)
-    )
+      overflow === "full"
+        ? "药力已至上限,这一颗白费了"
+        : overflow === "partial"
+          ? "药力已至上限,这一颗只延续到顶"
+          : buffToastText(def.buffId),
+    );
   }
-  track('pillsUsed')
+  track("pillsUsed");
   // Phase 32.5:「不假外物」之誓在按下这一刻就落空,不必等到转世才被告知
-  noteTaboo('pill')
-  collect('pill', id)
+  noteTaboo("pill");
+  collect("pill", id);
   if (!quiet) {
-    playSfx('success')
-    ui.toast(`服下「${def.name}」,${lines.join(',') || '药力温养周身'}`, 'success')
+    playSfx("success");
+    ui.toast(`服下「${def.name}」,${lines.join(",") || "药力温养周身"}`, "success");
   }
-  return true
+  return true;
 }
 
 /**
@@ -111,36 +116,39 @@ export function usePill(id: string, quiet = false): boolean {
  * @returns 实际服下的枚数(0 = 一枚没服下)
  */
 export function usePillBatch(id: string, count: number): number {
-  const def = pillDef(id)
-  if (!def) return 0
-  if (def.buffId) return usePill(id) ? 1 : 0
-  if (count <= 1) return usePill(id) ? 1 : 0
-  let eaten = 0
+  const def = pillDef(id);
+  if (!def) return 0;
+  if (def.buffId) return usePill(id) ? 1 : 0;
+  if (count <= 1) return usePill(id) ? 1 : 0;
+  let eaten = 0;
   for (let i = 0; i < count; i += 1) {
-    if (!usePill(id, true)) break
-    eaten += 1
+    if (!usePill(id, true)) break;
+    eaten += 1;
   }
-  const ui = useUiStore()
+  const ui = useUiStore();
   if (eaten > 0) {
-    playSfx('success')
-    ui.toast(`连服 ${eaten} 枚「${def.name}」${eaten < count ? `(仅存 ${eaten} 枚)` : ''}`, 'success')
+    playSfx("success");
+    ui.toast(
+      `连服 ${eaten} 枚「${def.name}」${eaten < count ? `(仅存 ${eaten} 枚)` : ""}`,
+      "success",
+    );
   } else {
-    ui.toast('丹药不足', 'warn')
+    ui.toast("丹药不足", "warn");
   }
-  return eaten
+  return eaten;
 }
 
 /** 炼丹消耗 —— 草按品阶认(ISS-306,品阶由方子准入境界推导,见 data/herbGrades) */
 export interface PillCraftCost {
-  herb: number
+  herb: number;
   /** 这张方子烧哪个品阶的灵草:凡品聚气散到道品道祖丹,各按自己的界 */
-  herbGrade: HerbGrade
-  stone: GNum
+  herbGrade: HerbGrade;
+  stone: GNum;
 }
 
 export function pillCraftCost(id: string): PillCraftCost | null {
-  const def = pillDef(id)
-  if (!def?.recipe) return null
+  const def = pillDef(id);
+  if (!def?.recipe) return null;
   /**
    * 灵石开销按这张方子**准入境界能拿到的最高层级**折算。
    *
@@ -148,8 +156,12 @@ export function pillCraftCost(id: string): PillCraftCost | null {
    * 而玩家在混沌海能到的最高层级是 32 —— 一张方子的价格凭空高出 322 倍(1.9^5),
    * 于是界外炼丹被自己的报价挡在门外(ISS-211)。层级只有一个事实源:区域表。
    */
-  const tier = maxTierForMajor(def.minRealm)
-  return { herb: def.recipe.herb, herbGrade: herbGradeOfMajor(def.minRealm), stone: stoneByTier(tier, def.recipe.stoneBase / 10) }
+  const tier = maxTierForMajor(def.minRealm);
+  return {
+    herb: def.recipe.herb,
+    herbGrade: herbGradeOfMajor(def.minRealm),
+    stone: stoneByTier(tier, def.recipe.stoneBase / 10),
+  };
 }
 
 /**
@@ -157,7 +169,7 @@ export function pillCraftCost(id: string): PillCraftCost | null {
  * 炸炉风险由 craftability 呈现给玩家自行判断,这里不代玩家做决定。
  */
 export function availableRecipes(): string[] {
-  return knownRecipes().map(p => p.id)
+  return knownRecipes().map((p) => p.id);
 }
 
 /**
@@ -166,30 +178,34 @@ export function availableRecipes(): string[] {
  * 导出供 core/pillValue.ts 折算炼制代价 —— 那边若另抄一份,两处口径迟早分叉。
  */
 export function salvageRatio(skill: number): number {
-  return 0.2 + 0.3 * Math.min(1, skill / 100)
+  return 0.2 + 0.3 * Math.min(1, skill / 100);
 }
 
 /** 开炉长的本事:成功长得快,失败也长——只是慢些,且偏向补最欠缺的一环 */
-function gainCraftExp(skills: Readonly<Partial<Record<SkillId, number>>>, rank: number, succeeded: boolean): void {
-  const lore = useLoreStore()
+function gainCraftExp(
+  skills: Readonly<Partial<Record<SkillId, number>>>,
+  rank: number,
+  succeeded: boolean,
+): void {
+  const lore = useLoreStore();
   // 澄心丹(炼丹心得):增益内生时,同一炉的心得 ×(1 + craftExpGain)——
   // 「做得多就精」的加速器,词条经 finalStats.mods 同一把尺子进来(见 engineCraft)。
-  const expBoost = 1 + (usePlayerStore().finalStats.mods.craftExpGain ?? 0)
-  const base = (succeeded ? 10 : 6) * (1 + rank * 0.35) * expBoost
+  const expBoost = 1 + (usePlayerStore().finalStats.mods.craftExpGain ?? 0);
+  const base = (succeeded ? 10 : 6) * (1 + rank * 0.35) * expBoost;
   for (const [k, w] of Object.entries(skills)) {
-    if (w === undefined) continue
-    lore.addSkillExp(k as SkillId, base * w)
+    if (w === undefined) continue;
+    lore.addSkillExp(k as SkillId, base * w);
   }
 }
 
 export interface CraftOutcome {
-  ok: boolean
+  ok: boolean;
   /** 出丹数;失败为 0 */
-  count: number
+  count: number;
   /** 未开炉(材料不足/不知此方)时为 true —— 与"开炉失败"是两回事 */
-  aborted?: boolean
+  aborted?: boolean;
   /** 失败这一炉按技艺保下的灵草残料 —— 批量层要拿它收账,不许丢(见 pillBatch.spec) */
-  salvaged?: number
+  salvaged?: number;
 }
 
 /**
@@ -202,13 +218,13 @@ export interface CraftOutcome {
  * 而且失手对灵材的印象比顺手时更深(见 noteMaterialUsed)。
  */
 export function craftPill(id: string, quiet = false): CraftOutcome {
-  const resources = useResourcesStore()
-  const inventory = useInventoryStore()
-  const ui = useUiStore()
-  const def = pillDef(id)
-  const able = craftability(id)
-  const cost = pillCraftCost(id)
-  if (!def || !cost || !able) return { ok: false, count: 0, aborted: true }
+  const resources = useResourcesStore();
+  const inventory = useInventoryStore();
+  const ui = useUiStore();
+  const def = pillDef(id);
+  const able = craftability(id);
+  const cost = pillCraftCost(id);
+  if (!def || !cost || !able) return { ok: false, count: 0, aborted: true };
 
   /**
    * 开一次炉:门槛、材料、成败与双成由库同一次判定给出(见 core/engineCraft)。
@@ -216,44 +232,53 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
    * 后者要扣料、长技艺、记失败。
    */
   // 草按品阶认:这张方子烧 cost.herbGrade 的草,新手村的凡品草进不了道祖丹的炉
-  const canPay = resources.hasHerbs(cost.herbGrade, cost.herb) && resources.hasStone(cost.stone)
-  const roll = runCraft(id, { pillId: id, canPay }, rng)
+  const canPay = resources.hasHerbs(cost.herbGrade, cost.herb) && resources.hasStone(cost.stone);
+  const roll = runCraft(id, { pillId: id, canPay }, rng);
   if (!roll.fired) {
     // 批量里的"料尽"由批量那一层报「料尽而止」,阻塞理由只在非静默时单说一遍
-    if (!quiet) ui.toast(roll.reason, 'warn')
-    return { ok: false, count: 0, aborted: true }
+    if (!quiet) ui.toast(roll.reason, "warn");
+    return { ok: false, count: 0, aborted: true };
   }
-  const craft = recipeCraft(def)
-  const succeeded = roll.succeeded
+  const craft = recipeCraft(def);
+  const succeeded = roll.succeeded;
 
   // 无论成败,炉先开了,料先下了 —— 扣多少照回报记账,不再自己算一遍
-  resources.spendStone(spentOf(roll, 'stone') as GNum)
-  resources.spendHerbs(cost.herbGrade, spentOf(roll, 'herb') as number)
+  resources.spendStone(spentOf(roll, "stone") as GNum);
+  resources.spendHerbs(cost.herbGrade, spentOf(roll, "herb") as number);
 
-  gainCraftExp(craft?.skills ?? {}, able.rank, succeeded)
-  for (const mid of able.materials) noteMaterialUsed(mid, succeeded)
+  gainCraftExp(craft?.skills ?? {}, able.rank, succeeded);
+  for (const mid of able.materials) noteMaterialUsed(mid, succeeded);
 
   if (!succeeded) {
     // 炸炉长记性:这张方子反而更熟了一点
-    useLoreStore().addRecipeMastery(id, 0.02)
-    track('pillsFailed')
-    if (!quiet) playSfx('fail')
+    useLoreStore().addRecipeMastery(id, 0.02);
+    track("pillsFailed");
+    if (!quiet) playSfx("fail");
     // 保料必须报数:定心丹「爆炸保料 +50%」与技艺的护料本钱,得让玩家用眼睛收账
-    const spent = spentOf(roll, 'herb') as number
-    const kept = cost.herb - spent
-    if (!quiet) ui.toast(kept > 0 ? `${failLine(able.weakness)} 残料尚存,保得灵草 ×${kept}` : failLine(able.weakness), 'warn')
-    return { ok: false, count: 0, salvaged: kept }
+    const spent = spentOf(roll, "herb") as number;
+    const kept = cost.herb - spent;
+    if (!quiet)
+      ui.toast(
+        kept > 0
+          ? `${failLine(able.weakness)} 残料尚存,保得灵草 ×${kept}`
+          : failLine(able.weakness),
+        "warn",
+      );
+    return { ok: false, count: 0, salvaged: kept };
   }
 
-  const extra = roll.extra
-  inventory.addPill(id, roll.produced)
-  track('pillsCrafted', roll.produced)
-  collect('pill', id)
+  const extra = roll.extra;
+  inventory.addPill(id, roll.produced);
+  track("pillsCrafted", roll.produced);
+  collect("pill", id);
   if (!quiet) {
-    playSfx('success')
-    ui.toast(extra ? `丹成两枚!「${def.name}」品相极佳` : `炼成「${def.name}」×${roll.produced}`, extra ? 'rare' : 'success')
+    playSfx("success");
+    ui.toast(
+      extra ? `丹成两枚!「${def.name}」品相极佳` : `炼成「${def.name}」×${roll.produced}`,
+      extra ? "rare" : "success",
+    );
   }
-  return { ok: true, count: roll.produced }
+  return { ok: true, count: roll.produced };
 }
 
 /**
@@ -262,47 +287,56 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
  * 材料一份都不够时,交给一次非静默开炉去说明真实阻塞理由。
  * @returns 炉数 / 入包丹数 / 炸炉数
  */
-export function craftPillBatch(id: string, count: number): { rounds: number; made: number; failed: number } {
+export function craftPillBatch(
+  id: string,
+  count: number,
+): { rounds: number; made: number; failed: number } {
   if (count <= 1) {
-    const first = craftPill(id)
-    return { rounds: first.aborted ? 0 : 1, made: first.ok ? first.count : 0, failed: first.ok ? 0 : 1 }
+    const first = craftPill(id);
+    return {
+      rounds: first.aborted ? 0 : 1,
+      made: first.ok ? first.count : 0,
+      failed: first.ok ? 0 : 1,
+    };
   }
-  let rounds = 0
-  let made = 0
-  let failed = 0
-  let salvaged = 0
+  let rounds = 0;
+  let made = 0;
+  let failed = 0;
+  let salvaged = 0;
   for (let i = 0; i < count; i += 1) {
-    const out = craftPill(id, true)
-    if (out.aborted) break
-    rounds += 1
-    made += out.count
+    const out = craftPill(id, true);
+    if (out.aborted) break;
+    rounds += 1;
+    made += out.count;
     if (!out.ok) {
-      failed += 1
-      salvaged += out.salvaged ?? 0
+      failed += 1;
+      salvaged += out.salvaged ?? 0;
     }
   }
-  const ui = useUiStore()
+  const ui = useUiStore();
   if (rounds === 0) {
     // 材料一份都不够:非静默开一炉,让「差在哪」的阻塞理由浮上来
-    craftPill(id)
-    return { rounds: 0, made: 0, failed: 0 }
+    craftPill(id);
+    return { rounds: 0, made: 0, failed: 0 };
   }
-  playSfx(failed > 0 && made === 0 ? 'fail' : 'success')
-  const parts = [`连炼 ${rounds} 炉,成 ${made}、败 ${failed}`]
-  if (salvaged > 0) parts.push(`残料保回 ×${salvaged}`)
-  if (rounds < count) parts.push('料尽而止')
-  ui.toast(parts.join(';'), failed > 0 && made === 0 ? 'warn' : 'success')
-  return { rounds, made, failed }
+  playSfx(failed > 0 && made === 0 ? "fail" : "success");
+  const parts = [`连炼 ${rounds} 炉,成 ${made}、败 ${failed}`];
+  if (salvaged > 0) parts.push(`残料保回 ×${salvaged}`);
+  if (rounds < count) parts.push("料尽而止");
+  ui.toast(parts.join(";"), failed > 0 && made === 0 ? "warn" : "success");
+  return { rounds, made, failed };
 }
 
 /** 炸炉话术:优先复述最要命的那条短板,让玩家知道该补什么 */
 /** 增益丹回执:名称 + 逐项数值 + 持续时长 —— 与图鉴同源,不另写一套数 */
 function buffToastText(buffId: string): string {
-  const buff = buffDef(buffId)
-  return buff ? `药力化开「${buff.name}」:${modsText(buff.mods)}(持续 ${Math.round(buff.durationSec / 60)} 分钟)` : '药力化开,状态加身'
+  const buff = buffDef(buffId);
+  return buff
+    ? `药力化开「${buff.name}」:${modsText(buff.mods)}(持续 ${Math.round(buff.durationSec / 60)} 分钟)`
+    : "药力化开,状态加身";
 }
 
 function failLine(weakness: readonly string[]): string {
-  const reason = weakness[0]
-  return reason ? `炉中一声闷响,丹毁了。${reason}` : '炉中一声闷响,丹毁了——火候差了那么一线。'
+  const reason = weakness[0];
+  return reason ? `炉中一声闷响,丹毁了。${reason}` : "炉中一声闷响,丹毁了——火候差了那么一线。";
 }

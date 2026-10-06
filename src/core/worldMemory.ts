@@ -8,15 +8,22 @@
  * 原则:不新增货币 / 不新增境界 / 不改变核心经济 / 不引入高频操作 / 不破坏挂机
  * 全部为「记录与展示」层,数值影响极轻(材料掉落微调、无强制 debuff)
  */
-import type { RegionProsperity, RegionRecall, NemesisRecord, EventMemory } from '@/types'
-import { usePlayerStore } from '@/stores/player'
-import { REGION_MEMORY, REVIVE_AFTER_HOURS } from './engineMemory'
+import type { RegionProsperity, RegionRecall, NemesisRecord, EventMemory } from "@/types";
+import { usePlayerStore } from "@/stores/player";
+import { REGION_MEMORY, REVIVE_AFTER_HOURS } from "./engineMemory";
 
 // ============ S1: 区域兴衰 ============
 
 // 档位与门槛住在 core/engineMemory(那是本作对库"档位机"的定制);这里转出,
 // 调用方与用例的 import 一行不用改
-export { DECAY_HOURS, FLOURISH_HOURS, FLOURISH_WINS, REVIVE_AFTER_HOURS, STABLE_HOURS, STABLE_WINS } from './engineMemory'
+export {
+  DECAY_HOURS,
+  FLOURISH_HOURS,
+  FLOURISH_WINS,
+  REVIVE_AFTER_HOURS,
+  STABLE_HOURS,
+  STABLE_WINS,
+} from "./engineMemory";
 
 /**
  * 妖气复聚的钟 —— 「这片地界多久没被打理了」。
@@ -31,15 +38,15 @@ export { DECAY_HOURS, FLOURISH_HOURS, FLOURISH_WINS, REVIVE_AFTER_HOURS, STABLE_
 export function regionTouchedAt(
   lastFightAt: number | undefined,
   suppressedAt: number | undefined,
-  clearedAt: number | undefined
+  clearedAt: number | undefined,
 ): number {
   // 钟的起点 = 最后一次与它打交道(战斗 / 镇压 / 通关,取最晚)
-  return REGION_MEMORY.touchedAt(lastFightAt, suppressedAt, clearedAt)
+  return REGION_MEMORY.touchedAt(lastFightAt, suppressedAt, clearedAt);
 }
 
 /** 该地界此刻是否该复聚(纯函数;钟没走过 —— 从未打过交道 —— 不算) */
 export function isRegionRevived(touchedAt: number, now: number): boolean {
-  return REGION_MEMORY.idleBeyond(touchedAt, now, REVIVE_AFTER_HOURS)
+  return REGION_MEMORY.idleBeyond(touchedAt, now, REVIVE_AFTER_HOURS);
 }
 
 /**
@@ -48,48 +55,54 @@ export function isRegionRevived(touchedAt: number, now: number): boolean {
  * 复聚是确定的期限,却从不预告:玩家只会看到某天镇压「突然没了」。
  * 界面据此把期限写成倒计时(与 isReviving 同一个阈值,不另立一份)。
  */
-export function hoursUntilRevive(suppressedAt: number | undefined, now: number = Date.now()): number {
-  if (suppressedAt === undefined) return 0
-  return REGION_MEMORY.hoursUntil(suppressedAt, now, REVIVE_AFTER_HOURS)
+export function hoursUntilRevive(
+  suppressedAt: number | undefined,
+  now: number = Date.now(),
+): number {
+  if (suppressedAt === undefined) return 0;
+  return REGION_MEMORY.hoursUntil(suppressedAt, now, REVIVE_AFTER_HOURS);
 }
 
 interface RegionStateInput {
-  totalWins: number
-  hasSuppressed: boolean
-  suppressedAt?: number
-  lastActivityAt: number
-  now: number
+  totalWins: number;
+  hasSuppressed: boolean;
+  suppressedAt?: number;
+  lastActivityAt: number;
+  now: number;
 }
 
 /** 派生区域兴衰状态(纯函数,无副作用) */
 export function deriveProsperity(input: RegionStateInput): RegionRecall {
   // 守土时长:镇压后守了多久(与「打赢过多少场」是两条路)
-  const heldHours = input.suppressedAt !== undefined ? REGION_MEMORY.hoursBetween(input.suppressedAt, input.now) : 0
+  const heldHours =
+    input.suppressedAt !== undefined
+      ? REGION_MEMORY.hoursBetween(input.suppressedAt, input.now)
+      : 0;
   // 档位机由库给:多路门槛取先到、没镇压过就停在最低档、太久没来就回落
   const stage = REGION_MEMORY.stateOf({
     count: input.totalWins,
     hours: heldHours,
     idleHours: REGION_MEMORY.hoursBetween(input.lastActivityAt, input.now),
-    eligible: input.hasSuppressed
-  })
-  const prosperity = stage.id as RegionProsperity
+    eligible: input.hasSuppressed,
+  });
+  const prosperity = stage.id as RegionProsperity;
   return {
     prosperity,
     since: input.suppressedAt ?? input.lastActivityAt,
     totalWins: input.totalWins,
     hasSuppressed: input.hasSuppressed,
-    suppressedAt: input.suppressedAt
-  }
+    suppressedAt: input.suppressedAt,
+  };
 }
 
 const PROSPERITY_NAMES: Record<RegionProsperity, string> = {
-  chaos: '混乱',
-  stable: '稳定',
-  flourish: '繁盛'
-}
+  chaos: "混乱",
+  stable: "稳定",
+  flourish: "繁盛",
+};
 
 export function prosperityName(p: RegionProsperity): string {
-  return PROSPERITY_NAMES[p]
+  return PROSPERITY_NAMES[p];
 }
 
 /**
@@ -100,17 +113,22 @@ export function prosperityName(p: RegionProsperity): string {
  */
 export function prosperityYieldMult(p: RegionProsperity): number {
   // 系数写在档位表里(见 core/engineMemory)—— 档位与它的回报在同一处,不会再分家
-  return REGION_MEMORY.stages.find(stage => stage.id === p)?.mult ?? 1
+  return REGION_MEMORY.stages.find((stage) => stage.id === p)?.mult ?? 1;
 }
 
 // ============ S2: 宿敌记忆 ============
 
 /** 标记为宿敌所需败北次数 */
-export const NEMESIS_THRESHOLD = 3
+export const NEMESIS_THRESHOLD = 3;
 
 /** 由敌人图鉴 id 组装宿敌记录(内部用;首次败北即 lossCount=1) */
-function makeNemesis(enemyId: string, enemyName: string, regionId: string, now: number): NemesisRecord {
-  return { enemyId, enemyName, regionId, lossCount: 1, lastLossAt: now }
+function makeNemesis(
+  enemyId: string,
+  enemyName: string,
+  regionId: string,
+  now: number,
+): NemesisRecord {
+  return { enemyId, enemyName, regionId, lossCount: 1, lastLossAt: now };
 }
 
 /** 记录一次败北:更新宿敌计数,新增或累加 */
@@ -120,71 +138,81 @@ export function recordLoss(
   enemyName: string,
   regionId: string,
   now: number,
-  threshold = NEMESIS_THRESHOLD
+  threshold = NEMESIS_THRESHOLD,
 ): { list: NemesisRecord[]; becameNemesis: boolean } {
-  const existing = nemeses.find(n => n.enemyId === enemyId)
+  const existing = nemeses.find((n) => n.enemyId === enemyId);
   if (existing) {
-    const next = { ...existing, lossCount: existing.lossCount + 1, lastLossAt: now }
+    const next = { ...existing, lossCount: existing.lossCount + 1, lastLossAt: now };
     return {
-      list: nemeses.map(n => (n.enemyId === enemyId ? next : n)),
-      becameNemesis: next.lossCount >= threshold
-    }
+      list: nemeses.map((n) => (n.enemyId === enemyId ? next : n)),
+      becameNemesis: next.lossCount >= threshold,
+    };
   }
-  const created = makeNemesis(enemyId, enemyName, regionId, now)
+  const created = makeNemesis(enemyId, enemyName, regionId, now);
   return {
     list: [...nemeses.slice(-49), created],
-    becameNemesis: created.lossCount >= threshold
-  }
+    becameNemesis: created.lossCount >= threshold,
+  };
 }
 
 /** 是否已为宿敌(雪耻未完成) */
 export function isNemesis(nemeses: NemesisRecord[], enemyId: string): boolean {
-  const n = nemeses.find(x => x.enemyId === enemyId)
-  return n !== undefined && n.lossCount >= NEMESIS_THRESHOLD && n.avengedAt === undefined
+  const n = nemeses.find((x) => x.enemyId === enemyId);
+  return n !== undefined && n.lossCount >= NEMESIS_THRESHOLD && n.avengedAt === undefined;
 }
 
 /** 首次雪耻:记录击破宿敌时间 */
-export function markAvenged(nemeses: NemesisRecord[], enemyId: string, now: number): NemesisRecord[] {
-  return nemeses.map(n => (n.enemyId === enemyId && n.avengedAt === undefined ? { ...n, avengedAt: now } : n))
+export function markAvenged(
+  nemeses: NemesisRecord[],
+  enemyId: string,
+  now: number,
+): NemesisRecord[] {
+  return nemeses.map((n) =>
+    n.enemyId === enemyId && n.avengedAt === undefined ? { ...n, avengedAt: now } : n,
+  );
 }
 
 // ============ S3: 事件余波 ============
 
 /** 再次遭遇已完成事件时,触发「余波」文案的概率 */
-export const AFTERMATH_CHANCE = 0.2
+export const AFTERMATH_CHANCE = 0.2;
 
 /** 记录事件已完成:更新计数与最近选择 */
 export function recordEvent(
   memories: Record<string, EventMemory>,
   eventId: string,
   choiceIdx: number,
-  now: number
+  now: number,
 ): Record<string, EventMemory> {
-  const cur = memories[eventId]
+  const cur = memories[eventId];
   const next: EventMemory = cur
     ? { ...cur, times: cur.times + 1, lastAt: now, lastChoiceIdx: choiceIdx }
-    : { eventId, times: 1, lastAt: now, lastChoiceIdx: choiceIdx, aftermathSeen: false }
-  return { ...memories, [eventId]: next }
+    : { eventId, times: 1, lastAt: now, lastChoiceIdx: choiceIdx, aftermathSeen: false };
+  return { ...memories, [eventId]: next };
 }
 
 /** 余波触发条件(纯函数):该事件**完成过一次**(times≥1)即可,再按 AFTERMATH_CHANCE 抽。
  * 注释勿写作「≥2次」—— worldMemory.spec 用 recordEvent 一次(times=1)即断言可触发,
  * 行为以 spec 为准;这里写错会误导后人以为要等第二次。 */
-export function shouldTriggerAftermath(memories: Record<string, EventMemory>, eventId: string, rand: number): boolean {
-  const m = memories[eventId]
-  if (!m || m.times < 1) return false
-  return rand < AFTERMATH_CHANCE
+export function shouldTriggerAftermath(
+  memories: Record<string, EventMemory>,
+  eventId: string,
+  rand: number,
+): boolean {
+  const m = memories[eventId];
+  if (!m || m.times < 1) return false;
+  return rand < AFTERMATH_CHANCE;
 }
 
 /** 余波文案生成(纯函数) */
-export function aftermathText(eventTitle: string, kind: 'good' | 'echo' | 'silence'): string {
+export function aftermathText(eventTitle: string, kind: "good" | "echo" | "silence"): string {
   switch (kind) {
-    case 'good':
-      return `${eventTitle}的痕迹依旧温存,你感到一丝久违的暖意。`
-    case 'echo':
-      return `${eventTitle}的余韵未散,往事如画卷般在眼前展开。`
-    case 'silence':
-      return `${eventTitle}已然远去,只余一片寂静。`
+    case "good":
+      return `${eventTitle}的痕迹依旧温存,你感到一丝久违的暖意。`;
+    case "echo":
+      return `${eventTitle}的余韵未散,往事如画卷般在眼前展开。`;
+    case "silence":
+      return `${eventTitle}已然远去,只余一片寂静。`;
   }
 }
 
@@ -192,9 +220,9 @@ export function aftermathText(eventTitle: string, kind: 'good' | 'echo' | 'silen
 
 /** 当前区域兴衰(UI 用) */
 export function regionRecallFor(regionId: string): RegionRecall {
-  const player = usePlayerStore()
-  const stats = player.regionStats[regionId]
-  const now = Date.now()
+  const player = usePlayerStore();
+  const stats = player.regionStats[regionId];
+  const now = Date.now();
   return deriveProsperity({
     totalWins: stats?.totalFights ?? 0,
     hasSuppressed: player.suppressedRegions.includes(regionId),
@@ -202,14 +230,14 @@ export function regionRecallFor(regionId: string): RegionRecall {
     // —— 否则镇压后继续刷战,`since` 会随战斗一路前移,「此地已稳定 N 小时」越算越短
     suppressedAt: player.suppressedSince[regionId],
     lastActivityAt: stats?.lastUpdateAt ?? now,
-    now
-  })
+    now,
+  });
 }
 
 // ============ 宿敌残魂(Phase 31.4)============
 
 /** 残魂再现概率(低,3%) */
-export const ECHO_GHOST_CHANCE = 0.03
+export const ECHO_GHOST_CHANCE = 0.03;
 
 /**
  * 宿敌残魂:已雪耻的宿敌以"历史形态"再现。
@@ -217,18 +245,18 @@ export const ECHO_GHOST_CHANCE = 0.03
  * 每次遭遇独立判定,低概率。
  */
 export function ghostOf(nemeses: NemesisRecord[], enemyId: string): NemesisRecord | null {
-  const n = nemeses.find(x => x.enemyId === enemyId)
+  const n = nemeses.find((x) => x.enemyId === enemyId);
   // 只有已雪耻(avengedAt)的宿敌才有残魂形态
-  if (!n || n.avengedAt === undefined) return null
-  return n
+  if (!n || n.avengedAt === undefined) return null;
+  return n;
 }
 
 /** 残魂战报前缀(叙事) */
 export function ghostTitle(n: NemesisRecord): string {
-  return `残魂·${n.enemyName}`
+  return `残魂·${n.enemyName}`;
 }
 
 /** 残魂引导语 (战报第一行前) */
 export function ghostLeadIn(n: NemesisRecord): string {
-  return `你曾${n.lossCount}败于此,又将此敌斩于剑下。如今一道残魂再度拦路——它似乎仍记得你。`
+  return `你曾${n.lossCount}败于此,又将此敌斩于剑下。如今一道残魂再度拦路——它似乎仍记得你。`;
 }

@@ -17,7 +17,9 @@
       -->
       <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span class="shrink-0 font-kai text-[12px] tracking-widest text-ink-faint">灵根</span>
-        <span class="shrink-0 whitespace-nowrap font-kai text-[13px] text-cinnabar">{{ player.linggen?.gradeName }}</span>
+        <span class="shrink-0 whitespace-nowrap font-kai text-[13px] text-cinnabar">{{
+          player.linggen?.gradeName
+        }}</span>
         <div class="flex shrink-0 gap-1.5">
           <span
             v-for="root in player.linggen?.roots ?? []"
@@ -27,12 +29,18 @@
           >
             <span
               class="grid h-6 w-6 place-items-center rounded-full border text-[11px] font-kai"
-              :style="{ borderColor: ELEMENTS[root.element].color, color: ELEMENTS[root.element].color }"
+              :style="{
+                borderColor: ELEMENTS[root.element].color,
+                color: ELEMENTS[root.element].color,
+              }"
             >
               {{ ELEMENTS[root.element].char }}
             </span>
             <!-- 资质直接亮在圆环下,不再只藏 hover —— 手机上看得到才谈得上权衡 -->
-            <span class="mt-0.5 text-[9px] leading-none tabular" :style="{ color: ELEMENTS[root.element].color }">
+            <span
+              class="mt-0.5 text-[9px] leading-none tabular"
+              :style="{ color: ELEMENTS[root.element].color }"
+            >
               {{ root.aptitude }}
             </span>
           </span>
@@ -43,8 +51,14 @@
       </div>
       <!-- 天然牌面(Phase 32.2):转世发下的这张牌决定路好不好走,而非走得多快 -->
       <div v-if="tendencies.length" class="mt-2 space-y-1">
-        <p v-for="t in tendencies" :key="t.element" class="flex gap-1.5 text-[11px] leading-relaxed text-ink-faint">
-          <span class="shrink-0 font-kai" :style="{ color: ELEMENTS[t.element].color }">{{ ELEMENTS[t.element].char }}</span>
+        <p
+          v-for="t in tendencies"
+          :key="t.element"
+          class="flex gap-1.5 text-[11px] leading-relaxed text-ink-faint"
+        >
+          <span class="shrink-0 font-kai" :style="{ color: ELEMENTS[t.element].color }">{{
+            ELEMENTS[t.element].char
+          }}</span>
           <span>{{ t.text }}</span>
         </p>
       </div>
@@ -88,7 +102,7 @@
               <span v-if="row.capped" class="ml-0.5 text-[9px] text-cinnabar">软</span>
             </span>
             <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
-              {{ row.value > 0 ? '+' : '' }}{{ formatPercent(row.value) }}
+              {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
             </span>
           </button>
         </div>
@@ -102,13 +116,17 @@
         </p>
         <div v-if="breakdownRows.length" class="mt-1.5 rounded-md bg-paper-deep/60 px-2.5 py-2">
           <p class="text-[10px] text-ink-soft">{{ STAT_NAMES[breakdownKey!] }} · 来源明细</p>
-          <p v-for="c in breakdownRows" :key="c.name" class="mt-0.5 flex justify-between text-[10px]">
+          <p
+            v-for="c in breakdownRows"
+            :key="c.name"
+            class="mt-0.5 flex justify-between text-[10px]"
+          >
             <span class="text-ink-faint">
               {{ c.name }}
               <span v-if="c.onTop" class="ml-1 text-[9px] text-cinnabar">另乘</span>
             </span>
             <span class="tabular" :class="c.value > 0 ? 'text-qing' : 'text-cinnabar'">
-              {{ c.value > 0 ? '+' : '' }}{{ formatPercent(c.value) }}
+              {{ c.value > 0 ? "+" : "" }}{{ formatPercent(c.value) }}
             </span>
           </p>
           <p class="mt-1 text-[9px] leading-relaxed text-ink-faint">
@@ -116,7 +134,9 @@
           </p>
         </div>
         <p v-if="softCappedNotes.length" class="mt-1.5 text-[10px] leading-relaxed text-cinnabar">
-          标「软」者已达软上限:{{ softCappedNotes.join('、') }}。极限堆叠到此后收益递减,不是面板被削。
+          标「软」者已达软上限:{{
+            softCappedNotes.join("、")
+          }}。极限堆叠到此后收益递减,不是面板被削。
         </p>
       </div>
     </section>
@@ -127,7 +147,8 @@
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">流 派</span>
         <span class="block truncate text-[10px] text-ink-faint tabular">
           <template v-if="build">
-            {{ build.displayName }} · 契合 {{ formatPercent(build.affinity, 0) }} · 快照 {{ loadouts.list.length }} 套
+            {{ build.displayName }} · 契合 {{ formatPercent(build.affinity, 0) }} · 快照
+            {{ loadouts.list.length }} 套
           </template>
           <template v-else>道途尚未成路,词条与功法凑成一派便见分晓</template>
         </span>
@@ -136,10 +157,15 @@
     </RouterLink>
 
     <!-- 修行画像(Phase 31.2:历史行为归纳,纯描述无数值) -->
-    <button class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99" @click="identityOpen = true">
+    <button
+      class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
+      @click="identityOpen = true"
+    >
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修行画像</span>
-        <span class="block truncate text-[10px] text-ink-faint">「{{ identity?.epithet ?? '玄枢散人' }}」 · {{ identity?.narrative ?? '足迹尚浅' }}</span>
+        <span class="block truncate text-[10px] text-ink-faint"
+          >「{{ identity?.epithet ?? "玄枢散人" }}」 · {{ identity?.narrative ?? "足迹尚浅" }}</span
+        >
       </span>
       <span class="shrink-0 text-[11px] text-ink-soft">展卷 →</span>
     </button>
@@ -155,45 +181,58 @@
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">名号与灵兽</span>
         <span class="block truncate text-[10px] text-ink-faint">
-          {{ currentTitleName ?? '未佩名号' }} · {{ currentPetName ?? '未伴灵兽' }}
+          {{ currentTitleName ?? "未佩名号" }} · {{ currentPetName ?? "未伴灵兽" }}
         </span>
       </span>
       <span class="text-[11px] text-jade">整理 →</span>
     </RouterLink>
 
     <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
-    <button class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99" @click="mentorDialog = true">
+    <button
+      class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
+      @click="mentorDialog = true"
+    >
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">师 承</span>
         <span class="block truncate text-[10px] text-ink-faint">
-          {{ mentorVer ? `${mentorVer.mentor?.name ?? ''}·${mentorVer.mentor?.title ?? ''} | ${mentorVer.line}` : '尚未拜师,可寻一位师尊' }}
+          {{
+            mentorVer
+              ? `${mentorVer.mentor?.name ?? ""}·${mentorVer.mentor?.title ?? ""} | ${mentorVer.line}`
+              : "尚未拜师,可寻一位师尊"
+          }}
         </span>
       </span>
-      <span class="shrink-0 text-[11px] text-qing">{{ mentorVer ? '求教 →' : '拜师 →' }}</span>
+      <span class="shrink-0 text-[11px] text-qing">{{ mentorVer ? "求教 →" : "拜师 →" }}</span>
     </button>
 
     <!-- 道侣(Phase 33.8):这一世遇见的人。只记关系与经历,不给任何属性 -->
-    <button class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99" @click="bondDialog = true">
+    <button
+      class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
+      @click="bondDialog = true"
+    >
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">道 侣</span>
         <span class="block truncate text-[10px] text-ink-faint">
           {{
             bondDef && bond
-              ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? '(已殁)' : ''} | ${bondDef.brief}`
+              ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? "(已殁)" : ""} | ${bondDef.brief}`
               : pastBonds.length
                 ? `此生尚未遇见,历世曾有 ${pastBonds.length} 段同行`
-                : '此生尚未遇见谁'
+                : "此生尚未遇见谁"
           }}
         </span>
       </span>
-      <span class="shrink-0 text-[11px] text-qing">{{ bondDef ? '相知 →' : '履历 →' }}</span>
+      <span class="shrink-0 text-[11px] text-qing">{{ bondDef ? "相知 →" : "履历 →" }}</span>
     </button>
 
     <RouterLink to="/collection" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">藏珍与成就</span>
         <span class="block text-[10px] text-ink-faint tabular">
-          成就 {{ achievementCounts(achievementStateOf(quests.achieved)).done }}/{{ ACHIEVEMENTS.length }} · 图鉴 {{ collectHave }}/{{ collectTotal }}
+          成就 {{ achievementCounts(achievementStateOf(quests.achieved)).done }}/{{
+            ACHIEVEMENTS.length
+          }}
+          · 图鉴 {{ collectHave }}/{{ collectTotal }}
         </span>
       </span>
       <span class="text-[11px] text-gold-ink">翻阅 →</span>
@@ -202,7 +241,9 @@
     <RouterLink to="/legacy" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修仙录</span>
-        <span class="block truncate text-[10px] text-ink-faint tabular">画像 · 节点 · 我的纪录——这一部只写你自己</span>
+        <span class="block truncate text-[10px] text-ink-faint tabular"
+          >画像 · 节点 · 我的纪录——这一部只写你自己</span
+        >
       </span>
       <span class="text-[11px] text-ink-soft">展卷 →</span>
     </RouterLink>
@@ -211,16 +252,23 @@
     <RouterLink to="/codex" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">界域志</span>
-        <span class="block truncate text-[10px] text-ink-faint tabular">{{ cnNumber(WORLDS.length) }}界{{ cnNumber(REALMS.length) }}境 · 每一境的来路与典籍</span>
+        <span class="block truncate text-[10px] text-ink-faint tabular"
+          >{{ cnNumber(WORLDS.length) }}界{{ cnNumber(REALMS.length) }}境 · 每一境的来路与典籍</span
+        >
       </span>
       <span class="text-[11px] text-ink-soft">查阅 →</span>
     </RouterLink>
 
-    <button class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99" @click="rebirthOpen = true">
+    <button
+      class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
+      @click="rebirthOpen = true"
+    >
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">轮 回</span>
         <span class="block text-[10px] text-ink-faint tabular">
-          <span class="chip-ink mr-1 border-violet-ink/50 text-[9px] text-violet-ink">永久积累</span>
+          <span class="chip-ink mr-1 border-violet-ink/50 text-[9px] text-violet-ink"
+            >永久积累</span
+          >
           道果 {{ player.reincarnation.daoFruit }} · 天赋 {{ ownedTalents.length }} 项
         </span>
       </span>
@@ -228,19 +276,37 @@
     </button>
 
     <!-- 修行画像弹窗(Phase 31.2) -->
-    <BaseModal :open="identityOpen" :title="`修行画像 · 「${identity?.epithet ?? '玄枢散人'}」`" @close="identityOpen = false">
+    <BaseModal
+      :open="identityOpen"
+      :title="`修行画像 · 「${identity?.epithet ?? '玄枢散人'}」`"
+      @close="identityOpen = false"
+    >
       <div v-if="identity" class="space-y-2.5">
         <p class="text-[12px] leading-relaxed text-ink-soft">{{ identity.narrative }}</p>
         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-          <p class="flex justify-between"><span class="text-ink-faint">师承</span><span class="text-ink-soft">{{ identity.roots.mentor?.name ?? '未定' }}</span></p>
-          <p class="flex justify-between"><span class="text-ink-faint">道途</span><span class="text-ink-soft">{{ identity.roots.daoPath ?? '未立' }}</span></p>
-          <p class="flex justify-between"><span class="text-ink-faint">流派</span><span class="text-ink-soft">{{ identity.roots.build ?? '未成' }}</span></p>
-          <p class="flex justify-between"><span class="text-ink-faint">悟道</span><span class="text-ink-soft">{{ identity.roots.branches.join('、') || '未定' }}</span></p>
+          <p class="flex justify-between">
+            <span class="text-ink-faint">师承</span
+            ><span class="text-ink-soft">{{ identity.roots.mentor?.name ?? "未定" }}</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-ink-faint">道途</span
+            ><span class="text-ink-soft">{{ identity.roots.daoPath ?? "未立" }}</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-ink-faint">流派</span
+            ><span class="text-ink-soft">{{ identity.roots.build ?? "未成" }}</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-ink-faint">悟道</span
+            ><span class="text-ink-soft">{{ identity.roots.branches.join("、") || "未定" }}</span>
+          </p>
         </div>
         <p v-if="identity.roots.fortunes.length" class="text-[11px] text-ink-faint">
-          机缘印记:{{ identity.roots.fortunes.map(f => f.title).join(' · ') }}
+          机缘印记:{{ identity.roots.fortunes.map((f) => f.title).join(" · ") }}
         </p>
-        <p class="text-[10px] leading-relaxed text-ink-faint">画像基于真实选择归纳——你玩成了什么样,它便描述什么。</p>
+        <p class="text-[10px] leading-relaxed text-ink-faint">
+          画像基于真实选择归纳——你玩成了什么样,它便描述什么。
+        </p>
       </div>
       <template #footer>
         <button class="btn-seal w-full" @click="identityOpen = false">收 卷</button>
@@ -259,14 +325,16 @@
             }}%;转世保留
           </span>
         </span>
-        <span class="tabular font-kai text-[15px] text-cinnabar">{{ player.reincarnation.daoFruit }}</span>
+        <span class="tabular font-kai text-[15px] text-cinnabar">{{
+          player.reincarnation.daoFruit
+        }}</span>
       </p>
       <!-- S3 道果收益:有效值与软上限白话 -->
       <p class="mt-1 text-[11px] text-ink-faint tabular">
         有效收益
         <span class="text-gold-ink">{{ fruitInfo.effectiveText }} 枚</span>
         (边际渐减)·
-        {{ fruitInfo.total > 0 ? `当前修行 ${fruitInfo.cultBonusText}` : '' }}
+        {{ fruitInfo.total > 0 ? `当前修行 ${fruitInfo.cultBonusText}` : "" }}
       </p>
       <!-- 逆旅契:道果的第一个消费出口。花道果换一世逆境,回报只有履历 -->
       <p class="mt-2 flex items-center justify-between text-[12px]">
@@ -274,7 +342,11 @@
           逆旅契
           <span class="ml-1 text-[10px] text-violet-ink">【本世 · 消耗道果】</span>
           <span class="block text-[10px] text-ink-faint">
-            {{ signedTrial ? `此生已立「${signedTrial.name}」·${signedTrial.ruleText}` : '以道果换一世逆境,所得唯有履历一笔' }}
+            {{
+              signedTrial
+                ? `此生已立「${signedTrial.name}」·${signedTrial.ruleText}`
+                : "以道果换一世逆境,所得唯有履历一笔"
+            }}
           </span>
         </span>
         <!-- 拇指够得着:纯文字按钮只有 18px 高,补成 30px(弹窗里的可点元素同样受 28px 那条约束) -->
@@ -285,7 +357,9 @@
         >
           立契
         </button>
-        <span v-else class="shrink-0 font-kai text-[15px] text-cinnabar">{{ signedTrial.seal }}</span>
+        <span v-else class="shrink-0 font-kai text-[15px] text-cinnabar">{{
+          signedTrial.seal
+        }}</span>
       </p>
 
       <div class="mt-2">
@@ -302,14 +376,23 @@
           >
             {{ t!.name }}
           </button>
-          <span v-if="!ownedTalents.length" class="text-[11px] text-ink-faint">转世后可觉醒先天之姿</span>
+          <span v-if="!ownedTalents.length" class="text-[11px] text-ink-faint"
+            >转世后可觉醒先天之姿</span
+          >
         </div>
-        <p v-if="talentTap && tappedTalent" class="mt-1.5 text-[10px] leading-relaxed text-ink-faint">
-          <span :style="{ color: TALENT_GRADE_COLORS[tappedTalent.grade] }">{{ tappedTalent.name }}</span>
+        <p
+          v-if="talentTap && tappedTalent"
+          class="mt-1.5 text-[10px] leading-relaxed text-ink-faint"
+        >
+          <span :style="{ color: TALENT_GRADE_COLORS[tappedTalent.grade] }">{{
+            tappedTalent.name
+          }}</span>
           ：{{ tappedTalent.desc }}
         </p>
       </div>
-      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">兵解转世保留道果 / 天赋 / 法宝,功法折半,余者归尘。金丹境方可自行兵解。</p>
+      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
+        兵解转世保留道果 / 天赋 / 法宝,功法折半,余者归尘。金丹境方可自行兵解。
+      </p>
       <template #footer>
         <button class="btn-ghost w-full !text-[12px]" @click="rebirth">兵解转世</button>
       </template>
@@ -336,20 +419,32 @@
               已签过整组都灰,报「此生已签」(此时再报尚差会指错方向);
               道果不足照「尚差 N」报差数(与聚气丹/建筑同款纪律),不稳灰到底。
             -->
-            <span v-if="signedTrial" class="shrink-0 tabular text-[12px] text-ink-faint">此生已签</span>
+            <span v-if="signedTrial" class="shrink-0 tabular text-[12px] text-ink-faint"
+              >此生已签</span
+            >
             <span v-else class="shrink-0 tabular text-[12px] text-cinnabar">
-              {{ player.reincarnation.daoFruit >= t.cost ? `${t.cost} 道果` : `尚差 ${t.cost - player.reincarnation.daoFruit} 道果` }}
+              {{
+                player.reincarnation.daoFruit >= t.cost
+                  ? `${t.cost} 道果`
+                  : `尚差 ${t.cost - player.reincarnation.daoFruit} 道果`
+              }}
             </span>
           </span>
           <span class="mt-0.5 block text-[11px] leading-relaxed text-ink-soft">{{ t.desc }}</span>
           <span class="mt-0.5 block text-[10px] text-ink-faint">{{ t.ruleText }}</span>
         </button>
       </div>
-      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">一世只可立一契,立下不可解。转世时契随皮囊散去,履历长存。</p>
+      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
+        一世只可立一契,立下不可解。转世时契随皮囊散去,履历长存。
+      </p>
     </BaseModal>
 
     <!-- 道侣弹窗:这一世的关系与历世的同行 -->
-    <BaseModal :open="bondDialog" :title="bondDef ? `道侣 · ${bondDef.name}` : '道侣'" @close="bondDialog = false">
+    <BaseModal
+      :open="bondDialog"
+      :title="bondDef ? `道侣 · ${bondDef.name}` : '道侣'"
+      @close="bondDialog = false"
+    >
       <template v-if="bondDef && bond">
         <p class="font-kai text-[14px] text-ink">{{ bondDef.name }}</p>
         <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ bondDef.brief }}</p>
@@ -368,13 +463,17 @@
           </p>
         </div>
         <p class="mt-2 text-[11px] text-ink-faint">共历 {{ bond.shared }} 次</p>
-        <p v-if="responseLine" class="mt-1 text-[11px] text-ink-faint">她开的口,你历次回应:{{ responseLine }}</p>
+        <p v-if="responseLine" class="mt-1 text-[11px] text-ink-faint">
+          她开的口,你历次回应:{{ responseLine }}
+        </p>
 
         <p class="mt-3 text-[11px] leading-relaxed text-ink-soft">她所求:{{ bondDef.pursuit }}</p>
-        <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">她不越的线:{{ bondDef.taboo }}</p>
+        <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">
+          她不越的线:{{ bondDef.taboo }}
+        </p>
 
         <p v-if="gateHint" class="mt-3 text-[11px] text-gold-ink">
-          离「{{ STAGE_NAMES[gateHint.stage] }}」尚差:{{ gateHint.lacking.join('、') }}
+          离「{{ STAGE_NAMES[gateHint.stage] }}」尚差:{{ gateHint.lacking.join("、") }}
         </p>
 
         <!-- 她自己提出的事(Phase 34.1):不是世界安排的事件,是她开的口 -->
@@ -383,7 +482,9 @@
             <p class="text-[12px] leading-relaxed text-gold-ink">{{ herIntent.line }}</p>
             <p class="mt-1 text-[10px] text-ink-faint">她所求:{{ herIntent.wish }}</p>
             <!-- 意图由经历催生,不是凭空的:把「因何而起」摆出来 -->
-            <p v-if="herIntentSparks" class="text-[10px] text-ink-faint">因何而起:{{ herIntentSparks }}</p>
+            <p v-if="herIntentSparks" class="text-[10px] text-ink-faint">
+              因何而起:{{ herIntentSparks }}
+            </p>
             <div class="mt-2.5 flex gap-2">
               <button
                 v-for="r in INTENT_CHOICES"
@@ -411,7 +512,10 @@
                 v-for="ch in pendingEvent.choices"
                 :key="ch.id"
                 class="card-ink w-full px-3 py-2 text-left text-[12px] text-ink-soft active:scale-99"
-                :class="{ '!border-cinnabar/50 text-cinnabar': ch.peril, '!border-gold-ink/40': ch.risky && !ch.peril }"
+                :class="{
+                  '!border-cinnabar/50 text-cinnabar': ch.peril,
+                  '!border-gold-ink/40': ch.risky && !ch.peril,
+                }"
                 @click="pickChoice(ch.id)"
               >
                 {{ ch.label }}
@@ -420,7 +524,10 @@
             </div>
           </div>
         </template>
-        <p v-else-if="lastEventText" class="mt-4 border-t border-ink/10 pt-3 text-[11px] leading-relaxed text-ink-soft">
+        <p
+          v-else-if="lastEventText"
+          class="mt-4 border-t border-ink/10 pt-3 text-[11px] leading-relaxed text-ink-soft"
+        >
           {{ lastEventText }}
         </p>
       </template>
@@ -433,7 +540,9 @@
         <div class="mt-2 max-h-40 space-y-1.5 overflow-y-auto">
           <p v-for="(r, i) in pastBonds" :key="i" class="flex justify-between text-[11px]">
             <span class="text-ink-soft">{{ r.name }}</span>
-            <span class="text-ink-faint">{{ STAGE_NAMES[r.stage] }} · {{ ENDING_NAMES[r.ending] }}</span>
+            <span class="text-ink-faint"
+              >{{ STAGE_NAMES[r.stage] }} · {{ ENDING_NAMES[r.ending] }}</span
+            >
           </p>
         </div>
       </template>
@@ -441,24 +550,38 @@
 
     <!-- 师承弹窗:拜师 / 师尊评价
         (Phase 31 S1:四种师承理念,拜后不改,转世保留,纯叙事反馈) -->
-    <BaseModal :open="mentorDialog" :title="mentorVer ? `师承 · ${mentorVer.mentor?.name ?? ''}` : '拜师'" @close="mentorDialog = false">
+    <BaseModal
+      :open="mentorDialog"
+      :title="mentorVer ? `师承 · ${mentorVer.mentor?.name ?? ''}` : '拜师'"
+      @close="mentorDialog = false"
+    >
       <div v-if="mentorVer" class="space-y-3">
         <p class="font-kai text-[14px] text-ink">{{ mentorVer.mentor?.master }}</p>
-        <p class="text-[12px] leading-relaxed text-ink-soft">
-          「{{ mentorVer.line }}」
-        </p>
+        <p class="text-[12px] leading-relaxed text-ink-soft">「{{ mentorVer.line }}」</p>
         <p class="text-[11px] text-ink-faint tabular">
           契合度
-          <span :class="mentorVer.affinity > 0.2 ? 'text-jade' : mentorVer.affinity < -0.2 ? 'text-cinnabar' : 'text-ink-faint'">
+          <span
+            :class="
+              mentorVer.affinity > 0.2
+                ? 'text-jade'
+                : mentorVer.affinity < -0.2
+                  ? 'text-cinnabar'
+                  : 'text-ink-faint'
+            "
+          >
             {{ mentorVer.affinity.toFixed(2) }}
           </span>
         </p>
         <p class="text-[11px] leading-relaxed text-ink-faint">
-          师承词条(并入终局属性):{{ Object.values(mentorVer.mentor?.mods ?? {}).join(' · ') || '—' }}
+          师承词条(并入终局属性):{{
+            Object.values(mentorVer.mentor?.mods ?? {}).join(" · ") || "—"
+          }}
         </p>
       </div>
       <div v-else class="space-y-2.5">
-        <p class="text-[12px] leading-relaxed text-ink-faint">师承是凡界修行者给你的"额外成长思想"。拜入师门,获一条方向性词条;行为与师承相合,师尊自有嘉许,不设惩罚。</p>
+        <p class="text-[12px] leading-relaxed text-ink-faint">
+          师承是凡界修行者给你的"额外成长思想"。拜入师门,获一条方向性词条;行为与师承相合,师尊自有嘉许,不设惩罚。
+        </p>
         <button
           v-for="m in mentorChoices()"
           :key="m!.id"
@@ -469,7 +592,11 @@
           <p class="flex items-baseline gap-2">
             <span class="font-kai text-[14px] text-ink">{{ m!.name }}</span>
             <span class="text-[11px] text-qing">{{ m!.title }}</span>
-            <span v-if="hintMentor === m!.id" class="chip-ink ml-1 border-cinnabar/50 text-[9px] text-cinnabar">机缘引荐</span>
+            <span
+              v-if="hintMentor === m!.id"
+              class="chip-ink ml-1 border-cinnabar/50 text-[9px] text-cinnabar"
+              >机缘引荐</span
+            >
             <span class="ml-auto text-[10px] text-ink-faint">{{ m!.master }}</span>
           </p>
           <p class="mt-0.5 text-[11px] text-ink-faint">{{ m!.desc }}</p>
@@ -483,243 +610,257 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref, watch } from 'vue'
-  import { usePlayerStore } from '@/stores/player'
-  import { ENDING_NAMES, LEAN_NAMES, STAGE_NAMES, TEMPER_NAMES, daoluDef } from '@/data/daolu'
-  import { chooseBondEvent, herStance, nextGateHint, pendingBondEvent, pendingIntent, respondIntent } from '@/core/daoluService'
-  import { LIFE_TRIALS } from '@/data/lifeTrials'
-  import { activeLifeTrial, canSignLifeTrial, signLifeTrial } from '@/core/lifeTrialService'
-  import { useQuestsStore } from '@/stores/quests'
-  import { useUiStore } from '@/stores/ui'
-  import { ELEMENTS } from '@/data/linggen'
-  import { titleDef } from '@/data/titles'
-  import { petDef, PETS } from '@/data/pets'
-  import { talentDef, TALENT_GRADE_COLORS, TALENTS } from '@/data/talents'
-  import { ACHIEVEMENTS } from '@/data/achievements'
-  import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
-  import { GONGFA } from '@/data/gongfa'
-  import { PILLS } from '@/data/pills'
-  import { ARTIFACTS } from '@/data/artifacts'
-  import { REALMS, WORLDS } from '@/data/realms'
-  import { EVENTS } from '@/data/events'
-  import { prepareReincarnation, MANUAL_REBIRTH_MIN_MAJOR } from '@/core/reincarnation'
-  import { detectBuild } from '@/core/buildDetect'
-  import { useLoadoutsStore } from '@/stores/loadouts'
-  import { isSoftCapped, modOf } from '@/core/statsCalc'
-  import { DAO_FRUIT_COMBAT_BONUS, DAO_FRUIT_CULT_BONUS, SOFT_CAPS } from '@/data/constants'
-  import { RESPONSE_NAMES, SPARK_NAMES } from '@/data/bondIntent'
-  import { TRIGGER_NAMES } from '@/data/bondEvents'
-  import { fruitMarginalInfo } from '@/core/resourceGuidance'
-  import { branchCodex, materialCodex } from '@/ui/codex'
-  import { mentorVerdict, mentorChoices } from '@/core/mentorService'
-  import { mentorHint } from '@/core/fortuneChain'
-  import { buildIdentity } from '@/core/identityService'
-  import { rootElements, tendencyLines } from '@/core/linggenAffinity'
-  import { cnNumber, formatPercent } from '@/utils/format'
-  import TapNumber from '@/components/common/TapNumber.vue'
-  import type { AnyStatKey } from '@/types'
-  import { STAT_NAMES } from '@/ui/statNames'
-  import { achievementCounts, achievementStateOf } from '@/core/engineUnlocks'
-  import SectionTitle from '@/components/common/SectionTitle.vue'
-  import BaseModal from '@/components/common/BaseModal.vue'
-  import GameIcon from '@/components/common/GameIcon.vue'
-  import ProgressBar from '@/components/common/ProgressBar.vue'
+import { computed, ref, watch } from "vue";
+import { usePlayerStore } from "@/stores/player";
+import { ENDING_NAMES, LEAN_NAMES, STAGE_NAMES, TEMPER_NAMES, daoluDef } from "@/data/daolu";
+import {
+  chooseBondEvent,
+  herStance,
+  nextGateHint,
+  pendingBondEvent,
+  pendingIntent,
+  respondIntent,
+} from "@/core/daoluService";
+import { LIFE_TRIALS } from "@/data/lifeTrials";
+import { activeLifeTrial, canSignLifeTrial, signLifeTrial } from "@/core/lifeTrialService";
+import { useQuestsStore } from "@/stores/quests";
+import { useUiStore } from "@/stores/ui";
+import { ELEMENTS } from "@/data/linggen";
+import { titleDef } from "@/data/titles";
+import { petDef, PETS } from "@/data/pets";
+import { talentDef, TALENT_GRADE_COLORS, TALENTS } from "@/data/talents";
+import { ACHIEVEMENTS } from "@/data/achievements";
+import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
+import { GONGFA } from "@/data/gongfa";
+import { PILLS } from "@/data/pills";
+import { ARTIFACTS } from "@/data/artifacts";
+import { REALMS, WORLDS } from "@/data/realms";
+import { EVENTS } from "@/data/events";
+import { prepareReincarnation, MANUAL_REBIRTH_MIN_MAJOR } from "@/core/reincarnation";
+import { detectBuild } from "@/core/buildDetect";
+import { useLoadoutsStore } from "@/stores/loadouts";
+import { isSoftCapped, modOf } from "@/core/statsCalc";
+import { DAO_FRUIT_COMBAT_BONUS, DAO_FRUIT_CULT_BONUS, SOFT_CAPS } from "@/data/constants";
+import { RESPONSE_NAMES, SPARK_NAMES } from "@/data/bondIntent";
+import { TRIGGER_NAMES } from "@/data/bondEvents";
+import { fruitMarginalInfo } from "@/core/resourceGuidance";
+import { branchCodex, materialCodex } from "@/ui/codex";
+import { mentorVerdict, mentorChoices } from "@/core/mentorService";
+import { mentorHint } from "@/core/fortuneChain";
+import { buildIdentity } from "@/core/identityService";
+import { rootElements, tendencyLines } from "@/core/linggenAffinity";
+import { cnNumber, formatPercent } from "@/utils/format";
+import TapNumber from "@/components/common/TapNumber.vue";
+import type { AnyStatKey } from "@/types";
+import { STAT_NAMES } from "@/ui/statNames";
+import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
+import SectionTitle from "@/components/common/SectionTitle.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
+import GameIcon from "@/components/common/GameIcon.vue";
+import ProgressBar from "@/components/common/ProgressBar.vue";
 
-  const player = usePlayerStore()
+const player = usePlayerStore();
 
-  /** S3 道果链路:有效收益与软上限白话 */
-  const fruitInfo = computed(() => fruitMarginalInfo())
-  const quests = useQuestsStore()
-  const ui = useUiStore()
-  const loadouts = useLoadoutsStore()
+/** S3 道果链路:有效收益与软上限白话 */
+const fruitInfo = computed(() => fruitMarginalInfo());
+const quests = useQuestsStore();
+const ui = useUiStore();
+const loadouts = useLoadoutsStore();
 
-  const stats = computed(() => player.finalStats)
-  /** 战力详情:三围原始读数各一行 —— 战力是它们的加权和,拆开才知道涨在哪一项 */
-  const powerDetailRows = computed(() => [
-    { label: '攻击', value: player.finalStats.attack },
-    { label: '防御', value: player.finalStats.defense },
-    { label: '气血', value: player.finalStats.maxHp }
-  ])
+const stats = computed(() => player.finalStats);
+/** 战力详情:三围原始读数各一行 —— 战力是它们的加权和,拆开才知道涨在哪一项 */
+const powerDetailRows = computed(() => [
+  { label: "攻击", value: player.finalStats.attack },
+  { label: "防御", value: player.finalStats.defense },
+  { label: "气血", value: player.finalStats.maxHp },
+]);
 
-  /** 灵根的天然牌面(倾向文案,不含任何数值) */
-  const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roots)))
+/** 灵根的天然牌面(倾向文案,不含任何数值) */
+const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roots)));
 
-  const MOD_KEYS: AnyStatKey[] = [
-    'cultivationSpeed',
-    'qiRegen',
-    'breakthroughRate',
-    'critRate',
-    'critDamage',
-    'damageBonus',
-    'damageReduction',
-    'dodgeRate',
-    'accuracy',
-    'shieldOnStart',
-    'luck',
-    'explorationSpeed',
-    'dropRate'
-  ]
+const MOD_KEYS: AnyStatKey[] = [
+  "cultivationSpeed",
+  "qiRegen",
+  "breakthroughRate",
+  "critRate",
+  "critDamage",
+  "damageBonus",
+  "damageReduction",
+  "dodgeRate",
+  "accuracy",
+  "shieldOnStart",
+  "luck",
+  "explorationSpeed",
+  "dropRate",
+];
 
-  const modRows = computed(() =>
-    MOD_KEYS.map(k => ({
-      key: k,
-      label: STAT_NAMES[k],
-      value: modOf(stats.value.mods, k),
-      capped: isSoftCapped(stats.value.mods, k)
-    })).filter(x => x.value !== 0)
-  )
+const modRows = computed(() =>
+  MOD_KEYS.map((k) => ({
+    key: k,
+    label: STAT_NAMES[k],
+    value: modOf(stats.value.mods, k),
+    capped: isSoftCapped(stats.value.mods, k),
+  })).filter((x) => x.value !== 0),
+);
 
-  /** 面板上是否需要那句「进阶成功率只作用于小进阶」的边界说明 */
-  const hasAdvanceRate = computed(() => modOf(stats.value.mods, 'breakthroughRate') !== 0)
+/** 面板上是否需要那句「进阶成功率只作用于小进阶」的边界说明 */
+const hasAdvanceRate = computed(() => modOf(stats.value.mods, "breakthroughRate") !== 0);
 
-  /** 来源明细:点哪一行看哪一行 —— 数据来自 finalStats.breakdown,不在界面里另算 */
-  const breakdownKey = ref<AnyStatKey | null>(null)
-  const breakdownRows = computed(() => {
-    const key = breakdownKey.value
-    if (!key) return []
-    return stats.value.breakdown
-      .map(r => ({ name: r.name, value: r.mods[key] ?? 0, onTop: r.onTop === true }))
-      .filter(c => c.value !== 0)
-  })
+/** 来源明细:点哪一行看哪一行 —— 数据来自 finalStats.breakdown,不在界面里另算 */
+const breakdownKey = ref<AnyStatKey | null>(null);
+const breakdownRows = computed(() => {
+  const key = breakdownKey.value;
+  if (!key) return [];
+  return stats.value.breakdown
+    .map((r) => ({ name: r.name, value: r.mods[key] ?? 0, onTop: r.onTop === true }))
+    .filter((c) => c.value !== 0);
+});
 
-  function toggleBreakdown(key: AnyStatKey): void {
-    breakdownKey.value = breakdownKey.value === key ? null : key
+function toggleBreakdown(key: AnyStatKey): void {
+  breakdownKey.value = breakdownKey.value === key ? null : key;
+}
+
+/**
+ * 软上限从来不是暗改:越过之后超出部分按折扣计入,
+ * 折扣率取自 SOFT_CAPS 本体,不在这里手抄"折半"(各键并非同一个数)
+ */
+const softCappedNotes = computed(() =>
+  modRows.value
+    .filter((r) => r.capped)
+    .map((r) => `${r.label}(超出按 ${formatPercent(SOFT_CAPS[r.key]?.diminish ?? 1, 0)} 计入)`),
+);
+
+const build = computed(() => detectBuild(stats.value.mods));
+
+const currentTitleName = computed(() =>
+  player.titleId ? titleDef(player.titleId)?.name : undefined,
+);
+const currentPetName = computed(() => (player.petId ? petDef(player.petId)?.name : undefined));
+const currentPetIcon = computed(() => (player.petId ? petDef(player.petId)?.icon : undefined));
+const ownedTalents = computed(() =>
+  player.reincarnation.talents.map((id) => talentDef(id)).filter((t) => t !== undefined),
+);
+
+const knownIn = (ids: string[], table: readonly { id: string }[]): number => {
+  const tableIds = new Set(table.map((row) => row.id));
+  return new Set(ids.filter((id) => tableIds.has(id))).size;
+};
+
+const collectHave = computed(
+  () =>
+    knownIn(quests.collections.equip, EQUIPMENT_TEMPLATES) +
+    knownIn(quests.collections.gongfa, GONGFA) +
+    knownIn(quests.collections.pill, PILLS) +
+    knownIn(quests.collections.artifact, ARTIFACTS) +
+    knownIn(quests.collections.pet, PETS) +
+    knownIn(quests.collections.event, EVENTS) +
+    knownIn(quests.collections.talent, TALENTS) +
+    // 图鉴页还有灵材谱与悟道录两类(派生视图,见 ui/codex.ts),计数要带上,否则两页对不上
+    branchCodex().entries.filter((e) => e.stage > 0).length +
+    materialCodex().entries.filter((e) => e.stage > 0).length,
+);
+const collectTotal =
+  EQUIPMENT_TEMPLATES.length +
+  GONGFA.length +
+  PILLS.length +
+  ARTIFACTS.length +
+  PETS.length +
+  EVENTS.length +
+  TALENTS.length +
+  branchCodex().entries.length +
+  materialCodex().entries.length;
+
+// ---- 轮回 ----
+const rebirthOpen = ref(false);
+/** 天赋芯片点按展开(移动端无 hover,效果说明内联显示);关弹窗复位 */
+const talentTap = ref<string | null>(null);
+const tappedTalent = computed(() => (talentTap.value ? talentDef(talentTap.value) : undefined));
+watch(rebirthOpen, (open) => {
+  if (!open) talentTap.value = null;
+});
+const bondDialog = ref(false);
+const bond = computed(() => player.bond);
+const bondDef = computed(() => (bond.value ? (daoluDef(bond.value.daoluId) ?? null) : null));
+const bondMeters = computed(() =>
+  bond.value
+    ? [
+        { label: "缘分", v: bond.value.fate },
+        { label: "信任", v: bond.value.trust },
+        { label: "契合", v: bond.value.accord },
+      ]
+    : [],
+);
+const gateHint = computed(() => nextGateHint());
+const pastBonds = computed(() => player.reincarnation.bonds);
+/**
+ * 待决的共同事件 —— 由历练情境写入关系状态,界面只读取。
+ *
+ * 34.0 之前是「打开弹窗才抽一个」:内容是真的,时机是假的。
+ * 现在事件在历练途中就已发生,弹窗只是去看它
+ */
+const pendingEvent = computed(() => pendingBondEvent());
+/** 这件事因何而来(触发名取自 bondEvents,不在视图里手写) */
+const pendingEventTriggers = computed(() =>
+  (pendingEvent.value?.triggers ?? [])
+    .map((t) => TRIGGER_NAMES[t])
+    .filter(Boolean)
+    .join("、"),
+);
+const lastEventText = ref("");
+const herLine = computed(() => (pendingEvent.value ? herStance(pendingEvent.value) : null));
+watch(bondDialog, (open) => {
+  if (open) lastEventText.value = "";
+});
+function pickChoice(choiceId: string): void {
+  if (!pendingEvent.value) return;
+  const r = chooseBondEvent(pendingEvent.value.id, choiceId);
+  lastEventText.value = r?.text ?? "";
+}
+
+/** 她主动提出的事(34.1);三种回应,忽略不等于回绝 */
+const herIntent = computed(() => pendingIntent());
+/** 这份心意因何而起(经历名取自 bondIntent) */
+const herIntentSparks = computed(() => {
+  const sparks = herIntent.value?.sparks ?? [];
+  return [...new Set(sparks)].map((s) => SPARK_NAMES[s]).join("、");
+});
+/** 她记得你怎么答的 —— 回应名取自 bondIntent,视图不另写一份 */
+const responseLine = computed(() => {
+  const rs = bond.value?.intent?.responses ?? [];
+  return rs.length ? rs.map((r) => RESPONSE_NAMES[r]).join(" · ") : "";
+});
+const INTENT_CHOICES = [
+  { id: "accept" as const, label: "与她同去" },
+  { id: "refuse" as const, label: "婉言谢绝" },
+  { id: "ignore" as const, label: "不作声" },
+];
+function answerIntent(r: "accept" | "refuse" | "ignore"): void {
+  const a = respondIntent(r);
+  lastEventText.value = a?.text ?? "";
+}
+const trialOpen = ref(false);
+/** 本世已立的逆旅契;未立为 null */
+const signedTrial = computed(() => activeLifeTrial());
+function signTrial(id: string): void {
+  if (signLifeTrial(id)) trialOpen.value = false;
+}
+const canRebirth = computed(() => player.major >= MANUAL_REBIRTH_MIN_MAJOR);
+
+// Phase 31 S1 师承
+const mentorDialog = ref(false);
+const mentorVer = computed(() => mentorVerdict(player.mentor));
+// Phase 31.1 机缘链:机缘取/弃记忆 → 师承推荐
+const hintMentor = computed(() => mentorHint());
+// Phase 31.2 修行画像
+const identityOpen = ref(false);
+const identity = computed(() => buildIdentity());
+
+function rebirth(): void {
+  if (!canRebirth.value) {
+    ui.toast(`至少金丹境方可自行兵解`, "warn");
+    return;
   }
-
-  /**
-   * 软上限从来不是暗改:越过之后超出部分按折扣计入,
-   * 折扣率取自 SOFT_CAPS 本体,不在这里手抄"折半"(各键并非同一个数)
-   */
-  const softCappedNotes = computed(() =>
-    modRows.value
-      .filter(r => r.capped)
-      .map(r => `${r.label}(超出按 ${formatPercent(SOFT_CAPS[r.key]?.diminish ?? 1, 0)} 计入)`)
-  )
-
-  const build = computed(() => detectBuild(stats.value.mods))
-
-  const currentTitleName = computed(() => (player.titleId ? titleDef(player.titleId)?.name : undefined))
-  const currentPetName = computed(() => (player.petId ? petDef(player.petId)?.name : undefined))
-  const currentPetIcon = computed(() => (player.petId ? petDef(player.petId)?.icon : undefined))
-  const ownedTalents = computed(() => player.reincarnation.talents.map(id => talentDef(id)).filter(t => t !== undefined))
-
-  const knownIn = (ids: string[], table: readonly { id: string }[]): number => {
-    const tableIds = new Set(table.map(row => row.id))
-    return new Set(ids.filter(id => tableIds.has(id))).size
-  }
-
-  const collectHave = computed(
-    () =>
-      knownIn(quests.collections.equip, EQUIPMENT_TEMPLATES) +
-      knownIn(quests.collections.gongfa, GONGFA) +
-      knownIn(quests.collections.pill, PILLS) +
-      knownIn(quests.collections.artifact, ARTIFACTS) +
-      knownIn(quests.collections.pet, PETS) +
-      knownIn(quests.collections.event, EVENTS) +
-      knownIn(quests.collections.talent, TALENTS) +
-      // 图鉴页还有灵材谱与悟道录两类(派生视图,见 ui/codex.ts),计数要带上,否则两页对不上
-      branchCodex().entries.filter(e => e.stage > 0).length +
-      materialCodex().entries.filter(e => e.stage > 0).length
-  )
-  const collectTotal =
-    EQUIPMENT_TEMPLATES.length +
-    GONGFA.length +
-    PILLS.length +
-    ARTIFACTS.length +
-    PETS.length +
-    EVENTS.length +
-    TALENTS.length +
-    branchCodex().entries.length +
-    materialCodex().entries.length
-
-  // ---- 轮回 ----
-  const rebirthOpen = ref(false)
-  /** 天赋芯片点按展开(移动端无 hover,效果说明内联显示);关弹窗复位 */
-  const talentTap = ref<string | null>(null)
-  const tappedTalent = computed(() => (talentTap.value ? talentDef(talentTap.value) : undefined))
-  watch(rebirthOpen, open => {
-    if (!open) talentTap.value = null
-  })
-  const bondDialog = ref(false)
-  const bond = computed(() => player.bond)
-  const bondDef = computed(() => (bond.value ? (daoluDef(bond.value.daoluId) ?? null) : null))
-  const bondMeters = computed(() =>
-    bond.value
-      ? [
-          { label: '缘分', v: bond.value.fate },
-          { label: '信任', v: bond.value.trust },
-          { label: '契合', v: bond.value.accord }
-        ]
-      : []
-  )
-  const gateHint = computed(() => nextGateHint())
-  const pastBonds = computed(() => player.reincarnation.bonds)
-  /**
-   * 待决的共同事件 —— 由历练情境写入关系状态,界面只读取。
-   *
-   * 34.0 之前是「打开弹窗才抽一个」:内容是真的,时机是假的。
-   * 现在事件在历练途中就已发生,弹窗只是去看它
-   */
-  const pendingEvent = computed(() => pendingBondEvent())
-  /** 这件事因何而来(触发名取自 bondEvents,不在视图里手写) */
-  const pendingEventTriggers = computed(() =>
-    (pendingEvent.value?.triggers ?? []).map(t => TRIGGER_NAMES[t]).filter(Boolean).join('、')
-  )
-  const lastEventText = ref('')
-  const herLine = computed(() => (pendingEvent.value ? herStance(pendingEvent.value) : null))
-  watch(bondDialog, open => {
-    if (open) lastEventText.value = ''
-  })
-  function pickChoice(choiceId: string): void {
-    if (!pendingEvent.value) return
-    const r = chooseBondEvent(pendingEvent.value.id, choiceId)
-    lastEventText.value = r?.text ?? ''
-  }
-
-  /** 她主动提出的事(34.1);三种回应,忽略不等于回绝 */
-  const herIntent = computed(() => pendingIntent())
-  /** 这份心意因何而起(经历名取自 bondIntent) */
-  const herIntentSparks = computed(() => {
-    const sparks = herIntent.value?.sparks ?? []
-    return [...new Set(sparks)].map(s => SPARK_NAMES[s]).join('、')
-  })
-  /** 她记得你怎么答的 —— 回应名取自 bondIntent,视图不另写一份 */
-  const responseLine = computed(() => {
-    const rs = bond.value?.intent?.responses ?? []
-    return rs.length ? rs.map(r => RESPONSE_NAMES[r]).join(' · ') : ''
-  })
-  const INTENT_CHOICES = [
-    { id: 'accept' as const, label: '与她同去' },
-    { id: 'refuse' as const, label: '婉言谢绝' },
-    { id: 'ignore' as const, label: '不作声' }
-  ]
-  function answerIntent(r: 'accept' | 'refuse' | 'ignore'): void {
-    const a = respondIntent(r)
-    lastEventText.value = a?.text ?? ''
-  }
-  const trialOpen = ref(false)
-  /** 本世已立的逆旅契;未立为 null */
-  const signedTrial = computed(() => activeLifeTrial())
-  function signTrial(id: string): void {
-    if (signLifeTrial(id)) trialOpen.value = false
-  }
-  const canRebirth = computed(() => player.major >= MANUAL_REBIRTH_MIN_MAJOR)
-
-  // Phase 31 S1 师承
-  const mentorDialog = ref(false)
-  const mentorVer = computed(() => mentorVerdict(player.mentor))
-  // Phase 31.1 机缘链:机缘取/弃记忆 → 师承推荐
-  const hintMentor = computed(() => mentorHint())
-  // Phase 31.2 修行画像
-  const identityOpen = ref(false)
-  const identity = computed(() => buildIdentity())
-
-  function rebirth(): void {
-    if (!canRebirth.value) {
-      ui.toast(`至少金丹境方可自行兵解`, 'warn')
-      return
-    }
-    rebirthOpen.value = false
-    prepareReincarnation()
-  }
+  rebirthOpen.value = false;
+  prepareReincarnation();
+}
 </script>

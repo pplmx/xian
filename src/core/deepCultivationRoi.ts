@@ -14,12 +14,12 @@
  * 问题是除了收割道果之外,系统没有任何理由让玩家把这一世继续活下去。
  * 所以 B 案要的不是「把效率抹平」,而是「让深修成为另一种目标下的最优解」。
  */
-import { MANUAL_REBIRTH_MIN_MAJOR } from './reincarnation'
-import { daoFruitGain } from './formulas'
-import { effectiveDaoFruit } from './statsCalc'
-import { DAO_FRUIT_COMBAT_BONUS } from '@/data/constants'
-import { REBIRTH_REFERENCE_MAJOR } from '@/data/realms'
-import { fullHoursToReach, optimalRebirthPoint } from './rebirthRoi'
+import { MANUAL_REBIRTH_MIN_MAJOR } from "./reincarnation";
+import { daoFruitGain } from "./formulas";
+import { effectiveDaoFruit } from "./statsCalc";
+import { DAO_FRUIT_COMBAT_BONUS } from "@/data/constants";
+import { REBIRTH_REFERENCE_MAJOR } from "@/data/realms";
+import { fullHoursToReach, optimalRebirthPoint } from "./rebirthRoi";
 
 // ---------------- A 案:道果阶数追平耗时 ----------------
 
@@ -30,70 +30,70 @@ import { fullHoursToReach, optimalRebirthPoint } from './rebirthRoi'
  * 耗时按约 3.3 倍/境界指数增长,故道果也必须指数增长才追得上
  */
 export function requiredFruitGrowth(floor = 0.5): number {
-  const lo = MANUAL_REBIRTH_MIN_MAJOR
-  const optEff = optimalRebirthPoint().efficiency
+  const lo = MANUAL_REBIRTH_MIN_MAJOR;
+  const optEff = optimalRebirthPoint().efficiency;
   // 二分求解增长率 k:fruit(m) = fruit(lo) × k^(m-lo)
-  let low = 1
-  let high = 10
+  let low = 1;
+  let high = 10;
   for (let iter = 0; iter < 60; iter += 1) {
-    const k = (low + high) / 2
-    let ok = true
+    const k = (low + high) / 2;
+    let ok = true;
     for (let m = lo; m <= REBIRTH_REFERENCE_MAJOR; m += 1) {
-      const fruit = daoFruitGain(lo, 9) * Math.pow(k, m - lo)
+      const fruit = daoFruitGain(lo, 9) * Math.pow(k, m - lo);
       if (fruit / fullHoursToReach(m + 1) < optEff * floor) {
-        ok = false
-        break
+        ok = false;
+        break;
       }
     }
-    if (ok) high = k
-    else low = k
+    if (ok) high = k;
+    else low = k;
   }
-  return high
+  return high;
 }
 
 export interface ExponentialFruitRow {
-  major: number
+  major: number;
   /** 当前口径的道果 */
-  current: number
+  current: number;
   /** A 案下的道果 */
-  proposed: number
+  proposed: number;
   /** 放大倍数 */
-  inflation: number
+  inflation: number;
   /** A 案下,单世道果换算成的永久战力加成 */
-  combatBonus: number
+  combatBonus: number;
 }
 
 /** A 案的道果表:看它会膨胀到什么程度 */
 export function exponentialFruitTable(growth: number): ExponentialFruitRow[] {
-  const lo = MANUAL_REBIRTH_MIN_MAJOR
-  const base = daoFruitGain(lo, 9)
-  const out: ExponentialFruitRow[] = []
+  const lo = MANUAL_REBIRTH_MIN_MAJOR;
+  const base = daoFruitGain(lo, 9);
+  const out: ExponentialFruitRow[] = [];
   for (let m = lo; m <= REBIRTH_REFERENCE_MAJOR; m += 1) {
-    const current = daoFruitGain(m, 9)
-    const proposed = base * Math.pow(growth, m - lo)
+    const current = daoFruitGain(m, 9);
+    const proposed = base * Math.pow(growth, m - lo);
     out.push({
       major: m,
       current,
       proposed,
       inflation: proposed / current,
-      combatBonus: effectiveDaoFruit(proposed) * DAO_FRUIT_COMBAT_BONUS
-    })
+      combatBonus: effectiveDaoFruit(proposed) * DAO_FRUIT_COMBAT_BONUS,
+    });
   }
-  return out
+  return out;
 }
 
 // ---------------- B 案:深修的第二回报 ----------------
 
 export interface CompensationRow {
-  major: number
-  fruit: number
-  hours: number
+  major: number;
+  fruit: number;
+  hours: number;
   /** 当前效率相对最优点 */
-  ratio: number
+  ratio: number;
   /** 追平到最优点 target 比例所需的「等效道果」额外价值 */
-  needed: number
+  needed: number;
   /** 该额外价值相当于本境界道果的多少倍 */
-  timesFruit: number
+  timesFruit: number;
 }
 
 /**
@@ -105,15 +105,22 @@ export interface CompensationRow {
  * 本表的用途是给出「若走纯补偿路线,坑有多深」的上界
  */
 export function compensationTable(target = 0.5): CompensationRow[] {
-  const optEff = optimalRebirthPoint().efficiency
-  const out: CompensationRow[] = []
+  const optEff = optimalRebirthPoint().efficiency;
+  const out: CompensationRow[] = [];
   for (let m = MANUAL_REBIRTH_MIN_MAJOR; m <= REBIRTH_REFERENCE_MAJOR; m += 1) {
-    const fruit = daoFruitGain(m, 9)
-    const hours = fullHoursToReach(m + 1)
-    const needed = Math.max(0, optEff * target * hours - fruit)
-    out.push({ major: m, fruit, hours, ratio: fruit / hours / optEff, needed, timesFruit: needed / fruit })
+    const fruit = daoFruitGain(m, 9);
+    const hours = fullHoursToReach(m + 1);
+    const needed = Math.max(0, optEff * target * hours - fruit);
+    out.push({
+      major: m,
+      fruit,
+      hours,
+      ratio: fruit / hours / optEff,
+      needed,
+      timesFruit: needed / fruit,
+    });
   }
-  return out
+  return out;
 }
 
 /**
@@ -124,5 +131,5 @@ export function compensationTable(target = 0.5): CompensationRow[] {
  * 返回的是可作为停世点的境界数(金丹之上每一境都得有自己的独特回报)
  */
 export function distinctRouteCount(): number {
-  return REBIRTH_REFERENCE_MAJOR - MANUAL_REBIRTH_MIN_MAJOR + 1
+  return REBIRTH_REFERENCE_MAJOR - MANUAL_REBIRTH_MIN_MAJOR + 1;
 }

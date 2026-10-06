@@ -57,7 +57,7 @@ function persistedIdsFromSource(): string[] {
   for (const file of readdirSync(STORES_DIR)) {
     if (!file.endsWith(".ts") || file.endsWith(".spec.ts")) continue;
     const src = readFileSync(resolve(STORES_DIR, file), "utf8");
-    for (const m of src.matchAll(/persistConfig\(\s*'([a-zA-Z]+)'\s*\)/g)) ids.add(m[1]!);
+    for (const m of src.matchAll(/persistConfig\(\s*["']([a-zA-Z]+)["']\s*\)/g)) ids.add(m[1]!);
   }
   return [...ids].sort();
 }

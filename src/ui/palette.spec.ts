@@ -64,7 +64,7 @@ function paletteOf(scope: RegExp, names: Set<string>): Map<string, Rgb> {
 
 const TOKENS = tokenNames();
 const LIGHT = paletteOf(/:root \{([\s\S]*?)\n\}/, TOKENS);
-const DARK = paletteOf(/html\[data-theme='dark'\] \{([\s\S]*?)\n\}/, TOKENS);
+const DARK = paletteOf(/html\[data-theme=["']dark["']\] \{([\s\S]*?)\n\}/, TOKENS);
 
 /**
  * 铺字的底,按主题各算一遍。**卡片那一张是最难的**:夜间主题里卡片
@@ -74,7 +74,9 @@ const DARK = paletteOf(/html\[data-theme='dark'\] \{([\s\S]*?)\n\}/, TOKENS);
  */
 function surfacesOf(theme: "light" | "dark"): { name: string; rgb: Rgb }[] {
   const scope =
-    theme === "light" ? /:root \{([\s\S]*?)\n\}/ : /html\[data-theme='dark'\] \{([\s\S]*?)\n\}/;
+    theme === "light"
+      ? /:root \{([\s\S]*?)\n\}/
+      : /html\[data-theme=["']dark["']\] \{([\s\S]*?)\n\}/;
   const lifted = /--color-paper-lifted-rgb:\s*(\d+)\s+(\d+)\s+(\d+);/.exec(bodyOf(scope));
   const p = theme === "light" ? LIGHT : DARK;
   const card: Rgb = [Number(lifted![1]), Number(lifted![2]), Number(lifted![3])];
@@ -185,7 +187,7 @@ describe("调色板 · 一份事实源", () => {
 
   it("每个 token 都在 tailwind 里有对应的语义色,且 tailwind 不留没定义的 token", () => {
     const declared = new Set(
-      [...TAILWIND.matchAll(/withAlpha\('--color-([a-z0-9-]+)-rgb'\)/g)].map((m) => m[1]!),
+      [...TAILWIND.matchAll(/withAlpha\(["']--color-([a-z0-9-]+)-rgb["']\)/g)].map((m) => m[1]!),
     );
     expect([...LIGHT.keys()].sort()).toEqual([...declared].sort());
   });
@@ -211,7 +213,7 @@ describe("调色板 · 一份事实源", () => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
         const path = resolve(dir, entry.name);
         if (entry.isDirectory()) walk(path);
-        else if (entry.name.endsWith('.ts') && !entry.name.endsWith(".spec.ts")) {
+        else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".spec.ts")) {
           const text = readFileSync(path, "utf-8");
           for (const m of text.matchAll(/['"`]#[0-9a-fA-F]{3,8}['"`]/g))
             offenders.push(`${path.slice(ROOT.length + 1)} → ${m[0]}`);
@@ -258,7 +260,7 @@ describe("调色板 · 印面", () => {
 
   it("暗色主题的印面确实是深的那一枚(亮朱当底会把奶油字压到 2.9:1)", () => {
     expect(CSS).toMatch(
-      /html\[data-theme='dark'\] \.btn-seal \{[^}]*background: var\(--color-cinnabar-deep\)/,
+      /html\[data-theme=["']dark["']\] \.btn-seal \{[^}]*background: var\(--color-cinnabar-deep\)/,
     );
   });
 });
@@ -307,7 +309,7 @@ describe("调色板 · 九品色阶分得开", () => {
 describe("调色板 · 两处手抄关系", () => {
   it("浏览器 chrome 色跟的是纸色", () => {
     const m =
-      /const THEME_CHROME = \{ light: '(#[0-9A-Fa-f]{6})', dark: '(#[0-9A-Fa-f]{6})' \}/.exec(
+      /const THEME_CHROME = \{ light: ["'](#[0-9A-Fa-f]{6})["'], dark: ["'](#[0-9A-Fa-f]{6})["'] \}/.exec(
         THEME_TS,
       );
     expect(m, "core/theme.ts 里的 THEME_CHROME 变了形状,判据要跟着改").toBeTruthy();

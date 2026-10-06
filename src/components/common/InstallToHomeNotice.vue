@@ -17,22 +17,30 @@
     <p class="mt-1.5 text-[11px] leading-relaxed text-ink-soft">
       用 Safari 打开本页 → 点底部的分享按钮 → 选「添加到主屏幕」。
     </p>
-    <button v-if="!permanent" class="mt-2 text-[11px] text-ink-faint underline active:opacity-60" @click="dismiss">知道了</button>
+    <button
+      v-if="!permanent"
+      class="mt-2 text-[11px] text-ink-faint underline active:opacity-60"
+      @click="dismiss"
+    >
+      知道了
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import { probeEnv, shouldSuggestInstall } from '@/utils/platform'
-  import { useSettingsStore } from '@/stores/settings'
+import { computed } from "vue";
+import { probeEnv, shouldSuggestInstall } from "@/utils/platform";
+import { useSettingsStore } from "@/stores/settings";
 
-  const props = withDefaults(defineProps<{ permanent?: boolean }>(), { permanent: false })
+const props = withDefaults(defineProps<{ permanent?: boolean }>(), { permanent: false });
 
-  const settings = useSettingsStore()
+const settings = useSettingsStore();
 
-  const visible = computed(() => shouldSuggestInstall(probeEnv()) && (props.permanent || !settings.installNoticeDismissed))
+const visible = computed(
+  () => shouldSuggestInstall(probeEnv()) && (props.permanent || !settings.installNoticeDismissed),
+);
 
-  function dismiss(): void {
-    settings.installNoticeDismissed = true
-  }
+function dismiss(): void {
+  settings.installNoticeDismissed = true;
+}
 </script>

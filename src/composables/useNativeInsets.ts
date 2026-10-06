@@ -9,28 +9,28 @@
  *   顶部是状态栏高度。
  * 非安卓平台没有这个桥 → 一律 0,页面照旧只靠 env()。
  */
-import { onMounted, onUnmounted, ref, type Ref } from 'vue'
+import { onMounted, onUnmounted, ref, type Ref } from "vue";
 
 interface NativeAppBridge {
-  insetTop?: () => number
-  insetBottom?: () => number
+  insetTop?: () => number;
+  insetBottom?: () => number;
 }
 
 /** 桥不存在、方法缺失、抛错、非有限数、负数 —— 都当 0,绝不让一个坏值把布局撑爆 */
 function safeInset(read: (() => number) | undefined): number {
-  if (typeof read !== 'function') return 0
+  if (typeof read !== "function") return 0;
   try {
-    const v = read()
-    return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0
+    const v = read();
+    return typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0;
   } catch {
-    return 0
+    return 0;
   }
 }
 
 /** 读一次当前占位(纯函数,便于测试与故障注入) */
 export function readNativeInsets(bridge?: NativeAppBridge): { top: number; bottom: number } {
-  const b = bridge ?? (globalThis as { NativeApp?: NativeAppBridge }).NativeApp
-  return { top: safeInset(b?.insetTop), bottom: safeInset(b?.insetBottom) }
+  const b = bridge ?? (globalThis as { NativeApp?: NativeAppBridge }).NativeApp;
+  return { top: safeInset(b?.insetTop), bottom: safeInset(b?.insetBottom) };
 }
 
 /**
@@ -39,17 +39,17 @@ export function readNativeInsets(bridge?: NativeAppBridge): { top: number; botto
  * 原生缓存的最新值。
  */
 export function useNativeInsets(): { top: Ref<number>; bottom: Ref<number> } {
-  const top = ref(0)
-  const bottom = ref(0)
+  const top = ref(0);
+  const bottom = ref(0);
   const refresh = (): void => {
-    const r = readNativeInsets()
-    top.value = r.top
-    bottom.value = r.bottom
-  }
+    const r = readNativeInsets();
+    top.value = r.top;
+    bottom.value = r.bottom;
+  };
   onMounted(() => {
-    refresh()
-    window.addEventListener('nativeinsets', refresh)
-  })
-  onUnmounted(() => window.removeEventListener('nativeinsets', refresh))
-  return { top, bottom }
+    refresh();
+    window.addEventListener("nativeinsets", refresh);
+  });
+  onUnmounted(() => window.removeEventListener("nativeinsets", refresh));
+  return { top, bottom };
 }

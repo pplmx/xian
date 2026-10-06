@@ -18,24 +18,24 @@
  */
 
 /** 计数器账:键由作品定,值只增不减 */
-export type CounterMap = Readonly<Record<string, number>>
+export type CounterMap = Readonly<Record<string, number>>;
 
 /** 打基准快照:把此刻的计数器原样记一份(键值都取有限数,坏值当 0) */
 export function snapshotOf(counters: CounterMap): Record<string, number> {
-  const out: Record<string, number> = {}
+  const out: Record<string, number> = {};
   for (const [key, value] of Object.entries(counters)) {
-    out[key] = Number.isFinite(value) ? value : 0
+    out[key] = Number.isFinite(value) ? value : 0;
   }
-  return out
+  return out;
 }
 
 /** 自基准以来的增量:夹到 ≥ 0(坏值当 0) */
 export function deltaOf(base: number, now: number): number {
-  const raw = (Number.isFinite(now) ? now : 0) - (Number.isFinite(base) ? base : 0)
-  return raw > 0 ? raw : 0
+  const raw = (Number.isFinite(now) ? now : 0) - (Number.isFinite(base) ? base : 0);
+  return raw > 0 ? raw : 0;
 }
 
 /** 某个计数器的本期增量:当前 − 基准,夹到 ≥ 0;缺基准按 0 起算 */
 export function deltaSince(base: CounterMap, counters: CounterMap, key: string): number {
-  return deltaOf(base[key] ?? 0, counters[key] ?? 0)
+  return deltaOf(base[key] ?? 0, counters[key] ?? 0);
 }

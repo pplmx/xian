@@ -19,13 +19,13 @@
 
 /** 一次环境取样。做成参数而不是直接读 window:探测逻辑要能被用例喂各种 UA 去验。 */
 export interface EnvProbe {
-  userAgent: string
+  userAgent: string;
   /** iOS Safari「添加到主屏幕」后 navigator.standalone 为 true */
-  standalone?: boolean
+  standalone?: boolean;
   /** 已安装的 PWA(桌面 Chrome、安卓 Chrome 亦适用) */
-  displayModeStandalone?: boolean
+  displayModeStandalone?: boolean;
   /** iPadOS 13+ 的 Safari 把 UA 伪装成 Mac,只能靠触点数认出来 */
-  maxTouchPoints?: number
+  maxTouchPoints?: number;
 }
 
 /** 从当前窗口取样(调用点只有一个:设置页与主页那张提示卡) */
@@ -34,21 +34,22 @@ export function probeEnv(): EnvProbe {
     userAgent: navigator.userAgent,
     standalone: (navigator as Navigator & { standalone?: boolean }).standalone === true,
     displayModeStandalone:
-      typeof matchMedia === 'function' &&
-      (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches),
-    maxTouchPoints: navigator.maxTouchPoints
-  }
+      typeof matchMedia === "function" &&
+      (matchMedia("(display-mode: standalone)").matches ||
+        matchMedia("(display-mode: fullscreen)").matches),
+    maxTouchPoints: navigator.maxTouchPoints,
+  };
 }
 
 /** iPhone / iPad / iPod;含 iPadOS 13+ 那套「伪装成 Mac」的 UA(靠触点数认) */
 export function isIos(env: EnvProbe): boolean {
-  if (/iPad|iPhone|iPod/.test(env.userAgent)) return true
-  return /Macintosh/.test(env.userAgent) && (env.maxTouchPoints ?? 0) > 1
+  if (/iPad|iPhone|iPod/.test(env.userAgent)) return true;
+  return /Macintosh/.test(env.userAgent) && (env.maxTouchPoints ?? 0) > 1;
 }
 
 /** 已经是「装好的应用」了(主屏幕 Web App / 安装的 PWA)—— 那就没有这回事 */
 export function isInstalledApp(env: EnvProbe): boolean {
-  return env.standalone === true || env.displayModeStandalone === true
+  return env.standalone === true || env.displayModeStandalone === true;
 }
 
 /**
@@ -56,5 +57,5 @@ export function isInstalledApp(env: EnvProbe): boolean {
  * 这里不判断浏览器 —— iOS 上所有浏览器共用 WebKit 的存储策略,风险一样。
  */
 export function shouldSuggestInstall(env: EnvProbe): boolean {
-  return isIos(env) && !isInstalledApp(env)
+  return isIos(env) && !isInstalledApp(env);
 }

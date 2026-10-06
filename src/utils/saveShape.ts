@@ -11,5 +11,5 @@ export {
   asObjectOrNull,
   asRecord,
   asRecordOf,
-  asStringArray
-} from 'wanxiang-engine'
+  asStringArray,
+} from "wanxiang-engine";

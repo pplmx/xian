@@ -9,29 +9,29 @@
  *   · **双成在成功之后再掷一次,且夹在 0.8**:那行 `Math.min(0.8, …)` 的意图
  *     ("加成再高也别必双")现在是库的参数。
  */
-import type { GNum } from '@/types'
-import type { CraftCost, CraftOutcome } from 'wanxiang-engine'
-import type { Rng } from 'wanxiang-engine'
-import { createRecipeRunner } from 'wanxiang-engine'
-import { craftability } from './craftability'
-import { pillCraftCost, salvageRatio } from './pillService'
-import { modOf } from './statsCalc'
-import { usePlayerStore } from '@/stores/player'
+import type { GNum } from "@/types";
+import type { CraftCost, CraftOutcome } from "wanxiang-engine";
+import type { Rng } from "wanxiang-engine";
+import { createRecipeRunner } from "wanxiang-engine";
+import { craftability } from "./craftability";
+import { pillCraftCost, salvageRatio } from "./pillService";
+import { modOf } from "./statsCalc";
+import { usePlayerStore } from "@/stores/player";
 
 /** 双成概率的上限:加成再高也别把"双成"写成"必双" */
-export const ALCHEMY_BONUS_CAP = 0.8
+export const ALCHEMY_BONUS_CAP = 0.8;
 
 /** 一次开炉的上下文:配方 id + 账本够不够(账本由调用方查,库不认识资源) */
 export interface CraftCtx {
-  pillId: string
-  canPay: boolean
+  pillId: string;
+  canPay: boolean;
 }
 
 /** 双成概率 = 炉子给的那份 + 「炼丹产出」词条 */
 export function alchemyBonus(pillId: string): number {
-  const able = craftability(pillId)
-  if (!able) return 0
-  return able.bonusChance + modOf(usePlayerStore().finalStats.mods, 'alchemyYield')
+  const able = craftability(pillId);
+  if (!able) return 0;
+  return able.bonusChance + modOf(usePlayerStore().finalStats.mods, "alchemyYield");
 }
 
 /**
@@ -40,39 +40,45 @@ export function alchemyBonus(pillId: string): number {
  * 界面不许报出负双成。
  */
 export function alchemyBonusCapped(pillId: string): number {
-  return Math.min(ALCHEMY_BONUS_CAP, Math.max(0, alchemyBonus(pillId)))
+  return Math.min(ALCHEMY_BONUS_CAP, Math.max(0, alchemyBonus(pillId)));
 }
 
 const RUNNER = createRecipeRunner<CraftCtx, number | GNum>({
   costs: (_id, ctx) => {
-    const cost = pillCraftCost(ctx.pillId)
-    return cost ? [{ key: 'herb', amount: cost.herb }, { key: 'stone', amount: cost.stone }] : []
+    const cost = pillCraftCost(ctx.pillId);
+    return cost
+      ? [
+          { key: "herb", amount: cost.herb },
+          { key: "stone", amount: cost.stone },
+        ]
+      : [];
   },
   rate: (_id, ctx) => craftability(ctx.pillId)?.successRate ?? 0,
   // 顺序即玩家先看到哪句话:先"知不知此方",再"料够不够"
   blocked: (_id, ctx) => craftability(ctx.pillId)?.blockers[0],
-  affordable: (_id, ctx) => (ctx.canPay ? undefined : '灵草或灵石不足'),
+  affordable: (_id, ctx) => (ctx.canPay ? undefined : "灵草或灵石不足"),
   // 失败时灵草按技艺保下一部分(手越稳赔得越少),灵石不退;
   // 稳炉丹(稳炉护料)内生时,同一技艺的保料比例再按 (1 + craftSalvage) 倍
   spentOnFail: (cost, _id, ctx) =>
-    cost.key === 'herb'
+    cost.key === "herb"
       ? (cost.amount as number) -
         Math.floor(
           (cost.amount as number) *
             salvageRatio(craftability(ctx.pillId)?.skill ?? 0) *
-            (1 + modOf(usePlayerStore().finalStats.mods, 'craftSalvage'))
+            (1 + modOf(usePlayerStore().finalStats.mods, "craftSalvage")),
         )
       : cost.amount,
   bonus: (_id, ctx) => alchemyBonus(ctx.pillId),
-  bonusCap: ALCHEMY_BONUS_CAP
-})
+  bonusCap: ALCHEMY_BONUS_CAP,
+});
 
 /** 开一次炉:成功率、扣料与双成全部出自库的同一次判定 */
 export function runCraft(recipeId: string, ctx: CraftCtx, rng: Rng): CraftOutcome<number | GNum> {
-  return RUNNER.run(recipeId, ctx, rng)
+  return RUNNER.run(recipeId, ctx, rng);
 }
 
 /** 从回报里取某一条实际扣的数额(调用方照着记账) */
 export function spentOf(out: CraftOutcome<number | GNum>, key: string): number | GNum | undefined {
-  return (out.spent as readonly CraftCost<number | GNum>[]).find(cost => cost.key === key)?.amount
+  return (out.spent as readonly CraftCost<number | GNum>[]).find((cost) => cost.key === key)
+    ?.amount;
 }

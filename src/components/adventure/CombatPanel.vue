@@ -13,7 +13,8 @@
         </span>
       </div>
       <p class="mt-1 text-[11px] text-ink-faint tabular">
-        胜 {{ session?.wins ?? 0 }} 场 · 际遇 {{ session?.events ?? 0 }} 次 · 拾获 {{ session?.itemGain ?? 0 }} 件
+        胜 {{ session?.wins ?? 0 }} 场 · 际遇 {{ session?.events ?? 0 }} 次 · 拾获
+        {{ session?.itemGain ?? 0 }} 件
       </p>
       <!-- 连胜与冲档:3/5/10 档的赏赐有 toast,距离也得看得见(见 streakLine) -->
       <p v-if="streakLine" class="mt-0.5 text-[10px] text-gold-ink tabular">{{ streakLine }}</p>
@@ -23,7 +24,11 @@
         <span class="text-jade">+{{ gains.exp }}</span>
       </p>
       <!-- 目标感:未靖的地界,打完十胜就该遇首领;不给提示的话玩家不知道还要打多久 -->
-      <p v-if="bossHint" class="mt-0.5 text-[10px]" :class="bossSoon ? 'text-cinnabar' : 'text-gold-ink'">
+      <p
+        v-if="bossHint"
+        class="mt-0.5 text-[10px]"
+        :class="bossSoon ? 'text-cinnabar' : 'text-gold-ink'"
+      >
         {{ bossHint }}
       </p>
     </div>
@@ -31,23 +36,36 @@
     <!-- 战斗面板 -->
     <div class="card-ink relative overflow-hidden px-4 py-4">
       <!-- 敌方 -->
-      <div class="relative" :class="[shakeCls.e, strikeCls.e, flickerCls.e, shieldCls.e, defeated === 'e' ? 'foe-defeated' : '']">
+      <div
+        class="relative"
+        :class="[
+          shakeCls.e,
+          strikeCls.e,
+          flickerCls.e,
+          shieldCls.e,
+          defeated === 'e' ? 'foe-defeated' : '',
+        ]"
+      >
         <!--
           换敌入场:每场战罢新敌上台,前后两场长得未必一样,却没有任何「换了」的信号。
           按 battle.at 键控重挂(换敌即重放入场动画);浮伤留在这层之外的锚点上,
           不受重挂影响 —— 轻版淡入+上浮(enemy-enter),高速播放不闪眼。
         -->
         <div :key="battle?.at" class="enemy-enter">
-        <!-- 图标与首行文字顶部对齐:名字+标签换行时,图标不该跟着往下沉 -->
-        <div class="flex items-start gap-2">
-          <span
-            class="grid h-10 w-10 shrink-0 place-items-center rounded-full border"
-            :class="battle?.isBoss ? 'border-cinnabar/70 text-cinnabar bg-cinnabar/5 animate-glow-pulse' : 'border-ink/25 text-ink-soft bg-ink/4'"
-          >
-            <GameIcon :name="battle?.enemyIcon ?? 'paw'" :size="18" />
-          </span>
-          <div class="min-w-0 grow">
-            <!--
+          <!-- 图标与首行文字顶部对齐:名字+标签换行时,图标不该跟着往下沉 -->
+          <div class="flex items-start gap-2">
+            <span
+              class="grid h-10 w-10 shrink-0 place-items-center rounded-full border"
+              :class="
+                battle?.isBoss
+                  ? 'border-cinnabar/70 text-cinnabar bg-cinnabar/5 animate-glow-pulse'
+                  : 'border-ink/25 text-ink-soft bg-ink/4'
+              "
+            >
+              <GameIcon :name="battle?.enemyIcon ?? 'paw'" :size="18" />
+            </span>
+            <div class="min-w-0 grow">
+              <!--
               名字 + 适配星级一行,**标签另起一行**。
 
               从前名字、首领/宿敌、特性、星级全挤在同一行 nowrap 的 flex 里:
@@ -55,68 +73,98 @@
               标签压在一起。标签数量不定,让它跟名字抢宽度就永远会有下一档挤法 ——
               干脆分层:第一行只答「这是谁、我打它多合适」,第二行只答「它有什么路数」。
             -->
-            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-kai text-[14px] text-ink">
-              <template v-if="battle">
-                <span data-foe-name class="whitespace-nowrap" :class="battle?.isBoss ? 'text-cinnabar' : ''">{{ battle.enemyName }}</span>
-              </template>
-              <template v-else>
-                <span class="whitespace-nowrap">搜寻猎物中</span>
-                <span class="ink-dots text-ink-faint">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-              </template>
-              <!--
+              <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-kai text-[14px] text-ink">
+                <template v-if="battle">
+                  <span
+                    data-foe-name
+                    class="whitespace-nowrap"
+                    :class="battle?.isBoss ? 'text-cinnabar' : ''"
+                    >{{ battle.enemyName }}</span
+                  >
+                </template>
+                <template v-else>
+                  <span class="whitespace-nowrap">搜寻猎物中</span>
+                  <span class="ink-dots text-ink-faint">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                </template>
+                <!--
                 适配星级:星是结果,「为什么」是原因 —— 手机没有 hover,原因此前只挂
                 :title 上(与方向理由同类死提示)。星级改可点,原因在名字行下直出。
               -->
-              <span
-                v-if="foeAdaptation"
-                class="ml-auto shrink-0 text-[10px] font-normal text-gold-ink tabular"
-              >
-                <button
-                  type="button"
-                  class="-my-2 -ml-1 inline-flex min-h-[28px] items-center px-1 active:opacity-60"
-                  :aria-expanded="adaptTap === foeAdaptation.stars"
-                  @click="adaptTap = adaptTap === foeAdaptation.stars ? null : foeAdaptation.stars"
+                <span
+                  v-if="foeAdaptation"
+                  class="ml-auto shrink-0 text-[10px] font-normal text-gold-ink tabular"
                 >
-                  {{ starsText(foeAdaptation.stars) }}
-                </button>
-              </span>
-            </p>
-            <p v-if="adaptReveal" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular">{{ adaptReveal }}</p>
-            <!-- 标签行:首领 / 宿敌 / 敌人路数(特性)—— 有几个就排几个,放不下就在这一行里换行 -->
-            <p
-              v-if="battle && (battle.isBoss || isNemesisFoe || shownTraits.length)"
-              class="mt-1 flex flex-wrap items-center gap-1.5"
-            >
-              <span v-if="battle.isBoss" class="chip-ink border-cinnabar/60 text-[9px] text-cinnabar">首领</span>
-              <span v-if="isNemesisFoe" class="chip-ink border-cinnabar/80 bg-cinnabar/6 text-[9px] text-cinnabar">宿敌</span>
-              <span v-for="t in shownTraits" :key="t" class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink">
-                {{ TRAIT_NAMES[t] }}
-              </span>
-            </p>
-            <ProgressBar :value="ehp" color="var(--color-cinnabar)" :height="6" class="mt-1" />
+                  <button
+                    type="button"
+                    class="-my-2 -ml-1 inline-flex min-h-[28px] items-center px-1 active:opacity-60"
+                    :aria-expanded="adaptTap === foeAdaptation.stars"
+                    @click="
+                      adaptTap = adaptTap === foeAdaptation.stars ? null : foeAdaptation.stars
+                    "
+                  >
+                    {{ starsText(foeAdaptation.stars) }}
+                  </button>
+                </span>
+              </p>
+              <p
+                v-if="adaptReveal"
+                class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular"
+              >
+                {{ adaptReveal }}
+              </p>
+              <!-- 标签行:首领 / 宿敌 / 敌人路数(特性)—— 有几个就排几个,放不下就在这一行里换行 -->
+              <p
+                v-if="battle && (battle.isBoss || isNemesisFoe || shownTraits.length)"
+                class="mt-1 flex flex-wrap items-center gap-1.5"
+              >
+                <span
+                  v-if="battle.isBoss"
+                  class="chip-ink border-cinnabar/60 text-[9px] text-cinnabar"
+                  >首领</span
+                >
+                <span
+                  v-if="isNemesisFoe"
+                  class="chip-ink border-cinnabar/80 bg-cinnabar/6 text-[9px] text-cinnabar"
+                  >宿敌</span
+                >
+                <span
+                  v-for="t in shownTraits"
+                  :key="t"
+                  class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink"
+                >
+                  {{ TRAIT_NAMES[t] }}
+                </span>
+              </p>
+              <ProgressBar :value="ehp" color="var(--color-cinnabar)" :height="6" class="mt-1" />
+            </div>
           </div>
-        </div>
-        <!--
+          <!--
           首领现身:此地之主登场那一声 —— 居中宣告淡入定住再散。
           随外层 battle.at 键控重挂(每场首领战重放一遍),pointer-events-none 不挡操作、
           absolute 不占几何;退场定在 opacity 0,采样量不到。
         -->
-        <div
-          v-if="battle?.isBoss"
-          class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
-        >
-          <span class="boss-reveal font-kai text-[16px] tracking-[0.35em] text-cinnabar">此地之主 · 现身</span>
-        </div>
+          <div
+            v-if="battle?.isBoss"
+            class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+          >
+            <span class="boss-reveal font-kai text-[16px] tracking-[0.35em] text-cinnabar"
+              >此地之主 · 现身</span
+            >
+          </div>
         </div>
         <span
-          v-for="f in floats.filter(x => x.side === 'e')"
+          v-for="f in floats.filter((x) => x.side === 'e')"
           :key="f.id"
           class="pointer-events-none absolute right-2 top-0 tabular font-kai"
-          :class="f.crit ? 'animate-float-crit text-[17px] text-cinnabar' : 'animate-float-dmg text-[13px] text-ink-soft'"
+          :class="
+            f.crit
+              ? 'animate-float-crit text-[17px] text-cinnabar'
+              : 'animate-float-dmg text-[13px] text-ink-soft'
+          "
         >
           {{ f.text }}
         </span>
@@ -145,14 +193,30 @@
             :class="KIND_COLOR[entry.t]"
           >
             {{ entry.text }}
-            <span v-if="entry.dmg" class="tabular" :class="entry.t === 'crit' ? 'text-cinnabar' : ''">{{ entry.dmg }}</span>
+            <span
+              v-if="entry.dmg"
+              class="tabular"
+              :class="entry.t === 'crit' ? 'text-cinnabar' : ''"
+              >{{ entry.dmg }}</span
+            >
           </p>
-          <p v-if="displayed.length === 0" class="pt-16 text-center text-[12px] text-ink-faint">山风掠过,四下无声……</p>
+          <p v-if="displayed.length === 0" class="pt-16 text-center text-[12px] text-ink-faint">
+            山风掠过,四下无声……
+          </p>
         </div>
       </div>
 
       <!-- 我方 -->
-      <div class="relative mt-3" :class="[shakeCls.p, strikeCls.p, flickerCls.p, shieldCls.p, defeated === 'p' ? 'foe-defeated' : '']">
+      <div
+        class="relative mt-3"
+        :class="[
+          shakeCls.p,
+          strikeCls.p,
+          flickerCls.p,
+          shieldCls.p,
+          defeated === 'p' ? 'foe-defeated' : '',
+        ]"
+      >
         <div class="flex items-center gap-2">
           <span
             class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing"
@@ -174,21 +238,28 @@
               class="mt-0.5 text-[9px] leading-none"
               :class="lowHpGimmick ? 'text-cinnabar' : 'text-ink-faint'"
             >
-              {{ lowHpGimmick ? '三成以下 · 背水/破釜类效果此刻生效' : '气血已降至三成以下' }}
+              {{ lowHpGimmick ? "三成以下 · 背水/破釜类效果此刻生效" : "气血已降至三成以下" }}
             </p>
           </div>
         </div>
         <span
-          v-for="f in floats.filter(x => x.side === 'p')"
+          v-for="f in floats.filter((x) => x.side === 'p')"
           :key="f.id"
           class="pointer-events-none absolute right-2 top-0 tabular font-kai"
-          :class="f.crit ? 'animate-float-crit text-[17px] text-cinnabar' : 'animate-float-dmg text-[13px] text-cinnabar'"
+          :class="
+            f.crit
+              ? 'animate-float-crit text-[17px] text-cinnabar'
+              : 'animate-float-dmg text-[13px] text-cinnabar'
+          "
         >
           {{ f.text }}
         </span>
       </div>
       <!-- 战斗后统计 + 分析入口 -->
-      <p v-if="battleSummary" class="mt-2 flex items-center justify-center gap-2 text-center text-[10px] text-ink-faint tabular">
+      <p
+        v-if="battleSummary"
+        class="mt-2 flex items-center justify-center gap-2 text-center text-[10px] text-ink-faint tabular"
+      >
         {{ battleSummary }}
         <!--
           行内文字的按钮也得有 28px 触达区(见 layout-check 的判据):
@@ -201,7 +272,7 @@
           :aria-expanded="showLore"
           @click="showLore = !showLore"
         >
-          {{ showLore ? '收起所知' : '此物所知 »' }}
+          {{ showLore ? "收起所知" : "此物所知 »" }}
         </button>
         <button
           v-if="analysis"
@@ -209,35 +280,51 @@
           :aria-expanded="showAnalysis"
           @click="showAnalysis = !showAnalysis"
         >
-          {{ showAnalysis ? '收起分析' : '战斗分析 »' }}
+          {{ showAnalysis ? "收起分析" : "战斗分析 »" }}
         </button>
       </p>
       <!-- 本战拾获明细:战报里原本只进件数,「得了什么」全靠猜 -->
-      <p v-if="battleLoot.length" class="mt-1 text-center text-[10px] leading-relaxed text-ink-faint">
+      <p
+        v-if="battleLoot.length"
+        class="mt-1 text-center text-[10px] leading-relaxed text-ink-faint"
+      >
         <span class="text-gold-ink">本战所得</span>
-        {{ battleLoot.join(' · ') }}
+        {{ battleLoot.join(" · ") }}
       </p>
       <!-- 此物所知(Phase 32.5:交手越多,战前看得越清楚) -->
       <div v-if="showLore && lore" class="mt-2 rounded-md bg-ink/4 px-3 py-2.5">
         <p class="flex items-center gap-2">
           <span class="font-kai text-[12px] tracking-wider text-ink">{{ battle?.enemyName }}</span>
-          <span class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink">{{ lore.stageName }}</span>
+          <span class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink">{{
+            lore.stageName
+          }}</span>
           <span v-if="lore.boosted" class="text-[10px] text-gold-ink">宿慧照见</span>
         </p>
         <p v-if="lore.elementName || lore.frame.length" class="mt-1 text-[11px] text-ink-soft">
           <span v-if="lore.elementName" class="mr-1.5 text-qing">{{ lore.elementName }}属</span>
-          {{ lore.frame.join(' · ') }}
+          {{ lore.frame.join(" · ") }}
         </p>
-        <p v-for="s in lore.skills" :key="s.name" class="mt-1 text-[11px] leading-relaxed text-ink-soft">
+        <p
+          v-for="s in lore.skills"
+          :key="s.name"
+          class="mt-1 text-[11px] leading-relaxed text-ink-soft"
+        >
           ·
           <span class="text-ink">{{ s.name }}</span>
           ——{{ s.note }}
         </p>
-        <p v-for="ph in lore.phases" :key="ph.at" class="mt-1 text-[11px] leading-relaxed text-cinnabar">
+        <p
+          v-for="ph in lore.phases"
+          :key="ph.at"
+          class="mt-1 text-[11px] leading-relaxed text-cinnabar"
+        >
           · {{ ph.at }}时{{ ph.label }}
         </p>
         <p v-if="lore.archetype" class="mt-1.5 text-[11px] leading-relaxed text-gold-ink">
-          <span v-if="lore.archetypeLabel" class="mr-1 rounded bg-gold-ink/12 px-1 py-0.5 text-[10px]">
+          <span
+            v-if="lore.archetypeLabel"
+            class="mr-1 rounded bg-gold-ink/12 px-1 py-0.5 text-[10px]"
+          >
             {{ lore.archetypeLabel }}
           </span>
           {{ lore.archetype }}
@@ -246,11 +333,20 @@
       </div>
       <!-- 战斗分析(战败自动展开;硬核数据供研究) -->
       <div v-if="showAnalysis && analysis" class="mt-2 rounded-md bg-ink/4 px-3 py-2.5">
-        <p class="font-kai text-[12px] tracking-wider" :class="battle?.result.win ? 'text-jade' : 'text-cinnabar'">
+        <p
+          class="font-kai text-[12px] tracking-wider"
+          :class="battle?.result.win ? 'text-jade' : 'text-cinnabar'"
+        >
           {{ analysis.headline }}
         </p>
         <template v-if="analysis.findings.length">
-          <p v-for="(f, i) in analysis.findings" :key="i" class="mt-1 text-[11px] leading-relaxed text-ink-soft">· {{ f.text }}</p>
+          <p
+            v-for="(f, i) in analysis.findings"
+            :key="i"
+            class="mt-1 text-[11px] leading-relaxed text-ink-soft"
+          >
+            · {{ f.text }}
+          </p>
         </template>
         <!--
           可借力的方向:60 行前的适配理由同款 —— 手机没有 hover,「为什么看好这个方向」
@@ -268,11 +364,20 @@
             >
               {{ d.styleName }}
             </button>
-            <span v-if="directionTap === d.styleName" class="text-violet-ink"> —— {{ d.reason }}</span>
+            <span v-if="directionTap === d.styleName" class="text-violet-ink">
+              —— {{ d.reason }}</span
+            >
           </span>
         </p>
-        <div v-if="analysis.dataRows.length" class="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 border-t border-ink/10 pt-1.5">
-          <p v-for="row in analysis.dataRows" :key="row.label" class="flex justify-between text-[10px] tabular">
+        <div
+          v-if="analysis.dataRows.length"
+          class="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 border-t border-ink/10 pt-1.5"
+        >
+          <p
+            v-for="row in analysis.dataRows"
+            :key="row.label"
+            class="flex justify-between text-[10px] tabular"
+          >
             <span class="text-ink-faint">{{ row.label }}</span>
             <span class="text-ink-soft">{{ row.value }}</span>
           </p>
@@ -285,311 +390,331 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, ref, watch, onUnmounted } from 'vue'
-  import { useAdventureStore } from '@/stores/adventure'
-  import { usePlayerStore } from '@/stores/player'
-  import { useSettingsStore } from '@/stores/settings'
-  import { stopExploration, winsUntilRegionBoss } from '@/core/exploration'
-  import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS, EXPLORE_MODES, LOW_HP_THRESHOLD } from '@/data/constants'
-  import { WIN_STREAK_REWARDS } from '@/data/earlyGame'
-  import { formatCountdown, formatGN, formatPercent } from '@/utils/format'
-  import { useNow } from '@/composables/useNow'
-  import { detectBuild } from '@/core/buildDetect'
-  import { detectionAdaptation, enemyTraits, starsText, TRAIT_NAMES, type RegionEcology } from '@/core/buildAdvisor'
-  import { analyzeBattle } from '@/core/battleAnalysis'
-  import { isNemesis } from '@/core/worldMemory'
-  import { playSfx } from '@/core/audio'
-  import { enemyDef } from '@/data/enemies'
-  import { enemyLoreView } from '@/ui/enemyLore'
-  import type { CombatLogEntry } from '@/types'
-  import ProgressBar from '@/components/common/ProgressBar.vue'
-  import GameIcon from '@/components/common/GameIcon.vue'
+import { computed, onMounted, ref, watch, onUnmounted } from "vue";
+import { useAdventureStore } from "@/stores/adventure";
+import { usePlayerStore } from "@/stores/player";
+import { useSettingsStore } from "@/stores/settings";
+import { stopExploration, winsUntilRegionBoss } from "@/core/exploration";
+import {
+  COMBAT_PLAYBACK_BASE_MS,
+  COMBAT_PLAYBACK_MIN_MS,
+  EXPLORE_MODES,
+  LOW_HP_THRESHOLD,
+} from "@/data/constants";
+import { WIN_STREAK_REWARDS } from "@/data/earlyGame";
+import { formatCountdown, formatGN, formatPercent } from "@/utils/format";
+import { useNow } from "@/composables/useNow";
+import { detectBuild } from "@/core/buildDetect";
+import {
+  detectionAdaptation,
+  enemyTraits,
+  starsText,
+  TRAIT_NAMES,
+  type RegionEcology,
+} from "@/core/buildAdvisor";
+import { analyzeBattle } from "@/core/battleAnalysis";
+import { isNemesis } from "@/core/worldMemory";
+import { playSfx } from "@/core/audio";
+import { enemyDef } from "@/data/enemies";
+import { enemyLoreView } from "@/ui/enemyLore";
+import type { CombatLogEntry } from "@/types";
+import ProgressBar from "@/components/common/ProgressBar.vue";
+import GameIcon from "@/components/common/GameIcon.vue";
 
-  const adventure = useAdventureStore()
-  const player = usePlayerStore()
-  const settings = useSettingsStore()
-  const now = useNow()
+const adventure = useAdventureStore();
+const player = usePlayerStore();
+const settings = useSettingsStore();
+const now = useNow();
 
-  const displayed = ref<CombatLogEntry[]>([])
-  const php = ref(1)
-  const ehp = ref(1)
-  const floats = ref<{ id: number; text: string; side: 'p' | 'e'; crit: boolean }[]>([])
-  const shakeCls = ref<{ p: string; e: string }>({ p: '', e: '' })
-  /** 闪避侧移:躲开 ≠ 挨打 —— 受击方不震颤,而是身形一晃侧让(见 flicker 帧) */
-  const flickerCls = ref<{ p: string; e: string }>({ p: '', e: '' })
-  /** 护盾成形:开启护盾的一方筑起金色屏壁(见 shield-rise 帧) */
-  const shieldCls = ref<{ p: string; e: string }>({ p: '', e: '' })
-  /**
-   * 攻击方的横踏:浮伤与震颤都在受击方,「谁在出手」此前毫无动作 ——
-   * 同一因果环只剩下受击那半边,这半边(出手)补上才成环。
-   */
-  const strikeCls = ref<{ p: string; e: string }>({ p: '', e: '' })
-  const defeated = ref<'p' | 'e' | null>(null)
-  const logBox = ref<HTMLElement | null>(null)
+const displayed = ref<CombatLogEntry[]>([]);
+const php = ref(1);
+const ehp = ref(1);
+const floats = ref<{ id: number; text: string; side: "p" | "e"; crit: boolean }[]>([]);
+const shakeCls = ref<{ p: string; e: string }>({ p: "", e: "" });
+/** 闪避侧移:躲开 ≠ 挨打 —— 受击方不震颤,而是身形一晃侧让(见 flicker 帧) */
+const flickerCls = ref<{ p: string; e: string }>({ p: "", e: "" });
+/** 护盾成形:开启护盾的一方筑起金色屏壁(见 shield-rise 帧) */
+const shieldCls = ref<{ p: string; e: string }>({ p: "", e: "" });
+/**
+ * 攻击方的横踏:浮伤与震颤都在受击方,「谁在出手」此前毫无动作 ——
+ * 同一因果环只剩下受击那半边,这半边(出手)补上才成环。
+ */
+const strikeCls = ref<{ p: string; e: string }>({ p: "", e: "" });
+const defeated = ref<"p" | "e" | null>(null);
+const logBox = ref<HTMLElement | null>(null);
 
-  let playTimer: number | undefined
-  let floatSeq = 1
+let playTimer: number | undefined;
+let floatSeq = 1;
 
-  const session = computed(() => adventure.session)
-  const region = computed(() => adventure.currentRegion)
-  const battle = computed(() => adventure.lastBattle)
-  const timeLeft = computed(() => (session.value ? Math.max(0, (session.value.endsAt - now.value) / 1000) : 0))
-  const modeName = computed(() => (session.value ? EXPLORE_MODES[session.value.mode].name : ''))
+const session = computed(() => adventure.session);
+const region = computed(() => adventure.currentRegion);
+const battle = computed(() => adventure.lastBattle);
+const timeLeft = computed(() =>
+  session.value ? Math.max(0, (session.value.endsAt - now.value) / 1000) : 0,
+);
+const modeName = computed(() => (session.value ? EXPLORE_MODES[session.value.mode].name : ""));
 
-  /** 连胜与下一档赏赐:冲档要有距离感 —— 3/5/10 档的赏赐发给谁,先得让人看得见自己在几连胜 */
-  const streakLine = computed(() => {
-    const s = player.winStreak
-    if (s <= 0) return ''
-    const next = WIN_STREAK_REWARDS.find(r => r.streak > s)
-    return next ? `连胜 ${s} 场 · 距下一档赏赐还差 ${next.streak - s} 场` : `连胜 ${s} 场 · 已至连胜终赏`
-  })
+/** 连胜与下一档赏赐:冲档要有距离感 —— 3/5/10 档的赏赐发给谁,先得让人看得见自己在几连胜 */
+const streakLine = computed(() => {
+  const s = player.winStreak;
+  if (s <= 0) return "";
+  const next = WIN_STREAK_REWARDS.find((r) => r.streak > s);
+  return next
+    ? `连胜 ${s} 场 · 距下一档赏赐还差 ${next.streak - s} 场`
+    : `连胜 ${s} 场 · 已至连胜终赏`;
+});
 
-  /**
-   * 背水血线:我方生命跌过三成 —— 血条转危色,顺带把「此刻谁在生效」说出来。
-   * 阈值只从 combat.ts 的 LOW_HP_THRESHOLD 取,视图这边不写第二份 0.3;
-   * 破釜丹(buff_pofu)与背水一击系词缀都挂在 lowHpDamage / lowHpReduction 上,
-   * 有其一,即说明这套效果此刻真的在咬人 —— 不再是白挂着却看不见的隐形 buff。
-   */
-  const hpBelowLine = computed(() => php.value > 0 && php.value < LOW_HP_THRESHOLD)
-  const lowHpGimmick = computed(() => {
-    const m = player.finalStats.mods
-    return (m.lowHpDamage ?? 0) > 0 || (m.lowHpReduction ?? 0) > 0
-  })
+/**
+ * 背水血线:我方生命跌过三成 —— 血条转危色,顺带把「此刻谁在生效」说出来。
+ * 阈值只从 combat.ts 的 LOW_HP_THRESHOLD 取,视图这边不写第二份 0.3;
+ * 破釜丹(buff_pofu)与背水一击系词缀都挂在 lowHpDamage / lowHpReduction 上,
+ * 有其一,即说明这套效果此刻真的在咬人 —— 不再是白挂着却看不见的隐形 buff。
+ */
+const hpBelowLine = computed(() => php.value > 0 && php.value < LOW_HP_THRESHOLD);
+const lowHpGimmick = computed(() => {
+  const m = player.finalStats.mods;
+  return (m.lowHpDamage ?? 0) > 0 || (m.lowHpReduction ?? 0) > 0;
+});
 
-  /** 本次历练已得(灵石/修为)—— 取自会话里如实累计的入账数,不是期望值 */
-  const gains = computed(() => {
-    const s = session.value
-    if (!s) return null
-    return { stone: formatGN(s.stoneGain), exp: formatGN(s.expGain) }
-  })
+/** 本次历练已得(灵石/修为)—— 取自会话里如实累计的入账数,不是期望值 */
+const gains = computed(() => {
+  const s = session.value;
+  if (!s) return null;
+  return { stone: formatGN(s.stoneGain), exp: formatGN(s.expGain) };
+});
 
-  /** 距区域之主还差几胜(已靖的地界不再提示) */
-  const bossIn = computed(() => {
-    const s = session.value
-    const r = region.value
-    if (!s || !r) return null
-    // 门槛认的是这一地界的**累计**胜场(战败结束整趟,但进度不清零)—— 见 core/exploration
-    return winsUntilRegionBoss(adventure.winsIn(r.id), adventure.cleared.includes(r.id))
-  })
-  const bossSoon = computed(() => bossIn.value !== null && bossIn.value <= 0)
-  const bossHint = computed(() => {
-    const n = bossIn.value
-    if (n === null) return null
-    return n > 0 ? `距此地之主还差 ${n} 胜` : '此地之主将现 —— 下一战即是首领'
-  })
+/** 距区域之主还差几胜(已靖的地界不再提示) */
+const bossIn = computed(() => {
+  const s = session.value;
+  const r = region.value;
+  if (!s || !r) return null;
+  // 门槛认的是这一地界的**累计**胜场(战败结束整趟,但进度不清零)—— 见 core/exploration
+  return winsUntilRegionBoss(adventure.winsIn(r.id), adventure.cleared.includes(r.id));
+});
+const bossSoon = computed(() => bossIn.value !== null && bossIn.value <= 0);
+const bossHint = computed(() => {
+  const n = bossIn.value;
+  if (n === null) return null;
+  return n > 0 ? `距此地之主还差 ${n} 胜` : "此地之主将现 —— 下一战即是首领";
+});
 
-  /** 本战拾获明细(旧存档/旧战报没有这一栏 → 空数组) */
-  const battleLoot = computed(() => battle.value?.loot ?? [])
+/** 本战拾获明细(旧存档/旧战报没有这一栏 → 空数组) */
+const battleLoot = computed(() => battle.value?.loot ?? []);
 
-  /** 当前敌人的机制特性标签 */
-  const foeTraits = computed(() => {
-    const id = battle.value?.enemyId
-    if (!id) return []
-    const def = enemyDef(id)
-    return def ? enemyTraits(def) : []
-  })
+/** 当前敌人的机制特性标签 */
+const foeTraits = computed(() => {
+  const id = battle.value?.enemyId;
+  if (!id) return [];
+  const def = enemyDef(id);
+  return def ? enemyTraits(def) : [];
+});
 
-  /** 此物所知(Phase 32.5)—— 战前情报由认知层决定,不是白送的 */
-  const lore = computed(() => {
-    const id = battle.value?.enemyId
-    return id ? enemyLoreView(id) : null
-  })
+/** 此物所知(Phase 32.5)—— 战前情报由认知层决定,不是白送的 */
+const lore = computed(() => {
+  const id = battle.value?.enemyId;
+  return id ? enemyLoreView(id) : null;
+});
 
-  /**
-   * 认得它,才谈得上"知道它会怎么打"。
-   * 交过一场手即达「眼熟」,所以这道门只挡第一次照面 —— 那一次本就该是未知的。
-   */
-  const foeKnown = computed(() => (lore.value?.stage ?? 0) >= 1)
+/**
+ * 认得它,才谈得上"知道它会怎么打"。
+ * 交过一场手即达「眼熟」,所以这道门只挡第一次照面 —— 那一次本就该是未知的。
+ */
+const foeKnown = computed(() => (lore.value?.stage ?? 0) >= 1);
 
-  const shownTraits = computed(() => (foeKnown.value ? foeTraits.value : []))
+const shownTraits = computed(() => (foeKnown.value ? foeTraits.value : []));
 
-  /** 宿敌标记:此敌曾败我 ≥3 次且尚未雪耻 */
-  const isNemesisFoe = computed(() => {
-    const id = battle.value?.enemyId
-    return id ? isNemesis(player.nemeses, id) : false
-  })
+/** 宿敌标记:此敌曾败我 ≥3 次且尚未雪耻 */
+const isNemesisFoe = computed(() => {
+  const id = battle.value?.enemyId;
+  return id ? isNemesis(player.nemeses, id) : false;
+});
 
-  /** 当前构筑对此敌的适配(战力之外的胜负参考) */
-  const foeAdaptation = computed(() => {
-    const b = battle.value
-    if (!b || !foeKnown.value) return null
-    const build = detectBuild(player.finalStats.mods)
-    if (!build) return null
-    const eco: RegionEcology = { burst: 0, multi: 0, pierce: 0, dodge: 0 }
-    for (const t of foeTraits.value) eco[t] = 2
-    return detectionAdaptation(build, eco, b.isBoss)
-  })
+/** 当前构筑对此敌的适配(战力之外的胜负参考) */
+const foeAdaptation = computed(() => {
+  const b = battle.value;
+  if (!b || !foeKnown.value) return null;
+  const build = detectBuild(player.finalStats.mods);
+  if (!build) return null;
+  const eco: RegionEcology = { burst: 0, multi: 0, pierce: 0, dodge: 0 };
+  for (const t of foeTraits.value) eco[t] = 2;
+  return detectionAdaptation(build, eco, b.isBoss);
+});
 
-  /** 战斗后统计行 */
-  const battleSummary = computed(() => {
-    const b = battle.value
-    if (!b) return null
-    const r = b.result
-    // 结语只多四个字,却是每个玩家每场都会读到的一行:抢先 / 被抢先
-    const first = r.firstMove ? (r.firstMove.playerFirst ? ' · 抢先' : ' · 被抢先') : ''
-    return `此战 ${r.rounds} 回合 · 战后气血 ${formatPercent(r.playerHpPct, 0)} · ${r.win ? '胜' : '负'}${first}`
-  })
+/** 战斗后统计行 */
+const battleSummary = computed(() => {
+  const b = battle.value;
+  if (!b) return null;
+  const r = b.result;
+  // 结语只多四个字,却是每个玩家每场都会读到的一行:抢先 / 被抢先
+  const first = r.firstMove ? (r.firstMove.playerFirst ? " · 抢先" : " · 被抢先") : "";
+  return `此战 ${r.rounds} 回合 · 战后气血 ${formatPercent(r.playerHpPct, 0)} · ${r.win ? "胜" : "负"}${first}`;
+});
 
-  // ---- 战斗分析(第三层信息) ----
-  const showAnalysis = ref(false)
-  const showLore = ref(false)
-  /** 方向上点开的是哪一系(理由内联展开);换敌时复位,免得挂着上一战的旧名 */
-  const directionTap = ref<string | null>(null)
-  /** 适配星级点开的理由(与方向理由同族,换敌复位) */
-  const adaptTap = ref<number | null>(null)
-  const adaptReveal = computed(() =>
-    adaptTap.value === null || !foeAdaptation.value ? null : foeAdaptation.value.reasons.join(' · ')
-  )
+// ---- 战斗分析(第三层信息) ----
+const showAnalysis = ref(false);
+const showLore = ref(false);
+/** 方向上点开的是哪一系(理由内联展开);换敌时复位,免得挂着上一战的旧名 */
+const directionTap = ref<string | null>(null);
+/** 适配星级点开的理由(与方向理由同族,换敌复位) */
+const adaptTap = ref<number | null>(null);
+const adaptReveal = computed(() =>
+  adaptTap.value === null || !foeAdaptation.value ? null : foeAdaptation.value.reasons.join(" · "),
+);
 
-  const analysis = computed(() => {
-    const b = battle.value
-    if (!b) return null
-    const build = detectBuild(player.finalStats.mods)
-    return analyzeBattle(b.result, build?.style.id ?? null)
-  })
+const analysis = computed(() => {
+  const b = battle.value;
+  if (!b) return null;
+  const build = detectBuild(player.finalStats.mods);
+  return analyzeBattle(b.result, build?.style.id ?? null);
+});
 
-  // 战败时自动展开分析;并按胜负配一声战果音
-  watch(
-    () => battle.value?.at,
-    () => {
-      if (!battle.value) return
-      playSfx(battle.value.result.win ? 'win' : 'lose')
-      if (!battle.value.result.win) showAnalysis.value = true
+// 战败时自动展开分析;并按胜负配一声战果音
+watch(
+  () => battle.value?.at,
+  () => {
+    if (!battle.value) return;
+    playSfx(battle.value.result.win ? "win" : "lose");
+    if (!battle.value.result.win) showAnalysis.value = true;
+  },
+);
+
+const KIND_COLOR: Record<CombatLogEntry["t"], string> = {
+  atk: "text-ink-soft",
+  skill: "text-qing",
+  crit: "text-cinnabar",
+  shield: "text-gold-ink",
+  heal: "text-jade",
+  dodge: "text-ink-faint",
+  proc: "text-violet-ink",
+  info: "text-ink-faint",
+  win: "text-jade font-kai",
+  lose: "text-cinnabar font-kai",
+};
+
+function stopPlayback(): void {
+  if (playTimer !== undefined) {
+    window.clearInterval(playTimer);
+    playTimer = undefined;
+  }
+}
+
+function playBattle(instant = false): void {
+  const b = battle.value;
+  if (!b) return;
+  stopPlayback();
+  defeated.value = null;
+  const entries = b.result.log;
+  if (instant) {
+    displayed.value = entries.slice(-100);
+    const last = entries[entries.length - 1];
+    php.value = last?.php ?? 1;
+    ehp.value = last?.ehp ?? 1;
+    defeated.value = b.result.win ? "e" : "p";
+    return;
+  }
+  displayed.value = [];
+  php.value = 1;
+  ehp.value = 1;
+  let idx = 0;
+  const interval = Math.max(COMBAT_PLAYBACK_MIN_MS, COMBAT_PLAYBACK_BASE_MS / settings.battleSpeed);
+  playTimer = window.setInterval(() => {
+    const entry = entries[idx];
+    if (!entry) {
+      stopPlayback();
+      defeated.value = b.result.win ? "e" : "p";
+      return;
     }
-  )
-
-  const KIND_COLOR: Record<CombatLogEntry['t'], string> = {
-    atk: 'text-ink-soft',
-    skill: 'text-qing',
-    crit: 'text-cinnabar',
-    shield: 'text-gold-ink',
-    heal: 'text-jade',
-    dodge: 'text-ink-faint',
-    proc: 'text-violet-ink',
-    info: 'text-ink-faint',
-    win: 'text-jade font-kai',
-    lose: 'text-cinnabar font-kai'
-  }
-
-  function stopPlayback(): void {
-    if (playTimer !== undefined) {
-      window.clearInterval(playTimer)
-      playTimer = undefined
+    displayed.value = [...displayed.value.slice(-99), entry];
+    php.value = entry.php;
+    ehp.value = entry.ehp;
+    if (entry.dmg) {
+      const id = floatSeq;
+      floatSeq += 1;
+      floats.value = [
+        ...floats.value.slice(-5),
+        {
+          id,
+          text: `-${entry.dmg}`,
+          side: entry.side === "p" ? "e" : "p",
+          crit: entry.t === "crit",
+        },
+      ];
+      setTimeout(() => {
+        floats.value = floats.value.filter((f) => f.id !== id);
+      }, 900);
+      // 受击方原样震颤(既有),攻击方同步横踏 —— 出手与挨打才成一对
+      triggerShake(entry.side === "p" ? "e" : "p", entry.t === "crit");
+      triggerStrike(entry.side);
     }
-  }
-
-  function playBattle(instant = false): void {
-    const b = battle.value
-    if (!b) return
-    stopPlayback()
-    defeated.value = null
-    const entries = b.result.log
-    if (instant) {
-      displayed.value = entries.slice(-100)
-      const last = entries[entries.length - 1]
-      php.value = last?.php ?? 1
-      ehp.value = last?.ehp ?? 1
-      defeated.value = b.result.win ? 'e' : 'p'
-      return
+    // 闪避:攻击方照常横踏(出手是出手了),受击方却身形一晃侧让而非挨震 ——
+    // 躲开和被打中是两种画面,不许让闪避也走震颤(那是"打中了"的反馈)
+    if (entry.t === "dodge") {
+      triggerStrike(entry.side);
+      triggerFlicker(entry.side === "p" ? "e" : "p");
     }
-    displayed.value = []
-    php.value = 1
-    ehp.value = 1
-    let idx = 0
-    const interval = Math.max(COMBAT_PLAYBACK_MIN_MS, COMBAT_PLAYBACK_BASE_MS / settings.battleSpeed)
-    playTimer = window.setInterval(() => {
-      const entry = entries[idx]
-      if (!entry) {
-        stopPlayback()
-        defeated.value = b.result.win ? 'e' : 'p'
-        return
-      }
-      displayed.value = [...displayed.value.slice(-99), entry]
-      php.value = entry.php
-      ehp.value = entry.ehp
-      if (entry.dmg) {
-        const id = floatSeq
-        floatSeq += 1
-        floats.value = [
-          ...floats.value.slice(-5),
-          { id, text: `-${entry.dmg}`, side: entry.side === 'p' ? 'e' : 'p', crit: entry.t === 'crit' }
-        ]
-        setTimeout(() => {
-          floats.value = floats.value.filter(f => f.id !== id)
-        }, 900)
-        // 受击方原样震颤(既有),攻击方同步横踏 —— 出手与挨打才成一对
-        triggerShake(entry.side === 'p' ? 'e' : 'p', entry.t === 'crit')
-        triggerStrike(entry.side)
-      }
-      // 闪避:攻击方照常横踏(出手是出手了),受击方却身形一晃侧让而非挨震 ——
-      // 躲开和被打中是两种画面,不许让闪避也走震颤(那是"打中了"的反馈)
-      if (entry.t === 'dodge') {
-        triggerStrike(entry.side)
-        triggerFlicker(entry.side === 'p' ? 'e' : 'p')
-      }
-      // 护盾成形:开启护盾的一方筑起屏壁 —— 给一道金色环光(shield 行无出手方,只亮护盾方)
-      if (entry.t === 'shield' && (entry.side === 'p' || entry.side === 'e')) {
-        triggerShield(entry.side)
-      }
-      requestAnimationFrame(() => {
-        logBox.value?.scrollTo({ top: logBox.value.scrollHeight })
-      })
-      idx += 1
-    }, interval)
-  }
-
-  /** 受击方短促震颤(暴击更重);先清类、下一帧再挂,保证连击时动画也能重放 */
-  function triggerShake(side: 'p' | 'e', hard: boolean): void {
-    shakeCls.value = { ...shakeCls.value, [side]: '' }
-    requestAnimationFrame(() => {
-      shakeCls.value = { ...shakeCls.value, [side]: hard ? 'hit-shake-hard' : 'hit-shake' }
-    })
-  }
-
-  /** 护盾成形:护盾方筑起金色屏壁(与 triggerShake 同款的重放手法,连叠可重放) */
-  function triggerShield(side: 'p' | 'e'): void {
-    shieldCls.value = { ...shieldCls.value, [side]: '' }
-    requestAnimationFrame(() => {
-      shieldCls.value = { ...shieldCls.value, [side]: 'shield-rise' }
-    })
-  }
-
-  /** 闪避侧移:受击方身形一晃侧让(与 triggerShake 同款的重放手法,连避可重放) */
-  function triggerFlicker(side: 'p' | 'e'): void {
-    flickerCls.value = { ...flickerCls.value, [side]: '' }
-    requestAnimationFrame(() => {
-      flickerCls.value = { ...flickerCls.value, [side]: 'flicker' }
-    })
-  }
-
-  /** 攻击方朝敌阵横踏一步(与 triggerShake 同款的重放手法);sys 行没有出手方,不动 */
-  function triggerStrike(side: CombatLogEntry['side']): void {
-    if (side !== 'p' && side !== 'e') return
-    strikeCls.value = { ...strikeCls.value, [side]: '' }
-    requestAnimationFrame(() => {
-      strikeCls.value = { ...strikeCls.value, [side]: side === 'p' ? 'strike-p' : 'strike-e' }
-    })
-  }
-
-  /** 跳过播放,直接呈现战果 */
-  function skipPlayback(): void {
-    playBattle(true)
-  }
-
-  watch(
-    () => battle.value?.at,
-    (at, oldAt) => {
-      if (at !== undefined && at !== oldAt) {
-        playBattle(false)
-        directionTap.value = null
-        adaptTap.value = null
-      }
+    // 护盾成形:开启护盾的一方筑起屏壁 —— 给一道金色环光(shield 行无出手方,只亮护盾方)
+    if (entry.t === "shield" && (entry.side === "p" || entry.side === "e")) {
+      triggerShield(entry.side);
     }
-  )
+    requestAnimationFrame(() => {
+      logBox.value?.scrollTo({ top: logBox.value.scrollHeight });
+    });
+    idx += 1;
+  }, interval);
+}
 
-  onMounted(() => {
-    if (battle.value) playBattle(true)
-  })
+/** 受击方短促震颤(暴击更重);先清类、下一帧再挂,保证连击时动画也能重放 */
+function triggerShake(side: "p" | "e", hard: boolean): void {
+  shakeCls.value = { ...shakeCls.value, [side]: "" };
+  requestAnimationFrame(() => {
+    shakeCls.value = { ...shakeCls.value, [side]: hard ? "hit-shake-hard" : "hit-shake" };
+  });
+}
 
-  onUnmounted(stopPlayback)
+/** 护盾成形:护盾方筑起金色屏壁(与 triggerShake 同款的重放手法,连叠可重放) */
+function triggerShield(side: "p" | "e"): void {
+  shieldCls.value = { ...shieldCls.value, [side]: "" };
+  requestAnimationFrame(() => {
+    shieldCls.value = { ...shieldCls.value, [side]: "shield-rise" };
+  });
+}
+
+/** 闪避侧移:受击方身形一晃侧让(与 triggerShake 同款的重放手法,连避可重放) */
+function triggerFlicker(side: "p" | "e"): void {
+  flickerCls.value = { ...flickerCls.value, [side]: "" };
+  requestAnimationFrame(() => {
+    flickerCls.value = { ...flickerCls.value, [side]: "flicker" };
+  });
+}
+
+/** 攻击方朝敌阵横踏一步(与 triggerShake 同款的重放手法);sys 行没有出手方,不动 */
+function triggerStrike(side: CombatLogEntry["side"]): void {
+  if (side !== "p" && side !== "e") return;
+  strikeCls.value = { ...strikeCls.value, [side]: "" };
+  requestAnimationFrame(() => {
+    strikeCls.value = { ...strikeCls.value, [side]: side === "p" ? "strike-p" : "strike-e" };
+  });
+}
+
+/** 跳过播放,直接呈现战果 */
+function skipPlayback(): void {
+  playBattle(true);
+}
+
+watch(
+  () => battle.value?.at,
+  (at, oldAt) => {
+    if (at !== undefined && at !== oldAt) {
+      playBattle(false);
+      directionTap.value = null;
+      adaptTap.value = null;
+    }
+  },
+);
+
+onMounted(() => {
+  if (battle.value) playBattle(true);
+});
+
+onUnmounted(stopPlayback);
 </script>

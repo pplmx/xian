@@ -33,48 +33,53 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, watch } from 'vue'
-  import { useUiStore } from '@/stores/ui'
-  import type { Toast } from '@/stores/ui'
-  import { playSfx, type SfxName } from '@/core/audio'
+import { ref, watch } from "vue";
+import { useUiStore } from "@/stores/ui";
+import type { Toast } from "@/stores/ui";
+import { playSfx, type SfxName } from "@/core/audio";
 
-  const ui = useUiStore()
+const ui = useUiStore();
 
-  /**
-   * 离场动画时长 —— 必须与 style.css 里 .toast-slide-* 的 0.25s 对齐。
-   *
-   * 之所以要显式写死:稀有提示带着 animate-glow-pulse(2.4s **无限**动画),
-   * 过渡的自动探测会把那 2.4 秒当成离场时长,而无限动画的 animationend 永远不来,
-   * 于是它只能等满这个超时 —— 玩家点掉一条提示后,它还得在原地杵两秒才消失,
-   * 手感就是「点了没反应」。写死时长让 Vue 到点就摘,不必等 anim.
-   */
-  const TOAST_ANIM_MS = 250
+/**
+ * 离场动画时长 —— 必须与 style.css 里 .toast-slide-* 的 0.25s 对齐。
+ *
+ * 之所以要显式写死:稀有提示带着 animate-glow-pulse(2.4s **无限**动画),
+ * 过渡的自动探测会把那 2.4 秒当成离场时长,而无限动画的 animationend 永远不来,
+ * 于是它只能等满这个超时 —— 玩家点掉一条提示后,它还得在原地杵两秒才消失,
+ * 手感就是「点了没反应」。写死时长让 Vue 到点就摘,不必等 anim.
+ */
+const TOAST_ANIM_MS = 250;
 
-  const flashId = ref<number | null>(null)
+const flashId = ref<number | null>(null);
 
-  const KIND_CLASS: Record<Toast['kind'], string> = {
-    info: 'border-ink/25 text-ink-soft bg-paper',
-    success: 'border-jade/60 text-jade bg-paper',
-    warn: 'border-cinnabar/60 text-cinnabar bg-paper',
-    rare: 'border-gold-ink/70 text-gold-ink bg-paper animate-glow-pulse'
-  }
+const KIND_CLASS: Record<Toast["kind"], string> = {
+  info: "border-ink/25 text-ink-soft bg-paper",
+  success: "border-jade/60 text-jade bg-paper",
+  warn: "border-cinnabar/60 text-cinnabar bg-paper",
+  rare: "border-gold-ink/70 text-gold-ink bg-paper animate-glow-pulse",
+};
 
-  const KIND_SFX: Record<Toast['kind'], SfxName> = { info: 'info', success: 'success', warn: 'warn', rare: 'rare' }
+const KIND_SFX: Record<Toast["kind"], SfxName> = {
+  info: "info",
+  success: "success",
+  warn: "warn",
+  rare: "rare",
+};
 
-  // 新 toast 落地时按类型配一声提示音;稀有品级另加全屏金光
-  watch(
-    () => ui.toasts[ui.toasts.length - 1]?.id,
-    (id, prev) => {
-      if (id === undefined || id === prev) return
-      const last = ui.toasts[ui.toasts.length - 1]
-      if (!last) return
-      playSfx(KIND_SFX[last.kind])
-      if (last.kind === 'rare') {
-        flashId.value = last.id
-        setTimeout(() => {
-          if (flashId.value === last.id) flashId.value = null
-        }, 1200)
-      }
+// 新 toast 落地时按类型配一声提示音;稀有品级另加全屏金光
+watch(
+  () => ui.toasts[ui.toasts.length - 1]?.id,
+  (id, prev) => {
+    if (id === undefined || id === prev) return;
+    const last = ui.toasts[ui.toasts.length - 1];
+    if (!last) return;
+    playSfx(KIND_SFX[last.kind]);
+    if (last.kind === "rare") {
+      flashId.value = last.id;
+      setTimeout(() => {
+        if (flashId.value === last.id) flashId.value = null;
+      }, 1200);
     }
-  )
+  },
+);
 </script>

@@ -21,12 +21,12 @@
  * 判据用 TypeScript 语法树,不是正则 —— 注释与字符串里的名字不算使用,
  * `obj.foo` 的属性名 / 接口字段名也不算,免得"提过一嘴"冒充"接线"。
  */
-import { describe, expect, it } from 'vite-plus/test'
-import ts from 'typescript'
-import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { describe, expect, it } from "vite-plus/test";
+import ts from "typescript";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 
-const SRC = resolve(__dirname, '..')
+const SRC = resolve(__dirname, "..");
 
 /**
  * 有理由先留、暂不接线的导出。
@@ -36,8 +36,8 @@ const SRC = resolve(__dirname, '..')
  */
 const ALLOWLIST: Record<string, string> = {
   // 已被别的审计钉住的两端
-  studyBlueprint: '炼器图纸骨架:contentReachabilityAudit 已钉"读与给必须一起接",此处不重复扣押'
-}
+  studyBlueprint: '炼器图纸骨架:contentReachabilityAudit 已钉"读与给必须一起接",此处不重复扣押',
+};
 
 /**
  * 审计/分析模块 —— 它们的导出本就不是给游戏运行时用的,而是给用例读的
@@ -51,57 +51,60 @@ const ALLOWLIST: Record<string, string> = {
  * 于是改为**具名清单**:新增分析模块时在此登记,一眼可审。
  */
 const AUDIT_MODULES = new Set([
-  'core/buildSearch.ts',
-  'core/buildSim.ts',
-  'core/celestialSim.ts',
-  'core/compoundingAudit.ts',
-  'core/daoFruitCurve.ts',
-  'core/daoFruitRoles.ts',
-  'core/deepCultivationRoi.ts',
-  'core/ecosystemHealth.ts',
-  'core/fingerprints.ts',
-  'core/fruitOutlets.ts',
-  'core/impactSurface.ts',
-  'core/inflationAudit.ts',
-  'core/lootSim.ts',
-  'core/mortalGate.ts',
-  'core/mortalIdentity.ts',
-  'core/mortalWorldGen.ts',
-  'core/motivationType.ts',
-  'core/narrowingImpact.ts',
-  'core/overviewNecessity.ts',
-  'core/progressionSim.ts',
-  'core/rebirthRoi.ts',
-  'core/ruleBudget.ts',
-  'core/samsaraAudit.ts',
-  'core/shallowRebirthGains.ts',
-  'core/trialMotivation.ts'
-])
+  "core/buildSearch.ts",
+  "core/buildSim.ts",
+  "core/celestialSim.ts",
+  "core/compoundingAudit.ts",
+  "core/daoFruitCurve.ts",
+  "core/daoFruitRoles.ts",
+  "core/deepCultivationRoi.ts",
+  "core/ecosystemHealth.ts",
+  "core/fingerprints.ts",
+  "core/fruitOutlets.ts",
+  "core/impactSurface.ts",
+  "core/inflationAudit.ts",
+  "core/lootSim.ts",
+  "core/mortalGate.ts",
+  "core/mortalIdentity.ts",
+  "core/mortalWorldGen.ts",
+  "core/motivationType.ts",
+  "core/narrowingImpact.ts",
+  "core/overviewNecessity.ts",
+  "core/progressionSim.ts",
+  "core/rebirthRoi.ts",
+  "core/ruleBudget.ts",
+  "core/samsaraAudit.ts",
+  "core/shallowRebirthGains.ts",
+  "core/trialMotivation.ts",
+]);
 
 /**
  * 全扫描统一用正斜杠路径(Win 上 join 产出 `\`,会打不中机制表里的正斜杠键)。
  * 文件系统操作仍用各自平台的 join,只有进比较的字符串归一。
  */
-const posix = (p: string): string => p.replace(/\\/g, '/')
+const posix = (p: string): string => p.replace(/\\/g, "/");
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry)
-    if (statSync(full).isDirectory()) walk(full, out)
-    else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith('.d.ts')) out.push(posix(full))
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) walk(full, out);
+    else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".d.ts")) out.push(posix(full));
   }
-  return out
+  return out;
 }
 
 /** .vue 只取 <script> 块;返回可解析的源码 */
 function scriptOf(path: string): string {
-  const text = readFileSync(path, 'utf8')
-  if (!path.endsWith('.vue')) return text
-  return /<script[^>]*>([\s\S]*?)<\/script>/.exec(text)?.[1] ?? ''
+  const text = readFileSync(path, "utf8");
+  if (!path.endsWith(".vue")) return text;
+  return /<script[^>]*>([\s\S]*?)<\/script>/.exec(text)?.[1] ?? "";
 }
 
 function hasExportModifier(node: ts.Node): boolean {
-  return ts.canHaveModifiers(node) && !!ts.getModifiers(node)?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)
+  return (
+    ts.canHaveModifiers(node) &&
+    !!ts.getModifiers(node)?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
+  );
 }
 
 /** 属性名/字段名/枚举成员不是"使用":`obj.foo`、`{ foo: 1 }`、`interface { foo: T }` 都不算 */
@@ -122,89 +125,91 @@ function isNonUseIdentifier(node: ts.Identifier, parent: ts.Node): boolean {
     (ts.isMethodDeclaration(parent) && parent.name === node) ||
     (ts.isMethodSignature(parent) && parent.name === node) ||
     (ts.isEnumMember(parent) && parent.name === node)
-  )
+  );
 }
 
 interface DeadExport {
-  name: string
-  file: string
+  name: string;
+  file: string;
 }
 
 /** 全量扫描:顶层导出名 → 出现次数(声明处各计一次;spec 与运行时分开计) */
 function scanExports(): {
-  dead: DeadExport[]
-  specOnly: DeadExport[]
-  againDead: DeadExport[]
-  scanned: number
-  exports: number
+  dead: DeadExport[];
+  specOnly: DeadExport[];
+  againDead: DeadExport[];
+  scanned: number;
+  exports: number;
 } {
-  const files = walk(SRC)
-  const declarations = new Map<string, number>()
-  const declFile = new Map<string, string>()
+  const files = walk(SRC);
+  const declarations = new Map<string, number>();
+  const declFile = new Map<string, string>();
   /** 导出名 → 声明所在的绝对路径(判定"运行时模块"用) */
-  const declPath = new Map<string, string>()
-  const uses = new Map<string, number>()
-  const specUses = new Map<string, number>()
-  const bump = (m: Map<string, number>, k: string): void => void m.set(k, (m.get(k) ?? 0) + 1)
+  const declPath = new Map<string, string>();
+  const uses = new Map<string, number>();
+  const specUses = new Map<string, number>();
+  const bump = (m: Map<string, number>, k: string): void => void m.set(k, (m.get(k) ?? 0) + 1);
 
   for (const file of files) {
-    const text = scriptOf(file)
-    if (!text.trim()) continue
-    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+    const text = scriptOf(file);
+    if (!text.trim()) continue;
+    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const visit = (node: ts.Node): void => {
       const name =
-        'name' in node && node.name && ts.isIdentifier(node.name as ts.Node) ? (node.name as ts.Identifier).text : null
+        "name" in node && node.name && ts.isIdentifier(node.name as ts.Node)
+          ? (node.name as ts.Identifier).text
+          : null;
       if (name && hasExportModifier(node)) {
-        bump(declarations, name)
-        if (!declFile.has(name)) declFile.set(name, posix(relative(SRC, file)))
-        if (!declPath.has(name)) declPath.set(name, file)
+        bump(declarations, name);
+        if (!declFile.has(name)) declFile.set(name, posix(relative(SRC, file)));
+        if (!declPath.has(name)) declPath.set(name, file);
       }
       if (ts.isVariableStatement(node) && hasExportModifier(node)) {
         for (const d of node.declarationList.declarations) {
           if (ts.isIdentifier(d.name)) {
-            bump(declarations, d.name.text)
-            if (!declFile.has(d.name.text)) declFile.set(d.name.text, posix(relative(SRC, file)))
-            if (!declPath.has(d.name.text)) declPath.set(d.name.text, file)
+            bump(declarations, d.name.text);
+            if (!declFile.has(d.name.text)) declFile.set(d.name.text, posix(relative(SRC, file)));
+            if (!declPath.has(d.name.text)) declPath.set(d.name.text, file);
           }
         }
       }
-      ts.forEachChild(node, visit)
-    }
-    visit(sf)
+      ts.forEachChild(node, visit);
+    };
+    visit(sf);
     /**
      * .vue 的模板也要算:template 里的 {{ formatDate(...) }} 是真实使用,
      * 只解析 <script> 会把它们误判成"没人用"(本轮把 import 排除出"使用"后就暴露了这一点)。
      */
-    if (file.endsWith('.vue')) {
-      const template = readFileSync(file, 'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g, '')
+    if (file.endsWith(".vue")) {
+      const template = readFileSync(file, "utf8").replace(/<script[^>]*>[\s\S]*?<\/script>/g, "");
       /**
        * 只数**表达式里**的词 —— 整篇扫词会把 HTML 标签名当成标识符
        * (`<div>` 会让 gnum.div 看起来"有人在用",本轮就撞上了这一下)。
        */
-      const exprs: string[] = []
-      for (const m of template.matchAll(/\{\{([\s\S]*?)\}\}/g)) exprs.push(m[1]!)
-      for (const m of template.matchAll(/(?::|@|v-)[\w.-]*="([^"]*)"/g)) exprs.push(m[1]!)
-      for (const word of exprs.join('\n').match(/[A-Za-z_$][\w$]*/g) ?? []) bump(uses, word)
+      const exprs: string[] = [];
+      for (const m of template.matchAll(/\{\{([\s\S]*?)\}\}/g)) exprs.push(m[1]!);
+      for (const m of template.matchAll(/(?::|@|v-)[\w.-]*="([^"]*)"/g)) exprs.push(m[1]!);
+      for (const word of exprs.join("\n").match(/[A-Za-z_$][\w$]*/g) ?? []) bump(uses, word);
     }
   }
 
   for (const file of files) {
-    const text = scriptOf(file)
-    if (!text.trim()) continue
-    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
-    const isSpec = file.endsWith('.spec.ts')
+    const text = scriptOf(file);
+    if (!text.trim()) continue;
+    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const isSpec = file.endsWith(".spec.ts");
     const visit = (node: ts.Node): void => {
       if (ts.isIdentifier(node) && !(node.parent && isNonUseIdentifier(node, node.parent))) {
-        bump(uses, node.text)
-        if (isSpec) bump(specUses, node.text)
+        bump(uses, node.text);
+        if (isSpec) bump(specUses, node.text);
       }
-      ts.forEachChild(node, visit)
-    }
-    visit(sf)
+      ts.forEachChild(node, visit);
+    };
+    visit(sf);
   }
 
-  const dead: DeadExport[] = []
-  const specOnly: DeadExport[] = []
+  const dead: DeadExport[] = [];
+  const specOnly: DeadExport[] = [];
   /**
    * 裸再导出的活死判据与普通导出**不同**,得单独收集。
    *
@@ -219,52 +224,66 @@ function scanExports(): {
    * 门面转发,一眼看得出名字本尊住哪,不在本判据之内。
    */
   /** 谁从模块 M import 了哪些(原名)名字:moduleFile → Set(名字) */
-  const importedFrom = new Map<string, Set<string>>()
+  const importedFrom = new Map<string, Set<string>>();
   /**
    * 哪些名字以裸再导出出现在哪些模块里:moduleFile → Set(名字)。
    * 与 importedFrom 对照:再导出但没人从该模块 import —— 死门面。
    */
-  const againExportedFrom = new Map<string, Set<string>>()
+  const againExportedFrom = new Map<string, Set<string>>();
   /** 再导出名字对应的行号,报错时给精确位置:moduleFile → name → line */
-  const againExportLine = new Map<string, Map<string, number>>()
+  const againExportLine = new Map<string, Map<string, number>>();
 
   for (const file of files) {
-    const text = scriptOf(file)
-    if (!text.trim()) continue
-    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+    const text = scriptOf(file);
+    if (!text.trim()) continue;
+    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     for (const stmt of sf.statements) {
-      if (!ts.isImportDeclaration(stmt) || !stmt.importClause || !ts.isStringLiteral(stmt.moduleSpecifier)) continue
-      const nb = stmt.importClause.namedBindings
-      if (!nb || !ts.isNamedImports(nb)) continue
-      const target = resolveImport(file, stmt.moduleSpecifier.text)
-      if (!target) continue
-      if (!importedFrom.has(target)) importedFrom.set(target, new Set())
+      if (
+        !ts.isImportDeclaration(stmt) ||
+        !stmt.importClause ||
+        !ts.isStringLiteral(stmt.moduleSpecifier)
+      )
+        continue;
+      const nb = stmt.importClause.namedBindings;
+      if (!nb || !ts.isNamedImports(nb)) continue;
+      const target = resolveImport(file, stmt.moduleSpecifier.text);
+      if (!target) continue;
+      if (!importedFrom.has(target)) importedFrom.set(target, new Set());
       for (const el of nb.elements) {
         // 别名 `import { X as Y }` 里 X 才是这个模块真正拿出去的名字
-        importedFrom.get(target)!.add(el.propertyName ? el.propertyName.text : el.name.text)
+        importedFrom.get(target)!.add(el.propertyName ? el.propertyName.text : el.name.text);
       }
     }
     const visit = (node: ts.Node): void => {
-      if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause) && !node.moduleSpecifier) {
-        const line = sf.getLineAndCharacterOfPosition(node.getStart()).line + 1
+      if (
+        ts.isExportDeclaration(node) &&
+        node.exportClause &&
+        ts.isNamedExports(node.exportClause) &&
+        !node.moduleSpecifier
+      ) {
+        const line = sf.getLineAndCharacterOfPosition(node.getStart()).line + 1;
         for (const el of node.exportClause.elements) {
-          const name = el.name.text
-          if (!againExportedFrom.has(file)) againExportedFrom.set(file, new Set())
-          againExportedFrom.get(file)!.add(name)
-          if (!againExportLine.has(file)) againExportLine.set(file, new Map())
-          againExportLine.get(file)!.set(name, line)
+          const name = el.name.text;
+          if (!againExportedFrom.has(file)) againExportedFrom.set(file, new Set());
+          againExportedFrom.get(file)!.add(name);
+          if (!againExportLine.has(file)) againExportLine.set(file, new Map());
+          againExportLine.get(file)!.set(name, line);
         }
       }
-      ts.forEachChild(node, visit)
-    }
-    visit(sf)
+      ts.forEachChild(node, visit);
+    };
+    visit(sf);
   }
 
-  const againDead: DeadExport[] = []
+  const againDead: DeadExport[] = [];
   for (const [file, names] of againExportedFrom) {
-    const got = importedFrom.get(file) ?? new Set()
+    const got = importedFrom.get(file) ?? new Set();
     for (const name of names) {
-      if (!got.has(name)) againDead.push({ name, file: `${posix(relative(SRC, file))}:${againExportLine.get(file)!.get(name)!}` })
+      if (!got.has(name))
+        againDead.push({
+          name,
+          file: `${posix(relative(SRC, file))}:${againExportLine.get(file)!.get(name)!}`,
+        });
     }
   }
 
@@ -278,85 +297,104 @@ function scanExports(): {
    * 传递可达才算数:只从 spec 能被够到的模块,整份都是审计工具,不进这条红线。
    */
   function resolveImport(from: string, spec: string): string | null {
-    const base = spec.startsWith('@/')
+    const base = spec.startsWith("@/")
       ? join(SRC, spec.slice(2))
-      : spec.startsWith('.')
-        // Win 路径是 `\`,`lastIndexOf('/')` 恒为 -1 会把目录切成坏路径 —— 两种分隔符都找
-        ? join(from.slice(0, Math.max(from.lastIndexOf('/'), from.lastIndexOf('\\'))), spec)
-        : null
-    if (!base) return null
-    for (const cand of [base, `${base}.ts`, `${base}.vue`, join(base, 'index.ts')].map(posix)) {
-      if (files.includes(cand)) return cand
+      : spec.startsWith(".")
+        ? // Win 路径是 `\`,`lastIndexOf('/')` 恒为 -1 会把目录切成坏路径 —— 两种分隔符都找
+          join(from.slice(0, Math.max(from.lastIndexOf("/"), from.lastIndexOf("\\"))), spec)
+        : null;
+    if (!base) return null;
+    for (const cand of [base, `${base}.ts`, `${base}.vue`, join(base, "index.ts")].map(posix)) {
+      if (files.includes(cand)) return cand;
     }
-    return null
+    return null;
   }
   function importsOf(file: string): string[] {
-    const sf = ts.createSourceFile(file, scriptOf(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
-    const out: string[] = []
+    const sf = ts.createSourceFile(
+      file,
+      scriptOf(file),
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+    const out: string[] = [];
     for (const stmt of sf.statements) {
-      if (ts.isImportDeclaration(stmt) && stmt.moduleSpecifier && ts.isStringLiteral(stmt.moduleSpecifier)) {
-        const target = resolveImport(file, stmt.moduleSpecifier.text)
-        if (target) out.push(target)
+      if (
+        ts.isImportDeclaration(stmt) &&
+        stmt.moduleSpecifier &&
+        ts.isStringLiteral(stmt.moduleSpecifier)
+      ) {
+        const target = resolveImport(file, stmt.moduleSpecifier.text);
+        if (target) out.push(target);
       }
     }
-    return out
+    return out;
   }
-  const runtimeModules = new Set<string>()
-  const entry = posix(join(SRC, 'main.ts'))
-  const queue = files.includes(entry) ? [entry] : []
+  const runtimeModules = new Set<string>();
+  const entry = posix(join(SRC, "main.ts"));
+  const queue = files.includes(entry) ? [entry] : [];
   while (queue.length > 0) {
-    const cur = queue.pop()!
-    if (runtimeModules.has(cur)) continue
-    runtimeModules.add(cur)
-    for (const next of importsOf(cur)) if (!runtimeModules.has(next)) queue.push(next)
+    const cur = queue.pop()!;
+    if (runtimeModules.has(cur)) continue;
+    runtimeModules.add(cur);
+    for (const next of importsOf(cur)) if (!runtimeModules.has(next)) queue.push(next);
   }
   for (const [name, count] of declarations) {
     // 声明处自己占一次;≤ 声明次数 ⇒ 除此之外无人提及
-    const total = uses.get(name) ?? 0
-    const file = declFile.get(name) ?? '?'
+    const total = uses.get(name) ?? 0;
+    const file = declFile.get(name) ?? "?";
     if (total <= count) {
-      dead.push({ name, file })
-      continue
+      dead.push({ name, file });
+      continue;
     }
     // 只在 spec 里被用到(除声明外运行时零引用):若这个模块本身是运行时模块,就是"骨架信号"
-    const specOnlyCount = specUses.get(name) ?? 0
-    const runtimeUses = total - specOnlyCount
-    const declRel = declFile.get(name) ?? ''
-    if (runtimeModules.has(declPath.get(name) ?? '') && !AUDIT_MODULES.has(declRel) && runtimeUses <= count && specOnlyCount > 0) {
-      specOnly.push({ name, file })
+    const specOnlyCount = specUses.get(name) ?? 0;
+    const runtimeUses = total - specOnlyCount;
+    const declRel = declFile.get(name) ?? "";
+    if (
+      runtimeModules.has(declPath.get(name) ?? "") &&
+      !AUDIT_MODULES.has(declRel) &&
+      runtimeUses <= count &&
+      specOnlyCount > 0
+    ) {
+      specOnly.push({ name, file });
     }
   }
-  const byName = (a: DeadExport, b: DeadExport): number => a.name.localeCompare(b.name)
+  const byName = (a: DeadExport, b: DeadExport): number => a.name.localeCompare(b.name);
   return {
     dead: dead.sort(byName),
     specOnly: specOnly.sort(byName),
-    againDead: againDead.sort((a, b) => a.file.localeCompare(b.file) || a.name.localeCompare(b.name)),
+    againDead: againDead.sort(
+      (a, b) => a.file.localeCompare(b.file) || a.name.localeCompare(b.name),
+    ),
     scanned: files.length,
-    exports: declarations.size
-  }
+    exports: declarations.size,
+  };
 }
 
-describe('死导出审计', () => {
-  const { dead, specOnly, againDead, scanned, exports } = scanExports()
-  const deadNames = dead.map(d => d.name)
+describe("死导出审计", () => {
+  const { dead, specOnly, againDead, scanned, exports } = scanExports();
+  const deadNames = dead.map((d) => d.name);
 
-  it('扫描确实跑起来了(空库不算通过)', () => {
-    expect(scanned).toBeGreaterThan(200)
-    expect(exports).toBeGreaterThan(500)
-  })
+  it("扫描确实跑起来了(空库不算通过)", () => {
+    expect(scanned).toBeGreaterThan(200);
+    expect(exports).toBeGreaterThan(500);
+  });
 
-  it('不新增死导出:写下的每个导出都得有人接', () => {
-    const unexpected = dead.filter(d => !(d.name in ALLOWLIST))
+  it("不新增死导出:写下的每个导出都得有人接", () => {
+    const unexpected = dead.filter((d) => !(d.name in ALLOWLIST));
     expect(
-      unexpected.map(d => `${d.file} → ${d.name}`),
-      '这些导出在 src 里除声明处外无人引用:接上它,或删掉它;确要保留请在 ALLOWLIST 写明原因'
-    ).toEqual([])
-  })
+      unexpected.map((d) => `${d.file} → ${d.name}`),
+      "这些导出在 src 里除声明处外无人引用:接上它,或删掉它;确要保留请在 ALLOWLIST 写明原因",
+    ).toEqual([]);
+  });
 
-  it('豁免不常驻:已被接上的条目必须立即销账', () => {
-    const stale = Object.keys(ALLOWLIST).filter(name => !deadNames.includes(name))
-    expect(stale, '这些名字已经有人接了(或已删除):请从 ALLOWLIST 里删掉,名单不是博物馆').toEqual([])
-  })
+  it("豁免不常驻:已被接上的条目必须立即销账", () => {
+    const stale = Object.keys(ALLOWLIST).filter((name) => !deadNames.includes(name));
+    expect(stale, "这些名字已经有人接了(或已删除):请从 ALLOWLIST 里删掉,名单不是博物馆").toEqual(
+      [],
+    );
+  });
 
   /**
    * 「骨架空转」的判据:运行时模块里,只被 spec 用到的导出 = 声明在前、实现没跟。
@@ -367,29 +405,30 @@ describe('死导出审计', () => {
    * 一个模块若从没被运行时引用过,它整份都是审计工具,自然全是 spec-only。
    */
   const SPEC_ONLY_ALLOWLIST: Record<string, string> = {
-    reliefKinds: '审计汇总:把灵根的劫型解法通道列出来,供渡劫审计与灵根角色审计读',
-    winChanceFromRatio: '审计公式:胜率换算只作审计口径,不进战斗结算',
-    lt: '数值原语:gNum 比较,供公式单调性用例读',
-    gt: '数值原语:gNum 比较,与 lt 成对',
+    reliefKinds: "审计汇总:把灵根的劫型解法通道列出来,供渡劫审计与灵根角色审计读",
+    winChanceFromRatio: "审计公式:胜率换算只作审计口径,不进战斗结算",
+    lt: "数值原语:gNum 比较,供公式单调性用例读",
+    gt: "数值原语:gNum 比较,与 lt 成对",
     // 洞府巡游的测试隔离钩子:caveEvent 是模块态「当下弹窗」,不随 pinia 重置而清,
     // 用例间残留让「今日已出/未触发」洞府用例间歇闪红(earlyGameService.spec)。
     // 销账:把 caveEvent 移进 player store(随 store 重置即得隔离)后删除本导出并移出此表。
-    resetCaveEvent: '测试隔离钩子:清空模块态巡游弹窗,供早期服务洞府用例在 beforeEach 里重置,防跨用例残留闪红'
-  }
+    resetCaveEvent:
+      "测试隔离钩子:清空模块态巡游弹窗,供早期服务洞府用例在 beforeEach 里重置,防跨用例残留闪红",
+  };
 
-  it('运行时模块里的导出,不能只被 spec 用到 —— 那是骨架空转的样子', () => {
-    const unexpected = specOnly.filter(d => !(d.name in SPEC_ONLY_ALLOWLIST))
+  it("运行时模块里的导出,不能只被 spec 用到 —— 那是骨架空转的样子", () => {
+    const unexpected = specOnly.filter((d) => !(d.name in SPEC_ONLY_ALLOWLIST));
     expect(
-      unexpected.map(d => `${d.file} → ${d.name}`),
-      '这些导出只在 spec 里出现:要么接进游戏(像本轮的道侣因果、技艺表),要么删掉;确要保留请写明理由'
-    ).toEqual([])
-  })
+      unexpected.map((d) => `${d.file} → ${d.name}`),
+      "这些导出只在 spec 里出现:要么接进游戏(像本轮的道侣因果、技艺表),要么删掉;确要保留请写明理由",
+    ).toEqual([]);
+  });
 
-  it('骨架豁免同样不常驻:已接上或已删除的,从名单销账', () => {
-    const names = specOnly.map(d => d.name)
-    const stale = Object.keys(SPEC_ONLY_ALLOWLIST).filter(n => !names.includes(n))
-    expect(stale, '这些已经不再是"只在 spec 里出现"了:请从 SPEC_ONLY_ALLOWLIST 删掉').toEqual([])
-  })
+  it("骨架豁免同样不常驻:已接上或已删除的,从名单销账", () => {
+    const names = specOnly.map((d) => d.name);
+    const stale = Object.keys(SPEC_ONLY_ALLOWLIST).filter((n) => !names.includes(n));
+    expect(stale, '这些已经不再是"只在 spec 里出现"了:请从 SPEC_ONLY_ALLOWLIST 删掉').toEqual([]);
+  });
 
   /**
    * 裸再导出(`export { X }`,不带 from)的活死判据:
@@ -398,19 +437,21 @@ describe('死导出审计', () => {
    *
    * 例外极少见,真要留也需要理由(如"为旧路径保留别名"),写进 AGAIN_ALLOWLIST。
    */
-  const AGAIN_ALLOWLIST: Record<string, string> = {}
+  const AGAIN_ALLOWLIST: Record<string, string> = {};
 
-  it('裸再导出不能是死门面:`export { X }` 必须有人从本模块 import 走', () => {
-    const unexpected = againDead.filter(d => !((d.file + ' → ' + d.name) in AGAIN_ALLOWLIST))
+  it("裸再导出不能是死门面:`export { X }` 必须有人从本模块 import 走", () => {
+    const unexpected = againDead.filter((d) => !(d.file + " → " + d.name in AGAIN_ALLOWLIST));
     expect(
-      unexpected.map(d => `${d.file} → ${d.name}`),
-      '这些名字被裸再导出,却没人从本模块 import:要么删掉这层再导出(名字本尊另有出处),要么把 import 改道走本模块'
-    ).toEqual([])
-  })
+      unexpected.map((d) => `${d.file} → ${d.name}`),
+      "这些名字被裸再导出,却没人从本模块 import:要么删掉这层再导出(名字本尊另有出处),要么把 import 改道走本模块",
+    ).toEqual([]);
+  });
 
-  it('裸再导出豁免不常驻:已接上或已删除的,从名单销账', () => {
-    const keys = new Set(againDead.map(d => `${d.file} → ${d.name}`))
-    const stale = Object.keys(AGAIN_ALLOWLIST).filter(k => !keys.has(k))
-    expect(stale, '这些再导出已经有人从本模块 import(或已删除):请从 AGAIN_ALLOWLIST 销账').toEqual([])
-  })
-})
+  it("裸再导出豁免不常驻:已接上或已删除的,从名单销账", () => {
+    const keys = new Set(againDead.map((d) => `${d.file} → ${d.name}`));
+    const stale = Object.keys(AGAIN_ALLOWLIST).filter((k) => !keys.has(k));
+    expect(stale, "这些再导出已经有人从本模块 import(或已删除):请从 AGAIN_ALLOWLIST 销账").toEqual(
+      [],
+    );
+  });
+});

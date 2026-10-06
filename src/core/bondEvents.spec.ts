@@ -443,7 +443,7 @@ describe("共命之险 · 在真实路径上够得着", () => {
     expect(declared.size).toBeGreaterThan(0);
     for (const trig of declared) {
       expect(callers, `没有任何玩法代码会 offer「${trig}」—— 声明了却从不发生`).toContain(
-        `offerBondEvent('${trig}')`,
+        `offerBondEvent("${trig}")`,
       );
     }
   });

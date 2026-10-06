@@ -8,47 +8,50 @@
  * 写了也白写。此处每条规则都带一组既有的 CombatRules,文本只是它的说法。
  * 凡是既有规则表达不出来的,不进这个池子。
  */
-import type { CombatRules } from '@/types'
+import type { CombatRules } from "@/types";
 
 /** 秘境层数:固定三层(放数据里,player.sanitize 读档修形也要用它,免得反手 import core) */
-export const SECRET_LAYERS = 3
+export const SECRET_LAYERS = 3;
 /** 败两次即被逐出 */
-export const SECRET_MAX_LOSSES = 2
+export const SECRET_MAX_LOSSES = 2;
 
 export interface SecretRule {
   /** 给玩家看的说法 */
-  text: string
+  text: string;
   /** 真正并入战斗的规则 */
-  rules: CombatRules
+  rules: CombatRules;
 }
 
 /** 随机规则池 —— 每条都能落到既有的 CombatRules 上 */
 export const SECRET_RULES: SecretRule[] = [
-  { text: '治疗减半', rules: { healMult: 0.5 } },
-  { text: '敌方多一段追击', rules: { enemyExtraMods: { counterRate: 0.15 } } },
-  { text: '回合上限 20', rules: { maxRounds: 20 } },
-  { text: '妖兽狂化(攻击 +20%)', rules: { enemyAtkMult: 1.2 } },
-  { text: '不得使用护盾', rules: { shieldCapRatio: 0 } },
-  { text: '妖血更厚(气血 +25%)', rules: { enemyHpMult: 1.25 } },
-  { text: '此地凶险(敌方攻防各 +10%)', rules: { enemyAtkMult: 1.1, enemyExtraMods: { defensePct: 0.1 } } }
-]
+  { text: "治疗减半", rules: { healMult: 0.5 } },
+  { text: "敌方多一段追击", rules: { enemyExtraMods: { counterRate: 0.15 } } },
+  { text: "回合上限 20", rules: { maxRounds: 20 } },
+  { text: "妖兽狂化(攻击 +20%)", rules: { enemyAtkMult: 1.2 } },
+  { text: "不得使用护盾", rules: { shieldCapRatio: 0 } },
+  { text: "妖血更厚(气血 +25%)", rules: { enemyHpMult: 1.25 } },
+  {
+    text: "此地凶险(敌方攻防各 +10%)",
+    rules: { enemyAtkMult: 1.1, enemyExtraMods: { defensePct: 0.1 } },
+  },
+];
 
 export interface SecretRealmDef {
-  id: string
-  name: string
-  desc: string
+  id: string;
+  name: string;
+  desc: string;
   /** 在哪一册出现:凡境秘境挂在历练页,天界秘境挂在试炼册 */
-  gate: 'mortal' | 'celestial'
+  gate: "mortal" | "celestial";
   /** 可进入的最低大境界(凡境元婴 = 3,天界真仙 = 9) */
-  minMajor: number
+  minMajor: number;
   /** 入口代价:凡境按地界层级折算灵石;天界用道源(与远征/试炼同一种终局资粮) */
-  cost: { stone: number } | { daoSource: number }
+  cost: { stone: number } | { daoSource: number };
   /** 本境自带的规则(进入即生效,与随机规则叠加) */
-  rules: CombatRules
+  rules: CombatRules;
   /** 层间回血比例(负数为损血) */
-  healBetweenPct: number
+  healBetweenPct: number;
   /** 战利倍率 */
-  rewardMult: number
+  rewardMult: number;
 }
 
 /**
@@ -63,65 +66,65 @@ export interface SecretRealmDef {
  */
 export const SECRET_REALMS: SecretRealmDef[] = [
   {
-    id: 'sr_kurong',
-    gate: 'mortal',
-    name: '枯荣古境',
-    desc: '草木枯而复荣。治疗极盛,但每层之末要留一成气血给这片土地。',
+    id: "sr_kurong",
+    gate: "mortal",
+    name: "枯荣古境",
+    desc: "草木枯而复荣。治疗极盛,但每层之末要留一成气血给这片土地。",
     minMajor: 3,
     cost: { stone: 40 },
     rules: { healMult: 2 },
     healBetweenPct: -0.1,
-    rewardMult: 1.2
+    rewardMult: 1.2,
   },
   {
-    id: 'sr_jianzhong',
-    gate: 'mortal',
-    name: '剑冢幻境',
-    desc: '万剑横空。出手极重,防守极薄。',
+    id: "sr_jianzhong",
+    gate: "mortal",
+    name: "剑冢幻境",
+    desc: "万剑横空。出手极重,防守极薄。",
     minMajor: 3,
     cost: { stone: 60 },
     rules: { playerAtkMult: 1.3, playerExtraMods: { defensePct: -0.2 } },
     healBetweenPct: 0.5,
-    rewardMult: 1.3
+    rewardMult: 1.3,
   },
   {
-    id: 'sr_kuye',
-    gate: 'mortal',
-    name: '苦海渡舟',
-    desc: '一叶渡苦海。回气极慢,但彼岸的东西格外丰厚。',
+    id: "sr_kuye",
+    gate: "mortal",
+    name: "苦海渡舟",
+    desc: "一叶渡苦海。回气极慢,但彼岸的东西格外丰厚。",
     minMajor: 4,
     cost: { stone: 80 },
     rules: {},
     healBetweenPct: 0.3,
-    rewardMult: 1.5
+    rewardMult: 1.5,
   },
   // ---- 天界秘境:真仙起,道源代价,与远征/试炼并列 ----
   {
-    id: 'sr_xingchen',
-    gate: 'celestial',
-    name: '星辰古殿',
-    desc: '殿中星轨自行流转。敌势愈盛,天赐亦厚;三层之末,殿心封着一物。',
+    id: "sr_xingchen",
+    gate: "celestial",
+    name: "星辰古殿",
+    desc: "殿中星轨自行流转。敌势愈盛,天赐亦厚;三层之末,殿心封着一物。",
     minMajor: 9,
     cost: { daoSource: 30 },
     rules: { enemyAtkMult: 1.15 },
     healBetweenPct: 0.4,
-    rewardMult: 1.4
+    rewardMult: 1.4,
   },
   {
-    id: 'sr_guixu',
-    gate: 'celestial',
-    name: '归墟之眼',
-    desc: '万流归墟,视之如渊。此地最凶,也最肥 —— 入者未必能再睁眼。',
+    id: "sr_guixu",
+    gate: "celestial",
+    name: "归墟之眼",
+    desc: "万流归墟,视之如渊。此地最凶,也最肥 —— 入者未必能再睁眼。",
     minMajor: 9,
     cost: { daoSource: 50 },
     rules: { playerAtkMult: 1.25, enemyHpMult: 1.2, maxRounds: 25 },
     healBetweenPct: 0.25,
-    rewardMult: 1.8
-  }
-]
+    rewardMult: 1.8,
+  },
+];
 
-const BY_ID = new Map(SECRET_REALMS.map(r => [r.id, r]))
+const BY_ID = new Map(SECRET_REALMS.map((r) => [r.id, r]));
 
 export function secretRealmDef(id: string): SecretRealmDef | undefined {
-  return BY_ID.get(id)
+  return BY_ID.get(id);
 }

@@ -21,14 +21,14 @@
  *
  * 钟的起点见 worldMemory.regionTouchedAt:最后一次在当地战斗、或把它镇压下来。
  */
-import { REGIONS, regionDef } from '@/data/regions'
-import { useAdventureStore } from '@/stores/adventure'
-import { usePlayerStore } from '@/stores/player'
-import { useUiStore } from '@/stores/ui'
-import { isRegionRevived, regionTouchedAt } from './worldMemory'
+import { REGIONS, regionDef } from "@/data/regions";
+import { useAdventureStore } from "@/stores/adventure";
+import { usePlayerStore } from "@/stores/player";
+import { useUiStore } from "@/stores/ui";
+import { isRegionRevived, regionTouchedAt } from "./worldMemory";
 
 /** 提示里最多点名几处 —— 回来一次撞上二十处复聚时,别糊一屏名字 */
-const LITANY_LIMIT = 3
+const LITANY_LIMIT = 3;
 
 /**
  * 结算妖气复聚:够钟的已靖地界旧主归来,镇压随之松开。
@@ -39,49 +39,49 @@ const LITANY_LIMIT = 3
  * @returns 这一次刚复聚的地界 id
  */
 export function settleRegionRevivals(now: number = Date.now()): string[] {
-  const adventure = useAdventureStore()
-  const player = usePlayerStore()
-  const returned: string[] = []
-  const loosened: string[] = []
+  const adventure = useAdventureStore();
+  const player = usePlayerStore();
+  const returned: string[] = [];
+  const loosened: string[] = [];
 
   for (const region of REGIONS) {
-    const clearedNow = adventure.cleared.includes(region.id)
-    const suppressedNow = player.suppressedRegions.includes(region.id)
+    const clearedNow = adventure.cleared.includes(region.id);
+    const suppressedNow = player.suppressedRegions.includes(region.id);
     // 既没靖也压着的地界,没有"妖气"可聚(首领本来就在)
-    if (!clearedNow && !suppressedNow) continue
+    if (!clearedNow && !suppressedNow) continue;
     // 旧主早已归来、镇压也早松开的,不必每 tick 再看一遍
-    if (!suppressedNow && adventure.revived.includes(region.id)) continue
+    if (!suppressedNow && adventure.revived.includes(region.id)) continue;
     const touchedAt = regionTouchedAt(
       player.regionStats[region.id]?.lastUpdateAt,
       player.suppressedSince[region.id],
-      adventure.clearedAt[region.id]
-    )
-    if (!isRegionRevived(touchedAt, now)) continue
+      adventure.clearedAt[region.id],
+    );
+    if (!isRegionRevived(touchedAt, now)) continue;
     // 妖气都聚起来了,压不住 —— 镇压松开(资格仍在,随时可再接回来)
     if (suppressedNow) {
-      player.unsuppressRegion(region.id)
-      loosened.push(region.id)
+      player.unsuppressRegion(region.id);
+      loosened.push(region.id);
     }
     // 已靖的地界:旧主归来,此处不再「已靖」(再靖一次即复位)
     if (clearedNow) {
-      adventure.markRevived(region.id)
-      returned.push(region.id)
+      adventure.markRevived(region.id);
+      returned.push(region.id);
     }
   }
 
-  const ui = useUiStore()
+  const ui = useUiStore();
   if (returned.length > 0) {
-    ui.toast(`仙路日久,妖气复聚:${litany(returned)}的旧主归来 —— 再历一程即可复靖`, 'info')
+    ui.toast(`仙路日久,妖气复聚:${litany(returned)}的旧主归来 —— 再历一程即可复靖`, "info");
   }
   if (loosened.length > 0) {
-    ui.toast(`${litany(loosened)}妖气复聚,镇压松动 —— 此地重新成为历练之地`, 'info')
+    ui.toast(`${litany(loosened)}妖气复聚,镇压松动 —— 此地重新成为历练之地`, "info");
   }
-  return returned
+  return returned;
 }
 
 /** 点名几处,多了就报个数 —— 回来一次撞上二十处复聚时别糊一屏名字 */
 function litany(ids: string[]): string {
-  const names = ids.map(id => regionDef(id)?.name ?? id)
-  const head = names.slice(0, LITANY_LIMIT).join('、')
-  return names.length > LITANY_LIMIT ? `${head} 等 ${names.length} 处` : head
+  const names = ids.map((id) => regionDef(id)?.name ?? id);
+  const head = names.slice(0, LITANY_LIMIT).join("、");
+  return names.length > LITANY_LIMIT ? `${head} 等 ${names.length} 处` : head;
 }

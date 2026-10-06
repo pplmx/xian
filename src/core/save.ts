@@ -8,12 +8,12 @@ import {
   migrateInventorySlice,
   SAVE_VERSION,
   validateImportPayload,
-  type ExportPayload
-} from '@/utils/storage'
-import { encryptSave, readSaveText } from '@/utils/crypto'
-import { defineSaveFormat, runMigrations } from 'wanxiang-engine'
-import { useGameStore } from '@/stores/game'
-import { engine } from './engine'
+  type ExportPayload,
+} from "@/utils/storage";
+import { encryptSave, readSaveText } from "@/utils/crypto";
+import { defineSaveFormat, runMigrations } from "wanxiang-engine";
+import { useGameStore } from "@/stores/game";
+import { engine } from "./engine";
 
 /**
  * 本作的存档格式:版本链由公共库执行(见 packages/engine 的 save / runMigrations)。
@@ -24,51 +24,57 @@ import { engine } from './engine'
 const EXPORT_FORMAT = defineSaveFormat<Record<string, unknown>>({
   currentVersion: SAVE_VERSION,
   migrations: {
-    1: data => {
-      const d = { ...(data as Record<string, unknown>) }
-      if (typeof d.inventory === 'object' && d.inventory !== null) {
-        d.inventory = migrateInventorySlice(d.inventory as Record<string, unknown>)
+    1: (data) => {
+      const d = { ...(data as Record<string, unknown>) };
+      if (typeof d.inventory === "object" && d.inventory !== null) {
+        d.inventory = migrateInventorySlice(d.inventory as Record<string, unknown>);
       }
-      return d
-    }
-  }
-})
+      return d;
+    },
+  },
+});
 
 /** 迁移旧版本存档(链式) */
 function migrate(payload: ExportPayload): ExportPayload {
-  const data = runMigrations(payload.data, payload.version, EXPORT_FORMAT as never) as Record<string, unknown>
-  const migrated: ExportPayload = { ...payload, version: SAVE_VERSION, data: { ...data } }
+  const data = runMigrations(payload.data, payload.version, EXPORT_FORMAT as never) as Record<
+    string,
+    unknown
+  >;
+  const migrated: ExportPayload = { ...payload, version: SAVE_VERSION, data: { ...data } };
   // 导入 = 从这份快照继续:lastActiveAt 重戳为现在的时刻。
   // 快照里吞着的是导出那一刻的时间戳,直接沿用会把「导入旧备份」误算成
   // 「缺勤数月」——离线资源按 8h 封顶、年龄却按全程流,先死处理
-  if (migrated.data.game && typeof migrated.data.game === 'object') {
-    migrated.data.game = { ...(migrated.data.game as Record<string, unknown>), lastActiveAt: Date.now() }
+  if (migrated.data.game && typeof migrated.data.game === "object") {
+    migrated.data.game = {
+      ...(migrated.data.game as Record<string, unknown>),
+      lastActiveAt: Date.now(),
+    };
   }
-  return migrated
+  return migrated;
 }
 
 export function exportSaveText(): string {
   // 导出为密文,防手改;导入时兼容旧版明文 JSON
-  return encryptSave(JSON.stringify(buildExportPayload()))
+  return encryptSave(JSON.stringify(buildExportPayload()));
 }
 
 /** 导入存档文本(密文或旧版明文皆可);成功返回 null,失败返回错误信息 */
 export function importSaveText(text: string): string | null {
-  let parsed: unknown
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(readSaveText(text.trim()))
+    parsed = JSON.parse(readSaveText(text.trim()));
   } catch {
-    return '文件内容无法解析(既非本游戏密文,也非有效 JSON)'
+    return "文件内容无法解析(既非本游戏密文,也非有效 JSON)";
   }
-  const error = validateImportPayload(parsed)
-  if (error) return error
+  const error = validateImportPayload(parsed);
+  if (error) return error;
   try {
-    applyImportPayload(migrate(parsed as ExportPayload))
+    applyImportPayload(migrate(parsed as ExportPayload));
   } catch (e) {
     // 原子导入已回滚旧档,写明「原档还在」,免得玩家以为存档没了
-    return e instanceof Error ? e.message : '写入存档失败,浏览器存储可能不可用'
+    return e instanceof Error ? e.message : "写入存档失败,浏览器存储可能不可用";
   }
-  return null
+  return null;
 }
 
 /**
@@ -79,11 +85,15 @@ export function importSaveText(text: string): string | null {
  * 注意:必须在「导入写盘完成之后」调用——它会把 setItem 置为 noop,先调用会吞掉导入的写入
  */
 export function sealStorageWrites(): void {
-  const noop = (): undefined => undefined
+  const noop = (): undefined => undefined;
   // 主路径:改写 Storage.prototype。它是普通 JS 对象,defineProperty 行为可预期,
   // 且对所有 Storage 实例生效
   try {
-    Object.defineProperty(Storage.prototype, 'setItem', { value: noop, configurable: true, writable: true })
+    Object.defineProperty(Storage.prototype, "setItem", {
+      value: noop,
+      configurable: true,
+      writable: true,
+    });
   } catch {
     // 原型被冻结时降级到下面的实例路径
   }
@@ -92,7 +102,7 @@ export function sealStorageWrites(): void {
   // (实测 Android WebView 91)会把这次 defineProperty 解释成「存一条 key 为
   // setItem 的记录」,原方法毫发无损,封存静默失效。因此它不能作为唯一手段
   try {
-    Object.defineProperty(window.localStorage, 'setItem', { value: noop, configurable: true })
+    Object.defineProperty(window.localStorage, "setItem", { value: noop, configurable: true });
   } catch {
     // 存储不可用时无事可做
   }
@@ -109,17 +119,17 @@ export function sealStorageWrites(): void {
  * 守卫会把任何路由都弹回 welcome,目标页无需在这里指定
  */
 export function resetGame(): void {
-  engine.stop()
-  sealStorageWrites()
-  clearAllSave()
+  engine.stop();
+  sealStorageWrites();
+  clearAllSave();
   // 内存兜底:reload 是异步的,卸载前页面仍在跑。万一两条封存路径都失效,
   // 排队刷盘写回的也是 started:false,守卫照样把人送回 welcome
   try {
-    useGameStore().started = false
+    useGameStore().started = false;
   } catch {
     // Pinia 未激活时(理论上不会走到)忽略
   }
-  window.location.reload()
+  window.location.reload();
 }
 
 /**
@@ -128,7 +138,7 @@ export function resetGame(): void {
  * 一旦触发 SPA 导航引发回写,覆盖的正是刚导入的数据
  */
 export function reloadGame(): void {
-  engine.stop()
-  sealStorageWrites()
-  window.location.reload()
+  engine.stop();
+  sealStorageWrites();
+  window.location.reload();
 }

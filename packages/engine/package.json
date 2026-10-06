@@ -2,20 +2,32 @@
   "name": "wanxiang-engine",
   "version": "0.1.22",
   "description": "万象引擎 —— 可配置的等级(境界)/装备/属性/副本系统内核:换一套名称与内容,就能搭出自己的游戏",
-  "author": "Mystvio",
-  "type": "module",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/pplmx/wanxiang-engine.git"
-  },
+  "keywords": [
+    "attributes",
+    "dungeon",
+    "equipment",
+    "game-engine",
+    "idle-game",
+    "level",
+    "rpg"
+  ],
   "homepage": "https://github.com/pplmx/wanxiang-engine#readme",
   "bugs": {
     "url": "https://github.com/pplmx/wanxiang-engine/issues"
   },
-  "engines": {
-    "node": ">=20"
+  "license": "MIT",
+  "author": "Mystvio",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pplmx/wanxiang-engine.git"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "docs"
+  ],
+  "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -42,12 +54,6 @@
       "import": "./dist/presets/minimal.js"
     }
   },
-  "files": [
-    "dist",
-    "README.md",
-    "CHANGELOG.md",
-    "docs"
-  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "prepack": "tsc -p tsconfig.build.json",
@@ -65,13 +71,7 @@
     "typescript": "~6.0.3",
     "vite-plus": "1.0.0"
   },
-  "keywords": [
-    "game-engine",
-    "idle-game",
-    "rpg",
-    "level",
-    "equipment",
-    "attributes",
-    "dungeon"
-  ]
+  "engines": {
+    "node": ">=20"
+  }
 }

@@ -12,30 +12,30 @@
  *
  * 原则:不为消耗而消耗——每一笔花销都在改变构筑,而非购买数值。
  */
-import type { EquipmentInstance, GNum } from '@/types'
-import { add, gnZero } from '@/utils/gnum'
-import { rng } from '@/utils/random'
-import { affixDef } from '@/data/affixes'
-import { equipmentTemplate } from '@/data/equipment'
-import { qualityDef } from '@/data/qualities'
+import type { EquipmentInstance, GNum } from "@/types";
+import { add, gnZero } from "@/utils/gnum";
+import { rng } from "@/utils/random";
+import { affixDef } from "@/data/affixes";
+import { equipmentTemplate } from "@/data/equipment";
+import { qualityDef } from "@/data/qualities";
 import {
   REFORGE_DUST_BASE,
   REFORGE_SEAL_LOAD,
   REFORGE_STONE_BASE,
-  SEAL_STONE_BASE
-} from '@/data/constants'
-import { stoneByTier } from './formulas'
-import { noteSmithingUsed } from './loreService'
-import { track } from './progress'
-import { ENGINE_WORLD } from './engineWorld'
-import { useInventoryStore } from '@/stores/inventory'
-import { useLoreStore } from '@/stores/lore'
-import { useResourcesStore } from '@/stores/resources'
-import { useUiStore } from '@/stores/ui'
+  SEAL_STONE_BASE,
+} from "@/data/constants";
+import { stoneByTier } from "./formulas";
+import { noteSmithingUsed } from "./loreService";
+import { track } from "./progress";
+import { ENGINE_WORLD } from "./engineWorld";
+import { useInventoryStore } from "@/stores/inventory";
+import { useLoreStore } from "@/stores/lore";
+import { useResourcesStore } from "@/stores/resources";
+import { useUiStore } from "@/stores/ui";
 
 export interface ReforgeCost {
-  stone: GNum
-  dust: number
+  stone: GNum;
+  dust: number;
 }
 
 /**
@@ -46,19 +46,19 @@ export interface ReforgeCost {
  * 无可重铸余地(全封存)时返回 null —— 这是唯一的"不能再炼"。
  */
 export function reforgeCost(inst: EquipmentInstance): ReforgeCost | null {
-  if (reforgeableAffixIds(inst).length === 0) return null
-  const sealed = (inst.sealedAffixIds ?? []).length
-  const load = 1 + sealed * REFORGE_SEAL_LOAD
+  if (reforgeableAffixIds(inst).length === 0) return null;
+  const sealed = (inst.sealedAffixIds ?? []).length;
+  const load = 1 + sealed * REFORGE_SEAL_LOAD;
   return {
     stone: stoneByTier(inst.tier, REFORGE_STONE_BASE * load),
-    dust: Math.round(REFORGE_DUST_BASE * load)
-  }
+    dust: Math.round(REFORGE_DUST_BASE * load),
+  };
 }
 
 /** 可被重铸(未封存)的词条 id 列表 */
 export function reforgeableAffixIds(inst: EquipmentInstance): string[] {
-  const sealed = new Set(inst.sealedAffixIds ?? [])
-  return inst.affixes.map(a => a.id).filter(id => !sealed.has(id))
+  const sealed = new Set(inst.sealedAffixIds ?? []);
+  return inst.affixes.map((a) => a.id).filter((id) => !sealed.has(id));
 }
 
 /**
@@ -66,7 +66,7 @@ export function reforgeableAffixIds(inst: EquipmentInstance): string[] {
  * 判据与界面共用这一处,免得两边各算一遍(封存上限变了,有一边忘了跟)。
  */
 export function sealCapacity(inst: EquipmentInstance): number {
-  return Math.max(0, inst.affixes.length - 1)
+  return Math.max(0, inst.affixes.length - 1);
 }
 
 /**
@@ -79,23 +79,23 @@ export function sealCapacity(inst: EquipmentInstance): number {
  * 品质、阶数、强化等级一概不动 —— 重铸的是一件的「词条构成」,不是它的出身。
  */
 export function reforgeEquipment(uid: string, quiet = false): boolean {
-  const inventory = useInventoryStore()
-  const resources = useResourcesStore()
-  const ui = useUiStore()
-  const inst = inventory.findItem(uid)
-  if (!inst) return false
-  const cost = reforgeCost(inst)
+  const inventory = useInventoryStore();
+  const resources = useResourcesStore();
+  const ui = useUiStore();
+  const inst = inventory.findItem(uid);
+  if (!inst) return false;
+  const cost = reforgeCost(inst);
   if (!cost) {
-    if (!quiet) ui.toast('此物已无重铸余地', 'warn')
-    return false
+    if (!quiet) ui.toast("此物已无重铸余地", "warn");
+    return false;
   }
-  if (!resources.hasStone(cost.stone) || !resources.hasSmall('dust', cost.dust)) {
-    if (!quiet) ui.toast('灵石或器灵尘不足', 'warn')
-    return false
+  if (!resources.hasStone(cost.stone) || !resources.hasSmall("dust", cost.dust)) {
+    if (!quiet) ui.toast("灵石或器灵尘不足", "warn");
+    return false;
   }
 
-  resources.spendStone(cost.stone)
-  resources.spendSmall('dust', cost.dust)
+  resources.spendStone(cost.stone);
+  resources.spendSmall("dust", cost.dust);
 
   /*
    * 重掷本身交给库(见 packages/engine 的 equipment.rerollAffixes)——
@@ -103,97 +103,103 @@ export function reforgeEquipment(uid: string, quiet = false): boolean {
    * 免得"掉出来的"与"洗出来的"有两套口径。
    * 封存(sealedAffixIds)是本作的字段,这里翻译成库的 `keep`。
    */
-  const template = equipmentTemplate(inst.templateId)
-  const sealed = inst.sealedAffixIds ?? []
-  const kept = inst.affixes.filter(a => sealed.includes(a.id))
+  const template = equipmentTemplate(inst.templateId);
+  const sealed = inst.sealedAffixIds ?? [];
+  const kept = inst.affixes.filter((a) => sealed.includes(a.id));
   const affixes = ENGINE_WORLD.equipment.rerollAffixes(inst.affixes, {
     rng,
     quality: qualityDef(inst.quality),
     tier: inst.tier,
     slot: template?.slot,
-    keep: sealed
-  })
-  const before = inst.affixes.length
-  const sealedNote = kept.length > 0 ? `(封存 ${kept.length} 条未动)` : ''
-  const countNote = before === affixes.length ? `${affixes.length} 条` : `${before} → ${affixes.length} 条`
+    keep: sealed,
+  });
+  const before = inst.affixes.length;
+  const sealedNote = kept.length > 0 ? `(封存 ${kept.length} 条未动)` : "";
+  const countNote =
+    before === affixes.length ? `${affixes.length} 条` : `${before} → ${affixes.length} 条`;
 
-  inventory.replaceItem({ ...inst, affixes, reforgeCount: (inst.reforgeCount ?? 0) + 1 })
-  track('upgrades')
+  inventory.replaceItem({ ...inst, affixes, reforgeCount: (inst.reforgeCount ?? 0) + 1 });
+  track("upgrades");
   // 重铸也是炼器:每次上手一味矿材,矿石通晓与锻造技艺照常推进(见 noteSmithingUsed)
-  noteSmithingUsed(inst.tier, true)
+  noteSmithingUsed(inst.tier, true);
   // 重铸更是刻纹 —— 铭纹技艺此前定义了却从没人涨过(玩家反馈「铭纹熟练度老版本为0,
   // 新版本没看到新系统」),真正「刻纹引灵」的活儿就该长这门手艺
-  useLoreStore().addSkillExp('inscribe', 10 * (1 + inst.tier * 0.2))
+  useLoreStore().addSkillExp("inscribe", 10 * (1 + inst.tier * 0.2));
 
-  if (!quiet) ui.toast(`重铸而成:词条 ${countNote}${sealedNote}`, 'success')
-  return true
+  if (!quiet) ui.toast(`重铸而成:词条 ${countNote}${sealedNote}`, "success");
+  return true;
 }
 
 /** 封存成本:第 n 次封存 = 基础 × n(灵石按装备层级换算) */
 export function sealCost(inst: EquipmentInstance): GNum | null {
-  const sealed = inst.sealedAffixIds ?? []
+  const sealed = inst.sealedAffixIds ?? [];
   // 至少留一个可随机位,封满则不可再封
-  if (sealed.length >= sealCapacity(inst)) return null
-  return stoneByTier(inst.tier, SEAL_STONE_BASE * (sealed.length + 1))
+  if (sealed.length >= sealCapacity(inst)) return null;
+  return stoneByTier(inst.tier, SEAL_STONE_BASE * (sealed.length + 1));
 }
 
 /** 封存一个词条:重铸永不替换之 */
 export function sealAffix(uid: string, affixId: string): boolean {
-  const inventory = useInventoryStore()
-  const resources = useResourcesStore()
-  const ui = useUiStore()
-  const inst = inventory.findItem(uid)
-  if (!inst) return false
-  if (!inst.affixes.some(a => a.id === affixId)) return false
-  if ((inst.sealedAffixIds ?? []).includes(affixId)) return false
-  const cost = sealCost(inst)
+  const inventory = useInventoryStore();
+  const resources = useResourcesStore();
+  const ui = useUiStore();
+  const inst = inventory.findItem(uid);
+  if (!inst) return false;
+  if (!inst.affixes.some((a) => a.id === affixId)) return false;
+  if ((inst.sealedAffixIds ?? []).includes(affixId)) return false;
+  const cost = sealCost(inst);
   if (!cost) {
-    ui.toast('至少须留一个词条随天意流转', 'warn')
-    return false
+    ui.toast("至少须留一个词条随天意流转", "warn");
+    return false;
   }
   if (!resources.hasStone(cost)) {
-    ui.toast('灵石不足', 'warn')
-    return false
+    ui.toast("灵石不足", "warn");
+    return false;
   }
-  resources.spendStone(cost)
-  inventory.replaceItem({ ...inst, sealedAffixIds: [...(inst.sealedAffixIds ?? []), affixId] })
-  const name = affixDef(affixId)?.name ?? '词条'
-  ui.toast(`「${name}」已封存,重铸不移`, 'success')
-  return true
+  resources.spendStone(cost);
+  inventory.replaceItem({ ...inst, sealedAffixIds: [...(inst.sealedAffixIds ?? []), affixId] });
+  const name = affixDef(affixId)?.name ?? "词条";
+  ui.toast(`「${name}」已封存,重铸不移`, "success");
+  return true;
 }
 
 // ---------- 自动重铸(玩家反馈:一键重铸多次,洗到指定词条就停) ----------
 
 /** 自动重铸的停止条件:出现「id 命中且 roll ≥ minRoll(未给则任意值)」即收手 */
 export interface ReforgeTarget {
-  affixId: string
+  affixId: string;
   /** 要求的最低 roll(0~1;不填 = 只要出现这个词条就行) */
-  minRoll?: number
+  minRoll?: number;
 }
 
 /** 这件装备当前是否命中任一目标;命中返回那一条 */
-export function refRoleMatches(inst: EquipmentInstance, targets: readonly ReforgeTarget[]): { id: string; roll: number } | null {
+export function refRoleMatches(
+  inst: EquipmentInstance,
+  targets: readonly ReforgeTarget[],
+): { id: string; roll: number } | null {
   for (const t of targets) {
-    const hit = inst.affixes.find(a => a.id === t.affixId && (t.minRoll === undefined || a.roll >= t.minRoll))
-    if (hit) return { id: hit.id, roll: hit.roll }
+    const hit = inst.affixes.find(
+      (a) => a.id === t.affixId && (t.minRoll === undefined || a.roll >= t.minRoll),
+    );
+    if (hit) return { id: hit.id, roll: hit.roll };
   }
-  return null
+  return null;
 }
 
-export type AutoReforgeStop = 'target' | 'budget' | 'broke' | 'frozen'
+export type AutoReforgeStop = "target" | "budget" | "broke" | "frozen";
 
 export interface AutoReforgeOutcome {
   /** 实际洗了几次 */
-  rolls: number
+  rolls: number;
   /** 这几次的灵石账 */
-  stone: GNum
+  stone: GNum;
   /** 这几次的器灵尘账 */
-  dust: number
-  stop: AutoReforgeStop
+  dust: number;
+  stop: AutoReforgeStop;
   /** 命中目标的那一条(null = 没洗到,撞了预算/没钱/无位可洗) */
-  hit: { id: string; roll: number } | null
+  hit: { id: string; roll: number } | null;
   /** 收手时这件装备的词条 id 全表 */
-  affixIds: string[]
+  affixIds: string[];
 }
 
 /**
@@ -205,45 +211,79 @@ export interface AutoReforgeOutcome {
  * - broke   灵石/器灵尘见底,收手;
  * - frozen  这件已无位可洗(全封存)或已不存在。
  */
-export function autoReforge(uid: string, targets: readonly ReforgeTarget[], maxRolls: number): AutoReforgeOutcome {
-  const inventory = useInventoryStore()
-  const resources = useResourcesStore()
-  let stone = gnZero()
-  let dust = 0
+export function autoReforge(
+  uid: string,
+  targets: readonly ReforgeTarget[],
+  maxRolls: number,
+): AutoReforgeOutcome {
+  const inventory = useInventoryStore();
+  const resources = useResourcesStore();
+  let stone = gnZero();
+  let dust = 0;
   // 一个目标都没给:收手,不烧预算 —— 面板上按钮禁用只是挡层,服务本身不当
   if (targets.length === 0) {
-    return { rolls: 0, stone, dust, stop: 'budget', hit: null, affixIds: [] }
+    return { rolls: 0, stone, dust, stop: "budget", hit: null, affixIds: [] };
   }
   // 装备已含目标词条:分文不动,直接收手 —— 别花一次重铸把已到手的条件洗没
-  const initial = inventory.findItem(uid)
+  const initial = inventory.findItem(uid);
   if (initial) {
-    const hit = refRoleMatches(initial, targets)
-    if (hit) return { rolls: 0, stone, dust, stop: 'target', hit, affixIds: initial.affixes.map(a => a.id) }
+    const hit = refRoleMatches(initial, targets);
+    if (hit)
+      return {
+        rolls: 0,
+        stone,
+        dust,
+        stop: "target",
+        hit,
+        affixIds: initial.affixes.map((a) => a.id),
+      };
   }
   for (let i = 0; i < maxRolls; i += 1) {
-    const inst = inventory.findItem(uid)
-    const cost = inst && reforgeCost(inst)
-    if (!inst || !cost) return { rolls: i, stone, dust, stop: 'frozen', hit: null, affixIds: [] }
-    if (!resources.hasStone(cost.stone) || !resources.hasSmall('dust', cost.dust)) {
-      return { rolls: i, stone, dust, stop: 'broke', hit: null, affixIds: inst.affixes.map(a => a.id) }
+    const inst = inventory.findItem(uid);
+    const cost = inst && reforgeCost(inst);
+    if (!inst || !cost) return { rolls: i, stone, dust, stop: "frozen", hit: null, affixIds: [] };
+    if (!resources.hasStone(cost.stone) || !resources.hasSmall("dust", cost.dust)) {
+      return {
+        rolls: i,
+        stone,
+        dust,
+        stop: "broke",
+        hit: null,
+        affixIds: inst.affixes.map((a) => a.id),
+      };
     }
     if (!reforgeEquipment(uid, true)) {
-      return { rolls: i, stone, dust, stop: 'frozen', hit: null, affixIds: inst.affixes.map(a => a.id) }
+      return {
+        rolls: i,
+        stone,
+        dust,
+        stop: "frozen",
+        hit: null,
+        affixIds: inst.affixes.map((a) => a.id),
+      };
     }
-    stone = add(stone, cost.stone)
-    dust += cost.dust
-    const after = inventory.findItem(uid)
-    if (!after) return { rolls: i + 1, stone, dust, stop: 'frozen', hit: null, affixIds: [] }
-    const hit = refRoleMatches(after, targets)
-    if (hit) return { rolls: i + 1, stone, dust, stop: 'target', hit, affixIds: after.affixes.map(a => a.id) }
+    stone = add(stone, cost.stone);
+    dust += cost.dust;
+    const after = inventory.findItem(uid);
+    if (!after) return { rolls: i + 1, stone, dust, stop: "frozen", hit: null, affixIds: [] };
+    const hit = refRoleMatches(after, targets);
+    if (hit)
+      return {
+        rolls: i + 1,
+        stone,
+        dust,
+        stop: "target",
+        hit,
+        affixIds: after.affixes.map((a) => a.id),
+      };
   }
-  const last = inventory.findItem(uid)
+  const last = inventory.findItem(uid);
   return {
     rolls: maxRolls,
     stone,
     dust,
-    stop: 'budget',
+    stop: "budget",
     hit: null,
-    affixIds: last ? last.affixes.map(a => a.id) : []
-  }
+    affixIds: last ? last.affixes.map((a) => a.id) : [],
+  };
 }

@@ -30,11 +30,11 @@
  */
 export interface ProficiencyConfig {
   /** 饱和系数(默认曲线用) */
-  scale: number
+  scale: number;
   /** 上限,默认 100 */
-  cap?: number
+  cap?: number;
   /** 自己接管:给累计经验,返回熟练度(给了它,scale/cap 忽略) */
-  curve?: (exp: number) => number
+  curve?: (exp: number) => number;
 }
 
 /**
@@ -46,24 +46,29 @@ export interface ProficiencyConfig {
  * 第二个参数既可以只给一个数字(旧的写法:饱和系数),也可以给一份配置
  * (想换曲线、改上限时用)。
  */
-export function proficiencyFromExp(exp: number, scaleOrConfig: number | ProficiencyConfig, cap = 100): number {
-  const e = Math.max(0, exp)
-  const config: ProficiencyConfig = typeof scaleOrConfig === 'number' ? { scale: scaleOrConfig, cap } : scaleOrConfig
-  if (config.curve) return config.curve(e)
-  const scale = config.scale
-  const top = config.cap ?? cap
-  if (!(scale > 0)) return cap
-  return (top * e) / (e + scale)
+export function proficiencyFromExp(
+  exp: number,
+  scaleOrConfig: number | ProficiencyConfig,
+  cap = 100,
+): number {
+  const e = Math.max(0, exp);
+  const config: ProficiencyConfig =
+    typeof scaleOrConfig === "number" ? { scale: scaleOrConfig, cap } : scaleOrConfig;
+  if (config.curve) return config.curve(e);
+  const scale = config.scale;
+  const top = config.cap ?? cap;
+  if (!(scale > 0)) return cap;
+  return (top * e) / (e + scale);
 }
 
 /** 分档:给裸数字起名字(按 min 从高到低找第一档) */
 export interface StageDef {
-  min: number
-  name: string
+  min: number;
+  name: string;
 }
 
-export function stageNameOf(level: number, stages: readonly StageDef[], fallback = ''): string {
-  return stages.find(s => level >= s.min)?.name ?? fallback
+export function stageNameOf(level: number, stages: readonly StageDef[], fallback = ""): string {
+  return stages.find((s) => level >= s.min)?.name ?? fallback;
 }
 
 // ============ 技艺水平 ============
@@ -71,25 +76,29 @@ export function stageNameOf(level: number, stages: readonly StageDef[], fallback
 /** 按权重求技艺水平(权重为 0 或 undefined 的项不参与,全无权重时返回 0) */
 export function weightedSkill(
   weights: Readonly<Record<string, number | undefined>>,
-  levelOf: (id: string) => number
+  levelOf: (id: string) => number,
 ): number {
-  let total = 0
-  let weight = 0
+  let total = 0;
+  let weight = 0;
   for (const [id, w] of Object.entries(weights)) {
-    if (w === undefined) continue
-    total += levelOf(id) * w
-    weight += w
+    if (w === undefined) continue;
+    total += levelOf(id) * w;
+    weight += w;
   }
-  return weight > 0 ? total / weight : 0
+  return weight > 0 ? total / weight : 0;
 }
 
 /** 平均认知度:每项按 max 归一后取平均;空列表视为"全懂"(没有未知之物) */
-export function averageLore(ids: readonly string[], loreOf: (id: string) => number, max: number): number {
-  if (ids.length === 0) return 1
-  if (!(max > 0)) return 0
-  let sum = 0
-  for (const id of ids) sum += Math.min(max, Math.max(0, loreOf(id))) / max
-  return sum / ids.length
+export function averageLore(
+  ids: readonly string[],
+  loreOf: (id: string) => number,
+  max: number,
+): number {
+  if (ids.length === 0) return 1;
+  if (!(max > 0)) return 0;
+  let sum = 0;
+  for (const id of ids) sum += Math.min(max, Math.max(0, loreOf(id))) / max;
+  return sum / ids.length;
 }
 
 // ============ 成功率 ============
@@ -102,17 +111,17 @@ export function averageLore(ids: readonly string[], loreOf: (id: string) => numb
  */
 export interface OverReachSpec {
   /** 各档系数,下标即超出的阶数(下标 0 = 没越级) */
-  table: readonly number[]
+  table: readonly number[];
   /** 表外每多一阶乘的系数 */
-  decay: number
+  decay: number;
 }
 
 export function overReachFactor(over: number, spec: OverReachSpec): number {
-  if (over <= 0) return 1
-  const last = spec.table.length - 1
-  if (over <= last) return spec.table[over] ?? 1
-  const tail = spec.table[last] ?? 1
-  return tail * Math.pow(spec.decay, over - last)
+  if (over <= 0) return 1;
+  const last = spec.table.length - 1;
+  if (over <= last) return spec.table[over] ?? 1;
+  const tail = spec.table[last] ?? 1;
+  return tail * Math.pow(spec.decay, over - last);
 }
 
 /**
@@ -122,8 +131,8 @@ export function overReachFactor(over: number, spec: OverReachSpec): number {
  * 0 会让"赌一把"这个选择消失,而那正是这套设计想留给玩家的事。
  */
 export interface LeverSpec {
-  floor: number
-  span: number
+  floor: number;
+  span: number;
   /**
    * 自定义曲线(**可选**):给了它就用它,`floor/span` 只当兜底。
    *
@@ -131,17 +140,17 @@ export interface LeverSpec {
    * "前几级几乎没差别"这类手感需要别的形状 —— 直接给一条函数,不必让库猜。
    * 契约:返回一个乘数,0~1 之间最自然(库不替你夹取)。
    */
-  curve?: (value: number) => number
+  curve?: (value: number) => number;
 }
 
 export function leverFactor(value: number, spec: LeverSpec): number {
-  if (spec.curve) return spec.curve(Math.max(0, Math.min(1, value)))
-  return spec.floor + spec.span * Math.max(0, Math.min(1, value))
+  if (spec.curve) return spec.curve(Math.max(0, Math.min(1, value)));
+  return spec.floor + spec.span * Math.max(0, Math.min(1, value));
 }
 
 export interface CraftFormula {
   /** 各项皆满且不越级时的成功率上限 —— 剩下的留给天意 */
-  baseRate: number
+  baseRate: number;
   /**
    * 乘区表:**几个、叫什么,全由作品定**。
    *
@@ -150,19 +159,19 @@ export interface CraftFormula {
    * 设计与实现"。键名只是标签,引擎只做一件事:**按乘区表逐项取 `下限 + 跨度 × clamp01(值)`
    * 再乘起来**(顺序即对象键的顺序,故结果可复现)。
    */
-  levers: Record<string, LeverSpec>
+  levers: Record<string, LeverSpec>;
   /**
    * 越级惩罚(可选):把某一项的值当作"越了几级"来陡峭折算,作为最后一个因子乘上去。
    *
    * `key` 指向输入里的哪一项(它不必出现在 `levers` 里);
    * 不给就是没有越级这回事 —— 有些题材根本没有"越级"。
    */
-  overReach?: { key: string; spec: OverReachSpec }
+  overReach?: { key: string; spec: OverReachSpec };
 }
 
 export interface CraftLevers {
   /** 乘区名 → 值(作品侧负责归一:0~100 的先除 100);越级那一项也放这里 */
-  [key: string]: number
+  [key: string]: number;
 }
 
 /**
@@ -172,10 +181,11 @@ export interface CraftLevers {
  * 与上游工程原式一致(逐位对齐,迁移时数字一位不变)。
  */
 export function composeCraftRate(values: CraftLevers, formula: CraftFormula): number {
-  let rate = formula.baseRate
+  let rate = formula.baseRate;
   for (const [key, spec] of Object.entries(formula.levers)) {
-    rate *= leverFactor(values[key] ?? 0, spec)
+    rate *= leverFactor(values[key] ?? 0, spec);
   }
-  if (formula.overReach) rate *= overReachFactor(values[formula.overReach.key] ?? 0, formula.overReach.spec)
-  return rate
+  if (formula.overReach)
+    rate *= overReachFactor(values[formula.overReach.key] ?? 0, formula.overReach.spec);
+  return rate;
 }

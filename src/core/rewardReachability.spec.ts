@@ -42,7 +42,9 @@ function walk(dir: string, out: string[] = []): string[] {
 const corpus = walk(SRC)
   .map((f) => readFileSync(f, "utf8"))
   .join("\n");
-const grantedTitles = new Set([...corpus.matchAll(/titleId:\s*'([^']+)'/g)].map((m) => m[1]!));
+const grantedTitles = new Set(
+  [...corpus.matchAll(/titleId:\s*["']([^"']+)["']/g)].map((m) => m[1]!),
+);
 
 describe("奖励可达性 · 称号", () => {
   it("每个称号都有获取路径 —— 不许有只能看不能得的称号", () => {

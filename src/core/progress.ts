@@ -2,27 +2,32 @@
  * 进度服务 —— 计数器 / 成就 / 主线任务 / 每日任务 / 奖励发放
  * 所有系统通过 track() 汇报行为,由此统一驱动成就与任务
  */
-import type { AchvCond, AchievementDef, CounterKey, RewardBundle } from '@/types'
-import { gte } from '@/utils/gnum'
-import { todayStr } from '@/utils/time'
-import { formatGN } from '@/utils/format'
-import { ACHIEVEMENTS } from '@/data/achievements'
-import { MAIN_QUESTS } from '@/data/quests'
-import { LIFESPAN_CRITICAL_RATIO } from '@/data/constants'
-import { titleDef } from '@/data/titles'
-import { pillDef } from '@/data/pills'
-import { stoneByTier } from './formulas'
-import { dailyShapeOf, dailyStateOf, dailyTaskDef, settleDailies } from './engineDailies'
-import { advanceMainChain, mainQuestDefById } from './engineChain'
-import { achievementIdsOf, achievementStateOf, scanAchievements, unlockAchievementById } from './engineUnlocks'
-import { usePlayerStore } from '@/stores/player'
-import { useQuestsStore } from '@/stores/quests'
-import { useResourcesStore } from '@/stores/resources'
-import { useInventoryStore } from '@/stores/inventory'
-import { useUiStore } from '@/stores/ui'
-import type { CollectionCategory } from '@/stores/quests'
-import type { GoalCond, GoalEnv } from 'wanxiang-engine'
-import { evalGoal } from 'wanxiang-engine'
+import type { AchvCond, AchievementDef, CounterKey, RewardBundle } from "@/types";
+import { gte } from "@/utils/gnum";
+import { todayStr } from "@/utils/time";
+import { formatGN } from "@/utils/format";
+import { ACHIEVEMENTS } from "@/data/achievements";
+import { MAIN_QUESTS } from "@/data/quests";
+import { LIFESPAN_CRITICAL_RATIO } from "@/data/constants";
+import { titleDef } from "@/data/titles";
+import { pillDef } from "@/data/pills";
+import { stoneByTier } from "./formulas";
+import { dailyShapeOf, dailyStateOf, dailyTaskDef, settleDailies } from "./engineDailies";
+import { advanceMainChain, mainQuestDefById } from "./engineChain";
+import {
+  achievementIdsOf,
+  achievementStateOf,
+  scanAchievements,
+  unlockAchievementById,
+} from "./engineUnlocks";
+import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
+import { useResourcesStore } from "@/stores/resources";
+import { useInventoryStore } from "@/stores/inventory";
+import { useUiStore } from "@/stores/ui";
+import type { CollectionCategory } from "@/stores/quests";
+import type { GoalCond, GoalEnv } from "wanxiang-engine";
+import { evalGoal } from "wanxiang-engine";
 
 /**
  * 本作的条件 → 库的条件。
@@ -32,16 +37,16 @@ import { evalGoal } from 'wanxiang-engine'
  */
 export function toGoalCond(cond: AchvCond): GoalCond | null {
   switch (cond.type) {
-    case 'counter':
-      return { type: 'counter', key: cond.key, value: cond.value }
-    case 'realm':
-      return { type: 'position', major: cond.major }
-    case 'quality':
-      return null
-    case 'custom': {
-      const m = /^realm_(\d+)_(\d+)$/.exec(cond.key)
-      if (m) return { type: 'position', major: Number(m[1]), sub: Number(m[2]) }
-      return { type: 'custom', key: cond.key }
+    case "counter":
+      return { type: "counter", key: cond.key, value: cond.value };
+    case "realm":
+      return { type: "position", major: cond.major };
+    case "quality":
+      return null;
+    case "custom": {
+      const m = /^realm_(\d+)_(\d+)$/.exec(cond.key);
+      if (m) return { type: "position", major: Number(m[1]), sub: Number(m[2]) };
+      return { type: "custom", key: cond.key };
     }
   }
 }
@@ -53,64 +58,64 @@ export function toGoalCond(cond: AchvCond): GoalCond | null {
  * 等哪天真有(如"是否已渡过某劫"),从这里接上即可,判据那边一行不用改。
  */
 export function goalEnv(): GoalEnv {
-  const quests = useQuestsStore()
-  const player = usePlayerStore()
+  const quests = useQuestsStore();
+  const player = usePlayerStore();
   return {
-    counter: key => quests.counter(key as CounterKey),
+    counter: (key) => quests.counter(key as CounterKey),
     level: () => player.major,
     subLevel: () => player.sub,
-    custom: () => false
-  }
+    custom: () => false,
+  };
 }
 
 /** 玩家当前所处的等效掉落层级 */
 export function playerTier(): number {
-  const player = usePlayerStore()
-  return Math.min(20, player.major * 2 + 1 + (player.sub >= 5 ? 1 : 0))
+  const player = usePlayerStore();
+  return Math.min(20, player.major * 2 + 1 + (player.sub >= 5 ? 1 : 0));
 }
 
 export function grantReward(bundle: RewardBundle, quiet = false): string[] {
-  const resources = useResourcesStore()
-  const quests = useQuestsStore()
-  const inventory = useInventoryStore()
-  const ui = useUiStore()
-  const lines: string[] = []
+  const resources = useResourcesStore();
+  const quests = useQuestsStore();
+  const inventory = useInventoryStore();
+  const ui = useUiStore();
+  const lines: string[] = [];
   if (bundle.stoneTier) {
-    const v = stoneByTier(playerTier(), bundle.stoneTier)
-    resources.addStone(v)
-    lines.push('灵石')
+    const v = stoneByTier(playerTier(), bundle.stoneTier);
+    resources.addStone(v);
+    lines.push("灵石");
   }
   if (bundle.wudao) {
-    resources.addSmall('wudao', bundle.wudao)
-    lines.push(`悟道点×${bundle.wudao}`)
+    resources.addSmall("wudao", bundle.wudao);
+    lines.push(`悟道点×${bundle.wudao}`);
   }
   if (bundle.herb) {
-    resources.addSmall('herb', bundle.herb)
-    lines.push(`灵草×${bundle.herb}`)
+    resources.addSmall("herb", bundle.herb);
+    lines.push(`灵草×${bundle.herb}`);
   }
   if (bundle.ore) {
-    resources.addSmall('ore', bundle.ore)
-    lines.push(`玄铁×${bundle.ore}`)
+    resources.addSmall("ore", bundle.ore);
+    lines.push(`玄铁×${bundle.ore}`);
   }
   if (bundle.page) {
-    resources.addSmall('page', bundle.page)
-    lines.push(`残页×${bundle.page}`)
+    resources.addSmall("page", bundle.page);
+    lines.push(`残页×${bundle.page}`);
   }
   if (bundle.dust) {
-    resources.addSmall('dust', bundle.dust)
-    lines.push(`器灵尘×${bundle.dust}`)
+    resources.addSmall("dust", bundle.dust);
+    lines.push(`器灵尘×${bundle.dust}`);
   }
   if (bundle.pillId && pillDef(bundle.pillId)) {
-    inventory.addPill(bundle.pillId, 1)
-    lines.push(`丹药「${pillDef(bundle.pillId)!.name}」`)
+    inventory.addPill(bundle.pillId, 1);
+    lines.push(`丹药「${pillDef(bundle.pillId)!.name}」`);
   }
   if (bundle.titleId && titleDef(bundle.titleId)) {
     if (quests.ownTitle(bundle.titleId)) {
-      lines.push(`名号「${titleDef(bundle.titleId)!.name}」`)
-      if (!quiet) ui.toast(`获得名号「${titleDef(bundle.titleId)!.name}」`, 'rare')
+      lines.push(`名号「${titleDef(bundle.titleId)!.name}」`);
+      if (!quiet) ui.toast(`获得名号「${titleDef(bundle.titleId)!.name}」`, "rare");
     }
   }
-  return lines
+  return lines;
 }
 
 /**
@@ -118,22 +123,24 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
  * 界面标的是实发额(灵石随层级折实,不是写死的固定数)。
  */
 export function rewardTextAtTier(bundle: RewardBundle | undefined, tier: number): string {
-  if (!bundle) return ''
-  const parts: string[] = []
-  if (bundle.stoneTier) parts.push(`灵石 ${formatGN(stoneByTier(tier, bundle.stoneTier))}`)
-  if (bundle.wudao) parts.push(`悟道点×${bundle.wudao}`)
-  if (bundle.herb) parts.push(`灵草×${bundle.herb}`)
-  if (bundle.ore) parts.push(`玄铁×${bundle.ore}`)
-  if (bundle.page) parts.push(`残页×${bundle.page}`)
-  if (bundle.dust) parts.push(`器灵尘×${bundle.dust}`)
-  if (bundle.pillId && pillDef(bundle.pillId)) parts.push(`丹药「${pillDef(bundle.pillId)!.name}」`)
-  if (bundle.titleId && titleDef(bundle.titleId)) parts.push(`名号「${titleDef(bundle.titleId)!.name}」`)
-  return parts.join(' · ')
+  if (!bundle) return "";
+  const parts: string[] = [];
+  if (bundle.stoneTier) parts.push(`灵石 ${formatGN(stoneByTier(tier, bundle.stoneTier))}`);
+  if (bundle.wudao) parts.push(`悟道点×${bundle.wudao}`);
+  if (bundle.herb) parts.push(`灵草×${bundle.herb}`);
+  if (bundle.ore) parts.push(`玄铁×${bundle.ore}`);
+  if (bundle.page) parts.push(`残页×${bundle.page}`);
+  if (bundle.dust) parts.push(`器灵尘×${bundle.dust}`);
+  if (bundle.pillId && pillDef(bundle.pillId))
+    parts.push(`丹药「${pillDef(bundle.pillId)!.name}」`);
+  if (bundle.titleId && titleDef(bundle.titleId))
+    parts.push(`名号「${titleDef(bundle.titleId)!.name}」`);
+  return parts.join(" · ");
 }
 
 /** 此刻的入账文案:掉落层级取玩家当前等效层级 */
 export function rewardText(bundle: RewardBundle | undefined): string {
-  return rewardTextAtTier(bundle, playerTier())
+  return rewardTextAtTier(bundle, playerTier());
 }
 
 /**
@@ -147,9 +154,9 @@ export function rewardText(bundle: RewardBundle | undefined): string {
  */
 export function evalCond(cond: AchvCond): boolean {
   // 品质成就由 checkQuality 显式触发(不与等级同路),故不走通用判据
-  if (cond.type === 'quality') return false
-  const goal = toGoalCond(cond)
-  return goal !== null && evalGoal(goal, goalEnv())
+  if (cond.type === "quality") return false;
+  const goal = toGoalCond(cond);
+  return goal !== null && evalGoal(goal, goalEnv());
 }
 
 /**
@@ -157,138 +164,147 @@ export function evalCond(cond: AchvCond): boolean {
  * 状态型成就每拍都会来敲一次门,重复发奖正是这层要挡住的事。
  */
 function unlockAchievement(id: string): void {
-  const quests = useQuestsStore()
-  const out = unlockAchievementById(achievementStateOf(quests.achieved), id)
-  if (!out.unlocked || !out.def) return
-  quests.setAchieved(achievementIdsOf(out.state))
-  announceAchievement(out.def)
+  const quests = useQuestsStore();
+  const out = unlockAchievementById(achievementStateOf(quests.achieved), id);
+  if (!out.unlocked || !out.def) return;
+  quests.setAchieved(achievementIdsOf(out.state));
+  announceAchievement(out.def);
 }
 
 /** 发奖 + 报喜(顺序与迁移前一致:先发赏,再提示) */
 function announceAchievement(def: AchievementDef): void {
-  const ui = useUiStore()
-  if (def.reward) grantReward(def.reward, true)
-  ui.toast(`成就达成「${def.name}」`, 'rare')
+  const ui = useUiStore();
+  if (def.reward) grantReward(def.reward, true);
+  ui.toast(`成就达成「${def.name}」`, "rare");
 }
 
 /** 检查所有可自动判定的成就 */
 export function checkAchievements(): void {
-  const quests = useQuestsStore()
-  const out = scanAchievements(achievementStateOf(quests.achieved), def => {
-    if (def.cond.type === 'quality') return false
+  const quests = useQuestsStore();
+  const out = scanAchievements(achievementStateOf(quests.achieved), (def) => {
+    if (def.cond.type === "quality") return false;
     /**
      * custom 分两种:
      * - `realm_<major>_<sub>`:状态可判,这里直接判(此前被一并跳过,于是这条分支成了死代码,
      *   「炼气圆满」那类成就根本无人解锁);
      * - 其余状态型键(lifespanLow / lifespan10k / stone1m):由 checkStateAchievements 显式触发。
      */
-    if (def.cond.type === 'custom' && !/^realm_\d+_\d+$/.test(def.cond.key)) return false
-    return evalCond(def.cond)
-  })
-  if (out.newly.length === 0) return
-  quests.setAchieved(achievementIdsOf(out.state))
-  for (const def of out.newly) announceAchievement(def)
+    if (def.cond.type === "custom" && !/^realm_\d+_\d+$/.test(def.cond.key)) return false;
+    return evalCond(def.cond);
+  });
+  if (out.newly.length === 0) return;
+  quests.setAchieved(achievementIdsOf(out.state));
+  for (const def of out.newly) announceAchievement(def);
 }
 
 /** 品质成就(获得装备时显式调用) */
 export function checkQualityAchievement(rank: number): void {
-  const quests = useQuestsStore()
+  const quests = useQuestsStore();
   for (const def of ACHIEVEMENTS) {
-    if (def.cond.type === 'quality' && !quests.hasAchieved(def.id) && rank >= def.cond.rank) {
-      unlockAchievement(def.id)
+    if (def.cond.type === "quality" && !quests.hasAchieved(def.id) && rank >= def.cond.rank) {
+      unlockAchievement(def.id);
     }
   }
 }
 
 /** 特判成就 */
 export function checkCustomAchievement(key: string): void {
-  const quests = useQuestsStore()
+  const quests = useQuestsStore();
   for (const def of ACHIEVEMENTS) {
-    if (def.cond.type === 'custom' && def.cond.key === key && !quests.hasAchieved(def.id)) {
-      unlockAchievement(def.id)
+    if (def.cond.type === "custom" && def.cond.key === key && !quests.hasAchieved(def.id)) {
+      unlockAchievement(def.id);
     }
   }
 }
 
 /** 周期检查(寿元/灵石等状态型成就) */
 export function checkStateAchievements(): void {
-  const player = usePlayerStore()
-  const resources = useResourcesStore()
-  if (player.lifespanRatio <= LIFESPAN_CRITICAL_RATIO && player.lifespanRatio > 0) checkCustomAchievement('lifespanLow')
-  if (player.lifespanMax >= 10000) checkCustomAchievement('lifespan10k')
-  if (gte(resources.spiritStone, { m: 1, e: 6 })) checkCustomAchievement('stone1m')
+  const player = usePlayerStore();
+  const resources = useResourcesStore();
+  if (player.lifespanRatio <= LIFESPAN_CRITICAL_RATIO && player.lifespanRatio > 0)
+    checkCustomAchievement("lifespanLow");
+  if (player.lifespanMax >= 10000) checkCustomAchievement("lifespan10k");
+  if (gte(resources.spiritStone, { m: 1, e: 6 })) checkCustomAchievement("stone1m");
 }
 
 function checkMainQuest(): void {
-  const quests = useQuestsStore()
-  const ui = useUiStore()
+  const quests = useQuestsStore();
+  const ui = useUiStore();
   /**
    * 一次结算可以连推多节(玩家一口气满足后面几节是常事),守卫是 5 节 ——
    * 顺序与迁移前一致:逐节"发赏 → 提示",再把下标一次落账(见 core/engineChain)。
    */
-  const out = advanceMainChain(quests.mainIdx, node => {
-    const def = mainQuestDefById(node.id)
-    return def !== undefined && evalCond(def.cond)
-  })
+  const out = advanceMainChain(quests.mainIdx, (node) => {
+    const def = mainQuestDefById(node.id);
+    return def !== undefined && evalCond(def.cond);
+  });
   for (const def of out.advanced) {
-    grantReward(def.reward, true)
-    ui.toast(`任务完成「${def.name}」`, 'success')
+    grantReward(def.reward, true);
+    ui.toast(`任务完成「${def.name}」`, "success");
   }
-  if (out.index !== quests.mainIdx) quests.setMainIndex(out.index)
+  if (out.index !== quests.mainIdx) quests.setMainIndex(out.index);
   if (out.capped) {
     // 守卫是为了挡住"条件恒真"这类内容事故,不该静默:说一句,好查
-    console.warn('[进度] 主线一次结算撞上限,请检查条件是否恒真:', out.index, MAIN_QUESTS[out.index]?.id)
+    console.warn(
+      "[进度] 主线一次结算撞上限,请检查条件是否恒真:",
+      out.index,
+      MAIN_QUESTS[out.index]?.id,
+    );
   }
 }
 
 function checkDaily(): void {
-  const quests = useQuestsStore()
-  const ui = useUiStore()
+  const quests = useQuestsStore();
+  const ui = useUiStore();
   // 一次结算"达成且本期没领过"的(顺序即 DAILY_TASKS 顺序),先记账再发赏 ——
   // 发赏若又牵动 track,重新进来也认得出"已经领过"了
-  const settled = settleDailies(dailyStateOf(quests.daily), quests.counters)
-  if (settled.settled.length === 0) return
-  quests.setDailyState(dailyShapeOf(settled.state))
+  const settled = settleDailies(dailyStateOf(quests.daily), quests.counters);
+  if (settled.settled.length === 0) return;
+  quests.setDailyState(dailyShapeOf(settled.state));
   for (const row of settled.settled) {
-    const def = dailyTaskDef(row.task.id)
-    if (!def) continue
-    grantReward(def.reward, true)
-    ui.toast(`日课已成「${def.name}」`, 'success')
+    const def = dailyTaskDef(row.task.id);
+    if (!def) continue;
+    grantReward(def.reward, true);
+    ui.toast(`日课已成「${def.name}」`, "success");
   }
 }
 
 /** 每日重置(引擎在日期变化时调用) */
 export function rolloverDailyIfNeeded(): void {
-  const quests = useQuestsStore()
-  const today = todayStr()
+  const quests = useQuestsStore();
+  const today = todayStr();
   if (quests.daily.date !== today) {
-    quests.rolloverDaily(today)
+    quests.rolloverDaily(today);
   }
 }
 
 /** 统一行为汇报入口 */
 export function track(key: CounterKey, n = 1): void {
-  const quests = useQuestsStore()
-  quests.inc(key, n)
-  checkAchievements()
-  checkMainQuest()
-  checkDaily()
+  const quests = useQuestsStore();
+  quests.inc(key, n);
+  checkAchievements();
+  checkMainQuest();
+  checkDaily();
 }
 
 /** 境界成就(突破后调用) */
 export function trackRealm(): void {
-  const player = usePlayerStore()
-  const quests = useQuestsStore()
+  const player = usePlayerStore();
+  const quests = useQuestsStore();
   for (const def of ACHIEVEMENTS) {
-    if (def.cond.type === 'realm' && !quests.hasAchieved(def.id) && player.major >= def.cond.major) {
-      unlockAchievement(def.id)
+    if (
+      def.cond.type === "realm" &&
+      !quests.hasAchieved(def.id) &&
+      player.major >= def.cond.major
+    ) {
+      unlockAchievement(def.id);
     }
   }
   // 小层也走这里:realm_<major>_<sub> 型成就要在「修至本境圆满」那一刻就解锁
-  checkAchievements()
-  checkMainQuest()
+  checkAchievements();
+  checkMainQuest();
 }
 
 export function collect(category: CollectionCategory, id: string): void {
-  useQuestsStore().collect(category, id)
+  useQuestsStore().collect(category, id);
 }

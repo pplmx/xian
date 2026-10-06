@@ -1,56 +1,56 @@
 /** 玩家状态 —— 境界 / 修为 / 寿元 / 灵根 / 最终属性汇总 */
-import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
-import type { FinalStats, GNum, LinggenProfile, StatMods } from '@/types'
-import { gn, gnZero, add, gte, mulN, progress, subClamp } from '@/utils/gnum'
-import { persistConfig } from '@/utils/storage'
-import { realmDef, realmLabel, worldOf, SUB_NAMES, MAX_MAJOR } from '@/data/realms'
-import { SUB_LEVELS, START_AGE } from '@/data/constants'
-import { QI_BANK_MULT } from '@/data/constants'
-import { legacyInsightOf } from '@/data/samsara'
-import { titleDef } from '@/data/titles'
-import { COMPANION_SYSTEM } from '@/core/engineWorld'
-import { mentorDef } from '@/data/mentors'
-import { talentDef } from '@/data/talents'
-import { heritageDef } from '@/data/heritage'
-import { baseCultPerSec, baseQiRegen, expRequirement, qiCap } from '@/core/formulas'
-import { computeFinalStats, modOf } from '@/core/statsCalc'
-import { todayWeather } from '@/core/weather'
-import { readingFromState, readingMods } from '@/core/divination'
-import { asFiniteNumber, asStringArray } from '@/utils/saveShape'
-import { SECRET_LAYERS, SECRET_MAX_LOSSES, SECRET_REALMS, SECRET_RULES } from '@/data/secretRealms'
-import { DAOLU, STAGE_ORDER } from '@/data/daolu'
-import { regionDef } from '@/data/regions'
-import { petDef } from '@/data/pets'
-import { fateChart, fateMods, fateSeed } from '@/core/fate'
-import type { FortuneChoice } from '@/core/fortuneChain'
-import { useInventoryStore } from './inventory'
-import { useCultivationStore } from './cultivation'
-import { useDongfuStore } from './dongfu'
-import { useResourcesStore } from './resources'
-import { useQuestsStore } from './quests'
-import { useEndgameStore } from './endgame'
-import { useGameStore } from './game'
-import { gameNow } from '@/core/enginePause'
+import { defineStore } from "pinia";
+import { computed, ref } from "vue";
+import type { FinalStats, GNum, LinggenProfile, StatMods } from "@/types";
+import { gn, gnZero, add, gte, mulN, progress, subClamp } from "@/utils/gnum";
+import { persistConfig } from "@/utils/storage";
+import { realmDef, realmLabel, worldOf, SUB_NAMES, MAX_MAJOR } from "@/data/realms";
+import { SUB_LEVELS, START_AGE } from "@/data/constants";
+import { QI_BANK_MULT } from "@/data/constants";
+import { legacyInsightOf } from "@/data/samsara";
+import { titleDef } from "@/data/titles";
+import { COMPANION_SYSTEM } from "@/core/engineWorld";
+import { mentorDef } from "@/data/mentors";
+import { talentDef } from "@/data/talents";
+import { heritageDef } from "@/data/heritage";
+import { baseCultPerSec, baseQiRegen, expRequirement, qiCap } from "@/core/formulas";
+import { computeFinalStats, modOf } from "@/core/statsCalc";
+import { todayWeather } from "@/core/weather";
+import { readingFromState, readingMods } from "@/core/divination";
+import { asFiniteNumber, asStringArray } from "@/utils/saveShape";
+import { SECRET_LAYERS, SECRET_MAX_LOSSES, SECRET_REALMS, SECRET_RULES } from "@/data/secretRealms";
+import { DAOLU, STAGE_ORDER } from "@/data/daolu";
+import { regionDef } from "@/data/regions";
+import { petDef } from "@/data/pets";
+import { fateChart, fateMods, fateSeed } from "@/core/fate";
+import type { FortuneChoice } from "@/core/fortuneChain";
+import { useInventoryStore } from "./inventory";
+import { useCultivationStore } from "./cultivation";
+import { useDongfuStore } from "./dongfu";
+import { useResourcesStore } from "./resources";
+import { useQuestsStore } from "./quests";
+import { useEndgameStore } from "./endgame";
+import { useGameStore } from "./game";
+import { gameNow } from "@/core/enginePause";
 
 export const usePlayerStore = defineStore(
-  'player',
+  "player",
   () => {
-    const inventory = useInventoryStore()
-    const cultivation = useCultivationStore()
-    const dongfu = useDongfuStore()
-    const resources = useResourcesStore()
+    const inventory = useInventoryStore();
+    const cultivation = useCultivationStore();
+    const dongfu = useDongfuStore();
+    const resources = useResourcesStore();
 
-    const name = ref('无名散修')
-    const linggen = ref<LinggenProfile | null>(null)
-    const major = ref(0)
-    const sub = ref(0)
-    const exp = ref<GNum>(gnZero())
-    const age = ref(START_AGE)
-    const lifespanBonusYears = ref(0)
-    const titleId = ref<string | null>(null)
-    const petId = ref<string | null>(null)
-    const dead = ref(false)
+    const name = ref("无名散修");
+    const linggen = ref<LinggenProfile | null>(null);
+    const major = ref(0);
+    const sub = ref(0);
+    const exp = ref<GNum>(gnZero());
+    const age = ref(START_AGE);
+    const lifespanBonusYears = ref(0);
+    const titleId = ref<string | null>(null);
+    const petId = ref<string | null>(null);
+    const dead = ref(false);
     /**
      * 轮回(Phase 32.5 重构)。
      *
@@ -66,18 +66,18 @@ export const usePlayerStore = defineStore(
       /** 宿命传承(ISS-302):跨世永久的能力位,随神魂不灭 */
       heritage: [] as string[],
       insight: 0,
-      lives: [] as import('@/data/samsara').LifeRecord[],
-      vow: null as import('@/data/samsara').LifeVow | null,
+      lives: [] as import("@/data/samsara").LifeRecord[],
+      vow: null as import("@/data/samsara").LifeVow | null,
       /** 这一世签下的逆旅契(道果的第一个非效率出口);转世时清空 */
-      trial: null as import('@/data/lifeTrials').LifeTrialState | null,
+      trial: null as import("@/data/lifeTrials").LifeTrialState | null,
       /**
        * 历世的关系履历(Phase 33.8)。
        *
        * 跨轮回**只留历史,不留人**:下一世不会自动带回同一个道侣,
        * 但「曾与谁走到哪一步」会记在这里,并成为宿缘重逢的依据
        */
-      bonds: [] as import('@/core/daoluService').BondRecord[]
-    })
+      bonds: [] as import("@/core/daoluService").BondRecord[],
+    });
 
     /**
      * 这一世的关系(Phase 33.8)。
@@ -85,37 +85,37 @@ export const usePlayerStore = defineStore(
      * 与 reincarnation.bonds 分开:那是历史,这是当下。
      * 转世时清空 —— 人不跨世继承
      */
-    const bond = ref<import('@/core/daoluService').BondState | null>(null)
+    const bond = ref<import("@/core/daoluService").BondState | null>(null);
 
     // Phase 28 前期玩法状态
-    const eventChains = ref<import('@/types').EventChainState>({}) // 奇遇连锁进度(链路实装见 RIL)
-    const winStreak = ref(0) // 当前连胜数
-    const lastCaveEventDay = ref(0) // 上次洞府巡游日期
+    const eventChains = ref<import("@/types").EventChainState>({}); // 奇遇连锁进度(链路实装见 RIL)
+    const winStreak = ref(0); // 当前连胜数
+    const lastCaveEventDay = ref(0); // 上次洞府巡游日期
 
     // Phase 30 区域镇压(每个区域独立统计)
-    const regionStats = ref<Record<string, import('@/core/suppress').RegionStats>>({})
-    const suppressedRegions = ref<string[]>([])
+    const regionStats = ref<Record<string, import("@/core/suppress").RegionStats>>({});
+    const suppressedRegions = ref<string[]>([]);
     /**
      * 镇压资格(取得即永久,随世界记忆跨世保留)。
      *
      * 「镇压过就镇压过」:一旦对某地区域取得过绝对优势,此后随时可把它切回收益态,
      * 不必再打满二十场重新证明一遍。收益是否正在收取是另一件事(见 suppressedRegions)。
      */
-    const suppressQualified = ref<string[]>([])
+    const suppressQualified = ref<string[]>([]);
     /** 镇压时间戳:区域 → 镇压开始的时刻(供复苏判定) */
-    const suppressedSince = ref<Record<string, number>>({})
+    const suppressedSince = ref<Record<string, number>>({});
 
     // Phase 31 师承:凡界修行者的额外成长思想(跨世保留)
-    const mentor = ref<import('@/data/mentors').MentorId | null>(null)
+    const mentor = ref<import("@/data/mentors").MentorId | null>(null);
 
     // Phase 31 A2 区域动态事件(单区域内一次一个,自动过期)
-    const regionEvent = ref<import('@/core/regionEvent').RegionEventState | null>(null)
+    const regionEvent = ref<import("@/core/regionEvent").RegionEventState | null>(null);
 
     // Phase 31 S3 短期秘境(一次性内容容器,进行中状态)
-    const secretRealm = ref<import('@/core/secretRealm').SecretRealmState | null>(null)
+    const secretRealm = ref<import("@/core/secretRealm").SecretRealmState | null>(null);
 
     /** Phase 34.3 问卦所得之卦(一世一时之象,过期自散;转世不带) */
-    const divination = ref<import('@/core/divination').DivinationState | null>(null)
+    const divination = ref<import("@/core/divination").DivinationState | null>(null);
 
     /**
      * 突破准备(静坐/聚气丹)—— **付费的一次性加成必须存进档**。
@@ -124,7 +124,9 @@ export const usePlayerStore = defineStore(
      * 玩家一刷新页面就没了 —— 顿悟/巡游丢状态无所谓(那是免费的提示),
      * 花钱买的一次性加成丢了就是吞了玩家的资源。
      */
-    const breakthroughPrep = ref<import('@/core/earlyGameService').BreakthroughPrepState | null>(null)
+    const breakthroughPrep = ref<import("@/core/earlyGameService").BreakthroughPrepState | null>(
+      null,
+    );
 
     /**
      * 上次顿悟的时刻 —— 这是**频次闸**,必须随档。
@@ -132,57 +134,61 @@ export const usePlayerStore = defineStore(
      * 顿悟给悟道点(真货币),原先冷却挂在模块上:刷新一次页面冷却归零,
      * 变成「重开页面刷顿悟」。闸门跨世保留(它不是本世进度,是速率限制)。
      */
-    const enlightenmentAt = ref(0)
+    const enlightenmentAt = ref(0);
 
     // Phase 31.1 机缘链:机缘选择记忆(取/弃),影响师承推荐与未来同类机缘
-    const fortuneChoices = ref<Record<string, FortuneChoice>>({})
+    const fortuneChoices = ref<Record<string, FortuneChoice>>({});
 
     // Phase 30.9 世界记忆
     /** 宿敌列表(同一敌人败我 ≥3 次) */
-    const nemeses = ref<import('@/types').NemesisRecord[]>([])
+    const nemeses = ref<import("@/types").NemesisRecord[]>([]);
     /** 区域总胜场(供兴衰状态派生;regionStats 已有近似数据,但保持独立统计纯胜场) */
-    const regionWins = ref<Record<string, number>>({})
+    const regionWins = ref<Record<string, number>>({});
 
     // ---------- 境界 ----------
-    const realm = computed(() => realmDef(major.value))
-    const realmName = computed(() => realmLabel(major.value, sub.value))
-    const world = computed(() => worldOf(major.value))
-    const worldName = computed(() => world.value.name)
-    const subName = computed(() => SUB_NAMES[Math.min(sub.value, SUB_NAMES.length - 1)]!)
-    const expReq = computed(() => expRequirement(major.value, sub.value))
-    const expProgress = computed(() => progress(exp.value, expReq.value))
-    const expFull = computed(() => gte(exp.value, expReq.value))
+    const realm = computed(() => realmDef(major.value));
+    const realmName = computed(() => realmLabel(major.value, sub.value));
+    const world = computed(() => worldOf(major.value));
+    const worldName = computed(() => world.value.name);
+    const subName = computed(() => SUB_NAMES[Math.min(sub.value, SUB_NAMES.length - 1)]!);
+    const expReq = computed(() => expRequirement(major.value, sub.value));
+    const expProgress = computed(() => progress(exp.value, expReq.value));
+    const expFull = computed(() => gte(exp.value, expReq.value));
     /** 修为积余:越过当前突破需求的部分(卡境期间继续累积,突破时随境界带走) */
-    const expOverflow = computed(() => subClamp(exp.value, expReq.value))
-    const isMajorStep = computed(() => sub.value >= SUB_LEVELS - 1)
-    const atMaxRealm = computed(() => major.value >= MAX_MAJOR && sub.value >= SUB_LEVELS - 1)
+    const expOverflow = computed(() => subClamp(exp.value, expReq.value));
+    const isMajorStep = computed(() => sub.value >= SUB_LEVELS - 1);
+    const atMaxRealm = computed(() => major.value >= MAX_MAJOR && sub.value >= SUB_LEVELS - 1);
 
     // ---------- 属性汇总 ----------
-    const talentMods = computed<StatMods[]>(() => reincarnation.value.talents.map(id => talentDef(id)?.mods ?? {}))
-    const titleMods = computed<StatMods>(() => (titleId.value ? (titleDef(titleId.value)?.mods ?? {}) : {}))
+    const talentMods = computed<StatMods[]>(() =>
+      reincarnation.value.talents.map((id) => talentDef(id)?.mods ?? {}),
+    );
+    const titleMods = computed<StatMods>(() =>
+      titleId.value ? (titleDef(titleId.value)?.mods ?? {}) : {},
+    );
     const mentorMods = computed<StatMods>(() => {
-      if (!mentor.value) return {}
-      return mentorDef(mentor.value)?.mods ?? {}
-    })
+      if (!mentor.value) return {};
+      return mentorDef(mentor.value)?.mods ?? {};
+    });
     const petMods = computed<StatMods>(() => {
-      if (!petId.value) return {}
+      if (!petId.value) return {};
       // 灵兽园等级(beastMult)与「安抚灵兽」类 buff(beastPct)都放大灵兽效果;
       // buffMods 只依赖 cultivation 自身,不兜回本 computed,无循环
-      const buffPct = 1 + modOf(cultivation.buffMods, 'beastPct')
-      const scaled: StatMods = {}
+      const buffPct = 1 + modOf(cultivation.buffMods, "beastPct");
+      const scaled: StatMods = {};
       // "这只灵兽带哪些词条"由库的伙伴系统回答(见 core/engineWorld 的 COMPANION_SYSTEM)
-      const base = COMPANION_SYSTEM.modsOf(petId.value)
+      const base = COMPANION_SYSTEM.modsOf(petId.value);
       for (const k in base) {
-        const key = k as keyof StatMods
-        scaled[key] = (base[key] ?? 0) * dongfu.beastMult * buffPct
+        const key = k as keyof StatMods;
+        scaled[key] = (base[key] ?? 0) * dongfu.beastMult * buffPct;
       }
-      return scaled
-    })
+      return scaled;
+    });
 
     /** 当天天时(Phase 31 A1)作为环境 mod 源并入最终属性:
      * 灵雨修炼/灵气、赤阳伤害、月蚀福缘/掉落、雷鸣攻伐/渡劫抗性 ——
      * 战斗/掉落/渡劫均读 finalStats.mods,故并入即可全链路生效,无需各自接线 */
-    const weatherMods = computed<StatMods>(() => todayWeather().mods)
+    const weatherMods = computed<StatMods>(() => todayWeather().mods);
 
     /**
      * 在身之卦:与天时同法并入最终属性。
@@ -193,32 +199,32 @@ export const usePlayerStore = defineStore(
      */
     const activeDivination = computed(() => {
       // 读一次心跳:过期判定要随引擎推进被重新计算(见 engine 的 addPlayTime)
-      void useGameStore().totalPlaySec
-      const state = divination.value
-      return state && state.expiresAt > gameNow() ? state : null
-    })
+      void useGameStore().totalPlaySec;
+      const state = divination.value;
+      return state && state.expiresAt > gameNow() ? state : null;
+    });
     const divinationMods = computed<StatMods>(() => {
-      const state = activeDivination.value
-      if (!state) return {}
-      const reading = readingFromState(state)
-      return reading ? readingMods(reading) : {}
-    })
+      const state = activeDivination.value;
+      if (!state) return {};
+      const reading = readingFromState(state);
+      return reading ? readingMods(reading) : {};
+    });
 
     /**
      * 本世命格(紫微十二宫):由灵根与转世数确定性推出,不落状态、不耗时日。
      * 一世不变,转世重算 —— 与"一时之卦"分工明确。
      */
-    const chart = computed(() => fateChart(fateSeed(linggen.value, reincarnation.value.count)))
-    const fateModsValue = computed<StatMods>(() => fateMods(chart.value))
+    const chart = computed(() => fateChart(fateSeed(linggen.value, reincarnation.value.count)));
+    const fateModsValue = computed<StatMods>(() => fateMods(chart.value));
 
     const qiCapValue = computed(() => {
       // 聚灵阵(qiCapMult)与「修复阵法」类 buff(qiCapPct)都能抬高灵气上限
-      const buffPct = 1 + modOf(cultivation.buffMods, 'qiCapPct')
-      return Math.floor(qiCap(major.value, sub.value) * dongfu.qiCapMult * buffPct)
-    })
-    const qiRich = computed(() => resources.qi >= qiCapValue.value * 0.5)
+      const buffPct = 1 + modOf(cultivation.buffMods, "qiCapPct");
+      return Math.floor(qiCap(major.value, sub.value) * dongfu.qiCapMult * buffPct);
+    });
+    const qiRich = computed(() => resources.qi >= qiCapValue.value * 0.5);
     /** 灵气积余上限(标称容量 × 积余倍数):卡境期间灵气可存到此处 */
-    const qiBankCapValue = computed(() => qiCapValue.value * QI_BANK_MULT)
+    const qiBankCapValue = computed(() => qiCapValue.value * QI_BANK_MULT);
 
     const finalStats = computed<FinalStats>(() =>
       computeFinalStats({
@@ -237,29 +243,29 @@ export const usePlayerStore = defineStore(
           weatherMods.value,
           divinationMods.value,
           fateModsValue.value,
-          ...talentMods.value
+          ...talentMods.value,
         ],
         // 名字与上面一一对应 —— 面板的「来源明细」直接读它们,不再另起一套说法
         sourceNames: [
-          '装备',
-          '功法',
-          '丹药与增益',
-          '洞府建筑',
-          '灵脉',
-          '称号',
-          '师承',
-          '灵兽',
-          '天时',
-          '在身之卦',
-          '命格',
-          ...reincarnation.value.talents.map(id => `天赋·${talentDef(id)?.name ?? id}`)
+          "装备",
+          "功法",
+          "丹药与增益",
+          "洞府建筑",
+          "灵脉",
+          "称号",
+          "师承",
+          "灵兽",
+          "天时",
+          "在身之卦",
+          "命格",
+          ...reincarnation.value.talents.map((id) => `天赋·${talentDef(id)?.name ?? id}`),
         ],
         /** 凡界的平铺三维:**装备给的攻防血就是从这里进来的**(见 core/statsCalc) */
         equipFlats: inventory.equipFlats,
         daoFruit: reincarnation.value.daoFruit,
-        qiRich: qiRich.value
-      })
-    )
+        qiRich: qiRich.value,
+      }),
+    );
 
     /**
      * 天界口径属性(Phase 33.3)——凡器入天界,数值尽去,只余形意。
@@ -271,7 +277,7 @@ export const usePlayerStore = defineStore(
      * 功法、洞府、称号、师承、灵兽、天赋皆属修士自身之道,不受此约束
      */
     const celestialStats = computed<FinalStats>(() => {
-      const endgame = useEndgameStore()
+      const endgame = useEndgameStore();
       return computeFinalStats({
         major: major.value,
         sub: sub.value,
@@ -300,53 +306,61 @@ export const usePlayerStore = defineStore(
           weatherMods.value,
           divinationMods.value,
           fateModsValue.value,
-          ...talentMods.value
+          ...talentMods.value,
         ],
         sourceNames: [
-          '凡界装备',
-          '器魂',
-          '功法',
-          '丹药与增益',
-          '洞府建筑',
-          '灵脉',
-          '称号',
-          '师承',
-          '灵兽',
-          '天时',
-          '在身之卦',
-          '命格',
-          ...reincarnation.value.talents.map(id => `天赋·${talentDef(id)?.name ?? id}`)
+          "凡界装备",
+          "器魂",
+          "功法",
+          "丹药与增益",
+          "洞府建筑",
+          "灵脉",
+          "称号",
+          "师承",
+          "灵兽",
+          "天时",
+          "在身之卦",
+          "命格",
+          ...reincarnation.value.talents.map((id) => `天赋·${talentDef(id)?.name ?? id}`),
         ],
         /** 平铺三维也照常作数:它就是「基础属性」本身 */
         equipFlats: inventory.equipFlats,
         daoFruit: reincarnation.value.daoFruit,
-        qiRich: qiRich.value
-      })
-    })
+        qiRich: qiRich.value,
+      });
+    });
 
     /** 修为增速(每秒) */
     const cultPerSec = computed(
-      () => baseCultPerSec(major.value, sub.value) * Math.max(0.05, 1 + modOf(finalStats.value.mods, 'cultivationSpeed'))
-    )
-    const qiRegenPerSec = computed(() => baseQiRegen(major.value) * Math.max(0.05, 1 + modOf(finalStats.value.mods, 'qiRegen')))
+      () =>
+        baseCultPerSec(major.value, sub.value) *
+        Math.max(0.05, 1 + modOf(finalStats.value.mods, "cultivationSpeed")),
+    );
+    const qiRegenPerSec = computed(
+      () => baseQiRegen(major.value) * Math.max(0.05, 1 + modOf(finalStats.value.mods, "qiRegen")),
+    );
 
     // ---------- 寿元 ----------
     const lifespanMax = computed(() => {
-      const base = realm.value.lifespanYears
-      return Math.floor(base * (1 + modOf(finalStats.value.mods, 'lifespanPct')) + lifespanBonusYears.value)
-    })
-    const lifespanRatio = computed(() => Math.max(0, 1 - age.value / Math.max(1, lifespanMax.value)))
+      const base = realm.value.lifespanYears;
+      return Math.floor(
+        base * (1 + modOf(finalStats.value.mods, "lifespanPct")) + lifespanBonusYears.value,
+      );
+    });
+    const lifespanRatio = computed(() =>
+      Math.max(0, 1 - age.value / Math.max(1, lifespanMax.value)),
+    );
 
     // ---------- 动作 ----------
     function initCharacter(newName: string, profile: LinggenProfile): void {
-      name.value = newName
-      linggen.value = profile
-      major.value = 0
-      sub.value = 0
-      exp.value = gnZero()
-      age.value = START_AGE
-      lifespanBonusYears.value = 0
-      dead.value = false
+      name.value = newName;
+      linggen.value = profile;
+      major.value = 0;
+      sub.value = 0;
+      exp.value = gnZero();
+      age.value = START_AGE;
+      lifespanBonusYears.value = 0;
+      dead.value = false;
     }
 
     /**
@@ -357,56 +371,56 @@ export const usePlayerStore = defineStore(
      * 积余带入下一境 —— 等待因此不是浪费,而是把后面的指数级开销先垫上。
      */
     function gainExp(v: GNum): void {
-      exp.value = add(exp.value, v)
+      exp.value = add(exp.value, v);
     }
 
     function loseExpPct(pct: number): void {
-      exp.value = subClamp(exp.value, mulN(exp.value, pct))
+      exp.value = subClamp(exp.value, mulN(exp.value, pct));
     }
 
     function advanceRealm(): void {
       // 先记下「刚走完的这一境」的需求:突破只该扣这一份,积余随境界带走
-      const spent = expReq.value
+      const spent = expReq.value;
       if (isMajorStep.value) {
         if (major.value < MAX_MAJOR) {
-          major.value += 1
-          sub.value = 0
+          major.value += 1;
+          sub.value = 0;
         }
       } else {
-        sub.value += 1
+        sub.value += 1;
       }
-      exp.value = subClamp(exp.value, spent)
+      exp.value = subClamp(exp.value, spent);
     }
 
     function addAge(years: number): void {
-      age.value += years
+      age.value += years;
     }
 
     function addLifespan(years: number): void {
-      lifespanBonusYears.value += years
+      lifespanBonusYears.value += years;
     }
 
     /** 改道号/名号(非建号流程专用;转世重拟名号用) */
     function setName(newName: string): void {
-      name.value = newName
+      name.value = newName;
     }
 
     function setTitle(id: string | null): void {
-      titleId.value = id
+      titleId.value = id;
     }
 
     function setPet(id: string | null): void {
-      petId.value = id
+      petId.value = id;
       // 唤作伴便入册:灵兽册「相伴中/曾相伴」档从这里记(见 ui/codex 灵兽册)
-      if (id) useQuestsStore().recordPetCompanion(id)
+      if (id) useQuestsStore().recordPetCompanion(id);
     }
 
     function addTalent(id: string): void {
       if (!reincarnation.value.talents.includes(id)) {
         reincarnation.value = {
           ...reincarnation.value,
-          talents: [...reincarnation.value.talents, id]
-        }
+          talents: [...reincarnation.value.talents, id],
+        };
       }
     }
 
@@ -415,13 +429,13 @@ export const usePlayerStore = defineStore(
       if (!reincarnation.value.heritage.includes(id)) {
         reincarnation.value = {
           ...reincarnation.value,
-          heritage: [...reincarnation.value.heritage, id]
-        }
+          heritage: [...reincarnation.value.heritage, id],
+        };
       }
     }
 
     function addDaoFruit(n: number): void {
-      reincarnation.value = { ...reincarnation.value, daoFruit: reincarnation.value.daoFruit + n }
+      reincarnation.value = { ...reincarnation.value, daoFruit: reincarnation.value.daoFruit + n };
     }
 
     /**
@@ -434,17 +448,17 @@ export const usePlayerStore = defineStore(
      * @returns 余额不足时返回 false,不做任何改动
      */
     function spendDaoFruit(n: number): boolean {
-      if (!(n > 0) || reincarnation.value.daoFruit < n) return false
-      reincarnation.value = { ...reincarnation.value, daoFruit: reincarnation.value.daoFruit - n }
-      return true
+      if (!(n > 0) || reincarnation.value.daoFruit < n) return false;
+      reincarnation.value = { ...reincarnation.value, daoFruit: reincarnation.value.daoFruit - n };
+      return true;
     }
 
     /** 签下这一世的逆旅契(null 为解除) */
-    function setLifeTrial(trial: import('@/data/lifeTrials').LifeTrialState | null): void {
-      reincarnation.value = { ...reincarnation.value, trial }
+    function setLifeTrial(trial: import("@/data/lifeTrials").LifeTrialState | null): void {
+      reincarnation.value = { ...reincarnation.value, trial };
     }
 
-    function setBond(b: import('@/core/daoluService').BondState | null): void {
+    function setBond(b: import("@/core/daoluService").BondState | null): void {
       // 老存档的 bond 可能缺 34.0 新增的机会点字段,补默认值
       bond.value = b
         ? {
@@ -453,111 +467,115 @@ export const usePlayerStore = defineStore(
             opportunities: b.opportunities ?? 0,
             nextEventAt: b.nextEventAt ?? 0,
             pendingEventId: b.pendingEventId ?? null,
-            lastKind: b.lastKind ?? null
+            lastKind: b.lastKind ?? null,
           }
-        : null
+        : null;
     }
 
     /** 把一世的关系结局记入履历(只记事,不给任何资源) */
-    function recordBond(r: import('@/core/daoluService').BondRecord): void {
-      reincarnation.value = { ...reincarnation.value, bonds: [...reincarnation.value.bonds, r] }
+    function recordBond(r: import("@/core/daoluService").BondRecord): void {
+      reincarnation.value = { ...reincarnation.value, bonds: [...reincarnation.value.bonds, r] };
     }
 
     /** 记入宿慧(历世阅历与达成的命题都走这里) */
     function addInsight(n: number): void {
-      if (!(n > 0)) return
-      reincarnation.value = { ...reincarnation.value, insight: reincarnation.value.insight + n }
+      if (!(n > 0)) return;
+      reincarnation.value = { ...reincarnation.value, insight: reincarnation.value.insight + n };
     }
 
     /** 立下这一世的题(null 为不立题) */
-    function setVow(vow: import('@/data/samsara').LifeVow | null): void {
-      reincarnation.value = { ...reincarnation.value, vow }
+    function setVow(vow: import("@/data/samsara").LifeVow | null): void {
+      reincarnation.value = { ...reincarnation.value, vow };
     }
 
     /** 破题:犯了忌讳。不扣任何东西,只是这一世的话没说到底 */
     function breakVow(): void {
-      const cur = reincarnation.value.vow
-      if (!cur || cur.broken) return
-      reincarnation.value = { ...reincarnation.value, vow: { ...cur, broken: true } }
+      const cur = reincarnation.value.vow;
+      if (!cur || cur.broken) return;
+      reincarnation.value = { ...reincarnation.value, vow: { ...cur, broken: true } };
     }
 
     /** 归档一世履历 */
-    function recordLife(rec: import('@/data/samsara').LifeRecord): void {
-      reincarnation.value = { ...reincarnation.value, lives: [...reincarnation.value.lives, rec] }
+    function recordLife(rec: import("@/data/samsara").LifeRecord): void {
+      reincarnation.value = { ...reincarnation.value, lives: [...reincarnation.value.lives, rec] };
     }
 
     function markDead(): void {
-      dead.value = true
+      dead.value = true;
     }
 
     /** 转世重置(保留天赋/道果/转世次数) */
     function rebirth(newLinggen: LinggenProfile): void {
-      reincarnation.value = { ...reincarnation.value, count: reincarnation.value.count + 1 }
-      linggen.value = newLinggen
-      major.value = 0
-      sub.value = 0
-      exp.value = gnZero()
-      age.value = START_AGE
-      lifespanBonusYears.value = 0
-      dead.value = false
+      reincarnation.value = { ...reincarnation.value, count: reincarnation.value.count + 1 };
+      linggen.value = newLinggen;
+      major.value = 0;
+      sub.value = 0;
+      exp.value = gnZero();
+      age.value = START_AGE;
+      lifespanBonusYears.value = 0;
+      dead.value = false;
       // 新的一世:本世进程全部清零。
       // 连胜/当日巡游属于「这一世」的当下进度;秘境是进行中的一次性内容
       // (其门槛 minMajor≥3 本就是境界限制,新世 major=0 理应推倒重来)。
       // 保留跨世:镇压/区域兴衰(「成长改变世界」的世界记忆,见 DEC-003)、
       // 机缘选择记忆(fortuneChoices,「世界记得你的选择」)、奇缘(eventChains)
-      winStreak.value = 0
-      lastCaveEventDay.value = 0
-      secretRealm.value = null
-      regionEvent.value = null
+      winStreak.value = 0;
+      lastCaveEventDay.value = 0;
+      secretRealm.value = null;
+      regionEvent.value = null;
       // 卦是此一时的时机,不是"我是谁":转世即散
-      divination.value = null
+      divination.value = null;
       // 突破准备也随这一世散去(下一世要重新备)
-      breakthroughPrep.value = null
+      breakthroughPrep.value = null;
       // 外物随皮囊散去:灵兽、洞府建筑、灵脉投资都是「我拥有多少」,不是「我是谁」
-      petId.value = null
-      dongfu.resetForRebirth()
+      petId.value = null;
+      dongfu.resetForRebirth();
     }
 
     /** 存档修复 */
     function sanitize(): void {
-      exp.value = gn(exp.value)
-      if (!Number.isFinite(age.value)) age.value = START_AGE
-      if (!Number.isFinite(major.value) || major.value < 0) major.value = 0
-      if (!Number.isFinite(sub.value) || sub.value < 0) sub.value = 0
+      exp.value = gn(exp.value);
+      if (!Number.isFinite(age.value)) age.value = START_AGE;
+      if (!Number.isFinite(major.value) || major.value < 0) major.value = 0;
+      if (!Number.isFinite(sub.value) || sub.value < 0) sub.value = 0;
       // 寿元加算:lifespanMax = floor(base×(1+pct) + 此栏),写坏(字符串/NaN)会让它变 NaN,
       // 而引擎死亡判据 `age < lifespanMax` 恒为 false → 下一拍即「油尽灯枯」。坏档必死,必须修回
-      lifespanBonusYears.value = asFiniteNumber(lifespanBonusYears.value, 0)
+      lifespanBonusYears.value = asFiniteNumber(lifespanBonusYears.value, 0);
       // Phase 32.5:旧存档没有宿慧/履历/命题三项,按转世次数折算补齐,不让老玩家凭空掉档
-      const r = reincarnation.value
-      const count = Number.isFinite(r?.count) ? Math.max(0, r.count) : 0
+      const r = reincarnation.value;
+      const count = Number.isFinite(r?.count) ? Math.max(0, r.count) : 0;
       // 旧存档没有卦象一栏(Phase 34.3);形状不对的直接作废,不让坏数据进属性汇总
       if (divination.value) {
-        const d = divination.value
+        const d = divination.value;
         const ok =
           Array.isArray(d.lines) &&
           d.lines.length === 6 &&
           Array.isArray(d.changingAt) &&
-          typeof d.expiresAt === 'number' &&
-          !!readingFromState(d)
-        if (!ok) divination.value = null
+          typeof d.expiresAt === "number" &&
+          !!readingFromState(d);
+        if (!ok) divination.value = null;
       }
       // 旧存档没有突破准备一栏(Phase 34.6);形状不对的直接作废
       if (breakthroughPrep.value) {
-        const p = breakthroughPrep.value
-        const ok = Number.isFinite(p.bonus) && Number.isFinite(p.readyAt) && (p.kind === 'meditate' || p.kind === 'pill')
-        if (!ok) breakthroughPrep.value = null
+        const p = breakthroughPrep.value;
+        const ok =
+          Number.isFinite(p.bonus) &&
+          Number.isFinite(p.readyAt) &&
+          (p.kind === "meditate" || p.kind === "pill");
+        if (!ok) breakthroughPrep.value = null;
       }
       // 旧存档没有顿悟冷却一栏(Phase 34.6):0 = 从未顿悟,合法
-      if (!Number.isFinite(enlightenmentAt.value) || enlightenmentAt.value < 0) enlightenmentAt.value = 0
+      if (!Number.isFinite(enlightenmentAt.value) || enlightenmentAt.value < 0)
+        enlightenmentAt.value = 0;
       /**
        * 秘境状态修形(Phase 34.9):它现在真的会进档(以前是进不去的骨架)。
        * 层数越界会让「第 99 层」直接结算通关,携带气血越界会把战斗开局算成 NaN —— 故逐项夹回。
        */
       if (secretRealm.value) {
-        const sr = secretRealm.value
-        const known = SECRET_REALMS.some(r => r.id === sr.realmId)
+        const sr = secretRealm.value;
+        const known = SECRET_REALMS.some((r) => r.id === sr.realmId);
         if (!known) {
-          secretRealm.value = null
+          secretRealm.value = null;
         } else {
           secretRealm.value = {
             realmId: sr.realmId,
@@ -566,10 +584,10 @@ export const usePlayerStore = defineStore(
             wins: Math.floor(asFiniteNumber(sr.wins, 0, 0)),
             losses: Math.min(SECRET_MAX_LOSSES, Math.floor(asFiniteNumber(sr.losses, 0, 0))),
             spoils: asStringArray(sr.spoils),
-            rules: asStringArray(sr.rules).filter(t => SECRET_RULES.some(r => r.text === t)),
+            rules: asStringArray(sr.rules).filter((t) => SECRET_RULES.some((r) => r.text === t)),
             carriedHpPct: Math.min(1, asFiniteNumber(sr.carriedHpPct, 1, 0.05)),
-            finished: sr.finished === true
-          }
+            finished: sr.finished === true,
+          };
         }
       }
       /**
@@ -577,15 +595,16 @@ export const usePlayerStore = defineStore(
        * 但坏档能绕过写入口。若 trust 被改成 NaN,门槛判定(nextGateHint)与履历都会跟着算歪。
        */
       if (bond.value) {
-        const b = bond.value
-        const known = DAOLU.some(d => d.id === b.daoluId)
+        const b = bond.value;
+        const known = DAOLU.some((d) => d.id === b.daoluId);
         if (!known) {
-          bond.value = null
+          bond.value = null;
         } else {
-          const clamp100 = (v: unknown, fallback = 0): number => Math.min(100, asFiniteNumber(v, fallback, 0))
+          const clamp100 = (v: unknown, fallback = 0): number =>
+            Math.min(100, asFiniteNumber(v, fallback, 0));
           bond.value = {
             ...b,
-            stage: STAGE_ORDER.includes(b.stage) ? b.stage : 'met',
+            stage: STAGE_ORDER.includes(b.stage) ? b.stage : "met",
             fate: clamp100(b.fate),
             trust: clamp100(b.trust),
             accord: clamp100(b.accord),
@@ -596,11 +615,14 @@ export const usePlayerStore = defineStore(
             doneEvents: asStringArray(b.doneEvents),
             opportunities: Math.floor(asFiniteNumber(b.opportunities, 0, 0)),
             nextEventAt: Math.floor(asFiniteNumber(b.nextEventAt, 0, 0)),
-            pendingEventId: typeof b.pendingEventId === 'string' ? b.pendingEventId : null,
+            pendingEventId: typeof b.pendingEventId === "string" ? b.pendingEventId : null,
             intentPending: b.intentPending === true,
             // 意图结构复杂且由经历催生:形状不对就整块作废,让她重新酝酿
-            intent: b.intent && Array.isArray(b.intent.sparks) && typeof b.intent.wish === 'string' ? b.intent : null
-          }
+            intent:
+              b.intent && Array.isArray(b.intent.sparks) && typeof b.intent.wish === "string"
+                ? b.intent
+                : null,
+          };
         }
       }
       /**
@@ -608,44 +630,44 @@ export const usePlayerStore = defineStore(
        * 坏了就有两种结果 —— endsAt=NaN 永不失效,或者负值当场失效,故按「认不出就清掉」处理。
        */
       if (regionEvent.value) {
-        const ev = regionEvent.value
-        const regionOk = !!regionDef(ev.regionId)
-        const endsAt = asFiniteNumber(ev.endsAt, 0, 0)
-        if (!regionOk || endsAt <= 0) regionEvent.value = null
-        else regionEvent.value = { ...ev, endsAt }
+        const ev = regionEvent.value;
+        const regionOk = !!regionDef(ev.regionId);
+        const endsAt = asFiniteNumber(ev.endsAt, 0, 0);
+        if (!regionOk || endsAt <= 0) regionEvent.value = null;
+        else regionEvent.value = { ...ev, endsAt };
       }
       /**
        * 数组类字段先补形,再谈内容 —— 存档可能被改坏、写坏或在旧版本里根本没有这一栏。
        * 此前只挡了 suppressQualified,没挡 suppressedRegions,于是坏档会在
        * `for...of` 上直接抛出,玩家看到的是白屏而不是「回到玄枢山下」。
        */
-      if (!Array.isArray(suppressedRegions.value)) suppressedRegions.value = []
-      if (!Array.isArray(suppressQualified.value)) suppressQualified.value = []
+      if (!Array.isArray(suppressedRegions.value)) suppressedRegions.value = [];
+      if (!Array.isArray(suppressQualified.value)) suppressQualified.value = [];
       for (const id of suppressedRegions.value) {
-        if (!suppressQualified.value.includes(id)) suppressQualified.value.push(id)
+        if (!suppressQualified.value.includes(id)) suppressQualified.value.push(id);
       }
       reincarnation.value = {
         count,
         daoFruit: Number.isFinite(r?.daoFruit) ? Math.max(0, r.daoFruit) : 0,
         talents: Array.isArray(r?.talents)
-          ? r.talents.filter((id): id is string => typeof id === 'string' && !!talentDef(id))
+          ? r.talents.filter((id): id is string => typeof id === "string" && !!talentDef(id))
           : [],
         heritage: Array.isArray(r?.heritage)
-          ? r.heritage.filter((id): id is string => typeof id === 'string' && !!heritageDef(id))
+          ? r.heritage.filter((id): id is string => typeof id === "string" && !!heritageDef(id))
           : [],
         insight: Number.isFinite(r?.insight) ? Math.max(0, r.insight) : legacyInsightOf(count),
         lives: Array.isArray(r?.lives) ? r.lives : [],
         vow: r?.vow ?? null,
         trial: r?.trial ?? null,
-        bonds: Array.isArray(r?.bonds) ? r.bonds : []
-      }
+        bonds: Array.isArray(r?.bonds) ? r.bonds : [],
+      };
       // Ghost pet id: personalityEffects / companion mods fall back to neutral
       // and the character row shows "no companion" — wipe the dangling id.
-      if (petId.value != null && !petDef(petId.value)) petId.value = null
+      if (petId.value != null && !petDef(petId.value)) petId.value = null;
       // Ghost title: titleMods already fall back to {}, but the worn name
       // still shows and load/equip paths treat the id as real — wipe it.
-      if (titleId.value != null && !titleDef(titleId.value)) titleId.value = null
-      if (mentor.value != null && !mentorDef(mentor.value)) mentor.value = null
+      if (titleId.value != null && !titleDef(titleId.value)) titleId.value = null;
+      if (mentor.value != null && !mentorDef(mentor.value)) mentor.value = null;
     }
 
     // Phase 28 前期玩法动作
@@ -654,19 +676,19 @@ export const usePlayerStore = defineStore(
      * 推进与断绝都只是"把它设到哪一程",故只留这一个写入口。
      */
     function setEventChain(chainId: string, stage: number): void {
-      eventChains.value = { ...eventChains.value, [chainId]: Math.max(0, Math.floor(stage)) }
+      eventChains.value = { ...eventChains.value, [chainId]: Math.max(0, Math.floor(stage)) };
     }
 
     function incrementWinStreak(): void {
-      winStreak.value += 1
+      winStreak.value += 1;
     }
 
     function resetWinStreak(): void {
-      winStreak.value = 0
+      winStreak.value = 0;
     }
 
     function markCaveEventToday(day: number): void {
-      lastCaveEventDay.value = day
+      lastCaveEventDay.value = day;
     }
 
     // Phase 30 区域镇压操作
@@ -682,7 +704,7 @@ export const usePlayerStore = defineStore(
         avgRounds: 0,
         avgDamageTakenPct: 0,
         lastUpdateAt: Date.now(),
-      }
+      };
 
       const newStats = {
         consecutiveWins: win ? current.consecutiveWins + 1 : 0,
@@ -690,26 +712,31 @@ export const usePlayerStore = defineStore(
         avgRounds: current.avgRounds * 0.7 + rounds * 0.3,
         avgDamageTakenPct: current.avgDamageTakenPct * 0.7 + damageTakenPct * 0.3,
         lastUpdateAt: Date.now(),
-      }
+      };
 
-      regionStats.value = { ...regionStats.value, [regionId]: newStats }
+      regionStats.value = { ...regionStats.value, [regionId]: newStats };
     }
 
     /**
      * Apply N identical wins in one write. EMA matches N calls of updateRegionStats:
      * avg' = avg * 0.7^n + x * (1 - 0.7^n). Also bumps regionWins (world memory).
      */
-    function applyRegionWinBatch(regionId: string, n: number, rounds: number, damageTakenPct: number): void {
-      const count = Math.floor(n)
-      if (count <= 0) return
+    function applyRegionWinBatch(
+      regionId: string,
+      n: number,
+      rounds: number,
+      damageTakenPct: number,
+    ): void {
+      const count = Math.floor(n);
+      if (count <= 0) return;
       const current = regionStats.value[regionId] ?? {
         consecutiveWins: 0,
         totalFights: 0,
         avgRounds: 0,
         avgDamageTakenPct: 0,
-        lastUpdateAt: Date.now()
-      }
-      const decay = 0.7 ** count
+        lastUpdateAt: Date.now(),
+      };
+      const decay = 0.7 ** count;
       regionStats.value = {
         ...regionStats.value,
         [regionId]: {
@@ -717,85 +744,90 @@ export const usePlayerStore = defineStore(
           totalFights: current.totalFights + count,
           avgRounds: current.avgRounds * decay + rounds * (1 - decay),
           avgDamageTakenPct: current.avgDamageTakenPct * decay + damageTakenPct * (1 - decay),
-          lastUpdateAt: Date.now()
-        }
-      }
-      regionWins.value = { ...regionWins.value, [regionId]: (regionWins.value[regionId] ?? 0) + count }
+          lastUpdateAt: Date.now(),
+        },
+      };
+      regionWins.value = {
+        ...regionWins.value,
+        [regionId]: (regionWins.value[regionId] ?? 0) + count,
+      };
     }
 
     function suppressRegion(regionId: string): void {
       if (!suppressedRegions.value.includes(regionId)) {
-        suppressedRegions.value = [...suppressedRegions.value, regionId]
-        suppressedSince.value = { ...suppressedSince.value, [regionId]: Date.now() }
+        suppressedRegions.value = [...suppressedRegions.value, regionId];
+        suppressedSince.value = { ...suppressedSince.value, [regionId]: Date.now() };
       }
     }
 
     /** 记下镇压资格(幂等) —— 资格一旦取得便不再失,故与收益开关分开存 */
     function markSuppressQualified(regionId: string): void {
       if (!suppressQualified.value.includes(regionId)) {
-        suppressQualified.value = [...suppressQualified.value, regionId]
+        suppressQualified.value = [...suppressQualified.value, regionId];
       }
     }
 
     function unsuppressRegion(regionId: string): void {
-      suppressedRegions.value = suppressedRegions.value.filter(id => id !== regionId)
-      const next = { ...suppressedSince.value }
-      delete next[regionId]
-      suppressedSince.value = next
+      suppressedRegions.value = suppressedRegions.value.filter((id) => id !== regionId);
+      const next = { ...suppressedSince.value };
+      delete next[regionId];
+      suppressedSince.value = next;
       // 重置连胜计数
       if (regionStats.value[regionId]) {
         regionStats.value = {
           ...regionStats.value,
           [regionId]: { ...regionStats.value[regionId]!, consecutiveWins: 0 },
-        }
+        };
       }
     }
 
     // ---------- Phase 30.9 世界记忆 ----------
     /** 记录一次净胜(用于区域兴衰的累计胜场) */
     function recordRegionWin(regionId: string): void {
-      regionWins.value = { ...regionWins.value, [regionId]: (regionWins.value[regionId] ?? 0) + 1 }
+      regionWins.value = { ...regionWins.value, [regionId]: (regionWins.value[regionId] ?? 0) + 1 };
     }
 
     /** 记录一条宿敌(由 worldMemory.recordLoss 提供) */
-    function setNemeses(list: import('@/types').NemesisRecord[]): void {
-      nemeses.value = list
+    function setNemeses(list: import("@/types").NemesisRecord[]): void {
+      nemeses.value = list;
     }
 
     // ---------- Phase 31 师承 ----------
     /** 拜入师门(一经确立,不再更改;转世保留) */
-    function adoptMentor(id: import('@/data/mentors').MentorId): void {
-      if (mentor.value !== null) return
-      mentor.value = id
+    function adoptMentor(id: import("@/data/mentors").MentorId): void {
+      if (mentor.value !== null) return;
+      mentor.value = id;
     }
 
     // ---------- Phase 31 A2 区域事件 ----------
-    function setRegionEvent(ev: import('@/core/regionEvent').RegionEventState | null): void {
-      regionEvent.value = ev
+    function setRegionEvent(ev: import("@/core/regionEvent").RegionEventState | null): void {
+      regionEvent.value = ev;
     }
 
     // ---------- Phase 31 S3 短期秘境 ----------
-    function setSecretRealm(state: import('@/core/secretRealm').SecretRealmState | null): void {
-      secretRealm.value = state
+    function setSecretRealm(state: import("@/core/secretRealm").SecretRealmState | null): void {
+      secretRealm.value = state;
     }
 
     // ---------- Phase 34.3 问卦 ----------
-    function setDivination(state: import('@/core/divination').DivinationState | null): void {
-      divination.value = state
+    function setDivination(state: import("@/core/divination").DivinationState | null): void {
+      divination.value = state;
     }
 
     // ---------- Phase 28 突破准备 ----------
-    function setBreakthroughPrep(state: import('@/core/earlyGameService').BreakthroughPrepState | null): void {
-      breakthroughPrep.value = state
+    function setBreakthroughPrep(
+      state: import("@/core/earlyGameService").BreakthroughPrepState | null,
+    ): void {
+      breakthroughPrep.value = state;
     }
 
     function setEnlightenmentAt(t: number): void {
-      enlightenmentAt.value = Number.isFinite(t) ? Math.max(0, t) : 0
+      enlightenmentAt.value = Number.isFinite(t) ? Math.max(0, t) : 0;
     }
 
     // ---------- Phase 31.1 机缘链 ----------
     function setFortuneChoices(choices: Record<string, FortuneChoice>): void {
-      fortuneChoices.value = choices
+      fortuneChoices.value = choices;
     }
 
     /**
@@ -803,29 +835,38 @@ export const usePlayerStore = defineStore(
      * Hexagram / region event / breakthrough sit / enlightenment cooldown.
      */
     function shiftTimedState(pausedMs: number): void {
-      if (pausedMs <= 0) return
+      if (pausedMs <= 0) return;
       if (divination.value) {
-        divination.value = { ...divination.value, expiresAt: divination.value.expiresAt + pausedMs }
+        divination.value = {
+          ...divination.value,
+          expiresAt: divination.value.expiresAt + pausedMs,
+        };
       }
       if (regionEvent.value) {
-        regionEvent.value = { ...regionEvent.value, endsAt: regionEvent.value.endsAt + pausedMs }
+        regionEvent.value = { ...regionEvent.value, endsAt: regionEvent.value.endsAt + pausedMs };
       }
       if (breakthroughPrep.value) {
-        breakthroughPrep.value = { ...breakthroughPrep.value, readyAt: breakthroughPrep.value.readyAt + pausedMs }
+        breakthroughPrep.value = {
+          ...breakthroughPrep.value,
+          readyAt: breakthroughPrep.value.readyAt + pausedMs,
+        };
       }
-      if (enlightenmentAt.value > 0) enlightenmentAt.value += pausedMs
+      if (enlightenmentAt.value > 0) enlightenmentAt.value += pausedMs;
       // Duration clocks (held time / revival / prosperity idle) use "since"
       // stamps. If they stay put, a pause eats revive hours and inflates 已守.
-      const nextSince: Record<string, number> = {}
+      const nextSince: Record<string, number> = {};
       for (const [id, at] of Object.entries(suppressedSince.value)) {
-        nextSince[id] = typeof at === 'number' && at > 0 ? at + pausedMs : at
+        nextSince[id] = typeof at === "number" && at > 0 ? at + pausedMs : at;
       }
-      suppressedSince.value = nextSince
-      const nextStats: Record<string, (typeof regionStats.value)[string]> = {}
+      suppressedSince.value = nextSince;
+      const nextStats: Record<string, (typeof regionStats.value)[string]> = {};
       for (const [id, st] of Object.entries(regionStats.value)) {
-        nextStats[id] = { ...st, lastUpdateAt: st.lastUpdateAt > 0 ? st.lastUpdateAt + pausedMs : st.lastUpdateAt }
+        nextStats[id] = {
+          ...st,
+          lastUpdateAt: st.lastUpdateAt > 0 ? st.lastUpdateAt + pausedMs : st.lastUpdateAt,
+        };
       }
-      regionStats.value = nextStats
+      regionStats.value = nextStats;
     }
 
     return {
@@ -922,8 +963,8 @@ export const usePlayerStore = defineStore(
       setBreakthroughPrep,
       setEnlightenmentAt,
       setFortuneChoices,
-      shiftTimedState
-    }
+      shiftTimedState,
+    };
   },
-  { persist: persistConfig('player') }
-)
+  { persist: persistConfig("player") },
+);

@@ -28,7 +28,7 @@ function counterKeysFromTypes(): string[] {
   expect(start, "types/index.ts 里找不到 CounterKey").toBeGreaterThanOrEqual(0);
   const end = src.indexOf("export type AchvCond", start);
   const block = src.slice(start, end > 0 ? end : undefined);
-  return [...new Set([...block.matchAll(/'([A-Za-z]+)'/g)].map((m) => m[1]!))];
+  return [...new Set([...block.matchAll(/["']([A-Za-z]+)["']/g)].map((m) => m[1]!))];
 }
 
 describe("成就方向 · 每个「???」都有地方可去", () => {

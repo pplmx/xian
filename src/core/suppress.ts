@@ -5,60 +5,60 @@
  * 核心理念:"成长改变世界",而非"世界永远跟着你缩放"。
  */
 
-import { usePlayerStore } from '@/stores/player'
-import { useResourcesStore } from '@/stores/resources'
-import { regionDef } from '@/data/regions'
-import { stoneByTier } from '@/core/formulas'
-import { generateEquipment } from '@/core/equipGen'
-import { acquireEquipment } from '@/core/loot'
-import { rng, type RandomService } from '@/utils/random'
-import { gnZero, add, isZero, mulN, gn } from '@/utils/gnum'
-import { formatGN } from '@/utils/format'
-import type { GNum, QualityId, RegionRecall } from '@/types'
-import { equipmentTemplate } from '@/data/equipment'
-import { deriveProsperity, prosperityYieldMult } from './worldMemory'
-import { settleRegionRevivals } from './regionRevival'
-import { AGE_YEARS_PER_HOUR } from '@/data/constants'
+import { usePlayerStore } from "@/stores/player";
+import { useResourcesStore } from "@/stores/resources";
+import { regionDef } from "@/data/regions";
+import { stoneByTier } from "@/core/formulas";
+import { generateEquipment } from "@/core/equipGen";
+import { acquireEquipment } from "@/core/loot";
+import { rng, type RandomService } from "@/utils/random";
+import { gnZero, add, isZero, mulN, gn } from "@/utils/gnum";
+import { formatGN } from "@/utils/format";
+import type { GNum, QualityId, RegionRecall } from "@/types";
+import { equipmentTemplate } from "@/data/equipment";
+import { deriveProsperity, prosperityYieldMult } from "./worldMemory";
+import { settleRegionRevivals } from "./regionRevival";
+import { AGE_YEARS_PER_HOUR } from "@/data/constants";
 
 /** 区域统计数据(使用指数移动平均) */
 export interface RegionStats {
-  totalFights: number
-  avgRounds: number          // 指数移动平均回合数
-  avgDamageTakenPct: number  // 指数移动平均受伤百分比
-  consecutiveWins: number
-  lastUpdateAt: number
+  totalFights: number;
+  avgRounds: number; // 指数移动平均回合数
+  avgDamageTakenPct: number; // 指数移动平均受伤百分比
+  consecutiveWins: number;
+  lastUpdateAt: number;
 }
 
 /** 镇压判定阈值(界面也用它写规则说明,避免两处各写一套数字) */
 export const SUPPRESS_THRESHOLDS = {
-  minFights: 20,              // 最少战斗次数
-  maxAvgRounds: 3,            // 平均回合数上限
-  maxAvgDamageTaken: 0.10,    // 平均受伤百分比上限 10%
-}
+  minFights: 20, // 最少战斗次数
+  maxAvgRounds: 3, // 平均回合数上限
+  maxAvgDamageTaken: 0.1, // 平均受伤百分比上限 10%
+};
 
 /** 镇压收益(每小时基础倍率) */
 const SUPPRESS_YIELD_PER_HOUR = {
-  stoneMultiplier: 150,       // 灵石倍率
-  equipmentChance: 0.4,       // 装备掉落概率
-}
+  stoneMultiplier: 150, // 灵石倍率
+  equipmentChance: 0.4, // 装备掉落概率
+};
 
 /** 镇守道韵:每镇压一区,每小时按挂机修速 +8% 给修为;总封顶 +40%(5 区满) */
-export const SUPPRESS_EXP_PER_REGION = 0.08
-export const SUPPRESS_EXP_MAX = 0.4
+export const SUPPRESS_EXP_PER_REGION = 0.08;
+export const SUPPRESS_EXP_MAX = 0.4;
 
 /** 老镇压区的装备成长:镇满一天,该区掉落的装备运气 +0.1,封顶 +0.8 */
-export const SUPPRESS_EQUIP_LUCK_CAP = 0.8
-export const SUPPRESS_EQUIP_LUCK_PER_DAY = 0.1
+export const SUPPRESS_EQUIP_LUCK_CAP = 0.8;
+export const SUPPRESS_EQUIP_LUCK_PER_DAY = 0.1;
 
 /** 镇守道韵的挂机加成:每镇压一区 +8%,封顶 +40% —— 纯函数,便于断言 */
 export function suppressionExpRate(count: number): number {
-  return Math.min(count * SUPPRESS_EXP_PER_REGION, SUPPRESS_EXP_MAX)
+  return Math.min(count * SUPPRESS_EXP_PER_REGION, SUPPRESS_EXP_MAX);
 }
 
 /** 老镇压区的装备运气:镇满一天 +0.1,封顶 +0.8 —— 纯函数,便于断言 */
 export function suppressionEquipmentLuck(sinceMs: number, nowMs: number): number {
-  const days = Math.floor(Math.max(0, nowMs - sinceMs) / 86_400_000)
-  return Math.min(SUPPRESS_EQUIP_LUCK_CAP, days * SUPPRESS_EQUIP_LUCK_PER_DAY)
+  const days = Math.floor(Math.max(0, nowMs - sinceMs) / 86_400_000);
+  return Math.min(SUPPRESS_EQUIP_LUCK_CAP, days * SUPPRESS_EQUIP_LUCK_PER_DAY);
 }
 
 /**
@@ -71,51 +71,56 @@ export function suppressionEquipmentLuck(sinceMs: number, nowMs: number): number
  * 取值按标签优先表逐条匹配(与地界自身标签顺序无关,保证确定),
  * 产量随层级线性放大(灵材是小标量,不跟着灵石做指数)。
  */
-type SuppressResource = 'herb' | 'ore' | 'page' | 'dust'
+type SuppressResource = "herb" | "ore" | "page" | "dust";
 
 const YIELD_BY_TAG: { tag: string; resource: SuppressResource; perHour: number }[] = [
-  { tag: 'forest', resource: 'herb', perHour: 6 },
-  { tag: 'water', resource: 'herb', perHour: 5 },
-  { tag: 'ice', resource: 'herb', perHour: 4 },
-  { tag: 'fire', resource: 'ore', perHour: 4 },
-  { tag: 'thunder', resource: 'ore', perHour: 3 },
-  { tag: 'mountain', resource: 'ore', perHour: 3 },
-  { tag: 'ruin', resource: 'page', perHour: 2 },
-  { tag: 'sword', resource: 'page', perHour: 2 },
-  { tag: 'dark', resource: 'dust', perHour: 2 },
-  { tag: 'sky', resource: 'dust', perHour: 2 },
-  { tag: 'immortal', resource: 'dust', perHour: 3 },
-  { tag: 'god', resource: 'page', perHour: 3 },
-  { tag: 'chaos', resource: 'dust', perHour: 4 }
-]
+  { tag: "forest", resource: "herb", perHour: 6 },
+  { tag: "water", resource: "herb", perHour: 5 },
+  { tag: "ice", resource: "herb", perHour: 4 },
+  { tag: "fire", resource: "ore", perHour: 4 },
+  { tag: "thunder", resource: "ore", perHour: 3 },
+  { tag: "mountain", resource: "ore", perHour: 3 },
+  { tag: "ruin", resource: "page", perHour: 2 },
+  { tag: "sword", resource: "page", perHour: 2 },
+  { tag: "dark", resource: "dust", perHour: 2 },
+  { tag: "sky", resource: "dust", perHour: 2 },
+  { tag: "immortal", resource: "dust", perHour: 3 },
+  { tag: "god", resource: "page", perHour: 3 },
+  { tag: "chaos", resource: "dust", perHour: 4 },
+];
 
 const RESOURCE_NAMES: Record<SuppressResource, string> = {
-  herb: '灵草',
-  ore: '玄铁',
-  page: '功法残页',
-  dust: '器灵尘'
-}
+  herb: "灵草",
+  ore: "玄铁",
+  page: "功法残页",
+  dust: "器灵尘",
+};
 
 /** 某地界的物产(无匹配标签则无次级产出) */
-export function suppressYield(regionId: string): { id: SuppressResource; name: string; perHour: number } | null {
-  const region = regionDef(regionId)
-  if (!region) return null
-  const hit = YIELD_BY_TAG.find(y => region.eventTags.includes(y.tag))
-  if (!hit) return null
+export function suppressYield(
+  regionId: string,
+): { id: SuppressResource; name: string; perHour: number } | null {
+  const region = regionDef(regionId);
+  if (!region) return null;
+  const hit = YIELD_BY_TAG.find((y) => region.eventTags.includes(y.tag));
+  if (!hit) return null;
   // 层级越高,同一物产的产出越丰(线性,不参与灵石的指数口径)
-  const perHour = Math.round(hit.perHour * (1 + region.tier * 0.15))
-  return { id: hit.resource, name: RESOURCE_NAMES[hit.resource], perHour }
+  const perHour = Math.round(hit.perHour * (1 + region.tier * 0.15));
+  return { id: hit.resource, name: RESOURCE_NAMES[hit.resource], perHour };
 }
 
 /**
  * 判定玩家是否已镇压某区域
  * 条件:≥20 战,平均回合 ≤3,平均受伤 ≤10%
  */
-export function checkSuppression(player: ReturnType<typeof usePlayerStore>, regionId: string): boolean {
-  if (player.suppressedRegions.includes(regionId)) return false
+export function checkSuppression(
+  player: ReturnType<typeof usePlayerStore>,
+  regionId: string,
+): boolean {
+  if (player.suppressedRegions.includes(regionId)) return false;
 
-  const p = suppressionProgress(player.regionStats[regionId])
-  return p.fightsOk && p.roundsOk && p.damageOk
+  const p = suppressionProgress(player.regionStats[regionId]);
+  return p.fightsOk && p.roundsOk && p.damageOk;
 }
 
 /**
@@ -126,31 +131,31 @@ export function checkSuppression(player: ReturnType<typeof usePlayerStore>, regi
  * 唯一的解释渠道是去读源码。纯函数:吃 stats,不碰 store,便于断言。
  */
 export interface SuppressionProgress {
-  fights: number
-  needFights: number
+  fights: number;
+  needFights: number;
   /** 指数移动平均回合数;无战绩时为 Infinity(界面据此不显示假平均值) */
-  avgRounds: number
-  maxAvgRounds: number
+  avgRounds: number;
+  maxAvgRounds: number;
   /** 指数移动平均受伤百分比(0~1,界面乘 100 显示);无战绩时为 1 */
-  avgDamagePct: number
-  maxAvgDamagePct: number
-  fightsOk: boolean
-  roundsOk: boolean
-  damageOk: boolean
+  avgDamagePct: number;
+  maxAvgDamagePct: number;
+  fightsOk: boolean;
+  roundsOk: boolean;
+  damageOk: boolean;
   /** 是否已有战绩可谈平均值 */
-  hasStats: boolean
+  hasStats: boolean;
   /** 三条判据是否全部满足(不含「是否已镇压」) */
-  qualified: boolean
+  qualified: boolean;
 }
 
 export function suppressionProgress(stats: RegionStats | undefined): SuppressionProgress {
-  const fights = Math.max(0, stats?.totalFights ?? 0)
-  const hasStats = fights > 0
-  const avgRounds = stats ? stats.avgRounds : Number.POSITIVE_INFINITY
-  const avgDamagePct = stats ? stats.avgDamageTakenPct : 1
-  const fightsOk = fights >= SUPPRESS_THRESHOLDS.minFights
-  const roundsOk = avgRounds <= SUPPRESS_THRESHOLDS.maxAvgRounds
-  const damageOk = avgDamagePct <= SUPPRESS_THRESHOLDS.maxAvgDamageTaken
+  const fights = Math.max(0, stats?.totalFights ?? 0);
+  const hasStats = fights > 0;
+  const avgRounds = stats ? stats.avgRounds : Number.POSITIVE_INFINITY;
+  const avgDamagePct = stats ? stats.avgDamageTakenPct : 1;
+  const fightsOk = fights >= SUPPRESS_THRESHOLDS.minFights;
+  const roundsOk = avgRounds <= SUPPRESS_THRESHOLDS.maxAvgRounds;
+  const damageOk = avgDamagePct <= SUPPRESS_THRESHOLDS.maxAvgDamageTaken;
   return {
     fights,
     needFights: SUPPRESS_THRESHOLDS.minFights,
@@ -162,14 +167,14 @@ export function suppressionProgress(stats: RegionStats | undefined): Suppression
     roundsOk,
     damageOk,
     hasStats,
-    qualified: fightsOk && roundsOk && damageOk
-  }
+    qualified: fightsOk && roundsOk && damageOk,
+  };
 }
 
 /** 某地界镇压产出的每小时速率(灵石 + 物产)—— 界面与结算共用这一份口径 */
 export interface SuppressRate {
-  stonePerHour: GNum
-  resource: { id: SuppressResource; name: string; perHour: number } | null
+  stonePerHour: GNum;
+  resource: { id: SuppressResource; name: string; perHour: number } | null;
 }
 
 /**
@@ -179,12 +184,12 @@ export interface SuppressRate {
  * 调常数的那一刻界面就开始撒谎。速率只留这一份实现。
  */
 export function suppressRateFor(regionId: string): SuppressRate | null {
-  const region = regionDef(regionId)
-  if (!region) return null
+  const region = regionDef(regionId);
+  if (!region) return null;
   return {
     stonePerHour: stoneByTier(region.tier, SUPPRESS_YIELD_PER_HOUR.stoneMultiplier),
-    resource: suppressYield(regionId)
-  }
+    resource: suppressYield(regionId),
+  };
 }
 
 /**
@@ -194,14 +199,14 @@ export function suppressRateFor(regionId: string): SuppressRate | null {
  * 成就时刻恰恰是玩家唯一听不到数字的地方。抽出这份单源实现,两处都报数,
  * 也免得界面一处、回执一处各写一套格式。
  */
-export function suppressRateLine(regionId: string, prosperity: RegionRecall['prosperity']): string {
-  const rate = suppressRateFor(regionId)
-  if (!rate) return '—'
-  const mult = prosperityYieldMult(prosperity)
-  const stone = `${formatGN(mulN(rate.stonePerHour, mult))}灵石/时`
-  if (!rate.resource) return stone
-  const perHour = Math.max(1, Math.round(rate.resource.perHour * mult))
-  return `${stone} · ${rate.resource.name}${perHour}/时`
+export function suppressRateLine(regionId: string, prosperity: RegionRecall["prosperity"]): string {
+  const rate = suppressRateFor(regionId);
+  if (!rate) return "—";
+  const mult = prosperityYieldMult(prosperity);
+  const stone = `${formatGN(mulN(rate.stonePerHour, mult))}灵石/时`;
+  if (!rate.resource) return stone;
+  const perHour = Math.max(1, Math.round(rate.resource.perHour * mult));
+  return `${stone} · ${rate.resource.name}${perHour}/时`;
 }
 
 /**
@@ -210,37 +215,40 @@ export function suppressRateLine(regionId: string, prosperity: RegionRecall['pro
  * 返回累计收益(供离线结算展示)
  */
 export interface SuppressedYield {
-  stone: GNum
+  stone: GNum;
   /** 镇守道韵:这一段镇压折算的修为点数(与挂机同源,见 SUPPRESS_EXP_PER_REGION) */
-  expGain: GNum
-  equipment: { name: string; quality: QualityId; recycled?: boolean }[]
+  expGain: GNum;
+  equipment: { name: string; quality: QualityId; recycled?: boolean }[];
   /** 未入包(自动回收/满包化尘)装备化作的器灵尘(由 acquireEquipment 记账) */
-  recycledDust: number
+  recycledDust: number;
   /** 各地界的物产累计(灵草/玄铁/残页/器灵尘) */
-  resources: { id: SuppressResource; name: string; amount: number }[]
+  resources: { id: SuppressResource; name: string; amount: number }[];
   /**
    * 这一段时间里妖气复聚的地界(见 core/regionRevival)。
    *
    * 跟着收益一起回给调用方,是为了让**归来卷轴**能把这件事写进账目 ——
    * 刚回来的玩家看的是那一屏,而提示条正在跟它抢注意力(实测:归来时卷轴是弹窗)。
    */
-  revived: string[]
+  revived: string[];
 }
 
-export function settleSuppressedRegions(dt: number, service: RandomService = rng): SuppressedYield | null {
-  const player = usePlayerStore()
-  const resources = useResourcesStore()
+export function settleSuppressedRegions(
+  dt: number,
+  service: RandomService = rng,
+): SuppressedYield | null {
+  const player = usePlayerStore();
+  const resources = useResourcesStore();
 
-  const hours = dt / 3600
+  const hours = dt / 3600;
   const total: SuppressedYield = {
     stone: gnZero(),
     expGain: gnZero(),
     equipment: [],
     recycledDust: 0,
     resources: [],
-    revived: []
-  }
-  const now = Date.now()
+    revived: [],
+  };
+  const now = Date.now();
 
   /**
    * 妖气复聚先结算,再算收益 —— 复聚的地界这一 tick 自然不再产出。
@@ -252,23 +260,23 @@ export function settleSuppressedRegions(dt: number, service: RandomService = rng
    * **必须排在"没有镇压就直接返回"之前**:复聚管的不只是镇压 —— 已靖却没镇压的
    * 地界(旧主同样该归来)一份镇压都没有,若让那句早退挡在前面,那条路永远走不到。
    */
-  total.revived = settleRegionRevivals(now)
+  total.revived = settleRegionRevivals(now);
   // 既没有镇压收益、也没有复聚可说,才是"这一段时间什么也没发生"
-  if (player.suppressedRegions.length === 0) return total.revived.length > 0 ? total : null
+  if (player.suppressedRegions.length === 0) return total.revived.length > 0 ? total : null;
 
-  const active = player.suppressedRegions
-  if (active.length === 0) return total
+  const active = player.suppressedRegions;
+  if (active.length === 0) return total;
 
   // ---- 镇守道韵:同源挂机曲线(cultPerSec × dt),每镇压一区 +8%,封顶 +40% ----
-  const expGain = mulN(gn(player.cultPerSec), suppressionExpRate(active.length) * hours)
+  const expGain = mulN(gn(player.cultPerSec), suppressionExpRate(active.length) * hours);
   if (!isZero(expGain)) {
-    player.gainExp(expGain)
-    total.expGain = add(total.expGain, expGain)
+    player.gainExp(expGain);
+    total.expGain = add(total.expGain, expGain);
   }
 
   for (const regionId of active) {
-    const region = regionDef(regionId)
-    if (!region) continue
+    const region = regionDef(regionId);
+    if (!region) continue;
 
     // Phase 30.9:长期安稳 → 灵脉渐复(收益 99%);繁盛 → 商旅(100%)
     const recall = deriveProsperity({
@@ -276,55 +284,66 @@ export function settleSuppressedRegions(dt: number, service: RandomService = rng
       hasSuppressed: true,
       suppressedAt: player.suppressedSince[regionId],
       lastActivityAt: player.regionStats[regionId]?.lastUpdateAt ?? now,
-      now
-    })
-    const yieldMult = prosperityYieldMult(recall.prosperity)
+      now,
+    });
+    const yieldMult = prosperityYieldMult(recall.prosperity);
 
     // 灵石产出:基础倍率 × 区域阶位 × 时间 × 兴衰微调
-    const stoneYield = stoneByTier(region.tier, SUPPRESS_YIELD_PER_HOUR.stoneMultiplier * hours * yieldMult)
-    resources.addStone(stoneYield)
-    total.stone = add(total.stone, stoneYield)
+    const stoneYield = stoneByTier(
+      region.tier,
+      SUPPRESS_YIELD_PER_HOUR.stoneMultiplier * hours * yieldMult,
+    );
+    resources.addStone(stoneYield);
+    total.stone = add(total.stone, stoneYield);
 
     // 物产:按地界气质给一份次级产出(灵材是小标量,随层级线性增长)
-    const yieldDef = suppressYield(regionId)
+    const yieldDef = suppressYield(regionId);
     if (yieldDef) {
-      const amount = Math.floor(yieldDef.perHour * hours * yieldMult)
+      const amount = Math.floor(yieldDef.perHour * hours * yieldMult);
       if (amount > 0) {
-        resources.addSmall(yieldDef.id, amount)
-        const row = total.resources.find(r => r.id === yieldDef.id)
-        if (row) row.amount += amount
-        else total.resources.push({ id: yieldDef.id, name: yieldDef.name, amount })
+        resources.addSmall(yieldDef.id, amount);
+        const row = total.resources.find((r) => r.id === yieldDef.id);
+        if (row) row.amount += amount;
+        else total.resources.push({ id: yieldDef.id, name: yieldDef.name, amount });
       }
     }
 
     // 装备掉落:次数期望结算(0.4件/h × 时长)。不能用 Math.random()<equipChance:
     // hours>2.5 时概率>1 恒真,离线一晚上每区只掉 1 件,与在线 0.4/h 的线性产出
     // 差出好几倍。拆成「整数件 + 零头概率」:hours<1 时与原概率判定等价,长时离线才对齐
-    const equipChance = SUPPRESS_YIELD_PER_HOUR.equipmentChance * hours
+    const equipChance = SUPPRESS_YIELD_PER_HOUR.equipmentChance * hours;
     // 零头与装备生成走同一个可注入随机源:从前这里裸调 Math.random(生成装备却用 rng),
     // 测试只能去 mock 全局 Math.random,而 rng 在构造时就把原函数抓走了 —— 注入才是可测的那条路
-    const equipCount = Math.floor(equipChance) + (service.chance(equipChance - Math.floor(equipChance)) ? 1 : 0)
+    const equipCount =
+      Math.floor(equipChance) + (service.chance(equipChance - Math.floor(equipChance)) ? 1 : 0);
     // 老镇压区:镇守满一天,该区掉落的装备运气 +0.1(封顶 +0.8) —— 镇的越久,出的越不只是粉尘
     const tenureLuck =
       player.suppressedSince[regionId] === undefined
         ? 0
-        : suppressionEquipmentLuck(player.suppressedSince[regionId], now)
+        : suppressionEquipmentLuck(player.suppressedSince[regionId], now);
     for (let i = 0; i < equipCount; i += 1) {
-      const equip = generateEquipment(region.tier, service, { luck: tenureLuck, minQualityRank: 0 })
-      const res = acquireEquipment(equip, { quiet: true }) // quiet=true 避免镇压收益刷屏
+      const equip = generateEquipment(region.tier, service, {
+        luck: tenureLuck,
+        minQualityRank: 0,
+      });
+      const res = acquireEquipment(equip, { quiet: true }); // quiet=true 避免镇压收益刷屏
       // 所得清单如实记下每一件产出:入包与否都列,未入包(自动回收/满包化尘)标注回收
-      total.equipment.push({ name: equipmentTemplate(equip.templateId)?.name ?? '未知', quality: equip.quality, recycled: !res.bagged })
-      if (!res.bagged) total.recycledDust += res.dust
+      total.equipment.push({
+        name: equipmentTemplate(equip.templateId)?.name ?? "未知",
+        quality: equip.quality,
+        recycled: !res.bagged,
+      });
+      if (!res.bagged) total.recycledDust += res.dust;
     }
   }
 
-  return total
+  return total;
 }
 
 // ============ 区域凭吊叙事(Phase 31.4)============
 
 /** 凭吊触发概率(低,4%) */
-export const MEMORIAL_CHANCE = 0.04
+export const MEMORIAL_CHANCE = 0.04;
 
 /**
  * 待念:进入已被你镇压的区域时,低概率触发一段"世界记得你"的叙事。
@@ -333,19 +352,19 @@ export const MEMORIAL_CHANCE = 0.04
 export function memorialLine(
   regionId: string,
   player: ReturnType<typeof usePlayerStore>,
-  now: number = Date.now()
+  now: number = Date.now(),
 ): string | null {
-  const since = player.suppressedSince[regionId]
-  if (since === undefined) return null
-  const region = regionDef(regionId)
-  if (!region) return null
+  const since = player.suppressedSince[regionId];
+  if (since === undefined) return null;
+  const region = regionDef(regionId);
+  if (!region) return null;
   // Same stick as lifespan: 1 real hour = AGE_YEARS_PER_HOUR years.
   // The old divisor 31_536_000 ms (~8.76h) made a ten-hour sit read as "一载"
   // while the character aged ten years.
-  const years = Math.max(1, Math.floor(((now - since) / 3_600_000) * AGE_YEARS_PER_HOUR))
+  const years = Math.max(1, Math.floor(((now - since) / 3_600_000) * AGE_YEARS_PER_HOUR));
   return [
     `行至${region.name},山道两侧立着两块石碑——一块刻着你的道号,另一块是空的。`,
     `你镇压此地已逾${years}载,此方妖邪至今不敢再聚。`,
-    `守道的山民见你,愣了愣,拱手道:「是你。上回一别,已是多年。」`
-  ].join('')
+    `守道的山民见你,愣了愣,拱手道:「是你。上回一别,已是多年。」`,
+  ].join("");
 }

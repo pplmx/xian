@@ -13,21 +13,21 @@
  *      也不会出现「卡上写已看过、存档却不记得」这类两处记账。
  *   三 **给方向,不替玩家做决定**:卡上写清为什么,点不点由玩家。
  */
-import { usePlayerStore } from '@/stores/player'
-import { useQuestsStore } from '@/stores/quests'
-import { isRetreating } from './earlyGameService'
-import { realmLabel } from '@/data/realms'
-import { SUB_LEVELS } from '@/data/constants'
+import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
+import { isRetreating } from "./earlyGameService";
+import { realmLabel } from "@/data/realms";
+import { SUB_LEVELS } from "@/data/constants";
 
 export interface FirstStep {
   /** 去哪儿(路由) */
-  to: string
+  to: string;
   /** 按钮文字 */
-  label: string
+  label: string;
   /** 一句话:现在该做什么 */
-  text: string
+  text: string;
   /** 一句话:为什么(不给理由的指路就是命令) */
-  hint: string
+  hint: string;
 }
 
 /**
@@ -35,47 +35,47 @@ export interface FirstStep {
  * 用**主线下标**而不是「玩了多久」—— 时长会离线累计,而走过第一条主线是玩家
  * 真做过一件事的证据。
  */
-const BEGINNER_MAIN_IDX = 0
+const BEGINNER_MAIN_IDX = 0;
 
 /** 首页人物卡那一行状态:闭关是 5 分钟 buff,不是「没出门就是闭关」。 */
 export function homeStatusText(input: {
-  dead: boolean
-  exploringSecret: boolean
-  expedition: boolean
-  sessionActive: boolean
-  regionName: string
-  injured: boolean
-  retreating: boolean
+  dead: boolean;
+  exploringSecret: boolean;
+  expedition: boolean;
+  sessionActive: boolean;
+  regionName: string;
+  injured: boolean;
+  retreating: boolean;
   /** 修为已满 —— 闲坐时该说「修为已满」,把突破那一步推到眼前 */
-  expFull: boolean
+  expFull: boolean;
 }): string {
-  if (input.dead) return '陨落'
-  if (input.exploringSecret) return '探秘中'
-  if (input.expedition) return '远征中'
-  if (input.sessionActive) return `历练中 · ${input.regionName}`
-  if (input.injured) return '疗伤中'
-  if (input.retreating) return '闭关中'
+  if (input.dead) return "陨落";
+  if (input.exploringSecret) return "探秘中";
+  if (input.expedition) return "远征中";
+  if (input.sessionActive) return `历练中 · ${input.regionName}`;
+  if (input.injured) return "疗伤中";
+  if (input.retreating) return "闭关中";
   // 修为满了还写「修炼中」,等于告诉玩家「该干嘛还干嘛」—— 修为不会自己长,
   // 该突破那一步得有人递到眼前
-  if (input.expFull) return '修为已满'
-  return '修炼中'
+  if (input.expFull) return "修为已满";
+  return "修炼中";
 }
 
 export function currentFirstStep(): FirstStep | null {
-  const player = usePlayerStore()
-  const quests = useQuestsStore()
+  const player = usePlayerStore();
+  const quests = useQuestsStore();
 
-  if (player.dead) return null
+  if (player.dead) return null;
   // 出师三条件任一成立即收卡:主线走过第一条 / 自己历练过 / 已突破到筑基以上
   // (最后一条是给老档兜底 —— 没有计数与主线下标的老存档不该再被当成新玩家)
-  if (quests.mainIdx > BEGINNER_MAIN_IDX) return null
-  if (quests.counter('explores') > 0) return null
-  if (player.major > 0) return null
+  if (quests.mainIdx > BEGINNER_MAIN_IDX) return null;
+  if (quests.counter("explores") > 0) return null;
+  if (player.major > 0) return null;
   /**
    * 闭关中不指路去历练:那条路会被当场拦下(`startExploration` 明文拒绝),
    * 指过去等于让玩家白点一次 —— 而这正是这张卡要消除的那类摩擦。
    */
-  if (isRetreating()) return null
+  if (isRetreating()) return null;
 
   /**
    * 修为圆满时唯一该做的是回修炼页突破。
@@ -83,19 +83,19 @@ export function currentFirstStep(): FirstStep | null {
    * 而修为正卡在圆满线上不再涨。
    */
   if (player.expFull) {
-    const next = realmLabel(player.major, Math.min(player.sub + 1, SUB_LEVELS - 1))
+    const next = realmLabel(player.major, Math.min(player.sub + 1, SUB_LEVELS - 1));
     return {
-      to: '/cultivation',
-      label: '去突破',
+      to: "/cultivation",
+      label: "去突破",
       text: `第一步 · 修为已圆满,回修炼页突破「${next}」`,
-      hint: '修为满了就不再涨,突破是眼下唯一能往前走的一步'
-    }
+      hint: "修为满了就不再涨,突破是眼下唯一能往前走的一步",
+    };
   }
 
   return {
-    to: '/adventure',
-    label: '去历练',
-    text: '第一步 · 去历练走一趟',
-    hint: '历练有敌人、装备、灵草与灵石;修为自己会涨,圆满了回修炼页突破'
-  }
+    to: "/adventure",
+    label: "去历练",
+    text: "第一步 · 去历练走一趟",
+    hint: "历练有敌人、装备、灵草与灵石;修为自己会涨,圆满了回修炼页突破",
+  };
 }

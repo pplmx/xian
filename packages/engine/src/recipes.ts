@@ -18,64 +18,64 @@
  * 单位由内容定:花费的数额库**只原样带出、不做算术** —— "失败时这一条实际扣多少"也让内容算
  * (取整、大数、折扣率都是作品的事),所以同一份骨架能配 `number`,也能配 `{m,e}` 那样的大数。
  */
-import type { Rng } from './rng.js'
+import type { Rng } from "./rng.js";
 
 /** 一条花费(键名由内容定:灵草 / 灵石 / 材料……) */
 export interface CraftCost<A = number> {
-  key: string
-  amount: A
+  key: string;
+  amount: A;
 }
 
 export interface CraftOutcome<A = number> {
   /** 炉开了吗(材料不足 / 门槛没过 = 没开) */
-  fired: boolean
+  fired: boolean;
   /** 没开炉时给人看的原因(开炉了就是 '') */
-  reason: string
+  reason: string;
   /** 成没成(没开炉时为 false) */
-  succeeded: boolean
+  succeeded: boolean;
   /** 这一次实际扣掉的花费(没开炉时为空) */
-  spent: readonly CraftCost<A>[]
+  spent: readonly CraftCost<A>[];
   /** 产出件数(失败与没开炉都是 0) */
-  produced: number
+  produced: number;
   /** 是双成 / 额外产出吗 */
-  extra: boolean
+  extra: boolean;
   /** 这一次实际用的成功率 */
-  chance: number
+  chance: number;
 }
 
 export interface RecipeRunnerConfig<Ctx = unknown, A = number> {
   /** 这一条配方要花什么 */
-  costs: (recipeId: string, ctx: Ctx) => readonly CraftCost<A>[]
+  costs: (recipeId: string, ctx: Ctx) => readonly CraftCost<A>[];
   /** 成功率(通常是 `crafting` 那套四乘区的输出;库会把它夹到 [0,1]) */
-  rate: (recipeId: string, ctx: Ctx) => number
+  rate: (recipeId: string, ctx: Ctx) => number;
   /**
    * 开炉门槛:不行就返回一句人话(本作是"不知此方 / 参悟不足"这类)。
    * 与 `affordable` 的**顺序**是:门槛 → 材料 —— 顺序即玩家先看到哪句话。
    */
-  blocked?: (recipeId: string, ctx: Ctx) => string | undefined
+  blocked?: (recipeId: string, ctx: Ctx) => string | undefined;
   /** 材料够不够(库不认识资源账本,所以由调用方查):不足就返回一句人话 */
-  affordable?: (recipeId: string, ctx: Ctx) => string | undefined
+  affordable?: (recipeId: string, ctx: Ctx) => string | undefined;
   /**
    * 失败时这一条**实际扣多少**(不给就全扣)。
    * 库不做算术:取整、大数、按技艺保下多少,都是内容的事。
    */
-  spentOnFail?: (cost: CraftCost<A>, recipeId: string, ctx: Ctx) => A
+  spentOnFail?: (cost: CraftCost<A>, recipeId: string, ctx: Ctx) => A;
   /** 双成(额外产出)的概率(未配 = 不会双成) */
-  bonus?: (recipeId: string, ctx: Ctx) => number
+  bonus?: (recipeId: string, ctx: Ctx) => number;
   /** 双成概率的上限(默认 1) */
-  bonusCap?: number
+  bonusCap?: number;
   /** 基础产出件数(默认 1);双成时再加 1 */
-  baseYield?: (recipeId: string, ctx: Ctx) => number
+  baseYield?: (recipeId: string, ctx: Ctx) => number;
 }
 
 export function createRecipeRunner<Ctx = unknown, A = number>(config: RecipeRunnerConfig<Ctx, A>) {
-  const bonusCap = config.bonusCap ?? 1
+  const bonusCap = config.bonusCap ?? 1;
 
   /** 只有"真开炉"才走这里:先掷成败,成功了才掷双成 */
   const run = (recipeId: string, ctx: Ctx, rng: Rng): CraftOutcome<A> => {
-    const costs = config.costs(recipeId, ctx)
-    const blocked = config.blocked?.(recipeId, ctx)
-    const affordable = blocked === undefined ? config.affordable?.(recipeId, ctx) : undefined
+    const costs = config.costs(recipeId, ctx);
+    const blocked = config.blocked?.(recipeId, ctx);
+    const affordable = blocked === undefined ? config.affordable?.(recipeId, ctx) : undefined;
     if (blocked !== undefined || affordable !== undefined) {
       return {
         fired: false,
@@ -84,34 +84,53 @@ export function createRecipeRunner<Ctx = unknown, A = number>(config: RecipeRunn
         spent: [],
         produced: 0,
         extra: false,
-        chance: 0
-      }
+        chance: 0,
+      };
     }
 
-    const raw = config.rate(recipeId, ctx)
+    const raw = config.rate(recipeId, ctx);
     // 成功率一律夹到 [0,1]:叠出来的概率不该有 1.8 或 NaN 传到掷骰那一步
-    const chance = Math.min(1, Math.max(0, Number.isFinite(raw) ? raw : 0))
-    const succeeded = rng.chance(chance)
-    const spent: CraftCost<A>[] = []
+    const chance = Math.min(1, Math.max(0, Number.isFinite(raw) ? raw : 0));
+    const succeeded = rng.chance(chance);
+    const spent: CraftCost<A>[] = [];
     for (const cost of costs) {
       if (succeeded) {
-        spent.push(cost)
+        spent.push(cost);
       } else {
-        spent.push({ key: cost.key, amount: config.spentOnFail ? config.spentOnFail(cost, recipeId, ctx) : cost.amount })
+        spent.push({
+          key: cost.key,
+          amount: config.spentOnFail ? config.spentOnFail(cost, recipeId, ctx) : cost.amount,
+        });
       }
     }
     if (!succeeded) {
-      return { fired: true, reason: '', succeeded: false, spent, produced: 0, extra: false, chance }
+      return {
+        fired: true,
+        reason: "",
+        succeeded: false,
+        spent,
+        produced: 0,
+        extra: false,
+        chance,
+      };
     }
 
-    const rawBonus = config.bonus?.(recipeId, ctx) ?? 0
-    const bonusChance = Math.min(bonusCap, Math.max(0, Number.isFinite(rawBonus) ? rawBonus : 0))
-    const extra = bonusChance > 0 ? rng.chance(bonusChance) : false
-    const base = Math.max(0, Math.floor(config.baseYield?.(recipeId, ctx) ?? 1))
-    return { fired: true, reason: '', succeeded: true, spent, produced: base + (extra ? 1 : 0), extra, chance }
-  }
+    const rawBonus = config.bonus?.(recipeId, ctx) ?? 0;
+    const bonusChance = Math.min(bonusCap, Math.max(0, Number.isFinite(rawBonus) ? rawBonus : 0));
+    const extra = bonusChance > 0 ? rng.chance(bonusChance) : false;
+    const base = Math.max(0, Math.floor(config.baseYield?.(recipeId, ctx) ?? 1));
+    return {
+      fired: true,
+      reason: "",
+      succeeded: true,
+      spent,
+      produced: base + (extra ? 1 : 0),
+      extra,
+      chance,
+    };
+  };
 
-  return { bonusCap, run }
+  return { bonusCap, run };
 }
 
-export type RecipeRunner<Ctx = unknown, A = number> = ReturnType<typeof createRecipeRunner<Ctx, A>>
+export type RecipeRunner<Ctx = unknown, A = number> = ReturnType<typeof createRecipeRunner<Ctx, A>>;

@@ -66,7 +66,7 @@ function effectTypesFromTypes(): string[] {
   const start = src.indexOf("export type ArtifactEffect =");
   expect(start, "types/index.ts 里找不到 ArtifactEffect").toBeGreaterThanOrEqual(0);
   const block = src.slice(start, src.indexOf("export interface ArtifactDef", start));
-  return [...new Set([...block.matchAll(/type:\s*'([a-z]+)'/g)].map((m) => m[1]!))];
+  return [...new Set([...block.matchAll(/type:\s*["']([a-z]+)["']/g)].map((m) => m[1]!))];
 }
 
 describe("法宝效果 · 词汇表不虚设", () => {

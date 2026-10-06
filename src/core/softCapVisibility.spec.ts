@@ -63,7 +63,7 @@ describe("软上限:机制本体", () => {
 describe("软上限:人物页真的标出来了", () => {
   it("凡有软阈值的属性,人物页都必须显示(否则无从标记)", () => {
     for (const key of CAPPED_KEYS) {
-      expect(CHAR_VIEW_SRC, `人物页漏了 ${key}`).toContain(`'${key}'`);
+      expect(CHAR_VIEW_SRC, `人物页漏了 ${key}`).toContain(`"${key}"`);
     }
   });
 

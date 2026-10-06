@@ -51,7 +51,7 @@ describe("自然介入 · 一:不打开道侣页也会发生", () => {
   it("历练代码在四个情境点主动提供事件", () => {
     // 33.9 的时机来自「打开弹窗」;34.0 必须来自历练本身
     for (const t of ["enterPlace", "firstVictory", "bossDefeated", "nearDeath"] as const) {
-      expect(EXPLORATION).toContain(`offerBondEvent('${t}')`);
+      expect(EXPLORATION).toContain(`offerBondEvent("${t}")`);
     }
     console.log("\n历练情境点:");
     for (const [k, v] of Object.entries(TRIGGER_NAMES)) console.log(`  ${k.padEnd(14)} ${v}`);

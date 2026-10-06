@@ -13,26 +13,26 @@
  *
  * 本文件只做映射与文案,不读 store、不改状态 —— 需要状态的调用方把状态传进来。
  */
-import type { ArtifactDef, EquipmentTemplate, GongfaDef, PetDef, PillDef } from '@/types'
-import { qualityDef } from '@/data/qualities'
-import { EQUIP_SLOT_NAMES } from '@/data/equipment'
-import { artifactActiveText, artifactValue } from '@/data/artifacts'
-import { buffDef } from '@/data/buffs'
-import { GONGFA_TYPE_NAMES } from '@/data/gongfa'
-import { ELEMENTS } from '@/data/linggen'
-import { REALMS } from '@/data/realms'
-import { HERB_GRADE_SHORT, herbGradeOfMajor } from '@/data/herbGrades'
-import { equipSetDef } from '@/core/equipSet'
-import { worldNameOfTier } from '@/core/formulas'
-import { gongfaModsAt } from '@/stores/cultivation'
-import { personalityEffects } from '@/core/petPersonality'
-import { formatDuration, formatNum, formatPercent } from '@/utils/format'
-import { modsText } from './statNames'
+import type { ArtifactDef, EquipmentTemplate, GongfaDef, PetDef, PillDef } from "@/types";
+import { qualityDef } from "@/data/qualities";
+import { EQUIP_SLOT_NAMES } from "@/data/equipment";
+import { artifactActiveText, artifactValue } from "@/data/artifacts";
+import { buffDef } from "@/data/buffs";
+import { GONGFA_TYPE_NAMES } from "@/data/gongfa";
+import { ELEMENTS } from "@/data/linggen";
+import { REALMS } from "@/data/realms";
+import { HERB_GRADE_SHORT, herbGradeOfMajor } from "@/data/herbGrades";
+import { equipSetDef } from "@/core/equipSet";
+import { worldNameOfTier } from "@/core/formulas";
+import { gongfaModsAt } from "@/stores/cultivation";
+import { personalityEffects } from "@/core/petPersonality";
+import { formatDuration, formatNum, formatPercent } from "@/utils/format";
+import { modsText } from "./statNames";
 
 // ============ 装备 ============
 
 /** 平铺三围的中文名(装备的「所主」用) */
-const FLAT_NAMES = { attack: '攻击', defense: '防御', maxHp: '气血' } as const
+const FLAT_NAMES = { attack: "攻击", defense: "防御", maxHp: "气血" } as const;
 
 /**
  * 装备的功用:所主(它主加哪一维)+ 固有机制 + 所属共鸣。
@@ -41,18 +41,20 @@ const FLAT_NAMES = { attack: '攻击', defense: '防御', maxHp: '气血' } as c
  * 「主加哪一维」而不印数字 —— 离开层级印一个数字,反而是另一种撒谎。
  */
 export function equipFuncText(t: EquipmentTemplate): string {
-  const parts: string[] = []
-  const flats = (['attack', 'defense', 'maxHp'] as const).filter(k => t.base[k]).map(k => FLAT_NAMES[k])
-  if (flats.length) parts.push(`所主:${flats.join('、')}`)
-  if (t.fixedMods && Object.keys(t.fixedMods).length) parts.push(`固有:${modsText(t.fixedMods)}`)
-  const set = t.set ? equipSetDef(t.set) : undefined
-  if (set) parts.push(`共鸣「${set.name}」:${set.effectDesc}(${set.required} 件)`)
-  return parts.join('\n')
+  const parts: string[] = [];
+  const flats = (["attack", "defense", "maxHp"] as const)
+    .filter((k) => t.base[k])
+    .map((k) => FLAT_NAMES[k]);
+  if (flats.length) parts.push(`所主:${flats.join("、")}`);
+  if (t.fixedMods && Object.keys(t.fixedMods).length) parts.push(`固有:${modsText(t.fixedMods)}`);
+  const set = t.set ? equipSetDef(t.set) : undefined;
+  if (set) parts.push(`共鸣「${set.name}」:${set.effectDesc}(${set.required} 件)`);
+  return parts.join("\n");
 }
 
 /** 装备的出处一行:部位 · 界域 · 哪一阶(一阶一名) */
 export function equipMetaText(t: EquipmentTemplate): string {
-  return `${EQUIP_SLOT_NAMES[t.slot]} · ${worldNameOfTier(t.tier)} · ${t.tier} 阶`
+  return `${EQUIP_SLOT_NAMES[t.slot]} · ${worldNameOfTier(t.tier)} · ${t.tier} 阶`;
 }
 
 // ============ 法宝 ============
@@ -62,11 +64,11 @@ export function equipMetaText(t: EquipmentTemplate): string {
  * + 神通说明(同一套缩放与封顶,见 artifactActiveText)。
  */
 export function artifactFuncText(a: ArtifactDef, level = 0): string {
-  const passive = modsText(artifactValue(a, level).passive)
-  const lines: string[] = []
-  if (passive) lines.push(`被动:${passive}`)
-  lines.push(`神通「${a.active.name}」:${artifactActiveText(a, level)}`)
-  return lines.join('\n')
+  const passive = modsText(artifactValue(a, level).passive);
+  const lines: string[] = [];
+  if (passive) lines.push(`被动:${passive}`);
+  lines.push(`神通「${a.active.name}」:${artifactActiveText(a, level)}`);
+  return lines.join("\n");
 }
 
 /**
@@ -76,7 +78,7 @@ export function artifactFuncText(a: ArtifactDef, level = 0): string {
  * 看品质与界域,升阶靠祭炼;一个「N 阶起」说清它会在哪些地界掉出来。
  */
 export function artifactMetaText(a: ArtifactDef): string {
-  return `${qualityDef(a.quality).name} · ${worldNameOfTier(a.fromTier)} · ${a.fromTier} 阶起可现世`
+  return `${qualityDef(a.quality).name} · ${worldNameOfTier(a.fromTier)} · ${a.fromTier} 阶起可现世`;
 }
 
 // ============ 功法 ============
@@ -86,11 +88,11 @@ export function artifactMetaText(a: ArtifactDef): string {
  * 功法没有「掉落层级」这回事,满级数值对谁都是同一个 —— 故直接印满级。
  */
 export function gongfaFuncText(g: GongfaDef): string {
-  const lines = [`圆满(${g.maxLevel} 层)可得:${modsText(gongfaModsAt(g.id, g.maxLevel))}`]
+  const lines = [`圆满(${g.maxLevel} 层)可得:${modsText(gongfaModsAt(g.id, g.maxLevel))}`];
   if (g.skill) {
-    lines.push(gongfaSkillLine(g.skill))
+    lines.push(gongfaSkillLine(g.skill));
   }
-  return lines.join('\n')
+  return lines.join("\n");
 }
 
 /**
@@ -98,15 +100,15 @@ export function gongfaFuncText(g: GongfaDef): string {
  * 这句边界是从前各页面自己手写时最容易漏的一条(光看「出手 20%」会以为
  * 随便装备哪部就在放,其实战斗只出主修的那一式)。
  */
-export function gongfaSkillLine(skill: GongfaDef['skill'] | undefined): string {
-  if (!skill) return ''
-  return `附带神通「${skill.name}」:出手 ${formatPercent(skill.rate)} 几率,${formatPercent(skill.mult)} 威力。须设为主修,战斗只出这一式`
+export function gongfaSkillLine(skill: GongfaDef["skill"] | undefined): string {
+  if (!skill) return "";
+  return `附带神通「${skill.name}」:出手 ${formatPercent(skill.rate)} 几率,${formatPercent(skill.mult)} 威力。须设为主修,战斗只出这一式`;
 }
 
 /** 功法的出处一行:类型 · 品质 · 属性 · 从哪一境起可参 */
 export function gongfaMetaText(g: GongfaDef): string {
-  const element = g.element ? ` · ${ELEMENTS[g.element].name}属性` : ''
-  return `${GONGFA_TYPE_NAMES[g.type]} · ${qualityDef(g.quality).name}${element} · ${REALMS[g.minRealm]?.name ?? ''}期可参`
+  const element = g.element ? ` · ${ELEMENTS[g.element].name}属性` : "";
+  return `${GONGFA_TYPE_NAMES[g.type]} · ${qualityDef(g.quality).name}${element} · ${REALMS[g.minRealm]?.name ?? ""}期可参`;
 }
 
 // ============ 丹药 ============
@@ -118,46 +120,48 @@ export function gongfaMetaText(g: GongfaDef): string {
  * 数值取自 instant / buff 本体,不另写一份:改数据,文案自己跟上。
  */
 export function pillFuncText(def: PillDef): string {
-  const lines: string[] = []
-  const i = def.instant
-  if (def.kind === 'instant' && i) {
-    const parts: string[] = []
+  const lines: string[] = [];
+  const i = def.instant;
+  if (def.kind === "instant" && i) {
+    const parts: string[] = [];
     // 修为丹按等效闭关时长计价(Phase 39):写"折合闭关 一时"而不是百分比 ——
     // 玩家要判断的是"这枚丹抵我多久",不是"它占这道墙的几成"
-    if (i.expSecs) parts.push(`修为 +折合闭关 ${formatDuration(i.expSecs)}(至多不满一层)`)
-    if (i.expFixed) parts.push(`修为 +${formatNum(i.expFixed)} 点`)
-    if (i.qiPct) parts.push(`灵气 +上限的 ${Math.round(i.qiPct * 100)}%`)
-    if (i.lifespanYears) parts.push(`寿元 +${formatNum(i.lifespanYears)} 载`)
-    if (i.wudao) parts.push(`悟道点 +${formatNum(i.wudao)}`)
-    if (parts.length) lines.push(`服之:${parts.join(' · ')}`)
+    if (i.expSecs) parts.push(`修为 +折合闭关 ${formatDuration(i.expSecs)}(至多不满一层)`);
+    if (i.expFixed) parts.push(`修为 +${formatNum(i.expFixed)} 点`);
+    if (i.qiPct) parts.push(`灵气 +上限的 ${Math.round(i.qiPct * 100)}%`);
+    if (i.lifespanYears) parts.push(`寿元 +${formatNum(i.lifespanYears)} 载`);
+    if (i.wudao) parts.push(`悟道点 +${formatNum(i.wudao)}`);
+    if (parts.length) lines.push(`服之:${parts.join(" · ")}`);
   } else if (def.buffId) {
-    const buff = buffDef(def.buffId)
+    const buff = buffDef(def.buffId);
     if (buff) {
-      lines.push(`服之化开「${buff.name}」:${modsText(buff.mods)}(持续 ${Math.round(buff.durationSec / 60)} 分钟)`)
+      lines.push(
+        `服之化开「${buff.name}」:${modsText(buff.mods)}(持续 ${Math.round(buff.durationSec / 60)} 分钟)`,
+      );
     }
   }
-  lines.push(pillSourceText(def))
-  return lines.join('\n')
+  lines.push(pillSourceText(def));
+  return lines.join("\n");
 }
 
 /** 丹药的来路:有方子的说方子,没方子的明说「只能偶得」—— 免得玩家满世界找书 */
 export function pillSourceText(def: PillDef): string {
-  if (!def.recipe) return '无方,只在历练掉落与际遇里偶得'
+  if (!def.recipe) return "无方,只在历练掉落与际遇里偶得";
   // 灵草分五品(ISS-306):方子烧哪一品就报哪一品 —— 新手村草进不了道祖丹的炉
-  const gradeName = HERB_GRADE_SHORT[herbGradeOfMajor(def.minRealm)]
-  return `有方:${gradeName}灵草×${def.recipe.herb},丹房可炼`
+  const gradeName = HERB_GRADE_SHORT[herbGradeOfMajor(def.minRealm)];
+  return `有方:${gradeName}灵草×${def.recipe.herb},丹房可炼`;
 }
 
 /** 丹药的出处一行:品质 · 类别 · 从哪一境起现世 */
 export function pillMetaText(def: PillDef): string {
-  return `${qualityDef(def.quality).name} · ${def.recipe ? '可炼' : '偶得'} · ${REALMS[def.minRealm]?.name ?? ''}期起见`
+  return `${qualityDef(def.quality).name} · ${def.recipe ? "可炼" : "偶得"} · ${REALMS[def.minRealm]?.name ?? ""}期起见`;
 }
 
 // ============ 灵兽 ============
 
 /** 灵兽的出战加成(数值) */
 export function petFuncText(def: PetDef): string {
-  return modsText(def.mods)
+  return modsText(def.mods);
 }
 
 /**
@@ -168,14 +172,15 @@ export function petFuncText(def: PetDef): string {
  * core/petPersonality 里参与结算,却没在界面上露过面。故逐项摊开(零值不列)。
  */
 export function petTraitText(def: PetDef): string {
-  const e = personalityEffects(def.id)
-  const delta = (mult: number): string => `${mult >= 1 ? '+' : ''}${formatPercent(mult - 1)}`
-  const parts: string[] = []
-  if (e.exploreDurMult !== 1) parts.push(`历练时长 ${delta(e.exploreDurMult)}`)
-  if (e.dangerMult !== 1) parts.push(`遇险 ${delta(e.dangerMult)}`)
-  if (e.dropLuck !== 0) parts.push(`掉落气运 ${e.dropLuck > 0 ? '+' : ''}${formatPercent(e.dropLuck)}`)
+  const e = personalityEffects(def.id);
+  const delta = (mult: number): string => `${mult >= 1 ? "+" : ""}${formatPercent(mult - 1)}`;
+  const parts: string[] = [];
+  if (e.exploreDurMult !== 1) parts.push(`历练时长 ${delta(e.exploreDurMult)}`);
+  if (e.dangerMult !== 1) parts.push(`遇险 ${delta(e.dangerMult)}`);
+  if (e.dropLuck !== 0)
+    parts.push(`掉落气运 ${e.dropLuck > 0 ? "+" : ""}${formatPercent(e.dropLuck)}`);
   // lossReduction 的真实机制是「危急时灵兽护主、免于败绩」的概率(exploration 败北分支),
   // 不是战败率本身削 X 点 —— 名前不叫「战败率」,免得读出"这场败得更少一点"的错觉
-  if (e.lossReduction > 0) parts.push(`危急护主,免败 ${formatPercent(e.lossReduction)}`)
-  return parts.join(' · ')
+  if (e.lossReduction > 0) parts.push(`危急护主,免败 ${formatPercent(e.lossReduction)}`);
+  return parts.join(" · ");
 }

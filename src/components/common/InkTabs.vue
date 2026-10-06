@@ -13,7 +13,7 @@
         :style="{
           width: `calc((100% - 8px) / ${tabs.length})`,
           transform: `translateX(${activeIdx * 100}%)`,
-          transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)'
+          transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
         }"
       />
       <button
@@ -39,42 +39,42 @@
 </template>
 
 <script setup lang="ts" generic="T extends string">
-  import { computed, ref } from 'vue'
+import { computed, ref } from "vue";
 
-  const props = defineProps<{
-    tabs: readonly { id: T; label: string; dot?: boolean }[]
-  }>()
+const props = defineProps<{
+  tabs: readonly { id: T; label: string; dot?: boolean }[];
+}>();
 
-  const model = defineModel<T>({ required: true })
+const model = defineModel<T>({ required: true });
 
-  const activeIdx = computed(() =>
-    Math.max(
-      0,
-      props.tabs.findIndex(t => t.id === model.value)
-    )
-  )
-  /** v-for 里的模板引用:同序数组,配合箭头键做焦点漫游 */
-  const tabEls = ref<(HTMLButtonElement | null)[]>([])
+const activeIdx = computed(() =>
+  Math.max(
+    0,
+    props.tabs.findIndex((t) => t.id === model.value),
+  ),
+);
+/** v-for 里的模板引用:同序数组,配合箭头键做焦点漫游 */
+const tabEls = ref<(HTMLButtonElement | null)[]>([]);
 
-  /** 把焦点与选中一起移到第 i 个页签(roving tabindex 的落点) */
-  function focusTab(i: number): void {
-    const target = tabEls.value[i]
-    if (!target) return
-    model.value = props.tabs[i]!.id
-    target.focus()
+/** 把焦点与选中一起移到第 i 个页签(roving tabindex 的落点) */
+function focusTab(i: number): void {
+  const target = tabEls.value[i];
+  if (!target) return;
+  model.value = props.tabs[i]!.id;
+  target.focus();
+}
+
+/** 键盘漫游:←/→ 循环、Home/End 到头尾;方向键 preventDefault,免得替页面翻动 */
+function onKeydown(e: KeyboardEvent): void {
+  const n = props.tabs.length;
+  let target = -1;
+  if (e.key === "ArrowRight") target = (activeIdx.value + 1) % n;
+  else if (e.key === "ArrowLeft") target = (activeIdx.value - 1 + n) % n;
+  else if (e.key === "Home") target = 0;
+  else if (e.key === "End") target = n - 1;
+  if (target >= 0) {
+    e.preventDefault();
+    focusTab(target);
   }
-
-  /** 键盘漫游:←/→ 循环、Home/End 到头尾;方向键 preventDefault,免得替页面翻动 */
-  function onKeydown(e: KeyboardEvent): void {
-    const n = props.tabs.length
-    let target = -1
-    if (e.key === 'ArrowRight') target = (activeIdx.value + 1) % n
-    else if (e.key === 'ArrowLeft') target = (activeIdx.value - 1 + n) % n
-    else if (e.key === 'Home') target = 0
-    else if (e.key === 'End') target = n - 1
-    if (target >= 0) {
-      e.preventDefault()
-      focusTab(target)
-    }
-  }
+}
 </script>

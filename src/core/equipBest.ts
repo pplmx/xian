@@ -12,35 +12,35 @@
  * 纯方便性功能:**只改装配**,不分解、不炼化、不卖任何一件;换下来的旧件自动回行囊
  * (inventory.equip 的 bag.assign 语义)。同一件已经是该槽最强时不动(幂等)。
  */
-import { useInventoryStore } from '@/stores/inventory'
-import { qualityDef } from '@/data/qualities'
-import { equipmentTemplate } from '@/data/equipment'
-import { resolveEquipStats } from './equipGen'
-import { POWER_STAT_WEIGHTS } from './powerRating'
-import { toNum } from '@/utils/gnum'
-import type { AnyStatKey, EquipmentInstance, EquipSlot } from '@/types'
+import { useInventoryStore } from "@/stores/inventory";
+import { qualityDef } from "@/data/qualities";
+import { equipmentTemplate } from "@/data/equipment";
+import { resolveEquipStats } from "./equipGen";
+import { POWER_STAT_WEIGHTS } from "./powerRating";
+import { toNum } from "@/utils/gnum";
+import type { AnyStatKey, EquipmentInstance, EquipSlot } from "@/types";
 
 const SLOT_COURIER: EquipSlot[] = [
-  'weapon',
-  'head',
-  'body',
-  'wrist',
-  'belt',
-  'boots',
-  'necklace',
-  'ring',
-  'talisman'
-]
+  "weapon",
+  "head",
+  "body",
+  "wrist",
+  "belt",
+  "boots",
+  "necklace",
+  "ring",
+  "talisman",
+];
 
 /** 气血按 1/6 折算进战力:续命值钱,但不如攻防那么直接 */
-const HP_FLAT_WEIGHT = 1 / 6
+const HP_FLAT_WEIGHT = 1 / 6;
 
 function qualityRank(i: EquipmentInstance): number {
-  return qualityDef(i.quality).rank
+  return qualityDef(i.quality).rank;
 }
 
 function rollSum(i: EquipmentInstance): number {
-  return i.affixes.reduce((s, x) => s + x.roll, 0)
+  return i.affixes.reduce((s, x) => s + x.roll, 0);
 }
 
 /**
@@ -56,63 +56,63 @@ function rollSum(i: EquipmentInstance): number {
  * 成长类词条(修炼速度等)不在权重表上,分项为 0 —— 一键不为了修速换装。
  */
 export function equippablePower(i: EquipmentInstance): number {
-  const r = resolveEquipStats(i)
-  const f = r.flats
-  const base = toNum(f.attack) + toNum(f.defense) + toNum(f.maxHp) * HP_FLAT_WEIGHT
-  const critRate = r.mods.critRate ?? 0
-  const critDamage = r.mods.critDamage ?? 0
+  const r = resolveEquipStats(i);
+  const f = r.flats;
+  const base = toNum(f.attack) + toNum(f.defense) + toNum(f.maxHp) * HP_FLAT_WEIGHT;
+  const critRate = r.mods.critRate ?? 0;
+  const critDamage = r.mods.critDamage ?? 0;
   // 面板的百分比分(pct 尺度):会心联乘单列,其余键按权重表折
-  let pct = critRate * (1 + critDamage)
+  let pct = critRate * (1 + critDamage);
   for (const [k, raw] of Object.entries(r.mods)) {
-    if (k === 'critRate' || k === 'critDamage' || raw === undefined) continue
-    pct += (POWER_STAT_WEIGHTS[k as AnyStatKey] ?? 0) * raw
+    if (k === "critRate" || k === "critDamage" || raw === undefined) continue;
+    pct += (POWER_STAT_WEIGHTS[k as AnyStatKey] ?? 0) * raw;
   }
-  return base * (1 + pct)
+  return base * (1 + pct);
 }
 
 /** a 是否严格强于 b(真实战力为主,同分回退到粗排 —— 不两败打转) */
 function stronger(a: EquipmentInstance, b: EquipmentInstance): boolean {
-  const pa = equippablePower(a)
-  const pb = equippablePower(b)
-  if (pa !== pb) return pa > pb
-  return betterEquip(a, b)
+  const pa = equippablePower(a);
+  const pb = equippablePower(b);
+  if (pa !== pb) return pa > pb;
+  return betterEquip(a, b);
 }
 
 /** 旧序的粗排(品质 → 层级 → 强化 → 词条成色)。现作「同战力」的稳定裁决 */
 export function betterEquip(a: EquipmentInstance, b: EquipmentInstance): boolean {
-  const qa = qualityRank(a)
-  const qb = qualityRank(b)
-  if (qa !== qb) return qa > qb
-  if (a.tier !== b.tier) return a.tier > b.tier
-  if (a.level !== b.level) return a.level > b.level
-  return rollSum(a) > rollSum(b)
+  const qa = qualityRank(a);
+  const qb = qualityRank(b);
+  if (qa !== qb) return qa > qb;
+  if (a.tier !== b.tier) return a.tier > b.tier;
+  if (a.level !== b.level) return a.level > b.level;
+  return rollSum(a) > rollSum(b);
 }
 
 /** 该槽该穿的最强一件(该槽无任何可穿戴时返回 null) */
 export function bestEquipFor(slot: EquipSlot): EquipmentInstance | null {
-  const inventory = useInventoryStore()
-  const pool = inventory.items.filter(i => equipmentTemplate(i.templateId)?.slot === slot)
-  if (pool.length === 0) return null
-  return pool.reduce((a, b) => (stronger(b, a) ? b : a))
+  const inventory = useInventoryStore();
+  const pool = inventory.items.filter((i) => equipmentTemplate(i.templateId)?.slot === slot);
+  if (pool.length === 0) return null;
+  return pool.reduce((a, b) => (stronger(b, a) ? b : a));
 }
 
 /** 一键换装单槽:换上最强一件,已是则不动。返回是否真的换了 */
 export function equipBestFor(slot: EquipSlot): boolean {
-  const inventory = useInventoryStore()
-  const best = bestEquipFor(slot)
-  if (!best) return false
-  if (inventory.equipped[slot] === best.uid) return false
-  inventory.equip(best.uid, slot)
-  return true
+  const inventory = useInventoryStore();
+  const best = bestEquipFor(slot);
+  if (!best) return false;
+  if (inventory.equipped[slot] === best.uid) return false;
+  inventory.equip(best.uid, slot);
+  return true;
 }
 
 /** 一键换装全部可穿槽(法宝另走 equippedArtifacts,不在这九个里) */
 export function equipAllBest(): number {
-  let changed = 0
+  let changed = 0;
   for (const slot of SLOT_COURIER) {
-    if (equipBestFor(slot)) changed += 1
+    if (equipBestFor(slot)) changed += 1;
   }
-  return changed
+  return changed;
 }
 
 /**
@@ -120,21 +120,23 @@ export function equipAllBest(): number {
  * 回退粗排);已穿的那件更强就不动 —— 穿套装绝不降级。返回换上几件。
  */
 export function equipSetCombo(setId: string): number {
-  const inventory = useInventoryStore()
-  const bestPerSlot = new Map<EquipSlot, EquipmentInstance>()
+  const inventory = useInventoryStore();
+  const bestPerSlot = new Map<EquipSlot, EquipmentInstance>();
   for (const it of inventory.items) {
-    const tpl = equipmentTemplate(it.templateId)
-    if (!tpl || tpl.set !== setId) continue
-    const cur = bestPerSlot.get(tpl.slot)
-    if (!cur || stronger(it, cur)) bestPerSlot.set(tpl.slot, it)
+    const tpl = equipmentTemplate(it.templateId);
+    if (!tpl || tpl.set !== setId) continue;
+    const cur = bestPerSlot.get(tpl.slot);
+    if (!cur || stronger(it, cur)) bestPerSlot.set(tpl.slot, it);
   }
-  let changed = 0
+  let changed = 0;
   for (const [slot, piece] of bestPerSlot) {
-    if (inventory.equipped[slot] === piece.uid) continue
-    const occupant = inventory.equipped[slot] ? inventory.findItem(inventory.equipped[slot]!) : undefined
-    if (occupant && stronger(occupant, piece)) continue
-    inventory.equip(piece.uid, slot)
-    changed += 1
+    if (inventory.equipped[slot] === piece.uid) continue;
+    const occupant = inventory.equipped[slot]
+      ? inventory.findItem(inventory.equipped[slot]!)
+      : undefined;
+    if (occupant && stronger(occupant, piece)) continue;
+    inventory.equip(piece.uid, slot);
+    changed += 1;
   }
-  return changed
+  return changed;
 }

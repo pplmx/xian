@@ -10,26 +10,41 @@
         <div v-for="(row, i) in view.rows" :key="i" class="rounded-md bg-paper-deep/60 px-3 py-2">
           <p class="flex items-baseline justify-between gap-2">
             <span class="shrink-0 text-[11px] text-ink-faint">{{ row.label }}</span>
-            <span v-if="row.text" class="shrink-0 text-[13px] text-ink tabular">{{ row.text }}</span>
-            <span v-else class="shrink-0 text-[11px] text-ink-faint tabular">{{ formatGN(row.value!) }}</span>
+            <span v-if="row.text" class="shrink-0 text-[13px] text-ink tabular">{{
+              row.text
+            }}</span>
+            <span v-else class="shrink-0 text-[11px] text-ink-faint tabular">{{
+              formatGN(row.value!)
+            }}</span>
           </p>
           <p v-if="row.text" class="mt-0.5 text-right text-[10px] leading-snug text-ink-faint">
-            {{ row.hint ?? '由当前速率推算,会随构筑与加成变化' }}
+            {{ row.hint ?? "由当前速率推算,会随构筑与加成变化" }}
           </p>
-          <p v-else class="mt-0.5 break-all text-right font-kai text-[15px] leading-snug text-ink tabular">
-            {{ row.value === undefined ? '' : formatExact(row.value) }}
+          <p
+            v-else
+            class="mt-0.5 break-all text-right font-kai text-[15px] leading-snug text-ink tabular"
+          >
+            {{ row.value === undefined ? "" : formatExact(row.value) }}
           </p>
-          <p v-if="row.hint && !row.text" class="mt-0.5 text-right text-[10px] text-ink-faint">{{ row.hint }}</p>
+          <p v-if="row.hint && !row.text" class="mt-0.5 text-right text-[10px] text-ink-faint">
+            {{ row.hint }}
+          </p>
           <!--
             大数的"量级"读数:到了兆/京以上,玩家真正能横比的是数量级,而不是第几位数字。
             只在数够大时补这一句(小数字给了只会变成噪音)。
           -->
-          <p v-else-if="row.value !== undefined && magnitudeOf(row.value)" class="mt-0.5 text-right text-[10px] text-ink-faint tabular">
+          <p
+            v-else-if="row.value !== undefined && magnitudeOf(row.value)"
+            class="mt-0.5 text-right text-[10px] text-ink-faint tabular"
+          >
             {{ magnitudeOf(row.value!) }}
           </p>
         </div>
       </div>
-      <p v-if="view.note" class="mt-2 rounded-md bg-ink/4 px-2.5 py-2 text-[11px] leading-relaxed text-ink-soft">
+      <p
+        v-if="view.note"
+        class="mt-2 rounded-md bg-ink/4 px-2.5 py-2 text-[11px] leading-relaxed text-ink-soft"
+      >
         {{ view.note }}
       </p>
       <!--
@@ -45,23 +60,23 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import { useUiStore } from '@/stores/ui'
-  import { formatExact, formatGN, formatScientific } from '@/utils/format'
-  import { gn } from '@/utils/gnum'
-  import type { GNum } from '@/types'
-  import BaseModal from '@/components/common/BaseModal.vue'
+import { computed } from "vue";
+import { useUiStore } from "@/stores/ui";
+import { formatExact, formatGN, formatScientific } from "@/utils/format";
+import { gn } from "@/utils/gnum";
+import type { GNum } from "@/types";
+import BaseModal from "@/components/common/BaseModal.vue";
 
-  const ui = useUiStore()
-  const view = computed(() => ui.numberDetail)
+const ui = useUiStore();
+const view = computed(() => ui.numberDetail);
 
-  /** 数够大(兆以上)时补一句科学计数法 —— 量级才是能横比的那个量 */
-  function magnitudeOf(v: GNum | number): string | null {
-    const g = gn(v)
-    return g.m !== 0 && g.e >= 12 ? formatScientific(g) : null
-  }
+/** 数够大(兆以上)时补一句科学计数法 —— 量级才是能横比的那个量 */
+function magnitudeOf(v: GNum | number): string | null {
+  const g = gn(v);
+  return g.m !== 0 && g.e >= 12 ? formatScientific(g) : null;
+}
 
-  function close(): void {
-    ui.numberDetail = null
-  }
+function close(): void {
+  ui.numberDetail = null;
+}
 </script>

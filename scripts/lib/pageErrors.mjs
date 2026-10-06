@@ -23,8 +23,8 @@
 
 export function watchPageErrors(page, sink) {
   // sink 既可以是数组(多数调用方),也可以是回调(冒烟脚本还要给异常配一处出处)
-  const report = typeof sink === 'function' ? sink : msg => sink.push(msg)
-  page.on('pageerror', e => report(String(e).slice(0, 160)))
+  const report = typeof sink === "function" ? sink : (msg) => sink.push(msg);
+  page.on("pageerror", (e) => report(String(e).slice(0, 160)));
 }
 
 /**
@@ -54,13 +54,14 @@ export function watchPageErrors(page, sink) {
  * @param allow 允许的前缀(如 `['http://127.0.0.1']`)
  */
 export async function blockExternal(pageOrContext, allow = []) {
-  let blocked = 0
-  await pageOrContext.route('**/*', route => {
-    const url = route.request().url()
-    const allowed = /^(file|data|blob):/.test(url) || allow.some(prefix => url.startsWith(prefix))
-    if (allowed) return route.continue()
-    blocked += 1
-    return route.abort()
-  })
-  return () => blocked
+  let blocked = 0;
+  await pageOrContext.route("**/*", (route) => {
+    const url = route.request().url();
+    const allowed =
+      /^(file|data|blob):/.test(url) || allow.some((prefix) => url.startsWith(prefix));
+    if (allowed) return route.continue();
+    blocked += 1;
+    return route.abort();
+  });
+  return () => blocked;
 }

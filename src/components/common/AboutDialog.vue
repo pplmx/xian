@@ -26,16 +26,16 @@
 </template>
 
 <script setup lang="ts">
-  import BaseModal from './BaseModal.vue'
-  import pkg from '@root/package.json'
+import BaseModal from "./BaseModal.vue";
+import pkg from "@root/package.json";
 
-  defineProps<{
-    open: boolean
-  }>()
+defineProps<{
+  open: boolean;
+}>();
 
-  defineEmits<{
-    close: []
-  }>()
+defineEmits<{
+  close: [];
+}>();
 
-  const version = pkg.version
+const version = pkg.version;
 </script>

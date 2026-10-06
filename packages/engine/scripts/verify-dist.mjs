@@ -15,30 +15,39 @@
  *
  * 用法:`node scripts/verify-dist.mjs`(已挂在 `bun run check` 末尾)
  */
-import assert from 'node:assert/strict'
-import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { resolve } from 'node:path'
+import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
 
-const ENGINE = resolve(import.meta.dirname, '..')
-const DIST = resolve(ENGINE, 'dist')
+const ENGINE = resolve(import.meta.dirname, "..");
+const DIST = resolve(ENGINE, "dist");
 for (const entry of [
-  'index.js',
-  'index.d.ts',
-  'presets/demo.js',
-  'presets/xiuxian.js',
-  'presets/daily.js',
-  'presets/minimal.js'
+  "index.js",
+  "index.d.ts",
+  "presets/demo.js",
+  "presets/xiuxian.js",
+  "presets/daily.js",
+  "presets/minimal.js",
 ]) {
-  assert.ok(existsSync(resolve(DIST, entry)), `产物缺文件:dist/${entry} —— 先跑 bun run build`)
+  assert.ok(existsSync(resolve(DIST, entry)), `产物缺文件:dist/${entry} —— 先跑 bun run build`);
 }
 
-const engine = await import(resolve(DIST, 'index.js'))
-const { DEMO } = await import(resolve(DIST, 'presets/demo.js'))
-const { XIUXIAN } = await import(resolve(DIST, 'presets/xiuxian.js'))
-const { DAILY } = await import(resolve(DIST, 'presets/daily.js'))
-const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
+const engine = await import(resolve(DIST, "index.js"));
+const { DEMO } = await import(resolve(DIST, "presets/demo.js"));
+const { XIUXIAN } = await import(resolve(DIST, "presets/xiuxian.js"));
+const { DAILY } = await import(resolve(DIST, "presets/daily.js"));
+const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
 
 /**
  * 组装指南自检 —— 文档里的每个 `create*` 与每个示例文件都必须真实存在。
@@ -47,31 +56,35 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
  * 模块**(拆了、改名了、还没写),抄的人会先怀疑自己。这里把"提到的都得有"变成机器判据。
  */
 {
-  const doc = readFileSync(resolve(ENGINE, 'docs/assembly.md'), 'utf-8')
-  const factories = new Set([...doc.matchAll(/`(create[A-Z]\w*)`/g)].map(m => m[1]))
-  assert.ok(factories.size >= 8, '组装指南里应当指向足够多的模块(至少 8 个 create*)')
+  const doc = readFileSync(resolve(ENGINE, "docs/assembly.md"), "utf-8");
+  const factories = new Set([...doc.matchAll(/`(create[A-Z]\w*)`/g)].map((m) => m[1]));
+  assert.ok(factories.size >= 8, "组装指南里应当指向足够多的模块(至少 8 个 create*)");
   for (const name of factories) {
-    assert.ok(name in engine, `组装指南提到 ${name},但公开入口没有这个导出`)
+    assert.ok(name in engine, `组装指南提到 ${name},但公开入口没有这个导出`);
   }
   const plainApis = new Set(
-    [...doc.matchAll(/`(evalGoal|goalProgress|planIdle|runIdle|drawFrom|drawMany|snapshotOf|deltaSince|accrue|defineGame|defineSaveFormat|asRecord|composeCraftRate|softChance)`/g)].map(
-      m => m[1]
-    )
-  )
+    [
+      ...doc.matchAll(
+        /`(evalGoal|goalProgress|planIdle|runIdle|drawFrom|drawMany|snapshotOf|deltaSince|accrue|defineGame|defineSaveFormat|asRecord|composeCraftRate|softChance)`/g,
+      ),
+    ].map((m) => m[1]),
+  );
   for (const name of plainApis) {
-    assert.ok(name in engine, `组装指南提到 ${name},但公开入口没有这个导出`)
+    assert.ok(name in engine, `组装指南提到 ${name},但公开入口没有这个导出`);
   }
   for (const [, example] of doc.matchAll(/(examples\/[\w.-]+\.ts)/g)) {
-    assert.ok(existsSync(resolve(ENGINE, example)), `组装指南提到的示例不存在:${example}`)
+    assert.ok(existsSync(resolve(ENGINE, example)), `组装指南提到的示例不存在:${example}`);
   }
   for (const [, spec] of doc.matchAll(/`(\w+\.spec\.ts)`/g)) {
     // 用例可能在子目录里(如 presets/presets.spec.ts):按文件名整棵树找
-    const found = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).some(
-      entry => typeof entry === 'string' && entry.endsWith(spec)
-    )
-    assert.ok(found, `组装指南提到的用例不存在:${spec}`)
+    const found = readdirSync(resolve(ENGINE, "src"), { recursive: true, encoding: "utf-8" }).some(
+      (entry) => typeof entry === "string" && entry.endsWith(spec),
+    );
+    assert.ok(found, `组装指南提到的用例不存在:${spec}`);
   }
-  console.log(`组装指南自检通过(${factories.size} 个工厂 + ${plainApis.size} 个工具 + 示例与用例路径)`)
+  console.log(
+    `组装指南自检通过(${factories.size} 个工厂 + ${plainApis.size} 个工具 + 示例与用例路径)`,
+  );
 
   /**
    * 定制表自检 —— 「想改什么,改哪里」里,凡是**公开导出**的名字,都得有用例提到过。
@@ -83,16 +96,16 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 表原先住在 README,后来整节搬进 `docs/usage.md`(README 只留摘要与指针)—— 搬到哪儿,这条
    * 判据就跟到哪儿:文档可以挪,承诺不许丢。
    */
-  const usage = readFileSync(resolve(ENGINE, 'docs/usage.md'), 'utf-8')
-  const specDir = resolve(ENGINE, 'src')
-  const specText = readdirSync(specDir, { recursive: true, encoding: 'utf-8' })
-    .filter(entry => typeof entry === 'string' && entry.endsWith('.spec.ts'))
-    .map(entry => readFileSync(resolve(specDir, entry), 'utf-8'))
-    .join('\n')
-  const tableStart = usage.indexOf('## 定制:想改什么,改哪里')
-  assert.ok(tableStart >= 0, 'docs/usage.md 里找不到「定制:想改什么,改哪里」这一节')
-  const tableEnd = usage.indexOf('\n## ', tableStart + 5)
-  const table = usage.slice(tableStart, tableEnd)
+  const usage = readFileSync(resolve(ENGINE, "docs/usage.md"), "utf-8");
+  const specDir = resolve(ENGINE, "src");
+  const specText = readdirSync(specDir, { recursive: true, encoding: "utf-8" })
+    .filter((entry) => typeof entry === "string" && entry.endsWith(".spec.ts"))
+    .map((entry) => readFileSync(resolve(specDir, entry), "utf-8"))
+    .join("\n");
+  const tableStart = usage.indexOf("## 定制:想改什么,改哪里");
+  assert.ok(tableStart >= 0, "docs/usage.md 里找不到「定制:想改什么,改哪里」这一节");
+  const tableEnd = usage.indexOf("\n## ", tableStart + 5);
+  const table = usage.slice(tableStart, tableEnd);
   /**
    * 取每个反引号片段里最后一个标识符片段:`equipment.affixCountFn` → `affixCountFn`,
    * `'max'` 这类字面量会被跳过(不以字母开头)。
@@ -100,15 +113,15 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
   const promised = [
     ...new Set(
       [...table.matchAll(/`([^`]+)`/g)]
-        .map(m => m[1].split('.').pop().trim())
-        .filter(name => /^[A-Za-z_]\w*$/.test(name))
-    )
-  ]
+        .map((m) => m[1].split(".").pop().trim())
+        .filter((name) => /^[A-Za-z_]\w*$/.test(name)),
+    ),
+  ];
   // 防空转:标题被改掉、正则失配时,这份自检会"通过"得毫无意义
-  assert.ok(promised.length >= 40, `定制表只读出 ${promised.length} 个名字 —— 标题或表格结构变了?`)
-  const unpinned = promised.filter(name => !specText.includes(name))
-  assert.deepEqual(unpinned, [], `定制表承诺可改、却没有任何用例提到:${unpinned.join('、')}`)
-  console.log(`定制表自检通过(${promised.length} 个名字,逐个都有用例提到)`)
+  assert.ok(promised.length >= 40, `定制表只读出 ${promised.length} 个名字 —— 标题或表格结构变了?`);
+  const unpinned = promised.filter((name) => !specText.includes(name));
+  assert.deepEqual(unpinned, [], `定制表承诺可改、却没有任何用例提到:${unpinned.join("、")}`);
+  console.log(`定制表自检通过(${promised.length} 个名字,逐个都有用例提到)`);
 
   /**
    * 定制表旋钮自检 —— 表里写出来的**旋钮路径**必须真的在源码里存在。
@@ -121,22 +134,34 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * `realms.breakthrough.rateFn(major, layer)` → `rateFn`;`'max'` 这类字面量不以字母开头,跳过。
    * 只查"存在"(不查类型与签名,那是使用者侧 `tsc` 与用例的事)。
    */
-  const srcText = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' })
-    .filter(entry => typeof entry === 'string' && entry.endsWith('.ts') && !entry.endsWith('.spec.ts'))
-    .map(entry => readFileSync(resolve(specDir, entry), 'utf-8'))
-    .join('\n')
+  const srcText = readdirSync(resolve(ENGINE, "src"), { recursive: true, encoding: "utf-8" })
+    .filter(
+      (entry) => typeof entry === "string" && entry.endsWith(".ts") && !entry.endsWith(".spec.ts"),
+    )
+    .map((entry) => readFileSync(resolve(specDir, entry), "utf-8"))
+    .join("\n");
   const knobs = [
     ...new Set(
       [...table.matchAll(/`([^`\n]+)`/g)]
-        .map(m => m[1].trim().replace(/\([^()]*\)\s*$/, '').split('.').pop().trim())
-        .filter(name => /^[A-Za-z_]\w*$/.test(name))
-    )
-  ]
+        .map((m) =>
+          m[1]
+            .trim()
+            .replace(/\([^()]*\)\s*$/, "")
+            .split(".")
+            .pop()
+            .trim(),
+        )
+        .filter((name) => /^[A-Za-z_]\w*$/.test(name)),
+    ),
+  ];
   // 防空转:与上面那条同源,读不出东西就说明表格结构变了
-  assert.ok(knobs.length >= promised.length, `定制表旋钮只读出 ${knobs.length} 个 —— 表格结构变了?`)
-  const phantom = knobs.filter(name => !new RegExp(`\\b${name}\\b`).test(srcText))
-  assert.deepEqual(phantom, [], `定制表承诺的旋钮在源码里找不到:${phantom.join('、')}`)
-  console.log(`定制表旋钮自检通过(${knobs.length} 个旋钮在源码里都存在)`)
+  assert.ok(
+    knobs.length >= promised.length,
+    `定制表旋钮只读出 ${knobs.length} 个 —— 表格结构变了?`,
+  );
+  const phantom = knobs.filter((name) => !new RegExp(`\\b${name}\\b`).test(srcText));
+  assert.deepEqual(phantom, [], `定制表承诺的旋钮在源码里找不到:${phantom.join("、")}`);
+  console.log(`定制表旋钮自检通过(${knobs.length} 个旋钮在源码里都存在)`);
 
   /**
    * 报错口径自检 —— 源码里的**每一条 `throw` 都得有人真的触发过**。
@@ -150,31 +175,39 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 要求长度 ≥ 4 —— 因为有些报错以插值开头(`属性系统:${key} 的 …`),只取前缀会退化成
    * "属性系统"这四个字,谁都能满足。最长段才是这句话里最认得出的部分。
    */
-  const throwMessages = new Set()
-  const throwFiles = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).filter(
-    entry => typeof entry === 'string' && entry.endsWith('.ts')
-  )
+  const throwMessages = new Set();
+  const throwFiles = readdirSync(resolve(ENGINE, "src"), {
+    recursive: true,
+    encoding: "utf-8",
+  }).filter((entry) => typeof entry === "string" && entry.endsWith(".ts"));
   for (const rel of throwFiles) {
-    if (rel.endsWith('.spec.ts')) continue
-    const text = readFileSync(resolve(ENGINE, 'src', rel), 'utf-8')
+    if (rel.endsWith(".spec.ts")) continue;
+    const text = readFileSync(resolve(ENGINE, "src", rel), "utf-8");
     for (const m of text.matchAll(/throw new Error\((?:`([^`]*)`|'([^']*)'|"([^"]*)")\)/g)) {
-      const raw = m[1] ?? m[2] ?? m[3] ?? ''
+      const raw = m[1] ?? m[2] ?? m[3] ?? "";
       const longest = raw
-        .replace(/\\n/g, ' ')
+        .replace(/\\n/g, " ")
         .split(/\$\{[^}]*\}/)
-        .map(part => part.replace(/^[\s:、,——-]+|[\s:、,——-]+$/g, ''))
-        .sort((a, b) => b.length - a.length)[0]
-      if (longest !== undefined && longest.length >= 4) throwMessages.add(longest)
+        .map((part) => part.replace(/^[\s:、,——-]+|[\s:、,——-]+$/g, ""))
+        .sort((a, b) => b.length - a.length)[0];
+      if (longest !== undefined && longest.length >= 4) throwMessages.add(longest);
     }
   }
-  assert.ok(throwMessages.size >= 20, `只从源码里读出 ${throwMessages.size} 条报错 —— throw 的写法变了?`)
+  assert.ok(
+    throwMessages.size >= 20,
+    `只从源码里读出 ${throwMessages.size} 条报错 —— throw 的写法变了?`,
+  );
   // 匹配留一点余地:模板串切开之后,有些段会带一个多余的虚词(如"的 appliesTo 指向…"),
   // 所以"整段命中"或"去掉首字命中"都算 —— 判据要拦的是"没人触发过",不是"措辞一字不差"
   const untriggered = [...throwMessages].filter(
-    message => !specText.includes(message) && !specText.includes(message.slice(1))
-  )
-  assert.deepEqual(untriggered, [], `这些报错没有任何用例触发过(可能早就走不到,或者文案已经漂了):${untriggered.join('、')}`)
-  console.log(`报错口径自检通过(${throwMessages.size} 条报错都有人真的触发过)`)
+    (message) => !specText.includes(message) && !specText.includes(message.slice(1)),
+  );
+  assert.deepEqual(
+    untriggered,
+    [],
+    `这些报错没有任何用例触发过(可能早就走不到,或者文案已经漂了):${untriggered.join("、")}`,
+  );
+  console.log(`报错口径自检通过(${throwMessages.size} 条报错都有人真的触发过)`);
 
   /**
    * 版本引用自检 —— 文档里指向的那个 tag,必须就是 `package.json` 里的版本。
@@ -187,23 +220,33 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    *
    * CHANGELOG 不算:那里出现的历史版本号是**应该**不一样的。
    */
-  const version = JSON.parse(readFileSync(resolve(ENGINE, 'package.json'), 'utf-8')).version
-  const versionDocs = ['README.md', ...readdirSync(resolve(ENGINE, 'docs')).map(name => `docs/${name}`)].filter(
-    rel => !rel.endsWith('CHANGELOG.md')
-  )
-  const versionRefs = []
+  const version = JSON.parse(readFileSync(resolve(ENGINE, "package.json"), "utf-8")).version;
+  const versionDocs = [
+    "README.md",
+    ...readdirSync(resolve(ENGINE, "docs")).map((name) => `docs/${name}`),
+  ].filter((rel) => !rel.endsWith("CHANGELOG.md"));
+  const versionRefs = [];
   for (const rel of versionDocs) {
-    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
-    for (const m of text.matchAll(/#v(\d+\.\d+\.\d+)/g)) versionRefs.push([rel, m[1]])
-    for (const m of text.matchAll(/wanxiang-engine-(\d+\.\d+\.\d+)\.tgz/g)) versionRefs.push([rel, m[1]])
-    for (const m of text.matchAll(/当前版本 \*\*(\d+\.\d+\.\d+)\*\*/g)) versionRefs.push([rel, m[1]])
+    const text = readFileSync(resolve(ENGINE, rel), "utf-8");
+    for (const m of text.matchAll(/#v(\d+\.\d+\.\d+)/g)) versionRefs.push([rel, m[1]]);
+    for (const m of text.matchAll(/wanxiang-engine-(\d+\.\d+\.\d+)\.tgz/g))
+      versionRefs.push([rel, m[1]]);
+    for (const m of text.matchAll(/当前版本 \*\*(\d+\.\d+\.\d+)\*\*/g))
+      versionRefs.push([rel, m[1]]);
     // release 附件的下载路径也在引用版本号(装了才发现对不上就晚了)
-    for (const m of text.matchAll(/releases\/download\/v(\d+\.\d+\.\d+)\//g)) versionRefs.push([rel, m[1]])
+    for (const m of text.matchAll(/releases\/download\/v(\d+\.\d+\.\d+)\//g))
+      versionRefs.push([rel, m[1]]);
   }
-  assert.ok(versionRefs.length >= 4, `只找到 ${versionRefs.length} 处版本引用 —— 文档改了写法?`)
-  const stale = versionRefs.filter(([, v]) => v !== version).map(([rel, v]) => `${rel} 写的是 ${v}`)
-  assert.deepEqual(stale, [], `这些文档里的版本与 package.json(${version})不一致:${stale.join('、')}`)
-  console.log(`版本引用自检通过(${versionRefs.length} 处引用都是 ${version})`)
+  assert.ok(versionRefs.length >= 4, `只找到 ${versionRefs.length} 处版本引用 —— 文档改了写法?`);
+  const stale = versionRefs
+    .filter(([, v]) => v !== version)
+    .map(([rel, v]) => `${rel} 写的是 ${v}`);
+  assert.deepEqual(
+    stale,
+    [],
+    `这些文档里的版本与 package.json(${version})不一致:${stale.join("、")}`,
+  );
+  console.log(`版本引用自检通过(${versionRefs.length} 处引用都是 ${version})`);
 
   /**
    * 文档链接自检 —— 文档里指向仓库的**绝对链接**必须真的存在。
@@ -213,25 +256,28 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 这些链接会静默变成 404,而 Markdown 里没有任何东西会因此变红。这里就把"链接指向的路径
    * 在仓库里存在"变成判据(blob → 文件,tree → 目录)。
    */
-  const linkDocs = ['README.md', ...readdirSync(resolve(ENGINE, 'docs')).map(name => `docs/${name}`)]
-  const base = 'https://github.com/pplmx/wanxiang-engine'
-  let linkCount = 0
-  const deadLinks = []
+  const linkDocs = [
+    "README.md",
+    ...readdirSync(resolve(ENGINE, "docs")).map((name) => `docs/${name}`),
+  ];
+  const base = "https://github.com/pplmx/wanxiang-engine";
+  let linkCount = 0;
+  const deadLinks = [];
   for (const rel of linkDocs) {
-    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
+    const text = readFileSync(resolve(ENGINE, rel), "utf-8");
     // 目标在 `)`、空白或 `>`(被 <…> 包起来的自动链接)处结束
-    for (const m of text.matchAll(new RegExp(`${base}/(blob|tree)/main/([^)\\s>]+)`, 'g'))) {
-      const [, kind, target] = m
-      linkCount += 1
-      const path = target.replace(/[#?].*$/, '')
-      const full = resolve(ENGINE, path)
-      const ok = kind === 'blob' ? existsSync(full) && statSync(full).isFile() : existsSync(full)
-      if (!ok) deadLinks.push(`${rel} → ${path}`)
+    for (const m of text.matchAll(new RegExp(`${base}/(blob|tree)/main/([^)\\s>]+)`, "g"))) {
+      const [, kind, target] = m;
+      linkCount += 1;
+      const path = target.replace(/[#?].*$/, "");
+      const full = resolve(ENGINE, path);
+      const ok = kind === "blob" ? existsSync(full) && statSync(full).isFile() : existsSync(full);
+      if (!ok) deadLinks.push(`${rel} → ${path}`);
     }
   }
-  assert.ok(linkCount >= 20, `只找到 ${linkCount} 条仓库链接 —— 链接写法变了?`)
-  assert.deepEqual(deadLinks, [], `这些文档链接指向仓库里不存在的地方:${deadLinks.join('、')}`)
-  console.log(`文档链接自检通过(${linkCount} 条指回仓库的链接都指向真实文件)`)
+  assert.ok(linkCount >= 20, `只找到 ${linkCount} 条仓库链接 —— 链接写法变了?`);
+  assert.deepEqual(deadLinks, [], `这些文档链接指向仓库里不存在的地方:${deadLinks.join("、")}`);
+  console.log(`文档链接自检通过(${linkCount} 条指回仓库的链接都指向真实文件)`);
 
   /**
    * 文档引用自检 —— 文档里点名的**脚本与路径**必须真的存在。
@@ -246,36 +292,45 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    *   ② `src/core/...` 是**上游工程**的路径(parity.md 讲的是与源工程的对账)。
    * 除这两类之外,凡文档里写出来的,都得在这个仓库里找得到。
    */
-  const HOST_ONLY_SCRIPTS = new Set(['check:engine', 'check:engine:standalone'])
-  const pkgScripts = Object.keys(JSON.parse(readFileSync(resolve(ENGINE, 'package.json'), 'utf-8')).scripts)
-  let docCommands = 0
-  let docPaths = 0
-  const missingRefs = []
+  const HOST_ONLY_SCRIPTS = new Set(["check:engine", "check:engine:standalone"]);
+  const pkgScripts = Object.keys(
+    JSON.parse(readFileSync(resolve(ENGINE, "package.json"), "utf-8")).scripts,
+  );
+  let docCommands = 0;
+  let docPaths = 0;
+  const missingRefs = [];
   for (const rel of linkDocs) {
-    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
+    const text = readFileSync(resolve(ENGINE, rel), "utf-8");
     for (const [, name] of text.matchAll(/bun run ([a-zA-Z:_-]+)/g)) {
-      if (name.length < 2 || HOST_ONLY_SCRIPTS.has(name)) continue // 单字母是占位写法
-      docCommands += 1
-      if (!pkgScripts.includes(name)) missingRefs.push(`${rel}: bun run ${name}`)
+      if (name.length < 2 || HOST_ONLY_SCRIPTS.has(name)) continue; // 单字母是占位写法
+      docCommands += 1;
+      if (!pkgScripts.includes(name)) missingRefs.push(`${rel}: bun run ${name}`);
     }
     for (const [, path] of text.matchAll(/`((?:src|scripts|examples|docs)\/[\w./@-]+)`/g)) {
-      if (path.includes('*') || path.endsWith('/') || path.startsWith('src/core/')) continue
-      docPaths += 1
-      if (!existsSync(resolve(ENGINE, path))) missingRefs.push(`${rel}: \`${path}\``)
+      if (path.includes("*") || path.endsWith("/") || path.startsWith("src/core/")) continue;
+      docPaths += 1;
+      if (!existsSync(resolve(ENGINE, path))) missingRefs.push(`${rel}: \`${path}\``);
     }
     // 相对链接:点下去才发现是 404 的那种。目标是相对**这份文档所在目录**解析的。
     for (const [, target] of text.matchAll(/\]\(([^)\s]+)\)/g)) {
-      if (/^(https?:|mailto:|#)/.test(target)) continue
-      const clean = target.split('#')[0]
-      if (clean === '') continue
-      docPaths += 1
-      if (!existsSync(resolve(ENGINE, rel, '..', clean))) missingRefs.push(`${rel}: 链接 \`${target}\``)
+      if (/^(https?:|mailto:|#)/.test(target)) continue;
+      const clean = target.split("#")[0];
+      if (clean === "") continue;
+      docPaths += 1;
+      if (!existsSync(resolve(ENGINE, rel, "..", clean)))
+        missingRefs.push(`${rel}: 链接 \`${target}\``);
     }
   }
-  assert.ok(docCommands >= 10, `只从文档里读出 ${docCommands} 条命令 —— 写法变了?`)
-  assert.ok(docPaths >= 20, `只从文档里读出 ${docPaths} 条路径 —— 写法变了?`)
-  assert.deepEqual(missingRefs, [], `文档里这些脚本/路径在这个仓库里找不到:${missingRefs.join('、')}`)
-  console.log(`文档引用自检通过(${docCommands} 条命令与 ${docPaths} 条路径都真实存在;上游工程那几条已显式豁免)`)
+  assert.ok(docCommands >= 10, `只从文档里读出 ${docCommands} 条命令 —— 写法变了?`);
+  assert.ok(docPaths >= 20, `只从文档里读出 ${docPaths} 条路径 —— 写法变了?`);
+  assert.deepEqual(
+    missingRefs,
+    [],
+    `文档里这些脚本/路径在这个仓库里找不到:${missingRefs.join("、")}`,
+  );
+  console.log(
+    `文档引用自检通过(${docCommands} 条命令与 ${docPaths} 条路径都真实存在;上游工程那几条已显式豁免)`,
+  );
 
   /**
    * 目录树自检 —— README 里那棵树是使用者的地图,它必须**和仓库逐项对得上**。
@@ -284,39 +339,49 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 或者改了名/删了文件却没改树(地图指向不存在的路,照着找的人先怀疑自己)。
    * 树上的文档清单同理 —— `docs/` 下每份文档都得在地图上。
    */
-  const readme = readFileSync(resolve(ENGINE, 'README.md'), 'utf-8')
-  const treeBlock = readme.match(/```\n(packages\/engine\/[\s\S]*?)```/)
-  assert.ok(treeBlock, 'README 里找不到 packages/engine/ 的目录树代码块')
-  const tree = treeBlock[1]
-  const listedModules = [...tree.matchAll(/^ {4}([A-Za-z]\w*)\.ts\b/gm)].map(m => m[1])
-  const actualModules = readdirSync(resolve(ENGINE, 'src'))
-    .filter(name => name.endsWith('.ts') && !name.endsWith('.spec.ts'))
-    .map(name => name.replace(/\.ts$/, ''))
+  const readme = readFileSync(resolve(ENGINE, "README.md"), "utf-8");
+  const treeBlock = readme.match(/```\n(packages\/engine\/[\s\S]*?)```/);
+  assert.ok(treeBlock, "README 里找不到 packages/engine/ 的目录树代码块");
+  const tree = treeBlock[1];
+  const listedModules = [...tree.matchAll(/^ {4}([A-Za-z]\w*)\.ts\b/gm)].map((m) => m[1]);
+  const actualModules = readdirSync(resolve(ENGINE, "src"))
+    .filter((name) => name.endsWith(".ts") && !name.endsWith(".spec.ts"))
+    .map((name) => name.replace(/\.ts$/, ""));
   // 两侧用同一个显式 ASCII 比较器:deepEqual 判的是「集合一致」,次序只要两侧一致即可
-  const ascii = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  const ascii = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
   assert.deepEqual(
     [...listedModules].sort(ascii),
     [...actualModules].sort(ascii),
-    'README 的目录树与 src/ 下的模块文件对不上(少列了模块,或列了不存在的文件)'
-  )
-  const listedDocs = [...tree.matchAll(/(\w+)\.md/g)].map(m => m[1])
-  const actualDocs = readdirSync(resolve(ENGINE, 'docs')).map(name => name.replace(/\.md$/, ''))
+    "README 的目录树与 src/ 下的模块文件对不上(少列了模块,或列了不存在的文件)",
+  );
+  const listedDocs = [...tree.matchAll(/(\w+)\.md/g)].map((m) => m[1]);
+  const actualDocs = readdirSync(resolve(ENGINE, "docs")).map((name) => name.replace(/\.md$/, ""));
   for (const doc of actualDocs) {
-    assert.ok(listedDocs.includes(doc), `README 的目录树里没有列 docs/${doc}.md`)
+    assert.ok(listedDocs.includes(doc), `README 的目录树里没有列 docs/${doc}.md`);
   }
   /**
    * README 自己写的**数量**也要对上:正文里那句"`src/` 下 N 个模块文件(另有 M 份内容包)"
    * 是读者建立规模感的第一句话,而它不在那棵代码块里,上面的树比不到它 —— 实测它已经漂过一次
    * (写着 36、实际 38)。所以顺手一起查:数字改成手写的那一天起,就得有人盯着。
    */
-  const countClaim = readme.match(/`src\/` 下 (\d+) 个模块文件[^(]*\(另有 (\d+) 份内容包\)/)
-  assert.ok(countClaim, 'README 里找不到"src/ 下 N 个模块文件(另有 M 份内容包)"这句 —— 措辞改了?')
-  assert.equal(Number(countClaim[1]), actualModules.length, `README 说 ${countClaim[1]} 个模块文件,实际 ${actualModules.length} 个`)
-  const actualPresets = readdirSync(resolve(ENGINE, 'src/presets')).filter(
-    name => name.endsWith('.ts') && !name.endsWith('.spec.ts')
-  ).length
-  assert.equal(Number(countClaim[2]), actualPresets, `README 说 ${countClaim[2]} 份内容包,实际 ${actualPresets} 份`)
-  console.log(`目录树自检通过(${listedModules.length} 个模块文件 + ${actualDocs.length} 份文档都在图上,正文的数量也对得上)`)
+  const countClaim = readme.match(/`src\/` 下 (\d+) 个模块文件[^(]*\(另有 (\d+) 份内容包\)/);
+  assert.ok(countClaim, 'README 里找不到"src/ 下 N 个模块文件(另有 M 份内容包)"这句 —— 措辞改了?');
+  assert.equal(
+    Number(countClaim[1]),
+    actualModules.length,
+    `README 说 ${countClaim[1]} 个模块文件,实际 ${actualModules.length} 个`,
+  );
+  const actualPresets = readdirSync(resolve(ENGINE, "src/presets")).filter(
+    (name) => name.endsWith(".ts") && !name.endsWith(".spec.ts"),
+  ).length;
+  assert.equal(
+    Number(countClaim[2]),
+    actualPresets,
+    `README 说 ${countClaim[2]} 份内容包,实际 ${actualPresets} 份`,
+  );
+  console.log(
+    `目录树自检通过(${listedModules.length} 个模块文件 + ${actualDocs.length} 份文档都在图上,正文的数量也对得上)`,
+  );
 
   /**
    * 用例数自检 —— README 里那行"N 个用例 / M 个文件",文件数不许写错。
@@ -325,13 +390,18 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 最常见的那种漂移(加了新 spec 文件但没改 README)。用例数仍靠人写,写的时候顺手跑一次
    * `bun run test` 核对 —— 这条自检只保证"分母没写错"。
    */
-  const specFiles = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).filter(
-    entry => typeof entry === 'string' && entry.endsWith('.spec.ts')
-  ).length
-  const countRow = readme.match(/(\d+) 个用例 \/ (\d+) 个文件/)
-  assert.ok(countRow, 'README 的判据表里找不到"用例 / 文件"那一行')
-  assert.equal(Number(countRow[2]), specFiles, `README 写的用例文件数与实际不符(实际 ${specFiles} 个)`)
-  console.log(`用例数自检通过(README 写的 ${countRow[2]} 个用例文件与实际一致)`)
+  const specFiles = readdirSync(resolve(ENGINE, "src"), {
+    recursive: true,
+    encoding: "utf-8",
+  }).filter((entry) => typeof entry === "string" && entry.endsWith(".spec.ts")).length;
+  const countRow = readme.match(/(\d+) 个用例 \/ (\d+) 个文件/);
+  assert.ok(countRow, 'README 的判据表里找不到"用例 / 文件"那一行');
+  assert.equal(
+    Number(countRow[2]),
+    specFiles,
+    `README 写的用例文件数与实际不符(实际 ${specFiles} 个)`,
+  );
+  console.log(`用例数自检通过(README 写的 ${countRow[2]} 个用例文件与实际一致)`);
 
   /**
    * 调参参考自检 —— `docs/tuning.md` 必须**收全**每一份消融实验。
@@ -339,15 +409,15 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 消融实验的价值在于"量出来的数字有人看得到";新加一份却忘了收进参考表,就等于白量。
    * 这条自检反向掐住它:凡是 `src/*.sim.spec.ts`,参考表里必须点名一份(顺带保证点到的文件存在)。
    */
-  const tuning = readFileSync(resolve(ENGINE, 'docs/tuning.md'), 'utf-8')
-  const simSpecs = readdirSync(resolve(ENGINE, 'src'))
-    .filter(name => name.endsWith('.sim.spec.ts'))
-    .sort()
-  assert.ok(simSpecs.length >= 4, `消融实验只有 ${simSpecs.length} 份 —— 目录或命名变了?`)
-  const missing = simSpecs.filter(name => !tuning.includes(name))
-  assert.deepEqual(missing, [], `这些消融实验还没收进 docs/tuning.md:${missing.join('、')}`)
+  const tuning = readFileSync(resolve(ENGINE, "docs/tuning.md"), "utf-8");
+  const simSpecs = readdirSync(resolve(ENGINE, "src"))
+    .filter((name) => name.endsWith(".sim.spec.ts"))
+    .sort();
+  assert.ok(simSpecs.length >= 4, `消融实验只有 ${simSpecs.length} 份 —— 目录或命名变了?`);
+  const missing = simSpecs.filter((name) => !tuning.includes(name));
+  assert.deepEqual(missing, [], `这些消融实验还没收进 docs/tuning.md:${missing.join("、")}`);
   for (const [, spec] of tuning.matchAll(/`(src\/\w+\.sim\.spec\.ts)`/g)) {
-    assert.ok(simSpecs.includes(spec.replace('src/', '')), `调参参考指向了不存在的用例:${spec}`)
+    assert.ok(simSpecs.includes(spec.replace("src/", "")), `调参参考指向了不存在的用例:${spec}`);
   }
   /**
    * 一页索引自检 —— 文首那张"你要调的那件事在哪一节"的表,必须**一节课一行**。
@@ -356,17 +426,21 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 所以这一条盯两件事:①索引行数 = 消融份数(不许有节漏进索引);
    * ②每个小节的标题都在索引里被点名(标题改了、索引没改,也会红)。
    */
-  const indexStart = tuning.indexOf('## 一页索引')
-  assert.ok(indexStart >= 0, 'docs/tuning.md 里找不到「一页索引」那一节')
-  const indexEnd = tuning.indexOf('\n## ', indexStart + 5)
-  const indexBlock = tuning.slice(indexStart, indexEnd < 0 ? undefined : indexEnd)
-  const indexRows = [...indexBlock.matchAll(/^\| (?!---)/gm)].length - 1 // 去掉表头那一行
-  assert.equal(indexRows, simSpecs.length, `一页索引有 ${indexRows} 行,但消融有 ${simSpecs.length} 份 —— 有节没进索引?`)
-  const sectionTitles = [...tuning.matchAll(/^## (?!一页索引|怎么自己复现)(.+)$/gm)].map(line =>
-    line[1].replace(/\s*\(`[^`]+`\)\s*$/, '').trim()
-  )
-  const missingFromIndex = sectionTitles.filter(title => !indexBlock.includes(title))
-  assert.deepEqual(missingFromIndex, [], `这些小节没进一页索引:${missingFromIndex.join('、')}`)
+  const indexStart = tuning.indexOf("## 一页索引");
+  assert.ok(indexStart >= 0, "docs/tuning.md 里找不到「一页索引」那一节");
+  const indexEnd = tuning.indexOf("\n## ", indexStart + 5);
+  const indexBlock = tuning.slice(indexStart, indexEnd < 0 ? undefined : indexEnd);
+  const indexRows = [...indexBlock.matchAll(/^\| (?!---)/gm)].length - 1; // 去掉表头那一行
+  assert.equal(
+    indexRows,
+    simSpecs.length,
+    `一页索引有 ${indexRows} 行,但消融有 ${simSpecs.length} 份 —— 有节没进索引?`,
+  );
+  const sectionTitles = [...tuning.matchAll(/^## (?!一页索引|怎么自己复现)(.+)$/gm)].map((line) =>
+    line[1].replace(/\s*\(`[^`]+`\)\s*$/, "").trim(),
+  );
+  const missingFromIndex = sectionTitles.filter((title) => !indexBlock.includes(title));
+  assert.deepEqual(missingFromIndex, [], `这些小节没进一页索引:${missingFromIndex.join("、")}`);
   /**
    * 复现命令自检 —— 文档给的命令必须**真能看见读数**。
    *
@@ -375,16 +449,16 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 跑完是"全绿、一片空白"。而这份文档的全部价值就是那些打印出来的读数 ——
    * 命令少一个 `--reporter=verbose`,读者会以为实验没打印,而不是以为命令写错了。
    */
-  const tuningCommands = [...tuning.matchAll(/bunx vitest run[^\n`]*/g)].map(m => m[0].trim())
-  const blind = tuningCommands.filter(cmd => !cmd.includes('--reporter=verbose'))
+  const tuningCommands = [...tuning.matchAll(/bunx vitest run[^\n`]*/g)].map((m) => m[0].trim());
+  const blind = tuningCommands.filter((cmd) => !cmd.includes("--reporter=verbose"));
   assert.deepEqual(
     blind,
     [],
-    `这些复现命令看不见读数(vitest 默认吞掉通过用例的 stdout):${blind.join('、')}`
-  )
+    `这些复现命令看不见读数(vitest 默认吞掉通过用例的 stdout):${blind.join("、")}`,
+  );
   console.log(
-    `调参参考自检通过(${simSpecs.length} 份消融都在 docs/tuning.md,一页索引逐节点名,${tuningCommands.length} 条复现命令都看得见读数)`
-  )
+    `调参参考自检通过(${simSpecs.length} 份消融都在 docs/tuning.md,一页索引逐节点名,${tuningCommands.length} 条复现命令都看得见读数)`,
+  );
 
   /**
    * 相对导入自检 —— 源码里的相对导入必须带 `.js` 扩展名。
@@ -395,18 +469,23 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 而发版这边一切正常(库自己的构建与用例都过得去)。
    * 这次就是这么发现的:`companions.ts` 里一句 `from './attributes'` 漏了扩展名。
    */
-  const srcFiles = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).filter(
-    entry => typeof entry === 'string' && entry.endsWith('.ts')
-  )
-  const badSpecs = []
+  const srcFiles = readdirSync(resolve(ENGINE, "src"), {
+    recursive: true,
+    encoding: "utf-8",
+  }).filter((entry) => typeof entry === "string" && entry.endsWith(".ts"));
+  const badSpecs = [];
   for (const file of srcFiles) {
-    const text = readFileSync(resolve(ENGINE, 'src', file), 'utf-8')
+    const text = readFileSync(resolve(ENGINE, "src", file), "utf-8");
     for (const [, spec] of text.matchAll(/from\s+'(\.[^']*)'/g)) {
-      if (!spec.endsWith('.js')) badSpecs.push(`${file} → ${spec}`)
+      if (!spec.endsWith(".js")) badSpecs.push(`${file} → ${spec}`);
     }
   }
-  assert.deepEqual(badSpecs, [], `这些相对导入少了 .js 扩展名(消费者用 node16 解析时会红):${badSpecs.join('、')}`)
-  console.log(`相对导入自检通过(${srcFiles.length} 个源文件里的相对导入都带 .js)`)
+  assert.deepEqual(
+    badSpecs,
+    [],
+    `这些相对导入少了 .js 扩展名(消费者用 node16 解析时会红):${badSpecs.join("、")}`,
+  );
+  console.log(`相对导入自检通过(${srcFiles.length} 个源文件里的相对导入都带 .js)`);
 
   /**
    * 公开面行为判据自检 —— **每个运行时导出都得有人真用过**。
@@ -428,31 +507,31 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 或者文档字符串里写过它 —— 这三种都不等于"有人真用过",而它们都能骗过朴素的包含判断。
    * 去掉之后仍能匹配到,才是真的在调用/引用。
    */
-  const stripComments = text =>
+  const stripComments = (text) =>
     text
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/\/\/[^\n]*/g, '')
-      .replace(/^\s*import[\s\S]*?from\s*'[^']*'/gm, '')
-      .replace(/^\s*import\s*'[^']*'/gm, '')
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/[^\n]*/g, "")
+      .replace(/^\s*import[\s\S]*?from\s*'[^']*'/gm, "")
+      .replace(/^\s*import\s*'[^']*'/gm, "")
       .replace(/'(?:[^'\\]|\\.)*'/g, "''")
       .replace(/"(?:[^"\\]|\\.)*"/g, '""')
-      .replace(/`(?:[^`\\]|\\.)*`/g, '``')
+      .replace(/`(?:[^`\\]|\\.)*`/g, "``");
   const usageText = [
-    ...readdirSync(resolve(ENGINE, 'src'))
-      .filter(name => name.endsWith('.spec.ts') && name !== 'publicApi.spec.ts')
-      .map(name => stripComments(readFileSync(resolve(ENGINE, 'src', name), 'utf-8'))),
-    ...readdirSync(resolve(ENGINE, 'examples'))
-      .filter(name => name.endsWith('.ts'))
-      .map(name => stripComments(readFileSync(resolve(ENGINE, 'examples', name), 'utf-8')))
-  ].join('\n')
-  const exportNames = Object.keys(engine)
-  const unusedExports = exportNames.filter(name => !new RegExp(`\\b${name}\\b`).test(usageText))
+    ...readdirSync(resolve(ENGINE, "src"))
+      .filter((name) => name.endsWith(".spec.ts") && name !== "publicApi.spec.ts")
+      .map((name) => stripComments(readFileSync(resolve(ENGINE, "src", name), "utf-8"))),
+    ...readdirSync(resolve(ENGINE, "examples"))
+      .filter((name) => name.endsWith(".ts"))
+      .map((name) => stripComments(readFileSync(resolve(ENGINE, "examples", name), "utf-8"))),
+  ].join("\n");
+  const exportNames = Object.keys(engine);
+  const unusedExports = exportNames.filter((name) => !new RegExp(`\\b${name}\\b`).test(usageText));
   assert.deepEqual(
     unusedExports,
     [],
-    `这些导出没有任何行为性用例或示例用过(只出现在 publicApi.spec 的名字清单里):${unusedExports.join('、')}`
-  )
-  console.log(`公开面行为判据自检通过(${exportNames.length} 个导出都有人真用过)`)
+    `这些导出没有任何行为性用例或示例用过(只出现在 publicApi.spec 的名字清单里):${unusedExports.join("、")}`,
+  );
+  console.log(`公开面行为判据自检通过(${exportNames.length} 个导出都有人真用过)`);
 
   /**
    * 公开面数量自检 —— README 里那两个数(运行时导出 / 公开类型)必须是真的。
@@ -466,17 +545,30 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 公开类型 = `publicApi.spec.ts` 里那份 `import type { … } from './index.js'` 清单的条目数 ——
    * 那份清单的职责就是"每个模块的公开类型都从公开入口取得到",它的条目数就是公开类型的条目数。
    */
-  const faceReadme = readFileSync(resolve(ENGINE, 'README.md'), 'utf-8')
-  const runtimeCount = Object.keys(engine).length
-  const apiSource = readFileSync(resolve(ENGINE, 'src/publicApi.spec.ts'), 'utf-8')
-  const typeBlock = apiSource.match(/import type \{([\s\S]*?)\} from '\.\/index\.js'/)
-  assert.ok(typeBlock, "publicApi.spec.ts 里找不到 import type { … } from './index.js' 那一块 —— 写法变了?")
-  const typeCount = typeBlock[1].split(',').filter(entry => entry.trim().length > 0).length
-  const faceClaim = faceReadme.match(/(\d+) 个运行时导出 \+ (\d+) 个公开类型/)
-  assert.ok(faceClaim, 'README 里找不到"N 个运行时导出 + M 个公开类型"那句 —— 措辞改了?')
-  assert.equal(Number(faceClaim[1]), runtimeCount, `README 说 ${faceClaim[1]} 个运行时导出,实际 ${runtimeCount} 个`)
-  assert.equal(Number(faceClaim[2]), typeCount, `README 说 ${faceClaim[2]} 个公开类型,实际清单里 ${typeCount} 条`)
-  console.log(`公开面数量自检通过(${runtimeCount} 个运行时导出 + ${typeCount} 个公开类型,与 README 写的一致)`)
+  const faceReadme = readFileSync(resolve(ENGINE, "README.md"), "utf-8");
+  const runtimeCount = Object.keys(engine).length;
+  const apiSource = readFileSync(resolve(ENGINE, "src/publicApi.spec.ts"), "utf-8");
+  const typeBlock = apiSource.match(/import type \{([\s\S]*?)\} from '\.\/index\.js'/);
+  assert.ok(
+    typeBlock,
+    "publicApi.spec.ts 里找不到 import type { … } from './index.js' 那一块 —— 写法变了?",
+  );
+  const typeCount = typeBlock[1].split(",").filter((entry) => entry.trim().length > 0).length;
+  const faceClaim = faceReadme.match(/(\d+) 个运行时导出 \+ (\d+) 个公开类型/);
+  assert.ok(faceClaim, 'README 里找不到"N 个运行时导出 + M 个公开类型"那句 —— 措辞改了?');
+  assert.equal(
+    Number(faceClaim[1]),
+    runtimeCount,
+    `README 说 ${faceClaim[1]} 个运行时导出,实际 ${runtimeCount} 个`,
+  );
+  assert.equal(
+    Number(faceClaim[2]),
+    typeCount,
+    `README 说 ${faceClaim[2]} 个公开类型,实际清单里 ${typeCount} 条`,
+  );
+  console.log(
+    `公开面数量自检通过(${runtimeCount} 个运行时导出 + ${typeCount} 个公开类型,与 README 写的一致)`,
+  );
 
   /**
    * 模块速查覆盖自检 —— 每个模块文件都得在 `docs/usage.md` 的模块表里找得到。
@@ -486,57 +578,74 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 写成一张显式的表 —— 因为好些模块是通过 `game.*` 用的,不是靠 `create*` 名字找。
    */
   const MODULE_ANCHORS = {
-    'realms.ts': 'game.realms',
-    'attributes.ts': 'game.attributes',
-    'rng.ts': 'mulberry32',
-    'equipment.ts': 'game.equipment',
-    'holding.ts': 'createHoldingSystem',
-    'dungeons.ts': 'game.dungeons',
-    'combat.ts': 'game.combat',
-    'skills.ts': 'createSkillSystem',
-    'crafting.ts': 'composeCraftRate',
-    'recipes.ts': 'createRecipeRunner',
-    'goals.ts': 'evalGoal',
-    'deck.ts': 'drawFrom',
-    'companions.ts': 'createCompanionSystem',
-    'idle.ts': 'planIdle',
-    'progression.ts': 'createProgressionAudit',
-    'save.ts': 'defineSaveFormat',
-    'saveShape.ts': 'asRecord',
-    'numeric.ts': 'Numeric<T>',
-    'config.ts': 'defineGame',
-    'resources.ts': 'createResourceSystem',
-    'triage.ts': 'createTriage',
-    'cycles.ts': 'createCycleSystem',
-    'choices.ts': 'createChoiceSystem',
-    'codex.ts': 'createCodex',
-    'memory.ts': 'createStageMemory',
-    'economy.ts': 'createEconomyReadings',
-    'intake.ts': 'createIntake',
-    'settlement.ts': 'createSettlement',
-    'drops.ts': 'createDropTable',
-    'buffs.ts': 'createBuffSystem',
-    'facilities.ts': 'createFacilitySystem',
-    'points.ts': 'createPointPool',
-    'tasks.ts': 'createTaskBoard',
-    'counters.ts': 'snapshotOf',
-    'chain.ts': 'createChain',
-    'pity.ts': 'createPityCounter',
-    'unlocks.ts': 'createUnlockRegistry',
-    'presets/': '内容包'
-  }
-  const moduleFiles = readdirSync(resolve(ENGINE, 'src'), { recursive: true, encoding: 'utf-8' }).filter(
-    entry => typeof entry === 'string' && (entry.endsWith('.ts') || entry.endsWith('/')) && !entry.endsWith('.spec.ts')
-  )
-  const uncovered = Object.entries(MODULE_ANCHORS).filter(([, anchor]) => !usage.includes(anchor)).map(([file]) => file)
-  assert.deepEqual(uncovered, [], `这些模块没有出现在 docs/usage.md 的模块表里:${uncovered.join('、')}`)
-  assert.ok(uncovered.length === 0 && Object.keys(MODULE_ANCHORS).length >= 36, '模块锚点表少写了一项?')
+    "realms.ts": "game.realms",
+    "attributes.ts": "game.attributes",
+    "rng.ts": "mulberry32",
+    "equipment.ts": "game.equipment",
+    "holding.ts": "createHoldingSystem",
+    "dungeons.ts": "game.dungeons",
+    "combat.ts": "game.combat",
+    "skills.ts": "createSkillSystem",
+    "crafting.ts": "composeCraftRate",
+    "recipes.ts": "createRecipeRunner",
+    "goals.ts": "evalGoal",
+    "deck.ts": "drawFrom",
+    "companions.ts": "createCompanionSystem",
+    "idle.ts": "planIdle",
+    "progression.ts": "createProgressionAudit",
+    "save.ts": "defineSaveFormat",
+    "saveShape.ts": "asRecord",
+    "numeric.ts": "Numeric<T>",
+    "config.ts": "defineGame",
+    "resources.ts": "createResourceSystem",
+    "triage.ts": "createTriage",
+    "cycles.ts": "createCycleSystem",
+    "choices.ts": "createChoiceSystem",
+    "codex.ts": "createCodex",
+    "memory.ts": "createStageMemory",
+    "economy.ts": "createEconomyReadings",
+    "intake.ts": "createIntake",
+    "settlement.ts": "createSettlement",
+    "drops.ts": "createDropTable",
+    "buffs.ts": "createBuffSystem",
+    "facilities.ts": "createFacilitySystem",
+    "points.ts": "createPointPool",
+    "tasks.ts": "createTaskBoard",
+    "counters.ts": "snapshotOf",
+    "chain.ts": "createChain",
+    "pity.ts": "createPityCounter",
+    "unlocks.ts": "createUnlockRegistry",
+    "presets/": "内容包",
+  };
+  const moduleFiles = readdirSync(resolve(ENGINE, "src"), {
+    recursive: true,
+    encoding: "utf-8",
+  }).filter(
+    (entry) =>
+      typeof entry === "string" &&
+      (entry.endsWith(".ts") || entry.endsWith("/")) &&
+      !entry.endsWith(".spec.ts"),
+  );
+  const uncovered = Object.entries(MODULE_ANCHORS)
+    .filter(([, anchor]) => !usage.includes(anchor))
+    .map(([file]) => file);
+  assert.deepEqual(
+    uncovered,
+    [],
+    `这些模块没有出现在 docs/usage.md 的模块表里:${uncovered.join("、")}`,
+  );
+  assert.ok(
+    uncovered.length === 0 && Object.keys(MODULE_ANCHORS).length >= 36,
+    "模块锚点表少写了一项?",
+  );
   // 反向:锚点表里的模块文件必须真实存在(改了名/删了文件时要跟着改)
   for (const file of Object.keys(MODULE_ANCHORS)) {
-    const exists = moduleFiles.some(entry => entry === file || entry.startsWith(file))
-    assert.ok(exists, `模块锚点表里写了不存在的模块:${file}`)
+    const exists = moduleFiles.some((entry) => entry === file || entry.startsWith(file));
+    assert.ok(exists, `模块锚点表里写了不存在的模块:${file}`);
   }
-  console.log(`模块速查覆盖自检通过(${Object.keys(MODULE_ANCHORS).length} 个模块都在 docs/usage.md 里)`)
+  console.log(
+    `模块速查覆盖自检通过(${Object.keys(MODULE_ANCHORS).length} 个模块都在 docs/usage.md 里)`,
+  );
 
   /**
    * 示例覆盖自检 —— **每个模块都得有一份示例走到**。
@@ -551,154 +660,187 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 或 README / 模块速查的装配片段里写着(三份内容包本来就有一份不进示例 ——
    * "不引用任何内容包"的那份示例正是要证明这件事)。
    */
-  const exampleCode = readdirSync(resolve(ENGINE, 'examples'))
-    .filter(name => name.endsWith('.ts'))
-    .map(name => stripComments(readFileSync(resolve(ENGINE, 'examples', name), 'utf-8')))
-    .join('\n')
-  const presetDocs = [readFileSync(resolve(ENGINE, 'README.md'), 'utf-8'), usage].join('\n')
+  const exampleCode = readdirSync(resolve(ENGINE, "examples"))
+    .filter((name) => name.endsWith(".ts"))
+    .map((name) => stripComments(readFileSync(resolve(ENGINE, "examples", name), "utf-8")))
+    .join("\n");
+  const presetDocs = [readFileSync(resolve(ENGINE, "README.md"), "utf-8"), usage].join("\n");
   /** 一个模块导出的名字(够用即可:函数/常量/类/类型 + `export { … }` 两种写法都算) */
-  const exportNamesOf = rel => {
-    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
-    const names = new Set()
-    for (const m of text.matchAll(/^export\s+(?:async\s+)?(?:function|class|const|let|var|interface|type|enum)\s+([A-Za-z0-9_$]+)/gm)) {
-      names.add(m[1])
+  const exportNamesOf = (rel) => {
+    const text = readFileSync(resolve(ENGINE, rel), "utf-8");
+    const names = new Set();
+    for (const m of text.matchAll(
+      /^export\s+(?:async\s+)?(?:function|class|const|let|var|interface|type|enum)\s+([A-Za-z0-9_$]+)/gm,
+    )) {
+      names.add(m[1]);
     }
     for (const m of text.matchAll(/^export\s*\{([^}]*)\}/gm)) {
-      for (const part of m[1].split(',')) {
-        const name = part.split(/\s+as\s+/).pop().trim()
-        if (name) names.add(name)
+      for (const part of m[1].split(",")) {
+        const name = part
+          .split(/\s+as\s+/)
+          .pop()
+          .trim();
+        if (name) names.add(name);
       }
     }
-    return [...names]
-  }
-  const usedIn = (names, text) => names.some(name => new RegExp(`\\b${name}\\b`).test(text))
-  const sourceModules = readdirSync(resolve(ENGINE, 'src'))
-    .filter(name => name.endsWith('.ts') && !name.endsWith('.spec.ts') && name !== 'index.ts')
-    .map(name => `src/${name}`)
-  const presetModules = readdirSync(resolve(ENGINE, 'src/presets'))
-    .filter(name => name.endsWith('.ts') && !name.endsWith('.spec.ts'))
-    .map(name => `src/presets/${name}`)
-  const noExample = sourceModules.filter(rel => !usedIn(exportNamesOf(rel), exampleCode))
-  assert.deepEqual(noExample, [], `这些模块在 examples/ 里一个导出都没用到(整个模块没有能跑的路径):${noExample.join('、')}`)
-  const orphanPresets = presetModules.filter(rel => !usedIn(exportNamesOf(rel), exampleCode + presetDocs))
-  assert.deepEqual(orphanPresets, [], `这些内容包既没进示例、也没进 README / docs/usage.md 的装配片段:${orphanPresets.join('、')}`)
-  console.log(`示例覆盖自检通过(${sourceModules.length} 个模块都有示例走到 + ${presetModules.length} 份内容包有出处)`)
+    return [...names];
+  };
+  const usedIn = (names, text) => names.some((name) => new RegExp(`\\b${name}\\b`).test(text));
+  const sourceModules = readdirSync(resolve(ENGINE, "src"))
+    .filter((name) => name.endsWith(".ts") && !name.endsWith(".spec.ts") && name !== "index.ts")
+    .map((name) => `src/${name}`);
+  const presetModules = readdirSync(resolve(ENGINE, "src/presets"))
+    .filter((name) => name.endsWith(".ts") && !name.endsWith(".spec.ts"))
+    .map((name) => `src/presets/${name}`);
+  const noExample = sourceModules.filter((rel) => !usedIn(exportNamesOf(rel), exampleCode));
+  assert.deepEqual(
+    noExample,
+    [],
+    `这些模块在 examples/ 里一个导出都没用到(整个模块没有能跑的路径):${noExample.join("、")}`,
+  );
+  const orphanPresets = presetModules.filter(
+    (rel) => !usedIn(exportNamesOf(rel), exampleCode + presetDocs),
+  );
+  assert.deepEqual(
+    orphanPresets,
+    [],
+    `这些内容包既没进示例、也没进 README / docs/usage.md 的装配片段:${orphanPresets.join("、")}`,
+  );
+  console.log(
+    `示例覆盖自检通过(${sourceModules.length} 个模块都有示例走到 + ${presetModules.length} 份内容包有出处)`,
+  );
 }
 
 // 装配 + 走一圈:光能 import 不够,导出得真的能用
-const game = engine.defineGame(DEMO)
-assert.equal(game.realms.label(0, 0), '见习船员 I 阶')
-assert.equal(game.attributes.name('attack'), '火力')
-const loot = game.equipment.generate(engine.createRng('verify'), { tier: 1 })
-assert.ok(game.equipment.resolve(loot).template, '掉出来的装备应当能解析')
-assert.equal(engine.defineGame(XIUXIAN).realms.realms.length, 21)
+const game = engine.defineGame(DEMO);
+assert.equal(game.realms.label(0, 0), "见习船员 I 阶");
+assert.equal(game.attributes.name("attack"), "火力");
+const loot = game.equipment.generate(engine.createRng("verify"), { tier: 1 });
+assert.ok(game.equipment.resolve(loot).template, "掉出来的装备应当能解析");
+assert.equal(engine.defineGame(XIUXIAN).realms.realms.length, 21);
 
 // 第三个题材(与战斗/修仙都无关的那份)也要能装起来走一圈 —— 通用性不是"两份预设恰好像",
 // 而是"没有任何战斗世界观的题材,同一套内核照样跑完升级 → 掉装备 → 遭遇 → 通关结算"。
 {
-  const game = engine.defineGame(DAILY)
-  assert.equal(game.realms.label(0, 0), '启蒙班·第一周')
-  assert.equal(game.attributes.name('attack'), '专注力')
-  const rng = engine.createRng('书桌')
-  const state = game.realms.addExp({ major: 0, layer: 0, exp: 0 }, Number(game.realms.expCost(0, 0)))
-  assert.equal(game.realms.progress(state).ready, true)
-  const loot = game.equipment.generate(rng, { tier: 1 })
-  const resolved = game.equipment.resolve(loot)
-  assert.ok(resolved.template, '掉出来的文具应当能解析')
-  const loadout = game.equipment.equip({ equipped: {} }, loot)
-  const equipped = game.equipment.resolveLoadout(loadout, new Map([[loot.uid, loot]]))
+  const game = engine.defineGame(DAILY);
+  assert.equal(game.realms.label(0, 0), "启蒙班·第一周");
+  assert.equal(game.attributes.name("attack"), "专注力");
+  const rng = engine.createRng("书桌");
+  const state = game.realms.addExp(
+    { major: 0, layer: 0, exp: 0 },
+    Number(game.realms.expCost(0, 0)),
+  );
+  assert.equal(game.realms.progress(state).ready, true);
+  const loot = game.equipment.generate(rng, { tier: 1 });
+  const resolved = game.equipment.resolve(loot);
+  assert.ok(resolved.template, "掉出来的文具应当能解析");
+  const loadout = game.equipment.equip({ equipped: {} }, loot);
+  const equipped = game.equipment.resolveLoadout(loadout, new Map([[loot.uid, loot]]));
   const stats = game.attributes.compute({
     base: game.realms.baseStats(0, 0),
     flat: equipped.flats,
-    modSources: [equipped.mods, resolved.mods]
-  })
-  const region = game.dungeons.firstRegion()
-  assert.equal(region.name, '图书馆')
-  const encounter = game.dungeons.nextEncounter(region.id, engine.emptyProgress(), rng)
-  const foe = game.dungeons.snapshot(encounter.enemyId)
+    modSources: [equipped.mods, resolved.mods],
+  });
+  const region = game.dungeons.firstRegion();
+  assert.equal(region.name, "图书馆");
+  const encounter = game.dungeons.nextEncounter(region.id, engine.emptyProgress(), rng);
+  const foe = game.dungeons.snapshot(encounter.enemyId);
   const battle = game.combat.resolve(
     {
-      id: 'me',
-      name: '我',
+      id: "me",
+      name: "我",
       stats: {
         hp: stats.final.maxHp ?? 0,
         maxHp: stats.final.maxHp ?? 0,
         attack: stats.final.attack ?? 0,
         defense: stats.final.defense ?? 0,
-        speed: 1
+        speed: 1,
       },
-      mods: stats.mods
+      mods: stats.mods,
     },
     { id: foe.id, name: foe.name, stats: foe.stats, mods: foe.mods, skills: foe.skills },
-    rng
-  )
-  assert.ok(battle.events.length > 0, '这一场得有过程')
-  const outcome = game.dungeons.onVictory(region.id, { ...encounter, kind: 'boss' }, engine.emptyProgress(), rng)
-  assert.equal(outcome.firstClear, true)
-  assert.ok(outcome.rewards.length > 0, '通关要给点东西(哪怕是"理解"与零花钱)')
+    rng,
+  );
+  assert.ok(battle.events.length > 0, "这一场得有过程");
+  const outcome = game.dungeons.onVictory(
+    region.id,
+    { ...encounter, kind: "boss" },
+    engine.emptyProgress(),
+    rng,
+  );
+  assert.equal(outcome.firstClear, true);
+  assert.ok(outcome.rewards.length > 0, '通关要给点东西(哪怕是"理解"与零花钱)');
 }
 
 // 第四个题材:**只装两层**的那种作品 —— 没有装备、没有副本,也要能装出一个能用的世界。
 // 这一段的用意是把"通用"落到最硬的地方:不是"四层都装满才好用",而是"用得上几层就装几层"。
 {
-  const game = engine.defineGame(MINIMAL)
-  assert.equal(game.config.equipment, null)
-  assert.equal(game.config.dungeons, null)
-  assert.equal(game.realms.label(0, 0), '学徒·粗活')
-  assert.equal(game.attributes.name('attack'), '手感')
-  const panel = game.realms.baseStats(0, 0)
-  assert.ok(panel.attack, '只装两层的世界照样有面板')
+  const game = engine.defineGame(MINIMAL);
+  assert.equal(game.config.equipment, null);
+  assert.equal(game.config.dungeons, null);
+  assert.equal(game.realms.label(0, 0), "学徒·粗活");
+  assert.equal(game.attributes.name("attack"), "手感");
+  const panel = game.realms.baseStats(0, 0);
+  assert.ok(panel.attack, "只装两层的世界照样有面板");
   // 空的那两层:读结构是"有意义的空",真去用则当场说明白
-  assert.deepEqual(game.equipment.slots, [])
-  assert.deepEqual(game.dungeons.chain(), [])
-  assert.throws(() => game.dungeons.firstRegion(), /副本系统:区域表是空的/)
-  assert.throws(() => game.equipment.generate(engine.createRng('minimal'), { tier: 1 }), /装备系统:没有任何可掉落的槽位/)
+  assert.deepEqual(game.equipment.slots, []);
+  assert.deepEqual(game.dungeons.chain(), []);
+  assert.throws(() => game.dungeons.firstRegion(), /副本系统:区域表是空的/);
+  assert.throws(
+    () => game.equipment.generate(engine.createRng("minimal"), { tier: 1 }),
+    /装备系统:没有任何可掉落的槽位/,
+  );
 }
 
-console.log(`Node 产物自检通过(dist 可被 node ESM 直接 import:${Object.keys(engine).length} 个导出)`)
+console.log(
+  `Node 产物自检通过(dist 可被 node ESM 直接 import:${Object.keys(engine).length} 个导出)`,
+);
 
 // —— 使用者那一侧:装发布包,按包名 import ——
 // npm 的缓存默认落 ~/.npm(沙箱/CI 里可能只读),故显式指向临时目录
-const work = mkdtempSync(resolve(tmpdir(), 'wanxiang-install-'))
-const cache = resolve(work, 'npm-cache')
-const tarballDir = resolve(work, 'tarball')
-mkdirSync(tarballDir, { recursive: true })
+const work = mkdtempSync(resolve(tmpdir(), "wanxiang-install-"));
+const cache = resolve(work, "npm-cache");
+const tarballDir = resolve(work, "tarball");
+mkdirSync(tarballDir, { recursive: true });
 // --silent:npm 默认把整份文件清单当 notice 打到 stderr,刷屏;失败时它照样以非零码退出
-execFileSync('npm', ['pack', '--silent', '--pack-destination', tarballDir], {
-  cwd: resolve(import.meta.dirname, '..'),
+execFileSync("npm", ["pack", "--silent", "--pack-destination", tarballDir], {
+  cwd: resolve(import.meta.dirname, ".."),
   env: { ...process.env, npm_config_cache: cache },
-  stdio: ['ignore', 'ignore', 'inherit']
-})
-const tgz = readdirSync(tarballDir).find(name => name.endsWith('.tgz'))
-assert.ok(tgz, 'npm pack 没有产出 tarball')
+  stdio: ["ignore", "ignore", "inherit"],
+});
+const tgz = readdirSync(tarballDir).find((name) => name.endsWith(".tgz"));
+assert.ok(tgz, "npm pack 没有产出 tarball");
 
 // tarball 里是 package/ 一层,摊开成 node_modules/wanxiang-engine —— 与使用者装完的样子一致
-const app = resolve(work, 'app')
-const nm = resolve(app, 'node_modules')
-mkdirSync(nm, { recursive: true })
-execFileSync('tar', ['-xzf', resolve(tarballDir, tgz), '-C', nm], { stdio: 'inherit' })
-renameSync(resolve(nm, 'package'), resolve(nm, 'wanxiang-engine'))
+const app = resolve(work, "app");
+const nm = resolve(app, "node_modules");
+mkdirSync(nm, { recursive: true });
+execFileSync("tar", ["-xzf", resolve(tarballDir, tgz), "-C", nm], { stdio: "inherit" });
+renameSync(resolve(nm, "package"), resolve(nm, "wanxiang-engine"));
 
 // 发布包里该有什么:产物 + 说明 + 变更记录 + 文档。少一样,使用者就只拿到半个包。
-const installed = resolve(nm, 'wanxiang-engine')
+const installed = resolve(nm, "wanxiang-engine");
 for (const required of [
-  'dist/index.js',
-  'dist/index.d.ts',
-  'dist/presets/daily.js',
-  'dist/presets/minimal.js',
-  'package.json',
-  'README.md',
-  'CHANGELOG.md',
-  'LICENSE',
-  'docs/usage.md',
-  'docs/assembly.md',
-  'docs/tuning.md',
-  'docs/parity.md',
-  'docs/development.md'
+  "dist/index.js",
+  "dist/index.d.ts",
+  "dist/presets/daily.js",
+  "dist/presets/minimal.js",
+  "package.json",
+  "README.md",
+  "CHANGELOG.md",
+  "LICENSE",
+  "docs/usage.md",
+  "docs/assembly.md",
+  "docs/tuning.md",
+  "docs/parity.md",
+  "docs/development.md",
 ]) {
-  assert.ok(existsSync(resolve(installed, required)), `发布包里少了 ${required}`)
+  assert.ok(existsSync(resolve(installed, required)), `发布包里少了 ${required}`);
 }
-assert.ok(!existsSync(resolve(installed, 'src')), '发布包里混进了源码目录 —— 对外只该发 dist 与说明')
+assert.ok(
+  !existsSync(resolve(installed, "src")),
+  "发布包里混进了源码目录 —— 对外只该发 dist 与说明",
+);
 
 const consumerProbe = `
   const assert = (await import('node:assert/strict')).default
@@ -782,8 +924,8 @@ const consumerProbe = `
   assert.equal(cleared, true, '自己写的区域应当能通关')
   assert.ok(progress.cleared.includes('plainroad'))
   console.log('   从零装配通过(不引用任何内容包:自己写槽位/品质/词条/区域/敌人,跑通修炼 → 掉装 → 通关)')
- `
-execFileSync('node', ['--input-type=module', '-e', consumerProbe], { cwd: app, stdio: 'inherit' })
+ `;
+execFileSync("node", ["--input-type=module", "-e", consumerProbe], { cwd: app, stdio: "inherit" });
 
 /**
  * 定制表探针 —— **文档承诺的每一类旋钮,使用者真能拧动吗**。
@@ -984,8 +1126,11 @@ const customizationProbe = `
   assert.equal(bigRealms.expCost(1, 0), 9n)   // 3 × 3^1,精确到个位
 
   console.log('   定制表探针通过(曲线/生成/周期/抉择/账本/记忆/投资点/设施/体检/清理/存档/数值层,十二类旋钮都拧得动)')
-`
-execFileSync('node', ['--input-type=module', '-e', customizationProbe], { cwd: app, stdio: 'inherit' })
+`;
+execFileSync("node", ["--input-type=module", "-e", customizationProbe], {
+  cwd: app,
+  stdio: "inherit",
+});
 
 /**
  * 类型消费者自检 —— 使用者那边 `tsc --strict` 能不能过。
@@ -995,10 +1140,10 @@ execFileSync('node', ['--input-type=module', '-e', customizationProbe], { cwd: a
  * 子路径类型)。这些错了,包能跑但一编译就红 —— 而且只在**使用者**那边红,发版的人看不见。
  * 所以这里真造一个 `.mts` 消费者,用严格模式 + 两种 moduleResolution 各编一遍。
  */
-const tsc = resolve(ENGINE, 'node_modules/typescript/bin/tsc')
+const tsc = resolve(ENGINE, "node_modules/typescript/bin/tsc");
 if (existsSync(tsc)) {
   writeFileSync(
-    resolve(app, 'probe.mts'),
+    resolve(app, "probe.mts"),
     `
 import { createRng, defineGame, planIdle, createDropTable, type IdlePlan, type Rng } from 'wanxiang-engine'
 import type {
@@ -1092,31 +1237,31 @@ const bigintNumeric: Numeric<bigint> = {
 }
 export const probe = { plan, hits, worlds: games.map(g => g.realms.realms.length) }
 export const custom = { config, resources, triage, bigintNumeric }
-`
-  )
+`,
+  );
   for (const [label, moduleResolution] of [
-    ['bundler', 'bundler'],
-    ['node16', 'node16']
+    ["bundler", "bundler"],
+    ["node16", "node16"],
   ]) {
     execFileSync(
-      'node',
+      "node",
       [
         tsc,
-        '--noEmit',
-        '--strict',
-        '--target',
-        'es2022',
-        '--module',
-        moduleResolution === 'node16' ? 'node16' : 'esnext',
-        '--moduleResolution',
+        "--noEmit",
+        "--strict",
+        "--target",
+        "es2022",
+        "--module",
+        moduleResolution === "node16" ? "node16" : "esnext",
+        "--moduleResolution",
         moduleResolution,
-        '--skipLibCheck',
-        'false',
-        resolve(app, 'probe.mts')
+        "--skipLibCheck",
+        "false",
+        resolve(app, "probe.mts"),
       ],
-      { cwd: app, stdio: 'inherit' }
-    )
-    console.log(`   使用者的 tsc --strict 通过(moduleResolution: ${label})`)
+      { cwd: app, stdio: "inherit" },
+    );
+    console.log(`   使用者的 tsc --strict 通过(moduleResolution: ${label})`);
   }
 
   /**
@@ -1131,53 +1276,75 @@ export const custom = { config, resources, triage, bigintNumeric }
    * 而"能编译"到"跑起来是对的"之间还隔着一层 —— 默认值不对、空表崩掉、导出少一个,
    * 都是编译期看不出来的。跑的是**装好的发布包**,不是仓库源码。
    */
-  const docSources = ['README.md', ...readdirSync(resolve(ENGINE, 'docs')).map(name => `docs/${name}`)]
-  let checkedBlocks = 0
-  let ranBlocks = 0
+  const docSources = [
+    "README.md",
+    ...readdirSync(resolve(ENGINE, "docs")).map((name) => `docs/${name}`),
+  ];
+  let checkedBlocks = 0;
+  let ranBlocks = 0;
   /** bun 不在就跳过"真跑"这一步(与上面 tsc 那条同样的取舍:不假装验过,但要说清跳过了什么)。 */
   const bunBin = (() => {
     try {
-      execFileSync('bun', ['--version'], { stdio: 'ignore' })
-      return 'bun'
+      execFileSync("bun", ["--version"], { stdio: "ignore" });
+      return "bun";
     } catch {
-      return undefined
+      return undefined;
     }
-  })()
+  })();
   for (const rel of docSources) {
-    const text = readFileSync(resolve(ENGINE, rel), 'utf-8')
-    const marked = [...text.matchAll(/<!-- compile-check[^>]*-->\s*\n```(?:ts|typescript)\n([\s\S]*?)^```$/gm)]
+    const text = readFileSync(resolve(ENGINE, rel), "utf-8");
+    const marked = [
+      ...text.matchAll(/<!-- compile-check[^>]*-->\s*\n```(?:ts|typescript)\n([\s\S]*?)^```$/gm),
+    ];
     for (const [index, block] of marked.entries()) {
-      const file = resolve(app, `doc-${rel.replace(/\W+/g, '-')}-${index}.mts`)
-      writeFileSync(file, block[1])
+      const file = resolve(app, `doc-${rel.replace(/\W+/g, "-")}-${index}.mts`);
+      writeFileSync(file, block[1]);
       execFileSync(
-        'node',
-        [tsc, '--noEmit', '--strict', '--target', 'es2022', '--module', 'esnext', '--moduleResolution', 'bundler', '--skipLibCheck', 'false', file],
-        { cwd: app, stdio: 'inherit' }
-      )
+        "node",
+        [
+          tsc,
+          "--noEmit",
+          "--strict",
+          "--target",
+          "es2022",
+          "--module",
+          "esnext",
+          "--moduleResolution",
+          "bundler",
+          "--skipLibCheck",
+          "false",
+          file,
+        ],
+        { cwd: app, stdio: "inherit" },
+      );
       // 编过不等于跑得对:再真跑一遍(输出只在失败时打出来,免得刷屏)
       if (bunBin) {
-        const run = spawnSync(bunBin, [file], { cwd: app, encoding: 'utf-8' })
+        const run = spawnSync(bunBin, [file], { cwd: app, encoding: "utf-8" });
         if (run.status !== 0) {
-          const tail = `${run.stdout ?? ''}${run.stderr ?? ''}`.trim().split('\n').slice(-6).join('\n')
-          assert.fail(`${rel} 里这段 compile-check 片段**编得过但跑不起来**:\n${tail}`)
+          const tail = `${run.stdout ?? ""}${run.stderr ?? ""}`
+            .trim()
+            .split("\n")
+            .slice(-6)
+            .join("\n");
+          assert.fail(`${rel} 里这段 compile-check 片段**编得过但跑不起来**:\n${tail}`);
         }
-        ranBlocks += 1
+        ranBlocks += 1;
       }
-      checkedBlocks += 1
+      checkedBlocks += 1;
     }
   }
-  assert.ok(checkedBlocks >= 1, '文档里一个 compile-check 片段都没有?约定被删了?')
-  if (bunBin) assert.equal(ranBlocks, checkedBlocks, `有 ${checkedBlocks - ranBlocks} 段没跑成`)
+  assert.ok(checkedBlocks >= 1, "文档里一个 compile-check 片段都没有?约定被删了?");
+  if (bunBin) assert.equal(ranBlocks, checkedBlocks, `有 ${checkedBlocks - ranBlocks} 段没跑成`);
   console.log(
     bunBin
       ? `   文档片段通过(${checkedBlocks} 段标了 compile-check 的代码块:都对着发布包编过,而且都真跑了一遍)`
-      : `   文档片段编译通过(${checkedBlocks} 段对着发布包编过;本机没有 bun,没跑)`
-  )
+      : `   文档片段编译通过(${checkedBlocks} 段对着发布包编过;本机没有 bun,没跑)`,
+  );
 } else {
-  console.log('   (跳过类型消费者自检:本地没有 typescript —— 先 bun install)')
+  console.log("   (跳过类型消费者自检:本地没有 typescript —— 先 bun install)");
 }
 
-console.log(`发布包自检通过(${tgz} 装进临时项目后可用 · 含使用者侧的 tsc 严格模式)`)
+console.log(`发布包自检通过(${tgz} 装进临时项目后可用 · 含使用者侧的 tsc 严格模式)`);
 
 /**
  * 自检清单自检 —— **README 里说有几道自检,这里就得真有那几道**。
@@ -1188,17 +1355,26 @@ console.log(`发布包自检通过(${tgz} 装进临时项目后可用 · 含使�
  * (说明正则或清单结构变了,这条判据自己先失灵)。
  */
 {
-  const selfSource = readFileSync(new URL(import.meta.url), 'utf-8')
-  const declared = new Set([...selfSource.matchAll(/([\u4e00-\u9fa5A-Za-z][\u4e00-\u9fa5A-Za-z]*)\s*自检通过[（(]/g)].map(m => m[1]))
-  const readmeText = readFileSync(resolve(ENGINE, 'README.md'), 'utf-8')
+  const selfSource = readFileSync(new URL(import.meta.url), "utf-8");
+  const declared = new Set(
+    [...selfSource.matchAll(/([\u4e00-\u9fa5A-Za-z][\u4e00-\u9fa5A-Za-z]*)\s*自检通过[（(]/g)].map(
+      (m) => m[1],
+    ),
+  );
+  const readmeText = readFileSync(resolve(ENGINE, "README.md"), "utf-8");
   // 只取那一行(清单必须写在一行里 —— 换行了这条判据就读不出来了,那时它自己会红)
-  const listedLine = readmeText.match(/真正跑起来的是\*\*[^*]*\*\*:([^\n]+)/)
-  assert.ok(listedLine, 'README 里找不到"真正跑起来的是**…常驻自检**:…"那一行')
-  const listed = new Set([...listedLine[1].matchAll(/`([^`]+)`/g)].map(m => m[1]))
-  assert.ok(declared.size >= 10, `只从 scripts/verify-dist.mjs 里读出 ${declared.size} 道自检 —— 写法变了?`)
-  const missing = [...declared].filter(name => !listed.has(name))
-  const extra = [...listed].filter(name => !declared.has(name))
-  assert.deepEqual(missing, [], `这些自检没写进 README 的清单:${missing.join('、')}`)
-  assert.deepEqual(extra, [], `README 的清单里写了不存在的自检:${extra.join('、')}`)
-  console.log(`自检清单自检通过(README 的 ${listed.size} 道与实跑的 ${declared.size} 道一一对得上)`)
+  const listedLine = readmeText.match(/真正跑起来的是\*\*[^*]*\*\*:([^\n]+)/);
+  assert.ok(listedLine, 'README 里找不到"真正跑起来的是**…常驻自检**:…"那一行');
+  const listed = new Set([...listedLine[1].matchAll(/`([^`]+)`/g)].map((m) => m[1]));
+  assert.ok(
+    declared.size >= 10,
+    `只从 scripts/verify-dist.mjs 里读出 ${declared.size} 道自检 —— 写法变了?`,
+  );
+  const missing = [...declared].filter((name) => !listed.has(name));
+  const extra = [...listed].filter((name) => !declared.has(name));
+  assert.deepEqual(missing, [], `这些自检没写进 README 的清单:${missing.join("、")}`);
+  assert.deepEqual(extra, [], `README 的清单里写了不存在的自检:${extra.join("、")}`);
+  console.log(
+    `自检清单自检通过(README 的 ${listed.size} 道与实跑的 ${declared.size} 道一一对得上)`,
+  );
 }

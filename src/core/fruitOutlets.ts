@@ -17,8 +17,8 @@
  *
  *   3. 道果该不该被花掉?零消费会让任何阈值型出口最终失去决策意义。
  */
-import type { AnyStatKey } from '@/types'
-import { fruitAtLife } from './compoundingAudit'
+import type { AnyStatKey } from "@/types";
+import { fruitAtLife } from "./compoundingAudit";
 
 // ============ 一、效率链可达性 ============
 
@@ -29,82 +29,82 @@ import { fruitAtLife } from './compoundingAudit'
  * 任何能压缩它的东西都会重建正反馈,无论中间隔了几跳
  */
 export interface ReachPath {
-  key: AnyStatKey
+  key: AnyStatKey;
   /** 到终点的跳数;1 表示直接影响耗时 */
-  hops: number
+  hops: number;
   /** 路径描述 */
-  via: string
+  via: string;
 }
 
 /** 直接压缩重修耗时的键(fullSecondsForMajor 的四个因子) */
 const DIRECT: readonly ReachPath[] = [
-  { key: 'cultivationSpeed', hops: 1, via: '修为累积速度' },
-  { key: 'expGain', hops: 1, via: '修为获取量' },
-  { key: 'breakthroughRate', hops: 1, via: '进阶成功率 → 失败重试次数' },
-  { key: 'qiRegen', hops: 1, via: '灵气回复 → 突破前的等待' },
-  { key: 'lifespanPct', hops: 1, via: '寿元 → 一世可用的修行时长' }
-]
+  { key: "cultivationSpeed", hops: 1, via: "修为累积速度" },
+  { key: "expGain", hops: 1, via: "修为获取量" },
+  { key: "breakthroughRate", hops: 1, via: "进阶成功率 → 失败重试次数" },
+  { key: "qiRegen", hops: 1, via: "灵气回复 → 突破前的等待" },
+  { key: "lifespanPct", hops: 1, via: "寿元 → 一世可用的修行时长" },
+];
 
 /** 经战斗力抵达的键 —— 战斗更顺则历练更快,修为与掉落都来得更快 */
 const VIA_COMBAT: readonly AnyStatKey[] = [
-  'attackPct',
-  'defensePct',
-  'maxHpPct',
-  'critRate',
-  'critDamage',
-  'speed',
-  'damageBonus',
-  'damageReduction',
-  'armorPen',
-  'firstStrike',
-  'counterRate',
-  'lifesteal',
-  'shieldOnStart',
-  'executeDamage',
-  'regenPerRound',
-  'dodgeRate',
-  'lowHpReduction',
-  'tribulationResist',
-  'comboRate',
-  'stunRate',
-  'lowHpDamage',
-  'fullHpDamage',
-  'shieldPower',
-  'comboDamage',
-  'counterDamage',
-  'overhealShield',
+  "attackPct",
+  "defensePct",
+  "maxHpPct",
+  "critRate",
+  "critDamage",
+  "speed",
+  "damageBonus",
+  "damageReduction",
+  "armorPen",
+  "firstStrike",
+  "counterRate",
+  "lifesteal",
+  "shieldOnStart",
+  "executeDamage",
+  "regenPerRound",
+  "dodgeRate",
+  "lowHpReduction",
+  "tribulationResist",
+  "comboRate",
+  "stunRate",
+  "lowHpDamage",
+  "fullHpDamage",
+  "shieldPower",
+  "comboDamage",
+  "counterDamage",
+  "overhealShield",
   // 命中:化解闪避 → 有效输出 → 清场提速(它声明已久却没进这张表——联合覆盖检查揪出来的漏)
-  'accuracy'
-]
+  "accuracy",
+];
 
 /** 经资源抵达的键 —— 资源换装备/丹药/建筑,最终仍回到战力或速度 */
 const VIA_RESOURCE: readonly { key: AnyStatKey; via: string }[] = [
-  { key: 'luck', via: '幸运 → 掉落品质 → 装备 → 战力' },
-  { key: 'dropRate', via: '掉落率 → 装备 → 战力' },
-  { key: 'doubleDropRate', via: '双倍掉落 → 装备 → 战力' },
-  { key: 'eventLuck', via: '事件运 → 际遇收益 → 资源 → 战力' },
-  { key: 'spiritStoneGain', via: '灵石 → 灵脉/建筑/强化 → 速度与战力' },
-  { key: 'alchemyYield', via: '丹药产出 → 属性与修为' },
-  { key: 'craftExpGain', via: '炼丹心得 → 技艺成长 → 成功率/双成 → 丹药 → 修为与战力' },
-  { key: 'craftSalvage', via: '定心护料 → 手稳收草 → 省料 → 更多炼丹 → 修为与战力' },
-  { key: 'forgeDiscount', via: '强化省耗 → 同等灵石换更多战力' },
-  { key: 'breakRefund', via: '突破返还 → 灵气成本 → 突破等待' },
-  { key: 'explorationSpeed', via: '历练节奏 → 单位时间收益' },
+  { key: "luck", via: "幸运 → 掉落品质 → 装备 → 战力" },
+  { key: "dropRate", via: "掉落率 → 装备 → 战力" },
+  { key: "doubleDropRate", via: "双倍掉落 → 装备 → 战力" },
+  { key: "eventLuck", via: "事件运 → 际遇收益 → 资源 → 战力" },
+  { key: "spiritStoneGain", via: "灵石 → 灵脉/建筑/强化 → 速度与战力" },
+  { key: "alchemyYield", via: "丹药产出 → 属性与修为" },
+  { key: "craftExpGain", via: "炼丹心得 → 技艺成长 → 成功率/双成 → 丹药 → 修为与战力" },
+  { key: "craftSalvage", via: "定心护料 → 手稳收草 → 省料 → 更多炼丹 → 修为与战力" },
+  { key: "forgeDiscount", via: "强化省耗 → 同等灵石换更多战力" },
+  { key: "breakRefund", via: "突破返还 → 灵气成本 → 突破等待" },
+  { key: "explorationSpeed", via: "历练节奏 → 单位时间收益" },
   // 下面两个是联合覆盖检查揪出的漏登记:声明已久却没进效率表 —— 补上,「没有安全键」才机械成立
-  { key: 'beastPct', via: '灵兽效果 → 灵兽的修速/际遇加成 → 单位时间收益' },
-  { key: 'qiCapPct', via: '灵气上限 → 突破资源储备 → 突破节奏 → 境界推进' }
-]
+  { key: "beastPct", via: "灵兽效果 → 灵兽的修速/际遇加成 → 单位时间收益" },
+  { key: "qiCapPct", via: "灵气上限 → 突破资源储备 → 突破节奏 → 境界推进" },
+];
 
 /** 全部属性键到「轮回速度」的可达路径 */
 export const EFFICIENCY_REACH: ReachPath[] = [
   ...DIRECT,
-  ...VIA_COMBAT.map(key => ({ key, hops: 2, via: '战斗表现 → 历练效率 → 修为与掉落' })),
-  ...VIA_RESOURCE.map(r => ({ key: r.key, hops: 3, via: r.via }))
-]
+  ...VIA_COMBAT.map((key) => ({ key, hops: 2, via: "战斗表现 → 历练效率 → 修为与掉落" })),
+  ...VIA_RESOURCE.map((r) => ({ key: r.key, hops: 3, via: r.via })),
+];
 
 /** 该属性键是否最终可达「轮回速度」 */
 export function reachesEfficiency(key: AnyStatKey): boolean {
-  return EFFICIENCY_REACH.some(r => r.key === key)
+  return EFFICIENCY_REACH.some((r) => r.key === key);
 }
 
 /**
@@ -115,46 +115,46 @@ export function reachesEfficiency(key: AnyStatKey): boolean {
  * 任何以 StatMods 形式发放的道果出口都会重建回路
  */
 export function statModsAllReachable(all: readonly AnyStatKey[]): boolean {
-  return all.every(k => reachesEfficiency(k))
+  return all.every((k) => reachesEfficiency(k));
 }
 
 /** 全部属性键(PercentStatKey + SpecialKey),用于整类判定 */
 export const ALL_STAT_KEYS: readonly AnyStatKey[] = [
-  ...DIRECT.map(d => d.key),
+  ...DIRECT.map((d) => d.key),
   ...VIA_COMBAT,
-  ...VIA_RESOURCE.map(r => r.key)
-]
+  ...VIA_RESOURCE.map((r) => r.key),
+];
 
 // ============ 二、两个正交维度 ============
 
 /** 道果是否会被花掉 */
 export type SpendMode =
   /** 花掉:余额减少 */
-  | 'consume'
+  | "consume"
   /** 不花:达到阈值即永久生效 */
-  | 'permanent'
+  | "permanent";
 
 /** 发放物的类别 */
 export type PayloadKind =
   /** 属性修正(StatMods) */
-  | 'stats'
+  | "stats"
   /** 资源(灵石/材料/丹药) */
-  | 'resource'
+  | "resource"
   /** 内容准入(命题、规则、世界入口) */
-  | 'access'
+  | "access"
   /** 知识与记录(认知、图鉴、历史) */
-  | 'record'
+  | "record";
 
 export interface OutletCandidate {
-  id: string
-  name: string
-  spend: SpendMode
-  payload: PayloadKind
+  id: string;
+  name: string;
+  spend: SpendMode;
+  payload: PayloadKind;
   /** 是否重建效率回路 */
-  rebuildsLoop: boolean
+  rebuildsLoop: boolean;
   /** 是否已在项目里存在可挂载的系统 */
-  hasHost: boolean
-  note: string
+  hasHost: boolean;
+  note: string;
 }
 
 /**
@@ -165,115 +165,130 @@ export interface OutletCandidate {
  */
 export const OUTLETS: OutletCandidate[] = [
   {
-    id: 'permStat',
-    name: '兑换永久属性',
-    spend: 'consume',
-    payload: 'stats',
+    id: "permStat",
+    name: "兑换永久属性",
+    spend: "consume",
+    payload: "stats",
     rebuildsLoop: true,
     hasHost: true,
-    note: '反例:花掉道果买 +5% 修炼速度 —— 花掉了,但回路原样闭合'
+    note: "反例:花掉道果买 +5% 修炼速度 —— 花掉了,但回路原样闭合",
   },
   {
-    id: 'resourcePack',
-    name: '兑换资源礼包',
-    spend: 'consume',
-    payload: 'resource',
+    id: "resourcePack",
+    name: "兑换资源礼包",
+    spend: "consume",
+    payload: "resource",
     rebuildsLoop: true,
     hasHost: true,
-    note: '反例:灵石/丹药最终换成战力与速度,只是把回路拉长一跳'
+    note: "反例:灵石/丹药最终换成战力与速度,只是把回路拉长一跳",
   },
   {
-    id: 'themeUnlock',
-    name: '命题资格',
-    spend: 'consume',
-    payload: 'access',
+    id: "themeUnlock",
+    name: "命题资格",
+    spend: "consume",
+    payload: "access",
     rebuildsLoop: false,
     hasHost: true,
-    note: 'lifeThemes 已存在且按阶位开放;命题奖励是宿慧与叙事,不进 StatMods'
+    note: "lifeThemes 已存在且按阶位开放;命题奖励是宿慧与叙事,不进 StatMods",
   },
   {
-    id: 'ruleCarry',
-    name: '携带规则入世',
-    spend: 'consume',
-    payload: 'access',
+    id: "ruleCarry",
+    name: "携带规则入世",
+    spend: "consume",
+    payload: "access",
     rebuildsLoop: false,
     hasHost: true,
-    note: 'mutators/pacts 已有完整规则库与三重审计门,但目前只用于天界'
+    note: "mutators/pacts 已有完整规则库与三重审计门,但目前只用于天界",
   },
   {
-    id: 'worldEntry',
-    name: '特殊世界入口',
-    spend: 'consume',
-    payload: 'access',
+    id: "worldEntry",
+    name: "特殊世界入口",
+    spend: "consume",
+    payload: "access",
     rebuildsLoop: false,
     hasHost: true,
-    note: 'worldGen 已能生成带平衡门的世界;入口本身不给属性'
+    note: "worldGen 已能生成带平衡门的世界;入口本身不给属性",
   },
   {
-    id: 'loreResearch',
-    name: '高阶认知研究',
-    spend: 'consume',
-    payload: 'record',
+    id: "loreResearch",
+    name: "高阶认知研究",
+    spend: "consume",
+    payload: "record",
     rebuildsLoop: false,
     hasHost: true,
-    note: 'lore store 已存在;但须注意认知会经 craftability 间接影响战力,属于慢速通道'
+    note: "lore store 已存在;但须注意认知会经 craftability 间接影响战力,属于慢速通道",
   },
   {
-    id: 'history',
-    name: '历史与纪念',
-    spend: 'permanent',
-    payload: 'record',
+    id: "history",
+    name: "历史与纪念",
+    spend: "permanent",
+    payload: "record",
     rebuildsLoop: false,
     hasHost: true,
-    note: '图鉴与履历;不进任何计算,是最安全但也最弱的出口'
+    note: "图鉴与履历;不进任何计算,是最安全但也最弱的出口",
   },
   {
-    id: 'irreversible',
-    name: '不可逆的人生选择',
-    spend: 'consume',
-    payload: 'access',
+    id: "irreversible",
+    name: "不可逆的人生选择",
+    spend: "consume",
+    payload: "access",
     rebuildsLoop: false,
     hasHost: false,
-    note: '尚无宿主系统;须新建。参照师承的「拿一次锁死」写法'
-  }
-]
+    note: "尚无宿主系统;须新建。参照师承的「拿一次锁死」写法",
+  },
+];
 
 /** 合格出口:不重建效率回路 */
 export function qualifiedOutlets(): OutletCandidate[] {
-  return OUTLETS.filter(o => !o.rebuildsLoop)
+  return OUTLETS.filter((o) => !o.rebuildsLoop);
 }
 
 /** 被否决的出口 */
 export function rejectedOutlets(): OutletCandidate[] {
-  return OUTLETS.filter(o => o.rebuildsLoop)
+  return OUTLETS.filter((o) => o.rebuildsLoop);
 }
 
 export interface Quadrant {
-  spend: SpendMode
-  loops: boolean
-  label: string
-  verdict: string
+  spend: SpendMode;
+  loops: boolean;
+  label: string;
+  verdict: string;
 }
 
 /** 两个维度交叉出的四个象限 */
 export const QUADRANTS: Quadrant[] = [
-  { spend: 'permanent', loops: true, label: '不花 + 进效率链', verdict: '现状,最差:无限积累且自动加速' },
-  { spend: 'consume', loops: true, label: '花掉 + 进效率链', verdict: '看似有决策,回路仍在,只是延后' },
-  { spend: 'permanent', loops: false, label: '不花 + 不进效率链', verdict: '安全但无决策:纯收藏' },
-  { spend: 'consume', loops: false, label: '花掉 + 不进效率链', verdict: '理想:第一次产生真正的资源决策' }
-]
+  {
+    spend: "permanent",
+    loops: true,
+    label: "不花 + 进效率链",
+    verdict: "现状,最差:无限积累且自动加速",
+  },
+  {
+    spend: "consume",
+    loops: true,
+    label: "花掉 + 进效率链",
+    verdict: "看似有决策,回路仍在,只是延后",
+  },
+  { spend: "permanent", loops: false, label: "不花 + 不进效率链", verdict: "安全但无决策:纯收藏" },
+  {
+    spend: "consume",
+    loops: false,
+    label: "花掉 + 不进效率链",
+    verdict: "理想:第一次产生真正的资源决策",
+  },
+];
 
 export function idealQuadrant(): Quadrant {
-  return QUADRANTS.find(q => q.spend === 'consume' && !q.loops)!
+  return QUADRANTS.find((q) => q.spend === "consume" && !q.loops)!;
 }
 
 // ============ 三、零消费的后果 ============
 
 export interface BudgetRow {
-  life: number
-  balance: number
+  life: number;
+  balance: number;
   /** 相对一个定价 P 的出口,余额是它的几倍 */
-  timesPrice: number
+  timesPrice: number;
 }
 
 /**
@@ -284,19 +299,18 @@ export interface BudgetRow {
  * 玩家不必权衡,只需等待
  */
 export function budgetCurve(price: number, lives = 30): BudgetRow[] {
-  const out: BudgetRow[] = []
+  const out: BudgetRow[] = [];
   for (let life = 1; life <= lives; life += 1) {
-    const balance = fruitAtLife(life)
-    out.push({ life, balance, timesPrice: price > 0 ? balance / price : 0 })
+    const balance = fruitAtLife(life);
+    out.push({ life, balance, timesPrice: price > 0 ? balance / price : 0 });
   }
-  return out
+  return out;
 }
 
 /** 一个定价 P 的阈值型出口,在第几世后余额超过它 n 倍(即失去权衡意义) */
 export function trivialAtLife(price: number, times = 3, maxLives = 200): number {
   for (let life = 1; life <= maxLives; life += 1) {
-    if (fruitAtLife(life) >= price * times) return life
+    if (fruitAtLife(life) >= price * times) return life;
   }
-  return -1
+  return -1;
 }
-

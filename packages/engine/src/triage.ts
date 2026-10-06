@@ -16,98 +16,102 @@
  */
 
 /** 一条规则的表态:留 / 不留 / 不表态(undefined,交给下一条) */
-export type TriageOutcome = boolean | { keep: boolean; reason?: string } | undefined
+export type TriageOutcome = boolean | { keep: boolean; reason?: string } | undefined;
 
 export interface TriageRule<T> {
   /** 规则名(读数按它分组,也是"谁负责"的凭据) */
-  id: string
+  id: string;
   /** 人话说明(界面直接可用) */
-  label?: string
+  label?: string;
   /** 表态:返回 true/false 或 `{ keep, reason }`;返回 undefined 表示这条不管 */
-  decide: (item: T) => TriageOutcome
+  decide: (item: T) => TriageOutcome;
 }
 
 export interface TriageVerdict {
-  keep: boolean
+  keep: boolean;
   /** 由谁裁决:规则 id,或 `skip`(豁免)/ `fallback`(谁都没表态) */
-  rule: string
+  rule: string;
   /** 凭什么(界面可读的一句话) */
-  reason: string
+  reason: string;
 }
 
 export interface TriageConfig<T> {
-  rules: readonly TriageRule<T>[]
+  rules: readonly TriageRule<T>[];
   /** 豁免:命中它的件不参与裁决(本作是"上锁的件",别的游戏可能是"正在装备的") */
-  skip?: (item: T) => boolean
+  skip?: (item: T) => boolean;
   /** 所有规则都不表态时的兜底;默认"不留" */
-  fallback?: { keep: boolean; reason?: string }
+  fallback?: { keep: boolean; reason?: string };
 }
 
 export interface TriageImpact {
   /** 参与裁决的件数(豁免的不算) */
-  candidates: number
-  keep: number
-  junk: number
+  candidates: number;
+  keep: number;
+  junk: number;
   /** 判定原因 → 件数,按"谁先命中谁负责"计,与裁决顺序一致 */
-  byReason: { reason: string; count: number }[]
+  byReason: { reason: string; count: number }[];
 }
 
 export function createTriage<T>(config: TriageConfig<T>) {
-  const fallback = config.fallback ?? { keep: false, reason: '无一条规则认领' }
+  const fallback = config.fallback ?? { keep: false, reason: "无一条规则认领" };
 
   const decide = (item: T): TriageVerdict => {
-    if (config.skip?.(item)) return { keep: true, rule: 'skip', reason: '不参与自动裁决' }
+    if (config.skip?.(item)) return { keep: true, rule: "skip", reason: "不参与自动裁决" };
     for (const rule of config.rules) {
-      const outcome = rule.decide(item)
-      if (outcome === undefined) continue
-      if (typeof outcome === 'boolean') {
-        return { keep: outcome, rule: rule.id, reason: rule.label ?? rule.id }
+      const outcome = rule.decide(item);
+      if (outcome === undefined) continue;
+      if (typeof outcome === "boolean") {
+        return { keep: outcome, rule: rule.id, reason: rule.label ?? rule.id };
       }
-      return { keep: outcome.keep, rule: rule.id, reason: outcome.reason ?? rule.label ?? rule.id }
+      return { keep: outcome.keep, rule: rule.id, reason: outcome.reason ?? rule.label ?? rule.id };
     }
-    return { keep: fallback.keep, rule: 'fallback', reason: fallback.reason ?? 'fallback' }
-  }
+    return { keep: fallback.keep, rule: "fallback", reason: fallback.reason ?? "fallback" };
+  };
 
-  const partition = (items: readonly T[]): { keep: T[]; junk: T[]; verdicts: { item: T; verdict: TriageVerdict }[] } => {
-    const keep: T[] = []
-    const junk: T[] = []
-    const verdicts: { item: T; verdict: TriageVerdict }[] = []
+  const partition = (
+    items: readonly T[],
+  ): { keep: T[]; junk: T[]; verdicts: { item: T; verdict: TriageVerdict }[] } => {
+    const keep: T[] = [];
+    const junk: T[] = [];
+    const verdicts: { item: T; verdict: TriageVerdict }[] = [];
     for (const item of items) {
-      const verdict = decide(item)
-      verdicts.push({ item, verdict })
-      if (verdict.keep) keep.push(item)
-      else junk.push(item)
+      const verdict = decide(item);
+      verdicts.push({ item, verdict });
+      if (verdict.keep) keep.push(item);
+      else junk.push(item);
     }
-    return { keep, junk, verdicts }
-  }
+    return { keep, junk, verdicts };
+  };
 
   /** 体检读数:调开关时"这一下会扔多少件"看得见 */
   const impact = (items: readonly T[]): TriageImpact => {
-    let keep = 0
-    let junk = 0
-    const counts = new Map<string, number>()
+    let keep = 0;
+    let junk = 0;
+    const counts = new Map<string, number>();
     for (const item of items) {
-      if (config.skip?.(item)) continue
-      const verdict = decide(item)
+      if (config.skip?.(item)) continue;
+      const verdict = decide(item);
       if (verdict.keep) {
-        keep += 1
-        continue
+        keep += 1;
+        continue;
       }
-      junk += 1
-      counts.set(verdict.reason, (counts.get(verdict.reason) ?? 0) + 1)
+      junk += 1;
+      counts.set(verdict.reason, (counts.get(verdict.reason) ?? 0) + 1);
     }
     return {
       candidates: keep + junk,
       keep,
       junk,
-      byReason: [...counts.entries()].map(([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count)
-    }
-  }
+      byReason: [...counts.entries()]
+        .map(([reason, count]) => ({ reason, count }))
+        .sort((a, b) => b.count - a.count),
+    };
+  };
 
-  return { rules: config.rules, decide, partition, impact }
+  return { rules: config.rules, decide, partition, impact };
 }
 
-export type TriageSystem<T> = ReturnType<typeof createTriage<T>>
+export type TriageSystem<T> = ReturnType<typeof createTriage<T>>;
 
 /**
  * 一串比较器依次比 —— "行囊满了先挤掉谁"的骨架。
@@ -115,12 +119,14 @@ export type TriageSystem<T> = ReturnType<typeof createTriage<T>>
  * 每一层只回答一个问题(先比成色、再比层级、最后比词条),前一层分出胜负就不再往下比;
  * 全都没分出胜负就返回 0(由调用方决定稳定排序还是另想办法)。
  */
-export function compareBy<T>(...comparators: readonly ((a: T, b: T) => number)[]): (a: T, b: T) => number {
+export function compareBy<T>(
+  ...comparators: readonly ((a: T, b: T) => number)[]
+): (a: T, b: T) => number {
   return (a: T, b: T): number => {
     for (const compare of comparators) {
-      const result = compare(a, b)
-      if (result !== 0) return result
+      const result = compare(a, b);
+      if (result !== 0) return result;
     }
-    return 0
-  }
+    return 0;
+  };
 }

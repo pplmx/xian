@@ -283,6 +283,6 @@ describe("离线的作用域 · 在途的东西一律不动", () => {
     const status = readFileSync(resolve(__dirname, "firstStep.ts"), "utf8");
     expect(status).toContain("探秘中");
     expect(status).toContain("远征中");
-    expect(status).toContain("return '修炼中'");
+    expect(status).toContain('return "修炼中"');
   });
 });

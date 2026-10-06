@@ -102,7 +102,7 @@ function engineBoundNames(files: readonly string[]): { bound: Set<string>; names
   for (const file of files) {
     const text = readFileSync(file, "utf-8");
     for (const m of text.matchAll(
-      /(?:import|export)\s*(?:type\s*)?\{([^}]*)\}\s*from\s*'wanxiang-engine'/g,
+      /(?:import|export)\s*(?:type\s*)?\{([^}]*)\}\s*from\s*["']wanxiang-engine["']/g,
     )) {
       for (const part of m[1]!.split(",")) {
         const name = part

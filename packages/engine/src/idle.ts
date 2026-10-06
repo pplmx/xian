@@ -14,32 +14,32 @@
 
 export interface IdleConfig {
   /** 单步时长(与 elapsedMs 同单位,通常用毫秒) */
-  stepMs: number
+  stepMs: number;
   /** 计入上限;省略 = 不封顶 */
-  capMs?: number
+  capMs?: number;
   /** 效率系数(0~1),乘在计入时长上;默认 1 */
-  efficiency?: number
+  efficiency?: number;
   /** 步数上限(防御性,防止 stepMs 设得过小跑爆) */
-  maxSteps?: number
+  maxSteps?: number;
 }
 
 export interface IdlePlan {
   /** 单步时长(配置原值) */
-  stepMs: number
+  stepMs: number;
   /** 实际过去多久 */
-  elapsedMs: number
+  elapsedMs: number;
   /** 计入上限后的时长 */
-  cappedMs: number
+  cappedMs: number;
   /** 再乘效率系数后的"有效时长"(步数由它推) */
-  effectiveMs: number
+  effectiveMs: number;
   /** 整数步数 */
-  steps: number
+  steps: number;
   /** 不足一步的余量(不回退、也不吞掉:下一次结算会带上) */
-  remainderMs: number
+  remainderMs: number;
   /** 被上限吃掉的部分(0 = 没被截) */
-  overflowMs: number
+  overflowMs: number;
   /** 是否被上限截过(overflowMs > 0) */
-  capped: boolean
+  capped: boolean;
 }
 
 /**
@@ -51,14 +51,16 @@ export interface IdlePlan {
  * ```
  */
 export function planIdle(elapsedMs: number, config: IdleConfig): IdlePlan {
-  if (!(config.stepMs > 0)) throw new Error('idle:stepMs 必须为正数')
-  const elapsed = Math.max(0, elapsedMs)
-  const capped = config.capMs === undefined ? elapsed : Math.min(elapsed, Math.max(0, config.capMs))
-  const efficiency = config.efficiency ?? 1
-  const effective = capped * Math.max(0, efficiency)
-  const rawSteps = Math.floor(effective / config.stepMs)
-  const steps = config.maxSteps === undefined ? rawSteps : Math.min(rawSteps, Math.max(0, config.maxSteps))
-  const remainderMs = effective - steps * config.stepMs
+  if (!(config.stepMs > 0)) throw new Error("idle:stepMs 必须为正数");
+  const elapsed = Math.max(0, elapsedMs);
+  const capped =
+    config.capMs === undefined ? elapsed : Math.min(elapsed, Math.max(0, config.capMs));
+  const efficiency = config.efficiency ?? 1;
+  const effective = capped * Math.max(0, efficiency);
+  const rawSteps = Math.floor(effective / config.stepMs);
+  const steps =
+    config.maxSteps === undefined ? rawSteps : Math.min(rawSteps, Math.max(0, config.maxSteps));
+  const remainderMs = effective - steps * config.stepMs;
   return {
     stepMs: config.stepMs,
     elapsedMs: elapsed,
@@ -67,8 +69,8 @@ export function planIdle(elapsedMs: number, config: IdleConfig): IdlePlan {
     steps,
     remainderMs,
     overflowMs: elapsed - capped,
-    capped: elapsed > capped
-  }
+    capped: elapsed > capped,
+  };
 }
 
 /**
@@ -77,8 +79,12 @@ export function planIdle(elapsedMs: number, config: IdleConfig): IdlePlan {
  * `step(state, index, stepMs)` 返回新状态;每一步拿到的 stepMs 都是配置里的那个值
  * (余量不单独成步,由调用方按 `remainderMs` 自行处理,或留给下一次)。
  */
-export function runIdle<T>(plan: IdlePlan, initial: T, step: (state: T, index: number, stepMs: number) => T): T {
-  let state = initial
-  for (let i = 0; i < plan.steps; i += 1) state = step(state, i, plan.stepMs)
-  return state
+export function runIdle<T>(
+  plan: IdlePlan,
+  initial: T,
+  step: (state: T, index: number, stepMs: number) => T,
+): T {
+  let state = initial;
+  for (let i = 0; i < plan.steps; i += 1) state = step(state, i, plan.stepMs);
+  return state;
 }

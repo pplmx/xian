@@ -18,59 +18,59 @@
  * "打基准 + 算增量"这一组原语来自 `counters.ts`(作品自己的"本世 / 本赛季"也用同一份,
  * 免得同一条减法在三个地方各写一遍、各漏一次夹取)。
  */
-import { deltaSince, snapshotOf } from './counters.js'
+import { deltaSince, snapshotOf } from "./counters.js";
 
 export interface TaskSpec {
-  id: string
+  id: string;
   /** 展示名(可省) */
-  name?: string
+  name?: string;
   /** 看哪个计数器(库不认识键的含义) */
-  counter: string
+  counter: string;
   /** 干到多少算完成 */
-  target: number
+  target: number;
 }
 
 export interface TaskBoardState {
   /** 当前是哪一期(日期 / 周号 / 赛季号,由调用方给 —— 库不解释它怎么来的) */
-  period: string
+  period: string;
   /** 本期起点:各计数器在换期那一刻的值 */
-  base: Record<string, number>
+  base: Record<string, number>;
   /** 本期已经结算 / 领取过的任务 */
-  claimed: readonly string[]
+  claimed: readonly string[];
 }
 
 export interface TaskProgress {
-  task: TaskSpec
+  task: TaskSpec;
   /** 本期增量(已夹到 ≥ 0) */
-  delta: number
+  delta: number;
   /** 给界面看的进度(不超过目标) */
-  progress: number
+  progress: number;
   /** 够不够 */
-  done: boolean
+  done: boolean;
   /** 本期是不是已经结算过 */
-  claimed: boolean
+  claimed: boolean;
 }
 
 export interface SettleResult {
   /** 结算后的状态(没有要结算的则原样返回) */
-  state: TaskBoardState
+  state: TaskBoardState;
   /** 这一次结算掉的任务(顺序即声明顺序) */
-  settled: TaskProgress[]
+  settled: TaskProgress[];
 }
 
 export interface ClaimOutcome {
-  ok: boolean
+  ok: boolean;
   /** 没领成的原因(结构化:由作品决定怎么说给人听) */
-  reason: 'unknown' | 'claimed' | 'unfinished' | null
-  task: TaskSpec | null
-  state: TaskBoardState
+  reason: "unknown" | "claimed" | "unfinished" | null;
+  task: TaskSpec | null;
+  state: TaskBoardState;
 }
 
 export function createTaskBoard(config: { tasks: readonly TaskSpec[] }) {
-  const byId = new Map<string, TaskSpec>()
-  for (const task of config.tasks) byId.set(task.id, task)
+  const byId = new Map<string, TaskSpec>();
+  for (const task of config.tasks) byId.set(task.id, task);
 
-  const taskOf = (id: string): TaskSpec | undefined => byId.get(id)
+  const taskOf = (id: string): TaskSpec | undefined => byId.get(id);
 
   /**
    * 换期:把**换期那一刻的计数器**记成本期基准,并清空本期的领取记录。
@@ -79,64 +79,90 @@ export function createTaskBoard(config: { tasks: readonly TaskSpec[] }) {
   const rollover = (
     state: TaskBoardState,
     counters: Readonly<Record<string, number>>,
-    period: string
+    period: string,
   ): TaskBoardState => {
-    if (state.period === period) return state
-    return { period, base: snapshotOf(counters), claimed: [] }
-  }
+    if (state.period === period) return state;
+    return { period, base: snapshotOf(counters), claimed: [] };
+  };
 
   /** 本期增量:当前 − 期初基准,夹到 ≥ 0(缺基准按 0 起算;见 counters.ts) */
-  const deltaOf = (state: TaskBoardState, counters: Readonly<Record<string, number>>, counter: string): number => {
-    return deltaSince(state.base, counters, counter)
-  }
+  const deltaOf = (
+    state: TaskBoardState,
+    counters: Readonly<Record<string, number>>,
+    counter: string,
+  ): number => {
+    return deltaSince(state.base, counters, counter);
+  };
 
   /** 一条任务本期的进度读数(界面直接用) */
-  const progressOf = (state: TaskBoardState, counters: Readonly<Record<string, number>>, id: string): TaskProgress | null => {
-    const task = taskOf(id)
-    if (!task) return null
-    const delta = deltaOf(state, counters, task.counter)
+  const progressOf = (
+    state: TaskBoardState,
+    counters: Readonly<Record<string, number>>,
+    id: string,
+  ): TaskProgress | null => {
+    const task = taskOf(id);
+    if (!task) return null;
+    const delta = deltaOf(state, counters, task.counter);
     return {
       task,
       delta,
       progress: Math.min(task.target, delta),
       done: delta >= task.target,
-      claimed: state.claimed.includes(task.id)
-    }
-  }
+      claimed: state.claimed.includes(task.id),
+    };
+  };
 
   /** 整块任务板(顺序即声明顺序) */
-  const board = (state: TaskBoardState, counters: Readonly<Record<string, number>>): TaskProgress[] => {
-    const out: TaskProgress[] = []
+  const board = (
+    state: TaskBoardState,
+    counters: Readonly<Record<string, number>>,
+  ): TaskProgress[] => {
+    const out: TaskProgress[] = [];
     for (const task of config.tasks) {
-      const row = progressOf(state, counters, task.id)
-      if (row) out.push(row)
+      const row = progressOf(state, counters, task.id);
+      if (row) out.push(row);
     }
-    return out
-  }
+    return out;
+  };
 
   /**
    * 自动结算:把"已达成且本期还没结算过"的一次性挑出来(顺序即声明顺序),
    * 并把它们记进 `claimed`。发奖是调用方的事 —— 库只管"发过没有"。
    */
-  const settle = (state: TaskBoardState, counters: Readonly<Record<string, number>>): SettleResult => {
-    const settled = board(state, counters).filter(row => row.done && !row.claimed)
-    if (settled.length === 0) return { state, settled: [] }
-    return { state: { ...state, claimed: [...state.claimed, ...settled.map(row => row.task.id)] }, settled }
-  }
+  const settle = (
+    state: TaskBoardState,
+    counters: Readonly<Record<string, number>>,
+  ): SettleResult => {
+    const settled = board(state, counters).filter((row) => row.done && !row.claimed);
+    if (settled.length === 0) return { state, settled: [] };
+    return {
+      state: { ...state, claimed: [...state.claimed, ...settled.map((row) => row.task.id)] },
+      settled,
+    };
+  };
 
   /**
    * 手动领取(有些作品是玩家自己点):与自动结算共用同一份 `claimed`,
    * 两条路一起用也不会重复给。
    */
-  const claim = (state: TaskBoardState, counters: Readonly<Record<string, number>>, id: string): ClaimOutcome => {
-    const row = progressOf(state, counters, id)
-    if (!row) return { ok: false, reason: 'unknown', task: null, state }
-    if (row.claimed) return { ok: false, reason: 'claimed', task: row.task, state }
-    if (!row.done) return { ok: false, reason: 'unfinished', task: row.task, state }
-    return { ok: true, reason: null, task: row.task, state: { ...state, claimed: [...state.claimed, id] } }
-  }
+  const claim = (
+    state: TaskBoardState,
+    counters: Readonly<Record<string, number>>,
+    id: string,
+  ): ClaimOutcome => {
+    const row = progressOf(state, counters, id);
+    if (!row) return { ok: false, reason: "unknown", task: null, state };
+    if (row.claimed) return { ok: false, reason: "claimed", task: row.task, state };
+    if (!row.done) return { ok: false, reason: "unfinished", task: row.task, state };
+    return {
+      ok: true,
+      reason: null,
+      task: row.task,
+      state: { ...state, claimed: [...state.claimed, id] },
+    };
+  };
 
-  return { tasks: config.tasks, taskOf, rollover, deltaOf, progressOf, board, settle, claim }
+  return { tasks: config.tasks, taskOf, rollover, deltaOf, progressOf, board, settle, claim };
 }
 
-export type TaskBoard = ReturnType<typeof createTaskBoard>
+export type TaskBoard = ReturnType<typeof createTaskBoard>;

@@ -1,19 +1,30 @@
 /** 洞府状态 —— 建筑等级与产出 / 灵脉投资 */
-import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
-import type { BuildingId, SmallResourceId, StatMods } from '@/types'
-import type { VeinId } from '@/data/veins'
-import { persistConfig } from '@/utils/storage'
-import { BUILDINGS, librarySubGongfaSlots } from '@/data/buildings'
-import { INSIGHT_DISCOUNT_PER_POINT } from '@/data/veins'
-import { ARRAY_QI_CAP_PER_LEVEL, BEAST_MULT_PER_LEVEL, FORGE_LEVEL_PER_CAP, OFFLINE_CAP_HOURS } from '@/data/constants'
-import { mergeMods } from '@/core/statsCalc'
-import { allDongfuMaxed, buildingLevelCapOf, buildingModSources, capOfBuilding, produceOf } from '@/core/engineFacilities'
-import { veinModsOf, veinStateOf, veinTotalOf } from '@/core/engineVeins'
-import { useResourcesStore } from './resources'
+import { defineStore } from "pinia";
+import { computed, ref } from "vue";
+import type { BuildingId, SmallResourceId, StatMods } from "@/types";
+import type { VeinId } from "@/data/veins";
+import { persistConfig } from "@/utils/storage";
+import { BUILDINGS, librarySubGongfaSlots } from "@/data/buildings";
+import { INSIGHT_DISCOUNT_PER_POINT } from "@/data/veins";
+import {
+  ARRAY_QI_CAP_PER_LEVEL,
+  BEAST_MULT_PER_LEVEL,
+  FORGE_LEVEL_PER_CAP,
+  OFFLINE_CAP_HOURS,
+} from "@/data/constants";
+import { mergeMods } from "@/core/statsCalc";
+import {
+  allDongfuMaxed,
+  buildingLevelCapOf,
+  buildingModSources,
+  capOfBuilding,
+  produceOf,
+} from "@/core/engineFacilities";
+import { veinModsOf, veinStateOf, veinTotalOf } from "@/core/engineVeins";
+import { useResourcesStore } from "./resources";
 
 export const useDongfuStore = defineStore(
-  'dongfu',
+  "dongfu",
   () => {
     const levels = ref<Record<BuildingId, number>>({
       mansion: 0,
@@ -22,50 +33,56 @@ export const useDongfuStore = defineStore(
       forge: 0,
       field: 0,
       library: 0,
-      beast: 0
-    })
+      beast: 0,
+    });
     /** 产出小数累积器 */
-    const frac = ref({ herb: 0, ore: 0, wudao: 0 })
+    const frac = ref({ herb: 0, ore: 0, wudao: 0 });
     /** Phase 30.3 灵脉:主脉方向 + 各脉已投点数 */
-    const veinMain = ref<VeinId | null>(null)
-    const veinPoints = ref<Record<VeinId, number>>({ gather: 0, craft: 0, alchemy: 0, insight: 0 })
+    const veinMain = ref<VeinId | null>(null);
+    const veinPoints = ref<Record<VeinId, number>>({ gather: 0, craft: 0, alchemy: 0, insight: 0 });
 
     const buildingMods = computed<StatMods>(() => {
       // 建筑效果的来源清单由库给出(只算真的建起来了的),合并仍是本作的属性汇总口径
-      return mergeMods(buildingModSources(levels.value))
-    })
+      return mergeMods(buildingModSources(levels.value));
+    });
 
     /** 灵脉属性加成(悟道脉走参悟折扣,不入 mods)—— 每点 × 点数的口径在接入层 */
     const veinMods = computed<StatMods>(() => {
-      return veinModsOf(veinStateOf(veinPoints.value, veinMain.value))
-    })
+      return veinModsOf(veinStateOf(veinPoints.value, veinMain.value));
+    });
 
     /** 悟道脉参悟折扣(0~) */
-    const insightDiscount = computed(() => (veinPoints.value.insight ?? 0) * INSIGHT_DISCOUNT_PER_POINT)
+    const insightDiscount = computed(
+      () => (veinPoints.value.insight ?? 0) * INSIGHT_DISCOUNT_PER_POINT,
+    );
 
     /** 灵脉已投总点数 */
-    const veinTotal = computed(() => veinTotalOf(veinStateOf(veinPoints.value, veinMain.value)))
+    const veinTotal = computed(() => veinTotalOf(veinStateOf(veinPoints.value, veinMain.value)));
 
-    const offlineCapHours = computed(() => OFFLINE_CAP_HOURS[Math.min(levels.value.mansion, OFFLINE_CAP_HOURS.length - 1)]!)
+    const offlineCapHours = computed(
+      () => OFFLINE_CAP_HOURS[Math.min(levels.value.mansion, OFFLINE_CAP_HOURS.length - 1)]!,
+    );
     /** 洞府等级限制其余建筑上限 */
-    const buildingLevelCap = computed(() => buildingLevelCapOf(levels.value.mansion))
+    const buildingLevelCap = computed(() => buildingLevelCapOf(levels.value.mansion));
     /** 建筑实际可达上限:洞府全局闸门与自身品类上限取小(洞府自身不受自己闸门所限) */
     function buildingCap(id: BuildingId): number {
-      return capOfBuilding(id, levels.value)
+      return capOfBuilding(id, levels.value);
     }
     /** 整座洞府尽善:七座俱已至顶(判据走引擎的 allDongfuMaxed,与 buildingCap 同源) */
-    const allBuildingsMaxed = computed(() => allDongfuMaxed(levels.value))
+    const allBuildingsMaxed = computed(() => allDongfuMaxed(levels.value));
     /** 已启用(等级 > 0)的座数 —— 首页入口与洞府页抬头同读这一份,不许两处各数一遍 */
-    const builtCount = computed(() => BUILDINGS.filter(b => (levels.value[b.id] ?? 0) > 0).length)
-    const subGongfaSlots = computed(() => librarySubGongfaSlots(levels.value.library))
-    const alchemyLevel = computed(() => levels.value.alchemy)
+    const builtCount = computed(
+      () => BUILDINGS.filter((b) => (levels.value[b.id] ?? 0) > 0).length,
+    );
+    const subGongfaSlots = computed(() => librarySubGongfaSlots(levels.value.library));
+    const alchemyLevel = computed(() => levels.value.alchemy);
     // 炼器台每 FORGE_LEVEL_PER_CAP 级提高强化上限 1(此前把 2 写死在业务代码里)
-    const forgeCapBonus = computed(() => Math.floor(levels.value.forge / FORGE_LEVEL_PER_CAP))
-    const qiCapMult = computed(() => 1 + levels.value.array * ARRAY_QI_CAP_PER_LEVEL)
-    const beastMult = computed(() => 1 + levels.value.beast * BEAST_MULT_PER_LEVEL)
+    const forgeCapBonus = computed(() => Math.floor(levels.value.forge / FORGE_LEVEL_PER_CAP));
+    const qiCapMult = computed(() => 1 + levels.value.array * ARRAY_QI_CAP_PER_LEVEL);
+    const beastMult = computed(() => 1 + levels.value.beast * BEAST_MULT_PER_LEVEL);
 
     function setLevel(id: BuildingId, lv: number): void {
-      levels.value = { ...levels.value, [id]: lv }
+      levels.value = { ...levels.value, [id]: lv };
     }
 
     /**
@@ -74,38 +91,38 @@ export const useDongfuStore = defineStore(
      * 这是持久化收益来源里唯一没做 sanitize 的一处
      */
     function sanitize(): void {
-      const nextLevels = { ...levels.value }
+      const nextLevels = { ...levels.value };
       for (const def of BUILDINGS) {
-        const cur = nextLevels[def.id]
-        if (cur === undefined || !Number.isFinite(cur) || cur < 0) nextLevels[def.id] = 0
-        else nextLevels[def.id] = Math.min(Math.floor(cur), def.maxLevel)
+        const cur = nextLevels[def.id];
+        if (cur === undefined || !Number.isFinite(cur) || cur < 0) nextLevels[def.id] = 0;
+        else nextLevels[def.id] = Math.min(Math.floor(cur), def.maxLevel);
       }
-      levels.value = nextLevels
-      const nextFrac = { ...frac.value }
+      levels.value = nextLevels;
+      const nextFrac = { ...frac.value };
       for (const key of Object.keys(nextFrac) as (keyof typeof frac.value)[]) {
-        if (!Number.isFinite(nextFrac[key])) nextFrac[key] = 0
+        if (!Number.isFinite(nextFrac[key])) nextFrac[key] = 0;
       }
-      frac.value = nextFrac
-      const nextVein = { ...veinPoints.value }
+      frac.value = nextFrac;
+      const nextVein = { ...veinPoints.value };
       for (const id of Object.keys(nextVein) as VeinId[]) {
-        if (!Number.isFinite(nextVein[id]) || nextVein[id] < 0) nextVein[id] = 0
+        if (!Number.isFinite(nextVein[id]) || nextVein[id] < 0) nextVein[id] = 0;
       }
-      veinPoints.value = nextVein
+      veinPoints.value = nextVein;
     }
 
     /** 灵脉投点(校验由 veinService 负责) */
     function addVeinPoint(id: VeinId, n: number): void {
-      veinPoints.value = { ...veinPoints.value, [id]: (veinPoints.value[id] ?? 0) + n }
+      veinPoints.value = { ...veinPoints.value, [id]: (veinPoints.value[id] ?? 0) + n };
     }
 
     function setVeinMain(id: VeinId): void {
-      veinMain.value = id
+      veinMain.value = id;
     }
 
     /** 整份写回灵脉账(点数 + 主脉)—— 服务的判定结果一次落到 store 上 */
     function setVeinState(state: { points: Record<string, number>; main: string | null }): void {
-      veinPoints.value = { ...veinPoints.value, ...(state.points as Record<VeinId, number>) }
-      veinMain.value = state.main as VeinId | null
+      veinPoints.value = { ...veinPoints.value, ...(state.points as Record<VeinId, number>) };
+      veinMain.value = state.main as VeinId | null;
     }
 
     /**
@@ -113,22 +130,22 @@ export const useDongfuStore = defineStore(
      * 留下的只有认知与宿慧(见 core/reincarnation 的继承清单)。
      */
     function resetForRebirth(): void {
-      const nextLevels = { ...levels.value }
-      for (const def of BUILDINGS) nextLevels[def.id] = 0
-      levels.value = nextLevels
-      frac.value = { herb: 0, ore: 0, wudao: 0 }
-      veinMain.value = null
-      veinPoints.value = { gather: 0, craft: 0, alchemy: 0, insight: 0 }
+      const nextLevels = { ...levels.value };
+      for (const def of BUILDINGS) nextLevels[def.id] = 0;
+      levels.value = nextLevels;
+      frac.value = { herb: 0, ore: 0, wudao: 0 };
+      veinMain.value = null;
+      veinPoints.value = { gather: 0, craft: 0, alchemy: 0, insight: 0 };
     }
 
     /** 建筑产出(灵田/藏经阁),按秒推进 */
     function produce(dtSec: number): void {
-      const resources = useResourcesStore()
+      const resources = useResourcesStore();
       // 每小时速率来自建筑等级,零头怎么留、什么时候进位由库的 accrue 管(见 core/engineFacilities)
-      const step = produceOf(frac.value, levels.value, dtSec)
-      frac.value = step.frac as typeof frac.value
+      const step = produceOf(frac.value, levels.value, dtSec);
+      frac.value = step.frac as typeof frac.value;
       for (const [key, whole] of Object.entries(step.whole)) {
-        resources.addSmall(key as SmallResourceId, whole)
+        resources.addSmall(key as SmallResourceId, whole);
       }
     }
 
@@ -157,8 +174,8 @@ export const useDongfuStore = defineStore(
       setVeinState,
       resetForRebirth,
       produce,
-      sanitize
-    }
+      sanitize,
+    };
   },
-  { persist: persistConfig('dongfu') }
-)
+  { persist: persistConfig("dongfu") },
+);

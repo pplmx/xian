@@ -25,9 +25,9 @@
  *
  * 两者相加才是 totalInsight(),分阶、折资质地板都用它。
  */
-import { LORE_MAX, MATERIALS } from '@/data/materials'
-import { SKILL_IDS, skillLevelFromExp } from '@/data/crafting'
-import { REINCARNATE_APTITUDE_FLOOR } from '@/data/constants'
+import { LORE_MAX, MATERIALS } from "@/data/materials";
+import { SKILL_IDS, skillLevelFromExp } from "@/data/crafting";
+import { REINCARNATE_APTITUDE_FLOOR } from "@/data/constants";
 import {
   INSIGHT_PER_APTITUDE,
   INSIGHT_PER_ENEMY,
@@ -38,29 +38,35 @@ import {
   INSIGHT_SKILL_DIV,
   stageAt,
   type LifeVow,
-  type SamsaraStageDef
-} from '@/data/samsara'
-import { lifeThemeDef, themesForStage, type LifeTaboo, type LifeThemeDef, type LifeThemeMetric } from '@/data/lifeThemes'
-import { ENEMY_LORE_MAX, useLoreStore } from '@/stores/lore'
-import { usePlayerStore } from '@/stores/player'
-import { useQuestsStore } from '@/stores/quests'
-import { useCultivationStore } from '@/stores/cultivation'
-import { useUiStore } from '@/stores/ui'
-import type { CounterKey } from '@/types'
-import { deltaOf, deltaSince, snapshotOf } from 'wanxiang-engine'
+  type SamsaraStageDef,
+} from "@/data/samsara";
+import {
+  lifeThemeDef,
+  themesForStage,
+  type LifeTaboo,
+  type LifeThemeDef,
+  type LifeThemeMetric,
+} from "@/data/lifeThemes";
+import { ENEMY_LORE_MAX, useLoreStore } from "@/stores/lore";
+import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
+import { useCultivationStore } from "@/stores/cultivation";
+import { useUiStore } from "@/stores/ui";
+import type { CounterKey } from "@/types";
+import { deltaOf, deltaSince, snapshotOf } from "wanxiang-engine";
 
 // ============ 宿慧折算(纯函数,可独立测试) ============
 
 /** 折算宿慧所需的认知快照 —— 与 store 解耦,便于审计测试直接喂数据 */
 export interface LoreSnapshot {
   /** 灵材 id → 认知层 0~3 */
-  materialLore: Record<string, number>
+  materialLore: Record<string, number>;
   /** 丹方 id → 掌握度 0~1 */
-  recipeLore: Record<string, number>
+  recipeLore: Record<string, number>;
   /** 技艺 id → 累积经验 */
-  skillExp: Record<string, number>
+  skillExp: Record<string, number>;
   /** 敌人 id → 认知层 0~3 */
-  enemyLore: Record<string, number>
+  enemyLore: Record<string, number>;
 }
 
 /**
@@ -70,50 +76,50 @@ export interface LoreSnapshot {
  * 通晓用法的药在"认得"之上再计一份 —— 认得它叫什么和会用它,是两回事。
  */
 export function loreInsight(snap: LoreSnapshot): number {
-  let sum = 0
+  let sum = 0;
   for (const v of Object.values(snap.materialLore)) {
-    if (v >= 1) sum += INSIGHT_PER_MATERIAL
-    if (v >= LORE_MAX) sum += INSIGHT_PER_MATERIAL_MASTERED
+    if (v >= 1) sum += INSIGHT_PER_MATERIAL;
+    if (v >= LORE_MAX) sum += INSIGHT_PER_MATERIAL_MASTERED;
   }
   for (const v of Object.values(snap.recipeLore)) {
-    if (v >= 1) sum += INSIGHT_PER_RECIPE
+    if (v >= 1) sum += INSIGHT_PER_RECIPE;
   }
-  let skillSum = 0
+  let skillSum = 0;
   for (const id of SKILL_IDS) {
-    skillSum += skillLevelFromExp(snap.skillExp[id] ?? 0)
+    skillSum += skillLevelFromExp(snap.skillExp[id] ?? 0);
   }
-  sum += skillSum / INSIGHT_SKILL_DIV
+  sum += skillSum / INSIGHT_SKILL_DIV;
   for (const v of Object.values(snap.enemyLore)) {
-    if (v >= ENEMY_LORE_MAX) sum += INSIGHT_PER_ENEMY
+    if (v >= ENEMY_LORE_MAX) sum += INSIGHT_PER_ENEMY;
   }
-  return Math.floor(sum)
+  return Math.floor(sum);
 }
 
 /** 一世走到某大境界,留下多少阅历 */
 export function lifeInsight(major: number): number {
-  return (Math.max(0, major) + 1) * INSIGHT_PER_LIFE_REALM
+  return (Math.max(0, major) + 1) * INSIGHT_PER_LIFE_REALM;
 }
 
 // ============ 当下取数 ============
 
 function snapshotLore(): LoreSnapshot {
-  const lore = useLoreStore()
+  const lore = useLoreStore();
   return {
     materialLore: lore.materialLore,
     recipeLore: lore.recipeLore,
     skillExp: lore.skillExp,
-    enemyLore: lore.enemyLore
-  }
+    enemyLore: lore.enemyLore,
+  };
 }
 
 /** 此刻的宿慧 = 存量(历世阅历 + 已达成的命题)+ 现量(认知折算) */
 export function totalInsight(): number {
-  return usePlayerStore().reincarnation.insight + loreInsight(snapshotLore())
+  return usePlayerStore().reincarnation.insight + loreInsight(snapshotLore());
 }
 
 /** 此刻所处的轮回阶段 */
 export function currentStage(): SamsaraStageDef {
-  return stageAt(totalInsight())
+  return stageAt(totalInsight());
 }
 
 /**
@@ -124,10 +130,10 @@ export function currentStage(): SamsaraStageDef {
  * 资质本就硬封顶 100,这条维度短线就顶满,不值得为凸显宿慧而砍老玩家。
  */
 export function aptitudeFloorNow(): number {
-  const player = usePlayerStore()
-  const byCount = REINCARNATE_APTITUDE_FLOOR * (player.reincarnation.count + 1)
-  const byInsight = Math.floor(totalInsight() / INSIGHT_PER_APTITUDE)
-  return Math.max(byCount, byInsight)
+  const player = usePlayerStore();
+  const byCount = REINCARNATE_APTITUDE_FLOOR * (player.reincarnation.count + 1);
+  const byInsight = Math.floor(totalInsight() / INSIGHT_PER_APTITUDE);
+  return Math.max(byCount, byInsight);
 }
 
 /**
@@ -138,28 +144,29 @@ export function aptitudeFloorNow(): number {
  * @returns 本次新认出的灵材数
  */
 export function carryLore(stage: SamsaraStageDef): number {
-  if (stage.knownMaterialRank <= 0) return 0
-  const lore = useLoreStore()
-  let n = 0
+  if (stage.knownMaterialRank <= 0) return 0;
+  const lore = useLoreStore();
+  let n = 0;
   for (const m of MATERIALS) {
-    if (m.rank <= stage.knownMaterialRank && lore.advanceLore(m.id, 1)) n += 1
+    if (m.rank <= stage.knownMaterialRank && lore.advanceLore(m.id, 1)) n += 1;
   }
-  return n
+  return n;
 }
 
 /** 转世睁眼时一共认得几味灵材(不改动状态,供轮回界面预告) */
 export function carryLorePreview(stage: SamsaraStageDef): number {
-  const lore = useLoreStore()
-  return MATERIALS.filter(m => m.rank <= stage.knownMaterialRank || lore.loreOf(m.id) >= 1).length
+  const lore = useLoreStore();
+  return MATERIALS.filter((m) => m.rank <= stage.knownMaterialRank || lore.loreOf(m.id) >= 1)
+    .length;
 }
 
 // ============ 这一世的命题 ============
 
 /** 命题进度:cur / need,以及是否已达成 */
 export interface ThemeProgress {
-  cur: number
-  need: number
-  done: boolean
+  cur: number;
+  need: number;
+  done: boolean;
 }
 
 /**
@@ -168,72 +175,76 @@ export interface ThemeProgress {
  * 回档那天就会冒出负进度)。
  */
 function countersDelta(key: CounterKey, base: Partial<Record<CounterKey, number>>): number {
-  return deltaSince(base as Record<string, number>, useQuestsStore().counters as Record<string, number>, key)
+  return deltaSince(
+    base as Record<string, number>,
+    useQuestsStore().counters as Record<string, number>,
+    key,
+  );
 }
 
 /** 已择定的悟道分支数 */
 export function branchCount(): number {
-  return Object.keys(useCultivationStore().gongfaBranch).length
+  return Object.keys(useCultivationStore().gongfaBranch).length;
 }
 
 /** 已雪耻的宿敌数 */
 export function avengedCount(): number {
-  return usePlayerStore().nemeses.filter(n => n.avengedAt !== undefined).length
+  return usePlayerStore().nemeses.filter((n) => n.avengedAt !== undefined).length;
 }
 
 /** 单条判据的进度 */
 function metricProgress(metric: LifeThemeMetric, vow: LifeVow): ThemeProgress {
-  const player = usePlayerStore()
-  const lore = useLoreStore()
+  const player = usePlayerStore();
+  const lore = useLoreStore();
   switch (metric.kind) {
-    case 'realm':
-      return prog(player.major, metric.major)
-    case 'counter':
-      return prog(countersDelta(metric.key, vow.base), metric.n)
-    case 'materialLore': {
-      const n = Object.values(lore.materialLore).filter(v => v >= metric.stage).length
-      return prog(n, metric.n)
+    case "realm":
+      return prog(player.major, metric.major);
+    case "counter":
+      return prog(countersDelta(metric.key, vow.base), metric.n);
+    case "materialLore": {
+      const n = Object.values(lore.materialLore).filter((v) => v >= metric.stage).length;
+      return prog(n, metric.n);
     }
-    case 'recipeMastered':
-      return prog(lore.masteredRecipeCount, metric.n)
-    case 'skill':
-      return prog(lore.skillLevel(metric.id), metric.level)
-    case 'enemyLore':
-      return prog(lore.masteredEnemyCount, metric.n)
-    case 'branch':
-      return prog(deltaOf(vow.baseBranches, branchCount()), metric.n)
-    case 'avenge':
-      return prog(deltaOf(vow.baseAvenged, avengedCount()), metric.n)
-    case 'all': {
+    case "recipeMastered":
+      return prog(lore.masteredRecipeCount, metric.n);
+    case "skill":
+      return prog(lore.skillLevel(metric.id), metric.level);
+    case "enemyLore":
+      return prog(lore.masteredEnemyCount, metric.n);
+    case "branch":
+      return prog(deltaOf(vow.baseBranches, branchCount()), metric.n);
+    case "avenge":
+      return prog(deltaOf(vow.baseAvenged, avengedCount()), metric.n);
+    case "all": {
       // 取各条中最落后的一条作为整体进度:全部达成才算达成
-      const parts = metric.of.map(m => metricProgress(m, vow))
+      const parts = metric.of.map((m) => metricProgress(m, vow));
       // need<=0 的条目不参与比烂:0 需求视为已达成(ratio=1)。
       // 否则 0/0→NaN、cur/0→Infinity 会让 reduce 恒留 a,选错「最落后的一条」
-      const ratioOf = (p: ThemeProgress): number => (p.need <= 0 ? 1 : p.cur / p.need)
-      const worst = parts.reduce((a, b) => (ratioOf(a) <= ratioOf(b) ? a : b))
-      return { ...worst, done: parts.every(p => p.done) }
+      const ratioOf = (p: ThemeProgress): number => (p.need <= 0 ? 1 : p.cur / p.need);
+      const worst = parts.reduce((a, b) => (ratioOf(a) <= ratioOf(b) ? a : b));
+      return { ...worst, done: parts.every((p) => p.done) };
     }
   }
 }
 
 function prog(cur: number, need: number): ThemeProgress {
-  return { cur, need, done: cur >= need }
+  return { cur, need, done: cur >= need };
 }
 
 /** 本世命题的进度(未立题返回 null) */
 export function vowProgress(): ThemeProgress | null {
-  const vow = usePlayerStore().reincarnation.vow
-  const def = vow ? lifeThemeDef(vow.themeId) : undefined
-  if (!vow || !def) return null
-  return metricProgress(def.metric, vow)
+  const vow = usePlayerStore().reincarnation.vow;
+  const def = vow ? lifeThemeDef(vow.themeId) : undefined;
+  if (!vow || !def) return null;
+  return metricProgress(def.metric, vow);
 }
 
 /** 本世命题的结局:已破 / 已成 / 未竟 */
-export function vowResult(): 'broken' | 'done' | 'unfinished' | null {
-  const vow = usePlayerStore().reincarnation.vow
-  if (!vow) return null
-  if (vow.broken) return 'broken'
-  return vowProgress()?.done ? 'done' : 'unfinished'
+export function vowResult(): "broken" | "done" | "unfinished" | null {
+  const vow = usePlayerStore().reincarnation.vow;
+  if (!vow) return null;
+  if (vow.broken) return "broken";
+  return vowProgress()?.done ? "done" : "unfinished";
 }
 
 /**
@@ -243,13 +254,13 @@ export function vowResult(): 'broken' | 'done' | 'unfinished' | null {
  * 而不是几个时辰后被一句总结告知。
  */
 export function noteTaboo(taboo: LifeTaboo): void {
-  const player = usePlayerStore()
-  const vow = player.reincarnation.vow
-  if (!vow || vow.broken) return
-  const def = lifeThemeDef(vow.themeId)
-  if (def?.taboo !== taboo) return
-  player.breakVow()
-  useUiStore().toast(`【破题】你曾立誓「${def.vow}」——这一世的话,没能说到底`, 'warn')
+  const player = usePlayerStore();
+  const vow = player.reincarnation.vow;
+  if (!vow || vow.broken) return;
+  const def = lifeThemeDef(vow.themeId);
+  if (def?.taboo !== taboo) return;
+  player.breakVow();
+  useUiStore().toast(`【破题】你曾立誓「${def.vow}」——这一世的话,没能说到底`, "warn");
 }
 
 /**
@@ -259,17 +270,20 @@ export function noteTaboo(taboo: LifeTaboo): void {
  * 本身就是最后一阶开的能力。
  * @param rngPick 抽签函数(注入以便测试)
  */
-export function offerThemes(stage: SamsaraStageDef, rngPick: (arr: LifeThemeDef[]) => LifeThemeDef): LifeThemeDef[] {
-  const pool = themesForStage(stage.index)
-  if (stage.themeFreeChoice || pool.length <= 3) return pool
-  const out: LifeThemeDef[] = []
-  const rest = [...pool]
+export function offerThemes(
+  stage: SamsaraStageDef,
+  rngPick: (arr: LifeThemeDef[]) => LifeThemeDef,
+): LifeThemeDef[] {
+  const pool = themesForStage(stage.index);
+  if (stage.themeFreeChoice || pool.length <= 3) return pool;
+  const out: LifeThemeDef[] = [];
+  const rest = [...pool];
   for (let i = 0; i < 3 && rest.length > 0; i += 1) {
-    const picked = rngPick(rest)
-    out.push(picked)
-    rest.splice(rest.indexOf(picked), 1)
+    const picked = rngPick(rest);
+    out.push(picked);
+    rest.splice(rest.indexOf(picked), 1);
   }
-  return out
+  return out;
 }
 
 /**
@@ -279,23 +293,23 @@ export function offerThemes(stage: SamsaraStageDef, rngPick: (arr: LifeThemeDef[
  * 手法与每日任务的 rolloverDaily 一致(见 stores/quests.ts)。
  */
 export function beginLife(themeId: string | null, now = Date.now()): void {
-  const player = usePlayerStore()
+  const player = usePlayerStore();
   if (themeId === null || !lifeThemeDef(themeId)) {
-    player.setVow(null)
-    return
+    player.setVow(null);
+    return;
   }
   /**
    * 一世一题:已经立过就直接返回 —— 重进来一次(连点确认、恢复流程)不该把这一世
    * 已经攒下的进度重新打基准抹掉。转世流程会**先撤上一世的题**再立新题(见 core/reincarnation)。
    */
-  if (player.reincarnation.vow) return
-  const quests = useQuestsStore()
+  if (player.reincarnation.vow) return;
+  const quests = useQuestsStore();
   player.setVow({
     themeId,
     at: now,
     base: snapshotOf(quests.counters) as Partial<Record<CounterKey, number>>,
     baseBranches: branchCount(),
     baseAvenged: avengedCount(),
-    broken: false
-  })
+    broken: false,
+  });
 }

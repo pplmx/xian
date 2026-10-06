@@ -7,16 +7,21 @@
  * 唯一的硬门槛是「你根本不知道有这张方子」。除此之外一律软化:
  * 高出承受四阶的方子照样能开炉,只是成功率个位数——赌不赌是玩家的事。
  */
-import type { PillDef } from '@/types'
-import { LORE_MAX, materialDef } from '@/data/materials'
-import { recipeCraft, skillDef, type RecipeCraft, type SkillId } from '@/data/crafting'
-import { pillDef, PILLS } from '@/data/pills'
-import { useLoreStore } from '@/stores/lore'
-import { usePlayerStore } from '@/stores/player'
-import { averageLore, composeCraftRate, overReachFactor as libOverReachFactor, weightedSkill as libWeightedSkill } from 'wanxiang-engine'
+import type { PillDef } from "@/types";
+import { LORE_MAX, materialDef } from "@/data/materials";
+import { recipeCraft, skillDef, type RecipeCraft, type SkillId } from "@/data/crafting";
+import { pillDef, PILLS } from "@/data/pills";
+import { useLoreStore } from "@/stores/lore";
+import { usePlayerStore } from "@/stores/player";
+import {
+  averageLore,
+  composeCraftRate,
+  overReachFactor as libOverReachFactor,
+  weightedSkill as libWeightedSkill,
+} from "wanxiang-engine";
 
 /** 各项皆满且同阶时的成功率上限 —— 余下的是天意 */
-export const CRAFT_BASE_RATE = 0.95
+export const CRAFT_BASE_RATE = 0.95;
 
 /**
  * 本作的合成公式 —— 四个乘区各有下限,越级另走陡峭曲线。
@@ -27,38 +32,38 @@ const CRAFT_FORMULA = {
   levers: {
     mastery: { floor: 0.22, span: 0.78 },
     lore: { floor: 0.42, span: 0.58 },
-    skill: { floor: 0.3, span: 0.7 }
+    skill: { floor: 0.3, span: 0.7 },
   },
-  overReach: { key: 'overReach', spec: { table: [1, 0.6, 0.35, 0.18], decay: 0.45 } }
-}
+  overReach: { key: "overReach", spec: { table: [1, 0.6, 0.35, 0.18], decay: 0.45 } },
+};
 
 export interface Craftability {
-  recipeId: string
+  recipeId: string;
   /** 丹方阶位 */
-  rank: number
+  rank: number;
   /** 丹方掌握度 0~1 */
-  mastery: number
+  mastery: number;
   /** 方中灵材的平均认知度 0~1 */
-  materialLore: number
+  materialLore: number;
   /** 这张方子加权后的技艺水平 0~100 */
-  skill: number
+  skill: number;
   /** 自身修为可承受的阶位 */
-  bearableRank: number
+  bearableRank: number;
   /** 超规格阶数(>0 即为强炼) */
-  overReach: number
-  successRate: number
+  overReach: number;
+  successRate: number;
   /** 成功时多得一枚的概率 */
-  bonusChance: number
+  bonusChance: number;
   /** 开不了炉的硬阻碍 */
-  blockers: string[]
+  blockers: string[];
   /** 压低成功率的软因素,人话 */
-  weakness: string[]
-  materials: readonly string[]
+  weakness: string[];
+  materials: readonly string[];
 }
 
 /** 修为可承受的丹方阶位:练气可稳承一阶,每高一境多一阶 */
 export function bearableRank(major: number): number {
-  return major + 1
+  return major + 1;
 }
 
 /**
@@ -67,88 +72,104 @@ export function bearableRank(major: number): number {
  * 曲线由公共库算(表与衰减都在上面的公式里)。
  */
 export function overReachFactor(over: number): number {
-  return libOverReachFactor(over, CRAFT_FORMULA.overReach.spec)
+  return libOverReachFactor(over, CRAFT_FORMULA.overReach.spec);
 }
 
 /** 方中灵材的平均认知度(0~1)—— 归一与平均由公共库算 */
-export function materialLoreOf(materials: readonly string[], loreOf: (id: string) => number): number {
-  return averageLore(materials, loreOf, LORE_MAX)
+export function materialLoreOf(
+  materials: readonly string[],
+  loreOf: (id: string) => number,
+): number {
+  return averageLore(materials, loreOf, LORE_MAX);
 }
 
 /** 按丹方的技艺权重加权求和(0~100)—— 加权由公共库算 */
 export function weightedSkill(craft: RecipeCraft, levelOf: (id: SkillId) => number): number {
-  return libWeightedSkill(craft.skills as Record<string, number | undefined>, id => levelOf(id as SkillId))
+  return libWeightedSkill(craft.skills as Record<string, number | undefined>, (id) =>
+    levelOf(id as SkillId),
+  );
 }
 
 /**
  * 合成成功率。四个乘区各有下限——
  * 任何一项都不会把成功率直接归零,但四项全弱时结果自然低到不该开炉。
  */
-export function composeSuccessRate(mastery: number, matLore: number, skill: number, over: number): number {
-  return composeCraftRate({ mastery, lore: matLore, skill: skill / 100, overReach: over }, CRAFT_FORMULA)
+export function composeSuccessRate(
+  mastery: number,
+  matLore: number,
+  skill: number,
+  over: number,
+): number {
+  return composeCraftRate(
+    { mastery, lore: matLore, skill: skill / 100, overReach: over },
+    CRAFT_FORMULA,
+  );
 }
 
 function weaknessLines(c: {
-  mastery: number
-  matLore: number
-  skill: number
-  over: number
-  craft: RecipeCraft
-  loreOf: (id: string) => number
-  levelOf: (id: SkillId) => number
+  mastery: number;
+  matLore: number;
+  skill: number;
+  over: number;
+  craft: RecipeCraft;
+  loreOf: (id: string) => number;
+  levelOf: (id: SkillId) => number;
 }): string[] {
-  const out: string[] = []
-  if (c.mastery < 0.35) out.push('丹方只记得个大概,火候节点全靠猜。')
-  else if (c.mastery < 0.7) out.push('丹方尚未烂熟于心,关键几步还要现想。')
+  const out: string[] = [];
+  if (c.mastery < 0.35) out.push("丹方只记得个大概,火候节点全靠猜。");
+  else if (c.mastery < 0.7) out.push("丹方尚未烂熟于心,关键几步还要现想。");
 
-  const unknown = c.craft.materials.filter(id => c.loreOf(id) < 1)
+  const unknown = c.craft.materials.filter((id) => c.loreOf(id) < 1);
   if (unknown.length > 0) {
-    out.push(`方中有 ${unknown.length} 味药你还叫不出名字。`)
+    out.push(`方中有 ${unknown.length} 味药你还叫不出名字。`);
   } else {
-    const shallow = c.craft.materials.filter(id => c.loreOf(id) < LORE_MAX)
+    const shallow = c.craft.materials.filter((id) => c.loreOf(id) < LORE_MAX);
     if (shallow.length > 0) {
-      const names = shallow.map(id => materialDef(id)?.name).filter(Boolean).slice(0, 2)
-      out.push(`${names.join('、')}的用法你只知其一。`)
+      const names = shallow
+        .map((id) => materialDef(id)?.name)
+        .filter(Boolean)
+        .slice(0, 2);
+      out.push(`${names.join("、")}的用法你只知其一。`);
     }
   }
 
   // 找这张方子最吃重、而你最弱的那项技艺,用它自己的话说
-  let worst: { id: SkillId; score: number } | null = null
+  let worst: { id: SkillId; score: number } | null = null;
   for (const [k, w] of Object.entries(c.craft.skills)) {
-    if (w === undefined) continue
-    const id = k as SkillId
-    const score = (100 - c.levelOf(id)) * w
-    if (worst === null || score > worst.score) worst = { id, score }
+    if (w === undefined) continue;
+    const id = k as SkillId;
+    const score = (100 - c.levelOf(id)) * w;
+    if (worst === null || score > worst.score) worst = { id, score };
   }
   if (worst && c.levelOf(worst.id) < 55) {
-    const def = skillDef(worst.id)
-    if (def) out.push(`${def.name}不足:${def.lackText}`)
+    const def = skillDef(worst.id);
+    if (def) out.push(`${def.name}不足:${def.lackText}`);
   }
 
-  if (c.over > 0) out.push(`此方高出你能承受的 ${c.over} 阶,强炼是在赌命。`)
-  return out
+  if (c.over > 0) out.push(`此方高出你能承受的 ${c.over} 阶,强炼是在赌命。`);
+  return out;
 }
 
 /** 计算一张丹方当前的可炼程度;非可炼丹方返回 null */
 export function craftability(id: string): Craftability | null {
-  const def = pillDef(id)
-  if (!def) return null
-  const craft = recipeCraft(def)
-  if (!craft) return null
+  const def = pillDef(id);
+  if (!def) return null;
+  const craft = recipeCraft(def);
+  if (!craft) return null;
 
-  const lore = useLoreStore()
-  const player = usePlayerStore()
-  const loreOf = (mid: string): number => lore.loreOf(mid)
-  const levelOf = (sid: SkillId): number => lore.skillLevel(sid)
+  const lore = useLoreStore();
+  const player = usePlayerStore();
+  const loreOf = (mid: string): number => lore.loreOf(mid);
+  const levelOf = (sid: SkillId): number => lore.skillLevel(sid);
 
-  const mastery = lore.recipeMastery(id)
-  const matLore = materialLoreOf(craft.materials, loreOf)
-  const skill = weightedSkill(craft, levelOf)
-  const bearable = bearableRank(player.major)
-  const over = Math.max(0, craft.rank - bearable)
+  const mastery = lore.recipeMastery(id);
+  const matLore = materialLoreOf(craft.materials, loreOf);
+  const skill = weightedSkill(craft, levelOf);
+  const bearable = bearableRank(player.major);
+  const over = Math.max(0, craft.rank - bearable);
 
-  const blockers: string[] = []
-  if (mastery <= 0) blockers.push('尚未得此丹方')
+  const blockers: string[] = [];
+  if (mastery <= 0) blockers.push("尚未得此丹方");
 
   return {
     recipeId: id,
@@ -161,13 +182,16 @@ export function craftability(id: string): Craftability | null {
     successRate: composeSuccessRate(mastery, matLore, skill, over),
     bonusChance: Math.min(0.5, mastery * 0.18 + skill / 500),
     blockers,
-    weakness: blockers.length > 0 ? [] : weaknessLines({ mastery, matLore, skill, over, craft, loreOf, levelOf }),
-    materials: craft.materials
-  }
+    weakness:
+      blockers.length > 0
+        ? []
+        : weaknessLines({ mastery, matLore, skill, over, craft, loreOf, levelOf }),
+    materials: craft.materials,
+  };
 }
 
 /** 已知的丹方(掌握度 >0)。这是"你听说过什么",不是"你够不够级" */
 export function knownRecipes(): PillDef[] {
-  const lore = useLoreStore()
-  return PILLS.filter(p => p.recipe && lore.recipeMastery(p.id) > 0)
+  const lore = useLoreStore();
+  return PILLS.filter((p) => p.recipe && lore.recipeMastery(p.id) > 0);
 }

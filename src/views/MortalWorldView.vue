@@ -10,20 +10,35 @@
 
       <!-- 路线全貌:高低即层级,横距即路程,点大即事多 -->
       <div class="card-ink px-3 py-2">
-        <svg :viewBox="`0 0 ${VIEW_W} ${VIEW_H}`" class="h-16 w-full" role="img" aria-label="本世路线">
-          <polyline :points="polyline" fill="none" stroke="currentColor" stroke-width="1" class="text-ink/25" />
+        <svg
+          :viewBox="`0 0 ${VIEW_W} ${VIEW_H}`"
+          class="h-16 w-full"
+          role="img"
+          aria-label="本世路线"
+        >
+          <polyline
+            :points="polyline"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+            class="text-ink/25"
+          />
           <circle
             v-for="p in view.places"
             :key="p.nodeId"
             :cx="p.x"
             :cy="p.y"
             :r="p.r"
-            :class="cleared(p.nodeId) ? 'text-jade' : unlocked(p.nodeId) ? 'text-qing' : 'text-ink-faint'"
+            :class="
+              cleared(p.nodeId) ? 'text-jade' : unlocked(p.nodeId) ? 'text-qing' : 'text-ink-faint'
+            "
             fill="currentColor"
             :fill-opacity="unlocked(p.nodeId) ? 0.85 : 0.35"
           />
         </svg>
-        <p class="mt-0.5 text-center text-[10px] text-ink-faint">高处境深 · 远处路长 · 点大处事多</p>
+        <p class="mt-0.5 text-center text-[10px] text-ink-faint">
+          高处境深 · 远处路长 · 点大处事多
+        </p>
       </div>
 
       <SectionTitle title="本世地界" hint="这一世的路,按段而行" />
@@ -38,7 +53,10 @@
             class="grid h-9 w-9 shrink-0 place-items-center rounded-md"
             :class="unlocked(p.nodeId) ? 'bg-qing/6 text-qing' : 'bg-ink/6 text-ink-faint'"
           >
-            <GameIcon :name="unlocked(p.nodeId) ? (regionDef(p.regionId)?.icon ?? 'mountain') : 'lock'" :size="16" />
+            <GameIcon
+              :name="unlocked(p.nodeId) ? (regionDef(p.regionId)?.icon ?? 'mountain') : 'lock'"
+              :size="16"
+            />
           </span>
           <div class="min-w-0 grow">
             <p class="flex items-baseline gap-1.5">
@@ -49,16 +67,26 @@
             <p class="mt-0.5 flex items-center gap-2 text-[10px] text-ink-faint">
               <span class="truncate">镇守 {{ p.bossName }}</span>
               <span class="flex shrink-0 gap-0.5">
-                <span v-for="n in p.eventLevel" :key="n" class="h-1 w-1 rounded-full bg-gold-ink/60" />
+                <span
+                  v-for="n in p.eventLevel"
+                  :key="n"
+                  class="h-1 w-1 rounded-full bg-gold-ink/60"
+                />
               </span>
             </p>
             <!-- 锁住的地界要给一句"为什么现在去不了",而不是只画把锁 -->
             <p v-if="!unlocked(p.nodeId)" class="mt-0.5 text-[10px] leading-relaxed text-cinnabar">
-              {{ blockReason(p.regionId) ?? '此境未开,须先走完这一世的来时路' }}
+              {{ blockReason(p.regionId) ?? "此境未开,须先走完这一世的来时路" }}
             </p>
           </div>
           <!-- 已通的段落照样能再去 —— 「已通」是记号,不是封路 -->
-          <button v-if="unlocked(p.nodeId)" class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]" @click="depart(p.regionId)">出 发</button>
+          <button
+            v-if="unlocked(p.nodeId)"
+            class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]"
+            @click="depart(p.regionId)"
+          >
+            出 发
+          </button>
         </div>
       </div>
 
@@ -90,47 +118,57 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import { useRouter } from 'vue-router'
-  import SectionTitle from '@/components/common/SectionTitle.vue'
-  import GameIcon from '@/components/common/GameIcon.vue'
-  import { useAdventureStore } from '@/stores/adventure'
-  import { enemyDef } from '@/data/enemies'
-  import { regionDef } from '@/data/regions'
-  import { VIEW_H, VIEW_W, canEnterNode, ensureMortalWorld, entryBlockReason, isNodeCleared, worldView } from '@/core/mortalWorldService'
+import { computed } from "vue";
+import { useRouter } from "vue-router";
+import SectionTitle from "@/components/common/SectionTitle.vue";
+import GameIcon from "@/components/common/GameIcon.vue";
+import { useAdventureStore } from "@/stores/adventure";
+import { enemyDef } from "@/data/enemies";
+import { regionDef } from "@/data/regions";
+import {
+  VIEW_H,
+  VIEW_W,
+  canEnterNode,
+  ensureMortalWorld,
+  entryBlockReason,
+  isNodeCleared,
+  worldView,
+} from "@/core/mortalWorldService";
 
-  const adventure = useAdventureStore()
-  const router = useRouter()
+const adventure = useAdventureStore();
+const router = useRouter();
 
-  /** 本世之界;首次进入本页时凝成 */
-  const view = computed(() => {
-    const w = adventure.mortalWorld ?? ensureMortalWorld()
-    if (!w) return null
-    return worldView(w, id => enemyDef(id)?.name ?? id)
-  })
+/** 本世之界;首次进入本页时凝成 */
+const view = computed(() => {
+  const w = adventure.mortalWorld ?? ensureMortalWorld();
+  if (!w) return null;
+  return worldView(w, (id) => enemyDef(id)?.name ?? id);
+});
 
-  /** 路线折线 —— 纵向绑定层级,故回落看得见 */
-  const polyline = computed(() => (view.value ? view.value.places.map(p => `${p.x},${p.y}`).join(' ') : ''))
+/** 路线折线 —— 纵向绑定层级,故回落看得见 */
+const polyline = computed(() =>
+  view.value ? view.value.places.map((p) => `${p.x},${p.y}`).join(" ") : "",
+);
 
-  function unlocked(nodeId: string): boolean {
-    return canEnterNode(nodeId)
-  }
+function unlocked(nodeId: string): boolean {
+  return canEnterNode(nodeId);
+}
 
-  function cleared(nodeId: string): boolean {
-    return isNodeCleared(nodeId)
-  }
+function cleared(nodeId: string): boolean {
+  return isNodeCleared(nodeId);
+}
 
-  function blockReason(regionId: string): string | null {
-    return entryBlockReason(regionId)
-  }
+function blockReason(regionId: string): string | null {
+  return entryBlockReason(regionId);
+}
 
-  /**
-   * 出发 —— 带着地界回历练页选出行方式。
-   *
-   * 模式弹窗连着适配预览与流派推荐,只应有一处实现;
-   * 在这里重做一遍等于把同一段逻辑养成两份
-   */
-  function depart(regionId: string): void {
-    router.push({ path: '/adventure', query: { go: regionId } })
-  }
+/**
+ * 出发 —— 带着地界回历练页选出行方式。
+ *
+ * 模式弹窗连着适配预览与流派推荐,只应有一处实现;
+ * 在这里重做一遍等于把同一段逻辑养成两份
+ */
+function depart(regionId: string): void {
+  router.push({ path: "/adventure", query: { go: regionId } });
+}
 </script>

@@ -2,7 +2,7 @@
  * 存档加密 —— AES(crypto-js)
  * 目的:防止直接手改 localStorage/导出文件作弊,并非安全边界(密钥随包分发)
  */
-import CryptoJS from 'crypto-js'
+import CryptoJS from "crypto-js";
 
 /**
  * 存档加密口令 —— **这个名字别跟着游戏改名**。
@@ -11,10 +11,10 @@ import CryptoJS from 'crypto-js'
  * 游戏 2026-09 从旧名改为《玄枢录》时,这里的字符串刻意原样保留(存储前缀另有迁移,
  * 见 utils/storage.migrateLegacyPrefix)。
  */
-const SAVE_SECRET = 'yunyin-xiuxian::dao-in-the-clouds::v1'
+const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
 
 export function encryptSave(plain: string): string {
-  return CryptoJS.AES.encrypt(plain, SAVE_SECRET).toString()
+  return CryptoJS.AES.encrypt(plain, SAVE_SECRET).toString();
 }
 
 /**
@@ -31,19 +31,19 @@ export function encryptSave(plain: string): string {
  * 不是它的,一律按明文走,根本不进解密。
  */
 export function decryptSave(cipher: string): string | null {
-  if (!cipher.startsWith('U2FsdGVkX1')) return null
+  if (!cipher.startsWith("U2FsdGVkX1")) return null;
   try {
-    const wordArray = CryptoJS.AES.decrypt(cipher, SAVE_SECRET)
+    const wordArray = CryptoJS.AES.decrypt(cipher, SAVE_SECRET);
     // 解密失败时 wordArray.sigBytes === 0,转 UTF-8 得空串或乱码
-    if (wordArray.sigBytes === 0) return null
-    const text = wordArray.toString(CryptoJS.enc.Utf8)
-    return text.length > 0 ? text : null
+    if (wordArray.sigBytes === 0) return null;
+    const text = wordArray.toString(CryptoJS.enc.Utf8);
+    return text.length > 0 ? text : null;
   } catch {
-    return null
+    return null;
   }
 }
 
 /** 读取存档文本:优先按密文解,失败则按旧版明文返回(向后兼容) */
 export function readSaveText(raw: string): string {
-  return decryptSave(raw) ?? raw
+  return decryptSave(raw) ?? raw;
 }

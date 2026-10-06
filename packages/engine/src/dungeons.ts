@@ -17,76 +17,76 @@
  * 每次胜利固定给一份(修为/货币),再按 `dropChance` 掷掉落。
  * 引擎只负责"给了什么、给了多少",至于这些资源叫什么、怎么花,那是游戏自己的事。
  */
-import type { AttributeSystem, Mods } from './attributes.js'
-import type { Numeric } from './numeric.js'
-import { numberNumeric } from './numeric.js'
-import type { Rng } from './rng.js'
+import type { AttributeSystem, Mods } from "./attributes.js";
+import type { Numeric } from "./numeric.js";
+import { numberNumeric } from "./numeric.js";
+import type { Rng } from "./rng.js";
 
 export interface EnemySkillDef {
-  name: string
+  name: string;
   /** 伤害倍率 */
-  mult: number
+  mult: number;
   /** 触发概率 */
-  rate: number
+  rate: number;
   /**
    * 机制标记(自由文本):stun / drain / pierce / multi / bleed 之类。
    * 库**不认识**这些词,只把它原样交给 `BattleConfig.skillEffectFn` 去解释 ——
    * 你的题材里叫"分心""伤口""没电了"也行。
    */
-  effect?: string
-  desc?: string
+  effect?: string;
+  desc?: string;
 }
 
 export interface EnemyDef {
-  id: string
-  name: string
+  id: string;
+  name: string;
   /** 层级:决定数值量级 */
-  tier: number
-  icon?: string
-  desc?: string
-  hpMult: number
-  atkMult: number
-  defMult: number
-  speed: number
-  skills?: EnemySkillDef[]
-  boss?: boolean
+  tier: number;
+  icon?: string;
+  desc?: string;
+  hpMult: number;
+  atkMult: number;
+  defMult: number;
+  speed: number;
+  skills?: EnemySkillDef[];
+  boss?: boolean;
   /** 敌人自带词条(闪避/减伤/回复……用于流派克制) */
-  mods?: Mods
+  mods?: Mods;
   /** 机制家族标记,玩法层可自行解释 */
-  archetype?: string
-  tags?: string[]
+  archetype?: string;
+  tags?: string[];
 }
 
 export interface RewardDef {
-  id: string
-  name?: string
+  id: string;
+  name?: string;
   /**
    * 自己接管数额(**可选**):给了它,base/tierGrowth 忽略(概率仍然生效)。
    * 奖励曲线想按"层级 + 别的什么"算时用它。
    */
-  amount?: (tier: number) => number
+  amount?: (tier: number) => number;
   /** 基础数量;给了 `amount` 时可以不写 */
-  base?: number
+  base?: number;
   /** 每层级倍率:amount = base × tierGrowth^(tier-1) */
-  tierGrowth?: number
+  tierGrowth?: number;
   /** 概率(省略 = 必给) */
-  chance?: number
+  chance?: number;
 }
 
 export interface RegionDef {
-  id: string
-  name: string
-  desc?: string
-  icon?: string
+  id: string;
+  name: string;
+  desc?: string;
+  icon?: string;
   /** 层级,与装备层级同一把尺子 */
-  tier: number
+  tier: number;
   /** 推荐等级(等级系统里的大境界序号) */
-  minRealm: number
-  danger?: number
+  minRealm: number;
+  danger?: number;
   /** 普通遭遇池(敌人 id) */
-  enemies: string[]
+  enemies: string[];
   /** 首领(敌人 id) */
-  boss: string
+  boss: string;
   /**
    * 前置区域:要开这一处,需要先通的那些地方。
    *
@@ -96,19 +96,19 @@ export interface RegionDef {
    * 多条前置是给"两条线都走通才开"这种结构的:主线之外还有支线时,
    * 用一条链硬串会把支线变成"必须顺路",而这里可以表达"两者都要"或"任一条即可"。
    */
-  requireCleared?: string | readonly string[]
+  requireCleared?: string | readonly string[];
   /** 多条前置时的语义:默认 `'all'`(全部已通);`'any'` 表示任一已通即可 */
-  requireMode?: 'all' | 'any'
-  eventTags?: string[]
+  requireMode?: "all" | "any";
+  eventTags?: string[];
   /** 该图专属奖励(叠加在通用奖励上) */
-  rewards?: RewardDef[]
+  rewards?: RewardDef[];
 }
 
 export interface DungeonConfig<T = number> {
-  regions: RegionDef[]
-  enemies: EnemyDef[]
+  regions: RegionDef[];
+  enemies: EnemyDef[];
   /** 击败 N 次普通遭遇后必出首领,默认 8 */
-  bossProgress?: number
+  bossProgress?: number;
   /**
    * 首领节奏 —— 两款游戏在这件事上真的不同,故写成配置:
    *
@@ -117,29 +117,29 @@ export interface DungeonConfig<T = number> {
    *   `once`       :攒到 N 胜出一次首领,击败即通关,此后不再出
    *                  (适合"一图一关、通关开下一图"的推进玩法)。
    */
-  bossRhythm?: 'cycle' | 'once'
+  bossRhythm?: "cycle" | "once";
   /** 敌人数值基数与层级曲线 */
   enemyPower?: {
-    baseHp: number
-    baseAttack: number
-    baseDefense: number
+    baseHp: number;
+    baseAttack: number;
+    baseDefense: number;
     /**
      * 每层倍率:`tierGrowth^(tier-1)`。
      *
      * **给了 `tierFactors` 或 `scaleFn` 就可以不写** —— 自己接管曲线的人不必再编一个用不上的数
      * (与装备那边的 `tierGrowth` 同一条口径)。两样都没给时按 1 处理。
      */
-    tierGrowth?: number
+    tierGrowth?: number;
     /** 直接给出每一层的缩放系数(第 i 项 = 层级 i+1) */
-    tierFactors?: number[]
+    tierFactors?: number[];
     /**
      * 自己接管层级系数(**可选**):给了它就完全接管(返回该层的缩放倍数),
      * 便于"分层档不按同一条指数走"的作品 —— 与装备那边的 tierFactors 是同一个思路。
      */
-    scaleFn?: (tier: number) => number
-  }
+    scaleFn?: (tier: number) => number;
+  };
   /** 每场胜利的通用奖励 */
-  victoryRewards?: RewardDef[]
+  victoryRewards?: RewardDef[];
   /**
    * 自己接管"这一场给什么"(**可选**)。
    *
@@ -149,17 +149,17 @@ export interface DungeonConfig<T = number> {
    */
   rewardFn?: (
     ctx: {
-      region: RegionDef
-      encounter: Encounter
-      progress: DungeonProgress
-      tier: number
+      region: RegionDef;
+      encounter: Encounter;
+      progress: DungeonProgress;
+      tier: number;
       /** 默认规则算好的这一场奖励 */
-      defaultRewards: readonly { id: string; name?: string; amount: T }[]
+      defaultRewards: readonly { id: string; name?: string; amount: T }[];
     },
-    rng: Rng
-  ) => { id: string; name?: string; amount: number }[] | null
+    rng: Rng,
+  ) => { id: string; name?: string; amount: number }[] | null;
   /** 是否需要前置通关才解锁(默认 true) */
-  requireChain?: boolean
+  requireChain?: boolean;
   /**
    * 自己接管"这一场遇到什么"(**可选**)。
    *
@@ -173,74 +173,74 @@ export interface DungeonConfig<T = number> {
    */
   encounterFn?: (
     ctx: {
-      region: RegionDef
-      progress: DungeonProgress
+      region: RegionDef;
+      progress: DungeonProgress;
       /** 默认逻辑此刻会不会出首领(攒够胜场 / 一次性已通) */
-      bossDue: boolean
+      bossDue: boolean;
       /** 该区域的普通遭遇池(已滤掉不存在的敌人;可能为空) */
-      pool: readonly string[]
+      pool: readonly string[];
     },
-    rng: Rng
-  ) => { kind: 'normal' | 'boss'; enemyId?: string } | null
+    rng: Rng,
+  ) => { kind: "normal" | "boss"; enemyId?: string } | null;
 }
 
 export interface DungeonProgress {
-  cleared: string[]
+  cleared: string[];
   /** 区域 → 已击败的普通遭遇次数 */
-  bossWins: Record<string, number>
+  bossWins: Record<string, number>;
   /** 区域 → 巡回场次(统计用) */
-  runs: Record<string, number>
+  runs: Record<string, number>;
 }
 
 export interface Encounter {
-  regionId: string
-  kind: 'normal' | 'boss'
-  enemyId: string
+  regionId: string;
+  kind: "normal" | "boss";
+  enemyId: string;
 }
 
 export interface VictoryOutcome<T> {
-  progress: DungeonProgress
-  rewards: { id: string; name?: string; amount: T }[]
+  progress: DungeonProgress;
+  rewards: { id: string; name?: string; amount: T }[];
   /** 这一次是否首次通关该区域 */
-  firstClear: boolean
-  encounter: Encounter
+  firstClear: boolean;
+  encounter: Encounter;
 }
 
 export interface EnemySnapshot<T> {
-  id: string
-  name: string
+  id: string;
+  name: string;
   /**
    * 本值表 —— 与 `Combatant.stats` 同形,可直接喂给战斗引擎。
    *
    * 键名是引擎的接口词(attack/defense/hp/speed);想用自己的叫法,
    * 在 `BattleConfig.keys` 里指过去即可(见 combat)。
    */
-  stats: Record<string, T>
-  mods: Mods
-  skills: EnemySkillDef[]
-  boss: boolean
-  tier: number
+  stats: Record<string, T>;
+  mods: Mods;
+  skills: EnemySkillDef[];
+  boss: boolean;
+  tier: number;
 }
 
 export interface DungeonSystem<T = number> {
-  readonly regions: readonly RegionDef[]
-  readonly enemies: readonly EnemyDef[]
-  region(id: string): RegionDef | undefined
-  enemy(id: string): EnemyDef | undefined
+  readonly regions: readonly RegionDef[];
+  readonly enemies: readonly EnemyDef[];
+  region(id: string): RegionDef | undefined;
+  enemy(id: string): EnemyDef | undefined;
   /** 主线链的第一个区域 */
-  firstRegion(): RegionDef
+  firstRegion(): RegionDef;
   /** 按前置关系排出的主线顺序 */
-  chain(): RegionDef[]
-  isUnlocked(regionId: string, progress: DungeonProgress, major: number): boolean
-  unlocked(progress: DungeonProgress, major: number): RegionDef[]
+  chain(): RegionDef[];
+  isUnlocked(regionId: string, progress: DungeonProgress, major: number): boolean;
+  unlocked(progress: DungeonProgress, major: number): RegionDef[];
   /** 该区域当前攒了多少首领进度,以及还差几次;need 为 null = 此地已无首领 */
-  bossProgress(regionId: string, progress: DungeonProgress): { wins: number; need: number | null }
+  bossProgress(regionId: string, progress: DungeonProgress): { wins: number; need: number | null };
   /**
    * 距区域之主还差几胜 —— 界面提示与战斗判定共用这一处。
    *
    * @returns null = 此地已无首领(once 节奏下已通关);0 = 下一战即是首领
    */
-  winsUntilBoss(wins: number, cleared?: boolean): number | null
+  winsUntilBoss(wins: number, cleared?: boolean): number | null;
   /**
    * 前置补票 —— **不看等级**,凡"前置已通"的都该开。
    *
@@ -248,185 +248,212 @@ export interface DungeonSystem<T = number> {
    * 扩界之后新加的一段地界,若它的前置早在这份存档里通过,那一处就该开着 ——
    * 否则旧存档会永久卡在"需先击败某某"上。
    */
-  prereqClosure(unlocked: readonly string[], cleared: readonly string[]): string[]
-  nextEncounter(regionId: string, progress: DungeonProgress, rng: Rng): Encounter
-  onVictory(regionId: string, encounter: Encounter, progress: DungeonProgress, rng: Rng): VictoryOutcome<T>
+  prereqClosure(unlocked: readonly string[], cleared: readonly string[]): string[];
+  nextEncounter(regionId: string, progress: DungeonProgress, rng: Rng): Encounter;
+  onVictory(
+    regionId: string,
+    encounter: Encounter,
+    progress: DungeonProgress,
+    rng: Rng,
+  ): VictoryOutcome<T>;
   /** 敌人快照(数值已按层级放大) */
-  snapshot(enemyId: string): EnemySnapshot<T>
+  snapshot(enemyId: string): EnemySnapshot<T>;
 }
 
 export function emptyProgress(): DungeonProgress {
-  return { cleared: [], bossWins: {}, runs: {} }
+  return { cleared: [], bossWins: {}, runs: {} };
 }
 
 export function createDungeonSystem<T = number>(
   config: DungeonConfig<T>,
-  numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>
+  numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>,
 ): DungeonSystem<T> {
-  const regions = [...config.regions]
-  const enemies = [...config.enemies]
-  const regionById = new Map(regions.map(r => [r.id, r]))
-  const enemyById = new Map(enemies.map(e => [e.id, e]))
-  const bossGoal = config.bossProgress ?? 8
-  const rhythm = config.bossRhythm ?? 'cycle'
-  const requireChain = config.requireChain ?? true
-  const power = config.enemyPower ?? { baseHp: 150, baseAttack: 12, baseDefense: 7, tierGrowth: 1.9 }
+  const regions = [...config.regions];
+  const enemies = [...config.enemies];
+  const regionById = new Map(regions.map((r) => [r.id, r]));
+  const enemyById = new Map(enemies.map((e) => [e.id, e]));
+  const bossGoal = config.bossProgress ?? 8;
+  const rhythm = config.bossRhythm ?? "cycle";
+  const requireChain = config.requireChain ?? true;
+  const power = config.enemyPower ?? {
+    baseHp: 150,
+    baseAttack: 12,
+    baseDefense: 7,
+    tierGrowth: 1.9,
+  };
 
   /** 某区域的前置列表(字符串与数组两种写法都收成一个数组) */
   const prereqsOf = (region: RegionDef): readonly string[] =>
-    region.requireCleared === undefined ? [] : typeof region.requireCleared === 'string' ? [region.requireCleared] : region.requireCleared
+    region.requireCleared === undefined
+      ? []
+      : typeof region.requireCleared === "string"
+        ? [region.requireCleared]
+        : region.requireCleared;
 
   /** 前置是否已满足(多条时按 requireMode:默认全部) */
   const prereqMet = (region: RegionDef, beaten: ReadonlySet<string>): boolean => {
-    const prereqs = prereqsOf(region)
-    if (prereqs.length === 0) return true
-    return region.requireMode === 'any' ? prereqs.some(id => beaten.has(id)) : prereqs.every(id => beaten.has(id))
-  }
+    const prereqs = prereqsOf(region);
+    if (prereqs.length === 0) return true;
+    return region.requireMode === "any"
+      ? prereqs.some((id) => beaten.has(id))
+      : prereqs.every((id) => beaten.has(id));
+  };
 
   const firstRegion = (): RegionDef => {
     // 区域表是空的 = 这款游戏没有副本这一层(配置里写的是 dungeons: null)。
     // 出声说明白:原来这里回的是 `regions[0]`,空表时就是 undefined —— 拿到它的人会在
     // 很远的地方以"读不到 id"的样子崩掉,而这句话才是能读懂的那句。
-    if (regions.length === 0) throw new Error('副本系统:区域表是空的,没有第一处区域')
+    if (regions.length === 0) throw new Error("副本系统:区域表是空的,没有第一处区域");
     // 没有前置的,或前置指向了不认识的 id(内容被挪过) —— 都当作可作起点
-    const head = regions.find(r => prereqsOf(r).every(id => !regionById.has(id)))
-    return head ?? regions[0]!
-  }
+    const head = regions.find((r) => prereqsOf(r).every((id) => !regionById.has(id)));
+    return head ?? regions[0]!;
+  };
 
   const chain = (): RegionDef[] => {
     // 空表 = 没有副本这一层:这条链就是**空链**(一个读得懂的空答案),
     // 与 firstRegion() 不同 —— 那个要回一个"第一处区域",空表时没有诚实的值可回,故出声。
-    if (regions.length === 0) return []
+    if (regions.length === 0) return [];
     // 排序:按"被谁当作前置"建图,从起点出发做深度优先(多条前置时认第一条作为顺序依据)
-    const byRequirement = new Map<string, RegionDef[]>()
+    const byRequirement = new Map<string, RegionDef[]>();
     for (const r of regions) {
-      const key = prereqsOf(r)[0] ?? ''
-      const list = byRequirement.get(key)
-      if (list) list.push(r)
-      else byRequirement.set(key, [r])
+      const key = prereqsOf(r)[0] ?? "";
+      const list = byRequirement.get(key);
+      if (list) list.push(r);
+      else byRequirement.set(key, [r]);
     }
-    const out: RegionDef[] = []
-    const start = firstRegion()
+    const out: RegionDef[] = [];
+    const start = firstRegion();
     const visit = (r: RegionDef, guard: number): void => {
-      if (guard > regions.length + 1) return
-      out.push(r)
-      for (const next of byRequirement.get(r.id) ?? []) visit(next, guard + 1)
-    }
-    visit(start, 0)
-    for (const r of regions) if (!out.includes(r)) out.push(r)
-    return out
-  }
+      if (guard > regions.length + 1) return;
+      out.push(r);
+      for (const next of byRequirement.get(r.id) ?? []) visit(next, guard + 1);
+    };
+    visit(start, 0);
+    for (const r of regions) if (!out.includes(r)) out.push(r);
+    return out;
+  };
 
   const isUnlocked = (regionId: string, progress: DungeonProgress, major: number): boolean => {
-    const region = regionById.get(regionId)
-    if (!region) return false
-    if (major < region.minRealm) return false
-    if (!requireChain) return true
-    return prereqMet(region, new Set(progress.cleared))
-  }
+    const region = regionById.get(regionId);
+    if (!region) return false;
+    if (major < region.minRealm) return false;
+    if (!requireChain) return true;
+    return prereqMet(region, new Set(progress.cleared));
+  };
 
   const unlocked = (progress: DungeonProgress, major: number): RegionDef[] =>
-    chain().filter(r => isUnlocked(r.id, progress, major))
+    chain().filter((r) => isUnlocked(r.id, progress, major));
 
   const winsUntilBoss = (wins: number, cleared = false): number | null => {
     // 只有 once 节奏才"通关即再无首领":cycle 是刷本循环,通关不改变节奏
-    if (rhythm === 'once') return cleared ? null : Math.max(0, bossGoal - wins)
-    return bossGoal - (wins % bossGoal)
-  }
+    if (rhythm === "once") return cleared ? null : Math.max(0, bossGoal - wins);
+    return bossGoal - (wins % bossGoal);
+  };
 
-  const bossProgress = (regionId: string, progress: DungeonProgress): { wins: number; need: number | null } => {
-    const wins = progress.bossWins[regionId] ?? 0
-    return { wins, need: winsUntilBoss(wins, progress.cleared.includes(regionId)) }
-  }
+  const bossProgress = (
+    regionId: string,
+    progress: DungeonProgress,
+  ): { wins: number; need: number | null } => {
+    const wins = progress.bossWins[regionId] ?? 0;
+    return { wins, need: winsUntilBoss(wins, progress.cleared.includes(regionId)) };
+  };
 
   const prereqClosure = (unlocked: readonly string[], cleared: readonly string[]): string[] => {
-    const out = [...unlocked]
-    const have = new Set(out)
-    const beaten = new Set(cleared)
+    const out = [...unlocked];
+    const have = new Set(out);
+    const beaten = new Set(cleared);
     for (const region of chain()) {
-      if (have.has(region.id) || prereqsOf(region).length === 0) continue
-      if (!prereqMet(region, beaten)) continue
-      have.add(region.id)
-      out.push(region.id)
+      if (have.has(region.id) || prereqsOf(region).length === 0) continue;
+      if (!prereqMet(region, beaten)) continue;
+      have.add(region.id);
+      out.push(region.id);
     }
-    return out
-  }
+    return out;
+  };
 
   const nextEncounter = (regionId: string, progress: DungeonProgress, rng: Rng): Encounter => {
-    const region = regionById.get(regionId)
-    if (!region) throw new Error(`副本系统:没有这个区域 —— ${regionId}`)
-    const remaining = winsUntilBoss(progress.bossWins[regionId] ?? 0, progress.cleared.includes(regionId))
-    const due = rhythm === 'once' ? remaining === 0 : remaining !== null && remaining <= 1
-    const pool = region.enemies.filter(id => enemyById.has(id))
+    const region = regionById.get(regionId);
+    if (!region) throw new Error(`副本系统:没有这个区域 —— ${regionId}`);
+    const remaining = winsUntilBoss(
+      progress.bossWins[regionId] ?? 0,
+      progress.cleared.includes(regionId),
+    );
+    const due = rhythm === "once" ? remaining === 0 : remaining !== null && remaining <= 1;
+    const pool = region.enemies.filter((id) => enemyById.has(id));
     const defaultChoice = (): Encounter => {
-      if (due || pool.length === 0) return { regionId, kind: 'boss', enemyId: region.boss }
-      return { regionId, kind: 'normal', enemyId: rng.weighted(pool, () => 1) }
-    }
+      if (due || pool.length === 0) return { regionId, kind: "boss", enemyId: region.boss };
+      return { regionId, kind: "normal", enemyId: rng.weighted(pool, () => 1) };
+    };
     if (config.encounterFn) {
-      const choice = config.encounterFn({ region, progress, bossDue: due, pool }, rng)
+      const choice = config.encounterFn({ region, progress, bossDue: due, pool }, rng);
       if (choice) {
-        if (choice.enemyId !== undefined) return { regionId, kind: choice.kind, enemyId: choice.enemyId }
-        if (choice.kind === 'boss') return { regionId, kind: 'boss', enemyId: region.boss }
-        if (pool.length > 0) return { regionId, kind: 'normal', enemyId: rng.weighted(pool, () => 1) }
+        if (choice.enemyId !== undefined)
+          return { regionId, kind: choice.kind, enemyId: choice.enemyId };
+        if (choice.kind === "boss") return { regionId, kind: "boss", enemyId: region.boss };
+        if (pool.length > 0)
+          return { regionId, kind: "normal", enemyId: rng.weighted(pool, () => 1) };
       }
     }
-    return defaultChoice()
-  }
+    return defaultChoice();
+  };
 
   const rewardAmount = (reward: RewardDef, tier: number): T => {
-    if (reward.amount) return numeric.from(reward.amount(tier))
-    const growth = reward.tierGrowth ?? 1
-    return numeric.mulN(numeric.from(reward.base ?? 0), growth ** Math.max(0, tier - 1))
-  }
+    if (reward.amount) return numeric.from(reward.amount(tier));
+    const growth = reward.tierGrowth ?? 1;
+    return numeric.mulN(numeric.from(reward.base ?? 0), growth ** Math.max(0, tier - 1));
+  };
 
   const onVictory = (
     regionId: string,
     encounter: Encounter,
     progress: DungeonProgress,
-    rng: Rng
+    rng: Rng,
   ): VictoryOutcome<T> => {
-    const region = regionById.get(regionId)
-    if (!region) throw new Error(`副本系统:没有这个区域 —— ${regionId}`)
-    const rewards: { id: string; name?: string; amount: T }[] = []
+    const region = regionById.get(regionId);
+    if (!region) throw new Error(`副本系统:没有这个区域 —— ${regionId}`);
+    const rewards: { id: string; name?: string; amount: T }[] = [];
     const merge = (def: RewardDef): void => {
-      if (def.chance !== undefined && !rng.chance(def.chance)) return
-      const amount = rewardAmount(def, region.tier)
-      const exist = rewards.find(r => r.id === def.id)
-      if (exist) exist.amount = numeric.add(exist.amount, amount)
-      else rewards.push({ id: def.id, name: def.name, amount })
-    }
-    for (const def of config.victoryRewards ?? []) merge(def)
-    for (const def of region.rewards ?? []) merge(def)
+      if (def.chance !== undefined && !rng.chance(def.chance)) return;
+      const amount = rewardAmount(def, region.tier);
+      const exist = rewards.find((r) => r.id === def.id);
+      if (exist) exist.amount = numeric.add(exist.amount, amount);
+      else rewards.push({ id: def.id, name: def.name, amount });
+    };
+    for (const def of config.victoryRewards ?? []) merge(def);
+    for (const def of region.rewards ?? []) merge(def);
     const overridden = config.rewardFn
-      ? config.rewardFn({ region, encounter, progress, tier: region.tier, defaultRewards: rewards }, rng)
-      : null
+      ? config.rewardFn(
+          { region, encounter, progress, tier: region.tier, defaultRewards: rewards },
+          rng,
+        )
+      : null;
     const finalRewards = overridden
-      ? overridden.map(r => ({ id: r.id, name: r.name, amount: numeric.from(r.amount) }))
-      : rewards
+      ? overridden.map((r) => ({ id: r.id, name: r.name, amount: numeric.from(r.amount) }))
+      : rewards;
 
     // 首领倒下即重新计数:下一轮首领要再攒满一次,而不是"见过一次之后次次见"
-    const wins = encounter.kind === 'boss' ? 0 : (progress.bossWins[regionId] ?? 0) + 1
-    const runs = { ...progress.runs, [regionId]: (progress.runs[regionId] ?? 0) + 1 }
-    let cleared = progress.cleared
-    let firstClear = false
-    if (encounter.kind === 'boss' && !cleared.includes(regionId)) {
-      cleared = [...cleared, regionId]
-      firstClear = true
+    const wins = encounter.kind === "boss" ? 0 : (progress.bossWins[regionId] ?? 0) + 1;
+    const runs = { ...progress.runs, [regionId]: (progress.runs[regionId] ?? 0) + 1 };
+    let cleared = progress.cleared;
+    let firstClear = false;
+    if (encounter.kind === "boss" && !cleared.includes(regionId)) {
+      cleared = [...cleared, regionId];
+      firstClear = true;
     }
     return {
       progress: { cleared, bossWins: { ...progress.bossWins, [regionId]: wins }, runs },
       rewards: finalRewards,
       firstClear,
-      encounter
-    }
-  }
+      encounter,
+    };
+  };
 
   const snapshot = (enemyId: string): EnemySnapshot<T> => {
-    const def = enemyById.get(enemyId)
-    if (!def) throw new Error(`副本系统:没有这个敌人 —— ${enemyId}`)
+    const def = enemyById.get(enemyId);
+    if (!def) throw new Error(`副本系统:没有这个敌人 —— ${enemyId}`);
     const factor = power.scaleFn
       ? power.scaleFn(def.tier)
-      : power.tierFactors?.[def.tier - 1] ?? (power.tierGrowth ?? 1) ** Math.max(0, def.tier - 1)
+      : (power.tierFactors?.[def.tier - 1] ?? (power.tierGrowth ?? 1) ** Math.max(0, def.tier - 1));
     return {
       id: def.id,
       name: def.name,
@@ -435,20 +462,20 @@ export function createDungeonSystem<T = number>(
         maxHp: numeric.mulN(numeric.from(power.baseHp * def.hpMult), factor),
         attack: numeric.mulN(numeric.from(power.baseAttack * def.atkMult), factor),
         defense: numeric.mulN(numeric.from(power.baseDefense * def.defMult), factor),
-        speed: numeric.from(def.speed)
+        speed: numeric.from(def.speed),
       },
       mods: { ...def.mods },
       skills: [...(def.skills ?? [])],
       boss: def.boss === true,
-      tier: def.tier
-    }
-  }
+      tier: def.tier,
+    };
+  };
 
   return {
     regions,
     enemies,
-    region: id => regionById.get(id),
-    enemy: id => enemyById.get(id),
+    region: (id) => regionById.get(id),
+    enemy: (id) => enemyById.get(id),
     firstRegion,
     chain,
     isUnlocked,
@@ -458,8 +485,8 @@ export function createDungeonSystem<T = number>(
     prereqClosure,
     nextEncounter,
     onVictory,
-    snapshot
-  }
+    snapshot,
+  };
 }
 
 /**
@@ -481,70 +508,70 @@ export function createDungeonSystem<T = number>(
  */
 export interface DungeonContentPowerConfig<T = number> {
   /** 副本系统 —— 区域表(层级 + 推荐境界)就是内容强度的坐标 */
-  dungeons: DungeonSystem<T>
+  dungeons: DungeonSystem<T>;
   /**
    * 怎么把一份敌人快照读成一个可比数(战力)。
    *
    * 只有你自己知道"你的游戏里什么叫强",所以这一格的口径由你定;给了 `attributes` 就可以不写。
    */
-  powerOf?: (snapshot: EnemySnapshot<T>) => number
+  powerOf?: (snapshot: EnemySnapshot<T>) => number;
   /**
    * 属性系统:给了它就默认取 `compute({ base: snapshot.stats }).power` ——
    * 与体检里玩家那一侧**同源**的口径(别用"面板之和"当默认,那是保底,不是同一把尺子)。
    */
-  attributes?: AttributeSystem<T>
+  attributes?: AttributeSystem<T>;
   /**
    * 数值层:只有走 `attributes` 那条默认读数时用得上。
    *
    * 换了大数实现的作品要把它传进来 —— 战力是 T,而体检那边的强度读数是 number,
    * 转回来这一步只有你的数值层做得了(`numeric.toNumber`)。
    */
-  numeric?: Numeric<T>
+  numeric?: Numeric<T>;
   /** 该境界挑哪一处代表(默认:minRealm ≤ major 里 tier 最高的那一处) */
-  regionOf?: (major: number) => RegionDef | undefined
+  regionOf?: (major: number) => RegionDef | undefined;
   /** 这处挑哪只敌人当强度(默认:区域首领) */
-  enemyOf?: (region: RegionDef) => string | undefined
+  enemyOf?: (region: RegionDef) => string | undefined;
 }
 
 export function dungeonContentPower<T = number>(
-  config: DungeonContentPowerConfig<T>
+  config: DungeonContentPowerConfig<T>,
 ): (major: number) => number {
-  const { dungeons } = config
+  const { dungeons } = config;
   if (!config.powerOf && !config.attributes) {
-    throw new Error('内容强度:要么给 powerOf,要么给 attributes —— 不给就不知道拿什么当战力')
+    throw new Error("内容强度:要么给 powerOf,要么给 attributes —— 不给就不知道拿什么当战力");
   }
-  const numeric = config.numeric ?? (numberNumeric as unknown as Numeric<T>)
-  const attributes = config.attributes
+  const numeric = config.numeric ?? (numberNumeric as unknown as Numeric<T>);
+  const attributes = config.attributes;
   const powerOf =
     config.powerOf ??
     ((snapshot: EnemySnapshot<T>): number =>
-      numeric.toNumber(attributes!.compute({ base: snapshot.stats }).power))
+      numeric.toNumber(attributes!.compute({ base: snapshot.stats }).power));
 
   /** 该境界能打到的最强一处:够格的里 tier 最大的;一处都不够格就取最浅的那处 */
   const pick = (major: number): RegionDef | undefined => {
-    const reachable = dungeons.regions.filter(r => r.minRealm <= major)
-    const pool = reachable.length > 0 ? reachable : dungeons.regions
+    const reachable = dungeons.regions.filter((r) => r.minRealm <= major);
+    const pool = reachable.length > 0 ? reachable : dungeons.regions;
     return pool.reduce<RegionDef | undefined>(
       (best, r) => (best === undefined || r.tier >= best.tier ? r : best),
-      undefined
-    )
-  }
+      undefined,
+    );
+  };
 
-  const enemyOf = config.enemyOf ?? ((region: RegionDef): string | undefined => region.boss)
-  const cache = new Map<number, number>()
+  const enemyOf = config.enemyOf ?? ((region: RegionDef): string | undefined => region.boss);
+  const cache = new Map<number, number>();
   return (major: number): number => {
-    const hit = cache.get(major)
-    if (hit !== undefined) return hit
-    const region = config.regionOf ? config.regionOf(major) : pick(major)
-    if (!region) throw new Error(`内容强度:这个境界没有可用的区域 —— 第 ${major} 境界`)
+    const hit = cache.get(major);
+    if (hit !== undefined) return hit;
+    const region = config.regionOf ? config.regionOf(major) : pick(major);
+    if (!region) throw new Error(`内容强度:这个境界没有可用的区域 —— 第 ${major} 境界`);
     // 首领不在敌人表里(内容改过)时退回普通池:宁可给"这一处最弱的读数",也别让整条体检报错
-    const wanted = enemyOf(region)
+    const wanted = enemyOf(region);
     const enemy =
       (wanted ? dungeons.enemy(wanted) : undefined) ??
-      region.enemies.map(id => dungeons.enemy(id)).find((e): e is EnemyDef => e !== undefined)
-    if (!enemy) throw new Error(`内容强度:这处区域没有可用的敌人 —— ${region.id}`)
-    const value = powerOf(dungeons.snapshot(enemy.id))
-    cache.set(major, value)
-    return value
-  }
+      region.enemies.map((id) => dungeons.enemy(id)).find((e): e is EnemyDef => e !== undefined);
+    if (!enemy) throw new Error(`内容强度:这处区域没有可用的敌人 —— ${region.id}`);
+    const value = powerOf(dungeons.snapshot(enemy.id));
+    cache.set(major, value);
+    return value;
+  };
 }

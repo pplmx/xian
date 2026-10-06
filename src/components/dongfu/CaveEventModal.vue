@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getCurrentCaveEvent, chooseCaveOption, dismissCaveEvent } from '@/core/earlyGameService'
-import { gameNow } from '@/core/enginePause'
-import { URGENT_COUNTDOWN_SEC } from '@/data/constants'
-import type { CaveEvent } from '@/types'
-import BaseModal from '@/components/common/BaseModal.vue'
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { getCurrentCaveEvent, chooseCaveOption, dismissCaveEvent } from "@/core/earlyGameService";
+import { gameNow } from "@/core/enginePause";
+import { URGENT_COUNTDOWN_SEC } from "@/data/constants";
+import type { CaveEvent } from "@/types";
+import BaseModal from "@/components/common/BaseModal.vue";
 
 /*
  * 洞府巡游 —— 与顿悟同一个毛病(自己铺 fixed inset-0):没有 dialog 语义、
@@ -13,48 +13,48 @@ import BaseModal from '@/components/common/BaseModal.vue'
  * 它的「离开」按钮上,故 :closable=false 禁掉 Esc/背板/X 的无声退出
  * (随手一关与明确放弃代价相同却毫无提示,审计视为坑)。
  */
-const event = ref<CaveEvent | null>(null)
-const remaining = ref(0)
-let timer: number | undefined
+const event = ref<CaveEvent | null>(null);
+const remaining = ref(0);
+let timer: number | undefined;
 
 const locationNames: Record<string, string> = {
-  field: '灵田',
-  furnace: '丹炉',
-  library: '藏经阁',
-  array: '聚灵阵',
-  garden: '灵兽园'
-}
+  field: "灵田",
+  furnace: "丹炉",
+  library: "藏经阁",
+  array: "聚灵阵",
+  garden: "灵兽园",
+};
 
 function refresh() {
-  event.value = getCurrentCaveEvent()
+  event.value = getCurrentCaveEvent();
   if (event.value) {
-    remaining.value = Math.max(0, Math.ceil((event.value.expiresAt - gameNow()) / 1000))
+    remaining.value = Math.max(0, Math.ceil((event.value.expiresAt - gameNow()) / 1000));
   }
 }
 
 function handleChoose(index: number) {
-  chooseCaveOption(index)
-  event.value = null
+  chooseCaveOption(index);
+  event.value = null;
 }
 
 function handleIgnore() {
-  dismissCaveEvent() // 清模块级事件,轮询才不会把它弹回来
-  event.value = null
+  dismissCaveEvent(); // 清模块级事件,轮询才不会把它弹回来
+  event.value = null;
 }
 
 onMounted(() => {
-  refresh()
-  timer = window.setInterval(refresh, 1000)
-})
+  refresh();
+  timer = window.setInterval(refresh, 1000);
+});
 
 onUnmounted(() => {
-  if (timer !== undefined) window.clearInterval(timer)
-})
+  if (timer !== undefined) window.clearInterval(timer);
+});
 
-const show = computed(() => event.value !== null)
+const show = computed(() => event.value !== null);
 const locationLabel = computed(() =>
-  event.value ? locationNames[event.value.location] ?? '未知' : ''
-)
+  event.value ? (locationNames[event.value.location] ?? "未知") : "",
+);
 </script>
 
 <template>
@@ -62,7 +62,11 @@ const locationLabel = computed(() =>
     <p class="flex items-center justify-between text-[11px] text-ink-faint">
       <span class="chip-ink !py-0 text-[10px] text-jade">{{ locationLabel }}</span>
       <!-- 临散前转朱砂:关掉=放弃当日巡游,紧迫得用颜色说出来 -->
-      <span class="tabular" :class="remaining <= URGENT_COUNTDOWN_SEC ? 'text-cinnabar' : 'text-gold-ink'">{{ remaining }} 秒后自散</span>
+      <span
+        class="tabular"
+        :class="remaining <= URGENT_COUNTDOWN_SEC ? 'text-cinnabar' : 'text-gold-ink'"
+        >{{ remaining }} 秒后自散</span
+      >
     </p>
     <p class="mt-3 font-kai text-[14px] tracking-widest text-ink">{{ event?.title }}</p>
     <p class="mt-1 text-[12px] leading-relaxed text-ink-soft">{{ event?.desc }}</p>
@@ -74,7 +78,9 @@ const locationLabel = computed(() =>
         @click="handleChoose(idx)"
       >
         <span class="block font-kai text-[14px] tracking-widest text-ink">{{ opt.label }}</span>
-        <span class="mt-0.5 block text-[11px] leading-relaxed text-ink-faint">{{ opt.effect }}</span>
+        <span class="mt-0.5 block text-[11px] leading-relaxed text-ink-faint">{{
+          opt.effect
+        }}</span>
       </button>
     </div>
     <template #footer>

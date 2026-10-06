@@ -20,8 +20,14 @@
  * 后两项管的是玩家的重复感,前两项管的是系统的解法空间 ——
  * 两者不是同一个东西,不该合成一个数。
  */
-import { type MortalAudit, type MortalWorld, auditMortalWorld, generateMortalWorld, mortalNovelty } from './mortalWorldGen'
-import { rhythmNovelty, skeletonNovelty } from './mortalIdentity'
+import {
+  type MortalAudit,
+  type MortalWorld,
+  auditMortalWorld,
+  generateMortalWorld,
+  mortalNovelty,
+} from "./mortalWorldGen";
+import { rhythmNovelty, skeletonNovelty } from "./mortalIdentity";
 
 /** 各门的最低线 */
 export const GATES = {
@@ -34,24 +40,24 @@ export const GATES = {
   /** 路线骨架新颖度 */
   skeleton: 0.3,
   /** 事件节奏差异 */
-  rhythm: 0.3
-} as const
+  rhythm: 0.3,
+} as const;
 
 export interface GateResult {
-  name: string
-  value: number
-  floor: number
-  passed: boolean
+  name: string;
+  value: number;
+  floor: number;
+  passed: boolean;
 }
 
 export interface GateReport {
-  world: MortalWorld
-  audit: MortalAudit
-  gates: GateResult[]
+  world: MortalWorld;
+  audit: MortalAudit;
+  gates: GateResult[];
   /** 全部通过才算过审 */
-  passed: boolean
+  passed: boolean;
   /** 未通过的门 */
-  failed: string[]
+  failed: string[];
 }
 
 /**
@@ -61,28 +67,28 @@ export interface GateReport {
  * 「哪一门差多少」,而不是只看到一个通过与否
  */
 export function evaluateGates(w: MortalWorld, history: MortalWorld[], runs = 10): GateReport {
-  const audit = auditMortalWorld(w, runs)
+  const audit = auditMortalWorld(w, runs);
   const gates: GateResult[] = [
-    { name: '结构新颖', value: mortalNovelty(w, history), floor: GATES.structural, passed: false },
-    { name: '可行构筑', value: audit.viable, floor: GATES.viable, passed: false },
+    { name: "结构新颖", value: mortalNovelty(w, history), floor: GATES.structural, passed: false },
+    { name: "可行构筑", value: audit.viable, floor: GATES.viable, passed: false },
     // 最强胜率是上限门,方向相反:用「上限 - 实际」折算成余量
-    { name: '非必胜', value: GATES.topMax - audit.top, floor: 0, passed: false },
-    { name: '路线骨架', value: skeletonNovelty(w, history), floor: GATES.skeleton, passed: false },
-    { name: '事件节奏', value: rhythmNovelty(w, history), floor: GATES.rhythm, passed: false }
-  ].map(g => ({ ...g, passed: g.value >= g.floor }))
+    { name: "非必胜", value: GATES.topMax - audit.top, floor: 0, passed: false },
+    { name: "路线骨架", value: skeletonNovelty(w, history), floor: GATES.skeleton, passed: false },
+    { name: "事件节奏", value: rhythmNovelty(w, history), floor: GATES.rhythm, passed: false },
+  ].map((g) => ({ ...g, passed: g.value >= g.floor }));
   // 首领生态不合直接否决,与新颖无关
-  const ecology = audit.bossFits
-  const failed = gates.filter(g => !g.passed).map(g => g.name)
-  if (!ecology) failed.push('首领生态')
-  return { world: w, audit, gates, passed: failed.length === 0, failed }
+  const ecology = audit.bossFits;
+  const failed = gates.filter((g) => !g.passed).map((g) => g.name);
+  if (!ecology) failed.push("首领生态");
+  return { world: w, audit, gates, passed: failed.length === 0, failed };
 }
 
 export interface GatedWorld {
-  report: GateReport
+  report: GateReport;
   /** 被弃用的候选数 */
-  rejected: number
+  rejected: number;
   /** 各门的否决次数统计 —— 看哪一门在真正起作用 */
-  rejectionsByGate: Record<string, number>
+  rejectionsByGate: Record<string, number>;
 }
 
 /**
@@ -95,29 +101,29 @@ export function generateGatedMortal(
   baseSeed: number,
   history: MortalWorld[] = [],
   maxTries = 300,
-  runs = 10
+  runs = 10,
 ): GatedWorld | null {
-  const rejectionsByGate: Record<string, number> = {}
+  const rejectionsByGate: Record<string, number> = {};
   for (let t = 0; t < maxTries; t += 1) {
-    const world = generateMortalWorld(baseSeed + t * 7919)
-    const report = evaluateGates(world, history, runs)
-    if (report.passed) return { report, rejected: t, rejectionsByGate }
-    for (const f of report.failed) rejectionsByGate[f] = (rejectionsByGate[f] ?? 0) + 1
+    const world = generateMortalWorld(baseSeed + t * 7919);
+    const report = evaluateGates(world, history, runs);
+    if (report.passed) return { report, rejected: t, rejectionsByGate };
+    for (const f of report.failed) rejectionsByGate[f] = (rejectionsByGate[f] ?? 0) + 1;
   }
-  return null
+  return null;
 }
 
 /** 连续生成 n 个过四门的凡界 */
 export function generateGatedSeries(n: number, baseSeed = 20260904, runs = 10): GatedWorld[] {
-  const out: GatedWorld[] = []
-  const history: MortalWorld[] = []
+  const out: GatedWorld[] = [];
+  const history: MortalWorld[] = [];
   for (let i = 0; i < n; i += 1) {
-    const got = generateGatedMortal(baseSeed + i * 104729, history, 300, runs)
-    if (!got) break
-    out.push(got)
-    history.push(got.report.world)
+    const got = generateGatedMortal(baseSeed + i * 104729, history, 300, runs);
+    if (!got) break;
+    out.push(got);
+    history.push(got.report.world);
   }
-  return out
+  return out;
 }
 
 /**
@@ -127,7 +133,7 @@ export function generateGatedSeries(n: number, baseSeed = 20260904, runs = 10): 
  */
 export function wouldPassWithAverage(report: GateReport): boolean {
   // 若按旧口径把各门平均成一个总分,它会不会通过
-  const noveltyGates = report.gates.filter(g => g.name !== '可行构筑' && g.name !== '非必胜')
-  const avg = noveltyGates.reduce((s, g) => s + g.value, 0) / noveltyGates.length
-  return avg >= GATES.structural
+  const noveltyGates = report.gates.filter((g) => g.name !== "可行构筑" && g.name !== "非必胜");
+  const avg = noveltyGates.reduce((s, g) => s + g.value, 0) / noveltyGates.length;
+  return avg >= GATES.structural;
 }

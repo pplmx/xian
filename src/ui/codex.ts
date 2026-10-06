@@ -20,24 +20,24 @@
  * 本文件只做映射与文案,不改任何状态(与 ui/enemyLore.ts 同规)。
  * describeXxx 是纯函数(可独立测试),xxxCodex 才是读 store 的那层薄封装。
  */
-import { ELEMENTS } from '@/data/linggen'
-import { LORE_MAX, LORE_STAGE_NAMES, MATERIALS, type MaterialDef } from '@/data/materials'
-import { GONGFA_BRANCHES, canEnlighten, type GongfaBranchDef } from '@/data/gongfaBranches'
-import { GONGFA_TYPE_NAMES, gongfaDef } from '@/data/gongfa'
-import { QUALITIES, qualityDef } from '@/data/qualities'
-import { ARTIFACTS, ARTIFACT_MAX_LEVEL } from '@/data/artifacts'
-import { EQUIPMENT_TEMPLATES } from '@/data/equipment'
-import { PILLS } from '@/data/pills'
-import type { ArtifactDef, EquipmentTemplate, PetDef, PillDef } from '@/types'
-import { useInventoryStore } from '@/stores/inventory'
-import { useLoreStore } from '@/stores/lore'
-import { useCultivationStore } from '@/stores/cultivation'
-import { useQuestsStore } from '@/stores/quests'
-import { usePlayerStore } from '@/stores/player'
-import type { CollectionCategory } from '@/stores/quests'
-import { PETS } from '@/data/pets'
-import { PERSONALITY_NAMES, personalityDesc } from '@/core/petPersonality'
-import { modsText } from './statNames'
+import { ELEMENTS } from "@/data/linggen";
+import { LORE_MAX, LORE_STAGE_NAMES, MATERIALS, type MaterialDef } from "@/data/materials";
+import { GONGFA_BRANCHES, canEnlighten, type GongfaBranchDef } from "@/data/gongfaBranches";
+import { GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
+import { QUALITIES, qualityDef } from "@/data/qualities";
+import { ARTIFACTS, ARTIFACT_MAX_LEVEL } from "@/data/artifacts";
+import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
+import { PILLS } from "@/data/pills";
+import type { ArtifactDef, EquipmentTemplate, PetDef, PillDef } from "@/types";
+import { useInventoryStore } from "@/stores/inventory";
+import { useLoreStore } from "@/stores/lore";
+import { useCultivationStore } from "@/stores/cultivation";
+import { useQuestsStore } from "@/stores/quests";
+import { usePlayerStore } from "@/stores/player";
+import type { CollectionCategory } from "@/stores/quests";
+import { PETS } from "@/data/pets";
+import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
+import { modsText } from "./statNames";
 import {
   artifactFuncText,
   artifactMetaText,
@@ -46,37 +46,37 @@ import {
   petFuncText,
   petTraitText,
   pillFuncText,
-  pillMetaText
-} from './itemText'
+  pillMetaText,
+} from "./itemText";
 
 /** 图鉴条目 —— 收藏图鉴九类共用的呈现形状 */
 export interface CodexEntry {
-  id: string
-  name: string
+  id: string;
+  name: string;
   /** 按收录深度逐层揭示的正文;未收录时为空。多段以换行分隔 */
-  desc: string
+  desc: string;
   /** 一行补充信息(阶位 / 所属功法等) */
-  meta: string
+  meta: string;
   /** 章形图标(灵兽册这类重在"貌"的条目带图标,已收录 chip 前置一枚小章) */
-  icon?: string
-  color?: string
+  icon?: string;
+  color?: string;
   /** 收录深度:0 未收录,≥1 已收录 */
-  stage: number
+  stage: number;
   /** 该深度的名目 */
-  stageName: string
+  stageName: string;
   /** 满深度的一字标记(「通」「择」);未满为空 */
-  badge: string
+  badge: string;
   /** 还差什么才看得更清楚;已到顶为空 */
-  hint: string
+  hint: string;
   /** 详情页脚注 —— 各类口径不同,故随条目一起给出 */
-  foot: { label: string; value: string }
+  foot: { label: string; value: string };
 }
 
 export interface CodexCat {
-  key: string
-  name: string
+  key: string;
+  name: string;
   /** 标题右侧的计数。各类层级口径不同,在此写死成人话而非 have/total */
-  hint: string
+  hint: string;
   /**
    * 这一册的东西**从哪来**。
    *
@@ -84,45 +84,45 @@ export interface CodexCat {
    * 故每册带一句来源说明,由 codexSource.spec 对着真实的 collect 调用点核:
    * 说「历练掉落」,就得真有一处在历练里 collect('equip')。
    */
-  source: string
-  entries: CodexEntry[]
+  source: string;
+  entries: CodexEntry[];
 }
 
 /** 七类收藏册的来源说明(灵材谱与悟道录在各自构造函数里另给) */
 export const CODEX_SOURCES: Record<CollectionCategory, string> = {
-  equip: '来源:历练掉落 —— 强敌与首领更易出',
-  gongfa: '来源:藏经阁参悟 —— 用功法残页逐部撞见',
+  equip: "来源:历练掉落 —— 强敌与首领更易出",
+  gongfa: "来源:藏经阁参悟 —— 用功法残页逐部撞见",
   // 三处:掉落(loot)、炼丹(pillService)、际遇赠丹(eventEngine)—— 由 codexSource.spec 对着 collect 点核
-  pill: '来源:三处 —— 历练掉落、丹房照方炼出,际遇里也有人赠',
-  artifact: '来源:历练掉落 —— 高阶地界才出得上品',
-  pet: '来源:历练际遇 —— 结缘而非猎取',
-  event: '来源:历练际遇与奇缘 —— 走到哪,遇见什么',
-  talent: '来源:转世择姿 —— 每一世选一个'
-}
+  pill: "来源:三处 —— 历练掉落、丹房照方炼出,际遇里也有人赠",
+  artifact: "来源:历练掉落 —— 高阶地界才出得上品",
+  pet: "来源:历练际遇 —— 结缘而非猎取",
+  event: "来源:历练际遇与奇缘 —— 走到哪,遇见什么",
+  talent: "来源:转世择姿 —— 每一世选一个",
+};
 
 // ============ 灵材谱 ============
 
 /** 还差什么才更懂它 —— 索引即当前认知层 */
 const MATERIAL_HINTS = [
-  '尚未识得此物。',
-  '多照面几回,便摸得清它的性子。',
-  '须以它入方开炉 —— 上手用过,才谈得上通晓。'
-] as const
+  "尚未识得此物。",
+  "多照面几回,便摸得清它的性子。",
+  "须以它入方开炉 —— 上手用过,才谈得上通晓。",
+] as const;
 
 /** 温性评语:正为热,负为寒。数值本身在"已知性"层一并给出,这里只做人话 */
 function thermalWord(v: number): string {
-  if (v >= 30) return '大热'
-  if (v >= 10) return '性温'
-  if (v > -10) return '性平'
-  if (v > -30) return '性凉'
-  return '至寒'
+  if (v >= 30) return "大热";
+  if (v >= 10) return "性温";
+  if (v > -10) return "性平";
+  if (v > -30) return "性凉";
+  return "至寒";
 }
 
 function toxinWord(v: number): string {
-  if (v <= 0) return '无毒'
-  if (v < 10) return '微毒'
-  if (v < 30) return '有毒'
-  return '剧毒'
+  if (v <= 0) return "无毒";
+  if (v < 10) return "微毒";
+  if (v < 30) return "有毒";
+  return "剧毒";
 }
 
 /**
@@ -132,28 +132,28 @@ function toxinWord(v: number): string {
  * @param seen 照面次数 —— 认知推进的底料,见得多才可能认出来
  */
 export function describeMaterial(def: MaterialDef, stage: number, seen: number): CodexEntry {
-  const lv = Math.max(0, Math.min(LORE_MAX, Math.floor(stage)))
-  const el = ELEMENTS[def.element]
-  const lines: string[] = def.lore.slice(0, lv)
+  const lv = Math.max(0, Math.min(LORE_MAX, Math.floor(stage)));
+  const el = ELEMENTS[def.element];
+  const lines: string[] = def.lore.slice(0, lv);
   // 「已知性」的字面意思就是知道它的性子:到这一层才把数值摊开
   if (lv >= 2) {
     lines.push(
       `药性:药力 ${def.medicinal.potency} · ${thermalWord(def.medicinal.thermal)} · ${toxinWord(def.medicinal.toxin)}`,
-      `器性:硬度 ${def.forging.hardness} · 灵性 ${def.forging.spirit} · 导灵 ${def.forging.conduct}`
-    )
+      `器性:硬度 ${def.forging.hardness} · 灵性 ${def.forging.spirit} · 导灵 ${def.forging.conduct}`,
+    );
   }
   return {
     id: def.id,
     name: def.name,
-    desc: lines.join('\n'),
-    meta: `${def.rank} 阶 · ${el.name}属 · ${def.bucket === 'herb' ? '灵草' : '金石'}`,
+    desc: lines.join("\n"),
+    meta: `${def.rank} 阶 · ${el.name}属 · ${def.bucket === "herb" ? "灵草" : "金石"}`,
     color: el.color,
     stage: lv,
     stageName: LORE_STAGE_NAMES[lv] ?? LORE_STAGE_NAMES[0],
-    badge: lv >= LORE_MAX ? '通' : '',
-    hint: lv < LORE_MAX ? MATERIAL_HINTS[lv]! : '',
-    foot: { label: '照面', value: seen > 0 ? `${seen} 回` : '未曾照面' }
-  }
+    badge: lv >= LORE_MAX ? "通" : "",
+    hint: lv < LORE_MAX ? MATERIAL_HINTS[lv]! : "",
+    foot: { label: "照面", value: seen > 0 ? `${seen} 回` : "未曾照面" },
+  };
 }
 
 /**
@@ -163,36 +163,44 @@ export function describeMaterial(def: MaterialDef, stage: number, seen: number):
  */
 export function byBest(rows: { entry: CodexEntry; rank: number }[]): CodexEntry[] {
   return [...rows]
-    .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.entry.name.localeCompare(b.entry.name))
-    .map(r => r.entry)
+    .sort(
+      (a, b) =>
+        b.rank - a.rank ||
+        b.entry.stage - a.entry.stage ||
+        a.entry.name.localeCompare(b.entry.name),
+    )
+    .map((r) => r.entry);
 }
 
 export function materialCodex(): CodexCat {
-  const lore = useLoreStore()
+  const lore = useLoreStore();
   // 从好到差:品阶高的灵材在前(太虚灵参这类顶格先露面),同阶内收录深的在前
   const entries = byBest(
-    MATERIALS.map(def => ({ rank: def.rank, entry: describeMaterial(def, lore.loreOf(def.id), lore.seenOf(def.id)) }))
-  )
-  const known = entries.filter(e => e.stage >= 1).length
-  const mastered = entries.filter(e => e.stage >= LORE_MAX).length
+    MATERIALS.map((def) => ({
+      rank: def.rank,
+      entry: describeMaterial(def, lore.loreOf(def.id), lore.seenOf(def.id)),
+    })),
+  );
+  const known = entries.filter((e) => e.stage >= 1).length;
+  const mastered = entries.filter((e) => e.stage >= LORE_MAX).length;
   return {
-    key: 'material',
-    name: '灵材谱',
+    key: "material",
+    name: "灵材谱",
     hint: `已辨识 ${known}/${MATERIALS.length} · 通晓 ${mastered}`,
-    source: '来源:采集、掉落,以及真把它用进一炉丹',
-    entries
-  }
+    source: "来源:采集、掉落,以及真把它用进一炉丹",
+    entries,
+  };
 }
 
 // ============ 悟道录 ============
 
-export const BRANCH_STAGE_NAMES = ['未见', '已见', '已择'] as const
-export const BRANCH_STAGE_MAX = 2
+export const BRANCH_STAGE_NAMES = ["未见", "已见", "已择"] as const;
+export const BRANCH_STAGE_MAX = 2;
 
-const BRANCH_HINTS = ['此功尚未修至圆满,歧路未现。', '此道尚可择 —— 一经择定,不可更改。'] as const
+const BRANCH_HINTS = ["此功尚未修至圆满,歧路未现。", "此道尚可择 —— 一经择定,不可更改。"] as const;
 
 /** 已择的那条道用金色标出:它比品质更该被一眼看见,那是你自己走的路 */
-const PICKED_COLOR = 'var(--color-gold-ink)'
+const PICKED_COLOR = "var(--color-gold-ink)";
 
 /**
  * 一条分支此刻处在哪一态。
@@ -203,29 +211,29 @@ const PICKED_COLOR = 'var(--color-gold-ink)'
 export function branchStage(
   def: GongfaBranchDef,
   learned: Readonly<Record<string, number>>,
-  picked: Readonly<Record<string, string>>
+  picked: Readonly<Record<string, string>>,
 ): number {
-  if (picked[def.gongfaId] === def.id) return BRANCH_STAGE_MAX
-  return canEnlighten(def.gongfaId, learned[def.gongfaId] ?? 0) ? 1 : 0
+  if (picked[def.gongfaId] === def.id) return BRANCH_STAGE_MAX;
+  return canEnlighten(def.gongfaId, learned[def.gongfaId] ?? 0) ? 1 : 0;
 }
 
 /** 按三态揭示一条悟道分支 */
 export function describeBranch(def: GongfaBranchDef, stage: number): CodexEntry {
-  const lv = Math.max(0, Math.min(BRANCH_STAGE_MAX, Math.floor(stage)))
-  const g = gongfaDef(def.gongfaId)
+  const lv = Math.max(0, Math.min(BRANCH_STAGE_MAX, Math.floor(stage)));
+  const g = gongfaDef(def.gongfaId);
   return {
     id: def.id,
     name: def.name,
-    desc: lv >= 1 ? `${def.desc}\n${modsText(def.mods)}` : '',
-    meta: g ? `${g.name} · ${GONGFA_TYPE_NAMES[g.type]} · ${qualityDef(g.quality).name}` : '',
+    desc: lv >= 1 ? `${def.desc}\n${modsText(def.mods)}` : "",
+    meta: g ? `${g.name} · ${GONGFA_TYPE_NAMES[g.type]} · ${qualityDef(g.quality).name}` : "",
     color: lv >= BRANCH_STAGE_MAX ? PICKED_COLOR : g ? qualityDef(g.quality).color : undefined,
     stage: lv,
     stageName: BRANCH_STAGE_NAMES[lv]!,
-    badge: lv >= BRANCH_STAGE_MAX ? '择' : '',
-    hint: lv < BRANCH_STAGE_MAX ? BRANCH_HINTS[lv]! : '',
+    badge: lv >= BRANCH_STAGE_MAX ? "择" : "",
+    hint: lv < BRANCH_STAGE_MAX ? BRANCH_HINTS[lv]! : "",
     // 分支名有重复(如两部功法各有一条「归一」),所属功法是唯一的辨认依据
-    foot: { label: '所属功法', value: g?.name ?? '—' }
-  }
+    foot: { label: "所属功法", value: g?.name ?? "—" },
+  };
 }
 
 /**
@@ -235,19 +243,19 @@ export function describeBranch(def: GongfaBranchDef, stage: number): CodexEntry 
  * 「这部功法有哪几条路」一眼可辨。打散了排,七十七条就成了一堆无从索引的词。
  */
 export function branchCodex(): CodexCat {
-  const cultivation = useCultivationStore()
-  const entries = GONGFA_BRANCHES.map(def =>
-    describeBranch(def, branchStage(def, cultivation.learned, cultivation.gongfaBranch))
-  )
-  const seen = entries.filter(e => e.stage >= 1).length
-  const picked = entries.filter(e => e.stage >= BRANCH_STAGE_MAX).length
+  const cultivation = useCultivationStore();
+  const entries = GONGFA_BRANCHES.map((def) =>
+    describeBranch(def, branchStage(def, cultivation.learned, cultivation.gongfaBranch)),
+  );
+  const seen = entries.filter((e) => e.stage >= 1).length;
+  const picked = entries.filter((e) => e.stage >= BRANCH_STAGE_MAX).length;
   return {
-    key: 'branch',
-    name: '悟道录',
+    key: "branch",
+    name: "悟道录",
     hint: `已见 ${seen}/${GONGFA_BRANCHES.length} · 已择 ${picked}`,
-    source: '来源:把一部功法修至圆满,再择一条道走下去',
-    entries
-  }
+    source: "来源:把一部功法修至圆满,再择一条道走下去",
+    entries,
+  };
 }
 
 // ============ 用具三类:收录深度 ============
@@ -269,35 +277,35 @@ export function branchCodex(): CodexCat {
  * 而第三档仍是运气(撞见天品以上的成色)。原先的第二档是「见过精品」——
  * 对低阶模板要等运气,玩家在图鉴里干看着,推不动它。
  */
-export const EQUIP_STAGE_NAMES = ['未录', '已入目', '曾上手', '见过天品'] as const
-export const EQUIP_STAGE_MAX = 3
+export const EQUIP_STAGE_NAMES = ["未录", "已入目", "曾上手", "见过天品"] as const;
+export const EQUIP_STAGE_MAX = 3;
 
 /** 分档的品质由此而来 —— 不写魔数,改品质表时这里跟着走 */
-const EQUIP_STAGE3_RANK = qualityDef('heaven').rank
+const EQUIP_STAGE3_RANK = qualityDef("heaven").rank;
 
 const EQUIP_HINTS = [
-  '尚未见过此物 —— 多在地界里走动。',
-  '见过形制了 —— 强化一件、或把它装上身,才算上手。',
-  '用过了 —— 再往上就看运气:见一件天品以上的成色。',
-  ''
-] as const
+  "尚未见过此物 —— 多在地界里走动。",
+  "见过形制了 —— 强化一件、或把它装上身,才算上手。",
+  "用过了 —— 再往上就看运气:见一件天品以上的成色。",
+  "",
+] as const;
 
 /** 见闻记录:该模板见过的最高品质档、最高层级,以及是否亲手用过(u) */
 export interface EquipSeen {
   /** 最高品质 rank */
-  q: number
+  q: number;
   /** 最高层级 */
-  t: number
+  t: number;
   /** 是否亲手用过(强化过或装备过):1 = 用过 */
-  u?: number
+  u?: number;
 }
 
 /** 某件装备在「见过什么成色」上走到哪一层 */
 export function equipStage(seen: EquipSeen | undefined, collected: boolean): number {
-  if (!seen) return collected ? 1 : 0
-  if (seen.q >= EQUIP_STAGE3_RANK) return 3
-  if (seen.u) return 2
-  return 1
+  if (!seen) return collected ? 1 : 0;
+  if (seen.q >= EQUIP_STAGE3_RANK) return 3;
+  if (seen.u) return 2;
+  return 1;
 }
 
 /**
@@ -306,180 +314,192 @@ export function equipStage(seen: EquipSeen | undefined, collected: boolean): num
  * 平铺数值随掉落层级折算,所以「见过什么成色」是这个模板唯一说得清的深度 ——
  * 它同时回答了「这东西上限在哪」与「我刷的地界够不够高」。
  */
-export function describeEquipment(def: EquipmentTemplate, seen: EquipSeen | undefined, collected: boolean): CodexEntry {
-  const stage = equipStage(seen, collected)
-  const lines = [def.desc, equipFuncText(def)].filter(Boolean)
+export function describeEquipment(
+  def: EquipmentTemplate,
+  seen: EquipSeen | undefined,
+  collected: boolean,
+): CodexEntry {
+  const stage = equipStage(seen, collected);
+  const lines = [def.desc, equipFuncText(def)].filter(Boolean);
   if (stage >= 1 && seen) {
-    lines.push(`见过最好的:${qualityOfRank(seen.q).name} · ${seen.t} 阶`)
+    lines.push(`见过最好的:${qualityOfRank(seen.q).name} · ${seen.t} 阶`);
   }
   return {
     id: def.id,
     name: def.name,
-    desc: lines.join('\n'),
+    desc: lines.join("\n"),
     meta: equipMetaText(def),
     stage,
     stageName: EQUIP_STAGE_NAMES[stage]!,
-    badge: stage >= EQUIP_STAGE_MAX ? '极' : '',
+    badge: stage >= EQUIP_STAGE_MAX ? "极" : "",
     hint: EQUIP_HINTS[stage]!,
-    foot: { label: '收录时间', value: '' }
-  }
+    foot: { label: "收录时间", value: "" },
+  };
 }
 
 /** 品质 rank → 品质定义(见闻只存了 rank;回头要查名字) */
 function qualityOfRank(rank: number) {
-  const r = Math.max(0, Math.min(8, Math.floor(rank || 0)))
-  return QUALITIES.find(q => q.rank === r) ?? QUALITIES[0]!
+  const r = Math.max(0, Math.min(8, Math.floor(rank || 0)));
+  return QUALITIES.find((q) => q.rank === r) ?? QUALITIES[0]!;
 }
 
 /** 法宝收录深度:0 未录 / 1 已录 / 2 曾祭炼 / 3 祭炼圆满 */
-export const ARTIFACT_STAGE_NAMES = ['未录', '已录', '曾祭炼', '祭炼圆满'] as const
-export const ARTIFACT_STAGE_MAX = 3
+export const ARTIFACT_STAGE_NAMES = ["未录", "已录", "曾祭炼", "祭炼圆满"] as const;
+export const ARTIFACT_STAGE_MAX = 3;
 
 const ARTIFACT_HINTS = [
-  '尚未见过此宝 —— 高阶地界才出得上品。',
-  '录在册上了,还没拿它炼过一重 —— 祭炼过后,被动与神通各强八分。',
-  '炼过几重了 —— 炼到九重,才算把它用透。',
-  ''
-] as const
+  "尚未见过此宝 —— 高阶地界才出得上品。",
+  "录在册上了,还没拿它炼过一重 —— 祭炼过后,被动与神通各强八分。",
+  "炼过几重了 —— 炼到九重,才算把它用透。",
+  "",
+] as const;
 
 /** 某件法宝走到哪一层(等级取自玩家自己的那一件) */
 export function artifactStage(level: number, collected: boolean): number {
-  const lv = Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)))
-  if (lv >= ARTIFACT_MAX_LEVEL) return 3
-  if (lv >= 1) return 2
-  return collected ? 1 : 0
+  const lv = Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)));
+  if (lv >= ARTIFACT_MAX_LEVEL) return 3;
+  if (lv >= 1) return 2;
+  return collected ? 1 : 0;
 }
 
 /** 法宝谱条目:风味 + 功用(按本人祭炼等级) */
 export function describeArtifact(def: ArtifactDef, level: number, collected: boolean): CodexEntry {
-  const stage = artifactStage(level, collected)
+  const stage = artifactStage(level, collected);
   return {
     id: def.id,
     name: def.name,
-    desc: [def.desc, artifactFuncText(def, level)].filter(Boolean).join('\n'),
+    desc: [def.desc, artifactFuncText(def, level)].filter(Boolean).join("\n"),
     meta: artifactMetaText(def),
     color: qualityDef(def.quality).color,
     stage,
     stageName: ARTIFACT_STAGE_NAMES[stage]!,
-    badge: stage >= ARTIFACT_STAGE_MAX ? '满' : '',
+    badge: stage >= ARTIFACT_STAGE_MAX ? "满" : "",
     hint: ARTIFACT_HINTS[stage]!,
-    foot: { label: '祭炼', value: `${Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)))}/${ARTIFACT_MAX_LEVEL} 重` }
-  }
+    foot: {
+      label: "祭炼",
+      value: `${Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)))}/${ARTIFACT_MAX_LEVEL} 重`,
+    },
+  };
 }
 
 /** 丹方录收录深度:0 未录 / 1 已录 / 2 已得方 / 3 通晓 */
-export const PILL_STAGE_NAMES = ['未录', '已录', '已得方', '通晓'] as const
-export const PILL_STAGE_MAX = 3
+export const PILL_STAGE_NAMES = ["未录", "已录", "已得方", "通晓"] as const;
+export const PILL_STAGE_MAX = 3;
 
 const PILL_HINTS = [
-  '尚未见过此丹。',
-  '见过成品,方子还没到手。',
-  '方子在手,开炉炼熟它。',
-  ''
-] as const
+  "尚未见过此丹。",
+  "见过成品,方子还没到手。",
+  "方子在手,开炉炼熟它。",
+  "",
+] as const;
 
 /** 无方之丹(只掉不炼)的收尾话:免得玩家满世界找一本不存在的方子 */
-export const PILL_NO_RECIPE_HINT = '此丹本无方 —— 只在历练与际遇里偶得,炼不出来。'
+export const PILL_NO_RECIPE_HINT = "此丹本无方 —— 只在历练与际遇里偶得,炼不出来。";
 
 /**
  * 某味丹走到哪一层。
  * 无方之丹到「已录」即顶(阶段名照给,但上限只有 1)—— 界面上用 hint 说明缘由。
  */
 export function pillStage(def: PillDef, collected: boolean, mastery: number): number {
-  if (!collected) return 0
-  if (!def.recipe) return 1
-  const m = Math.max(0, Math.min(1, mastery))
-  if (m >= 1) return 3
-  if (m > 0) return 2
-  return 1
+  if (!collected) return 0;
+  if (!def.recipe) return 1;
+  const m = Math.max(0, Math.min(1, mastery));
+  if (m >= 1) return 3;
+  if (m > 0) return 2;
+  return 1;
 }
 
 /** 丹方录条目:风味 + 服之如何 + 来路 */
 export function describePill(def: PillDef, collected: boolean, mastery: number): CodexEntry {
-  const stage = pillStage(def, collected, mastery)
-  const cap = def.recipe ? PILL_STAGE_MAX : 1
-  const top = stage >= cap
+  const stage = pillStage(def, collected, mastery);
+  const cap = def.recipe ? PILL_STAGE_MAX : 1;
+  const top = stage >= cap;
   return {
     id: def.id,
     name: def.name,
-    desc: [def.desc, pillFuncText(def)].filter(Boolean).join('\n'),
+    desc: [def.desc, pillFuncText(def)].filter(Boolean).join("\n"),
     meta: pillMetaText(def),
     color: qualityDef(def.quality).color,
     stage,
     stageName: PILL_STAGE_NAMES[stage]!,
-    badge: top && stage >= PILL_STAGE_MAX ? '通' : '',
-    hint: top ? (def.recipe ? '' : PILL_NO_RECIPE_HINT) : PILL_HINTS[stage]!,
-    foot: def.recipe ? { label: '丹方掌握', value: `${Math.round(Math.max(0, Math.min(1, mastery)) * 100)}%` } : { label: '来路', value: '偶得' }
-  }
+    badge: top && stage >= PILL_STAGE_MAX ? "通" : "",
+    hint: top ? (def.recipe ? "" : PILL_NO_RECIPE_HINT) : PILL_HINTS[stage]!,
+    foot: def.recipe
+      ? { label: "丹方掌握", value: `${Math.round(Math.max(0, Math.min(1, mastery)) * 100)}%` }
+      : { label: "来路", value: "偶得" },
+  };
 }
 
 export function equipCodex(): CodexCat {
-  const lore = useLoreStore()
-  const quests = useQuestsStore()
-  const owned = new Set(quests.collections.equip)
-  const entries = EQUIPMENT_TEMPLATES.map(def => ({
+  const lore = useLoreStore();
+  const quests = useQuestsStore();
+  const owned = new Set(quests.collections.equip);
+  const entries = EQUIPMENT_TEMPLATES.map((def) => ({
     ...describeEquipment(def, lore.equipSeen(def.id), owned.has(def.id)),
-    foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`equip:${def.id}`]) }
-  })).sort((a, b) => b.stage - a.stage)
-  const seen = entries.filter(e => e.stage >= 1).length
-  const best = entries.filter(e => e.stage >= EQUIP_STAGE_MAX).length
+    foot: { label: "收录时间", value: collectedTimeText(quests.collectedAt[`equip:${def.id}`]) },
+  })).sort((a, b) => b.stage - a.stage);
+  const seen = entries.filter((e) => e.stage >= 1).length;
+  const best = entries.filter((e) => e.stage >= EQUIP_STAGE_MAX).length;
   return {
-    key: 'equip',
-    name: '装备图鉴',
+    key: "equip",
+    name: "装备图鉴",
     hint: `已入目 ${seen}/${EQUIPMENT_TEMPLATES.length} · 见过天品 ${best}`,
     source: CODEX_SOURCES.equip,
-    entries
-  }
+    entries,
+  };
 }
 
 export function artifactCodex(): CodexCat {
-  const inventory = useInventoryStore()
-  const quests = useQuestsStore()
-  const owned = new Set(quests.collections.artifact)
-  const levelOf = new Map(inventory.artifacts.map(a => [a.defId, a.level]))
+  const inventory = useInventoryStore();
+  const quests = useQuestsStore();
+  const owned = new Set(quests.collections.artifact);
+  const levelOf = new Map(inventory.artifacts.map((a) => [a.defId, a.level]));
   const entries = byBest(
-    ARTIFACTS.map(def => ({
+    ARTIFACTS.map((def) => ({
       rank: qualityDef(def.quality).rank,
       entry: {
         ...describeArtifact(def, levelOf.get(def.id) ?? 0, owned.has(def.id)),
-        foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`artifact:${def.id}`]) }
-      }
-    }))
-  )
-  const seen = entries.filter(e => e.stage >= 1).length
-  const full = entries.filter(e => e.stage >= ARTIFACT_STAGE_MAX).length
+        foot: {
+          label: "收录时间",
+          value: collectedTimeText(quests.collectedAt[`artifact:${def.id}`]),
+        },
+      },
+    })),
+  );
+  const seen = entries.filter((e) => e.stage >= 1).length;
+  const full = entries.filter((e) => e.stage >= ARTIFACT_STAGE_MAX).length;
   return {
-    key: 'artifact',
-    name: '法宝谱',
+    key: "artifact",
+    name: "法宝谱",
     hint: `已录 ${seen}/${ARTIFACTS.length} · 祭炼圆满 ${full}`,
     source: CODEX_SOURCES.artifact,
-    entries
-  }
+    entries,
+  };
 }
 
 export function pillCodex(): CodexCat {
-  const lore = useLoreStore()
-  const quests = useQuestsStore()
-  const owned = new Set(quests.collections.pill)
+  const lore = useLoreStore();
+  const quests = useQuestsStore();
+  const owned = new Set(quests.collections.pill);
   const entries = byBest(
-    PILLS.map(def => ({
+    PILLS.map((def) => ({
       rank: qualityDef(def.quality).rank,
       entry: {
         ...describePill(def, owned.has(def.id), lore.recipeMastery(def.id)),
-        foot: { label: '收录时间', value: collectedTimeText(quests.collectedAt[`pill:${def.id}`]) }
-      }
-    }))
-  )
-  const seen = entries.filter(e => e.stage >= 1).length
-  const known = entries.filter(e => e.stage >= 2).length
-  const mastered = entries.filter(e => e.stage >= PILL_STAGE_MAX).length
+        foot: { label: "收录时间", value: collectedTimeText(quests.collectedAt[`pill:${def.id}`]) },
+      },
+    })),
+  );
+  const seen = entries.filter((e) => e.stage >= 1).length;
+  const known = entries.filter((e) => e.stage >= 2).length;
+  const mastered = entries.filter((e) => e.stage >= PILL_STAGE_MAX).length;
   return {
-    key: 'pill',
-    name: '丹方录',
+    key: "pill",
+    name: "丹方录",
     hint: `已录 ${seen}/${PILLS.length} · 得方 ${known} · 通晓 ${mastered}`,
     source: CODEX_SOURCES.pill,
-    entries
-  }
+    entries,
+  };
 }
 
 // ============ 灵兽册 ============
@@ -490,15 +510,15 @@ export function pillCodex(): CodexCat {
 // 记进 quests.petCompanions(见灵兽册在 quests store 的配套字段),同一件事只记一处。
 
 /** 灵兽册收录深度:0 未录 / 1 已结缘 / 2 曾相伴 / 3 相伴中 */
-export const PET_STAGE_NAMES = ['未录', '已结缘', '曾相伴', '相伴中'] as const
-export const PET_STAGE_MAX = 3
+export const PET_STAGE_NAMES = ["未录", "已结缘", "曾相伴", "相伴中"] as const;
+export const PET_STAGE_MAX = 3;
 
 const PET_HINTS = [
-  '尚未结缘 —— 多在地界间走动。',
-  '结缘是头一档。唤它相伴一程,册上便记「曾相伴」。',
-  '曾唤以为伴。若此刻仍随你身侧,便是「相伴中」。',
-  ''
-] as const
+  "尚未结缘 —— 多在地界间走动。",
+  "结缘是头一档。唤它相伴一程,册上便记「曾相伴」。",
+  "曾唤以为伴。若此刻仍随你身侧,便是「相伴中」。",
+  "",
+] as const;
 
 /**
  * 档位的及格线:
@@ -506,18 +526,22 @@ const PET_HINTS = [
  * - 相伴中(3)必须建立在**记过档的**曾相伴上,current 单独撑不起最深的档;
  * - 正伴着的至少算「曾相伴」—— 哪怕曾相伴标记缺失,也不落回只结缘。
  */
-export function petStage(status: { collected: boolean; wasCompanion: boolean; current: boolean }): number {
-  if (!status.collected) return 0
-  if (status.current && status.wasCompanion) return 3
-  if (status.wasCompanion) return 2
-  if (status.current) return 2
-  return 1
+export function petStage(status: {
+  collected: boolean;
+  wasCompanion: boolean;
+  current: boolean;
+}): number {
+  if (!status.collected) return 0;
+  if (status.current && status.wasCompanion) return 3;
+  if (status.wasCompanion) return 2;
+  if (status.current) return 2;
+  return 1;
 }
 
 /** 灵兽册条目:风味 + 它给我什么 + 与玩家的相伴档 */
 export function describePet(def: PetDef, stage: number, collectedAt?: number): CodexEntry {
-  const lv = Math.max(0, Math.min(PET_STAGE_MAX, Math.floor(stage || 0)))
-  const q = qualityDef(def.quality)
+  const lv = Math.max(0, Math.min(PET_STAGE_MAX, Math.floor(stage || 0)));
+  const q = qualityDef(def.quality);
   return {
     id: def.id,
     name: def.name,
@@ -525,26 +549,26 @@ export function describePet(def: PetDef, stage: number, collectedAt?: number): C
       def.desc,
       petFuncText(def),
       `性格 ${PERSONALITY_NAMES[def.personality]}:${personalityDesc(def.personality)}`,
-      petTraitText(def)
+      petTraitText(def),
     ]
       .filter(Boolean)
-      .join('\n'),
+      .join("\n"),
     meta: q.name,
     icon: def.icon,
     color: q.color,
     stage: lv,
     stageName: PET_STAGE_NAMES[lv]!,
-    badge: lv >= PET_STAGE_MAX ? '伴' : '',
+    badge: lv >= PET_STAGE_MAX ? "伴" : "",
     hint: PET_HINTS[lv]!,
-    foot: { label: '收录时间', value: collectedTimeText(collectedAt) }
-  }
+    foot: { label: "收录时间", value: collectedTimeText(collectedAt) },
+  };
 }
 
 export function petCodex(): CodexCat {
-  const quests = useQuestsStore()
-  const player = usePlayerStore()
-  const collectedSet = new Set(quests.collections.pet)
-  const companionSet = new Set(quests.petCompanions)
+  const quests = useQuestsStore();
+  const player = usePlayerStore();
+  const collectedSet = new Set(quests.collections.pet);
+  const companionSet = new Set(quests.petCompanions);
   // 品阶降序 → 相伴档降序 → 原序:同品阶内保住宠物表的手排叙事序
   const rows = PETS.map((def, idx) => ({
     idx,
@@ -554,22 +578,22 @@ export function petCodex(): CodexCat {
       petStage({
         collected: collectedSet.has(def.id),
         wasCompanion: companionSet.has(def.id),
-        current: player.petId === def.id
+        current: player.petId === def.id,
       }),
-      quests.collectedAt[`pet:${def.id}`]
-    )
-  }))
+      quests.collectedAt[`pet:${def.id}`],
+    ),
+  }));
   const entries = rows
     .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.idx - b.idx)
-    .map(r => r.entry)
-  const known = entries.filter(e => e.stage >= 1).length
+    .map((r) => r.entry);
+  const known = entries.filter((e) => e.stage >= 1).length;
   return {
-    key: 'pet',
-    name: '灵兽册',
+    key: "pet",
+    name: "灵兽册",
     hint: `已结缘 ${known}/${PETS.length}`,
     source: CODEX_SOURCES.pet,
-    entries
-  }
+    entries,
+  };
 }
 
 /**
@@ -577,12 +601,12 @@ export function petCodex(): CodexCat {
  * 而不是编一个时间或显示 1970。
  */
 export function collectedTimeText(ts: number | undefined): string {
-  if (ts === undefined || !Number.isFinite(ts)) return '早年收录,未记时日'
-  return new Date(ts).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  if (ts === undefined || !Number.isFinite(ts)) return "早年收录,未记时日";
+  return new Date(ts).toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

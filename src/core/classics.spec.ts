@@ -129,7 +129,7 @@ describe("界域志 · 分册", () => {
     .replace(/\/\/.*$/gm, "");
 
   /** 分册表里声明的每一册 */
-  const tabIds = [...src.matchAll(/id: '(realm|classics|yi|ziwei|xiang|qimen|todo)'/g)].map(
+  const tabIds = [...src.matchAll(/id: ["'](realm|classics|yi|ziwei|xiang|qimen|todo)["']/g)].map(
     (m) => m[1]!,
   );
 

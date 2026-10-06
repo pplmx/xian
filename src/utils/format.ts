@@ -1,58 +1,61 @@
 /**
  * 统一数值格式化 —— 中文单位 + 科学计数法兜底
  */
-import type { GNum } from '@/types'
-import { gn, toNum } from './gnum'
+import type { GNum } from "@/types";
+import { gn, toNum } from "./gnum";
 
 /** 每 4 个数量级一个中文单位 */
-const UNITS = ['万', '亿', '兆', '京', '垓', '秭', '穰', '沟', '涧', '正', '载', '极'] as const
+const UNITS = ["万", "亿", "兆", "京", "垓", "秭", "穰", "沟", "涧", "正", "载", "极"] as const;
 
 /** 格式化大数:1,234 → 12.35万 → 1.235亿 → 1.24e52 */
 export function formatGN(v: GNum | number): string {
-  const g = typeof v === 'number' ? gn(v) : v
-  if (g.m === 0) return '0'
-  if (g.m < 0) return '-' + formatGN({ m: -g.m, e: g.e })
+  const g = typeof v === "number" ? gn(v) : v;
+  if (g.m === 0) return "0";
+  if (g.m < 0) return "-" + formatGN({ m: -g.m, e: g.e });
   if (g.e < 4) {
-    const n = toNum(g)
+    const n = toNum(g);
     if (n < 1000) {
       if (n < 100 && !Number.isInteger(n)) {
         // 0.04 显示成 0.04、0.004 也应收着——任何正收益都不该因为太细碎而显示成 0。
         // 位数随数量级抬升(0.04→2 位,0.004→3 位),封顶 6 位,杜绝 0.0000000001 刷屏
-        const tiny = n > 0 && n < 0.1 ? n.toFixed(Math.max(2, Math.min(6, 1 - Math.floor(Math.log10(n))))) : n.toFixed(1)
-        return trimZero(tiny)
+        const tiny =
+          n > 0 && n < 0.1
+            ? n.toFixed(Math.max(2, Math.min(6, 1 - Math.floor(Math.log10(n)))))
+            : n.toFixed(1);
+        return trimZero(tiny);
       }
       // 与 <100 档(四舍五入)一致,不再向下取整:999.6 显示 1000 而非 999
-      return String(Math.round(n))
+      return String(Math.round(n));
     }
-    return Math.floor(n).toLocaleString('en-US')
+    return Math.floor(n).toLocaleString("en-US");
   }
-  const unitIdx = Math.floor(g.e / 4) - 1
+  const unitIdx = Math.floor(g.e / 4) - 1;
   if (unitIdx >= UNITS.length) {
-    return `${g.m.toFixed(2)}e${g.e}`
+    return `${g.m.toFixed(2)}e${g.e}`;
   }
-  const value = g.m * Math.pow(10, g.e - (unitIdx + 1) * 4)
-  return trimZero(fixedByMag(value)) + UNITS[unitIdx]
+  const value = g.m * Math.pow(10, g.e - (unitIdx + 1) * 4);
+  return trimZero(fixedByMag(value)) + UNITS[unitIdx];
 }
 
 function fixedByMag(v: number): string {
-  if (v < 10) return v.toFixed(3)
-  if (v < 100) return v.toFixed(2)
-  if (v < 1000) return v.toFixed(1)
-  return String(Math.floor(v))
+  if (v < 10) return v.toFixed(3);
+  if (v < 100) return v.toFixed(2);
+  if (v < 1000) return v.toFixed(1);
+  return String(Math.floor(v));
 }
 
 function trimZero(s: string): string {
-  return s.includes('.') ? s.replace(/\.?0+$/, '') : s
+  return s.includes(".") ? s.replace(/\.?0+$/, "") : s;
 }
 
 /** 格式化普通数字(整数展示) */
 export function formatNum(n: number): string {
-  return formatGN(gn(n))
+  return formatGN(gn(n));
 }
 
 /** 速率:xx/秒 */
 export function formatRate(v: GNum | number): string {
-  return `${formatGN(v)}/秒`
+  return `${formatGN(v)}/秒`;
 }
 
 /**
@@ -69,67 +72,67 @@ export function formatRate(v: GNum | number): string {
  *   二 有效数字只留 15 位,剩下的补 0,并明确标注"尾数为有效数字,其后是量级"。
  */
 export function formatExact(v: GNum | number): string {
-  const g = typeof v === 'number' ? gn(v) : gn(v)
-  if (g.m === 0) return '0'
-  const sign = g.m < 0 ? '-' : ''
-  const abs = Math.abs(g.m)
-  const intDigits = Math.floor(Math.log10(abs)) + 1
-  const decimals = Math.max(0, 15 - intDigits)
-  const digits = abs.toFixed(decimals).replace('.', '').replace(/0+$/, '') || '0'
-  const width = g.e + 1
+  const g = typeof v === "number" ? gn(v) : gn(v);
+  if (g.m === 0) return "0";
+  const sign = g.m < 0 ? "-" : "";
+  const abs = Math.abs(g.m);
+  const intDigits = Math.floor(Math.log10(abs)) + 1;
+  const decimals = Math.max(0, 15 - intDigits);
+  const digits = abs.toFixed(decimals).replace(".", "").replace(/0+$/, "") || "0";
+  const width = g.e + 1;
   if (width <= 24) {
-    const padded = digits.length >= width ? digits.slice(0, width) : digits.padEnd(width, '0')
-    return sign + group(padded)
+    const padded = digits.length >= width ? digits.slice(0, width) : digits.padEnd(width, "0");
+    return sign + group(padded);
   }
   // 太长:不假装有那么多位精度,退回科学计数
-  const m = abs.toPrecision(15).replace(/\.?0+$/, '')
-  return `${sign}${m}×10^${g.e}`
+  const m = abs.toPrecision(15).replace(/\.?0+$/, "");
+  return `${sign}${m}×10^${g.e}`;
 }
 
 /** 科学计数法(给"这个数有多大"一个一眼可比的写法) */
 export function formatScientific(v: GNum | number): string {
-  const g = typeof v === 'number' ? gn(v) : gn(v)
-  if (g.m === 0) return '0'
-  return `${g.m.toPrecision(4).replace(/\.?0+$/, '')}×10^${g.e}`
+  const g = typeof v === "number" ? gn(v) : gn(v);
+  if (g.m === 0) return "0";
+  return `${g.m.toPrecision(4).replace(/\.?0+$/, "")}×10^${g.e}`;
 }
 
 /** 每三位加分隔(负数原样带符号) */
 function group(digits: string): string {
-  const sign = digits.startsWith('-') ? '-' : ''
-  const body = sign ? digits.slice(1) : digits
-  return sign + body.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  const sign = digits.startsWith("-") ? "-" : "";
+  const body = sign ? digits.slice(1) : digits;
+  return sign + body.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 /** 数值非法时的统一占位(避免界面出现 NaN%/Infinity%) */
-const NOT_AVAILABLE = '--'
+const NOT_AVAILABLE = "--";
 
 /** 百分比:0.125 → 12.5%;非法值(NaN/Infinity)显示 -- */
 export function formatPercent(x: number, dp = 1): string {
-  if (!Number.isFinite(x)) return NOT_AVAILABLE
-  const v = x * 100
+  if (!Number.isFinite(x)) return NOT_AVAILABLE;
+  const v = x * 100;
   // -0.001% 这类连一位小数都到不了的极小值,不该显示成「-0%」吓人
-  if (Math.abs(v) < Math.pow(10, -dp)) return '0%'
-  const s = Number.isInteger(v) ? String(v) : v.toFixed(dp)
-  return `${trimZero(s)}%`
+  if (Math.abs(v) < Math.pow(10, -dp)) return "0%";
+  const s = Number.isInteger(v) ? String(v) : v.toFixed(dp);
+  return `${trimZero(s)}%`;
 }
 
 /** 带符号的比率:正数显 +,负数沿用 formatPercent 自带的 −,避免拼出「+-15%」 */
 export function formatSignedPercent(x: number, dp = 1): string {
-  return x > 0 ? `+${formatPercent(x, dp)}` : formatPercent(x, dp)
+  return x > 0 ? `+${formatPercent(x, dp)}` : formatPercent(x, dp);
 }
 
 /** 时长:秒 → 中文可读;非法值(NaN/Infinity)显示 -- */
 export function formatDuration(totalSec: number): string {
-  if (!Number.isFinite(totalSec)) return NOT_AVAILABLE
-  const sec = Math.max(0, Math.floor(totalSec))
-  const d = Math.floor(sec / 86400)
-  const h = Math.floor((sec % 86400) / 3600)
-  const m = Math.floor((sec % 3600) / 60)
-  const s = sec % 60
-  if (d > 0) return `${d}天${h}小时`
-  if (h > 0) return `${h}小时${m}分`
-  if (m > 0) return `${m}分${s}秒`
-  return `${s}秒`
+  if (!Number.isFinite(totalSec)) return NOT_AVAILABLE;
+  const sec = Math.max(0, Math.floor(totalSec));
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (d > 0) return `${d}天${h}小时`;
+  if (h > 0) return `${h}小时${m}分`;
+  if (m > 0) return `${m}分${s}秒`;
+  return `${s}秒`;
 }
 
 /**
@@ -145,16 +148,16 @@ export function formatDuration(totalSec: number): string {
  * 数字本身另由 .tabular(tabular-nums)保证等宽,两者合起来才真的不动。
  */
 export function formatCountdown(totalSec: number): string {
-  if (!Number.isFinite(totalSec)) return NOT_AVAILABLE
-  const sec = Math.max(0, Math.floor(totalSec))
-  const pad2 = (n: number): string => String(n).padStart(2, '0')
-  const d = Math.floor(sec / 86400)
-  const h = Math.floor((sec % 86400) / 3600)
-  const m = Math.floor((sec % 3600) / 60)
-  const s = sec % 60
-  if (d > 0) return `${d}天${pad2(h)}时`
-  if (h > 0) return `${pad2(h)}时${pad2(m)}分`
-  return `${pad2(m)}分${pad2(s)}秒`
+  if (!Number.isFinite(totalSec)) return NOT_AVAILABLE;
+  const sec = Math.max(0, Math.floor(totalSec));
+  const pad2 = (n: number): string => String(n).padStart(2, "0");
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (d > 0) return `${d}天${pad2(h)}时`;
+  if (h > 0) return `${pad2(h)}时${pad2(m)}分`;
+  return `${pad2(m)}分${pad2(s)}秒`;
 }
 
 /**
@@ -164,25 +167,25 @@ export function formatCountdown(totalSec: number): string {
  * absence report「流逝 1 载」while the bar still reads the old integer.
  */
 export function yearsShown(y: number): number {
-  if (!Number.isFinite(y) || y <= 0) return 0
-  return Math.floor(y)
+  if (!Number.isFinite(y) || y <= 0) return 0;
+  return Math.floor(y);
 }
 
 /** How many integer years the counter advanced (never negative). */
 export function yearsDeltaShown(before: number, after: number): number {
-  return Math.max(0, yearsShown(after) - yearsShown(before))
+  return Math.max(0, yearsShown(after) - yearsShown(before));
 }
 
 /** Remaining integer years implied by the HUD pair `age / max`. */
 export function yearsLeftShown(age: number, lifespanMax: number): number {
-  return Math.max(0, yearsShown(lifespanMax) - yearsShown(age))
+  return Math.max(0, yearsShown(lifespanMax) - yearsShown(age));
 }
 
 /** 寿元年数展示 */
 export function formatYears(y: number): string {
-  const n = yearsShown(y)
-  if (n >= 10000) return formatNum(n) + '载'
-  return `${n}载`
+  const n = yearsShown(y);
+  if (n >= 10000) return formatNum(n) + "载";
+  return `${n}载`;
 }
 
 /**
@@ -195,25 +198,25 @@ export function formatYears(y: number): string {
  * 只做到 9999:此范围之外说明这个数字不该以汉字出现,原样返回阿拉伯数字更诚实。
  */
 export function cnNumber(n: number): string {
-  if (!Number.isInteger(n) || n < 0 || n > 9999) return String(n)
-  const DIGITS = '零一二三四五六七八九'
-  const UNITS = ['', '十', '百', '千']
-  if (n < 10) return DIGITS[n]!
-  const str = String(n)
-  const len = str.length
-  let out = ''
-  let pendingZero = false
+  if (!Number.isInteger(n) || n < 0 || n > 9999) return String(n);
+  const DIGITS = "零一二三四五六七八九";
+  const UNITS = ["", "十", "百", "千"];
+  if (n < 10) return DIGITS[n]!;
+  const str = String(n);
+  const len = str.length;
+  let out = "";
+  let pendingZero = false;
   for (let i = 0; i < len; i++) {
-    const digit = Number(str[i])
+    const digit = Number(str[i]);
     if (digit === 0) {
-      pendingZero = true
-      continue
+      pendingZero = true;
+      continue;
     }
-    if (pendingZero && out) out += DIGITS[0]
-    pendingZero = false
+    if (pendingZero && out) out += DIGITS[0];
+    pendingZero = false;
     // 十、十二、十四……前导的「一」不成词
-    if (!(len === 2 && i === 0 && digit === 1)) out += DIGITS[digit]
-    out += UNITS[len - 1 - i]
+    if (!(len === 2 && i === 0 && digit === 1)) out += DIGITS[digit];
+    out += UNITS[len - 1 - i];
   }
-  return out
+  return out;
 }

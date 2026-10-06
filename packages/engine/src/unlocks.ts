@@ -18,69 +18,70 @@
  */
 
 export interface UnlockEntry {
-  id: string
+  id: string;
   /** 展示名(可省) */
-  name?: string
+  name?: string;
 }
 
 export interface UnlockState {
   /** 已经解锁的条目(顺序即解锁顺序 —— 成就墙 / 履历按它排) */
-  unlocked: readonly string[]
+  unlocked: readonly string[];
 }
 
 export interface UnlockOutcome {
-  state: UnlockState
+  state: UnlockState;
   /** 这一次**真的**解锁了吗(已经解开过就是 false) */
-  unlocked: boolean
-  entry: UnlockEntry | null
+  unlocked: boolean;
+  entry: UnlockEntry | null;
 }
 
 export interface UnlockScan {
-  state: UnlockState
+  state: UnlockState;
   /** 这一次新解锁的条目(顺序即声明顺序);一条都没有时 state 原样返回 */
-  newly: UnlockEntry[]
+  newly: UnlockEntry[];
 }
 
 export function createUnlockRegistry(config: { entries: readonly UnlockEntry[] }) {
-  const byId = new Map<string, UnlockEntry>()
-  for (const entry of config.entries) byId.set(entry.id, entry)
+  const byId = new Map<string, UnlockEntry>();
+  for (const entry of config.entries) byId.set(entry.id, entry);
 
-  const entryOf = (id: string): UnlockEntry | undefined => byId.get(id)
-  const has = (state: UnlockState, id: string): boolean => state.unlocked.includes(id)
+  const entryOf = (id: string): UnlockEntry | undefined => byId.get(id);
+  const has = (state: UnlockState, id: string): boolean => state.unlocked.includes(id);
   /** 已解锁的条目(认不出 id 的旧数据跳过,不让它把成就墙炸了) */
   const list = (state: UnlockState): UnlockEntry[] => {
-    const out: UnlockEntry[] = []
+    const out: UnlockEntry[] = [];
     for (const id of state.unlocked) {
-      const entry = byId.get(id)
-      if (entry) out.push(entry)
+      const entry = byId.get(id);
+      if (entry) out.push(entry);
     }
-    return out
-  }
-  const count = (state: UnlockState): number => state.unlocked.length
-  const remaining = (state: UnlockState): number => Math.max(0, config.entries.length - count(state))
+    return out;
+  };
+  const count = (state: UnlockState): number => state.unlocked.length;
+  const remaining = (state: UnlockState): number =>
+    Math.max(0, config.entries.length - count(state));
 
   /** 显式解锁(去重):由"当时发生的动作"声明,例如状态型成就 */
   const unlock = (state: UnlockState, id: string): UnlockOutcome => {
-    const entry = entryOf(id)
-    if (!entry || has(state, id)) return { state, unlocked: false, entry: entry ?? null }
-    return { state: { unlocked: [...state.unlocked, id] }, unlocked: true, entry }
-  }
+    const entry = entryOf(id);
+    if (!entry || has(state, id)) return { state, unlocked: false, entry: entry ?? null };
+    return { state: { unlocked: [...state.unlocked, id] }, unlocked: true, entry };
+  };
 
   /**
    * 扫一遍:把"达成了且还没登记"的一次性挑出来(顺序即声明顺序)。
    * 判据应当是**纯**的 —— 一次扫描里每个条目只会被问一次(与任务链不同,这里没有守卫与多看一节)。
    */
   const scan = (state: UnlockState, ok: (entry: UnlockEntry) => boolean): UnlockScan => {
-    const newly: UnlockEntry[] = []
+    const newly: UnlockEntry[] = [];
     for (const entry of config.entries) {
-      if (has(state, entry.id)) continue
-      if (ok(entry)) newly.push(entry)
+      if (has(state, entry.id)) continue;
+      if (ok(entry)) newly.push(entry);
     }
-    if (newly.length === 0) return { state, newly }
-    return { state: { unlocked: [...state.unlocked, ...newly.map(entry => entry.id)] }, newly }
-  }
+    if (newly.length === 0) return { state, newly };
+    return { state: { unlocked: [...state.unlocked, ...newly.map((entry) => entry.id)] }, newly };
+  };
 
-  return { entries: config.entries, entryOf, has, list, count, remaining, unlock, scan }
+  return { entries: config.entries, entryOf, has, list, count, remaining, unlock, scan };
 }
 
-export type UnlockRegistry = ReturnType<typeof createUnlockRegistry>
+export type UnlockRegistry = ReturnType<typeof createUnlockRegistry>;

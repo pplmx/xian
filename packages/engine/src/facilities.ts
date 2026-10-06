@@ -18,112 +18,113 @@
  * 大数灵石,故数额类型是泛型)。效果(`mods`)同理,原样带出给作品自己的属性汇总。
  */
 
-export type LevelMap = Record<string, number>
+export type LevelMap = Record<string, number>;
 
 /** 一条花费(键名由内容定:灵石 / 玄铁 / 零花钱……) */
 export interface FacilityCost<A = number> {
-  key: string
-  amount: A
+  key: string;
+  amount: A;
 }
 
 export interface FacilityDef<M = unknown, Ctx = unknown, A = number> {
-  id: string
+  id: string;
   /** 展示名(可省:作品自己有内容表的话,这里只留键) */
-  name?: string
+  name?: string;
   /** 自身品类上限:顶到这一级为止 */
-  maxLevel: number
+  maxLevel: number;
   /**
    * 另外的等级上限(**可选**):本作是 `(洞府等级 + 1) × 5`。
    * 与 `maxLevel` **取小**;只封住升级,不把已有等级改小。
    */
-  cap?: (levels: LevelMap, ctx: Ctx) => number
+  cap?: (levels: LevelMap, ctx: Ctx) => number;
   /** 卡在等级上限时的说法(界面直接用);不配则该档没有额外说明 */
-  capReason?: string
+  capReason?: string;
   /**
    * 其他门槛:不行就返回**一句给人看的原因**,undefined = 这一关过了。
    * 判定顺序即这里写的顺序(先报哪一句,由内容定)。
    */
-  blocked?: (levels: LevelMap, level: number, ctx: Ctx) => string | undefined
+  blocked?: (levels: LevelMap, level: number, ctx: Ctx) => string | undefined;
   /** 从 `level` 升到 `level + 1` 要花什么(数额类型泛型,本作用大数灵石) */
-  costs?: (level: number, ctx: Ctx) => readonly FacilityCost<A>[]
+  costs?: (level: number, ctx: Ctx) => readonly FacilityCost<A>[];
   /** 这一级带来的效果(库不解释,原样带出) */
-  mods?: (level: number, ctx: Ctx) => M
+  mods?: (level: number, ctx: Ctx) => M;
   /** 这一级**每小时**产出什么(键与单位由调用方定) */
-  perHour?: (level: number, ctx: Ctx) => Record<string, number>
+  perHour?: (level: number, ctx: Ctx) => Record<string, number>;
 }
 
 export interface UpgradeInfo<A = number> {
-  can: boolean
+  can: boolean;
   /** 不能升时给人看的原因(能升时为 '') */
-  reason: string
+  reason: string;
   /** 现在几级 */
-  level: number
+  level: number;
   /** 升上去是几级 */
-  nextLevel: number
+  nextLevel: number;
   /** 要花什么(不能升时也给出来 —— 界面常常要显示"差在哪") */
-  costs: readonly FacilityCost<A>[]
+  costs: readonly FacilityCost<A>[];
 }
 
 export function createFacilitySystem<M = unknown, Ctx = unknown, A = number>(config: {
-  facilities: readonly FacilityDef<M, Ctx, A>[]
+  facilities: readonly FacilityDef<M, Ctx, A>[];
 }) {
-  const byId = new Map<string, FacilityDef<M, Ctx, A>>()
-  for (const def of config.facilities) byId.set(def.id, def)
+  const byId = new Map<string, FacilityDef<M, Ctx, A>>();
+  for (const def of config.facilities) byId.set(def.id, def);
 
-  const defOf = (id: string): FacilityDef<M, Ctx, A> | undefined => byId.get(id)
+  const defOf = (id: string): FacilityDef<M, Ctx, A> | undefined => byId.get(id);
 
   /** 现在几级(没记过 = 0;坏值一律当 0,不让它渗进 UI) */
   const levelOf = (levels: LevelMap, id: string): number => {
-    const raw = levels[id]
-    return raw !== undefined && Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0
-  }
+    const raw = levels[id];
+    return raw !== undefined && Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0;
+  };
 
   /** 这一级还能升到多高:自身上限与别人给的上限**取小** */
   const capOf = (levels: LevelMap, id: string, ctx: Ctx): number => {
-    const def = defOf(id)
-    if (!def) return 0
-    const other = def.cap?.(levels, ctx)
-    return other === undefined ? def.maxLevel : Math.min(def.maxLevel, other)
-  }
+    const def = defOf(id);
+    if (!def) return 0;
+    const other = def.cap?.(levels, ctx);
+    return other === undefined ? def.maxLevel : Math.min(def.maxLevel, other);
+  };
 
   /** "能不能升、为什么、下一级是几级、要花什么" —— 四件事出自同一次判定 */
   const upgradeInfo = (levels: LevelMap, id: string, ctx: Ctx): UpgradeInfo<A> => {
-    const def = defOf(id)
-    const level = levelOf(levels, id)
-    if (!def) return { can: false, reason: '', level, nextLevel: level + 1, costs: [] }
-    const costs = def.costs?.(level, ctx) ?? []
-    const blocked = def.blocked?.(levels, level, ctx)
-    if (blocked !== undefined) return { can: false, reason: blocked, level, nextLevel: level + 1, costs }
+    const def = defOf(id);
+    const level = levelOf(levels, id);
+    if (!def) return { can: false, reason: "", level, nextLevel: level + 1, costs: [] };
+    const costs = def.costs?.(level, ctx) ?? [];
+    const blocked = def.blocked?.(levels, level, ctx);
+    if (blocked !== undefined)
+      return { can: false, reason: blocked, level, nextLevel: level + 1, costs };
     if (level >= capOf(levels, id, ctx)) {
-      return { can: false, reason: def.capReason ?? '', level, nextLevel: level + 1, costs }
+      return { can: false, reason: def.capReason ?? "", level, nextLevel: level + 1, costs };
     }
-    return { can: true, reason: '', level, nextLevel: level + 1, costs }
-  }
+    return { can: true, reason: "", level, nextLevel: level + 1, costs };
+  };
 
   /** 各设施在这一级的每小时产出**合计**(只算真的建起来了的:等级 > 0) */
   const ratesOf = (levels: LevelMap, ctx: Ctx): Record<string, number> => {
-    const out: Record<string, number> = {}
+    const out: Record<string, number> = {};
     for (const def of config.facilities) {
-      const level = levelOf(levels, def.id)
-      if (level <= 0 || !def.perHour) continue
+      const level = levelOf(levels, def.id);
+      if (level <= 0 || !def.perHour) continue;
       for (const [key, rate] of Object.entries(def.perHour(level, ctx))) {
-        out[key] = (out[key] ?? 0) + rate
+        out[key] = (out[key] ?? 0) + rate;
       }
     }
-    return out
-  }
+    return out;
+  };
 
   /** 建起来了的设施带来的效果(顺序即声明顺序)—— 喂给作品自己的属性汇总 */
   const modsOf = (levels: LevelMap, ctx: Ctx): M[] => {
-    const out: M[] = []
+    const out: M[] = [];
     for (const def of config.facilities) {
-      const level = levelOf(levels, def.id)
-      if (level > 0 && def.mods) out.push(def.mods(level, ctx))
+      const level = levelOf(levels, def.id);
+      if (level > 0 && def.mods) out.push(def.mods(level, ctx));
     }
-    return out
-  }
+    return out;
+  };
 
-  return { facilities: config.facilities, defOf, levelOf, capOf, upgradeInfo, ratesOf, modsOf }
+  return { facilities: config.facilities, defOf, levelOf, capOf, upgradeInfo, ratesOf, modsOf };
 }
 
 /**
@@ -140,22 +141,22 @@ export function createFacilitySystem<M = unknown, Ctx = unknown, A = number>(con
 export function accrue(
   frac: Readonly<Record<string, number>>,
   rates: Readonly<Record<string, number>>,
-  sec: number
+  sec: number,
 ): { frac: Record<string, number>; whole: Record<string, number> } {
-  const nextFrac: Record<string, number> = {}
-  const whole: Record<string, number> = {}
-  const keys = new Set([...Object.keys(frac), ...Object.keys(rates)])
+  const nextFrac: Record<string, number> = {};
+  const whole: Record<string, number> = {};
+  const keys = new Set([...Object.keys(frac), ...Object.keys(rates)]);
   for (const key of keys) {
-    const carried = Number.isFinite(frac[key]) ? (frac[key] ?? 0) : 0
-    const gained = ((rates[key] ?? 0) * sec) / 3600
-    const total = carried + gained
-    const emit = Math.floor(total)
-    nextFrac[key] = total - emit
-    if (emit > 0) whole[key] = emit
+    const carried = Number.isFinite(frac[key]) ? (frac[key] ?? 0) : 0;
+    const gained = ((rates[key] ?? 0) * sec) / 3600;
+    const total = carried + gained;
+    const emit = Math.floor(total);
+    nextFrac[key] = total - emit;
+    if (emit > 0) whole[key] = emit;
   }
-  return { frac: nextFrac, whole }
+  return { frac: nextFrac, whole };
 }
 
 export type FacilitySystem<M = unknown, Ctx = unknown, A = number> = ReturnType<
   typeof createFacilitySystem<M, Ctx, A>
->
+>;

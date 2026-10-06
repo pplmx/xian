@@ -20,17 +20,25 @@
  * 解析改由库算,本作只做一次形状适配(quality → qualityId、补齐三个平铺键),
  * 数字与迁移前逐位相同。
  */
-import type { AffixRarity, EquipmentInstance, EquipSlot, GNum, QualityDef, QualityId, StatMods } from '@/types'
-import type { EquipmentInstance as EngineEquipmentInstance } from 'wanxiang-engine'
-import type { RandomService } from '@/utils/random'
-import { gnZero } from '@/utils/gnum'
-import { ENGINE_WORLD } from './engineWorld'
+import type {
+  AffixRarity,
+  EquipmentInstance,
+  EquipSlot,
+  GNum,
+  QualityDef,
+  QualityId,
+  StatMods,
+} from "@/types";
+import type { EquipmentInstance as EngineEquipmentInstance } from "wanxiang-engine";
+import type { RandomService } from "@/utils/random";
+import { gnZero } from "@/utils/gnum";
+import { ENGINE_WORLD } from "./engineWorld";
 
 export interface GenOptions {
-  slot?: EquipSlot
-  minQualityRank?: number
+  slot?: EquipSlot;
+  minQualityRank?: number;
   /** 气运(提高高品质权重) */
-  luck?: number
+  luck?: number;
 }
 
 /**
@@ -44,12 +52,16 @@ export interface GenOptions {
  * 权重查询,因为经济/膨胀审计要按它算期望,而审计读的是本作的品质表。
  */
 export function qualityWeightAt(q: QualityDef, tier: number, opts: GenOptions = {}): number {
-  return ENGINE_WORLD.equipment.qualityWeightAt(q, tier, { tier, ...opts })
+  return ENGINE_WORLD.equipment.qualityWeightAt(q, tier, { tier, ...opts });
 }
 
 /** 生成一件装备实例 */
-export function generateEquipment(tier: number, rng: RandomService, opts: GenOptions = {}): EquipmentInstance {
-  const inst = ENGINE_WORLD.equipment.generate(rng, { tier, ...opts })
+export function generateEquipment(
+  tier: number,
+  rng: RandomService,
+  opts: GenOptions = {},
+): EquipmentInstance {
+  const inst = ENGINE_WORLD.equipment.generate(rng, { tier, ...opts });
   // 库的实例用 qualityId 指品质;本作的 EquipmentInstance 一直叫 quality(存档字段)。
   return {
     uid: inst.uid,
@@ -57,13 +69,13 @@ export function generateEquipment(tier: number, rng: RandomService, opts: GenOpt
     quality: inst.qualityId as QualityId,
     tier: inst.tier,
     level: inst.level,
-    affixes: inst.affixes.map(a => ({ id: a.id, roll: a.roll }))
-  }
+    affixes: inst.affixes.map((a) => ({ id: a.id, roll: a.roll })),
+  };
 }
 
 export interface ResolvedEquipStats {
-  flats: { attack: GNum; defense: GNum; maxHp: GNum }
-  mods: StatMods
+  flats: { attack: GNum; defense: GNum; maxHp: GNum };
+  mods: StatMods;
   /**
    * 词条展示行 —— **已是展示序**(见 sortAffixLines),不是掷出的先后。
    * 掷出的顺序是随机的,照着印出来等于把「哪条要紧」交给运气。
@@ -76,18 +88,18 @@ export interface ResolvedEquipStats {
    * 每行长短不一,玩家对比的是句子长度而不是数字。
    */
   affixLines: {
-    id: string
-    name: string
+    id: string;
+    name: string;
     /** 整句(数值已代入)—— 说得出这条管什么 */
-    desc: string
+    desc: string;
     /** 数值之前的话(如「攻击提升 」) */
-    before: string
+    before: string;
     /** 数值本身(如「4.2」) */
-    value: string
+    value: string;
     /** 数值之后的话(如「%」) */
-    after: string
-    rarity: AffixRarity
-  }[]
+    after: string;
+    rarity: AffixRarity;
+  }[];
 }
 
 /**
@@ -98,17 +110,17 @@ export interface ResolvedEquipStats {
  */
 /** 解析装备实例的实际数值 —— 实现已搬进公共库的装备系统,此处只做形状适配 */
 export function resolveEquipStats(inst: EquipmentInstance): ResolvedEquipStats {
-  const resolved = ENGINE_WORLD.equipment.resolve(toEngineInstance(inst))
+  const resolved = ENGINE_WORLD.equipment.resolve(toEngineInstance(inst));
   return {
     // 本作的三个平铺键恒定存在(取值处直接读 flats.attack),故补齐零值
     flats: {
       attack: resolved.flats.attack ?? gnZero(),
       defense: resolved.flats.defense ?? gnZero(),
-      maxHp: resolved.flats.maxHp ?? gnZero()
+      maxHp: resolved.flats.maxHp ?? gnZero(),
     },
     mods: resolved.mods as StatMods,
-    affixLines: resolved.affixLines
-  }
+    affixLines: resolved.affixLines,
+  };
 }
 
 /**
@@ -124,6 +136,6 @@ export function toEngineInstance(inst: EquipmentInstance): EngineEquipmentInstan
     qualityId: inst.quality,
     tier: inst.tier,
     level: inst.level,
-    affixes: inst.affixes
-  }
+    affixes: inst.affixes,
+  };
 }
