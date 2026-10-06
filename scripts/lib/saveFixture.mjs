@@ -39,6 +39,109 @@ export async function seedSave(context, slices, guard = "__fixtureSeeded") {
 
 const gn = (m, e) => ({ m, e });
 
+/**
+ * 「后期档」夹具 —— 神人境 + 成套装备,给 ui-smoke --late 覆盖终局界面。
+ * 与「展品档」的分工:展品档为出图('看得好看'),这一份为冒烟('点得动、不出 NaN'),
+ * 故数值取到后期极限、装备铺满词条,把终局的每条分支都逼出来。
+ */
+export function lateSlices(theme = "dark") {
+  const now = Date.now();
+  return {
+    /**
+     * 时间戳用"现在":夹具若写 1970,离线结算会去补算半个世纪的挂机收益 ——
+     * 冒烟脚本每翻一页都要重算一次,一轮要跑十分钟(实测)。
+     */
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: now,
+      lastActiveAt: now,
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      name: "冒烟自检",
+      major: 14,
+      sub: 0,
+      exp: gn(0, 0),
+      age: 3000,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 2,
+        daoFruit: 12,
+        talents: [],
+        insight: 400,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: {
+        roots: [
+          { element: "fire", aptitude: 88 },
+          { element: "water", aptitude: 70 },
+        ],
+        gradeName: "双灵根",
+        growthMult: 1.4,
+      },
+    },
+    resources: {
+      spiritStone: gn(9, 12),
+      qi: 5000,
+      wudao: 800,
+      herb: 900,
+      ore: 900,
+      page: 300,
+      dust: 500,
+    },
+    /**
+     * 装备两件「背水」词条 —— 攒出一路流派。没有这一步,流派页的成路界面
+     * (五维评级 / 组合技 / 成路来源)在冒烟里根本不会渲染,等于没测。
+     * 槽位用真实名(weapon / body):从前写的是 `armor` —— 那个槽位不存在,
+     * 件被 sanitize 静默丢掉,于是「两件」其实只装上了一件,成路界面根本没被覆盖。
+     */
+    inventory: {
+      items: [
+        {
+          uid: "smoke_w",
+          templateId: "w_chensha",
+          quality: "heaven",
+          tier: 14,
+          level: 0,
+          affixes: [{ id: "bs3", roll: 1 }],
+        },
+        {
+          uid: "smoke_b",
+          templateId: "b_xingluo",
+          quality: "heaven",
+          tier: 14,
+          level: 0,
+          affixes: [{ id: "low2", roll: 1 }],
+        },
+      ],
+      equipped: { weapon: "smoke_w", body: "smoke_b" },
+      pills: {},
+      artifacts: [],
+      equippedArtifacts: [],
+    },
+    endgame: { daoPath: "sword", daoSource: 1200, souls: [], equippedSouls: [] },
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme,
+    },
+  };
+}
+
 /** 一件装备的落盘形态(与 inventory store 的 items 条目同形) */
 const item = (uid, templateId, quality, affixes, level = 0) => ({
   uid,
