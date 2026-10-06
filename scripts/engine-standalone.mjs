@@ -60,7 +60,10 @@ try {
   assert.ok(existsSync(join(target, 'dist/index.js')) && existsSync(join(target, 'dist/index.d.ts')), '编译没产出 dist/index')
 
   console.log('④ 在临时目录里独立跑库自己的用例')
-  execFileSync(bin('vitest'), ['run', '--reporter=dot'], { cwd: target, stdio: 'inherit' })
+  // 跑包自己声明的 test 入口(`bun run test` → package.json 的 `vp test run`),
+  // 不硬编码 runner —— 曾经写死 vitest,引擎随 Vite+ 迁移后 devDeps 里没有它,
+  // 干净环境(无陈旧 node_modules 缓存)当场 ENOENT。库用什么跑,这里就跑什么。
+  execFileSync('bun', ['run', 'test', '--reporter=dot'], { cwd: target, stdio: 'inherit' })
 
   console.log('⑤ 独立 import 一次产物')
   const probe = `
