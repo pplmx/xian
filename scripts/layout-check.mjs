@@ -888,6 +888,23 @@ function zoomProblems(info, tag) {
  *      底是渐变的则大片像素读不出来,照样红。
  */
 async function measurePixelContrast(page, sampler, dpr) {
+  /*
+   * 先等「字」与「图」都落定再量 —— 楷体按需分片后走 font-display: swap,
+   * 配图各自异步解码,这两样在不同机器上落定时间不同:冷缓存 CI 采样时字体
+   * 可能还在交换(量到的 glyph 是兜底字形)、图还没解码(量的底是占位色),
+   * 而本地热缓存已经落定。贴着 4.5 阈值的字就被这个采样时机的差值推到两侧
+   * —— 就是 CI 连红 6 次(跨 4 个没动渲染的提交)而本地恒绿的原因。
+   * 等到字体与图片都 ready 再量,两边量到的都是同一个「安定态」,判据才有
+   * 确定性(动画本身由截图的 animations: "disabled" 冻结,不在此列)。
+   */
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all(
+      [...document.images]
+        .filter((img) => !(img.complete && img.naturalWidth > 0))
+        .map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())),
+    );
+  });
   const targets = await page.evaluate(() => {
     const parse = (c) => {
       const m = /rgba?\(([^)]+)\)/.exec(c);
