@@ -192,6 +192,11 @@ function applyPrefs(): void {
 
 /** 构建乐器、效果与整首曲子(仅一次) */
 async function init(): Promise<void> {
+  // Tone 加载时会在控制台打一条版本横幅(TONE_SILENCE_LOGGING 语义):
+  // 生产零噪音,静掉它(在动态 import 前设置全局即生效)。Tone 的类型层
+  // 没有声明这个全局,故显式断言(不是 any)
+  const g = globalThis as unknown as { TONE_SILENCE_LOGGING: boolean };
+  g.TONE_SILENCE_LOGGING = true;
   const tone = await import("tone");
   const audioBase = `${import.meta.env.BASE_URL}audio/`;
   const sampler = (

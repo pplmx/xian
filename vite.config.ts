@@ -1694,14 +1694,14 @@ export default defineConfig({
     ],
   },
   base: "./",
-  esbuild: {
-    // 只丢 debugger 与调试级 console:console.error/warn 必须留在生产构建里。
-    // 全量 drop:['console'] 会把 App.vue 全局 errorHandler 的 console.error 一并删掉,
-    // 玩家侧只剩「出现异常,已记录」的 toast 而没有任何堆栈,线上问题无从查起
-    drop: ["debugger"],
-    pure: ["console.log", "console.info", "console.debug", "console.trace"],
-    legalComments: "none",
-  },
+  // 生产代码净化交给 oxc(默认压缩器)与 lint 兜底,删掉了死在转译层里的
+  // esbuild 块:oxc 接手后那句 "esbuild options will be ignored" 警告指明
+  // drop/pure/legalComments 全部失效。诚实的迁移结论:
+  //   · dropDebugger —— 应用源码零 debugger(lint 禁),全产物也零,无需配置
+  //   · dropConsole / drop:['console'] —— 刻意不用:全灭会连 App.vue 全局
+  //     errorHandler 的 console.error 一起删掉,线上问题无从查起
+  //   · pure:['console.log'…] —— oxc 无对应;应用源码本就零调试 console,
+  //     唯一的第三方残留 Tone 版本横幅由 TONE_SILENCE_LOGGING 静默(audio.ts)
   plugins: lazyPlugins(() => [
     vue({
       template: {
