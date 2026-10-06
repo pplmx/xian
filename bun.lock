@@ -37,8 +37,8 @@
         "postcss": "^8.5.26",
         "tailwindcss": "^3.4.19",
         "typescript": "~6.0.3",
-        "vite": "catalog:",
-        "vite-plus": "catalog:",
+        "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+        "vite-plus": "1.0.0",
         "vue-tsc": "^3.3.11",
       },
     },
@@ -48,15 +48,12 @@
       "devDependencies": {
         "@types/node": "^22.13.0",
         "typescript": "~6.0.3",
+        "vite-plus": "1.0.0",
       },
     },
   },
   "overrides": {
-    "vite": "catalog:",
-  },
-  "catalog": {
     "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
-    "vite-plus": "1.0.0",
   },
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.3.0", "https://registry.npmmirror.com/@alloc/quick-lru/-/quick-lru-5.3.0.tgz", {}, "sha512-U4+70Pc5ZS9osnCBCE5Jha/ciHM+Yp+CNMNC/7HvYbNRk1Ldd+f7qO65W5qfhu/TCv+/ozljlXXe9Nj8419DMA=="],

@@ -65,12 +65,12 @@
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.19",
     "typescript": "~6.0.3",
-    "vite": "catalog:",
-    "vite-plus": "catalog:",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vite-plus": "1.0.0",
     "vue-tsc": "^3.3.11"
   },
   "overrides": {
-    "vite": "catalog:"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0"
   },
   "browserslist": [
     "Chrome >= 51",
@@ -78,6 +78,7 @@
     "iOS >= 12",
     "Safari >= 12"
   ],
+  "packageManager": "bun@1.4.2",
   "engines": {
     "node": ">=22.18"
   },
@@ -99,9 +100,5 @@
       "icon": "public/favicon.ico",
       "artifactName": "xuanshu-${version}-win.${ext}"
     }
-  },
-  "catalog": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
-    "vite-plus": "1.0.0"
   }
 }
