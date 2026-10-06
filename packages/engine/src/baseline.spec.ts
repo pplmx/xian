@@ -85,10 +85,24 @@ const attributeRows = (config: AttributeSystemConfig) => {
     onTop: [{ name: '全局', mult: { attack: 1.1, maxHp: 1.05 } }]
   })
   return {
-    // 带上展示名:换名字也是使用者的改动之一(内容包之间的差别就在这里)
-    merged: Object.fromEntries(Object.entries(merged).sort().map(([k, v]) => [k, attrs.name(k), n(v)])),
-    final: Object.fromEntries(Object.entries(stats.final).sort().map(([k, v]) => [k, n(v)])),
-    total: Object.fromEntries(Object.entries(stats.total).sort().map(([k, v]) => [k, n(v)])),
+    // 带上展示名:换名字也是使用者的改动之一(内容包之间的差别就在这里)。
+    // 排序按键走 ASCII 字典序 —— 键是字符串,显式写比较器把意图说死,
+    // 免得日后有人看见默认 sort 以为能按值排。
+    merged: Object.fromEntries(
+      Object.entries(merged)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([k, v]) => [k, attrs.name(k), n(v)]),
+    ),
+    final: Object.fromEntries(
+      Object.entries(stats.final)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([k, v]) => [k, n(v)]),
+    ),
+    total: Object.fromEntries(
+      Object.entries(stats.total)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([k, v]) => [k, n(v)]),
+    ),
     core: [...attrs.coreKeys],
     softCapped: ['attackPct', 'critRate'].map(key => attrs.isSoftCapped(merged, key)),
     depth: n(attrs.modDepth(merged))
@@ -216,7 +230,11 @@ describe('数字基线 —— 曲线不许悄悄变', () => {
   })
 
   it('全默认等级表:默认十层名目 + 缺省寿元无限', () => {
-    console.log(`  默认小层名目:${defaultsRealm[0]![0]} · 末格:${defaultsRealm[defaultsRealm.length - 1]![6]}`)
+    // realmRows 行是 unknown[][]:具体格的值要在运行时才见得到,显示端显式转串,
+    // 不给类型系统留「在模板里插 unknown」的敞口
+    console.log(
+      `  默认小层名目:${String(defaultsRealm[0]![0])} · 末格:${String(defaultsRealm[defaultsRealm.length - 1]![6])}`,
+    )
     expect(digest(defaultsRealm)).toBe('a7789efd-be448cc8-1440')
   })
 

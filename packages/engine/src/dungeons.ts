@@ -437,7 +437,7 @@ export function createDungeonSystem<T = number>(
         defense: numeric.mulN(numeric.from(power.baseDefense * def.defMult), factor),
         speed: numeric.from(def.speed)
       },
-      mods: { ...(def.mods ?? {}) },
+      mods: { ...def.mods },
       skills: [...(def.skills ?? [])],
       boss: def.boss === true,
       tier: def.tier

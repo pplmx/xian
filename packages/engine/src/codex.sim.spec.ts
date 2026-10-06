@@ -74,7 +74,7 @@ describe('消融实验 —— 图鉴的档位门槛与三条升档路', () => {
     const chanceOf = (): number => 0.1
     const DRAWS = 20
     let maxed = 0
-    const stageCounts = new Array(STAGES.length).fill(0) as number[]
+    const stageCounts = Array.from({ length: STAGES.length }, () => 0)
     for (let run = 0; run < RUNS; run += 1) {
       const rng = createRng(`认出它-${run}`)
       let state = codex.create()

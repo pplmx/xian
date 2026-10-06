@@ -156,7 +156,7 @@ export function createCodex(config: CodexConfig) {
   ): { state: CodexState; improved: boolean } => {
     const prev = state.best[id]
     let improved = !prev
-    const merged: Record<string, number> = { ...(prev ?? {}) }
+    const merged: Record<string, number> = { ...prev }
     for (const [key, value] of Object.entries(candidate)) {
       const next = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0))
       if (next > (merged[key] ?? -1)) {

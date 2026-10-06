@@ -152,7 +152,9 @@ describe('消融实验 —— 抽干一张内容池要多少抽', () => {
       card = drawFrom(WEIGHTED, { level: 1, tags: [], seen }, rng)
     }
     expect(seen.length).toBe(24)
-    console.log(`  抽完 ${seen.length} 张之后连抽 5 次:${[1, 2, 3, 4, 5].map(() => String(drawFrom(WEIGHTED, { level: 1, tags: [], seen }, rng))).join('、')}`)
+    console.log(`  抽完 ${seen.length} 张之后连抽 5 次:${[1, 2, 3, 4, 5].map(() => drawFrom(WEIGHTED, { level: 1, tags: [], seen }, rng)?.name ?? '空').join('、')}`)
+    // 打点直接上报牌名:此前 String(整张 Card 对象)只能打出 [object Object],
+    // 这一行的排查价值是零(抽出来的是什么牌根本看不出)
 
     // ③ 池空返回 null —— 内容必须自己安排"兜底牌"
     const withBackstop: Card[] = [...WEIGHTED, { id: 'backstop', name: '随便逛逛', weight: 1 }]

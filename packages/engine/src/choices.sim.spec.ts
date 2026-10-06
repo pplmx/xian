@@ -52,7 +52,7 @@ describe('消融实验 —— 事件选项的长期分布与兜底', () => {
   it('稀有分支有多难遇到:5% 的后果抽 100 次可能一次都不出', () => {
     const RUNS = 2000
     const DRAWS = 100
-    const counts = new Array(GRAB.outcomes.length).fill(0) as number[]
+    const counts = Array.from({ length: GRAB.outcomes.length }, () => 0)
     let roundsWithoutRare = 0
     for (let round = 0; round < RUNS; round += 1) {
       const rng = createRng(`宝箱-${round}`)

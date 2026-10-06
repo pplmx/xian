@@ -292,9 +292,11 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
   const actualModules = readdirSync(resolve(ENGINE, 'src'))
     .filter(name => name.endsWith('.ts') && !name.endsWith('.spec.ts'))
     .map(name => name.replace(/\.ts$/, ''))
+  // 两侧用同一个显式 ASCII 比较器:deepEqual 判的是「集合一致」,次序只要两侧一致即可
+  const ascii = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
   assert.deepEqual(
-    [...listedModules].sort(),
-    [...actualModules].sort(),
+    [...listedModules].sort(ascii),
+    [...actualModules].sort(ascii),
     'README 的目录树与 src/ 下的模块文件对不上(少列了模块,或列了不存在的文件)'
   )
   const listedDocs = [...tree.matchAll(/(\w+)\.md/g)].map(m => m[1])
@@ -307,7 +309,7 @@ const { MINIMAL } = await import(resolve(DIST, 'presets/minimal.js'))
    * 是读者建立规模感的第一句话,而它不在那棵代码块里,上面的树比不到它 —— 实测它已经漂过一次
    * (写着 36、实际 38)。所以顺手一起查:数字改成手写的那一天起,就得有人盯着。
    */
-  const countClaim = readme.match(/\`src\/\` 下 (\d+) 个模块文件[^(]*\(另有 (\d+) 份内容包\)/)
+  const countClaim = readme.match(/`src\/` 下 (\d+) 个模块文件[^(]*\(另有 (\d+) 份内容包\)/)
   assert.ok(countClaim, 'README 里找不到"src/ 下 N 个模块文件(另有 M 份内容包)"这句 —— 措辞改了?')
   assert.equal(Number(countClaim[1]), actualModules.length, `README 说 ${countClaim[1]} 个模块文件,实际 ${actualModules.length} 个`)
   const actualPresets = readdirSync(resolve(ENGINE, 'src/presets')).filter(

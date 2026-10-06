@@ -95,7 +95,7 @@ describe('消融实验 —— 背包满了会发生什么', () => {
     const bulkForced = bag.addMany(full, many(5, 200), { force: true })
     expect(bulkForced.added.length).toBe(5)
     // 防空转:同一批件、同样的起点,唯一的差别就是 force
-    expect([...bulkForced.added.map(i => i.uid)]).toEqual(many(5, 200).map(i => i.uid))
+    expect(bulkForced.added.map(i => i.uid)).toEqual(many(5, 200).map(i => i.uid))
   })
 
   it('删件必须清掉所有相关槽位:同一件被挂在两个槽上也要一起摘干净', () => {

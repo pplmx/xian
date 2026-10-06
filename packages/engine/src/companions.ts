@@ -108,7 +108,7 @@ export function createCompanionSystem(config: CompanionConfig): CompanionSystem 
 
   const modsOf = (id: string | null): Mods => {
     if (id === null) return {}
-    return { ...(byId.get(id)?.mods ?? {}) }
+    return { ...byId.get(id)?.mods }
   }
 
   const activeMods = (ids: readonly (string | null)[]): Record<string, number> => {
