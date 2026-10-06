@@ -278,6 +278,12 @@
           与天时不同:天时是全境之气,星象只利一方。
         </p>
         <button
+          class="mt-1.5 inline-flex min-h-[28px] items-center text-[11px] text-qing underline underline-offset-2 active:opacity-60"
+          @click="goAdventure"
+        >
+          去 {{ favoredWorldName }} 历练 →
+        </button>
+        <button
           class="mt-2 w-full text-left text-[10px] text-qing active:opacity-60"
           :aria-expanded="showAllMansions"
           @click="showAllMansions = !showAllMansions"
@@ -336,6 +342,13 @@
         <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
           门的效果全部用既有的战斗规则表达,不另造字段 —— 不择门(走常道)时,规则与从前逐字相同。
         </p>
+        <!-- 志 → 行动:门讲得再清楚,也得递出「去哪儿择」这一步 -->
+        <button
+          class="mt-1.5 inline-flex min-h-[28px] items-center text-[11px] text-qing underline underline-offset-2 active:opacity-60"
+          @click="goExped"
+        >
+          去天道远征 · 择门入界 →
+        </button>
       </section>
     </template>
   </div>
@@ -343,6 +356,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useNow } from "@/composables/useNow";
 import { usePlayerStore } from "@/stores/player";
 import { useGameStore } from "@/stores/game";
@@ -528,5 +542,16 @@ function gotoClassic(id: string): void {
 }
 function gotoRealm(id: string): void {
   void jumpTo("realm", `realm-${id}`);
+}
+
+// ---- 志 → 行动:把「讲清楚」接回「去哪儿做」 ----
+const router = useRouter();
+/** 奇门:择门入界在「天道远征」里做 —— 带着 ?tab=exped 直接落到远征册 */
+function goExped(): void {
+  void router.push({ path: "/celestial", query: { tab: "exped" } });
+}
+/** 星象:今日利的一方,去历练里兑现 */
+function goAdventure(): void {
+  void router.push("/adventure");
 }
 </script>

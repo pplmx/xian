@@ -59,198 +59,212 @@
       道痕未满{{ cnNumber(PROFILE_MIN_MARKS) }}则,画像尚不成形。
     </p>
 
-    <!-- 轮回录(Phase 32.5):第 N 世与第 1 世的实质区别 -->
-    <SectionTitle title="轮回录" :hint="`宿慧 ${insight}`" />
-    <div class="card-ink px-4 py-3">
-      <p class="flex items-center gap-2">
-        <span class="font-kai text-[14px] tracking-widest text-ink">{{ stage.name }}</span>
-        <span class="text-[10px] text-ink-faint tabular"
-          >第 {{ player.reincarnation.count + 1 }} 世</span
-        >
-        <span
-          v-if="toNextStage !== null"
-          class="ml-auto shrink-0 text-[10px] text-ink-faint tabular"
-        >
-          再积 {{ toNextStage }} 宿慧入下一境地
-        </span>
-        <span v-else class="ml-auto shrink-0 text-[10px] text-gold-ink">此道已至尽头</span>
-      </p>
-      <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">{{ stage.desc }}</p>
+    <!-- 页签:长卷分册 —— 与界域志 / 图鉴 / 名号 / 天界同构,免得七段一路滑到底 -->
+    <InkTabs v-model="tab" :tabs="TABS" />
 
-      <!-- 随神魂不灭的那一份 -->
-      <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-ink/10 pt-2 text-[11px]">
-        <p class="flex justify-between">
-          <span class="text-ink-faint">认得灵材</span>
-          <span class="tabular text-ink-soft">{{ lore.knownMaterialCount }} 味</span>
-        </p>
-        <p class="flex justify-between">
-          <span class="text-ink-faint">通晓丹方</span>
-          <span class="tabular text-ink-soft">{{ lore.masteredRecipeCount }} 张</span>
-        </p>
-        <p class="flex justify-between">
-          <span class="text-ink-faint">洞悉敌手</span>
-          <span class="tabular text-ink-soft">{{ lore.masteredEnemyCount }} 种</span>
-        </p>
-        <p class="flex justify-between">
-          <span class="text-ink-faint">睁眼即识</span>
-          <span class="tabular text-ink-soft">{{ stage.knownMaterialRank }} 阶以下</span>
-        </p>
-      </div>
-
-      <!-- 这一世的命题 -->
-      <div v-if="vowTheme" class="mt-2 rounded-lg border border-ink/15 px-3 py-2">
-        <p class="flex items-center justify-between">
-          <span class="font-kai text-[13px] text-ink">「{{ vowTheme.vow }}」</span>
+    <template v-if="tab === 'samsara'">
+      <!-- 轮回录(Phase 32.5):第 N 世与第 1 世的实质区别 -->
+      <SectionTitle title="轮回录" :hint="`宿慧 ${insight}`" />
+      <div class="card-ink px-4 py-3">
+        <p class="flex items-center gap-2">
+          <span class="font-kai text-[14px] tracking-widest text-ink">{{ stage.name }}</span>
+          <span class="text-[10px] text-ink-faint tabular"
+            >第 {{ player.reincarnation.count + 1 }} 世</span
+          >
           <span
-            class="text-[11px]"
-            :class="vowBroken ? 'text-amber-ink' : vowDone ? 'text-cinnabar' : 'text-ink-faint'"
+            v-if="toNextStage !== null"
+            class="ml-auto shrink-0 text-[10px] text-ink-faint tabular"
           >
-            {{ vowBroken ? "已破" : vowDone ? "已成" : "在途" }}
+            再积 {{ toNextStage }} 宿慧入下一境地
           </span>
+          <span v-else class="ml-auto shrink-0 text-[10px] text-gold-ink">此道已至尽头</span>
         </p>
-        <p class="mt-1 text-[11px] text-ink-faint">
-          {{ vowTheme.goal }}
-          <span v-if="vowProg" class="tabular"
-            >({{ Math.floor(vowProg.cur) }} / {{ vowProg.need }})</span
-          >
-        </p>
-      </div>
-      <p v-else class="mt-2 text-[11px] text-ink-faint">
-        这一世不曾为自己立题。兵解转世时,可择一题而行。
-      </p>
-    </div>
+        <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">{{ stage.desc }}</p>
 
-    <!-- 历世履历 -->
-    <SectionTitle title="历世履历" :hint="lifeRows.length ? `${lifeRows.length} 世` : '初世'" />
-    <div class="card-ink divide-y divide-ink/6 px-4">
-      <template v-if="lifeRows.length">
-        <p v-for="l in lifeRows" :key="l.index" class="flex items-center gap-2 py-2 text-[12px]">
-          <span class="w-11 shrink-0 font-kai text-ink-faint tabular">第{{ l.index }}世</span>
-          <span class="text-ink-soft">{{ l.realmLabel }}</span>
-          <span class="text-[10px] text-ink-faint tabular">寿 {{ l.age }} 载</span>
-          <span v-if="l.themeName" class="text-[10px]" :class="l.resultColor"
-            >{{ l.themeName }}·{{ l.resultText }}</span
-          >
-          <span class="ml-auto shrink-0 tabular text-[10px] text-gold-ink"
-            >宿慧 +{{ l.insight }}</span
-          >
-        </p>
-      </template>
-      <p v-else class="py-4 text-center text-[11px] text-ink-faint">
-        此为初世。你尚未死过一次,也就还没有什么可以回忆。
-      </p>
-    </div>
-
-    <!-- 修行节点 -->
-    <SectionTitle
-      title="修行节点"
-      :hint="`${endgame.milestones.length}/${MILESTONE_DEFS.length}`"
-    />
-    <div class="card-ink px-4 py-2">
-      <div v-if="milestoneRows.length" class="relative ml-2 border-l border-ink/15 pl-4">
-        <div v-for="row in milestoneRows" :key="row.id" class="relative py-1.5">
-          <span class="absolute -left-5.25 top-2.5 h-2 w-2 rounded-full bg-gold-ink" />
-          <p class="font-kai text-[13px] text-ink">第 {{ row.life }} 世 · {{ row.name }}</p>
-          <p class="text-[10px] text-ink-faint">{{ row.desc }}</p>
+        <!-- 随神魂不灭的那一份 -->
+        <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-ink/10 pt-2 text-[11px]">
+          <p class="flex justify-between">
+            <span class="text-ink-faint">认得灵材</span>
+            <span class="tabular text-ink-soft">{{ lore.knownMaterialCount }} 味</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-ink-faint">通晓丹方</span>
+            <span class="tabular text-ink-soft">{{ lore.masteredRecipeCount }} 张</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-ink-faint">洞悉敌手</span>
+            <span class="tabular text-ink-soft">{{ lore.masteredEnemyCount }} 种</span>
+          </p>
+          <p class="flex justify-between">
+            <span class="text-ink-faint">睁眼即识</span>
+            <span class="tabular text-ink-soft">{{ stage.knownMaterialRank }} 阶以下</span>
+          </p>
         </div>
+
+        <!-- 这一世的命题 -->
+        <div v-if="vowTheme" class="mt-2 rounded-lg border border-ink/15 px-3 py-2">
+          <p class="flex items-center justify-between">
+            <span class="font-kai text-[13px] text-ink">「{{ vowTheme.vow }}」</span>
+            <span
+              class="text-[11px]"
+              :class="vowBroken ? 'text-amber-ink' : vowDone ? 'text-cinnabar' : 'text-ink-faint'"
+            >
+              {{ vowBroken ? "已破" : vowDone ? "已成" : "在途" }}
+            </span>
+          </p>
+          <p class="mt-1 text-[11px] text-ink-faint">
+            {{ vowTheme.goal }}
+            <span v-if="vowProg" class="tabular"
+              >({{ Math.floor(vowProg.cur) }} / {{ vowProg.need }})</span
+            >
+          </p>
+        </div>
+        <p v-else class="mt-2 text-[11px] text-ink-faint">
+          这一世不曾为自己立题。兵解转世时,可择一题而行。
+        </p>
       </div>
-      <p v-else class="py-4 text-center text-[11px] text-ink-faint">
-        此录尚白。天界之行,自会留名。
-      </p>
-    </div>
 
-    <!-- 征战录(Phase 30.9 S2):宿敌与雪耻 -->
-    <SectionTitle title="征战录" :hint="`宿敌 ${nemesisRows.length} 位`" />
-    <div class="card-ink divide-y divide-ink/6 px-4">
-      <template v-if="nemesisRows.length">
-        <p
-          v-for="n in nemesisRows"
-          :key="n.enemyId"
-          class="flex items-center gap-2 py-2 text-[12px]"
-        >
-          <span class="font-kai text-[13px]" :class="n.avengedAt ? 'text-ink' : 'text-cinnabar'">{{
-            n.enemyName
-          }}</span>
-          <span class="text-[10px] text-ink-faint"
-            >{{ n.regionName }} · 败我 {{ n.lossCount }} 次</span
-          >
-          <span
-            class="ml-auto shrink-0 text-[10px]"
-            :class="n.avengedAt ? 'text-jade' : 'text-cinnabar'"
-          >
-            {{ n.avengedAt ? "已雪耻" : "尚为宿敌" }}
-          </span>
+      <!-- 历世履历 -->
+      <SectionTitle title="历世履历" :hint="lifeRows.length ? `${lifeRows.length} 世` : '初世'" />
+      <div class="card-ink divide-y divide-ink/6 px-4">
+        <template v-if="lifeRows.length">
+          <p v-for="l in lifeRows" :key="l.index" class="flex items-center gap-2 py-2 text-[12px]">
+            <span class="w-11 shrink-0 font-kai text-ink-faint tabular">第{{ l.index }}世</span>
+            <span class="text-ink-soft">{{ l.realmLabel }}</span>
+            <span class="text-[10px] text-ink-faint tabular">寿 {{ l.age }} 载</span>
+            <span v-if="l.themeName" class="text-[10px]" :class="l.resultColor"
+              >{{ l.themeName }}·{{ l.resultText }}</span
+            >
+            <span class="ml-auto shrink-0 tabular text-[10px] text-gold-ink"
+              >宿慧 +{{ l.insight }}</span
+            >
+          </p>
+        </template>
+        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+          此为初世。你尚未死过一次,也就还没有什么可以回忆。
         </p>
-      </template>
-      <p v-else class="py-4 text-center text-[11px] text-ink-faint">
-        尚无宿敌。此录待你的血与道来填。
-      </p>
-    </div>
+      </div>
+    </template>
 
-    <!-- 行迹录(Phase 30.9 S3):事件余波 -->
-    <!-- 奇缘录(Phase 34.2):未了之缘,一世一世接下去 -->
-    <SectionTitle title="奇缘录" :hint="`未了之缘 ${unfinishedChains} 条`" />
-    <div class="card-ink divide-y divide-ink/6 px-4">
-      <template v-if="chainRows.length">
-        <p v-for="c in chainRows" :key="c.id" class="flex items-center gap-2 py-2 text-[12px]">
-          <span
-            class="shrink-0 font-kai text-[13px]"
-            :class="c.finished ? 'text-ink' : 'text-cinnabar'"
-            >{{ c.name }}</span
-          >
-          <span class="min-w-0 truncate text-[10px] text-ink-faint">{{ c.hint }}</span>
-          <span
-            class="ml-auto shrink-0 tabular text-[10px]"
-            :class="c.finished ? 'text-jade' : 'text-ink-faint'"
-          >
-            {{ c.finished ? "已了" : `第 ${c.stage + 1}/${c.total} 程` }}
-          </span>
+    <template v-else-if="tab === 'journey'">
+      <!-- 修行节点 -->
+      <SectionTitle
+        title="修行节点"
+        :hint="`${endgame.milestones.length}/${MILESTONE_DEFS.length}`"
+      />
+      <div class="card-ink px-4 py-2">
+        <div v-if="milestoneRows.length" class="relative ml-2 border-l border-ink/15 pl-4">
+          <div v-for="row in milestoneRows" :key="row.id" class="relative py-1.5">
+            <span class="absolute -left-5.25 top-2.5 h-2 w-2 rounded-full bg-gold-ink" />
+            <p class="font-kai text-[13px] text-ink">第 {{ row.life }} 世 · {{ row.name }}</p>
+            <p class="text-[10px] text-ink-faint">{{ row.desc }}</p>
+          </div>
+        </div>
+        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+          此录尚白。天界之行,自会留名。
         </p>
-      </template>
-      <p v-else class="py-4 text-center text-[11px] text-ink-faint">
-        尚无未了之缘。缘起于路上,不在名录里。
-      </p>
-    </div>
+      </div>
 
-    <SectionTitle title="行迹录" :hint="`际遇回响 ${lossTotal} 则`" />
-    <div class="card-ink divide-y divide-ink/6 px-4">
-      <template v-if="lossRows.length">
-        <p
-          v-for="l in lossRows"
-          :key="l.eventId + l.at"
-          class="flex items-center gap-2 py-2 text-[12px]"
-        >
-          <span class="text-[10px] text-ink-faint">{{ formatDate(l.at) }}</span>
-          <span class="text-ink-soft">{{ l.eventName }}</span>
-          <span class="ml-auto shrink-0 text-[10px] text-ink-faint">{{ l.note }}</span>
+      <!-- 征战录(Phase 30.9 S2):宿敌与雪耻 -->
+      <SectionTitle title="征战录" :hint="`宿敌 ${nemesisRows.length} 位`" />
+      <div class="card-ink divide-y divide-ink/6 px-4">
+        <template v-if="nemesisRows.length">
+          <p
+            v-for="n in nemesisRows"
+            :key="n.enemyId"
+            class="flex items-center gap-2 py-2 text-[12px]"
+          >
+            <span
+              class="font-kai text-[13px]"
+              :class="n.avengedAt ? 'text-ink' : 'text-cinnabar'"
+              >{{ n.enemyName }}</span
+            >
+            <span class="text-[10px] text-ink-faint"
+              >{{ n.regionName }} · 败我 {{ n.lossCount }} 次</span
+            >
+            <span
+              class="ml-auto shrink-0 text-[10px]"
+              :class="n.avengedAt ? 'text-jade' : 'text-cinnabar'"
+            >
+              {{ n.avengedAt ? "已雪耻" : "尚为宿敌" }}
+            </span>
+          </p>
+        </template>
+        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+          尚无宿敌。此录待你的血与道来填。
         </p>
-        <!-- 只列最近的几则,但抬头报的是**总数** —— 数不许多报也不许少报 -->
-        <p v-if="lossTotal > lossRows.length" class="py-2 text-center text-[10px] text-ink-faint">
-          仅列最近 {{ lossRows.length }} 则
-        </p>
-      </template>
-      <p v-else class="py-4 text-center text-[11px] text-ink-faint">世界尚未记住你的足迹。</p>
-    </div>
+      </div>
+    </template>
 
-    <!-- 我的纪录 -->
-    <SectionTitle title="我的纪录" hint="只与过去的自己比" />
-    <div class="card-ink divide-y divide-ink/6 px-4">
-      <template v-if="recordRows.length">
-        <p v-for="r in recordRows" :key="r.id" class="flex items-center gap-2 py-2 text-[12px]">
-          <span class="text-ink-faint">{{ r.name }}</span>
-          <span class="ml-auto tabular font-kai text-[13px] text-gold-ink">{{ r.valueText }}</span>
-          <span class="shrink-0 text-[10px] text-ink-faint">第{{ r.life }}世 · {{ r.note }}</span>
+    <template v-else-if="tab === 'fate'">
+      <!-- 奇缘录(Phase 34.2):未了之缘,一世一世接下去 -->
+      <SectionTitle title="奇缘录" :hint="`未了之缘 ${unfinishedChains} 条`" />
+      <div class="card-ink divide-y divide-ink/6 px-4">
+        <template v-if="chainRows.length">
+          <p v-for="c in chainRows" :key="c.id" class="flex items-center gap-2 py-2 text-[12px]">
+            <span
+              class="shrink-0 font-kai text-[13px]"
+              :class="c.finished ? 'text-ink' : 'text-cinnabar'"
+              >{{ c.name }}</span
+            >
+            <span class="min-w-0 truncate text-[10px] text-ink-faint">{{ c.hint }}</span>
+            <span
+              class="ml-auto shrink-0 tabular text-[10px]"
+              :class="c.finished ? 'text-jade' : 'text-ink-faint'"
+            >
+              {{ c.finished ? "已了" : `第 ${c.stage + 1}/${c.total} 程` }}
+            </span>
+          </p>
+        </template>
+        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+          尚无未了之缘。缘起于路上,不在名录里。
         </p>
-      </template>
-      <p v-else class="py-4 text-center text-[11px] text-ink-faint">
-        纪录待创。破界之时,自见分晓。
-      </p>
-    </div>
+      </div>
+
+      <SectionTitle title="行迹录" :hint="`际遇回响 ${lossTotal} 则`" />
+      <div class="card-ink divide-y divide-ink/6 px-4">
+        <template v-if="lossRows.length">
+          <p
+            v-for="l in lossRows"
+            :key="l.eventId + l.at"
+            class="flex items-center gap-2 py-2 text-[12px]"
+          >
+            <span class="text-[10px] text-ink-faint">{{ formatDate(l.at) }}</span>
+            <span class="text-ink-soft">{{ l.eventName }}</span>
+            <span class="ml-auto shrink-0 text-[10px] text-ink-faint">{{ l.note }}</span>
+          </p>
+          <!-- 只列最近的几则,但抬头报的是**总数** —— 数不许多报也不许少报 -->
+          <p v-if="lossTotal > lossRows.length" class="py-2 text-center text-[10px] text-ink-faint">
+            仅列最近 {{ lossRows.length }} 则
+          </p>
+        </template>
+        <p v-else class="py-4 text-center text-[11px] text-ink-faint">世界尚未记住你的足迹。</p>
+      </div>
+    </template>
+
+    <template v-else>
+      <!-- 我的纪录 -->
+      <SectionTitle title="我的纪录" hint="只与过去的自己比" />
+      <div class="card-ink divide-y divide-ink/6 px-4">
+        <template v-if="recordRows.length">
+          <p v-for="r in recordRows" :key="r.id" class="flex items-center gap-2 py-2 text-[12px]">
+            <span class="text-ink-faint">{{ r.name }}</span>
+            <span class="ml-auto tabular font-kai text-[13px] text-gold-ink">{{
+              r.valueText
+            }}</span>
+            <span class="shrink-0 text-[10px] text-ink-faint">第{{ r.life }}世 · {{ r.note }}</span>
+          </p>
+        </template>
+        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+          纪录待创。破界之时,自见分晓。
+        </p>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
@@ -272,7 +286,18 @@ import { isNemesis } from "@/core/worldMemory";
 import { chainProgressRows } from "@/core/eventEngine";
 import { formatDate } from "@/utils/time";
 import SectionTitle from "@/components/common/SectionTitle.vue";
+import InkTabs from "@/components/common/InkTabs.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
+
+/** 长卷分册:轮回(本世与历世)/ 征程(节点与宿敌)/ 缘迹(奇缘与行迹)/ 纪录 */
+type LegacyTab = "samsara" | "journey" | "fate" | "record";
+const TABS: { id: LegacyTab; label: string }[] = [
+  { id: "samsara", label: "轮回" },
+  { id: "journey", label: "征程" },
+  { id: "fate", label: "缘迹" },
+  { id: "record", label: "纪录" },
+];
+const tab = ref<LegacyTab>("samsara");
 
 const endgame = useEndgameStore();
 const player = usePlayerStore();

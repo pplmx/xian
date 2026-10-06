@@ -1116,7 +1116,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
@@ -1221,6 +1221,7 @@ const endgame = useEndgameStore();
 const unlocked = computed(() => endgameUnlocked());
 
 const router = useRouter();
+const route = useRoute();
 function goSouls(): void {
   router.push({ name: "souls" });
 }
@@ -1320,13 +1321,18 @@ function doCondense(): void {
 
 // ---- 页签:长卷分册(远征在途时落在远征册) ----
 type CelTab = "dao" | "exped" | "trial" | "marks";
-const celTab = ref<CelTab>(endgame.worldRun ? "exped" : "dao");
 const CEL_TABS: { id: CelTab; label: string }[] = [
   { id: "dao", label: "道途" },
   { id: "exped", label: "远征" },
   { id: "trial", label: "试炼" },
   { id: "marks", label: "道痕" },
 ];
+/**
+ * 落哪一册:界域志的「奇门」可带 `?tab=exped` 直接落到远征册(择门就在那儿),
+ * 其余按旧规矩 —— 远征在途落远征,否则落道途。
+ */
+const routeTab = CEL_TABS.find((t) => t.id === String(route.query.tab))?.id;
+const celTab = ref<CelTab>(routeTab ?? (endgame.worldRun ? "exped" : "dao"));
 
 /** 页签行:远征在途时挂朱点提醒 */
 const celTabRows = computed(() =>
