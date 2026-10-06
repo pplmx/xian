@@ -5,6 +5,27 @@ import legacy from "@vitejs/plugin-legacy";
 
 export default defineConfig({
   fmt: {},
+  run: {
+    tasks: {
+      /* 一次跑完整套门禁 —— 提交/推送前该过的全过:
+         type-check + 全仓 oxlint + docs-check、全量测试、文档例数对账、
+         生产与 legacy 双构建、引擎子树同树、独立仓模拟(后两步最容易忘,
+         缓存会掩盖引擎回归 —— 见 memory 续十四之二)。cache: false
+         保证每次真跑,不拿上一次的结果糊弄。 */
+      verify: {
+        cache: false,
+        command: [
+          "bun run check",
+          "bun run test",
+          "bun run test:report",
+          "bun run build",
+          "bun run build:release",
+          "bun run check:engine",
+          "bun run check:engine:standalone",
+        ],
+      },
+    },
+  },
   lint: {
     plugins: ["oxc", "typescript", "unicorn", "vue"],
     categories: {
