@@ -36,7 +36,7 @@ if (!existsSync(join(DIST, "index.html"))) {
 }
 
 /** SW 的缓存版本号就是它唯一的"人工记得"的旋钮,从源码读,免得判据自己抄一份 */
-const CACHE_VERSION = /CACHE_VERSION\s*=\s*'([^']+)'/.exec(
+const CACHE_VERSION = /CACHE_VERSION\s*=\s*["']([^"']+)["']/.exec(
   readFileSync(join(ROOT, "public/sw.js"), "utf8"),
 )?.[1];
 if (!CACHE_VERSION) {
