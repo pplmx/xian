@@ -7,7 +7,8 @@
         >← 人物</RouterLink
       >
       <span class="text-[11px] text-ink-faint">·</span>
-      <span class="text-[12px] text-ink-soft">图鉴</span>
+      <!-- 抬头与人物页入口同名(藏珍与成就):这一页含「成就」一册,只叫「图鉴」就少了一半 -->
+      <span class="text-[12px] text-ink-soft">藏珍与成就</span>
     </div>
     <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
     <InkTabs v-model="tab" :tabs="tabRows" />

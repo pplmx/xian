@@ -7,7 +7,8 @@
         >← 人物</RouterLink
       >
       <span class="text-[11px] text-ink-faint">·</span>
-      <span class="text-[12px] text-ink-soft">名号</span>
+      <!-- 抬头与人物页入口同名(名号与灵兽):同一处地方,只许一个名字 -->
+      <span class="text-[12px] text-ink-soft">名号与灵兽</span>
     </div>
     <!-- 页签 -->
     <InkTabs v-model="tab" :tabs="TABS" />

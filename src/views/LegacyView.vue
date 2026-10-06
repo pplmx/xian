@@ -121,6 +121,7 @@
     </div>
 
     <!-- 历世履历 -->
+    <SectionTitle title="历世履历" :hint="lifeRows.length ? `${lifeRows.length} 世` : '初世'" />
     <div class="card-ink divide-y divide-ink/6 px-4">
       <template v-if="lifeRows.length">
         <p v-for="l in lifeRows" :key="l.index" class="flex items-center gap-2 py-2 text-[12px]">
@@ -211,7 +212,7 @@
       </p>
     </div>
 
-    <SectionTitle title="行迹录" :hint="`际遇回响 ${lossRows.length} 则`" />
+    <SectionTitle title="行迹录" :hint="`际遇回响 ${lossTotal} 则`" />
     <div class="card-ink divide-y divide-ink/6 px-4">
       <template v-if="lossRows.length">
         <p
@@ -222,6 +223,10 @@
           <span class="text-[10px] text-ink-faint">{{ formatDate(l.at) }}</span>
           <span class="text-ink-soft">{{ l.eventName }}</span>
           <span class="ml-auto shrink-0 text-[10px] text-ink-faint">{{ l.note }}</span>
+        </p>
+        <!-- 只列最近的几则,但抬头报的是**总数** —— 数不许多报也不许少报 -->
+        <p v-if="lossTotal > lossRows.length" class="py-2 text-center text-[10px] text-ink-faint">
+          仅列最近 {{ lossRows.length }} 则
         </p>
       </template>
       <p v-else class="py-4 text-center text-[11px] text-ink-faint">世界尚未记住你的足迹。</p>
@@ -328,6 +333,10 @@ const nemesisRows = computed(() =>
     .sort((a, b) => (a.avengedAt ?? 0) - (b.avengedAt ?? 0)),
 );
 
+/** 行迹录:报的是**总数**;列表只列最近的几则(抬头不许少报) */
+const lossTotal = computed(
+  () => Object.values(adventure.eventMemories).filter((m) => m.times >= 2).length,
+);
 /** 征战录:事件余波(世界记忆的最近完成) */
 const lossRows = computed(() =>
   Object.values(adventure.eventMemories)

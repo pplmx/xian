@@ -10,7 +10,7 @@
       <span class="text-[12px] text-ink-soft">界域志</span>
     </div>
 
-    <SectionTitle title="界域志" hint="境界名从哪来,一路读下去" />
+    <SectionTitle title="界域志" :hint="`境界名从哪来 · 已至「${realmDef(player.major).name}」`" />
     <InkTabs v-model="codexTab" :tabs="CODEX_TABS" />
 
     <template v-if="codexTab === 'realm'">
@@ -35,6 +35,7 @@
         <div class="mt-2 space-y-2">
           <div
             v-for="cell in row.realms"
+            :id="`realm-${cell.def.id}`"
             :key="cell.def.id"
             class="rounded-md px-2.5 py-2"
             :class="cell.index === player.major ? 'codex-current' : 'bg-paper-deep/50'"
@@ -58,12 +59,22 @@
             <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ cell.def.desc }}</p>
             <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">{{ cell.def.lore }}</p>
             <!-- 此境所据何典:把「境界 → 原典」这条来路直接摆在该境底下 -->
-            <p v-if="classicsOf(cell.def.id).length" class="mt-1 text-[10px] text-ink-faint">
-              所据:{{
-                classicsOf(cell.def.id)
-                  .map((c) => `《${c.title}》`)
-                  .join(" ")
-              }}
+            <!-- 所据何典:点一下就跳到「典籍」那一册 —— codex 要能顺着来路追下去 -->
+            <p
+              v-if="classicsOf(cell.def.id).length"
+              class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[10px] text-ink-faint"
+            >
+              <span>所据:</span>
+              <!-- 行内链接给 28px 触达面(inline-flex min-h),与历练页那枚同款 -->
+              <button
+                v-for="c in classicsOf(cell.def.id)"
+                :key="c.id"
+                class="inline-flex min-h-[28px] items-center text-qing underline underline-offset-2 active:opacity-60"
+                :aria-label="`查看典籍《${c.title}》`"
+                @click="gotoClassic(c.id)"
+              >
+                《{{ c.title }}》
+              </button>
             </p>
           </div>
         </div>
@@ -74,15 +85,33 @@
       <!-- 典籍:境界名背后的原典 -->
       <SectionTitle title="典籍" hint="所述者传统道教、佛教、道家与丹道之书" />
       <section class="space-y-2">
-        <article v-for="c in CLASSICS" :key="c.id" class="card-ink px-4 py-3">
+        <article
+          v-for="c in CLASSICS"
+          :id="`classic-${c.id}`"
+          :key="c.id"
+          class="card-ink px-4 py-3"
+        >
           <p class="flex flex-wrap items-center gap-2">
             <span class="font-kai text-[14px] text-ink">《{{ c.title }}》</span>
             <span class="chip-ink !text-[9px]">{{ c.school }}</span>
             <span class="text-[10px] text-ink-faint">{{ c.source }}</span>
           </p>
           <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">{{ c.gist }}</p>
-          <p v-if="c.realms.length" class="mt-1 text-[10px] text-ink-faint">
-            相涉:{{ c.realms.map((id) => realmName(id)).join("、") }}
+          <!-- 相涉何境:点一下跳回「界域」那一段 —— 反向也能追 -->
+          <p
+            v-if="c.realms.length"
+            class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[10px] text-ink-faint"
+          >
+            <span>相涉:</span>
+            <button
+              v-for="id in c.realms"
+              :key="id"
+              class="inline-flex min-h-[28px] items-center text-qing underline underline-offset-2 active:opacity-60"
+              :aria-label="`查看境界「${realmName(id)}」`"
+              @click="gotoRealm(id)"
+            >
+              {{ realmName(id) }}
+            </button>
           </p>
         </article>
       </section>
@@ -309,31 +338,18 @@
         </p>
       </section>
     </template>
-
-    <template v-if="codexTab === 'todo' && PLANNED_SCHOOLS.length">
-      <SectionTitle title="待续" hint="已列入路线、尚未实装的经典门类" />
-      <section class="card-ink divide-y divide-ink/7 px-4">
-        <div v-for="p in PLANNED_SCHOOLS" :key="p.name" class="flex items-start gap-2 py-2.5">
-          <span class="w-[104px] shrink-0 font-kai text-[12px] text-ink-soft">{{ p.name }}</span>
-          <span class="text-[11px] leading-relaxed text-ink-faint">{{ p.note }}</span>
-        </div>
-        <p class="py-2.5 text-[10px] leading-relaxed text-ink-faint">
-          这里只列尚未动的门类,不写空话 —— 真接上之后,它们会带着自己的典籍与玩法搬进来。
-        </p>
-      </section>
-    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useNow } from "@/composables/useNow";
 import { usePlayerStore } from "@/stores/player";
 import { useGameStore } from "@/stores/game";
 import { useUiStore } from "@/stores/ui";
 import { useResourcesStore } from "@/stores/resources";
 import { REALMS, WORLDS, realmDef } from "@/data/realms";
-import { CLASSICS, PLANNED_SCHOOLS, classicsForRealm } from "@/data/classics";
+import { CLASSICS, classicsForRealm } from "@/data/classics";
 import { HEXAGRAMS, TRIGRAMS, trigramDef } from "@/data/yijing";
 import {
   DIVINATION_COST,
@@ -494,5 +510,23 @@ function realmName(id: string): string {
 /** 此境所据的原典(来自典籍表,不在视图里手写) */
 function classicsOf(realmId: string) {
   return classicsForRealm(realmId);
+}
+
+/**
+ * 志里两半互指:点「所据」跳到典籍那一册,点「相涉」跳回界域那一段。
+ *
+ * 一部志若只能从头读到尾、不能顺着线索走,就只是一篇长文;能互指才是「志」。
+ * 切完册等一帧再滚 —— 目标要等目标册渲染出来才在 DOM 里。
+ */
+async function jumpTo(tab: CodexTab, elId: string): Promise<void> {
+  codexTab.value = tab;
+  await nextTick();
+  document.getElementById(elId)?.scrollIntoView({ block: "center" });
+}
+function gotoClassic(id: string): void {
+  void jumpTo("classics", `classic-${id}`);
+}
+function gotoRealm(id: string): void {
+  void jumpTo("realm", `realm-${id}`);
 }
 </script>
