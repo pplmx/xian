@@ -12,6 +12,11 @@
  *   bun scripts/ui-smoke.mjs             # 每页最多点 12 个按钮
  *   bun scripts/ui-smoke.mjs --depth 25  # 点更多
  *   bun scripts/ui-smoke.mjs --late      # 用后期夹具存档(神人境)覆盖终局界面
+ *   bun scripts/ui-smoke.mjs --jobs 6    # 并发路数;也可用 UI_SMOKE_JOBS 环境变量
+ *
+ * 每页一个独立 context(各带自己的存档),由下面的 runPool 并发跑 —— 从前 15 页
+ * 排成一队,一轮约十分钟;并发后本地实测两分多钟。--jobs 1 退化回串行。
+ * 各页的点击序、失败清单按 ROUTES 固定顺序合并,报告与串行时一致。
  *
  * 会跳过有破坏性的按钮(分解/删除/清空/重置/兵解/转世),免得把冒烟盘玩坏。
  * 发现 pageerror 即失败并打印堆栈前几行 —— 那通常就是一处真 bug。
@@ -23,11 +28,12 @@
  * 故这里能照同一套格式造一份"神人境"存档。它是**自检夹具**,不是作弊入口:
  * 别把它当推荐玩法,也别据此以为存档不可改。
  *
- * ⚠ --late 很慢(一轮约十分钟):终局页面上的按钮会真的触发模拟
- * (突破推演 / 远征预估 / 挑战书定价),不是脚本卡住了。日常冒烟用默认模式。
+ * ⚠ --late 很慢(终局页面上的按钮会真的触发模拟:突破推演 / 远征预估 / 挑战书
+ * 定价,不是脚本卡住了)。日常冒烟用默认模式;并发只是让这些等待叠在一起,并不减免。
  */
 import { chromium } from "playwright";
 import CryptoJS from "crypto-js";
+import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
@@ -37,6 +43,18 @@ const INDEX = `file://${join(ROOT, "dist/index.html")}`;
 const depthArg = process.argv.indexOf("--depth");
 const DEPTH = depthArg > 0 ? Number(process.argv[depthArg + 1]) || 12 : 12;
 const LATE = process.argv.includes("--late");
+
+/** 并发路数:`--jobs N` > `UI_SMOKE_JOBS` > 按核数自适应(上限 8,CI 少核也不会把内存打爆) */
+const JOBS = (() => {
+  const i = process.argv.indexOf("--jobs");
+  if (i > 0) {
+    const n = Number(process.argv[i + 1]);
+    if (Number.isFinite(n) && n >= 1) return Math.floor(n);
+  }
+  const env = Number(process.env.UI_SMOKE_JOBS);
+  if (Number.isFinite(env) && env >= 1) return Math.floor(env);
+  return Math.max(2, Math.min(8, (cpus().length || 4) - 1));
+})();
 
 /**
  * 全量路由 —— 从前只点九页,流派/收藏/修仙录/洞府/本世之界/天界这六页
@@ -66,16 +84,14 @@ const SKIP = /分解|删除|清空|重置|兵解|转世|散尽|导出|导入|隐
 
 /**
  * 分析脚本的域名在自检里断掉(见 lib/pageErrors.mjs 里那段实测说明):
- * 不是为了省时间(本地量过,断不断都是一轮五分半 —— 时间花在点击与等待上),
- * 而是不让第三方脚本的加载与异常掺进这道门。
+ * 不是为了省时间,而是不让第三方脚本的加载与异常掺进这道门。
  */
 const browser = await chromium.launch({
   args: ["--allow-file-access-from-files", "--disable-web-security"],
 });
-const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
-// 外域请求一律拦掉:一是量尺(应当恒为 0),二是别让别人的服务器决定我们的门要不要绿
-const blockedExternal = await blockExternal(context);
-if (LATE) {
+
+/** 后期夹具存档(神人境):每个 context 各注入一份,故每页都是干净终局档 */
+function lateSlices() {
   const gn = (m, e) => ({ m, e });
   const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
   const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
@@ -170,95 +186,69 @@ if (LATE) {
       theme: "dark",
     },
   };
-  await context.addInitScript(
-    (data) => {
+  return Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]));
+}
+
+/**
+ * 建"我们自己的"上下文 —— **外域请求一律拦掉**。
+ * 挂在 context 层:该上下文里所有页面(含后续新建的)自动覆盖。
+ * 后期模式顺手把夹具注进去(每个 context 一份,互不干扰)。
+ */
+async function makeContext() {
+  const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  const blocked = await blockExternal(context);
+  if (LATE) {
+    await context.addInitScript((data) => {
       if (localStorage.getItem("__smokeFixture")) return;
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
       localStorage.setItem("__smokeFixture", "1");
-    },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
-  );
-}
-const page = await context.newPage();
-const errors = [];
-/**
- * 点了没反应的按钮 —— 只报告,不判失败。
- *
- * 判据是「点击前后看不出任何变化」:正文文本、弹窗数、toast 数都没动。
- * 空白点击有时是合理的(比如点一个已选中的页签),故先当读数看:
- * 一屏里要是冒出十几个,那就说明有一批入口在静默失败。
- */
-const silent = [];
-async function fingerprint() {
-  return page.evaluate(() => {
-    const text = document.body.innerText.replace(/\s+/g, " ").slice(0, 4000);
-    /*
-     * 指纹里必须带上「不体现在文字上的变化」。
-     *
-     * 主题与战报速度这两组切换改的是 CSS 变量与 aria-pressed,正文一个字都不变 ——
-     * 于是它们每一轮都被报成「点了没反应」,而读数一旦常驻噪声,真事故就会被忽略。
-     * 故把 data-theme 与当前按下的选择一并算进指纹(顺手也能看出选中态有没有变)。
-     */
-    /*
-     * 全文哈希:只看首尾会漏掉「变化发生在中间」的点击 ——
-     * 比如人物页点一行属性,来源明细是在正文中段展开的,
-     * 首 120/末 80 字都没动,于是它被记成「点了没反应」(实测)。
-     */
-    const full = document.body.innerText.replace(/\s+/g, " ");
-    let hash = 0;
-    for (let i = 0; i < full.length; i += 1) hash = (hash * 31 + full.charCodeAt(i)) | 0;
-    const pressed = [...document.querySelectorAll("[aria-pressed=true]")]
-      .map((b) => (b.textContent || "").trim().slice(0, 6))
-      .join(",");
-    const theme = document.documentElement.getAttribute("data-theme") ?? "";
-    return `${text.length}:${full.length}:${hash}|${theme}|${pressed}|${document.querySelectorAll(".modal-panel").length}|${document.querySelectorAll("[class*=toast]").length}`;
-  });
-}
-/** 页面异常收集 —— 与排版自检同一条口径(lib/pageErrors.mjs 只写一处) */
-watchPageErrors(page, (msg) => errors.push({ where: "boot", msg }));
-
-await page.goto(INDEX, { waitUntil: "load" });
-if (!LATE) {
-  await page
-    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
-    .first()
-    .click();
-  await page.locator("input[type=checkbox]").first().check();
-  await page
-    .getByRole("button", { name: /同意并开始/ })
-    .first()
-    .click();
-  await page.waitForTimeout(3200);
-  await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("冒烟自检");
-  await page
-    .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
-    .first()
-    .click();
-}
-await page.waitForTimeout(LATE ? 1800 : 1500);
-
-let clicked = 0;
-/** 弹窗里的按钮也要点 —— 大部分交互都藏在 modal 里(炼丹/收纳/人物各入口/天界册页) */
-async function clickInsideModal(route) {
-  const panel = page.locator(".modal-panel").first();
-  if (!(await panel.count())) return;
-  const inner = await panel.getByRole("button").all();
-  for (const b of inner.slice(0, 6)) {
-    const label = ((await b.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
-    if (!label || SKIP.test(label)) continue;
-    if (!(await b.isVisible().catch(() => false))) continue;
-    if (await b.isDisabled().catch(() => false)) continue;
-    const before = errors.length;
-    await b.click({ timeout: 800 }).catch(() => {});
-    clicked += 1;
-    await page.waitForTimeout(160);
-    if (errors.length > before) errors[errors.length - 1].where = `${route} 弹窗内点「${label}」`;
+    }, lateSlices());
   }
+  return { context, blocked };
 }
 
-for (const route of ROUTES) {
-  await page.goto(INDEX + "#" + route, { waitUntil: "load" });
-  await page.waitForTimeout(600);
+/** 一页的冒烟:建号(或夹具)、逐按钮点、点开弹窗再关掉,收回这一页的异常读数 */
+async function runRoute(route) {
+  const { context, blocked } = await makeContext();
+  const page = await context.newPage();
+  const errors = [];
+  const silent = [];
+  let clicked = 0;
+  watchPageErrors(page, (msg) => errors.push({ where: `${route} 载入`, msg }));
+
+  /**
+   * 点了没反应的按钮 —— 只报告,不判失败。
+   *
+   * 判据是「点击前后看不出任何变化」:正文文本、弹窗数、toast 数都没动。
+   * 空白点击有时是合理的(比如点一个已选中的页签),故先当读数看:
+   * 一屏里要是冒出十几个,那就说明有一批入口在静默失败。
+   */
+  async function fingerprint() {
+    return page.evaluate(() => {
+      const text = document.body.innerText.replace(/\s+/g, " ").slice(0, 4000);
+      /*
+       * 指纹里必须带上「不体现在文字上的变化」。
+       *
+       * 主题与战报速度这两组切换改的是 CSS 变量与 aria-pressed,正文一个字都不变 ——
+       * 于是它们每一轮都被报成「点了没反应」,而读数一旦常驻噪声,真事故就会被忽略。
+       * 故把 data-theme 与当前按下的选择一并算进指纹(顺手也能看出选中态有没有变)。
+       */
+      /*
+       * 全文哈希:只看首尾会漏掉「变化发生在中间」的点击 ——
+       * 比如人物页点一行属性,来源明细是在正文中段展开的,
+       * 首 120/末 80 字都没动,于是它被记成「点了没反应」(实测)。
+       */
+      const full = document.body.innerText.replace(/\s+/g, " ");
+      let hash = 0;
+      for (let i = 0; i < full.length; i += 1) hash = (hash * 31 + full.charCodeAt(i)) | 0;
+      const pressed = [...document.querySelectorAll("[aria-pressed=true]")]
+        .map((b) => (b.textContent || "").trim().slice(0, 6))
+        .join(",");
+      const theme = document.documentElement.getAttribute("data-theme") ?? "";
+      return `${text.length}:${full.length}:${hash}|${theme}|${pressed}|${document.querySelectorAll(".modal-panel").length}|${document.querySelectorAll("[class*=toast]").length}`;
+    });
+  }
+
   /**
    * 数字体检:正文里出现 NaN / Infinity / undefined 一律算失败。
    * 这类泄漏在单元测试里看不出来(函数返回了"数字"),到了百万级数值与
@@ -268,7 +258,7 @@ for (const route of ROUTES) {
    * (炼丹、收纳、人物入口、天界册页),点开弹窗才现形的 NaN/undefined 不抛异常,
    * watchPageErrors 逮不到 —— 故把同一判据搬进每次点击之后重跑。
    */
-  const scanNumericLeaks = async (where) => {
+  async function scanNumericLeaks(where) {
     const leaked = await page.evaluate((patterns) => {
       const text = document.body.innerText;
       return patterns
@@ -280,7 +270,48 @@ for (const route of ROUTES) {
     }, NUMERIC_LEAK);
     for (const l of leaked) errors.push({ where, msg: l });
     return leaked.length;
-  };
+  }
+
+  /** 弹窗里的按钮也要点 —— 大部分交互都藏在 modal 里(炼丹/收纳/人物各入口/天界册页) */
+  async function clickInsideModal(where) {
+    const panel = page.locator(".modal-panel").first();
+    if (!(await panel.count())) return;
+    const inner = await panel.getByRole("button").all();
+    for (const b of inner.slice(0, 6)) {
+      const label = ((await b.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
+      if (!label || SKIP.test(label)) continue;
+      if (!(await b.isVisible().catch(() => false))) continue;
+      if (await b.isDisabled().catch(() => false)) continue;
+      const before = errors.length;
+      await b.click({ timeout: 800 }).catch(() => {});
+      clicked += 1;
+      await page.waitForTimeout(160);
+      if (errors.length > before) errors[errors.length - 1].where = `${where} 弹窗内点「${label}」`;
+    }
+  }
+
+  await page.goto(INDEX, { waitUntil: "load" });
+  if (!LATE) {
+    await page
+      .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+      .first()
+      .click();
+    await page.locator("input[type=checkbox]").first().check();
+    await page
+      .getByRole("button", { name: /同意并开始/ })
+      .first()
+      .click();
+    await page.waitForTimeout(3200);
+    await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("冒烟自检");
+    await page
+      .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+      .first()
+      .click();
+  }
+  await page.waitForTimeout(LATE ? 1800 : 1500);
+
+  await page.goto(INDEX + "#" + route, { waitUntil: "load" });
+  await page.waitForTimeout(600);
   await scanNumericLeaks(`${route} 正文泄漏`);
   // 逐页按钮清单在导航之后再抓:goto 前抓会拿到上一页的数组(41847c0 把这一行
   // 卷进 scanNumericLeaks 重构时丢过一次,门在首路由上直接 ReferenceError 崩掉)
@@ -303,17 +334,52 @@ for (const route of ROUTES) {
     await page.keyboard.press("Escape").catch(() => {});
     await page.waitForTimeout(80);
   }
+
+  await context.close();
+  return { route, errors, silent, clicked, blocked: blocked() };
 }
 
+/** 固定上限的并发池:一页一个任务,谁空出来谁接下一页 */
+async function runPool(items, limit, worker) {
+  const out = Array.from({ length: items.length });
+  let next = 0;
+  const run = async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      try {
+        out[i] = await worker(items[i]);
+      } catch (e) {
+        out[i] = {
+          route: items[i],
+          errors: [{ where: `${items[i]} 载入`, msg: `任务自身抛异常:${e?.stack ?? e}` }],
+          silent: [],
+          clicked: 0,
+          blocked: 0,
+        };
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run));
+  return out;
+}
+
+const results = await runPool(ROUTES, JOBS, runRoute);
 await browser.close();
+
+const clicked = results.reduce((n, r) => n + r.clicked, 0);
+const silent = results.flatMap((r) => r.silent);
+const errors = results.flatMap((r) => r.errors);
+const blockedTotal = results.reduce((n, r) => n + r.blocked, 0);
+
 console.log(`\n界面冒烟:${ROUTES.length} 页,点击 ${clicked} 次(每页上限 ${DEPTH})`);
 if (silent.length) {
   console.log(`点了没反应 ${silent.length} 处(读数,不判失败):`);
   for (const s of silent.slice(0, 20)) console.log(`  · ${s}`);
 }
 if (errors.length === 0) {
-  if (blockedExternal() !== 0) {
-    console.log(`✗ 这一轮发起了 ${blockedExternal()} 个外域请求 —— 本站的决定是「零外部请求」`);
+  if (blockedTotal !== 0) {
+    console.log(`✗ 这一轮发起了 ${blockedTotal} 个外域请求 —— 本站的决定是「零外部请求」`);
     process.exitCode = 1;
   } else {
     console.log("✓ 无运行时异常(外域请求 0 个:不接入任何第三方)");
