@@ -97,7 +97,7 @@ describe("Phase 30.8: Boss 阶段与机制有效性审计", () => {
         ...boss.skills,
         ...(boss.phases ?? []).flatMap((p) => p.skillChanges ?? []),
       ];
-      const allMods = { ...(boss.mods ?? {}) };
+      const allMods = { ...boss.mods };
       for (const p of boss.phases ?? []) {
         if (p.modChanges) Object.assign(allMods, p.modChanges);
       }

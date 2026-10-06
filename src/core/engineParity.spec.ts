@@ -707,8 +707,8 @@ describe("对账 · 属性合并规则(库 与 冻结的旧口径)", () => {
 
   it("覆盖到游戏登记过的每一个词条键", () => {
     for (const key of Object.keys(STAT_NAMES)) expect(system.def(key)).toBeDefined();
-    expect([...system.defs.map((d) => d.key)].sort()).toEqual(
-      [...realAttributeDefs().map((d) => d.key)].sort(),
+    expect(system.defs.map((d) => d.key).sort()).toEqual(
+      realAttributeDefs().map((d) => d.key).sort(),
     );
   });
 

@@ -31,7 +31,7 @@ export interface LootPressure {
 
 export function simulateLootPressure(tier: number, samples = 600): LootPressure {
   const rng = new RandomService(mulberry32(tier * 977))
-  const rankCounts = new Array<number>(QUALITIES.length).fill(0)
+  const rankCounts = Array.from({ length: QUALITIES.length }, () => 0)
   let dustSum = 0
   for (let i = 0; i < samples; i += 1) {
     const inst = generateEquipment(tier, rng)

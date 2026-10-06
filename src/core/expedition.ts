@@ -129,7 +129,7 @@ export function expeditionRules(world: CelestialWorldDef, run: WorldRunState, no
  */
 export function withCarriedHp(rules: CombatRules | undefined, run: WorldRunState): CombatRules {
   const startCap = rules?.playerStartHpPct ?? 1
-  return { ...(rules ?? {}), playerStartHpPct: Math.min(startCap, run.carriedHpPct) }
+  return { ...rules, playerStartHpPct: Math.min(startCap, run.carriedHpPct) }
 }
 
 /** 远征总场数(入界 + 三层 + 界主) */

@@ -211,7 +211,7 @@ describe("调色板 · 一份事实源", () => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
         const path = resolve(dir, entry.name);
         if (entry.isDirectory()) walk(path);
-        else if (/\.ts$/.test(entry.name) && !entry.name.endsWith(".spec.ts")) {
+        else if (entry.name.endsWith('.ts') && !entry.name.endsWith(".spec.ts")) {
           const text = readFileSync(path, "utf-8");
           for (const m of text.matchAll(/['"`]#[0-9a-fA-F]{3,8}['"`]/g))
             offenders.push(`${path.slice(ROOT.length + 1)} → ${m[0]}`);

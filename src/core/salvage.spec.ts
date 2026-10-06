@@ -134,7 +134,9 @@ describe("分解返还 · 强化投入的八成随件退回", () => {
     // 同上:一次性成就奖励先烧掉
     inventory.addEquipment(mk("warmup", "fine", 0, 6));
     decomposeEquipment("warmup");
-    for (const t of [...ui.toasts]) ui.dismissToast(t.id);
+    // dismissToast 是不可变 filter(整体换数组、不就地 splice),边遍历边清安全,
+    // 无需先拍快照 —— 旧写法 [...ui.toasts] 是冗余拷贝(oxlint no-useless-spread)
+    for (const t of ui.toasts) ui.dismissToast(t.id);
     const targets = [mk("h1", "fine", 2, 6), mk("h2", "fine", 0, 6), mk("h3", "fine", 4, 6)];
     for (const it of targets) inventory.addEquipment(it);
     inventory.addEquipment(mk("keep", "heaven", 3, 6)); // 没勾选的档,动不得

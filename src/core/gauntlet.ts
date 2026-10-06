@@ -196,7 +196,7 @@ export function worldFoeSnap(
   escalation = 1,
   judgement: CelestialJudgement = NO_JUDGEMENT
 ): CombatantSnap {
-  const mods: StatMods = { ...(shape.mods ?? {}) }
+  const mods: StatMods = { ...shape.mods }
   if (judgement.damageBonus > 0) mods.damageBonus = (mods.damageBonus ?? 0) + judgement.damageBonus
   if (judgement.damageReduction > 0) mods.damageReduction = (mods.damageReduction ?? 0) + judgement.damageReduction
   const thicken = escalation * judgement.thicken
@@ -310,7 +310,7 @@ export function runGauntlet(
     const snap: CombatantSnap = opts.perWinPlayerMods
       ? { ...player, mods: stackMods(player.mods, opts.perWinPlayerMods, fightsWon) }
       : player
-    const fightRules: CombatRules = { ...(rules ?? {}), playerStartHpPct: Math.min(startCap, carried) }
+    const fightRules: CombatRules = { ...rules, playerStartHpPct: Math.min(startCap, carried) }
     const result = resolveCombat(snap, foe, rng, fightRules)
     totalRounds += result.rounds
     rows.push({ foeName: foe.name, win: result.win, rounds: result.rounds, hpLeftPct: result.playerHpPct, logs: result.log, foe })

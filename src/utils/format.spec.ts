@@ -85,15 +85,15 @@ describe("数值格式化", () => {
     // 同一分钟量级内逐秒走一遍,宽度必须恒定(9→10 秒、59→60 秒这些跳档点在内)
     const widths = new Set<number>();
     for (let s = 1; s <= 59 * 60; s += 1) widths.add(w(formatCountdown(s)));
-    expect([...widths].length, `分秒量级内的宽度有 ${[...widths].join("/")} 种`).toBe(1);
+    expect(widths.size, `分秒量级内的宽度有 ${[...widths].join("/")} 种`).toBe(1);
     // 小时量级同理
     const hourWidths = new Set<number>();
     for (let s = 3600; s <= 24 * 3600 - 1; s += 137) hourWidths.add(w(formatCountdown(s)));
-    expect([...hourWidths].length).toBe(1);
+    expect(hourWidths.size).toBe(1);
     // 天量级同理
     const dayWidths = new Set<number>();
     for (let s = 86400; s <= 9 * 86400; s += 601) dayWidths.add(w(formatCountdown(s)));
-    expect([...dayWidths].length).toBe(1);
+    expect(dayWidths.size).toBe(1);
   });
 
   it("倒计时读得出、且与 formatDuration 同一个意思", () => {

@@ -26,7 +26,7 @@ function refReroll(
   const kept = inst.affixes.filter((a) => sealed.has(a.id));
   const [minCount, maxCount] = quality.affixes;
   const wantCount = Math.max(kept.length + 1, Math.min(maxCount, rng.int(minCount, maxCount)));
-  const used = new Set([...kept.map((a) => a.id)]);
+  const used = new Set(kept.map((a) => a.id));
   const fresh: AffixRoll[] = [];
   let guard = 0;
   while (fresh.length < wantCount - kept.length && guard < 50) {

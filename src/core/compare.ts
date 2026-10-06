@@ -49,7 +49,7 @@ export function measureOnWorld(
     const startCap = carried
     let cleared = true
     for (const foe of foes) {
-      const result = resolveCombat(snap, foe, rng, { ...(rules ?? {}), playerStartHpPct: Math.min(startCap, carried) })
+      const result = resolveCombat(snap, foe, rng, { ...rules, playerStartHpPct: Math.min(startCap, carried) })
       totalRounds += result.rounds
       fights += 1
       if (result.stats) {

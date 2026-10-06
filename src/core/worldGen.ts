@@ -188,14 +188,14 @@ function generateCandidate(seed: number): CelestialWorldDef | null {
     if (m.rules.playerAtkMult !== undefined) out.playerAtkMult = (out.playerAtkMult ?? 1) * m.rules.playerAtkMult
     if (m.rules.enemyAtkMult !== undefined) out.enemyAtkMult = (out.enemyAtkMult ?? 1) * m.rules.enemyAtkMult
     if (m.rules.enemyExtraMods) {
-      out.enemyExtraMods = { ...(out.enemyExtraMods ?? {}) }
+      out.enemyExtraMods = { ...out.enemyExtraMods }
       for (const k in m.rules.enemyExtraMods) {
         const key = k as keyof NonNullable<typeof m.rules.enemyExtraMods>
         out.enemyExtraMods[key] = (out.enemyExtraMods[key] ?? 0) + (m.rules.enemyExtraMods[key] ?? 0)
       }
     }
     if (m.rules.playerExtraMods) {
-      out.playerExtraMods = { ...(out.playerExtraMods ?? {}) }
+      out.playerExtraMods = { ...out.playerExtraMods }
       for (const k in m.rules.playerExtraMods) {
         const key = k as keyof NonNullable<typeof m.rules.playerExtraMods>
         out.playerExtraMods[key] = (out.playerExtraMods[key] ?? 0) + (m.rules.playerExtraMods[key] ?? 0)
