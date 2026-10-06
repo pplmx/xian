@@ -141,8 +141,10 @@
       </div>
     </section>
 
-    <!-- 各处入口 -->
+    <!-- 各处入口 —— 按「道途 / 缘法 / 记录」分节,每张卡带一枚题头图标,免成一列同形的卡 -->
+    <SectionTitle title="道途" />
     <RouterLink to="/build" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+      <GameIcon name="swords" :size="16" class="shrink-0 text-cinnabar" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">流 派</span>
         <span class="block truncate text-[10px] text-ink-faint tabular">
@@ -161,9 +163,11 @@
       class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
       @click="identityOpen = true"
     >
+      <GameIcon name="circle-user" :size="16" class="shrink-0 text-ink-soft" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修行画像</span>
-        <span class="block truncate text-[10px] text-ink-faint"
+        <!-- 画像叙述是这一页最有「人味」的一行,一行截断会拦腰断句 —— 给两行 -->
+        <span class="line-clamp-2 text-[10px] leading-relaxed text-ink-faint"
           >「{{ identity?.epithet ?? "玄枢散人" }}」 · {{ identity?.narrative ?? "足迹尚浅" }}</span
         >
       </span>
@@ -172,12 +176,8 @@
 
     <RouterLink to="/titles" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
       <!-- 相伴灵兽的"脸":有伴时亮出一枚玉色印章,未伴时无印 —— 伙伴不该只是名字 -->
-      <span
-        v-if="currentPetIcon"
-        class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-jade/10 text-jade"
-      >
-        <GameIcon :name="currentPetIcon" :size="18" />
-      </span>
+      <!-- 相伴灵兽的「脸」:有伴亮伴侣的形,未伴用名号的冕 —— 同其他入口一样是一枚题头图 -->
+      <GameIcon :name="currentPetIcon ?? 'crown'" :size="16" class="shrink-0 text-jade" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">名号与灵兽</span>
         <span class="block truncate text-[10px] text-ink-faint">
@@ -187,11 +187,14 @@
       <span class="text-[11px] text-jade">整理 →</span>
     </RouterLink>
 
+    <!-- 缘法:这一世遇见的人 -->
+    <SectionTitle title="缘法" />
     <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
     <button
       class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
       @click="mentorDialog = true"
     >
+      <GameIcon name="scroll" :size="16" class="shrink-0 text-qing" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">师 承</span>
         <span class="block truncate text-[10px] text-ink-faint">
@@ -210,6 +213,7 @@
       class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
       @click="bondDialog = true"
     >
+      <GameIcon name="user" :size="16" class="shrink-0 text-qing" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">道 侣</span>
         <span class="block truncate text-[10px] text-ink-faint">
@@ -225,7 +229,10 @@
       <span class="shrink-0 text-[11px] text-qing">{{ bondDef ? "相知 →" : "履历 →" }}</span>
     </button>
 
+    <!-- 记录:走过什么、这条路从哪来 -->
+    <SectionTitle title="记录" />
     <RouterLink to="/collection" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+      <GameIcon name="gem" :size="16" class="shrink-0 text-gold-ink" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">藏珍与成就</span>
         <span class="block text-[10px] text-ink-faint tabular">
@@ -239,6 +246,7 @@
     </RouterLink>
 
     <RouterLink to="/legacy" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+      <GameIcon name="book" :size="16" class="shrink-0 text-ink-soft" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修仙录</span>
         <span class="block truncate text-[10px] text-ink-faint tabular"
@@ -250,6 +258,7 @@
 
     <!-- 界域志:与修仙录同级 —— 一部写你,一部写这条路从哪来 -->
     <RouterLink to="/codex" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+      <GameIcon name="mountain" :size="16" class="shrink-0 text-ink-soft" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">界域志</span>
         <span class="block truncate text-[10px] text-ink-faint tabular"
@@ -263,6 +272,7 @@
       class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
       @click="rebirthOpen = true"
     >
+      <GameIcon name="refresh" :size="16" class="shrink-0 text-violet-ink" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">轮 回</span>
         <span class="block text-[10px] text-ink-faint tabular">

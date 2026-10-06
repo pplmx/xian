@@ -7,17 +7,7 @@
     <template v-if="tab === 'equip'">
       <!-- 装备共鸣:机制是活的,玩家却看不见 —— 同组两件即共鸣,（2/2）亮起 -->
       <div v-if="setRows.length" class="card-ink mt-3 px-4 py-2.5">
-        <div class="flex items-center justify-between gap-2">
-          <p class="text-[10px] text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
-          <!-- 一键穿最强:纯方便性动作,只改装配,绝不把好换差 -->
-          <button
-            type="button"
-            class="shrink-0 -my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
-            @click="wearEquipBest"
-          >
-            一键 · 各部位换最强
-          </button>
-        </div>
+        <p class="text-[10px] text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
         <p v-for="s in setRows" :key="s.def.id" class="mt-1 flex items-baseline gap-2 text-[11px]">
           <span class="font-kai" :class="s.active ? 'text-jade' : 'text-ink-soft'">{{
             s.def.name
@@ -44,6 +34,16 @@
           >行囊 {{ inventory.bagItems.length }} · 器灵尘 {{ resources.dust }}</span
         >
         <span class="flex gap-3">
+          <!-- 一键穿最强:纯方便性动作,只改装配,绝不把好换差。
+               从前它挂在「有共鸣套才出现」的那张卡里 —— 没有成套件的玩家一直看不到它,
+               而这本来该是常驻的便利入口。故上移到这行常驻操作里。 -->
+          <button
+            class="-my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
+            aria-label="一键各部位换最强"
+            @click="wearEquipBest"
+          >
+            换最强
+          </button>
           <button
             class="-my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
             aria-label="智能收纳设置"
