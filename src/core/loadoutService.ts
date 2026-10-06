@@ -1,7 +1,7 @@
 /**
  * 构筑服务 —— 捕获当前整套 Build / 一键切换
  */
-import type { EquipSlot } from "@/types";
+import type { EquipSlot, Loadout } from "@/types";
 import { uid } from "@/utils/id";
 import { equipmentTemplate } from "@/data/equipment";
 import { artifactSlotsFor } from "@/data/artifacts";
@@ -10,7 +10,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useDongfuStore } from "@/stores/dongfu";
-import { useLoadoutsStore, MAX_LOADOUTS, type Loadout } from "@/stores/loadouts";
+import { useLoadoutsStore, MAX_LOADOUTS } from "@/stores/loadouts";
 import { detectBuild } from "./buildDetect";
 import { notify } from "./notify";
 

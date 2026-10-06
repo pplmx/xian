@@ -1,7 +1,7 @@
 /** 真仙终局状态 —— 道途 / 道源 / 战绩 / 道痕 / 远征进行时 */
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { CelestialWorldDef, DaoMark, DaoPathId, StatMods } from "@/types";
+import type { CelestialWorldDef, DaoMark, DaoPathId, StatMods, WorldRunState } from "@/types";
 import { persistConfig } from "@/utils/storage";
 import { mergeMods } from "@/core/statsCalc";
 import { EXPEDITION_GUARDIAN_LAYER, celestialWorldDef } from "@/data/endgame";
@@ -22,24 +22,6 @@ export interface TrialRecord {
 }
 
 /** 路线远征进行时(可跨会话续行) */
-export interface WorldRunState {
-  worldId: string;
-  pactId: string | null;
-  /** 奇门遁甲:此趟入界所择之门(未择为 null;见 data/qimen) */
-  gateId?: string | null;
-  /** 0..2 = 待选该层路线;3 = 待战界主 */
-  layer: number;
-  /** 沿途节点累计的额外道源 */
-  bonus: number;
-  rows: { foeName: string; win: boolean; rounds: number; hpLeftPct: number }[];
-  carriedHpPct: number;
-  totalRounds: number;
-  /** 剑意/杀意逐胜层数 */
-  winStacks: number;
-  /** 逆命契:签约时封印的主流派核心词条(负值) */
-  sealedMods?: StatMods;
-}
-
 export const MAX_MARKS = 60;
 
 export const useEndgameStore = defineStore(

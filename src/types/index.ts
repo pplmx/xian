@@ -1256,3 +1256,36 @@ export type CollectionCategory =
   | "pet"
   | "event"
   | "talent";
+
+/** 进行中的天界远征(路线层数、逐层战报与封印词条)—— 由 endgame store 装载 */
+export interface WorldRunState {
+  worldId: string;
+  pactId: string | null;
+  /** 奇门遁甲:此趟入界所择之门(未择为 null;见 data/qimen) */
+  gateId?: string | null;
+  /** 0..2 = 待选该层路线;3 = 待战界主 */
+  layer: number;
+  /** 沿途节点累计的额外道源 */
+  bonus: number;
+  rows: { foeName: string; win: boolean; rounds: number; hpLeftPct: number }[];
+  carriedHpPct: number;
+  totalRounds: number;
+  /** 剑意/杀意逐胜层数 */
+  winStacks: number;
+  /** 逆命契:签约时封印的主流派核心词条(负值) */
+  sealedMods?: StatMods;
+}
+
+/** 一套换装预设(装配方案快照)—— 由 loadouts store 装载 */
+export interface Loadout {
+  id: string;
+  name: string;
+  /** 流派印章单字(保存时的识别结果) */
+  seal: string;
+  mainGongfa: string | null;
+  subGongfa: string[];
+  artifactIds: string[];
+  /** 槽位 → 装备 uid */
+  equipment: Partial<Record<EquipSlot, string>>;
+  savedAt: number;
+}

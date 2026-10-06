@@ -15,7 +15,8 @@
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { usePlayerStore } from "@/stores/player";
-import { useEndgameStore, type WorldRunState } from "@/stores/endgame";
+import { useEndgameStore } from "@/stores/endgame";
+import type { WorldRunState } from "@/types";
 import { CELESTIAL_WORLDS } from "@/data/endgame";
 import { useInventoryStore } from "@/stores/inventory";
 import { RandomService, mulberry32 } from "@/utils/random";

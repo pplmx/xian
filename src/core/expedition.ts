@@ -40,7 +40,8 @@ import { defaultHistory, generateApprovedWorld, type HistoryEntry } from "./worl
 import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import { SIM_REFERENCE } from "./celestialSim";
 import { usePlayerStore } from "@/stores/player";
-import { useEndgameStore, type WorldRunState } from "@/stores/endgame";
+import { useEndgameStore } from "@/stores/endgame";
+import type { WorldRunState } from "@/types";
 import { gateDef } from "@/data/qimen";
 import { notify } from "./notify";
 

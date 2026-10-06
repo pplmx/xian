@@ -19,9 +19,8 @@ import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
 import { expeditionRules, forecastExpedition, startWorldExpedition } from "./expedition";
 import { celestialWorldDef } from "@/data/endgame";
-import type { WorldRunState } from "@/stores/endgame";
 import { markRules, recordMark } from "./endgameService";
-import type { DaoMark } from "@/types";
+import type { DaoMark, WorldRunState } from "@/types";
 
 beforeEach(() => {
   setActivePinia(createPinia());
