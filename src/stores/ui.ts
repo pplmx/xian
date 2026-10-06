@@ -2,84 +2,13 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { setNotifier } from "@/core/notify";
-import type { OfflineSummary } from "@/types";
-
-export interface Toast {
-  id: number;
-  text: string;
-  kind: "info" | "success" | "warn" | "rare";
-}
-
-/**
- * 数值详情 —— 点任意大数后弹出来的那一页。
- *
- * rows 的约定:第一行是"这个数本身",后面可以跟"所需 / 还需 / 每秒"这类同族读数;
- * note 放一句人话(如"按当前速率还需 3 天 2 时")—— 一行字的解释比再堆一个数字有用。
- */
-export interface NumberDetailView {
-  title: string;
-  /**
-   * 一行一个读数。`value` 走数值格式化(缩写 + 点开看精确值);
-   * `text` 用于**本来就不是数**的那一行 —— 如"预计还要多久"(时长),
-   * 它没有精确值可展开,但有话直说反而最有用。
-   */
-  rows: { label: string; value?: import("@/types").GNum | number; text?: string; hint?: string }[];
-  note?: string;
-}
-
-export interface BreakthroughView {
-  success: boolean;
-  fromLabel: string;
-  toLabel: string;
-  isMajor: boolean;
-  tribulationLog: string[];
-  message: string;
-}
-
-/** 上一世的回顾(Phase 32.5)—— 轮回界面第一屏要说清楚"你刚刚过完了怎样的一生" */
-export interface LifeReview {
-  /** 刚结束的是第几世(1 起) */
-  index: number;
-  realmLabel: string;
-  age: number;
-  /** 本世立的题;未立题为 null */
-  themeId: string | null;
-  themeResult: "done" | "unfinished" | "broken" | null;
-  /** 命题进度(未立题为 0/0) */
-  themeCur: number;
-  themeNeed: number;
-  /** 本世所得宿慧(阅历 + 达成命题) */
-  insightGained: number;
-}
-
-export interface ReincarnationView {
-  daoFruitGained: number;
-  talentChoices: string[];
-  extraTalents: string[];
-  prevRealmLabel: string;
-  /** 上一世回顾 */
-  review: LifeReview;
-  /** 转世之后的宿慧总量 */
-  insightAfter: number;
-  /** 转世之后所处的轮回阶 */
-  stageId: string;
-  stageName: string;
-  stageDesc: string;
-  /** 这一世的经历是否让你进了一阶 */
-  stageAdvanced: boolean;
-  /** 距下一阶还差多少宿慧(已在顶阶为 null) */
-  toNextStage: number | null;
-  /** 睁眼即认得的灵材数 */
-  knownMaterials: number;
-  /** 可立的命题(id);空数组表示此阶无题可立 */
-  themeChoices: string[];
-  /** 是否可从全部已开命题中自选(百世老修) */
-  themeFree: boolean;
-  /** ISS-302:这一世到达的最高未锻造传承(id);深修专属,无则 null */
-  heritageGained: string | null;
-  /** 转世重拟的道号草稿(随机掷出;确认页可改回) */
-  nameDraft: string;
-}
+import type {
+  BreakthroughView,
+  NumberDetailView,
+  OfflineSummary,
+  ReincarnationView,
+  Toast,
+} from "@/types";
 
 let toastSeq = 1;
 

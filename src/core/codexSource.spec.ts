@@ -21,7 +21,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { CODEX_SOURCES } from "@/ui/codex";
-import type { CollectionCategory } from "@/stores/quests";
+import type { CollectionCategory } from "@/types";
 
 const SRC = resolve(__dirname, "..");
 

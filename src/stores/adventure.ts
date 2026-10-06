@@ -1,7 +1,7 @@
 /** 历练状态 —— 区域解锁 / 历练会话 / 待处理事件 / 最近战报 */
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { AdventureSession, CombatResult } from "@/types";
+import type { AdventureSession, LastBattleView } from "@/types";
 import { persistConfig } from "@/utils/storage";
 import { regionDef } from "@/data/regions";
 import { ENGINE_WORLD } from "@/core/engineWorld";
@@ -13,22 +13,6 @@ import {
   asRecord,
   asStringArray,
 } from "@/utils/saveShape";
-
-export interface LastBattleView {
-  enemyName: string;
-  enemyIcon: string;
-  /** 敌人定义 id(供适配度展示;旧存档可能缺失) */
-  enemyId?: string;
-  isBoss: boolean;
-  result: CombatResult;
-  at: number;
-  /**
-   * 这一场的战利品明细(残页/装备/丹药/法宝;翻倍提示也在内)。
-   * 线上一向只把掉落条数记进会话、把文案丢掉,玩家打完看不到自己得了什么。
-   * 旧存档没有这一栏,消费方按缺省空数组处理。
-   */
-  loot?: string[];
-}
 
 export const useAdventureStore = defineStore(
   "adventure",

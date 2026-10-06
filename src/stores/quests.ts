@@ -1,7 +1,7 @@
 /** 任务 / 成就 / 称号 / 图鉴 / 计数器 */
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { CounterKey } from "@/types";
+import type { CollectionCategory, CounterKey } from "@/types";
 import { persistConfig } from "@/utils/storage";
 import { MAIN_QUESTS } from "@/data/quests";
 import { ACHIEVEMENTS } from "@/data/achievements";
@@ -22,15 +22,6 @@ import {
 } from "@/utils/saveShape";
 import type { StoredDaily } from "@/core/engineDailies";
 import { dailyShapeOf, dailyStateOf, rolloverDailyBoard } from "@/core/engineDailies";
-
-export type CollectionCategory =
-  | "equip"
-  | "gongfa"
-  | "pill"
-  | "artifact"
-  | "pet"
-  | "event"
-  | "talent";
 
 function uniqueKnown(ids: string[], exists: (id: string) => boolean): string[] {
   const out: string[] = [];

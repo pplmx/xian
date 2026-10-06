@@ -1142,3 +1142,117 @@ export interface AdventureSession {
   /** 本场累计所得悟道点(连胜档赏 + 际遇所给 + 重复法宝折化)—— 结束总结要报,不能只活在账本里 */
   wudaoGain: number;
 }
+
+// ============ 视图模型(store 与上层交接的浮层 / 瞬态数据)============
+/*
+ * 这些形状以前分别定义在各自的 store 里(ui / adventure / quests),于是 core 与视图
+ * 要拿它们就得 `import type ... from "@/stores/*"` —— 逻辑层只想要一个数据结构,
+ * 却被迫依赖状态容器。放到这里,core 只认 @/types,store 只负责装数据。
+ */
+
+/** 瞬态提示条 */
+export interface Toast {
+  id: number;
+  text: string;
+  kind: "info" | "success" | "warn" | "rare";
+}
+
+/**
+ * 数值详情 —— 点任意大数后弹出来的那一页。
+ *
+ * rows 的约定:第一行是"这个数本身",后面可以跟"所需 / 还需 / 每秒"这类同族读数;
+ * note 放一句人话(如"按当前速率还需 3 天 2 时")—— 一行字的解释比再堆一个数字有用。
+ */
+export interface NumberDetailView {
+  title: string;
+  /**
+   * 一行一个读数。`value` 走数值格式化(缩写 + 点开看精确值);
+   * `text` 用于**本来就不是数**的那一行 —— 如"预计还要多久"(时长),
+   * 它没有精确值可展开,但有话直说反而最有用。
+   */
+  rows: { label: string; value?: GNum | number; text?: string; hint?: string }[];
+  note?: string;
+}
+
+/** 突破结果弹窗 */
+export interface BreakthroughView {
+  success: boolean;
+  fromLabel: string;
+  toLabel: string;
+  isMajor: boolean;
+  tribulationLog: string[];
+  message: string;
+}
+
+/** 上一世的回顾(Phase 32.5)—— 轮回界面第一屏要说清楚"你刚刚过完了怎样的一生" */
+export interface LifeReview {
+  /** 刚结束的是第几世(1 起) */
+  index: number;
+  realmLabel: string;
+  age: number;
+  /** 本世立的题;未立题为 null */
+  themeId: string | null;
+  themeResult: "done" | "unfinished" | "broken" | null;
+  /** 命题进度(未立题为 0/0) */
+  themeCur: number;
+  themeNeed: number;
+  /** 本世所得宿慧(阅历 + 达成命题) */
+  insightGained: number;
+}
+
+/** 轮回界面 */
+export interface ReincarnationView {
+  daoFruitGained: number;
+  talentChoices: string[];
+  extraTalents: string[];
+  prevRealmLabel: string;
+  /** 上一世回顾 */
+  review: LifeReview;
+  /** 转世之后的宿慧总量 */
+  insightAfter: number;
+  /** 转世之后所处的轮回阶 */
+  stageId: string;
+  stageName: string;
+  stageDesc: string;
+  /** 这一世的经历是否让你进了一阶 */
+  stageAdvanced: boolean;
+  /** 距下一阶还差多少宿慧(已在顶阶为 null) */
+  toNextStage: number | null;
+  /** 睁眼即认得的灵材数 */
+  knownMaterials: number;
+  /** 可立的命题(id);空数组表示此阶无题可立 */
+  themeChoices: string[];
+  /** 是否可从全部已开命题中自选(百世老修) */
+  themeFree: boolean;
+  /** ISS-302:这一世到达的最高未锻造传承(id);深修专属,无则 null */
+  heritageGained: string | null;
+  /** 转世重拟的道号草稿(随机掷出;确认页可改回) */
+  nameDraft: string;
+}
+
+/** 上一场战斗的回放数据 */
+export interface LastBattleView {
+  enemyName: string;
+  enemyIcon: string;
+  /** 敌人定义 id(供适配度展示;旧存档可能缺失) */
+  enemyId?: string;
+  isBoss: boolean;
+  result: CombatResult;
+  at: number;
+  /**
+   * 这一场的战利品明细(残页/装备/丹药/法宝;翻倍提示也在内)。
+   * 线上一向只把掉落条数记进会话、把文案丢掉,玩家打完看不到自己得了什么。
+   * 旧存档没有这一栏,消费方按缺省空数组处理。
+   */
+  loot?: string[];
+}
+
+/** 图鉴分类 */
+export type CollectionCategory =
+  | "equip"
+  | "gongfa"
+  | "pill"
+  | "artifact"
+  | "pet"
+  | "event"
+  | "talent";

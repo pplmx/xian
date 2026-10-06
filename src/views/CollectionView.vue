@@ -140,7 +140,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from "vue";
 import { useQuestsStore } from "@/stores/quests";
-import type { CollectionCategory } from "@/stores/quests";
+import type { CollectionCategory } from "@/types";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { GONGFA } from "@/data/gongfa";
 import { EVENTS } from "@/data/events";

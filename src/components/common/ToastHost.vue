@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useUiStore } from "@/stores/ui";
-import type { Toast } from "@/stores/ui";
+import type { Toast } from "@/types";
 import { playSfx, type SfxName } from "@/core/audio";
 
 const ui = useUiStore();

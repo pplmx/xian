@@ -28,8 +28,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useUiStore } from "@/stores/ui";
-import type { BreakthroughView } from "@/stores/ui";
-import type { StatMods } from "@/types";
+import type { BreakthroughView, StatMods } from "@/types";
 import { playSfx } from "./audio";
 import { notify } from "./notify";
 // Phase 28 突破准备:静坐/服丹的一次性加成(见 earlyGameService;仅无劫突破受益)

@@ -22,7 +22,7 @@ import {
   EXPLORE_MODES,
 } from "@/data/constants";
 import { mansionEventLuck } from "./astronomy";
-import type { StatMods } from "@/types";
+import type { LastBattleView, StatMods } from "@/types";
 import { makeEnemySnap, mortalFoeOriginFromParts, resolveCombat } from "./combat";
 import { petDef } from "@/data/pets";
 import type { RegionEventId } from "./regionEvent";
@@ -40,7 +40,6 @@ import { ENGINE_WORLD } from "./engineWorld";
 import { track } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
-import type { LastBattleView } from "@/stores/adventure";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useSettingsStore } from "@/stores/settings";
 import { checkSuppression, memorialLine, MEMORIAL_CHANCE } from "./suppress";

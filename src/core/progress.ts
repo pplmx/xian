@@ -2,7 +2,13 @@
  * 进度服务 —— 计数器 / 成就 / 主线任务 / 每日任务 / 奖励发放
  * 所有系统通过 track() 汇报行为,由此统一驱动成就与任务
  */
-import type { AchvCond, AchievementDef, CounterKey, RewardBundle } from "@/types";
+import type {
+  AchvCond,
+  AchievementDef,
+  CollectionCategory,
+  CounterKey,
+  RewardBundle,
+} from "@/types";
 import { gte } from "@/utils/gnum";
 import { todayStr } from "@/utils/time";
 import { formatGN } from "@/utils/format";
@@ -24,7 +30,6 @@ import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
-import type { CollectionCategory } from "@/stores/quests";
 import type { GoalCond, GoalEnv } from "wanxiang-engine";
 import { evalGoal } from "wanxiang-engine";
 import { notify } from "./notify";
