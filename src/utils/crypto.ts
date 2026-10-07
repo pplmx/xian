@@ -1,8 +1,16 @@
 /**
  * 存档加密 —— AES(crypto-js)
  * 目的:防止直接手改 localStorage/导出文件作弊,并非安全边界(密钥随包分发)
+ *
+ * **只引子模块,不引桶文件**。`crypto-js` 的 `index.js` 会把全部算法
+ * (TripleDES / Blowfish / RC4 / Rabbit / SHA-3 / RIPEMD 等)一次性挂上,这些是
+ * CommonJS 副作用赋值,打包器摇不掉 —— 本文件只用 AES,却把整套算法捎进首屏。
+ * 走 `crypto-js/aes`(它自带 cipher-core / enc-base64 / md5 / evpkdf 依赖链,
+ * CBC + PKCS7 + OpenSSL 格式都在其中)与 `crypto-js/enc-utf8` 就够。
+ * 改动前 player 组 517KB,其中 crypto-js 一整桶占了一大块。
  */
-import CryptoJS from "crypto-js";
+import AES from "crypto-js/aes";
+import Utf8 from "crypto-js/enc-utf8";
 
 /**
  * 存档加密口令 —— **这个名字别跟着游戏改名**。
@@ -14,7 +22,7 @@ import CryptoJS from "crypto-js";
 const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
 
 export function encryptSave(plain: string): string {
-  return CryptoJS.AES.encrypt(plain, SAVE_SECRET).toString();
+  return AES.encrypt(plain, SAVE_SECRET).toString();
 }
 
 /**
@@ -33,10 +41,10 @@ export function encryptSave(plain: string): string {
 export function decryptSave(cipher: string): string | null {
   if (!cipher.startsWith("U2FsdGVkX1")) return null;
   try {
-    const wordArray = CryptoJS.AES.decrypt(cipher, SAVE_SECRET);
+    const wordArray = AES.decrypt(cipher, SAVE_SECRET);
     // 解密失败时 wordArray.sigBytes === 0,转 UTF-8 得空串或乱码
     if (wordArray.sigBytes === 0) return null;
-    const text = wordArray.toString(CryptoJS.enc.Utf8);
+    const text = wordArray.toString(Utf8);
     return text.length > 0 ? text : null;
   } catch {
     return null;
