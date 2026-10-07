@@ -15,7 +15,6 @@ import { useResourcesStore } from "@/stores/resources";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useAdventureStore } from "@/stores/adventure";
-import { useUiStore } from "@/stores/ui";
 import { tickExploration, stopExploration } from "./exploration";
 import { settleOffline, sanitizeOfflineInputs } from "./offline";
 import { checkStateAchievements, rolloverDailyIfNeeded } from "./progress";
@@ -29,6 +28,7 @@ import { studyTick, seedLoreIfNeeded } from "./loreService";
 import { flushSaveWrites } from "@/utils/storage";
 import { enginePaused, pauseElapsedMs, setEnginePaused } from "./enginePause";
 import { notify } from "./notify";
+import { setDeathDialog } from "./uiPort";
 
 export { enginePaused } from "./enginePause";
 
@@ -178,7 +178,6 @@ class GameEngine {
   private checkDeath(): void {
     const player = usePlayerStore();
     const adventure = useAdventureStore();
-    const ui = useUiStore();
     if (player.dead || player.age < player.lifespanMax) {
       return;
     }
@@ -186,7 +185,7 @@ class GameEngine {
     if (adventure.session) stopExploration("manual");
     if (!this.deathAnnounced) {
       this.deathAnnounced = true;
-      ui.deathDialog = true;
+      setDeathDialog(true);
       notify("油尽灯枯,大限已至……", "warn");
     }
   }

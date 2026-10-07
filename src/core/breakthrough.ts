@@ -27,10 +27,10 @@ import { recordMilestone } from "./identity";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
-import { useUiStore } from "@/stores/ui";
 import type { BreakthroughView, StatMods } from "@/types";
 import { playSfx } from "./audio";
 import { notify } from "./notify";
+import { showBreakthrough } from "./uiPort";
 // Phase 28 突破准备:静坐/服丹的一次性加成(见 earlyGameService;仅无劫突破受益)
 import {
   breakthroughPrepState,
@@ -187,7 +187,6 @@ export function attemptBreakthrough(): BreakthroughView | null {
   const player = usePlayerStore();
   const resources = useResourcesStore();
   const cultivation = useCultivationStore();
-  const ui = useUiStore();
   const info = breakthroughInfo();
   if (!info.ready) {
     notify(info.reason, "warn");
@@ -257,6 +256,6 @@ export function attemptBreakthrough(): BreakthroughView | null {
         : "灵气逆冲,功亏一篑。你吐出一口淤血,盘膝疗伤。",
     };
   }
-  ui.breakthrough = view;
+  showBreakthrough(view);
   return view;
 }

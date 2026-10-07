@@ -2,6 +2,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { setNotifier } from "@/core/notify";
+import { setUiViewModelSink } from "@/core/uiPort";
 import type {
   BreakthroughView,
   NumberDetailView,
@@ -56,6 +57,28 @@ export const useUiStore = defineStore("ui", () => {
    * 对账用例就是这么截提示语的),落点也始终是当前 active 的那份 pinia。
    */
   setNotifier({ toast: (text, kind) => useUiStore().toast(text, kind) });
+
+  /*
+   * 视图模型端口(见 core/uiPort.ts):core 不再 `useUiStore().breakthrough = view`
+   * 那样直接够到本 store,而是调 `showBreakthrough(view)`;这里把落点接上。
+   * 同 notify:转发经 `useUiStore()`,所以测试里断言 `ui.breakthrough` /
+   * `ui.reincarnation` 照旧拦得住,落点也始终是当前 active 的那份 pinia。
+   */
+  setUiViewModelSink({
+    breakthrough: (view) => {
+      useUiStore().breakthrough = view;
+    },
+    deathDialog: (open) => {
+      useUiStore().deathDialog = open;
+    },
+    offlineSummary: (summary) => {
+      useUiStore().offlineSummary = summary;
+    },
+    reincarnation: (view) => {
+      useUiStore().reincarnation = view;
+    },
+    readReincarnation: () => useUiStore().reincarnation,
+  });
 
   /** 手动关闭某条提示(点按 toast 即收,不等超时) */
   function dismissToast(id: number): void {

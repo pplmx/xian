@@ -33,11 +33,11 @@ import { useCultivationStore } from "@/stores/cultivation";
 import { useAdventureStore } from "@/stores/adventure";
 import { useEndgameStore } from "@/stores/endgame";
 import { useGameStore } from "@/stores/game";
-import { useUiStore } from "@/stores/ui";
 import type { GNum, LifeReview, ReincarnationView } from "@/types";
 import { recordMilestone } from "./identity";
 import { gnZero } from "@/utils/gnum";
 import { notify } from "./notify";
+import { currentReincarnationView, setDeathDialog, setReincarnationView } from "./uiPort";
 
 /** 至少金丹境方可主动兵解 */
 export const MANUAL_REBIRTH_MIN_MAJOR = 2;
@@ -180,7 +180,7 @@ export function prepareReincarnation(): ReincarnationView {
     // 新一世的随机道号草稿(确认页可改回)
     nameDraft: rollReincarnateName(),
   };
-  useUiStore().reincarnation = view;
+  setReincarnationView(view);
   return view;
 }
 
@@ -225,8 +225,7 @@ export function confirmReincarnation(
   const inventory = useInventoryStore();
   const cultivation = useCultivationStore();
   const adventure = useAdventureStore();
-  const ui = useUiStore();
-  const view = ui.reincarnation;
+  const view = currentReincarnationView();
   if (!view) return;
 
   // 永久收获
@@ -305,8 +304,8 @@ export function confirmReincarnation(
   beginLife(view.themeChoices.includes(chosenThemeId ?? "") ? chosenThemeId : null);
   recordMilestone("first_rebirth");
   track("reincarnations");
-  ui.reincarnation = null;
-  ui.deathDialog = false;
+  setReincarnationView(null);
+  setDeathDialog(false);
   notify("一梦轮回,你在玄枢山下再度睁开双眼", "rare");
   if (view.stageAdvanced) notify(`宿慧渐厚,你已是「${view.stageName}」`, "rare");
   if (recognized > 0) notify(`睁眼之际,${recognized} 味灵材的名字自行浮上心头`, "info");

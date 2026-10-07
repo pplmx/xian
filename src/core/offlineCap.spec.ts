@@ -39,6 +39,9 @@ function suppressionStoneAfterOffline(mansionLevel: number): number {
   const game = useGameStore();
   const player = usePlayerStore();
   const dongfu = useDongfuStore();
+  // 先把 ui store 起起来:离线回执经 core/uiPort 递过去(见其文件头),
+  // 没起 store 时那条回执无处可放 —— 本用例下面正是要读它
+  useUiStore();
   game.markStarted();
   game.lastActiveAt = Date.now() - GAP_HOURS * 3600 * 1000; // 60h 前最后在线
   player.major = 3;

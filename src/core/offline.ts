@@ -58,8 +58,8 @@ import { useCultivationStore } from "@/stores/cultivation";
 import { useAdventureStore } from "@/stores/adventure";
 import { useGameStore } from "@/stores/game";
 import { useLoreStore } from "@/stores/lore";
-import { useUiStore } from "@/stores/ui";
 import { useInventoryStore } from "@/stores/inventory";
+import { showOfflineSummary } from "./uiPort";
 import { useQuestsStore } from "@/stores/quests";
 import { useEndgameStore } from "@/stores/endgame";
 import { useLoadoutsStore } from "@/stores/loadouts";
@@ -117,7 +117,6 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const cultivation = useCultivationStore();
   const adventure = useAdventureStore();
   const endgameStore = useEndgameStore();
-  const ui = useUiStore();
 
   if (!game.started || player.dead) return null;
   const dtSec = Math.max(0, (nowMs - game.lastActiveAt) / 1000);
@@ -559,7 +558,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
 
   if (dtSec >= OFFLINE_MODAL_MIN_SECONDS) {
     track("offlineClaims");
-    ui.offlineSummary = summary;
+    showOfflineSummary(summary);
   }
   return summary;
 }

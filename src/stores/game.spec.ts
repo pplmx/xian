@@ -73,6 +73,9 @@ describe("建号「逆天改命」不限次", () => {
     enterCreateView(rng);
     game.setCreateProfile(rollLinggen(rng));
 
+    // 轮回视图经 core/uiPort 在 prepare → confirm 之间转手(见其文件头);
+    // 没起 ui store 时视图无处落脚,confirm 会当"没有待确认的轮回"直接返回
+    useUiStore();
     prepareReincarnation();
     confirmReincarnation(null);
 
