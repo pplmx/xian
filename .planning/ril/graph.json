@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 434,
+  "round": 435,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T10:11:09+00:00",
+  "updated_at": "2026-10-07T10:35:56+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25334,6 +25334,41 @@
       "touched_round": 433,
       "commit": "c5c2342",
       "summary": "三个 current* 加 TribulationPlayer 参数;breakthrough/CultivationView 传 player;breakthrough.spec/weather.spec 传 usePlayerStore();layeringAudit 基线下降"
+    },
+    "ISS-315": {
+      "id": "ISS-315",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T10:35:52+00:00",
+      "updated_at": "2026-10-07T10:35:52+00:00",
+      "touched_round": 434,
+      "summary": "宿命传承(ISS-302)的 8 个效果定义齐全但**全都没接线**:只被 player.addHeritage 记录,没有任何玩法读取 —— 玩家看到的是空头支票(如「元婴凝实」承诺转世起步筑基,从不发生)。本轮接上 2 个(yuanying→起步筑基、baihuang→额外法宝位),其余 6 个(danxin/tonggan/shouzhuo/daotong/dubu/daoben)待接或按合理性替换。"
+    },
+    "TASK-445": {
+      "id": "TASK-445",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T10:35:52+00:00",
+      "updated_at": "2026-10-07T10:35:52+00:00",
+      "touched_round": 434,
+      "category": "correctness",
+      "severity": 0.7,
+      "confidence": 0.95,
+      "effort": 3,
+      "summary": "接完剩余 6 个宿命传承效果,或把不合理的替换成可落地的能力位:danxin(自选起始丹)、tonggan(提前灵兽/师承入口)、shouzhuo(炼制失败保底不毁一次)、daotong(命轮两题并行)、dubu(渡劫失败豁免一次)、daoben(名号/道痕位跨世)"
+    },
+    "CHG-518": {
+      "id": "CHG-518",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T10:35:52+00:00",
+      "updated_at": "2026-10-07T10:35:52+00:00",
+      "touched_round": 434,
+      "commit": "ae8f3a6",
+      "summary": "新增 core/heritageEffects(纯函数:birthMajorFloor/artifactSlotBonus);player.rebirth 接起步筑基;loadoutService/InventoryView 接额外法宝位;人物页天赋芯片展开与转世弹窗卡片补 modsText 具体数值、传承框补 effectDesc;文档 spec 计数同步"
     }
   },
   "edges": [
@@ -37069,6 +37104,18 @@
       "to": "TASK-444",
       "type": "implements",
       "created_at": "2026-10-07T10:11:08+00:00"
+    },
+    {
+      "from": "TASK-445",
+      "to": "ISS-315",
+      "type": "addresses",
+      "created_at": "2026-10-07T10:35:56+00:00"
+    },
+    {
+      "from": "CHG-518",
+      "to": "TASK-445",
+      "type": "implements",
+      "created_at": "2026-10-07T10:35:56+00:00"
     }
   ]
 }
