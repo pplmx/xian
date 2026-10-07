@@ -41,7 +41,7 @@ import {
   explorationRules,
   winsUntilRegionBoss,
 } from "./exploration";
-import { currentRegionEvent, regionEventDef } from "./regionEvent";
+import { regionEventDef } from "./regionEvent";
 import { placeContent } from "./mortalWorldService";
 import { planIdle } from "wanxiang-engine";
 import { expFromSecs, stoneByTier } from "./formulas";
@@ -242,7 +242,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       // 与在线同源:区域事件(妖潮/古墓/商队)同时改两件事 —— 危险(dangerMult)与加丰(rewardMult)。
       // 危险侧此前已接进离线;奖励侧漏了的话,事件就只剩「更难」没有「更丰」——
       // 在线 afterWin 每次取胜都乘 rewardMult,离线这里读同一份 regionEventDef,一次读两用
-      const regEvent = currentRegionEvent(region.id);
+      const regEvent = player.currentRegionEvent(region.id);
       const regionEventDanger = regEvent ? (regionEventDef(regEvent.eventId)?.dangerMult ?? 1) : 1;
       const regionEventReward = regEvent ? (regionEventDef(regEvent.eventId)?.rewardMult ?? 1) : 1;
       const remainSec = Math.max(0, (session.endsAt - (nowMs - dtSec * 1000)) / 1000);

@@ -32,6 +32,8 @@ import { useQuestsStore } from "./quests";
 import { useEndgameStore } from "./endgame";
 import { useGameStore } from "./game";
 import { gameNow } from "@/core/enginePause";
+import { liveRegionEvent, rollNewRegionEvent } from "@/core/regionEvent";
+import { rng } from "@/utils/random";
 
 export const usePlayerStore = defineStore(
   "player",
@@ -804,6 +806,29 @@ export const usePlayerStore = defineStore(
       regionEvent.value = ev;
     }
 
+    /**
+     * 当前生效的区域事件(过期顺手清掉)—— 编排落在 store:
+     * 「读自己的 state → 调 core 的纯函数 liveRegionEvent → 过期就写回 null」。
+     * 判断本身在 core/regionEvent,本层只管状态怎么动。
+     */
+    function currentRegionEvent(
+      regionId: string,
+    ): import("@/core/regionEvent").RegionEventState | null {
+      const cur = regionEvent.value;
+      const live = liveRegionEvent(cur, regionId, gameNow());
+      if (!live && cur && cur.regionId === regionId) regionEvent.value = null;
+      return live;
+    }
+
+    /** 低频尝试为某区域生成一次事件(引擎周期调用);掷法在 core,写回在本层 */
+    function rollRegionEvent(
+      region: import("@/types").RegionDef,
+    ): import("@/core/regionEvent").RegionEventState | null {
+      const next = rollNewRegionEvent(region, gameNow(), regionEvent.value, rng);
+      if (next) regionEvent.value = next;
+      return next;
+    }
+
     // ---------- Phase 31 S3 短期秘境 ----------
     function setSecretRealm(state: import("@/core/secretRealm").SecretRealmState | null): void {
       secretRealm.value = state;
@@ -958,6 +983,8 @@ export const usePlayerStore = defineStore(
       setNemeses,
       adoptMentor,
       setRegionEvent,
+      currentRegionEvent,
+      rollRegionEvent,
       setSecretRealm,
       setDivination,
       setBreakthroughPrep,

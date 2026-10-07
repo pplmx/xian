@@ -62,7 +62,7 @@ import {
   recordLoss as recordStreakLoss,
   isRetreating,
 } from "./earlyGameService";
-import { currentRegionEvent, regionEventDef, rollRegionEvent } from "./regionEvent";
+import { regionEventDef } from "./regionEvent";
 import { noteEnemy } from "./loreService";
 import { noteTaboo } from "./samsaraService";
 import { useInventoryStore } from "@/stores/inventory";
@@ -140,7 +140,7 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
   adventure.setPendingEvent(null, Date.now());
   notify(`你动身前往${region.name},开始${modeDef.name}`, "info");
   // Phase 31 A2:出发时低频判定区域事件(妖潮等,30~120 分钟)
-  const ev = rollRegionEvent(region);
+  const ev = player.rollRegionEvent(region);
   if (ev) {
     // 界域化的叫法:人间界是「妖潮/商队遇袭」,混沌海是「凶兽潮/掠夺者」
     const def = regionEventDef(ev.eventId, player.major);
@@ -233,7 +233,7 @@ export function explorationFoeDanger(o: {
  * 出行方式与灵兽之性等到出行那一刻再摊开(那时玩家才做得了选择)。
  */
 export function regionFoeOrigin(region: RegionDef): FoeOrigin {
-  const ev = currentRegionEvent(region.id);
+  const ev = usePlayerStore().currentRegionEvent(region.id);
   const evDef = ev ? regionEventDef(ev.eventId, usePlayerStore().major) : undefined;
   return mortalFoeOriginFromParts(region.tier, [
     { label: "地界凶险", ratio: 1 + (region.danger - 1) * 0.05 },
@@ -301,7 +301,7 @@ function runBattle(now: number): void {
   }
 
   // Phase 31 S4:灵兽性格修正危险(好战更高,谨慎更低)
-  const regEv = currentRegionEvent(region.id);
+  const regEv = usePlayerStore().currentRegionEvent(region.id);
   // 危险因子与它的来源说明书一次算出来:两处各乘一遍,迟早有一个悄悄变了
   const { total: dangerFactor, origin: foeOrigin } = explorationFoeDanger({
     tier: region.tier,

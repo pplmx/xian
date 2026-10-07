@@ -3,8 +3,16 @@
  */
 import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
-import { REGION_EVENTS, regionEventDef, currentRegionEvent } from "./regionEvent";
+import {
+  REGION_EVENTS,
+  liveRegionEvent,
+  regionEventDef,
+  rollNewRegionEvent,
+  type RegionEventState,
+} from "./regionEvent";
 import { usePlayerStore } from "@/stores/player";
+import { regionDef } from "@/data/regions";
+import { RandomService } from "@/utils/random";
 
 describe("区域动态事件(regionEvent)", () => {
   beforeEach(() => {
@@ -22,11 +30,11 @@ describe("区域动态事件(regionEvent)", () => {
   it("事件按区域生效,过期自动清理", () => {
     const player = usePlayerStore();
     player.setRegionEvent({ regionId: "qingyun", eventId: "yaochao", endsAt: Date.now() + 60_000 });
-    expect(currentRegionEvent("qingyun")?.eventId).toBe("yaochao");
-    expect(currentRegionEvent("luoxia")).toBeNull();
+    expect(player.currentRegionEvent("qingyun")?.eventId).toBe("yaochao");
+    expect(player.currentRegionEvent("luoxia")).toBeNull();
     // 过期
     player.setRegionEvent({ regionId: "qingyun", eventId: "gumu", endsAt: Date.now() - 1000 });
-    expect(currentRegionEvent("qingyun")).toBeNull();
+    expect(player.currentRegionEvent("qingyun")).toBeNull();
     expect(player.regionEvent).toBeNull();
   });
 
@@ -54,5 +62,31 @@ describe("区域动态事件(regionEvent)", () => {
         expect(def.name, `${id} 在 ${major} 境还用人间界的名字`).not.toBe(regionEventDef(id)!.name);
       }
     }
+  });
+});
+
+/**
+ * 纯函数那半边:判断与掷法不必起 Pinia —— 这正是把编排挪出 core 的收益。
+ * 状态怎么动归 store(上面那条),能不能生效 / 怎么掷归这里的纯函数。
+ */
+describe("区域事件的判断与掷法可脱离 Pinia", () => {
+  const ev = (regionId: string, endsAt: number): RegionEventState => ({
+    regionId,
+    eventId: "yaochao",
+    endsAt,
+  });
+
+  it("liveRegionEvent:只认匹配且未过期的那条", () => {
+    expect(liveRegionEvent(ev("qingyun", 100), "qingyun", 50)?.eventId).toBe("yaochao");
+    expect(liveRegionEvent(ev("qingyun", 100), "luoxia", 50)).toBeNull();
+    expect(liveRegionEvent(ev("qingyun", 40), "qingyun", 50)).toBeNull();
+    expect(liveRegionEvent(null, "qingyun", 50)).toBeNull();
+  });
+
+  it("rollNewRegionEvent:已有未过期事件则不重复(掷都不掷)", () => {
+    const region = regionDef("qingyun")!;
+    // 固定随机源:若照常掷必出事件;这里应因"已有未过期事件"直接返回 null
+    const rng = new RandomService(() => 0);
+    expect(rollNewRegionEvent(region, 50, ev("qingyun", 100), rng)).toBeNull();
   });
 });

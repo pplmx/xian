@@ -28,7 +28,6 @@ import {
   breakthroughPrepState,
   getRetreatRemainingSec,
 } from "./earlyGameService";
-import { currentRegionEvent } from "./regionEvent";
 import { hoursUntilRevive, REVIVE_AFTER_HOURS } from "./worldMemory";
 
 /**
@@ -569,7 +568,7 @@ describe("引擎暂停 · 历练墙上的截止时刻", () => {
     useGameStore().addPlayTime(1);
 
     expect(player.activeDivination, "暂停中卦力不得因墙上时钟散掉").not.toBeNull();
-    expect(currentRegionEvent("qingyun"), "暂停中不得清掉区域事件").not.toBeNull();
+    expect(player.currentRegionEvent("qingyun"), "暂停中不得清掉区域事件").not.toBeNull();
     expect(player.regionEvent, "过期清理路径不得在暂停中写掉存档").not.toBeNull();
     const prep = breakthroughPrepState();
     expect(prep.sitting, "静坐不得在暂停中被墙上时钟判成就绪").toBe(true);
@@ -578,7 +577,7 @@ describe("引擎暂停 · 历练墙上的截止时刻", () => {
 
     engine.resume();
     expect(player.activeDivination, "挪完截止后卦还在").not.toBeNull();
-    expect(currentRegionEvent("qingyun"), "挪完截止后区域事件还在").not.toBeNull();
+    expect(player.currentRegionEvent("qingyun"), "挪完截止后区域事件还在").not.toBeNull();
     expect(breakthroughPrepState().sitting, "挪完截止后仍在静坐").toBe(true);
     expect(getRetreatRemainingSec()).toBe(300);
   });

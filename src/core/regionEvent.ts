@@ -14,11 +14,9 @@
  * 那里只有掠夺者留下的残局。文案按界域取(worlds),倍率与触发方式一律共用,
  * 免得为了一句 flavor 把同一套机制在界外再实现一遍。
  */
-import { usePlayerStore } from "@/stores/player";
-import { rng } from "@/utils/random";
+import type { Rng } from "wanxiang-engine";
 import { worldOf } from "@/data/realms";
 import type { RegionDef, WorldId } from "@/types";
-import { gameNow } from "./enginePause";
 
 export type RegionEventId = "yaochao" | "lingmai" | "gumu" | "shangdui";
 
@@ -118,36 +116,34 @@ export function regionEventDef(id: RegionEventId, major?: number): RegionEventDe
 /** 事件持续时间(分钟,30~120) */
 const DURATION_MIN = [30, 60, 90, 120] as const;
 
-/** 当前生效的区域事件(未过期;被过期清理) */
-export function currentRegionEvent(regionId: string): RegionEventState | null {
-  const player = usePlayerStore();
-  const now = gameNow();
-  const ev = player.regionEvent;
+/**
+ * 该事件此刻在 regionId 上还算不算数(匹配 + 未过期)—— **纯函数**。
+ * 过期清理由调用方负责(见 stores/player 的 currentRegionEvent):本层不读也不写 store。
+ */
+export function liveRegionEvent(
+  ev: RegionEventState | null,
+  regionId: string,
+  now: number,
+): RegionEventState | null {
   if (!ev || ev.regionId !== regionId) return null;
-  if (ev.endsAt <= now) {
-    // 过期自动清理
-    player.setRegionEvent(null);
-    return null;
-  }
-  return ev;
+  return ev.endsAt > now ? ev : null;
 }
 
-/** 尝试为某区域生成一次事件(低频:引擎周期性调用,按概率) */
-export function rollRegionEvent(region: RegionDef): RegionEventState | null {
-  const player = usePlayerStore();
-  const now = gameNow();
+/**
+ * 掷一次新事件 —— **纯函数**:已有未过期事件不重复;按低频概率与时长掷出。
+ * 写回由调用方(store 的 action)负责;随机源由调用方给,以保住既有的随机流。
+ */
+export function rollNewRegionEvent(
+  region: RegionDef,
+  now: number,
+  current: RegionEventState | null,
+  rng: Rng,
+): RegionEventState | null {
   // 已有未过期事件则不重复
-  const cur = player.regionEvent;
-  if (cur && cur.endsAt > now) return null;
+  if (current && current.endsAt > now) return null;
   // 低频概率:每小时约一次(配合引擎 30s 周期 → 约 0.85% / 检查)
   if (!rng.chance(0.0085)) return null;
   const eventId = rng.pick(REGION_EVENTS.map((e) => e.id));
   const durationMin = rng.pick(DURATION_MIN) ?? 60;
-  const state: RegionEventState = {
-    regionId: region.id,
-    eventId,
-    endsAt: now + durationMin * 60_000,
-  };
-  player.setRegionEvent(state);
-  return state;
+  return { regionId: region.id, eventId, endsAt: now + durationMin * 60_000 };
 }
