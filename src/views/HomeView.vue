@@ -124,9 +124,18 @@
       >
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">天界已开</span>
-        <span class="block text-[10px] text-ink-faint"
-          >道途 · 特殊世界 · 天道熔炉 · 试炼 · 道痕</span
-        >
+        <!--
+          今日天道的每日挑战是**过一天就白丢**的:首页这一行不提醒,只看主页的人
+          永远不会知道天界还有一件事没做 —— 挂一枚朱章(与人物页「卦在身」同款)。
+        -->
+        <span class="block text-[10px] text-ink-faint">
+          <span
+            v-if="dailyPending"
+            class="chip-ink mr-1 border-cinnabar/50 text-[9px] text-cinnabar"
+            >今日天道未做</span
+          >
+          道途 · 特殊世界 · 天道熔炉 · 试炼 · 道痕
+        </span>
       </span>
       <span class="text-[11px] text-cinnabar">踏天 →</span>
     </RouterLink>
@@ -275,6 +284,7 @@ import { rewardText } from "@/core/progress";
 import { modsText } from "@/ui/statNames";
 import { isRetreating } from "@/core/earlyGameService";
 import { dailyRowsOf, dailyStateOf } from "@/core/engineDailies";
+import { todayChallenge } from "@/core/dailyChallenge";
 import { mainQuestAt } from "@/core/engineChain";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -302,6 +312,12 @@ const veinOpen = ref(false);
 const adventure = useAdventureStore();
 const cultivation = useCultivationStore();
 const endgame = useEndgameStore();
+/** 天界的今日天道还没做(每日挑战,过了今日就丢)—— 首页那一行要报出来 */
+const dailyPending = computed(() => {
+  if (player.major < WORLD_BREAK_MAJOR || !endgame.daoPath) return false;
+  const d = todayChallenge();
+  return !!d && endgame.dailyDoneDay !== d.day;
+});
 const quests = useQuestsStore();
 const now = useNow();
 

@@ -1334,9 +1334,19 @@ const CEL_TABS: { id: CelTab; label: string }[] = [
 const routeTab = CEL_TABS.find((t) => t.id === String(route.query.tab))?.id;
 const celTab = ref<CelTab>(routeTab ?? (endgame.worldRun ? "exped" : "dao"));
 
-/** 页签行:远征在途时挂朱点提醒 */
+/**
+ * 页签行:两处**有当下**的挂朱点 ——
+ *   远征:一趟没走完(worldRun 在);
+ *   试炼:今日天道的每日挑战还没做(日出而题,过了今日就白丢)。
+ * 道途 / 道痕没有「在跑」的状态,不挂。
+ */
 const celTabRows = computed(() =>
-  CEL_TABS.map((t) => ({ ...t, dot: t.id === "exped" && !!endgame.worldRun })),
+  CEL_TABS.map((t) => ({
+    ...t,
+    dot:
+      (t.id === "exped" && !!endgame.worldRun) ||
+      (t.id === "trial" && !!daily.value && endgame.dailyDoneDay !== daily.value.day),
+  })),
 );
 
 /** 远征行程点列:重层择路 + 界主(层号与 EXPEDITION_* 同源,不另外数) */
