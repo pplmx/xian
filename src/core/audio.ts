@@ -425,6 +425,13 @@ function startTone(): void {
 /** 首次用户交互时调用,加载引擎并解锁声音;每次交互重入无副作用 */
 export function unlockAudio(): void {
   if (typeof window === "undefined" || typeof window.AudioContext === "undefined") return;
+  /*
+   * 两个开关都关着时不必把 Tone(340KB / gzip 79KB)与整套采样拽下来:
+   * 没人会听到。关掉音频的人在设置里改开那一刻是同一个按钮的 pointerdown 先跑
+   * (此时 prefs 还没翻),所以这一拍不载、下一拍再载 —— 多一次点击的延迟换掉
+   * 一次白下载,值。
+   */
+  if (!prefs.musicOn && !prefs.sfxOn) return;
   unlocked = true;
   if (T) {
     // 已就绪:在手势调用栈内直接恢复上下文
