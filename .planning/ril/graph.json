@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 432,
+  "round": 433,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T09:47:55+00:00",
+  "updated_at": "2026-10-07T10:01:29+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25284,6 +25284,31 @@
       "touched_round": 431,
       "commit": "1878bb8",
       "summary": "core/equipBest 加 EquipInventory 端口参数(bestEquipFor/equipBestFor/equipAllBest/equipSetCombo);视图传 useInventoryStore();两个纯 describe 去 Pinia + 新增无 Pinia 用例;layeringAudit 基线下降"
+    },
+    "TASK-443": {
+      "id": "TASK-443",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T10:01:28+00:00",
+      "updated_at": "2026-10-07T10:01:28+00:00",
+      "touched_round": 432,
+      "category": "maintainability",
+      "severity": 0.3,
+      "confidence": 1,
+      "effort": 1,
+      "summary": "worldMemory 去 player store:regionRecallFor 收 RegionRecallSource + now;worldMemory 0 store 依赖;基线 53→52 文件、158→157 处"
+    },
+    "CHG-516": {
+      "id": "CHG-516",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T10:01:29+00:00",
+      "updated_at": "2026-10-07T10:01:29+00:00",
+      "touched_round": 432,
+      "commit": "b878a06",
+      "summary": "regionRecallFor(regionId, src, now?) 结构化 RegionRecallSource;exploration/AdventureView 传 player;worldMemory.spec/suppress.spec 传 player;layeringAudit 基线下降"
     }
   },
   "edges": [
@@ -37007,6 +37032,12 @@
       "to": "TASK-442",
       "type": "implements",
       "created_at": "2026-10-07T09:47:55+00:00"
+    },
+    {
+      "from": "CHG-516",
+      "to": "TASK-443",
+      "type": "implements",
+      "created_at": "2026-10-07T10:01:29+00:00"
     }
   ]
 }
