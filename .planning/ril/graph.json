@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 437,
+  "round": 438,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T10:54:50+00:00",
+  "updated_at": "2026-10-07T11:15:26+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24461,11 +24461,11 @@
     "TASK-428": {
       "id": "TASK-428",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-09-22T14:47:25+00:00",
-      "updated_at": "2026-09-22T14:47:25+00:00",
-      "touched_round": 421,
+      "updated_at": "2026-10-07T11:15:22+00:00",
+      "touched_round": 437,
       "category": "maintainability",
       "severity": 0.4,
       "confidence": 0.9,
@@ -24989,11 +24989,11 @@
     "TASK-433": {
       "id": "TASK-433",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T07:58:19+00:00",
-      "updated_at": "2026-10-07T07:58:19+00:00",
-      "touched_round": 426,
+      "updated_at": "2026-10-07T11:15:22+00:00",
+      "touched_round": 437,
       "category": "dx",
       "severity": 0.3,
       "confidence": 1,
@@ -25405,6 +25405,17 @@
       "touched_round": 436,
       "commit": "d716f56",
       "summary": "heritageEffects.spec 加声明即承诺扫描;本轮系统审计所有非数值能力位(套装 hook/法宝特效/师承/秘境 rules/建筑上限/星象/天时…)—— 传承是唯一空头支票大类,其余均已接线"
+    },
+    "CHG-521": {
+      "id": "CHG-521",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T11:15:22+00:00",
+      "updated_at": "2026-10-07T11:15:22+00:00",
+      "touched_round": 437,
+      "commit": "engine@d2ade0e",
+      "summary": "git subtree push packages/engine → 独立仓 main(4d86a8b..d2ade0e);同树门转绿 333499c3b148;独立可站门通过"
     }
   },
   "edges": [
@@ -37170,6 +37181,18 @@
       "to": "TASK-446",
       "type": "implements",
       "created_at": "2026-10-07T10:54:50+00:00"
+    },
+    {
+      "from": "CHG-521",
+      "to": "TASK-433",
+      "type": "implements",
+      "created_at": "2026-10-07T11:15:22+00:00"
+    },
+    {
+      "from": "CHG-521",
+      "to": "TASK-428",
+      "type": "implements",
+      "created_at": "2026-10-07T11:15:22+00:00"
     }
   ]
 }
