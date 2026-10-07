@@ -40,7 +40,7 @@ jobs:
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
           version: "1.0.0"
-          node-version: "22"
+          node-version: "26"
           cache: true
           run-install: false
 

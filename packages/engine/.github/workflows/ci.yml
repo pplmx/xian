@@ -15,13 +15,18 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # 测的是**声明的最低版**:engines 写 `>=26`,就只钉 26.x。跟最低版对齐,
+    # 才不会出现"声明支持 26、实际只在 27 上验过"这种没人看得见的缺口。
+    strategy:
+      matrix:
+        node-version: ["26.x"]
     steps:
       - uses: actions/checkout@v7
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
           version: "1.0.0"
-          node-version: "22"
+          node-version: ${{ matrix.node-version }}
           cache: true
           run-install: false
       - name: 安装依赖

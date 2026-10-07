@@ -21,6 +21,11 @@
 
 ## 未发布
 
+- **运行时要求 Node ≥ 26**(原 ≥ 20);`tsconfig` 的 `lib` 随之提到 ES2022(用例里本就在用
+  `Array.prototype.at` —— 此前只是被 `@types/node` 22 的兼容垫片遮住了)。包仍是纯 ESM、零运行时依赖。
+  同时把**包形态门**接进 `check`:`publint` + `@arethetypeswrong/cli --profile esm-only`,
+  防"消费侧才现形"的导出 / 类型解析回归。
+
 - **接通 npm 发布**(为"引擎从宿主仓外置成普通依赖"铺路)。`package.json` 声明
   `publishConfig.access=public`;release workflow 在配了 `NPM_TOKEN` 时自动 `npm publish`
   (同版本已在线则跳过),release 附件那条 tgz 路仍保留。下一次发版起,

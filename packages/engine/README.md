@@ -365,7 +365,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 - **数值曲线不承诺不变**(换题材本来就要调),但**默认值与旧行为**在未显式配置时逐位一致,
   由 `baseline.spec.ts` 的摘要与 `docs/parity.md` 的对账守着。
 
-**兼容性**:零运行时依赖;纯 ESM + `.d.ts`;Node ≥ 20 / Bun / Deno / Vite / webpack 直接可用,
+**兼容性**:零运行时依赖;纯 ESM + `.d.ts`;**Node ≥ 26** / Bun / Deno / Vite / webpack 直接可用,
 不需要任何构建器插件。库不依赖 Vue / Pinia / 浏览器 API —— 纯函数 + 数据驱动,服务端跑批量模拟也能直接用。
 
 ## 版本与发布

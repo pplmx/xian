@@ -1,15 +1,22 @@
 {
   "name": "wanxiang-engine",
   "version": "0.1.22",
-  "description": "万象引擎 —— 可配置的等级(境界)/装备/属性/副本系统内核:换一套名称与内容,就能搭出自己的游戏",
+  "description": "万象引擎 —— 可配置的数值游戏内核:等级(境界)/属性/装备/副本四套系统 + 账本·任务·掉落·保底·图鉴等横切层。零运行时依赖、纯 ESM,换一套名称与内容就能搭出自己的游戏",
   "keywords": [
     "attributes",
+    "deterministic",
     "dungeon",
     "equipment",
+    "esm",
     "game-engine",
+    "idle",
     "idle-game",
     "level",
-    "rpg"
+    "loot",
+    "progression",
+    "rpg",
+    "simulation",
+    "typescript"
   ],
   "homepage": "https://github.com/pplmx/wanxiang-engine#readme",
   "bugs": {
@@ -67,14 +74,17 @@
     "examples": "bun examples/from-zero.ts && bun examples/quickstart.ts && bun examples/minimal.ts && bun examples/combo-arts.ts && bun examples/daily-loop.ts && bun examples/quest-loop.ts && bun examples/collect-loop.ts && bun examples/shop-loop.ts && bun examples/world-loop.ts && bun examples/craft-loop.ts && bun examples/realm-ladder.ts && bun examples/combat-takeover.ts && bun examples/arena-takeover.ts",
     "type-check:examples": "tsc -p tsconfig.examples.json",
     "verify:dist": "node scripts/verify-dist.mjs",
-    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.examples.json && vp test run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs && bun run examples"
+    "verify:package": "publint && attw --pack . --profile esm-only",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.examples.json && vp test run && tsc -p tsconfig.build.json && node scripts/verify-dist.mjs && bun run verify:package && bun run examples"
   },
   "devDependencies": {
-    "@types/node": "^22.13.0",
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@types/node": "^26.0.0",
+    "publint": "^0.3.25",
     "typescript": "~6.0.3",
     "vite-plus": "1.0.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=26"
   }
 }
