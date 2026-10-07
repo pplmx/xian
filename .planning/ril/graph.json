@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 423,
+  "round": 424,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-09-28T12:58:05+00:00",
+  "updated_at": "2026-10-07T06:37:05+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -286,7 +286,7 @@
       "version": 1,
       "created_at": "2026-09-09T12:53:18+00:00",
       "updated_at": "2026-09-09T12:53:18+00:00",
-      "touched_round": 180,
+      "touched_round": 424,
       "summary": "SettingsView/存档系统(导出/导入/重置)"
     },
     "ISS-012": {
@@ -6476,7 +6476,7 @@
       "version": 2,
       "created_at": "2026-09-12T04:35:19+00:00",
       "updated_at": "2026-09-12T05:26:30+00:00",
-      "touched_round": 394,
+      "touched_round": 424,
       "summary": "界面外壳与底部导航(App.vue 外壳 + TopStatusBar + BottomNavigation + 全局浮层 ToastHost + scripts/layout-check.mjs):承载所有页面的固定骨架,也是「真机排版」的观测面"
     },
     "ISS-099": {
@@ -10819,7 +10819,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 388,
+      "touched_round": 424,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -21896,7 +21896,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 392,
+      "touched_round": 424,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -24734,6 +24734,119 @@
       "touched_round": 422,
       "summary": "灵气线补位:神泉丹(14)/道泉丹(18,道品草)qiPct=1;气运爆点:鸿运丹(8)+ buff 鸿运当头(luck 0.5/eventLuck 0.4,600s);丹数 60→63,全量过七律与时制对账",
       "commit": "6a32927"
+    },
+    "ISS-309": {
+      "id": "ISS-309",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:35:05+00:00",
+      "updated_at": "2026-10-07T06:35:05+00:00",
+      "touched_round": 424,
+      "summary": "窄屏下纯文字按钮的标签被折行:界域志「问 卦(悟道点 2)」被右侧长注挤成「问 卦(悟道」/「点 2)」,流派页「+ 存当前构筑」在 320 宽同样被左侧说明挤成两行。根因:一行不换行的 flex 里按钮没设 shrink,被邻居挤扁后文字只好折行。卡片没溢出、字也没被挤成竖排,横向溢出与既有挤压判据都量不出来。",
+      "severity": 0.35,
+      "located": "src/views/RealmCodexView.vue, src/views/BuildView.vue"
+    },
+    "TASK-431": {
+      "id": "TASK-431",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T06:35:09+00:00",
+      "updated_at": "2026-10-07T06:35:09+00:00",
+      "touched_round": 424,
+      "category": "test-quality",
+      "summary": "布局自检补第四十四条通用判据:纯文字按钮(无子元素、2~18 字)的文字必须落在一行 —— 让「按钮标签被折行」这类挤压事故有门可拦",
+      "severity": 0.3
+    },
+    "CHG-500": {
+      "id": "CHG-500",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:35:09+00:00",
+      "updated_at": "2026-10-07T06:35:09+00:00",
+      "touched_round": 424,
+      "commit": "d4a3630",
+      "summary": "存档加密只引 crypto-js/aes + enc-utf8 子模块,不再引桶文件;player 组 517→465KB(gzip 192→174KB),>500KB 分块告警消失"
+    },
+    "CHG-501": {
+      "id": "CHG-501",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:35:09+00:00",
+      "updated_at": "2026-10-07T06:35:09+00:00",
+      "touched_round": 424,
+      "commit": "0a0ce15",
+      "summary": "问卦/存当前构筑两处按钮 shrink-0+whitespace-nowrap;layout-check 补第四十四条通用判据(纯文字按钮标签不许折行)"
+    },
+    "CHG-502": {
+      "id": "CHG-502",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:35:09+00:00",
+      "updated_at": "2026-10-07T06:35:09+00:00",
+      "touched_round": 424,
+      "commit": 3754619,
+      "summary": "背包/修炼空态补 .empty-note 淡墨短横,与录册(LegacyView/CelestialView)空态同款"
+    },
+    "DEC-190": {
+      "id": "DEC-190",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:35:13+00:00",
+      "updated_at": "2026-10-07T06:35:13+00:00",
+      "touched_round": 424,
+      "summary": "把「纯文字按钮标签被折行」做成 layout-check 的通用判据(而非逐页手工检查)",
+      "rationale": "同族事故已复发两次(问卦、存当前构筑),根因同一(不换行 flex 里按钮没设 shrink)。项目既有的四条通用挤压判据(layout-check 第三十四)正是这种「卡片没溢出、只是挤」的门;按钮标签折行属于同一类,且可机械判定:纯文字按钮(无子元素、2~18 字)的文字行盒数 ≥2 即红。",
+      "alternatives_rejected": "①逐页手工看一遍 —— 事故会随时间长回来,正是这门要防的;②对所有按钮一律不许折行 —— 图标+文字的按钮由子元素自己撑,长叙述型按钮(>18 字)折行属正常,会造出假红;③只看 320 窄屏 —— 界域志那处在 390 上已现形,判据不该绑死在某一档宽度。"
+    },
+    "ISS-310": {
+      "id": "ISS-310",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:35:18+00:00",
+      "updated_at": "2026-10-07T06:35:18+00:00",
+      "touched_round": 424,
+      "summary": "crypto-js 桶文件把整套算法(TripleDES/Blowfish/RC4/Rabbit/SHA-3/RIPEMD 等)一次性挂进首屏:仅用 AES 却让 player 组多背 52KB(19KB gzip)。CommonJS 副作用赋值,打包器摇不掉。",
+      "severity": 0.4
+    },
+    "ISS-311": {
+      "id": "ISS-311",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:35:23+00:00",
+      "updated_at": "2026-10-07T06:35:23+00:00",
+      "touched_round": 424,
+      "summary": "空态写法不统一:录册(LegacyView/CelestialView)用 .empty-note 的淡墨短横,背包与修炼页的空态却是一行孤字浮在空白里,像是渲染出错。",
+      "severity": 0.25
+    },
+    "ISS-312": {
+      "id": "ISS-312",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:37:01+00:00",
+      "updated_at": "2026-10-07T06:37:01+00:00",
+      "touched_round": 424,
+      "summary": "音频全关时仍会加载 Tone(unlockAudio 只看 AudioContext,不看偏好):两个开关都关掉的玩家第一次点屏幕白下载 340KB / gzip 79KB 与整套采样。",
+      "severity": 0.3
+    },
+    "CHG-503": {
+      "id": "CHG-503",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:37:02+00:00",
+      "updated_at": "2026-10-07T06:37:02+00:00",
+      "touched_round": 424,
+      "commit": "a86ffc4",
+      "summary": "unlockAudio 加偏好闸:musicOn/sfxOn 都为 false 时不建 initPromise、不加载 Tone;改开后下一拍再载"
     }
   },
   "edges": [
@@ -36175,6 +36288,78 @@
       "type": "resolves",
       "created_at": "2026-09-24T10:16:37+00:00",
       "detail": "神品/道品灵气丹 + 气运爆点,本轮落地"
+    },
+    {
+      "from": "CHG-500",
+      "to": "ISS-310",
+      "type": "resolves",
+      "created_at": "2026-10-07T06:35:18+00:00"
+    },
+    {
+      "from": "CHG-501",
+      "to": "ISS-309",
+      "type": "resolves",
+      "created_at": "2026-10-07T06:35:18+00:00"
+    },
+    {
+      "from": "TASK-431",
+      "to": "ISS-309",
+      "type": "addresses",
+      "created_at": "2026-10-07T06:35:18+00:00"
+    },
+    {
+      "from": "CHG-501",
+      "to": "TASK-431",
+      "type": "implements",
+      "created_at": "2026-10-07T06:35:18+00:00"
+    },
+    {
+      "from": "DEC-190",
+      "to": "TASK-431",
+      "type": "governs",
+      "created_at": "2026-10-07T06:35:19+00:00"
+    },
+    {
+      "from": "DEC-190",
+      "to": "COMP-019",
+      "type": "governs",
+      "created_at": "2026-10-07T06:35:19+00:00"
+    },
+    {
+      "from": "ISS-309",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-07T06:35:19+00:00"
+    },
+    {
+      "from": "ISS-310",
+      "to": "COMP-001",
+      "type": "located_in",
+      "created_at": "2026-10-07T06:35:19+00:00"
+    },
+    {
+      "from": "CHG-502",
+      "to": "ISS-311",
+      "type": "resolves",
+      "created_at": "2026-10-07T06:35:23+00:00"
+    },
+    {
+      "from": "ISS-311",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-07T06:35:23+00:00"
+    },
+    {
+      "from": "CHG-503",
+      "to": "ISS-312",
+      "type": "resolves",
+      "created_at": "2026-10-07T06:37:05+00:00"
+    },
+    {
+      "from": "ISS-312",
+      "to": "COMP-015",
+      "type": "located_in",
+      "created_at": "2026-10-07T06:37:05+00:00"
     }
   ]
 }
