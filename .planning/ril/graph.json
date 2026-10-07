@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 426,
+  "round": 427,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T08:00:48+00:00",
+  "updated_at": "2026-10-07T08:22:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25025,6 +25025,31 @@
       "summary": "引擎「外置成依赖包(从本仓移除)」评估:技术已就绪,但仅当要做成对外独立产品时才值得;前置是先发 npm",
       "rationale": "就绪度:零运行时依赖、独立仓已有 CI+release、宿主 41 文件只经公开入口、engine-dist 已证明'裸包名由 node 解析'可过。外置要动:vite 别名→dist、tsconfig paths、vitest include(引擎 80 spec 还给引擎仓)、workspace:*→npm 版本、删 engine-dist/sync/standalone 三道门与 CI 两步;24 份 engine*Parity+Ablation 必须留在宿主(它们拿引擎对账宿主冻结的旧口径)。收益:宿主仓瘦 122 文件/约 26k 行源码 + 15k 行 spec,归属清晰、安装走 npm。代价:宿主发现引擎真错(本轮 ISS-314 即此)变成 引擎修→CI→发版→宿主升 pin→对账 的跨仓流程;失去原子提交与别名到 src 的即时 TDD;同树门换成版本 pin(仍耦合)。前置:引擎尚未发 npm(现装 release 附件 tgz)。关键判据=引擎变更频率与是否要第二用户。",
       "alternatives_rejected": "A) 现在就外置(唯一消费者是宿主且引擎处维护期,收益仅仓洁,却把每次修复变发布流程);B) 保持 subtree 永不外置(若确要做成对外产品,则错过清理窗口);C) 子模块挂载(仍带源码,且比 subtree 更笨重)"
+    },
+    "CHG-508": {
+      "id": "CHG-508",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:22:48+00:00",
+      "updated_at": "2026-10-07T08:22:48+00:00",
+      "touched_round": 426,
+      "commit": "d12dd68",
+      "summary": "引擎接通 npm 发布:publishConfig.access=public + release workflow 的 npm publish 步(配 NPM_TOKEN 才发)+ 开发文档发版第7步 + README 安装说明"
+    },
+    "TASK-435": {
+      "id": "TASK-435",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:22:48+00:00",
+      "updated_at": "2026-10-07T08:22:48+00:00",
+      "touched_round": 426,
+      "category": "dx",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 3,
+      "summary": "把引擎从宿主仓外置成普通依赖包(远期目标=对外独立产品):先发一次 npm → 宿主删 workspace/别名/vitest include/三道门与 CI 步、改依赖版本 → 24 份 engine*Parity/Ablation 留宿主 → 全量对账。需人工 push/发布"
     }
   },
   "edges": [
@@ -36622,6 +36647,24 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-10-07T08:00:48+00:00"
+    },
+    {
+      "from": "DEC-193",
+      "to": "TASK-435",
+      "type": "governs",
+      "created_at": "2026-10-07T08:22:51+00:00"
+    },
+    {
+      "from": "TASK-435",
+      "to": "TASK-433",
+      "type": "depends_on",
+      "created_at": "2026-10-07T08:22:51+00:00"
+    },
+    {
+      "from": "CHG-508",
+      "to": "TASK-435",
+      "type": "implements",
+      "created_at": "2026-10-07T08:22:51+00:00"
     }
   ]
 }
