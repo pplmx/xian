@@ -38,9 +38,9 @@ export const HERITAGE_DEFS: HeritageDef[] = [
     name: "浴火丹心",
     gateMajor: 2,
     effect: "bounded-flat",
-    axis: "choice",
-    desc: "转世开局,可自选一枚已会炼制之丹(而非随机起始丹药)",
-    effectDesc: "转世出生结算时,从已学会的丹方中自选一枚起始丹",
+    axis: "fault-tolerant",
+    desc: "转世开局,本世前三炉炼丹必成",
+    effectDesc: "出生后本世前三次开炉必定成功(新手手感,不炼也能不亏)",
   },
   {
     id: "yuanying",
@@ -66,8 +66,8 @@ export const HERITAGE_DEFS: HeritageDef[] = [
     gateMajor: 5,
     effect: "bounded-flat",
     axis: "choice",
-    desc: "提前解锁一处前期灵兽位 / 师承线",
-    effectDesc: "前期额外开放一个灵兽或师承入口",
+    desc: "转世择先天之姿时,多一个可选项",
+    effectDesc: "转世的三选一变为四选一(多一份选择,不白给属性)",
   },
   {
     id: "shouzhuo",
@@ -83,9 +83,9 @@ export const HERITAGE_DEFS: HeritageDef[] = [
     name: "大乘道统",
     gateMajor: 7,
     effect: "bounded-flat",
-    axis: "choice",
-    desc: "命轮(命题)可选两份并行",
-    effectDesc: "同一世可并行两门命题(扩命题系统,非数值)",
+    axis: "honor",
+    desc: "转世时已习功法等级全部保留,不再折回起手",
+    effectDesc: "转世交割时按原等级带走已习功法(本作默认折回一层)",
   },
   {
     id: "dubu",
@@ -102,8 +102,8 @@ export const HERITAGE_DEFS: HeritageDef[] = [
     gateMajor: 9,
     effect: "bounded-flat",
     axis: "honor",
-    desc: "跨世保留一个名号 / 道痕效果位",
-    effectDesc: "真仙专属名号/道痕位随神魂不灭(纯荣誉开放位)",
+    desc: "转世睁眼即认得世间所有灵材,不必按境界补认知",
+    effectDesc: "出生时认知按最高档全带(所见即所学,平直开放)",
   },
 ];
 

@@ -68,6 +68,13 @@ export const usePlayerStore = defineStore(
       talents: [] as string[],
       /** 宿命传承(ISS-302):跨世永久的能力位,随神魂不灭 */
       heritage: [] as string[],
+      /**
+       * 本世各传承效果已用掉几次(每世重置)。
+       *
+       * 「每世一次」类效果(渡劫豁免 / 失败保料 / 首炉必成)的用量账:跨世不带,
+       * 故在 rebirth 里清空;落进存档是为了刷新页面不白嫖(见 sanitizeHeritageUses)。
+       */
+      heritageUses: {} as Record<string, number>,
       insight: 0,
       lives: [] as import("@/data/samsara").LifeRecord[],
       vow: null as import("@/data/samsara").LifeVow | null,
@@ -437,6 +444,35 @@ export const usePlayerStore = defineStore(
       }
     }
 
+    /**
+     * 消耗一次「每世一次」的传承效果(渡劫豁免 / 失败保料 / 首炉必成)。
+     *
+     * 只在**持有该传承、且本世还没用满**时返回 true 并记账 —— 调用方据此决定
+     * 「这一下要不要照常结算损失」;返回 false 就照旧。
+     */
+    function consumeHeritageUse(id: string, max = 1): boolean {
+      if (!reincarnation.value.heritage.includes(id)) return false;
+      const used = reincarnation.value.heritageUses[id] ?? 0;
+      if (used >= max) return false;
+      reincarnation.value = {
+        ...reincarnation.value,
+        heritageUses: { ...reincarnation.value.heritageUses, [id]: used + 1 },
+      };
+      return true;
+    }
+
+    /** 形状修复:传承用量只保留「认识的 id + 正整数次」 */
+    function sanitizeHeritageUses(raw: unknown): Record<string, number> {
+      const src = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
+      const out: Record<string, number> = {};
+      for (const [id, n] of Object.entries(src)) {
+        if (!heritageDef(id)) continue;
+        const v = Number(n);
+        if (Number.isFinite(v) && v > 0) out[id] = Math.floor(v);
+      }
+      return out;
+    }
+
     function addDaoFruit(n: number): void {
       reincarnation.value = { ...reincarnation.value, daoFruit: reincarnation.value.daoFruit + n };
     }
@@ -509,7 +545,11 @@ export const usePlayerStore = defineStore(
 
     /** 转世重置(保留天赋/道果/转世次数) */
     function rebirth(newLinggen: LinggenProfile): void {
-      reincarnation.value = { ...reincarnation.value, count: reincarnation.value.count + 1 };
+      reincarnation.value = {
+        ...reincarnation.value,
+        count: reincarnation.value.count + 1,
+        heritageUses: {},
+      };
       linggen.value = newLinggen;
       major.value = birthMajorFloor(reincarnation.value.heritage);
       sub.value = 0;
@@ -663,6 +703,7 @@ export const usePlayerStore = defineStore(
         vow: r?.vow ?? null,
         trial: r?.trial ?? null,
         bonds: Array.isArray(r?.bonds) ? r.bonds : [],
+        heritageUses: sanitizeHeritageUses(r?.heritageUses),
       };
       // Ghost pet id: personalityEffects / companion mods fall back to neutral
       // and the character row shows "no companion" — wipe the dangling id.
@@ -957,6 +998,7 @@ export const usePlayerStore = defineStore(
       setPet,
       addTalent,
       addHeritage,
+      consumeHeritageUse,
       addDaoFruit,
       addInsight,
       bond,

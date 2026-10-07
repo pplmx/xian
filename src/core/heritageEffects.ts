@@ -29,3 +29,26 @@ export function birthMajorFloor(owned: readonly HeritageId[]): number {
 export function artifactSlotBonus(owned: readonly HeritageId[]): number {
   return owned.includes("baihuang") ? 1 : 0;
 }
+
+/** **转世择先天之姿多一个可选项**(炼虚通感):三选一 → 四选一 */
+export function hasTalentChoiceBonus(owned: readonly HeritageId[]): boolean {
+  return owned.includes("tonggan");
+}
+
+/** **已习功法等级全留**(大乘道统):转世交割时不折回起手 */
+export function keepsAllGongfa(owned: readonly HeritageId[]): boolean {
+  return owned.includes("daotong");
+}
+
+/** **认知按最高档全带**(真仙道痕):转世睁眼即认得所有灵材,不受本世境界限制 */
+export function carriesAllLore(owned: readonly HeritageId[]): boolean {
+  return owned.includes("daoben");
+}
+
+/**
+ * **本世前几炉炼丹必成**(浴火丹心):返回本世可保住的炉数(0 = 无)。
+ * 由 `core/engineCraft` 的 `rate` 钩子消费 —— 库只在"真开炉"时调 `rate`,故安全。
+ */
+export function craftGuaranteeCrafts(owned: readonly HeritageId[]): number {
+  return owned.includes("danxin") ? 3 : 0;
+}

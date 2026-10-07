@@ -5,7 +5,14 @@
  * 钉住,且**不用起 Pinia**(拿 id 数组直接验)。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { artifactSlotBonus, birthMajorFloor } from "./heritageEffects";
+import {
+  artifactSlotBonus,
+  birthMajorFloor,
+  carriesAllLore,
+  craftGuaranteeCrafts,
+  hasTalentChoiceBonus,
+  keepsAllGongfa,
+} from "./heritageEffects";
 
 describe("宿命传承的效果", () => {
   it("元婴凝实:出生境界下限抬到筑基,其余仍从炼气", () => {
@@ -18,5 +25,16 @@ describe("宿命传承的效果", () => {
   it("化神百炼:额外一个法宝位;没持有则不加", () => {
     expect(artifactSlotBonus([])).toBe(0);
     expect(artifactSlotBonus(["baihuang"])).toBe(1);
+  });
+
+  it("其余四个效果也认传承 id", () => {
+    expect(hasTalentChoiceBonus(["tonggan"])).toBe(true);
+    expect(hasTalentChoiceBonus([])).toBe(false);
+    expect(keepsAllGongfa(["daotong"])).toBe(true);
+    expect(keepsAllGongfa([])).toBe(false);
+    expect(carriesAllLore(["daoben"])).toBe(true);
+    expect(carriesAllLore([])).toBe(false);
+    expect(craftGuaranteeCrafts(["danxin"])).toBe(3);
+    expect(craftGuaranteeCrafts([])).toBe(0);
   });
 });

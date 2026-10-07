@@ -49,6 +49,7 @@ import { rerollMortalWorld } from "./mortalWorldService";
 import { archiveBond } from "./daoluService";
 import { drawMany } from "wanxiang-engine";
 import { lifeForge } from "./heritageForge";
+import { carriesAllLore, hasTalentChoiceBonus, keepsAllGongfa } from "./heritageEffects";
 
 /**
  * 天赋牌堆 —— 抽到的天赋不再重复出现,故每项都按"一次性"标记;
@@ -144,7 +145,9 @@ export function prepareReincarnation(): ReincarnationView {
   const player = usePlayerStore();
   const owned = new Set(player.reincarnation.talents);
   const draws = 1 + Math.floor(player.major / TALENT_DRAW_DIV);
-  const choices = drawTalents(3, owned);
+  // 炼虚通感(宿命传承):三选一 → 四选一
+  const choiceCount = 3 + (hasTalentChoiceBonus(player.reincarnation.heritage) ? 1 : 0);
+  const choices = drawTalents(choiceCount, owned);
   const extras = draws > 1 ? drawTalents(draws - 1, new Set([...owned, ...choices])) : [];
 
   const review = reviewLastLife();
@@ -194,7 +197,10 @@ export function prepareReincarnation(): ReincarnationView {
 function carryGongfa(
   learned: Readonly<Record<string, number>>,
   keepOne: boolean,
+  keepAll = false,
 ): Record<string, number> {
+  // 大乘道统(宿命传承):练过的层数全带,不再折回起手
+  if (keepAll) return { ...learned };
   let keptId: string | null = null;
   if (keepOne) {
     for (const [id, lv] of Object.entries(learned)) {
@@ -274,7 +280,11 @@ export function confirmReincarnation(
   inventory.equippedArtifacts = [];
   // 已习功法保留但层数折半(顶阶可留一门不折)
   const stage = stageAt(view.insightAfter);
-  cultivation.learned = carryGongfa(cultivation.learned, stage.keepOneGongfa);
+  cultivation.learned = carryGongfa(
+    cultivation.learned,
+    stage.keepOneGongfa,
+    keepsAllGongfa(player.reincarnation.heritage),
+  );
   cultivation.buffs = [];
   adventure.setSession(null);
   adventure.setPendingEvent(null, 0);
@@ -289,7 +299,7 @@ export function confirmReincarnation(
   // (洞府/灵脉/灵兽的归零在 player.rebirth() 里,与其余「本世进程」同处一地)
 
   // 认知不因转世清零,只按阶补齐:该认得的药,睁眼就该认得
-  const recognized = carryLore(stage);
+  const recognized = carryLore(stage, carriesAllLore(player.reincarnation.heritage));
   player.rebirth(rollLinggen(rng, aptitudeFloorNow()));
   // 新的一世:上一世的建号草稿作废,「逆天改命」额度归满
   useGameStore().resetCreateDraft();

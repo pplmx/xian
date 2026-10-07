@@ -143,12 +143,13 @@ export function aptitudeFloorNow(): number {
  * 百世老修不该还要从头辨认青芝草。
  * @returns 本次新认出的灵材数
  */
-export function carryLore(stage: SamsaraStageDef): number {
-  if (stage.knownMaterialRank <= 0) return 0;
+export function carryLore(stage: SamsaraStageDef, all = false): number {
+  // 真仙道痕(宿命传承):认知按最高档全带 —— 所见即所学,不受本世境界限制
+  if (!all && stage.knownMaterialRank <= 0) return 0;
   const lore = useLoreStore();
   let n = 0;
   for (const m of MATERIALS) {
-    if (m.rank <= stage.knownMaterialRank && lore.advanceLore(m.id, 1)) n += 1;
+    if ((all || m.rank <= stage.knownMaterialRank) && lore.advanceLore(m.id, 1)) n += 1;
   }
   return n;
 }

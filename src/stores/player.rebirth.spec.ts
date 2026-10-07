@@ -107,4 +107,23 @@ describe("player.rebirth 转世状态重置", () => {
     expect(p.major, "有元婴凝实:睁眼即筑基").toBe(1);
     expect(p.sub).toBe(0);
   });
+
+  it("传承的「每世一次」:持有才能用,用满即止,转世后重置", () => {
+    const p = usePlayerStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    // 没持有 → 用不了
+    expect(p.consumeHeritageUse("dubu")).toBe(false);
+    p.addHeritage("dubu");
+    expect(p.consumeHeritageUse("dubu"), "首次应可用").toBe(true);
+    expect(p.consumeHeritageUse("dubu"), "用满一次即止").toBe(false);
+    // 转世重置:下一世又能用
+    p.rebirth({ roots: [] } as never);
+    expect(p.consumeHeritageUse("dubu"), "转世后重置").toBe(true);
+    // 丹心:本世可用三次
+    p.addHeritage("danxin");
+    expect(p.consumeHeritageUse("danxin", 3)).toBe(true);
+    expect(p.consumeHeritageUse("danxin", 3)).toBe(true);
+    expect(p.consumeHeritageUse("danxin", 3)).toBe(true);
+    expect(p.consumeHeritageUse("danxin", 3)).toBe(false);
+  });
 });

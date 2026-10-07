@@ -241,7 +241,8 @@ export function attemptBreakthrough(): BreakthroughView | null {
   } else {
     const mods = player.finalStats.mods;
     const refund = Math.min(0.8, modOf(mods, "breakRefund"));
-    player.loseExpPct(BT_FAIL_EXP_LOSS * (1 - refund));
+    // 渡劫跬步(宿命传承):本世首次渡劫失败,修为不散
+    if (!player.consumeHeritageUse("dubu")) player.loseExpPct(BT_FAIL_EXP_LOSS * (1 - refund));
     cultivation.addBuff("injury", Date.now());
     track("breakthroughFails");
     playSfx("fail");
