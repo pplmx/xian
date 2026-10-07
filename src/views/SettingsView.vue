@@ -7,7 +7,7 @@
       <div class="py-3">
         <label class="flex items-center justify-between">
           <span class="text-[13px] text-ink-soft">背景音乐</span>
-          <input v-model="settings.musicOn" type="checkbox" class="h-4 w-4 accent-cinnabar" />
+          <input v-model="settings.musicOn" type="checkbox" class="toggle-ink" />
         </label>
         <!--
           min-w-0:range 的原生宽度(约 129px)是它作为可替换元素的自动最小尺寸,
@@ -31,7 +31,7 @@
       <div class="py-3">
         <label class="flex items-center justify-between">
           <span class="text-[13px] text-ink-soft">音效</span>
-          <input v-model="settings.sfxOn" type="checkbox" class="h-4 w-4 accent-cinnabar" />
+          <input v-model="settings.sfxOn" type="checkbox" class="toggle-ink" />
         </label>
         <div v-if="settings.sfxOn" class="mt-2 flex items-center gap-2">
           <span class="text-[10px] text-ink-faint">轻</span>
@@ -50,11 +50,11 @@
       </div>
       <label class="flex items-center justify-between py-3">
         <span class="text-[13px] text-ink-soft">减少动效</span>
-        <input v-model="settings.reduceMotion" type="checkbox" class="h-4 w-4 accent-cinnabar" />
+        <input v-model="settings.reduceMotion" type="checkbox" class="toggle-ink" />
       </label>
       <label class="flex items-center justify-between py-3">
         <span class="text-[13px] text-ink-soft">遇事勿扰</span>
-        <input v-model="settings.dndEvents" type="checkbox" class="h-4 w-4 accent-cinnabar" />
+        <input v-model="settings.dndEvents" type="checkbox" class="toggle-ink" />
       </label>
       <div class="flex items-center justify-between py-3">
         <span class="text-[13px] text-ink-soft">夜间模式</span>

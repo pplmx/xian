@@ -826,6 +826,54 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
   transition: transform 0.12s ease;
 }
 
+/*
+ * 开关(.toggle-ink)—— 设置页的四个布尔项
+ *
+ * 原生 checkbox 只换一层形:appearance:none 只动外观,元素仍是 <input type=checkbox>,
+ * 读屏、键盘、v-model 语义一点不动。视觉与旁边的胶囊控件同一套语言:
+ * 未开是墨色淡底,开了是朱砂;滑块随 checked 平移。
+ */
+.toggle-ink {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.22);
+  background: rgb(var(--color-ink-rgb) / 0.07);
+  position: relative;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.toggle-ink::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: rgb(var(--color-paper-lifted-rgb));
+  box-shadow: 0 1px 2px rgb(var(--shadow-ink-rgb) / 0.35);
+  transition: transform 0.15s ease;
+}
+.toggle-ink:checked {
+  background: rgb(var(--color-cinnabar-rgb));
+  border-color: rgb(var(--color-cinnabar-rgb));
+}
+.toggle-ink:checked::after {
+  transform: translateX(14px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .toggle-ink,
+  .toggle-ink::after {
+    transition-duration: 0.01ms;
+  }
+}
+
 .btn-seal {
   display: inline-flex;
   align-items: center;
