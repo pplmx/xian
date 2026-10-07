@@ -21,21 +21,7 @@ import type { AttributeSystem, Mods } from "./attributes.js";
 import type { Numeric } from "./numeric.js";
 import { numberNumeric } from "./numeric.js";
 import type { Rng } from "./rng.js";
-
-export interface EnemySkillDef {
-  name: string;
-  /** 伤害倍率 */
-  mult: number;
-  /** 触发概率 */
-  rate: number;
-  /**
-   * 机制标记(自由文本):stun / drain / pierce / multi / bleed 之类。
-   * 库**不认识**这些词,只把它原样交给 `BattleConfig.skillEffectFn` 去解释 ——
-   * 你的题材里叫"分心""伤口""没电了"也行。
-   */
-  effect?: string;
-  desc?: string;
-}
+import type { EnemySkillDef } from "./combat.js";
 
 export interface EnemyDef {
   id: string;

@@ -12,7 +12,27 @@ import type { Mods } from "./attributes.js";
 import type { Numeric } from "./numeric.js";
 import { numberNumeric } from "./numeric.js";
 import type { Rng } from "./rng.js";
-import type { EnemySkillDef } from "./dungeons.js";
+
+/**
+ * 一条技能 / 敌人的招式 —— 战斗引擎与内容层共用的形状。
+ *
+ * 它住在战斗这一侧(而不是副本):`createDungeonSystem` 只负责"哪个敌人会这招",
+ * 真正解释它的是战斗引擎 —— 内容依赖战斗模型,而不是反过来。
+ */
+export interface EnemySkillDef {
+  name: string;
+  /** 伤害倍率 */
+  mult: number;
+  /** 触发概率 */
+  rate: number;
+  /**
+   * 机制标记(自由文本):stun / drain / pierce / multi / bleed 之类。
+   * 库**不认识**这些词,只把它原样交给 `BattleConfig.skillEffectFn` 去解释 ——
+   * 你的题材里叫"分心""伤口""没电了"也行。
+   */
+  effect?: string;
+  desc?: string;
+}
 
 /**
  * 战斗读哪几个键 —— **键名由作品定**。
