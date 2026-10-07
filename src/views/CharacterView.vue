@@ -261,9 +261,18 @@
       <GameIcon name="mountain" :size="16" class="shrink-0 text-ink-soft" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">界域志</span>
-        <span class="block truncate text-[10px] text-ink-faint tabular"
-          >{{ cnNumber(WORLDS.length) }}界{{ cnNumber(REALMS.length) }}境 · 每一境的来路与典籍</span
-        >
+        <!--
+          这一册装着两半:界域/典籍是「来路」(只读),周易/紫微/星象/奇门是「术数四门」
+          (有当下,问卦就在里面) —— 副题要把两半都说出来,否则想找问卦的人根本不会点进来。
+        -->
+        <span class="block text-[10px] text-ink-faint tabular">
+          <span
+            v-if="divinationOn"
+            class="chip-ink mr-1 border-cinnabar/50 text-[9px] text-cinnabar"
+            >卦在身</span
+          >
+          {{ cnNumber(WORLDS.length) }}界{{ cnNumber(REALMS.length) }}境的来路与典籍 · 术数四门
+        </span>
       </span>
       <span class="text-[11px] text-ink-soft">查阅 →</span>
     </RouterLink>
@@ -670,6 +679,8 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 
 const player = usePlayerStore();
+/** 卦在身:时限制的一卦在跑 —— 界域志那一行要报出来(问卦就在那一册里) */
+const divinationOn = computed(() => !!player.activeDivination);
 
 /** S3 道果链路:有效收益与软上限白话 */
 const fruitInfo = computed(() => fruitMarginalInfo());

@@ -11,7 +11,12 @@
     </div>
 
     <SectionTitle title="界域志" :hint="`境界名从哪来 · 已至「${realmDef(player.major).name}」`" />
-    <InkTabs v-model="codexTab" :tabs="CODEX_TABS" />
+    <!--
+      这一册装着两半:界域 / 典籍是「名物的来路」(只读),周易 / 紫微 / 星象 /
+      奇门是「术数四门」(有当下)。两半混在一排页签里,若不标出来就看不出后四册是活的 ——
+      周易有卦在身时挂一朱点(与图鉴「收藏」、天界「远征」同款)。
+    -->
+    <InkTabs v-model="codexTab" :tabs="codexTabRows" />
 
     <template v-if="codexTab === 'realm'">
       <!-- 界域与境界:逐境写明出处与承接 -->
@@ -402,6 +407,10 @@ const CODEX_TABS: { id: CodexTab; label: string }[] = [
   { id: "qimen", label: "奇门" },
 ];
 const codexTab = ref<CodexTab>("realm");
+/** 卦在身:周易那一册挂朱点 —— 时限制的一卦在跑,得让人看得见 */
+const codexTabRows = computed(() =>
+  CODEX_TABS.map((t) => ({ ...t, dot: t.id === "yi" && !!player.activeDivination })),
+);
 
 const showAllHex = ref(false);
 
