@@ -5,6 +5,9 @@
  * 钉住,且**不用起 Pinia**(拿 id 数组直接验)。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { HERITAGE_DEFS } from "@/data/heritage";
 import {
   artifactSlotBonus,
   birthMajorFloor,
@@ -36,5 +39,28 @@ describe("宿命传承的效果", () => {
     expect(carriesAllLore([])).toBe(false);
     expect(craftGuaranteeCrafts(["danxin"])).toBe(3);
     expect(craftGuaranteeCrafts([])).toBe(0);
+  });
+
+  /**
+   * **声明即承诺** —— 这条判据是本轮审计的收口:8 个传承此前全声明了、却一个都没接,
+   * 玩家看到的是一张空头支票。今后新增一个传承却忘了接线,这里当场红。
+   *
+   * 扫 core/stores 的源码(排除 data 里的定义与 spec 里的断言):每个传承 id 都必须
+   * 在**玩法代码**里出现一次(被某个效果函数 / store 动作 / hook 读)。
+   */
+  it("每个传承 id 都在 core/stores 里有消费点(不是空头支票)", () => {
+    const root = resolve(__dirname, "..");
+    const files: string[] = [];
+    for (const dir of ["core", "stores"]) {
+      for (const f of readdirSync(join(root, dir))) {
+        if (f.endsWith(".ts") && !f.endsWith(".spec.ts")) files.push(join(root, dir, f));
+      }
+    }
+    const text = files.map((f) => readFileSync(f, "utf8")).join("\n");
+    const unwired = HERITAGE_DEFS.filter((d) => !text.includes(`"${d.id}"`));
+    expect(
+      unwired.map((d) => `${d.id}(${d.name})`),
+      "这些传承只在 data 里声明,没接进玩法",
+    ).toEqual([]);
   });
 });
