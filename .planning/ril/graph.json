@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 427,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T08:22:51+00:00",
+  "updated_at": "2026-10-07T08:30:08+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 426,
+      "touched_round": 427,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -24970,7 +24970,7 @@
       "version": 1,
       "created_at": "2026-10-07T07:58:16+00:00",
       "updated_at": "2026-10-07T07:58:16+00:00",
-      "touched_round": 426,
+      "touched_round": 427,
       "summary": "packages/engine 维持 git-subtree 模型(宿主为事实源,独立仓为镜像+独立 CI/发布),本轮不翻转事实源",
       "rationale": "引擎早已是独立仓:.github/workflows(ci+release)、README/CHANGELOG/docs、发布包自检(scripts/verify-dist.mjs)、宿主侧 engine-sync 同树门 + check:engine:standalone 都齐备;41 个宿主文件经公开入口消费,且引擎正处文档化的维护期(0.1.22 起,只修真错/判据漏洞/文档不一致)。当前唯一真消费者就是宿主,且引擎仍随宿主发现的真错共演进(本轮 ISS-314 即宿主 GNum 大数台账暴露),subtree 让'宿主+引擎'的改动保持原子、单一工具链与锁文件;翻转事实源会把一次引擎修复变成 引擎分支→tag→release→宿主升 pin→对账 的跨仓流程。",
       "alternatives_rejected": "A) 翻转事实源:在独立仓开发、宿主按发布版本消费(现无第二消费者,且打破原子改动,成本大于收益);B) 彻底拆出 monorepo(需独立版本节奏与跨仓 CI 协调,触发信号未到);C) 不做任何约定、任由镜像漂移(已有 engine-sync 门在 CI 拦,不可取)"
@@ -25021,7 +25021,7 @@
       "version": 1,
       "created_at": "2026-10-07T08:00:48+00:00",
       "updated_at": "2026-10-07T08:00:48+00:00",
-      "touched_round": 426,
+      "touched_round": 427,
       "summary": "引擎「外置成依赖包(从本仓移除)」评估:技术已就绪,但仅当要做成对外独立产品时才值得;前置是先发 npm",
       "rationale": "就绪度:零运行时依赖、独立仓已有 CI+release、宿主 41 文件只经公开入口、engine-dist 已证明'裸包名由 node 解析'可过。外置要动:vite 别名→dist、tsconfig paths、vitest include(引擎 80 spec 还给引擎仓)、workspace:*→npm 版本、删 engine-dist/sync/standalone 三道门与 CI 两步;24 份 engine*Parity+Ablation 必须留在宿主(它们拿引擎对账宿主冻结的旧口径)。收益:宿主仓瘦 122 文件/约 26k 行源码 + 15k 行 spec,归属清晰、安装走 npm。代价:宿主发现引擎真错(本轮 ISS-314 即此)变成 引擎修→CI→发版→宿主升 pin→对账 的跨仓流程;失去原子提交与别名到 src 的即时 TDD;同树门换成版本 pin(仍耦合)。前置:引擎尚未发 npm(现装 release 附件 tgz)。关键判据=引擎变更频率与是否要第二用户。",
       "alternatives_rejected": "A) 现在就外置(唯一消费者是宿主且引擎处维护期,收益仅仓洁,却把每次修复变发布流程);B) 保持 subtree 永不外置(若确要做成对外产品,则错过清理窗口);C) 子模块挂载(仍带源码,且比 subtree 更笨重)"
@@ -25044,12 +25044,24 @@
       "version": 1,
       "created_at": "2026-10-07T08:22:48+00:00",
       "updated_at": "2026-10-07T08:22:48+00:00",
-      "touched_round": 426,
+      "touched_round": 427,
       "category": "dx",
       "severity": 0.5,
       "confidence": 0.9,
       "effort": 3,
       "summary": "把引擎从宿主仓外置成普通依赖包(远期目标=对外独立产品):先发一次 npm → 宿主删 workspace/别名/vitest include/三道门与 CI 步、改依赖版本 → 24 份 engine*Parity/Ablation 留宿主 → 全量对账。需人工 push/发布"
+    },
+    "DEC-194": {
+      "id": "DEC-194",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:30:07+00:00",
+      "updated_at": "2026-10-07T08:30:07+00:00",
+      "touched_round": 427,
+      "summary": "确认路线:引擎短期保留在本仓(subtree 模型),外置成普通依赖包列为远期目标;npm 发布前置已接通",
+      "rationale": "外置的收益是宿主仓瘦身与归属清晰,代价是宿主逼出的引擎真错要走跨仓发布链。短期开发阶段宿主与引擎仍需频繁联动(改动、对账、消融),别名到 src 的即时 TDD 与原子提交比仓洁更重要,故短期不动。远期目标是引擎成为对外独立产品 —— 那时外置才有第二收益(外部使用者按包消费);前置(发 npm)已接通(publishConfig + release workflow)。触发外置的信号见 DEC-193。",
+      "alternatives_rejected": "A) 短期即外置(牺牲开发便利换仓洁,当前不值得);B) 现在就删除已接通的 npm 发布配置(那份配置同时修掉了 release 附件安装的脆弱性,且是远期前置,保留);C) 把 subtree 换成子模块(更笨重)"
     }
   },
   "edges": [
@@ -36665,6 +36677,30 @@
       "to": "TASK-435",
       "type": "implements",
       "created_at": "2026-10-07T08:22:51+00:00"
+    },
+    {
+      "from": "DEC-194",
+      "to": "DEC-192",
+      "type": "supersedes",
+      "created_at": "2026-10-07T08:30:08+00:00"
+    },
+    {
+      "from": "DEC-194",
+      "to": "DEC-193",
+      "type": "supersedes",
+      "created_at": "2026-10-07T08:30:08+00:00"
+    },
+    {
+      "from": "DEC-194",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-10-07T08:30:08+00:00"
+    },
+    {
+      "from": "DEC-194",
+      "to": "TASK-435",
+      "type": "governs",
+      "created_at": "2026-10-07T08:30:08+00:00"
     }
   ]
 }
