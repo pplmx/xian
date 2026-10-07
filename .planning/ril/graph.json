@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 424,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T06:37:05+00:00",
+  "updated_at": "2026-10-07T06:41:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24847,6 +24847,28 @@
       "touched_round": 424,
       "commit": "a86ffc4",
       "summary": "unlockAudio 加偏好闸:musicOn/sfxOn 都为 false 时不建 initPromise、不加载 Tone;改开后下一拍再载"
+    },
+    "ISS-313": {
+      "id": "ISS-313",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:41:48+00:00",
+      "updated_at": "2026-10-07T06:41:48+00:00",
+      "touched_round": 424,
+      "summary": "首页「今日天道未做」朱章压在 10px 小字行首,把「道途 · 特殊世界 · 天道熔炉 · 试炼 · 道痕」挤折成两行(390 最常见一档本可单行)。",
+      "severity": 0.25
+    },
+    "CHG-504": {
+      "id": "CHG-504",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T06:41:48+00:00",
+      "updated_at": "2026-10-07T06:41:48+00:00",
+      "touched_round": 424,
+      "commit": "c56da36",
+      "summary": "首页朱章挪到题头「天界已开」一行旁,小字行恢复单行;320 仍用 keep-all 只在「 · 」处断"
     }
   },
   "edges": [
@@ -36360,6 +36382,18 @@
       "to": "COMP-015",
       "type": "located_in",
       "created_at": "2026-10-07T06:37:05+00:00"
+    },
+    {
+      "from": "CHG-504",
+      "to": "ISS-313",
+      "type": "resolves",
+      "created_at": "2026-10-07T06:41:51+00:00"
+    },
+    {
+      "from": "ISS-313",
+      "to": "COMP-015",
+      "type": "located_in",
+      "created_at": "2026-10-07T06:41:51+00:00"
     }
   ]
 }
