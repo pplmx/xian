@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 430,
+  "round": 431,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T09:23:04+00:00",
+  "updated_at": "2026-10-07T09:36:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25234,6 +25234,31 @@
       "touched_round": 429,
       "commit": "6f9a5bf",
       "summary": "astronomy.ts 四个函数改收 totalPlaySec(todayMansion/isFavoredRegion/mansionEventLuck/todayMansionLine);exploreEventChance/tickExploration 加 totalPlaySec 形参;astronomy.spec 去 Pinia;layeringAudit 基线下降"
+    },
+    "TASK-441": {
+      "id": "TASK-441",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T09:36:20+00:00",
+      "updated_at": "2026-10-07T09:36:20+00:00",
+      "touched_round": 430,
+      "category": "maintainability",
+      "severity": 0.4,
+      "confidence": 1,
+      "effort": 3,
+      "summary": "视图模型走端口:core 不再 import ui store(breakthrough/engine/offline/reincarnation 改走 core/uiPort 落点);core 对 ui 的依赖 4→0,分层引用处 163→159"
+    },
+    "CHG-514": {
+      "id": "CHG-514",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T09:36:20+00:00",
+      "updated_at": "2026-10-07T09:36:20+00:00",
+      "touched_round": 430,
+      "commit": "3a15b0d",
+      "summary": "新增 core/uiPort.ts(showBreakthrough/setDeathDialog/showOfflineSummary/setReincarnationView/currentReincarnationView);ui store setup 时绑定落点;4 个 core 文件摘 ui 依赖;3 处用例补 useUiStore() 前置"
     }
   },
   "edges": [
@@ -36945,6 +36970,12 @@
       "to": "TASK-440",
       "type": "implements",
       "created_at": "2026-10-07T09:23:04+00:00"
+    },
+    {
+      "from": "CHG-514",
+      "to": "TASK-441",
+      "type": "implements",
+      "created_at": "2026-10-07T09:36:20+00:00"
     }
   ]
 }
