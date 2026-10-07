@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 424,
+  "round": 426,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T06:41:51+00:00",
+  "updated_at": "2026-10-07T07:51:03+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 399,
+      "touched_round": 425,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -24869,6 +24869,99 @@
       "touched_round": 424,
       "commit": "c56da36",
       "summary": "首页朱章挪到题头「天界已开」一行旁,小字行恢复单行;320 仍用 keep-all 只在「 · 」处断"
+    },
+    "ISS-314": {
+      "id": "ISS-314",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-07T07:46:03+00:00",
+      "updated_at": "2026-10-07T07:49:02+00:00",
+      "touched_round": 424,
+      "summary": "引擎 resources 台账把大数压回 double:apply/shortfall 全程走 numeric.toNumber,导致 >1e308 的收支被当坏数据静默丢弃(entries=0)、余额被归零;canAfford 对超大数因 Infinity-Infinity=NaN 误判为'付得起'。库里 createResourceSystem 号称支持 Numeric<T>,宿主 STONE_LEDGER 正是 GNum 大数。"
+    },
+    "TASK-432": {
+      "id": "TASK-432",
+      "type": "task",
+      "status": "resolved",
+      "version": 4,
+      "created_at": "2026-10-07T07:46:05+00:00",
+      "updated_at": "2026-10-07T07:49:08+00:00",
+      "touched_round": 425,
+      "category": "correctness",
+      "severity": 0.75,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "resources 台账改 T 原生:apply 不经过 double(大数收支不丢/不被当坏数据)、shortfall/canAfford 用 T 比较(超大数不再误判);补强'大数不压 double'用例到 >1e308 与 mantissa 精度"
+    },
+    "EV-453": {
+      "id": "EV-453",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:48:53+00:00",
+      "updated_at": "2026-10-07T07:48:53+00:00",
+      "touched_round": 424,
+      "source": "525e40f packages/engine/src/resources.spec.ts",
+      "summary": "改前探针:1e400 收支 entries=0(静默丢)、canAfford(1e400, 2e400)=true;改后同探针与三档新判据全绿,全量 323 spec/3076 例绿,engine-dist 产物自检绿",
+      "confidence": 1.0
+    },
+    "CHG-505": {
+      "id": "CHG-505",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:48:55+00:00",
+      "updated_at": "2026-10-07T07:48:55+00:00",
+      "touched_round": 424,
+      "commit": "525e40f",
+      "summary": "resources apply 改 T 原生(clampT/badAmount/shortfall):大数收支不再经 double;补 1e400/余额不归零/canAfford 超大数三档判据"
+    },
+    "HYP-119": {
+      "id": "HYP-119",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:49:00+00:00",
+      "updated_at": "2026-10-07T07:49:00+00:00",
+      "touched_round": 426,
+      "confidence": 0.95,
+      "summary": "resources.apply/shortfall 把台账值投影成 double(number)是超界收支被丢、余额被归零、canAfford 超大数误判的共同根因"
+    },
+    "CHG-506": {
+      "id": "CHG-506",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:50:58+00:00",
+      "updated_at": "2026-10-07T07:50:58+00:00",
+      "touched_round": 425,
+      "commit": "110e78d",
+      "summary": "resources.normalize 已知键改 T 原生 readEntry:大数存档形状({m,e})不再被 Number() 抹成 0;未知键行为不变"
+    },
+    "DEC-191": {
+      "id": "DEC-191",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:50:58+00:00",
+      "updated_at": "2026-10-07T07:50:58+00:00",
+      "touched_round": 425,
+      "summary": "resources 大数修复取向:T 原生比较/加减,不往 Numeric 加 floor",
+      "rationale": "整数资源的取整仍可走 toNumber(材料是小数字);给 Numeric 加 floor 会扩公开接口、动所有实现,而真正要保的是'值不经过 double',不是'取整也用 T'。number 层逐位一致由既有对账用例守着。",
+      "alternatives_rejected": "A) 给 Numeric 增补 floor 成员;B) 按 typeof zero 分叉两套 apply;C) 只加文档说明'大数资源请自行 clamp'"
+    },
+    "EV-454": {
+      "id": "EV-454",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:51:03+00:00",
+      "updated_at": "2026-10-07T07:51:03+00:00",
+      "touched_round": 426,
+      "source": "110e78d packages/engine/src/resources.spec.ts",
+      "summary": "normalize 旧实现 Number({m:9.9,e:400})=NaN(实测)→ 大数存档被清零;改后 normalize 保留 e=400/m=9.9,全量 323 spec/3076 例绿",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -36394,6 +36487,54 @@
       "to": "COMP-015",
       "type": "located_in",
       "created_at": "2026-10-07T06:41:51+00:00"
+    },
+    {
+      "from": "TASK-432",
+      "to": "ISS-314",
+      "type": "addresses",
+      "created_at": "2026-10-07T07:46:07+00:00"
+    },
+    {
+      "from": "ISS-314",
+      "to": "COMP-027",
+      "type": "located_in",
+      "created_at": "2026-10-07T07:46:07+00:00"
+    },
+    {
+      "from": "EV-453",
+      "to": "HYP-119",
+      "type": "validates",
+      "created_at": "2026-10-07T07:49:00+00:00"
+    },
+    {
+      "from": "CHG-505",
+      "to": "ISS-314",
+      "type": "resolves",
+      "created_at": "2026-10-07T07:49:02+00:00"
+    },
+    {
+      "from": "CHG-505",
+      "to": "TASK-432",
+      "type": "implements",
+      "created_at": "2026-10-07T07:49:02+00:00"
+    },
+    {
+      "from": "CHG-506",
+      "to": "TASK-432",
+      "type": "implements",
+      "created_at": "2026-10-07T07:50:58+00:00"
+    },
+    {
+      "from": "DEC-191",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-10-07T07:51:00+00:00"
+    },
+    {
+      "from": "EV-454",
+      "to": "HYP-119",
+      "type": "validates",
+      "created_at": "2026-10-07T07:51:03+00:00"
     }
   ]
 }
