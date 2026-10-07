@@ -21,6 +21,14 @@
 
 ## 未发布
 
+- **资源台账改 T 原生 —— 大数收支不再被压回 double**。`createResourceSystem` 号称支持
+  `Numeric<T>`,但 `apply` / `shortfall` 全程把值投影成 `number`:超出 double(约 1.8e308)
+  的收支被当坏数据静默丢弃(`grant` 返回 `entries=0`)、余额被 `Infinity → from` 归零,
+  `canAfford` 对超大数因 `Infinity - Infinity = NaN` 误判成"付得起";`normalize` 还会把
+  存成 `{m,e}` 的大数格修复成 0。现在落账 / 比价 / 存档修复都走 T 原生(`clampT` /
+  `badAmount` / `readEntry`),整数资源取整仍走 `toNumber`(材料是小数字)。
+  `number` 层的默认行为逐位不变(宿主对账用例守着)。
+
 - **加权抽取抽出题材无关的核 `pickWeighted`**。`createRng.weighted` 此前没跟
   `randomRng` 对齐:首项权重为 0 且 `next()===0` 时会被选中。现在两边(以及宿主
   自己的 RandomService)共用同一份半开区间核 —— 零/负权重在有正权重时永不中,
