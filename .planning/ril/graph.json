@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 433,
+  "round": 434,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T10:01:29+00:00",
+  "updated_at": "2026-10-07T10:11:09+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25309,6 +25309,31 @@
       "touched_round": 432,
       "commit": "b878a06",
       "summary": "regionRecallFor(regionId, src, now?) 结构化 RegionRecallSource;exploration/AdventureView 传 player;worldMemory.spec/suppress.spec 传 player;layeringAudit 基线下降"
+    },
+    "TASK-444": {
+      "id": "TASK-444",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T10:11:08+00:00",
+      "updated_at": "2026-10-07T10:11:08+00:00",
+      "touched_round": 433,
+      "category": "maintainability",
+      "severity": 0.3,
+      "confidence": 1,
+      "effort": 1,
+      "summary": "tribulationDecision 去 player store:currentStatGuard/Relief/Plan 收 TribulationPlayer;基线 52→51 文件、157→156 处"
+    },
+    "CHG-517": {
+      "id": "CHG-517",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T10:11:08+00:00",
+      "updated_at": "2026-10-07T10:11:08+00:00",
+      "touched_round": 433,
+      "commit": "c5c2342",
+      "summary": "三个 current* 加 TribulationPlayer 参数;breakthrough/CultivationView 传 player;breakthrough.spec/weather.spec 传 usePlayerStore();layeringAudit 基线下降"
     }
   },
   "edges": [
@@ -37038,6 +37063,12 @@
       "to": "TASK-443",
       "type": "implements",
       "created_at": "2026-10-07T10:01:29+00:00"
+    },
+    {
+      "from": "CHG-517",
+      "to": "TASK-444",
+      "type": "implements",
+      "created_at": "2026-10-07T10:11:08+00:00"
     }
   ]
 }
