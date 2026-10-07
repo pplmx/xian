@@ -44,7 +44,7 @@
 
     <!-- 收藏图鉴 -->
     <template v-else>
-      <section v-for="cat in collectionCats" :key="cat.key">
+      <section v-for="cat in visibleCats" :key="cat.key">
         <SectionTitle :title="cat.name" :hint="cat.hint" />
         <!--
           未收录的条目只是一片「???」—— 得告诉玩家去哪儿找,否则这一册只能干瞪眼。
@@ -57,7 +57,7 @@
         </p>
         <p v-else class="mt-1 text-[10px] text-ink-faint">{{ cat.source }}</p>
         <div class="card-ink mt-2 flex flex-wrap gap-1.5 px-3.5 py-3">
-          <template v-for="entry in cat.entries" :key="entry.id">
+          <template v-for="entry in cat.shown" :key="entry.id">
             <button
               v-if="entry.stage >= 1"
               class="chip-ink flex items-center gap-1 active:scale-95"
@@ -86,6 +86,16 @@
               >???</span
             >
           </template>
+          <!--
+            未识者至多铺 UNKNOWN_CAP 枚:装备图鉴有 288 个模板,全铺出来是二十屏的「?」墙 ——
+            而每个 ? 都不带一点信息(名字、品阶全遮着),只等于同一个数重复画。【多出来的折成一枚计数章。
+          -->
+          <span
+            v-if="cat.hiddenUnknown"
+            class="chip-ink border-ink/15 text-ink-faint"
+            :title="`尚有 ${cat.hiddenUnknown} 件未收录`"
+            >…+{{ cat.hiddenUnknown }}</span
+          >
         </div>
       </section>
       <p class="text-center text-[10px] text-ink-faint">
@@ -306,6 +316,26 @@ const collectionCats = computed<CodexCat[]>(() => {
     ),
   ];
 });
+
+/**
+ * 未识的「???」至多铺这么多枚。
+ *
+ * 装备图鉴有 288 个模板 —— 全铺出来是二十屏的「?」墙,而每个 ? 都不带一点信息
+ * (名字/品阶/描述全遮着),多铺一枚与少铺一枚读到的东西完全一样。故已收录的照旧全列,
+ * 未识的只铺前 UNKNOWN_CAP 枚(留出「还有很多格空着」的感觉),其余折成一枚「…+N」。
+ */
+const UNKNOWN_CAP = 24;
+const visibleCats = computed(() =>
+  collectionCats.value.map((cat) => {
+    const known = cat.entries.filter((e) => e.stage >= 1);
+    const unknown = cat.entries.filter((e) => e.stage < 1);
+    return {
+      ...cat,
+      shown: [...known, ...unknown.slice(0, UNKNOWN_CAP)],
+      hiddenUnknown: Math.max(0, unknown.length - UNKNOWN_CAP),
+    };
+  }),
+);
 
 /** 收藏册里还有「新得」没看过 —— 图鉴默认落在「成就」页,不切进去也看不见有货,门口先亮一点 */
 const collectionHasNew = computed(() =>
