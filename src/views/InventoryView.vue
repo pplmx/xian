@@ -117,7 +117,9 @@
           />
         </div>
       </div>
-      <p v-else class="mt-8 text-center text-[12px] text-ink-faint">行囊空空,去历练中寻些机缘吧</p>
+      <p v-else class="empty-note mt-8 text-center text-[12px] text-ink-faint">
+        行囊空空,去历练中寻些机缘吧
+      </p>
     </template>
 
     <!-- 丹药 -->
@@ -193,7 +195,7 @@
           >
         </button>
       </div>
-      <p v-else class="mt-10 text-center text-[12px] text-ink-faint">丹匣空空</p>
+      <p v-else class="empty-note mt-10 text-center text-[12px] text-ink-faint">丹匣空空</p>
     </template>
 
     <!-- 材料 -->
@@ -307,7 +309,7 @@
           </p>
         </div>
       </div>
-      <p v-else class="mt-16 text-center text-[12px] text-ink-faint">
+      <p v-else class="empty-note mt-16 text-center text-[12px] text-ink-faint">
         尚无法宝随身
         <br />
         <span class="text-[11px]">法宝多出自际遇与强敌之手</span>

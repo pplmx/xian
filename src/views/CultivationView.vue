@@ -543,7 +543,7 @@
           </button>
         </div>
         <!-- 开局尚无一部习得功法:别让带边框的容器空着一块白板,说一句下一步在哪 -->
-        <p v-else class="card-ink px-4 py-3 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note card-ink px-4 py-3 text-center text-[11px] text-ink-faint">
           尚无一部习得之法 —— 于下方藏经阁参悟,点亮道途
         </p>
 
