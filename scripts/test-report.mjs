@@ -147,6 +147,7 @@ const CATEGORIES = [
       "worldRite",
       "player.rebirth",
       "heritageForge",
+      "heritageEffects",
     ],
   },
   {

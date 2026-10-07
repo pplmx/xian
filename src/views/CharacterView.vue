@@ -416,6 +416,7 @@
             tappedTalent.name
           }}</span>
           ：{{ tappedTalent.desc }}
+          <span class="mt-0.5 block text-qing">{{ modsText(tappedTalent.mods) }}</span>
         </p>
       </div>
       <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
@@ -680,7 +681,7 @@ import { rootElements, tendencyLines } from "@/core/linggenAffinity";
 import { cnNumber, formatPercent } from "@/utils/format";
 import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES, modsText } from "@/ui/statNames";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";

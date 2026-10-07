@@ -91,4 +91,20 @@ describe("player.rebirth 转世状态重置", () => {
       "灵脉投点应清零",
     ).toBe(true);
   });
+
+  /**
+   * 宿命传承的效果必须在**出生那一刻**真的落地(ISS-302 的后半)。
+   * 此前传承只被 addHeritage 记下,效果一个都没接 —— 玩家看到的是一张空头支票。
+   */
+  it("宿命传承「元婴凝实」:出生境界下限抬到筑基", () => {
+    const p = usePlayerStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    p.rebirth({ roots: [] } as never);
+    expect(p.major, "没有传承时出生即炼气").toBe(0);
+
+    p.addHeritage("yuanying");
+    p.rebirth({ roots: [] } as never);
+    expect(p.major, "有元婴凝实:睁眼即筑基").toBe(1);
+    expect(p.sub).toBe(0);
+  });
 });

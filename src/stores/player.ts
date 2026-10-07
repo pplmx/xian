@@ -32,6 +32,7 @@ import { useQuestsStore } from "./quests";
 import { useEndgameStore } from "./endgame";
 import { useGameStore } from "./game";
 import { gameNow } from "@/core/enginePause";
+import { birthMajorFloor } from "@/core/heritageEffects";
 import { liveRegionEvent, rollNewRegionEvent } from "@/core/regionEvent";
 import { rng } from "@/utils/random";
 
@@ -510,7 +511,7 @@ export const usePlayerStore = defineStore(
     function rebirth(newLinggen: LinggenProfile): void {
       reincarnation.value = { ...reincarnation.value, count: reincarnation.value.count + 1 };
       linggen.value = newLinggen;
-      major.value = 0;
+      major.value = birthMajorFloor(reincarnation.value.heritage);
       sub.value = 0;
       exp.value = gnZero();
       age.value = START_AGE;

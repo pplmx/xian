@@ -923,6 +923,7 @@ import {
   ARTIFACT_SLOT_UNLOCK_MAJOR,
   artifactSlotsFor,
 } from "@/data/artifacts";
+import { artifactSlotBonus } from "@/core/heritageEffects";
 import { REALMS } from "@/data/realms";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { BAG_CAPACITY } from "@/data/constants";
@@ -1320,7 +1321,9 @@ function craftBatch(id: string): void {
   craftPillBatch(id, 5);
 }
 
-const artifactSlots = computed(() => artifactSlotsFor(player.major));
+const artifactSlots = computed(
+  () => artifactSlotsFor(player.major) + artifactSlotBonus(player.reincarnation.heritage),
+);
 /** 开第二法宝位的那一境的名字 —— 门槛挪动时文案跟着走,不手写「元婴」 */
 const artifactUnlockRealm = computed(() => REALMS[ARTIFACT_SLOT_UNLOCK_MAJOR]?.name ?? "");
 

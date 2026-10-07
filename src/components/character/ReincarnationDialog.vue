@@ -173,6 +173,10 @@
             }}</span>
           </p>
           <p class="mt-0.5 text-[11px] text-ink-faint">{{ talentDef(id)?.desc }}</p>
+          <!-- 具体效果不再只藏在名字后面:抽的时候就看得到数字(手机上没 hover) -->
+          <p v-if="modsText(talentDef(id)?.mods ?? {})" class="mt-0.5 text-[11px] text-qing">
+            {{ modsText(talentDef(id)?.mods ?? {}) }}
+          </p>
         </button>
       </div>
       <p v-if="view.extraTalents.length" class="mt-3 text-[11px] text-ink-faint">
@@ -192,6 +196,9 @@
         </p>
         <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">
           {{ heritageDef(view.heritageGained)!.desc }}
+        </p>
+        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          效果：{{ heritageDef(view.heritageGained)!.effectDesc }}
         </p>
       </div>
 
@@ -245,6 +252,7 @@ import {
   rollReincarnateName,
 } from "@/core/reincarnation";
 import { talentDef, TALENT_GRADE_COLORS, TALENT_GRADE_NAMES } from "@/data/talents";
+import { modsText } from "@/ui/statNames";
 import { heritageDef } from "@/data/heritage";
 import { lifeThemeDef, TABOO_NAMES } from "@/data/lifeThemes";
 import { heritageGroups } from "@/core/samsaraAudit";
