@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 427,
+  "round": 428,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T08:32:28+00:00",
+  "updated_at": "2026-10-07T08:41:54+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25078,10 +25078,10 @@
     "TASK-436": {
       "id": "TASK-436",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T08:32:24+00:00",
-      "updated_at": "2026-10-07T08:32:24+00:00",
+      "updated_at": "2026-10-07T08:41:47+00:00",
       "touched_round": 427,
       "category": "dx",
       "severity": 0.55,
@@ -25106,16 +25106,86 @@
     "TASK-438": {
       "id": "TASK-438",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T08:32:28+00:00",
-      "updated_at": "2026-10-07T08:32:28+00:00",
+      "updated_at": "2026-10-07T08:41:47+00:00",
       "touched_round": 427,
       "category": "docs",
       "severity": 0.4,
       "confidence": 0.9,
       "effort": 2,
       "summary": "引擎独立仓补齐产品外壳:CONTRIBUTING.md / SECURITY.md / issue+PR 模板(现无);package.json description 与 keywords 仍写'四套系统',与实际 38 模块(含横切层)对齐"
+    },
+    "CHG-509": {
+      "id": "CHG-509",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:41:47+00:00",
+      "updated_at": "2026-10-07T08:41:47+00:00",
+      "touched_round": 427,
+      "commit": "816a9ee",
+      "summary": "引擎目标 Node >=26 + check 接 publint/attw(esm-only)+ CI 26 矩阵;tsconfig lib ES2020→ES2022(揭出 @types/node@22 垫片遮蔽 Array.at);描述/关键字对齐 38 模块;独立仓锁文件仓外重生成"
+    },
+    "CHG-510": {
+      "id": "CHG-510",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:41:48+00:00",
+      "updated_at": "2026-10-07T08:41:48+00:00",
+      "touched_round": 427,
+      "commit": "4627c62",
+      "summary": "EnemySkillDef 从 dungeons 搬到 combat —— 战斗引擎不再依赖副本内容层(仅类型,公开面不变)"
+    },
+    "CHG-511": {
+      "id": "CHG-511",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:41:48+00:00",
+      "updated_at": "2026-10-07T08:41:48+00:00",
+      "touched_round": 427,
+      "commit": "2cc072c",
+      "summary": "引擎独立仓补产品外壳:CONTRIBUTING / SECURITY / issue+PR 模板"
+    },
+    "TASK-439": {
+      "id": "TASK-439",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T08:41:51+00:00",
+      "updated_at": "2026-10-07T08:41:51+00:00",
+      "touched_round": 427,
+      "category": "maintainability",
+      "severity": 0.35,
+      "confidence": 1,
+      "effort": 1,
+      "summary": "解耦 combat→dungeons 的类型依赖:EnemySkillDef 归位战斗层,内容层依赖战斗模型"
+    },
+    "HYP-120": {
+      "id": "HYP-120",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:41:51+00:00",
+      "updated_at": "2026-10-07T08:41:51+00:00",
+      "touched_round": 427,
+      "confidence": 0.98,
+      "summary": "引擎 specs 一直用 Array.at(ES2022),但 tsconfig lib=ES2020 却能过类型检查 —— 根因是 @types/node@22 的 compatibility/indexable.d.ts 垫片暗补 Array.at;@types/node 提到 26 后垫片消失即暴露"
+    },
+    "EV-455": {
+      "id": "EV-455",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:41:51+00:00",
+      "updated_at": "2026-10-07T08:41:51+00:00",
+      "touched_round": 427,
+      "source": "816a9ee packages/engine/tsconfig.json",
+      "summary": "实测:@types/node@22 时 tsc 过(@types/node@26 时 TS2550 'at' 不存在);HEAD 用当前 node_modules 也红→非源码问题;lib 改 ES2022 后引擎 check 全绿(594 例 + 18 道自检 + publint+attw)",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -36779,6 +36849,36 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-10-07T08:32:28+00:00"
+    },
+    {
+      "from": "CHG-509",
+      "to": "TASK-436",
+      "type": "implements",
+      "created_at": "2026-10-07T08:41:53+00:00"
+    },
+    {
+      "from": "CHG-510",
+      "to": "TASK-438",
+      "type": "implements",
+      "created_at": "2026-10-07T08:41:54+00:00"
+    },
+    {
+      "from": "CHG-511",
+      "to": "TASK-439",
+      "type": "implements",
+      "created_at": "2026-10-07T08:41:54+00:00"
+    },
+    {
+      "from": "EV-455",
+      "to": "HYP-120",
+      "type": "validates",
+      "created_at": "2026-10-07T08:41:54+00:00"
+    },
+    {
+      "from": "DEC-195",
+      "to": "TASK-439",
+      "type": "governs",
+      "created_at": "2026-10-07T08:41:54+00:00"
     }
   ]
 }
