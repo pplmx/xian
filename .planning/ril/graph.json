@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 428,
+  "round": 429,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T08:41:54+00:00",
+  "updated_at": "2026-10-07T08:58:53+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 427,
+      "touched_round": 428,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -25092,11 +25092,11 @@
     "TASK-437": {
       "id": "TASK-437",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T08:32:28+00:00",
-      "updated_at": "2026-10-07T08:32:28+00:00",
-      "touched_round": 427,
+      "updated_at": "2026-10-07T08:58:53+00:00",
+      "touched_round": 428,
       "category": "dx",
       "severity": 0.5,
       "confidence": 0.85,
@@ -25186,6 +25186,29 @@
       "source": "816a9ee packages/engine/tsconfig.json",
       "summary": "实测:@types/node@22 时 tsc 过(@types/node@26 时 TS2550 'at' 不存在);HEAD 用当前 node_modules 也红→非源码问题;lib 改 ES2022 后引擎 check 全绿(594 例 + 18 道自检 + publint+attw)",
       "confidence": 1.0
+    },
+    "CHG-512": {
+      "id": "CHG-512",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:58:50+00:00",
+      "updated_at": "2026-10-07T08:58:50+00:00",
+      "touched_round": 428,
+      "commit": "5f50c1a",
+      "summary": "运行时报错统一 EngineError(code,message):30 处 throw 改写 + errors.ts 模块 + errors.spec 注册表钉 28 个 code + verify-dist 抓 EngineError 并禁 throw new Error( + examples/error-codes.ts + README/usage/公开面 80/213 + 宿主落地表"
+    },
+    "DEC-196": {
+      "id": "DEC-196",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:58:50+00:00",
+      "updated_at": "2026-10-07T08:58:50+00:00",
+      "touched_round": 428,
+      "summary": "运行时错误码约定:统一 EngineError(code, message);code 大写蛇形、按模块前缀(ATTR_/REALM_/EQUIP_/DUNGEON_/…);message 给人看(可改),code 给程序看(稳定)",
+      "rationale": "对外产品需要消费方能程序化区分失败(补表/退档/拦住发布),字符串匹配中文文案一改就断。validateGame 早已用 code,运行时补齐到同一口径。增删 code 属对使用者有影响的变更,写进 CHANGELOG。errors.spec.ts 的注册表 + verify-dist 的静态门双重钉住。",
+      "alternatives_rejected": "A) 只加文档说明\"可按文案判断\"(脆弱);B) 给每条错误单独一个类(类爆炸,且 instanceof 分支比 code 更难组合);C) 保持 throw new Error(公共库不友好)"
     }
   },
   "edges": [
@@ -36879,6 +36902,18 @@
       "to": "TASK-439",
       "type": "governs",
       "created_at": "2026-10-07T08:41:54+00:00"
+    },
+    {
+      "from": "CHG-512",
+      "to": "TASK-437",
+      "type": "implements",
+      "created_at": "2026-10-07T08:58:53+00:00"
+    },
+    {
+      "from": "DEC-196",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-10-07T08:58:53+00:00"
     }
   ]
 }
