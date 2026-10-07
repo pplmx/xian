@@ -20,6 +20,7 @@
  * (掉错一件东西,好过在上千次掉落里突然抛错)。
  */
 import type { Mods } from "./attributes.js";
+import { EngineError } from "./errors.js";
 import type { Numeric } from "./numeric.js";
 import { clamp, numberNumeric } from "./numeric.js";
 import type { Rng } from "./rng.js";
@@ -383,7 +384,8 @@ export function createEquipmentSystem<T = number>(
     // 品质表是空的 = 这款游戏没有装备这一层(配置里写的是 equipment: null)。
     // 这里必须出声:往下走会掷出一个 undefined 的品质,然后带着它去读 affixes ——
     // 那种错会在很远的地方以"读不到属性"的样子出现,这里的这句话才是能用的话。
-    if (qualities.length === 0) throw new Error("装备系统:品质表是空的,没有可用的品质");
+    if (qualities.length === 0)
+      throw new EngineError("EQUIP_QUALITY_EMPTY", "装备系统:品质表是空的,没有可用的品质");
     const floor = Math.max(opts.minQualityRank ?? 0, opts.floorRank ?? 0);
     const pool = qualities.filter((q) => q.rank >= floor);
     if (pool.length === 0) return qualities[qualities.length - 1]!;
@@ -438,7 +440,8 @@ export function createEquipmentSystem<T = number>(
   const generate = (rng: Rng, opts: RollOptions): EquipmentInstance => {
     const tier = Math.max(1, opts.tier);
     const dropSlots = slots.filter((s) => (s.dropWeight ?? 1) > 0);
-    if (dropSlots.length === 0) throw new Error("装备系统:没有任何可掉落的槽位");
+    if (dropSlots.length === 0)
+      throw new EngineError("EQUIP_SLOT_NONE", "装备系统:没有任何可掉落的槽位");
     /*
      * 掷槽位时只在该层**真的有内容**的槽位里掷。
      *
@@ -450,10 +453,15 @@ export function createEquipmentSystem<T = number>(
      * `opts.slot` 是**点名**要某个槽位,那种情况仍然大声报错并指名道姓。
      */
     const withContent = dropSlots.filter((s) => poolAtTier(tier, s.id).length > 0);
-    if (withContent.length === 0) throw new Error(`装备系统:层级 ${tier} 没有任何可掉落的模板`);
+    if (withContent.length === 0)
+      throw new EngineError("EQUIP_TIER_EMPTY", `装备系统:层级 ${tier} 没有任何可掉落的模板`);
     const slot = opts.slot ?? rng.weighted(withContent, (s) => s.dropWeight ?? 1).id;
     const eligible = poolAtTier(tier, slot);
-    if (eligible.length === 0) throw new Error(`装备系统:层级 ${tier} 的槽位 ${slot} 没有任何模板`);
+    if (eligible.length === 0)
+      throw new EngineError(
+        "EQUIP_TIER_SLOT_EMPTY",
+        `装备系统:层级 ${tier} 的槽位 ${slot} 没有任何模板`,
+      );
     const template = rng.weighted(eligible, () => 1);
     const quality = rollQuality(tier, rng, opts);
     const [minA, maxA] = quality.affixes;
@@ -605,7 +613,8 @@ export function createEquipmentSystem<T = number>(
       if (found) return found;
       // 表里有品质但认不出这个 id 时退到最弱那一档(旧存档里可能留着删掉的品质);
       // 表本身就是空的(这游戏没有装备这一层)则要出声,不能返回一个 undefined
-      if (qualities.length === 0) throw new Error("装备系统:品质表是空的,没有可用的品质");
+      if (qualities.length === 0)
+        throw new EngineError("EQUIP_QUALITY_EMPTY", "装备系统:品质表是空的,没有可用的品质");
       return qualities[0]!;
     },
     template: (id) => templateById.get(id),

@@ -8,6 +8,7 @@
  */
 import type { AttributeSystem, AttributeSystemConfig } from "./attributes.js";
 import { createAttributeSystem } from "./attributes.js";
+import { EngineError } from "./errors.js";
 import type { Numeric } from "./numeric.js";
 import { numberNumeric } from "./numeric.js";
 import type { RealmSystem, RealmSystemConfig } from "./realms.js";
@@ -411,7 +412,7 @@ export function defineGame<T = number>(
   const blocking = opts.strict === true ? issues : issues.filter((i) => i.level === "error");
   if (blocking.length > 0) {
     const text = blocking.map((i) => `  [${i.level}] ${i.code}: ${i.message}`).join("\n");
-    throw new Error(`世界配置有 ${blocking.length} 处问题:\n${text}`);
+    throw new EngineError("GAME_CONFIG_INVALID", `世界配置有 ${blocking.length} 处问题:\n${text}`);
   }
   const numeric = opts.numeric ?? (numberNumeric as unknown as Numeric<T>);
   const attributes = createAttributeSystem<T>(config.attributes, numeric);

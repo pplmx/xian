@@ -15,6 +15,7 @@
  * 因为作品侧通常还要过一遍自己的合并规则(递减、软上限),加总就把那层信息丢了。
  */
 import type { Mods } from "./attributes.js";
+import { EngineError } from "./errors.js";
 
 /** 一条升级消耗:`基数 × 倍率^等级 + 每级线性`,再乘折扣,最后向上取整 */
 export interface SkillCostSpec {
@@ -131,9 +132,9 @@ export function createSkillSystem(config: SkillConfig): SkillSystem {
   const defs = [...config.skills];
   const byId = new Map<string, SkillDef>();
   for (const d of defs) {
-    if (byId.has(d.id)) throw new Error(`技能系统:id 重复 —— ${d.id}`);
+    if (byId.has(d.id)) throw new EngineError("SKILL_ID_DUPLICATE", `技能系统:id 重复 —— ${d.id}`);
     if (!Number.isInteger(d.maxLevel) || d.maxLevel < 1)
-      throw new Error(`技能系统:${d.id} 的 maxLevel 必须是 ≥1 的整数`);
+      throw new EngineError("SKILL_MAX_LEVEL", `技能系统:${d.id} 的 maxLevel 必须是 ≥1 的整数`);
     byId.set(d.id, d);
   }
 

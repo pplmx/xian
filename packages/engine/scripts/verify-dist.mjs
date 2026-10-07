@@ -176,6 +176,8 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
    * "属性系统"这四个字,谁都能满足。最长段才是这句话里最认得出的部分。
    */
   const throwMessages = new Set();
+  const throwCodes = [];
+  const legacyThrows = [];
   const throwFiles = readdirSync(resolve(ENGINE, "src"), {
     recursive: true,
     encoding: "utf-8",
@@ -183,8 +185,12 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
   for (const rel of throwFiles) {
     if (rel.endsWith(".spec.ts")) continue;
     const text = readFileSync(resolve(ENGINE, "src", rel), "utf-8");
-    for (const m of text.matchAll(/throw new Error\((?:`([^`]*)`|'([^']*)'|"([^"]*)")\)/g)) {
-      const raw = m[1] ?? m[2] ?? m[3] ?? "";
+    // 运行时报错一律 `throw new EngineError("CODE", message)` —— 代码里带上稳定的 code
+    for (const m of text.matchAll(
+      /throw new EngineError\(\s*"([A-Z][A-Z0-9_]*)",\s*(?:`([^`]*)`|'([^']*)'|"([^"]*)")(?:\s*,)?\s*\)/g,
+    )) {
+      throwCodes.push(m[1]);
+      const raw = m[2] ?? m[3] ?? m[4] ?? "";
       const longest = raw
         .replace(/\\n/g, " ")
         .split(/\$\{[^}]*\}/)
@@ -192,10 +198,17 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
         .sort((a, b) => b.length - a.length)[0];
       if (longest !== undefined && longest.length >= 4) throwMessages.add(longest);
     }
+    // 还有人 `throw new Error(`:那条没有 code,消费方只能字符串匹配 —— 当场红
+    if (/throw new Error\(/.test(text)) legacyThrows.push(rel);
   }
+  assert.deepEqual(
+    legacyThrows,
+    [],
+    `这些文件还在 throw new Error( —— 运行时报错要统一走 EngineError(code, message):${legacyThrows.join("、")}`,
+  );
   assert.ok(
-    throwMessages.size >= 20,
-    `只从源码里读出 ${throwMessages.size} 条报错 —— throw 的写法变了?`,
+    throwCodes.length >= 20,
+    `只从源码里读出 ${throwCodes.length} 条 EngineError(code 必须是字面量字符串)—— throw 的写法变了?`,
   );
   // 匹配留一点余地:模板串切开之后,有些段会带一个多余的虚词(如"的 appliesTo 指向…"),
   // 所以"整段命中"或"去掉首字命中"都算 —— 判据要拦的是"没人触发过",不是"措辞一字不差"
@@ -207,7 +220,9 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
     [],
     `这些报错没有任何用例触发过(可能早就走不到,或者文案已经漂了):${untriggered.join("、")}`,
   );
-  console.log(`报错口径自检通过(${throwMessages.size} 条报错都有人真的触发过)`);
+  console.log(
+    `报错口径自检通过(${throwMessages.size} 条报错都有人真的触发过 · ${new Set(throwCodes).size} 个错误码)`,
+  );
 
   /**
    * 版本引用自检 —— 文档里指向的那个 tag,必须就是 `package.json` 里的版本。
@@ -581,6 +596,7 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
     "realms.ts": "game.realms",
     "attributes.ts": "game.attributes",
     "rng.ts": "mulberry32",
+    "errors.ts": "EngineError",
     "equipment.ts": "game.equipment",
     "holding.ts": "createHoldingSystem",
     "dungeons.ts": "game.dungeons",

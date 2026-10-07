@@ -19,6 +19,7 @@
  *   二 软阈值:合计越过 cap 后,超出部分按 diminish 折算(极端堆叠的第二道防线)。
  * 两道折算都能摊回来源(见 `mergeModsDetailed`),面板明细之和才会等于面板值。
  */
+import { EngineError } from "./errors.js";
 import type { Numeric } from "./numeric.js";
 import { numberNumeric } from "./numeric.js";
 
@@ -146,16 +147,21 @@ export function createAttributeSystem<T = number>(
   const defs = [...config.defs];
   const byKey = new Map<string, AttributeDef>();
   for (const d of defs) {
-    if (byKey.has(d.key)) throw new Error(`属性系统:键重复 —— ${d.key}`);
+    if (byKey.has(d.key))
+      throw new EngineError("ATTR_KEY_DUPLICATE", `属性系统:键重复 —— ${d.key}`);
     byKey.set(d.key, d);
   }
   const coreKeys = config.core ?? defs.filter((d) => d.kind === "flat").map((d) => d.key);
   for (const k of coreKeys) {
-    if (!byKey.has(k)) throw new Error(`属性系统:core 里的键未登记 —— ${k}`);
+    if (!byKey.has(k))
+      throw new EngineError("ATTR_CORE_UNKNOWN", `属性系统:core 里的键未登记 —— ${k}`);
   }
   for (const d of defs) {
     if (d.appliesTo !== undefined && !byKey.has(d.appliesTo)) {
-      throw new Error(`属性系统:${d.key} 的 appliesTo 指向未登记的键 —— ${d.appliesTo}`);
+      throw new EngineError(
+        "ATTR_APPLIES_TO_UNKNOWN",
+        `属性系统:${d.key} 的 appliesTo 指向未登记的键 —— ${d.appliesTo}`,
+      );
     }
   }
   const powerWeights = config.powerWeights ?? { attack: 3, defense: 2, maxHp: 0.15 };

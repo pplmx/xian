@@ -42,6 +42,10 @@ const NOT_BY_NAME: Record<string, { kind: "facade" | "own" | "none"; why: string
   generateTemplates: { kind: "facade", why: "内容表由 data/equipment 自己写,不用模板生成器" },
   emptyProgress: { kind: "facade", why: "本作自己的进度形状由 store 建,不用库的空进度" },
   validateGame: { kind: "facade", why: "defineGame 内部会校验;本作另有 dataAudit 那一套" },
+  EngineError: {
+    kind: "own",
+    why: "本作的错误处理走自己的 Error + 对话框文案,不按引擎 code 分支;库错误码留给未来需要程序化分支的消费方(宿主侧至今还没按 code 接过)",
+  },
   leverFactor: { kind: "own", why: "炼制只经 composeCraftRate(已导入),不单独取乘区" },
   entryAllowed: { kind: "own", why: "抽池用 deckPool + drawFrom,不需要单条判定" },
   encodeSave: {

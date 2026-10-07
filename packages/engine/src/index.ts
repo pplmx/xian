@@ -11,6 +11,9 @@ export { numberNumeric, formatAmount, clamp } from "./numeric.js";
 export type { Rng } from "./rng.js";
 export { createRng, mulberry32, pickWeighted, seedFromString, randomRng } from "./rng.js";
 
+/** 统一的运行时错误类型 —— 每条抛错都带稳定的 `code`(见 `errors.ts`) */
+export { EngineError } from "./errors.js";
+
 export type {
   AttributeDef,
   AttributeSystem,

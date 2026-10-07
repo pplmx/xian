@@ -16,6 +16,7 @@
  * 要不要限制是玩法层的事。
  */
 import type { Mods } from "./attributes.js";
+import { EngineError } from "./errors.js";
 
 /** 一条性格:一组行为系数 */
 export interface TraitDef {
@@ -76,16 +77,21 @@ export function createCompanionSystem(config: CompanionConfig): CompanionSystem 
   const byId = new Map<string, CompanionDef>();
   const traitById = new Map<string, TraitDef>();
   for (const c of defs) {
-    if (byId.has(c.id)) throw new Error(`伙伴系统:id 重复 —— ${c.id}`);
+    if (byId.has(c.id))
+      throw new EngineError("COMPANION_ID_DUPLICATE", `伙伴系统:id 重复 —— ${c.id}`);
     byId.set(c.id, c);
   }
   for (const t of traits) {
-    if (traitById.has(t.id)) throw new Error(`伙伴系统:性格 id 重复 —— ${t.id}`);
+    if (traitById.has(t.id))
+      throw new EngineError("COMPANION_TRAIT_DUPLICATE", `伙伴系统:性格 id 重复 —— ${t.id}`);
     traitById.set(t.id, t);
   }
   for (const c of defs) {
     if (c.traitId !== undefined && !traitById.has(c.traitId)) {
-      throw new Error(`伙伴系统:${c.id} 指向未定义的性格 —— ${c.traitId}`);
+      throw new EngineError(
+        "COMPANION_TRAIT_UNKNOWN",
+        `伙伴系统:${c.id} 指向未定义的性格 —— ${c.traitId}`,
+      );
     }
   }
   const neutral = { ...config.neutral };
@@ -93,7 +99,10 @@ export function createCompanionSystem(config: CompanionConfig): CompanionSystem 
   for (const t of traits) {
     for (const key of Object.keys(t.mods)) {
       if (!(key in neutral)) {
-        throw new Error(`伙伴系统:性格 ${t.id} 用了没有中性值的键 —— ${key};请把它加进 neutral`);
+        throw new EngineError(
+          "COMPANION_NEUTRAL_MISSING",
+          `伙伴系统:性格 ${t.id} 用了没有中性值的键 —— ${key};请把它加进 neutral`,
+        );
       }
     }
   }

@@ -12,6 +12,8 @@
  * 面板要说清"超出的那部分没算"时,需要的正是 capped 与 overflow 两个数。
  */
 
+import { EngineError } from "./errors.js";
+
 export interface IdleConfig {
   /** 单步时长(与 elapsedMs 同单位,通常用毫秒) */
   stepMs: number;
@@ -51,7 +53,7 @@ export interface IdlePlan {
  * ```
  */
 export function planIdle(elapsedMs: number, config: IdleConfig): IdlePlan {
-  if (!(config.stepMs > 0)) throw new Error("idle:stepMs 必须为正数");
+  if (!(config.stepMs > 0)) throw new EngineError("IDLE_STEP_MS", "idle:stepMs 必须为正数");
   const elapsed = Math.max(0, elapsedMs);
   const capped =
     config.capMs === undefined ? elapsed : Math.min(elapsed, Math.max(0, config.capMs));

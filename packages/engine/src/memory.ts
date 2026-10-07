@@ -16,6 +16,8 @@
  * 档位叫什么、门槛多少、系数给多少,都是内容;库给的是上面这四条的顺序与边界。
  */
 
+import { EngineError } from "./errors.js";
+
 export interface StageSpec {
   /** 档位标识(本作是 chaos / stable / flourish) */
   id: string;
@@ -58,7 +60,8 @@ export interface StageMemoryState {
 
 export function createStageMemory(config: StageMemoryConfig) {
   const stages = config.stages;
-  if (stages.length === 0) throw new Error("档位表不能为空:至少要有一个默认档");
+  if (stages.length === 0)
+    throw new EngineError("MEMORY_STAGES_EMPTY", "档位表不能为空:至少要有一个默认档");
 
   /** 由输入推当前档位(纯函数) */
   const stateOf = (input: StageMemoryInput = {}): StageMemoryState => {

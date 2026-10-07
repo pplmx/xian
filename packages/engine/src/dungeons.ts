@@ -22,6 +22,7 @@ import type { Numeric } from "./numeric.js";
 import { numberNumeric } from "./numeric.js";
 import type { Rng } from "./rng.js";
 import type { EnemySkillDef } from "./combat.js";
+import { EngineError } from "./errors.js";
 
 export interface EnemyDef {
   id: string;
@@ -289,7 +290,8 @@ export function createDungeonSystem<T = number>(
     // 区域表是空的 = 这款游戏没有副本这一层(配置里写的是 dungeons: null)。
     // 出声说明白:原来这里回的是 `regions[0]`,空表时就是 undefined —— 拿到它的人会在
     // 很远的地方以"读不到 id"的样子崩掉,而这句话才是能读懂的那句。
-    if (regions.length === 0) throw new Error("副本系统:区域表是空的,没有第一处区域");
+    if (regions.length === 0)
+      throw new EngineError("DUNGEON_REGION_EMPTY", "副本系统:区域表是空的,没有第一处区域");
     // 没有前置的,或前置指向了不认识的 id(内容被挪过) —— 都当作可作起点
     const head = regions.find((r) => prereqsOf(r).every((id) => !regionById.has(id)));
     return head ?? regions[0]!;
@@ -359,7 +361,8 @@ export function createDungeonSystem<T = number>(
 
   const nextEncounter = (regionId: string, progress: DungeonProgress, rng: Rng): Encounter => {
     const region = regionById.get(regionId);
-    if (!region) throw new Error(`副本系统:没有这个区域 —— ${regionId}`);
+    if (!region)
+      throw new EngineError("DUNGEON_REGION_UNKNOWN", `副本系统:没有这个区域 —— ${regionId}`);
     const remaining = winsUntilBoss(
       progress.bossWins[regionId] ?? 0,
       progress.cleared.includes(regionId),
@@ -396,7 +399,8 @@ export function createDungeonSystem<T = number>(
     rng: Rng,
   ): VictoryOutcome<T> => {
     const region = regionById.get(regionId);
-    if (!region) throw new Error(`副本系统:没有这个区域 —— ${regionId}`);
+    if (!region)
+      throw new EngineError("DUNGEON_REGION_UNKNOWN", `副本系统:没有这个区域 —— ${regionId}`);
     const rewards: { id: string; name?: string; amount: T }[] = [];
     const merge = (def: RewardDef): void => {
       if (def.chance !== undefined && !rng.chance(def.chance)) return;
@@ -436,7 +440,7 @@ export function createDungeonSystem<T = number>(
 
   const snapshot = (enemyId: string): EnemySnapshot<T> => {
     const def = enemyById.get(enemyId);
-    if (!def) throw new Error(`副本系统:没有这个敌人 —— ${enemyId}`);
+    if (!def) throw new EngineError("DUNGEON_ENEMY_UNKNOWN", `副本系统:没有这个敌人 —— ${enemyId}`);
     const factor = power.scaleFn
       ? power.scaleFn(def.tier)
       : (power.tierFactors?.[def.tier - 1] ?? (power.tierGrowth ?? 1) ** Math.max(0, def.tier - 1));
@@ -524,7 +528,10 @@ export function dungeonContentPower<T = number>(
 ): (major: number) => number {
   const { dungeons } = config;
   if (!config.powerOf && !config.attributes) {
-    throw new Error("内容强度:要么给 powerOf,要么给 attributes —— 不给就不知道拿什么当战力");
+    throw new EngineError(
+      "DUNGEON_CONTENT_POWER_INPUT",
+      "内容强度:要么给 powerOf,要么给 attributes —— 不给就不知道拿什么当战力",
+    );
   }
   const numeric = config.numeric ?? (numberNumeric as unknown as Numeric<T>);
   const attributes = config.attributes;
@@ -549,13 +556,21 @@ export function dungeonContentPower<T = number>(
     const hit = cache.get(major);
     if (hit !== undefined) return hit;
     const region = config.regionOf ? config.regionOf(major) : pick(major);
-    if (!region) throw new Error(`内容强度:这个境界没有可用的区域 —— 第 ${major} 境界`);
+    if (!region)
+      throw new EngineError(
+        "DUNGEON_CONTENT_POWER_REGION",
+        `内容强度:这个境界没有可用的区域 —— 第 ${major} 境界`,
+      );
     // 首领不在敌人表里(内容改过)时退回普通池:宁可给"这一处最弱的读数",也别让整条体检报错
     const wanted = enemyOf(region);
     const enemy =
       (wanted ? dungeons.enemy(wanted) : undefined) ??
       region.enemies.map((id) => dungeons.enemy(id)).find((e): e is EnemyDef => e !== undefined);
-    if (!enemy) throw new Error(`内容强度:这处区域没有可用的敌人 —— ${region.id}`);
+    if (!enemy)
+      throw new EngineError(
+        "DUNGEON_CONTENT_POWER_ENEMY",
+        `内容强度:这处区域没有可用的敌人 —— ${region.id}`,
+      );
     const value = powerOf(dungeons.snapshot(enemy.id));
     cache.set(major, value);
     return value;

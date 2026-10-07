@@ -105,6 +105,7 @@ import type {
   DungeonProgress,
   DungeonSystem,
   Encounter,
+  EngineError,
   EnemyDef,
   EnemySkillDef,
   EnemySnapshot,
@@ -232,6 +233,7 @@ import type {
 const RUNTIME_EXPORTS = [
   "DEFAULT_ATTRIBUTES",
   "DEFAULT_LAYER_NAMES",
+  "EngineError",
   "asArray",
   "asFiniteNumber",
   "asNumberRecord",
@@ -321,6 +323,7 @@ interface SampleItem extends HoldingItem {
 }
 
 type PublicTypes = {
+  error: [EngineError];
   attribute: [
     AttributeDef,
     AttributeSystem,

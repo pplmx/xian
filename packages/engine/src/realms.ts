@@ -23,6 +23,7 @@
 import type { Numeric } from "./numeric.js";
 import { clamp, numberNumeric } from "./numeric.js";
 import type { Rng } from "./rng.js";
+import { EngineError } from "./errors.js";
 
 export interface RealmEntry {
   id?: string;
@@ -245,14 +246,16 @@ export function createRealmSystem<T = number>(
   numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>,
 ): RealmSystem<T> {
   const layerNames = [...(config.layerNames ?? DEFAULT_LAYER_NAMES)];
-  if (layerNames.length === 0) throw new Error("等级体系:layerNames 不能为空");
+  if (layerNames.length === 0)
+    throw new EngineError("REALM_LAYERS_EMPTY", "等级体系:layerNames 不能为空");
   const labelFormat = config.labelFormat ?? "{realm}·{layer}";
 
   const realms: RealmDef[] = [];
   const worlds: WorldDef[] = [];
   let major = 0;
   for (const w of config.worlds) {
-    if (w.realms.length === 0) throw new Error(`等级体系:世界 ${w.id} 一个境界都没有`);
+    if (w.realms.length === 0)
+      throw new EngineError("REALM_WORLD_EMPTY", `等级体系:世界 ${w.id} 一个境界都没有`);
     const start = major;
     for (const entry of w.realms) {
       const def: RealmEntry = typeof entry === "string" ? { name: entry } : entry;
@@ -271,7 +274,7 @@ export function createRealmSystem<T = number>(
     worlds.push({ id: w.id, name: w.name, desc: w.desc, start, end: major - 1 });
   }
   const maxMajor = realms.length - 1;
-  if (maxMajor < 0) throw new Error("等级体系:境界表为空");
+  if (maxMajor < 0) throw new EngineError("REALM_EMPTY", "等级体系:境界表为空");
 
   // 成长曲线的分段点:缺省取第一世界之后的那个境界(即"跨界之后")
   const defaultLateFrom = worlds[1]?.start ?? maxMajor + 1;
@@ -300,7 +303,8 @@ export function createRealmSystem<T = number>(
   if (lifespanCfg && "byWorld" in lifespanCfg) {
     for (const w of worlds) {
       const cfg = lifespanCfg.byWorld[w.id];
-      if (!cfg) throw new Error(`等级体系:缺少世界 ${w.id} 的寿元参数`);
+      if (!cfg)
+        throw new EngineError("REALM_LIFESPAN_MISSING", `等级体系:缺少世界 ${w.id} 的寿元参数`);
       lifespanByWorld.set(w.id, { ...cfg, start: w.start });
     }
   } else if (lifespanCfg) {

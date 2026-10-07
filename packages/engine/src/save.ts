@@ -10,6 +10,7 @@
  *      猜错的后果是把新档写坏,而写坏比读不到严重得多。
  */
 import { asRecord } from "./saveShape.js";
+import { EngineError } from "./errors.js";
 
 /** 存档封套:版本 + 存档时刻 + 数据。savedAt 用于离线结算(知道"离开多久") */
 export interface SavePayload {
@@ -48,7 +49,7 @@ export interface SaveFormat<T> {
 
 export function defineSaveFormat<T>(format: SaveFormat<T>): SaveFormat<T> {
   if (!Number.isInteger(format.currentVersion) || format.currentVersion < 1) {
-    throw new Error("存档格式:currentVersion 必须是 ≥1 的整数");
+    throw new EngineError("SAVE_VERSION_INVALID", "存档格式:currentVersion 必须是 ≥1 的整数");
   }
   return format;
 }

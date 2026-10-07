@@ -21,6 +21,12 @@
 
 ## 未发布
 
+- **运行时报错统一带稳定错误码**:新增 `EngineError(code, message)`(从公开入口导出),库内 30 处
+  `throw new Error` 全部改走它 —— 消费方可以 `e instanceof EngineError && e.code === "EQUIP_TIER_EMPTY"`
+  分支,不再依赖中文文案。**文案仍给人看**(可读、可改),`code` **给程序看**(大写蛇形、按模块前缀,
+  不随文案漂移);`errors.spec.ts` 逐条钉住"哪个场景 → 哪个 code"。公开面 79 → 80 个运行时导出、
+  212 → 213 个公开类型。
+
 - **运行时要求 Node ≥ 26**(原 ≥ 20);`tsconfig` 的 `lib` 随之提到 ES2022(用例里本就在用
   `Array.prototype.at` —— 此前只是被 `@types/node` 22 的兼容垫片遮住了)。包仍是纯 ESM、零运行时依赖。
   同时把**包形态门**接进 `check`:`publint` + `@arethetypeswrong/cli --profile esm-only`,

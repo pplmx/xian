@@ -27,6 +27,7 @@
 import type { RealmSystem } from "./realms.js";
 import { numberNumeric, type Numeric } from "./numeric.js";
 import type { Game } from "./config.js";
+import { EngineError } from "./errors.js";
 
 export interface ProgressionAuditConfig<T = number> {
   /** 要体检的那张等级表(与 `game` 二选一) */
@@ -173,7 +174,7 @@ export function createProgressionAudit<T = number>(
 ) {
   const crushRatio = config.crushRatio ?? 3;
   const sys = config.realms ?? config.game?.realms;
-  if (!sys) throw new Error("成长体检:要么给 realms,要么给 game");
+  if (!sys) throw new EngineError("PROGRESSION_INPUT", "成长体检:要么给 realms,要么给 game");
 
   /** 面板之和:没给 `power` 时的保底口径(键名不参与,只求和 —— 引擎不认识它们) */
   const panelSum = (major: number, layer: number): number =>

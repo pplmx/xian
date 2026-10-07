@@ -15,17 +15,25 @@
  *   · 消息里必须带上**是哪一处**(键名 / id / 区域名),否则使用者还得自己找;
  *   · 前缀稳定 —— 前缀就是"这是哪一类问题"。
  *
- * 常驻判据:`scripts/verify-dist.mjs` 的「报错口径自检」按源码里的 `throw new Error(...)`
+ * 常驻判据:`scripts/verify-dist.mjs` 的「报错口径自检」按源码里的 `throw new EngineError("CODE", …)`
  * 逐个查"有没有 spec 触发过它";新加一条抛错却忘了配用例,当场红。
+ * 文件末尾那份表还把"哪个场景 → 哪个 code"逐条钉死 —— `code` 是对外承诺,文案不是。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { attributeDefs, createAttributeSystem } from "./attributes.js";
 import { createCompanionSystem, type CompanionConfig } from "./companions.js";
 import { defineGame } from "./config.js";
-import { createDungeonSystem, emptyProgress, type DungeonConfig } from "./dungeons.js";
+import {
+  createDungeonSystem,
+  dungeonContentPower,
+  emptyProgress,
+  type DungeonConfig,
+} from "./dungeons.js";
+import { EngineError } from "./errors.js";
 import { createEquipmentSystem } from "./equipment.js";
 import { planIdle } from "./idle.js";
 import { createStageMemory } from "./memory.js";
+import { createProgressionAudit } from "./progression.js";
 import { createRealmSystem, type RealmSystemConfig } from "./realms.js";
 import { createRng } from "./rng.js";
 import { defineSaveFormat } from "./save.js";
@@ -255,5 +263,197 @@ describe("报错口径 —— 配置写错时,使用者拿到的是哪一句话"
     expect(message.split("\n").length - 1).toBeGreaterThanOrEqual(1);
     // 严格模式下警告也当错误:这是内容发布前的那道闸
     expect(() => defineGame(broken, { strict: true })).toThrow(/世界配置有 \d+ 处问题:/);
+  });
+});
+
+/**
+ * 错误码 —— **对外承诺的是 `code`,不是文案**。
+ *
+ * 文案是给人看的(可读、可改、可本地化),`code` 是给程序看的(稳定、可按它分支)。
+ * 这份表把"哪个场景 → 哪个 code"逐条钉死:文案改了不会红,但 **code 改了、或某个场景
+ * 抛了别的 code,当场红**。表本身也是错误码的清单(消费方看这一份就够)。
+ */
+describe("错误码 —— 对外承诺的是 code,不是文案", () => {
+  const codeOf = (run: () => unknown): string => {
+    try {
+      run();
+    } catch (error) {
+      return error instanceof EngineError ? error.code : `非 EngineError(${String(error)})`;
+    }
+    return "没有抛错";
+  };
+
+  it("每个场景抛的都是约定的那次 EngineError.code", () => {
+    const defs = attributeDefs({});
+    const equip = () => structuredClone(DEMO.equipment)!;
+    const eqSlot = (): string => equip().slots[0]!.id;
+    const dg = () => createDungeonSystem(dungeonConfig());
+    const skill = (over: Partial<{ id: string; maxLevel: number }> = {}) => ({
+      id: "fire",
+      name: "火候",
+      kind: "主技",
+      maxLevel: 3,
+      baseMods: {},
+      perLevelMods: {},
+      ...over,
+    });
+    const brokenPreset = () => {
+      const broken = structuredClone(DEMO) as typeof DEMO;
+      broken.equipment!.templates[0]!.slot = "nope";
+      return broken;
+    };
+
+    const cases: [string, () => unknown][] = [
+      ["ATTR_KEY_DUPLICATE", () => createAttributeSystem({ defs: [...defs, { ...defs[0]! }] })],
+      ["ATTR_CORE_UNKNOWN", () => createAttributeSystem({ defs, core: ["nope"] })],
+      [
+        "ATTR_APPLIES_TO_UNKNOWN",
+        () =>
+          createAttributeSystem({
+            defs: [...defs, { key: "w", name: "怪", kind: "percent", appliesTo: "ghost" }],
+          }),
+      ],
+      ["REALM_LAYERS_EMPTY", () => createRealmSystem({ ...realmConfig(), layerNames: [] })],
+      [
+        "REALM_WORLD_EMPTY",
+        () =>
+          createRealmSystem({ ...realmConfig(), worlds: [{ id: "e", name: "空", realms: [] }] }),
+      ],
+      ["REALM_EMPTY", () => createRealmSystem({ ...realmConfig(), worlds: [] })],
+      [
+        "REALM_LIFESPAN_MISSING",
+        () =>
+          createRealmSystem({
+            ...realmConfig(),
+            worlds: [
+              { id: "a", name: "一", realms: ["一境"] },
+              { id: "b", name: "二", realms: ["二境"] },
+            ],
+            lifespan: { byWorld: { a: { base: 100, growth: 2 } } },
+          }),
+      ],
+      [
+        "EQUIP_QUALITY_EMPTY",
+        () => {
+          const c = equip();
+          c.qualities = [];
+          createEquipmentSystem(c).quality("x");
+        },
+      ],
+      [
+        "EQUIP_SLOT_NONE",
+        () => {
+          const c = equip();
+          c.slots = c.slots.map((s) => ({ ...s, dropWeight: 0 }));
+          createEquipmentSystem(c).generate(createRng("e"), { tier: 1 });
+        },
+      ],
+      [
+        "EQUIP_TIER_EMPTY",
+        () => {
+          const c = equip();
+          c.templates = [];
+          createEquipmentSystem(c).generate(createRng("e"), { tier: 3 });
+        },
+      ],
+      [
+        "EQUIP_TIER_SLOT_EMPTY",
+        () => {
+          const c = equip();
+          const slot = eqSlot();
+          c.templates = c.templates.filter((t) => t.slot !== slot);
+          createEquipmentSystem(c).generate(createRng("e"), { tier: 2, slot });
+        },
+      ],
+      [
+        "DUNGEON_REGION_EMPTY",
+        () => createDungeonSystem({ regions: [], enemies: [] }).firstRegion(),
+      ],
+      ["DUNGEON_REGION_UNKNOWN", () => dg().nextEncounter("nope", emptyProgress(), createRng("e"))],
+      ["DUNGEON_ENEMY_UNKNOWN", () => dg().snapshot("ghost")],
+      ["DUNGEON_CONTENT_POWER_INPUT", () => dungeonContentPower({ dungeons: dg() })],
+      [
+        "DUNGEON_CONTENT_POWER_REGION",
+        () =>
+          dungeonContentPower({
+            dungeons: createDungeonSystem({ regions: [], enemies: [] }),
+            powerOf: () => 1,
+          })(0),
+      ],
+      [
+        "DUNGEON_CONTENT_POWER_ENEMY",
+        () =>
+          dungeonContentPower({
+            dungeons: createDungeonSystem({
+              regions: [
+                { id: "x", name: "空图", tier: 1, minRealm: 0, enemies: ["nope"], boss: "gone" },
+              ],
+              enemies: [],
+            }),
+            powerOf: () => 1,
+          })(0),
+      ],
+      ["SKILL_ID_DUPLICATE", () => createSkillSystem({ skills: [skill(), skill()] })],
+      ["SKILL_MAX_LEVEL", () => createSkillSystem({ skills: [skill({ maxLevel: 0 })] })],
+      [
+        "COMPANION_ID_DUPLICATE",
+        () =>
+          createCompanionSystem({
+            ...companionConfig(),
+            companions: [
+              { id: "cat", name: "猫" },
+              { id: "cat", name: "另一只猫" },
+            ],
+          }),
+      ],
+      [
+        "COMPANION_TRAIT_DUPLICATE",
+        () =>
+          createCompanionSystem({
+            ...companionConfig(),
+            traits: [
+              { id: "sharp", name: "眼尖", mods: { luck: 0.2 } },
+              { id: "sharp", name: "又一遍", mods: { luck: 0.3 } },
+            ],
+          }),
+      ],
+      [
+        "COMPANION_TRAIT_UNKNOWN",
+        () =>
+          createCompanionSystem({
+            ...companionConfig(),
+            companions: [{ id: "cat", name: "猫", traitId: "ghost" }],
+          }),
+      ],
+      [
+        "COMPANION_NEUTRAL_MISSING",
+        () =>
+          createCompanionSystem({
+            ...companionConfig(),
+            traits: [{ id: "calm", name: "沉静", mods: { focus: 0.2 } }],
+            companions: [{ id: "cat", name: "猫", traitId: "calm" }],
+          }),
+      ],
+      ["IDLE_STEP_MS", () => planIdle(1, { stepMs: 0, capMs: 1 })],
+      ["MEMORY_STAGES_EMPTY", () => createStageMemory({ stages: [] })],
+      [
+        "SAVE_VERSION_INVALID",
+        () =>
+          defineSaveFormat({
+            currentVersion: 0,
+            migrations: [],
+            codec: { encode: () => "{}", decode: () => ({}) },
+          }),
+      ],
+      ["PROGRESSION_INPUT", () => createProgressionAudit({} as never)],
+      ["GAME_CONFIG_INVALID", () => defineGame(brokenPreset())],
+    ];
+
+    const wrong = cases
+      .map(([want, run]) => [want, codeOf(run)] as const)
+      .filter(([want, got]) => want !== got);
+    expect(wrong, `这些场景的 code 对不上:${JSON.stringify(wrong)}`).toEqual([]);
+    // 防空转:表里真有一整套(少了就说明有人把场景删了而没删期望)
+    expect(cases.length).toBeGreaterThanOrEqual(28);
   });
 });

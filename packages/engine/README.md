@@ -222,7 +222,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 
 ## 模块一览
 
-库按"一层回答一个问题"切开,`src/` 下 38 个模块文件各是一层(另有 4 份内容包)。
+库按"一层回答一个问题"切开,`src/` 下 39 个模块文件各是一层(另有 4 份内容包)。
 按**你要做的事**分组:
 
 | 这一组 | 回答什么 | 代表入口 |
@@ -321,7 +321,8 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 | 与源工程对账 | 21 境 × 10 层的名目/寿元/修为/三维/成功率、200 组来源下的词条合并、掉落池与装备结算**逐条相同** | [`docs/parity.md`](./docs/parity.md) |
 | 产物自检 | 编译后的 `dist` 能被 **Node** ESM 直接 import(而不是 bun/vite 的宽容解析) | `scripts/verify-dist.mjs` |
 | 发布包自检 | 真 `npm pack` → 摊进临时项目的 `node_modules/` → 按**包名与子路径** import,并装配四份内容包 | `scripts/verify-dist.mjs` |
-| 公开面判据 | 79 个运行时导出 + 212 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
+| 公开面判据 | 80 个运行时导出 + 213 个公开类型一字不差,少一个就红 | [`src/publicApi.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/publicApi.spec.ts) |
+| 报错口径 | 每条运行时报错都是 `EngineError(code, message)`:`code` 稳定可分支、文案可改;30 处场景的 code 逐条钉住 | [`src/errors.spec.ts`](https://github.com/pplmx/wanxiang-engine/blob/main/src/errors.spec.ts) |
 
 上表只是最常被问到的五条。真正跑起来的是**十八道常驻自检**:`组装指南` / `定制表` / `定制表旋钮` / `报错口径` / `版本引用` / `文档链接` / `文档引用` / `目录树` / `用例数` / `调参参考` / `相对导入` / `公开面行为判据` / `公开面数量` / `模块速查覆盖` / `示例覆盖` / `产物` / `发布包` / `自检清单`
 
@@ -361,7 +362,7 @@ console.log(game.dungeons.onVictory('r1', { ...encounter, kind: 'boss' }, progre
 - **不再新增能力层**:新玩法请在库外组合已有的层(配方见 [组装指南](./docs/assembly.md));
   库自己只做三件事 —— 修错、补判据、让文档与实现一致;
 - **版本只加 patch**:0.1.x 往下走,不跳 minor、不追里程碑;真正的对外承诺是
-  **公开面清单**(79 个运行时导出 + 212 个公开类型,逐字钉在 `src/publicApi.spec.ts`);
+  **公开面清单**(80 个运行时导出 + 213 个公开类型,逐字钉在 `src/publicApi.spec.ts`);
 - **数值曲线不承诺不变**(换题材本来就要调),但**默认值与旧行为**在未显式配置时逐位一致,
   由 `baseline.spec.ts` 的摘要与 `docs/parity.md` 的对账守着。
 
@@ -400,6 +401,7 @@ packages/engine/
     index.ts        公开入口(对外承诺的就是这里导出的东西,清单钉在 publicApi.spec.ts)
     numeric.ts      数值适配层(默认 number,大数库可插拔)
     rng.ts          可复现随机(mulberry32) + 题材无关的加权核 pickWeighted
+    errors.ts       统一错误类型 EngineError(稳定 code,供调用方分支)
     counters.ts     计数器基准快照(生涯 / 本期共用一份计数)
     attributes.ts   属性登记表 + 合并规则 + 最终属性结算
     buffs.ts        状态(时效增益):叠时长、过期即散、按分类清除
@@ -436,7 +438,7 @@ packages/engine/
     saveShape.ts    形状修复原语
     config.ts       defineGame / validateGame(交叉校验)
     presets/        仙侠 / 星港 / 日常学习 / 最小(只装两层)四份内容包
-  examples/         可跑示例(从零装配 / 快速上手 / 最小循环 / 战斗组合技 / 一梯三界 / 书桌与日常 / 自习室的一天 / 星屑集册 / 一角点心铺 / 行商十二日 / 药庐二十四炉 / 战斗接管 / 拳赛接管)
+  examples/         可跑示例(从零装配 / 快速上手 / 最小循环 / 战斗组合技 / 一梯三界 / 书桌与日常 / 自习室的一天 / 星屑集册 / 一角点心铺 / 行商十二日 / 药庐二十四炉 / 战斗接管 / 拳赛接管 / 错误码)
   docs/
     usage.md        模块速查与定制点(每层回答什么、想改什么改哪里)
     assembly.md     组装指南:四条配方 + 坑清单 + 验收清单
