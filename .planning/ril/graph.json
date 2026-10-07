@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 436,
+  "round": 437,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T10:49:11+00:00",
+  "updated_at": "2026-10-07T10:54:50+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25380,6 +25380,31 @@
       "touched_round": 435,
       "commit": "a2949b9",
       "summary": "8 个宿命传承效果全部接线(danxin 首炉必成/yuanying 起步筑基/baihuang 法宝位/tonggan 四选一/shouzhuo 失败保料/daotong 功法全留/dubu 渡劫豁免/daoben 认知全带);重定 4 个;新增 core/heritageEffects + player.heritageUses;天赋/传承 UI 显示具体效果"
+    },
+    "TASK-446": {
+      "id": "TASK-446",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T10:54:50+00:00",
+      "updated_at": "2026-10-07T10:54:50+00:00",
+      "touched_round": 436,
+      "category": "test-quality",
+      "severity": 0.4,
+      "confidence": 1,
+      "effort": 1,
+      "summary": "传承「声明即承诺」判据:HERITAGE_DEFS 每个 id 必须在 core/stores 玩法代码里出现;防新增传承再次只声明不接线"
+    },
+    "CHG-520": {
+      "id": "CHG-520",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T10:54:50+00:00",
+      "updated_at": "2026-10-07T10:54:50+00:00",
+      "touched_round": 436,
+      "commit": "d716f56",
+      "summary": "heritageEffects.spec 加声明即承诺扫描;本轮系统审计所有非数值能力位(套装 hook/法宝特效/师承/秘境 rules/建筑上限/星象/天时…)—— 传承是唯一空头支票大类,其余均已接线"
     }
   },
   "edges": [
@@ -37139,6 +37164,12 @@
       "to": "TASK-445",
       "type": "implements",
       "created_at": "2026-10-07T10:49:11+00:00"
+    },
+    {
+      "from": "CHG-520",
+      "to": "TASK-446",
+      "type": "implements",
+      "created_at": "2026-10-07T10:54:50+00:00"
     }
   ]
 }
