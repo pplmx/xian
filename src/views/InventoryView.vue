@@ -1053,13 +1053,13 @@ const setRows = computed(() => {
 
 /** 一键穿最强:换成几件就报几件,没换就说"已是最佳"(与核心同一套不降级口径) */
 function wearEquipBest(): void {
-  const n = equipAllBest();
+  const n = equipAllBest(inventory);
   ui.toast(n > 0 ? `一键换装:换上 ${n} 件` : "已是最佳,无需更动", n > 0 ? "success" : "info");
 }
 
 /** 穿齐某套:换成几件报几件;已穿更强的不动,幂等 */
 function wearSetOf(setId: string): void {
-  const n = equipSetCombo(setId);
+  const n = equipSetCombo(inventory, setId);
   ui.toast(n > 0 ? `穿齐共鸣:换上 ${n} 件` : "此套已是最佳,无需更动", n > 0 ? "success" : "info");
 }
 

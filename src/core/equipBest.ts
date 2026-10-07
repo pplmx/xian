@@ -11,8 +11,11 @@
  *
  * 纯方便性功能:**只改装配**,不分解、不炼化、不卖任何一件;换下来的旧件自动回行囊
  * (inventory.equip 的 bag.assign 语义)。同一件已经是该槽最强时不动(幂等)。
+ *
+ * 这一层**不认识 store**:要改的背包以 `EquipInventory` 端口传进来(视图传
+ * `useInventoryStore()` 即可)。于是选哪一件/该不该换的**判断**是纯函数,
+ * 测它不必先起一套 Pinia;真正落库那一下仍由 store 的 `equip` 做。
  */
-import { useInventoryStore } from "@/stores/inventory";
 import { qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
 import { resolveEquipStats } from "./equipGen";
@@ -88,29 +91,38 @@ export function betterEquip(a: EquipmentInstance, b: EquipmentInstance): boolean
   return rollSum(a) > rollSum(b);
 }
 
+/**
+ * 要改的那本背包 —— core 只认这个形状,不认 Pinia。
+ * `useInventoryStore()` 天然满足它(字段是解包后的值,方法是同名的那些)。
+ */
+export interface EquipInventory {
+  items: readonly EquipmentInstance[];
+  equipped: Partial<Record<EquipSlot, string>>;
+  equip(uid: string, slot: EquipSlot): void;
+  findItem(uid: string): EquipmentInstance | undefined;
+}
+
 /** 该槽该穿的最强一件(该槽无任何可穿戴时返回 null) */
-export function bestEquipFor(slot: EquipSlot): EquipmentInstance | null {
-  const inventory = useInventoryStore();
-  const pool = inventory.items.filter((i) => equipmentTemplate(i.templateId)?.slot === slot);
+export function bestEquipFor(inv: EquipInventory, slot: EquipSlot): EquipmentInstance | null {
+  const pool = inv.items.filter((i) => equipmentTemplate(i.templateId)?.slot === slot);
   if (pool.length === 0) return null;
   return pool.reduce((a, b) => (stronger(b, a) ? b : a));
 }
 
 /** 一键换装单槽:换上最强一件,已是则不动。返回是否真的换了 */
-export function equipBestFor(slot: EquipSlot): boolean {
-  const inventory = useInventoryStore();
-  const best = bestEquipFor(slot);
+export function equipBestFor(inv: EquipInventory, slot: EquipSlot): boolean {
+  const best = bestEquipFor(inv, slot);
   if (!best) return false;
-  if (inventory.equipped[slot] === best.uid) return false;
-  inventory.equip(best.uid, slot);
+  if (inv.equipped[slot] === best.uid) return false;
+  inv.equip(best.uid, slot);
   return true;
 }
 
 /** 一键换装全部可穿槽(法宝另走 equippedArtifacts,不在这九个里) */
-export function equipAllBest(): number {
+export function equipAllBest(inv: EquipInventory): number {
   let changed = 0;
   for (const slot of SLOT_COURIER) {
-    if (equipBestFor(slot)) changed += 1;
+    if (equipBestFor(inv, slot)) changed += 1;
   }
   return changed;
 }
@@ -119,10 +131,9 @@ export function equipAllBest(): number {
  * 一键穿齐某共鸣套。每槽换上该套**已持有里最强**的一件(真实战力为主,同分
  * 回退粗排);已穿的那件更强就不动 —— 穿套装绝不降级。返回换上几件。
  */
-export function equipSetCombo(setId: string): number {
-  const inventory = useInventoryStore();
+export function equipSetCombo(inv: EquipInventory, setId: string): number {
   const bestPerSlot = new Map<EquipSlot, EquipmentInstance>();
-  for (const it of inventory.items) {
+  for (const it of inv.items) {
     const tpl = equipmentTemplate(it.templateId);
     if (!tpl || tpl.set !== setId) continue;
     const cur = bestPerSlot.get(tpl.slot);
@@ -130,12 +141,10 @@ export function equipSetCombo(setId: string): number {
   }
   let changed = 0;
   for (const [slot, piece] of bestPerSlot) {
-    if (inventory.equipped[slot] === piece.uid) continue;
-    const occupant = inventory.equipped[slot]
-      ? inventory.findItem(inventory.equipped[slot]!)
-      : undefined;
+    if (inv.equipped[slot] === piece.uid) continue;
+    const occupant = inv.equipped[slot] ? inv.findItem(inv.equipped[slot]!) : undefined;
     if (occupant && stronger(occupant, piece)) continue;
-    inventory.equip(piece.uid, slot);
+    inv.equip(piece.uid, slot);
     changed += 1;
   }
   return changed;

@@ -21,6 +21,7 @@ import {
   betterEquip,
   equipSetCombo,
   equippablePower,
+  type EquipInventory,
 } from "./equipBest";
 import { resolveEquipStats } from "./equipGen";
 import { equipmentTemplate } from "@/data/equipment";
@@ -61,10 +62,6 @@ function slotOf(itemInst: EquipmentInstance): EquipSlot {
 }
 
 describe("equippablePower —— 真实战斗价值", () => {
-  beforeEach(() => {
-    setActivePinia(createPinia());
-  });
-
   it("平铺随强化放大:同件装备强化 10 胜过高 1 阶的裸件", () => {
     const fresh = item("weapon", "heaven", 18);
     const leveled = { ...item("weapon", "heaven", 17), level: 10 };
@@ -123,7 +120,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     const leveled = item("weapon", "heaven", 17, 10); // 天品 17 阶,强化 10
     add(inv, fresh, leveled);
     expect(equippablePower(leveled)).toBeGreaterThan(equippablePower(fresh));
-    expect(bestEquipFor("weapon")!.uid, "该穿强化满的那件").toBe(leveled.uid);
+    expect(bestEquipFor(inv, "weapon")!.uid, "该穿强化满的那件").toBe(leveled.uid);
   });
 
   it("跨品质跨阶:高阶玄品满强化胜过低阶地品裸件(玩家反馈的主诉场景)", () => {
@@ -133,7 +130,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     add(inv, earned, polished);
     expect(slotOf(earned)).toBe("weapon");
     expect(equippablePower(earned)).toBeGreaterThan(equippablePower(polished));
-    expect(bestEquipFor("weapon")!.uid, "玄品满强化是实打打来的战利").toBe(earned.uid);
+    expect(bestEquipFor(inv, "weapon")!.uid, "玄品满强化是实打打来的战利").toBe(earned.uid);
   });
 
   it("空槽:把行囊里真实战力更强的一件换上", () => {
@@ -141,7 +138,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     const step = item("head", "fine", 9);
     const better = item("head", "excellent", 6);
     add(inv, step, better);
-    expect(equipBestFor("head"), "空槽应当上一件").toBe(true);
+    expect(equipBestFor(inv, "head"), "空槽应当上一件").toBe(true);
     const picked = inv.items.find((i) => i.uid === inv.equipped["head"])!;
     const other = picked === better ? step : better;
     // 真实战力为准:穿上去的那件就是更强的(不奉行「品质保底」)
@@ -153,7 +150,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     const best = item("body", "immortal", 20, 5);
     add(inv, best);
     inv.equip(best.uid, "body");
-    expect(equipBestFor("body"), "本就是最强,不该来回换").toBe(false);
+    expect(equipBestFor(inv, "body"), "本就是最强,不该来回换").toBe(false);
   });
 
   it("已穿的更强就不换(真实战力口径)", () => {
@@ -163,7 +160,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     add(inv, worn, weaker);
     inv.equip(worn.uid, "necklace");
     expect(equippablePower(weaker)).toBeLessThan(equippablePower(worn));
-    expect(equipBestFor("necklace"), "已穿更强的,不该被更弱件换下").toBe(false);
+    expect(equipBestFor(inv, "necklace"), "已穿更强的,不该被更弱件换下").toBe(false);
     expect(inv.equipped["necklace"]).toBe(worn.uid);
   });
 
@@ -173,7 +170,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     const strong = item("weapon", "heaven", 16, 0, [{ id: "atk1", roll: 0.9 }]);
     add(inv, weak, strong);
     expect(equippablePower(strong)).toBeGreaterThan(equippablePower(weak));
-    expect(bestEquipFor("weapon")!.uid, "词条在排序里要真的能赢").toBe(strong.uid);
+    expect(bestEquipFor(inv, "weapon")!.uid, "词条在排序里要真的能赢").toBe(strong.uid);
   });
 
   it("词条只在同阶/邻阶翻转 —— 整体层级差距面前,平铺仍然主导", () => {
@@ -182,7 +179,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     const high = item("weapon", "heaven", 17); // 高三阶裸件
     add(inv, low, high);
     expect(equippablePower(low)).toBeLessThan(equippablePower(high));
-    expect(bestEquipFor("weapon")!.uid, "层级差不该被一条好词条吞掉").toBe(high.uid);
+    expect(bestEquipFor(inv, "weapon")!.uid, "层级差不该被一条好词条吞掉").toBe(high.uid);
   });
 
   it("一键全槽:每槽换上最强,返回换了几件", () => {
@@ -194,7 +191,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
       item("necklace", "mortal", 3),
       item("weapon", "spirit", 10),
     );
-    const changed = equipAllBest();
+    const changed = equipAllBest(inv);
     expect(changed).toBe(4);
     for (const slot of ["head", "body", "necklace", "weapon"] as EquipSlot[]) {
       expect(inv.equipped[slot], `${slot} 槽应已穿上`).toBeTruthy();
@@ -203,10 +200,6 @@ describe("一键换装 · 「最强」按真实战力", () => {
 });
 
 describe("betterEquip —— 仍是同战力的粗排裁决", () => {
-  beforeEach(() => {
-    setActivePinia(createPinia());
-  });
-
   it("品质 → 层级 → 强化 → 词条成色", () => {
     const a = item("weapon", "heaven", 3); // 天品 3 阶
     const b = item("weapon", "spirit", 8); // 灵品 8 阶
@@ -240,7 +233,7 @@ describe("一键穿齐套装", () => {
     ];
     inv.items = pieces;
     inv.equip("sd", "head");
-    const changed = equipSetCombo("s_tiebi");
+    const changed = equipSetCombo(inv, "s_tiebi");
     expect(changed, "只该换武器槽").toBe(1);
     expect(inv.equipped["weapon"], "换上天品重剑").toBe("sb");
     expect(inv.equipped["head"], "已穿更强 divine 不该被降级").toBe("sd");
@@ -267,6 +260,31 @@ describe("一键穿齐套装", () => {
     inv.items = [a, b];
     inv.equip(a.uid, "weapon");
     inv.equip(b.uid, "head");
-    expect(equipSetCombo("s_tiebi"), "已穿齐,不应再动").toBe(0);
+    expect(equipSetCombo(inv, "s_tiebi"), "已穿齐,不应再动").toBe(0);
+  });
+});
+
+/**
+ * 端口注入的收益:换装的**判断**不必先起 Pinia —— 给一个最小 `EquipInventory` 即可。
+ * 这正是分层审计要的那句话(「测一个数值函数不必先建一整套 store」);
+ * 真实应用里传的就是 `useInventoryStore()`,形状天然对得上。
+ */
+describe("一键换装的判断可脱离 Pinia(端口注入)", () => {
+  it("bestEquipFor / equipAllBest 只靠注入的背包对象", () => {
+    const hero = item("weapon", "heaven", 18);
+    const peon = item("weapon", "heaven", 12);
+    const inv: EquipInventory = {
+      items: [peon, hero],
+      equipped: {},
+      equip(uid, slot) {
+        inv.equipped[slot] = uid;
+      },
+      findItem(uid) {
+        return inv.items.find((i) => i.uid === uid);
+      },
+    };
+    expect(bestEquipFor(inv, "weapon")!.uid).toBe(hero.uid);
+    expect(equipAllBest(inv)).toBe(1);
+    expect(inv.equipped["weapon"]).toBe(hero.uid);
   });
 });
