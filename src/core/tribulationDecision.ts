@@ -14,7 +14,7 @@
  * 必须调用同一批函数——凡是 UI 里算进星级的词条,结算里必须同样吃到,
  * 反之亦然。任何"前端显示一套、结算另一套"都属于欺骗玩家。
  */
-import type { StatMods } from "@/types";
+import type { FinalStats, LinggenProfile, StatMods } from "@/types";
 import { modOf } from "./statsCalc";
 import {
   tribulationDef,
@@ -40,7 +40,6 @@ import { realmScale, tribulationWaveDamage } from "./formulas";
 import { isWorldEntry } from "@/data/realms";
 import { mulberry32 } from "@/utils/random";
 import { toNum } from "@/utils/gnum";
-import { usePlayerStore } from "@/stores/player";
 
 export interface TribulationPlan {
   kind: TribulationKind;
@@ -135,14 +134,25 @@ export function statFoldAt(targetMajor: number): number {
 }
 
 /**
+ * 渡劫这一层读到的玩家形状 —— 由调用方给(视图 / 结算各握着 player),本层不读 store。
+ * 只声明用得到的几样:三维折算读 defense/maxHp、灵根通道读 linggen、计划读 major/sub/mods。
+ */
+export interface TribulationPlayer {
+  major: number;
+  sub: number;
+  isMajorStep: boolean;
+  finalStats: Pick<FinalStats, "defense" | "maxHp" | "mods">;
+  linggen: LinggenProfile | null;
+}
+
+/**
  * 当前玩家的三维折算 —— 预览(currentTribulationPlan)与结算(runTribulation)共用这一个入口。
  *
  * 折叠在这里做,而不是在 waveDamage / trace 里各做一次:这是**读数的唯一入口**,
  * 界面摊开的「防御折算 X% · 气血折算 Y%」与实际结算吃到的就是同一个数。
  * 若在结算侧另折一次而界面上照旧显示原值,玩家会看到"护持明明写着 35%,却像没有"。
  */
-export function currentStatGuard(): TribStatGuard {
-  const player = usePlayerStore();
+export function currentStatGuard(player: TribulationPlayer): TribStatGuard {
   const raw = statGuardOf({
     defense: toNum(player.finalStats.defense),
     maxHp: toNum(player.finalStats.maxHp),
@@ -502,24 +512,25 @@ function riskLines(
  * 预览(currentTribulationPlan)与结算(breakthrough.runTribulation)
  * 都必须经这一个入口取 relief——否则又会出现"看的一套、算的一套"。
  */
-export function currentTribulationRelief(kind: TribulationKind): TribulationRelief {
-  const player = usePlayerStore();
+export function currentTribulationRelief(
+  player: TribulationPlayer,
+  kind: TribulationKind,
+): TribulationRelief {
   return tribulationRelief(rootElements(player.linggen?.roots), kind);
 }
 
 /** 供 UI:当前玩家(含天时、灵根)的渡劫计划
  * 渡劫难度随天时(雷鸣日+8%):预览乘入 todayWeather().tribulationMult,
  * 与结算 runTribulation 同源(见 breakthrough.ts),预览与实算不可能分叉 */
-export function currentTribulationPlan(): TribulationPlan {
-  const player = usePlayerStore();
+export function currentTribulationPlan(player: TribulationPlayer): TribulationPlan {
   const nextMajor = player.isMajorStep ? player.major + 1 : player.major;
   const kind = rollTribulation(nextMajor);
   return buildTribulationPlan(
     nextMajor,
     player.finalStats.mods,
     kind,
-    currentTribulationRelief(kind),
+    currentTribulationRelief(player, kind),
     todayWeather().tribulationMult,
-    currentStatGuard(),
+    currentStatGuard(player),
   );
 }

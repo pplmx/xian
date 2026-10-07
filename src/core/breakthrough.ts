@@ -155,10 +155,10 @@ function runTribulation(targetMajor: number): { survived: boolean; log: string[]
   const waves = tribulationWaves(targetMajor);
   const kind = rollTribulation(targetMajor);
   const tDef = tribulationDef(kind);
-  const relief = currentTribulationRelief(kind);
+  const relief = currentTribulationRelief(player, kind);
   const weatherMult = todayWeather().tribulationMult;
   // 三维折算与预览同源(currentTribulationPlan 走同一个 helper):血厚防高者硬抗一部分
-  const stat = currentStatGuard();
+  const stat = currentStatGuard(player);
   const regen = sustainScore(mods, tDef, relief);
   let hpLeft = 1 + guardScore(mods, tDef, relief) + stat.guard;
   const log: string[] = [

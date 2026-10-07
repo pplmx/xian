@@ -75,7 +75,7 @@ describe("渡劫成功率推演", () => {
     expect(Object.keys(info)).not.toContain("tribRate");
 
     if (info.needTribulation) {
-      const plan = currentTribulationPlan();
+      const plan = currentTribulationPlan(usePlayerStore());
       expect(plan.kind).toBeTruthy();
       expect(plan.risks.length).toBeGreaterThan(0);
       for (const dim of ["guard", "sustain", "resist", "burst"] as const) {

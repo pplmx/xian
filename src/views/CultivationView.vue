@@ -798,7 +798,9 @@ const PLAN_COLOR: Record<TribulationPlan["verdict"], string> = {
 };
 const PREP_NAMES = { guard: "护持", sustain: "恢复", resist: "抗性", burst: "爆发" } as const;
 const PREP_STARS = ["·", "✧", "✧✧", "✧✧✧"] as const;
-const tribPlan = computed(() => (btInfo.value.needTribulation ? currentTribulationPlan() : null));
+const tribPlan = computed(() =>
+  btInfo.value.needTribulation ? currentTribulationPlan(player) : null,
+);
 /** 这天时是这场劫算进去的那一个(与结算/主页同源);倍率 >1 才挂字 */
 const tribWeather = computed(() => todayWeather());
 const tribWeatherMult = computed(() =>
@@ -824,9 +826,9 @@ const worldStep = computed(() => statFoldAt(tribTargetMajor.value) < 1);
 const tribLedger = computed(() => {
   if (!tribPlan.value) return null;
   const mods = player.finalStats.mods;
-  const stat = currentStatGuard();
+  const stat = currentStatGuard(player);
   const def = tribPlan.value.def;
-  const relief = currentTribulationRelief(tribPlan.value.kind);
+  const relief = currentTribulationRelief(player, tribPlan.value.kind);
   return {
     resist: settlementResist(mods, relief, stat),
     statResist: stat.resist,

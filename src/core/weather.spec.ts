@@ -172,8 +172,8 @@ describe("渡劫难度随天时(雷鸣日 +8%)", () => {
     }
     expect(stormDay).toBeGreaterThanOrEqual(0);
     // 同一天内预览稳定(确定性),且 > 0 即可(具体难度由构筑决定)
-    const a = currentTribulationPlan();
-    const b = currentTribulationPlan();
+    const a = currentTribulationPlan(usePlayerStore());
+    const b = currentTribulationPlan(usePlayerStore());
     expect(a.kind).toBe(b.kind);
     expect(a.expectedRate).toBeGreaterThan(0);
   });
