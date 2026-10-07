@@ -152,7 +152,6 @@ describe("资源账本 —— 货币 / 材料 / 点数这一层", () => {
   });
 
   it("大数台账:收支条目可以传台账自己的数(T),不经过 double", () => {
-    // 一个最小的大数壳:m × 10^e(与宿主 GNum 同形),只为验证"条目收 T"
     type Big = { m: number; e: number };
     const norm = (a: Big): Big => {
       if (a.m === 0) return { m: 0, e: 0 };
@@ -209,5 +208,33 @@ describe("资源账本 —— 货币 / 材料 / 点数这一层", () => {
     expect(amount.m).toBeCloseTo(1, 10);
     expect(amount.e).toBe(40); // 没被压成 double
     expect(res.audit(gained.entries).bySource["秘境"]!.net.e).toBe(40);
+
+    /*
+     * 下面三条才是这份判据的要害:1e40 仍在 double 的射程内,压一遍再看回来照样对得上 ——
+     * 只有越过 double 的边界(约 1.8e308)才看得出来"到底压没压"。
+     */
+    // 一、超出 double 的收支不能被当坏数据丢掉(从前 entries=0、余额不变)
+    const beyond = { m: 9.9, e: 400 } as Big;
+    const huge = res.grant(res.create(), [{ key: "stone", amount: beyond, source: "秘境" }]);
+    expect(huge.entries.length, "1e400 的收支被静默丢弃了").toBe(1);
+    expect(huge.ledger.stone!.e).toBe(400);
+    expect(huge.ledger.stone!.m).toBeCloseTo(9.9, 10);
+
+    // 二、余额是大数时再加一笔,余额不能被压成 Infinity 后归零
+    const stacked = res.grant({ stone: beyond }, [{ key: "stone", amount: beyond }]);
+    expect(stacked.ledger.stone!.e).toBe(401);
+    expect(stacked.ledger.stone!.m).toBeCloseTo(1.98, 10);
+
+    // 三、够不够用 T 比:1e400 付不起 2e400,但付得起 5e399
+    const purse = { stone: { m: 1, e: 400 } as Big };
+    expect(
+      res.canAfford(purse, [{ key: "stone", amount: { m: 2, e: 400 } }]),
+      "超大数被误判成付得起",
+    ).toBe(false);
+    expect(res.canAfford(purse, [{ key: "stone", amount: { m: 5, e: 399 } }])).toBe(true);
+    const paid = res.pay(purse, [{ key: "stone", amount: { m: 5, e: 399 } }]);
+    expect(paid.ok).toBe(true);
+    expect(paid.ledger.stone!.e).toBe(399);
+    expect(paid.ledger.stone!.m).toBeCloseTo(5, 10);
   });
 });

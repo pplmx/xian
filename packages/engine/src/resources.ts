@@ -100,11 +100,51 @@ export function createResourceSystem<T = number>(
     return byKey.get(key)?.integer ? Math.floor(clamped) : clamped;
   };
 
-  /** 逐条落账;返回新账本(不改入参)与每条的实际发生额 */
+  /**
+   * 把**台账自己的数**夹到上下限内 —— T 原生,不经过 double。
+   *
+   * 与 `clampValue` 分开是刻意的:那一份收的是"新建 / 修复存档"时的普通数字,
+   * 而落账这条路上值可能是宿主的大数(1e400 那种)。一旦先 `toNumber` 再回来,
+   * 轻则丢精度,重则 Infinity → 余额归零 / 那条收支被当坏数据丢掉。所以这里
+   * 只做 T 的比较与夹取,绝不把值投影成 double。
+   *
+   * 整数资源的取整仍走 `toNumber`(材料 / 点数是小数字,不属于大数那一档);
+   * 大数的投影是 Infinity 时保留原值 —— 它本身已是整数语义。
+   */
+  const clampT = (key: string, ledger: Ledger<T>, value: T): T => {
+    let v = value;
+    const floor = numeric.from(floorOf(key));
+    if (numeric.cmp(v, floor) < 0) v = floor;
+    const cap = capOf(key, ledger);
+    if (cap !== Number.POSITIVE_INFINITY && numeric.cmp(v, numeric.from(cap)) > 0) {
+      v = numeric.from(cap);
+    }
+    if (byKey.get(key)?.integer) {
+      const floored = Math.floor(numeric.toNumber(v));
+      if (Number.isFinite(floored)) v = numeric.from(floored);
+    }
+    return v;
+  };
+
   /** 条目里的额可以是 number,也可以是台账自己的数(大数资源) */
   const amountOf = (entry: ResourceEntry<T>): T =>
     typeof entry.amount === "number" ? numeric.from(entry.amount) : entry.amount;
 
+  /**
+   * 这一条的额是不是坏数据。
+   *
+   * number:非有限就是坏(NaN / Infinity)。
+   * T:`toNumber` 出 NaN 才是坏;Infinity 只说明它**大得超出 double**,
+   * 这正是大数资源该走的路 —— 不能再像从前那样把它当坏数据丢掉。
+   */
+  const badAmount = (entry: ResourceEntry<T>): boolean => {
+    const raw = entry.amount;
+    if (typeof raw === "number") return !Number.isFinite(raw);
+    if (raw == null) return true;
+    return Number.isNaN(numeric.toNumber(raw as T));
+  };
+
+  /** 逐条落账;返回新账本(不改入参)与每条的实际发生额 */
   const apply = (
     ledger: Ledger<T>,
     entries: readonly ResourceEntry<T>[],
@@ -113,20 +153,21 @@ export function createResourceSystem<T = number>(
     const applied: AppliedEntry<T>[] = [];
     const rejected: ResourceEntry<T>[] = [];
     for (const entry of entries) {
-      const amount = entry ? amountOf(entry) : zero;
-      if (!entry || typeof entry.key !== "string" || !Number.isFinite(numeric.toNumber(amount))) {
+      if (!entry || typeof entry.key !== "string" || badAmount(entry)) {
         // 内容写错不该让整场结算炸掉:这一条丢掉,其余照收照付
         if (entry) rejected.push(entry);
         continue;
       }
-      const before = numeric.toNumber(next[entry.key] ?? zero);
-      const after = clampValue(entry.key, next, before + numeric.toNumber(amount));
-      const delta = after - before;
-      next[entry.key] = numeric.from(after);
+      const amount = amountOf(entry);
+      const before = next[entry.key] ?? zero;
+      const raw = numeric.add(before, amount);
+      const after = clampT(entry.key, next, raw);
+      next[entry.key] = after;
       applied.push({
         ...entry,
-        applied: numeric.from(delta),
-        clamped: Math.abs(delta - numeric.toNumber(amount)) > 1e-9,
+        applied: numeric.sub(after, before),
+        // 夹取或取整改动了结果,就是"这一条被动过"
+        clamped: numeric.cmp(after, raw) !== 0,
       });
     }
     return { ledger: next, entries: applied, rejected };
@@ -137,17 +178,19 @@ export function createResourceSystem<T = number>(
     ledger: Ledger<T>,
     costs: readonly ResourceEntry<T>[],
   ): { key: string; short: number }[] => {
-    const need = new Map<string, number>();
+    const need = new Map<string, T>();
     for (const cost of costs) {
-      const amount = cost ? numeric.toNumber(amountOf(cost)) : Number.NaN;
-      if (cost && typeof cost.key === "string" && Number.isFinite(amount)) {
-        need.set(cost.key, (need.get(cost.key) ?? 0) + amount);
-      }
+      if (!cost || typeof cost.key !== "string" || badAmount(cost)) continue;
+      const amount = amountOf(cost);
+      need.set(cost.key, numeric.add(need.get(cost.key) ?? zero, amount));
     }
     const out: { key: string; short: number }[] = [];
     for (const [key, amount] of need) {
-      const short = Math.max(0, amount - numberOf(ledger, key));
-      if (short > 0) out.push({ key, short });
+      const have = of(ledger, key);
+      // 够不够用 T 比,不再把两边压成 double 后相减(那会在 Infinity 处变成 NaN)
+      if (numeric.cmp(amount, have) > 0) {
+        out.push({ key, short: numeric.toNumber(numeric.sub(amount, have)) });
+      }
     }
     return out;
   };
