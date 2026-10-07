@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 431,
+  "round": 432,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T09:36:20+00:00",
+  "updated_at": "2026-10-07T09:47:55+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25259,6 +25259,31 @@
       "touched_round": 430,
       "commit": "3a15b0d",
       "summary": "新增 core/uiPort.ts(showBreakthrough/setDeathDialog/showOfflineSummary/setReincarnationView/currentReincarnationView);ui store setup 时绑定落点;4 个 core 文件摘 ui 依赖;3 处用例补 useUiStore() 前置"
+    },
+    "TASK-442": {
+      "id": "TASK-442",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T09:47:55+00:00",
+      "updated_at": "2026-10-07T09:47:55+00:00",
+      "touched_round": 431,
+      "category": "maintainability",
+      "severity": 0.35,
+      "confidence": 1,
+      "effort": 2,
+      "summary": "equipBest 收背包端口:换装判断(选哪件/该不该换)变纯函数,不再 import inventory store;用例可脱离 Pinia;基线 54→53 文件、159→158 处"
+    },
+    "CHG-515": {
+      "id": "CHG-515",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T09:47:55+00:00",
+      "updated_at": "2026-10-07T09:47:55+00:00",
+      "touched_round": 431,
+      "commit": "1878bb8",
+      "summary": "core/equipBest 加 EquipInventory 端口参数(bestEquipFor/equipBestFor/equipAllBest/equipSetCombo);视图传 useInventoryStore();两个纯 describe 去 Pinia + 新增无 Pinia 用例;layeringAudit 基线下降"
     }
   },
   "edges": [
@@ -36976,6 +37001,12 @@
       "to": "TASK-441",
       "type": "implements",
       "created_at": "2026-10-07T09:36:20+00:00"
+    },
+    {
+      "from": "CHG-515",
+      "to": "TASK-442",
+      "type": "implements",
+      "created_at": "2026-10-07T09:47:55+00:00"
     }
   ]
 }
