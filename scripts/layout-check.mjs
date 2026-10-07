@@ -71,9 +71,10 @@
  *   三十三 地界卡不许挤压:名字必须单行,头部与操作块不许相交。夹具里备了镇压中、
  *      临期复聚、已取得资格三态 —— 从前夹具一个镇压区域都没有,于是「自动产出」
  *      把地界名压成竖排的事故全绿通过(横向溢出量不到挤压:卡片没溢出,只是挤)。
- *   三十四 两条通用挤压判据,全页面生效:①文字被挤成竖排(宽 < 40px 且折成 3 行以上);
- *      ②数字与量词被换行拆开(「2,798 石」不许变成「2,798 / 石」)。两者都是
- *      「卡片没溢出、只是挤」这一类,横向溢出永远查不出来。
+ *   三十四 四条通用挤压判据,全页面生效:①文字被挤成竖排(宽 < 40px 且折成 3 行以上);
+ *      ②数字与量词被换行拆开(「2,798 石」不许变成「2,798 / 石」);③标点被折成孤字(见三十五);
+ *      ④纯文字按钮的标签被折行(见四十四)。它们都是「卡片没溢出、只是挤」这一类,
+ *      横向溢出永远查不出来。
  *   三十五 标点不许被折成孤字:模板里把标点另起一行写(HTML 会把换行折成空格),
  *      窄屏上句号就会独自占一行 —— 量的是渲染结果,比在源码里认标点准。
  *   三十六 敌人卡最挤的一档:名字最长 9 字 + 满标签(首领/宿敌/3 特性)+ 星级。
@@ -103,6 +104,9 @@
  *      四舍五入后正好等于下限,实际是 27.6px 的子像素抖动,而那个按钮声明的是
  *      min-h-[28px]。一条会自己变红的门比没有门更糟,故四处量 28px 的地方统一:声明的
  *      min-height 到了 28 的给半像素容差,报数带一位小数(不再四舍五入到与下限同值)。
+ *   四十四 按钮标签不许被折行:纯文字按钮(无子元素、2~18 字)的文字必须落在一行。
+ *      实见界域志「问 卦(悟道点 2)」被右侧长注挤成「问 卦(悟道」/「点 2)」—— 门槛数字
+ *      拦腰折断。根因又是一行不换行的 flex,横向溢出与前面几条挤压判据都量不出来。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -711,6 +715,33 @@ async function measurePage(page) {
         return out;
       })(),
       /**
+       * 通用挤压判据之四:**按钮标签被折行**。
+       *
+       * 按钮里的字是动作的名字(「问 卦(悟道点 2)」「升级 · 3,861 石」),它被折成两行
+       * 不只是难看 —— 门槛数字会被拦腰折断(实见「问 卦(悟道」/「点 2)」)。根因又是一行
+       * 不换行的 flex:按钮自己没设 shrink,被右侧长注挤扁后文字只好折行。卡片没溢出、
+       * 字也没被挤成竖排,横向溢出与上面几条都量不出来。
+       *
+       * 只量**纯文字按钮**(无子元素、文字 2~18 字),图标 + 文字的按钮由子元素自己撑,
+       * 不在这里管;超过 18 字的多是整段叙述型按钮(如设置页的说明长句),折行属正常。
+       */
+      wrappedButtonLabels: (() => {
+        const out = [];
+        for (const el of document.querySelectorAll("button")) {
+          if (el.children.length > 0) continue; // 只看纯文字按钮
+          const text = (el.textContent || "").trim();
+          if (text.length < 2 || text.length > 18) continue;
+          const r = el.getBoundingClientRect();
+          if (r.width <= 0 || r.height <= 0) continue;
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const lines = new Set([...range.getClientRects()].map((x) => Math.round(x.top))).size;
+          if (lines >= 2) out.push(`«${text.slice(0, 16)}»`);
+          if (out.length >= 3) break;
+        }
+        return out;
+      })(),
+      /**
        * 选择型控件的选中态要对机器可读,且**每组恰有一个**。
        *
        * 此前主题/战报速度/页签的选中全靠边色,读屏用户与自动化都看不出选了哪个
@@ -1314,6 +1345,8 @@ function problemsOf(info) {
   if (info.unitBreaks?.length) problems.push(`数字与量词被换行拆开:${info.unitBreaks.join(" | ")}`);
   if (info.orphanPunctuation?.length)
     problems.push(`标点被折成孤字:${info.orphanPunctuation.join(" | ")}`);
+  if (info.wrappedButtonLabels?.length)
+    problems.push(`按钮标签被折行:${info.wrappedButtonLabels.join(" | ")}`);
   if (info.navItems !== 5) problems.push(`底部导航 ${info.navItems} 项(应为 5)`);
   if (info.railDrift && (info.railDrift.windowOverflow > 1 || info.railDrift.drift > 1)) {
     problems.push(

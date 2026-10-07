@@ -171,8 +171,17 @@
         <!-- 读屏:散卦没有 toast 可依,整块消失的那一瞬必须自报(成卦由 toast 落地即念) -->
         <p aria-live="polite" class="sr-only">{{ readingAnnounce }}</p>
 
-        <div class="mt-2.5 flex items-center gap-2">
-          <button class="btn-ghost !py-1.5 !text-[12px]" :disabled="askDisabled" @click="ask">
+        <!--
+          按钮标签不许折行:原先这行是不换行的 flex,按钮被右侧长注挤到
+          「问 卦(悟道」/「点 2)」两行 —— 门槛数字被拦腰折断。给按钮 shrink-0 +
+          whitespace-nowrap(自己保住一整块),注文可换行、必要时整行再折(gap-y)。
+        -->
+        <div class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <button
+            class="btn-ghost shrink-0 whitespace-nowrap !py-1.5 !text-[12px]"
+            :disabled="askDisabled"
+            @click="ask"
+          >
             {{ askLabel }}
           </button>
           <span class="text-[10px] leading-relaxed text-ink-faint">

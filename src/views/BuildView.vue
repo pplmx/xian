@@ -166,7 +166,12 @@
         <span class="text-[11px] text-ink-faint"
           >把顺手的整套功法 / 法宝 / 装备存起来,一键切换</span
         >
-        <button class="-my-1 py-1.5 text-[11px] text-cinnabar active:opacity-60" @click="openSave">
+        <!-- 320 窄窗:按钮不许被左侧说明挤折(「+ 存当前构 / 筑」)。
+             按钮 shrink-0 + 不断行,说明文字先让位。 -->
+        <button
+          class="-my-1 shrink-0 whitespace-nowrap py-1.5 text-[11px] text-cinnabar active:opacity-60"
+          @click="openSave"
+        >
           + 存当前构筑
         </button>
       </p>
