@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 426,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T07:51:03+00:00",
+  "updated_at": "2026-10-07T07:58:25+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -13167,7 +13167,7 @@
       "version": 1,
       "created_at": "2026-09-18T07:20:00+00:00",
       "updated_at": "2026-09-18T07:20:00+00:00",
-      "touched_round": 425,
+      "touched_round": 426,
       "summary": "公共库 packages/engine(wanxiang-engine):等级(境界)/属性/装备/副本四套系统的可配置内核,零运行时依赖、不依赖 Vue/Pinia/浏览器 API;defineGame 装配 + validateGame 交叉校验;数值走 Numeric<T> 适配层(默认 number,大数库可插拔);内容包 presets/xiuxian(本作名目)与 presets/demo(星港,换皮示例)。"
     },
     "ISS-228": {
@@ -24962,6 +24962,57 @@
       "source": "110e78d packages/engine/src/resources.spec.ts",
       "summary": "normalize 旧实现 Number({m:9.9,e:400})=NaN(实测)→ 大数存档被清零;改后 normalize 保留 e=400/m=9.9,全量 323 spec/3076 例绿",
       "confidence": 1.0
+    },
+    "DEC-192": {
+      "id": "DEC-192",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:58:16+00:00",
+      "updated_at": "2026-10-07T07:58:16+00:00",
+      "touched_round": 426,
+      "summary": "packages/engine 维持 git-subtree 模型(宿主为事实源,独立仓为镜像+独立 CI/发布),本轮不翻转事实源",
+      "rationale": "引擎早已是独立仓:.github/workflows(ci+release)、README/CHANGELOG/docs、发布包自检(scripts/verify-dist.mjs)、宿主侧 engine-sync 同树门 + check:engine:standalone 都齐备;41 个宿主文件经公开入口消费,且引擎正处文档化的维护期(0.1.22 起,只修真错/判据漏洞/文档不一致)。当前唯一真消费者就是宿主,且引擎仍随宿主发现的真错共演进(本轮 ISS-314 即宿主 GNum 大数台账暴露),subtree 让'宿主+引擎'的改动保持原子、单一工具链与锁文件;翻转事实源会把一次引擎修复变成 引擎分支→tag→release→宿主升 pin→对账 的跨仓流程。",
+      "alternatives_rejected": "A) 翻转事实源:在独立仓开发、宿主按发布版本消费(现无第二消费者,且打破原子改动,成本大于收益);B) 彻底拆出 monorepo(需独立版本节奏与跨仓 CI 协调,触发信号未到);C) 不做任何约定、任由镜像漂移(已有 engine-sync 门在 CI 拦,不可取)"
+    },
+    "CHG-507": {
+      "id": "CHG-507",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:58:19+00:00",
+      "updated_at": "2026-10-07T07:58:19+00:00",
+      "touched_round": 426,
+      "commit": "5050a3f",
+      "summary": "combat 四种钩子上下文收口到内部 BattlePrimitives + primitives(round,defaultActor) 工厂;公开面不变(79 导出/212 类型)"
+    },
+    "TASK-433": {
+      "id": "TASK-433",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T07:58:19+00:00",
+      "updated_at": "2026-10-07T07:58:19+00:00",
+      "touched_round": 426,
+      "category": "dx",
+      "severity": 0.3,
+      "confidence": 1,
+      "effort": 1,
+      "summary": "把本轮引擎改动(ISS-314 大数台账修复 + 战斗 primitives 重构 + CHANGELOG)同步到独立仓并攒批发版 —— 需人工 push 到 wanxiang-engine main"
+    },
+    "TASK-434": {
+      "id": "TASK-434",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T07:58:25+00:00",
+      "updated_at": "2026-10-07T07:58:25+00:00",
+      "touched_round": 426,
+      "category": "maintainability",
+      "severity": 0.4,
+      "confidence": 1,
+      "effort": 2,
+      "summary": "combat 四种钩子上下文去重:抽内部 BattlePrimitives<T> + 单工厂,消掉四处重抄的 skipNextTurn/log/state 闭包(公开面不变)"
     }
   },
   "edges": [
@@ -36535,6 +36586,24 @@
       "to": "HYP-119",
       "type": "validates",
       "created_at": "2026-10-07T07:51:03+00:00"
+    },
+    {
+      "from": "DEC-192",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-10-07T07:58:19+00:00"
+    },
+    {
+      "from": "CHG-507",
+      "to": "TASK-434",
+      "type": "implements",
+      "created_at": "2026-10-07T07:58:25+00:00"
+    },
+    {
+      "from": "TASK-433",
+      "to": "TASK-434",
+      "type": "depends_on",
+      "created_at": "2026-10-07T07:58:25+00:00"
     }
   ]
 }
