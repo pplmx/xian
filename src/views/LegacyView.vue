@@ -55,7 +55,7 @@
       </div>
       <p class="mt-1.5 text-[9px] text-ink-faint">画像皆出自真实道痕,不可人工修饰。</p>
     </div>
-    <p v-else class="card-ink px-4 py-6 text-center text-[11px] text-ink-faint">
+    <p v-else class="empty-note card-ink px-4 py-6 text-center text-[11px] text-ink-faint">
       道痕未满{{ cnNumber(PROFILE_MIN_MARKS) }}则,画像尚不成形。
     </p>
 
@@ -140,7 +140,7 @@
             >
           </p>
         </template>
-        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
           此为初世。你尚未死过一次,也就还没有什么可以回忆。
         </p>
       </div>
@@ -160,7 +160,7 @@
             <p class="text-[10px] text-ink-faint">{{ row.desc }}</p>
           </div>
         </div>
-        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
           此录尚白。天界之行,自会留名。
         </p>
       </div>
@@ -190,7 +190,7 @@
             </span>
           </p>
         </template>
-        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
           尚无宿敌。此录待你的血与道来填。
         </p>
       </div>
@@ -216,7 +216,7 @@
             </span>
           </p>
         </template>
-        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
           尚无未了之缘。缘起于路上,不在名录里。
         </p>
       </div>
@@ -238,7 +238,9 @@
             仅列最近 {{ lossRows.length }} 则
           </p>
         </template>
-        <p v-else class="py-4 text-center text-[11px] text-ink-faint">世界尚未记住你的足迹。</p>
+        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
+          世界尚未记住你的足迹。
+        </p>
       </div>
     </template>
 
@@ -255,7 +257,7 @@
             <span class="shrink-0 text-[10px] text-ink-faint">第{{ r.life }}世 · {{ r.note }}</span>
           </p>
         </template>
-        <p v-else class="py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
           纪录待创。破界之时,自见分晓。
         </p>
       </div>
