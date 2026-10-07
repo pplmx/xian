@@ -128,7 +128,9 @@
           今日天道的每日挑战是**过一天就白丢**的:首页这一行不提醒,只看主页的人
           永远不会知道天界还有一件事没做 —— 挂一枚朱章(与人物页「卦在身」同款)。
         -->
-        <span class="block text-[10px] text-ink-faint">
+        <!-- word-break:keep-all:加了朱章之后这行会折行,而默认的 CJK 折行会把
+             「试炼」拦腰折成「试/炼」—— 只在「 · 」的空白处断,词不断 -->
+        <span class="block text-[10px] text-ink-faint [word-break:keep-all]">
           <span
             v-if="dailyPending"
             class="chip-ink mr-1 border-cinnabar/50 text-[9px] text-cinnabar"
@@ -137,7 +139,7 @@
           道途 · 特殊世界 · 天道熔炉 · 试炼 · 道痕
         </span>
       </span>
-      <span class="text-[11px] text-cinnabar">踏天 →</span>
+      <span class="shrink-0 whitespace-nowrap text-[11px] text-cinnabar">踏天 →</span>
     </RouterLink>
 
     <!-- 修行志(任务) -->
