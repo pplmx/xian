@@ -54,6 +54,9 @@
       "import": "./dist/presets/minimal.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "prepack": "tsc -p tsconfig.build.json",

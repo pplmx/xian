@@ -61,7 +61,8 @@ game.dungeons.nextEncounter('r1', progress, rng)   // 这次遇到谁
 
 ## 安装
 
-尚未发布到 npm。装**发布版的压缩包**(包里带编译好的 `dist`,不需要任何构建脚本):
+**npm 发布已接通**(`package.json` 的 `publishConfig.access=public` + release workflow),**下一次发版起**
+可直接 `npm i wanxiang-engine`;在那之前的版本装**发布版压缩包**(包里带编译好的 `dist`,不需要任何构建脚本):
 
 ```bash
 bun add https://github.com/pplmx/wanxiang-engine/releases/download/v0.1.22/wanxiang-engine-0.1.22.tgz

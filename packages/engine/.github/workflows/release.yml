@@ -21,6 +21,13 @@ on:
 permissions:
   contents: write
 
+# npm 发布:配了 NPM_TOKEN secret 才发(package.json 已声明 publishConfig.access=public)。
+# 没配就静默跳过 —— 本地发版流程里手动 `npm publish` 仍是快路径,这里是保险丝。
+# 想换成免 token 的 npm trusted publishing(推荐):在 npmjs.com 把本仓本 workflow 设为
+# Trusted Publisher,再把下面那步改成 `npm publish --provenance`(需 id-token: write)。
+env:
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
 jobs:
   attach:
     runs-on: ubuntu-latest
@@ -55,3 +62,15 @@ jobs:
           # 附件名必须与 README 里的安装 URL 一致,否则使用者装到的还是 404
           gh release upload "$TAG" "$TGZ" --clobber
           gh release view "$TAG" --json assets --jq '.assets[].name' | tee /dev/stderr | grep -qx "$TGZ"
+
+      - name: 发布到 npm(配了 NPM_TOKEN 才发)
+        if: env.NPM_TOKEN != ''
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "wanxiang-engine@${VERSION}" version >/dev/null 2>&1; then
+            echo "wanxiang-engine@${VERSION} 已在 npm 上,跳过(重复发版不报错)"
+          else
+            npm publish --access public
+          fi
+          npm view "wanxiang-engine@${VERSION}" version

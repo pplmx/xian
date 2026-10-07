@@ -64,7 +64,7 @@ git push git@github.com:<你>/wanxiang-engine.git engine-main:main
 cp -r packages/engine ../wanxiang-engine && cd ../wanxiang-engine && git init
 ```
 
-## 发版(五步,一步都不能省)
+## 发版(逐步,一步都不能省)
 
 版本口径见 [CHANGELOG](../CHANGELOG.md) 开头:**攒批发布、默认只加 patch** ——
 初期攒到几十个改动再发一个版本是常态,发出来的 tag 是给外面的使用者一个可 pin 的点。
@@ -84,12 +84,19 @@ gh release create v0.1.22 --target "$(git -C packages/engine rev-parse main)" --
 # 6 · 把打包产物挂成 release 附件 —— 使用者装的就是它(README 的首选安装方式就是这个 URL)
 cd packages/engine && npm pack && gh release upload v0.1.22 wanxiang-engine-0.1.22.tgz --clobber
 gh api repos/pplmx/wanxiang-engine/releases/tags/v0.1.22     # 核对 tag、包内版本与附件
+# 7 · 发到 npm —— 让宿主与外部使用者能直接 `npm i wanxiang-engine`
+#     前置:package.json 已声明 publishConfig.access=public;
+#     配好 npmjs.com 的 Trusted Publisher(免 token,推荐)或本机 `npm login` 一次
+npm publish --access public
+npm view wanxiang-engine version                             # 核对线上版本
 ```
 
 第 6 步**忘了也不要紧**:`.github/workflows/release.yml` 会在 release 发布时自动做同一件事
 (checkout 该 tag → `bun run check` → `npm pack` → `gh release upload` → 核对附件名),
 所以它是一根保险丝 —— 本地那条是快路径,workflow 那条保证"迟早会挂上"。
-要重传某个旧 tag 的附件,手动触发这个 workflow 并填 tag 即可。
+第 7 步同样:release workflow 里那一步在配置了 `NPM_TOKEN` secret 时会自动 `npm publish`
+(已在 npm 上的同一版本会跳过,不报错);想彻底免 token,把它换成 npm 的
+**Trusted Publisher + `npm publish --provenance`**。要重传某个旧 tag 的附件,手动触发这个 workflow 并填 tag 即可。
 
 两条经验,都是真踩过的:
 
@@ -131,7 +138,7 @@ bun run tuning    # 31 份消融的读数(只有改了数值或曲线时才需�
 | 发布包真的可用 | `npm pack` 出来的 tgz 装进空项目跑一遍;发版时 release 保险丝会再验一次 |
 | 宿主(第一个定制用户) | 上游工程那道门里的"静态检查 + 单元测试"与"构建"两步 |
 
-**发版**:仍走上面那五步 + 附件,但**只在攒够一批**时才发 —— 几份判据或文档改动不值得占一个版本号。
+**发版**:仍走上面那几步 + release 附件 + npm,但**只在攒够一批**时才发 —— 几份判据或文档改动不值得占一个版本号。
 
 ## 常跑的命令
 

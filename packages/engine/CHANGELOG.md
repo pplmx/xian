@@ -21,6 +21,11 @@
 
 ## 未发布
 
+- **接通 npm 发布**(为"引擎从宿主仓外置成普通依赖"铺路)。`package.json` 声明
+  `publishConfig.access=public`;release workflow 在配了 `NPM_TOKEN` 时自动 `npm publish`
+  (同版本已在线则跳过),release 附件那条 tgz 路仍保留。下一次发版起,
+  宿主与外部使用者可直接 `npm i wanxiang-engine`,不必再依赖 release 附件 URL。
+
 - **资源台账改 T 原生 —— 大数收支不再被压回 double**。`createResourceSystem` 号称支持
   `Numeric<T>`,但 `apply` / `shortfall` 全程把值投影成 `number`:超出 double(约 1.8e308)
   的收支被当坏数据静默丢弃(`grant` 返回 `entries=0`)、余额被 `Infinity → from` 归零,
