@@ -503,17 +503,28 @@
       </div>
       <div v-if="recipes.length" class="max-h-64 space-y-2 overflow-y-auto">
         <div v-for="r in recipes" :key="r.def.id" class="card-ink px-3.5 py-2.5">
-          <div class="flex items-center gap-3">
+          <!--
+            左图 + 中信息 + 右把握:两个按钮下移到卡底 —— 三列挤在一行时,
+            中间的「方名 / 代价 / 成品」只剩一百来像素,「聚气散」被折成「聚气/散」(实测)。
+          -->
+          <div class="flex items-start gap-3">
             <GameIcon
               :name="r.def.icon"
               :size="18"
+              class="mt-0.5"
               :style="{ color: qualityDef(r.def.quality).color }"
             />
             <div class="min-w-0 grow">
               <p class="flex items-center gap-2">
-                <span class="font-kai text-[13px] text-ink">{{ r.def.name }}</span>
-                <span class="text-[10px] text-ink-faint">{{ r.able.rank }} 阶</span>
-                <span v-if="r.able.overReach > 0" class="text-[10px] text-cinnabar"
+                <span class="whitespace-nowrap font-kai text-[13px] text-ink">{{
+                  r.def.name
+                }}</span>
+                <span class="whitespace-nowrap text-[10px] text-ink-faint"
+                  >{{ r.able.rank }} 阶</span
+                >
+                <span
+                  v-if="r.able.overReach > 0"
+                  class="whitespace-nowrap text-[10px] text-cinnabar"
                   >越阶 {{ r.able.overReach }}</span
                 >
               </p>
@@ -535,25 +546,6 @@
                 }}<span class="ml-1 text-[9px] text-ink-faint">双成</span>
               </p>
             </div>
-            <div class="flex shrink-0 gap-1.5">
-              <button
-                class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]"
-                :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
-                :disabled="r.shortHerb || r.shortStone"
-                @click="craftPill(r.def.id)"
-              >
-                炼制
-              </button>
-              <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
-              <button
-                class="btn-ghost shrink-0 !px-3 !py-1.5 !text-[12px]"
-                :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
-                :disabled="r.shortHerb || r.shortStone"
-                @click="craftBatch(r.def.id)"
-              >
-                连炼 ×5
-              </button>
-            </div>
           </div>
           <p v-if="r.shortText" class="mt-1 pl-7 text-[10px] text-cinnabar tabular">
             {{ r.shortText }}
@@ -568,6 +560,25 @@
           <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-faint">
             · {{ w }}
           </p>
+          <div class="mt-2 flex justify-end gap-1.5">
+            <button
+              class="btn-seal !px-3 !py-1.5 !text-[12px]"
+              :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
+              :disabled="r.shortHerb || r.shortStone"
+              @click="craftPill(r.def.id)"
+            >
+              炼制
+            </button>
+            <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
+            <button
+              class="btn-ghost !px-3 !py-1.5 !text-[12px]"
+              :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
+              :disabled="r.shortHerb || r.shortStone"
+              @click="craftBatch(r.def.id)"
+            >
+              连炼 ×5
+            </button>
+          </div>
         </div>
       </div>
       <p v-else class="px-1 py-6 text-center text-[11px] leading-relaxed text-ink-faint">
