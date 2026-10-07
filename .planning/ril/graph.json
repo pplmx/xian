@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 427,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T08:30:08+00:00",
+  "updated_at": "2026-10-07T08:32:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25062,6 +25062,60 @@
       "summary": "确认路线:引擎短期保留在本仓(subtree 模型),外置成普通依赖包列为远期目标;npm 发布前置已接通",
       "rationale": "外置的收益是宿主仓瘦身与归属清晰,代价是宿主逼出的引擎真错要走跨仓发布链。短期开发阶段宿主与引擎仍需频繁联动(改动、对账、消融),别名到 src 的即时 TDD 与原子提交比仓洁更重要,故短期不动。远期目标是引擎成为对外独立产品 —— 那时外置才有第二收益(外部使用者按包消费);前置(发 npm)已接通(publishConfig + release workflow)。触发外置的信号见 DEC-193。",
       "alternatives_rejected": "A) 短期即外置(牺牲开发便利换仓洁,当前不值得);B) 现在就删除已接通的 npm 发布配置(那份配置同时修掉了 release 附件安装的脆弱性,且是远期前置,保留);C) 把 subtree 换成子模块(更笨重)"
+    },
+    "DEC-195": {
+      "id": "DEC-195",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:32:24+00:00",
+      "updated_at": "2026-10-07T08:32:24+00:00",
+      "touched_round": 427,
+      "summary": "引擎「独立产品」架构体检结论:运行时架构不需要重构;需要的是产品化成熟度(包形态门/CI 版本矩阵/错误 code/社区文件/英文?)外加一处小解耦(combat→dungeons 仅类型)",
+      "rationale": "证据:运行时依赖图无环(只 numeric/rng/attributes/realms/equipment/dungeons/combat/counters/saveShape);无 node/浏览器 API(仅 randomRng 的 Math.random 与 encodeSave 默认 Date.now);create*(config,numeric)+纯函数+数据一致;defineGame 门面含交叉校验;publint 全绿;attw --profile esm-only 全绿(默认 strict 的 ⚠️/💀 正是纯 ESM/不支持 node10 的既定取舍)。真正缺的是'给别人用'的成熟度,不是内部结构。",
+      "alternatives_rejected": "A) 重写/重组 38 个模块(冻结期无收益的 churn);B) 拆 combat 的 resolve 单函数(有 855 行用例护着但风险高、收益低);C) 直接上 CJS 双格式(与'纯 ESM'承诺冲突)"
+    },
+    "TASK-436": {
+      "id": "TASK-436",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:32:24+00:00",
+      "updated_at": "2026-10-07T08:32:24+00:00",
+      "touched_round": 427,
+      "category": "dx",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 2,
+      "summary": "引擎产品化 P0:把 publint(已全绿)+ attw --profile esm-only(已全绿)接进 check 的包形态门,防消费侧回归;CI 加 node 20(engines 声明的最低版)矩阵"
+    },
+    "TASK-437": {
+      "id": "TASK-437",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:32:28+00:00",
+      "updated_at": "2026-10-07T08:32:28+00:00",
+      "touched_round": 427,
+      "category": "dx",
+      "severity": 0.5,
+      "confidence": 0.85,
+      "effort": 3,
+      "summary": "引擎对外 API:运行时 30 处 throw new Error 无 code,消费方只能字符串匹配;仿 validateGame 的 code 口径给运行时错误补 code(或 EngineError 类)"
+    },
+    "TASK-438": {
+      "id": "TASK-438",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T08:32:28+00:00",
+      "updated_at": "2026-10-07T08:32:28+00:00",
+      "touched_round": 427,
+      "category": "docs",
+      "severity": 0.4,
+      "confidence": 0.9,
+      "effort": 2,
+      "summary": "引擎独立仓补齐产品外壳:CONTRIBUTING.md / SECURITY.md / issue+PR 模板(现无);package.json description 与 keywords 仍写'四套系统',与实际 38 模块(含横切层)对齐"
     }
   },
   "edges": [
@@ -36701,6 +36755,30 @@
       "to": "TASK-435",
       "type": "governs",
       "created_at": "2026-10-07T08:30:08+00:00"
+    },
+    {
+      "from": "DEC-195",
+      "to": "TASK-436",
+      "type": "governs",
+      "created_at": "2026-10-07T08:32:28+00:00"
+    },
+    {
+      "from": "DEC-195",
+      "to": "TASK-437",
+      "type": "governs",
+      "created_at": "2026-10-07T08:32:28+00:00"
+    },
+    {
+      "from": "DEC-195",
+      "to": "TASK-438",
+      "type": "governs",
+      "created_at": "2026-10-07T08:32:28+00:00"
+    },
+    {
+      "from": "DEC-195",
+      "to": "COMP-027",
+      "type": "governs",
+      "created_at": "2026-10-07T08:32:28+00:00"
     }
   ]
 }
