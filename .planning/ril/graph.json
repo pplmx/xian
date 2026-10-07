@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 435,
+  "round": 436,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T10:35:56+00:00",
+  "updated_at": "2026-10-07T10:49:11+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25338,21 +25338,21 @@
     "ISS-315": {
       "id": "ISS-315",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T10:35:52+00:00",
-      "updated_at": "2026-10-07T10:35:52+00:00",
-      "touched_round": 434,
+      "updated_at": "2026-10-07T10:49:11+00:00",
+      "touched_round": 435,
       "summary": "宿命传承(ISS-302)的 8 个效果定义齐全但**全都没接线**:只被 player.addHeritage 记录,没有任何玩法读取 —— 玩家看到的是空头支票(如「元婴凝实」承诺转世起步筑基,从不发生)。本轮接上 2 个(yuanying→起步筑基、baihuang→额外法宝位),其余 6 个(danxin/tonggan/shouzhuo/daotong/dubu/daoben)待接或按合理性替换。"
     },
     "TASK-445": {
       "id": "TASK-445",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T10:35:52+00:00",
-      "updated_at": "2026-10-07T10:35:52+00:00",
-      "touched_round": 434,
+      "updated_at": "2026-10-07T10:49:11+00:00",
+      "touched_round": 435,
       "category": "correctness",
       "severity": 0.7,
       "confidence": 0.95,
@@ -25369,6 +25369,17 @@
       "touched_round": 434,
       "commit": "ae8f3a6",
       "summary": "新增 core/heritageEffects(纯函数:birthMajorFloor/artifactSlotBonus);player.rebirth 接起步筑基;loadoutService/InventoryView 接额外法宝位;人物页天赋芯片展开与转世弹窗卡片补 modsText 具体数值、传承框补 effectDesc;文档 spec 计数同步"
+    },
+    "CHG-519": {
+      "id": "CHG-519",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T10:49:11+00:00",
+      "updated_at": "2026-10-07T10:49:11+00:00",
+      "touched_round": 435,
+      "commit": "a2949b9",
+      "summary": "8 个宿命传承效果全部接线(danxin 首炉必成/yuanying 起步筑基/baihuang 法宝位/tonggan 四选一/shouzhuo 失败保料/daotong 功法全留/dubu 渡劫豁免/daoben 认知全带);重定 4 个;新增 core/heritageEffects + player.heritageUses;天赋/传承 UI 显示具体效果"
     }
   },
   "edges": [
@@ -37116,6 +37127,18 @@
       "to": "TASK-445",
       "type": "implements",
       "created_at": "2026-10-07T10:35:56+00:00"
+    },
+    {
+      "from": "CHG-519",
+      "to": "ISS-315",
+      "type": "resolves",
+      "created_at": "2026-10-07T10:49:11+00:00"
+    },
+    {
+      "from": "CHG-519",
+      "to": "TASK-445",
+      "type": "implements",
+      "created_at": "2026-10-07T10:49:11+00:00"
     }
   ]
 }
