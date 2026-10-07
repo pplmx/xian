@@ -295,16 +295,34 @@ export function createResourceSystem<T = number>(
   };
 
   /**
+   * 把一个存档原始格读成 T —— **大数形状也要能读回来**。
+   *
+   * `Number({m, e})` 是 NaN,于是"灵石存成宿主大数"的存档一进 `normalize` 就被抹成 0。
+   * 数字层(默认)照旧只收数字;大数层把宿主自己的形状交给 `numeric.of` —— 与
+   * `ResourceEntry.amount` 收 T 是同一条路。
+   */
+  const readEntry = (raw: unknown): T => {
+    if (typeof raw === "number") return Number.isFinite(raw) ? numeric.from(raw) : zero;
+    if (raw == null) return zero;
+    const asNumber = Number(raw);
+    if (Number.isFinite(asNumber)) return numeric.from(asNumber);
+    if (typeof zero !== "number") {
+      const value = numeric.of(raw as T);
+      if (!Number.isNaN(numeric.toNumber(value))) return value;
+    }
+    return zero;
+  };
+
+  /**
    * 形状修复:存档里那一格可能是字符串、null、负数、超过上限的数 —— 一律按定义兜回来。
-   * 未知键原样留着(可能是更老的存档留下的,删了更糟)。
+   * 已知资源键走 T 原生的读写(宿主大数不会在修复时被抹掉);未知键原样留着
+   * (可能是更老的存档留下的,删了更糟)。
    */
   const normalize = (raw: unknown): Ledger<T> => {
     const source = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
     const ledger: Ledger<T> = {};
     for (const def of defs) {
-      const value = Number(source[def.key]);
-      const safe = Number.isFinite(value) ? value : 0;
-      ledger[def.key] = numeric.from(clampValue(def.key, ledger, safe));
+      ledger[def.key] = clampT(def.key, ledger, readEntry(source[def.key]));
     }
     for (const [key, value] of Object.entries(source)) {
       if (key in ledger) continue;

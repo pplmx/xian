@@ -236,5 +236,10 @@ describe("资源账本 —— 货币 / 材料 / 点数这一层", () => {
     expect(paid.ok).toBe(true);
     expect(paid.ledger.stone!.e).toBe(399);
     expect(paid.ledger.stone!.m).toBeCloseTo(5, 10);
+
+    // 四、存档修复也得认大数形状 —— 不能被 Number({m,e}) 抹成 0
+    const repaired = res.normalize({ stone: beyond });
+    expect(repaired.stone!.e).toBe(400);
+    expect(repaired.stone!.m).toBeCloseTo(9.9, 10);
   });
 });
