@@ -378,7 +378,7 @@ function runBattle(now: number): void {
       player.markSuppressQualified(region.id);
       player.suppressRegion(region.id);
       notify(
-        `你已彻底镇压${region.name},此后将自动产出:${suppressRateLine(region.id, regionRecallFor(region.id).prosperity)}`,
+        `你已彻底镇压${region.name},此后将自动产出:${suppressRateLine(region.id, regionRecallFor(region.id, player).prosperity)}`,
         "rare",
       );
     }

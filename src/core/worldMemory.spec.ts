@@ -83,7 +83,7 @@ describe("S1 区域兴衰", () => {
         lastUpdateAt: lastFight,
       },
     };
-    const recall = regionRecallFor("qingyun");
+    const recall = regionRecallFor("qingyun", player);
     // since 应以镇压时刻为起点:50h 前镇压 → since 应为 50h 前的密钥
     expect(recall.suppressedAt).toBe(suppressedAt);
     expect(recall.since).toBe(suppressedAt);

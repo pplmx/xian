@@ -28,8 +28,8 @@ const UTILS = resolve(__dirname, "../utils");
 
 /** core 里「import 了某个 store」的一句话。只认这个别名路径,与全仓口径一致。 */
 const STORE_IMPORT = /from\s+"@\/stores\/[A-Za-z]+"/g;
-const CORE_STORE_FILES = 53;
-const CORE_STORE_SITES = 158;
+const CORE_STORE_FILES = 52;
+const CORE_STORE_SITES = 157;
 
 function sources(dir: string): { name: string; text: string }[] {
   return readdirSync(dir)

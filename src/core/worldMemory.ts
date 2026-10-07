@@ -9,7 +9,6 @@
  * 全部为「记录与展示」层,数值影响极轻(材料掉落微调、无强制 debuff)
  */
 import type { RegionProsperity, RegionRecall, NemesisRecord, EventMemory } from "@/types";
-import { usePlayerStore } from "@/stores/player";
 import { REGION_MEMORY, REVIVE_AFTER_HOURS } from "./engineMemory";
 
 // ============ S1: 区域兴衰 ============
@@ -218,17 +217,30 @@ export function aftermathText(eventTitle: string, kind: "good" | "echo" | "silen
 
 // ============ 通用查询(供 UI 使用) ============
 
-/** 当前区域兴衰(UI 用) */
-export function regionRecallFor(regionId: string): RegionRecall {
-  const player = usePlayerStore();
-  const stats = player.regionStats[regionId];
-  const now = Date.now();
+/**
+ * 区域兴衰的读数只依赖这几样 —— **由调用方给**(玩家状态)。这一层不读 store,
+ * `now` 也由调用方给;与 astronomy 同一路:判断留在这里当纯函数,读 store 挪到边缘。
+ * 用结构化类型而非引入 `RegionStats` —— `suppress` 反向 import 本模块,不宜再互引。
+ */
+export interface RegionRecallSource {
+  regionStats: Readonly<Record<string, { totalFights: number; lastUpdateAt: number } | undefined>>;
+  suppressedRegions: readonly string[];
+  suppressedSince: Readonly<Record<string, number | undefined>>;
+}
+
+/** 当前区域兴衰(UI 用)—— 纯函数:玩家状态与 `now` 都由调用方传 */
+export function regionRecallFor(
+  regionId: string,
+  src: RegionRecallSource,
+  now: number = Date.now(),
+): RegionRecall {
+  const stats = src.regionStats[regionId];
   return deriveProsperity({
     totalWins: stats?.totalFights ?? 0,
-    hasSuppressed: player.suppressedRegions.includes(regionId),
+    hasSuppressed: src.suppressedRegions.includes(regionId),
     // 「镇压后稳定多久」的起点是镇压时刻,suppressedSince;不能拿最近战斗时间 lastUpdateAt 充数
     // —— 否则镇压后继续刷战,`since` 会随战斗一路前移,「此地已稳定 N 小时」越算越短
-    suppressedAt: player.suppressedSince[regionId],
+    suppressedAt: src.suppressedSince[regionId],
     lastActivityAt: stats?.lastUpdateAt ?? now,
     now,
   });

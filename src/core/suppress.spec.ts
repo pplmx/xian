@@ -407,7 +407,10 @@ describe("镇压速率:显示与结算同源", () => {
   /** 照 AdventureView.rateText 的算法算出界面上的每小时灵石 */
   function uiStonePerHour(regionId: string): number {
     const rate = suppressRateFor(regionId)!;
-    return toNum(rate.stonePerHour) * prosperityYieldMult(regionRecallFor(regionId).prosperity);
+    const player = usePlayerStore();
+    return (
+      toNum(rate.stonePerHour) * prosperityYieldMult(regionRecallFor(regionId, player).prosperity)
+    );
   }
 
   it("刚镇压(混乱 ×1.0):界面速率 = 一小时入账", () => {
@@ -431,7 +434,7 @@ describe("镇压速率:显示与结算同源", () => {
     player.suppressedRegions = ["qingyun"];
     player.suppressedSince = { qingyun: now - 7 * 3600_000 }; // 已守 7 小时 → 稳定
 
-    expect(regionRecallFor("qingyun").prosperity).toBe("stable");
+    expect(regionRecallFor("qingyun", player).prosperity).toBe("stable");
     const before = { ...resources.spiritStone };
     settleSuppressedRegions(3600, new RandomService(() => 0.99));
     const gained = toNum(sub(resources.spiritStone, before));

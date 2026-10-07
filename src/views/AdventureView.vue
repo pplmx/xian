@@ -536,7 +536,7 @@ const regionRows = computed(() =>
   REGIONS.map((r) => {
     const eco = regionEcology(r);
     const suppressed = player.suppressedRegions.includes(r.id);
-    const recall = regionRecallFor(r.id);
+    const recall = regionRecallFor(r.id, player);
     // 妖气复聚是落盘的世界状态(见 core/regionRevival),不是"镇压到点"的临时读数
     const revived = adventure.revived.includes(r.id);
     return {
