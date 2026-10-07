@@ -19,25 +19,32 @@
         title="成就"
         :hint="`${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length}`"
       />
-      <div class="card-ink divide-y divide-ink/6 px-4">
-        <div v-for="row in achievementRows" :key="row.id" class="flex items-center gap-3 py-2.5">
-          <span
-            class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-kai"
-            :class="row.done ? 'border-gold-ink text-gold-ink' : 'border-ink/15 text-ink-faint'"
-          >
-            {{ row.done ? "成" : "未" }}
-          </span>
-          <div class="min-w-0">
-            <p class="font-kai text-[12px]" :class="row.done ? 'text-ink' : 'text-ink-faint'">
-              {{ row.name }}
-            </p>
-            <p class="truncate text-[10px] text-ink-faint">{{ row.desc }}</p>
-            <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏(见 rewardText 含 titleId) -->
-            <p v-if="row.done && row.rewardText" class="text-[10px] text-qing tabular">
-              {{ row.rewardText }}
-            </p>
+      <div class="card-ink mt-2 divide-y divide-ink/6 px-4">
+        <template v-for="g in achievementGroups" :key="g.direction">
+          <!-- 方向小标题:把六十多个「???」按「往哪使劲」归拢,组头给出该方向的达成进度 -->
+          <p class="flex items-center justify-between py-1.5 text-[10px] text-ink-faint">
+            <span class="font-kai tracking-widest">{{ g.direction }}</span>
+            <span class="tabular">{{ g.done }}/{{ g.total }}</span>
+          </p>
+          <div v-for="row in g.rows" :key="row.id" class="flex items-center gap-3 py-2.5">
+            <span
+              class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-kai"
+              :class="row.done ? 'border-gold-ink text-gold-ink' : 'border-ink/15 text-ink-faint'"
+            >
+              {{ row.done ? "成" : "未" }}
+            </span>
+            <div class="min-w-0">
+              <p class="font-kai text-[12px]" :class="row.done ? 'text-ink' : 'text-ink-faint'">
+                {{ row.name }}
+              </p>
+              <p class="truncate text-[10px] text-ink-faint">{{ row.desc }}</p>
+              <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏(见 rewardText 含 titleId) -->
+              <p v-if="row.done && row.rewardText" class="text-[10px] text-qing tabular">
+                {{ row.rewardText }}
+              </p>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
       <p class="text-center text-[10px] text-ink-faint">功成之日,名目自现</p>
     </template>
@@ -212,14 +219,38 @@ const achievementRows = computed(() =>
     return {
       id: a.id,
       done,
+      // 方向:未达成者靠它分组归位(见 achievementGroups)—— 名字仍遮着
+      direction: achievementDirection(a.cond),
       name: done ? a.name : "???",
-      // 名字成时自现,但方向要给:六十多个「???」不给方向,这一页就是白纸
-      desc: done ? a.desc : `尚未达成 · 方向:${achievementDirection(a.cond)}`,
+      // 方向已提到组头,行里不再重写;名字成时自现
+      desc: done ? a.desc : "尚未达成 · 成时自见",
       // 达成才现赏:与名称同一披露节奏;rewardText 含称号(29/63 的大头),与发赏同一套换算
       rewardText: done && a.reward ? rewardText(a.reward) : "",
     };
-  }).sort((a, b) => Number(b.done) - Number(a.done)),
+  }),
 );
+
+/**
+ * 成就按「方向」分组 —— 六十多个「???」平铺是一张白纸;按「往哪使劲」归拢之后,
+ * 一眼看得出这一路在做什么、还差哪些。组头给出该方向的进度,组内已达成者置顶。
+ * 组序:已达成多的在前 → 条目多的在前(0 达成的局,就看哪个方向摊得厚)。
+ */
+const achievementGroups = computed(() => {
+  const map = new Map<string, { direction: string; rows: typeof achievementRows.value }>();
+  for (const row of achievementRows.value) {
+    const g = map.get(row.direction) ?? { direction: row.direction, rows: [] };
+    g.rows.push(row);
+    map.set(row.direction, g);
+  }
+  return [...map.values()]
+    .map((g) => ({
+      ...g,
+      rows: [...g.rows].sort((a, b) => Number(b.done) - Number(a.done)),
+      done: g.rows.filter((r) => r.done).length,
+      total: g.rows.length,
+    }))
+    .sort((a, b) => b.done - a.done || b.total - a.total);
+});
 
 /**
  * 原有七类只有"收没收录"两态,在此补齐 CodexEntry 的深度字段:
