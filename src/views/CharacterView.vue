@@ -216,7 +216,16 @@
       <GameIcon name="user" :size="16" class="shrink-0 text-qing" />
       <span class="min-w-0 grow">
         <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">道 侣</span>
+        <!--
+          她开了口 / 提了事,还等你一句 —— 这一行要报出来。此前只有点开弹窗
+          才知道有事在等,而不开弹窗就永远不知道(与「卦在身」「今日天道未做」同族)。
+        -->
         <span class="block truncate text-[10px] text-ink-faint">
+          <span
+            v-if="hasBondWord"
+            class="chip-ink mr-1 align-middle border-qing/50 text-[9px] text-qing"
+            >有话说</span
+          >
           {{
             bondDef && bond
               ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? "(已殁)" : ""} | ${bondDef.brief}`
@@ -840,6 +849,8 @@ function pickChoice(choiceId: string): void {
 
 /** 她主动提出的事(34.1);三种回应,忽略不等于回绝 */
 const herIntent = computed(() => pendingIntent());
+/** 道侣有未答的事(她自己提的言 / 世界递的事) —— 入口那一行要报出来 */
+const hasBondWord = computed(() => !!pendingEvent.value || !!herIntent.value);
 /** 这份心意因何而起(经历名取自 bondIntent) */
 const herIntentSparks = computed(() => {
   const sparks = herIntent.value?.sparks ?? [];

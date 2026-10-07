@@ -34,16 +34,6 @@
           >行囊 {{ inventory.bagItems.length }} · 器灵尘 {{ resources.dust }}</span
         >
         <span class="flex gap-3">
-          <!-- 一键穿最强:纯方便性动作,只改装配,绝不把好换差。
-               从前它挂在「有共鸣套才出现」的那张卡里 —— 没有成套件的玩家一直看不到它,
-               而这本来该是常驻的便利入口。故上移到这行常驻操作里。 -->
-          <button
-            class="-my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
-            aria-label="一键各部位换最强"
-            @click="wearEquipBest"
-          >
-            换最强
-          </button>
           <button
             class="-my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
             aria-label="智能收纳设置"
@@ -97,6 +87,18 @@
       <p class="mt-2 text-center text-[10px] text-ink-faint">
         点击部位查看候选,行囊满时新掉落自动折作器灵尘
       </p>
+      <!--
+        一键穿最强:纯方便性动作,只改装配,绝不把好换差。
+        它是常驻的便利入口 —— 从前藏在「有共鸣套才出现」的卡里,后来塞进「收纳/分解」
+        那一排 11px 小字里,两回都没人看得见(两次实测反馈)。故改成整行按钮,写明全称。
+      -->
+      <button
+        class="btn-ghost mt-2 w-full !py-2 !text-[12px]"
+        aria-label="一键各部位换最强"
+        @click="wearEquipBest"
+      >
+        一键 · 各部位换最强
+      </button>
 
       <!-- 全部藏品(含佩戴中):部位槽之下的完整清单 -->
       <div v-if="allItems.length" class="mt-4">
