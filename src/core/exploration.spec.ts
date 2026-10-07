@@ -106,7 +106,7 @@ describe("灵兽性格 · 败北保护(lossReduction 接入 runBattle)", () => {
 
     protect.value = true; // 放行败北保护那一掷
 
-    tickExploration(now);
+    tickExploration(now, 0);
 
     const cultivation = useCultivationStore();
     const adventure = useAdventureStore();
@@ -121,7 +121,7 @@ describe("灵兽性格 · 败北保护(lossReduction 接入 runBattle)", () => {
     const now = Date.now();
     forgeSession(now);
 
-    tickExploration(now);
+    tickExploration(now, 0);
 
     const cultivation = useCultivationStore();
     const adventure = useAdventureStore();
@@ -139,7 +139,7 @@ describe("灵兽性格 · 败北保护(lossReduction 接入 runBattle)", () => {
 
     protect.value = true; // 即使放行掷点,0 的概率也恒不护
 
-    tickExploration(now);
+    tickExploration(now, 0);
 
     const cultivation = useCultivationStore();
     const adventure = useAdventureStore();
@@ -162,7 +162,7 @@ describe("连胜(TASK-022 接线 · runBattle 胜负驱动 player.winStreak)", (
     forgeSession(now);
 
     combatWin.value = true;
-    tickExploration(now);
+    tickExploration(now, 0);
 
     expect(player.winStreak).toBe(1);
   });
@@ -176,7 +176,7 @@ describe("连胜(TASK-022 接线 · runBattle 胜负驱动 player.winStreak)", (
     forgeSession(now);
 
     protect.value = true; // 败北被护住:不算败 → 连胜保留
-    tickExploration(now);
+    tickExploration(now, 0);
     expect(player.winStreak).toBe(3);
     expect(useAdventureStore().session).not.toBeNull();
 
@@ -185,7 +185,7 @@ describe("连胜(TASK-022 接线 · runBattle 胜负驱动 player.winStreak)", (
     protect.value = false;
     player.winStreak = 5;
     forgeSession(now);
-    tickExploration(now);
+    tickExploration(now, 0);
     expect(player.winStreak).toBe(0);
   });
 
@@ -196,7 +196,7 @@ describe("连胜(TASK-022 接线 · runBattle 胜负驱动 player.winStreak)", (
     combatWin.value = true;
     const now = Date.now();
     forgeSession(now);
-    tickExploration(now);
+    tickExploration(now, 0);
     expect(player.winStreak).toBe(3);
     expect(
       useAdventureStore().session!.wudaoGain,
@@ -231,7 +231,7 @@ describe("镇压资格首次自动、此后自由", () => {
 
     const now = Date.now();
     forgeSession(now);
-    tickExploration(now);
+    tickExploration(now, 0);
     expect(player.suppressedRegions, "首次达成应自动转收益").toContain("qingyun");
     expect(player.suppressQualified).toContain("qingyun");
 
@@ -240,7 +240,7 @@ describe("镇压资格首次自动、此后自由", () => {
     player.regionStats.qingyun = { ...stats };
     const now2 = Date.now() + 60_000;
     forgeSession(now2);
-    tickExploration(now2);
+    tickExploration(now2, 0);
     expect(player.suppressedRegions, "已取得资格后不该再被自动接管").not.toContain("qingyun");
     expect(player.suppressQualified).toContain("qingyun");
   });
@@ -303,12 +303,12 @@ describe("会话账目 · 与真实入账同源", () => {
     const now = Date.now();
     forgeSession(now);
     // 第一战会带上首胜成就这类一次性奖励,不能拿来对账;比第二战的增量才干净
-    tickExploration(now);
+    tickExploration(now, 0);
     const s1 = adventure.session!;
     const stoneBefore = { ...resources.spiritStone };
     const expBefore = { ...player.exp };
     adventure.setSession({ ...s1, nextBattleAt: now - 1 });
-    tickExploration(now);
+    tickExploration(now, 0);
 
     const s = adventure.session!;
     expect(s.wins).toBe(2);
@@ -331,7 +331,7 @@ describe("会话账目 · 与真实入账同源", () => {
 
     const now = Date.now();
     forgeSession(now);
-    tickExploration(now);
+    tickExploration(now, 0);
 
     // 假 rng 把所有概率判定压成否:本战无实物掉落,但明细栏必须存在且为空表
     expect(Array.isArray(adventure.lastBattle?.loot)).toBe(true);
@@ -519,7 +519,7 @@ describe("引擎暂停 · 历练墙上的截止时刻", () => {
     engine.resume();
 
     expect(adventure.pendingEventSince).toBe(t0 + pauseMs);
-    tickExploration(t0 + pauseMs);
+    tickExploration(t0 + pauseMs, 0);
     expect(adventure.pendingEventId, "暂停把 120 秒窗口耗尽时不得代选").toBe("ev_spring");
   });
 

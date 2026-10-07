@@ -418,6 +418,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { ExploreMode, RegionDef, RegionRecall } from "@/types";
 import { useAdventureStore } from "@/stores/adventure";
+import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useSettingsStore } from "@/stores/settings";
 import { petDef } from "@/data/pets";
@@ -460,6 +461,7 @@ import CombatPanel from "@/components/adventure/CombatPanel.vue";
 import { useNow } from "@/composables/useNow";
 
 const adventure = useAdventureStore();
+const game = useGameStore();
 const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
@@ -500,8 +502,10 @@ const worldBrief = computed(() => {
 });
 
 /** 今日星象:值日之宿所利界域,由此知今日该往哪一片地界走 */
-const mansionLine = computed(() => todayMansionLine());
-const favoredWorldName = computed(() => worldDef(favoredWorld(todayMansion())).name);
+const mansionLine = computed(() => todayMansionLine(game.totalPlaySec));
+const favoredWorldName = computed(
+  () => worldDef(favoredWorld(todayMansion(game.totalPlaySec))).name,
+);
 /** 区域适配原因点按展开(移动端无 hover) */
 const adaptExpand = ref<string | null>(null);
 

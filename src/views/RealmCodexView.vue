@@ -496,8 +496,10 @@ const fateRows = computed(() =>
 
 // 星象:值日之宿与所利界域(由游戏日派生,随心跳刷新)
 const showAllMansions = ref(false);
-const mansionLine = computed(() => todayMansionLine());
-const favoredWorldName = computed(() => worldDef(favoredWorld(todayMansion())).name);
+const mansionLine = computed(() => todayMansionLine(game.totalPlaySec));
+const favoredWorldName = computed(
+  () => worldDef(favoredWorld(todayMansion(game.totalPlaySec))).name,
+);
 function worldName(id: WorldId): string {
   return worldDef(id).name;
 }

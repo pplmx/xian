@@ -490,8 +490,10 @@ function nextBattleTime(now: number): number {
  * 于是同一天同一地,离线挂机算出的事件数比在线少一成。故抽成一处,
  * 让"所见即所算"有地方可钉(见 astronomy.spec 的在线/离线同源一条)。
  */
-export function exploreEventChance(regionId: string, mods: StatMods): number {
-  return EXPLORE_EVENT_CHANCE * (1 + modOf(mods, "eventLuck") + mansionEventLuck(regionId));
+export function exploreEventChance(regionId: string, mods: StatMods, totalPlaySec: number): number {
+  return (
+    EXPLORE_EVENT_CHANCE * (1 + modOf(mods, "eventLuck") + mansionEventLuck(regionId, totalPlaySec))
+  );
 }
 
 /** 每 Tick 推进历练(由引擎调用) */
@@ -507,7 +509,7 @@ function announceEventTier(ev: EventDef): void {
   else if (tier.id === "qiyuan") notify(`缘分再续 —— 「${ev.title}」`, "info");
 }
 
-export function tickExploration(now: number): void {
+export function tickExploration(now: number, totalPlaySec: number): void {
   const adventure = useAdventureStore();
   const player = usePlayerStore();
   const s = adventure.session;
@@ -534,7 +536,7 @@ export function tickExploration(now: number): void {
   if (now >= s.nextBattleAt) {
     const region = regionDef(s.regionId);
     if (!region) return;
-    if (rng.chance(exploreEventChance(region.id, player.finalStats.mods))) {
+    if (rng.chance(exploreEventChance(region.id, player.finalStats.mods, totalPlaySec))) {
       // 事件标签同样走本世内容
       const ev = pickEventFor({ ...region, eventTags: [...placeContent(region.id).eventTags] });
       if (ev && useSettingsStore().dndEvents) {

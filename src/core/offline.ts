@@ -253,7 +253,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       const encounters = Math.floor((simSec / EXPLORE_BATTLE_INTERVAL) * speed);
       // 与在线同源:同一个 exploreEventChance(含今日星象之利)——
       // 从前离线漏了星象,同一天同一地会比在线少算一成际遇
-      events = Math.round(encounters * exploreEventChance(region.id, mods));
+      events = Math.round(
+        encounters * exploreEventChance(region.id, mods, useGameStore().totalPlaySec),
+      );
       battles = Math.max(0, encounters - events);
 
       if (battles > 0) {

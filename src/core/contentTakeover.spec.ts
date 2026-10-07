@@ -236,7 +236,7 @@ describe("内容接管 · 故障注入:行为必须真的变了", () => {
       const s = adventure.session;
       if (!s) break;
       adventure.setPendingEvent(null, 0);
-      tickExploration(s.nextBattleAt + 1);
+      tickExploration(s.nextBattleAt + 1, 0);
     }
 
     const battle = adventure.lastBattle;

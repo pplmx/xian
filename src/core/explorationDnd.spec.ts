@@ -66,7 +66,7 @@ describe("遇事勿扰", () => {
     const now = Date.now();
     forgeSession(now);
     trigger.value = true;
-    tickExploration(now);
+    tickExploration(now, 0);
     const adventure = useAdventureStore();
     expect(adventure.pendingEventId, "默认应挂起弹窗").toBeTruthy();
     expect(adventure.session?.events, "弹窗等玩家决断,不算已结清").toBe(0);
@@ -77,7 +77,7 @@ describe("遇事勿扰", () => {
     forgeSession(now);
     useSettingsStore().dndEvents = true;
     trigger.value = true;
-    tickExploration(now);
+    tickExploration(now, 0);
     const adventure = useAdventureStore();
     expect(adventure.pendingEventId, "勿扰不弹窗").toBeNull();
     expect(adventure.session?.events, "事件已按默认好愿结清").toBe(1);
@@ -90,7 +90,7 @@ describe("遇事勿扰", () => {
     forgeSession(now, now + 999_999);
     useSettingsStore().dndEvents = true;
     trigger.value = false; // 事件判定为否:无事发生
-    tickExploration(now);
+    tickExploration(now, 0);
     const adventure = useAdventureStore();
     expect(adventure.session?.events).toBe(0);
   });

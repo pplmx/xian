@@ -9,14 +9,12 @@
  *   二 轮值是定的:同一游戏日同一宿,二十八日一轮,不缺不跳;
  *   三 所利是用得上的:值日宿所配界域之地**真的**多一分际遇,他处真的不加。
  */
-import { describe, expect, it, beforeEach } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { IMAGES, MANSIONS } from "@/data/xiangxiu";
 import { REGIONS, regionDef } from "@/data/regions";
 import { worldOf } from "@/data/realms";
-import { useGameStore } from "@/stores/game";
 import {
   MANSION_EVENT_LUCK,
   favoredWorld,
@@ -27,10 +25,6 @@ import {
   todayMansionLine,
 } from "./astronomy";
 import { exploreEventChance } from "./exploration";
-
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
 
 describe("二十八宿 · 数据", () => {
   it("四象各七宿,合二十八宿", () => {
@@ -61,9 +55,7 @@ describe("二十八宿 · 数据", () => {
 describe("值日 · 二十八日一轮", () => {
   it("同一游戏日同一宿(确定性)", () => {
     expect(mansionOfDay(12).name).toBe(mansionOfDay(12).name);
-    const game = useGameStore();
-    game.$patch({ totalPlaySec: 86400 * 12 + 5000 });
-    expect(todayMansion().name).toBe(mansionOfDay(12).name);
+    expect(todayMansion(86400 * 12 + 5000).name).toBe(mansionOfDay(12).name);
   });
 
   it("二十八日恰好走完一轮,不缺不跳", () => {
@@ -86,7 +78,6 @@ describe("值日 · 二十八日一轮", () => {
 
 describe("所利 · 真的只利一方", () => {
   it("值日宿所配界域之地得利,他处不得利", () => {
-    const game = useGameStore();
     // 找一天,使其值日宿配人间界,再挑一处人间界地界与一处仙界地界对看
     let day = -1;
     for (let d = 0; d < 28; d += 1) {
@@ -96,14 +87,14 @@ describe("所利 · 真的只利一方", () => {
       }
     }
     expect(day, "二十八日里必有人间界得利之日").toBeGreaterThanOrEqual(0);
-    game.$patch({ totalPlaySec: day * 86400 });
+    const secs = day * 86400;
     const mortal = REGIONS.find((r) => worldOf(r.minRealm).id === "mortal")!;
     const immortal = REGIONS.find((r) => worldOf(r.minRealm).id === "immortal")!;
-    expect(isFavoredRegion(mortal.id)).toBe(true);
-    expect(isFavoredRegion(immortal.id)).toBe(false);
-    expect(mansionEventLuck(mortal.id)).toBeCloseTo(MANSION_EVENT_LUCK);
-    expect(mansionEventLuck(immortal.id)).toBe(0);
-    console.log(`\n${todayMansionLine()} —— 利${mortal.name}`);
+    expect(isFavoredRegion(mortal.id, secs)).toBe(true);
+    expect(isFavoredRegion(immortal.id, secs)).toBe(false);
+    expect(mansionEventLuck(mortal.id, secs)).toBeCloseTo(MANSION_EVENT_LUCK);
+    expect(mansionEventLuck(immortal.id, secs)).toBe(0);
+    console.log(`\n${todayMansionLine(secs)} —— 利${mortal.name}`);
   });
 
   it("四界各有得利之日(不是一个界域吃满)", () => {
@@ -113,7 +104,7 @@ describe("所利 · 真的只利一方", () => {
   });
 
   it("不存在的地界不加成(坏 id 不报错也不给利)", () => {
-    expect(mansionEventLuck("nope")).toBe(0);
+    expect(mansionEventLuck("nope", 0)).toBe(0);
     expect(regionDef("nope")).toBeUndefined();
   });
 });
@@ -139,7 +130,6 @@ describe("星象 · 接线", () => {
 
   it("在线与离线同源:际遇概率只有一份口径(含星象之利)", () => {
     // 从前在线与离线各写一遍公式;星象只接进了在线,同一天同一地离线少算一成际遇
-    const game = useGameStore();
     let day = -1;
     for (let d = 0; d < 28; d += 1) {
       if (favoredWorld(mansionOfDay(d)) === "mortal") {
@@ -147,12 +137,12 @@ describe("星象 · 接线", () => {
         break;
       }
     }
-    game.$patch({ totalPlaySec: day * 86400 });
+    const secs = day * 86400;
     const mortal = REGIONS.find((r) => worldOf(r.minRealm).id === "mortal")!;
     const immortal = REGIONS.find((r) => worldOf(r.minRealm).id === "immortal")!;
     // 同一个函数算两地:得利之地高出 MANSION_EVENT_LUCK 的比例,他处原样
-    const lucky = exploreEventChance(mortal.id, {});
-    const plain = exploreEventChance(immortal.id, {});
+    const lucky = exploreEventChance(mortal.id, {}, secs);
+    const plain = exploreEventChance(immortal.id, {}, secs);
     expect(lucky / plain).toBeCloseTo(1 + MANSION_EVENT_LUCK, 6);
 
     // 离线结算文件必须调用这一个函数,不许再自己乘一遍

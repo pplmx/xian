@@ -135,6 +135,7 @@ class GameEngine {
   }
 
   private advance(dt: number, now: number): void {
+    const game = useGameStore();
     const player = usePlayerStore();
     const resources = useResourcesStore();
     const dongfu = useDongfuStore();
@@ -152,7 +153,7 @@ class GameEngine {
       // Buff 过期
       cultivation.pruneBuffs(now);
       // 历练推进
-      tickExploration(now);
+      tickExploration(now, game.totalPlaySec);
       // Phase 28: 悟道顿悟触发(修炼时随机)
       mayTriggerEnlightenment();
       // Phase 30: 镇压区域被动收益
