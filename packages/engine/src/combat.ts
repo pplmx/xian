@@ -463,6 +463,25 @@ function mod(mods: Mods, key: string): number {
   return typeof v === "number" ? v : 0;
 }
 
+/**
+ * 四种钩子上下文共用的原语 —— 仅供 `createCombatEngine` 内部拼装,不对外导出。
+ *
+ * 与 `SkillEffectContext` / `StrikeContext` / `ActContext` / `BattleHookContext`
+ * 里那几样是同一份形状;对外仍由那四个接口各自声明(公开面不变)。
+ */
+interface BattlePrimitives<T> {
+  keys: Required<CombatKeys>;
+  statOf: (c: Combatant<T>, key: string) => T;
+  setStat: (c: Combatant<T>, key: string, value: T) => void;
+  num: (c: Combatant<T>, key: string) => number;
+  shieldOf: (c: Combatant<T>) => number;
+  gainShield: (c: Combatant<T>, amount: number) => number;
+  heal: (c: Combatant<T>, amount: number) => { applied: number; shielded: number };
+  skipNextTurn: (target: Combatant<T>) => void;
+  log: (kind: BattleEventKind, text: string, damage?: number, actor?: string) => void;
+  state: Record<string, unknown>;
+}
+
 export function createCombatEngine<T = number>(
   config: BattleConfig<T> = {},
   numeric: Numeric<T> = numberNumeric as unknown as Numeric<T>,
@@ -628,11 +647,16 @@ export function createCombatEngine<T = number>(
        * 于是不会再把钩子叫起来 —— 否则"会心追加一记"会自己喂自己。
        */
       let hookDepth = 0;
-      /** 回合钩子 / 事件反应共用的上下文(不绑出手双方:谁打谁由钩子自己指定) */
-      const hookContext = (atRound: number): BattleHookContext<T> => ({
-        round: atRound,
-        player: p,
-        enemy: e,
+
+      /**
+       * 四种钩子上下文共用的那套原语 —— 只在这里建一次。
+       *
+       * `SkillEffectContext` / `StrikeContext` / `ActContext` / `BattleHookContext` 暴露的
+       * 是同一批原语(取本值 / 改本值 / 护盾 / 治疗 / 跳过出手 / 记日志 / 本场抽屉);
+       * 从前每建一个上下文就重抄一遍闭包,四个地方各写一份 —— 改一处容易漏三处。
+       * 收到这里之后只此一份,`atRound` 与 `defaultActor` 决定 `log` 的默认口吻。
+       */
+      const primitives = (atRound: number, defaultActor: string): BattlePrimitives<T> => ({
         keys,
         statOf: stat,
         setStat,
@@ -640,6 +664,21 @@ export function createCombatEngine<T = number>(
         shieldOf,
         gainShield,
         heal,
+        skipNextTurn: (target: Combatant<T>): void => {
+          skipping.add(target);
+        },
+        log: (kind, text, damage = 0, actor): void => {
+          emit(atRound, actor ?? defaultActor, kind, text, damage);
+        },
+        state,
+      });
+
+      /** 回合钩子 / 事件反应共用的上下文(不绑出手双方:谁打谁由钩子自己指定) */
+      const hookContext = (atRound: number): BattleHookContext<T> => ({
+        round: atRound,
+        player: p,
+        enemy: e,
+        ...primitives(atRound, p.name),
         applyDamage,
         strike: (
           attacker: Combatant<T>,
@@ -648,13 +687,6 @@ export function createCombatEngine<T = number>(
         ): number => strike(attacker, defender, atRound, opts),
         damage: (attacker: Combatant<T>, defender: Combatant<T>, mult?: number): number =>
           rawDamage(attacker, defender, mult ?? 1, rng),
-        skipNextTurn: (target: Combatant<T>): void => {
-          skipping.add(target);
-        },
-        log: (kind: BattleEventKind, text: string, damage = 0, actor?: string): void => {
-          emit(atRound, actor ?? p.name, kind, text, damage);
-        },
-        state,
         over: (): boolean => !alive(p) || !alive(e),
       });
 
@@ -693,10 +725,7 @@ export function createCombatEngine<T = number>(
             attacker,
             defender,
             opts,
-            keys,
-            statOf: stat,
-            setStat,
-            num: statNum,
+            ...primitives(round, attacker.name),
             damage: (mult?: number): number =>
               rawDamage(attacker, defender, mult ?? opts.mult ?? opts.skill?.mult ?? 1, rng),
             applyDamage: (
@@ -708,13 +737,6 @@ export function createCombatEngine<T = number>(
               dealt += lost;
               return lost;
             },
-            shieldOf,
-            gainShield,
-            heal,
-            skipNextTurn: (target: Combatant<T>) => skipping.add(target),
-            log: (kind, text, damage, actor) =>
-              emit(round, actor ?? attacker.name, kind, text, damage),
-            state,
           };
           hookDepth += 1;
           let handled: boolean | void;
@@ -897,10 +919,7 @@ export function createCombatEngine<T = number>(
             defender,
             skill,
             mult: skill.mult,
-            keys,
-            statOf: stat,
-            setStat,
-            num: statNum,
+            ...primitives(round, attacker.name),
             strike: (mult?: number): number =>
               strike(attacker, defender, round, { skill, mult: mult ?? skill.mult }),
             damage: (mult?: number): number =>
@@ -918,16 +937,6 @@ export function createCombatEngine<T = number>(
               }
               return dealt;
             },
-            shieldOf,
-            gainShield,
-            heal,
-            skipNextTurn: (target: Combatant<T>): void => {
-              skipping.add(target);
-            },
-            log: (kind: BattleEventKind, text: string, damage = 0, actor?: string): void => {
-              emit(round, actor ?? attacker.name, kind, text, damage);
-            },
-            state,
           },
           rng,
         );
@@ -988,18 +997,8 @@ export function createCombatEngine<T = number>(
                   self: attacker,
                   foe: defender,
                   skills: attacker.skills ?? [],
-                  keys,
-                  statOf: stat,
-                  setStat,
-                  num: statNum,
-                  shieldOf,
-                  gainShield,
-                  heal,
+                  ...primitives(round, attacker.name),
                   strike: (a, d, opts) => strike(a, d, round, opts),
-                  skipNextTurn: (target: Combatant<T>) => skipping.add(target),
-                  log: (kind, text, damage, actor) =>
-                    emit(round, actor ?? attacker.name, kind, text, damage),
-                  state,
                 },
                 rng,
               );
