@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 429,
+  "round": 430,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T08:58:53+00:00",
+  "updated_at": "2026-10-07T09:23:04+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24738,11 +24738,11 @@
     "ISS-309": {
       "id": "ISS-309",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T06:35:05+00:00",
-      "updated_at": "2026-10-07T06:35:05+00:00",
-      "touched_round": 424,
+      "updated_at": "2026-10-07T09:01:13+00:00",
+      "touched_round": 429,
       "summary": "窄屏下纯文字按钮的标签被折行:界域志「问 卦(悟道点 2)」被右侧长注挤成「问 卦(悟道」/「点 2)」,流派页「+ 存当前构筑」在 320 宽同样被左侧说明挤成两行。根因:一行不换行的 flex 里按钮没设 shrink,被邻居挤扁后文字只好折行。卡片没溢出、字也没被挤成竖排,横向溢出与既有挤压判据都量不出来。",
       "severity": 0.35,
       "located": "src/views/RealmCodexView.vue, src/views/BuildView.vue"
@@ -24807,33 +24807,33 @@
     "ISS-310": {
       "id": "ISS-310",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T06:35:18+00:00",
-      "updated_at": "2026-10-07T06:35:18+00:00",
-      "touched_round": 424,
+      "updated_at": "2026-10-07T09:01:13+00:00",
+      "touched_round": 429,
       "summary": "crypto-js 桶文件把整套算法(TripleDES/Blowfish/RC4/Rabbit/SHA-3/RIPEMD 等)一次性挂进首屏:仅用 AES 却让 player 组多背 52KB(19KB gzip)。CommonJS 副作用赋值,打包器摇不掉。",
       "severity": 0.4
     },
     "ISS-311": {
       "id": "ISS-311",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T06:35:23+00:00",
-      "updated_at": "2026-10-07T06:35:23+00:00",
-      "touched_round": 424,
+      "updated_at": "2026-10-07T09:01:13+00:00",
+      "touched_round": 429,
       "summary": "空态写法不统一:录册(LegacyView/CelestialView)用 .empty-note 的淡墨短横,背包与修炼页的空态却是一行孤字浮在空白里,像是渲染出错。",
       "severity": 0.25
     },
     "ISS-312": {
       "id": "ISS-312",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T06:37:01+00:00",
-      "updated_at": "2026-10-07T06:37:01+00:00",
-      "touched_round": 424,
+      "updated_at": "2026-10-07T09:01:13+00:00",
+      "touched_round": 429,
       "summary": "音频全关时仍会加载 Tone(unlockAudio 只看 AudioContext,不看偏好):两个开关都关掉的玩家第一次点屏幕白下载 340KB / gzip 79KB 与整套采样。",
       "severity": 0.3
     },
@@ -24851,11 +24851,11 @@
     "ISS-313": {
       "id": "ISS-313",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T06:41:48+00:00",
-      "updated_at": "2026-10-07T06:41:48+00:00",
-      "touched_round": 424,
+      "updated_at": "2026-10-07T09:01:13+00:00",
+      "touched_round": 429,
       "summary": "首页「今日天道未做」朱章压在 10px 小字行首,把「道途 · 特殊世界 · 天道熔炉 · 试炼 · 道痕」挤折成两行(390 最常见一档本可单行)。",
       "severity": 0.25
     },
@@ -25209,6 +25209,31 @@
       "summary": "运行时错误码约定:统一 EngineError(code, message);code 大写蛇形、按模块前缀(ATTR_/REALM_/EQUIP_/DUNGEON_/…);message 给人看(可改),code 给程序看(稳定)",
       "rationale": "对外产品需要消费方能程序化区分失败(补表/退档/拦住发布),字符串匹配中文文案一改就断。validateGame 早已用 code,运行时补齐到同一口径。增删 code 属对使用者有影响的变更,写进 CHANGELOG。errors.spec.ts 的注册表 + verify-dist 的静态门双重钉住。",
       "alternatives_rejected": "A) 只加文档说明\"可按文案判断\"(脆弱);B) 给每条错误单独一个类(类爆炸,且 instanceof 分支比 code 更难组合);C) 保持 throw new Error(公共库不友好)"
+    },
+    "TASK-440": {
+      "id": "TASK-440",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-07T09:23:04+00:00",
+      "updated_at": "2026-10-07T09:23:04+00:00",
+      "touched_round": 429,
+      "category": "maintainability",
+      "severity": 0.35,
+      "confidence": 1,
+      "effort": 2,
+      "summary": "astronomy 去 store:游戏时间由调用方(引擎/离线/视图)传入,astronomy 与 exploration 变纯;分层基线 55→54 文件、164→163 处"
+    },
+    "CHG-513": {
+      "id": "CHG-513",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-07T09:23:04+00:00",
+      "updated_at": "2026-10-07T09:23:04+00:00",
+      "touched_round": 429,
+      "commit": "6f9a5bf",
+      "summary": "astronomy.ts 四个函数改收 totalPlaySec(todayMansion/isFavoredRegion/mansionEventLuck/todayMansionLine);exploreEventChance/tickExploration 加 totalPlaySec 形参;astronomy.spec 去 Pinia;layeringAudit 基线下降"
     }
   },
   "edges": [
@@ -36914,6 +36939,12 @@
       "to": "COMP-027",
       "type": "governs",
       "created_at": "2026-10-07T08:58:53+00:00"
+    },
+    {
+      "from": "CHG-513",
+      "to": "TASK-440",
+      "type": "implements",
+      "created_at": "2026-10-07T09:23:04+00:00"
     }
   ]
 }
