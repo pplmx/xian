@@ -34,6 +34,7 @@ import { notify } from "@/core/notify";
 const router = useRouter();
 const appr = useApprenticeStore();
 const player = usePlayerStore();
+const resources = useResourcesStore();
 
 const now = ref(Date.now());
 let timer: number | undefined;

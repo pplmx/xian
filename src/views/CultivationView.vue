@@ -1080,7 +1080,9 @@ const comprehendLeft = computed(
 const pageShort = computed(() => Math.max(0, COMPREHEND_PAGE_COST - resources.page));
 
 /** 池里还有货且残页够 —— 才能点参悟 */
-const canComprehend = computed(() => comprehendLeft > 0 && resources.page >= COMPREHEND_PAGE_COST);
+const canComprehend = computed(
+  () => comprehendLeft.value > 0 && resources.page >= COMPREHEND_PAGE_COST,
+);
 
 /**
  * 快捷栏一枚丹的一行药效 —— 「以药辅道」不只看名字猜,服下去会怎样就地给。
