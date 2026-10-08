@@ -47,7 +47,7 @@
           class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-soft tabular"
         >
           <button
-            class="-my-1 py-1.5 text-left active:opacity-60"
+            class="tap-row -my-1 py-1.5 text-left active:opacity-60"
             :aria-expanded="showCultBreakdown"
             @click="showCultBreakdown = !showCultBreakdown"
           >
@@ -511,7 +511,7 @@
           <span class="min-w-0 grow">
             <span class="block truncate font-kai text-[14px] text-ink">{{ mainDef.name }}</span>
             <span class="flex items-center gap-1.5">
-              <span class="shrink-0 text-[11px] text-ink-faint">
+              <span class="shrink-0 text-[11px] text-ink-faint tabular">
                 第 {{ cultivation.learned[mainDef.id] }} 层 · {{ qualityDef(mainDef.quality).name }}
               </span>
               <span

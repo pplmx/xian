@@ -40,8 +40,8 @@
       <template v-if="info.canUpgrade">
         <span class="leading-tight">
           <span class="whitespace-nowrap">{{ level > 0 ? "升级" : "建造" }} ·</span>
-          <span class="whitespace-nowrap">{{ formatGN(info.stone) }} 石</span>
-          <span v-if="info.ore > 0" class="whitespace-nowrap">· {{ info.ore }} 铁</span>
+          <span class="whitespace-nowrap tabular">{{ formatGN(info.stone) }} 石</span>
+          <span v-if="info.ore > 0" class="whitespace-nowrap tabular">· {{ info.ore }} 玄铁</span>
         </span>
       </template>
       <template v-else

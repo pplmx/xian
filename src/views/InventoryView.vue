@@ -21,7 +21,7 @@
           <!-- 穿齐该套:换上已持有里最强的套件,已穿更强者不动(绝不降级) -->
           <button
             type="button"
-            class="shrink-0 -my-1.5 py-1.5 font-kai text-[11px] text-cinnabar active:opacity-60"
+            class="tap-row shrink-0 -my-1.5 py-1.5 font-kai text-[11px] text-cinnabar active:opacity-60"
             :aria-label="`穿齐${s.def.name}`"
             @click="wearSetOf(s.def.id)"
           >
@@ -35,7 +35,7 @@
         >
         <span class="flex gap-3">
           <button
-            class="-my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
+            class="tap-row -my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
             aria-label="智能收纳设置"
             :aria-expanded="smartOpen"
             @click="smartOpen = true"
@@ -43,7 +43,7 @@
             收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
           </button>
           <button
-            class="-my-1.5 py-1.5 text-[11px] text-cinnabar active:opacity-60"
+            class="tap-row -my-1.5 py-1.5 text-[11px] text-cinnabar active:opacity-60"
             aria-label="批量分解装备"
             :aria-expanded="decomposeOpen"
             @click="decomposeOpen = true"
@@ -195,7 +195,9 @@
           >
         </button>
       </div>
-      <p v-else class="empty-note mt-10 text-center text-[12px] text-ink-faint">丹匣空空</p>
+      <p v-else class="empty-note mt-10 text-center text-[12px] text-ink-faint">
+        丹匣空空,去藏经阁参悟丹方,或去坊市收购几株灵草
+      </p>
     </template>
 
     <!-- 材料 -->

@@ -31,7 +31,7 @@
         />
         <button
           v-if="noteDraft"
-          class="-my-1 px-1 py-1 text-[11px] text-ink-faint active:opacity-60"
+          class="tap-row -my-1 px-1 py-1 text-[11px] text-ink-faint active:opacity-60"
           @click="clearNote"
         >
           清除
@@ -124,7 +124,7 @@
               class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-qing active:scale-90 active:opacity-60 disabled:cursor-not-allowed disabled:opacity-40"
               :disabled="!sealAffordable"
               :aria-label="`封存词条${line.name}`"
-              :title="sealAffordable ? undefined : `尚差 ${formatGN(sealShortfall)} 石`"
+              :title="sealAffordable ? undefined : `尚差 ${formatGN(sealShortfall)} 灵石`"
               @click="doSealAffix(line.id)"
             >
               封存
@@ -385,7 +385,7 @@
           </p>
           <!-- 封存只算灵石一道账:付不起同样置灰+列差,不许只有点了才听见 toast -->
           <p v-if="sealCostVal && !sealAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
-            封存尚差 {{ formatGN(sealShortfall) }} 石
+            封存尚差 {{ formatGN(sealShortfall) }} 灵石
           </p>
           <!--
             重铸到底做什么,得在按下之前说清:条数与数值一并重掷(封存的不动),
@@ -557,7 +557,7 @@ const sealCostVal = computed(() => (inst.value ? sealCost(inst.value) : null));
 const sealAffordable = computed(
   () => sealCostVal.value !== null && resources.hasStone(sealCostVal.value),
 );
-/** 封存短额:走 GNum 指数感知减法(subClamp,与天道熔炉同款),差多少明说「尚差 N 石」 */
+/** 封存短额:走 GNum 指数感知减法(subClamp,与天道熔炉同款),差多少明说「尚差 N 灵石」 */
 const sealShortfall = computed(() =>
   sealCostVal.value === null ? 0 : toNum(subClamp(sealCostVal.value, resources.spiritStone)),
 );

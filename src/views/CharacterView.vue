@@ -94,7 +94,7 @@
           <button
             v-for="row in modRows"
             :key="row.label"
-            class="-my-1 flex justify-between py-1.5 text-left text-[11px] active:opacity-60"
+            class="tap-row -my-1 flex justify-between py-1.5 text-left text-[11px] active:opacity-60"
             @click="toggleBreakdown(row.key)"
           >
             <span class="text-ink-faint">
@@ -142,166 +142,182 @@
     </section>
 
     <!-- 各处入口 —— 按「道途 / 缘法 / 记录」分节,每张卡带一枚题头图标,免成一列同形的卡 -->
-    <SectionTitle title="道途" />
-    <RouterLink to="/build" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
-      <GameIcon name="swords" :size="16" class="shrink-0 text-cinnabar" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">流 派</span>
-        <span class="block truncate text-[10px] text-ink-faint tabular">
-          <template v-if="build">
-            {{ build.displayName }} · 契合 {{ formatPercent(build.affinity, 0) }} · 快照
-            {{ loadouts.list.length }} 套
-          </template>
-          <template v-else>道途尚未成路,词条与功法凑成一派便见分晓</template>
-        </span>
-      </span>
-      <span class="text-[11px] text-cinnabar">参详 →</span>
-    </RouterLink>
+    <section>
+      <SectionTitle title="道途" hint="流派" />
+      <div class="mt-2 space-y-4">
+        <RouterLink to="/build" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+          <GameIcon name="swords" :size="16" class="shrink-0 text-cinnabar" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">流 派</span>
+            <span class="block truncate text-[10px] text-ink-faint tabular">
+              <template v-if="build">
+                {{ build.displayName }} · 契合 {{ formatPercent(build.affinity, 0) }} · 快照
+                {{ loadouts.list.length }} 套
+              </template>
+              <template v-else>道途尚未成路,词条与功法凑成一派便见分晓</template>
+            </span>
+          </span>
+          <span class="text-[11px] text-cinnabar">参详 →</span>
+        </RouterLink>
 
-    <!-- 修行画像(Phase 31.2:历史行为归纳,纯描述无数值) -->
-    <button
-      class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
-      @click="identityOpen = true"
-    >
-      <GameIcon name="circle-user" :size="16" class="shrink-0 text-ink-soft" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修行画像</span>
-        <!-- 画像叙述是这一页最有「人味」的一行,一行截断会拦腰断句 —— 给两行 -->
-        <span class="line-clamp-2 text-[10px] leading-relaxed text-ink-faint"
-          >「{{ identity?.epithet ?? "玄枢散人" }}」 · {{ identity?.narrative ?? "足迹尚浅" }}</span
+        <!-- 修行画像(Phase 31.2:历史行为归纳,纯描述无数值) -->
+        <button
+          class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
+          @click="identityOpen = true"
         >
-      </span>
-      <span class="shrink-0 text-[11px] text-ink-soft">展卷 →</span>
-    </button>
+          <GameIcon name="circle-user" :size="16" class="shrink-0 text-ink-soft" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修行画像</span>
+            <!-- 画像叙述是这一页最有「人味」的一行,一行截断会拦腰断句 —— 给两行 -->
+            <span class="line-clamp-2 text-[10px] leading-relaxed text-ink-faint"
+              >「{{ identity?.epithet ?? "玄枢散人" }}」 ·
+              {{ identity?.narrative ?? "足迹尚浅" }}</span
+            >
+          </span>
+          <span class="shrink-0 text-[11px] text-ink-soft">展卷 →</span>
+        </button>
 
-    <RouterLink to="/titles" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
-      <!-- 相伴灵兽的"脸":有伴时亮出一枚玉色印章,未伴时无印 —— 伙伴不该只是名字 -->
-      <!-- 相伴灵兽的「脸」:有伴亮伴侣的形,未伴用名号的冕 —— 同其他入口一样是一枚题头图 -->
-      <GameIcon :name="currentPetIcon ?? 'crown'" :size="16" class="shrink-0 text-jade" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">名号与灵兽</span>
-        <span class="block truncate text-[10px] text-ink-faint">
-          {{ currentTitleName ?? "未佩名号" }} · {{ currentPetName ?? "未伴灵兽" }}
-        </span>
-      </span>
-      <span class="text-[11px] text-jade">整理 →</span>
-    </RouterLink>
+        <RouterLink to="/titles" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+          <!-- 相伴灵兽的"脸":有伴时亮出一枚玉色印章,未伴时无印 —— 伙伴不该只是名字 -->
+          <!-- 相伴灵兽的「脸」:有伴亮伴侣的形,未伴用名号的冕 —— 同其他入口一样是一枚题头图 -->
+          <GameIcon :name="currentPetIcon ?? 'crown'" :size="16" class="shrink-0 text-jade" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">名号与灵兽</span>
+            <span class="block truncate text-[10px] text-ink-faint">
+              {{ currentTitleName ?? "未佩名号" }} · {{ currentPetName ?? "未伴灵兽" }}
+            </span>
+          </span>
+          <span class="text-[11px] text-jade">整理 →</span>
+        </RouterLink>
+      </div>
+    </section>
 
     <!-- 缘法:这一世遇见的人 -->
-    <SectionTitle title="缘法" />
-    <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
-    <button
-      class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
-      @click="mentorDialog = true"
-    >
-      <GameIcon name="scroll" :size="16" class="shrink-0 text-qing" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">师 承</span>
-        <span class="block truncate text-[10px] text-ink-faint">
-          {{
-            mentorVer
-              ? `${mentorVer.mentor?.name ?? ""}·${mentorVer.mentor?.title ?? ""} | ${mentorVer.line}`
-              : "尚未拜师,可寻一位师尊"
-          }}
-        </span>
-      </span>
-      <span class="shrink-0 text-[11px] text-qing">{{ mentorVer ? "求教 →" : "拜师 →" }}</span>
-    </button>
+    <section>
+      <SectionTitle title="缘法" hint="师承道侣" />
+      <div class="mt-2 space-y-4">
+        <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
+        <button
+          class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
+          @click="mentorDialog = true"
+        >
+          <GameIcon name="scroll" :size="16" class="shrink-0 text-qing" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">师 承</span>
+            <span class="block truncate text-[10px] text-ink-faint">
+              {{
+                mentorVer
+                  ? `${mentorVer.mentor?.name ?? ""}·${mentorVer.mentor?.title ?? ""} | ${mentorVer.line}`
+                  : "尚未拜师,可寻一位师尊"
+              }}
+            </span>
+          </span>
+          <span class="shrink-0 text-[11px] text-qing">{{ mentorVer ? "求教 →" : "拜师 →" }}</span>
+        </button>
 
-    <!-- 道侣(Phase 33.8):这一世遇见的人。只记关系与经历,不给任何属性 -->
-    <button
-      class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
-      @click="bondDialog = true"
-    >
-      <GameIcon name="user" :size="16" class="shrink-0 text-qing" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">道 侣</span>
-        <!--
+        <!-- 道侣(Phase 33.8):这一世遇见的人。只记关系与经历,不给任何属性 -->
+        <button
+          class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
+          @click="bondDialog = true"
+        >
+          <GameIcon name="user" :size="16" class="shrink-0 text-qing" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">道 侣</span>
+            <!--
           她开了口 / 提了事,还等你一句 —— 这一行要报出来。此前只有点开弹窗
           才知道有事在等,而不开弹窗就永远不知道(与「卦在身」「今日天道未做」同族)。
         -->
-        <span class="block truncate text-[10px] text-ink-faint">
-          <span
-            v-if="hasBondWord"
-            class="chip-ink mr-1 align-middle border-qing/50 text-[9px] text-qing"
-            >有话说</span
-          >
-          {{
-            bondDef && bond
-              ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? "(已殁)" : ""} | ${bondDef.brief}`
-              : pastBonds.length
-                ? `此生尚未遇见,历世曾有 ${pastBonds.length} 段同行`
-                : "此生尚未遇见谁"
-          }}
-        </span>
-      </span>
-      <span class="shrink-0 text-[11px] text-qing">{{ bondDef ? "相知 →" : "履历 →" }}</span>
-    </button>
+            <span class="block truncate text-[10px] text-ink-faint">
+              <span
+                v-if="hasBondWord"
+                class="chip-ink mr-1 align-middle border-qing/50 text-[9px] text-qing"
+                >有话说</span
+              >
+              {{
+                bondDef && bond
+                  ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? "(已殁)" : ""} | ${bondDef.brief}`
+                  : pastBonds.length
+                    ? `此生尚未遇见,历世曾有 ${pastBonds.length} 段同行`
+                    : "此生尚未遇见谁"
+              }}
+            </span>
+          </span>
+          <span class="shrink-0 text-[11px] text-qing">{{ bondDef ? "相知 →" : "履历 →" }}</span>
+        </button>
+      </div>
+    </section>
 
     <!-- 记录:走过什么、这条路从哪来 -->
-    <SectionTitle title="记录" />
-    <RouterLink to="/collection" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
-      <GameIcon name="gem" :size="16" class="shrink-0 text-gold-ink" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">藏珍与成就</span>
-        <span class="block text-[10px] text-ink-faint tabular">
-          成就 {{ achievementCounts(achievementStateOf(quests.achieved)).done }}/{{
-            ACHIEVEMENTS.length
-          }}
-          · 图鉴 {{ collectHave }}/{{ collectTotal }}
-        </span>
-      </span>
-      <span class="text-[11px] text-gold-ink">翻阅 →</span>
-    </RouterLink>
-
-    <RouterLink to="/legacy" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
-      <GameIcon name="book" :size="16" class="shrink-0 text-ink-soft" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修仙录</span>
-        <span class="block truncate text-[10px] text-ink-faint tabular"
-          >画像 · 节点 · 我的纪录——这一部只写你自己</span
+    <section>
+      <SectionTitle title="记录" hint="藏珍" />
+      <div class="mt-2 space-y-4">
+        <RouterLink
+          to="/collection"
+          class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99"
         >
-      </span>
-      <span class="text-[11px] text-ink-soft">展卷 →</span>
-    </RouterLink>
+          <GameIcon name="gem" :size="16" class="shrink-0 text-gold-ink" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">藏珍与成就</span>
+            <span class="block text-[10px] text-ink-faint tabular">
+              成就 {{ achievementCounts(achievementStateOf(quests.achieved)).done }}/{{
+                ACHIEVEMENTS.length
+              }}
+              · 图鉴 {{ collectHave }}/{{ collectTotal }}
+            </span>
+          </span>
+          <span class="text-[11px] text-gold-ink">翻阅 →</span>
+        </RouterLink>
 
-    <!-- 界域志:与修仙录同级 —— 一部写你,一部写这条路从哪来 -->
-    <RouterLink to="/codex" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
-      <GameIcon name="mountain" :size="16" class="shrink-0 text-ink-soft" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">界域志</span>
-        <!--
+        <RouterLink to="/legacy" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+          <GameIcon name="book" :size="16" class="shrink-0 text-ink-soft" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">修仙录</span>
+            <span class="block truncate text-[10px] text-ink-faint tabular"
+              >画像 · 节点 · 我的纪录——这一部只写你自己</span
+            >
+          </span>
+          <span class="text-[11px] text-ink-soft">展卷 →</span>
+        </RouterLink>
+
+        <!-- 界域志:与修仙录同级 —— 一部写你,一部写这条路从哪来 -->
+        <RouterLink to="/codex" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
+          <GameIcon name="mountain" :size="16" class="shrink-0 text-ink-soft" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">界域志</span>
+            <!--
           这一册装着两半:界域/典籍是「来路」(只读),周易/紫微/星象/奇门是「术数四门」
           (有当下,问卦就在里面) —— 副题要把两半都说出来,否则想找问卦的人根本不会点进来。
         -->
-        <span class="block text-[10px] text-ink-faint tabular">
-          <span
-            v-if="divinationOn"
-            class="chip-ink mr-1 border-cinnabar/50 text-[9px] text-cinnabar"
-            >卦在身</span
-          >
-          {{ cnNumber(WORLDS.length) }}界{{ cnNumber(REALMS.length) }}境的来路与典籍 · 术数四门
-        </span>
-      </span>
-      <span class="text-[11px] text-ink-soft">查阅 →</span>
-    </RouterLink>
+            <span class="block text-[10px] text-ink-faint tabular">
+              <span
+                v-if="divinationOn"
+                class="chip-ink mr-1 border-cinnabar/50 text-[9px] text-cinnabar"
+                >卦在身</span
+              >
+              {{ cnNumber(WORLDS.length) }}界{{ cnNumber(REALMS.length) }}境的来路与典籍 · 术数四门
+            </span>
+          </span>
+          <span class="text-[11px] text-ink-soft">查阅 →</span>
+        </RouterLink>
 
-    <button
-      class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
-      @click="rebirthOpen = true"
-    >
-      <GameIcon name="refresh" :size="16" class="shrink-0 text-violet-ink" />
-      <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">轮 回</span>
-        <span class="block text-[10px] text-ink-faint tabular">
-          <span class="chip-ink mr-1 border-violet-ink/50 text-[9px] text-violet-ink"
-            >永久积累</span
-          >
-          道果 {{ player.reincarnation.daoFruit }} · 天赋 {{ ownedTalents.length }} 项
-        </span>
-      </span>
-      <span class="text-[11px] text-violet-ink">观想 →</span>
-    </button>
+        <button
+          class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
+          @click="rebirthOpen = true"
+        >
+          <GameIcon name="refresh" :size="16" class="shrink-0 text-violet-ink" />
+          <span class="min-w-0 grow">
+            <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">轮 回</span>
+            <span class="block text-[10px] text-ink-faint tabular">
+              <span class="chip-ink mr-1 border-violet-ink/50 text-[9px] text-violet-ink"
+                >永久积累</span
+              >
+              道果 {{ player.reincarnation.daoFruit }} · 天赋 {{ ownedTalents.length }} 项
+            </span>
+          </span>
+          <span class="text-[11px] text-violet-ink">观想 →</span>
+        </button>
+      </div>
+    </section>
 
     <!-- 修行画像弹窗(Phase 31.2) -->
     <BaseModal

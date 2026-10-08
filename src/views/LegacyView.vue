@@ -24,7 +24,9 @@
             :height="5"
             color="var(--color-cinnabar)"
           />
-          <span class="w-8 shrink-0 text-right tabular text-ink-soft">{{ d.pct }}%</span>
+          <span class="w-8 shrink-0 text-right tabular text-ink-soft">{{
+            formatPercent(d.pct / 100)
+          }}</span>
         </p>
       </div>
       <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
@@ -239,7 +241,7 @@
           </p>
         </template>
         <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
-          世界尚未记住你的足迹。
+          世界尚未记住你的足迹。此录待你行过此世,自会留下回响。
         </p>
       </div>
     </template>
@@ -271,7 +273,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { useLoreStore } from "@/stores/lore";
-import { cnNumber } from "@/utils/format";
+import { cnNumber, formatPercent } from "@/utils/format";
 import {
   cultivatorProfile,
   MILESTONE_DEFS,

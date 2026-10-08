@@ -64,7 +64,7 @@
             <button
               v-for="l in powerRating.labels"
               :key="l.key"
-              class="-my-1 py-1.5 text-left active:opacity-60"
+              class="w-full min-h-8 -my-1 py-1.5 text-left active:opacity-60"
               @click="toggleDim(l.key)"
             >
               <span class="flex items-center justify-between text-[11px]">
@@ -160,7 +160,7 @@
     </div>
 
     <!-- 构筑快照 -->
-    <SectionTitle title="构筑快照" :hint="`${loadouts.list.length}/${MAX_LOADOUTS}`" />
+    <SectionTitle title="构筑快照" :hint="`已存 ${loadouts.list.length}/${MAX_LOADOUTS} 套`" />
     <div class="card-ink px-4 py-3">
       <p class="mb-1.5 flex items-center justify-between">
         <span class="text-[11px] text-ink-faint"
@@ -169,7 +169,7 @@
         <!-- 320 窄窗:按钮不许被左侧说明挤折(「+ 存当前构 / 筑」)。
              按钮 shrink-0 + 不断行,说明文字先让位。 -->
         <button
-          class="-my-1 shrink-0 whitespace-nowrap py-1.5 text-[11px] text-cinnabar active:opacity-60"
+          class="tap-row -my-1 shrink-0 whitespace-nowrap py-1.5 text-[11px] text-cinnabar active:opacity-60"
           @click="openSave"
         >
           + 存当前构筑
