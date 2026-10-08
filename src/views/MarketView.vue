@@ -13,10 +13,15 @@ import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { pillDef } from "@/data/pills";
+import { herbGradeOfMajor } from "@/data/herbGrades";
 import { formatGN } from "@/utils/format";
+import { toNum } from "@/utils/gnum";
+import type { GNum } from "@/types";
 import { MARKET_CONSIGN_SECONDS, MARKET_MAT_COUNT, MARKET_REFRESH_SECONDS } from "@/data/market";
+import type { BountySlot } from "@/data/bounty";
 import { marketEquipInstance, marketRemainingSec } from "@/core/marketService";
 import { bountyRemainingSec } from "@/core/bountyService";
+import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
 
 const router = useRouter();
@@ -77,7 +82,13 @@ const sellablePills = computed(() =>
 );
 
 function buySlot(idx: number): void {
-  market.buy(idx);
+  const r = market.buy(idx);
+  if (r === "poor") notify("灵石不足,购入不成", "warn");
+}
+
+/** 购入短差:买得起念全价,付不起换口「尚差 X 石」 */
+function stoneShort(cost: GNum): number {
+  return Math.max(0, toNum(cost) - toNum(resources.spiritStone));
 }
 function consign(uid: string): void {
   market.consignEquip(uid, Date.now());
@@ -95,7 +106,28 @@ const bountyRemainingText = computed(() => {
 });
 
 function claimBounty(idx: number): void {
-  bounty.claim(idx);
+  const r = bounty.claim(idx);
+  if (r === "insufficient") notify("材料或丹药不足,交不了货", "warn");
+  else if (r === "nobag") notify("行囊里没有够阶的兵刃", "warn");
+}
+
+/** 逐单交货短差:够交回 null,不够列「需 N X,缺 M」(与「尚差 N 石」同一纪律) */
+function bountyShort(o: BountySlot): string | null {
+  if (o.claimed) return null;
+  if (o.kind === "herb" || o.kind === "ore") {
+    const isHerb = o.kind === "herb";
+    const have = isHerb ? resources.herbs[herbGradeOfMajor(player.major)] : resources.ore;
+    if (have >= o.target) return null;
+    return `需 ${o.target} ${isHerb ? "灵草" : "玄铁"},缺 ${o.target - have}`;
+  }
+  if (o.kind === "pill") {
+    const have = inventory.pills[o.kindId] ?? 0;
+    if (have >= o.target) return null;
+    return `需 ${o.target} ${pillDef(o.kindId)?.name ?? o.kindId},缺 ${o.target - have}`;
+  }
+  const have = inventory.bagItems.filter((e) => e.tier >= o.tier).length;
+  if (have > 0) return null;
+  return `缺一件 ≥${o.tier} 阶兵刃`;
 }
 </script>
 
@@ -158,10 +190,16 @@ function claimBounty(idx: number): void {
           <span class="text-[12px] tabular text-cinnabar">{{ formatGN(slot.price) }}灵石</span>
           <button
             class="btn-seal !px-3 !py-1 text-[11px]"
-            :disabled="slot.sold"
+            :disabled="slot.sold || !resources.hasStone(slot.price)"
             @click="buySlot(slot.idx)"
           >
-            {{ slot.sold ? "已售" : "购入" }}
+            {{
+              slot.sold
+                ? "已售"
+                : resources.hasStone(slot.price)
+                  ? "购入"
+                  : `尚差 ${formatGN(stoneShort(slot.price))} 石`
+            }}
           </button>
         </div>
         <p v-if="market.stock.length === 0" class="py-3 text-center text-[11px] text-ink-faint">
@@ -191,21 +229,24 @@ function claimBounty(idx: number): void {
           <div class="min-w-0 flex-1 text-[12px]">
             <template v-if="o.kind === 'herb' || o.kind === 'ore'">
               <p class="truncate">募 {{ o.kind === "herb" ? "灵草" : "玄铁" }} ×{{ o.target }}</p>
-              <p class="text-[10px] text-ink-faint">交货即得灵石</p>
+              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">{{ bountyShort(o) }}</p>
+              <p v-else class="text-[10px] text-ink-faint">交货即得灵石</p>
             </template>
             <template v-else-if="o.kind === 'pill'">
               <p class="truncate">{{ pillDef(o.kindId)?.name ?? o.kindId }} ×{{ o.target }}</p>
-              <p class="text-[10px] text-ink-faint">另得悟道×{{ o.extra }}</p>
+              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">{{ bountyShort(o) }}</p>
+              <p v-else class="text-[10px] text-ink-faint">另得悟道×{{ o.extra }}</p>
             </template>
             <template v-else>
               <p class="truncate">贡一柄 ≥{{ o.tier }} 阶兵刃</p>
-              <p class="text-[10px] text-ink-faint">价随所交之品质现算</p>
+              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">{{ bountyShort(o) }}</p>
+              <p v-else class="text-[10px] text-ink-faint">价随所交之品质现算</p>
             </template>
           </div>
           <span class="text-[12px] tabular text-cinnabar">{{ formatGN(o.reward) }}灵石</span>
           <button
             class="btn-seal !px-3 !py-1 text-[11px]"
-            :disabled="o.claimed"
+            :disabled="o.claimed || !!bountyShort(o)"
             @click="claimBounty(o.idx)"
           >
             {{ o.claimed ? "已交" : "交货" }}
@@ -265,7 +306,6 @@ function claimBounty(idx: number): void {
           v-for="p in sellablePills"
           :key="p.id"
           class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
-          :disabled="!p.def?.recipe?.stoneBase"
           @click="sellPill(p.id)"
         >
           售{{ p.def?.name ?? p.id }}({{ p.count }})
