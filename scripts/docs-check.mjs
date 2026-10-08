@@ -16,6 +16,7 @@
  * 拿今天的仓库去校对历史计划,只会逼人改记录(那比留着一份旧计划更坏)。
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -97,6 +98,27 @@ if (failures.length > 0) {
   console.error("文档自检:以下地方与仓库对不上");
   for (const f of failures) console.error(`  ✗ ${f}`);
   process.exit(1);
+}
+
+// —— rumdl(markdown 门):README + docs/** 的 .md 必须经 rumdl 零命中 ——
+// 规则豁免见根目录 rumdl.toml —— 只放行贴合既有中文文档风格的几类(MD013 长中文自然行、
+// MD033 内联 HTML 横幅、MD041 首行横幅、MD036 标语式强调、MD025 两段式 H1),
+// 断链/围栏/列表/结尾空白/标题层级跳跃等真检查全开着。
+// 传文件列表(而非目录)而非 `docs/`,好与上面的 docFiles 同范围 —— 都剔除
+// docs/superpowers/plans/** 历史计划存档。经 devDependencies 里的 rumdl 跑(CI 装依赖即有)。
+{
+  const { status, stdout, stderr } = spawnSync(
+    "bunx",
+    ["--no-install", "rumdl", "check", ...docFiles],
+    { encoding: "utf-8" },
+  );
+  if (status !== 0) {
+    console.error("文档自检:rumdl(markdown 门)命中 —— 修文档,或确有必要时在 rumdl.toml 配豁免");
+    if (stdout) process.stdout.write(stdout);
+    if (stderr) process.stderr.write(stderr);
+    process.exit(1);
+  }
+  console.log(`  rumdl 通过(${docFiles.length} 份文档零命中)`);
 }
 
 console.log(

@@ -60,6 +60,7 @@
     "esbuild": "^0.28.2",
     "playwright": "1.64.0",
     "postcss": "^8.5.29",
+    "rumdl": "^0.2.78",
     "tailwindcss": "^3.4.19",
     "typescript": "~6.0.3",
     "vite": "catalog:",

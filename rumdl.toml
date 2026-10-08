@@ -1,0 +1,46 @@
+# rumdl 配置 —— 接进仓库 docs 门(见 scripts/docs-check.mjs)。
+#
+# 范围:与 docs-check.mjs 同一套 —— README.md + docs/** 下的 .md,
+# 但不含 docs/superpowers/plans/**(历史计划存档,不套今日判据 —— 见 docs-check.mjs 头注释)。
+# 保留有意义的检查:断链(MD051/57)、未闭环/交错围栏(MD046/70)、畸形列表(MD032/076/077)、
+# 结尾多余空白(MD009/047)、标题层级跳跃(MD001)、代码块缺语言(MD040)等一律开着,
+# 只在下面为既有中文文档风格逐条放行,不放行的一个都不动。
+
+[global]
+# 规则豁免 —— 只豁免与既有风格冲突、修了会伤语义/格式习惯的规则,且逐条写明理由。
+disable = [
+  # MD013 行长:全库文档都是「长行中文自然段落」,单行常达 100~300+ 字。
+  # 80 字符行宽规则是为英文散文设计的;对逐字等宽的中文强行折行,既难看、
+  # 又会破坏 git diff 的按行粒度与编辑体验,故整条关闭。CJK 换行本就应交给渲染器。
+  "MD013",
+
+  # MD033 内联 HTML:README 顶部用 <div align="center"> + <img> 渲染居中横幅与 Banner。
+  # 这套只读展示层是刻意的(不用 HTML 无法居中定宽),属既有格式习惯,放行。
+  "MD033",
+
+  # MD041 首行应为 H1:README 首行就是上面的居中横幅(<div>),不是标题 ——
+  # 这是 MD033 放行的连带结果,不是文档缺陷。
+  "MD041",
+
+  # MD036 用强调代替标题:README 的「*玄之又玄 · 众妙之门*」标语式副标题是刻意风格,
+  # 改标题会破坏首屏观感,放行。
+  "MD036",
+
+  # MD025 单文档多 H1:设计稿(specs)普遍是「设计讨论 + 可执行规格」两段式,
+  # 第二段用独立 H1 分隔(如 …-rebirth-economy-deep-cultivation-legacy-design.md)。
+  # 降级会把整份文档的子标题层级整体打乱(改一行要跟着改全篇),属既有结构习惯,放行。
+  "MD025",
+]
+
+exclude = [
+  ".git",
+  ".github",
+  "node_modules",
+  "dist",
+  "build",
+  # 与 docs-check.mjs 一致的归档豁免:历史计划存档不套今日判据
+  "docs/superpowers/plans",
+]
+
+# 供手动 `rumdl check .` 时限定范围(与 docs 门的 docFiles 一致)。
+include = ["README.md", "docs/**/*.md"]
