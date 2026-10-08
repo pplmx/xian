@@ -13,7 +13,15 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vite-plus/test"
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createPinia, setActivePinia } from "pinia";
-import { reforgeCost, reforgeEquipment, sealCapacity, sealCost, sealAffix } from "./reforge";
+import {
+  reforgeCost,
+  reforgeEquipment,
+  reforgeableAffixIds,
+  sealCapacity,
+  sealCost,
+  sealAffix,
+  unsealAffix,
+} from "./reforge";
 import { REFORGE_DUST_BASE, REFORGE_SEAL_LOAD, REFORGE_STONE_BASE } from "@/data/constants";
 import { qualityDef } from "@/data/qualities";
 import { rng } from "@/utils/random";
@@ -211,6 +219,102 @@ describe("重铸动作 · 条数与数值一起重掷", () => {
   });
 });
 
+describe("解除封存(解锁)· 免费即时,与封存共用同一份 sealedAffixIds", () => {
+  beforeEach(() => setActivePinia(createPinia()));
+  afterEach(() => vi.restoreAllMocks());
+
+  /** 摆一件装备与足够的资源(封存要真扣账;解锁不扣,但账目要能对比) */
+  function setup(inst: EquipmentInstance): void {
+    useInventoryStore().items = [inst];
+    useResourcesStore().addStone(gn(1e30));
+  }
+
+  it("封存后可解锁:sealedAffixIds 去掉该条,词条重回可重掷位", () => {
+    const inst: EquipmentInstance = {
+      ...base,
+      uid: "u-unseal",
+      affixes: [
+        { id: "atk1", roll: 0.5 },
+        { id: "def1", roll: 0.5 },
+        { id: "hp1", roll: 0.5 },
+      ],
+    };
+    setup(inst);
+    expect(sealAffix("u-unseal", "atk1")).toBe(true);
+    let cur = useInventoryStore().findItem("u-unseal")!;
+    expect(cur.sealedAffixIds).toEqual(["atk1"]);
+    expect(reforgeableAffixIds(cur)).not.toContain("atk1");
+
+    expect(unsealAffix("u-unseal", "atk1"), "已封存则解封成功").toBe(true);
+    cur = useInventoryStore().findItem("u-unseal")!;
+    expect(cur.sealedAffixIds).toEqual([]);
+    expect(reforgeableAffixIds(cur), "解锁后该词条重回可重掷位").toContain("atk1");
+  });
+
+  it("reforgeCost 随封存数升、随解锁降:解锁后成本回落", () => {
+    const inst: EquipmentInstance = {
+      ...base,
+      uid: "u-cost",
+      affixes: [
+        { id: "atk1", roll: 0.5 },
+        { id: "def1", roll: 0.5 },
+        { id: "hp1", roll: 0.5 },
+      ],
+    };
+    setup(inst);
+    sealAffix("u-cost", "atk1");
+    const sealedCost = reforgeCost(useInventoryStore().findItem("u-cost")!)!;
+    unsealAffix("u-cost", "atk1");
+    const unsealedCost = reforgeCost(useInventoryStore().findItem("u-cost")!)!;
+    expect(stoneOf(unsealedCost.stone)).toBeLessThan(stoneOf(sealedCost.stone));
+    expect(unsealedCost.dust).toBeLessThan(sealedCost.dust);
+  });
+
+  it("解锁 no-op 安全:本就未封存的条解封返回 false 且不动实例", () => {
+    const inst: EquipmentInstance = { ...base, uid: "u-nop" };
+    setup(inst);
+    expect(unsealAffix("u-nop", "def1")).toBe(false);
+    expect(useInventoryStore().findItem("u-nop")!.sealedAffixIds ?? []).toEqual([]);
+  });
+
+  it("解锁免费、不退款:灵石一分不动,只是放弃槽位保护", () => {
+    const inst: EquipmentInstance = {
+      ...base,
+      uid: "u-free",
+      affixes: [
+        { id: "atk1", roll: 0.5 },
+        { id: "def1", roll: 0.5 },
+      ],
+    };
+    setup(inst);
+    const res = useResourcesStore();
+    expect(sealAffix("u-free", "atk1")).toBe(true); // 封存会真扣一笔
+    const before = stoneOf(res.spiritStone);
+    expect(unsealAffix("u-free", "atk1")).toBe(true);
+    expect(stoneOf(res.spiritStone), "解锁不退款也不收费").toBe(before);
+  });
+
+  it("解锁减少封存,天然不违反「至少留一可重掷位」:解锁后重铸恢复", () => {
+    const inst: EquipmentInstance = {
+      ...base,
+      uid: "u-cap",
+      affixes: [
+        { id: "atk1", roll: 0.5 },
+        { id: "def1", roll: 0.5 },
+      ],
+    };
+    setup(inst);
+    expect(sealAffix("u-cap", "atk1")).toBe(true); // 已是上限 1/1
+    expect(sealCost(useInventoryStore().findItem("u-cap")!), "封满不可再封").toBeNull();
+    expect(unsealAffix("u-cap", "atk1")).toBe(true);
+    expect(
+      reforgeCost(useInventoryStore().findItem("u-cap")!),
+      "解锁后不再全封存,重铸恢复可用",
+    ).not.toBeNull();
+    expect(sealCost(useInventoryStore().findItem("u-cap")!), "空出位子,又可再封").not.toBeNull();
+  });
+});
+
 describe("界面与判定同源 · 条数上限不写死", () => {
   const dialog = readFileSync(
     resolve(__dirname, "../components/equipment/EquipmentDetailDialog.vue"),
@@ -223,5 +327,10 @@ describe("界面与判定同源 · 条数上限不写死", () => {
     );
     expect(dialog, "封存上限应读 sealCapacity(与判定同一处)").toContain("sealCapacity(");
     expect(dialog, "不该再出现「重铸次数 x/10」这类写死的分母").not.toMatch(/重铸次数\s*\{\{/);
+  });
+
+  it("已封存词条有「解除封存」入口,且与核心同源(unsealAffix)", () => {
+    expect(dialog, "界面应调用 unsealAffix(与核心同一处)").toContain("unsealAffix");
+    expect(dialog, "解除按钮文案").toMatch(/解除/);
   });
 });

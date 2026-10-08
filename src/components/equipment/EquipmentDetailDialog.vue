@@ -129,13 +129,22 @@
             >
               封存
             </button>
-            <span
-              v-else-if="isAffixSealed(line.id)"
-              class="shrink-0 text-jade"
-              role="img"
-              aria-label="这条词条已封存"
-            >
-              <GameIcon name="lock" :size="12" />
+            <span v-else-if="isAffixSealed(line.id)" class="flex shrink-0 items-center gap-1">
+              <span class="text-jade" role="img" aria-label="这条词条已封存">
+                <GameIcon name="lock" :size="12" />
+              </span>
+              <!--
+                解除封存:免费即时 —— 锁是花过的沉没成本,解开只是放弃这条槽位的保护,
+                既不收费也不退款(见 reforge.unsealAffix 的注释)。故不做付不起置灰,
+                与封存的账目纪律区分开。
+              -->
+              <button
+                class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-ink-faint hover:text-qing active:scale-90 active:opacity-60"
+                :aria-label="`解除封存词条${line.name}`"
+                @click="doUnsealAffix(line.id)"
+              >
+                解除
+              </button>
             </span>
           </li>
         </ul>
@@ -478,6 +487,7 @@ import {
   sealAffix,
   sealCapacity,
   sealCost,
+  unsealAffix,
   type ReforgeTarget,
 } from "@/core/reforge";
 import { affixDef, AFFIXES } from "@/data/affixes";
@@ -575,6 +585,10 @@ function canSealAffix(affixId: string): boolean {
 
 function doSealAffix(affixId: string): void {
   if (inst.value) sealAffix(inst.value.uid, affixId);
+}
+
+function doUnsealAffix(affixId: string): void {
+  if (inst.value) unsealAffix(inst.value.uid, affixId);
 }
 
 function doReforge(): void {

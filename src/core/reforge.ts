@@ -161,6 +161,28 @@ export function sealAffix(uid: string, affixId: string): boolean {
   return true;
 }
 
+/**
+ * 解除封存(解锁):把 affixId 从 sealedAffixIds 移除,该词条重回可重掷位。
+ *
+ * 解锁语义判断:锁是花过的沉没成本 —— 封存付费时已结清,解开只是**放弃对这条槽位的
+ * 保护**(它从此又能被重铸洗掉),既不收费也不退款。就是「降低保护」的反向操作,
+ * 与封存共用同一份 sealedAffixIds 事实源,不另写一套账。
+ * 该词条本就未封存时 no-op(返回 false,不动实例)。
+ * 不触碰「至少留一可重掷位」的封存上限:那是封存侧加封时的校验,解锁只会减封存,
+ * 天然不违反上限、也无需在这里重算成本。
+ */
+export function unsealAffix(uid: string, affixId: string): boolean {
+  const inventory = useInventoryStore();
+  const inst = inventory.findItem(uid);
+  if (!inst) return false;
+  const sealed = inst.sealedAffixIds ?? [];
+  if (!sealed.includes(affixId)) return false;
+  inventory.replaceItem({ ...inst, sealedAffixIds: sealed.filter((id) => id !== affixId) });
+  const name = affixDef(affixId)?.name ?? "词条";
+  notify(`「${name}」已解除封存,回到可重掷位`, "success");
+  return true;
+}
+
 // ---------- 自动重铸(玩家反馈:一键重铸多次,洗到指定词条就停) ----------
 
 /** 自动重铸的停止条件:出现「id 命中且 roll ≥ minRoll(未给则任意值)」即收手 */
