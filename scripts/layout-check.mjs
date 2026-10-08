@@ -3974,7 +3974,9 @@ async function taskDongfuBuild() {
       failures.push("[390] 营造场景:洞府页没有可动工的建筑(判据没跑到东西)");
     } else {
       const label = ((await buildBtn.textContent()) || "").replace(/\s+/g, " ").trim();
-      const oreCost = Number((/([\d,]+)\s*铁/.exec(label.replace(/,/g, "")) || [])[1] ?? NaN);
+      // 资源名 7f91a90 起统一为「玄铁」,卡片代价是「· 40 玄铁」;此前只认「铁」,
+      // 读「40 玄铁」解析成 NaN,营造账目判据永远红。给「玄」留可选位,兼容新旧两种写法。
+      const oreCost = Number((/([\d,]+)\s*玄?铁/.exec(label.replace(/,/g, "")) || [])[1] ?? NaN);
       await buildBtn.click({ timeout: 3000 }).catch(() => {});
       await page.waitForTimeout(800);
       const toast = await page.evaluate(() =>
