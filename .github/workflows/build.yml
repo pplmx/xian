@@ -22,6 +22,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 静态门禁单独跑一次(gate.yml 可复用工作流):check + test + build + engine + standalone。
+  # build-electron 与 build-android 原本各内联一遍这套判据,现共用这一个 gate 的产物门。
+  gate:
+    uses: ./.github/workflows/gate.yml
+
   # 0. 版本闸门:tag 必须与 package.json 是同一个版本
   #
   # 两处版本号各有各的用处 —— tag 决定 Release 挂在哪个名下,package.json 决定
@@ -60,7 +65,7 @@ jobs:
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          version: "1.0.0"
+          version-file: package.json
           node-version: "22"
           cache: true
           run-install: false
@@ -103,7 +108,7 @@ jobs:
   # 1. 构建 Electron 客户端
   build-electron:
     name: 构建 Electron (${{ matrix.os }})
-    needs: [guard, ui-check]
+    needs: [guard, ui-check, gate]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -116,23 +121,14 @@ jobs:
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          version: "1.0.0"
+          version-file: package.json
           node-version: "22"
           cache: true
           run-install: false
 
-      # 过闸才继续:lint/类型检查/单测任意一条红,构建与发布都停在这
-      - name: 静态检查 + 单元测试
-        run: |
-          vp install --frozen-lockfile
-          bun run check
-          # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs);
-          # 失败/跳过/未登记分类/文档例数不符都会红,替代裸 `bun run test` 少跑一遍测试
-          bun run test:report
-          # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
-          bun run check:engine
-          # 公共库还要"能单独成 repo":整份复制到临时目录,独立编译 + 独立跑用例 + 独立装配
-          bun run check:engine:standalone
+      # 闸门在 gate job 里统一过(check/test/build/engine/standalone),这里只装依赖
+      - name: 安装依赖
+        run: vp install --frozen-lockfile
 
       - name: 缓存 Electron Builder
         uses: actions/cache@v6
@@ -160,7 +156,7 @@ jobs:
   # 2. 构建 Android APK
   build-android:
     name: 构建 Android APK
-    needs: [guard, ui-check]
+    needs: [guard, ui-check, gate]
     runs-on: ubuntu-latest
     # 签名口令走 Secrets 注入(不落在仓库文件里)。
     #
@@ -176,20 +172,13 @@ jobs:
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          version: "1.0.0"
+          version-file: package.json
           node-version: "22"
           cache: true
           run-install: false
 
-      - name: 静态检查 + 单元测试
-        run: |
-          vp install --frozen-lockfile
-          bun run check
-          # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs)
-          bun run test:report
-          # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
-          bun run check:engine
-          bun run check:engine:standalone
+      - name: 安装依赖
+        run: vp install --frozen-lockfile
 
       - name: 配置 Java
         uses: actions/setup-java@v6
@@ -242,7 +231,7 @@ jobs:
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          version: "1.0.0"
+          version-file: package.json
           node-version: "22"
           cache: true
           run-install: false

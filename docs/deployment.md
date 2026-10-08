@@ -158,16 +158,22 @@ docker stats xuanshu                # 资源占用
 
 ## CI/CD
 
-`.github/workflows/xuanshu.yml` 在 push 到 `main`、打 `v*.*.*` 标签或手动触发时执行:
-`bun run check` + `bun run test` 全绿 → `bun run build` → 校验 `dist/index.html` →
-用 `Dockerfile.ci` 构建多架构镜像 → 推送 GHCR(`latest` / 版本号 / commit sha 三个标签);
+静态门禁(env + 类型 + 格式 + lint + 文档 + 测试 + 构建)抽成共享可复用工作流
+`.github/workflows/gate.yml`:`vp fmt --check && vp run verify`(verify 串起
+`bun run check` + `bun run test` + build + engine 自检 + standalone)。部署 Pages、发布
+Docker 镜像、构建客户端各自引用 gate 一次,不再重复内联整段判据;本机
+`.vite-hooks/pre-commit` 跑同一套,保证「本地能过 = CI 能过」。
+
+镜像发布走 `.github/workflows/publish.yml`(曾写作 `xuanshu.yml`,实际文件名已改):push
+到 `main`、打 `v*.*.*` 标签或手动触发时执行 —— 先过共享 gate,再用 `Dockerfile.ci`
+构建多架构镜像 → 推送 GHCR(`latest` / 版本号 / commit sha 三个标签);
 配置了 Docker Hub 凭据时同样推送一份。
 
 要在自己的 fork 里发布镜像,把上面这套步骤照抄即可:
 
 ```yaml
       - run: vp install --frozen-lockfile
-      - run: bun run check && bun run test
+      - run: vp fmt --check && vp run verify
       - run: bun run build
       - run: cp .dockerignore.ci .dockerignore
       - uses: docker/build-push-action@v7

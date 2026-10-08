@@ -1,2 +1,10 @@
+#!/usr/bin/env sh
+set -e
+
+# 与 CI 的共享门禁(gate.yml)跑同一套完整判据,保证「本地能过 = CI 能过」。
+# 完整判据 = vp fmt --check(格式/oxfmt)+ vp run verify(
+#   check = env + 类型 + lint + 文档, 再 test + test:report + build + check:engine + standalone)。
+# 先让 vp 按 vite.config 的 staged 规则把暂存区格式/lint 修一遍,再做全量校验。
 vp staged
-bun run type-check
+vp fmt --check
+vp run verify

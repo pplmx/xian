@@ -19,7 +19,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    uses: ./.github/workflows/gate.yml
+
   build-and-push:
+    needs: gate
     runs-on: ubuntu-latest
     # 构建 + 双平台推镜像一条龙,长点没关系,但得有上限:卡在 QEMU 慢构建或
     # Docker Hub 限速时,40 分钟后该推开路让位,而不是把 Runner 挂到平台去收尸。
@@ -42,22 +46,13 @@ jobs:
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
-          version: "1.0.0"
+          version-file: package.json
           node-version: "22"
           cache: true
           run-install: false
 
       - name: 安装依赖
         run: vp install --frozen-lockfile
-
-      - name: 静态检查 + 单元测试
-        run: |
-          bun run check
-          # test:report = 一次完整 vitest 运行 + 分类报告 + 文档例数核对(见 scripts/test-report.mjs)
-          bun run test:report
-          # 公共库的发布产物自检(见 scripts/engine-dist.mjs)
-          bun run check:engine
-          bun run check:engine:standalone
 
       # 镜像是要发出去的,故直接构建生产产物。
       - name: 构建项目 · 带时长上限

@@ -1,0 +1,73 @@
+name: 共享静态门禁 (可复用工作流)
+
+# 静态门禁的唯一实现:env + 类型 + 格式(oxfmt) + lint + 文档 + 测试 + 构建。
+# 全仓各 workflow(部署 Pages / 发布镜像 / 构建客户端)都用 `uses` 引用它一次,
+# 不再各自内联整段「check + test:report + check:engine + standalone」——
+# 要改判据只改这一处;一次 push 多个 workflow 同时触发,也只在各自 workflow 里跑一遍。
+# 本机 `.vite-hooks/pre-commit` 跑同一套命令,保证「本地能过 = CI 能过」。
+#
+# 完整判据命令:`vp fmt --check && vp run verify`
+#   · vp fmt --check —— 格式(oxfmt,只判不改),补上 CI 此前缺的格式判据
+#   · vp run verify  —— 仓库 vite.config.ts 的 verify 任务(cache:false 每次真跑):
+#       bun run check(env + 类型 + lint + 文档) + test + test:report +
+#       build + check:engine + check:engine:standalone
+#
+# 运行时 pin:Node 22(与 engines >=22.18 一致)、Bun 走 packageManager(1.4.2)、
+# Vite+ 用 version-file 从 package.json 的 catalog 解到 lockfile 版本(不再手抄,杜绝漂移)。
+on:
+  workflow_call:
+
+jobs:
+  gate:
+    name: 静态门禁 (check·test·build·engine)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v7
+
+      - name: 设置 Vite+ (Node 22 · Bun 按 packageManager · Vite+ 按 lockfile)
+        uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          version-file: package.json
+          node-version: "22"
+          cache: true
+          run-install: false
+
+      # —— 缓存:跨 job、跨 run 复用,避免每次重下/重算 ——
+      # bun install 缓存要先于 install 恢复,装依赖时才能命中
+      - name: 缓存 bun install
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: 安装依赖 (frozen)
+        run: vp install --frozen-lockfile
+
+      - name: 缓存 vue-tsc 增量 (tsbuildinfo)
+        uses: actions/cache@v6
+        with:
+          path: |
+            **/*.tsbuildinfo
+            node_modules/.tmp
+          key: tsbuildinfo-${{ runner.os }}-${{ hashFiles('tsconfig*.json','packages/**/tsconfig*.json','vite.config.ts') }}
+          restore-keys: |
+            tsbuildinfo-${{ runner.os }}-
+
+      - name: 缓存 vitest/vite (node_modules/.vite)
+        uses: actions/cache@v6
+        with:
+          path: node_modules/.vite
+          key: vitest-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            vitest-${{ runner.os }}-
+
+      # 完整判据:格式 + check + test + test:report + build + engine + standalone
+      # (与 .vite-hooks/pre-commit 跑同一套,见 gate 顶部注释)
+      - name: 完整门禁 (vp fmt --check && vp run verify)
+        run: |
+          vp fmt --check
+          vp run verify
