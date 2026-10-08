@@ -31,6 +31,10 @@
         <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
           「{{ player.realm.basis }}」{{ player.realm.lore }}
         </p>
+        <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
+        <div class="mx-auto mt-3 max-w-xs">
+          <RealmLadder :major="player.major" />
+        </div>
       </div>
       <div class="mt-4">
         <!--
@@ -627,6 +631,7 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import GongfaDialog from "@/components/cultivation/GongfaDialog.vue";
 import BuffDialog from "@/components/cultivation/BuffDialog.vue";
+import RealmLadder from "@/components/cultivation/RealmLadder.vue";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
