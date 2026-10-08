@@ -238,6 +238,19 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cult?.src).toContain("在辅修席");
   });
 
+  it("功法门类签不得退回实心印面 —— 选中是 6% 朱砂底上的墨字", () => {
+    // 门类签刻意避开 kyunyin 那种「整块实心印面 + 奶油字」:同色底最多 6%,
+    // 文字不叠透明度。选中=6% 朱砂淡底 + 墨字,未选中=淡墨不铺底。
+    // 若有人把分类签改回 .btn-seal 实心印面,下面的守卫红 —— 不许悄悄退化。
+    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    // 选中签:6% 朱砂淡底 + 墨字(不是奶油字印面)
+    expect(cult?.src).toContain("bg-cinnabar/6 text-ink");
+    // 未选中:淡墨,不铺 6% 底
+    expect(cult?.src).toContain("text-ink-faint");
+    // 分类签上不能用 .btn-seal 那种奶油字实心印面(它在 role="tab" 附近出现即退化)
+    expect(cult?.src).not.toMatch(/role="tab"[\s\S]{0,400}?btn-seal/);
+  });
+
   it("灵草坊买十用十株的门槛 + 付不起摆短差 —— 灯灰必须说出差多少", () => {
     // 买10 曾拿单株价当门槛(够 1 株就亮),点了才弹「灵石不足」;付不起了也只
     // 沉到底不报差,与同文件法宝炼化的「尚差」句式不一致。两者一起钉死:
