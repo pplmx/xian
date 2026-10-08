@@ -137,7 +137,7 @@
           {{ isMain ? "主修中" : "设为主修" }}
         </button>
         <button v-else class="btn-seal flex-1" @click="toggleSub">
-          {{ isSub ? "卸下辅修" : "设为辅修" }}
+          {{ subSlotLabel }}
         </button>
         <!-- 进修付不起就置灰+列差:缺哪样、差多少都在按钮上直说(与聚气丹/建筑同款纪律) -->
         <button
@@ -230,6 +230,12 @@ const previewRows = computed(() => {
 
 const isMain = computed(() => def.value && cultivation.mainGongfa === def.value.id);
 const isSub = computed(() => def.value && cultivation.subGongfa.includes(def.value.id));
+/** 秘术没有自己的席,装上的是辅修席。按钮把这件事说穿,和列表上的「在辅修席」同一句话。 */
+const subSlotLabel = computed(() => {
+  const secret = def.value?.type === "secret";
+  if (isSub.value) return secret ? "移出辅修席" : "卸下辅修";
+  return secret ? "放入辅修席" : "设为辅修";
+});
 
 // Phase 31 A3:满级悟道分支
 const fullLevel = computed(() => (def.value ? level.value >= (def.value.maxLevel ?? 9) : false));

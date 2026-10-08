@@ -517,39 +517,105 @@
           <GameIcon name="flame" :size="15" class="text-cinnabar" />
         </button>
 
-        <!-- 已习得列表(限高滚动,功法过多不撑爆页面) -->
-        <div
-          v-if="learnedList.length"
-          class="card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-1"
-        >
-          <button
-            v-for="def in learnedList"
-            :key="def!.id"
-            class="flex w-full items-center gap-3 px-2.5 py-2.5 text-left active:bg-ink/4"
-            @click="ui.gongfaDetailId = def!.id"
+        <!--
+          一门一册:签与书目同卡,选中签是 6% 朱砂底上的墨字,不铺三色印面。
+          窄屏只留印章与部数,门名在读屏标签里。行分两行,名字不再被层数和席位挤扁。
+        -->
+        <div class="card-ink overflow-hidden">
+          <div
+            class="flex gap-1 border-b border-ink/10 p-1"
+            role="tablist"
+            aria-label="功法门类"
+            @keydown="onGongfaCatKeydown"
           >
-            <span class="font-kai text-[13px]" :style="{ color: qualityDef(def!.quality).color }">{{
-              def!.name
-            }}</span>
-            <span class="text-[10px] text-ink-faint">{{ cultivation.learned[def!.id] }} 层</span>
-            <!-- Phase 31 A3:已选分支显示道名;确有歧路可择时才招手,否则只报「圆满」 -->
-            <span v-if="branchName(def!.id)" class="text-[10px] text-gold-ink">
-              {{ branchName(def!.id) }}
-            </span>
-            <span v-else-if="canEnlighten(def!.id)" class="text-[10px] text-qing">待悟道 →</span>
-            <span v-else-if="isFull(def!.id)" class="text-[10px] text-ink-faint">圆满</span>
-            <span
-              class="ml-auto text-[10px]"
-              :class="equipStateOf(def!.id) ? 'text-jade' : 'text-ink-faint'"
+            <button
+              v-for="g in gongfaCategories"
+              :key="g.type"
+              type="button"
+              role="tab"
+              :aria-selected="gongfaCat === g.type"
+              :aria-label="`${GONGFA_TYPE_NAMES[g.type]} ${g.items.length} 部`"
+              :tabindex="gongfaCat === g.type ? 0 : -1"
+              class="flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 font-kai text-[13px] tracking-[0.14em]"
+              :class="
+                gongfaCat === g.type
+                  ? 'bg-cinnabar/6 text-ink'
+                  : 'text-ink-faint active:text-ink-soft'
+              "
+              @click="gongfaCat = g.type"
             >
-              {{ equipStateOf(def!.id) || "未装配" }}
-            </span>
-          </button>
+              <span
+                class="font-kai text-[12px]"
+                :class="gongfaCat === g.type ? 'text-cinnabar' : 'text-ink-faint'"
+                >{{ gongfaSeal(g.type) }}</span
+              >
+              <span class="hidden min-[360px]:inline">{{ GONGFA_TYPE_NAMES[g.type] }}</span>
+              <span class="tabular text-[10px] text-ink-faint">{{ g.items.length }}</span>
+            </button>
+          </div>
+
+          <div
+            class="max-h-72 overflow-y-auto"
+            :class="activeGongfaItems.length ? 'divide-y divide-ink/7' : ''"
+            role="tabpanel"
+            :aria-label="GONGFA_TYPE_NAMES[gongfaCat]"
+          >
+            <button
+              v-for="def in activeGongfaItems"
+              :key="def.id"
+              class="flex w-full flex-col gap-1 px-3 py-2.5 text-left active:bg-ink/4"
+              @click="ui.gongfaDetailId = def.id"
+            >
+              <span class="flex min-w-0 items-baseline justify-between gap-3">
+                <span
+                  class="min-w-0 truncate font-kai text-[14px] leading-none"
+                  :style="{ color: qualityDef(def.quality).color }"
+                  >{{ def.name }}</span
+                >
+                <span class="shrink-0 tabular text-[10px] text-ink-faint"
+                  >第 {{ cultivation.learned[def.id] }} 层</span
+                >
+              </span>
+              <span class="flex min-w-0 items-center gap-1.5">
+                <span
+                  v-if="branchName(def.id)"
+                  class="min-w-0 truncate rounded bg-gold-ink/6 px-1.5 py-0.5 text-[10px] text-gold-ink"
+                >
+                  {{ branchName(def.id) }}
+                </span>
+                <span
+                  v-else-if="canEnlighten(def.id)"
+                  class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-[10px] text-qing"
+                  >待悟道</span
+                >
+                <span v-else-if="isFull(def.id)" class="shrink-0 text-[10px] text-ink-faint"
+                  >圆满</span
+                >
+                <span v-else class="shrink-0 text-[10px] text-ink-faint">修习中</span>
+                <span
+                  class="ml-auto shrink-0 text-[10px]"
+                  :class="equipStateOf(def.id) ? 'text-qing' : 'text-ink-faint'"
+                >
+                  {{ equipStateOf(def.id) || "未装配" }}
+                </span>
+              </span>
+            </button>
+            <p
+              v-if="activeGongfaItems.length === 0"
+              class="empty-note px-4 py-6 text-center text-[11px] leading-relaxed text-ink-faint"
+            >
+              <span
+                class="mx-auto mb-2 grid h-7 w-7 place-items-center rounded-md bg-cinnabar/6 font-kai text-[13px] text-cinnabar"
+                aria-hidden="true"
+                >{{ gongfaSeal(gongfaCat) }}</span
+              >
+              <template v-if="learnedCount === 0">
+                尚无一部习得之法 —— 于下方藏经阁参悟,点亮道途
+              </template>
+              <template v-else>此门尚无习得。藏经阁参悟之后,会出现在这里。</template>
+            </p>
+          </div>
         </div>
-        <!-- 开局尚无一部习得功法:别让带边框的容器空着一块白板,说一句下一步在哪 -->
-        <p v-else class="empty-note card-ink px-4 py-3 text-center text-[11px] text-ink-faint">
-          尚无一部习得之法 —— 于下方藏经阁参悟,点亮道途
-        </p>
 
         <!--
           参悟池还剩几部也报出来:藏经阁是「花残页赌一部没见过的」,
@@ -608,7 +674,8 @@ import { usePill } from "@/core/pillService";
 import { qiRepairView, repairWithQi } from "@/core/qiRepair";
 import { useNow } from "@/composables/useNow";
 import { BREAKTHROUGH_PREP_OPTIONS } from "@/data/earlyGame";
-import { GONGFA, gongfaDef } from "@/data/gongfa";
+import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
+import type { GongfaDef, GongfaType } from "@/types";
 import { ELEMENTS } from "@/data/linggen";
 import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from "@/data/gongfaBranches";
 import { buffDef } from "@/data/buffs";
@@ -900,12 +967,66 @@ const breakthroughBuffRows = computed(() =>
     .filter((x): x is { buffId: string; name: string; rate: number; effect: string } => x !== null),
 );
 
-const learnedList = computed(() =>
-  Object.keys(cultivation.learned)
-    .map((id) => gongfaDef(id))
-    .filter((d) => d !== undefined)
-    .sort((a, b) => qualityDef(b!.quality).rank - qualityDef(a!.quality).rank),
+const GONGFA_CAT_ORDER: GongfaType[] = ["main", "sub", "secret"];
+
+function gongfaSeal(type: GongfaType): string {
+  if (type === "secret") return "秘";
+  if (type === "main") return "主";
+  return "辅";
+}
+
+/** 已习得按门分组。栏内品阶降序,同品按准入境界、再按功法名。默认停在主修,不因空门改签。 */
+const gongfaCategories = computed(() => {
+  const byType: Partial<Record<GongfaType, GongfaDef[]>> = {};
+  for (const id of Object.keys(cultivation.learned)) {
+    const def = gongfaDef(id);
+    if (!def) continue;
+    (byType[def.type] ??= []).push(def);
+  }
+  const sortItems = (a: GongfaDef, b: GongfaDef) =>
+    qualityDef(b.quality).rank - qualityDef(a.quality).rank ||
+    a.minRealm - b.minRealm ||
+    a.name.localeCompare(b.name, "zh");
+  return GONGFA_CAT_ORDER.map((type) => ({
+    type,
+    items: (byType[type] ?? []).sort(sortItems),
+  }));
+});
+
+const gongfaCat = ref<GongfaType>("main");
+const activeGongfaItems = computed(
+  () => gongfaCategories.value.find((g) => g.type === gongfaCat.value)?.items ?? [],
 );
+const learnedCount = computed(() => gongfaCategories.value.reduce((n, g) => n + g.items.length, 0));
+
+function onGongfaCatKeydown(e: KeyboardEvent): void {
+  if ((e.target as HTMLElement).getAttribute?.("role") !== "tab") return;
+  let idx = GONGFA_CAT_ORDER.indexOf(gongfaCat.value);
+  switch (e.key) {
+    case "ArrowLeft":
+      idx -= 1;
+      break;
+    case "ArrowRight":
+      idx += 1;
+      break;
+    case "Home":
+      idx = 0;
+      break;
+    case "End":
+      idx = GONGFA_CAT_ORDER.length - 1;
+      break;
+    default:
+      return;
+  }
+  idx = (idx + GONGFA_CAT_ORDER.length) % GONGFA_CAT_ORDER.length;
+  e.preventDefault();
+  const target = GONGFA_CAT_ORDER[idx];
+  if (target === undefined) return;
+  gongfaCat.value = target;
+  (e.currentTarget as HTMLElement)
+    .querySelectorAll<HTMLButtonElement>('[role="tab"]')
+    [idx]?.focus();
+}
 
 const mainDef = computed(() =>
   cultivation.mainGongfa ? gongfaDef(cultivation.mainGongfa) : undefined,
@@ -962,7 +1083,10 @@ const quickPills = computed(() =>
 
 function equipStateOf(id: string): string {
   if (cultivation.mainGongfa === id) return "主修";
-  if (cultivation.subGongfa.includes(id)) return "辅修";
+  if (cultivation.subGongfa.includes(id)) {
+    // 秘术进的是辅修席,书目门类仍叫秘术,行上把席位说穿
+    return gongfaDef(id)?.type === "secret" ? "在辅修席" : "辅修";
+  }
   return "";
 }
 

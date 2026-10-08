@@ -228,13 +228,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(charv?.src).not.toMatch(/t\.cost \} 道果/);
   });
 
-  it("已习得功法列表有空态 —— 开局一白板也是要填的话", () => {
-    // 习得列表若只有 v-for 没有空态,开局没参悟过任何功法时,这只带边框的
-    // max-h-64 容器就是一块空白(有的游戏开场就是一块能滚动的黑板)。空态给
-    // 一句「尚无一部习得之法」把下一步(参悟)递到手边。
+  it("已习得功法按门分签,空门与开局都有话 —— 不留一块白板", () => {
+    // 列表按主修/辅修/秘术分签。一门皆空时不能只剩滚动容器;
+    // 一部都没有时仍把参悟递到手边,有别的门时只说这一门还空。
     const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
-    expect(cult?.src).toMatch(/v-if="learnedList\.length"/);
-    expect(cult?.src).toMatch(/v-else[\s\S]{0,120}尚无一部习得之法/);
+    expect(cult?.src).toContain('role="tablist"');
+    expect(cult?.src).toContain("尚无一部习得之法");
+    expect(cult?.src).toContain("此门尚无习得");
+    expect(cult?.src).toContain("在辅修席");
   });
 
   it("灵草坊买十用十株的门槛 + 付不起摆短差 —— 灯灰必须说出差多少", () => {
