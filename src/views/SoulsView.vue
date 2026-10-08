@@ -165,20 +165,20 @@
           </div>
         </div>
         <p class="mt-3 text-[12px] leading-relaxed text-ink-soft">{{ soulModText(soulDetail) }}</p>
-        <template #footer>
-          <div class="flex w-full gap-2">
-            <button class="btn-ghost flex-1" @click="soulDetail = null">收 起</button>
-            <button
-              class="btn-seal flex-1"
-              @click="
-                removeSoul(soulDetail.uid);
-                soulDetail = null;
-              "
-            >
-              卸 下
-            </button>
-          </div>
-        </template>
+      </template>
+      <template #footer>
+        <div v-if="soulDetail" class="flex w-full gap-2">
+          <button class="btn-ghost flex-1" @click="soulDetail = null">收 起</button>
+          <button
+            class="btn-seal flex-1"
+            @click="
+              removeSoul(soulDetail.uid);
+              soulDetail = null;
+            "
+          >
+            卸 下
+          </button>
+        </div>
       </template>
     </BaseModal>
 
