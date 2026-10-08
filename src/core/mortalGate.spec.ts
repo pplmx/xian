@@ -10,37 +10,13 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { GATES, evaluateGates, generateGatedSeries, wouldPassWithAverage } from "./mortalGate";
-import {
-  ROUTE_SHAPES,
-  RHYTHM_ARCHETYPES,
-  generateMortalWorld,
-  shuffleOnlyWorld,
-} from "./mortalWorldGen";
-import { avgVisibleByDim, visibleFeatures } from "./mortalIdentity";
+import { generateMortalWorld, shuffleOnlyWorld } from "./mortalWorldGen";
+import { avgVisibleByDim } from "./mortalIdentity";
 
 const SERIES = generateGatedSeries(6, 20260904, 10);
 const WORLDS = SERIES.map((s) => s.report.world);
 
 describe("验收门 · 路线骨架与事件节奏是否活了", () => {
-  it("模板库", () => {
-    console.log("\n路线骨架:");
-    for (const s of ROUTE_SHAPES)
-      console.log(`  ${s.name.padEnd(6)} ${s.tiers.join(" → ")}(${s.tiers.length} 段)`);
-    console.log("事件节奏:");
-    for (const r of RHYTHM_ARCHETYPES) console.log(`  ${r.name.padEnd(6)} ${r.curve.join(" ")}`);
-  });
-
-  it("六世的骨架与节奏", () => {
-    console.log("\n世代  骨架      节奏        层级序列              事件密度");
-    for (const [i, w] of WORLDS.entries()) {
-      const v = visibleFeatures(w);
-      console.log(
-        `${String(i + 1).padStart(4)}  ${w.shapeName.padEnd(8)} ${w.rhythmName.padEnd(10)} ` +
-          `${v.shape.join("-").padEnd(20)}  ${v.eventDensity.join("")}`,
-      );
-    }
-  });
-
   it("上一轮死掉的两维活过来了", () => {
     const dims = avgVisibleByDim(WORLDS);
     console.log("\n可见维度        两两平均距离(上一轮 → 本轮)");
@@ -76,22 +52,6 @@ describe("验收门 · 路线骨架与事件节奏是否活了", () => {
 });
 
 describe("验收门 · 四门独立", () => {
-  it("逐世的各门读数", () => {
-    console.log("\n世代  结构新颖  可行构筑  非必胜余量  路线骨架  事件节奏  弃用");
-    for (const [i, s] of SERIES.entries()) {
-      const g = Object.fromEntries(s.report.gates.map((x) => [x.name, x.value]));
-      console.log(
-        `${String(i + 1).padStart(4)} ${g["结构新颖"]!.toFixed(3).padStart(9)} ` +
-          `${String(g["可行构筑"]).padStart(9)} ${g["非必胜"]!.toFixed(3).padStart(11)} ` +
-          `${g["路线骨架"]!.toFixed(3).padStart(9)} ${g["事件节奏"]!.toFixed(3).padStart(9)} ` +
-          `${String(s.rejected).padStart(5)}`,
-      );
-    }
-    console.log(
-      `\n门槛:结构 ${GATES.structural} · 构筑 ${GATES.viable} · 骨架 ${GATES.skeleton} · 节奏 ${GATES.rhythm}`,
-    );
-  });
-
   it("六世全部过四门", () => {
     expect(SERIES.length).toBe(6);
     for (const s of SERIES) {
@@ -131,31 +91,6 @@ describe("验收门 · 四门独立", () => {
     if (byAverage) {
       console.log("\n平均口径放行了一个骨架与节奏完全照抄的世界 —— 这就是要拆成四门的原因");
     }
-  });
-
-  it("各门的否决统计:看哪一门在真正起作用", () => {
-    const total: Record<string, number> = {};
-    for (const s of SERIES) {
-      for (const [k, v] of Object.entries(s.rejectionsByGate)) total[k] = (total[k] ?? 0) + v;
-    }
-    console.log("\n门            否决候选次数");
-    for (const [k, v] of Object.entries(total).sort((a, b) => b[1] - a[1])) {
-      console.log(`${k.padEnd(12)} ${v}`);
-    }
-    const dead = ["结构新颖", "路线骨架", "事件节奏"].filter((g) => (total[g] ?? 0) === 0);
-    console.log(
-      dead.length > 0
-        ? `\n从未否决过任何候选的门:${dead.join("、")}`
-        : "\n三道新颖门都实际否决过候选,不是摆设",
-    );
-    console.log(
-      "\n这份统计要长期看:「从未命中」与「无判别力」是两回事 ——" +
-        "\n结构门已由纯洗牌反例证明有效(见上一条),只是当前生成器撞不到它的下限。" +
-        "\n内容池扩充、规则组合改变之后它可能开始起作用," +
-        "\n故每次都输出命中次数而非只输出「全部通过」——" +
-        "\n否则过几个版本就看不出哪道门已经沦为装饰",
-    );
-    expect(Object.keys(total).length).toBeGreaterThanOrEqual(0);
   });
 });
 

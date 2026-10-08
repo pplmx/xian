@@ -19,29 +19,9 @@ import {
   qualifiedRewards,
   reachabilityTable,
 } from "./contentGateAudit";
-import { MANUAL_REBIRTH_MIN_MAJOR } from "./reincarnation";
-import { REALMS, WORLD_BREAK_MAJOR } from "@/data/realms";
-
-const NAMES = REALMS.map((r) => r.name);
+import { WORLD_BREAK_MAJOR } from "@/data/realms";
 
 describe("内容可达性 · 门槛全貌", () => {
-  it("逐类内容的真实门槛与金丹可达度", () => {
-    console.log(
-      `\n轮回门槛 = ${NAMES[MANUAL_REBIRTH_MIN_MAJOR]}(major ${MANUAL_REBIRTH_MIN_MAJOR})`,
-    );
-    console.log("内容            门槛性质  最低境界  金丹可达  深修专属  可作独有回报");
-    for (const r of reachabilityTable()) {
-      const g = r.gate;
-      const share =
-        r.goldShare === null ? "   —" : `${(r.goldShare * 100).toFixed(0)}%`.padStart(5);
-      const deep = r.deepOnly === null ? "  —" : String(r.deepOnly).padStart(4);
-      console.log(
-        `${g.name.padEnd(12)} ${g.kind.padEnd(8)} ${(g.minMajor > 0 ? NAMES[g.minMajor]! : "无").padStart(6)} ` +
-          `${share} ${deep}      ${g.qualifies ? "是" : "否"}`,
-      );
-    }
-  });
-
   it("门槛分三种性质,不可混为一谈", () => {
     const kinds = new Set(CONTENT_GATES.map((g) => g.kind));
     // 获得门槛(拿不到)、触发门槛(事件不出现)、无门槛——本项目暂无「使用门槛」

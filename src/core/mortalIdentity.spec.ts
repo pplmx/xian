@@ -29,14 +29,6 @@ const SERIES = generateSeries(6, 20260904, 10);
 const WORLDS = SERIES.map((s) => s.world);
 
 describe("可见新颖 · 世界身份", () => {
-  it("每一世都能合成出自己的身份", () => {
-    console.log("\n世代  世界名                     摘要");
-    for (const [i, w] of WORLDS.entries()) {
-      const id = worldIdentity(w);
-      console.log(`${String(i + 1).padStart(4)}  ${id.name.padEnd(24)} ${id.summary}`);
-    }
-  });
-
   it("身份是从已有素材抽出来的,不需要新写剧情", () => {
     for (const w of WORLDS) {
       const id = worldIdentity(w);
@@ -72,17 +64,6 @@ describe("可见新颖 · 世界身份", () => {
 });
 
 describe("可见新颖 · 结构与可见的落差", () => {
-  it("逐世对照", () => {
-    console.log("\n世代  结构新颖  可见新颖   落差");
-    for (let i = 1; i < WORLDS.length; i += 1) {
-      const g = noveltyGap(WORLDS[i]!, WORLDS.slice(0, i));
-      console.log(
-        `${String(i + 1).padStart(4)} ${g.structural.toFixed(3).padStart(9)} ${g.visible.toFixed(3).padStart(9)} ` +
-          `${g.gap >= 0 ? "+" : ""}${g.gap.toFixed(3)}`,
-      );
-    }
-  });
-
   it("预期被推翻:聚合可见新颖度并不低于结构新颖度", () => {
     const gaps = [];
     for (let i = 1; i < WORLDS.length; i += 1)
@@ -132,13 +113,6 @@ describe("可见新颖 · 结构与可见的落差", () => {
 });
 
 describe("可见新颖 · 体验骨架去重", () => {
-  it("骨架各维的实际取值数 —— 找出哪一维是死的", () => {
-    console.log("\n维度            取值数  样例");
-    for (const d of skeletonDimensions(WORLDS)) {
-      console.log(`${d.dim.padEnd(14)} ${String(d.values).padStart(6)}  ${d.sample}`);
-    }
-  });
-
   it("路线形状不再恒定 —— 曾经是当前生成器最明显的可见缺陷", () => {
     const dims = skeletonDimensions(WORLDS);
     const shape = dims.find((d) => d.dim === "路线形状")!;

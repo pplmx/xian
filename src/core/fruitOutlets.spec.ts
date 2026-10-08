@@ -17,7 +17,6 @@ import {
   ALL_STAT_KEYS,
   EFFICIENCY_REACH,
   OUTLETS,
-  QUADRANTS,
   budgetCurve,
   idealQuadrant,
   qualifiedOutlets,
@@ -28,13 +27,6 @@ import {
 } from "./fruitOutlets";
 
 describe("出口空间 · 效率链可达性", () => {
-  it("全部属性键到「轮回速度」的路径", () => {
-    console.log("\n跳数  属性键                路径");
-    for (const r of [...EFFICIENCY_REACH].sort((a, b) => a.hops - b.hops)) {
-      console.log(`  ${r.hops}   ${String(r.key).padEnd(20)} ${r.via}`);
-    }
-  });
-
   it("最要紧的一条:没有一个属性键是安全的", () => {
     // 逐键判定的结果是全部可达 —— 因此禁止清单不该逐项去列
     expect(statModsAllReachable(ALL_STAT_KEYS)).toBe(true);
@@ -87,11 +79,6 @@ describe("出口空间 · 效率链可达性", () => {
 });
 
 describe("出口空间 · 两个正交维度", () => {
-  it("四象限", () => {
-    console.log("\n象限                    判定");
-    for (const q of QUADRANTS) console.log(`${q.label.padEnd(22)} ${q.verdict}`);
-  });
-
   it("「花掉」不等于「安全」——这是两个维度而非一个", () => {
     // 反例:花掉道果买永久属性。余额确实减少了,回路却原样闭合
     const bad = OUTLETS.find((o) => o.id === "permStat")!;
@@ -107,17 +94,6 @@ describe("出口空间 · 两个正交维度", () => {
     expect(ideal.spend).toBe("consume");
     expect(ideal.loops).toBe(false);
     console.log(`\n理想:${ideal.label} —— ${ideal.verdict}`);
-  });
-
-  it("候选出口评估", () => {
-    console.log("\n出口              花费      发放物    重建回路  已有宿主");
-    for (const o of OUTLETS) {
-      console.log(
-        `${o.name.padEnd(16)} ${(o.spend === "consume" ? "花掉" : "不花").padEnd(8)} ` +
-          `${o.payload.padEnd(9)} ${(o.rebuildsLoop ? "是" : "否").padEnd(9)} ${o.hasHost ? "是" : "否"}`,
-      );
-      console.log(`    ${o.note}`);
-    }
   });
 
   it("合格出口里六项之中五项已有宿主系统,不必从零造", () => {

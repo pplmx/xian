@@ -90,18 +90,6 @@ describe("动机类型 · 探索型长什么样", () => {
 });
 
 describe("动机类型 · 探索型消费的三个结构条件", () => {
-  it("条件表", () => {
-    console.log("\n条件                  逆旅契  虚界  凡界有现成能力");
-    for (const c of CONDITIONS) {
-      console.log(
-        `${c.name.padEnd(20)} ${(c.trialMeets ? "✓" : "✗").padStart(5)} ` +
-          `${(c.voidMeets ? "✓" : "✗").padStart(5)} ${(c.hostReady ? "有" : "无").padStart(10)}`,
-      );
-      console.log(`    ${c.desc}`);
-      console.log(`    ${c.note}`);
-    }
-  });
-
   it("三条虚界全满足,逆旅契一条都不满足", () => {
     expect(conditionsMetBy("void")).toHaveLength(CONDITIONS.length);
     expect(conditionsMetBy("trial")).toHaveLength(0);

@@ -10,8 +10,6 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import {
-  DAO_FRUIT_COMBAT_BONUS,
-  DAO_FRUIT_CULT_BONUS,
   FRUIT_CONSUMERS,
   NOT_FRUIT_DRIVEN,
   counterfactualAt,
@@ -23,27 +21,6 @@ import {
 } from "./daoFruitRoles";
 
 describe("道果职责 · 引用点全貌", () => {
-  it("逐项归类", () => {
-    const ROLE = {
-      speed: "消费·速度",
-      power: "消费·战力",
-      production: "生产",
-      display: "展示",
-      sim: "模拟",
-    };
-    const NEED = { must: "非它不可", legacy: "历史遗留", replaceable: "可换来源" };
-    const LOOP = { direct: "直接入环", indirect: "间接入环", none: "不入环" };
-    console.log("\n引用点          角色        必要性      回环");
-    for (const c of FRUIT_CONSUMERS) {
-      console.log(
-        `${c.name.padEnd(14)} ${ROLE[c.role].padEnd(10)} ` +
-          `${(c.necessity ? NEED[c.necessity] : "—").padEnd(10)} ${LOOP[c.loop]}`,
-      );
-      console.log(`    ${c.site}`);
-      console.log(`    ${c.evidence}`);
-    }
-  });
-
   it("道果只有一个真消费者,却在同一处被赋予两个职责", () => {
     const real = realConsumers();
     expect(real).toHaveLength(2);
@@ -81,19 +58,6 @@ describe("道果职责 · 引用点全貌", () => {
 });
 
 describe("道果职责 · 两个职责的量级", () => {
-  it("逐世量级表", () => {
-    console.log(`\n速度系数 ${DAO_FRUIT_CULT_BONUS} · 战力系数 ${DAO_FRUIT_COMBAT_BONUS}`);
-    console.log("世代  累计道果  有效道果  速度加成  战力乘区");
-    for (const r of roleMagnitudes(30)) {
-      if (![1, 3, 6, 12, 20, 30].includes(r.life)) continue;
-      console.log(
-        `${String(r.life).padStart(4)} ${String(r.fruit).padStart(9)} ` +
-          `${r.effective.toFixed(1).padStart(9)} ${`+${r.speedAdd.toFixed(2)}`.padStart(9)} ` +
-          `${`×${r.powerMult.toFixed(2)}`.padStart(9)}`,
-      );
-    }
-  });
-
   it("两个职责到三十世都已是数量级级别的加成", () => {
     const m = roleMagnitudes(30);
     const last = m[m.length - 1]!;

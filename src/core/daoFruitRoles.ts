@@ -220,5 +220,3 @@ export function steadySpeedupWithoutSpeedRole(lives = 30): number {
   const t = lifeTable(lives, "linggen");
   return 1 / t[t.length - 1]!.vsFirst;
 }
-
-export { DAO_FRUIT_COMBAT_BONUS, DAO_FRUIT_CULT_BONUS };

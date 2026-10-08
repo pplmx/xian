@@ -32,18 +32,6 @@ import {
 import { legacyInsightOf } from "@/data/samsara";
 
 describe("影响面 · 宿慧的来源有两条", () => {
-  it("来源清单", () => {
-    console.log("\n宿慧的两本账:");
-    for (const c of INSIGHT_CHANNELS) {
-      console.log(
-        `  ${c.name.padEnd(8)} [${c.source === "stock" ? "存量" : "现量"}] ` +
-          `金丹一世 ${c.perGoldLife === null ? "不定" : `+${c.perGoldLife}`} · ` +
-          `${c.persisted ? "落盘" : "实时算"} · ${c.realmGated ? "高阶受境界挡" : "无境界门槛"}`,
-      );
-      console.log(`      ${c.evidence}`);
-    }
-  });
-
   it("「把宿慧移出浅轮回」对两条通道是两件事", () => {
     const stock = INSIGHT_CHANNELS.filter((c) => c.source === "stock");
     const live = INSIGHT_CHANNELS.filter((c) => c.source === "live");
@@ -60,18 +48,6 @@ describe("影响面 · 宿慧的来源有两条", () => {
 });
 
 describe("影响面 · 真实存档实测", () => {
-  it("两份存档的宿慧构成", () => {
-    console.log("\n存档            轮回  存量   现量   合计   存量占比  阶位");
-    for (const p of PROBES) {
-      console.log(
-        `${p.name.padEnd(12)} ${String(p.rebirths).padStart(4)} ` +
-          `${String(p.stockAfterLoad).padStart(5)} ${String(p.live).padStart(6)} ` +
-          `${String(totalOf(p)).padStart(6)}   ${(stockShare(p) * 100).toFixed(0).padStart(5)}%  ` +
-          `${stageAt(totalOf(p)).name}`,
-      );
-    }
-  });
-
   it("实测:靠本体系攒出的存量是零 —— 存量通道在真实玩家身上从未跑起来", () => {
     // 小黄鸭 17 世的 238 全部来自旧存档折算(字段缺失走 legacyInsightOf);
     // 白望舒 4 世字段为 0,一分未记。两人都没有一点存量是本体系发放的
@@ -113,17 +89,6 @@ describe("影响面 · 真实存档实测", () => {
 });
 
 describe("影响面 · 宿慧的消费者链", () => {
-  it("消费者按性质分两类", () => {
-    console.log("\n宿慧的消费者:");
-    for (const c of INSIGHT_CONSUMERS) {
-      console.log(
-        `  ${c.name.padEnd(16)} [${c.kind === "standing" ? "持续能力" : "开局状态"}] ` +
-          `经 ${c.via}(第 ${c.fromStage} 阶起)`,
-      );
-      console.log(`      ${c.evidence}`);
-    }
-  });
-
   it("只有「持续能力」配叫永久继承资产,开局状态可被本世行为追平", () => {
     const standing = standingConsumers().map((c) => c.name);
     const opening = openingConsumers().map((c) => c.name);
@@ -190,18 +155,6 @@ describe("影响面 · 移出存量的后果落在谁身上", () => {
 });
 
 describe("影响面 · 灵脉与先天之姿的存量处理", () => {
-  it("存量资产判定", () => {
-    console.log("\n资产        饱和度  沉没成本  轮回触碰  判定");
-    for (const a of LEGACY_ASSETS) {
-      console.log(
-        `${a.name.padEnd(10)} ${(a.saturation * 100).toFixed(0).padStart(5)}%  ` +
-          `${a.sunkCost ? "  有  " : "  无  "}    ${a.touchedByRebirth ? "是" : "否"}      ` +
-          `${a.verdict === "heritage" ? "历史遗产" : "本世建设"}`,
-      );
-      console.log(`    ${a.evidence}`);
-    }
-  });
-
   it("灵脉:两份存档都已投满,清零是追溯性剥夺已付代价", () => {
     for (const p of PROBES) {
       expect(veinTotalOf(p)).toBe(100);

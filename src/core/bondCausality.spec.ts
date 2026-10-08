@@ -33,12 +33,6 @@ const VIEW = readFileSync(resolve(__dirname, "../views/CharacterView.vue"), "utf
 /** 玩家能否回溯到事件的原因 */
 type Traceability = "traceable" | "inferable" | "abrupt";
 
-const LEVEL_NAMES: Record<Traceability, string> = {
-  traceable: "可追溯",
-  inferable: "可推断",
-  abrupt: "突兀",
-};
-
 interface CausalLink {
   /** 玩家收到的东西 */
   surface: string;
@@ -102,20 +96,6 @@ const LINKS: CausalLink[] = [
 ].map((l) => ({ ...l, level: levelOf(l.evidence, l.footprints) }));
 
 describe("因果可感知 · 现状", () => {
-  it("四条因果链的可追溯等级", () => {
-    console.log("\n玩家收到的            等级      玩家可见的证据");
-    for (const l of LINKS) {
-      console.log(
-        `${l.surface.padEnd(22)} ${LEVEL_NAMES[l.level].padEnd(8)} ${l.evidence.join(" / ") || "无"}`,
-      );
-      console.log(`    真实原因:${l.cause}`);
-    }
-    const abrupt = LINKS.filter((l) => l.level === "abrupt").length;
-    console.log(
-      `\n可追溯 ${LINKS.filter((l) => l.level === "traceable").length} · 可推断 ${LINKS.filter((l) => l.level === "inferable").length} · 突兀 ${abrupt}`,
-    );
-  });
-
   it("没有任何一条因果链达到「可追溯」", () => {
     // 可追溯的条件是原因累积期间留下过足迹。当前全部为 0
     expect(LINKS.every((l) => l.footprints === 0)).toBe(true);

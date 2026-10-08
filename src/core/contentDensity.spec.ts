@@ -40,24 +40,6 @@ function tiersOf(major: number): Set<number> {
 }
 
 describe("内容密度 · 每一境都得有新东西", () => {
-  it("逐境内容矩阵(读表,不手抄)", () => {
-    const head = ["境界", "地界", "敌人", "新功法", "新丹方"];
-    console.log(head.join("\t"));
-    for (let m = 0; m <= MAX_MAJOR; m++) {
-      const regions = REGIONS.filter((r) => r.minRealm === m);
-      const tiers = tiersOf(m);
-      console.log(
-        [
-          `${m} ${REALMS[m]!.name}`,
-          regions.length,
-          ENEMIES.filter((e) => tiers.has(e.tier)).length,
-          GONGFA.filter((g) => g.minRealm === m).length,
-          PILLS.filter((p) => p.minRealm === m).length,
-        ].join("\t"),
-      );
-    }
-  });
-
   it("每一境都至少有一条门槛落在该境的功法 —— 境界不能只是数值台阶", () => {
     const empty: string[] = [];
     for (let m = 0; m <= MAX_MAJOR; m++) {
