@@ -252,7 +252,7 @@ function bountyShort(o: BountySlot): string | null {
           </button>
         </div>
         <p v-if="bounty.orders.length === 0" class="py-3 text-center text-[11px] text-ink-faint">
-          悬赏板空着 ── 商号还没挂单,下个时辰自会换新。
+          悬赏板空着 —— 商号还没挂单,下个时辰自会换新。
         </p>
       </div>
     </section>
@@ -294,7 +294,7 @@ function bountyShort(o: BountySlot): string | null {
               {{ it.quality }}·{{ it.tier }}阶
             </button>
             <span v-if="inventory.bagItems.length === 0" class="text-[10px] text-ink-faint"
-              >行囊空空 ── 去历练中寻些机缘吧</span
+              >行囊空空 —— 去历练中寻些机缘吧</span
             >
           </div>
           <p v-else class="text-[10px] text-ink-faint">已上满 2 格,待手头一张空闲</p>
@@ -327,7 +327,7 @@ function bountyShort(o: BountySlot): string | null {
             售玄铁×{{ MARKET_MAT_COUNT }}
           </button>
           <span v-if="sellablePills.length === 0" class="text-[10px] text-ink-faint"
-            >并无即时可售的丹药 ── 历练所得,自能入市</span
+            >并无即时可售的丹药 —— 历练所得,自能入市</span
           >
         </div>
       </div>
