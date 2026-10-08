@@ -566,6 +566,17 @@
             </button>
           </div>
 
+          <p
+            v-if="gongfaPoolLeft[gongfaCat] > 0"
+            class="border-b border-ink/7 px-3 py-1.5 text-[11px] text-ink-faint"
+          >
+            此门已习 {{ activeGongfaItems.length }} 部 · 参悟池尚余
+            {{ gongfaPoolLeft[gongfaCat] }} 部
+          </p>
+          <p v-else class="border-b border-ink/7 px-3 py-1.5 text-[11px] text-ink-faint">
+            此门已收全,待更高境界再探
+          </p>
+
           <div
             class="max-h-72 overflow-y-auto"
             :class="activeGongfaItems.length ? 'divide-y divide-ink/7' : ''"
@@ -1015,6 +1026,17 @@ const activeGongfaItems = computed(
   () => gongfaCategories.value.find((g) => g.type === gongfaCat.value)?.items ?? [],
 );
 const learnedCount = computed(() => gongfaCategories.value.reduce((n, g) => n + g.items.length, 0));
+
+/** 逐门参悟池余量 —— 与全局 comprehendLeft 同源,仅按门过滤:minRealm ≤ 当前 + 1 且未习得 */
+const gongfaPoolLeft = computed<Record<GongfaType, number>>(() => {
+  const out = {} as Record<GongfaType, number>;
+  for (const t of GONGFA_CAT_ORDER) {
+    out[t] = GONGFA.filter(
+      (g) => g.type === t && g.minRealm <= player.major + 1 && !cultivation.learned[g.id],
+    ).length;
+  }
+  return out;
+});
 
 function onGongfaCatKeydown(e: KeyboardEvent): void {
   if ((e.target as HTMLElement).getAttribute?.("role") !== "tab") return;
