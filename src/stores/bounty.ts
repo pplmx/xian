@@ -6,8 +6,7 @@
  */
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { GNum, QualityId } from "@/types";
-import { gn, gnZero } from "@/utils/gnum";
+import type { QualityId } from "@/types";
 import { persistConfig } from "@/utils/storage";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -15,20 +14,9 @@ import { useInventoryStore } from "@/stores/inventory";
 import { qualityDef } from "@/data/qualities";
 import { BOUNTY_REFRESH_SECONDS, type BountyKind, type BountySlot } from "@/data/bounty";
 import { equipBountyReward, generateBounty } from "@/core/bountyService";
-import { asArray, asFiniteNumber } from "@/utils/saveShape";
+import { asArray, asFiniteNumber, asPrice } from "@/utils/saveShape";
 
 export type BountyClaimResult = "ok" | "claimed" | "insufficient" | "nobag" | "missing";
-
-/** 悬赏里的价坏了就归零(归零意味着「能交」;换新会重填,不会真以零成交) */
-function gprice(v: unknown): GNum {
-  if (!v || typeof v !== "object" || !("m" in v) || !("e" in v)) return gnZero();
-  const shaped = v as { m: unknown; e: unknown };
-  const m = shaped.m;
-  const e = shaped.e;
-  if (typeof m === "number" && typeof e === "number" && Number.isFinite(m) && Number.isFinite(e))
-    return gn({ m, e });
-  return gnZero();
-}
 
 function isKind(v: unknown): v is BountyKind {
   return v === "herb" || v === "ore" || v === "pill" || v === "equip";
@@ -65,7 +53,7 @@ export const useBountyStore = defineStore(
           kindId: "kindId" in raw && typeof raw.kindId === "string" ? raw.kindId : "",
           target: Math.max(1, nonNeg("target" in raw ? raw.target : 1, 1)),
           tier: nonNeg("tier" in raw ? raw.tier : 0, 0),
-          reward: gprice("reward" in raw ? raw.reward : undefined),
+          reward: asPrice("reward" in raw ? raw.reward : undefined),
           extra: Math.max(0, nonNeg("extra" in raw ? raw.extra : 0, 0)),
           claimed: "claimed" in raw && raw.claimed === true,
         });

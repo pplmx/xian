@@ -14,12 +14,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { pillDef } from "@/data/pills";
 import { formatGN } from "@/utils/format";
-import {
-  MARKET_CONSIGN_SECONDS,
-  MARKET_MAT_COUNT,
-  MARKET_REFRESH_SECONDS,
-  type MarketSlot,
-} from "@/data/market";
+import { MARKET_CONSIGN_SECONDS, MARKET_MAT_COUNT, MARKET_REFRESH_SECONDS } from "@/data/market";
 import { marketEquipInstance, marketRemainingSec } from "@/core/marketService";
 import { bountyRemainingSec } from "@/core/bountyService";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
@@ -62,11 +57,17 @@ const remainingText = computed(() => {
   return h > 0 ? `${h}时${m}分` : `${m}分${s % 60}秒`;
 });
 
-/** 预览一件货架装备(确定性实例,不落库) */
-function previewEquip(slot: MarketSlot) {
-  if (slot.kind !== "equipment") return null;
-  return marketEquipInstance(slot, market.stockedAt);
-}
+/**
+ * 货架装备预览(确定性实例,只取品质,不落库)。缓成 per-slot 表:
+ * 只随货架 / 上货时刻重算,不再随每秒的倒计时重掷整件装备(避免每个 tick 生成 6 次)。
+ */
+const previews = computed<Record<number, string>>(() => {
+  const m: Record<number, string> = {};
+  for (const s of market.stock) {
+    if (s.kind === "equipment") m[s.idx] = marketEquipInstance(s, market.stockedAt).quality;
+  }
+  return m;
+});
 
 const sellablePills = computed(() =>
   Object.entries(inventory.pills)
@@ -146,10 +147,10 @@ function claimBounty(idx: number): void {
             </template>
             <template v-else>
               <p class="truncate">
-                {{ previewEquip(slot)?.quality }} 阶·{{ player.major }} 层
-                <span class="text-ink-faint">
-                  品质底档{{ (slot as { minQualityRank: number }).minQualityRank }}
-                </span>
+                {{ previews[slot.idx] }}·{{ player.major }} 层
+                <span class="text-ink-faint"
+                  >品质底档{{ (slot as { minQualityRank: number }).minQualityRank }}</span
+                >
               </p>
               <p class="text-[10px] text-ink-faint">一件已定兵刃,到手即用</p>
             </template>

@@ -73,7 +73,9 @@ export function apprenticeSpoils(
   if (base.stone) out.stone = mulN(base.stone, mult);
   if (base.pillId) {
     out.pillId = base.pillId;
-    out.pillCount = base.pillCount;
+    // 天赋加成作用于枚数:寻宝基座仅 1 枚,floor(1×1.25)=1 会让「寻宝灵童」的天赋整场失活
+    // (开局白送的正是 talent='seek' 的 ap_lingtong)。整数枚数用 ceil,才在 1 枚基座上显出差值。
+    out.pillCount = Math.max(1, Math.ceil((base.pillCount ?? 1) * mult));
   }
   return out;
 }

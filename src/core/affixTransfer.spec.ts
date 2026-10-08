@@ -6,8 +6,11 @@
  * 在 composables/useAffixTransfer 及其 spec 里测,这里不绑 Pinia。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { createRng } from "wanxiang-engine";
 import type { EquipmentInstance, QualityId } from "@/types";
-import { planTransfer, targetBlock } from "./affixTransfer";
+import { planTransfer, targetBlock, expectedRollsToHit } from "./affixTransfer";
+import { ENGINE_WORLD } from "./engineWorld";
+import { qualityDef } from "@/data/qualities";
 
 function eq(
   uid: string,
@@ -110,5 +113,36 @@ describe("planTransfer 落地", () => {
       expect(r.plan.target.transferCount).toBe(1);
       expect(r.plan.cost.sealStone).toBeNull();
     }
+  });
+});
+
+/**
+ * 定价对账 —— 转移价 = 引擎真实洗练的期望命中次数的打折,故估计器(expectedRollsToHit)
+ * 必须跟得上引擎的抽选口径。本测试用引擎 rerollAffixes 实测命中率,与解析预期比对:
+ * 换洗练规则(池子/权重/条数)不更新估计器时,这里当场红。取数带至少打了个折扣的安全余量。
+ */
+describe("定价对账 · expectedRollsToHit 与引擎实际抽选同源", () => {
+  it("实测命中率落在解析预期 ±25% 带内", () => {
+    const inst = eq("w", "w_zhuqing", "excellent", []);
+    const target = "atk1";
+    const kept: string[] = [];
+    const p = 1 / expectedRollsToHit(inst, target, kept);
+    expect(p).toBeGreaterThan(0);
+    const q = qualityDef(inst.quality);
+    let hits = 0;
+    const N = 1500;
+    for (let i = 0; i < N; i += 1) {
+      const affixes = ENGINE_WORLD.equipment.rerollAffixes(inst.affixes, {
+        rng: createRng(1000 + i),
+        quality: q,
+        tier: inst.tier,
+        slot: "weapon",
+        keep: [],
+      });
+      if (affixes.some((a) => a.id === target)) hits += 1;
+    }
+    const measured = hits / N;
+    expect(measured, "实测命中率应贴近解析预期").toBeGreaterThan(p * 0.75);
+    expect(measured).toBeLessThan(p * 1.25);
   });
 });

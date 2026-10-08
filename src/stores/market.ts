@@ -6,8 +6,6 @@
  */
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { GNum } from "@/types";
-import { gn, gnZero } from "@/utils/gnum";
 import { persistConfig } from "@/utils/storage";
 import { rng } from "@/utils/random";
 import { usePlayerStore } from "@/stores/player";
@@ -31,21 +29,9 @@ import {
   type ConsignPost,
   type MarketSlot,
 } from "@/data/market";
-import { asArray, asFiniteNumber } from "@/utils/saveShape";
+import { asArray, asFiniteNumber, asPrice } from "@/utils/saveShape";
 
 export type MarketBuyResult = "ok" | "sold" | "poor" | "bagfull" | "missing";
-
-/** 货架里的价格坏了就归零(归零意味着「买得起」;上货会重填,故不会真以零成交) */
-function gprice(v: unknown): GNum {
-  if (!v || typeof v !== "object" || !("m" in v) || !("e" in v)) return gnZero();
-  // 已用 in 确认 m/e 两键在;数形再各验一次,坏档不给 NaN 价
-  const shaped = v as { m: unknown; e: unknown };
-  const m = shaped.m;
-  const e = shaped.e;
-  if (typeof m === "number" && typeof e === "number" && Number.isFinite(m) && Number.isFinite(e))
-    return gn({ m, e });
-  return gnZero();
-}
 
 function safeIdx(v: unknown, fallback: number): number {
   return Number.isFinite(v) ? Math.max(0, Math.floor(v as number)) : fallback;
@@ -77,7 +63,7 @@ export const useMarketStore = defineStore(
             idx,
             pillId: raw.pillId,
             count: Math.max(1, Math.floor(Number("count" in raw ? raw.count : 1) || 1)),
-            price: gprice("price" in raw ? raw.price : undefined),
+            price: asPrice("price" in raw ? raw.price : undefined),
             sold,
           });
         } else if (kind === "material") {
@@ -88,7 +74,7 @@ export const useMarketStore = defineStore(
             idx,
             matId,
             count: Math.max(1, Math.floor(Number("count" in raw ? raw.count : 1) || 1)),
-            price: gprice("price" in raw ? raw.price : undefined),
+            price: asPrice("price" in raw ? raw.price : undefined),
             sold,
           });
         } else {
@@ -100,7 +86,7 @@ export const useMarketStore = defineStore(
               0,
               Math.floor(Number("minQualityRank" in raw ? raw.minQualityRank : 0) || 0),
             ),
-            price: gprice("price" in raw ? raw.price : undefined),
+            price: asPrice("price" in raw ? raw.price : undefined),
             sold,
           });
         }
@@ -121,7 +107,7 @@ export const useMarketStore = defineStore(
             0,
             Math.floor(Number("qualityRank" in raw ? raw.qualityRank : 0) || 0),
           ),
-          price: gprice("price" in raw ? raw.price : undefined),
+          price: asPrice("price" in raw ? raw.price : undefined),
           finishAt,
           name: "name" in raw && typeof raw.name === "string" ? raw.name : "",
         });
