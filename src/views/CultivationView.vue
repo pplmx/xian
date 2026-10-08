@@ -1011,7 +1011,10 @@ const gongfaCategories = computed(() => {
     if (!def) continue;
     (byType[def.type] ??= []).push(def);
   }
+  // 当前装配(主修/占辅修席)的置顶,其后保持原降序 —— 判定与 equipStateOf 口径一致
+  const equipFlag = (id: string) => (isEquippedGongfa(id) ? 0 : 1);
   const sortItems = (a: GongfaDef, b: GongfaDef) =>
+    equipFlag(a.id) - equipFlag(b.id) ||
     qualityDef(b.quality).rank - qualityDef(a.quality).rank ||
     a.minRealm - b.minRealm ||
     a.name.localeCompare(b.name, "zh");
@@ -1127,6 +1130,11 @@ const quickPills = computed(() =>
     .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank)
     .slice(0, 4),
 );
+
+/** 当前装配:主修 或 占着辅修席(含秘术) */
+function isEquippedGongfa(id: string): boolean {
+  return cultivation.mainGongfa === id || cultivation.subGongfa.includes(id);
+}
 
 function equipStateOf(id: string): string {
   if (cultivation.mainGongfa === id) return "主修";
