@@ -173,7 +173,7 @@
       <!-- 战报 -->
       <div class="relative mt-3">
         <button
-          class="absolute right-1 -top-0.5 z-10 -m-2 rounded p-2 text-[10px] text-ink-faint active:text-ink active:opacity-60"
+          class="tap-row absolute right-1 -top-0.5 z-10 -m-2 rounded p-2 text-[10px] text-ink-faint active:text-ink active:opacity-60"
           @click="skipPlayback"
         >
           跳过播放 »

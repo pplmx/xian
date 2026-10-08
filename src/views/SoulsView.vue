@@ -81,9 +81,9 @@
               <span class="mt-0.5 w-full truncate text-[9px] leading-tight text-ink-faint">{{
                 soulModText(endgame.activeSouls[i - 1]!)
               }}</span>
-              <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 30px 的靶面 -->
+              <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 32px 的靶面 -->
               <button
-                class="mt-1 inline-block px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
+                class="tap-row mt-1 inline-block px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
                 @click.stop="removeSoul(endgame.activeSouls[i - 1]!.uid)"
               >
                 卸下
@@ -239,8 +239,8 @@
       <p class="mb-2 text-[11px] leading-relaxed text-ink-faint">
         入炉即毁原器,耗道源 {{ SOUL_REFINE_COST }}。
         <!-- 付不起置灰+列差(与秘境道源/聚气丹同款):灰按钮不告诉差多少等于没说完 -->
-        <span v-if="!canAffordRefine" class="text-cinnabar"
-          >尚差 {{ SOUL_REFINE_COST - endgame.daoSource }} 道源</span
+        <span v-if="refineShort > 0" class="text-cinnabar"
+          >尚差 {{ formatGN(refineShort) }} 道源</span
         >
       </p>
       <div
@@ -354,6 +354,8 @@ const pendingDissolveUid = ref<string | null>(null);
 
 /** 道源不够 20 置灰凝炼入口 —— 正是秘境/聚气丹同款的「付不起要直说」 */
 const canAffordRefine = computed(() => endgame.daoSource >= SOUL_REFINE_COST);
+/** 凝炼短差(付不起置灰+列差):与 RealmCodexView askShort 同款 —— 裸相减不保底会有负号 */
+const refineShort = computed(() => Math.max(0, SOUL_REFINE_COST - endgame.daoSource));
 
 /** 二步确认后真正入炉;成功后收拢确认态 */
 function doRefine(uid: string): void {

@@ -70,7 +70,11 @@
           <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{ r.desc }}</span>
         </button>
         <p v-if="list.length === 0" class="text-[11px] text-ink-faint">
-          尚无秘境可探 —— 境界再高些,自有去处。
+          {{
+            gate === "celestial"
+              ? "尚无天界秘境可探 ── 天界册真仙起,自有去处。"
+              : "尚无凡境秘境可探 ── 凡境册元婴起,自有去处。"
+          }}
         </p>
       </div>
     </template>

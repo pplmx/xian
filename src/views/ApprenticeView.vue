@@ -27,7 +27,7 @@ import {
 } from "@/core/apprenticeService";
 import { stoneByTier } from "@/core/formulas";
 import { pillDef } from "@/data/pills";
-import { formatGN } from "@/utils/format";
+import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { notify } from "@/core/notify";
 
@@ -55,10 +55,6 @@ const slots = computed(() => apprenticeSlots(player.major));
 function secondsLeft(finishAt: number): number {
   return Math.max(0, Math.ceil((finishAt - now.value) / 1000));
 }
-function fmtRemaining(sec: number): string {
-  const m = Math.floor(sec / 60);
-  return m > 0 ? `${m}分${sec % 60}秒` : `${sec}秒`;
-}
 function send(uid: string, spec: (typeof APPRENTICE_TASKS)[number]["spec"]): void {
   appr.dispatch(uid, spec, Date.now());
 }
@@ -80,9 +76,9 @@ function taskYield(a: OwnedApprentice, spec: ApprenticeSpec): string {
     : s.ore
       ? `玄铁 ~${s.ore}`
       : s.dust
-        ? `器尘 ~${s.dust}`
+        ? `器灵尘 ~${s.dust}`
         : s.wudao
-          ? `悟道 ~${s.wudao}`
+          ? `悟道点 ~${s.wudao}`
           : s.stone
             ? `灵石 ~${formatGN(s.stone)}`
             : s.pillId
@@ -104,7 +100,7 @@ function doRecruit(): void {
     <!-- 抬头 -->
     <div class="card-ink flex items-center justify-between gap-2 px-4 py-3">
       <button
-        class="-my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
+        class="tap-row -my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
         @click="goBack(router, { name: 'dongfu' })"
       >
         ← 返回
@@ -133,7 +129,7 @@ function doRecruit(): void {
       <div
         v-for="a in appr.apprentices"
         :key="a.uid"
-        class="rounded-lg border border-ink/10 bg-surface/60 px-3 py-2"
+        class="rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
       >
         <div class="flex items-center gap-2">
           <span class="font-kai text-[13px] text-ink">{{
@@ -149,7 +145,10 @@ function doRecruit(): void {
         <div v-if="a.task" class="mt-1.5 flex items-center gap-2 text-[11px]">
           <span class="rounded bg-ink/5 px-1.5 py-0.5">{{ taskDef(a.task.spec).name }}</span>
           <span class="tabular text-ink-faint"
-            >归期 {{ fmtRemaining(secondsLeft(a.task.finishAt)) }}</span
+            >归期
+            <span class="countdown-slot">{{
+              formatCountdown(secondsLeft(a.task.finishAt))
+            }}</span></span
           >
           <span v-if="taskDone(a, now)" class="text-jade">已归,待领</span>
         </div>

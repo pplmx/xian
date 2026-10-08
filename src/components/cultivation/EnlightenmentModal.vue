@@ -7,6 +7,7 @@ import {
 } from "@/core/earlyGameService";
 import { gameNow } from "@/core/enginePause";
 import { URGENT_COUNTDOWN_SEC } from "@/data/constants";
+import { formatCountdown } from "@/utils/format";
 import type { EnlightenmentEvent } from "@/types";
 import BaseModal from "@/components/common/BaseModal.vue";
 
@@ -59,11 +60,12 @@ const show = computed(() => event.value !== null);
   <BaseModal :open="show" title="悟道顿悟" @close="handleIgnore">
     <p class="flex items-center justify-between text-[11px] text-ink-faint">
       <span>灵光一闪,选择一项增益</span>
-      <!-- 临散前转朱砂:限时增益,过了就白丢 —— 紧迫得用颜色说出来,不看倒计时也瞥见 -->
+      <!-- 临散前转朱砂:限时增益,过了就白丢 —— 紧迫得用颜色说出来,不看倒计时也瞥见
+           (颜色判断用原始秒数,呈现走 formatCountdown 定宽串) -->
       <span
         class="tabular"
         :class="remaining <= URGENT_COUNTDOWN_SEC ? 'text-cinnabar' : 'text-gold-ink'"
-        >{{ remaining }} 秒后自散</span
+        ><span class="countdown-slot">{{ formatCountdown(remaining) }}</span> 后自散</span
       >
     </p>
     <div class="mt-3 space-y-2">

@@ -7,7 +7,7 @@
         裸 router.back() 会退到 about:blank 把游戏一起带走 —— 故走 goBack(父页兜底)
       -->
       <button
-        class="-my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
+        class="tap-row -my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
         @click="goBack(router, { name: 'home' })"
       >
         ← 返回
@@ -25,20 +25,20 @@
       <div class="mt-2 grid grid-cols-2 gap-2.5">
         <RouterLink
           to="/market"
-          class="flex flex-col justify-between gap-2 rounded-lg border border-ink/10 bg-surface/60 px-3 py-3 active:scale-[0.99]"
+          class="flex flex-col justify-between gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-3 active:scale-[0.99]"
         >
           <div>
-            <p class="font-kai text-[13px] tracking-[0.2em] text-ink">坊市</p>
+            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">坊市</p>
             <p class="mt-0.5 text-[10px] text-ink-faint">购丹续料、购兵刃,兼售寄卖</p>
           </div>
           <span class="text-[12px] text-cinnabar">进入 →</span>
         </RouterLink>
         <RouterLink
           to="/apprentice"
-          class="flex flex-col justify-between gap-2 rounded-lg border border-ink/10 bg-surface/60 px-3 py-3 active:scale-[0.99]"
+          class="flex flex-col justify-between gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-3 active:scale-[0.99]"
         >
           <div>
-            <p class="font-kai text-[13px] tracking-[0.2em] text-ink">门庭有徒</p>
+            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">门庭有徒</p>
             <p class="mt-0.5 text-[10px] text-ink-faint">弟子离线跑腿,归来带回资材</p>
           </div>
           <span class="text-[12px] text-cinnabar">进入 →</span>

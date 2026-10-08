@@ -14,7 +14,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { pillDef } from "@/data/pills";
 import { herbGradeOfMajor } from "@/data/herbGrades";
-import { formatGN } from "@/utils/format";
+import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import type { GNum } from "@/types";
 import { MARKET_CONSIGN_SECONDS, MARKET_MAT_COUNT, MARKET_REFRESH_SECONDS } from "@/data/market";
@@ -23,6 +23,7 @@ import { marketEquipInstance, marketRemainingSec } from "@/core/marketService";
 import { bountyRemainingSec } from "@/core/bountyService";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
+import SectionTitle from "@/components/common/SectionTitle.vue";
 
 const router = useRouter();
 const market = useMarketStore();
@@ -55,12 +56,6 @@ onUnmounted(() => {
 });
 
 const remainingSec = computed(() => marketRemainingSec(market.stockedAt, now.value));
-const remainingText = computed(() => {
-  const s = Math.floor(remainingSec.value);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  return h > 0 ? `${h}时${m}分` : `${m}分${s % 60}秒`;
-});
 
 /**
  * 货架装备预览(确定性实例,只取品质,不落库)。缓成 per-slot 表:
@@ -100,11 +95,6 @@ function sellMat(matId: "herb" | "ore"): void {
   market.sellMaterial(matId, player.major);
 }
 
-const bountyRemainingText = computed(() => {
-  const s = Math.floor(bountyRemainingSec(bounty.bountyAt, now.value));
-  return `${Math.floor(s / 3600)}时${Math.floor((s % 3600) / 60)}分`;
-});
-
 function claimBounty(idx: number): void {
   const r = bounty.claim(idx);
   if (r === "insufficient") notify("材料或丹药不足,交不了货", "warn");
@@ -136,7 +126,7 @@ function bountyShort(o: BountySlot): string | null {
     <!-- 抬头 -->
     <div class="card-ink flex items-center justify-between gap-2 px-4 py-3">
       <button
-        class="-my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
+        class="tap-row -my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
         @click="goBack(router, { name: 'dongfu' })"
       >
         ← 返回
@@ -149,18 +139,19 @@ function bountyShort(o: BountySlot): string | null {
         class="rounded-md border border-ink/10 px-1.5 py-0.5 text-[10px] tabular text-ink-faint"
         :title="`${MARKET_REFRESH_SECONDS / 3600} 小时一换`"
       >
-        刷新 {{ remainingText }}
+        刷新
+        <span class="countdown-slot">{{ formatCountdown(remainingSec) }}</span>
       </span>
     </div>
 
     <!-- 货架 -->
     <section>
-      <p class="mb-2 px-1 font-kai text-[13px] tracking-[0.2em] text-ink">货架</p>
-      <div class="space-y-2">
+      <SectionTitle title="货架" hint="时辰一到自会换新" />
+      <div class="mt-2 space-y-2">
         <div
           v-for="slot in market.stock"
           :key="slot.idx"
-          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-surface/60 px-3 py-2"
+          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
           :class="slot.sold ? 'opacity-50' : ''"
         >
           <div class="min-w-0 flex-1 text-[12px]">
@@ -210,36 +201,44 @@ function bountyShort(o: BountySlot): string | null {
 
     <!-- 悬赏板:商号收购 -->
     <section>
-      <p class="mb-2 px-1 font-kai text-[13px] tracking-[0.2em] text-ink">
-        悬赏板
+      <div class="flex items-center justify-between pr-1">
+        <SectionTitle title="悬赏板" />
         <span
-          class="text-[10px] tracking-normal text-ink-faint"
+          class="text-[10px] text-ink-faint"
           :title="`${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`"
+          >换新
+          <span class="countdown-slot">{{
+            formatCountdown(bountyRemainingSec(bounty.bountyAt, now))
+          }}</span></span
         >
-          换新 {{ bountyRemainingText }}
-        </span>
-      </p>
-      <div class="space-y-2">
+      </div>
+      <div class="mt-1 space-y-2">
         <div
           v-for="o in bounty.orders"
           :key="o.idx"
-          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-surface/60 px-3 py-2"
+          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
           :class="o.claimed ? 'opacity-50' : ''"
         >
           <div class="min-w-0 flex-1 text-[12px]">
             <template v-if="o.kind === 'herb' || o.kind === 'ore'">
               <p class="truncate">募 {{ o.kind === "herb" ? "灵草" : "玄铁" }} ×{{ o.target }}</p>
-              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">{{ bountyShort(o) }}</p>
+              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
+                {{ bountyShort(o) }}
+              </p>
               <p v-else class="text-[10px] text-ink-faint">交货即得灵石</p>
             </template>
             <template v-else-if="o.kind === 'pill'">
               <p class="truncate">{{ pillDef(o.kindId)?.name ?? o.kindId }} ×{{ o.target }}</p>
-              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">{{ bountyShort(o) }}</p>
+              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
+                {{ bountyShort(o) }}
+              </p>
               <p v-else class="text-[10px] text-ink-faint">另得悟道×{{ o.extra }}</p>
             </template>
             <template v-else>
               <p class="truncate">贡一柄 ≥{{ o.tier }} 阶兵刃</p>
-              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">{{ bountyShort(o) }}</p>
+              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
+                {{ bountyShort(o) }}
+              </p>
               <p v-else class="text-[10px] text-ink-faint">价随所交之品质现算</p>
             </template>
           </div>
@@ -253,80 +252,84 @@ function bountyShort(o: BountySlot): string | null {
           </button>
         </div>
         <p v-if="bounty.orders.length === 0" class="py-3 text-center text-[11px] text-ink-faint">
-          悬赏板空着 —— 商号还没挂单。
+          悬赏板空着 ── 商号还没挂单,下个时辰自会换新。
         </p>
       </div>
     </section>
 
     <!-- 售出:寄卖装备 + 即时售丹/料 -->
     <section>
-      <p class="mb-2 px-1 font-kai text-[13px] tracking-[0.2em] text-ink">售出</p>
+      <SectionTitle title="售出" />
+      <div class="mt-2">
+        <!-- 寄卖中的 -->
+        <div v-if="market.consign.length" class="mb-2 space-y-1">
+          <div
+            v-for="p in market.consign"
+            :key="p.slot"
+            class="flex items-center gap-2 rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-1.5 text-[11px]"
+          >
+            <span class="flex-1 truncate">{{ p.name }}</span>
+            <span class="tabular text-ink-faint">
+              <span class="countdown-slot">{{
+                formatCountdown(Math.max(0, (p.finishAt - now) / 1000))
+              }}</span>
+              后自售 · {{ formatGN(p.price) }}
+            </span>
+          </div>
+        </div>
 
-      <!-- 寄卖中的 -->
-      <div v-if="market.consign.length" class="mb-2 space-y-1">
+        <!-- 寄卖入口:挑一件背包装备上架 -->
+        <div class="rounded-lg border border-ink/10 bg-paper-deep/40 px-3 py-2">
+          <p class="mb-1 text-[10px] text-ink-faint">
+            寄卖一件背包装备(2 格,约
+            {{ MARKET_CONSIGN_SECONDS / 60 }} 分自售入账,离包即定)
+          </p>
+          <div v-if="market.consign.length < 2" class="flex gap-1 overflow-x-auto">
+            <button
+              v-for="it in inventory.bagItems.slice(0, 12)"
+              :key="it.uid"
+              class="shrink-0 rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+              @click="consign(it.uid)"
+            >
+              {{ it.quality }}·{{ it.tier }}阶
+            </button>
+            <span v-if="inventory.bagItems.length === 0" class="text-[10px] text-ink-faint"
+              >行囊空空 ── 去历练中寻些机缘吧</span
+            >
+          </div>
+          <p v-else class="text-[10px] text-ink-faint">已上满 2 格,待手头一张空闲</p>
+        </div>
+
+        <!-- 即时售 -->
         <div
-          v-for="p in market.consign"
-          :key="p.slot"
-          class="flex items-center gap-2 rounded-md border border-ink/10 bg-surface/40 px-3 py-1.5 text-[11px]"
+          class="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/40 px-3 py-2"
         >
-          <span class="flex-1 truncate">{{ p.name }}</span>
-          <span class="tabular text-ink-faint">
-            {{ Math.max(0, Math.ceil((p.finishAt - now) / 1000 / 60)) }}分后自售 ·
-            {{ formatGN(p.price) }}
-          </span>
-        </div>
-      </div>
-
-      <!-- 寄卖入口:挑一件背包装备上架 -->
-      <div class="rounded-lg border border-ink/10 bg-surface/40 px-3 py-2">
-        <p class="mb-1 text-[10px] text-ink-faint">
-          寄卖一件背包装备(2 格,约 {{ MARKET_CONSIGN_SECONDS / 60 }} 分自售入账,离包即定)
-        </p>
-        <div v-if="market.consign.length < 2" class="flex gap-1 overflow-x-auto">
           <button
-            v-for="it in inventory.bagItems.slice(0, 12)"
-            :key="it.uid"
-            class="shrink-0 rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
-            @click="consign(it.uid)"
+            v-for="p in sellablePills"
+            :key="p.id"
+            class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+            @click="sellPill(p.id)"
           >
-            {{ it.quality }}·{{ it.tier }}阶
+            售{{ p.def?.name ?? p.id }}({{ p.count }})
           </button>
-          <span v-if="inventory.bagItems.length === 0" class="text-[10px] text-ink-faint"
-            >行囊空空</span
+          <button
+            class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+            :disabled="!resources.hasSmall('herb', MARKET_MAT_COUNT)"
+            @click="sellMat('herb')"
+          >
+            售灵草×{{ MARKET_MAT_COUNT }}
+          </button>
+          <button
+            class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+            :disabled="!resources.hasSmall('ore', MARKET_MAT_COUNT)"
+            @click="sellMat('ore')"
+          >
+            售玄铁×{{ MARKET_MAT_COUNT }}
+          </button>
+          <span v-if="sellablePills.length === 0" class="text-[10px] text-ink-faint"
+            >并无即时可售的丹药 ── 历练所得,自能入市</span
           >
         </div>
-        <p v-else class="text-[10px] text-ink-faint">已上满 2 格,待手头一张空闲</p>
-      </div>
-
-      <!-- 即时售 -->
-      <div
-        class="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-ink/10 bg-surface/40 px-3 py-2"
-      >
-        <button
-          v-for="p in sellablePills"
-          :key="p.id"
-          class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
-          @click="sellPill(p.id)"
-        >
-          售{{ p.def?.name ?? p.id }}({{ p.count }})
-        </button>
-        <button
-          class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
-          :disabled="!resources.hasSmall('herb', MARKET_MAT_COUNT)"
-          @click="sellMat('herb')"
-        >
-          售灵草×{{ MARKET_MAT_COUNT }}
-        </button>
-        <button
-          class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
-          :disabled="!resources.hasSmall('ore', MARKET_MAT_COUNT)"
-          @click="sellMat('ore')"
-        >
-          售玄铁×{{ MARKET_MAT_COUNT }}
-        </button>
-        <span v-if="sellablePills.length === 0" class="text-[10px] text-ink-faint"
-          >无可即时售出的丹药</span
-        >
       </div>
     </section>
   </div>

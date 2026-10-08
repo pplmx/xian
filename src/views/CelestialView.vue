@@ -255,7 +255,7 @@
                 >
                   {{ world.seal }}
                 </span>
-                <span class="font-kai text-[15px] tracking-widest text-ink">{{ world.name }}</span>
+                <span class="font-kai text-[14px] tracking-[0.2em] text-ink">{{ world.name }}</span>
                 <span
                   v-if="endgame.worldClears[world.id]"
                   class="chip-ink border-jade/60 text-[9px] text-jade"
@@ -309,7 +309,7 @@
                 >
                   {{ endgame.voidWorld?.seal ?? "虚" }}
                 </span>
-                <span class="font-kai text-[15px] tracking-widest text-ink">
+                <span class="font-kai text-[14px] tracking-[0.2em] text-ink">
                   虚界之门
                   <template v-if="endgame.voidWorld">· {{ endgame.voidWorld.name }}</template>
                 </span>
@@ -406,7 +406,7 @@
         <section v-else>
           <SectionTitle title="今日天道" hint="日出而题,日落而息" />
           <div
-            class="card-ink mt-2 px-4 py-4 text-center text-[11px] leading-relaxed text-ink-faint"
+            class="empty-note card-ink mt-2 px-4 py-4 text-center text-[11px] leading-relaxed text-ink-faint"
           >
             今日天道随道途而定 —— 于道途一页择定「此世之路」后,自会在此展开。
           </div>
@@ -464,7 +464,7 @@
                 >
                   {{ trial.seal }}
                 </span>
-                <span class="font-kai text-[15px] tracking-widest text-ink">{{ trial.name }}</span>
+                <span class="font-kai text-[14px] tracking-[0.2em] text-ink">{{ trial.name }}</span>
                 <span
                   v-if="endgame.trialRecords[trial.id]"
                   class="ml-auto tabular text-[10px] text-gold-ink"
@@ -478,11 +478,11 @@
               </p>
               <button
                 class="btn-ghost mt-2.5 w-full !py-2 !text-[13px]"
-                :disabled="trialDaoShort(trial) > 0"
+                :disabled="daoEntryShort(trial.entryCost) > 0"
                 @click="goTrial(trial.id)"
               >
-                <template v-if="trialDaoShort(trial) > 0"
-                  >尚差 {{ trialDaoShort(trial) }} 道源</template
+                <template v-if="daoEntryShort(trial.entryCost) > 0"
+                  >尚差 {{ daoEntryShort(trial.entryCost) }} 道源</template
                 >
                 <template v-else
                   >应 试(道源 {{ trial.entryCost }} · 功成得 {{ trial.rewardDaoSource }})</template
@@ -1259,10 +1259,6 @@ function daoEntryShort(cost: number): number {
 const challengeDaoShort = computed(() => daoEntryShort(CHALLENGE_ENTRY_COST));
 /** 天道变数入口的道源短差 */
 const mutationDaoShort = computed(() => daoEntryShort(MUTATION_ENTRY_COST));
-/** 试炼入口道源短差(各试炼一道门票) */
-function trialDaoShort(trial: (typeof TRIALS)[number]): number {
-  return daoEntryShort(trial.entryCost);
-}
 /** 远征入界差多少(付不起置灰):与 startWorldExpedition 拒绝臂同口径 */
 const expeditionEntryShort = computed(() => daoEntryShort(prepWorld.value?.entryCost ?? 0));
 /** 虚界再窥差多少(付不起置灰):VOID_REROLL_COST 同源 */

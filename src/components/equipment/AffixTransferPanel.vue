@@ -78,7 +78,7 @@ function doTransfer(): void {
 </script>
 
 <template>
-  <div class="rounded-lg border border-ink/10 bg-surface/60 p-3 text-[12px]">
+  <div class="rounded-lg border border-ink/10 bg-paper-deep/60 p-3 text-[12px]">
     <div class="mb-2 flex items-center gap-2">
       <span class="font-medium text-ink">词条转移</span>
       <span class="text-[10px] text-ink-faint">抽走源件一条词条,落到另一件上;源件保留</span>
@@ -182,7 +182,7 @@ function doTransfer(): void {
         </label>
         <span class="ml-auto text-[11px]">
           <span v-if="affordable">
-            尘×{{ plan.cost.dust }} · 灵石
+            器灵尘×{{ plan.cost.dust }} · 灵石
             {{ formatGN(plan.cost.stone) }}
             <span v-if="plan.cost.sealStone">(含封存 {{ formatGN(plan.cost.sealStone) }})</span>
           </span>
