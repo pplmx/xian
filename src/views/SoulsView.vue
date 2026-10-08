@@ -60,8 +60,9 @@
           <div
             v-for="i in SOUL_SLOTS"
             :key="i"
-            class="card-ink flex min-h-[86px] flex-col items-center justify-center px-2 py-2 text-center"
-            :class="endgame.activeSouls[i - 1] ? '' : 'opacity-50'"
+            class="card-ink flex min-h-[92px] flex-col items-center justify-center px-2 py-2 text-center"
+            :class="endgame.activeSouls[i - 1] ? 'cursor-pointer active:scale-95' : 'opacity-50'"
+            @click="soulDetail = endgame.activeSouls[i - 1] ?? null"
           >
             <template v-if="endgame.activeSouls[i - 1]">
               <span
@@ -73,10 +74,17 @@
               <span class="mt-1 text-[10px] leading-tight text-ink-soft">{{
                 soulLabel(endgame.activeSouls[i - 1]!)
               }}</span>
+              <!--
+                装配了就看不见"给什么" —— 就地摊一行词条短字(全量读数在详情弹窗,
+                同闲置行的 soulModText,不另造第二份文案)。
+              -->
+              <span class="mt-0.5 w-full truncate text-[9px] leading-tight text-ink-faint">{{
+                soulModText(endgame.activeSouls[i - 1]!)
+              }}</span>
               <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 30px 的靶面 -->
               <button
                 class="mt-1 inline-block px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
-                @click="removeSoul(endgame.activeSouls[i - 1]!.uid)"
+                @click.stop="removeSoul(endgame.activeSouls[i - 1]!.uid)"
               >
                 卸下
               </button>
@@ -132,6 +140,47 @@
         </button>
       </section>
     </template>
+
+    <!-- 已装配器魂详情:槽从"只看印章"升级为可点,全量读数同闲置行 soulModText -->
+    <BaseModal
+      :open="soulDetail !== null"
+      :title="soulDetail ? soulLabel(soulDetail) : ''"
+      @close="soulDetail = null"
+    >
+      <template v-if="soulDetail">
+        <div class="flex items-center gap-3">
+          <span
+            class="grid h-12 w-12 shrink-0 place-items-center rounded-md font-kai text-[24px]"
+            :style="{ color: soulColor(soulDetail) }"
+          >
+            {{ soulSeal(soulDetail) }}
+          </span>
+          <div class="min-w-0">
+            <p class="text-[12px]" :style="{ color: soulColor(soulDetail) }">
+              {{ soulGradeDef(soulDetail.grade).name }}·{{
+                soulTypeDef(soulDetail.type)?.name ?? "器魂"
+              }}
+            </p>
+            <p class="text-[10px] text-ink-faint">凝自「{{ soulDetail.fromName }}」</p>
+          </div>
+        </div>
+        <p class="mt-3 text-[12px] leading-relaxed text-ink-soft">{{ soulModText(soulDetail) }}</p>
+        <template #footer>
+          <div class="flex w-full gap-2">
+            <button class="btn-ghost flex-1" @click="soulDetail = null">收 起</button>
+            <button
+              class="btn-seal flex-1"
+              @click="
+                removeSoul(soulDetail.uid);
+                soulDetail = null;
+              "
+            >
+              卸 下
+            </button>
+          </div>
+        </template>
+      </template>
+    </BaseModal>
 
     <!-- 散置形意 -->
     <BaseModal :open="idleOpen" title="散置形意" @close="idleOpen = false">
@@ -296,6 +345,8 @@ const inventory = useInventoryStore();
 const unlocked = computed(() => endgameUnlocked());
 const idleOpen = ref(false);
 const forgeOpen = ref(false);
+/** 已装配器魂的详情弹窗对象;非 null 时展示该缕 */
+const soulDetail = ref<SoulInstance | null>(null);
 /** 等待二次确认的行(uid);非 null 表示该行已展开确认态 */
 const pendingRefineUid = ref<string | null>(null);
 /** 散去形意同样二步确认:器魂是花道源与一件法器凝出来的,一脚碎掉连个反悔都没有 */

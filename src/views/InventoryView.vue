@@ -351,6 +351,23 @@
         <p v-if="pillMasteryText(currentPill.def.id)" class="mt-1 text-[11px] text-ink-faint">
           {{ pillMasteryText(currentPill.def.id) }}
         </p>
+        <!--
+          服前把叠层/将顶摊明(与修行快捷卡同口径 buffOverflowOf):增益丹顶满再吃 = 白费,
+          usePill 在 full 也照吃,不能等服后 toast 才明白 —— 决策就地可见。
+        -->
+        <p
+          v-if="currentPillHint"
+          class="mt-1 text-[11px]"
+          :class="
+            currentPillHint.tone === 'cinnabar'
+              ? 'text-cinnabar'
+              : currentPillHint.tone === 'amber'
+                ? 'text-amber-ink'
+                : 'text-ink-faint'
+          "
+        >
+          {{ currentPillHint.text }}
+        </p>
       </template>
       <template #footer>
         <div class="flex gap-2">
@@ -586,7 +603,7 @@
       <p v-else class="px-1 py-6 text-center text-[11px] leading-relaxed text-ink-faint">
         你还不知道任何丹方。
         <br />
-        <span class="text-[10px]">多采多看多打听,方子自会找上门来</span>
+        <span class="text-[10px]">去藏经阁参悟,或向师长讨教,新方自会翻出</span>
       </p>
       <template #footer>
         <button class="btn-seal w-full" @click="craftOpen = false">收 炉</button>
@@ -900,6 +917,7 @@ import { useCultivationStore } from "@/stores/cultivation";
 import { qualityDef, QUALITIES } from "@/data/qualities";
 import { pillDef } from "@/data/pills";
 import { buffDef } from "@/data/buffs";
+import { activeBuffsOf, buffOverflowOf, buffStackCount } from "@/core/engineBuffs";
 import { pillFuncText } from "@/ui/itemText";
 import {
   HERB_GRADES,
@@ -1291,6 +1309,26 @@ const currentMaterial = computed(
 const pillDetail = ref<string | null>(null);
 const currentPill = computed(() =>
   pillDetail.value ? (pillRows.value.find((r) => r.def?.id === pillDetail.value) ?? null) : null,
+);
+
+/**
+ * 增益丹服前提示(与修行快捷卡同口径 buffOverflowOf,不另造判据):
+ * 顶满再服 = 白费、贴着上限只续到顶 —— 决策就地可见,不等服后 toast 才明白。
+ * full/partial 给警告;照常服时把「已叠几份」的叠加事实摊出来(可消耗增益才叠份数)。
+ */
+const currentPillHint = computed<{ text: string; tone: "cinnabar" | "amber" | "faint" } | null>(
+  () => {
+    const def = currentPill.value?.def;
+    if (!def || def.kind !== "buff" || !def.buffId) return null;
+    const now = Date.now();
+    const overflow = buffOverflowOf(cult.buffs, def.buffId, now);
+    if (overflow === "full") return { text: "药力已顶满——这一颗将白费", tone: "cinnabar" };
+    if (overflow === "partial") return { text: "药力将触上限——这一颗只续到顶", tone: "amber" };
+    const active = activeBuffsOf(cult.buffs, now).find((b) => b.def.id === def.buffId);
+    const stack = active ? buffStackCount(def.buffId, active.remainingSec) : 1;
+    if (stack <= 1) return null;
+    return { text: `已叠 ${stack} 份,服之续时`, tone: "faint" };
+  },
 );
 
 const craftOpen = ref(false);
