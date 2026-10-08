@@ -633,12 +633,17 @@
           参悟池还剩几部也报出来:藏经阁是「花残页赌一部没见过的」,
           玩家看不到池子还有多大,就无从判断这一注值不值。
         -->
-        <button class="btn-ghost w-full" @click="comprehendGongfa()">
+        <button class="btn-ghost w-full" :disabled="!canComprehend" @click="comprehendGongfa()">
           于藏经阁参悟功法(残页×{{ COMPREHEND_PAGE_COST }})
-          <span v-if="comprehendLeft > 0" class="ml-1 text-[10px] text-ink-faint"
+          <span v-if="comprehendLeft === 0" class="ml-1 text-[10px] text-ink-faint"
+            >· 此境功法已尽数参悟</span
+          >
+          <span v-else-if="pageShort > 0" class="ml-1 text-[10px] text-ink-faint"
+            >· 尚差 {{ pageShort }} 残页</span
+          >
+          <span v-else class="ml-1 text-[10px] text-ink-faint"
             >· 池中尚有 {{ comprehendLeft }} 部未参</span
           >
-          <span v-else class="ml-1 text-[10px] text-ink-faint">· 此境功法已尽数参悟</span>
         </button>
       </div>
     </section>
@@ -1048,6 +1053,12 @@ const mainDef = computed(() =>
 const comprehendLeft = computed(
   () => GONGFA.filter((g) => g.minRealm <= player.major + 1 && !cultivation.learned[g.id]).length,
 );
+
+/** 参悟还差几页残页 —— 与 comprehendGongfa 的消耗同源,付不起就置灰并写差 */
+const pageShort = computed(() => Math.max(0, COMPREHEND_PAGE_COST - resources.page));
+
+/** 池里还有货且残页够 —— 才能点参悟 */
+const canComprehend = computed(() => comprehendLeft > 0 && resources.page >= COMPREHEND_PAGE_COST);
 
 /**
  * 快捷栏一枚丹的一行药效 —— 「以药辅道」不只看名字猜,服下去会怎样就地给。
