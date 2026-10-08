@@ -48,6 +48,12 @@ export const PERSISTED_STORES = [
    * 玩家报问题时,那份导出文件是他唯一会交出来的东西。
    */
   "diag",
+  /** 坊市:货架与寄卖随存档,离线照走 */
+  "market",
+  /** 坊市悬赏板:当前一版收购订单随存档 */
+  "bounty",
+  /** 收徒:已收弟子与游历任务随存档 */
+  "apprentice",
 ] as const;
 
 /**

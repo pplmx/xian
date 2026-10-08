@@ -19,6 +19,33 @@
       <span class="w-10 shrink-0" />
     </div>
 
+    <!-- 家业两案入口:坊市(灵石周转)与收徒(弟子跑腿) -->
+    <section>
+      <SectionTitle title="家业 · 财与人" :hint="`灵石往来 · 弟子跑腿`" />
+      <div class="mt-2 grid grid-cols-2 gap-2.5">
+        <RouterLink
+          to="/market"
+          class="flex flex-col justify-between gap-2 rounded-lg border border-ink/10 bg-surface/60 px-3 py-3 active:scale-[0.99]"
+        >
+          <div>
+            <p class="font-kai text-[13px] tracking-[0.2em] text-ink">坊市</p>
+            <p class="mt-0.5 text-[10px] text-ink-faint">购丹续料、购兵刃,兼售寄卖</p>
+          </div>
+          <span class="text-[12px] text-cinnabar">进入 →</span>
+        </RouterLink>
+        <RouterLink
+          to="/apprentice"
+          class="flex flex-col justify-between gap-2 rounded-lg border border-ink/10 bg-surface/60 px-3 py-3 active:scale-[0.99]"
+        >
+          <div>
+            <p class="font-kai text-[13px] tracking-[0.2em] text-ink">门庭有徒</p>
+            <p class="mt-0.5 text-[10px] text-ink-faint">弟子离线跑腿,归来带回资材</p>
+          </div>
+          <span class="text-[12px] text-cinnabar">进入 →</span>
+        </RouterLink>
+      </div>
+    </section>
+
     <!-- 建筑 -->
     <section>
       <!-- 家业总览的一份子:已营几座在首页入口可见,洞府页自己反倒没有 —— 补进营造题头 -->

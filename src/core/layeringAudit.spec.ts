@@ -93,7 +93,10 @@ const STATEFUL_CORE = new Set<string>([
 ]);
 
 /** core → store 的引用处数基线(只许减;名单没变时防止单个模块越挂越多) */
-const CORE_STORE_SITES = 155;
+// 155 → 158:坊市(market)与悬赏板(bounty)、收徒(apprentice)是新持久化 store,各自的
+// sanitize 必须接进开机链路(storeResilience 的「sanitize 必须接进开机链路」判定);
+// storeResilience 与本基线对新增持久化 store 天然相抵,每 +1 都是新增系统的正当代价。
+const CORE_STORE_SITES = 158;
 /** core 用例里需要 Pinia 的文件数基线(只许减)—— 「core 逻辑绑在 Pinia 上」的硬读数 */
 const CORE_PINIA_SPECS = 109;
 

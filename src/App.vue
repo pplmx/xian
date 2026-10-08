@@ -61,6 +61,9 @@ import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
 import { useSettingsStore } from "@/stores/settings";
+import { useMarketStore } from "@/stores/market";
+import { useBountyStore } from "@/stores/bounty";
+import { useApprenticeStore } from "@/stores/apprentice";
 import { subscribeSaveWriteFailure } from "@/utils/storage";
 import { engine } from "@/core/engine";
 import { applyTheme, initTheme } from "@/core/theme";
@@ -83,6 +86,9 @@ const game = useGameStore();
 const player = usePlayerStore();
 const ui = useUiStore();
 const settings = useSettingsStore();
+const market = useMarketStore();
+const bounty = useBountyStore();
+const apprentice = useApprenticeStore();
 const route = useRoute();
 
 /** 内容区滚动宿主(滚动条挂在这个常驻的 main 上,不是 window) */
@@ -136,6 +142,13 @@ onMounted(() => {
     if (failure) ui.toast("存档写入失败 —— 浏览器存储可能已满,建议先导出备份", "warn");
     else ui.toast("存档已恢复写入", "info");
   });
+  // 归来一拍即收:坊市寄卖到时辰的自售入账 / 货架与悬赏换新,落地即结算(墙钟为准,不必开市)
+  market.collectConsign(Date.now());
+  market.sync(Date.now());
+  bounty.sync(Date.now());
+  // 收徒:归来一拍即收(弟子到时辰的跑腿账,捡起即入)
+  apprentice.sync();
+  apprentice.collectFinished(Date.now(), player.major);
   engine.start();
   window.addEventListener("pointerdown", onPointerDown);
 });

@@ -21,6 +21,12 @@ export const router = createRouter({
     { path: "/celestial", name: "celestial", component: () => import("@/views/CelestialView.vue") },
     { path: "/souls", name: "souls", component: () => import("@/views/SoulsView.vue") },
     { path: "/dongfu", name: "dongfu", component: () => import("@/views/DongfuView.vue") },
+    { path: "/market", name: "market", component: () => import("@/views/MarketView.vue") },
+    {
+      path: "/apprentice",
+      name: "apprentice",
+      component: () => import("@/views/ApprenticeView.vue"),
+    },
     {
       path: "/collection",
       name: "collection",
