@@ -30,3 +30,9 @@ export function asPrice(v: unknown): GNum {
     return gn({ m, e });
   return gnZero();
 }
+
+/** 存档里的非负整数(索引/层数/件数):NaN 用兜底,负数夹回 0。
+    坊市格序(safeIdx)、悬赏 quantity / 阶位(nonNeg)、收徒等级(clampLevel)共用一面 —— 别各写一份。 */
+export function asNonNegInt(v: unknown, fallback: number): number {
+  return Number.isFinite(v) ? Math.max(0, Math.floor(v as number)) : fallback;
+}

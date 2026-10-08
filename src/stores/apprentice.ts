@@ -26,7 +26,7 @@ import {
   type OwnedApprentice,
   type TaskSpoils,
 } from "@/core/apprenticeService";
-import { asArray } from "@/utils/saveShape";
+import { asArray, asNonNegInt } from "@/utils/saveShape";
 
 let seq = 0;
 function nextUid(): string {
@@ -39,8 +39,8 @@ function isSpec(v: unknown): v is ApprenticeSpec {
 }
 
 function clampLevel(v: unknown): number {
-  const n = Math.floor(Number(v) || 1);
-  return Math.min(APPRENTICE_MAX_LEVEL, Math.max(1, n));
+  // 非负整数 → 至少 1 → 封顶(与 asNonNegInt 同面,收徒等级别另写一份取整)
+  return Math.min(APPRENTICE_MAX_LEVEL, Math.max(1, asNonNegInt(v, 1)));
 }
 
 /** 把一趟产出入账到资源/背包 */

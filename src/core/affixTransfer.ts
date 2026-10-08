@@ -263,33 +263,6 @@ export function planTransfer(
   };
 }
 
-/** 单词条落位文案:为什么一条转不过去(主按钮/候选的禁用提示用同一份) */
-export function transferBlockText(block: TransferBlock, affixId: string): string {
-  const name = affixDef(affixId)?.name ?? affixId;
-  switch (block) {
-    case "same":
-      return "源件与目标件是同一件";
-    case "noAffix":
-      return `源件没有「${name}」这条`;
-    case "noTemplate":
-      return "目标件的件形失效";
-    case "slot":
-      return `目标部位容不下「${name}」`;
-    case "rank":
-      return `「${name}」需要更高品质的载体`;
-    case "dup":
-      return `「${name}」在目标上已有更高或持平的一条`;
-    case "noLanding":
-      return "要顶替的词条不在目标上";
-    case "full":
-      return "目标词条已满,先顶替一条才能新增";
-    case "stack":
-      return "同件上不可再叠这条递减属性";
-    case "sealFull":
-      return "目标已封满,须留一个可重掷位才能同时封存";
-  }
-}
-
 /**
  * 目标件上的落位:「新增」在前,其后是目标词条(按展示序倒排 —— 常见、低值的先顶);
  * 成立的排前,被挡的排后。每一项都带 planTransfer 的结论(不封存口径),价签与禁用态由它给。

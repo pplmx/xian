@@ -12,7 +12,6 @@ import type { EquipmentInstance } from "@/types";
 import {
   planTransfer,
   targetBlock,
-  transferBlockText,
   type TransferCandidate,
   type TransferCost,
   type TransferRequest,
@@ -23,6 +22,7 @@ import { equipmentTemplate } from "@/data/equipment";
 import { qualityDef } from "@/data/qualities";
 import { playSfx } from "@/core/audio";
 import { notify } from "@/core/notify";
+import { transferBlockText, TRANSFER_NEEDS_TEXT } from "@/ui/affixTransferText";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 
@@ -33,11 +33,6 @@ export function transferShort(cost: TransferCost): TransferShort {
   if (!resources.hasSmall("dust", cost.dust)) return "dust";
   return null;
 }
-
-const TRANSFER_OUT_TEXT: Record<"stone" | "dust", string> = {
-  stone: "灵石不足",
-  dust: "器灵尘不足",
-};
 
 /**
  * 能接这一条的目标件:可选在前 → 已装备在前 → 与源件同部位在前 → 品质高、阶高在前。
@@ -91,7 +86,7 @@ export function transferAffix(req: TransferRequest): boolean {
   const short = transferShort(check.plan.cost);
   if (short) {
     playSfx("warn");
-    notify(TRANSFER_OUT_TEXT[short], "warn");
+    notify(TRANSFER_NEEDS_TEXT[short], "warn");
     return false;
   }
   resources.spendStone(check.plan.cost.stone);

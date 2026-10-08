@@ -14,16 +14,12 @@ import { useInventoryStore } from "@/stores/inventory";
 import { qualityDef } from "@/data/qualities";
 import { BOUNTY_REFRESH_SECONDS, type BountyKind, type BountySlot } from "@/data/bounty";
 import { equipBountyReward, generateBounty } from "@/core/bountyService";
-import { asArray, asFiniteNumber, asPrice } from "@/utils/saveShape";
+import { asArray, asFiniteNumber, asNonNegInt, asPrice } from "@/utils/saveShape";
 
 export type BountyClaimResult = "ok" | "claimed" | "insufficient" | "nobag" | "missing";
 
 function isKind(v: unknown): v is BountyKind {
   return v === "herb" || v === "ore" || v === "pill" || v === "equip";
-}
-
-function nonNeg(v: unknown, fallback: number): number {
-  return Number.isFinite(v) ? Math.max(0, Math.floor(v as number)) : fallback;
 }
 
 /** 交一柄兵刃入账:现算灵石器尘(按所交之品的品质);贡器四路共用,价随实交 */
@@ -48,13 +44,13 @@ export const useBountyStore = defineStore(
       for (const raw of asArray<unknown>(orders.value)) {
         if (!raw || typeof raw !== "object" || !("kind" in raw) || !isKind(raw.kind)) continue;
         clean.push({
-          idx: nonNeg("idx" in raw ? raw.idx : clean.length, clean.length),
+          idx: asNonNegInt("idx" in raw ? raw.idx : clean.length, clean.length),
           kind: raw.kind,
           kindId: "kindId" in raw && typeof raw.kindId === "string" ? raw.kindId : "",
-          target: Math.max(1, nonNeg("target" in raw ? raw.target : 1, 1)),
-          tier: nonNeg("tier" in raw ? raw.tier : 0, 0),
+          target: Math.max(1, asNonNegInt("target" in raw ? raw.target : 1, 1)),
+          tier: asNonNegInt("tier" in raw ? raw.tier : 0, 0),
           reward: asPrice("reward" in raw ? raw.reward : undefined),
-          extra: Math.max(0, nonNeg("extra" in raw ? raw.extra : 0, 0)),
+          extra: Math.max(0, asNonNegInt("extra" in raw ? raw.extra : 0, 0)),
           claimed: "claimed" in raw && raw.claimed === true,
         });
       }

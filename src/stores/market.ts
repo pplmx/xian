@@ -29,13 +29,9 @@ import {
   type ConsignPost,
   type MarketSlot,
 } from "@/data/market";
-import { asArray, asFiniteNumber, asPrice } from "@/utils/saveShape";
+import { asArray, asFiniteNumber, asNonNegInt, asPrice } from "@/utils/saveShape";
 
 export type MarketBuyResult = "ok" | "sold" | "poor" | "bagfull" | "missing";
-
-function safeIdx(v: unknown, fallback: number): number {
-  return Number.isFinite(v) ? Math.max(0, Math.floor(v as number)) : fallback;
-}
 
 export const useMarketStore = defineStore(
   "market",
@@ -53,7 +49,7 @@ export const useMarketStore = defineStore(
         const kind = raw.kind;
         if (kind !== "pill" && kind !== "material" && kind !== "equipment") continue;
         const sold = "sold" in raw && raw.sold === true;
-        const idx = safeIdx("idx" in raw ? raw.idx : undefined, clean.length);
+        const idx = asNonNegInt("idx" in raw ? raw.idx : undefined, clean.length);
 
         if (kind === "pill") {
           if (!("pillId" in raw) || typeof raw.pillId !== "string" || !pillDef(raw.pillId))
