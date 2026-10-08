@@ -14,19 +14,6 @@ import { SHALLOW_GAINS, summarizeShallow } from "./shallowRebirthGains";
 import { qualifiedRewards } from "./contentGateAudit";
 
 describe("浅轮回收益 · 金丹一世能推进什么", () => {
-  it("永久收益清单", () => {
-    const KIND = { unbounded: "无上限", capped: "有上限", onetime: "一次性", gated: "够不着" };
-    console.log("\n金丹轮回一世的永久收益:");
-    console.log("资产                性质    每世推进        上限");
-    for (const g of SHALLOW_GAINS) {
-      console.log(
-        `${g.name.padEnd(20)} ${KIND[g.kind].padEnd(7)} ${g.perLife.padEnd(14)} ` +
-          `${g.cap === null ? "无" : String(g.cap)}${g.livesToCap ? `(约${g.livesToCap}世满)` : ""}`,
-      );
-    }
-    for (const g of SHALLOW_GAINS) console.log(`  · ${g.name}:${g.evidence}`);
-  });
-
   it("收益面确实过宽:金丹轮回能推进七项永久资产,不止道果", () => {
     const s = summarizeShallow();
     console.log(

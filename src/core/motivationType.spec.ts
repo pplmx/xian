@@ -26,20 +26,7 @@ import {
 } from "./motivationType";
 import { LIFE_TRIALS } from "@/data/lifeTrials";
 
-const TYPE_LABEL = { challenge: "挑战型", discovery: "探索型" };
-
 describe("动机类型 · 逆旅契属于哪一种", () => {
-  it("动机画像", () => {
-    console.log("\n项目        可预知  偏离度  重玩增量  改变层  类型");
-    for (const p of [...trialProfiles(), voidWorldProfile()]) {
-      console.log(
-        `${p.name.padEnd(12)} ${p.determinism.toFixed(2).padStart(6)} ` +
-          `${p.deviation.toFixed(3).padStart(7)} ${p.replayDelta.toFixed(2).padStart(9)} ` +
-          `${(p.surface === "numbers" ? "数值" : "内容").padStart(6)}  ${TYPE_LABEL[p.type]}`,
-      );
-    }
-  });
-
   it("四份契的规则确实偏离了平常的一世 —— 它不是换皮", () => {
     for (const p of trialProfiles()) {
       expect(p.deviation).toBeGreaterThan(0);

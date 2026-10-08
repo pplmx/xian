@@ -5,17 +5,6 @@ import { auditAllWorlds, crossWorldUniversals } from "./celestialSim";
 describe("终局世界守恒审计(Phase 20 —— 六项发布条件)", () => {
   const rows = auditAllWorlds();
 
-  it("输出四天通关率矩阵", () => {
-    console.log("\n—— 特殊世界 × 六大流派 通关率(各 25 次连战) ——");
-    for (const row of rows) {
-      const cells = row.byStyle
-        .map((x) => `${x.profile.name}${Math.round(x.clearRate * 100)}%`)
-        .join(" ");
-      console.log(`  ${row.world.name}: ${cells} | 随机最优 ${Math.round(row.randomBest * 100)}%`);
-    }
-    expect(rows.length).toBe(4);
-  });
-
   it("条件①:每个世界至少 3 个可行流派(通关率 ≥35%)", () => {
     for (const row of rows) {
       expect(row.viableCount, row.world.name).toBeGreaterThanOrEqual(3);

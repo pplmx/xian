@@ -7,18 +7,6 @@ import { simulateLootPressure } from "./lootSim";
 describe("装备经济压力测试(Phase 19)", () => {
   const tiers = [3, 8, 14].map((t) => simulateLootPressure(t));
 
-  it("输出装备洪流报告", () => {
-    console.log("\n—— 装备掉落压力(全程挂机) ——");
-    for (const p of tiers) {
-      const junk = (p.rankShare[0]! + p.rankShare[1]!) * 100;
-      const rare = p.rankShare.slice(4).reduce((s, x) => s + x, 0) * 100;
-      console.log(
-        `  t${String(p.tier).padStart(2, " ")}: ${p.dropsPerHour.toFixed(0)}件/时 · 爆仓 ${p.hoursToFillBag.toFixed(1)}h · 24h ${p.dropsPer24h.toFixed(0)}件 / 30d ${p.dropsPer30d.toFixed(0)}件 · 凡良占 ${junk.toFixed(0)}% · 玄品+占 ${rare.toFixed(1)}% · 灵尘 ${p.dustPerDay.toFixed(0)}/日`,
-      );
-    }
-    expect(tiers.length).toBe(3);
-  });
-
   it("掉落速率在设计带宽内(30~120 件/时)", () => {
     for (const p of tiers) {
       expect(p.dropsPerHour).toBeGreaterThan(30);
