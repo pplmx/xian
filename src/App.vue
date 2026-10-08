@@ -38,6 +38,7 @@
     <BottomNavigation v-if="game.started && route.name !== 'create'" />
 
     <!-- 全局浮层 -->
+    <UpdatePrompt :visible="updateReady" @refresh="swHandle?.reload()" />
     <ToastHost />
     <OfflineRewardDialog />
     <BreakthroughResultDialog />
@@ -64,6 +65,11 @@ import { useSettingsStore } from "@/stores/settings";
 import { useMarketStore } from "@/stores/market";
 import { useBountyStore } from "@/stores/bounty";
 import { useApprenticeStore } from "@/stores/apprentice";
+import UpdatePrompt from "@/components/common/UpdatePrompt.vue";
+import {
+  useServiceWorkerUpdate,
+  type ServiceWorkerUpdateHandle,
+} from "@/composables/useServiceWorkerUpdate";
 import { subscribeSaveWriteFailure } from "@/utils/storage";
 import { engine } from "@/core/engine";
 import { applyTheme, initTheme } from "@/core/theme";
@@ -89,6 +95,8 @@ const settings = useSettingsStore();
 const market = useMarketStore();
 const bounty = useBountyStore();
 const apprentice = useApprenticeStore();
+const updateReady = ref(false);
+let swHandle: ServiceWorkerUpdateHandle | undefined;
 const route = useRoute();
 
 /** 内容区滚动宿主(滚动条挂在这个常驻的 main 上,不是 window) */
@@ -149,6 +157,17 @@ onMounted(() => {
   // 收徒:归来一拍即收(弟子到时辰的跑腿账,捡起即入)
   apprentice.sync();
   apprentice.collectFinished(Date.now(), player.major);
+  // PWA 版本更新:有新版就绪再亮「刷新」(注册在 main.ts;这里取回 registration 接管监听)
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .getRegistration()
+      .then((reg) => {
+        if (reg) swHandle = useServiceWorkerUpdate(reg, () => (updateReady.value = true));
+      })
+      .catch(() => {
+        /* 拿不到 registration 则无更新提示,功能照常 */
+      });
+  }
   engine.start();
   window.addEventListener("pointerdown", onPointerDown);
 });
@@ -156,6 +175,7 @@ onMounted(() => {
 onUnmounted(() => {
   unsubscribeTheme();
   unsubscribeSaveFailure();
+  swHandle?.stop();
   engine.stop();
   stopBgm();
   window.removeEventListener("pointerdown", onPointerDown);
