@@ -381,6 +381,14 @@
           >
             {{ autoOpen ? "收起自动重铸" : "自动重铸 · 洗到指定词条即停" }}
           </button>
+          <button class="btn-ghost w-full !py-1 !text-[11px]" @click="transferOpen = !transferOpen">
+            {{ transferOpen ? "收起词条转移" : "词条转移 · 抽一条给别的装备" }}
+          </button>
+          <AffixTransferPanel
+            v-if="transferOpen && inst"
+            :source="inst"
+            @close="transferOpen = false"
+          />
         </template>
         <div class="flex gap-2">
           <button class="btn-seal flex-1" @click="toggleEquip">
@@ -456,6 +464,7 @@ import type { AnyStatKey, GNum } from "@/types";
 import { AFFIX_RARITY_META, STAT_NAMES } from "@/ui/statNames";
 import BaseModal from "@/components/common/BaseModal.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
+import AffixTransferPanel from "./AffixTransferPanel.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import { useLoreStore } from "@/stores/lore";
@@ -564,6 +573,7 @@ function clearNote(): void {
 
 // ---- 自动重铸(玩家反馈:一键重铸多次,洗到指定词条就停) ----
 const autoOpen = ref(false);
+const transferOpen = ref(false);
 const autoBudget = ref(50);
 /** 停止条件:任一命中即停;minRoll 给「数值范围」那一嘴 */
 const autoTargets = ref<ReforgeTarget[]>([]);
@@ -720,6 +730,7 @@ const fixedModRows = computed(() => {
 
 function close(): void {
   ui.equipDetailUid = null;
+  transferOpen.value = false;
 }
 
 function toggleEquip(): void {

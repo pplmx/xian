@@ -295,6 +295,12 @@ export const REFORGE_SEAL_LOAD = 0.6;
 export const REFORGE_DUST_BASE = 30;
 /** 封存一个词条的灵石倍率(第 n 次封存 ×n) */
 export const SEAL_STONE_BASE = 200;
+/**
+ * 词条转移的灵石倍率(与重铸同口径,见 core/affixTransfer 的 priceTimes):
+ * 转移一件「刚好想带给下一件」的词条,量级上比盲洗重铸更贵一些,
+ * 但仍远低于「反复洗到它」 —— 兜住「转移=稳定的定向洗练」这条经济该有的价差。
+ */
+export const TRANSFER_PRICE_RATE = 0.6;
 
 /**
  * 敌人相对玩家裸装的补偿系数:随层级指数跟随。
