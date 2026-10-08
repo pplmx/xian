@@ -7,6 +7,11 @@ export default defineConfig({
   staged: {
     "*.{ts,tsx,vue}": "vp check --fix",
     "*.{mjs,cjs,json}": "vp fmt",
+    /* markdown 门:staged 里提交的 .md 直接经 rumdl 查(与全量 verify 里的
+       docs-check→rumdl 同一份 rumdl.toml),让提交这一步就拦下坏的 md,
+       不等到重活 verify 尾巴 —— 与 CI 对文档的门一致。lint-staged 会自动把
+       本次暂存的 .md 列表追加到命令后。 */
+    "*.md": "bunx --no-install rumdl check",
   },
   run: {
     tasks: {
