@@ -121,8 +121,10 @@
             </span>
             <button
               v-if="canSealAffix(line.id)"
-              class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-qing active:scale-90 active:opacity-60"
+              class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-qing active:scale-90 active:opacity-60 disabled:cursor-not-allowed disabled:opacity-40"
+              :disabled="!sealAffordable"
               :aria-label="`封存词条${line.name}`"
+              :title="sealAffordable ? undefined : `尚差 ${formatGN(sealShortfall)} 石`"
               @click="doSealAffix(line.id)"
             >
               封存
@@ -325,13 +327,27 @@
             >
             <button
               class="btn-seal ml-auto !px-3 !py-1 !text-[11px]"
-              :disabled="!autoTargets.length"
-              :title="autoTargets.length ? undefined : '先点一条要洗到的词条'"
+              :disabled="!autoTargets.length || !autoAffordable"
+              :title="
+                !autoTargets.length
+                  ? '先点一条要洗到的词条'
+                  : autoAffordable
+                    ? undefined
+                    : '灵石或器灵尘不足'
+              "
               @click="runAutoReforge"
             >
               开 洗
             </button>
           </div>
+          <!-- 首洗就付不起,预告就把它摆出来(与重铸/封存同款):灰钮不许只有 broke toast -->
+          <p
+            v-if="autoTargets.length && !autoAffordable"
+            class="mt-1 text-[10px] text-cinnabar tabular"
+          >
+            尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
+            {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
+          </p>
         </div>
         <!-- 重铸与封存 (Phase 30.1) -->
         <template v-if="reforgeCostVal || sealCostVal">
@@ -349,7 +365,12 @@
             </button>
             <div
               v-if="sealCostVal"
-              class="flex flex-1 items-center justify-center rounded-md border border-qing/20 bg-qing/5 px-2 py-1 text-qing"
+              class="flex flex-1 items-center justify-center rounded-md border px-2 py-1"
+              :class="
+                sealAffordable
+                  ? 'border-qing/20 bg-qing/5 text-qing'
+                  : 'border-ink/10 bg-ink/4 text-ink-faint opacity-60'
+              "
             >
               封存一词 {{ formatGN(sealCostVal) }}
             </div>
@@ -361,6 +382,10 @@
           >
             尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
             {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
+          </p>
+          <!-- 封存只算灵石一道账:付不起同样置灰+列差,不许只有点了才听见 toast -->
+          <p v-if="sealCostVal && !sealAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
+            封存尚差 {{ formatGN(sealShortfall) }} 石
           </p>
           <!--
             重铸到底做什么,得在按下之前说清:条数与数值一并重掷(封存的不动),
@@ -459,7 +484,7 @@ import { affixDef, AFFIXES } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
 import { usePlayerStore } from "@/stores/player";
 import { formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
-import { isZero, sub } from "@/utils/gnum";
+import { isZero, sub, subClamp } from "@/utils/gnum";
 import type { AnyStatKey, GNum } from "@/types";
 import { AFFIX_RARITY_META, STAT_NAMES } from "@/ui/statNames";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -528,6 +553,14 @@ const reforgeAffordable = computed(() => {
   return resources.hasSmall("dust", c.dust) && resources.hasStone(c.stone);
 });
 const sealCostVal = computed(() => (inst.value ? sealCost(inst.value) : null));
+/** 封存付得起吗 —— 成本与 sealAffix 同源(sealCost),仅灵石一道账,缺则置灰 */
+const sealAffordable = computed(
+  () => sealCostVal.value !== null && resources.hasStone(sealCostVal.value),
+);
+/** 封存短额:走 GNum 指数感知减法(subClamp,与天道熔炉同款),差多少明说「尚差 N 石」 */
+const sealShortfall = computed(() =>
+  sealCostVal.value === null ? 0 : toNum(subClamp(sealCostVal.value, resources.spiritStone)),
+);
 /** 这一件按品质能有多少条词条:上限来自品质表,不在界面里另写一份 */
 const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).affixes[1] : 0));
 const qualityName = computed(() => (inst.value ? qualityDef(inst.value.quality).name : ""));
@@ -577,6 +610,12 @@ const transferOpen = ref(false);
 const autoBudget = ref(50);
 /** 停止条件:任一命中即停;minRoll 给「数值范围」那一嘴 */
 const autoTargets = ref<ReforgeTarget[]>([]);
+/** 首洗成本判付不起:自动重铸每洗与单次重铸同源(reforgeCost),缺一道账即灰 */
+const autoAffordable = computed(() => {
+  const c = reforgeCostVal.value;
+  if (!c) return false;
+  return resources.hasSmall("dust", c.dust) && resources.hasStone(c.stone);
+});
 
 /**
  * 可选的停止词条:当前装备**真能洗到**的那些 —— 与重铸抽取池同规则
