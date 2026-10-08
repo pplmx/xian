@@ -510,8 +510,20 @@
           >
           <span class="min-w-0 grow">
             <span class="block truncate font-kai text-[14px] text-ink">{{ mainDef.name }}</span>
-            <span class="block text-[11px] text-ink-faint">
-              第 {{ cultivation.learned[mainDef.id] }} 层 · {{ qualityDef(mainDef.quality).name }}
+            <span class="flex items-center gap-1.5">
+              <span class="shrink-0 text-[11px] text-ink-faint">
+                第 {{ cultivation.learned[mainDef.id] }} 层 · {{ qualityDef(mainDef.quality).name }}
+              </span>
+              <span
+                v-if="branchName(mainDef.id)"
+                class="min-w-0 truncate rounded bg-gold-ink/6 px-1.5 py-0.5 text-[10px] text-gold-ink"
+                >{{ branchName(mainDef.id) }}</span
+              >
+              <span
+                v-else-if="canEnlighten(mainDef.id)"
+                class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-[10px] text-qing"
+                >待悟道</span
+              >
             </span>
           </span>
           <GameIcon name="flame" :size="15" class="text-cinnabar" />
