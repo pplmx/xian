@@ -3,8 +3,8 @@
  * 用法: bun run test:report
  */
 import { execSync } from "node:child_process";
-import { readFileSync, rmSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const ENGINE_DIR = "packages/engine";
@@ -63,6 +63,8 @@ const CATEGORIES = [
       "codex",
       "craftability",
       "reforge",
+      "affixTransfer",
+      "useAffixTransfer",
       "theme",
       "savePersistence",
       "enginePause",
@@ -114,6 +116,7 @@ const CATEGORIES = [
       "realms.spec",
       "realmBanking",
       "realmNaming",
+      "realmLadder",
       "classics",
       "progressionDoc",
       "progressionSim",
@@ -179,6 +182,8 @@ const CATEGORIES = [
       "herbMarket",
       "herbGrades",
       "buildingService.spec",
+      "market.spec",
+      "bounty",
     ],
   },
   {
@@ -195,6 +200,7 @@ const CATEGORIES = [
       "contentReachability",
       "contentDensity",
       "mentorService",
+      "apprentice",
       "daoluService",
       "bondEvents",
       "bondTiming",
@@ -296,7 +302,9 @@ const CATEGORIES = [
   },
 ];
 
-const OUT = ".vitest-report.json";
+// 与 vite.config.ts 里 test.outputFile 同路径:verify 里 `vp test run` 先落盘,
+// 这里复读同一份,不再把全量 vitest 跑第二遍(见下文 VERIFY_SHARED_VITEST_JSON)。
+const OUT = resolve(ROOT, ".vitest", "vitest-report.json");
 
 /**
  * vitest 的退出码是"有没有失败"的唯一权威信号,不能丢。
@@ -309,22 +317,37 @@ const OUT = ".vitest-report.json";
  * 故同时盯两路:childExitCode 兜住一切非零退出,JSON 重算兜住 skipped 等旁路状态。
  */
 let childExitCode = 0;
-try {
-  execSync(`bunx vitest run --reporter=json --outputFile=${OUT}`, { stdio: "pipe" });
-} catch (e) {
-  // 有测试失败时 vitest 以非零码退出,报告文件仍会生成;退出码从异常里取
-  const status = typeof e === "object" && e !== null && "status" in e ? Number(e.status) : NaN;
-  childExitCode = Number.isInteger(status) ? status : 1;
+let report = null;
+// verify 里 `bun run test`(vp test run)已经用 config 的 json reporter 把完整结果
+// 写进了 OUT —— 只有 verify 会置 VERIFY_SHARED_VITEST_JSON=1 表示「读这份就行」。
+// 复读同一份结果,既保留分类报告 + 文档例数核对,又不再把全量 vitest 跑第二遍。
+// 独立跑 test:report(如 CI 的 `bun run check && bun run test:report`)没这个标记,
+// 绝不读旧文件,照旧自己跑一次 —— 免得拿上一次运行的旧结果冒充新报告。
+if (process.env.VERIFY_SHARED_VITEST_JSON === "1" && existsSync(OUT)) {
+  try {
+    report = JSON.parse(readFileSync(OUT, "utf8"));
+  } catch {
+    report = null;
+  }
+  rmSync(OUT, { force: true });
 }
-
-let report;
-try {
-  report = JSON.parse(readFileSync(OUT, "utf8"));
-} catch {
-  console.error("未能读取测试报告,请先确认 bunx vitest run 可正常执行");
-  process.exit(1);
+if (!report) {
+  try {
+    mkdirSync(dirname(OUT), { recursive: true });
+    execSync(`bunx vitest run --reporter=json --outputFile=${OUT}`, { stdio: "pipe" });
+  } catch (e) {
+    // 有测试失败时 vitest 以非零码退出,报告文件仍会生成;退出码从异常里取
+    const status = typeof e === "object" && e !== null && "status" in e ? Number(e.status) : NaN;
+    childExitCode = Number.isInteger(status) ? status : 1;
+  }
+  try {
+    report = JSON.parse(readFileSync(OUT, "utf8"));
+  } catch {
+    console.error("未能读取测试报告,请先确认 bunx vitest run 可正常执行");
+    process.exit(1);
+  }
+  rmSync(OUT, { force: true });
 }
-rmSync(OUT, { force: true });
 
 const rows = CATEGORIES.map((c) => ({ ...c, passed: 0, failed: 0 }));
 let uncategorized = 0;
