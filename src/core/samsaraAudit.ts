@@ -236,8 +236,12 @@ export const HERITAGE: HeritageRow[] = [
   {
     id: "suppress",
     name: "区域镇压与宿敌",
-    mode: "full",
-    detail: "rebirth() 未重置 regionStats/suppressedRegions/nemeses",
+    // 半留:战绩/宿敌/区域兴衰随神魂不灭(「世界记得你」),镇压**权益**随皮囊散去
+    // (妖气复聚,见 player.rebirth 与 sanitize 的 suppressReachable)。早些是全留,
+    // 于是新世炼气仍按旧世远境阶位派发高阶装备,数值当场爆炸。
+    mode: "partial",
+    detail:
+      "rebirth() 清空镇压权益与资格令(suppressedRegions/suppressQualified/suppressedSince);余下 regionStats 战绩、区域兴衰与宿敌随神魂不灭",
     kind: "state",
     power: "none",
     compressesGrowth: false,

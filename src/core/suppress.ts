@@ -5,7 +5,7 @@
  * 核心理念:"成长改变世界",而非"世界永远跟着你缩放"。
  */
 
-import { usePlayerStore } from "@/stores/player";
+import { usePlayerStore, type PlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { regionDef } from "@/data/regions";
 import { stoneByTier } from "@/core/formulas";
@@ -113,10 +113,7 @@ export function suppressYield(
  * 判定玩家是否已镇压某区域
  * 条件:≥20 战,平均回合 ≤3,平均受伤 ≤10%
  */
-export function checkSuppression(
-  player: ReturnType<typeof usePlayerStore>,
-  regionId: string,
-): boolean {
+export function checkSuppression(player: PlayerStore, regionId: string): boolean {
   if (player.suppressedRegions.includes(regionId)) return false;
 
   const p = suppressionProgress(player.regionStats[regionId]);
@@ -322,9 +319,10 @@ export function settleSuppressedRegions(
         ? 0
         : suppressionEquipmentLuck(player.suppressedSince[regionId], now);
     for (let i = 0; i < equipCount; i += 1) {
+      // 不传 minQualityRank(哪怕 0):镇压产出也要走品质窗口 —— 高阶远境被妖气复聚清除后,
+      // 本世炼气仍在按低阶位派发,窗口让低阶镇守不掉带外高品(与 afterWin 同一纪律)。
       const equip = generateEquipment(region.tier, service, {
         luck: tenureLuck,
-        minQualityRank: 0,
       });
       const res = acquireEquipment(equip, { quiet: true }); // quiet=true 避免镇压收益刷屏
       // 所得清单如实记下每一件产出:入包与否都列,未入包(自动回收/满包化尘)标注回收
@@ -351,7 +349,7 @@ export const MEMORIAL_CHANCE = 0.04;
  */
 export function memorialLine(
   regionId: string,
-  player: ReturnType<typeof usePlayerStore>,
+  player: PlayerStore,
   now: number = Date.now(),
 ): string | null {
   const since = player.suppressedSince[regionId];

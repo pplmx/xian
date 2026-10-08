@@ -573,6 +573,16 @@ export const usePlayerStore = defineStore(
       // 外物随皮囊散去:灵兽、洞府建筑、灵脉投资都是「我拥有多少」,不是「我是谁」
       petId.value = null;
       dongfu.resetForRebirth();
+      // 镇压权益同样随皮囊散去(妖气复聚):旧世压下的远境(多为高阶)若跨世,
+      // 新世炼气仍在按旧阶位派发高阶装备/灵石,数值当场爆炸(玩家实报
+      // 「低境界刷低副本掉远超当前的装备」)。这属于「我拥有多少」而非「我是谁」;
+      // 世界记忆(regionStats 战绩、区域兴衰)仍随神魂不灭,「世界记得你」的叙事不丢。
+      // suppressQualified(永久资格令)也是经济权柄,不随世走 —— 否则新世一键把
+      // 旧世高阶远境切回收益态,爆炸换个入口又回来。sanitize 的 suppressReachable
+      // 兜修复前已转世的旧档(见 sanitize)。
+      suppressedRegions.value = [];
+      suppressedSince.value = {};
+      suppressQualified.value = [];
     }
 
     /** 存档修复 */
@@ -686,6 +696,19 @@ export const usePlayerStore = defineStore(
        */
       if (!Array.isArray(suppressedRegions.value)) suppressedRegions.value = [];
       if (!Array.isArray(suppressQualified.value)) suppressQualified.value = [];
+      // 镇压权益是「这一世」的东西:凡这一世根本打不进那一界(minRealm>当前境界)的,
+      // 一律复聚回历练地 —— 修复前已转世却带着旧世远境镇压的存档,读档即清(不必再转一世)。
+      // 本世合法压下的(minRealm≤境界,转世前也这么压过)原样保留;suppressedSince 同步清,
+      // 免得一旧一新。这也是 maxTierForMajor 的同款判据,两处共用区域表。
+      if (typeof suppressedSince.value !== "object" || suppressedSince.value === null)
+        suppressedSince.value = {};
+      const suppressReachable = (id: string): boolean =>
+        (regionDef(id)?.minRealm ?? Infinity) <= major.value;
+      suppressedRegions.value = suppressedRegions.value.filter(suppressReachable);
+      suppressQualified.value = suppressQualified.value.filter(suppressReachable);
+      suppressedSince.value = Object.fromEntries(
+        Object.entries(suppressedSince.value).filter(([id]) => suppressReachable(id)),
+      );
       for (const id of suppressedRegions.value) {
         if (!suppressQualified.value.includes(id)) suppressQualified.value.push(id);
       }
@@ -1038,3 +1061,9 @@ export const usePlayerStore = defineStore(
   },
   { persist: persistConfig("player") },
 );
+
+/**
+ * 玩家 store 的实例类型 —— 本店的命名类型,消费者从本模块 import,
+ * 不在调用处裸用 ReturnType<typeof usePlayerStore> 去拼。
+ */
+export type PlayerStore = ReturnType<typeof usePlayerStore>;

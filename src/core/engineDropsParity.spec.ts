@@ -143,7 +143,8 @@ function legacyDrops(
     EQUIP_DROP_CHANCE * rewardMult * (1 + modOf(mods, "dropRate")) * (isBoss ? 2.5 : 1);
   for (let i = 0; i < doubled; i += 1) {
     if (rng.chance(Math.min(0.9, equipChance)) || (isBoss && i === 0)) {
-      const inst = generateEquipment(tier, rng, { luck, minQualityRank: isBoss ? 1 : 0 });
+      // 与 loot.afterWin 同款纪律:普通战不传品质下限(走品质窗口),首领才是蓝品例外
+      const inst = generateEquipment(tier, rng, isBoss ? { luck, minQualityRank: 1 } : { luck });
       lines.push(acquireEquipment(inst).line);
       items += 1;
     }

@@ -12,7 +12,7 @@
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { questProgressOf } from "./questProgress";
-import { evalCond } from "./progress";
+import { checkStateAchievements, evalCond } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { MAIN_QUESTS } from "@/data/quests";
@@ -90,5 +90,32 @@ describe("主线进度读数", () => {
       );
     }
     expect(checked, "一条主线都没扫到,断言形同虚设").toBeGreaterThan(25);
+  });
+});
+
+/**
+ * 成就补扫 —— realm / counter 成就是累计事实,满足了就该解锁。
+ * 它们原本只在 track()/trackRealm() 两个行为触发点被求值;老档/导入档在
+ * 境界已高、又再没触发计数时,低境界成就永远锁着。修法:引擎周期调用的
+ * checkStateAchievements 里重放一次 checkAchievements(见 progress.ts),本块守这条自愈。
+ */
+describe("成就补扫", () => {
+  beforeEach(() => setActivePinia(createPinia()));
+
+  it("境界已高、从未 track 的档,周期补扫即解锁早该解锁的境界成就", () => {
+    const p = usePlayerStore();
+    const q = useQuestsStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    // 模拟修复前的旧档/导入档:境界已到金丹(major=2),却从未走过 track()/trackRealm() 触发点
+    q.setAchieved([]);
+    p.major = 2;
+    p.sub = 0;
+
+    // 只跑周期补扫,不调用任何 track —— 修复前这里不动签到不全的成就
+    checkStateAchievements();
+
+    expect(q.hasAchieved("a_r0"), "炼气成就应被补扫解锁").toBe(true);
+    expect(q.hasAchieved("a_r1"), "筑基成就应被补扫解锁").toBe(true);
+    expect(q.hasAchieved("a_r2"), "金丹成就应被补扫解锁").toBe(true);
   });
 });

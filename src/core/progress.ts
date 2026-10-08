@@ -222,6 +222,12 @@ export function checkCustomAchievement(key: string): void {
 
 /** 周期检查(寿元/灵石等状态型成就) */
 export function checkStateAchievements(): void {
+  // 全成就补扫:realm / counter 成就是累计事实,满足了就该解锁。它们原本只会在
+  // track()/trackRealm() 两个行为触发点被求值;老档/导入档在境界已高、又再没触发
+  // 计数时,低境界成就就永远锁着 —— 引擎周期恰好调用本函数,在这里重放一次即自愈。
+  checkAchievements();
+  // 主线任务同根:也只在这些触发点被推进;补扫一并推进,免得老档卡在早该完成的一步
+  checkMainQuest();
   const player = usePlayerStore();
   const resources = useResourcesStore();
   if (player.lifespanRatio <= LIFESPAN_CRITICAL_RATIO && player.lifespanRatio > 0)

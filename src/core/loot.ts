@@ -329,7 +329,14 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
           items += 1;
           break;
         case "equipment": {
-          const inst = generateEquipment(tier, rng, { luck, minQualityRank: isBoss ? 1 : 0 });
+          // 普通战不传品质下限:传了(哪怕是 0)就算「显式下限」,品质窗口(带外惩罚)整个失效,
+          // 低阶副本会掉出带外高品 —— 恰是「低界掉落过高装备」的另一半。只有首领是剧情给的例外
+          // (至少蓝品)。(engineParity 的 refBandFactor 已锁死「undefined → 带外惩罚」这条语义。)
+          const inst = generateEquipment(
+            tier,
+            rng,
+            isBoss ? { luck, minQualityRank: 1 } : { luck },
+          );
           lines.push(acquireEquipment(inst).line);
           items += 1;
           break;

@@ -138,6 +138,15 @@ describe("数值格式化", () => {
     expect(formatPercent(-Infinity)).toBe("--");
   });
 
+  it("百分比 ×100 上溢(x 有限但 v=Infinity)也显示 --,不吐 infinity%", () => {
+    // x 有限(1e307 < Number.MAX_VALUE)但 ×100 溢出为 Infinity;
+    // 修复前这里会走 v.toFixed(dp)=="Infinity",拼成「Infinity%」
+    expect(formatPercent(1e307)).toBe("--");
+    expect(formatPercent(-1e307)).toBe("--");
+    // 恰好没上溢的极值仍正常出百分比(带符号由调用方决定)
+    expect(formatPercent(1e305)).not.toBe("--");
+  });
+
   it("非法时长显示 --", () => {
     expect(formatDuration(NaN)).toBe("--");
     expect(formatDuration(Infinity)).toBe("--");

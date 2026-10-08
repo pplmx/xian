@@ -13,7 +13,7 @@
  * - material      材料不足     → "采集XX"
  * - build         流派未成形   → "凑出XX流" (中期核心目标)
  */
-import { usePlayerStore } from "@/stores/player";
+import type { PlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
@@ -60,7 +60,7 @@ const GEAR_SLOTS: EquipSlot[] = [
 const MATERIAL_LOW_HERB = 10;
 
 /** 纯函数:根据玩家状态生成当前目标 */
-export function generateCurrentGoal(player: ReturnType<typeof usePlayerStore>): Goal | null {
+export function generateCurrentGoal(player: PlayerStore): Goal | null {
   // 1. 死后无目标
   if (player.dead) return null;
 

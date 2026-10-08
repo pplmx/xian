@@ -50,7 +50,7 @@ describe("轮回审计 · 继承清单(逐条对照代码核实)", () => {
     expect(byId("gongfa").mode).toBe("partial");
   });
 
-  it("外物已全部归零;仍完整继承的状态类只剩荣誉/道统/世界记忆", () => {
+  it("外物已全部归零;仍完整继承的状态类只剩荣誉/道统", () => {
     const s = summarize();
     const names = s.stateButFull.map((r) => r.name);
     console.log(`\n属于状态却完整继承:${names.join("、")}`);
@@ -58,7 +58,9 @@ describe("轮回审计 · 继承清单(逐条对照代码核实)", () => {
     expect(names).not.toContain("灵兽");
     expect(names).not.toContain("洞府建筑");
     expect(names).not.toContain("灵脉投资");
-    // 留下的三项各有理由:荣誉(称号)、道统(师承)、世界记忆(镇压与宿敌)
+    // 镇压改为半留(世界记忆留、权益随皮囊散去,见 suppress 一行),不再是完整继承
+    expect(names).not.toContain("区域镇压与宿敌");
+    // 剩下的各留其名:荣誉(称号)、道统(师承)
     expect(names).toContain("称号");
     expect(names).toContain("师承");
   });
@@ -342,11 +344,13 @@ describe("轮回审计 · 继承清单最小完备", () => {
       "insight",
       "title",
       "mentor",
-      "suppress",
       "fortuneMemory",
     ]) {
       expect(byId(id).mode, `${byId(id).name} 属记忆/精神/灵魂,应保留`).toBe("full");
     }
+    // 镇压半留:世界记忆(regionStats/宿敌)随神魂不灭,但**权益**随皮囊散去(妖气复聚)
+    // —— 全留会让新世炼气按旧世远境阶位派发高阶装备(数值爆炸)
+    expect(byId("suppress").mode).toBe("partial");
     // 功法只「半留」:门类是记忆,层数是修为进度
     expect(byId("gongfa").mode).toBe("partial");
     // 道友同理:关系归档入履历,人不留下
