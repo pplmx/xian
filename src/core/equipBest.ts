@@ -61,7 +61,11 @@ function rollSum(i: EquipmentInstance): number {
 export function equippablePower(i: EquipmentInstance): number {
   const r = resolveEquipStats(i);
   const f = r.flats;
-  const base = toNum(f.attack) + toNum(f.defense) + toNum(f.maxHp) * HP_FLAT_WEIGHT;
+  // toNum 在 e>308 返回 Infinity(见 utils/gnum)。坏档 / 异常模板把平铺写爆时先夹回 0,
+  // 别让 Infinity 战力混进 multi 件全平手、一键换装退化成语义变味的比较(与 yunyin 同纪律)。
+  const finite = (n: number): number => (Number.isFinite(n) ? n : 0);
+  const base =
+    finite(toNum(f.attack)) + finite(toNum(f.defense)) + finite(toNum(f.maxHp)) * HP_FLAT_WEIGHT;
   const critRate = r.mods.critRate ?? 0;
   const critDamage = r.mods.critDamage ?? 0;
   // 面板的百分比分(pct 尺度):会心联乘单列,其余键按权重表折
