@@ -11,10 +11,48 @@ TypeScript、Vite、Vitest 等都在 `package.json` 里,`vp install` 一次就�
 
 ```bash
 vp install
-bun dev            # 开发服务器(vite --host)
-bun run build      # 类型检查 + 生产构建
-bun preview        # 预览构建结果
+vp dev            # 开发服务器(vite --host)
+vp build          # 类型检查 + 生产构建
+vp preview        # 预览构建结果
 ```
+
+### 运行时策略
+
+这个仓库同时有 Bun、Node 两组环境变量,各自管一段,别混淆:
+
+| 角色 | 谁来当 | 承担的事 |
+| --- | --- | --- |
+| 包管理器 + 脚本执行器 | **Bun** 1.4.2 | 装依赖、锁文件(`bun.lock`)、跑 `package.json` 脚本;`packageManager: bun@1.4.2` 明确的正是这一层 |
+| 工具链兼容基准 | **Node** ≥ 22.18 | `engines.node` 表达的是"跑 Vue / Vite / vue-tsc / Oxlint 这条工具链至少要 Node 22.18",**不是**「应用跑在 Node 上」(CI 的 `setup-vp` 就装 Node 22) |
+| 生产运行时 | **浏览器** | Web / PWA 的最终宿主 |
+| 平台运行时 | **Electron / Capacitor** | 把同一份 Web 产物包进 Windows 桌面与 Android 的壳 |
+
+`engines.node >= 22.18` 与 `packageManager: bun@1.4.2` 并存**不矛盾**:一个约束
+「工具链要跑在 ≥22.18 的 Node 上」,一个约束「安装与脚本托管交给 Bun」,管的是两层。
+只要包管理走 Bun、工具链跑在 ≥22.18 的 Node 上即可。
+
+> **`prepare: vp config --no-agent` 为什么每次 install 都跑**:它在 clone 后把仓库里
+> **已跟踪**的钩子(`.vite-hooks/pre-commit`、`.vite-hooks/commit-msg`)
+> 注册进 git —— 设 `core.hooksPath` 并生成 `.vite-hooks/_` 分派器。pre-commit 跑
+> `vp staged` 和 `bun run type-check`,commit-msg 跑 commitlint,是本仓库自己的提交流水闸;
+> 少了它,clone 后这些门会悄悄失效。每次 install 重跑只是幂等的本地注册,代价是毫秒级,
+> 换来"钩子永远在"——所以**保留在 lifecycle 里**,不要为了让 install 少一步而拆掉。
+> (这些钩子只影响本地提交,CI 用 `vp install` 另跑 `check`+`test`,不依赖它。)
+
+### 用 bun 还是用 vp
+
+**默认用 `vp`**。它统一接管 dev / build / test / lint / fmt / check:
+`bun dev`、`bun preview`、`bun run test` 这些只是薄封装,最终都落到 `vp`;
+直接用 `vp …` 少一层跳转、行为一致。具体分工:
+
+| 层 | 入口 | 说明 |
+| --- | --- | --- |
+| 工具链入口(推荐) | `vp …` | `vp dev` / `vp build` / `vp test` / `vp lint` / `vp fmt` / `vp check` / `vp run verify`,全部经 Vite+ |
+| 脚本托管 | `bun run <script>` | 跑 `package.json` 里的自定义脚本(`shots`、`test:report`、`check:engine` 等非标准步骤);`bun dev` / `bun preview` / `bun run test` 是薄封装,vp 优先 |
+| 别用 | `bun test`、`bunx` 等 | `bun test` 不读本仓库路径别名,整片报找不到模块;统一交给 `vp test` |
+
+> 想要一整套常用命令时,直接用 `vp`;只有跑仓库自定义脚本(不在 vp 命令表里的)才退到
+> `bun run`。个别脚本内部仍会 `exec vp`(如 `build` = `vue-tsc -b && vp build`),那是最小薄封装,不是双入口。
 
 ## 命令一览
 

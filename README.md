@@ -50,16 +50,34 @@
 需要 [Bun](https://bun.sh) 1.4.2(与 `package.json` 的 `packageManager` 一致)。
 
 ```bash
-vp install      # 安装依赖
-bun dev         # 开发服务器
-bun run build   # 类型检查 + 生产构建
-bun preview     # 预览构建结果
-bun run test    # 全量用例(全量 332 个 spec / 3089 例;本作自己那部分 252 个 / 2494 例)
-bun run check   # 环境/类型/文档自检 + Oxlint
+vp install      # 安装依赖(底层走 bun)
+vp dev          # 开发服务器
+vp build        # 类型检查 + 生产构建
+vp preview      # 预览构建结果
+vp test         # 全量用例(332 spec / 3089 例,本作 252 / 2494)
+vp check        # 环境/类型/文档自检 + Oxlint
 ```
 
-> 工具链是 Vite+(`vp`):`dev/build/preview/lint/test` 都经它跑,ESLint 已迁移为
-> Oxlint(`vp lint`),Vitest 5 由 `vp test` 托管。依赖安装与锁文件仍走 bun。
+> 统一以 Vite+(`vp`)为入口:`dev/build/preview/test/lint/fmt/check` 都经它跑;
+> `bun dev` / `bun preview` / `bun run test` 这些只是薄封装,最终都落到 `vp`。
+> ESLint 已迁移为 Oxlint(`vp lint`),Vitest 5 由 `vp test` 托管。
+> 依赖安装与锁文件仍走 bun(`vp install` 底层也是 bun),见下方「运行时策略」。
+
+## 运行时策略
+
+这个仓库里 **Bun、Node、浏览器各管一段,不打架**:
+
+| 角色 | 谁来当 | 承担的事 |
+| --- | --- | --- |
+| 包管理器 + 脚本执行器 | **Bun** 1.4.2 | 装依赖、锁文件(`bun.lock`)、跑 `package.json` 脚本。`packageManager: bun@1.4.2` 明确的正是这一层 |
+| 工具链兼容基准 | **Node** ≥ 22.18 | `engines.node` 表达的是"跑 Vue/Vite/vue-tsc/Oxlint 这条工具链至少要 Node 22.18",**不是**「应用跑在 Node 上」 |
+| 生产运行时 | **浏览器** | Web / PWA 的最终宿主,应用代码在这里跑 |
+| 平台运行时 | **Electron / Capacitor** | 把同一份 Web 产物包进 Windows 桌面与 Android 的壳 |
+
+`engines.node >= 22.18` 与 `packageManager: bun@1.4.2` 并存**不矛盾**:前者声明
+「工具链需要多新的 Node」(通常是 CI / Docker 的基础镜像),后者声明
+「安装与脚本托管交给 Bun」。两者约束的是不同层次 —— 只要包管理走 Bun、
+工具链跑在 ≥22.18 的 Node 上即可,两个字段描述的是同一套开发环境的两半。
 
 ## 文档
 
