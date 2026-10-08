@@ -47,7 +47,7 @@
       <RouterLink
         to="/settings"
         aria-label="设置"
-        class="-my-1.5 -mr-1.5 flex min-h-[32px] min-w-[32px] items-center justify-center p-1.5 text-ink-faint active:scale-90"
+        class="-my-2 -mr-2 flex min-h-[40px] min-w-[40px] items-center justify-center p-1.5 text-ink-faint active:scale-90"
       >
         <GameIcon name="settings" :size="15" />
       </RouterLink>

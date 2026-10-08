@@ -15,7 +15,7 @@
   -->
   <div
     aria-live="polite"
-    class="pointer-events-none fixed inset-x-0 top-12 z-70 flex flex-col items-center gap-1.5 px-6"
+    class="pointer-events-none fixed inset-x-0 top-[max(env(safe-area-inset-top),2.5rem)] z-70 flex flex-col items-center gap-1.5 px-6"
   >
     <TransitionGroup name="toast-slide" :duration="TOAST_ANIM_MS">
       <button

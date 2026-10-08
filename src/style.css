@@ -1400,6 +1400,18 @@ button.chip-ink:active:not(:disabled) {
 }
 
 /*
+ * 行内文本/小动作:撑足 32px 触达,不挤视觉排版(负边距看着紧凑,命中区齐全)
+ *
+ * 触达档位(全站按压口径,只记纪律不改动效):
+ *   卡状全行 99 / 选择行 98 / 格小 chip 95 / 图标钮 90
+ */
+.tap-row {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/*
  * 倒计时的定宽槽位 —— 与 formatCountdown 配套使用。
  *
  * 逐位补零只保证「同一量级内宽度相同」;跨量级(秒→分→时)与不同字数(如"1天"与"10天")
