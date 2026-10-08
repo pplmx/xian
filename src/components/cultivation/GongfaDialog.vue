@@ -4,6 +4,7 @@
       <div class="flex items-center gap-2">
         <QualityTag :quality="def.quality" />
         <span class="chip-ink border-ink/30 text-ink-soft">{{ GONGFA_TYPE_NAMES[def.type] }}</span>
+        <span v-if="def.type === 'secret'" class="text-[10px] text-ink-faint">装配时占辅修席</span>
         <span v-if="def.element" class="chip-ink" :style="{ color: ELEMENTS[def.element].color }">
           {{ ELEMENTS[def.element].name }}属性
         </span>
@@ -13,6 +14,16 @@
           class="chip-ink border-gold-ink/40 text-gold-ink"
           title="与你的灵根同源,藏经阁参悟时更易撞见"
           >同源</span
+        >
+        <span
+          v-if="learned && branchPicked"
+          class="rounded bg-gold-ink/6 px-1.5 py-0.5 text-[10px] text-gold-ink"
+          >{{ branchPicked.name }}</span
+        >
+        <span
+          v-else-if="learned && fullLevel && branches.length"
+          class="rounded bg-qing/6 px-1.5 py-0.5 text-[10px] text-qing"
+          >待悟道</span
         >
         <span v-if="learned" class="ml-auto tabular text-[12px] text-gold-ink"
           >第 {{ level }}/{{ def.maxLevel }} 层</span
