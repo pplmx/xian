@@ -12,7 +12,7 @@
  * 谁要把这条改回去,下面那条用例会先红。
  */
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import type { VeinId } from "@/data/veins";
 import { veinDef } from "@/data/veins";
 import {
@@ -93,7 +93,7 @@ function run(
   opts: { major: number; stone: string },
   impl: "now" | "legacy",
 ) {
-  setActivePinia(createPinia());
+  resetWorld();
   const player = usePlayerStore();
   player.major = opts.major;
   useResourcesStore().spiritStone = gn(Number(opts.stone));
@@ -118,7 +118,7 @@ const repeat = (kind: Action["kind"], id: VeinId, n: number): Action[] =>
 const RICH = { major: VEIN_UNLOCK_MAJOR, stone: "1e9" };
 
 beforeEach(() => {
-  setActivePinia(createPinia());
+  resetWorld();
   vi.restoreAllMocks();
 });
 

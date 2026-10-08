@@ -13,7 +13,7 @@
  *     迁移前的写法只是悄悄停下,内容一旦写歪(条件恒真)没人知道。
  */
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import { MAIN_QUESTS } from "@/data/quests";
 import { advanceMainChain, MAIN_CHAIN_MAX_STEPS } from "./engineChain";
 import { evalCond, track } from "./progress";
@@ -55,9 +55,7 @@ const ALL_AT_ONCE: Record<string, number> = {
   bossKills: 999,
 };
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("主线任务链对账 —— 推到哪一节、发什么、说什么", () => {
   const scenarios: [string, number, number, Record<string, number>][] = [

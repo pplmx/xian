@@ -13,7 +13,7 @@
  * 每拍触发,少了去重就会每拍发一次奖;迁移前这份去重在 store 里,现在收进库的登记簿。
  */
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import {
   checkAchievements,
@@ -64,7 +64,7 @@ function richCounters(value = 1e6): Record<string, number> {
 const toasts: string[] = [];
 
 beforeEach(() => {
-  setActivePinia(createPinia());
+  resetWorld();
   toasts.length = 0;
   vi.spyOn(useUiStore(), "toast").mockImplementation((msg) => void toasts.push(msg));
 });

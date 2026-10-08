@@ -15,7 +15,7 @@
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import { explorationRules } from "./exploration";
 import { settleOffline } from "./offline";
 import { usePlayerStore } from "@/stores/player";
@@ -26,7 +26,7 @@ import { useLoreStore } from "@/stores/lore";
 const src = (f: string) => resolve(__dirname, f);
 
 describe("离线历练 · 战斗规则与在线同源(逆旅契)", () => {
-  beforeEach(() => setActivePinia(createPinia()));
+  beforeEach(resetWorld);
 
   it("逆旅契合并只此一份:在线与离线都经 explorationRules,离线不再内联 currentDaoRules", () => {
     const exploration = readFileSync(src("./exploration.ts"), "utf8");
@@ -92,7 +92,7 @@ describe("离线历练 · 区域事件加丰与加难成对(regReward)", () => {
 });
 
 describe("离线历练 · 战后语义与在线同源", () => {
-  beforeEach(() => setActivePinia(createPinia()));
+  beforeEach(resetWorld);
 
   it("离线普通战写入图鉴照面与区域统计,并走镇压判定", () => {
     const offline = readFileSync(src("./offline.ts"), "utf8");

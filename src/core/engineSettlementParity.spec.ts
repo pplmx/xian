@@ -13,7 +13,7 @@
  *  那是别的账,不是"这一笔奖励"。)
  */
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import { afterWin } from "./loot";
 import { regionDef } from "@/data/regions";
 import { usePlayerStore } from "@/stores/player";
@@ -41,7 +41,7 @@ function freezeBattle(): void {
 
 describe('结算回执对账 —— "本次所得"与账本实际增量', () => {
   beforeEach(() => {
-    setActivePinia(createPinia());
+    resetWorld();
     usePlayerStore().initCharacter("同源校验", { roots: [] } as never);
   });
 

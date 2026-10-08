@@ -9,7 +9,7 @@
  * 读数(几条规则各判掉多少)也一并比:它与裁决共用同一个 `decide`,不该出现两套数字。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import type { EquipmentInstance, QualityId } from "@/types";
 import { useSettingsStore } from "@/stores/settings";
 import { usePlayerStore } from "@/stores/player";
@@ -100,9 +100,7 @@ function gangdunBuild(): void {
   usePlayerStore().finalStats.mods = { shieldOnStart: 0.25, shieldPower: 0.3 };
 }
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("智能收纳对账 —— 裁决与迁移前逐字相同", () => {
   const items: EquipmentInstance[] = [

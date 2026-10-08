@@ -14,7 +14,7 @@
  *     所以线上没露出来,但那是运气)。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import type { CounterKey } from "@/types";
 import { DAILY_TASKS } from "@/data/quests";
 import { rolloverDailyIfNeeded, track } from "./progress";
@@ -91,9 +91,7 @@ const days: [string, Daily, Counters][] = [
   ],
 ];
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("每日任务对账 —— 结算出哪几条、按什么顺序", () => {
   for (const [label, daily, counters] of days) {

@@ -10,7 +10,7 @@
  * 另有两条时机上的约定:见闻在裁决**之前**记(化尘的也算见过),`forceKeep` 跳过裁决。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import type { EquipmentInstance, QualityId } from "@/types";
 import { acquireEquipment } from "./loot";
 import { useInventoryStore } from "@/stores/inventory";
@@ -49,9 +49,7 @@ function smartOn(): void {
   useResourcesStore().spiritStone = gn(0);
 }
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("入库漏斗对账 —— 四条去路的文案与去向", () => {
   it('① 被自动回收:文案带"自动回收"、不入包、有化尘', () => {

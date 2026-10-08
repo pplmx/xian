@@ -8,7 +8,7 @@
  *      而"用没用过"只是同一份记录里的一格 —— 后面再见到更差的成色,不会把它抹回去。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import { useLoreStore } from "@/stores/lore";
 import {
   ENEMY_LORE_BOSS_THRESHOLDS,
@@ -59,9 +59,7 @@ function refNoteEquipUsed(
   return { ...best, [id]: { q: cur?.q ?? 0, t: cur?.t ?? 0, u: 1 } };
 }
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("图鉴对账 —— 敌人认知与装备见闻", () => {
   it('敌人认知:普通怪与首领各 60 次交手,累计、档位与"是否升档"逐次相同', () => {

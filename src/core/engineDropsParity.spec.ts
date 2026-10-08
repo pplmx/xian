@@ -17,7 +17,7 @@
  *   · "战利品翻倍"在装备上是**多抽一次**,在材料/残页上翻的是**份数**。
  */
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import type { RegionDef } from "@/types";
 import type { Rng } from "wanxiang-engine";
 import { createRng } from "wanxiang-engine";
@@ -87,7 +87,7 @@ function seedRng(seed: number): void {
 
 /** 一场干净的仗:行囊空、不化尘、不自动收纳 —— 两边的起点必须一模一样 */
 function freshBattle(): void {
-  setActivePinia(createPinia());
+  resetWorld();
   useSettingsStore().decomposeRanks = [];
   useSettingsStore().smartKeep.enabled = false;
   usePlayerStore().initCharacter("掉落对账", { roots: [] } as never);

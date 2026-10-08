@@ -9,7 +9,7 @@
  * "同一个周期永远是同一个结果"。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { REALMS, worldOf } from "@/data/realms";
@@ -45,9 +45,7 @@ function setProgress(totalPlaySec: number, major: number): void {
   usePlayerStore().major = major;
 }
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("天时对账 —— 逐日与迁移前相同", () => {
   it("人间界:60 天的天时逐日相同(同一天内任意时刻也相同)", () => {

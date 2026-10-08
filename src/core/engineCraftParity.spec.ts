@@ -13,7 +13,7 @@
  *     (夹上限那条路径由库侧 `recipes.spec` 钉着 —— 这里钉的是它与本作口径的接线)。
  */
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import { PILLS, pillDef } from "@/data/pills";
 import { recipeCraft } from "@/data/crafting";
 import { herbGradeOfMajor } from "@/data/herbGrades";
@@ -168,7 +168,7 @@ function runCase(
   script: boolean[],
   impl: "now" | "legacy",
 ): Snapshot {
-  setActivePinia(createPinia());
+  resetWorld();
   prepare(opts);
   const toasts: string[] = [];
   vi.spyOn(useUiStore(), "toast").mockImplementation((msg) => void toasts.push(msg));
@@ -184,7 +184,7 @@ function runCase(
 }
 
 beforeEach(() => {
-  setActivePinia(createPinia());
+  resetWorld();
   vi.restoreAllMocks();
 });
 

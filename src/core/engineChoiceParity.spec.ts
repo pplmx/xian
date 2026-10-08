@@ -7,7 +7,7 @@
  *   二 **没选时的兜底**(默认且可选 → 第一条可选 → 第一条)—— 离线自动结算与界面超时共用这一处。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import type { EventChoice, EventDef } from "@/types";
 import { EVENTS } from "@/data/events";
 import { usePlayerStore } from "@/stores/player";
@@ -37,9 +37,7 @@ function refDefaultIndex(def: EventDef, tier: number): number {
 const SAMPLE: EventDef[] = EVENTS.slice(0, 40);
 const TIER = 2;
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("事件抉择对账 —— 掷后果与兜底逐次相同", () => {
   it("同一种子掷出同一条后果(前 40 个事件的每个选项 × 20 颗种子)", () => {

@@ -11,7 +11,7 @@
  * 抹掉。现在"已经立过题就直接返回",转世流程则**先撤上一世的题**再立新题。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import type { CounterKey } from "@/types";
 import { LIFE_THEMES } from "@/data/lifeThemes";
 import { beginLife, vowProgress } from "./samsaraService";
@@ -43,9 +43,7 @@ const setCounters = (patch: Counters): void => {
   useQuestsStore().counters = { ...patch };
 };
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("本世计对账 —— 开世基准与本世增量", () => {
   it("开世基准:各计数器的快照与冻结口径逐键相同", () => {

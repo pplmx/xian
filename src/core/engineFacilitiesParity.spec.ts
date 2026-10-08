@@ -11,7 +11,7 @@
  *      改成"每次取整再累加",整条产线就会被悄悄抹平(而且只在长时间挂机后才看得出来)。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { createPinia, setActivePinia } from "pinia";
+import { resetWorld } from "./parityShared";
 import type { BuildingId } from "@/types";
 import { BUILDINGS, buildingDef } from "@/data/buildings";
 import { FIELD_HERB_PER_HOUR, FIELD_ORE_PER_HOUR } from "@/data/constants";
@@ -105,9 +105,7 @@ const levelCases: [string, LevelMap][] = [
   ["超上限的坏档(洞府 0 级、灵兽园 8 级)", { ...zeroLevels(), beast: 8 }],
 ];
 
-beforeEach(() => {
-  setActivePinia(createPinia());
-});
+beforeEach(resetWorld);
 
 describe("设施对账 —— 能不能升 / 为什么 / 要花什么", () => {
   beforeEach(() => {
