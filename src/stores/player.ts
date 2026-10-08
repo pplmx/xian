@@ -630,6 +630,16 @@ export const usePlayerStore = defineStore(
         if (!known) {
           secretRealm.value = null;
         } else {
+          // 已掷定敌人原样保留(预览==实战须同源,往返不裂);缺/坏则不补——
+          // 战时兜底现掷,这里不留死值。
+          const { foe } = sr;
+          const foeOk =
+            foe !== undefined &&
+            "maxHp" in foe &&
+            "attack" in foe &&
+            typeof foe.name === "string" &&
+            typeof foe.maxHp === "object" &&
+            typeof foe.attack === "object";
           secretRealm.value = {
             realmId: sr.realmId,
             enteredAt: asFiniteNumber(sr.enteredAt, Date.now(), 0),
@@ -640,6 +650,7 @@ export const usePlayerStore = defineStore(
             rules: asStringArray(sr.rules).filter((t) => SECRET_RULES.some((r) => r.text === t)),
             carriedHpPct: Math.min(1, asFiniteNumber(sr.carriedHpPct, 1, 0.05)),
             finished: sr.finished === true,
+            foe: foeOk ? foe : undefined,
           };
         }
       }

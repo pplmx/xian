@@ -33,6 +33,7 @@ import {
   realmUnlock,
   secretFightRules,
   secretLayerFoe,
+  secretLayerPreview,
   secretLayerReward,
   tierOfMajor,
 } from "./secretRealm";
@@ -362,5 +363,62 @@ describe("秘境 · 战利倍率算得出对", () => {
         toNum(secretLayerReward(tier, 2, 1.2).stone),
       );
     }
+  });
+});
+
+describe("秘境 · 战前预览与实战同源", () => {
+  const BANDS = ["胜算在握", "约有七成胜算", "五五之数,凶险参半", "凶多吉少"];
+
+  it("进境即掷定本层敌人落档,预览与实战读同一份;战利与层数/倍率同源", () => {
+    ready(3);
+    expect(enterSecretRealm("sr_kurong").ok).toBe(true);
+    const st = currentRealm()!;
+    expect(st.foe, "进境应已掷定本层敌人").toBeDefined();
+    const pv = secretLayerPreview(st);
+    // 预览==实战:敌人就是已落档的那一份,不重掷
+    expect(pv.foe).toEqual(st.foe);
+    expect(BANDS).toContain(pv.winText);
+    // 战利与 secretLayerReward 同源:灵石随层数与本境倍率,材料只随层数
+    const def = SECRET_REALMS.find((r) => r.id === "sr_kurong")!;
+    expect(pv.reward).toEqual(secretLayerReward(tierOfMajor(3), st.layer, def.rewardMult));
+  });
+
+  it("再入一层后,新一轮预览敌人已随层落档(仍是同一份,不重掷)", () => {
+    ready(3);
+    enterSecretRealm("sr_kurong");
+    let guard = 0;
+    while (currentRealm() && guard < 5) {
+      const st = currentRealm()!;
+      expect(st.foe, "每一层都应已掷定敌人").toBeDefined();
+      expect(secretLayerPreview(st).foe, "预览(再入前)与已落档敌人同一份").toEqual(st.foe);
+      fightSecretLayer();
+      guard += 1;
+    }
+  });
+
+  it("旧档缺 foe:战时兜底现掷,预览给莫测占位而非崩", () => {
+    ready(3);
+    const player = usePlayerStore();
+    player.setSecretRealm({
+      realmId: "sr_kurong",
+      enteredAt: 0,
+      layer: 1,
+      wins: 0,
+      losses: 0,
+      spoils: [],
+      rules: [],
+      carriedHpPct: 1,
+      finished: false,
+      // 无 foe —— 模拟旧档
+    } as never);
+    const st = currentRealm()!;
+    expect(st.foe).toBeUndefined();
+    expect(secretLayerPreview(st).foe).toBeNull();
+    expect(secretLayerPreview(st).winText).toBe("莫测");
+    // 战时不崩:兜底现掷出一个可读敌人
+    const r = fightSecretLayer();
+    expect(r).not.toBeNull();
+    expect(r!.lines.length).toBeGreaterThan(0);
+    for (const line of r!.lines) expect(line).not.toContain("NaN");
   });
 });

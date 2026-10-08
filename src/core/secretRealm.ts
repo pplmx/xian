@@ -21,7 +21,7 @@ import {
   secretRealmDef,
   type SecretRealmDef,
 } from "@/data/secretRealms";
-import { resolveCombat } from "./combat";
+import { resolveCombat, sampleWinRate } from "./combat";
 import { mergeRules, worldFoeSnap } from "./gauntlet";
 import { buildPlayerSnap } from "./playerSnap";
 import { currentDaoRules } from "./endgameService";
@@ -52,6 +52,11 @@ export interface SecretRealmState {
   carriedHpPct: number;
   /** 结束标记(结束后即清空状态,故仅在一次结算内为真) */
   finished: boolean;
+  /**
+   * 本层敌人的快照 —— **进境/再入时掷定落档**,预览与实战共用同一份(预览==实战,不重掷)。
+   * 可选:旧档(本字段引入前)中途在境的没有它,战时兜底现掷;新档一律有。
+   */
+  foe?: CombatantSnap;
 }
 
 /**
@@ -130,7 +135,8 @@ export function enterSecretRealm(defId: string): EnterResult {
     const pick = pool.splice(rng.int(0, pool.length - 1), 1)[0]!;
     texts.push(pick.text);
   }
-  player.setSecretRealm({
+  // 进境即掷定本层敌人落档:预览与实战共读这一份,「所见即所打」,不重掷。
+  const first: SecretRealmState = {
     realmId: def.id,
     enteredAt: Date.now(),
     layer: 1,
@@ -140,7 +146,8 @@ export function enterSecretRealm(defId: string): EnterResult {
     rules: texts,
     carriedHpPct: 1,
     finished: false,
-  });
+  };
+  player.setSecretRealm({ ...first, foe: secretLayerFoe(first).snap });
   return { ok: true };
 }
 
@@ -218,6 +225,45 @@ export function secretLayerReward(
   return { stone: stoneByTier(tier, (12 + 6 * layer) * rewardMult), material: 2 + layer };
 }
 
+/** 胜算档文案(与远征天机同一档位:0.9/0.6/0.35) */
+function winTextOf(rate: number): string {
+  return rate >= 0.9
+    ? "胜算在握"
+    : rate >= 0.6
+      ? "约有七成胜算"
+      : rate >= 0.35
+        ? "五五之数,凶险参半"
+        : "凶多吉少";
+}
+
+export interface SecretLayerPreview {
+  /** 本层敌人快照(预览与实战同源;旧档缺失时为 null,界面给「莫测」占位) */
+  foe: CombatantSnap | null;
+  /** 胜算 0..1 */
+  rate: number;
+  /** 胜算档文案 */
+  winText: string;
+  /** 本层战利(灵石 + 材料) */
+  reward: { stone: GNum; material: number };
+}
+
+/**
+ * 战前预览(「再入一层」所见即所打):敌人、战利、胜算都来自本层将用的那一份。
+ * 胜算与实战同口径 —— buildPlayerSnap × 已落档的 state.foe × 同一套 secretFightRules
+ * (含携带气血),与 fightSecretLayer 里 resolveCombat 的判定同源。
+ */
+export function secretLayerPreview(state: SecretRealmState): SecretLayerPreview {
+  const player = usePlayerStore();
+  const def = secretRealmDef(state.realmId);
+  const tier = tierOfMajor(player.major);
+  const reward = secretLayerReward(tier, state.layer, def?.rewardMult ?? 1);
+  if (!state.foe) return { foe: null, rate: 0, winText: "莫测", reward };
+  const playerSnap = buildPlayerSnap();
+  const rules = { ...secretFightRules(state), playerStartHpPct: state.carriedHpPct };
+  const rate = sampleWinRate(playerSnap, state.foe, rng, 3, rules);
+  return { foe: state.foe, rate, winText: winTextOf(rate), reward };
+}
+
 /** 打一层 */
 export function fightSecretLayer(): SecretLayerResult | null {
   const player = usePlayerStore();
@@ -227,7 +273,8 @@ export function fightSecretLayer(): SecretLayerResult | null {
   const def = secretRealmDef(state.realmId);
   if (!def) return null;
 
-  const { snap } = secretLayerFoe(state);
+  // 预览与实战同源:有已落档的敌人就用它(进境/再入已掷定);旧档没有才兜底现掷。
+  const snap = state.foe ?? secretLayerFoe(state).snap;
   const tier = tierOfMajor(player.major);
   const playerSnap: CombatantSnap = buildPlayerSnap();
   const rules = { ...secretFightRules(state), playerStartHpPct: state.carriedHpPct };
@@ -252,13 +299,15 @@ export function fightSecretLayer(): SecretLayerResult | null {
       return { win: true, finished: true, cleared: true, lines };
     }
     const carried = Math.min(1, result.playerHpPct + def.healBetweenPct);
-    player.setSecretRealm({
+    // 再入一层:掷定下一层的敌人落档 —— 界面上下一层的预览与实战仍同源。
+    const next: SecretRealmState = {
       ...state,
       layer: nextLayer,
       wins: state.wins + 1,
       spoils: [...state.spoils, ...lines],
       carriedHpPct: Math.max(0.05, carried),
-    });
+    };
+    player.setSecretRealm({ ...next, foe: secretLayerFoe(next).snap });
     return { win: true, finished: false, cleared: false, lines };
   }
 

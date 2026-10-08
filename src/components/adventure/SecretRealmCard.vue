@@ -26,6 +26,17 @@
       >
         <span v-for="(s, i) in state.spoils" :key="i" class="block">· {{ s }}</span>
       </p>
+      <!-- 战前预览:与实战同源 —— 敌人/胜算(secretLayerPreview)本层即准,「所见即所打」 -->
+      <p v-if="preview" class="mt-1 whitespace-nowrap text-[10px] leading-relaxed text-ink-soft">
+        <template v-if="preview.foe">
+          本层劫:<span class="text-ink">{{ preview.foe.name }}</span>
+          <span :class="preview.rate < 0.35 ? 'text-cinnabar' : 'text-ink'"
+            >· {{ preview.winText }}</span
+          >
+        </template>
+        <template v-else>本层劫:<span class="text-ink">莫测</span></template>
+        · 战利:灵石 +{{ formatGN(preview.reward.stone) }} · 灵草 +{{ preview.reward.material }}
+      </p>
       <div class="mt-2 flex gap-2">
         <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="fight">再 入 一 层</button>
         <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="abandonRealm()">
@@ -64,6 +75,21 @@
       </div>
     </template>
   </section>
+
+  <!-- 未解锁:inert 占位(仿天界「未至真仙」)—— 灰注开启境界,不可点、不进焦点 -->
+  <section
+    v-else
+    aria-hidden="true"
+    class="card-ink pointer-events-none select-none px-4 py-3 opacity-60"
+  >
+    <p class="flex items-center gap-2">
+      <span class="font-kai text-[14px] tracking-[0.2em] text-ink">秘境</span>
+      <span class="chip-ink !text-[9px]">{{ gate === "celestial" ? "天界秘境" : "凡境秘境" }}</span>
+    </p>
+    <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+      {{ gate === "celestial" ? "天界册 · 真仙起(道源)" : "凡境册 · 元婴起(灵石)" }}
+    </p>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -85,6 +111,7 @@ import {
   entryCostText,
   fightSecretLayer,
   realmUnlock,
+  secretLayerPreview,
 } from "@/core/secretRealm";
 
 const player = usePlayerStore();
@@ -100,6 +127,8 @@ const list = computed(() => availableRealms(props.gate));
 const def = computed<SecretRealmDef | undefined>(() =>
   state.value ? secretRealmDef(state.value.realmId) : undefined,
 );
+/** 战前预览:本层敌人/胜算/战利(与实战同源,见 secretLayerPreview) */
+const preview = computed(() => (state.value ? secretLayerPreview(state.value) : null));
 
 function canPay(r: SecretRealmDef): boolean {
   const c = entryCostOf(r, player.major);
