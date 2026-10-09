@@ -23,9 +23,9 @@
     <!-- 底部:隐私政策 / 导出导入恢复 / 关于 -->
     <div class="mt-6 flex items-center gap-3 text-[11px] text-ink-faint">
       <button class="active:text-ink-soft" @click="privacyOpen = true">隐私政策</button>
-      <span class="text-ink-faint/40">·</span>
+      <span class="text-ink/15">·</span>
       <button class="active:text-ink-soft" @click="importOpen = true">导入存档</button>
-      <span class="text-ink-faint/40">·</span>
+      <span class="text-ink/15">·</span>
       <button class="active:text-ink-soft" @click="aboutOpen = true">关于此作</button>
     </div>
     <input

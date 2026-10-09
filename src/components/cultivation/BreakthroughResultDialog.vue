@@ -31,7 +31,7 @@
       -->
       <p
         v-if="view.success && view.isMajor"
-        class="mx-auto mt-1.5 w-fit animate-ink-pop rounded border border-gold-ink/60 bg-gold-ink/8 px-2 py-0.5 font-kai text-[11px] tracking-[0.3em] text-gold-ink"
+        class="mx-auto mt-1.5 w-fit animate-ink-pop rounded border border-gold-ink/60 bg-gold-ink/6 px-2 py-0.5 font-kai text-[11px] tracking-[0.3em] text-gold-ink"
       >
         大 境
       </p>

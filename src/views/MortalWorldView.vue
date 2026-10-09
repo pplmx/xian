@@ -21,7 +21,7 @@
             fill="none"
             stroke="currentColor"
             stroke-width="1"
-            class="text-ink/25"
+            class="text-ink/15"
           />
           <circle
             v-for="p in view.places"

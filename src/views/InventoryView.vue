@@ -429,7 +429,7 @@
               持有 {{ row.held }} · 单价 {{ formatGN(row.price) }} 灵石
             </p>
             <!-- 落处:买错品=大额沉没。「草比石贵」十倍一翻,先把这品草喂谁的方子摆出来 -->
-            <p class="text-[10px] text-qing/80">{{ row.usage }}</p>
+            <p class="text-[10px] text-qing">{{ row.usage }}</p>
             <!--
               付不起就把缺摆出来:买十的门槛是十株的价,值与买一口径同源 ——
               一盏灰灯不告诉差多少等于没说完(法宝炼化同款句式)。
