@@ -140,7 +140,7 @@ vp preview        # 预览构建结果
 ```text
 packages/engine/          # 公共库:万象引擎(等级/属性/装备/副本四套系统的可配置内核)
 src/
-├── data/                 # 内容层:纯静态声明式定义(54 个模块)
+├── data/                 # 内容层:纯静态声明式定义(57 个模块)
 │   ├── realms.ts             # 4 界域 · 21 境界
 │   ├── regions.ts            # 44 区域
 │   ├── enemies.ts            # 132 敌人
@@ -148,7 +148,7 @@ src/
 │   ├── affixes.ts            # 113 词条
 │   ├── gongfa.ts             # 63 功法
 │   ├── gongfaBranches.ts     # 141 悟道分支
-│   ├── pills.ts              # 63 丹药
+│   ├── pills.ts              # 68 丹药
 │   ├── artifacts.ts          # 45 法宝
 │   ├── souls.ts              # 6 类 6 阶器魂
 │   ├── xiangxiu.ts           # 28 星宿 · 四象
@@ -159,7 +159,7 @@ src/
 │   ├── endgame.ts            # 道途 / 天界 / 试炼
 │   ├── mutators.ts           # 8 变数
 │   └── constants.ts          # 全局平衡参数
-├── core/                 # 逻辑层(127 个模块 + 210 个 spec,另有 *Sim.ts 平衡模拟器)
+├── core/                 # 逻辑层(136 个模块 + 218 个 spec,另有 *Sim.ts 平衡模拟器)
 │   ├── engine.ts             # 在线心跳驱动(1000ms)
 │   ├── offline.ts            # 离线收益结算
 │   ├── combat.ts             # 回合制战斗预解算
@@ -171,9 +171,9 @@ src/
 │   ├── progress.ts           # 任务成就横向总线
 │   ├── worldGen.ts           # 终局世界生成(三重审计门)
 │   └── *Service.ts           # 各系统服务
-├── stores/               # Pinia 状态(15 个,绝大部分自动持久化)
-├── views/                # 17 个页面
-├── components/           # 35 个组件(8 组)
+├── stores/               # Pinia 状态(18 个,除瞬态 `ui` 外 17 个自动持久化)
+├── views/                # 19 个页面
+├── components/           # 38 个组件(8 组)
 ├── ui/                   # 图标、词条名、图鉴与提示等展示层数据
 ├── utils/                # GNum 大数(m×10^e)/ 格式化 / 随机 / 存档底层
 ├── composables/          # useNow 等
