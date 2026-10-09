@@ -5,7 +5,13 @@ import { gn } from "@/utils/gnum";
 import { mulberry32, RandomService } from "@/utils/random";
 import { enemyDef } from "@/data/enemies";
 import { artifactDef } from "@/data/artifacts";
-import { makeEnemySnap, resolveCombat, sampleWinRate, sampleWinRateRaw } from "./combat";
+import {
+  makeEnemySnap,
+  resolveCombat,
+  sampleWinRate,
+  sampleWinRateRaw,
+  winTextForRate,
+} from "./combat";
 
 const seeded = (seed = 1): RandomService => new RandomService(mulberry32(seed));
 
@@ -265,5 +271,18 @@ describe("自动战斗", () => {
       "被震慑后法宝仍在自动出手(每场都≥2 次)—— 震慑没掐住法宝",
     ).toBeLessThanOrEqual(15);
     console.log(`\n震慑(敌 100% 震慑率)× 15 场:玩家法宝出手 ${artifactFires} 次(应为≤15)`);
+  });
+});
+
+describe("胜算档文案 · 单一事实源", () => {
+  it("0.9/0.6/0.35 四档阈值与措辞钉死", () => {
+    expect(winTextForRate(0.91)).toBe("胜算在握");
+    expect(winTextForRate(0.6)).toBe("约有七成胜算");
+    expect(winTextForRate(0.59)).toBe("五五之数,凶险参半");
+    expect(winTextForRate(0.5)).toBe("五五之数,凶险参半");
+    expect(winTextForRate(0.35)).toBe("五五之数,凶险参半");
+    expect(winTextForRate(0.34)).toBe("凶多吉少");
+    expect(winTextForRate(0)).toBe("凶多吉少");
+    expect(winTextForRate(1)).toBe("胜算在握");
   });
 });

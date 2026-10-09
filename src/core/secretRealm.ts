@@ -21,7 +21,7 @@ import {
   secretRealmDef,
   type SecretRealmDef,
 } from "@/data/secretRealms";
-import { resolveCombat, sampleWinRate } from "./combat";
+import { resolveCombat, sampleWinRate, winTextForRate } from "./combat";
 import { mergeRules, worldFoeSnap } from "./gauntlet";
 import { buildPlayerSnap } from "./playerSnap";
 import { currentDaoRules } from "./endgameService";
@@ -225,16 +225,7 @@ export function secretLayerReward(
   return { stone: stoneByTier(tier, (12 + 6 * layer) * rewardMult), material: 2 + layer };
 }
 
-/** 胜算档文案(与远征天机同一档位:0.9/0.6/0.35) */
-function winTextOf(rate: number): string {
-  return rate >= 0.9
-    ? "胜算在握"
-    : rate >= 0.6
-      ? "约有七成胜算"
-      : rate >= 0.35
-        ? "五五之数,凶险参半"
-        : "凶多吉少";
-}
+/** 胜算档文案 —— 与远征天机同档,统一走 combat.winTextForRate(单一事实源) */
 
 export interface SecretLayerPreview {
   /** 本层敌人快照(预览与实战同源;旧档缺失时为 null,界面给「莫测」占位) */
@@ -261,7 +252,7 @@ export function secretLayerPreview(state: SecretRealmState): SecretLayerPreview 
   const playerSnap = buildPlayerSnap();
   const rules = { ...secretFightRules(state), playerStartHpPct: state.carriedHpPct };
   const rate = sampleWinRate(playerSnap, state.foe, rng, 3, rules);
-  return { foe: state.foe, rate, winText: winTextOf(rate), reward };
+  return { foe: state.foe, rate, winText: winTextForRate(rate), reward };
 }
 
 /** 打一层 */

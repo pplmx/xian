@@ -31,7 +31,7 @@ import {
 } from "./gauntlet";
 import { VOID_ANCHOR_TIER } from "./worldGen";
 import { MAX_MAJOR } from "@/data/realms";
-import { resolveCombat, sampleWinRate } from "./combat";
+import { resolveCombat, sampleWinRate, winTextForRate } from "./combat";
 import { modOf } from "./statsCalc";
 import { SLAUGHTER_PER_WIN, SWORD_PER_WIN, slaughterSpeedBonus, stackedMods } from "./daoDepth";
 import { currentDaoRules, endgameUnlocked, recordMark } from "./endgameService";
@@ -443,14 +443,7 @@ export function previewFight(
   const snap = run ? runSnap(run) : buildPlayerSnap(true);
   const fightRules = world && run ? withCarriedHp(rules, run) : rules;
   const rate = sampleWinRate(snap, foe, rand, 3, fightRules);
-  const winText =
-    rate >= 0.9
-      ? "胜算在握"
-      : rate >= 0.6
-        ? "约有七成胜算"
-        : rate >= 0.35
-          ? "五五之数,凶险参半"
-          : "凶多吉少";
+  const winText = winTextForRate(rate);
   return { skillLines, riskLines, winText, rate };
 }
 

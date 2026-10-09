@@ -691,3 +691,20 @@ export function sampleWinRateRaw(
   }
   return samples > 0 ? wins / samples : 0;
 }
+
+/**
+ * 胜算档文案 —— 单一事实源。
+ *
+ * 远征天机(expedition.previewFight)与秘境预览(secretRealm)都用同一组档位,
+ * 曾各写一份:改一档、不改另一处,两面文案就对不上了。故抽成一处,阈值与措辞
+ * 都钉在这里(0.9/0.6/0.35 → 四档字样)。
+ */
+export function winTextForRate(rate: number): string {
+  return rate >= 0.9
+    ? "胜算在握"
+    : rate >= 0.6
+      ? "约有七成胜算"
+      : rate >= 0.35
+        ? "五五之数,凶险参半"
+        : "凶多吉少";
+}
