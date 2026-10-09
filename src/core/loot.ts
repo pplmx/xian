@@ -1,7 +1,7 @@
 /**
  * 掉落服务 —— 战斗胜利后的奖励结算
  */
-import type { ArtifactDef, EquipmentInstance, GNum, RegionDef } from "@/types";
+import type { ArtifactDef, EquipmentInstance, GNum, QualityId, RegionDef } from "@/types";
 import { rng } from "@/utils/random";
 import { gnZero, isZero } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
@@ -178,11 +178,21 @@ export function acquireArtifact(defId: string, quiet = false): string {
   return `法宝「${def.name}」`;
 }
 
+/**
+ * 丹药掉落权重 —— 品质越高越罕见。
+ *
+ * 随机掉落(下方 randomDropPill)与丹药价值审计(core/pillValue)共用同一把
+ * 钥匙:改品质权重只动这一处,审计不会对着过期的掉落模型衡量。
+ */
+export function pillDropWeight(def: { quality: QualityId }): number {
+  return 100 / (1 + qualityDef(def.quality).rank * 2);
+}
+
 /** 随机一件当前境界可用的掉落丹药 */
 export function randomDropPill(major: number): string | null {
   const pool = PILLS.filter((p) => p.minRealm <= major && !p.recipe);
   if (pool.length === 0) return null;
-  const picked = rng.weighted(pool, (p) => 100 / (1 + qualityDef(p.quality).rank * 2));
+  const picked = rng.weighted(pool, pillDropWeight);
   return picked.id;
 }
 

@@ -58,6 +58,7 @@ import { toNum } from "@/utils/gnum";
 import { baseCultPerSec, baseQiRegen, expRequirement, qiCap, stoneByTier } from "./formulas";
 import { bearableRank, composeSuccessRate } from "./craftability";
 import { salvageRatio } from "./pillService";
+import { pillDropWeight } from "./loot";
 
 // ============ 审计基准 ============
 
@@ -207,22 +208,17 @@ export function craftBattlesOf(def: PillDef): number {
 
 // ============ 取得代价:掉落品 ============
 
-/** 掉落权重 —— 与 core/loot.ts 的 randomDropPill 同一口径:品质越高越罕见 */
-export function dropWeightOf(def: PillDef): number {
-  return 100 / (1 + qualityDef(def.quality).rank * 2);
-}
-
 /** 某大境界能掉出的丹药池 */
 export function dropPoolAt(major: number): PillDef[] {
   return PILLS.filter((p) => !p.recipe && p.minRealm <= major);
 }
 
-/** 这一味丹在某境界掉落池里的占比 */
+/** 这一味丹在某境界掉落池里的占比(权重 = loot.pillDropWeight,与实掉落同一把钥匙) */
 export function dropShareAt(def: PillDef, major: number): number {
   if (def.recipe) return 0;
   const pool = dropPoolAt(major);
-  const total = pool.reduce((s, p) => s + dropWeightOf(p), 0);
-  return total > 0 ? dropWeightOf(def) / total : 0;
+  const total = pool.reduce((s, p) => s + pillDropWeight(p), 0);
+  return total > 0 ? pillDropWeight(def) / total : 0;
 }
 
 /** 期望多少场遭遇才见一枚 —— 掉落品的"代价"是稀有度,不是时间 */
