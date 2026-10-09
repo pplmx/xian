@@ -114,7 +114,7 @@ vp check        # 环境/类型/文档自检 + Oxlint
 | Vue 3 | 3.5 | 组合式 API + `<script setup>` |
 | TypeScript | 6.0 | strict 严格类型检查 |
 | Vite | 8 | 构建与开发服务器 |
-| Pinia | 3 | 状态管理(15 个 store,绝大部分自动持久化) |
+| Pinia | 3 | 状态管理(18 个 store,除瞬态 `ui` 外 17 个自动持久化) |
 | Tailwind CSS | 3.4 | 水墨色系语义色与暗色主题 |
 | Vue Router | 4 | 客户端路由(hash 模式) |
 | Tone.js | 15 | FluidR3 乐器采样播放(BGM + SFX) |
