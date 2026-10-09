@@ -60,9 +60,12 @@ export function castLines(rand: RandomService = rng): { lines: number[]; changin
     // 每爻三枚:背(阳)计 1,字(阴)计 0
     let backs = 0;
     for (let c = 0; c < 3; c += 1) if (rand.chance(0.5)) backs += 1;
-    // 三钱:三背为老阳(变),二背为少阴,一背为少阳,零背为老阴(变)
+    // 三钱:三背为老阳(变),二背为少阴,一背为少阳,零背为老阴(变)。
+    // 背计 3、字计 2,三枚之和 = 6+背数:6 老阴(动)/7 少阳/8 少阴/9 老阳(动)。
+    // 故阴 = 背数为偶,阳 = 背数为奇(旧写法 `backs >= 2` 把 1背/2背恰好颠倒,
+    // 占全部落跋的 3/4,卦象整片反相)。
     const old = backs === 3 || backs === 0;
-    const yang = backs >= 2;
+    const yang = backs % 2 === 1;
     lines.push(yang ? 1 : 0);
     if (old) changingAt.push(i + 1);
   }

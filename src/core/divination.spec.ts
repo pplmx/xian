@@ -131,6 +131,33 @@ describe("摇卦 · 三钱六爻", () => {
     const moved = readingOfLines([1, 1, 1, 0, 0, 0], [1])!;
     expect(moved.changed?.name).toBe("升"); // 泰之初爻动,成地风升
   });
+
+  it("三钱按经典定爻:阴=背偶、阳=背奇,老阴老阳为动爻(回归钉)", () => {
+    // 语义来自方法注释:背计 3、字计 2,三枚之和 = 6+背数 → 6老阴(动)/7少阳/8少阴/9老阳(动)。
+    // 旧写法 `backs >= 2` 把 1背/2背两种最常见的落背恰好颠倒,必须钉住经典映射。
+    // 每条爻三枚背值(true=背/阳面):次序无关,chance 只数背。
+    const castWith = (backsPerLine: number[]): { lines: number[]; changingAt: number[] } => {
+      const script: number[] = [];
+      for (const backs of backsPerLine) {
+        // 一爻三枚:背(true,<0.5)恰好 backs 个,字(false,>=0.5)补足
+        const coins = [...Array(3).keys()].map((i) => (i < backs ? 0.3 : 0.7));
+        script.push(...coins);
+      }
+      const rand = new RandomService(() => script.shift() ?? 0.5);
+      return castLines(rand);
+    };
+    // 六爻:1背 / 2背 / 3背 / 0背 / 1背 / 2背
+    const { lines, changingAt } = castWith([1, 2, 3, 0, 1, 2]);
+    // 少阳(1)、少阴(2)、老阳(3)、老阴(0)、少阳(1)、少阴(2)
+    expect(lines).toEqual([1, 0, 1, 0, 1, 0]);
+    // 老阳/老阴(3背/0背)为动爻
+    expect(changingAt).toEqual([3, 4]);
+    // 单一爻也能单独验证四象限
+    expect(castWith([3]).lines[0]).toBe(1); // 老阳 → 阳
+    expect(castWith([0]).lines[0]).toBe(0); // 老阴 → 阴
+    expect(castWith([1]).lines[0]).toBe(1); // 少阳 → 阳
+    expect(castWith([2]).lines[0]).toBe(0); // 少阴 → 阴
+  });
 });
 
 describe("卦力 · 由上下卦推出", () => {
