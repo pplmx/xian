@@ -43,6 +43,7 @@ export const usePlayerStore = defineStore(
     const cultivation = useCultivationStore();
     const dongfu = useDongfuStore();
     const resources = useResourcesStore();
+    const endgame = useEndgameStore();
 
     const name = ref("无名散修");
     const linggen = ref<LinggenProfile | null>(null);
@@ -287,7 +288,6 @@ export const usePlayerStore = defineStore(
      * 功法、洞府、称号、师承、灵兽、天赋皆属修士自身之道,不受此约束
      */
     const celestialStats = computed<FinalStats>(() => {
-      const endgame = useEndgameStore();
       return computeFinalStats({
         major: major.value,
         sub: sub.value,
