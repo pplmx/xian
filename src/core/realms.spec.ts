@@ -20,7 +20,9 @@ import {
   worldOf,
   worldDef,
   isWorldEntry,
+  SUB_NAMES,
 } from "@/data/realms";
+import { SUB_LEVELS } from "@/data/constants";
 
 /** 扩界时对 0-9 号境界的承诺:id 与名称一字不动(存档/内容 gate 兼容) */
 const FROZEN_IDS = [
@@ -59,6 +61,13 @@ describe("境界体系 · 结构", () => {
     }
     expect(new Set(REALMS.map((r) => r.id)).size, "境界 id 重复").toBe(REALMS.length);
     expect(new Set(REALMS.map((r) => r.name)).size, "境界名重复").toBe(REALMS.length);
+  });
+
+  it("子层级档数与名称一一对应:SUB_LEVELS 恒等于 SUB_NAMES.length,末档恒为圆满", () => {
+    // 逻辑(progressionSim 等)按 SUB_LEVELS 迭代,展示(player 等)按 SUB_NAMES 取字;
+    // 两者一错位,公式在圆满档给的却是「九层」,isMajorStep 的归属也一起漂。
+    expect(SUB_NAMES.length).toBe(SUB_LEVELS);
+    expect(SUB_NAMES[SUB_LEVELS - 1]).toBe("圆满");
   });
 
   it("0-9 号境界冻结:id/名称与扩界前一字不差", () => {
