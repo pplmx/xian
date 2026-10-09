@@ -211,9 +211,11 @@ export function createAttributeSystem<T = number>(
         attribute(best.src, key, best.value);
       } else {
         const sorted = [...list].sort((a, b) => b.value - a.value);
+        const floor = DEFAULT_DIMINISHING_WEIGHTS[DEFAULT_DIMINISHING_WEIGHTS.length - 1]!;
         for (let i = 0; i < sorted.length; i += 1) {
           const entry = sorted[i]!;
-          const counted = entry.value * (weights[Math.min(i, weights.length - 1)] ?? 0.25);
+          // 递减梯子取到尽头就停在末档;空/异常表回落到默认梯子的末档(同一把钥匙)
+          const counted = entry.value * (weights[Math.min(i, weights.length - 1)] ?? floor);
           total += counted;
           attribute(entry.src, key, counted);
         }

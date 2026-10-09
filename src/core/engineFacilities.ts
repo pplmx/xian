@@ -14,6 +14,7 @@ import type { UpgradeInfo } from "wanxiang-engine";
 import { accrue, createFacilitySystem } from "wanxiang-engine";
 import { BUILDINGS, buildingDef, libraryWudaoPerHour } from "@/data/buildings";
 import { FIELD_HERB_PER_HOUR, FIELD_ORE_PER_HOUR } from "@/data/constants";
+import { realmDef } from "@/data/realms";
 import { buildingCost } from "./formulas";
 
 /** 藏经阁每小时悟道点的唯一实现住在 data/buildings(卡片文案与产出同源) —— 此处转发,调用方零改动 */
@@ -58,9 +59,6 @@ const PER_HOUR: Partial<Record<BuildingId, (level: number) => Record<string, num
   library: (lv) => ({ wudao: libraryWudaoPerHour(lv) }),
 };
 
-/** 建筑门槛里的境界说法(与迁移前的文案一致) */
-const UNLOCK_REALM_NAMES = ["炼气", "筑基", "金丹"];
-
 const FACILITIES = createFacilitySystem<StatMods, FacilityCtx, GNum | number>({
   facilities: BUILDINGS.map((def) => {
     const perHour = PER_HOUR[def.id];
@@ -73,7 +71,7 @@ const FACILITIES = createFacilitySystem<StatMods, FacilityCtx, GNum | number>({
       // 顺序即界面的说法:先报"境界不够",再报"已至顶层"(与迁移前同一顺序)
       blocked: (_levels, level, ctx) =>
         ctx.major < def.unlockRealm
-          ? `需 ${UNLOCK_REALM_NAMES[def.unlockRealm] ?? "更高"} 境`
+          ? `需 ${realmDef(def.unlockRealm).name} 境`
           : level >= def.maxLevel
             ? "已至顶层"
             : undefined,

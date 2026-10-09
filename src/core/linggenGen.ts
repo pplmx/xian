@@ -41,6 +41,14 @@ export const LINGGEN_GRADES: LinggenGrade[] = [
   { name: "混沌灵根", color: "#a83f39" },
 ];
 
+/**
+ * 混沌灵根(单根成圣)的成长按「单根基数 × 混沌专属加成」算。
+ * 单根基数直接读 COUNT_FACTOR[1](普根单根的同一把钥匙,免得改单根系数时
+ * 混沌还握着旧 1.6);混沌加成是 1.5,**有意比**普根遇到特殊灵根的 1.2 更重
+ * —— 成圣就该压一头,这不是笔误,别「顺手」改回 1.2 而不动平衡文案。
+ */
+const CHAOS_SPECIAL_BONUS = 1.5;
+
 export function rollLinggen(rng: RandomService, aptitudeFloor = 0): LinggenProfile {
   // 混沌灵根:极小概率单根成圣
   if (rng.chance(CHAOS_CHANCE)) {
@@ -48,7 +56,7 @@ export function rollLinggen(rng: RandomService, aptitudeFloor = 0): LinggenProfi
     return {
       roots: [{ element: "chaos", aptitude }],
       gradeName: "混沌灵根",
-      growthMult: round2(1.6 * (aptitude / 60) * 1.5),
+      growthMult: round2((COUNT_FACTOR[1] ?? 1) * (aptitude / 60) * CHAOS_SPECIAL_BONUS),
     };
   }
 
