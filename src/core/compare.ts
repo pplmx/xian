@@ -6,7 +6,7 @@ import type { CelestialWorldDef, CombatantSnap, DaoMark } from "@/types";
 import { add, gnZero, ratio } from "@/utils/gnum";
 import { mulberry32, RandomService } from "@/utils/random";
 import { CELESTIAL_WORLDS, celestialWorldDef } from "@/data/endgame";
-import { resolveCombat } from "./combat";
+import { resolveCombat, clearRateText } from "./combat";
 import { mergeRules, worldFoeSnap, type GauntletOpts } from "./gauntlet";
 import { currentDaoRules, snapFromReplay } from "./endgameService";
 
@@ -82,12 +82,6 @@ export function measureOnWorld(
   };
 }
 
-const RANK_TEXT = ["九死一生", "凶险", "胜负各半", "略占上风", "稳操胜券"] as const;
-
-export function rateText(rate: number): string {
-  return RANK_TEXT[rate >= 0.85 ? 4 : rate >= 0.6 ? 3 : rate >= 0.4 ? 2 : rate >= 0.15 ? 1 : 0]!;
-}
-
 export interface CompareRow {
   worldName: string;
   aText: string;
@@ -126,8 +120,8 @@ export function compareSnaps(a: CombatantSnap, b: CombatantSnap, runs = 8): Comp
     const rb = Math.round(mb.clearRate * runs);
     rows.push({
       worldName: world.name,
-      aText: rateText(ma.clearRate),
-      bText: rateText(mb.clearRate),
+      aText: clearRateText(ma.clearRate),
+      bText: clearRateText(mb.clearRate),
       trend: rb > ra ? "up" : rb < ra ? "down" : "flat",
     });
   }
@@ -204,8 +198,8 @@ export function legacyComparisons(marks: DaoMark[], limit = 2): LegacyComparison
       lateLife: late.life,
       earlyBuild: early.buildName,
       lateBuild: late.buildName,
-      earlyText: rateText(me.clearRate),
-      lateText: rateText(ml.clearRate),
+      earlyText: clearRateText(me.clearRate),
+      lateText: clearRateText(ml.clearRate),
       diffLines,
     });
     if (out.length >= limit) break;

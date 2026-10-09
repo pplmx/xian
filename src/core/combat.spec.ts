@@ -11,6 +11,8 @@ import {
   sampleWinRate,
   sampleWinRateRaw,
   winTextForRate,
+  clearRateText,
+  clearRateRank,
 } from "./combat";
 
 const seeded = (seed = 1): RandomService => new RandomService(mulberry32(seed));
@@ -284,5 +286,19 @@ describe("胜算档文案 · 单一事实源", () => {
     expect(winTextForRate(0.34)).toBe("凶多吉少");
     expect(winTextForRate(0)).toBe("凶多吉少");
     expect(winTextForRate(1)).toBe("胜算在握");
+  });
+
+  it("通关率档 0.85/0.6/0.4/0.15 五档阈值与措辞钉死", () => {
+    // 档位索引与当档字眼必须同源(compare / expedition / lab 三处共用)
+    expect(clearRateRank(1)).toBe(4);
+    expect(clearRateText(0.85)).toBe("稳操胜券");
+    expect(clearRateRank(0.85)).toBe(4);
+    expect(clearRateText(0.6)).toBe("略占上风");
+    expect(clearRateRank(0.59)).toBe(2);
+    expect(clearRateText(0.4)).toBe("胜负各半");
+    expect(clearRateRank(0.15)).toBe(1);
+    expect(clearRateText(0.15)).toBe("凶险");
+    expect(clearRateRank(0.14)).toBe(0);
+    expect(clearRateText(0)).toBe("九死一生");
   });
 });

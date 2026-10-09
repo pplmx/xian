@@ -708,3 +708,25 @@ export function winTextForRate(rate: number): string {
         ? "五五之数,凶险参半"
         : "凶多吉少";
 }
+
+/**
+ * 通关率档索引(0.85/0.6/0.4/0.15 → 0..4)。
+ *
+ * 档位是多个模块的公共事实(战力对比、远征难度、修士实验室换装推演都要按档
+ * 前后比较),故连数字带措辞都抽到一处:比较逻辑用 `clearRateRank` 拿档位索引,
+ * 展示用 `clearRateText` 拿当档字眼 —— 两者同源,不会各说各话。
+ */
+export function clearRateRank(rate: number): number {
+  return rate >= 0.85 ? 4 : rate >= 0.6 ? 3 : rate >= 0.4 ? 2 : rate >= 0.15 ? 1 : 0;
+}
+
+/**
+ * 通关率档文案 —— 单一事实源(0.85/0.6/0.4/0.15 → 五档)。
+ *
+ * 世界对比(compare.rateText)、远征难度(expedition.celestialForecast)与修士实验室
+ * (lab)共用同一组阈值与档词,曾各写一份、顶档还各用一个近义词(稳操胜券/胜券
+ * 在望),改一档就两面脱节。故抽成一处,阈值与措辞都钉在这里。
+ */
+export function clearRateText(rate: number): string {
+  return ["九死一生", "凶险", "胜负各半", "略占上风", "稳操胜券"][clearRateRank(rate)]!;
+}

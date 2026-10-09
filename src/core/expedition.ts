@@ -31,7 +31,7 @@ import {
 } from "./gauntlet";
 import { VOID_ANCHOR_TIER } from "./worldGen";
 import { MAX_MAJOR } from "@/data/realms";
-import { resolveCombat, sampleWinRate, winTextForRate } from "./combat";
+import { resolveCombat, sampleWinRate, winTextForRate, clearRateText } from "./combat";
 import { modOf } from "./statsCalc";
 import { SLAUGHTER_PER_WIN, SWORD_PER_WIN, slaughterSpeedBonus, stackedMods } from "./daoDepth";
 import { currentDaoRules, endgameUnlocked, recordMark } from "./endgameService";
@@ -654,16 +654,7 @@ export function forecastExpedition(
 
   const starN = pRate >= 0.85 ? 5 : pRate >= 0.6 ? 4 : pRate >= 0.4 ? 3 : pRate >= 0.15 ? 2 : 1;
   return {
-    difficulty:
-      pRate >= 0.85
-        ? "胜券在望"
-        : pRate >= 0.6
-          ? "略占上风"
-          : pRate >= 0.4
-            ? "胜负各半"
-            : pRate >= 0.15
-              ? "凶险"
-              : "九死一生",
+    difficulty: clearRateText(pRate),
     judgementLines: celestialJudgementLines(
       player.celestialStats.mods,
       player.major,

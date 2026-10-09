@@ -14,6 +14,7 @@ import { detectBuild, type BuildDetection } from "./buildDetect";
 import { resolveEquipStats } from "./equipGen";
 import { celestialFoeCaliber, mergeRules, runGauntlet, worldFoeSnap } from "./gauntlet";
 import { currentDaoRules } from "./endgameService";
+import { clearRateRank, clearRateText } from "./combat";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 
@@ -32,12 +33,6 @@ export interface WhatIfReport {
   worlds: WhatIfWorldRow[];
   /** 主要词条变化(绝对值最大前四) */
   modChanges: { label: string; delta: number }[];
-}
-
-const RANK_TEXT = ["九死一生", "凶险", "胜负各半", "略占上风", "稳操胜券"] as const;
-
-function rateRank(rate: number): number {
-  return rate >= 0.85 ? 4 : rate >= 0.6 ? 3 : rate >= 0.4 ? 2 : rate >= 0.15 ? 1 : 0;
 }
 
 function worldRate(
@@ -110,13 +105,13 @@ export function whatIfEquip(uid: string): WhatIfReport | null {
   const after: CombatantSnap = { ...before, mods, attack, defense, maxHp };
 
   const worlds: WhatIfWorldRow[] = CELESTIAL_WORLDS.map((w, i) => {
-    const rb = rateRank(worldRate(w, before, 660000 + i * 97));
-    const ra = rateRank(worldRate(w, after, 660000 + i * 97));
+    const rb = clearRateRank(worldRate(w, before, 660000 + i * 97));
+    const ra = clearRateRank(worldRate(w, after, 660000 + i * 97));
     return {
       name: w.name,
       seal: w.seal,
-      beforeText: RANK_TEXT[rb]!,
-      afterText: RANK_TEXT[ra]!,
+      beforeText: clearRateText(worldRate(w, before, 660000 + i * 97)),
+      afterText: clearRateText(worldRate(w, after, 660000 + i * 97)),
       trend: ra > rb ? "up" : ra < rb ? "down" : "flat",
     };
   });
