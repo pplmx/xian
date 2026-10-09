@@ -17,7 +17,12 @@ import { herbGradeOfMajor } from "@/data/herbGrades";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import type { GNum } from "@/types";
-import { MARKET_CONSIGN_SECONDS, MARKET_MAT_COUNT, MARKET_REFRESH_SECONDS } from "@/data/market";
+import {
+  MARKET_CONSIGN_SECONDS,
+  MARKET_CONSIGN_SLOTS,
+  MARKET_MAT_COUNT,
+  MARKET_REFRESH_SECONDS,
+} from "@/data/market";
 import type { BountySlot } from "@/data/bounty";
 import { marketEquipInstance, marketRemainingSec } from "@/core/marketService";
 import { bountyRemainingSec } from "@/core/bountyService";
@@ -281,10 +286,13 @@ function bountyShort(o: BountySlot): string | null {
         <!-- 寄卖入口:挑一件背包装备上架 -->
         <div class="rounded-lg border border-ink/10 bg-paper-deep/40 px-3 py-2">
           <p class="mb-1 text-[10px] text-ink-faint">
-            寄卖一件背包装备(2 格,约
+            寄卖一件背包装备({{ MARKET_CONSIGN_SLOTS }} 格,约
             {{ MARKET_CONSIGN_SECONDS / 60 }} 分自售入账,离包即定)
           </p>
-          <div v-if="market.consign.length < 2" class="flex gap-1 overflow-x-auto">
+          <div
+            v-if="market.consign.length < MARKET_CONSIGN_SLOTS"
+            class="flex gap-1 overflow-x-auto"
+          >
             <button
               v-for="it in inventory.bagItems.slice(0, 12)"
               :key="it.uid"
@@ -297,7 +305,9 @@ function bountyShort(o: BountySlot): string | null {
               >行囊空空 —— 去历练中寻些机缘吧</span
             >
           </div>
-          <p v-else class="text-[10px] text-ink-faint">已上满 2 格,待手头一张空闲</p>
+          <p v-else class="text-[10px] text-ink-faint">
+            已上满 {{ MARKET_CONSIGN_SLOTS }} 格,待手头一张空闲
+          </p>
         </div>
 
         <!-- 即时售 -->

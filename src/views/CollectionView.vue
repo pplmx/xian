@@ -210,8 +210,7 @@ const TABS: { id: Tab; label: string }[] = [
  * 成就一律先以「???」示人,达成之后才现名目。
  *
  * 既然未达成的全都遮住,原先的 hidden 标记(未达成时整行不列出)就没了着落 ——
- * 它与寻常未达成者长得一模一样,却害得计数的分母(50)对不上列出的行数(48)。
- * 故此处不再筛除,五十个位子一个不少。
+ * 它与寻常未达成者长得一模一样。故此处不再筛除,全量位子一个不少。
  */
 const achievementRows = computed(() =>
   ACHIEVEMENTS.map((a) => {
@@ -224,7 +223,7 @@ const achievementRows = computed(() =>
       name: done ? a.name : "???",
       // 方向已提到组头,行里不再重写;名字成时自现
       desc: done ? a.desc : "尚未达成 · 成时自见",
-      // 达成才现赏:与名称同一披露节奏;rewardText 含称号(29/63 的大头),与发赏同一套换算
+      // 达成才现赏:与名称同一披露节奏;rewardText 含称号(29/62 的大头),与发赏同一套换算
       rewardText: done && a.reward ? rewardText(a.reward) : "",
     };
   }),

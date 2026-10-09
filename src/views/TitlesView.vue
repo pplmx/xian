@@ -17,13 +17,13 @@
     <template v-if="tab === 'title'">
       <SectionTitle title="名号" :hint="`${ownedCount}/${TITLES.length} · 佩一枚`" />
       <!--
-        名号尽收的完成感:三十顶全齐也只显一个计数,「追寻这一路的名号」的终点
+        名号尽收的完成感:全齐也只显一个计数,「追寻这一路的名号」的终点
         没有任何表示。与图鉴「尽收」同族 —— 判据读同一个 ownedCount(与标题
         计数同源),全收后给一行「名号尽收」,把圆满说出来。
       -->
       <p v-if="titlesAllOwned" class="mt-2 flex items-center gap-1.5 px-1 text-[11px] text-jade">
         <span class="chip-ink border-jade/60 text-[10px] text-jade">名号尽收</span>
-        三十顶名号皆入囊中 —— 这一世的名,走到头了
+        {{ TITLES.length }} 顶名号皆入囊中 —— 这一世的名,走到头了
       </p>
       <div class="card-ink divide-y divide-ink/6 px-4">
         <div v-for="row in titleRows" :key="row.def.id" class="flex items-center gap-3 py-2.5">
@@ -159,7 +159,7 @@ const TABS: { id: Tab; label: string }[] = [
 const ownedCount = computed(
   () => TITLES.filter((def) => quests.titlesOwned.includes(def.id)).length,
 );
-/** 名号尽收:三十顶全齐才算(与标题计数同源,不另起一套判据) */
+/** 名号尽收:全齐才算(与标题计数同源,不另起一套判据) */
 const titlesAllOwned = computed(() => ownedCount.value === TITLES.length && TITLES.length > 0);
 
 /** 全量陈列:佩戴中 > 已拥有 > 未获得 */
