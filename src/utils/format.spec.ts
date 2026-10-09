@@ -41,6 +41,14 @@ describe("数值格式化", () => {
     expect(formatGN(-123456)).toBe("-12.35万");
   });
 
+  it("细碎正收益不显示成 0(0<x<0.1,位数随数量级抬升)", () => {
+    expect(formatGN(0.04)).toBe("0.04");
+    expect(formatGN(0.004)).toBe("0.004");
+    expect(formatGN(0.08)).toBe("0.08");
+    expect(formatGN(0.5)).toBe("0.5");
+    expect(formatGN(0)).toBe("0");
+  });
+
   it("时长", () => {
     expect(formatDuration(45)).toBe("45秒");
     expect(formatDuration(65)).toBe("1分5秒");
