@@ -36,6 +36,20 @@ const BPM = 52;
 /** 前奏 4 + 主歌 8 + 副歌 8 + 尾声 4 = 24 小节曲体,再留 2 小节混响余韵 */
 const LOOP_END = "26:0:0";
 
+/**
+ * 音符时值 → 拍数。Tone.js 记法里 `Nn` 的 N 是分母:整体记为多少分音符,
+ * 拍数 = 4 / N(四分音符 `4n` = 1 拍、二分符 `2n` = 2 拍、全音符 `1n` = 4 拍、
+ * 十六分 `16n` = 0.25 拍)。带点(`2n.`)×1.5。
+ *
+ * 别用 `Number(dur[0])` —— 那读的是**第一位的数字**,恰好和拍数反着
+ * (1n→1 该是 4,4n→4 该是 1),还会把 `16n` 截成 "1"。
+ */
+export function noteBeats(dur: string): number {
+  const value = Number.parseInt(dur, 10);
+  if (!Number.isFinite(value) || value <= 0) return 1;
+  return (4 / value) * (dur.endsWith(".") ? 1.5 : 1);
+}
+
 type NoteEvent = [time: string, note: string, dur: string];
 
 /**
@@ -316,9 +330,9 @@ async function init(): Promise<void> {
       if (mark === "lyr" && zhengTail && T) {
         // 用 setTimeout 而非 transport.schedule:loop 每轮回调都会执行,
         // 但 schedule 是绝对时间一次性的,回绕后会丢失;setTimeout 跟随真实时间
-        // dur 秒数按 BPM 换算(四分音符 = 60/BPM 秒);'2n' = 2 拍,'1n' = 4 拍,'4n' = 1 拍
+        // dur 秒数按 BPM 换算(四分音符 = 60/BPM 秒);noteBeats 把 `Nn` 折成拍数
         const beatSec = 60 / BPM;
-        const beats = dur.endsWith(".") ? Number(dur[0]) * 1.5 : Number(dur[0]);
+        const beats = noteBeats(dur);
         const durSec = beats * beatSec;
         const ms = (time - T.now()) * 1000 + durSec * 1000 + 150;
         if (ms > 0 && ms < 12000) {

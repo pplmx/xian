@@ -66,6 +66,7 @@ const CATEGORIES = [
       "affixTransfer",
       "useAffixTransfer",
       "theme",
+      "audio.spec",
       "savePersistence",
       "enginePause",
       "dongfu.spec",
