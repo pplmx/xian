@@ -273,6 +273,49 @@ describe("调色板 · 纸上的墨只有三档", () => {
   });
 });
 
+describe("调色板 · 文字不叠透明度", () => {
+  /**
+   * design.md 的硬规矩:写字就用整色,要淡是设计的事(换一档 token),不是让浏览器
+   * 去混 —— `text-cinnabar/80` 这种叠透明度的写法算不出对比度,极易掉到 AA 以下。
+   * palette.spec 本体只核**实色 token**,扫不到界面里这般半透明的叠写,所以漏了
+   * 两次(如 text-qing/80、bg-gold-ink/12)。这一条直接扫源码,把两类叠写钉死:
+   *
+   * ① 语义强色当字色时不许叠透明度 —— 信息小字(青)、主行动色(朱砂)、品阶名
+   *    (金/紫/…等)一律整色。
+   * ② 墨色(token 名含 -ink)只许在装饰档 /15 叠透明度(装饰性线条/分隔符,
+   *    见 design.md「需要更淡的装饰性线条/色块用墨的 15%」);其余档位(如曾经的
+   *    ink-faint/40、ink/25)都该落在整色 token 上。
+   */
+  const STRONG = [...LIGHT.keys()].filter(
+    (n) => !SURFACES.has(n) && n !== SEAL && !n.endsWith("-ink") && !n.startsWith("ink"),
+  );
+  it("语义强色作字色不叠透明度", () => {
+    expect(STRONG.length).toBeGreaterThan(0);
+    expect(
+      filesMatching(
+        resolve(ROOT, "src"),
+        new RegExp(`text-(${STRONG.join("|")})/[0-9]{1,2}\\b`),
+        /\.(vue|ts)$/,
+      ),
+    ).toEqual([]);
+  });
+  it("墨色只在装饰档 /15 叠透明度", () => {
+    // /15 是装饰性线条/色块的专用档;其余档位(≤14 与 ≥16)都是文字叠写,该落到整色
+    const hits: string[] = [];
+    for (const f of filesMatching(
+      resolve(ROOT, "src"),
+      /text-(?:ink|ink-soft|ink-faint)(?:\/|\b)|-ink\/[0-9]{1,2}\b/,
+      /\.(vue|ts)$/,
+    )) {
+      const text = readFileSync(resolve(ROOT, f), "utf-8");
+      for (const m of text.matchAll(/text-(?:ink|ink-soft|ink-faint)(?:\/([0-9]{1,2}))?\b/g)) {
+        if (m[1] !== undefined && m[1] !== "15") hits.push(`${f} → text-…/n${m[1]}`);
+      }
+    }
+    expect(hits, "墨色文字叠了非 /15 的透明度——该换整色 token").toEqual([]);
+  });
+});
+
 describe("调色板 · 青", () => {
   it("青在色板上,色相落在青的带里(180-220°)—— 不是灰蓝,也不是西式蓝", () => {
     expect(LIGHT.has("qing")).toBe(true);
