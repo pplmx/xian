@@ -72,7 +72,7 @@ export function formatRate(v: GNum | number): string {
  *   二 有效数字只留 15 位,剩下的补 0,并明确标注"尾数为有效数字,其后是量级"。
  */
 export function formatExact(v: GNum | number): string {
-  const g = typeof v === "number" ? gn(v) : gn(v);
+  const g = gn(v);
   if (g.m === 0) return "0";
   const sign = g.m < 0 ? "-" : "";
   const abs = Math.abs(g.m);
@@ -91,7 +91,7 @@ export function formatExact(v: GNum | number): string {
 
 /** 科学计数法(给"这个数有多大"一个一眼可比的写法) */
 export function formatScientific(v: GNum | number): string {
-  const g = typeof v === "number" ? gn(v) : gn(v);
+  const g = gn(v);
   if (g.m === 0) return "0";
   return `${g.m.toPrecision(4).replace(/\.?0+$/, "")}×10^${g.e}`;
 }
