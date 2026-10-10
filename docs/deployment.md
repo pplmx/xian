@@ -7,6 +7,16 @@
 
 把 `bun run build` 产出的 `dist/` 交给任意静态服务器即可(或走下方 Docker 镜像)。
 
+线上有两份,同一份 `dist/`,各由一套 CI 自动发布 —— 都不是"改完手动传"的:
+
+| 入口 | 托管 | 谁在发布 |
+| --- | --- | --- |
+| <https://xiuxian.yoooo.fun> | Cloudflare(仓库根的 `wrangler.jsonc` 就是它的部署配置) | Cloudflare 侧连着本仓,`main` 有新提交即构建 |
+| <https://blog.yoooo.fun/xian/> | GitHub Pages | `.github/workflows/deploy.yml`(每次 `main` 提交,过共享 gate 后发布) |
+
+> **两个域名各存一份存档**:存档在浏览器 localStorage 里,而 localStorage 按**源**隔离 ——
+> 换入口(或用 Docker 自托管)请走游戏内的「存档 → 导出 / 导入」,别指望它跟过去。
+
 - 移动浏览器打开即玩,可「添加到主屏幕」;
 - Service Worker 会缓存静态资源:**首次在线打开后,断网重开也能进游戏**;
   发版更新即时生效,不会卡在旧版本;

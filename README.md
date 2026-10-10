@@ -17,6 +17,10 @@
 历练是派遣式的:派出去、等一段时间、回来看遭遇与掉落;战斗在后台一次算完再回放,
 所以**关掉页面、断网、隔一晚再回来**,该发生的事一件不少。
 
+**直接玩**:<https://xiuxian.yoooo.fun>(Cloudflare)或 <https://blog.yoooo.fun/xian/>(GitHub Pages);
+桌面与安卓装 [最新 Release](https://github.com/pplmx/xian/releases/latest) 里的安装包。
+两处网页各存一份本地存档,换入口请用游戏内的「存档 → 导出 / 导入」(见 [docs/deployment.md](docs/deployment.md))。
+
 三条贯穿全程的取向:
 
 - **离线是常态,不是补丁** —— 挂机收益、自动挑战、读档补票都按"玩家可能一周没上线"设计;
