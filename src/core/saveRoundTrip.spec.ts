@@ -28,6 +28,7 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import {
   PERSISTED_STORES,
   SAVE_VERSION,
+  STORE_NAMES,
   clearAllSave,
   dropPendingWrites,
   flushSaveWrites,
@@ -98,6 +99,12 @@ describe("存档往返 · 分片清单从源码倒推", () => {
       listed.filter((id) => !fromSource.includes(id)),
       "PERSISTED_STORES 里列着并不持久化的 id —— 清单已经与代码脱节",
     ).toEqual([]);
+  });
+
+  it("每个持久化分片都有一个人话的名字(界面不露英文 id)", () => {
+    // 回归:market/bounty/apprentice 曾漏进 STORE_NAMES,坏档提示就成了「market」。
+    const unnamed = PERSISTED_STORES.filter((id) => !STORE_NAMES[id]);
+    expect(unnamed, `这些分片在 STORE_NAMES 里没有中文名:${unnamed.join("、")}`).toEqual([]);
   });
 
   it("清档真的清干净:清单里的每个键都从 localStorage 消失", () => {

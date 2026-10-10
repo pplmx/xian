@@ -76,17 +76,28 @@ export function formatExact(v: GNum | number): string {
   if (g.m === 0) return "0";
   const sign = g.m < 0 ? "-" : "";
   const abs = Math.abs(g.m);
-  const intDigits = Math.floor(Math.log10(abs)) + 1;
-  const decimals = Math.max(0, 15 - intDigits);
-  const digits = abs.toFixed(decimals).replace(".", "").replace(/0+$/, "") || "0";
-  const width = g.e + 1;
-  if (width <= 24) {
-    const padded = digits.length >= width ? digits.slice(0, width) : digits.padEnd(width, "0");
-    return sign + group(padded);
+  const width = g.e + 1; // 整数位数:值 = 1.x × 10^g.e → 小数点在第 g.e+1 位后
+  if (width > 24) {
+    // 太长:不假装有那么多位精度,退回科学计数
+    const m = abs.toPrecision(15).replace(/\.?0+$/, "");
+    return `${sign}${m}×10^${g.e}`;
   }
-  // 太长:不假装有那么多位精度,退回科学计数
-  const m = abs.toPrecision(15).replace(/\.?0+$/, "");
-  return `${sign}${m}×10^${g.e}`;
+  // 15 位有效数字的尾数(去点、去尾零),例如 1.25 → "125"
+  const digits = abs.toPrecision(15).replace(".", "").replace(/0+$/, "") || "0";
+  let intPart: string;
+  let fracPart = "";
+  if (width >= 1) {
+    if (width >= digits.length) intPart = digits.padEnd(width, "0");
+    else {
+      intPart = digits.slice(0, width);
+      fracPart = digits.slice(width);
+    }
+  } else {
+    // 0 < |值| < 1:整数 0,小数里小数点后先垫 (-e-1 = -width) 个零再放尾数
+    intPart = "0";
+    fracPart = "0".repeat(-width) + digits;
+  }
+  return sign + (fracPart ? `${group(intPart)}.${fracPart}` : group(intPart));
 }
 
 /** 科学计数法(给"这个数有多大"一个一眼可比的写法) */

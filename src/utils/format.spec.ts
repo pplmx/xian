@@ -78,6 +78,14 @@ describe("数值格式化", () => {
     expect(formatExact({ m: 1.2345, e: 25 })).toBe("1.2345×10^25");
   });
 
+  it("精确值:小数与 <1 也不丢位(回归:曾把 12.5 截成 12、0.4 截成空串)", () => {
+    expect(formatExact(12.5)).toBe("12.5");
+    expect(formatExact(999.6)).toBe("999.6");
+    expect(formatExact(0.4)).toBe("0.4");
+    expect(formatExact(0.0125)).toBe("0.0125");
+    expect(formatExact(0.00025)).toBe("0.00025");
+  });
+
   it("科学计数法:一眼看出量级(四位有效数字)", () => {
     expect(formatScientific(0)).toBe("0");
     expect(formatScientific({ m: 1.2345, e: 21 })).toBe("1.234×10^21");

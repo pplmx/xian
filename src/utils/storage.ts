@@ -77,6 +77,9 @@ export const STORE_NAMES: Record<string, string> = {
   lore: "认知",
   pacing: "节奏遥测",
   diag: "异常留档",
+  market: "坊市",
+  bounty: "悬赏板",
+  apprentice: "收徒",
 };
 
 export function storageKey(storeId: string): string {
