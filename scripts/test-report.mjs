@@ -253,6 +253,7 @@ const CATEGORIES = [
       "questProgress",
       "firstStep",
       "rebrand",
+      "gradleShadow",
       "veinText",
       "statNames.spec",
     ],
