@@ -178,6 +178,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const herbBefore = resources.herb;
   const oreBefore = resources.ore;
   const wudaoBefore = resources.wudao;
+  // 灵石基准与修为/材料/悟道同点起账:都锚在建筑产出与镇压收益**之前**,否则
+  // 归来卷轴的「灵石 +X」会漏掉镇压诸域被动入账(修为/材料/悟道却都算进去了)。
+  const stoneBefore = { ...resources.spiritStone };
   dongfu.produce(effSec);
 
   // ---- 藏经阁被动钻研(与在线同源,只是 dt 不同) ----
@@ -218,7 +221,6 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   let battles = 0;
   let wins = 0;
   let events = 0;
-  const stoneBefore = { ...resources.spiritStone };
   const session = adventure.session;
   /**
    * 挂机期间这趟历练的所得(灵石/修为/实物)。
@@ -328,8 +330,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         resources.addSmall("ore", oreGain);
         harvestMaterials(region.tier, "herb", herbGain);
         harvestMaterials(region.tier, "ore", oreGain);
-        // 残页与在线同源:在线判 rng.chance(PAGE_DROP_CHANCE * rewardMult),出 n=1..2(均值1.5),
-        // rewardMult 参数 = mode×reg —— 离线按其期望整段结算,0.15 是写死的旧值(漏了模式倍率)
+        // 残页与在线同源:在线判 rng.chance(PAGE_DROP_CHANCE × rewardMult)、出 n=1..2(均值 1.5);
+        // rewardMult = mode × reg —— 离线按其期望整段结算,mode/区域/福缘倍率照收(与灵石修为同源)
         resources.addSmall(
           "page",
           Math.round(
@@ -539,7 +541,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
    * 只报"流逝了几年"不够 —— 玩家要的是"我还剩几年、危不危险"。
    * 阈值沿用全局告警线(LIFESPAN_WARN_RATIO),与顶栏那条同源。
    */
-  if (player.lifespanRatio <= LIFESPAN_WARN_RATIO) {
+  if (player.lifespanRatio < LIFESPAN_WARN_RATIO) {
     const remainYears = yearsLeftShown(player.age, player.lifespanMax);
     notes.push(
       player.lifespanRatio <= LIFESPAN_CRITICAL_RATIO
