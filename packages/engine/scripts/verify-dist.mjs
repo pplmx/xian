@@ -353,9 +353,13 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
    * 两边都拦:新加一个模块却忘了写进树(地图少一块,读者以为库里没有这层),
    * 或者改了名/删了文件却没改树(地图指向不存在的路,照着找的人先怀疑自己)。
    * 树上的文档清单同理 —— `docs/` 下每份文档都得在地图上。
+   *
+   * 围栏**允许带语言标记**(` ```text `):rumdl 的 MD040 就要求给围栏标语言 ——
+   * 只认"围栏 + 换行"的话,一次纯格式整理就能把这条自检整个打瞎
+   * (报的是"找不到目录树代码块",而树明明在)。判据盯的是块里那棵树,不是围栏长什么样。
    */
   const readme = readFileSync(resolve(ENGINE, "README.md"), "utf-8");
-  const treeBlock = readme.match(/```\n(packages\/engine\/[\s\S]*?)```/);
+  const treeBlock = readme.match(/```[\w-]*\n(packages\/engine\/[\s\S]*?)```/);
   assert.ok(treeBlock, "README 里找不到 packages/engine/ 的目录树代码块");
   const tree = treeBlock[1];
   const listedModules = [...tree.matchAll(/^ {4}([A-Za-z]\w*)\.ts\b/gm)].map((m) => m[1]);
@@ -440,6 +444,10 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
    * 参考表长到二十多节之后,"收全了"还不够用:得让人在半分钟内找到自己那一行。
    * 所以这一条盯两件事:①索引行数 = 消融份数(不许有节漏进索引);
    * ②每个小节的标题都在索引里被点名(标题改了、索引没改,也会红)。
+   *
+   * 「量自己的表」不进索引:它是**前置说明**(怎么量你自己的表),不是某一份消融的小节 ——
+   * 索引一行 = 一份实验,混进去会让行数对不上。它是 `##` 级(与各实验并列),
+   * 因为再高一级就成了 # → ### 的两级跳(rumdl 的 MD001 正是盯这个)。
    */
   const indexStart = tuning.indexOf("## 一页索引");
   assert.ok(indexStart >= 0, "docs/tuning.md 里找不到「一页索引」那一节");
@@ -451,8 +459,8 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
     simSpecs.length,
     `一页索引有 ${indexRows} 行,但消融有 ${simSpecs.length} 份 —— 有节没进索引?`,
   );
-  const sectionTitles = [...tuning.matchAll(/^## (?!一页索引|怎么自己复现)(.+)$/gm)].map((line) =>
-    line[1].replace(/\s*\(`[^`]+`\)\s*$/, "").trim(),
+  const sectionTitles = [...tuning.matchAll(/^## (?!一页索引|怎么自己复现|量自己的表)(.+)$/gm)].map(
+    (line) => line[1].replace(/\s*\(`[^`]+`\)\s*$/, "").trim(),
   );
   const missingFromIndex = sectionTitles.filter((title) => !indexBlock.includes(title));
   assert.deepEqual(missingFromIndex, [], `这些小节没进一页索引:${missingFromIndex.join("、")}`);

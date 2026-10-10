@@ -9,7 +9,7 @@
 
 **判断标准只有一条:只有那部作品才需要的东西,不进库。** 我们自己就是第一个"拿库定制游戏"的用户 ——
 凡是本作独有的设计(流派组合技、法宝触发、首领阶段……)都留在作品侧,库只提供它们需要的**能力形状**
-(比如"破盾了""会心了""每回合结束了"这三个落点)。详见[什么留在作品那一侧](#战斗副本的下半场)。
+(比如"破盾了""会心了""每回合结束了"这三个落点)。详见[什么留在作品那一侧](#到哪儿为止库的职责边界)。
 
 [![CI](https://github.com/pplmx/wanxiang-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/pplmx/wanxiang-engine/actions/workflows/ci.yml)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](#边界与兼容性)
@@ -32,7 +32,7 @@
 - [边界与兼容性](#边界与兼容性)
 - [版本与发布](#版本与发布)
 - [开发](#开发)
-- [目录](#目录)
+- [目录树](#目录树)
 - [许可](#许可)
 
 ## 这是什么
@@ -393,9 +393,9 @@ bun run examples               # 跑一遍 examples/ 下的示例
 (<https://github.com/pplmx/wanxiang-engine>),同步方式、接进自己项目的四种写法、
 以及"它真的能独立"的自检,见[开发文档](./docs/development.md)。
 
-## 目录
+## 目录树
 
-```
+```text
 packages/engine/
   src/
     index.ts        公开入口(对外承诺的就是这里导出的东西,清单钉在 publicApi.spec.ts)
