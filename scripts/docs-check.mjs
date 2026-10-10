@@ -100,25 +100,24 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-// —— rumdl(markdown 门):README + docs/** 的 .md 必须经 rumdl 零命中 ——
-// 规则豁免见根目录 rumdl.toml —— 只放行贴合既有中文文档风格的几类(MD013 长中文自然行、
-// MD033 内联 HTML 横幅、MD041 首行横幅、MD036 标语式强调、MD025 两段式 H1),
-// 断链/围栏/列表/结尾空白/标题层级跳跃等真检查全开着。
-// 传文件列表(而非目录)而非 `docs/`,好与上面的 docFiles 同范围 —— 都剔除
-// docs/superpowers/plans/** 历史计划存档。经 devDependencies 里的 rumdl 跑(CI 装依赖即有)。
+// —— rumdl(markdown 门):范围交给 rumdl.toml —— **全仓**的 .md(只豁免归档与生成物,
+// 见根目录 rumdl.toml 的 exclude),不在这里另传文件列表。
+// 为什么不自己列:手列的范围会与"人手会去改的范围"错开 —— 曾经写成只扫 README + docs/**,
+// 于是 packages/engine 下十几份没人扫,里面安静地躺着三十多处命中(还有一处死锚点)。
+// 命令 / 路径 / 规模数那三条仍然只查**本作**的文档(docFiles):库的文档里写着库自己的
+// 脚本与路径,拿宿主的清单去校对只会假红。
 {
-  const { status, stdout, stderr } = spawnSync(
-    "bunx",
-    ["--no-install", "rumdl", "check", ...docFiles],
-    { encoding: "utf-8" },
-  );
+  const { status, stdout, stderr } = spawnSync("bunx", ["--no-install", "rumdl", "check"], {
+    encoding: "utf-8",
+    cwd: ROOT,
+  });
   if (status !== 0) {
     console.error("文档自检:rumdl(markdown 门)命中 —— 修文档,或确有必要时在 rumdl.toml 配豁免");
     if (stdout) process.stdout.write(stdout);
     if (stderr) process.stderr.write(stderr);
     process.exit(1);
   }
-  console.log(`  rumdl 通过(${docFiles.length} 份文档零命中)`);
+  console.log("  rumdl 通过(全仓的 .md 零命中,范围见 rumdl.toml)");
 }
 
 console.log(

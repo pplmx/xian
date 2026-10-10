@@ -1,7 +1,10 @@
-# rumdl 配置 —— 接进仓库 docs 门(见 scripts/docs-check.mjs)。
+# rumdl 配置 —— 接进仓库文档门(见 scripts/docs-check.mjs),也供手动 `rumdl check` / `rumdl fmt`。
 #
-# 范围:与 docs-check.mjs 同一套 —— README.md + docs/** 下的 .md,
-# 但不含 docs/superpowers/plans/**(历史计划存档,不套今日判据 —— 见 docs-check.mjs 头注释)。
+# 范围:**全仓**的 .md —— 含 packages/engine 这棵子树、含 .github 的 issue 模板,
+# 只排掉生成物、依赖与历史计划存档。曾经写成只扫 `README.md + docs/**`,后果是手动跑
+# rumdl 时**只看得到十六份文档**:packages/engine 下十几份没人扫,里面真躺着三十多处命中
+# (还有一处死锚点、一处重名标题)。判据的范围不该比人手工会去改的范围窄 ——
+# 「我只改了仓库里的一份 md」和「我只改了被门罩着的一份 md」是两件事。
 # 保留有意义的检查:断链(MD051/57)、未闭环/交错围栏(MD046/70)、畸形列表(MD032/076/077)、
 # 结尾多余空白(MD009/047)、标题层级跳跃(MD001)、代码块缺语言(MD040)等一律开着,
 # 只在下面为既有中文文档风格逐条放行,不放行的一个都不动。
@@ -34,13 +37,12 @@ disable = [
 
 exclude = [
   ".git",
-  ".github",
   "node_modules",
   "dist",
   "build",
-  # 与 docs-check.mjs 一致的归档豁免:历史计划存档不套今日判据
+  # 归档豁免:历史计划存档不套今日判据(与 docs-check.mjs 一致)
   "docs/superpowers/plans",
 ]
 
-# 供手动 `rumdl check .` 时限定范围(与 docs 门的 docFiles 一致)。
-include = ["README.md", "docs/**/*.md"]
+# 不写 `include` —— 默认就是「cwd 下所有 .md 减去 exclude」,少一层要同步维护的名单。
+# (runtime / 依赖目录另有 respect_gitignore = true 兜底。)
