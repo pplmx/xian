@@ -74,6 +74,37 @@ describe("悬赏板 store", () => {
     expect(equip.claimed).toBe(true);
   });
 
+  it("claimEquip 交玩家点选的那一件,不顺着取第一件", () => {
+    seedPlayerAndFunds();
+    const b = useBountyStore();
+    const inventory = useInventoryStore();
+    // 一件旧凡品 + 一件刚重铸的高阶,订单只要求「够阶」 —— 若顺取第一件
+    // (行囊插入序)会把高阶的情头好悄悄顺走;点选轨就该交玩家挑的那件。
+    inventory.addEquipment({
+      uid: "old1",
+      templateId: "w_zhuqing",
+      quality: "fine",
+      tier: 3,
+      level: 0,
+      affixes: [],
+    });
+    inventory.addEquipment({
+      uid: "treasure",
+      templateId: "w_zhuqing",
+      quality: "divine",
+      tier: 5,
+      level: 0,
+      affixes: [],
+    });
+    const t = Date.now();
+    b.sync(t);
+    const equip = b.orders.find((o) => o.kind === "equip")!;
+    expect(b.claimEquip(equip.idx, "treasure")).toBe("ok");
+    expect(inventory.findItem("treasure")).toBeUndefined();
+    expect(inventory.findItem("old1")).not.toBeUndefined();
+    expect(equip.claimed).toBe(true);
+  });
+
   it("sanitize:烂单丢弃,只剩合法单,时刻夹回非负", () => {
     seedPlayerAndFunds();
     const b = useBountyStore();

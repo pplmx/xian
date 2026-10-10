@@ -28,7 +28,10 @@ import { marketEquipInstance, marketRemainingSec } from "@/core/marketService";
 import { bountyRemainingSec } from "@/core/bountyService";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
+import { qualityDef } from "@/data/qualities";
+import { equipmentTemplate } from "@/data/equipment";
 import SectionTitle from "@/components/common/SectionTitle.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
 
 const router = useRouter();
 const market = useMarketStore();
@@ -101,9 +104,34 @@ function sellMat(matId: "herb" | "ore"): void {
 }
 
 function claimBounty(idx: number): void {
+  const slot = bounty.orders.find((o) => o.idx === idx);
+  // 贡器要选交哪一件,不能悄悄拿走行囊里顺着序排在第一件的够格兵刃
+  // (可能正是刚重铸/升级过的心头好) —— 点开挑一件,再交。
+  if (slot && slot.kind === "equip") {
+    equipPick.value = idx;
+    return;
+  }
   const r = bounty.claim(idx);
   if (r === "insufficient") notify("材料或丹药不足,交不了货", "warn");
   else if (r === "nobag") notify("行囊里没有够阶的兵刃", "warn");
+}
+
+/** 正在点选交付兵刃的那单悬赏(idx;null = 未在挑) */
+const equipPick = ref<number | null>(null);
+
+/** 贡器单可交付的够格行囊兵刃(与 claim 的找回谓词同源:阶 ≥ 订单要求) */
+const equipCandidates = computed(() => {
+  if (equipPick.value === null) return [];
+  const slot = bounty.orders.find((o) => o.idx === equipPick.value);
+  if (!slot || slot.kind !== "equip" || slot.claimed) return [];
+  return inventory.bagItems.filter((e) => e.tier >= slot.tier);
+});
+
+function deliverPicked(uid: string): void {
+  if (equipPick.value === null) return;
+  const r = bounty.claimEquip(equipPick.value, uid);
+  equipPick.value = null;
+  if (r === "insufficient") notify("这件不够阶,换一件", "warn");
 }
 
 /** 逐单交货短差:够交回 null,不够列「需 N X,缺 M」(与「尚差 N 石」同一纪律) */
@@ -261,6 +289,38 @@ function bountyShort(o: BountySlot): string | null {
         </p>
       </div>
     </section>
+
+    <!-- 贡器点选:挑一件交付,价随所交之品质现算,交了就没了 -->
+    <BaseModal
+      :open="equipPick !== null"
+      title="贡一件兵刃"
+      aria-label="交付兵刃"
+      @close="equipPick = null"
+    >
+      <p class="mb-2 text-[11px] text-ink-faint">
+        交付就没了 —— 挑一件你舍得交的。价随所交之品质现算。
+      </p>
+      <div class="space-y-1">
+        <button
+          v-for="it in equipCandidates"
+          :key="it.uid"
+          class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-[12px] hover:border-cinnabar"
+          @click="deliverPicked(it.uid)"
+        >
+          <span class="min-w-0 truncate">
+            <span
+              class="font-kai"
+              :style="{ color: qualityDef(it.quality).color }"
+            >
+              {{ equipmentTemplate(it.templateId)?.name ?? "无名法器" }}
+            </span>
+            <span class="ml-1 text-ink-faint">{{ qualityDef(it.quality).name }} · {{ it.tier }}阶</span>
+          </span>
+          <span class="shrink-0 text-cinnabar">交付</span>
+        </button>
+        <p v-if="equipCandidates.length === 0" class="text-[11px] text-ink-faint">没有够阶的兵刃</p>
+      </div>
+    </BaseModal>
 
     <!-- 售出:寄卖装备 + 即时售丹/料 -->
     <section>
