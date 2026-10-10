@@ -203,7 +203,7 @@ function bountyShort(o: BountySlot): string | null {
             </template>
             <template v-else>
               <p class="truncate">
-                {{ previews[slot.idx] }}·{{ player.major }} 层
+                {{ previews[slot.idx] }}·{{ slot.tier }} 层
                 <span class="text-ink-faint"
                   >品质底档{{ (slot as { minQualityRank: number }).minQualityRank }}</span
                 >

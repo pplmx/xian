@@ -39,10 +39,16 @@ export function apprenticeTaskSeconds(spec: ApprenticeSpec): number {
   return taskDef(spec).seconds;
 }
 
-/** 寻宝的丹药:按等级在可炼丹池里取一枚,确定可复现 */
-function pickSeekPill(level: number): string {
-  const pool = PILLS.filter((p) => p.recipe?.stoneBase != null).map((p) => p.id);
-  return pool[(level * 7) % pool.length]!;
+/**
+ * 寻宝所得的丹:按**当前境界**从可炼丹里挑(与其余所有取丹路径一样守着
+ * minRealm 的门,不能开局就让药童拾到高阶丹把境界门槛抄了近路)。
+ * 该境界没有可炼丹时回退到全池 —— 宁可回退也不让寻宝落空、更不抛错。
+ */
+function pickSeekPill(major: number, level: number): string {
+  const craftable = PILLS.filter((p) => p.recipe?.stoneBase != null);
+  const pool = craftable.filter((p) => p.minRealm <= major);
+  const src = pool.length > 0 ? pool : craftable;
+  return src[(level * 7) % src.length]!.id;
 }
 
 function baseSpoils(major: number, level: number): Record<ApprenticeSpec, TaskSpoils> {
@@ -50,7 +56,7 @@ function baseSpoils(major: number, level: number): Record<ApprenticeSpec, TaskSp
     herb: { herb: 4 + level * 2 },
     ore: { ore: 3 + level * 2 },
     adventure: { stone: stoneByTier(major, 3 + level), dust: 1 + level },
-    seek: { pillId: pickSeekPill(level), pillCount: 1 },
+    seek: { pillId: pickSeekPill(major, level), pillCount: 1 },
     study: { wudao: 2 + level },
   };
 }
