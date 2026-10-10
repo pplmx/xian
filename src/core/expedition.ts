@@ -616,8 +616,11 @@ export function forecastExpedition(
     const sealed = sealCoreMods();
     if (sealed) snap = { ...snap, mods: stackedMods(snap.mods, sealed, 1) };
   }
+  // 实战永远是 1 进场 + EXPEDITION_ROUTE_LAYERS 条路线 + 1 位门神 = 共 1+3+1=5 场,
+  // 与 fightStep 一条线同构(world.fights 是旧线性连战残留,实战路径从不读它)。
+  // 故预估也按同一结构取敌,否则 6 场世界被往长了估、4 场虚界被往短了估。
   const playerFoes: CombatantSnap[] = [];
-  for (let i = 0; i < world.fights - 1; i += 1)
+  for (let i = 0; i < EXPEDITION_ROUTE_LAYERS + 1; i += 1)
     playerFoes.push(worldFoeSnap(world.foes[i % world.foes.length]!, pRef, 1, pJudgement));
   playerFoes.push(worldFoeSnap(world.guardian, pRef, 1, pJudgement));
   let clears = 0;
@@ -639,7 +642,7 @@ export function forecastExpedition(
     const styleSnap = buildSnap(profile);
     const styleJudgement = celestialJudgement(styleSnap.mods, MAX_MAJOR, world.anchorTier);
     const simFoes: CombatantSnap[] = [];
-    for (let i = 0; i < world.fights - 1; i += 1)
+    for (let i = 0; i < EXPEDITION_ROUTE_LAYERS + 1; i += 1)
       simFoes.push(
         worldFoeSnap(world.foes[i % world.foes.length]!, SIM_REFERENCE, 1, styleJudgement),
       );
