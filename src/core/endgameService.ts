@@ -81,7 +81,17 @@ export function furnaceConvert(rate: FurnaceRate): number {
     notify(`${rate.name}不足 ${rate.per},不够熔铸一缕道源`, "warn");
     return 0;
   }
-  resources.spendSmall(rate.resource, daoSource * rate.per);
+  // 灵草按五档存、`herb` 只是 Σ 汇总:按汇总计价就得从汇总里真扣(跨档扣),
+  // 不能只扣当前境界那一档 —— 否则别的档堆着熔不动、扣不成还照发道源(白刷资源)。
+  // 其余(玄铁/残页/尘)是单标量,spendSmall 即汇总,照旧。
+  const paid =
+    rate.resource === "herb"
+      ? useResourcesStore().spendHerbsAll(daoSource * rate.per)
+      : resources.spendSmall(rate.resource, daoSource * rate.per);
+  if (!paid) {
+    notify(`${rate.name}不足,熔铸作罢`, "warn");
+    return 0;
+  }
   endgame.addDaoSource(daoSource);
   notify(`${rate.name}×${daoSource * rate.per} 熔作道源 +${daoSource}`, "success");
   return daoSource;
@@ -321,8 +331,10 @@ export function rewriteMark(mark: DaoMark): ExpeditionResult | null {
   const player = usePlayerStore();
   const stats = player.celestialStats;
   const ref = { attack: stats.attack, defense: stats.defense, maxHp: stats.maxHp };
-  if (!trial) return null;
-  const judgement = celestialJudgement(stats.mods, player.major, trial.anchorTier);
+  // 世界探险与试炼都可重写(与 replayMark 同构):界(无 trial)也走 world 分支,
+  // 不能在此因 `!trial` 提前返回 —— 那种写法会让界之痕付了 10 道源却空手而归,
+  // 还让下面的 if(world) 分支永成死代码。
+  const judgement = celestialJudgement(stats.mods, player.major, (world ?? trial)!.anchorTier);
   const foes = [];
   if (world) {
     for (let i = 0; i < world.fights - 1; i += 1)

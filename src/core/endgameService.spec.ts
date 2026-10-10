@@ -5,12 +5,15 @@ import { useResourcesStore } from "@/stores/resources";
 import { useEndgameStore, MAX_MARKS } from "@/stores/endgame";
 import type { DaoMark } from "@/types";
 import { FURNACE_RATES, DAO_SOURCE_PER_FRUIT } from "@/data/endgame";
+import { gn } from "@/utils/gnum";
 import {
   chooseDaoPath,
   condenseDaoFruit,
   currentDaoRules,
   endgameUnlocked,
   furnaceConvert,
+  rewriteMark,
+  REWRITE_ENTRY_COST,
 } from "./endgameService";
 import { resolveWorld, startWorldExpedition } from "./expedition";
 import { attemptBreakthrough } from "./breakthrough";
@@ -65,6 +68,61 @@ describe("真仙终局服务", () => {
     expect(gained).toBe(5);
     expect(endgame.daoSource).toBe(5);
     expect(resources.ore).toBe(5); // 余数保留
+  });
+
+  it("熔炉·灵草跨档蚀:按汇总真扣,不够则不熔", () => {
+    ascend();
+    const resources = useResourcesStore();
+    const endgame = useEndgameStore();
+    const rate = FURNACE_RATES.find((r) => r.resource === "herb")!;
+    // 回归:灵草按五档存、`herb` 只读汇总 —— 旧代码按汇总计价却只扣当前境界那档,
+    // 当前档 0 株、别的档堆着也能白拿道源。现在跨档真扣,不够就不熔。
+    resources.grantHerbs(60, 1); // 低档 60 株,当前境界档 0
+    expect(resources.herb).toBe(60);
+    const gained = furnaceConvert(rate);
+    expect(gained).toBe(1);
+    expect(endgame.daoSource).toBe(1);
+    expect(resources.herb).toBe(0); // 跨档真扣了,不是白给
+    // 不足 60 则既不熔也不扣
+    resources.grantHerbs(30, 1);
+    expect(furnaceConvert(rate)).toBe(0);
+    expect(resources.herb).toBe(30);
+    expect(endgame.daoSource).toBe(1);
+  });
+
+  it("重写世界之痕:扣 10 道源真打一场,不再付了费空手而归", () => {
+    ascend();
+    const endgame = useEndgameStore();
+    chooseDaoPath("sword");
+    endgame.addDaoSource(REWRITE_ENTRY_COST * 2);
+    // 世界探险之痕:targetId 是世界(非试炼)→ markTarget 给 world、无 trial。
+    const mark: DaoMark = {
+      life: 1,
+      daoPathId: "sword",
+      targetId: "chiyan",
+      targetName: "赤炎天",
+      cleared: true,
+      rounds: 30,
+      buildName: "罡盾流",
+      powerText: "1万",
+      at: Date.now(),
+      replay: {
+        mods: {},
+        attack: gn(1000),
+        defense: gn(600),
+        maxHp: gn(20000),
+        speed: 2,
+        skills: [],
+        artifacts: [],
+        pactId: null,
+      },
+    };
+    const before = endgame.daoSource;
+    const result = rewriteMark(mark);
+    // 旧代码在付完 10 道源、因 world 无 trial 提前 return null —— 又扣费又空手。
+    // 如今世界痕走 world 分支真打,返回战报,且确确实实花掉入场费。
+    expect(result).not.toBeNull();
+    expect(endgame.daoSource).toBe(before - REWRITE_ENTRY_COST);
   });
 
   it("道源凝道果:走既有软上限体系", () => {

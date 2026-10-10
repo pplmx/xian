@@ -104,6 +104,24 @@ export const useResourcesStore = defineStore(
       return false;
     }
 
+    /**
+     * 付草跨档汇总:Σ五档够才扣(从低档往高档扣,保留高档天材地宝给炼丹),
+     * 不够原样返回 —— 熔炉等按「汇总存量」计价的道源转化用它。
+     */
+    function spendHerbsAll(n: number): boolean {
+      if (!Number.isFinite(n) || n < 0) return false;
+      const total = HERB_GRADES.reduce((s, g) => s + herbs.value[g], 0);
+      if (total < n) return false;
+      let left = n;
+      for (const g of HERB_GRADES) {
+        if (left <= 0) break;
+        const take = Math.min(left, herbs.value[g]);
+        if (take > 0) herbs.value = { ...herbs.value, [g]: herbs.value[g] - take };
+        left -= take;
+      }
+      return true;
+    }
+
     // ---- 材料 / 点数(非灵草这类分级项走引擎账本) ----
 
     function addSmall(id: SmallResourceId, n: number): void {
@@ -165,6 +183,7 @@ export const useResourcesStore = defineStore(
       hasHerbs,
       grantHerbs,
       spendHerbs,
+      spendHerbsAll,
       addStone,
       spendStone,
       hasStone,
