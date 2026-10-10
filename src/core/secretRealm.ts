@@ -185,10 +185,14 @@ export interface SecretLayerResult {
  * 一个刚飞升、还没来得及换装的真仙会撞上 tier 21 的绝对数值 —— 付了道源,
  * 两场就被逐出。玩家相对口径才谈得上"这是给你的考验",而不是"你换装慢了"。
  *
+ * 层级递进的凶险**只在秘密规则里**(secretFightRules 的 enemyAtk/HpMult):
+ * 快照只反映"按玩家缩放"这一层,不把 1+0.12×(层-1) 再烘焙进来 ——
+ * 否则 resolveCombat 会把规则倍率又叠乘一遍,第 2 层起 HP 每层就 ×1.25 了。
+ *
  * 抽成对外函数是为了可测:用例直接看「敌我比值」,不必跑完整场战斗。
  */
 export function secretLayerFoe(
-  state: SecretRealmState,
+  _state: SecretRealmState,
   rand: typeof rng = rng,
 ): { snap: CombatantSnap; shape: WorldFoeShape } {
   const player = usePlayerStore();
@@ -207,7 +211,7 @@ export function secretLayerFoe(
     skills: foeDef.skills.map((sk) => ({ ...sk })),
     mods: foeDef.mods,
   };
-  return { snap: worldFoeSnap(shape, ref, 1 + 0.12 * (state.layer - 1)), shape };
+  return { snap: worldFoeSnap(shape, ref), shape };
 }
 
 /**

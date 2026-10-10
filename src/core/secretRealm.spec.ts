@@ -16,6 +16,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { gn, toNum } from "@/utils/gnum";
+import { mulberry32, RandomService } from "@/utils/random";
 import { SECRET_REALMS, SECRET_RULES } from "@/data/secretRealms";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -317,10 +318,11 @@ describe("秘境 · 敌人按玩家缩放(与远征/试炼同法)", () => {
   it("敌人倍率有上界:裸装玩家吃力是设计,但不该出现「绝对数值墙」", () => {
     // 裸装(无装备无功法)去打秘境本就该吃亏;这里钉的是"吃亏有上限":
     // 敌人攻击不超过玩家的 5 倍,且结算文案始终有效 —— 而不是按层级绝对值碾压。
+    // 快照只按玩家缩放、不随层叠加(层级凶险在 secretFightRules),故直接传 state。
     const player = usePlayerStore();
     for (const major of [3, 9, 14, 20]) {
       player.major = major;
-      const foe = secretLayerFoe({ ...state, layer: SECRET_LAYERS });
+      const foe = secretLayerFoe(state);
       const ratio = toNum(foe.snap.attack) / toNum(player.finalStats.attack);
       expect(ratio, `major ${major} 的秘境敌人攻击是玩家的 ${ratio.toFixed(1)} 倍`).toBeLessThan(5);
       expect(Number.isFinite(toNum(foe.snap.maxHp))).toBe(true);
@@ -334,6 +336,25 @@ describe("秘境 · 敌人按玩家缩放(与远征/试炼同法)", () => {
     expect(r).not.toBeNull();
     expect(r!.lines.length).toBeGreaterThan(0);
     for (const line of r!.lines) expect(line).not.toContain("NaN");
+  });
+
+  it("层级递进的凶险只在规则里:敌人快照不随层叠乘", () => {
+    // 回归(曾双重加码):secretLayerFoe 把 1+0.12×(层-1) 烘焙进快照,
+    // secretFightRules 又在规则里给 enemyHpMult,resolveCombat 叠乘 —— 第 2 层
+    // 起 HP 每层 ×1.25。钉死:快照与层无关,层梯子只在 secretFightRules 一处。
+    const player = usePlayerStore();
+    player.major = 9;
+    // 同一颗种子抽同一个敌人,才能比「同一敌人」跨层的快照;否则随机选敌让对照失真
+    const l1 = secretLayerFoe({ ...state, layer: 1 }, new RandomService(mulberry32(7)));
+    const lmax = secretLayerFoe(
+      { ...state, layer: SECRET_LAYERS },
+      new RandomService(mulberry32(7)),
+    );
+    expect(toNum(lmax.snap.maxHp)).toBe(toNum(l1.snap.maxHp));
+    expect(toNum(lmax.snap.attack)).toBe(toNum(l1.snap.attack));
+    expect(secretFightRules({ ...state, layer: SECRET_LAYERS }).enemyHpMult!).toBeGreaterThan(
+      secretFightRules({ ...state, layer: 1 }).enemyHpMult ?? 0,
+    );
   });
 });
 
