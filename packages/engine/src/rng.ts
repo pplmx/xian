@@ -78,24 +78,6 @@ export function pickWeighted<T>(
   return positive[positive.length - 1]!;
 }
 
-/**
- * Shared Fisher–Yates shuffle against any `[0, 1)` source.
- *
- * `createRng` / `randomRng` both call this so the algorithm cannot drift:
- * a bias/edge-case fix here lands on both the seeded-replay path and the
- * unseeded path at once, keeping seed-replay reproducible.
- */
-export function shuffleInto<T>(arr: readonly T[], next: () => number): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(next() * (i + 1));
-    const a = out[i]!;
-    out[i] = out[j]!;
-    out[j] = a;
-  }
-  return out;
-}
-
 export function createRng(seed: number | string = 1): Rng {
   const rand = mulberry32(typeof seed === "string" ? seedFromString(seed) : seed);
   return {
@@ -105,7 +87,16 @@ export function createRng(seed: number | string = 1): Rng {
     chance: (p) => rand() < p,
     pick: (arr) => arr[Math.floor(rand() * arr.length)]!,
     weighted: (items, weightOf) => pickWeighted(items, weightOf, rand),
-    shuffle: (arr) => shuffleInto(arr, rand),
+    shuffle: (arr) => {
+      const out = [...arr];
+      for (let i = out.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(rand() * (i + 1));
+        const a = out[i]!;
+        out[i] = out[j]!;
+        out[j] = a;
+      }
+      return out;
+    },
   };
 }
 
@@ -117,5 +108,14 @@ export const randomRng: Rng = {
   chance: (p) => Math.random() < p,
   pick: (arr) => arr[Math.floor(Math.random() * arr.length)]!,
   weighted: (items, weightOf) => pickWeighted(items, weightOf, Math.random),
-  shuffle: (arr) => shuffleInto(arr, Math.random),
+  shuffle: (arr) => {
+    const out = [...arr];
+    for (let i = out.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const a = out[i]!;
+      out[i] = out[j]!;
+      out[j] = a;
+    }
+    return out;
+  },
 };
