@@ -36,11 +36,18 @@ def pick = { String key, String envName, props, local ->
     if (props != null && props[key]) return props[key].toString()
     return null
 }
-def storePassword = pick('storePassword', 'KEYSTORE_STORE_PASSWORD', keystoreProps, localProps)
-def keyPassword = pick('keyPassword', 'KEYSTORE_KEY_PASSWORD', keystoreProps, localProps)
+// 【这两个局部变量不许叫 storePassword / keyPassword】Groovy 把 `a b` 读成「调用 a 传 b」,
+// 而处在作用域里的局部变量优先于闭包 delegate 上的 DSL 方法 —— 一旦同名,
+// `storePassword storePassword` 就变成「拿 String 当闭包调」,配置期当场炸:
+//   A problem occurred evaluating project ':app'
+//   > No signature of method: java.lang.String.call()
+// 这几行只在口令齐备时才执行,所以本地不设环境变量时全绿、CI 一注入 Secrets 就红 ——
+// 两次发版(v1.34.0 / v1.35.0)都停在这里。取名 storePass / keyPass 就与 DSL 方法错开了。
+def storePass = pick('storePassword', 'KEYSTORE_STORE_PASSWORD', keystoreProps, localProps)
+def keyPass = pick('keyPassword', 'KEYSTORE_KEY_PASSWORD', keystoreProps, localProps)
 // 哨兵:口令齐备才配签名;缺任何一位就直接跳过(出包但未签名)。
 // 不希望 CI 在某次构建里悄悄产出「没签名的 release」—— 无口令时显式打日志,一眼可查。
-def signingAvailable = storePassword != null && storePassword.length() > 0 && keyPassword != null && keyPassword.length() > 0 && keystorePropsFile.exists()
+def signingAvailable = storePass != null && storePass.length() > 0 && keyPass != null && keyPass.length() > 0 && keystorePropsFile.exists()
 if (!signingAvailable) {
     println "WARNING: 未找到签名口令(KEYSTORE_STORE_PASSWORD/KEYSTORE_KEY_PASSWORD),本次构建产出未签名 APK"
 }
@@ -53,9 +60,9 @@ android {
         release {
             if (signingAvailable) {
                 keyAlias keystoreProps['keyAlias']
-                keyPassword keyPassword
+                keyPassword keyPass
                 storeFile rootProject.file(keystoreProps['storeFile'])
-                storePassword storePassword
+                storePassword storePass
                 v1SigningEnabled true
                 v2SigningEnabled true
             }
