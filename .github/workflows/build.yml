@@ -140,10 +140,18 @@ jobs:
           restore-keys: |
             electron-${{ runner.os }}-
 
+      # 【为什么必须显式 --publish never】electron-builder 26 有一条**隐式行为**:
+      # 在 tag 构建上它自己会去发 Release(日志原话:Implicit publishing triggered by
+      # git tag) —— 拿 job 里的 GITHUB_TOKEN 直接 POST /releases。而这个 job 的 token
+      # 是只读的(contents: write 只给 release job),于是**包已经打好了**,却在最后一步
+      # 栽掉整条流水线:
+      #     • building  target=zip arch=x64 file=pkg\xuanshu-0.0.1-win.zip
+      #     ⨯ 403 Forbidden · Resource not accessible by integration
+      # 发 Release 是 release job 的职责(两个平台的产物要在那里一起收拢、重命名),构建
+      # job 只负责出包。故这里显式关掉隐式发布,连 token 也不再给 —— 一个没有写权限的
+      # job 手里攥着 token,只会让人误以为"它能发"。
       - name: 构建 Electron
-        run: bun run build:electron --${{ matrix.platform }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bun run build:electron --${{ matrix.platform }} --publish never
 
       # 【关键点】上传 zip 产物
       - name: 上传 Electron 安装包
