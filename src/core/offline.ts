@@ -51,6 +51,8 @@ import { modOf } from "./statsCalc";
 import { personalityEffects } from "./petPersonality";
 import { track } from "./progress";
 import { equipmentTemplate } from "@/data/equipment";
+import { herbGradeOfMajor } from "@/data/herbGrades";
+import { tierMajor } from "./tierScale";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useDongfuStore } from "@/stores/dongfu";
@@ -326,7 +328,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         // 材料 —— 离线也会撞见新灵材,只是次数封顶,免得回来一屏 toast
         const herbGain = Math.round(wins * 1.0 * doubleMult);
         const oreGain = Math.round(wins * 0.5 * doubleMult);
-        resources.addSmall("herb", herbGain);
+        // 灵草与在线同源按**产地**(region.tier)定品:addSmall 会落到玩家当前境界那档,
+        // 越阶/低阶开采会与在线打架 —— 故显式 grantHerbs(数量, 产地品阶)。
+        resources.grantHerbs(herbGain, herbGradeOfMajor(tierMajor(region.tier)));
         resources.addSmall("ore", oreGain);
         harvestMaterials(region.tier, "herb", herbGain);
         harvestMaterials(region.tier, "ore", oreGain);
