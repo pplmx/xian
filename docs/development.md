@@ -192,9 +192,15 @@ git tag vX.Y.Z
 git push origin main vX.Y.Z
 ```
 
-这条流水线第一件事是核对 tag 与 package.json 是否同一个版本,对不上直接红掉 ——
-免得发出「Release 页上的版本、与装到手机上的 versionName 不是同一个」的包 ——
-判据看的是两者**相等**,不是某个具体版本号。
+这条流水线第一件事是核对 tag 与 package.json 是否同一个版本(判据看的是两者**相等**,
+不是某个具体版本号),对不上直接红掉 —— 免得发出「Release 页上的版本、与装到手机上的
+versionName 不是同一个」的包。
+
+**Release 正文写在仓库里,不写在页面上。** `docs/release-notes/` 下与 tag 同名的文件
+(如 `docs/release-notes/v0.0.1.md`)就是那一版的正文:release job 优先取它,没有则退回
+GitHub 自动生成的提交清单。理由很实在 —— 手改页面上的正文会被下一次流水线重跑冲掉,
+落在仓库里才跟得住版本、也才过得了文档门。那份文件里的链接一律写绝对地址(图片与链接
+渲染在 Release 页上,相对路径解析不到仓库内容)。
 
 ## 多端构建
 

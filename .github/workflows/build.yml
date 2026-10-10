@@ -236,6 +236,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          # 取到 tag 对象本身(不只是那个提交):标题跟着 tag 说明走(见「取本版说明与标题」),
+          # 而 depth=1 时注释 tag 的对象不一定在本地
+          fetch-depth: 0
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:
@@ -284,12 +288,46 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      # 4. 上传新文件
-      - name: 创建 GitHub Release
+      # 4. 创建 Release
+      #
+      # 正文优先取**仓库里那份**:`docs/release-notes/<tag>.md`(约定见 docs/development.md 的「发版」)。
+      # 手改 Release 页面上的正文会被下一次流水线重跑冲掉 —— 落在仓库里才跟得住版本、也才过得了
+      # 文档门(rumdl / 链接 / 规模数那一套)。没有那一版的文件时不装作有:退回 GitHub 自动生成的
+      # 提交清单,总比空着强。
+      - name: 取本版说明与标题
+        id: notes
+        run: |
+          NOTES="docs/release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$NOTES" ]; then
+            echo "path=$NOTES" >> "$GITHUB_OUTPUT"
+            echo "正文:$NOTES"
+          else
+            echo "path=" >> "$GITHUB_OUTPUT"
+            echo "正文:docs/release-notes/${GITHUB_REF_NAME}.md 不存在 —— 这次用自动生成的提交清单"
+          fi
+          # 标题也跟 tag 走:写 tag 的人顺手写下的那一行,就是这一版的标题
+          TITLE=$(git tag -l --format='%(contents:subject)' "${GITHUB_REF_NAME}")
+          echo "title=${TITLE:-$GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "标题:${TITLE:-$GITHUB_REF_NAME}"
+
+      - name: 创建 GitHub Release(用仓库里那份正文)
+        if: steps.notes.outputs.path != ''
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
-          name: Release ${{ steps.get_version.outputs.VERSION }}
+          name: ${{ steps.notes.outputs.title }}
+          body_path: ${{ steps.notes.outputs.path }}
+          files: ./final-release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 创建 GitHub Release(没有那份正文时的兜底:自动生成的提交清单)
+        if: steps.notes.outputs.path == ''
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: ${{ steps.notes.outputs.title }}
+          generate_release_notes: true
           files: ./final-release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
