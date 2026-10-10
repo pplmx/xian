@@ -113,7 +113,11 @@ export function formatExact(v: GNum | number): string {
 export function formatScientific(v: GNum | number): string {
   const g = gn(v);
   if (g.m === 0) return "0";
-  return `${g.m.toPrecision(4).replace(/\.?0+$/, "")}×10^${g.e}`;
+  // toPrecision(4) 可能把尾数进位跨过 10(9.9996 → 10):此时应归位 1×10^(e+1),
+  // 否则排出「10×10^5」这种指数重复的错位(与 formatExact 同源进位问题)。
+  const mantissa = g.m.toPrecision(4);
+  if (Number(mantissa) >= 10) return `1×10^${g.e + 1}`;
+  return `${mantissa.replace(/\.?0+$/, "")}×10^${g.e}`;
 }
 
 /** 每三位加分隔(负数原样带符号) */

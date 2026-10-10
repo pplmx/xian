@@ -99,6 +99,11 @@ describe("数值格式化", () => {
   it("科学计数法:一眼看出量级(四位有效数字)", () => {
     expect(formatScientific(0)).toBe("0");
     expect(formatScientific({ m: 1.2345, e: 21 })).toBe("1.234×10^21");
+    // 尾数进位跨过 10(9.9996 → 10)时归位成 1×10^(e+1),不复写「10×10^5」
+    expect(formatScientific({ m: 9.9996, e: 5 })).toBe("1×10^6");
+    expect(formatScientific({ m: 9.99995, e: 8 })).toBe("1×10^9");
+    // 未进位不受影响
+    expect(formatScientific({ m: 9.999, e: 5 })).toBe("9.999×10^5");
   });
 
   /**
