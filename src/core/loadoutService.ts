@@ -75,21 +75,30 @@ export function applyLoadout(id: string): boolean {
     missing += 1;
   }
   const subCap = dongfu.subGongfaSlots;
-  const validSubs = loadout.subGongfa.filter((g) => cultivation.learned[g]).slice(0, subCap);
-  missing += loadout.subGongfa.length - validSubs.length;
-  cultivation.subGongfa = validSubs;
+  const learnedSubs = loadout.subGongfa.filter((g) => cultivation.learned[g]);
+  // 缺失只算「没学/没了」:已习得但超装着上限的只是「装不下」,不是「缺失」——
+  // 把超上限的也算成缺失,玩家会以为部件丢了。
+  missing += loadout.subGongfa.length - learnedSubs.length;
+  const subOverCap = Math.max(0, learnedSubs.length - subCap);
+  cultivation.subGongfa = learnedSubs.slice(0, subCap);
   // 法宝
   const artifactCap =
     artifactSlotsFor(player.major) + artifactSlotBonus(player.reincarnation.heritage);
   const owned = new Set(inventory.artifacts.map((a) => a.defId));
-  const validArts = loadout.artifactIds.filter((a) => owned.has(a)).slice(0, artifactCap);
-  missing += loadout.artifactIds.length - validArts.length;
-  inventory.equippedArtifacts = validArts;
+  const ownedArts = loadout.artifactIds.filter((a) => owned.has(a));
+  missing += loadout.artifactIds.length - ownedArts.length;
+  const artOverCap = Math.max(0, ownedArts.length - artifactCap);
+  inventory.equippedArtifacts = ownedArts.slice(0, artifactCap);
 
+  const overCap = subOverCap + artOverCap;
   notify(
     missing > 0
-      ? `已切换至「${loadout.name}」(${missing} 处部件缺失,已跳过)`
-      : `已切换至「${loadout.name}」`,
+      ? `已切换至「${loadout.name}」(${missing} 处部件缺失,已跳过${
+          overCap > 0 ? `;另有 ${overCap} 处超装着上限未上` : ""
+        })`
+      : overCap > 0
+        ? `已切换至「${loadout.name}」(${overCap} 处超装着上限未上)`
+        : `已切换至「${loadout.name}」`,
     "success",
   );
   return true;
