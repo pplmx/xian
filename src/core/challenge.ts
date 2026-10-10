@@ -120,6 +120,7 @@ export function verifyChallenge(draft: ChallengeDraft): ChallengeVerdict | null 
 export function undertakeChallenge(
   draft: ChallengeDraft,
   verdict: ChallengeVerdict,
+  init: { isDaily?: boolean } = {},
 ): ExpeditionResult | null {
   const endgame = useEndgameStore();
   if (!endgameUnlocked() || !endgame.daoPath || !verdict.ok) return null;
@@ -160,17 +161,27 @@ export function undertakeChallenge(
   if (report.cleared) {
     reward = verdict.reward;
     endgame.addDaoSource(reward);
-    recordMilestone("first_custom");
-    const player2 = usePlayerStore();
-    endgame.updateRecord("best_custom", reward, player2.reincarnation.count + 1, name, "max");
-    notify(`挑战书《${name}》功成!道源 +${reward}`, "rare");
+    // 「自立天道/亲手写挑战书」的里程碑与 best_custom 纪录、custom 道痕都是
+    // **玩家亲手开的挑战**专属。今日天道是系统生成的另一条(有自己 first_daily
+    // 与 dailyDoneDay),清扫它不该算进自写挑战的账 —— 否则一场每日会把玩家
+    // 亲手写下最好成绩顶掉。
+    if (!init.isDaily) {
+      recordMilestone("first_custom");
+      const player2 = usePlayerStore();
+      endgame.updateRecord("best_custom", reward, player2.reincarnation.count + 1, name, "max");
+      notify(`挑战书《${name}》功成!道源 +${reward}`, "rare");
+    } else {
+      notify(`今日《${name}》功成!道源 +${reward}`, "rare");
+    }
   } else {
     notify(`《${name}》未竟,止步第 ${report.fightsWon + 1} 战`, "warn");
   }
-  recordMark("custom", `挑战书·${name}`, report.cleared, report.totalRounds, draft.pactId, {
-    worldId: draft.worldId,
-    mutatorIds: draft.mutatorIds,
-  });
+  if (!init.isDaily) {
+    recordMark("custom", `挑战书·${name}`, report.cleared, report.totalRounds, draft.pactId, {
+      worldId: draft.worldId,
+      mutatorIds: draft.mutatorIds,
+    });
+  }
   return {
     title: `挑战书 · ${name}`,
     report,

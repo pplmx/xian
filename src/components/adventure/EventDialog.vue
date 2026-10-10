@@ -138,6 +138,13 @@ watch(
     if (!id) return;
     tierId.value = eventTierOf(id);
     lastTitle.value = eventDef(id)?.title ?? lastTitle.value;
+    // 每次新遭遇都是一次**独立**的开场 roll:回声(5%)与余波(20%)必须当场抽,
+    // 不能挂在会话级 flag 上只抽一次 —— 否则 5%/20% 又会退化成整局一道写死的
+    // 二进制门(与 aftermath 注释里要修掉的旧 bug 同一种)。事件一开就重置占位。
+    echoRolled = false;
+    echoActive = false;
+    aftermathRolled = false;
+    aftermathRoll = 0;
   },
   { immediate: true },
 );

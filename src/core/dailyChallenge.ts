@@ -59,7 +59,7 @@ export function undertakeDaily(daily: DailyChallenge): ExpeditionResult | null {
     notify("今日天道已了,明日再会", "info");
     return null;
   }
-  const result = undertakeChallenge(daily.draft, daily.verdict);
+  const result = undertakeChallenge(daily.draft, daily.verdict, { isDaily: true });
   if (result?.report.cleared) {
     endgame.markDailyDone(daily.day);
     recordMilestone("first_daily");
