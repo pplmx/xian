@@ -308,13 +308,12 @@ function bountyShort(o: BountySlot): string | null {
           @click="deliverPicked(it.uid)"
         >
           <span class="min-w-0 truncate">
-            <span
-              class="font-kai"
-              :style="{ color: qualityDef(it.quality).color }"
-            >
+            <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">
               {{ equipmentTemplate(it.templateId)?.name ?? "无名法器" }}
             </span>
-            <span class="ml-1 text-ink-faint">{{ qualityDef(it.quality).name }} · {{ it.tier }}阶</span>
+            <span class="ml-1 text-ink-faint"
+              >{{ qualityDef(it.quality).name }} · {{ it.tier }}阶</span
+            >
           </span>
           <span class="shrink-0 text-cinnabar">交付</span>
         </button>
