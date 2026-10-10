@@ -76,14 +76,23 @@ export function formatExact(v: GNum | number): string {
   if (g.m === 0) return "0";
   const sign = g.m < 0 ? "-" : "";
   const abs = Math.abs(g.m);
-  const width = g.e + 1; // 整数位数:值 = 1.x × 10^g.e → 小数点在第 g.e+1 位后
+  // 15 位有效数字的尾数字符串;尾数可能正好进位跨过 10(如 9.999…998 → 10),
+  // 此时等价于 1×10^(e+1):指数上抬、尾数额定置 1 —— 否则整数位会小一个量级
+  // (999.999…998 会被显示成 99.9 的错位)。
+  let mantissa = abs.toPrecision(15);
+  let e = g.e;
+  if (Number(mantissa) >= 10) {
+    mantissa = "1";
+    e += 1;
+  }
+  const width = e + 1; // 整数位数:值 = 1.x × 10^e → 小数点在第 e+1 位后
   if (width > 24) {
     // 太长:不假装有那么多位精度,退回科学计数
-    const m = abs.toPrecision(15).replace(/\.?0+$/, "");
-    return `${sign}${m}×10^${g.e}`;
+    const m = mantissa.replace(/\.?0+$/, "");
+    return `${sign}${m}×10^${e}`;
   }
   // 15 位有效数字的尾数(去点、去尾零),例如 1.25 → "125"
-  const digits = abs.toPrecision(15).replace(".", "").replace(/0+$/, "") || "0";
+  const digits = mantissa.replace(".", "").replace(/0+$/, "") || "0";
   let intPart: string;
   let fracPart = "";
   if (width >= 1) {
