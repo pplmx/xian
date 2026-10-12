@@ -13,6 +13,8 @@
 import type { AnyStatKey, FinalStats, GNum, StatMods, StatSourceRow } from "@/types";
 import { add, mulN } from "@/utils/gnum";
 import {
+  CULT_SPEED_SOFT_CAP_DIMINISH,
+  CULT_SPEED_SOFT_CAP_T,
   DAO_FRUIT_COMBAT_BONUS,
   DAO_FRUIT_CULT_BONUS,
   DAO_FRUIT_SOFT_EXP,
@@ -105,9 +107,27 @@ export function computeFinalStats(input: StatsInput): FinalStats {
   );
 
   // 修炼速度汇入:灵根倍率 + 道果 + 灵气充盈
-  const cultExtra =
-    input.linggenMult - 1 + fruit * DAO_FRUIT_CULT_BONUS + (input.qiRich ? QI_RICH_BONUS : 0);
-  mods.cultivationSpeed = Math.max(-0.9, (mods.cultivationSpeed ?? 0) + cultExtra);
+  const linggenExtra = input.linggenMult - 1;
+  const daoCultExtra = fruit * DAO_FRUIT_CULT_BONUS;
+  const qiRichExtra = input.qiRich ? QI_RICH_BONUS : 0;
+  const cultExtra = linggenExtra + daoCultExtra + qiRichExtra;
+
+  // 修炼速度软阈值(见 CULT_SPEED_SOFT_CAP_T):攻防血在 mergeMods 里有 SOFT_CAPS,
+  // 修炼速度是多轮回无界叠加的主线,这里补一道防线 —— 越过阈值后超出部分折算。
+  // 折算同乘一个系数摊回灵根/道果/充盈与各 mod 源,令「明细之和 == 面板值」恒成立。
+  // 正常单世构筑远低于阈值(factor 恒为 1),数值与其来源明细分毫不动。
+  const cultTotal = Math.max(-0.9, (mods.cultivationSpeed ?? 0) + cultExtra);
+  const cultCapped =
+    cultTotal > CULT_SPEED_SOFT_CAP_T
+      ? CULT_SPEED_SOFT_CAP_T + (cultTotal - CULT_SPEED_SOFT_CAP_T) * CULT_SPEED_SOFT_CAP_DIMINISH
+      : cultTotal;
+  const cultFactor = cultTotal === 0 ? 1 : cultCapped / cultTotal;
+  if (cultFactor !== 1) {
+    for (const bucket of effective) {
+      if (typeof bucket.cultivationSpeed === "number") bucket.cultivationSpeed *= cultFactor;
+    }
+  }
+  mods.cultivationSpeed = cultCapped;
 
   /*
    * 来源明细:两部分 —— 各 mod 源真正计入的那一份(已有两道折算),以及
@@ -118,13 +138,12 @@ export function computeFinalStats(input: StatsInput): FinalStats {
     name: input.sourceNames?.[i] ?? `来源 ${i + 1}`,
     mods: effective[i] ?? {},
   }));
-  const linggenExtra = input.linggenMult - 1;
   if (linggenExtra !== 0)
-    breakdown.push({ name: "灵根", mods: { cultivationSpeed: linggenExtra } });
+    breakdown.push({ name: "灵根", mods: { cultivationSpeed: linggenExtra * cultFactor } });
   if (fruit > 0) {
     breakdown.push({
       name: "道果(修炼)",
-      mods: { cultivationSpeed: fruit * DAO_FRUIT_CULT_BONUS },
+      mods: { cultivationSpeed: daoCultExtra * cultFactor },
     });
     breakdown.push({
       name: "道果(攻防血)",
@@ -132,7 +151,8 @@ export function computeFinalStats(input: StatsInput): FinalStats {
       onTop: true,
     });
   }
-  if (input.qiRich) breakdown.push({ name: "灵气充盈", mods: { cultivationSpeed: QI_RICH_BONUS } });
+  if (input.qiRich)
+    breakdown.push({ name: "灵气充盈", mods: { cultivationSpeed: qiRichExtra * cultFactor } });
 
   return { attack, defense, maxHp, power: powerScore(attack, defense, maxHp), mods, breakdown };
 }

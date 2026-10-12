@@ -20,10 +20,11 @@
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import type { AnyStatKey, StatMods } from "@/types";
-import { mergeMods, mergeModsDetailed } from "./statsCalc";
+import { mergeMods, mergeModsDetailed, computeFinalStats } from "./statsCalc";
 import { modOf } from "./statsCalc";
 import { baseCultPerSec } from "./formulas";
-import { SOFT_CAPS } from "@/data/constants";
+import { gn } from "@/utils/gnum";
+import { CULT_SPEED_SOFT_CAP_T, SOFT_CAPS } from "@/data/constants";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -74,6 +75,41 @@ describe("属性来源明细 · 合并的两道折算都要摊回来源", () => 
     expect(mods.critRate!).toBeCloseTo(cap.cap + (beforeSoftCap - cap.cap) * cap.diminish, 10);
     const sum = effective.reduce((s, e) => s + (e.critRate ?? 0), 0);
     expect(sum, "软阈值折算没有摊回来源,明细之和会对不上面板").toBeCloseTo(mods.critRate!, 10);
+  });
+
+  it("修炼速度软阈值:多轮回无界堆叠越过阈值才折算,常规构筑分毫不动", () => {
+    const baseInput = {
+      major: 3,
+      sub: 0,
+      linggenMult: 1,
+      equipFlats: { attack: gn(0), defense: gn(0), maxHp: gn(0) },
+      daoFruit: 0,
+      qiRich: false,
+      sourceNames: ["词条"],
+    };
+    // 单世满配远低于阈值:纯词条 3.0,不触发任何折叠
+    const normal = computeFinalStats({ ...baseInput, modSources: [{ cultivationSpeed: 3.0 }] });
+    expect(normal.mods.cultivationSpeed).toBeCloseTo(3.0, 10);
+    // 多轮回堆叠越过阈值(CULT_SPEED_SOFT_CAP_T):道果 + 词条超界,超出部分按 DIMINISH 折算
+    const stacked = computeFinalStats({
+      ...baseInput,
+      daoFruit: 60, // 道果 60 颗 → 有效(^0.9)≈40,再叠词条 4.0 → 越过 5.0
+      modSources: [{ cultivationSpeed: 4.0 }],
+    });
+    const effectiveFruit = Math.pow(60, 0.9);
+    const raw = 4.0 + effectiveFruit * 0.03;
+    expect(raw, "堆叠该越过阈值,不然断言无意义").toBeGreaterThan(CULT_SPEED_SOFT_CAP_T);
+    // 面板值 = 阈值 + 超出×0.5
+    expect(stacked.mods.cultivationSpeed).toBeCloseTo(
+      CULT_SPEED_SOFT_CAP_T + (raw - CULT_SPEED_SOFT_CAP_T) * 0.5,
+      10,
+    );
+    // 明细之和 = 面板值(道果修炼那一条也按 factor 折算)
+    const sum = stacked.breakdown.reduce((s, r) => s + (r.mods.cultivationSpeed ?? 0), 0);
+    expect(sum, "修速软阈值折算没有摊回来源,明细之和会对不上面板").toBeCloseTo(
+      stacked.mods.cultivationSpeed!,
+      10,
+    );
   });
 });
 

@@ -541,6 +541,16 @@ export const DAO_FRUIT_PER_MAJOR = 3;
 /** 每颗有效道果永久加成 */
 export const DAO_FRUIT_CULT_BONUS = 0.03;
 export const DAO_FRUIT_COMBAT_BONUS = 0.015;
+/**
+ * 修炼速度软阈值 —— 攻防血走 SOFT_CAPS,修炼速度这条主线此前不加任何衰减,
+ * 功法/道果/灵根/充盈/卦/灵兽在多轮回下可无界叠加。这里补一道防线:
+ * 合计越过 CULT_SPEED_SOFT_CAP_T 后,超出部分按 CULT_SPEED_SOFT_CAP_DIMINISH 折算。
+ * 阈值取在正常单一世构筑达不到、只有极端轮回堆叠才触及的位置,常规生态分毫不动。
+ * 单世满配天花板实测约 4.4(见 realPacing 满配档),故取 5.0:单世全流程不碰它,
+ * 只有多轮回道果/天赋堆叠越过才触发。
+ */
+export const CULT_SPEED_SOFT_CAP_T = 5.0; // 500%:单世满配天花板约 4.4,多轮回道果堆叠才够
+export const CULT_SPEED_SOFT_CAP_DIMINISH = 0.5;
 /** 道果收益软上限指数(有效道果 = 道果^该指数),抑制多周目无限加速 */
 export const DAO_FRUIT_SOFT_EXP = 0.9;
 /** 转世天赋抽取数 = 1 + floor(major / 2) */
