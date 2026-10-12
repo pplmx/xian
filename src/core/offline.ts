@@ -128,6 +128,13 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   if (dtSec < 1) return null;
 
   /**
+   * 结算前先清算已过期 buff:离线期 finalStats.mods 会被本段全部产出引用,
+   * 若 buff 已过期末清算,已过期的修炼/掉落加成会对整段离线全程生效(在线每 tick 即时清算,
+   * 离线单次结算必须在这里先剪枝)。已在当下过期即不再计;恰在途中过期的按整段生效(远轻于全程漏删)。
+   */
+  cultivation.pruneBuffs(nowMs);
+
+  /**
    * 离线分两条账:**被动修行不限时**,产出与派遣受洞府上限约束。
    *
    * 玩家反馈:「很长时间不登录,灵气/修为也不变化。」查下来是离线上限把时间切掉了 ——

@@ -20,6 +20,7 @@ import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { useAdventureStore } from "@/stores/adventure";
 import { useUiStore } from "@/stores/ui";
+import { useCultivationStore } from "@/stores/cultivation";
 import { todayWeather } from "./weather";
 import { gn, mulN, toNum } from "@/utils/gnum";
 import { OFFLINE_EFFICIENCY } from "@/data/constants";
@@ -72,6 +73,39 @@ describe("离线结算封顶一致性", () => {
     // 60h 封顶:stoneByTier(tier1, 150×60×0.98) ≈ 10584
     expect(stone).toBeGreaterThan(8000);
     expect(stone).toBeLessThan(13000);
+  });
+
+  it("已过期 buff 不补贴离线产出:结算前先清剪,不再全程生效", () => {
+    // 回归:settleOffline 产出先按 finalStats.mods 结算、pruneBuffs 却放末尾——
+    // 已过期的聚灵(+50% 修速)若不清剪,会对整段离线全程加成(在线每 tick 即时清算,
+    // 离线单次结算漏了)。实证:过期聚灵挂进 buffs 后 finalStats.mods.cultivationSpeed 含 0.5。
+    // 两分支共享同一枚 now:exp 是按时长线性累的,Date.now() 各取一次会带亚毫秒漂移,
+    // 把"只比 buff 变量"的断言容忍抬高到纯时钟噪声以下 —— 真正过期的 buff 贡献是精确 0。
+    const now = Date.now();
+    function offlineExpWithBuff(expired: boolean): number {
+      // 每个分支各自起一份新 pinia:settleOffline 有一次性初始化(天气/研读/首标),
+      // 跨分支共享 store 会让"第几个跑"影响读数 —— 独立环境才能只比 buff 这一个变量。
+      setActivePinia(createPinia());
+      const g = useGameStore();
+      const p = usePlayerStore();
+      const cult = useCultivationStore();
+      g.markStarted();
+      g.lastActiveAt = now - 60 * 1000; // 60s 离线,只修一次修为
+      p.initCharacter("清台", { roots: [] } as never);
+      if (expired) {
+        // 挂一颗在结算时已过期的聚灵:addBuff 把 buffClock 定在 2000s 前(离线前的陈旧钟),
+        // 让这颗在离线期间到期的 buff 在 settlement 读 finalStats 时被当成在效 —— 复现实况。
+        // 端点:endsAt = 挂入时刻+1800s < now,结算前必须剪掉。
+        cult.addBuff("buff_juling", now - 2000 * 1000);
+      }
+      const before = toNum(p.exp);
+      settleOffline(now);
+      return toNum(p.exp) - before;
+    }
+    const withExpired = offlineExpWithBuff(true);
+    const noBuff = offlineExpWithBuff(false);
+    // 过期 buff 已清剪 → 离线修为与无 buff 一致(修前红/修后绿)
+    expect(withExpired, "过期聚灵不再补贴离线修为").toBeCloseTo(noBuff, 6);
   });
 });
 
