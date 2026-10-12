@@ -17,7 +17,13 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { BuffInstance, StatMods } from "@/types";
 import { buffDef, BUFFS } from "@/data/buffs";
-import { activeBuffsOf, applyBuff, clearNegativeBuffList, pruneBuffList } from "./engineBuffs";
+import {
+  activeBuffsOf,
+  applyBuff,
+  clearNegativeBuffList,
+  expiredBuffNames,
+  pruneBuffList,
+} from "./engineBuffs";
 import { mergeMods } from "./statsCalc";
 
 /** 更早那版写法(已被修掉,留在这里当反面对照):`Math.max(旧, now + 时长)` = 刷新 */
@@ -195,5 +201,20 @@ describe("状态层对账 —— 逐字段、逐毫秒与迁移前一致", () =>
     expect(activeBuffsOf(stale, NOW)).toEqual([]);
     expect(activeBuffsOf(stale, NOW - 2).length).toBe(1); // 过期之前仍然算数
     expect(pruneBuffList(stale, NOW).list).toEqual([]);
+  });
+
+  it("expiredBuffNames:一段区间内到期的状态名,去重且顺序即出现序", () => {
+    const list: BuffInstance[] = [
+      { defId: "buff_juling", endsAt: NOW }, // 正好到终点:算
+      { defId: "buff_ningshen", endsAt: NOW + 1 }, // 还没到:不算
+      { defId: "buff_zhanli", endsAt: NOW - 1000 }, // 早已到期(离线残留):不给 startMs 则算,给则不算
+    ];
+    // 不限定起点:只要 now 前到期都报
+    expect(expiredBuffNames(list, -Infinity, NOW)).toEqual(["聚灵", "战意沸腾"]);
+    // 限定起点高于战意的到期时刻 → 那一条被排出(它不算"这段期间才散")
+    expect(expiredBuffNames(list, NOW - 500, NOW)).toEqual(["聚灵"]);
+    // 去重:同一种叠了两条,只报一次
+    const duped = [...list, { defId: "buff_juling", endsAt: NOW }];
+    expect(expiredBuffNames(duped, -Infinity, NOW)).toEqual(["聚灵", "战意沸腾"]);
   });
 });

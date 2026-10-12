@@ -111,6 +111,31 @@ export function clearNegativeBuffList(list: readonly BuffInstance[]): BuffInstan
 }
 
 /**
+ * 一段区间内到期的状态名(去重,顺序即出现序)。
+ *
+ * 归来明账 / 在线掉速提示共用这一份 —— 过期名必须在剪枝**之前**收:
+ * 剪掉之后 BuffInstance 就没了,名字再也取不回(见 AGENTS.md「让看不见的机制可见」)。
+ *
+ * @param startMs 区间起点(含):`endsAt > startMs` 才算"这段期间才散"。传 -Infinity
+ *                即不管它什么时候挂的,只要现在已到期都算。
+ * @param nowMs   区间终点(含):`endsAt <= nowMs`。
+ */
+export function expiredBuffNames(
+  list: readonly BuffInstance[],
+  startMs: number,
+  nowMs: number,
+): string[] {
+  const names = new Set<string>();
+  for (const buff of list) {
+    if (buff.endsAt > startMs && buff.endsAt <= nowMs) {
+      const def = buffDef(buff.defId);
+      if (def) names.add(def.name);
+    }
+  }
+  return [...names];
+}
+
+/**
  * BuffDialog「现效合计」行的原料:这个词条里**还有别的来源在供**(叠加或对冲),
  * 单颗自己的数已经讲不清"我实际吃到多少"了,亮出来才值得一行。
  *

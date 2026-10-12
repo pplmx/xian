@@ -28,6 +28,7 @@ import { studyTick, seedLoreIfNeeded } from "./loreService";
 import { flushSaveWrites } from "@/utils/storage";
 import { enginePaused, pauseElapsedMs, setEnginePaused } from "./enginePause";
 import { notify } from "./notify";
+import { expiredBuffNames as expiredBuffNamesOf } from "./engineBuffs";
 import { setDeathDialog } from "./uiPort";
 
 export { enginePaused } from "./enginePause";
@@ -150,8 +151,14 @@ class GameEngine {
       resources.setQi(resources.qi + player.qiRegenPerSec * dt, player.qiCapValue);
       // 建筑产出
       dongfu.produce(dt);
-      // Buff 过期
+      // Buff 过期 —— 在线掉速不能无提示:到期的那一拍，把名字通报一声，
+      // 与离线「归来明账」同一份过期名(见 engineBuffs.expiredBuffNames)。
+      // 起点用 lastTickAt:上一拍还活着、这一拍才到期 = 这次掉速的直接原因。
+      const expiredNames = expiredBuffNamesOf(cultivation.buffs, this.lastTickAt, now);
       cultivation.pruneBuffs(now);
+      if (expiredNames.length > 0) {
+        notify(`${expiredNames.join("、")} 的效果已结束`, "info");
+      }
       // 历练推进
       tickExploration(now, game.totalPlaySec);
       // Phase 28: 悟道顿悟触发(修炼时随机)
