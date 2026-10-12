@@ -17,6 +17,7 @@ import { engine, enginePaused } from "./engine";
 import { useCultivationStore } from "@/stores/cultivation";
 import { gnZero, sub, toNum } from "@/utils/gnum";
 import { useResourcesStore } from "@/stores/resources";
+import { useUiStore } from "@/stores/ui";
 import { EVENT_AUTO_RESOLVE_SECONDS, EXPLORE_BOSS_AFTER_WINS } from "@/data/constants";
 import { tickExploration, startExploration, winsUntilRegionBoss } from "./exploration";
 import {
@@ -580,5 +581,42 @@ describe("引擎暂停 · 历练墙上的截止时刻", () => {
     expect(player.currentRegionEvent("qingyun"), "挪完截止后区域事件还在").not.toBeNull();
     expect(breakthroughPrepState().sitting, "挪完截止后仍在静坐").toBe(true);
     expect(getRetreatRemainingSec()).toBe(300);
+  });
+});
+
+/**
+ * 自动结算的所见即所得 —— 超时 / 遇事勿扰两条路都不弹窗,
+ * 但奖励是实打实入账的,玩家长久看着没动静的界面只会以为「这事件是不是无事发生」。
+ * 这里锁的是「名号 + 实得清点」都给了通知(见 AGENTS.md「让看不见的机制可见」)。
+ */
+describe("自动结算事件 · 超时与勿扰都给实得通报", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    protect.value = false;
+    combatWin.value = false;
+  });
+
+  function captureToasts(now: number): string[] {
+    const toasts: string[] = [];
+    vi.spyOn(useUiStore(), "toast").mockImplementation((msg) => void toasts.push(msg));
+    // 挂一颗已逾期的待处理事件:超时路径走 autoResolveEvent(默认好愿)
+    useAdventureStore().setPendingEvent("ev_spring", now - (EVENT_AUTO_RESOLVE_SECONDS + 1) * 1000);
+    usePlayerStore().initCharacter("自动结算", { roots: [] } as never);
+    forgeSession(now);
+    tickExploration(now + (EVENT_AUTO_RESOLVE_SECONDS + 2) * 1000, 0);
+    return toasts;
+  }
+
+  it("超时自动结算后通报实得(事件名 + 清点逐行),不静默入账", () => {
+    const toasts = captureToasts(Date.now());
+    // 聚灵之前的灵泉「饮下泉水」默认结算给修为(applyEffect → 「修为 +…」)
+    expect(
+      toasts.some((t) => t.startsWith("灵泉")),
+      "实得清点应点名事件",
+    ).toBe(true);
+    expect(
+      toasts.some((t) => t.includes("修为")),
+      "清点里该有修为一笔",
+    ).toBe(true);
   });
 });

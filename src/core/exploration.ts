@@ -33,7 +33,8 @@ import { lifeTrialRules } from "./lifeTrialService";
 import { buildPlayerSnap } from "./playerSnap";
 import { currentDaoRules } from "./endgameService";
 import { afterWin } from "./loot";
-import { autoResolveEvent, pickEventFor } from "./eventEngine";
+import { autoResolveEvent, pickEventFor, type EventResolution } from "./eventEngine";
+import { eventDef } from "@/data/events";
 import { eventTierDef, eventTierOf } from "./eventTier";
 import { modOf } from "./statsCalc";
 import { ENGINE_WORLD } from "./engineWorld";
@@ -509,6 +510,24 @@ function announceEventTier(ev: EventDef): void {
   else if (tier.id === "qiyuan") notify(`缘分再续 —— 「${ev.title}」`, "info");
 }
 
+/**
+ * 自动结算后的通报:名号 + 实得清点。
+ *
+ * 超时与遇事勿扰两条自动结算路都不弹窗,但奖励是实打实入账的 ——
+ * 若只进账不吭声,玩家对着变多/变少的资源只会纳闷"刚才是怎么回事"(见
+ * AGENTS.md「让看不见的机制可见」)。这里把 EventResolution 的逐条效果(与手动
+ * 弹窗里的"收益清点"同一份 lines)报成一条通知;无事发生(全 skipped)则不打扰。
+ */
+function announceAutoResolution(ev: EventDef, res: EventResolution | null): void {
+  if (!res) {
+    // 查无此定义(内容改名后旧存档残留):只报名字,不编清点
+    announceEventTier(ev);
+    return;
+  }
+  announceEventTier(ev);
+  if (res.lines.length > 0) notify(`${ev.title}:${res.lines.join("、")}`, "info");
+}
+
 export function tickExploration(now: number, totalPlaySec: number): void {
   const adventure = useAdventureStore();
   const player = usePlayerStore();
@@ -519,8 +538,11 @@ export function tickExploration(now: number, totalPlaySec: number): void {
   if (adventure.pendingEventId) {
     if (now - adventure.pendingEventSince > EVENT_AUTO_RESOLVE_SECONDS * 1000) {
       const region = regionDef(s.regionId);
-      autoResolveEvent(adventure.pendingEventId, region?.tier ?? 1);
+      const pid = adventure.pendingEventId;
+      const res = autoResolveEvent(pid, region?.tier ?? 1);
       adventure.setPendingEvent(null, now);
+      const curEv = eventDef(pid);
+      if (res && curEv) announceAutoResolution(curEv, res);
       const cur = adventure.session;
       if (cur)
         adventure.setSession({ ...cur, events: cur.events + 1, nextBattleAt: nextBattleTime(now) });
@@ -547,8 +569,8 @@ export function tickExploration(now: number, totalPlaySec: number): void {
          * 勿扰只拦「阻塞的弹窗」:稀有档的宣布照念(announceEventTier),
          * 别把千分之几的机缘/奇缘连名号一起吞掉。
          */
-        autoResolveEvent(ev.id, region.tier);
-        announceEventTier(ev);
+        const res = autoResolveEvent(ev.id, region.tier);
+        announceAutoResolution(ev, res);
         const cur = adventure.session;
         if (cur)
           adventure.setSession({
