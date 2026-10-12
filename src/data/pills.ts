@@ -185,7 +185,7 @@ export const PILLS: PillDef[] = [
   ),
   p("p_dahuan", "大还丹", "profound", 4, "起死人肉白骨,服之如闭关一炷香(30 分钟)", {
     instant: { expSecs: 1800 },
-    recipe: { herb: 50, stoneBase: 100 },
+    recipe: { herb: 47, stoneBase: 100 },
     alchemyLevel: 6,
   }),
   p("p_wudaodan", "悟道丹", "profound", 3, "服之如聆道音,悟道点 +20", {
@@ -210,7 +210,7 @@ export const PILLS: PillDef[] = [
   }),
   p("p_jiuzhuan", "九转还魂丹", "heaven", 7, "九转丹成,天地同贺,服之如闭关一个时辰(2 小时)", {
     instant: { expSecs: 7200 },
-    recipe: { herb: 200, stoneBase: 500 },
+    recipe: { herb: 178, stoneBase: 445 },
     alchemyLevel: 10,
   }),
   // ---- 渡劫(8)/真仙(9) 可炼断档补齐(多维审视 P0-1:跨界前后各空一档;修为线续长) ----
@@ -514,7 +514,7 @@ export const PILLS: PillDef[] = [
   ),
   p("p_shenwang", "神王丹", "divine", 16, "神域气运并入己身,服之如闭关十八刻(270 分钟)", {
     instant: { expSecs: 16200 },
-    recipe: { herb: 500, stoneBase: 1250 },
+    recipe: { herb: 380, stoneBase: 1160 },
     alchemyLevel: 10,
   }),
   p("p_shendi", "神帝丹", "divine", 17, "神帝演道,言出法随,悟道点 +120", {
@@ -529,7 +529,7 @@ export const PILLS: PillDef[] = [
   }),
   p("p_kaitian", "开天丹", "divine", 20, "开天辟地,道祖遗泽,服之如闭关三个半时辰(7 小时)", {
     instant: { expSecs: 25200 },
-    recipe: { herb: 600, stoneBase: 1600 },
+    recipe: { herb: 576, stoneBase: 1536 },
     alchemyLevel: 10,
   }),
   // ---- 神品/道品灵气丹(多维审视 P1-3):灵气线自仙泉玉液(11)断档 —— 神界/混沌海 一口回满补齐 ----

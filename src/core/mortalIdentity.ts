@@ -23,6 +23,7 @@
 import { MUTATOR_THEMES, THEME_IDENTITY, type MutatorTheme } from "@/data/mutators";
 import { REGIONS } from "@/data/regions";
 import { enemyDef } from "@/data/enemies";
+import { jaccardDistance } from "@/utils/setMath";
 import { type MortalWorld, mortalNovelty } from "./mortalWorldGen";
 
 // ============ 一、世界身份 ============
@@ -223,12 +224,7 @@ export function visibleFeatures(w: MortalWorld): VisibleFeatures {
 }
 
 function jaccard(a: string[], b: string[]): number {
-  const sa = new Set(a);
-  const sb = new Set(b);
-  if (sa.size === 0 && sb.size === 0) return 0;
-  let inter = 0;
-  for (const x of sa) if (sb.has(x)) inter += 1;
-  return 1 - inter / (sa.size + sb.size - inter);
+  return jaccardDistance(new Set(a), new Set(b));
 }
 
 function seqDistance(a: number[], b: number[]): number {

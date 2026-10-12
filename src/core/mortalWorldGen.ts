@@ -31,6 +31,7 @@ import { makeEnemySnap, resolveCombat } from "./combat";
 import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import { powerScale } from "./formulas";
 import { mulN } from "@/utils/gnum";
+import { jaccardDistance } from "@/utils/setMath";
 import { NOVELTY_MIN } from "./worldGen";
 
 /**
@@ -387,13 +388,6 @@ function featureSets(w: MortalWorld): { arch: Set<string>; foes: Set<string>; ta
     foes: new Set(w.chain.flatMap((p) => p.enemies)),
     tags: new Set(w.chain.flatMap((p) => p.eventTags)),
   };
-}
-
-function jaccardDistance(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 0;
-  let inter = 0;
-  for (const x of a) if (b.has(x)) inter += 1;
-  return 1 - inter / (a.size + b.size - inter);
 }
 
 /** 生态位差异:同一头妖物出现在第几段,算不算换了位置 */
