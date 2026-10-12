@@ -14,6 +14,7 @@ import {
 import { rng } from "@/utils/random";
 import { regionDef } from "@/data/regions";
 import { enemyDef } from "@/data/enemies";
+import { buffDef } from "@/data/buffs";
 import {
   AGE_YEARS_PER_HOUR,
   BATTLE_EXP_SECS,
@@ -131,7 +132,19 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
    * 结算前先清算已过期 buff:离线期 finalStats.mods 会被本段全部产出引用,
    * 若 buff 已过期末清算,已过期的修炼/掉落加成会对整段离线全程生效(在线每 tick 即时清算,
    * 离线单次结算必须在这里先剪枝)。已在当下过期即不再计;恰在途中过期的按整段生效(远轻于全程漏删)。
+   *
+   * 先拍一张"离线期间到期的状态"的账,再剪:剪掉之后 buff 名字就再也取不到了。
+   * 归来明账的数必须与剪枝同源 —— 玩家得知道是哪个增益在闭关期间散了,
+   * 否则"修为怎么变慢了"又要猜 (见 AGENTS.md「让看不见的机制可见」)。
    */
+  const expiredBuffDefs = new Set<string>();
+  for (const buff of cultivation.buffs) {
+    // 离线开始时仍在效(endsAt 高于离线开始时刻),但到现在已到期 → 闭关期间散的
+    if (buff.endsAt > game.lastActiveAt && buff.endsAt <= nowMs) {
+      const def = buffDef(buff.defId);
+      if (def) expiredBuffDefs.add(def.name);
+    }
+  }
   cultivation.pruneBuffs(nowMs);
 
   /**
@@ -546,6 +559,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   };
   if (player.expFull) notes.push("修为已至圆满,可尝试突破");
   if (summary.ageYears > 0) notes.push(`闭关期间寿元流逝 ${summary.ageYears} 载`);
+  if (expiredBuffDefs.size > 0) {
+    notes.push(`闭关期间增益到期:${[...expiredBuffDefs].join("、")}`);
+  }
   /**
    * **寿元告警** —— 修为与灵气现在不限时(见上面那段),所以"挂得越久收益越多"，
    * 但寿元是按现实时间走的:一次长缺席可能把你直接送到油尽灯枯的边上。

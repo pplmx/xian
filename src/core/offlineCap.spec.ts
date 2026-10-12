@@ -12,6 +12,7 @@
 import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
 import { settleOffline } from "./offline";
+import type { OfflineSummary } from "@/types";
 import { studyTick } from "./loreService";
 import { useLoreStore } from "@/stores/lore";
 import { useGameStore } from "@/stores/game";
@@ -106,6 +107,28 @@ describe("离线结算封顶一致性", () => {
     const noBuff = offlineExpWithBuff(false);
     // 过期 buff 已清剪 → 离线修为与无 buff 一致(修前红/修后绿)
     expect(withExpired, "过期聚灵不再补贴离线修为").toBeCloseTo(noBuff, 6);
+  });
+
+  it("离线期间到期的 buff 记入归来总结,剪掉的账不丢", () => {
+    // 回归:pruneBuffs 之前先拍账 —— 剪掉之后 buff 名字就再也取不到,
+    // 若不先读 notes,玩家只见"修为变慢"、不见是哪个增益散了。
+    const now = Date.now();
+    function runWithBuff(): OfflineSummary | null {
+      setActivePinia(createPinia());
+      const g = useGameStore();
+      const p = usePlayerStore();
+      const cult = useCultivationStore();
+      g.markStarted();
+      g.lastActiveAt = now - 60 * 1000; // 60s 离线
+      p.initCharacter("清台", { roots: [] } as never);
+      // 聚灵 30min 时长;挂 1830s 前 → 离线(60s)进行中到期(endsAt=now-30s),
+      // 高于离线开始时刻(lastActiveAt=now-60s)、低于 now —— 正是"闭关期间散了"。
+      cult.addBuff("buff_juling", now - 1830 * 1000);
+      return settleOffline(now);
+    }
+    const midOffline = runWithBuff()!;
+    expect(midOffline.notes.join("")).toContain("聚灵");
+    expect(midOffline.notes.join("")).toContain("增益到期");
   });
 });
 
