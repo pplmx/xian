@@ -438,6 +438,41 @@
       <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
         兵解转世保留道果 / 天赋 / 法宝,功法折半,余者归尘。金丹境方可自行兵解。
       </p>
+      <!--
+        去留一览:兵解是不可逆的大事,一句「随皮囊散去」盖不住整本账 ——
+        哪一样去了哪、留下什么,读的就是 core/samsaraAudit 那份 HERITAGE(同表,不另写)。
+        默认收起:不压弹窗高度,按下前点开即可核对。
+      -->
+      <button
+        class="mt-2 flex w-full items-center justify-between px-2 py-2 text-left text-[11px] text-ink-soft active:opacity-60"
+        :aria-expanded="heritageOpen"
+        @click="heritageOpen = !heritageOpen"
+      >
+        <span>转世去留一览({{ keepCount }} 留 · {{ resetCount }} 去)</span>
+        <span class="text-[10px] text-qing">{{ heritageOpen ? "▾ 收 起" : "▸ 展 开" }}</span>
+      </button>
+      <div v-if="heritageOpen" class="mt-1.5 rounded-md bg-paper-deep/60 px-3 py-2">
+        <p class="text-[10px] text-ink-faint">随魂留存 / 归尘 · 与结算同表</p>
+        <div class="mt-1 space-y-1">
+          <p
+            v-for="row in heritageKeepRows"
+            :key="row.id"
+            class="flex items-baseline justify-between gap-2 text-[10px]"
+          >
+            <span class="text-ink-soft">{{ row.name }}</span>
+            <span class="shrink-0" :class="row.cls">{{ row.modeLabel }}</span>
+          </p>
+          <div class="my-1 border-t border-ink/6" />
+          <p
+            v-for="row in heritageResetRows"
+            :key="row.id"
+            class="flex items-baseline justify-between gap-2 text-[10px]"
+          >
+            <span class="text-ink-faint">{{ row.name }}</span>
+            <span class="shrink-0" :class="row.cls">{{ row.modeLabel }}</span>
+          </p>
+        </div>
+      </div>
       <template #footer>
         <button class="btn-ghost w-full !text-[12px]" @click="rebirth">兵解转世</button>
       </template>
@@ -682,6 +717,7 @@ import { ARTIFACTS } from "@/data/artifacts";
 import { REALMS, WORLDS } from "@/data/realms";
 import { EVENTS } from "@/data/events";
 import { prepareReincarnation, MANUAL_REBIRTH_MIN_MAJOR } from "@/core/reincarnation";
+import { HERITAGE } from "@/core/samsaraAudit";
 import { detectBuild } from "@/core/buildDetect";
 import { useLoadoutsStore } from "@/stores/loadouts";
 import { isSoftCapped, modOf } from "@/core/statsCalc";
@@ -823,8 +859,37 @@ const rebirthOpen = ref(false);
 const talentTap = ref<string | null>(null);
 const tappedTalent = computed(() => (talentTap.value ? talentDef(talentTap.value) : undefined));
 watch(rebirthOpen, (open) => {
-  if (!open) talentTap.value = null;
+  if (!open) {
+    talentTap.value = null;
+    heritageOpen.value = false;
+  }
 });
+/**
+ * 转世去留一览:兵解是不可逆的大事,一句「随皮囊散去」盖不住整本账。
+ * 行取自 core/samsaraAudit 的 HERITAGE 同表(审计处核实过,非样设口径),按留/去分组。
+ * 默认收起:不压弹窗高度,按下前点开即可核对。
+ */
+const heritageOpen = ref(false);
+const MODE_LABEL: Record<string, string> = {
+  full: "随魂留存",
+  partial: "折半/部分保留",
+  reset: "归尘",
+};
+const heritageRows = computed(() =>
+  HERITAGE.map((r) => ({
+    id: r.id,
+    name: r.name,
+    mode: r.mode,
+    modeLabel: MODE_LABEL[r.mode] ?? r.mode,
+    /** 留=jade 色、归尘=淡墨 —— 一眼分得清哪些带得走 */
+    cls: r.mode === "reset" ? "text-ink-faint" : "text-jade",
+    detail: r.detail,
+  })),
+);
+const heritageKeepRows = computed(() => heritageRows.value.filter((r) => r.mode !== "reset"));
+const heritageResetRows = computed(() => heritageRows.value.filter((r) => r.mode === "reset"));
+const keepCount = computed(() => heritageKeepRows.value.length);
+const resetCount = computed(() => heritageResetRows.value.length);
 const bondDialog = ref(false);
 const bond = computed(() => player.bond);
 const bondDef = computed(() => (bond.value ? (daoluDef(bond.value.daoluId) ?? null) : null));

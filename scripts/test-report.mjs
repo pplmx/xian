@@ -96,6 +96,7 @@ const CATEGORIES = [
       "buildSearch",
       "buildDetect",
       "buildAdvisor",
+      "playerMatchup",
       "powerRating",
       "statBreakdown",
       "equipSet",

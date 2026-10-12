@@ -471,6 +471,13 @@
         灵草 {{ resources.herb }} · 灵石 {{ formatGN(resources.spiritStone) }}
       </p>
       <!--
+        被动翻检全程无进度条:玩家只知道某天突然翻出一张方子,不知道它快到了。
+        这一行把「下一件事」报成时间 —— 读数与 studyTick 同序,见 core/loreService.studyEta
+      -->
+      <p v-if="studyLine" class="mb-2 text-[10px] leading-relaxed text-ink-faint tabular">
+        {{ studyLine }}
+      </p>
+      <!--
         炼丹增益:安神/澄心/定心是服下去的状态丹,「炼丹面」(双成/心得/护料)只在炉前
         有意义 —— 吃没吃、加几成,开着炉就该看得见;没吃则给个引子,不许白吃白扛。
         效果文案走 buff 的 mods → modsText,不在此处另写一份(见 pillBatch.spec 的收口)。
@@ -492,36 +499,6 @@
         炉前还是白身 —— 备一味
         <span class="text-qing">安神 · 澄心 · 定心</span>,双成 / 心得 / 护料即刻各涨一截
       </p>
-      <!-- 百工技艺:做得多就精。技艺一直在影响成丹 —— 境地与进度条都在这,看得见自己在长 -->
-      <div v-if="skillRows.length" class="mb-2 rounded-md bg-paper-deep/60 px-3 py-2">
-        <p class="text-[10px] text-ink-faint">技艺(按道分,做得多就精)</p>
-        <div class="mt-1 space-y-1">
-          <div v-for="s in skillRows" :key="s.id">
-            <p class="flex items-baseline gap-2 text-[11px]">
-              <span class="w-14 shrink-0 text-ink-faint">{{ s.daoName }}</span>
-              <span class="w-12 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
-              <span
-                class="w-12 shrink-0"
-                :class="s.stage === '生疏' ? 'text-ink-faint' : 'text-jade'"
-                >{{ s.stage }}</span
-              >
-              <span class="min-w-0 text-[10px] leading-relaxed text-ink-faint">{{ s.desc }}</span>
-            </p>
-            <!-- 离下一境还差多少:境地内线性进度(见 skillStageProgress),同其余进度条共一根 ProgressBar -->
-            <p class="mt-0.5 flex items-center gap-1.5 pl-14">
-              <ProgressBar
-                :value="s.progress"
-                :color="s.stage === '生疏' ? 'var(--color-ink-faint)' : 'var(--color-jade)'"
-                :height="4"
-                class="flex-1"
-              />
-              <span class="w-7 shrink-0 text-right text-[9px] tabular text-ink-faint">{{
-                formatPercent(s.progress, 0)
-              }}</span>
-            </p>
-          </div>
-        </div>
-      </div>
       <div v-if="recipes.length" class="max-h-64 space-y-2 overflow-y-auto">
         <div v-for="r in recipes" :key="r.def.id" class="card-ink px-3.5 py-2.5">
           <!--
@@ -599,6 +576,42 @@
             >
               连炼 ×5
             </button>
+          </div>
+        </div>
+      </div>
+      <!--
+        百工技艺:做得多就精。技艺一直在影响成丹 —— 境地与进度条都在这,看得见自己在长。
+        排在方子之后:九项技艺在窄屏上要占半屏,放在前面会把方子压到折叠线以下。
+        说明一栏至少留 9 个字宽,不够就整段换到下一行,不再被三列定宽挤成竖排。
+      -->
+      <div v-if="skillRows.length" class="mb-2 mt-3 rounded-md bg-paper-deep/60 px-3 py-2">
+        <p class="text-[10px] text-ink-faint">技艺(按道分,做得多就精)</p>
+        <div class="mt-1 space-y-1">
+          <div v-for="s in skillRows" :key="s.id">
+            <p class="flex items-baseline gap-2 text-[11px]">
+              <span class="w-14 shrink-0 text-ink-faint">{{ s.daoName }}</span>
+              <span class="w-12 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
+              <span
+                class="w-12 shrink-0"
+                :class="s.stage === '生疏' ? 'text-ink-faint' : 'text-jade'"
+                >{{ s.stage }}</span
+              >
+              <span class="min-w-[9em] flex-1 text-[10px] leading-relaxed text-ink-faint">{{
+                s.desc
+              }}</span>
+            </p>
+            <!-- 离下一境还差多少:境地内线性进度(见 skillStageProgress),同其余进度条共一根 ProgressBar -->
+            <p class="mt-0.5 flex items-center gap-1.5 pl-14">
+              <ProgressBar
+                :value="s.progress"
+                :color="s.stage === '生疏' ? 'var(--color-ink-faint)' : 'var(--color-jade)'"
+                :height="4"
+                class="flex-1"
+              />
+              <span class="w-7 shrink-0 text-right text-[9px] tabular text-ink-faint">{{
+                formatPercent(s.progress, 0)
+              }}</span>
+            </p>
           </div>
         </div>
       </div>
@@ -971,8 +984,16 @@ import { smartKeepImpact } from "@/core/smartKeep";
 import { maxTierForMajor } from "@/data/regions";
 import { equipSetDef, setCounts, type EquipSetDef } from "@/core/equipSet";
 import { useLoreStore } from "@/stores/lore";
+import { studyEta } from "@/core/loreService";
 import { DAO_NAMES, SKILLS, skillStageName, skillStageProgress } from "@/data/crafting";
-import { cnNumber, formatGN, formatNum, formatPercent, formatSignedPercent } from "@/utils/format";
+import {
+  cnNumber,
+  formatDuration,
+  formatGN,
+  formatNum,
+  formatPercent,
+  formatSignedPercent,
+} from "@/utils/format";
 import { STAT_NAMES, modsText } from "@/ui/statNames";
 import { colorWithAlpha } from "@/ui/colorVar";
 import type { AnyStatKey, EquipSlot, EquipmentInstance, GNum, PillDef } from "@/types";
@@ -1201,6 +1222,21 @@ const alchemyBuffRows = computed(() =>
   }),
 );
 
+/**
+ * 藏经阁翻检的当刻概况(开炉页顶部一行)。
+ * 读数在 core/loreService.studyEta —— 与 studyTick 同一优先序,界面不另算。
+ */
+const studyLine = computed(() => {
+  const eta = studyEta();
+  if (!eta) return "";
+  if (!eta.readingId && !eta.nextIsNew) return "藏经阁翻检中:够得着的方子都已到手";
+  if (eta.readingId) {
+    const name = pillDef(eta.readingId)?.name ?? "某方";
+    return `藏经阁正研读「${name}」,约 ${formatDuration(Math.round(eta.nextInSec))} 后读通`;
+  }
+  return `藏经阁翻检中,约 ${formatDuration(Math.round(eta.nextInSec))} 后翻出一张新方`;
+});
+
 const recipes = computed(() =>
   availableRecipes()
     .map((id) => {
@@ -1241,7 +1277,12 @@ const recipes = computed(() =>
         shortText: string | null;
       } => x !== null,
     )
-    .sort((a, b) => a.able.rank - b.able.rank),
+    // 现在能开炉的置顶,其余再按阶位 —— 进弹窗一眼看见此刻哪味立刻可炼
+    .sort((a, b) => {
+      const ca = a.shortHerb || a.shortStone ? 0 : 1;
+      const cb = b.shortHerb || b.shortStone ? 0 : 1;
+      return cb - ca || a.able.rank - b.able.rank;
+    }),
 );
 
 /**

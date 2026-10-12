@@ -23,6 +23,10 @@
     <p v-if="beastCompanionName" class="mt-1 flex items-center gap-1 text-[10px] text-jade">
       <GameIcon name="paw" :size="11" />居园相伴 · {{ beastCompanionName }}
     </p>
+    <!-- 藏经阁:下一张方子几时来 —— 丹方是全书唯一常驻被动流水,读数同开炉页(studyEta) -->
+    <p v-if="studyStatusLine" class="mt-1 flex items-center gap-1 text-[10px] text-gold-ink">
+      <GameIcon name="book" :size="11" />{{ studyStatusLine }}
+    </p>
     <button
       class="btn-ghost mt-2 w-full !py-1.5 !text-[12px]"
       :disabled="!info.canUpgrade"
@@ -57,9 +61,11 @@ import type { BuildingDef } from "@/types";
 import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { petDef } from "@/data/pets";
+import { pillDef } from "@/data/pills";
 import { buildingUpgradeInfo, upgradeBuilding } from "@/core/buildingService";
+import { studyEta } from "@/core/loreService";
+import { formatDuration, formatGN } from "@/utils/format";
 import GameIcon from "@/components/common/GameIcon.vue";
-import { formatGN } from "@/utils/format";
 
 const props = defineProps<{ def: BuildingDef }>();
 
@@ -74,6 +80,20 @@ const info = computed(() => buildingUpgradeInfo(props.def.id));
 const beastCompanionName = computed(() =>
   props.def.id === "beast" && player.petId ? petDef(player.petId)?.name : undefined,
 );
+/**
+ * 藏经阁的翻检线:丹方获取是全书唯一的常驻被动流水,得在它家门口报一声 ——
+ * 升它之前,先看见它下一张方子几时来。读数与开炉页同一份 studyEta。
+ */
+const studyStatusLine = computed(() => {
+  if (props.def.id !== "library") return "";
+  const eta = studyEta();
+  if (eta === null) return "";
+  if (eta.nextInSec <= 0) return "丹方皆已了然,无书可翻";
+  const when = formatDuration(Math.round(eta.nextInSec));
+  return eta.nextIsNew
+    ? `约 ${when} 后翻出新方`
+    : `约 ${when} 后读通「${eta.readingId ? (pillDef(eta.readingId)?.name ?? eta.readingId) : ""}」`;
+});
 
 // 升级落成:整卡金光一闪(动画播完自清)
 const flashing = ref(false);
