@@ -128,3 +128,17 @@ describe("离线普通战产出吃模式倍率(确定性)", () => {
     expect(deep.equipChanceCount).toBeLessThanOrEqual(Math.round(normal.equipChanceCount * 1.5));
   });
 });
+
+describe("离线 events 封顶 40 不蒸发超额遭遇 · 非事即战闭合", () => {
+  it("events 估超 40 封顶时,超额那半落成战斗,遭遇=事+战全数闭合", () => {
+    setActivePinia(createPinia());
+    // 2h 全程(默认离线上限≥2h→simSec 不砍):speed=1 → encounters = floor(7200/12) = 600
+    seedSession("normal");
+    const s = settleOffline(Date.now());
+    // events 估 ≈ 600×0.16 = 96,只实际结算 40(封顶)
+    expect(s!.events, "事件只实际结算 40 个封顶").toBe(40);
+    // 非事即战:超额那 56 场(96→40)必须落成战斗,不许凭空蒸发 ——
+    // 旧实现 battles 按「未封顶的 events」取差,events>40 时遭遇=事+战 少了(544<600)
+    expect(s!.battles + s!.events, "遭遇 = 事 + 战,全数闭合").toBe(600);
+  });
+});

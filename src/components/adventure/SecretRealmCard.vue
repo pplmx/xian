@@ -46,7 +46,7 @@
           </button>
         </template>
         <template v-else>
-          <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="abandonRealm()">
+          <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="doAbandon()">
             确认弃境
           </button>
           <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="confirmAbandon = false">
@@ -162,12 +162,20 @@ function payText(r: SecretRealmDef): string {
 }
 
 function enter(id: string): void {
+  // 上一次「确认弃境」的陈态不能带进新境:否则新秘境一进来就又是「确认弃境/取消」,误触即血亏
+  confirmAbandon.value = false;
   const out = enterSecretRealm(id);
   if (!out.ok) {
     ui.toast(out.reason ?? "不得其门而入", "warn");
     return;
   }
   ui.toast("你踏入秘境,身后的路随即合拢", "info");
+}
+
+/** 确认弃境后把确认态一并收起,免得带进下一境 */
+function doAbandon(): void {
+  abandonRealm();
+  confirmAbandon.value = false;
 }
 
 function fight(): void {

@@ -279,6 +279,10 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       events = Math.round(
         encounters * exploreEventChance(region.id, mods, useGameStore().totalPlaySec),
       );
+      // 事件只实际结算 40 个封顶(见下方 evCap / 结账)。battles 必须对「真正会结算的
+      // 事件数」取差,而不是对全量估算取差 —— 否则 events 估到 >40 时,超额那十几场
+      // 遭遇既没当事件结、也没当战斗结,凭空蒸发;非事即战就闭合不上了。
+      events = Math.min(events, 40);
       battles = Math.max(0, encounters - events);
 
       if (battles > 0) {
