@@ -58,6 +58,12 @@ const only = vi >= 0 ? args[vi + 1] : undefined;
 const fixture = args.includes("--showcase") ? "showcase" : "late";
 const noSeed = args.includes("--noseed");
 const gate = !args.includes("--no-gate");
+/** 背包视图按真实规模量:玩家攒几百件装备时,列表重渲染才是 jank 的真实来源。
+ * 默认 300 件(远大于在线能攒的典型规模,仍 60fps);--bigbag 0 退回小包。 */
+const bi = args.indexOf("--bigbag");
+const bigbag = Number(
+  ((bi >= 0 ? args[bi + 1] : undefined) ?? process.env.PERF_BIGBAG ?? 300) || 0,
+);
 
 /**
  * 判据上限。定法:先量出真实读数(全视图 max 17ms / 零长帧),再按「无头浏览器
@@ -155,7 +161,25 @@ for (const view of VIEWS) {
   let record = null;
   try {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    await seedSave(context, (fixture === "showcase" ? showcaseSlices : lateSlices)("light"));
+    let slices = (fixture === "showcase" ? showcaseSlices : lateSlices)("light");
+    if (bigbag > 0 && view.name === "inventory") {
+      // 造 bigbag 件装备进背包,把「几百件装备的列表重渲染」逼出来 —— 这才是
+      // 这类放置游戏 jank 的真实来源(小包 2-3 件量不出列表成本)。
+      const templates = ["w_chensha", "b_xingluo", "a_zhenhong", "a_luoxiao"];
+      const items = Array.from({ length: bigbag }, (_, i) => ({
+        uid: `big_${i}`,
+        templateId: templates[i % templates.length],
+        quality: ["mortal", "spirit", "earth", "heaven"][i % 4],
+        tier: 9,
+        level: 0,
+        affixes: [
+          { id: "bs3", roll: 1 },
+          { id: "low2", roll: 1 },
+        ],
+      }));
+      slices = { ...slices, inventory: { ...slices.inventory, items } };
+    }
+    await seedSave(context, slices);
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(String(e)));

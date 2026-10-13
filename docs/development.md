@@ -146,16 +146,23 @@ vp preview        # 预览构建结果
 > 是**回归门**不是基准 —— 预算按本机读数留数倍余量(见下文),红的是「成倍长回去」,
 > 不是机器抖动。
 
+背包视图按**真实规模**量(`--bigbag N`,默认 300 件):这类放置游戏 jank 的真实来源是
+玩家攒下几百件装备后,背列表随每秒心跳整块重渲染。小包 2-3 件量不出列表成本,故默认
+压到 300 件(远超在线能攒的典型规模,仍 60fps;`--bigbag 0` 或 `PERF_BIGBAG` 可调)。
+
 基线(2026-10-13 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
 
 | 视图 | 最差帧 | 长帧(>50ms) | DOM 节点 |
 | --- | --- | --- | --- |
-| home / cultivation / adventure / inventory / character | 17ms | 0 | 187–288 |
+| home / cultivation / adventure / character | 17ms | 0 | 187–288 |
+| **inventory(300 件装备)** | 17ms | 0 | ~1230 |
 | codex / souls / titles / settings / build / legacy / dongfu / world / celestial | 17ms | 0 | 162–492 |
 
-全 15 个游戏视图稳定 ~60fps、最差帧 17ms、零长帧、无崩溃 —— 引擎每秒 tick 没有造成可感知的
-帧尖峰。预算:`最差帧 ≤ 100ms`、`长帧 ≤ 2`(环境变量 `PERF_MAX_FRAME_MS` / `PERF_LONG_FRAMES`
-可调)。改动过会显著影响单次渲染量的代码后,这两个数要跟着重校,连同本表一起。
+并做过规模加压验证:背包塞进 **1000 件装备**(DOM ~3680)仍 60fps、最差帧 17ms、零长帧 ——
+即使极端规模 + 引擎每秒 tick,列表重渲染也没有造成可感知的 jank。全 15 个游戏视图稳定
+~60fps、零长帧、无崩溃。预算:`最差帧 ≤ 100ms`、`长帧 ≤ 2`(环境变量
+`PERF_MAX_FRAME_MS` / `PERF_LONG_FRAMES` 可调)。改动过会显著影响单次渲染量的代码后,
+这两个数要跟着重校,连同本表一起。
 
 推送到 `main` 会走 GitHub Actions 同一道闸:类型检查、Oxlint、用例全绿后才部署 Web / PWA 与镜像(CI 用 `voidzero-dev/setup-vp` 装 Vite+ 工具链,Node 22)。
 
