@@ -849,6 +849,52 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(char?.src, "上限说明要点破「顶不破这道上限」").toContain("顶不破这道上限");
   });
 
+  it("收徒归来要有一声 —— 资材不清进入账,界面要报「XX 归来,带回…」", () => {
+    // 弟子完工此前被一拍 disable 的 collectFinished 静默收割:资材悄悄入账、弟子无声
+    // 变回闲置,玩家盯着归期看却不报。「已归,待领」那格还因同一拍清 task 而永远亮不了。
+    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    expect(appr?.src, "归来要消费 collectFinished 的尾账").toContain(
+      "announceReaps(appr.collectFinished",
+    );
+    expect(appr?.src, "通报要念出弟子名与带回之物").toContain("」归来,带回 ");
+    expect(appr?.src, "自动收割下「已归,待领」是永远亮不了的死控件,不许留").not.toContain(
+      "已归,待领",
+    );
+    const store = readFileSync(resolve(__dirname, "../stores/apprentice.ts"), "utf-8");
+    expect(store, "尾账要带弟子名").toContain("name: apprenticeDef(appr.archId)?.name");
+  });
+
+  it("引气疗伤付不起列短差与回够时长 —— 同文件突破钮已内化的口径此处不许漏", () => {
+    // 疗伤钮是最老的「只说不许不报差」式样:灰钮只报「需 X」,不差多少、不回够多久。
+    // 同文件突破钮 btQiBlock 已补齐短差+ETA,此处照同一口径收口。
+    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    expect(cult?.src, "疗伤灰钮要现算短差").toMatch(/const repairBlock = computed\(/);
+    expect(cult?.src, "短差句要与突破钮同款(尚差 X,按当前回复约 Y)").toContain(
+      "尚差 {{ repairBlock.short }} 灵气,按当前回复{{ repairBlock.eta }}",
+    );
+  });
+
+  it("出秘境要二步确认 —— 付过门票的独一份内容,误触不该直接清空", () => {
+    // 整趟秘境是付过门票、层数战利「出则散」的独一份内容,此前点「出秘境」一拍即清,
+    // 误触即血亏 —— 与删快照同族,进确认态再动手。
+    const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
+    expect(sr?.src, "出秘境要先进确认态").toContain("confirmAbandon = true");
+    expect(sr?.src, "确认态要点破「余层尽弃」").toContain("确 出 · 余层尽弃");
+    expect(sr?.src, "确认态要有取消兜底").toContain("confirmAbandon = false");
+  });
+
+  it("灵脉全域满要自报 —— 单脉未满却被总量卡死,不许只印费用", () => {
+    // 单脉未满、钱够、却被 7 座总容量卡死时,此前按钮置灰却印着费用,像还能投。
+    const vein = FILES.find((f) => f.path === "components/dongfu/VeinInvestCard.vue");
+    expect(vein?.src, "全域满要换口「总容量已满」").toContain("总容量已满");
+    const capAt = vein?.src.indexOf("总容量已满") ?? -1;
+    const shortAt = vein?.src.indexOf("尚差") ?? -1;
+    expect(
+      capAt >= 0 && shortAt > capAt,
+      "全域满是硬约束,要排在「尚差石」前头(别让人看错拦因)",
+    ).toBe(true);
+  });
+
   it("今日天道有占位 —— 未择道途,也要说出它去哪了", () => {
     // 「今日天道」区块 v-if="daily",而 daily 依赖 endgame.daoPath —— 刚登真仙
     // 未择道途时整块消失,玩家切到试炼页找不到今日天道,会以为 bug。类目下

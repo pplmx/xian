@@ -31,6 +31,13 @@ import {
 } from "@/core/apprenticeService";
 import { asArray, asNonNegInt } from "@/utils/saveShape";
 
+/** 一趟归来的尾账:带弟子名,界面据此通报「XX 归来,带回…」 */
+export interface ApprenticeReap {
+  name: string;
+  spec: ApprenticeSpec;
+  spoils: TaskSpoils;
+}
+
 let seq = 0;
 function nextUid(): string {
   seq += 1;
@@ -120,9 +127,9 @@ export const useApprenticeStore = defineStore(
       }
     }
 
-    /** 收割所有已完工的弟子,return 尾账供界面报「弟子归来,带回…」 */
-    function collectFinished(now: number, major: number): TaskSpoils[] {
-      const reaped: TaskSpoils[] = [];
+    /** 收割所有已完工的弟子,return 尾账(带弟子名)供界面报「弟子归来,带回…」 */
+    function collectFinished(now: number, major: number): ApprenticeReap[] {
+      const reaped: ApprenticeReap[] = [];
       for (const appr of apprentices.value) {
         if (!taskDone(appr, now)) continue;
         const spec = appr.task!.spec;
@@ -131,7 +138,7 @@ export const useApprenticeStore = defineStore(
         appr.level = Math.min(APPRENTICE_MAX_LEVEL, appr.level + 1);
         appr.bond += 1;
         appr.task = null;
-        reaped.push(spoils);
+        reaped.push({ name: apprenticeDef(appr.archId)?.name ?? appr.archId, spec, spoils });
       }
       return reaped;
     }

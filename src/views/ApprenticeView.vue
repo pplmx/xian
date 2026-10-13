@@ -8,7 +8,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
-import { useApprenticeStore } from "@/stores/apprentice";
+import { useApprenticeStore, type ApprenticeReap } from "@/stores/apprentice";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import {
@@ -24,7 +24,6 @@ import {
 import {
   apprenticeSpoils,
   apprenticeTaskSeconds,
-  taskDone,
   type OwnedApprentice,
 } from "@/core/apprenticeService";
 import { stoneByTier } from "@/core/formulas";
@@ -41,12 +40,30 @@ const resources = useResourcesStore();
 const now = ref(Date.now());
 let timer: number | undefined;
 
+/** 一趟归来的账目文本(与派活期望同源,由 spoils 现算,不另写第二份) */
+function reapText(r: ApprenticeReap): string {
+  const s = r.spoils;
+  if (s.herb) return `灵草 ×${s.herb}`;
+  if (s.ore) return `玄铁 ×${s.ore}`;
+  if (s.dust) return `器灵尘 ×${s.dust}`;
+  if (s.wudao) return `悟道点 ×${s.wudao}`;
+  if (s.stone) return `灵石 ${formatGN(s.stone)}`;
+  if (s.pillId) return `${pillDef(s.pillId)?.name ?? s.pillId} ×${s.pillCount}`;
+  return "";
+}
+
+/** 弟子归来要有一声:资材不是静默入账的 → 每条通报「XX 归来,带回…」 */
+function announceReaps(reaped: ApprenticeReap[]): void {
+  for (const r of reaped) notify(`「${r.name}」归来,带回 ${reapText(r)}`, "success");
+}
+
 onMounted(() => {
   appr.sync();
-  appr.collectFinished(Date.now(), player.major);
+  // 离线归来/开页那一拍若有完工,照报 —— 玩家回来不该只知道数变了
+  announceReaps(appr.collectFinished(Date.now(), player.major));
   timer = window.setInterval(() => {
     now.value = Date.now();
-    appr.collectFinished(now.value, player.major);
+    announceReaps(appr.collectFinished(now.value, player.major));
   }, 1000);
 });
 onUnmounted(() => {
@@ -179,7 +196,6 @@ const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
               formatCountdown(secondsLeft(a.task.finishAt))
             }}</span></span
           >
-          <span v-if="taskDone(a, now)" class="text-jade">已归,待领</span>
         </div>
 
         <!-- 闲置:可派活 -->

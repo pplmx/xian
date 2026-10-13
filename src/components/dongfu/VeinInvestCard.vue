@@ -37,6 +37,10 @@
             </span>
             <!-- 已满就不再印费用:每点价格摆着像还能投 -->
             <span v-if="atCap(v.id)" class="ml-1.5 text-ink-faint">已满</span>
+            <!-- 全域总量卡死是硬约束:钱再多也填不上一格,须排在「尚差石」前头,别让人看错拦因 -->
+            <span v-else-if="veinTotal >= VEIN_TOTAL_CAPACITY" class="ml-1.5 text-ink-faint"
+              >总容量已满</span
+            >
             <span v-else-if="stoneShort > 0" class="ml-1.5 text-ink-faint"
               >尚差 {{ formatGN(stoneShort) }} 石</span
             >

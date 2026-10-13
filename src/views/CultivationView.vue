@@ -172,6 +172,13 @@
               : `灵气不足(需 ${formatNum(repair.cost)})`
           }}
         </button>
+        <!-- 灵气不足只报四字,拦下的却是「还差多少、回够要多久」 —— 补齐直显,与突破钮 btQiBlock 同款 -->
+        <p
+          v-if="repairBlock"
+          class="mt-1 text-center text-[10px] leading-relaxed text-cinnabar tabular"
+        >
+          尚差 {{ repairBlock.short }} 灵气,按当前回复{{ repairBlock.eta }}
+        </p>
       </div>
 
       <div class="ink-divider my-4" />
@@ -981,6 +988,17 @@ const tribWave = computed(() =>
 
 /** 灵气疗伤(修复)状态:负伤时才出现入口,代价随灵气容量指数增长 */
 const repair = computed(() => qiRepairView());
+/**
+ * 引气疗伤付不起时:短差与回够时长现算(与突破钮 btQiBlock 同款纪律)——
+ * 灰钮不能只报「需 X」,站在钮前的人要知道差多少、等多久。
+ */
+const repairBlock = computed(() => {
+  if (repair.value.affordable) return null;
+  const short = Math.max(0, Math.ceil(repair.value.cost - resources.qi));
+  const sec =
+    player.qiRegenPerSec > 0 ? Math.ceil(short / player.qiRegenPerSec) : Number.POSITIVE_INFINITY;
+  return { short, eta: Number.isFinite(sec) ? `约 ${formatDuration(sec)}` : "当前无回复" };
+});
 
 /** Phase 32.2 与此劫气机相应的灵根:判据取自 tribulationRelief,界面说的与结算做的同源 */
 const reliefRoots = computed(() =>

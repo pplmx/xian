@@ -38,10 +38,21 @@
         · 战利:灵石 +{{ formatGN(preview.reward.stone) }} · 灵草 +{{ preview.reward.material }}
       </p>
       <div class="mt-2 flex gap-2">
-        <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="fight">再 入 一 层</button>
-        <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="abandonRealm()">
-          出 秘 境
-        </button>
+        <!-- 出秘境是二步确认:整趟是付过门票的独一份内容,误触不该直接清空 —— 与删快照同族 -->
+        <template v-if="!confirmAbandon">
+          <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="fight">再 入 一 层</button>
+          <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="confirmAbandon = true">
+            出 秘 境
+          </button>
+        </template>
+        <template v-else>
+          <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="abandonRealm()">
+            确 出 · 余层尽弃
+          </button>
+          <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="confirmAbandon = false">
+            取 消
+          </button>
+        </template>
       </div>
     </template>
 
@@ -97,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useUiStore } from "@/stores/ui";
@@ -126,6 +137,8 @@ const props = withDefaults(defineProps<{ gate?: "mortal" | "celestial" }>(), { g
 const endgame = useEndgameStore();
 
 const unlocked = computed(() => realmUnlock(props.gate));
+/** 出秘境二步确认:整趟是付过门票的独一份内容,误触「出」就该血亏(与删快照同族) */
+const confirmAbandon = ref(false);
 const state = computed(() => currentRealm());
 const list = computed(() => availableRealms(props.gate));
 const def = computed<SecretRealmDef | undefined>(() =>
