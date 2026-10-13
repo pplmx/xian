@@ -6,6 +6,9 @@
  */
 import type { QualityId } from "@/types";
 
+/** 收徒一次要花的灵石层级基数(stoneByTier 的档位参数) —— 结算与价签同源 */
+export const APPRENTICE_RECRUIT_TIER_AMOUNT = 30;
+
 /** 弟子跑腿的任务门类 */
 export type ApprenticeSpec = "herb" | "ore" | "adventure" | "seek" | "study";
 

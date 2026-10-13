@@ -14,6 +14,7 @@ import { rng } from "@/utils/random";
 import { ENEMIES, enemyDef } from "@/data/enemies";
 import { maxTierForMajor } from "@/data/regions";
 import {
+  SECRET_FINAL_WUDAO,
   SECRET_LAYERS,
   SECRET_MAX_LOSSES,
   SECRET_REALMS,
@@ -314,8 +315,8 @@ export function fightSecretLayer(): SecretLayerResult | null {
       // 通关:最终宝藏
       const inst = generateEquipment(tier, rng, { minQualityRank: 2 });
       lines.push(`破境而出!${acquireEquipment(inst).line}`);
-      resources.addSmall("wudao", 3);
-      lines.push("悟道点 +3");
+      resources.addSmall("wudao", SECRET_FINAL_WUDAO);
+      lines.push(`悟道点 +${SECRET_FINAL_WUDAO}`);
       player.setSecretRealm(null);
       notify(`${def.name}已探尽`, "rare");
       return { win: true, finished: true, cleared: true, lines };

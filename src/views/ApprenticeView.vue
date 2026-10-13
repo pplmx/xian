@@ -16,6 +16,7 @@ import {
   APPRENTICE_MAX_LEVEL,
   APPRENTICE_TALENT_BONUS,
   BOND_TRUECODE_MIN,
+  APPRENTICE_RECRUIT_TIER_AMOUNT,
   apprenticeDef,
   apprenticeSlots,
   bondTitle,
@@ -81,8 +82,8 @@ function send(uid: string, spec: (typeof APPRENTICE_TASKS)[number]["spec"]): voi
   appr.dispatch(uid, spec, Date.now());
 }
 
-/** 收徒成本与槽位 —— 与 store.recruit 同源(stoneByTier(major,30)/apprenticeSlots) */
-const recruitCost = computed(() => stoneByTier(player.major, 30));
+/** 收徒成本与槽位 —— 与 store.recruit 同源(stoneByTier(major,APPRENTICE_RECRUIT_TIER_AMOUNT)/apprenticeSlots) */
+const recruitCost = computed(() => stoneByTier(player.major, APPRENTICE_RECRUIT_TIER_AMOUNT));
 const slotsFull = computed(() => appr.apprentices.length >= slots.value);
 const recruitShort = computed(() =>
   Math.max(0, toNum(recruitCost.value) - toNum(resources.spiritStone)),

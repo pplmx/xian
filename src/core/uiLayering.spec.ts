@@ -933,6 +933,31 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(gf, "修到顶置灰时可见列出差量").toContain("尚差 {{ upShort }}");
   });
 
+  it("机制数改常量要同源 —— 熔炉道源/收徒价/秘境悟道/变数上限/行程层数不手抄", () => {
+    // 「改常数就撒谎」的又一挂:界面把真实结算的机制数手写成了字面量,而别处早有
+    // 常量/结算来源。每处都要读同一个来源,不许手抄,免得常量一改界面就分叉。
+    const cv = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf-8");
+    expect(cv, "熔炉产出侧读 FURNACE_STONE_DAO_SOURCE").toContain(
+      "{{ FURNACE_STONE_DAO_SOURCE }} 道源",
+    );
+    expect(cv, "变数至上条数读 CHALLENGE_MAX_MUTATORS").toContain(
+      "cnNumber(CHALLENGE_MAX_MUTATORS)",
+    );
+    expect(cv, "行程层数临界不写死 2 / 3").toContain("layer >= EXPEDITION_ROUTE_LAYERS");
+    expect(cv, "界主层判据读 EXPEDITION_GUARDIAN_LAYER").toContain("=== EXPEDITION_GUARDIAN_LAYER");
+    const av = readFileSync(resolve(__dirname, "../views/ApprenticeView.vue"), "utf-8");
+    expect(av, "收徒价签读常量,不许手写 30").toContain("APPRENTICE_RECRUIT_TIER_AMOUNT");
+    expect(readFileSync(resolve(__dirname, "../stores/apprentice.ts"), "utf-8")).toContain(
+      "APPRENTICE_RECRUIT_TIER_AMOUNT",
+    );
+    expect(readFileSync(resolve(__dirname, "../core/secretRealm.ts"), "utf-8")).toContain(
+      "SECRET_FINAL_WUDAO",
+    );
+    expect(
+      readFileSync(resolve(__dirname, "../components/adventure/SecretRealmCard.vue"), "utf-8"),
+    ).toContain("SECRET_FINAL_WUDAO");
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。

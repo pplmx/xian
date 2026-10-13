@@ -500,7 +500,8 @@
           <SectionTitle title="天道挑战书" hint="你定规则,天道定赏" />
           <div class="card-ink mt-2 px-4 py-3">
             <p class="text-[11px] text-ink-faint">
-              选界 · 叠变数(至多三条)· 立契 · 命名。赏格由天道实测难度定价,无从作弊。
+              选界 · 叠变数(至多 {{ cnNumber(CHALLENGE_MAX_MUTATORS) }} 条)· 立契 ·
+              命名。赏格由天道实测难度定价,无从作弊。
             </p>
             <div class="mt-2 flex flex-wrap gap-1.5">
               <button
@@ -530,7 +531,11 @@
                       : 'border-ink/25 text-ink-faint'
                 "
                 :title="
-                  draft.mutatorIds.includes(m.id) ? m.text : draftFull ? '至多三条,已选满' : m.text
+                  draft.mutatorIds.includes(m.id)
+                    ? m.text
+                    : draftFull
+                      ? `至多 ${cnNumber(CHALLENGE_MAX_MUTATORS)} 条,已选满`
+                      : m.text
                 "
                 :aria-pressed="draft.mutatorIds.includes(m.id)"
                 :disabled="!draft.mutatorIds.includes(m.id) && draftFull"
@@ -975,7 +980,9 @@
             @click="furnaceConvertStone()"
           >
             <template v-if="stoneShort > 0">尚差 {{ formatGN(stoneShort) }} 石</template>
-            <template v-else>{{ formatGN(furnaceStoneCost()) }} → 5 道源</template>
+            <template v-else
+              >{{ formatGN(furnaceStoneCost()) }} → {{ FURNACE_STONE_DAO_SOURCE }} 道源</template
+            >
           </button>
         </div>
         <div class="py-2.5">
@@ -1143,6 +1150,7 @@ import {
   EXPEDITION_GUARDIAN_LAYER,
   EXPEDITION_ROUTE_LAYERS,
   FURNACE_RATES,
+  FURNACE_STONE_DAO_SOURCE,
   TRIALS,
   daoPathDef,
   type FurnaceRate,
@@ -1420,14 +1428,16 @@ const run = computed(() => endgame.worldRun);
 const runWorld = computed(() => (run.value ? (resolveWorld(run.value.worldId) ?? null) : null));
 const runPact = computed(() => (run.value?.pactId ? pactDef(run.value.pactId) : undefined));
 const currentNodes = computed(() => {
-  if (!run.value || !runWorld.value || run.value.layer > 2) return null;
+  if (!run.value || !runWorld.value || run.value.layer >= EXPEDITION_ROUTE_LAYERS) return null;
   return runWorld.value.routes[run.value.layer] ?? null;
 });
 const nodePreviews = computed(() =>
   currentNodes.value ? currentNodes.value.map((n) => previewFight(n.foe, n)) : [],
 );
 const guardianPreview = computed(() =>
-  run.value?.layer === 3 && runWorld.value ? previewFight(runWorld.value.guardian) : null,
+  run.value?.layer === EXPEDITION_GUARDIAN_LAYER && runWorld.value
+    ? previewFight(runWorld.value.guardian)
+    : null,
 );
 
 // ---- 战报弹窗(统一形状) ----

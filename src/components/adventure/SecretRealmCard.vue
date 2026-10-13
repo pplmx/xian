@@ -50,7 +50,9 @@
             {{ formatPercent(Math.abs(preview.healBetweenPct), 0) }}</span
           ></template
         ><template v-if="preview.isFinalLayer"
-          ><span class="text-gold-ink"> · 终层通关得随机装备 + 悟道点 3</span></template
+          ><span class="text-gold-ink">
+            · 终层通关得随机装备 + 悟道点 {{ SECRET_FINAL_WUDAO }}</span
+          ></template
         >
       </p>
       <div class="mt-2 flex gap-2">
@@ -129,7 +131,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useUiStore } from "@/stores/ui";
 import { useEndgameStore } from "@/stores/endgame";
-import { secretRealmDef, type SecretRealmDef } from "@/data/secretRealms";
+import { SECRET_FINAL_WUDAO, secretRealmDef, type SecretRealmDef } from "@/data/secretRealms";
 import { cnNumber, formatGN, formatPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import {

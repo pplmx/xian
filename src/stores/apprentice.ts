@@ -13,6 +13,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { stoneByTier } from "@/core/formulas";
 import {
   APPRENTICE_MAX_LEVEL,
+  APPRENTICE_RECRUIT_TIER_AMOUNT,
   APPRENTICES,
   BOND_TRUECODE_MIN,
   STARTER_APPRENTICE,
@@ -169,7 +170,7 @@ export const useApprenticeStore = defineStore(
       const owned = new Set(apprentices.value.map((a) => a.archId));
       const pool = APPRENTICES.filter((x) => x.id !== STARTER_APPRENTICE && !owned.has(x.id));
       if (pool.length === 0) return "full";
-      const cost = stoneByTier(major, 30);
+      const cost = stoneByTier(major, APPRENTICE_RECRUIT_TIER_AMOUNT);
       if (!useResourcesStore().spendStone(cost)) return "poor";
       apprentices.value.push({
         uid: nextUid(),

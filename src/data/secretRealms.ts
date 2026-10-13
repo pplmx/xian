@@ -14,6 +14,8 @@ import type { CombatRules } from "@/types";
 export const SECRET_LAYERS = 3;
 /** 败两次即被逐出 */
 export const SECRET_MAX_LOSSES = 2;
+/** 终层通关给的悟道点 —— 结算与卡片预告同源 */
+export const SECRET_FINAL_WUDAO = 3;
 
 export interface SecretRule {
   /** 给玩家看的说法 */
