@@ -450,6 +450,12 @@
       >
         闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)
       </button>
+      <!-- 闭关该收多少就摊多少:照现倍率折算 base,不只在定性「+150%」上打转 -->
+      <p class="mt-1 text-[10px] text-ink-faint tabular">
+        闭关后每秒 ≈ {{ formatRate(retreatPerSec) }}(现 {{ formatRate(player.cultPerSec) }})·{{
+          retreatMinutes
+        }}分钟约多收 {{ formatRate(retreatExtra) }} 修为
+      </p>
     </div>
 
     <!-- 状态 -->
@@ -915,6 +921,19 @@ const retreatRemaining = computed(() => getRetreatRemainingSec(now.value)); // n
 const retreatDef = buffDef("retreat");
 const retreatMinutes = Math.round((retreatDef?.durationSec ?? 0) / 60);
 const retreatPct = Math.round((retreatDef?.mods.cultivationSpeed ?? 0) * 100);
+/**
+ * 闭关该收多少:不能只按「现在每秒 ×2.5」—— 那会在已有聚气丹等速度增益时虚高。
+ * 闭关给修为速度 ×(1+现倍率+retreat 的 1.5),故按现倍率折算 base 再乘,才是真值。
+ */
+const retreatPerSec = computed(() => {
+  const r = retreatDef?.mods.cultivationSpeed ?? 0;
+  const mult = 1 + cultMultiplier.value;
+  return mult > 0 ? (player.cultPerSec * (mult + r)) / mult : player.cultPerSec;
+});
+/** 躺这 5 分钟,比照常多收多少修为 */
+const retreatExtra = computed(
+  () => (retreatPerSec.value - player.cultPerSec) * (retreatDef?.durationSec ?? 0),
+);
 function beginRetreat(): void {
   if (startRetreat()) {
     ui.toast("你封洞闭关,心不外骛", "info");
