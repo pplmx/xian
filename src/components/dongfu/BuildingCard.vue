@@ -72,7 +72,7 @@
            主按钮挤到折行/越界 —— 与灵脉投资那行(整宽区)不同,这里只能上下叠。 -->
       <button
         v-if="info.canUpgrade"
-        class="btn-ghost w-full !py-1 !text-[10px]"
+        class="btn-ghost min-h-[28px] w-full !py-1 !text-[10px]"
         aria-label="连升 5 级"
         :disabled="!info.canUpgrade"
         @click="buildingUpgradeN(props.def.id, BUILD_BATCH)"
