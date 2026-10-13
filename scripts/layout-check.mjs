@@ -4464,15 +4464,16 @@ async function taskInventoryAccounting() {
       }
       // 接着分解同一件:提示里说给多少尘,就该给多少 —— 而且这件要从包里消失
       const dustBeforeSplit = await readDust();
+      // 分解是**二步确认**:先点「分解这件装备」(图标钮,以 aria-label 命名),再点「确认分解」。
+      // 这里曾经点「空文本 footer 按钮」+「文本含分解? 的按钮」—— 对应更早的**单步版**;
+      // 两步版下那两下都点不中,分解没发生、提示没出来 → 误报「没交代」(实测真流程出「分解得器灵尘×4」)。
       await page
-        .locator(".modal-panel footer button")
-        .filter({ hasText: /^$/ })
-        .first()
+        .locator('.modal-panel button[aria-label="分解这件装备"]')
         .click({ timeout: 3000 })
         .catch(() => {});
       await page.waitForTimeout(300);
       await page
-        .locator(".modal-panel button", { hasText: /分解\?/ })
+        .locator(".modal-panel button", { hasText: /确认分解/ })
         .first()
         .click({ timeout: 3000 })
         .catch(() => {});
