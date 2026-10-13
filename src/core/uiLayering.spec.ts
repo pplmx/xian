@@ -836,6 +836,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(gongfa?.src, "席满拦因要显在按钮上,不许只有定性").toContain("辅修席满");
   });
 
+  it("突破不成的修为代价要摊 —— 只报耗灵气是还了半边账", () => {
+    // 突破按钮前只摊「耗灵气 N」,失败的真实代价(损修为 ×BT_FAIL_EXP_LOSS)一字不露,
+    // 玩家不知道破境还有修为折损。代价要读常量(改常数不撒谎),并点出返还/跬步对冲。
+    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    expect(cult?.src, "突破不成要摊损修为,读 BT_FAIL_EXP_LOSS 常量").toContain(
+      "formatPercent(BT_FAIL_EXP_LOSS)",
+    );
+    expect(cult?.src, "代价要对冲说清(返还/跬步)").toContain("跬步传承可全免");
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。
