@@ -13,6 +13,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import type { BountySlot } from "@/data/bounty";
+import { herbBuyPrice, herbGradeOfMajor } from "@/data/herbGrades";
 import { gn, toNum } from "@/utils/gnum";
 
 function seedPlayerAndFunds(): void {
@@ -103,6 +104,18 @@ describe("悬赏板 store", () => {
     expect(inventory.findItem("treasure")).toBeUndefined();
     expect(inventory.findItem("old1")).not.toBeUndefined();
     expect(equip.claimed).toBe(true);
+  });
+
+  it("悬赏灵草价受购价约束:每株恒低于坊市购入价,「买来再交悬赏」无利可图", () => {
+    seedPlayerAndFunds();
+    const p = usePlayerStore();
+    const b = useBountyStore();
+    b.sync(Date.now());
+    const herb = b.orders.find((o) => o.kind === "herb")!;
+    const perHerb = toNum(herb.reward) / herb.target;
+    const buyP = herbBuyPrice(herbGradeOfMajor(p.major));
+    expect(perHerb, "悬赏每株不可高于坊市购入价").toBeLessThan(buyP);
+    expect(perHerb).toBeGreaterThan(0);
   });
 
   it("sanitize:烂单丢弃,只剩合法单,时刻夹回非负", () => {
