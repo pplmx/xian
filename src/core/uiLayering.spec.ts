@@ -885,6 +885,18 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(appr?.src, "不许单值早退").toContain("parts.join(");
   });
 
+  it("astral 共鸣的护盾数值不许手写 —— data 只留机制,值读 ASTRAL_SET_SHIELD", () => {
+    // data/equipSets 的 effectDesc 曾把「护盾+5%」手打进三套 astral,而唯一真值是
+    // ASTRAL_SET_SHIELD(供 playerSnap 开战盾用)—— 改数就撒谎,且装备页「+5%」与
+    // 人物页盾值对不上。data 回归「只写 hook」的注释本意;显示处读常量拼值。
+    const data = readFileSync(resolve(__dirname, "../data/equipSets.ts"), "utf-8");
+    expect(data, "data 的 effectDesc 不许手写护盾百分比").not.toMatch(/护盾\s*\+[0-9.]+%/);
+    const equip = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    expect(equip?.src, "显示要读 ASTRAL_SET_SHIELD,不许另打一份").toContain(
+      "formatPercent(ASTRAL_SET_SHIELD)",
+    );
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。

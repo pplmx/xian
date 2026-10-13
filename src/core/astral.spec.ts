@@ -16,6 +16,7 @@ import type { EquipmentInstance, QualityId } from "@/types";
 import { mulberry32, RandomService } from "@/utils/random";
 import { resolveCombat, makeEnemySnap } from "./combat";
 import { buildPlayerSnap } from "./playerSnap";
+import { whatIfEquip } from "./lab";
 import { enemyDef } from "@/data/enemies";
 import { useInventoryStore } from "@/stores/inventory";
 
@@ -62,5 +63,17 @@ describe("astral 共鸣进战斗(开战护盾+5%)", () => {
     const logText = res.log.map((l) => l.text).join("\n");
     console.log(logText);
     expect(logText.includes("灵光护体")).toBe(true);
+  });
+
+  it("天机推演:换掉一件星斗,开战 +5% 盾随配装断开(不继承当前穿戴)", () => {
+    wearStarDou();
+    const inv = useInventoryStore();
+    // 候选:一顶非套的头(桃木簪,同 head 位)—— 换上后星斗头被顶掉 → 只剩 1 件 → astral 断开。
+    // 旧实现 after 继承了当前穿戴的 +5% 盾,推演会虚胖生存。
+    inv.items = [...inv.items, inst("plain-h", "h_muzan")];
+    const report = whatIfEquip("plain-h");
+    expect(report, "推演应可进行").not.toBeNull();
+    const shieldDelta = report!.modChanges.find((m) => m.delta === -0.05);
+    expect(shieldDelta, "换下星斗头 → 护盾 -5% 要体现在推演账上").toBeDefined();
   });
 });

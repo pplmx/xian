@@ -11,6 +11,7 @@ import { equipmentTemplate } from "@/data/equipment";
 import { STAT_NAMES } from "@/ui/statNames";
 import { buildPlayerSnap } from "./playerSnap";
 import { detectBuild, type BuildDetection } from "./buildDetect";
+import { ASTRAL_SET_SHIELD, hasActiveSet } from "./equipSet";
 import { resolveEquipStats } from "./equipGen";
 import { celestialFoeCaliber, mergeRules, runGauntlet, worldFoeSnap } from "./gauntlet";
 import { currentDaoRules } from "./endgameService";
@@ -102,7 +103,28 @@ export function whatIfEquip(uid: string): WhatIfReport | null {
     defense = subClamp(defense, lose.flats.defense);
     maxHp = subClamp(maxHp, lose.flats.maxHp);
   }
-  const after: CombatantSnap = { ...before, mods, attack, defense, maxHp };
+  // 换装推演要按「假想配装」重算共鸣:astral(开战 +5% 最大气血盾)/ 铁壁(保命)看的是
+  // 成套件数,不能继承当前穿戴 —— 否则脱下一件星斗套仍带着 5% 盾,推演虚胖生存
+  const equipped = inventory.equippedItems ?? [];
+  const inserted =
+    currentUid === null || !equipped.some((it) => it.uid === currentUid)
+      ? [...equipped, item] // 空位补穿
+      : equipped.map((it) => (it.uid === currentUid ? item : it));
+  const astralBefore = hasActiveSet(equipped, "astral");
+  const astralAfter = hasActiveSet(inserted, "astral");
+  const modsAfter: StatMods = { ...mods };
+  if (astralAfter && !astralBefore)
+    modsAfter.shieldOnStart = (modsAfter.shieldOnStart ?? 0) + ASTRAL_SET_SHIELD;
+  if (astralBefore && !astralAfter)
+    modsAfter.shieldOnStart = Math.max(0, (modsAfter.shieldOnStart ?? 0) - ASTRAL_SET_SHIELD);
+  const after: CombatantSnap = {
+    ...before,
+    mods: modsAfter,
+    attack,
+    defense,
+    maxHp,
+    ironwallBrace: hasActiveSet(inserted, "ironwall"),
+  };
 
   const worlds: WhatIfWorldRow[] = CELESTIAL_WORLDS.map((w, i) => {
     const rb = clearRateRank(worldRate(w, before, 660000 + i * 97));

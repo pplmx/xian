@@ -45,7 +45,12 @@
         <span class="font-kai" :class="setInfo.active ? 'text-jade' : 'text-violet-ink'">
           共鸣「{{ setInfo.def.name }}」{{ setInfo.count }}/{{ setInfo.def.required }}
         </span>
-        <span class="ml-1 text-ink-faint">{{ setInfo.def.effectDesc }}</span>
+        <span class="ml-1 text-ink-faint"
+          >{{ setInfo.def.effectDesc
+          }}<template v-if="setInfo.def.hook === 'astral'">
+            · 开战护盾 +{{ formatPercent(ASTRAL_SET_SHIELD) }} 最大气血</template
+          ></span
+        >
       </p>
       <div class="ink-divider my-3" />
       <p v-if="compareTarget" class="mb-1.5 text-[10px] text-ink-faint tabular">
@@ -487,7 +492,7 @@ import { ref, watch } from "vue";
 import { useUiStore } from "@/stores/ui";
 import { useInventoryStore } from "@/stores/inventory";
 import { equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
-import { equipSetDef, setCounts } from "@/core/equipSet";
+import { equipSetDef, setCounts, ASTRAL_SET_SHIELD } from "@/core/equipSet";
 import { worldNameOfTier } from "@/core/formulas";
 import { resolveEquipStats } from "@/core/equipGen";
 import {
