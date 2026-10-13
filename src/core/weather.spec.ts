@@ -260,4 +260,20 @@ describe("界域天象(weather · 仙界及以上)", () => {
     const src = readFileSync(resolve(import.meta.dirname, "../views/HomeView.vue"), "utf8");
     expect(src).toContain("modsText(weather");
   });
+
+  it("描述只承诺 mods 真有的影响,不许谎称不存在的属系", () => {
+    // 回归:赤阳/月蚀/雷鸣的 desc 曾写「火属更威能/幽冥之气弥漫/雷属更旺」,
+    // 但本作没有火系/幽冥系/雷系属性层,mods 只是攻击/气运/掉落这类通用数值 ——
+    // 卡面上的题字与玩家真吃到的东西必须一致(AGENTS「让看不见的机制可见」)。
+    // 全文点名"属系"却不在任何一条的效果里出现,就是在词条层之外又立了一套不存在的机制。
+    const FAMILY_CLAIMS = ["火属", "幽族", "雷属", "火系", "幽冥系", "雷系", "灵兽更", "剑意更"];
+    for (const w of [...WEATHERS, ...Object.values(WORLD_WEATHERS).flat()]) {
+      for (const claim of FAMILY_CLAIMS) {
+        expect(
+          w.desc.includes(claim),
+          `${w.name} 的题字「${w.desc}」里出现 ${claim},但本作效果表里没有这一属系`,
+        ).toBe(false);
+      }
+    }
+  });
 });

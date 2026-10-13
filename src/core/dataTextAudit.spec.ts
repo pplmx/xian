@@ -229,6 +229,17 @@ describe("文案数值对账 · 视图不手抄数字", () => {
     const view = src("../views/CultivationView.vue");
     expect(view).toMatch(/text-amber-ink[\s\S]{0,80}已封顶/);
   });
+
+  it("灵脉投资/改立主脉付不起要置灰并列出尚差 —— 与其他消费点同族规", () => {
+    const view = src("../components/dongfu/VeinInvestCard.vue");
+    // 按钮置灰(listable)之外,按钮文字必须列「尚差 N 石」(AGENTS#2 决策信息完整)
+    expect(view).toContain(':disabled="!canInvest(v.id)"');
+    expect(view).toContain('v-else-if="stoneShort > 0"');
+    expect(view).toContain("尚差 {{ formatGN(stoneShort) }} 石");
+    expect(view).toContain(':disabled="!canSwitchTo(v.id)"');
+    expect(view).toContain("`改立主脉 · 尚差 ${formatGN(switchStoneShort)} 石`");
+    expect(view).toContain("switchStoneShort > 0");
+  });
 });
 
 /**

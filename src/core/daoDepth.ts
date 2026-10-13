@@ -5,6 +5,7 @@
 import type { StatMods } from "@/types";
 import type { BuildDetection } from "./buildDetect";
 import { modOf } from "./statsCalc";
+import { STYLE_MATURE_AFFINITY } from "./buildDetect";
 
 /** 剑意每层加成 */
 export const SWORD_LAYER_MODS: StatMods = { damageBonus: 0.04, critRate: 0.02 };
@@ -12,6 +13,30 @@ export const SWORD_LAYER_MODS: StatMods = { damageBonus: 0.04, critRate: 0.02 };
 export const SWORD_PER_WIN: StatMods = { damageBonus: 0.04, critRate: 0.02 };
 /** 杀伐远征逐胜叠层 */
 export const SLAUGHTER_PER_WIN: StatMods = { damageBonus: 0.05 };
+
+/** 剑意纯度判定的各项(检查当期值该不该给这一层) */
+type PurityCheck = {
+  name: string;
+  test: (mods: StatMods, artifactCount: number, build: BuildDetection | null) => boolean;
+};
+const PURITY_CHECKS: PurityCheck[] = [
+  {
+    name: "主流派成形(契合 ≥60%)",
+    test: (_mods, _art, build) => (build?.affinity ?? 0) >= STYLE_MATURE_AFFINITY,
+  },
+  {
+    name: "道路纯粹(无副体系)",
+    test: (_mods, _art, build) => build !== null && build.secondary === undefined,
+  },
+  { name: "法宝不过一件", test: (_mods, art, _build) => art <= 1 },
+  {
+    name: "不修回血之术",
+    test: (mods, _art, _build) => modOf(mods, "lifesteal") + modOf(mods, "regenPerRound") < 0.02,
+  },
+];
+
+/** 剑意纯度总层数 —— 判定条数与界面「/N 层」同读这一枚(改一条就变,不手抄) */
+export const SWORD_PURITY_MAX_LAYERS = PURITY_CHECKS.length;
 
 export interface SwordPurity {
   layers: number;
@@ -28,12 +53,10 @@ export function swordPurity(
   artifactCount: number,
   build: BuildDetection | null,
 ): SwordPurity {
-  const checks = [
-    { name: "主流派成形(契合 ≥60%)", ok: (build?.affinity ?? 0) >= 0.6 },
-    { name: "道路纯粹(无副体系)", ok: build !== null && build.secondary === undefined },
-    { name: "法宝不过一件", ok: artifactCount <= 1 },
-    { name: "不修回血之术", ok: modOf(mods, "lifesteal") + modOf(mods, "regenPerRound") < 0.02 },
-  ];
+  const checks = PURITY_CHECKS.map((c) => ({
+    name: c.name,
+    ok: c.test(mods, artifactCount, build),
+  }));
   return { layers: checks.filter((c) => c.ok).length, checks };
 }
 

@@ -217,6 +217,20 @@ describe("⑦ 波形读数(道数 × 逐道加重)", () => {
     expect(high.waves).toBeGreaterThan(low.waves);
     expect(high.first).toBeGreaterThan(low.first);
   });
+
+  it("天时倍率乘进预览:雷鸣/仙劫/神威日前的读数必须含水(与结算同源)", () => {
+    // 回归:waveSpan 曾漏 weatherMult,传到相邻结算已乘 tribulationMult 的同一套函数
+    // 却漏乘 —— 雷鸣日(×1.08)预览会比真打吃亏 8%。默认不传 = 1(清和日零影响)。
+    const def = tribulationDef("thunder");
+    const calm = tribulationWaveSpan(def, 5);
+    expect(tribulationWaveSpan(def, 5, 1).first).toBeCloseTo(calm.first, 9);
+    const stormy = tribulationWaveSpan(def, 5, 1.08);
+    expect(stormy.first).toBeCloseTo(calm.first * 1.08, 9);
+    expect(stormy.total).toBeCloseTo(calm.total * 1.08, 9);
+    // 波形形状不因天时改变:天时只整体缩放,不改道数与最重道
+    expect(stormy.waves).toBe(calm.waves);
+    expect(stormy.heaviestWave).toBe(calm.heaviestWave);
+  });
 });
 
 describe("④ 结算抗性口径(界面=结算,不许第二把尺子)", () => {

@@ -12,7 +12,14 @@ import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import { SIM_REFERENCE } from "./celestialSim";
 import { mergeRules, runGauntlet, worldFoeSnap } from "./gauntlet";
 import { resolveCombat } from "./combat";
-import { swordPurity, stackedMods, SWORD_LAYER_MODS, slaughterSpeedBonus } from "./daoDepth";
+import {
+  swordPurity,
+  stackedMods,
+  SWORD_LAYER_MODS,
+  SWORD_PURITY_MAX_LAYERS,
+  slaughterSpeedBonus,
+} from "./daoDepth";
+import { STYLE_MATURE_AFFINITY, STYLE_MASTER_AFFINITY } from "./buildDetect";
 
 function chain(...list: (CombatRules | undefined)[]): CombatRules | undefined {
   return list.reduce((acc, cur) => mergeRules(acc, cur), undefined);
@@ -231,6 +238,22 @@ describe("道途深化裁判", () => {
     // 无流派可言者谈不上「纯」:四项皆不满足
     const impure = swordPurity({ lifesteal: 0.08 }, 2, null);
     expect(impure.layers).toBe(0);
+  });
+
+  it("剑意纯度阈值与层数单源:判定 / stageName / 界面「/N」同读一枚(改常数就撒谎)", () => {
+    // 三条必须指向同一来源,不许各处手抄 —— 0.6 改一个数,判定与流派文案若各写一份就不同步
+    expect(STYLE_MATURE_AFFINITY, "纯度「契合 ≥60%」该读流派成形线").toBe(0.6);
+    expect(STYLE_MASTER_AFFINITY).toBe(0.9);
+    // 层数 = 纯度判定的条数:检验条目增删时「/N 层」自动跟着走,不会界面 4 层、判定 5 条
+    expect(SWORD_PURITY_MAX_LAYERS).toBe(4);
+    const pure = swordPurity({ fullHpDamage: 0.35, firstStrike: 0.35 }, 1, {
+      style: null as never,
+      affinity: 1,
+      stageName: "大成",
+      coreValues: [],
+      displayName: "x",
+    });
+    expect(SWORD_PURITY_MAX_LAYERS).toBe(pure.checks.length);
   });
 
   it("剑意叠层与杀伐速战加成的数学正确", () => {

@@ -298,6 +298,7 @@ export function waveMultiplier(
 export function tribulationWaveSpan(
   def: TribulationDef,
   targetMajor: number,
+  weatherMult = 1,
 ): {
   waves: number;
   first: number;
@@ -315,7 +316,8 @@ export function tribulationWaveSpan(
   let total = 0;
   let heaviestWave = 1;
   for (let w = 1; w <= waves; w += 1) {
-    const v = tribulationWaveDamage(targetMajor, w, 0) * waveMultiplier(def, w, waves);
+    const v =
+      tribulationWaveDamage(targetMajor, w, 0) * waveMultiplier(def, w, waves) * weatherMult;
     if (w === 1) first = v;
     if (w === waves) last = v;
     min = Math.min(min, v);

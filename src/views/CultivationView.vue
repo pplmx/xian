@@ -943,7 +943,11 @@ const tribLedger = computed(() => {
 /** 天威本身的长相(道数 + 单波区间):与结算同一批函数,不在界面里另算一遍 */
 const tribWave = computed(() =>
   tribPlan.value
-    ? tribulationWaveSpan(tribPlan.value.def, player.isMajorStep ? player.major + 1 : player.major)
+    ? tribulationWaveSpan(
+        tribPlan.value.def,
+        player.isMajorStep ? player.major + 1 : player.major,
+        tribWeather.value.tribulationMult,
+      )
     : null,
 );
 

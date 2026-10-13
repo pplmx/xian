@@ -37,6 +37,9 @@
             </span>
             <!-- 已满就不再印费用:每点价格摆着像还能投 -->
             <span v-if="atCap(v.id)" class="ml-1.5 text-ink-faint">已满</span>
+            <span v-else-if="stoneShort > 0" class="ml-1.5 text-ink-faint"
+              >尚差 {{ formatGN(stoneShort) }} 石</span
+            >
             <span v-else class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }}</span>
           </span>
         </button>
@@ -53,11 +56,16 @@
         </p>
         <!-- 改立此脉为主脉:付费换向,现主脉点数转副(超额保留),按下前说清楚点数去向 -->
         <button
-          v-if="canSwitchTo(v.id)"
+          v-if="switchCandidate(v.id)"
           class="ml-0.5 px-0.5 text-[10px] text-cinnabar active:opacity-60"
+          :disabled="!canSwitchTo(v.id)"
           @click="doSwitch(v.id)"
         >
-          改立主脉 · {{ formatGN(switchCost) }}(现主 {{ mainPoints }} 点转副)
+          {{
+            switchStoneShort > 0
+              ? `改立主脉 · 尚差 ${formatGN(switchStoneShort)} 石`
+              : `改立主脉 · ${formatGN(switchCost)}`
+          }}(现主 {{ mainPoints }} 点转副)
         </button>
       </div>
     </div>
@@ -83,6 +91,7 @@
 import { computed } from "vue";
 import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
+import { useResourcesStore } from "@/stores/resources";
 import { VEINS, type VeinId } from "@/data/veins";
 import { investVein, veinPointCost, veinSwitchCost, switchMainVein } from "@/core/veinService";
 import {
@@ -94,13 +103,22 @@ import {
 import { STAT_NAMES } from "@/ui/statNames";
 import { veinEffectText } from "@/ui/veinText";
 import { formatGN, formatPercent } from "@/utils/format";
+import { toNum } from "@/utils/gnum";
 import type { AnyStatKey } from "@/types";
 
 const dongfu = useDongfuStore();
 const player = usePlayerStore();
+const resources = useResourcesStore();
 
 const investCost = computed(() => veinPointCost());
 const switchCost = computed(() => veinSwitchCost());
+/** 灵石缺口:欠多少列在按钮上(AGENTS「付不起要置灰并列出差额」) */
+const stoneShort = computed(() =>
+  Math.max(0, toNum(investCost.value) - toNum(resources.spiritStone)),
+);
+const switchStoneShort = computed(() =>
+  Math.max(0, toNum(switchCost.value) - toNum(resources.spiritStone)),
+);
 const veinsUnlocked = computed(() => player.major >= VEIN_UNLOCK_MAJOR);
 const veinTotal = computed(() => dongfu.veinTotal);
 /** 现主脉投了几点 —— 迁脉提示「现主 N 点转副」的依据 */
@@ -153,13 +171,20 @@ function surplusPoints(veinId: VeinId): number {
 function canInvest(veinId: VeinId): boolean {
   if (!veinsUnlocked.value) return false;
   if (currentLevel(veinId) >= cap(veinId)) return false;
-  return veinTotal.value < VEIN_TOTAL_CAPACITY;
+  if (veinTotal.value >= VEIN_TOTAL_CAPACITY) return false;
+  return stoneShort.value === 0;
 }
 
 function canSwitchTo(veinId: VeinId): boolean {
   if (!veinsUnlocked.value || isMain(veinId)) return false;
   // 尚无主脉时首投即成主脉,不必单独给"立主脉"入口
-  return dongfu.veinMain !== null;
+  if (dongfu.veinMain === null) return false;
+  return switchStoneShort.value === 0;
+}
+
+/** 具备改立主脉资格与否(不管灵石):按钮要留在页面上,付不起时置灰并列尚差 */
+function switchCandidate(veinId: VeinId): boolean {
+  return veinsUnlocked.value && !isMain(veinId) && dongfu.veinMain !== null;
 }
 
 function doInvest(veinId: VeinId): void {
