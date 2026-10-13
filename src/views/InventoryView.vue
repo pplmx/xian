@@ -377,7 +377,13 @@
           <button v-if="canBatchPill" class="btn-ghost flex-1" @click="onUsePillBatch()">
             连服 ×{{ PILL_BATCH }}
           </button>
-          <button class="btn-seal flex-1" @click="onUsePill()">服 用</button>
+          <button
+            class="btn-seal flex-1"
+            :disabled="currentPillOverflow === 'full'"
+            @click="onUsePill()"
+          >
+            服 用
+          </button>
         </div>
       </template>
     </BaseModal>
@@ -946,6 +952,7 @@ import { qualityDef, QUALITIES } from "@/data/qualities";
 import { pillDef } from "@/data/pills";
 import { buffDef } from "@/data/buffs";
 import { activeBuffsOf, buffOverflowOf, buffStackCount } from "@/core/engineBuffs";
+import type { BuffOverflow } from "@/core/engineBuffs";
 import { pillFuncText } from "@/ui/itemText";
 import {
   HERB_GRADES,
@@ -1392,18 +1399,25 @@ const currentPill = computed(() =>
 );
 
 /**
- * 增益丹服前提示(与修行快捷卡同口径 buffOverflowOf,不另造判据):
- * 顶满再服 = 白费、贴着上限只续到顶 —— 决策就地可见,不等服后 toast 才明白。
- * full/partial 给警告;照常服时把「已叠几份」的叠加事实摊出来(可消耗增益才叠份数)。
+ * 增益丹服前判定(与修行快捷卡同口径 buffOverflowOf,不另造判据):
+ * full=顶满再服即白费,partial=贴着上限只续到顶。
+ * 抽成独立 computed,让「服 用」按钮在 full 态一并置灰 —— 灰的同时
+ * currentPillHint 已把拦因摊出来,仍走「白费也照吃不误」就说不通了。
  */
+const currentPillOverflow = computed<BuffOverflow | null>(() => {
+  const def = currentPill.value?.def;
+  if (!def || def.kind !== "buff" || !def.buffId) return null;
+  return buffOverflowOf(cult.buffs, def.buffId, Date.now());
+});
+
 const currentPillHint = computed<{ text: string; tone: "cinnabar" | "amber" | "faint" } | null>(
   () => {
     const def = currentPill.value?.def;
     if (!def || def.kind !== "buff" || !def.buffId) return null;
-    const now = Date.now();
-    const overflow = buffOverflowOf(cult.buffs, def.buffId, now);
+    const overflow = currentPillOverflow.value;
     if (overflow === "full") return { text: "药力已顶满——这一颗将白费", tone: "cinnabar" };
     if (overflow === "partial") return { text: "药力将触上限——这一颗只续到顶", tone: "amber" };
+    const now = Date.now();
     const active = activeBuffsOf(cult.buffs, now).find((b) => b.def.id === def.buffId);
     const stack = active ? buffStackCount(def.buffId, active.remainingSec) : 1;
     if (stack <= 1) return null;

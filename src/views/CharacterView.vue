@@ -481,7 +481,13 @@
         </div>
       </div>
       <template #footer>
-        <button class="btn-ghost w-full !text-[12px]" @click="rebirth">兵解转世</button>
+        <button class="btn-ghost w-full !text-[12px]" :disabled="!canRebirth" @click="rebirth">
+          {{
+            canRebirth
+              ? "兵解转世"
+              : `${REALMS[MANUAL_REBIRTH_MIN_MAJOR]?.name ?? ""}境方可自行兵解`
+          }}
+        </button>
       </template>
     </BaseModal>
 

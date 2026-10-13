@@ -807,6 +807,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("白费/未达门槛要置灰 —— 丹药顶满、兵解未达境,不许点了才 toast", () => {
+    // ① 丹药详情「服 用」顶满仍可点,按下就真·白吃一颗(修炼快捷卡对同一
+    //    buffOverflowOf 判据置灰「已顶」,两视图原先相反);② 兵解转世未达金丹仍
+    //    可点、点了才 toast 拦。同族规:不可行就置灰 + 就地列因,别让点下去才知道。
+    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    expect(inv?.src, "丹药顶满要置灰(判据 currentPillOverflow)").toContain(
+      ":disabled=\"currentPillOverflow === 'full'\"",
+    );
+    expect(inv?.src, "丹药顶满拦因要就地摊(白费)").toContain("药力已顶满——这一颗将白费");
+    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    expect(char?.src, "兵解未达境要置灰(canRebirth)").toContain(':disabled="!canRebirth"');
+    expect(char?.src, "兵解置灰要列门槛境名,不许只有定性").toContain("境方可自行兵解");
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。
