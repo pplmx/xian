@@ -338,19 +338,16 @@
   }
 }
 
+/* 修为圆满「蓄势微光」:辉光由 .card-charged::before 以静态 box-shadow 驻留,
+   这里只把它的 opacity 淡入淡出 —— opacity 是合成器属性(走 GPU 合成层),
+   不再像从前那样逐帧重绘 box-shadow(无限动画 × 每帧重绘 = 低端移动端掉帧源)。 */
 @keyframes card-glow {
   0%,
   100% {
-    box-shadow:
-      0 1px 2px rgb(41 39 34 / 0.06),
-      0 4px 14px rgb(41 39 34 / 0.05),
-      0 0 0 0 rgb(168 63 57 / 0);
+    opacity: 0;
   }
   50% {
-    box-shadow:
-      0 1px 2px rgb(41 39 34 / 0.06),
-      0 4px 14px rgb(41 39 34 / 0.05),
-      0 0 16px 2px rgb(168 63 57 / 0.22);
+    opacity: 1;
   }
 }
 
@@ -1205,6 +1202,9 @@ button.chip-ink:active:not(:disabled) {
   margin-top: -65vmin;
   border-radius: 999px;
   pointer-events: none;
+  /* 全屏径向渐变:显式提升到独立合成层,渐变整幅只栅格化一次,交给 GPU 缩放 ——
+     否则半透明大渐变会逐帧重绘满屏像素(真机突破成功那一下掉帧的主因之一) */
+  will-change: transform;
   background: radial-gradient(
     circle,
     transparent 30%,
@@ -1218,6 +1218,16 @@ button.chip-ink:active:not(:disabled) {
 /* 修为圆满:境界卡蓄势微光呼吸(保留卡片底影) */
 .card-charged {
   border-color: rgb(var(--color-cinnabar-rgb) / 0.38);
+}
+/* 同上:朱砂辉光以静态 box-shadow 画在 ::before 上,随 card-glow 淡入淡出
+   (透明遮罩 + pointer-events:none,不挡内容不挡点击) */
+.card-charged::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 16px 2px rgb(168 63 57 / 0.22);
   animation: card-glow 2.6s ease-in-out infinite;
 }
 
