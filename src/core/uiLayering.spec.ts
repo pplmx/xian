@@ -905,6 +905,34 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cult?.src, "按现倍率折算,不手写常数").toContain("mult + r");
   });
 
+  it("读屏可访问名与付不起的原因 —— 占位输入给 aria-label,修到顶置灰时列差", () => {
+    // P1:三处纯占位输入框(构筑名/装备标记/挑战书命名)原先只靠 placeholder 当名字,
+    // 读屏成不了名;各补 aria-label 作可访问名,不靠会丢失的占位提示。
+    const build = readFileSync(resolve(__dirname, "../views/BuildView.vue"), "utf-8");
+    expect(build, "构筑命名输入要有可访问名").toMatch(
+      /input[\s\S]*?aria-label="给这套构筑起个名字"/,
+    );
+    const equip = readFileSync(
+      resolve(__dirname, "../components/equipment/EquipmentDetailDialog.vue"),
+      "utf-8",
+    );
+    expect(equip, "装备标记输入要有可访问名").toMatch(
+      /input[\s\S]*?aria-label="为这件装备加个标记/,
+    );
+    const celestial = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf-8");
+    expect(celestial, "挑战书命名输入要有可访问名").toMatch(
+      /input[\s\S]*?aria-label="为此挑战书命名/,
+    );
+    // P4:修到顶置灰时,只亮「修到顶」没把差多少摊出来(读屏只听到 disabled)。要像
+    // 同框「进 修」那样列「尚差 upShort」,并给 aria-label。
+    const gf = readFileSync(
+      resolve(__dirname, "../components/cultivation/GongfaDialog.vue"),
+      "utf-8",
+    );
+    expect(gf, "修到顶要有带差量的 aria-label").toMatch(/aria-label=.*修到顶/);
+    expect(gf, "修到顶置灰时可见列出差量").toContain("尚差 {{ upShort }}");
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。

@@ -169,9 +169,10 @@
           v-if="upCost"
           class="btn-ghost w-full !py-1.5 !text-[12px]"
           :disabled="!upAffordable"
+          :aria-label="upAffordable ? '修到顶' : `修到顶 · 尚差 ${upShort}`"
           @click="doUpgradeAll"
         >
-          修到顶
+          修到顶<template v-if="!upAffordable"> · 尚差 {{ upShort }}</template>
         </button>
       </div>
     </template>

@@ -579,6 +579,7 @@
             <input
               v-model="draft.name"
               maxlength="8"
+              aria-label="为此挑战书命名(最多八个字)"
               class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-1.5 font-kai text-[13px] tracking-widest text-ink outline-none focus:border-cinnabar/50"
               placeholder="为此挑战书命名(如《无盾求生》)"
             />
