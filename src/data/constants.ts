@@ -106,6 +106,8 @@ export const QI_BASE_REGEN = 0.9;
 export const QI_REGEN_MAJOR_GROWTH = 5.2;
 /** 灵气高于上限一半时,修炼速度额外加成 */
 export const QI_RICH_BONUS = 0.15;
+/** 灵气充盈的阈值:灵气 ≥ 标称容量的这一比例即触发 QI_RICH_BONUS(结算与界面同读这一枚) */
+export const QI_RICH_THRESHOLD_RATIO = 0.5;
 
 // ============ 突破 ============
 export const BT_SUB_BASE_RATE = 0.95;

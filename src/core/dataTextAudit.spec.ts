@@ -240,6 +240,18 @@ describe("文案数值对账 · 视图不手抄数字", () => {
     expect(view).toContain("`改立主脉 · 尚差 ${formatGN(switchStoneShort)} 石`");
     expect(view).toContain("switchStoneShort > 0");
   });
+
+  it("灵气充盈:off 态与阈值都摊开,且阈值/加成读常数不手抄(AGENTS「机制要露进界面」)", () => {
+    const view = src("../views/CultivationView.vue");
+    // 灵气 ≥ 标称容量一半即触发 +15% 修炼 —— off 态(尚差多少)与 on 态(在吃这个加成)
+    // 都要直显;且 0.5 / 0.15 不许在视图里手抄,只能引 QI_RICH_THRESHOLD_RATIO / QI_RICH_BONUS
+    expect(view).toContain("qiRichInfo.on");
+    expect(view).toContain("距灵气充盈尚差");
+    expect(view).toContain("灵气充盈 —— 修炼速度");
+    expect(view).toContain("QI_RICH_THRESHOLD_RATIO");
+    expect(view).toContain("QI_RICH_BONUS");
+    expect(view).not.toContain("qiCapValue * 0.5");
+  });
 });
 
 /**

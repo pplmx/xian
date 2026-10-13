@@ -142,6 +142,22 @@
           color="var(--color-qing)"
           :height="8"
         />
+        <!--
+          灵气充盈:灵气 ≥ 标称容量一半 → 修炼 +15%。off 态藏着不说是欺瞒 ——
+          玩家每日最常盯的就是修炼,这个加成答得上「我灵气满了该怎么花」。
+          阈值与结算同读 QI_RICH_THRESHOLD_RATIO(见 player.qirich)。
+        -->
+        <p class="mt-1 text-[10px]" :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'">
+          <template v-if="qiRichInfo.on"
+            >灵气充盈 —— 修炼速度 +{{ formatPercent(QI_RICH_BONUS) }}</template
+          >
+          <template v-else>
+            距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵(灵气 ≥
+            {{ formatNum(qiRichInfo.threshold) }}(容量一半)→ 修炼 +{{
+              formatPercent(QI_RICH_BONUS)
+            }})
+          </template>
+        </p>
         <!-- 以灵气疗伤(修复):灵气积余的用途,代价随境界指数增长 -->
         <button
           v-if="repair.injured"
@@ -710,7 +726,12 @@ import { buffDef } from "@/data/buffs";
 import { modsText } from "@/ui/statNames";
 import { pillDef } from "@/data/pills";
 import type { PillDef } from "@/types";
-import { COMPREHEND_PAGE_COST, QI_BANK_MULT } from "@/data/constants";
+import {
+  COMPREHEND_PAGE_COST,
+  QI_BANK_MULT,
+  QI_RICH_BONUS,
+  QI_RICH_THRESHOLD_RATIO,
+} from "@/data/constants";
 import {
   formatCountdown,
   formatDuration,
@@ -811,6 +832,13 @@ const expDetailNote = computed(() => {
 
 /** 灵气同理:回满还要多久 —— 突破、疗伤、炼丹都在等这条线 */
 const qiOverCap = computed(() => resources.qi > player.qiCapValue);
+/** 灵气充盈(≥50% 标称容量 → 修炼 +QI_RICH_BONUS):把阈值与 off 态摊开,不让机制藏在结算里 */
+const qiRichInfo = computed(() => {
+  const threshold = player.qiCapValue * QI_RICH_THRESHOLD_RATIO;
+  const on = player.qiRich;
+  const gap = Math.max(0, threshold - resources.qi);
+  return { on, threshold, gap };
+});
 /** 标称容量之外还攒了多少 —— 主行只挂一个「+」,精确值在点开的详情里 */
 const qiBanked = computed(() =>
   Math.max(0, Math.floor(resources.qi) - Math.floor(player.qiCapValue)),
