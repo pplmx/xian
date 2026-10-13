@@ -39,6 +39,7 @@ describe("taskDone", () => {
       uid: "u",
       archId: "ap_lingtong",
       level: 1,
+      bond: 0,
       task: { spec: "seek", startAt: 1000, finishAt: 2000 },
     };
     expect(taskDone(a, 1000)).toBe(false);

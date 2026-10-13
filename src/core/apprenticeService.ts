@@ -23,6 +23,8 @@ export interface OwnedApprentice {
   uid: string;
   archId: string;
   level: number;
+  /** 累计完工趟数 —— 羁绊位阶的依据(纯 flavor,不给产出/时长加成) */
+  bond: number;
   task: { spec: ApprenticeSpec; startAt: number; finishAt: number } | null;
 }
 

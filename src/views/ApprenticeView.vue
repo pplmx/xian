@@ -14,8 +14,10 @@ import { useResourcesStore } from "@/stores/resources";
 import {
   APPRENTICE_TASKS,
   APPRENTICE_MAX_LEVEL,
+  BOND_TITLES,
   apprenticeDef,
   apprenticeSlots,
+  bondTitle,
   taskDef,
   type ApprenticeSpec,
 } from "@/data/apprentices";
@@ -157,6 +159,12 @@ const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
             apprenticeDef(a.archId)?.name ?? a.archId
           }}</span>
           <span class="text-[10px] text-ink-faint">Lv{{ a.level }}/{{ APPRENTICE_MAX_LEVEL }}</span>
+          <span
+            v-if="a.bond >= BOND_TITLES[1]!.min"
+            class="rounded bg-cinnabar/10 px-1.5 py-0.5 text-[10px] text-cinnabar"
+            :title="`羁绊 ${a.bond} 趟(完工趟数,纯称谓不带加成)`"
+            >{{ bondTitle(a.bond) }}</span
+          >
           <span class="ml-auto text-[10px] text-ink-faint">{{
             apprenticeDef(a.archId)?.desc ?? ""
           }}</span>

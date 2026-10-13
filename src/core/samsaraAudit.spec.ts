@@ -202,6 +202,7 @@ describe("轮回审计 · 继承清单最小完备", () => {
     "pet",
     "mentor",
     "veins",
+    "apprentice",
     "lore",
     "quests",
     "endgame",

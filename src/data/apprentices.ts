@@ -99,3 +99,26 @@ export const DISPATCH_NEED_TARGET: Record<"herb" | "ore" | "wudao" | "dust", num
 };
 /** 历练(灵石自理)的保底分:灵石需求几乎恒有,若永远低于材料短缺分就永不历练;给一个固定底分防偏心 */
 export const DISPATCH_ADVENTURE_FIXED_SCORE = 2;
+
+/** 羁绊位阶(弟子的称谓)—— 纯命名/flavor,不给产出或时长加成;按累计完工趟数阈值 */
+export interface BondTitle {
+  min: number;
+  name: string;
+}
+export const BOND_TITLES: BondTitle[] = [
+  { min: 0, name: "道童" },
+  { min: 10, name: "道仆" },
+  { min: 30, name: "道徒" },
+  { min: 60, name: "记名弟子" },
+  { min: 100, name: "真传" },
+];
+/** 由累计完工趟数取羁绊称谓 */
+export function bondTitle(bond: number): string {
+  let name = BOND_TITLES[0]!.name;
+  for (const t of BOND_TITLES) {
+    if (bond >= t.min) name = t.name;
+  }
+  return name;
+}
+/** 跨世之缘只对「真传(最高羁绊位阶)」开放,凝成的一丝缘封顶到其阈值 —— 不越界 */
+export const BOND_TRUECODE_MIN = BOND_TITLES[BOND_TITLES.length - 1]!.min;

@@ -80,4 +80,73 @@ describe("收徒 store", () => {
     const u2 = a.apprentices.find((x) => x.uid === "u2")!;
     expect(u2.task).toBeNull(); // 坏规格任务 → 闲置
   });
+
+  it("collectFinished 累计羁绊(完工一趟 bond+1),不随等级反复", () => {
+    seed();
+    const a = useApprenticeStore();
+    a.sync();
+    const appr = a.apprentices[0]!;
+    const t = Date.now();
+    a.dispatch(appr.uid, "herb", t);
+    a.collectFinished(t + 30 * 3600_000, 0);
+    expect(appr.bond).toBe(1);
+    // 未派的另一趟不被计
+    expect(a.apprentices[0]!.bond).toBe(1);
+  });
+
+  it("resetForRebirth:未到真传位阶 → 不凝缘、弟子清空", () => {
+    seed();
+    const a = useApprenticeStore();
+    a.sync();
+    a.apprentices[0]!.bond = 99; // 距真传阈值 100 尚差一脚
+    a.resetForRebirth();
+    expect(a.apprentices).toEqual([]);
+    expect(a.rebirthKarma).toBe(0);
+  });
+
+  it("resetForRebirth:教出过真传(≥阈值)→ 凝成一缘,封顶到真传位阶", () => {
+    seed();
+    const a = useApprenticeStore();
+    a.sync();
+    a.apprentices[0]!.bond = 100;
+    a.resetForRebirth();
+    expect(a.apprentices).toEqual([]);
+    expect(a.rebirthKarma).toBe(100);
+  });
+
+  it("resetForRebirth 取最高羁绊:只有满真传那一名才让缘出现", () => {
+    seed();
+    const a = useApprenticeStore();
+    a.apprentices = [
+      { uid: "a", archId: STARTER_APPRENTICE, level: 1, bond: 100, task: null } as never,
+      { uid: "b", archId: STARTER_APPRENTICE, level: 1, bond: 30, task: null } as never,
+    ] as never;
+    a.resetForRebirth();
+    expect(a.rebirthKarma).toBe(100);
+  });
+
+  it("sync:新世 starter 携带上一世凝成的跨世之缘,随后清零(一次性)", () => {
+    seed();
+    const a = useApprenticeStore();
+    a.rebirthKarma = 100;
+    a.sync();
+    expect(a.apprentices.length).toBe(1);
+    expect(a.apprentices[0]!.bond).toBe(100);
+    expect(a.rebirthKarma, "携带过一次后应清零,不每世重演").toBe(0);
+    // 再 sync(已有一徒)→ 不再白送
+    a.sync();
+    expect(a.apprentices.length).toBe(1);
+  });
+
+  it("sanitize:越界羁绊夹回、跨世之缘封顶到真传位阶", () => {
+    seed();
+    const a = useApprenticeStore();
+    a.rebirthKarma = 9999;
+    a.apprentices = [
+      { uid: "u1", archId: STARTER_APPRENTICE, level: 1, bond: -5, task: null } as never,
+    ] as never;
+    a.sanitize();
+    expect(a.rebirthKarma).toBe(100);
+    expect(a.apprentices.find((x) => x.uid === "u1")!.bond).toBe(0);
+  });
 });

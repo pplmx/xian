@@ -31,6 +31,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useAdventureStore } from "@/stores/adventure";
+import { useApprenticeStore } from "@/stores/apprentice";
 import { useEndgameStore } from "@/stores/endgame";
 import { useGameStore } from "@/stores/game";
 import type { GNum, LifeReview, ReincarnationView } from "@/types";
@@ -297,6 +298,8 @@ export function confirmReincarnation(
   adventure.cleared = [];
   adventure.lastBattle = null;
   // (洞府/灵脉/灵兽的归零在 player.rebirth() 里,与其余「本世进程」同处一地)
+  // 弟子是今生家业,随皮囊散去;若教出过真传,凝成一丝跨世之缘由新世 starter 带回
+  useApprenticeStore().resetForRebirth();
 
   // 认知不因转世清零,只按阶补齐:该认得的药,睁眼就该认得
   const recognized = carryLore(stage, carriesAllLore(player.reincarnation.heritage));

@@ -115,6 +115,16 @@ export const HERITAGE: HeritageRow[] = [
     compressesGrowth: false,
   },
   {
+    id: "apprentice",
+    name: "弟子",
+    mode: "reset",
+    detail:
+      "useApprenticeStore().resetForRebirth() 清空弟子 —— 是今生家业随皮囊散去;教出过真传者凝一丝跨世之缘 rebirthKarma,由新世 starter 一次性带回",
+    kind: "state",
+    power: "none",
+    compressesGrowth: false,
+  },
+  {
     id: "buildings",
     name: "洞府建筑",
     mode: "reset",
