@@ -16,8 +16,6 @@
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { isRetreating } from "./earlyGameService";
-import { realmLabel } from "@/data/realms";
-import { SUB_LEVELS } from "@/data/constants";
 
 export interface FirstStep {
   /** 去哪儿(路由) */
@@ -83,11 +81,13 @@ export function currentFirstStep(): FirstStep | null {
    * 而修为正卡在圆满线上不再涨。
    */
   if (player.expFull) {
-    const next = realmLabel(player.major, Math.min(player.sub + 1, SUB_LEVELS - 1));
     return {
       to: "/cultivation",
       label: "去突破",
-      text: `第一步 · 修为已圆满,回修炼页突破「${next}」`,
+      // 不点名具体层数:同屏修行志的主线里程碑另报「炼气·三层」,这里再报「二层」会让
+      // 新手看成界面打架(它们分别是"立即的下一步"与"主线里程碑",本来就不同一口径)。
+      // 突破目标与现实层数由突破页自己亮,这张卡只负责递"该去哪点"。
+      text: "第一步 · 修为已圆满,回修炼页突破",
       hint: "修为满了就不再涨,突破是眼下唯一能往前走的一步",
     };
   }

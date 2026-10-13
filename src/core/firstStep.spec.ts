@@ -39,8 +39,10 @@ describe("第一步(新手起点)", () => {
     expect(step.to).toBe("/cultivation");
     expect(step.label).toBe("去突破");
     expect(step.text).toContain("圆满");
-    // 指向的境界是"下一层",而不是脚下这一层
-    expect(step.text).toContain("二层");
+    // 不再点名层数:同屏主线里程碑另报「三层」,这里再报「下一层」会看成界面打架。
+    // 实际目标层由突破页自己亮;这张卡只负责递"该去哪点"。
+    expect(step.text).toContain("突破");
+    expect(step.text).not.toContain("层");
   });
 
   it("修为未满 → 仍指历练(圆满那一支不该提前触发)", () => {
