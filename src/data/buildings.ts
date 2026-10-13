@@ -39,7 +39,7 @@ export const BUILDINGS: BuildingDef[] = [
     effectText: (lv) => [
       `离线收益上限 ${OFFLINE_CAP_HOURS[Math.min(lv, OFFLINE_CAP_HOURS.length - 1)]} 小时`,
       "其余建筑等级上限 +5/级",
-      `修炼速度 +${formatSignedPercent(lv * MANSION_CULT_SPEED_PER_LEVEL)}`,
+      `修炼速度 ${formatSignedPercent(lv * MANSION_CULT_SPEED_PER_LEVEL)}`,
     ],
     mods: (lv): StatMods => ({ cultivationSpeed: lv * MANSION_CULT_SPEED_PER_LEVEL }),
   },
@@ -53,9 +53,9 @@ export const BUILDINGS: BuildingDef[] = [
     costBase: 60,
     costOre: 6,
     effectText: (lv) => [
-      `灵气恢复 +${formatSignedPercent(lv * ARRAY_QI_REGEN_PER_LEVEL)}`,
+      `灵气恢复 ${formatSignedPercent(lv * ARRAY_QI_REGEN_PER_LEVEL)}`,
       `灵气上限 +${Math.round(lv * ARRAY_QI_CAP_PER_LEVEL * 100)}%`,
-      `修炼速度 +${formatSignedPercent(lv * ARRAY_CULT_SPEED_PER_LEVEL)}`,
+      `修炼速度 ${formatSignedPercent(lv * ARRAY_CULT_SPEED_PER_LEVEL)}`,
     ],
     mods: (lv): StatMods => ({
       qiRegen: lv * ARRAY_QI_REGEN_PER_LEVEL,
@@ -73,7 +73,7 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 10,
     // Phase 32.3 之后丹方不再由炉火高低"解锁",炉子只管出丹多寡 —— 成与不成看所知与手上功夫
     effectText: (lv) => [
-      `炼丹双成率 +${formatSignedPercent(lv * ALCHEMY_YIELD_PER_LEVEL)}`,
+      `炼丹双成率 ${formatSignedPercent(lv * ALCHEMY_YIELD_PER_LEVEL)}`,
       "炉子只管出丹多寡,成与不成看你懂多少",
     ],
     mods: (lv): StatMods => ({ alchemyYield: lv * ALCHEMY_YIELD_PER_LEVEL }),
@@ -89,7 +89,7 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 15,
     effectText: (lv) => [
       `强化上限 +${Math.floor(lv / FORGE_LEVEL_PER_CAP)}`,
-      `炼器省耗 +${formatSignedPercent(lv * FORGE_DISCOUNT_PER_LEVEL)}`,
+      `炼器省耗 ${formatSignedPercent(lv * FORGE_DISCOUNT_PER_LEVEL)}`,
     ],
     mods: (lv): StatMods => ({ forgeDiscount: lv * FORGE_DISCOUNT_PER_LEVEL }),
   },
@@ -118,7 +118,7 @@ export const BUILDINGS: BuildingDef[] = [
     // 钻研丹方是藏经阁的第三桩职能(见 core/loreService.ts studyTick),不写出来玩家无从得知
     effectText: (lv) => [
       `每小时产悟道点 ${fmtHour(libraryWudaoPerHour(lv))}`,
-      `辅修栏 ${librarySubGongfaSlots(lv)} 个 · 战斗修为 +${formatSignedPercent(lv * LIBRARY_EXP_GAIN_PER_LEVEL)}`,
+      `辅修栏 ${librarySubGongfaSlots(lv)} 个 · 战斗修为 ${formatSignedPercent(lv * LIBRARY_EXP_GAIN_PER_LEVEL)}`,
       "日夜翻检,读熟手上丹方,进而翻出新方",
     ],
     mods: (lv): StatMods => ({ expGain: lv * LIBRARY_EXP_GAIN_PER_LEVEL }),

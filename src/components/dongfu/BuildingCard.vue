@@ -19,6 +19,19 @@
       </template>
       <p v-else>{{ props.def.desc }}</p>
     </div>
+    <!--
+      下一级增益预览:卡面已显当前效果与代价,只补「升上去会怎样」——
+      与 effectText 同源,只报字面会变的行(平铺说明、未触发的档都不算增益)。
+      首建(0→1)没有当前效果,预览就是「建成后」的整张效果。
+      标签一行、每条变更行各占一行块(与当前效果的渲染同构),
+      这样「数字与量词」(每小时产灵草 X 株)不会被一行挤到跨行拆开。
+    -->
+    <p v-if="preview.lines.length" class="mt-1 font-kai text-[10px] tracking-wider text-gold-ink">
+      {{ preview.built ? "建成后" : `升至 ${preview.nextLevel} 级` }}
+    </p>
+    <div v-if="preview.lines.length" class="space-y-0.5 text-[10px] leading-relaxed text-ink-soft">
+      <p v-for="(line, i) in preview.lines" :key="i">{{ line }}</p>
+    </div>
     <!-- 灵兽园:把当前相伴的灵兽报在园子里 —— 别的建筑都是数值,这里是活物 -->
     <p v-if="beastCompanionName" class="mt-1 flex items-center gap-1 text-[10px] text-jade">
       <GameIcon name="paw" :size="11" />居园相伴 · {{ beastCompanionName }}
@@ -62,7 +75,11 @@ import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { petDef } from "@/data/pets";
 import { pillDef } from "@/data/pills";
-import { buildingUpgradeInfo, upgradeBuilding } from "@/core/buildingService";
+import {
+  buildingUpgradeInfo,
+  buildingUpgradePreview,
+  upgradeBuilding,
+} from "@/core/buildingService";
 import { studyEta } from "@/core/loreService";
 import { formatDuration, formatGN } from "@/utils/format";
 import GameIcon from "@/components/common/GameIcon.vue";
@@ -76,6 +93,8 @@ const level = computed(() => dongfu.levels[props.def.id] ?? 0);
 /** 实际可达上限:洞府全局闸门与自身品类上限取小,洞府卡展现的是"提升到什么档"的依据 */
 const cap = computed(() => dongfu.buildingCap(props.def.id));
 const info = computed(() => buildingUpgradeInfo(props.def.id));
+/** 下一级增益预览:卡面已显当前效果与代价,这里补「升上去会怎样」(effectText 同源,只报会变的行) */
+const preview = computed(() => buildingUpgradePreview(props.def.id, level.value));
 /** 灵兽园联动:洞府与宠物两系统彼此看见(只对 beast 这一座特例,其余建筑不理会) */
 const beastCompanionName = computed(() =>
   props.def.id === "beast" && player.petId ? petDef(player.petId)?.name : undefined,
