@@ -240,6 +240,12 @@ export interface SecretLayerPreview {
   winText: string;
   /** 本层战利(灵石 + 材料) */
   reward: { stone: GNum; material: number };
+  /** 再败几场即被逐出(0 表示败一场就出局) */
+  lossesLeft: number;
+  /** 层间回血/损血比例(枯荣为负.)—— 并入下一层携带气血的真实数 */
+  healBetweenPct: number | undefined;
+  /** 本层通关即清空秘境(终层:胜了拿最终宝藏+悟道) */
+  isFinalLayer: boolean;
 }
 
 /**
@@ -252,11 +258,32 @@ export function secretLayerPreview(state: SecretRealmState): SecretLayerPreview 
   const def = secretRealmDef(state.realmId);
   const tier = tierOfMajor(player.major);
   const reward = secretLayerReward(tier, state.layer, def?.rewardMult ?? 1);
-  if (!state.foe) return { foe: null, rate: 0, winText: "莫测", reward };
+  // 隐性机制随预览一并摊开(逐出门槛 / 层间回血 / 终层宝藏),与结算同源,不手写
+  const lossesLeft = Math.max(0, SECRET_MAX_LOSSES - state.losses);
+  const healBetweenPct = def?.healBetweenPct;
+  const isFinalLayer = state.layer >= SECRET_LAYERS;
+  if (!state.foe)
+    return {
+      foe: null,
+      rate: 0,
+      winText: "莫测",
+      reward,
+      lossesLeft,
+      healBetweenPct,
+      isFinalLayer,
+    };
   const playerSnap = buildPlayerSnap();
   const rules = { ...secretFightRules(state), playerStartHpPct: state.carriedHpPct };
   const rate = sampleWinRate(playerSnap, state.foe, rng, 3, rules);
-  return { foe: state.foe, rate, winText: winTextForRate(rate), reward };
+  return {
+    foe: state.foe,
+    rate,
+    winText: winTextForRate(rate),
+    reward,
+    lossesLeft,
+    healBetweenPct,
+    isFinalLayer,
+  };
 }
 
 /** 打一层 */

@@ -37,6 +37,22 @@
         <template v-else>本层劫:<span class="text-ink">莫测</span></template>
         · 战利:灵石 +{{ formatGN(preview.reward.stone) }} · 灵草 +{{ preview.reward.material }}
       </p>
+      <!--
+        隐性机制随预览披露(同源,不手写):逐出门槛、层间回血/损血、终层宝藏 ——
+        这三样按下去决定成败/去留,不许只活到战报/结算才见。
+      -->
+      <p v-if="preview" class="mt-0.5 text-[10px] leading-relaxed tabular">
+        <span :class="preview.lossesLeft <= 1 ? 'text-cinnabar' : 'text-ink-faint'"
+          >再败 {{ preview.lossesLeft === 0 ? "即逐出" : `${preview.lossesLeft} 场逐出` }}</span
+        ><template v-if="preview.healBetweenPct && preview.healBetweenPct !== 0"
+          ><span class="text-ink-faint">
+            · 层间{{ preview.healBetweenPct > 0 ? "回血" : "损血" }}
+            {{ formatPercent(Math.abs(preview.healBetweenPct), 0) }}</span
+          ></template
+        ><template v-if="preview.isFinalLayer"
+          ><span class="text-gold-ink"> · 终层通关得随机装备 + 悟道点 3</span></template
+        >
+      </p>
       <div class="mt-2 flex gap-2">
         <!-- 出秘境是二步确认:整趟是付过门票的独一份内容,误触不该直接清空 —— 与删快照同族 -->
         <template v-if="!confirmAbandon">
@@ -114,7 +130,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { useUiStore } from "@/stores/ui";
 import { useEndgameStore } from "@/stores/endgame";
 import { secretRealmDef, type SecretRealmDef } from "@/data/secretRealms";
-import { cnNumber, formatGN } from "@/utils/format";
+import { cnNumber, formatGN, formatPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import {
   SECRET_LAYERS,

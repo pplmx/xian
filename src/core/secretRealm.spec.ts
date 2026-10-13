@@ -417,6 +417,21 @@ describe("秘境 · 战前预览与实战同源", () => {
     }
   });
 
+  it("预览摊开隐性机制,与结算同源 —— 逐出余量/层间损血/终层", () => {
+    ready(3);
+    expect(enterSecretRealm("sr_kurong").ok).toBe(true);
+    const st = currentRealm()!;
+    const pv = secretLayerPreview(st);
+    // 枯荣层间损血 10%(负数):直接来自 def.healBetweenPct,不是界面另写的一份
+    expect(pv.healBetweenPct).toBe(-0.1);
+    // 逐出余量 = SECRET_MAX_LOSSES − 已败场(进境 0 败 → 2)
+    expect(pv.lossesLeft).toBe(SECRET_MAX_LOSSES - st.losses);
+    expect(pv.lossesLeft).toBeGreaterThan(0);
+    // 终层判定读 SECRET_LAYERS 常量,不许硬写 3;第 1 层不是终层
+    expect(pv.isFinalLayer).toBe(st.layer >= SECRET_LAYERS);
+    expect(pv.isFinalLayer).toBe(false);
+  });
+
   it("旧档缺 foe:战时兜底现掷,预览给莫测占位而非崩", () => {
     ready(3);
     const player = usePlayerStore();
