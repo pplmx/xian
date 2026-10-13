@@ -41,7 +41,7 @@ const ARCHETYPE_NOTES: Record<BossArchetype, string> = {
   spellbane: "吞法——你法门越多,它反倒越硬",
   evasive: "身形飘忽,不容易打实",
   attrition: "自愈不止,久战反而是它的场",
-  threshold: "开战即有罡盾,破不开便伤不着它",
+  threshold: "开战即有护盾,破不开便伤不着它",
 };
 
 export interface EnemySkillNote {

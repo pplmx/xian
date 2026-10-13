@@ -186,7 +186,7 @@ export const BUFFS: BuffDef[] = [
     "凝气护体",
     "blessing",
     600,
-    "真气护体,防御提升 12%",
+    "灵气护体,防御提升 12%",
     { defensePct: 0.12 },
     "shield",
   ),

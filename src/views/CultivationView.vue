@@ -152,7 +152,7 @@
             >灵气充盈 —— 修炼速度 +{{ formatPercent(QI_RICH_BONUS) }}</template
           >
           <template v-else>
-            距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵(灵气 ≥
+            距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵气(灵气 ≥
             {{ formatNum(qiRichInfo.threshold) }}(容量一半)→ 修炼 +{{
               formatPercent(QI_RICH_BONUS)
             }})
