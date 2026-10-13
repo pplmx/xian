@@ -438,14 +438,34 @@
   }
 }
 
+/*
+ * 「蓄势/归属」辉光的呼吸:原为无限动画 box-shadow(非合成属性 → 逐帧重绘,
+ * 低端移动端掉帧源)。现在辉光以静态 box-shadow 画在 .animate-glow-pulse::before /
+ * .animate-seal-breathe::before 上,这边只把 opacity 淡入淡出(GPU 合成层)。
+ * 元素本身 animation:none,不再逐帧重绘 —— 下方两个 .animate-* 覆盖规则负责
+ * 把辉光挪到伪元素(未分层规则压过 tailwind 工具类生成的 animation)。
+ */
 @keyframes glow-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(168 63 57 / 0);
+    opacity: 0;
   }
   50% {
-    box-shadow: 0 0 18px 2px rgb(168 63 57 / 0.25);
+    opacity: 1;
   }
+}
+.animate-glow-pulse {
+  position: relative;
+  animation: none;
+}
+.animate-glow-pulse::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 18px 2px rgb(168 63 57 / 0.25);
+  animation: glow-pulse 2.4s ease-in-out infinite;
 }
 
 /*
@@ -456,11 +476,24 @@
 @keyframes seal-breathe {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(147 175 149 / 0);
+    opacity: 0;
   }
   50% {
-    box-shadow: 0 0 14px 2px rgb(147 175 149 / 0.3);
+    opacity: 1;
   }
+}
+.animate-seal-breathe {
+  position: relative;
+  animation: none;
+}
+.animate-seal-breathe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 14px 2px rgb(147 175 149 / 0.3);
+  animation: seal-breathe 2.8s ease-in-out infinite;
 }
 
 /* ================= 基础 ================= */
