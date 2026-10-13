@@ -29,7 +29,7 @@ export const APPRENTICE_TASKS: ApprenticeTaskDef[] = [
     seconds: 2700,
     desc: "下山历练,挣灵石、磨阅历",
   },
-  { spec: "seek", name: "寻机缘", icon: "gem", seconds: 3600, desc: "四处寻访,或得丹药、或得器尘" },
+  { spec: "seek", name: "寻机缘", icon: "gem", seconds: 3600, desc: "四处寻访,或得丹药" },
   { spec: "study", name: "参悟", icon: "book", seconds: 5400, desc: "静坐参悟,为道基添悟道点" },
 ];
 

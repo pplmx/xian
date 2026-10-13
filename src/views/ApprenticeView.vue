@@ -15,7 +15,7 @@ import {
   APPRENTICE_TASKS,
   APPRENTICE_MAX_LEVEL,
   APPRENTICE_TALENT_BONUS,
-  BOND_TITLES,
+  BOND_TRUECODE_MIN,
   apprenticeDef,
   apprenticeSlots,
   bondTitle,
@@ -41,16 +41,17 @@ const resources = useResourcesStore();
 const now = ref(Date.now());
 let timer: number | undefined;
 
-/** 一趟归来的账目文本(与派活期望同源,由 spoils 现算,不另写第二份) */
+/** 一趟归来的账目文本(与派活期望同源,由 spoils 现算,不另写第二份);一路的奖励拼全,不早退漏掉灵石 */
 function reapText(r: ApprenticeReap): string {
   const s = r.spoils;
-  if (s.herb) return `灵草 ×${s.herb}`;
-  if (s.ore) return `玄铁 ×${s.ore}`;
-  if (s.dust) return `器灵尘 ×${s.dust}`;
-  if (s.wudao) return `悟道点 ×${s.wudao}`;
-  if (s.stone) return `灵石 ${formatGN(s.stone)}`;
-  if (s.pillId) return `${pillDef(s.pillId)?.name ?? s.pillId} ×${s.pillCount}`;
-  return "";
+  const parts: string[] = [];
+  if (s.herb) parts.push(`灵草 ×${s.herb}`);
+  if (s.ore) parts.push(`玄铁 ×${s.ore}`);
+  if (s.dust) parts.push(`器灵尘 ×${s.dust}`);
+  if (s.wudao) parts.push(`悟道点 ×${s.wudao}`);
+  if (s.stone) parts.push(`灵石 ${formatGN(s.stone)}`);
+  if (s.pillId) parts.push(`${pillDef(s.pillId)?.name ?? s.pillId} ×${s.pillCount}`);
+  return parts.join(" · ");
 }
 
 /** 弟子归来要有一声:资材不是静默入账的 → 每条通报「XX 归来,带回…」 */
@@ -92,19 +93,14 @@ function taskYield(a: OwnedApprentice, spec: ApprenticeSpec): string {
   const s = apprenticeSpoils(a.archId, spec, player.major, a.level);
   const talent = apprenticeDef(a.archId)?.talent === spec;
   const tag = talent ? `·天赋×${APPRENTICE_TALENT_BONUS}` : "";
-  const base = s.herb
-    ? `灵草 ~${s.herb}`
-    : s.ore
-      ? `玄铁 ~${s.ore}`
-      : s.dust
-        ? `器灵尘 ~${s.dust}`
-        : s.wudao
-          ? `悟道点 ~${s.wudao}`
-          : s.stone
-            ? `灵石 ~${formatGN(s.stone)}`
-            : s.pillId
-              ? `${pillDef(s.pillId)?.name ?? s.pillId} ~${s.pillCount}`
-              : "";
+  const parts: string[] = [];
+  if (s.herb) parts.push(`灵草 ~${s.herb}`);
+  if (s.ore) parts.push(`玄铁 ~${s.ore}`);
+  if (s.dust) parts.push(`器灵尘 ~${s.dust}`);
+  if (s.wudao) parts.push(`悟道点 ~${s.wudao}`);
+  if (s.stone) parts.push(`灵石 ~${formatGN(s.stone)}`);
+  if (s.pillId) parts.push(`${pillDef(s.pillId)?.name ?? s.pillId} ~${s.pillCount}`);
+  const base = parts.join(" · ");
   return base + tag;
 }
 
@@ -178,10 +174,10 @@ const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
           }}</span>
           <span class="text-[10px] text-ink-faint">Lv{{ a.level }}/{{ APPRENTICE_MAX_LEVEL }}</span>
           <span
-            v-if="a.bond >= BOND_TITLES[1]!.min"
+            v-if="a.bond > 0"
             class="rounded bg-cinnabar/10 px-1.5 py-0.5 text-[10px] text-cinnabar"
             :title="`羁绊 ${a.bond} 趟(完工趟数,纯称谓不带加成)`"
-            >{{ bondTitle(a.bond) }}</span
+            >{{ bondTitle(a.bond) }} · {{ a.bond }} 趟</span
           >
           <span class="ml-auto text-[10px] text-ink-faint">{{
             apprenticeDef(a.archId)?.desc ?? ""
@@ -217,6 +213,10 @@ const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
             </button>
           </div>
         </div>
+        <!-- 真传:跨世之缘只对最高羁绊开放 —— 养出真传的玩家该看得见这条,不藏注释 -->
+        <p v-if="a.bond >= BOND_TRUECODE_MIN" class="mt-1.5 text-[10px] text-gold-ink">
+          真传 —— 转世时凝一缕跨世之缘,来世情谊随魂而来
+        </p>
       </div>
     </div>
     <p v-else class="py-3 text-center text-[11px] text-ink-faint">

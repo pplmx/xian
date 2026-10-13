@@ -876,6 +876,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(char?.src, "不许再手写旧假账(保留法宝/折半)").not.toMatch(/天赋 \/ 法宝|功法折半/);
   });
 
+  it("弟子历练的灵石奖励要露 —— 尘与石都拼上,不许链式早退吞掉石头", () => {
+    // 历练(baseSpoils)同时产灵石(随境界折算的大头)与器尘,但 reapText/taskYield 原先都
+    // 是单个 early-return 链,器尘排在前 → 灵石永远不显示。奖励要拼全(parts.join),不退回「只报一种」。
+    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    expect(appr?.src, "要拼器尘").toContain("parts.push(`器灵尘");
+    expect(appr?.src, "要拼灵石").toContain("parts.push(`灵石 ");
+    expect(appr?.src, "不许单值早退").toContain("parts.join(");
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。
