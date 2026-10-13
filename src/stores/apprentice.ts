@@ -23,6 +23,8 @@ import {
   apprenticeSpoils,
   apprenticeTaskSeconds,
   taskDone,
+  dispatchAllToNeed as planDispatchAll,
+  type DispatchNeedStock,
   type OwnedApprentice,
   type TaskSpoils,
 } from "@/core/apprenticeService";
@@ -115,6 +117,18 @@ export const useApprenticeStore = defineStore(
       return true;
     }
 
+    /** 一键「各尽其长」:把所有闲置弟子派到当前最缺的门(目标无差别则各自专职) */
+    function dispatchAllToNeed(now: number, stock: DispatchNeedStock): number {
+      const idle = apprentices.value
+        .filter((x) => !x.task)
+        .map((x) => ({ uid: x.uid, talent: apprenticeDef(x.archId)?.talent ?? "adventure" }));
+      let n = 0;
+      for (const { uid, spec } of planDispatchAll(idle, stock)) {
+        if (dispatch(uid, spec, now)) n += 1;
+      }
+      return n;
+    }
+
     /** 收一名新弟子;槽满或灵石不够则不成 */
     function recruit(major: number): "full" | "poor" | "ok" {
       if (apprentices.value.length >= apprenticeSlots(major)) return "full";
@@ -127,7 +141,7 @@ export const useApprenticeStore = defineStore(
       return "ok";
     }
 
-    return { apprentices, sanitize, sync, collectFinished, dispatch, recruit };
+    return { apprentices, sanitize, sync, collectFinished, dispatch, dispatchAllToNeed, recruit };
   },
   { persist: persistConfig("apprentice") },
 );

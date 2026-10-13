@@ -94,6 +94,23 @@ function doRecruit(): void {
     notify(`槽位已满(${appr.apprentices.length}/${slots.value}),收不下新弟子`, "warn");
   else if (r === "poor") notify("灵石不足,收徒不成", "warn");
 }
+
+/** 「各尽其长」一键派发 —— 按库存读最缺的门,把闲置弟子都派过去 */
+function doDispatchAll(): void {
+  const idle = appr.apprentices.filter((x) => !x.task);
+  if (idle.length === 0) {
+    notify("弟子都在路上,无需再派", "info");
+    return;
+  }
+  const n = appr.dispatchAllToNeed(Date.now(), {
+    herb: resources.herb,
+    ore: resources.ore,
+    wudao: resources.wudao,
+    dust: resources.dust,
+  });
+  notify(n > 0 ? `${n} 名弟子各尽其长,已派往最缺的门` : "暂无闲置弟子可派", "success");
+}
+const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
 </script>
 
 <template>
@@ -127,6 +144,9 @@ function doRecruit(): void {
 
     <!-- 弟子 -->
     <div v-if="appr.apprentices.length" class="space-y-2">
+      <button class="btn-seal w-full !py-1 text-[11px]" :disabled="!hasIdle" @click="doDispatchAll">
+        {{ hasIdle ? "各尽其长 · 派闲置弟子去最缺的门" : "弟子都在路上" }}
+      </button>
       <div
         v-for="a in appr.apprentices"
         :key="a.uid"

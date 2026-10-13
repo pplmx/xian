@@ -83,3 +83,19 @@ export const APPRENTICE_TALENT_BONUS = 1.25;
 export function apprenticeSlots(major: number): number {
   return Math.min(5, 1 + Math.floor(Math.max(0, major) / 4));
 }
+
+/**
+ * 「各尽其长」一键派发的目标水位(见 core/apprenticeService.dispatchAllToNeed)。
+ *
+ * 每格是"库存到这条线才算够":缺得越多 score 越高,一键派发优先把闲置弟子
+ * 派去最缺的门。containers 是常识水位 —— 不是精确平衡判定,是"别让某样东西
+ * 一直空着也没人管"的懒开局。
+ */
+export const DISPATCH_NEED_TARGET: Record<"herb" | "ore" | "wudao" | "dust", number> = {
+  herb: 30,
+  ore: 20,
+  wudao: 10,
+  dust: 10,
+};
+/** 历练(灵石自理)的保底分:灵石需求几乎恒有,若永远低于材料短缺分就永不历练;给一个固定底分防偏心 */
+export const DISPATCH_ADVENTURE_FIXED_SCORE = 2;
