@@ -815,6 +815,30 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cult?.src, "不许手写「= 容量的 10 倍」这类字面量").not.toMatch(/= 容量的 \d+ 倍/);
   });
 
+  it("人物明细亮出递减规则 —— 同词条多源,不许只活在注释", () => {
+    // Phase 19.5 的关键设计(多来源边际递减、混合构筑更值)此前只活在公司注释与引擎
+    // 文档里:明细每一份虽是打完折的真值,玩家对着两三个来源看不出「第三个被砍半」。
+    // 点开多源明细时,把递减权重序从 DIMINISH_WEIGHTS 本体读出来,不许手抄 "50%/25%"。
+    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    expect(char?.src, "递减说明要读 DIMINISH_WEIGHTS 本体").toContain("DIMINISH_WEIGHTS");
+    expect(char?.src, "递减排重序从权重逐个换算且统走 formatPercent").toContain(
+      "formatPercent(w, 0)",
+    );
+    expect(char?.src, "递减注记要真挂在明细面板里").toContain('v-if="diminishNote"');
+    expect(char?.src, "方向要直说(混合比单条堆砌更值)").toContain("混合构筑比单条堆砌更值");
+  });
+
+  it("词条转移拦因要说清 —— 品质不够报缺哪档,落位不可报为什么", () => {
+    // 候选「品质不够」太笼统 —— 玩家看不出该把目标件升到哪一档;落位「不可」也不
+    // 说原因。两处都换口具体理由,与「决策信息完整」同族。
+    const xfer = FILES.find((f) => f.path === "components/equipment/AffixTransferPanel.vue");
+    expect(xfer?.src, "品质不够要直说缺哪一档").toContain("需 ≥ ${minQualityName()}");
+    expect(xfer?.src, "落位不可要报具体原因(读 transferBlockText)").toContain(
+      "transferBlockText(l.check.block, affixId!)",
+    );
+    expect(xfer?.src, "不许退回裸「品质不够」定性词").not.toContain('"品质不够"');
+  });
+
   it("今日天道有占位 —— 未择道途,也要说出它去哪了", () => {
     // 「今日天道」区块 v-if="daily",而 daily 依赖 endgame.daoPath —— 刚登真仙
     // 未择道途时整块消失,玩家切到试炼页找不到今日天道,会以为 bug。类目下

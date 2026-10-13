@@ -10,12 +10,13 @@
 import { computed, ref, watch } from "vue";
 import type { EquipmentInstance } from "@/types";
 import { affixDef } from "@/data/affixes";
-import { qualityDef } from "@/data/qualities";
+import { QUALITIES, qualityDef } from "@/data/qualities";
 import { formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { useResourcesStore } from "@/stores/resources";
 import { planTransfer, transferLandings, type TransferRequest } from "@/core/affixTransfer";
 import { transferAffix, transferCandidates, transferShort } from "@/composables/useAffixTransfer";
+import { transferBlockText } from "@/ui/affixTransferText";
 
 const props = defineProps<{ source: EquipmentInstance | null }>();
 const emit = defineEmits<{ close: [] }>();
@@ -59,6 +60,14 @@ const plan = computed(() => {
 });
 const short = computed(() => (plan.value ? transferShort(plan.value.cost) : null));
 const affordable = computed(() => short.value === null && plan.value !== null);
+
+/** 这条词条要求的目标件最低品质 —— 「品质不够」要直说差哪一档,不许只报定性词 */
+function minQualityName(): string | null {
+  if (!affixId.value) return null;
+  const rank = affixDef(affixId.value)?.minRank;
+  if (rank === undefined) return null;
+  return QUALITIES.find((q) => q.rank === rank)?.name ?? null;
+}
 
 function pick(id: string): void {
   affixId.value = id;
@@ -138,7 +147,13 @@ function doTransfer(): void {
             <span>{{ c.item.quality }}·{{ c.item.tier }} 阶</span>
             <span class="ml-auto">
               {{ c.worn ? "已装备" : "" }}
-              {{ c.block === "dup" ? "已有更高" : c.block === "rank" ? "品质不够" : "" }}
+              {{
+                c.block === "dup"
+                  ? "已有更高"
+                  : c.block === "rank"
+                    ? `需 ≥ ${minQualityName()}`
+                    : ""
+              }}
             </span>
           </button>
         </div>
@@ -166,7 +181,9 @@ function doTransfer(): void {
                 ? "新增一条"
                 : `顶替「${affixDef(l.replaceId!)?.name ?? l.replaceId}」`
             }}</span>
-            <span v-if="!l.check.ok" class="ml-auto">{{ l.check.ok ? "" : "不可" }}</span>
+            <span v-if="!l.check.ok" class="ml-auto">{{
+              transferBlockText(l.check.block, affixId!)
+            }}</span>
             <span v-else class="ml-auto opacity-70">
               <template v-if="l.check.ok">
                 <span v-if="replaceId === l.replaceId" class="text-accent">✓ 选中</span>

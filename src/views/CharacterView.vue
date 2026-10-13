@@ -132,6 +132,9 @@
           <p class="mt-1 text-[9px] leading-relaxed text-ink-faint">
             明细之和就是上面那个数;标「另乘」的不并入百分比,而是单独乘在攻防血上。
           </p>
+          <p v-if="diminishNote" class="mt-0.5 text-[9px] leading-relaxed text-cinnabar">
+            {{ diminishNote }}
+          </p>
         </div>
         <p v-if="softCappedNotes.length" class="mt-1.5 text-[10px] leading-relaxed text-cinnabar">
           标「软」者已达软上限:{{
@@ -721,7 +724,13 @@ import { HERITAGE } from "@/core/samsaraAudit";
 import { detectBuild } from "@/core/buildDetect";
 import { useLoadoutsStore } from "@/stores/loadouts";
 import { isSoftCapped, modOf } from "@/core/statsCalc";
-import { DAO_FRUIT_COMBAT_BONUS, DAO_FRUIT_CULT_BONUS, SOFT_CAPS } from "@/data/constants";
+import {
+  DAO_FRUIT_COMBAT_BONUS,
+  DAO_FRUIT_CULT_BONUS,
+  DIMINISH_KEYS,
+  DIMINISH_WEIGHTS,
+  SOFT_CAPS,
+} from "@/data/constants";
 import { RESPONSE_NAMES, SPARK_NAMES } from "@/data/bondIntent";
 import { TRIGGER_NAMES } from "@/data/bondEvents";
 import { fruitMarginalInfo } from "@/core/resourceGuidance";
@@ -802,6 +811,20 @@ const breakdownRows = computed(() => {
 function toggleBreakdown(key: AnyStatKey): void {
   breakdownKey.value = breakdownKey.value === key ? null : key;
 }
+
+/**
+ * 递减规则别只活在注释里:同一条件/触发词条多个来源时,明细里每一份已是打完折的
+ * 真值,但玩家对着两三个来源看不出「第三个被砍半」。权重序从 DIMINISH_WEIGHTS
+ * 本体读(第 5 个起一律 25%),不在界面手抄 "50%/25%"。
+ */
+const DIMINISH = new Set<AnyStatKey>(DIMINISH_KEYS);
+const diminishNote = computed(() => {
+  const key = breakdownKey.value;
+  if (!key || !DIMINISH.has(key)) return null;
+  if (breakdownRows.value.length < 2) return null;
+  const ladder = DIMINISH_WEIGHTS.map((w, i) => `第${i + 1}个 ${formatPercent(w, 0)}`).join("、");
+  return `同类来源按贡献降序 ${ladder} 递减计入 —— 混合构筑比单条堆砌更值`;
+});
 
 /**
  * 软上限从来不是暗改:越过之后超出部分按折扣计入,
