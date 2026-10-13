@@ -12,11 +12,14 @@ import type { EquipmentInstance } from "@/types";
 import { affixDef } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
 import { formatGN } from "@/utils/format";
+import { toNum } from "@/utils/gnum";
+import { useResourcesStore } from "@/stores/resources";
 import { planTransfer, transferLandings, type TransferRequest } from "@/core/affixTransfer";
 import { transferAffix, transferCandidates, transferShort } from "@/composables/useAffixTransfer";
 
 const props = defineProps<{ source: EquipmentInstance | null }>();
 const emit = defineEmits<{ close: [] }>();
+const resources = useResourcesStore();
 
 // ---- 选择状态 ----
 const affixId = ref<string | null>(null);
@@ -186,8 +189,10 @@ function doTransfer(): void {
             {{ formatGN(plan.cost.stone) }}
             <span v-if="plan.cost.sealStone">(含封存 {{ formatGN(plan.cost.sealStone) }})</span>
           </span>
-          <span v-else-if="short === 'stone'" class="text-ink-warn">灵石不足</span>
-          <span v-else-if="short === 'dust'" class="text-ink-warn">器灵尘不足</span>
+          <span v-else-if="short" class="text-ink-warn tabular">
+            尚差 器灵尘×{{ Math.max(0, plan.cost.dust - resources.dust) }} · 灵石
+            {{ formatGN(Math.max(0, toNum(plan.cost.stone) - toNum(resources.spiritStone))) }}
+          </span>
           <span v-else class="text-ink-faint">任选一处落位</span>
         </span>
         <button

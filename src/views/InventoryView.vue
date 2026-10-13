@@ -1260,7 +1260,7 @@ const recipes = computed(() =>
         shortText: shortHerb
           ? `缺${HERB_GRADE_NAMES[cost.herbGrade]},持 ${resources.herbOf(cost.herbGrade)}/${cost.herb}`
           : shortStone
-            ? `灵石不足(需 ${formatGN(cost.stone)})`
+            ? `灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石`
             : null,
       };
     })

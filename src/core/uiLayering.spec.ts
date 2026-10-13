@@ -775,6 +775,46 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("词条转移也列短差 —— 灵石/器灵尘不足不许只剩定性词", () => {
+    // 同族规(强化/重铸/封存都「尚差 N」,见 EquipmentDetailDialog):词条转移此前
+    // 只报「灵石不足/器灵尘不足」,付不起看不到差多少。补齐并钉死:短差必须走
+    // GNum 指数感知减法(与重铸同款),不许退回裸定性词。
+    const xfer = FILES.find((f) => f.path === "components/equipment/AffixTransferPanel.vue");
+    expect(xfer?.src, "转移付不起要列器灵尘差").toContain(
+      "器灵尘×{{ Math.max(0, plan.cost.dust - resources.dust) }}",
+    );
+    expect(xfer?.src, "转移付不起要列灵石差(GNum 感知)").toContain(
+      "toNum(plan.cost.stone) - toNum(resources.spiritStone)",
+    );
+    expect(xfer?.src, "不许退回裸「灵石不足」").not.toContain("灵石不足");
+    expect(xfer?.src, "不许退回裸「器灵尘不足」").not.toContain("器灵尘不足");
+  });
+
+  it("坊市售料不足列差额 —— 与悬赏「需 N X,缺 M」同源", () => {
+    // 买卖一族里买货、悬赏每单都列缺,唯独「售灵草/售玄铁」不足时只置灰不报差。
+    // 补齐并钉死:不足时按钮换口「尚差 N 灵草/玄铁」,与货架/悬赏同一纪律。
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    expect(market?.src, "售灵草不足要列差").toContain("尚差 ${herbSellShort} 灵草");
+    expect(market?.src, "售玄铁不足要列差").toContain("尚差 ${oreSellShort} 玄铁");
+  });
+
+  it("炼丹灵石不足列「尚差 N 石」 —— 与灵草臂同族,不许只报需求值", () => {
+    // 灵草臂已「持 x/y」,灵石臂却只「需 X」;同样付不起,玩家看不出差多少。
+    // 统一换口「尚差 N 石」,与灵草坊「尚差 N 石」同款(GNum 感知减法)。
+    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    expect(inv?.src, "炼丹灵石不足要列尚差").toContain(
+      "灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石",
+    );
+  });
+
+  it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
+    // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
+    // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。
+    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    expect(cult?.src, "积余备注要读 QI_BANK_MULT").toContain("容量的 ${QI_BANK_MULT} 倍)");
+    expect(cult?.src, "不许手写「= 容量的 10 倍」这类字面量").not.toMatch(/= 容量的 \d+ 倍/);
+  });
+
   it("今日天道有占位 —— 未择道途,也要说出它去哪了", () => {
     // 「今日天道」区块 v-if="daily",而 daily 依赖 endgame.daoPath —— 刚登真仙
     // 未择道途时整块消失,玩家切到试炼页找不到今日天道,会以为 bug。类目下

@@ -103,6 +103,12 @@ function sellMat(matId: "herb" | "ore"): void {
   market.sellMaterial(matId, player.major);
 }
 
+/** 即时售短差:不足售不出去时与悬赏「需 N X,缺 M」同源,直列差几份 */
+const herbSellShort = computed(() =>
+  Math.max(0, MARKET_MAT_COUNT - resources.herbs[herbGradeOfMajor(player.major)]),
+);
+const oreSellShort = computed(() => Math.max(0, MARKET_MAT_COUNT - resources.ore));
+
 function claimBounty(idx: number): void {
   const slot = bounty.orders.find((o) => o.idx === idx);
   // 贡器要选交哪一件,不能悄悄拿走行囊里顺着序排在第一件的够格兵刃
@@ -386,14 +392,14 @@ function bountyShort(o: BountySlot): string | null {
             :disabled="!resources.hasSmall('herb', MARKET_MAT_COUNT)"
             @click="sellMat('herb')"
           >
-            售灵草×{{ MARKET_MAT_COUNT }}
+            {{ herbSellShort > 0 ? `尚差 ${herbSellShort} 灵草` : `售灵草×${MARKET_MAT_COUNT}` }}
           </button>
           <button
             class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
             :disabled="!resources.hasSmall('ore', MARKET_MAT_COUNT)"
             @click="sellMat('ore')"
           >
-            售玄铁×{{ MARKET_MAT_COUNT }}
+            {{ oreSellShort > 0 ? `尚差 ${oreSellShort} 玄铁` : `售玄铁×${MARKET_MAT_COUNT}` }}
           </button>
           <span v-if="sellablePills.length === 0" class="text-[10px] text-ink-faint"
             >并无即时可售的丹药 —— 历练所得,自能入市</span

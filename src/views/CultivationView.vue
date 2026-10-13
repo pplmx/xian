@@ -869,7 +869,7 @@ const qiEtaText = computed(() => {
 });
 const qiDetailNote = computed(() => {
   if (resources.qi >= player.qiBankCapValue) {
-    return `灵气已积到上限(${formatNum(player.qiBankCapValue)} = 容量的 10 倍)——不会再涨;突破、疗伤与炼丹会消耗它。`;
+    return `灵气已积到上限(${formatNum(player.qiBankCapValue)} = 容量的 ${QI_BANK_MULT} 倍)——不会再涨;突破、疗伤与炼丹会消耗它。`;
   }
   if (player.qiCapValue - resources.qi <= 0) return "灵气已满(标称容量),继续积余到上限为止。";
   return undefined;
