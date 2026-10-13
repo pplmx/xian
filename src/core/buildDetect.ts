@@ -88,6 +88,9 @@ function shortName(style: BuildStyleDef): string {
   return style.name.replace(/流$/, "");
 }
 
+/** 各流派短名(去「流」):空态名单等展示用,由 BUILD_STYLES 派生,不另抄一份 */
+export const STYLE_SHORT_NAMES: string[] = BUILD_STYLES.map(shortName);
+
 /** 识别当前流派;不足雏形返回 null */
 export function detectBuild(mods: StatMods): BuildDetection | null {
   const scored = BUILD_STYLES.map((style) => {

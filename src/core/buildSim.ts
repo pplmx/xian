@@ -11,8 +11,12 @@ import { tribulationDef, TRIBULATIONS, type TribulationKind } from "@/data/tribu
 import { resolveCombat } from "./combat";
 import { traceTribulation } from "./tribulationDecision";
 import { mergeMods } from "./statsCalc";
+import { BUILD_STYLES } from "./buildDetect";
 
 // ---------- 流派构筑(中期典型成型度:词条×3~4 + 功法 + 天赋 + 法宝被动) ----------
+
+/** 流派显示名由 BUILD_STYLES 派生(6+ 处共用同一 lookup),改名后模拟矩阵自动跟随 */
+const styleName = (id: string): string => BUILD_STYLES.find((s) => s.id === id)?.name ?? id;
 
 export interface BuildProfile {
   id: string;
@@ -30,7 +34,7 @@ const ARTIFACT_LEVEL = 3;
 export const BUILD_PROFILES: BuildProfile[] = [
   {
     id: "beishui",
-    name: "背水流",
+    name: styleName("beishui"),
     mods: { lowHpDamage: 0.95, lowHpReduction: 0.5, executeDamage: 0.45, lifesteal: 0.12 },
     artifactId: "af_youming",
     atkMult: 1.0,
@@ -39,7 +43,7 @@ export const BUILD_PROFILES: BuildProfile[] = [
   },
   {
     id: "gangdun",
-    name: "罡盾流",
+    name: styleName("gangdun"),
     mods: { shieldOnStart: 0.4, shieldPower: 0.5, damageReduction: 0.12 },
     artifactId: "af_xuantian",
     atkMult: 0.95,
@@ -48,7 +52,7 @@ export const BUILD_PROFILES: BuildProfile[] = [
   },
   {
     id: "fanzhen",
-    name: "反震流",
+    name: styleName("fanzhen"),
     mods: { counterRate: 0.65, counterDamage: 1.5, damageReduction: 0.22 },
     artifactId: "af_fuyao",
     atkMult: 0.78,
@@ -57,7 +61,7 @@ export const BUILD_PROFILES: BuildProfile[] = [
   },
   {
     id: "lianji",
-    name: "连击流",
+    name: styleName("lianji"),
     mods: { comboRate: 0.5, comboDamage: 0.7, speed: 0.3, critRate: 0.1, critDamage: 0.3 },
     artifactId: "af_leiyin",
     atkMult: 1.1,
@@ -66,7 +70,7 @@ export const BUILD_PROFILES: BuildProfile[] = [
   },
   {
     id: "muze",
-    name: "沐泽流",
+    name: styleName("muze"),
     mods: { lifesteal: 0.09, regenPerRound: 0.03, overhealShield: 0.9 },
     artifactId: "af_yujing",
     atkMult: 0.88,
@@ -75,7 +79,7 @@ export const BUILD_PROFILES: BuildProfile[] = [
   },
   {
     id: "fengmang",
-    name: "锋芒流",
+    name: styleName("fengmang"),
     mods: {
       fullHpDamage: 0.55,
       firstStrike: 0.7,

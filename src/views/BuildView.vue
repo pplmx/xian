@@ -190,7 +190,7 @@
         道途尚未成路。凑齐同一路数的词条、功法与法宝,自成一派——
         <br />
         <span class="text-ink-faint"
-          >背水 / 罡盾 / 反震 / 连击 / 沐泽 / 锋芒,各有克制,亦各有天敌。</span
+          >{{ STYLE_SHORT_NAMES.join(" / ") }},各有克制,亦各有天敌。</span
         >
       </p>
     </div>
@@ -326,7 +326,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
-import { detectBuild, buildSources } from "@/core/buildDetect";
+import { detectBuild, buildSources, STYLE_SHORT_NAMES } from "@/core/buildDetect";
 import { ratePower, ratingStars, type PowerDimKey } from "@/core/powerRating";
 import { matchComboArt, COMBO_SECONDARY_MIN } from "@/data/comboArts";
 import { measureResilience, resilienceText } from "@/core/resilience";
