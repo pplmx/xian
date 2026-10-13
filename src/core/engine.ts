@@ -120,9 +120,15 @@ class GameEngine {
 
     if (dt > OFFLINE_MIN_SECONDS) {
       // 长时间停摆(休眠/后台冻结):走离线结算。与 start 同理,先翻日再结算,
-      // 冻结跨午夜恢复时离线收益归"归来之日"
+      // 冻结跨午夜恢复时离线收益归"归来之日"。结算留在 try 内:一旦中途抛错,
+      // 也要把 this.lastTickAt 推平 —— 否则下一 tick 会重算同一条长停摆差、整段离线
+      // 反复发赏,资源就翻倍了(见 settleOffline 的账在/store 写入是边走边记)。
       rolloverDailyIfNeeded();
-      settleOffline(now);
+      try {
+        settleOffline(now);
+      } catch (err) {
+        console.error("[引擎] 离线结算异常", err);
+      }
     } else {
       this.advance(dt, now);
     }

@@ -14,8 +14,18 @@ export const useLoadoutsStore = defineStore(
 
     /** 存档修复:配装列表被写坏时,配装页会在渲染期抛错 */
     function sanitize(): void {
+      // 悬浮引用/坏档要整条丢,不能只查外层 id:applyLoadout 会
+      // Object.keys(equipment)/subGongfa.filter/artifactIds.filter —— 一处崩,切换构筑就散架。
       list.value = asArray<Loadout>(list.value).filter(
-        (l) => l !== null && typeof l === "object" && typeof l.id === "string",
+        (l) =>
+          l !== null &&
+          typeof l === "object" &&
+          typeof l.id === "string" &&
+          l.equipment !== null &&
+          typeof l.equipment === "object" &&
+          !Array.isArray(l.equipment) &&
+          Array.isArray(l.subGongfa) &&
+          Array.isArray(l.artifactIds),
       );
     }
 

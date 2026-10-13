@@ -195,6 +195,7 @@ const CATEGORIES = [
     name: "Regression  服务与归因",
     match: [
       "loadoutService",
+      "loadouts",
       "battleAnalysis",
       "foeOrigin",
       "loreService",
