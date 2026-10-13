@@ -67,8 +67,10 @@ export function mul(a: GNum, b: GNum): GNum {
   const me = a.m * b.m;
   if (!Number.isFinite(me)) {
     // 尾数乘积上溢(如 b 未归一化、尾数 ~1e309):不能静默归零 —— 会把一笔巨值抹成 0
-    // (0 伤害/0 资源/0 修为,且无任何报错)。用对数空间折算指数,保住量级。
-    return powN(10, a.e + Math.log10(Math.abs(a.m)) + (b.e + Math.log10(Math.abs(b.m))));
+    // (0 伤害/0 资源/0 修为,且无任何报错)。用对数空间折算指数,保住量级与符号
+    // (旧实现漏了符号,powN 恒非负,负值巨量会被翻成正)。
+    const r = powN(10, a.e + Math.log10(Math.abs(a.m)) + (b.e + Math.log10(Math.abs(b.m))));
+    return me < 0 ? neg(r) : r;
   }
   return normalize(me, a.e + b.e);
 }
@@ -77,8 +79,9 @@ export function mulN(a: GNum, n: number): GNum {
   if (n === 0 || a.m === 0) return gnZero();
   const me = a.m * n;
   if (!Number.isFinite(me)) {
-    // 标量 n 上溢(如 n ~5e307)时同 mul:把溢出折进指数,不归零
-    return powN(10, a.e + Math.log10(Math.abs(a.m)) + Math.log10(Math.abs(n)));
+    // 标量 n 上溢(如 n ~5e307)时同 mul:把溢出折进指数,不归零,并保住符号
+    const r = powN(10, a.e + Math.log10(Math.abs(a.m)) + Math.log10(Math.abs(n)));
+    return me < 0 ? neg(r) : r;
   }
   return normalize(me, a.e);
 }

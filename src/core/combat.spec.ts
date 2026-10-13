@@ -99,6 +99,14 @@ describe("自动战斗", () => {
     expect(Number.isFinite(rate)).toBe(true);
   });
 
+  it("sampleWinRate 按胜的比例取档 —— 2 取样全胜应顶格,不被当成 2/3", () => {
+    // 旧实现按胜的个数取 4 档表,只对 samples===3 对:2/2(100%)会被当成 2/3 → 虚低到 0.72,
+    // 升 samples 的新调用方会悄悄漂。按分数取档(frac×3 再四舍五入)后 2/2 应顶格 0.93。
+    const enemy = makeEnemySnap(wolf, 1, 1);
+    const rate = sampleWinRate(playerSnap(1000), enemy, seeded(9), 2);
+    expect(rate).toBe(0.93);
+  });
+
   it("离线原始胜率:打得过给正胜率,打不过给 0(不套 0.08 保底)", () => {
     // 碾压级(战力差远超 3 取样能掩盖):原始胜率顶格 1
     const crush = sampleWinRateRaw(playerSnap(1000), makeEnemySnap(wolf, 1, 1), seeded(9), 3);

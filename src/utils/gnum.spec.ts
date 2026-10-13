@@ -16,6 +16,7 @@ import {
   subClamp,
   toNum,
 } from "./gnum";
+import { gnumNumeric } from "@/core/engineNumeric";
 
 describe("GameNumber 大数运算", () => {
   it("构造与规范化", () => {
@@ -64,6 +65,32 @@ describe("GameNumber 大数运算", () => {
     expect(toNum(a)).toBe(Infinity); // 正确保持巨量
     // 常规有限路径不受影响
     expect(toNum(mulN(gn(50), 3))).toBeCloseTo(150);
+  });
+
+  it("上溢折指数也保住符号 —— 负值巨量不被翻成正", () => {
+    // mul 上溢:两尾数乘积 ±Infinity,量级经对数恢复,但符号要保留(旧实现丢符号,
+    // powN 恒非负,把 -1e616 翻成 +1e616 —— 与分支自己的「不静默篡改」初衷相悖)
+    const negHuge = mul({ m: -1e308, e: 0 }, { m: 1e308, e: 0 });
+    expect(negHuge.m < 0).toBe(true);
+    expect(negHuge.e).toBeGreaterThan(300);
+    const negScalar = mulN({ m: 1e308, e: 0 }, -3);
+    expect(negScalar.m < 0).toBe(true);
+    // 正巨量与常规有限值不受影响
+    expect(mul({ m: 1e308, e: 0 }, { m: 1e308, e: 0 }).m > 0).toBe(true);
+    expect(toNum(mulN(gn(50), 3))).toBeCloseTo(150);
+  });
+
+  it("GNum 底数的幂:e·k 巨大时不上溢成 NaN/0", () => {
+    // 旧实现拆「尾数取幂 + 指数平移」,e·k 一大(1e16×2)就上溢成 0;对数空间保留整数指数
+    const big = gnumNumeric.pow({ m: 1, e: 1e16 }, 2);
+    expect(big.m === 0).toBe(false);
+    expect(Number.isFinite(big.e)).toBe(true);
+    expect(big.e).toBe(2e16);
+    // 常规小指数路径与旧实现一致(符号按奇偶、小数幂也对)
+    expect(toNum(gnumNumeric.pow(gn(2), 3))).toBeCloseTo(8);
+    expect(toNum(gnumNumeric.pow(gn(-2), 3))).toBeCloseTo(-8);
+    expect(toNum(gnumNumeric.pow(gn(-2), 2))).toBeCloseTo(4);
+    expect(toNum(gnumNumeric.pow(gn(4), 0.5))).toBeCloseTo(2);
   });
 
   it("NaN 尾数按 0 比较(与 gn() 的 scrubbing 一致)", () => {

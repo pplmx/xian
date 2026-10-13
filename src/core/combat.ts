@@ -662,9 +662,11 @@ export function sampleWinRate(
     if (resolveCombat(pSnap, eSnap, rng, rules).win) wins += 1;
   }
   const table = [0.08, 0.4, 0.72, 0.93];
-  // 索引夹到表长内:samples 取 >3 时 Math.min(samples, wins) 会越界取到 undefined →
-  // 静默变 NaN,被调用方当作胜率一路传导(离线收益/远征)。表是 4 档,顶格就是 0.93
-  return table[Math.min(table.length - 1, wins)]!;
+  // 表是 4 档胜率,须按"胜的比例"取档,不能按胜的**个数**取 —— 否则 samples 一
+  // 变,同一胜率的取值就漂(2/2 本应是顶档却被当成 2/3)。旧实现写死 samples===3,
+  // 参数是个谎言;凡是升 samples 的新调用方都会悄悄虚报/漏报胜率。
+  const frac = wins / samples;
+  return table[Math.min(table.length - 1, Math.round(frac * (table.length - 1)))]!;
 }
 
 /**

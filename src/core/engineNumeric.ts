@@ -11,7 +11,7 @@
  */
 import type { GNum } from "@/types";
 import type { Numeric } from "wanxiang-engine";
-import { add, cmp, div, gn, gnMax, gnZero, mul, mulN, powN, sub, toNum } from "@/utils/gnum";
+import { add, cmp, div, gn, gnMax, gnZero, mul, mulN, neg, powN, sub, toNum } from "@/utils/gnum";
 import { formatExact } from "@/utils/format";
 
 export const gnumNumeric: Numeric<GNum> = {
@@ -28,20 +28,16 @@ export const gnumNumeric: Numeric<GNum> = {
   /**
    * 以 GNum 为底数的幂。
    *
-   * 分解成"尾数取幂 + 指数平移":a = m × 10^e → a^k = (m^k) × 10^(e·k)。
-   * 整数指数下 e·k 是整数,平移不引入误差;本作的曲线一律走 `powN`,故这条
-   * 只在库内部以 T 为底数的场合用到(如用户自定义的复合曲线)。
+   * 直接在对数空间算:a = |m| × 10^e → a^k = 10^(k·(lg|m| + e)),再按奇偶带符号。
+   * 旧实现拆成「尾数取幂 + 指数平移」(m^k × 10^(e·k)),e·k 一大(如 e ~1e16、k=2)
+   * 就上溢成 NaN/0,静默把曲线碾平。对数空间下指数作为整数 exponent 原样保留,不会
+   * 掉进 Number 的上溢;正常的小指数学路经与旧实现逐位一致。
    */
   pow: (a, k) => {
     if (a.m === 0) return gnZero();
     const negative = a.m < 0 && Number.isInteger(k) && Math.abs(k % 2) === 1;
-    const mantissa = powN(Math.abs(a.m), k);
-    const shift = a.e * k;
-    const whole = Math.floor(shift);
-    return gn({
-      m: mantissa.m * Math.pow(10, shift - whole) * (negative ? -1 : 1),
-      e: mantissa.e + whole,
-    });
+    const r = powN(10, k * (Math.log10(Math.abs(a.m)) + a.e));
+    return negative ? neg(r) : r;
   },
   powN: (base, k) => powN(base, k),
   cmp,
