@@ -500,7 +500,20 @@
         <span class="text-qing">安神 · 澄心 · 定心</span>,双成 / 心得 / 护料即刻各涨一截
       </p>
       <div v-if="recipes.length" class="max-h-64 space-y-2 overflow-y-auto">
-        <div v-for="r in recipes" :key="r.def.id" class="card-ink px-3.5 py-2.5">
+        <input
+          v-model="recipeQuery"
+          type="text"
+          inputmode="search"
+          class="w-full rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[12px] text-ink outline-none placeholder:text-ink-faint"
+          placeholder="搜方名…"
+        />
+        <p
+          v-if="recipeQuery.trim() !== '' && !filteredRecipes.length"
+          class="px-0.5 text-[10px] text-ink-faint"
+        >
+          没有叫「{{ recipeQuery.trim() }}」的方子
+        </p>
+        <div v-for="r in filteredRecipes" :key="r.def.id" class="card-ink px-3.5 py-2.5">
           <!--
             左图 + 中信息 + 右把握:两个按钮下移到卡底 —— 三列挤在一行时,
             中间的「方名 / 代价 / 成品」只剩一百来像素,「聚气散」被折成「聚气/散」(实测)。
@@ -1305,6 +1318,13 @@ const skillRows = computed(() =>
   }),
 );
 
+/** 炉前按方名过滤:空白显示全部,输入即滤(trim 后空串不拦)。方名是正身,成品贴名不进搜索 */
+const filteredRecipes = computed(() => {
+  const q = recipeQuery.value.trim();
+  if (!q) return recipes.value;
+  return recipes.value.filter((r) => r.def.name.includes(q));
+});
+
 /**
  * 把握度配色:七成以上放心开炉(石绿)、三成以下是在赌(朱砂)、中间档留意(赭金)。
  * 色类必须是色板真类 —— 曾经写过 text-jade-ink / text-crimson-ink 两个不存在的类,
@@ -1392,6 +1412,8 @@ const currentPillHint = computed<{ text: string; tone: "cinnabar" | "amber" | "f
 );
 
 const craftOpen = ref(false);
+/** 炉前搜方名:方子一旦上手得多照单海搜,输入即滤(空白显示全部) */
+const recipeQuery = ref("");
 
 /** 服用后若已吃完最后一枚,顺手关掉详情——否则弹窗会停在一个不存在的丹药上 */
 function onUsePill(): void {
