@@ -93,7 +93,9 @@ function doTransfer(): void {
   <div class="rounded-lg border border-ink/10 bg-paper-deep/60 p-3 text-[12px]">
     <div class="mb-2 flex items-center gap-2">
       <span class="font-medium text-ink">词条转移</span>
-      <span class="text-[10px] text-ink-faint">抽走源件一条词条,落到另一件上;源件保留</span>
+      <span class="text-[10px] text-ink-faint"
+        >抽走源件一条词条,落到另一件上;源件保留,被移走与被顶替的词条皆不可回</span
+      >
       <button class="btn-ghost ml-auto !px-2 !py-0.5 text-[11px]" @click="emit('close')">
         收起
       </button>
@@ -179,7 +181,7 @@ function doTransfer(): void {
             <span>{{
               l.replaceId === null
                 ? "新增一条"
-                : `顶替「${affixDef(l.replaceId!)?.name ?? l.replaceId}」`
+                : `顶替「${affixDef(l.replaceId!)?.name ?? l.replaceId}」(旧条消散)`
             }}</span>
             <span v-if="!l.check.ok" class="ml-auto">{{
               transferBlockText(l.check.block, affixId!)

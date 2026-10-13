@@ -148,6 +148,9 @@
       </div>
 
       <p class="mt-3 font-kai text-[13px] tracking-widest text-ink">择一先天之姿</p>
+      <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        只取其一,余者本世无缘 —— 下一世才会重抽。
+      </p>
       <p
         v-if="view.talentChoices.length === 0"
         class="mt-2 text-[11px] leading-relaxed text-ink-faint"
@@ -229,7 +232,9 @@
             <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ t.vow }}</p>
             <p class="mt-0.5 text-[11px] text-ink-faint">
               {{ t.goal }}
-              <span v-if="t.taboo" class="ml-1 text-amber-ink">忌:{{ TABOO_NAMES[t.taboo] }}</span>
+              <span v-if="t.taboo" class="ml-1 text-amber-ink"
+                >忌:{{ TABOO_NAMES[t.taboo] }} —— 一世守之,破之题废,无所得</span
+              >
             </p>
           </button>
         </div>
