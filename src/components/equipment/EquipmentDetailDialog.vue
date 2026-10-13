@@ -214,6 +214,10 @@
           <span>强化 +{{ inst.level + 1 }} / 上限 {{ equipLevelCap() }}</span>
           <span class="tabular">器灵尘×{{ upCost.dust }} · 灵石 {{ formatGN(upCost.stone) }}</span>
         </p>
+        <!-- 代价有了,这一级给什么也要在 —— 基础攻防血按 (1+级数×12%) 叠乘,读 EPQUIP_LEVEL_BONUS 不手写 -->
+        <p class="mt-0.5 text-[10px] text-ink-faint">
+          强化每级:基础攻防血 ×(1 + 级数 ×{{ formatPercent(EQUIP_LEVEL_BONUS, 0) }})
+        </p>
         <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完(与法宝炼化同款) -->
         <p v-if="!upAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
           尚差 器灵尘×{{ Math.max(0, upCost.dust - resources.dust) }} · 灵石
@@ -503,6 +507,7 @@ import { affixDef, AFFIXES } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
 import { usePlayerStore } from "@/stores/player";
 import { formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
+import { EQUIP_LEVEL_BONUS } from "@/data/constants";
 import { isZero, sub, subClamp } from "@/utils/gnum";
 import type { AnyStatKey, GNum } from "@/types";
 import { AFFIX_RARITY_META, STAT_NAMES } from "@/ui/statNames";

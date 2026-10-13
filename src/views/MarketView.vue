@@ -25,8 +25,9 @@ import {
   MARKET_REFRESH_SECONDS,
 } from "@/data/market";
 import type { BountySlot } from "@/data/bounty";
-import { marketEquipInstance, marketRemainingSec } from "@/core/marketService";
-import { bountyRemainingSec } from "@/core/bountyService";
+import type { EquipmentInstance } from "@/types";
+import { marketEquipInstance, marketRemainingSec, consignPrice } from "@/core/marketService";
+import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
 import { qualityDef } from "@/data/qualities";
@@ -140,6 +141,12 @@ function deliverPicked(uid: string): void {
   const r = bounty.claimEquip(equipPick.value, uid);
   equipPick.value = null;
   if (r === "insufficient") notify("这件不够阶,换一件", "warn");
+}
+
+/** 贡这柄可得(随所交之品现算,与交货结算同源 —— 交哪件前先亮价) */
+function equipBountyText(it: EquipmentInstance): string {
+  const r = equipBountyReward(it.tier, qualityDef(it.quality).rank);
+  return `${formatGN(r.stone)} 石 · ${r.dust} 尘`;
 }
 
 /** 逐单交货短差:够交回 null,不够列「需 N X,缺 M」(与「尚差 N 石」同一纪律) */
@@ -325,6 +332,9 @@ function bountyShort(o: BountySlot): string | null {
               >{{ qualityDef(it.quality).name }} · {{ it.tier }}阶</span
             >
           </span>
+          <span class="ml-1 shrink-0 text-[11px] text-ink-faint tabular"
+            >收 {{ equipBountyText(it) }}
+          </span>
           <span class="shrink-0 text-cinnabar">交付</span>
         </button>
         <p v-if="equipCandidates.length === 0" class="text-[11px] text-ink-faint">没有够阶的兵刃</p>
@@ -368,7 +378,8 @@ function bountyShort(o: BountySlot): string | null {
               class="shrink-0 rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
               @click="consign(it.uid)"
             >
-              {{ it.quality }}·{{ it.tier }}阶
+              {{ it.quality }}·{{ it.tier }}阶 ·
+              {{ formatGN(consignPrice(it.tier, qualityDef(it.quality).rank)) }} 石
             </button>
             <span v-if="inventory.bagItems.length === 0" class="text-[10px] text-ink-faint"
               >行囊空空 —— 去历练中寻些机缘吧</span
