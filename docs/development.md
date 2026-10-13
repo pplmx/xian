@@ -133,6 +133,30 @@ vp preview        # 预览构建结果
 **构建那一步本身**(`bun scripts/build-timed.mjs`,把构建跑一遍并计时,超上限即红 ——
 只拦「成倍长回去」,上限按本机读数四到五倍给,CI 机器慢也吃得下)。
 
+### 运行时(帧率 / 长任务)
+
+首屏只管「第一屏多快」,不管「玩起来卡不卡」。放置游戏的心跳每秒改一批响应式状态
+(`stores/{player,resources,dongfu,cultivation}` 等),视图若在内容变多时开始整块
+重渲染,帧间隔就会拉长 —— 这一维此前没有门。`bun scripts/perf-profile.mjs`(npm 脚本
+`check:perf`)补上:对每个游戏视图,在 390×844 移动视口 + 后期档(神人境 + 成套装备)下
+采几秒 rAF 帧间隔,量最差帧、>50ms 长帧、DOM 节点数,断言不崩溃、无页面异常
+(见 `scripts/perf-profile.mjs` 文件头的量法说明与预算)。
+
+> 与排版/冒烟的分工:那边量「点不点得动、排版对不对」,这边专门量 jank。运行时门
+> 是**回归门**不是基准 —— 预算按本机读数留数倍余量(见下文),红的是「成倍长回去」,
+> 不是机器抖动。
+
+基线(2026-10-13 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
+
+| 视图 | 最差帧 | 长帧(>50ms) | DOM 节点 |
+| --- | --- | --- | --- |
+| home / cultivation / adventure / inventory / character | 17ms | 0 | 187–288 |
+| codex / souls / titles / settings / build / legacy / dongfu / world / celestial | 17ms | 0 | 162–492 |
+
+全 15 个游戏视图稳定 ~60fps、最差帧 17ms、零长帧、无崩溃 —— 引擎每秒 tick 没有造成可感知的
+帧尖峰。预算:`最差帧 ≤ 100ms`、`长帧 ≤ 2`(环境变量 `PERF_MAX_FRAME_MS` / `PERF_LONG_FRAMES`
+可调)。改动过会显著影响单次渲染量的代码后,这两个数要跟着重校,连同本表一起。
+
 推送到 `main` 会走 GitHub Actions 同一道闸:类型检查、Oxlint、用例全绿后才部署 Web / PWA 与镜像(CI 用 `voidzero-dev/setup-vp` 装 Vite+ 工具链,Node 22)。
 
 ## 项目结构

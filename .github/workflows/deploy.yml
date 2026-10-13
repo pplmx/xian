@@ -55,6 +55,10 @@ jobs:
       # 首屏预算:冷启动解码字节 / FCP / 楷体换上(见 scripts/first-paint.mjs)
       - name: 首屏预算(冷启动字节 / FCP / 楷体换上)
         run: bun scripts/first-paint.mjs
+      # 运行时回归门:逐视图采帧间隔,量「玩起来卡不卡」(见 scripts/perf-profile.mjs)。
+      # 首屏管第一屏有多快,这条管心跳改响应式状态时有没有整块重渲染拖帧。
+      - name: 运行时预算(逐视图帧率 / 长任务)
+        run: bun scripts/perf-profile.mjs
       # 逐页点按钮的冒烟(点炸了没有 / 有没有 NaN 漏到正文)——与排版自检同一道门的另一半
       - name: 界面冒烟(逐页点按钮)
         run: bun scripts/ui-smoke.mjs

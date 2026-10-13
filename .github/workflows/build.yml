@@ -93,6 +93,11 @@ jobs:
       # 又整份打进来,这里当场红。
       - name: 首屏预算(冷启动字节 / FCP / 楷体换上)
         run: bun scripts/first-paint.mjs
+      # 运行时回归门:逐视图采几秒帧间隔,量「玩起来卡不卡」—— 首屏那条管第一屏,
+      # 这条管心跳改响应式状态时有没有整块重渲染拖帧(见 scripts/perf-profile.mjs)。
+      # 预算按本机读数留数倍余量,红的是「成倍长回去」那类回归。
+      - name: 运行时预算(逐视图帧率 / 长任务)
+        run: bun scripts/perf-profile.mjs
       - name: 排版与交互自检
         run: bun scripts/layout-check.mjs
       # 与排版自检的分工:那边量排版,这边戳交互 —— 逐页把按钮点一遍,看有没有
