@@ -238,7 +238,7 @@
           </template>
           <template v-else>
             <button class="btn-seal !px-2 !py-0.5 !text-[10px]" @click="doDeleteLoadout(lo.id)">
-              确信删除
+              确认删除
             </button>
             <button
               class="text-[10px] text-ink-faint active:text-ink"

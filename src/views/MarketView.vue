@@ -14,6 +14,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { pillDef } from "@/data/pills";
 import { herbGradeOfMajor } from "@/data/herbGrades";
+import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import type { GNum } from "@/types";
@@ -217,7 +218,7 @@ function bountyShort(o: BountySlot): string | null {
               <p class="text-[10px] text-ink-faint">一件已定兵刃,到手即用</p>
             </template>
           </div>
-          <span class="text-[12px] tabular text-cinnabar">{{ formatGN(slot.price) }}灵石</span>
+          <span class="text-[12px] tabular text-cinnabar">{{ formatGN(slot.price) }} 灵石</span>
           <button
             class="btn-seal !px-3 !py-1 text-[11px]"
             :disabled="slot.sold || !resources.hasStone(slot.price)"
@@ -271,7 +272,9 @@ function bountyShort(o: BountySlot): string | null {
               <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
                 {{ bountyShort(o) }}
               </p>
-              <p v-else class="text-[10px] text-ink-faint">另得悟道×{{ o.extra }}</p>
+              <p v-else class="text-[10px] text-ink-faint">
+                另得{{ RESOURCE_LABELS.wudao }}×{{ o.extra }}
+              </p>
             </template>
             <template v-else>
               <p class="truncate">贡一柄 ≥{{ o.tier }} 阶兵刃</p>
@@ -281,7 +284,7 @@ function bountyShort(o: BountySlot): string | null {
               <p v-else class="text-[10px] text-ink-faint">价随所交之品质现算</p>
             </template>
           </div>
-          <span class="text-[12px] tabular text-cinnabar">{{ formatGN(o.reward) }}灵石</span>
+          <span class="text-[12px] tabular text-cinnabar">{{ formatGN(o.reward) }} 灵石</span>
           <button
             class="btn-seal !px-3 !py-1 text-[11px]"
             :disabled="o.claimed || !!bountyShort(o)"

@@ -12,23 +12,24 @@
 import { createResourceSystem, type Ledger } from "wanxiang-engine";
 import type { GNum, SmallResourceId } from "@/types";
 import { QI_BANK_MULT } from "@/data/constants";
+import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { gnumNumeric } from "./engineNumeric";
 
 /** 灵石单开一本账:它是本作唯一的"大数资源" */
 export const STONE_LEDGER = createResourceSystem<GNum>(
-  { resources: [{ key: "stone", name: "灵石", floor: 0 }] },
+  { resources: [{ key: "stone", name: RESOURCE_LABELS.stone, floor: 0 }] },
   gnumNumeric,
 );
 
 /** 材料与灵气:整数、不可为负;灵气的上限由调用方按标称容量给(见 clampQi) */
 export const SMALL_LEDGER = createResourceSystem({
   resources: [
-    { key: "wudao", name: "悟道点", floor: 0, integer: true },
-    { key: "herb", name: "灵草", floor: 0, integer: true },
-    { key: "ore", name: "玄铁", floor: 0, integer: true },
-    { key: "page", name: "功法残页", floor: 0, integer: true },
-    { key: "dust", name: "器灵尘", floor: 0, integer: true },
-    { key: "qi", name: "灵气", floor: 0 },
+    { key: "wudao", name: RESOURCE_LABELS.wudao, floor: 0, integer: true },
+    { key: "herb", name: RESOURCE_LABELS.herb, floor: 0, integer: true },
+    { key: "ore", name: RESOURCE_LABELS.ore, floor: 0, integer: true },
+    { key: "page", name: RESOURCE_LABELS.page, floor: 0, integer: true },
+    { key: "dust", name: RESOURCE_LABELS.dust, floor: 0, integer: true },
+    { key: "qi", name: RESOURCE_LABELS.qi, floor: 0 },
   ],
 });
 

@@ -110,7 +110,7 @@
               「{{ line.name }}」
             </span>
             <span
-              class="shrink-0 text-[9px] opacity-80"
+              class="shrink-0 text-[9px]"
               :style="{ color: AFFIX_RARITY_META[line.rarity].color }"
             >
               {{ AFFIX_RARITY_META[line.rarity].name }}
@@ -448,9 +448,9 @@
             </button>
           </template>
           <template v-else>
-            <button class="btn-seal !px-2.5 !text-[11px]" @click="doDecompose">分解?</button>
+            <button class="btn-seal !px-2.5 !text-[11px]" @click="doDecompose">确认分解</button>
             <button class="btn-ghost px-2 text-[11px] text-ink-faint" @click="decomposeArm = null">
-              算了
+              取消
             </button>
           </template>
         </div>

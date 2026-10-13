@@ -7,6 +7,7 @@
 
 import { usePlayerStore, type PlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
+import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { regionDef } from "@/data/regions";
 import { stoneByTier } from "@/core/formulas";
 import { generateEquipment } from "@/core/equipGen";
@@ -89,13 +90,6 @@ const YIELD_BY_TAG: { tag: string; resource: SuppressResource; perHour: number }
   { tag: "chaos", resource: "dust", perHour: 4 },
 ];
 
-const RESOURCE_NAMES: Record<SuppressResource, string> = {
-  herb: "灵草",
-  ore: "玄铁",
-  page: "功法残页",
-  dust: "器灵尘",
-};
-
 /** 某地界的物产(无匹配标签则无次级产出) */
 export function suppressYield(
   regionId: string,
@@ -106,7 +100,7 @@ export function suppressYield(
   if (!hit) return null;
   // 层级越高,同一物产的产出越丰(线性,不参与灵石的指数口径)
   const perHour = Math.round(hit.perHour * (1 + region.tier * 0.15));
-  return { id: hit.resource, name: RESOURCE_NAMES[hit.resource], perHour };
+  return { id: hit.resource, name: RESOURCE_LABELS[hit.resource], perHour };
 }
 
 /**

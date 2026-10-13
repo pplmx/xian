@@ -32,14 +32,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useAdventureStore } from "@/stores/adventure";
 import { useQuestsStore } from "@/stores/quests";
-
-const MATERIAL_NAMES = {
-  herb: "灵草",
-  ore: "玄铁",
-  page: "功法残页",
-  dust: "器灵尘",
-  wudao: "悟道点",
-} as const;
+import { RESOURCE_LABELS } from "@/data/resourceNames";
 
 /**
  * 境界带 —— 这条事件在**这一境**还说不说得通。
@@ -228,7 +221,7 @@ function applyEffect(effect: EventEffect, tier: number): string | null {
     }
     case "material":
       resources.addSmall(effect.id, effect.amount);
-      return `${MATERIAL_NAMES[effect.id]} +${effect.amount}`;
+      return `${RESOURCE_LABELS[effect.id]} +${effect.amount}`;
     case "equipment": {
       const inst = generateEquipment(Math.max(tier, 1), rng, {
         luck: modOf(player.finalStats.mods, "luck"),

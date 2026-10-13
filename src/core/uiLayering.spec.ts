@@ -879,7 +879,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 误触即血亏 —— 与删快照同族,进确认态再动手。
     const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
     expect(sr?.src, "出秘境要先进确认态").toContain("confirmAbandon = true");
-    expect(sr?.src, "确认态要点破「余层尽弃」").toContain("确 出 · 余层尽弃");
+    expect(sr?.src, "确认态要点破「弃境」").toContain("确认弃境");
     expect(sr?.src, "确认态要有取消兜底").toContain("confirmAbandon = false");
   });
 
@@ -893,6 +893,44 @@ describe("界面分层 · 浮层只有一个出处", () => {
       capAt >= 0 && shortAt > capAt,
       "全域满是硬约束,要排在「尚差石」前头(别让人看错拦因)",
     ).toBe(true);
+  });
+
+  it("破坏性二次确认话术统一 —— 确认前缀 + 取消,不许各说各话", () => {
+    // 删构筑/分解装备/弃秘境三处都是「确认后不可逆」的二步确认,此前确认词
+    // (确信删除/分解?/确出)与取消词(取消/算了)各说各话 —— 统一成「确认+对象 / 取消」。
+    const build = FILES.find((f) => f.path === "views/BuildView.vue");
+    expect(build?.src).toContain("确认删除");
+    const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
+    expect(sr?.src).toContain("确认弃境");
+    const eq = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    expect(eq?.src).toContain("确认分解");
+    expect(eq?.src, "分解取消不许再写「算了」").not.toContain("算了");
+  });
+
+  it("强色文字不叠透明度 —— 要淡是换 token,不许元素级 opacity", () => {
+    // design.md「文字不叠透明度」:品阶名(整色)与 buff 叠数(继承强色)此前用元素级
+    // opacity-80 淡化 —— 正好绕过 palette.spec 只扫「/80」斜杠语法的口子,浏览器照样
+    // 混色、对比度算不出。要低强调该换一档整色 token,不是让 opacity 偷偷混。
+    const eq = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    expect(eq?.src, "品阶名不许叠 opacity 淡化").not.toMatch(/text-\[9px\] opacity-80/);
+    expect(cult?.src, "buff 叠数不许叠 opacity 淡化").not.toMatch(/text-\[9px\] opacity-80/);
+  });
+
+  it("资源显示名单源 —— 手抄各副本删净,统一读 data/resourceNames", () => {
+    // 灵石/悟道点/灵草/玄铁/功法残页/器灵尘 此前在 engineResources、suppress、eventEngine、
+    // InventoryView、endgame 至少 5 处手抄(一处含悟道点、一处不含)—— 改一处其余不跟。
+    const el = readFileSync(resolve(__dirname, "../core/engineResources.ts"), "utf-8");
+    const sup = readFileSync(resolve(__dirname, "../core/suppress.ts"), "utf-8");
+    const ev = readFileSync(resolve(__dirname, "../core/eventEngine.ts"), "utf-8");
+    const inv = readFileSync(resolve(__dirname, "../views/InventoryView.vue"), "utf-8");
+    const eg = readFileSync(resolve(__dirname, "../data/endgame.ts"), "utf-8");
+    expect(el, "账本名要读 RESOURCE_LABELS").toContain("RESOURCE_LABELS.");
+    expect(el, "账本名不再手写「灵石/悟道点」").not.toMatch(/name: "灵石"|name: "悟道点"/);
+    expect(sup, "suppress 删除手抄 RESOURCE_NAMES").not.toContain("const RESOURCE_NAMES");
+    expect(ev, "eventEngine 删除手抄 MATERIAL_NAMES").not.toContain("const MATERIAL_NAMES");
+    expect(inv, "背包材料行读单源").toContain("name: RESOURCE_LABELS.herb");
+    expect(eg, "熔炉价目不再手写「玄铁/功法残页」").not.toMatch(/name: "玄铁"|name: "功法残页"/);
   });
 
   it("今日天道有占位 —— 未择道途,也要说出它去哪了", () => {

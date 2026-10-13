@@ -471,7 +471,7 @@
         >
           <GameIcon :name="b.def!.icon" :size="11" />
           {{ b.def!.name }}
-          <span v-if="b.stack > 1" class="text-[9px] opacity-80">×{{ b.stack }}</span>
+          <span v-if="b.stack > 1" class="text-[9px]">×{{ b.stack }}</span>
           <span class="countdown-slot">{{ formatCountdown(b.remain) }}</span>
         </button>
       </div>

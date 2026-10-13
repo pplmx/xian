@@ -960,6 +960,7 @@ import { artifactSlotBonus } from "@/core/heritageEffects";
 import { REALMS } from "@/data/realms";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { BAG_CAPACITY } from "@/data/constants";
+import { RESOURCE_LABELS } from "@/data/resourceNames";
 import {
   usePill,
   usePillBatch,
@@ -1315,11 +1316,26 @@ function rateClass(rate: number): string {
 }
 
 const materialRows = computed(() => [
-  { icon: "leaf", name: "灵草", desc: "炼丹的根本", value: resources.herb },
-  { icon: "mountain", name: "玄铁", desc: "筑造与炼器之材", value: resources.ore },
-  { icon: "scroll", name: "功法残页", desc: "集残页可参悟功法", value: resources.page },
-  { icon: "sparkles", name: "器灵尘", desc: "强化装备的灵性之尘", value: resources.dust },
-  { icon: "book", name: "悟道点", desc: "功法进修与法宝炼化所需", value: resources.wudao },
+  { icon: "leaf", name: RESOURCE_LABELS.herb, desc: "炼丹的根本", value: resources.herb },
+  { icon: "mountain", name: RESOURCE_LABELS.ore, desc: "筑造与炼器之材", value: resources.ore },
+  {
+    icon: "scroll",
+    name: RESOURCE_LABELS.page,
+    desc: "集残页可参悟功法",
+    value: resources.page,
+  },
+  {
+    icon: "sparkles",
+    name: RESOURCE_LABELS.dust,
+    desc: "强化装备的灵性之尘",
+    value: resources.dust,
+  },
+  {
+    icon: "book",
+    name: RESOURCE_LABELS.wudao,
+    desc: "功法进修与法宝炼化所需",
+    value: resources.wudao,
+  },
 ]);
 
 /** 材料格子:含灵石一并展示,数量走 formatNum 免得格子被长数字撑破 */

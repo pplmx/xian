@@ -47,7 +47,7 @@
         </template>
         <template v-else>
           <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="abandonRealm()">
-            确 出 · 余层尽弃
+            确认弃境
           </button>
           <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="confirmAbandon = false">
             取 消

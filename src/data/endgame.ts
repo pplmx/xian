@@ -6,6 +6,7 @@ import type {
   WorldFoeShape,
   WorldRouteNode,
 } from "@/types";
+import { RESOURCE_LABELS } from "@/data/resourceNames";
 
 // ============ 道途:此道在世,一切战斗皆循此规则 ============
 
@@ -637,10 +638,10 @@ export interface FurnaceRate {
 }
 
 export const FURNACE_RATES: FurnaceRate[] = [
-  { resource: "ore", name: "玄铁", per: 25 },
-  { resource: "page", name: "功法残页", per: 15 },
-  { resource: "herb", name: "灵草", per: 60 },
-  { resource: "dust", name: "器灵尘", per: 80 },
+  { resource: "ore", name: RESOURCE_LABELS.ore, per: 25 },
+  { resource: "page", name: RESOURCE_LABELS.page, per: 15 },
+  { resource: "herb", name: RESOURCE_LABELS.herb, per: 60 },
+  { resource: "dust", name: RESOURCE_LABELS.dust, per: 80 },
 ];
 
 /** 灵石献祭:每份消耗按玩家层级折算的灵石数量(在服务层用 stoneByTier 计算) */
