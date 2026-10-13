@@ -114,6 +114,10 @@
         <p v-if="hasAdvanceRate" class="mt-0.5 text-[9px] leading-relaxed text-ink-faint">
           进阶成功率只作用于小进阶;大关须渡天劫,看的是劫型与四维准备度(护持/恢复/抗性/爆发)。
         </p>
+        <p v-if="hasShieldMods" class="mt-0.5 text-[9px] leading-relaxed text-ink-faint">
+          护盾至多覆盖最大气血的 {{ formatPercent(SHIELD_CAP_RATIO, 0) }} ——
+          盾系堆得再多也顶不破这道上限。
+        </p>
         <div v-if="breakdownRows.length" class="mt-1.5 rounded-md bg-paper-deep/60 px-2.5 py-2">
           <p class="text-[10px] text-ink-soft">{{ STAT_NAMES[breakdownKey!] }} · 来源明细</p>
           <p
@@ -729,6 +733,7 @@ import {
   DAO_FRUIT_CULT_BONUS,
   DIMINISH_KEYS,
   DIMINISH_WEIGHTS,
+  SHIELD_CAP_RATIO,
   SOFT_CAPS,
 } from "@/data/constants";
 import { RESPONSE_NAMES, SPARK_NAMES } from "@/data/bondIntent";
@@ -797,6 +802,10 @@ const modRows = computed(() =>
 
 /** 面板上是否需要那句「进阶成功率只作用于小进阶」的边界说明 */
 const hasAdvanceRate = computed(() => modOf(stats.value.mods, "breakthroughRate") !== 0);
+
+/** 面板上是否需要护盾上限说明 —— 只在有盾系词条(与这条规则真相关)时亮,不占常驻字数 */
+const SHIELD_MOD_KEYS: AnyStatKey[] = ["shieldOnStart", "shieldPower", "overhealShield"];
+const hasShieldMods = computed(() => SHIELD_MOD_KEYS.some((k) => modOf(stats.value.mods, k) !== 0));
 
 /** 来源明细:点哪一行看哪一行 —— 数据来自 finalStats.breakdown,不在界面里另算 */
 const breakdownKey = ref<AnyStatKey | null>(null);

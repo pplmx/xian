@@ -839,6 +839,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(xfer?.src, "不许退回裸「品质不够」定性词").not.toContain('"品质不够"');
   });
 
+  it("护盾上限进构筑面板 —— 有盾系词条时才亮,读常量不手抄 50%", () => {
+    // 护盾至多覆盖最大气血 50% 此前只活在 combat 常量,玩家堆盾前完全不知道这道顶。
+    // 面它摆进有盾系词条时的人物卡(与「进阶成功率只作用于小进阶」同一族边界注),
+    // 只在真相关时出现、不占常驻字数;百分比从 SHIELD_CAP_RATIO 本体读,不手写 "50%"。
+    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    expect(char?.src, "护盾上限说明要读 SHIELD_CAP_RATIO 本体").toContain("SHIELD_CAP_RATIO");
+    expect(char?.src, "只在有盾系词条时亮(v-if=hasShieldMods)").toContain('v-if="hasShieldMods"');
+    expect(char?.src, "上限说明要点破「顶不破这道上限」").toContain("顶不破这道上限");
+  });
+
   it("今日天道有占位 —— 未择道途,也要说出它去哪了", () => {
     // 「今日天道」区块 v-if="daily",而 daily 依赖 endgame.daoPath —— 刚登真仙
     // 未择道途时整块消失,玩家切到试炼页找不到今日天道,会以为 bug。类目下
