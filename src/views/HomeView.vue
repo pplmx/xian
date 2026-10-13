@@ -48,7 +48,7 @@
             <span class="ml-1 text-[10px] text-ink-faint tabular">{{ weatherLeft }}</span>
           </div>
           <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
-            {{ weather.desc }}<span v-if="tomorrowWeather"> · 明日{{ tomorrowWeather.name }}</span>
+            {{ weather.desc }}<span v-if="tomorrowWeather">{{ tomorrowBrief }}</span>
           </p>
           <!--
             天时的影响是确定性数值,却只写在散文里(「灵气恢复与修炼皆有裨益」) ——
@@ -364,6 +364,14 @@ const weatherLeft = computed(() => {
   return `还有 ${formatDuration(weatherRemainingSec())}`;
 });
 const tomorrowWeather = computed(() => upcomingWeather(2)[1]);
+/** 明日天时的影响也摊开(与今日同源 modsText;渡劫倍率 >1 才挂更险) —— 渡劫前该不该等明日要看得见 */
+const tomorrowBrief = computed(() => {
+  const t = tomorrowWeather.value;
+  if (!t) return "";
+  const mod = modsText(t.mods);
+  const trib = t.tribulationMult > 1 ? ` · 渡劫×${t.tribulationMult}` : "";
+  return ` · 明日${t.name}${mod ? `(${mod}${trib})` : ""}`;
+});
 
 const mainQuest = computed(() => mainQuestAt(quests.mainIdx));
 /** 主线的进度读数(与发赏判定同源) */

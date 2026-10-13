@@ -338,7 +338,13 @@ function bountyShort(o: BountySlot): string | null {
               <p v-else class="text-[10px] text-ink-faint">价随所交之品质现算</p>
             </template>
           </div>
-          <span class="text-[12px] tabular text-cinnabar">{{ formatGN(o.reward) }} 灵石</span>
+          <span class="text-[12px] tabular text-cinnabar">
+            {{
+              o.kind === "equip"
+                ? `≥ ${formatGN(equipBountyReward(o.tier, 0).stone)} 石`
+                : `${formatGN(o.reward)} 灵石`
+            }}
+          </span>
           <button
             class="btn-seal !px-3 !py-1 text-[11px]"
             :disabled="o.claimed || !!bountyShort(o)"

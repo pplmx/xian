@@ -821,6 +821,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(char?.src, "兵解置灰要列门槛境名,不许只有定性").toContain("境方可自行兵解");
   });
 
+  it("悬赏贡器不许显占位 0 灵石 · 辅修席满要置灰", () => {
+    // ① 贡器单的 reward 是占位 gnZero,逐单真价在交货时按所交品质现算(equipBountyReward)。
+    //    价签若一视同仁 formatGN(o.reward) 就亮「0 灵石」——对不上任何结算的假数。
+    //    只在贡器单亮「≥X 石」底线(同源下限),不许退回占位 0。② 功法辅修席满时「放入
+    //    辅修席」不许再可点等 toast 拦,须置灰就地列因(与同一弹窗进修「尚差」同族)。
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    expect(market?.src, "贡器单要单独报下限(equip)").toContain('o.kind === "equip"');
+    expect(market?.src, "贡器具现下限走 equipBountyReward(tier,0)").toContain(
+      "equipBountyReward(o.tier, 0).stone",
+    );
+    const gongfa = FILES.find((f) => f.path === "components/cultivation/GongfaDialog.vue");
+    expect(gongfa?.src, "辅修席满要置灰(subFull)").toContain(':disabled="subFull"');
+    expect(gongfa?.src, "席满拦因要显在按钮上,不许只有定性").toContain("辅修席满");
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。

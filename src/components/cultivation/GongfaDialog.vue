@@ -148,8 +148,8 @@
           >
             {{ isMain ? "主修中" : "设为主修" }}
           </button>
-          <button v-else class="btn-seal flex-1" @click="toggleSub">
-            {{ subSlotLabel }}
+          <button v-else class="btn-seal flex-1" :disabled="subFull" @click="toggleSub">
+            {{ subFull ? `辅修席满(${dongfu.subGongfaSlots} 席)` : subSlotLabel }}
           </button>
           <!-- 进修付不起就置灰+列差:缺哪样、差多少都在按钮上直说(与聚气丹/建筑同款纪律) -->
           <button
@@ -258,6 +258,11 @@ const subSlotLabel = computed(() => {
   if (isSub.value) return secret ? "移出辅修席" : "卸下辅修";
   return secret ? "放入辅修席" : "设为辅修";
 });
+
+/** 辅修席满且这部功法不在席上:装不进,须先卸一部(浑装不行的同一套置灰拦因) */
+const subFull = computed(
+  () => !isSub.value && cultivation.subGongfa.length >= dongfu.subGongfaSlots,
+);
 
 // Phase 31 A3:满级悟道分支
 const fullLevel = computed(() => (def.value ? level.value >= (def.value.maxLevel ?? 9) : false));

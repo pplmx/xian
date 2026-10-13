@@ -693,6 +693,8 @@
             <span class="ml-auto text-[10px] text-ink-faint">{{ m!.master }}</span>
           </p>
           <p class="mt-0.5 text-[11px] text-ink-faint">{{ m!.desc }}</p>
+          <!-- 拜师是跨世保留的永久抉择:词条数值在按下前就摊开(与已拜后那行同源 modsText,不另拼) -->
+          <p class="mt-1 block text-[11px] text-qing">{{ modsText(m!.mods) }}</p>
         </button>
       </div>
       <template #footer>
