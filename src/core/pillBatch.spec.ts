@@ -247,7 +247,9 @@ describe("批量炼丹 · UI 收口", () => {
   it("连炼挂在批量开炉上;连服只在即时丹上挂(增益丹不许批量按钮)", () => {
     const src = readFileSync(join(SRC, "views/InventoryView.vue"), "utf8");
     expect(src).toContain("craftBatch(r.def.id)");
-    expect(src).toContain("连服 ×5");
+    // 按钮上的批量数须读 PILL_BATCH(单源,不许再手写「×5」)—— 写常量即撒谎
+    expect(src).toContain("连服 ×{{ PILL_BATCH }}");
+    expect(src).toContain("连炼 ×{{ PILL_BATCH }}");
     expect(src).toContain("!def.buffId");
   });
 

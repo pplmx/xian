@@ -375,7 +375,7 @@
         <div class="flex gap-2">
           <!-- 即时丹才许连服:增益丹药力一顶后面全白吃,不挂批量按钮(涉策 buffOverflowOf) -->
           <button v-if="canBatchPill" class="btn-ghost flex-1" @click="onUsePillBatch()">
-            连服 ×5
+            连服 ×{{ PILL_BATCH }}
           </button>
           <button class="btn-seal flex-1" @click="onUsePill()">服 用</button>
         </div>
@@ -574,7 +574,7 @@
               :disabled="r.shortHerb || r.shortStone"
               @click="craftBatch(r.def.id)"
             >
-              连炼 ×5
+              连炼 ×{{ PILL_BATCH }}
             </button>
           </div>
         </div>
@@ -962,6 +962,7 @@ import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { BAG_CAPACITY } from "@/data/constants";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import {
+  PILL_BATCH,
   usePill,
   usePillBatch,
   availableRecipes,
@@ -1409,13 +1410,13 @@ const canBatchPill = computed(() => {
 function onUsePillBatch(): void {
   const id = pillDetail.value;
   if (!id) return;
-  usePillBatch(id, 5);
+  usePillBatch(id, PILL_BATCH);
   if (!pillRows.value.some((r) => r.def?.id === id)) pillDetail.value = null;
 }
 
-/** 连炼 ×5 —— 批量开炉,料尽自停(成败与保料合一条提示) */
+/** 连炼一批 —— 批量开炉,料尽自停(成败与保料合一条提示) */
 function craftBatch(id: string): void {
-  craftPillBatch(id, 5);
+  craftPillBatch(id, PILL_BATCH);
 }
 
 const artifactSlots = computed(

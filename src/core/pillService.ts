@@ -30,6 +30,9 @@ import { playSfx } from "./audio";
 import type { GNum } from "@/types";
 import { notify } from "./notify";
 
+/** 一键连服 / 连炼的批量粒度:按钮上写几颗、真吃几颗(单源,改一处即改承诺) */
+export const PILL_BATCH = 5;
+
 /**
  * 服用一枚丹药。
  *

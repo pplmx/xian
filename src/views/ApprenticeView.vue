@@ -14,6 +14,7 @@ import { useResourcesStore } from "@/stores/resources";
 import {
   APPRENTICE_TASKS,
   APPRENTICE_MAX_LEVEL,
+  APPRENTICE_TALENT_BONUS,
   BOND_TITLES,
   apprenticeDef,
   apprenticeSlots,
@@ -90,7 +91,7 @@ const recruitShort = computed(() =>
 function taskYield(a: OwnedApprentice, spec: ApprenticeSpec): string {
   const s = apprenticeSpoils(a.archId, spec, player.major, a.level);
   const talent = apprenticeDef(a.archId)?.talent === spec;
-  const tag = talent ? "·天赋×1.25" : "";
+  const tag = talent ? `·天赋×${APPRENTICE_TALENT_BONUS}` : "";
   const base = s.herb
     ? `灵草 ~${s.herb}`
     : s.ore
@@ -224,7 +225,9 @@ const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
 
     <!-- 收徒成本说明 -->
     <p class="text-[10px] leading-relaxed text-ink-faint">
-      收徒一次耗灵石(按当前境界)。弟子天赋门类的产出 ×1.25。到时辰归来,久不在线亦照算。
+      收徒一次耗灵石(按当前境界)。弟子天赋门类的产出 ×{{
+        APPRENTICE_TALENT_BONUS
+      }}。到时辰归来,久不在线亦照算。
     </p>
   </div>
 </template>

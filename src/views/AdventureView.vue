@@ -217,9 +217,9 @@
                 <!-- 复聚有确定期限,就该有倒计时:否则玩家只会看到镇压某天突然消失 -->
                 <span
                   class="text-[10px] tabular"
-                  :class="row.reviveInHours <= 12 ? 'text-cinnabar' : 'text-ink-faint'"
+                  :class="reviveNow(row) <= 12 ? 'text-cinnabar' : 'text-ink-faint'"
                 >
-                  妖气 {{ reviveText(row.reviveInHours) }}后复聚
+                  妖气 {{ reviveText(reviveNow(row)) }}后复聚
                 </span>
                 <!-- 停取收益是次级动作:放在产出条里,不跟名字抢那一行 -->
                 <button
@@ -558,8 +558,6 @@ const regionRows = computed(() =>
       recall,
       /** 镇压资格进度(三条判据的当前值/阈值) */
       progress: suppressionProgress(player.regionStats[r.id]),
-      /** 距妖气复聚还剩几小时(未镇压为 0) */
-      reviveInHours: suppressed ? hoursUntilRevive(player.suppressedSince[r.id], now.value) : 0,
       tooHard: r.minRealm > player.major,
       /** 此地之敌的加成来源(层级补偿 × 地界凶险;出行方式那一档另算) */
       foeOrigin: regionFoeOrigin(r),
@@ -657,6 +655,17 @@ function rateText(r: RegionDef, recall: RegionRecall): string {
 function reviveText(hours: number): string {
   if (hours >= 24) return `${Math.floor(hours / 24)} 日`;
   return `${Math.max(0, Math.floor(hours))} 时`;
+}
+
+/**
+ * 复聚剩余小时:整个区域表里唯一随时间变的一列。
+ * 刻意从 regionRows 这个大 computed 里拆出来 —— regionRows 内部跑了每行的
+ * detectionAdaptation / detectBuild / suppressionProgress,这些只依赖「构筑×区域」,
+ * 不应被每秒一跳的 now 拖着整表重算。这里就地读 now(与 heldText 同依赖),
+ * 只让复聚这一格跟秒走。
+ */
+function reviveNow(row: { suppressed: boolean; def: { id: string } }): number {
+  return row.suppressed ? hoursUntilRevive(player.suppressedSince[row.def.id], now.value) : 0;
 }
 
 /** 已守时长(自镇压起算)—— 守得越久,兴衰越盛 */
