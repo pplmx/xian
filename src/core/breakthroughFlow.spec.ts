@@ -16,7 +16,7 @@ vi.mock("@/utils/random", async (importOriginal) => {
   return { ...mod, rng: new mod.RandomService(() => mockRand) };
 });
 
-import { attemptBreakthrough, breakthroughInfo } from "./breakthrough";
+import { attemptBreakthrough, breakthroughInfo, firstUnlockAnnouncement } from "./breakthrough";
 import { BT_FAIL_EXP_LOSS } from "@/data/constants";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -155,5 +155,30 @@ describe("突破 · 大关(渡劫)", () => {
     expect(useQuestsStore().counter("tribulations"), "没渡过就不该计数").toBe(0);
     expect(useQuestsStore().counter("breakthroughFails")).toBe(1);
     expect(view!.tribulationLog.some((l) => l.includes("重伤坠地"))).toBe(true);
+  });
+});
+
+describe("突破 · 新系统首开的出声", () => {
+  it("跨进金丹(from<2→to≥2):灵脉首开文案返回", () => {
+    const ann = firstUnlockAnnouncement(1, 2);
+    expect(ann).not.toBeNull();
+    expect(ann).toContain("灵脉");
+    expect(ann).toMatch(/金丹/);
+  });
+
+  it("跨进元婴(from<3→to≥3):秘境与法宝位同条", () => {
+    const ann = firstUnlockAnnouncement(2, 3);
+    expect(ann).toContain("秘境");
+    expect(ann).toContain("法宝位");
+  });
+
+  it("同境内逐层突破(from==to)不重复:返回 null", () => {
+    expect(firstUnlockAnnouncement(2, 2)).toBeNull();
+    expect(firstUnlockAnnouncement(3, 3)).toBeNull();
+  });
+
+  it("非门槛大境无通告", () => {
+    expect(firstUnlockAnnouncement(0, 1)).toBeNull();
+    expect(firstUnlockAnnouncement(3, 4)).toBeNull();
   });
 });

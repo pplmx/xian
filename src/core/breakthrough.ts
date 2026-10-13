@@ -4,7 +4,8 @@
 import { mulberry32, rng } from "@/utils/random";
 import { formatPercent } from "@/utils/format";
 import { realmDef, realmLabel, worldOf, isWorldEntry } from "@/data/realms";
-import { BT_FAIL_EXP_LOSS, BT_QI_COST_RATIO } from "@/data/constants";
+import { BT_FAIL_EXP_LOSS, BT_QI_COST_RATIO, VEIN_UNLOCK_MAJOR } from "@/data/constants";
+import { ARTIFACT_SLOT_UNLOCK_MAJOR } from "@/data/artifacts";
 import { breakthroughBaseRate, clampRate } from "./formulas";
 import { modOf } from "./statsCalc";
 import {
@@ -37,6 +38,21 @@ import {
   consumeBreakthroughPrep,
   type BreakthroughPrepView,
 } from "./earlyGameService";
+
+/**
+ * 首次跨入某大境时的新系统解锁通告。门槛读常量(VEIN_UNLOCK_MAJOR / ARTIFACT_SLOT_UNLOCK_MAJOR,
+ * 与各解锁谓词同源)、境界名由 major 现取(realmDef 不手写)。自带「跨过才触发」:
+ * from < 门槛 && to >= 门槛 才算首开 —— 同境内逐层突破 from==to 返回 null,不重复轰炸。
+ */
+export function firstUnlockAnnouncement(fromMajor: number, toMajor: number): string | null {
+  const toName = realmDef(toMajor).name;
+  if (fromMajor < VEIN_UNLOCK_MAJOR && toMajor >= VEIN_UNLOCK_MAJOR)
+    return `${toName}既成,洞府深处灵脉初醒 —— 投点可定主脉、聚灵增产`;
+  // 凡境秘境与法宝第二槽同拍(门槛同为元婴):合并成一条,一次突破只出一次声
+  if (fromMajor < ARTIFACT_SLOT_UNLOCK_MAJOR && toMajor >= ARTIFACT_SLOT_UNLOCK_MAJOR)
+    return `${toName}既成,凡境秘境之门开启,法宝位亦添一席 —— 一处灵石换一趟,出则散,慎入`;
+  return null;
+}
 
 export interface BreakthroughInfo {
   ready: boolean;
@@ -211,7 +227,12 @@ export function attemptBreakthrough(): BreakthroughView | null {
 
   let view: BreakthroughView;
   if (success) {
+    const prevMajor = player.major; // advanceRealm 之前:进金丹前是 1,进元婴前是 2
     player.advanceRealm();
+    // 首次跨入门槛:新系统第一次开张要有声。文案走 firstUnlockAnnouncement(门槛读常量、
+    // 境界名现取),自带「跨过才触发」—— 同境内逐层突破(from==to)不会重复轰炸。
+    const announcement = firstUnlockAnnouncement(prevMajor, player.major);
+    if (announcement) notify(announcement, "rare");
     cultivation.clearNegativeBuffs();
     track("breakthroughs");
     trackRealm();
