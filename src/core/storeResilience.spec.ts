@@ -22,6 +22,8 @@ import { useLoreStore } from "@/stores/lore";
 import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useQuestsStore } from "@/stores/quests";
+import { MAX_MAJOR } from "@/data/realms";
+import { SUB_LEVELS } from "@/data/constants";
 
 /**
  * store 清单**从源码倒推**,不再手写。
@@ -343,6 +345,20 @@ describe('坏档韧性 · 复杂状态的值也要修回来(不只是"不炸")',
     player.$patch({ lifespanBonusYears: 200 } as never);
     player.sanitize();
     expect(player.lifespanBonusYears).toBe(200);
+  });
+
+  it("境界越界夹回合法区:major/sub 从不上限兜,坏档会撑爆指数链", () => {
+    // 手改档/旧 bug 把 major 推过 MAX_MAJOR → qiCap/expReq/power 按它 powN 指数化 → Infinity
+    // → 战斗双方 hp 变 NaN、突破被「已至大道尽头」软锁。sanitize 只从下界兜,越界必须夹回。
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    player.$patch({ major: 1e9, sub: 999 } as never);
+    player.sanitize();
+    expect(player.major).toBeLessThanOrEqual(MAX_MAJOR);
+    expect(player.sub).toBeLessThanOrEqual(SUB_LEVELS - 1);
+    // 夹回后下游战力是有限数,不再是 Infinity
+    const power = player.finalStats.power as unknown as { m: number };
+    expect(Number.isFinite(power.m)).toBe(true);
   });
 });
 

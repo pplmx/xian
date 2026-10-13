@@ -88,6 +88,7 @@ const sellablePills = computed(() =>
 function buySlot(idx: number): void {
   const r = market.buy(idx);
   if (r === "poor") notify("灵石不足,购入不成", "warn");
+  else if (r === "bagfull") notify("行囊已满,灵石已退回", "warn");
 }
 
 /** 购入短差:买得起念全价,付不起换口「尚差 X 石」 */

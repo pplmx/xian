@@ -136,7 +136,13 @@ export const useMarketStore = defineStore(
       } else if (slot.kind === "material") {
         resources.addSmall(slot.matId, slot.count);
       } else {
-        inventory.addEquipment(marketEquipInstance(slot, stockedAt.value));
+        // 入包失败(purchase 预检到落袋之间的同帧空位被别的掉落占掉)→ 灵石退回,
+        // 不许「花了钱没拿到货」,格子也不该就此永久 sold
+        const admitted = inventory.addEquipment(marketEquipInstance(slot, stockedAt.value));
+        if (!admitted) {
+          resources.addStone(slot.price);
+          return "bagfull";
+        }
       }
       slot.sold = true;
       return "ok";

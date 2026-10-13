@@ -9,6 +9,8 @@
  */
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { useMarketStore } from "./market";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
@@ -105,5 +107,17 @@ describe("坊市 store", () => {
     market.collectConsign(t + 10_000_000); // 早已到时辰
     expect(JSON.stringify(res.spiritStone)).not.toBe(stoneBefore); // 入账
     expect(market.consign.length).toBe(0); // 格清
+  });
+
+  it("买装备的落袋原子性:入包失败要退回灵石,不许「花了钱没拿到货」", () => {
+    // 采购前有 bagFull 预检,但「预检到落袋」之间可能被同一帧别的掉落挤满 ——
+    // 防御臂必须是:addEquipment 返回 false 时退回灵石、返回 bagfull、不标 sold。
+    const src = readFileSync(resolve(__dirname, "market.ts"), "utf-8");
+    expect(src).toContain("admitted = inventory.addEquipment");
+    expect(src, "入包失败要退回灵石").toContain("resources.addStone(slot.price);");
+    expect(src, "回退后要返回 bagfull").toContain('return "bagfull";');
+    expect(src, "失败分支不得走到标 sold").toMatch(
+      /admitted = inventory\.addEquipment[\s\S]{0,200}return "bagfull";/,
+    );
   });
 });

@@ -589,8 +589,13 @@ export const usePlayerStore = defineStore(
     function sanitize(): void {
       exp.value = gn(exp.value);
       if (!Number.isFinite(age.value)) age.value = START_AGE;
+      // 境界只从下界兜,不上限会怎样:手改档/旧 bug 把 major 推过 MAX_MAJOR,下游
+      // qiCap/expReq/power 全按它 powN 指数化 → Infinity → 战斗双方 hp 变 NaN、
+      // 突破被「已至大道尽头」软锁。sanitize 既要防负数,也要把越界夹回合法区间。
       if (!Number.isFinite(major.value) || major.value < 0) major.value = 0;
+      else major.value = Math.min(major.value, MAX_MAJOR);
       if (!Number.isFinite(sub.value) || sub.value < 0) sub.value = 0;
+      else sub.value = Math.min(sub.value, SUB_LEVELS - 1);
       // 寿元加算:lifespanMax = floor(base×(1+pct) + 此栏),写坏(字符串/NaN)会让它变 NaN,
       // 而引擎死亡判据 `age < lifespanMax` 恒为 false → 下一拍即「油尽灯枯」。坏档必死,必须修回
       lifespanBonusYears.value = asFiniteNumber(lifespanBonusYears.value, 0);
