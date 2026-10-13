@@ -55,7 +55,7 @@ export const ENLIGHTENMENT_OPTIONS: EnlightenmentOption[] = [
   {
     type: "insight",
     label: "灵机一动",
-    desc: "立即获得 5 悟道点",
+    desc: "立即获得 5 悟道点(可投入功法钻研)",
     duration: 0,
     reward: { type: "wudao", value: 5 },
   },

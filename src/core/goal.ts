@@ -33,6 +33,8 @@ export interface Goal {
   progress?: number;
   /** 建议下一步(可选) */
   hint?: string;
+  /** 想去哪(可选):有去向则该卡渲染成可点跳转,免得只给方向不给入口 */
+  to?: string;
 }
 
 /**
@@ -116,6 +118,7 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
       type: "explore",
       text: `深入「${nextRegion.name}」`,
       hint: "增长阅历,也寻些机缘与材料",
+      to: "/adventure",
     };
   }
   const hasClearedAny = adventure.cleared.length > 0;

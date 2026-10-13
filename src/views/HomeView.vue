@@ -93,8 +93,31 @@
       <span class="shrink-0 text-[11px] text-cinnabar">{{ firstStep.label }} →</span>
     </RouterLink>
 
-    <!-- Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页) -->
-    <div v-if="currentGoal" class="card-ink flex items-center gap-3 px-4 py-3">
+    <!-- Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页)。
+        有去向(explore 等)时渲染成可点跳转 —— 不然第一步卡一撤,新手就只剩一句没入口
+        的方向,不知道去哪点。 -->
+    <RouterLink
+      v-if="currentGoal?.to"
+      :to="currentGoal.to"
+      class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99"
+    >
+      <GameIcon name="scroll" :size="14" class="shrink-0 text-jade" />
+      <div class="min-w-0 flex-1">
+        <p class="flex items-baseline justify-between gap-2">
+          <span class="font-kai text-[13px] tracking-wider text-ink">{{ currentGoal.text }}</span>
+          <span
+            v-if="currentGoal.progress !== undefined"
+            class="shrink-0 text-[10px] text-ink-faint tabular"
+          >
+            {{ formatPercent(currentGoal.progress, 0) }}
+          </span>
+        </p>
+        <p v-if="currentGoal.hint" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+          {{ currentGoal.hint }}
+        </p>
+      </div>
+    </RouterLink>
+    <div v-else-if="currentGoal" class="card-ink flex items-center gap-3 px-4 py-3">
       <GameIcon name="scroll" :size="14" class="shrink-0 text-jade" />
       <div class="min-w-0 flex-1">
         <p class="flex items-baseline justify-between gap-2">
