@@ -319,7 +319,8 @@ export function craftPillBatch(
     return { rounds: 0, made: 0, failed: 0 };
   }
   playSfx(failed > 0 && made === 0 ? "fail" : "success");
-  const parts = [`连炼 ${rounds} 炉,成 ${made}、败 ${failed}`];
+  // 结果要同栏同量:成/败是炉数,得是丹药枚数(双成会让枚数超过炉数)—— 分开报,不许「成 6 炉」读岔
+  const parts = [`连炼 ${rounds} 炉,得 ${made} 枚(成 ${rounds - failed} 炉 · 败 ${failed} 炉)`];
   if (salvaged > 0) parts.push(`残料保回 ×${salvaged}`);
   if (rounds < count) parts.push("料尽而止");
   notify(parts.join(";"), failed > 0 && made === 0 ? "warn" : "success");

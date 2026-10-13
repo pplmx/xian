@@ -553,10 +553,19 @@
               <p class="text-[10px] leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
             </div>
             <div class="shrink-0 text-right">
-              <p class="tabular text-[13px]" :class="rateClass(r.able.successRate)">
-                {{ formatPercent(r.able.successRate) }}
+              <p
+                class="tabular text-[13px]"
+                :class="r.guaranteeLeft > 0 ? 'text-gold-ink' : rateClass(r.able.successRate)"
+              >
+                {{ r.guaranteeLeft > 0 ? "必成" : formatPercent(r.able.successRate) }}
               </p>
-              <p class="text-[10px] text-ink-faint">把握</p>
+              <p class="text-[10px] text-ink-faint">
+                {{
+                  r.guaranteeLeft > 0
+                    ? `本世前 ${craftGuaranteeCrafts(player.reincarnation.heritage)} 炉保底 · 剩 ${r.guaranteeLeft} 炉`
+                    : "把握"
+                }}
+              </p>
               <!-- 双成率也亮在炉前:骰子不藏 —— 与掷骰同一口径(alchemyBonusCapped,见行构造器) -->
               <p class="mt-0.5 tabular text-[10px] text-ink-soft">
                 {{ formatPercent(r.doubleRate)
@@ -976,7 +985,7 @@ import {
   ARTIFACT_SLOT_UNLOCK_MAJOR,
   artifactSlotsFor,
 } from "@/data/artifacts";
-import { artifactSlotBonus } from "@/core/heritageEffects";
+import { artifactSlotBonus, craftGuaranteeCrafts } from "@/core/heritageEffects";
 import { REALMS } from "@/data/realms";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { BAG_CAPACITY } from "@/data/constants";
@@ -1267,6 +1276,13 @@ const recipes = computed(() =>
       const able = craftability(id);
       // 双成率 = 掷骰同一口径(alchemyBonusCapped:炉子份 + 炼丹产出词条,夹 0.8)—— 不许在界面重算一份
       const doubleRate = alchemyBonusCapped(id);
+      // 浴火丹心(宿命传承)「本世前 3 炉必成」:余量 = 保底总数 − 已用,与 engineCraft.rate 同源。
+      // 界面不报这段时,持传承会在「把握 60%」里看到一个其实必成的炉。
+      const guaranteeLeft = Math.max(
+        0,
+        craftGuaranteeCrafts(player.reincarnation.heritage) -
+          (player.reincarnation.heritageUses.danxin ?? 0),
+      );
       if (!def || !cost || !able) return null;
       // 分级后「灵草不足」太笼统:满兜仙品草也可能缺几株凡品 —— 逐案点名缺什么,
       // 缺草的直接指路灵草坊(那是唯一买草的地方)
@@ -1277,6 +1293,7 @@ const recipes = computed(() =>
         cost,
         able,
         doubleRate,
+        guaranteeLeft,
         shortHerb,
         shortStone,
         shortText: shortHerb
@@ -1294,6 +1311,7 @@ const recipes = computed(() =>
         cost: { herb: number; herbGrade: HerbGrade; stone: GNum };
         able: Craftability;
         doubleRate: number;
+        guaranteeLeft: number;
         shortHerb: boolean;
         shortStone: boolean;
         shortText: string | null;
