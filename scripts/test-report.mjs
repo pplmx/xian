@@ -276,6 +276,7 @@ const CATEGORIES = [
       "souls.spec",
       "rulesetEra",
       "qimen",
+      "gateRuleText",
     ],
   },
   {

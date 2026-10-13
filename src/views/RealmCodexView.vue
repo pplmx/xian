@@ -352,7 +352,13 @@
             <span class="w-20 shrink-0 text-[10px] text-ink-faint tabular"
               >{{ g.gua }}{{ g.direction }} · {{ g.palace }}宫 · {{ g.kind }}</span
             >
-            <span class="min-w-0 text-[11px] leading-relaxed text-ink-soft">{{ g.gist }}</span>
+            <span class="min-w-0 text-[11px] leading-relaxed text-ink-soft"
+              >{{ g.gist }}<br /><span
+                v-if="gateRuleSummary(g.rules)"
+                class="mt-0.5 inline-block text-[10px] tabular text-ink-faint"
+                >{{ gateRuleSummary(g.rules) }}</span
+              ></span
+            >
           </div>
         </div>
         <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
@@ -389,6 +395,7 @@ import {
   readingMinutes,
 } from "@/core/divination";
 import { askDivination } from "@/core/divinationService";
+import { gateRuleSummary } from "@/core/gateRuleText";
 import { PALACES, STARS } from "@/data/ziwei";
 import { fateLordLine } from "@/core/fate";
 import { IMAGES, MANSIONS, type ImageId } from "@/data/xiangxiu";

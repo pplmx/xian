@@ -784,7 +784,10 @@
                 ? 'bg-violet-ink/10 border border-violet-ink/40 text-ink'
                 : 'bg-paper-deep/60 border border-transparent text-ink-faint'
             "
-            :title="`${g.fullName}(${g.kind}) · ${g.gua}${g.direction}${g.palace}宫 —— ${g.desc}`"
+            :title="
+              `${g.fullName}(${g.kind}) · ${g.gua}${g.direction}${g.palace}宫 —— ${g.desc}` +
+              (gateRuleSummary(g.rules) ? `\n${gateRuleSummary(g.rules)}` : '')
+            "
             @click="prepGate = g.id"
           >
             <span class="font-kai text-[13px]">{{ g.name }}</span>
@@ -808,6 +811,10 @@
           >
           <br />
           {{ selectedGate.desc }}
+          <br />
+          <span v-if="gateRuleSummary(selectedGate.rules)" class="tabular text-ink-soft">
+            {{ gateRuleSummary(selectedGate.rules) }}
+          </span>
           <br />
           <span class="text-ink-faint">{{ selectedGate.gist }}</span>
         </p>
@@ -1127,6 +1134,7 @@ import { useEndgameStore, MAX_MARKS } from "@/stores/endgame";
 import { SOUL_SLOTS } from "@/data/souls";
 import { REALMS } from "@/data/realms";
 import { tierMajor } from "@/core/formulas";
+import { gateRuleSummary } from "@/core/gateRuleText";
 import {
   CELESTIAL_WORLDS,
   DAO_PATHS,
