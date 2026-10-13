@@ -172,7 +172,11 @@ function enter(id: string): void {
 
 function fight(): void {
   const r = fightSecretLayer();
-  if (!r) return;
+  if (!r) {
+    // 战况已失(多是坏档:境内状态在但境界定义没了)—— 静默停手等于按钮按了没响
+    ui.toast("此境战况已失,请退出重入", "warn");
+    return;
+  }
   // 战报合并为单条多行 toast:逐条 push 会被 toast 位(上限 5)把自己前面的行挤掉,长战报读不全
   if (r.lines.length) ui.toast(r.lines.join("\n"), r.win ? "info" : "warn");
 }

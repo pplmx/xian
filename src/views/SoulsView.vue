@@ -60,9 +60,15 @@
           <div
             v-for="i in SOUL_SLOTS"
             :key="i"
+            role="button"
+            :tabindex="endgame.activeSouls[i - 1] ? 0 : -1"
             class="card-ink flex min-h-[92px] flex-col items-center justify-center px-2 py-2 text-center"
+            :aria-label="
+              endgame.activeSouls[i - 1] ? `${soulLabel(endgame.activeSouls[i - 1]!)} 详情` : '空'
+            "
             :class="endgame.activeSouls[i - 1] ? 'cursor-pointer active:scale-95' : 'opacity-50'"
             @click="soulDetail = endgame.activeSouls[i - 1] ?? null"
+            @keydown="onSlotKeydown(i, $event)"
           >
             <template v-if="endgame.activeSouls[i - 1]">
               <span
@@ -347,6 +353,15 @@ const idleOpen = ref(false);
 const forgeOpen = ref(false);
 /** 已装配器魂的详情弹窗对象;非 null 时展示该缕 */
 const soulDetail = ref<SoulInstance | null>(null);
+
+/**
+ * 槽位整卡可点打开详情,但卡片是 div 且内嵌「卸下」按钮(不能套真 <button>);
+ * 补键盘可达:Enter/空格开详情;焦点在内层按钮时(事件 target ≠ currentTarget)不重复触发。
+ */
+function onSlotKeydown(i: number, e: KeyboardEvent): void {
+  if (e.target !== e.currentTarget) return;
+  if (e.key === "Enter" || e.key === " ") soulDetail.value = endgame.activeSouls[i - 1] ?? null;
+}
 /** 等待二次确认的行(uid);非 null 表示该行已展开确认态 */
 const pendingRefineUid = ref<string | null>(null);
 /** 散去形意同样二步确认:器魂是花道源与一件法器凝出来的,一脚碎掉连个反悔都没有 */
