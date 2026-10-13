@@ -14,6 +14,7 @@ import type { UpgradeInfo } from "wanxiang-engine";
 import { accrue, createFacilitySystem } from "wanxiang-engine";
 import { BUILDINGS, buildingDef, libraryWudaoPerHour } from "@/data/buildings";
 import { FIELD_HERB_PER_HOUR, FIELD_ORE_PER_HOUR } from "@/data/constants";
+import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { realmDef } from "@/data/realms";
 import { buildingCost } from "./formulas";
 
@@ -108,6 +109,29 @@ export function buildingModSources(levels: Record<string, number>): StatMods[] {
 /** 各建筑合计的每小时产出 */
 export function buildingRates(levels: Record<string, number>): Record<string, number> {
   return FACILITIES.ratesOf(levels, CTX_NO_REALM);
+}
+
+/** 会按小时产出的三种资源(顺序即展示顺序);名称走 RESOURCE_LABELS,不另起一套 */
+const HOUR_STREAMS = ["herb", "ore", "wudao"] as const;
+/** 灵田/玄铁用「株/块」,与 BuildingCard 的 effectText 同字(悟道点不嵌单位) */
+const HOUR_UNIT: Partial<Record<string, string>> = { herb: "株", ore: "块" };
+
+/**
+ * 「每时藏收」的中文条目(buildingRates 同源,不手写会被常数改动的数字):
+ * 只列真有产出的流,零流不上行。物理量与名字都引单一来源 —— 算出来的正是
+ * 结算(离线/实时 accrue)实际发的那些。
+ */
+export function hourlyYieldText(levels: Record<string, number>): string[] {
+  const rates = buildingRates(levels);
+  const parts: string[] = [];
+  for (const key of HOUR_STREAMS) {
+    const v = rates[key] ?? 0;
+    if (v <= 0) continue;
+    const num = (Math.round(v * 10) / 10).toString().replace(/\.0$/, "");
+    const unit = HOUR_UNIT[key] ?? "";
+    parts.push(`${RESOURCE_LABELS[key]} ${num}${unit ? ` ${unit}` : ""}`);
+  }
+  return parts;
 }
 
 /** 按秒推进产出:速率来自建筑等级,零头留在累加器里(见库的 `accrue`) */

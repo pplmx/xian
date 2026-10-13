@@ -53,6 +53,21 @@
         title="营造"
         :hint="`已营 ${dongfu.builtCount}/${BUILDINGS.length} · 各司其职,日夜不辍`"
       />
+      <!--
+        每时藏收:各地产卡的数散在七张卡里,合计得玩家心算 —— 补一行总额。
+        读数走 hourlyYieldText(buildingRates 同源):界面上这个数字就是实时/离线结算
+        实际发给玩家的那笔,不另写一份。未启(全 0)不上行,藏经阁 1~3 级保底照露。
+      -->
+      <p
+        v-if="hourlyLines.length"
+        class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-ink-faint"
+      >
+        <span class="font-kai tracking-[0.2em] text-ink">每时藏收</span>
+        <template v-for="(part, i) in hourlyLines" :key="part">
+          <span v-if="i" class="text-ink-faint">·</span>
+          <span>{{ part }}</span>
+        </template>
+      </p>
       <!-- 洞府是其余建筑等级上限的枢纽:提为整宽主卡置顶,其余 6 座排 2 列 3 行 -->
       <div class="mt-2 grid grid-cols-2 gap-2.5">
         <BuildingCard v-if="mansionDef" :def="mansionDef" class="col-span-2" />
@@ -114,6 +129,7 @@ import { OFFLINE_CAP_HOURS } from "@/data/constants";
 import { BUILDINGS } from "@/data/buildings";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BuildingCard from "@/components/dongfu/BuildingCard.vue";
+import { hourlyYieldText } from "@/core/engineFacilities";
 
 const router = useRouter();
 const dongfu = useDongfuStore();
@@ -123,4 +139,6 @@ const mansionDef = BUILDINGS.find((b) => b.id === "mansion");
 const otherBuildings = BUILDINGS.filter((b) => b.id !== "mansion");
 const mansionLevel = computed(() => dongfu.levels["mansion"] ?? 0);
 const offlineCapHours = computed(() => dongfu.offlineCapHours);
+/** 每时藏收:建筑合计的每小时产出(field 灵草/玄铁 + 藏经阁悟道,与 buildingRates / accrue 同源) */
+const hourlyLines = computed(() => hourlyYieldText({ ...dongfu.levels } as Record<string, number>));
 </script>

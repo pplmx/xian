@@ -17,7 +17,13 @@ import { BUILDINGS, buildingDef } from "@/data/buildings";
 import { FIELD_HERB_PER_HOUR, FIELD_ORE_PER_HOUR } from "@/data/constants";
 import { buildingUpgradeInfo } from "./buildingService";
 import { buildingCost } from "./formulas";
-import { allDongfuMaxed, libraryWudaoPerHour, produceOf } from "./engineFacilities";
+import {
+  allDongfuMaxed,
+  buildingRates,
+  hourlyYieldText,
+  libraryWudaoPerHour,
+  produceOf,
+} from "./engineFacilities";
 import { formatExact } from "@/utils/format";
 import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
@@ -220,6 +226,27 @@ describe("设施对账 —— 每小时产出与零头", () => {
     expect(resources.herb).toBe(3);
     expect(resources.ore).toBe(1);
     expect(resources.wudao).toBe(1);
+  });
+
+  it("hourlyYieldText:列出的正是 buildingRates 的非零流,数字与其同源", () => {
+    const levels: LevelMap = { ...zeroLevels(), field: 3, library: 2 };
+    const rates = buildingRates(levels);
+    const lines = hourlyYieldText(levels);
+    expect(lines).toContain("灵草 18 株"); // 3 级灵田 = 3×6
+    expect(lines).toContain("玄铁 7.2 块"); // 3×2.4
+    expect(lines).toContain("悟道点 4"); // 藏经阁 2 级落保底档:max(4, 3)=4
+    const NAME = { herb: "灵草", ore: "玄铁", wudao: "悟道点" };
+    for (const key of ["herb", "ore", "wudao"] as const) {
+      const v = rates[key] ?? 0;
+      expect(
+        lines.some((l) => l.startsWith(NAME[key])),
+        `${key} 应在/不在文案`,
+      ).toBe(v > 0);
+    }
+  });
+
+  it("零流不上行:未启(全 0)什么也不产,藏经阁保底只对已建的 1~3 级生效", () => {
+    expect(hourlyYieldText(zeroLevels())).toEqual([]); // 0 级建筑不产(保底露脸需藏经阁≥1 级)
   });
 });
 
