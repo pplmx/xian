@@ -402,7 +402,7 @@
           <span class="text-right text-[11px] text-ink-faint tabular">
             {{ formatDuration(EXPLORE_MODES[m.id].durationSec) }}
             <br />
-            收益 ×{{ EXPLORE_MODES[m.id].rewardMult }} · 遇险
+            收益 ×{{ EXPLORE_MODES[m.id].rewardMult }} · 敌势
             <span :class="EXPLORE_MODES[m.id].dangerMult > 1 ? 'text-cinnabar' : ''"
               >×{{ EXPLORE_MODES[m.id].dangerMult }}</span
             >

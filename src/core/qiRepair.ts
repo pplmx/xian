@@ -45,7 +45,7 @@ export function repairWithQi(): boolean {
   const resources = useResourcesStore();
   const cultivation = useCultivationStore();
   if (!isInjured()) {
-    notify("你并无伤势在身", "warn");
+    notify("你并无伤势或心魔在身", "warn");
     return false;
   }
   const cost = qiRepairCost();
@@ -55,6 +55,6 @@ export function repairWithQi(): boolean {
   }
   resources.setQi(resources.qi - cost, player.qiCapValue);
   cultivation.clearNegativeBuffs();
-  notify(`你引灵气静养,伤势尽复(耗灵气 ${Math.ceil(cost)})`, "success");
+  notify(`你引灵气静养,伤势与心魔尽复(耗灵气 ${Math.ceil(cost)})`, "success");
   return true;
 }

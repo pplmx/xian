@@ -168,7 +168,7 @@
         >
           {{
             repair.affordable
-              ? `引气疗伤 · 耗灵气 ${formatNum(repair.cost)}`
+              ? `引气静养 · 平复伤势心魔 · 耗灵气 ${formatNum(repair.cost)}`
               : `灵气不足(需 ${formatNum(repair.cost)})`
           }}
         </button>

@@ -176,7 +176,7 @@ export function petTraitText(def: PetDef): string {
   const delta = (mult: number): string => `${mult >= 1 ? "+" : ""}${formatPercent(mult - 1)}`;
   const parts: string[] = [];
   if (e.exploreDurMult !== 1) parts.push(`历练时长 ${delta(e.exploreDurMult)}`);
-  if (e.dangerMult !== 1) parts.push(`遇险 ${delta(e.dangerMult)}`);
+  if (e.dangerMult !== 1) parts.push(`敌势 ${delta(e.dangerMult)}`);
   if (e.dropLuck !== 0)
     parts.push(`掉落气运 ${e.dropLuck > 0 ? "+" : ""}${formatPercent(e.dropLuck)}`);
   // lossReduction 的真实机制是「危急时灵兽护主、免于败绩」的概率(exploration 败北分支),

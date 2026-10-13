@@ -175,7 +175,7 @@ describe("用具 · 灵兽", () => {
         );
       if (e.dangerMult !== 1)
         expect(text).toContain(
-          `遇险 ${e.dangerMult > 1 ? "+" : ""}${formatPercent(e.dangerMult - 1)}`,
+          `敌势 ${e.dangerMult > 1 ? "+" : ""}${formatPercent(e.dangerMult - 1)}`,
         );
       if (e.dropLuck !== 0)
         expect(text).toContain(`掉落气运 ${e.dropLuck > 0 ? "+" : ""}${formatPercent(e.dropLuck)}`);
