@@ -59,10 +59,13 @@
             「可能」、备足)直接亮出来(见 ui/eventText)。
           -->
           <span
-            v-if="choiceHintText(choice, tier)"
+            v-if="choiceHintText(choice, tier) || stoneShortHint(choice, tier)"
             class="ml-2 text-[11px] font-normal text-ink-faint"
           >
-            {{ choiceHintText(choice, tier) }}
+            {{ choiceHintText(choice, tier)
+            }}<template v-if="stoneShortHint(choice, tier)">
+              · {{ stoneShortHint(choice, tier) }}</template
+            >
           </span>
         </button>
       </div>
@@ -94,7 +97,7 @@
 import { computed, ref, watch } from "vue";
 import { useAdventureStore } from "@/stores/adventure";
 import { eventDef } from "@/data/events";
-import { choiceHintText } from "@/ui/eventText";
+import { choiceHintText, stoneShortHint } from "@/ui/eventText";
 import { choiceAvailable, resolveEventChoice, type EventResolution } from "@/core/eventEngine";
 import { pendingChainStages } from "@/core/eventEngine";
 import { usePlayerStore } from "@/stores/player";

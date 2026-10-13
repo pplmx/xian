@@ -128,6 +128,16 @@ describe("星象 · 接线", () => {
     }
   });
 
+  it("历练页星象利方报确数,不写「更易」这类定性词(与界域志同读 MANSION_EVENT_LUCK)", () => {
+    const src = readFileSync(resolve(__dirname, "../views/AdventureView.vue"), "utf8")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/\/\/.*$/gm, "");
+    // 直接引引擎常数现算,不许写死「+10%」(改了常数才跟着改)—— AGENTS「改常数就撒谎」
+    expect(src).toContain("MANSION_EVENT_LUCK,");
+    expect(src).toContain("formatPercent(MANSION_EVENT_LUCK, 0)");
+    expect(src, "利方加成不许退回定性词「更易」").not.toContain("更易");
+  });
+
   it("在线与离线同源:际遇概率只有一份口径(含星象之利)", () => {
     // 从前在线与离线各写一遍公式;星象只接进了在线,同一天同一地离线少算一成际遇
     let day = -1;

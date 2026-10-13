@@ -5,6 +5,8 @@
 import type { EventChoice } from "@/types";
 import { stoneByTier } from "@/core/formulas";
 import { formatGN } from "@/utils/format";
+import { useResourcesStore } from "@/stores/resources";
+import { toNum } from "@/utils/gnum";
 
 function stoneCosts(choice: EventChoice): number[] {
   const out: number[] = [];
@@ -39,4 +41,18 @@ export function choiceHintText(choice: EventChoice, tier: number): string {
   // 手写 hint 若只说了「要灵石」,被算出来的数字替掉;说了别的(「额外之财归你」)则保留
   const extra = choice.hint && !choice.hint.includes("灵石") ? `${choice.hint} · ` : "";
   return `${extra}${spend}${reserve}`;
+}
+
+/**
+ * 付不起时列出的灵石缺口 —— 际遇选项的 stone 门槛(cond.type==="stone")
+ * 在结算前就置灰(choiceAvailable),玩家看不出差多少,只知「不能选」。
+ * 这里现算余额与门槛的差(AGENTS「付不起要置灰并列出差额」),返回空串则付得起。
+ */
+export function stoneShortHint(choice: EventChoice, tier: number): string {
+  const cond = choice.cond;
+  if (cond?.type !== "stone") return "";
+  const need = toNum(stoneByTier(tier, cond.tierAmount));
+  const have = toNum(useResourcesStore().spiritStone);
+  if (have >= need) return "";
+  return `尚差 ${formatGN(need - have)} 石`;
 }

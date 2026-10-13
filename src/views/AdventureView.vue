@@ -31,7 +31,7 @@
         <p class="text-[10px] leading-relaxed text-violet-ink">
           今日星象:{{ mansionLine }} —— 利
           <span class="text-gold-ink">{{ favoredWorldName }}</span>
-          ,在其地历练际遇更易(他处不加)。
+          ,在其地历练际遇{{ describeMansionLuck }}。
         </p>
         <p v-if="player.suppressedRegions.length > 0" class="text-[10px] text-gold-ink">
           镇压收益中 {{ player.suppressedRegions.length }} 处 ——
@@ -428,7 +428,7 @@ import { REGIONS, regionDef, DANGER_NAMES } from "@/data/regions";
 import { worldOf, type WorldDef } from "@/data/realms";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import SecretRealmCard from "@/components/adventure/SecretRealmCard.vue";
-import { todayMansion, favoredWorld, todayMansionLine } from "@/core/astronomy";
+import { todayMansion, favoredWorld, todayMansionLine, MANSION_EVENT_LUCK } from "@/core/astronomy";
 import { worldDef } from "@/data/realms";
 import { canEnterRegion, entryBlockReason, worldView } from "@/core/mortalWorldService";
 import { isRetreating } from "@/core/earlyGameService";
@@ -506,6 +506,8 @@ const mansionLine = computed(() => todayMansionLine(game.totalPlaySec));
 const favoredWorldName = computed(
   () => worldDef(favoredWorld(todayMansion(game.totalPlaySec))).name,
 );
+/** 利方际遇加成 —— 直接读引擎那枚常数现算(不许写定性形容词) */
+const describeMansionLuck = computed(() => `概率乘 ${formatPercent(MANSION_EVENT_LUCK, 0)}`);
 /** 区域适配原因点按展开(移动端无 hover) */
 const adaptExpand = ref<string | null>(null);
 
