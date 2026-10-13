@@ -5,8 +5,8 @@
  */
 import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
-import { gn } from "@/utils/gnum";
-import { investVein, switchMainVein, veinCap } from "./veinService";
+import { gn, toNum } from "@/utils/gnum";
+import { investVein, investVeinBatch, switchMainVein, veinCap, veinPointCost } from "./veinService";
 import { usePlayerStore } from "@/stores/player";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
@@ -49,5 +49,25 @@ describe("灵脉投资(Phase 30.3)", () => {
     // 新主脉 craft 可过 30
     for (let i = 0; i < 35; i += 1) expect(investVein("craft")).toBe(true);
     expect(dongfu.veinPoints.craft).toBe(35);
+  });
+
+  it("连投:一次连投 5 点,首投认主、账目逐点同源", () => {
+    const dongfu = useDongfuStore();
+    const res = investVeinBatch("gather", 5);
+    expect(res.count).toBe(5);
+    expect(res.stopped).toBe("quota");
+    expect(dongfu.veinPoints.gather).toBe(5);
+    expect(dongfu.veinMain).toBe("gather");
+  });
+
+  it("连投料尽止:灵石只够两点的账就只连投两点,不越权烧", () => {
+    const dongfu = useDongfuStore();
+    const resources = useResourcesStore();
+    resources.spiritStone = gn(2 * toNum(veinPointCost())); // 只够两点
+    const res = investVeinBatch("gather", 10);
+    expect(res.count).toBe(2);
+    expect(res.stopped).toBe("broke");
+    expect(dongfu.veinPoints.gather).toBe(2);
+    expect(toNum(resources.spiritStone)).toBe(0);
   });
 });

@@ -9,10 +9,16 @@ import { createPinia, setActivePinia } from "pinia";
 import type { EquipmentInstance, QualityId } from "@/types";
 import { DECOMPOSE_DUST, DECOMPOSE_REFUND_RATE } from "@/data/constants";
 import { qualityDef } from "@/data/qualities";
-import { cmp, gn, toNum } from "@/utils/gnum";
+import { cmp, gn, toNum, add } from "@/utils/gnum";
 import { upgradeCost } from "./formulas";
 import { enhanceInvested, refundRateText, salvageOf } from "./salvage";
-import { decomposeByRanks, decomposeEquipment, upgradeEquipment } from "./forge";
+import {
+  decomposeByRanks,
+  decomposeEquipment,
+  equipLevelCap,
+  upgradeEquipment,
+  upgradeEquipmentAll,
+} from "./forge";
 
 const CHENG_NUM = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
 
@@ -101,6 +107,45 @@ describe("分解返还 · 强化投入的八成随件退回", () => {
     const after = inventory.findItem("e")!;
     expect(after.level).toBe(3);
     expect(after.invested?.dust).toBe(spentDust);
+  });
+
+  it("连强到顶:一次点到满级,总账与逐档累加一致(与单点共用一张账)", () => {
+    const inventory = useInventoryStore();
+    const resources = useResourcesStore();
+    inventory.addEquipment(mk("e2", "earth", 0, 8));
+    resources.addSmall("dust", 10_000_000);
+    resources.addStone(gn(1e12));
+    const cap = equipLevelCap();
+    const res = upgradeEquipmentAll("e2");
+    const after = inventory.findItem("e2")!;
+    expect(res.count).toBe(cap);
+    expect(res.ended).toBe("max");
+    expect(after.level).toBe(cap);
+    // 总账 = 逐档 upgradeCost 累加,与单点记到件上的数一致(applyOneUpgrade 共用)
+    let spentDust = 0;
+    let spentStone = gn(0);
+    for (let i = 0; i < cap; i += 1) {
+      const c = upgradeCost(i, 8, qualityDef("earth").rank, 0);
+      spentDust += c.dust;
+      spentStone = add(spentStone, c.stone);
+    }
+    expect(after.invested?.dust).toBe(spentDust);
+    expect(cmp(after.invested?.stone ?? gn(0), spentStone)).toBe(0);
+  });
+
+  it("连强到顶料尽止:资源只够哪档就只到哪档,不越权烧", () => {
+    const inventory = useInventoryStore();
+    const resources = useResourcesStore();
+    inventory.addEquipment(mk("e3", "earth", 0, 8));
+    // 只给够第一档的尘:料尽即停,不欠账
+    const first = upgradeCost(0, 8, qualityDef("earth").rank, 0);
+    resources.addSmall("dust", first.dust);
+    resources.addStone(gn(1e12));
+    const res = upgradeEquipmentAll("e3");
+    expect(res.count).toBe(1);
+    expect(res.ended).toBe("broke");
+    expect(inventory.findItem("e3")!.level).toBe(1);
+    expect(resources.dust).toBe(0);
   });
 
   it("分解一件练过的件:到账的就是预告那份(尘 + 灵石)", () => {

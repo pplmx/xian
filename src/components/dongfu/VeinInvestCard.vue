@@ -15,38 +15,49 @@
 
     <div class="space-y-2.5">
       <div v-for="v in VEINS" :key="v.id" class="space-y-1">
-        <button
-          class="btn-ghost flex w-full items-center justify-between !py-1.5 !text-[12px]"
-          :disabled="!canInvest(v.id)"
-          @click="doInvest(v.id)"
-        >
-          <span class="flex min-w-0 items-center gap-1.5">
-            <span class="truncate">{{ v.name }}</span>
-            <span
-              v-if="isMain(v.id)"
-              class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-[10px] leading-none text-cinnabar"
-              >主脉</span
-            >
-            <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-[10px] text-ink-faint"
-              >首投成主</span
-            >
-          </span>
-          <span class="tabular text-[11px]">
-            <span :class="atCap(v.id) ? 'text-jade' : 'text-ink-faint'">
-              {{ currentLevel(v.id) }}/{{ cap(v.id) }}
+        <div class="flex items-stretch gap-1.5">
+          <button
+            class="btn-ghost flex min-w-0 flex-1 items-center justify-between !py-1.5 !text-[12px]"
+            :disabled="!canInvest(v.id)"
+            @click="doInvest(v.id)"
+          >
+            <span class="flex min-w-0 items-center gap-1.5">
+              <span class="truncate">{{ v.name }}</span>
+              <span
+                v-if="isMain(v.id)"
+                class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-[10px] leading-none text-cinnabar"
+                >主脉</span
+              >
+              <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-[10px] text-ink-faint"
+                >首投成主</span
+              >
             </span>
-            <!-- 已满就不再印费用:每点价格摆着像还能投 -->
-            <span v-if="atCap(v.id)" class="ml-1.5 text-ink-faint">已满</span>
-            <!-- 全域总量卡死是硬约束:钱再多也填不上一格,须排在「尚差石」前头,别让人看错拦因 -->
-            <span v-else-if="veinTotal >= VEIN_TOTAL_CAPACITY" class="ml-1.5 text-ink-faint"
-              >总容量已满</span
-            >
-            <span v-else-if="stoneShort > 0" class="ml-1.5 text-ink-faint"
-              >尚差 {{ formatGN(stoneShort) }} 石</span
-            >
-            <span v-else class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }}</span>
-          </span>
-        </button>
+            <span class="tabular text-[11px]">
+              <span :class="atCap(v.id) ? 'text-jade' : 'text-ink-faint'">
+                {{ currentLevel(v.id) }}/{{ cap(v.id) }}
+              </span>
+              <!-- 已满就不再印费用:每点价格摆着像还能投 -->
+              <span v-if="atCap(v.id)" class="ml-1.5 text-ink-faint">已满</span>
+              <!-- 全域总量卡死是硬约束:钱再多也填不上一格,须排在「尚差石」前头,别让人看错拦因 -->
+              <span v-else-if="veinTotal >= VEIN_TOTAL_CAPACITY" class="ml-1.5 text-ink-faint"
+                >总容量已满</span
+              >
+              <span v-else-if="stoneShort > 0" class="ml-1.5 text-ink-faint"
+                >尚差 {{ formatGN(stoneShort) }} 石</span
+              >
+              <span v-else class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }}</span>
+            </span>
+          </button>
+          <!-- 连投:主脉 70 点一次一点要点半天,给个 +5 —— 点到 5 点/满/料尽为止,合一条账 -->
+          <button
+            class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-[11px]"
+            aria-label="连投 5 点"
+            :disabled="!canInvest(v.id)"
+            @click="doInvestBatch(v.id)"
+          >
+            +5
+          </button>
+        </div>
         <!-- 每条脉都要自陈作用:此前只显示名字与价格,玩家无从判断该投哪条 -->
         <p class="px-0.5 text-[10px] leading-relaxed text-ink-faint">
           {{ v.desc }}
@@ -97,7 +108,13 @@ import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { VEINS, type VeinId } from "@/data/veins";
-import { investVein, veinPointCost, veinSwitchCost, switchMainVein } from "@/core/veinService";
+import {
+  investVein,
+  investVeinBatch,
+  veinPointCost,
+  veinSwitchCost,
+  switchMainVein,
+} from "@/core/veinService";
 import {
   VEIN_MAIN_CAPACITY,
   VEIN_SIDE_CAP,
@@ -193,6 +210,10 @@ function switchCandidate(veinId: VeinId): boolean {
 
 function doInvest(veinId: VeinId): void {
   investVein(veinId);
+}
+
+function doInvestBatch(veinId: VeinId): void {
+  investVeinBatch(veinId, 5);
 }
 
 function doSwitch(veinId: VeinId): void {

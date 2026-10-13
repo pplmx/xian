@@ -19,6 +19,8 @@ import {
   veinSwitchCostAt,
 } from "./engineVeins";
 import { playerTier } from "./progress";
+import { add, gnZero } from "@/utils/gnum";
+import { formatGN } from "@/utils/format";
 import { usePlayerStore } from "@/stores/player";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
@@ -70,6 +72,52 @@ export function investVein(id: VeinId): boolean {
   // 整份写回:点数 + 主脉(首投自动认主由库决定,投成功才认)
   dongfu.setVeinState(info.state);
   return true;
+}
+
+export interface VeinInvestBatchResult {
+  count: number;
+  stone: GNum;
+  /** 为什么停:quota 投满 N 点 / cap 触及规则上限 / broke 灵石见底 */
+  stopped: "quota" | "cap" | "broke";
+}
+
+/**
+ * 连投:一条脉一次投多点(主脉 70 点,一次一点要点 70 下)。逐点复用 investVeinIn
+ * 的判定与记账 —— 与单点同一条账;合一条总账,不逐点弹提示。
+ */
+export function investVeinBatch(id: VeinId, maxPoints: number): VeinInvestBatchResult {
+  const dongfu = useDongfuStore();
+  const resources = useResourcesStore();
+  const tier = playerTier();
+  let count = 0;
+  let stone = gnZero();
+  let stopped: VeinInvestBatchResult["stopped"] = "quota";
+  for (let i = 0; i < Math.max(1, maxPoints); i += 1) {
+    const info = investVeinIn(veinStateOf(dongfu.veinPoints, dongfu.veinMain), id, {
+      major: usePlayerStore().major,
+      tier,
+    });
+    if (!info.can) {
+      // 触及规则上限(满 / 总量满 / 未开放……)—— 与单点同口径,不惊扰
+      stopped = "cap";
+      break;
+    }
+    const cost = info.costs[0]!.amount;
+    if (!resources.hasStone(cost)) {
+      stopped = "broke";
+      break;
+    }
+    resources.spendStone(cost);
+    dongfu.setVeinState(info.state);
+    count += 1;
+    stone = add(stone, cost);
+  }
+  if (count > 0) {
+    notify(`「${veinDef(id).name}」连投 ${count} 点,耗 ${formatGN(stone)} 灵石`, "success");
+  } else if (stopped === "broke") {
+    notify("灵石不足,连投戛然而止", "warn");
+  }
+  return { count, stone, stopped };
 }
 
 /** 迁移主脉:付费换向;原主脉点数保留(超出副脉上限的部分不再可投,但效果不失) */

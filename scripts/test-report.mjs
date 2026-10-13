@@ -124,6 +124,7 @@ const CATEGORIES = [
       "progressionDoc",
       "progressionSim",
       "realPacing",
+      "gongfaService",
       "breakthrough",
       "inflationAudit",
       "samsaraAudit",

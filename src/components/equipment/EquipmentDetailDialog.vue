@@ -219,6 +219,14 @@
           尚差 器灵尘×{{ Math.max(0, upCost.dust - resources.dust) }} · 灵石
           {{ formatGN(Math.max(0, toNum(upCost.stone) - toNum(resources.spiritStone))) }}
         </p>
+        <!-- 连强到顶:一次点到器灵尘/灵石见底或满级,不必逐级点(合一条总账) -->
+        <button
+          class="btn-ghost mt-2 w-full !py-1.5 !text-[12px]"
+          :disabled="!upAffordable"
+          @click="doUpgradeAll"
+        >
+          连强到顶
+        </button>
       </template>
       <p v-if="salvage" class="mt-1 flex items-center justify-between text-[11px] text-ink-faint">
         <span>分解返还{{ inst.level > 0 ? `(${refundRateText()})` : "" }}</span>
@@ -473,6 +481,7 @@ import {
   equipLevelCap,
   equipUpgradeCost,
   upgradeEquipment,
+  upgradeEquipmentAll,
 } from "@/core/forge";
 import { useResourcesStore } from "@/stores/resources";
 import { toNum } from "@/utils/gnum";
@@ -797,6 +806,11 @@ function toggleEquip(): void {
 
 function doUpgrade(): void {
   if (inst.value) upgradeEquipment(inst.value.uid);
+}
+
+/** 连强到顶:一次点到器灵尘/灵石见底或满级(forge.upgradeEquipmentAll 已合一条总账) */
+function doUpgradeAll(): void {
+  if (inst.value) upgradeEquipmentAll(inst.value.uid);
 }
 
 const decomposeArm = ref<string | null>(null);

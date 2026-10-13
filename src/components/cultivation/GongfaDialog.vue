@@ -138,29 +138,40 @@
       </template>
     </div>
     <template v-if="learned" #footer>
-      <div class="flex gap-2">
-        <button
-          v-if="def?.type === 'main'"
-          class="btn-seal flex-1"
-          :disabled="isMain"
-          @click="setMain"
-        >
-          {{ isMain ? "主修中" : "设为主修" }}
-        </button>
-        <button v-else class="btn-seal flex-1" @click="toggleSub">
-          {{ subSlotLabel }}
-        </button>
-        <!-- 进修付不起就置灰+列差:缺哪样、差多少都在按钮上直说(与聚气丹/建筑同款纪律) -->
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <button
+            v-if="def?.type === 'main'"
+            class="btn-seal flex-1"
+            :disabled="isMain"
+            @click="setMain"
+          >
+            {{ isMain ? "主修中" : "设为主修" }}
+          </button>
+          <button v-else class="btn-seal flex-1" @click="toggleSub">
+            {{ subSlotLabel }}
+          </button>
+          <!-- 进修付不起就置灰+列差:缺哪样、差多少都在按钮上直说(与聚气丹/建筑同款纪律) -->
+          <button
+            v-if="upCost"
+            class="btn-ghost flex-1"
+            :disabled="!upAffordable"
+            @click="def && upgradeGongfa(def.id)"
+          >
+            <template v-if="upAffordable"
+              >进 修 · {{ upCost.wudao }} 悟道点 · {{ upCost.page }} 残页</template
+            >
+            <template v-else>进修 · 尚差 {{ upShort }}</template>
+          </button>
+        </div>
+        <!-- 修到顶:一次修到圆满或悟道点/残页见底,不必逐层点(合一条总账) -->
         <button
           v-if="upCost"
-          class="btn-ghost flex-1"
+          class="btn-ghost w-full !py-1.5 !text-[12px]"
           :disabled="!upAffordable"
-          @click="def && upgradeGongfa(def.id)"
+          @click="doUpgradeAll"
         >
-          <template v-if="upAffordable"
-            >进 修 · {{ upCost.wudao }} 悟道点 · {{ upCost.page }} 残页</template
-          >
-          <template v-else>进修 · 尚差 {{ upShort }}</template>
+          修到顶
         </button>
       </div>
     </template>
@@ -177,7 +188,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { gongfaDef, GONGFA_TYPE_NAMES } from "@/data/gongfa";
 import { ELEMENTS } from "@/data/linggen";
 import { branchesFor, gongfaBranchDef } from "@/data/gongfaBranches";
-import { gongfaUpgradeCost, upgradeGongfa } from "@/core/gongfaService";
+import { gongfaUpgradeCost, upgradeGongfa, upgradeGongfaAll } from "@/core/gongfaService";
 import { gongfaAffinity, rootElements } from "@/core/linggenAffinity";
 import { gongfaModsAt } from "@/stores/cultivation";
 import { formatSignedPercent } from "@/utils/format";
@@ -275,6 +286,11 @@ function confirmBranch(): void {
   const id = branchConfirm.value;
   branchConfirm.value = null;
   choose(id);
+}
+
+/** 修到顶:一次修到圆满或料尽(gongfaService.upgradeGongfaAll 已合一条总账) */
+function doUpgradeAll(): void {
+  if (def.value) upgradeGongfaAll(def.value.id);
 }
 
 function close(): void {

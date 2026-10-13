@@ -82,19 +82,74 @@ export function gongfaUpgradeCost(id: string): { wudao: number; page: number } |
   };
 }
 
-export function upgradeGongfa(id: string): boolean {
+/**
+ * 单层进修的校验与结算(静默)。返回本次消耗;到顶/未习得返回 "max",
+ * 悟道点或残页不足返回 "broke"。单点进修与「修到顶」共用这一步 —— 一处记账。
+ */
+function applyOneGongfaUpgrade(id: string): { wudao: number; page: number } | "max" | "broke" {
   const resources = useResourcesStore();
   const cultivation = useCultivationStore();
   const cost = gongfaUpgradeCost(id);
-  if (!cost) return false;
-  if (!resources.hasSmall("wudao", cost.wudao) || !resources.hasSmall("page", cost.page)) {
-    notify("悟道点或残页不足", "warn");
-    return false;
-  }
+  if (!cost) return "max";
+  if (!resources.hasSmall("wudao", cost.wudao) || !resources.hasSmall("page", cost.page))
+    return "broke";
   resources.spendSmall("wudao", cost.wudao);
   resources.spendSmall("page", cost.page);
   cultivation.upgrade(id);
+  return { wudao: cost.wudao, page: cost.page };
+}
+
+export function upgradeGongfa(id: string): boolean {
+  const res = applyOneGongfaUpgrade(id);
   const def = gongfaDef(id);
+  if (res === "max") return false;
+  if (res === "broke") {
+    notify("悟道点或残页不足", "warn");
+    return false;
+  }
+  const cultivation = useCultivationStore();
   notify(`《${def?.name}》修炼至第 ${cultivation.learned[id]} 层`, "success");
   return true;
+}
+
+export interface GongfaUpgradeBatch {
+  count: number;
+  wudao: number;
+  page: number;
+  ended: "max" | "broke" | "notlearned";
+}
+
+/**
+ * 修到顶:一次修到圆满或悟道点/残页见底,不再逐层点。
+ * 合一条总账(与连强/连投同款:批量不逐层弹,免得把 toast 位挤没)。
+ */
+export function upgradeGongfaAll(id: string): GongfaUpgradeBatch {
+  const cultivation = useCultivationStore();
+  const def = gongfaDef(id);
+  let count = 0;
+  let wudao = 0;
+  let page = 0;
+  let ended: GongfaUpgradeBatch["ended"] = "notlearned";
+  // 上限定死:每层必耗料或到顶,循环必然终止;安全闸防病理匀速为 0 的残页档
+  for (let i = 0; i < 200; i += 1) {
+    const res = applyOneGongfaUpgrade(id);
+    if (res === "max") {
+      ended = "max";
+      break;
+    }
+    if (res === "broke") {
+      ended = "broke";
+      break;
+    }
+    count += 1;
+    wudao += res.wudao;
+    page += res.page;
+  }
+  const lv = cultivation.learned[id] ?? 0;
+  if (count > 0) {
+    notify(`《${def?.name}》修至第 ${lv} 层,耗 ${wudao} 悟道点 · ${page} 残页`, "success");
+  } else if (ended === "broke") {
+    notify("悟道点或残页不足,修习中止", "warn");
+  }
+  return { count, wudao, page, ended };
 }

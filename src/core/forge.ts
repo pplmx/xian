@@ -38,19 +38,18 @@ export function equipUpgradeCost(uid: string): { dust: number; stone: GNum } | n
   return upgradeCost(inst.level, inst.tier, q.rank, modOf(player.finalStats.mods, "forgeDiscount"));
 }
 
-export function upgradeEquipment(uid: string): boolean {
+/**
+ * 单次强化的校验与结算(静默)。
+ * 返回本次消耗;到顶/非背包返回 "max",器灵尘或灵石不足返回 "broke"。
+ * 单点强化与「连强到顶」共用这一步 —— 两条路一处记账,不会各自漂移。
+ */
+function applyOneUpgrade(uid: string): { dust: number; stone: GNum } | "max" | "broke" {
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
   const inst = inventory.findItem(uid);
   const cost = equipUpgradeCost(uid);
-  if (!inst || !cost) {
-    notify("已达强化上限", "warn");
-    return false;
-  }
-  if (!resources.hasSmall("dust", cost.dust) || !resources.hasStone(cost.stone)) {
-    notify("器灵尘或灵石不足", "warn");
-    return false;
-  }
+  if (!inst || !cost) return "max";
+  if (!resources.hasSmall("dust", cost.dust) || !resources.hasStone(cost.stone)) return "broke";
   resources.spendSmall("dust", cost.dust);
   resources.spendStone(cost.stone);
   // 记账:这件装备花掉的强化成本(分解时按八成返还)——折扣是当时的,只有账本记得住
@@ -61,13 +60,75 @@ export function upgradeEquipment(uid: string): boolean {
     invested: { dust: invested.dust + cost.dust, stone: add(invested.stone, cost.stone) },
   });
   track("upgrades");
-  const t = equipmentTemplate(inst.templateId);
   // 强化过也算「亲手用过」——图鉴那一档由玩家自己推进,不看运气
   useLoreStore().noteEquipUsed(inst.templateId);
   // 炼器也算上手一味矿材:矿石从此能推到「通晓」、锻造技艺照常涨(见 noteSmithingUsed)
   noteSmithingUsed(inst.tier, true);
-  notify(`「${t?.name}」强化至 +${inst.level + 1}`, "success");
+  return { dust: cost.dust, stone: cost.stone };
+}
+
+export function upgradeEquipment(uid: string): boolean {
+  const res = applyOneUpgrade(uid);
+  if (res === "max") {
+    notify("已达强化上限", "warn");
+    return false;
+  }
+  if (res === "broke") {
+    notify("器灵尘或灵石不足", "warn");
+    return false;
+  }
+  const inst = useInventoryStore().findItem(uid)!;
+  const t = equipmentTemplate(inst.templateId);
+  notify(`「${t?.name}」强化至 +${inst.level}`, "success");
   return true;
+}
+
+export interface UpgradeBatchResult {
+  /** 实际强化了几档 */
+  count: number;
+  dust: number;
+  stone: GNum;
+  ended: "max" | "broke" | "unchanged";
+}
+
+/**
+ * 连强到顶:一次点到器灵尘/灵石见底或满级,不再逐级点。
+ * 合一条总账(与 decomposeBatch 同款:批量不逐档弹提示,免得连弹 10 条把位挤没)。
+ */
+export function upgradeEquipmentAll(uid: string): UpgradeBatchResult {
+  let count = 0;
+  let dust = 0;
+  let stone = gnZero();
+  let ended: UpgradeBatchResult["ended"] = "broke";
+  // 上限定死:每档必耗料或到顶,循环必然终止;给个安全闸防极端成本为 0 的病理档
+  for (let i = 0; i < 200; i += 1) {
+    const res = applyOneUpgrade(uid);
+    if (res === "max") {
+      ended = "max";
+      break;
+    }
+    if (res === "broke") {
+      ended = "broke";
+      break;
+    }
+    count += 1;
+    dust += res.dust;
+    stone = add(stone, res.stone);
+  }
+  if (count === 0) {
+    // 一步都没强成(多半按钮被灰拦着,这里兜底防手滑空点):照单点那分支的措辞报
+    notify(ended === "max" ? "已达强化上限" : "器灵尘或灵石不足", "warn");
+    return { count, dust, stone, ended: "unchanged" };
+  }
+  const inst = useInventoryStore().findItem(uid);
+  const name = inst ? equipmentTemplate(inst.templateId)?.name : undefined;
+  notify(
+    ended === "broke"
+      ? `「${name ?? "此器"}」连强至 +${inst?.level},料尽止`
+      : `「${name ?? "此器"}」连强至 +${inst?.level}(满)`,
+    "success",
+  );
+  return { count, dust, stone, ended };
 }
 
 export function decomposeEquipment(uid: string, opts: { quiet?: boolean } = {}): boolean {
