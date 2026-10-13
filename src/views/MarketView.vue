@@ -16,7 +16,7 @@ import { pillDef } from "@/data/pills";
 import { herbGradeOfMajor } from "@/data/herbGrades";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { formatCountdown, formatGN } from "@/utils/format";
-import { toNum } from "@/utils/gnum";
+import { add, gn, toNum } from "@/utils/gnum";
 import type { GNum } from "@/types";
 import {
   MARKET_CONSIGN_SECONDS,
@@ -127,6 +127,35 @@ function claimBounty(idx: number): void {
 
 /** 正在点选交付兵刃的那单悬赏(idx;null = 未在挑) */
 const equipPick = ref<number | null>(null);
+
+/**
+ * 能一键自动交的单(草药 / 玄铁 / 丹药)。**贡器单不放进来** —— 那得挑一件
+ * 够格的兵刃,不能悄悄拿走行囊里顺着序排在第一件的心头好(见 claimBounty 的注释)。
+ */
+const autoClaimable = computed(() =>
+  bounty.orders.filter((o) => !o.claimed && o.kind !== "equip" && bountyShort(o) === null),
+);
+
+/** 一键交掉所有现成可交的非贡器单:逐单走 store 的 claim,合一条总账汇报 */
+function claimAllAuto(): void {
+  const ready = autoClaimable.value;
+  if (!ready.length) return;
+  let count = 0;
+  let stone = gn(0);
+  let wudao = 0;
+  for (const o of ready) {
+    const r = bounty.claim(o.idx);
+    if (r !== "ok") continue;
+    count += 1;
+    stone = add(stone, o.reward);
+    if (o.extra > 0) wudao += o.extra;
+  }
+  if (!count) return;
+  const parts = [`已交货 ${count} 单`];
+  if (toNum(stone) > 0) parts.push(`得灵石 ${formatGN(stone)}`);
+  if (wudao > 0) parts.push(`悟道 +${wudao}`);
+  notify(parts.join(" · "), "success");
+}
 
 /** 贡器单可交付的够格行囊兵刃(与 claim 的找回谓词同源:阶 ≥ 订单要求) */
 const equipCandidates = computed(() => {
@@ -251,14 +280,23 @@ function bountyShort(o: BountySlot): string | null {
     <section>
       <div class="flex items-center justify-between pr-1">
         <SectionTitle title="悬赏板" />
-        <span
-          class="text-[10px] text-ink-faint"
-          :title="`${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`"
-          >换新
-          <span class="countdown-slot">{{
-            formatCountdown(bountyRemainingSec(bounty.bountyAt, now))
-          }}</span></span
-        >
+        <div class="flex items-center gap-2">
+          <button
+            v-if="autoClaimable.length"
+            class="btn-seal !px-2.5 !py-1 text-[11px]"
+            @click="claimAllAuto()"
+          >
+            一键领取({{ autoClaimable.length }})
+          </button>
+          <span
+            class="text-[10px] text-ink-faint"
+            :title="`${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`"
+            >换新
+            <span class="countdown-slot">{{
+              formatCountdown(bountyRemainingSec(bounty.bountyAt, now))
+            }}</span></span
+          >
+        </div>
       </div>
       <div class="mt-1 space-y-2">
         <div
