@@ -34,6 +34,7 @@
               :height="5"
               color="var(--color-cinnabar)"
             />
+            <p class="mt-0.5 text-[10px] text-ink-faint tabular">{{ stageGapText }}</p>
             <p v-if="build.secondary" class="mt-1 text-[10px] text-ink-faint tabular">
               副体系:{{ build.secondary.style.name }}
               {{ formatPercent(build.secondary.affinity, 0) }} —— 修行无职业,道路可以不纯
@@ -326,7 +327,13 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
-import { detectBuild, buildSources, STYLE_SHORT_NAMES } from "@/core/buildDetect";
+import {
+  detectBuild,
+  buildSources,
+  STYLE_SHORT_NAMES,
+  STYLE_MATURE_AFFINITY,
+  STYLE_MASTER_AFFINITY,
+} from "@/core/buildDetect";
 import { ratePower, ratingStars, type PowerDimKey } from "@/core/powerRating";
 import { matchComboArt, COMBO_SECONDARY_MIN } from "@/data/comboArts";
 import { measureResilience, resilienceText } from "@/core/resilience";
@@ -348,6 +355,14 @@ const player = usePlayerStore();
 const loadouts = useLoadoutsStore();
 
 const build = computed(() => detectBuild(player.finalStats.mods));
+/** 距下一形态还差多少契合:读判定线常量(60%/90%,与 stageName 同源),进度不许空转 */
+const stageGapText = computed(() => {
+  const aff = build.value?.affinity;
+  if (aff === undefined) return "";
+  if (aff >= STYLE_MASTER_AFFINITY) return "已至大成";
+  const target = aff >= STYLE_MATURE_AFFINITY ? STYLE_MASTER_AFFINITY : STYLE_MATURE_AFFINITY;
+  return `距${aff >= STYLE_MATURE_AFFINITY ? "大成" : "成形"}还差 ${formatPercent(target - aff, 0)} 契合`;
+});
 /** 五维评级:进攻/生存/身法/恢复/机制 —— 让玩家读懂构筑形状而非只盯战力总数 */
 const powerRating = computed(() => ratePower(player.finalStats));
 

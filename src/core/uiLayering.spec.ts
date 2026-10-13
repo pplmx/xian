@@ -866,6 +866,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(inv?.src, "返草要显在炉台成本行").toContain("炸炉返草 ~");
   });
 
+  it("转世一句不撒谎 —— 法宝归尘、功法回一层,不许写保留/折半", () => {
+    // 弹窗顶部一句话曾写「保留道果/天赋/法宝,功法折半」,而同一弹窗的 HERITAGE
+    // 去留一览(samsaraAudit)写着法宝 reset(归尘)、功法 partial(回一层)—— 同屏两本账。
+    // 一句话要与结算同源:保留随魂之物,功法回一层,法宝归尘。不许退回旧假账。
+    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    expect(char?.src, "功法是回一层非折半").toContain("功法回一层");
+    expect(char?.src, "法宝是归尘非保留").toContain("法宝归尘");
+    expect(char?.src, "不许再手写旧假账(保留法宝/折半)").not.toMatch(/天赋 \/ 法宝|功法折半/);
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。
