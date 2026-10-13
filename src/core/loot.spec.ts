@@ -15,7 +15,7 @@ import {
   artifactDropWeight,
   randomDropArtifact,
 } from "./loot";
-import { upgradeEquipment } from "./forge";
+import { upgradeEquipment, upgradeEquipmentAll, upgradeRestCost } from "./forge";
 import { ARTIFACTS, artifactDef, artifactValue } from "@/data/artifacts";
 import type { ArtifactDef, StatMods } from "@/types";
 import { regionDef } from "@/data/regions";
@@ -27,7 +27,7 @@ import { useSettingsStore } from "@/stores/settings";
 import { qualityDef } from "@/data/qualities";
 import { DECOMPOSE_DUST } from "@/data/constants";
 import { useLoreStore } from "@/stores/lore";
-import { gn } from "@/utils/gnum";
+import { gn, toNum } from "@/utils/gnum";
 import type { EquipmentInstance, QualityId } from "@/types";
 
 describe("自动回收 · 装备入包前的第一道闸", () => {
@@ -390,5 +390,45 @@ describe("装备见闻 · 入账那一刻就记下成色", () => {
     ];
     expect(upgradeEquipment("used-2"), "强化应当成功(素材已给足)").toBe(true);
     expect(lore.equipSeen("w_qingshuang")?.u, "强化过也算上手").toBe(1);
+  });
+});
+
+describe("forge · 连强到顶总账预览与实付同账", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("upgradeRestCost 的累计恰好等于 upgradeEquipmentAll 实际扣掉的账(到顶)", () => {
+    const inv = useInventoryStore();
+    const res = useResourcesStore();
+    const uid = "rest-1";
+    inv.items = [
+      { uid, templateId: "w_qingshuang", quality: "heaven", tier: 3, level: 1, affixes: [] },
+    ];
+    // 料给足,连强不会中途 broke —— 这样预算与实付都该是「一路到顶」的同一笔
+    res.addSmall("dust", 10_000_000);
+    res.addStone(gn(1e15));
+    const preview = upgradeRestCost(uid);
+    if (preview === "max") throw new Error("当前未满级,应给出预算");
+    const batch = upgradeEquipmentAll(uid);
+    expect(batch.ended, "料足应一路到顶").toBe("max");
+    expect(batch.count).toBe(preview.count);
+    expect(batch.dust).toBe(preview.dust);
+    expect(toNum(batch.stone)).toBe(toNum(preview.stone));
+  });
+
+  it("已满级时 upgradeRestCost 报 max(无总账可给)", () => {
+    const inv = useInventoryStore();
+    inv.items = [
+      {
+        uid: "rest-full",
+        templateId: "w_qingshuang",
+        quality: "heaven",
+        tier: 3,
+        level: 99,
+        affixes: [],
+      },
+    ];
+    expect(upgradeRestCost("rest-full")).toBe("max");
   });
 });

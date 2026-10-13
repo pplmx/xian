@@ -26,11 +26,17 @@ import {
 } from "@/data/market";
 import type { BountySlot } from "@/data/bounty";
 import type { EquipmentInstance } from "@/types";
-import { marketEquipInstance, marketRemainingSec, consignPrice } from "@/core/marketService";
+import {
+  marketEquipInstance,
+  marketRemainingSec,
+  consignPrice,
+  pillSellPrice,
+  materialSellPrice,
+} from "@/core/marketService";
 import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
-import { qualityDef } from "@/data/qualities";
+import { qualityDef, QUALITIES } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -249,7 +255,9 @@ function bountyShort(o: BountySlot): string | null {
               <p class="truncate">
                 {{ previews[slot.idx] }}·{{ slot.tier }} 层
                 <span class="text-ink-faint"
-                  >品质底档{{ (slot as { minQualityRank: number }).minQualityRank }}</span
+                  >品质底档{{
+                    QUALITIES[(slot as { minQualityRank: number }).minQualityRank]?.name ?? ""
+                  }}</span
                 >
               </p>
               <p class="text-[10px] text-ink-faint">一件已定兵刃,到手即用</p>
@@ -438,21 +446,30 @@ function bountyShort(o: BountySlot): string | null {
             class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
             @click="sellPill(p.id)"
           >
-            售{{ p.def?.name ?? p.id }}({{ p.count }})
+            售{{ p.def?.name ?? p.id }}({{ p.count }}) · 每颗得
+            {{ formatGN(pillSellPrice(p.id)) }} 石
           </button>
           <button
             class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
             :disabled="!resources.hasSmall('herb', MARKET_MAT_COUNT)"
             @click="sellMat('herb')"
           >
-            {{ herbSellShort > 0 ? `尚差 ${herbSellShort} 灵草` : `售灵草×${MARKET_MAT_COUNT}` }}
+            {{
+              herbSellShort > 0
+                ? `尚差 ${herbSellShort} 灵草`
+                : `售灵草×${MARKET_MAT_COUNT} · 得 ${formatGN(materialSellPrice(player.major))} 石`
+            }}
           </button>
           <button
             class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
             :disabled="!resources.hasSmall('ore', MARKET_MAT_COUNT)"
             @click="sellMat('ore')"
           >
-            {{ oreSellShort > 0 ? `尚差 ${oreSellShort} 玄铁` : `售玄铁×${MARKET_MAT_COUNT}` }}
+            {{
+              oreSellShort > 0
+                ? `尚差 ${oreSellShort} 玄铁`
+                : `售玄铁×${MARKET_MAT_COUNT} · 得 ${formatGN(materialSellPrice(player.major))} 石`
+            }}
           </button>
           <span v-if="sellablePills.length === 0" class="text-[10px] text-ink-faint"
             >并无即时可售的丹药 —— 历练所得,自能入市</span

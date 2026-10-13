@@ -117,7 +117,11 @@
             <span class="block font-kai text-[14px] tracking-widest text-ink">散置形意</span>
             <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
               {{
-                idleSouls.length > 0 ? `${idleSouls.length} 缕待用 · 装配或散去` : "暂无闲置器魂"
+                idleSouls.length > 0
+                  ? slotsFull
+                    ? `${idleSouls.length} 缕待用 · 槽位已满,先散去一缕`
+                    : `${idleSouls.length} 缕待用 · 装配或散去`
+                  : "暂无闲置器魂"
               }}
             </span>
           </span>
@@ -208,8 +212,12 @@
             </p>
           </div>
           <div class="flex shrink-0 gap-1">
-            <button class="btn-ghost !px-2.5 !py-1 !text-[11px]" @click="wearSoul(soul.uid)">
-              装配
+            <button
+              class="btn-ghost !px-2.5 !py-1 !text-[11px]"
+              :disabled="slotsFull"
+              @click="wearSoul(soul.uid)"
+            >
+              {{ slotsFull ? "槽已满" : "装配" }}
             </button>
             <template v-if="pendingDissolveUid !== soul.uid">
               <button
@@ -388,6 +396,9 @@ function doDissolve(uid: string): void {
 const idleSouls = computed(() =>
   endgame.soulList.filter((s) => !endgame.activeSouls.some((a) => a.uid === s.uid)),
 );
+
+/** 神魂槽已满:散置窗里的闲置器魂装不进去,装配须先散去一缕 */
+const slotsFull = computed(() => endgame.activeSouls.length >= SOUL_SLOTS);
 
 /** 可入炉的法器:未锁定、未穿戴、且确有形意可存 */
 const refinable = computed(() => {

@@ -223,7 +223,16 @@
           尚差 器灵尘×{{ Math.max(0, upCost.dust - resources.dust) }} · 灵石
           {{ formatGN(Math.max(0, toNum(upCost.stone) - toNum(resources.spiritStone))) }}
         </p>
-        <!-- 连强到顶:一次点到器灵尘/灵石见底或满级,不必逐级点(合一条总账) -->
+        <!-- 连强到顶:一次点到器灵尘/灵石见底或满级,不必逐级点(合一条总账)。
+             批量动作照例把总账摊在按下前(与 decomposeBatch/decomposePreview 同族);
+             只有一级可点时上行已报下一级,不重复 -->
+        <p
+          v-if="restUpgrade !== 'max' && restUpgrade.count > 1"
+          class="mt-1 text-[10px] text-ink-faint tabular"
+        >
+          连强到顶共需({{ restUpgrade.count }} 级)器灵尘×{{ restUpgrade.dust }} · 灵石
+          {{ formatGN(restUpgrade.stone) }}
+        </p>
         <button
           class="btn-ghost mt-2 w-full !py-1.5 !text-[12px]"
           :disabled="!upAffordable"
@@ -453,6 +462,7 @@
             <button
               class="btn-ghost px-3"
               :disabled="isEquipped || inst?.locked"
+              :title="isEquipped ? '佩戴中,卸下后再分解' : '已锁定,解锁后再分解'"
               aria-label="分解这件装备"
               @click="decomposeArm = inst?.uid ?? null"
             >
@@ -486,6 +496,7 @@ import {
   equipUpgradeCost,
   upgradeEquipment,
   upgradeEquipmentAll,
+  upgradeRestCost,
 } from "@/core/forge";
 import { useResourcesStore } from "@/stores/resources";
 import { toNum } from "@/utils/gnum";
@@ -552,6 +563,10 @@ const upAffordable = computed(() => {
   if (!c) return false;
   return resources.hasSmall("dust", c.dust) && resources.hasStone(c.stone);
 });
+/** 连强到顶的总账:从当前级一路到满级要吃多少(纯读预览,与 upgradeEquipmentAll 同算法) */
+const restUpgrade = computed(() =>
+  inst.value ? upgradeRestCost(inst.value.uid) : ("max" as const),
+);
 /** 分解返还:底材 + 强化投入的配比(文案走 refundRateText,与 DECOMPOSE_REFUND_RATE 同源,不手写「八成」) */
 const salvage = computed(() => (inst.value ? salvageOf(inst.value) : null));
 

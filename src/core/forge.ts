@@ -39,6 +39,32 @@ export function equipUpgradeCost(uid: string): { dust: number; stone: GNum } | n
 }
 
 /**
+ * 「连强到顶」的总账预览(纯读,不改任何状态):从当前级一路算到满级,
+ * 与 upgradeEquipmentAll 的逐级累计同算法 —— 折扣取当前 forgeDiscount(批量内不变),
+ * 让玩家按下前看清一次点到头究竟要吃多少,而不是只看下一级。已满级返回 "max"。
+ */
+export function upgradeRestCost(uid: string): { count: number; dust: number; stone: GNum } | "max" {
+  const inventory = useInventoryStore();
+  const player = usePlayerStore();
+  const inst = inventory.findItem(uid);
+  if (!inst) return "max";
+  const cap = equipLevelCap();
+  if (inst.level >= cap) return "max";
+  const q = qualityDef(inst.quality);
+  const discount = modOf(player.finalStats.mods, "forgeDiscount");
+  let count = 0;
+  let dust = 0;
+  let stone = gnZero();
+  for (let lv = inst.level; lv < cap; lv += 1) {
+    const c = upgradeCost(lv, inst.tier, q.rank, discount);
+    count += 1;
+    dust += c.dust;
+    stone = add(stone, c.stone);
+  }
+  return { count, dust, stone };
+}
+
+/**
  * 单次强化的校验与结算(静默)。
  * 返回本次消耗;到顶/非背包返回 "max",器灵尘或灵石不足返回 "broke"。
  * 单点强化与「连强到顶」共用这一步 —— 两条路一处记账,不会各自漂移。
