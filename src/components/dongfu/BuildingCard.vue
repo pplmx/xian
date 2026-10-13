@@ -40,31 +40,46 @@
     <p v-if="studyStatusLine" class="mt-1 flex items-center gap-1 text-[10px] text-gold-ink">
       <GameIcon name="book" :size="11" />{{ studyStatusLine }}
     </p>
-    <button
-      class="btn-ghost mt-2 w-full !py-1.5 !text-[12px]"
-      :disabled="!info.canUpgrade"
-      @click="upgradeBuilding(props.def.id)"
-    >
-      <!--
-        数与量词必须黏在一起:窄屏(320)上卡片只有 ~140px,浏览器会在数字与「石」之间断行,
-        于是按钮读成「升级 · 2,798 / 石 50铁」—— 单价被拆成两半。
-        每个「数 + 量词」各自 nowrap,换行只发生在分隔符处。
-
-        外面这层 span 也是必须的:btn-ghost 是 flex 容器,散落的文本节点会各自成为
-        flex item 并**竖着堆**(实测直接把「升 / 级 / · / 317 石」排成一列)。
-        收进一个 inline 文本块里,它们才按普通行内规则折行。
-      -->
-      <template v-if="info.canUpgrade">
-        <span class="leading-tight">
-          <span class="whitespace-nowrap">{{ level > 0 ? "升级" : "建造" }} ·</span>
-          <span class="whitespace-nowrap tabular">{{ formatGN(info.stone) }} 石</span>
-          <span v-if="info.ore > 0" class="whitespace-nowrap tabular">· {{ info.ore }} 玄铁</span>
-        </span>
-      </template>
-      <template v-else
-        ><span class="whitespace-nowrap">{{ info.reason }}</span></template
+    <div class="mt-2 flex flex-col gap-1">
+      <button
+        class="btn-ghost w-full !py-1.5 !text-[12px]"
+        :disabled="!info.canUpgrade"
+        @click="upgradeBuilding(props.def.id)"
       >
-    </button>
+        <!--
+          数与量词必须黏在一起:窄屏(320)上卡片只有 ~140px,浏览器会在数字与「石」之间断行,
+          于是按钮读成「升级 · 2,798 / 石 50铁」—— 单价被拆成两半。
+          每个「数 + 量词」各自 nowrap,换行只发生在分隔符处。
+
+          外面这层 span 也是必须的:btn-ghost 是 flex 容器,散落的文本节点会各自成为
+          flex item 并**竖着堆**(实测直接把「升 / 级 / · / 317 石」排成一列)。
+          收进一个 inline 文本块里,它们才按普通行内规则折行。
+        -->
+        <template v-if="info.canUpgrade">
+          <span class="leading-tight">
+            <span class="whitespace-nowrap">{{ level > 0 ? "升级" : "建造" }} ·</span>
+            <span class="whitespace-nowrap tabular">{{ formatGN(info.stone) }} 石</span>
+            <span v-if="info.ore > 0" class="whitespace-nowrap tabular">· {{ info.ore }} 玄铁</span>
+          </span>
+        </template>
+        <template v-else
+          ><span class="whitespace-nowrap">{{ info.reason }}</span></template
+        >
+      </button>
+      <!-- 连升:一次升到最多 ×5 级(或料尽/到顶即止)。取有界批量而非「一口气到顶」 ——
+           玄铁是全局共用的硬料,连升不该有机会把兜里的玄铁一把烧光(连炼×5 / 灵脉+5 同手感)。
+           独立一行而不是并排:卡片是 2 列窄卡(200% 放大后内宽仅 ~84px),并排会把
+           主按钮挤到折行/越界 —— 与灵脉投资那行(整宽区)不同,这里只能上下叠。 -->
+      <button
+        v-if="info.canUpgrade"
+        class="btn-ghost w-full !py-1 !text-[10px]"
+        aria-label="连升 5 级"
+        :disabled="!info.canUpgrade"
+        @click="buildingUpgradeN(props.def.id, BUILD_BATCH)"
+      >
+        <span class="whitespace-nowrap">连升×{{ BUILD_BATCH }}</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -77,12 +92,16 @@ import { petDef } from "@/data/pets";
 import { pillDef } from "@/data/pills";
 import {
   buildingUpgradeInfo,
+  buildingUpgradeN,
   buildingUpgradePreview,
   upgradeBuilding,
 } from "@/core/buildingService";
 import { studyEta } from "@/core/loreService";
 import { formatDuration, formatGN } from "@/utils/format";
 import GameIcon from "@/components/common/GameIcon.vue";
+
+/** 连升一次至多升几级(与连炼×5 / 灵脉+5 同一种有界批量) */
+const BUILD_BATCH = 5;
 
 const props = defineProps<{ def: BuildingDef }>();
 

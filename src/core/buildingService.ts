@@ -3,7 +3,7 @@
  */
 import type { BuildingId, GNum } from "@/types";
 import { buildingDef } from "@/data/buildings";
-import { gnZero, gte, subClamp } from "@/utils/gnum";
+import { add, gnZero, gte, subClamp } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
 import { buildingUpgradeInfoOf } from "./engineFacilities";
 import { track } from "./progress";
@@ -96,4 +96,47 @@ export function upgradeBuilding(id: BuildingId): boolean {
   track("buildingUpgrades");
   notify(`${def.name}升至 ${info.nextLevel} 级`, "success");
   return true;
+}
+
+export interface BuildingUpgradeBatchResult {
+  levelsGained: number;
+  stone: GNum;
+  ore: number;
+}
+
+/**
+ * 连升 count 级(默认 5):一级级走与单升同一判定,到顶或料尽即止 ——
+ * 账是逐级的那笔,只是合一条汇报。取有界批量而非「一口气到顶」:玄铁是全局共用
+ * 的硬料,连升不该有机会把兜里的玄铁一把烧光(连炼×5 / 灵脉+5 同一种有界手感)。
+ */
+export function buildingUpgradeN(id: BuildingId, count = 5): BuildingUpgradeBatchResult {
+  const dongfu = useDongfuStore();
+  const resources = useResourcesStore();
+  const def = buildingDef(id)!;
+  let levelsGained = 0;
+  let stone = gnZero();
+  let ore = 0;
+  while (levelsGained < count) {
+    const info = buildingUpgradeInfo(id);
+    if (!info.canUpgrade) break;
+    // 双闸:buildingUpgradeInfo 已把资源差算进 canUpgrade,这里再兜一道(中途见底也停)
+    if (!resources.hasStone(info.stone) || !resources.hasSmall("ore", info.ore)) break;
+    resources.spendStone(info.stone);
+    resources.spendSmall("ore", info.ore);
+    const from = dongfu.levels[id] ?? 0;
+    dongfu.setLevel(id, info.nextLevel);
+    levelsGained += (dongfu.levels[id] ?? 0) - from;
+    stone = add(stone, info.stone);
+    ore += info.ore;
+  }
+  if (levelsGained > 0) {
+    track("buildingUpgrades");
+    const parts = [`${def.name}连升 ${levelsGained} 级 → ${dongfu.levels[id] ?? 0} 级`];
+    parts.push(`${formatGN(stone)} 石`);
+    if (ore > 0) parts.push(`${ore} 铁`);
+    notify(parts.join(" · "), "success");
+  } else {
+    notify(buildingUpgradeInfo(id).reason || "无法升级", "warn");
+  }
+  return { levelsGained, stone, ore };
 }

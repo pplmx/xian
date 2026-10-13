@@ -11,8 +11,8 @@ import { createPinia, setActivePinia } from "pinia";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
-import { gn } from "@/utils/gnum";
-import { buildingUpgradeInfo, buildingUpgradePreview } from "./buildingService";
+import { gn, toNum } from "@/utils/gnum";
+import { buildingUpgradeInfo, buildingUpgradePreview, buildingUpgradeN } from "./buildingService";
 import { buildingDef, BUILDINGS } from "@/data/buildings";
 
 /** 把聚灵阵撑到 3 级(高于首级,有玄铁成本;且远未到顶层/辖限) */
@@ -148,4 +148,42 @@ it("效果行不出双符号(++/+-):effectText 是给玩家看的,不该出现�
       }
     }
   }
+});
+
+describe("buildingUpgradeN · 一键连升 ×5", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    usePlayerStore().major = 0; // 聚灵阵 0 境可建,不受境界门槛拦
+  });
+
+  it("灵石/玄铁充足:连升到洞府辖限停下(0 级洞府 → 聚灵阵止步 5 级)", () => {
+    const dongfu = useDongfuStore();
+    const resources = useResourcesStore();
+    resources.ore = 1e9;
+    resources.spiritStone = gn(1e15);
+    const res = buildingUpgradeN("array");
+    expect(dongfu.levels["array"]).toBe(dongfu.buildingCap("array"));
+    expect(res.levelsGained).toBe(dongfu.levels["array"]);
+    expect(toNum(res.stone)).toBeGreaterThan(0);
+  });
+
+  it("无料:一级不动,返回 0 级进的空账", () => {
+    const dongfu = useDongfuStore();
+    const res = buildingUpgradeN("array");
+    expect(res.levelsGained).toBe(0);
+    expect(toNum(res.stone)).toBe(0);
+    expect(dongfu.levels["array"]).toBe(0);
+  });
+
+  it("料到即止:买到烧光为止,不欠账(灵石不为负),也不越到顶", () => {
+    const dongfu = useDongfuStore();
+    const resources = useResourcesStore();
+    resources.ore = 100000;
+    resources.spiritStone = gn(200);
+    const res = buildingUpgradeN("array");
+    expect(res.levelsGained).toBeGreaterThan(0);
+    expect(res.levelsGained).toBeLessThan(dongfu.buildingCap("array"));
+    expect(toNum(resources.spiritStone)).toBeGreaterThanOrEqual(0);
+    expect(dongfu.levels["array"]).toBe(res.levelsGained);
+  });
 });
