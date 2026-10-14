@@ -164,8 +164,8 @@ function recordMarkInternal(
 ): void {
   const player = usePlayerStore();
   const endgame = useEndgameStore();
-  const build = detectBuild(player.finalStats.mods);
-  const snap = buildPlayerSnap();
+  const build = detectBuild(player.celestialStats.mods);
+  const snap = buildPlayerSnap(true);
   const mark: DaoMark = {
     life: player.reincarnation.count + 1,
     daoPathId: endgame.daoPath,
@@ -174,7 +174,7 @@ function recordMarkInternal(
     cleared,
     rounds,
     buildName: build?.displayName ?? "杂学",
-    powerText: formatGN(player.finalStats.power),
+    powerText: formatGN(player.celestialStats.power),
     at: Date.now(),
     ruleset: RULESET_VERSION,
     context,
