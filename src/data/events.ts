@@ -1102,7 +1102,7 @@ export const EVENTS: EventDef[] = [
       ]),
       leave("缘分未到,强求无益。"),
     ],
-    { weight: 70, maxRealm: MORTAL_END },
+    { weight: 70, minRealm: MORTAL_END, maxRealm: MORTAL_END },
   ),
   ev(
     "ev_rescue_disciple",
