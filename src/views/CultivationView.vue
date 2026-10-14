@@ -260,7 +260,7 @@
           今日天时 · {{ tribWeather.name
           }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template
           ><template v-if="tribWeatherResistPenalty">
-            · 渡劫抗性 {{ tribWeatherResistPenalty }}</template
+            · {{ STAT_NAMES["tribulationResist"] }} {{ tribWeatherResistPenalty }}</template
           >
         </p>
         <p class="mt-1.5 text-[10px] text-ink-faint tabular">
@@ -744,7 +744,7 @@ import type { GongfaDef, GongfaType } from "@/types";
 import { ELEMENTS } from "@/data/linggen";
 import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from "@/data/gongfaBranches";
 import { buffDef } from "@/data/buffs";
-import { modsText } from "@/ui/statNames";
+import { modsText, STAT_NAMES } from "@/ui/statNames";
 import { pillDef } from "@/data/pills";
 import type { PillDef } from "@/types";
 import {
