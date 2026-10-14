@@ -113,7 +113,7 @@ const level = computed(() => dongfu.levels[props.def.id] ?? 0);
 const cap = computed(() => dongfu.buildingCap(props.def.id));
 const info = computed(() => buildingUpgradeInfo(props.def.id));
 /** 下一级增益预览:卡面已显当前效果与代价,这里补「升上去会怎样」(effectText 同源,只报会变的行) */
-const preview = computed(() => buildingUpgradePreview(props.def.id, level.value));
+const preview = computed(() => buildingUpgradePreview(props.def.id, level.value, cap.value));
 /** 灵兽园联动:洞府与宠物两系统彼此看见(只对 beast 这一座特例,其余建筑不理会) */
 const beastCompanionName = computed(() =>
   props.def.id === "beast" && player.petId ? petDef(player.petId)?.name : undefined,

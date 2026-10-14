@@ -30,10 +30,15 @@ export interface BuildingUpgradePreview {
  * 取 effectText(nextLevel) 与 effectText(level) 逐行比对,留下字面变掉的行 ——
  * 与 effectText 同一事实源,门槛、档位一致,不会出现「卡面印的出不去」。
  */
-export function buildingUpgradePreview(id: BuildingId, level: number): BuildingUpgradePreview {
+export function buildingUpgradePreview(
+  id: BuildingId,
+  level: number,
+  /** 有效上限(洞府档闸门 < 品类上限时已到顶的卡不该再印「下一级」);缺省回退 def.maxLevel */
+  cap?: number,
+): BuildingUpgradePreview {
   const def = buildingDef(id)!;
   const next = level + 1;
-  if (next > def.maxLevel) return { nextLevel: next, lines: [], built: level === 0 };
+  if (next > (cap ?? def.maxLevel)) return { nextLevel: next, lines: [], built: level === 0 };
   const cur = level > 0 ? def.effectText(level) : [];
   const nxt = def.effectText(next);
   const lines = nxt.filter((line, i) => line !== cur[i]);

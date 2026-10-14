@@ -73,7 +73,7 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 10,
     // Phase 32.3 之后丹方不再由炉火高低"解锁",炉子只管出丹多寡 —— 成与不成看所知与手上功夫
     effectText: (lv) => [
-      `炼丹双成率 ${formatSignedPercent(lv * ALCHEMY_YIELD_PER_LEVEL)}`,
+      `炼丹双成率 ${formatSignedPercent(lv * ALCHEMY_YIELD_PER_LEVEL)}(丹道有阈,非无限)`,
       "炉子只管出丹多寡,成与不成看你懂多少",
     ],
     mods: (lv): StatMods => ({ alchemyYield: lv * ALCHEMY_YIELD_PER_LEVEL }),
