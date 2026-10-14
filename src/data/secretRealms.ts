@@ -111,6 +111,21 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.3,
     rewardMult: 1.4,
   },
+  {
+    id: "sr_tiebi",
+    gate: "mortal",
+    name: "铁壁万壑",
+    desc: "万壑铁壁,万军难摧。此地主守:扛得住,就有得捞。",
+    minMajor: 6,
+    cost: { stone: 120 },
+    rules: {
+      enemyAtkMult: 1.25,
+      shieldCapRatio: 0.5,
+      playerExtraMods: { damageReduction: 0.12 },
+    },
+    healBetweenPct: 0.5,
+    rewardMult: 1.35,
+  },
   // ---- 天界秘境:真仙起,道源代价,与远征/试炼并列 ----
   {
     id: "sr_xingchen",
