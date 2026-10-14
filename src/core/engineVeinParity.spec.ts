@@ -209,9 +209,9 @@ describe("灵脉投资点对账 —— 点数、主脉、灵石与提示语", ()
 describe("灵脉读数的对账 —— 总点数与属性加成", () => {
   it("总点数:账上所有键都算(与迁移前的 reduce 同一个数)", () => {
     for (const points of [
-      { gather: 0, craft: 0, alchemy: 0, insight: 0, guard: 0 },
-      { gather: 70, craft: 30, alchemy: 0, insight: 0, guard: 0 },
-      { gather: 40, craft: 12, alchemy: 3, insight: 7, guard: 0 },
+      { gather: 0, craft: 0, alchemy: 0, insight: 0, guard: 0, xuanhuang: 0 },
+      { gather: 70, craft: 30, alchemy: 0, insight: 0, guard: 0, xuanhuang: 0 },
+      { gather: 40, craft: 12, alchemy: 3, insight: 7, guard: 0, xuanhuang: 0 },
     ]) {
       const legacyTotal = Object.values(points).reduce((a, b) => a + b, 0);
       expect(veinTotalOf(veinStateOf(points, "gather")), JSON.stringify(points)).toBe(legacyTotal);
@@ -230,9 +230,9 @@ describe("灵脉读数的对账 —— 总点数与属性加成", () => {
       return out;
     };
     for (const points of [
-      { gather: 0, craft: 0, alchemy: 0, insight: 0, guard: 0 },
-      { gather: 70, craft: 30, alchemy: 0, insight: 0, guard: 0 },
-      { gather: 12, craft: 4, alchemy: 9, insight: 30, guard: 0 },
+      { gather: 0, craft: 0, alchemy: 0, insight: 0, guard: 0, xuanhuang: 0 },
+      { gather: 70, craft: 30, alchemy: 0, insight: 0, guard: 0, xuanhuang: 0 },
+      { gather: 12, craft: 4, alchemy: 9, insight: 30, guard: 0, xuanhuang: 0 },
     ]) {
       const mine = veinModsOf(veinStateOf(points, "gather"));
       expect({ ...mine }, JSON.stringify(points)).toEqual(legacyMods(points));

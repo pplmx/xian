@@ -4,7 +4,7 @@
  */
 import type { StatMods } from "@/types";
 
-export type VeinId = "gather" | "craft" | "alchemy" | "insight" | "guard";
+export type VeinId = "gather" | "craft" | "alchemy" | "insight" | "guard" | "xuanhuang";
 
 export interface VeinDef {
   id: VeinId;
@@ -50,6 +50,13 @@ export const VEINS: VeinDef[] = [
     seal: "守",
     desc: "庚金固本,气血绵长",
     perPoint: { maxHpPct: 0.002 },
+  },
+  {
+    id: "xuanhuang",
+    name: "玄黄灵脉",
+    seal: "坚",
+    desc: "玄黄之气,卸力三分",
+    perPoint: { damageReduction: 0.002 },
   },
 ];
 
