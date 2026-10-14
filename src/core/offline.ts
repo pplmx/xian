@@ -177,7 +177,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       idx >= 0 && idx < OFFLINE_CAP_HOURS.length - 1 ? OFFLINE_CAP_HOURS[idx + 1]! : null;
     notes.push(
       `离府 ${formatDuration(dtSec)}:修为与灵气按时长全额入账;` +
-        `材料、钻研与历练受洞府上限(${capHours} 小时)约束,超出的 ${formatDuration(dtSec - capSec)} 未计入` +
+        `材料、钻研与历练按 ${OFFLINE_EFFICIENCY * 10} 折挂机、受洞府上限(${capHours} 小时)约束,超出的 ${formatDuration(dtSec - capSec)} 未计入` +
         (nextCap ? ` —— 洞府升一级可提到 ${nextCap} 小时` : " —— 洞府已至最高档"),
     );
   }
