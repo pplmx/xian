@@ -16,6 +16,7 @@ import { ACHIEVEMENTS } from "@/data/achievements";
 import { MAIN_QUESTS } from "@/data/quests";
 import { LIFESPAN_CRITICAL_RATIO } from "@/data/constants";
 import { titleDef } from "@/data/titles";
+import { qualityDef } from "@/data/qualities";
 import { pillDef } from "@/data/pills";
 import { stoneByTier } from "./formulas";
 import { dailyShapeOf, dailyStateOf, dailyTaskDef, settleDailies } from "./engineDailies";
@@ -234,6 +235,16 @@ export function checkStateAchievements(): void {
     checkCustomAchievement("lifespanLow");
   if (player.lifespanMax >= 10000) checkCustomAchievement("lifespan10k");
   if (gte(resources.spiritStone, { m: 1, e: 6 })) checkCustomAchievement("stone1m");
+  // 品质成就在「获得装备」时显式触发(loot witness);老档/从坊市买的高品装备若之后再没
+  // 碰上同档,会永久锁着。周期自愈按「身上现有最高品质」重放一次(realm/counter 已自愈,
+  // 唯独这档漏了,见 progress.ts:224-237 注释的姊妹关系)。
+  const inv = useInventoryStore();
+  let maxRank = 0;
+  for (const it of inv.items) {
+    const r = qualityDef(it.quality).rank;
+    if (r > maxRank) maxRank = r;
+  }
+  if (maxRank > 0) checkQualityAchievement(maxRank);
 }
 
 function checkMainQuest(): void {

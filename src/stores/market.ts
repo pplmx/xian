@@ -10,6 +10,7 @@ import { persistConfig } from "@/utils/storage";
 import { rng } from "@/utils/random";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
+import { track } from "@/core/progress";
 import { useInventoryStore } from "@/stores/inventory";
 import { pillDef } from "@/data/pills";
 import { equipmentTemplate } from "@/data/equipment";
@@ -143,6 +144,9 @@ export const useMarketStore = defineStore(
           resources.addStone(slot.price);
           return "bagfull";
         }
+        // 坊市买来的装备也是「获得」—— 与掉落/馈赠共用 EQUIP_INTAKE 计数,
+        // 否则主线「获得 X 件装备」/成就只埋掉落,前期靠买装的玩家永远 0/N
+        track("equipsGained");
       }
       slot.sold = true;
       return "ok";

@@ -130,7 +130,9 @@ export function buildingUpgradeN(id: BuildingId, count = 5): BuildingUpgradeBatc
     ore += info.ore;
   }
   if (levelsGained > 0) {
-    track("buildingUpgrades");
+    // 连升一批升了几级就计几笔 —— 与逐级的 upgradeBuilding 每级 track 同口径,
+    // 否则「累计升级建筑 N 次/成就」被连升按钮系统性拖慢(升 5 级只算 1 次)。
+    track("buildingUpgrades", levelsGained);
     const parts = [`${def.name}连升 ${levelsGained} 级 → ${dongfu.levels[id] ?? 0} 级`];
     parts.push(`${formatGN(stone)} 石`);
     if (ore > 0) parts.push(`${ore} 铁`);

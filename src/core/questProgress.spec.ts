@@ -15,6 +15,8 @@ import { questProgressOf } from "./questProgress";
 import { checkStateAchievements, evalCond } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
+import type { EquipmentInstance } from "@/types";
+import { useInventoryStore } from "@/stores/inventory";
 import { MAIN_QUESTS } from "@/data/quests";
 
 describe("主线进度读数", () => {
@@ -117,5 +119,26 @@ describe("成就补扫", () => {
     expect(q.hasAchieved("a_r0"), "炼气成就应被补扫解锁").toBe(true);
     expect(q.hasAchieved("a_r1"), "筑基成就应被补扫解锁").toBe(true);
     expect(q.hasAchieved("a_r2"), "金丹成就应被补扫解锁").toBe(true);
+  });
+
+  it("身上已有的高品装备,周期补扫即解锁品质成就(不只拾取触发)", () => {
+    const p = usePlayerStore();
+    const q = useQuestsStore();
+    const inv = useInventoryStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    q.setAchieved([]);
+    // 模拟老档/从坊市买来的玄品装备:已在包里,但之后没再「拾取」触发品质成就
+    inv.items = [
+      {
+        uid: "x1",
+        templateId: "weapon_1",
+        quality: "profound",
+        tier: 8,
+        level: 0,
+        affixes: [],
+      } as EquipmentInstance,
+    ];
+    checkStateAchievements();
+    expect(q.hasAchieved("a_q4"), "玄品成就应被补扫解锁").toBe(true);
   });
 });

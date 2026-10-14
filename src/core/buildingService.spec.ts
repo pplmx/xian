@@ -11,6 +11,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
 import { gn, toNum } from "@/utils/gnum";
 import { buildingUpgradeInfo, buildingUpgradePreview, buildingUpgradeN } from "./buildingService";
 import { buildingDef, BUILDINGS } from "@/data/buildings";
@@ -185,5 +186,16 @@ describe("buildingUpgradeN · 一键连升 ×5", () => {
     expect(res.levelsGained).toBeLessThan(dongfu.buildingCap("array"));
     expect(toNum(resources.spiritStone)).toBeGreaterThanOrEqual(0);
     expect(dongfu.levels["array"]).toBe(res.levelsGained);
+  });
+
+  it("连升批量按实升级数计账(升几级计几笔,与逐级同口径)", () => {
+    buildArrayToLevel(1);
+    useResourcesStore().spiritStone = gn(1e15);
+    useResourcesStore().ore = 999999;
+    const r = buildingUpgradeN("array", 5);
+    expect(r.levelsGained).toBeGreaterThan(1);
+    // 曾把连升整批只 track 一次:升 5 级却只算 1 次「升级建筑」,比逐级慢 5 倍
+    const quests = useQuestsStore();
+    expect(quests.counter("buildingUpgrades")).toBe(r.levelsGained);
   });
 });
