@@ -953,8 +953,6 @@ import { computed, onUnmounted, ref } from "vue";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { gn, toNum } from "@/utils/gnum";
-import { resolveEquipStats } from "@/core/equipGen";
-import { powerScore } from "@/core/formulas";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
 import { useSettingsStore } from "@/stores/settings";
@@ -1013,7 +1011,7 @@ import {
   artifactUpCost,
   upgradeArtifact,
 } from "@/core/forge";
-import { equipAllBest, equipSetCombo } from "@/core/equipBest";
+import { equipAllBest, equipSetCombo, equippablePower } from "@/core/equipBest";
 import { keepVerdict } from "@/core/smartKeep";
 import { smartKeepImpact } from "@/core/smartKeep";
 import { maxTierForMajor } from "@/data/regions";
@@ -1173,10 +1171,9 @@ const pickerRows = computed(() => {
   // 这一槽当下的佩戴件 —— 每个候选的「战 ±N」都与它比(powerScore 是线性合计,
   // 换装的战力差 = 新件三围分 − 旧件三围分,与人物页战力同一个数,无需重算总属性)
   const occupant = equippedUid ? inventory.items.find((i) => i.uid === equippedUid) : undefined;
-  const powerOf = (i: EquipmentInstance): number => {
-    const f = resolveEquipStats(i).flats;
-    return toNum(powerScore(f.attack, f.defense, f.maxHp));
-  };
+  // 战力差要走真实战力(平铺 × 词条%、会心联乘),与「一键穿最强」equippablePower 同源;
+  // 只比三围会让一件平铺高、零词条的件压过满掷暴击/吸血的件,列表数字与实穿打架
+  const powerOf = (i: EquipmentInstance): number => equippablePower(i);
   return inventory.items
     .map((item) => ({ item, template: equipmentTemplate(item.templateId) }))
     .filter(
