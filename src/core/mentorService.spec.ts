@@ -54,4 +54,26 @@ describe("师承(mentor)", () => {
   it("未拜师时无评价", () => {
     expect(mentorVerdict(null)).toBeNull();
   });
+
+  it("行为相左亦可判「未纯」:契合度为负,不再永远非负(未纯叙事可达)", () => {
+    const player = usePlayerStore();
+    player.adoptMentor("alchemist"); // 丹修
+    const quests = useQuestsStore();
+    quests.inc("kills", 600); // 却常年杀戮(相左)
+    const verdict = mentorVerdict(player.mentor)!;
+    expect(verdict.affinity).toBeLessThan(-0.2);
+    expect(verdict.line, "应落入「未纯」叙事而非契合").toContain("丹炉");
+  });
+
+  it("契合度高者顺手做相左小事,不被拖离契合(饱和保护)", () => {
+    const player = usePlayerStore();
+    player.adoptMentor("swordsman");
+    const quests = useQuestsStore();
+    quests.inc("kills", 500);
+    quests.inc("bossKills", 30);
+    quests.inc("pillsCrafted", 200); // 顺手炼药,不推翻剑心
+    const verdict = mentorVerdict(player.mentor)!;
+    expect(verdict.affinity).toBeGreaterThan(0.2);
+    expect(verdict.line).toContain("剑");
+  });
 });

@@ -97,7 +97,8 @@ export function buildIdentity(): CultivatorIdentity {
     .slice(0, 2);
 
   // ---- 倾向 ----
-  const build = detectBuild(player.finalStats.mods);
+  // 写照自称「历史归纳」,流派别被瞬态(天时/在身之卦/增益)顶起又回落 —— 用转世恒定源 permanentMods
+  const build = detectBuild(player.permanentMods);
   const adjectives: string[] = [];
   if (build) adjectives.push(build.style.name.replace("流", ""));
   if (mentor) adjectives.push(mentor.name);

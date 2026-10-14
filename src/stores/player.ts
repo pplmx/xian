@@ -14,7 +14,7 @@ import { mentorDef } from "@/data/mentors";
 import { talentDef } from "@/data/talents";
 import { heritageDef, type HeritageId } from "@/data/heritage";
 import { baseCultPerSec, baseQiRegen, expRequirement, qiCap } from "@/core/formulas";
-import { computeFinalStats, modOf } from "@/core/statsCalc";
+import { computeFinalStats, mergeMods, modOf } from "@/core/statsCalc";
 import { todayWeather } from "@/core/weather";
 import { readingFromState, readingMods } from "@/core/divination";
 import { asFiniteNumber, asStringArray } from "@/utils/saveShape";
@@ -276,6 +276,25 @@ export const usePlayerStore = defineStore(
         daoFruit: reincarnation.value.daoFruit,
         qiRich: qiRich.value,
       }),
+    );
+
+    /**
+     * 写照/画像用的「长期」属性:只含转世恒定源(装备/功法/洞府/灵脉/称号/师承/灵兽/命格/天赋),
+     * 排除 buff/天时/在身之卦 等瞬态 —— 免得写照「流派」被一卦或一日天时顶起又回落
+     * (写照自称「历史归纳」,不该随瞬态进进出出)。
+     */
+    const permanentMods = computed<StatMods>(() =>
+      mergeMods([
+        inventory.equipMods,
+        cultivation.gongfaMods,
+        dongfu.buildingMods,
+        dongfu.veinMods,
+        titleMods.value,
+        mentorMods.value,
+        petMods.value,
+        fateModsValue.value,
+        ...talentMods.value,
+      ]),
     );
 
     /**
@@ -1032,6 +1051,7 @@ export const usePlayerStore = defineStore(
       qiRich,
       finalStats,
       celestialStats,
+      permanentMods,
       activeDivination,
       divinationMods,
       fateChart: chart,

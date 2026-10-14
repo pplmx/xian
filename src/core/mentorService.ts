@@ -20,10 +20,10 @@ export interface MentorVerdict {
 
 /** 各师承的行为权重:计数器 → 该师承的契合方向(负数 = 相左) */
 const MENTOR_WEIGHTS: Record<MentorId, Partial<Record<string, number>>> = {
-  swordsman: { kills: 1, bossKills: 2, breakthroughs: 0.5 },
-  alchemist: { pillsCrafted: 1, pillsUsed: 1 },
-  arraymaster: { buildingUpgrades: 0.4, offlineClaims: 0.5 },
-  hunter: { explores: 1, equipsGained: 1, events: 0.5 },
+  swordsman: { kills: 1, bossKills: 2, breakthroughs: 0.5, pillsCrafted: -0.6 },
+  alchemist: { pillsCrafted: 1, pillsUsed: 1, kills: -0.8 },
+  arraymaster: { buildingUpgrades: 0.4, offlineClaims: 0.5, explores: -0.8 },
+  hunter: { explores: 1, equipsGained: 1, events: 0.5, buildingUpgrades: -0.6 },
 };
 
 /** 判别契合度:按师承权重对计数器归一化(加权和,阈值切档) */
