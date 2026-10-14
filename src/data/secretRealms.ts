@@ -127,6 +127,17 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.5,
     rewardMult: 1.35,
   },
+  {
+    id: "sr_chiyan",
+    gate: "mortal",
+    name: "赤焰石窟",
+    desc: "地火奔涌的石窟,焰浪灼人。火光中妖影跃动,越往深处越炽",
+    minMajor: 7,
+    cost: { stone: 150 },
+    rules: { enemyAtkMult: 1.2, shieldCapRatio: 0.7 },
+    healBetweenPct: 0.4,
+    rewardMult: 1.45,
+  },
   // ---- 天界秘境:真仙起,道源代价,与远征/试炼并列 ----
   {
     id: "sr_xingchen",
