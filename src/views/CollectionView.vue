@@ -180,7 +180,7 @@ import {
 import { gongfaFuncText, gongfaMetaText } from "@/ui/itemText";
 import { achievementDirection } from "@/ui/achievementHint";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
-import { rewardText } from "@/core/progress";
+import { rewardTextAtTier, playerTier } from "@/core/progress";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -223,8 +223,12 @@ const achievementRows = computed(() =>
       name: done ? a.name : "???",
       // 方向已提到组头,行里不再重写;名字成时自现
       desc: done ? a.desc : "尚未达成 · 成时自见",
-      // 达成才现赏:与名称同一披露节奏;rewardText 含称号(29/62 的大头),与发赏同一套换算
-      rewardText: done && a.reward ? rewardText(a.reward) : "",
+      // 达成才现赏:名目成时、所获同露 —— 按「达成时 tier」折实(实发额,不再随当前
+      // 层级漂移);含称号(29/62 的大头),与发赏同一套换算
+      rewardText:
+        done && a.reward
+          ? rewardTextAtTier(a.reward, quests.achievedTiers[a.id] ?? playerTier())
+          : "",
     };
   }),
 );

@@ -178,7 +178,10 @@ function unlockAchievement(id: string): void {
 
 /** 发奖 + 报喜(顺序与迁移前一致:先发赏,再提示) */
 function announceAchievement(def: AchievementDef): void {
-  if (def.reward) grantReward(def.reward, true);
+  if (def.reward) {
+    useQuestsStore().recordAchievedTier(def.id, playerTier());
+    grantReward(def.reward, true);
+  }
   notify(`成就达成「${def.name}」`, "rare");
 }
 

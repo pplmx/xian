@@ -39,6 +39,8 @@ export const useQuestsStore = defineStore(
   () => {
     const counters = ref<Partial<Record<CounterKey, number>>>({});
     const achieved = ref<string[]>([]);
+    /** 各成就达成那一刻的掉落层级(灵石实发=该 tier 折实;成就页据此重排不掉价) */
+    const achievedTiers = ref<Record<string, number>>({});
     const mainIdx = ref(0);
     const daily = ref<{ date: string; base: Partial<Record<CounterKey, number>>; done: string[] }>({
       date: "",
@@ -73,6 +75,11 @@ export const useQuestsStore = defineStore(
       counters.value = asNumberRecord(counters.value, 0);
       achieved.value = uniqueKnown(asStringArray(achieved.value), (id) =>
         ACHIEVEMENTS.some((a) => a.id === id),
+      );
+      achievedTiers.value = Object.fromEntries(
+        Object.entries(asNumberRecord(achievedTiers.value, 0)).filter(
+          ([id, t]) => ACHIEVEMENTS.some((a) => a.id === id) && t > 0,
+        ),
       );
       const maxIdx = Math.max(0, MAIN_QUESTS.length - 1);
       mainIdx.value = Math.min(Math.floor(asFiniteNumber(mainIdx.value, 0, 0)), maxIdx);
@@ -140,6 +147,11 @@ export const useQuestsStore = defineStore(
       achieved.value = [...ids];
     }
 
+    /** 记下某成就达成时的掉落层级 —— 成就页「实发额」按它重排,不再随当前层级漂移 */
+    function recordAchievedTier(id: string, tier: number): void {
+      achievedTiers.value = { ...achievedTiers.value, [id]: tier };
+    }
+
     function advanceMain(): void {
       mainIdx.value += 1;
     }
@@ -187,6 +199,7 @@ export const useQuestsStore = defineStore(
     return {
       counters,
       achieved,
+      achievedTiers,
       mainIdx,
       daily,
       titlesOwned,
@@ -200,6 +213,7 @@ export const useQuestsStore = defineStore(
       inc,
       hasAchieved,
       setAchieved,
+      recordAchievedTier,
       advanceMain,
       setMainIndex,
       ownTitle,
