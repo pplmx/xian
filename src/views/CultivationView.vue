@@ -1064,8 +1064,8 @@ const activeBuffs = computed(() =>
  * 谁在顶、顶多少,突破前一眼见(遍历 activeBuffs 的面,文案走 modsText,与开炉幕同款)。
  * 大关天劫不吃此事,整条只在非天劫幕亮(模板 v-if 于此)。
  */
-const breakthroughBuffRows = computed(() =>
-  activeBuffs.value
+const breakthroughBuffRows = computed(() => {
+  const rows: { buffId: string; name: string; rate: number; effect: string }[] = activeBuffs.value
     .map(({ def }) => {
       const face = Object.fromEntries(
         Object.entries(def.mods ?? {}).filter(([k]) => k === "breakthroughRate" || k === "luck"),
@@ -1083,8 +1083,24 @@ const breakthroughBuffRows = computed(() =>
           }
         : null;
     })
-    .filter((x): x is { buffId: string; name: string; rate: number; effect: string } => x !== null),
-);
+    .filter((x): x is { buffId: string; name: string; rate: number; effect: string } => x !== null);
+  // 天时也真吃小进阶成功率(breakthrough.ts 的 rate 并入 weatherMods),露进破境幕 —— 与渡劫幕同标准
+  const wFace: import("@/types").StatMods = Object.fromEntries(
+    Object.entries((todayWeather().mods ?? {}) as import("@/types").StatMods).filter(
+      ([k]) => k === "breakthroughRate" || k === "luck",
+    ),
+  );
+  const wRate = (wFace.breakthroughRate ?? 0) + (wFace.luck ?? 0) * 0.05;
+  if (wRate !== 0) {
+    rows.push({
+      buffId: "weather",
+      name: `天时·${todayWeather().name}`,
+      rate: wRate,
+      effect: modsText(wFace),
+    });
+  }
+  return rows;
+});
 
 const GONGFA_CAT_ORDER: GongfaType[] = ["main", "sub", "secret"];
 

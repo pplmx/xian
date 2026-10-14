@@ -32,7 +32,7 @@ import { SECRET_REALMS } from "@/data/secretRealms";
 import { CHAINS } from "@/data/chains";
 import { EVENTS, eventDef } from "@/data/events";
 import { PETS } from "@/data/pets";
-import { WORLD_WEATHERS } from "@/core/weather";
+import { WORLD_WEATHERS, WEATHERS } from "@/core/weather";
 
 /** 某境界的地界所占的层级 */
 function tiersOf(major: number): Set<number> {
@@ -133,7 +133,9 @@ describe("内容密度 · 每一境都得有新东西", () => {
   it("每一界域都有自己的天时(人间界固定池,其余按界域分池)", () => {
     for (const w of WORLDS) {
       const pool =
-        w.id === "mortal" ? 6 : (WORLD_WEATHERS[w.id as "immortal" | "god" | "chaos"]?.length ?? 0);
+        w.id === "mortal"
+          ? WEATHERS.length
+          : (WORLD_WEATHERS[w.id as "immortal" | "god" | "chaos"]?.length ?? 0);
       expect(pool, `${w.name} 没有专属天时`).toBeGreaterThanOrEqual(1);
     }
   });
