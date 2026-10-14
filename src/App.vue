@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
@@ -100,7 +100,7 @@ let swHandle: ServiceWorkerUpdateHandle | undefined;
 const route = useRoute();
 
 /** 内容区滚动宿主(滚动条挂在这个常驻的 main 上,不是 window) */
-const scrollHost = ref<HTMLElement | null>(null);
+const scrollHost = useTemplateRef<HTMLElement>("scrollHost");
 
 /**
  * 切页时把内容区滚动位置归零。

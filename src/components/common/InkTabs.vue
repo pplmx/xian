@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends string">
-import { computed, ref } from "vue";
+import { computed, useTemplateRef } from "vue";
 
 const props = defineProps<{
   tabs: readonly { id: T; label: string; dot?: boolean }[];
@@ -54,11 +54,11 @@ const activeIdx = computed(() =>
   ),
 );
 /** v-for 里的模板引用:同序数组,配合箭头键做焦点漫游 */
-const tabEls = ref<(HTMLButtonElement | null)[]>([]);
+const tabEls = useTemplateRef<HTMLButtonElement[]>("tabEls");
 
 /** 把焦点与选中一起移到第 i 个页签(roving tabindex 的落点) */
 function focusTab(i: number): void {
-  const target = tabEls.value[i];
+  const target = tabEls.value?.[i];
   if (!target) return;
   model.value = props.tabs[i]!.id;
   target.focus();

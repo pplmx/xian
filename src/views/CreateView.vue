@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import { rng } from "@/utils/random";
 import { rollLinggen } from "@/core/linggenGen";
@@ -144,7 +144,7 @@ watch(rollSeq, () => {
   // 「灵根」,读屏便念成「重掷得『天灵根』灵根」—— 疑为两物。去掉句尾那一个。
   rerollAnnounce.value = `重掷得「${p.gradeName}」,${rootsText},修行倍率 ×${p.growthMult.toFixed(2)}`;
 });
-const revealRef = ref<InstanceType<typeof SpiritRootReveal> | null>(null);
+const revealRef = useTemplateRef<InstanceType<typeof SpiritRootReveal>>("revealRef");
 /** 鉴定动画进行中(约 2.6s):防连点导致重复建号、重复发新手馈赠 */
 const starting = ref(false);
 

@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
 import { useUiStore } from "@/stores/ui";
@@ -107,8 +107,8 @@ const agreeOpen = ref(false);
 const agreed = ref(false);
 const importOpen = ref(false);
 const aboutOpen = ref(false);
-const fileInput = ref<HTMLInputElement | null>(null);
-const warpRef = ref<InstanceType<typeof WarpPortal> | null>(null);
+const fileInput = useTemplateRef<HTMLInputElement>("fileInput");
+const warpRef = useTemplateRef<InstanceType<typeof WarpPortal>>("warpRef");
 
 function onStart(): void {
   if (settings.privacyAccepted) {

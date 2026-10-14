@@ -248,7 +248,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted } from "vue";
+import { computed, ref, useTemplateRef, onUnmounted } from "vue";
 import { useSettingsStore } from "@/stores/settings";
 import { useGameStore } from "@/stores/game";
 import { useUiStore } from "@/stores/ui";
@@ -340,7 +340,7 @@ const resetConfirm = ref(false);
 const privacyOpen = ref(false);
 const aboutOpen = ref(false);
 const progressionOpen = ref(false);
-const fileInput = ref<HTMLInputElement | null>(null);
+const fileInput = useTemplateRef<HTMLInputElement>("fileInput");
 
 /** 导出存档:Web/Electron 走浏览器下载,原生端写 Documents(见 savePlatform) */
 function onExport(): void {

@@ -88,7 +88,7 @@ if (typeof window !== "undefined") window.addEventListener("keydown", onWindowKe
 </script>
 
 <script setup lang="ts">
-import { nextTick, onUnmounted, ref, watch } from "vue";
+import { nextTick, onUnmounted, useTemplateRef, watch } from "vue";
 import GameIcon from "./GameIcon.vue";
 
 const props = withDefaults(
@@ -122,7 +122,7 @@ const emit = defineEmits<{ close: [] }>();
  *   · Tab/Shift+Tab 在面板内循环,首尾相接;
  *   · 关闭后把焦点还给打开它的那个元素。
  */
-const panelRef = ref<HTMLElement | null>(null);
+const panelRef = useTemplateRef<HTMLElement>("panelRef");
 let lastFocused: HTMLElement | null = null;
 
 function focusablesIn(root: HTMLElement): HTMLElement[] {

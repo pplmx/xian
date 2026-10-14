@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import type { CombatLogEntry } from "@/types";
 import type { GauntletFightRow } from "@/core/gauntlet";
 import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS } from "@/data/constants";
@@ -85,7 +85,7 @@ const current = ref(0);
 const displayed = ref<CombatLogEntry[]>([]);
 const php = ref(1);
 const ehp = ref(1);
-const logBox = ref<HTMLElement | null>(null);
+const logBox = useTemplateRef<HTMLElement>("logBox");
 let timer: number | undefined;
 
 const row = computed(() => props.rows[current.value]);

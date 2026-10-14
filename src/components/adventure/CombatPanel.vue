@@ -390,7 +390,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch, onUnmounted } from "vue";
+import { computed, onMounted, ref, useTemplateRef, watch, onUnmounted } from "vue";
 import { useAdventureStore } from "@/stores/adventure";
 import { usePlayerStore } from "@/stores/player";
 import { useSettingsStore } from "@/stores/settings";
@@ -441,7 +441,7 @@ const shieldCls = ref<{ p: string; e: string }>({ p: "", e: "" });
  */
 const strikeCls = ref<{ p: string; e: string }>({ p: "", e: "" });
 const defeated = ref<"p" | "e" | null>(null);
-const logBox = ref<HTMLElement | null>(null);
+const logBox = useTemplateRef<HTMLElement>("logBox");
 
 let playTimer: number | undefined;
 let floatSeq = 1;
