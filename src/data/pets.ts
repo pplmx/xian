@@ -44,6 +44,16 @@ export const PETS: PetDef[] = [
     personality: "fierce",
   },
   {
+    id: "pet_xuanshui",
+    name: "玄水蛟",
+    desc: "潜龙于渊,血脉延年 —— 附灵则气息绵长",
+    icon: "dragon",
+    family: "dragon",
+    quality: "spirit",
+    mods: { qiRegen: 0.12, lifespanPct: 0.06 },
+    personality: "steady",
+  },
+  {
     id: "pet_yueying",
     name: "月影狸",
     desc: "昼伏夜出,来去无声",
