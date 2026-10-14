@@ -73,6 +73,7 @@ const DAO_EPITHETS: Record<string, string> = {
   fate: "天机",
   slaughter: "杀伐",
   lianzhu: "连珠",
+  jieshi: "借势",
 };
 
 export function buildIdentity(): CultivatorIdentity {

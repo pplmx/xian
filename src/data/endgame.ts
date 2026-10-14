@@ -84,6 +84,21 @@ export const DAO_PATHS: DaoPathDef[] = [
       "流水不争先,争的是滔滔不绝;怕的是一瞬的爆发",
     ],
   },
+  {
+    id: "jieshi",
+    name: "借势道",
+    seal: "借",
+    desc: "他强由他强,我借其势,反手一击。以守为攻,不先出手",
+    ruleText: ["受击反伤 +20%,反伤强度 +50%", "自身受到伤害 -13%", "敌人生命 +18%"],
+    rules: {
+      playerExtraMods: { counterRate: 0.2, counterDamage: 0.5, damageReduction: 0.13 },
+      enemyHpMult: 1.18,
+    },
+    deepText: [
+      "借势:凡敌攻我,必被我收势反掷 —— 敌人攻得越急,反得越狠",
+      "不先出手,最怕一击制敌的爆发;借的是势,还的是刀",
+    ],
+  },
 ];
 
 export function daoPathDef(id: string): DaoPathDef | undefined {
