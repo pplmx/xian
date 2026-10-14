@@ -282,7 +282,10 @@ export const CHAIN_EVENTS: EventDef[] = [
         ],
         { endsChain: true },
       ),
-      leave("你没有管它。走远时,身后传来一声很轻的呜咽。"),
+      c("离去", [o(1, "你没有管它。走远时,身后传来一声很轻的呜咽。")], {
+        isDefault: true,
+        endsChain: true,
+      }),
     ],
   ),
   ev(
