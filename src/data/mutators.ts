@@ -73,6 +73,12 @@ export const MUTATORS: MutatorDef[] = [
     text: "敌人气血垂危时攻势 +50%",
     rules: { enemyExtraMods: { lowHpDamage: 0.5 } },
   },
+  {
+    id: "foe_swift",
+    name: "逐影之势",
+    text: "敌人速度 +25%",
+    rules: { enemyExtraMods: { speed: 0.25 } },
+  },
 ];
 
 export function mutatorDef(id: string): MutatorDef | undefined {
