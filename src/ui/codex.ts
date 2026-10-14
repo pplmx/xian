@@ -206,6 +206,10 @@ const PICKED_COLOR = "var(--color-gold-ink)";
  *
  * 择了 A 之后 B 仍停在「已见」而非退回「未见」—— 没走的那条路也该留在录上,
  * 那正是悟道录的意思。
+ *
+ * 范围注:「已见」由「当前这部功法达到满级」推导(canEnlighten),故只在满级保持的同一世内成立;
+ * 转世把层数折回起手后,未满级的那部功法其分支会退回「未见」。与灵材/敌人认知"随神魂转世不灭"
+ * 不同,悟道录的「已见」跟层数走;择定的分支则跨世永驻(gongfaBranch 不随转世重置)。
  */
 export function branchStage(
   def: GongfaBranchDef,

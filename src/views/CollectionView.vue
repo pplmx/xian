@@ -325,7 +325,7 @@ const collectionCats = computed<CodexCat[]>(() => {
       "见闻志",
       c.event,
       // 奇缘的阶段事件与普通际遇同表,但在见闻志里得各归各的名 ——
-      // 一律写成「历练际遇」,玩家会以为那条缘也能在随便哪个地界撞见
+      // 奇缘标「奇缘」、普通际遇标「历练际遇」,免得玩家以为那条缘也能随便撞见
       EVENTS.map((e) => ({
         id: e.id,
         name: e.title,
