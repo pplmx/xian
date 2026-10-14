@@ -1,5 +1,5 @@
 /**
- * 成就库 —— 64 个,长期目标
+ * 成就库 —— 65 个,长期目标
  *
  * 未达成者在界面上一律以「???」示人(见 views/CollectionView.vue),
  * 所以此表不再有"隐藏成就"一说 —— 每个位子人人平等,成了才现名目。
@@ -184,6 +184,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   }),
   ac("a_k1000", "千军辟易", "击败 1000 个敌人", counter("kills", 1000), { stoneTier: 100 }),
   ac("a_k5000", "伏尸百万", "击败 5000 个敌人", counter("kills", 5000), { stoneTier: 200 }),
+  ac("a_battle100", "百战磨锋", "累计经历 100 次战斗", counter("battles", 100), { stoneTier: 60 }),
   ac("a_boss10", "一剑破万法", "击败 10 位区域首领", counter("bossKills", 10), {
     titleId: "ti_wanfa",
     wudao: 30,
