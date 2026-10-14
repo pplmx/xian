@@ -57,7 +57,7 @@ release. Add a tool name to select part of the graph. For example, run
 
 ## 提交
 
-- 功能**最小完备**就提交，不攒大坨；单个小完备增量可独立提交。
+- 小改动攒批合并提交：单次增删合计 100 行以下的改动**不单开 commit**，同一主题/打磨轮的若干小改动攒进一次提交（body 每条 bullet 一项）；只有净变更明显超出百行的改动才单独一次提交。
 - 先写用例（RED）→ 最小实现（GREEN）：新功能必带测试；纯逻辑进 `core` 并可直接测，视图只做薄接线。
 - commitlint 走 conventional（类型：feat/fix/refactor/test/docs/chore/…）。
 - commit message 用 bullet 一条条说明改了什么、为什么，不写一句话流水账。

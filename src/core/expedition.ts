@@ -83,12 +83,12 @@ function perWinMods(): StatMods | undefined {
 /** 逆命契:封印当前主流派核心词条(生成负向词条快照) */
 function sealCoreMods(): StatMods | null {
   const player = usePlayerStore();
-  const build = detectBuild(player.finalStats.mods);
+  const build = detectBuild(player.celestialStats.mods);
   if (!build) return null;
   const sealed: StatMods = {};
   for (const k of Object.keys(build.style.core)) {
     const key = k as keyof StatMods;
-    const cur = modOf(player.finalStats.mods, key);
+    const cur = modOf(player.celestialStats.mods, key);
     if (cur > 0) sealed[key] = -cur;
   }
   return Object.keys(sealed).length ? sealed : null;
@@ -232,7 +232,10 @@ function fightStep(
     ...run,
     rows: [...run.rows, row],
     totalRounds: run.totalRounds + result.rounds,
-    carriedHpPct: Math.min(startCap, result.playerHpPct + world.healBetweenPct),
+    carriedHpPct: Math.min(
+      startCap,
+      result.playerHpPct + world.healBetweenPct * (baseRules?.healMult ?? 1),
+    ),
   };
   const pact = run.pactId ? pactDef(run.pactId) : undefined;
 
