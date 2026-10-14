@@ -100,6 +100,17 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.3,
     rewardMult: 1.5,
   },
+  {
+    id: "sr_fengyin",
+    gate: "mortal",
+    name: "风吟孤岛",
+    desc: "孤岛薄雾,风里都是虚招。你闪得掉,它更能闪 —— 这一趟赌的是眼力与运气。",
+    minMajor: 5,
+    cost: { stone: 90 },
+    rules: { playerExtraMods: { dodgeRate: 0.15 }, enemyExtraMods: { dodgeRate: 0.2 } },
+    healBetweenPct: 0.3,
+    rewardMult: 1.4,
+  },
   // ---- 天界秘境:真仙起,道源代价,与远征/试炼并列 ----
   {
     id: "sr_xingchen",
