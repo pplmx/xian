@@ -56,6 +56,10 @@ const FORTUNE_ECHO_TEXTS: Record<string, { form: EchoForm; line: string }> = {
     form: "traces",
     line: "染血的龟甲埋在你亲手挖的土坑里——你曾将它掩埋于此。",
   },
+  ft_meteor_iron: {
+    form: "traces",
+    line: "山巅依旧躺着那块陨铁,边角一道擦痕正是你当年驻足又离去时留下的。",
+  },
   ft_xianmen_guqin: {
     form: "traces",
     line: "古琴仍在案上,弦上依旧无尘。你曾在这里坐了一晌,终究没有伸手。",

@@ -1,4 +1,4 @@
-/** 随机事件库 —— 82 个随机事件(含 21 个奇缘阶段) + 11 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 82 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1536,6 +1536,24 @@ export const FORTUNE_EVENTS: EventDef[] = [
       c("掩埋龟甲", [o(1, "此物不祥,你掘土掩埋,心念一清。")], { isDefault: true }),
     ],
     { element: "dark", maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ft_meteor_iron",
+    "天外陨铁",
+    "山巅躺着一块天外陨铁,冰冷暗沉,锻之似有器韵内敛。",
+    ["general", "mountain"],
+    [
+      c("拾取陨铁", [
+        o(70, "你寻匠人将其回炉,炼成一缕明净器韵。", { type: "material", id: "ore", amount: 40 }),
+        o(30, "陨铁沉重难移,你驮行半日,只取回一小半。", {
+          type: "material",
+          id: "ore",
+          amount: 20,
+        }),
+      ]),
+      c("转身离去", [o(1, "器道非你所长,你按捺住心思离去。")], { isDefault: true }),
+    ],
+    { maxRealm: MORTAL_END },
   ),
 
   // ============ 仙界及以上机缘(仅以界域标签出现,不会落到人间界)============
