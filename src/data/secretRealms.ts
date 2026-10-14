@@ -36,6 +36,7 @@ export const SECRET_RULES: SecretRule[] = [
     text: "此地凶险(敌方攻防各 +10%)",
     rules: { enemyAtkMult: 1.1, enemyExtraMods: { defensePct: 0.1 } },
   },
+  { text: "敌残血反扑(低血攻势 +50%)", rules: { enemyExtraMods: { lowHpDamage: 0.5 } } },
 ];
 
 export interface SecretRealmDef {
