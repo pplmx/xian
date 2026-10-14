@@ -1,4 +1,4 @@
-/** 随机事件库 —— 82 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 83 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -726,6 +726,24 @@ export const EVENTS: EventDef[] = [
       leave("剑意非强求所得,你按捺住心思,转身离去。"),
     ],
     { minRealm: 5, maxRealm: 7 },
+  ),
+  ev(
+    "ev_jiuxiao_stone",
+    "九霄孤石",
+    "一块自九霄坠落的孤石砸入山坳,裂面处道纹天成,灵光流转。",
+    ["ruin"],
+    [
+      c("观石悟道", [
+        o(60, "道纹入心,你仿佛触到天外遁去的一角。", { type: "exp", secs: 60 }),
+        o(40, "道纹繁复,你看得目眩神驰,气息微乱。", { type: "buff", id: "injury" }),
+      ]),
+      c("叩石听音", [
+        o(70, "金石之声铿锵,灵性自石中渗出。", { type: "material", id: "ore", amount: 20 }),
+        o(30, "叩击过猛,裂纹扩大,你只拣得几块碎屑。", { type: "material", id: "ore", amount: 8 }),
+      ]),
+      leave("天外之物,非强求可得,你压下心神离去。"),
+    ],
+    { maxRealm: MORTAL_END },
   ),
   ev(
     "ev_god_tree",
