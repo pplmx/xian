@@ -269,7 +269,12 @@ function applyEffect(effect: EventEffect, tier: number): string | null {
     case "pet": {
       const quests = useQuestsStore();
       const owned = new Set(quests.collections.pet);
-      const pool = PETS.filter((p) => !owned.has(p.id));
+      // 随机入账只给无门墙的入门灵兽:仙/神品神兽由高界区域事件**指名**发放
+      // (见 data/pets.ts「仙界及以上神兽,仅由高界区域事件发放」),人间界事件不许从全池
+      // 白送 —— 否则炼气层就能开出应龙/麒麟,与 contentGate「神兽须行至神界,无绕过路径」相左。
+      const pool = PETS.filter(
+        (p) => !owned.has(p.id) && p.quality !== "immortal" && p.quality !== "divine",
+      );
       const id = effect.id ?? (pool.length ? rng.pick(pool).id : null);
       if (!id || owned.has(id)) {
         resources.addSmall("herb", 10);
