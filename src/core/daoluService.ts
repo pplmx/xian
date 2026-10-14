@@ -565,7 +565,7 @@ export function respondIntent(response: IntentResponse): IntentAftermath | null 
   const player = usePlayerStore();
   const b = player.bond;
   const def = currentDaolu();
-  if (!b || !def || !b.intent || !b.intentPending) return null;
+  if (!b || !def || !b.intent || !b.intentPending || b.departed || b.fallen) return null;
   const after = respondTo(def, b.intent, response);
   const next: BondIntent = {
     ...b.intent,

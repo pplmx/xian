@@ -242,7 +242,7 @@
               >
               {{
                 bondDef && bond
-                  ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? "(已殁)" : ""} | ${bondDef.brief}`
+                  ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? "(已殁)" : bond.departed ? "(已离)" : ""} | ${bondDef.brief}`
                   : pastBonds.length
                     ? `此生尚未遇见,历世曾有 ${pastBonds.length} 段同行`
                     : "此生尚未遇见谁"
@@ -545,7 +545,8 @@
         <p class="mt-2 text-[11px] text-ink-soft">
           {{ TEMPER_NAMES[bondDef.temper] }} · {{ LEAN_NAMES[bondDef.lean] }}道
           <span class="ml-1 text-qing">{{ STAGE_NAMES[bond.stage] }}</span>
-          <span v-if="bond.fallen" class="ml-1 text-cinnabar">已殁</span>
+          <span v-if="bond.fallen" class="ml-1 text-cinnabar">已殁</span
+          ><span v-if="bond.departed" class="ml-1 text-qing">已离</span>
         </p>
 
         <!-- 三维只影响关系推进,不进任何属性 -->
@@ -969,7 +970,9 @@ function pickChoice(choiceId: string): void {
 }
 
 /** 她主动提出的事(34.1);三种回应,忽略不等于回绝 */
-const herIntent = computed(() => pendingIntent());
+const herIntent = computed(() =>
+  bond.value && !bond.value.departed && !bond.value.fallen ? pendingIntent() : null,
+);
 /** 道侣有未答的事(她自己提的言 / 世界递的事) —— 入口那一行要报出来 */
 const hasBondWord = computed(() => !!pendingEvent.value || !!herIntent.value);
 /** 这份心意因何而起(经历名取自 bondIntent) */
