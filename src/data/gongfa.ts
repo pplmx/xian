@@ -1,4 +1,4 @@
-/** 功法库 —— 63 部:主修 27 / 辅修 22 / 秘术 14,每境都有新东西可参 */
+/** 功法库 —— 64 部:主修 27 / 辅修 23 / 秘术 14,每境都有新东西可参 */
 import type { GongfaDef, GongfaType, QualityId, StatMods } from "@/types";
 
 function g(
@@ -214,6 +214,16 @@ export const GONGFA: GongfaDef[] = [
     "肉身为炉,千锤百炼",
     { maxHpPct: 0.08, defensePct: 0.04 },
     { maxHpPct: 0.012, defensePct: 0.008 },
+  ),
+  g(
+    "s_qiti",
+    "淬体养息诀",
+    "sub",
+    "fine",
+    0,
+    "以息养体,气血渐盈",
+    { qiRegen: 0.1, maxHpPct: 0.06 },
+    { qiRegen: 0.016, maxHpPct: 0.008 },
   ),
   g(
     "s_yufeng",

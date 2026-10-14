@@ -255,6 +255,10 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
     shieldPower: 0.16,
   }),
 
+  // ---- 辅修:淬体养息诀(良品) ----
+  b("s_qiti", "b_qiti_yang", "养息", "息机绵绵,气血自盈", { qiRegen: 0.12, maxHpPct: 0.06 }),
+  b("s_qiti", "b_qiti_cun", "长存", "气沉丹田,久战不疲", { maxHpPct: 0.12, qiRegen: 0.04 }),
+
   // ---- 辅修:明心见性篇(精品) ----
   b("s_mingxin", "b_mingxin_guan", "观心", "战中悟道,所获倍之", {
     expGain: 0.16,
