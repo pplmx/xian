@@ -270,7 +270,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       const regionEventDanger = regEvent ? (regionEventDef(regEvent.eventId)?.dangerMult ?? 1) : 1;
       const regionEventReward = regEvent ? (regionEventDef(regEvent.eventId)?.rewardMult ?? 1) : 1;
       const remainSec = Math.max(0, (session.endsAt - (nowMs - dtSec * 1000)) / 1000);
-      const simSec = Math.min(capSec, remainSec);
+      // 与材料/钻研同款 0.9 挂机折扣(设计注释与披露都自称历练打折,见离线头部与归来卷轴)
+      // —— 从前只封顶不打折,历练遭遇/战斗/胜利比设计意图高约 11%。
+      const simSec = Math.min(effSec, remainSec);
       const mods = player.finalStats.mods;
       const speed = 1 + modOf(mods, "explorationSpeed");
       const encounters = Math.floor((simSec / EXPLORE_BATTLE_INTERVAL) * speed);
@@ -393,7 +395,10 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         }
         trip.items += realCount;
         if (equipCount > realCount) {
-          resources.addSmall("dust", (equipCount - realCount) * 4);
+          const dust = (equipCount - realCount) * 4;
+          resources.addSmall("dust", dust);
+          // 并入「回收化尘」对账,归账弹窗才不少报实收(此前只在 note 定性、无数字可核)
+          recycledDust += dust;
           notes.push(`另有 ${equipCount - realCount} 件寻常之物,已折作器灵尘`);
         }
         if (wins < battles) {
