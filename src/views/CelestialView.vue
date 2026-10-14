@@ -960,9 +960,18 @@
           >
             <p class="text-[10px] leading-relaxed text-cinnabar">
               将
-              <span class="tabular">{{ row.rate.name }} ×{{ formatNum(row.have) }}</span>
-              尽数熔作道源,共 <span class="tabular">+{{ furnacePreview(row.rate) }}</span> 缕 ——
-              此举不可逆,这些资源再无炼丹/锻造/参悟之途。
+              <span class="tabular"
+                >{{ row.rate.name }} ×{{ formatNum(furnacePreview(row.rate) * row.rate.per) }}</span
+              >
+              熔作道源,共 <span class="tabular">+{{ furnacePreview(row.rate) }}</span> 缕
+              <template v-if="row.have % row.rate.per > 0"
+                >,余
+                <span class="tabular">{{
+                  formatNum(row.have - furnacePreview(row.rate) * row.rate.per)
+                }}</span>
+                保留</template
+              >
+              —— 此举不可逆,熔去的这些再无炼丹/锻造/参悟之途。
             </p>
             <div class="mt-1.5 flex justify-end gap-2">
               <button class="btn-ghost !px-3 !py-1 !text-[11px]" @click="furnaceConfirm = null">
