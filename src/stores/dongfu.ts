@@ -39,7 +39,13 @@ export const useDongfuStore = defineStore(
     const frac = ref({ herb: 0, ore: 0, wudao: 0 });
     /** Phase 30.3 灵脉:主脉方向 + 各脉已投点数 */
     const veinMain = ref<VeinId | null>(null);
-    const veinPoints = ref<Record<VeinId, number>>({ gather: 0, craft: 0, alchemy: 0, insight: 0 });
+    const veinPoints = ref<Record<VeinId, number>>({
+      gather: 0,
+      craft: 0,
+      alchemy: 0,
+      insight: 0,
+      guard: 0,
+    });
 
     const buildingMods = computed<StatMods>(() => {
       // 建筑效果的来源清单由库给出(只算真的建起来了的),合并仍是本作的属性汇总口径
@@ -144,7 +150,7 @@ export const useDongfuStore = defineStore(
       levels.value = nextLevels;
       frac.value = { herb: 0, ore: 0, wudao: 0 };
       veinMain.value = null;
-      veinPoints.value = { gather: 0, craft: 0, alchemy: 0, insight: 0 };
+      veinPoints.value = { gather: 0, craft: 0, alchemy: 0, insight: 0, guard: 0 };
     }
 
     /** 建筑产出(灵田/藏经阁),按秒推进 */

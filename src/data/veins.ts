@@ -4,7 +4,7 @@
  */
 import type { StatMods } from "@/types";
 
-export type VeinId = "gather" | "craft" | "alchemy" | "insight";
+export type VeinId = "gather" | "craft" | "alchemy" | "insight" | "guard";
 
 export interface VeinDef {
   id: VeinId;
@@ -43,6 +43,13 @@ export const VEINS: VeinDef[] = [
     seal: "悟",
     desc: "静水映月,功法进修所费更少",
     perPoint: {},
+  },
+  {
+    id: "guard",
+    name: "庚金灵脉",
+    seal: "守",
+    desc: "庚金固本,气血绵长",
+    perPoint: { maxHpPct: 0.002 },
   },
 ];
 

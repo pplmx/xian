@@ -82,7 +82,7 @@ function realSecondsForMajor(major: number, kind: "bare" | "max"): number {
     cul.equipMain(mainId);
     for (const id of subIds) cul.toggleSub(id, 7);
     for (const b of BUILDINGS) dongfu.setLevel(b.id, b.maxLevel);
-    dongfu.veinPoints = { gather: 70, craft: 0, alchemy: 0, insight: 0 };
+    dongfu.veinPoints = { gather: 70, craft: 0, alchemy: 0, insight: 0, guard: 0 };
     dongfu.veinMain = "gather";
   } else {
     // 裸档:无 kit、无灵根加成
