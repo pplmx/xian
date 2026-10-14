@@ -398,6 +398,16 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
     maxHpPct: 0.045,
   }),
 
+  // ---- 秘术:霜甲凝身诀(玄品) ----
+  b("x_shuangjia", "b_shuangjia_han", "玄寒", "霜气内敛,冷冽愈固", {
+    defensePct: 0.18,
+    maxHpPct: 0.09,
+  }),
+  b("x_shuangjia", "b_shuangjia_ti", "凝躯", "霜甲覆体,气血沉凝", {
+    maxHpPct: 0.16,
+    defensePct: 0.07,
+  }),
+
   // ---- 秘术:斡旋造化(天品) ----
   b("x_woxuan", "b_woxuan_wo", "斡旋", "关隘之前,天数可移", {
     breakthroughRate: 0.06,

@@ -1,4 +1,4 @@
-/** 功法库 —— 64 部:主修 27 / 辅修 23 / 秘术 14,每境都有新东西可参 */
+/** 功法库 —— 65 部:主修 27 / 辅修 23 / 秘术 15,每境都有新东西可参 */
 import type { GongfaDef, GongfaType, QualityId, StatMods } from "@/types";
 
 function g(
@@ -415,6 +415,16 @@ export const GONGFA: GongfaDef[] = [
     "一气化三,修行三倍",
     { cultivationSpeed: 0.2 },
     { cultivationSpeed: 0.06 },
+  ),
+  g(
+    "x_shuangjia",
+    "霜甲凝身诀",
+    "secret",
+    "profound",
+    3,
+    "寒气护体,皮骨俱坚",
+    { defensePct: 0.08, maxHpPct: 0.06 },
+    { defensePct: 0.02, maxHpPct: 0.02 },
   ),
   g(
     "x_woxuan",
