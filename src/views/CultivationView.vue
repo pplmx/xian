@@ -349,7 +349,6 @@
           ·
           <span class="text-violet-ink">此乃大关,需渡天劫</span>
         </template>
-        <template v-else-if="btInfo.isMajor">· 大境界之槛</template>
       </p>
       <!-- 突破不成的真代价也要摊:灵气付了之外,成败都只在修为上折 —— 频率≠无代价 -->
       <p class="mt-0.5 text-[10px] text-ink-faint tabular">
@@ -1069,9 +1068,12 @@ const breakthroughBuffRows = computed(() =>
   activeBuffs.value
     .map(({ def }) => {
       const face = Object.fromEntries(
-        Object.entries(def.mods ?? {}).filter(([k]) => k === "breakthroughRate"),
+        Object.entries(def.mods ?? {}).filter(([k]) => k === "breakthroughRate" || k === "luck"),
       );
-      const rate = (face as import("@/types").StatMods).breakthroughRate ?? 0;
+      // luck 也按实判口径折进成功率(+luck*0.05,见 breakthrough.ts 的 rate)
+      const rate =
+        ((face as import("@/types").StatMods).breakthroughRate ?? 0) +
+        ((face as import("@/types").StatMods).luck ?? 0) * 0.05;
       return rate !== 0
         ? {
             buffId: def.id,
