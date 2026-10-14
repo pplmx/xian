@@ -590,7 +590,7 @@ export interface ExpeditionForecast {
   difficulty: string;
   /** 敌人一侧的判定(道之理解 / 境界压制)—— 战前就该看得见,不然玩家只能靠猜 */
   judgementLines: string[];
-  /** 六大标准流派中可行的数目(≥35% 通率) */
+  /** 六大标准流派中可行的数目(≥40% 通率) */
   viableStyles: number;
   /** 当前构筑相性(1~5 星) */
   stars: string;
@@ -656,10 +656,9 @@ export function forecastExpedition(
     const styleSnap = buildSnap(profile);
     const styleJudgement = celestialJudgement(styleSnap.mods, MAX_MAJOR, world.anchorTier);
     const simFoes: CombatantSnap[] = [];
-    for (let i = 0; i < EXPEDITION_ROUTE_LAYERS + 1; i += 1)
-      simFoes.push(
-        worldFoeSnap(world.foes[i % world.foes.length]!, SIM_REFERENCE, 1, styleJudgement),
-      );
+    simFoes.push(worldFoeSnap(world.foes[0]!, SIM_REFERENCE, 1, styleJudgement));
+    for (let i = 0; i < EXPEDITION_ROUTE_LAYERS; i += 1)
+      simFoes.push(worldFoeSnap(world.routes[i]![0]!.foe, SIM_REFERENCE, 1, styleJudgement));
     simFoes.push(worldFoeSnap(world.guardian, SIM_REFERENCE, 1, styleJudgement));
     let wins = 0;
     for (let i = 0; i < 5; i += 1) {
