@@ -41,7 +41,7 @@ export const VEINS: VeinDef[] = [
     id: "insight",
     name: "寒冥灵脉",
     seal: "悟",
-    desc: "静水映月,参悟功法所费更少",
+    desc: "静水映月,功法进修所费更少",
     perPoint: {},
   },
 ];

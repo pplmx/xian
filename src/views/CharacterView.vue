@@ -371,9 +371,9 @@
           道果
           <span class="ml-1 text-[10px] text-violet-ink">【永久积累】</span>
           <span class="block text-[10px] text-ink-faint">
-            每枚:修行 +{{ formatPercent(DAO_FRUIT_CULT_BONUS, 0) }},道躯 +{{
+            每枚名义:修行 +{{ formatPercent(DAO_FRUIT_CULT_BONUS, 0) }},道躯 +{{
               formatPercent(DAO_FRUIT_COMBAT_BONUS, 0)
-            }}%;转世保留
+            }}%(合计受软上限,见下方「有效收益」);转世保留
           </span>
         </span>
         <span class="tabular font-kai text-[15px] text-cinnabar">{{

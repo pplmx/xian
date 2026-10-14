@@ -147,7 +147,7 @@ const mainPoints = computed(() => (dongfu.veinMain === null ? 0 : currentLevel(d
 /**
  * 当前加成 —— 必须把不走 StatMods 的那一条也算进来。
  *
- * 寒冥灵脉的 perPoint 是空对象:它的效果是「功法参悟省悟道点」,
+ * 寒冥灵脉的 perPoint 是空对象:它的效果是「功法进修省悟道点」,
  * 走 dongfu.insightDiscount,不进 veinMods。此前这里只读 veinMods,
  * 于是投了满脉也一个字都不显示 —— 玩家因此不知道它有没有用
  */
@@ -158,9 +158,9 @@ const bonusRows = computed(() => {
       rows.push({ label: STAT_NAMES[k as AnyStatKey] ?? k, value: v, sign: "+" });
     }
   }
-  // 参悟折扣是减耗,故记负号
+  // 折扣作用于功法「进修」的悟道点(参悟=藏经阁,只耗残页),故标「功法进修省耗」而非「参悟省耗」
   if (dongfu.insightDiscount > 0) {
-    rows.push({ label: "参悟省耗", value: Math.min(0.5, dongfu.insightDiscount), sign: "−" });
+    rows.push({ label: "功法进修省耗", value: Math.min(0.5, dongfu.insightDiscount), sign: "−" });
   }
   return rows;
 });
