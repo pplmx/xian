@@ -69,6 +69,21 @@ export const DAO_PATHS: DaoPathDef[] = [
       "速战之赏:远征总回合越短,道源加成越高(至多 +25%)",
     ],
   },
+  {
+    id: "lianzhu",
+    name: "连珠道",
+    seal: "珠",
+    desc: "一击连着一击,流水不复,断者自乱",
+    ruleText: ["己方连击率 +15%,连击伤害 +30%", "己方速度 +8%", "敌人生命 +10%"],
+    rules: {
+      playerExtraMods: { comboRate: 0.15, comboDamage: 0.3, speed: 0.08 },
+      enemyHpMult: 1.1,
+    },
+    deepText: [
+      "珠连:连击一旦起手便成势,每一记都更快、更密 —— 连击流的核心在这条道才真正成型",
+      "流水不争先,争的是滔滔不绝;怕的是一瞬的爆发",
+    ],
+  },
 ];
 
 export function daoPathDef(id: string): DaoPathDef | undefined {
