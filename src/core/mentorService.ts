@@ -16,8 +16,6 @@ export interface MentorVerdict {
   affinity: number;
   /** 叙事的师尊评价 */
   line: string;
-  /** 归一化的行为特征(供人物页展示) */
-  traits: { name: string; value: number }[];
 }
 
 /** 各师承的行为权重:计数器 → 该师承的契合方向(负数 = 相左) */
@@ -61,11 +59,6 @@ export function mentorVerdict(mentorId: MentorId | null): MentorVerdict | null {
     mentor: def,
     affinity,
     line,
-    traits: [
-      { name: "杀伐", value: quests.counter("kills") },
-      { name: "历练", value: quests.counter("explores") },
-      { name: "丹道", value: quests.counter("pillsCrafted") },
-    ],
   };
 }
 
