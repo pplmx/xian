@@ -1,4 +1,4 @@
-/** 随机事件库 —— 81 个随机事件(含 21 个奇缘阶段) + 11 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 82 个随机事件(含 21 个奇缘阶段) + 11 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -708,6 +708,24 @@ export const EVENTS: EventDef[] = [
       ]),
     ],
     { maxRealm: 5 },
+  ),
+  ev(
+    "ev_hantan_bei",
+    "寒潭古碑",
+    "你于寒潭深处寻得一方古碑,碑文以剑意刻就,历万古而不灭。",
+    ["ruin"],
+    [
+      c("临碑参悟", [
+        o(60, "剑意自碑中涌来,你依样运剑,修为为之一振。", { type: "exp", secs: 60 }),
+        o(40, "剑意凌厉,你强行参悟,气息紊乱。", { type: "buff", id: "injury" }),
+      ]),
+      c("拓下碑文", [
+        o(70, "你拓下碑文,换得几页残卷,或另有他用。", { type: "material", id: "page", amount: 12 }),
+        o(30, "碑文剑威逼人,拓印时伤了心神。", { type: "buff", id: "injury" }),
+      ]),
+      leave("剑意非强求所得,你按捺住心思,转身离去。"),
+    ],
+    { minRealm: 5, maxRealm: 7 },
   ),
   ev(
     "ev_god_tree",
