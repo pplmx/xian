@@ -76,9 +76,12 @@ export const useBountyStore = defineStore(
       const inventory = useInventoryStore();
 
       if (slot.kind === "herb" || slot.kind === "ore") {
-        const matId = slot.kindId === "ore" ? "ore" : "herb";
-        if (!resources.hasSmall(matId, slot.target)) return "insufficient";
-        resources.spendSmall(matId, slot.target);
+        if (slot.kindId === "ore") {
+          if (!resources.hasSmall("ore", slot.target)) return "insufficient";
+          resources.spendSmall("ore", slot.target);
+        } else if (!resources.spendHerbsAll(slot.target)) {
+          return "insufficient";
+        }
         resources.addStone(slot.reward);
       } else if (slot.kind === "pill") {
         if ((inventory.pills[slot.kindId] ?? 0) < slot.target) return "insufficient";

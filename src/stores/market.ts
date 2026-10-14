@@ -204,8 +204,14 @@ export const useMarketStore = defineStore(
     /** 即时售一批材料(与货架购入同单位数) */
     function sellMaterial(matId: "herb" | "ore", major: number): boolean {
       const resources = useResourcesStore();
-      if (!resources.hasSmall(matId, MARKET_MAT_COUNT)) return false;
-      resources.spendSmall(matId, MARKET_MAT_COUNT);
+      // 灵草按五档存、herb 只是 Σ 汇总:按汇总(货架/悬赏)计价就从汇总真扣(跨档,低→高),
+      // 与熔炉的道源转化同一惯例 —— 升级后攒下的旧品阶草照样能售,不再「库存有却卖不了」。
+      if (matId === "herb") {
+        if (!resources.spendHerbsAll(MARKET_MAT_COUNT)) return false;
+      } else {
+        if (!resources.hasSmall("ore", MARKET_MAT_COUNT)) return false;
+        resources.spendSmall("ore", MARKET_MAT_COUNT);
+      }
       resources.addStone(materialSellPrice(major));
       return true;
     }

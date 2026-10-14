@@ -13,7 +13,6 @@ import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { pillDef } from "@/data/pills";
-import { herbGradeOfMajor } from "@/data/herbGrades";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { add, gn, toNum } from "@/utils/gnum";
@@ -115,9 +114,7 @@ function sellMat(matId: "herb" | "ore"): void {
 }
 
 /** 即时售短差:不足售不出去时与悬赏「需 N X,缺 M」同源,直列差几份 */
-const herbSellShort = computed(() =>
-  Math.max(0, MARKET_MAT_COUNT - resources.herbs[herbGradeOfMajor(player.major)]),
-);
+const herbSellShort = computed(() => Math.max(0, MARKET_MAT_COUNT - resources.herb));
 const oreSellShort = computed(() => Math.max(0, MARKET_MAT_COUNT - resources.ore));
 
 function claimBounty(idx: number): void {
@@ -191,7 +188,7 @@ function bountyShort(o: BountySlot): string | null {
   if (o.claimed) return null;
   if (o.kind === "herb" || o.kind === "ore") {
     const isHerb = o.kind === "herb";
-    const have = isHerb ? resources.herbs[herbGradeOfMajor(player.major)] : resources.ore;
+    const have = isHerb ? resources.herb : resources.ore;
     if (have >= o.target) return null;
     return `需 ${o.target} ${isHerb ? "灵草" : "玄铁"},缺 ${o.target - have}`;
   }
