@@ -20,6 +20,9 @@
       <p class="mt-1 text-[10px] leading-relaxed text-violet-ink">
         此地规则:{{ state.rules.join(" · ") }}
       </p>
+      <p v-if="builtinRulesText" class="mt-0.5 text-[10px] leading-relaxed text-ink-soft">
+        本境之则:{{ builtinRulesText }}
+      </p>
       <p
         v-if="state.spoils.length"
         class="mt-1 max-h-24 overflow-y-auto text-[10px] leading-relaxed text-ink-faint"
@@ -146,6 +149,7 @@ import {
   realmUnlock,
   secretLayerPreview,
 } from "@/core/secretRealm";
+import { gateRuleSummary } from "@/core/gateRuleText";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
@@ -164,6 +168,8 @@ const def = computed<SecretRealmDef | undefined>(() =>
 );
 /** 战前预览:本层敌人/胜算/战利(与实战同源,见 secretLayerPreview) */
 const preview = computed(() => (state.value ? secretLayerPreview(state.value) : null));
+/** 本境自带规则:并入预览胜算/战利却一字未露,用 gateRuleSummary 摊开(与随机规则并排,免得「胜算在握」不知归因) */
+const builtinRulesText = computed(() => (def.value?.rules ? gateRuleSummary(def.value.rules) : ""));
 
 function canPay(r: SecretRealmDef): boolean {
   const c = entryCostOf(r, player.major);

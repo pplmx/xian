@@ -96,7 +96,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     desc: "一叶渡苦海。回气极慢,但彼岸的东西格外丰厚。",
     minMajor: 4,
     cost: { stone: 80 },
-    rules: {},
+    rules: { healMult: 0.5 },
     healBetweenPct: 0.3,
     rewardMult: 1.5,
   },
