@@ -1,4 +1,4 @@
-/** 转世天赋池 —— 33 个,按品阶加权抽取 */
+/** 转世天赋池 —— 34 个,按品阶加权抽取 */
 import type { StatMods, TalentDef } from "@/types";
 
 function t(
@@ -62,6 +62,11 @@ export const TALENTS: TalentDef[] = [
     defensePct: 0.15,
     maxHpPct: 0.15,
     damageReduction: 0.05,
+  }),
+  t("t_xingyan", "星衍", 4, "星辰炼体,聚宝气为杀力", {
+    attackPct: 0.18,
+    critRate: 0.05,
+    doubleDropRate: 0.08,
   }),
   t("t_pofu", "破釜", 2, "身陷绝境,战意愈炽", { lowHpDamage: 0.15, lowHpReduction: 0.08 }),
   t("t_dunxin", "盾心", 2, "以盾证道,愈守愈强", { shieldOnStart: 0.08, shieldPower: 0.1 }),
