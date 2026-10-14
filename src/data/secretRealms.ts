@@ -165,6 +165,20 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.35,
     rewardMult: 1.5,
   },
+  {
+    id: "sr_minghe",
+    gate: "celestial",
+    name: "冥河渡",
+    desc: "冥河幽渡,饮血者众。此渡禁疗,你越磨它它越回 —— 磨不动的,趁早回头。",
+    minMajor: 9,
+    cost: { daoSource: 45 },
+    rules: {
+      healMult: 0.5,
+      enemyExtraMods: { lifesteal: 0.2 },
+    },
+    healBetweenPct: 0.2,
+    rewardMult: 1.6,
+  },
 ];
 
 const BY_ID = new Map(SECRET_REALMS.map((r) => [r.id, r]));
