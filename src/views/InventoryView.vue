@@ -585,9 +585,11 @@
               · 灵草坊可补 ›
             </button>
           </p>
-          <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-faint">
-            · {{ w }}
-          </p>
+          <template v-if="r.guaranteeLeft === 0">
+            <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-faint">
+              · {{ w }}
+            </p>
+          </template>
           <div class="mt-2 flex justify-end gap-1.5">
             <button
               class="btn-seal !px-3 !py-1.5 !text-[12px]"
@@ -639,7 +641,7 @@
                 class="flex-1"
               />
               <span class="w-7 shrink-0 text-right text-[9px] tabular text-ink-faint">{{
-                formatPercent(s.progress, 0)
+                s.stage === "大成" ? "已顶" : formatPercent(s.progress, 0)
               }}</span>
             </p>
           </div>
