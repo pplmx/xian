@@ -196,6 +196,19 @@ describe("器魂 · 存档健壮性", () => {
     expect(endgame.equippedSouls, "sanitize 后幽灵不得占槽").toEqual([]);
     expect(endgame.equipSoul("real")).toBe(true);
   });
+
+  it("equippedSouls 超过 SOUL_SLOTS 时,sanitize 截断到 3(坏档不冒超槽收益)", () => {
+    const endgame = useEndgameStore();
+    const mk = (uid: string): SoulInstance => ({ uid, type: "fengmang", grade: 1, fromName: "x" });
+    endgame.$patch({
+      souls: [mk("a"), mk("b"), mk("c"), mk("d")],
+      equippedSouls: ["a", "b", "c", "d"],
+    } as never);
+    endgame.sanitize();
+    // 旧实现只滤幽灵不截断:4 枚全有效时 show「已凝 4/3」且 4 枚全进结算 —— 超槽收益
+    expect(endgame.equippedSouls).toHaveLength(3);
+    expect(endgame.activeSouls).toHaveLength(3);
+  });
 });
 
 describe("器魂 · 凝炼必须优于不凝", () => {

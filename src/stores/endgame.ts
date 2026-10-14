@@ -127,9 +127,12 @@ export const useEndgameStore = defineStore(
       );
       // Ghost uids still count toward SOUL_SLOTS in equipSoul; drop them here.
       const ownedSoulUids = new Set(souls.value.map((s) => s.uid));
-      equippedSouls.value = asStringArray(equippedSouls.value).filter((uid) =>
-        ownedSoulUids.has(uid),
-      );
+      equippedSouls.value = asStringArray(equippedSouls.value)
+        .filter((uid) => ownedSoulUids.has(uid))
+        // 且按 SOUL_SLOTS 截断:装备槽每件只能收这套上限(3 槽),坏档/迁移把
+        // equippedSouls 塞进 4 枚有效 uid 时,sanitize 必须截到 3 —— 否则「已凝 4/3」
+        // 且 4 枚全进 endgame.soulMods 结算,超槽收益就冒出来了
+        .slice(0, SOUL_SLOTS);
     }
 
     /** 已装配器魂(过滤掉已不存在的 uid) */
