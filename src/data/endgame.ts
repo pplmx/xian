@@ -794,6 +794,20 @@ export const TRIALS: TrialDef[] = [
     escalation: 1.06,
     rewardDaoSource: 45,
   },
+  {
+    id: "zhuifeng",
+    name: "追云试炼",
+    seal: "追",
+    anchorTier: 25,
+    desc: "云巅罡风如刀,敌影若即若离。以快打快,失之毫厘便即溃败",
+    ruleText: ["敌方速度 +20% · 闪避 +10%", "连战 4 场", "以快打快"],
+    rules: { enemyExtraMods: { speed: 0.2, dodgeRate: 0.1 } },
+    entryCost: 15,
+    fights: 4,
+    healBetweenPct: 0.7,
+    escalation: 1.06,
+    rewardDaoSource: 45,
+  },
 ];
 
 export function trialDef(id: string): TrialDef | undefined {
