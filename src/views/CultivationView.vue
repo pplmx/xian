@@ -269,8 +269,10 @@
             >{{ PREP_NAMES.guard }} {{ PREP_STARS[tribPlan.prep.guard] }}</span
           >
           · {{ PREP_NAMES.sustain }} {{ PREP_STARS[tribPlan.prep.sustain] }} ·
-          {{ PREP_NAMES.resist }} {{ PREP_STARS[tribPlan.prep.resist] }} · {{ PREP_NAMES.burst }}
-          {{ PREP_STARS[tribPlan.prep.burst] }}
+          {{ PREP_NAMES.resist }} {{ PREP_STARS[tribPlan.prep.resist] }}
+          <template v-if="tribPlan.def.id === 'soulrend'">
+            · {{ PREP_NAMES.burst }} {{ PREP_STARS[tribPlan.prep.burst] }}
+          </template>
         </p>
         <!--
           天劫是**按最大生命百分比**扣血的(见 core/formulas.tribulationWaveDamage),

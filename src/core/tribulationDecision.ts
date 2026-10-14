@@ -428,7 +428,7 @@ export function buildTribulationPlan(
 
   // 四维准备度(词条 → 维度;均为"这道劫下如何"的解读)
   const prep = {
-    guard: prepTier("guard", guardScore(mods, def, relief)),
+    guard: prepTier("guard", guardScore(mods, def, relief) + stat.guard),
     sustain: prepTier("sustain", sustainScore(mods, def, relief)),
     // 抗性这一维直接读结算口径(settlementResist)—— 结算是什么它就是什么;
     // 曾把「雷鸣减伤按半成折算」算进星里而结算从不吃它,幻影随口径统一抹掉
