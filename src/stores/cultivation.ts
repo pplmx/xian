@@ -88,7 +88,10 @@ export const useCultivationStore = defineStore(
         if (
           def?.gongfaId === gid &&
           lv != null &&
-          lv >= (gongfaDef(gid)?.maxLevel ?? Number.POSITIVE_INFINITY)
+          lv >= (gongfaDef(gid)?.maxLevel ?? Number.POSITIVE_INFINITY) &&
+          // 分支加成随「仍满级且仍装配」生效:换下主/辅修即不再并入。从前只判满级,
+          // 多门满级功法的分支永久叠加、与「功法=装配规则」相悖、面板读法打架(结算虚高)。
+          (gid === mainGongfa.value || subGongfa.value.includes(gid))
         ) {
           sources.push(def.mods);
         }

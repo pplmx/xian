@@ -30,7 +30,7 @@
         >
       </div>
       <p class="mt-2 text-[12px] leading-relaxed text-ink-faint">{{ def.desc }}</p>
-      <p v-if="def.minRealm > player.major" class="mt-1 text-[11px] text-cinnabar">
+      <p v-if="!learned && def.minRealm > player.major" class="mt-1 text-[11px] text-cinnabar">
         需更高境界方可参悟其精义
       </p>
       <div class="ink-divider my-3" />

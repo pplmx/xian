@@ -37,6 +37,18 @@ describe("功法悟道分支(gongfaBranch)", () => {
     expect(modOf(cul.gongfaMods, "damageBonus")).toBe(0);
   });
 
+  it("已装配功法的分支加成,换下主修后随装配一并失效(不永久叠加)", () => {
+    const cul = useCultivationStore();
+    cul.learn("m_taixuan");
+    for (let i = 0; i < 9; i++) cul.upgrade("m_taixuan"); // 满级
+    expect(cul.chooseBranch("m_taixuan", "b_taixuan_sha")).toBe(true);
+    expect(modOf(cul.gongfaMods, "damageBonus")).toBeCloseTo(0.05, 5);
+    // 换主修到另一门:太玄未装配 —— 分支加成须随装配一并撤下,不得在多门满级功法间永久叠加
+    cul.learn("m_zixiao");
+    cul.equipMain("m_zixiao");
+    expect(modOf(cul.gongfaMods, "damageBonus")).toBe(0);
+  });
+
   it("分支一经选择不可更改", () => {
     const cul = useCultivationStore();
     cul.learn("m_taixuan");
