@@ -60,8 +60,9 @@ export function applyLoadout(id: string): boolean {
     if (item && equipmentTemplate(item.templateId)?.slot === slot) {
       inventory.equip(itemUid, slot);
     } else {
+      // 部件已不存在(跨世被清/被销毁):不要再裸脱这格 —— 那会把新世已穿好的
+      // 当前装备剥下来(旧快照按 uid 存,转世清空 items 后整份失效)。只计缺失、跳过。
       missing += 1;
-      inventory.unequip(slot);
     }
   }
   // 功法

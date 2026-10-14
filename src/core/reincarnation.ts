@@ -37,6 +37,7 @@ import { useGameStore } from "@/stores/game";
 import type { GNum, LifeReview, ReincarnationView } from "@/types";
 import { recordMilestone } from "./identity";
 import { gnZero } from "@/utils/gnum";
+import { librarySubGongfaSlots } from "@/data/buildings";
 import { notify } from "./notify";
 import { currentReincarnationView, setDeathDialog, setReincarnationView } from "./uiPort";
 
@@ -234,6 +235,9 @@ export function confirmReincarnation(
   const adventure = useAdventureStore();
   const view = currentReincarnationView();
   if (!view) return;
+  // 确认即先收走 view:整段结算接下来会改一堆 store,若某一步抛错,view 已空,
+  // 重入立即返回 —— 不会把同一世阅历/道果/天赋再发一遍(view 就地保留用于结算)。
+  setReincarnationView(null);
 
   // 永久收获
   player.addDaoFruit(view.daoFruitGained);
@@ -313,6 +317,13 @@ export function confirmReincarnation(
   const recognized = carryLore(stage, carriesAllLore(player.reincarnation.heritage));
   const releasedSuppressed = player.suppressedRegions.length;
   player.rebirth(rollLinggen(rng, aptitudeFloorNow()));
+  // 辅修位是洞府建筑(外物),洞府随转世重置 —— 新世只带得下 dongfu.subGongfaSlots 席
+  // (藏经阁 0 级 = 1 席)。此前 subGongfa 未动,旧世 >1 门的辅修词条会带着越界词条开新世,
+  // 与「辅修席满」判据(cultivation.gongfaMods 不看 slot 上限)对不上。按新世席数裁剪。
+  const subCap = librarySubGongfaSlots(0);
+  cultivation.subGongfa = cultivation.subGongfa
+    .filter((g) => cultivation.learned[g] !== undefined)
+    .slice(0, subCap);
   if (releasedSuppressed > 0) {
     notify(`${releasedSuppressed} 处昔日镇压之地,妖气复聚 —— 此世再走一遭`, "info");
   }
@@ -329,7 +340,6 @@ export function confirmReincarnation(
   beginLife(view.themeChoices.includes(chosenThemeId ?? "") ? chosenThemeId : null);
   recordMilestone("first_rebirth");
   track("reincarnations");
-  setReincarnationView(null);
   setDeathDialog(false);
   notify("一梦轮回,你在玄枢山下再度睁开双眼", "rare");
   if (view.stageAdvanced) notify(`宿慧渐厚,你已是「${view.stageName}」`, "rare");
