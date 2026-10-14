@@ -21,7 +21,7 @@ export const DAO_PATHS: DaoPathDef[] = [
       playerExtraMods: { critRate: 0.1, critDamage: 0.3, armorPen: 0.15, damageReduction: -0.1 },
     },
     deepText: [
-      "剑意:道途越纯,剑意越盛——主流派大成、法宝不过一件、不修回血之术,至多四层,每层伤害 +4%、会心 +2%",
+      "剑意:道途越纯,剑意越盛——主流派成形、不涉副体系、法宝不过一件、不修回血之术,至多四层,每层伤害 +4%、会心 +2%",
       "远征蓄势:每胜一场,剑意再添一层",
     ],
   },

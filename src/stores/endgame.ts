@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import type { CelestialWorldDef, DaoMark, DaoPathId, StatMods, WorldRunState } from "@/types";
 import { persistConfig } from "@/utils/storage";
 import { mergeMods } from "@/core/statsCalc";
-import { EXPEDITION_GUARDIAN_LAYER, celestialWorldDef } from "@/data/endgame";
+import { EXPEDITION_GUARDIAN_LAYER, celestialWorldDef, daoPathDef } from "@/data/endgame";
 import { SOUL_SLOTS, soulMods as soulModsOf, type SoulInstance } from "@/data/souls";
 import {
   asArray,
@@ -59,7 +59,8 @@ export const useEndgameStore = defineStore(
      * (activeSouls 已有一层防御读取,但那是补丁;这里把形状一次修平)
      */
     function sanitize(): void {
-      daoPath.value = typeof daoPath.value === "string" ? daoPath.value : null;
+      const dp = typeof daoPath.value === "string" ? daoPath.value : null;
+      daoPath.value = dp && daoPathDef(dp) ? dp : null;
       daoSource.value = asFiniteNumber(daoSource.value, 0, 0);
       worldClears.value = asNumberRecord(worldClears.value, 0);
       trialRecords.value = asRecordOf<TrialRecord>(

@@ -1375,9 +1375,9 @@ const RUN_STAGES = [
 const swordInfo = computed(() => {
   if (endgame.daoPath !== "sword") return null;
   return swordPurity(
-    player.finalStats.mods,
+    player.celestialStats.mods,
     inventory.currentArtifacts.length,
-    detectBuild(player.finalStats.mods),
+    detectBuild(player.celestialStats.mods),
   );
 });
 
