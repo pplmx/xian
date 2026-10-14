@@ -1,5 +1,5 @@
 /**
- * 敌人库 —— 133 个,含 44 名区域首领;多段/真伤/闪避等机制用于流派克制
+ * 敌人库 —— 134 个,含 44 名区域首领;多段/真伤/闪避等机制用于流派克制
  *
  * 每一条写的是**族类**(`family`),图标由 `data/beastFamilies.ts` 的族类表给出 ——
  * 从此不手写 icon:狼写 wolf、蛇蛟写 serpent、傀儡写 puppet。原先这里是直接写 icon,
@@ -232,6 +232,10 @@ export const ENEMIES: EnemyDef[] = [
       element: "fire",
     },
   ),
+  e("e_firecrow", "赤焰火鸦", 7, "bird", [0.85, 1.15, 0.8, 1.25], [heavy("炎羽", 1.5, 0.25)], {
+    element: "fire",
+    mods: { critRate: 0.1 },
+  }),
   e("e_firelord", "炎狱魔君", 7, "demon", [3.8, 2.2, 1.0, 1.2], [heavy("炎狱焚天", 2.1, 0.3)], {
     boss: true,
     element: "fire",

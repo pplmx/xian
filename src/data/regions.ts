@@ -109,7 +109,7 @@ export const REGIONS: RegionDef[] = [
     3,
     "flame",
     "地火奔涌,寸草不生",
-    ["e_firewolf", "e_golem"],
+    ["e_firewolf", "e_golem", "e_firecrow"],
     "e_firelord",
     ["general", "fire"],
     "guzhanchang",
