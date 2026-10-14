@@ -91,7 +91,8 @@
 import { computed } from "vue";
 import { useUiStore } from "@/stores/ui";
 import { useCultivationStore } from "@/stores/cultivation";
-import { useNow } from "@/composables/useNow";
+import { useGameStore } from "@/stores/game";
+import { gameNow } from "@/core/enginePause";
 import { buffDef } from "@/data/buffs";
 import {
   buffCapSec,
@@ -108,7 +109,6 @@ import GameIcon from "@/components/common/GameIcon.vue";
 
 const ui = useUiStore();
 const cultivation = useCultivationStore();
-const now = useNow();
 
 const def = computed(() => (ui.buffDetailId ? buffDef(ui.buffDetailId) : undefined));
 const isInjury = computed(() => def.value?.kind === "injury");
@@ -127,8 +127,9 @@ const kindText = computed(() => KIND_TEXT[def.value?.kind ?? ""] ?? "");
 const remainSec = computed(() => {
   const id = ui.buffDetailId;
   if (!id) return 0;
+  void useGameStore().totalPlaySec; // 心跳:暂停冻结、恢复顺延,与结算 shiftBuffEnds 同源
   const inst = cultivation.buffs.find((b) => b.defId === id);
-  return inst ? Math.max(0, (inst.endsAt - now.value) / 1000) : 0;
+  return inst ? Math.max(0, (inst.endsAt - gameNow()) / 1000) : 0;
 });
 
 /** 已叠份数:丹药增益按剩余÷单颗归(见 engineBuffs.buffStackCount) */

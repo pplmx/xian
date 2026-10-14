@@ -737,6 +737,7 @@ import { comprehendGongfa } from "@/core/gongfaService";
 import { usePill } from "@/core/pillService";
 import { qiRepairView, repairWithQi } from "@/core/qiRepair";
 import { useNow } from "@/composables/useNow";
+import { useGameStore } from "@/stores/game";
 import { BREAKTHROUGH_PREP_OPTIONS } from "@/data/earlyGame";
 import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
 import type { GongfaDef, GongfaType } from "@/types";
@@ -916,7 +917,11 @@ function startPrep(option: "meditate" | "pill"): void {
 
 // Phase 28 闭关:状态与倒计时接 earlyGameService(buff 为真相源,重载后依旧可信)
 const retreating = computed(() => isRetreating());
-const retreatRemaining = computed(() => getRetreatRemainingSec(now.value)); // now 每秒刷新,倒计时走动
+// 暂停感知:闭关剩余与结算同读 getRetreatRemainingSec(gameNow 冻结、恢复顺延),随心跳刷新
+const retreatRemaining = computed(() => {
+  void useGameStore().totalPlaySec;
+  return getRetreatRemainingSec();
+});
 /**
  * 闭关的时长与加成取自 buffs.ts 的 retreat 本体(不在这里手抄 5 分钟 / +150%)。
  * 之前注释写着"数值唯一来源 = buffs.ts",但文案里的数字是手打的 —— 改常数就会撒谎。
