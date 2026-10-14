@@ -958,6 +958,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
     ).toContain("SECRET_FINAL_WUDAO");
   });
 
+  it("周易换挡表从 CHANGING_TIERS 派生;星象「乘/加」措辞不骗人", () => {
+    // 动爻→卦力×时长 的换挡表曾只在 core CHANGING_TIERS 里、界域志只给定性;
+    // 该露未露。判据:界域志要照实机常数派生(changingRange 读 CHANGING_TIERS),不手写分钟。
+    // 另一处:星象际遇是加性(exploreEventChance 把 luck 加进括号内),不许说「乘在……上」。
+    const c = readFileSync(resolve(__dirname, "../views/RealmCodexView.vue"), "utf-8");
+    expect(c, "换挡表要读 CHANGING_TIERS").toContain("CHANGING_TIERS");
+    expect(c, "档位人话从相邻 min 推,不手写区间").toContain("changingRange(CHANGING_TIERS,");
+    expect(c, "际遇加成是加性的,不许写「乘在……上」").not.toMatch(/乘在际遇概率/);
+  });
+
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。

@@ -188,6 +188,14 @@
             卜以决疑,不疑何卜 —— 一事不二卜,卦力随动爻而盛,亦随时而尽。
           </span>
         </div>
+        <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-ink-faint tabular">
+          <span v-for="(t, i) in CHANGING_TIERS" :key="t.min"
+            >{{ changingRange(CHANGING_TIERS, i) }} 动 → {{ t.minutes }} 分 · ×{{
+              t.power
+            }}
+            倍</span
+          >
+        </div>
       </section>
 
       <!-- 八卦 -->
@@ -283,7 +291,7 @@
             class="text-ink"
             >游戏约定</b
           >:{{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{ imageWorldMap }}),
-          值日之宿所属之象,所配界域今日际遇更易(乘在际遇概率上 +{{
+          值日之宿所属之象,所配界域今日际遇更易(际遇概率加成 +{{
             formatPercent(MANSION_EVENT_LUCK, 0)
           }}),他处不加。
         </p>
@@ -388,6 +396,7 @@ import { REALMS, WORLDS, realmDef } from "@/data/realms";
 import { CLASSICS, classicsForRealm } from "@/data/classics";
 import { HEXAGRAMS, TRIGRAMS, trigramDef } from "@/data/yijing";
 import {
+  CHANGING_TIERS,
   DIVINATION_COST,
   drawLines,
   readingCounsel,
@@ -509,6 +518,13 @@ const favoredWorldName = computed(
 );
 function worldName(id: WorldId): string {
   return worldDef(id).name;
+}
+/** 动爻换挡的档位人话:第 i 档的动爻区间(0 / 1-2 / 3+……)—— 从 CHANGING_TIERS 相邻 min 推,不手写 */
+function changingRange(tiers: typeof CHANGING_TIERS, i: number): string {
+  const t = tiers[i]!;
+  const nextMin = tiers[i + 1]?.min;
+  if (nextMin === undefined) return `${t.min}+`;
+  return nextMin - t.min <= 1 ? String(t.min) : `${t.min}-${nextMin - 1}`;
 }
 function mansionsOf(image: ImageId) {
   return MANSIONS.filter((m) => m.image === image);
