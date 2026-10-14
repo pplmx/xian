@@ -667,9 +667,7 @@
           </span>
         </p>
         <p class="text-[11px] leading-relaxed text-ink-faint">
-          师承词条(并入终局属性):{{
-            Object.values(mentorVer.mentor?.mods ?? {}).join(" · ") || "—"
-          }}
+          师承词条(并入终局属性):{{ modsText(mentorVer.mentor?.mods ?? {}) || "—" }}
         </p>
       </div>
       <div v-else class="space-y-2.5">
