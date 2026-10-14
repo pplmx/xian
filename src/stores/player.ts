@@ -612,7 +612,9 @@ export const usePlayerStore = defineStore(
           Array.isArray(d.changingAt) &&
           typeof d.expiresAt === "number" &&
           !!readingFromState(d);
-        if (!ok) divination.value = null;
+        // 已过期的卦是死纪录:computed 只把它藏起,但 shiftTimedState 仍会一次次给它的
+        // expiresAt 加时间(移而不崩)。sanitize 直接把过期卦作废,清掉陈态再走。
+        if (!ok || d.expiresAt <= gameNow()) divination.value = null;
       }
       // 旧存档没有突破准备一栏(Phase 34.6);形状不对的直接作废
       if (breakthroughPrep.value) {

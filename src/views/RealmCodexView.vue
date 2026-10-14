@@ -472,7 +472,13 @@ const remainText = computed(() => {
 const hasReading = computed(() => !!currentReading.value);
 const readingAnnounce = ref("");
 watch(hasReading, (nv, ov) => {
-  if (nv || !ov) return;
+  // 有了新卦就清掉旧「卦力已散」的读屏句,否则 aria-live 永挂载的 sr-only 块
+  // 会一直念叨已经过时的话(身明明已有新卦)
+  if (nv) {
+    readingAnnounce.value = "";
+    return;
+  }
+  if (!ov) return;
   readingAnnounce.value = "卦力已散,可再问一卦";
 });
 
