@@ -195,11 +195,10 @@ export const useInventoryStore = defineStore(
       return true;
     }
 
-    /** 获得法宝;重复返回 false(由调用方折算) */
+    /** 获得法宝;重复返回 false(由调用方折算)。获得默认不装备在身上,装配由玩家主动 */
     function addArtifact(defId: string): boolean {
       if (artifacts.value.some((a) => a.defId === defId)) return false;
       artifacts.value = [...artifacts.value, { defId, level: 0 }];
-      if (equippedArtifacts.value.length === 0) equippedArtifacts.value = [defId];
       return true;
     }
 

@@ -25,6 +25,8 @@ describe("构筑快照(保存/一键切换)", () => {
     cultivation.learn("s_tuna");
     cultivation.toggleSub("s_tuna", 2);
     inventory.addArtifact("af_lihuo");
+    // 快照模拟「已装配」的构筑:获得不默认装备,装配由玩家主动(见 addArtifact 契约)
+    inventory.equippedArtifacts = ["af_lihuo"];
     return { weaponUid: weapon.uid };
   }
 

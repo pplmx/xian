@@ -504,9 +504,10 @@ describe("坏档韧性 · 跨字段不一致(幽灵法宝占位)", () => {
     inv.sanitize();
 
     expect(inv.equippedArtifacts, "幽灵法宝要被 sanitize 清掉,不占槽位").toEqual([]);
-    // 真法宝仍可自动佩戴(此前因幽灵占位,length!==0 而佩不上)
-    expect(inv.addArtifact("af_xuantian"), "空槽时新法宝应能加进持有表").toBe(true);
-    expect(inv.equippedArtifacts).toEqual(["af_xuantian"]);
+    // 获得法宝默认不装备在身上(用户约定):只进持有表,装备位保持空
+    expect(inv.addArtifact("af_xuantian"), "新法宝应能加进持有表").toBe(true);
+    expect(inv.artifacts.map((a) => a.defId)).toContain("af_xuantian");
+    expect(inv.equippedArtifacts, "获得不默认装配,佩戴位不动").toEqual([]);
   });
 
   it("equippedArtifacts 指向真实存在的法宝时,保留且顺序不变", () => {
