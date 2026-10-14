@@ -30,6 +30,7 @@ export type WeatherId =
   | "yueshi"
   | "leiming"
   | "qinghe"
+  | "gangfeng"
   // 仙界
   | "xianyu"
   | "ziqi"
@@ -87,6 +88,13 @@ export const WEATHERS: WeatherDef[] = [
     name: "清和",
     desc: "风和日丽,四时清和。",
     mods: {},
+    tribulationMult: 1,
+  },
+  {
+    id: "gangfeng",
+    name: "罡风",
+    desc: "罡风凛冽,身法如风,闪避亦增。",
+    mods: { speed: 0.08, dodgeRate: 0.05 },
     tribulationMult: 1,
   },
 ];

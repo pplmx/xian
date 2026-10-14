@@ -22,8 +22,15 @@ describe("天时(weather)", () => {
     setActivePinia(createPinia());
   });
 
-  it("五种天时完整:灵雨/赤阳/月蚀/雷鸣/清和", () => {
-    expect(WEATHERS.map((w) => w.id)).toEqual(["lingyu", "chiyang", "yueshi", "leiming", "qinghe"]);
+  it("六种天时完整:灵雨/赤阳/月蚀/雷鸣/清和/罡风", () => {
+    expect(WEATHERS.map((w) => w.id)).toEqual([
+      "lingyu",
+      "chiyang",
+      "yueshi",
+      "leiming",
+      "qinghe",
+      "gangfeng",
+    ]);
     for (const w of WEATHERS) {
       expect(w.desc).toBeTruthy();
     }
