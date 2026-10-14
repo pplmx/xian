@@ -611,6 +611,22 @@ describe("坏档韧性 · 非法灵兽 / 称号 id", () => {
     expect(player.titleId).toBeNull();
   });
 
+  it("佩戴未拥有的真实称号时,sanitize 清成 null(已拥有的则保留)", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    const quests = useQuestsStore();
+    // 越权/坏档直写:身佩戴一顶未获得却真实存在的称号
+    player.setTitle("ti_daozu");
+    expect(quests.titlesOwned).not.toContain("ti_daozu");
+    player.sanitize();
+    expect(player.titleId, "未拥有却佩戴的称号应被清掉").toBeNull();
+    // 正常路径:先拥有再佩戴,不误伤已拥有的称号
+    quests.$patch({ titlesOwned: ["ti_churu"] });
+    player.setTitle("ti_churu");
+    player.sanitize();
+    expect(player.titleId).toBe("ti_churu");
+  });
+
   it("天赋 / 师承 id 不在表里时,sanitize 清掉,避免面板念出裸 id", () => {
     setActivePinia(createPinia());
     const player = usePlayerStore();

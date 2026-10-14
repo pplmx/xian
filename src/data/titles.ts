@@ -17,7 +17,7 @@ import type { TitleDef } from "@/types";
 
 export const TITLES: TitleDef[] = [
   { id: "ti_churu", name: "初入仙途", desc: "踏出修行第一步", mods: { cultivationSpeed: 0.02 } },
-  { id: "ti_lianqi", name: "炼气修士", desc: "于炼气境站稳脚跟", mods: { cultivationSpeed: 0.03 } },
+  { id: "ti_lianqi", name: "炼气修士", desc: "炼气境修至圆满", mods: { cultivationSpeed: 0.03 } },
   {
     id: "ti_zhuji",
     name: "筑基真人",

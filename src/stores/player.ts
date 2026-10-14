@@ -753,6 +753,10 @@ export const usePlayerStore = defineStore(
       // Ghost title: titleMods already fall back to {}, but the worn name
       // still shows and load/equip paths treat the id as real — wipe it.
       if (titleId.value != null && !titleDef(titleId.value)) titleId.value = null;
+      // 佩戴未拥有的称号:结算仍把 mods 并入面板,名号页三态又锁死没有「卸下」——
+      // 与幽灵 id 同纪律,把越权/坏档直写进来的 titleId 清掉,让「佩/藏/未」回到真实。
+      if (titleId.value != null && !useQuestsStore().titlesOwned.includes(titleId.value))
+        titleId.value = null;
       if (mentor.value != null && !mentorDef(mentor.value)) mentor.value = null;
     }
 
