@@ -74,6 +74,15 @@ export const PACTS: PactDef[] = [
     rules: { enemyAtkMult: 1.2 },
     sourceMult: 1.9,
   },
+  {
+    id: "huitian",
+    name: "晦天契",
+    seal: "晦",
+    desc: "天机晦暗,敌将会心之兆频现 —— 与棘手的暴击周旋,换些许道源",
+    ruleText: "敌方会心率 +25% · 道源 ×1.8",
+    rules: { enemyExtraMods: { critRate: 0.25 } },
+    sourceMult: 1.8,
+  },
 ];
 
 export function pactDef(id: string): PactDef | undefined {
