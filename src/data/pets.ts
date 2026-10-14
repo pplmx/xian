@@ -165,6 +165,16 @@ export const PETS: PetDef[] = [
     mods: { expGain: 0.2, breakthroughRate: 0.06, eventLuck: 0.15 },
     personality: "greedy",
   },
+  {
+    id: "pet_xuanwu",
+    name: "玄冥玄武",
+    desc: "冥水之精,背负玄龟之甲,万法难伤",
+    icon: "turtle",
+    family: "turtle",
+    quality: "divine",
+    mods: { defensePct: 0.18, maxHpPct: 0.18, damageReduction: 0.08 },
+    personality: "steady",
+  },
 ];
 
 const BY_ID = new Map(PETS.map((x) => [x.id, x]));
