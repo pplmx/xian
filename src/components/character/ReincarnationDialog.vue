@@ -131,6 +131,13 @@
         枚,来世修行更进一步。
       </p>
 
+      <!-- 来世灵根:所见即所得 —— 此行/此根与确认后落账的是同一roll,绝非另掷一卦 -->
+      <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">
+        来世灵根:<span class="font-kai text-ink">{{ view.nextLinggen.gradeName }}</span> · 修炼 ×{{
+          view.nextLinggen.growthMult
+        }}
+      </p>
+
       <!-- 新一世的道号:每世一换,确认页可改回(玩家反馈「转世名字没重随机」) -->
       <p class="mt-3 font-kai text-[13px] tracking-widest text-ink">新一世的道号</p>
       <p class="mt-1 text-[11px] text-ink-faint">道号属「这一世如何自报家门」,随皮囊一同换过。</p>

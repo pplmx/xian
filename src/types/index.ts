@@ -1223,6 +1223,8 @@ export interface ReincarnationView {
   toNextStage: number | null;
   /** 睁眼即认得的灵材数 */
   knownMaterials: number;
+  /** 来世灵根(所见即所得:确认即用它,绝不二次 roll —— 见 reincarnation-linggen-visibility 计划) */
+  nextLinggen: LinggenProfile;
   /** 可立的命题(id);空数组表示此阶无题可立 */
   themeChoices: string[];
   /** 是否可从全部已开命题中自选(百世老修) */

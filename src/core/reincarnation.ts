@@ -179,6 +179,7 @@ export function prepareReincarnation(): ReincarnationView {
     stageAdvanced: stageAfter.index > stageBefore.index,
     toNextStage: next ? next.insight - insightAfter : null,
     knownMaterials: carryLorePreview(stageAfter),
+    nextLinggen: rollLinggen(rng, aptitudeFloorNow()),
     themeChoices: (fresh.length > 0 ? fresh : pool).map((x) => x.id),
     themeFree: stageAfter.themeFreeChoice,
     // ISS-302:这一世到的最高未锻造门槛 —— 深修的「我是谁」。只算不改,confirm 才落账
@@ -317,7 +318,7 @@ export function confirmReincarnation(
   // 认知不因转世清零,只按阶补齐:该认得的药,睁眼就该认得
   const recognized = carryLore(stage, carriesAllLore(player.reincarnation.heritage));
   const releasedSuppressed = player.suppressedRegions.length;
-  player.rebirth(rollLinggen(rng, aptitudeFloorNow()));
+  player.rebirth(view.nextLinggen ?? rollLinggen(rng, aptitudeFloorNow()));
   // 辅修位是洞府建筑(外物),洞府随转世重置 —— 新世只带得下 dongfu.subGongfaSlots 席
   // (藏经阁 0 级 = 1 席)。此前 subGongfa 未动,旧世 >1 门的辅修词条会带着越界词条开新世,
   // 与「辅修席满」判据(cultivation.gongfaMods 不看 slot 上限)对不上。按新世席数裁剪。
