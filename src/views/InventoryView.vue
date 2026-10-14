@@ -547,7 +547,9 @@
               </p>
               <p class="text-[11px] text-ink-faint tabular">
                 {{ HERB_GRADE_SHORT[r.cost.herbGrade] }}灵草×{{ r.cost.herb }} · 灵石
-                {{ formatGN(r.cost.stone) }} · 炸炉返草 ~{{ formatPercent(r.salvageFraction, 0) }}
+                {{ formatGN(r.cost.stone) }} ·<template v-if="r.shouzhuoLeft"
+                  >本世首次炸炉灵草全保</template
+                ><template v-else>炸炉返草 ~{{ r.keptHerb }} 株</template>
               </p>
               <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
               <p class="text-[10px] leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
@@ -1290,6 +1292,12 @@ const recipes = computed(() =>
       // engineCraft.spentOnFail 同源 —— 只摊成功率等于只让玩家看见赢的那面
       const salvageFraction =
         salvageRatio(able.skill) * (1 + modOf(player.finalStats.mods, "craftSalvage"));
+      // 返草实算按整株取整(engineCraft.spentOnFail 对 cost.amount floor,
+      // 还原会退回 Math.floor(cost×ratio)),展示不许用浮点比率伪装整株:
+      // 4 株 20% 实际一株不退,写「~20%」就是骗。合体守拙本世首败灵草全保,也在炉前亮开。
+      const hasShouzhuo = player.reincarnation.heritage.includes("shouzhuo");
+      const shouzhuoLeft = hasShouzhuo && (player.reincarnation.heritageUses.shouzhuo ?? 0) === 0;
+      const keptHerb = shouzhuoLeft ? cost.herb : Math.floor(cost.herb * salvageFraction);
       // 分级后「灵草不足」太笼统:满兜仙品草也可能缺几株凡品 —— 逐案点名缺什么,
       // 缺草的直接指路灵草坊(那是唯一买草的地方)
       const shortHerb = !resources.hasHerbs(cost.herbGrade, cost.herb);
@@ -1301,6 +1309,8 @@ const recipes = computed(() =>
         doubleRate,
         guaranteeLeft,
         salvageFraction,
+        keptHerb,
+        shouzhuoLeft,
         shortHerb,
         shortStone,
         shortText: shortHerb
@@ -1320,6 +1330,8 @@ const recipes = computed(() =>
         doubleRate: number;
         guaranteeLeft: number;
         salvageFraction: number;
+        keptHerb: number;
+        shouzhuoLeft: boolean;
         shortHerb: boolean;
         shortStone: boolean;
         shortText: string | null;
