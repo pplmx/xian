@@ -46,7 +46,10 @@ export interface ReforgeCost {
  * 无可重铸余地(全封存)时返回 null —— 这是唯一的"不能再炼"。
  */
 export function reforgeCost(inst: EquipmentInstance): ReforgeCost | null {
-  if (reforgeableAffixIds(inst).length === 0) return null;
+  // 「无可重掷」仅指"确有词条且全封存";0 词条的凡品(quality affixes 允许掷 0 条)
+  // 不是不能再炼 —— 重铸的意义正是让它从零出词条。若此处对空词条返回 null,
+  // 这件就永远没法获得任何词条了。
+  if (inst.affixes.length > 0 && reforgeableAffixIds(inst).length === 0) return null;
   const sealed = (inst.sealedAffixIds ?? []).length;
   const load = 1 + sealed * REFORGE_SEAL_LOAD;
   return {

@@ -54,6 +54,12 @@ describe("重铸成本 · 只看阶数与封存数", () => {
     expect(late.dust).toBe(first.dust);
   });
 
+  it("0 词条凡品可重铸:空词条不是「全封存」,不能把重铸入口锁死", () => {
+    // 凡品 quality affixes 允许掷 0 条;reforgeCost 曾把「无未封存词条」误当成「不可再炼」,
+    // 0 词条件 return null → 详情页隐藏重铸按钮,这件永远没法获得任何词条。
+    expect(reforgeCost({ ...base, affixes: [] }), "空词条也应能重铸出词条").not.toBeNull();
+  });
+
   it("品质不进公式:凡品与神品洗一次同价(贵贱由阶数与封存数说)", () => {
     const mortal = reforgeCost({ ...base, quality: "mortal" })!;
     const divine = reforgeCost({ ...base, quality: "divine" })!;
