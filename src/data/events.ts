@@ -1,4 +1,4 @@
-/** 随机事件库 —— 83 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 84 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -87,6 +87,20 @@ export const EVENTS: EventDef[] = [
       leave(),
     ],
     { maxRealm: 4 },
+  ),
+  ev(
+    "ev_xipan_fumu",
+    "溪畔浮木",
+    "暴雨过后,溪畔搁浅了一截焦黑的浮木,隐约透出暖意。",
+    ["general", "forest"],
+    [
+      c("仔细察看", [
+        o(60, "浮木竟是一段火灵残枝,你收下这点灵性。", { type: "material", id: "herb", amount: 6 }),
+        o(40, "木心沁水,只余朽渣。", { type: "nothing" }),
+      ]),
+      leave("一根朽木而已,你不以为意,转身离去。"),
+    ],
+    { maxRealm: 1 },
   ),
   ev(
     "ev_spring",
