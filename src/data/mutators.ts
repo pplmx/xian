@@ -67,6 +67,12 @@ export const MUTATORS: MutatorDef[] = [
     text: "回合上限 30",
     rules: { maxRounds: 30 },
   },
+  {
+    id: "foe_rear",
+    name: "垂死反扑",
+    text: "敌人气血垂危时攻势 +50%",
+    rules: { enemyExtraMods: { lowHpDamage: 0.5 } },
+  },
 ];
 
 export function mutatorDef(id: string): MutatorDef | undefined {
