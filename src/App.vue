@@ -153,7 +153,12 @@ onMounted(() => {
     else ui.toast("存档已恢复写入", "info");
   });
   // 归来一拍即收:坊市寄卖到时辰的自售入账 / 货架与悬赏换新,落地即结算(墙钟为准,不必开市)
-  market.collectConsign(Date.now());
+  // 归来一拍即收:坊市寄卖到时辰的自售入账,离包即定(墙钟为准,不必开市)
+  // 寄卖到期自售的灵石要有一声 —— 离线回城,玩家回来不该只盯着数字变
+  {
+    const sold = market.collectConsign(Date.now());
+    if (sold.length) notify(`「${sold.join("、")}」已自售,灵石到账`, "success");
+  }
   market.sync(Date.now());
   bounty.sync(Date.now());
   // 收徒:归来一拍即收(弟子到时辰的跑腿账,捡起即入)

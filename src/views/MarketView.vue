@@ -53,7 +53,9 @@ let timer: number | undefined;
 
 onMounted(() => {
   market.sync(Date.now());
-  market.collectConsign(Date.now());
+  // 挂载一拍自然售出的寄卖,给一声(开页回城不该只盯着数字变;此后每秒定时器里的递进又自可见)
+  const sold = market.collectConsign(Date.now());
+  if (sold.length) notify(`「${sold.join("、")}」已自售,灵石到账`, "success");
   timer = window.setInterval(() => {
     const t = Date.now();
     now.value = t;
@@ -341,7 +343,7 @@ function bountyShort(o: BountySlot): string | null {
           <span class="text-[12px] tabular text-cinnabar">
             {{
               o.kind === "equip"
-                ? `≥ ${formatGN(equipBountyReward(o.tier, 0).stone)} 石`
+                ? `≥ ${formatGN(equipBountyReward(o.tier, 0).stone)} 石 + ${equipBountyReward(o.tier, 0).dust} 尘`
                 : `${formatGN(o.reward)} 灵石`
             }}
           </span>
