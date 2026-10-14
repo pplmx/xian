@@ -7,8 +7,9 @@
  */
 import type { GNum } from "@/types";
 import { mulN } from "@/utils/gnum";
+import { formatGN } from "@/utils/format";
 import { stoneByTier } from "./formulas";
-import { PILLS } from "@/data/pills";
+import { PILLS, pillDef } from "@/data/pills";
 import {
   APPRENTICE_TALENT_BONUS,
   DISPATCH_ADVENTURE_FIXED_SCORE,
@@ -156,4 +157,21 @@ export function dispatchAllToNeed(
   const target = needTargetDoor(stock);
   if (target) return idle.map((x) => ({ uid: x.uid, spec: target }));
   return idle.map((x) => ({ uid: x.uid, spec: x.talent }));
+}
+
+/**
+ * 一趟归来的账目文本(与派活期望同源,由 spoils 现算,不另写第二份);
+ * 一路的奖励拼全,不早退漏掉灵石。App 启动与收徒页共用同一条通报格式化,
+ * 免得启动静默收割那拍自己另写一份(此前归来在 App 重启路径整条不通报)。
+ */
+export function apprenticeReapText(spoils: TaskSpoils): string {
+  const parts: string[] = [];
+  if (spoils.herb) parts.push(`灵草 ×${spoils.herb}`);
+  if (spoils.ore) parts.push(`玄铁 ×${spoils.ore}`);
+  if (spoils.dust) parts.push(`器灵尘 ×${spoils.dust}`);
+  if (spoils.wudao) parts.push(`悟道点 ×${spoils.wudao}`);
+  if (spoils.stone) parts.push(`灵石 ${formatGN(spoils.stone)}`);
+  if (spoils.pillId)
+    parts.push(`${pillDef(spoils.pillId)?.name ?? spoils.pillId} ×${spoils.pillCount}`);
+  return parts.join(" · ");
 }

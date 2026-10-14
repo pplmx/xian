@@ -72,6 +72,8 @@ import {
 } from "@/composables/useServiceWorkerUpdate";
 import { subscribeSaveWriteFailure } from "@/utils/storage";
 import { engine } from "@/core/engine";
+import { notify } from "@/core/notify";
+import { apprenticeReapText } from "@/core/apprenticeService";
 import { applyTheme, initTheme } from "@/core/theme";
 import { configureAudio, playSfx, stopBgm, unlockAudio } from "@/core/audio";
 import TopStatusBar from "@/components/common/TopStatusBar.vue";
@@ -156,7 +158,11 @@ onMounted(() => {
   bounty.sync(Date.now());
   // 收徒:归来一拍即收(弟子到时辰的跑腿账,捡起即入)
   apprentice.sync();
-  apprentice.collectFinished(Date.now(), player.major);
+  // 归来即报一声:App 启动这拍是静默入账的漏网(收徒页 onMounted 已来不及收第二遍),
+  // —— 玩家回来不该只知道数变了。与收徒页同一条通报格式化(apprenticeReapText)。
+  for (const r of apprentice.collectFinished(Date.now(), player.major)) {
+    notify(`「${r.name}」归来,带回 ${apprenticeReapText(r.spoils)}`, "success");
+  }
   // PWA 版本更新:有新版就绪再亮「刷新」(注册在 main.ts;这里取回 registration 接管监听)
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker

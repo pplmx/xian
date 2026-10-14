@@ -26,6 +26,7 @@ import {
 import {
   apprenticeSpoils,
   apprenticeTaskSeconds,
+  apprenticeReapText,
   type OwnedApprentice,
 } from "@/core/apprenticeService";
 import { stoneByTier } from "@/core/formulas";
@@ -42,22 +43,10 @@ const resources = useResourcesStore();
 const now = ref(Date.now());
 let timer: number | undefined;
 
-/** 一趟归来的账目文本(与派活期望同源,由 spoils 现算,不另写第二份);一路的奖励拼全,不早退漏掉灵石 */
-function reapText(r: ApprenticeReap): string {
-  const s = r.spoils;
-  const parts: string[] = [];
-  if (s.herb) parts.push(`灵草 ×${s.herb}`);
-  if (s.ore) parts.push(`玄铁 ×${s.ore}`);
-  if (s.dust) parts.push(`器灵尘 ×${s.dust}`);
-  if (s.wudao) parts.push(`悟道点 ×${s.wudao}`);
-  if (s.stone) parts.push(`灵石 ${formatGN(s.stone)}`);
-  if (s.pillId) parts.push(`${pillDef(s.pillId)?.name ?? s.pillId} ×${s.pillCount}`);
-  return parts.join(" · ");
-}
-
-/** 弟子归来要有一声:资材不是静默入账的 → 每条通报「XX 归来,带回…」 */
+/** 弟子归来要有一声:资材不是静默入账的 → 每条通报「XX 归来,带回…」(格式化走共享 apprenticeReapText) */
 function announceReaps(reaped: ApprenticeReap[]): void {
-  for (const r of reaped) notify(`「${r.name}」归来,带回 ${reapText(r)}`, "success");
+  for (const r of reaped)
+    notify(`「${r.name}」归来,带回 ${apprenticeReapText(r.spoils)}`, "success");
 }
 
 onMounted(() => {
