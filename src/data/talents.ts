@@ -31,7 +31,10 @@ export const TALENTS: TalentDef[] = [
   t("t_yaoyuan", "妖缘", 2, "与兽亲和,灵兽相随", { explorationSpeed: 0.12, dropRate: 0.06 }),
   t("t_danxin", "丹心", 2, "炉火纯青,丹成有相", { alchemyYield: 0.2 }),
   t("t_qiao", "巧匠", 2, "炼器天赋,信手拈来", { forgeDiscount: 0.15 }),
-  t("t_wugou", "无垢", 3, "道心无垢,心魔不侵", { cultivationSpeed: 0.1, breakthroughRate: 0.04 }),
+  t("t_wugou", "无垢", 3, "道心澄明,修行愈速,破境愈稳", {
+    cultivationSpeed: 0.1,
+    breakthroughRate: 0.04,
+  }),
   t("t_canglan", "沧澜", 2, "气海如渊,灵气充沛", { qiRegen: 0.2 }),
   t("t_zhuoyue", "卓越", 3, "天资卓越,样样精通", {
     attackPct: 0.08,

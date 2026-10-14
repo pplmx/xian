@@ -416,7 +416,7 @@ export const EVENTS: EventDef[] = [
         { isDefault: true },
       ),
       c("保持警惕", [
-        o(70, "你敷衍几句便告辞,平安无事。"),
+        o(70, "你敷衍几句便告辞,平安无事。", { type: "material", id: "wudao", amount: 3 }),
         o(30, "那修士见你戒备,冷笑一声化作黑雾散去——竟是心魔所化!", {
           type: "buff",
           id: "bless_qingfeng",
@@ -979,8 +979,8 @@ export const EVENTS: EventDef[] = [
     ["general"],
     [
       c("直面心魔", [
-        o(60, '你与"自己"对峙三日,道心愈发坚定。', { type: "material", id: "wudao", amount: 12 }),
-        o(40, "心魔狡诈,你落了下风,道行受损。", { type: "buff", id: "curse_xinmo" }),
+        o(75, '你与"自己"对峙三日,道心愈发坚定。', { type: "material", id: "wudao", amount: 12 }),
+        o(25, "心魔狡诈,你落了下风,道行受损。", { type: "buff", id: "curse_xinmo" }),
       ]),
       c(
         "置之不理",

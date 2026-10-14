@@ -131,7 +131,7 @@ export const BUFFS: BuffDef[] = [
     "心魔缠身",
     "injury",
     600,
-    "心魔滋生,修炼速度降低 30%,进阶成功率降低 10%",
+    "心魔滋生,修炼速度降低 30%,进阶成功率降低 10%(大关天劫不吃此益)",
     { cultivationSpeed: -0.3, breakthroughRate: -0.1 },
     "ghost",
   ),
