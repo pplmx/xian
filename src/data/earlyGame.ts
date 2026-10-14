@@ -171,7 +171,7 @@ export const CAVE_EVENT_POOL = {
         { label: "查看", effect: "发现 3 灵草", reward: { type: "herb" as const, value: 3 } },
         {
           label: "安抚灵兽",
-          effect: "灵兽效果 +30%(10 分钟)",
+          effect: "灵兽属性效果 +30%(10 分钟)",
           reward: { type: "buff" as const, value: "cave_garden_pet" },
         },
         { label: "离开", effect: "无事发生", reward: { type: "stone" as const, value: 0 } },

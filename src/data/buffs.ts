@@ -232,7 +232,7 @@ export const BUFFS: BuffDef[] = [
     "灵兽相随",
     "blessing",
     600,
-    "安抚后的灵兽更尽心,灵兽效果提升 30%",
+    "安抚后的灵兽更尽心,灵兽属性效果提升 30%",
     { beastPct: 0.3 },
     "paw",
   ),

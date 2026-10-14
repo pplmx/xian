@@ -63,7 +63,7 @@ export const STAT_NAMES: Record<AnyStatKey, string> = {
    */
   forgeDiscount: "炼器省耗",
   qiCapPct: "灵气上限",
-  beastPct: "灵兽效果",
+  beastPct: "灵兽属性效果",
   armorPen: "破甲",
   // 与 speed 分开命名:那个管「谁先出手」,这个管「首回合打得更重」(先发/雷霆词条)
   firstStrike: "首回合伤害",
