@@ -65,6 +65,15 @@ export const PACTS: PactDef[] = [
     rules: { shieldCapRatio: 0.5 },
     sourceMult: 1.8,
   },
+  {
+    id: "jilei",
+    name: "殛雷契",
+    seal: "雷",
+    desc: "天雷封界,每一记皆重三分 —— 挨打更疼,却只得些许道源",
+    ruleText: "敌方攻击 +20% · 道源 ×1.9",
+    rules: { enemyAtkMult: 1.2 },
+    sourceMult: 1.9,
+  },
 ];
 
 export function pactDef(id: string): PactDef | undefined {
