@@ -132,9 +132,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockRealm: 2,
     costBase: 300,
     costOre: 30,
-    effectText: (lv) => [
-      `可驯养灵兽 · 灵兽属性效果 +${Math.round(lv * BEAST_MULT_PER_LEVEL * 100)}%`,
-    ],
+    effectText: (lv) => [`灵兽属性效果 +${Math.round(lv * BEAST_MULT_PER_LEVEL * 100)}%`],
   },
 ];
 
