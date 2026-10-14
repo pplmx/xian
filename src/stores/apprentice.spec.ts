@@ -41,6 +41,23 @@ describe("收徒 store", () => {
     expect(a.dispatch(uid, "ore", t + 1), "忙着的弟子不应能再派").toBe(false);
   });
 
+  it("dispatch 锁出发境界;无 rewardMajor 的老档任务退回收割时境界结算", () => {
+    seed();
+    const a = useApprenticeStore();
+    const p = usePlayerStore();
+    a.sync();
+    const uid = a.apprentices[0]!.uid;
+    const t = Date.now();
+    p.major = 3;
+    a.dispatch(uid, "adventure", t);
+    // 出发时的境界必须锁进 task —— 收割按它结算,离线/中途升境整批结算才不漂账
+    expect(a.apprentices[0]!.task!.rewardMajor).toBe(3);
+    // 老档任务没有 rewardMajor → 退回收割时传入的境界(不崩、照常入账)
+    a.apprentices[0]!.task = { spec: "adventure", startAt: t, finishAt: t + 30 * 3600_000 };
+    const reaped = a.collectFinished(t + 31 * 3600_000, 5);
+    expect(reaped.length).toBe(1);
+  });
+
   it("collectFinished:到时辰收割入账并升级,未到不动", () => {
     seed();
     const a = useApprenticeStore();

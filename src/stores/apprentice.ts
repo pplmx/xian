@@ -10,6 +10,8 @@ import { persistConfig } from "@/utils/storage";
 import { rng } from "@/utils/random";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
+import { usePlayerStore } from "@/stores/player";
+import { herbGradeOfMajor } from "@/data/herbGrades";
 import { stoneByTier } from "@/core/formulas";
 import {
   APPRENTICE_MAX_LEVEL,
@@ -64,10 +66,16 @@ function clampKarma(v: unknown): number {
 }
 
 /** 把一趟产出入账到资源/背包 */
-function applySpoils(spoils: TaskSpoils): void {
+function applySpoils(spoils: TaskSpoils, originMajor?: number): void {
   const resources = useResourcesStore();
   const inventory = useInventoryStore();
-  if (spoils.herb) resources.addSmall("herb", spoils.herb);
+  // 灵草按**出发境界**定品(与 offline 的「按产地定品」同口径):addSmall 会落到当前
+  // 境界那档,离线升境再归来时,弟子带回的旧界草会堆进新界档,与原产地账脱节
+  if (spoils.herb)
+    resources.grantHerbs(
+      spoils.herb,
+      originMajor != null ? herbGradeOfMajor(originMajor) : undefined,
+    );
   if (spoils.ore) resources.addSmall("ore", spoils.ore);
   if (spoils.dust) resources.addSmall("dust", spoils.dust);
   if (spoils.wudao) resources.addSmall("wudao", spoils.wudao);
@@ -95,12 +103,19 @@ export const useApprenticeStore = defineStore(
         const bond = clampBond("bond" in raw ? raw.bond : 0);
         let task: OwnedApprentice["task"] = null;
         if ("task" in raw && raw.task && typeof raw.task === "object") {
-          const t = raw.task as { spec?: unknown; startAt?: unknown; finishAt?: unknown };
+          const t = raw.task as {
+            spec?: unknown;
+            startAt?: unknown;
+            finishAt?: unknown;
+            rewardMajor?: unknown;
+          };
           if (isSpec(t.spec) && Number.isFinite(t.startAt) && Number.isFinite(t.finishAt)) {
+            const rm = "rewardMajor" in t ? t.rewardMajor : undefined;
             task = {
               spec: t.spec,
               startAt: Math.max(0, Math.floor(t.startAt as number)),
               finishAt: Math.max(0, Math.floor(t.finishAt as number)),
+              rewardMajor: typeof rm === "number" && Number.isFinite(rm) ? rm : undefined,
             };
           }
         }
@@ -134,8 +149,10 @@ export const useApprenticeStore = defineStore(
       for (const appr of apprentices.value) {
         if (!taskDone(appr, now)) continue;
         const spec = appr.task!.spec;
-        const spoils = apprenticeSpoils(appr.archId, spec, major, appr.level);
-        applySpoils(spoils);
+        // 按**出发档**结算:派出去时锁的境界才这趟的账;老档无 rewardMajor 才退回当前 major
+        const rewardMajor = appr.task!.rewardMajor ?? major;
+        const spoils = apprenticeSpoils(appr.archId, spec, rewardMajor, appr.level);
+        applySpoils(spoils, rewardMajor);
         appr.level = Math.min(APPRENTICE_MAX_LEVEL, appr.level + 1);
         appr.bond += 1;
         appr.task = null;
@@ -148,7 +165,12 @@ export const useApprenticeStore = defineStore(
     function dispatch(uid: string, spec: ApprenticeSpec, now: number): boolean {
       const appr = apprentices.value.find((x) => x.uid === uid);
       if (!appr || appr.task) return false;
-      appr.task = { spec, startAt: now, finishAt: now + apprenticeTaskSeconds(spec) * 1000 };
+      appr.task = {
+        spec,
+        startAt: now,
+        finishAt: now + apprenticeTaskSeconds(spec) * 1000,
+        rewardMajor: usePlayerStore().major,
+      };
       return true;
     }
 

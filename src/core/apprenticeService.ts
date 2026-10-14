@@ -25,7 +25,13 @@ export interface OwnedApprentice {
   level: number;
   /** 累计完工趟数 —— 羁绊位阶的依据(纯 flavor,不给产出/时长加成) */
   bond: number;
-  task: { spec: ApprenticeSpec; startAt: number; finishAt: number } | null;
+  task: {
+    spec: ApprenticeSpec;
+    startAt: number;
+    finishAt: number;
+    /** 出发时的境界 —— 收割按出发档结算(离线/中途升境也不漂账;老档无此字段则退回当前境界) */
+    rewardMajor?: number;
+  } | null;
 }
 
 /** 一趟任务的产出账(石头是大数,其余是小数;都未入账,由 store 应用) */
