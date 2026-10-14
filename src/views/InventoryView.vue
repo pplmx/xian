@@ -606,7 +606,7 @@
               :disabled="r.shortHerb || r.shortStone"
               @click="craftBatch(r.def.id)"
             >
-              连炼 ×{{ PILL_BATCH }}
+              连炼 ×{{ PILL_BATCH }}{{ batchGuaranteeText(r.guaranteeLeft) }}
             </button>
           </div>
         </div>
@@ -1490,6 +1490,12 @@ function onUsePillBatch(): void {
 /** 连炼一批 —— 批量开炉,料尽自停(成败与保料合一条提示) */
 function craftBatch(id: string): void {
   craftPillBatch(id, PILL_BATCH);
+}
+
+/** 连炼按钮披露保底只保前 N 炉(丹心保底是本世全局池,后半批回落到真实把握) */
+function batchGuaranteeText(left: number): string {
+  if (left <= 0) return "";
+  return left >= PILL_BATCH ? " · 皆必成" : ` · 前 ${left} 炉必成`;
 }
 
 const artifactSlots = computed(

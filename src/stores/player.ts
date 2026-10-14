@@ -12,7 +12,7 @@ import { titleDef } from "@/data/titles";
 import { COMPANION_SYSTEM } from "@/core/engineWorld";
 import { mentorDef } from "@/data/mentors";
 import { talentDef } from "@/data/talents";
-import { heritageDef } from "@/data/heritage";
+import { heritageDef, type HeritageId } from "@/data/heritage";
 import { baseCultPerSec, baseQiRegen, expRequirement, qiCap } from "@/core/formulas";
 import { computeFinalStats, modOf } from "@/core/statsCalc";
 import { todayWeather } from "@/core/weather";
@@ -32,7 +32,7 @@ import { useQuestsStore } from "./quests";
 import { useEndgameStore } from "./endgame";
 import { useGameStore } from "./game";
 import { gameNow } from "@/core/enginePause";
-import { birthMajorFloor } from "@/core/heritageEffects";
+import { birthMajorFloor, craftGuaranteeCrafts } from "@/core/heritageEffects";
 import { liveRegionEvent, rollNewRegionEvent } from "@/core/regionEvent";
 import { rng } from "@/utils/random";
 
@@ -469,7 +469,9 @@ export const usePlayerStore = defineStore(
       for (const [id, n] of Object.entries(src)) {
         if (!heritageDef(id)) continue;
         const v = Number(n);
-        if (Number.isFinite(v) && v > 0) out[id] = Math.floor(v);
+        // 按各传承上限钳(丹心 3 炉、其余每世一次):毁档超限可永久锁死保底,须自愈归位
+        const max = craftGuaranteeCrafts([id as HeritageId]) || 1;
+        if (Number.isFinite(v) && v > 0) out[id] = Math.min(Math.floor(v), max);
       }
       return out;
     }
