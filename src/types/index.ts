@@ -1017,6 +1017,11 @@ export interface CelestialWorldDef {
   rewardDaoSource: number;
   /** 路线树:每层两个节点,逐层择路(入界战 → 各层 → 界主) */
   routes: [WorldRouteNode, WorldRouteNode][];
+  /**
+   * 星象相合世界:今日值日星象所利之界 == 玩家本世之界 时,此界破关道源取加成
+   * (与星象系统「今日该往哪里去」的哲学同源 —— 只管这一个世界、不给全局)。
+   */
+  starTied?: boolean;
 }
 
 /** 天道契约(Phase 21):玩家自选的不公平规则,风险换道源 */
@@ -1270,6 +1275,8 @@ export interface WorldRunState {
   totalRounds: number;
   /** 剑意/杀意逐胜层数 */
   winStacks: number;
+  /** 星象相合世界(starTied)启动时算好的破界道源乘数;非 starTied/相忤时为 1(缺省兼容旧档) */
+  starFavor?: number;
   /** 逆命契:签约时封印的主流派核心词条(负值) */
   sealedMods?: StatMods;
 }

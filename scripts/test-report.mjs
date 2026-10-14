@@ -267,6 +267,7 @@ const CATEGORIES = [
     name: "Celestial   真仙终局",
     match: [
       "celestialSim",
+      "celestialStarAblation",
       "celestialCaliber",
       "endgameService",
       "phase21",

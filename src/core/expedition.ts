@@ -41,6 +41,7 @@ import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import { SIM_REFERENCE } from "./celestialSim";
 import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
+import { STAR_FAVOR_REWARD_MULT } from "./astronomy";
 import type { WorldRunState } from "@/types";
 import { gateDef } from "@/data/qimen";
 import { notify } from "./notify";
@@ -168,8 +169,10 @@ function settle(
     const pact = run.pactId ? pactDef(run.pactId) : undefined;
     const speedBonus =
       endgame.daoPath === "slaughter" ? slaughterSpeedBonus(run.totalRounds, RUN_FIGHTS) : 0;
+    // starTied 世界:启动时由 UI 算好的今日星象相合乘数(run.starFavor,默认 1)——只此世界、不给全局
+    const starFavor = run.starFavor ?? 1;
     reward = Math.floor(
-      (world.rewardDaoSource + run.bonus) * (pact?.sourceMult ?? 1) * (1 + speedBonus),
+      (world.rewardDaoSource + run.bonus) * (pact?.sourceMult ?? 1) * (1 + speedBonus) * starFavor,
     );
     endgame.addDaoSource(reward);
     endgame.recordWorldClear(world.id);
@@ -180,7 +183,9 @@ function settle(
     if (world.id === "void") recordMilestone("first_void");
     trackClearRecords(world.name, run.totalRounds, run.pactId, reward);
     notify(
-      `你踏破${world.name}!道源 +${reward}${speedBonus > 0 ? "(含杀伐速战之赏)" : ""}`,
+      `你踏破${world.name}!道源 +${reward}${speedBonus > 0 ? "(含杀伐速战之赏)" : ""}${
+        starFavor > 1 ? "(今日星象相合,道源加厚)" : ""
+      }`,
       "rare",
     );
   } else if (pactBroken) {
@@ -286,6 +291,8 @@ export function startWorldExpedition(
   worldId: string,
   pactId: string | null,
   gateId: string | null = null,
+  /** 今日星象相合(与玩家本世之界相合)—— 由 UI 用总游戏秒算好传进,core 不引 game store */
+  starBoon = false,
 ): StepOutcome | null {
   const endgame = useEndgameStore();
   const world = resolveWorld(worldId);
@@ -324,6 +331,7 @@ export function startWorldExpedition(
     carriedHpPct: rules?.playerStartHpPct ?? 1,
     totalRounds: 0,
     winStacks: 0,
+    starFavor: world.starTied && starBoon ? STAR_FAVOR_REWARD_MULT : 1,
     sealedMods,
   };
   if (pact) notify(`你与天道立下「${pact.name}」`, "info");

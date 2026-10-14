@@ -208,6 +208,118 @@ export const CELESTIAL_WORLDS: CelestialWorldDef[] = [
     rewardDaoSource: 60,
   },
   {
+    id: "xingyun",
+    name: "星陨天",
+    seal: "星",
+    anchorTier: 23,
+    desc: "星斗倾颓,陨石如雨。此界以星象为刀,逼你于天威之下寻一线生机",
+    ruleText: [
+      "星陨密集,回合紧迫(上限 26 回合)",
+      "敌借星威,会心频发(敌方会心率 +15%)",
+      "天威之下,重装与反震反得其道",
+    ],
+    rules: {
+      enemyAtkMult: 1.25,
+      healMult: 0.75,
+      maxRounds: 26,
+      playerExtraMods: { critRate: 0.1, critDamage: 0.5 },
+      enemyExtraMods: { critRate: 0.15 },
+    },
+    entryCost: 20,
+    fights: 6,
+    healBetweenPct: 0.5,
+    foes: [
+      shape("陨星甲士", "star", 0.78, 0.5, 1.5, 1.2, [
+        { name: "陨星连坠", mult: 1.0, rate: 0.6, effect: "multi" },
+      ]),
+      shape("星尘妖灵", "sparkles", 0.8, 0.47, 1.35, 1.3, [
+        { name: "星屑穿体", mult: 1.6, rate: 0.4, effect: "pierce" },
+      ]),
+    ],
+    guardian: shape("星陨天主", "star", 0.85, 0.55, 2.2, 1.25, [
+      { name: "星坠乾坤", mult: 1.9, rate: 0.35 },
+      { name: "星屑乱舞", mult: 1.0, rate: 0.6, effect: "multi" },
+    ]),
+    routes: [
+      [
+        node(
+          "xy_meteor",
+          "陨星原",
+          "陨石如雨,一段段砸落",
+          shape("坠星魔", "star", 0.8, 0.5, 1.4, 1.2, [
+            { name: "坠星连砸", mult: 1.0, rate: 0.62, effect: "multi" },
+          ]),
+          8,
+          "多段密集",
+        ),
+        node(
+          "xy_dust",
+          "星尘谷",
+          "尘沙蔽目,星芒穿铁",
+          shape("星尘枭", "sparkles", 0.78, 0.45, 1.3, 1.25, [
+            { name: "星芒贯体", mult: 1.6, rate: 0.42, effect: "pierce" },
+          ]),
+          12,
+          "真伤穿透",
+        ),
+      ],
+      [
+        node(
+          "xy_pit",
+          "陨坑",
+          "坑底星髓,力沉一击",
+          shape("星髓傀儡", "star", 0.9, 0.52, 1.5, 1.1, [
+            { name: "星髓重击", mult: 2.1, rate: 0.35 },
+          ]),
+          10,
+          "重击高爆",
+        ),
+        node(
+          "xy_nova",
+          "星璇",
+          "星漩涡流,魂被吸走",
+          shape("星璇虚灵", "ghost", 0.82, 0.46, 1.4, 1.2, [
+            { name: "星璇噬魂", mult: 1.5, rate: 0.45, effect: "drain" },
+          ]),
+          14,
+          "敌人吸血",
+          { healMult: 0.75 },
+        ),
+      ],
+      [
+        node(
+          "xy_ruin",
+          "陨灭殿",
+          "星斗尽陨,余威仍炽",
+          shape("陨灭星君", "star", 0.88, 0.5, 1.6, 1.25, [
+            { name: "陨星齐坠", mult: 2.0, rate: 0.4 },
+          ]),
+          12,
+          "强敌当关",
+        ),
+        node(
+          "xy_shine",
+          "星辉径",
+          "星光乍现,会心如雨",
+          shape(
+            "星辉圣使",
+            "sparkles",
+            0.84,
+            0.46,
+            1.35,
+            1.3,
+            [{ name: "星辉贯日", mult: 1.7, rate: 0.4, effect: "pierce" }],
+            { critRate: 0.25 },
+          ),
+          16,
+          "敌方高会心",
+        ),
+      ],
+    ],
+    rewardDaoSource: 65,
+    starTied: true,
+  },
+  {
     id: "wanren",
     name: "万刃天",
     seal: "刃",

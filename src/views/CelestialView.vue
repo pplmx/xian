@@ -288,6 +288,13 @@
               <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
                 <span v-for="(r, i) in world.ruleText" :key="i">{{ r }}</span>
               </p>
+              <p
+                v-if="world.starTied"
+                class="mt-1 tabular text-[10px]"
+                :class="starTieFavorOn(world) ? 'text-qing' : 'text-ink-faint'"
+              >
+                {{ starTieLine(world) }}
+              </p>
               <button
                 class="btn-seal mt-2.5 w-full !py-2 !text-[13px]"
                 :disabled="run !== null || daoEntryShort(world.entryCost) > 0"
@@ -1163,6 +1170,8 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
+import { useGameStore } from "@/stores/game";
+import { STAR_FAVOR_REWARD_MULT, starFavorAligned } from "@/core/astronomy";
 import { useInventoryStore } from "@/stores/inventory";
 import { useEndgameStore, MAX_MARKS } from "@/stores/endgame";
 import { SOUL_SLOTS } from "@/data/souls";
@@ -1256,6 +1265,22 @@ import {
 
 const resources = useResourcesStore();
 const player = usePlayerStore();
+const game = useGameStore();
+
+/**
+ * 星象相合世界(starTied,如星陨天):今日值日星象所利之界 == 本世之界 → 破界道源取加成。
+ * 与 settle() 同源计算 —— 入口展示的「相合/寻常」就是实结那一档。
+ */
+function starTieFavorOn(world: (typeof CELESTIAL_WORLDS)[number]): boolean {
+  if (!world.starTied) return false;
+  return starFavorAligned(game.totalPlaySec, player.world.id);
+}
+function starTieLine(world: (typeof CELESTIAL_WORLDS)[number]): string {
+  if (!world.starTied) return "";
+  return starTieFavorOn(world)
+    ? `今日星象相合:破界道源 ×${STAR_FAVOR_REWARD_MULT}`
+    : "星象平常 —— 待值日星宿偏你本界之日,此界道源方才加厚";
+}
 
 /** 某界的锚点层级落在哪一个境界 —— 界面上「此界宜 X 及以上」用它,不在模板里手写境界名 */
 function anchorMajorOf(anchorTier: number): number {
@@ -1521,7 +1546,12 @@ function handleOutcome(outcome: StepOutcome | null, title: string): void {
 function depart(): void {
   if (!prepWorld.value) return;
   const title = prepWorld.value.name;
-  const outcome = startWorldExpedition(prepWorld.value.id, prepPact.value, prepGate.value);
+  const outcome = startWorldExpedition(
+    prepWorld.value.id,
+    prepPact.value,
+    prepGate.value,
+    starTieFavorOn(prepWorld.value),
+  );
   if (outcome) prepWorldId.value = null;
   handleOutcome(outcome, title);
 }

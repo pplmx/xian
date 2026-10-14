@@ -20,6 +20,19 @@ import type { WorldId } from "@/types";
 /** 值日之宿所利界域的际遇加成(乘在际遇概率上) */
 export const MANSION_EVENT_LUCK = 0.1;
 
+/**
+ * 星象相合世界(星陨天)的破关道源加成。
+ * 「今日星象所利之界 == 玩家本世之界」时,星陨天这类 starTied 世界破关取 ×1.25。
+ * 与 MANSION_EVENT_LUCK 同理:只管这一个世界,不给全局 —— 它就是一个"今日适合去
+ * 星陨天取道源"的提示(见 AGENTS「该露的露」)。
+ */
+export const STAR_FAVOR_REWARD_MULT = 1.25;
+
+/** 玩家本世之界今日是否得星象相合(纯函数;给世界赏格与入口展示共用) */
+export function starFavorAligned(totalPlaySec: number, playerWorld: WorldId): boolean {
+  return favoredWorld(todayMansion(totalPlaySec)) === playerWorld;
+}
+
 /** 游戏日 → 值日之宿(28 日一轮) */
 export function mansionOfDay(day: number): MansionDef {
   const idx = ((Math.floor(day) % MANSIONS.length) + MANSIONS.length) % MANSIONS.length;

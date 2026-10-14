@@ -151,9 +151,9 @@ describe("择门 · 接线", () => {
       .replace(/\/\/.*$/gm, "");
     expect(src).toContain("in GATES");
     expect(src).toContain("forecastExpedition(prepWorldId.value, prepPact.value, prepGate.value)");
-    expect(src).toContain(
-      "startWorldExpedition(prepWorld.value.id, prepPact.value, prepGate.value)",
-    );
+    // 远征启动要把门传进去(签名后来多收今日星象相合布尔,oxfmt 会逐参断行,故断言用两个独立 token)
+    expect(src).toContain("startWorldExpedition(");
+    expect(src).toContain("prepGate.value");
   });
 
   it("界域志把九宫八门摊开了", () => {
