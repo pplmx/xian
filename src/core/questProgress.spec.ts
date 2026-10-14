@@ -141,4 +141,19 @@ describe("成就补扫", () => {
     checkStateAchievements();
     expect(q.hasAchieved("a_q4"), "玄品成就应被补扫解锁").toBe(true);
   });
+
+  it("迁移档:境界成就已达成但称号缺失,补扫幂等回填称号(不再永久不可得)", () => {
+    const p = usePlayerStore();
+    const q = useQuestsStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    // 模拟「补挂称号」更新前就已达成的老档/导入档:achieved 里已有、titlesOwned 却还没有
+    q.setAchieved(["a_r0", "a_r1", "a_r2"]);
+    expect(q.titlesOwned).toEqual([]);
+
+    checkStateAchievements();
+
+    expect(q.titlesOwned, "炼气/筑基/金丹称号应被幂等回填").toEqual(
+      expect.arrayContaining(["ti_churu", "ti_zhuji", "ti_jindan"]),
+    );
+  });
 });

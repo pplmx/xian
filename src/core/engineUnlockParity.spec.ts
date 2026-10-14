@@ -15,6 +15,7 @@
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { resetWorld } from "./parityShared";
 import { ACHIEVEMENTS } from "@/data/achievements";
+import { titleDef } from "@/data/titles";
 import {
   checkAchievements,
   checkCustomAchievement,
@@ -84,9 +85,15 @@ describe("成就解锁对账 —— 解几枚、按什么顺序、发什么", ()
       const frozen = legacyScan(quests.achieved);
       checkAchievements();
       expect(quests.achieved, label).toEqual(frozen);
-      expect(toasts, label).toEqual(
-        frozen.map((id) => `成就达成「${ACHIEVEMENTS.find((a) => a.id === id)!.name}」`),
-      );
+      // 配称号的成就:grantReward(quiet=false) 先报「获得名号」再报「成就达成」,与実发同源
+      const expected: string[] = [];
+      for (const id of frozen) {
+        const def = ACHIEVEMENTS.find((a) => a.id === id)!;
+        if (def.reward?.titleId && titleDef(def.reward.titleId))
+          expected.push(`获得名号「${titleDef(def.reward.titleId)!.name}」`);
+        expected.push(`成就达成「${def.name}」`);
+      }
+      expect(toasts, label).toEqual(expected);
     });
   }
 

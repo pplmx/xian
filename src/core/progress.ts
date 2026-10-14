@@ -180,7 +180,8 @@ function unlockAchievement(id: string): void {
 function announceAchievement(def: AchievementDef): void {
   if (def.reward) {
     useQuestsStore().recordAchievedTier(def.id, playerTier());
-    grantReward(def.reward, true);
+    // quiet=false:配称号的成就让「获得名号」真实报喜,不再因硬吞 true 而永远死码
+    grantReward(def.reward, false);
   }
   notify(`成就达成「${def.name}」`, "rare");
 }
@@ -230,6 +231,15 @@ export function checkStateAchievements(): void {
   // track()/trackRealm() 两个行为触发点被求值;老档/导入档在境界已高、又再没触发
   // 计数时,低境界成就就永远锁着 —— 引擎周期恰好调用本函数,在这里重放一次即自愈。
   checkAchievements();
+  // 称号回填:14 顶境界称号是事后补挂到既有成就 reward.titleId 上的;老档/导入档在补挂前已达成,
+  // 成就早解锁、重扫只挑「未解锁」→ 称号永久拿不到(展示「未」却永不可得)。这里幂等补齐:
+  // 凡已达成且带称号的成就,缺则补佩(ownTitle 自带幂等,不会重复计)。
+  {
+    const quests = useQuestsStore();
+    for (const a of ACHIEVEMENTS) {
+      if (a.reward?.titleId && quests.hasAchieved(a.id)) quests.ownTitle(a.reward.titleId);
+    }
+  }
   // 主线任务同根:也只在这些触发点被推进;补扫一并推进,免得老档卡在早该完成的一步
   checkMainQuest();
   const player = usePlayerStore();
