@@ -548,7 +548,7 @@
               <p class="text-[11px] text-ink-faint tabular">
                 {{ HERB_GRADE_SHORT[r.cost.herbGrade] }}灵草×{{ r.cost.herb }} · 灵石
                 {{ formatGN(r.cost.stone) }} ·<template v-if="r.shouzhuoLeft"
-                  >本世首次炸炉灵草全保</template
+                  >本世首败(任一炉)灵草全保</template
                 ><template v-else>炸炉返草 ~{{ r.keptHerb }} 株</template>
               </p>
               <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->

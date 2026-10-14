@@ -466,7 +466,7 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 360, stoneBase: 1000 },
     alchemyLevel: 10,
   }),
-  p("p_benyuandan", "本源丹", "divine", 18, "混沌本源入体,一日修行抵百日", {
+  p("p_benyuandan", "本源丹", "divine", 18, "混沌本源入体,一日修行抵百日,进阶成功率 +10%", {
     kind: "buff",
     buffId: "buff_hundun",
     recipe: { herb: 480, stoneBase: 1500 },
@@ -504,7 +504,7 @@ export const PILLS: PillDef[] = [
     "神将丹",
     "divine",
     15,
-    "神将临阵,攻伐无双,二十分钟(20 分钟)内攻击提升 45%,暴击伤害提升 30%",
+    "神将临阵,攻伐无双,二十分钟(20 分钟)内攻击提升 45%,暴击伤害提升 30%,受伤降低 10%",
     {
       kind: "buff",
       buffId: "buff_shenjiang",
