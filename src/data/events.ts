@@ -1,4 +1,4 @@
-/** 随机事件库 —— 84 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 85 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -101,6 +101,20 @@ export const EVENTS: EventDef[] = [
       leave("一根朽木而已,你不以为意,转身离去。"),
     ],
     { maxRealm: 1 },
+  ),
+  ev(
+    "ev_yedu_mijin",
+    "野渡迷津",
+    "山雨欲来,你行至一处野渡。渡船无人,只有一叶扁舟横在水上。",
+    ["general"],
+    [
+      c("解缆自渡", [
+        o(60, "你凭修为稳稳渡过江面,对岸空无一人。", { type: "exp", secs: 40 }),
+        o(40, "湍流暗涌,你呛了几口水,狼狈上岸。", { type: "buff", id: "injury" }),
+      ]),
+      leave("君子不临深水,你另寻他途,绕道而行。"),
+    ],
+    { maxRealm: 2 },
   ),
   ev(
     "ev_spring",
