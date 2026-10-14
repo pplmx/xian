@@ -1516,8 +1516,7 @@ const artifactRows = computed(() =>
         upCost,
         // 炼化既花悟道也花灵石:按下之前就得看得出付不付得起(见 forge.artifactUpCost)
         upAffordable:
-          !upCost ||
-          (resources.wudao >= upCost.wudao && toNum(resources.spiritStone) >= toNum(upCost.stone)),
+          !upCost || (resources.wudao >= upCost.wudao && resources.hasStone(upCost.stone)),
         equipped: inventory.equippedArtifacts.includes(a.defId),
       };
     })
