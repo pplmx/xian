@@ -13,7 +13,8 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import type { BountySlot } from "@/data/bounty";
-import { herbBuyPrice, herbGradeOfMajor } from "@/data/herbGrades";
+import { stoneByTier } from "@/core/formulas";
+import { MARKET_MAT_STONE_UNITS } from "@/data/market";
 import { gn, toNum } from "@/utils/gnum";
 
 function seedPlayerAndFunds(): void {
@@ -106,15 +107,17 @@ describe("悬赏板 store", () => {
     expect(equip.claimed).toBe(true);
   });
 
-  it("悬赏灵草价受购价约束:每株恒低于坊市购入价,「买来再交悬赏」无利可图", () => {
+  it("悬赏灵草价受货架购价约束:每株恒低于坊市货架购入价,「买来再交悬赏」无利可图", () => {
     seedPlayerAndFunds();
     const p = usePlayerStore();
     const b = useBountyStore();
     b.sync(Date.now());
     const herb = b.orders.find((o) => o.kind === "herb")!;
     const perHerb = toNum(herb.reward) / herb.target;
-    const buyP = herbBuyPrice(herbGradeOfMajor(p.major));
-    expect(perHerb, "悬赏每株不可高于坊市购入价").toBeLessThan(buyP);
+    // 真实购入锚是坊市货架的 stoneByTier(..,6),不是灵草坊 herbBuyPrice —— 后者与玩家实购价脱节,
+    // 曾经正是这条错锚让「买草→交悬赏」成为无本套利。现改为对真实购价断言。
+    const buyP = toNum(stoneByTier(p.major, MARKET_MAT_STONE_UNITS));
+    expect(perHerb, "悬赏每株不可高于坊市货架购入价").toBeLessThan(buyP);
     expect(perHerb).toBeGreaterThan(0);
   });
 

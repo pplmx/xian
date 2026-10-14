@@ -10,8 +10,6 @@ import { gn, gnZero, mulN } from "@/utils/gnum";
 import { stoneByTier } from "./formulas";
 import { pillDef } from "@/data/pills";
 import { salePills } from "./marketService";
-import { herbBuyPrice, herbGradeOfMajor } from "@/data/herbGrades";
-import { MARKET_MAT_STONE_UNITS } from "@/data/market";
 import {
   BOUNTY_SLOTS,
   BOUNTY_REFRESH_SECONDS,
@@ -52,14 +50,10 @@ export function generateBounty(major: number, now: number): BountySlot[] {
   const pd = pillDef(pillId);
   const matTarget = BOUNTY_MAT_TARGET;
   const matReward = stoneByTier(major, matTarget * BOUNTY_MAT_UNIT_AMOUNT);
-  // 悬赏灵草价 ≤ 坊市购价 × 悬赏档位占比 —— 悬赏每株恒低于购价,「买来再交悬赏」无利可图。
-  // 购价是 4 的倍数、档位占比 4.5/6,乘数整体为 0.75,总价恒为整数(无分石漂移)。
-  const herbGrade = herbGradeOfMajor(major);
-  const herbReward = gn(
-    Math.floor(
-      herbBuyPrice(herbGrade) * matTarget * (BOUNTY_MAT_UNIT_AMOUNT / MARKET_MAT_STONE_UNITS),
-    ),
-  );
+  // 悬赏灵草价与募材同源:每株 ≤ 坊市货架购入价(档位占比 4.5/6)。
+  // 从前误用灵草坊价 herbBuyPrice(1000 石/株)当基准,而玩家实购走坊市货架 stoneByTier(..,6),
+  // 形成「坊市买草 → 交悬赏」的无本套利 —— 现每株恒低于货架购入价,无利可图。
+  const herbReward = stoneByTier(major, matTarget * BOUNTY_MAT_UNIT_AMOUNT);
   const slots: BountySlot[] = [
     {
       idx: 0,
