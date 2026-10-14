@@ -780,6 +780,20 @@ export const TRIALS: TrialDef[] = [
     escalation: 1.06,
     rewardDaoSource: 45,
   },
+  {
+    id: "jinglei",
+    name: "惊雷试炼",
+    seal: "惊",
+    anchorTier: 29,
+    desc: "天雷封界,敌如惊雷而至。攻短而凶,抢在雷落前破阵",
+    ruleText: ["敌方攻击 +15%", "回合上限 40", "连战 5 场"],
+    rules: { enemyAtkMult: 1.15, maxRounds: 40 },
+    entryCost: 15,
+    fights: 5,
+    healBetweenPct: 0.6,
+    escalation: 1.06,
+    rewardDaoSource: 45,
+  },
 ];
 
 export function trialDef(id: string): TrialDef | undefined {
