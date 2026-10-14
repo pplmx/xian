@@ -32,7 +32,7 @@ export const REGIONS: RegionDef[] = [
     1,
     "mountain",
     "云雾缭绕的山麓,是初入仙途者的试炼之地",
-    ["e_wolf", "e_boar"],
+    ["e_wolf", "e_boar", "e_linghu"],
     "e_wolfking",
     ["general", "mountain"],
   ),
