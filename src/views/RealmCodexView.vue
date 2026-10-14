@@ -387,7 +387,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import { useNow } from "@/composables/useNow";
+import { gameNow } from "@/core/enginePause";
 import { usePlayerStore } from "@/stores/player";
 import { useGameStore } from "@/stores/game";
 import { useUiStore } from "@/stores/ui";
@@ -421,7 +421,12 @@ const player = usePlayerStore();
 const game = useGameStore();
 const ui = useUiStore();
 const resources = useResourcesStore();
-const now = useNow();
+const now = computed(() => {
+  // 暂停感知时钟:暂停时 activeDivination 因 gameNow() 冻结不散、恢复再顺延 expiresAt,
+  // 倒计时若用浏览器墙上钟(useNow)会在暂停里一路归零、恢复后又跳回十几分 —— 与结算同源。
+  void game.totalPlaySec;
+  return gameNow();
+});
 
 /** 分册:六门各占一册 —— 页越长越该分,免得一路拉到底找不着北 */
 type CodexTab = "realm" | "classics" | "yi" | "ziwei" | "xiang" | "qimen" | "todo";

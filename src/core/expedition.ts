@@ -440,7 +440,18 @@ export function previewFight(
   const heavy = foeShape.skills.find((sk) => sk.mult >= 2);
   if (heavy) riskLines.push(`【${heavy.name}】足以重创,留足气血以备不测`);
   if ((rules?.healMult ?? 1) < 0.7) riskLines.push("此地生机稀薄,回血难以为继");
-  const snap = run ? runSnap(run) : buildPlayerSnap(true);
+  let snap = run ? runSnap(run) : buildPlayerSnap(true);
+  // 出发前预览要吃契约的快照修饰(逆命契封印主流词条 / 孤剑契只留一件法器),
+  // 与整程预估同源 —— 同一契约两块天机面板不能一个压、一个不压,否则所窥非所打。
+  if (!run && prep?.pactId) {
+    const pact = pactDef(prep.pactId);
+    if (pact?.special === "soloArtifact")
+      snap = { ...snap, artifacts: (snap.artifacts ?? []).slice(0, 1) };
+    if (pact?.special === "sealCore") {
+      const sealed = sealCoreMods();
+      if (sealed) snap = { ...snap, mods: stackedMods(snap.mods, sealed, 1) };
+    }
+  }
   const fightRules = world && run ? withCarriedHp(rules, run) : rules;
   const rate = sampleWinRate(snap, foe, rand, 3, fightRules);
   const winText = winTextForRate(rate);

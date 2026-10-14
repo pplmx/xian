@@ -123,7 +123,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("问卦剩余与顿悟/巡游窗口在暂停时不空耗墙上时钟", () => {
     const codex = FILES.find((f) => f.path === "views/RealmCodexView.vue");
-    expect(codex?.src).toContain("useNow");
+    // 问卦倒计时走暂停感知时钟(gameNow):暂停时 activeDivination 因 gameNow() 冻结不散
+    // (exploration.spec 钉死「暂停中卦力不得因墙上时钟散掉」),倒计时若用墙上钟会在暂停里
+    // 一路归零、恢复后又跳回 —— 与结算同源,故与顿悟/巡游同纪律,不允许 useNow。
+    expect(codex?.src).toContain("gameNow");
     expect(codex?.src).toMatch(/expiresAt - now\.value/);
     const cave = FILES.find((f) => f.path === "components/dongfu/CaveEventModal.vue");
     expect(cave?.src).toContain("gameNow");
