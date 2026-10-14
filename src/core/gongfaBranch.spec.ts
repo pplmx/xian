@@ -24,15 +24,17 @@ describe("功法悟道分支(gongfaBranch)", () => {
     expect(cul.chooseBranch("m_taixuan", "b_taixuan_sha")).toBe(false);
   });
 
-  it("满级后可选分支,且分支词条并入功法属性", () => {
+  it("分支词条并入功法属性且只在满级时生效(转世折层后 lv-1 不得再吃满级分支)", () => {
     const cul = useCultivationStore();
     cul.learn("m_taixuan");
     for (let i = 0; i < 9; i++) cul.upgrade("m_taixuan"); // 1 + 9 = 10 层(>= maxLevel 9)
     const ok = cul.chooseBranch("m_taixuan", "b_taixuan_sha");
     expect(ok).toBe(true);
-    // 分支词条(attackPct +0.1, damageBonus +0.05)已并入
-    expect(modOf(cul.gongfaMods, "attackPct")).toBeCloseTo(0.1, 5);
+    // damageBonus 是分支独有词条(基础功法不掺),满级时该有 +0.05
     expect(modOf(cul.gongfaMods, "damageBonus")).toBeCloseTo(0.05, 5);
+    // 转世把层数折回:分支还挂着,但功法已不满级 —— 分支加成必须随之失效(继承价错误源头)
+    cul.learned = { ...cul.learned, m_taixuan: 2 };
+    expect(modOf(cul.gongfaMods, "damageBonus")).toBe(0);
   });
 
   it("分支一经选择不可更改", () => {

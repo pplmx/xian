@@ -37,6 +37,7 @@ import { useGameStore } from "@/stores/game";
 import type { GNum, LifeReview, ReincarnationView } from "@/types";
 import { recordMilestone } from "./identity";
 import { gnZero } from "@/utils/gnum";
+import { gongfaDef } from "@/data/gongfa";
 import { notify } from "./notify";
 import { currentReincarnationView, setDeathDialog, setReincarnationView } from "./uiPort";
 
@@ -287,6 +288,15 @@ export function confirmReincarnation(
     keepsAllGongfa(player.reincarnation.heritage),
   );
   cultivation.buffs = [];
+  // 悟道分支只在满级可择(cultivation.gongfaMods 无条件加 def.mods);层数一折回,
+  // 分支词条就该随满级资格一起失效 —— 只留 carry 后仍满级的功法,免得一门 lv-1
+  // 功法跨世带走满级专属加成(继承价错误,也没有任何既有 spec 盯它)。
+  cultivation.gongfaBranch = Object.fromEntries(
+    Object.entries(cultivation.gongfaBranch).filter(([gid]) => {
+      const lv = cultivation.learned[gid];
+      return lv != null && lv >= (gongfaDef(gid)?.maxLevel ?? Number.POSITIVE_INFINITY);
+    }),
+  );
   adventure.setSession(null);
   adventure.setPendingEvent(null, 0);
   adventure.unlocked = ["qingyun"];
@@ -296,6 +306,11 @@ export function confirmReincarnation(
   const bondRec = archiveBond();
   if (bondRec) player.recordBond(bondRec);
   adventure.cleared = [];
+  // 妖气复聚与靖洁时刻是本世进度,换世必须连坐清掉 —— 否则新世刚出生的世界地图
+  // 还挂着旧世「妖气复聚 · 旧主归来」徽标,而读档重载后 sanitize 又把它们对齐成空,
+  // 造成"内存态 ≠ 持久态"分叉(sanitize 只对齐,不背主动重置的锅)。
+  adventure.revived = [];
+  adventure.clearedAt = {};
   adventure.lastBattle = null;
   // (洞府/灵脉/灵兽的归零在 player.rebirth() 里,与其余「本世进程」同处一地)
   // 弟子是今生家业,随皮囊散去;若教出过真传,凝成一丝跨世之缘由新世 starter 带回

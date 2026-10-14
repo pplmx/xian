@@ -64,10 +64,18 @@ export const useCultivationStore = defineStore(
       for (const id of subGongfa.value) {
         if (learned.value[id]) sources.push(gongfaModsAt(id, learned.value[id]!));
       }
-      // Phase 31 A3:悟道分支追加词条(选过的功法)
+      // Phase 31 A3:悟道分支追加词条(选过的功法)。分支只在满级可择,加成也要随"仍满级"
+      // 生效 —— 否则转世把层数折回后,一门 lv-1 功法照旧吃满级专属分支(继承价错误)。
       for (const [gid, bid] of Object.entries(gongfaBranch.value)) {
         const def = gongfaBranchDef(bid);
-        if (def?.gongfaId === gid) sources.push(def.mods);
+        const lv = learned.value[gid];
+        if (
+          def?.gongfaId === gid &&
+          lv != null &&
+          lv >= (gongfaDef(gid)?.maxLevel ?? Number.POSITIVE_INFINITY)
+        ) {
+          sources.push(def.mods);
+        }
       }
       return mergeMods(sources);
     });
