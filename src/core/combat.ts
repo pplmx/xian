@@ -519,7 +519,9 @@ export function resolveCombat(
           `【${art.name}】${art.active.name},${foe.snap.isPlayer ? "你的" : `【${foe.snap.name}】的`}护体被撕开一道口子。`,
         );
       } else {
-        foe.weaken = values.amount;
+        // 与 sunder 同策略:多件削弱法宝同回合触发时取最强,不 after-write-wins ——
+        // 否则把弱的排在装备栏后面会让它覆盖强的、越加越弱,而两行词条都亮着
+        foe.weaken = Math.max(foe.weaken, values.amount);
         push(
           "proc",
           side,

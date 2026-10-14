@@ -14,8 +14,10 @@ import { hasActiveSet, ASTRAL_SET_SHIELD } from "./equipSet";
 /**
  * 构建玩家战斗快照。
  *
- * celestial=true 时走天界口径(Phase 33.3):装备贡献的词条先经 forgeSoul 凝为器魂
- * ——凡器入天界数值尽去,只余器魂。构筑方向原样保留,堆叠总量不再算数。
+ * celestial=true 时走天界口径(Phase 33.3):凡界装备**照常作数**,器魂是叠加上去的
+ * 一层(equipMods 与 soulMods 各自成源一并纳入,同键递减,见 stores/player.ts 的
+ * celestialStats 与 Phase 33 注释)。此前的「凡器数值尽去、只余器魂」二选一旧口径
+ * 已废弃,这里与实现对齐。
  * 基础三维不变(天界敌人本就按它等比缩放,已互相抵消)
  */
 export function buildPlayerSnap(celestial = false): CombatantSnap {
