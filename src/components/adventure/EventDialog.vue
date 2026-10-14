@@ -175,7 +175,10 @@ const echo = computed(() => {
 const aftermath = computed<string | null>(() => {
   if (!def.value || result.value) return null;
   const mem = adventure.eventMemories[def.value.id];
-  if (!mem) return null;
+  // 余波横幅只在「这次是第 2 次完成后的再次遭遇」才亮(times≥2):第 2 次遭遇时
+  // times=1,筛选出的档位是「silence/已然远去」—— 人还站在事件选择界面就说它远去,
+  // 文案自相矛盾;且行迹录/echo 档本就只统计 times≥2,横幅要与它们同一条线。
+  if (!mem || mem.times < 2) return null;
   // 打开时抽一次的独立 roll(见 file 头的 aftermathRolled 注释)
   if (!aftermathRolled) {
     aftermathRolled = true;

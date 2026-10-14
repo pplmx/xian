@@ -186,7 +186,7 @@ export function recordEvent(
   const cur = memories[eventId];
   const next: EventMemory = cur
     ? { ...cur, times: cur.times + 1, lastAt: now, lastChoiceIdx: choiceIdx }
-    : { eventId, times: 1, lastAt: now, lastChoiceIdx: choiceIdx, aftermathSeen: false };
+    : { eventId, times: 1, lastAt: now, lastChoiceIdx: choiceIdx };
   return { ...memories, [eventId]: next };
 }
 
