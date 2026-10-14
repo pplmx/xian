@@ -13,6 +13,8 @@ export const MUTATOR_THEMES: Record<string, MutatorTheme> = {
   foe_bulk: "endurance",
   killing_air: "lethality",
   heaven_wrath: "lethality",
+  foe_onslaught: "lethality",
+  time_thinning: "tempo",
 };
 
 /** 主题 → 界名意象 */
@@ -52,6 +54,18 @@ export const MUTATORS: MutatorDef[] = [
     name: "天罚加身",
     text: "敌人暴击率 +15%",
     rules: { enemyExtraMods: { critRate: 0.15 } },
+  },
+  {
+    id: "foe_onslaught",
+    name: "敌势如潮",
+    text: "敌人攻击 +18%",
+    rules: { enemyAtkMult: 1.18 },
+  },
+  {
+    id: "time_thinning",
+    name: "天时流尽",
+    text: "回合上限 30",
+    rules: { maxRounds: 30 },
   },
 ];
 
