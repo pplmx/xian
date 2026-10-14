@@ -1438,6 +1438,7 @@ const prepForecast = computed(() =>
 function openPrep(id: string): void {
   prepWorldId.value = id;
   prepPact.value = null;
+  prepGate.value = null;
 }
 
 // ---- 进行中远征 ----
