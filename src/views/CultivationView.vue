@@ -258,7 +258,10 @@
         -->
         <p class="mt-1 text-[10px] text-ink-faint tabular">
           今日天时 · {{ tribWeather.name
-          }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template>
+          }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template
+          ><template v-if="tribWeatherResistPenalty">
+            · 渡劫抗性 {{ tribWeatherResistPenalty }}</template
+          >
         </p>
         <p class="mt-1.5 text-[10px] text-ink-faint tabular">
           准备:
@@ -965,6 +968,11 @@ const tribWeather = computed(() => todayWeather());
 const tribWeatherMult = computed(() =>
   tribWeather.value.tribulationMult > 1 ? tribWeather.value.tribulationMult : null,
 );
+/** 同一天时并行的抗性折损(雷鸣 -5% / 仙劫日 -8% / 神威日 -10%)—— 真吃进伤害,必须摊出来 */
+const tribWeatherResistPenalty = computed(() => {
+  const r = tribWeather.value.mods?.tribulationResist ?? 0;
+  return r < 0 ? formatPercent(r, 0) : null;
+});
 
 /**
  * 这一劫是不是「界膜」那一关(人间→仙界 / 仙界→神界 / 神界→混沌海)。

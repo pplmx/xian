@@ -433,7 +433,7 @@ export function buildTribulationPlan(
     // 抗性这一维直接读结算口径(settlementResist)—— 结算是什么它就是什么;
     // 曾把「雷鸣减伤按半成折算」算进星里而结算从不吃它,幻影随口径统一抹掉
     resist: prepTier("resist", settlementResist(mods, relief, stat)),
-    burst: prepTier("burst", burstScore(mods)),
+    burst: effectiveBurstTier(mods, relief),
   };
 
   // 决策档以"全程最低水位"为准:险过与稳过必须分得开,
