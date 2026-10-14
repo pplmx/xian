@@ -290,13 +290,15 @@
               </p>
               <button
                 class="btn-seal mt-2.5 w-full !py-2 !text-[13px]"
-                :disabled="run !== null"
+                :disabled="run !== null || daoEntryShort(world.entryCost) > 0"
                 @click="openPrep(world.id)"
               >
                 {{
                   run
                     ? "远征在途"
-                    : `启 程(道源 ${world.entryCost} · 破界底赏 ${world.rewardDaoSource})`
+                    : daoEntryShort(world.entryCost) > 0
+                      ? `尚差 ${daoEntryShort(world.entryCost)} 道源`
+                      : `启 程(道源 ${world.entryCost} · 破界底赏 ${world.rewardDaoSource})`
                 }}
               </button>
             </div>
@@ -335,10 +337,16 @@
                 <div class="mt-2.5 flex gap-2">
                   <button
                     class="btn-seal flex-1 !py-2 !text-[13px]"
-                    :disabled="run !== null"
+                    :disabled="run !== null || daoEntryShort(endgame.voidWorld.entryCost) > 0"
                     @click="openPrep('void')"
                   >
-                    {{ run ? "远征在途" : `启 程(破界底赏 ${endgame.voidWorld.rewardDaoSource})` }}
+                    {{
+                      run
+                        ? "远征在途"
+                        : daoEntryShort(endgame.voidWorld.entryCost) > 0
+                          ? `尚差 ${daoEntryShort(endgame.voidWorld.entryCost)} 道源`
+                          : `启 程(道源 ${endgame.voidWorld.entryCost} · 破界底赏 ${endgame.voidWorld.rewardDaoSource})`
+                    }}
                   </button>
                   <button
                     class="btn-ghost !px-3 !text-[12px]"
