@@ -251,7 +251,7 @@
           紫微斗数本当以生辰起五行局再安诸星,游戏内没有生辰 —— 故此门只取
           <b class="text-ink">{{ cnNumber(PALACES.length) }}宫所主</b>与
           <b class="text-ink">{{ cnNumber(STARS.length) }}主星的星性</b
-          >,按灵根与轮回归属安星:是取象义,不是排盘。
+          >,按灵根与轮回归属安星:是取象义,不是排盘。诸星之力并进命格之力,不按宫位分流——宫位只是星象义,非机制分工。
           卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
         </p>
         <p class="mt-2 font-kai text-[13px] leading-relaxed text-ink">{{ fateLordLineText }}</p>

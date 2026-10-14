@@ -55,5 +55,5 @@ export function mansionEventLuck(regionId: string, totalPlaySec: number): number
 export function todayMansionLine(totalPlaySec: number): string {
   const m = todayMansion(totalPlaySec);
   const img = imageDef(m.image);
-  return `${m.fullName}直日 · ${img?.name ?? ""}${img?.direction ?? ""}方 · 分野${m.domain} —— 宜${m.good}`;
+  return `${m.fullName}直日 · ${img?.name ?? ""}${img?.direction ?? ""}方 · 分野${m.domain}`;
 }
