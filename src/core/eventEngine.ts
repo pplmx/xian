@@ -113,6 +113,7 @@ export interface ChainProgress {
   stage: number;
   total: number;
   finished: boolean;
+  broken: boolean;
 }
 
 export function chainProgressRows(): ChainProgress[] {
@@ -125,9 +126,11 @@ export function chainProgressRows(): ChainProgress[] {
       hint: chain.hint,
       stage,
       total: chain.stages.length,
+      // 断缘记的是负哨兵:finished 只看正档位,broken 只看负;两者都不是「未起(0)」
       finished: stage >= chain.stages.length,
+      broken: stage < 0,
     };
-  }).filter((c) => c.stage > 0);
+  }).filter((c) => c.stage !== 0);
 }
 
 /**
@@ -347,7 +350,8 @@ export function resolveEventChoice(
     const ended = def.choices[choiceIdx]?.endsChain ?? false;
     usePlayerStore().setEventChain(
       chain.chain.id,
-      ended ? chain.chain.stages.length : chain.stage + 1,
+      // 断缘记负哨兵,与「走完」区分:奇缘录据此标「缘断」而非「已了」
+      ended ? -chain.chain.stages.length : chain.stage + 1,
     );
   }
 

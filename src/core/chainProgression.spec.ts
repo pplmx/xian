@@ -175,7 +175,10 @@ describe("奇缘 · 结一程才轮到下一程", () => {
     const idx = ev.choices.findIndex((ch) => ch.endsChain);
     expect(idx, "灵狐第一程应有「断缘」选项").toBeGreaterThanOrEqual(0);
     resolveEventChoice(ev, idx, 1);
-    expect(chainProgressRows().find((r) => r.id === "wounded_fox")?.stage).toBe(3);
+    // 断缘记负哨兵:录上应标「缘断」,不是把恩断义绝记成「已了」
+    const row = chainProgressRows().find((r) => r.id === "wounded_fox");
+    expect(row?.broken, "断缘应标「缘断」而非「已了」").toBe(true);
+    expect(row?.finished).toBe(false);
     expect(pendingChainStages(9).some((p) => p.chainId === "wounded_fox")).toBe(false);
   });
 });

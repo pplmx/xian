@@ -206,15 +206,17 @@
           <p v-for="c in chainRows" :key="c.id" class="flex items-center gap-2 py-2 text-[12px]">
             <span
               class="shrink-0 font-kai text-[13px]"
-              :class="c.finished ? 'text-ink' : 'text-cinnabar'"
+              :class="c.broken ? 'text-ink-faint' : c.finished ? 'text-ink' : 'text-cinnabar'"
               >{{ c.name }}</span
             >
-            <span class="min-w-0 truncate text-[10px] text-ink-faint">{{ c.hint }}</span>
+            <span class="min-w-0 truncate text-[10px] text-ink-faint">
+              {{ c.broken ? "缘断,不复再续" : c.hint }}
+            </span>
             <span
               class="ml-auto shrink-0 tabular text-[10px]"
-              :class="c.finished ? 'text-jade' : 'text-ink-faint'"
+              :class="c.broken ? 'text-ink-faint' : c.finished ? 'text-jade' : 'text-ink-faint'"
             >
-              {{ c.finished ? "已了" : `第 ${c.stage + 1}/${c.total} 程` }}
+              {{ c.broken ? "缘断" : c.finished ? "已了" : `第 ${c.stage + 1}/${c.total} 程` }}
             </span>
           </p>
         </template>
@@ -384,7 +386,9 @@ const profile = computed(() => cultivatorProfile(endgame.marks));
 
 /** 奇缘录:只有起了头的缘才露面(往后的路不说破) */
 const chainRows = computed(() => chainProgressRows());
-const unfinishedChains = computed(() => chainRows.value.filter((c) => !c.finished).length);
+const unfinishedChains = computed(
+  () => chainRows.value.filter((c) => !c.finished && !c.broken).length,
+);
 
 const milestoneRows = computed(() =>
   [...endgame.milestones]

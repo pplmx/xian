@@ -766,7 +766,8 @@ export const usePlayerStore = defineStore(
      * 推进与断绝都只是"把它设到哪一程",故只留这一个写入口。
      */
     function setEventChain(chainId: string, stage: number): void {
-      eventChains.value = { ...eventChains.value, [chainId]: Math.max(0, Math.floor(stage)) };
+      // 允许负值:断缘用负哨兵(见 chainProgressRows.broken),与正常推进的档位区分
+      eventChains.value = { ...eventChains.value, [chainId]: Math.floor(stage) };
     }
 
     function incrementWinStreak(): void {
