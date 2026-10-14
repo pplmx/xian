@@ -4,7 +4,13 @@ import { computed, ref } from "vue";
 import type { BuffInstance, CombatSkill, StatMods } from "@/types";
 import { persistConfig } from "@/utils/storage";
 import { gongfaDef } from "@/data/gongfa";
-import { applyBuff, activeBuffsOf, clearNegativeBuffList, pruneBuffList } from "@/core/engineBuffs";
+import {
+  applyBuff,
+  activeBuffsOf,
+  buffCapSec,
+  clearNegativeBuffList,
+  pruneBuffList,
+} from "@/core/engineBuffs";
 import { gongfaBranchDef } from "@/data/gongfaBranches";
 import { GONGFA_SYSTEM } from "@/core/engineWorld";
 import { mergeMods } from "@/core/statsCalc";
@@ -35,7 +41,9 @@ export const useCultivationStore = defineStore(
     function sanitize(): void {
       const fixedLearned: Record<string, number> = {};
       for (const [id, lv] of Object.entries(asNumberRecord(learned.value, 0))) {
-        if (lv > 0 && gongfaDef(id)) fixedLearned[id] = Math.floor(lv);
+        // 读档一并钳上界:超 maxLevel 的存量等级会线性放大词条(引擎 modsAt 只钳下界),面板虚高
+        const def = gongfaDef(id);
+        if (lv > 0 && def) fixedLearned[id] = Math.min(Math.floor(lv), def.maxLevel ?? 9);
       }
       learned.value = fixedLearned;
       if (typeof mainGongfa.value !== "string" || !fixedLearned[mainGongfa.value])
@@ -49,6 +57,13 @@ export const useCultivationStore = defineStore(
         [],
         (b) => !!b && typeof (b as BuffInstance).defId === "string",
       );
+      // 读档钳回时长上限:封顶只在施加时生效,存量实例若 endsAt 超出当前 now+cap 政策,压回口径
+      buffs.value = buffs.value.map((b) => {
+        const cap = buffCapSec(b.defId);
+        if (cap === undefined || !Number.isFinite(b.endsAt)) return b;
+        const lim = Date.now() + cap * 1000;
+        return b.endsAt > lim ? { ...b, endsAt: lim } : b;
+      });
       const nextBranch: Record<string, string> = {};
       for (const [gid, bid] of Object.entries(asRecord<string>(gongfaBranch.value))) {
         const def = gongfaBranchDef(bid);

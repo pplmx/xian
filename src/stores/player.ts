@@ -742,7 +742,10 @@ export const usePlayerStore = defineStore(
         heritage: Array.isArray(r?.heritage)
           ? r.heritage.filter((id): id is string => typeof id === "string" && !!heritageDef(id))
           : [],
-        insight: Number.isFinite(r?.insight) ? Math.max(0, r.insight) : legacyInsightOf(count),
+        insight:
+          Number.isFinite(r?.insight) && (r?.insight !== 0 || count === 0)
+            ? Math.max(0, r.insight)
+            : legacyInsightOf(count),
         lives: Array.isArray(r?.lives) ? r.lives : [],
         vow: r?.vow ?? null,
         trial: r?.trial ?? null,
