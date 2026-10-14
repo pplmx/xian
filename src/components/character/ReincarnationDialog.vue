@@ -309,6 +309,8 @@ watch(view, (v) => {
   if (v) {
     step.value = "review";
     nameDraft.value = v.nameDraft;
+    chosen.value = null;
+    theme.value = null;
   }
 });
 
