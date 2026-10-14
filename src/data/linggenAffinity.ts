@@ -71,7 +71,7 @@ export const ELEMENT_AFFINITY: Record<ElementId, ElementAffinity> = {
     fortuneWeight: 2.5,
     kind: "counterflow",
     relief: { healRestore: 0.5 },
-    tendency: "生机绵长,草木丹方亲近你;灵气逆乱之中,你的生机不易断绝",
+    tendency: "生机绵长,草木功法亲近你;灵气逆乱之中,你的生机不易断绝",
   },
   water: {
     gongfaWeight: 2.2,
