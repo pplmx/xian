@@ -238,7 +238,7 @@ export interface DailyTaskDef {
   id: string;
   name: string;
   desc: string;
-  counterKey: "kills" | "pillsUsed" | "explores" | "breakthroughs" | "pillsCrafted";
+  counterKey: "kills" | "pillsUsed" | "explores" | "breakthroughs" | "pillsCrafted" | "upgrades";
   target: number;
   reward: QuestDef["reward"];
 }
@@ -276,5 +276,13 @@ export const DAILY_TASKS: DailyTaskDef[] = [
     counterKey: "pillsCrafted",
     target: 2,
     reward: { wudao: 6 },
+  },
+  {
+    id: "d_up",
+    name: "每日炼制",
+    desc: "今日强化装备 3 次",
+    counterKey: "upgrades",
+    target: 3,
+    reward: { dust: 12 },
   },
 ];
