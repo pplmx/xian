@@ -92,10 +92,19 @@ export const useDongfuStore = defineStore(
      */
     function sanitize(): void {
       const nextLevels = { ...levels.value };
+      // 先按品阶钳洞府本体,再按「洞府门」(mansion+1)*5 钳其余 —— 否则陈态等级能
+      // 越过自己的门(capOfBuilding),卡面显示 12/10 级、误报「营造尽善」。判据与
+      // 卡面/尽善读同一个 capOfBuilding(mansion 自己由 def.maxLevel 定)。
+      const mansionCur = nextLevels.mansion;
+      if (mansionCur === undefined || !Number.isFinite(mansionCur) || mansionCur < 0)
+        nextLevels.mansion = 0;
+      else
+        nextLevels.mansion = Math.min(Math.floor(mansionCur), capOfBuilding("mansion", nextLevels));
       for (const def of BUILDINGS) {
+        if (def.id === "mansion") continue; // 上面已固定
         const cur = nextLevels[def.id];
         if (cur === undefined || !Number.isFinite(cur) || cur < 0) nextLevels[def.id] = 0;
-        else nextLevels[def.id] = Math.min(Math.floor(cur), def.maxLevel);
+        else nextLevels[def.id] = Math.min(Math.floor(cur), capOfBuilding(def.id, nextLevels));
       }
       levels.value = nextLevels;
       const nextFrac = { ...frac.value };
