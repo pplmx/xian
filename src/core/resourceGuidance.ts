@@ -11,7 +11,7 @@
 import { useEndgameStore } from "@/stores/endgame";
 import { WORLD_BREAK_MAJOR } from "@/data/realms";
 import { usePlayerStore } from "@/stores/player";
-import { DAO_FRUIT_CULT_BONUS } from "@/data/constants";
+import { DAO_FRUIT_COMBAT_BONUS, DAO_FRUIT_CULT_BONUS } from "@/data/constants";
 import { effectiveDaoFruit } from "@/core/statsCalc";
 import { formatSignedPercent } from "@/utils/format";
 
@@ -54,6 +54,7 @@ export function daoSourceDialog(): ResourceDialogData {
 
 export function daoFruitDialog(): ResourceDialogData {
   const cultBonus = Math.round(DAO_FRUIT_CULT_BONUS * 100);
+  const combatBonus = Math.round(DAO_FRUIT_COMBAT_BONUS * 100);
   return {
     name: "道果",
     role: DAO_FRUIT_ROLE,
@@ -61,7 +62,7 @@ export function daoFruitDialog(): ResourceDialogData {
     intro: "跨越轮回仍不磨灭的修行成果。",
     usages: DAO_FRUIT_USAGES,
     gains: ["道源凝聚", "终局奖励"],
-    lifecycle: `跨世保留。每枚:修行 +${cultBonus}%,道躯 +1.5%。`,
+    lifecycle: `跨世保留。每枚:修行 +${cultBonus}%,道躯 +${combatBonus}%。`,
   };
 }
 

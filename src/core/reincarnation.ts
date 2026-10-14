@@ -36,6 +36,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { useGameStore } from "@/stores/game";
 import type { GNum, LifeReview, ReincarnationView } from "@/types";
 import { recordMilestone } from "./identity";
+import { abandonExpedition } from "./expedition";
 import { gnZero } from "@/utils/gnum";
 import { librarySubGongfaSlots } from "@/data/buildings";
 import { notify } from "./notify";
@@ -332,8 +333,12 @@ export function confirmReincarnation(
   // 新一世,新名号:确认页掷出的随机道号(玩家可改回)。「名随神魂不灭」让位给
   // 「每世一换」—— 换的只是这一世如何自报家门,神魂所系之物依旧跨世
   if (nextName && nextName.trim()) player.setName(nextName.trim());
-  // 道途归还天地,道源与道痕随神魂不灭
-  useEndgameStore().onRebirth();
+  // 道途归还天地,道源与道痕随神魂不灭。
+  // 在途远征若未清,先按「中道而返」记一笔殁 + 提示 —— 转世不该静默吞掉入场费又不落痕
+  // (onRebirth 只置空,不记痕、不退费、无提示)。
+  const endgameStore = useEndgameStore();
+  if (endgameStore.worldRun) abandonExpedition();
+  endgameStore.onRebirth();
   // 立下这一世的题。快照须在重置之后取,「本世」方才从此刻算起。
   // 先撤上一世的题:立誓一世一次,beginLife 靠"有没有题"认出这一世已经立过(见 samsaraService)
   player.setVow(null);

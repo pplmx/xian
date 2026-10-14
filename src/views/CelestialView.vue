@@ -493,8 +493,11 @@
                 <template v-else-if="daoEntryShort(trial.entryCost) > 0"
                   >尚差 {{ daoEntryShort(trial.entryCost) }} 道源</template
                 >
+                <template v-else-if="endgame.trialRecords[trial.id]"
+                  >应 试(道源 {{ trial.entryCost }} · 已捷过,再战仅录纪录)</template
+                >
                 <template v-else
-                  >应 试(道源 {{ trial.entryCost }} · 功成得 {{ trial.rewardDaoSource }})</template
+                  >应 试(道源 {{ trial.entryCost }} · 首破得 {{ trial.rewardDaoSource }})</template
                 >
               </button>
             </div>
