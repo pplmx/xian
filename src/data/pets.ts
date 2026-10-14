@@ -175,6 +175,16 @@ export const PETS: PetDef[] = [
     mods: { defensePct: 0.18, maxHpPct: 0.18, damageReduction: 0.08 },
     personality: "steady",
   },
+  {
+    id: "pet_taiyin",
+    name: "太阴玉兔",
+    desc: "月魄清辉所化的玉兔,栖于桂影之间,通晓长夜",
+    icon: "moon",
+    family: "moon",
+    quality: "heaven",
+    mods: { expGain: 0.12, cultivationSpeed: 0.08, maxHpPct: 0.06 },
+    personality: "steady",
+  },
 ];
 
 const BY_ID = new Map(PETS.map((x) => [x.id, x]));
