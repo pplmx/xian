@@ -280,7 +280,7 @@ export function confirmReincarnation(
   // 法宝亦是外物,随皮囊一同散去——留下的只有认知(丹方、药性、器纹皆在 lore)
   inventory.artifacts = [];
   inventory.equippedArtifacts = [];
-  // 已习功法保留但层数折半(顶阶可留一门不折)
+  // 已习功法保留但层数归零回一层(顶阶可留一门满层)—— 折半系数早已撤(见 constants 注)
   const stage = stageAt(view.insightAfter);
   cultivation.learned = carryGongfa(
     cultivation.learned,

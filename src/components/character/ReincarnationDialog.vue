@@ -82,7 +82,7 @@
       </div>
 
       <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
-        丹方、药性、器纹、敌手的路数——这些所知不随皮囊腐朽。 来世睁眼,你便认得
+        丹方、药性、器纹、敌手的路数——这些所知不随皮囊腐朽。 来世睁眼,你累计认得
         <span class="text-ink tabular">{{ view.knownMaterials }}</span>
         味灵材。
       </p>
