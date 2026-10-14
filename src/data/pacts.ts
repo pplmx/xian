@@ -56,6 +56,15 @@ export const PACTS: PactDef[] = [
     special: "sealCore",
     sourceMult: 4.0,
   },
+  {
+    id: "duanyuan",
+    name: "断源契",
+    seal: "缺",
+    desc: "天地灵机被截,护盾难凝",
+    ruleText: "护盾上限减半(50%) · 道源 ×1.8",
+    rules: { shieldCapRatio: 0.5 },
+    sourceMult: 1.8,
+  },
 ];
 
 export function pactDef(id: string): PactDef | undefined {
