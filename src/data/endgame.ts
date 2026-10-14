@@ -99,6 +99,26 @@ export const DAO_PATHS: DaoPathDef[] = [
       "不先出手,最怕一击制敌的爆发;借的是势,还的是刀",
     ],
   },
+  {
+    id: "xuehe",
+    name: "血河道",
+    seal: "血",
+    desc: "残血见真章。以血换血,越残越凶",
+    ruleText: [
+      "气血越低攻击越凶(低血伤害 +30%)",
+      "造成伤害的 5% 化作气血",
+      "对残血之敌斩杀 +20%",
+      "敌人生命 +22%",
+    ],
+    rules: {
+      playerExtraMods: { lowHpDamage: 0.3, lifesteal: 0.05, executeDamage: 0.2 },
+      enemyHpMult: 1.22,
+    },
+    deepText: [
+      "血河:行将残败时反而才是你最强的时候 —— 残血愈战愈勇,吸血回命",
+      "不敢残,就不配走这条道;最怕一击被人带走",
+    ],
+  },
 ];
 
 export function daoPathDef(id: string): DaoPathDef | undefined {

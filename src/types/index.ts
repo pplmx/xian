@@ -954,7 +954,14 @@ export interface CombatRules {
 }
 
 // ============ 真仙终局 ============
-export type DaoPathId = "sword" | "longevity" | "fate" | "slaughter" | "lianzhu" | "jieshi";
+export type DaoPathId =
+  | "sword"
+  | "longevity"
+  | "fate"
+  | "slaughter"
+  | "lianzhu"
+  | "jieshi"
+  | "xuehe";
 
 export interface DaoPathDef {
   id: DaoPathId;
