@@ -184,7 +184,12 @@
           <p class="mt-0.5 text-[11px] text-ink-faint">{{ mainQuest.desc }}</p>
           <!-- 主线赏哪一口缝和日课一样:光说"自动领赏"不报赏,路线图的终点价得看得见 -->
           <p class="mt-0.5 text-[11px] text-ink-soft tabular">
-            奖 {{ rewardText(mainQuest.reward) }}(达成后自动领赏)
+            奖 {{ rewardText(mainQuest.reward)
+            }}{{
+              mainQuest.cond.type === "realm"
+                ? "(达成时按新境界折灵石,自动领赏)"
+                : "(达成后自动领赏)"
+            }}
           </p>
           <!--
             主线只给"要做什么"不够 —— 新手第一天靠它当路线图,得知道自己走到哪了。

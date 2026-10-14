@@ -46,6 +46,20 @@ describe("图鉴收录", () => {
     expect(quests.titlesOwned).toEqual(["ti_churu"]);
     expect(quests.collections.gongfa).toEqual(["m_taixuan"]);
   });
+
+  it("sanitize 保留主线完成态(下标==length):不钳回最后一条、不重发终章赏", () => {
+    const quests = useQuestsStore();
+    const n = MAIN_QUESTS.length;
+    // 完成后 mainIdx == length(首页「主线已尽」);从前 maxIdx 多减 1 会把完成态钳回 length-1,
+    // 读档后周期 checkMainQuest(条件恒真)又对最后一条重发赏 —— 每次读档重复入账。
+    quests.$patch({ mainIdx: n } as never);
+    quests.sanitize();
+    expect(quests.mainIdx, "完成态下标应原样保留").toBe(n);
+    // 越界的值仍钳回 length(不是 length-1)
+    quests.$patch({ mainIdx: n + 999 } as never);
+    quests.sanitize();
+    expect(quests.mainIdx).toBe(n);
+  });
 });
 
 /**

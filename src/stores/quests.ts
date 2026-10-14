@@ -81,7 +81,9 @@ export const useQuestsStore = defineStore(
           ([id, t]) => ACHIEVEMENTS.some((a) => a.id === id) && t > 0,
         ),
       );
-      const maxIdx = Math.max(0, MAIN_QUESTS.length - 1);
+      // 主线完成态下标 == length(首页「主线已尽」)要原样保留;从前 maxIdx 多减 1 会把完成态
+      // 钳回最后一条,读档后周期 checkMainQuest(条件恒真)又重发终章赏 —— 每次读档重复入账。
+      const maxIdx = Math.max(0, MAIN_QUESTS.length);
       mainIdx.value = Math.min(Math.floor(asFiniteNumber(mainIdx.value, 0, 0)), maxIdx);
       const d = asObjectOrNull<{ date?: unknown; base?: unknown; done?: unknown }>(daily.value);
       daily.value = {
