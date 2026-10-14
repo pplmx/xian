@@ -716,6 +716,20 @@ export const TRIALS: TrialDef[] = [
     escalation: 1.04,
     rewardDaoSource: 45,
   },
+  {
+    id: "zhaoying",
+    name: "照影试炼",
+    seal: "照",
+    anchorTier: 28,
+    desc: "一念照影,对手借你的力回敬。出手越密,吃回越多",
+    ruleText: ["敌人反震极高(反击率 +40% · 反伤 +120%)", "敌兵会心亦频", "连战 5 场"],
+    rules: { enemyExtraMods: { counterRate: 0.4, counterDamage: 1.2, critRate: 0.1 } },
+    entryCost: 15,
+    fights: 5,
+    healBetweenPct: 0.8,
+    escalation: 1.06,
+    rewardDaoSource: 45,
+  },
 ];
 
 export function trialDef(id: string): TrialDef | undefined {
