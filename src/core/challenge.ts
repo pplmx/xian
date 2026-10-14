@@ -124,13 +124,13 @@ export function undertakeChallenge(
 ): ExpeditionResult | null {
   const endgame = useEndgameStore();
   if (!endgameUnlocked() || !endgame.daoPath || !verdict.ok) return null;
+  const player = usePlayerStore();
+  const world = celestialWorldDef(draft.worldId);
+  if (!world) return null;
   if (!endgame.spendDaoSource(CHALLENGE_ENTRY_COST)) {
     notify(`道源不足 ${CHALLENGE_ENTRY_COST}`, "warn");
     return null;
   }
-  const player = usePlayerStore();
-  const world = celestialWorldDef(draft.worldId);
-  if (!world) return null;
   // 与远征/试炼同源:敌人按本界锚点定标,判定按玩家的厚度与境界算(见 celestialFoeCaliber)
   const { ref, judgement } = celestialFoeCaliber(
     player.major,

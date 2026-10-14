@@ -486,10 +486,11 @@
               </p>
               <button
                 class="btn-ghost mt-2.5 w-full !py-2 !text-[13px]"
-                :disabled="daoEntryShort(trial.entryCost) > 0"
+                :disabled="!endgame.daoPath || daoEntryShort(trial.entryCost) > 0"
                 @click="goTrial(trial.id)"
               >
-                <template v-if="daoEntryShort(trial.entryCost) > 0"
+                <template v-if="!endgame.daoPath">先择道途,方可应试</template>
+                <template v-else-if="daoEntryShort(trial.entryCost) > 0"
                   >尚差 {{ daoEntryShort(trial.entryCost) }} 道源</template
                 >
                 <template v-else
@@ -614,10 +615,15 @@
               <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="doVerify">验 约</button>
               <button
                 class="btn-seal flex-1 !py-1.5 !text-[12px]"
-                :disabled="!challengeVerdict?.ok || run !== null || challengeDaoShort > 0"
+                :disabled="
+                  !endgame.daoPath || !challengeVerdict?.ok || run !== null || challengeDaoShort > 0
+                "
                 @click="doUndertake"
               >
-                <template v-if="challengeDaoShort > 0">尚差 {{ challengeDaoShort }} 道源</template>
+                <template v-if="!endgame.daoPath">先择道途</template>
+                <template v-else-if="challengeDaoShort > 0"
+                  >尚差 {{ challengeDaoShort }} 道源</template
+                >
                 <template v-else>立 约(道源 {{ CHALLENGE_ENTRY_COST }})</template>
               </button>
             </div>

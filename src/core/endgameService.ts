@@ -448,15 +448,18 @@ export function challengeTrial(trialId: string): ExpeditionResult | null {
 
   let reward = 0;
   if (report.cleared) {
-    reward = trial.rewardDaoSource;
-    endgame.addDaoSource(reward);
-    if (trial.id === "qisha") recordMilestone("first_qisha");
     const prevBest = endgame.trialRecords[trial.id]?.bestRounds;
+    const firstClear = !(endgame.trialRecords[trial.id]?.clears ?? 0);
+    if (firstClear) {
+      reward = trial.rewardDaoSource;
+      endgame.addDaoSource(reward);
+      if (trial.id === "qisha") recordMilestone("first_qisha");
+    }
     endgame.recordTrial(trial.id, report.totalRounds);
     notify(
       prevBest !== undefined && report.totalRounds < prevBest
         ? `${trial.name}新纪录!${report.totalRounds} 回合(原 ${prevBest})`
-        : `${trial.name}功成,道源 +${reward}`,
+        : `${trial.name}功成${firstClear ? `,道源 +${reward}` : "(已捷过,仅录纪录)"}`,
       "rare",
     );
   } else {
