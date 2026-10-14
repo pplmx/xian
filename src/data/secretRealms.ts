@@ -123,6 +123,22 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.25,
     rewardMult: 1.8,
   },
+  {
+    id: "sr_leize",
+    gate: "celestial",
+    name: "雷泽天渊",
+    desc: "雷海万道,唯速不死。你越快它越快,慢者先死 —— 赌的是身法,不是血量。",
+    minMajor: 9,
+    cost: { daoSource: 40 },
+    rules: {
+      playerExtraMods: { speed: 0.3, comboRate: 0.1 },
+      enemyAtkMult: 1.1,
+      enemyExtraMods: { speed: 0.25 },
+      maxRounds: 18,
+    },
+    healBetweenPct: 0.35,
+    rewardMult: 1.5,
+  },
 ];
 
 const BY_ID = new Map(SECRET_REALMS.map((r) => [r.id, r]));
