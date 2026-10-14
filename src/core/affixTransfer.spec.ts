@@ -102,7 +102,7 @@ describe("planTransfer 落地", () => {
     expect(replaced.ok).toBe(true);
   });
 
-  it("封存沿袭:顶替已封存的条,新条沿用封存;计数 +1", () => {
+  it("封存沿袭:顶替已封存的条,新条沿用封存", () => {
     const sealedTgt = eq("t", "b_qingyun", "mortal", [{ id: "hp1", roll: 0.5 }]);
     sealedTgt.sealedAffixIds = ["hp1"];
     const r = planTransfer(SRC, sealedTgt, "atk1", "hp1", false);
@@ -110,7 +110,6 @@ describe("planTransfer 落地", () => {
     if (r.ok) {
       expect(r.plan.sealMode).toBe("inherit");
       expect(r.plan.target.sealedAffixIds).toContain("atk1");
-      expect(r.plan.target.transferCount).toBe(1);
       expect(r.plan.cost.sealStone).toBeNull();
     }
   });

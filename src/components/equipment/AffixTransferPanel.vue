@@ -202,15 +202,21 @@ function doTransfer(): void {
           <input v-model="seal" type="checkbox" :disabled="!plan.canSeal" />
           同时封存(重铸不移)
         </label>
+        <span v-if="plan.sealMode === 'inherit'" class="min-w-0 text-[10px] text-ink-faint"
+          >顶替已封存条,新条自动沿用封存</span
+        >
         <span class="ml-auto text-[11px]">
           <span v-if="affordable">
             器灵尘×{{ plan.cost.dust }} · 灵石
             {{ formatGN(plan.cost.stone) }}
             <span v-if="plan.cost.sealStone">(含封存 {{ formatGN(plan.cost.sealStone) }})</span>
           </span>
-          <span v-else-if="short" class="text-ink-warn tabular">
-            尚差 器灵尘×{{ Math.max(0, plan.cost.dust - resources.dust) }} · 灵石
+          <span v-else-if="short === 'stone'" class="text-ink-warn tabular">
+            尚差 灵石
             {{ formatGN(Math.max(0, toNum(plan.cost.stone) - toNum(resources.spiritStone))) }}
+          </span>
+          <span v-else-if="short === 'dust'" class="text-ink-warn tabular">
+            尚差 器灵尘×{{ Math.max(0, plan.cost.dust - resources.dust) }}
           </span>
           <span v-else class="text-ink-faint">任选一处落位</span>
         </span>

@@ -248,7 +248,6 @@ export function planTransfer(
       target: {
         ...unsealed,
         sealedAffixIds: sealMode === "none" ? keptSeals : [...keptSeals, affixId],
-        transferCount: (target.transferCount ?? 0) + 1,
       },
       moved: landed,
       replaced,
