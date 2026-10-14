@@ -185,6 +185,16 @@ export const PETS: PetDef[] = [
     mods: { expGain: 0.12, cultivationSpeed: 0.08, maxHpPct: 0.06 },
     personality: "steady",
   },
+  {
+    id: "pet_qinghe",
+    name: "雾隐青鹤",
+    desc: "栖于晨雾之间,来去自在,气运随身",
+    icon: "bird",
+    family: "bird",
+    quality: "profound",
+    mods: { dodgeRate: 0.05, luck: 0.05, qiRegen: 0.12 },
+    personality: "cautious",
+  },
 ];
 
 const BY_ID = new Map(PETS.map((x) => [x.id, x]));
