@@ -80,7 +80,7 @@ export function applyLoadout(id: string): boolean {
   // 把超上限的也算成缺失,玩家会以为部件丢了。
   missing += loadout.subGongfa.length - learnedSubs.length;
   const subOverCap = Math.max(0, learnedSubs.length - subCap);
-  cultivation.subGongfa = learnedSubs.slice(0, subCap);
+  cultivation.subGongfa = learnedSubs.filter((g) => g !== loadout.mainGongfa).slice(0, subCap);
   // 法宝
   const artifactCap =
     artifactSlotsFor(player.major) + artifactSlotBonus(player.reincarnation.heritage);

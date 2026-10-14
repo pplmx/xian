@@ -40,9 +40,10 @@ export const useCultivationStore = defineStore(
       learned.value = fixedLearned;
       if (typeof mainGongfa.value !== "string" || !fixedLearned[mainGongfa.value])
         mainGongfa.value = null;
-      subGongfa.value = asStringArray(subGongfa.value).filter(
-        (id) => fixedLearned[id] !== undefined,
-      );
+      subGongfa.value = asStringArray(subGongfa.value)
+        .filter((id) => fixedLearned[id] !== undefined)
+        // 主/辅交集是幽灵占席:一门功法同时落主修与辅修为词条双计,读档须除掉
+        .filter((id) => id !== mainGongfa.value);
       buffs.value = asArray<BuffInstance>(
         buffs.value,
         [],
@@ -129,6 +130,8 @@ export const useCultivationStore = defineStore(
         subGongfa.value = subGongfa.value.filter((x) => x !== id);
         return true;
       }
+      // 一门功法不得同时占主/辅两席 —— 否则 gongfaMods 会把它计算两遍
+      if (id === mainGongfa.value || gongfaDef(id)?.type === "main") return false;
       if (subGongfa.value.length >= maxSlots) return false;
       if (!learned.value[id]) return false;
       subGongfa.value = [...subGongfa.value, id];

@@ -37,7 +37,6 @@ import { useGameStore } from "@/stores/game";
 import type { GNum, LifeReview, ReincarnationView } from "@/types";
 import { recordMilestone } from "./identity";
 import { gnZero } from "@/utils/gnum";
-import { gongfaDef } from "@/data/gongfa";
 import { notify } from "./notify";
 import { currentReincarnationView, setDeathDialog, setReincarnationView } from "./uiPort";
 
@@ -288,15 +287,9 @@ export function confirmReincarnation(
     keepsAllGongfa(player.reincarnation.heritage),
   );
   cultivation.buffs = [];
-  // 悟道分支只在满级可择(cultivation.gongfaMods 无条件加 def.mods);层数一折回,
-  // 分支词条就该随满级资格一起失效 —— 只留 carry 后仍满级的功法,免得一门 lv-1
-  // 功法跨世带走满级专属加成(继承价错误,也没有任何既有 spec 盯它)。
-  cultivation.gongfaBranch = Object.fromEntries(
-    Object.entries(cultivation.gongfaBranch).filter(([gid]) => {
-      const lv = cultivation.learned[gid];
-      return lv != null && lv >= (gongfaDef(gid)?.maxLevel ?? Number.POSITIVE_INFINITY);
-    }),
-  );
+  // 悟道分支是「一经择定终身不改 / 转世保留」的永久抉择:记录不该随层数折回而删除,
+  // 否则重将此功法修到满级后能改选另一条分支。词条是否并入已由 cultivation.gongfaMods
+  // 按「仍满级」把关(见其注释),层数折回后分支词条自然失效 —— 记录须完好保留。
   adventure.setSession(null);
   adventure.setPendingEvent(null, 0);
   adventure.unlocked = ["qingyun"];
