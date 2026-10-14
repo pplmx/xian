@@ -1,5 +1,5 @@
 /**
- * 成就库 —— 63 个,长期目标
+ * 成就库 —— 64 个,长期目标
  *
  * 未达成者在界面上一律以「???」示人(见 views/CollectionView.vue),
  * 所以此表不再有"隐藏成就"一说 —— 每个位子人人平等,成了才现名目。
@@ -227,6 +227,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   ac("a_craft100", "丹道圣手", "炼制 100 枚丹药", counter("pillsCrafted", 100), {
     titleId: "ti_danwang",
   }),
+  ac("a_pfail9", "屡败屡战", "炼丹失败 9 次", counter("pillsFailed", 9), { herb: 15 }),
   ac("a_soul10", "形销魂驻", "将 10 件装备凝作器魂", counter("soulsRefined", 10), { wudao: 20 }),
   // ---- 功法 ----
   ac("a_gf5", "博采众长", "习得 5 部功法", counter("gongfaLearned", 5), { page: 20 }),
