@@ -1,4 +1,4 @@
-/** 随机事件库 —— 85 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 86 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -115,6 +115,24 @@ export const EVENTS: EventDef[] = [
       leave("君子不临深水,你另寻他途,绕道而行。"),
     ],
     { maxRealm: 2 },
+  ),
+  ev(
+    "ev_huangmiao_zhong",
+    "荒庙孤钟",
+    "半山废庙中悬着一口孤钟,钟面刻满无名经文,夜风过时低鸣不止。",
+    ["ruin"],
+    [
+      c("叩钟问经", [
+        o(60, "钟鸣如雷,经文随声入心,你仿佛听见一角真意。", { type: "exp", secs: 60 }),
+        o(40, "钟声太烈,你气血翻涌,忙撤步后退。", { type: "buff", id: "injury" }),
+      ]),
+      c("细察经文", [
+        o(70, "经文残破,但你还是拓下几行。", { type: "material", id: "page", amount: 10 }),
+        o(30, "字迹断断续续,你一无所获。", { type: "nothing" }),
+      ]),
+      leave("庙是别人的庙,钟是别人的钟,你合掌一礼,转身离去。"),
+    ],
+    { maxRealm: 4 },
   ),
   ev(
     "ev_spring",
