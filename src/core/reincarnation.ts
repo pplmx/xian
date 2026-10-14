@@ -221,7 +221,7 @@ function carryGongfa(
 /**
  * 确认转世。
  *
- * @param chosenTalentId 三选一的先天之姿
+ * @param chosenTalentId 择一的先天之姿(炼虚通感四选一,其余三选一)
  * @param chosenThemeId 这一世立下的题(null 为不立题)
  * @param nextName 这一世的名号(确认页的随机道号草稿,玩家可改;缺省则保持原名)
  */
