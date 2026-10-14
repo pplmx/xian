@@ -16,7 +16,7 @@ export const ENLIGHTENMENT_OPTIONS: EnlightenmentOption[] = [
   {
     type: "cultivation",
     label: "道心通明",
-    desc: "修炼速度 +35%",
+    desc: "修炼速度 +35%(持续 5 分钟)",
     buffId: "enlighten_cult_strong",
     duration: 300,
   },
@@ -24,14 +24,14 @@ export const ENLIGHTENMENT_OPTIONS: EnlightenmentOption[] = [
   {
     type: "combat",
     label: "锤炼筋骨",
-    desc: "战斗伤害 +15%",
+    desc: "战斗伤害 +15%(持续 10 分钟)",
     buffId: "enlighten_dmg",
     duration: 600,
   },
   {
     type: "combat",
     label: "凝气护体",
-    desc: "战斗防御 +12%",
+    desc: "战斗防御 +12%(持续 10 分钟)",
     buffId: "enlighten_def",
     duration: 600,
   },
@@ -39,7 +39,7 @@ export const ENLIGHTENMENT_OPTIONS: EnlightenmentOption[] = [
   {
     type: "breakthrough",
     label: "悟透瓶颈",
-    desc: "下次进阶成功率 +8%",
+    desc: "下次进阶成功率 +8%(持续 30 分钟,大关天劫除外)",
     buffId: "enlighten_bt",
     duration: 1800,
   },
@@ -47,7 +47,7 @@ export const ENLIGHTENMENT_OPTIONS: EnlightenmentOption[] = [
   {
     type: "qi",
     label: "吐纳有序",
-    desc: "灵气回复速度 +25%",
+    desc: "灵气回复速度 +25%(持续 10 分钟)",
     buffId: "enlighten_qi",
     duration: 600,
   },
