@@ -123,4 +123,33 @@ describe("建号「逆天改命」不限次", () => {
     confirmReincarnation(null);
     expect(player.name).toBe(before);
   });
+
+  it("来世灵根所见即所得:prepare 已掷出一枚确定灵根,确认页可见", () => {
+    const rng = new RandomService(mulberry32(20260917));
+    const player = usePlayerStore();
+    const ui = useUiStore();
+    player.initCharacter("测", rollLinggen(rng));
+
+    const view = prepareReincarnation();
+    expect(view.nextLinggen, "确认前就应当掷好一枚确定灵根").toBeDefined();
+    // 确认页与返回视图虽是两个实例(经 ui store 转手),应携同一枚灵根的值
+    expect(ui.reincarnation!.nextLinggen!.roots).toEqual(view.nextLinggen!.roots);
+    expect(ui.reincarnation!.nextLinggen!.growthMult).toBe(view.nextLinggen!.growthMult);
+    expect(view.nextLinggen!.roots.length).toBeGreaterThan(0);
+  });
+
+  it("确认转世即用预览的灵根,不再二次掷灵根", () => {
+    const rng = new RandomService(mulberry32(20260918));
+    const player = usePlayerStore();
+    const ui = useUiStore();
+    player.initCharacter("测", rollLinggen(rng));
+
+    prepareReincarnation();
+    const previewed = ui.reincarnation!.nextLinggen!;
+    confirmReincarnation(null, null, ui.reincarnation!.nameDraft);
+    const landed = player.linggen!;
+    expect(landed.roots).toEqual(previewed.roots);
+    expect(landed.gradeName).toBe(previewed.gradeName);
+    expect(landed.growthMult).toBe(previewed.growthMult);
+  });
 });
