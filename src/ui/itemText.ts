@@ -179,8 +179,10 @@ export function petTraitText(def: PetDef): string {
   if (e.dangerMult !== 1) parts.push(`敌势 ${delta(e.dangerMult)}`);
   if (e.dropLuck !== 0)
     parts.push(`掉落气运 ${e.dropLuck > 0 ? "+" : ""}${formatPercent(e.dropLuck)}`);
-  // lossReduction 的真实机制是「危急时灵兽护主、免于败绩」的概率(exploration 败北分支),
-  // 不是战败率本身削 X 点 —— 名前不叫「战败率」,免得读出"这场败得更少一点"的错觉
-  if (e.lossReduction > 0) parts.push(`危急护主,免败 ${formatPercent(e.lossReduction)}`);
+  // lossReduction 的真实机制是「危急时灵兽护主、免于败绩」的概率(在线 exploration 败北分支),
+  // 不是战败率本身削 X 点 —— 名前不叫「战败率」,免得读出"这场败得更少一点"的错觉。
+  // 离线挂机按期望值整段结算、没有单场败北可护,故这层只在在线对战中生效 —— 把范围写明。
+  if (e.lossReduction > 0)
+    parts.push(`危急护主,免败 ${formatPercent(e.lossReduction)}(仅在线对战)`);
   return parts.join(" · ");
 }
