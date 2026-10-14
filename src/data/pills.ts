@@ -466,12 +466,19 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 360, stoneBase: 1000 },
     alchemyLevel: 10,
   }),
-  p("p_benyuandan", "本源丹", "divine", 18, "混沌本源入体,一日修行抵百日,进阶成功率 +10%", {
-    kind: "buff",
-    buffId: "buff_hundun",
-    recipe: { herb: 480, stoneBase: 1500 },
-    alchemyLevel: 10,
-  }),
+  p(
+    "p_benyuandan",
+    "本源丹",
+    "divine",
+    18,
+    "混沌本源入体,修炼提速 80%,进阶成功率 +10%,持续 30 分钟",
+    {
+      kind: "buff",
+      buffId: "buff_hundun",
+      recipe: { herb: 480, stoneBase: 1500 },
+      alchemyLevel: 10,
+    },
+  ),
   // ---- 炼丹增益(概念契约):安神丹 —— 神魂安泰(通用:回灵)+ 凝神观炉(炼丹面:双成)。
   // "火候"是炼丹者的本事,不是丹能管的火 —— 此名已废,改走安神一路(id 沿旧)。 ----
   p(
