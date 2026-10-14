@@ -186,7 +186,7 @@ export const SORCERY_LAYERS: SorceryLayer[] = [
   {
     id: "gong",
     name: "周易 · 问卦",
-    cadence: `一时之机 · 卦管 ${CHANGING_TIERS[0]!.minutes}~${CHANGING_TIERS[CHANGING_TIERS.length - 1]!.minutes} 分钟`,
+    cadence: `一时之机 · 卦管 ${CHANGING_TIERS[CHANGING_TIERS.length - 1]!.minutes}~${CHANGING_TIERS[0]!.minutes} 分钟`,
     cost: `悟道点 ${DIVINATION_COST} · 一事不二卜`,
     note: `${TRIGRAMS.length} 卦为体、${HEXAGRAMS.length} 卦为用;动爻越多,卦力越盛而时限越短`,
   },
@@ -195,7 +195,7 @@ export const SORCERY_LAYERS: SorceryLayer[] = [
     name: "紫微 · 命格",
     cadence: "一世之格 · 常驻",
     cost: "免费(转世重掷灵根即重排)",
-    note: `${PALACES.length} 宫 ${STARS.length} 主星定底色;力薄而常驻,不受时限,也不与卦叠加同类效果`,
+    note: `${PALACES.length} 宫 ${STARS.length} 主星定底色;力薄而常驻,不受时限(可与卦叠加同类效果)`,
   },
   {
     id: "xiang",
