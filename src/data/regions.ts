@@ -83,7 +83,7 @@ export const REGIONS: RegionDef[] = [
     2,
     "trees",
     "万妖聚居之地,机缘与凶险并存",
-    ["e_fox", "e_bear"],
+    ["e_fox", "e_bear", "e_mandrill"],
     "e_forestlord",
     ["general", "forest"],
     "hantan",
