@@ -181,6 +181,11 @@ describe("文案数值对账 · 视图不手抄数字", () => {
     // 手抄过的两处字面量必须消失(改了常数却忘了改文案,正是这条要拦的)
     expect(view).not.toContain("修行 +3%");
     expect(view).not.toContain("道躯 +1.5%");
+    // formatPercent 自带 % 尾巴,第二项后面再补一个字面 % 就成了 +2%%(实测:
+    // 「道躯 +2%%」)。不许在 formatPercent(道躯) 之后紧跟一个字面百分号。
+    expect(view, "道躯 formatPercent 后不许再补字面 %").not.toMatch(
+      /formatPercent\(DAO_FRUIT_COMBAT_BONUS[^{]*\}\}%/,
+    );
     expect(view, "边际收益里的 ×3 也是手抄的,应改成常数").not.toMatch(/effective \* 3\b/);
     expect(view, "有效枚数 toFixed(0) 会把 7.94 写成 8").not.toContain("effective.toFixed(0)");
     expect(view).toContain("effectiveText");
