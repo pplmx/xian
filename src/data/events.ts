@@ -1,4 +1,4 @@
-/** 随机事件库 —— 88 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 89 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1531,6 +1531,29 @@ export const EVENTS: EventDef[] = [
       c("绕路而行", [o(1, "你顺河岸绕行,虽费时却也安稳。")]),
     ],
     { maxRealm: 2 },
+  ),
+  ev(
+    "ev_cliff_herb",
+    "峭壁灵草",
+    "一处峭壁石缝中闪着微光,似有一株难得的灵草在风中摇曳。",
+    ["general"],
+    [
+      c(
+        "攀壁去采",
+        [
+          o(55, "你身手矫健,攀上峭壁采得灵草。", { type: "material", id: "herb", amount: 8 }),
+          o(30, "石壁湿滑,你只抓到几片叶,却也聊胜于无。", {
+            type: "material",
+            id: "herb",
+            amount: 3,
+          }),
+          o(15, "手一滑,你摔落山涧,蹭破了些皮。", { type: "buff", id: "injury" }),
+        ],
+        { isDefault: true },
+      ),
+      c("转身离开", [o(1, "终究是身外之物,你摇摇头走开。")]),
+    ],
+    { maxRealm: 4 },
   ),
 ];
 
