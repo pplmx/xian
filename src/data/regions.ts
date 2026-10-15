@@ -96,7 +96,7 @@ export const REGIONS: RegionDef[] = [
     3,
     "sword",
     "上古大战的残迹,怨气凝而不散",
-    ["e_soldier", "e_knight"],
+    ["e_soldier", "e_knight", "e_warghost"],
     "e_general",
     ["general", "ruin"],
     "wanyao",

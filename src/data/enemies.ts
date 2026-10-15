@@ -1,5 +1,5 @@
 /**
- * 敌人库 —— 139 个,含 44 名区域首领;多段/真伤/闪避等机制用于流派克制
+ * 敌人库 —— 140 个,含 44 名区域首领;多段/真伤/闪避等机制用于流派克制
  *
  * 每一条写的是**族类**(`family`),图标由 `data/beastFamilies.ts` 的族类表给出 ——
  * 从此不手写 icon:狼写 wolf、蛇蛟写 serpent、傀儡写 puppet。原先这里是直接写 icon,
@@ -210,6 +210,9 @@ export const ENEMIES: EnemyDef[] = [
       element: "dark",
     },
   ),
+  e("e_warghost", "残甲战魂", 6, "ghost", [0.95, 1.15, 0.85, 1.15], [heavy("噬魂枪", 1.55, 0.25)], {
+    element: "dark",
+  }),
   e(
     "e_general",
     "古将军亡魂",
