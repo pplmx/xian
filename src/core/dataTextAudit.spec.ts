@@ -350,6 +350,16 @@ describe("文案数值对账 · 视图不手抄数量", () => {
     expect(view, "不许手写「六战全捷」当常数改了只顾一头").not.toContain("六战全捷");
   });
 
+  it("中道而返是两段式确认,且披露此行的道源损失(误触不再赔整趟远征)", () => {
+    const view = src("../views/CelestialView.vue");
+    // 不可逆的毁约/熔尽/重写在别处一律两段式;远征放弃落上同一待遇 —— 若有人把
+    // v-if="abandonArmed" 这段摘掉改回一键,守卫会红(决策前摊数字契约)
+    expect(view, "中道而返该先进入待确认态,不是立刻执行").toContain('@click="abandonArmed = true"');
+    expect(view, "待确认态得能喊停").toContain("再想想");
+    expect(view, "确认动作要把此行损失摊开").toContain("尽付东流");
+    expect(view, "确认按钮不该与普通按钮同名(防误触)").toContain("确认中道而返");
+  });
+
   it("法宝位与门槛取自 artifacts.ts,界面与切换构筑共用一份", () => {
     const view = src("../views/InventoryView.vue");
     expect(view).toContain("artifactSlotsFor(player.major)");

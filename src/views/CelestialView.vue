@@ -235,9 +235,26 @@
                 决战 · {{ runWorld.guardian.name }}
               </button>
             </template>
+            <template v-if="abandonArmed">
+              <p
+                class="mt-2 rounded-md bg-cinnabar/6 px-2.5 py-1.5 text-[10px] leading-relaxed text-cinnabar"
+              >
+                此行 {{ runWorld.entryCost }} 道源与已攒的沿途道源
+                {{ run.bonus > 0 ? `+${run.bonus}` : "" }}尽付东流,战果与纪录不保。
+              </p>
+              <div class="mt-1.5 flex gap-2">
+                <button class="btn-ghost flex-1 !py-1.5 !text-[11px]" @click="abandonArmed = false">
+                  再想想
+                </button>
+                <button class="btn-seal flex-1 !py-1.5 !text-[11px]" @click="abandonRun">
+                  确认中道而返
+                </button>
+              </div>
+            </template>
             <button
+              v-else
               class="btn-ghost mt-2 w-full !py-1.5 !text-[11px] !text-ink-faint"
-              @click="abandonRun"
+              @click="abandonArmed = true"
             >
               中道而返(道源不退)
             </button>
@@ -1489,6 +1506,7 @@ function openPrep(id: string): void {
   prepWorldId.value = id;
   prepPact.value = null;
   prepGate.value = null;
+  abandonArmed.value = false;
 }
 
 // ---- 进行中远征 ----
@@ -1597,6 +1615,9 @@ function fightBoss(): void {
 function abandonRun(): void {
   abandonExpedition();
 }
+
+/** 中道而返两段式:误触一次不会把整趟远征赔进去(与重写/熔尽/立约同一待遇) */
+const abandonArmed = ref(false);
 
 // ---- 天道变数 ----
 const mutationDraw = ref<string[]>([]);
