@@ -350,9 +350,14 @@
           <span class="text-violet-ink">此乃大关,需渡天劫</span>
         </template>
       </p>
-      <!-- 突破不成的真代价也要摊:灵气付了之外,成败都只在修为上折 —— 频率≠无代价 -->
-      <p class="mt-0.5 text-[10px] text-ink-faint tabular">
-        突破不成损修为 {{ formatPercent(BT_FAIL_EXP_LOSS) }}(破境返还词条可减,首败跬步传承可全免)
+      <!-- 突破不成的真代价也要摊:灵气付了之外,还有修为折损与必发的重伤
+           (buffs.ts injury:修速减半、战力大减,需引气静养耗灵气平复)—— 频率≠无代价,
+           且不复述「只损修为」那种不完整的账。 -->
+      <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular">
+        突破不成损修为 {{ formatPercent(BT_FAIL_EXP_LOSS) }}、身负
+        <span class="text-cinnabar">重伤</span>({{ buffDef("injury")!.desc }},持续
+        {{ cnNumber(INJURY_DURATION) }}
+        秒,可引气静养平复)(破境返还词条可减修为损,首败跬步传承可全免)
       </p>
 
       <!-- Phase 28 突破准备:静坐调息 / 服聚气丹(无劫突破时,一次性加成) -->
@@ -755,11 +760,13 @@ import type { PillDef } from "@/types";
 import {
   BT_FAIL_EXP_LOSS,
   COMPREHEND_PAGE_COST,
+  INJURY_DURATION,
   QI_BANK_MULT,
   QI_RICH_BONUS,
   QI_RICH_THRESHOLD_RATIO,
 } from "@/data/constants";
 import {
+  cnNumber,
   formatCountdown,
   formatDuration,
   formatGN,

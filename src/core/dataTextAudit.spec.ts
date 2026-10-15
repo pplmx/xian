@@ -222,6 +222,17 @@ describe("文案数值对账 · 视图不手抄数字", () => {
     }
   });
 
+  it("突破失败的真代价要摊开:不只损修为,还必发重伤(修速减半/战力大减,需引气静养)", () => {
+    const view = src("../views/CultivationView.vue");
+    // 败后 addBuff("injury") 是确定会发生的(buff 定义在 buffs.ts);失败那行的账若不把
+    // 重伤写进去,玩家只看到「损修为 X%」,以为成败只在修为上折 —— 界面就欠了半句
+    expect(view, "失败行必须点名「重伤」").toContain("重伤");
+    expect(view, "重伤要与 injury buff 的 desc 同源,不另手抄").toContain('buffDef("injury")');
+    expect(view, "重伤时长应引 INJURY_DURATION").toContain("INJURY_DURATION");
+    // 不许退回「成败都只在修为上折」那种把它说成唯一代价的旧话(实为撒谎)
+    expect(view, "旧话把成败说成只损修为 —— 才是真的不完整账").not.toContain("成败都只在修为上折");
+  });
+
   it("突破按钮的「灵气不足」要补缺:还差多少、回够要多久直显,不许只给四字灰", () => {
     const view = src("../views/CultivationView.vue");
     // reason 报「灵气不足」时,按钮下方必须有 btQiBlock 的短差与 ETA;删/收缩成四字立刻红
