@@ -695,6 +695,23 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(tabs?.src, "焦点要跟着选中一起走").toContain("target.focus()");
   });
 
+  it("修行功法页签补全套 tab→panel 关联 —— 每个 tab 要 aria-controls 指向对应 panel", () => {
+    // 主修/辅修/秘术三签是 功法页 里自成一壳的 tablist+tabpanel(CultivationView 内联
+    // 实现,不像 InkTabs 那样壳与面板分离)。此前只有 role=tab/aria-selected,读屏无法把
+    // 一个 tab 与它控制的 panel 对应起来 —— 补上 id/aria-controls(tab 侧)与
+    // id/aria-labelledby(panel 侧),正是 WAI-ARIA 的 tab 模式。
+    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    expect(cult?.src, "功法 tab 要带自己的 id 与 aria-controls").toContain(
+      ':aria-controls="`gongfa-cat-panel-${g.type}`"',
+    );
+    expect(cult?.src, "功法 tab 要有稳定 id 供 panel 反指").toContain(
+      ':id="`gongfa-cat-tab-${g.type}`"',
+    );
+    expect(cult?.src, "功法 panel 要带对应 id 与 aria-labelledby 反指当前 tab").toContain(
+      ':aria-labelledby="`gongfa-cat-tab-${gongfaCat}`"',
+    );
+  });
+
   it("大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸", () => {
     // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
     // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)
@@ -1166,6 +1183,18 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "formatPercent(QI_RICH_THRESHOLD_RATIO)",
     );
     expect(cult?.src, "不许退回手写「容量一半」").not.toContain("容量一半");
+  });
+
+  it("首页天时倒计时走定宽口径 —— 不许退回复活 formatDuration 让每秒跳字", () => {
+    // 天时剩余是主页上唯一每秒在变的活值:最后 1 小时逐秒走字(formatDuration 变宽,
+    // 「9分59秒」→「10分0秒」字数还会缩),必须走 formatCountdown 逐位补零 + countdown-slot
+    // 定宽槽,整行才不随倒数左右跳(与状态胶囊同一条抖动纪律,见 style.css 的注释)。
+    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    expect(home?.src).toContain("formatCountdown(weatherRemainingSec())");
+    expect(home?.src).toContain("countdown-slot");
+    expect(home?.src, "不许退回会变宽的 formatDuration").not.toContain(
+      "formatDuration(weatherRemainingSec())",
+    );
   });
 
   it("破坏性二次确认话术统一 —— 确认前缀 + 取消,不许各说各话", () => {

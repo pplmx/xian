@@ -582,6 +582,8 @@
               :key="g.type"
               type="button"
               role="tab"
+              :id="`gongfa-cat-tab-${g.type}`"
+              :aria-controls="`gongfa-cat-panel-${g.type}`"
               :aria-selected="gongfaCat === g.type"
               :aria-label="`${GONGFA_TYPE_NAMES[g.type]} ${g.items.length} 部`"
               :tabindex="gongfaCat === g.type ? 0 : -1"
@@ -618,6 +620,8 @@
             class="max-h-72 overflow-y-auto"
             :class="activeGongfaItems.length ? 'divide-y divide-ink/7' : ''"
             role="tabpanel"
+            :id="`gongfa-cat-panel-${gongfaCat}`"
+            :aria-labelledby="`gongfa-cat-tab-${gongfaCat}`"
             :aria-label="GONGFA_TYPE_NAMES[gongfaCat]"
           >
             <button

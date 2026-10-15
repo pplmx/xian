@@ -45,7 +45,9 @@
           <div class="mt-3 flex items-center gap-1.5">
             <GameIcon name="sparkles" :size="13" class="shrink-0 text-gold-ink" />
             <span class="font-kai text-[12px] tracking-widest text-ink">{{ weather.name }}</span>
-            <span class="ml-1 text-[10px] text-ink-faint tabular">{{ weatherLeft }}</span>
+            <span class="countdown-slot ml-1 text-[10px] text-ink-faint tabular">{{
+              weatherLeft
+            }}</span>
           </div>
           <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
             {{ weather.desc }}<span v-if="tomorrowWeather">{{ tomorrowBrief }}</span>
@@ -311,7 +313,7 @@ import { VEIN_UNLOCK_MAJOR } from "@/data/constants";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { WORLD_BREAK_MAJOR } from "@/data/realms";
 import { todayWeather, upcomingWeather, weatherRemainingSec } from "@/core/weather";
-import { formatDuration, formatPercent } from "@/utils/format";
+import { formatCountdown, formatPercent } from "@/utils/format";
 import { generateCurrentGoal, type Goal } from "@/core/goal";
 import { currentMainQuestProgress } from "@/core/questProgress";
 import { currentFirstStep, homeStatusText } from "@/core/firstStep";
@@ -389,7 +391,7 @@ const weatherTribulation = computed(() =>
  */
 const weatherLeft = computed(() => {
   void now.value;
-  return `还有 ${formatDuration(weatherRemainingSec())}`;
+  return `还有 ${formatCountdown(weatherRemainingSec())}`;
 });
 const tomorrowWeather = computed(() => upcomingWeather(2)[1]);
 /** 明日天时的影响也摊开(与今日同源 modsText;渡劫倍率 >1 才挂更险) —— 渡劫前该不该等明日要看得见 */

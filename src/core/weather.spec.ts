@@ -251,9 +251,13 @@ describe("界域天象(weather · 仙界及以上)", () => {
     expect(anyPositive).toBe(true);
   });
 
-  it("首页天时剩余走 formatDuration,不 round 出 60 分", () => {
+  it("首页天时剩余走定宽倒计时,不 round 出 60 分", () => {
     const src = readFileSync(resolve(import.meta.dirname, "../views/HomeView.vue"), "utf8");
-    expect(src).toContain("formatDuration(weatherRemainingSec())");
+    // 天时倒计时是每秒在变的活值,最后 1 小时逐秒走字 —— 必须走 formatCountdown(逐位补零)
+    // 的定宽口径并配 countdown-slot,不许用会变宽的 formatDuration 让整行每秒左右跳。
+    expect(src).toContain("formatCountdown(weatherRemainingSec())");
+    expect(src).toContain("countdown-slot");
+    expect(src).not.toContain("formatDuration(weatherRemainingSec())");
     expect(src).not.toContain("Math.round((total % 3600) / 60)");
   });
 
