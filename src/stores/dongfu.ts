@@ -46,6 +46,7 @@ export const useDongfuStore = defineStore(
       insight: 0,
       guard: 0,
       xuanhuang: 0,
+      yize: 0,
     });
 
     const buildingMods = computed<StatMods>(() => {
@@ -151,7 +152,15 @@ export const useDongfuStore = defineStore(
       levels.value = nextLevels;
       frac.value = { herb: 0, ore: 0, wudao: 0 };
       veinMain.value = null;
-      veinPoints.value = { gather: 0, craft: 0, alchemy: 0, insight: 0, guard: 0, xuanhuang: 0 };
+      veinPoints.value = {
+        gather: 0,
+        craft: 0,
+        alchemy: 0,
+        insight: 0,
+        guard: 0,
+        xuanhuang: 0,
+        yize: 0,
+      };
     }
 
     /** 建筑产出(灵田/藏经阁),按秒推进 */

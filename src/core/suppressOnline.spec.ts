@@ -58,7 +58,15 @@ describe("玩家反馈: 镇压后在线产出(真实场景)", () => {
     player.suppressedRegions = ["qingyun"];
 
     // 设置灵脉投资加成
-    dongfu.veinPoints = { gather: 30, craft: 0, alchemy: 0, insight: 0, guard: 0, xuanhuang: 0 };
+    dongfu.veinPoints = {
+      gather: 30,
+      craft: 0,
+      alchemy: 0,
+      insight: 0,
+      guard: 0,
+      xuanhuang: 0,
+      yize: 0,
+    };
 
     const before = { ...resources.spiritStone };
     settleSuppressedRegions(3600);
