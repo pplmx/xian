@@ -1,4 +1,4 @@
-/** 功法库 —— 65 部:主修 27 / 辅修 23 / 秘术 15,每境都有新东西可参 */
+/** 功法库 —— 66 部:主修 28 / 辅修 23 / 秘术 15,每境都有新东西可参 */
 import type { GongfaDef, GongfaType, QualityId, StatMods } from "@/types";
 
 function g(
@@ -61,6 +61,17 @@ export const GONGFA: GongfaDef[] = [
     { cultivationSpeed: 0.1, attackPct: 0.08 },
     { cultivationSpeed: 0.02, attackPct: 0.012 },
     { element: "fire", skill: { name: "焚天火", mult: 1.7, rate: 0.22 } },
+  ),
+  g(
+    "m_kunhuang",
+    "坤黄厚土诀",
+    "main",
+    "fine",
+    0,
+    "地厚以载,万古承重",
+    { cultivationSpeed: 0.1, defensePct: 0.1 },
+    { cultivationSpeed: 0.02, defensePct: 0.015 },
+    { element: "earth", skill: { name: "厚土镇", mult: 1.5, rate: 0.2 } },
   ),
   g(
     "m_xuanshui",

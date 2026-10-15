@@ -73,6 +73,16 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
   b("m_lihuo", "b_lihuo_fen", "焚天", "离火更炽,出招更狠", { damageBonus: 0.08, critRate: 0.03 }),
   b("m_lihuo", "b_lihuo_xu", "续焰", "火尽不熄,攻守兼备", { attackPct: 0.05, defensePct: 0.05 }),
 
+  // ---- 主修:坤黄厚土诀(良品·土) ----
+  b("m_kunhuang", "b_kunhuang_dun", "坤德", "厚德孕物,难被撼动", {
+    defensePct: 0.14,
+    maxHpPct: 0.06,
+  }),
+  b("m_kunhuang", "b_kunhuang_zhen", "镇岳", "一镇山河,妖邪辟易", {
+    maxHpPct: 0.12,
+    damageReduction: 0.04,
+  }),
+
   // ---- 主修:玄水凝真经(良品·水) ----
   b("m_xuanshui", "b_xuanshui_ning", "凝真", "水凝成真,静者难摧", {
     defensePct: 0.09,
