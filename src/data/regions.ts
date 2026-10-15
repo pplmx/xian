@@ -122,7 +122,7 @@ export const REGIONS: RegionDef[] = [
     3,
     "waves",
     "海面漆黑如墨,不见天日",
-    ["e_shark", "e_corpse"],
+    ["e_shark", "e_corpse", "e_zezhang"],
     "e_seaking",
     ["general", "water", "dark"],
     "chiyan",
