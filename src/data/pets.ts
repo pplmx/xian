@@ -44,6 +44,16 @@ export const PETS: PetDef[] = [
     personality: "fierce",
   },
   {
+    id: "pet_bimao",
+    name: "碧眼灵猫",
+    desc: "碧瞳如夜,专寻埋藏的机缘",
+    icon: "paw",
+    family: "beast",
+    quality: "excellent",
+    mods: { dropRate: 0.06, explorationSpeed: 0.08 },
+    personality: "greedy",
+  },
+  {
     id: "pet_xuanshui",
     name: "玄水蛟",
     desc: "潜龙于渊,血脉延年 —— 附灵则气息绵长",
