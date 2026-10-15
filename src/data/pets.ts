@@ -54,6 +54,16 @@ export const PETS: PetDef[] = [
     personality: "greedy",
   },
   {
+    id: "pet_wudiao",
+    name: "雾影灵貂",
+    desc: "雾里来去,药香随身",
+    icon: "paw",
+    family: "beast",
+    quality: "excellent",
+    mods: { qiRegen: 0.08, luck: 0.04 },
+    personality: "steady",
+  },
+  {
     id: "pet_xuanshui",
     name: "玄水蛟",
     desc: "潜龙于渊,血脉延年 —— 附灵则气息绵长",
