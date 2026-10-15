@@ -157,9 +157,18 @@ describe("每日任务对账 —— 结算出哪几条、按什么顺序", () =>
     track("pillsCrafted", 2); // 每日炼丹
     track("upgrades", 3); // 每日炼制
     track("breakthroughs", 2); // 每日破境
+    track("bossKills", 1); // 每日斩将
     const frozen = legacySettle(
       { date: "2026-09-19", base: {}, done: [] },
-      { kills: 15, pillsUsed: 1, explores: 1, pillsCrafted: 2, upgrades: 3, breakthroughs: 2 },
+      {
+        kills: 15,
+        pillsUsed: 1,
+        explores: 1,
+        pillsCrafted: 2,
+        upgrades: 3,
+        breakthroughs: 2,
+        bossKills: 1,
+      },
     );
     expect(quests.daily.done).toEqual(frozen.daily.done);
     expect(quests.daily.done).toEqual(DAILY_TASKS.map((t) => t.id));
