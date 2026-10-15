@@ -70,7 +70,7 @@ export const REGIONS: RegionDef[] = [
     2,
     "droplets",
     "幽潭之下别有洞天,寒气砭骨",
-    ["e_snake", "e_bat"],
+    ["e_snake", "e_bat", "e_hanchan"],
     "e_icejiao",
     ["general", "water"],
     "heifeng",
