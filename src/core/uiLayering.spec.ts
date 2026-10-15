@@ -266,6 +266,23 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(inv?.src).not.toMatch(/:disabled="!row\.affordable"[\s\S]{0,40}buyTen/);
   });
 
+  it("炼丹/材料读数的灵草必须逐品列出 —— 不许退回单标量的合计", () => {
+    // 灵草分五品(凡→道)后,方子按品阶耗(cost.herbGrade)、灵草坊各品各标价,
+    // 可修行页那两处总读数仍报 Σ 五品的合计 —— 一眼看不出持有哪一品、够不够
+    // 这一品的方子。改逐品列表(与灵草坊 held 同源,走 herbOf,不拼第二套分档)。
+    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    expect(inv?.src, "炼丹头必须逐品列出(不得再回资源的合计)").toMatch(
+      /v-for="g in HERB_GRADES"[\s\S]{0,120}?herbGradeHeld\(g\)/,
+    );
+    expect(inv?.src, "材料详情同样逐品列出").toMatch(
+      /currentMaterial\.key === RESOURCE_LABELS\.herb/,
+    );
+    // 开炉炼丹卡副题:不许再报合计「灵草 ${resources.herb}」,改报当前境界那一品的量
+    expect(inv?.src, "炼丹卡副题报当前境之品,不报五品合计").not.toMatch(
+      /灵草 \$\{resources\.herb\}/,
+    );
+  });
+
   it("部位候选行报「战 ±N」 —— 换装这件值不值,列表层就该看见,别等点开详情", () => {
     // 换装是最重复的决策:候选行此前只报品质/阶/词条数,跟身上那件差多少要逐个
     // 点开详情才对。行级差值必须vs 当前佩戴件(powerOf 线性差,与人物页战力同口径),

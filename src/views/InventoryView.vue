@@ -138,7 +138,7 @@
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
             {{
               recipes.length > 0
-                ? `已知丹方 ${recipes.length} 种 · 灵草 ${resources.herb}`
+                ? `已知丹方 ${recipes.length} 种 · ${HERB_GRADE_SHORT[herbGradeOfMajor(player.major)]}灵草 ${resources.herbOf(herbGradeOfMajor(player.major))}`
                 : "尚不知任何丹方"
             }}
           </span>
@@ -404,6 +404,24 @@
             <p class="text-[10px] text-ink-faint">现有</p>
           </div>
         </div>
+        <!--
+          灵草五品:总读数归一堆,看不出这一品的方子够不够。逐品列出持有 ——
+          与炼丹头 / 灵草坊同一套分档读数(herbGradeHeld / herbOf 同源)。
+        -->
+        <template v-if="currentMaterial.key === RESOURCE_LABELS.herb">
+          <p class="mt-3 text-[10px] text-ink-faint">分品持有</p>
+          <div class="mt-1 flex flex-wrap gap-1.5">
+            <span
+              v-for="g in HERB_GRADES"
+              :key="g"
+              class="chip-ink !py-0.5 !px-2 !text-[10px] tabular"
+              :class="herbGradeHeld(g) > 0 ? 'text-jade' : 'text-ink-faint'"
+              :title="HERB_GRADE_NAMES[g]"
+            >
+              {{ HERB_GRADE_SHORT[g] }} {{ herbGradeHeld(g) }}
+            </span>
+          </div>
+        </template>
         <p class="mt-3 text-[12px] leading-relaxed text-ink-soft">{{ currentMaterial.desc }}</p>
       </template>
       <template #footer>
@@ -473,8 +491,20 @@
 
     <!-- 开炉炼丹 -->
     <BaseModal :open="craftOpen" title="开炉炼丹" wide @close="craftOpen = false">
-      <p class="mb-2 text-[11px] text-ink-faint tabular">
-        灵草 {{ resources.herb }} · 灵石 {{ formatGN(resources.spiritStone) }}
+      <!--
+        灵草五品:方子按品阶耗(见每条方子的 cost.herbGrade),总读数归一堆毫无意义 ——
+        逐品列出持有,才看得出这张方子的这一品够不够。灵石仍是单一大数,占同一行右侧。
+      -->
+      <p class="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] tabular">
+        <span class="text-ink-faint">灵草</span>
+        <template v-for="g in HERB_GRADES" :key="g">
+          <span
+            class="chip-ink !py-0.5 !px-1.5 !text-[10px]"
+            :class="herbGradeHeld(g) > 0 ? 'text-jade' : 'text-ink-faint'"
+            >{{ HERB_GRADE_SHORT[g] }} {{ herbGradeHeld(g) }}</span
+          >
+        </template>
+        <span class="text-ink-faint">· 灵石 {{ formatGN(resources.spiritStone) }}</span>
       </p>
       <!--
         被动翻检全程无进度条:玩家只知道某天突然翻出一张方子,不知道它快到了。
@@ -971,6 +1001,7 @@ import {
   HERB_GRADE_SHORT,
   herbBuyPrice,
   herbGradeBandLabel,
+  herbGradeOfMajor,
   type HerbGrade,
 } from "@/data/herbGrades";
 import ProgressBar from "@/components/common/ProgressBar.vue";
@@ -1072,6 +1103,11 @@ const marketRows = computed(() =>
     };
   }),
 );
+/** 某品灵草的持有量 —— 炼丹头逐品读数(与灵草坊 held 同源,不走总读数) */
+function herbGradeHeld(g: HerbGrade): number {
+  return resources.herbOf(g);
+}
+
 function buyOne(grade: HerbGrade) {
   const r = buyHerbs(grade, 1);
   if (r.ok)
