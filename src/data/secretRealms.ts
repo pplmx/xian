@@ -160,6 +160,17 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.2,
     rewardMult: 1.4,
   },
+  {
+    id: "sr_wanyao",
+    gate: "celestial",
+    name: "万妖谷",
+    desc: "万妖奔涌,攻如连珠。此谷敌势不绝,攻守须兼",
+    minMajor: 9,
+    cost: { daoSource: 46 },
+    rules: { enemyExtraMods: { comboRate: 0.2, attackPct: 0.1 } },
+    healBetweenPct: 0.35,
+    rewardMult: 1.55,
+  },
   // ---- 天界秘境:真仙起,道源代价,与远征/试炼并列 ----
   {
     id: "sr_xingchen",
