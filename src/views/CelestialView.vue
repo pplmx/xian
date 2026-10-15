@@ -625,9 +625,7 @@
               <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="doVerify">验 约</button>
               <button
                 class="btn-seal flex-1 !py-1.5 !text-[12px]"
-                :disabled="
-                  !endgame.daoPath || !challengeVerdict?.ok || run !== null || challengeDaoShort > 0
-                "
+                :disabled="!endgame.daoPath || !challengeVerdict?.ok || challengeDaoShort > 0"
                 @click="doUndertake"
               >
                 <template v-if="!endgame.daoPath">先择道途</template>

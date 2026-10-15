@@ -1569,6 +1569,19 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(explore, "历练回执不许写裸「、悟道 N」").not.toContain("、悟道 ${s.wudaoGain}");
   });
 
+  it("五路天机一视同仁 —— 立约/试炼/变数/今题不受远征在途拦,只有真远征受", () => {
+    // 远征(worldRun)是唯一真正「在途」的活动:启程两键按 run !== null 置灰
+    // 「远征在途」。立约(天道挑战书)本是象试炼/变数/今题一样的即时单场——
+    // undertakeChallenge 只跑一场抛报告,不碰 worldRun,却独独挂了 run 锁,
+    // 与另三路同形按钮完全相反:远征正跑时立约被静默置灰、而试炼/变数/今题
+    // 依旧可点,玩家看不出凭什么。四路都是即时单场,统一都不受远征在途拦。
+    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    expect(cel?.src, "启程/破界两键仍要守 run(它们是真远征)").toMatch(/:disabled="run !== null/);
+    expect(cel?.src, "立约不许再挂 run 锁 —— 与试炼/变数/今题同族即时单场").not.toMatch(
+      /!\s*challengeVerdict\?\.ok \|\| run !== null/,
+    );
+  });
+
   it("按下要有回声 —— chip-ink 基类自带按压反馈,裸按钮不许全无声", () => {
     // 全库最常见的微动作按钮是 chip-ink(服丹/闭关/灵脉/设置 chips),此前只有
     // btn-seal/btn-ghost 两个基类自带 :active —— chips 按下零反馈。补基类规则
