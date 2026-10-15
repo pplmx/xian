@@ -1403,6 +1403,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(host?.src, "toast 容器要挂 aria-live=polite").toContain('aria-live="polite"');
   });
 
+  it("同日多 toast 各有其声 —— 稀有转世不被末尾 info 顶掉音画", () => {
+    // 转世落地是同一帧连 push:rare(睁眼)·rare(宿慧)·info(识得灵材)。
+    // 若 toast 音效只盯「最后一条」,Vue 批处理后只对末条 info 发声 —— 转世那下
+    // 金光与稀有音效被静态吃掉(玩家守着屏幕重活一世,却只见一条普通提示)。
+    // 改盯「新增了哪些」:id 单调递增,凡超过已播最大 id 的新条各有其类型声。
+    const host = FILES.find((f) => f.path === "components/common/ToastHost.vue");
+    const w = host?.src.match(/let lastAnnouncedId[\s\S]{0,320}/)?.[0] ?? "";
+    expect(host?.src, "要记录已播过的最大 toast id").toContain("let lastAnnouncedId");
+    expect(w, "要遍历所有超过已播 id 的新 toast,不许只取末条").toMatch(
+      /for \(const t of ui\.toasts\)/,
+    );
+    expect(w, "新条里稀有级要逐条触发金光").toMatch(/t\.kind === "rare"/);
+  });
+
   it("在身之卦散卦要自报 —— 整块消失不许对读屏无声", () => {
     // 散卦是后台随心跳自散的:整块 v-if=currentReading 安静消失、按钮随之复活,
     // 没有 toast 可依 —— 不念一句,读屏玩家就只知道它没了。以「有无」布尔为

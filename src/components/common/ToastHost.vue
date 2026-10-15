@@ -66,19 +66,27 @@ const KIND_SFX: Record<Toast["kind"], SfxName> = {
   rare: "rare",
 };
 
-// 新 toast 落地时按类型配一声提示音;稀有品级另加全屏金光
+// 新 toast 落地时按类型配一声提示音;稀有品级另加全屏金光。
+// 盯「最后一条」会导致同帧连续入队的 toast(如转世 一帧三连:rare·rare·info)
+// 被 Vue 批处理后只对末条发声 —— 稀有转世的金光与稀有音效被末尾那条 info 吃掉。
+// 改为盯「新增了哪些」:id 单调递增,凡是超过已播过最大 id 的新条都各有其类型声。
+let lastAnnouncedId = -1;
 watch(
-  () => ui.toasts[ui.toasts.length - 1]?.id,
-  (id, prev) => {
-    if (id === undefined || id === prev) return;
-    const last = ui.toasts[ui.toasts.length - 1];
-    if (!last) return;
-    playSfx(KIND_SFX[last.kind]);
-    if (last.kind === "rare") {
-      flashId.value = last.id;
-      setTimeout(() => {
-        if (flashId.value === last.id) flashId.value = null;
-      }, 1200);
+  () => ui.toasts.map((t) => t.id),
+  (ids) => {
+    if (ids.length === 0) return;
+    const newest = Math.max(...ids);
+    if (newest <= lastAnnouncedId) return;
+    for (const t of ui.toasts) {
+      if (t.id <= lastAnnouncedId) continue;
+      playSfx(KIND_SFX[t.kind]);
+      if (t.kind === "rare") {
+        flashId.value = t.id;
+        setTimeout(() => {
+          if (flashId.value === t.id) flashId.value = null;
+        }, 1200);
+      }
+      lastAnnouncedId = t.id;
     }
   },
 );
