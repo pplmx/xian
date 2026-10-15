@@ -83,6 +83,15 @@ export const PACTS: PactDef[] = [
     rules: { enemyExtraMods: { critRate: 0.25 } },
     sourceMult: 1.8,
   },
+  {
+    id: "yinying",
+    name: "蔽影契",
+    seal: "影",
+    desc: "妖影幢幢,敌踪若有若无 —— 与缥缈的闪避周旋,换些许道源",
+    ruleText: "敌方闪避 +18% · 道源 ×1.8",
+    rules: { enemyExtraMods: { dodgeRate: 0.18 } },
+    sourceMult: 1.8,
+  },
 ];
 
 export function pactDef(id: string): PactDef | undefined {
