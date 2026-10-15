@@ -57,7 +57,7 @@ export const REGIONS: RegionDef[] = [
     2,
     "trees",
     "林中黑风终年不散,吹人骨髓生寒",
-    ["e_bwolf", "e_vine"],
+    ["e_bwolf", "e_vine", "e_bhawk"],
     "e_bwking",
     ["general", "forest"],
     "luoxia",
