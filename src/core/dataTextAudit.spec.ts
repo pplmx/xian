@@ -348,6 +348,17 @@ describe("文案数值对账 · 视图不手抄数量", () => {
     expect(view).not.toContain("四界二十一境");
   });
 
+  it("战力明细要把三围的权重摊开 —— 战力是加权和,删权重玩家就看不出涨在哪一项", () => {
+    const view = src("../views/CharacterView.vue");
+    // 战力详情行必须引 POWER_WEIGHTS(与 powerScore 同一处),不许手写 ×3/×2/×0.15
+    expect(view, "战力明细行应读权重常数,不手抄倍率").toContain("POWER_WEIGHTS.attack");
+    expect(view, "防御权重同理").toContain("POWER_WEIGHTS.defense");
+    expect(view, "血权重同理").toContain("POWER_WEIGHTS.maxHp");
+    expect(view, "权重要在明细里说人话(×N 计入战力)").toContain("计入战力");
+    // 手抄过的三倍率字面量不得改回来(改 POWER_WEIGHTS 常数,这条才该跟着动)
+    expect(view, "手抄 ×0.15/×3/×2 会与常数打架").not.toContain("按 ×0.15 计入战力");
+  });
+
   it("界域志各门的数量取自各自的表(易 / 紫微 / 星象 / 奇门)", () => {
     const view = src("../views/RealmCodexView.vue");
     for (const ref of [

@@ -742,6 +742,7 @@ import {
   DAO_FRUIT_CULT_BONUS,
   DIMINISH_KEYS,
   DIMINISH_WEIGHTS,
+  POWER_WEIGHTS,
   SHIELD_CAP_RATIO,
   SOFT_CAPS,
 } from "@/data/constants";
@@ -774,11 +775,16 @@ const ui = useUiStore();
 const loadouts = useLoadoutsStore();
 
 const stats = computed(() => player.finalStats);
-/** 战力详情:三围原始读数各一行 —— 战力是它们的加权和,拆开才知道涨在哪一项 */
+/** 战力详情:三围各一行,并标明它们在战力里的权重 —— 战力是加权和(见 powerScore),
+ *  拆开才知道涨在哪一项、哪项根本不顶事(×0.15 的气血再高也拉不动战力)。 */
 const powerDetailRows = computed(() => [
-  { label: "攻击", value: player.finalStats.attack },
-  { label: "防御", value: player.finalStats.defense },
-  { label: "气血", value: player.finalStats.maxHp },
+  { label: "攻击", value: player.finalStats.attack, hint: `按 ×${POWER_WEIGHTS.attack} 计入战力` },
+  {
+    label: "防御",
+    value: player.finalStats.defense,
+    hint: `按 ×${POWER_WEIGHTS.defense} 计入战力`,
+  },
+  { label: "气血", value: player.finalStats.maxHp, hint: `按 ×${POWER_WEIGHTS.maxHp} 计入战力` },
 ]);
 
 /** 灵根的天然牌面(倾向文案,不含任何数值) */
