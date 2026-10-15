@@ -1230,6 +1230,18 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("首页天气行窄屏不许挤竖排或撞修炼球 —— 须可换行且天时名不折", () => {
+    // 320 窄屏上左侧栏只剩 110px:天时名(whitespace-nowrap)+ 定宽倒计时塞一行必然互挤 ——
+    // 名被压成竖排(25px×54px,layout-check vertical-texts 报过),倒计时还会越界撞到右侧
+    // 修炼球(overlap=true)。修法:整行 flex-wrap 让倒计时装不下就换行,天时名 shrink-0
+    // 不折 —— 既消竖排又不撞球。退化成只 nowrap 不 wrap 的写法,倒计时照样盖到球上。
+    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const row = home?.src.match(/mt-3 flex flex-wrap items-center[\s\S]{0,400}/)?.[0] ?? "";
+    expect(row).toContain("flex flex-wrap");
+    expect(row).toContain("shrink-0 whitespace-nowrap font-kai text-[12px] tracking-widest");
+    expect(row).toContain("countdown-slot");
+  });
+
   it("破坏性二次确认话术统一 —— 确认前缀 + 取消,不许各说各话", () => {
     // 删构筑/分解装备/弃秘境三处都是「确认后不可逆」的二步确认,此前确认词
     // (确信删除/分解?/确出)与取消词(取消/算了)各说各话 —— 统一成「确认+对象 / 取消」。

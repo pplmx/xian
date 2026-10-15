@@ -3201,6 +3201,10 @@ async function taskSaveRoundTrip() {
       window.__beforeImport = "alive";
     });
     await page.locator("input[type=file]").first().setInputFiles(savePath);
+    await page.waitForTimeout(500);
+    // 导入是「整体替换本机进度」的不可逆操作 —— 与重置同纪律,先弹确认,点「用这份替换」才落库。
+    // 判据仍盯着原来的事(成功提示 + 重新入定 + 灵石回到导出那一刻),只是要穿过这扇确认门。
+    await page.getByRole("button", { name: /用这份替换/ }).click();
     await page.waitForTimeout(700);
     const toast = await page.evaluate(() =>
       [...document.querySelectorAll(".pointer-events-none.fixed button")]

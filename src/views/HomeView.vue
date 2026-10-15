@@ -42,10 +42,13 @@
             {{ statusText }}
           </p>
           <!-- 今日天时:确定性环境,影响当日产出与渡劫 -->
-          <div class="mt-3 flex items-center gap-1.5">
+          <div class="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
             <GameIcon name="sparkles" :size="13" class="shrink-0 text-gold-ink" />
-            <span class="font-kai text-[12px] tracking-widest text-ink">{{ weather.name }}</span>
-            <span class="countdown-slot ml-1 text-[10px] text-ink-faint tabular">{{
+            <span
+              class="shrink-0 whitespace-nowrap font-kai text-[12px] tracking-widest text-ink"
+              >{{ weather.name }}</span
+            >
+            <span class="countdown-slot ml-1 shrink-0 text-[10px] text-ink-faint tabular">{{
               weatherLeft
             }}</span>
           </div>
