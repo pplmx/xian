@@ -252,6 +252,24 @@
         <span class="text-cinnabar">整体替换</span>
         本机当前的修行进度 —— 之后的收获会回到备份那一刻,且无法撤销。
       </p>
+      <!-- 备份是谁的、什么版本、什么时间导的:整体替换前先摊个底细(决策前摊数字契约) -->
+      <div
+        v-if="importInspect"
+        class="mt-3 rounded-md bg-paper-deep/60 px-3 py-2 text-[11px] leading-relaxed"
+      >
+        <p class="flex flex-wrap items-baseline gap-x-2 text-ink">
+          <span class="font-kai text-[13px]">{{ importInspect.name }}</span>
+          <span class="text-ink-faint">{{ importInspect.realmLabel }}</span>
+        </p>
+        <p
+          class="mt-0.5 flex flex-wrap gap-x-2 tabular text-[10px]"
+          :class="importInspect.tooNew ? 'text-cinnabar' : 'text-ink-faint'"
+        >
+          <span>备份 v{{ importInspect.version }}</span>
+          <span>导出 {{ formatClock(importInspect.exportedAt) }}</span>
+          <span v-if="importInspect.tooNew">高于当前 v{{ SAVE_VERSION }},无法导入</span>
+        </p>
+      </div>
       <template #footer>
         <div class="flex gap-2">
           <button class="btn-ghost flex-1" @click="closeImport">再想想</button>
@@ -268,7 +286,13 @@ import { useSettingsStore } from "@/stores/settings";
 import { useGameStore } from "@/stores/game";
 import { useUiStore } from "@/stores/ui";
 import { engine } from "@/core/engine";
-import { importSaveText, resetGame, reloadGame, sealStorageWrites } from "@/core/save";
+import {
+  importSaveText,
+  resetGame,
+  reloadGame,
+  sealStorageWrites,
+  inspectImportText,
+} from "@/core/save";
 import { exportSaveToDevice } from "@/core/savePlatform";
 import { formatLastExport, shouldPromptBackup } from "@/core/saveBackup";
 import { formatDuration } from "@/utils/format";
@@ -354,6 +378,8 @@ const THEME_OPTIONS = [
 const resetConfirm = ref(false);
 const importConfirm = ref(false);
 const pendingImport = ref<string | null>(null);
+/** 这份待导入备份的身份与版本(确认前摊开):是谁的档、什么版本、何时导出、是否高于当前 */
+const importInspect = ref<ReturnType<typeof inspectImportText> | null>(null);
 const privacyOpen = ref(false);
 const aboutOpen = ref(false);
 const progressionOpen = ref(false);
@@ -405,6 +431,7 @@ function onFilePicked(e: Event): void {
   engine.pause();
   reader.onload = () => {
     pendingImport.value = String(reader.result ?? "");
+    importInspect.value = inspectImportText(pendingImport.value);
     importConfirm.value = true;
   };
   // 读文件本身也可能失败(权限/磁盘)—— 静默就等于「点了没反应」;打开确认框前
