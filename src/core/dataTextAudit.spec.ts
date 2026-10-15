@@ -338,6 +338,11 @@ describe("文案数值对账 · 视图不手抄数量", () => {
     expect(view, "行程点列不该自己数一遍重数").not.toContain("'一重', '二重', '三重'");
     expect(view).not.toContain("三重已过");
     expect(view).not.toContain("六连战");
+    // 变数全捷的战报冠词也读常数(不是把 6 再抄一遍):「六战全捷」随 MUTATION_FIGHTS 走
+    expect(view, "全捷战报的连战数要读 MUTATION_FIGHTS").toContain(
+      "${cnNumber(MUTATION_FIGHTS)}战全捷",
+    );
+    expect(view, "不许手写「六战全捷」当常数改了只顾一头").not.toContain("六战全捷");
   });
 
   it("法宝位与门槛取自 artifacts.ts,界面与切换构筑共用一份", () => {

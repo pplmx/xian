@@ -119,6 +119,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const gauntlet = FILES.find((f) => f.path === "components/celestial/GauntletPanel.vue");
     expect(gauntlet?.src, "连战场次按钮不能只念一个数字").toContain("aria-label");
     expect(gauntlet?.src).toMatch(/第 \$\{i \+ 1\} 场/);
+    // 终局战报的每一行既要文字也要伤害数字 —— 主历练 CombatPanel 早把 entry.dmg
+    // 渲染出来,同一份 CombatLogEntry 在 GauntletPanel 上却只打了 text、把 dmg 丢在
+    // 一边:玩家看不到「这下打了多少」。两边必须同一副面孔(crit 还要朱砂标)。
+    expect(gauntlet?.src, "终局战报该把伤害数打出来").toContain('v-if="entry.dmg"');
+    expect(gauntlet?.src, "暴击的伤害数要朱砂标出").toContain(
+      "entry.t === 'crit' ? 'text-cinnabar'",
+    );
   });
 
   it("问卦剩余与顿悟/巡游窗口在暂停时不空耗墙上时钟", () => {

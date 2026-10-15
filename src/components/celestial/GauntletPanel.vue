@@ -47,6 +47,9 @@
         :class="KIND_COLOR[entry.t]"
       >
         {{ entry.text }}
+        <span v-if="entry.dmg" class="tabular" :class="entry.t === 'crit' ? 'text-cinnabar' : ''">{{
+          entry.dmg
+        }}</span>
       </p>
       <p v-if="displayed.length === 0" class="py-2 text-center text-[11px] text-ink-faint">
         此战无录

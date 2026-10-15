@@ -1596,7 +1596,7 @@ function goMutation(): void {
     title: "天道变数",
     cleared: result.report.cleared,
     markText: result.report.cleared
-      ? `六战全捷,共 ${result.report.totalRounds} 回合`
+      ? `${cnNumber(MUTATION_FIGHTS)}战全捷,共 ${result.report.totalRounds} 回合`
       : `止步第 ${result.report.fightsWon + 1} 战`,
     rows: result.report.rows,
     reward: result.rewardDaoSource,
