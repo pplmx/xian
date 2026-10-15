@@ -158,6 +158,7 @@ describe("每日任务对账 —— 结算出哪几条、按什么顺序", () =>
     track("upgrades", 3); // 每日炼制
     track("breakthroughs", 2); // 每日破境
     track("bossKills", 1); // 每日斩将
+    track("equipsGained", 2); // 每日鉴器
     const frozen = legacySettle(
       { date: "2026-09-19", base: {}, done: [] },
       {
@@ -168,6 +169,7 @@ describe("每日任务对账 —— 结算出哪几条、按什么顺序", () =>
         upgrades: 3,
         breakthroughs: 2,
         bossKills: 1,
+        equipsGained: 2,
       },
     );
     expect(quests.daily.done).toEqual(frozen.daily.done);

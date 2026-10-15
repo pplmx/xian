@@ -245,7 +245,8 @@ export interface DailyTaskDef {
     | "breakthroughs"
     | "pillsCrafted"
     | "upgrades"
-    | "bossKills";
+    | "bossKills"
+    | "equipsGained";
   target: number;
   reward: QuestDef["reward"];
 }
@@ -306,6 +307,14 @@ export const DAILY_TASKS: DailyTaskDef[] = [
     desc: "今日斩落王级妖邪 1 尊",
     counterKey: "bossKills",
     target: 1,
+    reward: { wudao: 8 },
+  },
+  {
+    id: "d_equip",
+    name: "每日鉴器",
+    desc: "今日获得 2 件装备",
+    counterKey: "equipsGained",
+    target: 2,
     reward: { wudao: 8 },
   },
 ];
