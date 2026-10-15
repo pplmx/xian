@@ -33,6 +33,7 @@ export type WeatherId =
   | "gangfeng"
   | "ningshuang"
   | "xiaguang"
+  | "tianlang"
   // 仙界
   | "xianyu"
   | "ziqi"
@@ -111,6 +112,13 @@ export const WEATHERS: WeatherDef[] = [
     name: "霞光",
     desc: "朝霞满天,悟性通明,修习亦得几分进益。",
     mods: { expGain: 0.06, luck: 0.04 },
+    tribulationMult: 1,
+  },
+  {
+    id: "tianlang",
+    name: "天朗",
+    desc: "天朗气清,吐纳生息,气血亦得滋养。",
+    mods: { qiRegen: 0.1, maxHpPct: 0.04 },
     tribulationMult: 1,
   },
 ];
