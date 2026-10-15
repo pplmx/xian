@@ -808,6 +808,20 @@ export const TRIALS: TrialDef[] = [
     escalation: 1.06,
     rewardDaoSource: 45,
   },
+  {
+    id: "juejing",
+    name: "绝境试炼",
+    seal: "绝",
+    anchorTier: 27,
+    desc: "敌如饿虎相逼,尖牙利爪撕开甲胄。背水一战,无路可退",
+    ruleText: ["敌方攻击 +12% · 破防 +25%", "回合上限 42", "背水一战"],
+    rules: { enemyAtkMult: 1.12, enemyExtraMods: { armorPen: 0.25 }, maxRounds: 42 },
+    entryCost: 15,
+    fights: 5,
+    healBetweenPct: 0.55,
+    escalation: 1.06,
+    rewardDaoSource: 45,
+  },
 ];
 
 export function trialDef(id: string): TrialDef | undefined {
