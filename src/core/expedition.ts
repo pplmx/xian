@@ -73,6 +73,19 @@ export function resolveWorld(id: string): CelestialWorldDef | undefined {
   return celestialWorldDef(id);
 }
 
+/**
+ * 整程预估的**敌序敌源**:1 进场(world.foes[0]) + 每条路线首个节点怪 + 1 门神。
+ * 与实战同构(fightStep 先 world.foes[0],后逐层 node.foe),故预估的敌必须取自
+ * 路线节点,不能复用世界入口的 world.foes —— 那是两种完全不同的怪。
+ * 玩家星级与可行流派两块共用这份敌源,保证同一弹窗内口径一致(所见即所打)。
+ */
+export function expeditionForecastFoes(world: CelestialWorldDef): WorldFoeShape[] {
+  const shapes: WorldFoeShape[] = [world.foes[0]!];
+  for (let i = 0; i < EXPEDITION_ROUTE_LAYERS; i += 1) shapes.push(world.routes[i]![0]!.foe);
+  shapes.push(world.guardian);
+  return shapes;
+}
+
 /** 道途逐胜叠层词条 */
 function perWinMods(): StatMods | undefined {
   const dao = useEndgameStore().daoPath;
@@ -82,7 +95,7 @@ function perWinMods(): StatMods | undefined {
 }
 
 /** 逆命契:封印当前主流派核心词条(生成负向词条快照) */
-function sealCoreMods(): StatMods | null {
+export function sealCoreMods(): StatMods | null {
   const player = usePlayerStore();
   const build = detectBuild(player.celestialStats.mods);
   if (!build) return null;
@@ -641,10 +654,12 @@ export function forecastExpedition(
   // 实战永远是 1 进场 + EXPEDITION_ROUTE_LAYERS 条路线 + 1 位门神 = 共 1+3+1=5 场,
   // 与 fightStep 一条线同构(world.fights 是旧线性连战残留,实战路径从不读它)。
   // 故预估也按同一结构取敌,否则 6 场世界被往长了估、4 场虚界被往短了估。
-  const playerFoes: CombatantSnap[] = [];
-  for (let i = 0; i < EXPEDITION_ROUTE_LAYERS + 1; i += 1)
-    playerFoes.push(worldFoeSnap(world.foes[i % world.foes.length]!, pRef, 1, pJudgement));
-  playerFoes.push(worldFoeSnap(world.guardian, pRef, 1, pJudgement));
+  // 敌源与实战同构(1 进场 + 每条路线首个节点怪 + 1 门神),见 expeditionForecastFoes。
+  // 与下方可行流派同取同一份敌源,误复用 world.foes 会让星级与实战脱钩,
+  // 也与同行 block 口径打架(这就是那个 block 早用 route[0] 的原因)。
+  const playerFoes: CombatantSnap[] = expeditionForecastFoes(world).map((shape) =>
+    worldFoeSnap(shape, pRef, 1, pJudgement),
+  );
   let clears = 0;
   for (let i = 0; i < 8; i += 1) {
     if (runGauntlet(snap, playerFoes, rules, world.healBetweenPct, seededRng, opts).cleared)
@@ -663,11 +678,9 @@ export function forecastExpedition(
   for (const profile of BUILD_PROFILES) {
     const styleSnap = buildSnap(profile);
     const styleJudgement = celestialJudgement(styleSnap.mods, MAX_MAJOR, world.anchorTier);
-    const simFoes: CombatantSnap[] = [];
-    simFoes.push(worldFoeSnap(world.foes[0]!, SIM_REFERENCE, 1, styleJudgement));
-    for (let i = 0; i < EXPEDITION_ROUTE_LAYERS; i += 1)
-      simFoes.push(worldFoeSnap(world.routes[i]![0]!.foe, SIM_REFERENCE, 1, styleJudgement));
-    simFoes.push(worldFoeSnap(world.guardian, SIM_REFERENCE, 1, styleJudgement));
+    const simFoes: CombatantSnap[] = expeditionForecastFoes(world).map((shape) =>
+      worldFoeSnap(shape, SIM_REFERENCE, 1, styleJudgement),
+    );
     let wins = 0;
     for (let i = 0; i < 5; i += 1) {
       if (runGauntlet(styleSnap, simFoes, rules, world.healBetweenPct, seededRng, opts).cleared)

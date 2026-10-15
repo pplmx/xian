@@ -787,6 +787,14 @@
             </span>
           </button>
         </div>
+        <!-- 逆命契:签前把这场封印的具体词条摊开(决策前摊数字,不许只给定性形容词) -->
+        <p
+          v-if="sealedCore"
+          class="mt-1.5 rounded-md bg-paper-deep/70 px-3 py-2 text-[10px] leading-relaxed text-cinnabar"
+        >
+          <span class="font-kai text-ink">封印「{{ sealedCore.displayName }}」:</span>
+          {{ sealedCore.text }}
+        </p>
         <!-- 奇门遁甲:择门入界(免费,换的是打法,不碰道源倍数) -->
         <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
           奇门 · 择门入界 —— 立契是与天道做交易,择门是选这一趟从哪一门进:免费,改的是打法。
@@ -1176,6 +1184,7 @@ import { SOUL_SLOTS } from "@/data/souls";
 import { REALMS } from "@/data/realms";
 import { tierMajor } from "@/core/formulas";
 import { gateRuleSummary } from "@/core/gateRuleText";
+import { modsText } from "@/ui/statNames";
 import {
   CELESTIAL_WORLDS,
   DAO_PATHS,
@@ -1225,6 +1234,7 @@ import {
   rerollVoidWorld,
   resolveWorld,
   rollMutators,
+  sealCoreMods,
   startWorldExpedition,
   VOID_REROLL_COST,
   type StepOutcome,
@@ -1453,6 +1463,14 @@ const prepGate = ref<string | null>(null);
 const selectedGate = computed(() => (prepGate.value ? gateDef(prepGate.value) : undefined));
 const prepWorld = computed(() => (prepWorldId.value ? resolveWorld(prepWorldId.value) : null));
 const selectedPact = computed(() => (prepPact.value ? pactDef(prepPact.value) : undefined));
+/** 逆命契:把这场封印的具体词条摊开(决策前摊数字契约) */
+const sealedCore = computed(() => {
+  if (selectedPact.value?.special !== "sealCore") return null;
+  const build = detectBuild(player.celestialStats.mods);
+  const sealed = sealCoreMods();
+  if (!build || !sealed) return null;
+  return { displayName: build.displayName, text: modsText(sealed) };
+});
 const prepPreview = computed(() =>
   prepWorld.value
     ? previewFight(prepWorld.value.foes[0]!, undefined, undefined, {

@@ -21,7 +21,10 @@ import {
   chooseRouteNode,
   challengeGuardian,
   challengeMutation,
+  expeditionForecastFoes,
+  sealCoreMods,
 } from "./expedition";
+import { detectBuild } from "./buildDetect";
 import { celestialJudgementLines } from "./gauntlet";
 import type { EquipSlot, EquipmentInstance } from "@/types";
 
@@ -198,6 +201,78 @@ describe("远征 · 判定看得见", () => {
     expect(outcome!.judgementLines, "战报没交代这一战的判定").toEqual(
       celestialJudgementLines(player.celestialStats.mods, player.major, chiyan.anchorTier),
     );
+  });
+});
+
+describe("远征 · 预估敌源与实战同构", () => {
+  it("整程预估的敌序取自路线节点怪,而非世界入口的 world.foes", () => {
+    const chiyan = world("chiyan");
+    const shapes = expeditionForecastFoes(chiyan);
+    // 1 进场 + 每条路线首个节点怪 + 1 门神 = 1+3+1 = 5 场
+    expect(shapes.map((s) => s.name)).toEqual([
+      "赤炎狱卒", // 进场 world.foes[0]
+      "狱火统领", // 路线 0 节点 0
+      "焚天巨魔", // 路线 1 节点 0
+      "天火使者", // 路线 2 节点 0
+      "赤炎天主", // 界主
+    ]);
+    // 第 2~4 场各来自各自路线的首个节点怪(不是把入口怪循环充数)
+    expect(shapes[1]!.name).toBe(chiyan.routes[0]![0]!.foe.name);
+    expect(shapes[2]!.name).toBe(chiyan.routes[1]![0]!.foe.name);
+    expect(shapes[3]!.name).toBe(chiyan.routes[2]![0]!.foe.name);
+    // 至少有一段路线的节点怪与入口怪不同名 —— 只要预估误取了入口怪,这里就会露馅
+    const entryNames = new Set(chiyan.foes.map((f) => f.name));
+    expect(chiyan.routes.some((r) => !entryNames.has(r[0].foe.name))).toBe(true);
+  });
+
+  it("玩家星级预估与可行流派共用同一份敌源(口径一致)", () => {
+    const chiyan = world("chiyan");
+    const shapes = expeditionForecastFoes(chiyan);
+    // 旧实现 `world.foes[i % len]` 会把入口怪循环进第 2~4 场 —— 守卫钉住:那些场
+    // 必须是各自的路线节点怪,不是入口怪重复
+    expect(shapes[1]!.name).toBe(chiyan.routes[0]![0]!.foe.name);
+    expect(shapes[3]!.name).toBe(chiyan.routes[2]![0]!.foe.name);
+  });
+});
+
+describe("远征 · 逆命契封印摊开", () => {
+  it("逆命契把当前主流派的核心词条转成负向快照(签前能摊开具体封印了谁)", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    player.initCharacter("逆命契自检", { roots: [{ element: "wood", aptitude: 90 }] } as never);
+    player.major = 20;
+    player.sub = 9;
+    const inv = useInventoryStore();
+    inv.items = CHAOS_TOP.map((templateId, i): EquipmentInstance => ({
+      uid: `x${i}`,
+      templateId,
+      quality: "divine",
+      tier: 32,
+      level: 5,
+      // shd2 罡罩(shieldOnStart)+ gs2 盾魂(shieldPower):罡盾流的一套确定性勾出
+      affixes: [
+        { id: "shd2", roll: 1 },
+        { id: "gs2", roll: 1 },
+      ],
+    }));
+    inv.items.forEach((it, i) => inv.equip(it.uid, SLOTS[i]!));
+    useEndgameStore().daoPath = "sword";
+    const build = detectBuild(player.celestialStats.mods)!;
+    expect(build.style.id).toBe("gangdun");
+    const sealed = sealCoreMods()!;
+    expect(sealed, "主流派成形时逆命契不该没有可封印的词条").not.toBeNull();
+    // 封印的正是当前流派的核心 stat,且恒为负向(归零成负模快照)
+    for (const key of Object.keys(build.style.core)) {
+      const cur = player.celestialStats.mods[key as keyof typeof player.celestialStats.mods] ?? 0;
+      expect(sealed[key as keyof typeof sealed], `核心词条 ${key} 应被封印为负`).toBe(-cur);
+    }
+    // 至少封印了一个核心词条 —— 若 detectBuild 认得流派却空手而归,弹窗就摊不出东西
+    expect(Object.keys(sealed).length).toBeGreaterThan(0);
+  });
+
+  it("没有主流派时逆命契无可封印(不误导玩家有空头封印)", () => {
+    seated(9, [], "heaven", 20); // 裸装不成流派
+    expect(sealCoreMods()).toBeNull();
   });
 });
 
