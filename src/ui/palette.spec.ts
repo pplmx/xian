@@ -328,6 +328,17 @@ describe("调色板 · 青", () => {
     expect(worstSurface("qing", "light")).toBeGreaterThanOrEqual(4.5);
     expect(worstSurface("qing", "dark")).toBeGreaterThanOrEqual(4.5);
   });
+
+  it("被否决的 azure(#4F7699)不得回流进 src —— 浅色下 4.17:1 不到 AA,已被石青压深替代", () => {
+    // design.md:西式 azure 的明度只有 4.17:1,压深到 #2C5A7D 后才称石青。
+    // 曾有一处把它手写进创角鉴定数据层(linggenGen 上灵根)与光晕(Reveal),
+    // 现已换成 design.md 指定替代。这一条守着「被否决色不许再回来」。
+    // 只扫应用层的 .vue / 数据 .ts(style.css 那份事实源里的说明文字不算用途)。
+    for (const ext of [/\.vue$/, /\.ts$/] as RegExp[]) {
+      const hits = filesMatching(resolve(ROOT, "src"), /#4[fF]7699/i, ext);
+      expect(hits, `被否决的 azure #4F7699 不得出现在 ${ext} 文件`).toEqual([]);
+    }
+  });
 });
 
 describe("调色板 · 九品色阶分得开", () => {

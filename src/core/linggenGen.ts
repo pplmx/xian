@@ -34,7 +34,9 @@ export const LINGGEN_GRADES: LinggenGrade[] = [
   { name: "杂灵根", color: "#857f70" },
   { name: "伪灵根", color: "#857f70" },
   { name: "真灵根", color: "#6e8b74" },
-  { name: "上灵根", color: "#4f7699" },
+  // 上灵根原用西式 azure —— design.md 明文否决(见 style.css 的说明),已换成其指定的替代
+  // #2C5A7D 那档石青。这是固定的近黑鉴定场,不随主题换肤,故不改引 var(--color-*)。
+  { name: "上灵根", color: "#2c5a7d" },
   { name: "异灵根", color: "#7b5ea7" },
   { name: "变异灵根", color: "#7b5ea7" },
   { name: "天灵根", color: "#c9a227" },

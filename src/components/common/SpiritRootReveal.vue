@@ -148,7 +148,9 @@ defineExpose({ show });
 .root-bg-2 {
   width: 280px;
   height: 280px;
-  background: rgba(79, 118, 153, 0.5);
+  /* 原用西式 azure rgba(79,118,153,.5) —— design.md 否决的那档;鉴定场固定近黑不换肤,
+     故用 design.md 指定的替代 #2C5A7D 这档(与 linggenGen 上灵根同源) */
+  background: rgb(44 90 125 / 0.5);
   bottom: -60px;
   left: -50px;
   animation: root-float 12s ease-in-out infinite reverse;
@@ -365,6 +367,8 @@ defineExpose({ show });
   font-family: var(--font-kai);
   font-size: 1rem;
   letter-spacing: 0.4em;
+  /* 固定近黑鉴定场上的装饰性标题:浅米白在近黑底上可读(design.md 因「纸上放不下
+     第四档」撤掉的最淡墨 tier,此处只作暗场点缀保留,非纸上正文,不随主题换肤) */
   color: #b9b2a0;
   margin: 0;
 }
