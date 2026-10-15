@@ -103,6 +103,12 @@ export const MUTATORS: MutatorDef[] = [
     text: "敌人连击率 +18%",
     rules: { enemyExtraMods: { comboRate: 0.18 } },
   },
+  {
+    id: "foe_penetrate",
+    name: "破甲难防",
+    text: "敌人破防 +30%",
+    rules: { enemyExtraMods: { armorPen: 0.3 } },
+  },
 ];
 
 export function mutatorDef(id: string): MutatorDef | undefined {
