@@ -820,6 +820,9 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(view, "重铸确认后要卸武装态").toContain("disarmReforgeActions()");
     expect(view, "自动重铸同样要有两步确认").toContain("armAuto");
     expect(view, "界面该给「确认重铸」这一步").toContain("确认重铸");
+    // 预算越界输入(手打 0/600)显示会与实跑脱节:提交时须夹到 [1,500],不许「至多洗
+    // 0/600 次」而实跑 1/500 次 —— 预览与实发同口径.
+    expect(view, "预算提交时按实跑口径夹取(clampAutoBudget)").toContain("clampAutoBudget");
   });
 
   it("炼丹方子双缺要并列报(草缺·灵石尚差),失败线要说明灵石不退", () => {

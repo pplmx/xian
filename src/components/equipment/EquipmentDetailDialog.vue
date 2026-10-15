@@ -357,6 +357,7 @@
               min="1"
               max="500"
               class="w-16 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[11px] tabular"
+              @change="clampAutoBudget"
             />
             <span class="text-[10px] text-ink-faint tabular"
               >次 · 每洗 器灵尘×{{ reforgeCostVal.dust }} · 灵石
@@ -691,6 +692,12 @@ function clearNote(): void {
 const autoOpen = ref(false);
 const transferOpen = ref(false);
 const autoBudget = ref(50);
+/** 预算越界输入(手打 0 / 600)不静默按 500 洗:提交时即夹到 [1,500],让
+ * 「至多洗 N 次」显示与实跑 clampAutoBudget 同口径 —— 预览与实发不许脱节。 */
+function clampAutoBudget(): void {
+  const raw = Math.floor(Number(autoBudget.value) || 0);
+  autoBudget.value = Math.min(500, Math.max(1, raw));
+}
 /** 停止条件:任一命中即停;minRoll 给「数值范围」那一嘴 */
 const autoTargets = ref<ReforgeTarget[]>([]);
 /** 首洗成本判付不起:自动重铸每洗与单次重铸同源(reforgeCost),缺一道账即灰 */
