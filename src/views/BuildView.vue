@@ -66,6 +66,8 @@
               v-for="l in powerRating.labels"
               :key="l.key"
               class="w-full min-h-8 -my-1 py-1.5 text-left active:opacity-60"
+              :aria-expanded="dimKey === l.key"
+              :aria-controls="`build-dim-panel-${l.key}`"
               @click="toggleDim(l.key)"
             >
               <span class="flex items-center justify-between text-[11px]">
@@ -74,7 +76,11 @@
                   ratingStars(l.stars)
                 }}</span>
               </span>
-              <span v-if="dimKey === l.key" class="mt-1 block rounded-md bg-paper/70 px-2 py-1.5">
+              <span
+                v-if="dimKey === l.key"
+                :id="`build-dim-panel-${l.key}`"
+                class="mt-1 block rounded-md bg-paper/70 px-2 py-1.5"
+              >
                 <span class="block text-[10px] text-ink-soft">
                   {{ l.name }}得分 {{ l.score.toFixed(2) }} · 跨
                   {{ powerRating.thresholds[l.key].join(" / ") }} 逐级加星

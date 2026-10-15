@@ -712,6 +712,32 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("可点选的装备词条格要报选中态 —— aria-pressed,不许只靠描边变色", () => {
+    // 自动重铸的「洗到这些词条出现就停」多选格:选中态此前只靠朱砂描边+字色,
+    // 读屏根本听不出哪几个被选中,等于无法操作自动重铸。与 InventoryView 的
+    // smartKeep(minQuality 用 aria-pressed 同款)应同一条口径。
+    const eq = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    expect(eq?.src, "词条格选中态要报给读屏").toContain(':aria-pressed="isAutoTarget(af.id)"');
+  });
+
+  it("装备详情的两处折叠要报展开态 —— autoOpen/transferOpen 挂 aria-expanded", () => {
+    // 「自动重铸 / 词条转移」是点开才出现的折叠面板,此前只靠文案「收起/⋯」暗示,
+    // 读屏不知道展开没展开。与 CombatPanel 的 showLore/showAnalysis 的
+    // aria-expanded 同一条口径(揭开的 disclosure 一定要把状态报出来)。
+    const eq = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    expect(eq?.src, "自动重铸折叠要报展开态").toContain(':aria-expanded="autoOpen"');
+    expect(eq?.src, "词条转移折叠要报展开态").toContain(':aria-expanded="transferOpen"');
+  });
+
+  it("构筑五维评级的气泡点开要报展开态 —— dimKey 挂 aria-expanded + 面板给 id", () => {
+    // 五维评级的每一维可点开看词条明细,点开状态此前只靠下钻块是否可见传意,
+    // 读屏不知道哪一维开着。补 aria-expanded(报当前维开/合)与 aria-controls
+    // → id(把按钮和它控制的明细块拴起来)。
+    const build = FILES.find((f) => f.path === "views/BuildView.vue");
+    expect(build?.src, "评级维展开态报给读屏").toContain(':aria-expanded="dimKey === l.key"');
+    expect(build?.src, "评级维的明细块要带配对 id").toContain(':id="`build-dim-panel-${l.key}`"');
+  });
+
   it("大境突破有分级 —— 一境一次是天劫,不许和每层小推进同一张脸", () => {
     // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
     // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)

@@ -316,6 +316,7 @@
               v-for="af in affixOptions"
               :key="af.id"
               class="rounded px-1 py-1 text-[10px] leading-tight active:opacity-60"
+              :aria-pressed="isAutoTarget(af.id)"
               :class="
                 isAutoTarget(af.id)
                   ? 'border border-cinnabar text-cinnabar'
@@ -438,11 +439,16 @@
           <button
             v-if="reforgeCostVal"
             class="btn-ghost w-full !py-1 !text-[11px]"
+            :aria-expanded="autoOpen"
             @click="autoOpen = !autoOpen"
           >
             {{ autoOpen ? "收起自动重铸" : "自动重铸 · 洗到指定词条即停" }}
           </button>
-          <button class="btn-ghost w-full !py-1 !text-[11px]" @click="transferOpen = !transferOpen">
+          <button
+            class="btn-ghost w-full !py-1 !text-[11px]"
+            :aria-expanded="transferOpen"
+            @click="transferOpen = !transferOpen"
+          >
             {{ transferOpen ? "收起词条转移" : "词条转移 · 抽一条给别的装备" }}
           </button>
           <AffixTransferPanel
