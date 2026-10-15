@@ -1,5 +1,5 @@
 /**
- * 成就库 —— 65 个,长期目标
+ * 成就库 —— 66 个,长期目标
  *
  * 未达成者在界面上一律以「???」示人(见 views/CollectionView.vue),
  * 所以此表不再有"隐藏成就"一说 —— 每个位子人人平等,成了才现名目。
@@ -273,5 +273,12 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     "炼气境修至圆满",
     { type: "custom", key: "realm_0_9" },
     { stoneTier: 30, titleId: "ti_lianqi" },
+  ),
+  ac(
+    "a_boss",
+    "斩王十二",
+    "累计斩落十二尊王级妖邪",
+    { type: "counter", key: "bossKills", value: 12 },
+    { wudao: 40 },
   ),
 ];
