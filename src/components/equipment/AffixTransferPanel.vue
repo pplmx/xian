@@ -186,7 +186,7 @@ function doTransfer(): void {
             <span v-if="!l.check.ok" class="ml-auto">{{
               transferBlockText(l.check.block, affixId!)
             }}</span>
-            <span v-else class="ml-auto opacity-70">
+            <span v-else class="ml-auto">
               <template v-if="l.check.ok">
                 <span v-if="replaceId === l.replaceId" class="text-accent">✓ 选中</span>
                 <span v-else></span>

@@ -678,6 +678,16 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(view, "界域应读 worldNameOfTier").toContain("worldNameOfTier(");
   });
 
+  it("词条转移的「✓ 选中」是强调标记 —— 不许叠 opacity 把它压弱", () => {
+    const view = src("../components/equipment/AffixTransferPanel.vue");
+    // 选中确认字本应全色强调(text-accent);叠 opacity-70 语义倒置(选中反被弱化)。
+    // <span v-else class="ml-auto"> 负责 ml 对齐,「✓ 选中」由 text-accent 全色承载
+    expect(view, "✓ 选中该走 text-accent 全色,不叠 opacity").toMatch(
+      /text-accent[\s\S]{0,20}✓ 选中/,
+    );
+    expect(view, "外层容器不再叠 opacity 压字").not.toContain('v-else class="ml-auto opacity-70"');
+  });
+
   it("图鉴的用具三类取自 itemText 的功用函数", () => {
     // 装备/法宝/丹药三类已收进 codex 的派生视图,功用行在那里拼;
     // 功法阁仍是两态列表,由视图直接拼 —— 两边都得取同一份文案函数
