@@ -207,6 +207,14 @@ describe("文案数值对账 · 视图不手抄数字", () => {
     expect(view).not.toContain("5分钟 修炼 +150%");
   });
 
+  it("闭关的「后每秒/多收」估算只在未闭关头作前瞻 —— 闭关中现速率已含加成,再折算即重复叠加", () => {
+    const view = src("../views/CultivationView.vue");
+    // 前瞻行要挂在未闭关口:这正是它作为「决定要不要闭」的估值的意义
+    expect(view, "闭关估算应 v-if 在未闭关时展示").toContain('v-if="!retreating"');
+    // 预估要读 retreat 常量去折算,不许手写「×2.5」这类(改 buff 就会撒谎)
+    expect(view, "闭关估算应折现倍率,不手抄倍率").toContain("retreatDef?.mods.cultivationSpeed");
+  });
+
   it("突破幕亮出破境增益:谁在顶这一阶一眼见,文案走 buff→modsText;大关幕不亮", () => {
     const view = src("../views/CultivationView.vue");
     expect(view).toContain("breakthroughBuffRows");

@@ -459,8 +459,9 @@
       >
         闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)
       </button>
-      <!-- 闭关该收多少就摊多少:照现倍率折算 base,不只在定性「+150%」上打转 -->
-      <p class="mt-1 text-[10px] text-ink-faint tabular">
+      <!-- 闭关该收多少就摊多少:照现倍率折算 base,不只在定性「+150%」上打转。
+           只在未闭关头展示为**前瞻**;闭关中现速率已含 +150%,再折算一遍会重复叠加,故撤 -->
+      <p v-if="!retreating" class="mt-1 text-[10px] text-ink-faint tabular">
         闭关后每秒 ≈ {{ formatRate(retreatPerSec) }}(现 {{ formatRate(player.cultPerSec) }})·{{
           retreatMinutes
         }}分钟约多收 {{ formatRate(retreatExtra) }} 修为
