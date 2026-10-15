@@ -145,6 +145,10 @@ export function getRetreatRemainingSec(at: number = gameNow()): number {
 
 /** 突破准备(静坐/服丹)——数值与药价全部取自 BREAKTHROUGH_PREP_OPTIONS,逻辑不持有第二份魔法数 */
 export function prepareBreakthrough(optionId: string): boolean {
+  // 幂等(与 startRetreat 同款):已有在途/就绪的准备时再来一次,只该是误触/
+  // 连点 —— 聚气丹要花灵石,连点两下若双双放行,灵石扣两次、加成却只认一份。
+  // 界面本就用 v-if 在 坐/就绪 时藏掉按钮,这一层兜底是给重入/连点留的硬闸。
+  if (usePlayerStore().breakthroughPrep) return false;
   const opt = BREAKTHROUGH_PREP_OPTIONS.find((o) => o.id === optionId);
   if (!opt || opt.bonusRate <= 0) return false; // direct/未知项 = 不是准备动作,不产生加成
 

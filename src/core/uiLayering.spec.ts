@@ -1348,6 +1348,18 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("离线卷轴收益列同列同缩写 —— 灵气/灵草/玄铁/悟道点/器灵尘也要 formatNum", () => {
+    // 修为/灵石已走 formatGN,灵气等大数资源却裸整数 —— 同列的 tabular 对齐被
+    // 一串 10~20 位裸数字撑破(顶栏都缩写 qi,离线卷轴却给原数)。同一列、同一把尺:
+    // 大资源全部 formatNum 缩写,小值它也会原数显示,不吞精度。
+    const dlg = FILES.find((f) => f.path === "components/offline/OfflineRewardDialog.vue");
+    expect(dlg?.src, "灵气要缩写").toContain("+${formatNum(s.qi)}");
+    expect(dlg?.src, "灵草要缩写").toContain("+${formatNum(s.herb)}");
+    expect(dlg?.src, "玄铁要缩写").toContain("+${formatNum(s.ore)}");
+    expect(dlg?.src, "悟道点要缩写").toContain("+${formatNum(s.wudao)}");
+    expect(dlg?.src, "器灵尘要缩写").toContain("+${formatNum(s.recycledDust)}");
+  });
+
   it("提示条全库开口 —— toast 承载动作结果,不许对读屏全哑", () => {
     // toast 几乎通报了每一笔获得与每一处不足,ToastHost 却没有 live region ——
     // 视觉玩家有滑入的音画,读屏玩家点完只听个静默。挂在容器上:TransitionGroup

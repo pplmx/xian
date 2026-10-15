@@ -318,7 +318,8 @@
               <span class="chip-ink mr-1 border-violet-ink/50 text-[9px] text-violet-ink"
                 >永久积累</span
               >
-              道果 {{ player.reincarnation.daoFruit }} · 天赋 {{ ownedTalents.length }} 项
+              道果 {{ formatNum(player.reincarnation.daoFruit) }} · 天赋 {{ ownedTalents.length }}
+              项
             </span>
           </span>
           <span class="text-[11px] text-violet-ink">观想 →</span>
@@ -377,7 +378,7 @@
           </span>
         </span>
         <span class="tabular font-kai text-[15px] text-cinnabar">{{
-          player.reincarnation.daoFruit
+          formatNum(player.reincarnation.daoFruit)
         }}</span>
       </p>
       <!-- S3 道果收益:有效值与软上限白话 -->
@@ -752,7 +753,7 @@ import { mentorVerdict, mentorChoices } from "@/core/mentorService";
 import { mentorHint } from "@/core/fortuneChain";
 import { buildIdentity } from "@/core/identityService";
 import { rootElements, tendencyLines } from "@/core/linggenAffinity";
-import { cnNumber, formatPercent } from "@/utils/format";
+import { cnNumber, formatNum, formatPercent } from "@/utils/format";
 import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
 import { STAT_NAMES, modsText } from "@/ui/statNames";

@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
 import { useUiStore } from "@/stores/ui";
-import { formatDuration, formatGN } from "@/utils/format";
+import { formatDuration, formatGN, formatNum } from "@/utils/format";
 import { qualityDef } from "@/data/qualities";
 import { playSfx } from "@/core/audio";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -85,10 +85,10 @@ const rows = computed(() => {
   const list: { icon: string; label: string; value: string }[] = [];
   if (s.exp.m > 0) list.push({ icon: "flame", label: "修为", value: `+${formatGN(s.exp)}` });
   if (s.stone.m > 0) list.push({ icon: "gem", label: "灵石", value: `+${formatGN(s.stone)}` });
-  if (s.qi > 0) list.push({ icon: "wind", label: "灵气", value: `+${s.qi}` });
-  if (s.herb > 0) list.push({ icon: "leaf", label: "灵草", value: `+${s.herb}` });
-  if (s.ore > 0) list.push({ icon: "mountain", label: "玄铁", value: `+${s.ore}` });
-  if (s.wudao > 0) list.push({ icon: "book", label: "悟道点", value: `+${s.wudao}` });
+  if (s.qi > 0) list.push({ icon: "wind", label: "灵气", value: `+${formatNum(s.qi)}` });
+  if (s.herb > 0) list.push({ icon: "leaf", label: "灵草", value: `+${formatNum(s.herb)}` });
+  if (s.ore > 0) list.push({ icon: "mountain", label: "玄铁", value: `+${formatNum(s.ore)}` });
+  if (s.wudao > 0) list.push({ icon: "book", label: "悟道点", value: `+${formatNum(s.wudao)}` });
   if (s.ageYears > 0) list.push({ icon: "sunset", label: "寿元流逝", value: `${s.ageYears} 载` });
   if (s.battles > 0)
     list.push({ icon: "swords", label: "历练战斗", value: `${s.wins} 胜 / ${s.battles} 战` });
@@ -99,7 +99,7 @@ const rows = computed(() => {
     list.push({
       icon: "sparkles",
       label: "回收化尘",
-      value: `${recycled} 件 · 器灵尘+${s.recycledDust}`,
+      value: `${recycled} 件 · 器灵尘+${formatNum(s.recycledDust)}`,
     });
   }
   return list;

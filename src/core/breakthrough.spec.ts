@@ -116,6 +116,30 @@ describe("渡劫成功率推演", () => {
     }
   });
 
+  it("已设有突破准备时再点服丹/静坐不重复扣灵石 —— 幂等(防连点双重扣费)", () => {
+    // 界面本用 v-if 在 坐/就绪 时藏掉按钮,但连点两下会赶在重渲染前连发两次 click;
+    // prepareBreakthrough 若是每次照扣灵石、加成却只认一份,玩家就白亏一份药钱。
+    // 这层幂等兜底与 startRetreat 同款:已准备即 false,不再花钱、不再覆盖。
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(1_000_000);
+      const player = usePlayerStore();
+      const resources = useResourcesStore();
+      player.$patch({ major: 0, sub: 3, exp: { m: 1e12, e: 0 } });
+      resources.$patch({ qi: 99999 });
+      resources.addStone(gn(80));
+      expect(prepareBreakthrough("pill")).toBe(true);
+      // 灵石已扣一份;在途准备存在时再来一次必须失败,且一分不再扣
+      const expectErr = prepareBreakthrough("pill");
+      expect(expectErr).toBe(false);
+      // 供 80 花 80 后分文不剩;若二次误放行,这里会再扣(变成负数/报错)或已归零
+      expect(resources.hasStone(gn(1))).toBe(false);
+    } finally {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    }
+  });
+
   it("UI 预览与实际结算同向:推演更好的构筑,采样成功率也必须更高", () => {
     // Phase 32.1 口径纪律:决策面板告诉玩家"这套构筑更稳",
     // 结算就不能给出相反结论——否则玩家会觉得系统在骗人。
