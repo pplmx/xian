@@ -759,6 +759,18 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     );
   });
 
+  it("首次凝道果教学弹窗的判定要采样在凝果之前 —— 否则 flag 次序让弹窗永不弹出", () => {
+    const view = src("../views/CelestialView.vue");
+    // condenseDaoFruit 在首次成功时自己就置 daoFruitTutorialSeen(true),
+    // 若 doCondense 在凝果后才查 shouldShowFruitTutorial(),判定恒为假 → 弹窗死代码.
+    // 必须在凝果前先采样首次与否(firstFruit 先于 condenseDaoFruit).
+    // 直接断言源码顺序,不抽函数体(函数体长短变化不更敏感).
+    expect(
+      view,
+      "doCondense 该在凝果前先采样 shouldShowFruitTutorial(firstFruit 在其前)",
+    ).toContain("const firstFruit = shouldShowFruitTutorial();");
+  });
+
   it("离线挂机折扣是恒有的 —— 非超限的短离也要把「9 折」摊明,不能只在封顶时提", () => {
     const core = src("./offline.ts");
     // 0.9 的效率**每天离线都生效**(planIdle 的 effectiveMs = cappedMs × efficiency),

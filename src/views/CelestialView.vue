@@ -1438,9 +1438,13 @@ const fruitDialogOpen = ref(false);
 const fruitDialog = computed(() => daoFruitDialog());
 function doCondense(): void {
   const before = player.reincarnation.daoFruit;
+  // 标志序陷阱:condenseDaoFruit 在首次成功时自己就置 daoFruitTutorialSeen=true
+  // (endgameService),若在它之后才读 shouldShowFruitTutorial(),判定恒为假,
+  // 这条「首次凝道果」教学弹窗就永不弹出 —— 必须先于凝果采样.
+  const firstFruit = shouldShowFruitTutorial();
   condenseDaoFruit();
   if (player.reincarnation.daoFruit === before) return;
-  if (shouldShowFruitTutorial()) {
+  if (firstFruit) {
     fruitDialogOpen.value = true;
     markFruitTutorialSeen();
   }
