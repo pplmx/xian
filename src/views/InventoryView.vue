@@ -579,7 +579,8 @@
                 {{ HERB_GRADE_SHORT[r.cost.herbGrade] }}灵草×{{ r.cost.herb }} · 灵石
                 {{ formatGN(r.cost.stone) }} ·<template v-if="r.shouzhuoLeft"
                   >本世首败(任一炉)灵草全保</template
-                ><template v-else>炸炉返草 ~{{ r.keptHerb }} 株</template>
+                ><template v-else>炸炉返草 ~{{ r.keptHerb }} 株</template
+                ><template v-if="toNum(r.cost.stone) > 0"> · 灵石不退</template>
               </p>
               <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
               <p class="text-[10px] leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
@@ -1338,6 +1339,18 @@ const recipes = computed(() =>
       // 缺草的直接指路灵草坊(那是唯一买草的地方)
       const shortHerb = !resources.hasHerbs(cost.herbGrade, cost.herb);
       const shortStone = !resources.hasStone(cost.stone);
+      // 双缺要并列报(「缺凡品,持 a/b · 灵石尚差 c 石」)—— 与同仓其它消费点(GongfaDialog 悟道点·残页)一个口子;
+      // 若只报第一个成立的,买齐草后灵石尚差才突然冒出来,等于把决策的一半藏到付款后
+      const shortParts: string[] = [];
+      if (shortHerb)
+        shortParts.push(
+          `缺${HERB_GRADE_NAMES[cost.herbGrade]},持 ${resources.herbOf(cost.herbGrade)}/${cost.herb}`,
+        );
+      if (shortStone)
+        shortParts.push(
+          `灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石`,
+        );
+      const shortText = shortParts.length ? shortParts.join(" · ") : null;
       return {
         def,
         cost,
@@ -1349,11 +1362,7 @@ const recipes = computed(() =>
         shouzhuoLeft,
         shortHerb,
         shortStone,
-        shortText: shortHerb
-          ? `缺${HERB_GRADE_NAMES[cost.herbGrade]},持 ${resources.herbOf(cost.herbGrade)}/${cost.herb}`
-          : shortStone
-            ? `灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石`
-            : null,
+        shortText,
       };
     })
     .filter(

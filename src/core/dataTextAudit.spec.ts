@@ -698,6 +698,21 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     );
   });
 
+  it("炼丹方子双缺要并列报(草缺·灵石尚差),失败线要说明灵石不退", () => {
+    const view = src("../views/InventoryView.vue");
+    // 双缺只报第一个成立的,会让「买齐草才发现石也不够」的决策藏在付款后 —— 与同仓
+    // GongfaDialog 双缺并列一脉。shortText 由 shortParts 拼,既有草缺也有石缺两句
+    expect(view, "草缺与石缺要各成一句、用空串拼在 shortParts 里").toContain("shortParts.push");
+    expect(view, "双缺用 · 粘连,不许三目只取第一项").toContain('shortParts.join(" · ")');
+    // 失败那面的账只写「返草」会把灵石一炉全赔藏掉:成本行必须点名灵石不退
+    expect(view, "失败线要亮「灵石不退」(石满赔是 engineCraft.spentOnFail 的常量行为)").toContain(
+      "灵石不退",
+    );
+    expect(view, "灵石不退只在有石耗时才有意义(零石耗不摆空话)").toContain(
+      "toNum(r.cost.stone) > 0",
+    );
+  });
+
   it("灵兽的性子带数,出处与结算同源", () => {
     const view = src("../views/TitlesView.vue");
     expect(view, "性子该读 petTraitText(与 core/petPersonality 同源)").toContain("petTraitText(");
