@@ -79,6 +79,12 @@ export const MUTATORS: MutatorDef[] = [
     text: "敌人速度 +25%",
     rules: { enemyExtraMods: { speed: 0.25 } },
   },
+  {
+    id: "foe_wrath",
+    name: "煞气冲天",
+    text: "敌人会心 +12%",
+    rules: { enemyExtraMods: { critRate: 0.12 } },
+  },
 ];
 
 export function mutatorDef(id: string): MutatorDef | undefined {
