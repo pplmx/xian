@@ -1,4 +1,4 @@
-/** 随机事件库 —— 89 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 90 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1554,6 +1554,28 @@ export const EVENTS: EventDef[] = [
       c("转身离开", [o(1, "终究是身外之物,你摇摇头走开。")]),
     ],
     { maxRealm: 4 },
+  ),
+  ev(
+    "ev_river_sacrifice",
+    "河神祭",
+    "河畔香火缭绕,乡民正朝河中投下祭品,求个风调雨顺。",
+    ["general"],
+    [
+      c(
+        "驻足观看",
+        [
+          o(60, "你嗅到水底隐有灵物,便顺水捞起一件旧祭品。", {
+            type: "material",
+            id: "herb",
+            amount: 6,
+          }),
+          o(40, "浪头一涌,你只合了个空。", { type: "nothing" }),
+        ],
+        { isDefault: true },
+      ),
+      c("转身离开", [o(1, "凡间香火,你无意沾惹。")]),
+    ],
+    { maxRealm: 5 },
   ),
 ];
 
