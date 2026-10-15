@@ -1148,6 +1148,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(lad?.src, "不许退回手写「仙路 21 境」").not.toContain('aria-label="仙路 21 境"');
   });
 
+  it("建筑连升的读屏名读 BUILD_BATCH —— 不许写着「连升×{{BUILD_BATCH}}」、读屏却停「5 级」", () => {
+    // 建筑卡的连升按钮文本与批量调用都读 BUILD_BATCH,唯一漏的是读屏
+    // aria-label「连升 5 级」—— 批量指变了,按钮与调用跟着变,读名却停在 5,
+    // 又是「写常量即撒谎」(与灵脉连投 / 仙路境数同族)。
+    const b = FILES.find((f) => f.path === "components/dongfu/BuildingCard.vue");
+    expect(b?.src, "建筑连升读屏名要插批量常量").toContain("`连升 ${BUILD_BATCH} 级`");
+    expect(b?.src, "不许退回手写「连升 5 级」").not.toContain('aria-label="连升 5 级"');
+  });
+
   it("破坏性二次确认话术统一 —— 确认前缀 + 取消,不许各说各话", () => {
     // 删构筑/分解装备/弃秘境三处都是「确认后不可逆」的二步确认,此前确认词
     // (确信删除/分解?/确出)与取消词(取消/算了)各说各话 —— 统一成「确认+对象 / 取消」。

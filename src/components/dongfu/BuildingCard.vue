@@ -73,7 +73,7 @@
       <button
         v-if="info.canUpgrade"
         class="btn-ghost min-h-[28px] w-full !py-1 !text-[10px]"
-        aria-label="连升 5 级"
+        :aria-label="`连升 ${BUILD_BATCH} 级`"
         :disabled="!info.canUpgrade"
         @click="buildingUpgradeN(props.def.id, BUILD_BATCH)"
       >
