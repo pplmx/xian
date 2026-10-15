@@ -812,6 +812,16 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     );
   });
 
+  it("装备的重铸/自动重铸都要两步确认 —— 误触不得直接洗掉这一身 roll", () => {
+    const view = src("../components/equipment/EquipmentDetailDialog.vue");
+    // 重铸/自动重铸是「花器灵尘+灵石、把未封存词条尽数重掷」的高代价重掷,自动更
+    // 能一次连洗 500 次 —— 与分解同族破坏性动作,必须「先武装、再确认」才真跑.
+    expect(view, "重铸应有武装态,不一点即执行").toContain("armReforge");
+    expect(view, "重铸确认后要卸武装态").toContain("disarmReforgeActions()");
+    expect(view, "自动重铸同样要有两步确认").toContain("armAuto");
+    expect(view, "界面该给「确认重铸」这一步").toContain("确认重铸");
+  });
+
   it("炼丹方子双缺要并列报(草缺·灵石尚差),失败线要说明灵石不退", () => {
     const view = src("../views/InventoryView.vue");
     // 双缺只报第一个成立的,会让「买齐草才发现石也不够」的决策藏在付款后 —— 与同仓

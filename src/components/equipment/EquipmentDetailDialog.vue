@@ -363,6 +363,7 @@
               {{ formatGN(reforgeCostVal.stone) }}</span
             >
             <button
+              v-if="!autoArm"
               class="btn-seal ml-auto !px-3 !py-1 !text-[11px]"
               :disabled="!autoTargets.length || !autoAffordable"
               :title="
@@ -372,10 +373,25 @@
                     ? undefined
                     : '灵石或器灵尘不足'
               "
-              @click="runAutoReforge"
+              @click="armAuto"
             >
               开 洗
             </button>
+            <template v-else>
+              <button
+                class="btn-seal ml-auto !px-3 !py-1 !text-[11px]"
+                :disabled="!autoTargets.length || !autoAffordable"
+                @click="runAutoReforge"
+              >
+                确认开洗
+              </button>
+              <button
+                class="btn-ghost !px-3 !py-1 !text-[11px] text-ink-faint"
+                @click="disarmReforgeActions"
+              >
+                取消
+              </button>
+            </template>
           </div>
           <!-- 首洗就付不起,预告就把它摆出来(与重铸/封存同款):灰钮不许只有 broke toast -->
           <p
@@ -389,28 +405,39 @@
         <!-- 重铸与封存 (Phase 30.1) -->
         <template v-if="reforgeCostVal || sealCostVal">
           <div class="flex gap-2 text-[11px]">
-            <button
-              v-if="reforgeCostVal"
-              class="btn-ghost flex-1 !py-1"
-              :disabled="!reforgeAffordable"
-              @click="doReforge"
-            >
-              重铸词条
-              <span class="ml-1 tabular text-[10px] text-ink-faint">
-                器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
-              </span>
-            </button>
-            <div
-              v-if="sealCostVal"
-              class="flex flex-1 items-center justify-center rounded-md border px-2 py-1"
-              :class="
-                sealAffordable
-                  ? 'border-qing/20 bg-qing/5 text-qing'
-                  : 'border-ink/10 bg-ink/4 text-ink-faint opacity-60'
-              "
-            >
-              封存一词 {{ formatGN(sealCostVal) }}
-            </div>
+            <template v-if="reforgeArm">
+              <button class="btn-seal flex-1 !py-1" @click="doReforge">确认重铸</button>
+              <button
+                class="btn-ghost flex-initial px-3 py-1 text-ink-faint"
+                @click="disarmReforgeActions"
+              >
+                取消
+              </button>
+            </template>
+            <template v-else>
+              <button
+                v-if="reforgeCostVal"
+                class="btn-ghost flex-1 !py-1"
+                :disabled="!reforgeAffordable"
+                @click="armReforge"
+              >
+                重铸词条
+                <span class="ml-1 tabular text-[10px] text-ink-faint">
+                  器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
+                </span>
+              </button>
+              <div
+                v-if="sealCostVal"
+                class="flex flex-1 items-center justify-center rounded-md border px-2 py-1"
+                :class="
+                  sealAffordable
+                    ? 'border-qing/20 bg-qing/5 text-qing'
+                    : 'border-ink/10 bg-ink/4 text-ink-faint opacity-60'
+                "
+              >
+                封存一词 {{ formatGN(sealCostVal) }}
+              </div>
+            </template>
           </div>
           <!-- 付不起就把缺摆出来(与强化同款):重铸同样器灵尘+灵石两道账,缺谁明说谁 -->
           <p
@@ -634,6 +661,7 @@ function doUnsealAffix(affixId: string): void {
 
 function doReforge(): void {
   if (inst.value) reforgeEquipment(inst.value.uid);
+  disarmReforgeActions();
 }
 
 // ---- 装备标记(玩家反馈:同名装备想按不同流派区分)。草稿随当前件走,空串 = 清除 ----
@@ -740,6 +768,7 @@ function runAutoReforge(): void {
   }
   // 结账即收板:结果已写在 toast 与装备词条上,想再调条件重开一次即可
   closeAuto();
+  disarmReforgeActions();
 }
 
 // ---- 修士实验室:反事实换装推演 ----
@@ -754,6 +783,7 @@ function runWhatIf(): void {
 
 watch(inst, () => {
   whatIf.value = null;
+  disarmReforgeActions();
 });
 
 /** 换装流派预览:契合度 当前 → 装备后 */
@@ -853,6 +883,28 @@ function doDecompose(): void {
     decomposeArm.value = null;
     close();
   }
+}
+
+/**
+ * 重铸 / 自动重铸是「花器灵尘+灵石、把未封存词条尽数重掷」的高代价重掷 —— 与分解
+ * 同属破坏性动作。分解有两步确认(误触垃圾桶不该直接没),重铸一把梭(自动可连洗
+ * 500 次)同样需要先「武装」再确认,否则一次误触就烧掉资源并洗掉这一身 roll。
+ * 沿用 decomposeArm 的武装态:先点升为「确认重铸+取消」,确认才真跑。
+ */
+const reforgeArm = ref(false);
+const autoArm = ref(false);
+
+function armReforge(): void {
+  reforgeArm.value = true;
+  autoArm.value = false;
+}
+function armAuto(): void {
+  autoArm.value = true;
+  reforgeArm.value = false;
+}
+function disarmReforgeActions(): void {
+  reforgeArm.value = false;
+  autoArm.value = false;
 }
 
 function toggleLock(): void {
