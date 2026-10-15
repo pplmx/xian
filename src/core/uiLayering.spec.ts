@@ -563,6 +563,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(souls?.src, "右侧信息块贴右,标题守着正中").toContain("justify-self-end");
   });
 
+  it("弟子顶栏标题锁居中 —— 右侧收徒按钮几档换长,不许随其左右游移", () => {
+    // 收徒按钮文案在「收徒 · 尚差 X 石 / 收徒 NNN 石 / 已收满 N/M」之间换长,
+    // justify-between 下居中的「门庭有徒」会随右缘宽窄游移 —— 与器魂同款问题,
+    // 用同一张两侧均分网格把标题落点锁死。
+    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    expect(appr?.src, "顶栏必须用两侧均分网格").toContain("grid-cols-[1fr_auto_1fr]");
+    expect(appr?.src, "右侧收徒按钮贴右").toContain("justify-self-end");
+  });
+
   it("洞府离线存续当前档要实底点亮 —— 不许退回淡染的哑当前态", () => {
     // 离线上限阶梯「现在第几档」曾只有 6% 底 + 50% 边框,是全库最哑的当前态
     // 指示器(对照 InkTabs 实心墨块 / 行程点实底呼吸)。当前档改实底 paper 字。

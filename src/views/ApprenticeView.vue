@@ -121,20 +121,22 @@ const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
 
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!-- 抬头 -->
-    <div class="card-ink flex items-center justify-between gap-2 px-4 py-3">
+    <!-- 抬头:标题要永远居中 —— 左侧「← 返回」固定、右侧收徒按钮随剩余灵石几档换长(收徒 · 尚差 X 石 /
+         收徒 NNN 石 / 已收满 N/M),justify-between 下标题随右侧宽窄左右游移;故沿用器魂顶栏同款
+         两侧均分网格,标题落点锁死(界规见 uiLayering.spec 的「器魂顶栏标题锁居中」)。 -->
+    <div class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3">
       <button
-        class="tap-row -my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
+        class="tap-row -my-1.5 justify-self-start py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
         @click="goBack(router, { name: 'dongfu' })"
       >
         ← 返回
       </button>
-      <div class="min-w-0 text-center">
+      <div class="min-w-0 justify-self-center text-center">
         <p class="font-kai text-[15px] tracking-[0.3em] text-ink">门庭有徒</p>
         <p class="text-[10px] text-ink-faint">弟子跑腿,资材自来 · {{ slots }} 槽</p>
       </div>
       <button
-        class="btn-seal !px-2 !py-1 text-[11px]"
+        class="btn-seal !px-2 !py-1 justify-self-end text-[11px]"
         :disabled="slotsFull || recruitShort > 0"
         @click="doRecruit"
       >
