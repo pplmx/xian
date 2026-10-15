@@ -966,7 +966,8 @@
         </template>
         <template v-else>
           <p class="mb-2 text-center text-[11px] text-cinnabar">
-            将把行囊中未锁定的无缘之物尽数化尘,共 {{ cleanCount }} 件——此举不可逆,仍要清理?
+            将把行囊中未锁定的无缘之物尽数化尘,共 {{ cleanPlanned.count }} 件,拿回
+            {{ batchYieldText(cleanPlanned) }}——此举不可逆,仍要清理?
           </p>
           <div class="flex gap-2">
             <button class="btn-ghost flex-1 !text-[12px]" @click="cleanConfirm = false">
@@ -984,7 +985,7 @@
 import { computed, onUnmounted, ref } from "vue";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
-import { gn, toNum } from "@/utils/gnum";
+import { add, gn, gnZero, toNum } from "@/utils/gnum";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
 import { useSettingsStore } from "@/stores/settings";
@@ -1045,8 +1046,8 @@ import {
   upgradeArtifact,
 } from "@/core/forge";
 import { equipAllBest, equipSetCombo, equippablePower } from "@/core/equipBest";
-import { keepVerdict } from "@/core/smartKeep";
-import { smartKeepImpact } from "@/core/smartKeep";
+import { salvageOf } from "@/core/salvage";
+import { smartKeepImpact, smartRecycleTargets } from "@/core/smartKeep";
 import { maxTierForMajor } from "@/data/regions";
 import { equipSetDef, setCounts, type EquipSetDef } from "@/core/equipSet";
 import { useLoreStore } from "@/stores/lore";
@@ -1638,13 +1639,28 @@ const impact = computed(() => smartKeepImpact(inventory.bagItems));
 /** 待清理件数(确认提示用)—— 与读数同源 */
 const cleanCount = computed(() => impact.value.recycle);
 
+/**
+ * 待清理的预期收益:与真下手的 smartClean 用同一套目标(未上锁 + 裁决无缘)、
+ * 同一份 salvageOf —— 只算不花,把「会拿回多少器灵尘 / 退多少灵石」在按下前摊开
+ * (与一键分解的 decomposePreview 同一纪律)。
+ */
+const cleanPlanned = computed(() => {
+  let dust = 0;
+  let stone = gnZero();
+  for (const it of smartRecycleTargets(inventory.bagItems)) {
+    const g = salvageOf(it);
+    dust += g.dust;
+    stone = add(stone, g.stone);
+  }
+  return { count: cleanCount.value, dust, stone };
+});
+
 /** 清理确认态:按一次按钮先落在「再想想/清理化尘」上 */
 const cleanConfirm = ref(false);
 
 function smartClean(): void {
   cleanConfirm.value = false;
-  const targets = inventory.bagItems.filter((it) => !it.locked && !keepVerdict(it).keep);
-  const got = decomposeBatch(targets);
+  const got = decomposeBatch(smartRecycleTargets(inventory.bagItems));
   ui.toast(
     got.count > 0
       ? `收纳毕:${got.count} 件无缘之物化尘,${batchYieldText(got)}`

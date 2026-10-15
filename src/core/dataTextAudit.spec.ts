@@ -658,6 +658,16 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(view, "丹方读到几分熟取自 lore.recipeMastery").toContain("recipeMastery(");
   });
 
+  it("智能收纳的清理确认要把收益摊开 —— 不只件数,还有会拿回的器灵尘/灵石", () => {
+    const view = src("../views/InventoryView.vue");
+    // 与一键分解同族:分解 preview 在按下去前就把总账说了,化尘这步不可逆,更不该只报件数
+    expect(view, "清理确认该用待清理预期收益的读数").toContain("cleanPlanned");
+    expect(view, "清理确认要随收益(器灵尘/灵石)").toContain("batchYieldText(cleanPlanned)");
+    expect(view, "化尘是整包报废,不能退回只显件数的旧样板").not.toContain(
+      "共 {{ cleanCount }} 件——此举不可逆",
+    );
+  });
+
   it("灵兽的性子带数,出处与结算同源", () => {
     const view = src("../views/TitlesView.vue");
     expect(view, "性子该读 petTraitText(与 core/petPersonality 同源)").toContain("petTraitText(");

@@ -222,6 +222,11 @@ export function keepVerdict(item: EquipmentInstance): KeepVerdict {
   return { keep, reason };
 }
 
+/** 智能收纳会化尘的目标:未上锁 + 裁决判「无缘」(预览与真下手共用同一份,所见即所得) */
+export function smartRecycleTargets(items: readonly EquipmentInstance[]): EquipmentInstance[] {
+  return items.filter((it) => !it.locked && !keepVerdict(it).keep);
+}
+
 /**
  * 行囊满时该挤掉谁:品质最低 → 层级最低 → 词条最弱。
  * (练过的件根本进不了候选 —— 见 keepVerdict 的第一条。)

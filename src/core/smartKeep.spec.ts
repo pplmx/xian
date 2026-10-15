@@ -19,6 +19,7 @@ import {
   perfectRolls,
   shouldAutoRecycle,
   smartKeepImpact,
+  smartRecycleTargets,
 } from "./smartKeep";
 
 /** 夹具一律用「不带套」的青云道袍,免得套件规则混进别的判据 */
@@ -279,5 +280,21 @@ describe("智能收纳 · 阶级下限与品质档位", () => {
     expect(keepVerdict(mk("b", "heaven", { tier: 1 })).reason).toContain("低于 20 阶");
     // 高阶但品质不足:品质下限之后才轮到缘分
     expect(keepVerdict(mk("c", "mortal", { tier: 25 })).reason).toBeTruthy();
+  });
+
+  it("smartRecycleTargets = 未上锁且判无缘的那批(预览与下手同一份,化尘前能摊开收益)", () => {
+    const inv = useInventoryStore();
+    // 两件无缘(未练 + 品质在线下)、一件当藏(练过)、一件上锁
+    inv.items = [
+      mk("junk", "mortal"),
+      mk("junk2", "mortal"),
+      mk("invested", "mortal", { level: 3 }),
+      mk("locked", "mortal", { locked: true }),
+    ];
+    const targets = smartRecycleTargets(inv.items);
+    expect(targets.map((t) => t.uid).sort()).toEqual(["junk", "junk2"]);
+    // 与逐件 keepVerdict 判「无缘」的口径一致 —— 预览要做到下手前收益可见,就得同一批
+    for (const t of targets) expect(keepVerdict(t).keep, `${t.uid} 应判无缘`).toBe(false);
+    expect(smartRecycleTargets([])).toEqual([]);
   });
 });
