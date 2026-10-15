@@ -213,6 +213,17 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.15,
     rewardMult: 1.7,
   },
+  {
+    id: "sr_zhuxian",
+    gate: "celestial",
+    name: "筑仙台",
+    desc: "登台者众,成仙者稀。台上敌势汹涌,唯厚积薄发者可立",
+    minMajor: 9,
+    cost: { daoSource: 48 },
+    rules: { enemyHpMult: 1.25, enemyAtkMult: 1.1, shieldCapRatio: 0.8 },
+    healBetweenPct: 0.3,
+    rewardMult: 1.6,
+  },
 ];
 
 const BY_ID = new Map(SECRET_REALMS.map((r) => [r.id, r]));
