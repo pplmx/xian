@@ -5,7 +5,10 @@
       <div>
         <h1 class="font-kai text-[19px] tracking-[0.12em] text-ink">{{ view.title }}</h1>
         <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">本世之界 · {{ view.summary }}</p>
-        <p class="mt-0.5 text-[11px] text-cinnabar">此世笼罩:{{ view.ruleText }}</p>
+        <p class="mt-0.5 text-[11px] text-cinnabar">
+          此世命数:{{ view.ruleText
+          }}<span class="text-ink-faint">（此世气象之名,其律尚未显化于历练）</span>
+        </p>
       </div>
 
       <!-- 路线全貌:高低即层级,横距即路程,点大即事多 -->

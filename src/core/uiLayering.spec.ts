@@ -1659,4 +1659,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "reduce-motion 仍要压时长 —— 只清 delay 不清时长,就是还留着动画、只是没了次序",
     ).toHaveLength(2);
   });
+
+  it("地界志的境律不冒充生效 —— 命数作世界名,不许说成笼罩本世", () => {
+    // 世界生成的 rule(MUTATORS 里一条,如「生机凋敝」= 治疗效率 -75%)此刻并未
+    // 接管历练:历练走 explorationRules 只并大道/命途规则,world.rules 仅在模拟
+    // spec 里用过。旧文案「此世笼罩:生机凋敝」读起来像本世正受这条弱化压制,
+    // 实为界面撒谎。改成「此世命数」作气象之名,并明说其律尚未显化于历练。
+    const mw = FILES.find((f) => f.path === "views/MortalWorldView.vue");
+    expect(mw?.src, "境律要作「命数」之名,不许说成笼罩").toContain("此世命数:");
+    expect(mw?.src, "不许退回「此世笼罩」的生效口吻").not.toContain("此世笼罩:");
+    expect(mw?.src, "要明说「其律尚未显化于历练」,免得玩家以为真被降能").toContain(
+      "其律尚未显化于历练",
+    );
+  });
 });
