@@ -1,4 +1,4 @@
-/** 随机事件库 —— 90 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 91 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1576,6 +1576,29 @@ export const EVENTS: EventDef[] = [
       c("转身离开", [o(1, "凡间香火,你无意沾惹。")]),
     ],
     { maxRealm: 5 },
+  ),
+  ev(
+    "ev_dengta",
+    "古塔夜话",
+    "一座无人古塔夜半亮起孤灯,隐约有人影临窗而坐。",
+    ["general"],
+    [
+      c(
+        "登塔一叙",
+        [
+          o(55, "灯下是一位老翁,与你谈经论道,受益良多。", { type: "exp", secs: 70 }),
+          o(30, "塔中无人,只余一灯一几,你静坐片刻,心有所悟。", {
+            type: "material",
+            id: "wudao",
+            amount: 20,
+          }),
+          o(15, "忽有阴风穿堂,你惊觉此塔非善地,疾退而下。", { type: "buff", id: "injury" }),
+        ],
+        { isDefault: true },
+      ),
+      c("转身离开", [o(1, "深夜孤塔,你不想多惹是非。")]),
+    ],
+    { maxRealm: 8 },
   ),
 ];
 
