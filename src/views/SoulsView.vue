@@ -283,7 +283,10 @@
               手动动作不拦,但必须说清代价 —— 玩家不该在按下确认后才发现自己练过它。
               投入要报数:尘几许、灵石几许(enhanceInvested 同款,不是一句定性)。
             -->
-            <p v-if="row.invested && row.investedCost" class="truncate text-[10px] text-cinnabar">
+            <p
+              v-if="row.invested && row.investedCost"
+              class="text-[10px] leading-relaxed text-cinnabar"
+            >
               此器已淬养,入炉将连同强化投入一并失去(器灵尘×{{ row.investedCost.dust }} · 灵石
               {{ formatGN(row.investedCost.stone) }})
             </p>

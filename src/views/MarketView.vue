@@ -330,7 +330,7 @@ function bountyShort(o: BountySlot): string | null {
               </p>
             </template>
             <template v-else>
-              <p class="truncate">贡一柄 ≥{{ o.tier }} 阶兵刃</p>
+              <p class="leading-relaxed">贡一柄 ≥{{ o.tier }} 阶兵刃</p>
               <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
                 {{ bountyShort(o) }}
               </p>

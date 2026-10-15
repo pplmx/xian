@@ -572,6 +572,26 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(appr?.src, "右侧收徒按钮贴右").toContain("justify-self-end");
   });
 
+  it("毁器/交器代价的数字不许被弹列换行裁掉 —— 决策信息只在宽屏看得出就不算完整", () => {
+    // 两处「按下前必须看清数字」的文案曾被 truncate(nowrap+ellipsis):
+    //  · 器魂凝炼台的「已淬养」警示 —— 320 宽下标题列只剩 167px,而整句要 310px,
+    //    尘/灵石两枚投入数被省略号藏在截断线之后,玩家按「凝炼」前看不到代价;
+    //  · 坊市悬赏的「贡一柄 ≥N 阶兵刃」—— N(要交几阶)被裁掉,无从挑件。
+    // truncate 不产生溢出,排版自检量不到;它们只在本 spec 里被钉住:这两行一律不许 nowrap。
+    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const sClass = souls?.src.match(
+      /<p[\s\S]{0,200}?v-if="row\.invested && row\.investedCost"[\s\S]{0,120}?class="([^"]*)"/,
+    )?.[1];
+    expect(sClass, "已淬养警示须可换行(投入尘/灵石不许被省略号裁)").toMatch(/\bleading-relaxed\b/);
+    if (sClass) expect(sClass, "已淬养警示不许 nowrap 裁掉投入数").not.toMatch(/\btruncate\b/);
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const mClass = market?.src.match(
+      /<p[\s\S]{0,120}?class="([^"]*)"[\s\S]{0,80}?贡一柄 ≥\{\{ o\.tier \}\}/,
+    )?.[1];
+    expect(mClass, "贡器门槛行须可换行(≥N 阶不许被省略号裁)").toMatch(/\bleading-relaxed\b/);
+    if (mClass) expect(mClass, "贡器门槛行不许 nowrap 裁掉门槛数").not.toMatch(/\btruncate\b/);
+  });
+
   it("洞府离线存续当前档要实底点亮 —— 不许退回淡染的哑当前态", () => {
     // 离线上限阶梯「现在第几档」曾只有 6% 底 + 50% 边框,是全库最哑的当前态
     // 指示器(对照 InkTabs 实心墨块 / 行程点实底呼吸)。当前档改实底 paper 字。
