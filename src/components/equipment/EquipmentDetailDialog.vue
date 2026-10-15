@@ -365,7 +365,7 @@
             >
             <button
               v-if="!autoArm"
-              class="btn-seal ml-auto !px-3 !py-1 !text-[11px]"
+              class="btn-ghost ml-auto !px-3 !py-1 !text-[11px]"
               :disabled="!autoTargets.length || !autoAffordable"
               :title="
                 !autoTargets.length
