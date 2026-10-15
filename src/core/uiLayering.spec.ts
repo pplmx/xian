@@ -690,6 +690,18 @@ describe("界面分层 · 浮层只有一个出处", () => {
     }
   });
 
+  it("减少动效要拦历练回放 —— 与天界战报同一待遇,JS 逐条播也要让路", () => {
+    // 主历练 CombatPanel 的回放是 setInterval 逐行投入(JS 驱动),style.css 的
+    // .reduce-motion 只压 CSS 动画,盖不住它 —— 关动效的人每次历练开打仍被迫
+    // 逐条看。天界 GauntletPanel 早已判 settings.reduceMotion 直给结果,历练
+    // 这份漏了。不许退回「只压 CSS、JS 回放照播」的两套待遇。
+    const cp = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    expect(cp?.src, "历练回放要判 reduceMotion").toContain("settings.reduceMotion");
+    expect(cp?.src, "关动效时要直给结果(进 instant 即全量呈现)").toMatch(
+      /settings\.reduceMotion && !instant/,
+    );
+  });
+
   it("页签条是整套 tab 模式 —— role=tablist + roving tabindex + 方向键漫游", () => {
     // InkTabs 供 5 个页共用,此前只贴了 role=tab / aria-selected,缺外壳 tablist、
     // 每次只留一个在 Tab 序、以及方向键漫游 —— 半套 tab 模式对读屏是残缺的。

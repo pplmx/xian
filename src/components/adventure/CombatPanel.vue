@@ -601,6 +601,13 @@ function stopPlayback(): void {
 function playBattle(instant = false): void {
   const b = battle.value;
   if (!b) return;
+  // 关动效时直接给结果,不逐条播 —— 与 GauntletPanel 同一待遇。此回放是 JS 驱动
+  // (setInterval 逐行投入),style.css 的 .reduce-motion 只压 CSS 动画,盖不住它,
+  // 所以得在这里显式判。不然每次历练开打,关动效的人也被迫逐条看。
+  if (settings.reduceMotion && !instant) {
+    playBattle(true);
+    return;
+  }
   stopPlayback();
   defeated.value = null;
   const entries = b.result.log;
