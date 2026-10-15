@@ -91,6 +91,12 @@ export const MUTATORS: MutatorDef[] = [
     text: "敌人吸血 +15%",
     rules: { enemyExtraMods: { lifesteal: 0.15 } },
   },
+  {
+    id: "foe_iron",
+    name: "铜皮铁骨",
+    text: "敌人防御 +25%",
+    rules: { enemyExtraMods: { defensePct: 0.25 } },
+  },
 ];
 
 export function mutatorDef(id: string): MutatorDef | undefined {
