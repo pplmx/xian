@@ -92,6 +92,15 @@ export const PACTS: PactDef[] = [
     rules: { enemyExtraMods: { dodgeRate: 0.18 } },
     sourceMult: 1.8,
   },
+  {
+    id: "zhuefeng",
+    name: "追风契",
+    seal: "疾",
+    desc: "敌如飞蝗,掠影而过 —— 与风一般的速度周旋,换些许道源",
+    ruleText: "敌方速度 +20% · 道源 ×1.9",
+    rules: { enemyExtraMods: { speed: 0.2 } },
+    sourceMult: 1.9,
+  },
 ];
 
 export function pactDef(id: string): PactDef | undefined {
