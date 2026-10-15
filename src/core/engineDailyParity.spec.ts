@@ -121,9 +121,9 @@ describe("每日任务对账 —— 结算出哪几条、按什么顺序", () =>
     const daily = { date: "2026-09-19", base: { kills: 500, explores: 3 }, done: [] };
     const counters: Counters = { kills: 20, explores: 1 };
     expect(legacyRows(daily, counters).map((r) => r.progress)).toContain(-480); // 迁移前:负进度
-    expect(dailyRowsOf(dailyStateOf(daily), counters).map((r) => r.progress)).toEqual([
-      0, 0, 0, 0, 0,
-    ]);
+    expect(dailyRowsOf(dailyStateOf(daily), counters).map((r) => r.progress)).toEqual(
+      DAILY_TASKS.map(() => 0),
+    );
   });
 
   it("计数器不清零:结算只动每日账,生涯计数原样留着", () => {
@@ -156,9 +156,10 @@ describe("每日任务对账 —— 结算出哪几条、按什么顺序", () =>
     track("explores", 1);
     track("pillsCrafted", 2); // 每日炼丹
     track("upgrades", 3); // 每日炼制
+    track("breakthroughs", 2); // 每日破境
     const frozen = legacySettle(
       { date: "2026-09-19", base: {}, done: [] },
-      { kills: 15, pillsUsed: 1, explores: 1, pillsCrafted: 2, upgrades: 3 },
+      { kills: 15, pillsUsed: 1, explores: 1, pillsCrafted: 2, upgrades: 3, breakthroughs: 2 },
     );
     expect(quests.daily.done).toEqual(frozen.daily.done);
     expect(quests.daily.done).toEqual(DAILY_TASKS.map((t) => t.id));

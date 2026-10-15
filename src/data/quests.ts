@@ -285,4 +285,12 @@ export const DAILY_TASKS: DailyTaskDef[] = [
     target: 3,
     reward: { dust: 12 },
   },
+  {
+    id: "d_break",
+    name: "每日破境",
+    desc: "今日尝试突破 2 次",
+    counterKey: "breakthroughs",
+    target: 2,
+    reward: { wudao: 6 },
+  },
 ];
