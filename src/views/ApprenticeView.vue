@@ -15,6 +15,7 @@ import {
   APPRENTICE_TASKS,
   APPRENTICE_MAX_LEVEL,
   APPRENTICE_TALENT_BONUS,
+  BOND_TITLES,
   BOND_TRUECODE_MIN,
   APPRENTICE_RECRUIT_TIER_AMOUNT,
   apprenticeDef,
@@ -73,6 +74,18 @@ function send(uid: string, spec: (typeof APPRENTICE_TASKS)[number]["spec"]): voi
   appr.dispatch(uid, spec, Date.now());
 }
 
+/**
+ * 下一档羁绊称谓与距它的趟数 —— 称谓梯只显「道童→…→真传」的方向,不说清「离下一档还差几趟」;
+ * 而真传那档还带跨世之缘(有实际转世收益)的隐藏机制,冲它的人该在达成前就看得见门槛与方向。
+ * 返回 null 表示已到真传(封顶,无下一档)。
+ */
+function bondNext(bond: number): { name: string; remaining: number } | null {
+  for (const t of BOND_TITLES) {
+    if (bond < t.min) return { name: t.name, remaining: t.min - bond };
+  }
+  return null;
+}
+
 /** 收徒成本与槽位 —— 与 store.recruit 同源(stoneByTier(major,APPRENTICE_RECRUIT_TIER_AMOUNT)/apprenticeSlots) */
 const recruitCost = computed(() => stoneByTier(player.major, APPRENTICE_RECRUIT_TIER_AMOUNT));
 const slotsFull = computed(() => appr.apprentices.length >= slots.value);
@@ -86,12 +99,14 @@ function taskYield(a: OwnedApprentice, spec: ApprenticeSpec): string {
   const talent = apprenticeDef(a.archId)?.talent === spec;
   const tag = talent ? `·天赋×${APPRENTICE_TALENT_BONUS}` : "";
   const parts: string[] = [];
-  if (s.herb) parts.push(`灵草 ~${s.herb}`);
-  if (s.ore) parts.push(`玄铁 ~${s.ore}`);
-  if (s.dust) parts.push(`器灵尘 ~${s.dust}`);
-  if (s.wudao) parts.push(`悟道点 ~${s.wudao}`);
-  if (s.stone) parts.push(`灵石 ~${formatGN(s.stone)}`);
-  if (s.pillId) parts.push(`${pillDef(s.pillId)?.name ?? s.pillId} ~${s.pillCount}`);
+  // 产出一律确定(寻宝取丹是 (level*7)%len 的哈希,无随机)—— 预览与归来通报(apprenticeReapText)
+  // 逐位相等,标「~」会让人以为有波动,反倒撒谎;去掉,给确定值
+  if (s.herb) parts.push(`灵草 ${s.herb}`);
+  if (s.ore) parts.push(`玄铁 ${s.ore}`);
+  if (s.dust) parts.push(`器灵尘 ${s.dust}`);
+  if (s.wudao) parts.push(`悟道点 ${s.wudao}`);
+  if (s.stone) parts.push(`灵石 ${formatGN(s.stone)}`);
+  if (s.pillId) parts.push(`${pillDef(s.pillId)?.name ?? s.pillId} ${s.pillCount}`);
   const base = parts.join(" · ");
   return base + tag;
 }
@@ -192,8 +207,15 @@ const dispatchLabel = computed(() => {
           <span
             v-if="a.bond > 0"
             class="rounded bg-cinnabar/10 px-1.5 py-0.5 text-[10px] text-cinnabar"
-            :title="`羁绊 ${a.bond} 趟(完工趟数,纯称谓不带加成)`"
+            :title="
+              bondNext(a.bond)
+                ? `羁绊 ${a.bond} 趟 · 距「${bondNext(a.bond)!.name}」还差 ${bondNext(a.bond)!.remaining} 趟(完工趟数,纯称谓不带加成)`
+                : `羁绊 ${a.bond} 趟(完工趟数,纯称谓不带加成)`
+            "
             >{{ bondTitle(a.bond) }} · {{ a.bond }} 趟</span
+          >
+          <span v-if="bondNext(a.bond)" class="whitespace-nowrap text-[10px] text-ink-faint"
+            >距离「{{ bondNext(a.bond)!.name }}」{{ bondNext(a.bond)!.remaining }} 趟</span
           >
           <span class="ml-auto text-[10px] text-ink-faint">{{
             apprenticeDef(a.archId)?.desc ?? ""
@@ -232,6 +254,10 @@ const dispatchLabel = computed(() => {
         <!-- 真传:跨世之缘只对最高羁绊开放 —— 养出真传的玩家该看得见这条,不藏注释 -->
         <p v-if="a.bond >= BOND_TRUECODE_MIN" class="mt-1.5 text-[10px] text-gold-ink">
           真传 —— 转世时凝一缕跨世之缘,来世情谊随魂而来
+        </p>
+        <!-- 未到真传也要把这条机制与门槛摊明:冲「跨世之缘」的人在达成前就该知道它存在、差几趟 -->
+        <p v-else class="mt-1.5 text-[10px] text-ink-faint">
+          抵达「真传」({{ BOND_TRUECODE_MIN }} 趟)后,转世时凝一缕跨世之缘,来世情谊随魂而来
         </p>
       </div>
     </div>

@@ -697,6 +697,20 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(view, "丹方读到几分熟取自 lore.recipeMastery").toContain("recipeMastery(");
   });
 
+  it("弟子的羁绊要摊「距下一档称谓还差几趟」,真传的跨世之缘达成前就该露", () => {
+    const view = src("../views/ApprenticeView.vue");
+    // 称谓梯只显「道童→…→真传」的方向,不显「离下一档还差几趟」—— 进度该露
+    expect(view, "称谓应有距下一档的趟数进度").toContain("bondNext(");
+    expect(view, "进度数要与称谓阈值同源").toContain("BOND_TITLES");
+    // 真传那条跨世之缘(有实际转世收益)以前只在达成后才 v-if 出来 —— 冲它的人达成前
+    // 根本不知道这机制存在;未到真传也要把门槛与收益点明
+    expect(view, "未到真传也要露跨世之缘机制").toContain("抵达「真传」");
+    expect(view, "门槛引常量,不手写 100").toContain("BOND_TRUECODE_MIN");
+    // 派活产出是确定值(寻宝哈希、无随机),预览不该标「~」假装有波动 —— 与归来通报逐位相等
+    expect(view, "派活预览不标「~」,给确切的数").not.toContain("灵草 ~");
+    expect(view, "预览该与 apprenticeSpoils 同源(不另写死数)").toContain("apprenticeSpoils(");
+  });
+
   it("智能收纳的清理确认要把收益摊开 —— 不只件数,还有会拿回的器灵尘/灵石", () => {
     const view = src("../views/InventoryView.vue");
     // 与一键分解同族:分解 preview 在按下去前就把总账说了,化尘这步不可逆,更不该只报件数
