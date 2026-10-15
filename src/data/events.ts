@@ -1,4 +1,4 @@
-/** 随机事件库 —— 86 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 87 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1491,6 +1491,28 @@ export const EVENTS: EventDef[] = [
       ),
     ],
     { minRealm: 20, weight: 60 },
+  ),
+  ev(
+    "ev_ancient_battle",
+    "古战场回声",
+    "残月如钩,一处古战场的虚影在你眼前缓缓重现,喊杀声穿林而来。",
+    ["general"],
+    [
+      c(
+        "踏入战阵",
+        [
+          o(55, "你拾起一柄残兵,依稀还残留着昔日的锋锐。", {
+            type: "equipment",
+            minQualityRank: 2,
+          }),
+          o(30, "你在阵中捕到一缕亡者残存的悟道,受益匪浅。", { type: "exp", secs: 60 }),
+          o(15, "战魂乍然围攻,你且战且退,受了些轻伤。", { type: "buff", id: "injury" }),
+        ],
+        { isDefault: true },
+      ),
+      c("绕道而行", [o(1, "你避开这片煞气冲天的所在。")]),
+    ],
+    { maxRealm: 6 },
   ),
 ];
 
