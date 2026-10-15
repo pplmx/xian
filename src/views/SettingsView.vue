@@ -244,6 +244,21 @@
         </div>
       </template>
     </BaseModal>
+
+    <!-- 导入确认(与重置同一条确认纪律:这份备份会整体替换当前进度,不可逆) -->
+    <BaseModal :open="importConfirm" title="导入存档" @close="closeImport">
+      <p class="text-[13px] leading-relaxed text-ink-soft">
+        这份备份将
+        <span class="text-cinnabar">整体替换</span>
+        本机当前的修行进度 —— 之后的收获会回到备份那一刻,且无法撤销。
+      </p>
+      <template #footer>
+        <div class="flex gap-2">
+          <button class="btn-ghost flex-1" @click="closeImport">再想想</button>
+          <button class="btn-seal flex-1" @click="confirmImport">用这份替换</button>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -337,6 +352,8 @@ const THEME_OPTIONS = [
 ] as const;
 
 const resetConfirm = ref(false);
+const importConfirm = ref(false);
+const pendingImport = ref<string | null>(null);
 const privacyOpen = ref(false);
 const aboutOpen = ref(false);
 const progressionOpen = ref(false);
@@ -372,7 +389,7 @@ function confirmReset(): void {
 // 弹窗开着就离开页面时兜底恢复
 onUnmounted(() => {
   unsubscribeSaveFailure();
-  if (resetConfirm.value) engine.resume();
+  if (resetConfirm.value || importConfirm.value) engine.resume();
 });
 
 function triggerImport(): void {
@@ -383,25 +400,47 @@ function onFilePicked(e: Event): void {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
   const reader = new FileReader();
+  // 先暂停引擎,防止 Pinia persist 插件在导入后覆盖数据(与重置确认同款):
+  // 读到文本就挂起,先把「这份备份会整体替换当前进度」摆给玩家确认,确认后才落库。
+  engine.pause();
   reader.onload = () => {
-    const text = String(reader.result ?? "");
-    // 先暂停引擎,防止 Pinia persist 插件在导入后覆盖数据
-    engine.pause();
-    const err = importSaveText(text);
-    if (err) {
-      ui.toast(err, "warn");
-      engine.resume(); // 导入失败时恢复引擎
-      return;
-    }
-    ui.toast("存档导入成功,即将重新入定", "success");
-    // 导入已写盘,立即封存:阻止 persist 插件把旧内存回写覆盖
-    sealStorageWrites();
-    setTimeout(reloadGame, 800);
+    pendingImport.value = String(reader.result ?? "");
+    importConfirm.value = true;
   };
-  // 读文件本身也可能失败(权限/磁盘)—— 静默就等于「点了没反应」
-  reader.onerror = () => ui.toast("这个文件读不出来,换一个再试", "warn");
+  // 读文件本身也可能失败(权限/磁盘)—— 静默就等于「点了没反应」;打开确认框前
+  // 引擎还是暂停态,读失败要立刻恢复
+  reader.onerror = () => {
+    ui.toast("这个文件读不出来,换一个再试", "warn");
+    engine.resume();
+  };
   reader.readAsText(file);
   // 清空 input,允许重复选择同一文件
   if (fileInput.value) fileInput.value.value = "";
+}
+
+// ---- 导入确认流程:弹窗期间保持引擎暂停,确认才替换存档(与重置同一条确认纪律) ----
+function closeImport(): void {
+  importConfirm.value = false;
+  pendingImport.value = null;
+  engine.resume();
+}
+
+function confirmImport(): void {
+  const text = pendingImport.value;
+  if (text === null) return;
+  const err = importSaveText(text);
+  if (err) {
+    ui.toast(err, "warn");
+    importConfirm.value = false;
+    pendingImport.value = null;
+    engine.resume(); // 导入失败时恢复引擎
+    return;
+  }
+  ui.toast("存档导入成功,即将重新入定", "success");
+  importConfirm.value = false;
+  pendingImport.value = null;
+  // 导入已写盘,立即封存:阻止 persist 插件把旧内存回写覆盖
+  sealStorageWrites();
+  setTimeout(reloadGame, 800);
 }
 </script>

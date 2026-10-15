@@ -1242,6 +1242,22 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(eq?.src, "分解取消不许再写「算了」").not.toContain("算了");
   });
 
+  it("导入存档与重置同一条确认纪律 —— 备份会整体替换当前进度,不许直接落库", () => {
+    // 导入备份会把本机全部进度替换掉、不可逆,却曾与重置不对称:重置有整整一个
+    // 确认弹窗,导入却在选中文件后直接 importSaveText + reloadGame,一句话带过。
+    // 现在导入也会先进确认态(读到文本挂起、引擎暂停),确认才替换(与重置/删构筑/分解同族)。
+    const s = FILES.find((f) => f.path === "views/SettingsView.vue");
+    expect(s?.src, "选中文件后要先开确认态,不许直接落库").toContain("importConfirm.value = true");
+    expect(s?.src, "确认弹窗要点破「整体替换」").toContain("整体替换");
+    expect(s?.src, "确认成功走专门的 confirmImport,不在 onFilePicked 里顺带落库").toContain(
+      "function confirmImport",
+    );
+    expect(s?.src, "至少要有取消兜底").toContain("closeImport");
+    expect(s?.src, "导入确认期间引擎要暂停(与重置同款,防 persist 回写)").toContain(
+      "engine.pause()",
+    );
+  });
+
   it("强色文字不叠透明度 —— 要淡是换 token,不许元素级 opacity", () => {
     // design.md「文字不叠透明度」:品阶名(整色)与 buff 叠数(继承强色)此前用元素级
     // opacity-80 淡化 —— 正好绕过 palette.spec 只扫「/80」斜杠语法的口子,浏览器照样
