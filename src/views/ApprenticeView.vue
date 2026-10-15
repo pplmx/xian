@@ -27,6 +27,8 @@ import {
   apprenticeSpoils,
   apprenticeTaskSeconds,
   apprenticeReapText,
+  needTargetDoor,
+  type DispatchNeedStock,
   type OwnedApprentice,
 } from "@/core/apprenticeService";
 import { stoneByTier } from "@/core/formulas";
@@ -101,22 +103,44 @@ function doRecruit(): void {
   else if (r === "poor") notify("灵石不足,收徒不成", "warn");
 }
 
-/** 「各尽其长」一键派发 —— 按库存读最缺的门,把闲置弟子都派过去 */
+/** 给「各尽其长」的库存快照 —— 与派发实际入账同一份数(needTargetDoor 只读快照、无随机) */
+function dispatchStock(): DispatchNeedStock {
+  return {
+    herb: resources.herb,
+    ore: resources.ore,
+    wudao: resources.wudao,
+    dust: resources.dust,
+  };
+}
+
+/**
+ * 「各尽其长」一键派发 —— 按库存读最缺的门,把闲置弟子都派过去。
+ * 报结果要照实说:门有分晓就说派去哪个门(needTargetDoor 同源),无单门胜出(并列)
+ * 就退回「各就本职」—— 不许按钮喊「最缺的门」、实际却各自专职,两句话对不上。
+ */
 function doDispatchAll(): void {
   const idle = appr.apprentices.filter((x) => !x.task);
   if (idle.length === 0) {
     notify("弟子都在路上,无需再派", "info");
     return;
   }
-  const n = appr.dispatchAllToNeed(Date.now(), {
-    herb: resources.herb,
-    ore: resources.ore,
-    wudao: resources.wudao,
-    dust: resources.dust,
-  });
-  notify(n > 0 ? `${n} 名弟子各尽其长,已派往最缺的门` : "暂无闲置弟子可派", "success");
+  const target = needTargetDoor(dispatchStock());
+  const n = appr.dispatchAllToNeed(Date.now(), dispatchStock());
+  if (n <= 0) {
+    notify("暂无闲置弟子可派", "info");
+    return;
+  }
+  notify(
+    target ? `${n} 名弟子已派往「${taskDef(target).name}」` : `${n} 名弟子各就本职`,
+    "success",
+  );
 }
 const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
+/** 按钮文案与派发判定同源:有单门胜出报「派去最缺的门」,并列退回「各就本职」 */
+const dispatchLabel = computed(() => {
+  const target = needTargetDoor(dispatchStock());
+  return target ? `各尽其长 · 派去「${taskDef(target).name}」` : "各尽其长 · 各就本职";
+});
 </script>
 
 <template>
@@ -153,7 +177,7 @@ const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
     <!-- 弟子 -->
     <div v-if="appr.apprentices.length" class="space-y-2">
       <button class="btn-seal w-full !py-1 text-[11px]" :disabled="!hasIdle" @click="doDispatchAll">
-        {{ hasIdle ? "各尽其长 · 派闲置弟子去最缺的门" : "弟子都在路上" }}
+        {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
       </button>
       <div
         v-for="a in appr.apprentices"

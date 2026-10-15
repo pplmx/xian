@@ -107,26 +107,33 @@ describe("天道变数裁判", () => {
     for (let j = i + 1; j < MUTATORS.length; j += 1)
       for (let k = j + 1; k < MUTATORS.length; k += 1) combos.push([i, j, k]);
 
-  it("任意三条变数组合皆有解,且无组合通吃者", () => {
-    const alwaysHigh = new Map<string, number>();
-    for (const [ci, [a, b, c]] of combos.entries()) {
-      const rules = chain(MUTATORS[a]!.rules, MUTATORS[b]!.rules, MUTATORS[c]!.rules);
-      let best = 0;
-      for (const [pi, profile] of BUILD_PROFILES.entries()) {
-        const rate = mutationClearRate(rules, buildSnap(profile), 8, 31000 + ci * 61 + pi);
-        best = Math.max(best, rate);
-        if (rate >= 0.95) alwaysHigh.set(profile.id, (alwaysHigh.get(profile.id) ?? 0) + 1);
+  it(
+    "任意三条变数组合皆有解,且无组合通吃者",
+    // C(8,3)=56 组合 × 8 流派,每场 8 回合的胜率采样 —— 单测实测 ~20s,
+    // 恰好贴着 vitest 默认 testTimeout:20000。342 个文件并行时振荡一上来就超时,
+    // 本测试不是断言失败而是「算不够快」—— 故单独放宽到 120s,不动任何断言。
+    { timeout: 120000 },
+    () => {
+      const alwaysHigh = new Map<string, number>();
+      for (const [ci, [a, b, c]] of combos.entries()) {
+        const rules = chain(MUTATORS[a]!.rules, MUTATORS[b]!.rules, MUTATORS[c]!.rules);
+        let best = 0;
+        for (const [pi, profile] of BUILD_PROFILES.entries()) {
+          const rate = mutationClearRate(rules, buildSnap(profile), 8, 31000 + ci * 61 + pi);
+          best = Math.max(best, rate);
+          if (rate >= 0.95) alwaysHigh.set(profile.id, (alwaysHigh.get(profile.id) ?? 0) + 1);
+        }
+        expect(
+          best,
+          `变数组合 ${MUTATORS[a]!.name}/${MUTATORS[b]!.name}/${MUTATORS[c]!.name} 无解`,
+        ).toBeGreaterThanOrEqual(0.15);
       }
-      expect(
-        best,
-        `变数组合 ${MUTATORS[a]!.name}/${MUTATORS[b]!.name}/${MUTATORS[c]!.name} 无解`,
-      ).toBeGreaterThanOrEqual(0.15);
-    }
-    // 没有流派在 ≥90% 的组合里都近乎必胜
-    for (const [id, n] of alwaysHigh) {
-      expect(n / combos.length, `${id} 变数通吃`).toBeLessThan(0.9);
-    }
-  });
+      // 没有流派在 ≥90% 的组合里都近乎必胜
+      for (const [id, n] of alwaysHigh) {
+        expect(n / combos.length, `${id} 变数通吃`).toBeLessThan(0.9);
+      }
+    },
+  );
 });
 
 describe("路线节点裁判", () => {

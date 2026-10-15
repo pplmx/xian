@@ -1074,6 +1074,22 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(store, "尾账要带弟子名").toContain("name: apprenticeDef(appr.archId)?.name");
   });
 
+  it("「各尽其长」按钮与回执要照实说门 —— 并列退回本职时不许喊「最缺的门」", () => {
+    // 一键派发把全部闲置弟子派走,是玩家能做的几件「一锤子」事之一;可按钮原话
+    // 「派闲置弟子去最缺的门」与回执「已派往最缺的门」在**并列**时是假的 ——
+    // needTargetDoor 无单门胜出会退回各自专职,两句文案却没换口。判定与文案必须
+    // 同源(needTargetDoor / taskDef),并列、单门两种话术都钉在这里,不许只报一种。
+    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    expect(appr?.src, "派发文案要读 needTargetDoor(单门/并列的唯一判据)").toContain(
+      "needTargetDoor",
+    );
+    expect(appr?.src, "回执要说清派去了哪一门或各就本职(与判定同源)").toContain(
+      "taskDef(target).name",
+    );
+    expect(appr?.src, "「最缺的门」的旧空话不许回来").not.toContain("已派往最缺的门");
+    expect(appr?.src, "按钮与回执都要消掉并列时的那句假承诺").not.toContain("派闲置弟子去最缺的门");
+  });
+
   it("引气疗伤付不起列短差与回够时长 —— 同文件突破钮已内化的口径此处不许漏", () => {
     // 疗伤钮是最老的「只说不许不报差」式样:灰钮只报「需 X」,不差多少、不回够多久。
     // 同文件突破钮 btQiBlock 已补齐短差+ETA,此处照同一口径收口。
