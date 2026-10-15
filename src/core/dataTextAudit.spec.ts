@@ -738,6 +738,18 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(view, "版本过高与否取自 inspect(不另写死)").toContain("importInspect.tooNew");
   });
 
+  it("登临导览里「天道熔炉」是可聚焦按钮,不是无 href 的 <a> —— 否则键盘用户点不到", () => {
+    const view = src("../views/CelestialView.vue");
+    // 原实现是无 href 的 <a @click>,不在 Tab 序列里,键盘用户根本走不到;
+    // 且文字承诺「去熔炉」动作却只关导览 —— 改为真按钮(type=button)才可达
+    expect(view, "天道熔炉该是真按钮(可聚焦)").toMatch(
+      /<button\s+type="button"[\s\S]{0,200}天道熔炉\s*<\/button>/,
+    );
+    expect(view, "不该再有无 href 却挂 @click 的 <a>(键盘到不了的可交互元素)").not.toMatch(
+      /<a[^>]*@click=[^>]*>[\s\S]{0,40}天道熔炉/,
+    );
+  });
+
   it("离线挂机折扣是恒有的 —— 非超限的短离也要把「9 折」摊明,不能只在封顶时提", () => {
     const core = src("./offline.ts");
     // 0.9 的效率**每天离线都生效**(planIdle 的 effectiveMs = cappedMs × efficiency),

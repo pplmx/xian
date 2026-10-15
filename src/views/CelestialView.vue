@@ -1190,7 +1190,13 @@
         <p class="font-kai text-ink">凡间所得,终有尽时。</p>
         <p class="text-ink-soft">
           玄铁、功法残页、灵石……到了此境,皆可献入
-          <a class="-my-2 inline-block py-2 text-qing" @click="tutorialOpen = false">天道熔炉</a>
+          <button
+            type="button"
+            class="-my-2 inline-block py-2 align-baseline text-qing underline underline-offset-2 active:opacity-60"
+            @click="tutorialOpen = false"
+          >
+            天道熔炉
+          </button>
           ,熔作道源。
         </p>
         <p class="text-ink-soft">
