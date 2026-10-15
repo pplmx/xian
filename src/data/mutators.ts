@@ -97,6 +97,12 @@ export const MUTATORS: MutatorDef[] = [
     text: "敌人防御 +25%",
     rules: { enemyExtraMods: { defensePct: 0.25 } },
   },
+  {
+    id: "foe_combo",
+    name: "连击如潮",
+    text: "敌人连击率 +18%",
+    rules: { enemyExtraMods: { comboRate: 0.18 } },
+  },
 ];
 
 export function mutatorDef(id: string): MutatorDef | undefined {
