@@ -897,6 +897,23 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(market?.src, "售玄铁不足要列差").toContain("尚差 ${oreSellShort} 玄铁");
   });
 
+  it("寄卖列全件背包 + 即时售丹有声 —— 别把第 13 件藏起来、售丹不许哑卖", () => {
+    // ① 寄卖是背包装备唯一出手口,却只渲染前 12 件(bagItems.slice(0,12))——
+    //    背包容量 120,第 13 件往后连按钮都没有、也不说明,晚期玩家那件刚
+    //    洗出来的货永远寄不出去。整行本就 overflow-x-auto 可横滑,列全即可。
+    // ② 售丹按钮写「(N)」读起来像卖一整类,实际一按只出一颗且零反馈;
+    //    改成「现持 N」点明数量,并给每颗成功/失败的 toast,不许闷声。
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    expect(market?.src, "寄卖要列全背包,不许 slice 截断").not.toContain(
+      "inventory.bagItems.slice(0, 12)",
+    );
+    expect(market?.src, "寄卖按钮要遍历整包 bagItems").toContain(
+      'v-for="it in inventory.bagItems"',
+    );
+    expect(market?.src, "售丹数量要写「现持」点明,不许裸 (N)").toContain("(现持 ");
+    expect(market?.src, "售丹每颗要有成功反馈 toast").toMatch(/已售 1 颗.*得 .*石/);
+  });
+
   it("炼丹灵石不足列「尚差 N 石」 —— 与灵草臂同族,不许只报需求值", () => {
     // 灵草臂已「持 x/y」,灵石臂却只「需 X」;同样付不起,玩家看不出差多少。
     // 统一换口「尚差 N 石」,与灵草坊「尚差 N 石」同款(GNum 感知减法)。

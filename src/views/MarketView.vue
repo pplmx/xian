@@ -107,7 +107,10 @@ function consign(uid: string): void {
   market.consignEquip(uid, Date.now());
 }
 function sellPill(id: string): void {
-  market.sellPill(id);
+  const sold = market.sellPill(id);
+  const name = pillDef(id)?.name ?? id;
+  if (sold) notify(`已售 1 颗「${name}」,得 ${formatGN(pillSellPrice(id))} 石`, "success");
+  else notify(`「${name}」已无量可售`, "warn");
 }
 function sellMat(matId: "herb" | "ore"): void {
   market.sellMaterial(matId, player.major);
@@ -424,7 +427,7 @@ function bountyShort(o: BountySlot): string | null {
             class="flex gap-1 overflow-x-auto"
           >
             <button
-              v-for="it in inventory.bagItems.slice(0, 12)"
+              v-for="it in inventory.bagItems"
               :key="it.uid"
               class="shrink-0 rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
               @click="consign(it.uid)"
@@ -451,7 +454,7 @@ function bountyShort(o: BountySlot): string | null {
             class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
             @click="sellPill(p.id)"
           >
-            售{{ p.def?.name ?? p.id }}({{ p.count }}) · 每颗得
+            售{{ p.def?.name ?? p.id }}(现持 {{ p.count }}) · 每颗得
             {{ formatGN(pillSellPrice(p.id)) }} 石
           </button>
           <button
