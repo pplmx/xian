@@ -149,6 +149,17 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.2,
     rewardMult: 1.5,
   },
+  {
+    id: "sr_qingming",
+    gate: "mortal",
+    name: "青冥古渡",
+    desc: "古渡千年,冥气侵体。此渡疗愈见拙,唯以战养战者可渡",
+    minMajor: 4,
+    cost: { stone: 90 },
+    rules: { playerExtraMods: { lifesteal: 0.1 }, healMult: 0.8 },
+    healBetweenPct: 0.2,
+    rewardMult: 1.4,
+  },
   // ---- 天界秘境:真仙起,道源代价,与远征/试炼并列 ----
   {
     id: "sr_xingchen",
