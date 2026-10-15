@@ -85,6 +85,12 @@ export const MUTATORS: MutatorDef[] = [
     text: "敌人会心 +12%",
     rules: { enemyExtraMods: { critRate: 0.12 } },
   },
+  {
+    id: "foe_leech",
+    name: "饥渴之爪",
+    text: "敌人吸血 +15%",
+    rules: { enemyExtraMods: { lifesteal: 0.15 } },
+  },
 ];
 
 export function mutatorDef(id: string): MutatorDef | undefined {
