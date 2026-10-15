@@ -74,7 +74,7 @@
               <!-- 灵兽册这类带 icon 的条目,已收录的 chip 前置一枚小章 —— 图鉴终于有貌 -->
               <GameIcon v-if="entry.icon" :name="entry.icon" :size="11" />
               {{ entry.name }}
-              <span v-if="entry.badge" class="text-[9px] opacity-70">{{ entry.badge }}</span>
+              <span v-if="entry.badge" class="text-[9px] text-ink-faint">{{ entry.badge }}</span>
               <!--
                 新得:收录时刻在「上次打开图鉴」之后才露这一枚(判据在 quests store,见 quests.spec)。
                 刻意不覆盖的两类:灵材谱(认知深浅)与悟道录(分支阶段)不经 quests.collect(),

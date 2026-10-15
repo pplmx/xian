@@ -358,6 +358,21 @@
                     endgame.voidWorld.guardian.name
                   }}」
                 </p>
+                <!-- 与普通天界同款边界行:虚界同样按锚点层次定标、同样有境界压制,别把这条只埋在 prep 里 -->
+                <p
+                  class="mt-0.5 text-[10px]"
+                  :class="
+                    player.major < anchorMajorOf(endgame.voidWorld.anchorTier)
+                      ? 'text-cinnabar'
+                      : 'text-ink-faint'
+                  "
+                >
+                  此界宜
+                  {{ REALMS[anchorMajorOf(endgame.voidWorld.anchorTier)]?.name ?? "" }} 及以上
+                  <template v-if="player.major < anchorMajorOf(endgame.voidWorld.anchorTier)">
+                    · 你尚在此境之下,受境界压制</template
+                  >
+                </p>
                 <div class="mt-2.5 flex gap-2">
                   <button
                     class="btn-seal flex-1 !py-2 !text-[13px]"
@@ -907,9 +922,23 @@
         </p>
       </template>
       <template #footer>
+        <p
+          v-if="prepWorld && expeditionEntryShort <= 0"
+          class="mb-1 text-center text-[10px] text-ink-faint"
+        >
+          入界即花 {{ prepWorld.entryCost }} 道源;途中道源攒至出界才发放,
+          <template v-if="selectedPact"
+            >拟定契约 {{ cnNumber(EXPEDITION_ROUTE_LAYERS) }} 重择路中道而返或败北,</template
+          >
+          入界道源与沿途道源尽付东流 —— 战果与纪录不保
+        </p>
         <button class="btn-seal w-full" :disabled="expeditionEntryShort > 0" @click="depart">
           <template v-if="expeditionEntryShort > 0">尚差 {{ expeditionEntryShort }} 道源</template>
-          <template v-else>启 程{{ selectedPact ? `(携「${selectedPact.name}」)` : "" }}</template>
+          <template v-else
+            >启 程(入界 {{ prepWorld?.entryCost }} 道源){{
+              selectedPact ? ` · 携「${selectedPact.name}」` : ""
+            }}</template
+          >
         </button>
       </template>
     </BaseModal>

@@ -409,6 +409,23 @@ describe("文案数值对账 · 视图不手抄数量", () => {
     expect(view, "确认按钮不该与普通按钮同名(防误触)").toContain("确认中道而返");
   });
 
+  it("远征启程的提交钮要点名入界成本与败北后果 —— 决策信息不能只在前一屏卡片上给", () => {
+    const view = src("../views/CelestialView.vue");
+    // prep 的「启 程」按钮是动手前最后一眼:成本与「败则尽付东流」若只露在入口卡或停战弧,
+    // 站在提交钮上的人看不见 —— 与 AGENTS「下手前摊数字/后果」不符
+    expect(view, "启程钮要引入界成本").toContain("启 程(入界 {{ prepWorld?.entryCost }} 道源)");
+    expect(view, "提交点下方要摊开出界才发放与败北尽付东流").toContain("入界即花");
+    expect(view, "败北/毁约后果要点名尽付东流").toContain("尽付东流");
+    expect(view, "失败那面该说战果与纪录不保").toContain("战果与纪录不保");
+    expect(view, "入界成本要读世界定义,不另写死数字").toContain("prepWorld.entryCost");
+    // 虚界卡与普通天界同款边界行:虚界同样按锚点层次定标、同样有境界压制 —— 不许只埋在 prep
+    // (模板被格式化后「此界宜」与 {{ REALMS… }} 分在两行,故用容忍空白的正则)
+    expect(view, "虚界卡该有「此界宜」边界行").toMatch(
+      /此界宜\s*\{\{ REALMS\[anchorMajorOf\(endgame\.voidWorld\.anchorTier\)\]/,
+    );
+    expect(view, "虚界未至此境也要点「受境界压制」").toContain("受境界压制");
+  });
+
   it("法宝位与门槛取自 artifacts.ts,界面与切换构筑共用一份", () => {
     const view = src("../views/InventoryView.vue");
     expect(view).toContain("artifactSlotsFor(player.major)");
@@ -749,5 +766,13 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     }
     expect(view, "收录时刻的口径收在 codex,界面不再自己写一份").toContain("collectedTimeText(");
     expect(view, "界面里不该再出现日期格式化的第二份").not.toContain("toLocaleString(");
+  });
+
+  it("图鉴角标是文字,压暗走 token,不叠元素级 opacity", () => {
+    const view = src("../views/CollectionView.vue");
+    // 角标(「×N」「第X档」)是文字:叠 opacity-70 违反「文字不叠元素级 opacity」铁律,
+    // 弱化该用 text-ink-faint token(与其余弱化位同款)
+    expect(view, "角标弱化应走 token,不叠 opacity").not.toContain("opacity-70");
+    expect(view, "角标应读 entry.badge(与条目状态同源)").toContain("entry.badge");
   });
 });
