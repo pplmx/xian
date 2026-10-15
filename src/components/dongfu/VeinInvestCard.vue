@@ -48,14 +48,15 @@
               <span v-else class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }}</span>
             </span>
           </button>
-          <!-- 连投:主脉 70 点一次一点要点半天,给个 +5 —— 点到 5 点/满/料尽为止,合一条账 -->
+          <!-- 连投:主脉 70 点一次一点要点半天,给个批量 —— 点到批量/满/料尽为止,合一条账。
+               批量数读 VEIN_BATCH(单源),不许手写「+5」当常量改了只顾一头。 -->
           <button
             class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-[11px]"
-            aria-label="连投 5 点"
+            :aria-label="`连投 ${VEIN_BATCH} 点`"
             :disabled="!canInvest(v.id)"
             @click="doInvestBatch(v.id)"
           >
-            +5
+            +{{ VEIN_BATCH }}
           </button>
         </div>
         <!-- 每条脉都要自陈作用:此前只显示名字与价格,玩家无从判断该投哪条 -->
@@ -116,6 +117,7 @@ import {
   switchMainVein,
 } from "@/core/veinService";
 import {
+  VEIN_BATCH,
   VEIN_MAIN_CAPACITY,
   VEIN_SIDE_CAP,
   VEIN_TOTAL_CAPACITY,
@@ -213,7 +215,7 @@ function doInvest(veinId: VeinId): void {
 }
 
 function doInvestBatch(veinId: VeinId): void {
-  investVeinBatch(veinId, 5);
+  investVeinBatch(veinId, VEIN_BATCH);
 }
 
 function doSwitch(veinId: VeinId): void {

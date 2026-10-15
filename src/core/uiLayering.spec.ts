@@ -1121,6 +1121,22 @@ describe("界面分层 · 浮层只有一个出处", () => {
     ).toBe(true);
   });
 
+  it("连投批量读 VEIN_BATCH —— 不许手写「+5」当常量改了只顾一头", () => {
+    // 按钮、读屏名、批量调用三处同源:批量指改 VEIN_BATCH 一处生效,
+    // 而不是「+5」「连投 5 点」「investVeinBatch(id, 5)」各写一遍、改常量就撒谎
+    // (与连炼×5 / 建筑连升同一种有界批量,药那侧已有 pillBatch.spec 单源钉住)。
+    const vein = FILES.find((f) => f.path === "components/dongfu/VeinInvestCard.vue");
+    expect(vein?.src, "连投按钮要读常量 VEIN_BATCH").toMatch(/\+{{\s*VEIN_BATCH\s*}}/);
+    expect(vein?.src, "连投读屏名要与批量数同源").toContain("连投 ${VEIN_BATCH} 点");
+    expect(vein?.src, "批量调用要传 VEIN_BATCH 而非字面量").toContain(
+      "investVeinBatch(veinId, VEIN_BATCH)",
+    );
+    const constants = readFileSync(resolve(__dirname, "../data/constants.ts"), "utf-8");
+    expect(constants, "VEIN_BATCH 要真在常数表里(否则读了个寂寞)").toContain(
+      "export const VEIN_BATCH = 5;",
+    );
+  });
+
   it("破坏性二次确认话术统一 —— 确认前缀 + 取消,不许各说各话", () => {
     // 删构筑/分解装备/弃秘境三处都是「确认后不可逆」的二步确认,此前确认词
     // (确信删除/分解?/确出)与取消词(取消/算了)各说各话 —— 统一成「确认+对象 / 取消」。

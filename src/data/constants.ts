@@ -273,6 +273,8 @@ export const VEIN_MAIN_CAPACITY = 70;
 export const VEIN_SIDE_CAP = 30;
 /** 每点投资灵石倍率(stoneByTier 按玩家层级) */
 export const VEIN_POINT_STONE = 25;
+/** 连投一次至多投几点(与连炼×5 / 建筑连升同一种有界批量) */
+export const VEIN_BATCH = 5;
 /** 灵脉开放境界(金丹) */
 export const VEIN_UNLOCK_MAJOR = 2;
 
