@@ -76,6 +76,22 @@ describe("离线结算封顶一致性", () => {
     expect(stone).toBeLessThan(13000);
   });
 
+  it("挂机折扣在**未超限的短离**也要摊明 —— 9 折是每天离线都生效的常数,不只封顶才发生", () => {
+    const game = useGameStore();
+    const player = usePlayerStore();
+    useUiStore();
+    game.markStarted();
+    game.lastActiveAt = Date.now() - 3600 * 1000; // 1h 缺席,远低于洞府 0 级 8h 上限
+    player.major = 3;
+    const summary = settleOffline(Date.now())!;
+    expect(summary, "短离应正常结算").not.toBeNull();
+    expect(summary.capped, "1h 短离不该被 8h 上限截").toBe(false);
+    const note = summary.notes.join("");
+    // 非封顶分支也要有折扣说明:挂机 9 折若只在超限时才提,短离玩家拿到 9 折产出却不知为何
+    expect(note, "短离归来也要说「按 X 折挂机折算」,不许只在封顶时提").toMatch(/折挂机折算/);
+    expect(note, "折扣数要与 OFFLINE_EFFICIENCY 同源").toContain(`${OFFLINE_EFFICIENCY * 10} 折`);
+  });
+
   it("已过期 buff 不补贴离线产出:结算前先清剪,不再全程生效", () => {
     // 回归:settleOffline 产出先按 finalStats.mods 结算、pruneBuffs 却放末尾——
     // 已过期的聚灵(+50% 修速)若不清剪,会对整段离线全程加成(在线每 tick 即时清算,

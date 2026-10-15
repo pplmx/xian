@@ -170,16 +170,26 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const capSec = idle.cappedMs / 1000;
   const effSec = idle.effectiveMs / 1000;
   const notes: string[] = [];
-  if (idle.overflowMs > 1000) {
-    const capHours = dongfu.offlineCapHours;
-    const idx = (OFFLINE_CAP_HOURS as readonly number[]).indexOf(capHours);
-    const nextCap =
-      idx >= 0 && idx < OFFLINE_CAP_HOURS.length - 1 ? OFFLINE_CAP_HOURS[idx + 1]! : null;
-    notes.push(
-      `离府 ${formatDuration(dtSec)}:修为与灵气按时长全额入账;` +
-        `材料、钻研与历练按 ${OFFLINE_EFFICIENCY * 10} 折挂机、受洞府上限(${capHours} 小时)约束,超出的 ${formatDuration(dtSec - capSec)} 未计入` +
-        (nextCap ? ` —— 洞府升一级可提到 ${nextCap} 小时` : " —— 洞府已至最高档"),
-    );
+  // 挂机折扣是**恒有的**(每天离线都按 9 折折算材料/钻研/历练),不是封顶才发生的事;
+  // 只在超限时提一句,绝大多数短离拿到 9 折产出却以为"少了点什么",就把机制藏起来了。
+  // 超限时在同一句里续上封顶明细,不另起一行。
+  if (effSec > 0) {
+    if (idle.overflowMs > 1000) {
+      const capHours = dongfu.offlineCapHours;
+      const idx = (OFFLINE_CAP_HOURS as readonly number[]).indexOf(capHours);
+      const nextCap =
+        idx >= 0 && idx < OFFLINE_CAP_HOURS.length - 1 ? OFFLINE_CAP_HOURS[idx + 1]! : null;
+      notes.push(
+        `离府 ${formatDuration(dtSec)}:修为与灵气按时长全额入账;` +
+          `材料、钻研与历练按 ${OFFLINE_EFFICIENCY * 10} 折挂机、受洞府上限(${capHours} 小时)约束,超出的 ${formatDuration(dtSec - capSec)} 未计入` +
+          (nextCap ? ` —— 洞府升一级可提到 ${nextCap} 小时` : " —— 洞府已至最高档"),
+      );
+    } else {
+      notes.push(
+        `离府 ${formatDuration(dtSec)}:修为与灵气全额入账;材料、钻研与历练各按 ` +
+          `${OFFLINE_EFFICIENCY * 10} 折挂机折算`,
+      );
+    }
   }
   const equipmentGained: OfflineSummary["equipment"] = [];
   /** 离线期间未入包(自动回收/满包化尘)装备化作的器灵尘 */

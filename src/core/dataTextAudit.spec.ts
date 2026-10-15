@@ -680,6 +680,15 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(dlg, "离开归来应写「此去」(与退出确认同款用词)").toContain("此去");
   });
 
+  it("离线挂机折扣是恒有的 —— 非超限的短离也要把「9 折」摊明,不能只在封顶时提", () => {
+    const core = src("./offline.ts");
+    // 0.9 的效率**每天离线都生效**(planIdle 的 effectiveMs = cappedMs × efficiency),
+    // 只封顶时才提一句,短离玩家拿到 9 折产出却以为"少了点什么",机制就被藏起来了
+    expect(core, "离线结算该引 OFFLINE_EFFICIENCY(同一常数)").toContain("OFFLINE_EFFICIENCY");
+    // 非封顶分支(else)也要有折扣说明,不许只剩封顶那句
+    expect(core, "折扣说明不应只挂在封顶分支").toMatch(/else\s*\{[\s\S]{0,160}折挂机折算/);
+  });
+
   it("丹药详情与丹方清单说得出「服下去会怎样」", () => {
     const view = src("../views/InventoryView.vue");
     // 两处都要读同一份:丹药详情弹窗 + 开炉炼丹的方子清单
