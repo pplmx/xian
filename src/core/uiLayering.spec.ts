@@ -1157,6 +1157,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(b?.src, "不许退回手写「连升 5 级」").not.toContain('aria-label="连升 5 级"');
   });
 
+  it("灵气充盈的阈值比率读常量 —— 不许手写「容量一半」当比例改了只顾一头", () => {
+    // 阈值数字本就随 QI_RICH_THRESHOLD_RATIO(结算同源)现算,可括号里的形容
+    // 「容量一半」是手写的:比例一旦从 0.5 改走,数字跟着变、这句形容却停在一半,
+    // 又是不许手写会被常数改动的字(「改常数就撒谎」)。
+    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    expect(cult?.src, "阈值比率要用 formatPercent 现算").toContain(
+      "formatPercent(QI_RICH_THRESHOLD_RATIO)",
+    );
+    expect(cult?.src, "不许退回手写「容量一半」").not.toContain("容量一半");
+  });
+
   it("破坏性二次确认话术统一 —— 确认前缀 + 取消,不许各说各话", () => {
     // 删构筑/分解装备/弃秘境三处都是「确认后不可逆」的二步确认,此前确认词
     // (确信删除/分解?/确出)与取消词(取消/算了)各说各话 —— 统一成「确认+对象 / 取消」。

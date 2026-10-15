@@ -143,9 +143,10 @@
           :height="8"
         />
         <!--
-          灵气充盈:灵气 ≥ 标称容量一半 → 修炼 +15%。off 态藏着不说是欺瞒 ——
-          玩家每日最常盯的就是修炼,这个加成答得上「我灵气满了该怎么花」。
-          阈值与结算同读 QI_RICH_THRESHOLD_RATIO(见 player.qirich)。
+          灵气充盈:灵气 ≥ 标称容量 QI_RICH_THRESHOLD_RATIO → 修炼 +QI_RICH_BONUS。
+          off 态藏着不说是欺瞒 —— 玩家每日最常盯的就是修炼,这个加成答得上
+          「我灵气满了该怎么花」。阈值与结算同读 QI_RICH_THRESHOLD_RATIO(见
+          player.qirich),括号里的比率不许手写「一半」—— 改常数就撒谎。
         -->
         <p class="mt-1 text-[10px]" :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'">
           <template v-if="qiRichInfo.on"
@@ -153,9 +154,8 @@
           >
           <template v-else>
             距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵气(灵气 ≥
-            {{ formatNum(qiRichInfo.threshold) }}(容量一半)→ 修炼 +{{
-              formatPercent(QI_RICH_BONUS)
-            }})
+            {{ formatNum(qiRichInfo.threshold) }}(容量
+            {{ formatPercent(QI_RICH_THRESHOLD_RATIO) }})→ 修炼 +{{ formatPercent(QI_RICH_BONUS) }})
           </template>
         </p>
         <!-- 以灵气疗伤(修复):灵气积余的用途,代价随境界指数增长 -->
