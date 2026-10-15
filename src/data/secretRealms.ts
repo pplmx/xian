@@ -138,6 +138,17 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.4,
     rewardMult: 1.45,
   },
+  {
+    id: "sr_yunxing",
+    gate: "mortal",
+    name: "陨星荒原",
+    desc: "万界陨星坠落的荒原,碎石如雨。禁疗之地,唯快与甲可恃",
+    minMajor: 8,
+    cost: { stone: 200 },
+    rules: { healMult: 0.25, enemyExtraMods: { lowHpDamage: 0.4 }, maxRounds: 26 },
+    healBetweenPct: 0.2,
+    rewardMult: 1.5,
+  },
   // ---- 天界秘境:真仙起,道源代价,与远征/试炼并列 ----
   {
     id: "sr_xingchen",
