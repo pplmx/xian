@@ -44,7 +44,7 @@ export const REGIONS: RegionDef[] = [
     1,
     "sunset",
     "每逢黄昏,满谷霞光如焚",
-    ["e_sparrow", "e_stoneape"],
+    ["e_sparrow", "e_stoneape", "e_xiadeer"],
     "e_python",
     ["general", "mountain"],
     "qingyun",
