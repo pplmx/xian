@@ -1,4 +1,4 @@
-/** 随机事件库 —— 87 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 88 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1513,6 +1513,24 @@ export const EVENTS: EventDef[] = [
       c("绕道而行", [o(1, "你避开这片煞气冲天的所在。")]),
     ],
     { maxRealm: 6 },
+  ),
+  ev(
+    "ev_storm_bridge",
+    "暴雨石桥",
+    "骤雨倾盆,一座石桥被水半淹,桥下浊浪翻涌,几根桥板已朽。",
+    ["general"],
+    [
+      c(
+        "涉水而过",
+        [
+          o(60, "你扶住桥栏稳稳渡过,对岸空无一人。", { type: "exp", secs: 30 }),
+          o(40, "桥板朽烂,你一脚踏空,呛了几口浊水。", { type: "buff", id: "injury" }),
+        ],
+        { isDefault: true },
+      ),
+      c("绕路而行", [o(1, "你顺河岸绕行,虽费时却也安稳。")]),
+    ],
+    { maxRealm: 2 },
   ),
 ];
 
