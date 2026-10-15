@@ -750,6 +750,15 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     );
   });
 
+  it("建号页未定格前有回到欢迎页的入口 —— 否则 web 端建号无退路可比", () => {
+    const create = src("../views/CreateView.vue");
+    // 路由守卫允许 create→welcome(未开始前);建号全程可逆(草稿持久化+无限重掷),
+    // 但没有「上一步」控件时 web 端就只能卡在这一页(手机可借系统返回,桌面无处退)
+    expect(create, "建号页该有回欢迎页的 RouterLink").toMatch(
+      /<RouterLink[\s\S]{0,120}to="\/welcome"[\s\S]{0,240}欢迎/,
+    );
+  });
+
   it("离线挂机折扣是恒有的 —— 非超限的短离也要把「9 折」摊明,不能只在封顶时提", () => {
     const core = src("./offline.ts");
     // 0.9 的效率**每天离线都生效**(planIdle 的 effectiveMs = cappedMs × efficiency),

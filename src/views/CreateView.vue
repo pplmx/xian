@@ -1,5 +1,14 @@
 <template>
   <div class="stagger-in flex min-h-full flex-col px-6 py-8">
+    <!-- 上一步:未定格前可回欢迎页核隐私(路由守卫允许 create→welcome) -->
+    <div class="flex items-center">
+      <RouterLink
+        to="/welcome"
+        class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft"
+        >← 欢迎</RouterLink
+      >
+    </div>
+
     <!-- 题字 -->
     <div class="mt-6 text-center">
       <h1 class="font-kai text-[42px] leading-tight tracking-[0.35em] text-ink">玄枢录</h1>
