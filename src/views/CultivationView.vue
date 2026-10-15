@@ -491,7 +491,12 @@
         >
           <GameIcon :name="b.def!.icon" :size="11" />
           {{ b.def!.name }}
-          <span v-if="b.stack > 1" class="text-[9px]">×{{ b.stack }}</span>
+          <span
+            v-if="b.stack > 1"
+            class="text-[9px]"
+            :aria-label="`${b.def!.name} 与 ${b.stack - 1} 味状态同刻叠加`"
+            >×{{ b.stack }}</span
+          >
           <span class="countdown-slot">{{ formatCountdown(b.remain) }}</span>
         </button>
       </div>

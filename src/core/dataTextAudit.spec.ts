@@ -254,6 +254,25 @@ describe("文案数值对账 · 视图不手抄数字", () => {
     expect(view).toMatch(/text-amber-ink[\s\S]{0,80}已封顶/);
   });
 
+  it("同一味药的「两处数法」要分清:主屏 ×N 是同刻叠加份数,弹窗数的是服用颗数", () => {
+    const chip = src("../views/CultivationView.vue");
+    // 主屏胶囊挂角标算的是「同刻共享词条的状态数」(buffStackSize),不是本药吃了几颗
+    expect(chip, "主屏叠加角标应引 buffStackSize 同族台账").toContain("buffStackSize(");
+    // 除非同刻真在叠,不该挂角标 —— 不会把人误导成「这药吃了 N 颗」
+    expect(chip).toContain('v-if="b.stack > 1"');
+    // 角标要有把话说清的读屏文案,不许光一个 ×N 让人猜
+    expect(chip, "×N 须带 aria-label 说明是「与 N-1 味同刻叠加」").toContain("同刻叠加");
+    const dlg = src("../components/cultivation/BuffDialog.vue");
+    // 弹窗「已服 N 颗」数的是连吃颗数(封顶倍数),与主屏的「叠」不是一回事
+    expect(
+      dlg,
+      "弹窗的服用颗数不要借「已叠/ 份」'字面 —— 那正是主屏叠加份数的叫法,会撞口径",
+    ).not.toContain("已叠");
+    expect(dlg, "弹窗服用颗数该写「已服 … 颗」").toContain("已服");
+    expect(dlg, "颗数引 buffStackCount(封顶在至多可攒倍数)").toContain("buffStackCount(");
+    expect(dlg, "至多可攒该把倍数摊开").toContain("capMult");
+  });
+
   it("灵脉投资/改立主脉付不起要置灰并列出尚差 —— 与其他消费点同族规", () => {
     const view = src("../components/dongfu/VeinInvestCard.vue");
     // 按钮置灰(listable)之外,按钮文字必须列「尚差 N 石」(AGENTS#2 决策信息完整)

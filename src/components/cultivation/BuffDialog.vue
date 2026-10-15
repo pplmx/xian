@@ -55,13 +55,15 @@
         <span class="countdown-slot tabular">{{ formatCountdown(remainSec) }}</span>
       </p>
       <!--
-        已叠 N 份:丹药增益的叠法是"加上",同一状态连吃几颗 = 几份时长。
+        已服 N 颗:丹药增益的叠法是"加上"(extend),同一状态连吃几颗 = 几颗时长。
         此前「剩余」看着比「全程」还长时(叠了两颗),玩家以为坏了 ——
-        份数把这一串是怎么堆起来的摊明白。
+        颗数把这一串是怎么堆起来的摊明白。
+        (这里数的是**服用颗数**;与主屏状态胶囊的「×N 叠加份数」是两件事——
+        主屏数的是同刻共享词条的状态有几种,不是这一味药你吃了几颗。)
       -->
       <p v-if="stackCount > 1" class="mt-1 flex justify-between text-[13px]">
-        <span class="text-ink-soft">已叠</span>
-        <span class="tabular text-ink-faint">{{ stackCount }} 份</span>
+        <span class="text-ink-soft">已服</span>
+        <span class="tabular text-ink-faint">{{ stackCount }} 颗</span>
       </p>
       <p class="mt-1 flex justify-between text-[13px]">
         <span class="text-ink-soft">全程</span>
