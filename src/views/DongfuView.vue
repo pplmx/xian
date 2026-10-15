@@ -83,7 +83,7 @@
         class="mt-2 flex items-center gap-1.5 px-1 text-[11px] text-jade"
       >
         <span class="chip-ink border-jade/60 text-[10px] text-jade">营造尽善</span>
-        七座建筑俱已至顶 —— 此间经营,已然圆满
+        {{ cnNumber(BUILDINGS.length) }} 座建筑俱已至顶 —— 此间经营,已然圆满
       </p>
     </section>
 
@@ -130,6 +130,7 @@ import { BUILDINGS } from "@/data/buildings";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BuildingCard from "@/components/dongfu/BuildingCard.vue";
 import { hourlyYieldText } from "@/core/engineFacilities";
+import { cnNumber } from "@/utils/format";
 
 const router = useRouter();
 const dongfu = useDongfuStore();

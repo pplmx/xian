@@ -284,6 +284,26 @@ describe("文案数值对账 · 视图不手抄数字", () => {
     expect(view).toContain("switchStoneShort > 0");
   });
 
+  it("构筑快照存满要置灰并说清,不许点到弹窗里才吃闭门羹", () => {
+    const view = src("../views/BuildView.vue");
+    // 快照满额时「+ 存当前构筑」该置灰(与全仓「满/付不起置灰+列差」同一纪律)
+    expect(view, "快照满额应置灰存入口").toContain(':disabled="loadoutsFull"');
+    expect(view, "满额入口文字要醒目改口").toContain('"快照已满"');
+    expect(view, "满额判定读 MAX_LOADOUTS(与题头 N/M 同源)").toContain(
+      "loadouts.list.length >= MAX_LOADOUTS",
+    );
+    expect(view, "弹窗里存满也要拦并提示删套再存").toContain("先删一套再存");
+    expect(view, "不许把满额判定写死成 6").not.toMatch(/>= ?6\b/);
+  });
+
+  it("洞府的营造计数不手写 —— 「N 座建筑」要随 BUILDINGS.length 走", () => {
+    const view = src("../views/DongfuView.vue");
+    // 题头已营 N/M 读 BUILDINGS.length;「俱已至顶」那句也不许手写「七座」
+    expect(view, "营造尽善那句该引建筑数").toContain("cnNumber(BUILDINGS.length)");
+    expect(view, "手写「七座建筑」会在建筑集变更时与 N/M 打架").not.toContain("七座建筑");
+    expect(view, "判定与题头同源读 BUILDINGS").toContain("BUILDINGS");
+  });
+
   it("灵气充盈:off 态与阈值都摊开,且阈值/加成读常数不手抄(AGENTS「机制要露进界面」)", () => {
     const view = src("../views/CultivationView.vue");
     // 灵气 ≥ 标称容量一半即触发 +15% 修炼 —— off 态(尚差多少)与 on 态(在吃这个加成)

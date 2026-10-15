@@ -212,10 +212,11 @@
         <!-- 320 窄窗:按钮不许被左侧说明挤折(「+ 存当前构 / 筑」)。
              按钮 shrink-0 + 不断行,说明文字先让位。 -->
         <button
-          class="tap-row -my-1 shrink-0 whitespace-nowrap py-1.5 text-[11px] text-cinnabar active:opacity-60"
+          class="tap-row -my-1 shrink-0 whitespace-nowrap py-1.5 text-[11px] text-cinnabar active:opacity-60 disabled:text-ink-faint"
+          :disabled="loadoutsFull"
           @click="openSave"
         >
-          + 存当前构筑
+          {{ loadoutsFull ? "快照已满" : "+ 存当前构筑" }}
         </button>
       </p>
       <div v-if="loadouts.list.length" class="space-y-1.5">
@@ -325,7 +326,12 @@
         placeholder="给这套构筑起个名字"
       />
       <template #footer>
-        <button class="btn-seal w-full" @click="confirmSave">存 入</button>
+        <p v-if="loadoutsFull" class="mb-1 text-center text-[10px] text-cinnabar">
+          快照已满({{ loadouts.list.length }}/{{ MAX_LOADOUTS }}),先删一套再存
+        </p>
+        <button class="btn-seal w-full" :disabled="loadoutsFull" @click="confirmSave">
+          {{ loadoutsFull ? "快照已满" : "存 入" }}
+        </button>
       </template>
     </BaseModal>
   </div>
@@ -360,6 +366,8 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 
 const player = usePlayerStore();
 const loadouts = useLoadoutsStore();
+/** 快照存满:存入口该置灰(满额存不进,别让玩家点到弹窗里才吃闭门羹) */
+const loadoutsFull = computed(() => loadouts.list.length >= MAX_LOADOUTS);
 
 const build = computed(() => detectBuild(player.finalStats.mods));
 /** 距下一形态还差多少契合:读判定线常量(60%/90%,与 stageName 同源),进度不许空转 */
