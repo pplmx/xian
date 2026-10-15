@@ -727,6 +727,17 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(dlg, "离开归来应写「此去」(与退出确认同款用词)").toContain("此去");
   });
 
+  it("导入的备份太新时「用这份替换」不可行要置灰 —— 与付不起置灰同一纪律", () => {
+    const view = src("../views/SettingsView.vue");
+    // 备份版本高于当前就必然导入失败(storage 会拒);确认前已明示「无法导入」,
+    // 确认钮却仍可点就没意义 —— 应与付不起一样置灰改口
+    expect(view, "导入确认钮在版本过高时置灰").toContain(
+      ':disabled="importInspect?.tooNew === true"',
+    );
+    expect(view, "不可行的确应改口").toContain('"无法导入(版本过高)"');
+    expect(view, "版本过高与否取自 inspect(不另写死)").toContain("importInspect.tooNew");
+  });
+
   it("离线挂机折扣是恒有的 —— 非超限的短离也要把「9 折」摊明,不能只在封顶时提", () => {
     const core = src("./offline.ts");
     // 0.9 的效率**每天离线都生效**(planIdle 的 effectiveMs = cappedMs × efficiency),

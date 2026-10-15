@@ -273,7 +273,13 @@
       <template #footer>
         <div class="flex gap-2">
           <button class="btn-ghost flex-1" @click="closeImport">再想想</button>
-          <button class="btn-seal flex-1" @click="confirmImport">用这份替换</button>
+          <button
+            class="btn-seal flex-1 disabled:text-ink-faint"
+            :disabled="importInspect?.tooNew === true"
+            @click="confirmImport"
+          >
+            {{ importInspect?.tooNew === true ? "无法导入(版本过高)" : "用这份替换" }}
+          </button>
         </div>
       </template>
     </BaseModal>
