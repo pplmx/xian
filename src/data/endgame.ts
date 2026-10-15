@@ -822,6 +822,20 @@ export const TRIALS: TrialDef[] = [
     escalation: 1.06,
     rewardDaoSource: 45,
   },
+  {
+    id: "xiaomo",
+    name: "消磨试炼",
+    seal: "磨",
+    anchorTier: 24,
+    desc: "敌身披重甲、饮血而战 —— 你磨不动它,它却越战越回。攻不破,便输在磨",
+    ruleText: ["敌方护甲 +20% · 吸血 +12%", "连战 5 场", "消耗战"],
+    rules: { enemyExtraMods: { defensePct: 0.2, lifesteal: 0.12 } },
+    entryCost: 15,
+    fights: 5,
+    healBetweenPct: 0.5,
+    escalation: 1.05,
+    rewardDaoSource: 45,
+  },
 ];
 
 export function trialDef(id: string): TrialDef | undefined {
