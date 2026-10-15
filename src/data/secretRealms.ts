@@ -202,6 +202,17 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.2,
     rewardMult: 1.6,
   },
+  {
+    id: "sr_xuanyuan",
+    gate: "celestial",
+    name: "轩辕剑冢",
+    desc: "十万残剑,择主而鸣。此地以血试剑 —— 越搏命,所得越锋锐。",
+    minMajor: 9,
+    cost: { daoSource: 55 },
+    rules: { playerAtkMult: 1.3, playerStartHpPct: 0.5 },
+    healBetweenPct: 0.15,
+    rewardMult: 1.7,
+  },
 ];
 
 const BY_ID = new Map(SECRET_REALMS.map((r) => [r.id, r]));
