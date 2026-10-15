@@ -101,6 +101,15 @@ export const PACTS: PactDef[] = [
     rules: { enemyExtraMods: { speed: 0.2 } },
     sourceMult: 1.9,
   },
+  {
+    id: "shihun",
+    name: "噬魂契",
+    seal: "噬",
+    desc: "敌如饿鬼,吸食气血而战 —— 与难缠的吸血周旋,换些许道源",
+    ruleText: "敌方吸血 +15% · 道源 ×1.8",
+    rules: { enemyExtraMods: { lifesteal: 0.15 } },
+    sourceMult: 1.8,
+  },
 ];
 
 export function pactDef(id: string): PactDef | undefined {
