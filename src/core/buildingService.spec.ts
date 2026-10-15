@@ -13,7 +13,12 @@ import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { gn, toNum } from "@/utils/gnum";
-import { buildingUpgradeInfo, buildingUpgradePreview, buildingUpgradeN } from "./buildingService";
+import {
+  buildingUpgradeInfo,
+  buildingUpgradePreview,
+  buildingUpgradeN,
+  buildingUpgradeBatchCost,
+} from "./buildingService";
 import { buildingDef, BUILDINGS } from "@/data/buildings";
 
 /** 把聚灵阵撑到 3 级(高于首级,有玄铁成本;且远未到顶层/辖限) */
@@ -197,5 +202,19 @@ describe("buildingUpgradeN · 一键连升 ×5", () => {
     // 曾把连升整批只 track 一次:升 5 级却只算 1 次「升级建筑」,比逐级慢 5 倍
     const quests = useQuestsStore();
     expect(quests.counter("buildingUpgrades")).toBe(r.levelsGained);
+  });
+
+  it("连升的成本预演(buildingUpgradeBatchCost)与真花(buildingUpgradeN)同一判定、同一账", () => {
+    buildArrayToLevel(1);
+    // 料到即止的那档最考验口径:预演要跟实花对齐,不是先画个「×5」再烧光
+    useResourcesStore().spiritStone = gn(200);
+    useResourcesStore().ore = 100000;
+    const preview = buildingUpgradeBatchCost("array", 5);
+    const res = buildingUpgradeN("array", 5);
+    // 预演该批会升几级、花多少 —— 正是按下后实际会发生的数
+    expect(preview.levels, "预演批级数与实升不符").toBe(res.levelsGained);
+    expect(toNum(preview.stone), "预演石账与实花不符").toBe(toNum(res.stone));
+    expect(preview.ore, "预演玄铁账与实花不符").toBe(res.ore);
+    expect(toNum(useResourcesStore().spiritStone), "真花后灵石不为负").toBeGreaterThanOrEqual(0);
   });
 });

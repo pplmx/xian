@@ -69,7 +69,8 @@
       <!-- 连升:一次升到最多 ×5 级(或料尽/到顶即止)。取有界批量而非「一口气到顶」 ——
            玄铁是全局共用的硬料,连升不该有机会把兜里的玄铁一把烧光(连炼×5 / 灵脉+5 同手感)。
            独立一行而不是并排:卡片是 2 列窄卡(200% 放大后内宽仅 ~84px),并排会把
-           主按钮挤到折行/越界 —— 与灵脉投资那行(整宽区)不同,这里只能上下叠。 -->
+           主按钮挤到折行/越界 —— 与灵脉投资那行(整宽区)不同,这里只能上下叠。
+           总账在按下前摊开(与装备连强到顶同族):别让玩家对着「连升×5」就盲按。 -->
       <button
         v-if="info.canUpgrade"
         class="btn-ghost min-h-[28px] w-full !py-1 !text-[10px]"
@@ -77,7 +78,15 @@
         :disabled="!info.canUpgrade"
         @click="buildingUpgradeN(props.def.id, BUILD_BATCH)"
       >
-        <span class="whitespace-nowrap">连升×{{ BUILD_BATCH }}</span>
+        <template v-if="batch.levels > 0">
+          <span class="whitespace-nowrap">连升×{{ batch.levels }}</span>
+          <span class="whitespace-nowrap tabular text-ink-soft">
+            ·共 {{ formatGN(batch.stone) }} 石<span v-if="batch.ore > 0"> {{ batch.ore }} 铁</span>
+          </span>
+        </template>
+        <template v-else
+          ><span class="whitespace-nowrap">连升×{{ BUILD_BATCH }}</span></template
+        >
       </button>
     </div>
   </div>
@@ -94,6 +103,7 @@ import {
   buildingUpgradeInfo,
   buildingUpgradeN,
   buildingUpgradePreview,
+  buildingUpgradeBatchCost,
   upgradeBuilding,
 } from "@/core/buildingService";
 import { studyEta } from "@/core/loreService";
@@ -112,6 +122,9 @@ const level = computed(() => dongfu.levels[props.def.id] ?? 0);
 /** 实际可达上限:洞府全局闸门与自身品类上限取小,洞府卡展现的是"提升到什么档"的依据 */
 const cap = computed(() => dongfu.buildingCap(props.def.id));
 const info = computed(() => buildingUpgradeInfo(props.def.id));
+
+/** 连升整批会实际花掉的总账(只读预演,与 buildingUpgradeN 同一判定) —— 按下前把总数摊开 */
+const batch = computed(() => buildingUpgradeBatchCost(props.def.id, BUILD_BATCH));
 /** 下一级增益预览:卡面已显当前效果与代价,这里补「升上去会怎样」(effectText 同源,只报会变的行) */
 const preview = computed(() => buildingUpgradePreview(props.def.id, level.value, cap.value));
 /** 灵兽园联动:洞府与宠物两系统彼此看见(只对 beast 这一座特例,其余建筑不理会) */

@@ -147,3 +147,40 @@ export function buildingUpgradeN(id: BuildingId, count = 5): BuildingUpgradeBatc
   }
   return { levelsGained, stone, ore };
 }
+
+export interface BuildingBatchCost {
+  levels: number;
+  stone: GNum;
+  ore: number;
+  /** 预演到顶/料尽,说明实际只会连升这些级而非满批 —— 按下前把「会花多少」说清 */
+  capped: boolean;
+}
+
+/**
+ * 连升的只读成本预演:与 buildingUpgradeN 同一判定、逐级推进,只算不花 ——
+ * 返回「照当前可升的最多 ×5 级、按料尽/到顶/境界门槛即止」会实际花掉的总账,
+ * 供卡片在按下前把总成本摊开(与装备连强到顶同一纪律)。
+ * 逐级推进靠本地拷贝的 levels 快照,不碰真 store。
+ */
+export function buildingUpgradeBatchCost(id: BuildingId, count: number): BuildingBatchCost {
+  const player = usePlayerStore();
+  const resources = useResourcesStore();
+  const dongfu = useDongfuStore();
+  let levels = 0;
+  let stone = gnZero();
+  let ore = 0;
+  const snapshot: Record<string, number> = { ...dongfu.levels };
+  const totalCount = Math.max(0, count);
+  while (levels < totalCount) {
+    const info = buildingUpgradeInfoOf(id, snapshot, player.major);
+    if (!info.can) break; // 到顶 / 境界门槛 / 洞府辖限:与 buildingUpgradeN 同闸
+    const infoStone = (info.costs.find((c) => c.key === "stone")?.amount ?? gnZero()) as GNum;
+    const infoOre = (info.costs.find((c) => c.key === "ore")?.amount ?? 0) as number;
+    if (!resources.hasStone(infoStone) || !resources.hasSmall("ore", infoOre)) break; // 料尽
+    stone = add(stone, infoStone);
+    ore += infoOre;
+    levels += 1;
+    snapshot[id] = info.nextLevel; // 费用随级递增,下一级按新 level 算
+  }
+  return { levels, stone, ore, capped: levels > 0 && levels < totalCount };
+}
