@@ -110,6 +110,15 @@ export const PACTS: PactDef[] = [
     rules: { enemyExtraMods: { lifesteal: 0.15 } },
     sourceMult: 1.8,
   },
+  {
+    id: "liandie",
+    name: "连叠契",
+    seal: "连",
+    desc: "敌如狂潮,连叠不绝 —— 与滔滔的连击周旋,换些许道源",
+    ruleText: "敌方连击率 +18% · 道源 ×1.8",
+    rules: { enemyExtraMods: { comboRate: 0.18 } },
+    sourceMult: 1.8,
+  },
 ];
 
 export function pactDef(id: string): PactDef | undefined {
