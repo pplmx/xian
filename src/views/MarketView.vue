@@ -268,15 +268,21 @@ function bountyShort(o: BountySlot): string | null {
           <span class="text-[12px] tabular text-cinnabar">{{ formatGN(slot.price) }} 灵石</span>
           <button
             class="btn-seal !px-3 !py-1 text-[11px]"
-            :disabled="slot.sold || !resources.hasStone(slot.price)"
+            :disabled="
+              slot.sold ||
+              (slot.kind === 'equipment' && inventory.bagFull) ||
+              !resources.hasStone(slot.price)
+            "
             @click="buySlot(slot.idx)"
           >
             {{
               slot.sold
                 ? "已售"
-                : resources.hasStone(slot.price)
-                  ? "购入"
-                  : `尚差 ${formatGN(stoneShort(slot.price))} 石`
+                : slot.kind === "equipment" && inventory.bagFull
+                  ? "行囊已满"
+                  : resources.hasStone(slot.price)
+                    ? "购入"
+                    : `尚差 ${formatGN(stoneShort(slot.price))} 石`
             }}
           </button>
         </div>

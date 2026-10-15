@@ -907,11 +907,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(market?.src, "寄卖要列全背包,不许 slice 截断").not.toContain(
       "inventory.bagItems.slice(0, 12)",
     );
-    expect(market?.src, "寄卖按钮要遍历整包 bagItems").toContain(
-      'v-for="it in inventory.bagItems"',
-    );
+    expect(market?.src, "寄卖要遍历整包 bagItems").toContain('v-for="it in inventory.bagItems"');
     expect(market?.src, "售丹数量要写「现持」点明,不许裸 (N)").toContain("(现持 ");
     expect(market?.src, "售丹每颗要有成功反馈 toast").toMatch(/已售 1 颗.*得 .*石/);
+  });
+
+  it("货架购兵刃行囊满要置灰 —— 与「付不起置灰」同族,别点了才被退", () => {
+    // 店员误买装备在行囊满时被退回(store.buy 的 bagfull 门),但按钮只因 sold/
+    // 没灵石置灰 —— 行囊满时还可点,点了才弹「行囊已满,灵石已退回」,白点一下。
+    // 与「付不起置灰+就地列因」同族:装备槽行囊满就该置灰并改口「行囊已满」。
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    expect(market?.src, "装备买入行囊满要置灰(bagFull)").toContain(
+      "slot.kind === 'equipment' && inventory.bagFull",
+    );
+    expect(market?.src, "置灰时要就地改口「行囊已满」").toContain('"行囊已满"');
   });
 
   it("炼丹灵石不足列「尚差 N 石」 —— 与灵草臂同族,不许只报需求值", () => {
