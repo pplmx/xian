@@ -14,8 +14,8 @@ const worlds = computed(() => realmLadderWorlds());
 
 <template>
   <div>
-    <!-- 21 境刻度:每格均布,界首处立一道界门 -->
-    <div class="flex items-center" role="list" aria-label="仙路 21 境">
+    <!-- 刻度:每格均布,界首处立一道界门;境数读 points(即 REALMS.length)不手写 -->
+    <div class="flex items-center" role="list" :aria-label="`仙路 ${points.length} 境`">
       <template v-for="(p, i) in points" :key="p.index">
         <span
           v-if="p.worldStart && i > 0"

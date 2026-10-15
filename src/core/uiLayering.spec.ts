@@ -1137,6 +1137,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("仙路刻度的境数读 points —— aria-label 不许手写「21 境」当常量改了只顾一头", () => {
+    // 刻度格复用 REALMS 渲染,唯一会把「有几境」写死的是读屏 aria-label「仙路 21 境」:
+    // 将来增删境界,刻度会跟着变,这句读名却停在 21 —— 又是「写常量即撒谎」。
+    // 境数必须取自 points(即 REALMS.length),不许留数字字面量。
+    const lad = FILES.find((f) => f.path === "components/cultivation/RealmLadder.vue");
+    expect(lad?.src, "仙路 aria-label 的境数要读 points.length").toContain(
+      "仙路 ${points.length} 境",
+    );
+    expect(lad?.src, "不许退回手写「仙路 21 境」").not.toContain('aria-label="仙路 21 境"');
+  });
+
   it("破坏性二次确认话术统一 —— 确认前缀 + 取消,不许各说各话", () => {
     // 删构筑/分解装备/弃秘境三处都是「确认后不可逆」的二步确认,此前确认词
     // (确信删除/分解?/确出)与取消词(取消/算了)各说各话 —— 统一成「确认+对象 / 取消」。
