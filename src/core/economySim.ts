@@ -28,7 +28,7 @@ import { PILLS } from "@/data/pills";
 import { qualityDef } from "@/data/qualities";
 import { MAX_MAJOR } from "@/data/realms";
 import { WORLD_BREAK_MAJOR } from "@/data/realms";
-import { maxTierForMajor } from "@/data/regions";
+import { REGIONS, maxTierForMajor } from "@/data/regions";
 import { createEconomyReadings } from "wanxiang-engine";
 import {
   DAO_SOURCE_PER_FRUIT,
@@ -55,7 +55,8 @@ import {
 import { libraryWudaoPerHour } from "./engineFacilities";
 import { generateEquipment } from "./equipGen";
 import { secondsForMajor } from "./progressionSim";
-import { tripExpSecsPerHour, winsPerHour } from "./expIncome";
+import { eventsPerHour, tripExpSecsPerHour, winsPerHour } from "./expIncome";
+import { eventWudaoPerEncounter } from "./eventEngine";
 
 // ---- 挂机行为假设 ----
 const UPGRADES_PER_HOUR = 3;
@@ -120,11 +121,29 @@ const ECONOMY_READINGS = createEconomyReadings({
 export function avgDustPerDrop(tier: number, samples = 200): number {
   const rng = new RandomService(mulberry32(tier * 131));
   let total = 0;
+
   for (let i = 0; i < samples; i += 1) {
     const inst = generateEquipment(tier, rng);
     total += DECOMPOSE_DUST[qualityDef(inst.quality).rank] ?? 1;
   }
   return total / samples;
+}
+
+/**
+ * 该境界能去的所有地界的场所标签(去重合并)。
+ *
+ * 际遇池按区域标签筛(见 regionEventPoolFor),而审计只有境界没有"站在哪"——
+ * 故把该境界可达的地界标签并起来当池:这是"玩家会经历的全部际遇"的覆盖面,
+ * 比挑一处地界当代表更不容易偏。标签只影响池子里有哪些事件,
+ * 权重仍由 event.weight 决定。
+ */
+function reachableEventTags(major: number): string[] {
+  const tags = new Set<string>();
+  for (const region of REGIONS) {
+    if (region.minRealm > major) continue;
+    for (const tag of region.eventTags) tags.add(tag);
+  }
+  return [...tags];
 }
 
 /** 单个境界时期的资源流审计 */
@@ -149,7 +168,18 @@ export function auditEra(major: number): EraAudit {
   const oreIncome = winsThisHour * 0.35 * 1.5 + fieldLv * FIELD_ORE_PER_HOUR;
   const pageIncome = winsThisHour * PAGE_DROP_CHANCE * 1.5;
   const dustIncome = dropsPerHour * avgDustPerDrop(tier);
-  const wudaoIncome = libraryWudaoPerHour(libLv);
+  /**
+   * 悟道点收入 = 藏经阁 + 际遇。
+   *
+   * 从前只算藏经阁,于是审计读出「0~1 境缺口 20 倍」并据此立了一个 issue ——
+   * 那是假的:悟道点没有战斗或灵田产线,际遇才是它的主源(实测 20~31/h,
+   * 藏经阁 4~18/h)。漏掉主源 = 把收入低估 5~6 倍,缺口自然被放大。
+   *
+   * 区域标签取该境界可达地界的并集(见 reachableEventTags);际遇里的悟道
+   * 不看层级,故这一项基本随境界带变化,而不随层级涨。
+   */
+  const eventWudao = eventWudaoPerEncounter(major, reachableEventTags(major)) * eventsPerHour();
+  const wudaoIncome = libraryWudaoPerHour(libLv) + eventWudao;
   /**
    * 修为收入 = 挂机(底:1.0× 修速 = 3600 等效秒/小时)+ 历练(战斗胜场与际遇),
    * 两条线都随修速缩放,故这一行的比值在任何境界都该是同一个数 —— 判据据此断。

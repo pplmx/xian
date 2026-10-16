@@ -5,6 +5,7 @@ import { BT_QI_COST_RATIO } from "@/data/constants";
 import { MAX_MAJOR, worldOf } from "@/data/realms";
 import { maxTierForMajor } from "@/data/regions";
 import { layerSeconds } from "./pillValue";
+import { libraryWudaoPerHour } from "@/data/buildings";
 
 /**
  * 审计的判据分两段,理由写在 economySim 的文件头:
@@ -167,6 +168,28 @@ describe("经济闭环审计(Phase 19 · Phase 40 补界外与修为)", () => {
       // 悟道点是唯一例外 —— 它的真出口(功法进修 / 法宝炼化)没进模型,故必须自报口径
       const wudao = era.flows.find((f) => f.resource === "wudao")!;
       expect(wudao.note, `第${era.major}境悟道流的出口没进模型,却不自报口径`).toContain("待补");
+    }
+  });
+
+  /**
+   * 回归:悟道点收入必须含**际遇**这一条。
+   *
+   * 从前只算藏经阁,于是 0~1 境读出 ratio 0.047,并据此立了 ISS-305
+   * 「前期缺口 20 倍」——那是假的:悟道点没有战斗或灵田产线,际遇才是主源
+   * (实测 20~31/h,藏经阁 4~18/h)。少算主源会把收入低估 5~6 倍。
+   *
+   * 判据守两件事:①收入必须高于藏经阁单条(即际遇确实计入了);
+   * ②前期不再是 0.05 那种"差二十倍"的读数 —— 那是模型的产物,不是设计的意图。
+   */
+  it("悟道点收入含际遇这条主源:不再只算藏经阁", () => {
+    for (const era of eras.slice(0, 6)) {
+      const wudao = era.flows.find((f) => f.resource === "wudao")!;
+      const libraryOnly = libraryWudaoPerHour(Math.min(12, 2 + 2 * era.major));
+      expect(
+        wudao.incomePerHour,
+        `第${era.major}境悟道收入应高于藏经阁单条(${libraryOnly}/h),际遇没算进去`,
+      ).toBeGreaterThan(libraryOnly);
+      expect(wudao.ratio, `第${era.major}境悟道收支比`).toBeGreaterThan(0.2);
     }
   });
 

@@ -5,7 +5,7 @@ import type { EventChoice, EventDef, EventEffect, RegionDef } from "@/types";
 import { RandomService, rng } from "@/utils/random";
 import { formatGN, formatYears } from "@/utils/format";
 import { EVENTS, FORTUNE_EVENTS, eventDef } from "@/data/events";
-import { CHAINS, chainOfEvent } from "@/data/chains";
+import { CHAINS, CHAIN_EVENTS, chainOfEvent } from "@/data/chains";
 import { realmDef } from "@/data/realms";
 // 三档触发概率是同一份数据(见 data/constants 那段注释):际遇在 exploration 掷,
 // 奇缘与机缘在这里从上一步的结果里再掷一次。数字不在本文件另写一遍 ——
@@ -150,6 +150,52 @@ export function regionEventPoolFor(region: RegionDef): EventDef[] {
     tags: region.eventTags,
     seen: adventure.seenOnceEvents,
   }).map((e) => e.def);
+}
+
+/**
+ * 一个事件的悟道点期望 —— 按**实际会走的那条路**算,供经济审计建模用。
+ *
+ * 为什么需要它:economySim 从前只把藏经阁算作悟道点收入,而悟道点**没有**
+ * 战斗或灵田产线 —— 际遇才是它的主源(实测 0~5 境约 20~31/h,藏经阁只有 4~18/h)。
+ * 少算这一条会让审计读出「前期缺口 20 倍」这种并不存在的失衡。
+ *
+ * 口径对齐 `autoResolveEvent`:离线与自动结算走的是**默认项**(没有默认项则第一条),
+ * 故这里也只算那一项,不去平均所有选项 —— 否则会高估三倍(实测 0.414 vs 1.35)。
+ * 项内按 outcome 的 weight 加权。
+ */
+export function eventWudaoExpectation(def: EventDef): number {
+  const choice = def.choices.find((c) => c.isDefault) ?? def.choices[0];
+  if (!choice) return 0;
+  const total = choice.outcomes.reduce((s, o) => s + o.weight, 0);
+  if (total <= 0) return 0;
+  let sum = 0;
+  for (const outcome of choice.outcomes) {
+    for (const effect of outcome.effects) {
+      if (effect.type === "material" && effect.id === "wudao") {
+        sum += outcome.weight * effect.amount;
+      }
+    }
+  }
+  return sum / total;
+}
+
+/**
+ * 一趟际遇的悟道点期望 —— 三层概率链都算进去:
+ * 奇缘(CHAIN_STAGE_CHANCE)→ 机缘(FORTUNE_CHANCE)→ 普通事件池。
+ *
+ * 与 `pickEventFor` 的三条分支一一对应;池子按区域标签 + 境界带筛,
+ * 不另写一份"哪些事件会出"的判据。奇缘那一路按"该境界全部链事件"取均值 ——
+ * 真实选择还看链条进度,那是玩家状态,模型取不到也不该假装取到。
+ */
+export function eventWudaoPerEncounter(major: number, tags: readonly string[]): number {
+  const ctx = { level: major, tags };
+  const mean = (pool: EventDef[]): number =>
+    pool.length === 0 ? 0 : pool.reduce((s, ev) => s + eventWudaoExpectation(ev), 0) / pool.length;
+  const chain = mean(CHAIN_EVENTS.filter((ev) => eventInRealmBand(ev, major)));
+  const fortune = mean(deckPool(FORTUNE_DECK, ctx).map((e) => e.def));
+  const normal = mean(deckPool(EVENT_DECK, ctx).map((e) => e.def));
+  const rest = FORTUNE_CHANCE * fortune + (1 - FORTUNE_CHANCE) * normal;
+  return CHAIN_STAGE_CHANCE * chain + (1 - CHAIN_STAGE_CHANCE) * rest;
 }
 
 /** 为区域挑选一个事件(rand 可注入,便于测试与模拟) */
