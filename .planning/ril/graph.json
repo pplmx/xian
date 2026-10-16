@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 438,
+  "round": 439,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-07T11:15:26+00:00",
+  "updated_at": "2026-10-16T05:48:03+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24920,11 +24920,11 @@
     "HYP-119": {
       "id": "HYP-119",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T07:49:00+00:00",
-      "updated_at": "2026-10-07T07:49:00+00:00",
-      "touched_round": 426,
+      "updated_at": "2026-10-16T05:45:17+00:00",
+      "touched_round": 438,
       "confidence": 0.95,
       "summary": "resources.apply/shortfall 把台账值投影成 double(number)是超界收支被丢、余额被归零、canAfford 超大数误判的共同根因"
     },
@@ -25167,11 +25167,11 @@
     "HYP-120": {
       "id": "HYP-120",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-07T08:41:51+00:00",
-      "updated_at": "2026-10-07T08:41:51+00:00",
-      "touched_round": 427,
+      "updated_at": "2026-10-16T05:45:17+00:00",
+      "touched_round": 438,
       "confidence": 0.98,
       "summary": "引擎 specs 一直用 Array.at(ES2022),但 tsconfig lib=ES2020 却能过类型检查 —— 根因是 @types/node@22 的 compatibility/indexable.d.ts 垫片暗补 Array.at;@types/node 提到 26 后垫片消失即暴露"
     },
