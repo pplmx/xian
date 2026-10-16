@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 439,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-16T06:18:11+00:00",
+  "updated_at": "2026-10-16T06:57:36+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -1037,11 +1037,11 @@
       "id": "CHG-024",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-10T11:51:42+00:00",
-      "updated_at": "2026-09-10T11:51:42+00:00",
-      "touched_round": 11,
-      "commit": Infinity,
+      "updated_at": "2026-10-16T06:48:27+00:00",
+      "touched_round": 439,
+      "commit": "a057e53",
       "summary": "Esc 关闭弹窗 + 图鉴计数口径对齐"
     },
     "HYP-003": {
@@ -1677,11 +1677,11 @@
       "id": "CHANGE-034",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-11T06:25:42+00:00",
-      "updated_at": "2026-09-11T06:25:42+00:00",
-      "touched_round": 20,
-      "commit": 5044717,
+      "updated_at": "2026-10-16T06:48:27+00:00",
+      "touched_round": 439,
+      "commit": "d26fb7b",
       "summary": "loot capChance:afterWin 全部概率输入钳到 [0,1],TASK-030 闭环"
     },
     "CHG-033": {
@@ -3423,11 +3423,11 @@
       "id": "CHG-087",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-11T17:12:13+00:00",
-      "updated_at": "2026-09-11T17:12:13+00:00",
-      "touched_round": 67,
-      "commit": 9594635,
+      "updated_at": "2026-10-16T06:48:27+00:00",
+      "touched_round": 439,
+      "commit": "6e86495",
       "summary": "界域志分册(InkTabs 六册)+ 分册契约 3 例"
     },
     "ISS-051": {
@@ -3694,11 +3694,11 @@
       "id": "CHG-094",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-11T17:39:26+00:00",
-      "updated_at": "2026-09-11T17:39:26+00:00",
-      "touched_round": 74,
-      "commit": 7147059,
+      "updated_at": "2026-10-16T06:48:27+00:00",
+      "touched_round": 439,
+      "commit": "0fc7eb7",
       "summary": "新增 dataIntegrity.spec(3 例);删掉自己写的正则白名单版拼写检查(类型系统已覆盖且实测更准)"
     },
     "EV-053": {
@@ -4711,12 +4711,12 @@
       "id": "CHG-118",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-11T21:16:09+00:00",
-      "updated_at": "2026-09-11T21:16:09+00:00",
-      "touched_round": 94,
+      "updated_at": "2026-10-16T06:48:27+00:00",
+      "touched_round": 439,
       "summary": "高界每界域补两件法宝(26→32):青锋仙剑/云纹仙印(仙界)、镇神印/神雷珠(神界)、混沌青莲/虚界梭(混沌海);contentDensity 增判据「法宝件数 > 法宝位数」",
-      "commit": Infinity
+      "commit": "6384c5b"
     },
     "ISS-069": {
       "id": "ISS-069",
@@ -7397,13 +7397,12 @@
     "HYP-065": {
       "id": "HYP-065",
       "type": "hypothesis",
-      "status": "stale",
-      "version": 2,
+      "status": "active",
+      "version": 4,
       "created_at": "2026-09-12T09:03:48+00:00",
-      "updated_at": "2026-09-15T01:09:21+00:00",
-      "touched_round": 138,
+      "updated_at": "2026-10-16T06:50:34+00:00",
+      "touched_round": 439,
       "summary": "可读性也是可以量的,而*禁用态*最容易被漏:设计时只想着「把它灰掉」,忘了那行字往往正是「为什么不让我点」—— 玩家最需要读的一句。判据要按「算出来的对比度」量前景与背景,而不是按设计师记得的那几个色号",
-      "status:": "active",
       "confidence": 0.85
     },
     "ISS-115": {
@@ -7893,12 +7892,11 @@
       "id": "EV-128",
       "type": "evidence",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-12T11:38:41+00:00",
-      "updated_at": "2026-09-12T11:38:41+00:00",
-      "touched_round": 146,
+      "updated_at": "2026-10-16T06:50:34+00:00",
+      "touched_round": 439,
       "summary": "实测读数:开局 100万 → 投脉后页面 98.16万(磁盘暂为旧值,节流中)→ 切后台落盘 · 再投一次 96.32万 → pagehide 落盘。注入读数:单独去掉 storage.ts 的监听仍绿(engine.onVisibility 也刷一次盘,两处互为兜底);两处一起去掉才红:「切后台之后磁盘还是 1000000,页面已是 98.16万 —— 待刷存档没落盘」。排版自检 93 组全绿",
-      "confidence:": 0.95,
       "source": "scripts/layout-check.mjs",
       "confidence": 1.0
     },
@@ -7917,13 +7915,13 @@
       "id": "ISS-124",
       "type": "issue",
       "status": "resolved",
-      "version": 2,
+      "version": 4,
       "created_at": "2026-09-12T11:56:10+00:00",
-      "updated_at": "2026-09-12T11:56:15+00:00",
-      "touched_round": 147,
+      "updated_at": "2026-10-16T06:50:34+00:00",
+      "touched_round": 439,
       "summary": "战报回放这条链从没在真浏览器里走完过:出发 → 模式 → 等一场 → 逐行回放 → 结语 → 战斗分析。单元用例只跑引擎;而这是玩家看得最多的一屏 —— 回放卡住、结语不写、分析点不开,都会安静地留在那里",
-      "severity:": 0.3,
-      "confidence": 0.95
+      "confidence": 0.95,
+      "severity": 0.3
     },
     "TASK-115": {
       "id": "TASK-115",
@@ -8973,12 +8971,12 @@
       "id": "CHG-184",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-12T21:54:25+00:00",
-      "updated_at": "2026-09-12T21:54:25+00:00",
-      "touched_round": 159,
+      "updated_at": "2026-10-16T06:48:27+00:00",
+      "touched_round": 439,
       "summary": "previewFight 增 prep 上下文(世界/契约/奇门):出发前预览与首战同源合成 chainRules,CelestialView prep 弹层接上;新增 expeditionPrep.spec 钉住世界与契约规则可见",
-      "commit": 1086009
+      "commit": "b90ff41"
     },
     "TASK-134": {
       "id": "TASK-134",
@@ -11352,11 +11350,11 @@
       "id": "CHG-226",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-15T14:25:34+00:00",
-      "updated_at": "2026-09-15T14:25:34+00:00",
-      "touched_round": 193,
-      "commit": 5792978,
+      "updated_at": "2026-10-16T06:48:27+00:00",
+      "touched_round": 439,
+      "commit": "5792978",
       "summary": "装备 77→120 / 功法 46→63(分支 107→141)/ 法宝 33→45;新增 drain 法宝效果(引擎+文案对账+回血行为判据);修 ISS-196(未指定槽位时先按槽位分组,指定槽位路径逐位不变);法宝掉落加就近加成(32 阶高界占比 0.40→0.63);新增 realmNaming.spec 六条命名与可达红线;两件人间界旧物改名(混沌天衣→紫府道衣、道祖戒→玄元戒)"
     },
     "DEC-045": {
@@ -11712,11 +11710,11 @@
       "id": "CHG-233",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-15T23:22:55+00:00",
-      "updated_at": "2026-09-15T23:22:55+00:00",
-      "touched_round": 198,
-      "commit": 52573.0,
+      "updated_at": "2026-10-16T06:48:27+00:00",
+      "touched_round": 439,
+      "commit": "52573",
       "summary": "celestialStats 不再带凡界平铺三维(ISS-194 收口),判据从 0.5% 收紧到 0.05%;法宝 minTier → fromTier,图鉴补「N 阶起可现世」"
     },
     "CHG-234": {
@@ -11833,11 +11831,11 @@
       "id": "CHG-236",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-16T00:28:24+00:00",
-      "updated_at": "2026-09-16T00:28:24+00:00",
-      "touched_round": 200,
-      "commit": Infinity,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "2e89258",
       "summary": "celestialStats 恢复凡界装备 + 器魂叠加;敌人参照改本界锚点(powerScale);新增 celestialJudgement(道之理解 + 境界压制);四天/三试炼加 anchorTier,变数天界锚 32;五处造敌统一;界面写明「此界宜 X 及以上」;四份判据重写;README 与器魂文案改口"
     },
     "ISS-205": {
@@ -12411,11 +12409,11 @@
       "id": "CHG-245",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-17T15:37:23+00:00",
-      "updated_at": "2026-09-17T15:37:23+00:00",
-      "touched_round": 208,
-      "commit": 6399648,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "6399648",
       "summary": "界外定价三处根因:丹方/审计的层级映射统一读区域表 maxTierForMajor(旧口径 minRealm×2+1 最高算出层级 41 > 区域上限 32);熔炉灵石价改按玩家当前层级折算(旧口径冻死在第 20 层,道果到混沌海便宜 293 倍);审计改为量「凝一枚道果要多少小时材料产出」(界外 0.90~1.68h,不随层级量级漂移)。"
     },
     "ISS-216": {
@@ -15679,11 +15677,11 @@
       "id": "CHG-326",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T16:45:06+00:00",
-      "updated_at": "2026-09-18T16:45:06+00:00",
-      "touched_round": 264,
-      "commit": 6631574,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "6631574",
       "summary": "库:新增 src/holding.ts 与 holding.spec.ts(8 例),index.ts/publicApi.spec 导出并列入公开面(51 运行时导出)。宿主:新增 src/core/engineHolding.ts(容量 BAG_CAPACITY、\"已装配的不占位\")与 engineHoldingParity.spec.ts(6 条冻结旧实现的对账);stores/inventory 的 findItem/addEquipment/removeEquipment/replaceItem/equip/unequip/bagFull 改为转发,公开 API 与持久化形状不变;test-report 补 engineHoldingParity 分类。"
     },
     "EV-250": {
@@ -15729,11 +15727,11 @@
       "id": "CHG-327",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T16:52:58+00:00",
-      "updated_at": "2026-09-18T16:52:58+00:00",
-      "touched_round": 265,
-      "commit": 7997735,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "7997735",
       "summary": "库:equipment.ts 抽出 pickAffixes 并新增 rerollAffixes(第 19 条装备用例:保留不动/条数与池子口径/全封存时尽量给新条/纯函数),index 与 publicApi.spec 导出 RerollOptions;CHANGELOG 新增「未发布」一节并记录本改动;README 定制表加洗练一行。宿主:core/reforge 转发到库,新增 engineReforgeParity.spec(3 例,含随机流消耗一致),test-report 补分类,docs/engine.md 迁移表加两行(持有层与重铸)。"
     },
     "EV-251": {
@@ -15829,11 +15827,11 @@
       "id": "CHG-329",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T17:06:05+00:00",
-      "updated_at": "2026-09-18T17:06:05+00:00",
-      "touched_round": 267,
-      "commit": 8.564e98,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "8564e95",
       "summary": "新增 src/core/engineCombatAblation.spec.ts(3 例):四场景×200 种子的对照读数(强弱悬殊一致 100%、均势 75%/58%)、强弱方向一致性判据、同种子一致率落在 30%-95% 的\"同一类模型但不是同一套实现\"判据;test-report 补 engineCombatAblation 分类。"
     },
     "TASK-248": {
@@ -17319,11 +17317,11 @@
       "id": "CHG-358",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T19:57:10+00:00",
-      "updated_at": "2026-09-18T19:57:10+00:00",
-      "touched_round": 295,
-      "commit": 5437601,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "5437601",
       "summary": "发版改动:package.json 0.1.8 → 0.1.9;CHANGELOG「未发布」→「0.1.9 — 2026-09-19」并补本批总述(13 个提交、库 372 例/40 文件、宿主侧 24 份对账与消融、公开面 74→75 运行时导出 / 196→200 类型);README 安装块与版本块、docs/development 的装法、根 README 的引擎版本引用同步;gh release create v0.1.9(tag 落在 engine main 的发版提交 cac5872,标题修正过一次引号)。"
     },
     "EV-283": {
@@ -17558,11 +17556,11 @@
       "id": "CHG-363",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T20:25:52+00:00",
-      "updated_at": "2026-09-18T20:25:52+00:00",
-      "touched_round": 300,
-      "commit": 3241467,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "3241467",
       "summary": "库:新增 examples/combat-takeover.ts(约 200 行,含老口径参考实现 + 接管版 + 同种子对账 + 战报打印),package.json 的 examples 脚本加它,README 目录树与组装指南配方表补上,CHANGELOG「未发布」加一条。宿主无改动。"
     },
     "EV-288": {
@@ -17836,11 +17834,11 @@
       "id": "CHG-370",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T20:56:53+00:00",
-      "updated_at": "2026-09-18T20:56:53+00:00",
-      "touched_round": 306,
-      "commit": 6403950,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "6403950",
       "summary": "库:新增 docs/usage.md(372 行,含模块一览与定制表,搬运后与原段落 cmp 逐字节相同);README 精简(模块一览改成按事分组的 10 行速查表 + 定制摘要,各带指针);scripts/verify-dist.mjs 的定制表自检改读 docs/usage.md 并加存在性断言,发布包必需文件加 docs/usage.md;CHANGELOG「未发布」记一节。宿主无改动。"
     },
     "EV-295": {
@@ -18971,11 +18969,11 @@
       "id": "CHG-399",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T22:32:00+00:00",
-      "updated_at": "2026-09-18T22:32:00+00:00",
-      "touched_round": 334,
-      "commit": 8.546e98,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "8546e95",
       "summary": "库:新增 src/cycles.sim.spec.ts 与 src/points.sim.spec.ts(各 4 例);CHANGELOG「未发布」记两节;docs/tuning.md 新增两节(第 21、22 份消融进参考表);docs/assembly.md 补两行;README 用例数改 485/63。宿主无改动。"
     },
     "EV-325": {
@@ -19085,11 +19083,11 @@
       "id": "CHG-402",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-18T22:45:26+00:00",
-      "updated_at": "2026-09-18T22:45:26+00:00",
-      "touched_round": 337,
-      "commit": 7686006,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "7686006",
       "summary": "库:新增 src/recipes.sim.spec.ts 与 src/combat.sim.spec.ts(各 4 例);CHANGELOG「未发布」记两节;docs/tuning.md 新增两节(第 25、26 份消融进参考表);docs/assembly.md 补三行(含一条坑:以为成功率等于一炉产量);README 用例数改 501/67。宿主无改动。"
     },
     "EV-328": {
@@ -22792,11 +22790,11 @@
       "id": "CHG-478",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-09-19T15:35:49+00:00",
-      "updated_at": "2026-09-19T15:35:49+00:00",
-      "touched_round": 393,
-      "commit": 837450000.0,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
+      "commit": "83745e4",
       "summary": "新增 scripts/build-timed.mjs(跑一遍构建并计时、超上限即红),build.yml / deploy.yml / publish.yml 的构建步骤全部换成它;docs/development.md 补上构建时长那一行与口径(上限按本机读数四到五倍给)。"
     },
     "TASK-389": {
@@ -24705,12 +24703,12 @@
       "id": "CHG-498",
       "type": "change",
       "status": "resolved",
-      "version": 2,
+      "version": 3,
       "created_at": "2026-09-24T08:24:23+00:00",
-      "updated_at": "2026-09-24T08:25:40+00:00",
-      "touched_round": 422,
+      "updated_at": "2026-10-16T06:48:28+00:00",
+      "touched_round": 439,
       "summary": "炼丹体系补短板落地:渡劫丹/真仙丹 断档 2 味 + 火候丹(炼制增益 buff_huohou) + 大罗/神寿/神将/神王/神帝/鸿蒙寿/开天 每境第二味 7 味;神将之威 稳压仙力加身;全量过七律与 timeUnits 对账",
-      "commit": 338240000.0
+      "commit": "33824e4"
     },
     "ISS-308": {
       "id": "ISS-308",
@@ -24785,11 +24783,11 @@
       "id": "CHG-502",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-10-07T06:35:09+00:00",
-      "updated_at": "2026-10-07T06:35:09+00:00",
-      "touched_round": 424,
-      "commit": 3754619,
+      "updated_at": "2026-10-16T06:48:29+00:00",
+      "touched_round": 439,
+      "commit": "776549e",
       "summary": "背包/修炼空态补 .empty-note 淡墨短横,与录册(LegacyView/CelestialView)空态同款"
     },
     "DEC-190": {
@@ -25040,10 +25038,10 @@
     "TASK-435": {
       "id": "TASK-435",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "stale",
+      "version": 2,
       "created_at": "2026-10-07T08:22:48+00:00",
-      "updated_at": "2026-10-07T08:22:48+00:00",
+      "updated_at": "2026-10-16T06:36:24+00:00",
       "touched_round": 427,
       "category": "dx",
       "severity": 0.5,
@@ -25516,12 +25514,57 @@
       "id": "CHG-522",
       "type": "change",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "created_at": "2026-10-16T06:17:52+00:00",
-      "updated_at": "2026-10-16T06:17:52+00:00",
+      "updated_at": "2026-10-16T06:57:36+00:00",
       "touched_round": 439,
       "commit": "265b385",
       "summary": "economySim 悟道点收入接入际遇:新增 eventEngine.eventWudaoExpectation/eventWudaoPerEncounter(按 pickEventFor 三层概率链 + 默认项口径),auditEra 的收入改为 藏经阁 + 际遇;补回归判据「悟道收入必须高于藏经阁单条」(改前 4 不>4,当场红)"
+    },
+    "ISS-317": {
+      "id": "ISS-317",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T06:51:40+00:00",
+      "updated_at": "2026-10-16T06:51:40+00:00",
+      "touched_round": 439,
+      "severity": 0.7,
+      "summary": "ril.py 的 parse_fields 对每个字段值跑 json.loads,于是一个恰好\"全数字带 e\"的 git 短哈希会被静默转成浮点:commit=8564e98 → 8.564e+98、83745e4 → 837450000.0、1e999 → Infinity。图谱里 21 个 change 节点的 commit 就这样被毁(其中 8 个变成 inf/浮点),而 e+98 这种长浮点写法又让 vp fmt --check 每次都红 —— pre-commit 里 vp fmt --check 直接挡住所有提交。旁证:同一次误写还留下 severity:/status:/confidence: 三个畸形字段名"
+    },
+    "EV-460": {
+      "id": "EV-460",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T06:51:48+00:00",
+      "updated_at": "2026-10-16T06:51:48+00:00",
+      "touched_round": 439,
+      "source": ".agents/skills/graph-engineering/scripts/ril.py:148 parse_fields + git cat-file 逐条验证",
+      "summary": "复现:python3 -c \"import json;json.loads(\\\"8564e98\\\")\" → 8.564e+101(原值即由该路径产生)。21 个受损节点全部修复并逐条验证:13 个用精确逆推(mantissa+指数搬移,如 8.564e+98→8564e95、837450000.0→83745e4),8 个用 git log -S 按 summary 关键词定位(如 CHG-024→a057e53、CHG-118→6384c5b、CHG-094→0fc7eb7);每个都核对了 commit subject 与节点 summary 一致。另删掉 3 个畸形字段名(HYP-065 的 status:、EV-128 的 confidence:、ISS-124 的 severity:)。修后 vp fmt --check 转绿(pre-commit 阻塞解除),ril.py check 新增两条判据守这一类回归。",
+      "confidence": 1.0
+    },
+    "HYP-123": {
+      "id": "HYP-123",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T06:51:54+00:00",
+      "updated_at": "2026-10-16T06:51:54+00:00",
+      "touched_round": 439,
+      "confidence": 0.98,
+      "summary": "21 个 change 节点的 commit 被毁成浮点/Infinity,根因是 parse_fields 的 json.loads 兜底对所有字段一视同仁;修法是给\"永远该是字符串\"的字段名(commit/source/id/… )加白名单跳过 JSON 解析,并在 ril.py check 加两条判据(change.commit 必须是字符串、字段名不得以冒号结尾)"
+    },
+    "CHG-523": {
+      "id": "CHG-523",
+      "type": "change",
+      "status": "active",
+      "version": 2,
+      "created_at": "2026-10-16T06:52:07+00:00",
+      "updated_at": "2026-10-16T06:57:36+00:00",
+      "touched_round": 439,
+      "commit": "pending",
+      "summary": "ril.py:parse_fields 加 STRING_FIELDS 白名单(commit/source/id 等永不做 JSON 解析),check 加两条判据(change.commit 必须字符串、字段名不得含尾冒号),node set 加 --unset 用于清畸形字段名;修复 21 个被浮点化的 commit + 3 个畸形键"
     }
   },
   "edges": [
@@ -37347,6 +37390,18 @@
       "to": "ISS-316",
       "type": "resolves",
       "created_at": "2026-10-16T06:17:57+00:00"
+    },
+    {
+      "from": "EV-460",
+      "to": "HYP-123",
+      "type": "validates",
+      "created_at": "2026-10-16T06:52:07+00:00"
+    },
+    {
+      "from": "CHG-523",
+      "to": "ISS-317",
+      "type": "resolves",
+      "created_at": "2026-10-16T06:52:13+00:00"
     }
   ]
 }
