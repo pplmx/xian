@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 439,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-16T05:48:03+00:00",
+  "updated_at": "2026-10-16T05:53:56+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24639,7 +24639,7 @@
       "version": 1,
       "created_at": "2026-09-23T03:23:11+00:00",
       "updated_at": "2026-09-23T03:23:11+00:00",
-      "touched_round": 422,
+      "touched_round": 439,
       "summary": "悟道点前期瓶颈的真杠杆:功法进修成本下调(0~1境收益 vs 功法sink差20倍)",
       "rationale": "ISS-303 快赢③(藏经阁保底4/h)已按拟定落地,但 economySim 实测:0~1 境悟道点收入仅 3~6/h,功法进修 sink 高达 85~121/h,缺口超 20 倍;收入侧保底数学上救不动(era-0 要达标需 14~28 倍产出,破坏等级线性)。真杠杆在 sink 侧:对 gongfaUpCost 前几阶(或早期境界)做进阶成本折扣。需产品拍板目标口径(0~1 境 ratio 提到 ~0.5 或 ~1 够学档)与折扣数值;落地会联动 engine 的 gongfaUpgradeCost discount 参数、progressionDoc/engineParity 增长断言,属独立平衡改动,故与 ISS-303 快赢分离跟踪",
       "alternatives_rejected": "收入侧把藏经阁保底拉到 0~1境 达标(需 14~28 倍产出,荒谬且破坏等级线性);全局调低 GONGFA_UP_WUDAO_BASE(会推高 4 境后本就过剩的悟道点)"
@@ -25416,6 +25416,43 @@
       "touched_round": 437,
       "commit": "engine@d2ade0e",
       "summary": "git subtree push packages/engine → 独立仓 main(4d86a8b..d2ade0e);同树门转绿 333499c3b148;独立可站门通过"
+    },
+    "HYP-121": {
+      "id": "HYP-121",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T05:53:26+00:00",
+      "updated_at": "2026-10-16T05:53:26+00:00",
+      "touched_round": 439,
+      "confidence": 0.8,
+      "summary": "ISS-305 读到的「0~1境悟道点 sink 85~121/h vs 收入 4~6/h,缺口 20 倍」主要是 economySim 摊销口径的产物,不是玩法层面的失衡:那一格的 sink = (6×gongfaUpCost(2, 3+major) + 8) / max(本境时长, MIN_AMORTIZE_HOURS=2),第 0 境实际时长仅 0.27h 被抬到 2h,而分子是整境的 6 次进修 —— 于是 170 点沉没被压成「每小时 85 点」,是除法假象。玩家的真实体验是「攒第一层 13 点」:4/h 下 3.3 小时。三档杠杆实测(同一口径复算):前3层5折→0.09、前5层5折→0.15、增长 1.45→1.30→0.13、收入×2→0.15(第0境),全都不足以脱离瓶颈档;只有收入×3 或「一部满级功法 778 点被前3层只占 8%(59/778)」说明折扣打在前面几乎不起作用。故真杠杆只可能是收入侧或重定口径,而非节点原判的 sink 折扣"
+    },
+    "EV-456": {
+      "id": "EV-456",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T05:53:32+00:00",
+      "updated_at": "2026-10-16T05:53:32+00:00",
+      "touched_round": 439,
+      "source": "src/core/economySim.ts:133-134,174 + 本轮 probe(fullEconomyAudit / gongfaUpCost 复算)",
+      "summary": "实测三档:第0境时长 0.27h 被 MIN_AMORTIZE_HOURS=2 抬 7.4 倍;sink 分子 = 6×gongfaUpCost(2,3)+8 = 6×27+8 = 170 点(整境 6 次进修),除以 2h 得 85/h,而收入 libraryWudaoPerHour(lv2)=4/h → ratio 0.047。杠杆复算(仍按该口径):前3层5折 0.09 / 前5层5折 0.15 / 增长1.45→1.30 0.13 / 收入×2 0.15 / 收入×3 0.14 —— 无一脱离 0.7 瓶颈线;而「前3层占一部满级 778 点的 8%」说明折扣打在前面本就影响甚微。另:玩家真实口径下攒第 1 层(13 点/4 每小时)=3.3h,第5层(57)=14.3h",
+      "confidence": 1.0
+    },
+    "TASK-447": {
+      "id": "TASK-447",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T05:53:56+00:00",
+      "updated_at": "2026-10-16T05:53:56+00:00",
+      "touched_round": 439,
+      "category": "core-feature",
+      "severity": 0.4,
+      "confidence": 0.85,
+      "effort": 1,
+      "summary": "ISS-305 待产品拍板:先定「0~1 境悟道点该达到什么口径」(每层攒多久 / 或该达到什么 ratio),再据 EV-456 的三档读数选杠杆。已知:按现行审计口径,前3层5折 0.09、前5层5折 0.15、增长 1.45→1.30 0.13、收入×2 0.15,无一脱离 0.7 瓶颈线;而一部满级功法 778 点里前3层只占 8%,故「sink 折扣」这条原判杠杆近乎无效 —— 若确认前期确实偏紧,可动的是收入侧(藏经阁基数/保底)或重定审计口径(MIN_AMORTIZE_HOURS 对 wudao 是否适用)"
     }
   },
   "edges": [
@@ -37193,6 +37230,18 @@
       "to": "TASK-428",
       "type": "implements",
       "created_at": "2026-10-07T11:15:22+00:00"
+    },
+    {
+      "from": "EV-456",
+      "to": "HYP-121",
+      "type": "validates",
+      "created_at": "2026-10-16T05:53:32+00:00"
+    },
+    {
+      "from": "TASK-447",
+      "to": "ISS-305",
+      "type": "addresses",
+      "created_at": "2026-10-16T05:53:56+00:00"
     }
   ]
 }
