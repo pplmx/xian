@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 439,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-16T05:56:57+00:00",
+  "updated_at": "2026-10-16T06:04:05+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24924,7 +24924,7 @@
       "version": 2,
       "created_at": "2026-10-07T07:49:00+00:00",
       "updated_at": "2026-10-16T05:45:17+00:00",
-      "touched_round": 438,
+      "touched_round": 439,
       "confidence": 0.95,
       "summary": "resources.apply/shortfall 把台账值投影成 double(number)是超界收支被丢、余额被归零、canAfford 超大数误判的共同根因"
     },
@@ -25420,10 +25420,10 @@
     "HYP-121": {
       "id": "HYP-121",
       "type": "hypothesis",
-      "status": "active",
-      "version": 2,
+      "status": "resolved",
+      "version": 3,
       "created_at": "2026-10-16T05:53:26+00:00",
-      "updated_at": "2026-10-16T05:56:11+00:00",
+      "updated_at": "2026-10-16T06:04:05+00:00",
       "touched_round": 439,
       "confidence": 0.6,
       "summary": "ISS-305 的 20 倍缺口口径需分清「速率读数」与「玩家被卡」:审计的 sink 是假设(每境 6 次进修 × gongfaUpCost(2,3+major) + 8)除以 max(本境时长, MIN_AMORTIZE_HOURS=2),第 0 境真实时长仅 0.27h 被抬到 2h —— 注意这个下限是**压低**而非抬高读数(不限下限时 sink 达 170/0.27 = 630/h,ratio 掉到 0.006)。故缺口不是摊销假象,它是真实存在的,只是性质是「模型的均匀假设跑在收入前面」。累积口径更能说明问题:0~4 境累积 ratio 0.33(确实紧),0~8 境累积 ratio 13.67(闲置) —— 缺口只出现在前 5 境,是全时期快照对短时期era的放大。待验证的第二半:若承认早期不必做到 6 次/境(进修本可是长期目标),则前置瓶颈未必成立;若要它成立,则须动收入侧"
@@ -25476,6 +25476,41 @@
       "touched_round": 439,
       "confidence": 0.05,
       "summary": "「ISS-305 的 20 倍缺口是 MIN_AMORTIZE_HOURS=2 摊销下限制造的读数假象」这一判断不成立,但值得留在图上当反例:下限是在压低而非抬高早期 sink(第 0 境 0.27h,带上限 85/h,不带上限 630/h),所以缺口是真的,只是量级分布在前 5 境"
+    },
+    "ISS-316": {
+      "id": "ISS-316",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T06:03:38+00:00",
+      "updated_at": "2026-10-16T06:03:38+00:00",
+      "touched_round": 439,
+      "severity": 0.6,
+      "summary": "economySim 的 wudao 收入只算藏经阁(4~18/h),漏掉际遇这一条主源:实测用真实 pickEventFor + 种子骰跑 2 万次抽,青云山麓池平均每事件 0.414 点 × 际遇 48/h = 19.9 点/小时;按境界带加权全库亦得 20.7~26.2/h。合计收入应为 24.7~44.2/h(0~5 境),审计记 4~18/h —— 收入侧被低估 6~11 倍。故 ISS-305「缺口 20 倍」的分母(收入)是错的:按真实收入重算 0 境 ratio = 24.7/(170/2) = 0.29(不是 0.047),前 5 境已接近健康档下沿。真结论:前期悟道点并不存在 20 倍缺口,原节点整个立论不成立。另:洞府巡游 0.06/h、法宝重复 10 点/次、SECRET_FINAL 3 点、悟道丹(6~150 点)亦未入模型"
+    },
+    "EV-458": {
+      "id": "EV-458",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T06:03:44+00:00",
+      "updated_at": "2026-10-16T06:03:44+00:00",
+      "touched_round": 439,
+      "source": "src/core/eventEngine.ts:143-185 + data/events.ts + src/core/expIncome.ts:57 + 本轮种子骰 probe",
+      "summary": "实测口径与读数。(1)真实路径模拟:setActivePinia + pickEventFor(青云山麓, mulberry32(12345)) 抽 20000 次,平均每事件 0.414 点悟道点(默认项、按 outcome weight 加权),池子 54 个事件 → 际遇 48/h × 0.414 = 19.9 点/小时。(2)按境界带 + event.weight 加权全库(EVENTS+FORTUNE_EVENTS+CHAIN_EVENTS):m=0 每事件 0.43 点 → 20.7/h;m=5 0.54 → 26.2/h。(3)藏经阁那条:libraryWudaoPerHour(min(12,2+2m)) = 4/6/9/12/15/18。合计 24.7/26.7/30.4/35.3/39.2/44.2 点/小时,审计记 4/6/9/12/15/18 —— 收入低估 6~11 倍。(4)另三条未入模型:wudao 掉落池 62/124 事件含 wudao;洞府巡游每日一次期望 1.47 点 = 0.06/h;法宝重复 acquireArtifact 10 点/次;SECRET_FINAL_WUDAO=3;悟道丹 6~150 点/颗。",
+      "confidence": 1.0
+    },
+    "EV-459": {
+      "id": "EV-459",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T06:03:49+00:00",
+      "updated_at": "2026-10-16T06:03:49+00:00",
+      "touched_round": 439,
+      "source": "本轮 probe",
+      "summary": "x",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -37277,6 +37312,24 @@
       "to": "HYP-122",
       "type": "refutes",
       "created_at": "2026-10-16T05:56:57+00:00"
+    },
+    {
+      "from": "EV-458",
+      "to": "HYP-121",
+      "type": "refutes",
+      "created_at": "2026-10-16T06:03:44+00:00"
+    },
+    {
+      "from": "EV-459",
+      "to": "HYP-121",
+      "type": "validates",
+      "created_at": "2026-10-16T06:04:05+00:00"
+    },
+    {
+      "from": "ISS-316",
+      "to": "ISS-305",
+      "type": "causes",
+      "created_at": "2026-10-16T06:04:05+00:00"
     }
   ]
 }
