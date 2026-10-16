@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 439,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-16T06:04:05+00:00",
+  "updated_at": "2026-10-16T06:18:11+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -24635,12 +24635,12 @@
     "ISS-305": {
       "id": "ISS-305",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "abandoned",
+      "version": 2,
       "created_at": "2026-09-23T03:23:11+00:00",
-      "updated_at": "2026-09-23T03:23:11+00:00",
+      "updated_at": "2026-10-16T06:18:11+00:00",
       "touched_round": 439,
-      "summary": "悟道点前期瓶颈的真杠杆:功法进修成本下调(0~1境收益 vs 功法sink差20倍)",
+      "summary": "[已作废] 原判「0~1 境悟道点缺口 20 倍、真杠杆在 sink 折扣」被 ISS-316/EV-457/EV-458 推翻:分母(收入)漏算了际遇这条主源,缺口本身不存在;且折扣打在前几层对读数近乎无效(前 3 层只占满级 778 点的 8%)",
       "rationale": "ISS-303 快赢③(藏经阁保底4/h)已按拟定落地,但 economySim 实测:0~1 境悟道点收入仅 3~6/h,功法进修 sink 高达 85~121/h,缺口超 20 倍;收入侧保底数学上救不动(era-0 要达标需 14~28 倍产出,破坏等级线性)。真杠杆在 sink 侧:对 gongfaUpCost 前几阶(或早期境界)做进阶成本折扣。需产品拍板目标口径(0~1 境 ratio 提到 ~0.5 或 ~1 够学档)与折扣数值;落地会联动 engine 的 gongfaUpgradeCost discount 参数、progressionDoc/engineParity 增长断言,属独立平衡改动,故与 ISS-303 快赢分离跟踪",
       "alternatives_rejected": "收入侧把藏经阁保底拉到 0~1境 达标(需 14~28 倍产出,荒谬且破坏等级线性);全局调低 GONGFA_UP_WUDAO_BASE(会推高 4 境后本就过剩的悟道点)"
     },
@@ -25443,10 +25443,10 @@
     "TASK-447": {
       "id": "TASK-447",
       "type": "task",
-      "status": "active",
-      "version": 2,
+      "status": "abandoned",
+      "version": 3,
       "created_at": "2026-10-16T05:53:56+00:00",
-      "updated_at": "2026-10-16T05:56:43+00:00",
+      "updated_at": "2026-10-16T06:18:11+00:00",
       "touched_round": 439,
       "category": "core-feature",
       "severity": 0.4,
@@ -25480,10 +25480,10 @@
     "ISS-316": {
       "id": "ISS-316",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-16T06:03:38+00:00",
-      "updated_at": "2026-10-16T06:03:38+00:00",
+      "updated_at": "2026-10-16T06:18:11+00:00",
       "touched_round": 439,
       "severity": 0.6,
       "summary": "economySim 的 wudao 收入只算藏经阁(4~18/h),漏掉际遇这一条主源:实测用真实 pickEventFor + 种子骰跑 2 万次抽,青云山麓池平均每事件 0.414 点 × 际遇 48/h = 19.9 点/小时;按境界带加权全库亦得 20.7~26.2/h。合计收入应为 24.7~44.2/h(0~5 境),审计记 4~18/h —— 收入侧被低估 6~11 倍。故 ISS-305「缺口 20 倍」的分母(收入)是错的:按真实收入重算 0 境 ratio = 24.7/(170/2) = 0.29(不是 0.047),前 5 境已接近健康档下沿。真结论:前期悟道点并不存在 20 倍缺口,原节点整个立论不成立。另:洞府巡游 0.06/h、法宝重复 10 点/次、SECRET_FINAL 3 点、悟道丹(6~150 点)亦未入模型"
@@ -25511,6 +25511,17 @@
       "source": "本轮 probe",
       "summary": "x",
       "confidence": 1.0
+    },
+    "CHG-522": {
+      "id": "CHG-522",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-16T06:17:52+00:00",
+      "updated_at": "2026-10-16T06:17:52+00:00",
+      "touched_round": 439,
+      "commit": "265b385",
+      "summary": "economySim 悟道点收入接入际遇:新增 eventEngine.eventWudaoExpectation/eventWudaoPerEncounter(按 pickEventFor 三层概率链 + 默认项口径),auditEra 的收入改为 藏经阁 + 际遇;补回归判据「悟道收入必须高于藏经阁单条」(改前 4 不>4,当场红)"
     }
   },
   "edges": [
@@ -37330,6 +37341,12 @@
       "to": "ISS-305",
       "type": "causes",
       "created_at": "2026-10-16T06:04:05+00:00"
+    },
+    {
+      "from": "CHG-522",
+      "to": "ISS-316",
+      "type": "resolves",
+      "created_at": "2026-10-16T06:17:57+00:00"
     }
   ]
 }
