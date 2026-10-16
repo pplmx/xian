@@ -6,6 +6,12 @@ import { MAX_MAJOR, worldOf } from "@/data/realms";
 import { maxTierForMajor } from "@/data/regions";
 import { layerSeconds } from "./pillValue";
 import { libraryWudaoPerHour } from "@/data/buildings";
+import { REGIONS } from "@/data/regions";
+import { createPinia, setActivePinia } from "pinia";
+import { RandomService, mulberry32 } from "@/utils/random";
+import { pickEventFor } from "./eventEngine";
+import { reachableEventWudao } from "./economySim";
+import { usePlayerStore } from "@/stores/player";
 
 /**
  * 审计的判据分两段,理由写在 economySim 的文件头:
@@ -190,6 +196,53 @@ describe("经济闭环审计(Phase 19 · Phase 40 补界外与修为)", () => {
         `第${era.major}境悟道收入应高于藏经阁单条(${libraryOnly}/h),际遇没算进去`,
       ).toBeGreaterThan(libraryOnly);
       expect(wudao.ratio, `第${era.major}境悟道收支比`).toBeGreaterThan(0.2);
+    }
+  });
+
+  /**
+   * 模型必须贴着**真实抽事件**走 —— 这是本轮两次栽跟头的教训。
+   *
+   * 际遇收入是审计里唯一"另建了一份模型"的量(其余都直接读产线速率),
+   * 而模型最容易犯的错就是池子筛得比真跑宽:先前把该境界可达地界的标签
+   * 并起来算一次,于是只在某处出现的高额事件(`ev_turtle` 每趟 7 点)漏进
+   * 每一处,第 9 境读出 0.910 而真跑只有 0.618 —— 高估 47%。
+   *
+   * 判据:逐境界用真实 pickEventFor 抽一遍,与 reachableEventWudao 比对。
+   * 种子固定,故这是确定性断言;容差 15% 只留给抽样噪声,不留给模型偏差。
+   */
+  it("际遇悟道模型与真实抽事件吻合(不许宽于真跑)", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    for (const major of [0, 2, 5, 9]) {
+      player.major = major;
+      const reachable = REGIONS.filter((r) => r.minRealm <= major);
+      const rand = new RandomService(mulberry32(20261016 + major));
+      let encounters = 0;
+      let wudao = 0;
+      for (let i = 0; i < 8000; i += 1) {
+        const region = reachable[Math.floor(rand.next() * reachable.length)]!;
+        const ev = pickEventFor(region, rand);
+        if (!ev) continue;
+        encounters += 1;
+        const choice = ev.choices.find((c) => c.isDefault) ?? ev.choices[0];
+        if (!choice) continue;
+        const total = choice.outcomes.reduce((s, o) => s + o.weight, 0);
+        if (total <= 0) continue;
+        for (const outcome of choice.outcomes) {
+          for (const effect of outcome.effects) {
+            if (effect.type === "material" && effect.id === "wudao") {
+              wudao += (outcome.weight / total) * effect.amount;
+            }
+          }
+        }
+      }
+      const simPerEncounter = wudao / encounters;
+      const modelPerEncounter = reachableEventWudao(major);
+      const drift = Math.abs(modelPerEncounter - simPerEncounter) / simPerEncounter;
+      expect(
+        drift,
+        `第${major}境际遇悟道模型 ${modelPerEncounter.toFixed(3)} 偏离真跑 ${simPerEncounter.toFixed(3)} 达 ${(drift * 100).toFixed(0)}%`,
+      ).toBeLessThan(0.15);
     }
   });
 

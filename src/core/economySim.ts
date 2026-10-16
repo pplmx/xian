@@ -130,20 +130,21 @@ export function avgDustPerDrop(tier: number, samples = 200): number {
 }
 
 /**
- * 该境界能去的所有地界的场所标签(去重合并)。
+ * 该境界一趟际遇的悟道点期望 —— 对**每处可达地界各算一遍再取均值**。
  *
- * 际遇池按区域标签筛(见 regionEventPoolFor),而审计只有境界没有"站在哪"——
- * 故把该境界可达的地界标签并起来当池:这是"玩家会经历的全部际遇"的覆盖面,
- * 比挑一处地界当代表更不容易偏。标签只影响池子里有哪些事件,
- * 权重仍由 event.weight 决定。
+ * 为什么不是把标签并起来算一次:标签并集会让只属于某处地界的高额事件
+ * (如 `ev_turtle` 每趟 7 点,只在它那处出现)漏进**每一处**的池子,
+ * 于是高境界读出一个虚高的收入 —— 实测第 9 境并集 0.910 vs 真跑 0.618,
+ * 高估 47%;按地界平均则是 0.621,与真跑吻合。
+ *
+ * 为什么不是"挑最深那处当代表":玩家并不会只站在最深处,按地界平均
+ * 才与"这一境会遇到的际遇"对得上。
  */
-function reachableEventTags(major: number): string[] {
-  const tags = new Set<string>();
-  for (const region of REGIONS) {
-    if (region.minRealm > major) continue;
-    for (const tag of region.eventTags) tags.add(tag);
-  }
-  return [...tags];
+export function reachableEventWudao(major: number): number {
+  const reachable = REGIONS.filter((r) => r.minRealm <= major);
+  if (reachable.length === 0) return 0;
+  const total = reachable.reduce((sum, r) => sum + eventWudaoPerEncounter(major, r.eventTags), 0);
+  return total / reachable.length;
 }
 
 /** 单个境界时期的资源流审计 */
@@ -175,10 +176,10 @@ export function auditEra(major: number): EraAudit {
    * 那是假的:悟道点没有战斗或灵田产线,际遇才是它的主源(实测 20~31/h,
    * 藏经阁 4~18/h)。漏掉主源 = 把收入低估 5~6 倍,缺口自然被放大。
    *
-   * 区域标签取该境界可达地界的并集(见 reachableEventTags);际遇里的悟道
+   * 际遇额度取该境界可达地界的均值(见 reachableEventWudao);际遇里的悟道
    * 不看层级,故这一项基本随境界带变化,而不随层级涨。
    */
-  const eventWudao = eventWudaoPerEncounter(major, reachableEventTags(major)) * eventsPerHour();
+  const eventWudao = reachableEventWudao(major) * eventsPerHour();
   const wudaoIncome = libraryWudaoPerHour(libLv) + eventWudao;
   /**
    * 修为收入 = 挂机(底:1.0× 修速 = 3600 等效秒/小时)+ 历练(战斗胜场与际遇),
