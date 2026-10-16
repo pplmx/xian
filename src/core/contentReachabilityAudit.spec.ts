@@ -413,8 +413,19 @@ describe("内容可达性 · 全局报告", () => {
     for (const p of CRAFTABLE) {
       for (const id of Object.keys(recipeCraft(p)?.skills ?? {})) fromAlchemy.add(id as SkillId);
     }
-    const sourcedSkills = new Set<SkillId>([...fromMaterials, ...fromAlchemy]);
+    // 炼器/重铸这条路给的技艺:每次上手一味矿材涨锻打(见 loreService.noteSmithingUsed),
+    // 刻纹活儿涨铭纹(见 reforgeEquipment 的 addSkillExp("inscribe"))。
+    // 早先把普查只数识材+开炉两路,于是「铭纹」被误报成"尚无来源" ——
+    // 但重铸正是它的真实来源,缺的是内容**消费**,不是来源。
+    const REFORGE_SOURCE: Record<"smithing" | "inscribe", true> = {
+      smithing: true,
+      inscribe: true,
+    };
+    const fromReforgeIds = Object.keys(REFORGE_SOURCE) as SkillId[];
+    const sourcedSkills = new Set<SkillId>([...fromMaterials, ...fromAlchemy, ...fromReforgeIds]);
     const unwired = SKILL_IDS.filter((id) => !sourcedSkills.has(id));
+    // 铭纹的消费 = 有方子/内容吃它;如今只有来源(重铸),去向尚未接通
+    const inscribeConsumed = fromAlchemy.has("inscribe");
 
     console.log("\n  —— 内容可达性审计 ——");
     console.log(`  丹方   ${reachableRecipes.size}/${CRAFTABLE.length} 可达    藏经阁求索`);
@@ -422,11 +433,18 @@ describe("内容可达性 · 全局报告", () => {
     console.log(`  敌人   ${ENEMIES.length}/${ENEMIES.length} 可达    区域交手`);
     console.log(`  功法   ${GONGFA.length}/${GONGFA.length} 可达    残页参悟`);
     console.log(
-      `  技艺   ${sourcedSkills.size}/${SKILL_IDS.length} 有来源  识材 ${fromMaterials.size} 项 · 开炉 ${fromAlchemy.size} 项`,
+      `  技艺   ${sourcedSkills.size}/${SKILL_IDS.length} 有来源  识材 ${fromMaterials.size} 项 · 开炉 ${fromAlchemy.size} 项 · 炼器 ${fromReforgeIds.length} 项`,
     );
     console.log(`  境界跨度 ${REALMS.length} 重`);
     if (unwired.length > 0) {
-      console.log(`  未接骨架:技艺 ${unwired.join("、")} —— 炼器道尚无内容消费,不构成死内容`);
+      console.log(`  未接骨架:技艺 ${unwired.join("、")} —— 连一个"涨得了"的来源都没有`);
+    }
+    // 每一门技艺都得有来源(能涨)才不负有定义 —— 锁死,不许再退回"铭纹无来源"的误报
+    expect(unwired).toEqual([]);
+    // 来源≠消费:铭纹的来源(重铸)有了,但炼器道的**内容消费**还没接,分两句说清
+    expect(REFORGE_SOURCE.inscribe).toBe(true);
+    if (!inscribeConsumed) {
+      console.log("  铭纹  有来源(重铸)无内容消费 —— 炼器道的去向尚未接通,不算死内容\n");
     }
     console.log("  炼器图纸:blueprintLore 有字段无内容,studyBlueprint 尚无调用点\n");
 
