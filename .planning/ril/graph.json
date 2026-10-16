@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 439,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-16T06:57:36+00:00",
+  "updated_at": "2026-10-16T06:59:40+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25524,10 +25524,10 @@
     "ISS-317": {
       "id": "ISS-317",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-16T06:51:40+00:00",
-      "updated_at": "2026-10-16T06:51:40+00:00",
+      "updated_at": "2026-10-16T06:59:40+00:00",
       "touched_round": 439,
       "severity": 0.7,
       "summary": "ril.py 的 parse_fields 对每个字段值跑 json.loads,于是一个恰好\"全数字带 e\"的 git 短哈希会被静默转成浮点:commit=8564e98 → 8.564e+98、83745e4 → 837450000.0、1e999 → Infinity。图谱里 21 个 change 节点的 commit 就这样被毁(其中 8 个变成 inf/浮点),而 e+98 这种长浮点写法又让 vp fmt --check 每次都红 —— pre-commit 里 vp fmt --check 直接挡住所有提交。旁证:同一次误写还留下 severity:/status:/confidence: 三个畸形字段名"
@@ -25547,10 +25547,10 @@
     "HYP-123": {
       "id": "HYP-123",
       "type": "hypothesis",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-16T06:51:54+00:00",
-      "updated_at": "2026-10-16T06:51:54+00:00",
+      "updated_at": "2026-10-16T06:59:40+00:00",
       "touched_round": 439,
       "confidence": 0.98,
       "summary": "21 个 change 节点的 commit 被毁成浮点/Infinity,根因是 parse_fields 的 json.loads 兜底对所有字段一视同仁;修法是给\"永远该是字符串\"的字段名(commit/source/id/… )加白名单跳过 JSON 解析,并在 ril.py check 加两条判据(change.commit 必须是字符串、字段名不得以冒号结尾)"
@@ -25559,11 +25559,11 @@
       "id": "CHG-523",
       "type": "change",
       "status": "active",
-      "version": 2,
+      "version": 3,
       "created_at": "2026-10-16T06:52:07+00:00",
-      "updated_at": "2026-10-16T06:57:36+00:00",
+      "updated_at": "2026-10-16T06:59:40+00:00",
       "touched_round": 439,
-      "commit": "pending",
+      "commit": "5e75ecc",
       "summary": "ril.py:parse_fields 加 STRING_FIELDS 白名单(commit/source/id 等永不做 JSON 解析),check 加两条判据(change.commit 必须字符串、字段名不得含尾冒号),node set 加 --unset 用于清畸形字段名;修复 21 个被浮点化的 commit + 3 个畸形键"
     }
   },
