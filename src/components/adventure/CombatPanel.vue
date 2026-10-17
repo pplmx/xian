@@ -178,7 +178,10 @@
         >
           跳过播放 »
         </button>
-        <div ref="logBox" class="h-48 space-y-1 overflow-y-auto rounded-md bg-ink/4 px-3 py-2">
+        <div
+          ref="logBox"
+          class="scroll-pane h-48 space-y-1 overflow-y-auto rounded-md bg-ink/4 px-3 py-2"
+        >
           <!--
             data-battle-log 挂在**行**上(不是外面那层框):自检要数「这场到底出了几行」,
             而框里还有一行占位文案「山风掠过,四下无声……」—— 挂在框上会把它一起数进去。

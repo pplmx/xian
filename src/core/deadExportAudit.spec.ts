@@ -414,6 +414,11 @@ describe("死导出审计", () => {
     // 销账:把 caveEvent 移进 player store(随 store 重置即得隔离)后删除本导出并移出此表。
     resetCaveEvent:
       "测试隔离钩子:清空模块态巡游弹窗,供早期服务洞府用例在 beforeEach 里重置,防跨用例残留闪红",
+    // 时制反查器(文案 → 秒)。timeUnits 此前只被自己的 spec 够到,整份算"审计工具";
+    // 顿悟/巡游的时长行改由 ui/earlyGameText 现算后,它进了运行时可达集,这条才被扫到。
+    // 销账:哪天运行时真要"把文案读回时长"(如导入旧档的文案),接上它即可。
+    parseClassicalDuration:
+      "反查器:把「一炷香 / 三刻」折回秒,只服务 timeUnits.spec 的文案对账,结算侧不回读文案",
   };
 
   it("运行时模块里的导出,不能只被 spec 用到 —— 那是骨架空转的样子", () => {

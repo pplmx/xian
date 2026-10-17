@@ -1,8 +1,11 @@
 #!/usr/bin/env sh
 set -e
 
-# 与 CI 的共享门禁(gate.yml)跑同一套完整判据,保证「本地能过 = CI 能过」。
-# 完整判据 = vp fmt --check(格式/oxfmt)+ vp run verify(
+# 与 CI 的共享门禁(gate.yml)跑同一套**静态**判据 —— 本地静态门过了,CI 静态门就过。
+# 浏览器门(构建时长 / 首屏 / 帧率 / 排版 / 冒烟 / 离线)不在 verify 里(一轮约五分钟,
+# 提交前扛不住),只在 CI 的 ui-check job 与 `bun run check:ui` 里跑;接线由
+# src/core/gateWiring.spec.ts 守着。别把「提交前全绿」当成「CI 会全绿」。
+# 静态判据 = vp fmt --check(格式/oxfmt)+ vp run verify(
 #   check = env + 类型 + lint + 文档, 再 test + test:report + build + check:engine + standalone)。
 # 先让 vp 按 vite.config 的 staged 规则把暂存区格式/lint 修一遍,再做全量校验。
 vp staged

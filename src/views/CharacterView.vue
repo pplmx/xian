@@ -633,7 +633,7 @@
 
       <template v-if="pastBonds.length">
         <p class="mt-4 font-kai text-[13px] tracking-widest text-ink-soft">历世同行</p>
-        <div class="mt-2 max-h-40 space-y-1.5 overflow-y-auto">
+        <div class="scroll-pane mt-2 max-h-40 space-y-1.5 overflow-y-auto">
           <p v-for="(r, i) in pastBonds" :key="i" class="flex justify-between text-[11px]">
             <span class="text-ink-soft">{{ r.name }}</span>
             <span class="text-ink-faint"

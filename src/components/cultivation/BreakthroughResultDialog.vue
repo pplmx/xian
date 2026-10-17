@@ -44,7 +44,7 @@
       </p>
       <div
         v-if="view.tribulationLog.length"
-        class="mt-3 max-h-40 overflow-y-auto rounded-md bg-ink/4 px-3 py-2 text-left"
+        class="scroll-pane mt-3 max-h-40 overflow-y-auto rounded-md bg-ink/4 px-3 py-2 text-left"
       >
         <p
           v-for="(line, i) in view.tribulationLog"

@@ -153,7 +153,8 @@ export const BUFFS: BuffDef[] = [
     { shieldOnStart: 0.15, shieldPower: 0.12 },
     "shield",
   ),
-  // ---- Phase 28 前期玩法:悟道顿悟(选择后生效,数值与 earlyGame.ts 文案对齐) ----
+  // ---- Phase 28 前期玩法:悟道顿悟(数值就是这里的 mods —— earlyGame.ts 的文案
+  // 只剩风味,界面数值行由 ui/earlyGameText 现算,改这里界面就跟着变) ----
   b(
     "enlighten_cult",
     "静心凝神",

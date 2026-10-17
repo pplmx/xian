@@ -123,7 +123,7 @@ vp check        # 环境/类型/文档自检 + Oxlint
 | Vue Router | 4 | 客户端路由(hash 模式) |
 | Tone.js | 15 | FluidR3 乐器采样播放(BGM + SFX) |
 | CryptoJS | 4 | 存档 AES 加密 |
-| Vitest | 5 | 单元测试与平衡审计(全量 342 个 spec / 3351 例,含公共库 `packages/engine` 的 80 / 595) |
+| Vitest | 5 | 单元测试与平衡审计(全量 343 个 spec / 3362 例,含公共库 `packages/engine` 的 80 / 595) |
 | Electron / Capacitor | 39 / 8 | Windows 桌面与 Android 打包 |
 
 ## 许可证

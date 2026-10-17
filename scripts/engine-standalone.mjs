@@ -25,7 +25,8 @@ import {
   symlinkSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -57,18 +58,27 @@ try {
   console.log("② 源码里不许出现宿主引用(别名、越界相对路径)");
   const files = walk(join(target, "src")).filter((f) => f.endsWith(".ts"));
   const offenders = [];
+  // 报错文案里的路径:relative + 归一化,不用 `file.replace(target + "/", "")` ——
+  // 那是把 resolve 给的反斜杠根与手拼的 `/` 混着比,Windows 上永远匹配不到(只坏文案,不坏红绿)。
+  const relOf = (file) => relative(target, file).replace(/\\/g, "/");
   for (const file of files) {
     const text = readFileSync(file, "utf8");
-    if (/from '@\//.test(text) || /from '\.\.\/\.\.\/\.\./.test(text))
-      offenders.push(file.replace(target + "/", ""));
+    if (/from '@\//.test(text) || /from '\.\.\/\.\.\/\.\./.test(text)) offenders.push(relOf(file));
   }
   assert.deepEqual(offenders, [], `这些文件引用了宿主仓库的东西:${offenders.join(", ")}`);
   console.log(`   ${files.length} 个源文件干净`);
 
   console.log("③ 在临时目录里独立编译");
   const bin = (name) => join(target, "node_modules/.bin", name);
-  assert.ok(existsSync(bin("tsc")), "tsc 不在依赖里 —— 包自己声明了 devDependencies 吗?");
-  execFileSync(bin("tsc"), ["-p", "tsconfig.build.json"], { cwd: target, stdio: "inherit" });
+  /**
+   * shim 的文件名随平台与包管理器变:POSIX 上是无扩展名的 `tsc`,bun 在 Windows 上
+   * 造的是 `tsc.exe`(外加 `tsc.bunx`)。写死无扩展名等于让这条自检在任何 Windows
+   * 机器上永久红 —— 而且红的位置与被测语义无关,读起来像"依赖没装"。
+   * 候选只认能直接 spawn 的:.cmd/.bat 在现代 node 下不带 shell 会 EINVAL。
+   */
+  const tsc = ["tsc", "tsc.exe"].map(bin).find(existsSync);
+  assert.ok(tsc, "tsc 不在依赖里 —— 包自己声明了 devDependencies 吗?");
+  execFileSync(tsc, ["-p", "tsconfig.build.json"], { cwd: target, stdio: "inherit" });
   assert.ok(
     existsSync(join(target, "dist/index.js")) && existsSync(join(target, "dist/index.d.ts")),
     "编译没产出 dist/index",
@@ -81,9 +91,12 @@ try {
   execFileSync("bun", ["run", "test", "--reporter=dot"], { cwd: target, stdio: "inherit" });
 
   console.log("⑤ 独立 import 一次产物");
+  // import() 吃的是 URL:临时目录的绝对路径在 Windows 上是 `C:\…`,裸着塞进去会被当成
+  // scheme `c:`,node 当场 ERR_UNSUPPORTED_ESM_URL_SCHEME。转成 file:// URL 再拼进探针
+  // (探针是字符串,node 那边没有 target,算不了)。
   const probe = `
-    const engine = await import(${JSON.stringify(join(target, "dist/index.js"))})
-    const { DEMO } = await import(${JSON.stringify(join(target, "dist/presets/demo.js"))})
+    const engine = await import(${JSON.stringify(pathToFileURL(join(target, "dist/index.js")).href)})
+    const { DEMO } = await import(${JSON.stringify(pathToFileURL(join(target, "dist/presets/demo.js")).href)})
     const game = engine.defineGame(DEMO)
     if (game.realms.label(0, 0) !== '见习船员 I 阶') throw new Error('换皮世界没装起来')
     console.log('   换皮世界装配通过:' + game.attributes.name('attack'))

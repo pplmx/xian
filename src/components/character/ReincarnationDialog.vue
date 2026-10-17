@@ -97,11 +97,19 @@
             {{ g.title }}
             <span class="ml-1 text-[10px] text-ink-faint">{{ g.rows.length }} 项</span>
           </p>
+          <!--
+            交割清单的每一条 chip 都点得开 —— 机制说明(r.detail,30+ 条)原先只挂在
+            :title 上,而手机没有 hover:触屏玩家看得到「哪些带走了」,却一条原因都读不到。
+            改按 CharacterView 的 talentTap / AdventureView 的 adaptExpand 同一套范式:
+            chip 是 button + :aria-expanded(读屏也知道展开了),展开后在分组下方出一行。
+            min-h-[28px] 是排版自检那条触达下限 —— chip-ink 自然高只有 22 上下,
+            变成按钮之后就得对得起拇指。
+          -->
           <p class="mt-0.5 flex flex-wrap gap-1">
-            <span
+            <button
               v-for="r in g.rows"
               :key="r.id"
-              class="chip-ink !text-[10px]"
+              class="chip-ink min-h-[28px] !text-[10px] text-left"
               :class="
                 g.mode === 'full'
                   ? 'border-jade/50 text-jade'
@@ -110,9 +118,18 @@
                     : 'border-ink/20 text-ink-faint'
               "
               :title="r.detail"
+              :aria-expanded="heritageTap === r.id"
+              @click="heritageTap = heritageTap === r.id ? null : r.id"
             >
               {{ r.name }}
-            </span>
+            </button>
+          </p>
+          <p
+            v-if="tappedHeritage && tappedHeritage.mode === g.mode"
+            class="mt-1 text-[10px] leading-relaxed text-ink-faint"
+          >
+            <span class="text-ink-soft">{{ tappedHeritage.name }}</span>
+            ：{{ tappedHeritage.detail }}
           </p>
         </div>
       </div>
@@ -293,6 +310,17 @@ const chosen = ref<string | null>(null);
 const theme = ref<string | null>(null);
 const nameDraft = ref("");
 const step = ref<"review" | "next">("review");
+/**
+ * 交割清单里点开的那一条(heritageTap)。与 CharacterView 的 talentTap、
+ * AdventureView 的 adaptExpand 同形:一个 string|null,点同一条即收起。
+ * 存 id 而非整行,免得 heat-of-moment 的引用跟着重算走样。
+ */
+const heritageTap = ref<string | null>(null);
+const tappedHeritage = computed(() =>
+  heritageGroups()
+    .flatMap((g) => g.rows)
+    .find((r) => r.id === heritageTap.value),
+);
 
 const view = computed(() => ui.reincarnation);
 const reviewTheme = computed(() =>
@@ -318,6 +346,8 @@ watch(view, (v) => {
     nameDraft.value = v.nameDraft;
     chosen.value = null;
     theme.value = null;
+    // 上一世点开的交割说明不该带进这一世
+    heritageTap.value = null;
   }
 });
 

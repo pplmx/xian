@@ -259,6 +259,7 @@ const CATEGORIES = [
       "firstStep",
       "rebrand",
       "gradleShadow",
+      "gateWiring",
       "veinText",
       "statNames.spec",
     ],
@@ -413,20 +414,41 @@ console.log(
 // docs-check.mjs 只数 spec 文件(静态可数);「例」只有跑完测试才知道,故放在这一头:
 // 全量例数 = 本次运行全部断言,本作自己那部分 = 去掉公共库(src 之外的 packages/engine)。
 // 文档(README / docs)若写着与本次运行不符的例数,当场红 —— 加删用例若不同步改文档,这就是它的闸门。
+// 归档豁免(与 docs-check.mjs 同一个 ARCHIVE 口径):`docs/superpowers/plans/**` 是当时的计划存档,
+// 里面引用的例数是**当时**的,拿今天的运行实录去校对历史计划只会逼人改记录。
+const ARCHIVE = "docs/superpowers/plans/";
 const DOC_FILES = [
   { rel: "README.md", file: resolve(ROOT, "README.md"), dir: resolve(ROOT) },
 ].concat(
   readdirSync(join(ROOT, "docs"), { recursive: true, encoding: "utf-8" })
-    .filter(
-      (name) =>
-        typeof name === "string" && name.endsWith(".md") && !name.includes("superpowers/plans"),
-    )
-    .map((name) => ({
-      rel: `docs/${name}`,
-      file: join(ROOT, "docs", name),
+    .filter((name) => typeof name === "string" && name.endsWith(".md"))
+    // readdirSync 的 recursive 会**原样带上平台分隔符**(Windows 上是 `superpowers\plans\x.md`)。
+    // 不归一化的话,下面那条 startsWith 在 Windows 上永远判 false —— 归档豁免静默失效,
+    // 哪天归档里恰好写着「全量 N 个 spec / M 例」,`bun run test:report` 就会在 Windows 上
+    // 假红、在 CI 上真绿,两边看起来都"有理由"。
+    // 归一化放在**组装出口**这一处(与 docs-check.mjs 同一处置、同一写法):后面所有拿 rel 的
+    // 地方(读文件、报错文案、归档判据)都吃这一份口径,不必各自再 replace 一遍。
+    .map((name) => name.replace(/\\/g, "/"))
+    .filter((rel) => !rel.startsWith(ARCHIVE))
+    .map((rel) => ({
+      rel: `docs/${rel}`,
+      file: join(ROOT, "docs", rel),
       dir: join(ROOT, "docs"),
     })),
 );
+// 自证:归一化若失效(有人把这行删了、或换了别的读目录方式),归档豁免会**只在 Windows 上**
+// 静默失灵 —— CI 在 Linux 上永远绿,没人会去怀疑判据。故让脚本自己先看一眼分隔符。
+// 这条不是"文档的问题",是路径口径的问题,故不走 docFailures(那会被当成"文档忘了同步")。
+const unnormalized = DOC_FILES.filter((d) => d.rel.includes("\\"));
+if (unnormalized.length > 0) {
+  console.error(
+    `未分类?不,是脚本坏了:DOC_FILES 里混进了反斜杠路径 —— 归档豁免(${ARCHIVE})与所有 ` +
+      "startsWith/includes 都按正斜杠写,反斜杠会让它们静默失效。\n" +
+      "  修法:在组装 DOC_FILES 时把分隔符归一化成正斜杠,别在判据里两边各写一套。",
+  );
+  for (const d of unnormalized.slice(0, 5)) console.error(`  ✗ ${d.rel}`);
+  process.exit(1);
+}
 // vitest JSON 里的文件名是绝对路径(`/…/xian/src/…` / `/…/xian/packages/engine/…`),
 // 「本作自己那部分」= 不在公共库目录下的 spec(src 下,与 docs-check 的 hostOnly 同口径)。
 const isEngineFile = (f) => String(f.name ?? "").includes(`/${ENGINE_DIR}/`);

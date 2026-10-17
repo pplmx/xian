@@ -230,7 +230,10 @@
             showAllHex ? "收起" : `展开查看 ${HEXAGRAMS.length} 卦 →`
           }}</span>
         </button>
-        <div v-if="showAllHex" class="mt-2 max-h-72 divide-y divide-ink/6 overflow-y-auto">
+        <div
+          v-if="showAllHex"
+          class="scroll-pane mt-2 max-h-72 divide-y divide-ink/6 overflow-y-auto"
+        >
           <div v-for="x in HEXAGRAMS" :key="x.order" class="flex items-baseline gap-2 py-2">
             <span class="w-6 shrink-0 tabular text-[10px] text-ink-faint">{{ x.order }}</span>
             <span class="w-14 shrink-0 font-kai text-[13px] text-ink">{{ x.name }}</span>

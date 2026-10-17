@@ -172,7 +172,10 @@ docker stats xuanshu                # 资源占用
 `.github/workflows/gate.yml`:`vp fmt --check && vp run verify`(verify 串起
 `bun run check` + `bun run test` + build + engine 自检 + standalone)。部署 Pages、发布
 Docker 镜像、构建客户端各自引用 gate 一次,不再重复内联整段判据;本机
-`.vite-hooks/pre-commit` 跑同一套,保证「本地能过 = CI 能过」。
+`.vite-hooks/pre-commit` 跑同一套**静态**判据 —— 本地静态门过了,CI 静态门就过。
+**浏览器门**(构建时长 / 首屏 / 帧率 / 排版 / 冒烟 / 离线)不在 verify 链里(一轮约五分钟,
+提交前扛不住),只在 CI 的 ui-check job 与 `bun run check:ui` 里跑;这条接线由
+`src/core/gateWiring.spec.ts` 守着(CI 里出现的每个 `bun scripts/*.mjs` 都要有本地入口)。
 
 镜像发布走 `.github/workflows/publish.yml`(曾写作 `xuanshu.yml`,实际文件名已改):push
 到 `main`、打 `v*.*.*` 标签或手动触发时执行 —— 先过共享 gate,再用 `Dockerfile.ci`

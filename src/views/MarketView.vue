@@ -381,7 +381,7 @@ function bountyShort(o: BountySlot): string | null {
         <button
           v-for="it in equipCandidates"
           :key="it.uid"
-          class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-[12px] hover:border-cinnabar"
+          class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-[12px] hoverable:hover:border-cinnabar"
           @click="deliverPicked(it.uid)"
         >
           <span class="min-w-0 truncate">
@@ -430,12 +430,12 @@ function bountyShort(o: BountySlot): string | null {
           </p>
           <div
             v-if="market.consign.length < MARKET_CONSIGN_SLOTS"
-            class="flex gap-1 overflow-x-auto"
+            class="scroll-pane flex gap-1 overflow-x-auto"
           >
             <button
               v-for="it in inventory.bagItems"
               :key="it.uid"
-              class="shrink-0 rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+              class="shrink-0 rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
               @click="consign(it.uid)"
             >
               {{ it.quality }}·{{ it.tier }}阶 ·
@@ -457,14 +457,14 @@ function bountyShort(o: BountySlot): string | null {
           <button
             v-for="p in sellablePills"
             :key="p.id"
-            class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+            class="rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
             @click="sellPill(p.id)"
           >
             售{{ p.def?.name ?? p.id }}(现持 {{ p.count }}) · 每颗得
             {{ formatGN(pillSellPrice(p.id)) }} 石
           </button>
           <button
-            class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+            class="rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
             :disabled="!resources.hasSmall('herb', MARKET_MAT_COUNT)"
             @click="sellMat('herb')"
           >
@@ -475,7 +475,7 @@ function bountyShort(o: BountySlot): string | null {
             }}
           </button>
           <button
-            class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+            class="rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
             :disabled="!resources.hasSmall('ore', MARKET_MAT_COUNT)"
             @click="sellMat('ore')"
           >

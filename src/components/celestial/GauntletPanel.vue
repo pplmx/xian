@@ -38,7 +38,7 @@
     <!-- 战报 -->
     <div
       ref="logBox"
-      class="mt-2 max-h-40 overflow-y-auto rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-2"
+      class="scroll-pane mt-2 max-h-40 overflow-y-auto rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-2"
     >
       <p
         v-for="(entry, i) in displayed"

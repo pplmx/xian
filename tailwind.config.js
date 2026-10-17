@@ -113,10 +113,21 @@ export default {
    * 这里没有走 theme.screens 的 { raw: … } 写法 —— 那条路 Tailwind 会当场警告
    * 「min-* / max-* 变体不可用」,等于为了一个高度断点把任意宽度断点(min-[340px]:)
    * 全废掉;addVariant 只加一个变体,两边都不耽误。
+   *
+   * hoverable: —— 「真悬停设备」守卫
+   *
+   * 触屏上 hover 是个死状态:点一下之后它一直黏着不散(坊市「售丹/售料/寄卖」
+   * 那排最明显,点完还亮着,像「已选中」)。桌面测不出来 —— 鼠标一移开就退。
+   * 故凡是**只在悬停时给的反馈**,一律写成 hoverable:hover:xxx:这条变体在
+   * @media (hover: hover) and (pointer: fine) 之外根本不生成,触屏上一片安静。
+   *
+   * 不用 theme 里覆盖 hover 本身的写法:内置 hover 还有人(以及 group-hover)
+   * 在用,而这里要的是「逐处挑选」—— 加变体不改内置行为,两边都不耽误。
    */
   plugins: [
     ({ addVariant }) => {
       addVariant("short", "@media (max-height: 560px)");
+      addVariant("hoverable", "@media (hover: hover) and (pointer: fine)");
     },
   ],
 };

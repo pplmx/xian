@@ -29,6 +29,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const ENGINE = resolve(import.meta.dirname, "..");
 const DIST = resolve(ENGINE, "dist");
@@ -43,11 +44,15 @@ for (const entry of [
   assert.ok(existsSync(resolve(DIST, entry)), `产物缺文件:dist/${entry} —— 先跑 bun run build`);
 }
 
-const engine = await import(resolve(DIST, "index.js"));
-const { DEMO } = await import(resolve(DIST, "presets/demo.js"));
-const { XIUXIAN } = await import(resolve(DIST, "presets/xiuxian.js"));
-const { DAILY } = await import(resolve(DIST, "presets/daily.js"));
-const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
+// import() 的入参是 **URL**。`resolve()` 给的是文件系统路径,Windows 上是 `C:\…\dist\index.js`,
+// 直接塞进去会被 node 的 ESM 加载器当成 scheme 为 `c:` 的 URL(ERR_UNSUPPORTED_ESM_URL_SCHEME);
+// Linux 上因为分隔符恰好是 `/`、路径又以 `/` 开头,同样的写法能歪打正着 —— 这类 bug 只在
+// Windows 上红。故凡交给 import() 的一律先转 file:// URL。
+const engine = await import(pathToFileURL(resolve(DIST, "index.js")).href);
+const { DEMO } = await import(pathToFileURL(resolve(DIST, "presets/demo.js")).href);
+const { XIUXIAN } = await import(pathToFileURL(resolve(DIST, "presets/xiuxian.js")).href);
+const { DAILY } = await import(pathToFileURL(resolve(DIST, "presets/daily.js")).href);
+const { MINIMAL } = await import(pathToFileURL(resolve(DIST, "presets/minimal.js")).href);
 
 /**
  * 组装指南自检 —— 文档里的每个 `create*` 与每个示例文件都必须真实存在。
@@ -644,12 +649,19 @@ const { MINIMAL } = await import(resolve(DIST, "presets/minimal.js"));
   const moduleFiles = readdirSync(resolve(ENGINE, "src"), {
     recursive: true,
     encoding: "utf-8",
-  }).filter(
-    (entry) =>
-      typeof entry === "string" &&
-      (entry.endsWith(".ts") || entry.endsWith("/")) &&
-      !entry.endsWith(".spec.ts"),
-  );
+  })
+    // readdirSync 的 recursive 会**原样带上平台分隔符**:子目录在 Windows 上是 `presets\`、
+    // 在 Linux/macOS 上是 `presets/`。锚点表按正斜杠写(目录项就是 `presets/`),
+    // 不归一化的话下面那条 `entry.startsWith(file)` 在 Windows 上恒 false —— 报的是
+    // "锚点表写了不存在的模块",而问题根本不在锚点表。归一化放在**组装出口**这一处,
+    // 后面的比较(目录项 / .ts 文件)就都吃同一份口径。
+    .map((entry) => entry.replace(/\\/g, "/"))
+    .filter(
+      (entry) =>
+        typeof entry === "string" &&
+        (entry.endsWith(".ts") || entry.endsWith("/")) &&
+        !entry.endsWith(".spec.ts"),
+    );
   const uncovered = Object.entries(MODULE_ANCHORS)
     .filter(([, anchor]) => !usage.includes(anchor))
     .map(([file]) => file);
@@ -839,7 +851,17 @@ assert.ok(tgz, "npm pack 没有产出 tarball");
 const app = resolve(work, "app");
 const nm = resolve(app, "node_modules");
 mkdirSync(nm, { recursive: true });
-execFileSync("tar", ["-xzf", resolve(tarballDir, tgz), "-C", nm], { stdio: "inherit" });
+/*
+ * tar 的入参**不能带盘符**。GNU tar(git bash 自带的那个)把 `C:\…` 里的冒号当成 rsh 的
+ * `host:path` 语法,报 `tar (child): Cannot connect to C: resolve failed` —— 与 ESM 加载器
+ * 把 `C:` 当 scheme 是同一个形状:**路径被交给了一个按 `冒号=协议/主机` 解析的工具**。
+ * 故这里改用**相对路径 + cwd**:参数里不出现冒号,对 GNU tar 与 Windows 自带的 bsdtar
+ * 都成立(不用 `--force-local`,那是 GNU 专有开关,bsdtar 不认)。
+ */
+execFileSync("tar", ["-xzf", `tarball/${tgz}`, "-C", "app/node_modules"], {
+  cwd: work,
+  stdio: "inherit",
+});
 renameSync(resolve(nm, "package"), resolve(nm, "wanxiang-engine"));
 
 // 发布包里该有什么:产物 + 说明 + 变更记录 + 文档。少一样,使用者就只拿到半个包。

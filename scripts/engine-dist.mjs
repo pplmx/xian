@@ -12,7 +12,8 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, openSync, readFileSync, readdirSync, mkdtempSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -49,20 +50,33 @@ console.log("③ 从产物 import(不走仓库别名、不走 src;**用 node**,�
  * 这一步刻意用 node 而不是 bun:打包器与 bun 会宽容地解析无扩展名的相对导入,
  * 而 Node 的 ESM 解析器要求 `./x.js`。这个差别骗过过一次 —— dist 在 bun 里好好的,
  * 别人 `npm i` 之后 import 直接 ERR_MODULE_NOT_FOUND。故产物自检必须在 node 里跑。
+ *
+ * 另一件同样只在 Windows 上现形的事:`import()` 的入参是 **URL**,不是文件系统路径。
+ * 文件系统给的是平台本地分隔符(Windows 上是 `C:\…\dist\index.js`),直接塞进去会被 ESM
+ * 加载器当成 scheme 为 `c:` 的 URL,当场 ERR_UNSUPPORTED_ESM_URL_SCHEME;Linux/macOS 上
+ * 分隔符恰好是 `/`、路径又以 `/` 开头,同样的写法能歪打正着 —— 于是这类 bug 只在 Windows 上红,
+ * 看起来像"某人的环境问题"。故:凡交给 import() 的路径,一律先 pathToFileURL 成 file:// URL。
  */
+const distUrl = (rel) => pathToFileURL(resolve(DIST, rel)).href;
+
+// 探针是**拼成字符串**交给 node 子进程的:那边没有 DIST、没有 resolve、也没有 distUrl,
+// 所以 URL 必须在这一侧(bun)先算好,再 JSON.stringify 进去。
 const nodeProbe = `
-  const engine = await import(${JSON.stringify(resolve(DIST, "index.js"))})
-  const { DEMO } = await import(${JSON.stringify(resolve(DIST, "presets/demo.js"))})
-  const { XIUXIAN } = await import(${JSON.stringify(resolve(DIST, "presets/xiuxian.js"))})
+  const engine = await import(${JSON.stringify(distUrl("index.js"))})
+  const { DEMO } = await import(${JSON.stringify(distUrl("presets/demo.js"))})
+  const { XIUXIAN } = await import(${JSON.stringify(distUrl("presets/xiuxian.js"))})
   const game = engine.defineGame(DEMO)
   if (game.realms.label(0, 0) !== '见习船员 I 阶') throw new Error('换皮世界没装起来')
   if (engine.defineGame(XIUXIAN).realms.realms.length !== 21) throw new Error('仙侠包没装起来')
   console.log('   node 侧 import 通过(导出 ' + Object.keys(engine).length + ' 个)')
 `;
 execFileSync("node", ["--input-type=module", "-e", nodeProbe], { cwd: ROOT, stdio: "inherit" });
-const engine = await import(resolve(DIST, "index.js"));
-const { DEMO } = await import(resolve(DIST, "presets/demo.js"));
-const { XIUXIAN } = await import(resolve(DIST, "presets/xiuxian.js"));
+// 下面三条在 bun 里跑:bun 接受裸路径,这里换成 file:// URL 不是为了修 bug,是为了
+// **口径统一** —— 同样这三个文件在上面 node 探针里已经用 distUrl 加载过一次。若留两种写法,
+// 将来谁改坏了一份,另一份仍是绿的,自检就成了"看你走哪条路"的量子态。
+const engine = await import(distUrl("index.js"));
+const { DEMO } = await import(distUrl("presets/demo.js"));
+const { XIUXIAN } = await import(distUrl("presets/xiuxian.js"));
 
 // 只写名字与内容就能装配出一个世界 —— 这是这个库存在的理由
 const game = engine.defineGame(DEMO);
@@ -193,16 +207,21 @@ const walk = (dir) => {
   }
 };
 walk(APP_SRC);
+// 报错文案里的路径一律走 relative + 归一化成正斜杠。原来写的是 `file.replace(ROOT + "/", "")`,
+// 那是**两种分隔符混着用**:ROOT 来自 resolve(反斜杠),拼上去的却是 `/`,Windows 上永远匹配不到,
+// 于是失败信息里印出整条绝对路径 —— 判据本身没错,但修 bug 的人得先看一屏无关前缀。
+// (只影响文案,不影响红绿;顺手收口,与 docs-check 的 rel 口径对齐。)
+const relOf = (file) => relative(ROOT, file).replace(/\\/g, "/");
 const aliasUsers = [];
 const deepUsers = [];
 const crawlUsers = [];
 let byName = 0;
 for (const file of appFiles) {
   const text = readFileSync(file, "utf8");
-  if (/from '@engine/.test(text)) aliasUsers.push(file.replace(ROOT + "/", ""));
-  if (/from 'wanxiang-engine\//.test(text)) deepUsers.push(file.replace(ROOT + "/", ""));
+  if (/from '@engine/.test(text)) aliasUsers.push(relOf(file));
+  if (/from 'wanxiang-engine\//.test(text)) deepUsers.push(relOf(file));
   // 相对路径直接钻进库内部也算"没按使用者的方式引用"
-  if (/from '[^']*packages\/engine/.test(text)) crawlUsers.push(file.replace(ROOT + "/", ""));
+  if (/from '[^']*packages\/engine/.test(text)) crawlUsers.push(relOf(file));
   byName += (text.match(/from 'wanxiang-engine'/g) ?? []).length;
 }
 assert.deepEqual(aliasUsers, [], `这些文件还在用仓库内部别名 @engine:${aliasUsers.join("、")}`);

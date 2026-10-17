@@ -7,6 +7,7 @@ import {
 } from "@/core/earlyGameService";
 import { gameNow } from "@/core/enginePause";
 import { URGENT_COUNTDOWN_SEC } from "@/data/constants";
+import { enlightenmentEffectText } from "@/ui/earlyGameText";
 import { formatCountdown } from "@/utils/format";
 import type { EnlightenmentEvent } from "@/types";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -76,7 +77,12 @@ const show = computed(() => event.value !== null);
         @click="handleChoose(idx)"
       >
         <span class="block font-kai text-[14px] tracking-widest text-ink">{{ opt.label }}</span>
+        <!-- 风味一行、数值一行:数值由 ui/earlyGameText 从 buff 本体现算,
+             文案(opt.desc)只剩风味 —— 改 buffs.ts 的常数,这一行跟着变 -->
         <span class="mt-0.5 block text-[11px] leading-relaxed text-ink-faint">{{ opt.desc }}</span>
+        <span class="mt-0.5 block text-[11px] leading-relaxed tabular text-jade">{{
+          enlightenmentEffectText(opt)
+        }}</span>
       </button>
     </div>
     <template #footer>

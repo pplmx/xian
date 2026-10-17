@@ -535,7 +535,7 @@
         炉前还是白身 —— 备一味
         <span class="text-qing">安神 · 澄心 · 定心</span>,双成 / 心得 / 护料即刻各涨一截
       </p>
-      <div v-if="recipes.length" class="max-h-64 space-y-2 overflow-y-auto">
+      <div v-if="recipes.length" class="scroll-pane max-h-64 space-y-2 overflow-y-auto">
         <input
           v-model="recipeQuery"
           type="text"

@@ -704,9 +704,14 @@
           </div>
           <div
             v-if="endgame.marks.length"
-            class="card-ink mt-2 max-h-64 divide-y divide-ink/6 overflow-y-auto px-4"
+            class="scroll-pane card-ink mt-2 max-h-64 divide-y divide-ink/6 overflow-y-auto px-4"
           >
-            <div v-for="(mark, i) in endgame.marks" :key="i" class="flex items-center gap-2 py-2">
+            <div
+              v-for="(mark, i) in endgame.marks"
+              :key="i"
+              class="flex items-center gap-2 py-2"
+              :class="rewriteConfirm === i ? 'flex-wrap' : ''"
+            >
               <span class="shrink-0 font-kai text-[11px] text-ink-faint">第{{ mark.life }}世</span>
               <span class="shrink-0 text-[11px] text-violet-ink">{{
                 mark.daoPathId ? daoPathDef(mark.daoPathId)?.name : "无道"
@@ -750,6 +755,17 @@
                 >
                   确认重写
                 </button>
+                <!--
+                  判胜规则原本只挂在「写」的 :title 上 —— 而这一步**花的是道源**,
+                  触屏玩家读不到 hover 就等于「先付钱,判据事后才知道」。
+                  放进确认态:点「确认重写」之前必先看见这句。整行在确认态才 flex-wrap,
+                  平时那行还是原来的一行(不为了这一段去改所有行的排版)。
+                -->
+                <p class="w-full text-[10px] leading-relaxed text-ink-faint">
+                  判胜 —— 以今日之你重打此战,
+                  <span class="text-ink-soft">快过 {{ mark.rounds }} 回合</span>
+                  即【胜于旧我】;此次花 {{ REWRITE_ENTRY_COST }} 道源,不破不退。
+                </p>
               </template>
               <button
                 v-else-if="mark.cleared && mark.replay"
@@ -963,7 +979,7 @@
         </div>
 
         <!-- 逐场摘要:场次多时限高滚动,不把弹窗撑到 82vh 上限 -->
-        <div class="mt-2 max-h-40 space-y-1 overflow-y-auto">
+        <div class="scroll-pane mt-2 max-h-40 space-y-1 overflow-y-auto">
           <p
             v-for="(row, i) in expedition.rows"
             :key="i"

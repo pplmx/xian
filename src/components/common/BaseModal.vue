@@ -48,7 +48,7 @@
               <GameIcon name="x" :size="18" />
             </button>
           </header>
-          <div class="relative z-10 overflow-y-auto px-5 py-3 grow">
+          <div class="scroll-pane relative z-10 overflow-y-auto px-5 py-3 grow">
             <slot />
           </div>
           <footer v-if="$slots.footer" class="relative z-10 px-5 pb-5 pt-2 shrink-0">

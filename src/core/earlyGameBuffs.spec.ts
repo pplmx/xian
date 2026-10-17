@@ -19,6 +19,8 @@ describe("重伤时长取自 INJURY_DURATION(常数接线)", () => {
 import { setActivePinia, createPinia } from "pinia";
 import { buffDef } from "@/data/buffs";
 import { ENLIGHTENMENT_OPTIONS, CAVE_EVENT_POOL } from "@/data/earlyGame";
+import { caveOptionEffectText } from "@/ui/earlyGameText";
+import type { CaveEvent } from "@/types";
 import { usePlayerStore } from "@/stores/player";
 import { useCultivationStore } from "@/stores/cultivation";
 
@@ -63,12 +65,15 @@ describe("前期玩法 buff 数据完整性(防「无此定义→静默空转」
     }
   });
 
-  it('巡游非跳过项的 effect 必报数(带数量才谈得上"选"——不能只写定性)', () => {
+  it('巡游非跳过项的数值行必报数(带数量才谈得上"选"——不能只写定性)', () => {
     for (const location of Object.keys(CAVE_EVENT_POOL)) {
       for (const ev of CAVE_EVENT_POOL[location as keyof typeof CAVE_EVENT_POOL]) {
         for (const opt of ev.options) {
-          if (opt.effect === "无事发生") continue;
-          expect(opt.effect, `巡游「${opt.label}」的效果只写了定性,没报数`).toMatch(/\d/);
+          // 数字不再写在 effect 文案里(那本是手抄),改由 reward / penalty 现算 ——
+          // 故「报数」这条纪律转移到现算行上,判据不放宽
+          const text = caveOptionEffectText(opt);
+          if (text === "无事发生") continue;
+          expect(text, `巡游「${opt.label}」的数值行只写了定性,没报数`).toMatch(/\d/);
         }
       }
     }
@@ -79,10 +84,10 @@ describe("前期玩法 buff 数据完整性(防「无此定义→静默空转」
       loc: keyof typeof CAVE_EVENT_POOL,
       evIdx: number,
       optIdx: number,
-    ): { effect: string } => CAVE_EVENT_POOL[loc][evIdx]!.options[optIdx]!;
-    expect(optOf("field", 0, 0).effect).toBe("获得 50 修为");
-    expect(optOf("furnace", 0, 1).effect).toBe("修炼速度 +20%(10 分钟)");
-    expect(optOf("garden", 0, 0).effect).toBe("发现 3 灵草");
+    ): CaveEvent["options"][number] => CAVE_EVENT_POOL[loc][evIdx]!.options[optIdx]!;
+    expect(caveOptionEffectText(optOf("field", 0, 0))).toBe("修为 +50");
+    expect(caveOptionEffectText(optOf("furnace", 0, 1))).toBe("修炼速度 +20% · 一盏茶(10 分钟)");
+    expect(caveOptionEffectText(optOf("garden", 0, 0))).toBe("灵草 +3");
   });
 });
 

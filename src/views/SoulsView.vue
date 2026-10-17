@@ -196,7 +196,7 @@
     <BaseModal :open="idleOpen" title="散置形意" @close="idleOpen = false">
       <div
         v-if="idleSouls.length > 0"
-        class="card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4"
+        class="scroll-pane card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4"
       >
         <div
           v-for="soul in idleSouls"
@@ -259,7 +259,7 @@
       </p>
       <div
         v-if="refinable.length > 0"
-        class="card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4"
+        class="scroll-pane card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4"
       >
         <div
           v-for="row in refinable"

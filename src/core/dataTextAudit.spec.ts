@@ -6,8 +6,13 @@
  * (两边各自都"对"),静态审计也看不见(类型不关心数字),只有把两者对起来才现形。
  *
  * 判据只钉**形状保证配对**的那几张表:条目自带说明文本、也自带数值负载
- * (变数、秘境随机规则、增益)。其余地方文案里的数字可能来自别的表
- * (例如顿悟选项的数值挂在 buffs 上),硬对只会误报,故不在此列。
+ * (变数、秘境随机规则、增益)。
+ *
+ * 顿悟 / 洞府巡游的选项曾因此被排除在外(「数值挂在 buffs 上,硬对只会误报」)——
+ * 那份自陈就是一处审计盲区:选项文案手抄了「修炼速度 +20%」,真值在 buffs 的 mods 里,
+ * 两本账各自都"对",改常数那一夜界面就开始撒谎。现在选项文案只剩风味,数字一律由
+ * ui/earlyGameText 从 buffId / reward / penalty 现算,于是可以按 buffId、
+ * `penalty.type → cave_penalty_*` **配对**审计(见文末那一节),不再误报。
  *
  * 编码有三种,都要认:
  *   x      —— 0.15 表示 +15%(概率、词条)
@@ -18,11 +23,18 @@
 import { describe, expect, it } from "vite-plus/test";
 import { MUTATORS } from "@/data/mutators";
 import { SECRET_RULES } from "@/data/secretRealms";
-import { BUFFS } from "@/data/buffs";
+import { BUFFS, buffDef } from "@/data/buffs";
+import {
+  CAVE_EVENT_POOL,
+  ENLIGHTENMENT_OPTIONS,
+  BREAKTHROUGH_PREP_OPTIONS,
+} from "@/data/earlyGame";
+import { modernDuration } from "@/data/timeUnits";
+import { caveOptionEffectText, durationText, enlightenmentEffectText } from "@/ui/earlyGameText";
 import { PACTS } from "@/data/pacts";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import { cnNumber } from "@/utils/format";
+import { cnNumber, formatSignedPercent } from "@/utils/format";
 import { REALMS, WORLDS, ascensionLeap } from "@/data/realms";
 import { VEIN_MAIN_CAPACITY, VEIN_SIDE_CAP, VEIN_TOTAL_CAPACITY } from "@/data/constants";
 import { VEINS } from "@/data/veins";
@@ -36,6 +48,7 @@ import { ARTIFACT_MAX_SLOTS, ARTIFACT_SLOT_UNLOCK_MAJOR } from "@/data/artifacts
 import { EXPEDITION_ROUTE_LAYERS } from "@/data/endgame";
 import { MUTATION_FIGHTS } from "@/core/expedition";
 import { PROFILE_MIN_MARKS } from "@/core/identity";
+import type { CaveEvent } from "@/types";
 
 /** 文案里的百分比是否能在同一条目的数值里找到对应 */
 function percentBacked(percent: number, nums: number[]): boolean {
@@ -866,5 +879,214 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     // 弱化该用 text-ink-faint token(与其余弱化位同款)
     expect(view, "角标弱化应走 token,不叠 opacity").not.toContain("opacity-70");
     expect(view, "角标应读 entry.badge(与条目状态同源)").toContain("entry.badge");
+  });
+});
+
+/**
+ * 顿悟 / 洞府巡游 —— 数值挂在 buff 与 reward 上,文案只许写风味
+ *
+ * 这两处是本文件长期的自陈盲区(见文件头)。手抄的代价已经发生过:选项写着
+ * 「修炼速度 +20%」,真值在 buffs.ts 的 `{ cultivationSpeed: 0.2 }` 里 ——
+ * 两本账各自都"对",改常数那一夜界面就开始撒谎,而没有任何一处会红。
+ *
+ * 现在改成现算:desc / effect 只剩风味,数字一律由 ui/earlyGameText 从
+ * buffDef(buffId).mods、reward、penalty 派生。判据三条:
+ *   一 文案里不许再出现数字与百分号(手抄只能从这一处回潮);
+ *   二 派生行里的每个百分比都能在该选项**自己**的数据里找到(按 buffId、
+ *      penalty.type → cave_penalty_* 配对,不做全表硬对,故不误报);
+ *   三 锚定当下玩家看到的读数 —— 改 buffs.ts 的 0.2 为 0.25,本节立刻红。
+ *
+ * 「数字」不能只按 `\d` 认:中文有一整族数字写法,**成数**(一成…九成、半成)、
+ * **倍数**(一倍/两倍/三倍)、**时间量词**(一盏茶/一炷香/一刻/半个时辰)、
+ * **约量**(数倍/几成/少许)。把「修炼速度 +20%」改写成「修炼速度加两成」,
+ * ASCII 数字和百分号一起消失,`/\d/` 判据就全绿 —— 而它承载的是**同一份手抄数字**。
+ * 故这些词在风味文案里出现即视为"这句话在描述数值",一律禁。
+ * 风味句不需要量;需要量的地方,现算行里有现代读数(见 ui/earlyGameText)。
+ * (词表是字面词,不写正则:「一刻」误伤「这一刻」这类情形,改词表比改正则清楚。)
+ */
+const CN_NUMERALS = [
+  // 成数
+  "一成",
+  "两成",
+  "三成",
+  "四成",
+  "五成",
+  "六成",
+  "七成",
+  "八成",
+  "九成",
+  "半成",
+  // 倍数
+  "一倍",
+  "两倍",
+  "三倍",
+  // 时间量词:道门时制里的时长,同样是数值(现算行给现代分钟数)
+  "一盏茶",
+  "一炷香",
+  "一刻",
+  "半个时辰",
+  // 约量:量说不清但仍在说量(「快上数倍」)
+  "数倍",
+  "几成",
+  "少许",
+];
+
+/** 一段风味文案里出现了哪些"手抄数字"的写法 */
+function numeralsIn(text: string): string[] {
+  return CN_NUMERALS.filter((w) => text.includes(w));
+}
+
+describe("文案数值对账 · 顿悟/巡游的数值由 buff 与 reward 现算", () => {
+  type CaveOption = CaveEvent["options"][number];
+  const locations = Object.keys(CAVE_EVENT_POOL) as Array<keyof typeof CAVE_EVENT_POOL>;
+  const caveOptions = (): CaveOption[] => {
+    const out: CaveOption[] = [];
+    for (const loc of locations) {
+      for (const ev of CAVE_EVENT_POOL[loc]) {
+        for (const o of ev.options) out.push(o);
+      }
+    }
+    return out;
+  };
+
+  it("顿悟/突破准备的说明只剩风味:手抄的数字与百分号都不许回潮", () => {
+    for (const opt of ENLIGHTENMENT_OPTIONS) {
+      expect(opt.desc, `顿悟「${opt.label}」的说明又写了数字:${opt.desc}`).not.toMatch(/\d/);
+      expect(opt.desc, `顿悟「${opt.label}」的说明又写了百分号:${opt.desc}`).not.toContain("%");
+      // 中文数字同样是手抄:「加两成」与「+20%」是一回事,只认 `\d` 会被这一个写法绕过
+      const hits = numeralsIn(opt.desc);
+      expect(
+        hits,
+        `顿悟「${opt.label}」的说明用了中文数字「${hits.join("、")}」` +
+          ` —— 数字该由 buff / reward 现算,文案只写风味:${opt.desc}`,
+      ).toEqual([]);
+    }
+    expect(ENLIGHTENMENT_OPTIONS.length, "选项池空了,判据形同虚设").toBeGreaterThanOrEqual(5);
+    // 突破准备是同一族的第三张表,而它连渲染点都没有(见 src/data/earlyGame.ts 的注释):
+    // 它的 desc 曾手抄「耗时3分钟,进阶成功率 +8%」。既然没人显示它,就不该留一句待维护的
+    // 说明 —— 故这里要的不是"只剩风味",而是**这个字段不存在**(死字段也是会撒谎的字段)。
+    for (const opt of BREAKTHROUGH_PREP_OPTIONS) {
+      expect(
+        Object.keys(opt),
+        `突破准备「${opt.label}」又长回了 desc —— 数值只有 bonusRate / duration / cost 三处真相源,` +
+          "说明文字若真要用,请在视图里从这三样现算",
+      ).not.toContain("desc");
+    }
+    expect(BREAKTHROUGH_PREP_OPTIONS.length, "选项池空了,判据形同虚设").toBeGreaterThanOrEqual(3);
+  });
+
+  it("顿悟的数值行读 buff 本体:每个百分比都能在它自己的 mods 里找到", () => {
+    let checked = 0;
+    for (const opt of ENLIGHTENMENT_OPTIONS) {
+      if (opt.buffId) {
+        const def = buffDef(opt.buffId);
+        expect(def, `顿悟「${opt.label}」的 buff ${opt.buffId} 未注册`).toBeDefined();
+        const text = enlightenmentEffectText(opt);
+        const mods = Object.values(def?.mods ?? {}) as number[];
+        const pcs = percentsOf(text);
+        expect(pcs.length, `顿悟「${opt.label}」的数值行一个百分比都没有:${text}`).toBeGreaterThan(
+          0,
+        );
+        for (const pc of pcs) {
+          checked += 1;
+          expect(
+            percentBacked(pc, mods),
+            `顿悟「${opt.label}」写 ${pc}%,buff 的 mods 里对不上:${text} · [${mods.join(", ")}]`,
+          ).toBe(true);
+        }
+        // 时长同样要和 buff 本体一致:改了 durationSec 却没人改文案,这里就红
+        expect(
+          text,
+          `顿悟「${opt.label}」的时长与 buff 的 ${def?.durationSec}s 不符:${text}`,
+        ).toContain(modernDuration(def?.durationSec ?? 0));
+      } else if (opt.reward) {
+        expect(enlightenmentEffectText(opt), `顿悟「${opt.label}」没报出即时奖励`).toContain(
+          String(opt.reward.value),
+        );
+      }
+    }
+    expect(checked, "扫到的百分比太少,判据覆盖不足").toBeGreaterThanOrEqual(6);
+  });
+
+  it("巡游选项的效果只剩风味 —— 数字一律从 reward / penalty 现算", () => {
+    for (const opt of caveOptions()) {
+      expect(opt.effect, `巡游「${opt.label}」的效果又写了数字:${opt.effect}`).not.toMatch(/\d/);
+      expect(opt.effect, `巡游「${opt.label}」的效果又写了百分号:${opt.effect}`).not.toContain("%");
+      // 与顿悟同规:中文数字/量词也是手抄数字的写法(「抵上一炷香的药力」就该红)
+      const hits = numeralsIn(opt.effect);
+      expect(
+        hits,
+        `巡游「${opt.label}」的效果用了中文数字「${hits.join("、")}」` +
+          ` —— 数字该由 reward / penalty 现算:${opt.effect}`,
+      ).toEqual([]);
+    }
+  });
+
+  it("巡游的数值行:奖励读 reward 与 buff 本体,惩罚读 cave_penalty_* 的 mods", () => {
+    let checked = 0;
+    for (const opt of caveOptions()) {
+      const text = caveOptionEffectText(opt);
+      const nums: number[] = [];
+      if (opt.reward) {
+        if (opt.reward.type === "buff") {
+          const def = buffDef(opt.reward.value as string);
+          expect(def, `巡游「${opt.label}」的 buff ${opt.reward.value} 未注册`).toBeDefined();
+          nums.push(...(Object.values(def?.mods ?? {}) as number[]));
+          expect(
+            text,
+            `巡游「${opt.label}」的时长与 buff 的 ${def?.durationSec}s 不符:${text}`,
+          ).toContain(modernDuration(def?.durationSec ?? 0));
+        } else {
+          const v = opt.reward.value as number;
+          nums.push(v);
+          if (v > 0) expect(text, `巡游「${opt.label}」没报出奖励数`).toContain(`+${v}`);
+          else expect(text, `巡游「${opt.label}」零奖励该说「无事发生」`).toBe("无事发生");
+        }
+      } else {
+        expect(text, `巡游「${opt.label}」既无奖励也无惩罚,却报了数`).toBe("无事发生");
+      }
+      if (opt.penalty) {
+        const def = buffDef(`cave_penalty_${opt.penalty.type}`);
+        expect(def, `巡游「${opt.label}」的惩罚 ${opt.penalty.type} 未注册`).toBeDefined();
+        const mods = Object.values(def?.mods ?? {}) as number[];
+        nums.push(...mods);
+        expect(
+          text,
+          `巡游「${opt.label}」的惩罚时长与 ${def?.id} 的 ${def?.durationSec}s 不符:${text}`,
+        ).toContain(modernDuration(def?.durationSec ?? 0));
+        // 惩罚必须真的报出来:扣了什么、扣多少,不许只活在数据里
+        for (const v of mods.filter((x) => x !== 0)) {
+          expect(text, `巡游「${opt.label}」的惩罚项没报数:${text}`).toContain(
+            formatSignedPercent(v),
+          );
+        }
+      }
+      for (const pc of percentsOf(text)) {
+        checked += 1;
+        expect(
+          percentBacked(pc, nums),
+          `巡游「${opt.label}」写 ${pc}%,该选项的数据里对不上:${text} · [${nums.join(", ")}]`,
+        ).toBe(true);
+      }
+    }
+    expect(checked, "扫到的百分比太少,判据覆盖不足").toBeGreaterThanOrEqual(4);
+  });
+
+  it("锚定当下读数:改 buffs.ts 的 0.2 为 0.25,本节的字面量立刻红", () => {
+    const cult = ENLIGHTENMENT_OPTIONS.find((o) => o.buffId === "enlighten_cult");
+    expect(cult, "「静心凝神」不见了").toBeDefined();
+    expect(enlightenmentEffectText(cult!)).toBe("修炼速度 +20% · 一盏茶(10 分钟)");
+    // 巡游那条 buff 奖励与顿悟共用「20%」这个真值 —— 两条必须一起动
+    expect(caveOptionEffectText(CAVE_EVENT_POOL.furnace[0]!.options[1]!)).toBe(
+      "修炼速度 +20% · 一盏茶(10 分钟)",
+    );
+    // 奖励 + 惩罚并列:奖多少、罚多久,一行读得完
+    expect(caveOptionEffectText(CAVE_EVENT_POOL.field[0]!.options[1]!)).toBe(
+      "修为 +120 · 修炼速度 -15% · 5 分钟",
+    );
+    // 时长口径自身:落不在道门时制表上的 5 分钟不许说成「将近一刻」
+    expect(durationText(300)).toBe("5 分钟");
+    expect(durationText(600)).toBe("一盏茶(10 分钟)");
+    expect(durationText(1800)).toBe("一炷香(30 分钟)");
   });
 });

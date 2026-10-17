@@ -33,6 +33,16 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/** 按后缀收文件 —— 界面判据的扫描面不止 components/views,外壳、脚本常量、样式表都要看得见 */
+function walkByExt(dir: string, ext: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) walkByExt(full, ext, out);
+    else if (entry.endsWith(ext)) out.push(full);
+  }
+  return out;
+}
+
 const FILES = walk(SRC)
   .filter(
     (f) => f.includes(`${join("src", "components")}`) || f.includes(`${join("src", "views")}`),
@@ -673,16 +683,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
-  it("展开/收纳的控制要把状态报给读屏 —— disclosure 全要 aria-expanded", () => {
+  it("展开/收纳的控制要把状态报给读屏 —— 已登记的这几处 disclosure 都要 aria-expanded", () => {
     // 折叠/展开的按钮若只换文本箭头、不把展开态报给读屏,屏幕阅读器分不清
     // 现在到底收没收。方向名/星级(上面两条)早已钉;修为来路、卦/宿全览、
-    // 战斗所知/分析仍在裸 button,一并在这一条钉死,不许再退回。
+    // 战斗所知/分析、转世交割清单,一并在这一条钉死,不许再退回。
+    //
+    // 这是**手抄清单**,不是「全库自动找 disclosure」—— 它只保证下面登记的这几处
+    // 没退回去。新加可展开控件要自己登进来,否则这条守卫看都没看过它一眼。
     const checks: [string, string][] = [
       ["views/CultivationView.vue", ':aria-expanded="showCultBreakdown"'],
       ["views/RealmCodexView.vue", ':aria-expanded="showAllHex"'],
       ["views/RealmCodexView.vue", ':aria-expanded="showAllMansions"'],
       ["components/adventure/CombatPanel.vue", ':aria-expanded="showLore"'],
       ["components/adventure/CombatPanel.vue", ':aria-expanded="showAnalysis"'],
+      // 转世交割清单里点开的那一条(heritageTap)—— 只换措辞不报状态,读屏分不清
+      ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageTap === r.id"'],
     ];
     for (const [path, needle] of checks) {
       const f = FILES.find((x) => x.path === path);
@@ -1705,5 +1720,310 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(mw?.src, "要明说「其律尚未显化于历练」,免得玩家以为真被降能").toContain(
       "其律尚未显化于历练",
     );
+  });
+});
+
+describe("界面分层 · 触屏的滚动与悬停只说真话", () => {
+  /*
+   * 这两条都是**桌面测不出来、手机上一用就现形**的毛病,故钉成源码级红线:
+   *
+   * ① 二级滚动区:内层列表(max-h-*)滑到底,触摸滚动的手势会顺着滚动链继续
+   *    传给外层主滚动区 —— 玩家看到的是「这段列表划不动,整块页面跟着走」。
+   *    桌面上没有触摸滚动,只能靠鼠标滚轮,链条从不出问题,所以一直没被发现。
+   *    overscroll-behavior: contain 把内层的滚动链掐断,收口在 .scroll-pane 一处。
+   *    判据:凡会成为滚动容器的,都得同时挂 scroll-pane。会成为滚动容器的写法不止
+   *    一种,故这一条扫**整份源码**(模板 + 脚本 + 样式),而不是只扫 class 属性
+   *    字面量 —— 从前只认 `class="…"` 里的 `overflow-[xy]-auto`,于是下面五种
+   *    写法全在判据眼皮外面仍然绿,判据说得比做得多:
+   *      A `:class='…overflow-y-auto'`(单引号)
+   *      B `:class="常量"` + `<script>` 里写 `const 常量 = "…overflow-y-auto"`
+   *      C `overflow-auto`(不带轴)
+   *      D `<style>` 里的 `overflow-y: auto` 声明
+   *      E 外壳 `src/App.vue` 里的内层滚动容器(从前 FILES 只收 components/ 与 views/)
+   *    故障注入:摘掉任一处 scroll-pane → 红;把滚动容器换成上面任一种写法 → 也红。
+   *
+   * ② 裸 hover::触屏点一下之后 hover 态不散,一直黏在那儿(坊市「售丹/售料/寄卖」
+   *    那排最明显,点完还亮着,像「已选中」)。这些态只该给真悬停设备 —— 用
+   *    hoverable:(tailwind.config 里那条 @media (hover:hover) and (pointer:fine)
+   *    变体)把 hover: 包起来,触屏上它根本不生成。
+   *    判据:不许出现未经 hoverable: 守卫的裸 hover:,也不许出现会黏住的纯 CSS
+   *    :hover 规则。从前只扫 components/ 与 views/ 的 .vue,于是三种写法一样看不见:
+   *      F 类名常量写在 `.ts` 里,组件只写 `:class="常量"`
+   *      G 外壳 `src/App.vue` 上直接挂 `hover:…`
+   *      H `src/style.css` 里手写 `.x:hover { … }`(绕过 hoverable: 变体)
+   *    故扫描面扩到:全部 .vue(含 App.vue)、src 下 .ts 的字符串字面量、
+   *    style.css 的 :hover 规则(@media (hover: hover) 块内合法,不算)。
+   *    故障注入:把任一处 hoverable:hover: 改回 hover: → 红;换成 F/G/H → 也红。
+   */
+
+  /** 注释抹成等长空白:偏移与行号都不动,报 offender 时能直接指到源码那一行 */
+  function blankComments(text: string): string {
+    return text
+      .replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, " "))
+      .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
+      .replace(/^\s*\/\/.*$/gm, (m) => m.replace(/[^\n]/g, " "));
+  }
+
+  const lineAt = (src: string, idx: number): number => src.slice(0, idx).split("\n").length;
+
+  /** 该处所在的整条标签:`路径:行号 + <div class=…` 够人一眼找到地方了 */
+  function tagAt(src: string, idx: number): string {
+    const lt = src.lastIndexOf("<", idx);
+    if (lt < 0) return "";
+    const gt = src.indexOf(">", idx);
+    return src
+      .slice(lt, gt < 0 ? idx + 1 : gt + 1)
+      .replace(/\s+/g, " ")
+      .slice(0, 90);
+  }
+
+  /** class / :class 属性值的字符区间 —— 「这条容器挂没挂 scroll-pane」只能在同一个属性里看 */
+  function classValueSpans(src: string): { start: number; text: string }[] {
+    const spans: { start: number; text: string }[] = [];
+    for (const m of src.matchAll(/(?<![\w-])(:?class)\s*=\s*(["'])([\s\S]*?)\2/g)) {
+      const value = m[3] ?? "";
+      spans.push({ start: m.index + m[0].length - 1 - value.length, text: value });
+    }
+    return spans;
+  }
+
+  /** <style> 块的字符区间:只有落在里面的才算 CSS 声明(模板里的类名不算) */
+  function styleSpans(src: string): { start: number; end: number }[] {
+    const spans: { start: number; end: number }[] = [];
+    for (const m of src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) {
+      const start = m.index + m[0].indexOf(">") + 1;
+      spans.push({ start, end: start + (m[1] ?? "").length });
+    }
+    return spans;
+  }
+
+  /**
+   * CSS 声明所处的选择器(就近一个 `{` 往前读到上一个 `}` / `{`)。
+   * `floor` 是所在样式块的起点 —— 不夹这一刀,选择器会一路爬回 <script> 里去,
+   * 报出来的是「)), ); </script> <style scoped> .qa-probe-d」这种看不懂的东西。
+   */
+  function cssSelectorAt(css: string, idx: number, floor = 0): string {
+    const open = css.lastIndexOf("{", idx);
+    if (open < floor) return "";
+    const prev = Math.max(css.lastIndexOf("}", open), css.lastIndexOf("{", open - 1), floor - 1);
+    return css
+      .slice(prev + 1, open)
+      .trim()
+      .replace(/\s+/g, " ")
+      .slice(0, 60);
+  }
+
+  /**
+   * 写 :hover 的那条规则头(`.x:hover`)—— 选择器在自身 `{` 之前,所以这一头要往后找 `{`。
+   * 用 cssSelectorAt 会指到上一条规则上,报出来的名字驴唇不对马嘴。
+   */
+  function cssRuleHeadAt(css: string, idx: number): string {
+    const open = css.indexOf("{", idx);
+    if (open < 0) return "";
+    const prev = Math.max(
+      css.lastIndexOf("}", idx),
+      css.lastIndexOf("{", idx),
+      css.lastIndexOf(";", idx),
+    );
+    return css
+      .slice(prev + 1, open)
+      .trim()
+      .replace(/\s+/g, " ")
+      .slice(0, 60);
+  }
+
+  /** 悬停扫描面之一:全部 .vue —— 含外壳 App.vue(它从前不在 FILES 里) */
+  const SCAN_VUE = walkByExt(SRC, ".vue").map((f) => ({
+    path: relative(SRC, f).replace(/\\/g, "/"),
+    css: false,
+    src: blankComments(readFileSync(f, "utf8")),
+  }));
+
+  /** 悬停/滚动扫描面之二:样式表(纯 CSS 的 :hover 与 overflow 声明都在这儿) */
+  const SCAN_CSS = walkByExt(SRC, ".css").map((f) => ({
+    path: relative(SRC, f).replace(/\\/g, "/"),
+    css: true,
+    src: blankComments(readFileSync(f, "utf8")),
+  }));
+
+  /**
+   * 滚动收口的例外。**按处**豁免:`near` 给定时,只有所在标签含该串的那一处才免。
+   * 不做整份文件豁免 —— 否则「App.vue 里再塞一个内层滚动列表」会跟着一起免掉,
+   * 而 App.vue 恰恰是最容易被塞东西的那一层。
+   */
+  const SCROLL_WHITELIST: Record<string, { reason: string; near?: string[] }> = {
+    "App.vue": {
+      reason:
+        'App.vue 的 <main ref="scrollHost"> 是主滚动宿主(整套界面的唯一外层),在根上收口没有意义 —— 掐它等于掐掉外层本身;此豁免只覆盖这一处',
+      near: ['ref="scrollHost"'],
+    },
+  };
+
+  const HOVER_WHITELIST: Record<string, string> = {
+    // 目前无例外;若确有只能裸 hover: 的地方(如整体被 pointer:coarse 挡掉),
+    // 在此写明「路径 → 理由」。
+  };
+
+  it("二级滚动容器都要挂 scroll-pane —— 别把滑到底的手势甩给外层", () => {
+    // 会成为滚动容器的两种写法:tailwind 类名(含不带轴的 overflow-auto)与 CSS 声明
+    const CLASS_FORM = /(?<![\w-])overflow-(?:[xy]-)?auto(?![\w-])/g;
+    const CSS_FORM = /(?<![\w-])overflow(?:-[xy])?\s*:\s*auto(?![\w-])/g;
+
+    const offenders: string[] = [];
+    const panned: string[] = [];
+    const exempt: string[] = [];
+
+    for (const f of [...SCAN_VUE, ...SCAN_CSS]) {
+      const src = f.src;
+      // .css 整份都是 CSS;.vue 只有 <style> 块内才算声明
+      const spans: { start: number; text: string }[] = f.css ? [] : classValueSpans(src);
+      const styles: { start: number; end: number }[] = f.css
+        ? [{ start: 0, end: src.length }]
+        : styleSpans(src);
+      const rule = SCROLL_WHITELIST[f.path];
+
+      const judge = (idx: number, hit: string): void => {
+        const tag = tagAt(src, idx);
+        const where = `${f.path}:${lineAt(src, idx)}`;
+        if (rule && (!rule.near?.length || rule.near.some((n) => tag.includes(n)))) {
+          exempt.push(where);
+          return;
+        }
+        // ① 类名:同一个 class 属性里出现 scroll-pane 才算收口
+        const span = spans.find((s) => idx >= s.start && idx < s.start + s.text.length);
+        if (span) {
+          if (/\bscroll-pane\b/.test(span.text)) panned.push(where);
+          else offenders.push(`${where}  ${tag}  →  ${hit}(同一个 class 里找不到 scroll-pane)`);
+          return;
+        }
+        // ② CSS 声明:选择器本身得是 .scroll-pane
+        const style = styles.find((s) => idx >= s.start && idx < s.end);
+        if (style) {
+          const selector = cssSelectorAt(src, idx, style.start);
+          if (/\.scroll-pane\b/.test(selector)) panned.push(where);
+          else offenders.push(`${where}  ${selector || "(style 块)"}  { ${hit} }`);
+          return;
+        }
+        // ③ 其余:类名写在脚本常量 / 动态表达式里,看它周边有没有一道 scroll-pane 跟着
+        const near = src.slice(Math.max(0, idx - 240), idx + 240);
+        if (/\bscroll-pane\b/.test(near)) panned.push(where);
+        else offenders.push(`${where}  ${tag || "(脚本里的字符串)"}  →  ${hit}`);
+      };
+
+      for (const m of src.matchAll(CLASS_FORM)) judge(m.index, m[0]);
+      for (const m of src.matchAll(CSS_FORM)) judge(m.index, m[0]);
+    }
+
+    console.log(
+      `\n二级滚动区收口(scroll-pane):${panned.length} 处${
+        offenders.length ? `,漏了 ${offenders.length} 处` : ""
+      }${exempt.length ? `(外壳主滚动宿主 ${exempt.length} 处按白名单豁免)` : ""}`,
+    );
+    expect(
+      SCAN_VUE.length,
+      "扫描面里连外壳算上应有 50+ 个 .vue —— 少成这样就说明文件压根没扫到",
+    ).toBeGreaterThanOrEqual(50);
+    expect(
+      panned.length,
+      "收口后二级滚动区不该只剩个位数 —— 数量对不上说明判据没真扫到容器",
+    ).toBeGreaterThanOrEqual(13);
+    expect(
+      offenders,
+      "这些滚动容器没挂 scroll-pane —— 内层滑到底会把整块外层一起拖走;补上类名,或写明为何它不该收口",
+    ).toEqual([]);
+  });
+
+  /**
+   * 纯 CSS 的 :hover 在触屏上一样黏,而且完全绕过 tailwind 的 hoverable: 变体 ——
+   * `@media (hover: hover)` 块里的合法(只在真悬停设备生效),先整块抹成空白再找。
+   */
+  function blankHoverMediaBlocks(css: string): string {
+    let text = css;
+    for (let round = 0; round < 50; round += 1) {
+      const m = /@media[^{;]*\(\s*hover\s*:\s*hover\s*\)[^{;]*\{/i.exec(text);
+      if (!m) break;
+      const open = m.index + m[0].length - 1;
+      let depth = 0;
+      let end = -1;
+      for (let i = open; i < text.length; i += 1) {
+        if (text[i] === "{") depth += 1;
+        else if (text[i] === "}") {
+          depth -= 1;
+          if (depth === 0) {
+            end = i;
+            break;
+          }
+        }
+      }
+      if (end < 0) break;
+      const blank = text.slice(m.index, end + 1).replace(/[^\n]/g, " ");
+      text = text.slice(0, m.index) + blank + text.slice(end + 1);
+    }
+    return text;
+  }
+
+  it("hover: 只给真悬停设备 —— 触屏点一下别把 hover 态黏住", () => {
+    const offenders: string[] = [];
+    let scanned = 0;
+
+    const judgeHover = (path: string, src: string, idx: number, withTag = true): void => {
+      scanned += 1;
+      // 紧邻的九个字符若正是 "hoverable:" ,这个 hover: 已被真悬停设备守卫
+      if (src.slice(idx - "hoverable:".length, idx) === "hoverable:") return;
+      const tag = withTag ? tagAt(src, idx) : "";
+      offenders.push(
+        `${path}:${lineAt(src, idx)}  ${src
+          .slice(Math.max(0, idx - 28), idx + 10)
+          .replace(/\s+/g, " ")
+          .trim()}${tag ? `  〔${tag}〕` : ""}`,
+      );
+    };
+
+    // ① 全部 .vue:组件、视图,以及外壳 App.vue(<main> 上挂 hover: 一样会黏)
+    for (const f of SCAN_VUE) {
+      if (HOVER_WHITELIST[f.path]) continue;
+      for (const m of f.src.matchAll(/hover:/g)) judgeHover(f.path, f.src, m.index);
+    }
+
+    // ② src 下 .ts 的字符串字面量:类名常量常驻在那儿,组件只写 :class="常量"。
+    //    .spec.ts 不收 —— 审计用例本身要引用被禁写法的原文(这份文件里就有),
+    //    它不上屏,也不该算进产品代码的悬停面。
+    for (const file of walkByExt(SRC, ".ts").filter((p) => !p.endsWith(".spec.ts"))) {
+      const path = relative(SRC, file).replace(/\\/g, "/");
+      if (HOVER_WHITELIST[path]) continue;
+      const src = blankComments(readFileSync(file, "utf8"));
+      for (const lit of src.matchAll(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/g)) {
+        for (const m of lit[0].matchAll(/hover:/g)) {
+          // .ts 里没有标签可指,别拿泛型 `<T>` 当标签糊人脸上
+          judgeHover(path, src, lit.index + m.index, false);
+        }
+      }
+    }
+
+    // ③ 样式表里手写的 :hover —— 连 hoverable: 变体的挡板都绕过了
+    for (const f of SCAN_CSS) {
+      if (HOVER_WHITELIST[f.path]) continue;
+      const css = blankHoverMediaBlocks(f.src);
+      for (const m of css.matchAll(/:hover/g)) {
+        scanned += 1;
+        offenders.push(
+          `${f.path}:${lineAt(css, m.index)}  ${cssRuleHeadAt(css, m.index)} —— 纯 CSS 的 :hover 触屏上照样黏`,
+        );
+      }
+    }
+
+    console.log(
+      `\nhover: 收口(hoverable:):扫到 ${scanned} 处悬停声明,${
+        offenders.length ? `漏了 ${offenders.length} 处` : "全部合规"
+      }`,
+    );
+    expect(
+      scanned,
+      "全库悬停声明只剩这么几处 —— 要么判据没真扫到,要么悬停反馈被整体删了(9 处 hoverable:hover: 是下限)",
+    ).toBeGreaterThanOrEqual(9);
+    expect(
+      offenders,
+      "这些裸 hover: 触屏上会黏住 —— 改用 hoverable:hover:(真悬停设备才生效),或写明为何它该保留",
+    ).toEqual([]);
   });
 });

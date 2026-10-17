@@ -843,6 +843,22 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
 }
 
 /* ================= 组件层 ================= */
+
+/*
+ * 二级滚动区(.scroll-pane)—— 掐断滚动链
+ *
+ * main 是外壳里唯一的滚动宿主,弹窗/卡片内部那些 max-h-* 的列表是**二级**滚动区。
+ * 手指在内层列表上滑到底,滚动链会顺着 DOM 往外传,外层 main 跟着一起走:
+ * 玩家看到的是「这段列表划不动,整块页面在动」。桌面上只有滚轮、且滚轮本就不
+ * 传递滚动链,所以一直没被发现。
+ *
+ * overscroll-behavior: contain 把链条收口在当前容器:内层到顶/到底就停住,
+ * 不把剩余手势甩给外层。收在一处,免得 16 个容器各写一份、日后漏改。
+ */
+.scroll-pane {
+  overscroll-behavior: contain;
+}
+
 .card-ink {
   position: relative;
   background: rgb(var(--color-paper-lifted-rgb));

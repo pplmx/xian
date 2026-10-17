@@ -17,11 +17,10 @@ export type EnlightenmentType = "cultivation" | "combat" | "breakthrough" | "qi"
 export interface EnlightenmentOption {
   type: EnlightenmentType;
   label: string;
+  /** 风味文字 —— 不许带数字:数值由 ui/earlyGameText 从 buffId 的 buff 本体现算 */
   desc: string;
-  /** 生效的 buff;无 buff 的选项走即时 reward */
+  /** 生效的 buff;无 buff 的选项走即时 reward。时长以 buff 的 durationSec 为唯一真相 */
   buffId?: string;
-  /** 持续时间(秒) */
-  duration: number;
   /** 即时奖励(不走 buff,如"灵机一动"直接给悟道点——悟道产出无速率词条可挂) */
   reward?: { type: "wudao"; value: number };
 }
@@ -57,11 +56,16 @@ export interface CaveEvent {
   expiresAt: number;
 }
 
-/** 突破准备选项 */
+/**
+ * 突破准备选项
+ *
+ * 无 `desc`:它曾经手抄「耗时3分钟,进阶成功率 +8%」,却**没有任何渲染点**
+ * (视图只读 label / duration / bonusRate / cost)。数值只有三处真相源,
+ * 文案由视图从它们现算;谁想加回一句说明,请同时接上渲染点并让数字现算。
+ */
 export interface BreakthroughPrepOption {
   id: string;
   label: string;
-  desc: string;
   cost?: { stone?: number; pill?: string };
   bonusRate: number;
   /** 耗时(秒),0表示立即 */

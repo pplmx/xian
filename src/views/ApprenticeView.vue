@@ -240,7 +240,7 @@ const dispatchLabel = computed(() => {
             <button
               v-for="t in APPRENTICE_TASKS"
               :key="t.spec"
-              class="rounded border border-ink/10 px-2 py-1 text-[10px] hover:border-cinnabar"
+              class="rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
               :title="t.desc"
               @click="send(a.uid, t.spec)"
             >

@@ -47,3 +47,9 @@ core.[0-9]*
 
 # vitest --reporter=json 的默认产物目录(排查计数时偶然生成,不该进库)
 .vitest/
+
+# 本地 agent 工具的工作目录(会话记忆 / 任务编排),不属于本仓库的源码与文档。
+# 不 ignore 会有两个后果:① git status 里长期挂一条 ?? .workbuddy/;
+# ② rumdl 默认扫「cwd 下所有 .md 减 exclude」,会把里面的会话笔记当文档判错
+# —— rumdl.toml 里写着「runtime 目录另有 respect_gitignore 兜底」,这条就是补那个洞。
+.workbuddy/

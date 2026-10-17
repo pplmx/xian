@@ -4,7 +4,12 @@ name: 共享静态门禁 (可复用工作流)
 # 全仓各 workflow(部署 Pages / 发布镜像 / 构建客户端)都用 `uses` 引用它一次,
 # 不再各自内联整段「check + test:report + check:engine + standalone」——
 # 要改判据只改这一处;一次 push 多个 workflow 同时触发,也只在各自 workflow 里跑一遍。
-# 本机 `.vite-hooks/pre-commit` 跑同一套命令,保证「本地能过 = CI 能过」。
+# 本机 `.vite-hooks/pre-commit` 跑同一套命令:**本地静态门过了,CI 的静态门就过**。
+# 但静态门 ≠ 全部门 —— 浏览器门(构建时长 / 首屏 / 帧率 / 排版 / 冒烟 / 离线)不在
+# verify 链里(一轮约五分钟,提交前扛不住),只在各 workflow 的 ui-check job 与本地
+# `bun run check:ui` 里跑。故「提交前的绿」不等于「CI 全绿」,对那六项尤其如此。
+# 这条接线由 `src/core/gateWiring.spec.ts` 守着:CI 里出现的每个 `bun scripts/*.mjs`
+# 都得在 package.json 或 verify 里有对等入口,反之 verify 点名的脚本也必须真存在。
 #
 # 完整判据命令:`vp fmt --check && vp run verify`
 #   · vp fmt --check —— 格式(oxfmt,只判不改),补上 CI 此前缺的格式判据

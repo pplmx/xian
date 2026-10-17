@@ -23,12 +23,35 @@ const ROOT = resolve(import.meta.dirname, "..");
 const ENGINE = join(ROOT, "packages/engine");
 
 const scripts = Object.keys(JSON.parse(readFileSync(join(ROOT, "package.json"), "utf-8")).scripts);
+/** 归档豁免的口径:正斜杠,与 rumdl.toml 的 exclude 写法一致 */
+const ARCHIVE = "docs/superpowers/plans/";
 const docFiles = [
   "README.md",
   ...readdirSync(join(ROOT, "docs"), { recursive: true, encoding: "utf-8" })
     .filter((name) => typeof name === "string" && name.endsWith(".md"))
     .map((name) => `docs/${name}`),
-].filter((rel) => !rel.startsWith("docs/superpowers/plans/"));
+]
+  // readdirSync 的 recursive 会**原样带上平台分隔符**(Windows 上是 `superpowers\plans\x.md`)。
+  // 不归一化的话,下面那条 startsWith 在 Windows 上永远判 false —— 归档豁免静默失效,
+  // 于是同一个脚本在 Ubuntu CI 上是绿的、在 Windows 上是红的,两边看起来都"有理由"。
+  // 归一化放在**组装出口**这一处,后续所有拿 rel 的地方(读文件、拼链接、报错文案)
+  // 都吃到同一口径,不必各自再 replace 一遍。
+  .map((rel) => rel.replace(/\\/g, "/"))
+  .filter((rel) => !rel.startsWith(ARCHIVE));
+
+// 自证:上面的归一化若失效,豁免判据会**只在 Windows 上**静默失灵 —— 那是最难发现的一种坏,
+// 因为 CI 在 Linux 上始终是绿的,没人会去怀疑判据。所以让脚本自己先看一遍分隔符。
+// (用断言而不是另立 spec 文件:那会牵动 test-report.mjs 的分类登记与文档例数对账。)
+const unnormalized = docFiles.filter((rel) => rel.includes("\\"));
+if (unnormalized.length > 0) {
+  console.error(
+    "文档自检:docFiles 里混进了反斜杠路径 —— 这是跨平台路径 bug,不是文档的问题。\n" +
+      `  归档豁免(${ARCHIVE})与所有 startsWith/相对链接解析都按正斜杠写,反斜杠路径会让它们静默失效。\n` +
+      "  修法:组装 docFiles 时把分隔符归一化成正斜杠,别在判据里两边各写一套。",
+  );
+  for (const rel of unnormalized.slice(0, 5)) console.error(`  ✗ ${rel}`);
+  process.exit(1);
+}
 
 /** 一个 spec 文件都不算漏:两处都要走同一套"递归数 .spec.ts" */
 const countSpecs = (dir) =>

@@ -9,6 +9,14 @@ WORKDIR /app
 # 复制依赖文件
 COPY package.json bun.lock* ./
 
+# 复制 workspace 子包的 manifest
+# 根 package.json 声明了 "workspaces": ["packages/*"] 且依赖 "wanxiang-engine": "workspace:*"，
+# bun install --frozen-lockfile 会校验 lock 里登记的 workspace 是否真实存在；
+# 若 packages/engine 还没进镜像，会直接报
+# "the root package depends on workspace \"wanxiang-engine\" (packages/engine), which is listed in bun.lock but not on disk"。
+# 只复制 manifest 而非整目录，保持依赖层缓存不被源码变更击穿。
+COPY packages/engine/package.json ./packages/engine/
+
 # 安装依赖(--frozen-lockfile 保证依赖锁定)
 RUN bun install --frozen-lockfile
 

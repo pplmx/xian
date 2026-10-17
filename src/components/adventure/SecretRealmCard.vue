@@ -25,7 +25,7 @@
       </p>
       <p
         v-if="state.spoils.length"
-        class="mt-1 max-h-24 overflow-y-auto text-[10px] leading-relaxed text-ink-faint"
+        class="scroll-pane mt-1 max-h-24 overflow-y-auto text-[10px] leading-relaxed text-ink-faint"
       >
         <span v-for="(s, i) in state.spoils" :key="i" class="block">· {{ s }}</span>
       </p>

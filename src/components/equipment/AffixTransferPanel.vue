@@ -127,7 +127,7 @@ function doTransfer(): void {
       <!-- 选目标件 -->
       <div v-if="affixId" class="mb-2">
         <p class="mb-1 text-[10px] text-ink-faint">落到哪一件?</p>
-        <div class="max-h-24 space-y-1 overflow-y-auto">
+        <div class="scroll-pane max-h-24 space-y-1 overflow-y-auto">
           <button
             v-for="c in candidates"
             :key="c.item.uid"
@@ -137,7 +137,7 @@ function doTransfer(): void {
                 ? 'cursor-not-allowed text-ink-faint'
                 : targetUid === c.item.uid
                   ? 'bg-accent/10 text-accent'
-                  : 'hover:bg-ink/5'
+                  : 'hoverable:hover:bg-ink/5'
             "
             :disabled="c.block !== null"
             @click="
@@ -171,7 +171,7 @@ function doTransfer(): void {
             v-for="l in landings"
             :key="l.replaceId ?? '__new__'"
             class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-[11px]"
-            :class="l.check.ok ? 'hover:bg-ink/5' : 'cursor-not-allowed text-ink-faint'"
+            :class="l.check.ok ? 'hoverable:hover:bg-ink/5' : 'cursor-not-allowed text-ink-faint'"
             :disabled="!l.check.ok"
             @click="
               replaceId = l.replaceId;

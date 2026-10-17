@@ -17,6 +17,7 @@ import {
 } from "@/data/earlyGame";
 import { gn, toNum } from "@/utils/gnum";
 import { todayLocalNum } from "@/utils/time";
+import { caveOptionEffectText, enlightenmentEffectText } from "@/ui/earlyGameText";
 import { gameNow } from "./enginePause";
 import { notify } from "./notify";
 
@@ -90,10 +91,12 @@ export function chooseEnlightenment(optionIndex: number): void {
   // 但那不再是"选项该有的样子"——守卫在这里兜住,让漏注册显式为错误而不是静默空转
   if (opt.reward) {
     useResourcesStore().addSmall("wudao", opt.reward.value);
-    notify(`灵机一动,悟道点 +${opt.reward.value}`, "success");
+    // 数字现取自 reward,不复述文案(文案只剩风味,见 data/earlyGame 头注释)
+    notify(`${opt.label},悟道点 +${opt.reward.value}`, "success");
   } else if (opt.buffId) {
     cult.addBuff(opt.buffId, now);
-    notify(opt.desc, "success");
+    // 回执的数值行同样现算(buff → mods + durationSec),不印手抄串
+    notify(`顿悟「${opt.label}」:${enlightenmentEffectText(opt)}`, "success");
   }
 
   telemetry().record("enlightenment_choose", "modal", `悟道:${opt.label}`);
@@ -358,8 +361,10 @@ export function chooseCaveOption(optionIndex: number): void {
 
   const today = todayLocalNum();
   player.markCaveEventToday(today);
-  // 选完给一句回执——此前选完弹窗直接关,拿到什么全凭感觉
-  notify(`洞府巡游·${opt.effect}`, "success");
+  // 选完给一句回执——此前选完弹窗直接关,拿到什么全凭感觉。
+  // 回执里的数值现算(奖励读 reward、惩罚读 cave_penalty_* 的 mods),
+  // 不复述 effect 文案:那本是手抄副本,改常数就撒谎
+  notify(`洞府巡游「${opt.label}」:${caveOptionEffectText(opt)}`, "success");
   telemetry().record("cave_choose", "modal", `洞府选择:${opt.label}`);
   caveEvent = null;
 }

@@ -628,7 +628,7 @@
           </p>
 
           <div
-            class="max-h-72 overflow-y-auto"
+            class="scroll-pane max-h-72 overflow-y-auto"
             :class="activeGongfaItems.length ? 'divide-y divide-ink/7' : ''"
             role="tabpanel"
             :id="`gongfa-cat-panel-${gongfaCat}`"
