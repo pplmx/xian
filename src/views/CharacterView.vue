@@ -1,12 +1,34 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!-- 基本信息:道号、境界、年龄、世数皆在全局顶栏常驻,此处不再重复 -->
-    <div class="card-ink px-4 py-4">
-      <div data-value-row class="flex items-center justify-between">
-        <span class="text-[10px] tracking-[0.3em] text-ink-faint">战 力</span>
+    <!--
+      道躯总览 —— 战力是这一页唯一「一个数概括全部」的读数,故它是主角字;
+      但它由攻/防/血三项按权重折成,只报那个数等于让人背结论。
+      于是把三项按权重摊在同一行,读数与「这数怎么来的」同框而不同级。
+    -->
+    <div class="card-ink px-4 py-3">
+      <div class="flex items-baseline justify-between">
+        <span class="font-kai text-[14px] tracking-[0.2em] text-ink">道 躯</span>
+        <span class="text-[11px] text-ink-faint">攻 · 防 · 血 按权重折算</span>
+      </div>
+      <div data-value-row class="mt-2 flex items-baseline justify-between">
+        <span class="text-[11px] tracking-[0.3em] text-ink-faint">战 力</span>
         <span class="font-kai text-[18px] text-cinnabar tabular">
           <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
         </span>
+      </div>
+      <!--
+        构成占比:三围的**原始值**归下面「道躯」那一节(那里可点开源流),
+        这里只回答「这个战力数由谁撑起来」—— 占比 = 该项加权后 ÷ 战力合计。
+        两处数字职责不同,不重抄同一批读数。
+      -->
+      <div class="mt-1.5 grid grid-cols-3 gap-2 text-center">
+        <p v-for="row in powerDetailRows" :key="row.label">
+          <span class="block text-[10px] text-ink-faint">{{ row.label }}</span>
+          <span class="block font-kai text-[15px] text-ink tabular">{{
+            formatPercent(row.share, 0)
+          }}</span>
+          <span class="block text-[10px] text-ink-faint tabular">×{{ row.weightText }}</span>
+        </p>
       </div>
       <div class="ink-divider-mark my-3" />
       <!-- 灵根 -->
@@ -16,8 +38,8 @@
         改成一整行可换行:挤不下时让 ×倍率 落到下一行,而不是把名字压扁。
       -->
       <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span class="shrink-0 font-kai text-[12px] tracking-widest text-ink-faint">灵根</span>
-        <span class="shrink-0 whitespace-nowrap font-kai text-[13px] text-cinnabar">{{
+        <span class="shrink-0 font-kai text-[11px] tracking-widest text-ink-faint">灵根</span>
+        <span class="shrink-0 whitespace-nowrap font-kai text-[14px] text-cinnabar">{{
           player.linggen?.gradeName
         }}</span>
         <div class="flex shrink-0 gap-1.5">
@@ -38,7 +60,7 @@
             </span>
             <!-- 资质直接亮在圆环下,不再只藏 hover —— 手机上看得到才谈得上权衡 -->
             <span
-              class="mt-0.5 text-[9px] leading-none tabular"
+              class="mt-0.5 text-[10px] leading-none tabular"
               :style="{ color: ELEMENTS[root.element].color }"
             >
               {{ root.aptitude }}
@@ -99,22 +121,22 @@
           >
             <span class="text-ink-faint">
               {{ row.label }}
-              <span v-if="row.capped" class="ml-0.5 text-[9px] text-cinnabar">软</span>
+              <span v-if="row.capped" class="ml-0.5 text-[10px] text-cinnabar">软</span>
             </span>
             <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
               {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
             </span>
           </button>
         </div>
-        <p v-if="modRows.length" class="mt-1 text-[9px] text-ink-faint">点一行看它从哪来</p>
+        <p v-if="modRows.length" class="mt-1 text-[10px] text-ink-faint">点一行看它从哪来</p>
         <!--
           进阶成功率的名字容易过度承诺:它只进小进阶那一次掷点,大关走天劫推演。
           有这一项时才提示 —— 没有这项的玩家不需要知道这个边界。
         -->
-        <p v-if="hasAdvanceRate" class="mt-0.5 text-[9px] leading-relaxed text-ink-faint">
+        <p v-if="hasAdvanceRate" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
           进阶成功率只作用于小进阶;大关须渡天劫,看的是劫型与四维准备度(护持/恢复/抗性/爆发)。
         </p>
-        <p v-if="hasShieldMods" class="mt-0.5 text-[9px] leading-relaxed text-ink-faint">
+        <p v-if="hasShieldMods" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
           护盾至多覆盖最大气血的 {{ formatPercent(SHIELD_CAP_RATIO, 0) }} ——
           盾系堆得再多也顶不破这道上限。
         </p>
@@ -127,16 +149,16 @@
           >
             <span class="text-ink-faint">
               {{ c.name }}
-              <span v-if="c.onTop" class="ml-1 text-[9px] text-cinnabar">另乘</span>
+              <span v-if="c.onTop" class="ml-1 text-[10px] text-cinnabar">另乘</span>
             </span>
             <span class="tabular" :class="c.value > 0 ? 'text-qing' : 'text-cinnabar'">
               {{ c.value > 0 ? "+" : "" }}{{ formatPercent(c.value) }}
             </span>
           </p>
-          <p class="mt-1 text-[9px] leading-relaxed text-ink-faint">
+          <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
             明细之和就是上面那个数;标「另乘」的不并入百分比,而是单独乘在攻防血上。
           </p>
-          <p v-if="diminishNote" class="mt-0.5 text-[9px] leading-relaxed text-cinnabar">
+          <p v-if="diminishNote" class="mt-0.5 text-[10px] leading-relaxed text-cinnabar">
             {{ diminishNote }}
           </p>
         </div>
@@ -151,7 +173,7 @@
     <!-- 各处入口 —— 按「道途 / 缘法 / 记录」分节,每张卡带一枚题头图标,免成一列同形的卡 -->
     <section>
       <SectionTitle title="道途" hint="流派" />
-      <div class="mt-2 space-y-4">
+      <div class="mt-2 space-y-2">
         <RouterLink to="/build" class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99">
           <GameIcon name="swords" :size="16" class="shrink-0 text-cinnabar" />
           <span class="min-w-0 grow">
@@ -202,7 +224,7 @@
     <!-- 缘法:这一世遇见的人 -->
     <section>
       <SectionTitle title="缘法" hint="师承道侣" />
-      <div class="mt-2 space-y-4">
+      <div class="mt-2 space-y-2">
         <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
         <button
           class="card-ink flex w-full items-center gap-3 px-4 py-3 text-left active:scale-99"
@@ -237,7 +259,7 @@
             <span class="block truncate text-[10px] text-ink-faint">
               <span
                 v-if="hasBondWord"
-                class="chip-ink mr-1 align-middle border-qing/50 text-[9px] text-qing"
+                class="chip-ink mr-1 align-middle border-qing/50 text-[10px] text-qing"
                 >有话说</span
               >
               {{
@@ -257,7 +279,7 @@
     <!-- 记录:走过什么、这条路从哪来 -->
     <section>
       <SectionTitle title="记录" hint="藏珍" />
-      <div class="mt-2 space-y-4">
+      <div class="mt-2 space-y-2">
         <RouterLink
           to="/collection"
           class="card-ink flex items-center gap-3 px-4 py-3 active:scale-99"
@@ -298,7 +320,7 @@
             <span class="block text-[10px] text-ink-faint tabular">
               <span
                 v-if="divinationOn"
-                class="chip-ink mr-1 border-cinnabar/50 text-[9px] text-cinnabar"
+                class="chip-ink mr-1 border-cinnabar/50 text-[10px] text-cinnabar"
                 >卦在身</span
               >
               {{ cnNumber(WORLDS.length) }}界{{ cnNumber(REALMS.length) }}境的来路与典籍 · 术数四门
@@ -315,7 +337,7 @@
           <span class="min-w-0 grow">
             <span class="block font-kai text-[14px] tracking-[0.25em] text-ink">轮 回</span>
             <span class="block text-[10px] text-ink-faint tabular">
-              <span class="chip-ink mr-1 border-violet-ink/50 text-[9px] text-violet-ink"
+              <span class="chip-ink mr-1 border-violet-ink/50 text-[10px] text-violet-ink"
                 >永久积累</span
               >
               道果 {{ formatNum(player.reincarnation.daoFruit) }} · 天赋 {{ ownedTalents.length }}
@@ -334,7 +356,7 @@
       @close="identityOpen = false"
     >
       <div v-if="identity" class="space-y-2.5">
-        <p class="text-[12px] leading-relaxed text-ink-soft">{{ identity.narrative }}</p>
+        <p class="text-[11px] leading-relaxed text-ink-soft">{{ identity.narrative }}</p>
         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
           <p class="flex justify-between">
             <span class="text-ink-faint">师承</span
@@ -367,7 +389,7 @@
 
     <!-- 轮回弹窗 -->
     <BaseModal :open="rebirthOpen" title="轮回" @close="rebirthOpen = false">
-      <p class="flex justify-between text-[12px]">
+      <p class="flex justify-between text-[11px]">
         <span class="text-ink-soft">
           道果
           <span class="ml-1 text-[10px] text-violet-ink">【永久积累】</span>
@@ -389,7 +411,7 @@
         {{ fruitInfo.total > 0 ? `当前修行 ${fruitInfo.cultBonusText}` : "" }}
       </p>
       <!-- 逆旅契:道果的第一个消费出口。花道果换一世逆境,回报只有履历 -->
-      <p class="mt-2 flex items-center justify-between text-[12px]">
+      <p class="mt-2 flex items-center justify-between text-[11px]">
         <span class="text-ink-soft">
           逆旅契
           <span class="ml-1 text-[10px] text-violet-ink">【本世 · 消耗道果】</span>
@@ -404,7 +426,7 @@
         <!-- 拇指够得着:纯文字按钮只有 18px 高,补成 30px(弹窗里的可点元素同样受 28px 那条约束) -->
         <button
           v-if="!signedTrial"
-          class="shrink-0 self-center -my-1.5 px-2 py-1.5 text-[12px] text-gold-ink underline underline-offset-2 active:text-cinnabar"
+          class="shrink-0 self-center -my-1.5 px-2 py-1.5 text-[11px] text-gold-ink underline underline-offset-2 active:text-cinnabar"
           @click="trialOpen = true"
         >
           立契
@@ -483,7 +505,7 @@
         </div>
       </div>
       <template #footer>
-        <button class="btn-ghost w-full !text-[12px]" :disabled="!canRebirth" @click="rebirth">
+        <button class="btn-ghost w-full !text-[11px]" :disabled="!canRebirth" @click="rebirth">
           {{
             canRebirth
               ? "兵解转世"
@@ -514,10 +536,10 @@
               已签过整组都灰,报「此生已签」(此时再报尚差会指错方向);
               道果不足照「尚差 N」报差数(与聚气丹/建筑同款纪律),不稳灰到底。
             -->
-            <span v-if="signedTrial" class="shrink-0 tabular text-[12px] text-ink-faint"
+            <span v-if="signedTrial" class="shrink-0 tabular text-[11px] text-ink-faint"
               >此生已签</span
             >
-            <span v-else class="shrink-0 tabular text-[12px] text-cinnabar">
+            <span v-else class="shrink-0 tabular text-[11px] text-cinnabar">
               {{
                 player.reincarnation.daoFruit >= t.cost
                   ? `${t.cost} 道果`
@@ -575,7 +597,7 @@
         <!-- 她自己提出的事(Phase 34.1):不是世界安排的事件,是她开的口 -->
         <template v-if="herIntent">
           <div class="mt-4 border-t border-ink/10 pt-3">
-            <p class="text-[12px] leading-relaxed text-gold-ink">{{ herIntent.line }}</p>
+            <p class="text-[11px] leading-relaxed text-gold-ink">{{ herIntent.line }}</p>
             <p class="mt-1 text-[10px] text-ink-faint">她所求:{{ herIntent.wish }}</p>
             <!-- 意图由经历催生,不是凭空的:把「因何而起」摆出来 -->
             <p v-if="herIntentSparks" class="text-[10px] text-ink-faint">
@@ -585,7 +607,7 @@
               <button
                 v-for="r in INTENT_CHOICES"
                 :key="r.id"
-                class="card-ink grow px-2 py-2 text-center text-[12px] text-ink-soft active:scale-99"
+                class="card-ink grow px-2 py-2 text-center text-[11px] text-ink-soft active:scale-99"
                 @click="answerIntent(r.id)"
               >
                 {{ r.label }}
@@ -597,7 +619,7 @@
         <!-- 共同事件:她的诉求与底线在此第一次被玩家看见并回应 -->
         <template v-if="pendingEvent && !bond.fallen && !bond.departed">
           <div class="mt-4 border-t border-ink/10 pt-3">
-            <p class="font-kai text-[13px] tracking-widest text-ink">{{ pendingEvent.title }}</p>
+            <p class="font-kai text-[14px] tracking-widest text-ink">{{ pendingEvent.title }}</p>
             <p class="text-[10px] text-ink-faint">因何而来:{{ pendingEventTriggers }}</p>
             <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">{{ pendingEvent.text }}</p>
             <p class="mt-1.5 text-[11px] text-qing">{{ pendingEvent.herWish }}</p>
@@ -607,7 +629,7 @@
               <button
                 v-for="ch in pendingEvent.choices"
                 :key="ch.id"
-                class="card-ink w-full px-3 py-2 text-left text-[12px] text-ink-soft active:scale-99"
+                class="card-ink w-full px-3 py-2 text-left text-[11px] text-ink-soft active:scale-99"
                 :class="{
                   '!border-cinnabar/50 text-cinnabar': ch.peril,
                   '!border-gold-ink/40': ch.risky && !ch.peril,
@@ -627,12 +649,12 @@
           {{ lastEventText }}
         </p>
       </template>
-      <p v-else class="text-[12px] leading-relaxed text-ink-faint">
+      <p v-else class="text-[11px] leading-relaxed text-ink-faint">
         此生尚未遇见谁。人是在路上碰到的,不是挑出来的 —— 多走几处地界,或许自有相逢。
       </p>
 
       <template v-if="pastBonds.length">
-        <p class="mt-4 font-kai text-[13px] tracking-widest text-ink-soft">历世同行</p>
+        <p class="mt-4 font-kai text-[14px] tracking-widest text-ink-soft">历世同行</p>
         <div class="scroll-pane mt-2 max-h-40 space-y-1.5 overflow-y-auto">
           <p v-for="(r, i) in pastBonds" :key="i" class="flex justify-between text-[11px]">
             <span class="text-ink-soft">{{ r.name }}</span>
@@ -653,7 +675,7 @@
     >
       <div v-if="mentorVer" class="space-y-3">
         <p class="font-kai text-[14px] text-ink">{{ mentorVer.mentor?.master }}</p>
-        <p class="text-[12px] leading-relaxed text-ink-soft">「{{ mentorVer.line }}」</p>
+        <p class="text-[11px] leading-relaxed text-ink-soft">「{{ mentorVer.line }}」</p>
         <p class="text-[11px] text-ink-faint tabular">
           契合度
           <span
@@ -673,7 +695,7 @@
         </p>
       </div>
       <div v-else class="space-y-2.5">
-        <p class="text-[12px] leading-relaxed text-ink-faint">
+        <p class="text-[11px] leading-relaxed text-ink-faint">
           师承是凡界修行者给你的"额外成长思想"。拜入师门,获一条方向性词条;行为与师承相合,师尊自有嘉许,不设惩罚。
         </p>
         <button
@@ -688,7 +710,7 @@
             <span class="text-[11px] text-qing">{{ m!.title }}</span>
             <span
               v-if="hintMentor === m!.id"
-              class="chip-ink ml-1 border-cinnabar/50 text-[9px] text-cinnabar"
+              class="chip-ink ml-1 border-cinnabar/50 text-[10px] text-cinnabar"
               >机缘引荐</span
             >
             <span class="ml-auto text-[10px] text-ink-faint">{{ m!.master }}</span>
@@ -755,6 +777,7 @@ import { mentorHint } from "@/core/fortuneChain";
 import { buildIdentity } from "@/core/identityService";
 import { rootElements, tendencyLines } from "@/core/linggenAffinity";
 import { cnNumber, formatNum, formatPercent } from "@/utils/format";
+import { add, gn, mulN, ratio } from "@/utils/gnum";
 import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
 import { STAT_NAMES, modsText } from "@/ui/statNames";
@@ -777,15 +800,30 @@ const loadouts = useLoadoutsStore();
 const stats = computed(() => player.finalStats);
 /** 战力详情:三围各一行,并标明它们在战力里的权重 —— 战力是加权和(见 powerScore),
  *  拆开才知道涨在哪一项、哪项根本不顶事(×0.15 的气血再高也拉不动战力)。 */
-const powerDetailRows = computed(() => [
-  { label: "攻击", value: player.finalStats.attack, hint: `按 ×${POWER_WEIGHTS.attack} 计入战力` },
-  {
-    label: "防御",
-    value: player.finalStats.defense,
-    hint: `按 ×${POWER_WEIGHTS.defense} 计入战力`,
-  },
-  { label: "气血", value: player.finalStats.maxHp, hint: `按 ×${POWER_WEIGHTS.maxHp} 计入战力` },
-]);
+/**
+ * 战力的三项构成 —— 值取最终属性,权重读 POWER_WEIGHTS 本体。
+ *
+ * share = 该项加权后占战力的比例。加权与 powerScore 同走 mulN,
+ * 故三份占比之和恒为 1(不用另写一份「战力」算法,也就不会与面板打架)。
+ * weightText 供三围那一格直接印出「×3」这类系数:系数若手抄,
+ * 调平引擎权重时界面就成了唯一不跟的那处。
+ */
+const powerDetailRows = computed(() => {
+  const weighted = [
+    { label: "攻击", value: player.finalStats.attack, w: POWER_WEIGHTS.attack },
+    { label: "防御", value: player.finalStats.defense, w: POWER_WEIGHTS.defense },
+    { label: "气血", value: player.finalStats.maxHp, w: POWER_WEIGHTS.maxHp },
+  ].map((r) => ({ ...r, part: mulN(r.value, r.w) }));
+  const total = weighted.reduce((acc, r) => add(acc, r.part), gn(0));
+  return weighted.map((r) => ({
+    label: r.label,
+    value: r.value,
+    weightText: `${r.w}`,
+    // ratio 自带零分母与指数差钳制,不必在这里另判一遍
+    share: ratio(r.part, total),
+    hint: `按 ×${r.w} 计入战力`,
+  }));
+});
 
 /** 灵根的天然牌面(倾向文案,不含任何数值) */
 const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roots)));

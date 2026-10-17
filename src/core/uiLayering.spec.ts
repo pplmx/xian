@@ -1293,7 +1293,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const home = FILES.find((f) => f.path === "views/HomeView.vue");
     const row = home?.src.match(/mt-3 flex flex-wrap items-center[\s\S]{0,400}/)?.[0] ?? "";
     expect(row).toContain("flex flex-wrap");
-    expect(row).toContain("shrink-0 whitespace-nowrap font-kai text-[12px] tracking-widest");
+    // 只钉「不折」这件事(whitespace-nowrap + shrink-0 + 楷体),字号不进判据 ——
+    // 字阶归「主巡页 · 字阶同一套」管,一条判据只管一件事,改字号不该打红布局判据。
+    expect(row).toMatch(/shrink-0 whitespace-nowrap font-kai text-\[\d+px\] tracking-widest/);
     expect(row).toContain("countdown-slot");
   });
 
@@ -2066,5 +2068,54 @@ describe("修炼页 · 字号收六档", () => {
   it("判据自证:认得出越档的坏样本", () => {
     const bad = usedSizes('<p class="text-[13px]">x</p><p class="text-[9px]">y</p>');
     expect(bad.filter((n) => ![30, 16, 15, 14, 11, 10].includes(n))).toEqual([13, 9]);
+  });
+});
+
+describe("主巡页 · 字阶同一套", () => {
+  /*
+   * 修炼页定下的字阶不该只在它自己身上成立 —— 人物页与它是同一档信息密度
+   * (卡名 + 读数 + 明细 + 脚注),却曾各自长着 9/12/13 三个私档:
+   * 12 与 13 并排时读者分不出主次,9px 在手机上已低于可读下限。
+   *
+   * 故把「页面级字阶」立成全库判据:主巡页只许用 18/15/14/11/10
+   * (修炼页另有 30 的匾额与 16 的庆功字,它是特例,单列在上面那条)。
+   * 新页面进场时要么沿用这套,要么在这条判据里明写它为何是特例。
+   */
+  const SIZES = /text-\[(\d+)px\]/g;
+  const PAGE_TIERS = [18, 15, 14, 11, 10];
+  const pages = [
+    "views/CharacterView.vue",
+    "views/CultivationView.vue",
+    "views/HomeView.vue",
+    "views/DongfuView.vue",
+  ];
+
+  for (const path of pages) {
+    it(`${path} 不冒出页面字阶以外的私档`, () => {
+      const view = FILES.find((f) => f.path === path);
+      const src = view?.src ?? "";
+      /*
+       * 两处特例都是「不是文本字号」的那一类,故不进字阶、各写各的理由:
+       *  · 修炼页 30 是匾额、16 是庆功字 —— 它是这一作的字阶上端;
+       *  · 首页 17 是 ☯ 与印面里的那枚字符(当图标用,度量的是字面框不是行文)。
+       */
+      const allow =
+        path === "views/CultivationView.vue"
+          ? [...PAGE_TIERS, 30, 16]
+          : path === "views/HomeView.vue"
+            ? [...PAGE_TIERS, 17]
+            : PAGE_TIERS;
+      const off = [...new Set([...src.matchAll(SIZES)].map((m) => Number(m[1] ?? 0)))].filter(
+        (n) => !allow.includes(n),
+      );
+      expect(off, `${path} 冒出了页面字阶以外的字号:${off.join(", ")}`).toEqual([]);
+      // 防空转:这页真在写字号,不是被整页清空换了一张绿
+      expect([...src.matchAll(SIZES)].length).toBeGreaterThanOrEqual(5);
+    });
+  }
+
+  it("判据自证:人物页曾有的 9 / 12 / 13 会被拦下", () => {
+    const bad = [9, 12, 13, 18];
+    expect(bad.filter((n) => !PAGE_TIERS.includes(n))).toEqual([9, 12, 13]);
   });
 });

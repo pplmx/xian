@@ -45,7 +45,7 @@
           <div class="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
             <GameIcon name="sparkles" :size="13" class="shrink-0 text-gold-ink" />
             <span
-              class="shrink-0 whitespace-nowrap font-kai text-[12px] tracking-widest text-ink"
+              class="shrink-0 whitespace-nowrap font-kai text-[11px] tracking-widest text-ink"
               >{{ weather.name }}</span
             >
             <span class="countdown-slot ml-1 shrink-0 text-[10px] text-ink-faint tabular">{{
@@ -90,7 +90,7 @@
     >
       <GameIcon name="footprints" :size="14" class="shrink-0 text-cinnabar" />
       <span class="min-w-0 flex-1">
-        <span class="block font-kai text-[13px] tracking-wider text-ink">{{ firstStep.text }}</span>
+        <span class="block font-kai text-[14px] tracking-wider text-ink">{{ firstStep.text }}</span>
         <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{
           firstStep.hint
         }}</span>
@@ -109,7 +109,7 @@
       <GameIcon name="scroll" :size="14" class="shrink-0 text-jade" />
       <div class="min-w-0 flex-1">
         <p class="flex items-baseline justify-between gap-2">
-          <span class="font-kai text-[13px] tracking-wider text-ink">{{ currentGoal.text }}</span>
+          <span class="font-kai text-[14px] tracking-wider text-ink">{{ currentGoal.text }}</span>
           <span
             v-if="currentGoal.progress !== undefined"
             class="shrink-0 text-[10px] text-ink-faint tabular"
@@ -126,7 +126,7 @@
       <GameIcon name="scroll" :size="14" class="shrink-0 text-jade" />
       <div class="min-w-0 flex-1">
         <p class="flex items-baseline justify-between gap-2">
-          <span class="font-kai text-[13px] tracking-wider text-ink">{{ currentGoal.text }}</span>
+          <span class="font-kai text-[14px] tracking-wider text-ink">{{ currentGoal.text }}</span>
           <span
             v-if="currentGoal.progress !== undefined"
             class="shrink-0 text-[10px] text-ink-faint tabular"
@@ -162,7 +162,7 @@
           <span class="font-kai text-[14px] tracking-[0.25em] text-ink">天界已开</span>
           <span
             v-if="dailyPending"
-            class="chip-ink shrink-0 border-cinnabar/50 text-[9px] text-cinnabar"
+            class="chip-ink shrink-0 border-cinnabar/50 text-[10px] text-cinnabar"
             >今日天道未做</span
           >
         </span>
@@ -181,7 +181,7 @@
       <div class="card-ink mt-2 px-4 py-3">
         <template v-if="mainQuest">
           <p class="flex items-center justify-between">
-            <span class="font-kai text-[13px] tracking-wider text-ink">{{ mainQuest.name }}</span>
+            <span class="font-kai text-[14px] tracking-wider text-ink">{{ mainQuest.name }}</span>
             <span class="text-[10px] text-ink-faint"
               >主线 {{ quests.mainIdx + 1 }}/{{ MAIN_QUESTS.length }}</span
             >
@@ -214,13 +214,13 @@
             />
           </p>
         </template>
-        <p v-else class="text-[12px] text-ink-faint">主线已尽,前路由你自己书写。</p>
+        <p v-else class="text-[11px] text-ink-faint">主线已尽,前路由你自己书写。</p>
         <div class="ink-divider-mark my-2.5" />
         <div class="space-y-1.5">
           <p
             v-for="t in dailyRows"
             :key="t.id"
-            class="flex items-center justify-between gap-2 text-[12px]"
+            class="flex items-center justify-between gap-2 text-[11px]"
           >
             <span class="min-w-0">
               <span :class="t.done ? 'text-ink-faint line-through' : 'text-ink-soft'">{{
@@ -272,7 +272,7 @@
           >已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }}</span
         >
       </span>
-      <span class="shrink-0 text-[12px] text-ink-faint">›</span>
+      <span class="shrink-0 text-[11px] text-ink-faint">›</span>
     </RouterLink>
 
     <!-- 灵脉投资:金丹后开放,紧随洞府营造 -->
@@ -287,7 +287,7 @@
           >引灵脉入洞府,择一主脉而修</span
         >
       </span>
-      <span class="shrink-0 text-[12px] text-ink-faint">›</span>
+      <span class="shrink-0 text-[11px] text-ink-faint">›</span>
     </button>
 
     <!-- 灵脉弹窗:组件自带标题卡,故不画标题;但对话框自己仍要有可访问名 -->
