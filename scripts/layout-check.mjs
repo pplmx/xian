@@ -3592,8 +3592,8 @@ async function taskDecompose() {
     /** 背包页顶上那栏「器灵尘 N」 */
     const dustCount = () =>
       page.evaluate(() => {
-        const m = /器灵尘\s*(\d+)/.exec(document.querySelector("main")?.innerText || "");
-        return m ? Number(m[1]) : null;
+        const m = /器灵尘\s*([\d,]+)/.exec(document.querySelector("main")?.innerText || "");
+        return m ? Number(m[1].replace(/,/g, "")) : null;
       });
     const toasts = () =>
       page.evaluate(() =>
@@ -4436,8 +4436,8 @@ async function taskInventoryAccounting() {
     /** 背包页顶上那栏「器灵尘 N」 */
     const readDust = () =>
       page.evaluate(() => {
-        const m = /器灵尘\s*(\d+)/.exec(document.querySelector("main")?.innerText || "");
-        return m ? Number(m[1]) : null;
+        const m = /器灵尘\s*([\d,]+)/.exec(document.querySelector("main")?.innerText || "");
+        return m ? Number(m[1].replace(/,/g, "")) : null;
       });
     /**
      * 打开背包里那件(未装备、未锁定)——按 **uid** 找,不按名字找。

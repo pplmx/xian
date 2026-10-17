@@ -29,28 +29,40 @@
           </button>
         </p>
       </div>
-      <div class="mt-3 flex items-center justify-between px-1">
-        <span class="text-[11px] text-ink-faint tabular"
-          >行囊 {{ inventory.bagItems.length }} · 器灵尘 {{ resources.dust }}</span
-        >
-        <span class="flex gap-3">
-          <button
-            class="tap-row -my-1.5 py-1.5 text-[11px] text-qing active:opacity-60"
-            aria-label="智能收纳设置"
-            :aria-expanded="smartOpen"
-            @click="smartOpen = true"
-          >
-            收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
-          </button>
-          <button
-            class="tap-row -my-1.5 py-1.5 text-[11px] text-cinnabar active:opacity-60"
-            aria-label="批量分解装备"
-            :aria-expanded="decomposeOpen"
-            @click="decomposeOpen = true"
-          >
-            分解
-          </button>
+      <!--
+        行囊读数与两个动作此前挤在同一行:11px 的三个数 + 11px 的两个按钮,
+        320 宽下「行囊 30 · 器灵尘 123,456 收纳·启 分解」几乎要折。
+        读数归读数、动作归动作 —— 动作单独一行,并各带自己的语义色。
+      -->
+      <div class="mt-3 flex items-baseline justify-between px-1">
+        <span class="text-[11px] text-ink-faint tabular">行囊</span>
+        <!--
+          器灵尘走 formatExact 全量展开,不走 formatNum 的缩写 ——
+          它是要对账的钱(强化扣多少、分解给多少都按它算),
+          缩成「5千」就等于把账本藏起来一半。行囊数是小整数,照旧。
+        -->
+        <span class="text-[11px] text-ink-soft tabular">
+          {{ inventory.bagItems.length }}/{{ BAG_CAPACITY }} ·
+          <span class="text-ink-faint">器灵尘</span> {{ formatExact(resources.dust) }}
         </span>
+      </div>
+      <div class="mt-1.5 flex gap-2">
+        <button
+          class="chip-ink flex-1 !justify-center !py-1.5 text-[11px]"
+          aria-label="智能收纳设置"
+          :aria-expanded="smartOpen"
+          @click="smartOpen = true"
+        >
+          收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
+        </button>
+        <button
+          class="chip-ink flex-1 !justify-center !py-1.5 text-[11px]"
+          aria-label="批量分解装备"
+          :aria-expanded="decomposeOpen"
+          @click="decomposeOpen = true"
+        >
+          分解
+        </button>
       </div>
       <div class="mt-2 grid grid-cols-3 gap-2">
         <button
@@ -59,7 +71,11 @@
           class="card-ink flex flex-col items-center gap-1 px-2 py-2.5 active:scale-95"
           @click="pickerSlot = row.slot"
         >
-          <span class="text-[9px] text-ink-faint">
+          <!--
+            槽名是这一格的标题,不是脚注:9px 在手机上已低于可读下限,
+            与「还有几件候选」同处一行、后者淡一档,主次才分明。
+          -->
+          <span class="text-[10px] text-ink-faint tabular">
             {{ row.name }}
             <template v-if="row.stock">· {{ row.stock }}</template>
           </span>
@@ -93,7 +109,7 @@
         那一排 11px 小字里,两回都没人看得见(两次实测反馈)。故改成整行按钮,写明全称。
       -->
       <button
-        class="btn-ghost mt-2 w-full !py-2 !text-[12px]"
+        class="btn-ghost mt-2 w-full !py-2 !text-[11px]"
         aria-label="一键各部位换最强"
         @click="wearEquipBest"
       >
@@ -117,7 +133,7 @@
           />
         </div>
       </div>
-      <p v-else class="empty-note mt-8 text-center text-[12px] text-ink-faint">
+      <p v-else class="empty-note mt-8 text-center text-[11px] text-ink-faint">
         行囊空空,去历练中寻些机缘吧
       </p>
     </template>
@@ -143,7 +159,7 @@
             }}
           </span>
         </span>
-        <span class="shrink-0 text-[12px] text-ink-faint">›</span>
+        <span class="shrink-0 text-[11px] text-ink-faint">›</span>
       </button>
 
       <!-- 灵草坊(ISS-306):灵石购草 —— 草比石贵,想补哪一品,明码标价(极贵) -->
@@ -156,13 +172,13 @@
           >坊</span
         >
         <span class="min-w-0 flex-1">
-          <span class="block font-kai text-[13px] tracking-widest text-ink">灵草坊</span>
+          <span class="block font-kai text-[14px] tracking-widest text-ink">灵草坊</span>
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
             灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,道品
             {{ formatGN(herbBuyPrice(5)) }} 灵石一株
           </span>
         </span>
-        <span class="shrink-0 text-[12px] text-ink-faint">买 ›</span>
+        <span class="shrink-0 text-[11px] text-ink-faint">买 ›</span>
       </button>
 
       <!-- 丹匣:格子只给图标与名号,详情看弹窗 -->
@@ -184,18 +200,18 @@
               :style="{ color: qualityDef(row.def!.quality).color }"
             />
             <span
-              class="w-full truncate text-center text-[9px] leading-tight"
+              class="w-full truncate text-center text-[10px] leading-tight"
               :style="{ color: qualityDef(row.def!.quality).color }"
             >
               {{ row.def!.name }}
             </span>
           </span>
-          <span class="absolute bottom-0.5 right-1 text-[9px] leading-none text-ink-soft tabular"
+          <span class="absolute bottom-0.5 right-1 text-[10px] leading-none text-ink-soft tabular"
             >×{{ row.count }}</span
           >
         </button>
       </div>
-      <p v-else class="empty-note mt-10 text-center text-[12px] text-ink-faint">
+      <p v-else class="empty-note mt-10 text-center text-[11px] text-ink-faint">
         丹匣空空,去藏经阁参悟丹方,或去坊市收购几株灵草
       </p>
     </template>
@@ -211,11 +227,11 @@
         >
           <span class="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1">
             <GameIcon :name="m.icon" :size="20" :class="m.color" />
-            <span class="w-full truncate text-center text-[9px] leading-tight text-ink-soft">{{
+            <span class="w-full truncate text-center text-[10px] leading-tight text-ink-soft">{{
               m.name
             }}</span>
           </span>
-          <span class="absolute bottom-0.5 right-1 text-[9px] leading-none text-ink-soft tabular">{{
+          <span class="absolute bottom-0.5 right-1 text-[10px] leading-none text-ink-soft tabular">{{
             m.display
           }}</span>
         </button>
@@ -282,7 +298,7 @@
           </p>
           <div class="mt-2.5 flex gap-2">
             <button
-              class="btn-seal flex-1 !py-1.5 !text-[12px]"
+              class="btn-seal flex-1 !py-1.5 !text-[11px]"
               :class="{ '!bg-ink-faint': row.equipped }"
               @click="toggleArtifact(row.def.id)"
             >
@@ -290,7 +306,7 @@
             </button>
             <button
               v-if="row.upCost"
-              class="btn-ghost flex-1 !py-1.5 !text-[12px] tabular"
+              class="btn-ghost flex-1 !py-1.5 !text-[11px] tabular"
               :disabled="!row.upAffordable"
               @click="upgradeArtifact(row.def.id)"
             >
@@ -311,7 +327,7 @@
           </p>
         </div>
       </div>
-      <p v-else class="empty-note mt-16 text-center text-[12px] text-ink-faint">
+      <p v-else class="empty-note mt-16 text-center text-[11px] text-ink-faint">
         尚无法宝随身
         <br />
         <span class="text-[11px]">法宝多出自际遇与强敌之手</span>
@@ -345,9 +361,9 @@
             <p class="text-[11px] text-ink-faint tabular">持有 ×{{ currentPill.count }}</p>
           </div>
         </div>
-        <p class="mt-3 text-[12px] leading-relaxed text-ink-soft">{{ currentPill.def.desc }}</p>
+        <p class="mt-3 text-[11px] leading-relaxed text-ink-soft">{{ currentPill.def.desc }}</p>
         <!-- 效果与来路:丹药卡片此前只有风味与数量,服下去会怎样一个字都没说 -->
-        <p class="mt-2 whitespace-pre-line text-[12px] leading-relaxed text-qing">
+        <p class="mt-2 whitespace-pre-line text-[11px] leading-relaxed text-qing">
           {{ pillFuncText(currentPill.def) }}
         </p>
         <p v-if="pillMasteryText(currentPill.def.id)" class="mt-1 text-[11px] text-ink-faint">
@@ -422,7 +438,7 @@
             </span>
           </div>
         </template>
-        <p class="mt-3 text-[12px] leading-relaxed text-ink-soft">{{ currentMaterial.desc }}</p>
+        <p class="mt-3 text-[11px] leading-relaxed text-ink-soft">{{ currentMaterial.desc }}</p>
       </template>
       <template #footer>
         <button class="btn-seal w-full" @click="materialDetail = null">收 起</button>
@@ -444,11 +460,11 @@
           class="flex items-center gap-2.5 rounded-md bg-paper-deep/70 px-3 py-2"
         >
           <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-[13px] text-paper"
+            class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-[14px] text-paper"
             >{{ row.grade }}</span
           >
           <div class="min-w-0 grow">
-            <p class="font-kai text-[13px] text-ink">{{ row.name }}</p>
+            <p class="font-kai text-[14px] text-ink">{{ row.name }}</p>
             <p class="text-[10px] text-ink-faint tabular">
               持有 {{ row.held }} · 单价 {{ formatGN(row.price) }} 灵石
             </p>
@@ -466,14 +482,14 @@
             </p>
           </div>
           <button
-            class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]"
+            class="btn-seal shrink-0 !px-3 !py-1.5 !text-[11px]"
             :disabled="!row.affordable"
             @click="buyOne(row.grade)"
           >
             买1
           </button>
           <button
-            class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]"
+            class="btn-seal shrink-0 !px-3 !py-1.5 !text-[11px]"
             :disabled="!row.affordable10"
             @click="buyTen(row.grade)"
           >
@@ -540,7 +556,7 @@
           v-model="recipeQuery"
           type="text"
           inputmode="search"
-          class="w-full rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[12px] text-ink outline-none placeholder:text-ink-faint"
+          class="w-full rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[11px] text-ink outline-none placeholder:text-ink-faint"
           placeholder="搜方名…"
         />
         <p
@@ -563,7 +579,7 @@
             />
             <div class="min-w-0 grow">
               <p class="flex items-center gap-2">
-                <span class="whitespace-nowrap font-kai text-[13px] text-ink">{{
+                <span class="whitespace-nowrap font-kai text-[14px] text-ink">{{
                   r.def.name
                 }}</span>
                 <span class="whitespace-nowrap text-[10px] text-ink-faint"
@@ -587,7 +603,7 @@
             </div>
             <div class="shrink-0 text-right">
               <p
-                class="tabular text-[13px]"
+                class="tabular text-[14px]"
                 :class="r.guaranteeLeft > 0 ? 'text-gold-ink' : rateClass(r.able.successRate)"
               >
                 {{ r.guaranteeLeft > 0 ? "必成" : formatPercent(r.able.successRate) }}
@@ -602,7 +618,7 @@
               <!-- 双成率也亮在炉前:骰子不藏 —— 与掷骰同一口径(alchemyBonusCapped,见行构造器) -->
               <p class="mt-0.5 tabular text-[10px] text-ink-soft">
                 {{ formatPercent(r.doubleRate)
-                }}<span class="ml-1 text-[9px] text-ink-faint">双成</span>
+                }}<span class="ml-1 text-[10px] text-ink-faint">双成</span>
               </p>
             </div>
           </div>
@@ -623,7 +639,7 @@
           </template>
           <div class="mt-2 flex justify-end gap-1.5">
             <button
-              class="btn-seal !px-3 !py-1.5 !text-[12px]"
+              class="btn-seal !px-3 !py-1.5 !text-[11px]"
               :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
               :disabled="r.shortHerb || r.shortStone"
               @click="craftPill(r.def.id)"
@@ -632,7 +648,7 @@
             </button>
             <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
             <button
-              class="btn-ghost !px-3 !py-1.5 !text-[12px]"
+              class="btn-ghost !px-3 !py-1.5 !text-[11px]"
               :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
               :disabled="r.shortHerb || r.shortStone"
               @click="craftBatch(r.def.id)"
@@ -671,7 +687,7 @@
                 :height="4"
                 class="flex-1"
               />
-              <span class="w-7 shrink-0 text-right text-[9px] tabular text-ink-faint">{{
+              <span class="w-7 shrink-0 text-right text-[10px] tabular text-ink-faint">{{
                 s.stage === "大成" ? "已顶" : formatPercent(s.progress, 0)
               }}</span>
             </p>
@@ -711,7 +727,7 @@
             @click="openDetail(row.item.uid)"
           >
             <span
-              class="block truncate font-kai text-[13px]"
+              class="block truncate font-kai text-[14px]"
               :style="{ color: qualityDef(row.item.quality).color }"
             >
               {{ row.template.name }}
@@ -750,7 +766,7 @@
           </button>
         </div>
       </div>
-      <p v-else class="py-8 text-center text-[12px] text-ink-faint">
+      <p v-else class="py-8 text-center text-[11px] text-ink-faint">
         此部位尚无藏品,去历练中寻些机缘吧
       </p>
       <p class="mt-2 text-center text-[10px] text-ink-faint">点名称可查看详情与对比</p>
@@ -782,7 +798,7 @@
             :checked="settings.decomposeRanks.includes(row.rank)"
             @change="toggleRank(row.rank)"
           />
-          <span class="font-kai text-[13px]" :style="{ color: row.color }">{{ row.name }}</span>
+          <span class="font-kai text-[14px]" :style="{ color: row.color }">{{ row.name }}</span>
           <span class="ml-auto tabular text-[11px] text-ink-faint">
             现存 {{ row.count }} 件
             <template v-if="row.count > 0">· {{ row.text }}</template>
@@ -809,7 +825,7 @@
         要扔得你自己动手(单件分解,或勾选该品质的一键分解)。
       </p>
       <label class="mt-2 flex items-center justify-between py-1.5">
-        <span class="text-[13px] text-ink-soft">启用智能收纳</span>
+        <span class="text-[14px] text-ink-soft">启用智能收纳</span>
         <input
           v-model="settings.smartKeep.enabled"
           type="checkbox"
@@ -822,7 +838,7 @@
       -->
       <div class="py-1.5">
         <div class="flex items-baseline justify-between">
-          <span class="text-[12px] text-ink-soft">此品质起一律保留</span>
+          <span class="text-[11px] text-ink-soft">此品质起一律保留</span>
           <span class="text-[10px] text-ink-faint">低于它才交给缘分裁决</span>
         </div>
         <!-- 选中的档位只靠 borderColor 表达,读屏需要显式的按压态(与 SettingsView 的 theme/battleSpeed 同一范式) -->
@@ -850,7 +866,7 @@
       -->
       <div class="py-1.5">
         <div class="flex items-baseline justify-between">
-          <span class="text-[12px] text-ink-soft">此阶以下一律回收</span>
+          <span class="text-[11px] text-ink-soft">此阶以下一律回收</span>
           <span
             class="text-[10px]"
             :class="settings.smartKeep.minTier > 0 ? 'text-cinnabar' : 'text-ink-faint'"
@@ -890,7 +906,7 @@
         但把它收回政策弹窗、并排在保留线之后 —— 线上的件永远不受它影响。
       -->
       <label class="flex items-center justify-between py-1.5">
-        <span class="text-[12px] text-ink-soft">
+        <span class="text-[11px] text-ink-soft">
           线下不看缘分,一律回收
           <span class="block text-[10px] text-ink-faint"
             >低于保留线的件不再由核心词条/套件救回</span
@@ -927,7 +943,7 @@
         </p>
       </div>
       <label class="flex items-center justify-between py-1.5">
-        <span class="text-[12px] text-ink-soft">保留主流派核心词条件</span>
+        <span class="text-[11px] text-ink-soft">保留主流派核心词条件</span>
         <input
           v-model="settings.smartKeep.keepCoreAffix"
           type="checkbox"
@@ -935,7 +951,7 @@
         />
       </label>
       <label class="flex items-center justify-between py-1.5">
-        <span class="text-[12px] text-ink-soft">保留组合技部件(副体系词条)</span>
+        <span class="text-[11px] text-ink-soft">保留组合技部件(副体系词条)</span>
         <input
           v-model="settings.smartKeep.keepComboPiece"
           type="checkbox"
@@ -943,7 +959,7 @@
         />
       </label>
       <label class="flex items-center justify-between py-1.5">
-        <span class="text-[12px] text-ink-soft">保留成套共鸣件(机制优先)</span>
+        <span class="text-[11px] text-ink-soft">保留成套共鸣件(机制优先)</span>
         <input
           v-model="settings.smartKeep.keepSetPiece"
           type="checkbox"
@@ -951,7 +967,7 @@
         />
       </label>
       <label class="flex items-center justify-between py-1.5">
-        <span class="text-[12px] text-ink-soft">保留词条近满件</span>
+        <span class="text-[11px] text-ink-soft">保留词条近满件</span>
         <input
           v-model="settings.smartKeep.keepPerfectRolls"
           type="checkbox"
@@ -961,7 +977,7 @@
       <template #footer>
         <!-- 一键清理二步确认:整包报废,按一下不该就此了结 -->
         <template v-if="!cleanConfirm">
-          <button class="btn-ghost w-full !text-[12px]" @click="cleanConfirm = true">
+          <button class="btn-ghost w-full !text-[11px]" @click="cleanConfirm = true">
             依此规则清理行囊(未锁定的无缘之物化尘)
           </button>
         </template>
@@ -971,10 +987,10 @@
             {{ batchYieldText(cleanPlanned) }}——此举不可逆,仍要清理?
           </p>
           <div class="flex gap-2">
-            <button class="btn-ghost flex-1 !text-[12px]" @click="cleanConfirm = false">
+            <button class="btn-ghost flex-1 !text-[11px]" @click="cleanConfirm = false">
               再想想
             </button>
-            <button class="btn-seal flex-1 !text-[12px]" @click="smartClean()">清理化尘</button>
+            <button class="btn-seal flex-1 !text-[11px]" @click="smartClean()">清理化尘</button>
           </div>
         </template>
       </template>
@@ -1058,6 +1074,7 @@ import {
   cnNumber,
   formatDuration,
   formatGN,
+  formatExact,
   formatNum,
   formatPercent,
   formatSignedPercent,

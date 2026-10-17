@@ -2088,6 +2088,7 @@ describe("主巡页 · 字阶同一套", () => {
     "views/CultivationView.vue",
     "views/HomeView.vue",
     "views/DongfuView.vue",
+    "views/InventoryView.vue",
   ];
 
   for (const path of pages) {
@@ -2095,16 +2096,20 @@ describe("主巡页 · 字阶同一套", () => {
       const view = FILES.find((f) => f.path === path);
       const src = view?.src ?? "";
       /*
-       * 两处特例都是「不是文本字号」的那一类,故不进字阶、各写各的理由:
+       * 三处特例都是「不是正文行文」的那一类,故不进字阶、各写各的理由:
        *  · 修炼页 30 是匾额、16 是庆功字 —— 它是这一作的字阶上端;
-       *  · 首页 17 是 ☯ 与印面里的那枚字符(当图标用,度量的是字面框不是行文)。
+       *  · 首页 17 是 ☯ 与印面里的那枚字符(当图标用,度量的是字面框不是行文);
+       *  · 背包页 19 是格子里那枚大字读数(材料/丹药的数量角标)。字号小一号
+       *    在 5 列格子里就只剩糊,它是唯一的例外,别的正文仍走 11。
        */
       const allow =
         path === "views/CultivationView.vue"
           ? [...PAGE_TIERS, 30, 16]
           : path === "views/HomeView.vue"
             ? [...PAGE_TIERS, 17]
-            : PAGE_TIERS;
+            : path === "views/InventoryView.vue"
+              ? [...PAGE_TIERS, 19]
+              : PAGE_TIERS;
       const off = [...new Set([...src.matchAll(SIZES)].map((m) => Number(m[1] ?? 0)))].filter(
         (n) => !allow.includes(n),
       );
