@@ -58,7 +58,7 @@ vp preview        # 预览构建结果
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 346 个 spec / 3413 例;本作自己那部分 266 个 / 2818 例) |
+| `bun run test` | 全量用例(全量 346 个 spec / 3416 例;本作自己那部分 266 个 / 2821 例) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -82,7 +82,7 @@ vp preview        # 预览构建结果
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 346 个 spec / 3413 例(本作自己那部分 266 个 / 2818 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红;例数由 `test:report` 对照本次运行实录核对,加删用例忘了改文档也会红 |
+| 用例 | 全量 346 个 spec / 3416 例(本作自己那部分 266 个 / 2821 例),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红;例数由 `test:report` 对照本次运行实录核对,加删用例忘了改文档也会红 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |

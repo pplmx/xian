@@ -16,13 +16,13 @@
         </span>
       </p>
 
-      <p class="mt-2.5 text-[12px] leading-relaxed text-ink-faint">{{ def.desc }}</p>
+      <p class="mt-2.5 text-[11px] leading-relaxed text-ink-faint">{{ def.desc }}</p>
 
       <div class="ink-divider my-3" />
 
       <p class="mb-1.5 text-[11px] tracking-widest text-ink-faint">效果</p>
       <div class="space-y-1">
-        <p v-for="row in modRows" :key="row.key" class="flex justify-between text-[13px]">
+        <p v-for="row in modRows" :key="row.key" class="flex justify-between text-[11px]">
           <span class="text-ink-soft">{{ row.label }}</span>
           <span class="tabular" :class="row.good ? 'text-jade' : 'text-cinnabar'">{{
             row.text
@@ -39,7 +39,7 @@
         现效合计 · 所有状态同刻在效
       </p>
       <div v-if="stackRows.length" class="space-y-1">
-        <p v-for="r in stackRows" :key="r.key" class="flex justify-between text-[12px]">
+        <p v-for="r in stackRows" :key="r.key" class="flex justify-between text-[11px]">
           <span class="text-ink-soft">{{ r.label }}</span>
           <span class="tabular" :class="r.total < 0 ? 'text-cinnabar' : 'text-jade'">{{
             formatPercent(r.total)
@@ -49,7 +49,7 @@
 
       <div class="ink-divider my-3" />
 
-      <p class="flex justify-between text-[13px]">
+      <p class="flex justify-between text-[11px]">
         <span class="text-ink-soft">剩余</span>
         <!-- 剩余每秒在走:定宽(见 utils/format.formatCountdown),否则这一行的数字一直在跳 -->
         <span class="countdown-slot tabular">{{ formatCountdown(remainSec) }}</span>
@@ -61,11 +61,11 @@
         (这里数的是**服用颗数**;与主屏状态胶囊的「×N 叠加份数」是两件事——
         主屏数的是同刻共享词条的状态有几种,不是这一味药你吃了几颗。)
       -->
-      <p v-if="stackCount > 1" class="mt-1 flex justify-between text-[13px]">
+      <p v-if="stackCount > 1" class="mt-1 flex justify-between text-[11px]">
         <span class="text-ink-soft">已服</span>
         <span class="tabular text-ink-faint">{{ stackCount }} 颗</span>
       </p>
-      <p class="mt-1 flex justify-between text-[13px]">
+      <p class="mt-1 flex justify-between text-[11px]">
         <span class="text-ink-soft">全程</span>
         <span class="tabular text-ink-faint">{{ formatDuration(totalSec) }}</span>
       </p>
@@ -73,7 +73,7 @@
         有上限的状态(可消耗的那一类)把上限明写出来:这是**明改不是暗改** ——
         玩家看得到"还能攒到多久",也就不会在"吃了没变"时以为坏了(见 core/engineBuffs 的上限口径)。
       -->
-      <p v-if="capSec" class="mt-1 flex justify-between text-[13px]">
+      <p v-if="capSec" class="mt-1 flex justify-between text-[11px]">
         <span class="text-ink-soft">至多可攒</span>
         <span class="tabular text-ink-faint"
           >{{ formatDuration(capSec) }}(单颗 {{ capMult }} 倍)</span

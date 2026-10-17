@@ -1,67 +1,72 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!-- 境界与突破(修为圆满时整卡蓄势充能) -->
-    <div class="card-ink px-4 py-4" :class="player.expFull ? 'card-charged' : ''">
-      <div class="text-center">
-        <!-- 世界名带它的信标色(仙界=石青/神界=紫/混沌=幽蓝):修炼页是平时最常开的面,「这是哪一界」一眼可见 -->
-        <p class="world-label font-kai text-[11px] tracking-[0.5em]">{{ player.worldName }}</p>
-        <!--
-          境界名是这一页的主角字 —— 两侧衬两条世界色短横,像匾额两端的框墨。
-          只在宽裕的视口出现(min-360px):200% 缩放档有效视口只有 ~195px,
-          横杆会让名字折成竖排反而挤 —— 窄了就让名字独行,回归原样。
-        -->
-        <p class="mt-1 flex items-center justify-center gap-2.5">
-          <span
-            class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline"
-            aria-hidden="true"
-          />
-          <span class="font-kai text-[30px] tracking-[0.3em] text-ink">{{
-            player.realm.name
-          }}</span>
-          <span
-            class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline"
-            aria-hidden="true"
-          />
-        </p>
-        <p class="mt-0.5 font-kai text-[14px] tracking-[0.4em] text-cinnabar">
-          {{ player.subName }}
-        </p>
-        <p class="mt-1 text-[11px] text-ink-faint">{{ player.realm.desc }}</p>
-        <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
-          「{{ player.realm.basis }}」{{ player.realm.lore }}
-        </p>
-        <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
-        <div class="mx-auto mt-3 max-w-xs">
-          <RealmLadder :major="player.major" />
-        </div>
+    <!--
+      卷首行 —— 世界名、匾额、这一境的名与注:它们回答的是「我在哪一界、走到第几境」,
+      是一页的书名,不是一件可以操作的东西。故不铺卡、不压影,只在结尾落一道分隔线;
+      卡从下面的「修行」开始。一道 430 行的大卡会把书名与读数拉成同一档。
+    -->
+    <div class="pb-2 text-center">
+      <!-- 世界名带它的信标色(仙界=石青/神界=紫/混沌=幽蓝):修炼页是平时最常开的面,「这是哪一界」一眼可见 -->
+      <p class="world-label font-kai text-[11px] tracking-[0.5em]">{{ player.worldName }}</p>
+      <!--
+        境界名是这一页的主角字 —— 两侧衬两条世界色短横,像匾额两端的框墨。
+        只在宽裕的视口出现(min-360px):200% 缩放档有效视口只有 ~195px,
+        横杆会让名字折成竖排反而挤 —— 窄了就让名字独行,回归原样。
+      -->
+      <p class="mt-1 flex items-center justify-center gap-2.5">
+        <span
+          class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline"
+          aria-hidden="true"
+        />
+        <span class="font-kai text-[30px] tracking-[0.3em] text-ink">{{ player.realm.name }}</span>
+        <span
+          class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline"
+          aria-hidden="true"
+        />
+      </p>
+      <p class="mt-0.5 font-kai text-[14px] tracking-[0.4em] text-cinnabar">{{ player.subName }}</p>
+      <p class="mt-1 text-[11px] text-ink-faint">{{ player.realm.desc }}</p>
+      <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->
+      <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        「{{ player.realm.basis }}」{{ player.realm.lore }}
+      </p>
+    </div>
+    <div class="ink-divider" aria-hidden="true" />
+
+    <!--
+      修行卡 —— 这一页的主卡,左侧一道世界色竖封条把它与下面的破境卡分开。
+      卡名右侧是「第 N / 21 境」:境数读 REALMS.length,不手写(改境界表不撒谎)。
+    -->
+    <div class="card-ink border-l-2 border-l-[var(--world-bar)] px-4 py-3">
+      <div class="flex items-baseline justify-between">
+        <span class="font-kai text-[14px] tracking-[0.2em] text-ink">修 行</span>
+        <span class="text-[11px] text-ink-faint tabular">
+          第 {{ player.major + 1 }} / {{ REALMS.length }} 境
+        </span>
+      </div>
+      <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
+      <div class="mx-auto mt-3 max-w-xs">
+        <RealmLadder :major="player.major" />
       </div>
       <div class="mt-4">
         <!--
-          flex-wrap 只在这一行:200% 字号(布局视口 195px)下,「修为 +x/秒 ▸来路」与
-          「现值 / 所需」加起来比这一行宽 —— 与其把右边的值折断(主值行折行 = 判据红),
-          不如让值整块落到第二行:值本身仍是一行,一个字都不少。
+          修为读数成组:标签行(修为 + 下一步)→ 条 → 尾行(还剩多少 / 来路)。
+          从前「修为 +x/秒 ▸来路」与「现值 / 所需」挤在同一行、而「下一步」被一道分隔线
+          隔到另一段里去 —— 同一个量拆成两处,读的人得来回找。
+          主行的 flex-wrap 保留:200% 字号(布局视口 195px)下「下一步 → X」会换到
+          第二行,值那一块本身仍是一行(主值行折行 = 判据红)。
         -->
         <div
           data-value-row
           class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-soft tabular"
         >
-          <button
-            class="tap-row -my-1 py-1.5 text-left active:opacity-60"
-            :aria-expanded="showCultBreakdown"
-            @click="showCultBreakdown = !showCultBreakdown"
-          >
-            修为 +{{ formatRate(player.cultPerSec) }}
-            <span class="ml-0.5 text-[9px] text-ink-faint"
-              >{{ showCultBreakdown ? "▾" : "▸" }}来路</span
-            >
-          </button>
-          <!--
-            修为数可点:缩写照旧(排版不动),点开看精确值。
-            详情里按玩家的建议分两行(现有 / 所需),并补上**还需**与**预计耗时** ——
-            大数字看不出变化时,"还差多远、还要多久"才是真正被感知的那个量。
-          -->
-          <span>
+          <span class="flex items-baseline gap-1">
+            <span class="text-ink-faint">修为</span>
+            <!--
+              修为数可点:缩写照旧(排版不动),点开看精确值。
+              详情里按玩家的建议分两行(现有 / 所需),并补上**还需**与**预计耗时** ——
+              大数字看不出变化时,"还差多远、还要多久"才是真正被感知的那个量。
+            -->
             <!--
               这里**永远显示真实修为**。从前写的是 `expFull ? expReq : exp` ——
               圆满之后那行就锁死在「所需」上,玩家盯着一个不动的数,得出的结论自然是
@@ -73,7 +78,7 @@
               :rows="expDetailRows"
               :note="expDetailNote"
             />
-            / {{ formatGN(player.expReq) }}
+            <span class="text-ink-faint">/ {{ formatGN(player.expReq) }}</span>
             <!--
               积余不进这一行:它是"次要读数",挤在主行上会把这一行顶成两行(窄屏尤其明显)——
               点开修为那个数就能看到精确的积余与它的去路(突破时随境界带走)。
@@ -81,9 +86,26 @@
             -->
             <span v-if="player.expFull" class="text-jade">· 圆满</span>
           </span>
+          <span class="text-ink-soft">下一步 → {{ btInfo.targetLabel }}</span>
         </div>
         <div :class="player.expFull ? 'bar-charged' : ''">
-          <ProgressBar :value="player.expProgress" color="var(--color-cinnabar)" :height="8" />
+          <ProgressBar :value="player.expProgress" color="var(--color-cinnabar)" :height="10" />
+        </div>
+        <!--
+          尾行两件事:还剩多远(百分比 + 现成 ETA 文案,都在别处算过,这里只读)与
+          「来路」—— 修为速度的来路由它摊开,故它落在这一行而不是主行。
+        -->
+        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-2 text-[11px]">
+          <span class="text-ink-soft tabular">
+            还剩 {{ formatPercent(1 - player.expProgress, 0) }} · {{ expEtaText }}
+          </span>
+          <button
+            class="tap-row -my-1 py-1.5 text-left text-[10px] text-ink-faint active:opacity-60"
+            :aria-expanded="showCultBreakdown"
+            @click="showCultBreakdown = !showCultBreakdown"
+          >
+            {{ showCultBreakdown ? "▾" : "▸" }}来路
+          </button>
         </div>
         <!-- 修炼速度是玩家最常盯的数,故在它自己那一行就地摊开:基础 × (1 + 各来源) -->
         <div
@@ -102,11 +124,12 @@
               {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
             </span>
           </p>
-          <p class="mt-1 text-[9px] leading-relaxed text-ink-faint">
+          <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
             这些都是修炼速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
           </p>
         </div>
       </div>
+      <div class="ink-divider my-3" aria-hidden="true" />
       <div class="mt-3">
         <div data-value-row class="mb-1 flex justify-between text-[11px] text-ink-soft tabular">
           <span>灵气 +{{ formatRate(player.qiRegenPerSec) }}</span>
@@ -158,11 +181,15 @@
             {{ formatPercent(QI_RICH_THRESHOLD_RATIO) }})→ 修炼 +{{ formatPercent(QI_RICH_BONUS) }})
           </template>
         </p>
-        <!-- 以灵气疗伤(修复):灵气积余的用途,代价随境界指数增长 -->
+        <!--
+          以灵气疗伤(修复):灵气积余的用途,代价随境界指数增长。
+          它是「顺手做的一件小事」,不是这一页的主行动 —— 故走 chip-ink,把唯一的
+          btn-seal 留给突破钮(chip-ink 自带 nowrap,长文案在窄屏改为可折行)。
+        -->
         <button
           v-if="repair.injured"
           type="button"
-          class="btn-seal mt-2 w-full !py-2 !text-[12px]"
+          class="chip-ink mt-2 w-full !py-2 !whitespace-normal text-[11px] justify-center"
           :disabled="!repair.affordable"
           @click="repairWithQi()"
         >
@@ -180,10 +207,19 @@
           尚差 {{ repairBlock.short }} 灵气,按当前回复{{ repairBlock.eta }}
         </p>
       </div>
+    </div>
 
-      <div class="ink-divider-mark my-4" />
-      <div class="flex items-center justify-between text-[12px] text-ink-soft">
-        <span>下一步:{{ btInfo.targetLabel }}</span>
+    <!--
+      破境卡 —— 素卡:不加封条,因为它不是「正在进行的事」,是「下一步要不要做」。
+      卡名右侧读 btInfo:可破时石绿,不可破时把拦因原样写出来(与突破钮同一个 reason,
+      不在这一行另编一套话)。
+    -->
+    <div class="card-ink px-4 py-3">
+      <div class="flex items-baseline justify-between">
+        <span class="font-kai text-[14px] tracking-[0.2em] text-ink">破 境</span>
+        <span class="text-[11px]" :class="btInfo.ready ? 'text-jade' : 'text-ink-soft'">
+          {{ btInfo.ready ? "可破" : btInfo.reason }}
+        </span>
       </div>
       <!--
         天劫步不显示「突破成功率」:那条路根本不掷这个骰子(见 breakthrough.attemptBreakthrough,
@@ -235,7 +271,7 @@
             <span class="tabular text-ink-soft">{{ row.effect }}</span>
           </p>
           <!-- 诚实收口:这条只列「状态」来源 —— 装备/称号/天时等别的源头在大数字里,不在条里重抄 -->
-          <p class="pt-0.5 text-[9px] leading-relaxed text-ink-faint">
+          <p class="pt-0.5 text-[10px] leading-relaxed text-ink-faint">
             只列状态来源 —— 装备·名号·天时等见上值
           </p>
         </div>
@@ -246,23 +282,35 @@
       </div>
 
       <!-- Phase 32.0 劫势详情(决意前评估:风险维度 + 建议,信息给足,决定留给玩家) -->
+      <!--
+        劫势的次序 = 决策的次序:先说这一劫是什么(desc),再说它会怎么伤到你
+        (主要风险)、建议你怎么站(advice)、有没有一线(灵根相应);
+        然后才是要核的四项读数,最后是脚注(天时/折算/界膜/道数)。
+        一字未删,只是把「与你有关的三句」提到读数之前。
+      -->
       <div
         v-if="tribPlan"
         class="mt-2 rounded-md border border-violet-ink/25 bg-violet-ink/5 px-3 py-2"
       >
         <p class="text-[11px] text-violet-ink">{{ tribPlan.desc }}</p>
-        <!--
-          天时是这场劫的第三个输入:劫型看境界×今日天时、结算 damage 再乘
-          tribulationMult —— verdict/建议早已吃进这一笔,但没摆成一行。
-          这里与主页天时卡同一口径(读 todayWeather,不另算),渡劫前一眼对上。
-        -->
-        <p class="mt-1 text-[10px] text-ink-faint tabular">
-          今日天时 · {{ tribWeather.name
-          }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template
-          ><template v-if="tribWeatherResistPenalty">
-            · {{ STAT_NAMES["tribulationResist"] }} {{ tribWeatherResistPenalty }}</template
-          >
+        <p class="mt-1 text-[11px] text-ink-soft">
+          主要风险:<span class="text-cinnabar">{{ tribPlan.risks.join("; ") }}</span>
         </p>
+        <p class="mt-1 text-[11px] text-ink-soft">{{ tribPlan.advice }}</p>
+        <!-- Phase 32.2:灵根解开的那条路——说明这道劫为何对你不太一样(留一线,不是免死) -->
+        <p v-if="reliefRoots.length" class="mt-1 text-[11px] text-jade">
+          灵根相应:{{
+            reliefRoots.map((e) => ELEMENTS[e].name).join("、")
+          }}——此劫为你留了一线,能走到哪一步仍看自身准备
+        </p>
+        <div class="ink-divider my-2" aria-hidden="true" />
+        <!--
+          天劫是**按最大生命百分比**扣血的(见 core/formulas.tribulationWaveDamage),
+          攻伐不进公式;防御与气血只能按「本境裸修为」折算成抗性与开劫水位,且两条都有上限。
+          摊开读数是因为玩家最容易在这里误判:一身厚血厚防站在劫前,却不知道自己缺什么。
+        -->
+        <!-- 渡劫账:一排挤成串的读数改造成可扫读的 2×2 小网格 —— 四项各占一格,三维折算作小字跟在本格 -->
+        <p class="text-[10px] text-ink-faint">此劫只认百分比 —— 此刻会读的几项:</p>
         <p class="mt-1.5 text-[10px] text-ink-faint tabular">
           准备:
           <span class="text-ink-soft"
@@ -275,36 +323,54 @@
           </template>
         </p>
         <!--
-          天劫是**按最大生命百分比**扣血的(见 core/formulas.tribulationWaveDamage),
-          攻伐不进公式;防御与气血只能按「本境裸修为」折算成抗性与开劫水位,且两条都有上限。
-          摊开读数是因为玩家最容易在这里误判:一身厚血厚防站在劫前,却不知道自己缺什么。
+          格子分两行:上行「标签 + 值」,下行「折算成几成」。320 宽下两列各只 ~104px,
+          「天劫抗性 42%(防御折算 3%)」挤一行必然顶折 —— 拆成两行才扫得动。
         -->
-        <!-- 渡劫账:一排挤成串的读数改造成可扫读的 2×2 小网格 —— 四项各占一格,三维折算作小字跟在本格 -->
-        <p class="mt-1 text-[10px] text-ink-faint">此劫只认百分比 —— 此刻会读的几项:</p>
-        <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] tabular">
-          <p class="flex items-baseline gap-1">
-            <span class="text-ink-faint">天劫抗性</span>
-            <span class="text-ink-soft">{{ formatPercent(tribLedger?.resist ?? 0, 0) }}</span>
-            <span class="text-ink-faint"
+        <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px] tabular">
+          <p>
+            <span class="flex items-baseline gap-1">
+              <span class="text-ink-faint">天劫抗性</span>
+              <span class="text-ink-soft">{{ formatPercent(tribLedger?.resist ?? 0, 0) }}</span>
+            </span>
+            <span class="block text-[10px] text-ink-faint"
               >(防御折算 {{ formatPercent(tribLedger?.statResist ?? 0, 0) }})</span
             >
           </p>
-          <p class="flex items-baseline gap-1">
-            <span class="text-ink-faint">减伤</span>
-            <span class="text-ink-soft">{{ formatPercent(tribLedger?.reduction ?? 0, 0) }}</span>
+          <p>
+            <span class="flex items-baseline gap-1">
+              <span class="text-ink-faint">减伤</span>
+              <span class="text-ink-soft">{{ formatPercent(tribLedger?.reduction ?? 0, 0) }}</span>
+            </span>
           </p>
-          <p class="flex items-baseline gap-1">
-            <span class="text-ink-faint">每波恢复</span>
-            <span class="text-ink-soft">{{ formatPercent(tribLedger?.sustain ?? 0, 1) }}</span>
+          <p>
+            <span class="flex items-baseline gap-1">
+              <span class="text-ink-faint">每波恢复</span>
+              <span class="text-ink-soft">{{ formatPercent(tribLedger?.sustain ?? 0, 1) }}</span>
+            </span>
           </p>
-          <p class="flex items-baseline gap-1">
-            <span class="text-ink-faint">开劫护持</span>
-            <span class="text-ink-soft">{{ formatPercent(tribLedger?.guard ?? 0, 0) }}</span>
-            <span class="text-ink-faint"
+          <p>
+            <span class="flex items-baseline gap-1">
+              <span class="text-ink-faint">开劫护持</span>
+              <span class="text-ink-soft">{{ formatPercent(tribLedger?.guard ?? 0, 0) }}</span>
+            </span>
+            <span class="block text-[10px] text-ink-faint"
               >(气血折算 {{ formatPercent(tribLedger?.statGuard ?? 0, 0) }})</span
             >
           </p>
         </div>
+        <div class="ink-divider my-2" aria-hidden="true" />
+        <!--
+          天时是这场劫的第三个输入:劫型看境界×今日天时、结算 damage 再乘
+          tribulationMult —— verdict/建议早已吃进这一笔,但没摆成一行。
+          这里与主页天时卡同一口径(读 todayWeather,不另算),渡劫前一眼对上。
+        -->
+        <p class="text-[10px] text-ink-faint tabular">
+          今日天时 · {{ tribWeather.name
+          }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template
+          ><template v-if="tribWeatherResistPenalty">
+            · {{ STAT_NAMES["tribulationResist"] }} {{ tribWeatherResistPenalty }}</template
+          >
+        </p>
         <p class="mt-0.5 text-[10px] text-ink-faint">
           攻伐不进天劫公式;防御与气血按本境裸修为折算成上面的抗性与护持,各有上限 ——
           血再厚也只能硬抗一部分,剩下的仍要抗性/减伤/恢复来补。进阶成功率与突破准备也只作用于小进阶,大关不看它们。
@@ -331,16 +397,6 @@
           }}
           最大气血(合计约 {{ formatPercent(tribWave.total, 0) }}),
           {{ tribPlan.def.waveShape === "frontLoaded" ? "起手两道最重" : "逐道加重" }}
-        </p>
-        <p class="mt-1 text-[10px] text-ink-soft">
-          主要风险:<span class="text-cinnabar">{{ tribPlan.risks.join("; ") }}</span>
-        </p>
-        <p class="mt-1 text-[10px] text-ink-faint">{{ tribPlan.advice }}</p>
-        <!-- Phase 32.2:灵根解开的那条路——说明这道劫为何对你不太一样(留一线,不是免死) -->
-        <p v-if="reliefRoots.length" class="mt-1 text-[10px] text-jade">
-          灵根相应:{{
-            reliefRoots.map((e) => ELEMENTS[e].name).join("、")
-          }}——此劫为你留了一线,能走到哪一步仍看自身准备
         </p>
       </div>
       <p data-value-row class="mt-1 text-[11px] text-ink-soft tabular">
@@ -433,6 +489,11 @@
       </p>
     </div>
 
+    <!--
+      闭关卡 —— 与修行/破境同族的卡头:左为楷书卡名(必须为 span,判据钉着),
+      右侧是状态位:闭关中报倒计时(琥珀=进行中的事),未闭关不留字。
+      卡名读作「闭 关」两字一顿,与「修 行」「破 境」同一口气。
+    -->
     <!-- Phase 28 闭关:5 分钟 +150% 修炼,期间禁止历练(数值唯一来源 = buffs.ts retreat + earlyGameService) -->
     <!-- 开始那瞬整卡一闪(与 BuildingCard 升级同款 card-flash)——「这件事发生在我这张卡上」 -->
     <div
@@ -440,9 +501,9 @@
       :class="retreatFlash ? 'card-flash' : ''"
       @animationend.self="retreatFlash = false"
     >
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] text-ink-soft">闭关参悟</span>
-        <span v-if="retreating" class="text-[10px] text-amber-ink tabular">
+      <div class="flex items-baseline justify-between">
+        <span class="font-kai text-[14px] tracking-[0.2em] text-ink">闭 关</span>
+        <span v-if="retreating" class="text-[11px] text-amber-ink tabular">
           闭关中 · <span class="countdown-slot">{{ formatCountdown(retreatRemaining) }}</span>
         </span>
       </div>
@@ -470,6 +531,12 @@
       </p>
     </div>
 
+    <!--
+      主区(修行/破境/闭关)与辅区(状态/丹药/功法)之间落一枚花饰分隔:
+      往下不再是「今天要做的事」,是「随身带着的家当」。
+    -->
+    <div class="ink-divider-mark my-4" aria-hidden="true" />
+
     <!-- 状态 -->
     <section v-if="activeBuffs.length">
       <SectionTitle title="状态" />
@@ -495,7 +562,7 @@
           {{ b.def!.name }}
           <span
             v-if="b.stack > 1"
-            class="text-[9px]"
+            class="text-[10px]"
             :aria-label="`${b.def!.name} 与 ${b.stack - 1} 味状态同刻叠加`"
             >×{{ b.stack }}</span
           >
@@ -521,7 +588,7 @@
             :style="{ color: qualityDef(p.def!.quality).color }"
           />
           <span class="min-w-0 grow">
-            <span class="block truncate font-kai text-[12px] text-ink">{{ p.def!.name }}</span>
+            <span class="block truncate font-kai text-[11px] text-ink">{{ p.def!.name }}</span>
             <span class="block text-[10px] text-ink-faint tabular">
               存 {{ p.count
               }}<template v-if="quickPillBrief(p.def!)"> · {{ quickPillBrief(p.def!) }}</template>
@@ -600,7 +667,7 @@
               :aria-selected="gongfaCat === g.type"
               :aria-label="`${GONGFA_TYPE_NAMES[g.type]} ${g.items.length} 部`"
               :tabindex="gongfaCat === g.type ? 0 : -1"
-              class="flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 font-kai text-[13px] tracking-[0.14em]"
+              class="flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 font-kai text-[14px] tracking-[0.14em]"
               :class="
                 gongfaCat === g.type
                   ? 'bg-cinnabar/6 text-ink'
@@ -609,7 +676,7 @@
               @click="gongfaCat = g.type"
             >
               <span
-                class="font-kai text-[12px]"
+                class="font-kai text-[11px]"
                 :class="gongfaCat === g.type ? 'text-cinnabar' : 'text-ink-faint'"
                 >{{ gongfaSeal(g.type) }}</span
               >
@@ -682,7 +749,7 @@
               class="empty-note px-4 py-6 text-center text-[11px] leading-relaxed text-ink-faint"
             >
               <span
-                class="mx-auto mb-2 grid h-7 w-7 place-items-center rounded-md bg-cinnabar/6 font-kai text-[13px] text-cinnabar"
+                class="mx-auto mb-2 grid h-7 w-7 place-items-center rounded-md bg-cinnabar/6 font-kai text-[14px] text-cinnabar"
                 aria-hidden="true"
                 >{{ gongfaSeal(gongfaCat) }}</span
               >
@@ -757,6 +824,7 @@ import { qiRepairView, repairWithQi } from "@/core/qiRepair";
 import { useNow } from "@/composables/useNow";
 import { useGameStore } from "@/stores/game";
 import { BREAKTHROUGH_PREP_OPTIONS } from "@/data/earlyGame";
+import { REALMS } from "@/data/realms";
 import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
 import type { GongfaDef, GongfaType } from "@/types";
 import { ELEMENTS } from "@/data/linggen";

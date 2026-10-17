@@ -22,7 +22,7 @@
           {{ view.success ? "破" : "滞" }}
         </div>
       </div>
-      <p class="mt-3 font-kai text-lg tracking-[0.3em] text-ink">
+      <p class="mt-3 font-kai text-[16px] tracking-[0.3em] text-ink">
         {{ view.success ? "突破成功" : "突破失败" }}
       </p>
       <!--
@@ -35,7 +35,7 @@
       >
         大 境
       </p>
-      <p class="mt-1 text-[13px] text-ink-soft">
+      <p class="mt-1 text-[14px] text-ink-soft">
         {{ view.fromLabel }}
         <span class="mx-1 text-ink-faint">→</span>
         <span :class="view.success ? 'text-cinnabar font-kai' : 'text-ink-faint'">{{
@@ -49,12 +49,12 @@
         <p
           v-for="(line, i) in view.tribulationLog"
           :key="i"
-          class="py-0.5 text-[12px] leading-relaxed text-ink-soft"
+          class="py-0.5 text-[11px] leading-relaxed text-ink-soft"
         >
           {{ line }}
         </p>
       </div>
-      <p class="mt-3 text-[12px] leading-relaxed text-ink-faint">{{ view.message }}</p>
+      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">{{ view.message }}</p>
     </div>
     <template #footer>
       <button class="btn-seal w-full" @click="close">

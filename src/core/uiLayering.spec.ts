@@ -2029,3 +2029,42 @@ describe("界面分层 · 触屏的滚动与悬停只说真话", () => {
     ).toEqual([]);
   });
 });
+
+describe("修炼页 · 字号收六档", () => {
+  /*
+   * 修炼页深化定下的字阶:匾额 30,印记/大读数 16·15,卡名与条目名 14,
+   * 正文与数据行 11,脚注 10 —— 中间不许再长出 13/12/9 这类"只差一丁点"的私档:
+   * 相邻两档差 1px 时,读者分不出谁大谁小,层次就塌了。
+   * 三弹窗(状态 / 顿悟 / 突破结果)同族:庆功题字 16,名字 14,正文 11,小签 10。
+   */
+  const SIZES = /text-\[(\d+)px\]/g;
+  const usedSizes = (src: string): number[] =>
+    [...src.matchAll(SIZES)].map((m) => Number(m[1] ?? 0));
+
+  it("修炼页只用六档:30 / 16 / 15 / 14 / 11 / 10", () => {
+    const view = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const PAGE_TIERS = [30, 16, 15, 14, 11, 10];
+    const off = [...new Set(usedSizes(view?.src ?? ""))].filter((n) => !PAGE_TIERS.includes(n));
+    expect(off, `修炼页冒出了六档以外的字号:${off.join(", ")}`).toEqual([]);
+    // 防"空转":档位真在用,不是把字全删了换一张绿
+    expect(usedSizes(view?.src ?? "").length).toBeGreaterThanOrEqual(20);
+  });
+
+  it("三弹窗同族刻度:16 / 14 / 11 / 10", () => {
+    const DIALOG_TIERS = [16, 14, 11, 10];
+    for (const path of [
+      "components/cultivation/BuffDialog.vue",
+      "components/cultivation/EnlightenmentModal.vue",
+      "components/cultivation/BreakthroughResultDialog.vue",
+    ]) {
+      const dlg = FILES.find((f) => f.path === path);
+      const off = [...new Set(usedSizes(dlg?.src ?? ""))].filter((n) => !DIALOG_TIERS.includes(n));
+      expect(off, `${path} 冒出了同族刻度以外的字号:${off.join(", ")}`).toEqual([]);
+    }
+  });
+
+  it("判据自证:认得出越档的坏样本", () => {
+    const bad = usedSizes('<p class="text-[13px]">x</p><p class="text-[9px]">y</p>');
+    expect(bad.filter((n) => ![30, 16, 15, 14, 11, 10].includes(n))).toEqual([13, 9]);
+  });
+});
