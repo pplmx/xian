@@ -3,7 +3,7 @@
     <!-- 未至真仙 -->
     <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
       <p class="font-kai text-[22px] tracking-[0.4em] text-ink">器 魂</p>
-      <p class="mt-4 text-[12px] leading-relaxed text-ink-faint">
+      <p class="mt-4 text-[11px] leading-relaxed text-ink-faint">
         凡器未历天道,何来形意。
         <br />
         修至
@@ -19,7 +19,7 @@
       <div class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3">
         <!-- 同洞府:标签写着「天界」,冷启动时也得真的去天界,而不是退出游戏 -->
         <button
-          class="-my-1.5 justify-self-start py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
+          class="-my-1.5 justify-self-start py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
           @click="goBack(router, { name: 'celestial' })"
         >
           ← 天界
@@ -37,19 +37,32 @@
       <section>
         <SectionTitle title="何谓器魂" hint="形销而意存,多一条路数" />
         <div class="card-ink mt-2 px-4 py-3">
-          <p class="text-[11px] leading-relaxed text-ink-faint">
-            凡人的法器到了天界,锋芒会被天道磨去几分,却并非抹平 ——
-            它记得这件法器是何路数,那份记忆便是
-            <span class="text-gold-ink">器魂</span>
-            。器魂<b class="text-ink">叠加</b
-            >在你身上:攻防血这些基础属性照常作数,器魂是在其上多给一条路数。
+          <!--
+            这一段原是把两段散文铺满整张大卡 —— 它是这一页里最占地方、信息密度
+            最低的一块,而新手每次进来都要先跨过它才看得见自己那三个槽位。
+            改法:一句结论常驻(器魂是什么、从哪来),细节收进「怎么个章法」——
+            想知道的人点开,不想知道的人不必先读两百字。
+          -->
+          <p class="text-[11px] leading-relaxed text-ink-soft">
+            凡器入炉,锋芒被天道磨去几分,那份
+            <span class="text-gold-ink">路数</span>却留了下来 —— 这就是器魂:
+            攻防血照常作数,它是在其上多给一条路数。
           </p>
-          <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
-            以凡器入炉,形销而意存,得器魂一缕。神魂只容 {{ SOUL_SLOTS }} 缕——取舍便是构筑。
-            <span class="text-ink-faint"
-              >至于堆叠本身,天道自有应对:构筑越厚,守关者的道之理解越深;境界未及此界者,还会被境界压制。</span
-            >
-          </p>
+          <button
+            class="tap-row mt-1.5 -my-1 inline-flex min-h-[28px] items-center text-[10px] text-ink-faint active:opacity-60"
+            :aria-expanded="soulIntroOpen"
+            @click="soulIntroOpen = !soulIntroOpen"
+          >
+            {{ soulIntroOpen ? "▾ 收起" : "▸ 怎么个章法" }}
+          </button>
+          <div v-if="soulIntroOpen" class="mt-1 space-y-1.5">
+            <p class="text-[11px] leading-relaxed text-ink-faint">
+              以凡器入炉,形销而意存,得器魂一缕。神魂只容 {{ SOUL_SLOTS }} 缕——取舍便是构筑。
+            </p>
+            <p class="text-[11px] leading-relaxed text-ink-faint">
+              至于堆叠本身,天道自有应对:构筑越厚,守关者的道之理解越深;境界未及此界者,还会被境界压制。
+            </p>
+          </div>
         </div>
       </section>
 
@@ -84,7 +97,7 @@
                 装配了就看不见"给什么" —— 就地摊一行词条短字(全量读数在详情弹窗,
                 同闲置行的 soulModText,不另造第二份文案)。
               -->
-              <span class="mt-0.5 w-full truncate text-[9px] leading-tight text-ink-faint">{{
+              <span class="mt-0.5 w-full truncate text-[10px] leading-tight text-ink-faint">{{
                 soulModText(endgame.activeSouls[i - 1]!)
               }}</span>
               <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 32px 的靶面 -->
@@ -125,7 +138,7 @@
               }}
             </span>
           </span>
-          <span class="shrink-0 text-[12px] text-ink-faint">›</span>
+          <span class="shrink-0 text-[11px] text-ink-faint">›</span>
         </button>
 
         <button
@@ -146,7 +159,7 @@
               }}
             </span>
           </span>
-          <span class="shrink-0 text-[12px] text-ink-faint">›</span>
+          <span class="shrink-0 text-[11px] text-ink-faint">›</span>
         </button>
       </section>
     </template>
@@ -166,7 +179,7 @@
             {{ soulSeal(soulDetail) }}
           </span>
           <div class="min-w-0">
-            <p class="text-[12px]" :style="{ color: soulColor(soulDetail) }">
+            <p class="text-[11px]" :style="{ color: soulColor(soulDetail) }">
               {{ soulGradeDef(soulDetail.grade).name }}·{{
                 soulTypeDef(soulDetail.type)?.name ?? "器魂"
               }}
@@ -174,7 +187,7 @@
             <p class="text-[10px] text-ink-faint">凝自「{{ soulDetail.fromName }}」</p>
           </div>
         </div>
-        <p class="mt-3 text-[12px] leading-relaxed text-ink-soft">{{ soulModText(soulDetail) }}</p>
+        <p class="mt-3 text-[11px] leading-relaxed text-ink-soft">{{ soulModText(soulDetail) }}</p>
       </template>
       <template #footer>
         <div v-if="soulDetail" class="flex w-full gap-2">
@@ -204,7 +217,7 @@
           class="flex items-center justify-between gap-2 py-2.5"
         >
           <div class="min-w-0">
-            <p class="truncate text-[12px]" :style="{ color: soulColor(soul) }">
+            <p class="truncate text-[11px]" :style="{ color: soulColor(soul) }">
               {{ soulLabel(soul) }}
             </p>
             <p class="text-[10px] text-ink-faint">
@@ -267,7 +280,7 @@
           class="flex items-center justify-between gap-2 py-2.5"
         >
           <div class="min-w-0">
-            <p class="truncate text-[12px] text-ink-soft">{{ row.name }}</p>
+            <p class="truncate text-[11px] text-ink-soft">{{ row.name }}</p>
             <p class="truncate text-[10px] text-ink-faint">
               将凝出
               <span :style="{ color: soulGradeDef(row.gradeRank).color }"
@@ -362,6 +375,8 @@ const inventory = useInventoryStore();
 const unlocked = computed(() => endgameUnlocked());
 const idleOpen = ref(false);
 const forgeOpen = ref(false);
+/** 「何谓器魂」的细读段:默认收起,只留一句结论 */
+const soulIntroOpen = ref(false);
 /** 已装配器魂的详情弹窗对象;非 null 时展示该缕 */
 const soulDetail = ref<SoulInstance | null>(null);
 

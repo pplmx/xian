@@ -3,11 +3,11 @@
     <div class="flex items-center gap-2">
       <RouterLink
         to="/character"
-        class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft"
+        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
         >← 人物</RouterLink
       >
       <span class="text-[11px] text-ink-faint">·</span>
-      <span class="text-[12px] text-ink-soft">流派</span>
+      <span class="text-[11px] text-ink-soft">流派</span>
     </div>
     <SectionTitle title="流派" hint="道路由构筑自然成形" />
     <div class="card-ink px-4 py-3">
@@ -24,7 +24,7 @@
                 build.displayName
               }}</span>
               <span class="text-[11px] text-cinnabar">{{ build.stageName }}</span>
-              <span class="ml-auto tabular text-[12px] text-ink-soft"
+              <span class="ml-auto tabular text-[11px] text-ink-soft"
                 >契合 {{ formatPercent(build.affinity, 0) }}</span
               >
             </p>
@@ -43,7 +43,7 @@
         </div>
         <p class="mt-2 text-[11px] leading-relaxed text-ink-faint">{{ build.style.desc }}</p>
         <div class="mt-2 space-y-1">
-          <p v-for="cv in build.coreValues" :key="cv.key" class="flex justify-between text-[12px]">
+          <p v-for="cv in build.coreValues" :key="cv.key" class="flex justify-between text-[11px]">
             <span class="text-ink-soft">{{ STAT_NAMES[cv.key] }}</span>
             <span class="tabular text-violet-ink">+{{ formatPercent(cv.value) }}</span>
           </p>
@@ -96,7 +96,7 @@
                 <span v-if="!l.terms.length" class="block text-[10px] text-ink-faint"
                   >这一维还没有词条撑着。</span
                 >
-                <span class="mt-1 block text-[9px] leading-relaxed text-ink-faint">
+                <span class="mt-1 block text-[10px] leading-relaxed text-ink-faint">
                   贡献之和就是得分 —— 星级只看得分跨过哪一档。
                 </span>
               </span>
@@ -115,7 +115,7 @@
         >
           <p class="flex items-center gap-2">
             <span
-              class="font-kai text-[13px]"
+              class="font-kai text-[14px]"
               :class="comboInfo.active ? 'text-violet-ink' : 'text-ink-faint'"
             >
               组合技「{{ comboInfo.art.name }}」
@@ -169,7 +169,7 @@
               <span class="w-9 shrink-0 truncate text-[11px] text-ink-soft">{{ row.name }}</span>
               <span
                 v-if="row.wall"
-                class="shrink-0 rounded bg-cinnabar/10 px-1 py-0.5 text-[9px] leading-none text-cinnabar"
+                class="shrink-0 rounded bg-cinnabar/10 px-1 py-0.5 text-[10px] leading-none text-cinnabar"
                 >墙</span
               >
               <span class="track-ink h-1.25 min-w-0 flex-1 overflow-hidden rounded-full">
@@ -187,13 +187,13 @@
               </span>
             </div>
           </div>
-          <p class="mt-1.5 text-[9px] leading-relaxed text-ink-faint">
+          <p class="mt-1.5 text-[10px] leading-relaxed text-ink-faint">
             每类各打 {{ MATCHUP_SAMPLE_RUNS }} 场估算,读的是「哪面吃亏」的方向,不是精确胜率;四墙
             (首领 / 高爆发 / 真伤 / 疾影)通吃,才称万金油。
           </p>
         </div>
       </template>
-      <p v-else class="text-[12px] leading-relaxed text-ink-faint">
+      <p v-else class="text-[11px] leading-relaxed text-ink-faint">
         道途尚未成路。凑齐同一路数的词条、功法与法宝,自成一派——
         <br />
         <span class="text-ink-faint"
@@ -226,11 +226,11 @@
           class="flex items-center gap-2 rounded-md bg-paper-deep/70 px-2.5 py-1.5"
         >
           <span
-            class="grid h-6 w-6 shrink-0 place-items-center rounded bg-cinnabar/85 font-kai text-[12px] text-paper"
+            class="grid h-6 w-6 shrink-0 place-items-center rounded bg-cinnabar/85 font-kai text-[11px] text-paper"
           >
             {{ lo.seal }}
           </span>
-          <span class="min-w-0 grow truncate font-kai text-[12px] text-ink">{{ lo.name }}</span>
+          <span class="min-w-0 grow truncate font-kai text-[11px] text-ink">{{ lo.name }}</span>
           <button class="btn-ghost !px-2.5 !py-1 !text-[11px]" @click="applyLoadout(lo.id)">
             换装
           </button>

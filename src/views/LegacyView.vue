@@ -3,18 +3,18 @@
     <div class="flex items-center gap-2">
       <RouterLink
         to="/character"
-        class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft"
+        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
         >← 人物</RouterLink
       >
       <span class="text-[11px] text-ink-faint">·</span>
-      <span class="text-[12px] text-ink-soft">修仙录</span>
+      <span class="text-[11px] text-ink-soft">修仙录</span>
     </div>
     <SectionTitle title="修仙录" hint="这一部,只写你自己" />
 
     <!-- 修行画像 -->
     <div v-if="profile" class="card-ink px-4 py-3">
-      <p class="mb-1.5 font-kai text-[12px] tracking-[0.3em] text-ink-faint">修行画像</p>
-      <p class="font-kai text-[13px] leading-relaxed text-ink">「{{ profile.verdict }}」</p>
+      <p class="mb-1.5 font-kai text-[11px] tracking-[0.3em] text-ink-faint">修行画像</p>
+      <p class="font-kai text-[14px] leading-relaxed text-ink">「{{ profile.verdict }}」</p>
       <div class="mt-2 space-y-1">
         <p v-for="d in profile.daoShares" :key="d.name" class="flex items-center gap-2 text-[11px]">
           <span class="w-14 shrink-0 text-ink-faint">{{ d.name }}</span>
@@ -55,7 +55,7 @@
           <span class="text-cinnabar">{{ profile.weakWorld }}</span>
         </p>
       </div>
-      <p class="mt-1.5 text-[9px] text-ink-faint">画像皆出自真实道痕,不可人工修饰。</p>
+      <p class="mt-1.5 text-[10px] text-ink-faint">画像皆出自真实道痕,不可人工修饰。</p>
     </div>
     <p v-else class="empty-note card-ink px-4 py-6 text-center text-[11px] text-ink-faint">
       道痕未满{{ cnNumber(PROFILE_MIN_MARKS) }}则,画像尚不成形。
@@ -106,7 +106,7 @@
         <!-- 这一世的命题 -->
         <div v-if="vowTheme" class="mt-2 rounded-lg border border-ink/15 px-3 py-2">
           <p class="flex items-center justify-between">
-            <span class="font-kai text-[13px] text-ink">「{{ vowTheme.vow }}」</span>
+            <span class="font-kai text-[14px] text-ink">「{{ vowTheme.vow }}」</span>
             <span
               class="text-[11px]"
               :class="vowBroken ? 'text-amber-ink' : vowDone ? 'text-cinnabar' : 'text-ink-faint'"
@@ -130,7 +130,7 @@
       <SectionTitle title="历世履历" :hint="lifeRows.length ? `${lifeRows.length} 世` : '初世'" />
       <div class="card-ink divide-y divide-ink/6 px-4">
         <template v-if="lifeRows.length">
-          <p v-for="l in lifeRows" :key="l.index" class="flex items-center gap-2 py-2 text-[12px]">
+          <p v-for="l in lifeRows" :key="l.index" class="flex items-center gap-2 py-2 text-[11px]">
             <span class="w-11 shrink-0 font-kai text-ink-faint tabular">第{{ l.index }}世</span>
             <span class="text-ink-soft">{{ l.realmLabel }}</span>
             <span class="text-[10px] text-ink-faint tabular">寿 {{ l.age }} 载</span>
@@ -158,7 +158,7 @@
         <div v-if="milestoneRows.length" class="relative ml-2 border-l border-ink/15 pl-4">
           <div v-for="row in milestoneRows" :key="row.id" class="relative py-1.5">
             <span class="absolute -left-5.25 top-2.5 h-2 w-2 rounded-full bg-gold-ink" />
-            <p class="font-kai text-[13px] text-ink">第 {{ row.life }} 世 · {{ row.name }}</p>
+            <p class="font-kai text-[14px] text-ink">第 {{ row.life }} 世 · {{ row.name }}</p>
             <p class="text-[10px] text-ink-faint">{{ row.desc }}</p>
           </div>
         </div>
@@ -174,10 +174,10 @@
           <p
             v-for="n in nemesisRows"
             :key="n.enemyId"
-            class="flex items-center gap-2 py-2 text-[12px]"
+            class="flex items-center gap-2 py-2 text-[11px]"
           >
             <span
-              class="font-kai text-[13px]"
+              class="font-kai text-[14px]"
               :class="n.avengedAt ? 'text-ink' : 'text-cinnabar'"
               >{{ n.enemyName }}</span
             >
@@ -203,9 +203,9 @@
       <SectionTitle title="奇缘录" :hint="`未了之缘 ${unfinishedChains} 条`" />
       <div class="card-ink divide-y divide-ink/6 px-4">
         <template v-if="chainRows.length">
-          <p v-for="c in chainRows" :key="c.id" class="flex items-center gap-2 py-2 text-[12px]">
+          <p v-for="c in chainRows" :key="c.id" class="flex items-center gap-2 py-2 text-[11px]">
             <span
-              class="shrink-0 font-kai text-[13px]"
+              class="shrink-0 font-kai text-[14px]"
               :class="c.broken ? 'text-ink-faint' : c.finished ? 'text-ink' : 'text-cinnabar'"
               >{{ c.name }}</span
             >
@@ -231,7 +231,7 @@
           <p
             v-for="l in lossRows"
             :key="l.eventId + l.at"
-            class="flex items-center gap-2 py-2 text-[12px]"
+            class="flex items-center gap-2 py-2 text-[11px]"
           >
             <span class="text-[10px] text-ink-faint">{{ formatDate(l.at) }}</span>
             <span class="text-ink-soft">{{ l.eventName }}</span>
@@ -253,9 +253,9 @@
       <SectionTitle title="我的纪录" hint="只与过去的自己比" />
       <div class="card-ink divide-y divide-ink/6 px-4">
         <template v-if="recordRows.length">
-          <p v-for="r in recordRows" :key="r.id" class="flex items-center gap-2 py-2 text-[12px]">
+          <p v-for="r in recordRows" :key="r.id" class="flex items-center gap-2 py-2 text-[11px]">
             <span class="text-ink-faint">{{ r.name }}</span>
-            <span class="ml-auto tabular font-kai text-[13px] text-gold-ink">{{
+            <span class="ml-auto tabular font-kai text-[14px] text-gold-ink">{{
               r.valueText
             }}</span>
             <span class="shrink-0 text-[10px] text-ink-faint">第{{ r.life }}世 · {{ r.note }}</span>

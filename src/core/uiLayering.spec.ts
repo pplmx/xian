@@ -2090,35 +2090,50 @@ describe("主巡页 · 字阶同一套", () => {
     "views/DongfuView.vue",
     "views/InventoryView.vue",
     "views/RealmCodexView.vue",
+    "views/CelestialView.vue",
+    "views/SoulsView.vue",
+    "views/AdventureView.vue",
+    "views/BuildView.vue",
+    "views/CollectionView.vue",
+    "views/LegacyView.vue",
+    "views/TitlesView.vue",
+    "views/MarketView.vue",
+    "views/ApprenticeView.vue",
+    "views/MortalWorldView.vue",
+    "views/SettingsView.vue",
   ];
+
+  /*
+   * 每页的「非行文」字号放行位 —— 一律是印章单字、字符图标或唯一主读数,
+   * 度量的是字面框而不是行文节奏,故不进字阶。每一条都写明它是什么:
+   * 不写清理由的放行,等于给下一处私档开后门。
+   */
+  const NON_TEXT_ALLOW: Record<string, { sizes: number[]; why: string }> = {
+    "views/CultivationView.vue": { sizes: [30, 16], why: "30 匾额 · 16 庆功字" },
+    "views/HomeView.vue": { sizes: [17], why: "☯ 与印面字符" },
+    "views/InventoryView.vue": { sizes: [19], why: "格里的数量角标" },
+    "views/RealmCodexView.vue": { sizes: [16], why: "在身之卦那格的卦名" },
+    "views/CelestialView.vue": { sizes: [22, 20, 19, 17, 16], why: "匾额 · 印章单字 · 道源主读数" },
+    "views/SoulsView.vue": { sizes: [24, 22, 19], why: "器魂匾额 · 神魂印章单字" },
+    "views/BuildView.vue": { sizes: [22, 16], why: "流派印面 · 评级大字" },
+    "views/MortalWorldView.vue": { sizes: [19], why: "凡尘印面" },
+  };
 
   for (const path of pages) {
     it(`${path} 不冒出页面字阶以外的私档`, () => {
       const view = FILES.find((f) => f.path === path);
       const src = view?.src ?? "";
-      /*
-       * 三处特例都是「不是正文行文」的那一类,故不进字阶、各写各的理由:
-       *  · 修炼页 30 是匾额、16 是庆功字 —— 它是这一作的字阶上端;
-       *  · 首页 17 是 ☯ 与印面里的那枚字符(当图标用,度量的是字面框不是行文);
-       *  · 背包页 19 是格子里那枚大字读数(材料/丹药的数量角标)。字号小一号
-       *    在 5 列格子里就只剩糊,它是唯一的例外,别的正文仍走 11;
-       *  · 界域志 16 是「在身之卦」的卦名 —— 那一格里它是唯一的主读数,
-       *    与 14 的条目名拉开一档才立得住(册内其余一律 15 及以下)。
-       */
-      const allow =
-        path === "views/CultivationView.vue"
-          ? [...PAGE_TIERS, 30, 16]
-          : path === "views/HomeView.vue"
-            ? [...PAGE_TIERS, 17]
-            : path === "views/InventoryView.vue"
-              ? [...PAGE_TIERS, 19]
-              : path === "views/RealmCodexView.vue"
-                ? [...PAGE_TIERS, 16]
-                : PAGE_TIERS;
+      const extra = NON_TEXT_ALLOW[path];
+      const allow = extra ? [...PAGE_TIERS, ...extra.sizes] : PAGE_TIERS;
       const off = [...new Set([...src.matchAll(SIZES)].map((m) => Number(m[1] ?? 0)))].filter(
         (n) => !allow.includes(n),
       );
-      expect(off, `${path} 冒出了页面字阶以外的字号:${off.join(", ")}`).toEqual([]);
+      expect(
+        off,
+        `${path} 冒出了页面字阶以外的字号:${off.join(", ")}${
+          extra ? `(本页已放行:${extra.why})` : ""
+        }`,
+      ).toEqual([]);
       // 防空转:这页真在写字号,不是被整页清空换了一张绿
       expect([...src.matchAll(SIZES)].length).toBeGreaterThanOrEqual(5);
     });
@@ -2127,5 +2142,32 @@ describe("主巡页 · 字阶同一套", () => {
   it("判据自证:人物页曾有的 9 / 12 / 13 会被拦下", () => {
     const bad = [9, 12, 13, 18];
     expect(bad.filter((n) => !PAGE_TIERS.includes(n))).toEqual([9, 12, 13]);
+  });
+});
+
+describe("可点元素 · 焦点环不许被过渡吃掉", () => {
+  /*
+   * 由来:`transition-all` 会把 outline 也算进过渡。键盘 Tab 落到某个按钮上的那一瞬,
+   * outline 正从 none 往 2px 过渡 —— 自检在那一刻量到的是 0 宽,于是报「看不见焦点」。
+   *
+   * 这个毛病此前被当成「偶发不稳定」放过两回(同一批顿悟选项按钮),而它其实是
+   * 真实缺陷:键盘用户按下 Tab 的头一百毫秒里,确实什么都看不见。
+   * 修法是把它收窄成 transition-[transform,background-color] —— 按压动画不变,
+   * 焦点轮廓立刻出现。
+   */
+  it("可点元素不许用 transition-all(它会连焦点轮廓一起过渡)", () => {
+    const bad: string[] = [];
+    for (const f of FILES) {
+      if (f.src.includes("transition-all")) bad.push(f.path);
+    }
+    expect(
+      bad,
+      `这些文件用了 transition-all —— 改用 transition-[transform,background-color] 或 transition-colors:${bad.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("判据自证:transition-all 会被认出来", () => {
+    expect("class=\"transition-all active:scale-98\"".includes("transition-all")).toBe(true);
+    expect("transition-[transform,background-color]".includes("transition-all")).toBe(false);
   });
 });

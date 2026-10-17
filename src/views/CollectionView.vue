@@ -3,12 +3,12 @@
     <div class="flex items-center gap-2">
       <RouterLink
         to="/character"
-        class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft"
+        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
         >← 人物</RouterLink
       >
       <span class="text-[11px] text-ink-faint">·</span>
       <!-- 抬头与人物页入口同名(藏珍与成就):这一页含「成就」一册,只叫「图鉴」就少了一半 -->
-      <span class="text-[12px] text-ink-soft">藏珍与成就</span>
+      <span class="text-[11px] text-ink-soft">藏珍与成就</span>
     </div>
     <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
     <InkTabs v-model="tab" :tabs="tabRows" />
@@ -34,7 +34,7 @@
               {{ row.done ? "成" : "未" }}
             </span>
             <div class="min-w-0">
-              <p class="font-kai text-[12px]" :class="row.done ? 'text-ink' : 'text-ink-faint'">
+              <p class="font-kai text-[11px]" :class="row.done ? 'text-ink' : 'text-ink-faint'">
                 {{ row.name }}
               </p>
               <p class="truncate text-[10px] text-ink-faint">{{ row.desc }}</p>
@@ -59,7 +59,7 @@
           —— 收集的圆满是这册自己该说的话。
         -->
         <p v-if="catComplete(cat)" class="mt-1 text-[10px] text-jade">
-          <span class="chip-ink border-jade/60 text-[9px] text-jade">尽收</span>
+          <span class="chip-ink border-jade/60 text-[10px] text-jade">尽收</span>
           此目已无未识之物 —— 见之者皆入册
         </p>
         <p v-else class="mt-1 text-[10px] text-ink-faint">{{ cat.source }}</p>
@@ -74,7 +74,7 @@
               <!-- 灵兽册这类带 icon 的条目,已收录的 chip 前置一枚小章 —— 图鉴终于有貌 -->
               <GameIcon v-if="entry.icon" :name="entry.icon" :size="11" />
               {{ entry.name }}
-              <span v-if="entry.badge" class="text-[9px] text-ink-faint">{{ entry.badge }}</span>
+              <span v-if="entry.badge" class="text-[10px] text-ink-faint">{{ entry.badge }}</span>
               <!--
                 新得:收录时刻在「上次打开图鉴」之后才露这一枚(判据在 quests store,见 quests.spec)。
                 刻意不覆盖的两类:灵材谱(认知深浅)与悟道录(分支阶段)不经 quests.collect(),
@@ -82,7 +82,7 @@
               -->
               <span
                 v-if="quests.isEntryNew(cat.key, entry.id)"
-                class="text-[9px] text-cinnabar animate-new-pop"
+                class="text-[10px] text-cinnabar animate-new-pop"
                 >新</span
               >
             </button>
@@ -139,7 +139,7 @@
             detail.entry.meta
           }}</span>
         </p>
-        <p class="mt-3 whitespace-pre-line text-[13px] leading-relaxed text-ink-soft">
+        <p class="mt-3 whitespace-pre-line text-[14px] leading-relaxed text-ink-soft">
           {{ detail.entry.desc || "此物玄妙,难以言表。" }}
         </p>
         <p v-if="detail.entry.hint" class="mt-2 text-[11px] text-ink-faint">

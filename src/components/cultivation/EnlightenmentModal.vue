@@ -73,7 +73,7 @@ const show = computed(() => event.value !== null);
       <button
         v-for="(opt, idx) in event?.options ?? []"
         :key="idx"
-        class="w-full rounded-lg border border-ink/25 px-4 py-2.5 text-left transition-all active:scale-98 active:bg-ink/5"
+        class="w-full rounded-lg border border-ink/25 px-4 py-2.5 text-left transition-[transform,background-color] active:scale-98 active:bg-ink/5"
         @click="handleChoose(idx)"
       >
         <span class="block font-kai text-[14px] tracking-widest text-ink">{{ opt.label }}</span>

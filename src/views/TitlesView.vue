@@ -3,12 +3,12 @@
     <div class="flex items-center gap-2">
       <RouterLink
         to="/character"
-        class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft"
+        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
         >← 人物</RouterLink
       >
       <span class="text-[11px] text-ink-faint">·</span>
       <!-- 抬头与人物页入口同名(名号与灵兽):同一处地方,只许一个名字 -->
-      <span class="text-[12px] text-ink-soft">名号与灵兽</span>
+      <span class="text-[11px] text-ink-soft">名号与灵兽</span>
     </div>
     <!-- 页签 -->
     <InkTabs v-model="tab" :tabs="TABS" />
@@ -40,7 +40,7 @@
             {{ row.worn ? "佩" : row.owned ? "藏" : "未" }}
           </span>
           <div class="min-w-0 grow">
-            <p class="font-kai text-[13px]" :class="row.owned ? 'text-ink' : 'text-ink-faint'">
+            <p class="font-kai text-[14px]" :class="row.owned ? 'text-ink' : 'text-ink-faint'">
               {{ row.def.name }}
             </p>
             <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>
@@ -68,7 +68,7 @@
         改成与图鉴同款:全册都在,未结缘盖成「???」,并给出处。
       -->
       <p v-if="petsAllOwned" class="mt-1 text-[10px] text-jade">
-        <span class="chip-ink border-jade/60 text-[9px] text-jade">尽收</span>
+        <span class="chip-ink border-jade/60 text-[10px] text-jade">尽收</span>
         {{ cnNumber(PETS.length) }}只灵兽俱已结缘 —— 山野之间再无生客
       </p>
       <p v-else class="mt-1 text-[10px] text-ink-faint">{{ CODEX_SOURCES.pet }}</p>
@@ -83,13 +83,13 @@
             <div class="min-w-0 grow">
               <p class="flex items-center gap-2">
                 <span
-                  class="font-kai text-[13px]"
+                  class="font-kai text-[14px]"
                   :style="{ color: qualityDef(row.def.quality).color }"
                   >{{ row.def.name }}</span
                 >
                 <!-- 品阶文字:数值按品阶重配过,名字旁的「神品/仙品…」让品质与效果一眼可对(见 petQuality.spec 两条不变量) -->
                 <span
-                  class="text-[9px] tracking-[0.2em]"
+                  class="text-[10px] tracking-[0.2em]"
                   :style="{ color: qualityDef(row.def.quality).color }"
                   >{{ qualityDef(row.def.quality).name }}</span
                 >
@@ -118,7 +118,7 @@
               <GameIcon name="lock" :size="14" />
             </span>
             <div class="min-w-0 grow">
-              <p class="font-kai text-[13px] text-ink-faint">???</p>
+              <p class="font-kai text-[14px] text-ink-faint">???</p>
               <p class="truncate text-[10px] text-ink-faint">尚未结缘</p>
             </div>
           </template>

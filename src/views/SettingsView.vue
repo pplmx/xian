@@ -6,7 +6,7 @@
     <div class="card-ink divide-y divide-ink/7 px-4">
       <div class="py-3">
         <label class="flex items-center justify-between">
-          <span class="text-[13px] text-ink-soft">背景音乐</span>
+          <span class="text-[14px] text-ink-soft">背景音乐</span>
           <input v-model="settings.musicOn" type="checkbox" class="toggle-ink" />
         </label>
         <!--
@@ -30,7 +30,7 @@
       </div>
       <div class="py-3">
         <label class="flex items-center justify-between">
-          <span class="text-[13px] text-ink-soft">音效</span>
+          <span class="text-[14px] text-ink-soft">音效</span>
           <input v-model="settings.sfxOn" type="checkbox" class="toggle-ink" />
         </label>
         <div v-if="settings.sfxOn" class="mt-2 flex items-center gap-2">
@@ -49,15 +49,15 @@
         </div>
       </div>
       <label class="flex items-center justify-between py-3">
-        <span class="text-[13px] text-ink-soft">减少动效</span>
+        <span class="text-[14px] text-ink-soft">减少动效</span>
         <input v-model="settings.reduceMotion" type="checkbox" class="toggle-ink" />
       </label>
       <label class="flex items-center justify-between py-3">
-        <span class="text-[13px] text-ink-soft">遇事勿扰</span>
+        <span class="text-[14px] text-ink-soft">遇事勿扰</span>
         <input v-model="settings.dndEvents" type="checkbox" class="toggle-ink" />
       </label>
       <div class="flex items-center justify-between py-3">
-        <span class="text-[13px] text-ink-soft">夜间模式</span>
+        <span class="text-[14px] text-ink-soft">夜间模式</span>
         <div role="group" aria-label="夜间模式" class="flex gap-1">
           <button
             v-for="o in THEME_OPTIONS"
@@ -76,7 +76,7 @@
         </div>
       </div>
       <div class="flex items-center justify-between py-3">
-        <span class="text-[13px] text-ink-soft">战报速度</span>
+        <span class="text-[14px] text-ink-soft">战报速度</span>
         <div role="group" aria-label="战报速度" class="flex gap-1">
           <button
             v-for="s in [1, 2, 4] as const"
@@ -141,8 +141,8 @@
         </button>
       </p>
       <div class="grid grid-cols-2 gap-2">
-        <button class="btn-ghost !text-[12px]" @click="onExport">导出存档</button>
-        <button class="btn-ghost !text-[12px]" @click="triggerImport">导入存档</button>
+        <button class="btn-ghost !text-[11px]" @click="onExport">导出存档</button>
+        <button class="btn-ghost !text-[11px]" @click="triggerImport">导入存档</button>
         <input
           ref="fileInput"
           type="file"
@@ -152,7 +152,7 @@
         />
       </div>
       <button
-        class="btn-ghost w-full !border-cinnabar/40 !text-[12px] !text-cinnabar"
+        class="btn-ghost w-full !border-cinnabar/40 !text-[11px] !text-cinnabar"
         @click="openReset"
       >
         散尽修为,重入轮回(清空存档)
@@ -187,8 +187,8 @@
         <span v-if="latestError.route" class="ml-1 text-ink-faint">{{ latestError.route }}</span>
       </p>
       <div v-if="diag.errors.length" class="grid grid-cols-2 gap-2">
-        <button class="btn-ghost !text-[12px]" @click="copyDiag">复制异常记录</button>
-        <button class="btn-ghost !text-[12px]" @click="diag.clear()">清空记录</button>
+        <button class="btn-ghost !text-[11px]" @click="copyDiag">复制异常记录</button>
+        <button class="btn-ghost !text-[11px]" @click="diag.clear()">清空记录</button>
       </div>
     </div>
 
@@ -202,21 +202,21 @@
         class="flex w-full items-center justify-between py-3 active:opacity-60"
         @click="aboutOpen = true"
       >
-        <span class="text-[13px] text-ink-soft">关于此作</span>
+        <span class="text-[14px] text-ink-soft">关于此作</span>
         <span class="text-[11px] text-ink-faint">查看 →</span>
       </button>
       <button
         class="flex w-full items-center justify-between py-3 active:opacity-60"
         @click="privacyOpen = true"
       >
-        <span class="text-[13px] text-ink-soft">隐私政策</span>
+        <span class="text-[14px] text-ink-soft">隐私政策</span>
         <span class="text-[11px] text-ink-faint">查看 →</span>
       </button>
       <button
         class="flex w-full items-center justify-between py-3 active:opacity-60"
         @click="progressionOpen = true"
       >
-        <span class="text-[13px] text-ink-soft">数值体系</span>
+        <span class="text-[14px] text-ink-soft">数值体系</span>
         <span class="text-[11px] text-ink-faint">查看 →</span>
       </button>
     </div>
@@ -232,7 +232,7 @@
 
     <!-- 重置确认(弹窗期间引擎暂停) -->
     <BaseModal :open="resetConfirm" title="重置游戏" @close="closeReset">
-      <p class="text-[13px] leading-relaxed text-ink-soft">
+      <p class="text-[14px] leading-relaxed text-ink-soft">
         此举将
         <span class="text-cinnabar">彻底抹去</span>
         本机的一切修行痕迹,包括转世收获,且无法恢复。
@@ -247,7 +247,7 @@
 
     <!-- 导入确认(与重置同一条确认纪律:这份备份会整体替换当前进度,不可逆) -->
     <BaseModal :open="importConfirm" title="导入存档" @close="closeImport">
-      <p class="text-[13px] leading-relaxed text-ink-soft">
+      <p class="text-[14px] leading-relaxed text-ink-soft">
         这份备份将
         <span class="text-cinnabar">整体替换</span>
         本机当前的修行进度 —— 之后的收获会回到备份那一刻,且无法撤销。
@@ -258,7 +258,7 @@
         class="mt-3 rounded-md bg-paper-deep/60 px-3 py-2 text-[11px] leading-relaxed"
       >
         <p class="flex flex-wrap items-baseline gap-x-2 text-ink">
-          <span class="font-kai text-[13px]">{{ importInspect.name }}</span>
+          <span class="font-kai text-[14px]">{{ importInspect.name }}</span>
           <span class="text-ink-faint">{{ importInspect.realmLabel }}</span>
         </p>
         <p

@@ -165,7 +165,7 @@ const dispatchLabel = computed(() => {
          两侧均分网格,标题落点锁死(界规见 uiLayering.spec 的「器魂顶栏标题锁居中」)。 -->
     <div class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3">
       <button
-        class="tap-row -my-1.5 justify-self-start py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
+        class="tap-row -my-1.5 justify-self-start py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
         @click="goBack(router, { name: 'dongfu' })"
       >
         ← 返回
@@ -200,7 +200,7 @@ const dispatchLabel = computed(() => {
         class="rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
       >
         <div class="flex items-center gap-2">
-          <span class="font-kai text-[13px] text-ink">{{
+          <span class="font-kai text-[14px] text-ink">{{
             apprenticeDef(a.archId)?.name ?? a.archId
           }}</span>
           <span class="text-[10px] text-ink-faint">Lv{{ a.level }}/{{ APPRENTICE_MAX_LEVEL }}</span>

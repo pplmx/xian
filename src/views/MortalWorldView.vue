@@ -85,7 +85,7 @@
           <!-- 已通的段落照样能再去 —— 「已通」是记号,不是封路 -->
           <button
             v-if="unlocked(p.nodeId)"
-            class="btn-seal shrink-0 !px-3 !py-1.5 !text-[12px]"
+            class="btn-seal shrink-0 !px-3 !py-1.5 !text-[11px]"
             @click="depart(p.regionId)"
           >
             出 发
@@ -98,7 +98,7 @@
         规则存在却不告诉玩家,和没有规则一样糟
       -->
       <div class="card-ink px-4 py-3">
-        <p class="font-kai text-[13px] tracking-widest text-ink-soft">此界从何而来</p>
+        <p class="font-kai text-[14px] tracking-widest text-ink-soft">此界从何而来</p>
         <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
           你睁眼时,天地已成此形。所历地界、途中缓急、镇守之物皆随此世而定,
           <!-- 标点跟着前一句走:单独成行会在窄屏上被折成孤零零一个句号 -->
@@ -116,7 +116,7 @@
         </p>
       </div>
     </template>
-    <p v-else class="text-[12px] text-ink-faint">
+    <p v-else class="text-[11px] text-ink-faint">
       此世气象尚未凝成。天地未就,不妨先去历练,待此世凝成再来。
     </p>
   </div>

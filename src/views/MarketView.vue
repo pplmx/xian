@@ -211,7 +211,7 @@ function bountyShort(o: BountySlot): string | null {
     <!-- 抬头 -->
     <div class="card-ink flex items-center justify-between gap-2 px-4 py-3">
       <button
-        class="tap-row -my-1.5 py-1.5 text-left text-[12px] text-ink-faint active:text-ink-soft"
+        class="tap-row -my-1.5 py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
         @click="goBack(router, { name: 'dongfu' })"
       >
         ← 返回
@@ -239,7 +239,7 @@ function bountyShort(o: BountySlot): string | null {
           class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
           :class="slot.sold ? 'opacity-50' : ''"
         >
-          <div class="min-w-0 flex-1 text-[12px]">
+          <div class="min-w-0 flex-1 text-[11px]">
             <template v-if="slot.kind === 'pill'">
               <p class="truncate">
                 {{ pillDef(slot.pillId)?.name ?? slot.pillId }}
@@ -265,7 +265,7 @@ function bountyShort(o: BountySlot): string | null {
               <p class="text-[10px] text-ink-faint">一件已定兵刃,到手即用</p>
             </template>
           </div>
-          <span class="text-[12px] tabular text-cinnabar">{{ formatGN(slot.price) }} 灵石</span>
+          <span class="text-[11px] tabular text-cinnabar">{{ formatGN(slot.price) }} 灵石</span>
           <button
             class="btn-seal !px-3 !py-1 text-[11px]"
             :disabled="
@@ -321,7 +321,7 @@ function bountyShort(o: BountySlot): string | null {
           class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
           :class="o.claimed ? 'opacity-50' : ''"
         >
-          <div class="min-w-0 flex-1 text-[12px]">
+          <div class="min-w-0 flex-1 text-[11px]">
             <template v-if="o.kind === 'herb' || o.kind === 'ore'">
               <p class="truncate">募 {{ o.kind === "herb" ? "灵草" : "玄铁" }} ×{{ o.target }}</p>
               <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
@@ -346,7 +346,7 @@ function bountyShort(o: BountySlot): string | null {
               <p v-else class="text-[10px] text-ink-faint">价随所交之品质现算</p>
             </template>
           </div>
-          <span class="text-[12px] tabular text-cinnabar">
+          <span class="text-[11px] tabular text-cinnabar">
             {{
               o.kind === "equip"
                 ? `≥ ${formatGN(equipBountyReward(o.tier, 0).stone)} 石 + ${equipBountyReward(o.tier, 0).dust} 尘`
@@ -381,7 +381,7 @@ function bountyShort(o: BountySlot): string | null {
         <button
           v-for="it in equipCandidates"
           :key="it.uid"
-          class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-[12px] hoverable:hover:border-cinnabar"
+          class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-[11px] hoverable:hover:border-cinnabar"
           @click="deliverPicked(it.uid)"
         >
           <span class="min-w-0 truncate">

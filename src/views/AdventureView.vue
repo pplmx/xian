@@ -20,7 +20,7 @@
             <GameIcon name="cloud" :size="15" />
           </span>
           <span class="min-w-0 grow">
-            <span class="block font-kai text-[13px] tracking-[0.2em] text-ink">本世之界</span>
+            <span class="block font-kai text-[14px] tracking-[0.2em] text-ink">本世之界</span>
             <span class="block truncate text-[10px] leading-relaxed text-ink-faint">{{
               worldBrief
             }}</span>
@@ -129,23 +129,23 @@
                     }}</span>
                     <span
                       v-if="row.suppressed"
-                      class="chip-ink border-gold-ink/60 text-[9px] text-gold-ink"
+                      class="chip-ink border-gold-ink/60 text-[10px] text-gold-ink"
                       >已镇压</span
                     >
                     <span
                       v-else-if="row.revived"
-                      class="chip-ink border-cinnabar/60 text-[9px] text-cinnabar"
+                      class="chip-ink border-cinnabar/60 text-[10px] text-cinnabar"
                       >妖气复聚</span
                     >
                     <span
                       v-else-if="row.cleared"
-                      class="chip-ink border-jade/60 text-[9px] text-jade"
+                      class="chip-ink border-jade/60 text-[10px] text-jade"
                       >已靖</span
                     >
                     <!-- 世界记忆(Phase 30.9):区域兴衰状态 -->
                     <span
                       v-if="row.recall.prosperity !== 'chaos'"
-                      class="chip-ink text-[9px]"
+                      class="chip-ink text-[10px]"
                       :class="
                         row.recall.prosperity === 'flourish'
                           ? 'border-qing/60 text-qing'
@@ -192,7 +192,7 @@
                 <button
                   v-if="row.canEnter && !row.suppressed"
                   data-region-action
-                  class="btn-seal shrink-0 !px-4 !py-2 !text-[13px]"
+                  class="btn-seal shrink-0 !px-4 !py-2 !text-[14px]"
                   @click="chooseMode(row.def)"
                 >
                   出发
@@ -368,7 +368,7 @@
       <!-- 适配预览 -->
       <div v-if="preview" class="mb-3 rounded-md bg-ink/4 px-3 py-2.5">
         <template v-if="preview.mine && currentBuild">
-          <p class="flex items-center justify-between text-[12px]">
+          <p class="flex items-center justify-between text-[11px]">
             <span class="text-ink-soft">
               当前构筑:
               <span class="font-kai text-ink">{{ currentBuild.displayName }}</span>
@@ -400,7 +400,7 @@
           战力 {{ formatGN(player.finalStats.power) }} · 装备成色、词条与临场随机仍定成败
         </p>
       </div>
-      <p class="text-[12px] text-ink-faint">此行欲作何打算?</p>
+      <p class="text-[11px] text-ink-faint">此行欲作何打算?</p>
       <!-- 灵兽之性会改动出行时长与遇险:结算读了它,弹窗就必须摊开(见 exploration 的乘积) -->
       <p v-if="petLine" class="mt-1 text-[10px] text-violet-ink tabular">{{ petLine }}</p>
       <div class="mt-3 space-y-2">

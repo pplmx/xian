@@ -185,7 +185,7 @@
         <button
           v-for="id in view.talentChoices"
           :key="id"
-          class="w-full rounded-lg border px-3 py-2 text-left transition-all active:scale-98"
+          class="w-full rounded-lg border px-3 py-2 text-left transition-[transform,background-color] active:scale-98"
           :class="chosen === id ? 'border-cinnabar bg-cinnabar/5' : 'border-ink/20'"
           @click="chosen = id"
         >
@@ -245,7 +245,7 @@
           <button
             v-for="t in themeDefs"
             :key="t.id"
-            class="w-full rounded-lg border px-3 py-2 text-left transition-all active:scale-98"
+            class="w-full rounded-lg border px-3 py-2 text-left transition-[transform,background-color] active:scale-98"
             :class="theme === t.id ? 'border-cinnabar bg-cinnabar/5' : 'border-ink/20'"
             @click="theme = theme === t.id ? null : t.id"
           >
