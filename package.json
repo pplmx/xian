@@ -17,6 +17,7 @@
     "check:perf": "bun scripts/perf-profile.mjs",
     "check:ui": "bun scripts/build-timed.mjs && bun run check:first-paint && bun run check:perf && bun scripts/layout-check.mjs && bun scripts/ui-smoke.mjs && bun scripts/offline-check.mjs",
     "shots": "bun scripts/shots.mjs",
+    "build:favicon": "bun scripts/favicon.mjs",
     "preview": "vp preview",
     "lint": "vp lint",
     "test": "vp test run",

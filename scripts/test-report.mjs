@@ -244,6 +244,7 @@ const CATEGORIES = [
       "colorVar.spec",
       "inkIcons.spec",
       "ornament.spec",
+      "favicon.spec",
       "useNativeInsets",
       "fatePreview",
       "goBack",
@@ -286,6 +287,7 @@ const CATEGORIES = [
     name: "Decision    决策质量",
     match: [
       "decisionAudit",
+      "enlightenBalance",
       "synergyScan",
       "worldGen",
       "ruleUniverse",
