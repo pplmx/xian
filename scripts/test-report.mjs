@@ -512,8 +512,7 @@ console.log("");
  * 全绿就搁下了。真正的机制是下面这第二条:**未分类也算失败**(漏登记的用例不计入任何一类,
  * 报告就少算了它)。把原因印出来,"0 败 + 退出 1" 这种组合以后再也不会被误读成 flake。
  */
-const docFailure =
-  docFailures.length > 0 ? `文档里又写回了用例条数(${docFailures.length} 处)` : "";
+const docFailure = docFailures.length > 0 ? `文档里又写回了用例条数(${docFailures.length} 处)` : "";
 const failureReason =
   totalFailed > 0
     ? `有用例失败或跳过(${totalFailed} 个)`

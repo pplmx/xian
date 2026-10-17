@@ -108,7 +108,10 @@
             最后改用 flex(块级)容器 + 明确 min-h:块级子项的尺寸由自己的盒子决定,
             行盒插不上手。命中区该由「手指要多大」决定,而不是由行高间接推。
           -->
-          <button class="flex min-h-[28px] items-center text-qing active:opacity-60" @click.prevent="privacyOpen = true">
+          <button
+            class="flex min-h-[28px] items-center text-qing active:opacity-60"
+            @click.prevent="privacyOpen = true"
+          >
             《隐私政策》
           </button>
         </span>

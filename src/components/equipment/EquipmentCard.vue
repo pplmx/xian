@@ -59,10 +59,7 @@
         >共</span
       >
       <span v-else class="w-2.5" aria-hidden="true" />
-      <span
-        v-if="props.item.level > 0"
-        class="text-[10px] leading-none text-gold-ink tabular"
-      >
+      <span v-if="props.item.level > 0" class="text-[10px] leading-none text-gold-ink tabular">
         +{{ props.item.level }}
       </span>
     </span>

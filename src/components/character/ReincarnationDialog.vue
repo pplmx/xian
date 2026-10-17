@@ -175,10 +175,7 @@
       <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
         只取其一,余者本世无缘 —— 下一世才会重抽。
       </p>
-      <p
-        v-if="view.talentChoices.length === 0"
-        class="mt-2 t-body text-ink-faint"
-      >
+      <p v-if="view.talentChoices.length === 0" class="mt-2 t-body text-ink-faint">
         先天之姿已尽数为你所有,此番再无可择——直取轮回便是。
       </p>
       <div class="mt-2 space-y-2">

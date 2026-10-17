@@ -453,13 +453,14 @@ describe("暗场专用色 —— 不随主题换肤,但有名字", () => {
     // 夜间块(html[data-theme="dark"] { … })里不许重定义 stage 变量 ——
     // 重定义了就等于承认它会换肤,而这两个演出本来就是固定暗底
     const darkBlock = /html\[data-theme="dark"\] \{([\s\S]*?)\n\}/.exec(CSS)?.[1] ?? "";
-    expect(darkBlock, "night 主题里重定义了 --stage-*,暗场不该跟着纸换肤").not.toMatch(
-      /--stage-/,
-    );
+    expect(darkBlock, "night 主题里重定义了 --stage-*,暗场不该跟着纸换肤").not.toMatch(/--stage-/);
   });
 
   it("舞台组件不许再手抄裸 hex(变量或常量,二选一)", () => {
-    for (const rel of ["components/common/WarpPortal.vue", "components/common/SpiritRootReveal.vue"]) {
+    for (const rel of [
+      "components/common/WarpPortal.vue",
+      "components/common/SpiritRootReveal.vue",
+    ]) {
       const src = readFileSync(resolve(ROOT, "src", rel), "utf-8");
       const styleBlocks = src.match(/<style[\s\S]*?<\/style>/g) ?? [];
       const hexes = styleBlocks

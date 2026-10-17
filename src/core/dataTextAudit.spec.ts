@@ -1408,7 +1408,7 @@ describe("枚举 id 不许印到界面上 —— 玩家看的是名字,不是 ke
 
   it("货架品阶前缀要用中文名 —— 判据自证", () => {
     // 自证:上面那条正则真能认出坏样本
-    const sample = '<span>{{ it.quality }}·{{ it.tier }}阶</span>';
+    const sample = "<span>{{ it.quality }}·{{ it.tier }}阶</span>";
     expect(/\{\{[^}]*\.quality\s*\}\}/.test(sample)).toBe(true);
     // 正确写法不该被认成坏样本(它是 qualityDef(it.quality).name)
     const good = "<span>{{ qualityDef(it.quality).name }}</span>";

@@ -21,8 +21,10 @@
       </div>
       <!-- 家底一句:座数、离线档、弟子在途 —— 三个数概括这一页,不必翻卡 -->
       <p class="mt-1 text-[11px] text-ink-faint tabular">
-        已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }} 座 · 离线可攒 {{ offlineCapHours }}
-        时<template v-if="apprenticeBusy"> · 弟子在途 {{ apprenticeBusy }} 人</template>
+        已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }} 座 · 离线可攒
+        {{ offlineCapHours }} 时<template v-if="apprenticeBusy">
+          · 弟子在途 {{ apprenticeBusy }} 人</template
+        >
       </p>
     </div>
     <div class="ink-divider" aria-hidden="true" />

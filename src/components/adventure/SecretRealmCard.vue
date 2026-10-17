@@ -35,9 +35,7 @@
 
     <!-- 在境中 -->
     <template v-if="state">
-      <p class="mt-1.5 t-body text-ink-soft">
-        {{ def?.name }} · {{ def?.desc }}
-      </p>
+      <p class="mt-1.5 t-body text-ink-soft">{{ def?.name }} · {{ def?.desc }}</p>
       <p class="mt-1 text-[10px] leading-relaxed text-violet-ink">
         此地规则:{{ state.rules.join(" · ") }}
       </p>

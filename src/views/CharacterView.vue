@@ -90,7 +90,10 @@
                 {{ ELEMENTS[root.element].char }}
               </span>
               <!-- 资质直接亮在圆环旁,不再只藏 hover —— 手机上看得到才谈得上权衡 -->
-              <span class="tabular text-[10px] leading-none" :style="{ color: ELEMENTS[root.element].color }">
+              <span
+                class="tabular text-[10px] leading-none"
+                :style="{ color: ELEMENTS[root.element].color }"
+              >
                 {{ root.aptitude }}
               </span>
             </span>
@@ -427,7 +430,9 @@
           <span>
             <span class="text-gold-ink">{{ fruitInfo.effectiveText }} 枚</span>
             <span class="ml-1 text-[10px] text-ink-faint"
-              >(边际渐减){{ fruitInfo.total > 0 ? ` · 当前修行 ${fruitInfo.cultBonusText}` : "" }}</span
+              >(边际渐减){{
+                fruitInfo.total > 0 ? ` · 当前修行 ${fruitInfo.cultBonusText}` : ""
+              }}</span
             >
           </span>
         </p>
@@ -438,7 +443,9 @@
         </p>
       </div>
       <!-- 逆旅契:道果的第一个消费出口。花道果换一世逆境,回报只有履历 -->
-      <div class="mt-2 flex items-center justify-between gap-2 rounded-md border border-ink/12 px-3 py-2">
+      <div
+        class="mt-2 flex items-center justify-between gap-2 rounded-md border border-ink/12 px-3 py-2"
+      >
         <span class="min-w-0 text-[11px] text-ink-soft">
           逆旅契
           <span class="ml-1 text-[10px] text-violet-ink">【本世 · 消耗道果】</span>
@@ -531,49 +538,46 @@
       -->
       <div v-if="heritageOpen" class="scroll-fade mt-1.5">
         <div class="scroll-pane max-h-64 overflow-y-auto rounded-md bg-paper-deep/60 px-3 py-2">
-        <!--
+          <!--
           两组各带一枚色点与自己的小标:一条细线分不开「留下」与「归尘」这两件相反的事。
           上组(随魂)走玉色、下组(归尘)走淡墨 —— 颜色在这一屏就是结论。
         -->
-        <p class="flex items-center gap-1.5 text-[10px] text-jade">
-          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-jade" aria-hidden="true" />
-          随魂留存
-        </p>
-        <div class="mt-1 space-y-1">
-          <p
-            v-for="row in heritageKeepRows"
-            :key="row.id"
-            class="flex items-baseline justify-between gap-2 text-[10px]"
-          >
-            <span class="text-ink-soft">{{ row.name }}</span>
-            <!--
+          <p class="flex items-center gap-1.5 text-[10px] text-jade">
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-jade" aria-hidden="true" />
+            随魂留存
+          </p>
+          <div class="mt-1 space-y-1">
+            <p
+              v-for="row in heritageKeepRows"
+              :key="row.id"
+              class="flex items-baseline justify-between gap-2 text-[10px]"
+            >
+              <span class="text-ink-soft">{{ row.name }}</span>
+              <!--
               右侧只在**有例外**时才写字。
               这一组本来就是「随魂留存」,十六行里十三行右侧印着同一句「随魂留存」——
               重复的组名不提供任何信息,只把真正的例外(折半 / 部分保留)淹掉。
               组名由上面的色点标题负责;这里只报「不是全额留下」的那几条。
             -->
-            <span
-              v-if="row.modeLabel !== FULL_KEEP_LABEL"
-              class="shrink-0"
-              :class="row.cls"
-              >{{ row.modeLabel }}</span
+              <span v-if="row.modeLabel !== FULL_KEEP_LABEL" class="shrink-0" :class="row.cls">{{
+                row.modeLabel
+              }}</span>
+            </p>
+          </div>
+          <p class="mt-2.5 flex items-center gap-1.5 text-[10px] text-ink-faint">
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-ink/20" aria-hidden="true" />
+            归尘散去
+          </p>
+          <div class="mt-1 space-y-1">
+            <p
+              v-for="row in heritageResetRows"
+              :key="row.id"
+              class="flex items-baseline justify-between gap-2 text-[10px]"
             >
-          </p>
-        </div>
-        <p class="mt-2.5 flex items-center gap-1.5 text-[10px] text-ink-faint">
-          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-ink/20" aria-hidden="true" />
-          归尘散去
-        </p>
-        <div class="mt-1 space-y-1">
-          <p
-            v-for="row in heritageResetRows"
-            :key="row.id"
-            class="flex items-baseline justify-between gap-2 text-[10px]"
-          >
-            <span class="text-ink-faint">{{ row.name }}</span>
-            <span class="shrink-0" :class="row.cls">{{ row.modeLabel }}</span>
-          </p>
-        </div>
+              <span class="text-ink-faint">{{ row.name }}</span>
+              <span class="shrink-0" :class="row.cls">{{ row.modeLabel }}</span>
+            </p>
+          </div>
         </div>
       </div>
       <template #footer>
@@ -729,7 +733,9 @@
           </p>
         </div>
         <p class="mt-1.5 text-[10px] text-ink-faint">
-          共历 {{ bond.shared }} 次<span v-if="responseLine"> · 她开的口,你历次回应:{{ responseLine }}</span>
+          共历 {{ bond.shared }} 次<span v-if="responseLine">
+            · 她开的口,你历次回应:{{ responseLine }}</span
+          >
         </p>
 
         <!-- 门槛:离下一段还差什么 —— 紧挨着刻度,因为差的正是这些刻度的值 -->
@@ -935,9 +941,24 @@ const powerDetailRows = computed(() => {
    * 横条借它们分档,不必再造一套调色。
    */
   const weighted = [
-    { label: "攻击", value: player.finalStats.attack, w: POWER_WEIGHTS.attack, bar: "var(--color-cinnabar)" },
-    { label: "防御", value: player.finalStats.defense, w: POWER_WEIGHTS.defense, bar: "var(--color-qing)" },
-    { label: "气血", value: player.finalStats.maxHp, w: POWER_WEIGHTS.maxHp, bar: "var(--color-jade)" },
+    {
+      label: "攻击",
+      value: player.finalStats.attack,
+      w: POWER_WEIGHTS.attack,
+      bar: "var(--color-cinnabar)",
+    },
+    {
+      label: "防御",
+      value: player.finalStats.defense,
+      w: POWER_WEIGHTS.defense,
+      bar: "var(--color-qing)",
+    },
+    {
+      label: "气血",
+      value: player.finalStats.maxHp,
+      w: POWER_WEIGHTS.maxHp,
+      bar: "var(--color-jade)",
+    },
   ].map((r) => ({ ...r, part: mulN(r.value, r.w) }));
   const total = weighted.reduce((acc, r) => add(acc, r.part), gn(0));
   return weighted.map((r) => ({

@@ -18,7 +18,12 @@
       故用 py-3 把内容压到正中,而不是 pb 单边 —— 单边会让整块浮在上半格。
     -->
     <span class="flex h-full w-full flex-col items-center justify-center gap-1 px-1 py-3">
-      <GameIcon :name="icon" :size="size" :class="plain ? iconClass : undefined" :style="plain ? undefined : { color: tone }" />
+      <GameIcon
+        :name="icon"
+        :size="size"
+        :class="plain ? iconClass : undefined"
+        :style="plain ? undefined : { color: tone }"
+      />
       <span
         class="w-full truncate text-center text-[10px] leading-tight"
         :class="plain ? 'text-ink-soft' : undefined"

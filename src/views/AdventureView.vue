@@ -411,9 +411,7 @@
           @click="begin(m.id)"
         >
           <span>
-            <span class="t-card">{{
-              EXPLORE_MODES[m.id].name
-            }}</span>
+            <span class="t-card">{{ EXPLORE_MODES[m.id].name }}</span>
             <span
               class="ml-2 text-[11px]"
               :class="m.id === 'risky' || m.id === 'prolonged' ? 'text-cinnabar' : 'text-ink-faint'"

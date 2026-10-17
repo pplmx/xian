@@ -69,7 +69,9 @@
       -->
       <div data-value-row class="mt-4 flex items-baseline justify-center gap-2">
         <span class="text-[10px] tracking-[0.2em] text-ink-faint">修行倍率</span>
-        <span :key="rollSeq" class="font-kai text-[18px] leading-none text-cinnabar tabular animate-ink-pop"
+        <span
+          :key="rollSeq"
+          class="font-kai text-[18px] leading-none text-cinnabar tabular animate-ink-pop"
           >×{{ profile.growthMult.toFixed(2) }}</span
         >
       </div>
@@ -79,11 +81,7 @@
         :key="`tend-${rollSeq}`"
         class="stagger-in mt-3 space-y-1.5 border-t border-ink/10 pt-3"
       >
-        <p
-          v-for="t in tendencies"
-          :key="t.element"
-          class="flex gap-2 t-body text-ink-soft"
-        >
+        <p v-for="t in tendencies" :key="t.element" class="flex gap-2 t-body text-ink-soft">
           <span class="shrink-0 font-kai" :style="{ color: ELEMENTS[t.element].color }">{{
             ELEMENTS[t.element].char
           }}</span>

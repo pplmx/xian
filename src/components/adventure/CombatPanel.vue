@@ -349,11 +349,7 @@
           <span v-if="lore.elementName" class="mr-1.5 text-qing">{{ lore.elementName }}属</span>
           {{ lore.frame.join(" · ") }}
         </p>
-        <p
-          v-for="s in lore.skills"
-          :key="s.name"
-          class="mt-1 t-body text-ink-soft"
-        >
+        <p v-for="s in lore.skills" :key="s.name" class="mt-1 t-body text-ink-soft">
           ·
           <span class="text-ink">{{ s.name }}</span>
           ——{{ s.note }}
@@ -385,11 +381,7 @@
           {{ analysis.headline }}
         </p>
         <template v-if="analysis.findings.length">
-          <p
-            v-for="(f, i) in analysis.findings"
-            :key="i"
-            class="mt-1 t-body text-ink-soft"
-          >
+          <p v-for="(f, i) in analysis.findings" :key="i" class="mt-1 t-body text-ink-soft">
             · {{ f.text }}
           </p>
         </template>

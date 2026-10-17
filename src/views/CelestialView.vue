@@ -87,9 +87,7 @@
                   .join("、") || "尚无一纯"
               }})
             </p>
-            <p v-if="daoStory" class="mt-1.5 font-kai t-body text-ink-soft">
-              「{{ daoStory }}」
-            </p>
+            <p v-if="daoStory" class="mt-1.5 font-kai t-body text-ink-soft">「{{ daoStory }}」</p>
           </div>
           <div v-else class="mt-2 grid grid-cols-2 gap-2.5">
             <button
@@ -444,9 +442,7 @@
           <SectionTitle title="今日天道" hint="日出而题,日落而息" />
           <div class="card-ink mt-2 px-4 py-3">
             <p class="flex items-center gap-2">
-              <span class="t-card">{{
-                dailyWorld?.name
-              }}</span>
+              <span class="t-card">{{ dailyWorld?.name }}</span>
               <span class="tabular text-[11px] text-ink-soft"
                 >{{ daily.verdict.difficulty }} · 可行 {{ daily.verdict.viable }}/{{
                   BUILD_PROFILES.length
@@ -475,9 +471,7 @@
              择了道途它就在这儿(判据与上方 daily 同源) -->
         <section v-else>
           <SectionTitle title="今日天道" hint="日出而题,日落而息" />
-          <div
-            class="empty-note card-ink mt-2 px-4 py-4 text-center t-body text-ink-faint"
-          >
+          <div class="empty-note card-ink mt-2 px-4 py-4 text-center t-body text-ink-faint">
             今日天道随道途而定 —— 于道途一页择定「此世之路」后,自会在此展开。
           </div>
         </section>

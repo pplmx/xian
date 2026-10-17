@@ -46,11 +46,7 @@
         v-if="view.tribulationLog.length"
         class="scroll-pane mt-3 max-h-40 overflow-y-auto rounded-md bg-ink/4 px-3 py-2 text-left"
       >
-        <p
-          v-for="(line, i) in view.tribulationLog"
-          :key="i"
-          class="py-0.5 t-body text-ink-soft"
-        >
+        <p v-for="(line, i) in view.tribulationLog" :key="i" class="py-0.5 t-body text-ink-soft">
           {{ line }}
         </p>
       </div>

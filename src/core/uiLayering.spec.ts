@@ -2178,7 +2178,7 @@ describe("可点元素 · 焦点环不许被过渡吃掉", () => {
   });
 
   it("判据自证:transition-all 会被认出来", () => {
-    expect("class=\"transition-all active:scale-98\"".includes("transition-all")).toBe(true);
+    expect('class="transition-all active:scale-98"'.includes("transition-all")).toBe(true);
     expect("transition-[transform,background-color]".includes("transition-all")).toBe(false);
   });
 });
@@ -2329,9 +2329,7 @@ describe("滚动区 —— 还有下文时要说出来", () => {
   it("长列表自带滚动区,不靠整块面板滚", () => {
     // 面板滚的话,列表尾会被页脚按钮齐齐切掉(这正是这条判据的由来)
     const char = FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
-    expect(char, "去留一览要有自己的 max-h + overflow-y-auto").toMatch(
-      /max-h-64 overflow-y-auto/,
-    );
+    expect(char, "去留一览要有自己的 max-h + overflow-y-auto").toMatch(/max-h-64 overflow-y-auto/);
     expect(char, "外圈要套 scroll-fade").toContain("scroll-fade");
   });
 });

@@ -163,11 +163,7 @@
           <p class="mt-1.5 t-body text-ink-soft">
             {{ currentReading.hexagram.gist }}
           </p>
-          <p
-            v-for="(line, i) in counsel"
-            :key="`c${i}`"
-            class="mt-0.5 t-body text-ink-faint"
-          >
+          <p v-for="(line, i) in counsel" :key="`c${i}`" class="mt-0.5 t-body text-ink-faint">
             {{ line }}
           </p>
           <p class="mt-1.5 text-[11px] text-qing">在身之力:{{ powerText }}</p>
@@ -311,8 +307,7 @@
           >
         </div>
         <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
-          只在 {{ favoredWorldName }} 生效,往他处去不加 ——
-          与天时不同:天时是全境之气,星象只利一方。
+          只在 {{ favoredWorldName }} 生效,往他处去不加 —— 与天时不同:天时是全境之气,星象只利一方。
         </p>
         <button class="btn-ghost mt-2 w-full !py-1.5 !text-[11px]" @click="goAdventure">
           去 {{ favoredWorldName }} 历练 →
@@ -320,8 +315,9 @@
         <!-- 来历归脚注:分野依《晋书·天文志》只作读,管用的是上面那条约定 -->
         <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
           分野依《晋书·天文志》(诸家小异),只作来历读 —— 游戏里的地界不是九州。
-          {{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{ imageWorldMap }}),值日之宿所属之象,
-          所配界域今日际遇更易。
+          {{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{
+            imageWorldMap
+          }}),值日之宿所属之象, 所配界域今日际遇更易。
         </p>
         <button
           class="mt-2 w-full border-t border-ink/8 pt-2 text-left text-[10px] text-qing active:opacity-60"
