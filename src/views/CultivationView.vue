@@ -107,6 +107,13 @@
             {{ showCultBreakdown ? "▾" : "▸" }}来路
           </button>
         </div>
+        <!--
+          长 ETA 的解释:一天以上的等待单凭一个日期说明不了什么,旁边得有一句
+          「怎么让它变快」。见 longEtaHint 的注释。
+        -->
+        <p v-if="longEtaHint" class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          {{ longEtaHint }}
+        </p>
         <!-- 修炼速度是玩家最常盯的数,故在它自己那一行就地摊开:基础 × (1 + 各来源) -->
         <div
           v-if="showCultBreakdown"
@@ -934,6 +941,35 @@ const expEtaText = computed(() => {
   if (remain <= 0) return "就要满了";
   if (player.cultPerSec <= 0) return "当前无修为进项";
   return `约 ${formatDuration(remain / player.cultPerSec)}`;
+});
+
+/**
+ * 「久等之时,还有更快的路」—— 只在 ETA 长到会让人以为卡住时才说一句。
+ *
+ * 真仙四层离圆满差二十多兆,按当前速度是三十八天。这个数字是对的(每秒八千五百万,
+ * 确实是这个量级),但**孤零零一个「约 37天22小时」不解释任何事**:玩家看到的是
+ * 「这游戏不动了」,而实际上旁边就写着一条现成的加速 —— 灵气充盈(+15%)只差两分半。
+ *
+ * 阈值取一天:一天之内的事,读 ETA 本身就有意义;超过一天,ETA 只是在报一个
+ * 遥远的日期,这时该把「怎么变快」摆出来。
+ */
+const LONG_ETA_SEC = 86400;
+const longEtaHint = computed(() => {
+  if (player.expFull) return "";
+  const remain = toNum(subClamp(player.expReq, player.exp));
+  if (remain <= 0 || player.cultPerSec <= 0) return "";
+  if (remain / player.cultPerSec < LONG_ETA_SEC) return "";
+  // 充盈还没到 → 这是最近的一条加速;已经到了 → 指向「来路」摊开的那份明细
+  if (qiRichInfo.value && !qiRichInfo.value.on && qiRichInfo.value.gap > 0) {
+    const sec =
+      player.qiRegenPerSec > 0
+        ? Math.ceil(qiRichInfo.value.gap / player.qiRegenPerSec)
+        : Number.POSITIVE_INFINITY;
+    return Number.isFinite(sec)
+      ? `久等 —— 灵气充盈后修炼快 ${formatPercent(QI_RICH_BONUS, 0)},充盈还差约 ${formatDuration(sec)}`
+      : "久等 —— 灵气充盈后修炼更快,先让灵气回上去";
+  }
+  return "久等 —— 点「来路」看这一速由哪几处撑着,补一处就快一分";
 });
 const expDetailNote = computed(() => {
   if (player.expFull) return "修为已满 —— 下一步是突破,不是再攒。";

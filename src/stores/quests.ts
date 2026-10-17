@@ -125,6 +125,23 @@ export const useQuestsStore = defineStore(
       return typeof ts === "number" && ts > lastCollectionViewAt.value;
     }
 
+    /**
+     * 「收藏册里还有没看过的新得」—— 给抽屉外面那几处用。
+     *
+     * 收藏页自己算过一遍(它手里有完整的目与条目清单),但人物页那张「藏珍与成就」
+     * 卡没有那份清单 —— 它只知道成就进度与图鉴收集数,那都是**累计值**,
+     * 不说明「有没有新的」。缺了这个信号,玩家在人物页看到「图鉴 12/60」,
+     * 不知道那 12 里有没有刚刚才得的。
+     *
+     * 判法不必照搬条目标识:collectedAt 只在**首次收录**时写时间戳,
+     * 故「有没有任一条的时间晚于上次打开」即可,与 isEntryNew 同一条界。
+     * 这样它不依赖任何清单,谁都能调。
+     */
+    const hasCollectionNew = computed(() => {
+      const seenAt = lastCollectionViewAt.value;
+      return Object.values(collectedAt.value).some((ts) => typeof ts === "number" && ts > seenAt);
+    });
+
     /** 打开图鉴 = 当前已收录这一批都看过了:界推进到此刻 */
     function markCollectionSeen(): void {
       lastCollectionViewAt.value = Date.now();
@@ -209,6 +226,7 @@ export const useQuestsStore = defineStore(
       collectedAt,
       lastCollectionViewAt,
       isEntryNew,
+      hasCollectionNew,
       markCollectionSeen,
       currentMainQuest,
       counter,

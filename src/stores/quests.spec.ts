@@ -89,6 +89,35 @@ describe("图鉴新得", () => {
     expect(quests.isEntryNew("pill", "r_qingxin")).toBe(false);
   });
 
+  /*
+   * hasCollectionNew —— 给抽屉外面那几处用的汇总判法(人物页「藏珍与成就」卡)。
+   *
+   * 三件事都要自证,否则这条很容易写成一个「永远 true」的装饰:
+   *   · 有条目晚于上次打开 → true
+   *   · 全都早于上次打开 → false(不是「有收录就算新」)
+   *   · 一条都没有 → false(新号不能让这张卡一直亮着)
+   */
+  it("hasCollectionNew:有条目新于上次打开才为真", () => {
+    const quests = useQuestsStore();
+    quests.lastCollectionViewAt = 50;
+    quests.collectedAt = { "pill:a": 100, "pill:b": 20 };
+    expect(quests.hasCollectionNew, "有一条晚于上次打开").toBe(true);
+  });
+
+  it("hasCollectionNew:全都看过了就不再为真", () => {
+    const quests = useQuestsStore();
+    quests.lastCollectionViewAt = 300;
+    quests.collectedAt = { "pill:a": 100, "pill:b": 200 };
+    expect(quests.hasCollectionNew, "全都早于上次打开").toBe(false);
+  });
+
+  it("hasCollectionNew:一条收录都没有时不许亮", () => {
+    const quests = useQuestsStore();
+    quests.lastCollectionViewAt = 0;
+    quests.collectedAt = {};
+    expect(quests.hasCollectionNew, "空册不该挂「有新得」").toBe(false);
+  });
+
   it("旧档播种:老档无 lastCollectionViewAt(=0)且已有收录 → 清洗把界抬到此刻,已收录不算新得", () => {
     const quests = useQuestsStore();
     quests.$patch({

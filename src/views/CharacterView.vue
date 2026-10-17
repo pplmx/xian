@@ -328,6 +328,7 @@
           title="藏珍与成就"
           tone="gold"
           action="翻阅"
+          :badge="quests.hasCollectionNew ? '有新得' : ''"
           :sub="`成就 ${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length} · 图鉴 ${collectHave}/${collectTotal}`"
         />
 

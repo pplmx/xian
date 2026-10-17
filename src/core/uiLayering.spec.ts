@@ -191,6 +191,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(nav?.src).toContain("bagNewCount >= 2");
     expect(nav?.src).toContain('bagNewCount > 9 ? "9+"');
     expect(nav?.src).toContain("bagNewCount === 1");
+    /*
+     * 修炼点的「可破境」圆点。
+     *
+     * 破境是这一作最要紧的一次点击,而在此之前只有站在修炼页才看得见 ——
+     * 玩家在洞府/历练/背包里待着时,修为早够了、灵气也回满了,底栏一言不发。
+     * 判据盯三件事:它读的是**同一个** breakthroughInfo()(不许底栏另算一套
+     * 「大概够了吧」)、挂在修炼点上、并且是玉色圆点而不是背包那枚朱砂计数徽标
+     * (它说的是「有事在等你」,不是一个数)。
+     */
+    expect(nav?.src, "底栏要读同一个 breakthroughInfo()").toContain("breakthroughInfo()");
+    expect(nav?.src, "可破境圆点挂在修炼点").toContain(
+      "tab.name === 'cultivation' && canBreakthrough",
+    );
+    expect(nav?.src, "可破境用玉色圆点(与背包的朱砂计数徽标区分)").toContain("bg-jade");
     // 两枚「新」徽章(装备卡 / 图鉴 chip)都有入场动画:新件到手、再开包那一瞬齐齐弹起,
     // 一眼扫到哪些是新入的。animate-new-pop 走独立 scale 属性、不碰 transform
     // (装备卡徽章靠 -translate-x-1/2 居中,凡动 transform 都会横跳)—— 帧与映射删了下面都红。
