@@ -167,7 +167,7 @@
     -->
     <SectionTitle title="诊断" />
     <div class="card-ink space-y-2 px-4 py-3">
-      <p class="text-[11px] leading-relaxed text-ink-faint">
+      <p class="t-body text-ink-faint">
         <template v-if="diag.errors.length"
           >最近记录了 {{ diag.errors.length }} 条异常(最多留 {{ DIAG_MAX }} 条)</template
         >

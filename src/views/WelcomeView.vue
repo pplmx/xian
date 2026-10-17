@@ -71,7 +71,7 @@
 
     <!-- 导入存档:确认文案 -->
     <BaseModal :open="importOpen" title="导入存档" @close="importOpen = false">
-      <p class="text-[11px] leading-relaxed text-ink-faint">从设置页导出的存档文件可在此恢复。</p>
+      <p class="t-body text-ink-faint">从设置页导出的存档文件可在此恢复。</p>
       <template #footer>
         <div class="flex gap-2">
           <button class="btn-ghost flex-1" @click="importOpen = false">再想想</button>
@@ -88,7 +88,7 @@
 
     <!-- 开始前的同意确认 -->
     <BaseModal :open="agreeOpen" title="进入前请确认" :closable="false">
-      <p class="text-[11px] leading-relaxed text-ink-faint">
+      <p class="t-body text-ink-faint">
         游戏数据仅保存在你的浏览器本地,不上传服务器,也不接入任何第三方服务——页面不加载外部脚本、不发任何外部请求(详见隐私政策)。继续游玩前,请阅读并同意隐私政策。
       </p>
       <label class="mt-3 flex items-center gap-2">

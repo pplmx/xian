@@ -2182,3 +2182,56 @@ describe("可点元素 · 焦点环不许被过渡吃掉", () => {
     expect("transition-[transform,background-color]".includes("transition-all")).toBe(false);
   });
 });
+
+describe("排版角色 —— 有名字的才叫系统", () => {
+  /*
+   * 配色有一整套 token 与五条判据;排版此前只有一句「竖版阅读节奏」。
+   * 于是同一个角色被手写了上百遍:正文 `text-[11px] leading-relaxed text-ink-*`
+   * 逐字重复 97 次,卡名四种字距并存。
+   *
+   * 这些不是随手写的 —— 它们是真实角色,只是没有名字。没有名字的角色
+   * 每写一张新卡就要凭印象抄一遍,抄歪了也没人发现(字号档位那轮
+   * 9/12/13 私档正是这么长出来的)。
+   *
+   * 判据守两件事:
+   *   一 角色类在 style.css 里确实定义着(不许删了定义只留引用);
+   *   二 正文那三连组合不许再手写回来 —— 用 .t-body。
+   */
+  const STYLE = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+
+  it("五个排版角色都在 style.css 里有定义", () => {
+    for (const role of ["t-card", "t-entry", "t-item", "t-body", "t-note"]) {
+      expect(STYLE, `缺排版角色 .${role}`).toMatch(new RegExp(`\\.${role} \\{`));
+    }
+  });
+
+  it("角色只管字号/字距/行高/字重,不管颜色以外的装饰", () => {
+    // .t-body / .t-note 是纯度量:带颜色就等于把「正文」与某个墨档绑死,
+    // 而正文有两档墨(faint / soft),由调用处按语境挑。
+    const bodyBlock = /\.t-body \{([\s\S]*?)\}/.exec(STYLE)?.[1] ?? "";
+    expect(bodyBlock, ".t-body 不该写死颜色").not.toMatch(/color:/);
+    expect(bodyBlock, ".t-body 该是 11px").toMatch(/font-size: 11px/);
+  });
+
+  it("正文三连不许手写回来 —— 用 .t-body", () => {
+    const offenders: string[] = [];
+    for (const f of FILES) {
+      // 同一 class 里同时出现这三样的,就是「正文」那个角色
+      for (const m of f.src.matchAll(/class="([^"]*)"/g)) {
+        const toks = (m[1] ?? "").split(/\s+/);
+        if (
+          toks.includes("text-[11px]") &&
+          toks.includes("leading-relaxed") &&
+          (toks.includes("text-ink-faint") || toks.includes("text-ink-soft"))
+        ) {
+          offenders.push(f.path);
+          break;
+        }
+      }
+    }
+    expect(
+      offenders,
+      `这些文件把正文写回了三连 —— 改用 .t-body + 墨档:${offenders.join(", ")}`,
+    ).toEqual([]);
+  });
+});

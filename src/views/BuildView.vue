@@ -41,7 +41,7 @@
             </p>
           </div>
         </div>
-        <p class="mt-2 text-[11px] leading-relaxed text-ink-faint">{{ build.style.desc }}</p>
+        <p class="mt-2 t-body text-ink-faint">{{ build.style.desc }}</p>
         <div class="mt-2 space-y-1">
           <p v-for="cv in build.coreValues" :key="cv.key" class="flex justify-between text-[11px]">
             <span class="text-ink-soft">{{ STAT_NAMES[cv.key] }}</span>
@@ -193,7 +193,7 @@
           </p>
         </div>
       </template>
-      <p v-else class="text-[11px] leading-relaxed text-ink-faint">
+      <p v-else class="t-body text-ink-faint">
         道途尚未成路。凑齐同一路数的词条、功法与法宝,自成一派——
         <br />
         <span class="text-ink-faint"
@@ -322,7 +322,7 @@
         v-model="saveName"
         maxlength="8"
         aria-label="给这套构筑起个名字"
-        class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-2 font-kai text-[14px] tracking-widest text-ink outline-none focus:border-cinnabar/50"
+        class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-2 outline-none focus:border-cinnabar/50 t-card"
         placeholder="给这套构筑起个名字"
       />
       <template #footer>

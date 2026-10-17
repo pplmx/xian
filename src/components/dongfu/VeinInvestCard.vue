@@ -6,7 +6,7 @@
         {{ veinTotal }}/{{ VEIN_TOTAL_CAPACITY }}
       </span>
     </div>
-    <p class="mb-3 text-[11px] leading-relaxed text-ink-soft">
+    <p class="mb-3 t-body text-ink-soft">
       炼化灵石永久强化洞府灵脉,获得全局属性加成。主脉可投
       <span class="text-cinnabar">{{ VEIN_MAIN_CAPACITY }} 点</span>,副脉各
       <span class="text-cinnabar">{{ VEIN_SIDE_CAP }} 点</span>,总容量

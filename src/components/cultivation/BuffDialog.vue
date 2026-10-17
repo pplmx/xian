@@ -9,14 +9,14 @@
           <GameIcon :name="def.icon" :size="17" />
         </span>
         <span>
-          <span class="block font-kai text-[14px] tracking-widest text-ink">{{ def.name }}</span>
+          <span class="block t-card">{{ def.name }}</span>
           <span class="block text-[11px]" :class="isInjury ? 'text-cinnabar' : 'text-jade'">{{
             kindText
           }}</span>
         </span>
       </p>
 
-      <p class="mt-2.5 text-[11px] leading-relaxed text-ink-faint">{{ def.desc }}</p>
+      <p class="mt-2.5 t-body text-ink-faint">{{ def.desc }}</p>
 
       <div class="ink-divider my-3" />
 

@@ -64,7 +64,7 @@
           <p class="mb-1 font-kai text-[12px] tracking-[0.2em] text-ink-faint">
             功 行 圆 满 · 悟 道
           </p>
-          <p class="mb-2 text-[11px] leading-relaxed text-ink-faint">
+          <p class="mb-2 t-body text-ink-faint">
             此功已修至顶层,可就其中一条道走到底,永久追加下方词条(转世不失)。
             <span class="text-cinnabar">道分歧路,一经择定终身不改。</span>
           </p>

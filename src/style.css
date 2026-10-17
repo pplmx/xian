@@ -53,6 +53,22 @@
    命名规则:语义色名取中国传统色/国画颜料名,不取西式色名(azure/amber 这类)。
    青 = 石青(次色:信息、增益、可前往)。 */
 :root {
+  /*
+   * 暗场专用色 —— **不随主题换肤**,理由与用法都只此一处。
+   *
+   * 有两处界面是「固定近黑底」的全屏演出:灵根鉴定揭晓、穿越传送门。
+   * 它们不铺纸,自然也不该跟着纸的主题换色 —— 亮色主题下把纸上的墨搬上去,
+   * 结果是浅墨写在近黑底上,什么也看不见。
+   *
+   * 从前这两处直接手抄裸值(#c9a959 / #b9b2a0),而 #c9a959 恰好等于**夜间**
+   * 的 gold-ink(#cba35a)。于是它读起来像「抄错了主题」的 bug,每回审配色
+   * 都要重新判断一遍。这里给它们名字:看到 --stage-* 就知道「暗场」是故意的。
+   */
+  --stage-ink-faint: #b9b2a0;
+  /* 传送门副标题用的中性灰:比上面那档冷,因为它要退到金标题身后 */
+  --stage-ink-mute: #a0a0a0;
+  --stage-gold: #c9a959;
+
   --color-paper-rgb: 243 239 228;
   --color-paper-deep-rgb: 234 228 211;
   --color-paper-dark-rgb: 221 213 194;
@@ -855,6 +871,60 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
 .veil-fade-enter-from,
 .veil-fade-leave-to {
   opacity: 0;
+}
+
+/* ================= 排版角色 =================
+
+ *
+ * 配色有一整套 token 与五条判据守着;排版此前什么都没有 —— 只有 design.md 里
+ * 一句「竖版阅读节奏,移动端优先」。于是同一个角色被手写了上百遍,而且写法还不一样:
+ *
+ *   正文   `text-[11px] leading-relaxed text-ink-faint`   —— 全文 62 处逐字重复
+ *   正文   `text-[11px] leading-relaxed text-ink-soft`    —— 35 处
+ *   卡名   font-kai + 14px + tracking-{widest|.25em|.2em|wider} —— 四种字距并存
+ *
+ * 这些**不是随手写的**,它们是四个真实的排版角色(卡片标题 / 入口卡标题 /
+ * 条目名 / 正文)。问题只在于：角色没有名字，所以每写一个新卡片就得凭印象抄一遍，
+ * 抄得不一致也没人发现 —— 而字号档位那轮(9/12/13 私档)正是这么长出来的。
+ *
+ * 故这里给角色命名。**只有四个**，不多造：
+ *   .t-card   卡片题头(收进卡片上方那一行,字距最紧)
+ *   .t-entry  入口卡/列表项的标题(比卡片题头松一档)
+ *   .t-item   卡内条目名(松到 0.25em,读作「这一条的名字」)
+ *   .t-body   正文一句话(11px,双倍行距)
+ *   .t-note   脚注(10px,紧跟着正文,不另起一行)
+ *
+ * 用法约定:装饰性间距/颜色仍用 utility 拼(如 mt-1、text-qing),
+ * 角色只管「字号 + 字距 + 行高 + 字重」这四样到底该是什么。
+ */
+.t-card {
+  font-family: var(--font-kai);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  color: rgb(var(--color-ink-rgb));
+}
+.t-entry {
+  font-family: var(--font-kai);
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  line-height: 1.4;
+  color: rgb(var(--color-ink-rgb));
+}
+.t-item {
+  font-family: var(--font-kai);
+  font-size: 14px;
+  letter-spacing: 0.25em;
+  line-height: 1.4;
+  color: rgb(var(--color-ink-rgb));
+}
+.t-body {
+  font-size: 11px;
+  line-height: 1.625; /* = leading-relaxed */
+}
+.t-note {
+  font-size: 10px;
+  line-height: 1.625;
 }
 
 /* ================= 组件层 ================= */

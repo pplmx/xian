@@ -82,7 +82,7 @@
         <p
           v-for="t in tendencies"
           :key="t.element"
-          class="flex gap-2 text-[11px] leading-relaxed text-ink-soft"
+          class="flex gap-2 t-body text-ink-soft"
         >
           <span class="shrink-0 font-kai" :style="{ color: ELEMENTS[t.element].color }">{{
             ELEMENTS[t.element].char

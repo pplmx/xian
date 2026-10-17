@@ -36,7 +36,7 @@
             >第 {{ row.world.start + 1 }}–{{ row.world.end + 1 }} 境</span
           >
         </div>
-        <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ row.world.desc }}</p>
+        <p class="mt-0.5 t-body text-ink-faint">{{ row.world.desc }}</p>
         <div class="mt-2 space-y-2">
           <div
             v-for="cell in row.realms"
@@ -66,8 +66,8 @@
               >
             </p>
             <!-- 一句提要 + 一段释文:提要走 ink-soft、释文走 faint,两级靠颜色分而非靠留白 -->
-            <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ cell.def.desc }}</p>
-            <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ cell.def.lore }}</p>
+            <p class="mt-0.5 t-body text-ink-soft">{{ cell.def.desc }}</p>
+            <p class="mt-0.5 t-body text-ink-faint">{{ cell.def.lore }}</p>
             <!-- 此境所据何典:把「境界 → 原典」这条来路直接摆在该境底下 -->
             <!-- 所据何典:点一下就跳到「典籍」那一册 —— codex 要能顺着来路追下去 -->
             <p
@@ -106,7 +106,7 @@
             <span class="chip-ink !text-[10px]">{{ c.school }}</span>
             <span class="text-[10px] text-ink-faint">{{ c.source }}</span>
           </p>
-          <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">{{ c.gist }}</p>
+          <p class="mt-1 t-body text-ink-soft">{{ c.gist }}</p>
           <!-- 相涉何境:点一下跳回「界域」那一段 —— 反向也能追 -->
           <p
             v-if="c.realms.length"
@@ -134,7 +134,7 @@
         :hint="`${cnNumber(TRIGRAMS.length)}卦为体,${cnNumber(HEXAGRAMS.length)}卦为用`"
       />
       <section class="card-ink px-4 py-3">
-        <p class="text-[11px] leading-relaxed text-ink-faint">
+        <p class="t-body text-ink-faint">
           「易」不是书斋里的摆设:八卦各主一事之势,重卦由上下相叠 ——
           下卦为身,上卦为境,故一卦之力是内外相济的两股。摇得之卦在身,过时自散。
         </p>
@@ -160,13 +160,13 @@
           <div class="mt-1.5 space-y-0.5 font-kai text-[11px] tracking-[0.2em] text-ink-soft">
             <p v-for="(bar, i) in drawnLines" :key="i">{{ bar }}</p>
           </div>
-          <p class="mt-1.5 text-[11px] leading-relaxed text-ink-soft">
+          <p class="mt-1.5 t-body text-ink-soft">
             {{ currentReading.hexagram.gist }}
           </p>
           <p
             v-for="(line, i) in counsel"
             :key="`c${i}`"
-            class="mt-0.5 text-[11px] leading-relaxed text-ink-faint"
+            class="mt-0.5 t-body text-ink-faint"
           >
             {{ line }}
           </p>
@@ -217,7 +217,7 @@
             <span class="ml-auto shrink-0 text-[10px] text-jade">宜{{ t.good }}</span>
             <span class="shrink-0 text-[10px] text-cinnabar">忌{{ t.bad }}</span>
           </p>
-          <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ t.gist }}</p>
+          <p class="mt-0.5 t-body text-ink-soft">{{ t.gist }}</p>
         </div>
       </section>
 
@@ -245,7 +245,7 @@
             <span class="w-16 shrink-0 text-[10px] text-ink-faint tabular">
               {{ trigramDef(x.upper)?.symbol }}{{ trigramDef(x.lower)?.symbol }}
             </span>
-            <span class="min-w-0 text-[11px] leading-relaxed text-ink-soft">{{ x.gist }}</span>
+            <span class="min-w-0 t-body text-ink-soft">{{ x.gist }}</span>
           </div>
         </div>
       </section>
@@ -255,7 +255,7 @@
       <!-- 紫微:一世之格,与周易的「一时之机」分工 -->
       <SectionTitle title="紫微" :hint="`${cnNumber(PALACES.length)}宫定一世之格,与问卦分工`" />
       <section class="card-ink px-4 py-3">
-        <p class="text-[11px] leading-relaxed text-ink-faint">
+        <p class="t-body text-ink-faint">
           紫微斗数本当以生辰起五行局再安诸星,游戏内没有生辰 —— 故此门只取
           <b class="text-ink">{{ cnNumber(PALACES.length) }}宫所主</b>与
           <b class="text-ink">{{ cnNumber(STARS.length) }}主星的星性</b
@@ -274,14 +274,14 @@
               row.palace.name
             }}</span>
             <span class="w-24 shrink-0 text-[11px] text-cinnabar">{{ row.starNames }}</span>
-            <span class="min-w-0 text-[11px] leading-relaxed text-ink-faint"
+            <span class="min-w-0 t-body text-ink-faint"
               >{{ row.palace.domain }} · {{ row.palace.use }}</span
             >
           </div>
         </div>
         <div class="mt-2 border-t border-ink/10 pt-2">
           <p class="text-[10px] text-ink-faint">{{ cnNumber(STARS.length) }}主星</p>
-          <p v-for="s in STARS" :key="s.id" class="mt-1 text-[11px] leading-relaxed text-ink-soft">
+          <p v-for="s in STARS" :key="s.id" class="mt-1 t-body text-ink-soft">
             <span class="font-kai text-ink">{{ s.name }}</span>
             <span class="text-ink-faint"> · {{ s.nature }} · {{ s.gist }}</span>
           </p>
@@ -347,7 +347,7 @@
               <span class="w-12 shrink-0 font-kai text-[14px] text-ink">{{ m.name }}</span>
               <span class="w-20 shrink-0 text-[10px] text-ink-faint">{{ m.fullName }}</span>
               <span class="w-12 shrink-0 text-[10px] text-ink-faint">{{ m.domain }}</span>
-              <span class="min-w-0 text-[11px] leading-relaxed text-ink-soft">{{ m.good }}</span>
+              <span class="min-w-0 t-body text-ink-soft">{{ m.good }}</span>
             </div>
           </template>
         </div>
@@ -358,7 +358,7 @@
       <!-- 奇门:九宫八门,择门而入 -->
       <SectionTitle title="奇门" :hint="`九宫${cnNumber(GATES.length)}门,择门而入`" />
       <section class="card-ink px-4 py-3">
-        <p class="text-[11px] leading-relaxed text-ink-faint">
+        <p class="t-body text-ink-faint">
           {{ cnNumber(GATES.length) }}门依洛书九宫排布:{{ luoshuGatesText }}。
           远征启程前可择一门入界 —— 不是与天道立契(那换的是道源), 择门改的是这一趟的<b
             class="text-ink"
@@ -378,7 +378,7 @@
             <span class="w-20 shrink-0 text-[10px] text-ink-faint tabular"
               >{{ g.gua }}{{ g.direction }} · {{ g.palace }}宫 · {{ g.kind }}</span
             >
-            <span class="min-w-0 text-[11px] leading-relaxed text-ink-soft"
+            <span class="min-w-0 t-body text-ink-soft"
               >{{ g.gist }}<br /><span
                 v-if="gateRuleSummary(g.rules)"
                 class="mt-0.5 inline-block text-[10px] tabular text-ink-faint"

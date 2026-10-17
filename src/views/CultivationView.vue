@@ -746,7 +746,7 @@
             </button>
             <p
               v-if="activeGongfaItems.length === 0"
-              class="empty-note px-4 py-6 text-center text-[11px] leading-relaxed text-ink-faint"
+              class="empty-note px-4 py-6 text-center t-body text-ink-faint"
             >
               <span
                 class="mx-auto mb-2 grid h-7 w-7 place-items-center rounded-md bg-cinnabar/6 font-kai text-[14px] text-cinnabar"

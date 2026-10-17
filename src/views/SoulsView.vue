@@ -3,7 +3,7 @@
     <!-- 未至真仙 -->
     <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
       <p class="font-kai text-[22px] tracking-[0.4em] text-ink">器 魂</p>
-      <p class="mt-4 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mt-4 t-body text-ink-faint">
         凡器未历天道,何来形意。
         <br />
         修至
@@ -43,7 +43,7 @@
             改法:一句结论常驻(器魂是什么、从哪来),细节收进「怎么个章法」——
             想知道的人点开,不想知道的人不必先读两百字。
           -->
-          <p class="text-[11px] leading-relaxed text-ink-soft">
+          <p class="t-body text-ink-soft">
             凡器入炉,锋芒被天道磨去几分,那份
             <span class="text-gold-ink">路数</span>却留了下来 —— 这就是器魂:
             攻防血照常作数,它是在其上多给一条路数。
@@ -56,10 +56,10 @@
             {{ soulIntroOpen ? "▾ 收起" : "▸ 怎么个章法" }}
           </button>
           <div v-if="soulIntroOpen" class="mt-1 space-y-1.5">
-            <p class="text-[11px] leading-relaxed text-ink-faint">
+            <p class="t-body text-ink-faint">
               以凡器入炉,形销而意存,得器魂一缕。神魂只容 {{ SOUL_SLOTS }} 缕——取舍便是构筑。
             </p>
-            <p class="text-[11px] leading-relaxed text-ink-faint">
+            <p class="t-body text-ink-faint">
               至于堆叠本身,天道自有应对:构筑越厚,守关者的道之理解越深;境界未及此界者,还会被境界压制。
             </p>
           </div>
@@ -127,7 +127,7 @@
             >意</span
           >
           <span class="min-w-0 flex-1">
-            <span class="block font-kai text-[14px] tracking-widest text-ink">散置形意</span>
+            <span class="block t-card">散置形意</span>
             <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
               {{
                 idleSouls.length > 0
@@ -150,7 +150,7 @@
             >炼</span
           >
           <span class="min-w-0 flex-1">
-            <span class="block font-kai text-[14px] tracking-widest text-ink">凝炼台</span>
+            <span class="block t-card">凝炼台</span>
             <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
               {{
                 refinable.length > 0
@@ -187,7 +187,7 @@
             <p class="text-[10px] text-ink-faint">凝自「{{ soulDetail.fromName }}」</p>
           </div>
         </div>
-        <p class="mt-3 text-[11px] leading-relaxed text-ink-soft">{{ soulModText(soulDetail) }}</p>
+        <p class="mt-3 t-body text-ink-soft">{{ soulModText(soulDetail) }}</p>
       </template>
       <template #footer>
         <div v-if="soulDetail" class="flex w-full gap-2">
@@ -251,7 +251,7 @@
           </div>
         </div>
       </div>
-      <p v-else class="px-4 py-6 text-center text-[11px] leading-relaxed text-ink-faint">
+      <p v-else class="px-4 py-6 text-center t-body text-ink-faint">
         并无闲置形意。
         <br />
         <span class="text-[10px]">凝出的器魂若已尽数装配,此处便空着</span>
@@ -263,7 +263,7 @@
 
     <!-- 凝炼台 -->
     <BaseModal :open="forgeOpen" title="凝炼台" @close="forgeOpen = false">
-      <p class="mb-2 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mb-2 t-body text-ink-faint">
         入炉即毁原器,耗道源 {{ SOUL_REFINE_COST }}。
         <!-- 付不起置灰+列差(与秘境道源/聚气丹同款):灰按钮不告诉差多少等于没说完 -->
         <span v-if="refineShort > 0" class="text-cinnabar"
@@ -324,7 +324,7 @@
           </div>
         </div>
       </div>
-      <p v-else class="px-4 py-6 text-center text-[11px] leading-relaxed text-ink-faint">
+      <p v-else class="px-4 py-6 text-center t-body text-ink-faint">
         行囊中无可凝之器。
         <br />
         <span class="text-[10px]">已穿戴、已上锁、或无任何词条的法器都入不得炉</span>

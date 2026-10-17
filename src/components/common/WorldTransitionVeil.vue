@@ -16,7 +16,7 @@
         <p class="mt-1.5 font-kai text-[25px] leading-none tracking-[0.45em] text-cinnabar">
           {{ rite.name }}
         </p>
-        <p class="mt-2 max-w-[230px] text-center text-[11px] leading-relaxed text-ink-soft">
+        <p class="mt-2 max-w-[230px] text-center t-body text-ink-soft">
           {{ rite.desc }}
         </p>
       </div>

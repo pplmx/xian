@@ -157,7 +157,7 @@
           >炉</span
         >
         <span class="min-w-0 flex-1">
-          <span class="block font-kai text-[14px] tracking-widest text-ink">开炉炼丹</span>
+          <span class="block t-card">开炉炼丹</span>
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
             {{
               recipes.length > 0
@@ -179,7 +179,7 @@
           >坊</span
         >
         <span class="min-w-0 flex-1">
-          <span class="block font-kai text-[14px] tracking-widest text-ink">灵草坊</span>
+          <span class="block t-card">灵草坊</span>
           <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
             灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,道品
             {{ formatGN(herbBuyPrice(5)) }} 灵石一株
@@ -279,7 +279,7 @@
               artifactLevelLabel(row.owned.level)
             }}</span>
           </div>
-          <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">{{ row.def.desc }}</p>
+          <p class="mt-1.5 t-body text-ink-faint">{{ row.def.desc }}</p>
           <p class="mt-1 text-[11px] text-qing">
             {{ passiveLines(row.def.id, row.owned.level).join(" · ") }}
           </p>
@@ -366,7 +366,7 @@
             <p class="text-[11px] text-ink-faint tabular">持有 ×{{ currentPill.count }}</p>
           </div>
         </div>
-        <p class="mt-3 text-[11px] leading-relaxed text-ink-soft">{{ currentPill.def.desc }}</p>
+        <p class="mt-3 t-body text-ink-soft">{{ currentPill.def.desc }}</p>
         <!-- 效果与来路:丹药卡片此前只有风味与数量,服下去会怎样一个字都没说 -->
         <p class="mt-2 whitespace-pre-line text-[11px] leading-relaxed text-qing">
           {{ pillFuncText(currentPill.def) }}
@@ -443,7 +443,7 @@
             </span>
           </div>
         </template>
-        <p class="mt-3 text-[11px] leading-relaxed text-ink-soft">{{ currentMaterial.desc }}</p>
+        <p class="mt-3 t-body text-ink-soft">{{ currentMaterial.desc }}</p>
       </template>
       <template #footer>
         <button class="btn-seal w-full" @click="materialDetail = null">收 起</button>
@@ -452,7 +452,7 @@
 
     <!-- 灵草坊(ISS-306):灵石购草 —— 五品明码标价,只进不出 -->
     <BaseModal :open="marketOpen" title="灵草坊" @close="marketOpen = false">
-      <p class="mb-3 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mb-3 t-body text-ink-faint">
         灵石买草,童叟无欺。<span class="text-ink-soft">草比石贵</span>——凡品
         {{ formatGN(herbBuyPrice(1)) }} 灵石一株, 道品
         {{ formatGN(herbBuyPrice(5)) }}
@@ -699,7 +699,7 @@
           </div>
         </div>
       </div>
-      <p v-else class="px-1 py-6 text-center text-[11px] leading-relaxed text-ink-faint">
+      <p v-else class="px-1 py-6 text-center t-body text-ink-faint">
         你还不知道任何丹方。
         <br />
         <span class="text-[10px]">去藏经阁参悟,或向师长讨教,新方自会翻出</span>
@@ -783,7 +783,7 @@
         这段文案此前承诺了两件事(手动筛选 + 自动回收),于是和「智能收纳」的保留线打架:
         玩家把保留线设在灵品,却因为这里勾过玄品而被自动扔掉玄品。现在这一页只管手动那一次。
       -->
-      <p class="text-[11px] leading-relaxed text-ink-faint">
+      <p class="t-body text-ink-faint">
         勾选要分解的品质,已佩戴与上锁的装备不受影响。勾选会被记住,但<b class="text-ink"
           >只管这一页的手动分解</b
         >
@@ -822,10 +822,10 @@
 
     <!-- 智能收纳弹窗入口共用分解弹窗下方 -->
     <BaseModal :open="smartOpen" title="智能收纳" @close="smartOpen = false">
-      <p class="text-[11px] leading-relaxed text-ink-faint">
+      <p class="t-body text-ink-faint">
         开启后,新掉落先过智能裁决:无缘之物直接化尘不入包;行囊满时,值得收藏的新件会挤掉包内最弱的无缘旧物(品质低的先走,同档看层级与词条)。识别不只看品质:流派核心词条、组合技部件、成套共鸣件、条条近满的词条都算值得留。
       </p>
-      <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mt-1 t-body text-ink-faint">
         你强化过、重铸过、封存过词条的件,自动收纳一律不动 ——
         要扔得你自己动手(单件分解,或勾选该品质的一键分解)。
       </p>

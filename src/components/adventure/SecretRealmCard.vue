@@ -35,7 +35,7 @@
 
     <!-- 在境中 -->
     <template v-if="state">
-      <p class="mt-1.5 text-[11px] leading-relaxed text-ink-soft">
+      <p class="mt-1.5 t-body text-ink-soft">
         {{ def?.name }} · {{ def?.desc }}
       </p>
       <p class="mt-1 text-[10px] leading-relaxed text-violet-ink">
@@ -160,7 +160,7 @@
       <span class="font-kai text-[15px] tracking-[0.2em] text-ink">秘境</span>
       <span class="chip-ink !text-[9px]">{{ gate === "celestial" ? "天界秘境" : "凡境秘境" }}</span>
     </p>
-    <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+    <p class="mt-1.5 t-body text-ink-faint">
       {{ gate === "celestial" ? "天界册 · 真仙起(道源)" : "凡境册 · 元婴起(灵石)" }}
     </p>
   </section>

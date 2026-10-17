@@ -56,18 +56,27 @@ let stopTimers: (() => void) | null = null;
 /** 卸载后不再回填定时器,也不再回调 onDone(防路由切换后仍被 2200ms 定时器推回首页) */
 let unmounted = false;
 
+/**
+ * 兜底色 —— 只在 GRADES 里找不到对应灵根时用(理论上不该发生)。
+ *
+ * 为什么是字面值而不是 var(--stage-gold):这三处走的是 `:style` 绑定的
+ * **颜色字符串**,不是 CSS 规则里的声明,`var()` 在这里拼不出可用值。
+ * 故与 style.css 的 --stage-gold 保持同值(暗场金),两处要一起改。
+ */
+const STAGE_GOLD = "#c9a959";
+
 const currentName = computed(() =>
   animating.value ? (GRADES[cycleIdx.value]?.name ?? "?") : realName,
 );
 const currentColor = computed(() =>
-  animating.value ? (GRADES[cycleIdx.value]?.color ?? "#c9a959") : realColor,
+  animating.value ? (GRADES[cycleIdx.value]?.color ?? STAGE_GOLD) : realColor,
 );
 /** 读屏播报的定稿句(动画未完时为空,不抢读) */
 const settleText = computed(() => (animating.value ? "" : `灵根鉴定完毕:${realName}`));
 
 /** 真实灵根(结束时定格显示) */
 let realName = "?";
-let realColor = "#c9a959";
+let realColor = STAGE_GOLD;
 
 /** 展示灵根鉴定动画:随机闪现所有灵根品阶,结束时定格真实 gradeName */
 function show(gradeName: string, onDone?: () => void): void {
@@ -79,7 +88,7 @@ function show(gradeName: string, onDone?: () => void): void {
   stopTimers = null;
   realName = gradeName;
   // 灵根品阶越高颜色越亮(从 GRADES 里找真实灵根对应的颜色)
-  realColor = GRADES.find((g) => g.name === gradeName)?.color ?? "#c9a959";
+  realColor = GRADES.find((g) => g.name === gradeName)?.color ?? STAGE_GOLD;
   visible.value = true;
   animating.value = true;
   // 随机闪现所有灵根品阶(100ms 一次,约 20 次后显出真容)
@@ -139,6 +148,7 @@ defineExpose({ show });
 .root-bg-1 {
   width: 340px;
   height: 340px;
+  /* 朱砂光斑(亮色档)—— 同上,暗场专用,不随主题 */
   background: rgba(168, 63, 57, 0.6);
   top: -80px;
   right: -40px;
@@ -148,8 +158,12 @@ defineExpose({ show });
 .root-bg-2 {
   width: 280px;
   height: 280px;
-  /* 原用西式 azure rgba(79,118,153,.5) —— design.md 否决的那档;鉴定场固定近黑不换肤,
-     故用 design.md 指定的替代 #2C5A7D 这档(与 linggenGen 上灵根同源) */
+  /*
+   * 暗场氛围光斑 —— 固定近黑底,不随纸的主题换肤,故直接用石青的字面色值
+   * (44 90 125,即亮色主题的 qing)。这里**不能**写 var(--color-qing):
+   * 夜间主题会把 qing 翻成浅蓝(124 166 200),落在近黑底上会亮得刺眼。
+   * 原用西式 azure rgba(79,118,153,.5) 是 design.md 否决的那一档,已换掉。
+   */
   background: rgb(44 90 125 / 0.5);
   bottom: -60px;
   left: -50px;
@@ -179,7 +193,7 @@ defineExpose({ show });
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--color-gold-ink, #c9a959) 0%, transparent 100%);
+  background: radial-gradient(circle, var(--stage-gold) 0%, transparent 100%);
   opacity: 0;
   animation: root-particle-rise 2s ease-out infinite;
 }
@@ -296,7 +310,7 @@ defineExpose({ show });
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--color-gold-ink, #c9a959);
+  border: 2px solid var(--stage-gold);
   z-index: 2;
 }
 
@@ -311,7 +325,7 @@ defineExpose({ show });
 
 .root-ring {
   position: absolute;
-  border: 1px solid var(--color-gold-ink, #c9a959);
+  border: 1px solid var(--stage-gold);
   border-radius: 50%;
   opacity: 0.5;
 }
@@ -369,7 +383,7 @@ defineExpose({ show });
   letter-spacing: 0.4em;
   /* 固定近黑鉴定场上的装饰性标题:浅米白在近黑底上可读(design.md 因「纸上放不下
      第四档」撤掉的最淡墨 tier,此处只作暗场点缀保留,非纸上正文,不随主题换肤) */
-  color: #b9b2a0;
+  color: var(--stage-ink-faint);
   margin: 0;
 }
 

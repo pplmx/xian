@@ -69,7 +69,7 @@
       <SectionTitle title="轮回录" :hint="`宿慧 ${insight}`" />
       <div class="card-ink px-4 py-3">
         <p class="flex items-center gap-2">
-          <span class="font-kai text-[14px] tracking-widest text-ink">{{ stage.name }}</span>
+          <span class="t-card">{{ stage.name }}</span>
           <span class="text-[10px] text-ink-faint tabular"
             >第 {{ player.reincarnation.count + 1 }} 世</span
           >
@@ -81,7 +81,7 @@
           </span>
           <span v-else class="ml-auto shrink-0 text-[10px] text-gold-ink">此道已至尽头</span>
         </p>
-        <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">{{ stage.desc }}</p>
+        <p class="mt-1 t-body text-ink-faint">{{ stage.desc }}</p>
 
         <!-- 随神魂不灭的那一份 -->
         <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-ink/10 pt-2 text-[11px]">

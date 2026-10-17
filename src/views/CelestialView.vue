@@ -3,7 +3,7 @@
     <!-- 未至真仙 -->
     <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
       <p class="font-kai text-[22px] tracking-[0.4em] text-ink">天 界</p>
-      <p class="mt-4 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mt-4 t-body text-ink-faint">
         天门紧闭,仙光垂落而不可及。
         <br />
         修至
@@ -45,7 +45,7 @@
                 currentDao.name
               }}</span>
             </p>
-            <p class="mt-2 text-[11px] leading-relaxed text-ink-soft">{{ currentDao.desc }}</p>
+            <p class="mt-2 t-body text-ink-soft">{{ currentDao.desc }}</p>
             <!--
               三组文字此前同为 11px,只靠颜色分(青/金/灰)—— 三色都是低饱和,
               并排时读作同一片淡字。改法:给每组一条**自己的小标题**,
@@ -87,7 +87,7 @@
                   .join("、") || "尚无一纯"
               }})
             </p>
-            <p v-if="daoStory" class="mt-1.5 font-kai text-[11px] leading-relaxed text-ink-soft">
+            <p v-if="daoStory" class="mt-1.5 font-kai t-body text-ink-soft">
               「{{ daoStory }}」
             </p>
           </div>
@@ -104,7 +104,7 @@
                 >
                   {{ dao.seal }}
                 </span>
-                <span class="font-kai text-[14px] tracking-widest text-ink">{{ dao.name }}</span>
+                <span class="t-card">{{ dao.name }}</span>
               </p>
               <p class="mt-1.5 text-[10px] leading-relaxed text-ink-faint">{{ dao.desc }}</p>
               <p v-for="(r, i) in dao.ruleText" :key="i" class="mt-0.5 text-[10px] text-qing">
@@ -132,7 +132,7 @@
               >炉</span
             >
             <span class="min-w-0 flex-1">
-              <span class="block font-kai text-[14px] tracking-widest text-ink">天道熔炉</span>
+              <span class="block t-card">天道熔炉</span>
               <span class="block truncate text-[10px] leading-relaxed text-ink-faint"
                 >前尘俗物,皆可熔作道源</span
               >
@@ -149,7 +149,7 @@
               >魂</span
             >
             <span class="min-w-0 flex-1">
-              <span class="block font-kai text-[14px] tracking-widest text-ink">器 魂</span>
+              <span class="block t-card">器 魂</span>
               <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
                 凡器承不住天道,只余形意 · 已凝 {{ endgame.activeSouls.length }}/{{ SOUL_SLOTS }}
               </span>
@@ -324,7 +324,7 @@
                   · 你尚在此境之下,受境界压制</template
                 >
               </p>
-              <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">{{ world.desc }}</p>
+              <p class="mt-1.5 t-body text-ink-faint">{{ world.desc }}</p>
               <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
                 <span v-for="(r, i) in world.ruleText" :key="i">{{ r }}</span>
               </p>
@@ -370,7 +370,7 @@
                 </span>
               </p>
               <template v-if="endgame.voidWorld">
-                <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+                <p class="mt-1.5 t-body text-ink-faint">
                   {{ endgame.voidWorld.desc }}
                 </p>
                 <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
@@ -421,7 +421,7 @@
                 </div>
               </template>
               <template v-else>
-                <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+                <p class="mt-1.5 t-body text-ink-faint">
                   天道以变数织界:随机规则、随机敌阵、随机路线,经天机推演过审方能成形——每一座虚界都独一无二。
                 </p>
                 <button
@@ -444,7 +444,7 @@
           <SectionTitle title="今日天道" hint="日出而题,日落而息" />
           <div class="card-ink mt-2 px-4 py-3">
             <p class="flex items-center gap-2">
-              <span class="font-kai text-[14px] tracking-widest text-ink">{{
+              <span class="t-card">{{
                 dailyWorld?.name
               }}</span>
               <span class="tabular text-[11px] text-ink-soft"
@@ -476,7 +476,7 @@
         <section v-else>
           <SectionTitle title="今日天道" hint="日出而题,日落而息" />
           <div
-            class="empty-note card-ink mt-2 px-4 py-4 text-center text-[11px] leading-relaxed text-ink-faint"
+            class="empty-note card-ink mt-2 px-4 py-4 text-center t-body text-ink-faint"
           >
             今日天道随道途而定 —— 于道途一页择定「此世之路」后,自会在此展开。
           </div>
@@ -508,7 +508,7 @@
               </div>
             </template>
             <template v-else>
-              <p class="text-[11px] leading-relaxed text-ink-faint">
+              <p class="t-body text-ink-faint">
                 天道无常,规则无定。窥探本次变数,再决定是否应战——{{
                   cnNumber(MUTATION_FIGHTS)
                 }}连战,规则叠加。
@@ -542,7 +542,7 @@
                   最佳 {{ endgame.trialRecords[trial.id]!.bestRounds }} 回合
                 </span>
               </p>
-              <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">{{ trial.desc }}</p>
+              <p class="mt-1.5 t-body text-ink-faint">{{ trial.desc }}</p>
               <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
                 <span v-for="(r, i) in trial.ruleText" :key="i">{{ r }}</span>
               </p>
@@ -659,7 +659,7 @@
               v-model="draft.name"
               maxlength="8"
               aria-label="为此挑战书命名(最多八个字)"
-              class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-1.5 font-kai text-[14px] tracking-widest text-ink outline-none focus:border-cinnabar/50"
+              class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-1.5 outline-none focus:border-cinnabar/50 t-card"
               placeholder="为此挑战书命名(如《无盾求生》)"
             />
             <div
@@ -820,7 +820,7 @@
       @close="prepWorldId = null"
     >
       <template v-if="prepWorld">
-        <p class="text-[11px] leading-relaxed text-ink-faint">
+        <p class="t-body text-ink-faint">
           入界一战 → {{ cnNumber(EXPEDITION_ROUTE_LAYERS) }}重择路(沿途道源)→
           界主。层间可回凡界换构筑。启程前,可与天道立契——风险换道源。
         </p>
@@ -867,7 +867,7 @@
           {{ sealedCore.text }}
         </p>
         <!-- 奇门遁甲:择门入界(免费,换的是打法,不碰道源倍数) -->
-        <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
+        <p class="mt-3 t-body text-ink-faint">
           奇门 · 择门入界 —— 立契是与天道做交易,择门是选这一趟从哪一门进:免费,改的是打法。
         </p>
         <div class="mt-1.5 grid grid-cols-4 gap-1.5">
@@ -1045,7 +1045,7 @@
 
     <!-- 天道熔炉 -->
     <BaseModal :open="furnaceOpen" title="天道熔炉" @close="furnaceOpen = false">
-      <p class="mb-2 text-[11px] leading-relaxed text-ink-faint">前尘俗物,皆可熔作道源。</p>
+      <p class="mb-2 t-body text-ink-faint">前尘俗物,皆可熔作道源。</p>
       <div class="card-ink divide-y divide-ink/7 px-4">
         <div v-for="row in furnaceRows" :key="row.rate.resource" class="py-2.5">
           <div class="flex items-center justify-between gap-2">
@@ -1141,7 +1141,7 @@
     <BaseModal :open="pendingDao !== undefined" title="定下道途" @close="pendingDaoId = null">
       <template v-if="pendingDao">
         <p class="font-kai text-[14px] tracking-wider text-ink">{{ pendingDao.name }}</p>
-        <p class="mt-1.5 text-[11px] leading-relaxed text-ink-soft">{{ pendingDao.desc }}</p>
+        <p class="mt-1.5 t-body text-ink-soft">{{ pendingDao.desc }}</p>
         <p v-for="(r, i) in pendingDao.ruleText" :key="i" class="mt-0.5 text-[11px] text-qing">
           · {{ r }}
         </p>
@@ -1201,18 +1201,18 @@
     </BaseModal>
 
     <BaseModal :open="eraOpen" title="天道已变" @close="eraOpen = false">
-      <p v-if="eraMark" class="text-[11px] leading-relaxed text-ink-soft">
+      <p v-if="eraMark" class="t-body text-ink-soft">
         此战录于规则纪元 <span class="tabular text-cinnabar">{{ eraMark.ruleset }}</span
         >,今为 <span class="tabular">{{ RULESET_VERSION }}</span
         >。同界同契,当年的你依当年的规矩取胜 —— 如今再忆,规矩已换。
       </p>
-      <p v-else class="text-[11px] leading-relaxed text-ink-soft">
+      <p v-else class="t-body text-ink-soft">
         纪元变迁史只记改变战斗规则本身的变更,内容增删不入此列。
       </p>
       <div class="mt-2.5 space-y-2">
         <div v-for="c in eraChanges" :key="c.version" class="card-ink px-3 py-2">
           <p class="font-kai text-[11px] tabular text-cinnabar">纪元 {{ c.version }}</p>
-          <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ c.note }}</p>
+          <p class="mt-0.5 t-body text-ink-soft">{{ c.note }}</p>
         </div>
         <p
           v-if="!eraChanges.length"

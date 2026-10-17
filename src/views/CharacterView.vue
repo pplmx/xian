@@ -6,28 +6,49 @@
       于是把三项按权重摊在同一行,读数与「这数怎么来的」同框而不同级。
     -->
     <div class="card-ink px-4 py-3">
-      <div class="flex items-baseline justify-between">
-        <span class="font-kai text-[14px] tracking-[0.2em] text-ink">道 躯</span>
-        <span class="text-[11px] text-ink-faint">攻 · 防 · 血 按权重折算</span>
-      </div>
-      <div data-value-row class="mt-2 flex items-baseline justify-between">
+      <!--
+        这张卡不设卡名 —— 它原叫「道 躯」,与一屏之下的分区标题撞名。
+        卡片题头的作用是「这一张讲什么」,而这张只讲一件事:战力。
+        而「战 力」那一行本身就是它的名字,再加一层题头是多余的一层。
+        右上角那句话交代折算口径,是这张卡唯一需要的旁注。
+      -->
+      <div data-value-row class="flex items-baseline justify-between gap-2">
         <span class="text-[11px] tracking-[0.3em] text-ink-faint">战 力</span>
         <span class="font-kai text-[18px] text-cinnabar tabular">
           <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
         </span>
       </div>
       <!--
-        构成占比:三围的**原始值**归下面「道躯」那一节(那里可点开源流),
-        这里只回答「这个战力数由谁撑起来」—— 占比 = 该项加权后 ÷ 战力合计。
-        两处数字职责不同,不重抄同一批读数。
+        折算口径这句旁注**不能**待在主值行里:200% 缩放档的有效视口只有 ~195px,
+        「战 力」与这句一起放,主值行当场折成两行(layout-check 报过)。
+        主值行只放主读数,旁注自成一行。
       -->
-      <div class="mt-1.5 grid grid-cols-3 gap-2 text-center">
-        <p v-for="row in powerDetailRows" :key="row.label">
-          <span class="block text-[10px] text-ink-faint">{{ row.label }}</span>
-          <span class="block font-kai text-[15px] text-ink tabular">{{
-            formatPercent(row.share, 0)
-          }}</span>
-          <span class="block text-[10px] text-ink-faint tabular">×{{ row.weightText }}</span>
+      <p class="mt-0.5 text-right text-[10px] text-ink-faint">攻 · 防 · 血 按权重折算</p>
+      <!--
+        战力构成 —— 一条按比例分段的横条,不是一个三格数字阵。
+        
+        由来:这里原先摆着「攻击 45% / 防御 19% / 气血 36%」三枚 15px 楷体数字,
+        而一屏之下的「道躯」节又摆着同样三项标签(攻击/防御/气血)的原始值 ——
+        同名的三项在一屏里出现两次、都占主角位置,读者第一反应是「重复了」。
+        
+        职责确实不同(这里是占比、那里是原值),但**不同职责不等于要各占一行大字**:
+        占比这件事本来就是「谁撑起了这个数」,一把横条说得比三个百分数更直接,
+        而且不再与下方三项撞名同框。
+      -->
+      <div class="mt-2">
+        <div class="flex h-1.5 overflow-hidden rounded-sm" role="img" :aria-label="powerShareLabel">
+          <span
+            v-for="row in powerDetailRows"
+            :key="row.label"
+            :style="{ width: `${row.share * 100}%`, background: row.barColor }"
+          />
+        </div>
+        <!-- 图例:小字一行,三项按各自的色点对位 -->
+        <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-ink-faint">
+          <span v-for="row in powerDetailRows" :key="row.label" class="flex items-center gap-1">
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full" :style="{ background: row.barColor }" />
+            {{ row.label }} {{ formatPercent(row.share, 0) }}
+          </span>
         </p>
       </div>
       <div class="ink-divider-mark my-3" />
@@ -76,7 +97,7 @@
         <p
           v-for="t in tendencies"
           :key="t.element"
-          class="flex gap-1.5 text-[11px] leading-relaxed text-ink-faint"
+          class="flex gap-1.5 t-body text-ink-faint"
         >
           <span class="shrink-0 font-kai" :style="{ color: ELEMENTS[t.element].color }">{{
             ELEMENTS[t.element].char
@@ -356,7 +377,7 @@
       @close="identityOpen = false"
     >
       <div v-if="identity" class="space-y-2.5">
-        <p class="text-[11px] leading-relaxed text-ink-soft">{{ identity.narrative }}</p>
+        <p class="t-body text-ink-soft">{{ identity.narrative }}</p>
         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
           <p class="flex justify-between">
             <span class="text-ink-faint">师承</span
@@ -465,7 +486,7 @@
           <span class="mt-0.5 block text-qing">{{ modsText(tappedTalent.mods) }}</span>
         </p>
       </div>
-      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mt-3 t-body text-ink-faint">
         兵解转世保留道果 / 先天之姿 /
         称号等随魂之物;功法回一层,法宝归尘,余者随皮囊散去。金丹境方可自行兵解。
       </p>
@@ -517,7 +538,7 @@
 
     <!-- 逆旅契弹窗:一世一份,签下不可解除;只加难度,不给任何属性或资源 -->
     <BaseModal :open="trialOpen" title="逆旅契" @close="trialOpen = false">
-      <p class="text-[11px] leading-relaxed text-ink-faint">
+      <p class="t-body text-ink-faint">
         道果本是历世所积,却一向只堆在身上。立一份契,把它押在这一世的逆境里——
         契不予你分毫气力,只把路走窄。走完了,它会留在你的履历上。
       </p>
@@ -547,11 +568,11 @@
               }}
             </span>
           </span>
-          <span class="mt-0.5 block text-[11px] leading-relaxed text-ink-soft">{{ t.desc }}</span>
+          <span class="mt-0.5 block t-body text-ink-soft">{{ t.desc }}</span>
           <span class="mt-0.5 block text-[10px] text-ink-faint">{{ t.ruleText }}</span>
         </button>
       </div>
-      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mt-3 t-body text-ink-faint">
         一世只可立一契,立下不可解。转世时契随皮囊散去,履历长存。
       </p>
     </BaseModal>
@@ -564,7 +585,7 @@
     >
       <template v-if="bondDef && bond">
         <p class="font-kai text-[14px] text-ink">{{ bondDef.name }}</p>
-        <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ bondDef.brief }}</p>
+        <p class="mt-0.5 t-body text-ink-faint">{{ bondDef.brief }}</p>
         <p class="mt-2 text-[11px] text-ink-soft">
           {{ TEMPER_NAMES[bondDef.temper] }} · {{ LEAN_NAMES[bondDef.lean] }}道
           <span class="ml-1 text-qing">{{ STAGE_NAMES[bond.stage] }}</span>
@@ -585,8 +606,8 @@
           她开的口,你历次回应:{{ responseLine }}
         </p>
 
-        <p class="mt-3 text-[11px] leading-relaxed text-ink-soft">她所求:{{ bondDef.pursuit }}</p>
-        <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">
+        <p class="mt-3 t-body text-ink-soft">她所求:{{ bondDef.pursuit }}</p>
+        <p class="mt-0.5 t-body text-ink-faint">
           她不越的线:{{ bondDef.taboo }}
         </p>
 
@@ -619,9 +640,9 @@
         <!-- 共同事件:她的诉求与底线在此第一次被玩家看见并回应 -->
         <template v-if="pendingEvent && !bond.fallen && !bond.departed">
           <div class="mt-4 border-t border-ink/10 pt-3">
-            <p class="font-kai text-[14px] tracking-widest text-ink">{{ pendingEvent.title }}</p>
+            <p class="t-card">{{ pendingEvent.title }}</p>
             <p class="text-[10px] text-ink-faint">因何而来:{{ pendingEventTriggers }}</p>
-            <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">{{ pendingEvent.text }}</p>
+            <p class="mt-1 t-body text-ink-soft">{{ pendingEvent.text }}</p>
             <p class="mt-1.5 text-[11px] text-qing">{{ pendingEvent.herWish }}</p>
             <p class="text-[10px] text-ink-faint">{{ pendingEvent.herLimit }}</p>
             <p v-if="herLine" class="mt-1.5 text-[11px] text-gold-ink">{{ herLine }}</p>
@@ -644,12 +665,12 @@
         </template>
         <p
           v-else-if="lastEventText"
-          class="mt-4 border-t border-ink/10 pt-3 text-[11px] leading-relaxed text-ink-soft"
+          class="mt-4 border-t border-ink/10 pt-3 t-body text-ink-soft"
         >
           {{ lastEventText }}
         </p>
       </template>
-      <p v-else class="text-[11px] leading-relaxed text-ink-faint">
+      <p v-else class="t-body text-ink-faint">
         此生尚未遇见谁。人是在路上碰到的,不是挑出来的 —— 多走几处地界,或许自有相逢。
       </p>
 
@@ -675,7 +696,7 @@
     >
       <div v-if="mentorVer" class="space-y-3">
         <p class="font-kai text-[14px] text-ink">{{ mentorVer.mentor?.master }}</p>
-        <p class="text-[11px] leading-relaxed text-ink-soft">「{{ mentorVer.line }}」</p>
+        <p class="t-body text-ink-soft">「{{ mentorVer.line }}」</p>
         <p class="text-[11px] text-ink-faint tabular">
           契合度
           <span
@@ -690,12 +711,12 @@
             {{ mentorVer.affinity.toFixed(2) }}
           </span>
         </p>
-        <p class="text-[11px] leading-relaxed text-ink-faint">
+        <p class="t-body text-ink-faint">
           师承词条(并入终局属性):{{ modsText(mentorVer.mentor?.mods ?? {}) || "—" }}
         </p>
       </div>
       <div v-else class="space-y-2.5">
-        <p class="text-[11px] leading-relaxed text-ink-faint">
+        <p class="t-body text-ink-faint">
           师承是凡界修行者给你的"额外成长思想"。拜入师门,获一条方向性词条;行为与师承相合,师尊自有嘉许,不设惩罚。
         </p>
         <button
@@ -809,21 +830,32 @@ const stats = computed(() => player.finalStats);
  * 调平引擎权重时界面就成了唯一不跟的那处。
  */
 const powerDetailRows = computed(() => {
+  /*
+   * 配色:三条各取语义色之一(攻=朱砂、防=石青、血=石绿)。
+   * 这三个色在本作里本来就分工明确(朱砂=行动/要害,青=信息,玉=生生不息),
+   * 横条借它们分档,不必再造一套调色。
+   */
   const weighted = [
-    { label: "攻击", value: player.finalStats.attack, w: POWER_WEIGHTS.attack },
-    { label: "防御", value: player.finalStats.defense, w: POWER_WEIGHTS.defense },
-    { label: "气血", value: player.finalStats.maxHp, w: POWER_WEIGHTS.maxHp },
+    { label: "攻击", value: player.finalStats.attack, w: POWER_WEIGHTS.attack, bar: "var(--color-cinnabar)" },
+    { label: "防御", value: player.finalStats.defense, w: POWER_WEIGHTS.defense, bar: "var(--color-qing)" },
+    { label: "气血", value: player.finalStats.maxHp, w: POWER_WEIGHTS.maxHp, bar: "var(--color-jade)" },
   ].map((r) => ({ ...r, part: mulN(r.value, r.w) }));
   const total = weighted.reduce((acc, r) => add(acc, r.part), gn(0));
   return weighted.map((r) => ({
     label: r.label,
     value: r.value,
+    barColor: r.bar,
     weightText: `${r.w}`,
     // ratio 自带零分母与指数差钳制,不必在这里另判一遍
     share: ratio(r.part, total),
     hint: `按 ×${r.w} 计入战力`,
   }));
 });
+
+/** 横条的读屏描述 —— 纯视觉的百分比分段,读屏用户也该知道这个数由谁撑起来 */
+const powerShareLabel = computed(() =>
+  powerDetailRows.value.map((r) => `${r.label} ${formatPercent(r.share, 0)}`).join(" · "),
+);
 
 /** 灵根的天然牌面(倾向文案,不含任何数值) */
 const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roots)));

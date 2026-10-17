@@ -352,7 +352,7 @@
         <p
           v-for="s in lore.skills"
           :key="s.name"
-          class="mt-1 text-[11px] leading-relaxed text-ink-soft"
+          class="mt-1 t-body text-ink-soft"
         >
           ·
           <span class="text-ink">{{ s.name }}</span>
@@ -388,7 +388,7 @@
           <p
             v-for="(f, i) in analysis.findings"
             :key="i"
-            class="mt-1 text-[11px] leading-relaxed text-ink-soft"
+            class="mt-1 t-body text-ink-soft"
           >
             · {{ f.text }}
           </p>

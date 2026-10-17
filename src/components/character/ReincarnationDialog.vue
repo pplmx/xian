@@ -75,13 +75,13 @@
             >境地已迁</span
           >
         </p>
-        <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">{{ view.stageDesc }}</p>
+        <p class="mt-1 t-body text-ink-faint">{{ view.stageDesc }}</p>
         <p v-if="view.toNextStage !== null" class="mt-1 text-[11px] text-ink-faint tabular">
           再积 {{ view.toNextStage }} 宿慧,可入下一境地。
         </p>
       </div>
 
-      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mt-3 t-body text-ink-faint">
         丹方、药性、器纹、敌手的路数——这些所知不随皮囊腐朽。 来世睁眼,你累计认得
         <span class="text-ink tabular">{{ view.knownMaterials }}</span>
         味灵材。
@@ -149,7 +149,7 @@
       </p>
 
       <!-- 来世灵根:所见即所得 —— 此行/此根与确认后落账的是同一roll,绝非另掷一卦 -->
-      <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">
+      <p class="mt-0.5 t-body text-ink-faint">
         来世灵根:<span class="font-kai text-ink">{{ view.nextLinggen.gradeName }}</span> · 修炼 ×{{
           view.nextLinggen.growthMult
         }}
@@ -177,7 +177,7 @@
       </p>
       <p
         v-if="view.talentChoices.length === 0"
-        class="mt-2 text-[11px] leading-relaxed text-ink-faint"
+        class="mt-2 t-body text-ink-faint"
       >
         先天之姿已尽数为你所有,此番再无可择——直取轮回便是。
       </p>
@@ -222,7 +222,7 @@
         <p class="font-kai text-[13px] tracking-widest text-gold-ink">
           道统传承 · {{ heritageDef(view.heritageGained)!.name }}
         </p>
-        <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">
+        <p class="mt-1 t-body text-ink-soft">
           {{ heritageDef(view.heritageGained)!.desc }}
         </p>
         <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
@@ -253,7 +253,7 @@
               <span class="font-kai text-[14px] text-ink">{{ t.name }}</span>
               <span class="text-[10px] text-ink-faint tabular">宿慧 +{{ t.insight }}</span>
             </p>
-            <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ t.vow }}</p>
+            <p class="mt-0.5 t-body text-ink-soft">{{ t.vow }}</p>
             <p class="mt-0.5 text-[11px] text-ink-faint">
               {{ t.goal }}
               <span v-if="t.taboo" class="ml-1 text-amber-ink"

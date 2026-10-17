@@ -4,7 +4,7 @@
       <!-- 世界身份占据第一视觉位:标题是这一世的名字,不是通用标签 -->
       <div>
         <h1 class="font-kai text-[19px] tracking-[0.12em] text-ink">{{ view.title }}</h1>
-        <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">本世之界 · {{ view.summary }}</p>
+        <p class="mt-1 t-body text-ink-faint">本世之界 · {{ view.summary }}</p>
         <p class="mt-0.5 text-[11px] text-cinnabar">
           此世命数:{{ view.ruleText
           }}<span class="text-ink-faint">（此世气象之名,其律尚未显化于历练）</span>
@@ -99,17 +99,17 @@
       -->
       <div class="card-ink px-4 py-3">
         <p class="font-kai text-[14px] tracking-widest text-ink-soft">此界从何而来</p>
-        <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+        <p class="mt-1.5 t-body text-ink-faint">
           你睁眼时,天地已成此形。所历地界、途中缓急、镇守之物皆随此世而定,
           <!-- 标点跟着前一句走:单独成行会在窄屏上被折成孤零零一个句号 -->
           <span class="text-ink-soft">这一世之内不会再变。</span>
         </p>
-        <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">
+        <p class="mt-1 t-body text-ink-faint">
           唯有
           <span class="text-violet-ink">兵解转世</span>
           ,方另开一片天地—— 与此世不同的地界、不同的路、不同的规矩。
         </p>
-        <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">
+        <p class="mt-1 t-body text-ink-faint">
           此外诸界仍在,可回
           <span class="text-qing">历练</span>
           处另择他地,不必只走此路。

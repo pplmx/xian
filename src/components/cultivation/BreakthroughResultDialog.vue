@@ -49,12 +49,12 @@
         <p
           v-for="(line, i) in view.tribulationLog"
           :key="i"
-          class="py-0.5 text-[11px] leading-relaxed text-ink-soft"
+          class="py-0.5 t-body text-ink-soft"
         >
           {{ line }}
         </p>
       </div>
-      <p class="mt-3 text-[11px] leading-relaxed text-ink-faint">{{ view.message }}</p>
+      <p class="mt-3 t-body text-ink-faint">{{ view.message }}</p>
     </div>
     <template #footer>
       <button class="btn-seal w-full" @click="close">

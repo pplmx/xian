@@ -260,7 +260,7 @@
       class="card-ink flex items-center justify-between gap-3 px-4 py-3 active:scale-99"
     >
       <span class="min-w-0 flex-1">
-        <span class="block font-kai text-[14px] tracking-widest text-ink">洞府营造</span>
+        <span class="block t-card">洞府营造</span>
         <span class="block truncate text-[10px] leading-relaxed text-ink-faint"
           >经营家业,道途更稳</span
         >
@@ -282,7 +282,7 @@
       @click="veinOpen = true"
     >
       <span class="min-w-0 flex-1">
-        <span class="block font-kai text-[14px] tracking-widest text-ink">灵脉投资</span>
+        <span class="block t-card">灵脉投资</span>
         <span class="block truncate text-[10px] leading-relaxed text-ink-faint"
           >引灵脉入洞府,择一主脉而修</span
         >

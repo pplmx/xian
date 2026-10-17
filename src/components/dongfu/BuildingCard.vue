@@ -13,7 +13,7 @@
       </p>
     </div>
     <!-- 每项效果一行一条:320px 双列卡里散文不再堆成 4~5 行高墙,两列高度也齐 -->
-    <div class="mt-2 grow space-y-0.5 text-[11px] leading-relaxed text-ink-faint">
+    <div class="mt-2 grow space-y-0.5 t-body text-ink-faint">
       <template v-if="level > 0">
         <p v-for="(line, i) in props.def.effectText(level)" :key="i">{{ line }}</p>
       </template>

@@ -43,7 +43,7 @@
       </div>
       <p
         v-if="view.note"
-        class="mt-2 rounded-md bg-ink/4 px-2.5 py-2 text-[11px] leading-relaxed text-ink-soft"
+        class="mt-2 rounded-md bg-ink/4 px-2.5 py-2 t-body text-ink-soft"
       >
         {{ view.note }}
       </p>

@@ -252,7 +252,7 @@
                   转为镇压收益
                 </button>
               </div>
-              <p v-if="!row.canEnter" class="mt-2 text-[11px] leading-relaxed text-ink-faint">
+              <p v-if="!row.canEnter" class="mt-2 t-body text-ink-faint">
                 需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。
               </p>
               <!--
@@ -411,7 +411,7 @@
           @click="begin(m.id)"
         >
           <span>
-            <span class="font-kai text-[14px] tracking-widest text-ink">{{
+            <span class="t-card">{{
               EXPLORE_MODES[m.id].name
             }}</span>
             <span

@@ -276,15 +276,17 @@ function lineStyle(index: number): Record<string, string> {
   font-family: var(--font-kai);
   font-size: 1.8rem;
   font-weight: 700;
-  color: #c9a959;
+  /* 暗场专用色,不随主题换肤 —— 见 style.css 的 --stage-gold */
+  color: var(--stage-gold);
   margin: 0 0 12px;
   letter-spacing: 8px;
-  text-shadow: 0 0 30px rgba(201, 169, 89, 0.8);
+  text-shadow: 0 0 30px color-mix(in srgb, var(--stage-gold) 80%, transparent);
 }
 
 .warp-subtitle {
   font-size: 0.9rem;
-  color: #a0a0a0;
+  /* 中性灰,与标题的暗场金分开两档 —— 见 style.css 的 --stage-ink-mute */
+  color: var(--stage-ink-mute);
   margin: 0;
   letter-spacing: 4px;
   animation: warp-subtitle-pulse 1s ease-in-out infinite;

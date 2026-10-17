@@ -436,3 +436,37 @@ describe("调色板 · 两处手抄关系", () => {
     }
   });
 });
+
+describe("暗场专用色 —— 不随主题换肤,但有名字", () => {
+  /*
+   * 灵根鉴定与穿越传送门铺的是固定近黑底,不铺纸 —— 它们的字色不该跟着纸的主题走。
+   * 但这个「不该」从前只写在某一处注释里,值本身是裸 hex:#c9a959 恰好等于夜间
+   * 的 gold-ink,于是每回审配色都要重新判断一遍「这是抄错了主题,还是故意的」。
+   *
+   * 现在它们有名字(--stage-gold / --stage-ink-faint),判据守两件事:
+   *   一 这两个变量在 :root 里存在,且**不在**改肤的覆盖范围内;
+   *   二 组件里不许再出现裸 hex —— 用变量,或者写明为什么这里必须是字面值。
+   */
+  it("暗场变量在 :root 里定义,且夜间主题不覆盖它们", () => {
+    expect(CSS, "缺 --stage-gold").toMatch(/--stage-gold:\s*#[0-9a-f]{6}/i);
+    expect(CSS, "缺 --stage-ink-faint").toMatch(/--stage-ink-faint:\s*#[0-9a-f]{6}/i);
+    // 夜间块(html[data-theme="dark"] { … })里不许重定义 stage 变量 ——
+    // 重定义了就等于承认它会换肤,而这两个演出本来就是固定暗底
+    const darkBlock = /html\[data-theme="dark"\] \{([\s\S]*?)\n\}/.exec(CSS)?.[1] ?? "";
+    expect(darkBlock, "night 主题里重定义了 --stage-*,暗场不该跟着纸换肤").not.toMatch(
+      /--stage-/,
+    );
+  });
+
+  it("舞台组件不许再手抄裸 hex(变量或常量,二选一)", () => {
+    for (const rel of ["components/common/WarpPortal.vue", "components/common/SpiritRootReveal.vue"]) {
+      const src = readFileSync(resolve(ROOT, "src", rel), "utf-8");
+      const styleBlocks = src.match(/<style[\s\S]*?<\/style>/g) ?? [];
+      const hexes = styleBlocks
+        .join("\n")
+        .match(/#[0-9a-f]{6}\b/gi)
+        ?.filter((h) => !/^#(1a1812|000000|000)$/i.test(h));
+      expect(hexes ?? [], `${rel} 的样式里还有裸 hex —— 改走 var(--stage-*)`).toEqual([]);
+    }
+  });
+});

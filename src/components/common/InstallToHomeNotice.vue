@@ -10,11 +10,11 @@
   -->
   <div v-if="visible" class="card-ink border-qing/30 px-4 py-3">
     <p class="font-kai text-[13px] tracking-wider text-ink">把游戏「添加到主屏幕」</p>
-    <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
+    <p class="mt-1.5 t-body text-ink-faint">
       iOS 在网页七天没被打开之后会清掉它的本地数据 —— 存档就存在那里,连离线缓存一起。
       添加到主屏幕后,游戏以独立应用的样子存在,不受这条规则约束。
     </p>
-    <p class="mt-1.5 text-[11px] leading-relaxed text-ink-soft">
+    <p class="mt-1.5 t-body text-ink-soft">
       用 Safari 打开本页 → 点底部的分享按钮 → 选「添加到主屏幕」。
     </p>
     <button

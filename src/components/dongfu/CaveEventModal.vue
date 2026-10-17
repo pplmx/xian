@@ -71,7 +71,7 @@ const locationLabel = computed(() =>
         ><span class="countdown-slot">{{ formatCountdown(remaining) }}</span> 后自散</span
       >
     </p>
-    <p class="mt-3 font-kai text-[14px] tracking-widest text-ink">{{ event?.title }}</p>
+    <p class="mt-3 t-card">{{ event?.title }}</p>
     <p class="mt-1 text-[12px] leading-relaxed text-ink-soft">{{ event?.desc }}</p>
     <div class="mt-3 space-y-2">
       <button
@@ -80,10 +80,10 @@ const locationLabel = computed(() =>
         class="w-full rounded-lg border border-ink/25 px-4 py-2.5 text-left transition-[transform,background-color] active:scale-98 active:bg-ink/5"
         @click="handleChoose(idx)"
       >
-        <span class="block font-kai text-[14px] tracking-widest text-ink">{{ opt.label }}</span>
+        <span class="block t-card">{{ opt.label }}</span>
         <!-- 风味一行、数值一行:数值由 ui/earlyGameText 从 reward / penalty 现算,
              文案(opt.effect)只剩风味 —— 改 buffs.ts 或 reward 的值,这一行跟着变 -->
-        <span class="mt-0.5 block text-[11px] leading-relaxed text-ink-faint">{{
+        <span class="mt-0.5 block t-body text-ink-faint">{{
           opt.effect
         }}</span>
         <span class="mt-0.5 block text-[11px] leading-relaxed tabular text-jade">{{
