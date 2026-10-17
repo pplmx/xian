@@ -7,7 +7,6 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from "node:f
 import { dirname, join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const ENGINE_DIR = "packages/engine";
 
 /**
  * 分类映射。匹配是路径子串,按数组顺序取第一个命中的分类,故有两条约束:
@@ -413,12 +412,17 @@ console.log(
   `\n  共 ${totalPassed} 过 / ${totalFailed} 败${uncategorized > 0 ? ` · 另有 ${uncategorized} 个未分类` : ""}`,
 );
 
-// —— 文档里的「例数」声称也要守住 ——
-// docs-check.mjs 只数 spec 文件(静态可数);「例」只有跑完测试才知道,故放在这一头:
-// 全量例数 = 本次运行全部断言,本作自己那部分 = 去掉公共库(src 之外的 packages/engine)。
-// 文档(README / docs)若写着与本次运行不符的例数,当场红 —— 加删用例若不同步改文档,这就是它的闸门。
-// 归档豁免(与 docs-check.mjs 同一个 ARCHIVE 口径):`docs/superpowers/plans/**` 是当时的计划存档,
-// 里面引用的例数是**当时**的,拿今天的运行实录去校对历史计划只会逼人改记录。
+// —— 文档里**不许**写用例条数 ——
+//
+// 由来:README 与 development.md 曾把「346 个 spec / 3436 例,本作 266 / 2841」这种
+// 实录数字写进正文。问题是:spec 文件数静态可数(docs-check 能核对),**用例条数只有
+// 跑完才知道** —— 每加删一条用例都要手改两处文档,改漏了 `test:report` 就打红。
+// 于是每次动测试都在做一件与测试无关的杂务,而这个数对读文档的人并没有额外价值:
+// 想知道当前有多少例,`bun run test:report` 每次都会把真实数打在最上面。
+//
+// 故改成反向守卫:文档正文里再出现「N 例」这类实录数,当场红。
+// 只放行两处 —— 归档(docs/superpowers/plans/** 是当时的计划,不该被逼着改记录)
+// 与「不许写例数」这句规则本身的说明文字。
 const ARCHIVE = "docs/superpowers/plans/";
 const DOC_FILES = [
   { rel: "README.md", file: resolve(ROOT, "README.md"), dir: resolve(ROOT) },
@@ -427,7 +431,7 @@ const DOC_FILES = [
     .filter((name) => typeof name === "string" && name.endsWith(".md"))
     // readdirSync 的 recursive 会**原样带上平台分隔符**(Windows 上是 `superpowers\plans\x.md`)。
     // 不归一化的话,下面那条 startsWith 在 Windows 上永远判 false —— 归档豁免静默失效,
-    // 哪天归档里恰好写着「全量 N 个 spec / M 例」,`bun run test:report` 就会在 Windows 上
+    // 哪天归档里恰好写着「N 例」,`bun run test:report` 就会在 Windows 上
     // 假红、在 CI 上真绿,两边看起来都"有理由"。
     // 归一化放在**组装出口**这一处(与 docs-check.mjs 同一处置、同一写法):后面所有拿 rel 的
     // 地方(读文件、报错文案、归档判据)都吃这一份口径,不必各自再 replace 一遍。
@@ -452,20 +456,36 @@ if (unnormalized.length > 0) {
   for (const d of unnormalized.slice(0, 5)) console.error(`  ✗ ${d.rel}`);
   process.exit(1);
 }
-// vitest JSON 里的文件名是绝对路径(`/…/xian/src/…` / `/…/xian/packages/engine/…`),
-// 「本作自己那部分」= 不在公共库目录下的 spec(src 下,与 docs-check 的 hostOnly 同口径)。
-const isEngineFile = (f) => String(f.name ?? "").includes(`/${ENGINE_DIR}/`);
-const hostOnlyResults = (report.testResults ?? []).filter((f) => !isEngineFile(f));
-const realSpecs = (report.testResults ?? []).length;
-const realHostSpecs = hostOnlyResults.length;
-const realCases = (report.testResults ?? []).reduce(
-  (acc, f) => acc + (f.assertionResults ?? []).length,
-  0,
-);
-const realHostCases = hostOnlyResults.reduce(
-  (acc, f) => acc + (f.assertionResults ?? []).length,
-  0,
-);
+
+/**
+ * 命中「N 例」的地方 —— 但跳过两种情况:
+ *   · 行内已经写明这是规则本身的(含「不许写例数」「用例条数不写进文档」);
+ *   · 出现在代码块里的示例命令与目录树,是给人照抄的,不是实录。
+ * 用行号而不是整段匹配:文档里一行一句,报错能直接指到行。
+ */
+/**
+ * 命中「N 例」的地方 —— 但跳过两种:
+ *   · 行内已写明这是规则本身的;
+ *   · 目录树里的注释(以 `#` 开头且不含命令的那类),那是结构说明不是实录。
+ *
+ * **代码块不整体豁免** —— 第一版放了它,理由是「示例命令是给人照抄的」,
+ * 结果 README 里那条 `vp test # 全量用例(346 spec / 3436 例…)` 恰好写在代码块里,
+ * 于是最重要的那处反而漏检。教训:给豁免开的每一个口子,都要想到它会被用来绕过。
+ */
+function caseCountHits(text) {
+  const hits = [];
+  const lines = text.split(/\r?\n/);
+  lines.forEach((line, i) => {
+    if (/(不许写例数|用例条数不写进文档|不写进文档)/.test(line)) return;
+    /*
+     * 只认真正的用例数写法。中文里「条」是通用量词,不能当作用例标记 ——
+     * 第一版把「四条去路」也吃了,判据误报比漏报更伤(它教人开始怀疑判据本身)。
+     */
+    const m = /(\d[\d,]*)\s*(例|个用例|条用例|个断言|条断言)/.exec(line);
+    if (m) hits.push(`第 ${i + 1} 行: ${line.trim().slice(0, 80)}`);
+  });
+  return hits;
+}
 
 const docFailures = [];
 for (const { rel, file } of DOC_FILES) {
@@ -475,30 +495,16 @@ for (const { rel, file } of DOC_FILES) {
   } catch {
     continue;
   }
-  // 全量 N 个 spec / M 例
-  for (const [, specs, cases] of text.matchAll(/全量 (\d+) 个 spec \/ (\d+) 例/g)) {
-    if (Number(specs) !== realSpecs)
-      docFailures.push(`${rel}: 写着「全量 ${specs} 个 spec」,实际 ${realSpecs} 个`);
-    if (Number(cases) !== realCases)
-      docFailures.push(`${rel}: 写着「全量 ${specs} 个 spec / ${cases} 例」,实际 ${realCases} 例`);
-  }
-  // 本作自己那部分 N 个 / M 例(同一行连着写)
-  for (const [, specs, cases] of text.matchAll(/本作自己那部分 (\d+) 个 \/ (\d+) 例/g)) {
-    if (Number(specs) !== realHostSpecs)
-      docFailures.push(`${rel}: 写着「本作自己那部分 ${specs} 个 spec」,实际 ${realHostSpecs} 个`);
-    if (Number(cases) !== realHostCases)
-      docFailures.push(
-        `${rel}: 写着「本作自己那部分 ${specs} 个 / ${cases} 例」,实际 ${realHostCases} 例`,
-      );
+  for (const hit of caseCountHits(text)) {
+    docFailures.push(`${rel} ${hit} —— 文档只记 spec 文件数,用例条数不写进文档`);
   }
 }
 if (docFailures.length > 0) {
-  console.log("  ✗ 文档里的测试例数与本次运行对不上（加删用例后忘了同步文档）:");
+  console.log("  ✗ 文档里又写回了用例条数（它每次都变,不该记在文档里）:");
   for (const f of docFailures) console.log(`      ${f}`);
 }
 console.log("");
 
-/**
 /**
  * 退出码的**原因**要写在最后一行。
  *
@@ -507,7 +513,7 @@ console.log("");
  * 报告就少算了它)。把原因印出来,"0 败 + 退出 1" 这种组合以后再也不会被误读成 flake。
  */
 const docFailure =
-  docFailures.length > 0 ? `文档里的测试例数与本次运行对不上(${docFailures.length} 处)` : "";
+  docFailures.length > 0 ? `文档里又写回了用例条数(${docFailures.length} 处)` : "";
 const failureReason =
   totalFailed > 0
     ? `有用例失败或跳过(${totalFailed} 个)`
