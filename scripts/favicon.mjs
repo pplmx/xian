@@ -9,17 +9,20 @@
  * 每一次冷启动走一遍网络。ICO 里塞 256 是「图标包里放了一张原图」,
  * 不是「favicon 需要 256」。
  *
- * ## 母图为什么不从 public/ 取
+ * ## 母图就是安装图标那一枚
  *
- * 这枚标签页图标是一幅写意山水(山涧、瀑布、崖上的人),与 PWA 安装图标
- * (`public/icons/icon-512.png` 那枚平涂的山月)**不是同一张画** —— 浏览器里一枚、
- * 装到桌面是另一枚,这个不一致原样留着,本轮只做瘦身、不换画。
- * 故母图放 `images/brand/`(仓库内、不进产物):public/ 下的东西都会被打包发出去,
- * 把 130 KB 的原图放那儿等于瘦了个寂寞。
+ * 标签页图标此前是一幅**写意山水**(山涧、瀑布、崖上的人),与 PWA 安装图标
+ * (`public/icons/icon-512.png` 的平涂山月)、`apple-touch-icon.png` 都不是同一张画 ——
+ * 浏览器里一枚、装到桌面是另一枚。而且那幅画在 16px 下糊成一团暖色的雾,
+ * 标签页里根本读不出画的是什么。
+ *
+ * 现在统一从 `icon-512.png` 派生:标签页、桌面快捷方式、安装图标是同一枚。
+ * 判据见 src/ui/favicon.spec.ts —— 连「生成器读的是不是这一张」与「两者主色是否
+ * 同一个东西」都核。
  *
  * ## 用法
  *
- *   bun run build:favicon        # 读 images/brand/favicon-source-128.png
+ *   bun run build:favicon        # 读 public/icons/icon-512.png
  *
  * 换画就换那张母图再重跑,别手工改 .ico —— 判据见 src/ui/favicon.spec.ts:
  * 条目只许 16/32/48,体积不许超预算。
@@ -36,7 +39,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SOURCE = join(ROOT, "images/brand/favicon-source-128.png");
+const SOURCE = join(ROOT, "public/icons/icon-512.png");
 const OUT = join(ROOT, "public/favicon.ico");
 /** 标签页 16、高分屏 32、桌面「大图标」48 —— 再大就没有调用方了 */
 const SIZES = [16, 32, 48];
