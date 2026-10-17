@@ -463,7 +463,22 @@
         }}</span>
       </div>
 
-      <div class="mt-2">
+      <!--
+        先天之姿要有自己的名字。
+
+        截图里这排芯片直接接在逆旅契卡片下方,没有任何标题 —— 读者看到的是
+        「一张卡片后面冒出一串彩色词」,像是逆旅契的附录。而它们其实是转世
+        带得走的那批东西里最要紧的一样。
+
+        「{n} 项」跟在标题后面:数目本身就是玩家想知道的一半。
+      -->
+      <div class="mt-3 flex items-baseline justify-between">
+        <span class="font-kai text-[14px] tracking-[0.25em] text-ink">先天之姿</span>
+        <span v-if="ownedTalents.length" class="text-[10px] text-ink-faint tabular"
+          >{{ ownedTalents.length }} 项</span
+        >
+      </div>
+      <div class="mt-1.5">
         <div class="flex flex-wrap gap-1.5">
           <!-- 天赋效果不再只藏 hover:点一下芯片,下面展开一行说明(手机上看得见才算数) -->
           <button
@@ -509,8 +524,21 @@
         <span>转世去留一览({{ keepCount }} 留 · {{ resetCount }} 去)</span>
         <span class="text-[10px] text-qing">{{ heritageOpen ? "▾ 收 起" : "▸ 展 开" }}</span>
       </button>
-      <div v-if="heritageOpen" class="mt-1.5 rounded-md bg-paper-deep/60 px-3 py-2">
-        <p class="text-[10px] text-ink-faint">随魂留存 / 归尘 · 与结算同表</p>
+      <!--
+        列表自带一个滚动区(max-h-64),而不是靠整块面板滚 —— 面板滚的话,列表尾
+        会被页脚按钮齐齐切掉,看起来像「列表到此为止」。外圈套 .scroll-fade
+        负责在底边淡出一层(见 style.css):还有下文时那一截是虚的。
+      -->
+      <div v-if="heritageOpen" class="scroll-fade mt-1.5">
+        <div class="scroll-pane max-h-64 overflow-y-auto rounded-md bg-paper-deep/60 px-3 py-2">
+        <!--
+          两组各带一枚色点与自己的小标:一条细线分不开「留下」与「归尘」这两件相反的事。
+          上组(随魂)走玉色、下组(归尘)走淡墨 —— 颜色在这一屏就是结论。
+        -->
+        <p class="flex items-center gap-1.5 text-[10px] text-jade">
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-jade" aria-hidden="true" />
+          随魂留存
+        </p>
         <div class="mt-1 space-y-1">
           <p
             v-for="row in heritageKeepRows"
@@ -518,9 +546,25 @@
             class="flex items-baseline justify-between gap-2 text-[10px]"
           >
             <span class="text-ink-soft">{{ row.name }}</span>
-            <span class="shrink-0" :class="row.cls">{{ row.modeLabel }}</span>
+            <!--
+              右侧只在**有例外**时才写字。
+              这一组本来就是「随魂留存」,十六行里十三行右侧印着同一句「随魂留存」——
+              重复的组名不提供任何信息,只把真正的例外(折半 / 部分保留)淹掉。
+              组名由上面的色点标题负责;这里只报「不是全额留下」的那几条。
+            -->
+            <span
+              v-if="row.modeLabel !== FULL_KEEP_LABEL"
+              class="shrink-0"
+              :class="row.cls"
+              >{{ row.modeLabel }}</span
+            >
           </p>
-          <div class="my-1 border-t border-ink/6" />
+        </div>
+        <p class="mt-2.5 flex items-center gap-1.5 text-[10px] text-ink-faint">
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-ink/20" aria-hidden="true" />
+          归尘散去
+        </p>
+        <div class="mt-1 space-y-1">
           <p
             v-for="row in heritageResetRows"
             :key="row.id"
@@ -529,6 +573,7 @@
             <span class="text-ink-faint">{{ row.name }}</span>
             <span class="shrink-0" :class="row.cls">{{ row.modeLabel }}</span>
           </p>
+        </div>
         </div>
       </div>
       <template #footer>
@@ -754,6 +799,16 @@
         <p class="t-body text-ink-faint">
           师承是凡界修行者给你的"额外成长思想"。拜入师门,获一条方向性词条;行为与师承相合,师尊自有嘉许,不设惩罚。
         </p>
+        <!--
+          四张拜师卡要能**并着读**。
+
+          拜师是跨世保留的永久抉择(按下之后不改),而这四张卡的门道全在词条上。
+          原先每张只剩一句「攻击 +15% · 气血 +10%」—— 四个师门的项数与字面长短都不同,
+          四句话在卡里各落各的位置,想比「谁加攻击多」得来回扫两遍。
+
+          改成:名号行 → 一句门风 → **词条逐项成芯片、同项同序**。项数多的卡自然长一点,
+          但第一项永远在第一行,眼睛可以直着往下比。
+        -->
         <button
           v-for="m in mentorChoices()"
           :key="m!.id"
@@ -766,14 +821,23 @@
             <span class="text-[11px] text-qing">{{ m!.title }}</span>
             <span
               v-if="hintMentor === m!.id"
-              class="chip-ink ml-1 border-cinnabar/50 text-[10px] text-cinnabar"
+              class="chip-ink border-cinnabar/50 text-[10px] text-cinnabar"
               >机缘引荐</span
             >
             <span class="ml-auto text-[10px] text-ink-faint">{{ m!.master }}</span>
           </p>
-          <p class="mt-0.5 text-[11px] text-ink-faint">{{ m!.desc }}</p>
-          <!-- 拜师是跨世保留的永久抉择:词条数值在按下前就摊开(与已拜后那行同源 modsText,不另拼) -->
-          <p class="mt-1 block text-[11px] text-qing">{{ modsText(m!.mods) }}</p>
+          <p class="mt-0.5 t-body text-ink-faint">{{ m!.desc }}</p>
+          <!-- 词条逐项成芯片:数额在右、等宽数字,同一项在四张卡里总在同一列 -->
+          <div class="mt-1.5 flex flex-wrap gap-1">
+            <span
+              v-for="p in modsPills(m!.mods)"
+              :key="p.name"
+              class="chip-ink gap-1 border-qing/40 !py-0.5 text-[10px] text-ink-soft"
+            >
+              {{ p.name }}
+              <span class="tabular text-qing">{{ p.value }}</span>
+            </span>
+          </div>
         </button>
       </div>
       <template #footer>
@@ -836,7 +900,7 @@ import { cnNumber, formatNum, formatPercent } from "@/utils/format";
 import { add, gn, mulN, ratio } from "@/utils/gnum";
 import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
-import { STAT_NAMES, modsText } from "@/ui/statNames";
+import { STAT_NAMES, modsPills, modsText } from "@/ui/statNames";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import NavCard from "@/components/common/NavCard.vue";
@@ -1027,6 +1091,8 @@ const MODE_LABEL: Record<string, string> = {
   partial: "折半/部分保留",
   reset: "归尘",
 };
+/** 「全额留下」的那一档 —— 组标题已说过,行内不必再说 */
+const FULL_KEEP_LABEL = MODE_LABEL.full;
 const heritageRows = computed(() =>
   HERITAGE.map((r) => ({
     id: r.id,

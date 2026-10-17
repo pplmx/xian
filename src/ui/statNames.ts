@@ -100,8 +100,27 @@ export const STAT_NAMES: Record<AnyStatKey, string> = {
  * (曾有人为它另抄一份,见 uiLayering「界面不重造 modsText」审计)。
  */
 export function modsText(mods: StatMods): string {
+  return modsPills(mods)
+    .map((p) => `${p.name} ${p.value}`)
+    .join(" · ");
+}
+
+/**
+ * 同一份词条的**结构化**版本 —— 给需要「一项一枚、并排对齐」的地方用。
+ *
+ * 为什么要它:师承那四张拜师卡是跨世保留的永久抉择,玩家要在按下之前把四张并着读。
+ * 而四个师门的词条项数不一样、字面长短也不一样,摊成一句「攻击 +15% · 气血 +10%」
+ * 之后,四句在卡里各占一行的不同位置 —— 想比「谁加攻击多」得来回扫两遍。
+ *
+ * 命名与过滤仍走上面那一条口径(本函数是唯一出口,modsText 也读它),
+ * 不存在「界面自己又格式化一遍」的分叉:view 只负责排版,不负责措辞。
+ */
+export function modsPills(mods: StatMods): { name: string; value: string; pct: number }[] {
   return Object.entries(mods)
     .filter(([, v]) => v !== 0)
-    .map(([k, v]) => `${STAT_NAMES[k as AnyStatKey] ?? k} ${formatSignedPercent(v as number)}`)
-    .join(" · ");
+    .map(([k, v]) => ({
+      name: STAT_NAMES[k as AnyStatKey] ?? k,
+      value: formatSignedPercent(v as number),
+      pct: v as number,
+    }));
 }

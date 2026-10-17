@@ -945,6 +945,32 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
 }
 
 /*
+ * 还有下半截时,让底边淡下去(.scroll-fade)
+ *
+ * 「转世去留一览」有三十七条,在 max-h-64 里只露出十几行。列表在最后一行被齐齐
+ * 切断时,读起来就是「到此为止」—— 玩家不会去试「万一还能滚」。
+ *
+ * 渐变遮罩比滚动条可靠:手机上一堆浏览器默认隐藏滚动条,而这一层不管平台都会在。
+ * 用 ::after 盖在容器底部,不吃布局、不吃点击(pointer-events:none),
+ * 到真正的最后一行时它仍在 —— 但那时下面已经没有内容,淡出的是空白,看不出异样,
+ * 这比用 JS 去监听 scroll 判断「是否到底」要省事,也不会在滚动中闪。
+ *
+ * 颜色取自纸色:它要盖掉的正是「内容硬切」这道边,不是加一层阴影。
+ */
+.scroll-fade {
+  position: relative;
+}
+.scroll-fade::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 28px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--color-paper-deep));
+}
+
+/*
  * 卡片 —— 先给它一点厚度
  *
  * 底影之外,沿卡片上缘再压一线内高光。卡面与纸底只差一层色(#F4F0E6 对 #F3EFE4),

@@ -2304,3 +2304,34 @@ describe("入口卡 —— 一件,不是九件", () => {
     expect(nav, "副行该 truncate").toContain("truncate");
   });
 });
+
+describe("滚动区 —— 还有下文时要说出来", () => {
+  /*
+   * 轮回弹窗的「转世去留一览」有三十七条,在 max-h-64 里只露出十几行。
+   * 列表在最后一行被齐齐切断时,读起来就是「到此为止」—— 玩家不会去试「万一还能滚」。
+   * 手机上一堆浏览器默认隐藏滚动条,所以不能指望那条滑块替你说这件事。
+   *
+   * 修法是 .scroll-fade:底边淡出一层。判据守两件事:
+   *   一 类在 style.css 里定义着(不许删定义只留引用);
+   *   二 淡出层不接鼠标/触摸(pointer-events: none),否则它会挡住最后一行。
+   */
+  const STYLE = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+
+  it("scroll-fade 有定义,且不挡点击", () => {
+    expect(STYLE, "缺 .scroll-fade 定义").toMatch(/\.scroll-fade \{/);
+    expect(STYLE, "缺 ::after 淡出层").toMatch(/\.scroll-fade::after \{/);
+    const block = /\.scroll-fade::after \{([\s\S]*?)\}/.exec(STYLE)?.[1] ?? "";
+    expect(block, "淡出层必须 pointer-events: none —— 否则最后一行点不到").toMatch(
+      /pointer-events:\s*none/,
+    );
+  });
+
+  it("长列表自带滚动区,不靠整块面板滚", () => {
+    // 面板滚的话,列表尾会被页脚按钮齐齐切掉(这正是这条判据的由来)
+    const char = FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
+    expect(char, "去留一览要有自己的 max-h + overflow-y-auto").toMatch(
+      /max-h-64 overflow-y-auto/,
+    );
+    expect(char, "外圈要套 scroll-fade").toContain("scroll-fade");
+  });
+});
