@@ -146,7 +146,14 @@ function doTransfer(): void {
             "
           >
             <span>{{ affixDef(affixId)?.name ?? affixId }} →</span>
-            <span>{{ c.item.quality }}·{{ c.item.tier }} 阶</span>
+            <!--
+              `c.item.quality` 是品阶 **id**(excellent / profound / earth),
+              不是给玩家看的名字。坊市货架犯过同一个错 —— 这里同修:
+              取 qualityDef(...).name,并带上品阶色。
+            -->
+            <span :style="{ color: qualityDef(c.item.quality).color }"
+              >{{ qualityDef(c.item.quality).name }}·{{ c.item.tier }} 阶</span
+            >
             <span class="ml-auto">
               {{ c.worn ? "已装备" : "" }}
               {{

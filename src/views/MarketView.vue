@@ -75,13 +75,31 @@ onUnmounted(() => {
 const remainingSec = computed(() => marketRemainingSec(market.stockedAt, now.value));
 
 /**
- * 货架装备预览(确定性实例,只取品质,不落库)。缓成 per-slot 表:
+ * 货架装备预览(确定性实例,只取它与品质,不落库)。缓成 per-slot 表:
  * 只随货架 / 上货时刻重算,不再随每秒的倒计时重掷整件装备(避免每个 tick 生成 6 次)。
+ *
+ * **这里返回结构化对象而不是一个字符串**,是这次修 bug 的关键:
+ * 原先它返回 `generateEquipment(...).quality` —— 那是品阶的 **id**("excellent"),
+ * 而字典类型是 `Record<number, string>`:QualityId 与 name 都是 string,
+ * TypeScript 看不出区别,英文枚举于是就这样印到了货架上。
+ * 现在只有 `qualityName`(中文名)与 `name`(装备名),想印 id 得先绕过类型。
  */
-const previews = computed<Record<number, string>>(() => {
-  const m: Record<number, string> = {};
+interface EquipPreview {
+  name: string;
+  qualityName: string;
+  color: string;
+}
+const previews = computed<Record<number, EquipPreview>>(() => {
+  const m: Record<number, EquipPreview> = {};
   for (const s of market.stock) {
-    if (s.kind === "equipment") m[s.idx] = marketEquipInstance(s, market.stockedAt).quality;
+    if (s.kind !== "equipment") continue;
+    const inst = marketEquipInstance(s, market.stockedAt);
+    const q = qualityDef(inst.quality);
+    m[s.idx] = {
+      name: equipmentTemplate(inst.templateId)?.name ?? "兵刃",
+      qualityName: q.name,
+      color: q.color,
+    };
   }
   return m;
 });
@@ -254,15 +272,27 @@ function bountyShort(o: BountySlot): string | null {
               <p class="text-[10px] text-ink-faint">续洞府生产之料</p>
             </template>
             <template v-else>
+              <!--
+                货架上一件兵刃的主标题该是「它是什么」,不是「它多好」。
+                原先这里印的是「精品·9 层 品质底档精品」—— 品阶名打头、末尾又复述一遍,
+                真正的物件反而没有名字,玩家买完才知道拿的是什么。
+                改成:装备名(品阶色) · 品阶 · 阶数;底档降为副行的一句附注。
+              -->
               <p class="truncate">
-                {{ previews[slot.idx] }}·{{ slot.tier }} 层
+                <span
+                  class="font-kai"
+                  :style="{ color: previews[slot.idx]?.color ?? 'var(--color-ink)' }"
+                  >{{ previews[slot.idx]?.name ?? "兵刃" }}</span
+                >
                 <span class="text-ink-faint"
-                  >品质底档{{
-                    QUALITIES[(slot as { minQualityRank: number }).minQualityRank]?.name ?? ""
-                  }}</span
+                  >· {{ previews[slot.idx]?.qualityName ?? "" }}{{ slot.tier }}阶</span
                 >
               </p>
-              <p class="text-[10px] text-ink-faint">一件已定兵刃,到手即用</p>
+              <p class="text-[10px] text-ink-faint">
+                一件已定兵刃,到手即用 · 底档{{
+                  QUALITIES[(slot as { minQualityRank: number }).minQualityRank]?.name ?? ""
+                }}
+              </p>
             </template>
           </div>
           <span class="text-[11px] tabular text-cinnabar">{{ formatGN(slot.price) }} 灵石</span>
@@ -432,14 +462,25 @@ function bountyShort(o: BountySlot): string | null {
             v-if="market.consign.length < MARKET_CONSIGN_SLOTS"
             class="scroll-pane flex gap-1 overflow-x-auto"
           >
+            <!--
+              这一枚是「挑一件去寄售」的候选。原先印的是 {{ it.quality }} —— 品阶的
+              **id**（excellent / profound / earth），玩家看到的是英文枚举，不是品阶名。
+              而且整枚只有「品阶·阶数·价格」,没有装备名 —— 同一阶数的两件根本分不出。
+              改成:装备名(带品阶色) · 品阶名 · 阶数 · 价。
+            -->
             <button
               v-for="it in inventory.bagItems"
               :key="it.uid"
               class="shrink-0 rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
               @click="consign(it.uid)"
             >
-              {{ it.quality }}·{{ it.tier }}阶 ·
-              {{ formatGN(consignPrice(it.tier, qualityDef(it.quality).rank)) }} 石
+              <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">{{
+                equipmentTemplate(it.templateId)?.name ?? "?"
+              }}</span>
+              <span class="text-ink-faint"
+                >· {{ qualityDef(it.quality).name }}{{ it.tier }}阶 ·
+                {{ formatGN(consignPrice(it.tier, qualityDef(it.quality).rank)) }} 石</span
+              >
             </button>
             <span v-if="inventory.bagItems.length === 0" class="text-[10px] text-ink-faint"
               >行囊空空 —— 去历练中寻些机缘吧</span

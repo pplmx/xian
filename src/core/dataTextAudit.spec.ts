@@ -1337,3 +1337,81 @@ describe("文案数值对账 · 成就与任务说明里的数就是条件数", 
     expect(DAILY_TASKS.length, "日课表空了,判据形同虚设").toBeGreaterThanOrEqual(8);
   });
 });
+
+describe("枚举 id 不许印到界面上 —— 玩家看的是名字,不是 key", () => {
+  /*
+   * 由来:坊市货架上印着「excellent·9 层」「profound·9 层」。
+   *
+   * 根因不是打错字,是**类型擦除**:货架预览字典写成 `Record<number, string>`,
+   * 往里塞的是 `generateEquipment(...).quality` —— 品阶的 **id**。而 QualityId
+   * 与 name 都是 string,TypeScript 看不出区别,编译器一路放行。
+   *
+   * 同一个错在同一页里还并存着正确写法(`qualityDef(it.quality).name`),
+   * 于是它既没被类型拦住,也没被"看起来像英文"的直觉拦住 —— 那确实是英文,
+   * 只是它在数据层是对的、在界面上是错的。
+   *
+   * 修法有两个层次:
+   *   一 把字典改成结构化对象(EquipPreview),id 想混进名字字段就没那么容易;
+   *   二 这条判据 —— 界面里不许直接插值这些"有中文名的枚举字段"。
+   */
+  // 路径相对 src/core(__dirname),与本文件里 src() 辅助函数同一口径
+  const VUE = (rel: string): string => readFileSync(resolve(__dirname, rel), "utf-8");
+  const UI_FILES = [
+    "../views/MarketView.vue",
+    "../views/InventoryView.vue",
+    "../views/CharacterView.vue",
+    "../views/CultivationView.vue",
+    "../views/RealmCodexView.vue",
+    "../components/equipment/AffixTransferPanel.vue",
+    "../components/equipment/EquipmentDetailDialog.vue",
+  ];
+
+  /**
+   * 这些字段在数据层是**英文 id**,在界面上一律要换成 .name。
+   *
+   * 只收确定的:quality / rarity。**grade 不收** —— 同名不同义:
+   * 灵草档位的 grade 是数字 1~5(灵草坊格子里那枚印章大字就是它),
+   * 而天赋等表的 grade 才是英文档位。一个判据按字段名去猜,只会逼人
+   * 给数字也写一层多余映射。
+   */
+  const ENUM_FIELDS = ["quality", "rarity"];
+
+  it("界面里不许直接插值品阶 id", () => {
+    const bad: string[] = [];
+    for (const rel of UI_FILES) {
+      const text = VUE(rel);
+      /*
+       * 只在模板部分找(script 里出现这些字段是合法的:比较、查表、传参)。
+       *
+       * **不能**用 `slice(0, indexOf("<script"))` —— 本库有相当一批文件是
+       * `<script setup>` 写在最前面、模板在后的(坊市就是),那样切出来是空串,
+       * 判据等于什么都没查。写成「取 <template> 到 </template> 之间」才与
+       * 文件里两块的先后无关。
+       */
+      const tpl = /<template>([\s\S]*)<\/template>/.exec(text)?.[1] ?? "";
+      if (!tpl) throw new Error(`${rel}: 没切出模板 —— 判据会静默放过一切,先修它`);
+      // 去注释:示例里常会把坏写法原样引一遍(「原先印的是 {{ x.quality }}」)
+      const live = tpl.replace(/<!--[\s\S]*?-->/g, "");
+      for (const field of ENUM_FIELDS) {
+        // {{ x.field }} 或 {{ x.field }}  —— 直接插值,没有 .name / 函数包裹
+        const re = new RegExp(`\\{\\{[^}]*\\.${field}\\s*\\}\\}`, "g");
+        for (const m of live.matchAll(re)) {
+          bad.push(`${rel}: ${m[0].trim()}`);
+        }
+      }
+    }
+    expect(
+      bad,
+      `这些地方直接把枚举 id 印给了玩家 —— 改走 qualityDef(...).name 之类:${bad.join(" | ")}`,
+    ).toEqual([]);
+  });
+
+  it("货架品阶前缀要用中文名 —— 判据自证", () => {
+    // 自证:上面那条正则真能认出坏样本
+    const sample = '<span>{{ it.quality }}·{{ it.tier }}阶</span>';
+    expect(/\{\{[^}]*\.quality\s*\}\}/.test(sample)).toBe(true);
+    // 正确写法不该被认成坏样本(它是 qualityDef(it.quality).name)
+    const good = "<span>{{ qualityDef(it.quality).name }}</span>";
+    expect(/\{\{[^}]*\.quality\s*\}\}/.test(good)).toBe(false);
+  });
+});
