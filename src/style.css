@@ -1385,9 +1385,20 @@ button.chip-ink:active:not(:disabled) {
 }
 
 /* 战斗定局:败亡一方墨色散去(下一场自动复原) */
+/*
+ * 落败一方:去色、微缩、褪一层 —— 但**名字仍要读得出来**。
+ *
+ * 原先这一档是 `opacity: .45` + `blur(0.6px)`:整个方块像被擦掉,敌人叫什么
+ * 基本读不出。可「刚才打死的是谁」正是玩家在这一屏最想回头确认的一句 ——
+ * 血量归零、光色褪去已经说完了「它输了」,不需要把字一起压掉。
+ *
+ * 与按钮禁用态同一条口径:**压装饰,不压字**。0.72 的墨叠在纸上约 5.6:1,
+ * 仍过 AA;0.45 时只剩约 2.5:1,读不出来。模糊同理去掉 —— 它是最伤可读性的一项。
+ * 判据见 src/ui/palette.spec.ts「已败一方不许把字压到读不出」。
+ */
 .foe-defeated {
-  filter: grayscale(0.9) blur(0.6px);
-  opacity: 0.45;
+  filter: grayscale(0.85);
+  opacity: 0.72;
   transform: scale(0.985);
   transition:
     filter 0.9s ease,

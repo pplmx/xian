@@ -8,33 +8,41 @@
       <CombatPanel v-if="adventure.sessionActive" />
 
       <div v-else class="space-y-4">
-        <!-- 本世之界:链接入口,详情另开一页。历练地图仍在下方,照旧可走 -->
-        <RouterLink
-          to="/world"
-          class="card-ink flex items-center gap-3 border-qing/30 px-4 py-3 active:scale-99"
-        >
-          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-qing/6 text-qing">
-            <GameIcon name="cloud" :size="18" />
+        <!--
+          本世之界:链接入口,详情另开一页。历练地图仍在下方,照旧可走。
+
+          从前它与秘境卡、地界卡长得一模一样(同是 card-ink、同是 px-4 py-3),
+          页首三张同尺寸卡把「去哪儿」与「这是什么」拉成了同一档：
+          它其实只是一条书目 —— 一行标题 + 一句提要 + 一个指向,不该占一张卡的版面。
+        -->
+        <RouterLink to="/world" class="flex items-center gap-2.5 pb-2 active:scale-99">
+          <span class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-qing/6 text-qing">
+            <GameIcon name="cloud" :size="15" />
           </span>
           <span class="min-w-0 grow">
-            <span class="block font-kai text-[14px] tracking-[0.2em] text-ink">本世之界</span>
+            <span class="block font-kai text-[13px] tracking-[0.2em] text-ink">本世之界</span>
             <span class="block truncate text-[10px] leading-relaxed text-ink-faint">{{
               worldBrief
             }}</span>
           </span>
           <span class="shrink-0 text-[11px] text-qing">观 象 →</span>
         </RouterLink>
+        <div class="ink-divider" aria-hidden="true" />
 
         <SecretRealmCard />
 
         <SectionTitle title="历练" hint="行万里路,炼一颗心" />
-        <p class="text-[10px] leading-relaxed text-violet-ink">
+        <!--
+          星象是背景条件,不是行动:整句压成 ink-soft,只把「利在何处」那一个地名留在
+          金处 —— 五行散在同一段里,读的人得先找重点,再回头读句子。
+        -->
+        <p class="text-[10px] leading-relaxed text-ink-soft">
           今日星象:{{ mansionLine }} —— 利
           <span class="text-gold-ink">{{ favoredWorldName }}</span>
           ,在其地历练际遇{{ describeMansionLuck }}。
         </p>
-        <p v-if="player.suppressedRegions.length > 0" class="text-[10px] text-gold-ink">
-          镇压收益中 {{ player.suppressedRegions.length }} 处 ——
+        <p v-if="player.suppressedRegions.length > 0" class="text-[10px] text-ink-soft">
+          镇压收益中 <span class="text-gold-ink">{{ player.suppressedRegions.length }} 处</span> ——
           与历练互不冲突,可同时收取;一次只能历练一处。
         </p>
         <!--
@@ -71,16 +79,6 @@
             关掉
           </button>
         </p>
-        <!--
-          镇压规则压成一行:地界行里已经逐项写着「当前值 / 需≤阈值」,
-          这里只交代一句总纲(四条长句堆在列表前面就是一堵文字墙)。
-        -->
-        <p class="text-[10px] leading-relaxed text-ink-faint">
-          镇压门槛:{{ SUPPRESS_THRESHOLDS.minFights }} 战 · 均
-          {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{
-            formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0)
-          }}; 资格永久,守满 {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
-        </p>
         <div class="space-y-2.5">
           <template v-for="group in groupedRows" :key="group.world.id">
             <div class="flex items-center gap-2 pt-1">
@@ -96,7 +94,7 @@
               data-region-card
               class="card-ink px-4 py-3"
               :class="{
-                'opacity-70': !row.canEnter,
+                'border-ink/15': !row.canEnter,
                 '!border-gold-ink/30 bg-gold-ink/5': row.suppressed,
               }"
             >
@@ -115,7 +113,7 @@
                       ? 'bg-gold-ink/6 text-gold-ink'
                       : row.canEnter
                         ? 'bg-indigo-ink/6 text-indigo-ink'
-                        : 'bg-ink/6 text-ink-faint'
+                        : 'bg-ink/4 text-ink-faint'
                   "
                 >
                   <GameIcon
@@ -157,9 +155,13 @@
                       {{ prosperityName(row.recall.prosperity) }}
                     </span>
                   </p>
+                  <!--
+                    这一行是三档字号里的「注」:境相宜与中点留在最淡处(它是基准线),
+                    凶险名抬到 ink-soft(它才是要判的那一项),凶险 ≥4 另有朱砂。
+                  -->
                   <p class="mt-0.5 text-[11px] text-ink-faint">
                     {{ REALMS[row.def.minRealm]?.name }}境相宜 ·
-                    <span :class="row.def.danger >= 4 ? 'text-cinnabar' : ''">{{
+                    <span :class="row.def.danger >= 4 ? 'text-cinnabar' : 'text-ink-soft'">{{
                       DANGER_NAMES[row.def.danger]
                     }}</span>
                     <span v-if="row.tooHard" class="ml-1 text-cinnabar"
@@ -250,9 +252,8 @@
                   转为镇压收益
                 </button>
               </div>
-              <p class="mt-2 text-[11px] leading-relaxed text-ink-faint">
-                <template v-if="row.canEnter">{{ row.def.desc }}</template>
-                <template v-else>需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。</template>
+              <p v-if="!row.canEnter" class="mt-2 text-[11px] leading-relaxed text-ink-faint">
+                需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。
               </p>
               <!--
               镇压资格进度:只显示「能不能镇压」时,玩家打够了场数却压不住,
@@ -262,7 +263,7 @@
                 v-if="row.canEnter && !row.suppressed && !row.qualified"
                 class="mt-1 text-[10px] leading-relaxed tabular"
               >
-                <span class="text-ink-soft">镇压资格</span>
+                <span class="text-[11px] text-ink-soft">镇压资格</span>
                 <span class="ml-1" :class="row.progress.fightsOk ? 'text-jade' : 'text-ink-soft'">
                   {{ row.progress.fights }}/{{ row.progress.needFights }} 战
                 </span>
@@ -319,6 +320,14 @@
                   <span class="text-gold-ink">{{ starsText(row.adaptation.stars) }}</span>
                 </button>
               </div>
+              <!--
+                描述归末:它是这一行里唯一的散文,却排在 chips 之前 ——
+                先读一段描写再看见「能不能打、打得合不合路数」,判断被夹在中间。
+                移到判据与 chips 之后、适配理由展开之前,字号收到 10px 一档。
+              -->
+              <p v-if="row.canEnter" class="mt-2 text-[10px] leading-relaxed text-ink-faint">
+                {{ row.def.desc }}
+              </p>
               <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
                 <p
                   v-for="(r, i) in row.adaptation.reasons"
@@ -330,6 +339,22 @@
               </div>
             </div>
           </template>
+        </div>
+        <!--
+          历练之则:本页的规则总纲,放在列表收口之后。
+          地界行里已经逐项写着「当前值 / 需≤阈值」,这里只交代一句总纲(四条长句堆在
+          列表前面就是一堵文字墙);而它讲的是这一页的规则,不是「先看什么」—— 放在列表前,
+          玩家先读规则再找地界;放在列表后,先看见去处,要动手时再回头看门槛。
+        -->
+        <div class="space-y-1">
+          <div class="ink-divider" aria-hidden="true" />
+          <p class="text-[10px] text-ink-faint">历练之则</p>
+          <p class="text-[10px] leading-relaxed text-ink-faint">
+            镇压门槛:{{ SUPPRESS_THRESHOLDS.minFights }} 战 · 均
+            {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{
+              formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0)
+            }}; 资格永久,守满 {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
+          </p>
         </div>
       </div>
     </Transition>
@@ -359,7 +384,7 @@
           </p>
         </template>
         <p v-else class="text-[11px] text-ink-faint">尚未成流派,此地对各路数一视同仁。</p>
-        <div class="ink-divider-mark my-2" />
+        <div class="ink-divider my-2" />
         <p class="text-[10px] text-ink-faint">此地相性(机制契合度,并非胜率):</p>
         <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
           <span

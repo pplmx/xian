@@ -314,6 +314,24 @@ describe("调色板 · 文字不叠透明度", () => {
     }
     expect(hits, "墨色文字叠了非 /15 的透明度——该换整色 token").toEqual([]);
   });
+
+  it("已败一方不许把字压到读不出 —— 元素级 opacity 也是叠透明度", () => {
+    /*
+     * 战斗面板里输掉的一方整块挂 .foe-defeated。它原本是 opacity .45 + blur(.6px):
+     * 整块像被擦掉,「刚才打死的是谁」读不出来 —— 而血量归零已经说完了「它输了」,
+     * 不必把字一起压掉。0.45 的墨叠在纸上只剩约 2.5:1,低于 AA。
+     * 与按钮禁用态同一条口径:压装饰,不压字。
+     */
+    const body = /\.foe-defeated \{([\s\S]*?)\n\}/.exec(CSS)?.[1] ?? "";
+    expect(body, ".foe-defeated 不见了,判据要跟着改").not.toBe("");
+    const m = /opacity:\s*([\d.]+)/.exec(body);
+    expect(m, "已败态不再用 opacity 了?那这条判据要跟着改").toBeTruthy();
+    expect(
+      Number(m![1]),
+      "已败一方的 opacity 低于 0.7 —— 名称会掉到读不出的那一档",
+    ).toBeGreaterThanOrEqual(0.7);
+    expect(body, "模糊是最伤可读性的一项,已败不需要它").not.toMatch(/blur\(/);
+  });
 });
 
 describe("调色板 · 青", () => {

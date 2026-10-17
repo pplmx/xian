@@ -12,24 +12,47 @@
           余 <span class="countdown-slot">{{ formatCountdown(timeLeft) }}</span>
         </span>
       </div>
-      <p class="mt-1 text-[11px] text-ink-faint tabular">
-        胜 {{ session?.wins ?? 0 }} 场 · 际遇 {{ session?.events ?? 0 }} 次 · 拾获
-        {{ session?.itemGain ?? 0 }} 件
-      </p>
-      <!-- 连胜与冲档:3/5/10 档的赏赐有 toast,距离也得看得见(见 streakLine) -->
-      <p v-if="streakLine" class="mt-0.5 text-[10px] text-gold-ink tabular">{{ streakLine }}</p>
-      <!-- 本次所得:石头与修为此前只在挂机总结里出现,在线历练中玩家看不到这一趟赚了什么 -->
-      <p v-if="gains" class="mt-0.5 text-[10px] text-ink-faint tabular">
-        本次所得 · 灵石 <span class="text-gold-ink">+{{ gains.stone }}</span> · 修为
-        <span class="text-jade">+{{ gains.exp }}</span>
-      </p>
-      <!-- 目标感:未靖的地界,打完十胜就该遇首领;不给提示的话玩家不知道还要打多久 -->
+      <!--
+        目标感:未靖的地界,打完十胜就该遇首领;不给提示的话玩家不知道还要打多久。
+        挪到读数之上、题头之下:它是这一趟的「下一步」,读数只是「走到哪了」。
+        竖笔按「将现 / 未到」分色(借 EventDialog 档位横幅的 idiom)。
+      -->
       <p
         v-if="bossHint"
-        class="mt-0.5 text-[10px]"
-        :class="bossSoon ? 'text-cinnabar' : 'text-gold-ink'"
+        class="mt-1 border-l-2 pl-2 text-[10px]"
+        :class="bossSoon ? 'border-cinnabar/60 text-cinnabar' : 'border-gold-ink/60 text-gold-ink'"
       >
         {{ bossHint }}
+      </p>
+      <!-- 战果三个读数各占一格:散文串里三个数字混在一句话中,读起来得先数逗号 -->
+      <div class="mt-1.5 grid grid-cols-3 gap-2">
+        <div>
+          <p class="text-[10px] text-ink-faint">胜</p>
+          <p class="tabular text-[13px] text-ink">{{ session?.wins ?? 0 }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-ink-faint">际遇</p>
+          <p class="tabular text-[13px] text-ink">{{ session?.events ?? 0 }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-ink-faint">拾获</p>
+          <p class="tabular text-[13px] text-ink">{{ session?.itemGain ?? 0 }}</p>
+        </div>
+      </div>
+      <!--
+        连胜与本次所得并排一行:两者都是「这一趟的账」,各占半行、长短自定,
+        放不下就在同一个 flex 行里换行(两端对齐,不硬挤成两段)。
+      -->
+      <p
+        v-if="streakLine || gains"
+        class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[10px]"
+      >
+        <span v-if="streakLine" class="text-gold-ink tabular">{{ streakLine }}</span>
+        <!-- 本次所得:石头与修为此前只在挂机总结里出现,在线历练中玩家看不到这一趟赚了什么 -->
+        <span v-if="gains" class="text-ink-faint tabular">
+          本次所得 · 灵石 <span class="text-gold-ink">+{{ gains.stone }}</span> · 修为
+          <span class="text-jade">+{{ gains.exp }}</span>
+        </span>
       </p>
     </div>
 
@@ -170,9 +193,77 @@
         </span>
       </div>
 
+      <!--
+        块序:敌 → 我 → 战报。
+        敌我在上、相邻,读的是「此刻谁占上风」;战报在下,是这一场的流水。
+        从前敌 → 战报 → 我:两条血条被一屏战报隔开,要对照得往上翻。
+      -->
+      <!-- 我方 -->
+      <div
+        class="relative mt-3"
+        :class="[
+          shakeCls.p,
+          strikeCls.p,
+          flickerCls.p,
+          shieldCls.p,
+          defeated === 'p' ? 'foe-defeated' : '',
+        ]"
+      >
+        <div class="flex items-center gap-2">
+          <span
+            class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing"
+            :class="defeated === 'e' ? 'foe-victorious' : ''"
+          >
+            <GameIcon name="user" :size="18" />
+          </span>
+          <div class="grow">
+            <p class="font-kai text-[14px] text-ink">{{ player.name }}</p>
+            <!--
+              两条血条的色各有单一用途:敌方恒为朱砂(威胁),我方恒为青玉(自身)。
+              危血不再改我方条的颜色(那会让「青玉」同时表示两种状态),改挂一圈朱砂描边 +
+              下面那行字 —— 颜色之外还有形状与文字两个信号。
+            -->
+            <ProgressBar
+              :value="php"
+              color="var(--color-jade)"
+              :height="6"
+              class="mt-1"
+              :class="hpBelowLine ? 'ring-1 ring-cinnabar/40' : ''"
+            />
+            <!-- 三成血线:跌过线血条挂朱砂描边;有背水/破釜类效果时把「正在生效」也摆出来 -->
+            <p
+              v-if="hpBelowLine"
+              class="mt-0.5 text-[9px] leading-none"
+              :class="lowHpGimmick ? 'text-cinnabar' : 'text-ink-faint'"
+            >
+              {{ lowHpGimmick ? "三成以下 · 背水/破釜类效果此刻生效" : "气血已降至三成以下" }}
+            </p>
+          </div>
+        </div>
+        <span
+          v-for="f in floats.filter((x) => x.side === 'p')"
+          :key="f.id"
+          class="pointer-events-none absolute right-2 top-0 tabular font-kai"
+          :class="
+            f.crit
+              ? 'animate-float-crit text-[17px] text-cinnabar'
+              : 'animate-float-dmg text-[13px] text-cinnabar'
+          "
+        >
+          {{ f.text }}
+        </span>
+      </div>
+
+      <div class="ink-divider my-2" aria-hidden="true" />
+
       <!-- 战报 -->
-      <div class="relative mt-3">
+      <div class="relative">
+        <!--
+          「跳过播放」只在**还有得跳**的时候出现:播完还挂着它,等于留了个按下去
+          什么都不会发生的按钮 —— 战报框此时已经收成内容高,再没有可跳的东西。
+        -->
         <button
+          v-if="!playbackDone"
           class="tap-row absolute right-1 -top-0.5 z-10 -m-2 rounded p-2 text-[10px] text-ink-faint active:text-ink active:opacity-60"
           @click="skipPlayback"
         >
@@ -180,7 +271,8 @@
         </button>
         <div
           ref="logBox"
-          class="scroll-pane h-48 space-y-1 overflow-y-auto rounded-md bg-ink/4 px-3 py-2"
+          class="scroll-pane space-y-1 overflow-y-auto rounded-md bg-ink/4 px-3 py-2"
+          :class="playbackDone ? 'max-h-48' : 'h-48'"
         >
           <!--
             data-battle-log 挂在**行**上(不是外面那层框):自检要数「这场到底出了几行」,
@@ -207,56 +299,6 @@
             山风掠过,四下无声……
           </p>
         </div>
-      </div>
-
-      <!-- 我方 -->
-      <div
-        class="relative mt-3"
-        :class="[
-          shakeCls.p,
-          strikeCls.p,
-          flickerCls.p,
-          shieldCls.p,
-          defeated === 'p' ? 'foe-defeated' : '',
-        ]"
-      >
-        <div class="flex items-center gap-2">
-          <span
-            class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing"
-            :class="defeated === 'e' ? 'foe-victorious' : ''"
-          >
-            <GameIcon name="user" :size="18" />
-          </span>
-          <div class="grow">
-            <p class="font-kai text-[14px] text-ink">{{ player.name }}</p>
-            <ProgressBar
-              :value="php"
-              :color="hpBelowLine ? 'var(--color-cinnabar)' : 'var(--color-jade)'"
-              :height="6"
-              class="mt-1"
-            />
-            <!-- 三成血线:跌过线血条转危色;有背水/破釜类效果时把「正在生效」也摆出来 -->
-            <p
-              v-if="hpBelowLine"
-              class="mt-0.5 text-[9px] leading-none"
-              :class="lowHpGimmick ? 'text-cinnabar' : 'text-ink-faint'"
-            >
-              {{ lowHpGimmick ? "三成以下 · 背水/破釜类效果此刻生效" : "气血已降至三成以下" }}
-            </p>
-          </div>
-        </div>
-        <span
-          v-for="f in floats.filter((x) => x.side === 'p')"
-          :key="f.id"
-          class="pointer-events-none absolute right-2 top-0 tabular font-kai"
-          :class="
-            f.crit
-              ? 'animate-float-crit text-[17px] text-cinnabar'
-              : 'animate-float-dmg text-[13px] text-cinnabar'
-          "
-        >
-          {{ f.text }}
-        </span>
       </div>
       <!-- 战斗后统计 + 分析入口 -->
       <p
@@ -388,7 +430,9 @@
       </div>
     </div>
 
-    <button class="btn-ghost w-full" @click="stopExploration('manual')">收兵回府</button>
+    <button class="btn-ghost w-full !py-2 !text-[13px]" @click="stopExploration('manual')">
+      收兵回府
+    </button>
   </div>
 </template>
 
@@ -430,6 +474,23 @@ const settings = useSettingsStore();
 const now = useNow();
 
 const displayed = ref<CombatLogEntry[]>([]);
+
+/**
+ * 回放是否已经播完 —— 战报框的「高度」由它决定。
+ *
+ * 框从前是死高 `h-48`:播放中不许跳是对的(逐行投入,高度一变整页在抖),
+ * 可**播完之后仍占着 192px**,三行的战斗底下留着三行半的虚空 ——
+ * 一屏里最大的一块留白,恰好什么也没说。
+ *
+ * 故播完就换成 `max-h-48`:内容多长框多长,超过照旧滚。空战报(还没开打)
+ * 走 `displayed.length === 0`,此时不为 done,仍是死高,占位文案不会塌。
+ */
+const playbackDone = computed(() => {
+  const total = battle.value?.result.log.length ?? 0;
+  // displayed 只留最近 100 行,长战斗的 total 会更大 —— 取两者的小值比较
+  return total > 0 && displayed.value.length >= Math.min(total, 100);
+});
+
 const php = ref(1);
 const ehp = ref(1);
 const floats = ref<{ id: number; text: string; side: "p" | "e"; crit: boolean }[]>([]);

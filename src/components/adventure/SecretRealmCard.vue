@@ -1,15 +1,36 @@
 <template>
   <!-- 秘境:一次性内容,出则散。凡境册元婴起(灵石),天界册真仙起(道源) -->
-  <section v-if="unlocked" class="card-ink px-4 py-3">
-    <p class="flex items-center gap-2">
-      <span class="font-kai text-[14px] tracking-[0.2em] text-ink">秘境</span>
+  <!--
+    在境中是「印面卡」:左侧一道 qing 竖笔(借用 EventDialog 档位横幅的竖笔 idiom),
+    未入态不加这道封条 —— 竖笔的意思是「你正身在其中」,还没进去的人不该也挂一条。
+    三态三种形状:在境中 = 竖笔实线,未入 = 素实线,未解锁 = 虚线框。
+  -->
+  <section
+    v-if="unlocked"
+    class="card-ink px-4 py-3"
+    :class="state ? 'border-l-2 border-l-qing/70' : ''"
+  >
+    <p class="flex flex-wrap items-center gap-2">
+      <span class="font-kai text-[15px] tracking-[0.2em] text-ink">秘境</span>
       <span class="chip-ink !text-[9px]"
         >{{ gate === "celestial" ? "天界秘境" : "凡境秘境" }} · {{ cnNumber(SECRET_LAYERS) }}层 ·
         出则散</span
       >
-      <span v-if="state" class="ml-auto text-[10px] tabular text-gold-ink"
-        >第 {{ state.layer }}/{{ SECRET_LAYERS }} 层</span
+      <!-- 三枚点:已过 / 当前 / 未至 —— 数字不删,点只是把「走到第几层」变成一眼可数 -->
+      <span
+        v-if="state"
+        class="ml-auto flex items-center gap-1.5 text-[10px] tabular text-gold-ink"
       >
+        <span class="flex items-center gap-1" aria-hidden="true">
+          <span
+            v-for="i in SECRET_LAYERS"
+            :key="i"
+            class="h-1.5 w-1.5 rounded-full"
+            :class="i < state.layer ? 'bg-qing' : i === state.layer ? 'bg-cinnabar' : 'bg-ink/15'"
+          />
+        </span>
+        第 {{ state.layer }}/{{ SECRET_LAYERS }} 层
+      </span>
     </p>
 
     <!-- 在境中 -->
@@ -30,15 +51,25 @@
         <span v-for="(s, i) in state.spoils" :key="i" class="block">· {{ s }}</span>
       </p>
       <!-- 战前预览:与实战同源 —— 敌人/胜算(secretLayerPreview)本层即准,「所见即所打」 -->
-      <p v-if="preview" class="mt-1 whitespace-nowrap text-[10px] leading-relaxed text-ink-soft">
-        <template v-if="preview.foe">
-          本层劫:<span class="text-ink">{{ preview.foe.name }}</span>
-          <span :class="preview.rate < 0.35 ? 'text-cinnabar' : 'text-ink'"
-            >· {{ preview.winText }}</span
-          >
-        </template>
-        <template v-else>本层劫:<span class="text-ink">莫测</span></template>
-        · 战利:灵石 +{{ formatGN(preview.reward.stone) }} · 灵草 +{{ preview.reward.material }}
+      <!-- 组内不断、组间可换行:整行 nowrap 在 320 宽上会顶出卡片,全放开又会让「本层劫:xxx」被拆成两截 -->
+      <p
+        v-if="preview"
+        class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] leading-relaxed text-ink-soft"
+      >
+        <span class="whitespace-nowrap">
+          <template v-if="preview.foe">
+            本层劫:<span class="text-ink">{{ preview.foe.name }}</span>
+            <span :class="preview.rate < 0.35 ? 'text-cinnabar' : 'text-ink'"
+              >· {{ preview.winText }}</span
+            >
+          </template>
+          <template v-else>本层劫:<span class="text-ink">莫测</span></template>
+        </span>
+        <span class="whitespace-nowrap"
+          >· 战利:灵石 +{{ formatGN(preview.reward.stone) }} · 灵草 +{{
+            preview.reward.material
+          }}</span
+        >
       </p>
       <!--
         隐性机制随预览披露(同源,不手写):逐出门槛、层间回血/损血、终层宝藏 ——
@@ -79,12 +110,12 @@
 
     <!-- 未入:择一处 -->
     <template v-else>
-      <div class="mt-2 space-y-1.5">
+      <div class="mt-1 space-y-1.5">
         <button
           v-for="r in list"
           :key="r.id"
-          class="w-full rounded-md bg-paper-deep/60 px-3 py-2 text-left active:scale-99"
-          :class="{ 'disabled:opacity-40': !canPay(r) }"
+          class="w-full rounded-md bg-paper-deep/30 px-3 py-2 text-left active:scale-99"
+          :class="{ 'border border-ink/10': !canPay(r) }"
           :disabled="!canPay(r)"
           @click="enter(r.id)"
         >
@@ -97,11 +128,14 @@
             >
               {{ payText(r) }}
             </span>
-            <span class="ml-auto text-[10px] text-qing">入 境 →</span>
+            <!-- 入境的箭头跟 canPay 走:付不起时它不该还是一枚亮着的青箭头 -->
+            <span class="ml-auto text-[10px]" :class="canPay(r) ? 'text-qing' : 'text-ink-faint'"
+              >入 境 →</span
+            >
           </span>
           <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{ r.desc }}</span>
         </button>
-        <p v-if="list.length === 0" class="text-[11px] text-ink-faint">
+        <p v-if="list.length === 0" class="text-[10px] text-ink-faint">
           {{
             gate === "celestial"
               ? "尚无天界秘境可探 —— 天界册真仙起,自有去处。"
@@ -113,13 +147,17 @@
   </section>
 
   <!-- 未解锁:inert 占位(仿天界「未至真仙」)—— 灰注开启境界,不可点、不进焦点 -->
+  <!--
+    三态三种形状:在境中 = 左竖笔实线(印面)、未入 = 无竖笔实线、未解锁 = 虚线框。
+    虚线框代替此前的整块 60% 透明 —— 压色不压字:占位里那句「元婴起」是给玩家看的路标。
+  -->
   <section
     v-else
     aria-hidden="true"
-    class="card-ink pointer-events-none select-none px-4 py-3 opacity-60"
+    class="card-ink border-dashed border-ink/15 pointer-events-none select-none px-4 py-3"
   >
     <p class="flex items-center gap-2">
-      <span class="font-kai text-[14px] tracking-[0.2em] text-ink">秘境</span>
+      <span class="font-kai text-[15px] tracking-[0.2em] text-ink">秘境</span>
       <span class="chip-ink !text-[9px]">{{ gate === "celestial" ? "天界秘境" : "凡境秘境" }}</span>
     </p>
     <p class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">

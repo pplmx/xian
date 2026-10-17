@@ -8,7 +8,7 @@
  *   bun scripts/layout-check.mjs      # 加 --shots 顺带存图到 /tmp/layout-shots
  *   bun scripts/layout-check.mjs --jobs 4   # 并发路数;也可用 LAYOUT_JOBS 环境变量
  *
- * 它是**并发**跑的:下面 30 个自检任务各自开自己的 context、各带自己的存档,互不等待,
+ * 它是**并发**跑的:下面 31 个自检任务各自开自己的 context、各带自己的存档,互不等待,
  * 由 runPool 按 --jobs / LAYOUT_JOBS / 核数(上限 8)调度。从前它们是同一层里顺序排队的
  * 代码块,一段段等固定时长,一轮约七分钟;拆成任务后本地实测 ~90 秒,--jobs 1 退化回串行。
  * 任务之间只共享一个浏览器与失败清单(后者按固定任务顺序合并,报告与串行时一致)。
@@ -107,6 +107,10 @@
  *   四十四 按钮标签不许被折行:纯文字按钮(无子元素、2~18 字)的文字必须落在一行。
  *      实见界域志「问 卦(悟道点 2)」被右侧长注挤成「问 卦(悟道」/「点 2)」—— 门槛数字
  *      拦腰折断。根因又是一行不换行的 flex,横向溢出与前面几条挤压判据都量不出来。
+ *   四十五 秘境卡「在境中」的窄屏一档:320 宽 + 本层预览(本层劫 / 胜算 / 战利)+ 三枚层点。
+ *      这一行从前整段 nowrap,320 上必顶出卡片 —— 而巡页用的档里没有在途秘境,
+ *      三十三 那份 320 夹具的 adventure 切片也没有 secretRealm,于是这一档从没被量过。
+ *      夹具直接摆出「打到第二层」的状态,判据走通用那套(横向溢出 + 挤压)。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -4954,6 +4958,223 @@ async function taskEnemyCard() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/** 秘境卡「在境中」的最窄一档 */
+async function taskSecretRealm320() {
+  const failures = [];
+  let checked = 0;
+  const contrastFails = [];
+  const pixelContrastFails = [];
+  const zoomFails = [];
+  // ---- 第四十五件事:秘境卡「在境中」的窄屏一档 ----
+  /*
+   * 在境中的秘境卡有一行本层预览：本层劫 / 胜算 · 战利。它从前整段 whitespace-nowrap,
+   * 320 宽上必然顶出卡片 —— 但巡页的档里没有在途秘境,三十三那份 320 地界夹具的
+   * adventure 切片也没有 secretRealm,于是这一档从来没被量过:夹具缺什么,判据就瞎什么。
+   *
+   * 夹具摆出「打到第二层、带着战利、付过门票」的那一版,并把敌人名字给到最长的那类,
+   * 让两个 nowrap 组都撑到最满。
+   */
+  {
+    const ctx = await auditContext({
+      viewport: { width: 320, height: 568 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+    });
+    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const gn = (m, e) => ({ m, e });
+    const now = Date.now();
+    const slices = {
+      game: {
+        started: true,
+        saveVersion: 2,
+        createdAt: now - 86400000,
+        lastActiveAt: now,
+        totalPlaySec: 600,
+        createRerolls: 8,
+        createProfile: null,
+      },
+      player: {
+        name: "秘境卡自检",
+        major: 12,
+        sub: 3,
+        exp: gn(1, 3),
+        age: 300,
+        dead: false,
+        reincarnation: {
+          count: 1,
+          daoFruit: 3,
+          talents: [],
+          insight: 50,
+          lives: [],
+          vow: null,
+          trial: null,
+          bonds: [],
+        },
+        linggen: {
+          roots: [{ element: "ice", aptitude: 90 }],
+          gradeName: "单灵根",
+          growthMult: 1.2,
+        },
+        // 在境中:第二层、带着一份战利、已掷定本层敌人(预览与实战同源的那一份)
+        secretRealm: {
+          realmId: "sr_kurong",
+          enteredAt: now - 600000,
+          layer: 2,
+          wins: 1,
+          losses: 1,
+          spoils: ["灵石少许", "枯荣草一株"],
+          rules: ["治疗减半"],
+          carriedHpPct: 0.7,
+          finished: false,
+          foe: {
+            name: "残魂·堕落冰魄仙子",
+            icon: "snowflake",
+            isPlayer: false,
+            attack: gn(2, 5),
+            defense: gn(1, 4),
+            maxHp: gn(3, 6),
+            speed: 1.1,
+            mods: {},
+            skills: [],
+          },
+        },
+      },
+      resources: {
+        spiritStone: gn(8, 7),
+        qi: 5000,
+        wudao: 200,
+        herb: 100,
+        ore: 100,
+        page: 20,
+        dust: 40,
+      },
+      inventory: {
+        items: [
+          {
+            uid: "w1",
+            templateId: "w_zidian",
+            quality: "heaven",
+            tier: 12,
+            level: 2,
+            affixes: [
+              { id: "bs3", roll: 1 },
+              { id: "low2", roll: 1 },
+            ],
+          },
+        ],
+        equipped: { weapon: "w1" },
+        pills: {},
+        artifacts: [],
+        equippedArtifacts: [],
+      },
+      cultivation: {
+        learned: { g_qingyun: 6 },
+        mainGongfa: "g_qingyun",
+        subGongfa: [],
+        buffs: [],
+        gongfaBranch: {},
+      },
+      lore: {
+        materialLore: {},
+        materialSeen: {},
+        recipeLore: {},
+        blueprintLore: {},
+        skillExp: {},
+        enemyLore: {},
+        enemySeen: {},
+        studyFrac: 0,
+        seeded: true,
+      },
+      // 没有在途历练:这一屏要画的是择地界 + 秘境卡(在境中那一版),不是战斗面板
+      adventure: {
+        unlocked: ["qingyun", "luoxia", "heifeng", "leichi"],
+        cleared: ["qingyun"],
+        mortalCleared: [],
+        session: null,
+        pendingEventId: null,
+        pendingEventSince: 0,
+        seenOnceEvents: [],
+        lastBattle: null,
+        eventMemories: {},
+      },
+      settings: {
+        privacyAccepted: true,
+        sfxOn: false,
+        musicOn: false,
+        musicVol: 0,
+        sfxVol: 0,
+        reduceMotion: true,
+        battleSpeed: 4,
+        decomposeRanks: [],
+        smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+        theme: "dark",
+      },
+    };
+    await ctx.addInitScript(
+      (data) => {
+        for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+      },
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+    );
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/adventure", { waitUntil: "load" });
+    // 等秘境卡画出来(「再 入 一 层」是在境中那一版唯一的入口),而不是定时空读
+    await page
+      .waitForFunction(
+        () =>
+          [...document.querySelectorAll("button")].some((b) =>
+            (b.textContent || "").replace(/\s+/g, "").includes("再入一层"),
+          ),
+        { timeout: 8000 },
+      )
+      .catch(() => undefined);
+    const card = await page.evaluate(() => {
+      const btn = [...document.querySelectorAll("button")].find((b) =>
+        (b.textContent || "").replace(/\s+/g, "").includes("再入一层"),
+      );
+      const section = btn?.closest("section") ?? null;
+      if (!section) return { found: false };
+      const text = (section.textContent || "").replace(/\s+/g, " ").trim();
+      // 层点:三枚 6px 的圆点,当前层是朱砂 —— 数字不删,点只是把层数变成可数的
+      const dots = [...section.querySelectorAll("span")].filter((el) => {
+        const r = el.getBoundingClientRect();
+        return Math.round(r.width) === 6 && Math.round(r.height) === 6;
+      }).length;
+      return {
+        found: true,
+        text: text.slice(0, 80),
+        dots,
+        layerText: /第\s*2\s*\/\s*3\s*层/.test(text),
+        overflow: section.scrollWidth - section.clientWidth,
+      };
+    });
+    checked += 1;
+    if (!card.found) {
+      failures.push("[320-secret] 秘境卡在境中场景:卡片没渲染出来(夹具没被读出来?)");
+    } else {
+      if (!card.layerText)
+        failures.push(`[320-secret] 秘境卡没画「第 2/3 层」:«${card.text}»(夹具或模板?)`);
+      if (card.dots !== 3)
+        failures.push(`[320-secret] 秘境卡的层点有 ${card.dots} 枚(应为 3):«${card.text}»`);
+      if (card.overflow > 1)
+        failures.push(`[320-secret] 秘境卡横向溢出 ${card.overflow}px:«${card.text}»`);
+      const info = await measurePage(page);
+      for (const p of problemsOf(info)) failures.push(`[320-secret] /adventure → ${p}`);
+    }
+    if (pageErrors.length)
+      failures.push(
+        `[320-secret] 秘境卡在境中场景页面异常:${[...new Set(pageErrors)].join(" | ")}`,
+      );
+    await ctx.close();
+  }
+
+  return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
+}
+
 /** 切后台立即落盘 */
 async function taskPersistTiming() {
   const failures = [];
@@ -5726,6 +5947,7 @@ const TASKS = [
   ["背包里的账目", taskInventoryAccounting],
   ["真打一场历练战斗", taskCombatReplay],
   ["敌人卡最挤的一档", taskEnemyCard],
+  ["秘境卡在境中的窄屏一档", taskSecretRealm320],
   ["切后台立即落盘", taskPersistTiming],
   ["导出失败也说话", taskExportFailure],
   ["坏档也能进游戏", taskBadSave],

@@ -313,13 +313,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("秘境付不起置灰+报差 —— 别只沉到底、点了才 toast", () => {
     // 秘境入口曾用 opacity-60 假装灰(仍可点、点了才 toast 原因),不入「付不起置灰+列差」
-    // 的族规。钉死:付不起真禁用(disabled:opacity-40),行内代价换口「尚差 N 石/道源」。
+    // 的族规。钉死:付不起真禁用,禁用态**压色不压字**(底色与边框让位,字一个不降),
+    // 行内代价换口「尚差 N 石/道源」。
+    // 「压色不压字」落地后置灰不再靠元素级透明度:那会把「尚差 N」这行字一起压到读不出。
     const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
     expect(sr?.src).toContain(':disabled="!canPay(r)"');
-    expect(sr?.src).toContain("'disabled:opacity-40': !canPay(r)");
+    expect(sr?.src, "禁用态压色不压字:改挂淡边框").toContain("'border border-ink/10': !canPay(r)");
+    expect(sr?.src, "付不起不许再靠 opacity 假装灰").not.toMatch(/opacity-\d+['"]?: !canPay/);
     expect(sr?.src).toContain("payText(r)");
     expect(sr?.src).toMatch(/尚差 \$\{formatGN/);
-    expect(sr?.src).not.toMatch(/'opacity-60': !canPay/);
   });
 
   it("百分比显示统走 formatPercent —— 不许再手写 Math.round(x*100)%", () => {
