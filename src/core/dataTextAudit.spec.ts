@@ -25,6 +25,9 @@ import { MUTATORS } from "@/data/mutators";
 import { SECRET_RULES } from "@/data/secretRealms";
 import { BUFFS, buffDef } from "@/data/buffs";
 import { PILLS } from "@/data/pills";
+import { AFFIXES } from "@/data/affixes";
+import { ACHIEVEMENTS } from "@/data/achievements";
+import { DAILY_TASKS, MAIN_QUESTS } from "@/data/quests";
 import { STAT_NAMES } from "@/ui/statNames";
 import {
   CAVE_EVENT_POOL,
@@ -1177,5 +1180,160 @@ describe("文案数值对账 · 说明只说风味", () => {
     // 干净的风味句不许误报:这些字里没有量,只是文气
     expect(offenders("气血亏损,周天迟滞,战力大减")).toEqual([]);
     expect(offenders("一呼一吸皆有所得")).toEqual([]);
+  });
+});
+
+/**
+ * 装备词条的说明 —— 名字也只有一处
+ *
+ * 113 条词条的说明曾经逐条手打,而它们描述的是同一个 `key`:
+ * 「造成伤害提升 {v}%」写的是 `damageBonus`,面板上同一条叫「伤害增幅」;
+ * 「受到伤害降低 {v}%」是 `damageReduction`,面板叫「伤害减免」;
+ * 「生命上限提升 {v}%」是 `maxHpPct`,面板叫「气血上限」。
+ * 同一条词条在装备卡与状态弹窗上换三个名字,玩家没法把它们对上号。
+ *
+ * 现在 desc 由 STAT_NAMES 派生(见 data/affixes.ts 文件头),于是判据守的是性质而非实现:
+ * 说明必须以**自己那个键**的名字开头、数值位恰好一个、不许夹带旧名。
+ * 判据不比对字符串模板 —— 那样等于把实现抄一遍,实现改了判据跟着改,什么也守不住。
+ */
+describe("文案数值对账 · 词条说明的名字只有 STAT_NAMES 一处", () => {
+  it("每条词条的说明以自己的名字开头,数值位恰好一个,且不夹带旧名", () => {
+    let checked = 0;
+    for (const def of AFFIXES) {
+      const want = STAT_NAMES[def.key];
+      const head = (def.desc.split("{v}")[0] ?? "").trim();
+      expect(
+        head.startsWith(want),
+        `词条「${def.name}(${def.id})」的说明没用自己的名字(应为「${want}」):${def.desc}`,
+      ).toBe(true);
+      expect(
+        (def.desc.match(/\{v\}/g) ?? []).length,
+        `词条「${def.name}」的数值位不是恰好一个(引擎按它切 before/value/after):${def.desc}`,
+      ).toBe(1);
+      const hits = STAT_ALIASES.filter((w) => def.desc.includes(w));
+      expect(hits, `词条「${def.name}」的说明用了旧名「${hits.join("、")}」:${def.desc}`).toEqual(
+        [],
+      );
+      checked += 1;
+    }
+    expect(checked, "一条词条都没扫到 —— 判据形同虚设").toBeGreaterThanOrEqual(113);
+  });
+
+  it("这条判据认得出坏样本 —— 旧写法必须被判红", () => {
+    const nameOf = (desc: string): string => (desc.split("{v}")[0] ?? "").trim();
+    // 旧写法:名字不在 STAT_NAMES 里
+    expect(nameOf("造成伤害提升 {v}%").startsWith(STAT_NAMES.damageBonus)).toBe(false);
+    expect(nameOf("生命上限提升 {v}%").startsWith(STAT_NAMES.maxHpPct)).toBe(false);
+    // 新写法:通过
+    expect(nameOf("伤害增幅 +{v}%").startsWith(STAT_NAMES.damageBonus)).toBe(true);
+  });
+});
+
+/**
+ * 成就与任务的说明 —— 那个数就是条件本身,不能各写一遍
+ *
+ * 「击败 50 个敌人」这句话**就是** `counter("kills", 50)`,不是对它的注解。
+ * 所以它不像 buff 的说明那样可以删掉 —— 删了玩家就不知道要做什么。
+ * 但它同样是两本账:把 value 改成 100 而忘了改句子,界面会写着「击败 50 个敌人」
+ * 却在 100 时发赏(进度行还会打出「已 100/100」,自相矛盾)。
+ *
+ * 做法照 test-report 的先例(文档例数 ↔ 本次运行实录):**不删句子,锁死两边**。
+ * 判据 = 说明里出现的第一个数(阿拉伯或中文)必须恰好等于条件的数。
+ * 只认第一个:这些句子都只有一个量,多出来的数字反而说明句子在说别的事。
+ * realm / custom / quality 三类不在此列 —— 它们的说明承载风味与境界名,
+ * 数字不在 cond 里(而是 realm 表或 evaluator 的常量),硬对只会误报。
+ */
+describe("文案数值对账 · 成就与任务说明里的数就是条件数", () => {
+  /** 中文数字(只认这两张表里真的出现过的写法:一~十、十二、百/千/万 的组合) */
+  const CN_DIGIT: Record<string, number> = {
+    一: 1,
+    二: 2,
+    两: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+  };
+  const UNIT: Record<string, number> = { 十: 10, 百: 100, 千: 1000, 万: 10000 };
+
+  /** 取出说明里第一个数:先阿拉伯,再中文(按出现位置取最早的那个) */
+  function firstNumber(text: string): number | null {
+    const arabic = /\d+(?:\.\d+)?/.exec(text);
+    const cn = /[一二两三四五六七八九十百千万]+/.exec(text);
+    if (!arabic && !cn) return null;
+    if (arabic && (!cn || arabic.index < cn.index)) return Number(arabic[0]);
+    return parseCn(cn![0]);
+  }
+
+  function parseCn(word: string): number | null {
+    let total = 0;
+    let section = 0;
+    let digit = 0;
+    for (const ch of word) {
+      if (CN_DIGIT[ch] !== undefined) {
+        digit = CN_DIGIT[ch]!;
+      } else if (ch === "十") {
+        section += (digit === 0 ? 1 : digit) * 10;
+        digit = 0;
+      } else if (ch === "百" || ch === "千") {
+        section += (digit === 0 ? 1 : digit) * UNIT[ch]!;
+        digit = 0;
+      } else if (ch === "万") {
+        total += (section + digit) * 10000;
+        section = 0;
+        digit = 0;
+      }
+    }
+    return total + section + digit;
+  }
+
+  it("判据自己会认数 —— 中文写法与阿拉伯写法都要认对", () => {
+    expect(firstNumber("累计斩落十二尊王级妖邪")).toBe(12);
+    expect(firstNumber("完成第一次转世")).toBe(1);
+    expect(firstNumber("完成三次转世")).toBe(3);
+    expect(firstNumber("击败 50 个敌人")).toBe(50);
+    expect(firstNumber("今日炼成 2 枚丹药")).toBe(2);
+    expect(firstNumber("寿元上限超过一万载")).toBe(10000);
+    // 位置优先:阿拉伯数字在前就取它,不被后面的中文数字抢走
+    expect(firstNumber("服用 20 枚丹药,约三成火候")).toBe(20);
+  });
+
+  it("成就:计数器说明里的数等于 cond.value", () => {
+    let checked = 0;
+    for (const a of ACHIEVEMENTS) {
+      if (a.cond.type !== "counter") continue;
+      checked += 1;
+      expect(
+        firstNumber(a.desc),
+        `成就「${a.name}」的说明与条件对不上:说明「${a.desc}」,条件 ${a.cond.key}=${a.cond.value}`,
+      ).toBe(a.cond.value);
+    }
+    expect(checked, "一条计数成就都没扫到 —— 判据形同虚设").toBeGreaterThanOrEqual(30);
+  });
+
+  it("主线任务:计数器说明里的数等于 cond.value", () => {
+    let checked = 0;
+    for (const q of MAIN_QUESTS) {
+      if (q.cond.type !== "counter") continue;
+      checked += 1;
+      expect(
+        firstNumber(q.desc),
+        `任务「${q.name}」的说明与条件对不上:说明「${q.desc}」,条件 ${q.cond.key}=${q.cond.value}`,
+      ).toBe(q.cond.value);
+    }
+    expect(checked, "一条计数任务都没扫到").toBeGreaterThanOrEqual(8);
+  });
+
+  it("每日任务:说明里的数等于 target", () => {
+    for (const d of DAILY_TASKS) {
+      expect(
+        firstNumber(d.desc),
+        `日课「${d.name}」的说明与目标对不上:说明「${d.desc}」,目标 ${d.counterKey}=${d.target}`,
+      ).toBe(d.target);
+    }
+    expect(DAILY_TASKS.length, "日课表空了,判据形同虚设").toBeGreaterThanOrEqual(8);
   });
 });
