@@ -48,6 +48,20 @@
               <GameIcon name="x" :size="18" />
             </button>
           </header>
+          <!--
+            引首那道线 —— 题头与卷身之间的一笔。
+
+            没有它的时候,标题下面直接就是内容,弹窗读作一个「带标题的盒子」;
+            添上这一道,同一块面板才像摊开的卷轴:题签在上,卷身在下,中间是那道
+            压过纸的折痕。与顶栏底栏同一个画法(.ink-divider),两处收口一致。
+
+            只在真有题头时画 —— 无题弹窗(自带大标题卡的那几个)画了就是一道悬空的线。
+          -->
+          <div
+            v-if="props.title || props.closable"
+            class="ink-divider mx-5 shrink-0"
+            aria-hidden="true"
+          />
           <div class="scroll-pane relative z-10 overflow-y-auto px-5 py-3 grow">
             <slot />
           </div>

@@ -17,6 +17,17 @@
         class="relative flex flex-col items-center gap-0.5 py-2 transition-colors short:gap-0 short:py-1"
         :class="route.name === tab.name ? 'text-cinnabar' : 'text-ink-faint active:text-ink-soft'"
       >
+        <!--
+          落笔 —— 当前这栏顶上压一道朱砂短笔,像夹在书页间的那枚书签带。
+          图标的位移与变色已经说了「选中的是我」,但那是**脚下**的动静;视线扫过底栏
+          找「现在在哪」时,最短的路径是这排边缘 —— 一枚短笔贴着栏口,一眼就到。
+          absolute 放置:底栏高度被「两栏钉死」盯着,一分都不许长。
+        -->
+        <span
+          v-if="route.name === tab.name"
+          class="absolute inset-x-0 top-0 mx-auto h-0.5 w-3.5 rounded-full bg-cinnabar"
+          aria-hidden="true"
+        />
         <span
           class="relative transition-transform duration-200"
           :class="route.name === tab.name ? '-translate-y-0.5 scale-110' : ''"

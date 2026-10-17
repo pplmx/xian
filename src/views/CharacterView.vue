@@ -8,7 +8,7 @@
           <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
         </span>
       </div>
-      <div class="ink-divider my-3" />
+      <div class="ink-divider-mark my-3" />
       <!-- 灵根 -->
       <!--
         灵根名必须 nowrap 且不参与收缩:窄屏上「杂灵根」曾被两侧
@@ -88,7 +88,7 @@
             </p>
           </div>
         </div>
-        <div v-if="modRows.length" class="ink-divider my-2.5" />
+        <div v-if="modRows.length" class="ink-divider-mark my-2.5" />
         <div class="grid grid-cols-2 gap-x-4 gap-y-1">
           <!-- 每行可点:玩家问的从来不只是「多少」,还有「从哪来」 -->
           <button

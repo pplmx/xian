@@ -215,7 +215,7 @@
           </p>
         </template>
         <p v-else class="text-[12px] text-ink-faint">主线已尽,前路由你自己书写。</p>
-        <div class="ink-divider my-2.5" />
+        <div class="ink-divider-mark my-2.5" />
         <div class="space-y-1.5">
           <p
             v-for="t in dailyRows"

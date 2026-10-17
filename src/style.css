@@ -111,9 +111,24 @@
 
   /* 明暗通用阴影色(暗色主题下重定义) */
   --shadow-ink: rgb(41 39 34);
-  /* Chrome 91 兼容:color-mix() 需要 Chrome 111+,改用通道值变量
-     --shadow-ink-rgb 供 rgb(var(--shadow-ink-rgb) / alpha) 用
-     --color-paper-lifted-rgb 预计算 paper 92% + white 8% */
+  /*
+   * Chrome 91 兼容:color-mix() 需要 Chrome 111+,改用通道值变量
+   * --shadow-ink-rgb 供 rgb(var(--shadow-ink-rgb) / alpha) 用
+   * --color-paper-lifted-rgb 预计算 paper 92% + white 8%
+   *
+   * ===== 阴影墨只配阴影 =====
+   *
+   * 这一档是**投影**的墨,不是画在纸上的墨。白天两者恰好看不出区别
+   * (41 39 34 既是纸上最深的墨,也是投影该有的颜色),可夜间一旦分开就出事:
+   * 纸深到 33 31 28,投影墨被重定义成近黑 8 7 5 —— 于是凡是从这里取色的
+   * **线、槽、按压底色**都变成了「深纸上画深线」,22% 的透明度合成出来只差
+   * 三五个色阶,等于没画。分隔线、进度槽、按钮按下时那一下,夜间全是哑的。
+   *
+   * 故口径定死:**box-shadow 才许用 --shadow-ink-rgb**;凡是要在纸上被看见的
+   * (底色、线、滑块、冲击波)一律取 --color-ink-rgb —— 它会随主题翻转,
+   * 白天是深墨、夜间是浅墨,同一句声明两套主题都看得见。
+   * 判据见 src/ui/ornament.spec.ts。
+   */
   --shadow-ink-rgb: 41 39 34;
   --color-paper-lifted-rgb: 244 240 230;
 }
@@ -859,17 +874,47 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
   overscroll-behavior: contain;
 }
 
+/*
+ * 卡片 —— 先给它一点厚度
+ *
+ * 底影之外,沿卡片上缘再压一线内高光。卡面与纸底只差一层色(#F4F0E6 对 #F3EFE4),
+ * 这点差别白天刚好够分组,可单看一张卡是平的 —— 像打印出来的矩形,不像一张压在
+ * 纸上的卡。上缘被光擦过之后,同一张卡才有了「边」。
+ *
+ * 一行 shadow 不动布局、不动底色、不动字号:高光只在距上缘 1px 内,正文全在内边距
+ * 12px 之后,对比度判据采样不到它。
+ *
+ * 夜间不能沿用这份白 —— 暗色卡本就从底纸上浮一点(51 49 46 对 33 31 28),
+ * 再压 0.5 的白会浮成一块灰塑料,故另给一档 0.05(见下方 dark 覆写)。
+ * 说明不进规则体内:uiLayering.spec 用 400 字符的窗口核 transition 还在不在块里。
+ */
 .card-ink {
   position: relative;
   background: rgb(var(--color-paper-lifted-rgb));
   border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
   border-radius: 10px;
   box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
     0 1px 2px rgb(var(--shadow-ink-rgb) / 0.06),
     0 4px 14px rgb(var(--shadow-ink-rgb) / 0.05);
-  /* 触感统一:btn-seal/btn-ghost/chip-ink 按压早已 0.12s 滑移,唯独拿 card-ink
-     当按钮/Link 的地方(active:scale-98/99)是硬跳 —— 一条规则帽全库的微动作。 */
+  /* 触感统一:btn-seal/btn-ghost/chip-ink 按压都是 0.12s 滑移,拿 card-ink 当按钮处不该硬跳 */
   transition: transform 0.12s ease;
+}
+
+/*
+ * 暗色主题的卡片顶光:同一处厚度感,亮度收到两成不到的一份。
+ * 浅色那份(0.5 的白)在夜间会把卡面抬成一块灰塑料 —— 暗色里「浮起」本来就靠
+ * 底纸与卡面那点明度差,再加白就过界了。判据见 src/ui/ornament.spec.ts。
+ *
+ * 位置就在基类之后,不挪到文件上方那片暗色覆写里:uiLayering.spec 用基类选择器
+ * 定位之后核 400 字符内的 transition,**先出现的那个匹配**必须是基类,
+ * 否则它会选中这条覆写、找不到 transition 而报一个与被测语义无关的红。
+ */
+html[data-theme="dark"] .card-ink {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 1px 2px rgb(var(--shadow-ink-rgb) / 0.06),
+    0 4px 14px rgb(var(--shadow-ink-rgb) / 0.05);
 }
 
 /*
@@ -882,11 +927,22 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
 .empty-note::before {
   content: "";
   display: block;
-  width: 30px;
+  width: 34px;
   height: 1px;
   margin: 0 auto 10px;
   border-radius: 999px;
-  background: rgb(var(--color-ink-rgb) / 0.16);
+  /*
+   * 两端收笔:一笔横画下去,起笔与收笔都不该是齐口 —— 齐口的线读作分隔符，
+   * 收过笔的线才像手写的。故用线性渐变压两头,中线保持 20%(装饰档)。
+   * 高度仍是 1px:空态多出现在列表里,不能为了好看长个头。
+   */
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--color-ink-rgb) / 0.2) 18%,
+    rgb(var(--color-ink-rgb) / 0.2) 82%,
+    transparent
+  );
 }
 
 /*
@@ -948,7 +1004,12 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
   border-radius: 8px;
   padding: 10px 18px;
   letter-spacing: 0.12em;
+  /*
+   * 第一道是**压印**:沿上缘一线亮边,印面才像「按下去的一块」而不是贴上去的色块;
+   * 第二道是四周那一圈描边(朱砂与奶油字之间的过渡);第三道是投影。
+   */
   box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.24),
     inset 0 0 0 1px rgb(255 255 255 / 0.14),
     0 2px 6px rgb(140 51 46 / 0.35);
   transition:
@@ -994,7 +1055,8 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
 
 .btn-ghost:active:not(:disabled) {
   transform: scale(0.96);
-  background: rgb(var(--shadow-ink-rgb) / 0.06);
+  /* 按下去那一下要看得见:取纸上墨(见 --shadow-ink-rgb 处的口径),夜间才不哑 */
+  background: rgb(var(--color-ink-rgb) / 0.06);
 }
 
 .btn-ghost:disabled {
@@ -1033,7 +1095,7 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
  */
 button.chip-ink:active:not(:disabled) {
   transform: scale(0.96);
-  background: rgb(var(--shadow-ink-rgb) / 0.06);
+  background: rgb(var(--color-ink-rgb) / 0.06);
 }
 
 /*
@@ -1071,13 +1133,49 @@ button.chip-ink:active:not(:disabled) {
   pointer-events: none;
 }
 
+/*
+ * 一道渐隐的墨线 —— 两种用法，分寸不同
+ *
+ * **用在边上**(顶栏底缘、底栏上缘、弹窗题头):只要一道从中间往两头淡掉的水平线,
+ * 两端不留齐口,读起来是「书页的切口」而不是框线。
+ *
+ * **用在正文中间**断开两段时,一道光秃的线还不够 —— 那读作表格框线。故另有
+ * `.ink-divider-mark`:中腰加一枚极淡的墨点(朱丝栏,书页行间的界栏记号),
+ * 线才像排版。点走墨而不走朱砂:朱砂在本库里专指「可点的行动」,
+ * 拿它当纯装饰会把这份唯一的语义稀释掉。
+ */
 .ink-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(var(--shadow-ink-rgb) / 0.22), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--color-ink-rgb) / 0.22), transparent);
+}
+
+.ink-divider-mark {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--color-ink-rgb) / 0.2) 18%,
+    rgb(var(--color-ink-rgb) / 0.2) 82%,
+    transparent
+  );
+}
+.ink-divider-mark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  border-radius: 999px;
+  /* 比线实一点(整条线是 20%,点在 25%):它是这条线的落款处,不能与线同淡 */
+  background: rgb(var(--color-ink-rgb) / 0.25);
 }
 
 .track-ink {
-  background: rgb(var(--shadow-ink-rgb) / 0.1);
+  /* 进度槽:夜间取纸上墨,否则槽与纸同深,条子像浮在半空 */
+  background: rgb(var(--color-ink-rgb) / 0.1);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -1258,7 +1356,7 @@ button.chip-ink:active:not(:disabled) {
     circle,
     transparent 30%,
     rgb(168 63 57 / 0.28) 46%,
-    rgb(var(--shadow-ink-rgb) / 0.22) 60%,
+    rgb(var(--color-ink-rgb) / 0.22) 60%,
     transparent 72%
   );
   animation: ink-wave 1.15s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
@@ -1510,7 +1608,8 @@ button.chip-ink:active:not(:disabled) {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgb(var(--shadow-ink-rgb) / 0.18);
+  /* 3px 的细条:取纸上墨,夜间才看得见(投影墨在深纸上等于没有) */
+  background: rgb(var(--color-ink-rgb) / 0.18);
   border-radius: 2px;
 }
 

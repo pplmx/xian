@@ -243,6 +243,7 @@ const CATEGORIES = [
       "palette.spec",
       "colorVar.spec",
       "inkIcons.spec",
+      "ornament.spec",
       "useNativeInsets",
       "fatePreview",
       "goBack",

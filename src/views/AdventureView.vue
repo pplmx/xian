@@ -359,7 +359,7 @@
           </p>
         </template>
         <p v-else class="text-[11px] text-ink-faint">尚未成流派,此地对各路数一视同仁。</p>
-        <div class="ink-divider my-2" />
+        <div class="ink-divider-mark my-2" />
         <p class="text-[10px] text-ink-faint">此地相性(机制契合度,并非胜率):</p>
         <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
           <span

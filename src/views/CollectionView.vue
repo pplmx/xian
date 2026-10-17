@@ -145,7 +145,7 @@
         <p v-if="detail.entry.hint" class="mt-2 text-[11px] text-ink-faint">
           {{ detail.entry.hint }}
         </p>
-        <div class="ink-divider my-3" />
+        <div class="ink-divider-mark my-3" />
         <p class="flex justify-between text-[11px]">
           <span class="text-ink-faint">{{ detail.entry.foot.label }}</span>
           <span class="tabular text-ink-soft">{{ detail.entry.foot.value }}</span>

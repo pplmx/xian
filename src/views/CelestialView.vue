@@ -197,7 +197,7 @@
                 >
               </p>
             </div>
-            <div class="ink-divider my-2.5" />
+            <div class="ink-divider-mark my-2.5" />
             <!-- 择路 -->
             <template v-if="run.layer < EXPEDITION_ROUTE_LAYERS && currentNodes">
               <p class="mb-1.5 text-[11px] text-ink-faint">

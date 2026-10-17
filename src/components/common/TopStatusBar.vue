@@ -1,8 +1,16 @@
 <template>
   <header
-    class="relative z-20 flex shrink-0 items-center justify-between gap-2 border-b border-ink/10 bg-paper-deep/90 px-4 py-2 backdrop-blur short:py-1"
+    class="relative z-20 flex shrink-0 items-center justify-between gap-2 border-b border-transparent bg-paper-deep/90 px-4 py-2 backdrop-blur short:py-1"
     :style="`padding-top: max(env(safe-area-inset-top), ${statusTopPad})`"
   >
+    <!--
+      底缘那道渐隐墨线 —— 与底栏上缘同一句写法,两栏因此成一对「书页的上下切口」。
+
+      这里只换画法、不动尺寸:border-b 的宽度与颜色原先一起承担「一条实线」的职责,
+      现在让宽度留着(transparent)、线交给 .ink-divider 画 —— 顶栏高度一分未变,
+      「两栏钉死」那条自检照旧过,而线的两头收了口,不再是齐着屏幕边的框线。
+    -->
+    <div class="ink-divider absolute inset-x-0 -bottom-px" aria-hidden="true" />
     <!--
       窄屏不许折行:320 宽时右组的「9 兆」「25.33 亿」与左组的「3000/1000 亿载」
       曾被压成两行,顶栏从 46px 涨到 58px,数字看着像乱码。故右组 shrink-0(整组

@@ -181,7 +181,7 @@
         </p>
       </div>
 
-      <div class="ink-divider my-4" />
+      <div class="ink-divider-mark my-4" />
       <div class="flex items-center justify-between text-[12px] text-ink-soft">
         <span>下一步:{{ btInfo.targetLabel }}</span>
       </div>
