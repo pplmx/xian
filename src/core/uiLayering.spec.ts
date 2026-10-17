@@ -2235,3 +2235,72 @@ describe("排版角色 —— 有名字的才叫系统", () => {
     ).toEqual([]);
   });
 });
+
+describe("人物页 · 可点行要说出自己是可点的", () => {
+  /*
+   * 道躯那张卡里有十来行小字(修炼速度 +110.5% / 暴击率 +16% ……),每行都能点开
+   * 看「这个数从哪来」。可它此前**一点可点的样子都没有**:没有箭头、没有选中态,
+   * 底下只挂一句「点一行看它从哪来」当唯一的线索 —— 而那句话在展开之后还赖着不走。
+   *
+   * 判据守三件事,每一件都是这次真改掉的东西:
+   *   一 可点行带展开指示(›,选中时转 90° 并转朱砂);
+   *   二 选中行有底色(否则展开一块正文,看不出点的是哪一行);
+   *   三 那行提示只在**没展开**时出现(展开了,下面那块牌子本身就是答案)。
+   */
+  const char = (): string => FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
+
+  it("mod 行带展开指示,且有选中态", () => {
+    const src = char();
+    expect(src, "mod 行要找得到 aria-expanded(读屏也要知道它展开没)").toContain(
+      ':aria-expanded="breakdownKey === row.key"',
+    );
+    expect(src, "选中行要染底").toContain("'bg-ink/5'");
+    expect(src, "展开指示要随选中态转 90°").toContain("rotate-90");
+  });
+
+  it("「点一行看它从哪来」不该在展开后还挂着", () => {
+    const src = char();
+    // 提示那一行的 v-if 必须与 breakdownRows 挂钩;只写 modRows.length 就会永远显示
+    const hint = /<p[^>]*v-if="([^"]*)"[^>]*>\s*点一行看它从哪来/.exec(src)?.[1] ?? "";
+    expect(hint, "提示行的 v-if 要挂 !breakdownRows.length").toContain("!breakdownRows.length");
+  });
+});
+
+describe("入口卡 —— 一件,不是九件", () => {
+  /*
+   * 人物页那九张「往里走」的卡(流派/画像/名号/师承/道侣/藏珍/修仙录/界域志/轮回)
+   * 原本逐字重复同一套骨架,全库另有十几处同类写法。重复本身不可怕,
+   * 可怕的是**漂移**:手抄九遍之后,某一张的 py 变 2.5、某枚图标变 15px、
+   * 某张副行忘了 truncate —— 而这三样没一个会被当成 bug 报出来。
+   *
+   * 现在它们都走 common/NavCard.vue。这条判据只盯一件事:
+   * 人物页三大入口区里不许再出现手写的入口卡骨架。
+   */
+  const char = (): string => FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
+
+  it("人物页的入口都走 NavCard", () => {
+    const src = char();
+    expect(src, "人物页要引入 NavCard").toContain('from "@/components/common/NavCard.vue"');
+    // 手写骨架的特征组合:card-ink + items-center + gap-3 + px-4 py-3
+    const handWritten = [
+      ...src.matchAll(/class="[^"]*card-ink[^"]*items-center[^"]*gap-3[^"]*"/g),
+    ].map((m) => m[0]);
+    expect(
+      handWritten,
+      `人物页还有手写的入口卡骨架 —— 改用 <NavCard>:${handWritten.join(" | ")}`,
+    ).toEqual([]);
+  });
+
+  it("NavCard 自己带齐三件:题头图 / 卡名 / 动作词", () => {
+    const nav = readFileSync(resolve(__dirname, "../components/common/NavCard.vue"), "utf-8");
+    // 三件的字号必须落在页面字阶上,不许各写各的
+    expect(nav, "题头图 16px").toContain(':size="16"');
+    expect(nav, "卡名 14px 楷体").toContain("text-[14px]");
+    expect(nav, "动作词 11px").toContain("text-[11px]");
+    expect(nav, "动作词要自动缀箭头").toContain("{{ action }} →");
+    // 按压反馈:判据另一条要求卡状元素带 scale-99
+    expect(nav, "入口卡要带按压反馈").toContain("active:scale-99");
+    // 副行是注解:默认单行截断,两行要显式开
+    expect(nav, "副行该 truncate").toContain("truncate");
+  });
+});
