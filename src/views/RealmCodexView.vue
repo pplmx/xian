@@ -3,11 +3,11 @@
     <div class="flex items-center gap-2">
       <RouterLink
         to="/character"
-        class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft"
+        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
         >← 人物</RouterLink
       >
       <span class="text-[11px] text-ink-faint">·</span>
-      <span class="text-[12px] text-ink-soft">界域志</span>
+      <span class="text-[11px] text-ink-soft">界域志</span>
     </div>
 
     <SectionTitle title="界域志" :hint="`境界名从哪来 · 已至「${realmDef(player.major).name}」`" />
@@ -45,7 +45,7 @@
             class="rounded-md px-2.5 py-2"
             :class="cell.index === player.major ? 'codex-current' : 'bg-paper-deep/50'"
           >
-            <p class="flex items-center gap-2">
+            <p class="flex items-baseline gap-2">
               <span
                 class="font-kai text-[14px] tracking-wider"
                 :class="
@@ -58,11 +58,16 @@
               >
                 {{ cell.def.name }}
               </span>
-              <span class="chip-ink !text-[9px]">{{ cell.def.basis }}</span>
-              <span v-if="cell.index === player.major" class="text-[9px]">此刻在此</span>
+              <!-- 基准(内丹/道基…)是分类签,不是主角字:压到 10px 的淡字,
+                   与境界名同基线但不争大小 -->
+              <span class="text-[10px] text-ink-faint">{{ cell.def.basis }}</span>
+              <span v-if="cell.index === player.major" class="text-[10px] text-cinnabar"
+                >此刻在此</span
+              >
             </p>
+            <!-- 一句提要 + 一段释文:提要走 ink-soft、释文走 faint,两级靠颜色分而非靠留白 -->
             <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">{{ cell.def.desc }}</p>
-            <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">{{ cell.def.lore }}</p>
+            <p class="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{{ cell.def.lore }}</p>
             <!-- 此境所据何典:把「境界 → 原典」这条来路直接摆在该境底下 -->
             <!-- 所据何典:点一下就跳到「典籍」那一册 —— codex 要能顺着来路追下去 -->
             <p
@@ -98,7 +103,7 @@
         >
           <p class="flex flex-wrap items-center gap-2">
             <span class="font-kai text-[14px] text-ink">《{{ c.title }}》</span>
-            <span class="chip-ink !text-[9px]">{{ c.school }}</span>
+            <span class="chip-ink !text-[10px]">{{ c.school }}</span>
             <span class="text-[10px] text-ink-faint">{{ c.source }}</span>
           </p>
           <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">{{ c.gist }}</p>
@@ -145,14 +150,14 @@
                 currentReading.lower.name
               }}{{ currentReading.lower.symbol }}
             </span>
-            <span v-if="currentReading.changed" class="chip-ink !text-[9px]"
+            <span v-if="currentReading.changed" class="chip-ink !text-[10px]"
               >之{{ currentReading.changed.name }}</span
             >
             <span class="ml-auto text-[10px] tabular text-ink-faint"
               ><span class="countdown-slot">{{ remainText }}</span></span
             >
           </p>
-          <div class="mt-1.5 space-y-0.5 font-kai text-[12px] tracking-[0.2em] text-ink-soft">
+          <div class="mt-1.5 space-y-0.5 font-kai text-[11px] tracking-[0.2em] text-ink-soft">
             <p v-for="(bar, i) in drawnLines" :key="i">{{ bar }}</p>
           </div>
           <p class="mt-1.5 text-[11px] leading-relaxed text-ink-soft">
@@ -178,7 +183,7 @@
         -->
         <div class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
           <button
-            class="btn-ghost shrink-0 whitespace-nowrap !py-1.5 !text-[12px]"
+            class="btn-ghost shrink-0 whitespace-nowrap !py-1.5 !text-[11px]"
             :disabled="askDisabled"
             @click="ask"
           >
@@ -223,7 +228,7 @@
           :aria-expanded="showAllHex"
           @click="showAllHex = !showAllHex"
         >
-          <span class="font-kai text-[13px] tracking-wider text-ink"
+          <span class="font-kai text-[14px] tracking-wider text-ink"
             >{{ cnNumber(HEXAGRAMS.length) }}卦</span
           >
           <span class="text-[10px] text-qing">{{
@@ -236,7 +241,7 @@
         >
           <div v-for="x in HEXAGRAMS" :key="x.order" class="flex items-baseline gap-2 py-2">
             <span class="w-6 shrink-0 tabular text-[10px] text-ink-faint">{{ x.order }}</span>
-            <span class="w-14 shrink-0 font-kai text-[13px] text-ink">{{ x.name }}</span>
+            <span class="w-14 shrink-0 font-kai text-[14px] text-ink">{{ x.name }}</span>
             <span class="w-16 shrink-0 text-[10px] text-ink-faint tabular">
               {{ trigramDef(x.upper)?.symbol }}{{ trigramDef(x.lower)?.symbol }}
             </span>
@@ -257,7 +262,7 @@
           >,按灵根与轮回归属安星:是取象义,不是排盘。诸星之力并进命格之力,不按宫位分流——宫位只是星象义,非机制分工。
           卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
         </p>
-        <p class="mt-2 font-kai text-[13px] leading-relaxed text-ink">{{ fateLordLineText }}</p>
+        <p class="mt-2 font-kai text-[14px] leading-relaxed text-ink">{{ fateLordLineText }}</p>
         <p class="mt-1 text-[11px] text-qing">命格之力:{{ fateModsText }}</p>
         <div class="mt-2.5 divide-y divide-ink/6">
           <div
@@ -265,7 +270,7 @@
             :key="row.palace.id"
             class="flex items-baseline gap-2 py-1.5"
           >
-            <span class="w-14 shrink-0 font-kai text-[12px] text-ink-soft">{{
+            <span class="w-14 shrink-0 font-kai text-[11px] text-ink-soft">{{
               row.palace.name
             }}</span>
             <span class="w-24 shrink-0 text-[11px] text-cinnabar">{{ row.starNames }}</span>
@@ -288,28 +293,38 @@
       <!-- 星象:二十八宿值日,利一方界域 -->
       <SectionTitle title="星象" :hint="`${cnNumber(MANSIONS.length)}宿值日,分野为读、四象为用`" />
       <section class="card-ink px-4 py-3">
-        <p class="font-kai text-[13px] leading-relaxed text-ink">{{ mansionLine }}</p>
-        <p class="mt-1 text-[11px] leading-relaxed text-ink-faint">
-          分野依《晋书·天文志》(诸家小异)只作来历读 —— 游戏里的地界不是九州。 管用的是下面这条<b
-            class="text-ink"
-            >游戏约定</b
-          >:{{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{ imageWorldMap }}),
-          值日之宿所属之象,所配界域今日际遇更易(际遇概率加成 +{{
-            formatPercent(MANSION_EVENT_LUCK, 0)
-          }}),他处不加。
-        </p>
-        <p class="mt-1.5 text-[11px] text-qing">
-          今日利 <span class="text-gold-ink">{{ favoredWorldName }}</span> ——
+        <!--
+          这一册从「一段散文」改成三档:今日值宿(题) → 今日之利(用) → 来历(读)。
+          原先的顺序是把「管用的是下面这条」放在最前、把可执行的「今日利」埋在第三段,
+          而玩家打开这一册想知道的从来是第一件:今天该往哪界走。
+        -->
+        <p class="font-kai text-[14px] leading-relaxed text-ink">{{ mansionLine }}</p>
+        <div class="ink-divider my-2.5" aria-hidden="true" />
+        <!-- 主读数:今日利某一界 —— 这是这一册唯一能据以行动的结论。
+             label 与界名挨着放(不两端撑开):它们是一句话「今日利 人间界」,
+             撑到卡两边会读成两栏互不相干的读数。 -->
+        <div data-value-row class="flex items-baseline gap-2">
+          <span class="shrink-0 text-[11px] text-ink-faint">今日利</span>
+          <span class="font-kai text-[15px] text-gold-ink">{{ favoredWorldName }}</span>
+          <span class="ml-auto shrink-0 text-[10px] text-ink-faint tabular"
+            >+{{ formatPercent(MANSION_EVENT_LUCK, 0) }}</span
+          >
+        </div>
+        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+          只在 {{ favoredWorldName }} 生效,往他处去不加 ——
           与天时不同:天时是全境之气,星象只利一方。
         </p>
-        <button
-          class="mt-1.5 inline-flex min-h-[28px] items-center text-[11px] text-qing underline underline-offset-2 active:opacity-60"
-          @click="goAdventure"
-        >
+        <button class="btn-ghost mt-2 w-full !py-1.5 !text-[11px]" @click="goAdventure">
           去 {{ favoredWorldName }} 历练 →
         </button>
+        <!-- 来历归脚注:分野依《晋书·天文志》只作读,管用的是上面那条约定 -->
+        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          分野依《晋书·天文志》(诸家小异),只作来历读 —— 游戏里的地界不是九州。
+          {{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{ imageWorldMap }}),值日之宿所属之象,
+          所配界域今日际遇更易。
+        </p>
         <button
-          class="mt-2 w-full text-left text-[10px] text-qing active:opacity-60"
+          class="mt-2 w-full border-t border-ink/8 pt-2 text-left text-[10px] text-qing active:opacity-60"
           :aria-expanded="showAllMansions"
           @click="showAllMansions = !showAllMansions"
         >
@@ -329,7 +344,7 @@
               :key="m.name"
               class="flex items-baseline gap-2 py-1.5"
             >
-              <span class="w-12 shrink-0 font-kai text-[13px] text-ink">{{ m.name }}</span>
+              <span class="w-12 shrink-0 font-kai text-[14px] text-ink">{{ m.name }}</span>
               <span class="w-20 shrink-0 text-[10px] text-ink-faint">{{ m.fullName }}</span>
               <span class="w-12 shrink-0 text-[10px] text-ink-faint">{{ m.domain }}</span>
               <span class="min-w-0 text-[11px] leading-relaxed text-ink-soft">{{ m.good }}</span>
@@ -353,7 +368,7 @@
         <div class="mt-2.5 divide-y divide-ink/6">
           <div v-for="g in GATES" :key="g.id" class="flex items-start gap-2 py-2">
             <span
-              class="w-12 shrink-0 font-kai text-[13px]"
+              class="w-12 shrink-0 font-kai text-[14px]"
               :class="
                 g.kind === '凶' ? 'text-cinnabar' : g.kind === '吉' ? 'text-jade' : 'text-ink-soft'
               "

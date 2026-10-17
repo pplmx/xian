@@ -9,54 +9,68 @@
     :aria-label="label"
     @click="emit('open', props.item.uid)"
   >
-    <!-- 角标:佩戴 / 上锁 -->
-    <span
-      v-if="props.equipped"
-      class="absolute left-0.5 top-0.5 font-kai text-[8px] leading-none text-jade"
-      >佩</span
-    >
-    <span v-if="props.item.locked" class="absolute right-0.5 top-0.5 leading-none text-ink-faint">
-      <GameIcon name="lock" :size="8" />
+    <!--
+      角标不再散在四角。四列格子里 8px 的「佩/共/新」原来是四粒认不出的墨点,
+      而且和名字抢同一条视觉边。改成顶部一条标记带:
+      左侧「佩」用玉色实底(它是状态),右侧「共」用紫色描边(它是属性),
+      「新」仍挂正中朱砂。三样都还在,只是排成了一条读得懂的线。
+    -->
+    <span class="absolute inset-x-0 top-0 flex items-start justify-between px-1 pt-0.5">
+      <span
+        v-if="props.equipped"
+        class="rounded-sm bg-jade/15 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
+        >佩</span
+      >
+      <span v-else class="w-2.5" aria-hidden="true" />
+      <span
+        v-if="props.item.locked"
+        class="leading-none text-ink-faint"
+        aria-hidden="true"
+        title="已锁定"
+      >
+        <GameIcon name="lock" :size="9" />
+      </span>
     </span>
-    <!-- 共鸣件:方格背包里也得看得出这一件拴着一条机制(两件才亮,见 core/equipSet) -->
-    <span
-      v-if="setName"
-      class="absolute bottom-0.5 left-1 font-kai text-[8px] leading-none text-violet-ink"
-      :title="`共鸣「${setName}」`"
-    >
-      共
-    </span>
-    <!-- 新入包、还没开过背包看它:顶部中央挂「新」(佩在左、锁在右,这格谁都不占) -->
+    <!-- 新入包、还没开过背包看它 -->
     <span
       v-if="isNew"
-      class="absolute left-1/2 top-0.5 -translate-x-1/2 font-kai text-[8px] leading-none text-cinnabar animate-new-pop"
+      class="absolute left-1/2 top-0.5 -translate-x-1/2 font-kai text-[10px] leading-none text-cinnabar animate-new-pop"
     >
       新
     </span>
 
-    <!-- 主图标 -->
-    <span class="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1">
-      <GameIcon :name="template?.icon ?? 'sword'" :size="20" :style="{ color: quality.color }" />
+    <!-- 主图标 + 名字:上下各留一条基线带(top-0 标记带 / bottom-0 数值带)后居中 -->
+    <span class="flex h-full w-full flex-col items-center justify-center gap-1 px-1 py-4">
+      <GameIcon :name="template?.icon ?? 'sword'" :size="22" :style="{ color: quality.color }" />
       <span
-        class="w-full truncate text-center text-[9px] leading-tight"
+        class="w-full truncate text-center text-[10px] leading-tight"
         :style="{ color: quality.color }"
       >
         {{ template?.name ?? "?" }}
       </span>
     </span>
 
-    <!-- 强化等级:右下角,格子背包的惯例位置 -->
-    <span
-      v-if="props.item.level > 0"
-      class="absolute bottom-0.5 right-1 text-[9px] leading-none text-gold-ink tabular"
-    >
-      +{{ props.item.level }}
+    <!-- 底边:左「共」(共鸣),右强化等级 —— 两样都是数值性的,故都走右下这条基线 -->
+    <span class="absolute inset-x-0 bottom-0.5 flex items-center justify-between px-1">
+      <span
+        v-if="setName"
+        class="font-kai text-[10px] leading-none text-violet-ink"
+        :title="`共鸣「${setName}」`"
+        >共</span
+      >
+      <span v-else class="w-2.5" aria-hidden="true" />
+      <span
+        v-if="props.item.level > 0"
+        class="text-[10px] leading-none text-gold-ink tabular"
+      >
+        +{{ props.item.level }}
+      </span>
     </span>
 
     <!-- 玩家标记:同名装备按流派区分(详情弹窗里写,见 noteDraft)。 -->
     <span
       v-if="props.item.note"
-      class="absolute bottom-0.5 left-6 right-6 truncate text-center text-[8px] leading-none text-ink-faint"
+      class="absolute inset-x-1 bottom-4 truncate text-center text-[10px] leading-none text-ink-faint"
     >
       {{ props.item.note }}
     </span>

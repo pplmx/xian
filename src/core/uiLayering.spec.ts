@@ -2089,6 +2089,7 @@ describe("主巡页 · 字阶同一套", () => {
     "views/HomeView.vue",
     "views/DongfuView.vue",
     "views/InventoryView.vue",
+    "views/RealmCodexView.vue",
   ];
 
   for (const path of pages) {
@@ -2100,7 +2101,9 @@ describe("主巡页 · 字阶同一套", () => {
        *  · 修炼页 30 是匾额、16 是庆功字 —— 它是这一作的字阶上端;
        *  · 首页 17 是 ☯ 与印面里的那枚字符(当图标用,度量的是字面框不是行文);
        *  · 背包页 19 是格子里那枚大字读数(材料/丹药的数量角标)。字号小一号
-       *    在 5 列格子里就只剩糊,它是唯一的例外,别的正文仍走 11。
+       *    在 5 列格子里就只剩糊,它是唯一的例外,别的正文仍走 11;
+       *  · 界域志 16 是「在身之卦」的卦名 —— 那一格里它是唯一的主读数,
+       *    与 14 的条目名拉开一档才立得住(册内其余一律 15 及以下)。
        */
       const allow =
         path === "views/CultivationView.vue"
@@ -2109,7 +2112,9 @@ describe("主巡页 · 字阶同一套", () => {
             ? [...PAGE_TIERS, 17]
             : path === "views/InventoryView.vue"
               ? [...PAGE_TIERS, 19]
-              : PAGE_TIERS;
+              : path === "views/RealmCodexView.vue"
+                ? [...PAGE_TIERS, 16]
+                : PAGE_TIERS;
       const off = [...new Set([...src.matchAll(SIZES)].map((m) => Number(m[1] ?? 0)))].filter(
         (n) => !allow.includes(n),
       );

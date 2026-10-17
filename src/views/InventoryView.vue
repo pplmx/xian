@@ -72,12 +72,13 @@
           @click="pickerSlot = row.slot"
         >
           <!--
-            槽名是这一格的标题,不是脚注:9px 在手机上已低于可读下限,
-            与「还有几件候选」同处一行、后者淡一档,主次才分明。
+            槽名与下面的装备名同为 10px 时,一格里两层字一样重,读的人得先分辨
+            「哪个是我的东西」。槽名走楷体 + 字距:外形一变就认得出是题头而非内容;
+            「·N」是候选件数,压到更淡的一档。
           -->
-          <span class="text-[10px] text-ink-faint tabular">
+          <span class="font-kai text-[10px] tracking-[0.15em] text-ink-faint">
             {{ row.name }}
-            <template v-if="row.stock">· {{ row.stock }}</template>
+            <span v-if="row.stock" class="tracking-normal text-ink-faint/70">·{{ row.stock }}</span>
           </span>
           <template v-if="row.item && row.template">
             <GameIcon
@@ -123,7 +124,13 @@
           :hint="`${allItems.length} 件 · 行囊 ${inventory.bagItems.length}/${BAG_CAPACITY}`"
         />
         <!-- 方格背包:五列格子 + 空槽占位,一眼看出还剩多少地方 -->
-        <div class="mt-2 grid grid-cols-5 gap-1.5">
+        <!--
+          四列,不是五列 —— 390 宽下五列每格只剩 ~70px,而格子里要装图标、名字、
+          强化等级与三枚角标(佩/共/新):名字几乎必被截成两三个字,8px 的角标
+          更是认不出的墨点。四列给到 ~88px,名字与角标才都有立足处。
+          320 宽下四列仍有 ~66px,比原来的五列 ~50px 宽裕。
+        -->
+        <div class="mt-2 grid grid-cols-4 gap-2">
           <EquipmentCard
             v-for="row in allItems"
             :key="row.item.uid"
@@ -181,35 +188,18 @@
         <span class="shrink-0 text-[11px] text-ink-faint">买 ›</span>
       </button>
 
-      <!-- 丹匣:格子只给图标与名号,详情看弹窗 -->
-      <div v-if="pillRows.length" class="mt-3 grid grid-cols-4 gap-1.5">
-        <button
+      <!-- 丹匣:格子只给图标、名号与存量,详情看弹窗 -->
+      <div v-if="pillRows.length" class="mt-3 grid grid-cols-4 gap-2">
+        <ItemCell
           v-for="row in pillRows"
           :key="row.def!.id"
-          class="relative aspect-square rounded-md border transition-transform active:scale-95"
-          :style="{
-            borderColor: colorWithAlpha(qualityDef(row.def!.quality).color, 0.33),
-            background: colorWithAlpha(qualityDef(row.def!.quality).color, 0.06),
-          }"
-          @click="pillDetail = row.def!.id"
-        >
-          <span class="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1">
-            <GameIcon
-              :name="row.def!.icon"
-              :size="20"
-              :style="{ color: qualityDef(row.def!.quality).color }"
-            />
-            <span
-              class="w-full truncate text-center text-[10px] leading-tight"
-              :style="{ color: qualityDef(row.def!.quality).color }"
-            >
-              {{ row.def!.name }}
-            </span>
-          </span>
-          <span class="absolute bottom-0.5 right-1 text-[10px] leading-none text-ink-soft tabular"
-            >×{{ row.count }}</span
-          >
-        </button>
+          :icon="row.def!.icon"
+          :name="row.def!.name"
+          :tone="qualityDef(row.def!.quality).color"
+          :foot="`×${row.count}`"
+          :label="`${qualityDef(row.def!.quality).name}·${row.def!.name} · 存 ${row.count}`"
+          @open="pillDetail = row.def!.id"
+        />
       </div>
       <p v-else class="empty-note mt-10 text-center text-[11px] text-ink-faint">
         丹匣空空,去藏经阁参悟丹方,或去坊市收购几株灵草
@@ -218,23 +208,38 @@
 
     <!-- 材料 -->
     <template v-else-if="tab === 'material'">
-      <div class="mt-3 grid grid-cols-4 gap-1.5">
-        <button
-          v-for="m in materialGrid"
+      <!--
+        六格材料原先混成一排:灵草/玄铁/残页/器灵尘/悟道点/灵石,彼此的用途
+        差得很远(前三样进炉子,后三样进账本)。分两组,各带一行说明 ——
+        找「炼丹要什么」与「我还有多少底子」是两件事。
+      -->
+      <p class="mt-3 px-1 text-[11px] text-ink-faint">炼制之材 · 进炉子</p>
+      <div class="mt-1.5 grid grid-cols-4 gap-2">
+        <ItemCell
+          v-for="m in craftMaterials"
           :key="m.key"
-          class="relative aspect-square rounded-md border border-ink/15 bg-ink/[0.03] transition-transform active:scale-95"
-          @click="materialDetail = m.key"
-        >
-          <span class="flex h-full w-full flex-col items-center justify-center gap-0.5 px-1">
-            <GameIcon :name="m.icon" :size="20" :class="m.color" />
-            <span class="w-full truncate text-center text-[10px] leading-tight text-ink-soft">{{
-              m.name
-            }}</span>
-          </span>
-          <span class="absolute bottom-0.5 right-1 text-[10px] leading-none text-ink-soft tabular">{{
-            m.display
-          }}</span>
-        </button>
+          :icon="m.icon"
+          :name="m.name"
+          plain
+          :icon-class="m.color"
+          :foot="m.display"
+          :label="`${m.name} ${m.display}`"
+          @open="materialDetail = m.key"
+        />
+      </div>
+      <p class="mt-3 px-1 text-[11px] text-ink-faint">修行所积 · 进账本</p>
+      <div class="mt-1.5 grid grid-cols-4 gap-2">
+        <ItemCell
+          v-for="m in stockMaterials"
+          :key="m.key"
+          :icon="m.icon"
+          :name="m.name"
+          plain
+          :icon-class="m.color"
+          :foot="m.display"
+          :label="`${m.name} ${m.display}`"
+          @open="materialDetail = m.key"
+        />
       </div>
     </template>
 
@@ -1088,6 +1093,7 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import EquipmentCard from "@/components/equipment/EquipmentCard.vue";
+import ItemCell from "@/components/common/ItemCell.vue";
 
 const inventory = useInventoryStore();
 // 「新」角标清账时机 = 离开背包那一刻(路由无 keep-alive,离开即卸载):
@@ -1443,26 +1449,47 @@ function rateClass(rate: number): string {
   return "text-cinnabar";
 }
 
+/**
+ * 材料的图标色 —— 一律走色板真类,且各按物性给色:
+ * 灵草(木性)、玄铁(金性)、残页与悟道点(文墨)、器灵尘(器)、灵石(金贵)。
+ * 曾经六格全是 ink-soft,格子里的图标只剩「黑白剪影」一种身份,
+ * 于是四列格子最大的那块面积(图标)不承担任何识别功能。
+ */
 const materialRows = computed(() => [
-  { icon: "leaf", name: RESOURCE_LABELS.herb, desc: "炼丹的根本", value: resources.herb },
-  { icon: "mountain", name: RESOURCE_LABELS.ore, desc: "筑造与炼器之材", value: resources.ore },
+  {
+    icon: "leaf",
+    name: RESOURCE_LABELS.herb,
+    desc: "炼丹的根本",
+    value: resources.herb,
+    color: "text-jade",
+  },
+  {
+    icon: "mountain",
+    name: RESOURCE_LABELS.ore,
+    desc: "筑造与炼器之材",
+    value: resources.ore,
+    color: "text-ink-soft",
+  },
   {
     icon: "scroll",
     name: RESOURCE_LABELS.page,
     desc: "集残页可参悟功法",
     value: resources.page,
+    color: "text-qing",
   },
   {
     icon: "sparkles",
     name: RESOURCE_LABELS.dust,
     desc: "强化装备的灵性之尘",
     value: resources.dust,
+    color: "text-violet-ink",
   },
   {
     icon: "book",
     name: RESOURCE_LABELS.wudao,
     desc: "功法进修与法宝炼化所需",
     value: resources.wudao,
+    color: "text-cinnabar",
   },
 ]);
 
@@ -1473,7 +1500,7 @@ const materialGrid = computed(() => [
     icon: m.icon,
     name: m.name,
     desc: m.desc,
-    color: "text-ink-soft",
+    color: m.color,
     display: formatNum(m.value),
     full: String(m.value),
   })),
@@ -1489,6 +1516,26 @@ const materialGrid = computed(() => [
 ]);
 
 const materialDetail = ref<string | null>(null);
+/**
+ * 材料页的两组。分组的依据是**用途**而不是数量:前三样投进炼丹炉与炼器,
+ * 后三样是账面上的积余(器灵尘/悟道点/灵石)。找「炼丹要什么」与
+ * 「我还有多少底子」是两个问题,混成一排时两样都得从头找一遍。
+ *
+ * 组名一律读 RESOURCE_LABELS —— 手写字符串会在改全称时静默落空
+ * (分组悄悄变空,而页面照常渲染,不会有人发现)。
+ */
+const CRAFT_KEYS: string[] = [
+  RESOURCE_LABELS.herb,
+  RESOURCE_LABELS.ore,
+  RESOURCE_LABELS.dust,
+  RESOURCE_LABELS.page,
+];
+const craftMaterials = computed(() =>
+  materialGrid.value.filter((m) => CRAFT_KEYS.includes(m.name)),
+);
+const stockMaterials = computed(() =>
+  materialGrid.value.filter((m) => !CRAFT_KEYS.includes(m.name)),
+);
 const currentMaterial = computed(
   () => materialGrid.value.find((m) => m.key === materialDetail.value) ?? null,
 );
