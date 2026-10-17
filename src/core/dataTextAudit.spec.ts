@@ -24,6 +24,8 @@ import { describe, expect, it } from "vite-plus/test";
 import { MUTATORS } from "@/data/mutators";
 import { SECRET_RULES } from "@/data/secretRealms";
 import { BUFFS, buffDef } from "@/data/buffs";
+import { PILLS } from "@/data/pills";
+import { STAT_NAMES } from "@/ui/statNames";
 import {
   CAVE_EVENT_POOL,
   ENLIGHTENMENT_OPTIONS,
@@ -108,19 +110,25 @@ describe("文案数值对账 · 秘境随机规则", () => {
 });
 
 describe("文案数值对账 · 增益(Buff)", () => {
-  it("每味增益的说明百分比,都能在它自己的 mods 里找到", () => {
-    let checked = 0;
+  /**
+   * 这一条从前是「说明里的百分比必须能在 mods 里对到」—— 它证明的是两本账
+   * **暂时**一致,而两本账本身才是病根:改 mods 的那一夜界面开始撒谎,直到有人
+   * 想起改文案。现在说明只剩风味(见 data/buffs.ts 文件头与文末「说明只说风味」一节),
+   * 于是这条改成它本该守的东西:**每个增益都得有数值承载** —— 空了就等于
+   * 「说有增益、其实什么也不加」,比写错更糟。
+   */
+  it("每个增益都有数值承载 —— 说明可以留白,mods 不能空", () => {
     for (const b of BUFFS) {
       const nums = Object.values(b.mods) as number[];
-      for (const pc of percentsOf(b.desc)) {
-        checked += 1;
-        expect(
-          percentBacked(pc, nums),
-          `增益「${b.name}」说明写 ${pc}%,mods 里对不上:${b.desc} · [${nums.join(", ")}]`,
-        ).toBe(true);
-      }
+      expect(nums.length, `增益「${b.name}」的 mods 是空的:界面上它什么也不加`).toBeGreaterThan(0);
+      // 全零同样等于空(引擎侧按值判定,零值不参与结算)
+      expect(
+        nums.some((v) => v !== 0),
+        `增益「${b.name}」的 mods 全是零:[${nums.join(", ")}]`,
+      ).toBe(true);
+      expect(b.durationSec, `增益「${b.name}」没有时长,它永远不会过期`).toBeGreaterThan(0);
     }
-    expect(checked, "增益说明里扫到的百分比太少,判据覆盖不足").toBeGreaterThanOrEqual(8);
+    expect(BUFFS.length, "增益表空了,判据形同虚设").toBeGreaterThanOrEqual(38);
   });
 });
 
@@ -1088,5 +1096,86 @@ describe("文案数值对账 · 顿悟/巡游的数值由 buff 与 reward 现算
     expect(durationText(300)).toBe("5 分钟");
     expect(durationText(600)).toBe("一盏茶(10 分钟)");
     expect(durationText(1800)).toBe("一炷香(30 分钟)");
+  });
+});
+
+/**
+ * 增益与丹药的说明 —— 同一份数值不写两遍
+ *
+ * 这两张表的说明此前是「数值的第二个副本」:
+ *   · 增益卡把 desc 与效果行并排播:desc 写「攻击提升 20%,防御提升 10%」,
+ *     效果行由 mods 现算出「攻击 +20% / 防御 +10%」—— 同一件事两行字。
+ *   · 丹药卡同样:desc 写「一炷香内修炼提速五成(30 分钟)」,
+ *     效果行由 pillFuncText 写「修炼速度 +50%(持续 30 分钟)」。
+ *
+ * 更糟的是名字也分叉:desc 叫「战斗伤害」「造成伤害」「受伤降低」,效果行叫
+ * 「伤害增幅」「伤害减免」—— 同一条词条在同一张卡上读起来像两样东西。
+ * 根子在 STAT_NAMES 之外又手写了一套叫法(见 src/ui/statNames.ts 的取舍注释)。
+ *
+ * 所以判据是:说明里不许出现**任何**承载数值的写法,也不许出现旧词条别名。
+ * 数值与名字各有唯一出口 —— mods 的键、STAT_NAMES 的值、pillFuncText 的现算。
+ */
+const STAT_ALIASES = [
+  "战斗伤害",
+  "造成伤害",
+  "灵气回复",
+  "受到伤害降低",
+  "受伤降低",
+  "生命上限",
+  "战斗所得修为",
+  "突破成功率",
+  "出手速度",
+  "炼器消耗",
+];
+
+/**
+ * 连**正确**的词条名也不该出现在说明里。
+ *
+ * 只禁旧别名不够:desc 写「伤害增幅 +20%」与写「造成伤害提升 20%」是同一份手抄,
+ * 只是抄的那一版刚好与 STAT_NAMES 同名。名字的唯一出口是效果行(modsText 读 STAT_NAMES)。
+ * 单字/双字名(攻击、防御、气运、破甲…)放行 —— 它们在风味句里是寻常词,
+ * 而且「气运加身」这种句子说的不是词条,是那个东西本身。
+ */
+const STAT_COMPOUND = Object.values(STAT_NAMES).filter((s) => s.length >= 3);
+
+describe("文案数值对账 · 说明只说风味", () => {
+  /** 一段说明里承载数值的写法 —— 阿拉伯数字、百分号、中文数词、旧词条别名 */
+  const offenders = (text: string): string[] => {
+    const hits: string[] = [];
+    if (/\d/.test(text)) hits.push("阿拉伯数字");
+    if (text.includes("%")) hits.push("百分号");
+    hits.push(...numeralsIn(text).map((w) => `中文数词「${w}」`));
+    hits.push(...STAT_ALIASES.filter((w) => text.includes(w)).map((w) => `旧词条名「${w}」`));
+    hits.push(...STAT_COMPOUND.filter((w) => text.includes(w)).map((w) => `词条名「${w}」`));
+    return hits;
+  };
+
+  it("增益的说明只剩风味:数值与词条名都归效果行", () => {
+    for (const b of BUFFS) {
+      const hits = offenders(b.desc);
+      expect(hits, `增益「${b.name}」的说明又写上了${hits.join("、")}:${b.desc}`).toEqual([]);
+    }
+    expect(BUFFS.length, "增益表空了,判据形同虚设").toBeGreaterThanOrEqual(38);
+  });
+
+  it("丹药的说明只剩风味:服下去会怎样由 pillFuncText 说", () => {
+    for (const d of PILLS) {
+      const hits = offenders(d.desc);
+      expect(hits, `丹药「${d.name}」的说明又写上了${hits.join("、")}:${d.desc}`).toEqual([]);
+    }
+    expect(PILLS.length, "丹药表空了,判据形同虚设").toBeGreaterThanOrEqual(60);
+  });
+
+  it("判据本身认得这些写法 —— 否则「全绿」只是没扫到", () => {
+    // 自证:五种写法各自必须被认出(这类判据最容易写成「永远绿」)
+    expect(offenders("攻击提升 20%")).toEqual(["阿拉伯数字", "百分号"]);
+    expect(offenders("修炼提速五成")).toEqual(["中文数词「五成」"]);
+    expect(offenders("灵气回复提升")).toEqual(["旧词条名「灵气回复」"]);
+    expect(offenders("练了一炷香")).toEqual(["中文数词「一炷香」"]);
+    // 名字抄对了也不行:抄的就是同一份数,只是抄的是新版
+    expect(offenders("伤害增幅")).toEqual(["词条名「伤害增幅」"]);
+    // 干净的风味句不许误报:这些字里没有量,只是文气
+    expect(offenders("气血亏损,周天迟滞,战力大减")).toEqual([]);
+    expect(offenders("一呼一吸皆有所得")).toEqual([]);
   });
 });

@@ -17,11 +17,16 @@
  *      说「将近 X / X 有余」并附分钟数 —— 古语可以模糊,模糊必须写在明处;
  *   二 立判据:**凡是文案里出现了时制词,就折成秒与数据对账**。
  *      数值一改忘了改文案,这里立刻红(而不是等玩家发现"写的和做的不一样")。
+ *
+ * 第二轮追加:丹药与增益的 desc 不再写时长(那片数值改成由 pillFuncText 现算),
+ * 于是第二条判据的落点从 desc 挪到了**现算行** —— 见文末「时制对账 · 文案与数据」。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { PILLS } from "./pills";
 import { BUFFS, buffDef } from "./buffs";
 import { KE_SEC, SHICHEN_SEC, classicalDuration, parseClassicalDuration } from "./timeUnits";
+import { pillFuncText } from "@/ui/itemText";
+import { formatDuration } from "@/utils/format";
 
 /** 从文案里取出括号中的现代时长(分钟/小时),折成秒 */
 function modernSecondsIn(text: string): number | null {
@@ -66,57 +71,49 @@ describe("道门时制 · 表本身", () => {
 });
 
 describe("时制对账 · 文案与数据", () => {
-  it("丹药:凡文案里写了时制,折出的秒数必须等于它的真实时长", () => {
+  /**
+   * 这一条原来是「凡 desc 里写了时制,折出的秒数必须等于真实时长」——
+   * 它守的是两本账**暂时**一致。现在 desc 只剩风味(见 data/buffs.ts / pills.ts
+   * 的文件头),时长只有一处出口:界面上的现算行。于是判据跟着改成两截:
+   *   一 desc 里不许再出现时制词(手抄只能从这一处回潮);
+   *   二 现算行必须报出与 expSecs / buff.durationSec 同源的那一段时长。
+   */
+  it("丹药与增益的说明不再写时长", () => {
+    const offenders = [...PILLS, ...BUFFS]
+      .filter((d) => parseClassicalDuration(d.desc) !== null || modernSecondsIn(d.desc) !== null)
+      .map((d) => `${d.name}:${d.desc}`);
+    expect(offenders, "说明里又写上了时长 —— 它该由现算行说").toEqual([]);
+    expect(PILLS.length + BUFFS.length, "两张表都空了,判据形同虚设").toBeGreaterThanOrEqual(100);
+  });
+
+  it("丹药的现算行报出的时长,与 expSecs / buff 的持续秒数同源", () => {
     const rows: string[] = [];
     let checked = 0;
     for (const def of PILLS) {
-      const claimed = parseClassicalDuration(def.desc);
-      const modern = modernSecondsIn(def.desc);
-      // 只审"文案落了时长"的那几味
-      if (claimed === null && modern === null) continue;
-      checked += 1;
       // 真实时长:即时丹看 expSecs;增益丹看它 buff 的持续秒数
       const actual =
         def.instant?.expSecs ?? (def.buffId ? buffDef(def.buffId)?.durationSec : undefined);
-      rows.push(
-        `${def.name}:文案 ${claimed ? `${claimed.sec}s${claimed.exact ? "" : "(约)"}` : "-"} / 现代 ${modern ?? "-"}s · 实际 ${actual ?? "-"}s`,
-      );
-      expect(actual, `${def.name} 的文案写了时长,数据里却没有时长可比`).toBeDefined();
-      if (claimed) {
-        if (claimed.exact)
-          expect(claimed.sec, `${def.name} 的古语与实际不符(${def.desc})`).toBe(actual);
-        else
-          expect(
-            Math.abs(claimed.sec - actual!),
-            `${def.name} 的"将近/有余"跑出了最近那一档(${def.desc})`,
-          ).toBeLessThanOrEqual(KE_SEC);
-      }
-      if (modern !== null)
-        expect(modern, `${def.name} 括号里的现代时长与实际不符(${def.desc})`).toBe(actual);
+      if (!actual) continue;
+      checked += 1;
+      const text = pillFuncText(def);
+      // 即时丹走 formatDuration(「15分0秒」),增益丹说「持续 N 分钟」—— 各按各的口径对
+      const expected = def.instant?.expSecs
+        ? formatDuration(actual)
+        : `${Math.round(actual / 60)} 分钟`;
+      rows.push(`${def.name}:现算行须含「${expected}」· 实际 ${actual}s`);
+      expect(text, `${def.name} 的现算行没报出时长(${actual}s):${text}`).toContain(expected);
     }
-    console.log(`\n  丹药文案对账(共 ${checked} 味):`);
+    console.log(`\n  丹药现算行对账(共 ${checked} 味):`);
     for (const r of rows) console.log("    " + r);
-    expect(checked, "一味带时长的丹药都没扫到 —— 判据形同虚设").toBeGreaterThan(5);
+    expect(checked, "一味带时长的丹药都没扫到 —— 判据形同虚设").toBeGreaterThan(20);
   });
 
-  it("增益:文案里的时制同样要与 buff 的持续秒数一致", () => {
+  it("增益的时长只在 buff 本体上:现算行读的是 durationSec", () => {
     let checked = 0;
     for (const def of BUFFS) {
-      const claimed = parseClassicalDuration(def.desc);
-      if (claimed === null) continue;
+      expect(def.durationSec, `增益「${def.name}」没有时长`).toBeGreaterThan(0);
       checked += 1;
-      if (claimed.exact) {
-        expect(
-          claimed.sec,
-          `${def.name} 的古语与实际时长不符(${def.desc} / ${def.durationSec}s)`,
-        ).toBe(def.durationSec);
-      } else {
-        expect(
-          Math.abs(claimed.sec - def.durationSec),
-          `${def.name} 的"将近/有余"跑出了最近那一档`,
-        ).toBeLessThanOrEqual(KE_SEC);
-      }
     }
-    console.log(`  增益文案对账:${checked} 条含时制`);
+    expect(checked, "增益表空了,判据形同虚设").toBeGreaterThanOrEqual(38);
   });
 });

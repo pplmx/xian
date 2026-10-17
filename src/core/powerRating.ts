@@ -6,6 +6,7 @@
  * 星级基于词条合计的定性分段,不做精确排名——两个 4 星构筑谁强,由环境与相性决定。
  */
 import type { AnyStatKey, FinalStats, StatMods } from "@/types";
+import { STAT_NAMES } from "@/ui/statNames";
 import { detectBuild } from "./buildDetect";
 import { modOf } from "./statsCalc";
 
@@ -121,44 +122,55 @@ export function ratePower(stats: FinalStats): PowerRating {
   // 进攻:直接增伤 + 暴击期望 + 破甲/处决
   const critRaw = v("critRate");
   const critTerm: PowerTerm = {
-    label: "暴击率×(1+暴伤)",
+    // 这一条是公式不是单个词条,故两个名字都从 STAT_NAMES 取(「暴伤」是简称,
+    // 面板别处叫「暴击伤害」,简称在明细里会变成第二个名字)
+    label: `${STAT_NAMES.critRate}×(1+${STAT_NAMES.critDamage})`,
     raw: critRaw,
     contribution: critRaw * (1 + v("critDamage")),
   };
   const w = (k: AnyStatKey): number => POWER_STAT_WEIGHTS[k] ?? 0;
+  /**
+   * 分项名一律取 STAT_NAMES,不在这里另起一套叫法。
+   *
+   * 这里的标签此前各叫各的:面板写「伤害增幅」,战力理由写「造成伤害」;
+   * 面板写「气血上限」,这里写「气血加成」;面板写「濒危减伤」,这里写「残血减伤」。
+   * 同一条词条在同一屏上换三个名字,玩家没法把"差在哪一条"对上号 ——
+   * 而这一段存在的全部意义就是让人对上号。
+   */
+  const n = (k: AnyStatKey): string => STAT_NAMES[k];
   const attackTerms = [
-    term("攻击加成", v("attackPct"), w("attackPct")),
-    term("造成伤害", v("damageBonus"), w("damageBonus")),
+    term(n("attackPct"), v("attackPct"), w("attackPct")),
+    term(n("damageBonus"), v("damageBonus"), w("damageBonus")),
     critTerm,
-    term("破甲", v("armorPen"), w("armorPen")),
-    term("处决伤害", v("executeDamage"), w("executeDamage")),
-    term("背水增伤", v("lowHpDamage"), w("lowHpDamage")),
-    term("锋芒增伤", v("fullHpDamage"), w("fullHpDamage")),
-    term("追击威力", v("comboDamage"), w("comboDamage")),
-    term("反击威力", v("counterDamage"), w("counterDamage")),
+    term(n("armorPen"), v("armorPen"), w("armorPen")),
+    term(n("executeDamage"), v("executeDamage"), w("executeDamage")),
+    term(n("lowHpDamage"), v("lowHpDamage"), w("lowHpDamage")),
+    term(n("fullHpDamage"), v("fullHpDamage"), w("fullHpDamage")),
+    term(n("comboDamage"), v("comboDamage"), w("comboDamage")),
+    term(n("counterDamage"), v("counterDamage"), w("counterDamage")),
   ];
   // 生存:防御/生命/减伤/盾/闪避
   const survivalTerms = [
-    term("防御加成", v("defensePct"), w("defensePct")),
-    term("气血加成", v("maxHpPct"), w("maxHpPct")),
-    term("伤害减免", v("damageReduction"), w("damageReduction")),
-    term("开战护盾", v("shieldOnStart"), w("shieldOnStart")),
-    term("护盾强度", v("shieldPower"), w("shieldPower")),
-    term("闪避率", v("dodgeRate"), w("dodgeRate")),
+    term(n("defensePct"), v("defensePct"), w("defensePct")),
+    term(n("maxHpPct"), v("maxHpPct"), w("maxHpPct")),
+    term(n("damageReduction"), v("damageReduction"), w("damageReduction")),
+    term(n("shieldOnStart"), v("shieldOnStart"), w("shieldOnStart")),
+    term(n("shieldPower"), v("shieldPower"), w("shieldPower")),
+    term(n("dodgeRate"), v("dodgeRate"), w("dodgeRate")),
   ];
   // 身法:先手判定(阈值)/首回合伤害/连击率 —— 名字与 statNames 一致,面板与战力理由不许各叫各的
   const speedTerms = [
-    term("先手判定", v("speed"), w("speed")),
-    term("首回合伤害", v("firstStrike"), w("firstStrike")),
-    term("连击率", v("comboRate"), w("comboRate")),
-    term("反击概率", v("counterRate"), w("counterRate")),
+    term(n("speed"), v("speed"), w("speed")),
+    term(n("firstStrike"), v("firstStrike"), w("firstStrike")),
+    term(n("comboRate"), v("comboRate"), w("comboRate")),
+    term(n("counterRate"), v("counterRate"), w("counterRate")),
   ];
   // 恢复:吸血/回合回复/溢疗(量纲归一:小数值键放大)
   const recoveryTerms = [
-    term("吸血", v("lifesteal"), w("lifesteal")),
-    term("回合回复", v("regenPerRound"), w("regenPerRound")),
-    term("溢疗转盾", v("overhealShield"), w("overhealShield")),
-    term("残血减伤", v("lowHpReduction"), w("lowHpReduction")),
+    term(n("lifesteal"), v("lifesteal"), w("lifesteal")),
+    term(n("regenPerRound"), v("regenPerRound"), w("regenPerRound")),
+    term(n("overhealShield"), v("overhealShield"), w("overhealShield")),
+    term(n("lowHpReduction"), v("lowHpReduction"), w("lowHpReduction")),
   ];
   // 机制:流派成路程度 + 混合副系
   const build = detectBuild(m);

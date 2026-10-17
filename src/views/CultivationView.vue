@@ -352,10 +352,12 @@
       </p>
       <!-- 突破不成的真代价也要摊:灵气付了之外,还有修为折损与必发的重伤
            (buffs.ts injury:修速减半、战力大减,需引气静养耗灵气平复)—— 频率≠无代价,
-           且不复述「只损修为」那种不完整的账。 -->
+           且不复述「只损修为」那种不完整的账。
+           减多少由 buff 本体现算:这里曾读 injury 的 desc,而 desc 现在只写风味 ——
+           数值若留在那句风味里,改 mods 之后这行就成了唯一不跟的那处。 -->
       <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular">
         突破不成损修为 {{ formatPercent(BT_FAIL_EXP_LOSS) }}、身负
-        <span class="text-cinnabar">重伤</span>({{ buffDef("injury")!.desc }},持续
+        <span class="text-cinnabar">重伤</span>({{ modsText(injuryDef.mods) }},持续
         {{ cnNumber(INJURY_DURATION) }}
         秒,可引气静养平复)(破境返还词条可减修为损,首败跬步传承可全免)
       </p>
@@ -945,6 +947,11 @@ const retreatRemaining = computed(() => {
  * 之前注释写着"数值唯一来源 = buffs.ts",但文案里的数字是手打的 —— 改常数就会撒谎。
  */
 const retreatDef = buffDef("retreat");
+/**
+ * 重伤那一行同样读 buff 本体:desc 现在只写风味(见 data/buffs.ts 文件头),
+ * 减多少、减哪几项只有 mods 一处能说。
+ */
+const injuryDef = buffDef("injury")!;
 const retreatMinutes = Math.round((retreatDef?.durationSec ?? 0) / 60);
 const retreatPct = Math.round((retreatDef?.mods.cultivationSpeed ?? 0) * 100);
 /**
