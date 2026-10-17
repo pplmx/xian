@@ -4,7 +4,7 @@
     <div class="flex items-center">
       <RouterLink
         to="/welcome"
-        class="-my-1.5 py-1.5 text-[12px] text-ink-faint active:text-ink-soft"
+        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
         >← 欢迎</RouterLink
       >
     </div>
@@ -12,12 +12,12 @@
     <!-- 题字 -->
     <div class="mt-6 text-center">
       <h1 class="font-kai text-[42px] leading-tight tracking-[0.35em] text-ink">玄枢录</h1>
-      <p class="mt-2 text-[12px] tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
+      <p class="mt-2 text-[11px] tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
     </div>
 
     <!-- 道号 -->
     <div class="card-ink mt-8 px-4 py-3">
-      <p class="mb-2 font-kai text-[13px] tracking-[0.3em] text-ink-faint">道 号</p>
+      <p class="mb-2 font-kai text-[14px] tracking-[0.3em] text-ink-faint">道 号</p>
       <div class="flex items-center gap-2">
         <input
           v-model="name"
@@ -33,20 +33,25 @@
 
     <!-- 灵根 -->
     <div class="card-ink mt-4 px-4 py-4">
-      <div class="flex items-center justify-between">
-        <p class="font-kai text-[13px] tracking-[0.3em] text-ink-faint">灵 根</p>
+      <div class="flex items-baseline justify-between">
+        <p class="font-kai text-[11px] tracking-[0.3em] text-ink-faint">灵 根</p>
         <span class="font-kai text-[15px] tracking-widest text-cinnabar">{{
           profile.gradeName
         }}</span>
       </div>
-      <div :key="rollSeq" class="stagger-in mt-4 flex justify-center gap-3">
+      <!--
+        灵根圆环原是 48px、两枚并排、间距 12px —— 它是这一页的主角,
+        却比下面的说明文字还轻。放大到 64px 并拉开间距:重掷时换的是这张牌,
+        它得占住这一屏的视觉重心。
+      -->
+      <div :key="rollSeq" class="stagger-in mt-4 flex justify-center gap-5">
         <div
           v-for="root in profile.roots"
           :key="root.element"
           class="flex flex-col items-center gap-1.5"
         >
           <span
-            class="grid h-12 w-12 place-items-center rounded-full border-2 font-kai text-lg animate-breathe"
+            class="grid h-16 w-16 place-items-center rounded-full border-2 font-kai text-[26px] animate-breathe"
             :style="{
               borderColor: ELEMENTS[root.element].color,
               color: ELEMENTS[root.element].color,
@@ -57,12 +62,17 @@
           <span class="tabular text-[11px] text-ink-soft">资质 {{ root.aptitude }}</span>
         </div>
       </div>
-      <p class="mt-4 text-center text-[12px] text-ink-faint">
-        修行倍率
-        <span :key="rollSeq" class="tabular text-[14px] text-ink animate-ink-pop"
+      <!--
+        修行倍率是这一页最该被权衡的数 —— 它原先只是圆环底下一行 12px 的淡字,
+        「资质 66 / 53」比它还醒目。改成一个独立读数块:标签 10px、值 18px 楷体,
+        与灵根圆环同处一卡而自成一组。
+      -->
+      <div data-value-row class="mt-4 flex items-baseline justify-center gap-2">
+        <span class="text-[10px] tracking-[0.2em] text-ink-faint">修行倍率</span>
+        <span :key="rollSeq" class="font-kai text-[18px] leading-none text-cinnabar tabular animate-ink-pop"
           >×{{ profile.growthMult.toFixed(2) }}</span
         >
-      </p>
+      </div>
       <!-- 天然牌面(Phase 32.2):重掷时要权衡的不止倍率,还有这一世哪条路走得顺 -->
       <div
         v-if="tendencies.length"
@@ -82,16 +92,35 @@
       </div>
       <!-- 读屏:重掷结果念出来(最终定格有 SpiritRootReveal 播报,途中逆天改命不许哑) -->
       <p aria-live="polite" class="sr-only">{{ rerollAnnounce }}</p>
-      <button class="btn-ghost mt-4 w-full" :disabled="starting" @click="reroll">
-        {{ rerollLabel }}
-      </button>
+      <!--
+        「逆天改命」是这一页的核心互动,原是一枚与次要按钮无异的描边钮。
+        给它篆书的字距与一行更轻的上分隔 —— 不改色(它不是危险动作),
+        只让它读起来像一件「可以反复做的事」而不是一个普通按钮。
+      -->
+      <div class="mt-4 border-t border-ink/8 pt-3">
+        <button
+          class="btn-ghost w-full !py-2.5 font-kai text-[14px] tracking-[0.3em]"
+          :disabled="starting"
+          @click="reroll"
+        >
+          {{ rerollLabel }}
+        </button>
+      </div>
       <p v-if="unlimitedReroll" class="mt-2 text-center text-[11px] text-ink-faint">
         不满意就一直改,改到掷中你认的那副牌为止
       </p>
     </div>
 
+    <!--
+      底部主钮 —— 原先靠一个 grow 撑开,于是卡片与按钮之间空出一大块白,
+      而按钮自己贴着屏幕最底。这里把按钮组压到底部并补一句「按下去会发生什么」:
+      那一大片空白原本什么也没说,现在说了一件玩家此刻正想知道的事。
+    -->
     <div class="grow" />
-    <button class="btn-seal mt-8 w-full !py-3 text-[16px]" :disabled="starting" @click="begin">
+    <p class="mb-2 text-center text-[10px] leading-relaxed text-ink-faint">
+      按下之后,灵根将就此定格 —— 这一世的修行之路,由它决定
+    </p>
+    <button class="btn-seal mb-1 w-full !py-3 text-[16px]" :disabled="starting" @click="begin">
       {{ starting ? "灵 根 鉴 定 中……" : "踏 入 仙 途" }}
     </button>
 

@@ -223,6 +223,8 @@ async function auditModalControls(page) {
             .replace(/\s+/g, " ")
             .slice(0, 14),
           h: Math.round(r.height * 10) / 10,
+          declared,
+          cls: (el.className || "").toString().slice(0, 70),
           // 与巡页那条同一把尺子:声明的 min-height 到了 28 的,给半像素容差(见第四十三条)
           ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5),
         };
@@ -237,7 +239,9 @@ async function auditModalControls(page) {
         ""
       ).trim(),
       unnamed: rows.filter((r) => !r.name).map((r) => `${r.h}px`),
-      small: rows.filter((r) => !r.ok).map((r) => `${r.h}px «${r.name || "无名"}»`),
+      small: rows
+        .filter((r) => !r.ok)
+        .map((r) => `${r.h}px(声明 ${r.declared || "—"}px)«${r.name || "无名"}» [${r.cls}]`),
     };
   });
 }
@@ -452,7 +456,12 @@ async function measurePage(page) {
         .slice(0, 3)
         .map(
           ({ el, r, declared }) =>
-            `${r.height.toFixed(1)}px(声明 ${declared || "—"}px)«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}»`,
+            /*
+             * 报错要带类名 —— 只报「26.3px «《隐私政策》»」时,读者无从知道
+             * 量到的是哪一枚(同一个文案可能在弹窗与页面上各有一份)。
+             * 类名一摆出来,"量错了元素"与"真没给够高度"一眼可分。
+             */
+            `${r.height.toFixed(1)}px(声明 ${declared || "—"}px)«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}» [${(el.className || "").toString().slice(0, 60)}]`,
         ),
       /**
        * 禁用按钮上的字也得读得出来。
@@ -1388,6 +1397,15 @@ async function taskPageTour(vp) {
     .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
     .first()
     .click();
+  /*
+   * 等弹窗动画落定再量 —— 这一处缺了一整个弹窗生命周期:
+   * 点完立刻量,量到的是入场动画的中间态(实测这个按钮恒为 26.3px,
+   * 而它自己声明了 min-height:28px)。于是它读起来像"按钮没给够高度",
+   * 实际是"判据量在了半路上",而且极其稳定(每一档视口都是同一个数),
+   * 让人误以为是布局问题、反复去改那个按钮。
+   * 反向验证:去掉这一行立刻复现,加回去即绿。
+   */
+  await page.waitForTimeout(600);
   // 隐私弹窗也是弹窗:它的控件同样要过那两条尺子(页面上巡不到它)
   {
     const audit = await auditModalControls(page);

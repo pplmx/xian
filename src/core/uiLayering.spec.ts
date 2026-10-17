@@ -2101,6 +2101,8 @@ describe("主巡页 · 字阶同一套", () => {
     "views/ApprenticeView.vue",
     "views/MortalWorldView.vue",
     "views/SettingsView.vue",
+    "views/CreateView.vue",
+    "views/WelcomeView.vue",
   ];
 
   /*
@@ -2117,6 +2119,15 @@ describe("主巡页 · 字阶同一套", () => {
     "views/SoulsView.vue": { sizes: [24, 22, 19], why: "器魂匾额 · 神魂印章单字" },
     "views/BuildView.vue": { sizes: [22, 16], why: "流派印面 · 评级大字" },
     "views/MortalWorldView.vue": { sizes: [19], why: "凡尘印面" },
+    /*
+     * 首屏两页的题字与印面是「这一作的门面」,它们的尺寸不属于页面字阶 ——
+     * 字阶管的是「读」的层次,而 40~56 的题字与印章是「认」的图形。
+     */
+    "views/CreateView.vue": {
+      sizes: [42, 26, 18, 16],
+      why: "题字 · 灵根圆环里的字 · 修行倍率主读数 · 「踏入仙途」主钮",
+    },
+    "views/WelcomeView.vue": { sizes: [46, 40, 17], why: "印面「道」· 题字 · 主钮" },
   };
 
   for (const path of pages) {
