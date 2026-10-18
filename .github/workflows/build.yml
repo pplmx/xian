@@ -53,28 +53,18 @@ jobs:
   # 从前它只活在"谁记得在本地跑一次"里:scripts/ 没有任何工作流引用,
   # 于是每一个发出去的 APK/安装包都没有 UI 层面的门。
   # 这里单起一个 job:所有构建都 needs 它 —— 判据红,构建与发布都停在这。
+  # 六门脚本的接线收口在 ./.github/actions/ui-self-check(与 deploy.yml 同一份)。
   ui-check:
     name: 浏览器自检(排版与交互)
     runs-on: ubuntu-latest
     # 三条自检的时长(本机实测):排版 ~6 分 + 冒烟 ~5 分半 + 离线 ~1 分,另加装依赖与构建。
     # 原先的 20 分钟在只有排版那一条时够用,现在贴得太近 —— 超时会让这道门偶发失败,
     # 而一个会自己变红的门比没有门更糟。故留出余量。
+    # (CI 实测另一份口径见 deploy.yml 同门:全 job ~20 分钟。40 分钟仍是同一档余量。)
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v7
-      - name: 设置 Vite+
-        uses: voidzero-dev/setup-vp@v1.21.1
-        with:
-          version-file: package.json
-          node-version: "22"
-          cache: true
-          run-install: false
-      - name: 安装依赖
-        run: vp install --frozen-lockfile
-      # 构建计时:这一步既是「构建产物(自检量的是 dist)」,也顺带把**构建时长**量成判据
-      # (上限 90s)。构建一旦被塞回重型后处理,时长会成倍长回去,这里当场红。
-      - name: 构建产物(自检量的是 dist)· 带时长上限
-        run: bun scripts/build-timed.mjs
+      - name: 检出代码 + 工具链 + 依赖
+        uses: ./.github/actions/setup-vp-install
       # playwright 锁在 devDependencies 里(版本真源 = bun.lock,不再手抄进命令)。
       # 它没有 postinstall:vp install 只带 ~19MB 的 JS 本体,占地的浏览器二进制
       # 只由下面这一句按需下,落在 ~/.cache/ms-playwright —— 故给缓存,别每次重下。
@@ -85,30 +75,11 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: |
             playwright-${{ runner.os }}-
-      - name: 装浏览器
-        run: bunx playwright install --with-deps chromium
-      # 首屏预算:冷启动解码字节 / FCP / 楷体换上,三条各有上限(scripts/first-paint.mjs)。
-      # 它自带一个静态服务器与 4G 限速 —— 本机回环上不量不出取舍(字体抢带宽那件事
-      # 只在慢网下才发生)。这也是「首屏瘦身」那条工作的门:字体切片掉了、或者哪天
-      # 又整份打进来,这里当场红。
-      - name: 首屏预算(冷启动字节 / FCP / 楷体换上)
-        run: bun scripts/first-paint.mjs
-      # 运行时回归门:逐视图采几秒帧间隔,量「玩起来卡不卡」—— 首屏那条管第一屏,
-      # 这条管心跳改响应式状态时有没有整块重渲染拖帧(见 scripts/perf-profile.mjs)。
-      # 预算按本机读数留数倍余量,红的是「成倍长回去」那类回归。
-      - name: 运行时预算(逐视图帧率 / 长任务)
-        run: bun scripts/perf-profile.mjs
-      - name: 排版与交互自检
-        run: bun scripts/layout-check.mjs
-      # 与排版自检的分工:那边量排版,这边戳交互 —— 逐页把按钮点一遍,看有没有
-      # 点炸(pageerror)、有没有 NaN/undefined 漏到正文。它和排版自检同属 ISS-188
-      # 里被点名的那两条,但当时只接上了排版与离线;发版门缺的正是这一条。
-      - name: 界面冒烟(逐页点按钮)
-        run: bun scripts/ui-smoke.mjs
-      # Service Worker 只认安全上下文,故离线自检另起一个本地静态服务量同一份产物:
-      # 断网可重开、旧缓存会被清、发版能接管(见 scripts/offline-check.mjs)。
-      - name: 离线/发版接管自检
-        run: bun scripts/offline-check.mjs
+      # 构建计时 + 浏览器六门(装浏览器/首屏/运行时/排版/冒烟/离线)收口在
+      # ./.github/actions/ui-self-check —— 与 deploy.yml 的同一道门共用一份接线,
+      # 顺序也只有一处定义(原先两边各写一套,已经漂过一次)。
+      - name: 浏览器自检(构建计时 + 六门)
+        uses: ./.github/actions/ui-self-check
 
   # 1. 构建 Electron 客户端
   build-electron:
@@ -122,18 +93,9 @@ jobs:
           - os: windows-latest
             platform: win
     steps:
-      - uses: actions/checkout@v7
-      - name: 设置 Vite+
-        uses: voidzero-dev/setup-vp@v1.21.1
-        with:
-          version-file: package.json
-          node-version: "22"
-          cache: true
-          run-install: false
-
-      # 闸门在 gate job 里统一过(check/test/build/engine/standalone),这里只装依赖
-      - name: 安装依赖
-        run: vp install --frozen-lockfile
+      # 检出 + 工具链 + 依赖三件套收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)
+      - name: 检出代码 + 工具链 + 依赖
+        uses: ./.github/actions/setup-vp-install
 
       - name: 缓存 Electron Builder
         uses: actions/cache@v6
@@ -181,17 +143,9 @@ jobs:
       KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}
       KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
     steps:
-      - uses: actions/checkout@v7
-      - name: 设置 Vite+
-        uses: voidzero-dev/setup-vp@v1.21.1
-        with:
-          version-file: package.json
-          node-version: "22"
-          cache: true
-          run-install: false
-
-      - name: 安装依赖
-        run: vp install --frozen-lockfile
+      # 检出 + 工具链 + 依赖三件套收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)
+      - name: 检出代码 + 工具链 + 依赖
+        uses: ./.github/actions/setup-vp-install
 
       - name: 配置 Java
         uses: actions/setup-java@v6
@@ -245,6 +199,8 @@ jobs:
           # 取到 tag 对象本身(不只是那个提交):标题跟着 tag 说明走(见「取本版说明与标题」),
           # 而 depth=1 时注释 tag 的对象不一定在本地
           fetch-depth: 0
+      # 这里不走 setup-vp-install composite:它内部自带 depth=1 的 checkout,会把
+      # 上面 fetch-depth: 0 的检出覆盖掉(tag 说明就没了)。工具链单步接入。
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:

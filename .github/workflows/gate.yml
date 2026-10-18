@@ -26,18 +26,18 @@ jobs:
   gate:
     name: 静态门禁 (check·test·build·engine)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    # 实测(run 39159016919,缓存全热):全程 ~3 分钟,大头是 verify 里的
+    # test + build(~2.5 分钟)。原先的 40 分钟远超实测,超时上限本该是
+    # 「实测 × 余量」:取 15 分钟,仍给 5 倍余地兜住引擎两段冷缓存的首跑。
+    timeout-minutes: 15
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v7
-
-      - name: 设置 Vite+ (Node 22 · Bun 按 packageManager · Vite+ 按 lockfile)
-        uses: voidzero-dev/setup-vp@v1.21.1
+      # 检出 + 工具链三件套收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)。
+      # run-install: false —— 下面的「缓存 bun install」必须先于 install 恢复,
+      # 装依赖时才能命中;这条顺序不能被收口吞掉。
+      - name: 检出代码 + 设置工具链
+        uses: ./.github/actions/setup-vp-install
         with:
-          version-file: package.json
-          node-version: "22"
-          cache: true
-          run-install: false
+          run-install: "false"
 
       # —— 缓存:跨 job、跨 run 复用,避免每次重下/重算 ——
       # bun install 缓存要先于 install 恢复,装依赖时才能命中

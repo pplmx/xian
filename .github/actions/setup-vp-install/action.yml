@@ -1,0 +1,36 @@
+name: "安装依赖 (Vite+ 工具链)"
+description: "检出 + setup-vp + 冻结安装 —— 四个 workflow 里重复九次的三件套,收口成一处"
+
+# 这三步在 gate / deploy / build / publish 的每个 job 里原样出现(仅注释深浅不一):
+#   checkout → setup-vp(版本三源:Node 22 · Bun 按 packageManager · Vite+ 按 lockfile)
+#   → vp install --frozen-lockfile。
+# 收口成 composite action 的动机与 gate.yml 相同:同一套接线抄九遍,改一处漏八处。
+# 各 job 特有的缓存(bun store / tsbuildinfo / .vite / playwright / electron)依赖
+# hashFiles 表达式 —— composite action 里不可用,故仍留在各 workflow 原位。
+#
+# inputs:
+#   run-install —— gate.yml 置 false:它的「缓存 bun install」必须先于 install 恢复
+#   (装依赖时才能命中),收口不能把这条顺序也吞进去;其余 job 用默认 true。
+inputs:
+  run-install:
+    description: "装完工具链后是否顺带 vp install --frozen-lockfile"
+    required: false
+    default: "true"
+runs:
+  using: "composite"
+  steps:
+    - name: 检出代码
+      uses: actions/checkout@v7
+
+    - name: 设置 Vite+ (Node 22 · Bun 按 packageManager · Vite+ 按 lockfile)
+      uses: voidzero-dev/setup-vp@v1.21.1
+      with:
+        version-file: package.json
+        node-version: "22"
+        cache: true
+        run-install: false
+
+    - name: 安装依赖 (frozen)
+      if: inputs.run-install == 'true'
+      shell: bash
+      run: vp install --frozen-lockfile

@@ -1,0 +1,61 @@
+name: "浏览器自检 (排版与交互)"
+description: "构建计时 + 浏览器六门 —— build.yml 与 deploy.yml 重复两份、顺序还各写一套的那段,收口成一处"
+
+# 覆盖与 deploy.yml「浏览器自检」注释同一套判据:排版/触达区/对比度/焦点/弹窗语义/
+# 离屏回放那一整套,红一条这一版就不发。
+#
+# 为什么要收口:build.yml 的 ui-check job 与 deploy.yml 的 build job 各内联一份
+# 六门脚本(first-paint / perf-profile / layout-check / ui-smoke / offline-check),
+# 连执行顺序都各写一套(deploy 先排版后首屏,build 先首屏后排版)—— 判据说是
+# 「同一套」,实际已经漂了。收口后顺序只有一处定义。
+#
+# 输入假设:调用方已装好依赖(建议配 ./.github/actions/setup-vp-install),且
+# playwright 浏览器缓存留在调用方(它需要 hashFiles 表达式求 key,composite
+# action 内不可用 —— 与 setup-vp-install 同一条约束)。
+#
+# 与 gate 的分工:静态门(类型/lint/测试)在 gate.yml;这里是浏览器门,一轮
+# 约五分钟,不进提交前的 verify 链(见 gate.yml 顶部注释)。
+runs:
+  using: "composite"
+  steps:
+    # 构建计时:这一步既是「构建产物(自检量的是 dist)」,也顺带把**构建时长**量成判据
+    # (上限 90s)。构建一旦被塞回重型后处理,时长会成倍长回去,这里当场红。
+    - name: 构建产物(自检量的是 dist)· 带时长上限
+      shell: bash
+      run: bun scripts/build-timed.mjs
+
+    # playwright 锁在 devDependencies 里(版本真源 = bun.lock,不再手抄进命令)。
+    # 它没有 postinstall:vp install 只带 ~19MB 的 JS 本体,占地的浏览器二进制
+    # 只由下面这一句按需下,落在 ~/.cache/ms-playwright —— 缓存由调用方供。
+    - name: 装浏览器
+      shell: bash
+      run: bunx playwright install --with-deps chromium
+
+    # 首屏预算:冷启动解码字节 / FCP / 楷体换上,三条各有上限(scripts/first-paint.mjs)。
+    # 它自带一个静态服务器与 4G 限速 —— 本机回环上不量不出取舍(字体抢带宽那件事
+    # 只在慢网下才发生)。
+    - name: 首屏预算(冷启动字节 / FCP / 楷体换上)
+      shell: bash
+      run: bun scripts/first-paint.mjs
+
+    # 运行时回归门:逐视图采几秒帧间隔,量「玩起来卡不卡」—— 首屏那条管第一屏,
+    # 这条管心跳改响应式状态时有没有整块重渲染拖帧(见 scripts/perf-profile.mjs)。
+    - name: 运行时预算(逐视图帧率 / 长任务)
+      shell: bash
+      run: bun scripts/perf-profile.mjs
+
+    - name: 排版与交互自检
+      shell: bash
+      run: bun scripts/layout-check.mjs
+
+    # 与排版自检的分工:那边量排版,这边戳交互 —— 逐页把按钮点一遍,看有没有
+    # 点炸(pageerror)、有没有 NaN/undefined 漏到正文。
+    - name: 界面冒烟(逐页点按钮)
+      shell: bash
+      run: bun scripts/ui-smoke.mjs
+
+    # Service Worker 只认安全上下文,故离线自检另起一个本地静态服务量同一份产物:
+    # 断网可重开、旧缓存会被清、发版能接管(见 scripts/offline-check.mjs)。
+    - name: 离线/发版接管自检
+      shell: bash
+      run: bun scripts/offline-check.mjs

@@ -9,7 +9,8 @@
  * 一直写着「本地能过 = CI 能过」。**注释是承诺,却没有任何东西守着它。**
  *
  * 本文件把这句话变成可执行判据,两个方向都查:
- *   ① 正向:`.github/workflows/*.yml` 里每个点名的 `scripts/*.mjs`,都能在本地找到入口
+ *   ① 正向:`.github/workflows/*.yml` 与 `.github/actions/…/action.yml` 里每个点名的
+ *      `scripts/*.mjs`,都能在本地找到入口
  *      —— 入口 = package.json 的某个 script(沿 `bun run X` 递归展开)或 verify 命令;
  *   ② 反向:脚本正文 / verify / pre-commit 里点名的每个 `bun run X` **与 `vp run X`**,
  *      都真在 package.json(或 vite.config 的 run.tasks)里 —— 这个方向也会腐烂:
@@ -36,6 +37,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const WORKFLOWS = join(ROOT, ".github/workflows");
+const ACTIONS = join(ROOT, ".github/actions");
 const PRE_COMMIT = join(ROOT, ".vite-hooks/pre-commit");
 
 /** package.json 的 scripts(名字 → 命令正文) */
@@ -171,13 +173,23 @@ function unwired(ciText: string, scripts = SCRIPTS, verify = verifyCommands()): 
   return ciScripts(ciText).filter((script) => !pool.includes(script));
 }
 
-/** 真仓库的 CI 正文:全部 workflow 拼一份 */
+/**
+ * 真仓库的 CI 正文:全部 workflow + 全部 composite action 拼一份。
+ *
+ * composite actions 也要进这份正文:浏览器六门收口进 .github/actions/ui-self-check
+ * 后,`bun scripts/*.mjs` 的合法藏身处多了一个 —— 判据不跟过去,脚本就能在
+ * action 里悄悄换掉而本地永远不红(workflow 侧一条都读不出来,「防空转」那条
+ * 还会先替我们红掉,但那只是碰巧兜底,不是设计)。
+ */
 function workflowsText(): string {
-  return readdirSync(WORKFLOWS)
-    .filter((name) => name.endsWith(".yml") || name.endsWith(".yaml"))
-    .sort()
-    .map((name) => readFileSync(join(WORKFLOWS, name), "utf8"))
-    .join("\n");
+  const readDir = (dir: string): string =>
+    readdirSync(dir, { recursive: true })
+      .map((name) => String(name).replace(/\\/g, "/"))
+      .filter((name) => name.endsWith(".yml") || name.endsWith(".yaml"))
+      .sort()
+      .map((name) => readFileSync(join(dir, name), "utf8"))
+      .join("\n");
+  return `${readDir(WORKFLOWS)}\n${readDir(ACTIONS)}`;
 }
 
 /** 六个浏览器门 —— 需要先 build、需要 playwright chromium,一轮约五分钟 */
