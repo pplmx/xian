@@ -1391,6 +1391,8 @@ describe("枚举 id 不许印到界面上 —— 玩家看的是名字,不是 ke
     "../views/RealmCodexView.vue",
     "../components/equipment/AffixTransferPanel.vue",
     "../components/equipment/EquipmentDetailDialog.vue",
+    // 功法区自 CultivationView 拆出后自带书目呈现,一并进枚举字段的扫描面
+    "../components/cultivation/GongfaSection.vue",
   ];
 
   /**

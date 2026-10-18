@@ -270,7 +270,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("已习得功法按门分签,空门与开局都有话 —— 不留一块白板", () => {
     // 列表按主修/辅修/秘术分签。一门皆空时不能只剩滚动容器;
     // 一部都没有时仍把参悟递到手边,有别的门时只说这一门还空。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    // 拆分后功法区归 GongfaSection,判据随本体改指子面板
+    const cult = FILES.find((f) => f.path === "components/cultivation/GongfaSection.vue");
     expect(cult?.src).toContain('role="tablist"');
     expect(cult?.src).toContain("尚无一部习得之法");
     expect(cult?.src).toContain("此门尚无习得");
@@ -281,7 +282,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 门类签刻意避开 kyunyin 那种「整块实心印面 + 奶油字」:同色底最多 6%,
     // 文字不叠透明度。选中=6% 朱砂淡底 + 墨字,未选中=淡墨不铺底。
     // 若有人把分类签改回 .btn-seal 实心印面,下面的守卫红 —— 不许悄悄退化。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    // 拆分后功法区归 GongfaSection,判据随本体改指子面板
+    const cult = FILES.find((f) => f.path === "components/cultivation/GongfaSection.vue");
     // 选中签:6% 朱砂淡底 + 墨字(不是奶油字印面)
     expect(cult?.src).toContain("bg-cinnabar/6 text-ink");
     // 未选中:淡墨,不铺 6% 底
@@ -764,11 +766,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("修行功法页签补全套 tab→panel 关联 —— 每个 tab 要 aria-controls 指向对应 panel", () => {
-    // 主修/辅修/秘术三签是 功法页 里自成一壳的 tablist+tabpanel(CultivationView 内联
+    // 主修/辅修/秘术三签是 功法页 里自成一壳的 tablist+tabpanel(GongfaSection 内联
     // 实现,不像 InkTabs 那样壳与面板分离)。此前只有 role=tab/aria-selected,读屏无法把
     // 一个 tab 与它控制的 panel 对应起来 —— 补上 id/aria-controls(tab 侧)与
     // id/aria-labelledby(panel 侧),正是 WAI-ARIA 的 tab 模式。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    // 拆分后功法区归 GongfaSection,判据随本体改指子面板
+    const cult = FILES.find((f) => f.path === "components/cultivation/GongfaSection.vue");
     expect(cult?.src, "功法 tab 要带自己的 id 与 aria-controls").toContain(
       ':aria-controls="`gongfa-cat-panel-${g.type}`"',
     );
