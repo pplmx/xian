@@ -6048,15 +6048,23 @@ async function taskPreGameTour() {
     if (problems.length) failures.push(`[开局前] /welcome → ${problems.join(" / ")}`);
     await quiesceOverlays(page);
     for (const bad of await measureTextContrast(page)) {
-      contrastFails.push(`[开局前] /welcome ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`);
+      contrastFails.push(
+        `[开局前] /welcome ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
+      );
     }
   }
 
   // ---- 建号页:同意隐私后由欢迎页进来(传送门约 2.5s) ----
-  await page.getByRole("button", { name: /开\s*始\s*游\s*戏/ }).first().click();
+  await page
+    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .first()
+    .click();
   await page.waitForTimeout(600);
   await page.locator("input[type=checkbox]").first().check();
-  await page.getByRole("button", { name: /同意并开始/ }).first().click();
+  await page
+    .getByRole("button", { name: /同意并开始/ })
+    .first()
+    .click();
   await page.waitForTimeout(3200);
   await settleVisuals(page);
   {
@@ -6068,12 +6076,13 @@ async function taskPreGameTour() {
     if (problems.length) failures.push(`[开局前] /create → ${problems.join(" / ")}`);
     await quiesceOverlays(page);
     for (const bad of await measureTextContrast(page)) {
-      contrastFails.push(`[开局前] /create ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`);
+      contrastFails.push(
+        `[开局前] /create ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
+      );
     }
   }
 
-  if (pageErrors.length)
-    failures.push(`[开局前] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  if (pageErrors.length) failures.push(`[开局前] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   await page.close();
   return { failures, checked, contrastFails, pixelContrastFails: [], zoomFails: [] };
 }

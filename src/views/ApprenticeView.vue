@@ -229,7 +229,11 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
 
     <!-- 弟子 -->
     <div v-if="appr.apprentices.length" class="space-y-2">
-      <button class="btn-seal min-h-[28px] w-full !py-1 text-[11px]" :disabled="!hasIdle" @click="doDispatchAll">
+      <button
+        class="btn-seal min-h-[28px] w-full !py-1 text-[11px]"
+        :disabled="!hasIdle"
+        @click="doDispatchAll"
+      >
         {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
       </button>
       <div

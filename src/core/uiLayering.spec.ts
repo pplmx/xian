@@ -729,7 +729,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       // 转世交割清单里点开的那一条(heritageTap)—— 只换措辞不报状态,读屏分不清
       ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageTap === r.id"'],
       // 门庭派活的两步钮:第一下展开任务说明、再点同枚才派出 —— 新登的 disclosure
-      ["views/ApprenticeView.vue", ':aria-expanded="taskTap === a.uid + \':\' + t.spec"'],
+      ["views/ApprenticeView.vue", ":aria-expanded=\"taskTap === a.uid + ':' + t.spec\""],
     ];
     for (const [path, needle] of checks) {
       const f = FILES.find((x) => x.path === path);
