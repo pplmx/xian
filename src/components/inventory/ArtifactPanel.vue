@@ -15,7 +15,28 @@
     {{ cnNumber(ARTIFACT_MAX_LEVEL) }} 重 —— 顶到封顶的不再涨,卡片上标着
   </p>
   <div v-if="artifactRows.length" class="mt-2 space-y-2.5">
-    <div v-for="row in artifactRows" :key="row.def.id" class="card-ink px-4 py-3">
+    <div
+      v-for="row in artifactRows"
+      :key="row.def.id"
+      class="card-ink relative px-4 py-3"
+      :style="{
+        borderColor: colorWithAlpha(
+          qualityDef(row.def.quality).color,
+          tierOf(row.def.quality).border,
+        ),
+        background: colorWithAlpha(qualityDef(row.def.quality).color, tierOf(row.def.quality).bg),
+      }"
+    >
+      <!-- 佩戴中的法宝盖「随」章(玉色,与装备格的「佩」同族) —— 靠按钮文字区分太隐晦 -->
+      <span
+        v-if="row.equipped"
+        class="absolute left-2 top-2 rounded-sm bg-jade/15 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
+        >随</span
+      >
+      <!-- 天/仙/神右上盖品阶阴文章 —— 与装备/丹药同一套视觉语言(见 qualityTier) -->
+      <span v-if="isRareQuality(row.def.quality)" class="absolute right-2 top-2 leading-none">
+        <QualitySeal :quality="row.def.quality" :size="16" />
+      </span>
       <div class="flex items-center gap-2">
         <GameIcon
           :name="row.def.icon"
@@ -31,6 +52,13 @@
           artifactLevelLabel(row.owned.level)
         }}</span>
       </div>
+      <!-- 祭炼进度条:离满重还有多远,2px 细条(与成就组头同一根尺) -->
+      <ProgressBar
+        class="mt-1.5"
+        :value="row.owned.level / ARTIFACT_MAX_LEVEL"
+        color="var(--color-gold-ink)"
+        :height="2"
+      />
       <p class="mt-1.5 t-body text-ink-faint">{{ row.def.desc }}</p>
       <p class="mt-1 text-[11px] text-qing">
         {{ passiveLines(row.def.id, row.owned.level).join(" · ") }}
@@ -95,6 +123,10 @@
 import { computed } from "vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
+import QualitySeal from "@/components/common/QualitySeal.vue";
+import ProgressBar from "@/components/common/ProgressBar.vue";
+import { isRareQuality, qualityTierStyle as tierOf } from "@/ui/qualityTier";
+import { colorWithAlpha } from "@/ui/colorVar";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
