@@ -31,10 +31,14 @@ jobs:
     # 「实测 × 余量」:取 15 分钟,仍给 5 倍余地兜住引擎两段冷缓存的首跑。
     timeout-minutes: 15
     steps:
-      # 检出 + 工具链三件套收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)。
+      - name: 检出代码
+        uses: actions/checkout@v7
+
+      # 工具链 + 依赖收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)。
       # run-install: false —— 下面的「缓存 bun install」必须先于 install 恢复,
       # 装依赖时才能命中;这条顺序不能被收口吞掉。
-      - name: 检出代码 + 设置工具链
+      # (检出不在 composite 里:本地 action 要先 checkout 才能被引用。)
+      - name: 设置工具链
         uses: ./.github/actions/setup-vp-install
         with:
           run-install: "false"

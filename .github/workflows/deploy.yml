@@ -27,8 +27,11 @@ jobs:
     # 原先没写 timeout —— 没有上限的 job 卡死时会挂到平台来收尸。
     timeout-minutes: 40
     steps:
-      # 检出 + 工具链 + 依赖三件套收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)
-      - name: 检出代码 + 工具链 + 依赖
+      # 工具链 + 依赖收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线);
+      # 检出单独一步 —— 本地 composite 要先 checkout 才能被引用
+      - name: 检出代码
+        uses: actions/checkout@v7
+      - name: 工具链 + 依赖
         uses: ./.github/actions/setup-vp-install
       # 浏览器自检(构建计时 + 六门)与 build.yml 的 ui-check 共用一份接线:
       # ./.github/actions/ui-self-check —— 排版/首屏/运行时/冒烟/离线顺序只此一处定义。

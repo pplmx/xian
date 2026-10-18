@@ -41,8 +41,11 @@ jobs:
       # 原先的 checkout 带 fetch-depth: 0,但镜像构建只消费工作树与 package.json,
       # 不读 git 历史(COMMIT_SHA 走 github.sha 上下文,不需要本地有提交对象),
       # 收口后回落到默认 depth=1,检出更快。
-      # 检出 + 工具链 + 依赖三件套收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)
-      - name: 检出代码 + 工具链 + 依赖
+      # 工具链 + 依赖收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线);
+      # 检出单独一步 —— 本地 composite 要先 checkout 才能被引用
+      - name: 检出代码
+        uses: actions/checkout@v7
+      - name: 工具链 + 依赖
         uses: ./.github/actions/setup-vp-install
 
       # 镜像是要发出去的,故直接构建生产产物。

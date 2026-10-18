@@ -63,7 +63,9 @@ jobs:
     # (CI 实测另一份口径见 deploy.yml 同门:全 job ~20 分钟。40 分钟仍是同一档余量。)
     timeout-minutes: 40
     steps:
-      - name: 检出代码 + 工具链 + 依赖
+      - name: 检出代码
+        uses: actions/checkout@v7
+      - name: 工具链 + 依赖
         uses: ./.github/actions/setup-vp-install
       # playwright 锁在 devDependencies 里(版本真源 = bun.lock,不再手抄进命令)。
       # 它没有 postinstall:vp install 只带 ~19MB 的 JS 本体,占地的浏览器二进制
@@ -93,8 +95,11 @@ jobs:
           - os: windows-latest
             platform: win
     steps:
-      # 检出 + 工具链 + 依赖三件套收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)
-      - name: 检出代码 + 工具链 + 依赖
+      # 工具链 + 依赖收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线);
+      # 检出单独一步 —— 本地 composite 要先 checkout 才能被引用
+      - name: 检出代码
+        uses: actions/checkout@v7
+      - name: 工具链 + 依赖
         uses: ./.github/actions/setup-vp-install
 
       - name: 缓存 Electron Builder
@@ -143,8 +148,11 @@ jobs:
       KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}
       KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
     steps:
-      # 检出 + 工具链 + 依赖三件套收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)
-      - name: 检出代码 + 工具链 + 依赖
+      # 工具链 + 依赖收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线);
+      # 检出单独一步 —— 本地 composite 要先 checkout 才能被引用
+      - name: 检出代码
+        uses: actions/checkout@v7
+      - name: 工具链 + 依赖
         uses: ./.github/actions/setup-vp-install
 
       - name: 配置 Java
@@ -199,8 +207,8 @@ jobs:
           # 取到 tag 对象本身(不只是那个提交):标题跟着 tag 说明走(见「取本版说明与标题」),
           # 而 depth=1 时注释 tag 的对象不一定在本地
           fetch-depth: 0
-      # 这里不走 setup-vp-install composite:它内部自带 depth=1 的 checkout,会把
-      # 上面 fetch-depth: 0 的检出覆盖掉(tag 说明就没了)。工具链单步接入。
+      # 这里不走 setup-vp-install composite:该 job 要 fetch-depth: 0 检出(取 tag
+      # 说明),而 composite 不含检出、只有工具链,单独写反而多绕一层。工具链单步接入。
       - name: 设置 Vite+
         uses: voidzero-dev/setup-vp@v1.21.1
         with:

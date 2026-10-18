@@ -11,6 +11,12 @@ description: "检出 + setup-vp + 冻结安装 —— 四个 workflow 里重复�
 # inputs:
 #   run-install —— gate.yml 置 false:它的「缓存 bun install」必须先于 install 恢复
 #   (装依赖时才能命中),收口不能把这条顺序也吞进去;其余 job 用默认 true。
+#
+# 【本 action 不含 checkout】本地 composite(`uses: ./…`)必须先 actions/checkout
+# 才能被引用 —— runner 是从工作区里找 action.yml 的,而工作区要 checkout 才存在,
+# 「composite 第一步自己 checkout」是鸡生蛋(CI 实测报错:Can't find 'action.yml'
+# under '.github/actions/setup-vp-install')。故检出由各 job 在引用本 action 前
+# 显式做一步,代价是每 job 多一行,换九处接线单点维护。
 inputs:
   run-install:
     description: "装完工具链后是否顺带 vp install --frozen-lockfile"
@@ -19,9 +25,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: 检出代码
-      uses: actions/checkout@v7
-
     - name: 设置 Vite+ (Node 22 · Bun 按 packageManager · Vite+ 按 lockfile)
       uses: voidzero-dev/setup-vp@v1.21.1
       with:
