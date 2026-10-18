@@ -5981,6 +5981,11 @@ async function taskPreGameTour() {
   /** 基础档量尺:measurePage 的开局前子集(排版事故 + 控件名 + 触达下限) */
   const measureBasic = () =>
     page.evaluate(() => {
+      // 与 measurePage 同一条口径:测量前禁动画 —— stagger-in 入场位移的
+      // 中间帧不该被当成排版事故(开局页的灵根圆环曾在此被量出假越界)。
+      const st = document.createElement("style");
+      st.textContent = "*,*::before,*::after{animation:none!important;transition:none!important}";
+      document.head.appendChild(st);
       const vw = window.innerWidth;
       const overflows = [...document.querySelectorAll("body *")]
         .filter((el) => {
