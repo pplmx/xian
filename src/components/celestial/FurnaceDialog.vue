@@ -75,13 +75,21 @@
             <template v-else>{{ DAO_SOURCE_PER_FRUIT }} 道源 → 道果 +1</template>
           </button>
         </div>
-        <!-- S3 链路:本次凝聚后,下世收益变化 -->
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint tabular">
-          当前 {{ fruitInfo.total }} 枚 · 有效 {{ fruitInfo.effectiveText }} 枚
-          <span class="text-gold-ink"
-            >→ 凝后 {{ fruitInfo.nextEffectiveText }} 枚(+{{ fruitInfo.deltaPct }}%)</span
+        <!--
+          主读数:凝一枚,下世收益变多少 —— 站在这一行的人就问这一件事,此前却把
+          「凝后 +N%」埋在 10px 小字注脚里(与命格之力/今日利同款病,三档范式见
+          RealmCodexView 紫微/星象册的重排注释)。提成主值行:标签淡字 + 主读数
+          楷体放大(弹窗字阶 14;页面册是 15)。当前/有效存量与「边际收益渐减」
+          是口径旁注,降回 10px 一行。
+        -->
+        <div data-value-row class="mt-1 flex items-baseline gap-2">
+          <span class="shrink-0 text-[11px] text-ink-faint">凝一枚</span>
+          <span class="font-kai text-[14px] text-gold-ink tabular"
+            >下世有效 {{ fruitInfo.nextEffectiveText }} 枚(+{{ fruitInfo.deltaPct }}%)</span
           >
-          · 边际收益渐减
+        </div>
+        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular">
+          当前 {{ fruitInfo.total }} 枚 · 有效 {{ fruitInfo.effectiveText }} 枚 · 边际收益渐减
         </p>
       </div>
     </div>
