@@ -326,11 +326,12 @@ const cleanConfirm = ref(false);
 function smartClean(): void {
   cleanConfirm.value = false;
   const got = decomposeBatch(smartRecycleTargets(inventory.bagItems));
+  // 级别与一键换装同族(InventoryView):有化尘 = 正结果 success,空转 = 中性 info
   ui.toast(
     got.count > 0
       ? `收纳毕:${got.count} 件无缘之物化尘,${batchYieldText(got)}`
       : "行囊中皆是有缘之物",
-    "info",
+    got.count > 0 ? "success" : "info",
   );
   emit("close-smart");
 }

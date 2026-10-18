@@ -269,6 +269,8 @@ function fight(): void {
     return;
   }
   // 战报合并为单条多行 toast:逐条 push 会被 toast 位(上限 5)把自己前面的行挤掉,长战报读不全
-  if (r.lines.length) ui.toast(r.lines.join("\n"), r.win ? "info" : "warn");
+  // 胜负两级配色与全库结果播报同口径:胜=success(得了战利)、败=warn(气血折损);
+  // 此前胜写 info,与一键换装/重掌之地那批「正结果」不在一个级别上。
+  if (r.lines.length) ui.toast(r.lines.join("\n"), r.win ? "success" : "warn");
 }
 </script>
