@@ -33,8 +33,8 @@
     "build:android": "bun run build && bunx cap sync android",
     "build:apk": "bun run build:android && cd android && ./gradlew assembleRelease",
     "prepare": "vp config --no-agent",
-    "verify": "bun scripts/clean-dist.mjs && vp fmt --check && bun run check && bun run test && bun run build",
-    "preverify": "find dist -type f -delete 2>/dev/null; find dist -type d -empty -delete 2>/dev/null; true"
+    "preverify": "find dist -type f -delete 2>/dev/null; find dist -type d -empty -delete 2>/dev/null; true",
+    "check:all": "bun scripts/clean-dist.mjs && vp fmt --check && bun run check && bun run test && bun run build"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

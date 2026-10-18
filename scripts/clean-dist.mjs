@@ -11,9 +11,14 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const TARGET = join(ROOT, "dist");
+const TARGETS = [join(ROOT, "dist"), join(ROOT, "node_modules/.vitest-cache")];
 
-if (existsSync(TARGET)) {
+/**
+ * .vitest-cache 也要清:vitest 首跑的 ensureCacheIntegrity 会删缓存目录,
+ * 一样撞宿主批删护栏(主程序附记的已知坑)—— 预清一次即过。
+ */
+for (const TARGET of TARGETS) {
+  if (!existsSync(TARGET)) continue;
   const walk = (dir) => {
     for (const name of readdirSync(dir)) {
       const p = join(dir, name);
