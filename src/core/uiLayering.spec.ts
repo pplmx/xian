@@ -1106,8 +1106,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(build, "构筑命名输入要有可访问名").toMatch(
       /input[\s\S]*?aria-label="给这套构筑起个名字"/,
     );
+    // 备注子面板拆出后判据随本体走(components/equipment/EquipNotePanel.vue)
     const equip = readFileSync(
-      resolve(__dirname, "../components/equipment/EquipmentDetailDialog.vue"),
+      resolve(__dirname, "../components/equipment/EquipNotePanel.vue"),
       "utf-8",
     );
     expect(equip, "装备标记输入要有可访问名").toMatch(

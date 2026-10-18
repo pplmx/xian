@@ -20,24 +20,8 @@
         </button>
       </div>
       <p class="mt-2 text-[12px] leading-relaxed text-ink-faint">{{ template.desc }}</p>
-      <!-- 装备标记(玩家反馈:同名装备想按不同流派区分) -->
-      <div class="mt-2 flex items-center gap-2">
-        <input
-          v-model="noteDraft"
-          :maxlength="4"
-          aria-label="为这件装备加个标记区分流派(最多四个字)"
-          placeholder="加个标记区分流派(≤4字)"
-          class="min-w-0 grow rounded-md border border-ink/15 bg-paper-deep/60 px-2 py-1 text-[12px] text-ink outline-none placeholder:text-ink-faint focus:border-azure"
-          @change="applyNote"
-        />
-        <button
-          v-if="noteDraft"
-          class="tap-row -my-1 px-1 py-1 text-[11px] text-ink-faint active:opacity-60"
-          @click="clearNote"
-        >
-          清除
-        </button>
-      </div>
+      <!-- 备注子面板:标记输入/清除随面板走(EquipNotePanel,自读同一份 inst) -->
+      <EquipNotePanel />
       <!--
         共鸣是机制而非数值,但装备卡片此前一个字都不提:玩家在「要不要换掉这件」时,
         看不到它身上拴着一条会断的机制(见 core/equipSet)。
@@ -565,6 +549,7 @@ import { AFFIX_RARITY_META, STAT_NAMES } from "@/ui/statNames";
 import BaseModal from "@/components/common/BaseModal.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
 import AffixTransferPanel from "./AffixTransferPanel.vue";
+import EquipNotePanel from "./EquipNotePanel.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import { useLoreStore } from "@/stores/lore";
@@ -665,28 +650,7 @@ function doReforge(): void {
   disarmReforgeActions();
 }
 
-// ---- 装备标记(玩家反馈:同名装备想按不同流派区分)。草稿随当前件走,空串 = 清除 ----
-const noteDraft = ref("");
-watch(
-  () => inst.value?.note,
-  (n, old) => {
-    // 只在来源变化时同步草稿;自己写回(applyNote)引发的同一值回灌不迭代
-    if (n === noteDraft.value || n === old) return;
-    noteDraft.value = n ?? "";
-  },
-  { immediate: true },
-);
-
-function applyNote(): void {
-  if (!inst.value) return;
-  const note = noteDraft.value.trim();
-  inventory.replaceItem({ ...inst.value, note: note.length > 0 ? note.slice(0, 4) : undefined });
-}
-
-function clearNote(): void {
-  noteDraft.value = "";
-  applyNote();
-}
+// ---- 装备标记子面板见 EquipNotePanel.vue(草稿/写回随面板走,宿主不再持状态) ----
 
 // ---- 自动重铸(玩家反馈:一键重铸多次,洗到指定词条就停) ----
 const autoOpen = ref(false);
