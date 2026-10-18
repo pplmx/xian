@@ -331,11 +331,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 换装是最重复的决策:候选行此前只报品质/阶/词条数,跟身上那件差多少要逐个
     // 点开详情才对。行级差值必须vs 当前佩戴件(powerOf 线性差,与人物页战力同口径),
     // 佩戴中的底行自己不报差(它即基线)、空槽不报差(无对比对象)。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    expect(inv?.src).toContain("powerOf(row.item) - powerOf(occupant)");
-    expect(inv?.src).toContain("战 +${formatGN(Math.round(delta))}");
-    expect(inv?.src).toContain("row.delta !== null");
-    expect(inv?.src).toContain("powerOf(occupant)");
+    // 弹窗拆出后判据随本体走(components/inventory/SlotCandidatesDialog.vue)。
+    const picker = FILES.find((f) => f.path === "components/inventory/SlotCandidatesDialog.vue");
+    expect(picker?.src).toContain("powerOf(row.item) - powerOf(occupant)");
+    expect(picker?.src).toContain("战 +${formatGN(Math.round(delta))}");
+    expect(picker?.src).toContain("row.delta !== null");
+    expect(picker?.src).toContain("powerOf(occupant)");
   });
 
   it("秘境付不起置灰+报差 —— 别只沉到底、点了才 toast", () => {
