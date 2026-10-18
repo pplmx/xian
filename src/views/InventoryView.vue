@@ -196,6 +196,7 @@
           :icon="row.def!.icon"
           :name="row.def!.name"
           :tone="qualityDef(row.def!.quality).color"
+          :quality="row.def!.quality"
           :foot="`×${row.count}`"
           :label="`${qualityDef(row.def!.quality).name}·${row.def!.name} · 存 ${row.count}`"
           @open="pillDetail = row.def!.id"

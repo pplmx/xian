@@ -2,8 +2,8 @@
   <button
     class="relative aspect-square rounded-md border transition-transform active:scale-95"
     :style="{
-      borderColor: colorWithAlpha(quality.color, 0.33),
-      background: colorWithAlpha(quality.color, 0.06),
+      borderColor: colorWithAlpha(quality.color, tier.border),
+      background: colorWithAlpha(quality.color, tier.bg),
     }"
     :data-uid="props.item.uid"
     :aria-label="label"
@@ -14,6 +14,7 @@
       而且和名字抢同一条视觉边。改成顶部一条标记带:
       左侧「佩」用玉色实底(它是状态),右侧「共」用紫色描边(它是属性),
       「新」仍挂正中朱砂。三样都还在,只是排成了一条读得懂的线。
+      天/仙/神在标记带右侧再盖一枚品阶阴文小章 —— 形状线索,色弱也分得出档。
     -->
     <span class="absolute inset-x-0 top-0 flex items-start justify-between px-1 pt-0.5">
       <span
@@ -22,13 +23,16 @@
         >佩</span
       >
       <span v-else class="w-2.5" aria-hidden="true" />
-      <span
-        v-if="props.item.locked"
-        class="leading-none text-ink-faint"
-        aria-hidden="true"
-        title="已锁定"
-      >
-        <GameIcon name="lock" :size="9" />
+      <span class="flex items-center gap-0.5">
+        <QualitySeal v-if="rare" :quality="props.item.quality" :size="13" />
+        <span
+          v-if="props.item.locked"
+          class="leading-none text-ink-faint"
+          aria-hidden="true"
+          title="已锁定"
+        >
+          <GameIcon name="lock" :size="9" />
+        </span>
       </span>
     </span>
     <!-- 新入包、还没开过背包看它 -->
@@ -83,6 +87,8 @@ import { colorWithAlpha } from "@/ui/colorVar";
 import { equipSetDef } from "@/core/equipSet";
 import { useInventoryStore } from "@/stores/inventory";
 import GameIcon from "@/components/common/GameIcon.vue";
+import QualitySeal from "@/components/common/QualitySeal.vue";
+import { isRareQuality, qualityTierStyle } from "@/ui/qualityTier";
 
 const props = defineProps<{ item: EquipmentInstance; equipped?: boolean }>();
 const emit = defineEmits<{ open: [uid: string] }>();
@@ -93,6 +99,8 @@ const isNew = computed(() => inventory.isNewItem(props.item.uid));
 
 const template = computed(() => equipmentTemplate(props.item.templateId));
 const quality = computed(() => qualityDef(props.item.quality));
+const tier = computed(() => qualityTierStyle(props.item.quality));
+const rare = computed(() => isRareQuality(props.item.quality));
 const setName = computed(() =>
   template.value?.set ? (equipSetDef(template.value.set)?.name ?? "") : "",
 );

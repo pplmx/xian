@@ -6,8 +6,8 @@
       plain
         ? undefined
         : {
-            borderColor: colorWithAlpha(tone, 0.33),
-            background: colorWithAlpha(tone, 0.06),
+            borderColor: colorWithAlpha(tone, intensity.border),
+            background: colorWithAlpha(tone, intensity.bg),
           }
     "
     :aria-label="label"
@@ -46,12 +46,25 @@
     >
       {{ foot }}
     </span>
+
+    <!--
+      右上:品阶阴文小章(天/仙/神才盖) —— 高档位的第二条区分线索。
+      九档的颜色里良品与精品同属青绿系,纸面上几乎难分;章是形状线索,
+      色弱玩家也读得出「这几件不一样」。强度分级见 qualityTierOf。
+    -->
+    <span v-if="rare" class="absolute right-0.5 top-0.5 leading-none">
+      <QualitySeal :quality="quality!" :size="14" />
+    </span>
   </button>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import QualitySeal from "@/components/common/QualitySeal.vue";
 import { colorWithAlpha } from "@/ui/colorVar";
+import type { QualityId } from "@/types";
+import { isRareQuality, qualityTierStyle } from "@/ui/qualityTier";
 
 /**
  * 格匣 —— 背包里三种格子(装备 / 丹药 / 材料)共用的骨架。
@@ -64,12 +77,14 @@ import { colorWithAlpha } from "@/ui/colorVar";
  *   · 品质底色(默认) —— 装备与丹药按品质染边与底,色即品阶;
  *   · plain —— 材料没有品质档,走墨色中性底。
  */
-withDefaults(
+const props = withDefaults(
   defineProps<{
     icon: string;
     name: string;
     /** 品质色(plain 时忽略) */
     tone?: string;
+    /** 品阶 id —— 传入即按档分级:晕染强度随档升,天/仙/神盖角章 */
+    quality?: QualityId;
     /** 右下读数:数量 / 强化等级 */
     foot?: string;
     /** 走墨色中性底(材料这类无品质的) */
@@ -81,7 +96,13 @@ withDefaults(
     /** 读屏用的完整说明(名字会被截断) */
     label?: string;
   }>(),
-  { tone: "", foot: "", plain: false, iconClass: "", size: 20, label: "" },
+  { tone: "", quality: undefined, foot: "", plain: false, iconClass: "", size: 20, label: "" },
 );
 const emit = defineEmits<{ open: [] }>();
+
+/** 三档晕染强度与稀有档判定,同源 qualityTier(格匣与装备格共用一份,不许两本账) */
+const intensity = computed(() =>
+  props.quality ? qualityTierStyle(props.quality) : { border: 0.33, bg: 0.06 },
+);
+const rare = computed(() => !!props.quality && isRareQuality(props.quality));
 </script>
