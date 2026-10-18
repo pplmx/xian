@@ -250,17 +250,29 @@
     <template v-if="codexTab === 'ziwei'">
       <!-- 紫微:一世之格,与周易的「一时之机」分工 -->
       <SectionTitle title="紫微" :hint="`${cnNumber(PALACES.length)}宫定一世之格,与问卦分工`" />
+      <!--
+        这一册照星象册的三档重排:题(命主) → 用(命格之力) → 读(宫位与主星) → 来历。
+        从前是一段长散文开头,唯一的动态量「命格之力」混在 11px 小字里 ——
+        与师承契合度当初同一个病:玩家打开这一册想知道的从来是「我这一世是什么格、
+        力有多大」,机制说明该归来历。
+      -->
       <section class="card-ink px-4 py-3">
-        <p class="t-body text-ink-faint">
-          紫微斗数本当以生辰起五行局再安诸星,游戏内没有生辰 —— 故此门只取
-          <b class="text-ink">{{ cnNumber(PALACES.length) }}宫所主</b>与
-          <b class="text-ink">{{ cnNumber(STARS.length) }}主星的星性</b
-          >,按灵根与轮回归属安星:是取象义,不是排盘。诸星之力并进命格之力,不按宫位分流——宫位只是星象义,非机制分工。
+        <p class="font-kai text-[14px] leading-relaxed text-ink">{{ fateLordLineText }}</p>
+        <div class="ink-divider my-2.5" aria-hidden="true" />
+        <!-- 用:命格之力 —— 这一册唯一据以行动的结论,与星象「今日利」同一版式 -->
+        <div data-value-row class="flex items-baseline gap-2">
+          <span class="shrink-0 text-[11px] text-ink-faint">命格之力</span>
+          <span class="font-kai text-[15px] text-jade">{{ fateModsText }}</span>
+        </div>
+        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
           卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
         </p>
-        <p class="mt-2 font-kai text-[14px] leading-relaxed text-ink">{{ fateLordLineText }}</p>
-        <p class="mt-1 text-[11px] text-qing">命格之力:{{ fateModsText }}</p>
-        <div class="mt-2.5 divide-y divide-ink/6">
+        <div class="ink-divider my-2.5" aria-hidden="true" />
+        <!-- 读:十二宫所安之星 -->
+        <p class="mb-1 font-kai text-[10px] tracking-[0.5em] text-ink-faint">
+          {{ cnNumber(PALACES.length) }} 宫
+        </p>
+        <div class="divide-y divide-ink/6">
           <div
             v-for="row in fateRows"
             :key="row.palace.id"
@@ -275,13 +287,22 @@
             >
           </div>
         </div>
-        <div class="mt-2 border-t border-ink/10 pt-2">
-          <p class="text-[10px] text-ink-faint">{{ cnNumber(STARS.length) }}主星</p>
+        <div class="mt-3 border-t border-ink/10 pt-2">
+          <p class="mb-1 font-kai text-[10px] tracking-[0.5em] text-ink-faint">
+            {{ cnNumber(STARS.length) }} 主 星
+          </p>
           <p v-for="s in STARS" :key="s.id" class="mt-1 t-body text-ink-soft">
             <span class="font-kai text-ink">{{ s.name }}</span>
             <span class="text-ink-faint"> · {{ s.nature }} · {{ s.gist }}</span>
           </p>
         </div>
+        <!-- 来历:取象义而非排盘的说明,归脚注 -->
+        <p class="mt-2 border-t border-ink/8 pt-2 text-[10px] leading-relaxed text-ink-faint">
+          紫微斗数本当以生辰起五行局再安诸星,游戏内没有生辰 —— 故此门只取
+          <b class="text-ink">{{ cnNumber(PALACES.length) }}宫所主</b>与
+          <b class="text-ink">{{ cnNumber(STARS.length) }}主星的星性</b
+          >,按灵根与轮回归属安星:是取象义,不是排盘。诸星之力并进命格之力,不按宫位分流——宫位只是星象义,非机制分工。
+        </p>
       </section>
     </template>
 
