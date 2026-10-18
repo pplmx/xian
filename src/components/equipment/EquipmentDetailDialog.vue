@@ -109,33 +109,8 @@
               {{ line.before }}<span class="tabular font-medium text-ink">{{ line.value }}</span
               >{{ line.after }}
             </span>
-            <button
-              v-if="canSealAffix(line.id)"
-              class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-qing active:scale-90 active:opacity-60 disabled:cursor-not-allowed disabled:opacity-40"
-              :disabled="!sealAffordable"
-              :aria-label="`封存词条${line.name}`"
-              :title="sealAffordable ? undefined : `尚差 ${formatGN(sealShortfall)} 灵石`"
-              @click="doSealAffix(line.id)"
-            >
-              封存
-            </button>
-            <span v-else-if="isAffixSealed(line.id)" class="flex shrink-0 items-center gap-1">
-              <span class="text-jade" role="img" aria-label="这条词条已封存">
-                <GameIcon name="lock" :size="12" />
-              </span>
-              <!--
-                解除封存:免费即时 —— 锁是花过的沉没成本,解开只是放弃这条槽位的保护,
-                既不收费也不退款(见 reforge.unsealAffix 的注释)。故不做付不起置灰,
-                与封存的账目纪律区分开。
-              -->
-              <button
-                class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-ink-faint hoverable:hover:text-qing active:scale-90 active:opacity-60"
-                :aria-label="`解除封存词条${line.name}`"
-                @click="doUnsealAffix(line.id)"
-              >
-                解除
-              </button>
-            </span>
+            <!-- 封存/解除操作组随面板走(EquipSealPanel,自读同一份 inst) -->
+            <EquipSealPanel :affix-id="line.id" :name="line.name" />
           </li>
         </ul>
         <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
@@ -532,10 +507,8 @@ import {
   autoReforge,
   reforgeEquipment,
   reforgeCost,
-  sealAffix,
   sealCapacity,
   sealCost,
-  unsealAffix,
   type ReforgeTarget,
 } from "@/core/reforge";
 import { affixDef, AFFIXES } from "@/data/affixes";
@@ -550,6 +523,7 @@ import BaseModal from "@/components/common/BaseModal.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
 import AffixTransferPanel from "./AffixTransferPanel.vue";
 import EquipNotePanel from "./EquipNotePanel.vue";
+import EquipSealPanel from "./EquipSealPanel.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import { useLoreStore } from "@/stores/lore";
@@ -629,21 +603,7 @@ const sealShortfall = computed(() =>
 const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).affixes[1] : 0));
 const qualityName = computed(() => (inst.value ? qualityDef(inst.value.quality).name : ""));
 
-function isAffixSealed(affixId: string): boolean {
-  return (inst.value?.sealedAffixIds ?? []).includes(affixId);
-}
-
-function canSealAffix(affixId: string): boolean {
-  return inst.value !== undefined && sealCostVal.value !== null && !isAffixSealed(affixId);
-}
-
-function doSealAffix(affixId: string): void {
-  if (inst.value) sealAffix(inst.value.uid, affixId);
-}
-
-function doUnsealAffix(affixId: string): void {
-  if (inst.value) unsealAffix(inst.value.uid, affixId);
-}
+// ---- 封存:行内操作组见 EquipSealPanel.vue;页脚价签与短差随重铸页脚块留宿主 ----
 
 function doReforge(): void {
   if (inst.value) reforgeEquipment(inst.value.uid);

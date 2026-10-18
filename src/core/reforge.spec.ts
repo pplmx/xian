@@ -336,7 +336,12 @@ describe("界面与判定同源 · 条数上限不写死", () => {
   });
 
   it("已封存词条有「解除封存」入口,且与核心同源(unsealAffix)", () => {
-    expect(dialog, "界面应调用 unsealAffix(与核心同一处)").toContain("unsealAffix");
-    expect(dialog, "解除按钮文案").toMatch(/解除/);
+    // 封存操作组拆出后判据随本体走(components/equipment/EquipSealPanel.vue)
+    const seal = readFileSync(
+      resolve(__dirname, "../components/equipment/EquipSealPanel.vue"),
+      "utf8",
+    );
+    expect(seal, "界面应调用 unsealAffix(与核心同一处)").toContain("unsealAffix");
+    expect(seal, "解除按钮文案").toMatch(/解除/);
   });
 });
