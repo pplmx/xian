@@ -831,7 +831,8 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
   });
 
   it("智能收纳的清理确认要把收益摊开 —— 不只件数,还有会拿回的器灵尘/灵石", () => {
-    const view = src("../views/InventoryView.vue");
+    // 分解+收纳两扇拆出后判据随本体走(components/inventory/DismantleDialog.vue)
+    const view = src("../components/inventory/DismantleDialog.vue");
     // 与一键分解同族:分解 preview 在按下去前就把总账说了,化尘这步不可逆,更不该只报件数
     expect(view, "清理确认该用待清理预期收益的读数").toContain("cleanPlanned");
     expect(view, "清理确认要随收益(器灵尘/灵石)").toContain("batchYieldText(cleanPlanned)");
