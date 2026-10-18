@@ -225,7 +225,17 @@ describe("装饰层 · 花饰分隔只在页面层", () => {
   walk(resolve(ROOT, "src"));
 
   it("花饰分隔不进弹窗 —— 密集面板里一枚墨点会与数据争视线", () => {
-    expect(hits.filter((f) => !f.startsWith("src/views/"))).toEqual([]);
+    // 天界拆分后,exped 页签 body(含行程点列下的那枚墨点分隔)整段搬进
+    // ExpeditionPanel —— 它是页面层本体(非弹窗),随模板原样迁移,与 views/
+    // 同待遇放行(逐个列名,不放开整个目录:同目录的弹窗仍严禁)
+    const PANEL_PAGE_BODIES = [
+      "src/components/celestial/MarksPanel.vue",
+      "src/components/celestial/ExpeditionPanel.vue",
+      "src/components/celestial/TrialPanel.vue",
+    ];
+    expect(
+      hits.filter((f) => !f.startsWith("src/views/") && !PANEL_PAGE_BODIES.includes(f)),
+    ).toEqual([]);
   });
 
   it("确实有页面在用(否则这条判据在替一份空名单站岗)", () => {
