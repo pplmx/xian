@@ -235,7 +235,16 @@ export function showcaseSlices(theme = "light") {
         ring: "shot_r",
         talisman: "shot_tl",
       },
-      pills: {},
+      // 丹匣要摆出各品质档:ItemCell 的染色按品质走(tone=qualityDef().color),
+      // 展品档从前 pills 为空,丹匣永远空态 —— 染色分支从未被任何截图验证过。
+      // 五档(凡/良/精/玄/天)把 tone 的档位差摆上货架,数量也拉开(存量 foot 才有戏)。
+      pills: {
+        p_jvqisan: 12,
+        p_huichun: 6,
+        p_juling: 4,
+        p_dahuan: 2,
+        p_jiuzhuan: 1,
+      },
       artifacts: [],
       equippedArtifacts: [],
     },
