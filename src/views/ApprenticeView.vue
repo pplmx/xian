@@ -56,6 +56,12 @@ onMounted(() => {
   appr.sync();
   // 离线归来/开页那一拍若有完工,照报 —— 玩家回来不该只知道数变了
   announceReaps(appr.collectFinished(Date.now(), player.major));
+  /*
+   * 墙钟域,**不走** useGameClock(暂停冻结):弟子按墙钟走工(离线照算),
+   * 归来收割与 App.vue 启动那一拍是同一条墙钟口径 —— 重置/导入确认开着的
+   * 几分钟里完工的趟,恢复后第一拍照收,不该被游戏钟吞掉。每秒刷的归期
+   * 倒计时也随这枚表走(本页是墙钟域,倒计时不随暂停冻结)。
+   */
   timer = window.setInterval(() => {
     now.value = Date.now();
     announceReaps(appr.collectFinished(now.value, player.major));

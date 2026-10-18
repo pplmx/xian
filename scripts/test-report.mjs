@@ -246,6 +246,7 @@ const CATEGORIES = [
       "ornament.spec",
       "favicon.spec",
       "useNativeInsets",
+      "useGameClock",
       "fatePreview",
       "goBack",
       "inventorySeen",

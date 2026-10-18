@@ -55,6 +55,12 @@ onMounted(() => {
   // 挂载一拍自然售出的寄卖,给一声(开页回城不该只盯着数字变;此后每秒定时器里的递进又自可见)
   const sold = market.collectConsign(Date.now());
   if (sold.length) notify(`「${sold.join("、")}」已自售,灵石到账`, "success");
+  /*
+   * 墙钟域,**不走** useGameClock(暂停冻结):货架换新 / 悬赏换版 / 寄卖自售
+   * 都按墙钟结算 —— 离线照算,App.vue「归来一拍即收」也是墙钟口径。重置/导入
+   * 确认开着的几分钟,不该让货架晚一点换新、寄卖晚一步入账;故这里保留手写
+   * Date.now() 的 interval,不收进游戏钟(口径见 composables/useGameClock 注释)。
+   */
   timer = window.setInterval(() => {
     const t = Date.now();
     now.value = t;

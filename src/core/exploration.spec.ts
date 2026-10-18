@@ -434,10 +434,15 @@ describe("引擎暂停 · 历练墙上的截止时刻", () => {
     expect(useAdventureStore().session!.endsAt).toBe(endsAt + 5_000);
   });
 
-  it("useNow 在引擎暂停时不再推进墙上读数", () => {
+  it("useNow 在引擎暂停时不再推进墙上读数 —— 守卫收口到 useGameClock", () => {
+    // useNow 的守卫语义已收口进 useGameClock(本作全部「cb 每 tick、暂停冻结」
+    // 的定时器共用一个出处);useNow 只剩委托。审计随守卫走:委托要在,
+    // 守卫(enginePause / enginePaused)必须活在新出处里。
     const src = readFileSync(resolve(__dirname, "../composables/useNow.ts"), "utf8");
-    expect(src).toContain("enginePaused");
-    expect(src).toContain("enginePause");
+    expect(src).toContain("useGameClock");
+    const clock = readFileSync(resolve(__dirname, "../composables/useGameClock.ts"), "utf8");
+    expect(clock).toContain("enginePaused");
+    expect(clock).toContain("enginePause");
   });
 
   it("resume 把 Buff / 问卦 / 区域事件按暂停时长往后推", () => {

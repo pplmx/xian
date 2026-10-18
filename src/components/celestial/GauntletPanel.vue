@@ -75,6 +75,7 @@ import type { CombatLogEntry } from "@/types";
 import type { GauntletFightRow } from "@/core/gauntlet";
 import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS } from "@/data/constants";
 import { useSettingsStore } from "@/stores/settings";
+import { gameClock } from "@/composables/useGameClock";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 
 const props = defineProps<{
@@ -89,7 +90,8 @@ const displayed = ref<CombatLogEntry[]>([]);
 const php = ref(1);
 const ehp = ref(1);
 const logBox = useTemplateRef<HTMLElement>("logBox");
-let timer: number | undefined;
+/** 战报逐条回放的起表收口:gameClock(暂停冻结)—— 心跳停着时回放也停,恢复后续播 */
+let timer: (() => void) | undefined;
 
 const row = computed(() => props.rows[current.value]);
 const logs = computed(() => row.value?.logs ?? []);
@@ -110,7 +112,7 @@ const KIND_COLOR: Record<CombatLogEntry["t"], string> = {
 
 function stop(): void {
   if (timer !== undefined) {
-    window.clearInterval(timer);
+    timer();
     timer = undefined;
   }
 }
@@ -140,7 +142,9 @@ function play(): void {
   }
   let i = 0;
   const interval = Math.max(COMBAT_PLAYBACK_MIN_MS, COMBAT_PLAYBACK_BASE_MS / settings.battleSpeed);
-  timer = window.setInterval(() => {
+  // gameClock(暂停冻结):回放是已结算战局的「演出」,心跳停着(重置/导入确认)
+  // 就该跟着停 —— 与 useNow 的倒计时同一条口径,手写 interval 在此收口。
+  timer = gameClock(() => {
     const entry = all[i];
     if (!entry) {
       stop();

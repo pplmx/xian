@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { getCurrentCaveEvent, chooseCaveOption, dismissCaveEvent } from "@/core/earlyGameService";
 import { gameNow } from "@/core/enginePause";
+import { useGameClock } from "@/composables/useGameClock";
 import { URGENT_COUNTDOWN_SEC } from "@/data/constants";
 import { formatCountdown } from "@/utils/format";
 import { caveOptionEffectText } from "@/ui/earlyGameText";
@@ -14,10 +15,12 @@ import BaseModal from "@/components/common/BaseModal.vue";
  * 秒数照刷、到点由引擎收场。关掉即散=放弃当日巡游 —— 后果只挂在写明了
  * 它的「离开」按钮上,故 :closable=false 禁掉 Esc/背板/X 的无声退出
  * (随手一关与明确放弃代价相同却毫无提示,审计视为坑)。
+ *
+ * 每秒的轮询走 useGameClock(暂停冻结),与顿悟弹窗同一处收口:
+ * 重置/导入确认开着时不再把事件窗叠到确认窗上。
  */
 const event = ref<CaveEvent | null>(null);
 const remaining = ref(0);
-let timer: number | undefined;
 
 const locationNames: Record<string, string> = {
   field: "灵田",
@@ -44,14 +47,8 @@ function handleIgnore() {
   event.value = null;
 }
 
-onMounted(() => {
-  refresh();
-  timer = window.setInterval(refresh, 1000);
-});
-
-onUnmounted(() => {
-  if (timer !== undefined) window.clearInterval(timer);
-});
+onMounted(refresh);
+useGameClock(refresh, 1000);
 
 const show = computed(() => event.value !== null);
 const locationLabel = computed(() =>

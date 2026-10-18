@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import {
   getCurrentEnlightenment,
   chooseEnlightenment,
   dismissEnlightenment,
 } from "@/core/earlyGameService";
 import { gameNow } from "@/core/enginePause";
+import { useGameClock } from "@/composables/useGameClock";
 import { URGENT_COUNTDOWN_SEC } from "@/data/constants";
 import { enlightenmentEffectText } from "@/ui/earlyGameText";
 import { formatCountdown } from "@/utils/format";
@@ -22,10 +23,11 @@ import BaseModal from "@/components/common/BaseModal.vue";
  * 以及排版自检里那两条尺子(控件要有名、不小于 28px)一并继承。
  *
  * 倒计时的口径不变:秒数每秒刷一次,到点由引擎自己收场;「忽略」= 关掉即散。
+ * 每秒的轮询走 useGameClock(暂停冻结):重置/导入确认开着时心跳是停的,
+ * 轮询不该在这当口把一扇事件窗叠到确认窗上 —— 这正是收口后顺手修正的一处。
  */
 const event = ref<EnlightenmentEvent | null>(null);
 const remaining = ref(0);
-let timer: number | undefined;
 
 function refresh() {
   event.value = getCurrentEnlightenment();
@@ -44,14 +46,8 @@ function handleIgnore() {
   event.value = null;
 }
 
-onMounted(() => {
-  refresh();
-  timer = window.setInterval(refresh, 1000);
-});
-
-onUnmounted(() => {
-  if (timer !== undefined) window.clearInterval(timer);
-});
+onMounted(refresh);
+useGameClock(refresh, 1000);
 
 const show = computed(() => event.value !== null);
 </script>

@@ -45,13 +45,15 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from "vue";
 import { LINGGEN_GRADES as GRADES } from "@/core/linggenGen";
+import { gameClock } from "@/composables/useGameClock";
 
 const visible = ref(false);
 const animating = ref(false);
 
 /** 当前轮换位置(轮换中随机,结束时定格为真实灵根;必须用 ref 才能触发 computed 重算) */
 const cycleIdx = ref(0);
-let timer: ReturnType<typeof setInterval> | null = null;
+/** 轮换表的收表函数(gameClock 收口:暂停冻结)与整组定时器的收束 */
+let stopCycle: (() => void) | null = null;
 let stopTimers: (() => void) | null = null;
 /** 卸载后不再回填定时器,也不再回调 onDone(防路由切换后仍被 2200ms 定时器推回首页) */
 let unmounted = false;
@@ -92,11 +94,13 @@ function show(gradeName: string, onDone?: () => void): void {
   visible.value = true;
   animating.value = true;
   // 随机闪现所有灵根品阶(100ms 一次,约 20 次后显出真容)
-  timer = setInterval(() => {
+  // gameClock(暂停冻结)收口:这是建号流程里的演出,心跳若停着演出也跟着停,
+  // 手写 interval 不再另起一份(与 useNow / 事件轮询同一出处)。
+  stopCycle = gameClock(() => {
     cycleIdx.value = Math.floor(Math.random() * GRADES.length);
   }, 100);
   const doneTimeout = setTimeout(() => {
-    if (timer) clearInterval(timer);
+    stopCycle?.();
     // 定格:显示真实灵根(animating=false 后 currentName 取 realName)
     animating.value = false;
     const leave = setTimeout(() => {
@@ -106,7 +110,7 @@ function show(gradeName: string, onDone?: () => void): void {
     stopTimers = () => clearTimeout(leave);
   }, 2200);
   stopTimers = () => {
-    if (timer) clearInterval(timer);
+    stopCycle?.();
     clearTimeout(doneTimeout);
   };
 }
