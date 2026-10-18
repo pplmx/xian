@@ -204,7 +204,7 @@
           >
             强 化
           </button>
-          <!-- 分解二步确认子面板:武装→确认/取消随面板走(EquipDecomposePanel);分解成功由面板 emit,宿主关弹窗 -->
+          <!-- 分解二步确认子面板:武装→确认/再想想随面板走(EquipDecomposePanel);分解成功由面板 emit,宿主关弹窗 -->
           <EquipDecomposePanel @decomposed="close" />
         </div>
       </div>

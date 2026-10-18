@@ -252,7 +252,7 @@
               class="text-[10px] text-ink-faint active:text-ink"
               @click="confirmDelete = null"
             >
-              取消
+              再想想
             </button>
           </template>
         </div>
@@ -437,7 +437,8 @@ function pickCompare(at: number): void {
 
 const saveOpen = ref(false);
 const saveName = ref("");
-/** 等待二次确认删除的构筑 id */
+/** 等待二次确认删除的构筑 id。删构筑不可逆(一套心血),走两步武装确认:
+ *  确认词「确认+动词」、取消词一律「再想想」(确认模式分级见 EquipDecomposePanel 文件头) */
 const confirmDelete = ref<string | null>(null);
 
 function openSave(): void {

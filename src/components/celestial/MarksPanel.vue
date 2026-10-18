@@ -74,7 +74,7 @@
             class="shrink-0 rounded border border-cinnabar/50 bg-cinnabar/6 px-2 py-1 font-kai text-[10px] text-cinnabar active:scale-90"
             @click="rewriteConfirm = null"
           >
-            算了
+            再想想
           </button>
           <button
             class="shrink-0 rounded bg-cinnabar px-2 py-1 font-kai text-[10px] text-paper active:scale-90"
@@ -177,7 +177,9 @@ function goReplay(mark: (typeof endgame.marks)[number]): void {
 }
 
 // ---- 重写此痕:以今日之你,快过当年 ----
-/** 重写确认态(按道痕索引):写入要花道源,需要看明白再点 */
+/** 重写确认态(按道痕索引):写入要花道源,需要看明白再点。
+ *  重写花道源重打一场,成果不可退 —— 属「不可逆失去资源」的两步武装确认族:
+ *  确认词「确认+动词」、取消词一律「再想想」(确认模式分级见 EquipDecomposePanel 文件头)。 */
 const rewriteConfirm = ref<number | null>(null);
 function goRewrite(mark: (typeof endgame.marks)[number]): void {
   const result = rewriteMark(mark);

@@ -100,7 +100,7 @@
             确认弃境
           </button>
           <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="confirmAbandon = false">
-            取 消
+            再想想
           </button>
         </template>
       </div>
@@ -245,7 +245,7 @@ function payText(r: SecretRealmDef): string {
 }
 
 function enter(id: string): void {
-  // 上一次「确认弃境」的陈态不能带进新境:否则新秘境一进来就又是「确认弃境/取消」,误触即血亏
+  // 上一次「确认弃境」的陈态不能带进新境:否则新秘境一进来就又是「确认弃境/再想想」,误触即血亏
   confirmAbandon.value = false;
   const out = enterSecretRealm(id);
   if (!out.ok) {

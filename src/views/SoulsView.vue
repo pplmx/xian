@@ -242,10 +242,10 @@
             </template>
             <template v-else>
               <button class="btn-seal !px-2 !py-1 !text-[11px]" @click="doDissolve(soul.uid)">
-                确 散
+                确认散去
               </button>
               <button class="btn-ghost !px-2 !py-1 !text-[11px]" @click="pendingDissolveUid = null">
-                取 消
+                再想想
               </button>
             </template>
           </div>
@@ -316,10 +316,10 @@
           </button>
           <div v-else class="flex shrink-0 items-center gap-1.5">
             <button class="btn-seal !px-2.5 !py-1 !text-[11px]" @click="doRefine(row.inst.uid)">
-              凝 炼
+              确认凝炼
             </button>
             <button class="btn-ghost !px-2.5 !py-1 !text-[11px]" @click="pendingRefineUid = null">
-              取 消
+              再想想
             </button>
           </div>
         </div>
@@ -388,7 +388,12 @@ function onSlotKeydown(i: number, e: KeyboardEvent): void {
   if (e.target !== e.currentTarget) return;
   if (e.key === "Enter" || e.key === " ") soulDetail.value = endgame.activeSouls[i - 1] ?? null;
 }
-/** 等待二次确认的行(uid);非 null 表示该行已展开确认态 */
+/**
+ * 等待二次确认的行(uid);非 null 表示该行已展开确认态。
+ * 凝炼入炉毁的是原器、散去形意毁的是器魂 —— 都属「不可逆失去整件」,
+ * 走两步武装确认:确认词「确认+动词」、取消词一律「再想想」
+ * (确认模式分级见 EquipDecomposePanel 文件头)。
+ */
 const pendingRefineUid = ref<string | null>(null);
 /** 散去形意同样二步确认:器魂是花道源与一件法器凝出来的,一脚碎掉连个反悔都没有 */
 const pendingDissolveUid = ref<string | null>(null);

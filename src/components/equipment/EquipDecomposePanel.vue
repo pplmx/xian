@@ -1,11 +1,16 @@
 <script setup lang="ts">
 /**
- * 分解二步确认面板 —— 垃圾桶→确认分解→取消 的武装态一组(拆自 EquipmentDetailDialog)。
+ * 分解二步确认面板 —— 垃圾桶→确认分解→再想想 的武装态一组(拆自 EquipmentDetailDialog)。
  *
- * 归属:页脚动作行里分解钮的两步确认(武装→确认/取消)与 doDecompose。
+ * 归属:页脚动作行里分解钮的两步确认(武装→确认/再想想)与 doDecompose。
  * 一件淬养过的装备(强化/封存/重铸)误触垃圾桶不该直接没 —— 与重铸的
  * 先武装再确认同一族纪律。主文的「分解返还」价签不在此(它是展示行,
  * 与强化投入的账连在一起,留宿主)。
+ *
+ * 确认模式分级(2026-10 交互统一):误触代价**不可逆失去整件**的动作用
+ * 两步武装确认,确认词「确认+动词」、取消词全库一律「再想想」;可逆/
+ * 可自愈的消费动作(重铸/强化/服丹/闭关/买卖)一键直达加就地护栏。
+ * 家族全表见 uiLayering「破坏性二次确认话术统一」判据注释。
  *
  * 状态在 store 的自读 pinia:自读 ui.equipDetailUid + inventory,与宿主拿到
  * 同一份 inst;置灰依据(isEquipped / locked)由面板自算。分解成功后
@@ -60,7 +65,7 @@ function doDecompose(): void {
     <template v-else>
       <button class="btn-seal !px-2.5 !text-[11px]" @click="doDecompose">确认分解</button>
       <button class="btn-ghost px-2 text-[11px] text-ink-faint" @click="decomposeArm = null">
-        取消
+        再想想
       </button>
     </template>
   </template>

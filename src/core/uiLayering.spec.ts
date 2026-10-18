@@ -1360,17 +1360,51 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(row).toContain("countdown-slot");
   });
 
-  it("破坏性二次确认话术统一 —— 确认前缀 + 取消,不许各说各话", () => {
-    // 删构筑/分解装备/弃秘境三处都是「确认后不可逆」的二步确认,此前确认词
-    // (确信删除/分解?/确出)与取消词(取消/算了)各说各话 —— 统一成「确认+对象 / 取消」。
-    const build = FILES.find((f) => f.path === "views/BuildView.vue");
-    expect(build?.src).toContain("确认删除");
-    const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
-    expect(sr?.src).toContain("确认弃境");
-    // 分解二步确认拆出后判据随本体走(components/equipment/EquipDecomposePanel.vue)
+  it("破坏性二次确认话术统一 —— 确认前缀 + 再想想,不许各说各话", () => {
+    /*
+     * 确认模式分级(2026-10 交互统一轮定稿),按「误触代价可逆吗」分两档:
+     *
+     * 【T1 不可逆失去整件/整份独有进度】→ 两步武装确认:
+     *   确认词一律「确认+动词」(确认删除/确认分解/确认弃境/确认凝炼/确认散去/
+     *   确认熔尽/确认重写/确认中道而返/确认择道),取消词一律「再想想」。
+     *   弹窗级确认(重置/导入/定道途/兵解)取消词同为「再想想」,确认钮可用
+     *   叙事题词(道心已决/道心已定/踏入轮回)—— 整弹窗就是第一眼,不靠按钮名防误触。
+     * 【T2 消费但可自愈/可再得/交易本意】(重铸/强化/服丹/闭关/买卖交付/派遣)→
+     *   一键直达 + 就地护栏(付不起置灰列差/顶满置灰/代价内联);重铸一键是
+     *   用户拍板(dataTextAudit 另有判据钉死),不许退回两步。
+     * 【T3 可逆】(换装/卸下佩件/卸下器魂/勾选)→ 一键零确认。
+     *
+     * 家族成员(此判据逐个钉死话术):删构筑/分解单件/弃秘境/凝炼/散魂/
+     * 熔尽本包/忆战重写/中道而返/择道。取消词统一前它们各说各话
+     * (取消/取 消/算了/再想想)。
+     */
+    const family: Array<[string, string, string]> = [
+      // [文件, 确认词, 武装态字段(防一键回潮的锚)]
+      ["views/BuildView.vue", "确认删除", "confirmDelete"],
+      ["components/equipment/EquipDecomposePanel.vue", "确认分解", "decomposeArm"],
+      ["components/adventure/SecretRealmCard.vue", "确认弃境", "confirmAbandon"],
+      ["views/SoulsView.vue", "确认凝炼", "pendingRefineUid"],
+      ["views/SoulsView.vue", "确认散去", "pendingDissolveUid"],
+      ["components/celestial/FurnaceDialog.vue", "确认熔尽", "furnaceConfirm"],
+      ["components/celestial/MarksPanel.vue", "确认重写", "rewriteConfirm"],
+      ["components/celestial/ExpeditionPanel.vue", "确认中道而返", "abandonArmed"],
+      ["components/cultivation/GongfaDialog.vue", "确认择道", "branchConfirm"],
+    ];
+    const problems: string[] = [];
+    for (const [path, word, arm] of family) {
+      const f = FILES.find((x) => x.path === path);
+      if (!f) {
+        problems.push(`${path}: 文件不见了`);
+        continue;
+      }
+      if (!f.src.includes(word)) problems.push(`${path}: 确认词须是「${word}」`);
+      if (!f.src.includes(arm)) problems.push(`${path}: 武装态「${arm}」不见了(一键回潮?)`);
+      // 取消词全库一律「再想想」—— 分解另禁「算了」回潮
+      if (!f.src.includes("再想想")) problems.push(`${path}: 取消词须是「再想想」`);
+    }
     const eq = FILES.find((f) => f.path === "components/equipment/EquipDecomposePanel.vue");
-    expect(eq?.src).toContain("确认分解");
     expect(eq?.src, "分解取消不许再写「算了」").not.toContain("算了");
+    expect(problems, `话术或武装态各说各话:${problems.join(" | ")}`).toEqual([]);
   });
 
   it("导入存档与重置同一条确认纪律 —— 备份会整体替换当前进度,不许直接落库", () => {
