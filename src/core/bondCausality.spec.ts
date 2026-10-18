@@ -28,7 +28,8 @@ import { SPARK_NAMES, SPARK_WEIGHT } from "@/data/bondIntent";
 import { BOND_EVENTS, TRIGGER_NAMES } from "@/data/bondEvents";
 import { DAOLU } from "@/data/daolu";
 
-const VIEW = readFileSync(resolve(__dirname, "../views/CharacterView.vue"), "utf-8");
+// 拆分后道侣弹窗(「因何而起」的所在)归 BondDialog,判据随本体改指子面板
+const VIEW = readFileSync(resolve(__dirname, "../components/character/BondDialog.vue"), "utf-8");
 
 /** 玩家能否回溯到事件的原因 */
 type Traceability = "traceable" | "inferable" | "abrupt";

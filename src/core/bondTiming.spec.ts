@@ -67,10 +67,17 @@ describe("自然介入 · 一:不打开道侣页也会发生", () => {
   });
 
   it("界面不再自行抽取事件", () => {
+    // 拆分后道侣弹窗归 BondDialog、共享投影在 useBondOverview —— 两处都要守:
+    // 旧写法:打开弹窗 → rollBondEvent();读取只许走 pendingBondEvent
     const view = readFileSync(resolve(__dirname, "../views/CharacterView.vue"), "utf-8");
-    // 旧写法:打开弹窗 → rollBondEvent()
+    const dialog = readFileSync(
+      resolve(__dirname, "../components/character/BondDialog.vue"),
+      "utf-8",
+    );
+    const overview = readFileSync(resolve(__dirname, "../composables/useBondOverview.ts"), "utf-8");
     expect(view).not.toMatch(/rollBondEvent/);
-    expect(view).toMatch(/pendingBondEvent/);
+    expect(dialog).not.toMatch(/rollBondEvent/);
+    expect(overview).toMatch(/pendingBondEvent/);
     console.log("\n角色页只读 pendingBondEvent(),不再自己 roll —— 时机不归界面管");
   });
 });

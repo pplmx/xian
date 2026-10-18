@@ -388,7 +388,8 @@ describe("主动意图 · 回应有记录", () => {
   });
 
   it("人物页把历次回应摆出来,不是只在注释里承诺", () => {
-    const src = readFileSync(resolve(__dirname, "../views/CharacterView.vue"), "utf8")
+    // 拆分后回应史(「她开的口,你历次回应」一行)归 BondDialog,判据随本体改指子面板
+    const src = readFileSync(resolve(__dirname, "../components/character/BondDialog.vue"), "utf8")
       .replace(/<!--[\s\S]*?-->/g, "")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/\/\/.*$/gm, "");
