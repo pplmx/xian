@@ -137,7 +137,7 @@
           </span>
           <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{ r.desc }}</span>
         </button>
-        <p v-if="list.length === 0" class="text-[10px] text-ink-faint">
+        <p v-if="list.length === 0" class="empty-note text-center text-[11px] text-ink-faint">
           {{
             gate === "celestial"
               ? "尚无天界秘境可探 —— 天界册真仙起,自有去处。"

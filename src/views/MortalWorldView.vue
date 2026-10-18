@@ -116,7 +116,7 @@
         </p>
       </div>
     </template>
-    <p v-else class="text-[11px] text-ink-faint">
+    <p v-else class="empty-note text-center text-[11px] text-ink-faint">
       此世气象尚未凝成。天地未就,不妨先去历练,待此世凝成再来。
     </p>
   </div>
