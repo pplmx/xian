@@ -187,6 +187,7 @@ const CATEGORIES = [
       "herbGrades",
       "buildingService.spec",
       "market.spec",
+      "marketStock.spec",
       "bounty",
     ],
   },
