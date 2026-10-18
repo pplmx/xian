@@ -782,7 +782,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 自动重铸的「洗到这些词条出现就停」多选格:选中态此前只靠朱砂描边+字色,
     // 读屏根本听不出哪几个被选中,等于无法操作自动重铸。与 InventoryView 的
     // smartKeep(minQuality 用 aria-pressed 同款)应同一条口径。
-    const eq = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    const eq = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
     expect(eq?.src, "词条格选中态要报给读屏").toContain(':aria-pressed="isAutoTarget(af.id)"');
   });
 
@@ -790,7 +790,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「自动重铸 / 词条转移」是点开才出现的折叠面板,此前只靠文案「收起/⋯」暗示,
     // 读屏不知道展开没展开。与 CombatPanel 的 showLore/showAnalysis 的
     // aria-expanded 同一条口径(揭开的 disclosure 一定要把状态报出来)。
-    const eq = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    const eq = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
     expect(eq?.src, "自动重铸折叠要报展开态").toContain(':aria-expanded="autoOpen"');
     expect(eq?.src, "词条转移折叠要报展开态").toContain(':aria-expanded="transferOpen"');
   });
@@ -1393,9 +1393,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // design.md「文字不叠透明度」:品阶名(整色)与 buff 叠数(继承强色)此前用元素级
     // opacity-80 淡化 —— 正好绕过 palette.spec 只扫「/80」斜杠语法的口子,浏览器照样
     // 混色、对比度算不出。要低强调该换一档整色 token,不是让 opacity 偷偷混。
-    const eq = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    // 拆分后装备详情域 = 宿主 + 六个子面板,反断言要查全域,不许只查宿主(假绿)
+    const eqFiles = FILES.filter((f) => f.path.startsWith("components/equipment/"))
+      .map((f) => f.src)
+      .join("\n");
     const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
-    expect(eq?.src, "品阶名不许叠 opacity 淡化").not.toMatch(/text-\[9px\] opacity-80/);
+    expect(eqFiles, "品阶名不许叠 opacity 淡化").not.toMatch(/text-\[9px\] opacity-80/);
     expect(cult?.src, "buff 叠数不许叠 opacity 淡化").not.toMatch(/text-\[9px\] opacity-80/);
   });
 
@@ -1649,7 +1652,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(gongfa?.src, "进修按钮与横幅都要全称「悟道点」").toContain(
       "悟道点 · {{ upCost.page }} 残页",
     );
-    const equip = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    const equip = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
     expect(equip?.src, "重铸行要用全称「器灵尘」").toContain("器灵尘×{{ reforgeCostVal.dust }}");
     expect(equip?.src, "不许重铸再退回裸「尘×」").toContain("花 器灵尘×");
     const service = readFileSync(resolve(__dirname, "../core/buildingService.ts"), "utf-8");

@@ -857,7 +857,8 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
   });
 
   it("装备的重铸/自动重铸都要两步确认 —— 误触不得直接洗掉这一身 roll", () => {
-    const view = src("../components/equipment/EquipmentDetailDialog.vue");
+    // 拆分后:重铸与自动重铸整域在重铸子面板 —— 判据随本体走
+    const view = src("../components/equipment/EquipReforgePanel.vue");
     // 重铸/自动重铸是「花器灵尘+灵石、把未封存词条尽数重掷」的高代价重掷,自动更
     // 能一次连洗 500 次 —— 与分解同族破坏性动作,必须「先武装、再确认」才真跑.
     expect(view, "重铸应有武装态,不一点即执行").toContain("armReforge");

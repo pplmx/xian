@@ -322,8 +322,9 @@ describe("解除封存(解锁)· 免费即时,与封存共用同一份 sealedAff
 });
 
 describe("界面与判定同源 · 条数上限不写死", () => {
+  // 拆分后:重铸/封存上限/条数分母全在重铸子面板 —— 判据随本体走
   const dialog = readFileSync(
-    resolve(__dirname, "../components/equipment/EquipmentDetailDialog.vue"),
+    resolve(__dirname, "../components/equipment/EquipReforgePanel.vue"),
     "utf8",
   );
 
