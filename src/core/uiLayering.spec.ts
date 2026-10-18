@@ -292,28 +292,31 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("灵草坊买十用十株的门槛 + 付不起摆短差 —— 灯灰必须说出差多少", () => {
     // 买10 曾拿单株价当门槛(够 1 株就亮),点了才弹「灵石不足」;付不起了也只
-    // 沉到底不报差,与同文件法宝炼化的「尚差」句式不一致。两者一起钉死:
+    // 沉到底不报差,与法宝炼化的「尚差」句式不一致。两者一起钉死:
     // 十株有其自己的 affordability 判定与短差,买10 不许再退回单株价放行。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    expect(inv?.src).toContain("affordable10");
-    expect(inv?.src).toContain(':disabled="!row.affordable10"');
-    expect(inv?.src).toContain("formatGN(row.short)");
-    expect(inv?.src).toContain("formatGN(row.short10)");
-    expect(inv?.src).not.toMatch(/:disabled="!row\.affordable"[\s\S]{0,40}buyTen/);
+    // 灵草坊弹窗拆出后判据随本体走(components/inventory/HerbShopDialog.vue)。
+    const shop = FILES.find((f) => f.path === "components/inventory/HerbShopDialog.vue");
+    expect(shop?.src).toContain("affordable10");
+    expect(shop?.src).toContain(':disabled="!row.affordable10"');
+    expect(shop?.src).toContain("formatGN(row.short)");
+    expect(shop?.src).toContain("formatGN(row.short10)");
+    expect(shop?.src).not.toMatch(/:disabled="!row\.affordable"[\s\S]{0,40}buyTen/);
   });
 
   it("炼丹/材料读数的灵草必须逐品列出 —— 不许退回单标量的合计", () => {
     // 灵草分五品(凡→道)后,方子按品阶耗(cost.herbGrade)、灵草坊各品各标价,
     // 可修行页那两处总读数仍报 Σ 五品的合计 —— 一眼看不出持有哪一品、够不够
     // 这一品的方子。改逐品列表(与灵草坊 held 同源,走 herbOf,不拼第二套分档)。
-    // 开炉弹窗拆出后,炼丹头在 BrewingDialog,灵草坊仍在 InventoryView,两处都要盯。
+    // 开炉弹窗拆出后炼丹头在 BrewingDialog;灵草坊拆出后账在 composables/useHerbShop.ts
+    // (.ts 不入 FILES,直读源码) —— 各读各的。
     const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
     const brew = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    const shop = readFileSync(join(SRC, "composables/useHerbShop.ts"), "utf-8");
     expect(brew?.src, "炼丹头必须逐品列出(不得再回资源的合计)").toMatch(
       /v-for="g in HERB_GRADES"[\s\S]{0,120}?herbGradeHeld\(g\)/,
     );
-    expect(inv?.src, "灵草坊同样逐品列出(不得再回资源的合计)").toMatch(
-      /v-for="g in HERB_GRADES"[\s\S]{0,120}?herbGradeHeld\(g\)/,
+    expect(shop, "灵草坊同样逐品列出(不得再回资源的合计)").toMatch(
+      /HERB_GRADES\.map[\s\S]{0,200}?herbOf\(g\)/,
     );
     expect(inv?.src, "材料详情同样逐品列出").toMatch(
       /currentMaterial\.key === RESOURCE_LABELS\.herb/,
@@ -1605,11 +1608,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 紧凑按钮与「尚差」行=已注释简称(石/铁)。曾裂：灵草坊价目灵石+尚差灵石
     // (破全球「尚差 X 石」)、进修按钮悟道 vs 顶部悟道点、建筑卡 50 铁 vs 玄铁 N 块、
     // 装备重铸 尘×N vs 强化 器灵尘×N(同 toast 前后脚)。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    expect(inv?.src, "灵草坊尚差要跟全球「尚差 N 石」口风").toMatch(
+    // 灵草坊弹窗拆出后判据随本体走(components/inventory/HerbShopDialog.vue)。
+    const shop = FILES.find((f) => f.path === "components/inventory/HerbShopDialog.vue");
+    expect(shop?.src, "灵草坊尚差要跟全球「尚差 N 石」口风").toMatch(
       /尚差 \{\{ formatGN\(row\.short\) \}\} 石/,
     );
-    expect(inv?.src, "灵草坊价目行要全称「灵石」").toContain("单价 {{ formatGN(row.price) }} 灵石");
+    expect(shop?.src, "灵草坊价目行要全称「灵石」").toContain("单价 {{ formatGN(row.price) }} 灵石");
     const gongfa = FILES.find((f) => f.path === "components/cultivation/GongfaDialog.vue");
     expect(gongfa?.src, "进修按钮与横幅都要全称「悟道点」").toContain(
       "悟道点 · {{ upCost.page }} 残页",
