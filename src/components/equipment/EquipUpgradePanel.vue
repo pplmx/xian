@@ -14,7 +14,12 @@ import { computed } from "vue";
 import { useUiStore } from "@/stores/ui";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
-import { equipLevelCap, equipUpgradeCost, upgradeEquipmentAll, upgradeRestCost } from "@/core/forge";
+import {
+  equipLevelCap,
+  equipUpgradeCost,
+  upgradeEquipmentAll,
+  upgradeRestCost,
+} from "@/core/forge";
 import { EQUIP_LEVEL_BONUS } from "@/data/constants";
 import { formatGN, formatPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";

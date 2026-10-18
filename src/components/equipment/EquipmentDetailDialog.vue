@@ -182,49 +182,8 @@
           <template v-if="!isZero(salvage.stone)"> · 灵石 {{ formatGN(salvage.stone) }}</template>
         </span>
       </p>
-      <!-- 修士实验室:反事实换装推演(真仙可用) -->
-      <template v-if="canWhatIf">
-        <div class="ink-divider my-3" />
-        <button v-if="!whatIf" class="btn-ghost w-full !py-1.5 !text-[12px]" @click="runWhatIf">
-          天机推演 · 若换此装,四天局面如何?
-        </button>
-        <template v-else>
-          <p class="mb-1.5 font-kai text-[12px] tracking-[0.3em] text-ink-faint">天机推演</p>
-          <p class="text-[11px] text-ink-soft tabular">
-            构筑:{{ whatIf.buildBefore?.displayName ?? "未成路" }}
-            <span class="text-ink-faint">→</span>
-            {{ whatIf.buildAfter?.displayName ?? "流派散去" }}
-          </p>
-          <div class="mt-1 space-y-0.5">
-            <p v-for="w in whatIf.worlds" :key="w.name" class="flex justify-between text-[11px]">
-              <span class="text-ink-faint">{{ w.name }}</span>
-              <span class="tabular">
-                <span class="text-ink-faint">{{ w.beforeText }}</span>
-                <span class="mx-1 text-ink-faint">→</span>
-                <span
-                  :class="
-                    w.trend === 'up'
-                      ? 'text-jade'
-                      : w.trend === 'down'
-                        ? 'text-cinnabar'
-                        : 'text-ink-soft'
-                  "
-                >
-                  {{ w.afterText }}
-                </span>
-              </span>
-            </p>
-          </div>
-          <p v-if="whatIf.modChanges.length" class="mt-1 text-[10px] text-qing tabular">
-            主要变化:{{
-              whatIf.modChanges
-                .map((c) => `${c.label} ${c.delta > 0 ? "+" : ""}${formatPercent(c.delta, 0)}`)
-                .join(" · ")
-            }}
-          </p>
-          <p class="mt-0.5 text-[10px] text-ink-faint">推演只述局面,不替你定夺。</p>
-        </template>
-      </template>
+      <!-- 天机推演子面板:入口/四界局面/主要变化随面板走(EquipWhatIfPanel,自读同一份 inst) -->
+      <EquipWhatIfPanel />
     </div>
     <template #footer>
       <div class="flex flex-col gap-2">
@@ -458,17 +417,11 @@ import { equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
 import { equipSetDef, setCounts, ASTRAL_SET_SHIELD } from "@/core/equipSet";
 import { worldNameOfTier } from "@/core/formulas";
 import { resolveEquipStats } from "@/core/equipGen";
-import {
-  decomposeEquipment,
-  equipUpgradeCost,
-  upgradeEquipment,
-} from "@/core/forge";
+import { decomposeEquipment, equipUpgradeCost, upgradeEquipment } from "@/core/forge";
 import { useResourcesStore } from "@/stores/resources";
 import { toNum } from "@/utils/gnum";
 import { refundRateText, salvageOf } from "@/core/salvage";
 import { detectBuild } from "@/core/buildDetect";
-import { endgameUnlocked } from "@/core/endgameService";
-import { whatIfEquip, type WhatIfReport } from "@/core/lab";
 import {
   autoReforge,
   reforgeEquipment,
@@ -490,6 +443,7 @@ import AffixTransferPanel from "./AffixTransferPanel.vue";
 import EquipNotePanel from "./EquipNotePanel.vue";
 import EquipSealPanel from "./EquipSealPanel.vue";
 import EquipUpgradePanel from "./EquipUpgradePanel.vue";
+import EquipWhatIfPanel from "./EquipWhatIfPanel.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import { useLoreStore } from "@/stores/lore";
@@ -665,18 +619,9 @@ function runAutoReforge(): void {
   disarmReforgeActions();
 }
 
-// ---- 修士实验室:反事实换装推演 ----
-const whatIf = ref<WhatIfReport | null>(null);
-const canWhatIf = computed(
-  () => endgameUnlocked() && !isEquipped.value && inst.value !== undefined,
-);
-
-function runWhatIf(): void {
-  if (inst.value) whatIf.value = whatIfEquip(inst.value.uid);
-}
+// ---- 天机推演子面板见 EquipWhatIfPanel.vue(报表与清空随面板走,宿主不再持状态) ----
 
 watch(inst, () => {
-  whatIf.value = null;
   disarmReforgeActions();
 });
 
