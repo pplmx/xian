@@ -856,23 +856,25 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     );
   });
 
-  it("装备的重铸/自动重铸都要两步确认 —— 误触不得直接洗掉这一身 roll", () => {
+  it("重铸与自动重铸一键直达 —— 用户拍板连贯性优先(2026-10-18),不许退回两步确认", () => {
     // 拆分后:重铸与自动重铸整域在重铸子面板 —— 判据随本体走
     const view = src("../components/equipment/EquipReforgePanel.vue");
-    // 重铸/自动重铸是「花器灵尘+灵石、把未封存词条尽数重掷」的高代价重掷,自动更
-    // 能一次连洗 500 次 —— 与分解同族破坏性动作,必须「先武装、再确认」才真跑.
-    expect(view, "重铸应有武装态,不一点即执行").toContain("armReforge");
-    expect(view, "重铸确认后要卸武装态").toContain("disarmReforgeActions()");
-    expect(view, "自动重铸同样要有两步确认").toContain("armAuto");
-    expect(view, "界面该给「确认重铸」这一步").toContain("确认重铸");
-    // 预算越界输入(手打 0/600)显示会与实跑脱节:提交时须夹到 [1,500],不许「至多洗
-    // 0/600 次」而实跑 1/500 次 —— 预览与实发同口径.
-    expect(view, "预算提交时按实跑口径夹取(clampAutoBudget)").toContain("clampAutoBudget");
-    // 按钮等级:武装态「开 洗」是次钮(btn-ghost),「确认开洗」才是主钮(btn-seal),
-    // 与重铸词条 ghost→确认重铸 seal 的升档同款 —— 未确认的一敲不该看着像已完成.
-    expect(view, "「开洗」武装态该是次钮,确认开洗才是主钮").toContain(
-      'class="btn-ghost ml-auto !px-3 !py-1 !text-[11px]"',
+    /*
+     * 设计变更(用户拍板):从前的「武装态 → 确认重铸/确认开洗」两步确认
+     * **整体移除** —— 连洗几批时每次都要两段点,严重影响连贯性。
+     * 误触代价经权衡可接受:重掷的是未封存词条(可提前封存保护),
+     * 结果明写进 toast,不像分解那样不可逆失去整件。故此条判据**反转**:
+     * 不许再出现武装态 —— 谁手痒把两步确认加回来,这里当场红。
+     */
+    expect(view, "重铸应一键直达(@click 直接 doReforge)").toContain('@click="doReforge"');
+    expect(view, "自动重铸开洗应一键直达(直接 runAutoReforge)").toContain(
+      '@click="runAutoReforge"',
     );
+    expect(view, "武装态机制不许回潮").not.toContain("armReforge");
+    expect(view, "「确认重铸」这道拦截不许回潮").not.toContain("确认重铸");
+    // 预算越界输入(手打 0/600)显示会与实跑脱节:提交时须夹到 [1,500],不许「至多洗
+    // 0/600 次」而实跑 1/500 次 —— 预览与实发同口径(这条与确认无关,保留).
+    expect(view, "预算提交时按实跑口径夹取(clampAutoBudget)").toContain("clampAutoBudget");
   });
 
   it("炼丹方子双缺要并列报(草缺·灵石尚差),失败线要说明灵石不退", () => {
