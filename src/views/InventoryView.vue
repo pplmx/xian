@@ -510,204 +510,12 @@
       </template>
     </BaseModal>
 
-    <!-- 开炉炼丹 -->
-    <BaseModal :open="craftOpen" title="开炉炼丹" wide @close="craftOpen = false">
-      <!--
-        灵草五品:方子按品阶耗(见每条方子的 cost.herbGrade),总读数归一堆毫无意义 ——
-        逐品列出持有,才看得出这张方子的这一品够不够。灵石仍是单一大数,占同一行右侧。
-      -->
-      <p class="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] tabular">
-        <span class="text-ink-faint">灵草</span>
-        <template v-for="g in HERB_GRADES" :key="g">
-          <span
-            class="chip-ink !py-0.5 !px-1.5 !text-[10px]"
-            :class="herbGradeHeld(g) > 0 ? 'text-jade' : 'text-ink-faint'"
-            >{{ HERB_GRADE_SHORT[g] }} {{ herbGradeHeld(g) }}</span
-          >
-        </template>
-        <span class="text-ink-faint">· 灵石 {{ formatGN(resources.spiritStone) }}</span>
-      </p>
-      <!--
-        被动翻检全程无进度条:玩家只知道某天突然翻出一张方子,不知道它快到了。
-        这一行把「下一件事」报成时间 —— 读数与 studyTick 同序,见 core/loreService.studyEta
-      -->
-      <p v-if="studyLine" class="mb-2 text-[10px] leading-relaxed text-ink-faint tabular">
-        {{ studyLine }}
-      </p>
-      <!--
-        炼丹增益:安神/澄心/定心是服下去的状态丹,「炼丹面」(双成/心得/护料)只在炉前
-        有意义 —— 吃没吃、加几成,开着炉就该看得见;没吃则给个引子,不许白吃白扛。
-        效果文案走 buff 的 mods → modsText,不在此处另写一份(见 pillBatch.spec 的收口)。
-      -->
-      <div v-if="alchemyBuffRows.length" class="mb-2 rounded-md bg-paper-deep/60 px-3 py-2">
-        <p class="text-[10px] text-ink-faint">炼丹增益 · 此刻在炉前生效</p>
-        <div class="mt-1 space-y-0.5">
-          <p
-            v-for="row in alchemyBuffRows"
-            :key="row.buffId"
-            class="flex items-baseline gap-1.5 text-[11px]"
-          >
-            <span class="font-kai shrink-0 text-qing">{{ row.name }}</span>
-            <span class="tabular text-ink-soft">{{ row.effect }}</span>
-          </p>
-        </div>
-      </div>
-      <p v-else class="mb-2 text-[10px] leading-relaxed text-ink-faint">
-        炉前还是白身 —— 备一味
-        <span class="text-qing">安神 · 澄心 · 定心</span>,双成 / 心得 / 护料即刻各涨一截
-      </p>
-      <div v-if="recipes.length" class="scroll-pane max-h-64 space-y-2 overflow-y-auto">
-        <input
-          v-model="recipeQuery"
-          type="text"
-          inputmode="search"
-          class="w-full rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[11px] text-ink outline-none placeholder:text-ink-faint"
-          placeholder="搜方名…"
-        />
-        <p
-          v-if="recipeQuery.trim() !== '' && !filteredRecipes.length"
-          class="px-0.5 text-[10px] text-ink-faint"
-        >
-          没有叫「{{ recipeQuery.trim() }}」的方子
-        </p>
-        <div v-for="r in filteredRecipes" :key="r.def.id" class="card-ink px-3.5 py-2.5">
-          <!--
-            左图 + 中信息 + 右把握:两个按钮下移到卡底 —— 三列挤在一行时,
-            中间的「方名 / 代价 / 成品」只剩一百来像素,「聚气散」被折成「聚气/散」(实测)。
-          -->
-          <div class="flex items-start gap-3">
-            <GameIcon
-              :name="r.def.icon"
-              :size="18"
-              class="mt-0.5"
-              :style="{ color: qualityDef(r.def.quality).color }"
-            />
-            <div class="min-w-0 grow">
-              <p class="flex items-center gap-2">
-                <span class="whitespace-nowrap font-kai text-[14px] text-ink">{{
-                  r.def.name
-                }}</span>
-                <span class="whitespace-nowrap text-[10px] text-ink-faint"
-                  >{{ r.able.rank }} 阶</span
-                >
-                <span
-                  v-if="r.able.overReach > 0"
-                  class="whitespace-nowrap text-[10px] text-cinnabar"
-                  >越阶 {{ r.able.overReach }}</span
-                >
-              </p>
-              <p class="text-[11px] text-ink-faint tabular">
-                {{ HERB_GRADE_SHORT[r.cost.herbGrade] }}灵草×{{ r.cost.herb }} · 灵石
-                {{ formatGN(r.cost.stone) }} ·<template v-if="r.shouzhuoLeft"
-                  >本世首败(任一炉)灵草全保</template
-                ><template v-else>炸炉返草 ~{{ r.keptHerb }} 株</template
-                ><template v-if="toNum(r.cost.stone) > 0"> · 灵石不退</template>
-              </p>
-              <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
-              <p class="text-[10px] leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
-            </div>
-            <div class="shrink-0 text-right">
-              <p
-                class="tabular text-[14px]"
-                :class="r.guaranteeLeft > 0 ? 'text-gold-ink' : rateClass(r.able.successRate)"
-              >
-                {{ r.guaranteeLeft > 0 ? "必成" : formatPercent(r.able.successRate) }}
-              </p>
-              <p class="text-[10px] text-ink-faint">
-                {{
-                  r.guaranteeLeft > 0
-                    ? `本世前 ${craftGuaranteeCrafts(player.reincarnation.heritage)} 炉保底 · 剩 ${r.guaranteeLeft} 炉`
-                    : "把握"
-                }}
-              </p>
-              <!-- 双成率也亮在炉前:骰子不藏 —— 与掷骰同一口径(alchemyBonusCapped,见行构造器) -->
-              <p class="mt-0.5 tabular text-[10px] text-ink-soft">
-                {{ formatPercent(r.doubleRate)
-                }}<span class="ml-1 text-[10px] text-ink-faint">双成</span>
-              </p>
-            </div>
-          </div>
-          <p v-if="r.shortText" class="mt-1 pl-7 text-[10px] text-cinnabar tabular">
-            {{ r.shortText }}
-            <button
-              v-if="r.shortHerb"
-              class="underline active:opacity-60"
-              @click="marketOpen = true"
-            >
-              · 灵草坊可补 ›
-            </button>
-          </p>
-          <template v-if="r.guaranteeLeft === 0">
-            <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-faint">
-              · {{ w }}
-            </p>
-          </template>
-          <div class="mt-2 flex justify-end gap-1.5">
-            <button
-              class="btn-seal !px-3 !py-1.5 !text-[11px]"
-              :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
-              :disabled="r.shortHerb || r.shortStone"
-              @click="craftPill(r.def.id)"
-            >
-              炼制
-            </button>
-            <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
-            <button
-              class="btn-ghost !px-3 !py-1.5 !text-[11px]"
-              :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
-              :disabled="r.shortHerb || r.shortStone"
-              @click="craftBatch(r.def.id)"
-            >
-              连炼 ×{{ PILL_BATCH }}{{ batchGuaranteeText(r.guaranteeLeft) }}
-            </button>
-          </div>
-        </div>
-      </div>
-      <!--
-        百工技艺:做得多就精。技艺一直在影响成丹 —— 境地与进度条都在这,看得见自己在长。
-        排在方子之后:九项技艺在窄屏上要占半屏,放在前面会把方子压到折叠线以下。
-        说明一栏至少留 9 个字宽,不够就整段换到下一行,不再被三列定宽挤成竖排。
-      -->
-      <div v-if="skillRows.length" class="mb-2 mt-3 rounded-md bg-paper-deep/60 px-3 py-2">
-        <p class="text-[10px] text-ink-faint">技艺(按道分,做得多就精)</p>
-        <div class="mt-1 space-y-1">
-          <div v-for="s in skillRows" :key="s.id">
-            <p class="flex items-baseline gap-2 text-[11px]">
-              <span class="w-14 shrink-0 text-ink-faint">{{ s.daoName }}</span>
-              <span class="w-12 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
-              <span
-                class="w-12 shrink-0"
-                :class="s.stage === '生疏' ? 'text-ink-faint' : 'text-jade'"
-                >{{ s.stage }}</span
-              >
-              <span class="min-w-[9em] flex-1 text-[10px] leading-relaxed text-ink-faint">{{
-                s.desc
-              }}</span>
-            </p>
-            <!-- 离下一境还差多少:境地内线性进度(见 skillStageProgress),同其余进度条共一根 ProgressBar -->
-            <p class="mt-0.5 flex items-center gap-1.5 pl-14">
-              <ProgressBar
-                :value="s.progress"
-                :color="s.stage === '生疏' ? 'var(--color-ink-faint)' : 'var(--color-jade)'"
-                :height="4"
-                class="flex-1"
-              />
-              <span class="w-7 shrink-0 text-right text-[10px] tabular text-ink-faint">{{
-                s.stage === "大成" ? "已顶" : formatPercent(s.progress, 0)
-              }}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-      <p v-else class="px-1 py-6 text-center t-body text-ink-faint">
-        你还不知道任何丹方。
-        <br />
-        <span class="text-[10px]">去藏经阁参悟,或向师长讨教,新方自会翻出</span>
-      </p>
-      <template #footer>
-        <button class="btn-seal w-full" @click="craftOpen = false">收 炉</button>
-      </template>
-    </BaseModal>
+    <!-- 开炉炼丹:弹窗本体在 BrewingDialog,炉前的账在 useBrewing(两处同源) -->
+    <BrewingDialog
+      :open="craftOpen"
+      @close="craftOpen = false"
+      @open-herb-shop="marketOpen = true"
+    />
 
     <!-- 部位候选列表 -->
     <BaseModal
@@ -1014,10 +822,8 @@ import { useSettingsStore } from "@/stores/settings";
 import { useCultivationStore } from "@/stores/cultivation";
 import { qualityDef, QUALITIES } from "@/data/qualities";
 import { pillDef } from "@/data/pills";
-import { buffDef } from "@/data/buffs";
 import { activeBuffsOf, buffOverflowOf, buffStackCount } from "@/core/engineBuffs";
 import type { BuffOverflow } from "@/core/engineBuffs";
-import { pillFuncText } from "@/ui/itemText";
 import {
   HERB_GRADES,
   HERB_GRADE_NAMES,
@@ -1027,7 +833,6 @@ import {
   herbGradeOfMajor,
   type HerbGrade,
 } from "@/data/herbGrades";
-import ProgressBar from "@/components/common/ProgressBar.vue";
 import { buyHerbs } from "@/core/herbMarketService";
 import {
   artifactActiveText,
@@ -1041,24 +846,12 @@ import {
   ARTIFACT_SLOT_UNLOCK_MAJOR,
   artifactSlotsFor,
 } from "@/data/artifacts";
-import { artifactSlotBonus, craftGuaranteeCrafts } from "@/core/heritageEffects";
+import { artifactSlotBonus } from "@/core/heritageEffects";
 import { REALMS } from "@/data/realms";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { BAG_CAPACITY } from "@/data/constants";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
-import {
-  PILL_BATCH,
-  usePill,
-  usePillBatch,
-  availableRecipes,
-  craftPill,
-  craftPillBatch,
-  pillCraftCost,
-  salvageRatio,
-} from "@/core/pillService";
-import { craftability, type Craftability } from "@/core/craftability";
-import { modOf } from "@/core/statsCalc";
-import { alchemyBonusCapped } from "@/core/engineCraft";
+import { PILL_BATCH, usePill, usePillBatch } from "@/core/pillService";
 import {
   batchYieldText,
   decomposeBatch,
@@ -1073,20 +866,17 @@ import { smartKeepImpact, smartRecycleTargets } from "@/core/smartKeep";
 import { maxTierForMajor } from "@/data/regions";
 import { equipSetDef, setCounts, type EquipSetDef } from "@/core/equipSet";
 import { useLoreStore } from "@/stores/lore";
-import { studyEta } from "@/core/loreService";
-import { DAO_NAMES, SKILLS, skillStageName, skillStageProgress } from "@/data/crafting";
 import {
   cnNumber,
-  formatDuration,
   formatGN,
   formatExact,
   formatNum,
   formatPercent,
   formatSignedPercent,
 } from "@/utils/format";
-import { STAT_NAMES, modsText } from "@/ui/statNames";
+import { STAT_NAMES } from "@/ui/statNames";
 import { colorWithAlpha } from "@/ui/colorVar";
-import type { AnyStatKey, EquipSlot, EquipmentInstance, GNum, PillDef } from "@/types";
+import type { AnyStatKey, EquipSlot, EquipmentInstance } from "@/types";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
@@ -1094,6 +884,8 @@ import QualityTag from "@/components/common/QualityTag.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import EquipmentCard from "@/components/equipment/EquipmentCard.vue";
 import ItemCell from "@/components/common/ItemCell.vue";
+import BrewingDialog from "@/components/inventory/BrewingDialog.vue";
+import { useBrewing } from "@/composables/useBrewing";
 
 const inventory = useInventoryStore();
 // 「新」角标清账时机 = 离开背包那一刻(路由无 keep-alive,离开即卸载):
@@ -1105,6 +897,11 @@ const resources = useResourcesStore();
 const ui = useUiStore();
 const player = usePlayerStore();
 const settings = useSettingsStore();
+
+// 开炉炼丹:页面只管开关(craftOpen)与跳灵草坊(marketOpen),炉前的账全在 useBrewing
+// —— 页面与 BrewingDialog 同源调用,不许另抄一份 computed(两份定义 = 两本账)。
+// 页面只解构自己用到的那几样(丹方总数 / 逐品持有 / 效果文案);其余成员弹窗专用。
+const { herbGradeHeld, recipes, pillFuncText } = useBrewing();
 
 // 灵草坊(ISS-306):灵石购草 —— 五品明码标价,一次或十株,灵石够才成
 const marketOpen = ref(false);
@@ -1128,10 +925,7 @@ const marketRows = computed(() =>
     };
   }),
 );
-/** 某品灵草的持有量 —— 炼丹头逐品读数(与灵草坊 held 同源,不走总读数) */
-function herbGradeHeld(g: HerbGrade): number {
-  return resources.herbOf(g);
-}
+/** 某品灵草的持有量(herbGradeHeld)在 useBrewing —— 灵草坊与开炉头同源逐品读数 */
 
 function buyOne(grade: HerbGrade) {
   const r = buyHerbs(grade, 1);
@@ -1295,159 +1089,9 @@ const pillRows = computed(() =>
     .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank),
 );
 
-// ---- 开炉幕 · 炼丹增益(机制可见:三味状态丹的炼丹面只在炉前有意义,不许白吃白扛) ----
+// 修行 store:丹药详情的服前判定(buffOverflowOf)与增益叠数要读当前 buff;
+// 开炉幕的炼丹增益(alchemyBuffRows)也用它,如今在 useBrewing 里自取同一单例。
 const cult = useCultivationStore();
-/** 炼丹面三键:双成 / 心得 / 护料。其余(回灵 / 会心 / 破境)是通用面,不进炉前这一格 */
-const ALCHEMY_FACE_KEYS = new Set(["alchemyYield", "craftExpGain", "craftSalvage"]);
-const ALCHEMY_BUFF_PILLS = [
-  { buffId: "buff_huohou", name: "安神" },
-  { buffId: "buff_chengxin", name: "澄心" },
-  { buffId: "buff_dingxin", name: "定心" },
-] as const;
-const alchemyBuffRows = computed(() =>
-  ALCHEMY_BUFF_PILLS.filter(({ buffId }) => cult.hasBuff(buffId)).map(({ buffId, name }) => {
-    const mods = buffDef(buffId)?.mods ?? {};
-    // 只取炼丹面;文案 = buff 自己的 mods → modsText,不在界面里另写一份
-    const face = Object.fromEntries(Object.entries(mods).filter(([k]) => ALCHEMY_FACE_KEYS.has(k)));
-    return {
-      buffId,
-      name,
-      effect: Object.keys(face).length > 0 ? modsText(face as import("@/types").StatMods) : "",
-    };
-  }),
-);
-
-/**
- * 藏经阁翻检的当刻概况(开炉页顶部一行)。
- * 读数在 core/loreService.studyEta —— 与 studyTick 同一优先序,界面不另算。
- */
-const studyLine = computed(() => {
-  const eta = studyEta();
-  if (!eta) return "";
-  if (!eta.readingId && !eta.nextIsNew) return "藏经阁翻检中:够得着的方子都已到手";
-  if (eta.readingId) {
-    const name = pillDef(eta.readingId)?.name ?? "某方";
-    return `藏经阁正研读「${name}」,约 ${formatDuration(Math.round(eta.nextInSec))} 后读通`;
-  }
-  return `藏经阁翻检中,约 ${formatDuration(Math.round(eta.nextInSec))} 后翻出一张新方`;
-});
-
-const recipes = computed(() =>
-  availableRecipes()
-    .map((id) => {
-      const def = pillDef(id);
-      const cost = pillCraftCost(id);
-      const able = craftability(id);
-      // 双成率 = 掷骰同一口径(alchemyBonusCapped:炉子份 + 炼丹产出词条,夹 0.8)—— 不许在界面重算一份
-      const doubleRate = alchemyBonusCapped(id);
-      // 浴火丹心(宿命传承)「本世前 3 炉必成」:余量 = 保底总数 − 已用,与 engineCraft.rate 同源。
-      // 界面不报这段时,持传承会在「把握 60%」里看到一个其实必成的炉。
-      const guaranteeLeft = Math.max(
-        0,
-        craftGuaranteeCrafts(player.reincarnation.heritage) -
-          (player.reincarnation.heritageUses.danxin ?? 0),
-      );
-      if (!def || !cost || !able) return null;
-      // 失败那面的代价也在炉前摊开:炸炉返草 ≈ salvageRatio(技艺)×(1+稳炉护料),与
-      // engineCraft.spentOnFail 同源 —— 只摊成功率等于只让玩家看见赢的那面
-      const salvageFraction =
-        salvageRatio(able.skill) * (1 + modOf(player.finalStats.mods, "craftSalvage"));
-      // 返草实算按整株取整(engineCraft.spentOnFail 对 cost.amount floor,
-      // 还原会退回 Math.floor(cost×ratio)),展示不许用浮点比率伪装整株:
-      // 4 株 20% 实际一株不退,写「~20%」就是骗。合体守拙本世首败灵草全保,也在炉前亮开。
-      const hasShouzhuo = player.reincarnation.heritage.includes("shouzhuo");
-      const shouzhuoLeft = hasShouzhuo && (player.reincarnation.heritageUses.shouzhuo ?? 0) === 0;
-      const keptHerb = shouzhuoLeft ? cost.herb : Math.floor(cost.herb * salvageFraction);
-      // 分级后「灵草不足」太笼统:满兜仙品草也可能缺几株凡品 —— 逐案点名缺什么,
-      // 缺草的直接指路灵草坊(那是唯一买草的地方)
-      const shortHerb = !resources.hasHerbs(cost.herbGrade, cost.herb);
-      const shortStone = !resources.hasStone(cost.stone);
-      // 双缺要并列报(「缺凡品,持 a/b · 灵石尚差 c 石」)—— 与同仓其它消费点(GongfaDialog 悟道点·残页)一个口子;
-      // 若只报第一个成立的,买齐草后灵石尚差才突然冒出来,等于把决策的一半藏到付款后
-      const shortParts: string[] = [];
-      if (shortHerb)
-        shortParts.push(
-          `缺${HERB_GRADE_NAMES[cost.herbGrade]},持 ${resources.herbOf(cost.herbGrade)}/${cost.herb}`,
-        );
-      if (shortStone)
-        shortParts.push(
-          `灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石`,
-        );
-      const shortText = shortParts.length ? shortParts.join(" · ") : null;
-      return {
-        def,
-        cost,
-        able,
-        doubleRate,
-        guaranteeLeft,
-        salvageFraction,
-        keptHerb,
-        shouzhuoLeft,
-        shortHerb,
-        shortStone,
-        shortText,
-      };
-    })
-    .filter(
-      (
-        x,
-      ): x is {
-        def: PillDef;
-        cost: { herb: number; herbGrade: HerbGrade; stone: GNum };
-        able: Craftability;
-        doubleRate: number;
-        guaranteeLeft: number;
-        salvageFraction: number;
-        keptHerb: number;
-        shouzhuoLeft: boolean;
-        shortHerb: boolean;
-        shortStone: boolean;
-        shortText: string | null;
-      } => x !== null,
-    )
-    // 现在能开炉的置顶,其余再按阶位 —— 进弹窗一眼看见此刻哪味立刻可炼
-    .sort((a, b) => {
-      const ca = a.shortHerb || a.shortStone ? 0 : 1;
-      const cb = b.shortHerb || b.shortStone ? 0 : 1;
-      return cb - ca || a.able.rank - b.able.rank;
-    }),
-);
-
-/**
- * 技艺一览:名(道名 + 技艺名)、境地(skillStageName)、境地内进度(0~1)、这项技艺管什么。
- * lv/progress 喂给丹房的进度条 —— 「做得多就精」不再只是境地两个字,离下一境还差多少看得见。
- */
-const skillRows = computed(() =>
-  SKILLS.map((s) => {
-    const lv = lore.skillLevel(s.id);
-    return {
-      id: s.id,
-      daoName: DAO_NAMES[s.dao],
-      name: s.name,
-      stage: skillStageName(lv),
-      progress: skillStageProgress(lv),
-      desc: s.desc,
-    };
-  }),
-);
-
-/** 炉前按方名过滤:空白显示全部,输入即滤(trim 后空串不拦)。方名是正身,成品贴名不进搜索 */
-const filteredRecipes = computed(() => {
-  const q = recipeQuery.value.trim();
-  if (!q) return recipes.value;
-  return recipes.value.filter((r) => r.def.name.includes(q));
-});
-
-/**
- * 把握度配色:七成以上放心开炉(石绿)、三成以下是在赌(朱砂)、中间档留意(赭金)。
- * 色类必须是色板真类 —— 曾经写过 text-jade-ink / text-crimson-ink 两个不存在的类,
- * 整条语义色静默落到继承色,「敢不敢开」的绿色信号从界面上消失了(见 uiLayering 审计)。
- */
-function rateClass(rate: number): string {
-  if (rate >= 0.7) return "text-jade";
-  if (rate >= 0.3) return "text-gold-ink";
-  return "text-cinnabar";
-}
 
 /**
  * 材料的图标色 —— 一律走色板真类,且各按物性给色:
@@ -1573,8 +1217,6 @@ const currentPillHint = computed<{ text: string; tone: "cinnabar" | "amber" | "f
 );
 
 const craftOpen = ref(false);
-/** 炉前搜方名:方子一旦上手得多照单海搜,输入即滤(空白显示全部) */
-const recipeQuery = ref("");
 
 /** 服用后若已吃完最后一枚,顺手关掉详情——否则弹窗会停在一个不存在的丹药上 */
 function onUsePill(): void {
@@ -1597,16 +1239,7 @@ function onUsePillBatch(): void {
   if (!pillRows.value.some((r) => r.def?.id === id)) pillDetail.value = null;
 }
 
-/** 连炼一批 —— 批量开炉,料尽自停(成败与保料合一条提示) */
-function craftBatch(id: string): void {
-  craftPillBatch(id, PILL_BATCH);
-}
-
-/** 连炼按钮披露保底只保前 N 炉(丹心保底是本世全局池,后半批回落到真实把握) */
-function batchGuaranteeText(left: number): string {
-  if (left <= 0) return "";
-  return left >= PILL_BATCH ? " · 皆必成" : ` · 前 ${left} 炉必成`;
-}
+/** 连炼一批与保底披露(craftBatch / batchGuaranteeText)在 useBrewing —— 开炉弹窗专用 */
 
 const artifactSlots = computed(
   () => artifactSlotsFor(player.major) + artifactSlotBonus(player.reincarnation.heritage),

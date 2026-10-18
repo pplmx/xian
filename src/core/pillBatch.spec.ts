@@ -244,28 +244,35 @@ describe("批量炼丹", () => {
 });
 
 describe("批量炼丹 · UI 收口", () => {
+  // 开炉弹窗拆分后:连炼/批量数在 components/inventory/BrewingDialog.vue,
+  // 连服/增益丹拦按钮仍在 views/InventoryView.vue 的丹药详情弹窗 —— 各读各的。
+  const dialogSrc = (): string =>
+    readFileSync(join(SRC, "components/inventory/BrewingDialog.vue"), "utf8");
+  const viewSrc = (): string => readFileSync(join(SRC, "views/InventoryView.vue"), "utf8");
+
   it("连炼挂在批量开炉上;连服只在即时丹上挂(增益丹不许批量按钮)", () => {
-    const src = readFileSync(join(SRC, "views/InventoryView.vue"), "utf8");
-    expect(src).toContain("craftBatch(r.def.id)");
+    expect(dialogSrc()).toContain("craftBatch(r.def.id)");
     // 按钮上的批量数须读 PILL_BATCH(单源,不许再手写「×5」)—— 写常量即撒谎
-    expect(src).toContain("连服 ×{{ PILL_BATCH }}");
-    expect(src).toContain("连炼 ×{{ PILL_BATCH }}");
-    expect(src).toContain("!def.buffId");
+    expect(viewSrc()).toContain("连服 ×{{ PILL_BATCH }}");
+    expect(dialogSrc()).toContain("连炼 ×{{ PILL_BATCH }}");
+    expect(viewSrc()).toContain("!def.buffId");
   });
 
   it("开炉幕挂出炼丹增益:三味状态丹的炼丹面在炉前可见,文案走 buff→modsText(不许另写一份)", () => {
-    const src = readFileSync(join(SRC, "views/InventoryView.vue"), "utf8");
+    // buff 清单与 modsText 拼串住在 composables/useBrewing.ts,展示在 BrewingDialog 模板
+    const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf8");
     for (const buffId of ["buff_huohou", "buff_chengxin", "buff_dingxin"]) {
-      expect(src, `${buffId} 没接进开炉幕的炼丹增益`).toContain(buffId);
+      expect(brew, `${buffId} 没接进开炉幕的炼丹增益`).toContain(buffId);
     }
-    expect(src).toContain("炼丹增益");
-    expect(src).toContain("modsText");
+    expect(dialogSrc()).toContain("炼丹增益");
+    expect(brew).toContain("modsText");
   });
 
   it("开炉幕把双成率也亮出来:配方行报双成读数,走 alchemyBonusCapped 同一口径", () => {
-    const src = readFileSync(join(SRC, "views/InventoryView.vue"), "utf8");
-    expect(src).toContain("const doubleRate = alchemyBonusCapped(id)");
-    expect(src).toContain("formatPercent(r.doubleRate)");
-    expect(src).toContain(" 双成");
+    // 双成率的口径(alchemyBonusCapped)在 useBrewing 的行构造器,展示在弹窗模板
+    const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf8");
+    expect(brew).toContain("const doubleRate = alchemyBonusCapped(id)");
+    expect(dialogSrc()).toContain("formatPercent(r.doubleRate)");
+    expect(dialogSrc()).toContain(" 双成");
   });
 });

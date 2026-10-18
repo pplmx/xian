@@ -805,10 +805,12 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
   });
 
   it("丹药详情与丹方清单说得出「服下去会怎样」", () => {
+    // 开炉弹窗拆出后两处分居两文件:丹药详情弹窗在 InventoryView,方子清单在
+    // BrewingDialog —— 各自都要有 pillFuncText(同一份纯函数,出处 ui/itemText)
     const view = src("../views/InventoryView.vue");
-    // 两处都要读同一份:丹药详情弹窗 + 开炉炼丹的方子清单
-    const uses = view.match(/pillFuncText\(/g)?.length ?? 0;
-    expect(uses, "丹药详情与方子清单都该写清效果(同一份 pillFuncText)").toBeGreaterThanOrEqual(2);
+    const brew = src("../components/inventory/BrewingDialog.vue");
+    expect(view, "丹药详情该写清效果(pillFuncText)").toContain("pillFuncText(");
+    expect(brew, "方子清单该写清效果(pillFuncText)").toContain("pillFuncText(");
     expect(view, "丹方读到几分熟取自 lore.recipeMastery").toContain("recipeMastery(");
   });
 
@@ -855,16 +857,19 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
   });
 
   it("炼丹方子双缺要并列报(草缺·灵石尚差),失败线要说明灵石不退", () => {
-    const view = src("../views/InventoryView.vue");
+    // 拆分后:shortParts 的拼串在 composables/useBrewing.ts(方子行构造器),
+    // 「灵石不退」的成本行展示在 BrewingDialog 模板 —— 各读各的。
+    const brew = src("../composables/useBrewing.ts");
+    const dialog = src("../components/inventory/BrewingDialog.vue");
     // 双缺只报第一个成立的,会让「买齐草才发现石也不够」的决策藏在付款后 —— 与同仓
     // GongfaDialog 双缺并列一脉。shortText 由 shortParts 拼,既有草缺也有石缺两句
-    expect(view, "草缺与石缺要各成一句、用空串拼在 shortParts 里").toContain("shortParts.push");
-    expect(view, "双缺用 · 粘连,不许三目只取第一项").toContain('shortParts.join(" · ")');
+    expect(brew, "草缺与石缺要各成一句、用空串拼在 shortParts 里").toContain("shortParts.push");
+    expect(brew, "双缺用 · 粘连,不许三目只取第一项").toContain('shortParts.join(" · ")');
     // 失败那面的账只写「返草」会把灵石一炉全赔藏掉:成本行必须点名灵石不退
-    expect(view, "失败线要亮「灵石不退」(石满赔是 engineCraft.spentOnFail 的常量行为)").toContain(
+    expect(dialog, "失败线要亮「灵石不退」(石满赔是 engineCraft.spentOnFail 的常量行为)").toContain(
       "灵石不退",
     );
-    expect(view, "灵石不退只在有石耗时才有意义(零石耗不摆空话)").toContain(
+    expect(dialog, "灵石不退只在有石耗时才有意义(零石耗不摆空话)").toContain(
       "toNum(r.cost.stone) > 0",
     );
   });

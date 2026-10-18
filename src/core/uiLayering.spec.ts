@@ -225,9 +225,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 把握度是全开炉决策里最关键的风险读数:「≥70% 放心开炉」的绿与「<30% 在赌」的红
     // 若落进不存在的色类(text-jade-ink / text-crimson-ink),整条语义色就静默消失。
     // 死类名全仓唯一出处就在这里 —— 改回真类(jade / gold-ink / cinnabar),改半截就红。
+    // 拆分后 rateClass 函数体在 composables/useBrewing.ts(.ts 不入 FILES,直读源码),
+    // 死类名排查要盖住页面与新弹窗两份模板。
     const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    const dialog = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf-8");
     expect(inv?.src).not.toMatch(/text-(?:jade|crimson)-ink/);
-    expect(inv?.src).toMatch(
+    expect(dialog?.src).not.toMatch(/text-(?:jade|crimson)-ink/);
+    expect(brew).toMatch(
       /rate >= 0\.7[\s\S]{0,40}?text-jade[\s\S]{0,60}?rate >= 0\.3[\s\S]{0,40}?text-gold-ink[\s\S]{0,40}?text-cinnabar/,
     );
   });
@@ -301,8 +306,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 灵草分五品(凡→道)后,方子按品阶耗(cost.herbGrade)、灵草坊各品各标价,
     // 可修行页那两处总读数仍报 Σ 五品的合计 —— 一眼看不出持有哪一品、够不够
     // 这一品的方子。改逐品列表(与灵草坊 held 同源,走 herbOf,不拼第二套分档)。
+    // 开炉弹窗拆出后,炼丹头在 BrewingDialog,灵草坊仍在 InventoryView,两处都要盯。
     const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    expect(inv?.src, "炼丹头必须逐品列出(不得再回资源的合计)").toMatch(
+    const brew = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    expect(brew?.src, "炼丹头必须逐品列出(不得再回资源的合计)").toMatch(
+      /v-for="g in HERB_GRADES"[\s\S]{0,120}?herbGradeHeld\(g\)/,
+    );
+    expect(inv?.src, "灵草坊同样逐品列出(不得再回资源的合计)").toMatch(
       /v-for="g in HERB_GRADES"[\s\S]{0,120}?herbGradeHeld\(g\)/,
     );
     expect(inv?.src, "材料详情同样逐品列出").toMatch(
@@ -969,8 +979,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("炼丹灵石不足列「尚差 N 石」 —— 与灵草臂同族,不许只报需求值", () => {
     // 灵草臂已「持 x/y」,灵石臂却只「需 X」;同样付不起,玩家看不出差多少。
     // 统一换口「尚差 N 石」,与灵草坊「尚差 N 石」同款(GNum 感知减法)。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    expect(inv?.src, "炼丹灵石不足要列尚差").toContain(
+    // 「尚差」的拼串在方子行构造器里,拆分后住在 composables/useBrewing.ts
+    // (FILES 只收 components/ 与 views/ 的 .vue,故直读源码,与 pillBatch 同一口径)。
+    const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf-8");
+    expect(brew, "炼丹灵石不足要列尚差").toContain(
       "灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石",
     );
   });
@@ -1018,10 +1030,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // engineCraft.rate 在 danxin 保底窗口内返回 1(必成);炉台原先只报 craftability 的裸把握,
     // 持传承时会看到一个其实必成的炉报「把握 60%」—— 结算与界面两本账。行构造器读同源余量,
     // 窗口期把把握换成「必成」并报剩几炉;总数读 craftGuaranteeCrafts,不许手写 3。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    expect(inv?.src, "保底余量与结算同源(craftGuaranteeCrafts)").toContain("craftGuaranteeCrafts(");
-    expect(inv?.src, "窗口期展望必成而非裸把握").toContain('r.guaranteeLeft > 0 ? "必成"');
-    expect(inv?.src, "总数不许手写 3").toContain(
+    // (弹窗拆出后这套展示在 components/inventory/BrewingDialog.vue)
+    const brew = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    expect(brew?.src, "保底余量与结算同源(craftGuaranteeCrafts)").toContain(
+      "craftGuaranteeCrafts(",
+    );
+    expect(brew?.src, "窗口期展望必成而非裸把握").toContain('r.guaranteeLeft > 0 ? "必成"');
+    expect(brew?.src, "总数不许手写 3").toContain(
       "craftGuaranteeCrafts(player.reincarnation.heritage)",
     );
   });
@@ -1029,9 +1044,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("炸炉返草要摊在炉前 —— 失败那面不许只看把握", () => {
     // 炉台只亮成功率与双成,失败该返几成草只活在结算与失败 toast;做决定的人看不到
     // 输的那面。返草要读 salvageRatio(同源,含稳炉护料),不许界面另写一份数。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    expect(inv?.src, "返草要读 salvageRatio(同源)").toContain("salvageRatio(");
-    expect(inv?.src, "返草要显在炉台成本行").toContain("炸炉返草 ~");
+    // 拆分后比率算在 composables/useBrewing.ts(FILES 只收 .vue,直读源码)、
+    // 「炸炉返草 ~」的成本行展示在 BrewingDialog 模板 —— 两处各自盯。
+    const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf-8");
+    const dialog = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    expect(brew, "返草要读 salvageRatio(同源)").toContain("salvageRatio(");
+    expect(dialog?.src, "返草要显在炉台成本行").toContain("炸炉返草 ~");
   });
 
   it("转世一句不撒谎 —— 法宝归尘、功法回一层,不许写保留/折半", () => {
