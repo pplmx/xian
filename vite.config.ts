@@ -227,6 +227,11 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // 线程池替代默认的进程池:347 份 spec 每份各起一个 isolate,forks 池实测每个
+    // worker 启动 ~857ms(进程 spawn + 环境),threads 池 ~377ms —— 全量 41.98s →
+    // 29.48s(-30%),3467 例全绿不变。isolate:false 还能再快 ~7s,但实测 5 例
+    // 跨文件状态泄漏直接打红,隔离性不换这点速度,否决。
+    pool: "threads",
     // 应用自身的用例在 src/,公共库的用例在 packages/engine —— 两边都要跑
     include: ["src/**/*.spec.ts", "packages/engine/**/*.spec.ts"],
     // 平衡审计类用例(buildSim / celestialSim / synergyScan / worldGen 等)

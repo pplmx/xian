@@ -280,6 +280,16 @@ describe("离线结算同源吃天时(ISS-027 续)", () => {
     // 取一个除不尽的时长:整份产出会被 floor 进资源,余数才留在 frac 上 ——
     // 而余数正是这条产线的指纹(整数时长下 frac 恒为 0,断言会失去意义)
     const gapHours = 0.37;
+    /**
+     * 两次取时钉在同一枚 t0 上,别各调一次 Date.now():
+     * 离线那条账的实际时长是「lastActiveAt → settleOffline 实参」的差,若实参用
+     * 再取的 Date.now(),就比名义 gapHours 多出一段毫秒级调度延迟 —— 全量并行
+     * 负载下这段延迟放大成 frac 第 6 位小数的差异,toBeCloseTo(x, 6) 于是偶发
+     * 打红(实测在 forks 池全量跑里挂过一次,单跑必绿)。本用例的断言对象是
+     * 「离线折扣口径与在线同源」,不是墙钟本身,故把结算时点钉在 t0 ——
+     * 两分支拿同一份名义时长,漂移归零。
+     */
+    let t0 = 0;
     const setup = (): void => {
       setActivePinia(createPinia());
       const game = useGameStore();
@@ -291,7 +301,8 @@ describe("离线结算同源吃天时(ISS-027 续)", () => {
       dongfu.levels.field = 3;
       dongfu.levels.library = 2;
       lore.recipeLore = { p_jvqidan: 0.2 };
-      game.lastActiveAt = Date.now() - gapHours * 3600 * 1000;
+      t0 = Date.now();
+      game.lastActiveAt = t0 - gapHours * 3600 * 1000;
     };
     const readFrac = (): { herb: number; ore: number; wudao: number; study: number } => ({
       herb: useDongfuStore().frac.herb,
@@ -301,7 +312,7 @@ describe("离线结算同源吃天时(ISS-027 续)", () => {
     });
 
     setup();
-    settleOffline(Date.now());
+    settleOffline(t0);
     const offline = readFrac();
 
     setup();
