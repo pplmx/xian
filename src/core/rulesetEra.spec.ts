@@ -32,7 +32,8 @@ function stripComments(src: string): string {
 }
 
 const MARKS_VIEW_SRC = stripComments(
-  readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf8"),
+  // 道痕 tab 拆出后判据随本体走(components/celestial/MarksPanel.vue)
+  readFileSync(resolve(__dirname, "../components/celestial/MarksPanel.vue"), "utf8"),
 );
 
 describe("规则纪元:纪元先后", () => {

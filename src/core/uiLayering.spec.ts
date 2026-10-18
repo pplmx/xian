@@ -1447,7 +1447,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 道痕 60 则封顶后,新痕从头部挤入、最古一痕被静默覆去,玩家根本不知道自己
     // 最早的履历会无声消失。封顶 = 要留意(琥珀族,同突破已封顶/遇事勿扰),
     // 判据必须读 store 的 marksFull(与 addMark 的封顶同源),不许视图另数一遍。
-    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    // 道痕 tab 拆出后判据随本体走(components/celestial/MarksPanel.vue)。
+    const cel = FILES.find((f) => f.path === "components/celestial/MarksPanel.vue");
     expect(cel?.src, "天界道痕区要挂满卷提示").toContain("endgame.marksFull");
     expect(cel?.src, "满卷要是要留意的琥珀,不是普通淡字").toMatch(
       /endgame\.marksFull[\s\S]{0,80}text-amber-ink/,
@@ -2149,6 +2150,8 @@ describe("主巡页 · 字阶同一套", () => {
     "views/MarketView.vue",
     "views/ApprenticeView.vue",
     "views/MortalWorldView.vue",
+    // 天界拆出的面板:字号原样随模板搬来,入列逐文件验,不许在组件里长私档
+    "components/celestial/MarksPanel.vue",
     "views/SettingsView.vue",
     "views/CreateView.vue",
     "views/WelcomeView.vue",
