@@ -265,38 +265,19 @@
           >经营家业,道途更稳</span
         >
       </span>
-      <!-- 右侧实况:离线可攒小时 + 已营座数,与洞府页纪要同一口径现算;数字比副题更能勾人起身 -->
+      <!-- 右侧实况:离线可攒小时 + 已营座数 + 灵脉点数,与洞府页纪要同一口径现算;
+           灵脉投资已归位洞府页(经营动线归一),主页留一行点数保持可见性 -->
       <span class="flex shrink-0 flex-col items-end gap-0.5 text-[10px]">
         <span class="tabular text-gold-ink">离线 {{ offlineHrs }} 时</span>
         <span class="tabular text-ink-faint"
           >已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }}</span
         >
-      </span>
-      <span class="shrink-0 text-[11px] text-ink-faint">›</span>
-    </RouterLink>
-
-    <!-- 灵脉投资:金丹后开放,紧随洞府营造 -->
-    <button
-      v-if="player.major >= VEIN_UNLOCK_MAJOR"
-      class="card-ink flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:scale-99"
-      @click="veinOpen = true"
-    >
-      <span class="min-w-0 flex-1">
-        <span class="block t-card">灵脉投资</span>
-        <span class="block truncate text-[10px] leading-relaxed text-ink-faint"
-          >引灵脉入洞府,择一主脉而修</span
+        <span v-if="player.major >= VEIN_UNLOCK_MAJOR" class="tabular text-ink-faint"
+          >灵脉 {{ dongfu.veinTotal }} 点</span
         >
       </span>
       <span class="shrink-0 text-[11px] text-ink-faint">›</span>
-    </button>
-
-    <!-- 灵脉弹窗:组件自带标题卡,故不画标题;但对话框自己仍要有可访问名 -->
-    <BaseModal :open="veinOpen" title="" aria-label="灵脉" wide @close="veinOpen = false">
-      <VeinInvestCard />
-      <template #footer>
-        <button class="btn-seal w-full" @click="veinOpen = false">收 起</button>
-      </template>
-    </BaseModal>
+    </RouterLink>
   </div>
 </template>
 
@@ -327,8 +308,6 @@ import { dailyRowsOf, dailyStateOf } from "@/core/engineDailies";
 import { todayChallenge } from "@/core/dailyChallenge";
 import { mainQuestAt } from "@/core/engineChain";
 import SectionTitle from "@/components/common/SectionTitle.vue";
-import BaseModal from "@/components/common/BaseModal.vue";
-import VeinInvestCard from "@/components/dongfu/VeinInvestCard.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import CultivationOrb from "@/components/common/CultivationOrb.vue";
@@ -348,7 +327,6 @@ const dongfu = useDongfuStore();
 /** 洞府入口右侧实况:离线可攒小时 + 已营座数 —— 座数读 store 的 builtCount(与洞府页同源) */
 const offlineHrs = computed(() => dongfu.offlineCapHours);
 /** 灵脉投资弹窗 —— 卡片自洞府页移来,紧随洞府营造 */
-const veinOpen = ref(false);
 const adventure = useAdventureStore();
 const cultivation = useCultivationStore();
 const endgame = useEndgameStore();

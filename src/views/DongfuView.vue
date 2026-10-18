@@ -112,6 +112,33 @@
     </section>
 
     <!--
+      灵脉投资:金丹后开放 —— 从主页归位到洞府页(组件本就在 dongfu/ 域,
+      副题自己写着「引灵脉入洞府」,经营类动线该归一处)。主页洞府入口的
+      右侧实况仍露灵脉点数,可见性不丢。
+    -->
+    <section v-if="player.major >= VEIN_UNLOCK_MAJOR">
+      <SectionTitle title="灵脉 · 引脉入府" hint="炼化灵石,永久强化" />
+      <button
+        class="card-ink mt-2 flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:scale-99"
+        @click="veinOpen = true"
+      >
+        <span class="min-w-0 flex-1">
+          <span class="block t-card">灵脉投资</span>
+          <span class="block truncate text-[10px] leading-relaxed text-ink-faint"
+            >择一主脉而修,投点立得全局加成</span
+          >
+        </span>
+        <span class="shrink-0 text-[11px] text-ink-faint">›</span>
+      </button>
+    </section>
+    <BaseModal :open="veinOpen" title="" aria-label="灵脉" wide @close="veinOpen = false">
+      <VeinInvestCard />
+      <template #footer>
+        <button class="btn-seal w-full" @click="veinOpen = false">收 起</button>
+      </template>
+    </BaseModal>
+
+    <!--
       离线存续阶梯:离线上限按洞府等级分档,从前只活在常数表里
       (OFFLINE_CAP_HOURS 仅结算用),玩家看不出"现在第几档、升洞府能到哪一档"。
       五格一栏,亮到当前档,title 注各档可攒几时。
@@ -145,16 +172,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { useApprenticeStore } from "@/stores/apprentice";
-import { OFFLINE_CAP_HOURS } from "@/data/constants";
+import { usePlayerStore } from "@/stores/player";
+import { OFFLINE_CAP_HOURS, VEIN_UNLOCK_MAJOR } from "@/data/constants";
 import { BUILDINGS } from "@/data/buildings";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BuildingCard from "@/components/dongfu/BuildingCard.vue";
+import VeinInvestCard from "@/components/dongfu/VeinInvestCard.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
 import { hourlyYieldText } from "@/core/engineFacilities";
 import { cnNumber, formatGN } from "@/utils/format";
 
@@ -162,6 +192,8 @@ const router = useRouter();
 const dongfu = useDongfuStore();
 const resources = useResourcesStore();
 const apprentice = useApprenticeStore();
+const player = usePlayerStore();
+const veinOpen = ref(false);
 
 /** 坊市入口报的那枚数:灵石是全作唯一的通用货币,它决定「现在买不买得起」 */
 const stone = computed(() => resources.spiritStone);
