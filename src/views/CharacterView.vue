@@ -533,6 +533,18 @@
         <span class="text-[10px] text-qing">{{ heritageOpen ? "▾ 收 起" : "▸ 展 开" }}</span>
       </button>
       <!--
+        折叠态也要报出「打折的那几条」:光看「16 留 · 20 去」,玩家不知道留下的
+        有 4 条其实是折半 —— 「功法回一层」这种损失预期,不该等展开了才看见。
+      -->
+      <p
+        v-if="!heritageOpen && partialKeepRows.length"
+        class="mt-1 px-2 text-[10px] leading-relaxed text-ink-faint"
+      >
+        其中 {{ partialKeepRows.length }} 条折半或部分保留:{{
+          partialKeepRows.map((r) => r.name).join(" · ")
+        }}
+      </p>
+      <!--
         列表自带一个滚动区(max-h-64),而不是靠整块面板滚 —— 面板滚的话,列表尾
         会被页脚按钮齐齐切掉,看起来像「列表到此为止」。外圈套 .scroll-fade
         负责在底边淡出一层(见 style.css):还有下文时那一截是虚的。
@@ -784,20 +796,40 @@
       <div v-if="mentorVer" class="space-y-3">
         <p class="font-kai text-[14px] text-ink">{{ mentorVer.mentor?.master }}</p>
         <p class="t-body text-ink-soft">「{{ mentorVer.line }}」</p>
-        <p class="text-[11px] text-ink-faint tabular">
-          契合度
-          <span
-            :class="
-              mentorVer.affinity > 0.2
-                ? 'text-jade'
-                : mentorVer.affinity < -0.2
-                  ? 'text-cinnabar'
-                  : 'text-ink-faint'
-            "
-          >
-            {{ mentorVer.affinity.toFixed(2) }}
+        <!--
+          契合度:已拜视图里唯一的动态量。从前是 11px 小字里夹一个数 —— 玩家行为变了,
+          这一屏唯一会变的东西却排在引文下面当注脚。提成独立一行:数值放大 + 档位词,
+          让「现在我合不合师门」一眼可读(档位阈值与染色同源,不许第二把尺)。
+        -->
+        <div class="flex items-baseline justify-between rounded-md bg-paper-deep/60 px-3 py-2">
+          <span class="text-[11px] text-ink-soft">契合度</span>
+          <span class="flex items-baseline gap-1.5">
+            <span
+              class="font-kai text-[15px] tabular"
+              :class="
+                mentorVer.affinity > 0.2
+                  ? 'text-jade'
+                  : mentorVer.affinity < -0.2
+                    ? 'text-cinnabar'
+                    : 'text-ink-soft'
+              "
+            >
+              {{ mentorVer.affinity.toFixed(2) }}
+            </span>
+            <span
+              class="text-[10px]"
+              :class="
+                mentorVer.affinity > 0.2
+                  ? 'text-jade'
+                  : mentorVer.affinity < -0.2
+                    ? 'text-cinnabar'
+                    : 'text-ink-faint'
+              "
+            >
+              {{ mentorVer.affinity > 0.2 ? "相合" : mentorVer.affinity < -0.2 ? "相悖" : "平平" }}
+            </span>
           </span>
-        </p>
+        </div>
         <p class="t-body text-ink-faint">
           师承词条(并入终局属性):{{ modsText(mentorVer.mentor?.mods ?? {}) || "—" }}
         </p>
@@ -1130,6 +1162,11 @@ const heritageKeepRows = computed(() => heritageRows.value.filter((r) => r.mode 
 const heritageResetRows = computed(() => heritageRows.value.filter((r) => r.mode === "reset"));
 const keepCount = computed(() => heritageKeepRows.value.length);
 const resetCount = computed(() => heritageResetRows.value.length);
+/**
+ * 折叠态的例外摘要:「16 留」里有几条其实是折半/部分保留 —— 计数报不出这个打折,
+ * 而「功法会掉回一层」恰是按兵解前最该提前知道的一条。展开态不需要(列表里现成)。
+ */
+const partialKeepRows = computed(() => heritageKeepRows.value.filter((r) => r.mode === "partial"));
 const bondDialog = ref(false);
 const bond = computed(() => player.bond);
 const bondDef = computed(() => (bond.value ? (daoluDef(bond.value.daoluId) ?? null) : null));

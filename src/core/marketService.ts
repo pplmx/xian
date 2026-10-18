@@ -48,12 +48,28 @@ function equipSeed(stockedAt: number, idx: number): number {
   return (Math.floor(stockedAt / 1000) * 31 + idx) >>> 0;
 }
 
+/**
+ * 撞款重滚的种子步长。
+ *
+ * 相邻槽位的种子差恒为 1(idx 系数 31 只影响跨上货时刻),若直接把 idx+shift 当种子,
+ * 2 号槽 shift=1 会与 3 号槽同种子 —— 两格摆出同一件,比撞款更糟。
+ * 故偏移走独立大步长(质数,远大于槽位数),任何 (idx, shift) 组合都不会落进
+ * 其他槽位无偏移的种子邻域。
+ */
+const SEED_SHIFT_STRIDE = 7919;
+
+/** 第 shift 次重滚的装备种子 —— buildSlot 撞款时与 marketEquipInstance 共用这一支 */
+function equipSeedShifted(stockedAt: number, idx: number, shift: number): number {
+  return (equipSeed(stockedAt, idx) + shift * SEED_SHIFT_STRIDE) >>> 0;
+}
+
 function buildSlot(
   kind: MarketKind,
   idx: number,
   major: number,
   rng: RandomService,
   usedPills: Set<string>,
+  usedEquipKeys: Set<string>,
   now: number,
 ): MarketSlot {
   if (kind === "pill") {
@@ -83,15 +99,33 @@ function buildSlot(
   const minQualityRank = ENGINE_WORLD.equipment.rollQuality(major, rng, { tier: major }).rank;
   // 按「预览即购得的同一件」的真实品质档标价 —— 若按品质下限标价、实际却滚得更高,
   // 「坊市买入 → 悬赏贡器」会因贡器按实档结算而套利。
-  const inst = generateEquipment(major, new RandomService(mulberry32(equipSeed(now, idx))), {
+  //
+  // 同款去重:两槽独立随机抽到同一模板是正常概率,但货架摆两件同名同品的货,
+  // 读起来像出了 bug。撞款则 shift+1 重滚;shift 写进 slot,预览/购买用同一公式
+  // 再生同一件 —— 确定性同源不破。旧档 slot 无 seedShift → 视为 0 → 原公式。
+  let seedShift = 0;
+  let inst = generateEquipment(major, new RandomService(mulberry32(equipSeed(now, idx))), {
     minQualityRank,
   });
+  const sameKey = (e: EquipmentInstance): string => `${e.templateId}:${e.quality}`;
+  for (let tries = 0; tries < MARKET_SLOTS && usedEquipKeys.has(sameKey(inst)); tries += 1) {
+    seedShift += 1;
+    inst = generateEquipment(
+      major,
+      new RandomService(mulberry32(equipSeedShifted(now, idx, seedShift))),
+      {
+        minQualityRank,
+      },
+    );
+  }
+  usedEquipKeys.add(sameKey(inst));
   const rank = qualityDef(inst.quality).rank;
   return {
     kind: "equipment",
     idx,
     tier: major,
     minQualityRank,
+    ...(seedShift > 0 ? { seedShift } : {}),
     price: stoneByTier(major, MARKET_EQUIP_STONE_BASE + rank * MARKET_EQUIP_STONE_PER_RANK),
     sold: false,
   };
@@ -103,9 +137,10 @@ export function generateMarketStock(major: number, rng: RandomService, now: numb
   if (salePills(major).length > 0) feasible.unshift("pill");
 
   const usedPills = new Set<string>();
+  const usedEquipKeys = new Set<string>();
   const slots: MarketSlot[] = [];
   for (let idx = 0; idx < MARKET_SLOTS; idx += 1) {
-    slots.push(buildSlot(pickKind(rng, feasible), idx, major, rng, usedPills, now));
+    slots.push(buildSlot(pickKind(rng, feasible), idx, major, rng, usedPills, usedEquipKeys, now));
   }
   return { goods: slots, stockedAt: now };
 }
@@ -114,7 +149,7 @@ export function generateMarketStock(major: number, rng: RandomService, now: numb
 export function marketEquipInstance(slot: MarketEquipSlot, stockedAt: number): EquipmentInstance {
   return generateEquipment(
     slot.tier,
-    new RandomService(mulberry32(equipSeed(stockedAt, slot.idx))),
+    new RandomService(mulberry32(equipSeedShifted(stockedAt, slot.idx, slot.seedShift ?? 0))),
     { minQualityRank: slot.minQualityRank },
   );
 }

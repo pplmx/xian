@@ -88,6 +88,15 @@ export interface MarketEquipSlot {
   tier: number;
   /** 品质下限(给 generateEquipment 用) */
   minQualityRank: number;
+  /**
+   * 种子偏移 —— 货架去重用。
+   *
+   * 装备实例由 equipSeed(stockedAt, idx + seedShift) 确定性再生,预览与购买同源同一物。
+   * 两槽独立随机抽到同一模板是正常概率,但货架摆两件同名同品的货,读起来像出了 bug;
+   * 生成时撞款则 shift+1 重滚一次(见 marketService.buildSlot)。
+   * 旧档无此字段 → 视为 0 → 与原公式逐位一致,存档零迁移。
+   */
+  seedShift?: number;
   price: GNum;
   sold: boolean;
 }
