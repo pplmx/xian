@@ -16,6 +16,13 @@
     <!-- 名号:成就式列表,全量陈列 -->
     <template v-if="tab === 'title'">
       <SectionTitle title="名号" :hint="`${ownedCount}/${TITLES.length} · 佩一枚`" />
+      <!-- 收集进度可视化:数字要读,条是扫一眼(与图鉴成就页同一把尺、同一色) -->
+      <ProgressBar
+        class="mt-2"
+        :value="TITLES.length > 0 ? ownedCount / TITLES.length : 0"
+        color="var(--color-jade)"
+        :height="3"
+      />
       <!--
         名号尽收的完成感:全齐也只显一个计数,「追寻这一路的名号」的终点
         没有任何表示。与图鉴「尽收」同族 —— 判据读同一个 ownedCount(与标题
@@ -62,6 +69,13 @@
     <!-- 灵兽:全册陈列(未结缘者盖成「???」+ 出处)—— 与图鉴的灵兽册同一套披露 -->
     <template v-else>
       <SectionTitle title="灵兽" :hint="`已结缘 ${ownedPetCount}/${PETS.length} · 伴一只`" />
+      <!-- 收集进度可视化:灵兽册刚扩到四十只,「还差多少」给一根条(与名号同一把尺) -->
+      <ProgressBar
+        class="mt-2"
+        :value="PETS.length > 0 ? ownedPetCount / PETS.length : 0"
+        color="var(--color-jade)"
+        :height="3"
+      />
       <!--
         从前这里只列**已结缘**的几只,未结缘的整只不出现 ——
         抬头写着「3/14」却看不到另外 11 只是什么、去哪儿遇,这一册也就无从追。
@@ -142,6 +156,7 @@ import { modsText } from "@/ui/statNames";
 import { CODEX_SOURCES } from "@/ui/codex";
 import { cnNumber } from "@/utils/format";
 import SectionTitle from "@/components/common/SectionTitle.vue";
+import ProgressBar from "@/components/common/ProgressBar.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 

@@ -19,6 +19,16 @@
         title="成就"
         :hint="`${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length}`"
       />
+      <!--
+        全局进度条:六十几项成就的「整体走多远了」给一根条 —— 数字要读,
+        条是扫一眼。颜色 jade(推进态),与组内细条同色不同高度,层级靠粗细分。
+      -->
+      <ProgressBar
+        class="mt-2"
+        :value="achievementCounts(achievementStateOf(quests.achieved)).done / ACHIEVEMENTS.length"
+        color="var(--color-jade)"
+        :height="3"
+      />
       <div class="card-ink mt-2 divide-y divide-ink/6 px-4">
         <template v-for="g in achievementGroups" :key="g.direction">
           <!-- 方向小标题:把六十多个「???」按「往哪使劲」归拢,组头给出该方向的达成进度 -->
@@ -26,6 +36,13 @@
             <span class="font-kai tracking-widest">{{ g.direction }}</span>
             <span class="tabular">{{ g.done }}/{{ g.total }}</span>
           </p>
+          <!-- 组内细条:这一路走到哪了,2px 不与全局条争粗细 -->
+          <ProgressBar
+            class="pb-1.5"
+            :value="g.total > 0 ? g.done / g.total : 0"
+            color="var(--color-jade)"
+            :height="2"
+          />
           <div v-for="row in g.rows" :key="row.id" class="flex items-center gap-3 py-2.5">
             <span
               class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-kai"
@@ -182,6 +199,7 @@ import { achievementDirection } from "@/ui/achievementHint";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import { rewardTextAtTier } from "@/core/progress";
 import SectionTitle from "@/components/common/SectionTitle.vue";
+import ProgressBar from "@/components/common/ProgressBar.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
