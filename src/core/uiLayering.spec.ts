@@ -901,7 +901,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 挑战书选满第三枚后再点第四枚,此前 toggleDraftMutator 静默 return:
     // 疯狂点选的人以为没点到,又是重复点。上限既然有(CHALLENGE_MAX_MUTATORS),
     // 未选中的芯片在满员时就该置灰禁用 + title 说明 —— 别让「按了没反应」发生。
-    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    // 试炼域(挑战书)拆出后判据随本体走 components/celestial/TrialPanel.vue
+    const cel = FILES.find((f) => f.path === "components/celestial/TrialPanel.vue");
     expect(cel?.src, "变数满员要有置灰判据(draftFull)").toContain("draftFull");
     expect(cel?.src, "满员时未选芯片必须 disabled").toContain(
       ':disabled="!draft.mutatorIds.includes(m.id) && draftFull"',
@@ -1110,7 +1111,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(equip, "装备标记输入要有可访问名").toMatch(
       /input[\s\S]*?aria-label="为这件装备加个标记/,
     );
-    const celestial = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf-8");
+    const celestial = readFileSync(
+      resolve(__dirname, "../components/celestial/TrialPanel.vue"),
+      "utf-8",
+    );
     expect(celestial, "挑战书命名输入要有可访问名").toMatch(
       /input[\s\S]*?aria-label="为此挑战书命名/,
     );
@@ -1136,8 +1140,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(furnace, "熔炉产出侧读 FURNACE_STONE_DAO_SOURCE").toContain(
       "{{ FURNACE_STONE_DAO_SOURCE }} 道源",
     );
-    const cv = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf-8");
-    expect(cv, "变数至上条数读 CHALLENGE_MAX_MUTATORS").toContain(
+    // 试炼域拆出后变数上限判据随本体走 TrialPanel;远征域拆出后层数/界主判据随本体走 ExpeditionPanel
+    const trial = readFileSync(
+      resolve(__dirname, "../components/celestial/TrialPanel.vue"),
+      "utf-8",
+    );
+    expect(trial, "变数至上条数读 CHALLENGE_MAX_MUTATORS").toContain(
       "cnNumber(CHALLENGE_MAX_MUTATORS)",
     );
     // 远征域拆出后层数/界主判据随本体走 ExpeditionPanel
@@ -1418,7 +1426,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「今日天道」区块 v-if="daily",而 daily 依赖 endgame.daoPath —— 刚登真仙
     // 未择道途时整块消失,玩家切到试炼页找不到今日天道,会以为 bug。类目下
     // 「天道变数/试炼」都常驻,唯独这块没空态。补一句「择定道途后在此展开」。
-    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    // 试炼域拆出后判据随本体走 components/celestial/TrialPanel.vue
+    const cel = FILES.find((f) => f.path === "components/celestial/TrialPanel.vue");
     expect(cel?.src, "今日天道未择道途要有占位(v-else)").toMatch(/<section v-else>/);
     expect(cel?.src, "占位要直说「随道途而定」").toContain("今日天道随道途而定");
     expect(cel?.src, "占位要指明去道途页择定").toContain("择定");
@@ -1663,8 +1672,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 远征域拆出后:守 run 的两键随本体走 ExpeditionPanel
     const exped = FILES.find((f) => f.path === "components/celestial/ExpeditionPanel.vue");
     expect(exped?.src, "启程/破界两键仍要守 run(它们是真远征)").toMatch(/:disabled="run !== null/);
-    // 立约钮暂在主文件(随试炼块改道),负断言先留在主文件
-    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    // 立约钮随试炼域在 TrialPanel,负断言随本体走
+    const cel = FILES.find((f) => f.path === "components/celestial/TrialPanel.vue");
     expect(cel?.src, "立约不许再挂 run 锁 —— 与试炼/变数/今题同族即时单场").not.toMatch(
       /!\s*challengeVerdict\?\.ok \|\| run !== null/,
     );
@@ -2163,6 +2172,7 @@ describe("主巡页 · 字阶同一套", () => {
     // 天界拆出的面板:字号原样随模板搬来,入列逐文件验,不许在组件里长私档
     "components/celestial/MarksPanel.vue",
     "components/celestial/ExpeditionPanel.vue",
+    "components/celestial/TrialPanel.vue",
     "views/SettingsView.vue",
     "views/CreateView.vue",
     "views/WelcomeView.vue",

@@ -438,7 +438,8 @@ describe("文案数值对账 · 视图不手抄数量", () => {
     expect(view, "界主层判定读常数,不写 3").toContain("EXPEDITION_GUARDIAN_LAYER");
     expect(view, "行程点列不该自己数一遍重数").not.toContain("'一重', '二重', '三重'");
     expect(view).not.toContain("三重已过");
-    const cel = src("../views/CelestialView.vue");
+    // 试炼域拆出后变数连战数随本体走 TrialPanel
+    const cel = src("../components/celestial/TrialPanel.vue");
     expect(cel).toContain("cnNumber(MUTATION_FIGHTS)");
     expect(cel).not.toContain("六连战");
     // 变数全捷的战报冠词也读常数(不是把 6 再抄一遍):「六战全捷」随 MUTATION_FIGHTS 走
@@ -537,11 +538,11 @@ describe("文案数值对账 · 手写的门槛与容量", () => {
 
   it("「可行流派 x/N」的分母取自 BUILD_PROFILES(界面与生态健康度同源)", () => {
     expect(BUILD_PROFILES.length).toBe(6);
-    // 天界拆分后分母在两处出现:今日天道/挑战书在主文件,prep 天道推演在 ExpeditionPanel
-    // —— 分文件各断一份,防同型两处命中假绿
-    const view = src("../views/CelestialView.vue");
-    expect(view, "分母应读构筑流派数").toContain("BUILD_PROFILES.length");
-    expect(view, "界面里的分母不该手写").not.toMatch(/\}\}\s*\/6\b/);
+    // 天界拆分后分母在两处出现:今日天道/挑战书在 TrialPanel,prep 天道推演在
+    // ExpeditionPanel —— 分文件各断一份,防同型两处命中假绿
+    const trial = src("../components/celestial/TrialPanel.vue");
+    expect(trial, "分母应读构筑流派数").toContain("BUILD_PROFILES.length");
+    expect(trial, "界面里的分母不该手写").not.toMatch(/\}\}\s*\/6\b/);
     const exped = src("../components/celestial/ExpeditionPanel.vue");
     expect(exped, "分母应读构筑流派数(prep 推演)").toContain("BUILD_PROFILES.length");
     expect(exped, "界面里的分母不该手写").not.toMatch(/\}\}\s*\/6\b/);
