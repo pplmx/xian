@@ -384,24 +384,8 @@
           >
             强 化
           </button>
-          <!-- 分解二步确认:一件淬养过的装备(强化/封存/重铸)误触垃圾桶不该直接没 -->
-          <template v-if="decomposeArm !== inst?.uid">
-            <button
-              class="btn-ghost px-3"
-              :disabled="isEquipped || inst?.locked"
-              :title="isEquipped ? '佩戴中,卸下后再分解' : '已锁定,解锁后再分解'"
-              aria-label="分解这件装备"
-              @click="decomposeArm = inst?.uid ?? null"
-            >
-              <GameIcon name="trash" :size="15" />
-            </button>
-          </template>
-          <template v-else>
-            <button class="btn-seal !px-2.5 !text-[11px]" @click="doDecompose">确认分解</button>
-            <button class="btn-ghost px-2 text-[11px] text-ink-faint" @click="decomposeArm = null">
-              取消
-            </button>
-          </template>
+          <!-- 分解二步确认子面板:武装→确认/取消随面板走(EquipDecomposePanel);分解成功由面板 emit,宿主关弹窗 -->
+          <EquipDecomposePanel @decomposed="close" />
         </div>
       </div>
     </template>
@@ -417,7 +401,7 @@ import { equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
 import { equipSetDef, setCounts, ASTRAL_SET_SHIELD } from "@/core/equipSet";
 import { worldNameOfTier } from "@/core/formulas";
 import { resolveEquipStats } from "@/core/equipGen";
-import { decomposeEquipment, equipUpgradeCost, upgradeEquipment } from "@/core/forge";
+import { equipUpgradeCost, upgradeEquipment } from "@/core/forge";
 import { useResourcesStore } from "@/stores/resources";
 import { toNum } from "@/utils/gnum";
 import { refundRateText, salvageOf } from "@/core/salvage";
@@ -444,6 +428,7 @@ import EquipNotePanel from "./EquipNotePanel.vue";
 import EquipSealPanel from "./EquipSealPanel.vue";
 import EquipUpgradePanel from "./EquipUpgradePanel.vue";
 import EquipWhatIfPanel from "./EquipWhatIfPanel.vue";
+import EquipDecomposePanel from "./EquipDecomposePanel.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import { useLoreStore } from "@/stores/lore";
@@ -710,16 +695,7 @@ function doUpgrade(): void {
 }
 
 // 连强到顶的账与动作在 EquipUpgradePanel.vue(宿主页脚只留单级「强 化」)
-
-const decomposeArm = ref<string | null>(null);
-
-function doDecompose(): void {
-  if (!inst.value) return;
-  if (decomposeEquipment(inst.value.uid)) {
-    decomposeArm.value = null;
-    close();
-  }
-}
+// 分解二步确认在 EquipDecomposePanel.vue(分解成功 emit('decomposed'),宿主关弹窗)
 
 /**
  * 重铸 / 自动重铸是「花器灵尘+灵石、把未封存词条尽数重掷」的高代价重掷 —— 与分解

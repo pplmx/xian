@@ -1367,7 +1367,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(build?.src).toContain("确认删除");
     const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
     expect(sr?.src).toContain("确认弃境");
-    const eq = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    // 分解二步确认拆出后判据随本体走(components/equipment/EquipDecomposePanel.vue)
+    const eq = FILES.find((f) => f.path === "components/equipment/EquipDecomposePanel.vue");
     expect(eq?.src).toContain("确认分解");
     expect(eq?.src, "分解取消不许再写「算了」").not.toContain("算了");
   });
