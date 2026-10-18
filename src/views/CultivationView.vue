@@ -723,11 +723,24 @@
               @click="ui.gongfaDetailId = def.id"
             >
               <span class="flex min-w-0 items-baseline justify-between gap-3">
-                <span
-                  class="min-w-0 truncate font-kai text-[14px] leading-none"
-                  :style="{ color: qualityDef(def.quality).color }"
-                  >{{ def.name }}</span
-                >
+                <!--
+                  书目行只靠名色传品阶(行内没有品阶名文字),天/仙/神在名前补一枚
+                  12px 阴文章 —— 第二条形状线索,色弱也分得出高档(同源 qualityTier)。
+                  行是整宽的,章不挤;不高档的部目不留章,密度可控。
+                -->
+                <span class="flex min-w-0 items-center gap-1.5">
+                  <QualitySeal
+                    v-if="isRareQuality(def.quality)"
+                    :quality="def.quality"
+                    :size="12"
+                    class="shrink-0"
+                  />
+                  <span
+                    class="min-w-0 truncate font-kai text-[14px] leading-none"
+                    :style="{ color: qualityDef(def.quality).color }"
+                    >{{ def.name }}</span
+                  >
+                </span>
                 <span class="shrink-0 tabular text-[10px] text-ink-faint"
                   >第 {{ cultivation.learned[def.id] }} 层</span
                 >
@@ -864,6 +877,8 @@ import {
 } from "@/utils/format";
 import TapNumber from "@/components/common/TapNumber.vue";
 import { qualityDef } from "@/data/qualities";
+import { isRareQuality } from "@/ui/qualityTier";
+import QualitySeal from "@/components/common/QualitySeal.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";

@@ -16,7 +16,7 @@ import { pillDef } from "@/data/pills";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { add, gn, toNum } from "@/utils/gnum";
-import type { GNum } from "@/types";
+import type { EquipmentInstance, GNum, QualityId } from "@/types";
 import {
   MARKET_CONSIGN_SECONDS,
   MARKET_CONSIGN_SLOTS,
@@ -24,7 +24,6 @@ import {
   MARKET_REFRESH_SECONDS,
 } from "@/data/market";
 import type { BountySlot } from "@/data/bounty";
-import type { EquipmentInstance } from "@/types";
 import {
   marketEquipInstance,
   marketRemainingSec,
@@ -37,6 +36,9 @@ import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
 import { qualityDef, QUALITIES } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
+import { colorWithAlpha } from "@/ui/colorVar";
+import { isRareQuality, qualityTierStyle } from "@/ui/qualityTier";
+import QualitySeal from "@/components/common/QualitySeal.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 
@@ -94,6 +96,9 @@ interface EquipPreview {
   name: string;
   qualityName: string;
   color: string;
+  quality: QualityId;
+  /** 天/仙/神 —— 该盖品阶章的那批(同源 qualityTier,与背包格一份账) */
+  rare: boolean;
 }
 const previews = computed<Record<number, EquipPreview>>(() => {
   const m: Record<number, EquipPreview> = {};
@@ -105,10 +110,28 @@ const previews = computed<Record<number, EquipPreview>>(() => {
       name: equipmentTemplate(inst.templateId)?.name ?? "兵刃",
       qualityName: q.name,
       color: q.color,
+      quality: inst.quality,
+      rare: isRareQuality(inst.quality),
     };
   }
   return m;
 });
+
+/**
+ * 货架售品卡的品阶晕染(仅兵刃行):与背包格同源 qualityTier 的三档强度,
+ * 档位线索不靠颜色单打 —— 边框与底色随档加深,天/仙/神另有角章。
+ * 丹/料没有品阶档,保持墨色中性底。
+ */
+function shelfTier(slot: (typeof market.stock)[number]): Record<string, string> | undefined {
+  if (slot.kind !== "equipment") return undefined;
+  const p = previews.value[slot.idx];
+  if (!p) return undefined;
+  const t = qualityTierStyle(p.quality);
+  return {
+    borderColor: colorWithAlpha(p.color, t.border),
+    background: colorWithAlpha(p.color, t.bg),
+  };
+}
 
 const sellablePills = computed(() =>
   Object.entries(inventory.pills)
@@ -262,6 +285,7 @@ function bountyShort(o: BountySlot): string | null {
           :key="slot.idx"
           class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
           :class="slot.sold ? 'opacity-50' : ''"
+          :style="shelfTier(slot)"
         >
           <div class="min-w-0 flex-1 text-[11px]">
             <template v-if="slot.kind === 'pill'">
@@ -283,8 +307,15 @@ function bountyShort(o: BountySlot): string | null {
                 原先这里印的是「精品·9 层 品质底档精品」—— 品阶名打头、末尾又复述一遍,
                 真正的物件反而没有名字,玩家买完才知道拿的是什么。
                 改成:装备名(品阶色) · 品阶 · 阶数;底档降为副行的一句附注。
+                天/仙/神在名前盖品阶阴文章(与背包格/候选行同一条形状线索)。
               -->
               <p class="truncate">
+                <QualitySeal
+                  v-if="previews[slot.idx]?.rare"
+                  :quality="previews[slot.idx]!.quality"
+                  :size="12"
+                  class="mr-1 align-[-2px]"
+                />
                 <span
                   class="font-kai"
                   :style="{ color: previews[slot.idx]?.color ?? 'var(--color-ink)' }"
@@ -422,6 +453,13 @@ function bountyShort(o: BountySlot): string | null {
           @click="deliverPicked(it.uid)"
         >
           <span class="min-w-0 truncate">
+            <!-- 天/仙/神名前盖章:候选行与背包格同一条品阶形状线索(见 qualityTier) -->
+            <QualitySeal
+              v-if="isRareQuality(it.quality)"
+              :quality="it.quality"
+              :size="12"
+              class="mr-1 align-[-2px]"
+            />
             <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">
               {{ equipmentTemplate(it.templateId)?.name ?? "无名法器" }}
             </span>
@@ -481,6 +519,12 @@ function bountyShort(o: BountySlot): string | null {
               class="inline-flex min-h-[28px] shrink-0 items-center rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
               @click="consign(it.uid)"
             >
+              <QualitySeal
+                v-if="isRareQuality(it.quality)"
+                :quality="it.quality"
+                :size="12"
+                class="mr-1"
+              />
               <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">{{
                 equipmentTemplate(it.templateId)?.name ?? "?"
               }}</span>

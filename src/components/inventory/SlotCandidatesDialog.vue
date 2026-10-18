@@ -18,12 +18,21 @@
           :style="{ color: qualityDef(row.item.quality).color }"
         />
         <button class="min-w-0 grow text-left active:opacity-70" @click="openDetail(row.item.uid)">
-          <span
-            class="block truncate font-kai text-[14px]"
-            :style="{ color: qualityDef(row.item.quality).color }"
-          >
-            {{ row.template.name }}
-            <template v-if="row.item.level > 0">+{{ row.item.level }}</template>
+          <span class="flex min-w-0 items-center gap-1">
+            <!-- 天/仙/神名前盖品阶阴文章:稀有档的第二条线索,不靠颜色单打(见 qualityTier) -->
+            <QualitySeal
+              v-if="isRareQuality(row.item.quality)"
+              :quality="row.item.quality"
+              :size="14"
+              class="shrink-0"
+            />
+            <span
+              class="min-w-0 truncate font-kai text-[14px]"
+              :style="{ color: qualityDef(row.item.quality).color }"
+            >
+              {{ row.template.name }}
+              <template v-if="row.item.level > 0">+{{ row.item.level }}</template>
+            </span>
           </span>
           <span class="block text-[10px] text-ink-faint">
             <!-- 条数带分母:这一件还剩多少条可涨,一眼看得出(上限来自品质表) -->
@@ -69,9 +78,11 @@
 import { computed } from "vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import QualitySeal from "@/components/common/QualitySeal.vue";
 import { useInventoryStore } from "@/stores/inventory";
 import { useUiStore } from "@/stores/ui";
 import { qualityDef } from "@/data/qualities";
+import { isRareQuality } from "@/ui/qualityTier";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { equippablePower } from "@/core/equipBest";
 import { formatGN } from "@/utils/format";
