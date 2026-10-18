@@ -227,14 +227,15 @@ describe("文案数值对账 · 视图不手抄数字", () => {
   });
 
   it("修行页的闭关文案取自 buffs.ts 的 retreat 本体", () => {
-    const view = src("../views/CultivationView.vue");
+    // 拆分后闭关卡归 RetreatCard,判据随本体改指子面板
+    const view = src("../components/cultivation/RetreatCard.vue");
     expect(view, "闭关时长与加成应读 buff 定义").toContain('buffDef("retreat")');
     expect(view).not.toContain("5 分钟,修炼速度 +150%");
     expect(view).not.toContain("5分钟 修炼 +150%");
   });
 
   it("闭关的「后每秒/多收」估算只在未闭关头作前瞻 —— 闭关中现速率已含加成,再折算即重复叠加", () => {
-    const view = src("../views/CultivationView.vue");
+    const view = src("../components/cultivation/RetreatCard.vue");
     // 前瞻行要挂在未闭关口:这正是它作为「决定要不要闭」的估值的意义
     expect(view, "闭关估算应 v-if 在未闭关时展示").toContain('v-if="!retreating"');
     // 预估要读 retreat 常量去折算,不许手写「×2.5」这类(改 buff 就会撒谎)
