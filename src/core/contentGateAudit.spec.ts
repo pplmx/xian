@@ -54,10 +54,18 @@ describe("内容可达性 · 被证伪的候选", () => {
     const ev = CONTENT_GATES.find((g) => g.id === "event")!;
     const row = reachabilityTable().find((r) => r.gate.id === "event")!;
     expect(ev.qualifies).toBe(false);
-    // 金丹可触发绝大多数事件;仙界及以上新增的奇遇带 minRealm,但仍不足以支撑一条路线
-    expect(row.goldShare!).toBeGreaterThan(0.8);
+    /*
+     * 这把尺量的是「人间界玩家碰到的事件」(goldShareHuman,分母只含人间界
+     * 境界带内的事件),不再是整池占比。整池口径(goldShare)给高界每补一条
+     * 事件就掉一格 —— 灵兽池扩到 40 只、补 13 条仙/神品发放事件后从 0.829
+     * 掉到 0.699,而掉下去的原因恰恰是加对了内容。「加高界内容就红」的判据
+     * 守不住它想守的东西。真正的坏形状是:人间界的事件普遍要高修为 ——
+     * 那正是新口径拦的。整池占比仍打印出来供观察,不再当红线。
+     */
+    expect(row.goldShareHuman!, "人间界事件须金丹绝大多数可触发").toBeGreaterThan(0.8);
     console.log(
-      `\n事件:金丹可触发 ${(row.goldShare! * 100).toFixed(0)}%,有 ${row.deepOnly} 个需要深修`,
+      `\n事件:人间界事件金丹可触发 ${(row.goldShareHuman! * 100).toFixed(0)}%` +
+        `(整池口径 ${(row.goldShare! * 100).toFixed(0)}%),有 ${row.deepOnly} 个需要深修`,
     );
   });
 

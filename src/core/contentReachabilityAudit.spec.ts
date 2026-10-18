@@ -36,7 +36,7 @@ import { EVENTS, FORTUNE_EVENTS } from "@/data/events";
 import { ARTIFACTS } from "@/data/artifacts";
 import { artifactDef } from "@/data/artifacts";
 import { buffDef } from "@/data/buffs";
-import { petDef } from "@/data/pets";
+import { PETS, petDef } from "@/data/pets";
 import { gongfaDef } from "@/data/gongfa";
 import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
 import { REALMS, MAX_MAJOR, WORLD_BREAK_MAJOR } from "@/data/realms";
@@ -187,10 +187,25 @@ describe("内容可达性 · 事件点名发放的灵兽", () => {
         }
       }
     }
-    // 扩界新增的四只神兽都必须有可重复/必得的来源
-    for (const id of ["pet_yinglong", "pet_qilin", "pet_kunpeng", "pet_taotie"]) {
-      expect(grantable.has(id), `${id} 没有任何可重复或必得的发放路径`).toBe(true);
-    }
+    /*
+     * 遍历全表,不是硬编码四个 id。
+     *
+     * 原先是 `for (const id of [应龙, 麒麟, 鲲鹏, 饕餮])` —— 那只管住当轮新增的四只。
+     * 后果实测:玄冥玄武(divine)从来没有发放路径,而这条判据**一直是绿的**;
+     * 灵兽池从 20 扩到 40(新增仙品 5 + 神品 7)之后,死内容从 1 只涨到 13 只,
+     * 它同样一只都没报出来 —— 判据绿着,内容还是死的。
+     *
+     * 为什么必须全表:eventEngine 的随机池**硬性排除** immortal 与 divine
+     * (见 core/eventEngine.ts 的 pet 分支),所以这两档每一只都得有事件点名发放,
+     * 漏一只就是图鉴里一个永远锁着的格子。遍历全表才能让「漏了」当场红。
+     */
+    const needsEvent = PETS.filter((p) => p.quality === "immortal" || p.quality === "divine");
+    expect(needsEvent.length, "仙/神品灵兽一只都没有,判据失去意义").toBeGreaterThan(0);
+    const missing = needsEvent.filter((p) => !grantable.has(p.id)).map((p) => `${p.id}(${p.name})`);
+    expect(
+      missing,
+      `这些仙/神品灵兽没有任何可重复或必得的发放路径,图鉴会永远锁着:${missing.join("、")}`,
+    ).toEqual([]);
   });
 });
 

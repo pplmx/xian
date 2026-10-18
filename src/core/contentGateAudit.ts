@@ -17,7 +17,7 @@
  */
 import { PILLS } from "@/data/pills";
 import { GONGFA } from "@/data/gongfa";
-import { REGIONS } from "@/data/regions";
+import { REGIONS, MORTAL_TIER_MAX } from "@/data/regions";
 import { EVENTS } from "@/data/events";
 import { chainOfEvent } from "@/data/chains";
 import { PETS } from "@/data/pets";
@@ -160,6 +160,18 @@ export interface ReachabilityRow {
   goldShare: number | null;
   /** 深修专属的条目数 */
   deepOnly: number | null;
+  /**
+   * 奇遇专用:**人间界事件**里金丹可达的占比。
+   *
+   * 与 goldShare 的区别只在分母:goldShare 拿整池算,人间的与仙界/神界的混在一起。
+   * 奇遇这条判据问的是「际遇会不会变成一种只有深修才玩得到的东西」——
+   * 那件事只发生在**玩家早期真的会碰到的那批事件**上,高境界事件再多也不该把它判红。
+   *
+   * 实测:schema 从 91 扩到 104(补了 13 条仙/神品灵兽的发放事件)之后,
+   * 整池口径从 0.829 掉到 0.699 —— 而掉下去的原因**恰恰是加对了内容**。
+   * 一个「加高界内容就红」的判据,守不住它想守的东西。
+   */
+  goldShareHuman: number | null;
 }
 
 /** 可计数内容的金丹可达比例 */
@@ -186,8 +198,33 @@ export function reachabilityTable(): ReachabilityRow[] {
       gate,
       goldShare: c ? c.gold / c.total : null,
       deepOnly: c ? c.total - c.gold : null,
+      goldShareHuman: gate.id === "event" ? humanEventGoldShare() : null,
     };
   });
+}
+
+/**
+ * 人间界事件里金丹可达的占比 —— 奇遇判据该看的那把尺(见 ReachabilityRow.goldShareHuman)。
+ *
+ * 「人间界事件」的判法:事件的 minRealm 落在人间界的境界带内。境界带上限从区域表
+ * 现算(人间界 tier ≤ MORTAL_TIER_MAX 的区域里最高的 minRealm),不硬编码 ——
+ * 将来往人间界加区域,这条界自动跟上。
+ *
+ * 为什么要换这把尺:整池口径(goldShare)的分母混着仙界/神界事件,给高界补内容
+ * 必然稀释它 —— 补 13 条灵兽发放事件后从 0.829 掉到 0.699,而掉下去的原因
+ * **恰恰是加对了内容**。「加高界内容就红」的判据守不住它想守的东西。
+ *
+ * 这把尺守的是:人间界玩家真能碰到的那批事件里,不该普遍要求超过金丹的修为。
+ * 只有往人间界境界带里塞「minRealm 3–8」的事件才会压低它 —— 那才是该拦的。
+ */
+export function humanEventGoldShare(): number | null {
+  const mortalMaxMinRealm = Math.max(
+    ...REGIONS.filter((r) => r.tier <= MORTAL_TIER_MAX).map((r) => r.minRealm),
+  );
+  const human = POOL_EVENTS.filter((e) => (e.minRealm ?? 0) <= mortalMaxMinRealm);
+  if (human.length === 0) return null;
+  const gold = human.filter((e) => (e.minRealm ?? 0) <= GOLD).length;
+  return gold / human.length;
 }
 
 /** 有资格作深修独有回报的内容 */

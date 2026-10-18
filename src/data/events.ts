@@ -1,4 +1,4 @@
-/** 随机事件库 —— 91 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 104 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1599,6 +1599,377 @@ export const EVENTS: EventDef[] = [
       c("转身离开", [o(1, "深夜孤塔,你不想多惹是非。")]),
     ],
     { maxRealm: 8 },
+  ),
+  // ============ 仙品灵兽发放(神界:minRealm 14-17,标签 god)============
+  /**
+   * 仙界及以上 13 只灵兽的发放事件 —— 每一只都**点名**给。
+   *
+   * 起因:eventEngine 的随机池硬性排除 immortal / divine(见其 pet 分支),
+   * 于是这两档的每一只都必须有事件亲口点名,漏一只就是图鉴里一个永锁的格子。
+   * 从前的可达性判据只硬编码了四只,玄冥玄武因此一直没有发放路径而无人察觉。
+   *
+   * 两种合法形态(判据:`!ev.once || ch.outcomes.length === 1`):
+   *   A. once 事件 + 该选项唯一结局(必得,且整局只此一次)
+   *   B. 可重复事件(但同一只灵兽只会入账一次,引擎侧 owned 已挡)
+   * 本批 r7 全走 B、r8 全走 A:仙品是「神界常客」,神品是「一辈子一次的相遇」。
+   *
+   * 境界带纪律:r7 收在 14-17(god),r8 收在 18-20(chaos)。
+   * 神品**一律不收进 god 带** —— 否则神界就能开出 0.76 预算的镇岳尊。
+   */
+  ev(
+    "ev_zijinpi_ku",
+    "只进不出",
+    "神域边陲的废库中,一头貔伏在空箱堆上。箱箱皆空,它的腹却圆得反常。",
+    ["general", "god"],
+    [
+      c(
+        "以灵石换它一诺",
+        [
+          o(
+            1,
+            "你倾出一囊灵石,它一口吞尽,随即伏在你脚边 —— 往后你赚的,它替你守着。",
+            { type: "stone", tierAmount: -40 },
+            { type: "pet", id: "pet_zijinpi" },
+          ),
+        ],
+        { hint: "需要灵石", cond: { type: "stone", tierAmount: 40 } },
+      ),
+      c("撬开它的腹囊", [
+        o(65, "腹囊应声而开,金气扑面 —— 它却在你伸手时穿墙遁走了。", {
+          type: "stone",
+          tierAmount: 60,
+        }),
+        o(35, "腹囊是活的,一口咬住你的手,你带伤退开。", { type: "buff", id: "injury" }),
+      ]),
+      leave("你看了看那一地空箱,转身走了。貔也不抬头。"),
+    ],
+    { minRealm: 14, maxRealm: 17, weight: 80 },
+  ),
+  ev(
+    "ev_moyanya_bi",
+    "判生死一笔",
+    "陨神战场的骨堆上立着一只墨羽鸦,低头在一具神骸的额上画着什么。它抬眼,笔锋转向你。",
+    ["general", "god", "dark"],
+    [
+      c(
+        "与它论这一笔",
+        [
+          o(1, "你把自己的名字递上去。鸦落笔,写下的却是「未」—— 死期未定。此后它随你而行。", {
+            type: "pet",
+            id: "pet_moyanya",
+          }),
+        ],
+        { hint: "它要的不是命,是一个还没写完的名字", isDefault: true },
+      ),
+      c("先夺其笔", [
+        o(60, "一番恶斗,你将那支墨羽从它爪中打落 —— 鸦盘旋三匝,竟落下肩头。", {
+          type: "pet",
+          id: "pet_moyanya",
+        }),
+        o(40, "笔锋划过,你只觉生机被划去一线。", { type: "buff", id: "injury" }),
+      ]),
+      leave("你不去争那一笔。鸦收回目光,继续在那具神骸上写下去。"),
+    ],
+    { minRealm: 15, maxRealm: 17, weight: 80 },
+  ),
+  ev(
+    "ev_mingshuijiao_deng",
+    "冥灯渡夜",
+    "夜里的冥水之上漂着一盏灯,灯后一条蛟缓缓随行。它在渡什么,谁也说不清。",
+    ["general", "god", "water"],
+    [
+      c(
+        "下水替它扶灯",
+        [
+          o(1, "灯焰一稳,长夜骤然退去三千里。蛟衔灯回望,从此为你照路。", {
+            type: "pet",
+            id: "pet_mingshuijiao",
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("守在岸上,只看不动", [
+        o(1, "你守到灯灭,长夜未散,却把「渡」字想透了一层。", {
+          type: "material",
+          id: "wudao",
+          amount: 60,
+        }),
+      ]),
+    ],
+    { minRealm: 14, maxRealm: 16, weight: 80 },
+  ),
+  ev(
+    "ev_yuepoju_wang",
+    "月下旧网",
+    "神域边陲的月轮低了三分,一张蛛网横在林间 —— 网丝上没有虫,只挂着许多旧梦的碎影。",
+    ["general", "god"],
+    [
+      c(
+        "入网取回自己的梦",
+        [
+          o(1, "你在网里认出自己的一段旧梦。取回它时,网的主人自月光里垂了下来。", {
+            type: "pet",
+            id: "pet_yuepoju",
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("焚网", [
+        o(70, "网一烧即散,月魄如雨落了一身,你于道途更明一分。", {
+          type: "material",
+          id: "wudao",
+          amount: 70,
+        }),
+        o(30, "火光里窜出无数旧影,缠得你心神不宁。", { type: "buff", id: "curse_xinmo" }),
+      ]),
+      leave("你不去碰别人的梦。蛛在月光里一动不动,像也没看见你。"),
+    ],
+    { minRealm: 15, maxRealm: 17, weight: 80 },
+  ),
+  ev(
+    "ev_guyuexi_bu",
+    "一步一声钟",
+    "有东西自远山走来,一步一顿。走近才看清:是一头犀,背上驮着半截断碑,碑上无字。",
+    ["general", "god", "mountain"],
+    [
+      c(
+        "替它扶正背上的碑",
+        [
+          o(1, "碑扶正的一刻,四下齐鸣如钟。犀低头,把这半截古碑连同自己一并交给了你。", {
+            type: "pet",
+            id: "pet_guyuexi",
+          }),
+        ],
+        { hint: "需修为足够才托得住那半截碑", cond: { type: "realm", min: 16 }, isDefault: true },
+      ),
+      c("随它走一程", [
+        o(1, "你随它走到山脚。它站住不动了 —— 路到头了,你也到了。", {
+          type: "material",
+          id: "wudao",
+          amount: 55,
+        }),
+      ]),
+      leave("你让开道。它一步一顿地过去,钟声在身后响了很多年。"),
+    ],
+    { minRealm: 16, maxRealm: 17, weight: 80 },
+  ),
+
+  // ============ 神品灵兽发放(混沌海:minRealm 18-20,标签 chaos)============
+  ev(
+    "ev_xuanwu_fuming",
+    "玄冥负甲",
+    "幽滩真灵浮沉,忽有一物自渊底升起:玄龟负甲,甲上有纹,纹如万法自溃。",
+    ["general", "chaos", "water"],
+    [
+      c(
+        "以己道替它一甲",
+        [
+          o(
+            1,
+            "你剖出一段修为刻上甲纹。玄武收下,沉入渊底;再浮起时,甲纹已成,它驮着你的道与你同行。",
+            { type: "pet", id: "pet_xuanwu" },
+          ),
+        ],
+        { isDefault: true },
+      ),
+      c("只观其甲", [
+        o(1, "你看了莫大的甲纹一整夜。甲不动,你懂了「不动」两个字。", {
+          type: "material",
+          id: "wudao",
+          amount: 120,
+        }),
+      ]),
+    ],
+    { minRealm: 18, maxRealm: 19, once: true, weight: 70 },
+  ),
+  ev(
+    "ev_zhulong_zhengji",
+    "一睁一闭",
+    "天地无端一暗。无昼夜之分,无四时之序 —— 有东西在极远处睁了眼。",
+    ["general", "chaos", "sky"],
+    [
+      c(
+        "迎那双眼睛走进去",
+        [
+          o(1, "你立于它的瞳中。一睁,万界皆白;一闭,万界皆黑。它认得你了。", {
+            type: "pet",
+            id: "pet_zhulong",
+          }),
+        ],
+        { hint: "先把满身修为押上去", cond: { type: "realm", min: 19 }, isDefault: true },
+      ),
+      leave("你退回亮处。天光重开,你已不知方才暗了多久。"),
+    ],
+    { minRealm: 19, maxRealm: 20, once: true, weight: 70 },
+  ),
+  ev(
+    "ev_jinwu_jiuri",
+    "九日栖枝",
+    "混沌之滨长出过一株枯木,枝上栖着九日。走近时九日同鸣,一界皆明。",
+    ["general", "chaos", "fire"],
+    [
+      c("入火受灼", [
+        o(
+          1,
+          "九日之气贯体,灼得你几乎散去形骸;而目光越过九日,那鸟认了你 —— 它敛去八日,只留一日栖在肩上,从此你行处无暗。",
+          { type: "buff", id: "injury" },
+          { type: "pet", id: "pet_jinwu" },
+        ),
+      ]),
+      c("屏息远避", [
+        o(1, "你退至枯木之外,遥望一界通明,竟也悟出一分暖意。", {
+          type: "material",
+          id: "wudao",
+          amount: 120,
+        }),
+      ]),
+      leave("九日仍鸣。你没敢靠近。"),
+    ],
+    { minRealm: 18, maxRealm: 20, once: true, weight: 70 },
+  ),
+  ev(
+    "ev_haiwujing_cheng",
+    "背上生城",
+    "海上起了大雾。雾散时,一座城浮在水面 —— 城下有鳍。",
+    ["general", "chaos", "water"],
+    [
+      c(
+        "登城走一遍",
+        [
+          o(1, "城中无一人,街巷却齐整如新。你走完最后一条街,城塌回鲸背;海蜃鲸浮起,载你入混沌。", {
+            type: "pet",
+            id: "pet_haiwujing",
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("在城外看它散去", [
+        o(1, "城散时,你数清了它有多少条街。这份眼力,后来救过你数次。", {
+          type: "material",
+          id: "wudao",
+          amount: 100,
+        }),
+      ]),
+    ],
+    { minRealm: 18, maxRealm: 20, once: true, weight: 70 },
+  ),
+  ev(
+    "ev_qilinbi_busha",
+    "蹄下生灵",
+    "草叶倒伏而不折,一条笔直的旧路自混沌里伸出来。路的那头,有什么踩着草尖过来,一株芝生在它蹄窝里。",
+    ["general", "chaos"],
+    [
+      c(
+        "退到路边,把道让开",
+        [
+          o(1, "你退开半步。它自你面前走过,蹄不曾落向你 —— 走过后转身,与你并行。", {
+            type: "pet",
+            id: "pet_qilinbi",
+          }),
+        ],
+        { hint: "它只踩不伤人和虫,也只看不争不让的路", isDefault: true },
+      ),
+      c("抢先踏平这条道", [
+        o(1, "你踏平了那条旧路,只为换它回头一顾 —— 换到了,也踏碎了沿路的一窝灵虫。", {
+          type: "stone",
+          tierAmount: 120,
+        }),
+      ]),
+      leave("你不动,它也不停。擦身时你闻见芝香,然后它就远了。"),
+    ],
+    { minRealm: 18, maxRealm: 19, once: true, weight: 70 },
+  ),
+  ev(
+    "ev_wangchuan_wang",
+    "忘了在修行",
+    "川上无舟。水里有东西浮起来照了你一眼 —— 那一眼之后,你想不起自己为何要修这一世。",
+    ["general", "chaos", "dark"],
+    [
+      c(
+        "把名字刻回自己身上",
+        [
+          o(
+            1,
+            "你以指尖在腕上刻下自己的名字。再看它时,它已立在岸上等你。忘川渡不了记得自己的人。",
+            {
+              type: "pet",
+              id: "pet_wangchuan",
+            },
+          ),
+        ],
+        { hint: "需修为足够深才刻得下这三个字", cond: { type: "realm", min: 19 }, isDefault: true },
+      ),
+      c("任它忘了这一段", [
+        o(1, "你由着那一世沉进水里,竟觉前所未有的轻 —— 空出来的地方,被道填满了。", {
+          type: "exp",
+          secs: 120,
+        }),
+        o(1, "名字一忘,连修为也忘了。你站在川边很久,才想起要呼吸。", {
+          type: "material",
+          id: "wudao",
+          amount: 60,
+        }),
+      ]),
+      leave("你低下头,不去看水里的倒影。它便也沉了回去。"),
+    ],
+    { minRealm: 19, maxRealm: 20, once: true, weight: 70 },
+  ),
+  ev(
+    "ev_zaohualu_tou",
+    "投之以废铁",
+    "神魔渊底立着一座炉,炉门无火。炉前堆着无数断兵、碎甲、无用的道果 —— 炉里传出敲打声。",
+    ["general", "chaos"],
+    [
+      c(
+        "投废铁入炉",
+        [
+          o(1, "炉口一开,断兵碎甲尽数飞入,炉身轻颤,像识了主人 —— 你只需想炼什么,不必再问火。", {
+            type: "pet",
+            id: "pet_zaohualu",
+          }),
+        ],
+        {
+          hint: "它吃的是法宝:投三件,换一座能自己开火的炉",
+          cond: { type: "stone", tierAmount: 200 },
+        },
+      ),
+      c("在炉前问一句", [
+        o(1, "炉里传来一声闷响,像是应了你什么,又像什么都没说。", {
+          type: "material",
+          id: "wudao",
+          amount: 110,
+        }),
+      ]),
+      leave("你绕开那座炉。走出很远,敲打声仍跟着你。"),
+    ],
+    { minRealm: 18, maxRealm: 20, once: true, weight: 70 },
+  ),
+  ev(
+    "ev_zhenyuezun_budong",
+    "山不移,它不移",
+    "前路的山被人搬空了。只剩一股势还立在那里,势中有一尊东西,一步也没有挪。",
+    ["general", "chaos", "mountain"],
+    [
+      c(
+        "与它同时站定",
+        [
+          o(1, "你站着不动,它也站着不动。站到第十七日,山移之势散去;它收了势,认你为镇。", {
+            type: "pet",
+            id: "pet_zhenyuezun",
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("偏要过这一关", [
+        o(1, "你顶着那股势过了山。它不动,你也过去了 —— 从此你知道了什么能推、什么不该推。", {
+          type: "material",
+          id: "wudao",
+          amount: 90,
+        }),
+      ]),
+      leave("你选了下山路。势在你身后一寸一寸落回山里。"),
+    ],
+    { minRealm: 19, maxRealm: 20, once: true, weight: 70 },
   ),
 ];
 
