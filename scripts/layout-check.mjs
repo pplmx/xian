@@ -3176,7 +3176,7 @@ async function taskSaveRoundTrip() {
       failures.push(`[390] 存读场景:导出的文件名不像存档(${downloaded})`);
 
     // 动一下不会自己变的数:投一点灵脉,把灵石花掉
-    await page.goto(INDEX + "#" + "/", { waitUntil: "load" });
+    await page.goto(INDEX + "#" + "/dongfu", { waitUntil: "load" });
     await page.waitForTimeout(900);
     await page
       .getByRole("button", { name: /灵脉投资/ })
@@ -5278,7 +5278,7 @@ async function taskPersistTiming() {
     const page = await ctx.newPage();
     const pageErrors = [];
     watchPageErrors(page, pageErrors);
-    await page.goto(INDEX, { waitUntil: "load" });
+    await page.goto(INDEX + "#/dongfu", { waitUntil: "load" });
     await page.waitForTimeout(2400);
     await page.evaluate(() => {
       for (const b of document.querySelectorAll(".pointer-events-none.fixed button")) b.click();
