@@ -55,7 +55,7 @@ import { ENEMIES } from "@/data/enemies";
 import { REGIONS } from "@/data/regions";
 import { GONGFA } from "@/data/gongfa";
 import { GONGFA_BRANCHES } from "@/data/gongfaBranches";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import { uid } from "@/utils/id";
 import { GONGFA_UP_GROWTH, GONGFA_UP_WUDAO_BASE } from "@/data/constants";
 import { createSkillSystem } from "wanxiang-engine";
@@ -79,7 +79,7 @@ export const DROP_SLOTS = [
 ] as const;
 
 /**
- * 属性定义 —— 名目取自 ui/statNames(玩家看到的名字),
+ * 属性定义 —— 名目取自 data/statNames(玩家看到的名字),
  * 递减键与软阈值取自 data/constants(平衡口径的唯一定义处)。
  */
 function attributes(): AttributeDef[] {

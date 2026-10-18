@@ -28,7 +28,7 @@ import { PILLS } from "@/data/pills";
 import { AFFIXES } from "@/data/affixes";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { DAILY_TASKS, MAIN_QUESTS } from "@/data/quests";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import {
   CAVE_EVENT_POOL,
   ENLIGHTENMENT_OPTIONS,
@@ -1139,7 +1139,7 @@ describe("文案数值对账 · 顿悟/巡游的数值由 buff 与 reward 现算
  *
  * 更糟的是名字也分叉:desc 叫「战斗伤害」「造成伤害」「受伤降低」,效果行叫
  * 「伤害增幅」「伤害减免」—— 同一条词条在同一张卡上读起来像两样东西。
- * 根子在 STAT_NAMES 之外又手写了一套叫法(见 src/ui/statNames.ts 的取舍注释)。
+ * 根子在 STAT_NAMES 之外又手写了一套叫法(见 s../data/statNames.ts 的取舍注释)。
  *
  * 所以判据是:说明里不许出现**任何**承载数值的写法,也不许出现旧词条别名。
  * 数值与名字各有唯一出口 —— mods 的键、STAT_NAMES 的值、pillFuncText 的现算。

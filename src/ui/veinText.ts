@@ -11,7 +11,7 @@
 import type { AnyStatKey } from "@/types";
 import { INSIGHT_DISCOUNT_PER_POINT, type VeinDef } from "@/data/veins";
 import { formatPercent, formatSignedPercent } from "@/utils/format";
-import { STAT_NAMES } from "./statNames";
+import { STAT_NAMES } from "../data/statNames";
 
 /** 灵脉效果行:每点加成 × 当前点数,一条脉一行话 */
 export function veinEffectText(def: VeinDef, points: number): string {

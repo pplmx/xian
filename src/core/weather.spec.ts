@@ -14,7 +14,7 @@ import { worldOf } from "@/data/realms";
 import { currentTribulationPlan, waveDamage } from "./tribulationDecision";
 import { tribulationDef } from "@/data/tribulations";
 import { NO_RELIEF } from "@/data/linggenAffinity";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import type { AnyStatKey, StatMods } from "@/types";
 
 describe("天时(weather)", () => {

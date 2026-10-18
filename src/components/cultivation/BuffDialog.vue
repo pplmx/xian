@@ -102,7 +102,7 @@ import {
   buffStackHints,
   CONSUMABLE_BUFF_CAP_MULT,
 } from "@/core/engineBuffs";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import { formatCountdown, formatDuration, formatPercent } from "@/utils/format";
 import type { AnyStatKey, StatMods } from "@/types";
 import BaseModal from "@/components/common/BaseModal.vue";

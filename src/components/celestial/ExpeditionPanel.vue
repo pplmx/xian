@@ -450,7 +450,7 @@ import { useGameStore } from "@/stores/game";
 import { STAR_FAVOR_REWARD_MULT, starFavorAligned } from "@/core/astronomy";
 import { tierMajor } from "@/core/formulas";
 import { gateRuleSummary } from "@/core/gateRuleText";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import {
   CELESTIAL_WORLDS,
   EXPEDITION_GUARDIAN_LAYER,

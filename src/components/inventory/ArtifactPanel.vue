@@ -149,7 +149,7 @@ import { REALMS } from "@/data/realms";
 import { artifactUpCost, upgradeArtifact } from "@/core/forge";
 import { cnNumber, formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import type { AnyStatKey } from "@/types";
 
 const inventory = useInventoryStore();

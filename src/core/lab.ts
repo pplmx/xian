@@ -8,7 +8,7 @@ import { add, subClamp } from "@/utils/gnum";
 import { mulberry32, RandomService } from "@/utils/random";
 import { CELESTIAL_WORLDS } from "@/data/endgame";
 import { equipmentTemplate } from "@/data/equipment";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import { buildPlayerSnap } from "./playerSnap";
 import { detectBuild, type BuildDetection } from "./buildDetect";
 import { ASTRAL_SET_SHIELD, hasActiveSet } from "./equipSet";

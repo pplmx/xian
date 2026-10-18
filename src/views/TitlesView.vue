@@ -152,7 +152,7 @@ import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
 import type { StatMods } from "@/types";
 import { petTraitText } from "@/ui/itemText";
 import { qualityDef } from "@/data/qualities";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import { CODEX_SOURCES } from "@/ui/codex";
 import { cnNumber } from "@/utils/format";
 import SectionTitle from "@/components/common/SectionTitle.vue";

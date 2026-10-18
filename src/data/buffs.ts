@@ -9,7 +9,7 @@
  * STAT_NAMES 里叫「伤害增幅」「伤害减免」「灵气恢复」「气血上限」)——
  * 同一条词条在状态弹窗与装备词条上读起来像两样东西。
  *
- * 现在数值与名字只有一处真相:mods 的键 + ui/statNames.STAT_NAMES。
+ * 现在数值与名字只有一处真相:mods 的键 + data/statNames.STAT_NAMES。
  * 界面上的数值行由 modsText / BuffDialog 的效果行现算;desc 只留这一句「它是什么感觉」。
  * 判据见 core/dataTextAudit「说明只说风味」一节 —— desc 里出现数字、百分号、
  * 中文数词或旧词条别名,当场红。

@@ -229,7 +229,7 @@ import { usePlayerStore } from "@/stores/player";
 import { formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
 import { isZero, sub } from "@/utils/gnum";
 import type { AnyStatKey, GNum } from "@/types";
-import { AFFIX_RARITY_META, STAT_NAMES } from "@/ui/statNames";
+import { AFFIX_RARITY_META, STAT_NAMES } from "@/data/statNames";
 import BaseModal from "@/components/common/BaseModal.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
 import EquipNotePanel from "./EquipNotePanel.vue";

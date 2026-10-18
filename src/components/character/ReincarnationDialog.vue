@@ -279,7 +279,7 @@ import {
   rollReincarnateName,
 } from "@/core/reincarnation";
 import { talentDef, TALENT_GRADE_COLORS, TALENT_GRADE_NAMES } from "@/data/talents";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import { heritageDef } from "@/data/heritage";
 import { lifeThemeDef, TABOO_NAMES } from "@/data/lifeThemes";
 import { heritageGroups } from "@/core/samsaraAudit";

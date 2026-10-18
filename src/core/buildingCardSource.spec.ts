@@ -15,7 +15,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { BUILDINGS } from "@/data/buildings";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import { formatSignedPercent } from "@/utils/format";
 import type { AnyStatKey } from "@/types";
 

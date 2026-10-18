@@ -341,7 +341,7 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
 import { formatGN, formatNum } from "@/utils/format";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import { equipmentTemplate } from "@/data/equipment";
 import {
   SOUL_SLOTS,

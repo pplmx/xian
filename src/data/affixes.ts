@@ -8,12 +8,12 @@
  * (状态弹窗、战力分解、图鉴)叫「伤害增幅」「伤害减免」「气血上限」「战斗修为」。
  * 同一个键两套名字,玩家没法把「这件装备加的那条」和「面板上那条」对上号。
  *
- * 现在 desc 由 `ui/statNames.STAT_NAMES` 派生:一条词条的键只有一处,名字也只有一处。
+ * 现在 desc 由 `data/statNames.STAT_NAMES` 派生:一条词条的键只有一处,名字也只有一处。
  * 少数几个名字脱离语境会读歧的(命中、双倍战利、震慑),在后面缀一句注解 ——
  * 那是**含义**的补充,不承载数值,数值仍只有 `{v}` 一处。
  */
 import type { AffixDef, AnyStatKey, EquipSlot, AffixRarity } from "@/types";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 
 const W = ["weapon"] as EquipSlot[];
 const A = ["head", "body", "wrist", "belt", "boots"] as EquipSlot[];
@@ -121,7 +121,7 @@ export const AFFIXES: AffixDef[] = [
   a("qi1", "聚灵", "qiRegen", 4, 8, 90, { slots: AJ }),
   a("qi2", "引灵", "qiRegen", 8, 16, 50, { slots: AJ, minRank: 2 }),
   a("qi3", "吞灵", "qiRegen", 16, 28, 18, { slots: AJ, minRank: 5 }),
-  // ---- 进阶成功率(小进阶;大关天劫不看此数,见 ui/statNames) ----
+  // ---- 进阶成功率(小进阶;大关天劫不看此数,见 data/statNames) ----
   a("bt1", "通明", "breakthroughRate", 1, 2, 70, { slots: J }),
   a("bt2", "道基", "breakthroughRate", 2, 4, 35, { slots: J, minRank: 3 }),
   a("bt3", "天命", "breakthroughRate", 4, 6, 12, { slots: J, minRank: 6 }),
@@ -334,5 +334,5 @@ export function affixDef(id: string): AffixDef | undefined {
  * 词条数值与稀有度序都已搬进公共库的装备系统:
  *   数值 → `equipment.affixValue`(解析装备时由库代入)
  *   序  → 库按稀有度 + 成色给出展示序(见 equipment.resolve 的 affixLines)
- * 展示层要的稀有度名目与配色仍在 ui/statNames 的 AFFIX_RARITY_META(那是文案,不是机制)。
+ * 展示层要的稀有度名目与配色仍在 data/statNames 的 AFFIX_RARITY_META(那是文案,不是机制)。
  */

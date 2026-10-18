@@ -237,14 +237,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
-  it("界面不重造 modsText —— 词条文案的独一份事实源在 ui/statNames", () => {
+  it("界面不重造 modsText —— 词条文案的独一份事实源在 data/statNames", () => {
     // SoulsView 曾为「滤掉 0 值词条」自造一份本地 modsText,与库分叉成两套口径
     // (器魂低品键会带 0 → 库版印「+0%」、本地版不印)。单源 = 过滤收进库(见
     // statNames.spec),界面只 import。谁再在视图里起手 function modsText(,下面红。
     const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
     expect(souls?.src).not.toMatch(/function modsText\(/);
     expect(souls?.src).toMatch(
-      /import[\s\S]{0,300}?modsText[\s\S]{0,80}?from ['"]@\/ui\/statNames/,
+      /import[\s\S]{0,300}?modsText[\s\S]{0,80}?from ['"]@\/data\/statNames/,
     );
   });
 
@@ -1774,7 +1774,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(char?.src, "人物页无称号时的占位要写「未佩名号」").toContain("未佩名号");
     const itemText = readFileSync(resolve(__dirname, "../ui/itemText.ts"), "utf-8");
     expect(itemText, "装备/图鉴的属性平铺 maxHp 要写「气血」").toContain('maxHp: "气血"');
-    const statNames = readFileSync(resolve(__dirname, "../ui/statNames.ts"), "utf-8");
+    const statNames = readFileSync(resolve(__dirname, "../data/statNames.ts"), "utf-8");
     expect(statNames, "气血上限与气血同一族 —— maxHpPct 不许单独留在「生命上限」").toContain(
       'maxHpPct: "气血上限"',
     );

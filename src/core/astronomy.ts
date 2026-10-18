@@ -19,8 +19,6 @@ import { MANSION_EVENT_LUCK } from "@/data/constants";
 export { MANSION_EVENT_LUCK };
 import type { WorldId } from "@/types";
 
-
-
 /**
  * 星象相合世界(星陨天)的破关道源加成。
  * 「今日星象所利之界 == 玩家本世之界」时,星陨天这类 starTied 世界破关取 ×1.25。

@@ -358,7 +358,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { applyLoadout, captureLoadout, deleteLoadout } from "@/core/loadoutService";
 import { useLoadoutsStore, MAX_LOADOUTS } from "@/stores/loadouts";
 import { cnNumber, formatPercent } from "@/utils/format";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import BaseModal from "@/components/common/BaseModal.vue";

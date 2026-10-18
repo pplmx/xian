@@ -14,7 +14,7 @@ import { recipeCraft, type SkillId } from "@/data/crafting";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { maxTierForMajor } from "@/data/regions";
 import { herbGradeOfMajor, type HerbGrade } from "@/data/herbGrades";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import { collect, track } from "./progress";
 import { craftability, knownRecipes } from "./craftability";
 import { runCraft, spentOf } from "./engineCraft";

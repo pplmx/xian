@@ -36,7 +36,7 @@ import { useQuestsStore } from "@/stores/quests";
 import { usePlayerStore } from "@/stores/player";
 import { PETS } from "@/data/pets";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
-import { modsText } from "./statNames";
+import { modsText } from "../data/statNames";
 import {
   artifactFuncText,
   artifactMetaText,

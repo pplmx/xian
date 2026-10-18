@@ -123,7 +123,7 @@ import {
   VEIN_TOTAL_CAPACITY,
   VEIN_UNLOCK_MAJOR,
 } from "@/data/constants";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import { veinEffectText } from "@/ui/veinText";
 import { formatGN, formatPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";

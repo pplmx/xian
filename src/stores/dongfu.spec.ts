@@ -11,7 +11,7 @@ import {
   LIBRARY_WUDAO_MIN_PER_HOUR,
 } from "@/data/constants";
 import { libraryWudaoPerHour } from "@/core/engineFacilities";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import type { AnyStatKey, BuildingId } from "@/types";
 
 describe("dongfu store · sanitize", () => {

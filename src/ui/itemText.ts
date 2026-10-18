@@ -27,7 +27,7 @@ import { worldNameOfTier } from "@/core/formulas";
 import { gongfaModsAt } from "@/stores/cultivation";
 import { personalityEffects } from "@/core/petPersonality";
 import { formatDuration, formatNum, formatPercent } from "@/utils/format";
-import { modsText } from "./statNames";
+import { modsText } from "../data/statNames";
 
 // ============ 装备 ============
 

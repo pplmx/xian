@@ -7,7 +7,7 @@
  */
 import type { CombatRules } from "@/types";
 import { formatPercent, formatSignedPercent } from "@/utils/format";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 
 /** 倍率字段(m≈1 即无改动) → 自己的/敌方的 攻势/气血/治疗 增贬 */
 function multLine(parts: string[], m: number | undefined, label: string): void {

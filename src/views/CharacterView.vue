@@ -939,7 +939,7 @@ import { cnNumber, formatNum, formatPercent } from "@/utils/format";
 import { add, gn, mulN, ratio } from "@/utils/gnum";
 import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
-import { STAT_NAMES, modsPills, modsText } from "@/ui/statNames";
+import { STAT_NAMES, modsPills, modsText } from "@/data/statNames";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import NavCard from "@/components/common/NavCard.vue";

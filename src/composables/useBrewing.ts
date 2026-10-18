@@ -22,7 +22,7 @@ import { alchemyBonusCapped } from "@/core/engineCraft";
 import { studyEta } from "@/core/loreService";
 import { formatDuration, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import { pillFuncText } from "@/ui/itemText";
 import type { GNum, PillDef, StatMods } from "@/types";
 

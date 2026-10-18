@@ -855,7 +855,7 @@ import type { GongfaDef, GongfaType } from "@/types";
 import { ELEMENTS } from "@/data/linggen";
 import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from "@/data/gongfaBranches";
 import { buffDef } from "@/data/buffs";
-import { modsText, STAT_NAMES } from "@/ui/statNames";
+import { modsText, STAT_NAMES } from "@/data/statNames";
 import { pillDef } from "@/data/pills";
 import type { PillDef } from "@/types";
 import {

@@ -448,7 +448,7 @@ import { cnNumber, formatCountdown, formatPercent } from "@/utils/format";
 import { MANSION_EVENT_LUCK, favoredWorld, todayMansion, todayMansionLine } from "@/core/astronomy";
 import { worldDef } from "@/data/realms";
 import type { WorldId } from "@/types";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 

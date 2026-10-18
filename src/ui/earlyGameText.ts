@@ -20,7 +20,7 @@ import { buffDef } from "@/data/buffs";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { classicalDuration, modernDuration } from "@/data/timeUnits";
 import type { CaveEvent, EnlightenmentOption } from "@/types";
-import { modsText } from "./statNames";
+import { modsText } from "../data/statNames";
 
 type CaveOption = CaveEvent["options"][number];
 

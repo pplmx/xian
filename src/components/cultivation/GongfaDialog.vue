@@ -194,7 +194,7 @@ import { gongfaAffinity, rootElements } from "@/core/linggenAffinity";
 import { gongfaModsAt } from "@/stores/cultivation";
 import { formatSignedPercent } from "@/utils/format";
 import { gongfaSkillLine } from "@/ui/itemText";
-import { STAT_NAMES, modsText } from "@/ui/statNames";
+import { STAT_NAMES, modsText } from "@/data/statNames";
 import type { AnyStatKey } from "@/types";
 import BaseModal from "@/components/common/BaseModal.vue";
 import QualityTag from "@/components/common/QualityTag.vue";

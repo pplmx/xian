@@ -7,7 +7,7 @@
  * 实现,与库分叉成两套口径,见 uiLayering「界面不重造 modsText」审计。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 
 describe("statNames · modsText 共享行为", () => {
   it("零值词条不显示 —— 0 值键不许印成「+0%」", () => {

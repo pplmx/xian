@@ -302,7 +302,7 @@ import { generateCurrentGoal, type Goal } from "@/core/goal";
 import { currentMainQuestProgress } from "@/core/questProgress";
 import { currentFirstStep, homeStatusText } from "@/core/firstStep";
 import { rewardText } from "@/core/progress";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import { isRetreating } from "@/core/earlyGameService";
 import { dailyRowsOf, dailyStateOf } from "@/core/engineDailies";
 import { todayChallenge } from "@/core/dailyChallenge";

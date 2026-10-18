@@ -63,7 +63,7 @@ import { generateEquipment, resolveEquipStats } from "./equipGen";
 import { winsUntilRegionBoss } from "./exploration";
 import { ENEMIES } from "@/data/enemies";
 import { REGIONS } from "@/data/regions";
-import { STAT_NAMES } from "@/ui/statNames";
+import { STAT_NAMES } from "@/data/statNames";
 import { mulberry32, RandomService } from "@/utils/random";
 import { QUALITY_OUT_OF_BAND, QUALITY_TIER_SHIFT } from "@/data/constants";
 import type { EquipmentInstance, EquipSlot, QualityDef } from "@/types";

@@ -15,7 +15,7 @@ import { resolve } from "node:path";
 import { INSIGHT_DISCOUNT_PER_POINT, veinDef } from "@/data/veins";
 import { formatPercent } from "@/utils/format";
 import { veinEffectText } from "./veinText";
-import { STAT_NAMES } from "./statNames";
+import { STAT_NAMES } from "../data/statNames";
 
 describe("灵脉效果行", () => {
   it("炼器脉的数值与 perPoint×点数同源(非整数路径也直接对账常量)", () => {

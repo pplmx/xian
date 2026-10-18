@@ -24,7 +24,7 @@ import { craftability } from "./craftability";
 import { pillDef } from "@/data/pills";
 import { PILLS } from "@/data/pills";
 import { buffDef } from "@/data/buffs";
-import { modsText } from "@/ui/statNames";
+import { modsText } from "@/data/statNames";
 import { maxTierForMajor } from "@/data/regions";
 import { MAX_MAJOR } from "@/data/realms";
 import { recipeCraft, type SkillId } from "@/data/crafting";
