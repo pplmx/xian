@@ -118,9 +118,12 @@ const previews = computed<Record<number, EquipPreview>>(() => {
 });
 
 /**
- * 货架售品卡的品阶晕染(仅兵刃行):与背包格同源 qualityTier 的三档强度,
- * 档位线索不靠颜色单打 —— 边框与底色随档加深,天/仙/神另有角章。
- * 丹/料没有品阶档,保持墨色中性底。
+ * 货架售品卡的品阶晕染(仅兵刃行):边框随档加深(qualityTier 同源),
+ * 天/仙/神另有角章 —— 档位线索不靠颜色单打。丹/料没有品阶档,保持墨色中性底。
+ *
+ * 底色**固定 6%**(不随档):货架卡是多行文字密卡(品阶/描述/价格 10-11px),
+ * 进阶档的 10% 底会把文字对比度压破 AA(layout-check 像素采样实测 4.35:1)——
+ * 档位线索由边框与角章承担,底色退回弱晕。
  */
 function shelfTier(slot: (typeof market.stock)[number]): Record<string, string> | undefined {
   if (slot.kind !== "equipment") return undefined;
@@ -129,7 +132,7 @@ function shelfTier(slot: (typeof market.stock)[number]): Record<string, string> 
   const t = qualityTierStyle(p.quality);
   return {
     borderColor: colorWithAlpha(p.color, t.border),
-    background: colorWithAlpha(p.color, t.bg),
+    background: colorWithAlpha(p.color, 0.06),
   };
 }
 
