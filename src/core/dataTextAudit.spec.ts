@@ -471,7 +471,8 @@ describe("文案数值对账 · 视图不手抄数量", () => {
   });
 
   it("法宝位与门槛取自 artifacts.ts,界面与切换构筑共用一份", () => {
-    const view = src("../views/InventoryView.vue");
+    // 法宝面板拆出后判据随本体走(components/inventory/ArtifactPanel.vue)
+    const view = src("../components/inventory/ArtifactPanel.vue");
     expect(view).toContain("artifactSlotsFor(player.major)");
     expect(view).toContain("ARTIFACT_SLOT_UNLOCK_MAJOR");
     expect(view).not.toContain("元婴境开启第二法宝位");
@@ -683,7 +684,8 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
       .replace(/\/\/.*$/gm, "");
 
   it("法宝卡片的神通说明随祭炼走,等级也不叫「阶」", () => {
-    const view = src("../views/InventoryView.vue");
+    // 法宝面板拆出后判据随本体走(components/inventory/ArtifactPanel.vue)
+    const view = src("../components/inventory/ArtifactPanel.vue");
     expect(view, "神通说明应读 artifactActiveText(与战斗同一份数值)").toContain(
       "artifactActiveText(",
     );
