@@ -44,7 +44,7 @@
         却比下面的说明文字还轻。放大到 64px 并拉开间距:重掷时换的是这张牌,
         它得占住这一屏的视觉重心。
       -->
-      <div :key="rollSeq" class="stagger-in mt-4 flex justify-center gap-5">
+      <div :key="rollSeq" class="stagger-in mt-4 flex flex-wrap justify-center gap-5">
         <div
           v-for="root in profile.roots"
           :key="root.element"
