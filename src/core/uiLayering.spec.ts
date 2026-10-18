@@ -1634,7 +1634,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const service = readFileSync(resolve(__dirname, "../core/buildingService.ts"), "utf-8");
     expect(service, "建筑尚差两臂同用简称「铁」").toContain("} 铁`");
     expect(service, "不许尚差里又冒回「玄铁 N 块」").not.toMatch(/玄铁 `|玄铁 \$\{/);
-    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    const cel = FILES.find((f) => f.path === "components/celestial/TutorialDialog.vue");
     expect(cel?.src, "真仙导览散文要用全称「功法残页」").toContain("功法残页、灵石");
     // 散文 toast 里的读数同样全称 —— 连胜赏赐与历练回执都曾写「悟道 N」,
     // 与 d7783ee 收口的「混排零容忍」同类(同 toast 里灵石=N、悟道=N 直接展示裂痕)
@@ -2098,12 +2098,15 @@ describe("修炼页 · 字号收六档", () => {
     expect(usedSizes(view?.src ?? "").length).toBeGreaterThanOrEqual(20);
   });
 
-  it("三弹窗同族刻度:16 / 14 / 11 / 10", () => {
+  it("弹窗同族刻度:16 / 14 / 11 / 10", () => {
     const DIALOG_TIERS = [16, 14, 11, 10];
     for (const path of [
       "components/cultivation/BuffDialog.vue",
       "components/cultivation/EnlightenmentModal.vue",
       "components/cultivation/BreakthroughResultDialog.vue",
+      // 天界拆出的两枚弹窗同入此列(字号原样随模板搬来,不另立私档)
+      "components/celestial/FurnaceDialog.vue",
+      "components/celestial/TutorialDialog.vue",
     ]) {
       const dlg = FILES.find((f) => f.path === path);
       const off = [...new Set(usedSizes(dlg?.src ?? ""))].filter((n) => !DIALOG_TIERS.includes(n));

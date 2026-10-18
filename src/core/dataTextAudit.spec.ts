@@ -767,7 +767,8 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
   });
 
   it("登临导览里「天道熔炉」是可聚焦按钮,不是无 href 的 <a> —— 否则键盘用户点不到", () => {
-    const view = src("../views/CelestialView.vue");
+    // 导览弹窗拆出后判据随本体走(components/celestial/TutorialDialog.vue)
+    const view = src("../components/celestial/TutorialDialog.vue");
     // 原实现是无 href 的 <a @click>,不在 Tab 序列里,键盘用户根本走不到;
     // 且文字承诺「去熔炉」动作却只关导览 —— 改为真按钮(type=button)才可达
     expect(view, "天道熔炉该是真按钮(可聚焦)").toMatch(
