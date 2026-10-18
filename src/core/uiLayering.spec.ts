@@ -1783,14 +1783,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
       'push("气血", r.flats.maxHp',
     );
     const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    // 拆分后劫势详情归 TribulationPanel —— 气血/速度叫法守卫要查全域(宿主+子面板),不许只查宿主(假绿)
+    const trib = FILES.find((f) => f.path === "components/cultivation/TribulationPanel.vue");
+    const cultDomain = [cult?.src, trib?.src].join("\n");
     expect(cult?.src, "破境益的散文脚注也要说「名号」,不许留「装备·称号」混排").toContain(
       "装备·名号·天时",
     );
-    expect(cult?.src, "劫势单波那行也要说「最大气血」,气血一族不许残留「最大生命」").not.toContain(
+    expect(cultDomain, "劫势单波那行也要说「最大气血」,气血一族不许残留「最大生命」").not.toContain(
       "最大生命",
     );
     expect(
-      cult?.src,
+      cultDomain,
       "修炼速度一族全票认 canonical(STAT_NAMES),修行速度/修为速率不许回来",
     ).not.toMatch(/修行速度|修为速率/);
     const create = FILES.find((f) => f.path === "views/CreateView.vue");

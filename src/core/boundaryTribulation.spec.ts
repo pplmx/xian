@@ -59,10 +59,11 @@ describe("界膜之劫 · 玩家看得见", () => {
    */
   it("劫势面板把「界膜不认血肉」写在按钮之前", () => {
     const src = (p: string): string => readFileSync(resolve(__dirname, p), "utf8");
-    const cultivation = src("../views/CultivationView.vue");
-    expect(cultivation, "劫势面板该用 statFoldAt 判断这一步是不是界膜").toContain("statFoldAt(");
-    expect(cultivation, "界膜之劫的规则必须摊在面板上").toContain("界膜之劫");
-    expect(cultivation, "规则文案要与判据同源,不能另写一份境界清单").not.toContain(
+    // 拆分后劫势详情归 TribulationPanel(宿主只留劫型 plan),判据随本体改指子面板
+    const panel = src("../components/cultivation/TribulationPanel.vue");
+    expect(panel, "劫势面板该用 statFoldAt 判断这一步是不是界膜").toContain("statFoldAt(");
+    expect(panel, "界膜之劫的规则必须摊在面板上").toContain("界膜之劫");
+    expect(panel, "规则文案要与判据同源,不能另写一份境界清单").not.toContain(
       "needTribulation && player.major + 1 === 9",
     );
   });
