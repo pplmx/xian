@@ -15,10 +15,11 @@
 import { MANSIONS, imageDef, type MansionDef } from "@/data/xiangxiu";
 import { regionDef } from "@/data/regions";
 import { worldOf } from "@/data/realms";
+import { MANSION_EVENT_LUCK } from "@/data/constants";
+export { MANSION_EVENT_LUCK };
 import type { WorldId } from "@/types";
 
-/** 值日之宿所利界域的际遇加成(乘在际遇概率上) */
-export const MANSION_EVENT_LUCK = 0.1;
+
 
 /**
  * 星象相合世界(星陨天)的破关道源加成。

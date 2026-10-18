@@ -577,3 +577,15 @@ export const OFFLINE_BOSS_REWARD_MULT = 0.75;
  * 要收紧为有限次数时改成具体数字即可:store 的扣减/耗尽分支与界面文案都读这一个常量。
  */
 export const CREATE_REROLL_QUOTA: number | null = null;
+
+/**
+ * 问卦耗悟道点 —— 卜以决疑,不疑何卜;代价不重,但不可随手摇着玩。
+ * (定义住 data/constants,core/divination 与 progressionDoc 同源读取)
+ */
+export const DIVINATION_COST = 2;
+
+/**
+ * 值日之宿所利界域的际遇加成(乘在际遇概率上)。
+ * (定义住 data/constants,core/astronomy 与 progressionDoc 同源读取)
+ */
+export const MANSION_EVENT_LUCK = 0.1;

@@ -29,8 +29,10 @@ import {
   UPGRADE_DUST_GROWTH,
 } from "./constants";
 import { LIFESPAN_WORLDS, REALMS, WORLDS, WORLD_BREAK_MAJOR } from "./realms";
-import { DIVINATION_COST, CHANGING_TIERS } from "@/core/divination";
-import { MANSION_EVENT_LUCK } from "@/core/astronomy";
+// 两个常量定义住 data/constants(data→core 反向依赖清零);CHANGING_TIERS 仍是 core 的机制表
+import { DIVINATION_COST } from "@/data/constants";
+import { MANSION_EVENT_LUCK } from "@/data/constants";
+import { CHANGING_TIERS } from "@/core/divination";
 import { PALACES, STARS } from "./ziwei";
 import { GATES } from "./qimen";
 import { MANSIONS, IMAGES } from "./xiangxiu";

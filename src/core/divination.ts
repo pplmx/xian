@@ -24,9 +24,9 @@ import {
   type TrigramDef,
   type TrigramId,
 } from "@/data/yijing";
-
-/** 问卦耗悟道点 —— 卜以决疑,不疑何卜;代价不重,但不可随手摇着玩 */
-export const DIVINATION_COST = 2;
+import { DIVINATION_COST } from "@/data/constants";
+// 定义住 data/constants(progressionDoc 同源);re-export 兼容既有引用
+export { DIVINATION_COST };
 
 /** 动爻数与"卦力/时长"的换挡(静卦久而缓,动多者盛而易过) */
 export const CHANGING_TIERS: { min: number; power: number; minutes: number; note: string }[] = [
