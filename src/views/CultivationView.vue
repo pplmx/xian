@@ -648,6 +648,11 @@
                 class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-[10px] text-qing"
                 >待悟道</span
               >
+              <span
+                v-if="mainCanUpgrade"
+                class="shrink-0 rounded bg-jade/6 px-1.5 py-0.5 text-[10px] text-jade"
+                >可升层</span
+              >
             </span>
           </span>
           <GameIcon name="flame" :size="15" class="text-cinnabar" />
@@ -825,7 +830,7 @@ import {
   type TribulationPlan,
 } from "@/core/tribulationDecision";
 import { reliefElements, rootElements } from "@/core/linggenAffinity";
-import { comprehendGongfa } from "@/core/gongfaService";
+import { comprehendGongfa, gongfaUpgradeCost } from "@/core/gongfaService";
 import { usePill } from "@/core/pillService";
 import { qiRepairView, repairWithQi } from "@/core/qiRepair";
 import { useNow } from "@/composables/useNow";
@@ -1308,6 +1313,19 @@ function onGongfaCatKeydown(e: KeyboardEvent): void {
 const mainDef = computed(() =>
   cultivation.mainGongfa ? gongfaDef(cultivation.mainGongfa) : undefined,
 );
+
+/**
+ * 主修能不能立升一层 —— 「可变强」的信号提到列表层。
+ * 从前玩家攒够了悟道点与残页,列表上看不出哪部功法升得动,要一部部点开详情
+ * 才知道。成本走 gongfaUpgradeCost 同源(含寒冥灵脉折扣),不另写一套;
+ * 只做主修行 —— 书目行每行都亮会太密,详情层有完整账。
+ */
+const mainCanUpgrade = computed(() => {
+  if (!mainDef.value) return false;
+  const cost = gongfaUpgradeCost(mainDef.value.id);
+  if (!cost) return false;
+  return resources.hasSmall("wudao", cost.wudao) && resources.hasSmall("page", cost.page);
+});
 
 /** 参悟池里还剩几部 —— 与 comprehendGongfa 的池条件同源(minRealm ≤ 当前 + 1 且未习得) */
 const comprehendLeft = computed(
