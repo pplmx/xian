@@ -217,7 +217,9 @@ describe("文案数值对账 · 视图不手抄数字", () => {
       "cultBonusText",
     );
     expect(view).not.toMatch(/Math\.round\(fruitInfo\.effective/);
-    const celestial = src("../views/CelestialView.vue");
+    // 熔炉弹窗拆出后判据随本体走(components/celestial/FurnaceDialog.vue):
+    // S3 链路行(有效/凝后枚数)整个搬进了 FurnaceDialog
+    const celestial = src("../components/celestial/FurnaceDialog.vue");
     expect(celestial).not.toContain("effective.toFixed(0)");
     expect(celestial).not.toContain("nextEffective.toFixed(0)");
     expect(celestial).toContain("effectiveText");
@@ -786,7 +788,8 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
   });
 
   it("首次凝道果教学弹窗的判定要采样在凝果之前 —— 否则 flag 次序让弹窗永不弹出", () => {
-    const view = src("../views/CelestialView.vue");
+    // doCondense 随熔炉/道果弹窗搬进了 components/celestial/FurnaceDialog.vue
+    const view = src("../components/celestial/FurnaceDialog.vue");
     // condenseDaoFruit 在首次成功时自己就置 daoFruitTutorialSeen(true),
     // 若 doCondense 在凝果后才查 shouldShowFruitTutorial(),判定恒为假 → 弹窗死代码.
     // 必须在凝果前先采样首次与否(firstFruit 先于 condenseDaoFruit).

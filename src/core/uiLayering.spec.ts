@@ -914,7 +914,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 熔炉三个消费按钮曾口径不一:「熔尽本包」disabled 亮 0 道源,而「灵石→道源」
     // 与「道源→道果」永远可点、点了才 toast「灵石不足/道源不足 N」。
     // 与其余消费点同族:付不起置灰 + 内联「尚差 N 石/道源」,不许只有点了才响。
-    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    // 熔炉弹窗拆出后判据随本体走(components/celestial/FurnaceDialog.vue)。
+    const cel = FILES.find((f) => f.path === "components/celestial/FurnaceDialog.vue");
     expect(cel?.src, "灵石行付不起要置灰(stoneShort)").toContain(':disabled="stoneShort > 0"');
     expect(cel?.src, "灵石行要换口「尚差 N 石」").toContain("尚差 {{ formatGN(stoneShort) }} 石");
     expect(cel?.src, "道果行付不起要置灰(daoShort)").toContain(':disabled="daoShort > 0"');
@@ -1126,10 +1127,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("机制数改常量要同源 —— 熔炉道源/收徒价/秘境悟道/变数上限/行程层数不手抄", () => {
     // 「改常数就撒谎」的又一挂:界面把真实结算的机制数手写成了字面量,而别处早有
     // 常量/结算来源。每处都要读同一个来源,不许手抄,免得常量一改界面就分叉。
-    const cv = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf-8");
-    expect(cv, "熔炉产出侧读 FURNACE_STONE_DAO_SOURCE").toContain(
+    // (天界拆分后各机制数随本体走:FURNACE_STONE_DAO_SOURCE→FurnaceDialog,
+    //   CHALLENGE_MAX_MUTATORS/EXPEDITION_*→仍暂在主文件,随后续拆分块改道)
+    const furnace = readFileSync(
+      resolve(__dirname, "../components/celestial/FurnaceDialog.vue"),
+      "utf-8",
+    );
+    expect(furnace, "熔炉产出侧读 FURNACE_STONE_DAO_SOURCE").toContain(
       "{{ FURNACE_STONE_DAO_SOURCE }} 道源",
     );
+    const cv = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf-8");
     expect(cv, "变数至上条数读 CHALLENGE_MAX_MUTATORS").toContain(
       "cnNumber(CHALLENGE_MAX_MUTATORS)",
     );
