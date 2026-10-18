@@ -30,7 +30,7 @@
       -->
       <template v-if="gainRows.length">
         <div class="ink-divider my-3" />
-        <p class="mb-1.5 font-kai text-[10px] tracking-[0.5em] text-ink-faint">入 账</p>
+        <SectionMark text="入 账" />
         <ul class="stagger-in space-y-2 text-left">
           <li
             v-for="row in gainRows"
@@ -47,7 +47,7 @@
       </template>
       <template v-if="roadRows.length">
         <div class="ink-divider my-3" />
-        <p class="mb-1.5 font-kai text-[10px] tracking-[0.5em] text-ink-faint">路 上</p>
+        <SectionMark text="路 上" />
         <ul class="stagger-in space-y-2 text-left">
           <li
             v-for="row in roadRows"
@@ -96,6 +96,7 @@ import { qualityDef } from "@/data/qualities";
 import { playSfx } from "@/core/audio";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import SectionMark from "@/components/common/SectionMark.vue";
 
 const ui = useUiStore();
 

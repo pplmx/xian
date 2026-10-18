@@ -260,18 +260,13 @@
         <p class="font-kai text-[14px] leading-relaxed text-ink">{{ fateLordLineText }}</p>
         <div class="ink-divider my-2.5" aria-hidden="true" />
         <!-- 用:命格之力 —— 这一册唯一据以行动的结论,与星象「今日利」同一版式 -->
-        <div data-value-row class="flex items-baseline gap-2">
-          <span class="shrink-0 text-[11px] text-ink-faint">命格之力</span>
-          <span class="font-kai text-[15px] text-jade">{{ fateModsText }}</span>
-        </div>
+        <ValueRow label="命格之力" :value="fateModsText" color="text-jade" />
         <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
           卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
         </p>
         <div class="ink-divider my-2.5" aria-hidden="true" />
         <!-- 读:十二宫所安之星 -->
-        <p class="mb-1 font-kai text-[10px] tracking-[0.5em] text-ink-faint">
-          {{ cnNumber(PALACES.length) }} 宫
-        </p>
+        <SectionMark :text="`${cnNumber(PALACES.length)} 宫`" />
         <div class="divide-y divide-ink/6">
           <div
             v-for="row in fateRows"
@@ -288,9 +283,7 @@
           </div>
         </div>
         <div class="mt-3 border-t border-ink/10 pt-2">
-          <p class="mb-1 font-kai text-[10px] tracking-[0.5em] text-ink-faint">
-            {{ cnNumber(STARS.length) }} 主 星
-          </p>
+          <SectionMark :text="`${cnNumber(STARS.length)} 主 星`" />
           <p v-for="s in STARS" :key="s.id" class="mt-1 t-body text-ink-soft">
             <span class="font-kai text-ink">{{ s.name }}</span>
             <span class="text-ink-faint"> · {{ s.nature }} · {{ s.gist }}</span>
@@ -451,6 +444,8 @@ import type { WorldId } from "@/types";
 import { modsText } from "@/data/statNames";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
+import ValueRow from "@/components/common/ValueRow.vue";
+import SectionMark from "@/components/common/SectionMark.vue";
 
 const player = usePlayerStore();
 const game = useGameStore();
