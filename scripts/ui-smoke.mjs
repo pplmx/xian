@@ -59,6 +59,11 @@ const JOBS = (() => {
 /**
  * 全量路由 —— 从前只点九页,流派/收藏/修仙录/洞府/本世之界/天界这六页
  * 只被排版自检量过尺寸,没人戳过它们的按钮(点下去会不会炸、有没有 NaN 泄漏都没看过)。
+ *
+ * 没有列 /welcome 与 /create:这两页是**开局前**的状态,路由守卫见存档已开就把它们
+ * 重定向回首页(见 router/index.ts 的 beforeEach)—— 本脚本每个 context 都先建号,
+ * 导航过去量到的只会是首页,硬塞进来等于空转。它们的排版与对比度由 layout-check
+ * 的「开局前两页」任务(无存档的新 context)守着。
  */
 const ROUTES = [
   "/",
@@ -76,6 +81,8 @@ const ROUTES = [
   "/dongfu",
   "/world",
   "/celestial",
+  "/market",
+  "/apprentice",
 ];
 /** 正文里不该出现的数字/占位泄漏 */
 const NUMERIC_LEAK = ["NaN", "Infinity", "undefined"];

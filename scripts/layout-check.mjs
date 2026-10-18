@@ -8,7 +8,7 @@
  *   bun scripts/layout-check.mjs      # 加 --shots 顺带存图到 /tmp/layout-shots
  *   bun scripts/layout-check.mjs --jobs 4   # 并发路数;也可用 LAYOUT_JOBS 环境变量
  *
- * 它是**并发**跑的:下面 31 个自检任务各自开自己的 context、各带自己的存档,互不等待,
+ * 它是**并发**跑的:下面 32 个自检任务各自开自己的 context、各带自己的存档,互不等待,
  * 由 runPool 按 --jobs / LAYOUT_JOBS / 核数(上限 8)调度。从前它们是同一层里顺序排队的
  * 代码块,一段段等固定时长,一轮约七分钟;拆成任务后本地实测 ~90 秒,--jobs 1 退化回串行。
  * 任务之间只共享一个浏览器与失败清单(后者按固定任务顺序合并,报告与串行时一致)。
@@ -111,6 +111,12 @@
  *      这一行从前整段 nowrap,320 上必顶出卡片 —— 而巡页用的档里没有在途秘境,
  *      三十三 那份 320 夹具的 adventure 切片也没有 secretRealm,于是这一档从没被量过。
  *      夹具直接摆出「打到第二层」的状态,判据走通用那套(横向溢出 + 挤压)。
+ *   四十六 开局前两页(欢迎 / 建号):它们是唯二**没有存档才看得见**的页面 ——
+ *      路由守卫见存档已开就把 #/welcome、#/create 重定向回首页,所以巡页 ROUTES
+ *      永远巡不到它们(硬塞进 ROUTES 只会把首页重复量一遍)。故另开一个无存档的
+ *      context:先量欢迎页,再走「开始游戏 → 同意并开始」落到建号页量一遍。
+ *      只查基础档(横向溢出 / 外壳偏移 / 越界元素 / 无名控件 / 可点过小 / 正文对比度),
+ *      不查底部导航项数 —— 这两页本来就没有导航(开局前不该有)。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -151,6 +157,11 @@ const VIEWPORTS = [
 /**
  * 全量路由 —— 从前只巡八页,于是设置页与收藏页的排版与选中态从未被量过。
  * 页面各有各的布局风险,漏一页等于那一页没有守卫(加进来只多几秒)。
+ *
+ * 没有列 /welcome 与 /create:这两页是**开局前**的状态,路由守卫见存档已开就把它们
+ * 重定向回首页(router/index.ts 的 beforeEach)—— 巡页带着真存档,导航过去量到的
+ * 只会是首页,硬塞进来等于空转。它们由「开局前两页」任务(四十六)守着:
+ * 那边开一个无存档的新 context,这两页才真的被渲染出来。
  */
 const ROUTES = [
   "/",
@@ -168,6 +179,8 @@ const ROUTES = [
   "/dongfu",
   "/world",
   "/celestial",
+  "/market",
+  "/apprentice",
 ];
 
 const browser = await chromium.launch({
@@ -5923,6 +5936,148 @@ async function taskBuildArtifacts() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/**
+ * 开局前两页(见第四十六件事)。
+ *
+ * /welcome 与 /create 是「没有存档才看得见」的页面:路由守卫见存档已开就把它们
+ * 重定向回首页,巡页 ROUTES 永远巡不到 —— 此前这两页从未被量过,而它们恰是
+ * 每个新玩家的第一屏(字体最大的一屏、表单页)。这里开一个**无存档**的 context:
+ * 直接落在欢迎页量一遍,再走「开始游戏 → 同意并开始」落到建号页量一遍。
+ *
+ * 判据只取基础档,且是 measurePage 的**子集**:底部导航项数、顶栏折行、页签栏
+ * 这些判据以「游戏内页面」为前提,开局前两页没有导航与顶栏,硬套只会量出假红。
+ */
+async function taskPreGameTour() {
+  const failures = [];
+  let checked = 0;
+  const contrastFails = [];
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+
+  /** 基础档量尺:measurePage 的开局前子集(排版事故 + 控件名 + 触达下限) */
+  const measureBasic = () =>
+    page.evaluate(() => {
+      const vw = window.innerWidth;
+      const overflows = [...document.querySelectorAll("body *")]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          const rightOver = r.right > vw + 2;
+          const leftOver = r.left < -1;
+          if (r.width <= 0 || (!rightOver && !leftOver)) return false;
+          // 纯装饰层(不吃事件)不算排版事故 —— 与 measurePage 同一条口径
+          for (let node = el; node; node = node.parentElement) {
+            if (getComputedStyle(node).pointerEvents === "none") return false;
+          }
+          return true;
+        })
+        .slice(0, 4)
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          const side = r.left < -1 ? "L" : r.right > vw + 2 ? "R" : "?";
+          return `${el.tagName.toLowerCase()}.${String(el.className).split(" ")[0]}@${side}${Math.round(r.left)}..${Math.round(r.right)}`;
+        });
+      return {
+        hash: location.hash,
+        horizontalOverflow: document.documentElement.scrollWidth > vw + 1,
+        shellShift: (() => {
+          const shell = document.getElementById("app")?.firstElementChild;
+          if (!shell) return null;
+          return {
+            scrollLeft: Math.round(shell.scrollLeft),
+            overflowX: Math.round(shell.scrollWidth - shell.clientWidth),
+          };
+        })(),
+        overflows,
+        unnamed: [...document.querySelectorAll("button, a, [role=button]")]
+          .filter((el) => {
+            const name = (el.getAttribute("aria-label") || el.textContent || "").trim();
+            if (name) return false;
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height > 0;
+          })
+          .slice(0, 3)
+          .map((el) => el.outerHTML.slice(0, 80).replace(/\s+/g, " ")),
+        smallTargets: [...document.querySelectorAll("button, a, [role=button]")]
+          .map((el) => {
+            const r = el.getBoundingClientRect();
+            const declared = parseFloat(getComputedStyle(el).minHeight);
+            return { el, r, declared: Number.isFinite(declared) ? declared : 0 };
+          })
+          .filter(
+            ({ r, declared }) =>
+              r.width > 0 && r.height > 0 && r.height < 28 && !(declared >= 28 && r.height >= 27.5),
+          )
+          .slice(0, 3)
+          .map(
+            ({ el, r, declared }) =>
+              `${r.height.toFixed(1)}px(声明 ${declared || "—"}px)«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}» [${(el.className || "").toString().slice(0, 60)}]`,
+          ),
+      };
+    });
+
+  const problemsOfBasic = (info) => {
+    const problems = [];
+    if (info.horizontalOverflow) problems.push(`横向溢出(scrollWidth ${info.hash})`);
+    if (info.shellShift && (info.shellShift.scrollLeft !== 0 || info.shellShift.overflowX > 1))
+      problems.push(
+        `外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`,
+      );
+    if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
+    if (info.unnamed.length) problems.push(`无名控件:${info.unnamed.join(" | ")}`);
+    if (info.smallTargets.length) problems.push(`可点元素过小:${info.smallTargets.join(" | ")}`);
+    return problems;
+  };
+
+  // ---- 欢迎页:无存档冷启动就该落在这里 ----
+  await page.goto(INDEX, { waitUntil: "load" });
+  await page.waitForTimeout(900);
+  await settleVisuals(page);
+  {
+    const info = await measureBasic();
+    checked += 1;
+    if (!info.hash.includes("welcome"))
+      failures.push(`[开局前] 无存档冷启动落在 ${info.hash},应落在欢迎页`);
+    const problems = problemsOfBasic(info);
+    if (problems.length) failures.push(`[开局前] /welcome → ${problems.join(" / ")}`);
+    await quiesceOverlays(page);
+    for (const bad of await measureTextContrast(page)) {
+      contrastFails.push(`[开局前] /welcome ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`);
+    }
+  }
+
+  // ---- 建号页:同意隐私后由欢迎页进来(传送门约 2.5s) ----
+  await page.getByRole("button", { name: /开\s*始\s*游\s*戏/ }).first().click();
+  await page.waitForTimeout(600);
+  await page.locator("input[type=checkbox]").first().check();
+  await page.getByRole("button", { name: /同意并开始/ }).first().click();
+  await page.waitForTimeout(3200);
+  await settleVisuals(page);
+  {
+    const info = await measureBasic();
+    checked += 1;
+    if (!info.hash.includes("create"))
+      failures.push(`[开局前] 同意隐私后落在 ${info.hash},应落在建号页`);
+    const problems = problemsOfBasic(info);
+    if (problems.length) failures.push(`[开局前] /create → ${problems.join(" / ")}`);
+    await quiesceOverlays(page);
+    for (const bad of await measureTextContrast(page)) {
+      contrastFails.push(`[开局前] /create ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`);
+    }
+  }
+
+  if (pageErrors.length)
+    failures.push(`[开局前] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await page.close();
+  return { failures, checked, contrastFails, pixelContrastFails: [], zoomFails: [] };
+}
+
 /* ==========================================================================
  * 并发调度 —— 任务之间互不等待,谁都不再替别人的等待买单
  * ========================================================================== */
@@ -5970,6 +6125,7 @@ const TASKS = [
   ["导出失败也说话", taskExportFailure],
   ["坏档也能进游戏", taskBadSave],
   ["iOS 存档风险提示", taskIosNotice],
+  ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["构建产物 · dvh / 字体栈", taskBuildArtifacts],
 ];
 
