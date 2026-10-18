@@ -261,7 +261,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("逆旅契灰卡有理由 —— 已签报「此生已签」、道果不足报「尚差 N」", () => {
     // 契签不下只有两个理由:本世已签过(整组灰)/道果不足。别退回只有灰没有话:
     // 已签时应说「此生已签」,缺果子时按差数报「尚差 N 道果」(聚气丹/建筑同款)。
-    const charv = FILES.find((f) => f.path === "views/CharacterView.vue");
+    // 拆分后轮回/逆旅契两浮层归 RebirthDialog,判据随本体改指子面板
+    const charv = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
     expect(charv?.src).toContain("此生已签");
     expect(charv?.src).toMatch(/尚差 \$\{t\.cost - player\.reincarnation\.daoFruit\} 道果/);
     expect(charv?.src).not.toMatch(/t\.cost \} 道果/);
@@ -1009,7 +1010,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ":disabled=\"currentPillOverflow === 'full'\"",
     );
     expect(inv?.src, "丹药顶满拦因要就地摊(白费)").toContain("药力已顶满——这一颗将白费");
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    // 拆分后轮回弹窗归 RebirthDialog,兵解置灰判据随本体改指子面板
+    const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
     expect(char?.src, "兵解未达境要置灰(canRebirth)").toContain(':disabled="!canRebirth"');
     expect(char?.src, "兵解置灰要列门槛境名,不许只有定性").toContain("境方可自行兵解");
   });
@@ -1069,7 +1071,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 弹窗顶部一句话曾写「保留道果/天赋/法宝,功法折半」,而同一弹窗的 HERITAGE
     // 去留一览(samsaraAudit)写着法宝 reset(归尘)、功法 partial(回一层)—— 同屏两本账。
     // 一句话要与结算同源:保留随魂之物,功法回一层,法宝归尘。不许退回旧假账。
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    // 拆分后轮回弹窗归 RebirthDialog,判据随本体改指子面板
+    const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
     expect(char?.src, "功法是回一层非折半").toContain("功法回一层");
     expect(char?.src, "法宝是归尘非保留").toContain("法宝归尘");
     expect(char?.src, "不许再手写旧假账(保留法宝/折半)").not.toMatch(/天赋 \/ 法宝|功法折半/);
@@ -1738,7 +1741,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(css, "chip-ink 要带 transition(弹簧感,与 btn-ghost 同款)").toMatch(
       /\.chip-ink \{[\s\S]{0,300}transition:/,
     );
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    // 拆分后逆旅契试炼卡归 RebirthDialog,判据随本体改指子面板
+    const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
     expect(char?.src, "卡状可点元素(试炼卡)也要带按压反馈").toContain("active:scale-99");
   });
 
@@ -2451,7 +2455,8 @@ describe("滚动区 —— 还有下文时要说出来", () => {
 
   it("长列表自带滚动区,不靠整块面板滚", () => {
     // 面板滚的话,列表尾会被页脚按钮齐齐切掉(这正是这条判据的由来)
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
+    // 拆分后去留一览归 RebirthDialog,判据随本体改指子面板
+    const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue")?.src ?? "";
     expect(char, "去留一览要有自己的 max-h + overflow-y-auto").toMatch(/max-h-64 overflow-y-auto/);
     expect(char, "外圈要套 scroll-fade").toContain("scroll-fade");
   });

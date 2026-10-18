@@ -105,7 +105,7 @@ export const FRUIT_CONSUMERS: FruitConsumer[] = [
   {
     id: "view",
     name: "界面展示",
-    site: "CharacterView / ReincarnationDialog / ui.daoFruitGained",
+    site: "RebirthDialog / ReincarnationDialog / ui.daoFruitGained",
     role: "display",
     necessity: null,
     loop: "none",
