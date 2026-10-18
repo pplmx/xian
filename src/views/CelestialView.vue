@@ -157,14 +157,17 @@
         </section>
       </template>
 
-      <!-- 远征 tab(面板本体在 components/celestial/ExpeditionPanel.vue,含远征准备弹窗) -->
-      <ExpeditionPanel @outcome="handleOutcome" />
+      <!--
+        三个页签面板按激活页签互斥渲染(与拆分前 v-else-if 链一致)。
+        拆分时一度改成无条件挂载 —— 未激活页签的 DOM 混进了浏览器自检:
+        择契 chip 22.5px 过小、变数 chips 的多选组(0 条是合法初始态)被
+        「每组恰有一个选中」的单选判据误拦。页签未激活不渲染,不只是省渲染。
+      -->
+      <ExpeditionPanel v-if="celTab === 'exped'" @outcome="handleOutcome" />
 
-      <!-- 试炼 tab(面板本体在 components/celestial/TrialPanel.vue) -->
-      <TrialPanel :daily="daily" @report="openReport" />
+      <TrialPanel v-else-if="celTab === 'trial'" :daily="daily" @report="openReport" />
 
-      <!-- 道痕 tab(面板本体在 components/celestial/MarksPanel.vue,含纪元弹窗) -->
-      <MarksPanel @report="openReport" />
+      <MarksPanel v-else-if="celTab === 'dao'" @report="openReport" />
     </template>
 
     <!-- 战报(远征终局 / 试炼 / 变数) -->

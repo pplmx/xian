@@ -134,7 +134,7 @@
         <button
           v-for="w in CELESTIAL_WORLDS"
           :key="w.id"
-          class="chip-ink"
+          class="chip-ink !py-1.5 !px-3"
           :class="
             draft.worldId === w.id
               ? 'border-cinnabar text-cinnabar'
@@ -149,7 +149,7 @@
         <button
           v-for="m in MUTATORS"
           :key="m.id"
-          class="chip-ink"
+          class="chip-ink !py-1.5 !px-3"
           :class="
             draft.mutatorIds.includes(m.id)
               ? 'border-violet-ink text-violet-ink'
@@ -177,7 +177,7 @@
       </p>
       <div class="mt-1.5 flex flex-wrap gap-1.5">
         <button
-          class="chip-ink"
+          class="chip-ink !py-1.5 !px-3"
           :class="draft.pactId === null ? 'border-jade text-jade' : 'border-ink/25 text-ink-faint'"
           :aria-pressed="draft.pactId === null"
           @click="setDraftPact(null)"
@@ -187,7 +187,7 @@
         <button
           v-for="p in PACTS"
           :key="p.id"
-          class="chip-ink"
+          class="chip-ink !py-1.5 !px-3"
           :class="
             draft.pactId === p.id ? 'border-cinnabar text-cinnabar' : 'border-ink/25 text-ink-faint'
           "
