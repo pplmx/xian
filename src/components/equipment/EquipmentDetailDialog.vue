@@ -173,39 +173,8 @@
           <span class="w-7 shrink-0 text-right tabular">{{ formatPercent(s.progress, 0) }}</span>
         </p>
       </div>
-      <template v-if="upCost">
-        <div class="ink-divider my-3" />
-        <p class="flex items-center justify-between text-[12px] text-ink-faint">
-          <span>强化 +{{ inst.level + 1 }} / 上限 {{ equipLevelCap() }}</span>
-          <span class="tabular">器灵尘×{{ upCost.dust }} · 灵石 {{ formatGN(upCost.stone) }}</span>
-        </p>
-        <!-- 代价有了,这一级给什么也要在 —— 基础攻防血按 (1+级数×12%) 叠乘,读 EPQUIP_LEVEL_BONUS 不手写 -->
-        <p class="mt-0.5 text-[10px] text-ink-faint">
-          强化每级:基础攻防血 ×(1 + 级数 ×{{ formatPercent(EQUIP_LEVEL_BONUS, 0) }})
-        </p>
-        <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完(与法宝炼化同款) -->
-        <p v-if="!upAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
-          尚差 器灵尘×{{ Math.max(0, upCost.dust - resources.dust) }} · 灵石
-          {{ formatGN(Math.max(0, toNum(upCost.stone) - toNum(resources.spiritStone))) }}
-        </p>
-        <!-- 连强到顶:一次点到器灵尘/灵石见底或满级,不必逐级点(合一条总账)。
-             批量动作照例把总账摊在按下前(与 decomposeBatch/decomposePreview 同族);
-             只有一级可点时上行已报下一级,不重复 -->
-        <p
-          v-if="restUpgrade !== 'max' && restUpgrade.count > 1"
-          class="mt-1 text-[10px] text-ink-faint tabular"
-        >
-          连强到顶共需({{ restUpgrade.count }} 级)器灵尘×{{ restUpgrade.dust }} · 灵石
-          {{ formatGN(restUpgrade.stone) }}
-        </p>
-        <button
-          class="btn-ghost mt-2 w-full !py-1.5 !text-[12px]"
-          :disabled="!upAffordable"
-          @click="doUpgradeAll"
-        >
-          连强到顶
-        </button>
-      </template>
+      <!-- 强化子面板:价签/加成/短差/连强总账随面板走(EquipUpgradePanel,自读同一份 inst) -->
+      <EquipUpgradePanel />
       <p v-if="salvage" class="mt-1 flex items-center justify-between text-[11px] text-ink-faint">
         <span>分解返还{{ inst.level > 0 ? `(${refundRateText()})` : "" }}</span>
         <span class="tabular">
@@ -491,11 +460,8 @@ import { worldNameOfTier } from "@/core/formulas";
 import { resolveEquipStats } from "@/core/equipGen";
 import {
   decomposeEquipment,
-  equipLevelCap,
   equipUpgradeCost,
   upgradeEquipment,
-  upgradeEquipmentAll,
-  upgradeRestCost,
 } from "@/core/forge";
 import { useResourcesStore } from "@/stores/resources";
 import { toNum } from "@/utils/gnum";
@@ -515,7 +481,6 @@ import { affixDef, AFFIXES } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
 import { usePlayerStore } from "@/stores/player";
 import { formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
-import { EQUIP_LEVEL_BONUS } from "@/data/constants";
 import { isZero, sub, subClamp } from "@/utils/gnum";
 import type { AnyStatKey, GNum } from "@/types";
 import { AFFIX_RARITY_META, STAT_NAMES } from "@/ui/statNames";
@@ -524,6 +489,7 @@ import QualityTag from "@/components/common/QualityTag.vue";
 import AffixTransferPanel from "./AffixTransferPanel.vue";
 import EquipNotePanel from "./EquipNotePanel.vue";
 import EquipSealPanel from "./EquipSealPanel.vue";
+import EquipUpgradePanel from "./EquipUpgradePanel.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import { useLoreStore } from "@/stores/lore";
@@ -556,16 +522,13 @@ const isEquipped = computed(() =>
   inst.value && template.value ? inventory.equipped[template.value.slot] === inst.value.uid : false,
 );
 const upCost = computed(() => (inst.value ? equipUpgradeCost(inst.value.uid) : null));
-/** 付不起即灰:强化要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径) */
+/** 付不起即灰:强化要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径)。
+ *  页脚「强 化」钮专用;主文的价签/连强账在 EquipUpgradePanel(同一核心函数,两处必同账) */
 const upAffordable = computed(() => {
   const c = upCost.value;
   if (!c) return false;
   return resources.hasSmall("dust", c.dust) && resources.hasStone(c.stone);
 });
-/** 连强到顶的总账:从当前级一路到满级要吃多少(纯读预览,与 upgradeEquipmentAll 同算法) */
-const restUpgrade = computed(() =>
-  inst.value ? upgradeRestCost(inst.value.uid) : ("max" as const),
-);
 /** 分解返还:底材 + 强化投入的配比(文案走 refundRateText,与 DECOMPOSE_REFUND_RATE 同源,不手写「八成」) */
 const salvage = computed(() => (inst.value ? salvageOf(inst.value) : null));
 
@@ -801,10 +764,7 @@ function doUpgrade(): void {
   if (inst.value) upgradeEquipment(inst.value.uid);
 }
 
-/** 连强到顶:一次点到器灵尘/灵石见底或满级(forge.upgradeEquipmentAll 已合一条总账) */
-function doUpgradeAll(): void {
-  if (inst.value) upgradeEquipmentAll(inst.value.uid);
-}
+// 连强到顶的账与动作在 EquipUpgradePanel.vue(宿主页脚只留单级「强 化」)
 
 const decomposeArm = ref<string | null>(null);
 
