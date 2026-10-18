@@ -377,6 +377,13 @@ async function quiesceOverlays(page) {
 
 async function measurePage(page) {
   return page.evaluate(() => {
+    // 测量标准化:入场动画(stagger-in 的位移、breathe 的缩放)进行中量几何,
+    // 量到的是动画中间帧 —— /create 的灵根圆环曾在 stagger 中段被量出左右各越 5px。
+    // 截图有 animations:"disabled",测量也必须同一口径:测的是稳态布局,不是中间帧。
+    // (减动效自检在独立 ctx 按 duration/iteration 量,不受这条注入影响。)
+    const st = document.createElement("style");
+    st.textContent = "*,*::before,*::after{animation:none!important;transition:none!important}";
+    document.head.appendChild(st);
     const vw = window.innerWidth;
     const overflows = [...document.querySelectorAll("body *")]
       .filter((el) => {
