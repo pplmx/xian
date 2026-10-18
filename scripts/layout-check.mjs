@@ -398,6 +398,16 @@ async function measurePage(page) {
         for (let node = el; node; node = node.parentElement) {
           if (getComputedStyle(node).pointerEvents === "none") return false;
         }
+        /*
+         * 横向滚动轨里的内容**本来就该**超出取景 —— 容器自己负责滚,玩家滚得到。
+         * 320-late 的坊市寄售候选行(overflow-x-auto + shrink-0 的候选牌)第一次把
+         * 这一族带进判据:牌在轨内越界是设计,不是排版事故。只豁免 auto/scroll,
+         * 不豁免 overflow-hidden(外壳那层 hidden 恰恰是「玩家滚不动」的事故层)。
+         */
+        for (let node = el.parentElement; node; node = node.parentElement) {
+          const s = getComputedStyle(node);
+          if (s.overflowX === "auto" || s.overflowX === "scroll") return false;
+        }
         return true;
       })
       .slice(0, 4)
