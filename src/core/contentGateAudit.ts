@@ -82,9 +82,9 @@ export const CONTENT_GATES: ContentGate[] = [
     kind: "trigger",
     minMajor: 14,
     evidence:
-      "PetDef 无境界字段;入门 8 只由无门槛事件发放(ev_wounded_beast / ft_beast_pledge)," +
-      "神兽中应龙/青鸾由仙界事件(ev_xianmen_yize/ev_qingluan_yun,minRealm 9/10)发放," +
-      "其余由神界/混沌海事件发放",
+      "PetDef 无境界字段;随机池 21 只(精品~天品)由两条际遇事件发放(ev_wounded_beast ≤4 境 / ft_beast_pledge ≤8 境)," +
+      "仙/神 19 只全由 minRealm ≥ 9 的指名事件发放(应龙/青鸾在仙界 ev_xianmen_yize/ev_qingluan_yun,minRealm 9/10;" +
+      "其余在神界/混沌海)",
     reachableByGoldRebirth: false,
     bypass: "入门灵兽金丹前即可集齐;神兽须行至仙界及以上(应龙/青鸾在仙界,其余在神界/混沌海)",
     qualifies: true,

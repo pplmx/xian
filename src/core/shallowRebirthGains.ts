@@ -98,9 +98,10 @@ export const SHALLOW_GAINS: ShallowGainRow[] = [
     name: "灵兽",
     kind: "capped",
     perLife: "事件掉落,概率推进",
-    cap: PETS.length,
+    cap: PETS.filter((p) => p.quality !== "immortal" && p.quality !== "divine").length,
     livesToCap: null,
-    evidence: "发放事件无 minRealm,标签 general/forest;图鉴 collect 与 petId 均跨世保留",
+    evidence:
+      "随机池只出精品~天品 21 只(ev_wounded_beast ≤4 境 / ft_beast_pledge ≤8 境);仙/神 19 只全由 minRealm ≥ 9 的指名事件发放,金丹够不着;图鉴 collect 与 petId 均跨世保留",
   },
   {
     id: "lore",
