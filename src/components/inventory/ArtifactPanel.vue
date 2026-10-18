@@ -15,6 +15,12 @@
     {{ cnNumber(ARTIFACT_MAX_LEVEL) }} 重 —— 顶到封顶的不再涨,卡片上标着
   </p>
   <div v-if="artifactRows.length" class="mt-2 space-y-2.5">
+    <!--
+      法宝行卡的品阶晕染:边框随档加深(qualityTier 同源),天/仙/神另有角章。
+      底色**固定 6%**(不随档):法宝行是多行文字密卡(名/描述/被动/神通 11-14px),
+      进阶档的 10% 与稀有档的 13% 底会把文字对比度压破 AA(货架 4.35:1 的同一教训,
+      见 MarketView shelfTier)—— 档位线索由边框与角章承担,底色退回弱晕。
+    -->
     <div
       v-for="row in artifactRows"
       :key="row.def.id"
@@ -24,7 +30,7 @@
           qualityDef(row.def.quality).color,
           tierOf(row.def.quality).border,
         ),
-        background: colorWithAlpha(qualityDef(row.def.quality).color, tierOf(row.def.quality).bg),
+        background: colorWithAlpha(qualityDef(row.def.quality).color, 0.06),
       }"
     >
       <!-- 佩戴中的法宝盖「随」章(玉色,与装备格的「佩」同族) —— 靠按钮文字区分太隐晦 -->
