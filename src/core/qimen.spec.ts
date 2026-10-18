@@ -145,7 +145,11 @@ describe("择门 · 预估与实战同源", () => {
 
 describe("择门 · 接线", () => {
   it("远征准备里能择门,且预估把门算进去了", () => {
-    const src = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf8")
+    // 远征域(含 prep 弹窗)拆出后判据随本体走(components/celestial/ExpeditionPanel.vue)
+    const src = readFileSync(
+      resolve(__dirname, "../components/celestial/ExpeditionPanel.vue"),
+      "utf8",
+    )
       .replace(/<!--[\s\S]*?-->/g, "")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/\/\/.*$/gm, "");

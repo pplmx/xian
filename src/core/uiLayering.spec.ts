@@ -1140,8 +1140,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cv, "变数至上条数读 CHALLENGE_MAX_MUTATORS").toContain(
       "cnNumber(CHALLENGE_MAX_MUTATORS)",
     );
-    expect(cv, "行程层数临界不写死 2 / 3").toContain("layer >= EXPEDITION_ROUTE_LAYERS");
-    expect(cv, "界主层判据读 EXPEDITION_GUARDIAN_LAYER").toContain("=== EXPEDITION_GUARDIAN_LAYER");
+    // 远征域拆出后层数/界主判据随本体走 ExpeditionPanel
+    const exped = readFileSync(
+      resolve(__dirname, "../components/celestial/ExpeditionPanel.vue"),
+      "utf-8",
+    );
+    expect(exped, "行程层数临界不写死 2 / 3").toContain("layer >= EXPEDITION_ROUTE_LAYERS");
+    expect(exped, "界主层判据读 EXPEDITION_GUARDIAN_LAYER").toContain(
+      "=== EXPEDITION_GUARDIAN_LAYER",
+    );
     const av = readFileSync(resolve(__dirname, "../views/ApprenticeView.vue"), "utf-8");
     expect(av, "收徒价签读常量,不许手写 30").toContain("APPRENTICE_RECRUIT_TIER_AMOUNT");
     expect(readFileSync(resolve(__dirname, "../stores/apprentice.ts"), "utf-8")).toContain(
@@ -1653,8 +1660,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // undertakeChallenge 只跑一场抛报告,不碰 worldRun,却独独挂了 run 锁,
     // 与另三路同形按钮完全相反:远征正跑时立约被静默置灰、而试炼/变数/今题
     // 依旧可点,玩家看不出凭什么。四路都是即时单场,统一都不受远征在途拦。
+    // 远征域拆出后:守 run 的两键随本体走 ExpeditionPanel
+    const exped = FILES.find((f) => f.path === "components/celestial/ExpeditionPanel.vue");
+    expect(exped?.src, "启程/破界两键仍要守 run(它们是真远征)").toMatch(/:disabled="run !== null/);
+    // 立约钮暂在主文件(随试炼块改道),负断言先留在主文件
     const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
-    expect(cel?.src, "启程/破界两键仍要守 run(它们是真远征)").toMatch(/:disabled="run !== null/);
     expect(cel?.src, "立约不许再挂 run 锁 —— 与试炼/变数/今题同族即时单场").not.toMatch(
       /!\s*challengeVerdict\?\.ok \|\| run !== null/,
     );
@@ -2152,6 +2162,7 @@ describe("主巡页 · 字阶同一套", () => {
     "views/MortalWorldView.vue",
     // 天界拆出的面板:字号原样随模板搬来,入列逐文件验,不许在组件里长私档
     "components/celestial/MarksPanel.vue",
+    "components/celestial/ExpeditionPanel.vue",
     "views/SettingsView.vue",
     "views/CreateView.vue",
     "views/WelcomeView.vue",

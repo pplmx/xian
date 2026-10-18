@@ -431,22 +431,26 @@ describe("文案数值对账 · 视图不手抄数量", () => {
   });
 
   it("远征行程与变数连战数取自 EXPEDITION_* / MUTATION_FIGHTS", () => {
-    const view = src("../views/CelestialView.vue");
+    // 远征域拆出后:行程/界主部分随本体走 ExpeditionPanel,
+    // 变数连战数(markText)仍暂在主文件,随试炼块改道
+    const view = src("../components/celestial/ExpeditionPanel.vue");
     expect(view).toContain("cnNumber(EXPEDITION_ROUTE_LAYERS)");
-    expect(view).toContain("cnNumber(MUTATION_FIGHTS)");
     expect(view, "界主层判定读常数,不写 3").toContain("EXPEDITION_GUARDIAN_LAYER");
     expect(view, "行程点列不该自己数一遍重数").not.toContain("'一重', '二重', '三重'");
     expect(view).not.toContain("三重已过");
-    expect(view).not.toContain("六连战");
+    const cel = src("../views/CelestialView.vue");
+    expect(cel).toContain("cnNumber(MUTATION_FIGHTS)");
+    expect(cel).not.toContain("六连战");
     // 变数全捷的战报冠词也读常数(不是把 6 再抄一遍):「六战全捷」随 MUTATION_FIGHTS 走
-    expect(view, "全捷战报的连战数要读 MUTATION_FIGHTS").toContain(
+    expect(cel, "全捷战报的连战数要读 MUTATION_FIGHTS").toContain(
       "${cnNumber(MUTATION_FIGHTS)}战全捷",
     );
-    expect(view, "不许手写「六战全捷」当常数改了只顾一头").not.toContain("六战全捷");
+    expect(cel, "不许手写「六战全捷」当常数改了只顾一头").not.toContain("六战全捷");
   });
 
   it("中道而返是两段式确认,且披露此行的道源损失(误触不再赔整趟远征)", () => {
-    const view = src("../views/CelestialView.vue");
+    // 远征域拆出后判据随本体走(components/celestial/ExpeditionPanel.vue)
+    const view = src("../components/celestial/ExpeditionPanel.vue");
     // 不可逆的毁约/熔尽/重写在别处一律两段式;远征放弃落上同一待遇 —— 若有人把
     // v-if="abandonArmed" 这段摘掉改回一键,守卫会红(决策前摊数字契约)
     expect(view, "中道而返该先进入待确认态,不是立刻执行").toContain('@click="abandonArmed = true"');
@@ -456,7 +460,8 @@ describe("文案数值对账 · 视图不手抄数量", () => {
   });
 
   it("远征启程的提交钮要点名入界成本与败北后果 —— 决策信息不能只在前一屏卡片上给", () => {
-    const view = src("../views/CelestialView.vue");
+    // 远征域(prep 弹窗 + 虚界卡同域)拆出后判据随本体走 ExpeditionPanel
+    const view = src("../components/celestial/ExpeditionPanel.vue");
     // prep 的「启 程」按钮是动手前最后一眼:成本与「败则尽付东流」若只露在入口卡或停战弧,
     // 站在提交钮上的人看不见 —— 与 AGENTS「下手前摊数字/后果」不符
     expect(view, "启程钮要引入界成本").toContain("启 程(入界 {{ prepWorld?.entryCost }} 道源)");
@@ -532,9 +537,14 @@ describe("文案数值对账 · 手写的门槛与容量", () => {
 
   it("「可行流派 x/N」的分母取自 BUILD_PROFILES(界面与生态健康度同源)", () => {
     expect(BUILD_PROFILES.length).toBe(6);
+    // 天界拆分后分母在两处出现:今日天道/挑战书在主文件,prep 天道推演在 ExpeditionPanel
+    // —— 分文件各断一份,防同型两处命中假绿
     const view = src("../views/CelestialView.vue");
     expect(view, "分母应读构筑流派数").toContain("BUILD_PROFILES.length");
     expect(view, "界面里的分母不该手写").not.toMatch(/\}\}\s*\/6\b/);
+    const exped = src("../components/celestial/ExpeditionPanel.vue");
+    expect(exped, "分母应读构筑流派数(prep 推演)").toContain("BUILD_PROFILES.length");
+    expect(exped, "界面里的分母不该手写").not.toMatch(/\}\}\s*\/6\b/);
     const health = src("./ecosystemHealth.ts");
     expect(health, "健康度的多样性分母也读构筑流派数").toContain("BUILD_PROFILES.length");
     expect(health).not.toMatch(/\/ ?6\b/);
