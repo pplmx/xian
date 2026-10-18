@@ -156,6 +156,32 @@ const dispatchLabel = computed(() => {
   const target = needTargetDoor(dispatchStock());
   return target ? `各尽其长 · 派去「${taskDef(target).name}」` : "各尽其长 · 各就本职";
 });
+
+/**
+ * 派活任务说明点按展开 —— 与适配理由/天赋芯片同族(「点一下展开一行」)。
+ *
+ * 任务描述此前只挂在 :title 上,手机没有 hover,那是谁也看不见的死提示;而派出
+ * 又是把弟子锁走 30~90 分钟的半承诺。故同一枚按钮改两步:第一下展开说明
+ * (aria-expanded 报给读屏),再点一下才真派出 —— 说明看得见,误触也不再直接锁人。
+ */
+const taskTap = ref<string | null>(null); // `${uid}:${spec}`
+
+function tapTask(uid: string, spec: ApprenticeSpec): void {
+  const key = `${uid}:${spec}`;
+  if (taskTap.value === key) {
+    taskTap.value = null;
+    send(uid, spec);
+  } else {
+    taskTap.value = key;
+  }
+}
+
+/** 当前展开说明的那一单(跨弟子只开一份;拆 key 是为了让说明行能读回任务名) */
+const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => {
+  if (!taskTap.value) return null;
+  const i = taskTap.value.indexOf(":");
+  return { uid: taskTap.value.slice(0, i), spec: taskTap.value.slice(i + 1) as ApprenticeSpec };
+});
 </script>
 
 <template>
@@ -246,9 +272,9 @@ const dispatchLabel = computed(() => {
             <button
               v-for="t in APPRENTICE_TASKS"
               :key="t.spec"
-              class="rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
-              :title="t.desc"
-              @click="send(a.uid, t.spec)"
+              class="rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar active:scale-95"
+              :aria-expanded="taskTap === a.uid + ':' + t.spec"
+              @click="tapTask(a.uid, t.spec)"
             >
               <span class="block"
                 >{{ t.name }}({{ Math.round(apprenticeTaskSeconds(t.spec) / 60) }}分)</span
@@ -256,6 +282,15 @@ const dispatchLabel = computed(() => {
               <span class="block text-ink-faint">{{ taskYield(a, t.spec) }}</span>
             </button>
           </div>
+          <!-- 任务说明点开直出(与适配理由/天赋芯片同族)::title 在手机上是死提示。
+               第一tap 展开,再点同一枚即派出 —— 派出锁人 30~90 分钟,顺手变成两步。 -->
+          <p
+            v-if="tappedTask && tappedTask.uid === a.uid"
+            class="mt-1 text-[10px] leading-relaxed text-ink-faint"
+          >
+            「{{ taskDef(tappedTask.spec).name }}」{{ taskDef(tappedTask.spec).desc }} ——
+            再点一次「{{ taskDef(tappedTask.spec).name }}」即派出
+          </p>
         </div>
         <!-- 真传:跨世之缘只对最高羁绊开放 —— 养出真传的玩家该看得见这条,不藏注释 -->
         <p v-if="a.bond >= BOND_TRUECODE_MIN" class="mt-1.5 text-[10px] text-gold-ink">
@@ -276,6 +311,14 @@ const dispatchLabel = computed(() => {
       收徒一次耗灵石(按当前境界)。弟子天赋门类的产出 ×{{
         APPRENTICE_TALENT_BONUS
       }}。到时辰归来,久不在线亦照算。
+    </p>
+    <!--
+      等级从哪来:升级由完工趟数驱动(每收割一趟 +1,封顶 20),机制里没有
+      「半格进度」可言 —— 故不编一条「距下次升级」的假进度,把来源说清楚。
+      羁绊(趟数)已逐档摊在弟子卡上,与升级同源同长。
+    -->
+    <p class="text-[10px] leading-relaxed text-ink-faint">
+      弟子每完工一趟升一级(封顶 {{ APPRENTICE_MAX_LEVEL }} 级),等级越高,一趟带回的越多。
     </p>
   </div>
 </template>

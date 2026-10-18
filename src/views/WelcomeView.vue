@@ -33,12 +33,20 @@
     </button>
 
     <!-- 底部:隐私政策 / 导出导入恢复 / 关于 -->
+    <!-- 三枚底链是全站 28px 触点族的一员:裸 text-[11px] 的命中区只有字高 16.5px
+         (排版自检「开局前两页」任务首检即红),-my-1.5 py-1.5 把行盒撑到 28px 一族 -->
     <div class="mt-5 flex items-center gap-3 text-[11px] text-ink-faint">
-      <button class="active:text-ink-soft" @click="privacyOpen = true">隐私政策</button>
+      <button class="-my-1.5 py-1.5 active:text-ink-soft" @click="privacyOpen = true">
+        隐私政策
+      </button>
       <span class="text-ink/15">·</span>
-      <button class="active:text-ink-soft" @click="importOpen = true">导入存档</button>
+      <button class="-my-1.5 py-1.5 active:text-ink-soft" @click="importOpen = true">
+        导入存档
+      </button>
       <span class="text-ink/15">·</span>
-      <button class="active:text-ink-soft" @click="aboutOpen = true">关于此作</button>
+      <button class="-my-1.5 py-1.5 active:text-ink-soft" @click="aboutOpen = true">
+        关于此作
+      </button>
     </div>
 
     <!--

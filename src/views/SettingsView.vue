@@ -52,10 +52,20 @@
         <span class="text-[14px] text-ink-soft">减少动效</span>
         <input v-model="settings.reduceMotion" type="checkbox" class="toggle-ink" />
       </label>
-      <label class="flex items-center justify-between py-3">
-        <span class="text-[14px] text-ink-soft">遇事勿扰</span>
-        <input v-model="settings.dndEvents" type="checkbox" class="toggle-ink" />
-      </label>
+      <div class="py-3">
+        <label class="flex items-center justify-between">
+          <span class="text-[14px] text-ink-soft">遇事勿扰</span>
+          <input v-model="settings.dndEvents" type="checkbox" class="toggle-ink" />
+        </label>
+        <!--
+          功能 hint:这开关开着是「静默的」(际遇自动结清、弹窗永不出现),只留一个勾
+          玩家会以为是际遇没了 —— 历练页有开着时的完整提示与就地关掉(见 explorationDnd
+          与 AdventureView),这里把压缩成一句,两页通气。
+        -->
+        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          历练撞见际遇不再弹窗,按默认好愿当场结清(奖励照拿);历练页会提醒开着,可就地关。
+        </p>
+      </div>
       <div class="flex items-center justify-between py-3">
         <span class="text-[14px] text-ink-soft">夜间模式</span>
         <div role="group" aria-label="夜间模式" class="flex gap-1">
