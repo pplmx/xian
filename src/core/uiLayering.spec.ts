@@ -1614,7 +1614,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(shop?.src, "灵草坊尚差要跟全球「尚差 N 石」口风").toMatch(
       /尚差 \{\{ formatGN\(row\.short\) \}\} 石/,
     );
-    expect(shop?.src, "灵草坊价目行要全称「灵石」").toContain("单价 {{ formatGN(row.price) }} 灵石");
+    expect(shop?.src, "灵草坊价目行要全称「灵石」").toContain(
+      "单价 {{ formatGN(row.price) }} 灵石",
+    );
     const gongfa = FILES.find((f) => f.path === "components/cultivation/GongfaDialog.vue");
     expect(gongfa?.src, "进修按钮与横幅都要全称「悟道点」").toContain(
       "悟道点 · {{ upCost.page }} 残页",

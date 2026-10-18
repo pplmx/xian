@@ -17,10 +17,7 @@
           :size="16"
           :style="{ color: qualityDef(row.item.quality).color }"
         />
-        <button
-          class="min-w-0 grow text-left active:opacity-70"
-          @click="openDetail(row.item.uid)"
-        >
+        <button class="min-w-0 grow text-left active:opacity-70" @click="openDetail(row.item.uid)">
           <span
             class="block truncate font-kai text-[14px]"
             :style="{ color: qualityDef(row.item.quality).color }"

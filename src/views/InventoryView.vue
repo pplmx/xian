@@ -405,12 +405,7 @@ import { PILL_BATCH, usePill, usePillBatch } from "@/core/pillService";
 import { equipAllBest, equipSetCombo } from "@/core/equipBest";
 import { equipSetDef, setCounts, type EquipSetDef } from "@/core/equipSet";
 import { useLoreStore } from "@/stores/lore";
-import {
-  formatGN,
-  formatExact,
-  formatNum,
-  formatPercent,
-} from "@/utils/format";
+import { formatGN, formatExact, formatNum, formatPercent } from "@/utils/format";
 import { colorWithAlpha } from "@/ui/colorVar";
 import type { EquipSlot } from "@/types";
 import SectionTitle from "@/components/common/SectionTitle.vue";

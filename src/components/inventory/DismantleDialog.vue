@@ -53,11 +53,7 @@
     </p>
     <label class="mt-2 flex items-center justify-between py-1.5">
       <span class="text-[14px] text-ink-soft">启用智能收纳</span>
-      <input
-        v-model="settings.smartKeep.enabled"
-        type="checkbox"
-        class="h-4 w-4 accent-cinnabar"
-      />
+      <input v-model="settings.smartKeep.enabled" type="checkbox" class="h-4 w-4 accent-cinnabar" />
     </label>
     <!--
       品质下限:九档全给(凡→神)。从前只列灵/玄/地三档,于是"想更严一点"无处可选 ——
@@ -76,9 +72,7 @@
           class="chip-ink"
           :aria-pressed="settings.smartKeep.minQuality === q.rank"
           :style="
-            settings.smartKeep.minQuality === q.rank
-              ? { color: q.color, borderColor: q.color }
-              : {}
+            settings.smartKeep.minQuality === q.rank ? { color: q.color, borderColor: q.color } : {}
           "
           :class="settings.smartKeep.minQuality === q.rank ? '' : 'border-ink/25 text-ink-faint'"
           @click="settings.smartKeep.minQuality = q.rank"
@@ -135,9 +129,7 @@
     <label class="flex items-center justify-between py-1.5">
       <span class="text-[11px] text-ink-soft">
         线下不看缘分,一律回收
-        <span class="block text-[10px] text-ink-faint"
-          >低于保留线的件不再由核心词条/套件救回</span
-        >
+        <span class="block text-[10px] text-ink-faint">低于保留线的件不再由核心词条/套件救回</span>
       </span>
       <input
         v-model="settings.smartKeep.junkBelowLine"
@@ -233,12 +225,7 @@ import { useSettingsStore } from "@/stores/settings";
 import { useUiStore } from "@/stores/ui";
 import { QUALITIES } from "@/data/qualities";
 import { maxTierForMajor } from "@/data/regions";
-import {
-  batchYieldText,
-  decomposeBatch,
-  decomposeByRanks,
-  decomposePreview,
-} from "@/core/forge";
+import { batchYieldText, decomposeBatch, decomposeByRanks, decomposePreview } from "@/core/forge";
 import { salvageOf } from "@/core/salvage";
 import { smartKeepImpact, smartRecycleTargets } from "@/core/smartKeep";
 import { add, gnZero } from "@/utils/gnum";

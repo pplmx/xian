@@ -22,11 +22,9 @@
           :size="18"
           :style="{ color: qualityDef(row.def.quality).color }"
         />
-        <span
-          class="font-kai text-[14px]"
-          :style="{ color: qualityDef(row.def.quality).color }"
-          >{{ row.def.name }}</span
-        >
+        <span class="font-kai text-[14px]" :style="{ color: qualityDef(row.def.quality).color }">{{
+          row.def.name
+        }}</span>
         <QualityTag :quality="row.def.quality" />
         <!-- 「重」而不是「阶」:阶是地界与装备层级的词,法宝这一头说的是祭炼了几重 -->
         <span class="ml-auto tabular text-[11px] text-gold-ink">{{
@@ -77,10 +75,7 @@
         </button>
       </div>
       <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完 -->
-      <p
-        v-if="row.upCost && !row.upAffordable"
-        class="mt-1.5 text-[10px] text-cinnabar tabular"
-      >
+      <p v-if="row.upCost && !row.upAffordable" class="mt-1.5 text-[10px] text-cinnabar tabular">
         尚差 悟道点 {{ Math.max(0, row.upCost.wudao - resources.wudao) }} · 灵石
         {{ formatGN(Math.max(0, toNum(row.upCost.stone) - toNum(resources.spiritStone))) }}
       </p>
