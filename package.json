@@ -32,7 +32,9 @@
     "build:electron": "bun run build && esbuild electron/main.js --bundle --platform=node --format=esm --outfile=dist-electron/main.js --external:electron && esbuild electron/preload.js --bundle --platform=node --format=cjs --outfile=dist-electron/preload.js --external:electron && electron-builder",
     "build:android": "bun run build && bunx cap sync android",
     "build:apk": "bun run build:android && cd android && ./gradlew assembleRelease",
-    "prepare": "vp config --no-agent"
+    "prepare": "vp config --no-agent",
+    "verify": "bunx vp fmt --check && bun run check && bun run test && bun run build",
+    "preverify": "find dist -type f -delete 2>/dev/null; find dist -type d -empty -delete 2>/dev/null; true"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

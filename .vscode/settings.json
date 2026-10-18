@@ -1,0 +1,40 @@
+{
+  // ── 搜索与监视排除:全库搜索不再被构建产物与工具缓存污染 ──────────────
+  // packages/engine/dist 与 src 是同一份库的两份拷贝(subtree 对账),
+  // 不排除的话 grep/搜索每个关键词都出双份命中。
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/dist-electron": true,
+    "**/.vitest": true,
+    "**/.vite-hooks": true,
+    "**/.rumbl_cache": true,
+    "**/.workbuddy": true,
+    "**/packages/engine/dist": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/dist-electron/**": true,
+    "**/.vitest/**": true,
+    "**/.vite-hooks/**": true,
+    "**/.rumbl_cache/**": true,
+    "**/packages/engine/dist/**": true
+  },
+  // ── 资源管理器折叠:配置链收进 package.json,减少根目录的视觉噪音 ──────
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "bun.lock*, package-lock.json, .prettierignore, .commitlintrc.json, tsconfig*.json",
+    "AGENTS.md": "CODE_OF_CONDUCT.md, .gitattributes, .dockerignore, .dockerignore.ci",
+    "README.md": "*.webp"
+  },
+  // ── 编辑器行为 ──────────────────────────────────────────────
+  // 格式化以 `bunx vp fmt`(CLI)为准 —— CI 的 fmt --check 是唯一裁判,
+  // 编辑器侧不开 formatOnSave,避免两套格式器对同一文件各执一词。
+  "editor.formatOnSave": false,
+  "js/ts.tsserver.experimental.enableProjectDiagnostics": true,
+  // Vue 单文件组件的 script 区按 TS 处理(需 Vue.volar 扩展,见 extensions.json)
+  "files.associations": {
+    "*.vue": "vue"
+  }
+}
