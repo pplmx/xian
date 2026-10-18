@@ -108,7 +108,11 @@
 
     <!-- 未入:择一处 -->
     <template v-else>
-      <div class="mt-1 space-y-1.5">
+      <!-- 身在另一册的境中:先说明进不去,不摆一列点了才被拒的门 -->
+      <p v-if="elsewhere" class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        身在「{{ elsewhere.name }}」秘境之中 —— 出而后再来择境。
+      </p>
+      <div v-else class="mt-1 space-y-1.5">
         <button
           v-for="r in list"
           :key="r.id"
@@ -197,7 +201,26 @@ const endgame = useEndgameStore();
 const unlocked = computed(() => realmUnlock(props.gate));
 /** 出秘境二步确认:整趟是付过门票的独一份内容,误触「出」就该血亏(与删快照同族) */
 const confirmAbandon = ref(false);
-const state = computed(() => currentRealm());
+/**
+ * 在境中(仅认本册):currentRealm 是全局单份、不分册 —— 不筛的话,身在凡境的境中
+ * 时,天界册(试炼域)这张卡也会以「天界秘境」的册头渲染凡境的境况,册头与内容
+ * 口径失实。两册互不串门,与 availableRealms 的 gate 过滤同一口径。
+ */
+const state = computed(() => {
+  const s = currentRealm();
+  if (!s) return null;
+  return secretRealmDef(s.realmId)?.gate === props.gate ? s : null;
+});
+/**
+ * 身在**另一册**的境中:此册哪一处都进不去(引擎会拒「已在秘境之中」)。
+ * 与其摆一列点了才被 toast 拒的门,不如就地说明 —— 付不起置灰+列因的同族纪律。
+ */
+const elsewhere = computed(() => {
+  const s = currentRealm();
+  if (!s) return null;
+  const d = secretRealmDef(s.realmId);
+  return d && d.gate !== props.gate ? d : null;
+});
 const list = computed(() => availableRealms(props.gate));
 const def = computed<SecretRealmDef | undefined>(() =>
   state.value ? secretRealmDef(state.value.realmId) : undefined,
