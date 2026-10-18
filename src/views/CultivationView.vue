@@ -493,6 +493,7 @@ import {
 import { usePill } from "@/core/pillService";
 import { qiRepairView, repairWithQi } from "@/core/qiRepair";
 import { useNow } from "@/composables/useNow";
+import { useProgressEta } from "@/composables/useProgressEta";
 import { BREAKTHROUGH_PREP_OPTIONS } from "@/data/earlyGame";
 import { REALMS } from "@/data/realms";
 import { buffDef } from "@/data/buffs";
@@ -567,41 +568,49 @@ const btQiBlock = computed(() => {
  * 「还需」用 subClamp 算(不足则为 0),预计耗时 = 还需 ÷ 当前修为速度 ——
  * 到「京」这一档之后,绝对值本身看不出涨落,而这句"还需 3 天 2 时"每天都变,
  * 玩家据此判断自己是不是在前进。已圆满时不再报时间(那是在等突破,不是等修为)。
+ *
+ * 行骨架(上限→积余?→还需→预计 + ETA 三分支)与灵气详情同构,收进 useProgressEta
+ * 一份实现;这里只喂口径与文案(GNum 大数折法、满态话术),不再自写行序。
  */
-const expDetailRows = computed(() => [
-  { label: "所需", value: player.expReq, hint: "当前这一层的需求" },
-  {
-    label: "还需",
-    value: subClamp(player.expReq, player.exp),
-    hint: player.expFull ? "已至圆满,可尝试突破" : `每秒 ${formatRate(player.cultPerSec)}`,
-  },
+const {
+  rows: expDetailRows,
+  etaText: expEtaText,
+  note: expDetailNote,
+} = useProgressEta({
+  cap: () => player.expReq,
+  rate: () => player.cultPerSec,
+  isFull: () => player.expFull,
+  gap: () => toNum(subClamp(player.expReq, player.exp)),
+  remain: () => subClamp(player.expReq, player.exp),
+  capRow: { label: "所需", hint: "当前这一层的需求" },
   /**
    * 积余从主行挪进这里(玩家反馈:主行被它顶成两行)。
    * 它是**跨境界带走的那部分** —— 卡境期间继续攒,突破时只扣本境需求,
    * 所以这行不只是"多出来的数",还是一句"等待不白等"。
    */
-  ...(toNum(player.expOverflow) > 0
-    ? [
-        {
-          label: "积余",
-          value: player.expOverflow,
-          hint: "越过本境需求的部分;突破时随境界带走,不白攒",
-        },
-      ]
-    : []),
+  banked: {
+    value: () => player.expOverflow,
+    label: "积余",
+    hint: "越过本境需求的部分;突破时随境界带走,不白攒",
+  },
+  remainRow: {
+    label: "还需",
+    hint: () => (player.expFull ? "已至圆满,可尝试突破" : `每秒 ${formatRate(player.cultPerSec)}`),
+  },
   /**
    * 玩家点名要的那一行:绝对值到「京」以后看不出涨落,**"还要多久"才看得见变化** ——
    * 它每天都在动。故把它从脚注提成独立一行(用 text 走时长格式,没有精确值可展开)。
    */
-  { label: "预计", text: expEtaText.value, hint: "按当前修炼速度;未计战斗所得与丹药" },
-]);
-/** 修为见满还需多久(已满/无速率时说人话,不给假时长) */
-const expEtaText = computed(() => {
-  if (player.expFull) return "已满 —— 下一步是突破";
-  const remain = toNum(subClamp(player.expReq, player.exp));
-  if (remain <= 0) return "就要满了";
-  if (player.cultPerSec <= 0) return "当前无修为进项";
-  return `约 ${formatDuration(remain / player.cultPerSec)}`;
+  etaRow: { label: "预计", hint: "按当前修炼速度;未计战斗所得与丹药" },
+  /** 修为见满还需多久(已满/无速率时说人话,不给假时长) */
+  fullText: "已满 —— 下一步是突破",
+  almostText: "就要满了",
+  rateEmptyText: "当前无修为进项",
+  formatEta: (sec) => `约 ${formatDuration(sec)}`,
+  note: () => {
+    if (player.expFull) return "修为已满 —— 下一步是突破,不是再攒。";
+    return undefined;
+  },
 });
 
 /**
@@ -632,10 +641,6 @@ const longEtaHint = computed(() => {
   }
   return "久等 —— 点「来路」看这一速由哪几处撑着,补一处就快一分";
 });
-const expDetailNote = computed(() => {
-  if (player.expFull) return "修为已满 —— 下一步是突破,不是再攒。";
-  return undefined;
-});
 
 /** 灵气同理:回满还要多久 —— 突破、疗伤、炼丹都在等这条线 */
 const qiOverCap = computed(() => resources.qi > player.qiCapValue);
@@ -646,40 +651,32 @@ const qiRichInfo = computed(() => {
   const gap = Math.max(0, threshold - resources.qi);
   return { on, threshold, gap };
 });
-/** 标称容量之外还攒了多少 —— 主行只挂一个「+」,精确值在点开的详情里 */
-const qiBanked = computed(() =>
-  Math.max(0, Math.floor(resources.qi) - Math.floor(player.qiCapValue)),
-);
-const qiDetailRows = computed(() => [
-  { label: "标称容量", value: player.qiCapValue, hint: "进度条与上限判定走的这条线" },
-  ...(qiBanked.value > 0
-    ? [
-        {
-          label: "积余",
-          value: qiBanked.value,
-          hint: `容量之外还在攒的部分;可积到 ${formatNum(player.qiBankCapValue)}(容量的 ${QI_BANK_MULT} 倍)`,
-        },
-      ]
-    : []),
-  {
-    label: "还差",
-    value: Math.max(0, Math.floor(player.qiCapValue - resources.qi)),
-    hint: `每秒 ${formatRate(player.qiRegenPerSec)}`,
+/** 标称容量之外还攒了多少 —— 主行只挂一个「+」,精确值在点开的详情里(行骨架走 useProgressEta) */
+const { rows: qiDetailRows, note: qiDetailNote } = useProgressEta({
+  cap: () => player.qiCapValue,
+  rate: () => player.qiRegenPerSec,
+  isFull: () => resources.qi >= player.qiCapValue,
+  gap: () => player.qiCapValue - resources.qi,
+  remain: () => Math.max(0, Math.floor(player.qiCapValue - resources.qi)),
+  capRow: { label: "标称容量", hint: "进度条与上限判定走的这条线" },
+  banked: {
+    value: () => Math.max(0, Math.floor(resources.qi) - Math.floor(player.qiCapValue)),
+    label: "积余",
+    hint: () =>
+      `容量之外还在攒的部分;可积到 ${formatNum(player.qiBankCapValue)}(容量的 ${QI_BANK_MULT} 倍)`,
   },
-  { label: "预计回满", text: qiEtaText.value, hint: "按当前回复速度" },
-]);
-const qiEtaText = computed(() => {
-  const gap = player.qiCapValue - resources.qi;
-  if (gap <= 0) return "已满";
-  if (player.qiRegenPerSec <= 0) return "当前无回复";
-  return `约 ${formatDuration(gap / player.qiRegenPerSec)}`;
-});
-const qiDetailNote = computed(() => {
-  if (resources.qi >= player.qiBankCapValue) {
-    return `灵气已积到上限(${formatNum(player.qiBankCapValue)} = 容量的 ${QI_BANK_MULT} 倍)——不会再涨;突破、疗伤与炼丹会消耗它。`;
-  }
-  if (player.qiCapValue - resources.qi <= 0) return "灵气已满(标称容量),继续积余到上限为止。";
-  return undefined;
+  remainRow: { label: "还差", hint: () => `每秒 ${formatRate(player.qiRegenPerSec)}` },
+  etaRow: { label: "预计回满", hint: "按当前回复速度" },
+  fullText: "已满",
+  rateEmptyText: "当前无回复",
+  formatEta: (sec) => `约 ${formatDuration(sec)}`,
+  note: () => {
+    if (resources.qi >= player.qiBankCapValue) {
+      return `灵气已积到上限(${formatNum(player.qiBankCapValue)} = 容量的 ${QI_BANK_MULT} 倍)——不会再涨;突破、疗伤与炼丹会消耗它。`;
+    }
+    if (player.qiCapValue - resources.qi <= 0) return "灵气已满(标称容量),继续积余到上限为止。";
+    return undefined;
+  },
 });
 
 // Phase 28 突破准备:按钮文案/耗时/药价全部来自 BREAKTHROUGH_PREP_OPTIONS,不再在视图里写第二份
