@@ -81,7 +81,9 @@
       </p>
 
       <!-- 人:性情与两句话 —— 她所求 / 她不越的线 -->
-      <div class="mt-3 ink-divider-mark" />
+      <!-- 花饰分隔(ink-divider-mark 的中腰墨点)是页面层专属 —— 弹窗用素分隔(ornament 判据;
+           迁出宿主前它一直靠 views/ 整目录豁免躲在判据外,拆出后照弹窗族先例归位) -->
+      <div class="mt-3 ink-divider" />
       <p class="text-[11px] text-ink-soft">
         {{ TEMPER_NAMES[bondDef.temper] }} · {{ LEAN_NAMES[bondDef.lean] }}道
         <span class="ml-1 text-qing">{{ STAGE_NAMES[bond.stage] }}</span>
