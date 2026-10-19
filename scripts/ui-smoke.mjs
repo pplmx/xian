@@ -31,6 +31,24 @@
  * ⚠ --late 很慢(终局页面上的按钮会真的触发模拟:突破推演 / 远征预估 / 挑战书
  * 定价,不是脚本卡住了)。日常冒烟用默认模式;并发只是让这些等待叠在一起,并不减免。
  */
+/**
+ * 元素句柄,不用 nth 序号定位器 —— 一处曾被当作「游戏性能问题」的教训
+ * --------
+ * 抓按钮清单若用 `getByRole("button").all()`,拿到的是一串**钉了序号**的定位器
+ * (nth(0), nth(1), …):toast 进出、弹窗开合、点了「← 返回」/入口卡跳页,
+ * 都会让序号指向别的节点或空号 —— 而 Playwright 的查询会按可操作性**自动等待**,
+ * 空号一路等到默认 30s 超时。实测后果:/market /apprentice /dongfu 三页被拖到
+ * ~44s/点击(点击「返回」离页后,余下 9 个序号 × 30s 纯等待),墙钟 626s 里
+ * 一半以上是它;CDP 采样证明等待期间主线程全闲 —— 游戏侧毫无问题,玩家无感。
+ * 时机的三变(toast TTL 2.6s/4.2s、弹窗、导航)也解释了「同一枚按钮时卡时不卡」。
+ *
+ * 改用 `elementHandles()`:句柄钉住**DOM 节点本身**,toast 进出不挪它,节点一没
+ * innerText/click 立即抛错(被 .catch 吃掉,快进快出)。另加一道离页守卫:
+ * hash 一变即断循环 —— 离页后旧页的按钮本就无从点起。
+ *
+ * 单步 >1s 的等待仍会记进「慢步骤」读数(不判失败):--late 的终局模拟是真算,
+ * 不能当门槛;但它能把将来再长回来的静默等待晒在报告里。
+ */
 import { chromium } from "playwright";
 import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -117,8 +135,21 @@ async function runRoute(route) {
   const page = await context.newPage();
   const errors = [];
   const silent = [];
+  const slowSteps = []; // 单步 >1s 的等待(读数,不判失败)—— 见文件头的「元素句柄」注
   let clicked = 0;
+  let leftPage = false;
   watchPageErrors(page, (msg) => errors.push({ where: `${route} 载入`, msg }));
+
+  /** 计一步的墙钟:>1s 记入 slowSteps(用途是把静默等待晒出来,不判成败) */
+  async function step(where, fn) {
+    const t = performance.now();
+    try {
+      return await fn();
+    } finally {
+      const ms = performance.now() - t;
+      if (ms > 1000) slowSteps.push({ where, ms: Math.round(ms) });
+    }
+  }
 
   /**
    * 点了没反应的按钮 —— 只报告,不判失败。
@@ -180,17 +211,19 @@ async function runRoute(route) {
   async function clickInsideModal(where) {
     const panel = page.locator(".modal-panel").first();
     if (!(await panel.count())) return;
-    const inner = await panel.getByRole("button").all();
+    // 元素句柄(见文件头):toast 进出会让 nth 序号换指,句柄钉节点,没了一抛即走
+    const inner = await panel.getByRole("button").elementHandles();
     for (const b of inner.slice(0, 6)) {
-      const label = ((await b.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
-      if (!label || SKIP.test(label)) continue;
+      const label = await step(`${where} 弹窗按钮读名`, () => b.innerText().catch(() => ""));
+      const text = (label || "").replace(/\s+/g, " ").trim();
+      if (!text || SKIP.test(text)) continue;
       if (!(await b.isVisible().catch(() => false))) continue;
       if (await b.isDisabled().catch(() => false)) continue;
       const before = errors.length;
-      await b.click({ timeout: 800 }).catch(() => {});
+      await step(`${where} 弹窗内点「${text}」`, () => b.click({ timeout: 800 }).catch(() => {}));
       clicked += 1;
       await page.waitForTimeout(160);
-      if (errors.length > before) errors[errors.length - 1].where = `${where} 弹窗内点「${label}」`;
+      if (errors.length > before) errors[errors.length - 1].where = `${where} 弹窗内点「${text}」`;
     }
   }
 
@@ -222,21 +255,29 @@ async function runRoute(route) {
   await scanNumericLeaks(`${route} 正文泄漏`);
   // 逐页按钮清单在导航之后再抓:goto 前抓会拿到上一页的数组(41847c0 把这一行
   // 卷进 scanNumericLeaks 重构时丢过一次,门在首路由上直接 ReferenceError 崩掉)
-  const buttons = await page.getByRole("button").all();
+  // 元素句柄(见文件头):.all() 钉序号,toast/弹窗/跳页一变就空号空等 30s
+  const buttons = await page.getByRole("button").elementHandles();
+  const startHash = await page.evaluate(() => location.hash);
   for (const b of buttons.slice(0, DEPTH)) {
-    const label = ((await b.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
-    if (!label || SKIP.test(label)) continue;
+    // 离页守卫:点了「← 返回」/入口卡这类导航钮,旧页按钮已无从点起,断循环
+    if ((await page.evaluate(() => location.hash)) !== startHash) {
+      leftPage = true;
+      break;
+    }
+    const label = await step(`${route} 读名`, () => b.innerText().catch(() => ""));
+    const text = (label || "").replace(/\s+/g, " ").trim();
+    if (!text || SKIP.test(text)) continue;
     if (!(await b.isVisible().catch(() => false))) continue;
     if (await b.isDisabled().catch(() => false)) continue;
     const before = errors.length;
     const beforeFp = await fingerprint();
-    await b.click({ timeout: 800 }).catch(() => {});
+    await step(`${route} 点「${text}」`, () => b.click({ timeout: 800 }).catch(() => {}));
     clicked += 1;
     await page.waitForTimeout(160);
-    if (errors.length > before) errors[errors.length - 1].where = `${route} 点「${label}」`;
-    else if ((await fingerprint()) === beforeFp) silent.push(`${route} 点「${label}」`);
-    await scanNumericLeaks(`${route} 点「${label}」后泄漏`);
-    await clickInsideModal(route);
+    if (errors.length > before) errors[errors.length - 1].where = `${route} 点「${text}」`;
+    else if ((await fingerprint()) === beforeFp) silent.push(`${route} 点「${text}」`);
+    await scanNumericLeaks(`${route} 点「${text}」后泄漏`);
+    await step(`${route} 弹窗内逐枚(${text})`, () => clickInsideModal(route));
     // 点开弹窗后关掉,免得挡住后面的按钮
     await page.keyboard.press("Escape").catch(() => {});
     await page.waitForTimeout(80);
@@ -247,6 +288,8 @@ async function runRoute(route) {
     route,
     errors,
     silent,
+    slowSteps,
+    leftPage,
     clicked,
     blocked: blocked(),
     ms: Math.round(performance.now() - routeT0),
@@ -269,8 +312,12 @@ async function runPool(items, limit, worker) {
           route: items[i],
           errors: [{ where: `${items[i]} 载入`, msg: `任务自身抛异常:${e?.stack ?? e}` }],
           silent: [],
+          slowSteps: [],
+          leftPage: false,
           clicked: 0,
           blocked: 0,
+          ms: 0,
+          setupMs: 0,
         };
       }
     }
@@ -304,6 +351,20 @@ console.log("单页耗时 top10(总耗时 · 其中建号/首跳 · 点击数):"
 for (const r of byTime.slice(0, 10)) {
   console.log(
     `  ${(r.ms / 1000).toFixed(1).padStart(6)}s (setup ${(r.setupMs / 1000).toFixed(1)}s) · ${String(r.clicked).padStart(3)} 次点击 · ${r.route}`,
+  );
+}
+// 慢步骤读数(>1s,不判失败):静默等待再长回来会先在这里现形(见文件头「元素句柄」注)。
+// --late 的终局模拟是真算,会合理落进来 —— 当读数看,不当门槛。
+const slow = results.flatMap((r) => r.slowSteps ?? []);
+const leftPages = results.filter((r) => r.leftPage);
+if (slow.length) {
+  console.log(`单步 >1s 的等待 ${slow.length} 处(读数,不判失败):`);
+  for (const s of [...slow].sort((a, b) => b.ms - a.ms).slice(0, 15))
+    console.log(`  · ${String(s.ms).padStart(6)}ms  ${s.where}`);
+}
+if (leftPages.length) {
+  console.log(
+    `中途离页 ${leftPages.length} 页(点了导航钮,旧页余下按钮不再点):${leftPages.map((r) => r.route).join("、")}`,
   );
 }
 if (silent.length) {
