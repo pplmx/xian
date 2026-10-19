@@ -50,8 +50,16 @@ runs:
 
     # 与排版自检的分工:那边量排版,这边戳交互 —— 逐页把按钮点一遍,看有没有
     # 点炸(pageerror)、有没有 NaN/undefined 漏到正文。
+    #
+    # UI_SMOKE_JOBS=4:CI runner 4 核,冒烟每页一个独立 context 并发跑。本地
+    # --jobs 3 并发效率 ~90%(见 ui-smoke.mjs 头注),说明单页远吃不满一核,
+    # 4 路有余量;4 context 内存 <1GB,runner 富余。只写在 CI 这一层:本地
+    # check:ui 仍按核数自适应。env 收口在这里,build.yml / deploy.yml 两处
+    # 调用方自动同享,不必各自写一份。
     - name: 界面冒烟(逐页点按钮)
       shell: bash
+      env:
+        UI_SMOKE_JOBS: 4
       run: bun scripts/ui-smoke.mjs
 
     # Service Worker 只认安全上下文,故离线自检另起一个本地静态服务量同一份产物:
