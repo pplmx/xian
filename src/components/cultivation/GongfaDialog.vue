@@ -25,22 +25,22 @@
           class="rounded bg-qing/6 px-1.5 py-0.5 text-[10px] text-qing"
           >待悟道</span
         >
-        <span v-if="learned" class="ml-auto tabular text-[12px] text-gold-ink"
+        <span v-if="learned" class="ml-auto tabular text-[11px] text-gold-ink"
           >第 {{ level }}/{{ def.maxLevel }} 层</span
         >
       </div>
-      <p class="mt-2 text-[12px] leading-relaxed text-ink-faint">{{ def.desc }}</p>
+      <p class="mt-2 t-body text-ink-faint">{{ def.desc }}</p>
       <p v-if="!learned && def.minRealm > player.major" class="mt-1 text-[11px] text-cinnabar">
         需更高境界方可参悟其精义
       </p>
       <div class="ink-divider my-3" />
       <template v-if="learned">
         <div class="space-y-1.5">
-          <p v-for="row in modRows" :key="row.label" class="flex justify-between text-[13px]">
+          <p v-for="row in modRows" :key="row.label" class="flex justify-between text-[11px]">
             <span class="text-ink-soft">{{ row.label }}</span>
             <span class="tabular text-qing">{{ row.value }}</span>
           </p>
-          <p v-if="def.skill" class="text-[13px] leading-relaxed text-cinnabar">
+          <p v-if="def.skill" class="text-[11px] leading-relaxed text-cinnabar">
             {{ gongfaSkillLine(def.skill) }}
           </p>
         </div>
@@ -61,7 +61,7 @@
         </p>
         <!-- Phase 31 A3:满级悟道,择一分支。文案须自解释——给什么、要不要慎重,按下之前就得看见 -->
         <div v-if="fullLevel && branches.length" class="mt-3">
-          <p class="mb-1 font-kai text-[12px] tracking-[0.2em] text-ink-faint">
+          <p class="mb-1 font-kai text-[11px] tracking-[0.2em] text-ink-faint">
             功 行 圆 满 · 悟 道
           </p>
           <p class="mb-2 t-body text-ink-faint">
@@ -70,7 +70,7 @@
           </p>
           <div v-if="branchPicked" class="rounded-md bg-paper-deep/70 px-3 py-2">
             <p>
-              <span class="font-kai text-[13px] text-gold-ink">{{ branchPicked.name }}</span>
+              <span class="font-kai text-[14px] text-gold-ink">{{ branchPicked.name }}</span>
               <span class="ml-2 text-[11px] text-ink-faint">{{ branchPicked.desc }}</span>
             </p>
             <p class="tabular mt-0.5 text-[11px] text-qing">{{ modsText(branchPicked.mods) }}</p>
@@ -83,7 +83,7 @@
               @click="branchConfirm = b.id"
             >
               <span class="min-w-0">
-                <span class="font-kai text-[13px] text-ink">{{ b.name }}</span>
+                <span class="font-kai text-[14px] text-ink">{{ b.name }}</span>
                 <span class="ml-2 text-[11px] text-ink-faint">{{ b.desc }}</span>
                 <span class="tabular mt-0.5 block text-[11px] text-qing">{{
                   modsText(b.mods)
@@ -119,18 +119,18 @@
         玩家只能凭名字挑 —— 而名字看不出它是攻是守。故这里给满级账。
       -->
       <template v-else>
-        <p class="text-[12px] text-ink-faint">尚未习得此功法。</p>
+        <p class="text-[11px] text-ink-faint">尚未习得此功法。</p>
         <p class="mt-2 text-[11px] text-ink-soft">修至圆满({{ def.maxLevel }} 层)可得:</p>
         <div class="mt-1 space-y-1">
-          <p v-for="row in previewRows" :key="row.label" class="flex justify-between text-[13px]">
+          <p v-for="row in previewRows" :key="row.label" class="flex justify-between text-[11px]">
             <span class="text-ink-faint">{{ row.label }}</span>
             <span class="tabular text-qing">{{ row.value }}</span>
           </p>
-          <p v-if="def.skill" class="text-[13px] leading-relaxed text-cinnabar">
+          <p v-if="def.skill" class="text-[11px] leading-relaxed text-cinnabar">
             {{ gongfaSkillLine(def.skill) }}
           </p>
           <!-- 同上一行:满级账之外,把这功法的"尽头是条可择之路"一并预告 -->
-          <p v-if="branches.length" class="flex justify-between text-[13px]">
+          <p v-if="branches.length" class="flex justify-between text-[11px]">
             <span class="text-ink-faint">圆满后道途</span>
             <span class="tabular text-gold-ink">共 {{ branches.length }} 条可择(终身不改)</span>
           </p>
@@ -167,7 +167,7 @@
         <!-- 修到顶:一次修到圆满或悟道点/残页见底,不必逐层点(合一条总账) -->
         <button
           v-if="upCost"
-          class="btn-ghost w-full !py-1.5 !text-[12px]"
+          class="btn-ghost w-full !py-1.5 !text-[11px]"
           :disabled="!upAffordable"
           :aria-label="upAffordable ? '修到顶' : `修到顶 · 尚差 ${upShort}`"
           @click="doUpgradeAll"

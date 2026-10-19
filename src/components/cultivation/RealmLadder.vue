@@ -41,7 +41,7 @@ const worlds = computed(() => realmLadderWorlds());
     </div>
 
     <!-- 界段名:各钉在自己那段的正中央 -->
-    <p class="relative mt-1 h-3 text-[9px] leading-none text-ink-faint">
+    <p class="relative mt-1 h-3 text-[10px] leading-none text-ink-faint">
       <span
         v-for="w in worlds"
         :key="w.id"

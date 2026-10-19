@@ -2163,13 +2163,26 @@ describe("修炼页 · 字号收六档", () => {
   const usedSizes = (src: string): number[] =>
     [...src.matchAll(SIZES)].map((m) => Number(m[1] ?? 0));
 
-  it("修炼页只用六档:30 / 16 / 15 / 14 / 11 / 10", () => {
-    const view = FILES.find((f) => f.path === "views/CultivationView.vue");
+  it("修炼域只用六档:30 / 16 / 15 / 14 / 11 / 10 —— 宿主与全域子面板一体", () => {
+    // 拆分轮备案的盲区收口:这条判据此前只扫宿主 CultivationView,GongfaSection/
+    // TribulationPanel/RetreatCard/RealmLadder 与 GongfaDialog 都不在扫描面里 ——
+    // 盲区 = 后续往子面板塞私档字号判据看不见(同资源叫法条的反断言全域化先例:
+    // 反断言只查宿主 = 假绿)。实测收口时抓到两处:GongfaDialog 长着 12/13 私档
+    // (且它一直没进下面的弹窗同族名单),RealmLadder 有一枚 9px(低于可读下限)。
     const PAGE_TIERS = [30, 16, 15, 14, 11, 10];
-    const off = [...new Set(usedSizes(view?.src ?? ""))].filter((n) => !PAGE_TIERS.includes(n));
-    expect(off, `修炼页冒出了六档以外的字号:${off.join(", ")}`).toEqual([]);
-    // 防"空转":档位真在用,不是把字全删了换一张绿
-    expect(usedSizes(view?.src ?? "").length).toBeGreaterThanOrEqual(20);
+    const domain = [
+      "views/CultivationView.vue",
+      ...FILES.filter((f) => f.path.startsWith("components/cultivation/")).map((f) => f.path),
+    ];
+    let total = 0;
+    for (const path of domain) {
+      const sizes = usedSizes(FILES.find((f) => f.path === path)?.src ?? "");
+      total += sizes.length;
+      const off = [...new Set(sizes)].filter((n) => !PAGE_TIERS.includes(n));
+      expect(off, `${path} 冒出了六档以外的字号:${off.join(", ")}`).toEqual([]);
+    }
+    // 防"空转":域里真在写字号,不是把字全删了换一张绿
+    expect(total).toBeGreaterThanOrEqual(20);
   });
 
   it("弹窗同族刻度:16 / 14 / 11 / 10", () => {
@@ -2178,6 +2191,8 @@ describe("修炼页 · 字号收六档", () => {
       "components/cultivation/BuffDialog.vue",
       "components/cultivation/EnlightenmentModal.vue",
       "components/cultivation/BreakthroughResultDialog.vue",
+      // 功法详情弹窗自 CultivationView 拆出时带着 12/13 私档搬来,全域化实测收口归档 —— 同入此列
+      "components/cultivation/GongfaDialog.vue",
       // 天界拆出的两枚弹窗同入此列(字号原样随模板搬来,不另立私档)
       "components/celestial/FurnaceDialog.vue",
       "components/celestial/TutorialDialog.vue",
