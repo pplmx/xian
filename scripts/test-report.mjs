@@ -219,6 +219,7 @@ const CATEGORIES = [
       "game.spec",
       "earlyGameService",
       "earlyGameBuffs",
+      "useDaoEntry",
       "savePlatform",
       "saveRoundTrip",
       "saveBackup",

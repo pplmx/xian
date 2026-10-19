@@ -243,7 +243,15 @@ async function runRoute(route) {
   }
 
   await context.close();
-  return { route, errors, silent, clicked, blocked: blocked(), ms: Math.round(performance.now() - routeT0), setupMs };
+  return {
+    route,
+    errors,
+    silent,
+    clicked,
+    blocked: blocked(),
+    ms: Math.round(performance.now() - routeT0),
+    setupMs,
+  };
 }
 
 /** 固定上限的并发池:一页一个任务,谁空出来谁接下一页 */
