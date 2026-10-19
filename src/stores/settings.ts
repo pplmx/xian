@@ -12,7 +12,20 @@ export const useSettingsStore = defineStore(
     /** 音量 0~100 */
     const musicVol = ref(50);
     const sfxVol = ref(70);
-    const reduceMotion = ref(false);
+    /**
+     * 减少动效 —— 默认值从**系统偏好**播种(prefers-reduced-motion)。
+     *
+     * style.css 的媒体查询只压得住 CSS 动画,战斗回放是 JS 驱动的
+     * (CombatPanel/GauntletPanel 的 setInterval 逐行投入),只认这个应用内
+     * 开关 —— 系统关了动效的人,若这里永远 false 起步,照样被迫逐条看战报。
+     * 播种只在**无持久化档的首次创建**生效:pinia 持久化插件随后同步水合,
+     * 老玩家显式存的 true/false 会盖掉这里的值,偏好不被系统改写。
+     */
+    const reduceMotion = ref(
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        : false,
+    );
     /** 战报播放速度倍率 */
     const battleSpeed = ref<1 | 2 | 4>(1);
     /** 一键分解勾选的品质 rank 列表(持久化,免得每次重勾) */
