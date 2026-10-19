@@ -112,6 +112,7 @@ async function makeContext() {
 
 /** 一页的冒烟:建号(或夹具)、逐按钮点、点开弹窗再关掉,收回这一页的异常读数 */
 async function runRoute(route) {
+  const routeT0 = performance.now();
   const { context, blocked } = await makeContext();
   const page = await context.newPage();
   const errors = [];
@@ -215,6 +216,9 @@ async function runRoute(route) {
 
   await page.goto(INDEX + "#" + route, { waitUntil: "load" });
   await page.waitForTimeout(600);
+  // 计时插桩:建号/夹具 + 首跳的耗时单独记 —— 它是每页都要付一遍的固定开销,
+  // 与按钮循环的耗时分开量,才知道优化该往哪头下刀(只量时间,不判成败)。
+  const setupMs = Math.round(performance.now() - routeT0);
   await scanNumericLeaks(`${route} 正文泄漏`);
   // 逐页按钮清单在导航之后再抓:goto 前抓会拿到上一页的数组(41847c0 把这一行
   // 卷进 scanNumericLeaks 重构时丢过一次,门在首路由上直接 ReferenceError 崩掉)
@@ -239,7 +243,7 @@ async function runRoute(route) {
   }
 
   await context.close();
-  return { route, errors, silent, clicked, blocked: blocked() };
+  return { route, errors, silent, clicked, blocked: blocked(), ms: Math.round(performance.now() - routeT0), setupMs };
 }
 
 /** 固定上限的并发池:一页一个任务,谁空出来谁接下一页 */
@@ -267,8 +271,10 @@ async function runPool(items, limit, worker) {
   return out;
 }
 
+const wallT0 = performance.now();
 const results = await runPool(ROUTES, JOBS, runRoute);
 await browser.close();
+const wallMs = Math.round(performance.now() - wallT0);
 
 const clicked = results.reduce((n, r) => n + r.clicked, 0);
 const silent = results.flatMap((r) => r.silent);
@@ -276,6 +282,22 @@ const errors = results.flatMap((r) => r.errors);
 const blockedTotal = results.reduce((n, r) => n + r.blocked, 0);
 
 console.log(`\n界面冒烟:${ROUTES.length} 页,点击 ${clicked} 次(每页上限 ${DEPTH})`);
+// 计时读数:总墙钟、单页耗时 top10、建号/首跳固定开销占墙钟比例(并发摊薄后)。
+// 只报数,不判成败 —— 用途是给「14 分钟在哪」这类问题供数据。
+const byTime = [...results].sort((a, b) => b.ms - a.ms);
+const setupSum = results.reduce((n, r) => n + r.setupMs, 0);
+const busySum = results.reduce((n, r) => n + r.ms, 0);
+console.log(
+  `墙钟 ${(wallMs / 1000).toFixed(1)}s · 单页合计 ${(busySum / 1000).toFixed(1)}s · ` +
+    `并发 ${JOBS} 路 · 建号/首跳合计 ${(setupSum / 1000).toFixed(1)}s` +
+    `(摊到墙钟约 ${((setupSum / JOBS / wallMs) * 100).toFixed(0)}%)`,
+);
+console.log("单页耗时 top10(总耗时 · 其中建号/首跳 · 点击数):");
+for (const r of byTime.slice(0, 10)) {
+  console.log(
+    `  ${(r.ms / 1000).toFixed(1).padStart(6)}s (setup ${(r.setupMs / 1000).toFixed(1)}s) · ${String(r.clicked).padStart(3)} 次点击 · ${r.route}`,
+  );
+}
 if (silent.length) {
   console.log(`点了没反应 ${silent.length} 处(读数,不判失败):`);
   for (const s of silent.slice(0, 20)) console.log(`  · ${s}`);
