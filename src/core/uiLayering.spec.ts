@@ -701,7 +701,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「可借力的方向」只会出现在败局分析里,「为什么看好这个方向」此前只挂在
     // 非交互 span 的 :title 上,触屏上点了没反应 = 死提示。方向名改可点、理由
     // 内联展开(与适配理由/天赋芯片同族);退回 span + title,下面红。
-    const cp = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    // 分析面板自 CombatPanel 拆出(拆分第六刀),钉随本体改指 BattleIntelPanel
+    const cp = FILES.find((f) => f.path === "components/adventure/BattleIntelPanel.vue");
     expect(cp?.src, "方向名要是带展开语义的可点按钮").toContain(
       ':aria-expanded="directionTap === d.styleName"',
     );
@@ -733,8 +734,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ["views/CultivationView.vue", ':aria-expanded="showCultBreakdown"'],
       ["views/RealmCodexView.vue", ':aria-expanded="showAllHex"'],
       ["views/RealmCodexView.vue", ':aria-expanded="showAllMansions"'],
-      ["components/adventure/CombatPanel.vue", ':aria-expanded="showLore"'],
-      ["components/adventure/CombatPanel.vue", ':aria-expanded="showAnalysis"'],
+      // 战斗情报面板(战后统计/所知/分析)自 CombatPanel 拆出,登记随本体走
+      ["components/adventure/BattleIntelPanel.vue", ':aria-expanded="showLore"'],
+      ["components/adventure/BattleIntelPanel.vue", ':aria-expanded="showAnalysis"'],
       // 转世交割清单里点开的那一条(heritageTap)—— 只换措辞不报状态,读屏分不清
       ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageTap === r.id"'],
       // 门庭派活的两步钮:第一下展开任务说明、再点同枚才派出 —— 新登的 disclosure

@@ -322,7 +322,8 @@ describe("来源到屏幕的接线", () => {
   const src = (p: string): string => readFileSync(resolve(__dirname, p), "utf8");
 
   it("历练战报读同一份归因(逐项摊开的那一份)", () => {
-    const panel = src("../components/adventure/CombatPanel.vue");
+    // 分析面板自 CombatPanel 拆出(拆分第六刀),钉随本体改指 BattleIntelPanel
+    const panel = src("../components/adventure/BattleIntelPanel.vue");
     expect(panel, "战斗分析面板该照 analyzeBattle 讲").toContain("analyzeBattle(");
     const view = src("../views/AdventureView.vue");
     expect(view, "选地卡片该摊开层级补偿与地界凶险").toContain("regionFoeOrigin(");
