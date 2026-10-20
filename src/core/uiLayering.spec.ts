@@ -560,8 +560,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 修为与灵气的当前值此前与「+x/秒 ▸来路」同档 faint,数值本身反而被弱化;
     // 主值行整个提到 ink-soft(不动字号,200% 折行判据不受影响)。少一行就说明
     // 有人把某个主值行悄悄降回 faint。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
-    const rows = cult?.src.match(/data-value-row[\s\S]{0,90}text-ink-soft/g) ?? [];
+    // 拆分轮盲区收口:第三行(耗灵气)随破境卡本体迁入 BreakthroughCard ——
+    // 只查宿主 = 假绿(同资源叫法条全域化先例),查宿主 + 破境卡两处之和。
+    const domain = ["views/CultivationView.vue", "components/cultivation/BreakthroughCard.vue"]
+      .map((p) => FILES.find((f) => f.path === p)?.src ?? "")
+      .join("\n");
+    const rows = domain.match(/data-value-row[\s\S]{0,90}text-ink-soft/g) ?? [];
     expect(rows.length, "修为/灵气/耗灵气主值行都要在 ink-soft 或更上").toBeGreaterThanOrEqual(3);
   });
 
@@ -1034,7 +1038,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("突破不成的修为代价要摊 —— 只报耗灵气是还了半边账", () => {
     // 突破按钮前只摊「耗灵气 N」,失败的真实代价(损修为 ×BT_FAIL_EXP_LOSS)一字不露,
     // 玩家不知道破境还有修为折损。代价要读常量(改常数不撒谎),并点出返还/跬步对冲。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    // 代价行自 CultivationView 拆出随本体迁入 BreakthroughCard —— 钉随走(拆分第五轮 · 一)。
+    const cult = FILES.find((f) => f.path === "components/cultivation/BreakthroughCard.vue");
     expect(cult?.src, "突破不成要摊损修为,读 BT_FAIL_EXP_LOSS 常量").toContain(
       "formatPercent(BT_FAIL_EXP_LOSS)",
     );
@@ -1793,10 +1798,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
       'push("气血", r.flats.maxHp',
     );
     const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
-    // 拆分后劫势详情归 TribulationPanel —— 气血/速度叫法守卫要查全域(宿主+子面板),不许只查宿主(假绿)
+    // 拆分后劫势详情归 TribulationPanel、破境卡归 BreakthroughCard —— 气血/速度/名号
+    // 叫法守卫要查全域(宿主+两块子卡),不许只查宿主(假绿,同资源叫法条全域化先例)
     const trib = FILES.find((f) => f.path === "components/cultivation/TribulationPanel.vue");
-    const cultDomain = [cult?.src, trib?.src].join("\n");
-    expect(cult?.src, "破境益的散文脚注也要说「名号」,不许留「装备·称号」混排").toContain(
+    const btc = FILES.find((f) => f.path === "components/cultivation/BreakthroughCard.vue");
+    const cultDomain = [cult?.src, trib?.src, btc?.src].join("\n");
+    expect(btc?.src, "破境益的散文脚注也要说「名号」,不许留「装备·称号」混排").toContain(
       "装备·名号·天时",
     );
     expect(cultDomain, "劫势单波那行也要说「最大气血」,气血一族不许残留「最大生命」").not.toContain(

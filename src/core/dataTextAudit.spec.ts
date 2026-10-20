@@ -244,7 +244,8 @@ describe("文案数值对账 · 视图不手抄数字", () => {
   });
 
   it("突破幕亮出破境增益:谁在顶这一阶一眼见,文案走 buff→modsText;大关幕不亮", () => {
-    const view = src("../views/CultivationView.vue");
+    // 破境增益条自 CultivationView 拆出随本体迁入 BreakthroughCard —— 钉随走(拆分第五轮 · 一)
+    const view = src("../components/cultivation/BreakthroughCard.vue");
     expect(view).toContain("breakthroughBuffRows");
     expect(view).toContain('k === "breakthroughRate"');
     expect(view).toContain("modsText");
@@ -259,7 +260,8 @@ describe("文案数值对账 · 视图不手抄数字", () => {
   });
 
   it("突破失败的真代价要摊开:不只损修为,还必发重伤(修速减半/战力大减,需引气静养)", () => {
-    const view = src("../views/CultivationView.vue");
+    // 代价行随破境卡本体迁入 BreakthroughCard —— 钉随走(拆分第五轮 · 一)
+    const view = src("../components/cultivation/BreakthroughCard.vue");
     // 败后 addBuff("injury") 是确定会发生的(buff 定义在 buffs.ts);失败那行的账若不把
     // 重伤写进去,玩家只看到「损修为 X%」,以为成败只在修为上折 —— 界面就欠了半句
     expect(view, "失败行必须点名「重伤」").toContain("重伤");
@@ -270,7 +272,8 @@ describe("文案数值对账 · 视图不手抄数字", () => {
   });
 
   it("突破按钮的「灵气不足」要补缺:还差多少、回够要多久直显,不许只给四字灰", () => {
-    const view = src("../views/CultivationView.vue");
+    // 短差行随破境卡本体迁入 BreakthroughCard —— 钉随走(拆分第五轮 · 一)
+    const view = src("../components/cultivation/BreakthroughCard.vue");
     // reason 报「灵气不足」时,按钮下方必须有 btQiBlock 的短差与 ETA;删/收缩成四字立刻红
     expect(view).toContain('btInfo.value.reason !== "灵气不足"');
     expect(view).toContain('v-if="btQiBlock"');
@@ -1394,6 +1397,9 @@ describe("枚举 id 不许印到界面上 —— 玩家看的是名字,不是 ke
     "../components/equipment/EquipmentDetailDialog.vue",
     // 功法区自 CultivationView 拆出后自带书目呈现,一并进枚举字段的扫描面
     "../components/cultivation/GongfaSection.vue",
+    // 破境卡随拆分第五轮迁出宿主,快捷丹行带品质图标(qualityDef 包裹),
+    // 一并进枚举字段的扫描面(同 GongfaSection 先例)
+    "../components/cultivation/BreakthroughCard.vue",
   ];
 
   /**
