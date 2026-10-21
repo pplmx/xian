@@ -224,6 +224,14 @@ let pixelTextsSeen = 0;
  */
 async function auditModalControls(page) {
   return page.evaluate(() => {
+    // 测量标准化与 measurePage 同一口径:弹窗的入场过渡(page-fade/modal 过渡)
+    // 进行中量几何,量到的是动画中间帧 —— 「进入前请确认」弹窗里的《隐私政策》
+    // 按钮(块级 flex + min-h 28px)曾在 1280×800 档被量出 26.3px,三档视口反复
+    // 假红;600ms 墙钟等待只压得住 390 档,桌面档的过渡调度仍会撞上中间帧。
+    // 注入动画禁令后量的是稳态布局,与截图口径一致。
+    const st = document.createElement("style");
+    st.textContent = "*,*::before,*::after{animation:none!important;transition:none!important}";
+    document.head.appendChild(st);
     const panel = document.querySelector(".modal-panel");
     if (!panel) return null;
     const rows = [...panel.querySelectorAll("button, a, [role=button]")]
