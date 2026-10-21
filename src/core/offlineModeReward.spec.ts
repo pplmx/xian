@@ -221,6 +221,28 @@ describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", ()
     expect(inventory.equippedArtifacts.length, "祭炼位不许被离线自动装上").toBe(0);
   });
 
+  it("离线历练也记「独行」破题:祭着法宝打一夜,题须破、卷轴有交代", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const player = usePlayerStore();
+    const inventory = useInventoryStore();
+    player.initCharacter("破题记账", { roots: [] } as never);
+    // 立下「独行」之誓(未破)+ 祭上一件法宝(先入囊再上祭炼位)
+    player.setVow({
+      themeId: "lt_zejian",
+      at: Date.now() - 1000,
+      base: {},
+      baseBranches: 0,
+      baseAvenged: 0,
+      broken: false,
+    });
+    inventory.addArtifact("af_muyu");
+    inventory.toggleArtifact(inventory.artifacts[0]!.defId, 2);
+    expect(inventory.equippedArtifacts.length, "预置:法宝已祭上").toBe(1);
+    settleOffline(Date.now())!;
+    expect(player.reincarnation.vow?.broken, "祭着法宝出手一整夜 → 破题").toBe(true);
+  });
+
   it("recordWinStreakBatch:只发这一批跨过的档;带败场收尾归零", () => {
     setActivePinia(createPinia());
     seedSession("normal");

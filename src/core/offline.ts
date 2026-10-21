@@ -57,6 +57,7 @@ import { expFromSecs, stoneByTier } from "./formulas";
 import { checkSuppression, settleSuppressedRegions } from "./suppress";
 import { harvestMaterials, noteEnemy, noteEnemyMany, studyTick } from "./loreService";
 import { gainBondOpportunities } from "./daoluService";
+import { noteTaboo, vowResult } from "./samsaraService";
 import { isNemesis, markAvenged, recordLossBatch, NEMESIS_THRESHOLD } from "./worldMemory";
 import { recordWinStreakBatch, streakRewardText } from "./earlyGameService";
 import { modOf } from "./statsCalc";
@@ -310,6 +311,21 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       battles = Math.max(0, encounters - events);
 
       if (battles > 0) {
+        /**
+         * 破题与在线同源:在线每交一次手,只要身上祭着法宝就 noteTaboo('artifact')
+         * ——「独行」看的是有没有真的祭出,不是有没有法宝在身。
+         * 离线这一整段用的正是含法宝被动的 buildPlayerSnap(),从前却从不记这一笔:
+         * 挂机打赢几十场回来,「整世未祭一件法宝」的题还立着,两套账。
+         * noteTaboo 幂等(破一次即止),整段记一次与在线逐场记等价。
+         */
+        if (inventory.equippedArtifacts.length > 0) {
+          const vowBefore = vowResult();
+          noteTaboo("artifact");
+          // 归来卷轴再说一声:破题 toast 在结算途中就飘过去了,玩家多半没看见
+          if (vowBefore !== "broken" && vowResult() === "broken") {
+            notes.push("【破题】离线这一程祭着法宝出手,「独行」之誓没能说到底");
+          }
+        }
         // 与在线同源:敌群取自本世路线节点
         const mobId = rng.pick([...placeContent(region.id).enemies]);
         const mobDef = enemyDef(mobId);
