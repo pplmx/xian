@@ -217,6 +217,7 @@ const CATEGORIES = [
       "layeringAudit",
       "layoutMeasure",
       "adventureText",
+      "scriptDepsAudit",
       "suppress",
       "game.spec",
       "earlyGameService",

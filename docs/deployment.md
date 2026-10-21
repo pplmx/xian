@@ -108,7 +108,10 @@ Compose v1 的旧 CLI 把命令换成 `docker-compose` 即可(`docker-compose.ym
 (没有代码消费,页面标题写在 `index.html`),改了不生效,别把它们当成部署开关。
 注意 **PWA「添加到主屏幕」与这些 env 无关**:manifest(`public/manifest.webmanifest`)与图标
 由 `index.html` 无条件引用、`public/` 原样进构建,随镜像一起开箱即用;
-改动图标的正确姿势是改 `public/icon.svg` 后跑 `scripts/gen-pwa-icons.mjs` 重新生成。
+改动图标的正确姿势是改 `public/icon.svg` 后跑 `scripts/gen-pwa-icons.mjs` 重新生成
+(走仓里已有的 Playwright/Chromium 光栅化,不需另装图像库;脚本里的第三方依赖
+必须声明在 `package.json`,由 `src/core/scriptDepsAudit.spec.ts` 钉住 —— 此前它
+`import sharp` 而 sharp 从未进依赖表,干净 clone 上跑不起来)。
 
 ### Nginx 配置
 
