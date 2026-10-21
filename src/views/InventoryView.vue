@@ -421,6 +421,7 @@ import HerbShopDialog from "@/components/inventory/HerbShopDialog.vue";
 import SlotCandidatesDialog from "@/components/inventory/SlotCandidatesDialog.vue";
 import DismantleDialog from "@/components/inventory/DismantleDialog.vue";
 import { useBrewing } from "@/composables/useBrewing";
+import { useNow } from "@/composables/useNow";
 
 const inventory = useInventoryStore();
 // 「新」角标清账时机 = 离开背包那一刻(路由无 keep-alive,离开即卸载):
@@ -429,6 +430,8 @@ const inventory = useInventoryStore();
 // 这次离包之后新入的那几件(见 inventorySeen.spec)。
 onUnmounted(() => inventory.markInventorySeen());
 const resources = useResourcesStore();
+// 响应式钟:丹药详情的顶满判据读它(药效到期按钮自己亮回来;与修行页同一把)
+const now = useNow();
 const ui = useUiStore();
 const player = usePlayerStore();
 const settings = useSettingsStore();
@@ -648,7 +651,9 @@ const currentPill = computed(() =>
 const currentPillOverflow = computed<BuffOverflow | null>(() => {
   const def = currentPill.value?.def;
   if (!def || def.kind !== "buff" || !def.buffId) return null;
-  return buffOverflowOf(cult.buffs, def.buffId, Date.now());
+  // 读响应式钟(useNow,与修行快捷卡同一把):药效到期后「服 用」自己亮回来,
+  // 不许停在一次读出的灰里直到重开弹窗
+  return buffOverflowOf(cult.buffs, def.buffId, now.value);
 });
 
 const currentPillHint = computed<{ text: string; tone: "cinnabar" | "amber" | "faint" } | null>(
@@ -658,8 +663,8 @@ const currentPillHint = computed<{ text: string; tone: "cinnabar" | "amber" | "f
     const overflow = currentPillOverflow.value;
     if (overflow === "full") return { text: "药力已顶满——这一颗将白费", tone: "cinnabar" };
     if (overflow === "partial") return { text: "药力将触上限——这一颗只续到顶", tone: "amber" };
-    const now = Date.now();
-    const active = activeBuffsOf(cult.buffs, now).find((b) => b.def.id === def.buffId);
+    // 同一把响应式钟:叠份数提示也随药效走(顶满→partial→none 的迁移里两行一起换)
+    const active = activeBuffsOf(cult.buffs, now.value).find((b) => b.def.id === def.buffId);
     const stack = active ? buffStackCount(def.buffId, active.remainingSec) : 1;
     if (stack <= 1) return null;
     return { text: `已叠 ${stack} 份,服之续时`, tone: "faint" };

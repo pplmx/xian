@@ -1035,6 +1035,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ":disabled=\"currentPillOverflow === 'full'\"",
     );
     expect(inv?.src, "丹药顶满拦因要就地摊(白费)").toContain("药力已顶满——这一颗将白费");
+    // 顶满判据要随钟走:读 useNow 的响应式读数(与修行快捷卡同一把钟)——
+    // 药效到期后「服 用」自己亮回来,不许停在一次读出的灰里直到重开弹窗
+    expect(inv?.src, "顶满判据要读响应式 now.value,不读一次性 Date.now()").toContain(
+      "buffOverflowOf(cult.buffs, def.buffId, now.value)",
+    );
     // 拆分后轮回弹窗归 RebirthDialog,兵解置灰判据随本体改指子面板
     const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
     expect(char?.src, "兵解未达境要置灰(canRebirth)").toContain(':disabled="!canRebirth"');
