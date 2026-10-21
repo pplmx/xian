@@ -362,7 +362,13 @@ export function studyTick(dtSec: number): void {
     const room = 1 - lore.recipeMastery(target);
     const gain = Math.min(room, lore.studyFrac);
     lore.studyFrac -= gain;
-    lore.addRecipeMastery(target, gain);
+    const after = lore.addRecipeMastery(target, gain);
+    // 读通要有一声:钻研把 mastery 喂到 1 的那一拍报方名 —— 与翻出新方/灵材通晓/
+    // 敌人洞悉同族,完成不静默(挂机几小时的那声「成了」不许吞)
+    if (after >= 1) {
+      const def = pillDef(target);
+      if (def) notify(`丹方已通晓:「${def.name}」火候节点烂熟于心`, "rare");
+    }
     return;
   }
 

@@ -30,6 +30,7 @@ import {
 import { useLoreStore } from "@/stores/lore";
 import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
+import { useUiStore } from "@/stores/ui";
 
 const CRAFTABLE = PILLS.filter((p) => p.recipe);
 const NOTHING_KNOWN = (): number => 0;
@@ -161,6 +162,28 @@ describe("藏经阁钻研(挂机推演)", () => {
     expect(lore.recipeMastery("p_jvqidan")).toBeCloseTo(1, 6);
     // 盈余保留(δ=本拍 dt 累计的微小增量),而不是整段清零
     expect(lore.studyFrac).toBeGreaterThan(0.49);
+  });
+
+  it("丹方读通要有一声 —— 完成不静默(与翻出新方/灵材通晓同族)", () => {
+    // 翻出新方有 rare toast、灵材通晓有 rare toast、敌人洞悉有 rare toast,
+    // 唯独丹方读通(钻研把 mastery 喂到 1)静默 —— 挂机几小时的那声完成感漏了。
+    const player = usePlayerStore();
+    player.major = 1;
+    useDongfuStore().setLevel("library", 4);
+    useUiStore(); // 接上通知落点(notify 的 sink 在 ui store setup 时挂,不激活则静默丢弃)
+    const lore = useLoreStore();
+    lore.recipeLore = { p_jvqidan: 0.999 };
+    lore.studyFrac = 0.5;
+    studyTick(0.001);
+    expect(lore.recipeMastery("p_jvqidan")).toBe(1);
+    const texts = useUiStore()
+      .toasts.map((t) => t.text)
+      .join("\n");
+    expect(texts, "读通要报方名").toContain("聚气丹");
+    expect(texts, "读通要报「通晓」").toContain("通晓");
+    // 与灵材通晓同一档:这是过程性里程碑,不是掉落,走 rare
+    const hit = useUiStore().toasts.find((t) => t.text.includes("聚气丹"));
+    expect(hit?.kind).toBe("rare");
   });
 
   it("架上无书可读时钻研量归零,不会无限膨胀", () => {
