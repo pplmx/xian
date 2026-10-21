@@ -102,6 +102,17 @@ describe("离线历练 · 战后语义与在线同源", () => {
     expect(offline).toContain("noteEnemy(bossDef.id, bossResult.win)");
   });
 
+  /**
+   * 镇压达成的回执两处(普通战/首领战)要与在线同源 —— 在线报的是
+   * suppressRateLine 的产出账(灵石/时 × 物产),离线若只喊一句
+   * 「将自动产出资源」,同一件大事两套口径,玩家算不出挂机一夜值多少。
+   */
+  it("离线镇压达成的回执报产出账,与在线 suppressRateLine 同源", () => {
+    const offline = readFileSync(src("./offline.ts"), "utf8");
+    expect(offline).toContain("suppressRateLine");
+    expect(offline, "空话口径不许再出现").not.toContain("此地将自动产出资源");
+  });
+
   it("挂机归来后 regionStats / 图鉴照面随胜场推进", () => {
     const game = useGameStore();
     const player = usePlayerStore();

@@ -54,11 +54,17 @@ import { regionEventDef } from "./regionEvent";
 import { placeContent } from "./mortalWorldService";
 import { clamp, planIdle } from "wanxiang-engine";
 import { expFromSecs, stoneByTier } from "./formulas";
-import { checkSuppression, settleSuppressedRegions } from "./suppress";
+import { checkSuppression, settleSuppressedRegions, suppressRateLine } from "./suppress";
 import { harvestMaterials, noteEnemy, noteEnemyMany, studyTick } from "./loreService";
 import { gainBondOpportunities } from "./daoluService";
 import { noteTaboo, vowResult } from "./samsaraService";
-import { isNemesis, markAvenged, recordLossBatch, NEMESIS_THRESHOLD } from "./worldMemory";
+import {
+  isNemesis,
+  markAvenged,
+  recordLossBatch,
+  NEMESIS_THRESHOLD,
+  regionRecallFor,
+} from "./worldMemory";
 import { recordWinStreakBatch, streakRewardText } from "./earlyGameService";
 import { modOf } from "./statsCalc";
 import { personalityEffects } from "./petPersonality";
@@ -548,7 +554,11 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
           ) {
             player.markSuppressQualified(region.id);
             player.suppressRegion(region.id);
-            notes.push(`你已彻底镇压${region.name},此地将自动产出资源`);
+            // 与在线达成回执同一份产出账(suppressRateLine 单源):只喊「自动产出资源」
+            // 的话,玩家算不出挂机一夜这一区值多少
+            notes.push(
+              `你已彻底镇压${region.name},此后将自动产出:${suppressRateLine(region.id, regionRecallFor(region.id, player).prosperity)}`,
+            );
           }
         }
       }
@@ -627,7 +637,10 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             ) {
               player.markSuppressQualified(region.id);
               player.suppressRegion(region.id);
-              notes.push(`你已彻底镇压${region.name},此地将自动产出资源`);
+              // 与在线达成回执同一份产出账(suppressRateLine 单源),普通战/首领战两处同口径
+              notes.push(
+                `你已彻底镇压${region.name},此后将自动产出:${suppressRateLine(region.id, regionRecallFor(region.id, player).prosperity)}`,
+              );
             }
             clearRegionAndUnlockNext(region.id);
             notes.push(`挂单之间,你已将【${bossDef.name}】斩于剑下(离线战果,收益折损)`);
