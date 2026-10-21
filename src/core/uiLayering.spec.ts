@@ -1087,6 +1087,22 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("炉前亮存货账 —— 存 N 与药力状态,炼制决策不许半盲", () => {
+    // 炉台此前只摊把握/双成/代价/短差,不摊行囊里已存几枚 —— 行囊躺着 8 枚顶满丹
+    // 也照炼不误,炼出来白占一格。方子行亮「存 N」(读 inventory.pills,与丹匣同一份账),
+    // 增益丹再亮药力状态(已顶/将顶);判据与服用侧同一把尺(buffOverflowOf)+
+    // 同一把响应式钟(useNow),拆分后都住在 composables/useBrewing.ts。
+    const brew = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    expect(brew?.src, "方子行要亮存 N").toContain("存 {{ r.stock }}");
+    expect(brew?.src, "顶满要就地写「已顶」(与服用侧同族措辞)").toContain("已顶");
+    expect(brew?.src, "将顶要亮(amber 金赭,与突破已封顶同族)").toContain("将顶");
+    const src = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf-8");
+    expect(src, "存货读 inventory.pills,不另数一遍").toContain("inventory.pills[id] ?? 0");
+    expect(src, "药力判据读 buffOverflowOf + 响应式 now.value(同一把尺同一把钟)").toContain(
+      "buffOverflowOf(cult.buffs, def.buffId, now.value)",
+    );
+  });
+
   it("炸炉返草要摊在炉前 —— 失败那面不许只看把握", () => {
     // 炉台只亮成功率与双成,失败该返几成草只活在结算与失败 toast;做决定的人看不到
     // 输的那面。返草要读 salvageRatio(同源,含稳炉护料),不许界面另写一份数。

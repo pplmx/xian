@@ -170,6 +170,7 @@ const CATEGORIES = [
       "pillValueMonotonic",
       "pillService",
       "pillBatch",
+      "useBrewing",
       "consumableBuffCap",
       "buffStackCount",
       "veinEconomyAudit",

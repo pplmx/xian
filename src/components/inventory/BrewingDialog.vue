@@ -108,6 +108,19 @@
               {{ formatPercent(r.doubleRate)
               }}<span class="ml-1 text-[10px] text-ink-faint">双成</span>
             </p>
+            <!--
+              炉前存货账:存几枚、增益丹药力顶没顶 —— 此前只摊把握与代价,
+              行囊里躺着 8 枚顶满丹也照炼不误,炼出来白占一格。
+              存货与丹匣同一份账(inventory.pills),药力状态与服用侧同一把尺
+              (buffOverflowOf)+ 同一把钟(见 useBrewing 行构造器)。
+            -->
+            <p class="mt-0.5 tabular text-[10px]">
+              <span :class="r.stock > 0 ? 'text-ink-soft' : 'text-ink-faint'"
+                >存 {{ r.stock }}</span
+              >
+              <span v-if="r.overflow === 'full'" class="ml-1 text-cinnabar">已顶</span>
+              <span v-else-if="r.overflow === 'partial'" class="ml-1 text-gold-ink">将顶</span>
+            </p>
           </div>
         </div>
         <p v-if="r.shortText" class="mt-1 pl-7 text-[10px] text-cinnabar tabular">

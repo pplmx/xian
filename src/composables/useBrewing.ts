@@ -1,9 +1,12 @@
 import { computed } from "vue";
 import { useCultivationStore } from "@/stores/cultivation";
+import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
+import { useNow } from "@/composables/useNow";
 import { buffDef } from "@/data/buffs";
+import { buffOverflowOf } from "@/core/engineBuffs";
 import { pillDef } from "@/data/pills";
 import { HERB_GRADE_NAMES, type HerbGrade } from "@/data/herbGrades";
 import { DAO_NAMES, SKILLS, skillStageName, skillStageProgress } from "@/data/crafting";
@@ -38,6 +41,10 @@ export function useBrewing() {
   const player = usePlayerStore();
   const cult = useCultivationStore();
   const lore = useLoreStore();
+  const inventory = useInventoryStore();
+  // 响应式钟:增益丹的药力状态随钟走 —— 药效到期后「已顶」自己亮回来,
+  // 不许停在一次读出的灰里(与服用侧 InventoryView / 修行快捷卡同一把游戏钟)
+  const now = useNow();
 
   /** 某品灵草的持有量 —— 炼丹头逐品读数(与灵草坊 held 同源,不走总读数) */
   function herbGradeHeld(g: HerbGrade): number {
@@ -124,6 +131,15 @@ export function useBrewing() {
             `灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石`,
           );
         const shortText = shortParts.length ? shortParts.join(" · ") : null;
+        // 炉前存货账:方子行亮「存 N」(读 inventory.pills,与丹匣同一份账),
+        // 增益丹再亮「药力状态」—— 顶满/将顶时炼出来也是白占一格,
+        // 判据与服用侧同一把尺(buffOverflowOf)+ 同一把响应式钟(now.value),
+        // 不许在炼制面另造一份「大概不用炼了」的黑话。
+        const stock = inventory.pills[id] ?? 0;
+        const overflow =
+          def.kind === "buff" && def.buffId
+            ? buffOverflowOf(cult.buffs, def.buffId, now.value)
+            : null;
         return {
           def,
           cost,
@@ -136,6 +152,8 @@ export function useBrewing() {
           shortHerb,
           shortStone,
           shortText,
+          stock,
+          overflow,
         };
       })
       .filter(
@@ -153,6 +171,8 @@ export function useBrewing() {
           shortHerb: boolean;
           shortStone: boolean;
           shortText: string | null;
+          stock: number;
+          overflow: ReturnType<typeof buffOverflowOf> | null;
         } => x !== null,
       )
       // 现在能开炉的置顶,其余再按阶位 —— 进弹窗一眼看见此刻哪味立刻可炼
