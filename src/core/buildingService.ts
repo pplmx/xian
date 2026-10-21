@@ -13,7 +13,7 @@ import { useDongfuStore } from "@/stores/dongfu";
 import { notify } from "./notify";
 
 export interface BuildingUpgradePreview {
-  /** 预览指向的下一级 */
+  /** 预览指向的目标级(单步即下一级;连升即 level+steps) */
   nextLevel: number;
   /**
    * 升级到 nextLevel 会变的那些效果行 —— 与卡面同读 effectText,只报会变的那部分,
@@ -26,23 +26,28 @@ export interface BuildingUpgradePreview {
 }
 
 /**
- * 升级/建造的「下一级会怎样」预览。卡面已显当前效果与代价,这里只补赢得什么:
- * 取 effectText(nextLevel) 与 effectText(level) 逐行比对,留下字面变掉的行 ——
+ * 升级/建造的「升上去会怎样」预览。卡面已显当前效果与代价,这里只补赢得什么:
+ * 取 effectText(toLevel) 与 effectText(level) 逐行比对,留下字面变掉的行 ——
  * 与 effectText 同一事实源,门槛、档位一致,不会出现「卡面印的出不去」。
+ *
+ * steps 缺省 1(单步);连升整段传实际步数 —— 连升买的是整段,玩家不该拿
+ * 看不到的逐级增量自己加总(与 batch 的花费总账同摆:钱多少、得多少,一眼对上)。
  */
 export function buildingUpgradePreview(
   id: BuildingId,
   level: number,
   /** 有效上限(洞府档闸门 < 品类上限时已到顶的卡不该再印「下一级」);缺省回退 def.maxLevel */
   cap?: number,
+  /** 连升步数:从 level 直接 diff 到 level+steps(1 即单步) */
+  steps = 1,
 ): BuildingUpgradePreview {
   const def = buildingDef(id)!;
-  const next = level + 1;
-  if (next > (cap ?? def.maxLevel)) return { nextLevel: next, lines: [], built: level === 0 };
+  const toLevel = level + Math.max(1, steps);
+  if (toLevel > (cap ?? def.maxLevel)) return { nextLevel: toLevel, lines: [], built: level === 0 };
   const cur = level > 0 ? def.effectText(level) : [];
-  const nxt = def.effectText(next);
+  const nxt = def.effectText(toLevel);
   const lines = nxt.filter((line, i) => line !== cur[i]);
-  return { nextLevel: next, lines, built: level === 0 };
+  return { nextLevel: toLevel, lines, built: level === 0 };
 }
 
 export interface BuildingUpgradeInfo {

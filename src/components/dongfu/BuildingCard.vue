@@ -88,6 +88,15 @@
           ><span class="whitespace-nowrap">连升×{{ BUILD_BATCH }}</span></template
         >
       </button>
+      <!-- 连升整段的累积净得:钱的总账在按钮上,得的净得在这行 —— 两者同摆,一眼对上
+           (batch.levels>1 才有意义;单步的净得卡面 preview 已报) -->
+      <p
+        v-if="batchPreview.lines.length && batch.levels > 1"
+        class="text-[10px] leading-relaxed text-jade"
+      >
+        <span class="text-ink-faint">升至 {{ batchPreview.nextLevel }} 级累积净得:</span>
+        <span v-for="line in batchPreview.lines" :key="line" class="block">{{ line }}</span>
+      </p>
     </div>
   </div>
 </template>
@@ -125,6 +134,10 @@ const info = computed(() => buildingUpgradeInfo(props.def.id));
 
 /** 连升整批会实际花掉的总账(只读预演,与 buildingUpgradeN 同一判定) —— 按下前把总数摊开 */
 const batch = computed(() => buildingUpgradeBatchCost(props.def.id, BUILD_BATCH));
+/** 连升整段的累积净得:与 batch 同一步数,从当前级直接 diff 到目标级(effectText 同源) */
+const batchPreview = computed(() =>
+  buildingUpgradePreview(props.def.id, level.value, cap.value, Math.max(1, batch.value.levels)),
+);
 /** 下一级增益预览:卡面已显当前效果与代价,这里补「升上去会怎样」(effectText 同源,只报会变的行) */
 const preview = computed(() => buildingUpgradePreview(props.def.id, level.value, cap.value));
 /** 灵兽园联动:洞府与宠物两系统彼此看见(只对 beast 这一座特例,其余建筑不理会) */
