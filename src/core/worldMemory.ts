@@ -78,10 +78,14 @@ export function deriveProsperity(input: RegionStateInput): RegionRecall {
       ? REGION_MEMORY.hoursBetween(input.suppressedAt, input.now)
       : 0;
   // 档位机由库给:多路门槛取先到、没镇压过就停在最低档、太久没来就回落
+  // 「仍在镇压中」本身就是活动:镇压后不再产胜场,lastActivityAt 停在镇压前,
+  // 若只按最后一战算 idle,守到 DECAY(48h) 就被判回落混乱,而复聚要到 72h
+  // —— 守满 FLOURISH(24h) 才有的繁盛收益在 48~72h 之间凭空消失。
+  const idling = REGION_MEMORY.hoursBetween(input.lastActivityAt, input.now);
   const stage = REGION_MEMORY.stateOf({
     count: input.totalWins,
     hours: heldHours,
-    idleHours: REGION_MEMORY.hoursBetween(input.lastActivityAt, input.now),
+    idleHours: input.suppressedAt !== undefined ? 0 : idling,
     eligible: input.hasSuppressed,
   });
   const prosperity = stage.id as RegionProsperity;

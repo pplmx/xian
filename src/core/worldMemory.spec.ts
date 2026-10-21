@@ -127,6 +127,29 @@ describe("S1 区域兴衰", () => {
     expect(notSuppressed.prosperity).toBe("chaos");
   });
 
+  it("镇压中守着的地界不因「久无人烟」回落 —— 仍在镇压中即算活动", () => {
+    // 镇压后不再产胜场,lastActivityAt 停在镇压前;若只按最后一战算 idle,
+    // 守到 DECAY(48h) 就被回落混乱,而复聚要到 72h —— 守满 FLOURISH(24h)
+    // 才有的繁盛收益会在 48~72h 之间凭空消失。守着即活动。
+    const held = deriveProsperity({
+      totalWins: 30,
+      hasSuppressed: true,
+      suppressedAt: now - 50 * HOUR,
+      lastActivityAt: now - 50 * HOUR,
+      now,
+    });
+    expect(held.prosperity, "守 50 小时仍繁盛(不按最后一战回落)").toBe("flourish");
+    // 未镇压的对照:同样 50 小时没活动,久无人烟照样回落
+    const idle = deriveProsperity({
+      totalWins: 30,
+      hasSuppressed: false,
+      suppressedAt: undefined,
+      lastActivityAt: now - 50 * HOUR,
+      now,
+    });
+    expect(idle.prosperity, "没镇压的,久无人烟照样回落").toBe("chaos");
+  });
+
   it('镇压收益微调:繁盛 110% > 稳定 105% > 混乱 100%(仍属"轻")', () => {
     expect(prosperityYieldMult("flourish")).toBeGreaterThan(prosperityYieldMult("stable"));
     expect(prosperityYieldMult("stable")).toBeGreaterThan(prosperityYieldMult("chaos"));

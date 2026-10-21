@@ -1,8 +1,11 @@
 /**
- * 世界记忆对账 —— 区域兴衰的档位与"妖气复聚"的钟交给库之后,与**迁移前冻结的旧实现**逐次相同。
+ * 世界记忆对账 —— 区域兴衰的档位与"妖气复聚"的钟交给库之后,与**冻结的参照实现**逐次相同。
  *
  * 与 engineParity 同一条纪律。这里冻结的是两段容易被"顺手改坏"的逻辑:
  *   一 兴衰档位:两条路(胜场 / 守着多久)取先到、没镇压过就停在混乱、48 小时不打交道回落;
+ *      —— 2026-10-21 改冻(吸 yunyin 2339d91):**仍在镇压中本身就是活动**,闲置时长只在
+ *      未镇压时参与回落。从前 lastActivityAt 停在镇压前,守到 48h 就被回落混乱,而复聚
+ *      要到 72h,守满 24h 才有的繁盛收益在 48~72h 之间凭空消失。
  *   二 复聚的钟:起点取"最后一次打交道"(战斗 / 镇压 / 通关取最晚),且**从没打过交道不算够钟**
  *      (否则新档一开局全世界都该复聚)。
  */
@@ -22,7 +25,7 @@ import {
 
 const HOUR = 3600_000;
 
-// —— 迁移前冻结的旧口径(原 core/worldMemory.ts 的三段)——
+// —— 冻结的参照口径(2026-10-21 随 2339d91 吸收改冻:镇压中即活动)——
 function refDeriveProsperity(input: {
   totalWins: number;
   hasSuppressed: boolean;
@@ -30,8 +33,11 @@ function refDeriveProsperity(input: {
   lastActivityAt: number;
   now: number;
 }): "chaos" | "stable" | "flourish" {
-  const idleHours = (input.now - input.lastActivityAt) / HOUR;
   const heldHours = input.suppressedAt !== undefined ? (input.now - input.suppressedAt) / HOUR : 0;
+  // 闲置时长只在未镇压时参与回落:镇压后不再产胜场,lastActivityAt 停在镇压前,
+  // 若照算 idle,守着的镇区会在 48~72h 之间被错误回落
+  const idleHours =
+    input.suppressedAt !== undefined ? 0 : (input.now - input.lastActivityAt) / HOUR;
   let prosperity: "chaos" | "stable" | "flourish" = "chaos";
   if (input.hasSuppressed) {
     const alive = idleHours < DECAY_HOURS;
