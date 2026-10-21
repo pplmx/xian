@@ -29,11 +29,19 @@ import {
   OFFLINE_CAP_HOURS,
   OFFLINE_MODAL_MIN_SECONDS,
   PAGE_DROP_CHANCE,
+  PILL_DROP_CHANCE,
+  ARTIFACT_DROP_CHANCE,
 } from "@/data/constants";
 import { makeEnemySnap, resolveCombat, sampleWinRateRaw } from "./combat";
 import { buildPlayerSnap } from "./playerSnap";
 import { generateEquipment } from "./equipGen";
-import { acquireEquipment, afterWin } from "./loot";
+import {
+  acquireArtifact,
+  acquireEquipment,
+  afterWin,
+  randomDropArtifact,
+  randomDropPill,
+} from "./loot";
 import { autoResolveEvent, regionEventPoolFor } from "./eventEngine";
 import {
   clearRegionAndUnlockNext,
@@ -44,7 +52,7 @@ import {
 } from "./exploration";
 import { regionEventDef } from "./regionEvent";
 import { placeContent } from "./mortalWorldService";
-import { planIdle } from "wanxiang-engine";
+import { clamp, planIdle } from "wanxiang-engine";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { checkSuppression, settleSuppressedRegions } from "./suppress";
 import { harvestMaterials, noteEnemy, noteEnemyMany, studyTick } from "./loreService";
@@ -53,7 +61,7 @@ import { isNemesis, markAvenged, recordLossBatch, NEMESIS_THRESHOLD } from "./wo
 import { recordWinStreakBatch, streakRewardText } from "./earlyGameService";
 import { modOf } from "./statsCalc";
 import { personalityEffects } from "./petPersonality";
-import { track } from "./progress";
+import { collect, track } from "./progress";
 import { equipmentTemplate } from "@/data/equipment";
 import { herbGradeOfMajor } from "@/data/herbGrades";
 import { tierMajor } from "./tierScale";
@@ -126,6 +134,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const cultivation = useCultivationStore();
   const adventure = useAdventureStore();
   const endgameStore = useEndgameStore();
+  const inventory = useInventoryStore();
 
   if (!game.started || player.dead) return null;
   const dtSec = Math.max(0, (nowMs - game.lastActiveAt) / 1000);
@@ -431,6 +440,41 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
          */
         for (const reward of recordWinStreakBatch(wins, battles - wins)) {
           notes.push(`途中${streakRewardText(reward.streak, reward.stone, reward.wudao)}`);
+        }
+        /**
+         * 丹药与法宝 —— 与在线 afterWin 同源的两条掉落通道,离线普通战此前整段缺席:
+         * 挂一夜的期望丹药/法宝数恒为 0,而同样时长在线打下来是
+         * wins × PILL_DROP_CHANCE × 倍率 / wins × ARTIFACT_DROP_CHANCE × (1+luck)。
+         * 按期望折算「这一趟出几枚/几件」;概率先钳到 [0,1](ISS-030 同一道封顶);
+         * 福缘翻倍不作用于这两条(在线也掷在 doubled 循环之外);法宝只入囊,
+         * 祭炼由玩家亲手决定(addArtifact 本就不自动装配)。
+         */
+        const pillChance = clamp(PILL_DROP_CHANCE * modeDef.rewardMult * regionEventReward, 0, 1);
+        const pillCount = Math.round(wins * pillChance);
+        for (let i = 0; i < pillCount; i += 1) {
+          const pillId = randomDropPill(player.major);
+          if (!pillId) break;
+          inventory.addPill(pillId, 1);
+          collect("pill", pillId);
+          trip.items += 1;
+        }
+        if (pillCount > 0) {
+          notes.push(`途中拾得丹药 ${pillCount} 枚`);
+        }
+        const artifactChance = clamp(
+          ARTIFACT_DROP_CHANCE *
+            (1 + modOf(mods, "luck") + personalityEffects(player.petId).dropLuck),
+          0,
+          1,
+        );
+        const artifactCount = Math.round(wins * artifactChance);
+        for (let i = 0; i < artifactCount; i += 1) {
+          const artId = randomDropArtifact(region.tier);
+          if (!artId) break;
+          const line = acquireArtifact(artId, true);
+          if (!line) break;
+          trip.items += 1;
+          notes.push(`途中拾得${line}`);
         }
         /**
          * 道侣机会点与在线同源:在线首个胜场与败北各走一次 offerBondEvent,机会点随之 +1;

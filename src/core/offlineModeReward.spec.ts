@@ -26,6 +26,7 @@ import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { useResourcesStore } from "@/stores/resources";
+import { useInventoryStore } from "@/stores/inventory";
 import { EXPLORE_BATTLE_INTERVAL } from "@/data/constants";
 import { gn, toNum } from "@/utils/gnum";
 
@@ -197,6 +198,27 @@ describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", ()
     expect(b.trust, "信任同上").toBe(5);
     expect(b.accord, "契合同上").toBe(5);
     expect(b.pendingEventId, "不替玩家抽待决之事").toBeNull();
+  });
+
+  it("离线普通战补丹药与法宝掉落通道:期望为正、真入囊、不替玩家祭上", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const player = usePlayerStore();
+    const inventory = useInventoryStore();
+    player.initCharacter("掉落记账", { roots: [] } as never);
+    const pillsBefore = Object.values(inventory.pills).reduce((a, b) => a + b, 0);
+    const artsBefore = inventory.artifacts.length;
+    const s = settleOffline(Date.now())!;
+    expect(s!.wins, "确定性基建下必有胜场").toBeGreaterThan(0);
+    // 丹药:PILL_DROP_CHANCE=0.08 × 倍率,wins 数百 → 期望件数必 >0 且真入了丹匣
+    const pillsAfter = Object.values(inventory.pills).reduce((a, b) => a + b, 0);
+    expect(pillsAfter, "丹药掉落通道整段缺席 → 期望恒 0;现在真入袋了").toBeGreaterThan(pillsBefore);
+    // 法宝:0.015×wins 期望 >0;只入囊,祭炼位仍空(装配由玩家亲手)
+    expect(
+      inventory.artifacts.length,
+      "法宝掉落通道同样缺席 → 现在按同一把幸运尺折算",
+    ).toBeGreaterThan(artsBefore);
+    expect(inventory.equippedArtifacts.length, "祭炼位不许被离线自动装上").toBe(0);
   });
 
   it("recordWinStreakBatch:只发这一批跨过的档;带败场收尾归零", () => {
