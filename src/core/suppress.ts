@@ -32,7 +32,7 @@ export interface RegionStats {
 
 /** 镇压判定阈值(界面也用它写规则说明,避免两处各写一套数字) */
 export const SUPPRESS_THRESHOLDS = {
-  minFights: 20, // 最少战斗次数
+  minWins: 20, // 最少胜场(updateRegionStats 只在胜场分支写入,败场不入区域账)
   maxAvgRounds: 3, // 平均回合数上限
   maxAvgDamageTaken: 0.1, // 平均受伤百分比上限 10%
 };
@@ -111,7 +111,7 @@ export function checkSuppression(player: PlayerStore, regionId: string): boolean
   if (player.suppressedRegions.includes(regionId)) return false;
 
   const p = suppressionProgress(player.regionStats[regionId]);
-  return p.fightsOk && p.roundsOk && p.damageOk;
+  return p.winsOk && p.roundsOk && p.damageOk;
 }
 
 /**
@@ -122,15 +122,15 @@ export function checkSuppression(player: PlayerStore, regionId: string): boolean
  * 唯一的解释渠道是去读源码。纯函数:吃 stats,不碰 store,便于断言。
  */
 export interface SuppressionProgress {
-  fights: number;
-  needFights: number;
+  wins: number;
+  needWins: number;
   /** 指数移动平均回合数;无战绩时为 Infinity(界面据此不显示假平均值) */
   avgRounds: number;
   maxAvgRounds: number;
   /** 指数移动平均受伤百分比(0~1,界面乘 100 显示);无战绩时为 1 */
   avgDamagePct: number;
   maxAvgDamagePct: number;
-  fightsOk: boolean;
+  winsOk: boolean;
   roundsOk: boolean;
   damageOk: boolean;
   /** 是否已有战绩可谈平均值 */
@@ -140,25 +140,27 @@ export interface SuppressionProgress {
 }
 
 export function suppressionProgress(stats: RegionStats | undefined): SuppressionProgress {
-  const fights = Math.max(0, stats?.totalFights ?? 0);
-  const hasStats = fights > 0;
+  // totalFights 字段名沿用(改名要迁存档),但它只装胜场:updateRegionStats 就位于
+  // 在线 result.win 分支内(一败即中止这趟历练,败场走不到区域账),离线也只记 wins
+  const wins = Math.max(0, stats?.totalFights ?? 0);
+  const hasStats = wins > 0;
   const avgRounds = stats ? stats.avgRounds : Number.POSITIVE_INFINITY;
   const avgDamagePct = stats ? stats.avgDamageTakenPct : 1;
-  const fightsOk = fights >= SUPPRESS_THRESHOLDS.minFights;
+  const winsOk = wins >= SUPPRESS_THRESHOLDS.minWins;
   const roundsOk = avgRounds <= SUPPRESS_THRESHOLDS.maxAvgRounds;
   const damageOk = avgDamagePct <= SUPPRESS_THRESHOLDS.maxAvgDamageTaken;
   return {
-    fights,
-    needFights: SUPPRESS_THRESHOLDS.minFights,
+    wins,
+    needWins: SUPPRESS_THRESHOLDS.minWins,
     avgRounds,
     maxAvgRounds: SUPPRESS_THRESHOLDS.maxAvgRounds,
     avgDamagePct,
     maxAvgDamagePct: SUPPRESS_THRESHOLDS.maxAvgDamageTaken,
-    fightsOk,
+    winsOk,
     roundsOk,
     damageOk,
     hasStats,
-    qualified: fightsOk && roundsOk && damageOk,
+    qualified: winsOk && roundsOk && damageOk,
   };
 }
 

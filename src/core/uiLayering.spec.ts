@@ -697,6 +697,25 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("镇压进度统一说「胜场」 —— totalFights 只装胜场,界面不许把它写成「战」", () => {
+    // updateRegionStats 就位于在线 result.win 分支内(一败即中止这趟历练,败场
+    // 根本走不到区域账),离线也只记胜场 —— 这个数从来就是「胜场」。字段名沿用
+    // 旧名(改名要迁存档),但用户面文案一律「胜」:退回「7/20 战」读着像胜败
+    // 都算,曾经正是这歧义诱导过一次把离线败场塞进区域账的坏修复。
+    const adv = FILES.find((f) => f.path === "views/AdventureView.vue");
+    expect(adv?.src, "地界行要写「N/N 胜」").toContain(
+      "{{ row.progress.wins }}/{{ row.progress.needWins }} 胜",
+    );
+    expect(adv?.src, "总纲要写「胜 N 场」").toContain(
+      "镇压门槛:胜 {{ SUPPRESS_THRESHOLDS.minWins }} 场",
+    );
+    expect(adv?.src, "旧写法「N/N 战」不许回来").not.toContain("row.progress.fights");
+    const sup = readFileSync(resolve(__dirname, "../core/suppress.ts"), "utf-8");
+    expect(sup, "阈值要叫 minWins").toContain("minWins");
+    expect(sup, "旧名 minFights 不许回来").not.toContain("minFights");
+    expect(sup, "字段为何沿用旧名要写清(totalFights 只装胜场)").toContain("只装胜场");
+  });
+
   it("战斗分析的方向要能在手机上看理由 —— 不许只藏 hover title", () => {
     // 「可借力的方向」只会出现在败局分析里,「为什么看好这个方向」此前只挂在
     // 非交互 span 的 :title 上,触屏上点了没反应 = 死提示。方向名改可点、理由

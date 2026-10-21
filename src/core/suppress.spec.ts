@@ -357,9 +357,9 @@ describe("镇压资格进度", () => {
 
   it("毫无战绩:三判据全不达标,且不显示假的平均值", () => {
     const p = suppressionProgress(undefined);
-    expect(p.fights).toBe(0);
+    expect(p.wins).toBe(0);
     expect(p.hasStats).toBe(false);
-    expect([p.fightsOk, p.roundsOk, p.damageOk]).toEqual([false, false, false]);
+    expect([p.winsOk, p.roundsOk, p.damageOk]).toEqual([false, false, false]);
     expect(p.qualified).toBe(false);
   });
 
@@ -367,7 +367,7 @@ describe("镇压资格进度", () => {
     const p = suppressionProgress(
       stats({ totalFights: 25, avgRounds: 4, avgDamageTakenPct: 0.05 }),
     );
-    expect(p.fightsOk).toBe(true);
+    expect(p.winsOk).toBe(true);
     expect(p.roundsOk).toBe(false);
     expect(p.damageOk).toBe(true);
     expect(p.qualified).toBe(false);
@@ -377,7 +377,7 @@ describe("镇压资格进度", () => {
 
   it("场数够但挨打多:只有受伤项不合格", () => {
     const p = suppressionProgress(stats({ totalFights: 40, avgRounds: 2, avgDamageTakenPct: 0.3 }));
-    expect(p.fightsOk).toBe(true);
+    expect(p.winsOk).toBe(true);
     expect(p.roundsOk).toBe(true);
     expect(p.damageOk).toBe(false);
     expect(p.qualified).toBe(false);
