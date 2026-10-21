@@ -712,6 +712,9 @@ function pillMasteryText(id: string): string {
   const m = lore.recipeMastery(id);
   if (m <= 0) return "此方尚未到手 —— 去藏经阁翻书,或向师长讨教";
   if (m >= 1) return "此方已通晓:火候节点烂熟于心";
-  return `此方已得,熟练 ${formatPercent(m, 0)} —— 多炼几炉便到通晓`;
+  // 熟练度的真实来路只有两条:藏经阁被动钻研(需经阁)、炸炉长记性 ——
+  // 成功开炉不涨分毫。文案与机制同向(炼丹契约:说不通的是叙事该改,不是机制该改),
+  // 不许再写「多炼几炉便到通晓」那种照做必失望的假来路(dataTextAudit 钉着)。
+  return `此方已得,熟练 ${formatPercent(m, 0)} —— 藏经阁钻研自会精进,炸炉也长记性`;
 }
 </script>

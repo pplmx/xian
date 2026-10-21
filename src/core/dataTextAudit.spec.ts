@@ -732,6 +732,17 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(view, "外层容器不再叠 opacity 压字").not.toContain('v-else class="ml-auto opacity-70"');
   });
 
+  it("丹方熟练度的话必须与机制同向 —— 「多炼几炉」不许回来", () => {
+    // 熟练度的真实来路只有两条:藏经阁被动钻研(需经阁,studyTick)+ 炸炉长记性(+0.02);
+    // 成功开炉不涨分毫(pillService 只在 !succeeded 分支 addRecipeMastery)。
+    // 「多炼几炉便到通晓」与机制相反 —— 玩家照它说的连炼十炉一分不涨,下一个结论就是游戏坏了。
+    const view = src("../views/InventoryView.vue");
+    expect(view, "假来路「多炼几炉」不许回来").not.toContain("多炼几炉");
+    // 真话要点名来路:读书(钻研)是主路;炸炉也长记性是这机制的独特性格,顺带说破免得玩家只敢求稳
+    expect(view, "要说清真实来路(藏经阁钻研)").toContain("钻研");
+    expect(view, "要说清真实来路(炸炉也长记性)").toContain("炸炉");
+  });
+
   it("图鉴的用具三类取自 itemText 的功用函数", () => {
     // 装备/法宝/丹药三类已收进 codex 的派生视图,功用行在那里拼;
     // 功法阁仍是两态列表,由视图直接拼 —— 两边都得取同一份文案函数
