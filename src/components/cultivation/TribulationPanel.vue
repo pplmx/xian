@@ -57,6 +57,15 @@
       </p>
       <p>
         <span class="flex items-baseline gap-1">
+          <span class="text-ink-faint">濒危减伤</span>
+          <span class="text-ink-soft">{{ formatPercent(tribLedger?.lowHpRed ?? 0, 0) }}</span>
+        </span>
+        <span class="block text-[10px] text-ink-faint"
+          >(气血垂危(&lt;30%)时逐波生效 —— 结算同款封顶)</span
+        >
+      </p>
+      <p>
+        <span class="flex items-baseline gap-1">
           <span class="text-ink-faint">每波恢复</span>
           <span class="text-ink-soft">{{ formatPercent(tribLedger?.sustain ?? 0, 1) }}</span>
         </span>
@@ -181,6 +190,9 @@ const tribLedger = computed(() => {
     statResist: stat.resist,
     // 减伤同受结算的 0.6 上限:显示"此劫真的会读的"值,不拿全局裸减伤充数
     reduction: Math.min(0.6, modOf(mods, "damageReduction")),
+    // 濒危减伤同源:waveDamage 在气血垂危(<30%)时按这个数逐波再折(0.6 封顶),
+    // 背水/涅槃路数的真实护持,从前只在结算里兑现、账上隐身
+    lowHpRed: Math.min(0.6, modOf(mods, "lowHpReduction")),
     sustain: sustainScore(mods, def, relief),
     guard: guardScore(mods, def, relief) + stat.guard,
     statGuard: stat.guard,

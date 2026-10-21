@@ -14,6 +14,7 @@ import {
   settlementResist,
   prepTier,
   tribulationWaveSpan,
+  waveDamage,
   NO_STAT_GUARD,
   type TribStatGuard,
 } from "./tribulationDecision";
@@ -266,5 +267,18 @@ describe("④ 结算抗性口径(界面=结算,不许第二把尺子)", () => {
       const expected = prepTier("resist", settlementResist(mods, NO_RELIEF, NO_STAT_GUARD));
       expect(plan.prep.resist, `${def.name}劫:抗性星与结算不同源`).toBe(expected);
     }
+  });
+
+  it("濒危减伤在结算里真实削波:气血 <30% 时按 lowHpReduction(0.6 封顶)再折", () => {
+    // waveDamage 的 hpLeft<0.3 分支:满血与垂危各算一次,垂危那波必须更小;
+    // 折幅 = min(0.6, lowHpReduction),与渡劫账要披露的数同源
+    const def = tribulationDef("thunder");
+    const mods: StatMods = { lowHpReduction: 0.35 };
+    const full = waveDamage(def, mods, 1, 1, 1);
+    const low = waveDamage(def, mods, 1, 1, 0.2);
+    expect(low, "垂危波次要吃到濒危减伤").toBeCloseTo(full * (1 - 0.35), 6);
+    // 无该词条时两波相同
+    const bare = waveDamage(def, {}, 1, 1, 0.2);
+    expect(bare).toBeCloseTo(waveDamage(def, {}, 1, 1, 1), 6);
   });
 });

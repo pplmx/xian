@@ -67,4 +67,19 @@ describe("界膜之劫 · 玩家看得见", () => {
       "needTribulation && player.major + 1 === 9",
     );
   });
+
+  /**
+   * 渡劫账曾漏显濒危减伤:waveDamage 在气血垂危(<30%)时按 lowHpReduction
+   * (0.6 封顶)再削一波(背水/涅槃路数),账上却只报 damageReduction ——
+   * 玩家顶着 35% 濒危减伤看「减伤 0%」,说不出自己凭什么撑着。
+   * 结算兑现的不该隐身:账上要有这一行,且数与结算同款公式(min(0.6, modOf))。
+   */
+  it("渡劫账披露濒危减伤,与 waveDamage 结算同源", () => {
+    const src = (p: string): string => readFileSync(resolve(__dirname, p), "utf8");
+    const panel = src("../components/cultivation/TribulationPanel.vue");
+    expect(panel, "账上要有濒危减伤一行").toContain("lowHpReduction");
+    expect(panel, "要与结算同款封顶,不许裸读词条").toMatch(
+      /Math\.min\(0\.6,\s*modOf\(mods,\s*"lowHpReduction"\)\)/,
+    );
+  });
 });
