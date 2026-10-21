@@ -2,7 +2,7 @@
  * 终局服务 —— 道途 / 天道熔炉 / 特殊世界远征 / 天道试炼 / 道痕
  */
 import type { ArtifactDef, CombatantSnap, CombatRules, DaoMark, DaoPathId } from "@/types";
-import { rng } from "@/utils/random";
+import { mulberry32, RandomService } from "@/utils/random";
 import { formatGN } from "@/utils/format";
 import { artifactDef } from "@/data/artifacts";
 import { pactDef } from "@/data/pacts";
@@ -226,6 +226,22 @@ export function snapFromReplay(name: string, r: NonNullable<DaoMark["replay"]>):
 
 /** 道痕的环境规则(道途按当年 + 目标规则 + 变数 + 契约):忆战与重写共用 */
 /** 道痕当年的规则(道途 + 界/试炼 + 变数 + 契约 + 所择之门)—— 忆战/重写按此重打 */
+/**
+ * 押道源的战斗(忆战/重写/试炼)的种子 —— 按「打的是哪一场」定死。
+ *
+ * 这些战斗卖的是「重打同一场」:注释里写着「同界同契同变数」,共享 rng 下
+ * 全局随机流被任何别的动作推进,同一场连打两次战报都不一样,承诺落空。
+ * 种子只从目标 id 与世号派生 —— 同一场永远同一串数,可复现;远征(探索)
+ * 仍走共享 rng,那边「每次都不同」才是对的。
+ */
+function seedOf(targetId: string, life: number): number {
+  let h = 0x5eed;
+  for (let i = 0; i < targetId.length; i += 1) {
+    h = Math.imul(h ^ targetId.charCodeAt(i), 2654435761);
+  }
+  return (h ^ Math.imul(life + 1, 0x9e3779b1)) >>> 0;
+}
+
 export function markRules(
   mark: DaoMark,
   world?: ReturnType<typeof celestialWorldDef>,
@@ -291,12 +307,15 @@ export function replayMark(mark: DaoMark): ExpeditionResult | null {
   }
   const target = (world ?? trial)!;
   const rules = markRules(mark, world, trial);
+  // 忆战/重写都押了道源,卖的是「重打当年那一场」—— 用按痕定死的种子,
+  // 不随全局 rng 被别的动作推进而变(「同界同契同变数」因此才成立)
+  const markRng = new RandomService(mulberry32(seedOf(mark.targetId, mark.life)));
   const report = runGauntlet(
     snap,
     foes,
     rules,
     "healBetweenPct" in target ? target.healBetweenPct : 0.5,
-    rng,
+    markRng,
   );
   const era = isStaleRuleset(mark.ruleset)
     ? `(此战录于规则纪元 ${mark.ruleset},今为 ${RULESET_VERSION},天道已变)`
@@ -363,12 +382,14 @@ export function rewriteMark(mark: DaoMark): ExpeditionResult | null {
       : endgame.daoPath === "slaughter"
         ? SLAUGHTER_PER_WIN
         : undefined;
+  // 重写与忆战同一个「同变数」承诺(同界同契同变数),同一个种子
+  const markRng = new RandomService(mulberry32(seedOf(mark.targetId, mark.life)));
   const report = runGauntlet(
     buildPlayerSnap(true),
     foes,
     rules,
     "healBetweenPct" in target ? target.healBetweenPct : 0.5,
-    rng,
+    markRng,
     {
       perWinPlayerMods: perWin,
     },
@@ -442,7 +463,9 @@ export function challengeTrial(trialId: string): ExpeditionResult | null {
       : endgame.daoPath === "slaughter"
         ? SLAUGHTER_PER_WIN
         : undefined;
-  const report = runGauntlet(buildPlayerSnap(true), foes, rules, trial.healBetweenPct, rng, {
+  // 试炼同样押道源入场:清败可复现,种子按试炼 id 定死
+  const trialRng = new RandomService(mulberry32(seedOf(trial.id, 0)));
+  const report = runGauntlet(buildPlayerSnap(true), foes, rules, trial.healBetweenPct, trialRng, {
     perWinPlayerMods: perWin,
   });
 

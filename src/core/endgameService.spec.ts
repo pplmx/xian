@@ -125,6 +125,46 @@ describe("真仙终局服务", () => {
     expect(endgame.daoSource).toBe(before - REWRITE_ENTRY_COST);
   });
 
+  /**
+   * 「重打当年之战(同界同契同变数)」是写进注释的承诺:付了道源买的就是
+   * 「同一场重打」。共享 rng 下做不到 —— 别处的动作推进全局随机流,同一天
+   * 打两场同样的忆战,战斗序列都不一样。改用按痕定死的种子后,同一局
+   * 连打两次,逐回合战报必须一致(确定性,不是概率上像)。
+   */
+  it("忆战重打是「同变数」:同痕连打两次,战报逐字相同", () => {
+    const endgame = useEndgameStore();
+    chooseDaoPath("sword");
+    endgame.addDaoSource(REWRITE_ENTRY_COST * 5);
+    const mark: DaoMark = {
+      life: 1,
+      daoPathId: "sword",
+      targetId: "chiyan",
+      targetName: "赤炎天",
+      cleared: true,
+      rounds: 30,
+      buildName: "罡盾流",
+      powerText: "1万",
+      at: Date.now(),
+      replay: {
+        mods: {},
+        attack: gn(1000),
+        defense: gn(600),
+        maxHp: gn(20000),
+        speed: 2,
+        skills: [],
+        artifacts: [],
+        pactId: null,
+      },
+    };
+    const first = rewriteMark(mark);
+    expect(first).not.toBeNull();
+    const second = rewriteMark(mark);
+    expect(second).not.toBeNull();
+    expect(JSON.stringify(second!.report.rows), "重打当年之战该逐回合同变数").toBe(
+      JSON.stringify(first!.report.rows),
+    );
+  });
+
   it("道源凝道果:走既有软上限体系", () => {
     ascend();
     const endgame = useEndgameStore();
