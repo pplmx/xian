@@ -31,7 +31,7 @@
       </div>
       <p class="mt-2 t-body text-ink-faint">{{ def.desc }}</p>
       <p v-if="!learned && def.minRealm > player.major" class="mt-1 text-[11px] text-cinnabar">
-        需更高境界方可参悟其精义
+        需 {{ realmDef(def.minRealm)?.name ?? `第${def.minRealm}境` }} 境方可参悟其精义
       </p>
       <div class="ink-divider my-3" />
       <template v-if="learned">
@@ -187,6 +187,7 @@ import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { gongfaDef, GONGFA_TYPE_NAMES } from "@/data/gongfa";
+import { realmDef } from "@/data/realms";
 import { ELEMENTS } from "@/data/linggen";
 import { branchesFor, gongfaBranchDef } from "@/data/gongfaBranches";
 import { gongfaUpgradeCost, upgradeGongfa, upgradeGongfaAll } from "@/core/gongfaService";

@@ -762,6 +762,37 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     expect(itemText, "那一句该同时写威力").toContain("skill.mult");
   });
 
+  /**
+   * 「需更高境界」让玩家分不清差一步还是遥遥无期 —— 门槛是数据(minRealm),
+   * 境界名也有单源(realmLabel/realmDef),点名「需 X 境」两处现算即可,不许手写。
+   */
+  it("功法参悟门槛点名境界,不写含糊的「更高境界」", () => {
+    const dlg = src("../components/cultivation/GongfaDialog.vue");
+    expect(dlg, "要报出具体境界名(realmDef 现算)").toContain("minRealm");
+    expect(dlg, "含糊口径不许回潮").not.toContain("需更高境界");
+    expect(dlg, "境界名走单源 realmDef,不另拼").toContain("realmDef(");
+  });
+
+  /**
+   * 页签圆点:有货可办就亮,不等玩家翻页才发现。
+   * 丹药签:有一味现在能开炉(门槛 blockers 空 + canPay 两道账都付得起,与
+   * craftPill 的判定同源)。InkTabs 的 dot 已有(CollectionView 在用)。
+   * (yunyin 的「悬赏签圆点」不吸:本作坊市无签页 —— 货架与悬赏板同屏两案,
+   * 可交单直接以可点态摊在板面,无需圆点引路。)
+   */
+  it("丹药签亮「现在能开炉」圆点,判定与开炉闸同源", () => {
+    const view = src("../views/InventoryView.vue");
+    expect(view, "丹药签要挂 dot").toContain("dot:");
+    // 判定不许在页面重抄一份:shortHerb/shortStone/blockers 都是 useBrewing
+    // 与开炉弹窗共用的那份账,页面只读它
+    expect(view, "页面只读 useBrewing 的 recipes,不另抄判定").toContain("recipes.value.some");
+    const brewing = src("../composables/useBrewing.ts");
+    expect(brewing, "可开炉判据必须含料与钱的同源判定").toContain("hasHerbs");
+    expect(brewing, "可开炉判据必须含料与钱的同源判定").toContain("hasStone");
+    const craft = src("../core/craftability.ts");
+    expect(craft, "门槛 blockers 为空才算能开炉").toContain("blockers");
+  });
+
   it("离线归来卷轴不写「闭关」——玩家是离开再回来,不是封洞修炼", () => {
     const dlg = src("../components/offline/OfflineRewardDialog.vue");
     expect(

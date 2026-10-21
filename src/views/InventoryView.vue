@@ -445,12 +445,23 @@ const lore = useLoreStore();
 type Tab = "equip" | "pill" | "material" | "artifact";
 const tab = ref<Tab>("equip");
 
-const TABS: { id: Tab; label: string }[] = [
+/**
+ * 丹药签的「现在能开炉」圆点:有一味方子门槛(blockers 空)且料钱两道账都付得起
+ * 就亮 —— 判据与 craftPill 的 canPay 同一份形状(blockers 来自 craftability,
+ * shortHerb/shortStone 与开炉行同源),人在装备页也能看见丹药页有活可干。
+ */
+const brewableNow = computed(
+  () =>
+    tab.value !== "pill" &&
+    recipes.value.some((r) => r.able.blockers.length === 0 && !r.shortHerb && !r.shortStone),
+);
+
+const TABS = computed<{ id: Tab; label: string; dot?: boolean }[]>(() => [
   { id: "equip", label: "装备" },
-  { id: "pill", label: "丹药" },
+  { id: "pill", label: "丹药", dot: brewableNow.value },
   { id: "material", label: "材料" },
   { id: "artifact", label: "法宝" },
-];
+]);
 
 // ---- 装备:部位槽 + 部位候选列表 ----
 const SLOTS: EquipSlot[] = [
