@@ -113,6 +113,21 @@ describe("离线历练 · 战后语义与在线同源", () => {
     expect(offline, "空话口径不许再出现").not.toContain("此地将自动产出资源");
   });
 
+  /**
+   * 会话的胜负两本账要与在线同源:在线每胜一场 wins+1、每败一场 losses+1
+   * (首领也在同一条 runBattle 路),离线整段结算却只写 wins —— 挂机一夜回来
+   * 「此行胜 2 场」判不出打过 5 场,「胜+负 ≥3 才算走过一趟」的门槛也永远差着。
+   */
+  it("离线会话账记胜负两本:普通战整批、首领胜败各一场", () => {
+    const offline = readFileSync(src("./offline.ts"), "utf8");
+    // 会话推进处:两本账都进 setSession
+    expect(offline).toMatch(/wins: session\.wins \+ sessionWins/);
+    expect(offline).toMatch(/losses: session\.losses \+ sessionLosses/);
+    // 首领两臂各记一场(在线同一口径:胜败都是一场)
+    expect(offline).toContain("sessionWins += 1");
+    expect(offline).toContain("sessionLosses += 1");
+  });
+
   it("挂机归来后 regionStats / 图鉴照面随胜场推进", () => {
     const game = useGameStore();
     const player = usePlayerStore();

@@ -24,11 +24,13 @@
       >
         {{ bossHint }}
       </p>
-      <!-- 战果三个读数各占一格:散文串里三个数字混在一句话中,读起来得先数逗号 -->
-      <div class="mt-1.5 grid grid-cols-3 gap-2">
+      <!-- 战果四个读数各占一格:散文串里数字混在一句话中,读起来得先数逗号 -->
+      <div class="mt-1.5 grid grid-cols-4 gap-2">
         <div>
-          <p class="text-[10px] text-ink-faint">胜</p>
-          <p class="tabular text-[13px] text-ink">{{ session?.wins ?? 0 }}</p>
+          <p class="text-[10px] text-ink-faint">战绩</p>
+          <p class="tabular text-[13px] text-ink">
+            {{ session ? sessionRecordText(session) : "胜 0 场" }}
+          </p>
         </div>
         <div>
           <p class="text-[10px] text-ink-faint">际遇</p>
@@ -337,6 +339,7 @@ import {
 } from "@/core/buildAdvisor";
 import { detectBuild } from "@/core/buildDetect";
 import { isNemesis } from "@/core/worldMemory";
+import { sessionRecordText } from "@/ui/adventureText";
 import { enemyDef } from "@/data/enemies";
 import { enemyLoreView } from "@/ui/enemyLore";
 import type { CombatLogEntry } from "@/types";

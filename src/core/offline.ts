@@ -269,6 +269,15 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   let battles = 0;
   let wins = 0;
   let events = 0;
+  /**
+   * 这趟历练记进会话的账(与在线 runBattle 同一本):
+   * 普通战按估算的胜负两本,首领战胜败各记一场 —— 在线首领也在同一条
+   * runBattle 路,胜走 wins+1、败走 losses+1。从前只写 wins 不写 losses,
+   * 挂一夜回来「此行胜 2 场」判不出打过 5 场,提前收手时连
+   * 「胜+负 ≥3 才算走过一趟」的门槛都过不去。
+   */
+  let sessionWins = 0;
+  let sessionLosses = 0;
   const session = adventure.session;
   /**
    * 挂机期间这趟历练的所得(灵石/修为/实物)。
@@ -358,6 +367,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
           notes.push(`此地之敌远胜于你,离线切磋无一胜绩,未得收获`);
         }
         wins = Math.round(battles * winRate);
+        // 会话两本账:普通战按估算的胜负场整批入账
+        sessionWins += wins;
+        sessionLosses += battles - wins;
 
         // 灵石与修为 —— 与在线 afterWin 同源:取胜奖励乘区域事件加丰倍率(rewardMult)
         // 福缘(doubleDropRate)也同源:在线每战掷一次翻倍、期望 ×(1+p);
@@ -624,6 +636,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             trip.items += drops.items;
             track("kills");
             track("bossKills");
+            // 首领胜也是会话里的一场胜(与在线 runBattle 同口径)
+            sessionWins += 1;
             player.updateRegionStats(
               region.id,
               true,
@@ -660,6 +674,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
           } else {
             // 首领败也是败:连胜归零,与在线「非胜即清」同一条
             recordWinStreakBatch(0, 1);
+            // 首领败也是会话里的一场负
+            sessionLosses += 1;
             // 首领败北也是一次败北:在线败在谁手里就记谁的宿敌账,离线同一本
             const { list, becameNemesis } = recordLossBatch(
               player.nemeses,
@@ -687,7 +703,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       } else {
         adventure.setSession({
           ...session,
-          wins: session.wins + wins,
+          wins: session.wins + sessionWins,
+          losses: session.losses + sessionLosses,
           events: session.events + events,
           // 挂机所得计入这趟总账(与在线同一份会话字段,回来接着打的数才是整趟的数)
           stoneGain: add(session.stoneGain, trip.stone),

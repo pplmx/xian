@@ -216,6 +216,7 @@ const CATEGORIES = [
       "phase31LinkAudit",
       "layeringAudit",
       "layoutMeasure",
+      "adventureText",
       "suppress",
       "game.spec",
       "earlyGameService",

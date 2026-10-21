@@ -29,6 +29,7 @@ import type { RegionEventId } from "./regionEvent";
 import { mergeRules } from "./gauntlet";
 import { suppressRateLine } from "./suppress";
 import { regionRecallFor } from "./worldMemory";
+import { sessionRecordText } from "@/ui/adventureText";
 import { lifeTrialRules } from "./lifeTrialService";
 import { buildPlayerSnap } from "./playerSnap";
 import { currentDaoRules } from "./endgameService";
@@ -165,20 +166,19 @@ export function stopExploration(reason: "manual" | "defeat" | "complete"): void 
   if (s.wins + s.losses >= 3 || reason === "complete") {
     track("explores");
   }
-  // 总结带上这一趟的实际所得(会话账目即 afterWin 的真实入账):只说胜场与际遇,
-  // 玩家还得自己去翻行囊才知道赚没赚
+  // 总结带上这一趟的实际所得(会话账目即 afterWin 的真实入账)。
+  // 战绩报「胜/负」两本账:只报胜场时,「胜 2 场」分不出是两战全胜还是九战两胜,
+  // 而这恰恰是「这趟值不值得再来」与「胜+负 ≥3 才算走过一趟」要看的数。
+  const record = sessionRecordText(s);
   const haul = `得灵石 ${formatGN(s.stoneGain)}、修为 ${formatGN(s.expGain)}${
     s.wudaoGain > 0 ? `、悟道点 ${s.wudaoGain}` : ""
   }${s.itemGain > 0 ? `、拾获 ${s.itemGain} 件` : ""}`;
   if (reason === "complete") {
-    notify(
-      `此行${region?.name ?? ""}历练圆满,胜 ${s.wins} 场,际遇 ${s.events} 次;${haul}`,
-      "success",
-    );
+    notify(`此行${region?.name ?? ""}历练圆满,${record},际遇 ${s.events} 次;${haul}`, "success");
   } else if (reason === "defeat") {
-    notify(`你身负重伤,不得不中断历练归来疗伤;此行${haul}`, "warn");
+    notify(`你身负重伤,不得不中断历练归来疗伤;此行${record},${haul}`, "warn");
   } else {
-    notify(`你收拾行囊,提前结束了这次历练;此行${haul}`, "info");
+    notify(`你收拾行囊,提前结束了这次历练;此行${record},${haul}`, "info");
   }
 }
 
