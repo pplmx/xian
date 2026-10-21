@@ -21,12 +21,13 @@
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
 import { settleOffline } from "./offline";
+import { recordWinStreakBatch } from "./earlyGameService";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { useResourcesStore } from "@/stores/resources";
 import { EXPLORE_BATTLE_INTERVAL } from "@/data/constants";
-import { gn } from "@/utils/gnum";
+import { gn, toNum } from "@/utils/gnum";
 
 // rng 全响应固定:概率判定处处 0.5、pick 恒取首项 —— 序列确定
 vi.mock("@/utils/random", async (importOriginal) => {
@@ -141,5 +142,130 @@ describe("离线 events 封顶 40 不蒸发超额遭遇 · 非事即战闭合", 
     // 非事即战:超额那 46 场(86→40)必须落成战斗,不许凭空蒸发 ——
     // 旧实现 battles 按「未封顶的 events」取差,events>40 时遭遇=事+战少了(544<600)
     expect(s!.battles + s!.events, "遭遇 = 事 + 战,全数闭合").toBe(540);
+  });
+});
+
+describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", () => {
+  /**
+   * 与在线同一本账的三族:在线逐场 recordWin/recordLoss(连胜 + 赏格)、
+   * recordLoss(宿敌)、markAvenged(雪耻);离线整段结算此前整段漏记 ——
+   * 挂一夜连胜纹丝不动、被打死几回不算宿敌、打赢了宿敌征战录仍写「尚为宿敌」。
+   * 确定性基建同上(rng 恒真、胜率 mock 0.5):mock 后 battles>0、wins=round(battles×0.5)
+   * → 既有胜场也有败场,三族记账都会走到。
+   */
+  it("离线连胜整批推进并发放跨档赏格;卷轴写明发了哪几档", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const player = usePlayerStore();
+    player.initCharacter("挂机记账", { roots: [] } as never);
+    player.winStreak = 2; // 挂机前已 2 连胜,这一批 wins 再接上就该跨过 3 与 5 两档
+    const s = settleOffline(Date.now())!;
+    expect(s).not.toBeNull();
+    expect(player.winStreak, "败场存在 → 连胜收尾归零(与在线一败即止同一条)").toBe(0);
+    // 数额到账走 recordWinStreakBatch 的专项用例(见下);这里守行为面:
+    // 卷轴逐档写明赏格,别让玩家只看见数字凭空多了一截
+    expect(s!.notes.join("\n")).toContain("连胜 3 场");
+    expect(s!.notes.join("\n")).toContain("连胜 5 场");
+    expect(s!.notes.join("\n")).toContain("悟道点 +1");
+  });
+
+  it("离线历练照在线攒道侣机会点:只补记账,三维与待决事件原样", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const player = usePlayerStore();
+    player.initCharacter("机会点记账", { roots: [] } as never);
+    // 一段完整的在途关系:胜一回 + 败一回 → 机会点 +2;其余一概不动
+    player.setBond({
+      daoluId: "d_test",
+      metAt: Date.now() - 1000,
+      fallen: false,
+      doneEvents: [],
+      fate: 5,
+      trust: 5,
+      accord: 5,
+      shared: 0,
+      opportunities: 1,
+      nextEventAt: 6,
+      pendingEventId: null,
+      intentPending: false,
+      intent: null,
+    } as unknown as Parameters<typeof player.setBond>[0]);
+    settleOffline(Date.now())!;
+    const b = player.bond!;
+    expect(b.opportunities, "胜一回 + 败一回 → 机会点 +2").toBe(3);
+    expect(b.fate, "缘分不该被离线推进").toBe(5);
+    expect(b.trust, "信任同上").toBe(5);
+    expect(b.accord, "契合同上").toBe(5);
+    expect(b.pendingEventId, "不替玩家抽待决之事").toBeNull();
+  });
+
+  it("recordWinStreakBatch:只发这一批跨过的档;带败场收尾归零", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const player = usePlayerStore();
+    const resources = useResourcesStore();
+    player.initCharacter("赏格专项", { roots: [] } as never);
+    player.winStreak = 2;
+    const stoneBefore = toNum(resources.spiritStone);
+    const wudaoBefore = resources.wudao;
+    // 6 胜接上 → 跨 3 与 5 两档,发 20+40 石 / 1+2 悟道;2 败收尾归零
+    const granted = recordWinStreakBatch(6, 2);
+    expect(
+      granted.map((g) => g.streak),
+      "跨过的档逐一点名",
+    ).toEqual([3, 5]);
+    expect(toNum(resources.spiritStone) - stoneBefore, "两档灵石合计 60").toBe(60);
+    expect(resources.wudao - wudaoBefore, "两档悟道合计 3").toBe(3);
+    expect(player.winStreak, "带败场 → 归零").toBe(0);
+    // 已发过的档不重发:再接 4 胜(0→4),只该补第 3?不 —— 归零后再从 0 数,跨 3 一档
+    const granted2 = recordWinStreakBatch(4, 0);
+    expect(
+      granted2.map((g) => g.streak),
+      "归零后重数,只跨 3",
+    ).toEqual([3]);
+    expect(player.winStreak, "无败场 → 保留 4").toBe(4);
+    // 顶档之上不再有赏格
+    player.winStreak = 10;
+    const granted3 = recordWinStreakBatch(5, 0);
+    expect(granted3, "10 档之后没有更多赏格").toEqual([]);
+    expect(player.winStreak).toBe(15);
+  });
+
+  it("离线败场整批记宿敌:败绩合计与本趟败场同源", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const player = usePlayerStore();
+    player.initCharacter("挂机记账", { roots: [] } as never);
+    const s = settleOffline(Date.now())!;
+    const losses = s!.battles - s!.wins;
+    expect(losses, "确定性基建下本趟必有败场(胜率 0.5)").toBeGreaterThan(0);
+    // 本段败场整批记进宿敌账:lossCount = 本段败场(rng 恒 pick 首项 → 恒同一敌)
+    const rec = player.nemeses[0];
+    expect(rec, "宿敌账有入账").not.toBeUndefined();
+    expect(rec!.lossCount, "败绩合计 = 本段败场").toBe(losses);
+    expect(rec!.enemyName.length, "记的是名号,不是空壳").toBeGreaterThan(0);
+  });
+
+  it("离线打赢仍在账上的宿敌:markAvenged 清账,卷轴报雪耻", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const player = usePlayerStore();
+    player.initCharacter("雪耻记账", { roots: [] } as never);
+    // 预置:这一敌已在账上败了三次(宿敌成账、未雪耻)
+    player.setNemeses([
+      {
+        enemyId: "e_wolf",
+        enemyName: "赤目野狼",
+        regionId: "qingyun",
+        lossCount: 3,
+        lastLossAt: Date.now() - 1000,
+      },
+    ]);
+    const s = settleOffline(Date.now())!;
+    expect(s!.wins, "确定性基建下本趟必有胜场").toBeGreaterThan(0);
+    const rec = player.nemeses.find((n) => n.enemyId === "e_wolf");
+    // rng 恒 pick 首项 → 本段战的就是这只;净胜为正即等于在它手下赢过 → 清账
+    expect(rec?.avengedAt, "雪耻落值").toBeGreaterThan(0);
+    expect(s!.notes.join("\n"), "卷轴要报雪耻,别让征战录永远写着尚为宿敌").toContain("【雪耻】");
   });
 });

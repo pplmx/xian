@@ -16,6 +16,7 @@ import {
   earlyEventDecay,
 } from "@/data/earlyGame";
 import { gn, toNum } from "@/utils/gnum";
+import { formatNum } from "@/utils/format";
 import { todayLocalNum } from "@/utils/time";
 import { caveOptionEffectText, enlightenmentEffectText } from "@/ui/earlyGameText";
 import { gameNow } from "./enginePause";
@@ -255,6 +256,51 @@ export function recordLoss(): void {
   player.resetWinStreak();
   // 贺有赏、断有音:连胜被掐断的那一下要出声(别让玩家某天回过神才发现 3 连胜没了)
   if (streak > 0) notify(`连胜 ${streak} 场就此而止,前功须从头再积`, "warn");
+}
+
+/** 整批入账时发下的连胜赏格(与逐场 recordWin 同一张表) */
+export interface StreakBatchReward {
+  streak: number;
+  stone: number;
+  wudao: number;
+}
+
+/** 归来卷轴里一条赏格的写法(与在线 recordWin 的 toast 同一套数,不另抄一份) */
+export function streakRewardText(streak: number, stone: number, wudao: number): string {
+  const parts = [`连胜 ${streak} 场`];
+  if (stone > 0) parts.push(`灵石 +${formatNum(stone)}`);
+  if (wudao > 0) parts.push(`悟道点 +${formatNum(wudao)}`);
+  return parts.join(" · ");
+}
+
+/**
+ * 整批胜负的连胜结算(离线整段结算用)。
+ *
+ * 在线是逐场 `recordWin` / `recordLoss`:赢一场 +1、跨过 3/5/10 档即发赏格,
+ * 输一场归零。离线按期望值整段结算,没有「第几场」,但赢了几场、输了几场是确定的:
+ *
+ * - 先按**在线能发生的那种顺序**把胜场接上(`wins` 场连续胜利),跨过哪几档就发哪几档;
+ * - 再按败场收尾(`losses > 0` 即归零)—— 在线一败即中止这趟历练,不可能在败后再赢。
+ *
+ * 不发 toast:离线归来自有卷轴,一次结算弹几条只会盖住别的交代。
+ * 赏格的实发数额与文案交给调用方(`streakRewardText`),这里只报「发了哪几档」。
+ */
+export function recordWinStreakBatch(wins: number, losses: number): StreakBatchReward[] {
+  const player = usePlayerStore();
+  const resources = useResourcesStore();
+  const count = Math.max(0, Math.floor(wins));
+  const start = Math.max(0, Math.floor(player.winStreak));
+  const end = start + count;
+  const granted: StreakBatchReward[] = [];
+  // 只发「这一批跨过去」的档;已被上一批发过的(门槛 ≤ start)不再重发
+  for (const reward of WIN_STREAK_REWARDS) {
+    if (reward.streak <= start || reward.streak > end) continue;
+    resources.addStone(gn(reward.stone));
+    resources.addSmall("wudao", reward.wudao);
+    granted.push({ ...reward });
+  }
+  player.winStreak = Math.max(0, Math.floor(losses)) > 0 ? 0 : end;
+  return granted;
 }
 
 /** 触发洞府巡游(每日一次) */

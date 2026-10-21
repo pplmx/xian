@@ -9,6 +9,7 @@ import {
   hoursUntilRevive,
   prosperityName,
   recordLoss,
+  recordLossBatch,
   isNemesis,
   markAvenged,
   recordEvent,
@@ -173,6 +174,27 @@ describe("S2 宿敌记忆", () => {
       expect(r.becameNemesis).toBe(false);
     }
     expect(list[0]?.lossCount).toBe(2);
+  });
+
+  it("整批败北与逐场等价:门槛只在跨过的那批报一次;非正数原样返回", () => {
+    const now = Date.now();
+    // 一次记 3 场 == 逐场记 3 次:新成宿敌只在这批报一次
+    const batch = recordLossBatch([], "e_wolf", "赤目野狼", "qingyun", now, 3);
+    expect(batch.becameNemesis).toBe(true);
+    expect(batch.list[0]?.lossCount).toBe(3);
+    expect(isNemesis(batch.list, "e_wolf")).toBe(true);
+    // 已过门槛的再败,不重复报「新成」
+    const again = recordLossBatch(batch.list, "e_wolf", "赤目野狼", "qingyun", now, 2);
+    expect(again.becameNemesis).toBe(false);
+    expect(again.list[0]?.lossCount).toBe(5);
+    // 逐场等价:同样三场,逐次记,合计一致
+    let list: NemesisRecord[] = [];
+    for (let i = 0; i < 3; i++) list = recordLoss(list, "e_wolf", "赤目野狼", "qingyun", now).list;
+    expect(list[0]?.lossCount).toBe(batch.list[0]?.lossCount);
+    // 非正数(全胜/0)原样返回、不建账
+    const zero = recordLossBatch([], "e_boar", "山间野猪", "qingyun", now, 0);
+    expect(zero.list).toEqual([]);
+    expect(zero.becameNemesis).toBe(false);
   });
 
   it("第 3 次败北标记宿敌", () => {

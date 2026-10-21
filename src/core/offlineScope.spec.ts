@@ -192,6 +192,7 @@ describe("离线的作用域 · 在途的东西一律不动", () => {
 
     // Required: cultivation, lifespan, and bond opportunity points (explore still runs).
     // Optional: post-battle semantics that online runBattle also writes.
+    // winStreak / nemeses 同族:离线整批结算连胜赏格与宿敌账后,这两栏也是战后语义
     const required = ["age", "bond", "exp"];
     const optional = [
       "regionStats",
@@ -199,6 +200,8 @@ describe("离线的作用域 · 在途的东西一律不动", () => {
       "suppressQualified",
       "suppressedRegions",
       "suppressedSince",
+      "winStreak",
+      "nemeses",
     ];
     const allowed = new Set([...required, ...optional]);
     expect(
@@ -238,7 +241,7 @@ describe("离线的作用域 · 在途的东西一律不动", () => {
     expect(bondAfter.fate, "缘分被离线推进了 —— 关系不该自己长").toBe(bondBefore.fate);
     expect(bondAfter.trust, "信任被离线推进了").toBe(bondBefore.trust);
     expect(bondAfter.accord, "契合被离线推进了").toBe(bondBefore.accord);
-    expect(Number(bondAfter.opportunities), "机会点该随历练攒起来").toBeGreaterThanOrEqual(
+    expect(Number(bondAfter.opportunities), "机会点该随历练攒起来(带在途历练必涨)").toBeGreaterThan(
       Number(bondBefore.opportunities),
     );
 

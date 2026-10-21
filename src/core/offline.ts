@@ -48,6 +48,9 @@ import { planIdle } from "wanxiang-engine";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { checkSuppression, settleSuppressedRegions } from "./suppress";
 import { harvestMaterials, noteEnemy, noteEnemyMany, studyTick } from "./loreService";
+import { gainBondOpportunities } from "./daoluService";
+import { isNemesis, markAvenged, recordLossBatch, NEMESIS_THRESHOLD } from "./worldMemory";
+import { recordWinStreakBatch, streakRewardText } from "./earlyGameService";
 import { modOf } from "./statsCalc";
 import { personalityEffects } from "./petPersonality";
 import { track } from "./progress";
@@ -420,6 +423,52 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         // counted toward suppression (20 fights) or enemy lore — hang long enough
         // and the Adventure page and 界域志 quietly drift from the ledger.
         if (mobId) noteEnemyMany(mobId, wins, battles - wins);
+        /**
+         * 连胜与在线同源:在线逐场 recordWin/recordLoss,跨过 3/5/10 档即发赏格、
+         * 败一场归零。离线整段结算从前完全不碰 `winStreak` —— 挂一夜连胜数字纹丝不动,
+         * 赏格也从不发放,战斗页那句「再连胜 N 场可得…」在离线时成了空话。
+         * 这里按「胜场接上、败场收尾」的同一顺序整批结算。
+         */
+        for (const reward of recordWinStreakBatch(wins, battles - wins)) {
+          notes.push(`途中${streakRewardText(reward.streak, reward.stone, reward.wudao)}`);
+        }
+        /**
+         * 道侣机会点与在线同源:在线首个胜场与败北各走一次 offerBondEvent,机会点随之 +1;
+         * 离线整段一个都不攒,「走得多才有机会」在挂机时成了空话。这里按在线情境数
+         * 整段补记(胜一回 + 败一回,至多两回),不替玩家抽事件、不碰缘分/信任/契合。
+         */
+        gainBondOpportunities((wins > 0 ? 1 : 0) + (battles > wins ? 1 : 0));
+        /**
+         * 宿敌账与在线同源:在线每败一场走一次 recordLoss,达到三次即标记宿敌;
+         * 离线整段结算没有「哪一场」,但败了几场是确定的,按整批入账。
+         * 从前这里整段漏记 —— 挂机被打死几回不算宿敌,征战录永远空白,
+         * 而图鉴与区域账都已经记了这些败场。
+         */
+        if (mobId && mobDef && battles > wins) {
+          const { list, becameNemesis } = recordLossBatch(
+            player.nemeses,
+            mobDef.id,
+            mobDef.name,
+            region.id,
+            nowMs,
+            battles - wins,
+          );
+          player.setNemeses(list);
+          if (becameNemesis) {
+            notes.push(
+              `【宿敌】你已在${mobDef.name}手下败北${NEMESIS_THRESHOLD}次——此敌已成你的宿敌!`,
+            );
+          }
+        }
+        /**
+         * 雪耻与在线同源:在线打赢一位仍在账上的宿敌,当场清账并播报。
+         * 离线整段结算里这一段净胜为正,就等于在它手下赢过。
+         * 从前只补败北不补雪耻,挂机把它打回去几十次,征战录仍写着「尚为宿敌」。
+         */
+        if (mobDef && wins > 0 && isNemesis(player.nemeses, mobDef.id)) {
+          player.setNemeses(markAvenged(player.nemeses, mobDef.id, nowMs));
+          notes.push(`【雪耻】宿敌${mobDef.name}已被斩于剑下!`);
+        }
         if (wins > 0 && mobDef) {
           const sampleFight = resolveCombat(
             buildPlayerSnap(),
@@ -522,7 +571,37 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             }
             clearRegionAndUnlockNext(region.id);
             notes.push(`挂单之间,你已将【${bossDef.name}】斩于剑下(离线战果,收益折损)`);
+            // 首领胜也是一场胜:连胜照推,跨过赏格档照发(与在线 runBattle 同一本账)
+            for (const reward of recordWinStreakBatch(1, 0)) {
+              notes.push(`斩将之后${streakRewardText(reward.streak, reward.stone, reward.wudao)}`);
+            }
+            /**
+             * 首领战也是「打赢一场」:在线 runBattle 的取胜分支里,不论对手是不是首领,
+             * 只要账上仍记着这个宿敌就当场 markAvenged。离线普通战已补(见上),
+             * 首领这一场却漏着 —— 整趟只赢在首领头上时,征战录仍写「尚为宿敌」。
+             */
+            if (isNemesis(player.nemeses, bossDef.id)) {
+              player.setNemeses(markAvenged(player.nemeses, bossDef.id, nowMs));
+              notes.push(`【雪耻】宿敌${bossDef.name}已被斩于剑下!`);
+            }
           } else {
+            // 首领败也是败:连胜归零,与在线「非胜即清」同一条
+            recordWinStreakBatch(0, 1);
+            // 首领败北也是一次败北:在线败在谁手里就记谁的宿敌账,离线同一本
+            const { list, becameNemesis } = recordLossBatch(
+              player.nemeses,
+              bossDef.id,
+              bossDef.name,
+              region.id,
+              nowMs,
+              1,
+            );
+            player.setNemeses(list);
+            if (becameNemesis) {
+              notes.push(
+                `【宿敌】你已在${bossDef.name}手下败北${NEMESIS_THRESHOLD}次——此敌已成你的宿敌!`,
+              );
+            }
             notes.push(`曾遭遇区域之主【${bossDef.name}】,惜败而退,需再蓄力`);
           }
         }
