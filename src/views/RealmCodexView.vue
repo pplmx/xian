@@ -446,15 +446,19 @@ import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import ValueRow from "@/components/common/ValueRow.vue";
 import SectionMark from "@/components/common/SectionMark.vue";
+import { useGameNow } from "@/composables/useGameNow";
 
 const player = usePlayerStore();
 const game = useGameStore();
 const ui = useUiStore();
 const resources = useResourcesStore();
+const gameNowSec = useGameNow();
 const now = computed(() => {
-  // 暂停感知时钟:暂停时 activeDivination 因 gameNow() 冻结不散、恢复再顺延 expiresAt,
-  // 倒计时若用浏览器墙上钟(useNow)会在暂停里一路归零、恢复后又跳回十几分 —— 与结算同源。
-  void game.totalPlaySec;
+  // 暂停感知时钟:暂停时 activeDivination 因 gameNow() 冻结不散、恢复再顺延 expiresAt。
+  // 心跳源是 useGameNow(1s 心跳、gameNow() 同源)而非 totalPlaySec —— 引擎只在
+  // ACTIVE_STAMP_MS(5 秒)才加一次时间,卦的分秒倒计时会 5 秒一跳;换它之后秒针顺走,
+  // 暂停冻结/恢复顺延与判定链(gameNow())同一条语义,过期判定照旧不读它。
+  void gameNowSec.value;
   return gameNow();
 });
 
@@ -478,7 +482,7 @@ const showAllHex = ref(false);
 
 /** 在身之卦:读一次心跳,过期的卦才会自己消失(与 player 的判定同一个办法) */
 const currentReading = computed(() => {
-  void game.totalPlaySec;
+  void gameNowSec.value;
   const state = player.activeDivination;
   return state ? readingFromState(state) : null;
 });
@@ -486,11 +490,11 @@ const drawnLines = computed(() => (currentReading.value ? drawLines(currentReadi
 const counsel = computed(() => (currentReading.value ? readingCounsel(currentReading.value) : []));
 const powerText = computed(() => (currentReading.value ? modsText(player.divinationMods) : ""));
 const remainText = computed(() => {
-  void game.totalPlaySec;
+  void gameNowSec.value;
   const state = player.activeDivination;
   if (!state) return "";
   const sec = Math.max(0, Math.floor((state.expiresAt - now.value) / 1000));
-  // 倒计时一律走 formatCountdown(定宽补零)+ .countdown-slot 槽 —— 秒表每秒心跳,
+  // 倒计时一律走 formatCountdown(定宽补零)+ .countdown-slot 槽 —— 秒针顺走(useGameNow 1s 心跳),
   // 手拼的「尚余 5 分 3 秒 → 5 分 30 秒 → 9 秒」位数不定,行内会跟着跳
   // (全库唯一漏网的手写秒表,其余倒计时都走同一条纪律,见 uiLayering 审计)。
   return `尚余 ${formatCountdown(sec)}`;

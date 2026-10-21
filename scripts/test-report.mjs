@@ -255,6 +255,7 @@ const CATEGORIES = [
       "favicon.spec",
       "useNativeInsets",
       "useGameClock",
+      "useGameNow",
       "fatePreview",
       "goBack",
       "inventorySeen",

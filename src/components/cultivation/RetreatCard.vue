@@ -46,20 +46,23 @@
 import { computed, ref, watch } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
-import { useGameStore } from "@/stores/game";
 import { isRetreating, startRetreat, getRetreatRemainingSec } from "@/core/earlyGameService";
 import { modOf } from "@/core/statsCalc";
 import { buffDef } from "@/data/buffs";
 import { formatCountdown, formatRate } from "@/utils/format";
+import { useGameNow } from "@/composables/useGameNow";
 
 const player = usePlayerStore();
 const ui = useUiStore();
 
 // Phase 28 闭关:状态与倒计时接 earlyGameService(buff 为真相源,重载后依旧可信)
 const retreating = computed(() => isRetreating());
-// 暂停感知:闭关剩余与结算同读 getRetreatRemainingSec(gameNow 冻结、恢复顺延),随心跳刷新
+// 显示心跳(useGameNow,1s 心跳、gameNow() 同源):totalPlaySec 只每 5 秒
+// (ACTIVE_STAMP_MS)被引擎加一次,分秒倒计时会 5 秒一跳 —— 换它之后秒针顺走;
+// 暂停冻结/恢复顺延与 shiftBuffEnds 同一条语义,判定链(getRetreatRemainingSec)不读它,照旧
+const gameNowSec = useGameNow();
 const retreatRemaining = computed(() => {
-  void useGameStore().totalPlaySec;
+  void gameNowSec.value;
   return getRetreatRemainingSec();
 });
 /**
