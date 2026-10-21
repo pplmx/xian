@@ -34,9 +34,14 @@ export const useInventoryStore = defineStore(
 
     /** 存档修复:行囊/丹药/法宝被写坏时,装备合计与图鉴会在渲染期抛错 */
     function sanitize(): void {
+      const seen = new Set<string>();
       items.value = asArray<EquipmentInstance>(items.value, [], (it) => {
         const item = it as EquipmentInstance;
-        return !!item && typeof item.uid === "string" && !!equipmentTemplate(item.templateId);
+        // 同一 uid 只留首件:坏档把一件写两遍,重复行会把战力/包位都算成两份
+        if (!item || typeof item.uid !== "string" || seen.has(item.uid)) return false;
+        if (!equipmentTemplate(item.templateId)) return false;
+        seen.add(item.uid);
+        return true;
       });
       equipped.value = asRecord<string>(equipped.value);
       // Dangling uid, unknown slot key, or a piece sitting in the wrong slot:

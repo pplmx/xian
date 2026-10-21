@@ -4,7 +4,7 @@
  * 货架按墙钟刷新,离线照走;寄卖到时辰自售入账。判据与价签全在
  * core/marketService(纯)与 stores/market(编排),本页只做展示与点击。
  */
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
 import { useMarketStore } from "@/stores/market";
@@ -223,6 +223,12 @@ const equipCandidates = computed(() => {
   const slot = bounty.orders.find((o) => o.idx === equipPick.value);
   if (!slot || slot.kind !== "equip" || slot.claimed) return [];
   return inventory.bagItems.filter((e) => e.tier >= slot.tier);
+});
+
+// 换版瞬间收起点选窗:挑单是**对着旧单**挑的,新单同号未必还是贡器单 ——
+// equipCandidates 会因此空掉,窗口就挂成一张空列表;收掉让玩家按新单再点。
+watch(equipCandidates, (rows) => {
+  if (equipPick.value !== null && rows.length === 0) equipPick.value = null;
 });
 
 function deliverPicked(uid: string): void {

@@ -86,6 +86,34 @@ describe("坊市 store", () => {
     expect((market.stock[0] as { kind: "pill" }).kind).toBe("pill");
   });
 
+  it("坏档格号先校验再认号:缺号格不顶掉好货,寄卖格号重复重排", () => {
+    seedPlayerAndFunds();
+    const market = useMarketStore();
+    market.sync(Date.now());
+    // 坏档:第 0、1 格同号 idx 0
+    market.stock = market.stock.map((g, i) => ({ ...g, idx: i === 1 ? 0 : g.idx }));
+    market.sanitize();
+    const idxs = market.stock.map((g) => g.idx).sort((a, z) => a - z);
+    expect(new Set(idxs).size, "货架格号互异").toBe(market.stock.length);
+    // 寄卖:两笔同号 slot 0
+    const inventory = useInventoryStore();
+    for (const uid of ["c1", "c2"]) {
+      inventory.addEquipment({
+        uid,
+        templateId: "w_zhuqing",
+        quality: "mortal",
+        tier: 3,
+        level: 0,
+        affixes: [],
+      });
+      expect(market.consignEquip(uid, Date.now()), "预置寄卖入格").toBe("ok");
+    }
+    market.consign = market.consign.map((p) => ({ ...p, slot: 0 }));
+    market.sanitize();
+    const slots = market.consign.map((p) => p.slot).sort((a, z) => a - z);
+    expect(slots, "寄卖格号重排互异且不越界").toEqual([0, 1]);
+  });
+
   /**
    * 跨过换货窗口时点下「买」:屏幕上还是旧架,`sync` 却整架换新。
    * 若照旧按 idx 扣钱,玩家买下的是他没看过的那件(灵石照扣,装备品质还按新的

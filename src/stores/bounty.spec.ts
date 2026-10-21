@@ -150,6 +150,23 @@ describe("悬赏板 store", () => {
    * 若照旧按 idx 交货,扣的是玩家的货、成交的是**他没看过的新单**(新单收的货
    * 与赏格都可能不同)。宁可不成,让玩家按新单再点。
    */
+  it("坏档重复单号重排:两张单都交得了,好货不被缺号顶掉", () => {
+    seedPlayerAndFunds();
+    const b = useBountyStore();
+    b.sync(Date.now());
+    // 坏档:两张单同号 idx 1(生成器确定性 → kind 依序恒 herb/ore/pill/equip)
+    const list = b.orders.map((o, i) => ({ ...o, idx: i < 2 ? 1 : i }));
+    b.orders = list;
+    b.sanitize();
+    // 重排后 4 张单 idx 互异、连续覆盖 0..3 —— 两张「同号」单都还找得到
+    const idxs = b.orders.map((o) => o.idx).sort((a, z) => a - z);
+    expect(idxs, "单号互异").toEqual([0, 1, 2, 3]);
+    expect(
+      b.orders.map((o) => o.kind),
+      "四张单一张不少",
+    ).toEqual(["herb", "ore", "pill", "equip"]);
+  });
+
   it("跨过换版窗口时按下交货:不成交,也不扣货", () => {
     seedPlayerAndFunds();
     const b = useBountyStore();

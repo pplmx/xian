@@ -93,7 +93,19 @@ export const useMarketStore = defineStore(
           });
         }
       }
-      stock.value = clean;
+      // 格号去重:同号格只留首件,后续同号重排到空号 —— 缺号格不顶掉好货,
+      // 两格同号会让第二件从不露面(buy 按格号 find 恒取首个)
+      const taken = new Set<number>();
+      stock.value = clean.map((g) => {
+        if (!taken.has(g.idx)) {
+          taken.add(g.idx);
+          return g;
+        }
+        let free = 0;
+        while (taken.has(free)) free += 1;
+        taken.add(free);
+        return { ...g, idx: free };
+      });
 
       const posts: ConsignPost[] = [];
       for (const raw of asArray<unknown>(consign.value)) {
@@ -114,7 +126,18 @@ export const useMarketStore = defineStore(
           name: "name" in raw && typeof raw.name === "string" ? raw.name : "",
         });
       }
-      consign.value = posts;
+      // 寄卖格号同样去重重排:同号两笔会让其中一件从不露面
+      const takenSlots = new Set<number>();
+      consign.value = posts.map((p) => {
+        if (!takenSlots.has(p.slot) && p.slot < MARKET_CONSIGN_SLOTS) {
+          takenSlots.add(p.slot);
+          return p;
+        }
+        let free = 0;
+        while (takenSlots.has(free)) free += 1;
+        takenSlots.add(free);
+        return { ...p, slot: Math.min(free, MARKET_CONSIGN_SLOTS - 1) };
+      });
     }
 
     /** 货架空、或已过刷新窗口则重上一架;此刻的架内货不动 */

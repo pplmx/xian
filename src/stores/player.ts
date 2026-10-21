@@ -756,10 +756,14 @@ export const usePlayerStore = defineStore(
         count,
         daoFruit: Number.isFinite(r?.daoFruit) ? Math.max(0, r.daoFruit) : 0,
         talents: Array.isArray(r?.talents)
-          ? r.talents.filter((id): id is string => typeof id === "string" && !!talentDef(id))
+          ? [...new Set(r.talents)].filter(
+              (id): id is string => typeof id === "string" && !!talentDef(id),
+            )
           : [],
         heritage: Array.isArray(r?.heritage)
-          ? r.heritage.filter((id): id is string => typeof id === "string" && !!heritageDef(id))
+          ? [...new Set(r.heritage)].filter(
+              (id): id is string => typeof id === "string" && !!heritageDef(id),
+            )
           : [],
         insight:
           Number.isFinite(r?.insight) && (r?.insight !== 0 || count === 0)

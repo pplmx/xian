@@ -55,7 +55,8 @@ export const useBountyStore = defineStore(
       for (const raw of asArray<unknown>(orders.value)) {
         if (!raw || typeof raw !== "object" || !("kind" in raw) || !isKind(raw.kind)) continue;
         clean.push({
-          idx: asNonNegInt("idx" in raw ? raw.idx : clean.length, clean.length),
+          // 占位:shape 过滤完统一重排 —— 坏档两张同号会让第二张永远交不了
+          idx: clean.length,
           kind: raw.kind,
           kindId: "kindId" in raw && typeof raw.kindId === "string" ? raw.kindId : "",
           target: Math.max(1, asNonNegInt("target" in raw ? raw.target : 1, 1)),
@@ -65,7 +66,8 @@ export const useBountyStore = defineStore(
           claimed: "claimed" in raw && raw.claimed === true,
         });
       }
-      orders.value = clean;
+      // 单号统一重排 0..n-1:idx 只是这一版的格号,顺序即身份 —— 重排后每张单都交得了
+      orders.value = clean.map((o, i) => ({ ...o, idx: i }));
     }
 
     /** 订单空、或已过刷新窗口则换新一版(此刻的订单不动,交货中的不打断) */

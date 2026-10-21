@@ -20,6 +20,7 @@ import { useAdventureStore } from "@/stores/adventure";
 import { usePacingTelemetry } from "@/stores/pacingTelemetry";
 import { useLoreStore } from "@/stores/lore";
 import { useInventoryStore } from "@/stores/inventory";
+import { TALENTS } from "@/data/talents";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useQuestsStore } from "@/stores/quests";
 import { MAX_MAJOR } from "@/data/realms";
@@ -590,6 +591,53 @@ describe("坏档韧性 · 跨字段不一致(幽灵法宝占位)", () => {
     inv.sanitize();
     expect(inv.items.map((it) => it.uid)).toEqual(["real"]);
     expect(inv.equipped.body, "幽灵装备卸下,不占槽位").toBeUndefined();
+  });
+
+  it("重复天赋只留一份 —— 同一条写两遍不再白送两份词条", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    const def = TALENTS[0]!;
+    player.$patch({
+      reincarnation: { ...player.reincarnation, talents: [def.id, def.id] },
+    } as never);
+    player.sanitize();
+    expect(
+      player.reincarnation.talents.filter((t) => t === def.id).length,
+      "同一天赋只留一条",
+    ).toBe(1);
+  });
+
+  it("重复状态只留一条 —— 同一 defId 写两遍不再词条双算(引擎 apply 只改首个,余者静默挂着)", () => {
+    setActivePinia(createPinia());
+    const cultivation = useCultivationStore();
+    const now = Date.now();
+    cultivation.$patch({
+      buffs: [
+        { defId: "buff_wudao", endsAt: now + 60_000 },
+        { defId: "buff_wudao", endsAt: now + 120_000 },
+      ],
+    } as never);
+    cultivation.sanitize();
+    const rows = cultivation.buffs.filter((b) => b.defId === "buff_wudao");
+    expect(rows.length, "同一状态只留一条(留到期更晚的那条)").toBe(1);
+    expect(rows[0]?.endsAt).toBe(now + 120_000);
+  });
+
+  it("重复 uid 只留一件 —— 同一件装备写两遍不再算成两件(战力双算/包位双占)", () => {
+    setActivePinia(createPinia());
+    const inv = useInventoryStore();
+    const inst = {
+      uid: "dup",
+      templateId: "b_qingyun",
+      quality: "mortal",
+      tier: 1,
+      level: 0,
+      affixes: [],
+    };
+    inv.$patch({ items: [inst, { ...inst }] } as never);
+    inv.sanitize();
+    expect(inv.items.length, "同一 uid 只留首件").toBe(1);
+    expect(inv.items[0]?.uid).toBe("dup");
   });
 });
 

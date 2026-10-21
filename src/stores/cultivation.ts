@@ -52,11 +52,18 @@ export const useCultivationStore = defineStore(
         .filter((id) => fixedLearned[id] !== undefined)
         // 主/辅交集是幽灵占席:一门功法同时落主修与辅修为词条双计,读档须除掉
         .filter((id) => id !== mainGongfa.value);
-      buffs.value = asArray<BuffInstance>(
+      // 同一 defId 只留一条(留到期更晚的):引擎 apply 用 findIndex 只改首个,
+      // 坏档带进来的重复实例会静默挂着,activeBuffs 词条双算
+      const buffLatest = new Map<string, number>();
+      for (const b of asArray<BuffInstance>(
         buffs.value,
         [],
         (b) => !!b && typeof (b as BuffInstance).defId === "string",
-      );
+      )) {
+        const prev = buffLatest.get(b.defId);
+        if (prev === undefined || b.endsAt > prev) buffLatest.set(b.defId, b.endsAt);
+      }
+      buffs.value = [...buffLatest].map(([defId, endsAt]) => ({ defId, endsAt }));
       // 读档钳回时长上限:封顶只在施加时生效,存量实例若 endsAt 超出当前 now+cap 政策,压回口径
       buffs.value = buffs.value.map((b) => {
         const cap = buffCapSec(b.defId);
