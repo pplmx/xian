@@ -122,6 +122,8 @@ describe("顿悟 · 两个战斗向选项同量级", () => {
       return { label, ...e, mult: def.mods.damageBonus ? e.offense : e.survivability };
     });
     // 把量出来的数摊在测试输出里:改数值时先看这张表,比看报错快
+    // (刻度表是本 spec 的产物 —— 与 engine 侧 sim spec 同类,no-console 定向放行)
+    // eslint-disable-next-line no-console
     console.log(
       [
         "  选项        输出倍数   生存倍数",
