@@ -215,6 +215,7 @@ const CATEGORIES = [
       "worldMemory",
       "phase31LinkAudit",
       "layeringAudit",
+      "layoutMeasure",
       "suppress",
       "game.spec",
       "earlyGameService",
