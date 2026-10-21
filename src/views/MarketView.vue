@@ -147,6 +147,7 @@ function buySlot(idx: number): void {
   const r = market.buy(idx);
   if (r === "poor") notify("灵石不足,购入不成", "warn");
   else if (r === "bagfull") notify("行囊已满,灵石已退回", "warn");
+  else if (r === "expired") notify("货架刚换新,请按新货再买", "warn");
 }
 
 /** 购入短差:买得起念全价,付不起换口「尚差 X 石」 */
@@ -181,6 +182,7 @@ function claimBounty(idx: number): void {
   const r = bounty.claim(idx);
   if (r === "insufficient") notify("材料或丹药不足,交不了货", "warn");
   else if (r === "nobag") notify("行囊里没有够阶的兵刃", "warn");
+  else if (r === "expired") notify("悬赏已换新单,请按新单再交", "warn");
 }
 
 /** 正在点选交付兵刃的那单悬赏(idx;null = 未在挑) */
@@ -228,6 +230,7 @@ function deliverPicked(uid: string): void {
   const r = bounty.claimEquip(equipPick.value, uid);
   equipPick.value = null;
   if (r === "insufficient") notify("这件不够阶,换一件", "warn");
+  else if (r === "expired") notify("悬赏已换新单,请按新单再交", "warn");
 }
 
 /** 贡这柄可得(随所交之品现算,与交货结算同源 —— 交哪件前先亮价) */

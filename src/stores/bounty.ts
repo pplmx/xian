@@ -16,7 +16,18 @@ import { BOUNTY_REFRESH_SECONDS, type BountyKind, type BountySlot } from "@/data
 import { equipBountyReward, generateBounty } from "@/core/bountyService";
 import { asArray, asFiniteNumber, asNonNegInt, asPrice } from "@/utils/saveShape";
 
-export type BountyClaimResult = "ok" | "claimed" | "insufficient" | "nobag" | "missing";
+export type BountyClaimResult =
+  | "ok"
+  | "claimed"
+  | "insufficient"
+  | "nobag"
+  | "missing"
+  /**
+   * 点下去的那一瞬正好跨过换版窗口:订单已整版换新,`idx` 指的是另一张单。
+   * 单靠 idx 认单的话,这时会**拿玩家没看过的单成交**:扣的是玩家手里的货,
+   * 收货与赏格却是新单的 —— 宁可不成,让他按新单再点。
+   */
+  | "expired";
 
 function isKind(v: unknown): v is BountyKind {
   return v === "herb" || v === "ore" || v === "pill" || v === "equip";
@@ -68,7 +79,10 @@ export const useBountyStore = defineStore(
     /** 交货第 idx 单;验货→扣货→入账;贡器按所交之品的品质现算价 */
     function claim(idx: number): BountyClaimResult {
       const now = Date.now();
+      const before = orders.value;
       sync(now);
+      // 换版了:idx 现在指的是另一张单,不能替玩家交给他没看过的那张
+      if (before.length > 0 && orders.value !== before) return "expired";
       const slot = orders.value.find((s) => s.idx === idx);
       if (!slot) return "missing";
       if (slot.claimed) return "claimed";
@@ -100,7 +114,10 @@ export const useBountyStore = defineStore(
     /** 交货一柄玩家点选的够格兵刃(不再自动取第一件) */
     function claimEquip(idx: number, uid: string): BountyClaimResult {
       const now = Date.now();
+      const before = orders.value;
       sync(now);
+      // 换版同防:点选的 uid 是对着旧单挑的,新单的门槛未必还认它
+      if (before.length > 0 && orders.value !== before) return "expired";
       const slot = orders.value.find((s) => s.idx === idx);
       if (!slot || slot.kind !== "equip") return "missing";
       if (slot.claimed) return "claimed";

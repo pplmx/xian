@@ -17,7 +17,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { MARKET_REFRESH_SECONDS, MARKET_SLOTS, type MarketSlot } from "@/data/market";
 import type { EquipmentInstance } from "@/types";
-import { gn } from "@/utils/gnum";
+import { gn, toNum } from "@/utils/gnum";
 
 function seedPlayerAndFunds(): void {
   const p = usePlayerStore();
@@ -84,6 +84,31 @@ describe("坊市 store", () => {
     expect(market.stockedAt).toBe(0);
     expect(market.stock.length).toBe(1);
     expect((market.stock[0] as { kind: "pill" }).kind).toBe("pill");
+  });
+
+  /**
+   * 跨过换货窗口时点下「买」:屏幕上还是旧架,`sync` 却整架换新。
+   * 若照旧按 idx 扣钱,玩家买下的是他没看过的那件(灵石照扣,装备品质还按新的
+   * `(stockedAt, idx)` 再生)。宁可不成,让他按新货再买。
+   */
+  it("跨过换货窗口时买下:不成交、不扣灵石、不入袋", () => {
+    seedPlayerAndFunds();
+    const market = useMarketStore();
+    const resources = useResourcesStore();
+    const inventory = useInventoryStore();
+    market.sync(Date.now());
+    market.stockedAt = 0; // 屏幕上画的还是这架旧货,但已过窗口
+    resources.spiritStone = gn(100);
+    const oldShelf = market.stock;
+
+    expect(market.buy(0)).toBe("expired");
+    expect(market.stock, "已整架换新").not.toBe(oldShelf);
+    expect(oldShelf[0]!.sold, "旧架那格不动").toBe(false);
+    expect(toNum(resources.spiritStone), "灵石一枚不扣").toBe(100);
+    expect(
+      Object.values(inventory.pills).every((n) => n === 0),
+      "也不入袋",
+    ).toBe(true);
   });
 
   it("寄卖:满 2 格拒收;到时辰自售入账并清格", () => {

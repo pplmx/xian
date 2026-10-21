@@ -144,4 +144,50 @@ describe("悬赏板 store", () => {
     expect(b.orders.length).toBe(1);
     expect(b.orders[0]!.kind).toBe("herb");
   });
+
+  /**
+   * 跨过换版窗口时点下「交货」:屏幕上还是旧单,`sync` 却整版换新。
+   * 若照旧按 idx 交货,扣的是玩家的货、成交的是**他没看过的新单**(新单收的货
+   * 与赏格都可能不同)。宁可不成,让玩家按新单再点。
+   */
+  it("跨过换版窗口时按下交货:不成交,也不扣货", () => {
+    seedPlayerAndFunds();
+    const b = useBountyStore();
+    const res = useResourcesStore();
+    // 先上一版(玩家正看着这屏旧单),再把上货时刻推到窗口之外
+    b.sync(Date.now());
+    b.bountyAt = 0;
+    res.spendSmall("herb", 100); // 先清空,精确断言不扣
+    res.addSmall("herb", 30);
+    const oldList = b.orders;
+    const oldOrder = oldList[0]!;
+
+    expect(b.claim(0)).toBe("expired");
+    expect(oldOrder.claimed, "旧单不动").toBe(false);
+    expect(res.herb, "货一株不许扣").toBe(30);
+    expect(b.orders, "已整版换新").not.toBe(oldList);
+    expect(b.orders.includes(oldOrder), "旧单一纸不留").toBe(false);
+  });
+
+  it("贡器点选跨过换版窗口:同样不成交、不扣兵刃", () => {
+    seedPlayerAndFunds();
+    const b = useBountyStore();
+    const inventory = useInventoryStore();
+    inventory.addEquipment({
+      uid: "race-eq",
+      templateId: "w_zhuqing",
+      quality: "fine",
+      tier: 3,
+      level: 0,
+      affixes: [],
+    });
+    // 先上一版(玩家正对着旧单点选),再把上货时刻推到窗口之外
+    b.sync(Date.now());
+    b.bountyAt = 0; // 屏幕上是旧版,已过换版窗口
+    const oldList = b.orders;
+
+    expect(b.claimEquip(3, "race-eq")).toBe("expired");
+    expect(inventory.findItem("race-eq"), "兵刃不许离包").not.toBeUndefined();
+    expect(b.orders, "已整版换新").not.toBe(oldList);
+  });
 });
