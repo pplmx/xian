@@ -186,6 +186,17 @@ describe("秘境 · 推得动、出得来", () => {
     expect(SECRET_MAX_LOSSES).toBe(2);
   });
 
+  /**
+   * 逐出那一句曾经手写「连败两场」—— 门槛早已挪进 data(SECRET_MAX_LOSSES),
+   * 文案仍留在 core 里:门槛挪到三场时,这句就原地撒谎。改成从门槛现算,
+   * 并钉住战报里不许再出现手写的「两场」。
+   */
+  it("被逐出的战报从 SECRET_MAX_LOSSES 现算,不再手写「两场」", () => {
+    const src = readFileSync(resolve(__dirname, "secretRealm.ts"), "utf8");
+    expect(src).toContain("`连败 ${cnNumber(SECRET_MAX_LOSSES)} 场,被逐出秘境`");
+    expect(src, "不许再手写门槛数字").not.toContain("连败两场");
+  });
+
   it("放弃即出,状态清空(已得战利不退)", () => {
     ready(3);
     enterSecretRealm("sr_kurong");
