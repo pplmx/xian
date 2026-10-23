@@ -259,6 +259,7 @@ const CATEGORIES = [
       "swPrecache",
       "smokeReading",
       "absenceLedger",
+      "tautologyGuard",
       "fatePreview",
       "goBack",
       "inventorySeen",

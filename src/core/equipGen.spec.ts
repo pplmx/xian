@@ -40,7 +40,15 @@ describe("装备生成", () => {
     for (let i = 0; i < 60; i += 1) {
       const inst = generateEquipment(8, rng);
       const q = qualityDef(inst.quality);
-      expect(inst.affixes.length).toBeGreaterThanOrEqual(0);
+      /**
+       * 区间两端都要量。原先下界写 `>= 0` —— 条数恒不为负,那条断言永远为真,
+       * 等于没写;真正的下界在 `q.affixes[0]`(凡品 0、良品 1、精品 2…)。
+       * 少了它,「良品只出一条词条」这类生成器回退不会被发现。
+       */
+      expect(
+        inst.affixes.length,
+        `${q.name}的词条数不该少于 ${q.affixes[0]}`,
+      ).toBeGreaterThanOrEqual(q.affixes[0]);
       expect(inst.affixes.length).toBeLessThanOrEqual(q.affixes[1]);
       const ids = inst.affixes.map((a) => a.id);
       expect(new Set(ids).size).toBe(ids.length);

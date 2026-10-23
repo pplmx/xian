@@ -73,13 +73,31 @@ describe("首领唯一性 · 同一世界内不得重复", () => {
 
 describe("首领唯一性 · 跨世界可以重复", () => {
   it("不同世界之间不设约束", () => {
-    // 唯一性是**世界内**的。跨世复用是素材库该有的样子,
-    // 否则二十个首领撑不了几世
-    const a = generateMortalWorld(11111);
-    const b = generateMortalWorld(22222);
-    const shared = a.chain.map((p) => p.boss).filter((id) => b.chain.some((q) => q.boss === id));
-    console.log(`\n两世共用 ${shared.length} 个首领 —— 跨世重复是允许的`);
-    expect(shared.length).toBeGreaterThanOrEqual(0);
+    /**
+     * 唯一性是**世界内**的。跨世复用是素材库该有的样子,否则二十个首领撑不了几世。
+     *
+     * 这条原先断言 `shared.length >= 0` —— 恒真,等于没写;而它想守的东西恰恰
+     * 是**可被违反**的:若哪天有人把首领池改成全局唯一(比如把已用过的首领从
+     * 候选里永久剔除),下面的 `worldsWithReuse` 会归零,玩家看到的是"每一世
+     * 都是同一批新名字",而旧写法不会有任何反应。故把"允许"写成可检验的形状:
+     * ① 世界内仍绝对唯一;② 跨世界确实发生过复用(不是靠恒真句兜底)。
+     */
+    const worlds = [11111, 22222, 33333, 44444, 55555, 66666].map((s) => generateMortalWorld(s));
+    // ① 世界内:每一世自己不许重复
+    for (const w of worlds) {
+      const ids = w.chain.map((p) => p.boss);
+      expect(new Set(ids).size, "世界内首领重复了 —— 唯一性是世界内的契约").toBe(ids.length);
+    }
+    // ② 跨世界:至少有一世与他世共用过首领 —— 否则"允许复用"是空话
+    let reused = 0;
+    for (let i = 0; i < worlds.length; i += 1) {
+      for (let j = i + 1; j < worlds.length; j += 1) {
+        const mine = new Set(worlds[i]!.chain.map((p) => p.boss));
+        if (worlds[j]!.chain.some((p) => mine.has(p.boss))) reused += 1;
+      }
+    }
+    console.log(`\n六世两两比对:${reused} 对共用过首领 —— 跨世重复是允许的,不是靠恒真句兜底`);
+    expect(reused, "六世之间一次复用都没有:首领池被改成了全局唯一").toBeGreaterThan(0);
   });
 
   it("长序列里首领仍有足够轮换", () => {
