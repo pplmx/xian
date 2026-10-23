@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 440,
+  "round": 441,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-23T16:53:50+00:00",
+  "updated_at": "2026-10-23T17:22:50+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25776,6 +25776,52 @@
       "touched_round": 440,
       "title": "缺席只记一本账:挂起与关页面同一笔(absenceLedger.spec 守)",
       "category": "correctness"
+    },
+    "ISS-324": {
+      "id": "ISS-324",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T17:06:16+00:00",
+      "updated_at": "2026-10-23T17:06:16+00:00",
+      "touched_round": 441,
+      "title": "四条恒真断言(>=0)把判据退化成只打印不判断",
+      "severity": 0.45,
+      "summary": "equipGen 下界、bossUnique 跨世复用、mortalWorldGen 弃用数、mortalIdentity 语义发散,四处断言恒真"
+    },
+    "CHG-532": {
+      "id": "CHG-532",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T17:22:44+00:00",
+      "updated_at": "2026-10-23T17:22:44+00:00",
+      "touched_round": 441,
+      "commit": "01bdf787",
+      "title": "suppressOnline 稳住读数 + reportTestDecl.spec 两例 + 十条审计用例自报身份"
+    },
+    "ISS-325": {
+      "id": "ISS-325",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T17:22:47+00:00",
+      "updated_at": "2026-10-23T17:22:47+00:00",
+      "touched_round": 441,
+      "title": "一条命名「验证」的用例只打印不判断;报告型用例与缺陷用例在代码里同形",
+      "severity": 0.4,
+      "summary": "suppressOnline 灵脉/镇压那条只打印一行灵石;另 21 条无断言用例中 10 条是审计报告,需显式声明"
+    },
+    "CHG-533": {
+      "id": "CHG-533",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T17:22:50+00:00",
+      "updated_at": "2026-10-23T17:22:50+00:00",
+      "touched_round": 441,
+      "commit": "84b26d44",
+      "title": "四条恒真断言改真 + tautologyGuard.spec 三例"
     }
   },
   "edges": [
@@ -37673,6 +37719,18 @@
       "to": "ISS-323",
       "type": "addresses",
       "created_at": "2026-10-23T16:53:50+00:00"
+    },
+    {
+      "from": "CHG-532",
+      "to": "ISS-325",
+      "type": "resolves",
+      "created_at": "2026-10-23T17:22:47+00:00"
+    },
+    {
+      "from": "CHG-533",
+      "to": "ISS-324",
+      "type": "resolves",
+      "created_at": "2026-10-23T17:22:50+00:00"
     }
   ]
 }
