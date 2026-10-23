@@ -197,3 +197,88 @@ describe("逆旅契 · 接入与存档", () => {
     console.log("\n老存档降级正常:trial = null,不影响任何既有行为");
   });
 });
+
+/**
+ * 逆旅契的规则文案必须与 `rules` 双向对账。
+ *
+ * 这条判据补的是一个**真实缺口**:此前把「孤行契」的 `healMult` 从 0.25
+ * 改成 0.10,`lifeTrialService.spec` 十六个用例全绿 —— 而玩家读到的仍是
+ * 「本世一切治疗效力 25%」,签下去的代价与说好的差一倍半。
+ *
+ * 为什么别的判据抓不到:`isPurelyAdverse` 只问「是不是纯逆境」,不问
+ * 「文案说没说对」;`ruleText` 此前没有任何用例读过(只有一条 console.log)。
+ * 四份契的文案都是**公式化**的,每个数字都能从 rules 反推出来,故可以双向核对:
+ *   healMult 0.25        → 「治疗效力 25%」
+ *   maxRounds 30         → 「回合上限 30」
+ *   playerStartHpPct 0.7 → 「开局气血 70%」
+ *   enemyAtkMult 1.3     → 「敌人攻击 +30%」;enemyHpMult 1.2 → 「生命 +20%」
+ * 任一字段改了而文案没跟上,下面当场红。
+ */
+describe("逆旅契 · 规则文案与 rules 双向对账", () => {
+  /** 契约文案里某个键该写成什么 —— 一张显式的换算表,不做模糊匹配 */
+  const EXPECT: Record<string, (v: number) => string> = {
+    healMult: (v) => `${v * 100}%`,
+    maxRounds: (v) => `${v}`,
+    playerStartHpPct: (v) => `${v * 100}%`,
+    enemyAtkMult: (v) => `+${Math.round((v - 1) * 100)}%`,
+    enemyHpMult: (v) => `+${Math.round((v - 1) * 100)}%`,
+  };
+
+  it("每个 rules 字段都在文案里如实出现", () => {
+    for (const t of LIFE_TRIALS) {
+      for (const [key, value] of Object.entries(t.rules)) {
+        if (typeof value !== "number") continue;
+        const toText = EXPECT[key];
+        expect(
+          toText,
+          `契约「${t.name}」有 ${key},但判据没有它的文案换算 —— 加一条 EXPECT 再对账`,
+        ).toBeDefined();
+        // toBeDefined 不缩窄类型,故这里显式兜一层:缺换算表就直接失败,
+        // 而不是在下一行抛 TypeError(那条红是判据自己的 bug,不是契约的)
+        if (!toText) continue;
+        expect(
+          t.ruleText,
+          `契约「${t.name}」的 ${key}=${value},文案该写「${toText(value)}」,实际是:${t.ruleText}`,
+        ).toContain(toText(value));
+      }
+    }
+  });
+
+  it("文案里的每个数字都能被某个 rules 字段解释 —— 不许凭空多写", () => {
+    for (const t of LIFE_TRIALS) {
+      const allowed = new Set<string>();
+      for (const [key, value] of Object.entries(t.rules)) {
+        if (typeof value !== "number") continue;
+        const toText = EXPECT[key];
+        if (toText) allowed.add(toText(value));
+      }
+      // 比的是**数字本身**:文案写「治疗效力 25%」,allowed 里是「25%」——
+      // 直接拿 m[1]("25")去比会永远不等。故把 allowed 摊成数字集合再比。
+      const allowedNums = new Set(
+        [...allowed].flatMap((s) => [...s.matchAll(/\d+(?:\.\d+)?/g)].map((x) => x[0])),
+      );
+      for (const m of t.ruleText.matchAll(/(\d+(?:\.\d+)?)/g)) {
+        expect(
+          allowedNums.has(m[1]!),
+          `契约「${t.name}」文案里的 ${m[1]} 没有任何 rules 字段支撑:${t.ruleText}` +
+            `(可解释的只有:${[...allowedNums].join("、")})`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("判据自证:改一个 rules 值,双向对账必须抓得住", () => {
+    // 与 deadExportAudit 同一条纪律 —— 判据先证明它能被违反
+    const mutated = LIFE_TRIALS.map((t) =>
+      t.id === "tr_gu" ? { ...t, rules: { ...t.rules, healMult: 0.1 } } : t,
+    );
+    const broken = mutated.filter((t) => {
+      const v = t.rules.healMult;
+      return typeof v === "number" && v > 0 && !t.ruleText.includes(`${v * 100}%`);
+    });
+    expect(
+      broken.map((t) => t.name),
+      "把治疗效力 0.25 改成 0.10 却不改文案,这条必须红 —— 实测过旧判据下十六例全绿",
+    ).toEqual(["孤行契"]);
+  });
+});
