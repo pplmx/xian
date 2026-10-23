@@ -187,13 +187,28 @@ import {
   formatPercent,
 } from "@/utils/format";
 import TribulationPanel from "@/components/cultivation/TribulationPanel.vue";
+import { useGameNow } from "@/composables/useGameNow";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
 const cultivation = useCultivationStore();
 const ui = useUiStore();
 
-const btInfo = computed(() => breakthroughInfo());
+/**
+ * 调息倒计时的秒级心跳 —— 本卡此前是全库最后一枚没接的秒表。
+ *
+ * `breakthroughInfo()` 的 prep 段由 `breakthroughPrepState()` 现算,而那条链只依赖
+ * `totalPlaySec`(引擎按 ACTIVE_STAMP_MS=5s 盖章):「调息中 · 03分00秒」的秒针
+ * 5 秒才跳 5 格,「加成 +8% 就绪」与突破成功率瓦片同样晚 5 秒才翻。
+ * 接 `useGameNow`(1s 心跳、gameNow() 同源 —— 暂停冻结、恢复顺延与
+ * shiftTimedState 对 readyAt 的顺延一致):显示与判定仍读同一个时刻函数,
+ * 判定链(breakthroughPrepState / attemptBreakthrough)不读它,口径不变。
+ */
+const gameNowSec = useGameNow();
+const btInfo = computed(() => {
+  void gameNowSec.value;
+  return breakthroughInfo();
+});
 /**
  * 突破按钮的「灵气不足」补齐:reason 只报四字,不报还差多少、回够要多久。
  * 站在按钮前的人不该再点开灵气数字才看见等待值 —— short 与 eta 现算,无 rebound。
@@ -237,9 +252,13 @@ const PLAN_COLOR: Record<TribulationPlan["verdict"], string> = {
   ok: "text-qing",
   easy: "text-jade",
 };
-const tribPlan = computed(() =>
-  btInfo.value.needTribulation ? currentTribulationPlan(player) : null,
-);
+/**
+ * 劫势瓦片 —— 刻意**不**读 btInfo:那枚 computed 现在跟着 1s 心跳走,
+ * 而 currentTribulationPlan 要整段推演每一波雷(traceTribulation 逐波算伤害)。
+ * 「是不是大关」由 player.isMajorStep 直接给,与 btInfo.needTribulation 同源
+ * (见 breakthrough.ts 的 needTribulation = isMajorStep),值守恒不靠副产物。
+ */
+const tribPlan = computed(() => (player.isMajorStep ? currentTribulationPlan(player) : null));
 
 /**
  * 破境增益 · 此刻在身 —— 小进阶的成功率读 breakthroughRate,读数只是结果;

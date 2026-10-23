@@ -258,6 +258,32 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(codex?.src).not.toMatch(/尚余 \$\{m\} 分/);
   });
 
+  it("秒级倒计时的每一处都挂了心跳 —— 定宽槽不许配一枚 5 秒的钟", () => {
+    // 定宽槽(.countdown-slot)存在的理由是「秒针顺走且行宽不变」:格式对、心跳错,
+    // 秒针照样会 5 秒跳 5 格。前一版把闭关/状态/问卦三处从 totalPlaySec(引擎只在
+    // ACTIVE_STAMP_MS=5s 才 addPlayTime)换到 useGameNow,却漏了破境卡里的「调息中 ·
+    // 03分00秒」—— 那枚槽挂在 btInfo(只随 totalPlaySec 变)上,盯着看就是纹丝不动。
+    // 逐文件判据:凡渲染 countdown-slot 的组件,自身必须起一条 ≤1s 的心跳
+    // (useNow / useGameNow / useGameClock / gameClock / 手写 setInterval 墙钟域)。
+    // 只要心跳源在文件里,秒针才会走;没有的那一版当场红。
+    const HEARTBEAT = /useNow\(|useGameNow\(|useGameClock\(|gameClock\(|setInterval\(/;
+    const bare = FILES.filter((f) => f.src.includes("countdown-slot"))
+      .filter((f) => !HEARTBEAT.test(f.src))
+      .map((f) => f.path);
+    expect(bare, "这些文件渲染了秒级倒计时,却没有 1s 心跳 —— 槽里的秒针不会走").toEqual([]);
+  });
+
+  it("破境卡的调息倒计时读游戏钟,不读 5 秒盖章的 totalPlaySec", () => {
+    // 「调息中 · 02分59秒」是这个仓库里唯一一处没接 useGameNow 的分秒倒计时。
+    // 它的读数来自 breakthroughInfo → breakthroughPrepState,而那条链只依赖
+    // totalPlaySec(5 秒一涨),于是整枚胶囊 5 秒跳一次;同时「加成 +8% 就绪」与
+    // 成功率瓦片也会晚 5 秒才翻 —— 两处都是同一枚坏钟。
+    // 判据:卡片必须用 useGameNow,且 btInfo 的 computed 里读它(接上心跳,不是只 import)。
+    const card = FILES.find((f) => f.path === "components/cultivation/BreakthroughCard.vue");
+    expect(card?.src).toContain("useGameNow");
+    expect(card?.src).toMatch(/const btInfo = computed\(\(\) => \{\s*void gameNowSec\.value;/);
+  });
+
   it("逆旅契灰卡有理由 —— 已签报「此生已签」、道果不足报「尚差 N」", () => {
     // 契签不下只有两个理由:本世已签过(整组灰)/道果不足。别退回只有灰没有话:
     // 已签时应说「此生已签」,缺果子时按差数报「尚差 N 道果」(聚气丹/建筑同款)。
