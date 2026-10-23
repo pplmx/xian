@@ -23,10 +23,13 @@
   > 兑现条件写在 `public/sw.js` 的 install 里:预缓存导航壳(index.html)+
   > 构建期注入的 JS/CSS 产物清单,拿不到就不激活。清单由 `vite.config.ts` 的
   > `xuanshu:sw-precache-manifest` 插件注入(产物名带哈希,手写必过期);
+  > **缓存版本号也由该插件按清单派生**(`xuanshu-v2-<内容短哈希>`)——
+  > 前缀是手写的「缓存策略世代」,后缀每出一版新产物必变。故发版不需要谁记得
+  > 手动 bump:activate 按版本号清旧分片,忘了改就没人清这件事已经被机制堵掉。
   > 「首访 → 关页面 → 断网重开」这条真实路径由 `scripts/offline-check.mjs`
   > 的第四节量,**子路径部署(Pages 的 `/xian/`)另起一节量**(第五节 —
   > 壳地址从 `registration.scope` 推,不是写死根路径),
-  > 策略是否还在由 `src/core/swPrecache.spec.ts` 静态钉住;
+  > 策略是否还在由 `src/core/swPrecache.spec.ts` 静态钉住(含上面这条派生机制);
 - **iOS 上请务必「添加到主屏幕」**:Safari 会在网页七天没被打开后清掉它的本地数据
   (存档与离线缓存一起没),而已安装的 Web App 不受这条规则约束 ——
   游戏检测到这种情况会在主页提示一次,设置页里也常驻可查。

@@ -231,17 +231,49 @@ export default defineConfig({
           .filter((f) => /^assets\/.*\.(?:js|css)$/.test(f))
           .sort();
         const json = JSON.stringify(files);
+        /**
+         * 缓存版本号**由产物清单派生**,不再靠人记得改。
+         *
+         * 原先 `CACHE_VERSION` 是 public/sw.js 里手写的 "xuanshu-v2",注释写着
+         * 「改了预缓存清单/导航回退就 bump 一次」。可发版流程里没有任何一步会
+         * 提醒这件事 —— 忘了 bump 的后果不是"缓存旧一点":activate 不会清理
+         * 旧缓存分片,玩家的离线回退会一直落到老页面,而他们看到的是"这游戏
+         * 更新了但没变"。这正是 docs/deployment.md 那条承诺(发版接管)的反面。
+         *
+         * 产物名本身带内容哈希,故清单就是这一版的身份:取清单的短哈希拼进
+         * 版本号,内容一变版本必变,内容没变就不必白清一次缓存。
+         * 手写仍在 sw.js 里(开发态不经过构建,占位符原样留着也不炸),
+         * 这里只把 `__CACHE_VERSION_SUFFIX__` 换掉。
+         */
+        const listed = files.join("\n");
+        // FNV-1a 32 位:同内容同值、跨平台稳定,不引依赖
+        let hash = 0x811c9dc5;
+        for (let i = 0; i < listed.length; i += 1) {
+          hash ^= listed.charCodeAt(i);
+          hash = Math.imul(hash, 0x01000193) >>> 0;
+        }
+        const stamp = hash.toString(36).padStart(7, "0");
+        /**
+         * 全量替换,不用 `String.replace(字符串, …)` —— 后者只换**第一处**。
+         * 实测踩过:sw.js 的注释里也写着 `__CACHE_VERSION_SUFFIX__`(解释它由谁填),
+         * 于是那一处被换掉了,真正的 `const CACHE_VERSION = …` 反而留着占位符,
+         * 产物里版本号仍是字面量,activate 就永远不会清旧缓存。
+         */
+        const patch = (source: string): string =>
+          source
+            .replaceAll('"__PRECACHE_MANIFEST__"', json)
+            .replaceAll("__CACHE_VERSION_SUFFIX__", stamp);
         // public/ 下的文件由 vite 在 bundle 之后另拷,故直接改磁盘上的产物:
         // 两处都试(内存里的 asset + 已落盘的 sw.js),谁在改谁。
         const swAsset = bundle["sw.js"];
         if (swAsset && swAsset.type === "asset") {
-          swAsset.source = String(swAsset.source).replace('"__PRECACHE_MANIFEST__"', json);
+          swAsset.source = patch(String(swAsset.source));
         }
         const out = resolve(import.meta.dirname, "dist/sw.js");
         if (existsSync(out)) {
           const src = readFileSync(out, "utf8");
-          if (src.includes('"__PRECACHE_MANIFEST__"')) {
-            writeFileSync(out, src.replace('"__PRECACHE_MANIFEST__"', json));
+          if (src.includes('"__PRECACHE_MANIFEST__"') || src.includes("__CACHE_VERSION_SUFFIX__")) {
+            writeFileSync(out, patch(src));
           }
         }
       },

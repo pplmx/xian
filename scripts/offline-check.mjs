@@ -41,12 +41,25 @@ if (!existsSync(join(DIST, "index.html"))) {
   process.exit(1);
 }
 
-/** SW 的缓存版本号就是它唯一的"人工记得"的旋钮,从源码读,免得判据自己抄一份 */
+/**
+ * SW 的缓存版本号 —— 从**构建产物**读,不从源码读。
+ *
+ * 源码里那串是 `xuanshu-v2-__CACHE_VERSION_SUFFIX__`,后缀由构建期按产物清单
+ * 派生(vite.config.ts 的 sw-precache-manifest 插件)。若照着源码读,判据手里
+ * 拿到的会是带占位符的版本,而浏览器里建起来的是填好后的 —— 断言"缓存分片
+ * 已建立"当场假红。判据要读的是玩家真正会加载的那份。
+ */
 const CACHE_VERSION = /CACHE_VERSION\s*=\s*["']([^"']+)["']/.exec(
-  readFileSync(join(ROOT, "public/sw.js"), "utf8"),
+  readFileSync(join(ROOT, "dist/sw.js"), "utf8"),
 )?.[1];
 if (!CACHE_VERSION) {
-  console.error("从 public/sw.js 里读不到 CACHE_VERSION —— 判据无从下手");
+  console.error("从 dist/sw.js 里读不到 CACHE_VERSION —— 先跑一次构建再量离线");
+  process.exit(1);
+}
+if (/__CACHE_VERSION_SUFFIX__/.test(CACHE_VERSION)) {
+  console.error(
+    `dist/sw.js 里的缓存版本仍是占位符(${CACHE_VERSION})—— 构建期的 sw-precache-manifest 插件没跑成`,
+  );
   process.exit(1);
 }
 

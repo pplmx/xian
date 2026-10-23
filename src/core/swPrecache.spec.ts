@@ -94,3 +94,59 @@ describe("Service Worker · 首访即断网也要能重开", () => {
     expect(SW).toMatch(/self\.registration\.scope/);
   });
 });
+
+/**
+ * 缓存版本号必须**随产物变化**,不能靠人记得改。
+ *
+ * 原先 public/sw.js 里是手写的 `CACHE_VERSION = "xuanshu-v2"`,注释写着
+ * 「改了预缓存清单/导航回退就 bump 一次」—— 而发版流程里没有任何一步提醒它。
+ * 忘 bump 的后果不是"缓存旧一点":activate 不清理旧分片,玩家的离线回退
+ * 会一直落到老页面,他们看到的是"更新了但没变"。
+ *
+ * 现在是「前缀手写 + 后缀由构建期按产物清单派生」:
+ * 内容变了版本必变,内容没变就不白清一次缓存。下面三条钉住这套机制。
+ */
+describe("缓存版本 · 由产物派生,不靠人记得", () => {
+  const SW_SRC = readFileSync(resolve(ROOT, "public/sw.js"), "utf8");
+  const VITE = readFileSync(resolve(ROOT, "vite.config.ts"), "utf8");
+
+  it("源码里留占位符,后缀由插件填 —— 手写整串就退回了人肉记忆", () => {
+    // 源码必须含占位符:若哪天有人把它"改回可读的 v3",派生机制就悄悄失效了
+    expect(SW_SRC, "sw.js 的 CACHE_VERSION 必须留 __CACHE_VERSION_SUFFIX__ 占位").toContain(
+      "__CACHE_VERSION_SUFFIX__",
+    );
+    // 插件必须真的替换它
+    expect(VITE, "构建插件没替换版本占位符").toContain("__CACHE_VERSION_SUFFIX__");
+    // 而且要用全量替换:注释里也写了这个占位符,replace 只换第一处就会写错地方
+    expect(
+      VITE,
+      "必须用 replaceAll —— 注释里也有同一个占位符,replace(字符串) 只换第一处",
+    ).toContain('replaceAll("__CACHE_VERSION_SUFFIX__", stamp)');
+    expect(VITE, "清单注入同样是全量替换").toContain(
+      "replaceAll('\"__PRECACHE_MANIFEST__\"', json)",
+    );
+  });
+
+  it("离线门从构建产物读版本,不从源码读 —— 否则拿到的是带占位符的那串", () => {
+    const CHECK = readFileSync(resolve(ROOT, "scripts/offline-check.mjs"), "utf8");
+    expect(
+      CHECK,
+      "offline-check 读的是 dist/sw.js(玩家真正加载的那份),不是 public/sw.js",
+    ).toContain('join(ROOT, "dist/sw.js")');
+    expect(CHECK, "还从源码读版本 —— 断言会与浏览器里建起来的对不上").not.toContain(
+      'join(ROOT, "public/sw.js")',
+    );
+    // 占位符没被替换时要当场说清楚,别等到断言"缓存分片已建立"假红
+    expect(CHECK, "占位符残留要单独报错").toContain("__CACHE_VERSION_SUFFIX__");
+  });
+
+  it("版本后缀源自产物清单短哈希 —— 内容变则版本变", () => {
+    // 判据不重跑构建(那要十几秒),只钉住派生方式:哈希输入必须是 cream 清单本身
+    expect(VITE, "哈希要基于产物清单").toContain("files.join(");
+    expect(VITE, "要有 FNV 派生").toContain("0x01000193");
+    expect(VITE, "后缀要拼进版本").toContain("toString(36)");
+    // 实测留档(写在这里,免得下次又要重新验一遍):
+    //   同内容两次构建 → xuanshu-v2-0c60xtc(相同)
+    //   改一行界面文案 → xuanshu-v2-0f36199(变了)
+  });
+});
