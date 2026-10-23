@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 441,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-23T18:32:52+00:00",
+  "updated_at": "2026-10-23T18:50:47+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25937,6 +25937,29 @@
       "touched_round": 441,
       "commit": "1f6aa444",
       "title": "importsOf 认动态 import + veinCap 接界面 + fruitSoftCapText 接轮回弹窗 + 四条豁免登记"
+    },
+    "ISS-331": {
+      "id": "ISS-331",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T18:50:27+00:00",
+      "updated_at": "2026-10-23T18:50:27+00:00",
+      "touched_round": 441,
+      "title": "弹窗字阶与枚举插值两条判据都用手写文件清单,扫描面只有全库一成",
+      "severity": 0.5,
+      "summary": "弹窗字阶原列 6 个文件(components 下 30+ 在用 BaseModal);枚举插值原列 9 个(views 20 + components 40+)。收口后抓到 10 个弹窗含 8/9/12/13 私档"
+    },
+    "CHG-539": {
+      "id": "CHG-539",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T18:50:47+00:00",
+      "updated_at": "2026-10-23T18:50:47+00:00",
+      "touched_round": 441,
+      "commit": "7acc1075",
+      "title": "弹窗判据改按依赖枚举 + DIALOG_GRAPHIC 放行表 + 十个弹窗字号归并 + 枚举插值全库枚举"
     }
   },
   "edges": [
@@ -37900,6 +37923,18 @@
       "to": "COMP-016",
       "type": "located_in",
       "created_at": "2026-10-23T18:32:52+00:00"
+    },
+    {
+      "from": "CHG-539",
+      "to": "ISS-331",
+      "type": "resolves",
+      "created_at": "2026-10-23T18:50:47+00:00"
+    },
+    {
+      "from": "ISS-331",
+      "to": "COMP-022",
+      "type": "located_in",
+      "created_at": "2026-10-23T18:50:47+00:00"
     }
   ]
 }
