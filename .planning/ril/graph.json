@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 441,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-23T18:12:11+00:00",
+  "updated_at": "2026-10-23T18:32:52+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25914,6 +25914,29 @@
       "touched_round": 441,
       "commit": "85857b50",
       "title": "inspectImportText 加本作标识门槛 + importRejectReason + 三条回归"
+    },
+    "ISS-330": {
+      "id": "ISS-330",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T18:32:48+00:00",
+      "updated_at": "2026-10-23T18:32:48+00:00",
+      "touched_round": 441,
+      "title": "死导出判据只认静态 import,运行时可 da 达集只有 14/623,specOnly 红线大面积失效",
+      "severity": 0.55,
+      "summary": "importsOf 只遍历 ImportDeclaration,不认动态 import();路由懒加载全是后者。修正后当场抓出 6 个只被 spec 用的导出(veinCap/fruitSoftCapText/cognitionStats/classicDef/PLANNED_SCHOOLS/gameNowSeconds)"
+    },
+    "CHG-538": {
+      "id": "CHG-538",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T18:32:51+00:00",
+      "updated_at": "2026-10-23T18:32:51+00:00",
+      "touched_round": 441,
+      "commit": "1f6aa444",
+      "title": "importsOf 认动态 import + veinCap 接界面 + fruitSoftCapText 接轮回弹窗 + 四条豁免登记"
     }
   },
   "edges": [
@@ -37865,6 +37888,18 @@
       "to": "COMP-007",
       "type": "located_in",
       "created_at": "2026-10-23T18:12:08+00:00"
+    },
+    {
+      "from": "CHG-538",
+      "to": "ISS-330",
+      "type": "resolves",
+      "created_at": "2026-10-23T18:32:51+00:00"
+    },
+    {
+      "from": "ISS-330",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-10-23T18:32:52+00:00"
     }
   ]
 }
