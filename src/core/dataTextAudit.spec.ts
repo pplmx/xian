@@ -184,6 +184,53 @@ describe("文案数值对账 · 天道契约", () => {
     }
     expect(checked).toBeGreaterThanOrEqual(4);
   });
+
+  it("「道源 ×N」里的 N 必须等于 sourceMult —— 光说能找到不够", () => {
+    /**
+     * 上面两条查的是**单向**:文案里的每个数字,能不能在 rules / sourceMult 里找到。
+     * 这挡得住"文案凭空多写一个数",挡不住**改字段不改文案** ——
+     * 把血契的 sourceMult 从 2.2 提到 3.5,文案里的 2.2 仍能在 rules 里找到
+     * (治疗无效那条 rules 是 `healMult: 0`,而 2.2 恰好不再被任何规则承载,
+     * 但判据只问"文案能不能对上",不会反问"字段有没有被文案表达")。
+     *
+     * 「道源 ×N」是契约文案里唯一**有确切归属**的数字 —— 它只可能来自 sourceMult。
+     * 故对它做双向对账:文案写的必须恰是字段值。改数不文案,当场红。
+     */
+    let checked = 0;
+    for (const p of PACTS) {
+      if (typeof p.sourceMult !== "number") continue;
+      const shown = /道源\s*×\s*(\d+(?:\.\d+)?)/.exec(p.ruleText);
+      expect(
+        shown,
+        `契约「${p.name}」有 sourceMult,文案里却没写「道源 ×N」:${p.ruleText}`,
+      ).not.toBeNull();
+      checked += 1;
+      expect(
+        Number(shown![1]),
+        `契约「${p.name}」文案写「道源 ×${shown![1]}」,但 sourceMult 是 ${p.sourceMult} —— 改数没改文案`,
+      ).toBe(p.sourceMult);
+    }
+    // 自证:真改一个字段,这条会红(见下方注入用例)
+    expect(checked, "一条「道源 ×N」都没查到,判据形同虚设").toBeGreaterThanOrEqual(4);
+  });
+
+  it("判据自证:把 sourceMult 改掉,双向对账必须抓得住", () => {
+    /**
+     * 与 deadExportAudit 同一条纪律:判据本身要先证明它能被违反。
+     * 上一条若是写成"文案里的数能在字段里找到"的单向形式,这条注入就抓不到 ——
+     * 因为规则里的数还在,文案也就"对得上"。故这里显式跑一遍反向逻辑。
+     */
+    const mutated = PACTS.map((p) => (p.id === "xue" ? { ...p, sourceMult: 3.5 } : p));
+    const broken = mutated.filter((p) => {
+      if (typeof p.sourceMult !== "number") return false;
+      const shown = /道源\s*×\s*(\d+(?:\.\d+)?)/.exec(p.ruleText);
+      return shown !== null && Number(shown[1]) !== p.sourceMult;
+    });
+    expect(
+      broken.map((p) => p.name),
+      "改 sourceMult 却不改文案,双向对账必须红",
+    ).toEqual(["血契"]);
+  });
 });
 
 /**
