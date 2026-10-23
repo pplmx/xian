@@ -258,6 +258,7 @@ const CATEGORIES = [
       "useGameNow",
       "swPrecache",
       "smokeReading",
+      "absenceLedger",
       "fatePreview",
       "goBack",
       "inventorySeen",
