@@ -256,6 +256,7 @@ const CATEGORIES = [
       "useNativeInsets",
       "useGameClock",
       "useGameNow",
+      "swPrecache",
       "fatePreview",
       "goBack",
       "inventorySeen",

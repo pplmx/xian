@@ -6,13 +6,18 @@
  * 安全上下文(https 或 localhost),两件事没法在同一个页面里量。故这里起一个
  * 本地静态服务(dist 的临时副本),在那里量 SW 的浏览器级行为。
  *
- * 量的四件事(全部只认结果,不认实现):
+ * 量的五件事(全部只认结果,不认实现):
  *   一 首次联网访问后,SW 真的接管了页面(controller 非空)—— 没接管就没有离线;
  *   二 缓存里**同时**有导航页与带 hash 的产物;activate 时旧版本缓存被清掉
  *      (CACHE_VERSION 改了却忘了清,玩家离线回退就会落到老页面);
  *   三 **断网重载**仍能起得来(离线可重开 —— 这是玩家在飞机/地铁上唯一的指望);
- *   四 **发版接管**:导航请求走 network-first,线上改了 index.html 之后,
+ *   四 **首访即断网**:只访问一次、不刷新,关掉再断网打开也得起得来 ——
+ *      "刷新过好几次"的页面早被缓存喂饱了,量不出真实事故(见第四节);
+ *   五 **发版接管**:导航请求走 network-first,线上改了 index.html 之后,
  *      再次访问必须看到新那份(否则玩家被永久钉在旧版本上)。
+ *
+ * 要求 **安装成功才激活**:sw.js 的 install 先预缓存导航壳(scope 根 + index.html),
+ * 拿不到就不 skipWaiting —— 这样"装好了、缓存却是空的"这种半吊子状态不存在。
  *
  * 用法:
  *   bun run build
@@ -140,6 +145,11 @@ if (!afterReloadControlled) {
  * 于是什么都没落下。判断"离线能不能用"不该取决于这个时序 ——
  * 判据不变(缓存里必须有导航页与带 hash 的产物),只是不再拿运气当判据
  * (与"坏档启动提示只活两秒多 → 轮询到它出现为止"同一条做法)。
+ *
+ * **判据从"条数够"改成"导航壳在里头"**:条数是个会骗人的代理指标 —— 首访时
+ * 静态产物已经落了十几条,唯独导航页(index.html)没有(这次导航没经过 SW),
+ * 旧判据 `filled >= 3` 照样绿,而玩家关掉页面再断网打开就是 503
+ * 「离线且无缓存副本」。见下面第二节的三,那里量的正是这条真实路径。
  */
 let cachesNow = await page.evaluate(() => caches.keys());
 for (let attempt = 0; attempt < 4; attempt += 1) {
@@ -178,6 +188,36 @@ if (cachedCount < 3)
   failures.push(`缓存里只有 ${cachedCount} 条(导航页 + 静态产物至少该有几条)—— 离线必然缺件`);
 else pass.push(`缓存里已备下 ${cachedCount} 份资源`);
 
+/**
+ * 导航壳必须在缓存里 —— 这条比"条数够"要紧得多。
+ *
+ * 条数是个会骗人的代理指标:首访时静态产物已经落了十几条,唯独导航页
+ * (index.html / scope 根)没有。旧判据 `cachedCount >= 3` 照样绿,而玩家
+ * 关掉页面再断网打开就是 503「离线且无缓存副本」—— 这正是 offline-check
+ * 自己抓到过的那次红(靠重试碰运气才躲过),也是 docs/deployment.md 承诺
+ * 「首次在线打开后,断网重开也能进游戏」的兑现点。
+ * 现在 sw.js 在 install 里预缓存导航壳,判据在这里认它:认地址,不认条数。
+ */
+const shellCached = await page.evaluate(
+  async ({ name, scope }) => {
+    if (!(await caches.keys()).includes(name)) return { root: false, index: false, paths: [] };
+    const c = await caches.open(name);
+    const paths = (await c.keys()).map((r) => new URL(r.url).pathname);
+    return {
+      root: paths.includes(new URL(scope).pathname),
+      index: paths.includes(new URL("index.html", scope).pathname),
+      paths,
+    };
+  },
+  { name: CACHE_VERSION, scope: `${base}/` },
+);
+if (!shellCached.root && !shellCached.index)
+  failures.push(
+    `缓存里没有导航壳(找过 ${base}/ 与 ${base}/index.html,实际 ${shellCached.paths.slice(0, 5).join("、") || "空"})—— ` +
+      "首次在线访问后断网重开必落 503",
+  );
+else pass.push("导航壳已进缓存(离线重开只靠它)");
+
 // ---- 二 断网重载:玩家在飞机/地铁上要的那一下 ----
 await context.setOffline(true);
 await page.reload({ waitUntil: "load" }).catch(() => {});
@@ -208,6 +248,62 @@ else pass.push("发版接管:导航请求拿到了新的 index.html");
 
 if (pageErrors.length) failures.push(`离线自检页面异常:${[...new Set(pageErrors)].join(" | ")}`);
 
+/**
+ * ---- 四 首访即断网:玩家最常撞上的那条路径 ----
+ *
+ * 前三节都在"刷新过好几次"的页面上量 —— 那种页面早就被 SW 接管、缓存也被
+ * 导航请求顺手填满了,量不出真实事故。真正的玩家路径是:**第一次打开,玩一会儿,
+ * 关掉标签页,地铁里再打开**。这一节用一个干净 context 复刻它:只访问一次、
+ * 不刷新,然后直接断网重开。
+ *
+ * 这条判据在修 sw.js(install 预缓存导航壳)之前是红的 —— 断网重开落在
+ * 503「离线且无缓存副本」上,而部署文档写着"首次在线打开后,断网重开也能进游戏"。
+ */
+{
+  const fresh = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const p2 = await fresh.newPage();
+  const errs2 = [];
+  watchPageErrors(p2, errs2);
+  await p2.goto(`${base}/`, { waitUntil: "load" });
+  await p2.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  // 只等 SW 装完(install 里预缓存导航壳),**不刷新** —— 刷新会把这次导航喂给 SW,
+  // 那正是首访场景里不存在的一步。
+  const freshShell = await p2.evaluate(async (name) => {
+    if (!(await caches.keys()).includes(name)) return false;
+    const c = await caches.open(name);
+    const paths = (await c.keys()).map((r) => new URL(r.url).pathname);
+    return paths.includes("/") || paths.includes("/index.html");
+  }, CACHE_VERSION);
+  if (!freshShell)
+    failures.push(
+      "首访不刷新时导航壳就不在缓存里 —— 玩家关掉页面再断网打开必落 503(install 该预缓存它)",
+    );
+  await fresh.setOffline(true);
+  await p2.reload({ waitUntil: "load" }).catch(() => {});
+  await p2.waitForTimeout(1200);
+  const off2 = await p2.evaluate(() => {
+    const text = document.body?.innerText || "";
+    return {
+      door: /开\s*始\s*游\s*戏/.test(text),
+      blank: text.trim().length === 0,
+      swError: /离线且无缓存副本/.test(text),
+    };
+  });
+  if (off2.swError)
+    failures.push("首访之后直接断网重开落到了 503 兜底页 —— install 没预缓存导航壳");
+  else if (!off2.door || off2.blank)
+    failures.push("首访之后直接断网重开,应用没起来 —— 离线可重开只在「刷新过」的页面上成立");
+  else pass.push("首访即断网:不刷新也能重开(install 预缓存导航壳)");
+  if (errs2.length) failures.push(`首访断网那一轮页面异常:${[...new Set(errs2)].join(" | ")}`);
+  await fresh.close();
+}
+
 await browser.close();
 server.close();
 
@@ -215,7 +311,8 @@ console.log("\n离线自检(Service Worker · localhost)");
 for (const p of pass) console.log(`✓ ${p}`);
 if (failures.length === 0) {
   console.log(
-    "✓ 断网可重开、旧缓存会被清、发版能接管 —— 四件事都认结果(与联网时表现一致:不发任何外部请求)",
+    "✓ 断网可重开(首访即断网也算)、旧缓存会被清、发版能接管 —— " +
+      "认结果不认实现(与联网时表现一致:不发任何外部请求)",
   );
 } else {
   for (const f of failures) console.log(`✗ ${f}`);

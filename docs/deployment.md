@@ -20,6 +20,11 @@
 - 移动浏览器打开即玩,可「添加到主屏幕」;
 - Service Worker 会缓存静态资源:**首次在线打开后,断网重开也能进游戏**;
   发版更新即时生效,不会卡在旧版本;
+  > 兑现条件写在 `public/sw.js` 的 install 里:预缓存导航壳(index.html)+
+  > 构建期注入的 JS/CSS 产物清单,拿不到就不激活。清单由 `vite.config.ts` 的
+  > `xuanshu:sw-precache-manifest` 插件注入(产物名带哈希,手写必过期);
+  > 「首访 → 关页面 → 断网重开」这条真实路径由 `scripts/offline-check.mjs`
+  > 的第四节量,策略是否还在由 `src/core/swPrecache.spec.ts` 静态钉住;
 - **iOS 上请务必「添加到主屏幕」**:Safari 会在网页七天没被打开后清掉它的本地数据
   (存档与离线缓存一起没),而已安装的 Web App 不受这条规则约束 ——
   游戏检测到这种情况会在主页提示一次,设置页里也常驻可查。

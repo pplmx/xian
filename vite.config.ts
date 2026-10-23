@@ -1,3 +1,4 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, lazyPlugins } from "vite-plus";
 import vue from "@vitejs/plugin-vue";
@@ -202,6 +203,49 @@ export default defineConfig({
         },
       },
     }),
+    /**
+     * 把「这一版有哪些产物」写进 Service Worker 的预缓存清单。
+     *
+     * 由来:首访(第一次打开、玩一会儿、关掉、断网再打开)会白屏。根因是 SW 在
+     * `window.load` 之后才注册,那一次导航与整棵模块图早就取完了、一件都没经过它;
+     * 而路由是懒加载的,`WelcomeView-*.js` 这类分片**根本不在 index.html 里**,
+     * 靠"解析 HTML 拿资源"也拿不到。于是缓存里只有一个 HTML,断网重开全是 404。
+     *
+     * 做法:构建结束时把 `assets/` 下的入口级产物(JS + CSS)列成清单,替换掉
+     * `sw.js` 里的占位符 `"__PRECACHE_MANIFEST__"`(**连同引号一起** —— 只换内层
+     * 会拼出 `"["assets/…"]"` 这种把 JSON 塞进字符串字面量的非法 JS,SW 直接
+     * 注册失败,离线门会卡到超时)。字体与音频不预缓存 —— 2MB 字体与 544KB 音频
+     * 会让安装变慢,而它们走 cache-first,联网时自然会补齐;真正决定"能不能起得来"
+     * 的是 JS/CSS。
+     *
+     * 为什么不用 vite-plugin-pwa:它带一整套 workbox 与自己的版本/生命周期策略,
+     * 与本仓手写的 network-first + activate 清旧缓存那套会打架;这里要的只是
+     * 一份文件名清单。
+     */
+    {
+      name: "xuanshu:sw-precache-manifest",
+      apply: "build",
+      enforce: "post",
+      generateBundle(_options, bundle) {
+        const files = Object.keys(bundle)
+          .filter((f) => /^assets\/.*\.(?:js|css)$/.test(f))
+          .sort();
+        const json = JSON.stringify(files);
+        // public/ 下的文件由 vite 在 bundle 之后另拷,故直接改磁盘上的产物:
+        // 两处都试(内存里的 asset + 已落盘的 sw.js),谁在改谁。
+        const swAsset = bundle["sw.js"];
+        if (swAsset && swAsset.type === "asset") {
+          swAsset.source = String(swAsset.source).replace('"__PRECACHE_MANIFEST__"', json);
+        }
+        const out = resolve(import.meta.dirname, "dist/sw.js");
+        if (existsSync(out)) {
+          const src = readFileSync(out, "utf8");
+          if (src.includes('"__PRECACHE_MANIFEST__"')) {
+            writeFileSync(out, src.replace('"__PRECACHE_MANIFEST__"', json));
+          }
+        }
+      },
+    },
   ]),
   resolve: {
     alias: {
