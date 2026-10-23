@@ -6,14 +6,15 @@
  * 安全上下文(https 或 localhost),两件事没法在同一个页面里量。故这里起一个
  * 本地静态服务(dist 的临时副本),在那里量 SW 的浏览器级行为。
  *
- * 量的五件事(全部只认结果,不认实现):
+ * 量的六件事(全部只认结果,不认实现):
  *   一 首次联网访问后,SW 真的接管了页面(controller 非空)—— 没接管就没有离线;
  *   二 缓存里**同时**有导航页与带 hash 的产物;activate 时旧版本缓存被清掉
  *      (CACHE_VERSION 改了却忘了清,玩家离线回退就会落到老页面);
  *   三 **断网重载**仍能起得来(离线可重开 —— 这是玩家在飞机/地铁上唯一的指望);
  *   四 **首访即断网**:只访问一次、不刷新,关掉再断网打开也得起得来 ——
  *      "刷新过好几次"的页面早被缓存喂饱了,量不出真实事故(见第四节);
- *   五 **发版接管**:导航请求走 network-first,线上改了 index.html 之后,
+ *   五 **子路径部署**:Pages 那条入口在 `/xian/`,根路径下绿不代表它绿(见第五节);
+ *   六 **发版接管**:导航请求走 network-first,线上改了 index.html 之后,
  *      再次访问必须看到新那份(否则玩家被永久钉在旧版本上)。
  *
  * 要求 **安装成功才激活**:sw.js 的 install 先预缓存导航壳(scope 根 + index.html),
@@ -63,18 +64,38 @@ const MIME = {
   ".mp3": "audio/mpeg",
 };
 
-/** 起一个够用的静态服务:根路径回 index.html,带扩展名的 404 就直接 404 */
-function serve(dir) {
+/**
+ * 起一个够用的静态服务:根路径回 index.html,带扩展名的 404 就直接 404。
+ *
+ * @param dir  要服务的目录(通常是 dist 的副本)
+ * @param prefix 部署前缀(默认空 = 站点在 `/`)。GitHub Pages 那条入口在 `/xian/`,
+ *   子路径部署时 base 是 `./`,SW 的 scope、产物地址、导航壳全部相对解析 ——
+ *   根路径下绿不代表子路径下绿,故这里要能服务一个前缀(`--prefix /xian/`)。
+ */
+function serve(dir, prefix = "") {
+  const p = prefix.replace(/\/+$/, "");
   const server = createServer((req, res) => {
     const url = decodeURIComponent((req.url || "/").split("?")[0]);
-    const target = join(dir, url === "/" ? "index.html" : url);
+    // 子路径模式:请求不在前缀下 → 404(真实静态托管就是这样)
+    if (p && !(url === p || url.startsWith(`${p}/`))) {
+      res.writeHead(404).end("not found");
+      return;
+    }
+    const rel = p ? url.slice(p.length) || "/" : url;
+    const target = join(dir, rel === "/" ? "index.html" : rel);
     if (!target.startsWith(dir) || !existsSync(target) || statSync(target).isDirectory()) {
-      if (extname(url)) {
+      if (extname(rel)) {
+        res.writeHead(404).end("not found");
+        return;
+      }
+      // 无扩展名的都是应用内路由:一律回站点根的 index.html(hash 路由下也是它)
+      const home = join(dir, "index.html");
+      if (!existsSync(home)) {
         res.writeHead(404).end("not found");
         return;
       }
       res.writeHead(200, { "content-type": MIME[".html"] });
-      res.end(readFileSync(join(dir, "index.html")));
+      res.end(readFileSync(home));
       return;
     }
     res.writeHead(200, { "content-type": MIME[extname(target)] ?? "application/octet-stream" });
@@ -302,6 +323,62 @@ if (pageErrors.length) failures.push(`离线自检页面异常:${[...new Set(pag
   else pass.push("首访即断网:不刷新也能重开(install 预缓存导航壳)");
   if (errs2.length) failures.push(`首访断网那一轮页面异常:${[...new Set(errs2)].join(" | ")}`);
   await fresh.close();
+}
+
+/**
+ * ---- 五 子路径部署:GitHub Pages 那条入口在 /xian/ ----
+ *
+ * 本仓的部署矩阵里有两条网页入口:Cloudflare 在站点根,Pages 在 `/xian/` 子路径。
+ * `base: './'` 让产物按相对路径解析,SW 的 scope 也随之落在 `/xian/` —— 但根路径
+ * 下绿不代表子路径下绿:预缓存清单若按绝对 `/assets/…` 拼、或导航回退写死 `/`,
+ * 在子路径下就是一堆 404,而这正是本仓栽过两次的那类错(「本地永远绿、只有 CI 才
+ * 执行到的路径」)。
+ */
+{
+  const subDir = mkdtempSync(join(tmpdir(), "offline-check-sub-"));
+  const siteRoot = join(subDir, "xian");
+  cpSync(DIST, siteRoot, { recursive: true });
+  const subServer = await serve(siteRoot, "/xian/");
+  const subBase = `http://127.0.0.1:${subServer.address().port}/xian/`;
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const p3 = await ctx.newPage();
+  const errs3 = [];
+  watchPageErrors(p3, errs3);
+  await p3.goto(subBase, { waitUntil: "load" });
+  const swScope = await p3.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+    const reg = await navigator.serviceWorker.getRegistration();
+    return reg?.scope ?? "";
+  });
+  if (!swScope.endsWith("/xian/"))
+    failures.push(`子路径部署下 SW 的 scope 不对(${swScope || "空"})—— 应落在 /xian/`);
+  const subShell = await p3.evaluate(async (name) => {
+    if (!(await caches.keys()).includes(name)) return { ok: false, paths: [] };
+    const c = await caches.open(name);
+    const paths = (await c.keys()).map((r) => new URL(r.url).pathname);
+    return { ok: paths.includes("/xian/") || paths.includes("/xian/index.html"), paths };
+  }, CACHE_VERSION);
+  if (!subShell.ok)
+    failures.push(
+      `子路径部署下导航壳不在缓存里(找过 /xian/ 与 /xian/index.html,实际 ${subShell.paths.slice(0, 5).join("、") || "空"})`,
+    );
+  // 首访即断网(不刷新)—— 子路径下同样要成立
+  await ctx.setOffline(true);
+  await p3.reload({ waitUntil: "load" }).catch(() => {});
+  await p3.waitForTimeout(1200);
+  const subText = await p3.evaluate(() => document.body?.innerText || "");
+  if (/离线且无缓存副本/.test(subText))
+    failures.push("子路径部署下首访断网落到 503 —— 预缓存清单/回退可能按根路径拼地址");
+  else if (!/开\s*始\s*游\s*戏/.test(subText) || subText.trim().length === 0)
+    failures.push("子路径部署下首访断网应用没起来 —— /xian/ 这条入口的离线承诺没兑现");
+  else pass.push("子路径部署(/xian/):首访即断网也能重开");
+  if (errs3.length) failures.push(`子路径那一轮页面异常:${[...new Set(errs3)].join(" | ")}`);
+  await ctx.close();
+  subServer.close();
 }
 
 await browser.close();

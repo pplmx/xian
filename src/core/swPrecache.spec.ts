@@ -83,4 +83,14 @@ describe("Service Worker · 首访即断网也要能重开", () => {
     // 判据认导航壳在不在缓存里,不认条数(条数是会骗人的代理指标)
     expect(OFFLINE, "要有「导航壳已进缓存」这条判据").toContain("导航壳已进缓存");
   });
+
+  it("子路径部署也要量 —— Pages 在 /xian/,根路径绿不等于它绿", () => {
+    // 部署矩阵里两条网页入口:Cloudflare 在站点根,Pages 在 /xian/ 子路径。
+    // 本仓栽过两次「本地永远绿、只有 CI 才执行到的路径」,而子路径恰恰是那种：
+    // 预缓存清单若按绝对 /assets/… 拼、导航回退写死 /,在 /xian/ 下就是一堆 404。
+    expect(OFFLINE, "offline-check 要覆盖子路径").toContain("子路径部署");
+    expect(OFFLINE, "子路径那节要断网并认入口").toMatch(/\/xian\//);
+    // SW 侧:壳地址必须从 registration.scope 推(scope 就是 BASE_URL 解析后的前缀)
+    expect(SW).toMatch(/self\.registration\.scope/);
+  });
 });
