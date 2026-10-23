@@ -30,6 +30,8 @@ import { FRUIT_PER_LIFE } from "./samsaraAudit";
 const LIVES = [2, 10, 20, 50, 100, 200, 500];
 
 describe("道果曲线 · 五案对照", () => {
+  // 审计报告(只打印,不断言):这是五案对照的读数底稿;形状契约
+  // (第二世严格对齐、D 案断崖、E 案最平)由本文件其余用例断言。
   it("各曲线的体验形状", () => {
     for (const c of FRUIT_CURVES) {
       console.log(`\n【${c.name}】${c.desc}`);

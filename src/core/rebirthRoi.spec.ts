@@ -30,6 +30,8 @@ import { toNum } from "@/utils/gnum";
 const NAMES = ["炼气", "筑基", "金丹", "元婴", "化神", "炼虚", "合体", "大乘", "渡劫", "真仙"];
 
 describe("轮回 ROI · 各转世点的道果效率", () => {
+  // 审计报告(只打印,不断言):逐境界效率表是底稿;
+  // 「最优转世点就是门槛本身」「相差 537 倍」等结论由本文件其余用例断言。
   it("合法转世点的效率表", () => {
     const rows = rebirthPoints();
     const best = optimalRebirthPoint();

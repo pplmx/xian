@@ -260,6 +260,7 @@ const CATEGORIES = [
       "smokeReading",
       "absenceLedger",
       "tautologyGuard",
+      "reportTestDecl",
       "fatePreview",
       "goBack",
       "inventorySeen",

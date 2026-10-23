@@ -29,6 +29,8 @@ const impacts = allImpacts(60);
 const VALUE_LABEL = { reshapes: "改变排序", tilts: "有倾向", flat: "纯变难" };
 
 describe("动机 · 四份契到底改变了什么", () => {
+  // 审计报告(只打印,不断言):排行底稿;
+  // 「逆旅契要改变玩家思考」的判据由本文件其余用例断言。
   it("基线构筑排行", () => {
     console.log("\n无契时的构筑排行:");
     for (const s of standings(undefined, 60)) {
@@ -36,6 +38,8 @@ describe("动机 · 四份契到底改变了什么", () => {
     }
   });
 
+  // 审计报告(只打印,不断言):四份契的逐项影响;
+  // 「影响不均度决定是否需要重新思考」由下方那条用例断言。
   it("逐契影响表", () => {
     console.log("\n契        变难     排名变动  位移  最强易主  影响不均  判定");
     for (const im of impacts) {

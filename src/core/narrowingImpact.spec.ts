@@ -25,6 +25,8 @@ const fmt = (c: ReturnType<typeof coverageNow>): string =>
   `覆盖 ${c.shallow}/${c.total}(${(c.ratio * 100).toFixed(0)}%) · 深修独有 ${c.deepOnly}/${c.total}(${(c.exclusivity * 100).toFixed(0)}%)`;
 
 describe("收窄后果 · 覆盖比例", () => {
+  // 审计报告(只打印,不断言):三情形的逐项清单是底稿;
+  // 覆盖比例落进 38%~50% 区间、深修独有首次过半等结论由本文件其余用例断言。
   it("三种情形的对照", () => {
     console.log(`\n现状:       ${fmt(coverageNow())}`);
     console.log(`只移两项:   ${fmt(coverageInsightVeinsOnly())}`);

@@ -26,6 +26,8 @@ import {
 } from "./samsaraAudit";
 
 describe("轮回审计 · 继承清单(逐条对照代码核实)", () => {
+  // 审计报告(只打印,不断言):继承清单底稿;
+  // 「状态类资产已基本重建」「外物全清」等结论由本文件其余用例逐项断言。
   it("当前继承全貌", () => {
     const s = summarize();
     console.log(

@@ -82,6 +82,8 @@ function transmigrateMajor(s: SaveSample): number {
 }
 
 describe("存档校准 · 真实节奏", () => {
+  // 审计报告(只打印,不断言):两份真实存档的读数;
+  // 「走完一世是小时级」「转世境界在 3~7」等结论由下方紧邻的用例断言。
   it("两份样本的实际节奏", () => {
     console.log("\n真实存档(均已修满真仙圆满):");
     for (const s of SAMPLES) {
