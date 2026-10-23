@@ -359,19 +359,30 @@ const weatherTribulation = computed(() =>
  * 天时的两个读数(来自库的周期层):
  *   还有多久换 —— 天时是每天一次的确定性环境,玩家该知道它什么时候变;
  *   明日是什么 —— 预告让"今天该做什么"变成可以规划的事,而不是开盲盒。
+ *
+ * 措辞用「尚需修行」而不是「还有」:天时的周期序号来自 `totalPlaySec`
+ * (游戏内已游玩时长),不是墙钟 —— 挂机一晚不换天,只在真玩的那段时间里走。
+ * 这是 DEC-120 的纪律(序号来自游戏内时长、不碰现实时间:改系统时间/跨时区/
+ * 挂机一夜都不该换天)。写成「还有 5 小时」会让玩家以为关掉页面五小时回来天就变了,
+ * 而实际一秒都没走 —— 措辞要说清这是「还要修多久」,不是「现实还要等多久」。
  */
 const weatherLeft = computed(() => {
   void now.value;
-  return `还有 ${formatCountdown(weatherRemainingSec())}`;
+  return `尚需修行 ${formatCountdown(weatherRemainingSec())}`;
 });
 const tomorrowWeather = computed(() => upcomingWeather(2)[1]);
-/** 明日天时的影响也摊开(与今日同源 modsText;渡劫倍率 >1 才挂更险) —— 渡劫前该不该等明日要看得见 */
+/**
+ * 下一天时的影响也摊开(与今日同源 modsText;渡劫倍率 >1 才挂更险)——
+ * 渡劫前该不该等它要看得见。措辞用「下一天时」而不是「明日」:
+ * 它按游玩时长翻页(见上面 weatherLeft 的注释),写成「明日」会被读成
+ * 「现实明天」,而挂机一夜并不会换来它。
+ */
 const tomorrowBrief = computed(() => {
   const t = tomorrowWeather.value;
   if (!t) return "";
   const mod = modsText(t.mods);
   const trib = t.tribulationMult > 1 ? ` · 渡劫×${t.tribulationMult}` : "";
-  return ` · 明日${t.name}${mod ? `(${mod}${trib})` : ""}`;
+  return ` · 下一天时${t.name}${mod ? `(${mod}${trib})` : ""}`;
 });
 
 const mainQuest = computed(() => mainQuestAt(quests.mainIdx));

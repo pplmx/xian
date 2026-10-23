@@ -261,6 +261,24 @@ describe("界域天象(weather · 仙界及以上)", () => {
     expect(src).not.toContain("Math.round((total % 3600) / 60)");
   });
 
+  it("天时的倒计时与预告按「修行时长」措辞,不写成「还有 / 明日」", () => {
+    /**
+     * 天时的周期序号来自 `totalPlaySec`(游戏内已游玩时长),不是墙钟 ——
+     * DEC-120 的纪律:改系统时间、跨时区、挂机一夜都不该换天。
+     *
+     * 于是「还有 5 小时」「明日雷鸣」这类措辞是**会说谎的**:玩家关掉页面五小时
+     * (或挂机一夜)回来,天时一秒都没走。写成现实时间口径,玩家会以为「睡一觉就
+     * 换天了」,进而把「等天时渡劫」当成一条不存在的策略。
+     * 两处措辞改说修行时长:剩余写「尚需修行」,预告写「下一天时」。
+     * 退回任一旧写法,下面都红。
+     */
+    const src = readFileSync(resolve(import.meta.dirname, "../views/HomeView.vue"), "utf8");
+    expect(src, "剩余要说「尚需修行」").toContain("尚需修行 ${formatCountdown");
+    expect(src, "预告要说「下一天时」").toContain("下一天时");
+    expect(src, "不许退回「还有 N」的现实时间口径").not.toMatch(/还有 \$\{formatCountdown/);
+    expect(src, "不许退回「明日」的现实日期口径").not.toMatch(/· 明日\$\{/);
+  });
+
   it("每种天时的词条都有规范名 —— 卡面要把确定数值标出来,不许落回裸键", () => {
     // 天时卡升级为数值行之后,每个键都得写得成人话(STAT_NAMES),否则出现「攻击 5%」式裸键
     for (const w of [...WEATHERS, ...Object.values(WORLD_WEATHERS).flat()]) {
