@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 440,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-23T16:06:28+00:00",
+  "updated_at": "2026-10-23T16:53:50+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -15941,7 +15941,7 @@
       "version": 1,
       "created_at": "2026-09-18T17:12:28+00:00",
       "updated_at": "2026-09-18T17:12:28+00:00",
-      "touched_round": 268,
+      "touched_round": 440,
       "rationale": "周期(每日天时/运势/赛季)这类东西,难点不在抽取而在**确定性**:结果必须只由\"第几个周期\"决定。两条实现纪律写进了库:①派生**独立的**随机源,绝不消耗全局随机流(否则今天是什么取决于玩家此前掷过多少次骰子 —— 回放、离线、跨端都会飘);②序号来自游戏内时长而非现实时间(改系统时间、跨时区、挂机一晚都不该换天)。同时 `pick`/`seedOf` 可接管:已上线的作品换到这一层时,每一天的天时一位不变 —— 否则玩家会以为游戏在悄悄动平衡。",
       "alternatives_rejected": "①用全局 rng 抽(最自然的写法,也是最容易漂的);②用 Date.now()(跨时区与改系统时间即穿);③把抽取规则也写死进库(本作\"清和 30%、其余均分\"这种口径没法表达,换层就会改变每天的可见结果)。",
       "summary": "周期层的两条纪律:由周期序号派生独立随机源(不碰全局流)、序号来自游戏内时长(不碰现实时间);抽取规则与种子公式可接管,保证既有作品换层后每一天不变。"
@@ -25719,6 +25719,63 @@
       "touched_round": 440,
       "commit": "dbd88309",
       "title": "首页天时措辞改说修行时长 + weather.spec 新增措辞判据"
+    },
+    "ISS-322": {
+      "id": "ISS-322",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T16:25:47+00:00",
+      "updated_at": "2026-10-23T16:25:47+00:00",
+      "touched_round": 440,
+      "title": "冒烟两张读数表被自身固定等待与已按下开关污染",
+      "severity": 0.35,
+      "summary": "慢步骤外层汇总内层 6×160ms;aria-pressed 已选中点击本就不变,却记成没反应"
+    },
+    "CHG-530": {
+      "id": "CHG-530",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T16:25:50+00:00",
+      "updated_at": "2026-10-23T16:25:50+00:00",
+      "touched_round": 440,
+      "commit": "cd7c6fe0",
+      "title": "ui-smoke 慢步骤只记叶子 + 已按下开关不计没反应 + smokeReading.spec 四例"
+    },
+    "ISS-323": {
+      "id": "ISS-323",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T16:49:10+00:00",
+      "updated_at": "2026-10-23T16:49:10+00:00",
+      "touched_round": 440,
+      "title": "标签页挂起时缺席时长被补进 totalPlaySec,与关页面重开两本账",
+      "severity": 0.6,
+      "summary": "离线分支结算完未推平 lastStampAt,盖章块用现实间隔补时长;实测第0日20点缺席8小时即跨日换天时(灵雨→雷鸣),而关页面重开则不动"
+    },
+    "CHG-531": {
+      "id": "CHG-531",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T16:49:13+00:00",
+      "updated_at": "2026-10-23T16:49:13+00:00",
+      "touched_round": 440,
+      "commit": "09351516",
+      "title": "引擎离线分支推平 lastStampAt + absenceLedger.spec 两例"
+    },
+    "TASK-450": {
+      "id": "TASK-450",
+      "type": "task",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T16:53:45+00:00",
+      "updated_at": "2026-10-23T16:53:45+00:00",
+      "touched_round": 440,
+      "title": "缺席只记一本账:挂起与关页面同一笔(absenceLedger.spec 守)",
+      "category": "correctness"
     }
   },
   "edges": [
@@ -37592,6 +37649,30 @@
       "to": "ISS-321",
       "type": "resolves",
       "created_at": "2026-10-23T16:06:28+00:00"
+    },
+    {
+      "from": "CHG-530",
+      "to": "ISS-322",
+      "type": "resolves",
+      "created_at": "2026-10-23T16:25:50+00:00"
+    },
+    {
+      "from": "CHG-531",
+      "to": "ISS-323",
+      "type": "resolves",
+      "created_at": "2026-10-23T16:49:15+00:00"
+    },
+    {
+      "from": "DEC-120",
+      "to": "TASK-450",
+      "type": "governs",
+      "created_at": "2026-10-23T16:53:46+00:00"
+    },
+    {
+      "from": "TASK-450",
+      "to": "ISS-323",
+      "type": "addresses",
+      "created_at": "2026-10-23T16:53:50+00:00"
     }
   ]
 }
