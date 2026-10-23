@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 439,
+  "round": 440,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-16T06:59:40+00:00",
+  "updated_at": "2026-10-23T16:06:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25565,6 +25565,160 @@
       "touched_round": 439,
       "commit": "5e75ecc",
       "summary": "ril.py:parse_fields 加 STRING_FIELDS 白名单(commit/source/id 等永不做 JSON 解析),check 加两条判据(change.commit 必须字符串、字段名不得含尾冒号),node set 加 --unset 用于清畸形字段名;修复 21 个被浮点化的 commit + 3 个畸形键"
+    },
+    "ISS-318": {
+      "id": "ISS-318",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T14:27:04+00:00",
+      "updated_at": "2026-10-23T14:27:04+00:00",
+      "touched_round": 440,
+      "title": "破境卡调息倒计时缺秒级心跳(5 秒一跳)",
+      "severity": 0.5,
+      "summary": "breakthroughInfo→breakthroughPrepState 只依赖 totalPlaySec(5s 盖章),破境卡是全库最后一枚没接 useGameNow 的秒表"
+    },
+    "CHG-524": {
+      "id": "CHG-524",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T14:27:07+00:00",
+      "updated_at": "2026-10-23T14:27:07+00:00",
+      "touched_round": 440,
+      "commit": "62a6270",
+      "title": "破境卡接 useGameNow + 劫势瓦片脱钩心跳 + 两条心跳判据"
+    },
+    "ISS-319": {
+      "id": "ISS-319",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T14:58:59+00:00",
+      "updated_at": "2026-10-23T14:58:59+00:00",
+      "touched_round": 440,
+      "title": "首访即断网白屏:SW 安装不预缓存导航壳与懒加载分片",
+      "severity": 0.9,
+      "summary": "三层根因:SW 在 load 后注册、路由懒加载分片不在 index.html、旧判据只数条数"
+    },
+    "CHG-525": {
+      "id": "CHG-525",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T14:58:59+00:00",
+      "updated_at": "2026-10-23T14:58:59+00:00",
+      "touched_round": 440,
+      "commit": "89aa87a",
+      "title": "SW install 预缓存导航壳+构建期产物清单;offline-check 加首访断网一节;swPrecache.spec"
+    },
+    "CHG-526": {
+      "id": "CHG-526",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T15:28:49+00:00",
+      "updated_at": "2026-10-23T15:28:49+00:00",
+      "touched_round": 440,
+      "commit": "8a81aa8",
+      "title": "offline-check 覆盖 /xian/ 子路径 + swPrecache 第 6 例守卫"
+    },
+    "TASK-448": {
+      "id": "TASK-448",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-23T15:28:53+00:00",
+      "updated_at": "2026-10-23T15:28:56+00:00",
+      "touched_round": 440,
+      "category": "test-quality",
+      "title": "补子路径离线门与判据",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "ISS-320": {
+      "id": "ISS-320",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T15:38:47+00:00",
+      "updated_at": "2026-10-23T15:38:47+00:00",
+      "touched_round": 440,
+      "title": "Boss 阶段审计两把尺子:标题称相对 50%,正文查绝对 0.1;生态判据用 ≤5 容忍",
+      "severity": 0.45,
+      "summary": "③ 相对/绝对口径分裂导致三条正常内容被判弱;⑥ 的容忍会掩盖真回归"
+    },
+    "CHG-527": {
+      "id": "CHG-527",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T15:38:53+00:00",
+      "updated_at": "2026-10-23T15:38:53+00:00",
+      "touched_round": 440,
+      "commit": "741cf501",
+      "title": "Boss 审计统一相对尺子 + 具名豁免 + 名单过期守卫"
+    },
+    "CHG-528": {
+      "id": "CHG-528",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T15:52:15+00:00",
+      "updated_at": "2026-10-23T15:52:15+00:00",
+      "touched_round": 440,
+      "commit": "86bce3c3",
+      "title": "按实测改写 useGameNow 的解耦理由(性能前提被推翻)+ 开发文档补实测表"
+    },
+    "DEC-197": {
+      "id": "DEC-197",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-23T15:52:23+00:00",
+      "updated_at": "2026-10-23T15:52:23+00:00",
+      "touched_round": 440,
+      "title": "显示心跳与存档盖章节流解耦 —— 理由是语义而非性能",
+      "rationale": "实测 finalStats 重算 7.4us、渡劫推演 18.5us、修行页 1s 心跳零长帧,原「每秒重算太贵」的前提被推翻;解耦保留,理由改为 totalPlaySec 是存档事实、其盖章节流同时服务 lastActiveAt 落盘",
+      "alternatives_rejected": "[\"把 ACTIVE_STAMP_MS 改成 1s(让落盘节奏去决定秒针)\",\"继续用 totalPlaySec 当显示心跳(秒针 5 秒一跳)\"]"
+    },
+    "TASK-449": {
+      "id": "TASK-449",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-23T15:52:29+00:00",
+      "updated_at": "2026-10-23T15:52:32+00:00",
+      "touched_round": 440,
+      "category": "docs",
+      "title": "按实测改写心跳解耦理由并补文档实测表",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "ISS-321": {
+      "id": "ISS-321",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T16:06:23+00:00",
+      "updated_at": "2026-10-23T16:06:23+00:00",
+      "touched_round": 440,
+      "title": "首页天时倒计时与预告按现实时间措辞,机制按游玩时长翻页",
+      "severity": 0.5,
+      "summary": "「还有 N 时」「明日」会让玩家以为挂机一夜换天,而 totalPlaySec 由 DEC-120 规定不碰现实时间"
+    },
+    "CHG-529": {
+      "id": "CHG-529",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T16:06:27+00:00",
+      "updated_at": "2026-10-23T16:06:27+00:00",
+      "touched_round": 440,
+      "commit": "dbd88309",
+      "title": "首页天时措辞改说修行时长 + weather.spec 新增措辞判据"
     }
   },
   "edges": [
@@ -37402,6 +37556,42 @@
       "to": "ISS-317",
       "type": "resolves",
       "created_at": "2026-10-16T06:52:13+00:00"
+    },
+    {
+      "from": "CHG-524",
+      "to": "ISS-318",
+      "type": "resolves",
+      "created_at": "2026-10-23T14:27:07+00:00"
+    },
+    {
+      "from": "CHG-525",
+      "to": "ISS-319",
+      "type": "resolves",
+      "created_at": "2026-10-23T14:59:07+00:00"
+    },
+    {
+      "from": "CHG-526",
+      "to": "TASK-448",
+      "type": "implements",
+      "created_at": "2026-10-23T15:28:56+00:00"
+    },
+    {
+      "from": "CHG-527",
+      "to": "ISS-320",
+      "type": "resolves",
+      "created_at": "2026-10-23T15:38:53+00:00"
+    },
+    {
+      "from": "CHG-528",
+      "to": "TASK-449",
+      "type": "implements",
+      "created_at": "2026-10-23T15:52:32+00:00"
+    },
+    {
+      "from": "CHG-529",
+      "to": "ISS-321",
+      "type": "resolves",
+      "created_at": "2026-10-23T16:06:28+00:00"
     }
   ]
 }
