@@ -5,6 +5,7 @@ import {
   applyImportPayload,
   buildExportPayload,
   clearAllSave,
+  LEGACY_GAME_ID,
   migrateInventorySlice,
   SAVE_VERSION,
   validateImportPayload,
@@ -78,6 +79,29 @@ export function importSaveText(text: string): string | null {
   return null;
 }
 
+/**
+ * 这份文件**为什么**不能被当作存档导入;能导入时返回 null。给确认前的那道门用。
+ *
+ * 存在的理由只有一个:让"检视"与"导入"说同一句话。两处各写一套判据,
+ * 就会出现「弹窗说能导、点下去说不行」这种自相矛盾 —— 而那正是这次的 bug。
+ * 这里只做**无副作用的一半**(解析 + 门槛),不写库,故可以在选择文件时调用。
+ */
+export function importRejectReason(text: string): string | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readSaveText(text.trim()));
+  } catch {
+    return "文件内容无法解析(既非本游戏密文,也非有效 JSON)";
+  }
+  /**
+   * `validateImportPayload` 用 **null 表示通过**,所以这里不能写
+   * `validateImportPayload(parsed) ?? "无法导入"` —— `??` 会把"通过"当成空值
+   * 兜底成错误文案,于是合法存档被判成不能导入(实测踩过:自证用例当场红)。
+   * 通过时要返回 null,故原样返回。
+   */
+  return validateImportPayload(parsed);
+}
+
 export interface ImportInspect {
   name: string;
   realmLabel: string;
@@ -90,7 +114,22 @@ export interface ImportInspect {
 /**
  * 只读检视一份待导入的存档(不落库):把「这是谁的档、什么版本、什么时候导的」
  * 摆到确认框里 —— 整体替换进度是不可逆动作,玩家签之前该知道这份备份的底细。
- * 解析失败返回 null(交由导入路径报具体错)。
+ *
+ * 门槛查的是**「这是不是本作的档」**,不是导入校验的全套。两件事得分清:
+ *   · 确认框该不该开:取决于"这份东西有没有可能就是我的存档";
+ *   · 点下去会不会成功:那要 `data.player` / `data.game` 都在。
+ *
+ * 从前这里只查 `version` 与 `exportedAt`,于是「并非《玄枢录》的存档文件」
+ * 也会被展示成「无名散修 · 炼气·一层」加一个可点的「用这份替换」——
+ * 玩家读到的是"这是一份像样的存档",点下去才被告知根本不是本作的档。
+ * 从别的游戏拷来的 .save、拿 JSON 手工拼出来的东西,都会走到这条路上。
+ *
+ * 但也不能直接套 `validateImportPayload`:`buildExportPayload` 只打包**存在**
+ * 的分片,刚建号还没写过档时导出里可以没有 `data.player` —— 那是本作自己会产出的
+ * 东西,不该被挡在确认框外(实测:收紧成全套校验后,saveRoundTrip 那条正例当场红)。
+ * 故门槛取两者交集:必须是本作的标识(认更名前的旧标识),且版本号可读。
+ *
+ * 返回 null 表示"这份东西不该进确认框",由调用方按导入路径的报错处理。
  */
 export function inspectImportText(text: string): ImportInspect | null {
   try {
@@ -98,16 +137,20 @@ export function inspectImportText(text: string): ImportInspect | null {
       ExportPayload & { data?: { player?: { name?: unknown; major?: unknown; sub?: unknown } } }
     >;
     if (typeof parsed !== "object" || parsed === null) return null;
-    if (parsed.version == null || typeof parsed.exportedAt !== "number") return null;
+    // 与导入路径同一处常量:认更名前导出的旧标识,老玩家那份 .save 不该因改名作废
+    const game = (parsed as { game?: unknown }).game;
+    if (game !== "xuanshu" && game !== LEGACY_GAME_ID) return null;
+    if (typeof parsed.version !== "number" || typeof parsed.exportedAt !== "number") return null;
+    const tooNew = parsed.version > SAVE_VERSION;
     const player = parsed.data?.player;
     const major = typeof player?.major === "number" ? player.major : 0;
     const sub = typeof player?.sub === "number" ? player.sub : 0;
     return {
       name: typeof player?.name === "string" && player.name ? player.name : "无名散修",
       realmLabel: realmLabel(major, sub),
-      version: parsed.version,
+      version: parsed.version as number,
       exportedAt: parsed.exportedAt,
-      tooNew: parsed.version > SAVE_VERSION,
+      tooNew,
     };
   } catch {
     return null;

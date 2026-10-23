@@ -304,6 +304,7 @@ import { useUiStore } from "@/stores/ui";
 import { engine } from "@/core/engine";
 import {
   importSaveText,
+  importRejectReason,
   resetGame,
   reloadGame,
   sealStorageWrites,
@@ -448,6 +449,19 @@ function onFilePicked(e: Event): void {
   reader.onload = () => {
     pendingImport.value = String(reader.result ?? "");
     importInspect.value = inspectImportText(pendingImport.value);
+    /**
+     * 检视不过就不进确认框 —— 那个框问的是「要用这份替换吗」,
+     * 而一份不是本作的档 / 缺关键数据 / 已损坏的文件,没有可替换的东西。
+     * 从前这里无论如何都开框:框里底细区整块不渲染,只剩一句「将整体替换」
+     * 加一个可点的「用这份替换」,玩家点完才被告知"并非《玄枢录》的存档文件"。
+     * 现在把原因当场说清 —— 用的就是导入路径那一句(同出 validateImportPayload)。
+     */
+    if (!importInspect.value) {
+      ui.toast(importRejectReason(pendingImport.value) ?? "这份存档无法导入", "warn");
+      pendingImport.value = null;
+      engine.resume();
+      return;
+    }
     importConfirm.value = true;
   };
   // 读文件本身也可能失败(权限/磁盘)—— 静默就等于「点了没反应」;打开确认框前

@@ -24,8 +24,9 @@ import {
   dropPendingWrites,
   preflightScan,
   storageKey,
+  SAVE_VERSION,
 } from "@/utils/storage";
-import { importSaveText } from "./save";
+import { importSaveText, inspectImportText, importRejectReason } from "./save";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
@@ -200,5 +201,88 @@ describe("半损坏档 · 进得了游戏,或者被明确拒绝", () => {
     expect(err, "写盘失败应当报错").not.toBeNull();
     expect(writes.get(storageKey("game")), "回滚后旧 game 分片原样保留").toBe("OLD_GAME");
     expect(writes.get(storageKey("player")), "回滚后旧 player 分片原样保留").toBe("OLD_PLAYER");
+  });
+});
+
+/**
+ * 「确认框说什么」与「点下去会怎样」必须是同一句话。
+ *
+ * 这是一条**自相矛盾**的回归:确认框里的底细(`inspectImportText`)与真正导入
+ * (`importSaveText`)各写了一套判据 —— 前者只查 `version` 与 `exportedAt`,
+ * 后者走 `validateImportPayload`(要求 game / data.player / data.game 齐全)。
+ * 于是从别的游戏拷来的 .save 会被展示成「无名散修 · 炼气·一层」加一个可点的
+ * 「用这份替换」,玩家点完才被告知"并非《玄枢录》的存档文件"。
+ *
+ * 判据:凡检视说"这是个像样的档",导入就必须**至少**过得了校验那一关;
+ * 凡校验明确拒绝,检视就必须返回 null(版本更高是唯一例外 —— 那种档是本作的,
+ * 值得在框里摊开版本号再拒绝,玩家据此知道该升级游戏)。
+ */
+describe("导入 · 确认框与导入路径同源", () => {
+  const CASES: { label: string; text: string }[] = [
+    { label: "别的游戏的档", text: JSON.stringify({ game: "other", version: 1, exportedAt: 1 }) },
+    { label: "缺 game 标识", text: JSON.stringify({ version: 1, exportedAt: 1, data: {} }) },
+    { label: "根本不是 JSON", text: "这不是存档" },
+    { label: "空串", text: "" },
+  ];
+
+  it("不是本作的档,确认框一律不开 —— 不许给玩家一个必败的「替换」按钮", () => {
+    for (const c of CASES) {
+      expect(
+        importRejectReason(c.text),
+        `${c.label}:应当是校验拒绝的(这条用例的前提)`,
+      ).not.toBeNull();
+      expect(
+        inspectImportText(c.text),
+        `${c.label}:校验已拒绝,确认框却仍把底细摊出来 —— 点下去必然失败`,
+      ).toBeNull();
+    }
+  });
+
+  it("本作的档即使缺分片也进确认框 —— 那是导出侧会产出的形状", () => {
+    /**
+     * 这条与上一条是一对:`buildExportPayload` 只打包**存在**的分片,
+     * 刚建号还没写过档时 data.player 可以缺席。那是本作自己会产出的东西,
+     * 挡在确认框外就成了"自己的存档自己导不回来"。
+     * 实测:把门槛收紧成全套 validateImportPayload 时,saveRoundTrip 那条正例当场红。
+     */
+    const noPlayer = JSON.stringify({
+      game: "xuanshu",
+      version: SAVE_VERSION,
+      exportedAt: 1_700_000_000_000,
+      data: { game: { started: true } },
+    });
+    const info = inspectImportText(noPlayer);
+    expect(info, "本作的档缺 player 分片,仍该开确认框").not.toBeNull();
+    expect(info!.name, "缺名字时说「无名散修」,不编一个").toBe("无名散修");
+    expect(info!.tooNew).toBe(false);
+  });
+
+  it("版本更高的档仍进确认框 —— 它是本作的档,该让玩家看见版本号再决定", () => {
+    const future = JSON.stringify({
+      game: "xuanshu",
+      version: SAVE_VERSION + 1,
+      exportedAt: 1_700_000_000_000,
+      data: { player: { name: "未来人", major: 3, sub: 1 }, game: { started: true } },
+    });
+    const inspected = inspectImportText(future);
+    expect(inspected, "版本更高不该被当成「不是存档」").not.toBeNull();
+    expect(inspected!.tooNew).toBe(true);
+    expect(inspected!.name).toBe("未来人");
+  });
+
+  it("自证:同一份「看着像档」的输入,两条路给的结论必须一致", () => {
+    // 这条防的是"两处又被写成两套判据" —— 若哪天有人把 inspect 改回只看
+    // version/exportedAt,上面第一条会红;这里再钉一次正例,免得判据被改成"永远 null"
+    const real = JSON.stringify({
+      game: "xuanshu",
+      version: SAVE_VERSION,
+      exportedAt: 1_700_000_000_000,
+      data: { player: { name: "正常人", major: 2, sub: 3 }, game: { started: true } },
+    });
+    expect(importRejectReason(real), "这份档该过校验").toBeNull();
+    const inspected = inspectImportText(real);
+    expect(inspected, "过了校验的档,确认框必须给得出底细").not.toBeNull();
+    expect(inspected!.name).toBe("正常人");
+    expect(inspected!.tooNew).toBe(false);
   });
 });
