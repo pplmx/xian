@@ -5,15 +5,24 @@
  * 当心跳,而引擎只在 `ACTIVE_STAMP_MS`(5 秒)才 `addPlayTime` 一次 ——
  * 「04分58秒」的秒针纹丝不动、每 5 秒跳 5 格,盯着看的玩家只觉得卡。
  *
- * 为什么不直接把 ACTIVE_STAMP_MS 改成 1s:`totalPlaySec` 的依赖链上有
- * weatherMods → finalStats(全库最重的 computed,人物/战斗/炉前全读它),
- * 心跳提到 1s 等于让它每秒重算 —— 结算链的粒度不该为显示买单。
+ * 为什么把显示心跳与 `totalPlaySec` 解耦(而不是干脆把 ACTIVE_STAMP_MS 改成 1s):
+ * 当初的理由写的是「finalStats 是全库最重的 computed,每秒重算受不了」——
+ * **这条理由经实测站不住**,已按真账改写(2026-10-23 本机实测,神仙期满装 +
+ * 闭关状态,每次 totalPlaySec 变化后读 finalStats/cultPerSec/qiRegen):
+ *
+ *   finalStats 重算 ≈ 7.4us/次;currentTribulationPlan(逐波推演整段雷)≈ 18.5us/次;
+ *   修行页 1s 心跳下的真浏览器帧率:最差帧 17ms、p95 17ms、零长帧(perf-profile)。
+ *
+ * 也就是说「每秒重算」本身并不贵。真正要解耦的是**语义**,不是成本:
+ * `totalPlaySec` 是「已游玩时长」这一存档事实,它的盖章节流(ACTIVE_STAMP_MS)同时
+ * 服务于 lastActiveAt 的落盘节奏;把它当显示心跳,等于让落盘节流去决定秒针怎么走 ——
+ * 两个不相干的东西被一根线串起来。显示另有自己的钟(gameNow(),暂停冻结、恢复顺延),
+ * 与结算判定同源,这才是该有的分工。
  *
  * 语义:自起 1s 表、读 `gameNow()`(暂停冻结、恢复顺延)—— 与结算判定
  * 用的是**同一个时刻函数**,显示因此不会比判定先归零(暂停时两者一起冻结,
  * 恢复时 shiftWallClocks 已把在途截止顺延,读数从冻结点接着走)。
- * 结算链(activeDivination 过期判定等)不读它,照旧走 totalPlaySec ——
- * 显示最多领先判定一个盖章周期(≤5s),对「过时自散」这类后台行为无感。
+ * 结算链(activeDivination 过期判定等)照旧走各自的判定口径,不读本 composable。
  *
  * 「墙钟域」(坊市/弟子)不适用:那两处按墙钟结算,见 MarketView / ApprenticeView 注释。
  */

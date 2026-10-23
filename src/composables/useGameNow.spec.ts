@@ -18,9 +18,13 @@ afterEach(() => {
  * 缺口:闭关剩余/BuffDialog/卦倒计时此前读 totalPlaySec 当心跳,而引擎只在
  * ACTIVE_STAMP_MS(5 秒)才 addPlayTime 一次 —— 分秒倒计时 5 秒一跳,
  * 「04分58秒」的秒针纹丝不动、每 5 秒跳 5 格,盯着看的玩家只觉得卡。
- * totalPlaySec 直接改 1s 会把 weatherMods → finalStats(全库最重 computed)拖成
- * 每秒重算 —— 显示心跳与结算依赖解耦:本 composable 自起 1s 表,
- * 冻结/顺延语义与结算的 gameNow() 完全一致;结算判定链不读它,不受影响。
+ *
+ * 为什么不是「把 ACTIVE_STAMP_MS 改成 1s」:原始理由写的是「finalStats 是最重的
+ * computed,每秒重算受不了」—— 实测把这条推翻了(满装 + 闭关状态下 finalStats
+ * 重算 ≈7.4us、渡劫逐波推演 ≈18.5us、修行页 1s 心跳零长帧、最差帧 17ms)。
+ * 解耦的真理由因此改成**语义**:totalPlaySec 是「已游玩时长」这一存档事实,
+ * 它的盖章节流同时服务 lastActiveAt 落盘 —— 让落盘节奏去决定秒针怎么走,
+ * 是两个不相干的东西被一根线串起来。详见 useGameNow.ts 文件头的实测账。
  */
 
 describe("useGameNow · 游戏钟域的秒级心跳", () => {

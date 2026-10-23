@@ -167,6 +167,24 @@ vp preview        # 预览构建结果
 `PERF_MAX_FRAME_MS` / `PERF_LONG_FRAMES` 可调)。改动过会显著影响单次渲染量的代码后,
 这两个数要跟着重校,连同本表一起。
 
+### 显示心跳的粒度(为什么秒针能走、`totalPlaySec` 仍是 5 秒一盖)
+
+倒计时的秒针要每秒走,而 `totalPlaySec` 由引擎按 `ACTIVE_STAMP_MS`(5 秒)盖章 ——
+两者靠 `composables/useGameNow` 解耦:显示自起 1s 表、读 `gameNow()`,结算链照旧读各自口径。
+
+> 当初把「不解耦」的理由写成「`finalStats` 是全库最重的 computed,每秒重算受不了」。
+> **2026-10-23 实测把这条推翻了**(本机,神仙期满装 + 闭关状态,bun/vitest 内 `performance.now`):
+>
+> | 读数 | 实测 |
+> | --- | --- |
+> | 每次 `totalPlaySec` 变化后读 `finalStats.mods` + `cultPerSec` + `qiRegenPerSec` | ≈7.4µs |
+> | `currentTribulationPlan`(逐波推演整段雷)同条件 | ≈18.5µs |
+> | 修行页 1s 心跳的真浏览器帧率(`perf-profile --view cultivation`) | 最差帧 17ms · p95 17ms · 零长帧 |
+>
+> 每秒重算本身不贵。解耦的真理由是**语义**:`totalPlaySec` 是「已游玩时长」这一存档事实,
+> 它的盖章节流同时服务 `lastActiveAt` 落盘 —— 让落盘节奏决定秒针怎么走,是两个不相干的
+> 东西被一根线串起来。**推论**:以后若还要论证「某个每秒重算太贵」,先量,别沿用这条旧印象。
+
 推送到 `main` 会走 GitHub Actions 同一道闸:类型检查、Oxlint、用例全绿后才部署 Web / PWA 与镜像(CI 用 `voidzero-dev/setup-vp` 装 Vite+ 工具链,Node 22)。
 
 ## 项目结构
