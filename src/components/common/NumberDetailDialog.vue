@@ -10,7 +10,7 @@
         <div v-for="(row, i) in view.rows" :key="i" class="rounded-md bg-paper-deep/60 px-3 py-2">
           <p class="flex items-baseline justify-between gap-2">
             <span class="shrink-0 text-[11px] text-ink-faint">{{ row.label }}</span>
-            <span v-if="row.text" class="shrink-0 text-[13px] text-ink tabular">{{
+            <span v-if="row.text" class="shrink-0 text-[14px] text-ink tabular">{{
               row.text
             }}</span>
             <span v-else class="shrink-0 text-[11px] text-ink-faint tabular">{{

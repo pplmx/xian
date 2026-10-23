@@ -19,7 +19,7 @@
           <GameIcon :name="inst.locked ? 'lock' : 'unlock'" :size="15" />
         </button>
       </div>
-      <p class="mt-2 text-[12px] leading-relaxed text-ink-faint">{{ template.desc }}</p>
+      <p class="mt-2 t-body text-ink-faint">{{ template.desc }}</p>
       <!-- 备注子面板:标记输入/清除随面板走(EquipNotePanel,自读同一份 inst) -->
       <EquipNotePanel />
       <!--
@@ -42,7 +42,7 @@
         对比当前佩戴:「{{ compareTarget.name }}」(绿升红降)
       </p>
       <div class="space-y-1.5">
-        <p v-for="row in flatRows" :key="row.label" class="flex justify-between text-[13px]">
+        <p v-for="row in flatRows" :key="row.label" class="flex justify-between text-[14px]">
           <span class="text-ink-soft">{{ row.label }}</span>
           <span class="tabular text-ink">
             {{ row.value }}
@@ -54,7 +54,7 @@
             >
           </span>
         </p>
-        <p v-for="row in fixedModRows" :key="row.label" class="flex justify-between text-[13px]">
+        <p v-for="row in fixedModRows" :key="row.label" class="flex justify-between text-[14px]">
           <span class="text-ink-soft">{{ row.label }}</span>
           <span class="tabular text-qing">{{ row.value }}</span>
         </p>
@@ -67,7 +67,7 @@
           「要不要为这件洗下去」才算得清。
         -->
         <p
-          class="mb-1.5 flex items-baseline justify-between font-kai text-[12px] tracking-[0.3em] text-ink-faint"
+          class="mb-1.5 flex items-baseline justify-between font-kai text-[14px] tracking-[0.3em] text-ink-faint"
         >
           <span>词 条</span>
           <span class="text-[10px] tracking-normal tabular">
@@ -94,7 +94,7 @@
             :style="{ borderLeft: `2px solid ${AFFIX_RARITY_META[line.rarity].color}` }"
           >
             <span
-              class="shrink-0 font-kai text-[12px]"
+              class="shrink-0 font-kai text-[14px]"
               :style="{ color: AFFIX_RARITY_META[line.rarity].color }"
             >
               「{{ line.name }}」
@@ -119,7 +119,7 @@
       </template>
       <template v-if="buildPreview">
         <div class="ink-divider my-3" />
-        <p class="flex items-center justify-between text-[12px]">
+        <p class="flex items-center justify-between text-[14px]">
           <span class="text-ink-faint">装备后流派</span>
           <span class="tabular">
             <template v-if="buildPreview.before">

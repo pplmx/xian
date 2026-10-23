@@ -69,7 +69,7 @@ const locationLabel = computed(() =>
       >
     </p>
     <p class="mt-3 t-card">{{ event?.title }}</p>
-    <p class="mt-1 text-[12px] leading-relaxed text-ink-soft">{{ event?.desc }}</p>
+    <p class="mt-1 t-body text-ink-soft">{{ event?.desc }}</p>
     <div class="mt-3 space-y-2">
       <button
         v-for="(opt, idx) in event?.options ?? []"

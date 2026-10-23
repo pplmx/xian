@@ -9,7 +9,7 @@
           归
         </div>
       </div>
-      <p class="mt-2 text-[12px] text-ink-faint">
+      <p class="mt-2 text-[11px] text-ink-faint">
         此去
         <span class="font-kai text-[14px] text-ink">{{ formatDuration(summary.seconds) }}</span>
         <!--
@@ -37,7 +37,7 @@
             :key="row.label"
             class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2"
           >
-            <span class="flex items-center gap-2 text-[13px] text-ink-soft">
+            <span class="flex items-center gap-2 text-[14px] text-ink-soft">
               <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
               {{ row.label }}
             </span>
@@ -54,14 +54,14 @@
             :key="row.label"
             class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2"
           >
-            <span class="flex items-center gap-2 text-[13px]" :class="row.cls">
+            <span class="flex items-center gap-2 text-[14px]" :class="row.cls">
               <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
               {{ row.label }}
             </span>
-            <span class="tabular text-[13px]" :class="row.cls">{{ row.value }}</span>
+            <span class="tabular text-[14px]" :class="row.cls">{{ row.value }}</span>
           </li>
           <li v-if="savedEquipment.length" class="rounded-md bg-paper-deep/70 px-3 py-2">
-            <p class="mb-1 flex items-center gap-2 text-[13px] text-ink-soft">
+            <p class="mb-1 flex items-center gap-2 text-[14px] text-ink-soft">
               <GameIcon name="backpack" :size="15" class="text-ink-faint" />
               拾得装备 ×{{ savedEquipment.length }}
             </p>
@@ -69,7 +69,7 @@
               <span
                 v-for="(eq, i) in savedEquipment"
                 :key="i"
-                class="font-kai text-[12px]"
+                class="font-kai text-[11px]"
                 :style="{ color: qualityDef(eq.quality).color }"
               >
                 {{ qualityDef(eq.quality).name }}·{{ eq.name }}

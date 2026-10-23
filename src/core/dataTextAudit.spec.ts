@@ -1476,20 +1476,26 @@ describe("枚举 id 不许印到界面上 —— 玩家看的是名字,不是 ke
    */
   // 路径相对 src/core(__dirname),与本文件里 src() 辅助函数同一口径
   const VUE = (rel: string): string => readFileSync(resolve(__dirname, rel), "utf-8");
-  const UI_FILES = [
-    "../views/MarketView.vue",
-    "../views/InventoryView.vue",
-    "../views/CharacterView.vue",
-    "../views/CultivationView.vue",
-    "../views/RealmCodexView.vue",
-    "../components/equipment/AffixTransferPanel.vue",
-    "../components/equipment/EquipmentDetailDialog.vue",
-    // 功法区自 CultivationView 拆出后自带书目呈现,一并进枚举字段的扫描面
-    "../components/cultivation/GongfaSection.vue",
-    // 破境卡随拆分第五轮迁出宿主,快捷丹行带品质图标(qualityDef 包裹),
-    // 一并进枚举字段的扫描面(同 GongfaSection 先例)
-    "../components/cultivation/BreakthroughCard.vue",
-  ];
+  /**
+   * 扫描面 = **全部** .vue,不是手写清单。
+   *
+   * 这里原本是一张 9 个文件的清单,而 src/views 有 20 个、src/components 有 40+
+   * 个 —— 判据名叫「界面里不许直接插值品阶 id」,实际只查了其中一成多。
+   * 手写清单的问题不是"当时漏了哪个",而是**它永远不会自己长**:新加一个
+   * 带品质图标的视图,不会有人想起来往这张表里补一行,于是判据默默放行。
+   * (实测:改成全库枚举后,当前代码是 0 处违规 —— 也就是说这条判据此前
+   *  一直没坏,但它**证明不了**没坏,而这正是它存在的意义。)
+   */
+  const ALL_VUE: string[] = (function walkVue(dir: string, out: string[] = []): string[] {
+    for (const entry of readdirSync(resolve(__dirname, dir))) {
+      const rel = `${dir}/${entry}`;
+      const st = statSync(resolve(__dirname, rel));
+      if (st.isDirectory()) walkVue(rel, out);
+      else if (entry.endsWith(".vue")) out.push(rel);
+    }
+    return out;
+  })("..");
+  const UI_FILES = ALL_VUE;
 
   /**
    * 这些字段在数据层是**英文 id**,在界面上一律要换成 .name。

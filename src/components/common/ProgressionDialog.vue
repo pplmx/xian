@@ -1,6 +1,6 @@
 <template>
   <BaseModal :open="open" title="数值体系" @close="$emit('close')">
-    <div class="space-y-3 text-[12px] leading-relaxed">
+    <div class="space-y-3 text-[11px] leading-relaxed">
       <p class="text-ink-faint">
         每个大境界,数值按复利增长;而"净耗时"增长得更慢 —— 字段里的倍率都取自代码常数,
         不是手写的漂亮话。

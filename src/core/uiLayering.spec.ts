@@ -2260,21 +2260,64 @@ describe("修炼页 · 字号收六档", () => {
     expect(total).toBeGreaterThanOrEqual(20);
   });
 
-  it("弹窗同族刻度:16 / 14 / 11 / 10", () => {
-    const DIALOG_TIERS = [16, 14, 11, 10];
-    for (const path of [
-      "components/cultivation/BuffDialog.vue",
-      "components/cultivation/EnlightenmentModal.vue",
-      "components/cultivation/BreakthroughResultDialog.vue",
-      // 功法详情弹窗自 CultivationView 拆出时带着 12/13 私档搬来,全域化实测收口归档 —— 同入此列
-      "components/cultivation/GongfaDialog.vue",
-      // 天界拆出的两枚弹窗同入此列(字号原样随模板搬来,不另立私档)
-      "components/celestial/FurnaceDialog.vue",
-      "components/celestial/TutorialDialog.vue",
-    ]) {
-      const dlg = FILES.find((f) => f.path === path);
-      const off = [...new Set(usedSizes(dlg?.src ?? ""))].filter((n) => !DIALOG_TIERS.includes(n));
-      expect(off, `${path} 冒出了同族刻度以外的字号:${off.join(", ")}`).toEqual([]);
+  /**
+   * 弹窗同族刻度 —— 扫描面是**全部**弹窗组件,不是手写清单。
+   *
+   * 原先这里列了六个文件。可是 components 下共有三十多个文件在用 BaseModal,
+   * 剩下的二十来个**从来没被这条判据看过**:它们中间长着 12 / 13 / 9 私档
+   * (EquipmentDetailDialog 三样齐全),而下面的页面字阶判据又只管 views ——
+   * 于是"弹窗"这一整层成了两套判据之间的缝。
+   *
+   * 手写清单的通病不是"当时漏了谁",而是**它不会自己长**:新拆一个弹窗,
+   * 不会有人想起来往表里补一行。故改为按依赖枚举:凡在 components/ 下、
+   * 且用了 BaseModal 的文件,自动进扫描面。
+   *
+   * 刻度与页面同源(18/15/14/11/10),弹窗少一档 18(弹窗里不用匾额字);
+   * 剩下的「不成行文」的字号(Graphic 印章单字、角标、图标框)按文件登记,
+   * 每一条写明它是什么 —— 不写清理由的放行等于给下一处私档开后门。
+   */
+  it("弹窗同族刻度:16 / 15 / 14 / 11 / 10", () => {
+    const DIALOG_TIERS = [16, 15, 14, 11, 10];
+    /**
+     * 弹窗里的「不成行文」字号 —— 印章单字、角标、图标框。
+     *
+     * 判据是「这段字是不是在读一句话」:行文走刻度,图形化标识另计。
+     * 每条都必须写明度量的是什么,写不出来的就该改回刻度。
+     */
+    const DIALOG_GRAPHIC: Record<string, { sizes: number[]; why: string }> = {
+      "components/common/BottomNavigation.vue": {
+        sizes: [8],
+        why: "导航角标(未读数)的极小字,量的是圆点直径不是行文",
+      },
+      "components/adventure/CombatPanel.vue": { sizes: [9], why: "战报里数值增减的角标" },
+      "components/adventure/SecretRealmCard.vue": { sizes: [9], why: "秘境类别的角标" },
+      "components/adventure/BattleIntelPanel.vue": { sizes: [9], why: "敌情标签的角标" },
+      "components/common/QualitySeal.vue": { sizes: [9], why: "品质印章小号的单字" },
+      "components/equipment/EquipmentDetailDialog.vue": {
+        sizes: [9],
+        why: "品质印章的小号单字 —— 量的是印章直径,不是行文",
+      },
+      "components/character/RebirthDialog.vue": {
+        sizes: [18],
+        why: "道果主读数 —— 整张轮回弹窗的第一眼就是它,量的是读数不是行文",
+      },
+    };
+    const dialogs = FILES.filter(
+      (f) =>
+        f.path.startsWith("components/") && f.path.endsWith(".vue") && f.src.includes("<BaseModal"),
+    );
+    // 防空转:枚举真的找到了弹窗,不是路径写错后"零个文件零个违规"
+    expect(dialogs.length, "一个弹窗都没扫到 —— 枚举路径写错了").toBeGreaterThanOrEqual(20);
+    for (const dlg of dialogs) {
+      const extra = DIALOG_GRAPHIC[dlg.path];
+      const allow = extra ? [...DIALOG_TIERS, ...extra.sizes] : DIALOG_TIERS;
+      const off = [...new Set(usedSizes(dlg.src))].filter((n) => !allow.includes(n));
+      expect(
+        off,
+        `${dlg.path} 冒出了同族刻度以外的字号:${off.join(", ")}${
+          extra ? `(本文件已放行:${extra.why})` : ""
+        }`,
+      ).toEqual([]);
     }
   });
 

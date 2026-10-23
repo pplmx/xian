@@ -3,7 +3,7 @@
   <BaseModal :open="ui.deathDialog && !view" :closable="false" aria-label="寿元将尽">
     <div class="text-center">
       <p class="mt-2 font-kai text-2xl tracking-[0.4em] text-ink">寿元将尽</p>
-      <p class="mt-3 text-[13px] leading-relaxed text-ink-soft">
+      <p class="mt-3 text-[14px] leading-relaxed text-ink-soft">
         {{ player.name }}枯坐于蒲团之上,油尽灯枯。
         <br />
         此生行至 {{ yearsShown(player.age) }} 载,止步于{{ player.realmName }}。
@@ -19,7 +19,7 @@
   <!-- 第一程:回顾上一世 -->
   <BaseModal :open="view !== null && step === 'review'" :closable="false" title="此生已矣">
     <div v-if="view">
-      <p class="text-[12px] leading-relaxed text-ink-soft">
+      <p class="t-body text-ink-soft">
         第
         <span class="font-kai text-ink tabular">{{ view.review.index }}</span>
         世,你行至{{ view.review.realmLabel }},寿终于
@@ -30,7 +30,7 @@
       <!-- 这一世立的题 -->
       <div v-if="reviewTheme" class="mt-3 rounded-lg border border-ink/15 px-3 py-2">
         <p class="flex items-center justify-between">
-          <span class="font-kai text-[13px] text-ink">「{{ reviewTheme.vow }}」</span>
+          <span class="font-kai text-[14px] text-ink">「{{ reviewTheme.vow }}」</span>
           <span class="text-[11px]" :class="RESULT_COLORS[view.review.themeResult ?? 'unfinished']">
             {{ RESULT_NAMES[view.review.themeResult ?? "unfinished"] }}
           </span>
@@ -55,11 +55,11 @@
 
       <!-- 宿慧与阶段 -->
       <div class="mt-3 rounded-lg border border-ink/15 px-3 py-2">
-        <p class="flex items-center justify-between text-[12px]">
+        <p class="flex items-center justify-between text-[11px]">
           <span class="text-ink-soft">此生所历,化作宿慧</span>
           <span class="font-kai text-cinnabar tabular">+{{ view.review.insightGained }}</span>
         </p>
-        <p class="mt-1.5 flex items-center justify-between text-[12px]">
+        <p class="mt-1.5 flex items-center justify-between text-[11px]">
           <span class="text-ink-soft">宿慧共计</span>
           <span class="tabular text-ink">{{ view.insightAfter }}</span>
         </p>
@@ -142,7 +142,7 @@
   <!-- 第二程:择姿立题 -->
   <BaseModal :open="view !== null && step === 'next'" :closable="false" title="轮回">
     <div v-if="view">
-      <p class="text-[12px] leading-relaxed text-ink-soft">
+      <p class="t-body text-ink-soft">
         此番轮回凝得道果
         <span class="text-cinnabar tabular">{{ view.daoFruitGained }}</span>
         枚,来世修行更进一步。
@@ -156,7 +156,7 @@
       </p>
 
       <!-- 新一世的道号:每世一换,确认页可改回(玩家反馈「转世名字没重随机」) -->
-      <p class="mt-3 font-kai text-[13px] tracking-widest text-ink">新一世的道号</p>
+      <p class="mt-3 font-kai text-[14px] tracking-widest text-ink">新一世的道号</p>
       <p class="mt-1 text-[11px] text-ink-faint">道号属「这一世如何自报家门」,随皮囊一同换过。</p>
       <div class="mt-2 flex items-center gap-2">
         <input
@@ -171,7 +171,7 @@
         </button>
       </div>
 
-      <p class="mt-3 font-kai text-[13px] tracking-widest text-ink">择一先天之姿</p>
+      <p class="mt-3 font-kai text-[14px] tracking-widest text-ink">择一先天之姿</p>
       <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
         只取其一,余者本世无缘 —— 下一世才会重抽。
       </p>
@@ -216,7 +216,7 @@
         v-if="view.heritageGained && heritageDef(view.heritageGained)"
         class="mt-4 rounded-lg border border-gold-ink/30 bg-gold-ink/5 px-3 py-2"
       >
-        <p class="font-kai text-[13px] tracking-widest text-gold-ink">
+        <p class="font-kai text-[14px] tracking-widest text-gold-ink">
           道统传承 · {{ heritageDef(view.heritageGained)!.name }}
         </p>
         <p class="mt-1 t-body text-ink-soft">
@@ -229,7 +229,7 @@
 
       <!-- 这一世的命题 -->
       <template v-if="view.themeChoices.length">
-        <p class="mt-4 font-kai text-[13px] tracking-widest text-ink">
+        <p class="mt-4 font-kai text-[14px] tracking-widest text-ink">
           这一世要做什么
           <span v-if="view.themeFree" class="ml-1 text-[10px] font-normal text-gold-ink"
             >(百世老修,任你自择)</span

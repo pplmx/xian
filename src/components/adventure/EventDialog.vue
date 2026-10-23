@@ -27,7 +27,7 @@
       <!-- Phase 31.3 遗产回声:曾弃之缘,世界记得(叙事,无数值) -->
       <p
         v-if="echo"
-        class="mb-2 rounded-md border border-qing/30 bg-qing/5 px-3 py-2 text-[12px] leading-relaxed text-qing"
+        class="mb-2 rounded-md border border-qing/30 bg-qing/5 px-3 py-2 text-[11px] leading-relaxed text-qing"
       >
         {{ echo.line }}
       </p>
@@ -38,7 +38,7 @@
       >
         {{ aftermath }}
       </p>
-      <p class="text-[13px] leading-relaxed text-ink-soft">{{ def.text }}</p>
+      <p class="text-[14px] leading-relaxed text-ink-soft">{{ def.text }}</p>
       <div class="mt-4 space-y-2">
         <button
           v-for="(choice, idx) in def.choices"
@@ -73,7 +73,7 @@
     <!-- 结果阶段 -->
     <template v-else-if="result">
       <p class="mb-1.5 text-[10px] text-ink-faint">{{ tierDef.name }} · {{ tierDef.brief }}</p>
-      <p class="text-[13px] leading-relaxed text-ink-soft animate-ink-pop">
+      <p class="text-[14px] leading-relaxed text-ink-soft animate-ink-pop">
         {{ result.outcomeText }}
       </p>
       <!-- 收益清点逐行晕开(与离线归来卷轴同款 stagger-in);结果句已 animate-ink-pop,列表不让它单着 -->
@@ -81,7 +81,7 @@
         <li
           v-for="(line, i) in result.lines"
           :key="i"
-          class="rounded bg-paper-deep/70 px-3 py-1.5 text-[12px] text-ink tabular"
+          class="rounded bg-paper-deep/70 px-3 py-1.5 text-[11px] text-ink tabular"
         >
           {{ line }}
         </li>
