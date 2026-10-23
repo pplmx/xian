@@ -309,6 +309,19 @@ function scanExports(): {
     }
     return null;
   }
+  /**
+   * 一个模块「运行时被谁引」—— 静态 import **与动态 import() 都要算**。
+   *
+   * 只认 `ImportDeclaration` 会让运行时可 da 达集严重偏窄:本仓的视图全是路由懒加载
+   * (`component: () => import("@/views/HomeView.vue")`),而那些写法是 `CallExpression`,
+   * 不是 import 声明。实测:只认静态 import 时闭包里只有 14 个模块,把动态 import()
+   * 也算上则有 132 个 —— 差 9 倍。
+   *
+   * 这个差距直接掏空了本文件的一条红线:「运行时模块里的导出不能只被 spec 用到」
+   * 靠 `runtimeModules.has(...)` 判定,集合里没有的模块等于**永远不查**。
+   * 实测受害样本:`resourceGuidance.fruitSoftCapText` 只被自己的 spec 用,
+   * 而 resourceGuidance 不在那 14 个里,于是它一路绿灯躺着 —— 正是这条判据要抓的形状。
+   */
   function importsOf(file: string): string[] {
     const sf = ts.createSourceFile(
       file,
@@ -318,16 +331,29 @@ function scanExports(): {
       ts.ScriptKind.TS,
     );
     const out: string[] = [];
-    for (const stmt of sf.statements) {
+    const visit = (node: ts.Node): void => {
+      // 静态:`import x from "y"`
       if (
-        ts.isImportDeclaration(stmt) &&
-        stmt.moduleSpecifier &&
-        ts.isStringLiteral(stmt.moduleSpecifier)
+        ts.isImportDeclaration(node) &&
+        node.moduleSpecifier &&
+        ts.isStringLiteral(node.moduleSpecifier)
       ) {
-        const target = resolveImport(file, stmt.moduleSpecifier.text);
+        const target = resolveImport(file, node.moduleSpecifier.text);
         if (target) out.push(target);
       }
-    }
+      // 动态:`import("y")` —— 路由懒加载、按需加载的模拟器都走这条
+      if (
+        ts.isCallExpression(node) &&
+        node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+        node.arguments.length > 0 &&
+        ts.isStringLiteral(node.arguments[0] as ts.Node)
+      ) {
+        const target = resolveImport(file, (node.arguments[0] as ts.StringLiteral).text);
+        if (target) out.push(target);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sf);
     return out;
   }
   const runtimeModules = new Set<string>();
@@ -422,6 +448,18 @@ describe("死导出审计", () => {
     tribulationSuccessRate:
       "审计口径:按词条推演渡劫成功率(不传劫型时取五劫平均),只服务平衡审计与回归;" +
       "玩家看到的是「劫型 + 四维准备度 + 风险」,不是单一成功率数字 —— 界面上没有它的位置",
+    // 非组件环境的命令式心跳:useGameNow 是组合式壳(挂载即起、卸载即收),
+    // 而 gameNowSeconds 给"不在组件 setup 里"的调用方(测试、脚本读数)用。
+    // 两者同壳不同注册方式,不能合成一个。销账:哪天有脚本/工具真的用它读游戏钟。
+    gameNowSeconds: "命令式心跳:非组件环境起一枚 1s 表(组件内用 useGameNow),当前只被心跳用例读到",
+    // 待续清单:四门学说皆已实装,清单本就该是空的 —— 它活着的方式正是"断言为空"。
+    PLANNED_SCHOOLS: "待续清单:断言「四门皆已实装,该是空的」;它存在的意义就是空着,不是被界面读",
+    // 查表器:CLASSICS 的 id → 定义。界面走 classicsForRealm(按境界筛),
+    // 这里留给按 id 反查(用例逐条对账 / 将来典籍详情页)。
+    classicDef: "典籍查表器:id → 定义,界面当前按境界筛(classicsForRealm),反查暂无调用方",
+    // 埋点聚合:把道源/道果/三个教学标记收成一份读数,供诊断与用例核对,
+    // 界面各处直接读 store 字段,不需要这份聚合。
+    cognitionStats: "埋点聚合读数:道源/道果/教学标记收成一份供诊断与用例核对,界面直读 store",
   };
 
   it("运行时模块里的导出,不能只被 spec 用到 —— 那是骨架空转的样子", () => {

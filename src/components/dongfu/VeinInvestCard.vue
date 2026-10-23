@@ -114,6 +114,7 @@ import {
   investVeinBatch,
   veinPointCost,
   veinSwitchCost,
+  veinCap,
   switchMainVein,
 } from "@/core/veinService";
 import {
@@ -171,9 +172,15 @@ function isMain(veinId: VeinId): boolean {
   return dongfu.veinMain === veinId;
 }
 
-/** 该脉实际可投上限:主脉 70,副脉 30 */
+/**
+ * 该脉实际可投上限 —— 直接问引擎(veinCap → 库的 capOf),不在这里按主/副自己算一遍。
+ *
+ * 两者当前同值(主 70 / 副 30),但「同值」不等于「同源」:哪天上限开始依赖状态
+ * (已投点数、境界、某条脉的特殊规则),界面这份手算就会与结算分家,而玩家看到的
+ * 「x/y」正是他判断能不能再投的依据。读一处,永远是同一处。
+ */
 function cap(veinId: VeinId): number {
-  return isMain(veinId) ? VEIN_MAIN_CAPACITY : VEIN_SIDE_CAP;
+  return veinCap(veinId);
 }
 
 function currentLevel(veinId: VeinId): number {

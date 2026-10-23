@@ -39,6 +39,13 @@
           formatPercent(DAO_FRUIT_COMBAT_BONUS, 0)
         }};合计受软上限,转世保留
       </p>
+      <!--
+        软上限到底怎么递减、从多少开始 —— 上一句只说了"受软上限",玩家读完仍不知道
+        二十枚是个坎。白话出在 core/resourceGuidance 一处(与有效收益同模块),不在这里另写。
+      -->
+      <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        {{ softCapText }}
+      </p>
     </div>
     <!-- 逆旅契:道果的第一个消费出口。花道果换一世逆境,回报只有履历 -->
     <div
@@ -247,7 +254,7 @@ import { REALMS } from "@/data/realms";
 import { prepareReincarnation, MANUAL_REBIRTH_MIN_MAJOR } from "@/core/reincarnation";
 import { HERITAGE } from "@/core/samsaraAudit";
 import { DAO_FRUIT_COMBAT_BONUS, DAO_FRUIT_CULT_BONUS } from "@/data/constants";
-import { fruitMarginalInfo } from "@/core/resourceGuidance";
+import { fruitMarginalInfo, fruitSoftCapText } from "@/core/resourceGuidance";
 import { formatNum, formatPercent } from "@/utils/format";
 import { modsText } from "@/data/statNames";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -325,6 +332,8 @@ const canRebirth = computed(() => player.major >= MANUAL_REBIRTH_MIN_MAJOR);
 
 /** S3 道果链路:有效收益与软上限白话 */
 const fruitInfo = computed(() => fruitMarginalInfo());
+/** 软上限白话:同一份论断出在 core/resourceGuidance,界面不另写一套 */
+const softCapText = computed(() => fruitSoftCapText(fruitInfo.value.total));
 
 function rebirth(): void {
   if (!canRebirth.value) {
