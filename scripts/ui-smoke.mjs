@@ -140,14 +140,30 @@ async function runRoute(route) {
   let leftPage = false;
   watchPageErrors(page, (msg) => errors.push({ where: `${route} 载入`, msg }));
 
-  /** 计一步的墙钟:>1s 记入 slowSteps(用途是把静默等待晒出来,不判成败) */
+  /**
+   * 计一步的墙钟:>1s 记入 slowSteps(用途是把静默等待晒出来,不判成败)。
+   *
+   * **只记叶子步骤**(自己不再调 step 的那些)。容器步骤会把内层的全部耗时连本带利
+   * 算进自己:外层「弹窗内逐枚」包着最多 6 个弹窗按钮,每个按钮后都有一条固定的
+   * `waitForTimeout(160)`,于是外层读数恒在 1.2–1.7s —— 上一轮报告里的四条
+   * `/inventory 弹窗内逐枚(…)` 正是这么来的,读者(和我自己)第一反应是「点开收纳
+   * 真慢」,而那段里没有一行在量游戏。
+   * 这与文件头那条教训是同一个病 ——「量到的不是要量的事」。读数一旦常驻噪声,
+   * 真变慢时就没人会再看它。故用一叠帧标记:谁有子步骤,谁就不记账。
+   */
+  const stepFrames = [];
   async function step(where, fn) {
     const t = performance.now();
+    const frame = { hadChild: false };
+    // 进这一层之前,栈顶那位就多了一个子步骤 —— 它随之失去记账资格
+    if (stepFrames.length > 0) stepFrames[stepFrames.length - 1].hadChild = true;
+    stepFrames.push(frame);
     try {
       return await fn();
     } finally {
+      stepFrames.pop();
       const ms = performance.now() - t;
-      if (ms > 1000) slowSteps.push({ where, ms: Math.round(ms) });
+      if (!frame.hadChild && ms > 1000) slowSteps.push({ where, ms: Math.round(ms) });
     }
   }
 
@@ -271,11 +287,23 @@ async function runRoute(route) {
     if (await b.isDisabled().catch(() => false)) continue;
     const before = errors.length;
     const beforeFp = await fingerprint();
+    /**
+     * 已经是「按下」态的单选/开关按钮:点了当然不变 —— 这不是「没反应」。
+     *
+     * 战报速度 ×1/×2/×4、主题三档这类 `aria-pressed` 组,循环会逐个点一遍;
+     * 点到的若是**当前已选**那一档,页面一个像素都不该动,而旧判据把它记成
+     * 「点了没反应」。上一轮报告里那条 `/settings 点「×1」` 就是它 —— 噪声进报告,
+     * 真事故就没人看(与文件头「量到的不是要量的事」同一条毛病)。
+     */
+    const alreadyPressed = await b
+      .evaluate((el) => el.getAttribute("aria-pressed") === "true")
+      .catch(() => false);
     await step(`${route} 点「${text}」`, () => b.click({ timeout: 800 }).catch(() => {}));
     clicked += 1;
     await page.waitForTimeout(160);
     if (errors.length > before) errors[errors.length - 1].where = `${route} 点「${text}」`;
-    else if ((await fingerprint()) === beforeFp) silent.push(`${route} 点「${text}」`);
+    else if (!alreadyPressed && (await fingerprint()) === beforeFp)
+      silent.push(`${route} 点「${text}」`);
     await scanNumericLeaks(`${route} 点「${text}」后泄漏`);
     await step(`${route} 弹窗内逐枚(${text})`, () => clickInsideModal(route));
     // 点开弹窗后关掉,免得挡住后面的按钮
