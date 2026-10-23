@@ -62,31 +62,60 @@ describe("Phase 30.8: Boss 阶段与机制有效性审计", () => {
     expect(changes.size, "阶段变化应多样化").toBeGreaterThanOrEqual(4);
   });
 
-  it("③ 阶段变化强度: 每个阶段的机制参数变化应显著(mods 增量为原始值的 50%+)", () => {
+  it("③ 阶段变化强度: 阶段把已有词条抬高 ≥50%,或在满血段凭空多出一项新机制", () => {
+    /**
+     * 判据的两本账(审计自己先犯的错):
+     *
+     * 标题一直写着「mods 增量为原始值的 50%+」,正文查的却是**绝对增量 ≥0.1**。
+     * 两条尺子量的是不同的东西,于是同一份数据能得出相反结论 ——
+     *
+     *   万妖林主 regenPerRound 0.015 → 0.04:相对 **+167%**,绝对 +0.025(判「弱」)
+     *   万毒老祖 / 荒古妖圣 0.02 → 0.05:相对 **+150%**,绝对 +0.03(判「弱」)
+     *
+     * 而 regenPerRound 的单位是「每回合回复最大气血的比例」(见 combat.ts 的
+     * healSelf(mulN(maxHp, regen))):0.02→0.05 是每回合 2% 涨到 5%,
+     * 一场十几二十回合的消耗战里等于多出近半个血条 —— 谁看都不是"弱变化"。
+     * 绝对 0.1 这条尺子只对 base 为 0 的词条才说得通(凭空多出一项),对
+     * 本来就小的比率词条会把「翻了三倍」判成「几乎没动」。
+     *
+     * 故统一成一条:**base > 0 看相对(≥50%),base = 0 看绝对(≥0.1)**。
+     * 前者管"已有机制变强多少",后者管"多出一个新机制够不够分量"。
+     * 允许的弱变化从 3 降到 0 —— 换尺子不是为了放水,而是原来那三条本就该过。
+     */
     const weakChanges: string[] = [];
+    const REL_GROWTH = 0.5;
+    const NEW_MECHANIC_MIN = 0.1;
 
     for (const boss of ALL_BOSSES) {
       for (const p of boss.phases ?? []) {
         if (!p.modChanges) continue;
-        // 每个变化的 mod 值应至少为 0.1 的显著量
         for (const [k, v] of Object.entries(p.modChanges)) {
-          const base = boss.mods?.[k as keyof typeof boss.mods] ?? 0;
-          const delta = (v as number) - (base as number);
-          if (Math.abs(delta) < 0.1) {
-            weakChanges.push(`${boss.name}: ${k} 变化仅 ${delta.toFixed(2)}`);
+          const base = (boss.mods?.[k as keyof typeof boss.mods] as number | undefined) ?? 0;
+          const delta = (v as number) - base;
+          if (base > 0) {
+            const growth = delta / base;
+            if (growth < REL_GROWTH) {
+              weakChanges.push(
+                `${boss.name}: ${k} ${base} → ${v}(相对 +${(growth * 100).toFixed(0)}%,须 ≥${REL_GROWTH * 100}%)`,
+              );
+            }
+          } else if (Math.abs(delta) < NEW_MECHANIC_MIN) {
+            weakChanges.push(
+              `${boss.name}: ${k} 新增量 ${delta.toFixed(2)}(须 ≥${NEW_MECHANIC_MIN})`,
+            );
           }
         }
       }
     }
 
-    console.log(`\n  弱变化警告:`);
+    console.log(`\n  弱变化:`);
     if (weakChanges.length > 0) {
       for (const w of weakChanges) console.log(`    ⚠ ${w}`);
     } else {
-      console.log("    ✅ 所有阶段变化均 ≥0.1");
+      console.log(`    ✅ 已有词条一律抬 ≥${REL_GROWTH * 100}%,新机制一律 ≥${NEW_MECHANIC_MIN}`);
     }
 
-    expect(weakChanges.length, "不应有显著的弱变化").toBeLessThanOrEqual(3);
+    expect(weakChanges, "阶段变化须够分量:已有词条抬 50% 以上,或新机制 ≥0.1").toEqual([]);
   });
 
   it("④ Boss 生态一致性: archetype 应与技能/mod 机制匹配", () => {
@@ -153,31 +182,80 @@ describe("Phase 30.8: Boss 阶段与机制有效性审计", () => {
   });
 
   it("⑥ Boss 与区域生态一致: Boss 机制应是区域生态的极端表达", () => {
+    /**
+     * 生态维度只有四种(burst / multi / pierce / dodge,见 buildAdvisor 的 EcoTrait),
+     * 而 Boss 的机制远不止这四样 —— 消耗流的 regenPerRound / lifesteal、禁疗的
+     * 吸血、门槛的护盾,一个都对不上「生态」那张表。
+     *
+     * 于是这条审计量出来的四个"不一致"全是**刻度的缺口**,不是内容错:
+     *   独角妖狼 / 幽冥海皇 / 万毒老祖:所在区域的生态四维全 0(该区小怪一个都不带
+     *   这四个特性),而 Boss 自身带的是吸血 / 回复 —— 拿一张四维全空的表去判
+     *   "有没有重叠",结论必然是"无",这条对它们零信息量;
+     *   万妖林主:生态只有 dodge=2(小怪会闪),Boss 是消耗流(regen)—— 它确实
+     *   不是区域生态的极端表达,但这是**设计**:区域里的小怪会闪,Boss 换一种难法。
+     *
+     * 旧判据用 `<= 5` 兜住这四条 —— 那是"容忍错误"而不是"记录例外":
+     * 第 6 条真的冒出来时它照样绿,没人会去看那份 console。
+     * 故改成两件事:
+     *   ① 生态四维全 0 的区域**不参与判定**(空表没有"重叠"可言,判了也是假账);
+     *   ② 其余不一致必须登记在 EXEMPT 里,写明为什么 —— 没登记就红,登记了才放行。
+     *      EXEMPT 不常驻:哪天内容改得对上了,下面那条"名单不许过期"会提醒销账。
+     */
+    const EXEMPT: Record<string, string> = {
+      万妖林主: "区域生态只有 dodge(小怪会闪),Boss 走消耗流(regenPerRound 0.015→0.04)—— 小怪闪、Boss 耗,是同一种「难」的两种表达",
+    };
+
     const inconsistencies: string[] = [];
+    const skipped: string[] = [];
 
     for (const boss of ALL_BOSSES) {
       const region = REGIONS.find((r) => r.boss === boss.id);
       if (!region) continue;
 
       const eco = regionEcology(regionDef(region.id)!);
+      // ① 空生态区不参与:四维全 0 时"有没有重叠"是一句没有信息的话
+      if (Object.values(eco).every((v) => v === 0)) {
+        skipped.push(`${boss.name}(区域 ${region.id}:生态四维全 0)`);
+        continue;
+      }
       const bossTraits = enemyTraits(boss);
 
       // Boss 的 trait 应至少与区域生态的一个 trait 对应
       const hasOverlap = bossTraits.some((t) => (eco[t as keyof typeof eco] ?? 0) > 0);
-      if (!hasOverlap) {
+      if (!hasOverlap && !EXEMPT[boss.name]) {
         inconsistencies.push(
           `${boss.name}(区域 ${region.id} 生态 ${JSON.stringify(eco)})的机制 ${bossTraits.join(",") || "无"} 与生态无重叠`,
         );
       }
     }
 
+    if (skipped.length > 0) {
+      console.log(`\n  生态为空、不参与判定(${skipped.length} 处):`);
+      for (const s of skipped) console.log(`    · ${s}`);
+    }
     if (inconsistencies.length > 0) {
-      console.log(`\n  ⚠ 区域生态不一致:`);
+      console.log(`\n  ⚠ 区域生态不一致(未登记豁免):`);
       for (const i of inconsistencies) console.log(`    - ${i}`);
     } else {
-      console.log("\n  所有 Boss 机制与区域生态一致 ✅");
+      console.log(
+        `\n  所有有生态的区域,Boss 机制都与生态对得上 ✅(豁免 ${Object.keys(EXEMPT).length} 条)`,
+      );
     }
 
-    expect(inconsistencies.length, "Boss 机制应与区域生态相关").toBeLessThanOrEqual(5);
+    expect(inconsistencies, "Boss 机制应与区域生态相关;确属设计的请登记进 EXEMPT").toEqual([]);
+
+    // 名单不许过期:豁免的那位若哪天已经对上了,提醒把这条销掉(和 deadExportAudit 同款)
+    const staleExempt = Object.entries(EXEMPT).filter(([name]) => {
+      const boss = ALL_BOSSES.find((b) => b.name === name);
+      if (!boss) return true;
+      const region = REGIONS.find((r) => r.boss === boss.id);
+      if (!region) return true;
+      const eco = regionEcology(regionDef(region.id)!);
+      return enemyTraits(boss).some((t) => (eco[t as keyof typeof eco] ?? 0) > 0);
+    });
+    expect(
+      staleExempt.map(([n]) => n),
+      "这些已不再需要豁免 —— 内容改对了,把它们从 EXEMPT 里销掉",
+    ).toEqual([]);
   });
 });
