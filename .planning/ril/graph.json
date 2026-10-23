@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 441,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-23T17:22:50+00:00",
+  "updated_at": "2026-10-23T17:38:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25822,6 +25822,40 @@
       "touched_round": 441,
       "commit": "84b26d44",
       "title": "四条恒真断言改真 + tautologyGuard.spec 三例"
+    },
+    "ISS-326": {
+      "id": "ISS-326",
+      "type": "issue",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T17:38:21+00:00",
+      "updated_at": "2026-10-23T17:38:21+00:00",
+      "touched_round": 441,
+      "title": "文案与数值的单向对账:改字段不改文案不会被任何判据发现",
+      "severity": 0.45,
+      "summary": "pacts 的「道源 ×N」与 lifeTrials 的规则文案都只查「文案里的数能在字段里找到」;实测把 healMult 0.25 改 0.10,16 例全绿而文案仍写 25%"
+    },
+    "CHG-534": {
+      "id": "CHG-534",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T17:38:25+00:00",
+      "updated_at": "2026-10-23T17:38:25+00:00",
+      "touched_round": 441,
+      "commit": "aa7ecfbf",
+      "title": "契约「道源 ×N」双向对账 + 自证用例"
+    },
+    "CHG-535": {
+      "id": "CHG-535",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-23T17:38:28+00:00",
+      "updated_at": "2026-10-23T17:38:28+00:00",
+      "touched_round": 441,
+      "commit": "a0f2cd00",
+      "title": "逆旅契规则文案双向对账(正反两向 + EXPECT 换算表 + 自证)"
     }
   },
   "edges": [
@@ -37731,6 +37765,18 @@
       "to": "ISS-324",
       "type": "resolves",
       "created_at": "2026-10-23T17:22:50+00:00"
+    },
+    {
+      "from": "CHG-534",
+      "to": "ISS-326",
+      "type": "resolves",
+      "created_at": "2026-10-23T17:38:25+00:00"
+    },
+    {
+      "from": "CHG-535",
+      "to": "ISS-326",
+      "type": "resolves",
+      "created_at": "2026-10-23T17:38:28+00:00"
     }
   ]
 }
