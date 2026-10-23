@@ -17,7 +17,6 @@ import {
   APPRENTICE_TALENT_BONUS,
   BOND_TITLES,
   BOND_TRUECODE_MIN,
-  APPRENTICE_RECRUIT_TIER_AMOUNT,
   apprenticeDef,
   apprenticeSlots,
   bondTitle,
@@ -25,6 +24,7 @@ import {
   type ApprenticeSpec,
 } from "@/data/apprentices";
 import {
+  apprenticeRecruitCost,
   apprenticeSpoils,
   apprenticeTaskSeconds,
   apprenticeReapText,
@@ -32,7 +32,6 @@ import {
   type DispatchNeedStock,
   type OwnedApprentice,
 } from "@/core/apprenticeService";
-import { stoneByTier } from "@/core/formulas";
 import { pillDef } from "@/data/pills";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
@@ -92,8 +91,8 @@ function bondNext(bond: number): { name: string; remaining: number } | null {
   return null;
 }
 
-/** 收徒成本与槽位 —— 与 store.recruit 同源(stoneByTier(major,APPRENTICE_RECRUIT_TIER_AMOUNT)/apprenticeSlots) */
-const recruitCost = computed(() => stoneByTier(player.major, APPRENTICE_RECRUIT_TIER_AMOUNT));
+/** 收徒成本与槽位 —— 直接问 service 那一处实现(不再在这里算一遍同一式子) */
+const recruitCost = computed(() => apprenticeRecruitCost(player.major));
 const slotsFull = computed(() => appr.apprentices.length >= slots.value);
 const recruitShort = computed(() =>
   Math.max(0, toNum(recruitCost.value) - toNum(resources.spiritStone)),

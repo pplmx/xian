@@ -11,6 +11,7 @@ import { formatGN } from "@/utils/format";
 import { stoneByTier } from "./formulas";
 import { PILLS, pillDef } from "@/data/pills";
 import {
+  APPRENTICE_RECRUIT_TIER_AMOUNT,
   APPRENTICE_TALENT_BONUS,
   DISPATCH_ADVENTURE_FIXED_SCORE,
   DISPATCH_NEED_TARGET,
@@ -48,6 +49,18 @@ export interface TaskSpoils {
 
 export function apprenticeTaskSeconds(spec: ApprenticeSpec): number {
   return taskDef(spec).seconds;
+}
+
+/**
+ * 收一名弟子要多少灵石 —— **唯一实现**。
+ *
+ * 从前这条式子写了两遍:store 的 recruit 里算一次(扣费),弟子页又算一次
+ * (报价),两处注释都写着"与另一边同源"。那不是同源,是同一个公式的副本 ——
+ * 改了一处,玩家看到的价格就和实际扣的钱分家,而两边各自都"算对了"。
+ * 判据(singleSourceAudit)只盯着它 glob 里那几个文件,弟子页当时不在其中。
+ */
+export function apprenticeRecruitCost(major: number): GNum {
+  return stoneByTier(major, APPRENTICE_RECRUIT_TIER_AMOUNT);
 }
 
 /**

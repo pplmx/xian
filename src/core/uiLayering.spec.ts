@@ -1242,11 +1242,27 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(exped, "界主层判据读 EXPEDITION_GUARDIAN_LAYER").toContain(
       "=== EXPEDITION_GUARDIAN_LAYER",
     );
+    /*
+     * 收徒价:这条从前要求"界面与 store 都读 APPRENTICE_RECRUIT_TIER_AMOUNT"。
+     * 那是**同一个公式的两个副本**——两处各自 stoneByTier(major, 常量),
+     * 改参数或公式时报价与实际扣费会分家,而两边都"算对了"。现在收口成
+     * service 里的一处实现,界面与 store 都调它;判据随之改为:
+     * 常量只许住在 service 里,别处一律走函数。
+     */
     const av = readFileSync(resolve(__dirname, "../views/ApprenticeView.vue"), "utf-8");
-    expect(av, "收徒价签读常量,不许手写 30").toContain("APPRENTICE_RECRUIT_TIER_AMOUNT");
-    expect(readFileSync(resolve(__dirname, "../stores/apprentice.ts"), "utf-8")).toContain(
+    expect(av, "收徒价签该调 service 那一处实现,不许手写 30").toContain("apprenticeRecruitCost");
+    expect(av, "界面不该再直接引用收徒档常量 —— 它只该住在 service 那一处").not.toContain(
       "APPRENTICE_RECRUIT_TIER_AMOUNT",
     );
+    const apprStore = readFileSync(resolve(__dirname, "../stores/apprentice.ts"), "utf-8");
+    expect(apprStore, "扣费也该调同一处实现").toContain("apprenticeRecruitCost");
+    expect(apprStore, "store 不该再直接引用收徒档常量 —— 那正是报价与扣费分家的根源").not.toContain(
+      "APPRENTICE_RECRUIT_TIER_AMOUNT",
+    );
+    expect(
+      readFileSync(resolve(__dirname, "./apprenticeService.ts"), "utf-8"),
+      "常量的唯一住处:报价与扣费共用的那一处",
+    ).toContain("APPRENTICE_RECRUIT_TIER_AMOUNT");
     expect(readFileSync(resolve(__dirname, "../core/secretRealm.ts"), "utf-8")).toContain(
       "SECRET_FINAL_WUDAO",
     );

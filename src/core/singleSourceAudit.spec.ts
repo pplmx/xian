@@ -89,3 +89,57 @@ describe("同源审计 · 历练收益账", () => {
     expect(src).toMatch(/expGain:\s*add\(session\.expGain/);
   });
 });
+
+/**
+ * 同源审计 · 收徒成本 —— 报价与扣费必须是同一个函数。
+ *
+ * 这一条是本轮补的:从前 store 的 recruit 里算一次
+ * (`stoneByTier(major, APPRENTICE_RECRUIT_TIER_AMOUNT)`),弟子页又算一次,
+ * 两处注释都写着"与另一边同源"。那不是同源,是**同一个公式的副本**:
+ * 改了参数或公式,玩家看到的价格就和实际扣的灵石分家,而两边各自都"算对了"。
+ *
+ * 为什么 old 判据没抓到:SOURCES 的 glob 只列了 5 个文件,弟子页与弟子 store
+ * 都不在其中。这条判据按**行为**钉,不按文件清单钉 —— 任何地方再自算一遍都红。
+ */
+describe("同源审计 · 收徒成本", () => {
+  it("收徒成本只有一处实现:apprenticeRecruitCost", () => {
+    const svcMod = import.meta.glob("../core/apprenticeService.ts", {
+      query: "?raw",
+      import: "default",
+      eager: true,
+    }) as Record<string, string>;
+    const svc = Object.values(svcMod)[0] ?? "";
+    expect(svc, "收徒成本的唯一实现应在这里").toContain("export function apprenticeRecruitCost");
+    // 它自己是唯一允许写这条式子的地方
+    expect(svc, "唯一实现里该读那个常量").toContain("APPRENTICE_RECRUIT_TIER_AMOUNT");
+  });
+
+  it("store 与弟子页都调它,谁都不许再写 stoneByTier(major, 收徒档)", () => {
+    const mods = import.meta.glob(["../stores/apprentice.ts", "../views/ApprenticeView.vue"], {
+      query: "?raw",
+      import: "default",
+      eager: true,
+    }) as Record<string, string>;
+    const files = Object.entries(mods);
+    expect(files.length, "两份源码都要读到 —— 少一份这条判据就在空转").toBe(2);
+    for (const [path, src] of files) {
+      const name = path.split("/").pop();
+      expect(src, `${name} 该调 apprenticeRecruitCost`).toContain("apprenticeRecruitCost");
+      // 判「有没有再算一遍」,不判「有没有提到」—— 注释里解释这件事本身是好事
+      expect(src, `${name} 自己又算了一遍收徒成本 = 报价与扣费会分家的第二份真相源`).not.toMatch(
+        /stoneByTier\s*\(\s*major\s*,\s*APPRENTICE_RECRUIT_TIER_AMOUNT/,
+      );
+      expect(src, `${name} 不该再直接引用收徒档常量(它只该住在 service 那一处)`).not.toContain(
+        "APPRENTICE_RECRUIT_TIER_AMOUNT",
+      );
+    }
+  });
+
+  it("自证:把式子写回去,这条判据必须红", () => {
+    // 判据先证明它能被违反 —— 否则改成一条恒真断言也不会有声
+    const bad = "const cost = stoneByTier(major, APPRENTICE_RECRUIT_TIER_AMOUNT);";
+    expect(/stoneByTier\s*\(\s*major\s*,\s*APPRENTICE_RECRUIT_TIER_AMOUNT/.test(bad)).toBe(true);
+    const good = "const cost = apprenticeRecruitCost(major);";
+    expect(/stoneByTier\s*\(\s*major\s*,\s*APPRENTICE_RECRUIT_TIER_AMOUNT/.test(good)).toBe(false);
+  });
+});
