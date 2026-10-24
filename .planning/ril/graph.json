@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 443,
+  "round": 444,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-24T04:51:07+00:00",
+  "updated_at": "2026-10-24T05:15:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26085,6 +26085,42 @@
       "source": "commit 8ee80cf0 · bun run test 3590 例全绿 · layout-check 188 组合全绿",
       "confidence": 0.98,
       "summary": "提交后的全量门禁:check(vue-tsc/lint/rumdl/docs)通过、3590 例全绿、真浏览器 188 个页面×视口组合全绿(含扩面后的禁用态判据 0 红)"
+    },
+    "ISS-335": {
+      "id": "ISS-335",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T05:15:37+00:00",
+      "updated_at": "2026-10-24T05:15:51+00:00",
+      "touched_round": 444,
+      "severity": 0.45,
+      "title": "九处颜色类指向不存在的 token —— 编译后一个字节都不生成",
+      "summary": "Tailwind 对不存在的 token 不报错不生成:text-accent/bg-accent\\/10/!border-accent(accent 从未定义)、text-ink-success、text-ink-warn、focus:border-azure、border-ink\\/12 ×2、border-violet-ink\\/12(12 不在档位)、border-current\\/50(currentColor 不支持斜杠透明度)。词条转移的选中态与成功态静默无色"
+    },
+    "CHG-542": {
+      "id": "CHG-542",
+      "type": "change",
+      "status": "resolved",
+      "version": 1,
+      "created_at": "2026-10-24T05:15:45+00:00",
+      "updated_at": "2026-10-24T05:15:45+00:00",
+      "touched_round": 444,
+      "commit": "8429d293",
+      "title": "九处死类改真 token + 语义色类判据(按配置枚举)",
+      "summary": "accent→cinnabar、ink-success→jade、ink-warn→cinnabar、azure→qing、\\/12→\\/15、current\\/50→current;uiLayering 新增按 tailwind.config 枚举的语义色判据(含自证与防空转);dataTextAudit 那条钉死 text-accent 的断言一并修正"
+    },
+    "EV-464": {
+      "id": "EV-464",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T05:15:45+00:00",
+      "updated_at": "2026-10-24T05:15:45+00:00",
+      "touched_round": 444,
+      "source": "commit 8429d293 · bun run test 3593 例 · layout-check 188 组合 · 真浏览器取色",
+      "confidence": 0.98,
+      "summary": "修后 check+全量 3593 例+引擎 595 例+独立成库自检全绿;真浏览器实测 text-cinnabar/jade/qing 与 border-ink\\/15 均按预期取色;dist CSS 里八个死类名全部消失"
     }
   },
   "edges": [
@@ -38108,6 +38144,12 @@
       "to": "ISS-334",
       "type": "resolves",
       "created_at": "2026-10-24T04:40:42+00:00"
+    },
+    {
+      "from": "CHG-542",
+      "to": "ISS-335",
+      "type": "resolves",
+      "created_at": "2026-10-24T05:15:45+00:00"
     }
   ]
 }
