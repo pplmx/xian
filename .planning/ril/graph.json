@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 447,
+  "round": 448,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-24T10:57:47+00:00",
+  "updated_at": "2026-10-24T11:18:30+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26375,6 +26375,68 @@
       "source": "bun /tmp/probe-wearflow.mjs + /tmp/probe-slot-geom.mjs(390/320)+ vp test 3600 例 + bg_83 排版门",
       "confidence": 0.96,
       "summary": "点空槽「装配」开出「散置形意」清单(清单里有可点的装配键),装上一缕后三格变「锋/背/空」且 wearBtns=0(闲置耗尽入口自动消失,条件同源);两档三格等高 107px、无越界、无横向溢出、无 page error。故障注入:删 v-if 让入口无条件存在 —— uiLayering 那条当场红"
+    },
+    "ISS-341": {
+      "id": "ISS-341",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T11:17:21+00:00",
+      "updated_at": "2026-10-24T11:18:19+00:00",
+      "touched_round": 447,
+      "title": "ui-smoke「点了没反应」常驻两条导航类假阳 —— 160ms 采样撞上懒加载分包",
+      "summary": "/dongfu 与 /apprentice 的「← 返回」goBack 真的换了页,但路由是懒加载分包 + 页面淡入,160ms 那一次采样时新页还没画出来,指纹一字未动就被记成\"没反应\"。这张表是给人当线索用的:常驻两条\"看着像事故、其实是判据采样太早\"的行,真事故就会被当噪声忽略(与本文件 aria-pressed 已按下、叶子步骤记账同一个病)",
+      "severity": 0.35
+    },
+    "TASK-457": {
+      "id": "TASK-457",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T11:17:21+00:00",
+      "updated_at": "2026-10-24T11:18:19+00:00",
+      "touched_round": 447,
+      "category": "test-quality",
+      "title": "指纹带上路由 + 首采样未变时复检一次",
+      "summary": "location.hash 进指纹(换页本身就是反应);没变化再等 400ms 复检,仍一字不动才记 silent —— 只多一次 evaluate 且只在\"看起来没反应\"时才花;smokeReading 新增静态钉(跨行容忍形式,不让格式化器换个行就误红)",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-548": {
+      "id": "CHG-548",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T11:17:39+00:00",
+      "updated_at": "2026-10-24T11:18:19+00:00",
+      "touched_round": 447,
+      "commit": "b9a325d2",
+      "title": "指纹含路由 + 复检;smokeReading 新增一条静态钉",
+      "summary": "ui-smoke fingerprint 带 location.hash;未变化再等 400ms 复检才记 silent;smokeReading 钉两个口径(断言写成跨行容忍形式)。b9a325d2"
+    },
+    "EV-469": {
+      "id": "EV-469",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T11:17:39+00:00",
+      "updated_at": "2026-10-24T11:17:39+00:00",
+      "touched_round": 447,
+      "source": "bun scripts/ui-smoke.mjs --jobs 4(改前 /tmp 那份日志 + 改后同一门)",
+      "confidence": 0.95,
+      "summary": "改前报告:点了没反应 2 处(/dongfu、/apprentice 点「← 返回」);改后同一门:点了没反应 0 处,「中途离页」仍如实报 3 页(/dongfu、/market、/apprentice)—— 导航钮的正常后果没有被藏起来;全量 3601 例与 check 全绿"
+    },
+    "HYP-126": {
+      "id": "HYP-126",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T11:17:39+00:00",
+      "updated_at": "2026-10-24T11:17:39+00:00",
+      "touched_round": 447,
+      "confidence": 0.8,
+      "summary": "读数型判据的失效方式不是\"漏判\",而是**采样窗口比被观测量短**:懒加载分包 + 路由过渡让\"反应\"发生在判据已经下结论之后。修法是给\"看起来没反应\"那一支多一次复检(不在正常路径上加开销),并把被观测量本身(路由)放进指纹 —— 而不是调大全局等待,那会把整门时间乘上去换一条噪声"
     }
   },
   "edges": [
@@ -38500,6 +38562,30 @@
       "to": "TASK-456",
       "type": "implements",
       "created_at": "2026-10-24T10:57:47+00:00"
+    },
+    {
+      "from": "TASK-457",
+      "to": "ISS-341",
+      "type": "addresses",
+      "created_at": "2026-10-24T11:18:19+00:00"
+    },
+    {
+      "from": "CHG-548",
+      "to": "ISS-341",
+      "type": "resolves",
+      "created_at": "2026-10-24T11:18:19+00:00"
+    },
+    {
+      "from": "CHG-548",
+      "to": "TASK-457",
+      "type": "implements",
+      "created_at": "2026-10-24T11:18:19+00:00"
+    },
+    {
+      "from": "EV-469",
+      "to": "HYP-126",
+      "type": "validates",
+      "created_at": "2026-10-24T11:18:19+00:00"
     }
   ]
 }
