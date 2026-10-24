@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 446,
+  "round": 447,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-24T10:21:31+00:00",
+  "updated_at": "2026-10-24T10:57:47+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26324,6 +26324,57 @@
       "touched_round": 445,
       "confidence": 0.8,
       "summary": "无障碍的正确性问题要看**算出来的那棵树**,而不是 DOM 上声明的那几个属性:role / tabindex / aria-label 全写对,DOM 也可能把一枚按钮塞进另一枚的语义壳子里(button 带 Children Presentational),而 Chrome 的 AX 树还会把它照样露出来 —— 只有按规范推演(VoiceOver / TalkBack 会压平)才知道这是坏的。故静态源码扫描与浏览器实测是两条不同的门,少一条就有漏的一面"
+    },
+    "TASK-456": {
+      "id": "TASK-456",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T10:56:54+00:00",
+      "updated_at": "2026-10-24T10:57:47+00:00",
+      "touched_round": 446,
+      "category": "core-feature",
+      "title": "空槽给出下一步「装配」—— 真能操作时才给入口",
+      "summary": "SoulsView 空槽补 v-if idleSouls 的装配入口(读屏名「空槽 · 挑一缕装配」,点开清单由玩家挑);排版门后期档夹具改两缕只装一缕,否则该按钮在 188 页那遍一次都不存在;uiLayering 钉三条 + 故障注入",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 2
+    },
+    "ISS-340": {
+      "id": "ISS-340",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T10:56:54+00:00",
+      "updated_at": "2026-10-24T10:57:47+00:00",
+      "touched_round": 446,
+      "title": "判据量不到的分支:夹具把两缕器魂全装上,空槽入口在门里一次都不存在",
+      "summary": "门跑 188 页 × 视口全绿,但那一遍里 `装配` 按钮根本没被画出来 —— 后期档夹具 equippedSouls 装着全部 souls,idleSouls 恒空。判据从没量到过东西时,绿等于没跑(与 data-value-row / controlHostsSeen 的活信号同一族道理,只是这次漏在**夹具**里,静态计数抓不到)",
+      "severity": 0.4
+    },
+    "CHG-547": {
+      "id": "CHG-547",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T10:56:54+00:00",
+      "updated_at": "2026-10-24T10:57:47+00:00",
+      "touched_round": 446,
+      "commit": "54525be8",
+      "title": "空槽「装配」入口 + 夹具留一缕闲置 + 三条静态判据",
+      "summary": "v-if 决定存不存在(不是 disabled 灰按钮);夹具两缕只装一缕;uiLayering 钉条件/读屏名/不许退成灰按钮,删 v-if 当场红;docs 第四十四条补正面"
+    },
+    "EV-468": {
+      "id": "EV-468",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T10:57:47+00:00",
+      "updated_at": "2026-10-24T10:57:47+00:00",
+      "touched_round": 446,
+      "source": "bun /tmp/probe-wearflow.mjs + /tmp/probe-slot-geom.mjs(390/320)+ vp test 3600 例 + bg_83 排版门",
+      "confidence": 0.96,
+      "summary": "点空槽「装配」开出「散置形意」清单(清单里有可点的装配键),装上一缕后三格变「锋/背/空」且 wearBtns=0(闲置耗尽入口自动消失,条件同源);两档三格等高 107px、无越界、无横向溢出、无 page error。故障注入:删 v-if 让入口无条件存在 —— uiLayering 那条当场红"
     }
   },
   "edges": [
@@ -38431,6 +38482,24 @@
       "to": "HYP-124",
       "type": "validates",
       "created_at": "2026-10-24T10:21:31+00:00"
+    },
+    {
+      "from": "TASK-456",
+      "to": "ISS-340",
+      "type": "addresses",
+      "created_at": "2026-10-24T10:57:47+00:00"
+    },
+    {
+      "from": "CHG-547",
+      "to": "ISS-340",
+      "type": "resolves",
+      "created_at": "2026-10-24T10:57:47+00:00"
+    },
+    {
+      "from": "CHG-547",
+      "to": "TASK-456",
+      "type": "implements",
+      "created_at": "2026-10-24T10:57:47+00:00"
     }
   ]
 }
