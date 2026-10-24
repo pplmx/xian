@@ -6,10 +6,15 @@
   <!--
     命中区取 30px 而不是 28:自检量到 27.9 也会算「不到 28」(亚像素),留 2px 余量。
     负外边距把多出来的高度从行距里抵掉,视觉上仍是原来那一行字。
+
+    **宽度也要够**:一个三位缩写(「5.7」)实测只有 17.5px 宽,高度给足了照样点不准 ——
+    28px 是触控下限的两个轴,不是只有高度那一个。横向补到 28 用负外边距抵掉
+    (`-mx-1.5 px-1.5`):多出来的 12px 从行距里让出去,下划线仍只画在数字上,
+    与旁边的「/ 所需」之间的视觉间隔一分不变。
   -->
   <button
     type="button"
-    class="-my-1 inline-flex min-h-[30px] items-center tabular underline decoration-dotted decoration-ink/35 underline-offset-2 active:opacity-60"
+    class="-mx-1.5 -my-1 inline-flex min-h-[30px] min-w-[28px] items-center justify-center px-1.5 tabular underline decoration-dotted decoration-ink/35 underline-offset-2 active:opacity-60"
     @click="open"
   >
     <slot>{{ formatGN(value) }}</slot>

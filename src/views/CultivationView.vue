@@ -99,8 +99,12 @@
           <span class="text-ink-soft tabular">
             还剩 {{ formatPercent(1 - player.expProgress, 0) }} · {{ expEtaText }}
           </span>
+          <!--
+            「▸来路」实测只有 25px 宽 —— 高度给了 32 也没用,拇指按不到这么窄的一条。
+            补到 28 用横向负外边距抵掉(`-mx-1.5 px-1.5`),视觉位置一分不动。
+          -->
           <button
-            class="tap-row -my-1 py-1.5 text-left text-[10px] text-ink-faint active:opacity-60"
+            class="tap-row -mx-1.5 -my-1 min-w-[28px] justify-center px-1.5 py-1.5 text-center text-[10px] text-ink-faint active:opacity-60"
             :aria-expanded="showCultBreakdown"
             @click="showCultBreakdown = !showCultBreakdown"
           >

@@ -237,20 +237,25 @@ async function auditModalControls(page) {
     const rows = [...panel.querySelectorAll("button, a, [role=button]")]
       .map((el) => {
         const r = el.getBoundingClientRect();
-        const declared = parseFloat(getComputedStyle(el).minHeight);
+        const cs = getComputedStyle(el);
+        const num = (v) => (Number.isFinite(parseFloat(v)) ? parseFloat(v) : 0);
+        const minH = num(cs.minHeight);
+        const minW = num(cs.minWidth);
         return {
           name: (el.getAttribute("aria-label") || el.textContent || "")
             .trim()
             .replace(/\s+/g, " ")
             .slice(0, 14),
+          w: Math.round(r.width * 10) / 10,
           h: Math.round(r.height * 10) / 10,
-          declared,
           cls: (el.className || "").toString().slice(0, 70),
-          // 与巡页那条同一把尺子:声明的 min-height 到了 28 的,给半像素容差(见第四十三条)
-          ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5),
+          // 与巡页那条同一把尺子(28×28 两个轴,声明了 min-* 的给半像素容差)
+          ok:
+            (r.width >= 28 || (minW >= 28 && r.width >= 27.5)) &&
+            (r.height >= 28 || (minH >= 28 && r.height >= 27.5)),
         };
       })
-      .filter((r) => r.h > 0);
+      .filter((r) => r.w > 0 && r.h > 0);
     return {
       count: rows.length,
       // 对话框自己也得有个名字:读屏遇到 role=dialog 要念得出是哪一扇
@@ -259,10 +264,10 @@ async function auditModalControls(page) {
         panel.querySelector("h3")?.textContent ||
         ""
       ).trim(),
-      unnamed: rows.filter((r) => !r.name).map((r) => `${r.h}px`),
+      unnamed: rows.filter((r) => !r.name).map((r) => `${r.w}×${r.h}px`),
       small: rows
         .filter((r) => !r.ok)
-        .map((r) => `${r.h}px(声明 ${r.declared || "—"}px)«${r.name || "无名"}» [${r.cls}]`),
+        .map((r) => `${r.w}×${r.h}px«${r.name || "无名"}» [${r.cls}]`),
     };
   });
 }
@@ -484,23 +489,44 @@ async function measurePage(page) {
       smallTargets: [...document.querySelectorAll("button, a, [role=button]")]
         .map((el) => {
           const r = el.getBoundingClientRect();
-          const declared = parseFloat(getComputedStyle(el).minHeight);
-          return { el, r, declared: Number.isFinite(declared) ? declared : 0 };
+          const cs = getComputedStyle(el);
+          const num = (v) => {
+            const n = parseFloat(v);
+            return Number.isFinite(n) ? n : 0;
+          };
+          return {
+            el,
+            r,
+            minH: num(cs.minHeight),
+            minW: num(cs.minWidth),
+          };
         })
-        .filter(
-          ({ r, declared }) =>
-            r.width > 0 && r.height > 0 && r.height < 28 && !(declared >= 28 && r.height >= 27.5),
-        )
-        .slice(0, 3)
-        .map(
-          ({ el, r, declared }) =>
-            /*
-             * 报错要带类名 —— 只报「26.3px «《隐私政策》»」时,读者无从知道
-             * 量到的是哪一枚(同一个文案可能在弹窗与页面上各有一份)。
-             * 类名一摆出来,"量错了元素"与"真没给够高度"一眼可分。
-             */
-            `${r.height.toFixed(1)}px(声明 ${declared || "—"}px)«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}» [${(el.className || "").toString().slice(0, 60)}]`,
-        ),
+        .filter(({ r, minH, minW }) => {
+          if (r.width <= 0 || r.height <= 0) return false;
+          /*
+           * 28px 是触控下限的**两个轴**,不是一个。
+           *
+           * 这条原先只量高度:高度给足了,宽度可以窄到 7px 也算过。实测「修为 5.7」
+           * 那枚可点数只有 17.5px 宽、「▸来路」25px —— 拇指按不到这么窄的一条,
+           * 而它们的高度都在 30~32px,判据一路绿灯。横向同样按 28 判,容差与高度一致:
+           * 自己声明了 min-width ≥28 的,盒子到 27.5 以上就不判(亚像素)。
+           */
+          const tooNarrow = r.width < 28 && !(minW >= 28 && r.width >= 27.5);
+          const tooShort = r.height < 28 && !(minH >= 28 && r.height >= 27.5);
+          return tooNarrow || tooShort;
+        })
+        .slice(0, 4)
+        .map(({ el, r, minH, minW }) => {
+          /*
+           * 报错要带类名 —— 只报「26.3px «《隐私政策》»」时,读者无从知道
+           * 量到的是哪一枚(同一个文案可能在弹窗与页面上各有一份)。
+           * 类名一摆出来,"量错了元素"与"真没给够高度/宽度"一眼可分。
+           */
+          const size = `${r.width.toFixed(1)}×${r.height.toFixed(1)}px`;
+          const declared = `声明 ${minW || "—"}×${minH || "—"}px`;
+          const axis = r.width < 28 ? "宽" : "高";
+          return `${size}(${declared},${axis}不足)«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}» [${(el.className || "").toString().slice(0, 60)}]`;
+        }),
       /**
        * 禁用态的字也得读得出来 —— **全库所有 :disabled**,不再只认两个手写类名。
        *
@@ -1407,7 +1433,8 @@ function problemsOf(info) {
   }
   if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
   if (info.unnamed.length) problems.push(`无名控件:${info.unnamed.join(" | ")}`);
-  if (info.smallTargets.length) problems.push(`可点元素过小:${info.smallTargets.join(" | ")}`);
+  if (info.smallTargets.length)
+    problems.push(`可点元素过小(触控下限 28×28):${info.smallTargets.join(" | ")}`);
   if (info.dimDisabled.length)
     problems.push(`禁用态的字读不出来(合成后对比度 <3:1):${info.dimDisabled.join(" | ")}`);
   if (info.badGroups.length) problems.push(`选择组没选中态:${info.badGroups.join(" | ")}`);
@@ -6087,7 +6114,8 @@ async function taskPreGameTour() {
       );
     if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
     if (info.unnamed.length) problems.push(`无名控件:${info.unnamed.join(" | ")}`);
-    if (info.smallTargets.length) problems.push(`可点元素过小:${info.smallTargets.join(" | ")}`);
+    if (info.smallTargets.length)
+      problems.push(`可点元素过小(触控下限 28×28):${info.smallTargets.join(" | ")}`);
     return problems;
   };
 

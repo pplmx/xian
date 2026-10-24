@@ -49,7 +49,7 @@
             攻防血照常作数,它是在其上多给一条路数。
           </p>
           <button
-            class="tap-row mt-1.5 -my-1 inline-flex min-h-[28px] items-center text-[10px] text-ink-faint active:opacity-60"
+            class="tap-row mt-1.5 -mx-1.5 -my-1 inline-flex min-h-[28px] min-w-[28px] items-center justify-center px-1.5 text-[10px] text-ink-faint active:opacity-60"
             :aria-expanded="soulIntroOpen"
             @click="soulIntroOpen = !soulIntroOpen"
           >
