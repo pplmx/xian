@@ -318,7 +318,7 @@ async function readFormatted(page, title) {
 }
 
 /**
- * 一页一量:横向溢出、外壳偏移、越界元素、无名控件、过小可点元素、选择组选中态、底部导航项数。
+ * 一页一量:横向溢出、外壳偏移、越界元素、无名控件、按不动的假按钮、过小可点元素、选择组选中态、底部导航项数。
  *
  * 抽成函数是为了让**后期档**那一遍复用同一把尺子 —— 空档量不出长数字与满屏内容,
  * 而两遍若各写一份判据,迟早会分叉成两套标准。
@@ -475,6 +475,44 @@ async function measurePage(page) {
         })
         .slice(0, 3)
         .map((el) => el.outerHTML.slice(0, 80).replace(/\s+/g, " ")),
+      /**
+       * 声明了按钮语义、却按不动的控件 —— 「念出来是个按钮,按下去没反应」。
+       *
+       * 由来:器魂页的空槽位无论有没有器魂都挂着 role=button,tabindex 却给到
+       * 空槽 -1,aria-label 写着「空」。读屏于是播报一个按钮,而点它只是把
+       * soulDetail 赋成 null —— 弹窗连开都不开。声明了 affordance 却不给操作,
+       * 比不声明更坏:人会以为自己漏做了什么。
+       *
+       * 判据(逐条排除误报):
+       *   role=tab 不判 —— roving tabindex(选中 0、其余 -1)是规范要求的模式;
+       *   原生 <button disabled> / aria-disabled=true 不判 —— 那是「置灰」,
+       *     读屏会念出禁用原因,不是假按钮(置灰要列差量另有判据在别处守);
+       *   <a href> 只在 tabindex=-1 时判 —— 链接不挂 tabindex 本就可达;
+       *   [role=button] 与自绘 <button> 缺 tabindex(=null)或 -1 都判 ——
+       *     div 上的 role=button 没有 tabindex 就是键盘进不去、也进不了 Tab 序。
+       * 只管**看得见**的(零盒子不算),截图外的东西读屏也念不到。
+       */
+      deadControls: [...document.querySelectorAll("button, [role=button], a[href]")]
+        .filter((el) => {
+          if (el.getAttribute("role") === "tab") return false;
+          if (el.hasAttribute("disabled")) return false;
+          if (el.getAttribute("aria-disabled") === "true") return false;
+          const r = el.getBoundingClientRect();
+          if (r.width <= 0 || r.height <= 0) return false;
+          const ti = el.getAttribute("tabindex");
+          if (el.tagName === "A") return ti === "-1";
+          if (el.getAttribute("role") === "button") return ti === null || ti === "-1";
+          if (el.tagName === "BUTTON") return ti === "-1";
+          return false;
+        })
+        .slice(0, 3)
+        .map(
+          (el) =>
+            `${el.tagName.toLowerCase()}${el.getAttribute("role") ? `[role=${el.getAttribute("role")}]` : ""}` +
+            ` tabindex=${el.getAttribute("tabindex") ?? "—"} ` +
+            `«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}» ` +
+            `[${(el.className || "").toString().slice(0, 40)}]`,
+        ),
       /**
        * 可点元素的高度下限 28px —— 拇指点得着的最起码尺寸。
        * 实测(带装备的后期档,375/320 两档):修前有 47 个不足 24px、26 个不足 28px,
@@ -1437,6 +1475,8 @@ function problemsOf(info) {
     problems.push(`可点元素过小(触控下限 28×28):${info.smallTargets.join(" | ")}`);
   if (info.dimDisabled.length)
     problems.push(`禁用态的字读不出来(合成后对比度 <3:1):${info.dimDisabled.join(" | ")}`);
+  if (info.deadControls.length)
+    problems.push(`念出来是按钮却按不动:${info.deadControls.join(" | ")}`);
   if (info.badGroups.length) problems.push(`选择组没选中态:${info.badGroups.join(" | ")}`);
   if (info.headerTall?.length)
     problems.push(`顶栏折行(数字断行看着像乱码):${info.headerTall.join(" | ")}`);
@@ -6291,7 +6331,9 @@ if (blockedTotal() !== 0) {
   );
 }
 if (failures.length === 0) {
-  console.log("✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态");
+  console.log(
+    "✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态、没有「念出来是按钮却按不动」的假控件",
+  );
   console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
   console.log("✓ 五处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界),且铺满内容区宽度");
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");

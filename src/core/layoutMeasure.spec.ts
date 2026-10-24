@@ -33,4 +33,26 @@ describe("排版量法口径", () => {
     // 滚动轨(auto/scroll)内本来就该越出取景;overflow-hidden 是「玩家滚不动」的事故层
     expect(SCRIPT).toContain('s.overflowX === "auto" || s.overflowX === "scroll"');
   });
+
+  it("假按钮判据的豁免面要逐条写明 —— 否则页签与置灰键会被量成一片假红", () => {
+    /*
+     * layout-check 的 deadControls 扫「声明了按钮语义却按不动」的控件。它一旦误伤,
+     * 逼人做的就不是修界面而是削判据 —— 所以豁免面要钉死在源码上:
+     *   一 roving tabindex(role=tab 的未选中项 tabindex=-1 是规范做法,靠方向键漫游);
+     *   二 置灰(原生 disabled / aria-disabled=true 会念出原因,不是假按钮);
+     *   三 零盒子(看不见 = 读屏与截图都到不了)。
+     * 反过来,判据本体也不许被"顺手简化"成只看 tabindex 一种情形:自绘 role=button
+     * **根本没写 tabindex** 同样是键盘进不去(器魂页的空槽就是那样漏过去的)。
+     */
+    expect(SCRIPT).toContain('if (el.getAttribute("role") === "tab") return false;');
+    expect(SCRIPT).toContain('if (el.hasAttribute("disabled")) return false;');
+    expect(SCRIPT).toContain('if (el.getAttribute("aria-disabled") === "true") return false;');
+    expect(SCRIPT).toContain("if (r.width <= 0 || r.height <= 0) return false;");
+    // 判据本体:role=button 的「没写 tabindex」与「tabindex=-1」两种都要抓
+    expect(SCRIPT).toContain(
+      'if (el.getAttribute("role") === "button") return ti === null || ti === "-1";',
+    );
+    // 挂进两遍巡页共用的 problemsOf(不是只在某一个场景里生效)
+    expect(SCRIPT).toContain("if (info.deadControls.length)");
+  });
 });

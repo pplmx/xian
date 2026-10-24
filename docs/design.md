@@ -241,3 +241,11 @@ uv run scripts/fonts/build-kai-font.py        # 每片约 180 常用字 + 700 �
   原先只量**高度**:高度给足了,宽度可以窄到 7px 也算过 —— 实测「修为 5.7」那枚可点数
   只有 17.5px 宽、「▸来路」25px,高度都在 30~32px,判据一路绿灯。横向同样按 28 判,
   窄的那条用横向负外边距补(`-mx-1.5 px-1.5`),视觉位置一分不动。
+- **控件的声明 = 控件的行为(第四十四条)**:器魂页的空槽位从前无论有没有器魂都挂着
+  `role="button"`、`aria-label="空"`,tabindex 才给 -1 —— 读屏念出一个"空 按钮",按下去
+  只把详情对象赋成 `null`,弹窗连开都不开。声明了 affordance 却不给操作,比不声明更坏:
+  人会以为自己漏做了什么。现在按钮语义只随「真有器魂」出现(`soulAt` 一处判断,
+  role / tabindex / 读屏名 / 点击四样都从它取值),空槽只留一句可见的「空」与一道虚线框。
+  两道门同守:`layout-check.mjs` 的 `deadControls` 逐页扫**看得见**的假按钮
+  (豁免 role=tab 的 roving tabindex、置灰的 disabled / aria-disabled、零盒子),
+  `uiLayering.spec.ts` 钉住写法不回退(不许恒挂静态 role、四样必须同源)。

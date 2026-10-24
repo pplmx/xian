@@ -662,6 +662,31 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(souls?.src, "右侧信息块贴右,标题守着正中").toContain("justify-self-end");
   });
 
+  it("器魂槽位:空槽不许自称按钮 —— 按钮语义只随「真有器魂」出现", () => {
+    /*
+     * 由来:空槽位从前恒挂 role="button" 与 aria-label「空」,tabindex 才给 -1。
+     * 读屏于是念出一个"空 按钮",按下去只把 soulDetail 赋成 null,弹窗连开都不开 ——
+     * 声明了 affordance 却不给操作,比不声明更坏(人会以为自己漏做了什么)。
+     *
+     * 两条钉法:
+     *   一 不许再出现**静态** role="button" —— 必须是 :role= 绑定,空槽落 undefined;
+     *   二 「有没有器魂」这一句判断只许有一个出口(soulAt),按钮语义 / Tab 序 /
+     *      读屏名 / 点击四样都从它取值 —— 各写一份三元,漏一处就又是一个假按钮。
+     * 浏览器那一遍另有通用判据(layout-check 的 deadControls),这条守的是写法不回退。
+     */
+    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    expect(souls?.src, "槽位按钮语义必须是绑定值,不许恒挂静态 role").not.toMatch(
+      /^\s*role="button"/m,
+    );
+    expect(souls?.src, "按钮语义要由 soulAt 决定").toMatch(/:role="soulAt\(i\) \? 'button'/);
+    expect(souls?.src, "Tab 序要和按钮语义同一份判断").toMatch(
+      /:tabindex="soulAt\(i\) \? 0 : undefined"/,
+    );
+    expect(souls?.src, "空槽不许再把占位文字当控件名").not.toMatch(/:\s*["']空["']/);
+    expect(souls?.src, "读屏名要走同一份判断").toContain(':aria-label="slotAria(i)"');
+    expect(souls?.src, "点击要走同一份判断").toContain('@click="openSoulDetail(i)"');
+  });
+
   it("弟子顶栏标题锁居中 —— 右侧收徒按钮几档换长,不许随其左右游移", () => {
     // 收徒按钮文案在「收徒 · 尚差 X 石 / 收徒 NNN 石 / 已收满 N/M」之间换长,
     // justify-between 下居中的「门庭有徒」会随右缘宽窄游移 —— 与器魂同款问题,

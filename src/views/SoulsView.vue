@@ -70,44 +70,45 @@
       <section>
         <SectionTitle title="已凝形意" :hint="`${endgame.activeSouls.length} / ${SOUL_SLOTS} 缕`" />
         <div class="mt-2 grid grid-cols-3 gap-2">
+          <!--
+            空槽**不声明按钮语义**:从前无论有没有器魂都挂着 role=button 与
+            aria-label="空",读屏于是念出一个"空 按钮"—— 按下去什么都不发生
+            (点它只是把 soulDetail 赋成 null)。声明了 affordance 却不可操作,
+            比不声明更坏:人会以为自己漏做了什么。有器魂才给 role / tabindex /
+            aria-label;空槽只留一句可见的「空」与一道虚线框。
+          -->
           <div
             v-for="i in SOUL_SLOTS"
             :key="i"
-            role="button"
-            :tabindex="endgame.activeSouls[i - 1] ? 0 : -1"
+            :role="soulAt(i) ? 'button' : undefined"
+            :tabindex="soulAt(i) ? 0 : undefined"
             class="card-ink flex min-h-[92px] flex-col items-center justify-center px-2 py-2 text-center"
-            :aria-label="
-              endgame.activeSouls[i - 1] ? `${soulLabel(endgame.activeSouls[i - 1]!)} 详情` : '空'
-            "
-            :class="
-              endgame.activeSouls[i - 1]
-                ? 'cursor-pointer active:scale-95'
-                : 'border-dashed border-ink/15'
-            "
-            @click="soulDetail = endgame.activeSouls[i - 1] ?? null"
+            :aria-label="slotAria(i)"
+            :class="soulAt(i) ? 'cursor-pointer active:scale-95' : 'border-dashed border-ink/15'"
+            @click="openSoulDetail(i)"
             @keydown="onSlotKeydown(i, $event)"
           >
-            <template v-if="endgame.activeSouls[i - 1]">
+            <template v-if="soulAt(i)">
               <span
                 class="font-kai text-[22px] leading-none"
-                :style="{ color: soulColor(endgame.activeSouls[i - 1]!) }"
+                :style="{ color: soulColor(soulAt(i)!) }"
               >
-                {{ soulSeal(endgame.activeSouls[i - 1]!) }}
+                {{ soulSeal(soulAt(i)!) }}
               </span>
               <span class="mt-1 text-[10px] leading-tight text-ink-soft">{{
-                soulLabel(endgame.activeSouls[i - 1]!)
+                soulLabel(soulAt(i)!)
               }}</span>
               <!--
                 装配了就看不见"给什么" —— 就地摊一行词条短字(全量读数在详情弹窗,
                 同闲置行的 soulModText,不另造第二份文案)。
               -->
               <span class="mt-0.5 w-full truncate text-[10px] leading-tight text-ink-faint">{{
-                soulModText(endgame.activeSouls[i - 1]!)
+                soulModText(soulAt(i)!)
               }}</span>
               <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 32px 的靶面 -->
               <button
-                class="tap-row mt-1 inline-block px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
-                @click.stop="removeSoul(endgame.activeSouls[i - 1]!.uid)"
+                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
+                @click.stop="removeSoul(soulAt(i)!.uid)"
               >
                 卸下
               </button>
@@ -386,10 +387,27 @@ const soulDetail = ref<SoulInstance | null>(null);
 /**
  * 槽位整卡可点打开详情,但卡片是 div 且内嵌「卸下」按钮(不能套真 <button>);
  * 补键盘可达:Enter/空格开详情;焦点在内层按钮时(事件 target ≠ currentTarget)不重复触发。
+ *
+ * 三处都先过同一道闸:**空的槽位不可操作**。openSoulDetail 与 slotAria 也走这同一句
+ * 判断 —— 点开与读屏文案若各写一份"有没有器魂",漏一处就又是一个"念出来却按不动"。
  */
+function soulAt(i: number): SoulInstance | null {
+  return endgame.activeSouls[i - 1] ?? null;
+}
+
+function openSoulDetail(i: number): void {
+  soulDetail.value = soulAt(i);
+}
+
+/** 槽位的读屏名:空的槽位**不给名字** —— 它此时不是按钮,念它反而误导 */
+function slotAria(i: number): string | undefined {
+  const soul = soulAt(i);
+  return soul ? `${soulLabel(soul)} 详情` : undefined;
+}
+
 function onSlotKeydown(i: number, e: KeyboardEvent): void {
   if (e.target !== e.currentTarget) return;
-  if (e.key === "Enter" || e.key === " ") soulDetail.value = endgame.activeSouls[i - 1] ?? null;
+  if (e.key === "Enter" || e.key === " ") openSoulDetail(i);
 }
 /**
  * 等待二次确认的行(uid);非 null 表示该行已展开确认态。
