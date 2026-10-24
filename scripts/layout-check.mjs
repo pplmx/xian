@@ -2410,7 +2410,15 @@ async function taskLateTour() {
       endgame: {
         daoPath: "sword",
         daoSource: 1200,
-        souls: [{ uid: "late_s1", type: "fengmang", grade: 1, fromName: "旧剑" }],
+        /*
+         * 两缕只装一缕 —— 空槽那枚「装配」入口要在**有闲置形意**时才画得出来。
+         * 夹具若把两缕都装上,它在 188 页 × 视口那一遍里一次都不存在,判据量不到
+         * 就等于没量(与 data-value-row 的活信号同一道理)。
+         */
+        souls: [
+          { uid: "late_s1", type: "fengmang", grade: 1, fromName: "旧剑" },
+          { uid: "late_s2", type: "beishui", grade: 3, fromName: "残戟" },
+        ],
         equippedSouls: ["late_s1"],
         // 在途远征:归来卷轴要说「原样留着」,天界页也要画出「走到第二重」那一版
         worldRun: {

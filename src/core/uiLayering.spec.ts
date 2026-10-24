@@ -781,6 +781,25 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(souls?.src, "真按钮不必再手写键盘事件").not.toContain("onSlotKeydown");
     expect(buttonNesting(souls?.src ?? ""), "槽位卡壳与两枚动作按钮必须同级").toEqual([]);
   });
+  it("空槽的下一步「装配」只在真有闲置形意时出现 —— 不给按不动的入口", () => {
+    /*
+     * 空槽从前只写一个「空」:玩家手上有闲置形意,却要自己想起页面下方那张
+     * 「散置形意」清单才能装。现在那一格里给出「装配」,但按第四十四条同一道闸 ——
+     * **没有可装的东西时它就不是按钮**(v-if 掉整枚 <button>),而不是灰着一枚
+     * 让人以为漏了什么。点开的是那张清单由玩家挑一缕,不是替玩家装某不知名的魂。
+     */
+    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    expect(souls?.src, "空槽的装配入口要有条件").toMatch(
+      /<template v-else>[\s\S]*?v-if="idleSouls\.length > 0"[\s\S]*?@click="idleOpen = true"/,
+    );
+    expect(souls?.src, "装配入口的读屏名要说清是空槽且要挑一缕").toContain(
+      'aria-label="空槽 · 挑一缕装配"',
+    );
+    expect(souls?.src, "不许改成 disabled 的灰按钮(那正是念得出却按不动)").not.toMatch(
+      /<button[^>]{0,400}disabled[^>]{0,400}>装配/,
+    );
+  });
+
   it("全库不许有按钮套在按钮里 —— 读屏只念得出外层那一个", () => {
     /*
      * 浏览器那一遍(layout-check 的 nestedControls)量的是「此刻画出来的」形状,

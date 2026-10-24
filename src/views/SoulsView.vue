@@ -124,7 +124,23 @@
                 卸下
               </button>
             </template>
-            <span v-else class="text-[10px] text-ink-faint">空</span>
+            <template v-else>
+              <span class="text-[10px] text-ink-faint">空</span>
+              <!--
+                手上有闲置形意时,这一格就是玩家下一步该按的地方 —— 从前只写一个「空」,
+                装配的入口在页面下方的「散置形意」里,人得自己想起来去那儿找。
+                按第四十四条同一道闸:**没有可装的东西时它就不是按钮**。点开的仍是那张
+                清单(由玩家挑一缕),而不是替玩家装某不知名的魂。
+              -->
+              <button
+                v-if="idleSouls.length > 0"
+                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
+                aria-label="空槽 · 挑一缕装配"
+                @click="idleOpen = true"
+              >
+                装配
+              </button>
+            </template>
           </div>
         </div>
         <p v-if="activeModText" class="mt-2 px-1 text-[10px] leading-relaxed text-gold-ink">
