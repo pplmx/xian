@@ -244,8 +244,14 @@ uv run scripts/fonts/build-kai-font.py        # 每片约 180 常用字 + 700 �
 - **控件的声明 = 控件的行为(第四十四条)**:器魂页的空槽位从前无论有没有器魂都挂着
   `role="button"`、`aria-label="空"`,tabindex 才给 -1 —— 读屏念出一个"空 按钮",按下去
   只把详情对象赋成 `null`,弹窗连开都不开。声明了 affordance 却不给操作,比不声明更坏:
-  人会以为自己漏做了什么。现在按钮语义只随「真有器魂」出现(`soulAt` 一处判断,
-  role / tabindex / 读屏名 / 点击四样都从它取值),空槽只留一句可见的「空」与一道虚线框。
-  两道门同守:`layout-check.mjs` 的 `deadControls` 逐页扫**看得见**的假按钮
-  (豁免 role=tab 的 roving tabindex、置灰的 disabled / aria-disabled、零盒子),
-  `uiLayering.spec.ts` 钉住写法不回退(不许恒挂静态 role、四样必须同源)。
+  人会以为自己漏做了什么。现在的形状:卡壳不挂任何 role,「详情」与「卸下」是两枚同级
+  原生 `<button>`,有无器魂由 `soulAt(i)` 一处判断(两枚按钮与空槽那句「空」都从它取值)。
+  还有一笔账藏在排版里:词条行用 `w-full truncate` 收在一格之内,这要求祖先链上留着
+  **有确定宽度**的 flex 容器 —— 容器自己若是 `max-content` 就跟着内容长,`w-full`
+  退成 no-op。拆走外层 role 时顺手把这层容器删了,390 / 320 两档的三列网格就被最长的
+  那条词条撑出去 53 / 64px(排版自检当场报出,量法见第四十条那一族)。
+  三道门同守:`layout-check.mjs` 的 `deadControls` 与 `nestedControls` 逐页扫**看得见**
+  的假按钮与套娃控件(前者豁免 role=tab 的 roving tabindex、置灰的 disabled /
+  aria-disabled、零盒子;后者放过 `<label>` 里的原生关联与 role=tab 一类组合控件),
+  `uiLayering.spec.ts` 的 `buttonNesting()` 再扫一遍**源码** —— 旧形状
+  (`div[role=button]` 里嵌真 `<button>`)与「把卸下挪回详情里」都会当场红。

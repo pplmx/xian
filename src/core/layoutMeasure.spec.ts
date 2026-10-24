@@ -2,12 +2,14 @@
  * 排版自检的量法口径(layout-check 脚本不在常规 verify 链里跑,量法回归此前零信号)。
  *
  * 与 yunyin 同源:量法每失守一次,都是等某次假红/漏检才被发现 —— e17d46f(桌面档
- * 弹窗按钮被量成 26.3px)、e3caed1(灵根圆环 stagger 中段假越界)都是量法在抖,
- * 不是排版在坏。这里用静态判据把三条口径钉在源码上:
- *   1. 三把尺子(整页 / 弹窗 / 开局子集)量几何前都要注入动画禁令;
+ * 弹窗按钮被量成 26.3px)、e3caed1(灵根圆环 stagger 中段假越界)都是量法在抖,不是排版在坏。
+ * 这里用静态判据把量法口径钉在源码上:
+ *   1. 各处量尺量几何前都要注入动画禁令;
  *   2. 横向越界左右两侧都查(负边距推到左缘外的块不再漏检);
  *   3. 纯装饰层按**计算后的 pointer-events** 豁免,滚动轨(auto/scroll)内的内容算设计,
- *      overflow-hidden 不豁免。
+ *      overflow-hidden 不豁免;
+ *   4. 控件的「声明 = 行为」两条:假按钮的豁免面、控件套控件的宿主与排除项,
+ *      以及各自的活信号(量不到东西时不许静默变绿)。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
@@ -54,5 +56,25 @@ describe("排版量法口径", () => {
     );
     // 挂进两遍巡页共用的 problemsOf(不是只在某一个场景里生效)
     expect(SCRIPT).toContain("if (info.deadControls.length)");
+  });
+
+  it("控件套控件的判据:宿主按按钮语义选,内层排除 -1,且带活信号", () => {
+    /*
+     * layout-check 的 nestedControls 报的是「读屏只念得出外层那一个」。三个口径都要钉:
+     *   一 宿主只认按钮语义(button / [role=button] / a[href])—— role=tab 一类
+     *      组合控件天然带子件,把它们当宿主会一片假红;
+     *   二 内层要排除 tabindex=-1 的(roving tabindex 的未选中页签、装饰性 tabindex),
+     *      并且只算看得见的盒子;
+     *   三 这条判据不许空转:扫到过几枚宿主要累计成 controlHostsSeen,为 0 就报故障
+     *      (与 data-value-row / 200% 档 / 像素采样同一套防法)。
+     */
+    expect(SCRIPT).toContain(
+      'const hosts = [...document.querySelectorAll("button, [role=button], a[href]")]',
+    );
+    expect(SCRIPT).toContain('if (el.getAttribute("tabindex") === "-1") return false;');
+    expect(SCRIPT).toContain("if (!inner.length) continue;");
+    expect(SCRIPT).toContain("if (info.nestedControls?.items.length)");
+    expect(SCRIPT).toContain("controlHostsSeen += info.nestedControls?.hosts ?? 0;");
+    expect(SCRIPT).toContain("if (controlHostsSeen === 0)");
   });
 });

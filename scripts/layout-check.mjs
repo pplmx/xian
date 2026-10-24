@@ -208,6 +208,8 @@ const failures = [];
 let checked = 0;
 /** 量到过多少个 data-value-row —— 用来防这条判据"空转"(契约被删掉后依然全绿)。 */
 let valueRowsSeen = 0;
+/** 「按钮语义宿主」扫到过几枚 —— 控件套控件那条判据的活信号(0 = 空转) */
+let controlHostsSeen = 0;
 /** 200% 缩放档量过几页、采样像素量过几处字 —— 同样防判据空转 */
 let zoomSeen = 0;
 let pixelTextsSeen = 0;
@@ -513,6 +515,53 @@ async function measurePage(page) {
             `«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}» ` +
             `[${(el.className || "").toString().slice(0, 40)}]`,
         ),
+      /**
+       * 控件里套控件 —— 读屏听到的「一个按钮」与手上按得动的「两个按钮」对不上。
+       *
+       * 由来:器魂槽位整卡是 role=button 的 div,里面又嵌着「卸下」<button>。
+       * CDP 读出的无障碍树真把它画成 button ⊃ button。ARIA 里 button 带
+       * **Children Presentational: True**(WAI-ARIA 1.3 的角色模型;ACT 规则 307n5z
+       * 「presentational children 的元件不许有可聚焦内容」)—— 读屏本应把里面的内容
+       * 压平成一段文字,那个「卸下」在 VoiceOver / TalkBack 上就可能根本不可达,
+       * 而本作是移动端优先的放置游戏。Chrome 肯把它露出来不等于别的读屏也肯。
+       *
+       * 判据只查**同一条可聚焦链**上的两层:宿主是按钮语义(button / [role=button] /
+       * [role=link] / a[href]),里面还有可见的可聚焦件(真按钮、链接、表单件、
+       * [role=button|link|checkbox]、非 -1 的 tabindex)。role=tab / checkbox /
+       * switch 不判 —— 它们是组合控件,规范本身就允许里面挂子件(本库 InkTabs 的
+       * tablist、GongfaSection 的分类签都在这一类,一并被宿主选择器排除在外)。
+       *
+       * hosts 计数是**活信号**:扫到过几枚按钮语义宿主。0 就等于这条判据空转
+       * (与 data-value-row / 200% 档 / 像素采样同一套防法)—— 判据若从没量到过东西,
+       * 绿得毫无信息。
+       */
+      nestedControls: (() => {
+        const FOCUSABLE =
+          "button, a[href], input, select, textarea, [role=button], [role=link], [role=checkbox], [role=radio], [role=switch], [role=combobox], [tabindex]";
+        const hosts = [...document.querySelectorAll("button, [role=button], a[href]")].filter(
+          (el) => {
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height > 0;
+          },
+        );
+        const bad = [];
+        for (const host of hosts) {
+          const inner = [...host.querySelectorAll(FOCUSABLE)].filter((el) => {
+            if (el === host) return false;
+            if (el.getAttribute("tabindex") === "-1") return false;
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height > 0;
+          });
+          if (!inner.length) continue;
+          const label = (el) =>
+            `${el.tagName.toLowerCase()}${el.getAttribute("role") ? `[role=${el.getAttribute("role")}]` : ""}`;
+          bad.push(
+            `${label(host)}«${(host.getAttribute("aria-label") || host.textContent || "").trim().slice(0, 12)}」` +
+              ` 里套着 ${inner.length} 个可聚焦件(${inner.slice(0, 2).map(label).join(", ")})`,
+          );
+        }
+        return { items: bad.slice(0, 3), hosts: hosts.length };
+      })(),
       /**
        * 可点元素的高度下限 28px —— 拇指点得着的最起码尺寸。
        * 实测(带装备的后期档,375/320 两档):修前有 47 个不足 24px、26 个不足 28px,
@@ -1477,6 +1526,8 @@ function problemsOf(info) {
     problems.push(`禁用态的字读不出来(合成后对比度 <3:1):${info.dimDisabled.join(" | ")}`);
   if (info.deadControls.length)
     problems.push(`念出来是按钮却按不动:${info.deadControls.join(" | ")}`);
+  if (info.nestedControls?.items.length)
+    problems.push(`控件里套着控件(读屏只念一个按钮):${info.nestedControls.items.join(" | ")}`);
   if (info.badGroups.length) problems.push(`选择组没选中态:${info.badGroups.join(" | ")}`);
   if (info.headerTall?.length)
     problems.push(`顶栏折行(数字断行看着像乱码):${info.headerTall.join(" | ")}`);
@@ -1618,6 +1669,7 @@ async function taskPageTour(vp) {
     const info = await measurePage(page);
     checked += 1;
     valueRowsSeen += info.valueRowCount ?? 0;
+    controlHostsSeen += info.nestedControls?.hosts ?? 0;
     const problems = problemsOf(info);
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
     /*
@@ -6297,6 +6349,9 @@ for (const r of results) {
 if (valueRowsSeen === 0) {
   failures.push("data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)");
 }
+if (controlHostsSeen === 0) {
+  failures.push("一枚按钮语义宿主都没扫到 —— 控件套控件那条判据空转了(全库不再有待查形状?)");
+}
 // 这两条同理:量不到东西时不许静默变绿
 if (zoomSeen === 0) {
   failures.push("200% 缩放档一页都没量到 —— 那条判据空转了");
@@ -6332,7 +6387,7 @@ if (blockedTotal() !== 0) {
 }
 if (failures.length === 0) {
   console.log(
-    "✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态、没有「念出来是按钮却按不动」的假控件",
+    "✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态、没有「念出来是按钮却按不动」的假控件、没有套在按钮里的控件",
   );
   console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
   console.log("✓ 五处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界),且铺满内容区宽度");

@@ -56,6 +56,83 @@ const FILES = walk(SRC)
       .replace(/^\s*\/\/.*$/gm, ""),
   }));
 
+/*
+ * 「按钮套按钮」扫描器 —— 带名字的标签栈,认两种按钮语义写法。
+ *
+ * 由来见 docs/design.md 第四十四条:器魂槽位整卡曾是 role=button 的 div,里面嵌着
+ * 一枚真「卸下」<button>。CDP 读出的无障碍树真把它画成 button ⊃ button。ARIA 里
+ * button 带 **Children Presentational: True**(WAI-ARIA 1.3 角色模型;ACT 规则
+ * 307n5z 明令"presentational children 的元件不许有可聚焦内容")—— 读屏本应把里面的
+ * 内容压平成一段文字,那枚内层按钮在 VoiceOver / TalkBack 上就可能根本不可达。
+ * Chrome 肯把它露出来,不等于别的读屏也肯;而本作是移动端优先的放置游戏。
+ *
+ * 放过两类合法写法:
+ *   一 <label> / <summary> 里放原生控件 —— 那是规范的关联方式,不是控件套控件;
+ *   二 role=tab / checkbox / switch 这类**组合控件**里的子件 —— 扫描器的宿主只认
+ *     按钮语义(button 标签与 role 含 button),组合控件本身不在射程内。
+ * 闭合标签按名字回退到最近的同名开标签:Vue 模板里标签成对,不需要完整解析器。
+ */
+const VOID_TAGS: Record<string, true> = {
+  br: true,
+  img: true,
+  hr: true,
+  input: true,
+  meta: true,
+  link: true,
+  source: true,
+  area: true,
+  col: true,
+  wbr: true,
+};
+/** 里面的原生控件是"关联"而非"嵌套" */
+const TRANSPARENT_TAGS: Record<string, true> = { label: true, summary: true };
+const TAG_RE = /<(\/)?([a-zA-Z][\w-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/)?>/g;
+
+type StackCell = { tag: string; buttonish: boolean; transparent: boolean };
+
+/** 返回"这枚按钮套在哪枚按钮里"的清单;空数组 = 这一页干净 */
+function buttonNesting(src: string): string[] {
+  const bad: string[] = [];
+  const stack: StackCell[] = [];
+  const start = src.indexOf("<template");
+  if (start < 0) return bad;
+  for (const m of src.slice(start).matchAll(TAG_RE)) {
+    const closing = m[1] === "/";
+    const tag = (m[2] ?? "").toLowerCase();
+    const attrs = m[3] ?? "";
+    const selfClose = m[4] === "/";
+    if (closing) {
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i]!.tag === tag) {
+          stack.length = i;
+          break;
+        }
+      }
+      continue;
+    }
+    const roleButton = /:?role\s*=\s*"[^"]*button|:?role\s*=\s*'[^']*button/.test(attrs);
+    const buttonish = tag === "button" || roleButton;
+    if (buttonish) {
+      const host = stack.find((x) => x.buttonish);
+      if (host) {
+        const label = /aria-label=(?:"([^"]*)"|'([^']*)')/.exec(attrs);
+        bad.push(
+          `${tag}${roleButton ? "[role=button]" : ""} 套在 ${host.tag} 里` +
+            (label?.[1] || label?.[2] ? ` «${label[1] ?? label[2]}»` : ""),
+        );
+      }
+    }
+    if (selfClose || VOID_TAGS[tag]) continue;
+    if (TRANSPARENT_TAGS[tag]) {
+      stack.push({ tag, buttonish: false, transparent: true });
+      continue;
+    }
+    if (stack.some((x) => x.transparent)) continue;
+    stack.push({ tag, buttonish, transparent: false });
+  }
+  return bad;
+}
+
 const BASE_MODAL = "components/common/BaseModal.vue";
 
 describe("界面分层 · 浮层只有一个出处", () => {
@@ -662,29 +739,93 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(souls?.src, "右侧信息块贴右,标题守着正中").toContain("justify-self-end");
   });
 
-  it("器魂槽位:空槽不许自称按钮 —— 按钮语义只随「真有器魂」出现", () => {
+  it("器魂槽位:卡壳不许自称按钮,两个动作各用原生 button —— 读屏听到的与按得动的必须同源", () => {
     /*
-     * 由来:空槽位从前恒挂 role="button" 与 aria-label「空」,tabindex 才给 -1。
-     * 读屏于是念出一个"空 按钮",按下去只把 soulDetail 赋成 null,弹窗连开都不开 ——
-     * 声明了 affordance 却不给操作,比不声明更坏(人会以为自己漏做了什么)。
+     * 两笔账,同一个根:
+     *   一 空槽从前恒挂 role="button" 与 aria-label「空」,tabindex 才给 -1。读屏念出
+     *      一个"空 按钮",按下去只把 soulDetail 赋成 null,弹窗连开都不开;
+     *   二 有器魂的卡壳整张是 role=button 的 div,里面又嵌着「卸下」<button>。CDP 读出
+     *      的无障碍树真把它画成 button ⊃ button —— ARIA 里 button 带
+     *      Children Presentational,读屏本该把里面的内容压平成一段文字,那个「卸下」
+     *      在 VoiceOver / TalkBack 上就可能根本不可达(本作是移动端优先的放置游戏)。
      *
-     * 两条钉法:
-     *   一 不许再出现**静态** role="button" —— 必须是 :role= 绑定,空槽落 undefined;
-     *   二 「有没有器魂」这一句判断只许有一个出口(soulAt),按钮语义 / Tab 序 /
-     *      读屏名 / 点击四样都从它取值 —— 各写一份三元,漏一处就又是一个假按钮。
-     * 浏览器那一遍另有通用判据(layout-check 的 deadControls),这条守的是写法不回退。
+     * 现在按钮语义由真 <button> 自己带:卡壳是普通容器,「详情」与「卸下」是两枚同级
+     * 原生按钮,键盘可达也不必自己写 keydown(浏览器给 Enter / 空格)。
+     * 「这一格有没有器魂」仍只有一处出口 soulAt —— 样式与两枚按钮都从它取值,
+     * 各写一份三元,漏一处就又是一个"念出来却按不动"的东西。
+     * 浏览器那一遍另有通用判据(layout-check 的 deadControls + 本轮新增的 nesting),
+     * 这条守的是写法不回退。
      */
     const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
-    expect(souls?.src, "槽位按钮语义必须是绑定值,不许恒挂静态 role").not.toMatch(
-      /^\s*role="button"/m,
-    );
-    expect(souls?.src, "按钮语义要由 soulAt 决定").toMatch(/:role="soulAt\(i\) \? 'button'/);
-    expect(souls?.src, "Tab 序要和按钮语义同一份判断").toMatch(
-      /:tabindex="soulAt\(i\) \? 0 : undefined"/,
-    );
+    const shell = /<div\s+v-for="i in SOUL_SLOTS"[\s\S]*?>/.exec(souls?.src ?? "")?.[0];
+    expect(shell, "槽位卡壳要定位得到 —— 定位不到这条就是空转").toBeTruthy();
+    expect(
+      shell,
+      "卡壳不许声明 role(带 Children Presentational 的 role 会吞掉里面的真按钮)",
+    ).not.toMatch(/role=/);
+    expect(shell, "卡壳不许自己接管点击(点击归里面那两枚真按钮)").not.toMatch(/@click/);
+    expect(shell, "卡壳不许自己挂 Tab 序(原生按钮各在 Tab 序里)").not.toMatch(/tabindex/i);
     expect(souls?.src, "空槽不许再把占位文字当控件名").not.toMatch(/:\s*["']空["']/);
-    expect(souls?.src, "读屏名要走同一份判断").toContain(':aria-label="slotAria(i)"');
-    expect(souls?.src, "点击要走同一份判断").toContain('@click="openSoulDetail(i)"');
+    expect(souls?.src, "「有没有器魂」只许一处判断").toMatch(
+      /function soulAt\(i: number\): SoulInstance \| null/,
+    );
+    expect(souls?.src, "两枚按钮都要由 soulAt 决定存不存在").toMatch(
+      /<template v-if="soulAt\(i\)">/,
+    );
+    expect(souls?.src, "详情按钮要有自己的读屏名").toMatch(
+      /:aria-label="detailLabel\(soulAt\(i\)!\)"/,
+    );
+    expect(souls?.src, "卸下按钮的读屏名要带是哪一缕(只念「卸下」不知卸的什么)").toMatch(
+      /:aria-label="`卸下 \$\{soulLabel\(soulAt\(i\)!\)\}`"/,
+    );
+    expect(souls?.src, "真按钮不必再手写键盘事件").not.toContain("onSlotKeydown");
+    expect(buttonNesting(souls?.src ?? ""), "槽位卡壳与两枚动作按钮必须同级").toEqual([]);
+  });
+  it("全库不许有按钮套在按钮里 —— 读屏只念得出外层那一个", () => {
+    /*
+     * 浏览器那一遍(layout-check 的 nestedControls)量的是「此刻画出来的」形状,
+     * 要等到某条路由、某个弹窗、某个存档状态把那个形状摆出来才算数;这一条扫源码,
+     * 所有 components/views 一次过 —— 没渲染到的分支也在射程内。
+     * 数量不写在这里(「写常数即撒谎」),真数看一次运行。
+     */
+    const offenders = FILES.map((f) => ({ path: f.path, bad: buttonNesting(f.src) })).filter(
+      (f) => f.bad.length > 0,
+    );
+    expect(
+      offenders.map((f) => `${f.path} → ${f.bad.join(" / ")}`),
+      "这些文件把可聚焦控件嵌进了按钮语义的元件里(内层那枚在 VoiceOver / TalkBack 上可能根本不可达)",
+    ).toEqual([]);
+  });
+
+  it("扫描器自己有牙 —— 嵌套报得出,label 的关联与组合控件不报", () => {
+    /*
+     * 判据从没抓到过东西时,绿得毫无信息(与 data-value-row / deadControls 同一套防法)。
+     * 故拿内联夹具自证:真嵌套必须报,规范写法必须不报。
+     */
+    expect(
+      buttonNesting(
+        '<template><div><button aria-label="详情"><span>x</span><button>卸下</button></button></div></template>',
+      ),
+      "真 button 套真 button 必须报",
+    ).toHaveLength(1);
+    expect(
+      buttonNesting(
+        '<template><div role="button" tabindex="0"><button aria-label="卸下">卸下</button></div></template>',
+      ),
+      "role=button 的壳里嵌真按钮(器魂页的老形状)必须报",
+    ).toHaveLength(1);
+    expect(
+      buttonNesting(
+        '<template><label>名<input type="text" /></label><button>提交</button></template>',
+      ),
+      "label 里的原生控件是关联,不是嵌套",
+    ).toEqual([]);
+    expect(
+      buttonNesting(
+        '<template><div role="tablist"><button role="tab">甲</button></div></template>',
+      ),
+      "组合控件里的 tab 不在射程(宿主只认按钮语义)",
+    ).toEqual([]);
   });
 
   it("弟子顶栏标题锁居中 —— 右侧收徒按钮几档换长,不许随其左右游移", () => {

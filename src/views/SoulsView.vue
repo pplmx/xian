@@ -71,44 +71,55 @@
         <SectionTitle title="已凝形意" :hint="`${endgame.activeSouls.length} / ${SOUL_SLOTS} 缕`" />
         <div class="mt-2 grid grid-cols-3 gap-2">
           <!--
-            空槽**不声明按钮语义**:从前无论有没有器魂都挂着 role=button 与
-            aria-label="空",读屏于是念出一个"空 按钮"—— 按下去什么都不发生
-            (点它只是把 soulDetail 赋成 null)。声明了 affordance 却不可操作,
-            比不声明更坏:人会以为自己漏做了什么。有器魂才给 role / tabindex /
-            aria-label;空槽只留一句可见的「空」与一道虚线框。
+            卡壳**不再自称按钮**,里面两个动作各用原生 <button>。
+
+            从前整卡是 role=button 的 div,里面还嵌着「卸下」<button>。CDP 读出的
+            无障碍树真把它画成"button 里套着 button":「显形·锋魂 详情」里套着「卸下」。
+            ARIA 里 button 带 Children Presentational —— 屏幕阅读器本应把它里面的
+            内容压平成一段文字,连带那个「卸下」在部分读屏上根本不可达(VoiceOver /
+            TalkBack 正是这类)。而且两个可聚焦控件叠在一处,焦点顺序也说不清。
+
+            空槽另有旧伤:无论有没有器魂都挂着 role=button 与 aria-label「空」,
+            读屏念出一个"空 按钮",按下去只把 soulDetail 赋成 null,弹窗连开都不开
+            —— 声明了 affordance 却不给操作,比不声明更坏。
+
+            现在:「有没有器魂」仍只有一处出口(soulAt),按钮语义则由真 <button>
+            自己带 —— 读屏听到的"是什么"与手上按得动的,是同一个东西。
           -->
           <div
             v-for="i in SOUL_SLOTS"
             :key="i"
-            :role="soulAt(i) ? 'button' : undefined"
-            :tabindex="soulAt(i) ? 0 : undefined"
-            class="card-ink flex min-h-[92px] flex-col items-center justify-center px-2 py-2 text-center"
-            :aria-label="slotAria(i)"
-            :class="soulAt(i) ? 'cursor-pointer active:scale-95' : 'border-dashed border-ink/15'"
-            @click="openSoulDetail(i)"
-            @keydown="onSlotKeydown(i, $event)"
+            class="card-ink flex min-h-[92px] min-w-0 flex-col items-center justify-center px-2 py-2 text-center"
+            :class="soulAt(i) ? '' : 'border-dashed border-ink/15'"
           >
             <template v-if="soulAt(i)">
-              <span
-                class="font-kai text-[22px] leading-none"
-                :style="{ color: soulColor(soulAt(i)!) }"
+              <button
+                class="flex min-w-0 flex-1 self-stretch flex-col items-center justify-center px-1 text-center active:scale-95"
+                :aria-label="detailLabel(soulAt(i)!)"
+                @click="openSoulDetail(i)"
               >
-                {{ soulSeal(soulAt(i)!) }}
-              </span>
-              <span class="mt-1 text-[10px] leading-tight text-ink-soft">{{
-                soulLabel(soulAt(i)!)
-              }}</span>
-              <!--
-                装配了就看不见"给什么" —— 就地摊一行词条短字(全量读数在详情弹窗,
-                同闲置行的 soulModText,不另造第二份文案)。
-              -->
-              <span class="mt-0.5 w-full truncate text-[10px] leading-tight text-ink-faint">{{
-                soulModText(soulAt(i)!)
-              }}</span>
+                <span
+                  class="font-kai text-[22px] leading-none"
+                  :style="{ color: soulColor(soulAt(i)!) }"
+                >
+                  {{ soulSeal(soulAt(i)!) }}
+                </span>
+                <span class="mt-1 text-[10px] leading-tight text-ink-soft">{{
+                  soulLabel(soulAt(i)!)
+                }}</span>
+                <!--
+                  装配了就看不见"给什么" —— 就地摊一行词条短字(全量读数在详情弹窗,
+                  同闲置行的 soulModText,不另造第二份文案)。
+                -->
+                <span class="mt-0.5 w-full truncate text-[10px] leading-tight text-ink-faint">{{
+                  soulModText(soulAt(i)!)
+                }}</span>
+              </button>
               <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 32px 的靶面 -->
               <button
                 class="tap-row mt-1 min-w-[28px] px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
-                @click.stop="removeSoul(soulAt(i)!.uid)"
+                :aria-label="`卸下 ${soulLabel(soulAt(i)!)}`"
+                @click="removeSoul(soulAt(i)!.uid)"
               >
                 卸下
               </button>
@@ -385,11 +396,11 @@ const soulIntroOpen = ref(false);
 const soulDetail = ref<SoulInstance | null>(null);
 
 /**
- * 槽位整卡可点打开详情,但卡片是 div 且内嵌「卸下」按钮(不能套真 <button>);
- * 补键盘可达:Enter/空格开详情;焦点在内层按钮时(事件 target ≠ currentTarget)不重复触发。
+ * 「这一格有没有器魂」的唯一出口。详情按钮 / 卸下按钮 / 卡壳样式三处都从它取值 ——
+ * 各写一份"有没有器魂",漏一处就又是一个"念出来却按不动"的东西。
  *
- * 三处都先过同一道闸:**空的槽位不可操作**。openSoulDetail 与 slotAria 也走这同一句
- * 判断 —— 点开与读屏文案若各写一份"有没有器魂",漏一处就又是一个"念出来却按不动"。
+ * 键盘可达不用自己补:两个动作都是真 <button>,Enter / 空格是浏览器给的
+ * (从前整卡是 role=button 的 div,得手写 keydown 才走得动)。
  */
 function soulAt(i: number): SoulInstance | null {
   return endgame.activeSouls[i - 1] ?? null;
@@ -399,16 +410,11 @@ function openSoulDetail(i: number): void {
   soulDetail.value = soulAt(i);
 }
 
-/** 槽位的读屏名:空的槽位**不给名字** —— 它此时不是按钮,念它反而误导 */
-function slotAria(i: number): string | undefined {
-  const soul = soulAt(i);
-  return soul ? `${soulLabel(soul)} 详情` : undefined;
+/** 详情按钮的读屏名 —— 印章单字与短词条都是图形,念得出的是这一句 */
+function detailLabel(soul: SoulInstance): string {
+  return `${soulLabel(soul)} 详情`;
 }
 
-function onSlotKeydown(i: number, e: KeyboardEvent): void {
-  if (e.target !== e.currentTarget) return;
-  if (e.key === "Enter" || e.key === " ") openSoulDetail(i);
-}
 /**
  * 等待二次确认的行(uid);非 null 表示该行已展开确认态。
  * 凝炼入炉毁的是原器、散去形意毁的是器魂 —— 都属「不可逆失去整件」,
