@@ -771,10 +771,15 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
 
   it("词条转移的「✓ 选中」是强调标记 —— 不许叠 opacity 把它压弱", () => {
     const view = src("../components/equipment/AffixTransferPanel.vue");
-    // 选中确认字本应全色强调(text-accent);叠 opacity-70 语义倒置(选中反被弱化)。
-    // <span v-else class="ml-auto"> 负责 ml 对齐,「✓ 选中」由 text-accent 全色承载
-    expect(view, "✓ 选中该走 text-accent 全色,不叠 opacity").toMatch(
-      /text-accent[\s\S]{0,20}✓ 选中/,
+    // 选中确认字本应全色强调;叠 opacity-70 语义倒置(选中反被弱化)。
+    //
+    // 原先这里钉的是 `text-accent` —— 而色板上**根本没有 accent 这个 token**
+    // (见 tailwind.config.js 的 colors):那个类名编译后一个字节都不生成,
+    // 「选中」二字一直在继承色上,与「没选中」长得一样。判据钉了一个不存在的
+    // 类名,于是它守住的恰恰是坏掉的那一版。改成真 token(cinnabar,行动色)后,
+    // 这条断言才有意义;「色类必须指向存在的 token」由 uiLayering 的语义色判据守。
+    expect(view, "✓ 选中该走真 token 的全色,不叠 opacity").toMatch(
+      /text-cinnabar[\s\S]{0,20}✓ 选中/,
     );
     expect(view, "外层容器不再叠 opacity 压字").not.toContain('v-else class="ml-auto opacity-70"');
   });

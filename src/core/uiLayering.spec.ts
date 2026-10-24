@@ -2464,6 +2464,204 @@ describe("可点元素 · 焦点环不许被过渡吃掉", () => {
   });
 });
 
+describe("语义色类 —— 指向不存在的 token 就是静默无色", () => {
+  /*
+   * 这一条守的是「写了类名,产物里一个字节都没有」。
+   *
+   * Tailwind 对**不存在的 token** 不报错、不生成 —— 模板照写不误,浏览器照旧忽略。
+   * 于是 `text-accent` 落到继承色、`border-ink/12` 连边框色都不给(退回默认灰)。
+   * 这类缺陷行为测试看不见(元素在、字在、只是没颜色),人眼也容易当「设计就这样」。
+   *
+   * 实测抓到九处:词条转移的选中态(`text-accent` / `bg-accent/10` / `!border-accent`)、
+   * 转移成功的绿字(`text-ink-success`)、两条短差的警示色(`text-ink-warn`)、
+   * 备注输入框的焦点边(`focus:border-azure`)、三处分隔线(`border-ink/12` /
+   * `border-violet-ink/12`)、导航卡徽标的 `border-current/50`。
+   * 前四个指向**根本没定义**的 token(`accent` / `ink-success` / `ink-warn` / `azure`),
+   * 后几个用了不在透明度档位里的 `/12`,以及 `currentColor` 不支持斜杠透明度。
+   *
+   * 判据按**配置本身**枚举,不抄白名单:色板 token 读 `tailwind.config.js` 的 colors,
+   * 透明度档位读 theme.opacity(基础档 + 本地补的那几档)。新增 token 自动纳入,
+   * 删了 token 而模板还在用,当场红。
+   */
+  const CFG = readFileSync(resolve(__dirname, "../../tailwind.config.js"), "utf-8");
+
+  /** colors 里每个 withAlpha 的名字(含 DEFAULT 与纸/墨/朱三族的子键) */
+  function paletteTokens(): Set<string> {
+    const start = CFG.indexOf("colors: {");
+    if (start < 0) throw new Error("tailwind.config.js 里找不到 colors —— 判据要跟着改");
+    let depth = 0;
+    let end = start;
+    for (let i = start; i < CFG.length; i += 1) {
+      if (CFG[i] === "{") depth += 1;
+      else if (CFG[i] === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          end = i + 1;
+          break;
+        }
+      }
+    }
+    const body = CFG.slice(start, end);
+    const out = new Set<string>();
+    for (const m of body.matchAll(/"([a-z-]+)":\s*withAlpha/g)) out.add(m[1]!);
+    for (const m of body.matchAll(/\n\s{8}([a-z-]+):\s*withAlpha/g)) out.add(m[1]!);
+    for (const m of body.matchAll(/([a-z-]+):\s*\{([^{}]*)\}/g)) {
+      if (!m[2]!.includes("withAlpha")) continue;
+      out.add(m[1]!);
+      for (const sub of m[2]!.matchAll(/([a-z-]+):\s*withAlpha/g)) {
+        if (sub[1] !== "DEFAULT") out.add(`${m[1]!}-${sub[1]!}`);
+      }
+    }
+    return out;
+  }
+
+  /** 透明度档位:tailwind 基础步长 5 的 0..100,加上 theme.opacity 里补的那几档 */
+  function opacitySteps(): Set<number> {
+    const out = new Set<number>();
+    for (let n = 0; n <= 100; n += 5) out.add(n);
+    const block = /opacity:\s*\{([\s\S]*?)\}/.exec(CFG)?.[1] ?? "";
+    for (const m of block.matchAll(/(\d+):\s*"/g)) out.add(Number(m[1]));
+    return out;
+  }
+
+  const TOKENS = paletteTokens();
+  const STEPS = opacitySteps();
+
+  /**
+   * 一个「颜色类」的形状:`前缀-名字` 或 `前缀-名字/透明度`。
+   * 不是颜色类的一律排除 —— 尺寸(text-lg)、方向与线型(border-l-2 / border-dashed)、
+   * 关键字(bg-none / text-center)、CSS 属性(border-color)都不在此列。
+   */
+  const COLOR_UTIL =
+    /(?<![\w-])(?:bg|border|text|from|via|to|decoration|divide|outline|fill|placeholder)-([a-z][a-z0-9-]*?)(?:\/(\d+))?(?=[\s"'`]|$)/g;
+  const NON_COLOR = new Set([
+    // 方向与线型:border-t / border-l / divide-y 都是「哪一边」,不是颜色
+    "l",
+    "r",
+    "t",
+    "b",
+    "x",
+    "y",
+    "s",
+    "e",
+    "none",
+    "solid",
+    "dashed",
+    "dotted",
+    "double",
+    "hidden",
+    "full",
+    "screen",
+    "auto",
+    "center",
+    "left",
+    "right",
+    "justify",
+    "ellipsis",
+    "clip",
+    "wrap",
+    "nowrap",
+    "balance",
+    "pretty",
+    "transparent",
+    "current",
+    "inherit",
+    "white",
+    "black",
+    "origin",
+    "color",
+  ]);
+  const TEXT_SIZES = new Set(["xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl"]);
+
+  /** 扫一段源码,回报「指向不存在的 token / 不在档位的透明度」的类名 */
+  function deadColorClasses(src: string): string[] {
+    const out: string[] = [];
+    for (const m of src.matchAll(COLOR_UTIL)) {
+      const name = m[1]!;
+      const alpha = m[2];
+      // currentColor 不支持斜杠透明度 —— 这条要在「非颜色名」放行之前判,否则永远够不到
+      if (name === "current" && alpha !== undefined) {
+        out.push(m[0]);
+        continue;
+      }
+      if (NON_COLOR.has(name) || name.startsWith("gradient")) continue;
+      if (/^\d+$/.test(name)) continue;
+      // 方向 + 线宽(border-l-2)与方向 + 线型(border-t-dashed)都不是颜色
+      if (/^[lrtbxyse]-\d+$/.test(name) || /^[lrtbxyse]-[a-z]+$/.test(name) === false) {
+        if (/^[lrtbxyse]-\d+$/.test(name)) continue;
+      }
+      if (TEXT_SIZES.has(name)) continue;
+      // border-l-qing/70 这类:方向 + 颜色
+      const base = /^[lrtbxyse]-[a-z][a-z0-9-]*$/.test(name) ? name.slice(2) : name;
+      const unknownToken = !TOKENS.has(base);
+      const unknownAlpha = alpha !== undefined && !STEPS.has(Number(alpha));
+      // currentColor 不支持斜杠透明度:border-current/50 永远生成不出来
+      if (unknownToken || unknownAlpha) out.push(m[0]);
+    }
+    return out;
+  }
+
+  it("模板与样式里没有指向不存在 token 的颜色类", () => {
+    const offenders: string[] = [];
+    for (const f of FILES) {
+      for (const cls of deadColorClasses(f.src)) offenders.push(`${f.path} → ${cls}`);
+    }
+    // .ts 里的色类(composable 返回的 class 串)也扫:它们不进 FILES
+    const TS = ["composables/useBrewing.ts", "ui/itemText.ts", "ui/qualityTier.ts"];
+    for (const rel of TS) {
+      const src = readFileSync(resolve(__dirname, "..", rel), "utf-8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "");
+      for (const cls of deadColorClasses(src)) offenders.push(`${rel} → ${cls}`);
+    }
+    expect(
+      offenders,
+      `这些颜色类指向不存在的 token 或不在档位的透明度 —— 产物里一个字节都不会生成:${offenders.join(" | ")}`,
+    ).toEqual([]);
+  });
+
+  it("判据自证:九处真缺陷都认得出,合法类不误伤", () => {
+    // 真缺陷(修前形态)
+    for (const bad of [
+      "text-accent",
+      "bg-accent/10",
+      "!border-accent",
+      "text-ink-success",
+      "text-ink-warn",
+      "focus:border-azure",
+      "border-ink/12",
+      "border-violet-ink/12",
+      "border-current/50",
+    ]) {
+      const hit = deadColorClasses(bad);
+      expect(hit, `应认出 ${bad}`).toHaveLength(1);
+      expect(bad.endsWith(hit[0]!), `认出的类名应当是 ${bad} 的尾巴,实际 ${hit[0]}`).toBe(true);
+    }
+    // 合法类(修后形态与全库常见写法)
+    for (const ok of [
+      "text-jade",
+      "bg-cinnabar/6",
+      "border-ink/15",
+      "border-l-qing/70",
+      "border-dashed",
+      "text-lg",
+      "bg-paper-deep/60",
+      "text-ink-faint",
+      "border-current",
+      "bg-none",
+      "text-center",
+    ]) {
+      expect(deadColorClasses(ok), `不该误伤 ${ok}`).toEqual([]);
+    }
+  });
+
+  it("色板与档位都真读到了东西 —— 枚举失灵时这条会空转", () => {
+    expect(TOKENS.size, "色板 token 一个都没读到").toBeGreaterThanOrEqual(15);
+    expect(STEPS.has(6), "本地补的 6% 档没读到").toBe(true);
+    expect(STEPS.has(12), "12 不在档位里,判据的前提变了").toBe(false);
+  });
+});
+
 describe("样式层序 —— 角色定基线,调用处的工具类必须能盖", () => {
   /*
    * 这条守的是一次**静默失效**:角色类(card-ink / chip-ink / btn-seal / btn-ghost /

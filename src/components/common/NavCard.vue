@@ -44,7 +44,7 @@
       >
         <span
           v-if="badge"
-          class="chip-ink mr-1 border-current/50 align-middle text-[10px]"
+          class="chip-ink mr-1 border-current align-middle text-[10px]"
           :class="TONE[tone].text"
           >{{ badge }}</span
         ><slot name="sub">{{ sub }}</slot>

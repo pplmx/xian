@@ -88,6 +88,12 @@
 压深之后最容易撞上的是地品(琥珀)与天品(藤黄),故一档偏赤、一档偏橄榄。
 
 一份事实源在 `src/style.css`,界面与数据一律引用 `var(--color-*)` / utility 类名。
+**引用的类名必须指向色板上真有的 token** —— Tailwind 对不存在的 token 不报错、不生成,
+模板照写不误,浏览器照旧忽略:那个类编译后一个字节都没有,元素静默落到继承色。
+这类缺陷行为测试看不见(元素在、字在、只是没颜色),人眼也容易当「设计就这样」;
+实测清出九处,其中 `text-accent` / `text-ink-success` / `text-ink-warn` / `focus:border-azure`
+指向的是**从来没定义过**的 token。判据按 `tailwind.config.js` 的 colors 与 theme.opacity
+枚举(`uiLayering.spec.ts` 的「语义色类」),新增 token 自动纳入。
 品阶九色(`qualities`)、器魂六阶(`souls`)、五行与特殊灵根(`linggen`)、天赋档位
 (`talents`)原先各自手抄一份裸 hex,现全部改成引用变量 —— 它们从此跟着色板换肤,
 也才有夜间档可言。

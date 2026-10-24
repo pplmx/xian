@@ -90,7 +90,7 @@
             v-for="(line, i) in resolved.affixLines"
             :key="line.id"
             class="flex items-center gap-2 py-1.5 pl-2 pr-1.5"
-            :class="i > 0 ? 'border-t border-violet-ink/12' : ''"
+            :class="i > 0 ? 'border-t border-violet-ink/15' : ''"
             :style="{ borderLeft: `2px solid ${AFFIX_RARITY_META[line.rarity].color}` }"
           >
             <span

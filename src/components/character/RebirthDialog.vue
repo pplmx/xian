@@ -49,7 +49,7 @@
     </div>
     <!-- 逆旅契:道果的第一个消费出口。花道果换一世逆境,回报只有履历 -->
     <div
-      class="mt-2 flex items-center justify-between gap-2 rounded-md border border-ink/12 px-3 py-2"
+      class="mt-2 flex items-center justify-between gap-2 rounded-md border border-ink/15 px-3 py-2"
     >
       <span class="min-w-0 text-[11px] text-ink-soft">
         逆旅契

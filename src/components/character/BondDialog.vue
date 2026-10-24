@@ -46,7 +46,7 @@
 
       <!-- 共同事件:她的诉求与底线在此第一次被玩家看见并回应 -->
       <template v-if="pendingEvent && !bond.fallen && !bond.departed">
-        <div class="mt-3 rounded-md border border-ink/12 bg-paper-deep/50 px-3 py-2.5">
+        <div class="mt-3 rounded-md border border-ink/15 bg-paper-deep/50 px-3 py-2.5">
           <p class="t-card">{{ pendingEvent.title }}</p>
           <p class="text-[10px] text-ink-faint">因何而来:{{ pendingEventTriggers }}</p>
           <p class="mt-1 t-body text-ink-soft">{{ pendingEvent.text }}</p>

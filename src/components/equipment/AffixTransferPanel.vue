@@ -101,7 +101,7 @@ function doTransfer(): void {
       </button>
     </div>
 
-    <p v-if="done" class="py-3 text-center text-ink-success">词条已易地而至</p>
+    <p v-if="done" class="py-3 text-center text-jade">词条已易地而至</p>
 
     <template v-else-if="!source">
       <p class="text-ink-faint">这件装备已不在行囊,无法转移。</p>
@@ -116,7 +116,7 @@ function doTransfer(): void {
             v-for="a in source.affixes"
             :key="a.id"
             class="btn-ghost !px-2 text-[11px]"
-            :class="affixId === a.id ? '!border-accent !text-accent' : ''"
+            :class="affixId === a.id ? '!border-cinnabar !text-cinnabar' : ''"
             @click="pick(a.id)"
           >
             {{ affixDef(a.id)?.name ?? a.id }}
@@ -136,7 +136,7 @@ function doTransfer(): void {
               c.block
                 ? 'cursor-not-allowed text-ink-faint'
                 : targetUid === c.item.uid
-                  ? 'bg-accent/10 text-accent'
+                  ? 'bg-cinnabar/10 text-cinnabar'
                   : 'hoverable:hover:bg-ink/5'
             "
             :disabled="c.block !== null"
@@ -195,7 +195,7 @@ function doTransfer(): void {
             }}</span>
             <span v-else class="ml-auto">
               <template v-if="l.check.ok">
-                <span v-if="replaceId === l.replaceId" class="text-accent">✓ 选中</span>
+                <span v-if="replaceId === l.replaceId" class="text-cinnabar">✓ 选中</span>
                 <span v-else></span>
               </template>
             </span>
@@ -218,11 +218,11 @@ function doTransfer(): void {
             {{ formatGN(plan.cost.stone) }}
             <span v-if="plan.cost.sealStone">(含封存 {{ formatGN(plan.cost.sealStone) }})</span>
           </span>
-          <span v-else-if="short === 'stone'" class="text-ink-warn tabular">
+          <span v-else-if="short === 'stone'" class="text-cinnabar tabular">
             尚差 灵石
             {{ formatGN(Math.max(0, toNum(plan.cost.stone) - toNum(resources.spiritStone))) }}
           </span>
-          <span v-else-if="short === 'dust'" class="text-ink-warn tabular">
+          <span v-else-if="short === 'dust'" class="text-cinnabar tabular">
             尚差 器灵尘×{{ Math.max(0, plan.cost.dust - resources.dust) }}
           </span>
           <span v-else class="text-ink-faint">任选一处落位</span>
