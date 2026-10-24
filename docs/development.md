@@ -54,6 +54,21 @@ vp preview        # 预览构建结果
 > 想要一整套常用命令时,直接用 `vp`;只有跑仓库自定义脚本(不在 vp 命令表里的)才退到
 > `bun run`。个别脚本内部仍会 `exec vp`(如 `build` = `vue-tsc -b && vp build`),那是最小薄封装,不是双入口。
 
+**机器上的 `vp` 必须与仓库钉的那一版同版。** 仓库在 `package.json` 的 `catalog` 里把
+`vite-plus`(CLI)与 `vite`(它内嵌的 core)一起钉在同一个版本,两条**必须同版** ——
+只升一条,`vp build` 会当场拒绝:
+
+```text
+error: Failed to resolve vite command: GenericFailure, Expected
+@voidzero-dev/vite-plus-core@1.4.0, but found ...@1.3.0
+```
+
+而机器上那份 `vp`(mise / 全局安装)与 catalog 不同版时,报的是同一条错 —— 真实处境
+是「机器比仓库新」,而错误信息里的 `vp migrate` 是**升级仓库工具链**的动作,照做会把
+整条链搬走。`bun run check` 开头的 `scripts/env-check.mjs` 会把两边版本都打出来提醒;
+`src/core/gateWiring.spec.ts` 守着 catalog 自己那两条别写歪。修法二选一:用仓库自己那份
+(`./node_modules/.bin/vp …`,与 CI 完全一致),或把机器上的 vp 降到 catalog 那一版。
+
 ## 命令一览
 
 | 命令 | 作用 |

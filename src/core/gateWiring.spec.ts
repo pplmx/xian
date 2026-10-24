@@ -41,11 +41,13 @@ const ACTIONS = join(ROOT, ".github/actions");
 const PRE_COMMIT = join(ROOT, ".vite-hooks/pre-commit");
 
 /** package.json 的 scripts(名字 → 命令正文) */
-const SCRIPTS = (
-  JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
-    scripts: Record<string, string>;
-  }
-).scripts;
+const PKG = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
+  scripts: Record<string, string>;
+  catalog?: Record<string, string>;
+};
+
+/** package.json 的 scripts(名字 → 命令正文) */
+const SCRIPTS = PKG.scripts;
 
 /**
  * CI 里直接跑自检脚本的写法。**四种都得认**,只认一种就等于没有判据:
@@ -285,6 +287,32 @@ describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () =
       `这些脚本/任务被点名,但 package.json 与 vite.config 里都没有:${ghosts.join("、")}` +
         " —— 那一步从来不会真的跑",
     ).toEqual([]);
+  });
+
+  it("工具链的 catalog 两条同版 —— CLI 与它内嵌的 core 差一个次版本就 GenericFailure", () => {
+    /*
+     * 这一条守的是一次**跨机器的版本错位**,报错长这样:
+     *
+     *   error: Failed to resolve vite command: GenericFailure, Expected
+     *   @voidzero-dev/vite-plus-core@1.4.0, but found ...@1.3.0
+     *
+     * 仓库的 catalog 里 `vite-plus`(CLI)与 `vite`(它内嵌的 core)是两条独立的键 ——
+     * 只升一条,`vp build` 就当场拒绝,而错误信息指向的「vp migrate」是升级仓库的动作,
+     * 与真实处境无关。判据只比主次版本:补丁版不改变两者之间的契约。
+     *
+     * 机器上那份 vp 的版本由 `scripts/env-check.mjs` 在每次 `bun run check` 里报一句
+     * 提醒(不挡门 —— 那台机器的事不该锁住仓库),这里守的是**仓库自己别写歪**。
+     */
+    const catalog = PKG.catalog ?? {};
+    const cli = catalog["vite-plus"] ?? "";
+    const core = (catalog.vite ?? "").replace(/^npm:@@?voidzero-dev\/vite-plus-core@/, "");
+    expect(cli, "catalog 缺 vite-plus(CLI 版本)").not.toBe("");
+    expect(core, "catalog 缺 vite(内嵌 core 的版本)").not.toBe("");
+    const majorMinor = (v: string): string => v.split(".").slice(0, 2).join(".");
+    expect(
+      majorMinor(cli),
+      `catalog 里 vite-plus ${cli} 与 vite ${core} 不同版 —— CLI 会按自己的版本去要同版的 core`,
+    ).toBe(majorMinor(core));
   });
 
   it("六个浏览器门不回流到 verify / pre-commit —— 只走 check:ui 与 CI", () => {
