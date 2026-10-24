@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 444,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-24T05:15:51+00:00",
+  "updated_at": "2026-10-24T06:43:42+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -25883,11 +25883,11 @@
     "ISS-328": {
       "id": "ISS-328",
       "type": "issue",
-      "status": "active",
-      "version": 2,
+      "status": "resolved",
+      "version": 3,
       "created_at": "2026-10-23T17:57:22+00:00",
-      "updated_at": "2026-10-23T18:12:11+00:00",
-      "touched_round": 441,
+      "updated_at": "2026-10-24T05:33:15+00:00",
+      "touched_round": 444,
       "title": "vp build 内建命令与仓库固定的 vite-plus 版本冲突,verify 链那一步跑不通",
       "severity": 0.3,
       "summary": "全局 vp 1.4.0 与本地 vite-plus 1.3.0 冲突:直接调 vp build 报 GenericFailure,但 bun run build(内部同一个 vp)能跑通 —— 差异来自本地 node_modules/.bin 优先解析。实测 vp run verify 与 bun run build 全绿,只有裸调 vp build 失败"
@@ -26121,6 +26121,70 @@
       "source": "commit 8429d293 · bun run test 3593 例 · layout-check 188 组合 · 真浏览器取色",
       "confidence": 0.98,
       "summary": "修后 check+全量 3593 例+引擎 595 例+独立成库自检全绿;真浏览器实测 text-cinnabar/jade/qing 与 border-ink\\/15 均按预期取色;dist CSS 里八个死类名全部消失"
+    },
+    "CHG-543": {
+      "id": "CHG-543",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T05:30:48+00:00",
+      "updated_at": "2026-10-24T05:33:14+00:00",
+      "touched_round": 444,
+      "commit": "39c41b0d",
+      "title": "env-check 核对机器 vp 与 catalog 版本 + catalog 同版硬判据",
+      "summary": "ISS-328 的两副面孔:机器 CLI 比仓库新时误指 vp migrate(告警);catalog 里 vite-plus 与 vite 不同版(硬失败,gateWiring 守)"
+    },
+    "EV-465": {
+      "id": "EV-465",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T05:33:15+00:00",
+      "updated_at": "2026-10-24T05:33:15+00:00",
+      "touched_round": 444,
+      "source": "commit 39c41b0d · vp run verify 6/6 · 全量 3594 例",
+      "confidence": 0.97,
+      "summary": "env-check 报出机器 vp 1.4.0 与 catalog 1.3.0 不同版并给出两条出路(告警不挡门);catalog 内部不同版硬失败(故障注入改成 1.2.0 当场红);vp run verify 6/6 全绿"
+    },
+    "ISS-336": {
+      "id": "ISS-336",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T06:43:00+00:00",
+      "updated_at": "2026-10-24T06:43:42+00:00",
+      "touched_round": 444,
+      "severity": 0.35,
+      "title": "触控下限判据只量高度,不量宽度 —— 17.5px 宽的可点数一路绿灯",
+      "summary": "28px 是触控下限的两个轴。原先判据只查高度：修为数 5.7（17.5px）与▸来路（25px）都通过了——它们的高度在 30~32px，判据只报『可点元素不小于 28px』就绿了；但拇指横向按不到这么窄的一条。"
+    },
+    "TASK-453": {
+      "id": "TASK-453",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T06:43:00+00:00",
+      "updated_at": "2026-10-24T06:43:00+00:00",
+      "touched_round": 444,
+      "category": "detectability",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2,
+      "priority_score": 3.8,
+      "title": "判据扩到两轴 + TapNumber/来路修宽",
+      "summary": "layout-check smallTargets 扩到宽高两轴(同容差);TapNumber 用-x/-px 补宽;修炼页来路与器魂页章法同样处理"
+    },
+    "CHG-544": {
+      "id": "CHG-544",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T06:43:00+00:00",
+      "updated_at": "2026-10-24T06:43:42+00:00",
+      "touched_round": 444,
+      "commit": "380e372c",
+      "title": "触控下限扩到 28×28 +判据自证 +docs/设计 doc",
+      "summary": "修复三处窄目标(修为数、来路、章法);判据扩到 width+height 同判;docs/design.md 第四十三条更新为『两个轴』"
     }
   },
   "edges": [
@@ -38150,6 +38214,18 @@
       "to": "ISS-335",
       "type": "resolves",
       "created_at": "2026-10-24T05:15:45+00:00"
+    },
+    {
+      "from": "CHG-543",
+      "to": "ISS-328",
+      "type": "resolves",
+      "created_at": "2026-10-24T05:30:48+00:00"
+    },
+    {
+      "from": "TASK-453",
+      "to": "ISS-336",
+      "type": "addresses",
+      "created_at": "2026-10-24T06:43:42+00:00"
     }
   ]
 }
