@@ -19,8 +19,10 @@
             {{ build.style.seal }}
           </span>
           <div class="min-w-0 grow">
-            <p class="flex items-baseline gap-2">
-              <span class="font-kai text-[16px] tracking-widest text-ink">{{
+            <!-- 极窄档(≤220 CSS px):流派名 + 阶段 + 契合度一行塞不下,流派名被压到
+                 22px 宽一字一行 —— 允许换行,名字 itself 锁一行。320 / 390 两档不动。 -->
+            <p class="flex flex-wrap items-baseline gap-2">
+              <span class="font-kai whitespace-nowrap text-[16px] tracking-widest text-ink">{{
                 build.displayName
               }}</span>
               <span class="text-[11px] text-cinnabar">{{ build.stageName }}</span>

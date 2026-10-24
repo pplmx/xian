@@ -272,7 +272,9 @@
     <!-- 丹药速服 -->
     <section v-if="quickPills.length">
       <SectionTitle title="以药辅道" />
-      <div class="mt-2 grid grid-cols-2 gap-2">
+      <!-- 极窄档(≤220 CSS px):两列时每张卡只有 78px,「存 5 · 修为 +」被压成 11px
+           宽、9 行 —— 放开成单列,中间那块回到整行宽。320 / 390 两档不动。 -->
+      <div class="mt-2 grid grid-cols-2 gap-2 tinylens:grid-cols-1">
         <button
           v-for="p in quickPills"
           :key="p.def!.id"
