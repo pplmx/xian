@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 449,
+  "round": 450,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-24T12:23:36+00:00",
+  "updated_at": "2026-10-24T16:54:04+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26441,11 +26441,11 @@
     "ISS-342": {
       "id": "ISS-342",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-24T12:09:43+00:00",
-      "updated_at": "2026-10-24T12:09:43+00:00",
-      "touched_round": 448,
+      "updated_at": "2026-10-24T16:53:53+00:00",
+      "touched_round": 449,
       "title": "缩放档(195 CSS px)只判四条,竖排与按钮折行没接上 —— 实测 14 页有挤压读数",
       "severity": 0.6,
       "summary": "docs 第四十一条原写「判据与巡页共用同一把尺子」,实际 zoomProblems 只挑横向溢出 / 外壳被滚偏 / 越界元素 / 主值行折行四条;verticalTexts 与 wrappedButtonLabels 在这一档没接。独立量了一遍(同一口径,不改门):200%→195 下 14 页报出挤压 —— /character 属性名 11px 一字一行 + 三枚数值按钮折行、/market「← 返回」11px 竖排 +「一键领取(2)」39px 折行、/settings「夜间模式」「战报速度」竖排、/adventure「入 境 →」21px 竖排、/cultivation「修为未至圆满」129px 折行、/codex 四枚页签 26px 折行、/apprentice 顶栏标题与副题、/dongfu 时长档 28px、/build「背水流」、/legacy「第 3 世」、/celestial「纪元变迁史 →」、/ 首页两处。一把把两条判据接进缩放档 = 十几处同时红,必须分页做。本轮先修 /souls(三列放开两列)"
@@ -26453,11 +26453,11 @@
     "TASK-458": {
       "id": "TASK-458",
       "type": "task",
-      "status": "active",
-      "version": 2,
+      "status": "resolved",
+      "version": 3,
       "created_at": "2026-10-24T12:09:44+00:00",
-      "updated_at": "2026-10-24T12:21:25+00:00",
-      "touched_round": 448,
+      "updated_at": "2026-10-24T16:53:53+00:00",
+      "touched_round": 449,
       "category": "correctness",
       "title": "缩放档挤压:分页修完 14 页,再把 verticalTexts / wrappedButtonLabels 接进 zoomProblems",
       "summary": "顺序:一页一修一测(195 档量名字与动作键的行数、docScroll)。全清之后才把两条判据加进 zoomProblems —— 门与读数同源,否则加早了门就长红,逼人削判据",
@@ -26511,6 +26511,66 @@
       "touched_round": 448,
       "confidence": 0.85,
       "summary": "缩放档不是宽度档:195 CSS px(390 真机 ×200%)与 320 小屏是两回事,同一处布局在 320 绿、在 195 坏。竖排/折行这一族只在缩放档现形,而门在这一档只挑了四条判据 —— 补它必须逐页修完再收口,否则一加就十几处同时红,逼人削判据"
+    },
+    "CHG-550": {
+      "id": "CHG-550",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T16:51:42+00:00",
+      "updated_at": "2026-10-24T16:53:58+00:00",
+      "touched_round": 449,
+      "commit": "226fcf7f",
+      "title": "页签条极窄档去字距并锁一行",
+      "summary": "InkTabs 六枚 2 字页签在 195 档每枚 26px,字距 0.2em 顶折;tinylens:tracking-normal + tinylens:whitespace-nowrap(只去字距仍折,实测);字号不动"
+    },
+    "CHG-551": {
+      "id": "CHG-551",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T16:51:42+00:00",
+      "updated_at": "2026-10-24T16:53:58+00:00",
+      "touched_round": 449,
+      "commit": "5fb5208c",
+      "title": "首页 / 历练 / 轮回录 / 设置 / 秘境极窄档放开",
+      "summary": "首页题头与明日天时(keep-all)、历练地区卡纵叠+图标/出发键收小、轮回录行换行、设置两组行换行+导出导入单列、秘境卡换行"
+    },
+    "CHG-552": {
+      "id": "CHG-552",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T16:51:42+00:00",
+      "updated_at": "2026-10-24T16:53:58+00:00",
+      "touched_round": 449,
+      "commit": "0f50dc69",
+      "title": "构筑页与修炼页极窄档放开",
+      "summary": "构筑流派卡首行换行+名字 nowrap;以药辅道两列→单列。195 档竖排全库清零"
+    },
+    "EV-471": {
+      "id": "EV-471",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T16:51:48+00:00",
+      "updated_at": "2026-10-24T16:51:48+00:00",
+      "touched_round": 449,
+      "source": "bun /tmp/zoom2.mjs(195/390/320 同口径扫全库)+ /tmp/probe-{tabs4,headers2,shelf,settings,cult2,cult3,dongfu2,adv2,bc}.mjs + 排版门 188 页",
+      "confidence": 0.96,
+      "summary": "195 档挤压页 14 → 0:竖排全库清零,只剩 4 处整宽长文案按钮的合理折行(/cultivation 修为未至圆满、/settings 散尽修为…、/celestial 纪元变迁史 →、/apprentice 各尽其长 · 派去「…)。320 / 390 两档读数一分未动。典型读数:器魂槽格 49→78px、人物道躯 38→68px、属性名 11px/4行→44px/1行、坊市顶栏 221→113px、门庭顶栏 266→120px、货架行 140→86px、洞府档位 2行→1行(改三列不降字号)、页签六枚 2行→1行、修炼丹药卡 11px/9行→83px/4行"
+    },
+    "CHG-553": {
+      "id": "CHG-553",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T16:53:52+00:00",
+      "updated_at": "2026-10-24T16:53:58+00:00",
+      "touched_round": 449,
+      "commit": "a3addea1",
+      "title": "zoomProblems 接上竖排与短标签折行(收口)",
+      "summary": "缩放档判据从四条扩到六条;短标签按码点数字数(≤6);收口时抓到弹窗/详情里两处(功法详情 flex-1 两枚 31px、参悟键 inline-flex 挤成 31px 宽)+ 名号行 35px;layoutMeasure 钉住两条新判据与 Array.from 计数"
     }
   },
   "edges": [
@@ -38684,6 +38744,36 @@
       "to": "HYP-127",
       "type": "validates",
       "created_at": "2026-10-24T12:22:37+00:00"
+    },
+    {
+      "from": "CHG-550",
+      "to": "TASK-458",
+      "type": "implements",
+      "created_at": "2026-10-24T16:51:48+00:00"
+    },
+    {
+      "from": "CHG-551",
+      "to": "TASK-458",
+      "type": "implements",
+      "created_at": "2026-10-24T16:51:49+00:00"
+    },
+    {
+      "from": "CHG-552",
+      "to": "TASK-458",
+      "type": "implements",
+      "created_at": "2026-10-24T16:51:49+00:00"
+    },
+    {
+      "from": "CHG-553",
+      "to": "TASK-458",
+      "type": "implements",
+      "created_at": "2026-10-24T16:53:52+00:00"
+    },
+    {
+      "from": "CHG-553",
+      "to": "ISS-342",
+      "type": "resolves",
+      "created_at": "2026-10-24T16:53:53+00:00"
     }
   ]
 }
