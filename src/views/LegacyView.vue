@@ -68,8 +68,10 @@
       <!-- 轮回录(Phase 32.5):第 N 世与第 1 世的实质区别 -->
       <SectionTitle title="轮回录" :hint="`宿慧 ${insight}`" />
       <div class="card-ink px-4 py-3">
-        <p class="flex items-center gap-2">
-          <span class="t-card">{{ stage.name }}</span>
+        <!-- 极窄档(≤220 CSS px):阶段名 + 第 N 世 + 再积 N 宿慧一行塞不下,
+             阶段名被压到 15px 一字一行 —— 允许换行。320 / 390 两档不动。 -->
+        <p class="flex flex-wrap items-center gap-2">
+          <span class="t-card whitespace-nowrap">{{ stage.name }}</span>
           <span class="text-[10px] text-ink-faint tabular"
             >第 {{ player.reincarnation.count + 1 }} 世</span
           >

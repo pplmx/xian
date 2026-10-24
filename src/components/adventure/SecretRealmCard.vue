@@ -121,7 +121,7 @@
           :disabled="!canPay(r)"
           @click="enter(r.id)"
         >
-          <span class="flex items-baseline gap-2">
+          <span class="flex flex-wrap items-baseline gap-2">
             <span class="font-kai text-[13px] text-ink">{{ r.name }}</span>
             <!-- 付不起就报差(与聚气丹/建筑/法宝同款):一盏灰灯不说差多少等于没说完 -->
             <span

@@ -66,8 +66,13 @@
           历练撞见际遇不再弹窗,按默认好愿当场结清(奖励照拿);历练页会提醒开着,可就地关。
         </p>
       </div>
-      <div class="flex items-center justify-between py-3">
-        <span class="text-[14px] text-ink-soft">夜间模式</span>
+      <!--
+        极窄档(≤220 CSS px):「标签 + 右侧分段按钮组」一行塞不下,标签被压成 14px 宽
+        一字一行(实测 4 行、行高 109px)。允许换行后标签回到 56px 一行(行高 81px);
+        320 / 390 两档读数不动。
+      -->
+      <div class="flex flex-wrap items-center justify-between py-3">
+        <span class="text-[14px] whitespace-nowrap text-ink-soft">夜间模式</span>
         <div role="group" aria-label="夜间模式" class="flex gap-1">
           <button
             v-for="o in THEME_OPTIONS"
@@ -85,8 +90,8 @@
           </button>
         </div>
       </div>
-      <div class="flex items-center justify-between py-3">
-        <span class="text-[14px] text-ink-soft">战报速度</span>
+      <div class="flex flex-wrap items-center justify-between py-3">
+        <span class="text-[14px] whitespace-nowrap text-ink-soft">战报速度</span>
         <div role="group" aria-label="战报速度" class="flex gap-1">
           <button
             v-for="s in [1, 2, 4] as const"
@@ -150,7 +155,8 @@
           知道了
         </button>
       </p>
-      <div class="grid grid-cols-2 gap-2">
+      <!-- 极窄档(≤220 CSS px):两列各 61px 时「导出存档」四字折成两行 —— 放开成单列。 -->
+      <div class="grid grid-cols-2 gap-2 tinylens:grid-cols-1">
         <button class="btn-ghost !text-[11px]" @click="onExport">导出存档</button>
         <button class="btn-ghost !text-[11px]" @click="triggerImport">导入存档</button>
         <input

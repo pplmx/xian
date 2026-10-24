@@ -105,9 +105,9 @@
               右侧那一列 `shrink-0` 把左边的名字压到只剩一个字宽,「青云山麓」当场变成竖排,
               标签还会盖到产出字上(无头浏览器量的「横向溢出」抓不到这种挤压:它不溢出,只是挤)。
             -->
-              <div class="flex items-start gap-3">
+              <div class="flex items-start gap-3 tinylens:flex-col tinylens:gap-1.5">
                 <span
-                  class="grid h-10 w-10 shrink-0 place-items-center rounded-md"
+                  class="grid h-10 w-10 shrink-0 place-items-center rounded-md tinylens:h-8 tinylens:w-8"
                   :class="
                     row.suppressed
                       ? 'bg-gold-ink/6 text-gold-ink'
@@ -124,9 +124,11 @@
                 <div data-region-head class="min-w-0 grow">
                   <!-- 标签与名字同排但**可换行**:窄屏上宁可标签绕到下一行,也不许把名字挤成竖排 -->
                   <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span data-region-name class="font-kai text-[15px] tracking-wider text-ink">{{
-                      row.def.name
-                    }}</span>
+                    <span
+                      data-region-name
+                      class="font-kai whitespace-nowrap text-[15px] tracking-wider text-ink"
+                      >{{ row.def.name }}</span
+                    >
                     <span
                       v-if="row.suppressed"
                       class="chip-ink border-gold-ink/60 text-[10px] text-gold-ink"
@@ -192,7 +194,7 @@
                 <button
                   v-if="row.canEnter && !row.suppressed"
                   data-region-action
-                  class="btn-seal shrink-0 !px-4 !py-2 !text-[14px]"
+                  class="btn-seal shrink-0 !px-4 !py-2 !text-[14px] tinylens:!px-2.5 tinylens:!py-1 tinylens:!text-[11px]"
                   @click="chooseMode(row.def)"
                 >
                   出发

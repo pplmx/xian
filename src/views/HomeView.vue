@@ -52,7 +52,7 @@
               weatherLeft
             }}</span>
           </div>
-          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint [word-break:keep-all]">
             {{ weather.desc }}<span v-if="tomorrowWeather">{{ tomorrowBrief }}</span>
           </p>
           <!--
@@ -147,8 +147,10 @@
           会把「道途 · 特殊世界 · 天道熔炉 · 试炼 · 道痕」挤成两行 —— 390 这最常
           见的一档本来一行放得下。题头「天界已开」四字留白足够,章跟在后头不挤谁。
         -->
-        <span class="flex items-center gap-1.5">
-          <span class="font-kai text-[14px] tracking-[0.25em] text-ink">天界已开</span>
+        <span class="flex flex-wrap items-center gap-1.5">
+          <span class="font-kai whitespace-nowrap text-[14px] tracking-[0.25em] text-ink"
+            >天界已开</span
+          >
           <span
             v-if="dailyPending"
             class="chip-ink shrink-0 border-cinnabar/50 text-[10px] text-cinnabar"
