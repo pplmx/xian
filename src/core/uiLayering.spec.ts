@@ -800,6 +800,33 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("器魂槽位在极窄档放开成两列 —— 名字不许被挤成竖排", () => {
+    /*
+     * 200% 缩放档(390 的机型把字放大一倍,布局视口只剩 195 CSS px)实测:三列下每格
+     * 只有 49px,「显形·锋魂」折成两截、「卸下」一字一行 —— 名字与动作键都读不出来。
+     * 极窄时放开成两列(实测格宽 78px:名字一行、动作键 36×32 一行,无越界无横向溢出),
+     * 320 / 390 两档仍是三列(阈值 220px,量在两者之间)。
+     *
+     * 阈值写成数字是刻意的:它是**排版档位**而不是会被常数改动的数值(与「写常量即撒谎」
+     * 那一族无关),改它就得同时重测三档 —— 所以判据把两件事一起钉住。
+     */
+    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const grid = /<div class="(mt-2 grid[^"]*)">/.exec(souls?.src ?? "")?.[1];
+    expect(grid, "槽位网格要能定位到").toBeTruthy();
+    expect(grid, "常态仍是三列").toContain("grid-cols-3");
+    expect(grid, "极窄档要放开列数").toMatch(/max-\[\d+px\]:grid-cols-2/);
+    // 动作键不许被折成两行(与 ApprenticeView / BuildView 里同款短标签的既有写法同源)。
+    // 射程只有这两枚 `mt-1`(那枚 `mt-1.5` 是整幅宽卡里的「▸ 怎么个章法」,195 档实测
+    // 不折;给它强加 nowrap 反而会把长文案顶出卡外 —— 判据不许顺手扩到它)。
+    const actions = souls?.src.match(/class="tap-row mt-1 [^"]*"/g) ?? [];
+    expect(actions.length, "两枚动作键都要在射程内").toBeGreaterThanOrEqual(2);
+    for (const a of actions) expect(a, "动作标签不许折行").toContain("whitespace-nowrap");
+    const back = /class="(tap-row -my-1\.5[^"]*)"/.exec(souls?.src ?? "")?.[1];
+    expect(back, "顶栏「← 天界」同款:挂 tap-row 且不许折行").toMatch(
+      /tap-row[\s\S]{0,120}whitespace-nowrap/,
+    );
+  });
+
   it("全库不许有按钮套在按钮里 —— 读屏只念得出外层那一个", () => {
     /*
      * 浏览器那一遍(layout-check 的 nestedControls)量的是「此刻画出来的」形状,
