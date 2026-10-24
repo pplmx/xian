@@ -154,7 +154,7 @@
             draft.mutatorIds.includes(m.id)
               ? 'border-violet-ink text-violet-ink'
               : draftFull
-                ? 'border-ink/15 text-ink-faint opacity-45'
+                ? 'border-ink/15 text-ink-faint'
                 : 'border-ink/25 text-ink-faint'
           "
           :title="

@@ -284,7 +284,7 @@
         <div class="flex gap-2">
           <button class="btn-ghost flex-1" @click="closeImport">再想想</button>
           <button
-            class="btn-seal flex-1 disabled:text-ink-faint"
+            class="btn-seal flex-1"
             :disabled="importInspect?.tooNew === true"
             @click="confirmImport"
           >

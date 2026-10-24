@@ -601,7 +601,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 四件各退一件,下面红 —— 不许拆回「卡一按就跳、主角字光秃秃」。
     const style = readFileSync(resolve(__dirname, "../style.css"), "utf8");
     expect(style, "card-ink 要带按压滑移").toMatch(
-      /\.card-ink \{[\s\S]{0,400}transition: transform 0\.12s ease;/,
+      /^[ \t]*\.card-ink \{[\s\S]{0,600}transition: transform 0\.12s ease;/m,
     );
     const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
     expect(cult?.src, "境界名要用世界色横杆框墨").toMatch(/bg-\[var\(--world-bar\)\]/m);
@@ -966,7 +966,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cel?.src, "满员时未选芯片必须 disabled").toContain(
       ':disabled="!draft.mutatorIds.includes(m.id) && draftFull"',
     );
-    expect(cel?.src, "置灰要有 opacity 分隔,不许与正常态同灰").toContain("opacity-45");
+    // 置灰要有分隔,但**不许靠整块 opacity**:那会把「已选满」这行字一起压掉
+    // (实测 2.4:1,读不出来)。压色 —— 边框淡一档、字落到 ink-faint。
+    expect(cel?.src, "置灰要压色(边框淡一档),不许退回整块 opacity").toContain(
+      "'border-ink/15 text-ink-faint'",
+    );
+    expect(cel?.src, "置灰不许用整块 opacity(压字不压色)").not.toMatch(/opacity-\d+/);
     expect(cel?.src, "title 要直说「已选满」").toContain("已选满");
   });
 
@@ -1828,7 +1833,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "chip-ink 基类要有 :active 按压反馈(限 button —— 装饰性 chip 是 span,不该有按压态)",
     ).toMatch(/button\.chip-ink:active:not\(:disabled\)/);
     expect(css, "chip-ink 要带 transition(弹簧感,与 btn-ghost 同款)").toMatch(
-      /\.chip-ink \{[\s\S]{0,300}transition:/,
+      /^[ \t]*\.chip-ink \{[\s\S]{0,300}transition:/m,
     );
     // 拆分后逆旅契试炼卡归 RebirthDialog,判据随本体改指子面板
     const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
@@ -2456,6 +2461,189 @@ describe("可点元素 · 焦点环不许被过渡吃掉", () => {
   it("判据自证:transition-all 会被认出来", () => {
     expect('class="transition-all active:scale-98"'.includes("transition-all")).toBe(true);
     expect("transition-[transform,background-color]".includes("transition-all")).toBe(false);
+  });
+});
+
+describe("样式层序 —— 角色定基线,调用处的工具类必须能盖", () => {
+  /*
+   * 这条守的是一次**静默失效**:角色类(card-ink / chip-ink / btn-seal / btn-ghost /
+   * t-* / tap-row …)裸写在 `@tailwind utilities` 之后,同特指度下后出现的赢 ——
+   * 于是模板里拼在角色上的工具类全部失效。实测 36 处:chip-ink 上的 `text-[10px]`
+   * 仍是 11px、card-ink 上的 `border-dashed` 仍是实线、`bg-cinnabar/6` 与
+   * `shadow-lg` 一个都没落地。最扎眼的一处:秘境卡「未解锁 = 虚线框」从上线起
+   * 就没画出来过 —— 因为卡自己的 `border: 1px solid` 一直压着那两条工具类。
+   *
+   * 修法不是给每处补 `!`,是把角色挪进 `@layer components`:utilities 层整体压在它上面,
+   * 角色定基线、调用处永远能盖。这条判据守两件事:
+   *   一 那批角色确实在 components 层里(挪出去就退回静默失效);
+   *   二 层内的暗色覆写照旧按特指度生效(层不改变层内先后)。
+   */
+  const STYLE = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+
+  /**
+   * 取**所有** `@layer components` 段的正文(按花括号配平)。
+   *
+   * 层可以开多次(排版角色一块、按钮与触达一块),判据要把它们合起来看 ——
+   * 只取第一块会让第二块里的角色读成「在层外」,那是一条假红。
+   */
+  function layerBody(css: string): string {
+    const marker = "@layer components {";
+    let out = "";
+    let from = 0;
+    for (;;) {
+      const start = css.indexOf(marker, from);
+      if (start < 0) break;
+      let depth = 0;
+      let end = -1;
+      for (let i = start; i < css.length; i += 1) {
+        if (css[i] === "{") depth += 1;
+        else if (css[i] === "}") {
+          depth -= 1;
+          if (depth === 0) {
+            end = i + 1;
+            break;
+          }
+        }
+      }
+      if (end < 0) throw new Error("@layer components 没有配平的花括号");
+      out += `${css.slice(start, end)}\n`;
+      from = end;
+    }
+    if (out === "") throw new Error("style.css 里找不到 @layer components —— 判据要跟着改");
+    return out;
+  }
+
+  it("定基线的角色都在 components 层里 —— 不许再裸写在 utilities 之后", () => {
+    const layer = layerBody(STYLE);
+    const roles = [
+      "card-ink",
+      "chip-ink",
+      "btn-seal",
+      "btn-ghost",
+      "t-card",
+      "t-entry",
+      "t-item",
+      "t-body",
+      "t-note",
+      "tap-row",
+      "track-ink",
+      "bar-fill",
+      "tab-rail",
+      "font-kai",
+      "tabular",
+    ];
+    const outside = roles.filter((r) => !new RegExp(`^[ \\t]*\\.${r} \\{`, "m").test(layer));
+    expect(
+      outside,
+      `这些角色还在层外 —— 同特指度下会盖掉调用处的工具类:${outside.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("层外的暗色覆写照旧生效 —— 层只管与 utilities 的先后,不管层内特指度", () => {
+    // html[data-theme="dark"] .card-ink / .btn-seal 必须仍在源码里(层内先后不变)
+    expect(STYLE, "暗色卡片顶光被搬走或删了").toMatch(/html\[data-theme="dark"\] \.card-ink \{/);
+    expect(STYLE, "暗色印面被搬走或删了").toMatch(/html\[data-theme="dark"\] \.btn-seal \{/);
+  });
+
+  it("判据自证:层外的角色会被认出来", () => {
+    const fake =
+      "@layer components {\n.btn-seal {\n  color: red;\n}\n}\n.tap-row {\n  display: flex;\n}\n";
+    const layer = layerBody(fake);
+    expect(/^[ \t]*\.tap-row \{/m.test(layer), "层外的 tap-row 应被认出来").toBe(false);
+    expect(/^[ \t]*\.btn-seal \{/m.test(layer), "层内的 btn-seal 应被认出来").toBe(true);
+  });
+});
+
+describe("禁用态 —— 压色不压字", () => {
+  /*
+   * 「灰掉」有两种做法,只有一种读得出来:
+   *
+   *   压色 —— 边框/底色让位,字保留一档能读的墨。禁用态那行字往往正是
+   *          「为什么不让我点」(「尚差 N 道源」「修为未至圆满」),它是答案不是装饰。
+   *   压字 —— 整块 `opacity-40`,字与底一起向对方靠。实测浅色 2.31:1、夜间 2.94:1,
+   *          连 WCAG 的 3:1 门槛都够不着;而 `getComputedStyle().color` 读到的
+   *          仍是压之前的值,源码里看着完全正常 —— 这正是它反复回流的原因。
+   *
+   * 真浏览器那道门(scripts/layout-check.mjs 的 dimDisabled)量的是合成之后的读数,
+   * 但它只量得到**巡到的页面**。这条判据守源码面:凡是把禁用/不可用写成
+   * 「整块压透明度」的,当场红。
+   */
+  const STYLE = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+
+  /** 一个 class 串里有没有「整块压透明度」的写法(按压态 active:opacity 不算) */
+  function dimsWholeElement(cls: string): boolean {
+    for (const tok of cls.split(/\s+/)) {
+      if (/^(active|hover|focus|group|peer)[-:]/.test(tok)) continue;
+      if (/^!?opacity-(\d+)$/.test(tok)) return true;
+    }
+    return false;
+  }
+
+  it("模板里不许用整块 opacity 表示禁用/不可用", () => {
+    const offenders: string[] = [];
+    for (const f of FILES) {
+      for (const m of f.src.matchAll(/:class="([^"]*)"/g)) {
+        const expr = m[1] ?? "";
+        // 只看条件分支里的字面量:三元/对象的两个分支各是一段 class 串
+        for (const lit of expr.matchAll(/'([^']*)'/g)) {
+          if (dimsWholeElement(lit[1] ?? "")) offenders.push(`${f.path} → ${lit[1]}`);
+        }
+      }
+      for (const m of f.src.matchAll(/class="([^"]*)"/g)) {
+        const cls = m[1] ?? "";
+        // 静态 class 里带 disabled:/aria-disabled: 前缀的透明度,是同一件事的变体
+        if (/(?:disabled|aria-disabled):!?opacity-\d+/.test(cls))
+          offenders.push(`${f.path} → ${cls}`);
+        else if (dimsWholeElement(cls) && /:disabled=/.test(f.src)) {
+          // 静态 opacity 落在「这个文件里有禁用按钮」的模板上,值得人看一眼
+        }
+      }
+    }
+    expect(
+      offenders,
+      `整块压透明度会把「为什么不让我点」那句一起压掉(实测 2.3~2.9:1)—— 改用压色:${offenders.join(" | ")}`,
+    ).toEqual([]);
+  });
+
+  it("判据自证:按压态与半透明底色不算整块压字", () => {
+    expect(dimsWholeElement("active:opacity-60")).toBe(false);
+    expect(dimsWholeElement("border-ink/10 bg-ink/4")).toBe(false);
+    expect(dimsWholeElement("text-ink-faint/80")).toBe(false);
+    expect(dimsWholeElement("opacity-40")).toBe(true);
+    expect(dimsWholeElement("!opacity-40")).toBe(true);
+    expect(dimsWholeElement("card-ink opacity-50 active:scale-99")).toBe(true);
+  });
+
+  it("四个可禁用基类都自带禁用态 —— 压色不压字", () => {
+    // chip-ink 此前压根没有禁用态:付不起的聚气丹那枚胶囊把「尚差 30 石」写在自己
+    // 身上,却和可点的胶囊长得一模一样。四个基类都要有,少一个就有一条路漏回压字。
+    for (const role of ["btn-seal", "btn-ghost", "chip-ink"]) {
+      expect(STYLE, `缺 .${role}:disabled 的禁用态定义`).toMatch(
+        new RegExp(`\\.${role}:disabled \\{`),
+      );
+    }
+    // 夜间印面单独一档:html[data-theme=dark] .btn-seal 的特指度高过 .btn-seal:disabled,
+    // 不禁用态会在夜间原地退回深朱 —— 同一页上禁用钮与可用钮是同一个色块。
+    expect(STYLE, "夜间要另给一档禁用印面(否则特指度更高的深朱会盖掉它)").toMatch(
+      /html\[data-theme="dark"\] \.btn-seal:disabled \{/,
+    );
+  });
+
+  it("禁用态的底色与字色都不叠半透明 —— 对比度要算得出来", () => {
+    // 浅色那份用**不透明**的 ink-faint 打底 + 92% 白字;夜间那份用纸上墨 28% 压出来
+    // (夜间的 ink-faint 是浅墨,奶油字放上去只剩 2.0:1,不能照搬)。
+    // 取**基类那条**(前面没有 html[...] 前缀):先出现的 `.btn-seal:disabled {` 是它
+    // 取基类那条:先在源码里切掉所有 html[data-theme] 开头的规则,剩下的第一条才是它
+    const baseOnly = STYLE.replace(/^[ \t]*html\[[^\]]+\][^{]*\{[\s\S]*?\n[ \t]*\}/gm, "");
+    const seal = /^[ \t]*\.btn-seal:disabled \{([\s\S]*?)\n[ \t]*\}/m.exec(baseOnly)?.[1] ?? "";
+    expect(seal, ".btn-seal:disabled 该用不透明的 ink-faint 打底").toContain(
+      "background: var(--color-ink-faint)",
+    );
+    const dark =
+      /html\[data-theme="dark"\] \.btn-seal:disabled \{([\s\S]*?)\}/.exec(STYLE)?.[1] ?? "";
+    expect(dark, "夜间禁用印面要取纸上墨,不用浅墨(浅墨托不住奶油字)").toMatch(
+      /background: rgb\(var\(--color-ink-rgb\) \/ 0\.\d+\)/,
+    );
   });
 });
 

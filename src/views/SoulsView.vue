@@ -79,7 +79,11 @@
             :aria-label="
               endgame.activeSouls[i - 1] ? `${soulLabel(endgame.activeSouls[i - 1]!)} 详情` : '空'
             "
-            :class="endgame.activeSouls[i - 1] ? 'cursor-pointer active:scale-95' : 'opacity-50'"
+            :class="
+              endgame.activeSouls[i - 1]
+                ? 'cursor-pointer active:scale-95'
+                : 'border-dashed border-ink/15'
+            "
             @click="soulDetail = endgame.activeSouls[i - 1] ?? null"
             @keydown="onSlotKeydown(i, $event)"
           >
@@ -308,7 +312,6 @@
           <button
             v-if="pendingRefineUid !== row.inst.uid"
             class="btn-ghost !px-3 !py-1 !text-[11px]"
-            :class="{ 'disabled:opacity-40': !canAffordRefine }"
             :disabled="!canAffordRefine"
             @click="pendingRefineUid = row.inst.uid"
           >

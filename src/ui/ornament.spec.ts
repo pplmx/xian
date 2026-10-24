@@ -133,6 +133,15 @@ describe("装饰层 · 墨的浓度", () => {
   it("扫到的装饰底色/线不能太少(否则上一条形同虚设)", () => {
     expect(inkBackgroundAlphas(CSS).length).toBeGreaterThanOrEqual(8);
   });
+
+  it("夜间禁用印面也在这条上限之内 —— 它是压色,不是第二条边框", () => {
+    // 暗色主题里 html[data-theme="dark"] .btn-seal 特指度高于 .btn-seal:disabled,
+    // 禁用钮会在夜间原地退回深朱(与可用钮同一个色块,只差一道投影)。故另给一档墨色印面;
+    // 它同样受 25% 上限约束 —— 浓了就从「淡下去」变成第二条边框。
+    const hit = inkBackgroundAlphas(CSS).find((x) => x.at.includes(".btn-seal:disabled"));
+    expect(hit, "夜间禁用印面没被这条判据扫到 —— 选择器写法变了?").toBeTruthy();
+    expect(hit!.alpha, "夜间禁用印面超过 25% 墨浓度上限").toBeLessThanOrEqual(0.25);
+  });
 });
 
 describe("装饰层 · 卡片顶光与印面压印", () => {

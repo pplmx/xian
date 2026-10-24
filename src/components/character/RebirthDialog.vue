@@ -211,7 +211,8 @@
       <button
         v-for="t in LIFE_TRIALS"
         :key="t.id"
-        class="card-ink w-full px-3 py-2 text-left active:scale-99 disabled:opacity-40"
+        class="card-ink w-full px-3 py-2 text-left active:scale-99"
+        :class="{ 'border-dashed border-ink/15': !canSignLifeTrial(t.id) }"
         :disabled="!canSignLifeTrial(t.id)"
         @click="signTrial(t.id)"
       >

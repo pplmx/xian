@@ -270,7 +270,7 @@ watch(inst, () => {
         :class="
           sealAffordable
             ? 'border-qing/20 bg-qing/5 text-qing'
-            : 'border-ink/10 bg-ink/4 text-ink-faint opacity-60'
+            : 'border-ink/10 bg-ink/4 text-ink-faint'
         "
       >
         封存一词 {{ formatGN(sealCostVal) }}

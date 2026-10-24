@@ -141,7 +141,6 @@
         <div class="mt-2 flex justify-end gap-1.5">
           <button
             class="btn-seal !px-3 !py-1.5 !text-[11px]"
-            :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
             :disabled="r.shortHerb || r.shortStone"
             @click="craftPill(r.def.id)"
           >
@@ -150,7 +149,6 @@
           <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
           <button
             class="btn-ghost !px-3 !py-1.5 !text-[11px]"
-            :class="r.shortHerb || r.shortStone ? '!opacity-40' : ''"
             :disabled="r.shortHerb || r.shortStone"
             @click="craftBatch(r.def.id)"
           >

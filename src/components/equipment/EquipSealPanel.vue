@@ -54,7 +54,8 @@ function doUnsealAffix(): void {
 <template>
   <button
     v-if="canSealAffix(affixId)"
-    class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-qing active:scale-90 active:opacity-60 disabled:cursor-not-allowed disabled:opacity-40"
+    class="shrink-0 rounded-md px-1.5 py-1 text-[10px] text-qing active:scale-90 active:opacity-60"
+    :class="{ '!text-ink-faint': !sealAffordable }"
     :disabled="!sealAffordable"
     :aria-label="`封存词条${name}`"
     :title="sealAffordable ? undefined : `尚差 ${formatGN(sealCostVal ?? 0)} 灵石`"

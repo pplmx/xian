@@ -98,7 +98,7 @@
           v-else-if="mark.cleared && mark.replay"
           class="shrink-0 rounded border border-cinnabar/40 px-2 py-1 font-kai text-[10px] text-cinnabar active:scale-90"
           :title="`以今日之你重打此战,快过 ${mark.rounds} 回合即【胜于旧我】`"
-          :class="{ 'disabled:opacity-40': rewriteShort > 0 }"
+          :class="{ 'border-ink/15 !text-ink-faint': rewriteShort > 0 }"
           :disabled="rewriteShort > 0"
           @click="rewriteConfirm = i"
         >

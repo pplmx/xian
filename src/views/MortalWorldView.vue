@@ -50,7 +50,7 @@
           v-for="p in view.places"
           :key="p.nodeId"
           class="card-ink flex items-center gap-3 px-3 py-2.5"
-          :class="{ 'opacity-60': !unlocked(p.nodeId) }"
+          :class="{ 'border-dashed border-ink/15': !unlocked(p.nodeId) }"
         >
           <span
             class="grid h-9 w-9 shrink-0 place-items-center rounded-md"

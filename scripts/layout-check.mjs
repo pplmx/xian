@@ -502,69 +502,95 @@ async function measurePage(page) {
             `${r.height.toFixed(1)}px(声明 ${declared || "—"}px)«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}» [${(el.className || "").toString().slice(0, 60)}]`,
         ),
       /**
-       * 禁用按钮上的字也得读得出来。
+       * 禁用态的字也得读得出来 —— **全库所有 :disabled**,不再只认两个手写类名。
        *
-       * 禁用态往往正是「为什么不让我点」那句(「修为未至圆满」「灵石不足」),
-       * 而它此前用最淡的 ink-ghost 打底 + 75% 白字 —— 实测对比度 1.79:1,
-       * 在手机上基本看不见。这里量的是**算出来的**前景/背景对比度(两条都是不透明色)。
+       * 禁用态往往正是「为什么不让我点」那句(「修为未至圆满」「灵石不足」「尚差 N 道源」),
+       * 那是玩家最需要读到的一句。此前这条判据只扫 `.btn-seal:disabled, .btn-ghost:disabled`
+       * —— 手写清单等于「扫到什么就守什么」:chip-ink、card-ink 当按钮、`aria-disabled`
+       * 的自绘行、以及**整块压 opacity** 的那批,一处都没进过门。实测这批逃逸者的读数:
+       * 「入 炉」1.76:1、「尚差 3 道源」1.90:1、逆旅契卡 2.31:1 —— 全都低于 3:1。
+       *
+       * 量的是**合成之后**的前景/背景,两处都不能只看声明的色号:
+       *   底 —— 祖先链上层层半透明底色按 alpha 合成(.btn-ghost:disabled 的底是
+       *        rgb(ink / 0.04),只看这一层会当成纯黑,算出 2.46:1 的假红);
+       *   字 —— 祖先链上的 `opacity` 也要逐层乘进去。整块压透明度正是漏得最狠的那种:
+       *        声明里字色明明够深,乘上 0.4 之后只剩 2.31:1,而 `getComputedStyle().color`
+       *        读到的仍是压之前的值。
        */
-      dimDisabled: [...document.querySelectorAll(".btn-seal:disabled, .btn-ghost:disabled")]
-        .map((el) => {
-          const cs = getComputedStyle(el);
-          const lum = (c) => {
-            if (!c) return null;
-            const f = (v) => {
-              const s = v / 255;
-              return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-            };
-            return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+      dimDisabled: (() => {
+        const lum = (c) => {
+          if (!c) return null;
+          const f = (v) => {
+            const s = v / 255;
+            return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
           };
-          /**
-           * 把一层层半透明底色**合成**成实际看到的颜色。
-           *
-           * .btn-ghost:disabled 的底是 rgb(ink / 0.04),只看这一层的 RGB 会当成纯黑,
-           * 于是浅字对它算出 2.46:1 的假红。真实观感是「卡片色 + 4% 墨」,约 4:1。
-           */
-          const parse = (c) => {
-            const m = /rgba?\(([^)]+)\)/.exec(c);
-            if (!m) return null;
-            const p = m[1]
-              .split(/[,\s/]+/)
-              .filter(Boolean)
-              .map(Number);
-            if (p.length < 3) return null;
-            return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 };
-          };
-          const paintOf = (start) => {
-            const layers = [];
-            let n = start;
-            while (n) {
-              const c = parse(getComputedStyle(n).backgroundColor);
-              if (c && c.a > 0) {
-                layers.push(c);
-                if (c.a >= 0.999) break;
-              }
-              n = n.parentElement;
+          return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+        };
+        const parse = (c) => {
+          const m = /rgba?\(([^)]+)\)/.exec(c);
+          if (!m) return null;
+          const p = m[1]
+            .split(/[,\s/]+/)
+            .filter(Boolean)
+            .map(Number);
+          if (p.length < 3) return null;
+          return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 };
+        };
+        /** 祖先链上的背景层 + 累计 opacity(元素自身的 opacity 也乘进去) */
+        const paintOf = (start) => {
+          const layers = [];
+          let cum = 1;
+          let n = start;
+          while (n) {
+            const cs = getComputedStyle(n);
+            const c = parse(cs.backgroundColor);
+            if (c && c.a > 0) layers.push({ rgb: c.rgb, a: c.a * cum });
+            cum *= Number(cs.opacity);
+            n = n.parentElement;
+          }
+          let base = [255, 255, 255];
+          for (let i = layers.length - 1; i >= 0; i -= 1) {
+            const { rgb, a } = layers[i];
+            base = [0, 1, 2].map((k) => rgb[k] * a + base[k] * (1 - a));
+          }
+          return { base, cum };
+        };
+        const out = [];
+        for (const el of document.querySelectorAll(":disabled, [aria-disabled=true]")) {
+          if (!el.offsetParent) continue;
+          const text = (el.textContent || "").trim();
+          if (!text) continue;
+          /** 取第一个真有字的节点的色 —— 按钮里常有一串次级 span,取按钮自己的色会量错 */
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          let target = el;
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (node.textContent.trim()) {
+              target = node.parentElement ?? el;
+              break;
             }
-            let base = [255, 255, 255];
-            for (let i = layers.length - 1; i >= 0; i -= 1) {
-              const { rgb, a } = layers[i];
-              base = [0, 1, 2].map((k) => rgb[k] * a + base[k] * (1 - a));
-            }
-            return base;
-          };
-          const lf = lum(parse(cs.color)?.rgb ?? null);
-          const lb = lum(paintOf(el));
-          if (lf === null || lb === null) return null;
+          }
+          const { base, cum } = paintOf(el);
+          const raw = parse(getComputedStyle(target).color)?.rgb;
+          if (!raw) continue;
+          // 字也吃祖先链的 opacity:压到 40% 的白字,实际是「40% 的白 + 60% 的底」
+          let fgCum = 1;
+          for (let n = target; n; n = n.parentElement) fgCum *= Number(getComputedStyle(n).opacity);
+          const fg = [0, 1, 2].map((k) => raw[k] * fgCum + base[k] * (1 - fgCum));
+          const lf = lum(fg);
+          const lb = lum(base);
+          if (lf === null || lb === null) continue;
           const ratio = (Math.max(lf, lb) + 0.05) / (Math.min(lf, lb) + 0.05);
-          return {
-            ratio: Math.round(ratio * 100) / 100,
-            text: (el.textContent || "").trim().slice(0, 12),
-          };
-        })
-        .filter((x) => x && x.ratio < 3)
-        .slice(0, 3)
-        .map((x) => `${x.ratio}:1 «${x.text}»`),
+          if (ratio < 3)
+            out.push({ ratio: Math.round(ratio * 100) / 100, text: text.slice(0, 14), cum });
+        }
+        return out
+          .sort((a, b) => a.ratio - b.ratio)
+          .slice(0, 4)
+          .map(
+            (x) =>
+              `${x.ratio}:1 «${x.text}»${x.cum < 0.999 ? `(整块 opacity ${x.cum.toFixed(2)})` : ""}`,
+          );
+      })(),
       /**
        * 顶栏里的字都只能占一行。
        *
@@ -1383,7 +1409,7 @@ function problemsOf(info) {
   if (info.unnamed.length) problems.push(`无名控件:${info.unnamed.join(" | ")}`);
   if (info.smallTargets.length) problems.push(`可点元素过小:${info.smallTargets.join(" | ")}`);
   if (info.dimDisabled.length)
-    problems.push(`禁用态的字读不出来(对比度不足):${info.dimDisabled.join(" | ")}`);
+    problems.push(`禁用态的字读不出来(合成后对比度 <3:1):${info.dimDisabled.join(" | ")}`);
   if (info.badGroups.length) problems.push(`选择组没选中态:${info.badGroups.join(" | ")}`);
   if (info.headerTall?.length)
     problems.push(`顶栏折行(数字断行看着像乱码):${info.headerTall.join(" | ")}`);

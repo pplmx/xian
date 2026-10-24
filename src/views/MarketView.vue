@@ -296,7 +296,7 @@ function bountyShort(o: BountySlot): string | null {
           v-for="slot in market.stock"
           :key="slot.idx"
           class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
-          :class="slot.sold ? 'opacity-50' : ''"
+          :class="{ 'border-dashed border-ink/15': slot.sold }"
           :style="shelfTier(slot)"
         >
           <div class="min-w-0 flex-1 text-[11px]">
@@ -399,7 +399,7 @@ function bountyShort(o: BountySlot): string | null {
           v-for="o in bounty.orders"
           :key="o.idx"
           class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
-          :class="o.claimed ? 'opacity-50' : ''"
+          :class="{ 'border-dashed border-ink/15': o.claimed }"
         >
           <div class="min-w-0 flex-1 text-[11px]">
             <template v-if="o.kind === 'herb' || o.kind === 'ore'">
