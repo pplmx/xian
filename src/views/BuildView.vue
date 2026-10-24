@@ -212,7 +212,7 @@
         <!-- 320 窄窗:按钮不许被左侧说明挤折(「+ 存当前构 / 筑」)。
              按钮 shrink-0 + 不断行,说明文字先让位。 -->
         <button
-          class="tap-row -my-1 shrink-0 whitespace-nowrap py-1.5 text-[11px] text-cinnabar active:opacity-60 disabled:text-ink-faint"
+          class="tap-row -my-1 shrink-0 py-1.5 text-[11px] text-cinnabar active:opacity-60 disabled:text-ink-faint"
           :disabled="loadoutsFull"
           @click="openSave"
         >

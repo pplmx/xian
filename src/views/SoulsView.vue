@@ -19,7 +19,7 @@
       <div class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3">
         <!-- 同洞府:标签写着「天界」,冷启动时也得真的去天界,而不是退出游戏 -->
         <button
-          class="tap-row -my-1.5 justify-self-start whitespace-nowrap py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
+          class="tap-row -my-1.5 justify-self-start py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
           @click="goBack(router, { name: 'celestial' })"
         >
           ← 天界
@@ -73,9 +73,10 @@
           三列只在「格子够宽」时成立。200% 缩放档(390 的机型放大一倍,布局视口只剩
           195 CSS px)下每格只有 49px,「显形·锋魂」六个字必然折成两截 —— 而本作按
           AGENTS 的口径要防 200% 档折行,故极窄时放开成两列(名字 43px、动作键 36px
-          都还塞得进 77px 的格)。阈值 220px:320 / 390 真机(以及它们的常态)仍是三列。
+          都还塞得进 77px 的格)。阈值住在一个变体名里(见 tailwind.config.js 的 tinylens),
+          320 / 390 真机(以及它们的常态)仍是三列。
         -->
-        <div class="mt-2 grid grid-cols-3 gap-2 max-[220px]:grid-cols-2">
+        <div class="mt-2 grid grid-cols-3 gap-2 tinylens:grid-cols-2">
           <!--
             卡壳**不再自称按钮**,里面两个动作各用原生 <button>。
 
@@ -123,7 +124,7 @@
               </button>
               <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 32px 的靶面 -->
               <button
-                class="tap-row mt-1 min-w-[28px] whitespace-nowrap px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
+                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
                 :aria-label="`卸下 ${soulLabel(soulAt(i)!)}`"
                 @click="removeSoul(soulAt(i)!.uid)"
               >
@@ -140,7 +141,7 @@
               -->
               <button
                 v-if="idleSouls.length > 0"
-                class="tap-row mt-1 min-w-[28px] whitespace-nowrap px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
+                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
                 aria-label="空槽 · 挑一缕装配"
                 @click="idleOpen = true"
               >

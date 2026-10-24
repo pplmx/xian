@@ -145,7 +145,12 @@
     -->
     <section>
       <SectionTitle title="离线存续" :hint="`当前 ${offlineCapHours} 时`" />
-      <div class="mt-2 flex items-stretch gap-1.5">
+      <!--
+        五格横排在 200% 缩放档(195 CSS px)下每格只剩 28px,「12时」被折成两行(整排 44px)。
+        字号不许降(主巡页字阶只有 18/15/14/11/10,私开 9 档会被字阶判据打红),
+        故极窄档改成可换行:每格保底 34px,五格排两行,标签各自一行。
+      -->
+      <div class="mt-2 grid grid-cols-5 items-stretch gap-1.5 tinylens:grid-cols-3">
         <div
           v-for="(h, i) in OFFLINE_CAP_HOURS"
           :key="i"

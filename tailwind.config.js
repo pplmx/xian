@@ -123,11 +123,24 @@ export default {
    *
    * 不用 theme 里覆盖 hover 本身的写法:内置 hover 还有人(以及 group-hover)
    * 在用,而这里要的是「逐处挑选」—— 加变体不改内置行为,两边都不耽误。
+   *
+   * tinylens: —— 「极窄档」(布局视口 ≤220 CSS px)
+   *
+   * 这个数是 390 宽的机型按 200% 放大后的 195(量的是**缩放档**,不是宽度档,见
+   * docs/design.md 第四十一条)与最小的真机宽度 320 之间的一道缝。凡是「这一处格子
+   * 常态正好、极窄档要放开列数」都走它。
+   *
+   * 为什么不各处写 max-[220px]:那等于把同一个阈值抄成几份字面量(Tailwind 的 JIT
+   * 扫不到 `max-[${X}px]` 这类拼接,拼出来会**静默不生成**那条媒体查询,类名也就
+   * 从没生效过)。两处各写一个数就是两本账 —— 改一处另一处不动,同一台 200% 的机器上
+   * 一处放开一处不放开,而排版自检只判溢出/越界,看不出这是"两本账"而不是"没坏"。
+   * 收成具名变体后,阈值只住这一行。
    */
   plugins: [
     ({ addVariant }) => {
       addVariant("short", "@media (max-height: 560px)");
       addVariant("hoverable", "@media (hover: hover) and (pointer: fine)");
+      addVariant("tinylens", "@media (max-width: 220px)");
     },
   ],
 };

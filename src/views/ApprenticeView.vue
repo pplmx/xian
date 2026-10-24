@@ -194,17 +194,21 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
     <!-- 抬头:标题要永远居中 —— 左侧「← 返回」固定、右侧收徒按钮随剩余灵石几档换长(收徒 · 尚差 X 石 /
          收徒 NNN 石 / 已收满 N/M),justify-between 下标题随右侧宽窄左右游移;故沿用器魂顶栏同款
          两侧均分网格,标题落点锁死(界规见 uiLayering.spec 的「器魂顶栏标题锁居中」)。 -->
-    <div class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3">
+    <div
+      class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 tinylens:flex tinylens:flex-col tinylens:items-stretch tinylens:gap-1"
+    >
       <!-- 「← 返回」不许被挤成竖排:1fr 列在收徒价巨大(320-late 的 收徒 15.14万 石,
            nowrap 后整牌很宽)时会把左列压到 min-content 一字一行 —— nowrap 把返回
            锁成一行(1fr 的 min 就抬到整行宽),挤压由中间 min-w-0 的标题列吸收。 -->
       <button
-        class="tap-row -my-1.5 justify-self-start whitespace-nowrap py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
+        class="tap-row -my-1.5 justify-self-start py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
         @click="goBack(router, { name: 'dongfu' })"
       >
         ← 返回
       </button>
-      <div class="min-w-0 justify-self-center text-center">
+      <div
+        class="min-w-0 justify-self-center text-center tinylens:justify-self-auto tinylens:text-left"
+      >
         <p class="font-kai text-[15px] tracking-[0.3em] text-ink">门庭有徒</p>
         <p class="text-[10px] text-ink-faint">弟子跑腿,资材自来 · {{ slots }} 槽</p>
       </div>
@@ -240,7 +244,9 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
         :key="a.uid"
         class="rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
       >
-        <div class="flex items-center gap-2">
+        <!-- 极窄档(≤220 CSS px):「名字 + 等级 + 羁绊 + 天赋描述」一行塞不下,描述被压到
+             10px 一字一行 —— 允许换行,描述整块落到下一行。320 / 390 两档不动。 -->
+        <div class="flex flex-wrap items-center gap-2">
           <span class="font-kai text-[14px] text-ink">{{
             apprenticeDef(a.archId)?.name ?? a.archId
           }}</span>

@@ -814,17 +814,100 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const grid = /<div class="(mt-2 grid[^"]*)">/.exec(souls?.src ?? "")?.[1];
     expect(grid, "槽位网格要能定位到").toBeTruthy();
     expect(grid, "常态仍是三列").toContain("grid-cols-3");
-    expect(grid, "极窄档要放开列数").toMatch(/max-\[\d+px\]:grid-cols-2/);
-    // 动作键不许被折成两行(与 ApprenticeView / BuildView 里同款短标签的既有写法同源)。
-    // 射程只有这两枚 `mt-1`(那枚 `mt-1.5` 是整幅宽卡里的「▸ 怎么个章法」,195 档实测
-    // 不折;给它强加 nowrap 反而会把长文案顶出卡外 —— 判据不许顺手扩到它)。
-    const actions = souls?.src.match(/class="tap-row mt-1 [^"]*"/g) ?? [];
-    expect(actions.length, "两枚动作键都要在射程内").toBeGreaterThanOrEqual(2);
-    for (const a of actions) expect(a, "动作标签不许折行").toContain("whitespace-nowrap");
-    const back = /class="(tap-row -my-1\.5[^"]*)"/.exec(souls?.src ?? "")?.[1];
-    expect(back, "顶栏「← 天界」同款:挂 tap-row 且不许折行").toMatch(
-      /tap-row[\s\S]{0,120}whitespace-nowrap/,
+    expect(grid, "极窄档要放开列数").toMatch(/tinylens:grid-cols-2/);
+    /*
+     * 「动作标签不许折行」不再是逐处手写的装饰,而是 tap-row 这条角色的语义
+     * (src/style.css):挂它的 8 处调用点全是 2~6 字短动作标签。此前有两处各写了一遍
+     * whitespace-nowrap,其余各处靠运气 —— 200% 档实测坊市「← 返回」被挤成三行。
+     * 判据只钉角色本体:各调用点不许再抄一遍(两本账),也不许被删掉。
+     */
+    const css = readFileSync(resolve(SRC, "style.css"), "utf-8");
+    const tapRow = /\.tap-row \{([^}]*)\}/.exec(css)?.[1];
+    expect(tapRow, "tap-row 角色要能定位到 —— 定位不到这条就是空转").toBeTruthy();
+    expect(tapRow, "短动作标签不许折行(角色的语义,不是某处的装饰)").toContain(
+      "white-space: nowrap",
     );
+    const restated = FILES.filter((f) => /class="tap-row[^"]*whitespace-nowrap/.test(f.src)).map(
+      (f) => f.path,
+    );
+    expect(restated, "角色已经管了 nowrap,调用点不许再抄一遍(两本账)").toEqual([]);
+  });
+
+  it("人物页两处网格在极窄档放开列数 —— 九位数与属性名不许挤成竖排", () => {
+    /*
+     * 195 CSS px(390 按 200%)实测:
+     *   道躯那行三列时每列只剩 38px,「48.61亿」这类九位数被折成两行 —— 放开成两列
+     *     就回到 68px 一行(块高 56→83)。再放开成一列并没有额外收益(块高 129),
+     *     所以这一处是"三列 → 两列",不是"越少越好"。
+     *   属性行两列时每列 56.5px,「进阶成功率」被压成 11px 宽一字一行(8 行里 7 行竖排)
+     *     —— 放开成单列,名字回到 44px 一行。
+     * 320 / 390 两档实测读数一分未动(仍是三列 / 两列)。
+     */
+    const ch = FILES.find((f) => f.path === "views/CharacterView.vue");
+    const trio = /class="(grid grid-cols-3 gap-2 text-center[^"]*)"/.exec(ch?.src ?? "")?.[1];
+    expect(trio, "道躯那行网格要定位得到 —— 定位不到这条就是空转").toBeTruthy();
+    expect(trio, "极窄档放开成两列").toContain("tinylens:grid-cols-2");
+    const rows = /class="(grid grid-cols-2 gap-x-4 gap-y-1[^"]*)"/.exec(ch?.src ?? "")?.[1];
+    expect(rows, "属性行网格要定位得到").toBeTruthy();
+    expect(rows, "极窄档放开成单列").toContain("tinylens:grid-cols-1");
+  });
+
+  it("页签条在极窄档去字距并锁一行 —— 六枚页签不许各自折成两行", () => {
+    /*
+     * InkTabs 供六个页面共用,标签全是 2 字。常态字距 0.2em 是那枚墨块的呼吸,但
+     * 200% 缩放档(195 CSS px)下 6 枚页签每枚只剩 26px:2 字 13px 加字距要 31px,
+     * 实测六枚全折成两行。极窄档去字距后文字 26px 正好填满,但**边界抖动仍会折**
+     * (实测仍 2 行),故两条一起要:tracking 归零 + nowrap。
+     */
+    const tabs = FILES.find((f) => f.path === "components/common/InkTabs.vue");
+    const cls = /class="([^"]*font-kai[^"]*)"/.exec(tabs?.src ?? "")?.[1];
+    expect(cls, "页签的类名要定位得到 —— 定位不到这条就是空转").toBeTruthy();
+    expect(cls, "常态保留那口呼吸(字距 0.2em)").toContain("tracking-[0.2em]");
+    expect(cls, "极窄档去字距").toContain("tinylens:tracking-normal");
+    expect(cls, "极窄档锁一行(只去字距仍会因边界抖动折行)").toContain("tinylens:whitespace-nowrap");
+  });
+
+  it("极窄档的顶栏与行要放开 —— 三段横排塞不下时不许把标题压成一字一行", () => {
+    /*
+     * 195 CSS px(390 按 200%)实测,三处同构的「左返回 / 中标题 / 右动作」顶栏:
+     *   坊市 中间列 8px / 副题 14 行、整块 221px;门庭 20px / 16 行、266px;
+     *   货架行三段横排时名称块 4px / 10 行、行高 140px。
+     * 放开后(顶栏纵向堆叠、名称块占满整行):113 / 120 / 86px,标题 129px / 4 行。
+     * 320 / 390 两档读数一分未动 —— 所以只钉"极窄档那一侧有放开",不钉具体高度。
+     */
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    // 坊市顶栏 + 悬赏板题头 + 货架/悬赏行
+    expect(market?.src, "坊市顶栏极窄档要纵向堆叠").toMatch(
+      /class="card-ink flex[^"]*tinylens:flex-col/,
+    );
+    expect(market?.src, "悬赏板题头极窄档要纵向堆叠").toMatch(
+      /justify-between pr-1 tinylens:flex-col/,
+    );
+    expect(market?.src, "货架与悬赏行极窄档要允许换行").toMatch(/tinylens:flex-wrap/);
+    expect(market?.src, "名称块极窄档要占满整行").toMatch(/tinylens:basis-full/);
+    // 门庭顶栏
+    expect(appr?.src, "门庭顶栏极窄档要纵向堆叠").toMatch(/tinylens:flex tinylens:flex-col/);
+    expect(appr?.src, "弟子行极窄档要允许换行").toMatch(/flex flex-wrap items-center gap-2/);
+  });
+
+  it("极窄档的阈值只住一处 —— 不许各处再手写 max-[Npx]", () => {
+    /*
+     * 阈值一旦各处各写一遍,就是两本账:改一处另一处不动,同一台 200% 的机器上一处
+     * 放开一处不放开,而排版自检只判溢出/越界,看不出这是"两本账"而不是"没坏"。
+     * Tailwind 的 JIT 扫不到 `max-[${X}px]` 这类拼接(会静默不生成媒体查询),所以
+     * 任意值写法本来就必须是字面量 —— 索性把它收成配置里的一个具名变体(tinylens),
+     * 这里守"别人不许再抄数值"。
+     */
+    const strays = FILES.filter((f) => /max-\[\d+px\]:grid-cols-/.test(f.src)).map((f) => f.path);
+    expect(strays, "极窄档放开列数一律走 tinylens:,不许各处手写阈值").toEqual([]);
+    const cfg = readFileSync(resolve(SRC, "../tailwind.config.js"), "utf-8");
+    const declared = [
+      ...cfg.matchAll(/addVariant\(\s*"tinylens",\s*"@media \(max-width: *(\d+)px\)"/g),
+    ].map((m) => m[1]!);
+    expect(declared, "配置里要能找到那条阈值声明(改名/删掉时这条会空转)").toHaveLength(1);
+    const users = FILES.filter((f) => /tinylens:grid-cols-/.test(f.src)).map((f) => f.path);
+    expect(users.length, "至少有一处在用这个变体").toBeGreaterThan(0);
   });
 
   it("全库不许有按钮套在按钮里 —— 读屏只念得出外层那一个", () => {

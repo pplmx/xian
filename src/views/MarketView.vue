@@ -267,15 +267,21 @@ function bountyShort(o: BountySlot): string | null {
 
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!-- 抬头 -->
-    <div class="card-ink flex items-center justify-between gap-2 px-4 py-3">
+    <!--
+      抬头:常态是一行三段(返回 / 标题+副题 / 刷新牌)。200% 缩放档(195 CSS px)实测
+      一行塞不下:中间那列被挤到 8px 宽、副题折成 14 行,整块高 221px —— 故极窄档
+      改成纵向堆叠(高 113px,三块各 129px 宽、副题 4 行)。320 / 390 两档读数不动。
+    -->
+    <div
+      class="card-ink flex items-center justify-between gap-2 px-4 py-3 tinylens:flex-col tinylens:items-stretch tinylens:gap-1"
+    >
       <button
         class="tap-row -my-1.5 py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
         @click="goBack(router, { name: 'dongfu' })"
       >
         ← 返回
       </button>
-      <div class="min-w-0 text-center">
+      <div class="min-w-0 text-center tinylens:text-left">
         <p class="font-kai text-[15px] tracking-[0.3em] text-ink">坊市</p>
         <p class="text-[10px] text-ink-faint">灵石换机缘 · 时来运转</p>
       </div>
@@ -295,11 +301,16 @@ function bountyShort(o: BountySlot): string | null {
         <div
           v-for="slot in market.stock"
           :key="slot.idx"
-          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
+          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
           :class="{ 'border-dashed border-ink/15': slot.sold }"
           :style="shelfTier(slot)"
         >
-          <div class="min-w-0 flex-1 text-[11px]">
+          <!--
+            极窄档(≤220 CSS px)这一段要占满整行:三段横排时名称块只剩 4px 宽、副题
+            折成 10 行(实测行高 140px)。放开成两行后名称块 137px / 4 行,行高 86px;
+            320 / 390 两档读数不动。
+          -->
+          <div class="min-w-0 flex-1 text-[11px] tinylens:basis-full">
             <template v-if="slot.kind === 'pill'">
               <p class="truncate">
                 {{ pillDef(slot.pillId)?.name ?? slot.pillId }}
@@ -374,12 +385,16 @@ function bountyShort(o: BountySlot): string | null {
 
     <!-- 悬赏板:商号收购 -->
     <section>
-      <div class="flex items-center justify-between pr-1">
+      <!-- 极窄档(≤220 CSS px)同一行塞不下「标题 + 一键领取 + 换新倒计时」:标题被压到
+           19px 一字一行 —— 改成纵向堆叠,320 / 390 两档不动。 -->
+      <div
+        class="flex items-center justify-between pr-1 tinylens:flex-col tinylens:items-start tinylens:gap-1"
+      >
         <SectionTitle title="悬赏板" />
         <div class="flex items-center gap-2">
           <button
             v-if="autoClaimable.length"
-            class="btn-seal min-h-[28px] !px-2.5 !py-1 text-[11px]"
+            class="btn-seal min-h-[28px] !px-2.5 !py-1 text-[11px] whitespace-nowrap"
             @click="claimAllAuto()"
           >
             一键领取({{ autoClaimable.length }})
@@ -398,10 +413,10 @@ function bountyShort(o: BountySlot): string | null {
         <div
           v-for="o in bounty.orders"
           :key="o.idx"
-          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
+          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
           :class="{ 'border-dashed border-ink/15': o.claimed }"
         >
-          <div class="min-w-0 flex-1 text-[11px]">
+          <div class="min-w-0 flex-1 text-[11px] tinylens:basis-full">
             <template v-if="o.kind === 'herb' || o.kind === 'ore'">
               <p class="truncate">募 {{ o.kind === "herb" ? "灵草" : "玄铁" }} ×{{ o.target }}</p>
               <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">

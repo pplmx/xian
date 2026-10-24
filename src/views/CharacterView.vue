@@ -129,7 +129,12 @@
     <section>
       <SectionTitle title="道躯" />
       <div class="card-ink mt-2 px-4 py-3">
-        <div class="grid grid-cols-3 gap-2 text-center">
+        <!--
+          三列在 200% 缩放档(195 CSS px)下每列只剩 38px,「48.61亿」这类九位数
+          被折成两行 —— 放开成两列(实测 68px 一行,块高 56→83,仍比一列的 129 省)。
+          阈值与器魂槽位同一条:195 < 220 ≤ 320,320 / 390 两档不受影响。
+        -->
+        <div class="grid grid-cols-3 gap-2 text-center tinylens:grid-cols-2">
           <div>
             <p class="text-[10px] text-ink-faint">攻击</p>
             <p class="tabular font-kai text-[15px] text-ink">
@@ -155,7 +160,12 @@
           可点这件事得先看得见 —— 选中那行染底并亮出「明细」,其余行才敢不吭声。
           此前全无选中态,点开之后只多出一块正文,看不出点的是哪一行。
         -->
-        <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+        <!--
+          属性名(「进阶成功率」五个字)在两列时每列只有 56.5px,名字被压成
+          11px 宽一字一列(实测 8 行里 7 行竖排)—— 极窄档放开成单列,
+          名字回到 44px 一行。两列是常态(390 档实测一分不动)。
+        -->
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1 tinylens:grid-cols-1">
           <button
             v-for="row in modRows"
             :key="row.label"

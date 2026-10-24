@@ -1716,10 +1716,19 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
  * 触达档位(全站按压口径,只记纪律不改动效):
  *   卡状全行 99 / 选择行 98 / 格小 chip 95 / 图标钮 90
  */
+  /*
+   * nowrap 是这条角色的**语义**,不是某处的装饰:挂 tap-row 的全是短动作标签
+   * (「卸下」「装配」「← 返回」「跳过播放 »」…),它们被折成两行没有任何收益,
+   * 只让人读不出这是按钮。200% 缩放档(195 CSS px)实测:坊市的「← 返回」被挤成
+   * 三行、器魂页的「卸下 / 装配」一字一行 —— 而 8 处调用点里早有 2 处(门庭、构筑)
+   * 各自手写了 whitespace-nowrap,说明它本该在这里。实测 7 页 × 195/320 两档:
+   * 统一 nowrap 后无折行、无越界、docScroll 仍等于视口宽。
+   */
   .tap-row {
     min-height: 32px;
     display: inline-flex;
     align-items: center;
+    white-space: nowrap;
   }
 }
 
