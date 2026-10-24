@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 441,
+  "round": 443,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-23T19:07:34+00:00",
+  "updated_at": "2026-10-24T04:51:07+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -3601,7 +3601,7 @@
       "version": 4,
       "created_at": "2026-09-11T17:31:16+00:00",
       "updated_at": "2026-09-18T05:18:10+00:00",
-      "touched_round": 186,
+      "touched_round": 443,
       "confidence": 0.95,
       "summary": "凡是同一件事有两处算法(在线/离线、预估/实战、展示/结算),新机制接进来时必漏一处 —— 判据:抽成一个函数,并让「另一处不得再出现原常数」成为红线"
     },
@@ -7401,7 +7401,7 @@
       "version": 4,
       "created_at": "2026-09-12T09:03:48+00:00",
       "updated_at": "2026-10-16T06:50:34+00:00",
-      "touched_round": 439,
+      "touched_round": 443,
       "summary": "可读性也是可以量的,而*禁用态*最容易被漏:设计时只想着「把它灰掉」,忘了那行字往往正是「为什么不让我点」—— 玩家最需要读的一句。判据要按「算出来的对比度」量前景与背景,而不是按设计师记得的那几个色号",
       "confidence": 0.85
     },
@@ -25983,6 +25983,108 @@
       "touched_round": 441,
       "commit": "1705892f",
       "title": "apprenticeRecruitCost 唯一实现 + store/页面接线 + 行为判据三条"
+    },
+    "ISS-333": {
+      "id": "ISS-333",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T04:22:51+00:00",
+      "updated_at": "2026-10-24T04:40:42+00:00",
+      "touched_round": 443,
+      "severity": 0.55,
+      "title": "禁用态判据只认两个手写类名,八处整块压 opacity 与暗色印面逃逸",
+      "summary": "layout-check 的 dimDisabled 只扫 .btn-seal:disabled/.btn-ghost:disabled;chip-ink 无禁用态、card-ink 当按钮压 opacity-40、导入确认框 disabled:text-ink-faint、暗色 .btn-seal:disabled 被 html[data-theme=dark] .btn-seal 盖掉。实测 1.00~2.94:1"
+    },
+    "ISS-334": {
+      "id": "ISS-334",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T04:23:01+00:00",
+      "updated_at": "2026-10-24T04:40:42+00:00",
+      "touched_round": 443,
+      "severity": 0.5,
+      "title": "角色类排在 @tailwind utilities 之后 —— 36 处工具类被同特指度的角色类静默盖掉",
+      "summary": "card-ink/chip-ink/btn-seal/btn-ghost/t-body 等角色在 utilities 之后声明,同特指度下后者赢。实测 chip-ink text-[10px] 仍是 11px、card-ink border-dashed 仍是 solid、秘境卡未解锁的虚线框从来没画出来过"
+    },
+    "TASK-451": {
+      "id": "TASK-451",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T04:23:08+00:00",
+      "updated_at": "2026-10-24T04:40:42+00:00",
+      "touched_round": 443,
+      "category": "correctness",
+      "severity": 0.55,
+      "confidence": 0.95,
+      "effort": 2,
+      "priority_score": 8.2,
+      "title": "禁用态压色不压字:补 chip-ink 与暗色印面禁用态 + 清八处整块 opacity + 判据扩到全库 :disabled"
+    },
+    "TASK-452": {
+      "id": "TASK-452",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T04:23:08+00:00",
+      "updated_at": "2026-10-24T04:40:43+00:00",
+      "touched_round": 443,
+      "category": "maintainability",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 2,
+      "priority_score": 7.4,
+      "title": "角色类移进 @layer components,让工具类重新生效"
+    },
+    "EV-461": {
+      "id": "EV-461",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T04:23:15+00:00",
+      "updated_at": "2026-10-24T04:23:15+00:00",
+      "touched_round": 443,
+      "source": "scripts/layout-check.mjs:520 dimDisabled + bun /tmp/probe-final.mjs 全路由两主题",
+      "confidence": 0.98,
+      "summary": "扩面后的判据在 16 条路由 × 两套主题上量到 46 个禁用态,修后全部 ≥3:1(修前 8 处 1.00~2.94:1);全量 3586 例全绿"
+    },
+    "EV-462": {
+      "id": "EV-462",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T04:36:49+00:00",
+      "updated_at": "2026-10-24T04:36:49+00:00",
+      "touched_round": 443,
+      "source": "bun /tmp/probe-verify.mjs + /tmp/probe-taprow.mjs (真浏览器, dist)",
+      "confidence": 0.97,
+      "summary": "层序修复后 36 处工具类全部落地:chip-ink text-[10px] 实为 10px、card-ink border-dashed 实为 dashed、bg-cinnabar/6 实为 rgba(168,63,57,.06)、tap-row inline-block 实为 inline-block;角色基线不变(card-ink 底色/圆角、btn-seal 印面、t-body 11px 均保留)"
+    },
+    "CHG-541": {
+      "id": "CHG-541",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T04:37:00+00:00",
+      "updated_at": "2026-10-24T04:51:01+00:00",
+      "touched_round": 443,
+      "commit": "8ee80cf0",
+      "title": "禁用态压色不压字 + 角色类移进 @layer components + 判据扩面",
+      "summary": "chip-ink 补禁用态、夜间印面另给一档、八处整块 opacity 改压色、layout-check 的 dimDisabled 扩到全库 :disabled 并计入祖先 opacity、uiLayering 新增禁用态与层序两组判据"
+    },
+    "EV-463": {
+      "id": "EV-463",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T04:51:07+00:00",
+      "updated_at": "2026-10-24T04:51:07+00:00",
+      "touched_round": 443,
+      "source": "commit 8ee80cf0 · bun run test 3590 例全绿 · layout-check 188 组合全绿",
+      "confidence": 0.98,
+      "summary": "提交后的全量门禁:check(vue-tsc/lint/rumdl/docs)通过、3590 例全绿、真浏览器 188 个页面×视口组合全绿(含扩面后的禁用态判据 0 红)"
     }
   },
   "edges": [
@@ -37970,6 +38072,42 @@
       "to": "COMP-007",
       "type": "located_in",
       "created_at": "2026-10-23T19:07:34+00:00"
+    },
+    {
+      "from": "TASK-451",
+      "to": "ISS-333",
+      "type": "addresses",
+      "created_at": "2026-10-24T04:23:20+00:00"
+    },
+    {
+      "from": "TASK-452",
+      "to": "ISS-334",
+      "type": "addresses",
+      "created_at": "2026-10-24T04:23:20+00:00"
+    },
+    {
+      "from": "EV-461",
+      "to": "HYP-065",
+      "type": "validates",
+      "created_at": "2026-10-24T04:23:21+00:00"
+    },
+    {
+      "from": "EV-462",
+      "to": "HYP-015",
+      "type": "validates",
+      "created_at": "2026-10-24T04:36:54+00:00"
+    },
+    {
+      "from": "CHG-541",
+      "to": "ISS-333",
+      "type": "resolves",
+      "created_at": "2026-10-24T04:40:42+00:00"
+    },
+    {
+      "from": "CHG-541",
+      "to": "ISS-334",
+      "type": "resolves",
+      "created_at": "2026-10-24T04:40:42+00:00"
     }
   ]
 }
