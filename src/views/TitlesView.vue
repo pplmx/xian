@@ -33,7 +33,13 @@
         {{ TITLES.length }} 顶名号皆入囊中 —— 这一世的名,走到头了
       </p>
       <div class="card-ink divide-y divide-ink/6 px-4">
-        <div v-for="row in titleRows" :key="row.def.id" class="flex items-center gap-3 py-2.5">
+        <!-- 极窄档(≤220 CSS px):左侧徽章 + 名字/描述/词条三行 + 右侧佩/藏按钮,中间那块
+             被压到 35px(「修炼速度 +2%」一字一行)—— 允许换行。320 / 390 两档不动。 -->
+        <div
+          v-for="row in titleRows"
+          :key="row.def.id"
+          class="flex flex-wrap items-center gap-3 py-2.5"
+        >
           <span
             class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-kai"
             :class="

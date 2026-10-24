@@ -139,7 +139,12 @@
     </div>
     <template v-if="learned" #footer>
       <div class="flex flex-col gap-2">
-        <div class="flex gap-2">
+        <!--
+          两枚 flex-1 并排(设为主修 / 进修)在 200% 缩放档(195 CSS px)下每枚只剩 31px:
+          「进修 · 尚差 12 残页」被挤成一字一行、「修到顶 · 尚差 …」折成两行。极窄档改成
+          纵向堆叠,各自整行。320 / 390 两档不动。
+        -->
+        <div class="flex gap-2 tinylens:flex-col">
           <button
             v-if="def?.type === 'main'"
             class="btn-seal flex-1"

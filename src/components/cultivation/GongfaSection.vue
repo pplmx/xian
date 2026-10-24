@@ -170,7 +170,16 @@
         参悟池还剩几部也报出来:藏经阁是「花残页赌一部没见过的」,
         玩家看不到池子还有多大,就无从判断这一注值不值。
       -->
-      <button class="btn-ghost w-full" :disabled="!canComprehend" @click="comprehendGongfa()">
+      <!--
+        btn-ghost 是 inline-flex:主文与后面那句「· 尚差 N 残页」在同一行挤着放。
+        200% 缩放档(195 CSS px)下那一句只剩 31px 宽,一字一行(实测 45px 高)——
+        加 flex-wrap 让它在放不下时整块落到第二行。320 / 390 两档不动。
+      -->
+      <button
+        class="btn-ghost w-full flex-wrap"
+        :disabled="!canComprehend"
+        @click="comprehendGongfa()"
+      >
         于藏经阁参悟功法(残页×{{ COMPREHEND_PAGE_COST }})
         <span v-if="comprehendLeft === 0" class="ml-1 text-[10px] text-ink-faint"
           >· 此境功法已尽数参悟</span

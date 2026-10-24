@@ -58,6 +58,25 @@ describe("排版量法口径", () => {
     expect(SCRIPT).toContain("if (info.deadControls.length)");
   });
 
+  it("缩放档(200%)要判竖排与短标签折行 —— 这一档此前只判四条", () => {
+    /*
+     * 195 CSS px(390 按 200%)是 AGENTS 明写要防折行的那一档,而 zoomProblems 只判
+     * 横向溢出 / 外壳被滚偏 / 越界元素 / 主值行折行四条 —— 竖排与按钮折行一直没接,
+     * 实测 14 个页面在这一档把标题与属性名压成一字一行,门一路全绿。
+     *
+     * 现在两条接上了,但**按钮折行只算短标签**(≤6 字):整宽长文案按钮(「散尽修为,
+     * 重入轮回(清空存档)」这类)折行是读得出来的正常换行,不该判红 —— 一条会误伤
+     * 正常排版的判据,逼人做的不是修界面而是削判据。
+     */
+    expect(SCRIPT).toContain("文字被挤成竖排(200%)");
+    expect(SCRIPT).toContain("短动作标签被折行(200%)");
+    // 短标签的判据要真的按字数筛(而不是把整张折行表都报上来)
+    // 用 Array.from 而不是 [...text]:按码点数字数,别把代理对拆成两半
+    // (oxlint 的 no-misused-spread 也指着这条)
+    expect(SCRIPT).toMatch(/Array\.from\(text\)\.length <= 6/);
+    expect(SCRIPT).toContain("info.verticalTexts?.length");
+  });
+
   it("控件套控件的判据:宿主按按钮语义选,内层排除 -1,且带活信号", () => {
     /*
      * layout-check 的 nestedControls 报的是「读屏只念得出外层那一个」。三个口径都要钉:

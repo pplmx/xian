@@ -1162,6 +1162,24 @@ function zoomProblems(info, tag) {
   }
   if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
   if (info.valueRows?.length) problems.push(`主值行在 200% 下折行:${info.valueRows.join(" | ")}`);
+  /*
+   * 这一档此前只判上面四条。竖排与按钮折行两条一直没接 —— 195 CSS px 是最容易把
+   * 「一行几块横排」挤成一条的档位,而它恰恰是 AGENTS 明写要防的那一档
+   * (按 390px 与 200% 缩放防折行)。缺口的代价实测过:14 个页面在这一档把标题、
+   * 属性名、动作键压成一字一行,门一路全绿。
+   *
+   * 先逐页修完再收口(见 TASK-458):一把放开就是十几处同时红,逼人削判据。
+   * 现在全库竖排已清零,只剩 4 处「整宽长文案按钮」的合理折行 —— 那些是**读得出来**的
+   * 正常换行(一句 12 字的动作说明),故按钮折行这条只报「短标签」:与 problemsOf 里
+   * 那条同一把尺子,但只算 6 字以内的动作词。
+   */
+  if (info.verticalTexts?.length)
+    problems.push(`文字被挤成竖排(200%):${info.verticalTexts.join(" | ")}`);
+  const shortWrapped = (info.wrappedButtonLabels ?? []).filter((t) => {
+    const text = /«([^»]*)»/.exec(t)?.[1] ?? "";
+    return Array.from(text).length <= 6;
+  });
+  if (shortWrapped.length) problems.push(`短动作标签被折行(200%):${shortWrapped.join(" | ")}`);
   return problems;
 }
 
