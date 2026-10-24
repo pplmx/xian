@@ -196,7 +196,8 @@ async function runRoute(route) {
         .map((b) => (b.textContent || "").trim().slice(0, 6))
         .join(",");
       const theme = document.documentElement.getAttribute("data-theme") ?? "";
-      return `${text.length}:${full.length}:${hash}|${theme}|${pressed}|${document.querySelectorAll(".modal-panel").length}|${document.querySelectorAll("[class*=toast]").length}`;
+      // 路由进指纹:导航类点击「换了页」就是它的反应(见下面 re-poll 那段)
+      return `${location.hash}|${text.length}:${full.length}:${hash}|${theme}|${pressed}|${document.querySelectorAll(".modal-panel").length}|${document.querySelectorAll("[class*=toast]").length}`;
     });
   }
 
@@ -301,9 +302,25 @@ async function runRoute(route) {
     await step(`${route} 点「${text}」`, () => b.click({ timeout: 800 }).catch(() => {}));
     clicked += 1;
     await page.waitForTimeout(160);
+    /*
+     * 导航类点击要等它真的换页,否则 160ms 的采样的确"看不出变化"。
+     *
+     * 实测:/dongfu 与 /apprentice 的「← 返回」常驻这张表 —— goBack 走的是
+     * router.back() / router.push(父页),而路由是懒加载分包 + 页面淡入,160ms 时
+     * 新页还没画出来。同一张表里躺着两条"看着像事故、其实是判据采样太早"的行,
+     * 真事故就会被当成噪声忽略(与本文件那条 `aria-pressed` 的教训同一个病)。
+     *
+     * 改法:指纹没变时再等一次(总共 ~560ms)复检;仍然一字不动才记 silent。
+     * 只多花一次 evaluate 的量,且只在"看起来没反应"的时候才花。
+     */
     if (errors.length > before) errors[errors.length - 1].where = `${route} 点「${text}」`;
-    else if (!alreadyPressed && (await fingerprint()) === beforeFp)
-      silent.push(`${route} 点「${text}」`);
+    else if (!alreadyPressed) {
+      const after = await fingerprint();
+      if (after === beforeFp) {
+        await page.waitForTimeout(400);
+        if ((await fingerprint()) === beforeFp) silent.push(`${route} 点「${text}」`);
+      }
+    }
     await scanNumericLeaks(`${route} 点「${text}」后泄漏`);
     await step(`${route} 弹窗内逐枚(${text})`, () => clickInsideModal(route));
     // 点开弹窗后关掉,免得挡住后面的按钮
