@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 448,
+  "round": 449,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-24T11:18:30+00:00",
+  "updated_at": "2026-10-24T12:23:36+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26437,6 +26437,80 @@
       "touched_round": 447,
       "confidence": 0.8,
       "summary": "读数型判据的失效方式不是\"漏判\",而是**采样窗口比被观测量短**:懒加载分包 + 路由过渡让\"反应\"发生在判据已经下结论之后。修法是给\"看起来没反应\"那一支多一次复检(不在正常路径上加开销),并把被观测量本身(路由)放进指纹 —— 而不是调大全局等待,那会把整门时间乘上去换一条噪声"
+    },
+    "ISS-342": {
+      "id": "ISS-342",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T12:09:43+00:00",
+      "updated_at": "2026-10-24T12:09:43+00:00",
+      "touched_round": 448,
+      "title": "缩放档(195 CSS px)只判四条,竖排与按钮折行没接上 —— 实测 14 页有挤压读数",
+      "severity": 0.6,
+      "summary": "docs 第四十一条原写「判据与巡页共用同一把尺子」,实际 zoomProblems 只挑横向溢出 / 外壳被滚偏 / 越界元素 / 主值行折行四条;verticalTexts 与 wrappedButtonLabels 在这一档没接。独立量了一遍(同一口径,不改门):200%→195 下 14 页报出挤压 —— /character 属性名 11px 一字一行 + 三枚数值按钮折行、/market「← 返回」11px 竖排 +「一键领取(2)」39px 折行、/settings「夜间模式」「战报速度」竖排、/adventure「入 境 →」21px 竖排、/cultivation「修为未至圆满」129px 折行、/codex 四枚页签 26px 折行、/apprentice 顶栏标题与副题、/dongfu 时长档 28px、/build「背水流」、/legacy「第 3 世」、/celestial「纪元变迁史 →」、/ 首页两处。一把把两条判据接进缩放档 = 十几处同时红,必须分页做。本轮先修 /souls(三列放开两列)"
+    },
+    "TASK-458": {
+      "id": "TASK-458",
+      "type": "task",
+      "status": "active",
+      "version": 2,
+      "created_at": "2026-10-24T12:09:44+00:00",
+      "updated_at": "2026-10-24T12:21:25+00:00",
+      "touched_round": 448,
+      "category": "correctness",
+      "title": "缩放档挤压:分页修完 14 页,再把 verticalTexts / wrappedButtonLabels 接进 zoomProblems",
+      "summary": "顺序:一页一修一测(195 档量名字与动作键的行数、docScroll)。全清之后才把两条判据加进 zoomProblems —— 门与读数同源,否则加早了门就长红,逼人削判据",
+      "severity": 0.7,
+      "confidence": 0.9,
+      "effort": 5
+    },
+    "CHG-549": {
+      "id": "CHG-549",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T12:21:41+00:00",
+      "updated_at": "2026-10-24T12:22:37+00:00",
+      "touched_round": 448,
+      "commit": "050b0af9",
+      "title": "极窄档放开两列 + 动作键/返回 nowrap + 一条判据 +docs 第四十一条口径修正",
+      "summary": "max-[220px]:grid-cols-2(格宽 49→78px);「卸下 / 装配」「← 天界」补 whitespace-nowrap(同页那枚宽卡的章法键不扩进来);uiLayering 钉三列/放开/不折;docs 修正「共用同一把尺子」为「只判四条」并记下 14 页缺口"
+    },
+    "EV-470": {
+      "id": "EV-470",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T12:21:41+00:00",
+      "updated_at": "2026-10-24T12:21:41+00:00",
+      "touched_round": 448,
+      "source": "bun /tmp/zoom2.mjs(195/390/320 三档,复用门内两条判据原式)+ /tmp/probe-slot-geom.mjs + bg_92 排版门 + 全量 3602 例",
+      "confidence": 0.95,
+      "summary": "195 档实测:修前格宽 49px,「显形·锋魂」竖排、「卸下/装配」31px 两行;修后格宽 78px,名字一行、动作键 36×32 一行,esc/off 皆空,docScroll 195。320/390 两档读数与修前完全一致(仍三列、格宽 91/114)。同口径扫全库:195 档 14 页有挤压读数,390 与 320 两档为零 —— 缺口只在缩放档"
+    },
+    "ISS-343": {
+      "id": "ISS-343",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T12:22:36+00:00",
+      "updated_at": "2026-10-24T12:22:37+00:00",
+      "touched_round": 448,
+      "title": "器魂槽位三列在 195 CSS px 下把名字与动作键挤成竖排",
+      "severity": 0.5,
+      "summary": "200% 缩放档每格只剩 49px:「显形·锋魂」折两截、「卸下 / 装配」31px 一字一行。AGENTS 的移动端口径要按 390px 与 200% 缩放防折行,这一页两样都坏。门在这一档不判竖排(见 ISS-342),所以它一直是绿的"
+    },
+    "HYP-127": {
+      "id": "HYP-127",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T12:22:37+00:00",
+      "updated_at": "2026-10-24T12:22:37+00:00",
+      "touched_round": 448,
+      "confidence": 0.85,
+      "summary": "缩放档不是宽度档:195 CSS px(390 真机 ×200%)与 320 小屏是两回事,同一处布局在 320 绿、在 195 坏。竖排/折行这一族只在缩放档现形,而门在这一档只挑了四条判据 —— 补它必须逐页修完再收口,否则一加就十几处同时红,逼人削判据"
     }
   },
   "edges": [
@@ -38586,6 +38660,30 @@
       "to": "HYP-126",
       "type": "validates",
       "created_at": "2026-10-24T11:18:19+00:00"
+    },
+    {
+      "from": "TASK-458",
+      "to": "ISS-342",
+      "type": "addresses",
+      "created_at": "2026-10-24T12:21:41+00:00"
+    },
+    {
+      "from": "CHG-549",
+      "to": "ISS-343",
+      "type": "resolves",
+      "created_at": "2026-10-24T12:22:37+00:00"
+    },
+    {
+      "from": "CHG-549",
+      "to": "TASK-458",
+      "type": "implements",
+      "created_at": "2026-10-24T12:22:37+00:00"
+    },
+    {
+      "from": "EV-470",
+      "to": "HYP-127",
+      "type": "validates",
+      "created_at": "2026-10-24T12:22:37+00:00"
     }
   ]
 }
