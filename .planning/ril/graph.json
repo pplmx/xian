@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 444,
+  "round": 445,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-24T06:43:42+00:00",
+  "updated_at": "2026-10-24T08:51:15+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26161,10 +26161,10 @@
     "TASK-453": {
       "id": "TASK-453",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-24T06:43:00+00:00",
-      "updated_at": "2026-10-24T06:43:00+00:00",
+      "updated_at": "2026-10-24T07:13:18+00:00",
       "touched_round": 444,
       "category": "detectability",
       "severity": 0.35,
@@ -26185,6 +26185,69 @@
       "commit": "380e372c",
       "title": "触控下限扩到 28×28 +判据自证 +docs/设计 doc",
       "summary": "修复三处窄目标(修为数、来路、章法);判据扩到 width+height 同判;docs/design.md 第四十三条更新为『两个轴』"
+    },
+    "ISS-337": {
+      "id": "ISS-337",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T08:47:13+00:00",
+      "updated_at": "2026-10-24T08:51:15+00:00",
+      "touched_round": 445,
+      "title": "器魂空槽恒挂 role=button —— 读屏念出一个按不动的「空 按钮」",
+      "summary": "槽位卡无论有没有器魂都声明按钮语义:tabindex 才给空槽 -1、aria-label 写着「空」。点它只把 soulDetail 赋成 null,弹窗连开都不开。声明了 affordance 却不给操作,比不声明更坏:人会以为自己漏做了什么。全库再无第二处同类(通用判据 deadControls 逐页扫过:0 命中)。",
+      "severity": 0.4
+    },
+    "TASK-454": {
+      "id": "TASK-454",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T08:47:14+00:00",
+      "updated_at": "2026-10-24T08:51:15+00:00",
+      "touched_round": 445,
+      "category": "accessibility",
+      "title": "按钮语义只随「真有器魂」出现 + 通用 deadControls 判据",
+      "summary": "SoulsView 收 soulAt 为唯一出口(role/tabindex/读屏名/点击四样同源);layout-check 新增 deadControls 挂进 problemsOf;两条静态判据(uiLayering + layoutMeasure);docs 第四十四条",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 2,
+      "priority_score": 4.2
+    },
+    "CHG-545": {
+      "id": "CHG-545",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-24T08:48:26+00:00",
+      "updated_at": "2026-10-24T08:51:15+00:00",
+      "touched_round": 445,
+      "commit": "03a72dd8",
+      "title": "空槽不声明按钮语义 + deadControls 通用判据 +第四十四条",
+      "summary": "SoulsView 收 soulAt 为唯一出口;layout-check deadControls 挂 problemsOf(豁免 roving tabindex/置灰/零盒子);uiLayering 钉写法、layoutMeasure 钉判据本体;03a72dd8"
+    },
+    "EV-466": {
+      "id": "EV-466",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T08:48:26+00:00",
+      "updated_at": "2026-10-24T08:48:26+00:00",
+      "touched_round": 444,
+      "source": "bun /tmp/probe-slot2.mjs(真浏览器 dist)+ /tmp/probe-deadbtn{,2}.mjs + vp test 3596 例 + 排版自检 188 页",
+      "confidence": 0.97,
+      "summary": "后期档夹具 3 槽装 2 缕:有器魂槽 role=button/tabindex=0/名「显形·锋魂 详情」,空槽三项皆无且虚线框保留;故障注入(把 HEAD 那份源码喂进四条断言)全部会红;判据扫全库 17 路由 + 弹窗 + 开局两页 0 命中"
+    },
+    "HYP-124": {
+      "id": "HYP-124",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-24T08:48:26+00:00",
+      "updated_at": "2026-10-24T08:48:26+00:00",
+      "touched_round": 444,
+      "confidence": 0.85,
+      "summary": "无障碍的漏点不在「少了 aria-label」而在**声明与行为不同源**:同一句「能不能操作」被 role、tabindex、读屏名、点击四样各抄一份,漏改一处就产出一个念得出来却按不动的控件。判据要扫「看得见却按不动」这一整族,而不是逐页补名字"
     }
   },
   "edges": [
@@ -38226,6 +38289,36 @@
       "to": "ISS-336",
       "type": "addresses",
       "created_at": "2026-10-24T06:43:42+00:00"
+    },
+    {
+      "from": "CHG-544",
+      "to": "ISS-336",
+      "type": "resolves",
+      "created_at": "2026-10-24T08:23:13+00:00"
+    },
+    {
+      "from": "TASK-454",
+      "to": "ISS-337",
+      "type": "addresses",
+      "created_at": "2026-10-24T08:49:42+00:00"
+    },
+    {
+      "from": "CHG-545",
+      "to": "ISS-337",
+      "type": "resolves",
+      "created_at": "2026-10-24T08:49:42+00:00"
+    },
+    {
+      "from": "CHG-545",
+      "to": "TASK-454",
+      "type": "implements",
+      "created_at": "2026-10-24T08:49:42+00:00"
+    },
+    {
+      "from": "EV-466",
+      "to": "HYP-124",
+      "type": "validates",
+      "created_at": "2026-10-24T08:49:42+00:00"
     }
   ]
 }
