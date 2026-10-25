@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 451,
+  "round": 452,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-25T14:39:20+00:00",
+  "updated_at": "2026-10-25T15:36:45+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26632,6 +26632,54 @@
       "source": "layout-check 实测:后期档 195 档四处挤压 → 修后全绿(34 页缩放档通过);修前 320-late 报「外壳被滚偏 4px / 越界 a.-my-2 / 竖排 回收化尘」全部来自卷轴本身",
       "summary": "修前修后同一门对比",
       "confidence": 0.95
+    },
+    "ISS-346": {
+      "id": "ISS-346",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T15:36:33+00:00",
+      "updated_at": "2026-10-25T15:36:33+00:00",
+      "touched_round": 452,
+      "title": "归来卷轴在 195 CSS px 下收益行各自折两行 —— 且它只在开局弹一次,主巡页与缩放档都碰不到",
+      "summary": "BaseModal 四层各 20px 内边距让 155px 面板只剩 113px 行内宽;「修为」41px 与「+46.39兆」48px 并排时两段各折两行。它是玩家每几天见一次的屏",
+      "severity": 0.5,
+      "confidence": 0.95
+    },
+    "CHG-555": {
+      "id": "CHG-555",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T15:36:37+00:00",
+      "updated_at": "2026-10-25T15:36:37+00:00",
+      "touched_round": 452,
+      "title": "BaseModal 极窄档收窄内边距 + 归来卷轴行上下叠 + 三处输入框补可访问名",
+      "commit": "e9c64d2d"
+    },
+    "EV-473": {
+      "id": "EV-473",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T15:36:37+00:00",
+      "updated_at": "2026-10-25T15:36:37+00:00",
+      "touched_round": 452,
+      "source": "layout-check 实测:改前 ✗ 归来卷轴在 200% 下收益行的数值折成多行(2 行 +63.27兆 / 2 行 +8.037亿 / 2 行 +10.32兆 / 3 行 7 件·器灵尘+13 / 2 行 9 载);改后全绿,面板 155→171px、行内 113→145px",
+      "summary": "修前修后同一门",
+      "confidence": 0.95
+    },
+    "HYP-129": {
+      "id": "HYP-129",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T15:36:42+00:00",
+      "updated_at": "2026-10-25T15:36:42+00:00",
+      "touched_round": 452,
+      "title": "只在开局弹一次的浮层需要单独量:巡页前的 clearOverlays 会把它收掉",
+      "summary": "归来卷轴 :closable=false,巡页与缩放档那一遍都碰不到它;只有后期档开局那一步能量。这类「只出现一次」的界面是判据的系统性盲区",
+      "confidence": 0.85
     }
   },
   "edges": [
@@ -38853,6 +38901,18 @@
       "to": "HYP-128",
       "type": "validates",
       "created_at": "2026-10-25T14:39:20+00:00"
+    },
+    {
+      "from": "CHG-555",
+      "to": "ISS-346",
+      "type": "resolves",
+      "created_at": "2026-10-25T15:36:45+00:00"
+    },
+    {
+      "from": "EV-473",
+      "to": "HYP-129",
+      "type": "validates",
+      "created_at": "2026-10-25T15:36:45+00:00"
     }
   ]
 }
