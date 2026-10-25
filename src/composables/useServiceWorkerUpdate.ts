@@ -33,11 +33,36 @@ export function useServiceWorkerUpdate(
     if (navigator.serviceWorker.controller) onUpdate?.();
   };
 
-  registration.addEventListener("updatefound", () => {
+  /**
+   * `installing` 那一枚的 statechange 监听:每来一个新 worker 挂一条,装好(installed)
+   * 或作废(redundant)之后就摘掉 —— 否则每检测到一次更新都在那一枚 worker 上多留一条,
+   * 而 worker 对象会活到页面重载。stop() 时再把当前那条一并摘掉。
+   *
+   * 摘的是**监听本身**(worker.removeEventListener),不是「调一次 handler」——
+   * 后者在 installing 这种非终态上手是空的,监听照样挂着(实测:同一个 updatefound
+   * 派发两次就叠成两条)。
+   */
+  let detachInstaller: { worker: ServiceWorker; handler: () => void } | null = null;
+
+  const detach = (): void => {
+    if (!detachInstaller) return;
+    detachInstaller.worker.removeEventListener("statechange", detachInstaller.handler);
+    detachInstaller = null;
+  };
+
+  const onUpdateFound = (): void => {
     const installing = registration.installing;
     if (!installing) return;
-    installing.addEventListener("statechange", () => handleInstallerState(installing));
-  });
+    detach();
+    const onState = (): void => {
+      handleInstallerState(installing);
+      if (installing.state === "installed" || installing.state === "redundant") detach();
+    };
+    installing.addEventListener("statechange", onState);
+    detachInstaller = { worker: installing, handler: onState };
+  };
+
+  registration.addEventListener("updatefound", onUpdateFound);
 
   // updatefound 只在后台检测发现新脚本时派发;注册完成后主动要求检测一次,
   // 免得更新恰好发生在注册那一下被漏掉。
@@ -56,8 +81,14 @@ export function useServiceWorkerUpdate(
       }
       location.reload();
     },
+    /**
+     * 停监听:标志只是「不再回调」,挂在 registration 上的那条监听得真摘掉 ——
+     * registration 活到页面卸载,不摘就跟着活到最后(App 卸载后它仍会解构闭包)。
+     */
     stop() {
       stopped = true;
+      registration.removeEventListener("updatefound", onUpdateFound);
+      detach();
     },
   };
 }

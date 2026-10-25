@@ -10,7 +10,7 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { useServiceWorkerUpdate } from "./useServiceWorkerUpdate";
 
-/** 假 installing worker:可手动推 state,捕获 statechange 监听 */
+/** 假 installing worker:可手动推 state,捕获 statechange 监听(可摘) */
 function makeInstalling() {
   const listeners: Array<() => void> = [];
   const worker = {
@@ -18,18 +18,25 @@ function makeInstalling() {
     addEventListener(type: string, fn: () => void) {
       if (type === "statechange") listeners.push(fn);
     },
+    removeEventListener(type: string, fn: () => void) {
+      if (type !== "statechange") return;
+      const i = listeners.indexOf(fn);
+      if (i >= 0) listeners.splice(i, 1);
+    },
     postMessage: vi.fn(),
   };
   return {
     worker,
+    /** 当前挂着的 statechange 监听数 —— 「装好就摘」与「stop 要摘」两条判据靠它 */
+    listenerCount: () => listeners.length,
     setState(s: ServiceWorkerState) {
       worker.state = s;
-      for (const fn of listeners) fn();
+      for (const fn of listeners.slice()) fn();
     },
   };
 }
 
-/** 假 registration:捕获 updatefound 监听,记下 update() 调用 */
+/** 假 registration:捕获 updatefound 监听(可摘),记下 update() 调用 */
 function makeRegistration(installing: ReturnType<typeof makeInstalling> | null) {
   const updateFoundListeners: Array<() => void> = [];
   const registration = {
@@ -38,12 +45,19 @@ function makeRegistration(installing: ReturnType<typeof makeInstalling> | null) 
     addEventListener(type: string, fn: () => void) {
       if (type === "updatefound") updateFoundListeners.push(fn);
     },
+    removeEventListener(type: string, fn: () => void) {
+      if (type !== "updatefound") return;
+      const i = updateFoundListeners.indexOf(fn);
+      if (i >= 0) updateFoundListeners.splice(i, 1);
+    },
     update: vi.fn(() => Promise.resolve()),
   };
   return {
     registration,
+    /** 当前挂着的 updatefound 监听数 —— stop 有没有真摘掉,看这个 */
+    listenerCount: () => updateFoundListeners.length,
     found: () => {
-      for (const fn of updateFoundListeners) fn();
+      for (const fn of updateFoundListeners.slice()) fn();
     },
   };
 }
@@ -97,11 +111,13 @@ describe("useServiceWorkerUpdate · 更新提示", () => {
     expect(onUpdate).not.toHaveBeenCalled();
     installing.setState("installed");
     expect(onUpdate).toHaveBeenCalledTimes(1);
-    // 边界现状:同一次 statechange 若重复派发 installed,handleInstallerState
-    // 不去重、onUpdate 会再调 —— 浏览器的 statechange 只在真实状态跃迁时派发,
-    // installed 天然只来一次,故不算违约;此处记录现状,防后人误以为有去重守卫。
+    /*
+     * 重复派发 installed 不再重复提示:终态(installed / redundant)一到就把
+     * statechange 监听摘掉,第二下根本没有监听可派发。
+     * 此前只置一个「不再回调」的标志做不到这一点 —— 提示会连着亮两次。
+     */
     installing.setState("installed");
-    expect(onUpdate).toHaveBeenCalledTimes(2);
+    expect(onUpdate).toHaveBeenCalledTimes(1);
   });
 
   it("stop() 之后才装好的新版本:不再提示", () => {
@@ -136,6 +152,58 @@ describe("useServiceWorkerUpdate · 更新提示", () => {
     registration.found();
     second.setState("installed");
     expect(onUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("useServiceWorkerUpdate · 监听要真摘掉", () => {
+  /*
+   * stop() 原先只置一个 stopped 标志:挂在 registration 上的 updatefound 监听照样活着,
+   * 而 registration 活到页面卸载 —— App 卸载之后它仍抓着闭包(含 ui store 的那条
+   * 回调链)。标志能挡住「不再提示」,挡不住「监听还在」;两件事分开判。
+   */
+  it("stop() 摘掉 updatefound 监听 —— 不只是置一个不再回调的标志", () => {
+    stubBrowser({} as ServiceWorker);
+    const installing = makeInstalling();
+    const { registration, listenerCount } = makeRegistration(installing);
+    const handle = useServiceWorkerUpdate(registration as unknown as ServiceWorkerRegistration);
+    expect(listenerCount(), "装上之后要挂着一条").toBe(1);
+    handle.stop();
+    expect(listenerCount(), "stop 之后要真摘掉").toBe(0);
+  });
+
+  it("stop() 也摘掉 installing 上那条 statechange", () => {
+    stubBrowser({} as ServiceWorker);
+    const installing = makeInstalling();
+    const { registration, found } = makeRegistration(installing);
+    const handle = useServiceWorkerUpdate(registration as unknown as ServiceWorkerRegistration);
+    found();
+    expect(installing.listenerCount(), "updatefound 之后在那一枚上挂一条").toBe(1);
+    handle.stop();
+    expect(installing.listenerCount(), "stop 之后 worker 上不留监听").toBe(0);
+  });
+
+  it("装好(installed)就摘 —— 同一个 worker 不重复挂、也不残留", () => {
+    stubBrowser({} as ServiceWorker);
+    const installing = makeInstalling();
+    const { registration, found } = makeRegistration(installing);
+    const onUpdate = vi.fn();
+    useServiceWorkerUpdate(registration as unknown as ServiceWorkerRegistration, onUpdate);
+    found();
+    found(); // 同一个 updatefound 派发两次:第二条不该把第一条留下
+    expect(installing.listenerCount(), "重复派发不该叠加监听").toBe(1);
+    installing.setState("installed");
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(installing.listenerCount(), "装好之后那条自己摘掉").toBe(0);
+  });
+
+  it("redundant(装失败/被顶掉)同样摘掉 —— 不会再有 installed", () => {
+    stubBrowser({} as ServiceWorker);
+    const installing = makeInstalling();
+    const { registration, found } = makeRegistration(installing);
+    useServiceWorkerUpdate(registration as unknown as ServiceWorkerRegistration);
+    found();
+    installing.setState("redundant");
+    expect(installing.listenerCount()).toBe(0);
   });
 });
 
