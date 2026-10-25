@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 453,
+  "round": 454,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-25T15:56:04+00:00",
+  "updated_at": "2026-10-25T16:07:06+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26605,7 +26605,7 @@
       "version": 1,
       "created_at": "2026-10-25T14:39:08+00:00",
       "updated_at": "2026-10-25T14:39:08+00:00",
-      "touched_round": 451,
+      "touched_round": 454,
       "title": "后期档夹具要覆盖「长数字 + 满屏内容」那一档,而不只是空档",
       "summary": "空档量不出 195 宽上真正的难处:九位数灵石、成套装备、在途秘境全挤在一个布局视口里。后期档补一遍后当场量出四处挤压,而此前 320 / 缩放两遍都是空档 + 被卷轴遮住",
       "confidence": 0.9
@@ -26715,6 +26715,42 @@
       "touched_round": 453,
       "source": "layout-check:缩放档量到的页数 35 → 39(归来卷轴 / 渡劫结果 / 转世三步 / 顿悟与巡游各一);全绿",
       "summary": "尺子接上之后覆盖数上升",
+      "confidence": 0.95
+    },
+    "ISS-348": {
+      "id": "ISS-348",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T16:06:55+00:00",
+      "updated_at": "2026-10-25T16:06:55+00:00",
+      "touched_round": 454,
+      "title": "欢迎页在 195 CSS px 下把主钮折成两行、三枚底链压成 25px 宽的四字竖排",
+      "summary": "留白 32px 后内容宽只剩 131px;主钮 4 个 17px 字加 0.3em 字距放不下;底链并排要 44×3 被压窄,竖排的根因是被压窄而不是字多。它是玩家看到的第一屏,而它没有存档才可见",
+      "severity": 0.55,
+      "confidence": 0.95
+    },
+    "CHG-557": {
+      "id": "CHG-557",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T16:07:01+00:00",
+      "updated_at": "2026-10-25T16:07:01+00:00",
+      "touched_round": 454,
+      "title": "欢迎页主钮极窄档收字距锁一行 + 底链换行且每枚 shrink-0 nowrap + 开局前两页各过缩放档",
+      "commit": "b609d775"
+    },
+    "EV-475": {
+      "id": "EV-475",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T16:07:01+00:00",
+      "updated_at": "2026-10-25T16:07:01+00:00",
+      "touched_round": 454,
+      "source": "layout-check 实测:改前 /welcome 在 195 下「开 始 游 戏」131×79 折行、三枚底链各 25×45 竖排;改后开局前两页在缩放档零读数,缩放档覆盖页数 39 → 42",
+      "summary": "修前修后同一门",
       "confidence": 0.95
     }
   },
@@ -38961,6 +38997,18 @@
       "to": "HYP-129",
       "type": "validates",
       "created_at": "2026-10-25T15:56:04+00:00"
+    },
+    {
+      "from": "CHG-557",
+      "to": "ISS-348",
+      "type": "resolves",
+      "created_at": "2026-10-25T16:07:05+00:00"
+    },
+    {
+      "from": "EV-475",
+      "to": "HYP-128",
+      "type": "validates",
+      "created_at": "2026-10-25T16:07:06+00:00"
     }
   ]
 }
