@@ -6305,7 +6305,8 @@ async function taskIosNotice() {
 }
 
 /**
- * 浮层在 200% 缩放档:页面上点得开的那些弹窗(装备详情 / 丹房 / 器魂 / 灵脉)。
+ * 浮层在 200% 缩放档:页面上点得开的那些弹窗(装备详情 / 丹房 / 器魂 / 灵脉 /
+ * 人物读数详情 / 一键分解 / 关于此作 / 隐私政策)。
  *
  * 与「只在某一步出现的浮层」不同,这些是**点得开**的 —— 但巡页不会去点它们,
  * 缩放档那一遍自然也碰不到。实测 195 宽下面板只有 171px:丹房的方子卡三列并排
@@ -6470,6 +6471,28 @@ async function taskDialogZoom() {
   await probe("灵脉投资", "/dongfu", async () => {
     await page
       .locator("main button", { hasText: /灵脉投资/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+  // 人物页的详情浮层(点第一枚读数卡)与设置页的两份长文 —— 长文是 195 宽下最挤的一类
+  await probe("人物读数详情", "/character", async () => {
+    await page.locator("main button").first().click({ timeout: 3000 });
+  });
+  await probe("一键分解", "/inventory", async () => {
+    await page
+      .locator("main button", { hasText: /分\s*解/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+  await probe("关于此作", "/settings", async () => {
+    await page
+      .locator("main button", { hasText: /关于/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+  await probe("隐私政策", "/settings", async () => {
+    await page
+      .locator("main button", { hasText: /隐私/ })
       .first()
       .click({ timeout: 3000 });
   });
