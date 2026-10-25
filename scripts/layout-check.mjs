@@ -141,7 +141,7 @@
  */
 import { chromium } from "playwright";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
-import CryptoJS from "crypto-js";
+import { decryptSlice, encryptSlice } from "./lib/saveFixture.mjs";
 import { mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -2441,8 +2441,7 @@ async function taskLateTour() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -3018,8 +3017,7 @@ async function taskTribulation() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -3189,8 +3187,7 @@ async function taskReincarnation() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -3389,8 +3386,7 @@ async function taskIdleTick() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -3512,8 +3508,7 @@ async function taskSaveRoundTrip() {
       hasTouch: true,
       acceptDownloads: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -3581,7 +3576,7 @@ async function taskSaveRoundTrip() {
     const storedStone = async () => {
       const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
       if (!cipher) return null;
-      const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+      const plain = decryptSlice(cipher);
       if (!plain) return null;
       const v = JSON.parse(plain).spiritStone;
       return typeof v === "number" ? v : v.m * Math.pow(10, v.e);
@@ -3719,8 +3714,7 @@ async function taskSmartKeep() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -3942,8 +3936,7 @@ async function taskDecompose() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -4161,8 +4154,7 @@ async function taskArtifactRefine() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -4248,7 +4240,7 @@ async function taskArtifactRefine() {
       await page.waitForTimeout(5600);
       const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
       if (!cipher) return null;
-      const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+      const plain = decryptSlice(cipher);
       if (!plain) return null;
       const r = JSON.parse(plain);
       const num = (v) => (typeof v === "number" ? v : v.m * Math.pow(10, v.e));
@@ -4328,8 +4320,7 @@ async function taskDongfuBuild() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -4416,7 +4407,7 @@ async function taskDongfuBuild() {
       await page.waitForTimeout(5600);
       const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
       if (!cipher) return { text: "(无分片)", value: null };
-      const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+      const plain = decryptSlice(cipher);
       if (!plain) return { text: "(解不开)", value: null };
       const v = JSON.parse(plain).ore;
       const n = typeof v === "number" ? v : v.m * Math.pow(10, v.e);
@@ -4494,8 +4485,7 @@ async function taskReduceMotion() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -4637,8 +4627,7 @@ async function taskRetreat() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -4787,8 +4776,7 @@ async function taskInventoryAccounting() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -4997,8 +4985,7 @@ async function taskCombatReplay() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -5208,8 +5195,7 @@ async function taskEnemyCard() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const now = Date.now();
     const slices = {
@@ -5434,8 +5420,7 @@ async function taskSecretRealm320() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const now = Date.now();
     const slices = {
@@ -5649,8 +5634,7 @@ async function taskPersistTiming() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -5724,7 +5708,7 @@ async function taskPersistTiming() {
     const diskStone = async () => {
       const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
       if (!cipher) return null;
-      const plain = CryptoJS.AES.decrypt(cipher, SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+      const plain = decryptSlice(cipher);
       if (!plain) return null;
       const v = JSON.parse(plain).spiritStone;
       return typeof v === "number" ? v : v.m * Math.pow(10, v.e);
@@ -5868,8 +5852,7 @@ async function taskExportFailure() {
       hasTouch: true,
       acceptDownloads: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -5987,8 +5970,7 @@ async function taskBadSave() {
       isMobile: true,
       hasTouch: true,
     });
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const slices = {
       game: {
@@ -6123,8 +6105,7 @@ async function taskIosNotice() {
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
     const UA_DESKTOP =
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
-    const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-    const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+    const enc = encryptSlice;
     const gn = (m, e) => ({ m, e });
     const save = Object.fromEntries(
       Object.entries({
@@ -6320,8 +6301,7 @@ async function taskIosNotice() {
 async function taskDialogZoom() {
   const failures = [];
   let checked = 0;
-  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
-  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const enc = encryptSlice;
   const gn = (m, e) => ({ m, e });
   const slices = {
     game: {

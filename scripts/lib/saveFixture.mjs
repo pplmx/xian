@@ -19,6 +19,11 @@ export function encryptSlice(slice) {
   return CryptoJS.AES.encrypt(JSON.stringify(slice), SAVE_SECRET).toString();
 }
 
+/** 把落盘的密文还原成明文(解不开或空串返回 "") —— 判据要读盘上的真值时才需要它 */
+export function decryptSlice(cipher) {
+  return CryptoJS.AES.decrypt(String(cipher ?? ""), SAVE_SECRET).toString(CryptoJS.enc.Utf8);
+}
+
 /**
  * 把若干切片注入 context 的 localStorage(启动前)。带一次性守卫:同一条导航
  * 不重复注入,免得把游戏自己写回的进度又盖掉。
