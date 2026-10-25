@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 450,
+  "round": 451,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-24T16:54:04+00:00",
+  "updated_at": "2026-10-25T14:39:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26571,6 +26571,67 @@
       "commit": "a3addea1",
       "title": "zoomProblems 接上竖排与短标签折行(收口)",
       "summary": "缩放档判据从四条扩到六条;短标签按码点数字数(≤6);收口时抓到弹窗/详情里两处(功法详情 flex-1 两枚 31px、参悟键 inline-flex 挤成 31px 宽)+ 名号行 35px;layoutMeasure 钉住两条新判据与 Array.from 计数"
+    },
+    "ISS-344": {
+      "id": "ISS-344",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T14:38:58+00:00",
+      "updated_at": "2026-10-25T14:38:58+00:00",
+      "touched_round": 451,
+      "title": "后期档在 195 CSS px(200% 缩放)下四处挤压 —— 空档那一遍一页都量不到",
+      "summary": "洞府建筑两列每卡内宽 51px,连升×5 总账顶出卡片 13px;在途秘境两枚动作键并排各 61px 折成三行;远征择路每格 52px 节点说明竖排;修炼页灵气主值行两段挤 128px 把「· 已封顶」甩到第二行",
+      "severity": 0.6,
+      "confidence": 0.95
+    },
+    "ISS-345": {
+      "id": "ISS-345",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T14:39:02+00:00",
+      "updated_at": "2026-10-25T14:39:02+00:00",
+      "touched_round": 451,
+      "title": "320 / 缩放档那一遍隔着归来卷轴在量 —— :closable=false 的浮层 Esc 关不掉",
+      "summary": "后期档夹具 lastActiveAt 在 9 小时前,每个新 context 一开都弹归来卷轴;clearOverlays 按 Esc 关不掉它(closable=false),320 那一遍从未点「收下」,整轮巡页量到的是卷轴自己。判据绿得毫无信息",
+      "severity": 0.7,
+      "confidence": 0.95
+    },
+    "HYP-128": {
+      "id": "HYP-128",
+      "type": "hypothesis",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T14:39:08+00:00",
+      "updated_at": "2026-10-25T14:39:08+00:00",
+      "touched_round": 451,
+      "title": "后期档夹具要覆盖「长数字 + 满屏内容」那一档,而不只是空档",
+      "summary": "空档量不出 195 宽上真正的难处:九位数灵石、成套装备、在途秘境全挤在一个布局视口里。后期档补一遍后当场量出四处挤压,而此前 320 / 缩放两遍都是空档 + 被卷轴遮住",
+      "confidence": 0.9
+    },
+    "CHG-554": {
+      "id": "CHG-554",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T14:39:12+00:00",
+      "updated_at": "2026-10-25T14:39:12+00:00",
+      "touched_round": 451,
+      "title": "后期档补一遍 200% 缩放 + 关掉归来卷轴 + 四处极窄档放开",
+      "commit": "7211456d"
+    },
+    "EV-472": {
+      "id": "EV-472",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T14:39:16+00:00",
+      "updated_at": "2026-10-25T14:39:16+00:00",
+      "touched_round": 451,
+      "source": "layout-check 实测:后期档 195 档四处挤压 → 修后全绿(34 页缩放档通过);修前 320-late 报「外壳被滚偏 4px / 越界 a.-my-2 / 竖排 回收化尘」全部来自卷轴本身",
+      "summary": "修前修后同一门对比",
+      "confidence": 0.95
     }
   },
   "edges": [
@@ -38774,6 +38835,24 @@
       "to": "ISS-342",
       "type": "resolves",
       "created_at": "2026-10-24T16:53:53+00:00"
+    },
+    {
+      "from": "CHG-554",
+      "to": "ISS-344",
+      "type": "resolves",
+      "created_at": "2026-10-25T14:39:20+00:00"
+    },
+    {
+      "from": "CHG-554",
+      "to": "ISS-345",
+      "type": "resolves",
+      "created_at": "2026-10-25T14:39:20+00:00"
+    },
+    {
+      "from": "EV-472",
+      "to": "HYP-128",
+      "type": "validates",
+      "created_at": "2026-10-25T14:39:20+00:00"
     }
   ]
 }
