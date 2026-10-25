@@ -222,7 +222,7 @@ watch(inst, () => {
         type="number"
         min="1"
         max="500"
-        class="w-16 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[11px] tabular"
+        class="w-16 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
         @change="clampAutoBudget"
       />
       <span class="text-[10px] text-ink-faint tabular"

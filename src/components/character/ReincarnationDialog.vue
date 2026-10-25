@@ -163,7 +163,7 @@
           v-model="nameDraft"
           maxlength="8"
           aria-label="新一世的道号"
-          class="w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-2 font-kai text-[15px] tracking-widest text-ink outline-none focus:border-cinnabar/50"
+          class="w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-2 font-kai text-[16px] tracking-widest text-ink outline-none focus:border-cinnabar/50"
           :placeholder="view.nameDraft"
         />
         <button class="btn-ghost shrink-0 !px-3" aria-label="随机取一个道号" @click="reRollName">

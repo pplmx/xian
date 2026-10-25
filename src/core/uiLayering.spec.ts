@@ -852,6 +852,46 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(rows, "极窄档放开成单列").toContain("tinylens:grid-cols-1");
   });
 
+  it("页面不许禁掉缩放 —— 那正是这一部在防的那档被自己关了门", () => {
+    /*
+     * index.html 的 viewport 从首个版本起写着 `maximum-scale=1.0, user-scalable=no` ——
+     * 低视力用户放大不了页面,而 docs/design.md 第四十一条与 AGENTS 的移动端口径都在
+     * 「按 200% 缩放防折行」上做了好几轮:一边修 200% 档的排版,一边把 200% 关掉不让人用。
+     *
+     * 它当初大概是为了挡 iOS「输入框字号 <16px 时聚焦自动放大并顶偏布局」——
+     * 但那是可以正面解决的:把文本输入框提到 16px(iOS 的自动放大门槛是**计算字号 <16px**,
+     * 见下方那条判据)。两条一起才成立:关缩放是拿无障碍换省事。
+     */
+    const html = readFileSync(resolve(__dirname, "../../index.html"), "utf-8");
+    const meta = /<meta\s+name="viewport"[^>]*content="([^"]*)"/.exec(html)?.[1] ?? "";
+    expect(meta, "index.html 要有 viewport meta —— 定位不到这条就是空转").toBeTruthy();
+    expect(meta, "不许用 user-scalable=no 禁掉缩放").not.toContain("user-scalable=no");
+    expect(meta, "maximum-scale 不许压到 1 —— 那等于禁掉放大").not.toMatch(
+      /maximum-scale\s*=\s*1(\.0+)?\b/,
+    );
+  });
+
+  it("文本输入框字号 ≥16px —— 否则 iOS 聚焦会自动放大、把布局顶歪", () => {
+    /*
+     * iOS Safari 在输入框**计算字号 <16px** 时,一聚焦就自动放大页面并把它居中,
+     * 玩家得手动捏回去。这正是上一版「禁掉缩放」的来由;正确解法是把字号提上去。
+     * 只查文本类输入(text / number / search 等):checkbox / range / file 不触发这条。
+     */
+    const offenders: string[] = [];
+    for (const f of FILES) {
+      for (const m of f.src.matchAll(/<input\b(?:"[^"]*"|'[^']*'|[^>"'])*?>/g)) {
+        const tag = m[0];
+        const type = /type="([^"]*)"/.exec(tag)?.[1] ?? "text";
+        if (["hidden", "file", "checkbox", "radio", "range", "color"].includes(type)) continue;
+        const size = Number(/text-\[(\d+)px\]/.exec(tag)?.[1] ?? NaN);
+        // 未声明字号的按组件角色兜底(t-card = 14px),同样不足 16
+        if (!(size >= 16))
+          offenders.push(`${f.path}: ${type} ${Number.isFinite(size) ? size + "px" : "未声明"}`);
+      }
+    }
+    expect(offenders, "这些文本输入框在 iOS 上聚焦即自动放大").toEqual([]);
+  });
+
   it("页签条在极窄档去字距并锁一行 —— 六枚页签不许各自折成两行", () => {
     /*
      * InkTabs 供六个页面共用,标签全是 2 字。常态字距 0.2em 是那枚墨块的呼吸,但
@@ -2704,6 +2744,16 @@ describe("主巡页 · 字阶同一套", () => {
       why: "题字 · 灵根圆环里的字 · 修行倍率主读数 · 「踏入仙途」主钮",
     },
     "views/WelcomeView.vue": { sizes: [46, 40, 17], why: "印面「道」· 题字 · 主钮" },
+    /*
+     * 文本输入框的 16px 不是「行文字阶」,是 iOS 的一条硬门槛:输入框**计算字号 <16px**
+     * 时一聚焦就自动放大页面并把它居中(玩家得手动捏回去)。这条门槛与「放开缩放」
+     * 是一对:不放宽输入框,就只能靠 viewport 的 user-scalable=no 把整个页面缩放关掉。
+     * 故输入框统一 16px 并在此登记 —— 它度量的是「能不能正常输入」,不是阅读层次。
+     */
+    "components/celestial/TrialPanel.vue": {
+      sizes: [16],
+      why: "挑战书命名输入框(防 iOS 聚焦放大)",
+    },
   };
 
   for (const path of pages) {

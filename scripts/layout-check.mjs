@@ -932,6 +932,25 @@ async function measurePage(page) {
         return out;
       })(),
       /**
+       * 折行的按钮里哪些是**禁用态的原因句**。
+       *
+       * 「修为未至圆满」正好 6 字,`btn-seal w-full` 在 195 档折成两行 —— 但它是
+       * 「为什么按不得」的说明,不是动作词,折行不影响理解。缩放档那条判据按语义
+       * 排除它们(看 disabled),而不是把字数阈值往上抬 —— 抬阈值会连真正的四字
+       * 动作词一起放过。
+       */
+      disabledButtonLabels: [...document.querySelectorAll("button[disabled]")]
+        .filter((el) => el.children.length === 0)
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.width <= 0 || r.height <= 0) return null;
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const lines = new Set([...range.getClientRects()].map((x) => Math.round(x.top))).size;
+          return lines >= 2 ? (el.textContent || "").trim().slice(0, 16) : null;
+        })
+        .filter((x) => x !== null),
+      /**
        * 选择型控件的选中态要对机器可读,且**每组恰有一个**。
        *
        * 此前主题/战报速度/页签的选中全靠边色,读屏用户与自动化都看不出选了哪个
@@ -1175,11 +1194,23 @@ function zoomProblems(info, tag) {
    */
   if (info.verticalTexts?.length)
     problems.push(`文字被挤成竖排(200%):${info.verticalTexts.join(" | ")}`);
+  /*
+   * 只算**短动作标签**。两条排除都是踩过的:
+   *   一 整宽长文案按钮(「散尽修为,重入轮回(清空存档)」)折行是读得出来的正常换行;
+   *   二 禁用态的**原因句**(「修为未至圆满」正好 6 字,`btn-seal w-full` 在 195 档
+   *      折成两行)—— 那是「为什么按不得」的说明,不是动作词,折行不影响理解。
+   *      排除按语义(看 disabled)而不抬阈值:抬到 5 字会把真正的四字动作词也放过去。
+   */
   const shortWrapped = (info.wrappedButtonLabels ?? []).filter((t) => {
     const text = /«([^»]*)»/.exec(t)?.[1] ?? "";
     return Array.from(text).length <= 6;
   });
-  if (shortWrapped.length) problems.push(`短动作标签被折行(200%):${shortWrapped.join(" | ")}`);
+  const disabledReasons = new Set(info.disabledButtonLabels ?? []);
+  const actionableWrapped = shortWrapped.filter(
+    (t) => !disabledReasons.has(/«([^»]*)»/.exec(t)?.[1] ?? ""),
+  );
+  if (actionableWrapped.length)
+    problems.push(`短动作标签被折行(200%):${actionableWrapped.join(" | ")}`);
   return problems;
 }
 

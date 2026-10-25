@@ -219,6 +219,14 @@ uv run scripts/fonts/build-kai-font.py        # 每片约 180 常用字 + 700 �
 `prefers-reduced-motion` 下全局禁用动画;交互元素保留可聚焦性与语义标签。
 小字的对比度账目(哪些一档过 AA、哪些还欠着)由 `src/ui/palette.spec.ts` 盯着。
 
+**页面不许禁掉缩放**。`index.html` 的 viewport 从首个版本起写着
+`maximum-scale=1.0, user-scalable=no` —— 低视力用户放大不了页面,而这条规范与 AGENTS
+的移动端口径都在「按 200% 缩放防折行」上做了好几轮:一边修 200% 档的排版,一边把
+200% 关了门。它当初大约是为了挡 iOS「输入框聚焦自动放大并顶偏布局」,而那是可以正面
+解决的:**文本输入框字号 ≥16px**(iOS 的自动放大门槛是计算字号 <16px)。两条一起成立 ——
+只关缩放是拿无障碍换省事。现由 `uiLayering.spec.ts` 两条判据守:viewport 不许含
+`user-scalable=no` / `maximum-scale=1`,文本输入框一律 ≥16px。
+
 另外两条在真浏览器里量(`scripts/layout-check.mjs`):
 
 - **渐变与图片底上的对比度(第四十二条)**:`palette.spec.ts` 与「按声明色合成」那一条都只

@@ -205,7 +205,7 @@
         v-model="draft.name"
         maxlength="8"
         aria-label="为此挑战书命名(最多八个字)"
-        class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-1.5 outline-none focus:border-cinnabar/50 t-card"
+        class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-1.5 text-[16px] outline-none focus:border-cinnabar/50 t-card"
         placeholder="为此挑战书命名(如《无盾求生》)"
       />
       <div
