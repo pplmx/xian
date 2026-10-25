@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 455,
+  "round": 456,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-25T17:38:25+00:00",
+  "updated_at": "2026-10-25T17:56:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26434,7 +26434,7 @@
       "version": 1,
       "created_at": "2026-10-24T11:17:39+00:00",
       "updated_at": "2026-10-24T11:17:39+00:00",
-      "touched_round": 447,
+      "touched_round": 456,
       "confidence": 0.8,
       "summary": "读数型判据的失效方式不是\"漏判\",而是**采样窗口比被观测量短**:懒加载分包 + 路由过渡让\"反应\"发生在判据已经下结论之后。修法是给\"看起来没反应\"那一支多一次复检(不在正常路径上加开销),并把被观测量本身(路由)放进指纹 —— 而不是调大全局等待,那会把整门时间乘上去换一条噪声"
     },
@@ -26787,6 +26787,55 @@
       "touched_round": 455,
       "source": "layout-check:缩放档量到的页数 42 → 46(装备详情/丹房/器魂/灵脉各一);丹房与器魂两处修前红、修后绿",
       "summary": "覆盖数上升 + 两处真事故",
+      "confidence": 0.95
+    },
+    "ISS-350": {
+      "id": "ISS-350",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T17:56:42+00:00",
+      "updated_at": "2026-10-25T17:56:42+00:00",
+      "touched_round": 456,
+      "title": "useServiceWorkerUpdate 的 stop() 只置标志,不摘 registration 上的监听",
+      "summary": "registration 活到页面卸载,updatefound 与 installing 的 statechange 两条监听都留着;App 卸载后闭包仍被它抓着。顺带:installed 重复派发会连着提示两次,此前靠浏览器的状态跃迁天然只来一次兜着",
+      "severity": 0.45,
+      "confidence": 0.95
+    },
+    "ISS-351": {
+      "id": "ISS-351",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T17:56:42+00:00",
+      "updated_at": "2026-10-25T17:56:42+00:00",
+      "touched_round": 456,
+      "title": "文档里的任务数(32)与结构块模块数(data 57 / components 38)各自漂了",
+      "summary": "真实为 28 个任务、59 个 data 模块、68 个组件;任务数在两处各写一份,结构块括号里的数没人盯着",
+      "severity": 0.35,
+      "confidence": 0.95
+    },
+    "CHG-559": {
+      "id": "CHG-559",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T17:56:47+00:00",
+      "updated_at": "2026-10-25T17:56:47+00:00",
+      "touched_round": 456,
+      "title": "SW 监听在终态与 stop 时真摘;文档门新增结构块计数",
+      "commit": "dc365d3d"
+    },
+    "EV-477": {
+      "id": "EV-477",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T17:56:47+00:00",
+      "updated_at": "2026-10-25T17:56:47+00:00",
+      "touched_round": 456,
+      "source": "useServiceWorkerUpdate.spec 15 条(新增 4 条:stop 摘 registration / stop 摘 worker / 装好自己摘 / redundant 也摘);docs-check 故障注入:把 data 改回 57 当场红并点名行",
+      "summary": "两条修复各自的判据",
       "confidence": 0.95
     }
   },
@@ -39057,6 +39106,24 @@
       "to": "HYP-129",
       "type": "validates",
       "created_at": "2026-10-25T16:25:07+00:00"
+    },
+    {
+      "from": "CHG-559",
+      "to": "ISS-350",
+      "type": "resolves",
+      "created_at": "2026-10-25T17:56:51+00:00"
+    },
+    {
+      "from": "CHG-559",
+      "to": "ISS-351",
+      "type": "resolves",
+      "created_at": "2026-10-25T17:56:51+00:00"
+    },
+    {
+      "from": "EV-477",
+      "to": "HYP-126",
+      "type": "validates",
+      "created_at": "2026-10-25T17:56:51+00:00"
     }
   ]
 }
