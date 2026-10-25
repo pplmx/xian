@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 452,
+  "round": 453,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-25T15:36:45+00:00",
+  "updated_at": "2026-10-25T15:56:04+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26676,10 +26676,46 @@
       "version": 1,
       "created_at": "2026-10-25T15:36:42+00:00",
       "updated_at": "2026-10-25T15:36:42+00:00",
-      "touched_round": 452,
+      "touched_round": 453,
       "title": "只在开局弹一次的浮层需要单独量:巡页前的 clearOverlays 会把它收掉",
       "summary": "归来卷轴 :closable=false,巡页与缩放档那一遍都碰不到它;只有后期档开局那一步能量。这类「只出现一次」的界面是判据的系统性盲区",
       "confidence": 0.85
+    },
+    "ISS-347": {
+      "id": "ISS-347",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T15:55:55+00:00",
+      "updated_at": "2026-10-25T15:55:55+00:00",
+      "touched_round": 453,
+      "title": "只在某一步出现的浮层(归来卷轴/渡劫结果/转世三步/顿悟巡游)在 200% 缩放档一页都没量到",
+      "summary": "clearOverlays 会在巡页前收掉它们,概率浮层更是巡页永远碰不到;于是它们的 195 宽版面从未被量过 —— 归来卷轴就是这么一路绿着的",
+      "severity": 0.6,
+      "confidence": 0.95
+    },
+    "CHG-556": {
+      "id": "CHG-556",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T15:56:00+00:00",
+      "updated_at": "2026-10-25T15:56:00+00:00",
+      "touched_round": 453,
+      "title": "measureDialogZoom + dialogZoomProblems 一份尺子,四类只在某一步出现的浮层各量一次",
+      "commit": "ae5555bb"
+    },
+    "EV-474": {
+      "id": "EV-474",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-25T15:56:00+00:00",
+      "updated_at": "2026-10-25T15:56:00+00:00",
+      "touched_round": 453,
+      "source": "layout-check:缩放档量到的页数 35 → 39(归来卷轴 / 渡劫结果 / 转世三步 / 顿悟与巡游各一);全绿",
+      "summary": "尺子接上之后覆盖数上升",
+      "confidence": 0.95
     }
   },
   "edges": [
@@ -38913,6 +38949,18 @@
       "to": "HYP-129",
       "type": "validates",
       "created_at": "2026-10-25T15:36:45+00:00"
+    },
+    {
+      "from": "CHG-556",
+      "to": "ISS-347",
+      "type": "resolves",
+      "created_at": "2026-10-25T15:56:04+00:00"
+    },
+    {
+      "from": "EV-474",
+      "to": "HYP-129",
+      "type": "validates",
+      "created_at": "2026-10-25T15:56:04+00:00"
     }
   ]
 }
