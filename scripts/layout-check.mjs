@@ -96,6 +96,8 @@
  *      放大后,布局视口只剩 195 CSS px —— 与五档视口是两回事(量的是缩放档,不是宽度档)。
  *      起因:此前只守 320 这一档,而 390 的真机放大到 200% 比 320 还窄 125px,修炼页的
  *      修为行就是在那一档被顶成两行的。量法与巡页共用 measurePage(同一把尺子)。
+ *      空档之外还有一遍**后期档**(神人境的九位数灵石、成套装备、在途秘境):
+ *      195 宽上最容易出事的是「长数字 + 满屏内容」,而主巡页那一遍量的是刚建号的空档。
  *   四十二 渐变/图片底上的正文对比度:上面那条只算得到**声明出来的色号** —— 法球、
  *      印章、纸纹、以及半透明的纸叠在深色天幕上,真实像素比色号暗一截,那条量不到。
  *      故这里直接采样屏幕像素:把文字临时藏起来拍一张,逐像素算「这枚字落在这一像素上
@@ -2805,6 +2807,25 @@ async function taskLateTour() {
       await p.goto(INDEX, { waitUntil: "load" });
       await p.waitForTimeout(2400);
       await clearOverlays(p);
+      /*
+       * 归来卷轴是 :closable="false" 的 —— clearOverlays 按 Esc 关不掉它。
+       *
+       * 这份夹具的 lastActiveAt 在 9 小时前,所以**每个**新 context 一开都会弹它。
+       * 390 那一遍在开头点了「收下」,320 这一遍从前没点:于是整轮巡页都隔着一层
+       * 遮罩在量,量到的是卷轴自己(它的行在 195 宽下把「回收化尘」挤成竖排),
+       * 页面本体一次都没被量到。判据绿得毫无信息,比红更糟。
+       */
+      const dismiss = p.locator(".modal-panel button", { hasText: /收\s*下/ }).first();
+      if ((await dismiss.count()) > 0) {
+        await dismiss.click({ timeout: 3000 }).catch(() => {});
+        await p.waitForTimeout(500);
+      }
+      if ((await p.locator(".modal-panel").count()) > 0) {
+        const title = await p.evaluate(
+          () => document.querySelector(".modal-panel")?.getAttribute("aria-label") ?? "?",
+        );
+        failures.push(`[320-late] 开局浮层没关掉(「${title}」)—— 这一轮量的不是页面本体`);
+      }
       for (const route of ROUTES) {
         await p.goto(INDEX + "#" + route, { waitUntil: "load" });
         await p.waitForTimeout(600);
@@ -2814,10 +2835,29 @@ async function taskLateTour() {
         if (problems.length) failures.push(`[320-late] ${route} → ${problems.join(" / ")}`);
       }
       if (errs.length) failures.push(`[320] 后期档页面异常:${[...new Set(errs)].join(" | ")}`);
+      /*
+       * 同一份后期档再过一遍 200% 缩放档。
+       *
+       * 主巡页那一遍量的是**空档**:数字短、内容少。而 195 CSS px 上最容易出事的是
+       * 「长数字 + 满屏内容」—— 神人境的九位数灵石、成套装备、在途秘境,全挤在
+       * 195 宽里。这与 320 那一遍是同一个理由(空档量不出满屏内容),只是那一遍的
+       * 视口还没窄到 195。两遍共用同一把尺子(measurePage + zoomProblems)。
+       *
+       * 放在 320 那一遍之后:这一遍会把视口改成 390 再折半(195),量完 context 即关。
+       */
+      for (const route of ROUTES) {
+        await p.goto(INDEX + "#" + route, { waitUntil: "load" });
+        await p.waitForTimeout(600);
+        const zoom = await measureZoomScale(p, { width: 390, height: 844 });
+        zoomSeen += 1;
+        const zoomBad = zoomProblems(zoom, "390");
+        if (zoomBad.length) zoomFails.push(`[390-late] ${route} → ${zoomBad.join(" / ")}`);
+      }
       await narrow.close();
     }
   }
 
+  if (zoomFails.length) failures.push(`200% 缩放档上版面坏了(后期档):${zoomFails.join(" | ")}`);
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 

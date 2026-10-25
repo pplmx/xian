@@ -1,6 +1,6 @@
 <template>
   <header
-    class="relative z-20 flex shrink-0 items-center justify-between gap-2 border-b border-transparent bg-paper-deep/90 px-4 py-2 backdrop-blur short:py-1"
+    class="relative z-20 flex shrink-0 items-center justify-between gap-2 border-b border-transparent bg-paper-deep/90 px-4 py-2 backdrop-blur short:py-1 tinylens:gap-1 tinylens:px-2"
     :style="`padding-top: max(env(safe-area-inset-top), ${statusTopPad})`"
   >
     <!--

@@ -63,7 +63,11 @@
         <p class="mb-1.5 text-[11px] text-ink-faint">
           第 {{ run.layer + 1 }} 重 · 两径择一(层间可回凡界换构筑)
         </p>
-        <div class="stagger-in grid grid-cols-2 gap-2">
+        <!--
+          极窄档(195 CSS px)单列:两径并排时每格内宽只剩 ~52px,节点说明
+          「巨魔守关,一锤定音」被压成三行竖排(自检在后期档量到)。单列后每格 137px。
+        -->
+        <div class="stagger-in grid grid-cols-2 gap-2 tinylens:grid-cols-1">
           <button
             v-for="(node, i) in currentNodes"
             :key="node.id"

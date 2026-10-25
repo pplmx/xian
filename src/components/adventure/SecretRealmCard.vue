@@ -87,7 +87,12 @@
           ></template
         >
       </p>
-      <div class="mt-2 flex gap-2">
+      <!--
+        极窄档(195 CSS px)上下叠:两枚 flex-1 并排时每枚只剩 61px,「再 入 一 层」
+        五个字(带字距)放不下,当场折成三行、按钮涨到 84px 高(自检在后期档量到)。
+        叠起来每枚拿到整行 137px,一行放得下;320 / 390 两档不受影响。
+      -->
+      <div class="mt-2 flex gap-2 tinylens:flex-col">
         <!-- 出秘境是二步确认:整趟是付过门票的独一份内容,误触不该直接清空 —— 与删快照同族 -->
         <template v-if="!confirmAbandon">
           <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="fight">再 入 一 层</button>

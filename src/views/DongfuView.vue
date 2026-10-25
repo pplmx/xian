@@ -93,8 +93,15 @@
         </template>
       </p>
       <!-- 洞府是其余建筑等级上限的枢纽:提为整宽主卡置顶,其余 6 座排 2 列 3 行 -->
-      <div class="mt-2 grid grid-cols-2 gap-2.5">
-        <BuildingCard v-if="mansionDef" :def="mansionDef" class="col-span-2" />
+      <!--
+        极窄档(195 CSS px)改单列:两列时每卡内宽只剩 ~51px,「连升×5 ·共 31.37万 石
+        400 铁」那两段 nowrap 直接顶出卡片左右各 13px(自检在后期档量到)。单列内宽 137px,
+        两段各自一行放得下;320 / 390 两档不受影响。
+        主卡的 col-span-2 在单列里必须同时收回 col-span-1 —— 否则它会撑出第二条隐式列,
+        卡片量到 224px 宽(比整页还宽),越界判据当场红。
+      -->
+      <div class="mt-2 grid grid-cols-2 gap-2.5 tinylens:grid-cols-1">
+        <BuildingCard v-if="mansionDef" :def="mansionDef" class="col-span-2 tinylens:col-span-1" />
         <BuildingCard v-for="def in otherBuildings" :key="def.id" :def="def" />
       </div>
       <!--

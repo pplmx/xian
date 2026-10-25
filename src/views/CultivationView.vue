@@ -142,7 +142,15 @@
       </div>
       <div class="ink-divider my-3" aria-hidden="true" />
       <div class="mt-3">
-        <div data-value-row class="mb-1 flex justify-between text-[11px] text-ink-soft tabular">
+        <!--
+          极窄档(195 CSS px)改成上下两段:一行放「灵气 +X/秒」与「现值 · 已封顶」共需
+          92+85px,而整行只剩 128px —— 硬挤的结果是「· 已封顶」被单独甩到第二行
+          (自检在后期档量到主值行两行)。上下叠之后值那一段独享整行宽度,一行读得完。
+        -->
+        <div
+          data-value-row
+          class="mb-1 flex justify-between text-[11px] text-ink-soft tabular tinylens:flex-col tinylens:items-start tinylens:gap-y-0.5"
+        >
           <span>灵气 +{{ formatRate(player.qiRegenPerSec) }}</span>
           <span>
             <TapNumber
@@ -160,7 +168,13 @@
                 }}<template v-if="qiOverCap">+</template>
               </span>
             </TapNumber>
-            / {{ formatNum(player.qiCapValue) }}
+            <!--
+              上限与当前值并排只在常规档成立:195 CSS px(200% 缩放)上这一行只剩 68px,
+              「1.032兆+ / 1.032兆 · 已封顶」必然折成三行(自检在后期档量到过)。
+              极窄档隐去「/ 上限」,只留当前值与封顶标记 —— 上限在进度条的比例里、
+              也在点开的详情里(标称容量那行),不是丢了,是换了一处更读得清的地方。
+            -->
+            <span class="tinylens:hidden">/ {{ formatNum(player.qiCapValue) }}</span>
             <!--
               灵气积到银行上限就不再涨 —— 不说明的话,玩家只会以为它坏了。
               词收短到三字("已积至上限"在 320 宽后期档会把这一行顶折,自检当场量到过);

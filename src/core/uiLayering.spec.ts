@@ -852,6 +852,56 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(rows, "极窄档放开成单列").toContain("tinylens:grid-cols-1");
   });
 
+  it("后期档在极窄档的四处放开 —— 空档量不出的那几块", () => {
+    /*
+     * 主巡页量的是刚建号的空档:建筑未营、没有在途秘境、灵石只有三位数。
+     * 同一批页面在神人境(九位数灵石 + 成套装备 + 在途秘境)的 195 CSS px 下,
+     * 四处当场坏掉 —— 空档那一遍一页都量不到,故单列一条判据钉住:
+     *   一 洞府建筑两列时每卡内宽 ~51px,「连升×5 ·共 31.37万 石 400 铁」两段 nowrap
+     *      顶出卡片左右各 13px;改单列。**主卡的 col-span-2 必须同时收回** —— 单列里
+     *      留着它就会撑出第二条隐式列,卡片量到 224px 宽(比整页还宽)。
+     *   二 在途秘境「再入一层 / 出秘境」两枚 flex-1 并排各剩 61px,五个字带字距放不下,
+     *      折成三行、按钮涨到 84px;改极窄档上下叠。
+     *   三 远征择路两径并排每格 ~52px,节点说明被压成三行竖排;改单列。
+     *   四 修炼页灵气主值行:一段「灵气 +X/秒」92px 加一段「现值 · 已封顶」85px 挤在
+     *      128px 里,「· 已封顶」被甩到第二行(主值行折行判据红);改极窄档上下两段。
+     */
+    const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
+    const dongfuGrids = [
+      ...(dv?.src ?? "").matchAll(/class="(mt-2 grid grid-cols-2 gap-2\.5[^"]*)"/g),
+    ].map((m) => m[1]!);
+    expect(dongfuGrids.length, "洞府页两处两列网格(家业入口 / 建筑)都要定位得到").toBe(2);
+    expect(
+      dongfuGrids.filter((c) => c.includes("tinylens:grid-cols-1")),
+      "建筑网格(带 col-span 主卡那一处)极窄档改单列",
+    ).toHaveLength(1);
+    expect(dv?.src, "主卡的跨列要在单列里收回").toContain("col-span-2 tinylens:col-span-1");
+
+    const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
+    expect(sr?.src, "在途秘境的两枚动作键极窄档要上下叠").toMatch(
+      /class="mt-2 flex gap-2 tinylens:flex-col"/,
+    );
+
+    const exp = FILES.find((f) => f.path === "components/celestial/ExpeditionPanel.vue");
+    expect(exp?.src, "远征择路极窄档要单列").toMatch(
+      /class="stagger-in grid grid-cols-2 gap-2 tinylens:grid-cols-1"/,
+    );
+
+    const cv = FILES.find((f) => f.path === "views/CultivationView.vue");
+    // 两条主值行都带 data-value-row,灵气那条是唯一要求极窄档上下两段的
+    const qiRows = [...(cv?.src ?? "").matchAll(/data-value-row[\s\S]{0,240}?class="([^"]*)"/g)]
+      .map((m) => m[1]!)
+      .filter((c) => c.includes("text-[11px]"));
+    expect(qiRows.length, "两处主值行都要定位得到 —— 定位不到这条就是空转").toBe(2);
+    expect(
+      qiRows.filter((c) => c.includes("tinylens:flex-col")),
+      "灵气那一行极窄档上下两段(挤在一行会把「· 已封顶」甩到第二行)",
+    ).toHaveLength(1);
+    expect(cv?.src, "极窄档隐去「/ 上限」,上限在进度条与详情里").toMatch(
+      /class="tinylens:hidden">\/ \{\{ formatNum\(player\.qiCapValue\) \}\}/,
+    );
+  });
+
   it("页面不许禁掉缩放 —— 那正是这一部在防的那档被自己关了门", () => {
     /*
      * index.html 的 viewport 从首个版本起写着 `maximum-scale=1.0, user-scalable=no` ——
