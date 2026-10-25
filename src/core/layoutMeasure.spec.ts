@@ -91,6 +91,32 @@ describe("排版量法口径", () => {
     expect(SCRIPT).toMatch(/\[390-late\] \$\{route\} → \$\{zoomBad\.join/);
   });
 
+  it("只在某个时刻弹一次的浮层也要过缩放档 —— 巡页永远碰不到它们", () => {
+    /*
+     * 本作有整整一族「只在某一步出现」的浮层:归来卷轴、渡劫结果、转世三步
+     * (寿元将尽 / 此生已矣 / 轮回)。它们由 clearOverlays 收掉,或在巡页之前根本没触发,
+     * 于是 200% 那一档**一页都量不到它们** —— 归来卷轴就是这么一路绿着的
+     * (面板内宽 113px 时收益行各自折两行)。
+     *
+     * 钉三件事:
+     *   一 尺子只有一份(measureDialogZoom + dialogZoomProblems),不许每个场景各写一遍;
+     *   二 四类场景都真的调了它(归来卷轴 / 渡劫结果 / 转世的每一步);
+     *   三 读数要并进 failures —— 只算不报的判据等于没有。
+     */
+    expect(SCRIPT).toContain("async function measureDialogZoom(");
+    expect(SCRIPT).toContain("function dialogZoomProblems(");
+    expect(SCRIPT).toContain("problems.push(`数值被标签挤折:");
+    // 四类场景各调一次:数调用点而不是数场景名,场景改名时这条会红
+    // (格式化会把长调用折成两行,故允许中间有换行)
+    const calls = SCRIPT.match(/dialogZoomProblems\(\s*await measureDialogZoom\(/g) ?? [];
+    expect(calls.length, "归来卷轴 / 渡劫结果 / 转世每一步都要量").toBeGreaterThanOrEqual(3);
+    expect(SCRIPT).toMatch(/归来卷轴在 200% 下坏了/);
+    expect(SCRIPT).toMatch(/转世「\$\{label\}」在 200% 下坏了/);
+    expect(SCRIPT).toMatch(/渡劫结果在 200% 下坏了/);
+    // 与页面上那一套同一把尺子:禁用态的原因句不算折行
+    expect(SCRIPT).toMatch(/if \(el\.hasAttribute\("disabled"\)\) continue; \/\/ 禁用态是原因句/);
+  });
+
   it("控件套控件的判据:宿主按按钮语义选,内层排除 -1,且带活信号", () => {
     /*
      * layout-check 的 nestedControls 报的是「读屏只念得出外层那一个」。三个口径都要钉:

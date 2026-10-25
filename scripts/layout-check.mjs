@@ -98,6 +98,9 @@
  *      修为行就是在那一档被顶成两行的。量法与巡页共用 measurePage(同一把尺子)。
  *      空档之外还有一遍**后期档**(神人境的九位数灵石、成套装备、在途秘境):
  *      195 宽上最容易出事的是「长数字 + 满屏内容」,而主巡页那一遍量的是刚建号的空档。
+ *      只在某一步出现的浮层(归来卷轴 / 渡劫结果 / 转世三步 / 引擎掷中的顿悟与巡游)
+ *      另走 measureDialogZoom:巡页前的 clearOverlays 会把它们收掉,缩放档那一遍
+ *      一页都碰不到 —— 归来卷轴就是这么一路绿着的。
  *   四十二 渐变/图片底上的正文对比度:上面那条只算得到**声明出来的色号** —— 法球、
  *      印章、纸纹、以及半透明的纸叠在深色天幕上,真实像素比色号暗一截,那条量不到。
  *      故这里直接采样屏幕像素:把文字临时藏起来拍一张,逐像素算「这枚字落在这一像素上
@@ -1217,6 +1220,106 @@ function zoomProblems(info, tag) {
 }
 
 /**
+ * 弹窗在 200% 缩放档上的读数 —— 越界 / 竖排 / 短标签折行 / 数值被挤折。
+ *
+ * 与页面上那一套是同一条口径,但**只量弹窗面板里的东西**:遮罩下的页面在弹窗开着时
+ * 本来就被压暗、也不该点,量它只会得到假红。这四条此前只对「页面上摆着的东西」生效 ——
+ * 而本作有整整一族**只在某个时刻弹一次**的浮层(归来卷轴、渡劫结果、转世三步、
+ * 洞府巡游、突破成功):主巡页与缩放档那一遍都碰不到它们,于是它们的 200% 版面
+ * 从来没被量过。归来卷轴就是这么被量出来的(见 docs/design.md 第四十一条)。
+ */
+function dialogZoomProblems(info) {
+  const problems = [];
+  if (!info) return ["弹窗不见了 —— 判据没量到东西"];
+  if (info.wide.length) problems.push(`顶出面板:${info.wide.join(" | ")}`);
+  if (info.vertical.length) problems.push(`文字被挤成竖排:${info.vertical.join(" | ")}`);
+  if (info.wrapped.length) problems.push(`短动作标签被折行:${info.wrapped.join(" | ")}`);
+  if (info.folded.length) problems.push(`数值被标签挤折:${info.folded.join(" | ")}`);
+  return problems;
+}
+
+/** 把视口压到 195 量一扇正开着的弹窗,量完还原(量法与 dialogZoomProblems 同源) */
+async function measureDialogZoom(page, vp) {
+  const before = { width: vp.width, height: vp.height };
+  await page.setViewportSize({
+    width: Math.round(before.width / 2),
+    height: Math.round(before.height / 2),
+  });
+  await page.waitForTimeout(420);
+  const info = await page.evaluate(() => {
+    const panel = document.querySelector(".modal-panel");
+    if (!panel) return null;
+    const pr = panel.getBoundingClientRect();
+    /** 与 measurePage 的越界口径同源:纯装饰层(不吃事件)不算事故 */
+    const wide = [...panel.querySelectorAll("*")]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0) return false;
+        if (!(r.right > pr.right + 2 || r.left < pr.left - 2)) return false;
+        for (let n = el; n; n = n.parentElement) {
+          if (getComputedStyle(n).pointerEvents === "none") return false;
+        }
+        return true;
+      })
+      .slice(0, 3)
+      .map((el) => `«${(el.textContent || "").trim().slice(0, 12)}»`);
+    const vertical = [...panel.querySelectorAll("span, p, li, div, button")]
+      .filter((el) => {
+        const text = (el.textContent || "").trim();
+        if (text.length < 3) return false;
+        if (el.querySelector("span, p, div, li, button")) return false;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.width >= 40) return false;
+        const lh = parseFloat(getComputedStyle(el).lineHeight) || 16;
+        return r.height > lh * 2.5;
+      })
+      .slice(0, 3)
+      .map(
+        (el) =>
+          `${Math.round(el.getBoundingClientRect().width)}px «${(el.textContent || "").trim().slice(0, 10)}»`,
+      );
+    const wrapped = [];
+    for (const el of panel.querySelectorAll("button")) {
+      if (el.children.length > 0) continue; // 只看纯文字按钮(与页面上那条同源)
+      const text = (el.textContent || "").trim();
+      if (text.length < 2 || text.length > 18) continue;
+      if (el.hasAttribute("disabled")) continue; // 禁用态是原因句,折行不影响理解
+      const r = el.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) continue;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const lines = new Set([...range.getClientRects()].map((x) => Math.round(x.top))).size;
+      if (lines >= 2) wrapped.push(`«${text.slice(0, 14)}»`);
+    }
+    /*
+     * 「标签 + 数值」那一类行:数值的自然宽度**放得下**这一行却仍折了,才算被标签挤的
+     * (与归来卷轴那条同一把尺子 —— 自然宽度就超出的折行是正常换行)。
+     */
+    const folded = [];
+    for (const li of panel.querySelectorAll("li, [data-value-row]")) {
+      const [label, value] = [...li.children];
+      if (label?.tagName !== "SPAN" || !value) continue;
+      if (!(value.textContent || "").trim()) continue;
+      const cs = getComputedStyle(li);
+      const avail =
+        li.clientWidth - parseFloat(cs.paddingLeft || "0") - parseFloat(cs.paddingRight || "0");
+      const prev = value.style.whiteSpace;
+      value.style.whiteSpace = "nowrap";
+      const need = value.getBoundingClientRect().width;
+      value.style.whiteSpace = prev;
+      const lh = parseFloat(getComputedStyle(value).lineHeight) || 16;
+      const lines = Math.max(1, Math.round(value.getBoundingClientRect().height / lh));
+      if (lines > 1 && need <= avail + 1)
+        folded.push(`${lines} 行 «${(value.textContent || "").trim().slice(0, 12)}»`);
+    }
+    return { wide, vertical, wrapped, folded, w: Math.round(pr.width) };
+  });
+  await page.setViewportSize(before);
+  await page.waitForTimeout(300);
+  return info;
+}
+
+/**
  * 渐变/图片底上的正文对比度 —— 采样真实像素,不看声明出来的色号。
  *
  * measureTextContrast 把祖先链上**声明出来**的背景色按 alpha 合成,那套算法对纯色卡片
@@ -2198,6 +2301,16 @@ async function taskEngineModals() {
       });
       if (info && !seen.has(info.title)) {
         seen.set(info.title, info);
+        /*
+         * 顿悟与洞府巡游也只在概率掷中时出现 —— 巡页与缩放档都碰不到它们。
+         * 洞府巡游里那几行选项与代价正是 195 宽上最容易折的,故在按 Esc 之前量一遍。
+         */
+        zoomSeen += 1;
+        const evZoom = dialogZoomProblems(
+          await measureDialogZoom(page, { width: 375, height: 812 }),
+        );
+        if (evZoom.length)
+          failures.push(`[375] 「${info.title}」在 200% 下坏了:${evZoom.join(" / ")}`);
         await page.keyboard.press("Escape");
         await page.waitForTimeout(600);
       }
@@ -2567,68 +2680,12 @@ async function taskLateTour() {
        * 195:实测面板内宽只剩 113px,「修为」与「+46.39兆」并排时各自折成两行。
        * 故在收下之前把视口压到 195 量一遍,量完还原。
        */
-      await page.setViewportSize({ width: 195, height: 422 });
-      await page.waitForTimeout(500);
-      const scrollZoom = await page.evaluate(() => {
-        const panel = document.querySelector(".modal-panel");
-        if (!panel) return null;
-        /*
-         * 量的是**每一行的数值那一段折没折行**,不是「字有没有被压成竖排」。
-         *
-         * 试过竖排那条(宽 < 40px 且折三行):改前实测「修为」41px、「+46.39兆」48px,
-         * 两条都够宽,竖排判据一次都不会响 —— 一条量不到真事故的判据比没有更糟。
-         * 这里直接量行数:内边距收到 12px 之前面板内宽 113px,两段并排各折两行、行高 58px。
-         */
-        const folded = [];
-        for (const li of panel.querySelectorAll("li")) {
-          /*
-           * 只看「标签 + 数值」那一类行(首个子元素是 span)。拾得装备那一条是
-           * 一串装备名按 flex-wrap 正常换行,不是数值被挤折 —— 把它算进来就是假红。
-           *
-           * 判「挤折」而不是「折行」:数值自己的自然宽度**放得下**这一行却仍折了,
-           * 才是被标签挤的(实测「修为」41px + 「+46.39兆」48px 并排时两段各折两行,
-           * 而 60px 的数值在一行 89px 里本可一行)。自然宽度就超出这一行的
-           * (「7 件 · 尘+1,234」要 107px、行内只有 89px)折行是正常换行,不判。
-           */
-          const [label, value] = [...li.children];
-          if (label?.tagName !== "SPAN" || !value) continue;
-          if (!(value.textContent || "").trim()) continue;
-          const cs = getComputedStyle(li);
-          const avail =
-            li.clientWidth - parseFloat(cs.paddingLeft || "0") - parseFloat(cs.paddingRight || "0");
-          const prev = value.style.whiteSpace;
-          value.style.whiteSpace = "nowrap";
-          const need = value.getBoundingClientRect().width;
-          value.style.whiteSpace = prev;
-          const lh = parseFloat(getComputedStyle(value).lineHeight) || 16;
-          const lines = Math.max(1, Math.round(value.getBoundingClientRect().height / lh));
-          if (lines > 1 && need <= avail + 1)
-            folded.push(
-              `${lines} 行 «${(value.textContent || "").trim().slice(0, 12)}»(需 ${Math.round(need)} / 行内 ${Math.round(avail)}px)`,
-            );
-        }
-        const wide = [...panel.querySelectorAll("li, p, span")]
-          .filter((el) => {
-            const r = el.getBoundingClientRect();
-            const pr = panel.getBoundingClientRect();
-            return r.width > 0 && (r.right > pr.right + 2 || r.left < pr.left - 2);
-          })
-          .slice(0, 3)
-          .map((el) => `«${(el.textContent || "").trim().slice(0, 12)}»`);
-        return { folded, wide };
-      });
       zoomSeen += 1;
-      if (!scrollZoom) failures.push("[390] 后期档:缩到 195 时归来卷轴不见了");
-      else {
-        if (scrollZoom.folded.length)
-          failures.push(
-            `[390-late] 归来卷轴在 200% 下收益行的数值折成多行:${scrollZoom.folded.join(" | ")}`,
-          );
-        if (scrollZoom.wide.length)
-          failures.push(`[390-late] 归来卷轴在 200% 下顶出面板:${scrollZoom.wide.join(" | ")}`);
-      }
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.waitForTimeout(400);
+      const scrollZoom = dialogZoomProblems(
+        await measureDialogZoom(page, { width: 390, height: 844 }),
+      );
+      if (scrollZoom.length)
+        failures.push(`[390-late] 归来卷轴在 200% 下坏了:${scrollZoom.join(" / ")}`);
       const take = page.locator(".modal-panel button", { hasText: /收\s*下/ }).first();
       if ((await take.count()) === 0) failures.push("[390] 后期档:归来卷轴没有「收下」");
       else {
@@ -3073,6 +3130,16 @@ async function taskTribulation() {
         if (view.outcome === "成功" && view.realm !== "筑基") {
           failures.push(`[390] 渡劫场景:弹窗说成功,页面上的境界却还是「${view.realm}」`);
         }
+        /*
+         * 这一屏也要过 200% 那一档:它只在渡劫那一刻出现,主巡页与缩放档都碰不到。
+         * 突破结果里最长的是「共 N 道」那一段与逐道天雷的记述 —— 正是 195 宽上
+         * 最容易折成一字一行的那一类。
+         */
+        zoomSeen += 1;
+        const tribZoom = dialogZoomProblems(
+          await measureDialogZoom(page, { width: 390, height: 844 }),
+        );
+        if (tribZoom.length) failures.push(`[390] 渡劫结果在 200% 下坏了:${tribZoom.join(" / ")}`);
         const close = page.locator(".modal-panel button", { hasText: /继续问道|收拾心情/ }).first();
         if ((await close.count()) === 0) failures.push("[390] 渡劫场景:结果弹窗没有收尾按钮");
         else {
@@ -3218,6 +3285,16 @@ async function taskReincarnation() {
         failures.push(`[390] 转世场景:${label}的窗标题是「${p.title}」,不是预期的${expect}`);
       if (/NaN|undefined|Infinity/.test(p.text))
         failures.push(`[390] 转世场景:${label}漏出占位符 —— ${p.text.slice(0, 50)}`);
+      /*
+       * 三步都要过 200% 那一档:转世是**唯一会把存档推倒重来**的仪式,而这三扇窗
+       * 只在这条流程里出现 —— 主巡页与缩放档都碰不到,版面坏了也不会有人知道。
+       */
+      zoomSeen += 1;
+      const stepZoom = dialogZoomProblems(
+        await measureDialogZoom(page, { width: 390, height: 844 }),
+      );
+      if (stepZoom.length)
+        failures.push(`[390] 转世「${label}」在 200% 下坏了:${stepZoom.join(" / ")}`);
       return p;
     };
 
