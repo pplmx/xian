@@ -122,6 +122,8 @@
  *      context:先量欢迎页,再走「开始游戏 → 同意并开始」落到建号页量一遍。
  *      只查基础档(横向溢出 / 外壳偏移 / 越界元素 / 无名控件 / 可点过小 / 正文对比度),
  *      不查底部导航项数 —— 这两页本来就没有导航(开局前不该有)。
+ *      两页也各过一遍 200% 缩放档:实测欢迎页在 195 宽下把「开 始 游 戏」折成两行、
+ *      把三枚底链压成 25px 宽的四字竖排 —— 而这是玩家看到的第一屏。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -6472,6 +6474,20 @@ async function taskPreGameTour() {
         `[开局前] /welcome ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
       );
     }
+    /*
+     * 开局前两页也要过 200% 那一档。
+     *
+     * 它们是唯二**没有存档才看得见**的页面(路由守卫见存档已开就重定向),主巡页
+     * 的缩放档那一遍永远巡不到。实测欢迎页在这一档把「开 始 游 戏」折成两行、
+     * 把三枚底链各压成 25px 宽的四字竖排 —— 而这是玩家看到的第一屏。
+     */
+    zoomSeen += 1;
+    const welcomeZoom = zoomProblems(
+      await measureZoomScale(page, { width: 390, height: 844 }),
+      "390",
+    );
+    if (welcomeZoom.length)
+      failures.push(`[开局前] /welcome 在 200% 下坏了:${welcomeZoom.join(" / ")}`);
   }
 
   // ---- 建号页:同意隐私后由欢迎页进来(传送门约 2.5s) ----
@@ -6500,6 +6516,13 @@ async function taskPreGameTour() {
         `[开局前] /create ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
       );
     }
+    zoomSeen += 1;
+    const createZoom = zoomProblems(
+      await measureZoomScale(page, { width: 390, height: 844 }),
+      "390",
+    );
+    if (createZoom.length)
+      failures.push(`[开局前] /create 在 200% 下坏了:${createZoom.join(" / ")}`);
   }
 
   if (pageErrors.length) failures.push(`[开局前] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);

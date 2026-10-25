@@ -25,8 +25,13 @@
 
     <!-- 开始按钮:首屏主钮 —— 一缕柔辉呼吸着请玩家按(与突破就绪的朱砂辉光同族,
          只动 box-shadow 合层,reduce-motion 全局兜) -->
+    <!--
+      极窄档(195 CSS px)收字距并锁一行:留白 32px 后内容宽只剩 131px,
+      「开 始 游 戏」四个 17px 的字加 0.3em 字距正好放不下,当场折成两行(实测 79px 高)。
+      字距是这一作题字的呼吸,收窄只发生在这一档;320 / 390 一分不动。
+    -->
     <button
-      class="btn-seal animate-glow-pulse mt-10 w-full max-w-72 !py-3.5 text-[17px] tracking-[0.3em]"
+      class="btn-seal animate-glow-pulse mt-10 w-full max-w-72 !py-3.5 text-[17px] tracking-[0.3em] whitespace-nowrap tinylens:tracking-normal"
       @click="onStart"
     >
       开 始 游 戏
@@ -34,17 +39,30 @@
 
     <!-- 底部:隐私政策 / 导出导入恢复 / 关于 -->
     <!-- 三枚底链是全站 28px 触点族的一员:裸 text-[11px] 的命中区只有字高 16.5px
-         (排版自检「开局前两页」任务首检即红),-my-1.5 py-1.5 把行盒撑到 28px 一族 -->
-    <div class="mt-5 flex items-center gap-3 text-[11px] text-ink-faint">
-      <button class="-my-1.5 py-1.5 active:text-ink-soft" @click="privacyOpen = true">
+         (排版自检「开局前两页」任务首检即红),-my-1.5 py-1.5 把行盒撑到 28px 一族。
+         极窄档换行而不是压窄:三枚并排要 44×3 + 间距,而这一档只有 131px ——
+         不给换行时每枚被压成 25px 宽、四字各占一行(自检量到 25×45)。 -->
+    <div
+      class="mt-5 flex items-center gap-3 text-[11px] text-ink-faint tinylens:flex-wrap tinylens:justify-center tinylens:gap-2"
+    >
+      <button
+        class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft"
+        @click="privacyOpen = true"
+      >
         隐私政策
       </button>
-      <span class="text-ink/15">·</span>
-      <button class="-my-1.5 py-1.5 active:text-ink-soft" @click="importOpen = true">
+      <span class="shrink-0 text-ink/15">·</span>
+      <button
+        class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft"
+        @click="importOpen = true"
+      >
         导入存档
       </button>
-      <span class="text-ink/15">·</span>
-      <button class="-my-1.5 py-1.5 active:text-ink-soft" @click="aboutOpen = true">
+      <span class="shrink-0 text-ink/15">·</span>
+      <button
+        class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft"
+        @click="aboutOpen = true"
+      >
         关于此作
       </button>
     </div>

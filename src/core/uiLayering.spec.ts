@@ -684,6 +684,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cult?.src, "境界名要用世界色横杆框墨").toMatch(/bg-\[var\(--world-bar\)\]/m);
     const wel = FILES.find((f) => f.path === "views/WelcomeView.vue");
     expect(wel?.src, "首屏主钮要有柔辉").toMatch(/btn-seal animate-glow-pulse/);
+    /*
+     * 极窄档(195 CSS px)实测:留白 32px 后内容宽只剩 131px ——「开 始 游 戏」四个
+     * 17px 的字加 0.3em 字距放不下,当场折成两行(79px 高);三枚底链并排要 44×3,
+     * 被压成 25px 宽的四字竖排。这是玩家看到的**第一屏**,而它没有存档才可见,
+     * 主巡页的缩放档那一遍永远巡不到。
+     */
+    expect(wel?.src, "主钮极窄档收字距并锁一行").toMatch(
+      /tracking-\[0\.3em\] whitespace-nowrap tinylens:tracking-normal/,
+    );
+    expect(wel?.src, "三枚底链极窄档换行而不是被压成竖排").toMatch(
+      /tinylens:flex-wrap tinylens:justify-center/,
+    );
+    expect(wel?.src, "底链自身不许再折(短动作词锁一行)").toMatch(
+      /-my-1\.5 shrink-0 py-1\.5 whitespace-nowrap active:text-ink-soft/,
+    );
     const home = FILES.find((f) => f.path === "views/HomeView.vue");
     expect(home?.src, "法球要有同世界色的落地影").toMatch(/bg-\[var\(--world-mountain\)\]/);
   });
