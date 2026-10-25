@@ -58,6 +58,12 @@ if (unnormalized.length > 0) {
   process.exit(1);
 }
 
+/** 数某个目录下(不递归)匹配扩展名的文件 —— 结构块里的模块数用它 */
+const countFiles = (dir, re) =>
+  readdirSync(dir, { withFileTypes: true }).filter(
+    (e) => e.isFile() && re.test(e.name) && !e.name.endsWith(".spec.ts"),
+  ).length;
+
 /** 一个 spec 文件都不算漏:两处都要走同一套"递归数 .spec.ts" */
 const countSpecs = (dir) =>
   readdirSync(dir, { recursive: true, encoding: "utf-8" }).filter(
@@ -113,6 +119,29 @@ for (const rel of docFiles) {
     sizeClaims += 1;
     if (Number(n) !== hostOnly)
       failures.push(`${rel}: 写着「本作自己那部分 ${n} 个 spec」,实际 ${hostOnly} 个`);
+  }
+  /*
+   * 「项目结构」那一块里的模块数也要对得上:它是最容易被漏掉的一类腐烂 ——
+   * 加一个 data 模块、拆一组组件,谁也不会想起去改文档里那个括号。实测抓到的漂移:
+   * data 写 57(实际 59)、components 写 38(实际 68)。规则只认结构块里的那几行
+   * (以 `├── <目录>/` 开头),普通段落里提到「N 个模块」不算。
+   */
+  const structureCounts = [
+    ["data", countFiles(join(ROOT, "src/data"), /\.ts$/), /├── data\/[^\n]*\((\d+) 个模块\)/],
+    [
+      "components",
+      countFiles(join(ROOT, "src/components"), /\.vue$/),
+      /├── components\/[^\n]*\((\d+) 个组件/,
+    ],
+    ["views", countFiles(join(ROOT, "src/views"), /\.vue$/), /├── views\/[^\n]*\((\d+) 个页面\)/],
+    ["stores", countFiles(join(ROOT, "src/stores"), /\.ts$/), /├── stores\/[^\n]*\((\d+) 个,/],
+  ];
+  for (const [label, actual, re] of structureCounts) {
+    const m = re.exec(text);
+    if (!m) continue; // 结构块里没写数就不查(不强制每处都写)
+    sizeClaims += 1;
+    if (Number(m[1]) !== actual)
+      failures.push(`${rel}: 结构块里写着 ${label} 有 ${m[1]} 个,实际 ${actual} 个`);
   }
 }
 

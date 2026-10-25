@@ -8,10 +8,11 @@
  *   bun scripts/layout-check.mjs      # 加 --shots 顺带存图到 /tmp/layout-shots
  *   bun scripts/layout-check.mjs --jobs 4   # 并发路数;也可用 LAYOUT_JOBS 环境变量
  *
- * 它是**并发**跑的:下面 32 个自检任务各自开自己的 context、各带自己的存档,互不等待,
+ * 它是**并发**跑的:下面这批自检任务各自开自己的 context、各带自己的存档,互不等待,
  * 由 runPool 按 --jobs / LAYOUT_JOBS / 核数(上限 8)调度。从前它们是同一层里顺序排队的
  * 代码块,一段段等固定时长,一轮约七分钟;拆成任务后本地实测 ~90 秒,--jobs 1 退化回串行。
  * 任务之间只共享一个浏览器与失败清单(后者按固定任务顺序合并,报告与串行时一致)。
+ * (这里刻意不写「N 个任务」:任务数每次加一条判据就变,写进注释就是第二个会漂的数。)
  *
  * 它同时在 CI 里跑(见 .github/workflows/deploy.yml 与 build.yml 的 ui-check job):
  * 每个 main 提交与每个发版 tag 都过这一关 —— 判据红则不发布。
