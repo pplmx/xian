@@ -127,6 +127,53 @@ describe("排版量法口径", () => {
     expect(SCRIPT).toMatch(/if \(el\.hasAttribute\("disabled"\)\) continue; \/\/ 禁用态是原因句/);
   });
 
+  it("巡页与冒烟的路由表都要跟上 router —— 新页面不许悄悄漏在门外", () => {
+    /*
+     * ROUTES 是手抄的一份清单。新增一个页面却忘了加进来,那一刻起它就再也不被任何
+     * 排版/触达/对比度判据量到,而门照样全绿 —— 这类漏检不会有人报,因为「没坏」
+     * 和「没量」在报告里长得一模一样。
+     *
+     * 与 router/index.ts 逐个对:除开局前两页(有存档时被守卫重定向,另有无存档的
+     * 那个任务专门量)与兜底重定向,两边必须是同一个集合。
+     */
+    const routerSrc = readFileSync(resolve(__dirname, "../router/index.ts"), "utf-8");
+    const declared = new Set(
+      [...routerSrc.matchAll(/path: "([^"]+)"/g)]
+        .map((m) => m[1]!)
+        .filter((p) => p !== "/welcome" && p !== "/create" && !p.includes("pathMatch")),
+    );
+    const block = /const ROUTES = \[([\s\S]*?)\];/.exec(SCRIPT)?.[1];
+    expect(block, "ROUTES 要能定位得到 —— 定位不到这条就是空转").toBeTruthy();
+    const gated = new Set([...(block ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]!));
+    expect(gated.size, "ROUTES 要能定位得到 —— 定位不到这条就是空转").toBeGreaterThan(10);
+    expect(
+      [...declared].filter((p) => !gated.has(p)),
+      "这些页面在 router 里,却没进巡页清单",
+    ).toEqual([]);
+    expect(
+      [...gated].filter((p) => !declared.has(p)),
+      "巡页清单里有 router 不认识的路由",
+    ).toEqual([]);
+
+    /*
+     * 冒烟脚本有它自己的一份 ROUTES(点击序按它排序),同样要跟上 —— 漏一页就等于
+     * 那一页的按钮一次都没被点过,而「没报错」与「没点」在报告里长得一样。
+     */
+    const smoke = readFileSync(resolve(__dirname, "../../scripts/ui-smoke.mjs"), "utf-8");
+    const smokeBlock = /const ROUTES = \[([\s\S]*?)\];/.exec(smoke)?.[1];
+    expect(smokeBlock, "ui-smoke 的 ROUTES 要能定位得到").toBeTruthy();
+    const smoked = new Set([...(smokeBlock ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]!));
+    expect(smoked.size, "ui-smoke 的 ROUTES 不许是空的").toBeGreaterThan(10);
+    expect(
+      [...declared].filter((p) => !smoked.has(p)),
+      "这些页面在 router 里,却没进冒烟清单",
+    ).toEqual([]);
+    expect(
+      [...smoked].filter((p) => !declared.has(p)),
+      "冒烟清单里有 router 不认识的路由",
+    ).toEqual([]);
+  });
+
   it("控件套控件的判据:宿主按按钮语义选,内层排除 -1,且带活信号", () => {
     /*
      * layout-check 的 nestedControls 报的是「读屏只念得出外层那一个」。三个口径都要钉:
