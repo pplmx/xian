@@ -35,7 +35,7 @@
           <li
             v-for="row in gainRows"
             :key="row.label"
-            class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2"
+            class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
           >
             <span class="flex items-center gap-2 text-[14px] text-ink-soft">
               <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
@@ -52,7 +52,7 @@
           <li
             v-for="row in roadRows"
             :key="row.label"
-            class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2"
+            class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
           >
             <span class="flex items-center gap-2 text-[14px]" :class="row.cls">
               <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
@@ -133,13 +133,16 @@ const rows = computed<RewardRow[]>(() => {
     list.push({ icon: "mountain", label: "玄铁", value: `+${formatNum(s.ore)}`, gain: true });
   if (s.wudao > 0)
     list.push({ icon: "book", label: "悟道点", value: `+${formatNum(s.wudao)}`, gain: true });
-  // 自动回收的产出不入行囊、只化器灵尘,单独成行,免得玩家以为掉了没捡到
+  // 自动回收的产出不入行囊、只化器灵尘,单独成行,免得玩家以为掉了没捡到。
+  // 值那一段在 195 CSS px 下只有 89px 可用:「7 件 · 器灵尘+12」要 112px,
+  // 必折两行。尘是器灵尘的通用简称(见 AGENTS 的「尚差 灵石 X · 尘 Y」),
+  // 这里用简称把一行放下 —— 全称在分解/重铸的代价行里仍在。
   if (s.recycledDust > 0) {
     const recycled = s.equipment.filter((e) => e.recycled).length;
     list.push({
       icon: "sparkles",
       label: "回收化尘",
-      value: `${recycled} 件 · 器灵尘+${formatNum(s.recycledDust)}`,
+      value: `${recycled} 件 · 尘 +${formatNum(s.recycledDust)}`,
       gain: false,
       cls: "text-ink-faint",
     });

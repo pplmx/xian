@@ -3,7 +3,7 @@
     <Transition name="modal-fade">
       <div
         v-if="props.open"
-        class="fixed inset-0 flex items-center justify-center bg-ink/45 backdrop-blur-[2px] px-5"
+        class="fixed inset-0 flex items-center justify-center bg-ink/45 backdrop-blur-[2px] px-5 tinylens:px-3"
         :class="props.top ? 'z-60' : 'z-50'"
         @click.self="onBackdrop"
       >
@@ -20,7 +20,7 @@
           <!-- 卷轴上缘 -->
           <header
             v-if="props.title || props.closable"
-            class="relative z-10 flex items-center justify-between px-5 pt-4 pb-1 shrink-0"
+            class="relative z-10 flex items-center justify-between px-5 pt-4 pb-1 shrink-0 tinylens:px-3"
           >
             <!--
               弹窗标题此前是悬空一行楷体:页面每节都有世界色笔杆(brush-bar)当家,
@@ -62,10 +62,10 @@
             class="ink-divider mx-5 shrink-0"
             aria-hidden="true"
           />
-          <div class="scroll-pane relative z-10 overflow-y-auto px-5 py-3 grow">
+          <div class="scroll-pane relative z-10 overflow-y-auto px-5 py-3 grow tinylens:px-3">
             <slot />
           </div>
-          <footer v-if="$slots.footer" class="relative z-10 px-5 pb-5 pt-2 shrink-0">
+          <footer v-if="$slots.footer" class="relative z-10 px-5 pb-5 pt-2 shrink-0 tinylens:px-3">
             <slot name="footer" />
           </footer>
         </div>

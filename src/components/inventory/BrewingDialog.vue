@@ -50,6 +50,7 @@
         v-model="recipeQuery"
         type="text"
         inputmode="search"
+        aria-label="搜方名"
         class="w-full rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[16px] text-ink outline-none placeholder:text-ink-faint"
         placeholder="搜方名…"
       />

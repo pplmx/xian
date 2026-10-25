@@ -852,6 +852,39 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(rows, "极窄档放开成单列").toContain("tinylens:grid-cols-1");
   });
 
+  it("浮层在极窄档收窄内边距 —— 195 宽下 20px 一层的内边距吃掉四成可用宽", () => {
+    /*
+     * 归来卷轴在 195 CSS px 下的面板只有 155px 宽,而 BaseModal 三层各 20px 的内边距
+     * (遮罩 / 头部 / 卷身)让收益行只剩 113px —— 「修为」与「+46.39兆」并排时各自折两行。
+     * 极窄档收成 12px:面板 171px、行内 145px,两段并排也放得下。
+     * 这是全库所有弹窗共用的原语,故在它身上收一次,而不是逐个弹窗各自补。
+     */
+    const bm = FILES.find((f) => f.path === "components/common/BaseModal.vue");
+    const padded = [...(bm?.src ?? "").matchAll(/class="([^"]*\bpx-5\b[^"]*)"/g)].map((m) => m[1]!);
+    expect(padded.length, "四层内边距要定位得到 —— 定位不到这条就是空转").toBe(4);
+    for (const cls of padded) expect(cls, "极窄档收窄").toContain("tinylens:px-3");
+  });
+
+  it("归来卷轴在极窄档上下叠 —— 面板内宽 113px 时「修为」与「+46.39兆」各自折成两行", () => {
+    /*
+     * 这一屏玩家每几天见一次,而它只在开局弹一次:主巡页与缩放档那一遍都碰不到它
+     * (巡页前先 clearOverlays 收掉了)。390 上的读数一分不代表 195 —— 实测面板内宽
+     * 只剩 113px,「修为」与「+46.39兆」并排时各自折成两行,整行 58px。
+     * 改极窄档上下叠:标签一行、数值一行,各自都读得完整。
+     */
+    const off = FILES.find((f) => f.path === "components/offline/OfflineRewardDialog.vue");
+    const rows = [
+      ...(off?.src ?? "").matchAll(
+        /class="(flex items-center justify-between rounded-md bg-paper-deep\/70 px-3 py-2[^"]*)"/g,
+      ),
+    ].map((m) => m[1]!);
+    expect(rows.length, "入账 / 路上两组行都要定位得到 —— 定位不到这条就是空转").toBe(2);
+    for (const cls of rows) {
+      expect(cls, "极窄档上下叠").toContain("tinylens:flex-col");
+      expect(cls, "叠起来后从行首对齐,不是居中").toContain("tinylens:items-start");
+    }
+  });
+
   it("后期档在极窄档的四处放开 —— 空档量不出的那几块", () => {
     /*
      * 主巡页量的是刚建号的空档:建筑未营、没有在途秘境、灵石只有三位数。
@@ -919,6 +952,26 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(meta, "maximum-scale 不许压到 1 —— 那等于禁掉放大").not.toMatch(
       /maximum-scale\s*=\s*1(\.0+)?\b/,
     );
+  });
+
+  it("文本输入框都要有可访问名 —— 读屏念「文本框」等于没说是哪一个", () => {
+    /*
+     * 三处此前只靠 placeholder:建号页的道号、丹房的搜方名、重铸面板的「至多洗 N 次」。
+     * placeholder 不是可访问名(它一输入就消失,读屏在聚焦那一刻也未必念它),
+     * 而这三处恰好都是**玩家必须填**的那一格 —— 念不出名字就等于让人盲填。
+     * 只查文本类输入(checkbox / range / file 由别的判据管)。
+     */
+    const offenders: string[] = [];
+    for (const f of FILES) {
+      for (const m of f.src.matchAll(/<input\b(?:"[^"]*"|'[^']*'|[^>"'])*?>/g)) {
+        const tag = m[0];
+        const type = /type="([^"]*)"/.exec(tag)?.[1] ?? "text";
+        if (["hidden", "file", "checkbox", "radio", "range", "color"].includes(type)) continue;
+        if (/aria-label|aria-labelledby|\sid="/.test(tag)) continue;
+        offenders.push(`${f.path}: ${type} ${tag.replace(/\s+/g, " ").slice(0, 70)}`);
+      }
+    }
+    expect(offenders, "这些输入框没有可访问名").toEqual([]);
   });
 
   it("文本输入框字号 ≥16px —— 否则 iOS 聚焦会自动放大、把布局顶歪", () => {

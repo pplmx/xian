@@ -2559,6 +2559,76 @@ async function taskLateTour() {
       if (offline.leaks)
         failures.push(`[390] 后期档:归来卷轴漏出占位符 —— ${offline.text.slice(0, 60)}`);
       if (offline.rows === 0) failures.push("[390] 后期档:归来卷轴一条收益都没列");
+      /*
+       * 卷轴本身也要过 200% 那一档。
+       *
+       * 它是**玩家每几天就见一次**的那一屏,而它只在开局弹一次 —— 主巡页与缩放档
+       * 那一遍都碰不到它(巡页前先 clearOverlays 收掉了)。390 上量到的读数一分不代表
+       * 195:实测面板内宽只剩 113px,「修为」与「+46.39兆」并排时各自折成两行。
+       * 故在收下之前把视口压到 195 量一遍,量完还原。
+       */
+      await page.setViewportSize({ width: 195, height: 422 });
+      await page.waitForTimeout(500);
+      const scrollZoom = await page.evaluate(() => {
+        const panel = document.querySelector(".modal-panel");
+        if (!panel) return null;
+        /*
+         * 量的是**每一行的数值那一段折没折行**,不是「字有没有被压成竖排」。
+         *
+         * 试过竖排那条(宽 < 40px 且折三行):改前实测「修为」41px、「+46.39兆」48px,
+         * 两条都够宽,竖排判据一次都不会响 —— 一条量不到真事故的判据比没有更糟。
+         * 这里直接量行数:内边距收到 12px 之前面板内宽 113px,两段并排各折两行、行高 58px。
+         */
+        const folded = [];
+        for (const li of panel.querySelectorAll("li")) {
+          /*
+           * 只看「标签 + 数值」那一类行(首个子元素是 span)。拾得装备那一条是
+           * 一串装备名按 flex-wrap 正常换行,不是数值被挤折 —— 把它算进来就是假红。
+           *
+           * 判「挤折」而不是「折行」:数值自己的自然宽度**放得下**这一行却仍折了,
+           * 才是被标签挤的(实测「修为」41px + 「+46.39兆」48px 并排时两段各折两行,
+           * 而 60px 的数值在一行 89px 里本可一行)。自然宽度就超出这一行的
+           * (「7 件 · 尘+1,234」要 107px、行内只有 89px)折行是正常换行,不判。
+           */
+          const [label, value] = [...li.children];
+          if (label?.tagName !== "SPAN" || !value) continue;
+          if (!(value.textContent || "").trim()) continue;
+          const cs = getComputedStyle(li);
+          const avail =
+            li.clientWidth - parseFloat(cs.paddingLeft || "0") - parseFloat(cs.paddingRight || "0");
+          const prev = value.style.whiteSpace;
+          value.style.whiteSpace = "nowrap";
+          const need = value.getBoundingClientRect().width;
+          value.style.whiteSpace = prev;
+          const lh = parseFloat(getComputedStyle(value).lineHeight) || 16;
+          const lines = Math.max(1, Math.round(value.getBoundingClientRect().height / lh));
+          if (lines > 1 && need <= avail + 1)
+            folded.push(
+              `${lines} 行 «${(value.textContent || "").trim().slice(0, 12)}»(需 ${Math.round(need)} / 行内 ${Math.round(avail)}px)`,
+            );
+        }
+        const wide = [...panel.querySelectorAll("li, p, span")]
+          .filter((el) => {
+            const r = el.getBoundingClientRect();
+            const pr = panel.getBoundingClientRect();
+            return r.width > 0 && (r.right > pr.right + 2 || r.left < pr.left - 2);
+          })
+          .slice(0, 3)
+          .map((el) => `«${(el.textContent || "").trim().slice(0, 12)}»`);
+        return { folded, wide };
+      });
+      zoomSeen += 1;
+      if (!scrollZoom) failures.push("[390] 后期档:缩到 195 时归来卷轴不见了");
+      else {
+        if (scrollZoom.folded.length)
+          failures.push(
+            `[390-late] 归来卷轴在 200% 下收益行的数值折成多行:${scrollZoom.folded.join(" | ")}`,
+          );
+        if (scrollZoom.wide.length)
+          failures.push(`[390-late] 归来卷轴在 200% 下顶出面板:${scrollZoom.wide.join(" | ")}`);
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(400);
       const take = page.locator(".modal-panel button", { hasText: /收\s*下/ }).first();
       if ((await take.count()) === 0) failures.push("[390] 后期档:归来卷轴没有「收下」");
       else {
