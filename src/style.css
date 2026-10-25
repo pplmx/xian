@@ -1151,6 +1151,24 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     transform: scale(0.96);
     background: var(--color-cinnabar-deep);
   }
+  /*
+   * 极窄档(195 CSS px,390 的机型按 200% 放大)收一收两枚按钮族的内边距与字距。
+   *
+   * 18px 的左右内边距在 195 宽的面板上是**四成**可用宽:弹窗页脚那种
+   * 「再想想 / 收起」两枚并排各剩 68px,内容宽只有 36px,而「收 起」两个字加中间
+   * 那个空格要 40px —— 在空格处断成两行,按钮高 68px(实测)。两个字的动作词
+   * 折成竖排是最该避免的一类(与 tap-row 那条角色的语义同源)。
+   *
+   * 只收内边距与字距,**不动** white-space:整宽长文案按钮(「散尽修为,重入轮回
+   * (清空存档)」)在这一档仍该正常换行,那是读得出来的换行。
+   */
+  @media (max-width: 220px) {
+    .btn-seal,
+    .btn-ghost {
+      padding-inline: 8px;
+      letter-spacing: 0.04em;
+    }
+  }
 
   .btn-seal:disabled {
     /*

@@ -113,6 +113,16 @@ describe("排版量法口径", () => {
     expect(SCRIPT).toMatch(/归来卷轴在 200% 下坏了/);
     expect(SCRIPT).toMatch(/转世「\$\{label\}」在 200% 下坏了/);
     expect(SCRIPT).toMatch(/渡劫结果在 200% 下坏了/);
+    /*
+     * 点得开的那些弹窗(装备详情 / 丹房 / 器魂 / 灵脉)另有一个任务:巡页不会去点它们,
+     * 缩放档那一遍自然也碰不到 —— 实测丹房方子卡三列并排时中间只剩 42px,
+     * 器魂详情两枚页脚键在空格处断成两行。这条钉住那个任务真的存在、且点不开时报红
+     * (判据没量到东西时不许静默变绿)。
+     */
+    expect(SCRIPT).toContain("async function taskDialogZoom(");
+    expect(SCRIPT).toMatch(/浮层「\$\{label\}」点不开/);
+    expect(SCRIPT).toMatch(/\[195\] 浮层「\$\{label\}」在 200% 下坏了/);
+    expect(SCRIPT).toMatch(/\["浮层在 200% 缩放档\(点得开的那几扇\)", taskDialogZoom\]/);
     // 与页面上那一套同一把尺子:禁用态的原因句不算折行
     expect(SCRIPT).toMatch(/if \(el\.hasAttribute\("disabled"\)\) continue; \/\/ 禁用态是原因句/);
   });

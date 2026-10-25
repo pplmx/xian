@@ -1066,6 +1066,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(declared, "配置里要能找到那条阈值声明(改名/删掉时这条会空转)").toHaveLength(1);
     const users = FILES.filter((f) => /tinylens:grid-cols-/.test(f.src)).map((f) => f.path);
     expect(users.length, "至少有一处在用这个变体").toBeGreaterThan(0);
+    /*
+     * style.css 里那条 @media 是同一个阈值的第二处写法(按钮族的极窄档内边距)——
+     * CSS 里没法用 Tailwind 变体,但数值必须与配置一字不差,否则两边会各走各的:
+     * 改了配置里那一行,按钮的内边距仍停在旧阈值上,而排版自检看不出这种漂移。
+     */
+    const css = readFileSync(resolve(SRC, "style.css"), "utf-8");
+    const cssThresholds = [...css.matchAll(/@media \(max-width: *(\d+)px\)/g)].map((m) => m[1]!);
+    for (const t of cssThresholds) {
+      expect(declared, `style.css 里的 ${t}px 与 tinylens 的阈值不是同一个数`).toContain(t);
+    }
   });
 
   it("全库不许有按钮套在按钮里 —— 读屏只念得出外层那一个", () => {

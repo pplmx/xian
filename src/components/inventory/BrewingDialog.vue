@@ -64,8 +64,12 @@
         <!--
           左图 + 中信息 + 右把握:两个按钮下移到卡底 —— 三列挤在一行时,
           中间的「方名 / 代价 / 成品」只剩一百来像素,「聚气散」被折成「聚气/散」(实测)。
+          极窄档(195 CSS px)还要再放开一层:面板 171 宽、卡片内宽 115,减掉图标与间距后
+          中间只剩 42px —— 「凡品灵草×8 · 灵石 3.4」折成 132px 高的六行、
+          「服之:修为 +80 点」折成 98px 高的四行(自检量到)。故这一档整块竖排:
+          图标与名字一行,代价与成品各占整行,把握块改成左对齐另起一段。
         -->
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-3 tinylens:flex-col tinylens:gap-1.5">
           <GameIcon
             :name="r.def.icon"
             :size="18"
@@ -139,9 +143,14 @@
             · {{ w }}
           </p>
         </template>
+        <!--
+          极窄档(195 CSS px)两枚动作键并排只剩 45px / 64px:「炼制」两个字加 px-3 的
+          左右内边距正好放不下,当场折成两行(实测 45×47)。这一档收内边距并锁一行 ——
+          动作词折行是最该避免的那一类(与全站 tap-row 同一条口径)。
+        -->
         <div class="mt-2 flex justify-end gap-1.5">
           <button
-            class="btn-seal !px-3 !py-1.5 !text-[11px]"
+            class="btn-seal whitespace-nowrap !px-3 !py-1.5 !text-[11px] tinylens:!px-2"
             :disabled="r.shortHerb || r.shortStone"
             @click="craftPill(r.def.id)"
           >
@@ -149,7 +158,7 @@
           </button>
           <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
           <button
-            class="btn-ghost !px-3 !py-1.5 !text-[11px]"
+            class="btn-ghost whitespace-nowrap !px-3 !py-1.5 !text-[11px] tinylens:!px-2"
             :disabled="r.shortHerb || r.shortStone"
             @click="craftBatch(r.def.id)"
           >
@@ -167,17 +176,24 @@
       <p class="text-[10px] text-ink-faint">技艺(按道分,做得多就精)</p>
       <div class="mt-1 space-y-1">
         <div v-for="s in skillRows" :key="s.id">
-          <p class="flex items-baseline gap-2 text-[11px]">
-            <span class="w-14 shrink-0 text-ink-faint">{{ s.daoName }}</span>
-            <span class="w-12 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
+          <p class="flex items-baseline gap-2 text-[11px] tinylens:flex-wrap tinylens:gap-x-1.5">
+            <span class="w-14 shrink-0 text-ink-faint tinylens:w-auto">{{ s.daoName }}</span>
+            <span class="w-12 shrink-0 font-kai text-ink-soft tinylens:w-auto">{{ s.name }}</span>
             <span
-              class="w-12 shrink-0"
+              class="w-12 shrink-0 tinylens:w-auto"
               :class="s.stage === '生疏' ? 'text-ink-faint' : 'text-jade'"
               >{{ s.stage }}</span
             >
-            <span class="min-w-[9em] flex-1 text-[10px] leading-relaxed text-ink-faint">{{
-              s.desc
-            }}</span>
+            <!--
+              极窄档(195 CSS px)让说明整段落到下一行:三段定宽 56+48+48 加间距是 168px,
+              比面板内宽 121 还多 —— 说明那一栏被压到 34px 宽、「凡品灵草×8 · 灵石」
+              一字一行(自检量到 34px 宽的三行竖排)。故这一档三段改回自适应宽度
+              (挤在一行读得出),说明用 basis-full 独占下一行。
+            -->
+            <span
+              class="min-w-[9em] flex-1 text-[10px] leading-relaxed text-ink-faint tinylens:basis-full"
+              >{{ s.desc }}</span
+            >
           </p>
           <!-- 离下一境还差多少:境地内线性进度(见 skillStageProgress),同其余进度条共一根 ProgressBar -->
           <p class="mt-0.5 flex items-center gap-1.5 pl-14">

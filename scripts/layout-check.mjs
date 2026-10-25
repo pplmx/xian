@@ -124,6 +124,11 @@
  *      不查底部导航项数 —— 这两页本来就没有导航(开局前不该有)。
  *      两页也各过一遍 200% 缩放档:实测欢迎页在 195 宽下把「开 始 游 戏」折成两行、
  *      把三枚底链压成 25px 宽的四字竖排 —— 而这是玩家看到的第一屏。
+ *   四十七 浮层在 200% 缩放档:页面上点得开的那几扇(装备详情 / 丹房 / 器魂 / 灵脉)
+ *      另起一个任务,在 195×422 里逐扇点开量一遍。巡页不会去点它们,缩放档那一遍
+ *      自然也碰不到 —— 实测丹房方子卡三列并排时中间只剩 42px(代价折成六行),
+ *      器魂详情的「收 起 / 卸 下」各剩 68px、在空格处断成两行。这两类都不是溢出,
+ *      横向溢出与越界元素都量不出来。尺子与「只在某一步出现的浮层」共用一份。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -6299,6 +6304,182 @@ async function taskIosNotice() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/**
+ * 浮层在 200% 缩放档:页面上点得开的那些弹窗(装备详情 / 丹房 / 器魂 / 灵脉)。
+ *
+ * 与「只在某一步出现的浮层」不同,这些是**点得开**的 —— 但巡页不会去点它们,
+ * 缩放档那一遍自然也碰不到。实测 195 宽下面板只有 171px:丹房的方子卡三列并排
+ * 时中间只剩 42px(代价折成六行、成品折成四行),器魂详情的「收 起 / 卸 下」
+ * 两枚各剩 68px、在空格处断成两行。这两类都不是「溢出」,横向溢出与越界元素都量不出来。
+ *
+ * 判据用与浮层那一族同一把尺子(measureDialogZoom + dialogZoomProblems),
+ * 每开一扇量一次;开不出来就报红 —— 判据没量到东西时不许静默变绿。
+ */
+async function taskDialogZoom() {
+  const failures = [];
+  let checked = 0;
+  const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
+  const enc = (o) => CryptoJS.AES.encrypt(JSON.stringify(o), SAVE_SECRET).toString();
+  const gn = (m, e) => ({ m, e });
+  const slices = {
+    game: {
+      started: true,
+      saveVersion: 2,
+      createdAt: Date.now() - 86400000 * 30,
+      lastActiveAt: Date.now(),
+      totalPlaySec: 0,
+      createRerolls: 8,
+      createProfile: null,
+    },
+    player: {
+      major: 14,
+      sub: 0,
+      exp: gn(3, 9),
+      age: 3000,
+      lifespanBonusYears: 0,
+      dead: false,
+      reincarnation: {
+        count: 2,
+        daoFruit: 12,
+        talents: [],
+        insight: 400,
+        lives: [],
+        vow: null,
+        trial: null,
+        bonds: [],
+      },
+      linggen: {
+        roots: [{ element: "fire", aptitude: 42 }],
+        gradeName: "杂灵根",
+        growthMult: 0.85,
+      },
+    },
+    resources: {
+      spiritStone: gn(9, 12),
+      qi: 5000,
+      wudao: 800,
+      herb: 900,
+      ore: 900,
+      page: 300,
+      dust: 500,
+    },
+    inventory: {
+      items: [
+        {
+          uid: "dlg_w",
+          templateId: "w_zidian",
+          quality: "heaven",
+          tier: 20,
+          level: 3,
+          affixes: [
+            { id: "bs3", roll: 1 },
+            { id: "low2", roll: 0.6 },
+          ],
+        },
+      ],
+      equipped: { weapon: "dlg_w" },
+      pills: { p_jvqidan: 5 },
+      artifacts: [{ defId: "af_qinglian", level: 3 }],
+      equippedArtifacts: ["af_qinglian"],
+    },
+    endgame: {
+      daoPath: "sword",
+      daoSource: 1200,
+      souls: [{ uid: "dlg_s1", type: "fengmang", grade: 1, fromName: "旧剑" }],
+      equippedSouls: ["dlg_s1"],
+    },
+    dongfu: {
+      levels: { mansion: 4, field: 5, alchemy: 5, forge: 4, library: 4 },
+      offlineCapHours: 24,
+    },
+    settings: {
+      privacyAccepted: true,
+      sfxOn: false,
+      musicOn: false,
+      musicVol: 0,
+      sfxVol: 0,
+      reduceMotion: true,
+      battleSpeed: 4,
+      decomposeRanks: [],
+      smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
+      theme: "dark",
+    },
+  };
+  const ctx = await auditContext({
+    viewport: { width: 195, height: 422 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  await ctx.addInitScript(
+    (data) => {
+      for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
+    },
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+  );
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  watchPageErrors(page, pageErrors);
+
+  /** 一扇弹窗:点开 → 量 → 关掉。点不开直接报红(判据没量到东西) */
+  const probe = async (label, route, click) => {
+    await page.goto(INDEX + "#" + route, { waitUntil: "load" });
+    await page.waitForTimeout(1100);
+    await page.evaluate(() => {
+      Math.random = () => 1;
+      for (const b of document.querySelectorAll(".pointer-events-none.fixed button")) b.click();
+    });
+    try {
+      await click();
+    } catch (e) {
+      failures.push(`[195] 浮层「${label}」点不开(${String(e).slice(0, 60)})—— 判据没量到东西`);
+      return;
+    }
+    await page.waitForTimeout(700);
+    checked += 1;
+    zoomSeen += 1;
+    const problems = dialogZoomProblems(await measureDialogZoom(page, { width: 390, height: 844 }));
+    if (problems.length)
+      failures.push(`[195] 浮层「${label}」在 200% 下坏了:${problems.join(" / ")}`);
+    await page.keyboard.press("Escape").catch(() => {});
+    await page.waitForTimeout(400);
+  };
+
+  // 点的是槽位行(「武器 雾隐长枪 +3」)—— 装备详情由它打开,不是背包列表
+  await probe("装备详情", "/inventory", async () => {
+    await page
+      .locator("main button", { hasText: /雾隐长枪/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+  await probe("开炉炼丹", "/inventory", async () => {
+    const tab = page.getByRole("tab", { name: /丹/ }).first();
+    if (await tab.count()) await tab.click();
+    await page.waitForTimeout(400);
+    await page
+      .locator("main button", { hasText: /开炉炼丹/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+  await probe("器魂详情", "/souls", async () => {
+    await page
+      .locator("main button", { hasText: /锋芒|形意/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+  await probe("灵脉投资", "/dongfu", async () => {
+    await page
+      .locator("main button", { hasText: /灵脉投资/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+
+  if (pageErrors.length)
+    failures.push(`[195] 浮层场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  await ctx.close();
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 构建产物 · dvh/字体栈 */
 async function taskBuildArtifacts() {
   const failures = [];
@@ -6578,6 +6759,7 @@ const TASKS = [
   ["坏档也能进游戏", taskBadSave],
   ["iOS 存档风险提示", taskIosNotice],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
+  ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],
   ["构建产物 · dvh / 字体栈", taskBuildArtifacts],
 ];
 
