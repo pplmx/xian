@@ -263,6 +263,7 @@ const CATEGORIES = [
       "readOnlySettle",
       "mortalBias",
       "offlineFuzz",
+      "reincarnationConfirm",
       "usageDocCounts",
       "swPrecache",
       "smokeReading",
