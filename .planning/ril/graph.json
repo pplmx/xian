@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 487,
+  "round": 488,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T11:30:09+00:00",
+  "updated_at": "2026-10-26T11:43:11+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 485,
+      "touched_round": 488,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28237,6 +28237,45 @@
       "touched_round": 487,
       "commit": "49bf3462",
       "title": "ui-smoke 增 checkSaveFull:填死配额 → 改设置 → 警告出现 → 腾空间 → 自动消失"
+    },
+    "ISS-386": {
+      "id": "ISS-386",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:38:59+00:00",
+      "updated_at": "2026-10-26T11:43:11+00:00",
+      "touched_round": 488,
+      "title": "所钟只在马后炮处出现:历练页出发前看不到本世偏向",
+      "summary": "资源偏向只乘一个渠道(+15%),但它决定这一世该往哪种地界走。世界页说得到、战报命中的那一行说得到、归来卷轴也说得到 —— 唯独历练页(玩家真正干活的地方)没有,得先打一场才知道。与「让看不见的机制可见」是同一条纪律的另一半:看得见的地方要对,该看见的地方也要在。",
+      "severity": 0.25,
+      "confidence": 0.9
+    },
+    "TASK-492": {
+      "id": "TASK-492",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:38:59+00:00",
+      "updated_at": "2026-10-26T11:43:11+00:00",
+      "touched_round": 488,
+      "category": "ux-contract",
+      "title": "历练页在星象下加「此地所钟:…」,文案取 biasEffectOf 同一源",
+      "summary": "一行 10px 全文,不截断;浏览器实测典籍散佚渲染「功法残页掉落 +15%」;源码判据绑住 biasEffectOf + data-bias-hint。",
+      "severity": 0.25,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-592": {
+      "id": "CHG-592",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:43:11+00:00",
+      "updated_at": "2026-10-26T11:43:11+00:00",
+      "touched_round": 488,
+      "commit": "56de01f6",
+      "title": "历练页在星象下加「此地所钟:…」,绑 biasEffectOf 同一源"
     }
   },
   "edges": [
@@ -41232,6 +41271,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T11:30:09+00:00"
+    },
+    {
+      "from": "CHG-592",
+      "to": "ISS-386",
+      "type": "resolves",
+      "created_at": "2026-10-26T11:43:11+00:00"
+    },
+    {
+      "from": "CHG-592",
+      "to": "TASK-492",
+      "type": "implements",
+      "created_at": "2026-10-26T11:43:11+00:00"
+    },
+    {
+      "from": "ISS-386",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T11:43:11+00:00"
     }
   ]
 }
