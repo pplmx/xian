@@ -16,6 +16,8 @@
  * 见文末「未处置的账」。
  */
 import { describe, it, expect } from "vite-plus/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { PILLS, pillDef } from "@/data/pills";
 import { buffDef } from "@/data/buffs";
 import { qualityDef } from "@/data/qualities";
@@ -266,12 +268,12 @@ describe("定价法则", () => {
   });
 
   /**
-   * 【法则 E3】前期也要掉得出回气丹。
+   * 【法则 E4】前期也要掉得出回气丹。
    *
    * 灵气是突破的门槛资源。补上寒潭露之前,0~5 境的掉落池里没有任何一味灵气丹 ——
    * 法则 E「池子非空」照样过,因为修为丹一直在,池子只是少了一整族。
    */
-  it("E3 —— 每个大境界都掉得出回气丹", () => {
+  it("E4 —— 每个大境界都掉得出回气丹", () => {
     for (let m = 0; m <= MAX_MAJOR; m += 1) {
       const qi = dropPoolAt(m).filter((def) => pillFamily(def) === "qi");
       expect(qi.length, `境界 ${m} 掉不出任何回气丹`).toBeGreaterThan(0);
@@ -568,5 +570,38 @@ describe("本次校准的落点", () => {
           dropPeak,
         );
     }
+  });
+});
+
+describe("定价法则 · 清单本身不许漂移", () => {
+  /*
+   * 这套法则的编号是给人读的契约:报告里写「E3 红了」,别人得能对上文档里那一条。
+   * 而它此前没有任何守护 —— 加一条新法则时撞上旧编号(两条都叫 E3)不会报错,
+   * 文档里也只列到 E2。两条判据:编号不许重复,每条都要在两处清单里出现。
+   */
+  const SPEC = readFileSync(resolve(__dirname, "pillValue.spec.ts"), "utf8");
+  const ALCH = readFileSync(resolve(__dirname, "../../docs/alchemy.md"), "utf8");
+  const HEADER = readFileSync(resolve(__dirname, "../data/pills.ts"), "utf8");
+  const ids = [...SPEC.matchAll(/it\("([A-Z]\d?) —— /g)].map((m) => m[1]!);
+
+  it("法则编号不重复", () => {
+    const seen = new Set<string>();
+    const dup = ids.filter((id) => (seen.has(id) ? true : (seen.add(id), false)));
+    expect([...new Set(dup)], "同一个编号被两条法则用了").toEqual([]);
+  });
+
+  it("每条法则在 docs/alchemy.md 与 pills.ts 头注释里都点得到", () => {
+    const missingDocs = ids.filter(
+      (id) => !new RegExp(`(^|[^A-Za-z0-9])${id}[^A-Za-z0-9]`).test(ALCH),
+    );
+    const missingHeader = ids.filter(
+      (id) => !new RegExp(`(^|[^A-Za-z0-9])${id}[^A-Za-z0-9]`).test(HEADER),
+    );
+    expect(missingDocs, "这些法则在 docs/alchemy.md 里没写").toEqual([]);
+    expect(missingHeader, "这些法则在 pills.ts 头注释里没写").toEqual([]);
+  });
+
+  it("至少认出八条 —— 正则被改坏时不许静默变成空集", () => {
+    expect(ids.length).toBeGreaterThanOrEqual(8);
   });
 });
