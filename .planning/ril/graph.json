@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 500,
+  "round": 501,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T15:29:18+00:00",
+  "updated_at": "2026-10-26T15:37:49+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 494,
+      "touched_round": 501,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28744,6 +28744,45 @@
       "touched_round": 500,
       "commit": "ff059bdf",
       "title": "test-report:空转与没被跑到的 spec 都算失败并逐个列名"
+    },
+    "ISS-399": {
+      "id": "ISS-399",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:34:19+00:00",
+      "updated_at": "2026-10-26T15:37:49+00:00",
+      "touched_round": 501,
+      "title": "排版门的视口档位可被悄悄删掉,门不会红",
+      "summary": "五档视口各是被一类真实毛病逼出来的(320 窄屏、844×390 横屏、1280×800 桌面、390 的 200% 缩放)。删掉一档不会让门变红,只会让它安静地少量一部分屏幕 —— 「少量了」与「量过了」在报告里长得一模一样。此前只有量法口径被钉住,覆盖面没有。",
+      "severity": 0.25,
+      "confidence": 0.9
+    },
+    "TASK-505": {
+      "id": "TASK-505",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:34:19+00:00",
+      "updated_at": "2026-10-26T15:37:49+00:00",
+      "touched_round": 501,
+      "category": "detectability",
+      "title": "layoutMeasure.spec 钉住五档视口与 200% 缩放那一档",
+      "summary": "从 layout-check.mjs 读出 VIEWPORTS,要求 320/375/390/844/1280 都在;并要求 195 CSS px 的缩放量法(zoomProblems/zoomBad)仍出现。注入删掉 320 那一档即红。",
+      "severity": 0.25,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-605": {
+      "id": "CHG-605",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:37:48+00:00",
+      "updated_at": "2026-10-26T15:37:49+00:00",
+      "touched_round": 501,
+      "commit": "99b2666e",
+      "title": "layoutMeasure.spec 钉住五档视口与 200% 缩放那一档"
     }
   },
   "edges": [
@@ -41973,6 +42012,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T15:29:18+00:00"
+    },
+    {
+      "from": "CHG-605",
+      "to": "ISS-399",
+      "type": "resolves",
+      "created_at": "2026-10-26T15:37:48+00:00"
+    },
+    {
+      "from": "CHG-605",
+      "to": "TASK-505",
+      "type": "implements",
+      "created_at": "2026-10-26T15:37:49+00:00"
+    },
+    {
+      "from": "ISS-399",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T15:37:49+00:00"
     }
   ]
 }
