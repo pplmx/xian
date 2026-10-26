@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 481,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T10:00:03+00:00",
+  "updated_at": "2026-10-26T10:02:50+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 480,
+      "touched_round": 481,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27968,10 +27968,10 @@
     "ISS-379": {
       "id": "ISS-379",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T10:00:03+00:00",
-      "updated_at": "2026-10-26T10:00:03+00:00",
+      "updated_at": "2026-10-26T10:02:50+00:00",
       "touched_round": 481,
       "title": "离线结算只有手写状态用例:组合维度上没有「不崩」的判据",
       "summary": "忙碌档/空档/深探档各一条,都是手写的一种状态;真实档是境界×区域×出行×时长×洞府×偏向的组合。组合里任何一条抛错,玩家回来就是一屏空白 —— 而手写用例碰不到。本轮注入「取偏向时读 null 世界的字段」验证:组合式随机档能立刻抓到,手写用例不会。",
@@ -27981,10 +27981,10 @@
     "TASK-485": {
       "id": "TASK-485",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T10:00:03+00:00",
-      "updated_at": "2026-10-26T10:00:03+00:00",
+      "updated_at": "2026-10-26T10:02:50+00:00",
       "touched_round": 481,
       "category": "detectability",
       "title": "offlineFuzz:固定种子 120 组随机状态的不变量",
@@ -27992,6 +27992,17 @@
       "severity": 0.35,
       "confidence": 0.9,
       "effort": 1
+    },
+    "CHG-585": {
+      "id": "CHG-585",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T10:02:49+00:00",
+      "updated_at": "2026-10-26T10:02:50+00:00",
+      "touched_round": 481,
+      "commit": "8ced7430",
+      "title": "offlineFuzz:固定种子 120 组随机状态的离线结算不变量"
     }
   },
   "edges": [
@@ -40861,6 +40872,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T09:48:32+00:00"
+    },
+    {
+      "from": "CHG-585",
+      "to": "ISS-379",
+      "type": "resolves",
+      "created_at": "2026-10-26T10:02:49+00:00"
+    },
+    {
+      "from": "CHG-585",
+      "to": "TASK-485",
+      "type": "implements",
+      "created_at": "2026-10-26T10:02:49+00:00"
+    },
+    {
+      "from": "ISS-379",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T10:02:49+00:00"
     }
   ]
 }
