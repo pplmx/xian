@@ -394,6 +394,15 @@ describe("门禁覆盖面 · 具名场景不许悄悄消失", () => {
     expect(SMOKE).toMatch(/const MIN_CLICKS_PER_ROUTE = 1;/);
   });
 
+  it("开发文档里的冒烟场景清单与脚本同形", () => {
+    // 上一版文档写着「三条环境专场景」,而脚本早就是四条 —— 少掉的那条正是挂机稳定。
+    // 清单不全,读文档的人就不知道门在量什么(与「门量了多少东西」是同一个问题)。
+    const doc = readFileSync(join(ROOT, "docs/development.md"), "utf8");
+    for (const label of ["旧档迁移", "存储写满", "挂机稳定", "每页至少点得到一个控件"]) {
+      expect(doc, `开发文档的冒烟清单里少了「${label}」`).toContain(label);
+    }
+  });
+
   it("排版门的具名场景一个不少", () => {
     const critical = [
       "走完一次转世",
