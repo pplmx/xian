@@ -28,6 +28,13 @@
         >
           换一方天地({{ rerollCost }} 道果{{ canRerollWorld ? "" : ` · 尚差 ${shortfall} 枚` }})
         </button>
+        <!--
+          换界的代价必须写在按钮下面:setMortalWorld 会把本世路线进度清零(「换界即换路」)。
+          只说价、不说会清进度,等于让玩家在不知情的情况下丢掉已经走过的路。
+        -->
+        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          换界即换路:已走的本世路线会清零,所钟与地貌构成随之更换。
+        </p>
       </div>
 
       <!-- 路线全貌:高低即层级,横距即路程,点大即事多 -->
