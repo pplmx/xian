@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 488,
+  "round": 489,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T11:43:11+00:00",
+  "updated_at": "2026-10-26T11:53:24+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 488,
+      "touched_round": 489,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28276,6 +28276,45 @@
       "touched_round": 488,
       "commit": "56de01f6",
       "title": "历练页在星象下加「此地所钟:…」,绑 biasEffectOf 同一源"
+    },
+    "ISS-387": {
+      "id": "ISS-387",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:49:04+00:00",
+      "updated_at": "2026-10-26T11:53:24+00:00",
+      "touched_round": 489,
+      "title": "玩家手册没有「存档写不进去」这一节",
+      "summary": "设置页那张卡说得清(失败常驻一条、提示先导出),但 docs/usage.md 里没有:真出问题时玩家会先翻手册,而手册只讲了多标签页的只读。写满/写不进去是同一类事故的另一半 —— 进度没进档,而且它会自己恢复,这两件事都该写在手册里。",
+      "severity": 0.2,
+      "confidence": 0.9
+    },
+    "TASK-493": {
+      "id": "TASK-493",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:49:04+00:00",
+      "updated_at": "2026-10-26T11:53:24+00:00",
+      "touched_round": 489,
+      "category": "docs",
+      "title": "usage 补「存档写不进去」一节 + 设置页补一句「自动重试」",
+      "summary": "手册写清三件事(首次提示/常驻一条/5 秒自动重试与自愈)、失败时磁盘仍是上一版、导出→清空间→导入的顺序、坏文件当场报错;设置页那行补「腾出空间后会自动重试,成功时这条自己消失」。",
+      "severity": 0.2,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-593": {
+      "id": "CHG-593",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:53:24+00:00",
+      "updated_at": "2026-10-26T11:53:24+00:00",
+      "touched_round": 489,
+      "commit": "7663c30d",
+      "title": "usage 补「存档写不进去」一节 + 设置页补「自动重试」"
     }
   },
   "edges": [
@@ -41289,6 +41328,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T11:43:11+00:00"
+    },
+    {
+      "from": "CHG-593",
+      "to": "ISS-387",
+      "type": "resolves",
+      "created_at": "2026-10-26T11:53:24+00:00"
+    },
+    {
+      "from": "CHG-593",
+      "to": "TASK-493",
+      "type": "implements",
+      "created_at": "2026-10-26T11:53:24+00:00"
+    },
+    {
+      "from": "ISS-387",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T11:53:24+00:00"
     }
   ]
 }
