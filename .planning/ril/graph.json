@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 470,
+  "round": 471,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T07:45:18+00:00",
+  "updated_at": "2026-10-26T07:56:54+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 470,
+      "touched_round": 471,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27613,6 +27613,45 @@
       "touched_round": 470,
       "commit": "f9c35e6e",
       "title": "五个按墙钟结算的 store 方法在只读页早退;useReturnSettle 退回纯编排"
+    },
+    "ISS-370": {
+      "id": "ISS-370",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:52:32+00:00",
+      "updated_at": "2026-10-26T07:56:54+00:00",
+      "touched_round": 471,
+      "title": "只读页的操作在内存里「成功」却永不落盘,而且一声不吭",
+      "summary": "存储层的闸只把写入变成空操作,界面拿到的是成功:买下、派遣、改设置都在内存里生效,玩家要等到刷新才发现白忙一场。实测:只读页点「跟随系统」这类会写 settings 分片的开关,内存里换了主题、盘上没动、没有任何提示。",
+      "severity": 0.4,
+      "confidence": 0.95
+    },
+    "TASK-476": {
+      "id": "TASK-476",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:52:32+00:00",
+      "updated_at": "2026-10-26T07:56:54+00:00",
+      "touched_round": 471,
+      "category": "ux-contract",
+      "title": "只读页拦下第一笔写入时当场说一声(窗口内只喊一次)",
+      "summary": "storage 增加 onBlockedSaveWrite 订阅:THROTTLED_STORAGE.setItem 在 writesBlocked 时通知,5 秒窗口内只喊一次(一次点击常连写多片);App 订阅后弹「本页只读 —— 这一步没有保存」。用例:拦下即通知、同窗口不重复、写者页不误伤、退订生效。",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-576": {
+      "id": "CHG-576",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:56:54+00:00",
+      "updated_at": "2026-10-26T07:56:54+00:00",
+      "touched_round": 471,
+      "commit": "9a06612a",
+      "title": "onBlockedSaveWrite 订阅 + App 弹「这一步没有保存」"
     }
   },
   "edges": [
@@ -40320,6 +40359,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T07:45:18+00:00"
+    },
+    {
+      "from": "CHG-576",
+      "to": "ISS-370",
+      "type": "resolves",
+      "created_at": "2026-10-26T07:56:54+00:00"
+    },
+    {
+      "from": "CHG-576",
+      "to": "TASK-476",
+      "type": "implements",
+      "created_at": "2026-10-26T07:56:54+00:00"
+    },
+    {
+      "from": "ISS-370",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T07:56:54+00:00"
     }
   ]
 }
