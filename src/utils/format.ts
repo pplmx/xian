@@ -211,6 +211,21 @@ export function yearsLeftShown(age: number, lifespanMax: number): number {
   return Math.max(0, yearsShown(lifespanMax) - yearsShown(age));
 }
 
+/**
+ * 顶栏那一对「年龄 / 寿元」。
+ *
+ * 两侧必须用同一套缩写。此前左边走原数、右边走「寿元年数展示」:到了寿元以亿计的
+ * 境界,同一行会读成「1234567/1000亿载」—— 两个量纲并排,眼睛会把它当成「还早」。
+ * 单位只在末尾写一次,两侧都只出数字;万/亿从一万岁起才启用(与 formatYears 同一条界)。
+ */
+export function lifespanPair(age: number, lifespanMax: number): { age: string; max: string } {
+  const short = (y: number): string => {
+    const n = yearsShown(y);
+    return n >= 10000 ? formatNum(n) : String(n);
+  };
+  return { age: short(age), max: short(lifespanMax) };
+}
+
 /** 寿元年数展示 */
 export function formatYears(y: number): string {
   const n = yearsShown(y);

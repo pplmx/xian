@@ -27,7 +27,7 @@
             class="tabular shrink-0"
             :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : ''"
           >
-            {{ yearsShown(player.age) }}/{{ formatYears(player.lifespanMax) }}
+            {{ lifespan.age }}/{{ lifespan.max }}载
           </span>
           <!--
             轮回次数:从主页人物卡移来,置于全局顶栏常驻。
@@ -69,7 +69,7 @@
 import { computed } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
-import { formatGN, formatNum, formatYears, yearsShown } from "@/utils/format";
+import { formatGN, formatNum, lifespanPair } from "@/utils/format";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { Capacitor } from "@capacitor/core";
 import { useNativeInsets } from "@/composables/useNativeInsets";
@@ -82,6 +82,8 @@ const resources = useResourcesStore();
  * 老的猜测 —— 原生 20px(沉浸式状态栏的近似)/ 网页 8px,web 渲染逐位不变。
  */
 const { top: statusInset } = useNativeInsets();
+/** 年龄/寿元:两侧同一套缩写,单位(载)在模板里只写一次 */
+const lifespan = computed(() => lifespanPair(player.age, player.lifespanMax));
 const statusTopPad = computed(() =>
   statusInset.value > 0 ? `${statusInset.value}px` : Capacitor.isNativePlatform() ? "20px" : "8px",
 );

@@ -220,7 +220,13 @@ describe("离线总结 · 变动了多少就报多少", () => {
     expect(offlineSrc, "禁止再对剩余寿元四舍五入").not.toContain(
       "Math.round(player.lifespanMax - player.age)",
     );
-    expect(bar, "顶栏年龄必须走 yearsShown").toContain("yearsShown(player.age)");
+    // 顶栏改成 lifespanPair(两侧同一套缩写)之后,取整仍必须落在 yearsShown 上 ——
+    // 判据跟着那层间接走,而不是放宽成「随便什么写法都行」
+    expect(bar, "顶栏年龄必须走 lifespanPair").toContain("lifespanPair(player.age");
+    expect(
+      /export function lifespanPair[\s\S]*?yearsShown\(/.test(formatSrc),
+      "lifespanPair 内部必须调 yearsShown —— 顶栏与归来卷轴还是同一把尺",
+    ).toBe(true);
   });
 
   it("封顶也不改变「报的就是实际差额」:洞府 0 级时灵草只按 8 小时结", () => {

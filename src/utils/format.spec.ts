@@ -9,6 +9,7 @@ import {
   formatSignedPercent,
   formatScientific,
   formatYears,
+  lifespanPair,
   yearsDeltaShown,
   yearsLeftShown,
   yearsShown,
@@ -155,6 +156,15 @@ describe("数值格式化", () => {
     expect(yearsShown(0.4)).toBe(0);
     expect(yearsShown(NaN)).toBe(0);
     expect(yearsShown(-3)).toBe(0);
+  });
+
+  it("顶栏寿元:两侧同一套缩写 —— 别让 123 万读成「还早」", () => {
+    // 寿元以亿计的境界:年龄这时也在万以上,两侧都得走万/亿,单位只在模板写一次
+    expect(lifespanPair(1_234_567, 1e11)).toEqual({ age: "123.5万", max: "1000亿" });
+    // 一万岁以下两侧都是原数(与 formatYears 同一条界),不是把 3000 写成 0.3万
+    expect(lifespanPair(3000, 1200)).toEqual({ age: "3000", max: "1200" });
+    // 年龄是小数、寿元告急:两侧都取整,不出现 36.9/37
+    expect(lifespanPair(36.9, 1200)).toEqual({ age: "36", max: "1200" });
     expect(yearsDeltaShown(10, 10.6)).toBe(0);
     expect(yearsDeltaShown(10, 11.6)).toBe(1);
     expect(yearsDeltaShown(10.7, 11.3)).toBe(1);
