@@ -18,6 +18,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { skeletonDistance, terrainOf, visibleFeatures, worldIdentity } from "./mortalIdentity";
 import { generateMortalWorld, type MortalWorld } from "./mortalWorldGen";
+import { biasEffectOf } from "./mortalBias";
 
 /** 采样一批世界 */
 const POOL: MortalWorld[] = Array.from({ length: 240 }, (_, i) =>
@@ -186,19 +187,25 @@ describe("语义完整度 · 四层职责已确立", () => {
     );
   });
 
-  it("已知问题:资源偏向是纯装饰,不影响任何游戏数值", () => {
-    // bias 的全部消费点只有三处摘要文案与新颖度计算(审计用)。
-    // 它不影响掉落、不影响资源产出、不影响任何数值 ——
-    // 玩家读到「典籍散佚之地」会期待某种资源倾向,实际什么都不会发生。
-    //
-    // 这比「玩家不知道它意味着什么」更严重:**它根本不意味着什么**。
-    // 本轮不改(收尾),但把事实钉在这里,免得日后当成已生效的机制
+  it("资源偏向已经兑现:每条偏向只乘一个渠道,并写进世界详情", () => {
+    /*
+     * 这条曾经写着「已知问题:资源偏向是纯装饰」—— 摘要说「矿脉深厚之地」,
+     * 而玄铁掉率一分不动。现在每条偏向在 core/mortalBias 里有且只有一个渠道
+     * (灵草 / 玄铁 / 残页 / 丹药 / 灵石),幅度 +15%,并由 afterWin 真乘上去。
+     *
+     * 判据留在这一份审计里,是因为「世界说了什么」与「世界做了什么」的对账
+     * 本来就该并排看:只改 mortalBias 而忘了接进结算,这里会红。
+     */
     const biases = new Set(POOL.map((w) => w.bias));
     expect(biases.size).toBeGreaterThan(1);
+    for (const bias of biases) {
+      const effect = biasEffectOf(bias);
+      expect(effect, `${bias} 没有兑现表项`).toBeDefined();
+      expect(effect!.mult).toBeGreaterThan(1);
+    }
     console.log(
-      `\n资源偏向有 ${biases.size} 种取值:${[...biases].join("、")}` +
-        "\n但它只出现在摘要文案与新颖度计算里,不接任何经济或掉落逻辑。" +
-        "\n要么给它真实效果,要么从摘要里拿掉 —— 现状是「看似有信息、实际没信息」",
+      `\n资源偏向有 ${biases.size} 种取值,每种只乘一个渠道(+15%):` +
+        `\n${[...biases].map((b) => `${b}→${biasEffectOf(b)!.label}`).join(" · ")}`,
     );
   });
 });

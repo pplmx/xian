@@ -26,6 +26,7 @@ import { expFromSecs, stoneByTier } from "./formulas";
 import { herbGradeOfMajor } from "@/data/herbGrades";
 import { tierMajor } from "./tierScale";
 import { modOf } from "./statsCalc";
+import { biasChanceMult } from "./mortalBias";
 import { personalityEffects } from "./petPersonality";
 import { compareEvictable, keepVerdict, shouldAutoRecycle, smartKeepEnabled } from "./smartKeep";
 import { salvageOf } from "./salvage";
@@ -234,7 +235,13 @@ export function randomDropArtifact(tier: number): string | null {
 }
 
 /** 战斗胜利掉落 */
-export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean): DropSummary {
+export function afterWin(
+  region: RegionDef,
+  rewardMult: number,
+  isBoss: boolean,
+  /** 这一世的资源偏向(见 core/mortalBias):只放大对应的那一个渠道 */
+  bias?: string,
+): DropSummary {
   const player = usePlayerStore();
   const resources = useResourcesStore();
   const inventory = useInventoryStore();
@@ -249,7 +256,12 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
 
   // 灵石
   const stoneAmt =
-    rng.float(0.8, 1.2) * rewardMult * bossMult * doubled * (1 + modOf(mods, "spiritStoneGain"));
+    rng.float(0.8, 1.2) *
+    rewardMult *
+    bossMult *
+    doubled *
+    (1 + modOf(mods, "spiritStoneGain")) *
+    biasChanceMult(bias, "stone");
   const stone = stoneByTier(tier, 10 * stoneAmt);
   // 落账,并把"实际入账"取回来 —— 界面上的"本次所得"与行囊里多出来的只有这一个来源
   const settledStone = STONE_SETTLEMENT.settle(
@@ -289,9 +301,13 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
    */
   const dropEntries = {
     // 材料 —— 数量进标量库存,同时抽出"你到底捡到了什么"推进认知
-    herb: { key: "herb", chance: 0.5, count: [1, 3] as const },
-    ore: { key: "ore", chance: 0.35, count: [1, 2] as const },
-    page: { key: "page", chance: PAGE_DROP_CHANCE * rewardMult, count: [1, 2] as const },
+    herb: { key: "herb", chance: 0.5 * biasChanceMult(bias, "herb"), count: [1, 3] as const },
+    ore: { key: "ore", chance: 0.35 * biasChanceMult(bias, "ore"), count: [1, 2] as const },
+    page: {
+      key: "page",
+      chance: PAGE_DROP_CHANCE * rewardMult * biasChanceMult(bias, "page"),
+      count: [1, 2] as const,
+    },
     equipment: {
       key: "equipment",
       chance: EQUIP_DROP_CHANCE * rewardMult * (1 + modOf(mods, "dropRate")) * (isBoss ? 2.5 : 1),
@@ -304,7 +320,7 @@ export function afterWin(region: RegionDef, rewardMult: number, isBoss: boolean)
     },
     pill: {
       key: "pill",
-      chance: PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1),
+      chance: PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1) * biasChanceMult(bias, "pill"),
       count: 1,
       scalesWithCount: false,
     },

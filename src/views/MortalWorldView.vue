@@ -9,6 +9,13 @@
           此世命数:{{ view.ruleText
           }}<span class="text-ink-faint">（此世气象之名,其律尚未显化于历练）</span>
         </p>
+        <!--
+          资源偏向必须写明兑现方式:摘要里那句「矿脉深厚之地」若没有数字跟着,
+          玩家会把它当纯flavor —— 而它现在真的乘在玄铁掉率上(见 core/mortalBias)。
+        -->
+        <p v-if="view.biasText" class="mt-0.5 text-[11px] text-ink-faint">
+          此地所钟:{{ view.biasText }}
+        </p>
       </div>
 
       <!-- 路线全貌:高低即层级,横距即路程,点大即事多 -->

@@ -68,7 +68,13 @@ import { regionEventDef } from "./regionEvent";
 import { noteEnemy } from "./loreService";
 import { noteTaboo } from "./samsaraService";
 import { useInventoryStore } from "@/stores/inventory";
-import { advanceRoute, canEnterRegion, entryBlockReason, placeContent } from "./mortalWorldService";
+import {
+  advanceRoute,
+  canEnterRegion,
+  currentWorldBias,
+  entryBlockReason,
+  placeContent,
+} from "./mortalWorldService";
 import { terrainOf } from "./mortalIdentity";
 import {
   advanceBond,
@@ -349,7 +355,12 @@ function runBattle(now: number): void {
     recordStreakWin();
     // Phase 31 A2:区域事件掉落修正(妖潮/古墓/商队更丰)
     const regReward = regEv ? (regionEventDef(regEv.eventId)?.rewardMult ?? 1) : 1;
-    const drops = afterWin(region, modeDef.rewardMult * regReward, Boolean(eDef.isBoss));
+    const drops = afterWin(
+      region,
+      modeDef.rewardMult * regReward,
+      Boolean(eDef.isBoss),
+      currentWorldBias(),
+    );
     // 战报带上这一场的掉落明细:线上一向只数件数、把 lines 丢掉,玩家看不到自己得了什么
     adventure.recordBattle({ ...view, loot: drops.lines });
     // 会话账目直接取 afterWin 的**真实入账**(灵石/修为/实物件数),

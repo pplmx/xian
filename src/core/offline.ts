@@ -51,7 +51,7 @@ import {
   winsUntilRegionBoss,
 } from "./exploration";
 import { regionEventDef } from "./regionEvent";
-import { placeContent } from "./mortalWorldService";
+import { currentWorldBias, placeContent } from "./mortalWorldService";
 import { clamp, planIdle } from "wanxiang-engine";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { checkSuppression, settleSuppressedRegions, suppressRateLine } from "./suppress";
@@ -630,6 +630,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
               region,
               modeDef.rewardMult * OFFLINE_BOSS_REWARD_MULT * regionEventReward,
               true,
+              currentWorldBias(),
             );
             trip.stone = add(trip.stone, drops.stone);
             trip.exp = add(trip.exp, drops.exp);

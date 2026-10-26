@@ -261,6 +261,7 @@ const CATEGORIES = [
       "singleWriter",
       "useReturnSettle",
       "readOnlySettle",
+      "mortalBias",
       "usageDocCounts",
       "swPrecache",
       "smokeReading",

@@ -78,8 +78,9 @@ describe("离线历练 · 区域事件加丰与加难成对(regReward)", () => {
     const offline = readFileSync(src("./offline.ts"), "utf8");
     // 与 danger 同源:妖潮/古墓/商队在加难的同时也加丰(奖励倍率进石头/修为/掉落数)
     expect(offline).toContain("regionEventReward");
+    // 第四个参数是本世资源偏向:离线首领战也要与在线同口径(见 core/mortalBias)
     expect(offline).toMatch(
-      /afterWin\(\s*region,\s*modeDef\.rewardMult \* OFFLINE_BOSS_REWARD_MULT \* regionEventReward,\s*true,\s*\)/,
+      /afterWin\(\s*region,\s*modeDef\.rewardMult \* OFFLINE_BOSS_REWARD_MULT \* regionEventReward,\s*true,\s*currentWorldBias\(\),\s*\)/,
     );
     expect(offline).toContain("modeDef.rewardMult * regionEventReward");
     expect(offline).toMatch(

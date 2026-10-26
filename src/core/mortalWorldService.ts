@@ -22,6 +22,7 @@ import { generateGatedMortal } from "./mortalGate";
 import { terrainOf, worldIdentity } from "./mortalIdentity";
 import { REGIONS } from "@/data/regions";
 import { useAdventureStore } from "@/stores/adventure";
+import { biasEffectOf } from "./mortalBias";
 
 /** 生成本世世界所用的历史(暂只与自身去重,跨世历史留待接入轮回时补) */
 function historyOf(cur: MortalWorld | null): MortalWorld[] {
@@ -215,12 +216,19 @@ export interface PlaceView {
 export const VIEW_W = 300;
 export const VIEW_H = 64;
 
+/** 当前这一世的资源偏向(没立世 / 老存档里没有就是 undefined) */
+export function currentWorldBias(): string | undefined {
+  return useAdventureStore().mortalWorld?.bias;
+}
+
 export interface WorldView {
   /** 世界身份,玩家第一眼看到的那句话 */
   title: string;
   summary: string;
   /** 贯穿本世的规则(玩家可见) */
   ruleText: string;
+  /** 资源偏向这一句的兑现方式 —— 与 afterWin 里那个乘区同源 */
+  biasText: string;
   places: PlaceView[];
 }
 
@@ -275,5 +283,11 @@ export function worldView(w: MortalWorld, bossNameOf: (id: string) => string): W
       bossName: bossNameOf(p.boss),
     };
   });
-  return { title: id.name, summary: id.summary, ruleText: w.ruleName, places };
+  return {
+    title: id.name,
+    summary: id.summary,
+    ruleText: w.ruleName,
+    biasText: biasEffectOf(w.bias)?.label ?? "",
+    places,
+  };
 }
