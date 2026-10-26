@@ -260,6 +260,7 @@ const CATEGORIES = [
       "modalStack",
       "singleWriter",
       "useReturnSettle",
+      "readOnlySettle",
       "usageDocCounts",
       "swPrecache",
       "smokeReading",

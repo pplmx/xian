@@ -5,6 +5,7 @@
  * 一拍 collectFinished 即收割。产出由 core/apprenticeService 纯算,这里只管入账。
  */
 import { defineStore } from "pinia";
+import { saveReader } from "@/core/singleWriter";
 import { ref } from "vue";
 import { persistConfig } from "@/utils/storage";
 import { rng } from "@/utils/random";
@@ -128,6 +129,8 @@ export const useApprenticeStore = defineStore(
      * 若上一世凝有跨世之缘(真传),starter 带着这份羁绊入场,随后清零 —— 一次性携带,不每世重演。
      */
     function sync(): void {
+      // 只读页不白送弟子、不消耗跨世之缘 —— 那笔账进不了档,缘却已经扣掉了
+      if (saveReader.value) return;
       if (apprentices.value.length === 0) {
         apprentices.value = [
           {
@@ -144,6 +147,8 @@ export const useApprenticeStore = defineStore(
 
     /** 收割所有已完工的弟子,return 尾账(带弟子名)供界面报「弟子归来,带回…」 */
     function collectFinished(now: number, major: number): ApprenticeReap[] {
+      // 只读页不收割:弟子归来的资材会进内存,但这一页永远不落盘
+      if (saveReader.value) return [];
       const reaped: ApprenticeReap[] = [];
       for (const appr of apprentices.value) {
         if (!taskDone(appr, now)) continue;

@@ -5,6 +5,7 @@
  * core/bountyService(纯)现算,这里只管入账翻身。
  */
 import { defineStore } from "pinia";
+import { saveReader } from "@/core/singleWriter";
 import { ref } from "vue";
 import type { QualityId } from "@/types";
 import { persistConfig } from "@/utils/storage";
@@ -72,6 +73,8 @@ export const useBountyStore = defineStore(
 
     /** 订单空、或已过刷新窗口则换新一版(此刻的订单不动,交货中的不打断) */
     function sync(now: number): void {
+      // 只读页不换版:悬赏板是这一页永远写不回去的东西
+      if (saveReader.value) return;
       if (orders.value.length > 0 && now < bountyAt.value + BOUNTY_REFRESH_SECONDS * 1000) return;
       const player = usePlayerStore();
       orders.value = generateBounty(player.major, now);

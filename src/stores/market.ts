@@ -5,6 +5,7 @@
  * 「读存量 → 判 → 扣付 → 入账」的编排。坏档/旧档由 sanitize 逐格修形,烂格整格丢弃。
  */
 import { defineStore } from "pinia";
+import { saveReader } from "@/core/singleWriter";
 import { ref } from "vue";
 import { persistConfig } from "@/utils/storage";
 import { rng } from "@/utils/random";
@@ -142,6 +143,8 @@ export const useMarketStore = defineStore(
 
     /** 货架空、或已过刷新窗口则重上一架;此刻的架内货不动 */
     function sync(now: number): void {
+      // 只读页(多标签的后来者)不换架:这些账永远进不了档,换出来的是一架假货
+      if (saveReader.value) return;
       if (stock.value.length > 0 && now < stockedAt.value + MARKET_REFRESH_SECONDS * 1000) return;
       const player = usePlayerStore();
       const gen = generateMarketStock(player.major, rng, now);
@@ -205,6 +208,8 @@ export const useMarketStore = defineStore(
 
     /** 收割已售出的寄卖:入账灵石,清掉到期的格子,回售出名 */
     function collectConsign(now: number): string[] {
+      // 同上:只读页的寄卖留在原处,等真正在写的那一页来收
+      if (saveReader.value) return [];
       const credits: string[] = [];
       const resources = useResourcesStore();
       for (const p of consign.value) {

@@ -1,12 +1,10 @@
 /**
  * 「归来一拍」的结算 —— 打开页面时,先把墙钟推过去的那段账结掉。
  *
- * 只读页(多标签的后来者)必须整体跳过。存储层的闸只挡落盘,挡不住内存里的结算:
- * 页面会照常把寄卖卖掉、把弟子摘回来的收获通报一遍,可这些永远不会进档 ——
- * 玩家在一张写着「进度不会保存」的页面上收到「灵石到账」的提示。
- * 与「只读页不启引擎」同一条理由:这一页的数字必须停在打开存档的那一刻。
+ * 这里只负责「打开页面这一拍要结哪些账」,不负责判断谁能结 —— 那道闸在各 store 的
+ * `sync` / `collectConsign` / `collectFinished` 里:坊市页与收徒页也直接调这些方法
+ * (还各有一个每秒的定时器),只在 App 这一处拦,等于只堵了正门。
  */
-import { saveReader } from "@/core/singleWriter";
 import { useApprenticeStore } from "@/stores/apprentice";
 import { useBountyStore } from "@/stores/bounty";
 import { useMarketStore } from "@/stores/market";
@@ -19,11 +17,8 @@ export interface ReturnSettlements {
   reaped: ReturnType<ReturnType<typeof useApprenticeStore>["collectFinished"]>;
 }
 
-const NOTHING: ReturnSettlements = { sold: [], reaped: [] };
-
-/** 只读页连内存里的归来结算都不跑 —— 它不是玩家真正在玩的那一页 */
+/** 打开页面这一拍要结的账(只读页由各 store 自己拦下,这里照调不误) */
 export function settleReturn(now: number): ReturnSettlements {
-  if (saveReader.value) return { ...NOTHING };
   const market = useMarketStore();
   const sold = market.collectConsign(now);
   market.sync(now);
