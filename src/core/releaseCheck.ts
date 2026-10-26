@@ -18,6 +18,8 @@ export interface ReleaseFacts {
   tagExists: boolean;
   /** 自上次 tag 以来,只在 tag 流线上跑的路径的改动提交数 */
   tagOnlyCommits: number;
+  /** 正文里出现的绝对链接标签(如 raw.githubusercontent.com/…/v0.0.1/…),与本版不同的那些 */
+  staleNoteTags: string[];
 }
 
 export interface ReleaseVerdict {
@@ -49,6 +51,12 @@ export function checkRelease(f: ReleaseFacts): ReleaseVerdict {
   }
   if (f.tagExists) {
     blockers.push(`tag v${f.version} 已经存在 —— 要重发得先换版本号,不要复用同名 tag`);
+  }
+  if (f.staleNoteTags.length > 0) {
+    blockers.push(
+      `发版正文里引用了 ${f.staleNoteTags.join(" / ")} 的绝对链接 —— 那些图在 v${f.version} 这个 tag 上` +
+        "解析不到,Release 页会碎图。复制上一版正文时最容易漏这一步",
+    );
   }
   if (f.tagOnlyCommits > 0) {
     warnings.push(

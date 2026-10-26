@@ -27,6 +27,14 @@ const version = String(pkg.version ?? "");
 const dirty = git(["status", "--porcelain"]).length > 0;
 const tagExists = git(["tag", "-l", `v${version}`]).length > 0;
 const notesExists = existsSync(join(ROOT, "docs", "release-notes", `v${version}.md`));
+// 正文里的绝对链接按 tag 写死(见 docs/development.md 的「发版」):复制上一版最容易忘改,
+// 改漏了 Release 页就是一片碎图
+let staleNoteTags = [];
+if (notesExists) {
+  const text = await Bun.file(join(ROOT, "docs", "release-notes", `v${version}.md`)).text();
+  const tags = new Set([...text.matchAll(/\/v(\d+\.\d+\.\d+)\//g)].map((m) => `v${m[1]}`));
+  staleNoteTags = [...tags].filter((t) => t !== `v${version}`);
+}
 
 // 上一次 tag(按版本号排序取最后一个);一个都没有时退化成"整份历史都算新"
 let lastTag = "";
@@ -44,7 +52,14 @@ try {
   tagOnlyCommits = 0;
 }
 
-const verdict = checkRelease({ version, notesExists, dirty, tagExists, tagOnlyCommits });
+const verdict = checkRelease({
+  version,
+  notesExists,
+  dirty,
+  tagExists,
+  tagOnlyCommits,
+  staleNoteTags,
+});
 
 console.log(`发版体检 · 版本 v${version}${lastTag ? `(上次 ${lastTag})` : "(仓库里还没有 tag)"}`);
 for (const b of verdict.blockers) console.log(`  ✗ ${b}`);

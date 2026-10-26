@@ -262,7 +262,7 @@ git tag vX.Y.Z
 git push origin main vX.Y.Z
 ```
 
-`bun run release:check` 只答本地能答的三件事(版本与正文对得上、工作区干净、tag 没被用过),
+`bun run release:check` 只答本地能答的四件事(版本与正文对得上、工作区干净、tag 没被用过、正文里的绝对链接指的都是本版 tag —— 复制上一版正文时最容易漏改那几处图链),
 外加一条提醒:自上次 tag 以来若有提交动过 `android/`、`electron/` 或发版流水线,它会把条数
 摆出来 —— 那几条路径**本地永远绿、只有 tag 跑得到**,打完 tag 要看真跑结果。
 

@@ -7,6 +7,7 @@ const BASE: ReleaseFacts = {
   dirty: false,
   tagExists: false,
   tagOnlyCommits: 0,
+  staleNoteTags: [],
 };
 
 const facts = (patch: Partial<ReleaseFacts> = {}): ReleaseFacts => ({ ...BASE, ...patch });
@@ -42,6 +43,13 @@ describe("发版体检 · 三件本地能答的事", () => {
     expect(v.ok).toBe(true);
     expect(v.warnings.join()).toContain("3 个提交");
     expect(v.warnings.join()).toContain("本地门全绿不代表发得出去");
+  });
+
+  it("正文里还引用着旧 tag 的图 —— 拦下(复制上一版正文最容易漏)", () => {
+    const v = checkRelease(facts({ staleNoteTags: ["v0.0.1"] }));
+    expect(v.ok).toBe(false);
+    expect(v.blockers.join()).toContain("解析不到");
+    expect(v.blockers.join()).toContain("碎图");
   });
 
   it("自证:三条阻塞可以同时出现,一次全报出来(不是只报第一条)", () => {
