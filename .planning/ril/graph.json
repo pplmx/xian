@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 483,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T10:25:15+00:00",
+  "updated_at": "2026-10-26T10:27:42+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 482,
+      "touched_round": 483,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28046,10 +28046,10 @@
     "ISS-381": {
       "id": "ISS-381",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T10:25:15+00:00",
-      "updated_at": "2026-10-26T10:25:15+00:00",
+      "updated_at": "2026-10-26T10:27:41+00:00",
       "touched_round": 483,
       "title": "bountyService 零用例:悬赏价的三条经济承诺没有判据",
       "summary": "bountyService 是 src/core 里少数没有任何 spec 引用的模块之一。它在注释里承诺「募材高于摆摊售出、低于坊市购入」「募丹同理」「贡器恒低于购入」—— 这三句是套利边界,而没有任何用例盯着。常数(4.5/3/6、1.8/1.2/2.5、35+14r/60+30r)一调,要么开通「买→交悬赏」的无本套利,要么让悬赏板整块变成没人交的装饰,两种都不报错。",
@@ -28059,10 +28059,10 @@
     "TASK-487": {
       "id": "TASK-487",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T10:25:15+00:00",
-      "updated_at": "2026-10-26T10:25:15+00:00",
+      "updated_at": "2026-10-26T10:27:42+00:00",
       "touched_round": 483,
       "category": "correctness",
       "title": "bountyEconomics:7 境界 × 3 类悬赏 + 9 品质档贡器落在 (售出,购入) 带内",
@@ -28070,6 +28070,17 @@
       "severity": 0.4,
       "confidence": 0.9,
       "effort": 1
+    },
+    "CHG-587": {
+      "id": "CHG-587",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T10:27:41+00:00",
+      "updated_at": "2026-10-26T10:27:42+00:00",
+      "touched_round": 483,
+      "commit": "73f8ea97",
+      "title": "bountyEconomics.spec:悬赏价落在 (售出, 购入) 带内 + 换新倒计时"
     }
   },
   "edges": [
@@ -40975,6 +40986,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T10:16:04+00:00"
+    },
+    {
+      "from": "CHG-587",
+      "to": "ISS-381",
+      "type": "resolves",
+      "created_at": "2026-10-26T10:27:41+00:00"
+    },
+    {
+      "from": "CHG-587",
+      "to": "TASK-487",
+      "type": "implements",
+      "created_at": "2026-10-26T10:27:41+00:00"
+    },
+    {
+      "from": "ISS-381",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T10:27:41+00:00"
     }
   ]
 }
