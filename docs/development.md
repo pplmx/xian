@@ -104,7 +104,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | 排版与冒烟 | 全量路由 × 五档视口的渲染审计(`scripts/layout-check.mjs`)、界面冒烟(`ui-smoke.mjs`,逐页点按钮 + 四条专场景:旧档迁移、存储写满、挂机稳定、导入存档,外加「找到控件却一个都没点成」这条下限)、Service Worker 离线层(`offline-check.mjs`)。前两者**并发**跑(每个视口与每件事各是一个独立任务,`--jobs` 或 `LAYOUT_JOBS` / `UI_SMOKE_JOBS` 调路数,默认按核数、上限 8)—— 一轮从约 17 分钟压到约 5 分钟 |
 | 首屏预算 | 冷启动解码字节 / FCP / 楷体换上三条上限(`scripts/first-paint.mjs`,自带静态服务与 4G 限速) |
 | 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec 时,实际已是 294) |
-| 门禁自检 | 门本身也要被查:九道门失败时必须非零退出、冒烟与排版门的具名场景被删时必须红(`src/core/gateWiring.spec.ts`);排版门的五档视口与 200% 缩放档不许缩水(`layoutMeasure.spec.ts`);盘上的 spec 一条用例都没跑、或压根没被跑到,都算失败(`test:report`);只在 tag 上跑的路径(发版流水线、Android 签名、Release 正文)有静态判据(`releasePipeline.spec.ts`)—— 「门在跑」不等于「有保护」:失败时不出声的门,只是把绿勾借给了没人看着的东西 |
+| 门禁自检 | 门本身也要被查:九道门失败时必须非零退出、冒烟与排版门的具名场景被删时必须红(`src/core/gateWiring.spec.ts`);排版门的五档视口与 200% 缩放档不许缩水(`layoutMeasure.spec.ts`);盘上的 spec 一条用例都没跑、或压根没被跑到,都算失败(`test:report`);只在 tag 上跑的路径(发版流水线、Android 签名、Release 正文)有静态判据(`releasePipeline.spec.ts`),发版体检 `bun run release:check` 的命令与接线也有判据 —— 「门在跑」不等于「有保护」:失败时不出声的门,只是把绿勾借给了没人看着的东西 |
 | 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
 | 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |
 
