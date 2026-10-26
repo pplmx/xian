@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 514,
+  "round": 515,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T18:07:30+00:00",
+  "updated_at": "2026-10-26T18:19:38+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 509,
+      "touched_round": 515,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -29318,6 +29318,45 @@
       "touched_round": 514,
       "commit": "f602eafd",
       "title": "换一方天地:历练途中拒绝(busy)"
+    },
+    "ISS-414": {
+      "id": "ISS-414",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:19:37+00:00",
+      "updated_at": "2026-10-26T18:19:38+00:00",
+      "touched_round": 515,
+      "title": "换界的代价没写在按钮上:只说价,不说会清空本世路线",
+      "summary": "成功换界时 setMortalWorld 会把 mortalCleared / regionWins 整个清零。按钮原本只有「换一方天地(N 道果)」,玩家看不到「已走的路会没了」—— 上一轮的 busy 只挡住了进行中的那一趟,挡不住已经走过的路。",
+      "severity": 0.25,
+      "confidence": 0.9
+    },
+    "TASK-520": {
+      "id": "TASK-520",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:19:37+00:00",
+      "updated_at": "2026-10-26T18:19:38+00:00",
+      "touched_round": 515,
+      "category": "ux-contract",
+      "title": "按钮下补一行「换界即换路」的代价说明",
+      "summary": "与世界页既有说明同形;排版门 204 组与界面冒烟在 HEAD 上都复跑过。",
+      "severity": 0.25,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-619": {
+      "id": "CHG-619",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:19:37+00:00",
+      "updated_at": "2026-10-26T18:19:38+00:00",
+      "touched_round": 515,
+      "commit": "20177418",
+      "title": "换界代价写在按钮下面(换界即换路)"
     }
   },
   "edges": [
@@ -42817,6 +42856,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T18:07:30+00:00"
+    },
+    {
+      "from": "CHG-619",
+      "to": "ISS-414",
+      "type": "resolves",
+      "created_at": "2026-10-26T18:19:38+00:00"
+    },
+    {
+      "from": "CHG-619",
+      "to": "TASK-520",
+      "type": "implements",
+      "created_at": "2026-10-26T18:19:38+00:00"
+    },
+    {
+      "from": "ISS-414",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T18:19:38+00:00"
     }
   ]
 }
