@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 478,
+  "round": 479,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T09:25:16+00:00",
+  "updated_at": "2026-10-26T09:35:18+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 478,
+      "touched_round": 479,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27886,6 +27886,45 @@
       "touched_round": 478,
       "commit": "45a27bf5",
       "title": "ui-smoke 增 checkLegacySave:旧形状落盘 → 真启动 → 盘上回读"
+    },
+    "ISS-377": {
+      "id": "ISS-377",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:31:00+00:00",
+      "updated_at": "2026-10-26T09:35:18+00:00",
+      "touched_round": 479,
+      "title": "没有任何用例盯「同一段缺席被结算两次」",
+      "summary": "各离线用例都只调一次 settleOffline;而真实链路里 settleOffline 自己不盖章,由 engine.start / engine.tick 在结算后 stampActive —— 谁漏了这一步,同一段缺席就会再发一遍,资源凭空翻倍,而且没有任何判据会红。本轮浏览器实测:旧档 + 6 小时缺席 + 立刻重载,增幅 0(当下是对的)。",
+      "severity": 0.45,
+      "confidence": 0.9
+    },
+    "TASK-483": {
+      "id": "TASK-483",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:31:00+00:00",
+      "updated_at": "2026-10-26T09:35:18+00:00",
+      "touched_round": 479,
+      "category": "detectability",
+      "title": "offlineLedger 增「结算 → 盖章 → 再结算一秒」用例",
+      "summary": "照真实调用顺序写:首次数值 > 0(防空转)、第二次战斗 0 场、修为与灵石增幅 < 1%、寿元 ≤ 1 年;契约(sElltleOffline 不盖章)写进注释。注入去掉盖章即红。",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-583": {
+      "id": "CHG-583",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:35:17+00:00",
+      "updated_at": "2026-10-26T09:35:18+00:00",
+      "touched_round": 479,
+      "commit": "0c930069",
+      "title": "offlineLedger 增「结算 → 盖章 → 再结算一秒」用例"
     }
   },
   "edges": [
@@ -40719,6 +40758,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T09:25:16+00:00"
+    },
+    {
+      "from": "CHG-583",
+      "to": "ISS-377",
+      "type": "resolves",
+      "created_at": "2026-10-26T09:35:18+00:00"
+    },
+    {
+      "from": "CHG-583",
+      "to": "TASK-483",
+      "type": "implements",
+      "created_at": "2026-10-26T09:35:18+00:00"
+    },
+    {
+      "from": "ISS-377",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T09:35:18+00:00"
     }
   ]
 }
