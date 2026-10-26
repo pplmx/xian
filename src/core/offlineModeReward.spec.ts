@@ -103,6 +103,25 @@ function runOnce(mode: "normal" | "deep"): Yields {
   };
 }
 
+/**
+ * 同一次离线、同一颗世界种子,只把「本世偏向」换掉 —— 其余全同(链路已 mock 确定)。
+ * 只给最薄的一份世界:`placeContent` 在 chain 里找不到节点就回落 REGIONS,
+ * 这里要的只是 `bias` 一个字段。
+ */
+function runWithBias(bias: string | undefined): { stone: number; herb: number; page: number } {
+  setActivePinia(createPinia());
+  seedSession("normal");
+  useAdventureStore().setMortalWorld(bias ? ({ bias, chain: [] } as never) : null);
+  const res = useResourcesStore();
+  const before = { stone: toNum(res.spiritStone), herb: res.herb, page: res.page };
+  settleOffline(Date.now());
+  return {
+    stone: toNum(res.spiritStone) - before.stone,
+    herb: res.herb - before.herb,
+    page: res.page - before.page,
+  };
+}
+
 describe("离线普通战产出吃模式倍率(确定性)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -311,5 +330,34 @@ describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", ()
     // rng 恒 pick 首项 → 本段战的就是这只;净胜为正即等于在它手下赢过 → 清账
     expect(rec?.avengedAt, "雪耻落值").toBeGreaterThan(0);
     expect(s!.notes.join("\n"), "卷轴要报雪耻,别让征战录永远写着尚为宿敌").toContain("【雪耻】");
+  });
+});
+
+describe("离线普通战 · 本世资源偏向也要进账", () => {
+  /*
+   * 上一版只把偏向接进了 afterWin,而离线只有首领战走 afterWin —— 占大头的普通战
+   * 是按期望整段结算的,一条都没乘。结果「矿脉深厚」在离线只对首领生效,卷轴却
+   * 写着「离线已计入」。这组用例正是那条不一致的回归。
+   */
+  it("灵石充盈:灵石约 +15%,灵草一分不动", () => {
+    const plain = runWithBias(undefined);
+    const stoneBias = runWithBias("灵石充盈");
+    expect(plain.stone, "先得真有产出,否则判据空转").toBeGreaterThan(0);
+    const ratio = stoneBias.stone / plain.stone;
+    /*
+     * 不能断言 ≈1.15:这段灵石增量里混着**非战斗产线**(实测历大约占四成),
+     * 战斗那份的 +15% 被摊薄成 +6%。判据只问两件事:偏向生效了(> 1.04)、
+     * 且没有重复乘(< 1.2)—— 缺了乘区就是 1.000,乘两遍会到 1.2 以上。
+     */
+    expect(ratio, `实得 ${ratio.toFixed(3)} —— 偏向没进离线普通战?`).toBeGreaterThan(1.04);
+    expect(ratio, `实得 ${ratio.toFixed(3)} —— 像是乘了两遍`).toBeLessThan(1.2);
+    expect(stoneBias.herb, "灵石偏向不该动灵草").toBe(plain.herb);
+  });
+
+  it("草木丰饶:灵草变多,灵石不变 —— 偏向只放大自己那条渠道", () => {
+    const plain = runWithBias(undefined);
+    const herbBias = runWithBias("草木丰饶");
+    expect(herbBias.herb).toBeGreaterThan(plain.herb);
+    expect(herbBias.stone).toBe(plain.stone);
   });
 });

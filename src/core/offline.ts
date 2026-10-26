@@ -52,7 +52,7 @@ import {
 } from "./exploration";
 import { regionEventDef } from "./regionEvent";
 import { currentWorldBias, placeContent } from "./mortalWorldService";
-import { biasOfflineNote } from "./mortalBias";
+import { biasChanceMult, biasOfflineNote } from "./mortalBias";
 import { clamp, planIdle } from "wanxiang-engine";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { checkSuppression, settleSuppressedRegions, suppressRateLine } from "./suppress";
@@ -376,6 +376,14 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         // 福缘(doubleDropRate)也同源:在线每战掷一次翻倍、期望 ×(1+p);
         // 离线按期望值计入(doubleMult),与 winRate 的期望结算一致,词条不再对离线失效
         const doubleMult = 1 + Math.min(1, Math.max(0, modOf(mods, "doubleDropRate")));
+        /*
+         * 本世资源偏向也要进**普通战**这条离线账。
+         *
+         * 上一版只把偏向接进了 afterWin —— 离线只有首领战走 afterWin,占大头的是
+         * 这里按期望整段结算的普通战:结果「矿脉深厚」在离线只对首领生效,卷轴却
+         * 写着「离线已计入」。与在线同一处乘区,才是真的同源。
+         */
+        const bias = currentWorldBias();
         const stoneGain = stoneByTier(
           region.tier,
           10 *
@@ -383,7 +391,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             modeDef.rewardMult *
             regionEventReward *
             (1 + modOf(mods, "spiritStoneGain")) *
-            doubleMult,
+            doubleMult *
+            biasChanceMult(bias, "stone"),
         );
         resources.addStone(stoneGain);
         /**
@@ -406,8 +415,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         trip.stone = add(trip.stone, stoneGain);
         trip.exp = add(trip.exp, expGain);
         // 材料 —— 离线也会撞见新灵材,只是次数封顶,免得回来一屏 toast
-        const herbGain = Math.round(wins * 1.0 * doubleMult);
-        const oreGain = Math.round(wins * 0.5 * doubleMult);
+        const herbGain = Math.round(wins * 1.0 * doubleMult * biasChanceMult(bias, "herb"));
+        const oreGain = Math.round(wins * 0.5 * doubleMult * biasChanceMult(bias, "ore"));
         // 灵草与在线同源按**产地**(region.tier)定品:addSmall 会落到玩家当前境界那档,
         // 越阶/低阶开采会与在线打架 —— 故显式 grantHerbs(数量, 产地品阶)。
         resources.grantHerbs(herbGain, herbGradeOfMajor(tierMajor(region.tier)));
@@ -419,7 +428,13 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         resources.addSmall(
           "page",
           Math.round(
-            wins * PAGE_DROP_CHANCE * 1.5 * modeDef.rewardMult * regionEventReward * doubleMult,
+            wins *
+              PAGE_DROP_CHANCE *
+              1.5 *
+              modeDef.rewardMult *
+              regionEventReward *
+              doubleMult *
+              biasChanceMult(bias, "page"),
           ),
         );
         resources.addSmall("dust", Math.round(wins * 0.3 * doubleMult));
@@ -484,7 +499,11 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
          * 福缘翻倍不作用于这两条(在线也掷在 doubled 循环之外);法宝只入囊,
          * 祭炼由玩家亲手决定(addArtifact 本就不自动装配)。
          */
-        const pillChance = clamp(PILL_DROP_CHANCE * modeDef.rewardMult * regionEventReward, 0, 1);
+        const pillChance = clamp(
+          PILL_DROP_CHANCE * modeDef.rewardMult * regionEventReward * biasChanceMult(bias, "pill"),
+          0,
+          1,
+        );
         const pillCount = Math.round(wins * pillChance);
         for (let i = 0; i < pillCount; i += 1) {
           const pillId = randomDropPill(player.major);

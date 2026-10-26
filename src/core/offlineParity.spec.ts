@@ -88,7 +88,11 @@ describe("离线历练 · 区域事件加丰与加难成对(regReward)", () => {
     );
     // 残页与在线同源:在线 page 掉落判定是 rng.chance(PAGE_DROP_CHANCE * rewardMult),
     // rewardMult 参数含 mode×reg —— 离线残页若只写死 0.15、不吃模式倍率,高收益模式赌残页就落空
-    expect(offline).toContain("PAGE_DROP_CHANCE * 1.5 * modeDef.rewardMult * regionEventReward");
+    // 用允许换行/空白的正则,别锁死单行写法:本轮给 page 乘区补 biasChanceMult 时
+    // 把这行折成了多行,字面量判据当场误红 —— 判据该管「乘式还在」,不该管换行
+    expect(offline).toMatch(
+      /PAGE_DROP_CHANCE\s*\*\s*1\.5\s*\*\s*modeDef\.rewardMult\s*\*\s*regionEventReward/,
+    );
   });
 });
 
