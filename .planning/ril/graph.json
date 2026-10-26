@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 494,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T13:06:53+00:00",
+  "updated_at": "2026-10-26T13:10:54+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 492,
+      "touched_round": 494,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28475,10 +28475,10 @@
     "ISS-392": {
       "id": "ISS-392",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T13:06:53+00:00",
-      "updated_at": "2026-10-26T13:06:53+00:00",
+      "updated_at": "2026-10-26T13:10:53+00:00",
       "touched_round": 494,
       "title": "两条所钟判据锁死字面量:换行与局部变量都会误红",
       "summary": "adventure 与 offline 的两条接线判据原本锁死整句字面量。同样的写法在本会话里已经误红过两次(offlineParity 的残页乘式一折行就挂、次数注入还得回头改判据)。判据该管「接线还在不在」,不该管「怎么写的」。",
@@ -28488,10 +28488,10 @@
     "TASK-498": {
       "id": "TASK-498",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T13:06:53+00:00",
-      "updated_at": "2026-10-26T13:06:53+00:00",
+      "updated_at": "2026-10-26T13:10:54+00:00",
       "touched_round": 494,
       "category": "detectability",
       "title": "两条所钟判据改成认接线的正则(允许空白,仍钉住两件事)",
@@ -28499,6 +28499,17 @@
       "severity": 0.2,
       "confidence": 0.9,
       "effort": 1
+    },
+    "CHG-598": {
+      "id": "CHG-598",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T13:10:53+00:00",
+      "updated_at": "2026-10-26T13:10:54+00:00",
+      "touched_round": 494,
+      "commit": "b6b86524",
+      "title": "两条所钟判据改成认接线的正则(允许空白,仍钉两件事)"
     }
   },
   "edges": [
@@ -41602,6 +41613,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T12:55:40+00:00"
+    },
+    {
+      "from": "CHG-598",
+      "to": "ISS-392",
+      "type": "resolves",
+      "created_at": "2026-10-26T13:10:53+00:00"
+    },
+    {
+      "from": "CHG-598",
+      "to": "TASK-498",
+      "type": "implements",
+      "created_at": "2026-10-26T13:10:53+00:00"
+    },
+    {
+      "from": "ISS-392",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T13:10:53+00:00"
     }
   ]
 }
