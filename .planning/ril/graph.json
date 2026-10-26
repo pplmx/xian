@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 460,
+  "round": 461,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T04:43:26+00:00",
+  "updated_at": "2026-10-26T04:50:59+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -27183,6 +27183,34 @@
       "touched_round": 460,
       "commit": "e06411df",
       "title": "只读页挡住导入与清档两条直写路径"
+    },
+    "ISS-359": {
+      "id": "ISS-359",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T04:50:59+00:00",
+      "updated_at": "2026-10-26T04:50:59+00:00",
+      "touched_round": 461,
+      "title": "玩法文档写着「4 条灵脉」,数据里是 7 条 —— 结构数没有判据",
+      "summary": "docs/usage.md 的系统一览是玩家看到的清单,里面三十多处结构数(66 部功法 / 44 个区域 / 68 丹药 …)全部靠手改。四脉扩到七脉时漏了洞府那一行,「4 条灵脉投资分红」一直留到现在;其余抽查的 30 余处与数据一致。这类漂移与「文案里手写会被常数改动的数字」同源,只是这次在文档里。",
+      "severity": 0.4,
+      "confidence": 0.95
+    },
+    "TASK-464": {
+      "id": "TASK-464",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T04:50:59+00:00",
+      "updated_at": "2026-10-26T04:50:59+00:00",
+      "touched_round": 461,
+      "category": "docs",
+      "title": "改正灵脉条数;把 usage.md 的结构数接上数据源对账",
+      "summary": "七脉写成了四脉;新增 usageDocCounts.spec 逐条对账(正则 + 真值,真值取 @/data),找不到声明也算失败,并留一条把 4 改回来的自证。",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 1.5
     }
   },
   "edges": [

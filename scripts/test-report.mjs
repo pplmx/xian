@@ -259,6 +259,7 @@ const CATEGORIES = [
       "engineTick",
       "modalStack",
       "singleWriter",
+      "usageDocCounts",
       "swPrecache",
       "smokeReading",
       "absenceLedger",
