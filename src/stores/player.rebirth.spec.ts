@@ -221,3 +221,29 @@ describe("道果的加减法 · 坏值不许污染余额", () => {
     expect(player.reincarnation.daoFruit).toBe(6);
   });
 });
+
+describe("年岁与寿元 · 坏值不许污染", () => {
+  /*
+   * age 一旦变成 NaN:「寿元将尽」永远不成立、也不会再老 —— 玩家卡在不生不死里,
+   * 而界面只是显示 NaN 岁。lifespanBonusYears 同理,面板与寿元判定会一起失真。
+   */
+  it("addAge:非有限值不写,正常值照加", () => {
+    const player = usePlayerStore();
+    const before = player.age;
+    player.addAge(Number.NaN);
+    player.addAge(Number.NEGATIVE_INFINITY);
+    expect(player.age).toBe(before);
+    player.addAge(3);
+    expect(player.age).toBeCloseTo(before + 3, 10);
+  });
+
+  it("addLifespan:非有限值不写,正常值照加", () => {
+    const player = usePlayerStore();
+    const before = player.lifespanBonusYears;
+    player.addLifespan(Number.NaN);
+    player.addLifespan(Number.POSITIVE_INFINITY);
+    expect(player.lifespanBonusYears).toBe(before);
+    player.addLifespan(120);
+    expect(player.lifespanBonusYears).toBeCloseTo(before + 120, 10);
+  });
+});

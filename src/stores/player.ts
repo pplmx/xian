@@ -422,11 +422,19 @@ export const usePlayerStore = defineStore(
       exp.value = subClamp(exp.value, spent);
     }
 
+    /**
+     * 年岁与寿元:只拒**非有限值**,不拒符号 ——
+     * 年岁来自 tick 的 dt(已在上游夹过),寿元来自丹与际遇(调用方保证为正)。
+     * 但坏档或上游算错时,一次 NaN 就会把这两条永久污染:age 变 NaN 后「寿元将尽」
+     * 永远不成立、也不会再老;lifespanBonusYears 变 NaN 则面板与判定一起失真。
+     */
     function addAge(years: number): void {
+      if (!Number.isFinite(years)) return;
       age.value += years;
     }
 
     function addLifespan(years: number): void {
+      if (!Number.isFinite(years)) return;
       lifespanBonusYears.value += years;
     }
 
