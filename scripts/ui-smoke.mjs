@@ -476,11 +476,24 @@ async function checkSaveFull(browser) {
         .catch(() => false);
       if (!healed) fails.push("存储写满场景:腾出空间之后那句警告没消失(自动重试没生效)");
       /*
-       * 观察记录(本轮实测,尚未定论):腾出空间、横幅消失之后,页面上主题确实变了,
-       * 但 `xuanshu.settings` 分片在 8 秒轮询里始终**没有出现在盘上**。
-       * 可能是只读封存没解除(写失败后的防御态),也可能是节流队列没再触发。
-       * 这条先不写成判据(否则门永远是红的),留给下一轮查:见图谱 ISS-423。
+       * 横幅消失只是**界面**的说法。真凭据在盘上:自愈必须把排队的脏分片真的写出去。
+       *
+       * 复现过两次的读数(见图谱 ISS-423):正常启动 7 个分片 → 填满配额期间一个不变
+       * (写失败保留旧值)→ 腾出空间后**变成 18 个**(离线期间排队的 player/cultivation/
+       * adventure 等一起落了盘)。故这里钉「至少 7 个、且 settings 在场」——
+       * 少了任何一片,都说明重试只是把横幅收了起来。
        */
+      const diskKeys = await page.evaluate(() =>
+        Object.keys(localStorage).filter((k) => k.startsWith("xuanshu.")),
+      );
+      if (diskKeys.length < 7) {
+        fails.push(
+          `存储写满场景:自愈后盘上只有 ${diskKeys.length} 个分片(应 ≥7)—— 队列没真的写出去`,
+        );
+      }
+      if (!diskKeys.some((k) => k.endsWith("settings"))) {
+        fails.push("存储写满场景:自愈后盘上没有 settings 分片");
+      }
     }
     if (pageErrors.length)
       fails.push(`存储写满场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
