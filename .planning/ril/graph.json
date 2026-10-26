@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 527,
+  "round": 528,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T20:44:01+00:00",
+  "updated_at": "2026-10-26T20:53:19+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29747,6 +29747,45 @@
       "touched_round": 527,
       "commit": "03323a6d",
       "title": "世界页补「几段地界 · 层级跨度」"
+    },
+    "ISS-425": {
+      "id": "ISS-425",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T20:53:19+00:00",
+      "updated_at": "2026-10-26T20:53:19+00:00",
+      "touched_round": 528,
+      "title": "世界页概览与换天地按钮之后,六门没有在同一个 HEAD 上连跑",
+      "summary": "近几轮改了世界页(概览行、换天地按钮与代价说明、命数措辞)与冒烟的三处判据;各门单独跑过,六门未连跑。",
+      "severity": 0.15,
+      "confidence": 0.9
+    },
+    "TASK-531": {
+      "id": "TASK-531",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T20:53:19+00:00",
+      "updated_at": "2026-10-26T20:53:19+00:00",
+      "touched_round": 528,
+      "category": "verification",
+      "title": "HEAD 上跑完整 check:ui 并记档",
+      "summary": "构建计时/首屏/帧率/排版 204 组/冒烟(含导入、存储写满、挂机稳定)/离线八项全部复跑,结果全绿。",
+      "severity": 0.15,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-630": {
+      "id": "CHG-630",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T20:53:19+00:00",
+      "updated_at": "2026-10-26T20:53:19+00:00",
+      "touched_round": 528,
+      "commit": "1a12fc86",
+      "title": "HEAD(1a12fc86) 六门复跑全绿(无代码改动)"
     }
   },
   "edges": [
@@ -43426,6 +43465,24 @@
       "to": "ISS-424",
       "type": "addresses",
       "created_at": "2026-10-26T20:44:01+00:00"
+    },
+    {
+      "from": "CHG-630",
+      "to": "ISS-425",
+      "type": "resolves",
+      "created_at": "2026-10-26T20:53:19+00:00"
+    },
+    {
+      "from": "CHG-630",
+      "to": "TASK-531",
+      "type": "implements",
+      "created_at": "2026-10-26T20:53:19+00:00"
+    },
+    {
+      "from": "TASK-531",
+      "to": "ISS-425",
+      "type": "addresses",
+      "created_at": "2026-10-26T20:53:19+00:00"
     }
   ]
 }
