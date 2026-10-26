@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 457,
+  "round": 458,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T03:30:12+00:00",
+  "updated_at": "2026-10-26T03:43:07+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -8770,7 +8770,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 441,
+      "touched_round": 458,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -26994,6 +26994,68 @@
       "touched_round": 457,
       "commit": "e5eb583f",
       "title": "底栏角标/破境圆点的读屏等价物;aria-current 逐页判据与注入实验"
+    },
+    "ISS-354": {
+      "id": "ISS-354",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T03:37:36+00:00",
+      "updated_at": "2026-10-26T03:43:07+00:00",
+      "touched_round": 458,
+      "title": "被 catch 住的运行时异常对三条浏览器门完全隐形",
+      "summary": "pageerror 只报抛到顶层的;引擎 tick / 离线结算 / 音频加载 / 全局 errorHandler 都自己接住,只剩 console.error 一行。玩家看到的是「游戏卡住不动」,而排版 / 冒烟 / 离线三条门一行都看不到 —— 把 tick 塞一个必抛的错,加判据前门照绿。",
+      "severity": 0.6,
+      "confidence": 0.9
+    },
+    "TASK-461": {
+      "id": "TASK-461",
+      "type": "task",
+      "status": "resolved",
+      "version": 4,
+      "created_at": "2026-10-26T03:37:45+00:00",
+      "updated_at": "2026-10-26T03:43:07+00:00",
+      "touched_round": 458,
+      "category": "stability",
+      "title": "共用尺子收应用 console.error,并做一次注入证明会红",
+      "summary": "lib/pageErrors.mjs 的 watchPageErrors 除 pageerror 外再收 console.error,只认 [模块] 前缀(本作运行时日志的既有形状),浏览器自己的网络/内核消息不在射程。三条门共用一把尺子,改一处三处都生效;注入必抛的 tick 错误验证红,去掉验证绿。",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-562": {
+      "id": "CHG-562",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T03:42:51+00:00",
+      "updated_at": "2026-10-26T03:43:07+00:00",
+      "touched_round": 458,
+      "commit": "23d5e871",
+      "title": "共用尺子收应用 console.error;四条浏览器门同步"
+    },
+    "HYP-132": {
+      "id": "HYP-132",
+      "type": "hypothesis",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T03:42:51+00:00",
+      "updated_at": "2026-10-26T03:43:07+00:00",
+      "touched_round": 458,
+      "title": "被 catch 住的运行时异常在门里留不下任何痕迹",
+      "confidence": 0.9
+    },
+    "EV-480": {
+      "id": "EV-480",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T03:42:52+00:00",
+      "updated_at": "2026-10-26T03:42:52+00:00",
+      "touched_round": 458,
+      "source": "scripts/ui-smoke.mjs 注入 run + scripts/lib/pageErrors.mjs",
+      "title": "给 engine.tick 塞一次必抛的错:加判据后冒烟红并打印 console.error [引擎] Tick 异常;去掉后四门全绿(冒烟/排版/离线/帧率)",
+      "confidence": 1.0
     }
   },
   "edges": [
@@ -39341,6 +39403,36 @@
       "to": "TASK-460",
       "type": "implements",
       "created_at": "2026-10-26T03:30:12+00:00"
+    },
+    {
+      "from": "TASK-461",
+      "to": "ISS-354",
+      "type": "addresses",
+      "created_at": "2026-10-26T03:37:45+00:00"
+    },
+    {
+      "from": "ISS-354",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-10-26T03:37:45+00:00"
+    },
+    {
+      "from": "CHG-562",
+      "to": "ISS-354",
+      "type": "resolves",
+      "created_at": "2026-10-26T03:42:51+00:00"
+    },
+    {
+      "from": "CHG-562",
+      "to": "TASK-461",
+      "type": "implements",
+      "created_at": "2026-10-26T03:42:51+00:00"
+    },
+    {
+      "from": "EV-480",
+      "to": "HYP-132",
+      "type": "validates",
+      "created_at": "2026-10-26T03:42:52+00:00"
     }
   ]
 }
