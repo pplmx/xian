@@ -100,6 +100,9 @@
               :class="r.guaranteeLeft > 0 ? 'text-gold-ink' : rateClass(r.able.successRate)"
             >
               {{ r.guaranteeLeft > 0 ? "必成" : formatPercent(r.able.successRate) }}
+              <span v-if="brewTriesText(r)" class="ml-1 text-[10px] text-ink-faint">{{
+                brewTriesText(r)
+              }}</span>
             </p>
             <p class="text-[10px] text-ink-faint">
               {{
@@ -222,6 +225,7 @@
 </template>
 
 <script setup lang="ts">
+import { expectedTries } from "@/core/breakthrough";
 import { computed, ref } from "vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
@@ -267,4 +271,14 @@ const filteredRecipes = computed(() => {
   if (!q) return recipes.value;
   return recipes.value.filter((r) => r.def.name.includes(q));
 });
+
+/**
+ * 「平均 N 炉成一炉」—— 与突破卡同一口径(1 / 成功率),必成与坏值都不写。
+ * 百分比读数不直观:55% 听着像"两炉里成一炉",实际期望是 1.8 炉。
+ */
+function brewTriesText(r: { guaranteeLeft: number; able: { successRate: number } }): string {
+  if (r.guaranteeLeft > 0) return "";
+  const n = expectedTries(r.able.successRate);
+  return n === null ? "" : `平均 ${n} 炉成一炉`;
+}
 </script>
