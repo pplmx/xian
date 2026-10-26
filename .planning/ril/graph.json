@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 522,
+  "round": 524,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T19:50:27+00:00",
+  "updated_at": "2026-10-26T19:59:43+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29630,6 +29630,45 @@
       "touched_round": 522,
       "commit": "230d8622",
       "title": "世界名旁的说明改成「成形时校准难度」"
+    },
+    "ISS-422": {
+      "id": "ISS-422",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:59:42+00:00",
+      "updated_at": "2026-10-26T19:59:43+00:00",
+      "touched_round": 524,
+      "title": "手册里的价与常数是两本账:调了常量没人改手册",
+      "summary": "usage.md 写着「按余额一成半、至少 15 枚」,而这两个数字来自 WORLD_REROLL_RATE / WORLD_REROLL_FLOOR。改常量时没有任何判据会提醒改文档 —— 玩家按手册算出来的价与实际扣款对不上(与本仓「改常数就撒谎」同一条)。",
+      "severity": 0.2,
+      "confidence": 0.95
+    },
+    "TASK-528": {
+      "id": "TASK-528",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:59:43+00:00",
+      "updated_at": "2026-10-26T19:59:43+00:00",
+      "touched_round": 524,
+      "category": "detectability",
+      "title": "worldReroll.spec 从常数推出手册该写的说法并核对",
+      "summary": "抽成先过中文词表(一成/一成半/两成),再要求手册里两种写法都在;注入改成 0.2/20 即红。",
+      "severity": 0.2,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-627": {
+      "id": "CHG-627",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:59:43+00:00",
+      "updated_at": "2026-10-26T19:59:43+00:00",
+      "touched_round": 524,
+      "commit": "de0a7ca1",
+      "title": "手册里的价与常数同源"
     }
   },
   "edges": [
@@ -43255,6 +43294,18 @@
       "to": "TASK-527",
       "type": "implements",
       "created_at": "2026-10-26T19:50:27+00:00"
+    },
+    {
+      "from": "CHG-627",
+      "to": "ISS-422",
+      "type": "resolves",
+      "created_at": "2026-10-26T19:59:43+00:00"
+    },
+    {
+      "from": "CHG-627",
+      "to": "TASK-528",
+      "type": "implements",
+      "created_at": "2026-10-26T19:59:43+00:00"
     }
   ]
 }
