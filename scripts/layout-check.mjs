@@ -6115,7 +6115,7 @@ async function taskBadSave() {
      * 判据不变(提示文本必须含「损坏/异常/隔离」),只是不再拿运气当判据。
      */
     await page
-      .waitForFunction(() => /损坏|异常|隔离/.test(document.body.innerText), { timeout: 8000 })
+      .waitForFunction(() => /损坏|异常|隔离/.test(document.body.innerText), { timeout: 20000 })
       .catch(() => undefined);
     const boot = await page.evaluate(() => ({
       alive: !!document.querySelector("#app")?.firstElementChild,
@@ -6138,26 +6138,44 @@ async function taskBadSave() {
      * 哪一片 / 没说出备份位置」三条一起亮,而截图里它明明在。判据不变,只把等待换成
      * 确定性:等到含「存档版本」的卡片出现为止(启动提示那条也是这么改的)。
      */
-    await page
+    /**
+     * 并发跑到 8 路时,设置页是路由分包里的最后一个冷 chunk —— 实测本机单跑 55ms
+     * 就能出卡,但整轮 204 个组合并行时偶发超过 8 秒(本轮 20:xx 那次:三条判据
+     * 一起亮,而同一份产物单跑时卡片就在)。故把上限抬到 20 秒,**判据不变**;
+     * 超时也不再只是留个空串:把整页正文的头一段带进失败信息,下次能一眼分清
+     * 「卡没画出来」与「卡画出来了但没写那三件事」。
+     */
+    const cardShown = await page
       .waitForFunction(
         () =>
           [...document.querySelectorAll(".card-ink")].some((c) =>
             (c.textContent || "").includes("存档版本"),
           ),
-        { timeout: 8000 },
+        { timeout: 20000 },
       )
-      .catch(() => undefined);
+      .then(() => true)
+      .catch(() => false);
     const notice = await page.evaluate(() => {
       const card = [...document.querySelectorAll(".card-ink")].find((c) =>
         (c.textContent || "").includes("存档版本"),
       );
       return (card?.innerText || "").replace(/\n+/g, " ");
     });
-    if (!/分片损坏/.test(notice))
+    if (!cardShown) {
+      const where = await page.evaluate(() =>
+        document.body.innerText.replace(/\s+/g, " ").slice(0, 120),
+      );
+      failures.push(
+        `[390] 坏档场景:设置页的「存档版本」卡片 20 秒内没画出来(当前页:${
+          (await page.evaluate(() => location.hash)) || "?"
+        } · 正文:${where || "空"})`,
+      );
+    } else if (!/分片损坏/.test(notice))
       failures.push("[390] 坏档场景:设置页没有常驻交代(只说一次两秒的提示,玩家回头找不到原因)");
-    if (!/资源/.test(notice))
+    // 卡片没画出来时只报一条(上一条已经说了)—— 否则同一件事会亮三条假红
+    if (cardShown && !/资源/.test(notice))
       failures.push(`[390] 坏档场景:设置页没说出坏的是哪一片 —— ${notice.slice(0, 80)}`);
-    if (!/corrupt\./.test(notice))
+    if (cardShown && !/corrupt\./.test(notice))
       failures.push("[390] 坏档场景:设置页没说出原档备份在哪(玩家/帮他的人找不回来)");
     if (pageErrors.length)
       failures.push(`[390] 坏档场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
