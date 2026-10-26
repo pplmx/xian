@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 508,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T16:47:27+00:00",
+  "updated_at": "2026-10-26T16:49:31+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 507,
+      "touched_round": 508,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -29021,10 +29021,10 @@
     "ISS-406": {
       "id": "ISS-406",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T16:47:26+00:00",
-      "updated_at": "2026-10-26T16:47:26+00:00",
+      "updated_at": "2026-10-26T16:49:31+00:00",
       "touched_round": 508,
       "title": "没有判据问「这个词条键到底有没有人读」",
       "summary": "STAT_NAMES 是 Record<AnyStatKey, string>,「有名字」由类型保证;但一个键可以躺在 StatMods 里、被词条写入、被界面显示,而没有任何代码读过它 —— 玩家看到「会心率 +3%」却毫无变化,类型检查与界面判据却全绿。当前 45 个键都有人读,但没有判据盯着这件事。",
@@ -29034,10 +29034,10 @@
     "TASK-512": {
       "id": "TASK-512",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T16:47:27+00:00",
-      "updated_at": "2026-10-26T16:47:27+00:00",
+      "updated_at": "2026-10-26T16:49:31+00:00",
       "touched_round": 508,
       "category": "detectability",
       "title": "statBreakdown.spec 扫源码确认每个键在定义文件外被提到",
@@ -29045,6 +29045,17 @@
       "severity": 0.25,
       "confidence": 0.9,
       "effort": 2
+    },
+    "CHG-612": {
+      "id": "CHG-612",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:49:31+00:00",
+      "updated_at": "2026-10-26T16:49:31+00:00",
+      "touched_round": 508,
+      "commit": "4c300a06",
+      "title": "statBreakdown.spec 扫源码确认每个词条键在定义文件外被提到"
     }
   },
   "edges": [
@@ -42400,6 +42411,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T16:40:43+00:00"
+    },
+    {
+      "from": "CHG-612",
+      "to": "ISS-406",
+      "type": "resolves",
+      "created_at": "2026-10-26T16:49:31+00:00"
+    },
+    {
+      "from": "CHG-612",
+      "to": "TASK-512",
+      "type": "implements",
+      "created_at": "2026-10-26T16:49:31+00:00"
+    },
+    {
+      "from": "ISS-406",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T16:49:31+00:00"
     }
   ]
 }
