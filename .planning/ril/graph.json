@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 485,
+  "round": 486,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T10:57:11+00:00",
+  "updated_at": "2026-10-26T11:13:31+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 484,
+      "touched_round": 486,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28159,6 +28159,45 @@
       "touched_round": 485,
       "commit": "70563d1e",
       "title": "坏档场景:两个等待 8s→20s、超时带现场、后续三条加 cardShown 前置"
+    },
+    "ISS-384": {
+      "id": "ISS-384",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:04:34+00:00",
+      "updated_at": "2026-10-26T11:13:31+00:00",
+      "touched_round": 486,
+      "title": "经济审计的界外附注把「已建模」说成「未建模」",
+      "summary": "economySim 在界外那一格挂的附注写「界外出口(功法进修 / 法宝炼化)未入模型 —— 读数待补」,而 wudaoSinkEra 里本来就有 GONGFA_UPS_PER_ERA × gongfaUpCost(每期六次进修、按该境价位)。真正缺的只有法宝炼化。附注写错比不写更糟:读者会去补一遍已经算进去的东西,或者不信这一格。",
+      "severity": 0.25,
+      "confidence": 0.95
+    },
+    "TASK-490": {
+      "id": "TASK-490",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:04:34+00:00",
+      "updated_at": "2026-10-26T11:13:31+00:00",
+      "touched_round": 486,
+      "category": "docs",
+      "title": "界外附注改成「待补法宝炼化(功法进修已计入)」+ 三条一致性判据",
+      "summary": "附注与 interface 注释同步;判据:wudaoSinkEra 真含 gongfaUpCost、附注不许声称功法进修未建模、economySim 不出现 artifactUpCost。注入旧措辞即红。",
+      "severity": 0.25,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-590": {
+      "id": "CHG-590",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:13:31+00:00",
+      "updated_at": "2026-10-26T11:13:31+00:00",
+      "touched_round": 486,
+      "commit": "883b3706",
+      "title": "界外附注改成「待补法宝炼化(功法进修已计入)」+ 三条一致性判据"
     }
   },
   "edges": [
@@ -41118,6 +41157,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T10:57:11+00:00"
+    },
+    {
+      "from": "CHG-590",
+      "to": "ISS-384",
+      "type": "resolves",
+      "created_at": "2026-10-26T11:13:31+00:00"
+    },
+    {
+      "from": "CHG-590",
+      "to": "TASK-490",
+      "type": "implements",
+      "created_at": "2026-10-26T11:13:31+00:00"
+    },
+    {
+      "from": "ISS-384",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T11:13:31+00:00"
     }
   ]
 }
