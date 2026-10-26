@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 536,
+  "round": 537,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T22:06:11+00:00",
+  "updated_at": "2026-10-26T22:15:32+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -30098,6 +30098,45 @@
       "touched_round": 536,
       "commit": "f566f81d",
       "title": "加页面必须同时进冒烟与排版门"
+    },
+    "ISS-434": {
+      "id": "ISS-434",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:15:31+00:00",
+      "updated_at": "2026-10-26T22:15:31+00:00",
+      "touched_round": 537,
+      "title": "发版正文的图链按 tag 写死 —— 复制上一版改版本号时最容易漏改",
+      "summary": "release-notes 里的图片走 raw.githubusercontent.com/…/vX.Y.Z/… 绝对地址。复制上一版正文、只改标题不改链接,Release 页就是一片碎图,而本地门看不出任何异常。上一轮的 release:check 只验「正文存在」,没验链接指向哪一版。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-540": {
+      "id": "TASK-540",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:15:31+00:00",
+      "updated_at": "2026-10-26T22:15:31+00:00",
+      "touched_round": 537,
+      "category": "tooling",
+      "title": "checkRelease 增 staleNoteTags:正文里与本版不同的 tag 引用一律拦下",
+      "summary": "脚本扫正文里的 /vX.Y.Z/ 引用;正文本不存在时跳过(那条另有阻塞)。单测 7 条,实跑 v0.0.1 无误报。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-639": {
+      "id": "CHG-639",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:15:31+00:00",
+      "updated_at": "2026-10-26T22:15:32+00:00",
+      "touched_round": 537,
+      "commit": "148cd358",
+      "title": "发版体检加「正文图链必须指本版 tag」"
     }
   },
   "edges": [
@@ -43939,6 +43978,24 @@
       "to": "ISS-433",
       "type": "addresses",
       "created_at": "2026-10-26T22:06:11+00:00"
+    },
+    {
+      "from": "CHG-639",
+      "to": "ISS-434",
+      "type": "resolves",
+      "created_at": "2026-10-26T22:15:31+00:00"
+    },
+    {
+      "from": "CHG-639",
+      "to": "TASK-540",
+      "type": "implements",
+      "created_at": "2026-10-26T22:15:31+00:00"
+    },
+    {
+      "from": "TASK-540",
+      "to": "ISS-434",
+      "type": "addresses",
+      "created_at": "2026-10-26T22:15:31+00:00"
     }
   ]
 }
