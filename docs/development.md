@@ -73,7 +73,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 375 个 spec;本作自己那部分 295 个) |
+| `bun run test` | 全量用例(全量 376 个 spec;本作自己那部分 296 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -97,7 +97,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 375 个 spec(本作自己那部分 295 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 376 个 spec(本作自己那部分 296 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -255,10 +255,16 @@ src/
 
 ```bash
 # 1. 先提 package.json 的版本号(它决定 APK 的 versionName / versionCode)
-# 2. 打 tag 并推上去(版本号以 package.json 为准,这里只是例子)
+# 2. 本地体检:缺正文、工作区不干净、tag 重名都会被拦下
+bun run release:check
+# 3. 打 tag 并推上去(版本号以 package.json 为准,这里只是例子)
 git tag vX.Y.Z
 git push origin main vX.Y.Z
 ```
+
+`bun run release:check` 只答本地能答的三件事(版本与正文对得上、工作区干净、tag 没被用过),
+外加一条提醒:自上次 tag 以来若有提交动过 `android/`、`electron/` 或发版流水线,它会把条数
+摆出来 —— 那几条路径**本地永远绿、只有 tag 跑得到**,打完 tag 要看真跑结果。
 
 这条流水线第一件事是核对 tag 与 package.json 是否同一个版本(判据看的是两者**相等**,
 不是某个具体版本号),对不上直接红掉 —— 免得发出「Release 页上的版本、与装到手机上的

@@ -34,7 +34,8 @@
     "build:apk": "bun run build:android && cd android && ./gradlew assembleRelease",
     "prepare": "vp config --no-agent",
     "preverify": "find dist -type f -delete 2>/dev/null; find dist -type d -empty -delete 2>/dev/null; true",
-    "check:all": "bun scripts/clean-dist.mjs && vp fmt --check && bun run check && bun run test && bun run build"
+    "check:all": "bun scripts/clean-dist.mjs && vp fmt --check && bun run check && bun run test && bun run build",
+    "release:check": "bun scripts/release-check.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

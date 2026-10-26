@@ -267,6 +267,7 @@ const CATEGORIES = [
       "bountyEconomics",
       "bossArchetypes",
       "releasePipeline",
+      "releaseCheck",
       "worldReroll",
       "usageDocCounts",
       "swPrecache",
