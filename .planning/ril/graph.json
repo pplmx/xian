@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 516,
+  "round": 517,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T18:33:19+00:00",
+  "updated_at": "2026-10-26T18:52:37+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 516,
+      "touched_round": 517,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -29396,6 +29396,45 @@
       "touched_round": 516,
       "commit": "cc591131",
       "title": "离线结算即盖章(不再靠调用方)"
+    },
+    "ISS-416": {
+      "id": "ISS-416",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:52:36+00:00",
+      "updated_at": "2026-10-26T18:52:37+00:00",
+      "touched_round": 517,
+      "title": "导入存档那条链没有任何浏览器级判据;另外我的点击下限会误伤参考页",
+      "summary": "importSaveText 只写盘,之后靠 sealStorageWrites + 延时 reload 压住旧内存。漏任何一步,玩家看到「导入成功,然后一切照旧」,而盘上已是旧档。另:我前几轮加的「每页至少点 1 次」在只有一枚禁用按钮的 /world 上会算出 0 次点击而误红(--depth 1 实测)。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-522": {
+      "id": "TASK-522",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:52:36+00:00",
+      "updated_at": "2026-10-26T18:52:37+00:00",
+      "touched_round": 517,
+      "category": "detectability",
+      "title": "冒烟加「导入存档不被旧内存覆盖」+ 点击下限收窄到「找到控件却一个都没点成」",
+      "summary": "新场景:种旧档→导入另一份→重开断言新档→挂 3 秒再重载仍新档。下限改成 controls>0 && clicked===0,并在每页结果里记录 controls。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-621": {
+      "id": "CHG-621",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:52:36+00:00",
+      "updated_at": "2026-10-26T18:52:37+00:00",
+      "touched_round": 517,
+      "commit": "10e3cd00",
+      "title": "冒烟:导入存档场景 + 点击下限收窄"
     }
   },
   "edges": [
@@ -42931,6 +42970,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T18:33:19+00:00"
+    },
+    {
+      "from": "CHG-621",
+      "to": "ISS-416",
+      "type": "resolves",
+      "created_at": "2026-10-26T18:52:36+00:00"
+    },
+    {
+      "from": "CHG-621",
+      "to": "TASK-522",
+      "type": "implements",
+      "created_at": "2026-10-26T18:52:36+00:00"
+    },
+    {
+      "from": "ISS-416",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T18:52:37+00:00"
     }
   ]
 }
