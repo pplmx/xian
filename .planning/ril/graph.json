@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 491,
+  "round": 492,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T12:17:07+00:00",
+  "updated_at": "2026-10-26T12:31:43+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 490,
+      "touched_round": 492,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28393,6 +28393,45 @@
       "touched_round": 491,
       "commit": "524ad3e4",
       "title": "reincarnationConfirm 增「预告 == 结算」随机对比"
+    },
+    "ISS-390": {
+      "id": "ISS-390",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:27:42+00:00",
+      "updated_at": "2026-10-26T12:31:43+00:00",
+      "touched_round": 492,
+      "title": "冒烟只在「点了报错」时红:行动区整块消失的页面会安静通过",
+      "summary": "ui-smoke 的判据是页面异常与外域请求。一页若因某个 v-if 写反、数据分支没走到而整块行动区消失,它 0 次点击、0 个错误 —— 干净地通过。「页面在,但一个能点的都没有」是最该被自动发现的一种坏,而当时没有任何判据。",
+      "severity": 0.25,
+      "confidence": 0.9
+    },
+    "TASK-496": {
+      "id": "TASK-496",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:27:42+00:00",
+      "updated_at": "2026-10-26T12:31:43+00:00",
+      "touched_round": 492,
+      "category": "detectability",
+      "title": "ui-smoke:每页至少点得到一个控件(门槛 1,不设平均)",
+      "summary": "结果里加一条:clicked < 1 即报「整页没有可点的控件」;门槛取 1 只拦彻底没有,不惩罚本来就该安静的页面。自证:临时抬到 4,四页报 3/2/3/3;恢复 1 整轮绿。",
+      "severity": 0.25,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-596": {
+      "id": "CHG-596",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:31:43+00:00",
+      "updated_at": "2026-10-26T12:31:43+00:00",
+      "touched_round": 492,
+      "commit": "94c70a11",
+      "title": "ui-smoke:每页至少点得到一个控件(门槛 1)"
     }
   },
   "edges": [
@@ -41460,6 +41499,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T12:17:07+00:00"
+    },
+    {
+      "from": "CHG-596",
+      "to": "ISS-390",
+      "type": "resolves",
+      "created_at": "2026-10-26T12:31:43+00:00"
+    },
+    {
+      "from": "CHG-596",
+      "to": "TASK-496",
+      "type": "implements",
+      "created_at": "2026-10-26T12:31:43+00:00"
+    },
+    {
+      "from": "ISS-390",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T12:31:43+00:00"
     }
   ]
 }
