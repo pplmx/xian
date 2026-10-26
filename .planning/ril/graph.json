@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 535,
+  "round": 536,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T21:59:21+00:00",
+  "updated_at": "2026-10-26T22:06:11+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -30059,6 +30059,45 @@
       "touched_round": 535,
       "commit": "689a9756",
       "title": "发版前本地体检 release:check"
+    },
+    "ISS-433": {
+      "id": "ISS-433",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:06:11+00:00",
+      "updated_at": "2026-10-26T22:06:11+00:00",
+      "touched_round": 536,
+      "title": "新加一页只需在 router 登记 —— 两扇浏览器门的巡页清单不会变红",
+      "summary": "ui-smoke 与 layout-check 各自维护一份 ROUTES,与 router 是两份账。新页只登记在 router 时,它不会被点、不会被量,而所有门照样绿 —— 覆盖面临悄无声息地缩水,与「门在跑 ≠ 有保护」同一条。实测两门当前各覆盖 17 页,与 router 的 19 条(减去开局 welcome/create)一致。",
+      "severity": 0.3,
+      "confidence": 0.95
+    },
+    "TASK-539": {
+      "id": "TASK-539",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:06:11+00:00",
+      "updated_at": "2026-10-26T22:06:11+00:00",
+      "touched_round": 536,
+      "category": "detectability",
+      "title": "gateWiring 钉住「router ⊆ 两门清单」且两门彼此一致",
+      "summary": "开局两页进豁免名单并写明理由(有存档时路由守卫会重定向,硬塞只会重复量首页);注入 /archive 即点名。",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-638": {
+      "id": "CHG-638",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:06:11+00:00",
+      "updated_at": "2026-10-26T22:06:11+00:00",
+      "touched_round": 536,
+      "commit": "f566f81d",
+      "title": "加页面必须同时进冒烟与排版门"
     }
   },
   "edges": [
@@ -43882,6 +43921,24 @@
       "to": "ISS-432",
       "type": "addresses",
       "created_at": "2026-10-26T21:59:21+00:00"
+    },
+    {
+      "from": "CHG-638",
+      "to": "ISS-433",
+      "type": "resolves",
+      "created_at": "2026-10-26T22:06:11+00:00"
+    },
+    {
+      "from": "CHG-638",
+      "to": "TASK-539",
+      "type": "implements",
+      "created_at": "2026-10-26T22:06:11+00:00"
+    },
+    {
+      "from": "TASK-539",
+      "to": "ISS-433",
+      "type": "addresses",
+      "created_at": "2026-10-26T22:06:11+00:00"
     }
   ]
 }
