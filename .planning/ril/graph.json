@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 505,
+  "round": 506,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T16:22:30+00:00",
+  "updated_at": "2026-10-26T16:33:39+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 505,
+      "touched_round": 506,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28933,12 +28933,51 @@
       "id": "CHG-609",
       "type": "change",
       "status": "resolved",
-      "version": 2,
+      "version": 3,
       "created_at": "2026-10-26T16:22:29+00:00",
-      "updated_at": "2026-10-26T16:22:30+00:00",
-      "touched_round": 505,
+      "updated_at": "2026-10-26T16:33:39+00:00",
+      "touched_round": 506,
       "commit": "2a76e8d5",
-      "title": "加「寒潭露」(低境界回气丹)+ 法则 E3 每境都有回气丹"
+      "title": "加「寒潭露」(低境界回气丹)+ 法则 E4 每境都有回气丹"
+    },
+    "ISS-404": {
+      "id": "ISS-404",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:28:45+00:00",
+      "updated_at": "2026-10-26T16:33:38+00:00",
+      "touched_round": 506,
+      "title": "法则编号会撞车、清单会漂移 —— 判据没有守自己",
+      "summary": "丹药九条法则的编号是给人读的契约,但没有任何守护:加新法则时撞上旧编号(两条都叫 E3)不会报错;而 C2(buff 丹指向的增益必须存在)与 E3(0~2 掉落池有悟道可捡)自出现起就没写进 docs/alchemy.md 与 pills.ts 头注释。报告里说「E3 红了」时,人根本分不清是哪一条。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-510": {
+      "id": "TASK-510",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:28:45+00:00",
+      "updated_at": "2026-10-26T16:33:38+00:00",
+      "touched_round": 506,
+      "category": "detectability",
+      "title": "pillValue.spec 守法则清单:编号唯一 + 每条在两处清单里 + 认出不少于八条",
+      "summary": "从 spec 里抽出 it(\"<ID> ——\" 的编号,查重复、查 docs/alchemy.md 与 pills.ts 头注释是否都点到、并在正则失效时不许静默成空集;把上一轮那条改名 E4 并补写 C2/E3/E4 的理由。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-610": {
+      "id": "CHG-610",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:33:38+00:00",
+      "updated_at": "2026-10-26T16:33:39+00:00",
+      "touched_round": 506,
+      "commit": "0d9fe852",
+      "title": "pillValue.spec 守法则清单:编号唯一 + 每条在两处清单里;补写 C2/E3/E4"
     }
   },
   "edges": [
@@ -42258,6 +42297,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T16:22:29+00:00"
+    },
+    {
+      "from": "CHG-610",
+      "to": "ISS-404",
+      "type": "resolves",
+      "created_at": "2026-10-26T16:33:38+00:00"
+    },
+    {
+      "from": "CHG-610",
+      "to": "TASK-510",
+      "type": "implements",
+      "created_at": "2026-10-26T16:33:38+00:00"
+    },
+    {
+      "from": "ISS-404",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T16:33:38+00:00"
     }
   ]
 }
