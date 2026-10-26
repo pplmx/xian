@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 464,
+  "round": 465,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T05:57:29+00:00",
+  "updated_at": "2026-10-26T06:21:25+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 424,
+      "touched_round": 465,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27339,6 +27339,78 @@
       "touched_round": 464,
       "commit": "dfcbe067",
       "title": "五处自底降回 6%;palette.spec 新增同色自底判据(含三元分支与 \">\" 属性解析)"
+    },
+    "ISS-363": {
+      "id": "ISS-363",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T06:11:28+00:00",
+      "updated_at": "2026-10-26T06:11:28+00:00",
+      "touched_round": 465,
+      "title": "只读横幅只量过 390 日间:200% 缩放与夜间两档没碰过",
+      "summary": "第七轮加的「第二个标签页」判据只在 390×844 日间量了一次。横幅是朱砂 6% 的自底,正好是「窄到 195 CSS px」与「夜间换肤」最容易出事的两档;而这一页不在巡游里,巡页与缩放档那几遍都碰不到它 —— 与归来卷轴「只出现一次所以没人量」是同一类盲区。",
+      "severity": 0.35,
+      "confidence": 0.95
+    },
+    "TASK-468": {
+      "id": "TASK-468",
+      "type": "task",
+      "status": "active",
+      "version": 2,
+      "created_at": "2026-10-26T06:11:29+00:00",
+      "updated_at": "2026-10-26T06:11:38+00:00",
+      "touched_round": 465,
+      "category": "test-quality",
+      "title": "只读页判据扩到 390/195 × 日间/夜间四档",
+      "summary": "同一 context 连开两页;写者页不许有横幅,只读页在四档下都必须有,且逐档量「不裁字、不横向溢出、高度不小于 20px」。夜间用 emulateMedia(colorScheme) 驱动(auto 主题跟系统)。",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 1,
+      "lock_owner": "xian-loop-465",
+      "lock_until": "2026-10-26T06:56:38+00:00"
+    },
+    "ISS-364": {
+      "id": "ISS-364",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T06:21:07+00:00",
+      "updated_at": "2026-10-26T06:21:07+00:00",
+      "touched_round": 465,
+      "title": "坏档场景用固定 900ms 等路由分包:忙时读到空串,三条判据一起假红",
+      "summary": "taskBadSave 在 goto(#/settings) 之后固定等 900ms 再读「含存档版本的卡片」。设置页是路由分包,忙时首帧浮动 —— 本轮实测同一份产物偶发三条假红(没有常驻交代 / 没说出哪一片 / 没说出备份位置),而截图里那三句都在。文件头声称所有量测都已换成确定性等待,这一处是漏网的。",
+      "severity": 0.45,
+      "confidence": 0.9
+    },
+    "TASK-469": {
+      "id": "TASK-469",
+      "type": "task",
+      "status": "active",
+      "version": 2,
+      "created_at": "2026-10-26T06:21:07+00:00",
+      "updated_at": "2026-10-26T06:21:25+00:00",
+      "touched_round": 465,
+      "category": "test-quality",
+      "title": "坏档场景改成等卡片出现;只读页判据扩到 390/195 × 日/夜四档",
+      "summary": "①把固定 900ms 换成 waitForFunction(含「存档版本」的卡片出现为止),判据不变;②只读横幅新政据覆盖 390 与 195(200% 缩放)× 日间/夜间,并补一次像素对比度采样(measureTextContrast 自己翻两套主题)。",
+      "severity": 0.45,
+      "confidence": 0.9,
+      "effort": 1.5,
+      "lock_owner": "xian-loop-465",
+      "lock_until": "2026-10-26T07:06:25+00:00"
+    },
+    "TASK-470": {
+      "id": "TASK-470",
+      "type": "task",
+      "status": "abandoned",
+      "version": 2,
+      "created_at": "2026-10-26T06:21:17+00:00",
+      "updated_at": "2026-10-26T06:21:25+00:00",
+      "touched_round": 465,
+      "category": "test-quality",
+      "title": "(并入 TASK-469)只读页四档量测",
+      "summary": "(作废)建重了:只读页四档量测已并入 TASK-469,本节点不执行。"
     }
   },
   "edges": [
@@ -39896,6 +39968,36 @@
       "to": "TASK-467",
       "type": "implements",
       "created_at": "2026-10-26T05:57:18+00:00"
+    },
+    {
+      "from": "TASK-468",
+      "to": "ISS-363",
+      "type": "addresses",
+      "created_at": "2026-10-26T06:11:38+00:00"
+    },
+    {
+      "from": "ISS-363",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T06:11:38+00:00"
+    },
+    {
+      "from": "TASK-469",
+      "to": "ISS-364",
+      "type": "addresses",
+      "created_at": "2026-10-26T06:21:25+00:00"
+    },
+    {
+      "from": "TASK-469",
+      "to": "ISS-363",
+      "type": "addresses",
+      "created_at": "2026-10-26T06:21:25+00:00"
+    },
+    {
+      "from": "ISS-364",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T06:21:25+00:00"
     }
   ]
 }

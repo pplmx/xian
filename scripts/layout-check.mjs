@@ -133,8 +133,10 @@
  *   四十九 第二个标签页的只读态:多标签共用一份存档时,后来的那页不启引擎、不写盘
  *      (判据在 core/singleWriter 与 utils/storage 的单测里)。但「不写」对玩家是不可见的 ——
  *      数字不动、点了没反应,而解释只有一条三秒就消失的 toast。故这里另开一个 context
- *      开两页:先开的那页不许有横幅,后开的那页**必须有**一条常驻说明,且 390 宽不撑出
- *      横向溢出、文字不被裁。这页不巡游(它是另一条上下文里的第二页),巡页永远碰不到。
+ *      开两页:先开的那页不许有横幅,后开的那页**必须有**一条常驻说明。横幅是朱砂 6% 的
+ *      自底,故按四档量 —— 390 与 195(200% 缩放)× 日间 / 夜间:不裁字、不撑出横向溢出;
+ *      另跑一次像素对比度(measureTextContrast 自己翻两套主题)。这页不巡游(它是另一条
+ *      上下文里的第二页),巡页永远碰不到。
  *   四十八 底部导航的「当前位置」也要量:颜色与那枚朱砂短笔只对眼睛说话,读屏拿到的是
  *      RouterLink 按 exact-active 自己渲染的 aria-current=page —— 这一条先把「它真的在、
  *      且指向当前路由」量一遍:换手写 <a>、或哪个页签的 to 写歪,当场就红。
@@ -6098,7 +6100,23 @@ async function taskBadSave() {
       failures.push(`[390] 坏档场景:启动时没有交代坏档(${boot.toasts || "无提示"})`);
     if (!boot.backedUp) failures.push("[390] 坏档场景:坏掉的分片没有被隔离备份(原档直接丢了)");
     await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
-    await page.waitForTimeout(900);
+    /**
+     * 等那张卡真的画出来 —— 不要固定 900ms。
+     *
+     * 设置页是路由分包,忙时首帧浮动:本轮实测(加了只读页对比度采样之后)同一份产物
+     * 偶发三条假红 —— 卡还没渲染,读到的 notice 是空串,于是「没有常驻交代 / 没说出
+     * 哪一片 / 没说出备份位置」三条一起亮,而截图里它明明在。判据不变,只把等待换成
+     * 确定性:等到含「存档版本」的卡片出现为止(启动提示那条也是这么改的)。
+     */
+    await page
+      .waitForFunction(
+        () =>
+          [...document.querySelectorAll(".card-ink")].some((c) =>
+            (c.textContent || "").includes("存档版本"),
+          ),
+        { timeout: 8000 },
+      )
+      .catch(() => undefined);
     const notice = await page.evaluate(() => {
       const card = [...document.querySelectorAll(".card-ink")].find((c) =>
         (c.textContent || "").includes("存档版本"),
@@ -6779,6 +6797,10 @@ const JOBS = (() => {
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
  * 这套行为有单测,但玩家侧只剩「数字不动」—— 三秒的 toast 消失后就没有任何解释。
  * 判据:同一 context 开两页,先开的那页不许有横幅,后开的那页必须有,且不裁字、不溢出。
+ *
+ * 四种形态都要量:390 / 195(200% 缩放)× 日间 / 夜间。这一页不巡游,巡页那几遍
+ * 永远碰不到它 —— 横幅是朱砂 6% 的自底,正是「窄到只剩 195」与「夜间换肤」最容易
+ * 出事的两档。
  */
 async function taskReadOnlyTab() {
   const failures = [];
@@ -6795,31 +6817,64 @@ async function taskReadOnlyTab() {
     await reader.goto(INDEX + "#/", { waitUntil: "load" });
     await reader.waitForTimeout(900);
 
-    checked += 2;
+    checked += 1;
     const writerHas = await writer.evaluate(() => !!document.querySelector("[data-save-reader]"));
     if (writerHas) failures.push("[390] 写者页不该出现只读横幅");
 
-    const banner = await reader.evaluate(() => {
-      const el = document.querySelector("[data-save-reader]");
-      if (!el) return null;
-      const shell = document.getElementById("app")?.firstElementChild;
-      const r = el.getBoundingClientRect();
-      return {
-        text: (el.textContent || "").replace(/\s+/g, " ").trim(),
-        height: Math.round(r.height),
-        // 溢出/裁字:文字自己滚得动或盒子装不下,都算这行没把话说全
-        clipped: el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2,
-        overflowX: shell ? Math.round(shell.scrollWidth - shell.clientWidth) : 0,
-      };
-    });
-    if (!banner) {
-      failures.push("[390] 第二个标签页没有常驻只读说明 —— 只有一次性 toast,玩家会以为游戏坏了");
-    } else {
-      if (!/只读/.test(banner.text)) failures.push(`[390] 只读横幅没把话说清楚:«${banner.text}»`);
+    /** 量一次当前形态;标签带上视口档与配色,失败时才知道是哪一档 */
+    const measure = async (tag) => {
+      checked += 1;
+      const banner = await reader.evaluate(() => {
+        const el = document.querySelector("[data-save-reader]");
+        if (!el) return null;
+        const shell = document.getElementById("app")?.firstElementChild;
+        const r = el.getBoundingClientRect();
+        return {
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+          height: Math.round(r.height),
+          // 溢出/裁字:文字自己滚得动或盒子装不下,都算这行没把话说全
+          clipped: el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2,
+          overflowX: shell ? Math.round(shell.scrollWidth - shell.clientWidth) : 0,
+        };
+      });
+      if (!banner) {
+        failures.push(
+          `[${tag}] 第二个标签页没有常驻只读说明 —— 只有一次性 toast,玩家会以为游戏坏了`,
+        );
+        return;
+      }
+      if (!/只读/.test(banner.text))
+        failures.push(`[${tag}] 只读横幅没把话说清楚:«${banner.text}»`);
       if (banner.height < 20)
-        failures.push(`[390] 只读横幅只有 ${banner.height}px 高,读不清也点不着`);
-      if (banner.clipped) failures.push(`[390] 只读横幅文字被裁掉:«${banner.text}»`);
-      if (banner.overflowX > 1) failures.push(`[390] 只读横幅撑出横向溢出 ${banner.overflowX}px`);
+        failures.push(`[${tag}] 只读横幅只有 ${banner.height}px 高,读不清也点不着`);
+      if (banner.clipped) failures.push(`[${tag}] 只读横幅文字被裁掉:«${banner.text}»`);
+      if (banner.overflowX > 1)
+        failures.push(`[${tag}] 只读横幅撑出横向溢出 ${banner.overflowX}px`);
+    };
+
+    for (const scheme of ["light", "dark"]) {
+      await reader.emulateMedia({ colorScheme: scheme });
+      for (const [width, height, tier] of [
+        [390, 844, "390"],
+        [195, 422, "195·200%"],
+      ]) {
+        await reader.setViewportSize({ width, height });
+        await reader.waitForTimeout(350);
+        await measure(`${tier} ${scheme === "dark" ? "夜间" : "日间"}`);
+      }
+    }
+
+    /*
+     * 横幅的像素对比度也要量:它不是巡游页,`taskPageTour` 那遍永远采不到它。
+     * measureTextContrast 自己会把主题翻两遍并逐像素合成,故这里只跑一次。
+     */
+    await reader.emulateMedia({ colorScheme: "light" });
+    await reader.setViewportSize({ width: 390, height: 844 });
+    await reader.waitForTimeout(350);
+    for (const bad of await measureTextContrast(reader)) {
+      contrastFails.push(
+        `[只读页] ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
+      );
     }
   } finally {
     await ctx.close();
