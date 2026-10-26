@@ -10,10 +10,20 @@
  *   ② 再点一次什么都不再发(连点确认、恢复流程都会走到这里);
  *   ③ 无论从哪一境转世都不抛错,出生境界严格等于「宿命传承」给出的地板。
  */
-import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { prepareReincarnation, confirmReincarnation } from "./reincarnation";
 import { birthMajorFloor } from "./heritageEffects";
+import { stageAt } from "@/data/samsara";
+
+/*
+ * 只把「重掷本世之界」换成直通 —— 它每掷一次要跑门禁重试(最多 200 轮),
+ * 在 12 组随机状态里就是九秒;而这条用例核对的是道果/宿慧/阶名/名号,与换哪个世界无关。
+ */
+vi.mock("./mortalWorldService", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("./mortalWorldService")>();
+  return { ...mod, rerollMortalWorld: () => null };
+});
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -150,5 +160,76 @@ describe("转世确认 · 不可撤销的那一次结算", () => {
       );
       expect(Number.isFinite(toNum(player.exp))).toBe(true);
     }
+  });
+});
+
+describe("转世预告 · 许诺的数必须兑现", () => {
+  /*
+   * 转世弹窗给出的是**有约束力的许诺**:多少道果、多少宿慧、落到哪一阶、叫什么名号。
+   * 玩家确认之前只能看到这些数,确认之后不可撤销。预告与结算各算一遍的地方,
+   * 一旦分叉(改了一边忘了另一边),玩家拿到的就会与看到的不一样 —— 而它不可撤销。
+   *
+   * 这里用固定种子随机走 30 组状态(境界 × 宿慧 × 传承),逐条核对预告与实际之差。
+   */
+  function lcg(seed: number): () => number {
+    let s = seed >>> 0;
+    return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  }
+  const HERITAGES = [
+    "danxin",
+    "yuanying",
+    "baihuang",
+    "tonggan",
+    "shouzhuo",
+    "daotong",
+    "dubu",
+    "daoben",
+  ];
+
+  it("道果 / 宿慧 / 阶名 / 名号:30 组随机状态下预告与结算逐条相同", () => {
+    const rand = lcg(7);
+    const fails: string[] = [];
+    let fruitMoves = 0;
+    for (let i = 0; i < 30; i += 1) {
+      setActivePinia(createPinia());
+      useUiStore();
+      const game = useGameStore();
+      const player = usePlayerStore();
+      const res = useResourcesStore();
+      useAdventureStore();
+      game.markStarted();
+      player.major = Math.floor(rand() * 21);
+      player.sub = Math.floor(rand() * 3);
+      player.age = 30 + Math.floor(rand() * 100);
+      player.exp = gn(100000);
+      player.reincarnation.count = 1 + Math.floor(rand() * 5);
+      player.reincarnation.daoFruit = Math.floor(rand() * 100);
+      player.reincarnation.insight = Math.floor(rand() * 3000);
+      player.reincarnation.heritage = HERITAGES.filter(() => rand() < 0.25) as never;
+      res.spiritStone = gn(10000);
+
+      const fruit0 = player.reincarnation.daoFruit;
+      const insight0 = player.reincarnation.insight;
+      const view = prepareReincarnation();
+      confirmReincarnation(null, null, view.nameDraft);
+
+      const dFruit = player.reincarnation.daoFruit - fruit0;
+      const dInsight = player.reincarnation.insight - insight0;
+      const where = `#${i} major=${player.major} insight=${insight0}`;
+      if (dFruit !== view.daoFruitGained)
+        fails.push(`${where} 道果 ${dFruit} ≠ 预告 ${view.daoFruitGained}`);
+      if (dInsight !== view.review.insightGained)
+        fails.push(`${where} 宿慧 ${dInsight} ≠ 预告 ${view.review.insightGained}`);
+      if (player.reincarnation.insight !== view.insightAfter)
+        fails.push(`${where} 宿慧总量 ${player.reincarnation.insight} ≠ 预告 ${view.insightAfter}`);
+      const stage = stageAt(player.reincarnation.insight);
+      if (stage.name !== view.stageName)
+        fails.push(`${where} 阶名 ${stage.name} ≠ 预告 ${view.stageName}`);
+      if (player.name !== view.nameDraft) fails.push(`${where} 名号没落上`);
+      if (dFruit > 0) fruitMoves += 1;
+    }
+    expect(fails.slice(0, 6)).toEqual([]);
+    // 防空转:随机档里得真有一部分真的凝出道果,否则这条判据只在比 0 与 0
+    expect(fruitMoves, "30 组里凝出道果的太少 —— 夹具没造出有效状态").toBeGreaterThan(8);
   });
 });
