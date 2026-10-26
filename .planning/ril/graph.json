@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 467,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T06:54:23+00:00",
+  "updated_at": "2026-10-26T06:59:12+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -27461,10 +27461,10 @@
     "ISS-366": {
       "id": "ISS-366",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T06:54:19+00:00",
-      "updated_at": "2026-10-26T06:54:19+00:00",
+      "updated_at": "2026-10-26T06:59:11+00:00",
       "touched_round": 467,
       "title": "同色自底判据只扫 .vue:style.css 里 .codex-current 两版 7% 自底漏网",
       "summary": "TASK-467 的判据按 .vue 里的类名配对,而颜色规矩的另一半写在 style.css:界域志「此刻在此」的四个界域变体里,石青与紫墨两版是 0.07,超出 design.md 的 6% 上限。实测 7% 在浅色下仍有 4.66:1(过 AA),所以不是可用性事故,而是契约违例 + 判据盲区 —— token 层加一个 20% 自底也不会有人发现。",
@@ -27474,19 +27474,28 @@
     "TASK-472": {
       "id": "TASK-472",
       "type": "task",
-      "status": "active",
-      "version": 2,
+      "status": "resolved",
+      "version": 4,
       "created_at": "2026-10-26T06:54:19+00:00",
-      "updated_at": "2026-10-26T06:54:23+00:00",
+      "updated_at": "2026-10-26T06:59:12+00:00",
       "touched_round": 467,
       "category": "correctness",
       "title": "两处 7% 自底降回 6%;判据扩到全部 CSS",
       "summary": "style.css 的 qing/violet-ink 两版改 0.06;palette.spec 增加 CSS 扫描(同一块规则里 color 与 background 同 token 且 >0.06),扩到 src 下所有 .css,STRONG_TOKENS 补 cangqing,并留防空转断言。",
       "severity": 0.35,
       "confidence": 0.95,
-      "effort": 1,
-      "lock_owner": "xian-loop-467",
-      "lock_until": "2026-10-26T07:34:23+00:00"
+      "effort": 1
+    },
+    "CHG-572": {
+      "id": "CHG-572",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T06:59:11+00:00",
+      "updated_at": "2026-10-26T06:59:12+00:00",
+      "touched_round": 467,
+      "commit": "b7f0814e",
+      "title": "两处 7% 自底降回 6%;palette.spec 的 CSS 扫描扩到 src 下全部 .css"
     }
   },
   "edges": [
@@ -40128,6 +40137,18 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T06:54:23+00:00"
+    },
+    {
+      "from": "CHG-572",
+      "to": "ISS-366",
+      "type": "resolves",
+      "created_at": "2026-10-26T06:59:11+00:00"
+    },
+    {
+      "from": "CHG-572",
+      "to": "TASK-472",
+      "type": "implements",
+      "created_at": "2026-10-26T06:59:11+00:00"
     }
   ]
 }
