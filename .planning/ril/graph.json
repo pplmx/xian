@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 497,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T13:45:36+00:00",
+  "updated_at": "2026-10-26T13:48:29+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 496,
+      "touched_round": 497,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28592,10 +28592,10 @@
     "ISS-395": {
       "id": "ISS-395",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T13:45:36+00:00",
-      "updated_at": "2026-10-26T13:45:36+00:00",
+      "updated_at": "2026-10-26T13:48:29+00:00",
       "touched_round": 497,
       "title": "两条 tag-only 事故的修法没有任何判据:谁改回去都无人知晓",
       "summary": "Electron 与 Android 构建只在 tag 上跑,本地门证明不了。两处修法(Android 签名变量不遮蔽、Electron 显式 --publish never)都带详尽注释,但没有判据拦着它们被改回去 —— 而这两条路径本会话里始终无法本地验证。发版前的最后一次改动如果碰了这两处,只有打 tag 才会发现。",
@@ -28605,10 +28605,10 @@
     "TASK-501": {
       "id": "TASK-501",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T13:45:36+00:00",
-      "updated_at": "2026-10-26T13:45:36+00:00",
+      "updated_at": "2026-10-26T13:48:29+00:00",
       "touched_round": 497,
       "category": "detectability",
       "title": "releasePipeline.spec:五条判据钉住发版流水线的历史事故面",
@@ -28616,6 +28616,17 @@
       "severity": 0.35,
       "confidence": 0.9,
       "effort": 1
+    },
+    "CHG-601": {
+      "id": "CHG-601",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T13:48:28+00:00",
+      "updated_at": "2026-10-26T13:48:29+00:00",
+      "touched_round": 497,
+      "commit": "2d114fe6",
+      "title": "releasePipeline.spec:五条判据钉住 tag-only 的两处历史事故面"
     }
   },
   "edges": [
@@ -41773,6 +41784,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T13:37:55+00:00"
+    },
+    {
+      "from": "CHG-601",
+      "to": "ISS-395",
+      "type": "resolves",
+      "created_at": "2026-10-26T13:48:28+00:00"
+    },
+    {
+      "from": "CHG-601",
+      "to": "TASK-501",
+      "type": "implements",
+      "created_at": "2026-10-26T13:48:28+00:00"
+    },
+    {
+      "from": "ISS-395",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T13:48:28+00:00"
     }
   ]
 }
