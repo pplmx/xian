@@ -495,7 +495,14 @@ export const usePlayerStore = defineStore(
       return out;
     }
 
+    /**
+     * 凝出道果。
+     *
+     * 与 spendDaoFruit 对称:非有限值(坏档、上游算错)一律不写 —— 一旦把 NaN 加进余额,
+     * 此后所有「余额 < 价」与「余额 - 价」都会失效,直到下次读档被 sanitize 修回来。
+     */
     function addDaoFruit(n: number): void {
+      if (!Number.isFinite(n) || n <= 0) return;
       reincarnation.value = { ...reincarnation.value, daoFruit: reincarnation.value.daoFruit + n };
     }
 

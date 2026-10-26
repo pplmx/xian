@@ -191,3 +191,33 @@ describe("转世不残留产出型镇压", () => {
     expect(p.suppressedRegions).not.toContain(far);
   });
 });
+
+describe("道果的加减法 · 坏值不许污染余额", () => {
+  /*
+   * 余额一旦变成 NaN,后面所有「够不够」「扣多少」都失效 —— 而它不会报错,
+   * 只会静静地让每一次判断都走岔(sanitize 要等下次读档才修得回来)。
+   */
+  it("addDaoFruit:非有限值与非正数一律不写", () => {
+    const player = usePlayerStore();
+    player.reincarnation = { ...player.reincarnation, daoFruit: 100 } as never;
+    player.addDaoFruit(Number.NaN);
+    player.addDaoFruit(Number.POSITIVE_INFINITY);
+    player.addDaoFruit(-5);
+    player.addDaoFruit(0);
+    expect(player.reincarnation.daoFruit).toBe(100);
+    player.addDaoFruit(7);
+    expect(player.reincarnation.daoFruit).toBe(107);
+  });
+
+  it("spendDaoFruit:非正数与不足都不扣,余额保持不动", () => {
+    const player = usePlayerStore();
+    player.reincarnation = { ...player.reincarnation, daoFruit: 10 } as never;
+    for (const bad of [Number.NaN, 0, -3]) {
+      expect(player.spendDaoFruit(bad), `${bad} 不该被接受`).toBe(false);
+    }
+    expect(player.spendDaoFruit(11)).toBe(false);
+    expect(player.reincarnation.daoFruit).toBe(10);
+    expect(player.spendDaoFruit(4)).toBe(true);
+    expect(player.reincarnation.daoFruit).toBe(6);
+  });
+});
