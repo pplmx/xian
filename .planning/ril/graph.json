@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 534,
+  "round": 535,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T21:47:20+00:00",
+  "updated_at": "2026-10-26T21:59:21+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -30020,6 +30020,45 @@
       "touched_round": 534,
       "commit": "9ebb934a",
       "title": "HEAD(9ebb934a) 六门复跑全绿(无代码改动)"
+    },
+    "ISS-432": {
+      "id": "ISS-432",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:59:20+00:00",
+      "updated_at": "2026-10-26T21:59:21+00:00",
+      "touched_round": 535,
+      "title": "发版前没有一条本地命令 —— 缺正文、tag 重名、工作区脏都等推完 tag 才知道",
+      "summary": "本仓两次发版都栽在「本地永远绿、只有 tag 才执行到」的路径上。发版前该问的三件事(版本与正文对得上、工作区干净、同 tag 没被用过)此前散在人的记忆里;另有一件本地能看见却不能判断的事:自上次 tag 以来有多少提交动过 android/electron/发版流水线(实测 4 个)。",
+      "severity": 0.35,
+      "confidence": 0.9
+    },
+    "TASK-538": {
+      "id": "TASK-538",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:59:20+00:00",
+      "updated_at": "2026-10-26T21:59:21+00:00",
+      "touched_round": 535,
+      "category": "tooling",
+      "title": "`bun run release:check`:四条阻塞 + 一条 tag-only 提醒",
+      "summary": "判断在 core/releaseCheck(纯函数,6 条单测),脚本层只读版本、git 状态与提交数。",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-637": {
+      "id": "CHG-637",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:59:20+00:00",
+      "updated_at": "2026-10-26T21:59:21+00:00",
+      "touched_round": 535,
+      "commit": "689a9756",
+      "title": "发版前本地体检 release:check"
     }
   },
   "edges": [
@@ -43825,6 +43864,24 @@
       "to": "ISS-431",
       "type": "addresses",
       "created_at": "2026-10-26T21:47:20+00:00"
+    },
+    {
+      "from": "CHG-637",
+      "to": "ISS-432",
+      "type": "resolves",
+      "created_at": "2026-10-26T21:59:21+00:00"
+    },
+    {
+      "from": "CHG-637",
+      "to": "TASK-538",
+      "type": "implements",
+      "created_at": "2026-10-26T21:59:21+00:00"
+    },
+    {
+      "from": "TASK-538",
+      "to": "ISS-432",
+      "type": "addresses",
+      "created_at": "2026-10-26T21:59:21+00:00"
     }
   ]
 }
