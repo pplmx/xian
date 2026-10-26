@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 463,
+  "round": 464,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T05:27:13+00:00",
+  "updated_at": "2026-10-26T05:57:29+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 424,
+      "touched_round": 464,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -27300,6 +27300,45 @@
       "touched_round": 463,
       "commit": "85fd14e7",
       "title": "两条墙钟吞吐门加「首采样不达标重采一次」;精确累计断言配 reset"
+    },
+    "ISS-362": {
+      "id": "ISS-362",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T05:52:53+00:00",
+      "updated_at": "2026-10-26T05:57:29+00:00",
+      "touched_round": 464,
+      "title": "五处同色自底浓过 6%:10px 小字压在 10~15% 的自己色上",
+      "summary": "design.md 的硬规矩是「同色底最多 6%」,实测 8% 就掉到 4.44:1(不到 AA)。五处违反:弟子羁绊签与融合「墙」签(朱砂 10%)、装备「佩」/法宝「随」章(玉 15%)、词条转移选中行(朱砂 10%),全是 10px 小字。此前只有人眼盯着 —— palette.spec 只核实色 token 与文字叠透明度,没管自底浓度。",
+      "severity": 0.45,
+      "confidence": 0.95
+    },
+    "TASK-467": {
+      "id": "TASK-467",
+      "type": "task",
+      "status": "resolved",
+      "version": 4,
+      "created_at": "2026-10-26T05:52:53+00:00",
+      "updated_at": "2026-10-26T05:57:29+00:00",
+      "touched_round": 464,
+      "category": "correctness",
+      "title": "五处自底降到 6%;palette.spec 加同色自底判据",
+      "summary": "按 design.md 把 10%/15% 一律降回 6%;判据按元素内「一段类名」配对 bg-<强色>/N 与 text-<强色>(N>6),三元分支各算各的;标签解析要容忍属性里的 \">\"(v-if=\"a.bond > 0\")。",
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-569": {
+      "id": "CHG-569",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T05:57:18+00:00",
+      "updated_at": "2026-10-26T05:57:29+00:00",
+      "touched_round": 464,
+      "commit": "dfcbe067",
+      "title": "五处自底降回 6%;palette.spec 新增同色自底判据(含三元分支与 \">\" 属性解析)"
     }
   },
   "edges": [
@@ -39833,6 +39872,30 @@
       "to": "TASK-466",
       "type": "implements",
       "created_at": "2026-10-26T05:27:08+00:00"
+    },
+    {
+      "from": "TASK-467",
+      "to": "ISS-362",
+      "type": "addresses",
+      "created_at": "2026-10-26T05:53:00+00:00"
+    },
+    {
+      "from": "ISS-362",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T05:53:00+00:00"
+    },
+    {
+      "from": "CHG-569",
+      "to": "ISS-362",
+      "type": "resolves",
+      "created_at": "2026-10-26T05:57:18+00:00"
+    },
+    {
+      "from": "CHG-569",
+      "to": "TASK-467",
+      "type": "implements",
+      "created_at": "2026-10-26T05:57:18+00:00"
     }
   ]
 }
