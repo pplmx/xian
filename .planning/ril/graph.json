@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 469,
+  "round": 470,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T07:33:37+00:00",
+  "updated_at": "2026-10-26T07:45:18+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 469,
+      "touched_round": 470,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27574,6 +27574,45 @@
       "touched_round": 469,
       "commit": "dcd91c8f",
       "title": "归来结算抽到 composables/useReturnSettle;只读页整体跳过"
+    },
+    "ISS-369": {
+      "id": "ISS-369",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:39:51+00:00",
+      "updated_at": "2026-10-26T07:45:18+00:00",
+      "touched_round": 470,
+      "title": "只读页的结算闸只在 App 这一层:坊市页/收徒页自带定时器,照样结算",
+      "summary": "上一轮把归来结算抽到 useReturnSettle 并在 App 里拦下,但 MarketView 与 ApprenticeView 自己也调 market.sync/collectConsign、appr.sync/collectFinished,还各挂一个每秒的墙钟定时器 —— 只读页只要走到这两个页签,寄卖照样自售、货架照样换新、弟子照样归来,内存里加钱并弹通报。堵正门不堵侧门。",
+      "severity": 0.4,
+      "confidence": 0.95
+    },
+    "TASK-475": {
+      "id": "TASK-475",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:39:52+00:00",
+      "updated_at": "2026-10-26T07:45:18+00:00",
+      "touched_round": 470,
+      "category": "correctness",
+      "title": "把只读闸下沉到 store:五个按墙钟结算的方法统一早退",
+      "summary": "market.sync / market.collectConsign / bounty.sync / apprentice.sync / apprentice.collectFinished 在 saveReader 时早退;useReturnSettle 只负责编排,不再自带判断。用例直接在 store 层调这五个方法(不经 App),写者页对照 + 注入验证。",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-575": {
+      "id": "CHG-575",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:45:18+00:00",
+      "updated_at": "2026-10-26T07:45:18+00:00",
+      "touched_round": 470,
+      "commit": "f9c35e6e",
+      "title": "五个按墙钟结算的 store 方法在只读页早退;useReturnSettle 退回纯编排"
     }
   },
   "edges": [
@@ -40263,6 +40302,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T07:33:37+00:00"
+    },
+    {
+      "from": "CHG-575",
+      "to": "ISS-369",
+      "type": "resolves",
+      "created_at": "2026-10-26T07:45:18+00:00"
+    },
+    {
+      "from": "CHG-575",
+      "to": "TASK-475",
+      "type": "implements",
+      "created_at": "2026-10-26T07:45:18+00:00"
+    },
+    {
+      "from": "ISS-369",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T07:45:18+00:00"
     }
   ]
 }
