@@ -1710,6 +1710,19 @@ async function openRoute(page, route, settleMs) {
     })
     .catch(() => undefined);
   if (settleMs > 0) await page.waitForTimeout(settleMs);
+  /*
+   * 量之前等两帧:路由切换的入场过渡是**内联样式**(Vue 的 Transition 直接改
+   * style.opacity),而这里注入了 transition:none —— transitionend 因此永远不会来,
+   * 视图会停在 opacity:0。禁用态对比度那条判据会把祖先链的 opacity 乘进去,
+   * 于是整页的字都被算成「1:1,整块 opacity 0.00」而误红。
+   * (真出现这类误红的是一次新增按钮:320-late 的 /world 是巡游里第一个带禁用控件的页。)
+   */
+  await page.evaluate(
+    () =>
+      new Promise((r) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => r(null)));
+      }),
+  );
   return page.evaluate(() => (document.querySelector("main")?.innerText ?? "").trim().length);
 }
 

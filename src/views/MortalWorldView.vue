@@ -16,6 +16,20 @@
         <p v-if="view.biasText" class="mt-0.5 text-[11px] text-ink-faint">
           此地所钟:{{ view.biasText }}
         </p>
+        <!--
+          道果出口之一:换一方天地。发的是**选择权**,不是数值 —— 出口的发放物不得属于
+          StatMods 命名空间(见 core/fruitOutlets.spec 的结论)。不够时把差多少写出来。
+        -->
+        <button
+          class="btn-ghost mt-2 min-h-[28px] !px-3 !py-1 text-[11px]"
+          :disabled="!canRerollWorld"
+          data-world-reroll
+          @click="rerollWorld"
+        >
+          换一方天地({{ WORLD_REROLL_FRUIT }} 道果{{
+            canRerollWorld ? "" : ` · 尚差 ${shortfall} 枚`
+          }})
+        </button>
       </div>
 
       <!-- 路线全貌:高低即层级,横距即路程,点大即事多 -->
@@ -135,6 +149,10 @@ import { useRouter } from "vue-router";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import { useAdventureStore } from "@/stores/adventure";
+import { usePlayerStore } from "@/stores/player";
+import { useUiStore } from "@/stores/ui";
+import { WORLD_REROLL_FRUIT, rerollWorldByFruit } from "@/core/worldReroll";
+import { rerollMortalWorld } from "@/core/mortalWorldService";
 import { enemyDef } from "@/data/enemies";
 import { regionDef } from "@/data/regions";
 import {
@@ -148,6 +166,21 @@ import {
 } from "@/core/mortalWorldService";
 
 const adventure = useAdventureStore();
+const player = usePlayerStore();
+const ui = useUiStore();
+/** 换一方天地的按钮态:不够时按钮置灰,并把差多少写出来 */
+const canRerollWorld = computed(() => player.reincarnation.daoFruit >= WORLD_REROLL_FRUIT);
+const shortfall = computed(() => Math.max(0, WORLD_REROLL_FRUIT - player.reincarnation.daoFruit));
+function rerollWorld(): void {
+  const r = rerollWorldByFruit({
+    daoFruit: player.reincarnation.daoFruit,
+    spendFruit: (n) => player.spendDaoFruit(n),
+    reroll: () => rerollMortalWorld(),
+  });
+  if (r === "ok") ui.toast("此方天地已换 —— 又是一条没走过的路", "rare");
+  else if (r === "poor") ui.toast("道果不够换一方天地", "warn");
+  else ui.toast("此界掷不出新的天地 —— 一分未扣", "warn");
+}
 const router = useRouter();
 
 /** 本世之界;首次进入本页时凝成 */
