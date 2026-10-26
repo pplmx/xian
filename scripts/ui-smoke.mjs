@@ -20,6 +20,8 @@
  *
  * 会跳过有破坏性的按钮(分解/删除/清空/重置/兵解/转世),免得把冒烟盘玩坏。
  * 发现 pageerror 即失败并打印堆栈前几行 —— 那通常就是一处真 bug。
+ * 应用自己 `console.error` 的(`[引擎] Tick 异常` 这类**被 catch 住**的)同样计入失败:
+ * 它们不会触发 pageerror,却是「游戏不动了」的真身(见 lib/pageErrors.mjs 的说明)。
  * 它同时在 CI 里跑(见 .github/workflows/build.yml 的 ui-check job 与 deploy.yml),
  * 与排版自检同属一道门:那边量排版,这边戳交互,红一条就不发布。
  * 页面异常一律计入失败;外域请求由 lib/pageErrors.mjs 的 blockExternal 拦掉并计数(应当恒为 0)。

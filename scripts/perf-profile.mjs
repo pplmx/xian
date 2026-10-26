@@ -24,7 +24,7 @@
  *   与真机同口径,足够当回归判据。
  *
  * 判据(见 BUDGET):单视图不得有长帧(>50ms)超过上限、最差帧不超过上限、
- * 不得崩溃、不得有未处理的页面异常。CI 机器比本机核多但单核弱,故上限按
+ * 不得崩溃、不得有未处理的页面异常或应用自己的 console.error(同一把尺子,见 lib/pageErrors.mjs)。CI 机器比本机核多但单核弱,故上限按
  * 「本机读数留出数倍余量」定 —— 红的是「成倍长回去」那类回归,不是机器抖动。
  *
  * 基线(2026-10-13 实测,本机 + 无头 chromium,后期档):全视图 ~60fps、
@@ -36,6 +36,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { lateSlices, showcaseSlices, seedSave } from "./lib/saveFixture.mjs";
+import { watchPageErrors } from "./lib/pageErrors.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = join(ROOT, "dist");
@@ -182,7 +183,7 @@ for (const view of VIEWS) {
     await seedSave(context, slices);
     const page = await context.newPage();
     const errors = [];
-    page.on("pageerror", (e) => errors.push(String(e)));
+    watchPageErrors(page, errors);
     page.on("crash", () => errors.push("RENDERER_CRASH"));
     const url = base + (noSeed ? "" : `#${view.route}`);
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });

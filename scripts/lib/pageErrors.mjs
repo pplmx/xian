@@ -25,6 +25,27 @@ export function watchPageErrors(page, sink) {
   // sink 既可以是数组(多数调用方),也可以是回调(冒烟脚本还要给异常配一处出处)
   const report = typeof sink === "function" ? sink : (msg) => sink.push(msg);
   page.on("pageerror", (e) => report(String(e).slice(0, 160)));
+  /*
+   * console.error 也收 —— 它是**被 catch 住的那一类异常**的唯一出口。
+   *
+   * pageerror 只报「没人接,抛到顶层」的;而本作最要紧的几条运行时路径都是自己接住的:
+   * 引擎 tick(每秒一次)、离线结算、音频加载、全局 errorHandler。这些 catch 里做的事
+   * 只有 `console.error("[引擎] Tick 异常", err)` —— pageerror 对它们**永远不会触发**,
+   * 玩家那边则是「游戏卡住不动」而门全绿。判据:给 tick 塞一个必抛的错,冒烟立刻红
+   * (实测输出 `console.error [引擎] Tick 异常 Error: 注入:一次 tick 异常`),去掉即绿。
+   *
+   * 降噪靠**一条**规则:只认应用自己的日志。本作所有运行时日志都带 `[模块]` 前缀
+   * (引擎 / 音频 / 进度 / 全局异常),而浏览器自己发的消息(`Failed to load resource …`、
+   * `net::ERR_…`、`[.WebGL-…]`)一律没有这个形状 —— 离线自检断网时刷屏的正是它们,
+   * 而那条门量的本来就是离线缓存能不能用,不是「页面日志干净」。
+   * 新加的运行时日志跟着带前缀,就自动进了判据;不带前缀的 console.error 不在射程内。
+   */
+  page.on("console", (m) => {
+    if (m.type() !== "error") return;
+    const text = m.text();
+    if (!/^\[[^\]]+\]/.test(text)) return;
+    report(`console.error ${text}`.slice(0, 200));
+  });
 }
 
 /**
