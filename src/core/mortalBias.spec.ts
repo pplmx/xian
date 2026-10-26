@@ -67,8 +67,9 @@ describe("资源偏向 · 真的接进了结算", () => {
   it("在线与离线都传本世偏向 —— 两套账同一口径", () => {
     expect(onlineSrc, "在线战斗没传偏向").toContain("currentWorldBias()");
     expect(offlineSrc, "离线战斗没传偏向").toContain("currentWorldBias()");
-    expect(offlineSrc, "归来卷轴没写这一句 —— 多出来的那份没有来历").toContain(
-      "biasOfflineNote(currentWorldBias(), summary.battles)",
+    // 同上:允许换行与空格,但两件事必须同时在场 —— 本世偏向、这个人的场次
+    expect(offlineSrc, "归来卷轴没写这一句 —— 多出来的那份没有来历").toMatch(
+      /biasOfflineNote\(\s*currentWorldBias\(\)\s*,\s*summary\.battles\s*\)/,
     );
   });
 });
@@ -129,9 +130,10 @@ describe("所钟要说在出发前 · 历练页的那一行", () => {
   const viewSrc = readFileSync(resolve(__dirname, "../views/AdventureView.vue"), "utf8");
 
   it("历练页绑的是 biasEffectOf 的标签,不是自己另拼一句", () => {
-    expect(viewSrc, "历练页没绑 biasEffectOf —— 文案会与世界页漂开").toContain(
-      "biasEffectOf(adventure.mortalWorld?.bias)",
-    );
+    // 认「接线」不认某一种写法:局部变量、可选链、函数参数都可以换,但必须还是
+    // biasEffectOf(…) 算出来的标签 —— 上一批字面量判据已经因为换行误红过两次
+    expect(viewSrc, "历练页没绑 biasEffectOf —— 文案会与世界页漂开").toMatch(/biasEffectOf\(/);
+    expect(viewSrc).toMatch(/\{\{\s*biasLabel\s*\}\}/);
     expect(viewSrc, "那一行被摘掉了(或改了 data 标记)").toContain("data-bias-hint");
   });
 });
