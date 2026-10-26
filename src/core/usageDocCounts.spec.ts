@@ -27,7 +27,7 @@ import { MAIN_QUESTS } from "@/data/quests";
 import { TITLES } from "@/data/titles";
 import { LIFE_THEMES } from "@/data/lifeThemes";
 import { TRIBULATIONS } from "@/data/tribulations";
-import { TALENTS } from "@/data/talents";
+import { TALENTS, TALENT_GRADE_NAMES } from "@/data/talents";
 import { SKILLS } from "@/data/crafting";
 import { AFFIXES } from "@/data/affixes";
 import { PACTS } from "@/data/pacts";
@@ -146,5 +146,47 @@ describe("玩法文档 · 结构数字与数据源对账", () => {
       bad.some((m) => m.includes("灵脉")),
       `自证没抓住灵脉:${bad.join(" | ")}`,
     ).toBe(true);
+  });
+});
+
+/** 从文档里抠一段以「 / 」分隔的名单 —— 「名字也要对得上」那类承诺用它 */
+function namesIn(text: string, pattern: RegExp): string[] {
+  const m = pattern.exec(text);
+  return m
+    ? m[1]!
+        .split("/")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+}
+
+describe("玩法文档 · 名字与承诺也要对得上", () => {
+  /*
+   * 数字对上还不够:文档还会承诺「九门技艺叫这些名字」「道侣纯叙事不给属性」。
+   * 名字改一个、或哪天道侣悄悄加了词条,数字判据一无所知。
+   */
+  it("技艺九门的名字与 SKILLS 逐个一致", () => {
+    const docNames = namesIn(DOC, /\| 技艺 \| \d+ 门\(([^)]+)\)/);
+    expect(docNames.length, "文档里没抠到技艺名单(文案结构改了?)").toBeGreaterThan(0);
+    expect(docNames).toEqual(SKILLS.map((s) => s.name));
+  });
+
+  it("天赋四等的名字与 TALENT_GRADE_NAMES 一致", () => {
+    const docNames = namesIn(DOC, /分(.+?)四等/);
+    expect(docNames).toEqual(TALENT_GRADE_NAMES.filter(Boolean));
+  });
+
+  it("「道侣纯叙事不给属性」在数据上成立", () => {
+    expect(DOC, "文档不再声称这一点时,这条判据要重写").toContain("道侣纯叙事不给属性");
+    for (const d of DAOLU) {
+      const statLike = Object.keys(d).filter((k) => /mod|bonus|effect|stat|加成|属性/i.test(k));
+      expect(statLike, `${d.id} 带了数值字段 —— 文档说好的纯叙事呢`).toEqual([]);
+    }
+  });
+
+  it("判据自证:名单改一个字就会被抓住", () => {
+    // 只改「技艺」那一行:全文第一处「识材」并不在表里,直接全局替换会自证失败(踩过)
+    const broken = DOC.replace("门(识材", "门(识材x");
+    expect(namesIn(broken, /\| 技艺 \| \d+ 门\(([^)]+)\)/)).not.toEqual(SKILLS.map((s) => s.name));
   });
 });
