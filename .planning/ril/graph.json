@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 539,
+  "round": 540,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T22:24:18+00:00",
+  "updated_at": "2026-10-26T22:34:47+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -30176,6 +30176,45 @@
       "touched_round": 538,
       "commit": "25372b0e",
       "title": "发版体检的接线也有判据"
+    },
+    "ISS-436": {
+      "id": "ISS-436",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:34:46+00:00",
+      "updated_at": "2026-10-26T22:34:47+00:00",
+      "touched_round": 540,
+      "title": "突破卡只有百分比,没有「平均要试几次」",
+      "summary": "小进阶的成功率以百分比显示;玩家判断「现在冲还是再攒准备」时,71% 这种读数不如「平均约 1.4 次」直观 —— 而后者 realms.sim 早就算出来了,只是没进界面。",
+      "severity": 0.2,
+      "confidence": 0.9
+    },
+    "TASK-542": {
+      "id": "TASK-542",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:34:46+00:00",
+      "updated_at": "2026-10-26T22:34:47+00:00",
+      "touched_round": 540,
+      "category": "ux",
+      "title": "core 增 expectedTries,突破卡补一行「平均约 N 次」",
+      "summary": "必成/必败/坏值给 null;判据三条(换算、null 边界、单调且 ≥1)。",
+      "severity": 0.2,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-641": {
+      "id": "CHG-641",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:34:46+00:00",
+      "updated_at": "2026-10-26T22:34:47+00:00",
+      "touched_round": 540,
+      "commit": "e1ae325c",
+      "title": "突破卡补期望尝试次数"
     }
   },
   "edges": [
@@ -44053,6 +44092,18 @@
       "to": "ISS-435",
       "type": "addresses",
       "created_at": "2026-10-26T22:21:55+00:00"
+    },
+    {
+      "from": "CHG-641",
+      "to": "ISS-436",
+      "type": "resolves",
+      "created_at": "2026-10-26T22:34:46+00:00"
+    },
+    {
+      "from": "CHG-641",
+      "to": "TASK-542",
+      "type": "implements",
+      "created_at": "2026-10-26T22:34:46+00:00"
     }
   ]
 }
