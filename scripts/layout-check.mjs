@@ -1691,6 +1691,28 @@ function railProblems(rail) {
 }
 
 /** 一页量出来的读数 → 失败清单(两遍巡页共用同一套判据) */
+/**
+ * 打开一个路由,并等到「这一页真的画出来了」。
+ *
+ * 路由组件是懒加载分包:固定等 600~700ms 在机器忙时可能读到一张**空 main** ——
+ * 那一刻 measurePage / measureZoomScale 的每条判据都在量空页,于是全绿,而玩家
+ * 看到的其实还没渲染出来。假绿比假红更坏:它让「巡过这一页」变成一句没有证据的话。
+ * 故这里等 main 里真有字再交回去,并把「读到几个字」返回给调用方记失败。
+ *
+ * 固定等待**保留在**就绪探测之后:有些判据量的是「过了这么久之后的稳定态」
+ * (动画收敛、引擎跑过几拍),换成就绪即测会改掉它们量的东西。
+ */
+async function openRoute(page, route, settleMs) {
+  await page.goto(INDEX + "#" + route, { waitUntil: "load" });
+  await page
+    .waitForFunction(() => (document.querySelector("main")?.innerText ?? "").trim().length > 0, {
+      timeout: 15000,
+    })
+    .catch(() => undefined);
+  if (settleMs > 0) await page.waitForTimeout(settleMs);
+  return page.evaluate(() => (document.querySelector("main")?.innerText ?? "").trim().length);
+}
+
 function problemsOf(info) {
   const problems = [];
   if (info.horizontalOverflow) problems.push(`横向溢出(scrollWidth ${info.hash})`);
@@ -1867,10 +1889,12 @@ async function taskPageTour(vp) {
    */
   await clearOverlays(page);
   for (const route of ROUTES) {
-    await page.goto(INDEX + "#" + route, { waitUntil: "load" });
-    await page.waitForTimeout(700);
+    const rendered = await openRoute(page, route, 700);
     const info = await measurePage(page);
     checked += 1;
+    if (rendered === 0) {
+      failures.push(`[${vp.tag}] ${route} 页面没渲染出来(分包没就绪)—— 这一页其实没量到`);
+    }
     valueRowsSeen += info.valueRowCount ?? 0;
     controlHostsSeen += info.nestedControls?.hosts ?? 0;
     const problems = problemsOf(info);
@@ -2762,10 +2786,12 @@ async function taskLateTour() {
       "/build",
       "/dongfu",
     ]) {
-      await page.goto(INDEX + "#" + route, { waitUntil: "load" });
-      await page.waitForTimeout(700);
+      const rendered = await openRoute(page, route, 700);
       const info = await measurePage(page);
       checked += 1;
+      if (rendered === 0) {
+        failures.push(`[390-late] ${route} 页面没渲染出来 —— 这一页其实没量到`);
+      }
       const problems = problemsOf(info);
       if (problems.length) failures.push(`[390-late] ${route} → ${problems.join(" / ")}`);
       const rail = await measureTabRail(page);
@@ -3002,10 +3028,12 @@ async function taskLateTour() {
         failures.push(`[320-late] 开局浮层没关掉(「${title}」)—— 这一轮量的不是页面本体`);
       }
       for (const route of ROUTES) {
-        await p.goto(INDEX + "#" + route, { waitUntil: "load" });
-        await p.waitForTimeout(600);
+        const rendered = await openRoute(p, route, 600);
         const info = await measurePage(p);
         checked += 1;
+        if (rendered === 0) {
+          failures.push(`[320-late] ${route} 页面没渲染出来 —— 这一页其实没量到`);
+        }
         const problems = problemsOf(info);
         if (problems.length) failures.push(`[320-late] ${route} → ${problems.join(" / ")}`);
       }
@@ -3021,10 +3049,12 @@ async function taskLateTour() {
        * 放在 320 那一遍之后:这一遍会把视口改成 390 再折半(195),量完 context 即关。
        */
       for (const route of ROUTES) {
-        await p.goto(INDEX + "#" + route, { waitUntil: "load" });
-        await p.waitForTimeout(600);
+        const rendered = await openRoute(p, route, 600);
         const zoom = await measureZoomScale(p, { width: 390, height: 844 });
         zoomSeen += 1;
+        if (rendered === 0) {
+          zoomFails.push(`[390-late] ${route} → 页面没渲染出来,缩放档其实没量到`);
+        }
         const zoomBad = zoomProblems(zoom, "390");
         if (zoomBad.length) zoomFails.push(`[390-late] ${route} → ${zoomBad.join(" / ")}`);
       }
