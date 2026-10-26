@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 456,
+  "round": 457,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-25T17:56:51+00:00",
+  "updated_at": "2026-10-26T03:07:07+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -26792,11 +26792,11 @@
     "ISS-350": {
       "id": "ISS-350",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-25T17:56:42+00:00",
-      "updated_at": "2026-10-25T17:56:42+00:00",
-      "touched_round": 456,
+      "updated_at": "2026-10-26T03:07:07+00:00",
+      "touched_round": 457,
       "title": "useServiceWorkerUpdate 的 stop() 只置标志,不摘 registration 上的监听",
       "summary": "registration 活到页面卸载,updatefound 与 installing 的 statechange 两条监听都留着;App 卸载后闭包仍被它抓着。顺带:installed 重复派发会连着提示两次,此前靠浏览器的状态跃迁天然只来一次兜着",
       "severity": 0.45,
@@ -26805,11 +26805,11 @@
     "ISS-351": {
       "id": "ISS-351",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-25T17:56:42+00:00",
-      "updated_at": "2026-10-25T17:56:42+00:00",
-      "touched_round": 456,
+      "updated_at": "2026-10-26T03:07:07+00:00",
+      "touched_round": 457,
       "title": "文档里的任务数(32)与结构块模块数(data 57 / components 38)各自漂了",
       "summary": "真实为 28 个任务、59 个 data 模块、68 个组件;任务数在两处各写一份,结构块括号里的数没人盯着",
       "severity": 0.35,
@@ -26818,11 +26818,11 @@
     "CHG-559": {
       "id": "CHG-559",
       "type": "change",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-25T17:56:47+00:00",
-      "updated_at": "2026-10-25T17:56:47+00:00",
-      "touched_round": 456,
+      "updated_at": "2026-10-26T03:07:07+00:00",
+      "touched_round": 457,
       "title": "SW 监听在终态与 stop 时真摘;文档门新增结构块计数",
       "commit": "dc365d3d"
     },
@@ -26836,6 +26836,79 @@
       "touched_round": 456,
       "source": "useServiceWorkerUpdate.spec 15 条(新增 4 条:stop 摘 registration / stop 摘 worker / 装好自己摘 / redundant 也摘);docs-check 故障注入:把 data 改回 57 当场红并点名行",
       "summary": "两条修复各自的判据",
+      "confidence": 0.95
+    },
+    "ISS-352": {
+      "id": "ISS-352",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T02:59:10+00:00",
+      "updated_at": "2026-10-26T03:07:07+00:00",
+      "touched_round": 457,
+      "title": "GameEngine 心跳在墙钟回拨后永久停摆",
+      "summary": "tick() 用 `if (dt <= 0) return` 同时兜住「同一毫秒两拍」与「墙钟倒退」:dt<0 时 lastTickAt 不推平,往后每一拍都算出负数并提前返回,直到墙钟追平为止。期间修为/灵气/建筑/历练全停,totalPlaySec 也不增长,界面没有任何提示。",
+      "severity": 0.5,
+      "confidence": 0.95
+    },
+    "TASK-459": {
+      "id": "TASK-459",
+      "type": "task",
+      "status": "resolved",
+      "version": 4,
+      "created_at": "2026-10-26T02:59:13+00:00",
+      "updated_at": "2026-10-26T03:07:07+00:00",
+      "touched_round": 457,
+      "category": "correctness",
+      "title": "心跳在墙钟回拨时重设基准,并补第一份 tick 回归判据",
+      "summary": "回拨与同毫秒两拍分开处理:dt<0 时把 lastTickAt/lastStampAt 挪到当下并 stampActive,让心跳从回拨后的时钟继续;顺带给此前完全无 spec 的 GameEngine 心跳补一份 node 环境回归(正常推进 / 回拨不冻结)。",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 2,
+      "priority_score": 3.4
+    },
+    "COMP-030": {
+      "id": "COMP-030",
+      "type": "component",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T02:59:23+00:00",
+      "updated_at": "2026-10-26T02:59:23+00:00",
+      "touched_round": 457,
+      "summary": "游戏心跳(src/core/engine.ts 的 tick 循环:时间戳差值推进、离线接续、暂停/恢复基准、死亡与周期检查;此前无 spec、无节点)"
+    },
+    "CHG-560": {
+      "id": "CHG-560",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T03:06:50+00:00",
+      "updated_at": "2026-10-26T03:06:50+00:00",
+      "touched_round": 457,
+      "commit": "d9afe238",
+      "title": "墙钟回拨时重设心跳基准;GameEngine 补第一份 tick spec"
+    },
+    "EV-478": {
+      "id": "EV-478",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T03:06:54+00:00",
+      "updated_at": "2026-10-26T03:06:54+00:00",
+      "touched_round": 457,
+      "source": "src/core/engineTick.spec.ts",
+      "title": "回拨两条用例先红后绿:修复前 totalPlaySec 停在 5,修复后到 10",
+      "confidence": 1
+    },
+    "HYP-130": {
+      "id": "HYP-130",
+      "type": "hypothesis",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T03:07:00+00:00",
+      "updated_at": "2026-10-26T03:07:00+00:00",
+      "touched_round": 457,
+      "title": "dt<=0 早退把「同一毫秒两拍」与「墙钟回拨」混为一谈,回拨后 lastTickAt 留在未来",
       "confidence": 0.95
     }
   },
@@ -39124,6 +39197,36 @@
       "to": "HYP-126",
       "type": "validates",
       "created_at": "2026-10-25T17:56:51+00:00"
+    },
+    {
+      "from": "TASK-459",
+      "to": "ISS-352",
+      "type": "addresses",
+      "created_at": "2026-10-26T02:59:23+00:00"
+    },
+    {
+      "from": "ISS-352",
+      "to": "COMP-030",
+      "type": "located_in",
+      "created_at": "2026-10-26T02:59:23+00:00"
+    },
+    {
+      "from": "CHG-560",
+      "to": "ISS-352",
+      "type": "resolves",
+      "created_at": "2026-10-26T03:06:54+00:00"
+    },
+    {
+      "from": "CHG-560",
+      "to": "TASK-459",
+      "type": "implements",
+      "created_at": "2026-10-26T03:06:54+00:00"
+    },
+    {
+      "from": "EV-478",
+      "to": "HYP-130",
+      "type": "validates",
+      "created_at": "2026-10-26T03:07:00+00:00"
     }
   ]
 }
