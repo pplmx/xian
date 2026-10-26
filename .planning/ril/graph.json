@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 481,
+  "round": 482,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T10:02:50+00:00",
+  "updated_at": "2026-10-26T10:16:04+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 481,
+      "touched_round": 482,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28003,6 +28003,45 @@
       "touched_round": 481,
       "commit": "8ced7430",
       "title": "offlineFuzz:固定种子 120 组随机状态的离线结算不变量"
+    },
+    "ISS-380": {
+      "id": "ISS-380",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T10:14:02+00:00",
+      "updated_at": "2026-10-26T10:16:04+00:00",
+      "touched_round": 482,
+      "title": "confirmReincarnation 没有一条直接用例:最重的不可撤销结算无判据",
+      "summary": "player.rebirth() 有测试、prepareReincarnation 也被人读过,但「确认之后世界变成什么样」没人钉过:账目、清档、幂等、跨境界都不在任何用例的射程里。它改玩家、清资源/背包/功法层数/历练、重掷世界、立新题、归档道侣 —— 出错就是玩家一辈子白玩。",
+      "severity": 0.5,
+      "confidence": 0.9
+    },
+    "TASK-486": {
+      "id": "TASK-486",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T10:14:02+00:00",
+      "updated_at": "2026-10-26T10:16:04+00:00",
+      "touched_round": 482,
+      "category": "detectability",
+      "title": "reincarnationConfirm:账目/清档/幂等/跨境界四条判据",
+      "summary": "大额旧值 + 小阈值判「旧的一点没留」(避开转世后成就赏);第二次确认不得再发;0/1/2/5/9/14/20 境转世不抛错且出生境界 == birthMajorFloor。注入不收敛视图、不清灵石两条均当场红。",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-586": {
+      "id": "CHG-586",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T10:16:04+00:00",
+      "updated_at": "2026-10-26T10:16:04+00:00",
+      "touched_round": 482,
+      "commit": "c5b00a9d",
+      "title": "reincarnationConfirm.spec:账目/清档/幂等/跨境界四条判据"
     }
   },
   "edges": [
@@ -40890,6 +40929,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T10:02:49+00:00"
+    },
+    {
+      "from": "CHG-586",
+      "to": "ISS-380",
+      "type": "resolves",
+      "created_at": "2026-10-26T10:16:04+00:00"
+    },
+    {
+      "from": "CHG-586",
+      "to": "TASK-486",
+      "type": "implements",
+      "created_at": "2026-10-26T10:16:04+00:00"
+    },
+    {
+      "from": "ISS-380",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T10:16:04+00:00"
     }
   ]
 }
