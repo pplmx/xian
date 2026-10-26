@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 496,
+  "round": 497,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T13:37:55+00:00",
+  "updated_at": "2026-10-26T13:45:36+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -28588,6 +28588,34 @@
       "touched_round": 496,
       "commit": "ea8dcf0f",
       "title": "usage 补「转世:什么留下、什么放下」+ 三组标题与 heritageGroups 对账"
+    },
+    "ISS-395": {
+      "id": "ISS-395",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T13:45:36+00:00",
+      "updated_at": "2026-10-26T13:45:36+00:00",
+      "touched_round": 497,
+      "title": "两条 tag-only 事故的修法没有任何判据:谁改回去都无人知晓",
+      "summary": "Electron 与 Android 构建只在 tag 上跑,本地门证明不了。两处修法(Android 签名变量不遮蔽、Electron 显式 --publish never)都带详尽注释,但没有判据拦着它们被改回去 —— 而这两条路径本会话里始终无法本地验证。发版前的最后一次改动如果碰了这两处,只有打 tag 才会发现。",
+      "severity": 0.35,
+      "confidence": 0.9
+    },
+    "TASK-501": {
+      "id": "TASK-501",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T13:45:36+00:00",
+      "updated_at": "2026-10-26T13:45:36+00:00",
+      "touched_round": 497,
+      "category": "detectability",
+      "title": "releasePipeline.spec:五条判据钉住发版流水线的历史事故面",
+      "summary": "只在 v*.*.* 触发 / --publish never / 签名变量不遮蔽(剥注释后判)/ tag 与 package.json 版本闸门 / contents: write 只一次。注入两条均红。",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 1
     }
   },
   "edges": [

@@ -266,6 +266,7 @@ const CATEGORIES = [
       "reincarnationConfirm",
       "bountyEconomics",
       "bossArchetypes",
+      "releasePipeline",
       "usageDocCounts",
       "swPrecache",
       "smokeReading",
