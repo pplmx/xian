@@ -424,3 +424,52 @@ describe("门禁覆盖面 · 具名场景不许悄悄消失", () => {
     expect(missing, "这些场景没被登记进 TASKS —— 那一类毛病从此不再被量").toEqual([]);
   });
 });
+
+describe("加页面必须同时进两扇浏览器门", () => {
+  /*
+   * 新加一页,只在 router 里登记是不够的 —— 冒烟与排版门各自有一份巡页清单,
+   * 漏登记的那一页从此**没人点、没人量**,而且不会有任何地方变红。
+   * 这与「门在跑 ≠ 有保护」是同一条:覆盖面悄悄缩水,是最难发现的一种退化。
+   */
+  const ROUTER = readFileSync(resolve(__dirname, "../router/index.ts"), "utf8");
+  const SMOKE = readFileSync(resolve(__dirname, "../../scripts/ui-smoke.mjs"), "utf8");
+  const LAYOUT = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+  // 开局两页不进巡页清单:有存档时路由守卫会把它们重定向回首页,
+  // 硬塞进去只会把首页重复量一遍(排版门另开一趟无存档的流程量它们)
+  const ONBOARDING = new Set(["/welcome", "/create"]);
+
+  const pages = [...ROUTER.matchAll(/path: "(\/[a-z]*)"/g)]
+    .map((m) => m[1]!)
+    .filter((p) => !ONBOARDING.has(p));
+
+  const listOf = (src: string, who: string): Set<string> => {
+    const m = src.match(/const ROUTES = \[([\s\S]*?)\];/);
+    expect(m, `${who}里找不到巡页清单 ROUTES`).toBeTruthy();
+    return new Set([...m![1]!.matchAll(/"\/?([a-z]*)"/g)].map((x) => `/${x[1] ?? ""}`));
+  };
+
+  it("路由表里的每一页都在两扇门的清单里", () => {
+    expect(pages.length, "路由表只认出一两页 —— 解析锚点怕是失效了").toBeGreaterThan(10);
+    for (const [who, src] of [
+      ["冒烟", SMOKE],
+      ["排版", LAYOUT],
+    ] as const) {
+      const listed = listOf(src, who);
+      const missing = pages.filter((p) => !listed.has(p));
+      expect(missing, `${who}门漏了这些页 —— 它们不会被点/被量`).toEqual([]);
+    }
+  });
+
+  it("两门的清单彼此一致 —— 只加一处也算漏", () => {
+    const a = listOf(SMOKE, "冒烟");
+    const b = listOf(LAYOUT, "排版");
+    expect(
+      [...a].filter((x) => !b.has(x)),
+      "只有冒烟门有",
+    ).toEqual([]);
+    expect(
+      [...b].filter((x) => !a.has(x)),
+      "只有排版门有",
+    ).toEqual([]);
+  });
+});
