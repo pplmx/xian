@@ -11,7 +11,7 @@
  * 两条都是「改一次就过、谁回头改一下就悄悄复发」的类型,故在这里钉死形状。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const ROOT = resolve(__dirname, "../..");
@@ -59,5 +59,31 @@ describe("发版流水线 · 两条历史事故的护栏", () => {
   it("写权限只给 release job —— 构建 job 手里不该攥着能发版的 token", () => {
     const writes = [...BUILD.matchAll(/contents:\s*write/g)].length;
     expect(writes, "contents: write 只允许出现在 release job 里一次").toBe(1);
+  });
+});
+
+describe("发版正文 · 版本号一改,仓库里就得有一份同名正文", () => {
+  /*
+   * 约定写在 docs/development.md 的「发版」:Release 正文放仓库里,`docs/release-notes/<tag>.md`
+   * 与 tag 同名。流水线找不到那份文件时会**静默退回自动生成的提交清单** —— 发得出去,
+   * 只是发布页上从此是一串 commit 标题,而且只有打了 tag 才发现。
+   *
+   * 版本号是在本地提的(提完才打 tag),所以这一条能在提交前就拦住「提了版本、忘了写正文」。
+   */
+  const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8")) as {
+    version: string;
+  };
+
+  it("package.json 的当前版本有同名 Release 正文", () => {
+    const file = resolve(ROOT, `docs/release-notes/v${pkg.version}.md`);
+    expect(
+      existsSync(file),
+      `缺 docs/release-notes/v${pkg.version}.md —— 发版会静默退回自动生成的提交清单`,
+    ).toBe(true);
+  });
+
+  it("流水线确实优先取仓库里那份正文", () => {
+    expect(BUILD).toMatch(/NOTES="docs\/release-notes\/\$\{GITHUB_REF_NAME\}\.md"/);
+    expect(BUILD, "落回自动生成时应当留一条日志,别让发版悄悄降级").toMatch(/不存在[^\n]*自动生成/);
   });
 });
