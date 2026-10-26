@@ -10,6 +10,12 @@
   >
     <div class="ink-divider absolute -top-px inset-x-0" />
     <div class="grid grid-cols-5">
+      <!--
+        当前在哪一页交给 RouterLink:它在 exact-active 时自己渲染 aria-current="page"
+        (vue-router 的 aria-current-value 默认值就是 page)。这里不再手写一份 ——
+        同一个事实两套来源没有好处;哪天换成手写的 <a>,它就会跟着一起丢。
+        颜色、位移与那枚朱砂短笔只负责给眼睛看,判据在 layout-check 的逐页巡览里守着。
+      -->
       <RouterLink
         v-for="tab in TABS"
         :key="tab.name"
@@ -42,6 +48,7 @@
             v-if="tab.name === 'inventory' && bagNewCount >= 2"
             class="absolute -right-1.5 -top-1 grid h-[13px] min-w-[13px] place-items-center rounded-full bg-cinnabar px-[3px] font-kai text-[8px] leading-none text-paper"
             :class="route.name === 'inventory' ? '' : 'animate-breathe'"
+            aria-hidden="true"
             >{{ bagNewCount > 9 ? "9+" : bagNewCount }}</span
           >
           <span
@@ -66,6 +73,19 @@
           />
         </span>
         <span class="font-kai text-[11px] tracking-[0.2em] short:text-[10px]">{{ tab.label }}</span>
+        <!--
+          视觉上说得清、读屏里也要说得出。
+
+          · 背包角标:那枚「3」/「9+」说的是「有几件新货」,不是「第 3 项」——
+            数字对读屏是噪音(已 aria-hidden),名称末尾补一句「N 件新物」。
+          · 修炼页的玉色圆点:说的是「此刻可以破境」—— 本作最要紧的一次点击提示,
+            圆点本身 aria-hidden,不补这一句就等于只给视力好的人看。
+          两处都挂在链接内,读出来是「背包(3 件新物) 链接,当前页」。
+        -->
+        <span v-if="tab.name === 'inventory' && bagNewCount > 0" class="sr-only">
+          ({{ bagNewCount }} 件新物)
+        </span>
+        <span v-if="tab.name === 'cultivation' && canBreakthrough" class="sr-only">(可破境)</span>
       </RouterLink>
     </div>
   </nav>

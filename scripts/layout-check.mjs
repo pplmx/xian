@@ -130,6 +130,11 @@
  *      自然也碰不到 —— 实测丹房方子卡三列并排时中间只剩 42px(代价折成六行),
  *      器魂详情的「收 起 / 卸 下」各剩 68px、在空格处断成两行。这两类都不是溢出,
  *      横向溢出与越界元素都量不出来。尺子与「只在某一步出现的浮层」共用一份。
+ *   四十八 底部导航的「当前位置」也要量:颜色与那枚朱砂短笔只对眼睛说话,读屏拿到的是
+ *      RouterLink 按 exact-active 自己渲染的 aria-current=page —— 这一条先把「它真的在、
+ *      且指向当前路由」量一遍:换手写 <a>、或哪个页签的 to 写歪,当场就红。
+ *      判据逐页点一次 aria-current=page —— 恰有一枚、且指向当前路由;不在五个页签上时
+ *      (market / settings 等)一枚都不许有。源码级那条在 uiLayering.spec 里先拦一道。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -477,6 +482,13 @@ async function measurePage(page) {
       })(),
       overflows,
       navItems: document.querySelectorAll("nav button, nav a").length,
+      /**
+       * 底栏标出来的「当前在哪一页」—— 读屏靠 aria-current,不靠颜色与那枚朱砂短笔。
+       * 取的是 href 而不是文字:文字可以重名(以后多一枚「洞府」入口也不会误判)。
+       */
+      navCurrent: [...document.querySelectorAll("nav [aria-current='page']")].map((el) =>
+        String(el.getAttribute("href") || "").replace(/^#/, ""),
+      ),
       /**
        * 只有图标的控件必须自带可访问名(aria-label / 可见文字)。
        * 没有名字,读屏只会念「按钮」「链接」,自动化也无从按名字点它。
@@ -1705,6 +1717,28 @@ function problemsOf(info) {
   if (info.wrappedButtonLabels?.length)
     problems.push(`按钮标签被折行:${info.wrappedButtonLabels.join(" | ")}`);
   if (info.navItems !== 5) problems.push(`底部导航 ${info.navItems} 项(应为 5)`);
+  /*
+   * 底部导航的「当前位置」:读屏用户拿到的必须是状态,不是两处视觉提示(变色 + 朱砂短笔)。
+   * 五个页签上恰有一枚 aria-current=page 且指向当前路由;不在页签上(market / settings /
+   * codex 等)时一枚都不许有 —— 否则读屏会被告知一个并不存在的当前页签。
+   */
+  if (info.navItems === 5) {
+    const TAB_PATHS = ["/", "/cultivation", "/adventure", "/inventory", "/character"];
+    const here =
+      String(info.hash || "")
+        .replace(/^#/, "")
+        .split("?")[0] || "/";
+    const marked = info.navCurrent || [];
+    if (TAB_PATHS.includes(here)) {
+      if (marked.length !== 1) {
+        problems.push(`底部导航标了 ${marked.length} 个当前项(页签页上应恰为 1):${here}`);
+      } else if (marked[0] !== here) {
+        problems.push(`底部导航标的当前项是 ${marked[0]},而路由在 ${here}`);
+      }
+    } else if (marked.length > 0) {
+      problems.push(`不在五个页签上,底部导航却标了当前项:${marked.join(", ")}(路由 ${here})`);
+    }
+  }
   if (info.railDrift && (info.railDrift.windowOverflow > 1 || info.railDrift.drift > 1)) {
     problems.push(
       `文档层可滚 ${info.railDrift.windowOverflow}px、滚窗后两栏位移 ${info.railDrift.drift}px(顶栏底栏没钉住)`,

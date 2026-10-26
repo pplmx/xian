@@ -2937,6 +2937,51 @@ describe("可点元素 · 焦点环不许被过渡吃掉", () => {
   });
 });
 
+describe("底部导航 · 当前位置与角标都要说给读屏", () => {
+  /*
+   * 由来:底栏用颜色 + 一枚朱砂短笔标「现在在哪一页」,看上去像「只有视觉」。
+   * **实测不是**:RouterLink 在 exact-active 时会自己渲染 aria-current="page"
+   * (vue-router 的 aria-current-value 默认值),读屏本来就知道当前在哪 —— 这一条
+   * 是把它钉住,不是补一个新的。判据分两层:
+   *   · 浏览器那层在 layout-check 的逐页巡览里:页签页恰有一枚、且指向当前路由;
+   *   · 这里管「别把它换成手写链接、也别再手写第二份」—— 前者会一起丢掉 aria-current,
+   *     后者是同一事实两套来源(route.name 与 exact-active 并不是同一个判据)。
+   *
+   * 真正的缺口是角标:背包那枚「3」会被念成「背包 3」,听起来像第 3 项 —— 它说的是
+   * 「有几件新货」;修炼页那枚玉色圆点干脆 aria-hidden,读屏完全听不到「此刻可以
+   * 破境」,而这恰好是本作最要紧的一次点击提示。两处都补 sr-only 等价物。
+   */
+  const nav = (): { path: string; src: string } | undefined =>
+    FILES.find((f) => f.path === "components/common/BottomNavigation.vue");
+
+  it("当前页签状态由 RouterLink 提供,不手写第二份", () => {
+    expect(nav(), "底部导航不在扫描面里(判据会假绿)").toBeTruthy();
+    expect(
+      nav()?.src,
+      "页签要用 RouterLink —— aria-current=page 是它按 exact-active 渲染的",
+    ).toContain("<RouterLink");
+    expect(
+      nav()?.src,
+      "手写 aria-current 是第二套真相(route.name ≠ exact-active),出分歧时没人说得清哪份对",
+    ).not.toContain("aria-current");
+  });
+
+  it("两处只在视觉里的状态要有读屏等价物", () => {
+    const src = nav()?.src ?? "";
+    expect(src, "背包角标要说清是「几件新货」,不是一个孤零零的数字").toContain("件新物");
+    expect(src, "破境圆点要念出「可破境」").toContain("(可破境)");
+    expect(src, "角标的数字本身对读屏是噪音").toMatch(
+      /v-if="tab\.name === 'inventory' && bagNewCount >= 2"[\s\S]{0,400}aria-hidden="true"/,
+    );
+  });
+
+  it("判据自证:把 RouterLink 换成手写 a,「当前项」就没了来源", () => {
+    const handwritten = `<a :href="tab.to" :class="route.name === tab.name ? 'text-cinnabar' : ''">`;
+    expect(handwritten.includes("<RouterLink")).toBe(false);
+    expect(handwritten.includes("aria-current")).toBe(false);
+  });
+});
+
 describe("语义色类 —— 指向不存在的 token 就是静默无色", () => {
   /*
    * 这一条守的是「写了类名,产物里一个字节都没有」。
