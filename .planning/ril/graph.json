@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 503,
+  "round": 504,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T15:55:53+00:00",
+  "updated_at": "2026-10-26T16:11:21+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 501,
+      "touched_round": 504,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28861,6 +28861,45 @@
       "touched_round": 503,
       "commit": "69b4504b",
       "title": "development.md 补「门禁自检」判据行 + 冒烟场景清单改四条(附同形判据)"
+    },
+    "ISS-402": {
+      "id": "ISS-402",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:06:31+00:00",
+      "updated_at": "2026-10-26T16:11:21+00:00",
+      "touched_round": 504,
+      "title": "玩家手册从没写过「世界的所钟」这 +15%",
+      "summary": "「此地所钟」是玩家天天看见的两处字(世界页、历练页地名旁),但它加哪个渠道、加多少,手册里一个字都没有。玩家只能从「矿脉深厚之地」猜它给了玄铁还是灵石;偏向是每世一换的机制,猜错就会把这一世的资源规划做反。",
+      "severity": 0.2,
+      "confidence": 0.9
+    },
+    "TASK-508": {
+      "id": "TASK-508",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:06:31+00:00",
+      "updated_at": "2026-10-26T16:11:21+00:00",
+      "touched_round": 504,
+      "category": "docs",
+      "title": "usage 补「世界的所钟」一节 + 五条偏向与 BIAS_EFFECTS 对账",
+      "summary": "五种偏向 × 渠道对照表、战报与离线卷轴的注记、以及「换世就换、不随转世累积」的性质说明;判据钉住手册里五种偏向逐一在场且渠道文案与 BIAS_EFFECTS 一致。",
+      "severity": 0.2,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-608": {
+      "id": "CHG-608",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:11:21+00:00",
+      "updated_at": "2026-10-26T16:11:21+00:00",
+      "touched_round": 504,
+      "commit": "c698c39a",
+      "title": "usage 补「世界的所钟」一节 + 五条偏向与 BIAS_EFFECTS 对账"
     }
   },
   "edges": [
@@ -42144,6 +42183,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T15:55:53+00:00"
+    },
+    {
+      "from": "CHG-608",
+      "to": "ISS-402",
+      "type": "resolves",
+      "created_at": "2026-10-26T16:11:21+00:00"
+    },
+    {
+      "from": "CHG-608",
+      "to": "TASK-508",
+      "type": "implements",
+      "created_at": "2026-10-26T16:11:21+00:00"
+    },
+    {
+      "from": "ISS-402",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T16:11:21+00:00"
     }
   ]
 }
