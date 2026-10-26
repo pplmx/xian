@@ -42,6 +42,8 @@ export function worldRerollCost(daoFruit: number): number {
 export type WorldRerollResult =
   /** 掷到新世界,道果已扣 */
   | "ok"
+  /** 正在历练:换天地会把这一趟的路断掉 —— 先走完再来 */
+  | "busy"
   /** 道果不够 —— 一个字节也没动 */
   | "poor"
   /** 这一世还没有世界,或生成器掷不出新世界 —— 一个字节也没动 */
@@ -55,6 +57,8 @@ export interface RerollDeps {
   spendFruit: (n: number) => boolean;
   /** 重掷本世之界:掷不出返回 null(具体世界类型由调用方的服务决定) */
   reroll: () => object | null;
+  /** 是否有一趟历练在途中(setMortalWorld 会清空本世路线进度,途中换界等于把路抽走) */
+  sessionActive: boolean;
 }
 
 /**
@@ -65,6 +69,12 @@ export interface RerollDeps {
 export function rerollWorldByFruit(deps: RerollDeps): WorldRerollResult {
   // 余额本身不合法(坏档):不掷、不扣 —— 与 sanitize 的口径一致,宁可什么都不做
   if (!Number.isFinite(deps.daoFruit)) return "poor";
+  /*
+   * 历练途中不许换界:setMortalWorld 会把本世路线进度清零(「换界即换路」),
+   * 途中换掉等于把玩家正在走的那条路抽走 —— 而这一趟的所得还没结算。
+   * 与「掷不出就不扣」同一个口径:不制造说不清的损失。
+   */
+  if (deps.sessionActive) return "busy";
   const cost = worldRerollCost(deps.daoFruit);
   if (deps.daoFruit < cost) return "poor";
   const next = deps.reroll();

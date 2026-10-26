@@ -169,16 +169,20 @@ const ui = useUiStore();
 /** 换一方天地的按钮态:不够时按钮置灰,并把差多少写出来 */
 /** 这一次换世界的价(按余额抽成,见 core/worldReroll 的口径) */
 const rerollCost = computed(() => worldRerollCost(player.reincarnation.daoFruit));
-const canRerollWorld = computed(() => player.reincarnation.daoFruit >= rerollCost.value);
+const canRerollWorld = computed(
+  () => player.reincarnation.daoFruit >= rerollCost.value && !adventure.sessionActive,
+);
 const shortfall = computed(() => Math.max(0, rerollCost.value - player.reincarnation.daoFruit));
 function rerollWorld(): void {
   const r = rerollWorldByFruit({
     daoFruit: player.reincarnation.daoFruit,
     spendFruit: (n) => player.spendDaoFruit(n),
     reroll: () => rerollMortalWorld(),
+    sessionActive: adventure.sessionActive,
   });
   if (r === "ok") ui.toast("此方天地已换 —— 又是一条没走过的路", "rare");
   else if (r === "poor") ui.toast("道果不够换一方天地", "warn");
+  else if (r === "busy") ui.toast("先把这趟历练走完,再换天地", "warn");
   else ui.toast("此界掷不出新的天地 —— 一分未扣", "warn");
 }
 const router = useRouter();

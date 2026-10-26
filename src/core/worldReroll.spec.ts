@@ -20,6 +20,7 @@ function reroll(): ReturnType<typeof rerollWorldByFruit> {
     daoFruit: player.reincarnation.daoFruit,
     spendFruit: (n) => player.spendDaoFruit(n),
     reroll: () => rerollMortalWorld(),
+    sessionActive: useAdventureStore().sessionActive,
   });
 }
 
@@ -150,5 +151,45 @@ describe("换一方天地 · 定价跟着余额走(不是固定 15 枚)", () => 
     expect(costs.length, "两千枚应当换得起很多次").toBeGreaterThan(10);
     expect(balance, "连换之后余额必须真的降下去").toBeLessThan(2000 * 0.2);
     expect(costs.at(-1), "最后一笔仍在起步价之上").toBeGreaterThanOrEqual(WORLD_REROLL_FLOOR);
+  });
+});
+
+describe("换一方天地 · 历练途中不换界", () => {
+  /*
+   * setMortalWorld 的第一件事是把本世路线进度清零(「换界即换路」)。
+   * 途中换掉等于把玩家正在走的那条路抽走,而这一趟的所得还没结算 ——
+   * 所以宁可拒绝,不制造说不清的损失。
+   */
+  it("有一趟历练在途中:返回 busy,道果与世界都不动", () => {
+    const player = usePlayerStore();
+    const adventure = useAdventureStore();
+    player.reincarnation = { ...player.reincarnation, daoFruit: 100 } as never;
+    adventure.session = {
+      regionId: "qingyun",
+      mode: "normal",
+      wins: 1,
+      endsAt: Date.now() + 6e4,
+    } as never;
+    const before = freshWorld();
+    const beforeKey = before ? `${before.seed}/${before.bias}` : "none";
+    expect(reroll()).toBe("busy");
+    expect(player.reincarnation.daoFruit).toBe(100);
+    const after = freshWorld();
+    expect(after ? `${after.seed}/${after.bias}` : "none").toBe(beforeKey);
+  });
+
+  it("历练走完之后可以换 —— busy 不是永久闸", () => {
+    const player = usePlayerStore();
+    const adventure = useAdventureStore();
+    player.reincarnation = { ...player.reincarnation, daoFruit: 100 } as never;
+    adventure.session = {
+      regionId: "qingyun",
+      mode: "normal",
+      wins: 1,
+      endsAt: Date.now() + 6e4,
+    } as never;
+    expect(reroll()).toBe("busy");
+    adventure.session = null as never;
+    expect(reroll()).toBe("ok");
   });
 });
