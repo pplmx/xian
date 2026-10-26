@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 519,
+  "round": 520,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T19:11:45+00:00",
+  "updated_at": "2026-10-26T19:20:16+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29513,6 +29513,34 @@
       "touched_round": 519,
       "commit": "a41398c4",
       "title": "建号三步包 try(冒烟不再因此抛掉整轮)"
+    },
+    "ISS-419": {
+      "id": "ISS-419",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:20:15+00:00",
+      "updated_at": "2026-10-26T19:20:16+00:00",
+      "touched_round": 520,
+      "title": "最近十余轮改动之后,整套浏览器门没在 HEAD 上复跑过",
+      "summary": "自第 494 轮起改了 ui-smoke(三条环境专场景+导入存档)、layout-check(等两帧)、世界页(换天地按钮/代价说明)与若干 store 护栏;这些改动分散在多轮里,单门跑过但六门没有在同一个 HEAD 上连跑。",
+      "severity": 0.15,
+      "confidence": 0.9
+    },
+    "TASK-525": {
+      "id": "TASK-525",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:20:15+00:00",
+      "updated_at": "2026-10-26T19:20:16+00:00",
+      "touched_round": 520,
+      "category": "verification",
+      "title": "在 HEAD 上跑一遍完整 check:ui 并记档",
+      "summary": "构建计时/首屏/帧率/排版 204 组/冒烟(含新增场景)/离线八项全部复跑;结果为全绿。",
+      "severity": 0.15,
+      "confidence": 0.9,
+      "effort": 1
     }
   },
   "edges": [
