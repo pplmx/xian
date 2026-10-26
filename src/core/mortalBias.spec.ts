@@ -119,3 +119,19 @@ describe("资源偏向 · 归来卷轴那一句", () => {
     expect(biasOfflineNote("矿脉深厚", 0)).toBeNull();
   });
 });
+
+describe("所钟要说在出发前 · 历练页的那一行", () => {
+  /*
+   * 资源偏向只乘一个渠道(+15%),但它决定这一世该往哪种地界走。
+   * 世界页说得到、战报说得到、归来卷轴也说得到 —— 唯独真正干活的那一页(历练)
+   * 从前没有,玩家得先打一场、在战报里撞见「所钟」两个字才知道。
+   */
+  const viewSrc = readFileSync(resolve(__dirname, "../views/AdventureView.vue"), "utf8");
+
+  it("历练页绑的是 biasEffectOf 的标签,不是自己另拼一句", () => {
+    expect(viewSrc, "历练页没绑 biasEffectOf —— 文案会与世界页漂开").toContain(
+      "biasEffectOf(adventure.mortalWorld?.bias)",
+    );
+    expect(viewSrc, "那一行被摘掉了(或改了 data 标记)").toContain("data-bias-hint");
+  });
+});

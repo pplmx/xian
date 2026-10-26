@@ -41,6 +41,14 @@
           <span class="text-gold-ink">{{ favoredWorldName }}</span>
           ,在其地历练际遇{{ describeMansionLuck }}。
         </p>
+        <!--
+          本世所钟:资源偏向只乘一个渠道(+15%),但它决定这一世该往哪种地界走。
+          世界页说得到,历练页才是真正干活的地方 —— 出发前就该看见,而不是打完一场
+          在战报里才发现「所钟」两个字(那已经是马后炮)。
+        -->
+        <p v-if="biasLabel" data-bias-hint class="text-[10px] leading-relaxed text-ink-soft">
+          此地所钟:<span class="text-gold-ink">{{ biasLabel }}</span>
+        </p>
         <p v-if="player.suppressedRegions.length > 0" class="text-[10px] text-ink-soft">
           镇压收益中 <span class="text-gold-ink">{{ player.suppressedRegions.length }} 处</span> ——
           与历练互不冲突,可同时收取;一次只能历练一处。
@@ -456,6 +464,7 @@ import SecretRealmCard from "@/components/adventure/SecretRealmCard.vue";
 import { todayMansion, favoredWorld, todayMansionLine, MANSION_EVENT_LUCK } from "@/core/astronomy";
 import { worldDef } from "@/data/realms";
 import { canEnterRegion, entryBlockReason, worldView } from "@/core/mortalWorldService";
+import { biasEffectOf } from "@/core/mortalBias";
 import { isRetreating } from "@/core/earlyGameService";
 import { REALMS } from "@/data/realms";
 import { EXPLORE_MODES } from "@/data/constants";
@@ -517,6 +526,9 @@ const modeTarget = ref<RegionDef | null>(null);
  * 那三成去了奇缘)。档位胶囊按当前状态显示,而不是报一组永远同时成立的数。
  */
 const chainPending = computed(() => pendingChainStages(player.major).length > 0);
+
+/** 本世所钟:只在一个渠道上 +15%,与世界页/战报/归来卷轴同一个标签源 */
+const biasLabel = computed(() => biasEffectOf(adventure.mortalWorld?.bias)?.label ?? "");
 
 /** 顶部链接的一句话:说清这一世是什么世界 */
 const worldBrief = computed(() => {
