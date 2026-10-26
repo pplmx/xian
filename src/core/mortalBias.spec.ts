@@ -137,3 +137,22 @@ describe("所钟要说在出发前 · 历练页的那一行", () => {
     expect(viewSrc, "那一行被摘掉了(或改了 data 标记)").toContain("data-bias-hint");
   });
 });
+
+describe("玩家手册 · 世界的所钟要写得出来", () => {
+  /*
+   * 「+15% 只给一个渠道」是写进结算的机制(见 afterWin 与 offline),但手册长期没提 ——
+   * 玩家只能从世界页那句「矿脉深厚之地」猜它到底给了什么。故这里把手册与
+   * BIAS_EFFECTS 绑在一起:偏向表改了而手册没跟,当场红。
+   */
+  const DOC = readFileSync(resolve(__dirname, "../../docs/usage.md"), "utf8");
+
+  it("手册有「所钟」一节,五种偏向逐条都在", () => {
+    expect(DOC, "手册没有世界偏向那一节").toContain("世界的「所钟」");
+    for (const bias of Object.keys(BIAS_EFFECTS) as (keyof typeof BIAS_EFFECTS)[]) {
+      const effect = BIAS_EFFECTS[bias];
+      expect(effect, `${bias} 没有兑现表项`).toBeDefined();
+      expect(DOC, `手册少了「${bias}」这条偏向`).toContain(bias);
+      expect(DOC, `手册里「${bias}」的渠道没写对`).toContain(effect!.label.replace(" +15%", ""));
+    }
+  });
+});
