@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 521,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T19:29:31+00:00",
+  "updated_at": "2026-10-26T19:39:48+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 515,
+      "touched_round": 521,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -29552,6 +29552,45 @@
       "touched_round": 520,
       "commit": "210f7b4b",
       "title": "HEAD 全量浏览器门复跑:六门全绿"
+    },
+    "ISS-420": {
+      "id": "ISS-420",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:39:47+00:00",
+      "updated_at": "2026-10-26T19:39:48+00:00",
+      "touched_round": 521,
+      "title": "「其律尚未显化于历练」只有一半守护:没人保证这句话继续成立",
+      "summary": "世界页写着此世气象之名其律尚未显化于历练;查证属实(explorationRules 只合并道途与逆旅契,世界 rules 只在生成器平衡模拟里用)。但 uiLayering 只要求界面上有这句话,不要求它继续为真 —— 谁把 world.rules 接进历练,文案立刻变谎话而判据全绿。",
+      "severity": 0.25,
+      "confidence": 0.95
+    },
+    "TASK-526": {
+      "id": "TASK-526",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:39:47+00:00",
+      "updated_at": "2026-10-26T19:39:48+00:00",
+      "touched_round": 521,
+      "category": "detectability",
+      "title": "worldSemantics.spec 钉住事实:历练合并点不含 mortalWorld + 世界仍声明 CombatRules",
+      "summary": "注入把 world?.rules 接进 mergeRules,判据当场点名「世界页那句就得改」。",
+      "severity": 0.25,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-625": {
+      "id": "CHG-625",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:39:47+00:00",
+      "updated_at": "2026-10-26T19:39:48+00:00",
+      "touched_round": 521,
+      "commit": "c6f4b94a",
+      "title": "钉住「其律尚未显化于历练」这句真话"
     }
   },
   "edges": [
@@ -43147,6 +43186,24 @@
       "to": "TASK-525",
       "type": "implements",
       "created_at": "2026-10-26T19:26:25+00:00"
+    },
+    {
+      "from": "CHG-625",
+      "to": "ISS-420",
+      "type": "resolves",
+      "created_at": "2026-10-26T19:39:47+00:00"
+    },
+    {
+      "from": "CHG-625",
+      "to": "TASK-526",
+      "type": "implements",
+      "created_at": "2026-10-26T19:39:47+00:00"
+    },
+    {
+      "from": "ISS-420",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T19:39:48+00:00"
     }
   ]
 }
