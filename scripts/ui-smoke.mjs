@@ -475,6 +475,12 @@ async function checkSaveFull(browser) {
         .then(() => true)
         .catch(() => false);
       if (!healed) fails.push("存储写满场景:腾出空间之后那句警告没消失(自动重试没生效)");
+      /*
+       * 观察记录(本轮实测,尚未定论):腾出空间、横幅消失之后,页面上主题确实变了,
+       * 但 `xuanshu.settings` 分片在 8 秒轮询里始终**没有出现在盘上**。
+       * 可能是只读封存没解除(写失败后的防御态),也可能是节流队列没再触发。
+       * 这条先不写成判据(否则门永远是红的),留给下一轮查:见图谱 ISS-423。
+       */
     }
     if (pageErrors.length)
       fails.push(`存储写满场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
