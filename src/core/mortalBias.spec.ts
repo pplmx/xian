@@ -7,10 +7,15 @@
  *   ② 只放大对得上的那个渠道,别的渠道一分不增;
  *   ③ 真接进了战斗结算 —— 不是只多了一张表(对着 afterWin 比读数)。
  */
+import { createPinia, setActivePinia } from "pinia";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vite-plus/test";
+import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { BIAS_EFFECTS, biasChanceMult, biasEffectOf } from "./mortalBias";
+import { afterWin } from "./loot";
+import { REGIONS } from "@/data/regions";
+import { usePlayerStore } from "@/stores/player";
+import { useResourcesStore } from "@/stores/resources";
 
 const BIASES = ["草木丰饶", "矿脉深厚", "典籍散佚", "灵石充盈", "药气氤氲"] as const;
 
@@ -62,5 +67,40 @@ describe("资源偏向 · 真的接进了结算", () => {
   it("在线与离线都传本世偏向 —— 两套账同一口径", () => {
     expect(onlineSrc, "在线战斗没传偏向").toContain("currentWorldBias()");
     expect(offlineSrc, "离线战斗没传偏向").toContain("currentWorldBias()");
+  });
+});
+
+describe("资源偏向 · 应验时才报一声", () => {
+  /*
+   * +15% 单场看不出来。战报里那行「所钟」只在**对应渠道真的掉了**时写:
+   * 每场都写就成了噪音,而玩家要的是「刚才那次玄铁,是这一世的偏向给的」。
+   * 文案直接取 biasEffect.label —— 与乘区同源,不是另一处手写。
+   */
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    usePlayerStore().major = 3;
+    useResourcesStore().spiritStone = { m: 0, e: 0 };
+  });
+
+  it("灵石渠道每场必给,故一定应验", () => {
+    const drops = afterWin(REGIONS[0]!, 1, false, "灵石充盈");
+    expect(drops.lines).toContain("所钟 · 灵石收益 +15%");
+  });
+
+  it("没有偏向就不写这一行", () => {
+    const drops = afterWin(REGIONS[0]!, 1, false);
+    expect(drops.lines.some((l) => l.includes("所钟"))).toBe(false);
+  });
+
+  it("概率渠道:玄铁真掉了才写 —— 与行囊逐场对得上", () => {
+    const res = useResourcesStore();
+    for (let i = 0; i < 40; i += 1) {
+      res.ore = 0;
+      const drops = afterWin(REGIONS[0]!, 1, false, "矿脉深厚");
+      expect(
+        drops.lines.some((l) => l.includes("所钟")),
+        `第 ${i} 场`,
+      ).toBe(res.ore > 0);
+    }
   });
 });

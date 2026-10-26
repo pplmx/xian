@@ -26,7 +26,7 @@ import { expFromSecs, stoneByTier } from "./formulas";
 import { herbGradeOfMajor } from "@/data/herbGrades";
 import { tierMajor } from "./tierScale";
 import { modOf } from "./statsCalc";
-import { biasChanceMult } from "./mortalBias";
+import { biasChanceMult, biasEffectOf } from "./mortalBias";
 import { personalityEffects } from "./petPersonality";
 import { compareEvictable, keepVerdict, shouldAutoRecycle, smartKeepEnabled } from "./smartKeep";
 import { salvageOf } from "./salvage";
@@ -247,6 +247,13 @@ export function afterWin(
   const inventory = useInventoryStore();
   const mods = player.finalStats.mods;
   const lines: string[] = [];
+  /**
+   * 本世资源偏向这一场有没有应验 —— 见 core/mortalBias。
+   * 「所钟」这条提示只在**对应渠道真的掉了**时才写:每场都写一遍就成了噪音,
+   * 而玩家要的是「这一世那句矿脉深厚,刚才确实多给了我一次玄铁」。
+   */
+  const biasEffect = biasEffectOf(bias);
+  let biasHit = false;
   let items = 0;
   const tier = region.tier;
   const bossMult = isBoss ? 4 : 1;
@@ -263,6 +270,8 @@ export function afterWin(
     (1 + modOf(mods, "spiritStoneGain")) *
     biasChanceMult(bias, "stone");
   const stone = stoneByTier(tier, 10 * stoneAmt);
+  // 灵石是每场必给的渠道:偏向落在这里时,这一场一定应验
+  if (biasEffect?.channel === "stone") biasHit = true;
   // 落账,并把"实际入账"取回来 —— 界面上的"本次所得"与行囊里多出来的只有这一个来源
   const settledStone = STONE_SETTLEMENT.settle(
     { stone: resources.spiritStone },
@@ -341,15 +350,18 @@ export function afterWin(
       const key = entry.key as DropKey;
       switch (key) {
         case "herb":
+          if (biasEffect?.channel === "herb") biasHit = true;
           // 草按界域长品:这一片的层级是哪个界,采到的就是哪个品的草(ISS-306)
           resources.grantHerbs(n, herbGradeOfMajor(tierMajor(tier)));
           harvestMaterials(tier, "herb", n);
           break;
         case "ore":
+          if (biasEffect?.channel === "ore") biasHit = true;
           resources.addSmall("ore", n);
           harvestMaterials(tier, "ore", n);
           break;
         case "page":
+          if (biasEffect?.channel === "page") biasHit = true;
           resources.addSmall("page", n);
           lines.push(`功法残页×${n}`);
           items += 1;
@@ -368,6 +380,7 @@ export function afterWin(
           break;
         }
         case "pill": {
+          if (biasEffect?.channel === "pill") biasHit = true;
           const pillId = randomDropPill(player.major);
           if (pillId) {
             inventory.addPill(pillId, 1);
@@ -395,5 +408,7 @@ export function afterWin(
     },
   });
 
+  // 「所钟」应验了才写:文案与乘区同源(core/mortalBias 的 label),不是另一处手写
+  if (biasHit && biasEffect) lines.push(`所钟 · ${biasEffect.label}`);
   return { lines, stone: stoneGained, exp, items };
 }
