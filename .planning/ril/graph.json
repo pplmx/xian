@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 518,
+  "round": 519,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T19:03:01+00:00",
+  "updated_at": "2026-10-26T19:11:45+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29474,6 +29474,45 @@
       "touched_round": 518,
       "commit": "8a33aedc",
       "title": "导入场景失败也说话(不再崩掉整轮)"
+    },
+    "ISS-418": {
+      "id": "ISS-418",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:11:45+00:00",
+      "updated_at": "2026-10-26T19:11:45+00:00",
+      "touched_round": 519,
+      "title": "冒烟里的建号三步会抛异常:选择器一改名,整轮只剩一句栈",
+      "summary": "开始游戏 / 同意并开始 / 踏入仙途 三步没有 timeout 也没有 catch;任何一步没找到就把整轮冒烟抛掉,报告里只剩栈,后面每一页都没跑。与上一轮修好的导入场景是同一个病。",
+      "severity": 0.2,
+      "confidence": 0.95
+    },
+    "TASK-524": {
+      "id": "TASK-524",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:11:45+00:00",
+      "updated_at": "2026-10-26T19:11:45+00:00",
+      "touched_round": 519,
+      "category": "detectability",
+      "title": "建号三步包 try,失败变一条失败行",
+      "summary": "后续页面照常巡(空号读数打折);界面冒烟在 HEAD 上复跑通过。",
+      "severity": 0.2,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-623": {
+      "id": "CHG-623",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:11:45+00:00",
+      "updated_at": "2026-10-26T19:11:45+00:00",
+      "touched_round": 519,
+      "commit": "a41398c4",
+      "title": "建号三步包 try(冒烟不再因此抛掉整轮)"
     }
   },
   "edges": [
@@ -43045,6 +43084,18 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T19:03:01+00:00"
+    },
+    {
+      "from": "CHG-623",
+      "to": "ISS-418",
+      "type": "resolves",
+      "created_at": "2026-10-26T19:11:45+00:00"
+    },
+    {
+      "from": "CHG-623",
+      "to": "TASK-524",
+      "type": "implements",
+      "created_at": "2026-10-26T19:11:45+00:00"
     }
   ]
 }
