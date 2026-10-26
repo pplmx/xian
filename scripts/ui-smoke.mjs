@@ -261,21 +261,36 @@ async function runRoute(route) {
 
   await page.goto(INDEX, { waitUntil: "load" });
   if (!LATE) {
-    await page
-      .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
-      .first()
-      .click();
-    await page.locator("input[type=checkbox]").first().check();
-    await page
-      .getByRole("button", { name: /同意并开始/ })
-      .first()
-      .click();
-    await page.waitForTimeout(3200);
-    await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("冒烟自检");
-    await page
-      .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
-      .first()
-      .click();
+    /*
+     * 建号这几步包在 try 里:任何一个选择器改名或条件没满足,原先会直接把整轮冒烟
+     * 抛掉(报告里只剩一句栈,后面每一页都没跑)。现在变成一条说得清的失败行,
+     * 后面的页面照常巡 —— 只是那份存档会是空号,读数要打折看。
+     */
+    try {
+      await page
+        .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+        .first()
+        .click({ timeout: 5000 });
+      await page.locator("input[type=checkbox]").first().check({ timeout: 5000 });
+      await page
+        .getByRole("button", { name: /同意并开始/ })
+        .first()
+        .click({ timeout: 5000 });
+      await page.waitForTimeout(3200);
+      await page
+        .locator("input:not([type=file]):not([type=checkbox])")
+        .first()
+        .fill("冒烟自检", { timeout: 5000 });
+      await page
+        .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+        .first()
+        .click({ timeout: 5000 });
+    } catch {
+      errors.push({
+        where: "建号",
+        msg: "建号流程没走完(开始游戏 / 同意 / 踏入仙途 有一步没找到)—— 后面几页读到的是空号",
+      });
+    }
   }
   await page.waitForTimeout(LATE ? 1800 : 1500);
 
