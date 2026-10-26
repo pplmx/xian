@@ -219,6 +219,13 @@ describe("手册的页面覆盖 · 每个页面都点得到名", () => {
     settings: "设置",
   };
 
+  it("世界记忆那套三档在手册里说得清", () => {
+    // 历练页那枚小印没有图例:玩家只能靠手册知道「繁盛」是什么意思、值多少
+    for (const word of ["混乱", "稳定", "繁盛", "镇压"]) {
+      expect(DOC, `手册没讲世界记忆的「${word}」`).toContain(word);
+    }
+  });
+
   it("usage.md 里每个页面的关键词都在", () => {
     const missing = Object.entries(ROUTE_WORDS)
       .filter(([, word]) => !DOC.includes(word))
