@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 498,
+  "round": 499,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T13:55:55+00:00",
+  "updated_at": "2026-10-26T15:17:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 498,
+      "touched_round": 499,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28666,6 +28666,45 @@
       "touched_round": 498,
       "commit": "3bf82c28",
       "title": "releasePipeline.spec 补两条:当前版本有同名 Release 正文 + 流水线优先取仓库那份"
+    },
+    "ISS-397": {
+      "id": "ISS-397",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:13:58+00:00",
+      "updated_at": "2026-10-26T15:17:33+00:00",
+      "touched_round": 499,
+      "title": "没有任何判据盯着「门本身」:一道只打印不失败的门是静默空门",
+      "summary": "六道浏览器门 + 三道静态门各自收集 failures 再收尾;若有谁把退出码那一步改掉或写漏,它仍然天天打印 ✗,却从不拦下任何东西 —— 外表看起来「有保护」。这类事故不报错,只会让人误信。此前没有任何判据检查「门失败时是否真的红」。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-503": {
+      "id": "TASK-503",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:13:58+00:00",
+      "updated_at": "2026-10-26T15:17:33+00:00",
+      "touched_round": 499,
+      "category": "detectability",
+      "title": "gateWiring 补「九道门都有显式非零退出」判据",
+      "summary": "逐个读 scripts/*.mjs,要求出现 process.exitCode = 非零 或 process.exit(非零);只认显式退出码(裸 throw 可能是前置检查,不算)。自证两条 + 注入 first-paint 即点名。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-603": {
+      "id": "CHG-603",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:17:33+00:00",
+      "updated_at": "2026-10-26T15:17:33+00:00",
+      "touched_round": 499,
+      "commit": "7e1fbef6",
+      "title": "gateWiring 补「九道门都有显式非零退出」判据"
     }
   },
   "edges": [
@@ -41859,6 +41898,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T13:55:55+00:00"
+    },
+    {
+      "from": "CHG-603",
+      "to": "ISS-397",
+      "type": "resolves",
+      "created_at": "2026-10-26T15:17:33+00:00"
+    },
+    {
+      "from": "CHG-603",
+      "to": "TASK-503",
+      "type": "implements",
+      "created_at": "2026-10-26T15:17:33+00:00"
+    },
+    {
+      "from": "ISS-397",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T15:17:33+00:00"
     }
   ]
 }
