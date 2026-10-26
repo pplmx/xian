@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 486,
+  "round": 487,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T11:13:31+00:00",
+  "updated_at": "2026-10-26T11:30:09+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 486,
+      "touched_round": 487,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28198,6 +28198,45 @@
       "touched_round": 486,
       "commit": "883b3706",
       "title": "界外附注改成「待补法宝炼化(功法进修已计入)」+ 三条一致性判据"
+    },
+    "TASK-491": {
+      "id": "TASK-491",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:22:49+00:00",
+      "updated_at": "2026-10-26T11:30:09+00:00",
+      "touched_round": 487,
+      "category": "detectability",
+      "title": "ui-smoke 增「存储写满」专场景:填死配额 → 改设置 → 警告出现 → 腾空间 → 自动消失",
+      "summary": "独立 context:从大块到 64 字节把配额填死(填不死则判据不成立并明确报出),切主题逼一次落盘,等「上次写入存档失败」出现;清掉填充物后等它自己消失(存储层每 5 秒重试)。失败并入冒烟同一条出口。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "ISS-385": {
+      "id": "ISS-385",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:30:08+00:00",
+      "updated_at": "2026-10-26T11:30:09+00:00",
+      "touched_round": 487,
+      "title": "存储写满这条路只在假 localStorage 上演过:真浏览器里没人验过玩家看不看得见",
+      "summary": "存储层的失败处理写得很全(状态浮出、订阅通知、留队重试、恢复再报一声),savePersistence 也逐条钉住;但那些都在被 mock 的 localStorage 上。真浏览器里配额是真会抛的,而「设置页那行警告在与不在、腾出空间后会不会自己消失」只有浏览器层能验 —— 这三件事此前一道门都没有。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "CHG-591": {
+      "id": "CHG-591",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:30:08+00:00",
+      "updated_at": "2026-10-26T11:30:09+00:00",
+      "touched_round": 487,
+      "commit": "49bf3462",
+      "title": "ui-smoke 增 checkSaveFull:填死配额 → 改设置 → 警告出现 → 腾空间 → 自动消失"
     }
   },
   "edges": [
@@ -41175,6 +41214,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T11:13:31+00:00"
+    },
+    {
+      "from": "CHG-591",
+      "to": "ISS-385",
+      "type": "resolves",
+      "created_at": "2026-10-26T11:30:08+00:00"
+    },
+    {
+      "from": "CHG-591",
+      "to": "TASK-491",
+      "type": "implements",
+      "created_at": "2026-10-26T11:30:08+00:00"
+    },
+    {
+      "from": "ISS-385",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T11:30:09+00:00"
     }
   ]
 }
