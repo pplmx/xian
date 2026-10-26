@@ -326,3 +326,14 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
 
 这三条由 `src/core/rebrand.spec.ts` 钉住:对外文字里不许再出现旧标题、旧前缀会被迁移、
 旧导出文件仍能导入。以后再改名,照着这张表走一遍即可。
+
+## 待办 · 下一步
+
+两件事按优先级排,做完划掉即可:
+
+- **发版**:唯一阻塞是 `package.json` 的版本号。定下后写 `docs/release-notes/v<版本>.md`
+  (复制上一版正文,**记得把图链里的旧 tag 全部改掉**),跑 `bun run release:check` 看还剩什么,
+  再打 tag 并推送(推送由人决定)。
+- **「概率 → 直觉」的第三处**:洗练与掉落目前只给概率。做法照 `src/core/breakthrough.ts`
+  的 `expectedTries` —— 先在 `core` 写带单测的纯函数(换算 / 边界 / 单调三条判据),再接进界面;
+  **不在视图里现算**。
