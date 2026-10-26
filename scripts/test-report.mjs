@@ -265,6 +265,7 @@ const CATEGORIES = [
       "offlineFuzz",
       "reincarnationConfirm",
       "bountyEconomics",
+      "bossArchetypes",
       "usageDocCounts",
       "swPrecache",
       "smokeReading",

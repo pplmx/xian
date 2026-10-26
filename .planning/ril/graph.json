@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 483,
+  "round": 484,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T10:27:42+00:00",
+  "updated_at": "2026-10-26T10:35:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -28081,6 +28081,34 @@
       "touched_round": 483,
       "commit": "73f8ea97",
       "title": "bountyEconomics.spec:悬赏价落在 (售出, 购入) 带内 + 换新倒计时"
+    },
+    "ISS-382": {
+      "id": "ISS-382",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T10:35:57+00:00",
+      "updated_at": "2026-10-26T10:35:57+00:00",
+      "touched_round": 484,
+      "title": "神帝的家族标签与机制不符:tier 29 的「门槛型」身上没有一道门",
+      "summary": "bossArchetypes 的八张家族表只是分类与标签(行为在各首领自己的 def 里),标签经 ui/enemyLore 在「见过三次之后」露给玩家。逐个体检 44 个首领:43 个的标签都能在机制上找到依据,只有神帝挂 threshold(门槛型),实际机制是 3.3 倍真伤穿透 + 半血狂化,既无开场护盾也无减伤 —— 玩家被告诉「它在考你能不能破门」,而这一场根本没有门。",
+      "severity": 0.3,
+      "confidence": 0.95
+    },
+    "TASK-488": {
+      "id": "TASK-488",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T10:35:57+00:00",
+      "updated_at": "2026-10-26T10:35:57+00:00",
+      "touched_round": 484,
+      "category": "content",
+      "title": "bossArchetypes:家族标签的覆盖与签名判据 + 神帝改 truedmg",
+      "summary": "四条判据:首领都有家族/非首领不带/八家族非空/每家族一条签名机制(成员至少满足一样);自证用神帝改回 threshold 判红。数据侧只改一个词(threshold → truedmg),不改平衡。",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1
     }
   },
   "edges": [

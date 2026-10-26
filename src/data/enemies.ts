@@ -1074,7 +1074,9 @@ export const ENEMIES: EnemyDef[] = [
     {
       boss: true,
       element: "chaos",
-      archetype: "threshold",
+      // 神帝没有开场护盾/减伤这类"门"的机制:它的身份是 3.3 倍真伤穿透 + 半血狂化。
+      // 从前挂的是 threshold,藏经阁的家族标签(被打三次后显示)会告诉玩家"门槛型",对不上。
+      archetype: "truedmg",
       mods: { critRate: 0.15 },
       phases: [
         { hpThreshold: 0.5, modChanges: { damageBonus: 0.5, critDamage: 0.5 }, label: "神帝临尘" },
