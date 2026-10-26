@@ -802,6 +802,13 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     track("offlineClaims");
     showOfflineSummary(summary);
   }
+  /**
+   * 结算即盖章 —— 这件事原本留给调用方(engine 结算完紧跟一句 game.stampActive(now)),
+   * 但那是一条**只能靠自觉**的契约:谁新增一个调用点忘了盖章,同一段时间就会被结算两遍。
+   * 盖章放在这里,「离了多久」与「已经算过」就永远是同一个事实。
+   * (engine 那两处仍然会再盖一次 —— 幂等,不影响。)
+   */
+  game.stampActive(nowMs);
   return summary;
 }
 

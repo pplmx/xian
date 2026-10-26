@@ -113,3 +113,35 @@ describe("离线结算 · 随机状态不变量", () => {
     expect(withItems, "随机档里一件材料都没捡到").toBeGreaterThan(10);
   });
 });
+
+describe("离线结算 · 结算即盖章(同一段时间只算一次)", () => {
+  /*
+   * 盖章原本是调用方的责任(engine 结算完紧跟一句 game.stampActive(now))——
+   * 那是一条只能靠自觉的契约:谁新增调用点忘了盖章,同一段时间就结算两遍。
+   * 现在盖章挪进 settleOffline 自己:连跑两次,第二次拿到的 dt 是 0。
+   */
+  it("连跑两次:第二次不再发东西(同一段时长只算一次)", () => {
+    setActivePinia(createPinia());
+    const game = useGameStore();
+    const player = usePlayerStore();
+    game.started = true;
+    game.lastActiveAt = Date.now() - 3 * 3600 * 1000;
+    const now = Date.now();
+    expect(settleOffline(now), "三小时离该结算出东西").not.toBeNull();
+    const expAfterFirst = toNum(player.exp);
+    expect(settleOffline(now), "第二次应当什么都不算").toBeNull();
+    expect(toNum(player.exp), "第二次不许再发").toBe(expAfterFirst);
+    expect(game.lastActiveAt, "盖章落在结算时刻").toBe(now);
+  });
+
+  it("引擎仍然盖章也无害 —— 盖章是幂等的", () => {
+    setActivePinia(createPinia());
+    const game = useGameStore();
+    game.started = true;
+    game.lastActiveAt = Date.now() - 3 * 3600 * 1000;
+    const now = Date.now();
+    settleOffline(now);
+    game.stampActive(now);
+    expect(settleOffline(now)).toBeNull();
+  });
+});
