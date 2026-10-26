@@ -90,9 +90,6 @@ import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
 import { useSettingsStore } from "@/stores/settings";
-import { useMarketStore } from "@/stores/market";
-import { useBountyStore } from "@/stores/bounty";
-import { useApprenticeStore } from "@/stores/apprentice";
 import UpdatePrompt from "@/components/common/UpdatePrompt.vue";
 import {
   useServiceWorkerUpdate,
@@ -101,6 +98,7 @@ import {
 import { subscribeSaveWriteFailure } from "@/utils/storage";
 import { engine } from "@/core/engine";
 import { saveReader, saveWriterFree } from "@/core/singleWriter";
+import { settleReturn } from "@/composables/useReturnSettle";
 import { notify } from "@/core/notify";
 import { apprenticeReapText } from "@/core/apprenticeService";
 import { applyTheme, initTheme } from "@/core/theme";
@@ -123,9 +121,6 @@ const game = useGameStore();
 const player = usePlayerStore();
 const ui = useUiStore();
 const settings = useSettingsStore();
-const market = useMarketStore();
-const bounty = useBountyStore();
-const apprentice = useApprenticeStore();
 const updateReady = ref(false);
 let swHandle: ServiceWorkerUpdateHandle | undefined;
 const route = useRoute();
@@ -188,20 +183,12 @@ onMounted(() => {
     if (failure) ui.toast("存档写入失败 —— 浏览器存储可能已满,建议先导出备份", "warn");
     else ui.toast("存档已恢复写入", "info");
   });
-  // 归来一拍即收:坊市寄卖到时辰的自售入账 / 货架与悬赏换新,落地即结算(墙钟为准,不必开市)
-  // 归来一拍即收:坊市寄卖到时辰的自售入账,离包即定(墙钟为准,不必开市)
-  // 寄卖到期自售的灵石要有一声 —— 离线回城,玩家回来不该只盯着数字变
-  {
-    const sold = market.collectConsign(Date.now());
-    if (sold.length) notify(`「${sold.join("、")}」已自售,灵石到账`, "success");
-  }
-  market.sync(Date.now());
-  bounty.sync(Date.now());
-  // 收徒:归来一拍即收(弟子到时辰的跑腿账,捡起即入)
-  apprentice.sync();
-  // 归来即报一声:App 启动这拍是静默入账的漏网(收徒页 onMounted 已来不及收第二遍),
-  // —— 玩家回来不该只知道数变了。与收徒页同一条通报格式化(apprenticeReapText)。
-  for (const r of apprentice.collectFinished(Date.now(), player.major)) {
+  // 归来一拍即收:寄卖自售、货架与悬赏换新、弟子归来 —— 全在 settleReturn 里,
+  // 只读页整段跳过(见该模块注释:存储层的闸挡不住内存结算)
+  const settled = settleReturn(Date.now());
+  if (settled.sold.length) notify(`「${settled.sold.join("、")}」已自售,灵石到账`, "success");
+  // 归来即报一声 —— 玩家回来不该只知道数变了。与收徒页同一条通报格式化。
+  for (const r of settled.reaped) {
     notify(`「${r.name}」归来,带回 ${apprenticeReapText(r.spoils)}`, "success");
   }
   // PWA 版本更新:有新版就绪再亮「刷新」(注册在 main.ts;这里取回 registration 接管监听)

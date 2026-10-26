@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 468,
+  "round": 469,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T07:13:38+00:00",
+  "updated_at": "2026-10-26T07:31:18+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -27535,6 +27535,34 @@
       "touched_round": 468,
       "commit": "e357ea78",
       "title": "saveWriterFree + 只读页的恢复文案与刷新按钮;判据覆盖关写者→刷新→写权回收"
+    },
+    "ISS-368": {
+      "id": "ISS-368",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T07:31:18+00:00",
+      "updated_at": "2026-10-26T07:31:18+00:00",
+      "touched_round": 469,
+      "title": "只读页照跑「归来结算」:内存里加钱并通报,而横幅写着进度不会保存",
+      "summary": "App 的 onMounted 会结坊市寄卖自售、货架/悬赏换新、弟子归来。只读页只被拦了引擎启动与落盘,这一段照跑 —— 玩家在「本页只读,进度不会保存」的横幅下收到「灵石到账」,数字也确实涨了,但永远不会进档。与「只读页不启引擎」同一条理由:这一页的数字必须停在打开存档的那一刻。",
+      "severity": 0.4,
+      "confidence": 0.95
+    },
+    "TASK-474": {
+      "id": "TASK-474",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T07:31:18+00:00",
+      "updated_at": "2026-10-26T07:31:18+00:00",
+      "touched_round": 469,
+      "category": "correctness",
+      "title": "归来结算抽成 composable;只读页整体跳过",
+      "summary": "composables/useReturnSettle.settleReturn(now):只读页返回空清单且不动任何 store;写者页照旧结寄卖/货架/悬赏/弟子。用例锁三件事(写者真结算、只读一件不动、自证不恒真),注入去掉守卫应红。",
+      "severity": 0.4,
+      "confidence": 0.95,
+      "effort": 1.5
     }
   },
   "edges": [
