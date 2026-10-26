@@ -2425,9 +2425,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const mw = FILES.find((f) => f.path === "views/MortalWorldView.vue");
     expect(mw?.src, "境律要作「命数」之名,不许说成笼罩").toContain("此世命数:");
     expect(mw?.src, "不许退回「此世笼罩」的生效口吻").not.toContain("此世笼罩:");
-    expect(mw?.src, "要明说「其律尚未显化于历练」,免得玩家以为真被降能").toContain(
-      "其律尚未显化于历练",
-    );
+    // 措辞可以变,意思不能丢:它参与成形校准,但**不改写历练里的战斗**。
+    // 事实本身由 worldSemantics.spec 钉着(历练的合并点不含 mortalWorld)。
+    expect(mw?.src, "要明说它不改写战斗,免得玩家以为真被降能").toContain("不改写历练里的战斗");
   });
 });
 

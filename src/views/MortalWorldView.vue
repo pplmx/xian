@@ -7,7 +7,9 @@
         <p class="mt-1 t-body text-ink-faint">本世之界 · {{ view.summary }}</p>
         <p class="mt-0.5 text-[11px] text-cinnabar">
           此世命数:{{ view.ruleText
-          }}<span class="text-ink-faint">（此世气象之名,其律尚未显化于历练）</span>
+          }}<span class="text-ink-faint"
+            >（此世气象之名:成形时用它校准难度,但它不改写历练里的战斗）</span
+          >
         </p>
         <!--
           资源偏向必须写明兑现方式:摘要里那句「矿脉深厚之地」若没有数字跟着,
