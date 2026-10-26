@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 508,
+  "round": 509,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T16:49:31+00:00",
+  "updated_at": "2026-10-26T17:15:13+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 503,
+      "touched_round": 509,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 508,
+      "touched_round": 509,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -29056,6 +29056,73 @@
       "touched_round": 508,
       "commit": "4c300a06",
       "title": "statBreakdown.spec 扫源码确认每个词条键在定义文件外被提到"
+    },
+    "ISS-407": {
+      "id": "ISS-407",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:15:06+00:00",
+      "updated_at": "2026-10-26T17:15:13+00:00",
+      "touched_round": 509,
+      "title": "道果只进不出:出口缺一个,而口径早就写好了",
+      "summary": "fruitOutlets 已论证「余额无上限而定价固定,任何阈值型出口终会被淹没」,并要求出口的发放物不得属于 StatMods 命名空间。此前唯一的出口是逆旅契(纯逆境),道果的常规流向仍是「攒着只堆战力」。",
+      "severity": 0.35,
+      "confidence": 0.9
+    },
+    "TASK-513": {
+      "id": "TASK-513",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:15:06+00:00",
+      "updated_at": "2026-10-26T17:15:13+00:00",
+      "touched_round": 509,
+      "category": "content",
+      "title": "换一方天地:15 道果重掷本世之界(先掷后扣,core 不碰 store)",
+      "summary": "rerollWorldByFruit 收 daoFruit/spendFruit/reroll 三件依赖;四条用例含「对照组同样扣 15 枚不换世界,面板必须逐位相同」;世界页按钮在禁用态写出尚差多少。",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 3
+    },
+    "ISS-408": {
+      "id": "ISS-408",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:15:06+00:00",
+      "updated_at": "2026-10-26T17:15:13+00:00",
+      "touched_round": 509,
+      "title": "巡游量禁用态对比度会在路由入场过渡期间误红",
+      "summary": "量法注入了 transition:none,而 Vue 的入场过渡直接改内联 style.opacity —— transitionend 因此永远不来,视图停在 opacity:0;禁用态判据把祖先链 opacity 乘进前景色,整页被算成「1:1 · 整块 opacity 0.00」。一次新增按钮(世界页 320-late)第一次把这条暴露出来。",
+      "severity": 0.25,
+      "confidence": 0.85
+    },
+    "TASK-514": {
+      "id": "TASK-514",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:15:07+00:00",
+      "updated_at": "2026-10-26T17:15:13+00:00",
+      "touched_round": 509,
+      "category": "detectability",
+      "title": "openRoute 在量之前等两帧(判据本身不放宽)",
+      "summary": "settle 之后等两帧再取读数;复跑 204 组全绿,禁用态对比度那条判据保持原样。",
+      "severity": 0.25,
+      "confidence": 0.85,
+      "effort": 1
+    },
+    "CHG-613": {
+      "id": "CHG-613",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:15:12+00:00",
+      "updated_at": "2026-10-26T17:15:13+00:00",
+      "touched_round": 509,
+      "commit": "779094b2",
+      "title": "换一方天地(道果第二个出口)+ 巡游量禁用态等两帧"
     }
   },
   "edges": [
@@ -42429,6 +42496,42 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T16:49:31+00:00"
+    },
+    {
+      "from": "CHG-613",
+      "to": "ISS-407",
+      "type": "resolves",
+      "created_at": "2026-10-26T17:15:13+00:00"
+    },
+    {
+      "from": "CHG-613",
+      "to": "TASK-513",
+      "type": "implements",
+      "created_at": "2026-10-26T17:15:13+00:00"
+    },
+    {
+      "from": "CHG-613",
+      "to": "ISS-408",
+      "type": "resolves",
+      "created_at": "2026-10-26T17:15:13+00:00"
+    },
+    {
+      "from": "CHG-613",
+      "to": "TASK-514",
+      "type": "implements",
+      "created_at": "2026-10-26T17:15:13+00:00"
+    },
+    {
+      "from": "ISS-407",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T17:15:13+00:00"
+    },
+    {
+      "from": "ISS-408",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T17:15:13+00:00"
     }
   ]
 }
