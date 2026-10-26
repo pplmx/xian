@@ -802,11 +802,11 @@ html[data-theme="dark"] .mist-soft {
 }
 .app-shell[data-world="immortal"] .codex-current {
   color: var(--color-qing);
-  background: rgb(var(--color-qing-rgb) / 0.07);
+  background: rgb(var(--color-qing-rgb) / 0.06);
 }
 .app-shell[data-world="god"] .codex-current {
   color: var(--color-violet-ink);
-  background: rgb(var(--color-violet-ink-rgb) / 0.07);
+  background: rgb(var(--color-violet-ink-rgb) / 0.06);
 }
 .app-shell[data-world="chaos"] .codex-current {
   color: var(--color-cangqing);

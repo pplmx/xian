@@ -483,7 +483,7 @@ describe("调色板 · 同色底最多 6%", () => {
    * 判据按**每个元素里的每一段字符串字面量**配对:同一个类名里既有 bg-<强色>/N
    * 又有同色的 text-<强色> 才算 —— 三元分支各写各的不算(GauntletPanel 那种)。
    */
-  const STRONG_TOKENS = ["cinnabar", "jade", "qing", "gold-ink", "violet-ink"] as const;
+  const STRONG_TOKENS = ["cinnabar", "jade", "qing", "cangqing", "gold-ink", "violet-ink"] as const;
   const TINT = new RegExp(`bg-(${STRONG_TOKENS.join("|")})/(\\d{1,3})\\b`, "g");
 
   /**
@@ -530,6 +530,62 @@ describe("调色板 · 同色底最多 6%", () => {
       }
     }
     expect(hits, "同色底浓过 6% —— 降回 6%(design.md 实测 8% 已掉到 4.44:1)").toEqual([]);
+  });
+
+  /** 同一块 CSS 规则里既有同色字、又有同色自底 —— 返回超过 6% 的那些 */
+  function cssSelfTints(text: string): string[] {
+    const out: string[] = [];
+    for (const block of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selector = block[1]!.trim().split(/\n/).pop()!.trim();
+      const body = block[2]!;
+      const color = /color:\s*var\(--color-([a-z0-9-]+)\)/.exec(body);
+      if (!color) continue;
+      for (const bg of body.matchAll(
+        /background:\s*rgb\(var\(--color-([a-z0-9-]+)-rgb\)\s*\/\s*([0-9.]+)\)/g,
+      )) {
+        if (bg[1] !== color[1]) continue;
+        const pct = Number(bg[2]);
+        if (pct > 0.06) out.push(`${selector} · ${color[1]}/${pct}`);
+      }
+    }
+    return out;
+  }
+
+  it("CSS 里的同色自底同样不许浓过 6% —— token 层最容易漏", () => {
+    /*
+     * 上一条只扫 .vue。可自底最常写的地方是 style.css:
+     * `.codex-current` 的四个界域变体里,石青与紫墨两版曾是 0.07 ——
+     * 判据改了模板就以为管住了,其实颜色规矩的另一半躺在 CSS 里。
+     */
+    const hits: string[] = [];
+    let scanned = 0;
+    for (const f of filesMatching(resolve(ROOT, "src"), /color:\s*var\(--color-/, /\.css$/)) {
+      scanned += 1;
+      for (const o of cssSelfTints(readFileSync(resolve(ROOT, f), "utf-8")))
+        hits.push(`${f} → ${o}`);
+    }
+    expect(hits, "有浓过 6% 的同色自底").toEqual([]);
+    // 域里有真材料(不是把判据跑空)
+    expect(scanned).toBeGreaterThan(0);
+    expect(CSS).toMatch(/\.codex-current/);
+  });
+
+  it("判据自证:CSS 的 7% 被抓住、6% 放行、异色不误伤", () => {
+    expect(
+      cssSelfTints(
+        `.x { color: var(--color-qing); background: rgb(var(--color-qing-rgb) / 0.07); }`,
+      ),
+    ).toEqual([".x · qing/0.07"]);
+    expect(
+      cssSelfTints(
+        `.x { color: var(--color-qing); background: rgb(var(--color-qing-rgb) / 0.06); }`,
+      ),
+    ).toEqual([]);
+    expect(
+      cssSelfTints(
+        `.x { color: var(--color-paper); background: rgb(var(--color-qing-rgb) / 0.2); }`,
+      ),
+    ).toEqual([]);
   });
 
   it("判据自证:10% 被抓住、6% 放行、异色与分支不误伤", () => {
