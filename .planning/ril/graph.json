@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 476,
+  "round": 477,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T09:02:39+00:00",
+  "updated_at": "2026-10-26T09:11:50+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 476,
+      "touched_round": 477,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -27808,6 +27808,45 @@
       "touched_round": 476,
       "commit": "1155dfde",
       "title": "biasOfflineNote + offline.ts 卷轴补一句「此地所钟」"
+    },
+    "ISS-375": {
+      "id": "ISS-375",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:09:09+00:00",
+      "updated_at": "2026-10-26T09:11:49+00:00",
+      "touched_round": 477,
+      "title": "玩法文档只有数字被盯着:名字与「不给属性」这类承诺没有判据",
+      "summary": "usageDocCounts 只核结构数(66 部功法、44 区域…)。文档同时承诺「九门技艺叫识材/辨药/…」「天赋分凡赋/灵赋/天赋/道赋四等」「道侣纯叙事不给属性」—— 名字改一个字、或哪天道侣加了词条,判据一无所知。本轮逐条人工核对:当前都对得上,故这是覆盖缺口而不是现存错误。",
+      "severity": 0.25,
+      "confidence": 0.95
+    },
+    "TASK-481": {
+      "id": "TASK-481",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:09:09+00:00",
+      "updated_at": "2026-10-26T09:11:49+00:00",
+      "touched_round": 477,
+      "category": "docs",
+      "title": "usage 文档补三条名字/承诺判据",
+      "summary": "技艺九门名单对 SKILLS、天赋四等对 TALENT_GRADE_NAMES、「道侣纯叙事」对 DAOLU 字段;自证必须改表格那一行(全文第一处同名出现不在表里)。",
+      "severity": 0.25,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-581": {
+      "id": "CHG-581",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:11:49+00:00",
+      "updated_at": "2026-10-26T09:11:50+00:00",
+      "touched_round": 477,
+      "commit": "c62dece7",
+      "title": "usage 文档补三条名字/承诺判据(技艺名单、天赋四等、道侣无属性)"
     }
   },
   "edges": [
@@ -40605,6 +40644,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T09:02:39+00:00"
+    },
+    {
+      "from": "CHG-581",
+      "to": "ISS-375",
+      "type": "resolves",
+      "created_at": "2026-10-26T09:11:49+00:00"
+    },
+    {
+      "from": "CHG-581",
+      "to": "TASK-481",
+      "type": "implements",
+      "created_at": "2026-10-26T09:11:49+00:00"
+    },
+    {
+      "from": "ISS-375",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T09:11:49+00:00"
     }
   ]
 }
