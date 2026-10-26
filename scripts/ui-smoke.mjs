@@ -26,6 +26,12 @@
  * 与排版自检同属一道门:那边量排版,这边戳交互,红一条就不发布。
  * 页面异常一律计入失败;外域请求由 lib/pageErrors.mjs 的 blockExternal 拦掉并计数(应当恒为 0)。
  *
+ * 除逐页点按钮外,还有两条"环境异常"专场景(各占一个独立 context):
+ *   ① 旧档兼容 —— 按旧形状落盘,走真实启动,再从盘上读回,确认迁移真的写回了;
+ *   ② 存储写满 —— 把配额填死再改一次设置,设置页要说得出"上次写入存档失败",
+ *      腾出空间后那一行要自己消失(自动重试)。
+ * 两条都只在浏览器里才验得到:前者考启动序列,后者考 localStorage 真会抛的那种错。
+ *
  * ⚠ 夹具说明:存档密钥就写在包里(见 utils/crypto 的注释:并非安全边界),
  * 故这里能照同一套格式造一份"神人境"存档。它是**自检夹具**,不是作弊入口:
  * 别把它当推荐玩法,也别据此以为存档不可改。
@@ -377,6 +383,83 @@ async function checkLegacySave(browser) {
   return fails;
 }
 
+/**
+ * 存储写满 —— 「进度没进档」这件事必须说得出来,而且要好得了。
+ *
+ * 单测已经证明了存储层:失败会浮出状态、订阅方收到通知、那一片留在队列里重试、
+ * 恢复时再报一声。但那都在假 localStorage 上;真浏览器里配额是真会抛的,
+ * 而**玩家看不看得见**只有这一层能验:
+ *   ① 把配额填死(大块 → 小块,直到 64 字节也写不进去);
+ *   ② 改一次设置(主题切到另一边)逼一次落盘;
+ *   ③ 设置页必须出现「上次写入存档失败」;
+ *   ④ 清掉填充物,那一行必须自己消失(存储层每 5 秒重试一次)。
+ * 三个判据都不看实现,只看玩家能看到的那句话在与不在。
+ */
+async function checkSaveFull(browser) {
+  const fails = [];
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  try {
+    await seedSave(ctx, lateSlices(), "__fullFixture");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/settings", { waitUntil: "load" });
+    await page.waitForTimeout(2000);
+    const filled = await page.evaluate(() => {
+      // 大块先填、失败就换更小的块继续 —— 大块写不进去不等于没缝了
+      for (const size of [512 * 1024, 64 * 1024, 8 * 1024, 1024, 256, 64]) {
+        const chunk = "x".repeat(size);
+        for (let i = 0; i < 2000; i += 1) {
+          try {
+            localStorage.setItem(`__smokeBallast${size}_${i}`, chunk);
+          } catch {
+            break;
+          }
+        }
+      }
+      try {
+        localStorage.setItem("__smokeProbe", "y".repeat(64));
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    if (!filled) fails.push("存储写满场景:没能把配额填死(判据不成立,不是游戏的问题)");
+    else {
+      // 切主题一定会改设置 → 触发一次 persist 落盘
+      const theme = await page.evaluate(() => document.documentElement.dataset.theme ?? "");
+      await page
+        .getByRole("button", { name: theme === "dark" ? "日间" : "夜间" })
+        .first()
+        .click({ timeout: 5000 })
+        .catch(() => undefined);
+      const shown = await page
+        .waitForFunction(() => /上次写入存档失败/.test(document.body.innerText), { timeout: 20000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!shown)
+        fails.push("存储写满场景:写不进去却没有任何常驻交代(设置页应出现「上次写入存档失败」)");
+      await page.evaluate(() => {
+        for (const k of Object.keys(localStorage)) {
+          if (k.startsWith("__smokeBallast") || k === "__smokeProbe") localStorage.removeItem(k);
+        }
+      });
+      const healed = await page
+        .waitForFunction(() => !/上次写入存档失败/.test(document.body.innerText), {
+          timeout: 20000,
+        })
+        .then(() => true)
+        .catch(() => false);
+      if (!healed) fails.push("存储写满场景:腾出空间之后那句警告没消失(自动重试没生效)");
+    }
+    if (pageErrors.length)
+      fails.push(`存储写满场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return fails;
+}
+
 /** 固定上限的并发池:一页一个任务,谁空出来谁接下一页 */
 async function runPool(items, limit, worker) {
   const out = Array.from({ length: items.length });
@@ -409,6 +492,7 @@ async function runPool(items, limit, worker) {
 const wallT0 = performance.now();
 const results = await runPool(ROUTES, JOBS, runRoute);
 const legacyFails = await checkLegacySave(browser);
+const fullFails = await checkSaveFull(browser);
 await browser.close();
 const wallMs = Math.round(performance.now() - wallT0);
 
@@ -416,6 +500,7 @@ const clicked = results.reduce((n, r) => n + r.clicked, 0);
 const silent = results.flatMap((r) => r.silent);
 const errors = results.flatMap((r) => r.errors);
 for (const msg of legacyFails) errors.push({ where: "旧档兼容", msg });
+for (const msg of fullFails) errors.push({ where: "存储写满", msg });
 const blockedTotal = results.reduce((n, r) => n + r.blocked, 0);
 
 console.log(`\n界面冒烟:${ROUTES.length} 页,点击 ${clicked} 次(每页上限 ${DEPTH})`);
