@@ -7,7 +7,9 @@
         <p class="mt-1 t-body text-ink-faint">本世之界 · {{ view.summary }}</p>
         <!-- 路线形状的一句话:几段、层级跨度多大 —— 概览里先给结论,细节留给下面的路线图 -->
         <p class="mt-0.5 text-[11px] text-ink-faint" data-world-shape>
-          {{ view.stages }} 段地界 · {{ view.tierText }}
+          {{ view.stages }} 段地界 · {{ view.tierText }} · 已过 {{ view.clearedStages }}/{{
+            view.stages
+          }}
         </p>
         <p class="mt-0.5 text-[11px] text-cinnabar">
           此世命数:{{ view.ruleText
@@ -237,7 +239,7 @@ const router = useRouter();
 const view = computed(() => {
   const w = adventure.mortalWorld ?? ensureMortalWorld();
   if (!w) return null;
-  return worldView(w, (id) => enemyDef(id)?.name ?? id);
+  return worldView(w, (id) => enemyDef(id)?.name ?? id, cleared);
 });
 
 /** 路线折线 —— 纵向绑定层级,故回落看得见 */

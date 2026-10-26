@@ -291,6 +291,20 @@ describe("世界页概览 · 段数与层级跨度", () => {
     }
   });
 
+  it("已过几段来自同一份路线:给几段算几段,默认一段都不算", () => {
+    const w = POOL[0]!;
+    expect(worldView(w, (id) => id).clearedStages, "不传判定时应当是 0").toBe(0);
+    const ids = w.chain.map((p) => p.nodeId);
+    const two = new Set(ids.slice(0, 2));
+    const v = worldView(
+      w,
+      (id) => id,
+      (nodeId) => two.has(nodeId),
+    );
+    expect(v.clearedStages, "通了前两段就该报 2").toBe(2);
+    expect(v.clearedStages, "不许超过总段数").toBeLessThanOrEqual(v.stages);
+  });
+
   it("自证:层级全相同时不写成「5–5」", () => {
     const w = POOL[0]!;
     const flat = { ...w, chain: w.chain.map((p) => ({ ...p, tier: 5 })) };
