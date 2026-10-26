@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 524,
+  "round": 525,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T19:59:43+00:00",
+  "updated_at": "2026-10-26T20:16:08+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 518,
+      "touched_round": 525,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -29669,6 +29669,34 @@
       "touched_round": 524,
       "commit": "de0a7ca1",
       "title": "手册里的价与常数同源"
+    },
+    "ISS-423": {
+      "id": "ISS-423",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T20:16:08+00:00",
+      "updated_at": "2026-10-26T20:16:08+00:00",
+      "touched_round": 525,
+      "title": "腾出空间后主题没写到盘上:横幅消失但 xuanshu.settings 分片始终不出现",
+      "summary": "存储写满场景实测:清掉 ballast、横幅「上次写入存档失败」消失之后,页面上的主题确实切了(themeNow !== themeBefore),但 xuanshu.settings 在 localStorage 里 8 秒轮询都读不到。三种解释未排除:①写失败后的只读封存没解除;②节流队列恢复后没再触发;③键或形状读错(persist 包一层 state 的可能已排除)。若属实,玩家的设置与进度在恢复后会停在旧的一份。",
+      "severity": 0.45,
+      "confidence": 0.6
+    },
+    "TASK-529": {
+      "id": "TASK-529",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T20:16:08+00:00",
+      "updated_at": "2026-10-26T20:16:08+00:00",
+      "touched_round": 525,
+      "category": "robustness",
+      "title": "查:写失败自愈之后,封存是否解除、脏分片是否真的落盘",
+      "summary": "下一步从「首屏挂载/自愈时是否仍在只读封存」这一侧查:看 sealStorageWrites 与解锁路径、THROTTLED_STORAGE 的重试队列在解除封存后是否重新排出;确认后再决定是否补一条「盘上真的写进去」的判据。",
+      "severity": 0.45,
+      "confidence": 0.6,
+      "effort": 3
     }
   },
   "edges": [
@@ -43306,6 +43334,12 @@
       "to": "TASK-528",
       "type": "implements",
       "created_at": "2026-10-26T19:59:43+00:00"
+    },
+    {
+      "from": "ISS-423",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T20:16:08+00:00"
     }
   ]
 }
