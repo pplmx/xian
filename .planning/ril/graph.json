@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 530,
+  "round": 531,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T21:12:39+00:00",
+  "updated_at": "2026-10-26T21:21:41+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29864,6 +29864,45 @@
       "touched_round": 530,
       "commit": "6f1fa82c",
       "title": "手册补世界记忆一节"
+    },
+    "ISS-428": {
+      "id": "ISS-428",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:21:40+00:00",
+      "updated_at": "2026-10-26T21:21:40+00:00",
+      "touched_round": 531,
+      "title": "界面上的「今日天道」「此世命数」在手册里搜不到",
+      "summary": "把视图里真实出现的系统名逐个对照 usage.md:承运/界外/命数/洞天/今日天道/功德/香火 七词全缺,其中今日天道(天界每日题,过了白丢)与此世命数(世界页抬头)是玩家天天看到的。",
+      "severity": 0.2,
+      "confidence": 0.95
+    },
+    "TASK-534": {
+      "id": "TASK-534",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:21:40+00:00",
+      "updated_at": "2026-10-26T21:21:41+00:00",
+      "touched_round": 531,
+      "category": "docs",
+      "title": "补两节 + 「界面系统名」五词判据",
+      "summary": "今日天道讲清日出换题与首页朱印;此世命数讲清它只做成形校准。判据:今日天道/此世命数/世界记忆/所钟/道果 少一个就红;整段删除时判据当场点名。",
+      "severity": 0.2,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-633": {
+      "id": "CHG-633",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:21:40+00:00",
+      "updated_at": "2026-10-26T21:21:41+00:00",
+      "touched_round": 531,
+      "commit": "a7dd589a",
+      "title": "手册补今日天道与此世命数"
     }
   },
   "edges": [
@@ -43597,6 +43636,24 @@
       "to": "ISS-427",
       "type": "addresses",
       "created_at": "2026-10-26T21:12:38+00:00"
+    },
+    {
+      "from": "CHG-633",
+      "to": "ISS-428",
+      "type": "resolves",
+      "created_at": "2026-10-26T21:21:40+00:00"
+    },
+    {
+      "from": "CHG-633",
+      "to": "TASK-534",
+      "type": "implements",
+      "created_at": "2026-10-26T21:21:40+00:00"
+    },
+    {
+      "from": "TASK-534",
+      "to": "ISS-428",
+      "type": "addresses",
+      "created_at": "2026-10-26T21:21:40+00:00"
     }
   ]
 }
