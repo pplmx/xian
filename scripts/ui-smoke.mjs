@@ -120,7 +120,11 @@ const SKIP = /分解|删除|清空|重置|兵解|转世|散尽|导出|导入|隐
  * 不是为了省时间,而是不让第三方脚本的加载与异常掺进这道门。
  */
 const browser = await chromium.launch({
-  args: ["--allow-file-access-from-files", "--disable-web-security"],
+  args: [
+    "--allow-file-access-from-files",
+    "--disable-web-security",
+    "--enable-precise-memory-info",
+  ],
 });
 
 /**
@@ -460,6 +464,51 @@ async function checkSaveFull(browser) {
   return fails;
 }
 
+/**
+ * 挂机稳定性 —— 心跳每拍都会改响应式状态,谁在订阅里往页面/全局表里塞东西,
+ * 开一夜就会慢慢变大。这类"越挂越沉"的问题只有跑一段时间才看得见。
+ *
+ * 判据(20 秒,读的是玩家那一页):
+ *   ① DOM 节点数不许长(±5 容差;实测六分钟挂机恒为 314)。
+ *   ② 堆内存不许翻三倍以上(读数是抖的,故只拦"翻几倍"这种明显泄漏)。
+ * 打印两份读数,方便以后判断是"抖"还是"真的在长"。
+ */
+async function checkSoakStability(browser) {
+  const fails = [];
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  try {
+    await seedSave(ctx, lateSlices(), "__soakFixture");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/", { waitUntil: "load" });
+    await page.waitForTimeout(3000);
+    const sample = () =>
+      page.evaluate(() => ({
+        nodes: document.getElementsByTagName("*").length,
+        mb: (performance.memory?.usedJSHeapSize ?? 0) / 1048576,
+      }));
+    const before = await sample();
+    await page.waitForTimeout(20000);
+    const after = await sample();
+    if (after.nodes > before.nodes + 5) {
+      fails.push(
+        `挂机 20 秒后 DOM 节点 ${before.nodes} → ${after.nodes} —— 有心跳在往页面上堆东西`,
+      );
+    }
+    if (before.mb > 0 && after.mb > before.mb * 3 + 20) {
+      fails.push(`挂机 20 秒后堆内存 ${before.mb.toFixed(1)}MB → ${after.mb.toFixed(1)}MB`);
+    }
+    if (pageErrors.length) fails.push(`挂机稳定性页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    console.log(
+      `挂机稳定:DOM ${before.nodes} → ${after.nodes} · 堆 ${before.mb.toFixed(1)}MB → ${after.mb.toFixed(1)}MB`,
+    );
+  } finally {
+    await ctx.close();
+  }
+  return fails;
+}
+
 /** 固定上限的并发池:一页一个任务,谁空出来谁接下一页 */
 async function runPool(items, limit, worker) {
   const out = Array.from({ length: items.length });
@@ -493,6 +542,7 @@ const wallT0 = performance.now();
 const results = await runPool(ROUTES, JOBS, runRoute);
 const legacyFails = await checkLegacySave(browser);
 const fullFails = await checkSaveFull(browser);
+const soakFails = await checkSoakStability(browser);
 await browser.close();
 const wallMs = Math.round(performance.now() - wallT0);
 
@@ -501,6 +551,7 @@ const silent = results.flatMap((r) => r.silent);
 const errors = results.flatMap((r) => r.errors);
 for (const msg of legacyFails) errors.push({ where: "旧档兼容", msg });
 for (const msg of fullFails) errors.push({ where: "存储写满", msg });
+for (const msg of soakFails) errors.push({ where: "挂机稳定", msg });
 /**
  * 每页至少点得到一个控件 —— 「页面画出来了,但一个能点的都没有」。
  *
