@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 512,
+  "round": 513,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T17:46:54+00:00",
+  "updated_at": "2026-10-26T17:55:26+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 512,
+      "touched_round": 513,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -29240,6 +29240,45 @@
       "touched_round": 512,
       "commit": "2f8645ef",
       "title": "addDaoFruit 拒坏值(与 spendDaoFruit 对称)"
+    },
+    "ISS-412": {
+      "id": "ISS-412",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:55:26+00:00",
+      "updated_at": "2026-10-26T17:55:26+00:00",
+      "touched_round": 513,
+      "title": "age / lifespanBonusYears 被写成 NaN 就永久不再变老",
+      "summary": "addAge 与 addLifespan 直接把参数加上去:一次非有限值就能让 age 变 NaN —— 此后「寿元将尽」永远不成立、也永远不会再老,玩家卡在不生不死里,界面只显示一个 NaN 岁;lifespanBonusYears 同理,面板与寿元判定一起失真。与道果那条是同一个病。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-518": {
+      "id": "TASK-518",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:55:26+00:00",
+      "updated_at": "2026-10-26T17:55:26+00:00",
+      "touched_round": 513,
+      "category": "robustness",
+      "title": "addAge / addLifespan 只拒非有限值(留符号自由)",
+      "summary": "不拒符号:年岁来自夹过的 dt,寿元来自丹与际遇(调用方保证为正),以后真要加「减寿」不必再动这里。用例两条:NaN/±Infinity 不写,正常值照加。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-617": {
+      "id": "CHG-617",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:55:26+00:00",
+      "updated_at": "2026-10-26T17:55:26+00:00",
+      "touched_round": 513,
+      "commit": "f542723a",
+      "title": "年岁与寿元拒非有限值"
     }
   },
   "edges": [
@@ -42703,6 +42742,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T17:46:54+00:00"
+    },
+    {
+      "from": "CHG-617",
+      "to": "ISS-412",
+      "type": "resolves",
+      "created_at": "2026-10-26T17:55:26+00:00"
+    },
+    {
+      "from": "CHG-617",
+      "to": "TASK-518",
+      "type": "implements",
+      "created_at": "2026-10-26T17:55:26+00:00"
+    },
+    {
+      "from": "ISS-412",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T17:55:26+00:00"
     }
   ]
 }
