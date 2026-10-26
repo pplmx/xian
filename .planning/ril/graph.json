@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 490,
+  "round": 491,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T12:03:49+00:00",
+  "updated_at": "2026-10-26T12:17:07+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 487,
+      "touched_round": 491,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28354,6 +28354,45 @@
       "touched_round": 490,
       "commit": "e11343a6",
       "title": "design.md 字阶改五档 + 文档清单与 PAGE_TIERS 对账"
+    },
+    "ISS-389": {
+      "id": "ISS-389",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:11:29+00:00",
+      "updated_at": "2026-10-26T12:17:07+00:00",
+      "touched_round": 491,
+      "title": "转世弹窗的许诺没有判据:道果/宿慧/阶名/名号会不会兑现没人核对",
+      "summary": "confirmReincarnation 直接花 view.daoFruitGained 与 r.insightGained(预告即结算输入,单源),这条链上没有分叉;但没有一条用例核对「确认之后拿到的数」与「确认之前看到的数」是否一致。玩家只能按那几行字做决定,而且不可撤销 —— 而这种一致性属于「设计如此」,改一次就可能不再如此。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-495": {
+      "id": "TASK-495",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:11:29+00:00",
+      "updated_at": "2026-10-26T12:17:07+00:00",
+      "touched_round": 491,
+      "category": "detectability",
+      "title": "reincarnationConfirm 增「预告 == 结算」随机对比(30 组,含防空转阈值)",
+      "summary": "固定种子随机 30 组(境界×宿慧×传承):prepare 记许诺,confirm 后核对道果增量、宿慧增量与总量、阶名、名号;换世重掷世界直通以免 30×200 轮门禁重试。注入「结算多发 1 枚道果」即红。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-595": {
+      "id": "CHG-595",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:17:07+00:00",
+      "updated_at": "2026-10-26T12:17:07+00:00",
+      "touched_round": 491,
+      "commit": "524ad3e4",
+      "title": "reincarnationConfirm 增「预告 == 结算」随机对比"
     }
   },
   "edges": [
@@ -41403,6 +41442,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T12:03:49+00:00"
+    },
+    {
+      "from": "CHG-595",
+      "to": "ISS-389",
+      "type": "resolves",
+      "created_at": "2026-10-26T12:17:07+00:00"
+    },
+    {
+      "from": "CHG-595",
+      "to": "TASK-495",
+      "type": "implements",
+      "created_at": "2026-10-26T12:17:07+00:00"
+    },
+    {
+      "from": "ISS-389",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T12:17:07+00:00"
     }
   ]
 }
