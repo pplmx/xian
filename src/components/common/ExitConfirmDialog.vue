@@ -25,6 +25,7 @@ import { useRoute, useRouter } from "vue-router";
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 import { useGameStore } from "@/stores/game";
+import { closeTopModal } from "@/ui/modalStack";
 import BaseModal from "./BaseModal.vue";
 
 const open = ref(false);
@@ -52,6 +53,14 @@ function onBackButton(): void {
     open.value = false;
     return;
   }
+  /**
+   * 别的弹窗压在上面:先关它,与 Esc 同一座栈、同一个顺序。
+   *
+   * 漏了这一步的后果不是「少关一次」:详情弹窗开着按返回会叠出一层「暂别修行」,
+   * 再按一次关掉确认框、第三次又叠一层 —— 弹窗永远关不掉,也退不出游戏。
+   * 不看路由:非根页时全局弹窗同样留在屏幕上,先关它再谈回根页。
+   */
+  if (closeTopModal()) return;
   // 不在根页就先退回根页。各页本是并列的标签页,逐条回溯历史得按上七八次才退得出去
   if (route.name !== rootName()) {
     void router.push({ name: rootName() });

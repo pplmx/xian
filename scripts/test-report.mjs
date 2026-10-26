@@ -257,6 +257,7 @@ const CATEGORIES = [
       "useGameClock",
       "useGameNow",
       "engineTick",
+      "modalStack",
       "swPrecache",
       "smokeReading",
       "absenceLedger",

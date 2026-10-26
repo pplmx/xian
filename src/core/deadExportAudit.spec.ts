@@ -93,11 +93,17 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-/** .vue 只取 <script> 块;返回可解析的源码 */
+/**
+ * .vue 取**全部** <script> 块;返回可解析的源码。
+ *
+ * 只取第一块会漏掉 <script setup> —— BaseModal 正是两段式(模块级 Esc 监听 + setup):
+ * 它的 setup 里 import 的模块在审计眼里等于没人用。本轮据此误报三条「只在 spec 里出现」
+ * 的导出,而那三条恰恰是 BaseModal 真实调用的。
+ */
 function scriptOf(path: string): string {
   const text = readFileSync(path, "utf8");
   if (!path.endsWith(".vue")) return text;
-  return /<script[^>]*>([\s\S]*?)<\/script>/.exec(text)?.[1] ?? "";
+  return [...text.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join("\n");
 }
 
 function hasExportModifier(node: ts.Node): boolean {
@@ -399,6 +405,17 @@ function scanExports(): {
 }
 
 describe("死导出审计", () => {
+  it("两段式脚本:模块级 <script> 与 <script setup> 都要读", () => {
+    /*
+     * 判据自证:BaseModal 是全仓唯一的两段式组件。只取第一块时,setup 里的 import
+     * 对审计隐形 —— 实测:把目标模块搬进共用栈后,三条真实使用的导出被误报成
+     * 「只在 spec 里出现」。两段各取一个只在那一段出现的符号来钉。
+     */
+    const src = scriptOf(posix(join(SRC, "components/common/BaseModal.vue")));
+    expect(src, "模块级那段的符号没读到").toContain("closeTopModal");
+    expect(src, "setup 那段的符号没读到").toContain("nextTick");
+  });
+
   const { dead, specOnly, againDead, scanned, exports } = scanExports();
   const deadNames = dead.map((d) => d.name);
 

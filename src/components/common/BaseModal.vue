@@ -79,24 +79,21 @@
  * Esc 关闭 —— 只让最上面一层可关弹窗响应。
  *
  * 这段必须在**模块 scope** 的普通 <script> 里,不能放进 <script setup>:
- * <script setup> 顶层代码每实例跑一遍,放那里 = 每个 BaseModal 都有一份自己的
- * activeModals 与自己的 window keydown 监听。那会有两个毛病:
+ * <script setup> 顶层代码每实例跑一遍,放那里 = 每个 BaseModal 都挂一份自己的
+ * window keydown 监听。那会有两个毛病:
  *   · 路由来回切几次,window 上堆一走廊永不回收的死监听(BaseModal 是大量视图
  *     复用的浮层原语,导航进出一次就多一份);
- *   · 各实例只看得到自己的 entry,叠放时(详情盖列表)按一次 Esc 所有实例的
- *     监听都判定"自己是顶层"→ 整摞弹窗一层层全关,与"只退最上层"相悖。
- * 收敛到模块级一份后:activeModals[last] 是全局真顶层,一次 Esc 只退一层;
- * 监听也只有一份,不随实例增减,天然无泄漏。
+ *   · 各实例只看得到自己,叠放时(详情盖列表)按一次 Esc 所有实例的监听都判定
+ *     "自己是顶层"→ 整摞弹窗一层层全关,与"只退最上层"相悖。
+ * 监听收敛到模块级一份,栈本身挪去了 `@/ui/modalStack` —— 安卓实体返回键
+ * (ExitConfirmDialog)也要问同一句「上面还有一层吗」,栈不能再是这里的私有变量。
  */
-type ModalEntry = { closable: boolean; close: () => void };
-const activeModals: ModalEntry[] = [];
+import { closeTopModal, pushModal, removeModal, type ModalEntry } from "@/ui/modalStack";
+
 function onWindowKey(e: KeyboardEvent): void {
   if (e.key !== "Escape") return;
-  const top = activeModals[activeModals.length - 1];
-  if (top?.closable) {
-    e.preventDefault();
-    top.close();
-  }
+  // 栈空、或顶层不可关(必须作答的结果框)时把 Esc 让回浏览器,不吞这一下
+  if (closeTopModal()) e.preventDefault();
 }
 if (typeof window !== "undefined") window.addEventListener("keydown", onWindowKey);
 </script>
@@ -176,19 +173,18 @@ function onBackdrop(): void {
   if (props.closable) emit("close");
 }
 
-// ---- Esc 关闭:模块级唯一栈 + 模块级唯一监听,见文件头注释 ----
+// ---- Esc / 返回键共用同一座栈:压栈在这里,消费在 BaseModal 的监听与 ExitConfirmDialog ----
 const entry: ModalEntry = { closable: props.closable, close: () => emit("close") };
 watch(
   () => props.open,
   (open) => {
     if (open) {
-      activeModals.push(entry);
+      pushModal(entry);
       // 记住是谁打开的,关闭后把焦点还回去(键盘用户不会"掉到页面顶端")
       lastFocused = document.activeElement as HTMLElement | null;
       void nextTick(() => panelRef.value?.focus());
     } else {
-      const i = activeModals.indexOf(entry);
-      if (i >= 0) activeModals.splice(i, 1);
+      removeModal(entry);
       const back = lastFocused;
       lastFocused = null;
       void nextTick(() => {
@@ -204,8 +200,5 @@ watch(
     entry.closable = c;
   },
 );
-onUnmounted(() => {
-  const i = activeModals.indexOf(entry);
-  if (i >= 0) activeModals.splice(i, 1);
-});
+onUnmounted(() => removeModal(entry));
 </script>

@@ -188,6 +188,31 @@ describe("界面分层 · 浮层只有一个出处", () => {
     ).toEqual([]);
   });
 
+  it("安卓返回键与 Esc 共用一座栈 —— 别的弹窗压在上面时先关它", () => {
+    /*
+     * 由来:返回键从前只看自己那扇确认框。详情弹窗开着按返回 → 叠一层「暂别修行」,
+     * 再按一次关掉它、第三次又叠一层 —— 弹窗永远关不掉,也退不出游戏;非根页更糟,
+     * 它先把路由推回根页,全局弹窗还留在屏幕上。
+     *
+     * 真机返回键在无头浏览器里按不出来(Capacitor 只在原生壳里派发),故这里钉源码级
+     * 契约:栈必须是共用模块、返回键要先问栈。栈内部的顺序与「不可关的层挡住返回」
+     * 由 ui/modalStack.spec 钉。
+     */
+    const modal = FILES.find((f) => f.path === BASE_MODAL);
+    expect(modal?.src, "BaseModal 要注册进共用弹窗栈").toContain("@/ui/modalStack");
+    expect(modal?.src, "栈不许再退回 BaseModal 的私有数组").not.toContain("const activeModals");
+    expect(modal?.src, "Esc 也走同一个出口").toContain("closeTopModal()");
+
+    const exit = FILES.find((f) => f.path === "components/common/ExitConfirmDialog.vue");
+    const src = exit?.src ?? "";
+    expect(src, "返回键要问共用栈").toContain("closeTopModal");
+    const closeAt = src.indexOf("closeTopModal()");
+    const openAt = src.indexOf("open.value = true");
+    expect(closeAt, "返回键没接共用栈").toBeGreaterThan(-1);
+    expect(openAt, "没找到「开出确认框」那一行").toBeGreaterThan(-1);
+    expect(closeAt, "必须先关别人的弹窗,再考虑开自己的确认框").toBeLessThan(openAt);
+  });
+
   it("视图里不许裸 back() —— 冷启动时它会把人送出游戏", () => {
     // 判据:站内没有上一页时(书签 / deep link / PWA 冷启动恢复路由),
     // history.state.back 为 null,裸 back() 会退到 about:blank,界面整个消失。
