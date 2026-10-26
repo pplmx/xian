@@ -146,6 +146,33 @@ export function saveWriteFailure(): { at: number; keys: string[] } | null {
  */
 let writesBlocked = false;
 
+/**
+ * 只读页里「写入被拦下」的通报。
+ *
+ * 只读页的操作不会报错 —— 买下、派遣、突破在内存里都照常成功,只是永远不落盘。
+ * 玩家要等到刷新才发现白忙一场。故拦下第一笔写入时喊一声,让他当场知道这一步没存上。
+ * 一声就够:一次操作往往连写好几个分片,同窗口内不再重复。
+ */
+type BlockedWriteListener = (key: string) => void;
+const blockedWriteListeners = new Set<BlockedWriteListener>();
+const BLOCKED_NOTICE_WINDOW_MS = 5000;
+let lastBlockedNoticeAt = 0;
+
+/** 订阅「只读页拦下了一笔写入」;返回退订函数 */
+export function onBlockedSaveWrite(listener: BlockedWriteListener): () => void {
+  blockedWriteListeners.add(listener);
+  return () => {
+    blockedWriteListeners.delete(listener);
+  };
+}
+
+function announceBlockedWrite(key: string): void {
+  const now = Date.now();
+  if (now - lastBlockedNoticeAt < BLOCKED_NOTICE_WINDOW_MS) return;
+  lastBlockedNoticeAt = now;
+  for (const listener of blockedWriteListeners) listener(key);
+}
+
 /** 把本页切成只读:丢弃待写队列、停掉刷盘、此后所有写入(含删除)都是空操作 */
 export function blockSaveWrites(): void {
   writesBlocked = true;
@@ -224,7 +251,10 @@ const THROTTLED_STORAGE = {
     }
   },
   setItem: (key: string, value: string): void => {
-    if (writesBlocked) return;
+    if (writesBlocked) {
+      announceBlockedWrite(key);
+      return;
+    }
     pending.set(key, value);
     if (flushTimer === undefined) flushTimer = setTimeout(flushSaveWrites, SAVE_FLUSH_MS);
   },

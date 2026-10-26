@@ -95,7 +95,7 @@ import {
   useServiceWorkerUpdate,
   type ServiceWorkerUpdateHandle,
 } from "@/composables/useServiceWorkerUpdate";
-import { subscribeSaveWriteFailure } from "@/utils/storage";
+import { onBlockedSaveWrite, subscribeSaveWriteFailure } from "@/utils/storage";
 import { engine } from "@/core/engine";
 import { saveReader, saveWriterFree } from "@/core/singleWriter";
 import { settleReturn } from "@/composables/useReturnSettle";
@@ -142,6 +142,7 @@ function resetScroll(): void {
 
 let unsubscribeTheme: () => void = () => undefined;
 let unsubscribeSaveFailure: () => void = () => undefined;
+let unsubscribeBlockedWrite: () => void = () => undefined;
 
 /** 浏览器要求首次交互后才可出声;顺带给所有按钮一个轻点击音 */
 function onPointerDown(e: PointerEvent): void {
@@ -182,6 +183,13 @@ onMounted(() => {
   unsubscribeSaveFailure = subscribeSaveWriteFailure((failure) => {
     if (failure) ui.toast("存档写入失败 —— 浏览器存储可能已满,建议先导出备份", "warn");
     else ui.toast("存档已恢复写入", "info");
+  });
+  /*
+   * 只读页的操作在内存里都「成功」,只是不落盘 —— 不吭声的话,玩家刷新后才发现白忙。
+   * 拦下第一笔写入时当场说一声,别让他以为存上了。
+   */
+  unsubscribeBlockedWrite = onBlockedSaveWrite(() => {
+    ui.toast("本页只读 —— 这一步没有保存,换到另一处继续吧", "warn");
   });
   // 归来一拍即收:寄卖自售、货架与悬赏换新、弟子归来 —— 全在 settleReturn 里,
   // 只读页整段跳过(见该模块注释:存储层的闸挡不住内存结算)
@@ -231,6 +239,7 @@ onUnmounted(() => {
   if (writerWatch !== undefined) window.clearInterval(writerWatch);
   unsubscribeTheme();
   unsubscribeSaveFailure();
+  unsubscribeBlockedWrite();
   swHandle?.stop();
   engine.stop();
   stopBgm();

@@ -89,3 +89,65 @@ describe("只读页 · 写盘的总闸", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("只读页 · 被拦下的写入要说一声", () => {
+  /*
+   * 只读页上的操作在内存里「成功」,但永远不落盘。上一轮之前它们是静默的 ——
+   * 玩家要等到刷新才发现白忙。判据:拦下第一笔写入时通知订阅者,同一阵操作只喊
+   * 一次(一次点击常连写几个分片),换到窗口之后再说下一次。
+   */
+  it("拦下时通知一次,同一窗口内不重复喊", async () => {
+    vi.resetModules();
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+      const mod = await import("./storage");
+      const seen: string[] = [];
+      mod.onBlockedSaveWrite((key) => seen.push(key));
+      mod.blockSaveWrites();
+
+      mod.persistConfig("game").storage.setItem("xuanshu.game", "{}");
+      expect(seen, "第一笔被拦下的写入要喊一声").toEqual(["xuanshu.game"]);
+
+      mod.persistConfig("player").storage.setItem("xuanshu.player", "{}");
+      expect(seen, "同一阵操作(同一次点击连写多片)只喊一次").toHaveLength(1);
+
+      vi.setSystemTime(new Date("2026-01-01T00:00:06Z"));
+      mod.persistConfig("game").storage.setItem("xuanshu.game", "{}");
+      expect(seen, "过了窗口再拦下一笔,要再说一声").toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("写者页的写入不触发通报 —— 这条判据不误伤正常存档", async () => {
+    vi.resetModules();
+    const mod = await import("./storage");
+    const seen: string[] = [];
+    mod.onBlockedSaveWrite((key) => seen.push(key));
+    mod.persistConfig("game").storage.setItem("xuanshu.game", "{}");
+    expect(seen).toEqual([]);
+  });
+
+  it("退订之后不再收到通报", async () => {
+    vi.resetModules();
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-02-01T00:00:00Z"));
+      const mod = await import("./storage");
+      let count = 0;
+      const off = mod.onBlockedSaveWrite(() => {
+        count += 1;
+      });
+      mod.blockSaveWrites();
+      mod.persistConfig("game").storage.setItem("xuanshu.game", "{}");
+      expect(count).toBe(1);
+      off();
+      vi.setSystemTime(new Date("2026-02-01T00:00:09Z"));
+      mod.persistConfig("game").storage.setItem("xuanshu.game", "{}");
+      expect(count, "退订后不该再喊").toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
