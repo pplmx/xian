@@ -36,3 +36,14 @@ export function biasChanceMult(bias: string | undefined, channel: BiasChannel): 
 export function biasEffectOf(bias: string | undefined): BiasEffect | undefined {
   return bias === undefined ? undefined : BIAS_EFFECTS[bias];
 }
+
+/**
+ * 归来卷轴里那句「此地所钟」。
+ *
+ * 离线整段都在乘这个偏向(与在线同一处 afterWin),可卷轴从不提它 —— 玩家只看到
+ * 玄铁多了一点、不知道为什么。没有偏向、或这一段根本没打过仗时不写:卷轴别添空话。
+ */
+export function biasOfflineNote(bias: string | undefined, battles: number): string | null {
+  const effect = biasEffectOf(bias);
+  return effect && battles > 0 ? `此地所钟 · ${effect.label}(离线已计入)` : null;
+}

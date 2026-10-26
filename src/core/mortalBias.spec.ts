@@ -11,7 +11,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { BIAS_EFFECTS, biasChanceMult, biasEffectOf } from "./mortalBias";
+import { BIAS_EFFECTS, biasChanceMult, biasEffectOf, biasOfflineNote } from "./mortalBias";
 import { afterWin } from "./loot";
 import { REGIONS } from "@/data/regions";
 import { usePlayerStore } from "@/stores/player";
@@ -67,6 +67,9 @@ describe("资源偏向 · 真的接进了结算", () => {
   it("在线与离线都传本世偏向 —— 两套账同一口径", () => {
     expect(onlineSrc, "在线战斗没传偏向").toContain("currentWorldBias()");
     expect(offlineSrc, "离线战斗没传偏向").toContain("currentWorldBias()");
+    expect(offlineSrc, "归来卷轴没写这一句 —— 多出来的那份没有来历").toContain(
+      "biasOfflineNote(currentWorldBias(), summary.battles)",
+    );
   });
 });
 
@@ -102,5 +105,17 @@ describe("资源偏向 · 应验时才报一声", () => {
         `第 ${i} 场`,
       ).toBe(res.ore > 0);
     }
+  });
+});
+
+describe("资源偏向 · 归来卷轴那一句", () => {
+  it("有偏向且打过仗才写,文案与乘区同源", () => {
+    expect(biasOfflineNote("矿脉深厚", 12)).toBe("此地所钟 · 玄铁掉落 +15%(离线已计入)");
+  });
+
+  it("没偏向、或这一段没打过仗就不写 —— 卷轴不添空话", () => {
+    expect(biasOfflineNote(undefined, 12)).toBeNull();
+    expect(biasOfflineNote("老存档里的旧词", 12)).toBeNull();
+    expect(biasOfflineNote("矿脉深厚", 0)).toBeNull();
   });
 });

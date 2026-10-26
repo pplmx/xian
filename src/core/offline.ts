@@ -52,6 +52,7 @@ import {
 } from "./exploration";
 import { regionEventDef } from "./regionEvent";
 import { currentWorldBias, placeContent } from "./mortalWorldService";
+import { biasOfflineNote } from "./mortalBias";
 import { clamp, planIdle } from "wanxiang-engine";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { checkSuppression, settleSuppressedRegions, suppressRateLine } from "./suppress";
@@ -773,6 +774,10 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const inFlight = player as unknown as { secretRealm?: unknown };
   if (inFlight.secretRealm) notes.push("秘境之行原样留着 —— 层数、气血与规则都未变,回来接着走");
   if (endgameStore.worldRun) notes.push("那趟远征仍在途 —— 层数与战绩原样留着,回来接着走");
+
+  // 这一世的「资源偏向」在离线里也乘了(同一处 afterWin):卷轴说一声,别让那点多出来的玄铁没有来历
+  const biasNote = biasOfflineNote(currentWorldBias(), summary.battles);
+  if (biasNote) notes.push(biasNote);
 
   if (dtSec >= OFFLINE_MODAL_MIN_SECONDS) {
     track("offlineClaims");
