@@ -190,3 +190,39 @@ describe("玩法文档 · 名字与承诺也要对得上", () => {
     expect(namesIn(broken, /\| 技艺 \| \d+ 门\(([^)]+)\)/)).not.toEqual(SKILLS.map((s) => s.name));
   });
 });
+
+describe("手册的页面覆盖 · 每个页面都点得到名", () => {
+  /*
+   * 手册是玩家找答案的第一处。曾经「人物」与「坊市」这两页在整份 usage.md 里
+   * 一次都没出现过 —— 数得清的系统表不缺项,缺的是**页面**这一层。
+   * 这里给 18 个路由各配一个玩家会搜的词,少一个就红。
+   */
+  const ROUTE_WORDS: Record<string, string> = {
+    welcome: "开局",
+    create: "开局",
+    home: "首页",
+    cultivation: "修行",
+    codex: "界域志",
+    adventure: "历练",
+    world: "本世之界",
+    inventory: "背包",
+    character: "人物",
+    celestial: "天界",
+    souls: "器魂",
+    dongfu: "洞府",
+    market: "坊市",
+    apprentice: "弟子",
+    collection: "图鉴",
+    build: "构筑",
+    titles: "称号",
+    legacy: "履历",
+    settings: "设置",
+  };
+
+  it("usage.md 里每个页面的关键词都在", () => {
+    const missing = Object.entries(ROUTE_WORDS)
+      .filter(([, word]) => !DOC.includes(word))
+      .map(([route, word]) => `${route}(${word})`);
+    expect(missing, "这些页面在手册里点不到名").toEqual([]);
+  });
+});
