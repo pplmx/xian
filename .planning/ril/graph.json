@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 507,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T16:38:11+00:00",
+  "updated_at": "2026-10-26T16:40:43+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 506,
+      "touched_round": 507,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28982,10 +28982,10 @@
     "ISS-405": {
       "id": "ISS-405",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T16:38:11+00:00",
-      "updated_at": "2026-10-26T16:38:11+00:00",
+      "updated_at": "2026-10-26T16:40:43+00:00",
       "touched_round": 507,
       "title": "每族掉落起点只活在一次性的探针里 —— 做完就丢",
       "summary": "「哪一族从第几境开始掉」是决定前期能不能靠捡丹活下来的关键读数,但它此前只在我临时写的探针里算过一次,看完即删。寿元从 4 境起(前期靠炼不靠捡)、修速从 5 境起,这些是设计现状,却没有任何地方写着,也没人能在改动当天看出它变了。",
@@ -28995,10 +28995,10 @@
     "TASK-511": {
       "id": "TASK-511",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T16:38:11+00:00",
-      "updated_at": "2026-10-26T16:38:11+00:00",
+      "updated_at": "2026-10-26T16:40:43+00:00",
       "touched_round": 507,
       "category": "detectability",
       "title": "pillValue.spec 打印各族掉落起点并钉住现状",
@@ -29006,6 +29006,17 @@
       "severity": 0.2,
       "confidence": 0.9,
       "effort": 1
+    },
+    "CHG-611": {
+      "id": "CHG-611",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:40:42+00:00",
+      "updated_at": "2026-10-26T16:40:43+00:00",
+      "touched_round": 507,
+      "commit": "1974d048",
+      "title": "pillValue.spec 打印各族掉落起点并钉住现状"
     }
   },
   "edges": [
@@ -42343,6 +42354,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T16:33:38+00:00"
+    },
+    {
+      "from": "CHG-611",
+      "to": "ISS-405",
+      "type": "resolves",
+      "created_at": "2026-10-26T16:40:43+00:00"
+    },
+    {
+      "from": "CHG-611",
+      "to": "TASK-511",
+      "type": "implements",
+      "created_at": "2026-10-26T16:40:43+00:00"
+    },
+    {
+      "from": "ISS-405",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T16:40:43+00:00"
     }
   ]
 }
