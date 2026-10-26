@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 529,
+  "round": 530,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T21:04:19+00:00",
+  "updated_at": "2026-10-26T21:12:39+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29825,6 +29825,45 @@
       "touched_round": 529,
       "commit": "55f0d5f1",
       "title": "手册补「人物」「坊市」并钉住页面覆盖"
+    },
+    "ISS-427": {
+      "id": "ISS-427",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:12:38+00:00",
+      "updated_at": "2026-10-26T21:12:38+00:00",
+      "touched_round": 530,
+      "title": "历练页那枚「混乱/稳定/繁盛」小印没有图例:",
+      "summary": "AdventureView 会在非混乱档显示区域兴衰小印,但 usage.md 全文只有一处「记忆」且与它无关;玩家不知道它是什么、怎么升、值多少。它改的是镇压收益(混乱 100% / 稳定 105% / 繁盛 110%),来源是 engineMemory 的双门槛与 72 小时硬回落。",
+      "severity": 0.2,
+      "confidence": 0.95
+    },
+    "TASK-533": {
+      "id": "TASK-533",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:12:38+00:00",
+      "updated_at": "2026-10-26T21:12:38+00:00",
+      "touched_round": 530,
+      "category": "docs",
+      "title": "手册补「世界记忆」一节 + 三档与受益面判据",
+      "summary": "讲清升档(守土时长或胜场取先到)、回落(约 72 小时硬开关)、受益面(镇压);判据要求三档词与「镇压」都在。",
+      "severity": 0.2,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-632": {
+      "id": "CHG-632",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:12:38+00:00",
+      "updated_at": "2026-10-26T21:12:39+00:00",
+      "touched_round": 530,
+      "commit": "6f1fa82c",
+      "title": "手册补世界记忆一节"
     }
   },
   "edges": [
@@ -43540,6 +43579,24 @@
       "to": "ISS-426",
       "type": "addresses",
       "created_at": "2026-10-26T21:04:19+00:00"
+    },
+    {
+      "from": "CHG-632",
+      "to": "ISS-427",
+      "type": "resolves",
+      "created_at": "2026-10-26T21:12:38+00:00"
+    },
+    {
+      "from": "CHG-632",
+      "to": "TASK-533",
+      "type": "implements",
+      "created_at": "2026-10-26T21:12:38+00:00"
+    },
+    {
+      "from": "TASK-533",
+      "to": "ISS-427",
+      "type": "addresses",
+      "created_at": "2026-10-26T21:12:38+00:00"
     }
   ]
 }
