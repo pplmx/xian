@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 474,
+  "round": 475,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T08:43:31+00:00",
+  "updated_at": "2026-10-26T08:52:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 474,
+      "touched_round": 475,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -27730,6 +27730,45 @@
       "touched_round": 474,
       "commit": "a2c4b0f3",
       "title": "资源偏向兑现:五条偏向各乘一个渠道 +15%,世界详情写明;在线/离线同口径"
+    },
+    "ISS-373": {
+      "id": "ISS-373",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:50:25+00:00",
+      "updated_at": "2026-10-26T08:52:50+00:00",
+      "touched_round": 475,
+      "title": "资源偏向 +15% 在单场战斗里不可感知",
+      "summary": "上一轮把偏向接进了掉率,但 +15% 的差别在一场里看不出来:玩家看到玄铁掉了,不知道是不是这一世的偏向给的。机制可见性要求「让看不见的机制可见」,而这条只在世界页写了一次,离开那一页就没有回声。",
+      "severity": 0.3,
+      "confidence": 0.95
+    },
+    "TASK-479": {
+      "id": "TASK-479",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:50:25+00:00",
+      "updated_at": "2026-10-26T08:52:50+00:00",
+      "touched_round": 475,
+      "category": "feedback",
+      "title": "偏向应验时战报补一行「所钟 · …」",
+      "summary": "afterWin 里按渠道记 biasHit(灵石渠道每场必给),应验才写一行,文案取 biasEffect.label;判据三条确定性:灵石必应验、无偏向不写、概率渠道与行囊增量逐场对账。",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-579": {
+      "id": "CHG-579",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:52:50+00:00",
+      "updated_at": "2026-10-26T08:52:51+00:00",
+      "touched_round": 475,
+      "commit": "7b0b762e",
+      "title": "偏向应验时战报补一行「所钟 · …」;三条确定性判据"
     }
   },
   "edges": [
@@ -40491,6 +40530,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T08:43:30+00:00"
+    },
+    {
+      "from": "CHG-579",
+      "to": "ISS-373",
+      "type": "resolves",
+      "created_at": "2026-10-26T08:52:50+00:00"
+    },
+    {
+      "from": "CHG-579",
+      "to": "TASK-479",
+      "type": "implements",
+      "created_at": "2026-10-26T08:52:50+00:00"
+    },
+    {
+      "from": "ISS-373",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T08:52:50+00:00"
     }
   ]
 }
