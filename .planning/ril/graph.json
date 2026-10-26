@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 467,
+  "round": 468,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T06:59:12+00:00",
+  "updated_at": "2026-10-26T07:13:38+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 465,
+      "touched_round": 468,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27496,6 +27496,45 @@
       "touched_round": 467,
       "commit": "b7f0814e",
       "title": "两处 7% 自底降回 6%;palette.spec 的 CSS 扫描扩到 src 下全部 .css"
+    },
+    "ISS-367": {
+      "id": "ISS-367",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:13:32+00:00",
+      "updated_at": "2026-10-26T07:13:38+00:00",
+      "touched_round": 468,
+      "title": "只读页没有恢复路径:另一处关掉之后,横幅永远停在「已在另一处打开」",
+      "summary": "锁在页面卸载时自动释放,但只读页的心跳早已停掉,没有任何事件能把「席位空了」推给它。实测:关掉写者后 500ms,锁持有者归 0,而横幅仍是旧文案 —— 玩家只能猜,或以为游戏坏了重开浏览器。singleWriter 的头注释本来就写着「只读提示里会说清楚」,实现却没做到。",
+      "severity": 0.5,
+      "confidence": 0.95
+    },
+    "TASK-473": {
+      "id": "TASK-473",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:13:32+00:00",
+      "updated_at": "2026-10-26T07:13:38+00:00",
+      "touched_round": 468,
+      "category": "ux-contract",
+      "title": "只读页探到席位空出就改文案并提供刷新;判据覆盖整条恢复链路",
+      "summary": "singleWriter.saveWriterFree():query 里没有我们这把锁才算空(排队中的也算有人),问不出来答 false;App 只在只读态每 3 秒探一次,探到换文案并停表,按钮交给玩家按(不自动重载);layout-check 的只读任务补「关写者 → 换文案 → 点刷新 → 横幅消失且锁回到手里」。",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 2
+    },
+    "CHG-573": {
+      "id": "CHG-573",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:13:38+00:00",
+      "updated_at": "2026-10-26T07:13:38+00:00",
+      "touched_round": 468,
+      "commit": "e357ea78",
+      "title": "saveWriterFree + 只读页的恢复文案与刷新按钮;判据覆盖关写者→刷新→写权回收"
     }
   },
   "edges": [
@@ -40149,6 +40188,24 @@
       "to": "TASK-472",
       "type": "implements",
       "created_at": "2026-10-26T06:59:11+00:00"
+    },
+    {
+      "from": "CHG-573",
+      "to": "ISS-367",
+      "type": "resolves",
+      "created_at": "2026-10-26T07:13:38+00:00"
+    },
+    {
+      "from": "CHG-573",
+      "to": "TASK-473",
+      "type": "implements",
+      "created_at": "2026-10-26T07:13:38+00:00"
+    },
+    {
+      "from": "ISS-367",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T07:13:38+00:00"
     }
   ]
 }
