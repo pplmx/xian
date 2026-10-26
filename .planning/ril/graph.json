@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 461,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T04:50:59+00:00",
+  "updated_at": "2026-10-26T04:54:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -27187,10 +27187,10 @@
     "ISS-359": {
       "id": "ISS-359",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T04:50:59+00:00",
-      "updated_at": "2026-10-26T04:50:59+00:00",
+      "updated_at": "2026-10-26T04:54:32+00:00",
       "touched_round": 461,
       "title": "玩法文档写着「4 条灵脉」,数据里是 7 条 —— 结构数没有判据",
       "summary": "docs/usage.md 的系统一览是玩家看到的清单,里面三十多处结构数(66 部功法 / 44 个区域 / 68 丹药 …)全部靠手改。四脉扩到七脉时漏了洞府那一行,「4 条灵脉投资分红」一直留到现在;其余抽查的 30 余处与数据一致。这类漂移与「文案里手写会被常数改动的数字」同源,只是这次在文档里。",
@@ -27200,10 +27200,10 @@
     "TASK-464": {
       "id": "TASK-464",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T04:50:59+00:00",
-      "updated_at": "2026-10-26T04:50:59+00:00",
+      "updated_at": "2026-10-26T04:54:32+00:00",
       "touched_round": 461,
       "category": "docs",
       "title": "改正灵脉条数;把 usage.md 的结构数接上数据源对账",
@@ -27211,6 +27211,17 @@
       "severity": 0.4,
       "confidence": 0.95,
       "effort": 1.5
+    },
+    "CHG-566": {
+      "id": "CHG-566",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T04:54:18+00:00",
+      "updated_at": "2026-10-26T04:54:33+00:00",
+      "touched_round": 461,
+      "commit": "0c503351",
+      "title": "usage.md 灵脉 4→7;新增结构数对账判据(正则 + @/data 真值)"
     }
   },
   "edges": [
@@ -39684,6 +39695,18 @@
       "to": "TASK-463",
       "type": "implements",
       "created_at": "2026-10-26T04:43:15+00:00"
+    },
+    {
+      "from": "CHG-566",
+      "to": "ISS-359",
+      "type": "resolves",
+      "created_at": "2026-10-26T04:54:18+00:00"
+    },
+    {
+      "from": "CHG-566",
+      "to": "TASK-464",
+      "type": "implements",
+      "created_at": "2026-10-26T04:54:18+00:00"
     }
   ]
 }
