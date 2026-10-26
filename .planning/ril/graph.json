@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 484,
+  "round": 485,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T10:39:39+00:00",
+  "updated_at": "2026-10-26T10:57:11+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 477,
+      "touched_round": 485,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28120,6 +28120,45 @@
       "touched_round": 484,
       "commit": "43893620",
       "title": "神帝改 truedmg + bossArchetypes 覆盖与签名判据"
+    },
+    "ISS-383": {
+      "id": "ISS-383",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T10:51:28+00:00",
+      "updated_at": "2026-10-26T10:57:11+00:00",
+      "touched_round": 485,
+      "title": "排版门的「坏档」场景会假红:卡片 8 秒没画出来就三条判据一起亮",
+      "summary": "全量 check:ui 十余轮没跑过,本轮第一次跑就红在坏档场景:设置页三条判据全亮,而失败信息里的 notice 是空串 —— 同一份产物单跑时那张卡 55ms 就出来了,三件事(分片损坏/资源/corrupt.xuanshu.resources)一字不少。8 路并发 + 路由冷 chunk 下 8 秒不够,且超时只留空串,分不清「卡没画出来」与「卡画出来了但没写那三件事」。假红会挡住发版、也会让人不再信这道门。",
+      "severity": 0.35,
+      "confidence": 0.95
+    },
+    "TASK-489": {
+      "id": "TASK-489",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T10:51:28+00:00",
+      "updated_at": "2026-10-26T10:57:11+00:00",
+      "touched_round": 485,
+      "category": "detectability",
+      "title": "坏档场景:等待抬到 20 秒、超时带现场、后续三条不再重复亮",
+      "summary": "判据不变(文本仍须含 分片损坏/资源/corrupt.),只把两个 8 秒等待抬到 20 秒;cardShown 为假时只报一条并带上当前 hash 与正文头 120 字;后续两条加 cardShown 前置,避免同一件事亮三条。",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-589": {
+      "id": "CHG-589",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T10:57:10+00:00",
+      "updated_at": "2026-10-26T10:57:11+00:00",
+      "touched_round": 485,
+      "commit": "70563d1e",
+      "title": "坏档场景:两个等待 8s→20s、超时带现场、后续三条加 cardShown 前置"
     }
   },
   "edges": [
@@ -41061,6 +41100,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T10:39:39+00:00"
+    },
+    {
+      "from": "CHG-589",
+      "to": "ISS-383",
+      "type": "resolves",
+      "created_at": "2026-10-26T10:57:11+00:00"
+    },
+    {
+      "from": "CHG-589",
+      "to": "TASK-489",
+      "type": "implements",
+      "created_at": "2026-10-26T10:57:11+00:00"
+    },
+    {
+      "from": "ISS-383",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T10:57:11+00:00"
     }
   ]
 }
