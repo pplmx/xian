@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 458,
+  "round": 459,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T03:43:07+00:00",
+  "updated_at": "2026-10-26T04:02:05+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -6476,7 +6476,7 @@
       "version": 2,
       "created_at": "2026-09-12T04:35:19+00:00",
       "updated_at": "2026-09-12T05:26:30+00:00",
-      "touched_round": 457,
+      "touched_round": 459,
       "summary": "界面外壳与底部导航(App.vue 外壳 + TopStatusBar + BottomNavigation + 全局浮层 ToastHost + scripts/layout-check.mjs):承载所有页面的固定骨架,也是「真机排版」的观测面"
     },
     "ISS-099": {
@@ -8770,7 +8770,7 @@
       "version": 1,
       "created_at": "2026-09-12T21:00:41+00:00",
       "updated_at": "2026-09-12T21:00:41+00:00",
-      "touched_round": 458,
+      "touched_round": 459,
       "summary": "工程工具链:CI 工作流(build/deploy/yunyin)、自检脚本(ui-smoke/layout-check/test-report)、包脚本编排"
     },
     "EV-142": {
@@ -27056,6 +27056,58 @@
       "source": "scripts/ui-smoke.mjs 注入 run + scripts/lib/pageErrors.mjs",
       "title": "给 engine.tick 塞一次必抛的错:加判据后冒烟红并打印 console.error [引擎] Tick 异常;去掉后四门全绿(冒烟/排版/离线/帧率)",
       "confidence": 1.0
+    },
+    "ISS-355": {
+      "id": "ISS-355",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T03:49:15+00:00",
+      "updated_at": "2026-10-26T04:02:05+00:00",
+      "touched_round": 459,
+      "title": "安卓返回键被弹窗劫持:根页开着任意弹窗前按返回,弹出来的是「暂别修行」",
+      "summary": "ExitConfirmDialog 的 onBackButton 只看自己那扇确认框是否开着,不知道 BaseModal 还压着别的弹窗。于是:详情弹窗开着 → 按返回 → 叠一层确认框;再按 → 确认框关掉;再按 → 又叠一层 —— 弹窗永远关不掉,也退不出游戏。非根页更糟:它先把路由推回根页,全局弹窗还留在上面。弹窗栈此前是 BaseModal.vue 的模块内私有数组,外面够不着。",
+      "severity": 0.6,
+      "confidence": 0.9
+    },
+    "ISS-356": {
+      "id": "ISS-356",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T03:56:33+00:00",
+      "updated_at": "2026-10-26T04:02:05+00:00",
+      "touched_round": 459,
+      "title": "死导出审计只读 .vue 的第一块 <script>，<script setup> 整段隐形",
+      "summary": "scriptOf() 用正则取第一块。BaseModal 是全仓唯一的两段式组件（模块级 Esc 监听 + <script setup>），它的 setup 里 import 的模块在审计眼里等于没人用。实测：把 modalStack 的三条导出接进 BaseModal 之后，audit 仍报「只在 spec 里出现」，其中两条是组件真实调用的 —— 误报，不是真死。",
+      "severity": 0.35,
+      "confidence": 0.95
+    },
+    "TASK-462": {
+      "id": "TASK-462",
+      "type": "task",
+      "status": "resolved",
+      "version": 4,
+      "created_at": "2026-10-26T03:56:33+00:00",
+      "updated_at": "2026-10-26T04:02:05+00:00",
+      "touched_round": 459,
+      "category": "correctness",
+      "title": "安卓返回键先关最上面那层弹窗;弹窗栈抽成共用模块",
+      "summary": "把 BaseModal 私有栈挪到 ui/modalStack（push/remove/closeTop），Esc 与返回键共用；ExitConfirmDialog 在开自己的确认框之前先 closeTopModal()。顺带修掉这一步暴露的审计盲区：scriptOf 取全部 <script> 块，并加两段式自证。",
+      "severity": 0.6,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-563": {
+      "id": "CHG-563",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T04:01:53+00:00",
+      "updated_at": "2026-10-26T04:02:05+00:00",
+      "touched_round": 459,
+      "commit": "26b1cdb8",
+      "title": "弹窗栈抽成共用模块;安卓返回键先关栈顶;死导出审计读全部 script 块"
     }
   },
   "edges": [
@@ -39433,6 +39485,48 @@
       "to": "HYP-132",
       "type": "validates",
       "created_at": "2026-10-26T03:42:52+00:00"
+    },
+    {
+      "from": "TASK-462",
+      "to": "ISS-355",
+      "type": "addresses",
+      "created_at": "2026-10-26T03:56:39+00:00"
+    },
+    {
+      "from": "TASK-462",
+      "to": "ISS-356",
+      "type": "addresses",
+      "created_at": "2026-10-26T03:56:39+00:00"
+    },
+    {
+      "from": "ISS-355",
+      "to": "COMP-015",
+      "type": "located_in",
+      "created_at": "2026-10-26T03:56:39+00:00"
+    },
+    {
+      "from": "ISS-356",
+      "to": "COMP-016",
+      "type": "located_in",
+      "created_at": "2026-10-26T03:56:39+00:00"
+    },
+    {
+      "from": "CHG-563",
+      "to": "ISS-355",
+      "type": "resolves",
+      "created_at": "2026-10-26T04:01:53+00:00"
+    },
+    {
+      "from": "CHG-563",
+      "to": "ISS-356",
+      "type": "resolves",
+      "created_at": "2026-10-26T04:01:53+00:00"
+    },
+    {
+      "from": "CHG-563",
+      "to": "TASK-462",
+      "type": "implements",
+      "created_at": "2026-10-26T04:01:53+00:00"
     }
   ]
 }
