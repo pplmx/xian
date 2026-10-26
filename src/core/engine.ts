@@ -116,7 +116,22 @@ class GameEngine {
       return;
     }
     const dt = (now - this.lastTickAt) / 1000;
-    if (dt <= 0) return;
+    if (dt <= 0) {
+      /**
+       * 同一毫秒两拍(可见性回调撞上 interval)不必推进;墙钟倒退则是另一回事 ——
+       * 基准留在未来会让往后每一拍都算出负数、提前返回,心跳要停到墙钟自己追平为止
+       * (手改时间 / NTP 校正之后,修为、灵气、建筑、历练一起停,界面上还没有提示)。
+       * 回拨时把三枚基准一起挪到当下,游戏从回拨后的时钟接着走;那一刻的差值为负,
+       * 本来就没有可结算的时长,故不补也不发归来账。
+       */
+      if (dt < 0) {
+        console.warn("[引擎] 墙钟回拨,心跳基准重设", Math.round(-dt), "秒");
+        this.lastTickAt = now;
+        this.lastStampAt = now;
+        game.stampActive(now);
+      }
+      return;
+    }
 
     if (dt > OFFLINE_MIN_SECONDS) {
       // 长时间停摆(休眠/后台冻结):走离线结算。与 start 同理,先翻日再结算,
