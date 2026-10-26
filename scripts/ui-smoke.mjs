@@ -498,15 +498,25 @@ async function checkImportReplacesSave(browser) {
     watchPageErrors(page, pageErrors);
     await page.goto(INDEX + "#/settings", { waitUntil: "load" });
     await page.waitForTimeout(1500);
-    await page.setInputFiles('input[type="file"]', {
-      name: "xuanshu-save.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(payload, "utf8"),
-    });
-    await page
-      .getByRole("button", { name: /用这份替换/ })
-      .first()
-      .click({ timeout: 5000 });
+    /*
+     * 这一段全程包在 try 里:选文件或确认框任何一步没出现(文件读不出来、校验没过、
+     * 按钮改名),都要变成一条**说得清的失败行**,而不是让异常把整轮冒烟打断 ——
+     * 门自己崩掉时,后续所有场景都不会跑,而报告里只留一句栈。
+     */
+    try {
+      await page.setInputFiles('input[type="file"]', {
+        name: "xuanshu-save.json",
+        mimeType: "application/json",
+        buffer: Buffer.from(payload, "utf8"),
+      });
+      await page
+        .getByRole("button", { name: /用这份替换/ })
+        .first()
+        .click({ timeout: 5000 });
+    } catch {
+      fails.push("导入确认没走到「用这份替换」—— 选文件或校验那一步断了");
+      return fails;
+    }
     // 确认后 800ms 才 reload,再多等一会儿让新档完全起来
     await page.waitForTimeout(3000);
     const readName = async () => {
@@ -528,7 +538,7 @@ async function checkImportReplacesSave(browser) {
       fails.push(`旧道号「${oldName}」又回来了`);
     }
     if (pageErrors.length) fails.push(`导入流程页面异常:${[...new Set(pageErrors)].join(" | ")}`);
-    console.log(`导入存档:${oldName} → ${NEW_NAME},挂 3 秒后仍是新档`);
+    if (fails.length === 0) console.log(`导入存档:${oldName} → ${NEW_NAME},挂 3 秒后仍是新档`);
   } finally {
     await ctx.close();
   }
