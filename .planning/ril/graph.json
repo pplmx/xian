@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 506,
+  "round": 507,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T16:33:39+00:00",
+  "updated_at": "2026-10-26T16:38:11+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -28978,6 +28978,34 @@
       "touched_round": 506,
       "commit": "0d9fe852",
       "title": "pillValue.spec 守法则清单:编号唯一 + 每条在两处清单里;补写 C2/E3/E4"
+    },
+    "ISS-405": {
+      "id": "ISS-405",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T16:38:11+00:00",
+      "updated_at": "2026-10-26T16:38:11+00:00",
+      "touched_round": 507,
+      "title": "每族掉落起点只活在一次性的探针里 —— 做完就丢",
+      "summary": "「哪一族从第几境开始掉」是决定前期能不能靠捡丹活下来的关键读数,但它此前只在我临时写的探针里算过一次,看完即删。寿元从 4 境起(前期靠炼不靠捡)、修速从 5 境起,这些是设计现状,却没有任何地方写着,也没人能在改动当天看出它变了。",
+      "severity": 0.2,
+      "confidence": 0.9
+    },
+    "TASK-511": {
+      "id": "TASK-511",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T16:38:11+00:00",
+      "updated_at": "2026-10-26T16:38:11+00:00",
+      "touched_round": 507,
+      "category": "detectability",
+      "title": "pillValue.spec 打印各族掉落起点并钉住现状",
+      "summary": "一屏矩阵 + 断言五族起点(修为/悟道/灵气 0、寿元 4、修速 5)+ 状态族显式无掉落线;注入把凤髓膏提前一境即红。",
+      "severity": 0.2,
+      "confidence": 0.9,
+      "effort": 1
     }
   },
   "edges": [

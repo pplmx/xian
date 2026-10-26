@@ -605,3 +605,33 @@ describe("定价法则 · 清单本身不许漂移", () => {
     expect(ids.length).toBeGreaterThanOrEqual(8);
   });
 });
+
+describe("掉落线的起点 · 一屏看清每族从第几境开始掉", () => {
+  /*
+   * 这一屏是给做内容的人看的:哪一族在哪个境界还空着,一眼就知道该往哪儿加丹。
+   * 断言只钉「起点」这一件事 —— 它直接决定玩家在前期能不能靠捡到某一族的丹活下来。
+   * 改这一行必须是**有意的**(比如故意把寿元掉落压到四境之后),改的时候把理由写进
+   * 那条丹的注释,再回来更新这里。
+   *
+   * 现状:寿元从 4 境起(前期靠炼不靠捡)、修速从 5 境起;状态族没有掉落线 ——
+   * 状态丹全是炼出来的,这是刻意的,故断言里要求它缺席。
+   */
+  const FIRST: Record<string, number> = {};
+  for (const p of PILLS) {
+    if (pillLine(p) !== "drop") continue;
+    const fam = pillFamily(p);
+    FIRST[fam] = Math.min(FIRST[fam] ?? Number.MAX_SAFE_INTEGER, p.minRealm);
+  }
+
+  it("各族掉落起点与记录一致", () => {
+    const rows = Object.entries(FIRST).sort((a, b) => a[1] - b[1]);
+    console.log(
+      `\n掉落线起点(按境界):\n  ${rows.map(([f, m]) => `${FAMILY_NAME[f as keyof typeof FAMILY_NAME] ?? f} ${m}`).join(" · ")}`,
+    );
+    expect(FIRST).toEqual({ exp: 0, qi: 0, wudao: 0, lifespan: 4, tempo: 5 });
+    expect(
+      FIRST.state,
+      "状态族本就没有掉落线 —— 有了一条就说明内容变了,回来改注释",
+    ).toBeUndefined();
+  });
+});
