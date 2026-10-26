@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 469,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T07:31:18+00:00",
+  "updated_at": "2026-10-26T07:33:37+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 468,
+      "touched_round": 469,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27539,10 +27539,10 @@
     "ISS-368": {
       "id": "ISS-368",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T07:31:18+00:00",
-      "updated_at": "2026-10-26T07:31:18+00:00",
+      "updated_at": "2026-10-26T07:33:37+00:00",
       "touched_round": 469,
       "title": "只读页照跑「归来结算」:内存里加钱并通报,而横幅写着进度不会保存",
       "summary": "App 的 onMounted 会结坊市寄卖自售、货架/悬赏换新、弟子归来。只读页只被拦了引擎启动与落盘,这一段照跑 —— 玩家在「本页只读,进度不会保存」的横幅下收到「灵石到账」,数字也确实涨了,但永远不会进档。与「只读页不启引擎」同一条理由:这一页的数字必须停在打开存档的那一刻。",
@@ -27552,10 +27552,10 @@
     "TASK-474": {
       "id": "TASK-474",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T07:31:18+00:00",
-      "updated_at": "2026-10-26T07:31:18+00:00",
+      "updated_at": "2026-10-26T07:33:37+00:00",
       "touched_round": 469,
       "category": "correctness",
       "title": "归来结算抽成 composable;只读页整体跳过",
@@ -27563,6 +27563,17 @@
       "severity": 0.4,
       "confidence": 0.95,
       "effort": 1.5
+    },
+    "CHG-574": {
+      "id": "CHG-574",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T07:33:37+00:00",
+      "updated_at": "2026-10-26T07:33:37+00:00",
+      "touched_round": 469,
+      "commit": "dcd91c8f",
+      "title": "归来结算抽到 composables/useReturnSettle;只读页整体跳过"
     }
   },
   "edges": [
@@ -40234,6 +40245,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T07:13:38+00:00"
+    },
+    {
+      "from": "CHG-574",
+      "to": "ISS-368",
+      "type": "resolves",
+      "created_at": "2026-10-26T07:33:37+00:00"
+    },
+    {
+      "from": "CHG-574",
+      "to": "TASK-474",
+      "type": "implements",
+      "created_at": "2026-10-26T07:33:37+00:00"
+    },
+    {
+      "from": "ISS-368",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T07:33:37+00:00"
     }
   ]
 }
