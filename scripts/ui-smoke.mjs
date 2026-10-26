@@ -501,6 +501,23 @@ const silent = results.flatMap((r) => r.silent);
 const errors = results.flatMap((r) => r.errors);
 for (const msg of legacyFails) errors.push({ where: "旧档兼容", msg });
 for (const msg of fullFails) errors.push({ where: "存储写满", msg });
+/**
+ * 每页至少点得到一个控件 —— 「页面画出来了,但一个能点的都没有」。
+ *
+ * 冒烟此前只在「点了报错」时红:一页若因某个 v-if 写反、数据分支没走到,
+ * 整块行动区消失,它会安静地通过(0 次点击,0 个错误) —— 而那正是最该被发现的一种坏。
+ * 门槛设 1 而不是平均值:只拦「彻底没有」,不惩罚本来就该安静的页面。
+ */
+const MIN_CLICKS_PER_ROUTE = 1;
+for (const r of results) {
+  if (r.clicked < MIN_CLICKS_PER_ROUTE) {
+    errors.push({
+      where: r.route,
+      msg: `整页没有可点的控件(${r.clicked} 次点击)—— 是行动区没渲染出来,还是全被条件挡住了?`,
+    });
+  }
+}
+
 const blockedTotal = results.reduce((n, r) => n + r.blocked, 0);
 
 console.log(`\n界面冒烟:${ROUTES.length} 页,点击 ${clicked} 次(每页上限 ${DEPTH})`);
