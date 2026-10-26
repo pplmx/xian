@@ -281,3 +281,16 @@ export function attemptBreakthrough(): BreakthroughView | null {
   showBreakthrough(view);
   return view;
 }
+
+/**
+ * 期望尝试次数 = 1 / 成功率 —— 界面上「平均约 1.4 次」那行用。
+ *
+ * 为什么值得摆出来:成功率 71% 读起来"还行",但它的期望是 1.4 次、且有一成长尾要试三次以上。
+ * 概率本身不直观,期望次数直观 —— 与 realms.sim 打出来的读数同一口径。
+ *
+ * @returns 成功率 ≤0 或 ≥1 时给 null(必成不必说「平均」,必败没有意义)
+ */
+export function expectedTries(rate: number): number | null {
+  if (!Number.isFinite(rate) || rate <= 0 || rate >= 1) return null;
+  return Math.round((1 / rate) * 10) / 10;
+}

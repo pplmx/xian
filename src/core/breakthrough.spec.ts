@@ -4,7 +4,12 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
-import { tribulationSuccessRate, breakthroughInfo, attemptBreakthrough } from "./breakthrough";
+import {
+  tribulationSuccessRate,
+  breakthroughInfo,
+  attemptBreakthrough,
+  expectedTries,
+} from "./breakthrough";
 import { buildTribulationPlan, currentTribulationPlan } from "./tribulationDecision";
 import {
   prepareBreakthrough,
@@ -220,6 +225,30 @@ describe("渡劫成功率推演", () => {
       );
       expect(info.needTribulation, `${REALMS[entry]!.name} 是界域入口,却没有劫`).toBe(true);
       expect(info.isMajor).toBe(true);
+    }
+  });
+});
+
+describe("期望尝试次数 · 界面上「平均约 N 次」那行的口径", () => {
+  it("1 / 成功率,一位小数", () => {
+    expect(expectedTries(0.5)).toBe(2);
+    expect(expectedTries(0.71)).toBe(1.4);
+    expect(expectedTries(0.95)).toBe(1.1);
+  });
+
+  it("必成/必败/坏值都给 null —— 不写「平均」也不写 NaN", () => {
+    for (const bad of [1, 1.2, 0, -0.3, NaN, Infinity]) {
+      expect(expectedTries(bad), String(bad)).toBeNull();
+    }
+  });
+
+  it("自证:成功率越高期望越接近 1,且永不小于 1", () => {
+    let prev = Infinity;
+    for (const r of [0.3, 0.5, 0.71, 0.9, 0.99]) {
+      const e = expectedTries(r)!;
+      expect(e).toBeLessThan(prev);
+      expect(e).toBeGreaterThanOrEqual(1);
+      prev = e;
     }
   });
 });

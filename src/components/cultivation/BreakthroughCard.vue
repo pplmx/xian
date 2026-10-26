@@ -28,6 +28,11 @@
         >
           {{ btInfo.rateText }}
         </p>
+        <!--
+          概率不直观,期望直观:71% 读起来"还行",但它意味着平均要试 1.4 次。
+          数值来自 core 的 expectedTries(与 realms.sim 同一个口径),不在这里另算。
+        -->
+        <p v-if="triesText" class="tabular text-[10px] text-ink-faint">{{ triesText }}</p>
       </div>
       <div class="rounded-md bg-paper-deep/60 px-2.5 py-1.5">
         <p class="text-[10px] text-ink-faint">{{ btInfo.needTribulation ? "此劫" : "渡劫" }}</p>
@@ -166,7 +171,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useUiStore } from "@/stores/ui";
-import { attemptBreakthrough, breakthroughInfo } from "@/core/breakthrough";
+import { attemptBreakthrough, breakthroughInfo, expectedTries } from "@/core/breakthrough";
 import { todayWeather } from "@/core/weather";
 import { prepareBreakthrough, pillPrepShortfall } from "@/core/earlyGameService";
 import { toNum } from "@/utils/gnum";
@@ -304,5 +309,11 @@ const breakthroughBuffRows = computed(() => {
     });
   }
   return rows;
+});
+
+/** 成功率旁边的「平均约 N 次」—— 必成时不说「平均」 */
+const triesText = computed(() => {
+  const n = expectedTries(btInfo.value.rate);
+  return n === null ? "" : `平均约 ${n} 次`;
 });
 </script>
