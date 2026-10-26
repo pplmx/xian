@@ -8,10 +8,17 @@
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { rerollMortalWorld } from "./mortalWorldService";
-import { WORLD_REROLL_FLOOR, worldRerollCost, rerollWorldByFruit } from "./worldReroll";
+import {
+  WORLD_REROLL_FLOOR,
+  WORLD_REROLL_RATE,
+  worldRerollCost,
+  rerollWorldByFruit,
+} from "./worldReroll";
 
 /** 把 store 里的三件事按出口的口径递进去 */
 function reroll(): ReturnType<typeof rerollWorldByFruit> {
@@ -191,5 +198,28 @@ describe("换一方天地 · 历练途中不换界", () => {
     expect(reroll()).toBe("busy");
     adventure.session = null as never;
     expect(reroll()).toBe("ok");
+  });
+});
+
+describe("手册里的价 · 与常数同源", () => {
+  /*
+   * 手册写着「按余额一成半、至少 15 枚」。这类数字最容易被忘:调了常量、文档没跟,
+   * 玩家按手册算出来的价与实际扣款对不上 —— 与「改常数就撒谎」同一个病。
+   */
+  const DOC = readFileSync(resolve(__dirname, "../../docs/usage.md"), "utf8");
+  const RATE_WORD: Record<string, string> = {
+    "0.1": "一成",
+    "0.15": "一成半",
+    "0.2": "两成",
+    "0.25": "两成半",
+  };
+
+  it("抽成与起步价都对得上", () => {
+    const rateWord = RATE_WORD[String(WORLD_REROLL_RATE)];
+    expect(rateWord, `抽成 ${WORLD_REROLL_RATE} 没有对应的中文说法,先补一张词表`).toBeDefined();
+    expect(DOC, `手册没写「${rateWord}」`).toContain(rateWord!);
+    expect(DOC, `手册写的起步价不是 ${WORLD_REROLL_FLOOR} 枚`).toContain(
+      `至少 ${WORLD_REROLL_FLOOR} 枚`,
+    );
   });
 });
