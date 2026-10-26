@@ -194,3 +194,25 @@ describe("排版量法口径", () => {
     expect(SCRIPT).toContain("if (controlHostsSeen === 0)");
   });
 });
+
+describe("排版门的覆盖面 · 视口档位不许悄悄缩水", () => {
+  /*
+   * 这道门每加一档视口都是被某一类真实毛病逼出来的(320 窄屏、844×390 横屏、
+   * 1280×800 桌面、390 的 200% 缩放)。删掉一档不会让门变红,只会让它安静地
+   * 少量一部分屏幕 —— 而"少量了"和"量过了"在报告里长得一模一样。
+   */
+  const widths = [...SCRIPT.matchAll(/\{\s*width:\s*(\d+),\s*height:\s*(\d+),\s*tag:/g)].map((m) =>
+    Number(m[1]),
+  );
+
+  it("五档视口都在:320 / 375 / 390 / 844 / 1280", () => {
+    for (const w of [320, 375, 390, 844, 1280]) {
+      expect(widths, `少了 ${w} 宽那一档 —— 那一类屏幕从此不再被量`).toContain(w);
+    }
+  });
+
+  it("200% 缩放那一档仍在量(195 CSS px)", () => {
+    expect(SCRIPT, "200% 缩放的量法不见了").toMatch(/195/);
+    expect(SCRIPT).toMatch(/zoomProblems|zoomBad/);
+  });
+});
