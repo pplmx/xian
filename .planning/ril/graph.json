@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 525,
+  "round": 527,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T20:31:53+00:00",
+  "updated_at": "2026-10-26T20:44:01+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29708,6 +29708,45 @@
       "touched_round": 525,
       "commit": "e9185782",
       "title": "存储写满自愈后核对盘上分片(≥7 且 settings 在场)"
+    },
+    "ISS-424": {
+      "id": "ISS-424",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T20:44:00+00:00",
+      "updated_at": "2026-10-26T20:44:01+00:00",
+      "touched_round": 527,
+      "title": "世界页没有「这一世有多长、跨几层」—— 信息在路线图里,但得先展开才看得到",
+      "summary": "世界页首屏只有名字/摘要/命数/所钟;段数与层级跨度只存在于下面的路线 SVG 里(点的位置与大小)。玩家要判断「这一世份量」得先看图。两个数本来就有(链长、tier 的 min/max)。",
+      "severity": 0.15,
+      "confidence": 0.9
+    },
+    "TASK-530": {
+      "id": "TASK-530",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T20:44:00+00:00",
+      "updated_at": "2026-10-26T20:44:01+00:00",
+      "touched_round": 527,
+      "category": "ux",
+      "title": "WorldView 增 stages/tierText,世界页补一行概览",
+      "summary": "与链数据同源;层级全相同时写「层级 5」而不是「5–5」;判据两条(与链长/跨度一致 + 退化自证)。",
+      "severity": 0.15,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-629": {
+      "id": "CHG-629",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T20:44:00+00:00",
+      "updated_at": "2026-10-26T20:44:01+00:00",
+      "touched_round": 527,
+      "commit": "03323a6d",
+      "title": "世界页补「几段地界 · 层级跨度」"
     }
   },
   "edges": [
@@ -43369,6 +43408,24 @@
       "to": "TASK-529",
       "type": "implements",
       "created_at": "2026-10-26T20:31:53+00:00"
+    },
+    {
+      "from": "CHG-629",
+      "to": "ISS-424",
+      "type": "resolves",
+      "created_at": "2026-10-26T20:44:00+00:00"
+    },
+    {
+      "from": "CHG-629",
+      "to": "TASK-530",
+      "type": "implements",
+      "created_at": "2026-10-26T20:44:00+00:00"
+    },
+    {
+      "from": "TASK-530",
+      "to": "ISS-424",
+      "type": "addresses",
+      "created_at": "2026-10-26T20:44:01+00:00"
     }
   ]
 }
