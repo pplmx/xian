@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 501,
+  "round": 502,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T15:37:49+00:00",
+  "updated_at": "2026-10-26T15:46:25+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 500,
+      "touched_round": 502,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28783,6 +28783,45 @@
       "touched_round": 501,
       "commit": "99b2666e",
       "title": "layoutMeasure.spec 钉住五档视口与 200% 缩放那一档"
+    },
+    "ISS-400": {
+      "id": "ISS-400",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:42:04+00:00",
+      "updated_at": "2026-10-26T15:46:25+00:00",
+      "touched_round": 502,
+      "title": "具名场景被删掉时,没有任何判据察觉门少了覆盖",
+      "summary": "删掉一条具名场景(旧档迁移 / 存储写满 / 挂机稳定 / 走完一次转世)不会让门变红,只会少量一类毛病,报告里仍旧是绿色的勾 —— 与视口档位被删是同一类事故。上一轮钉了排版门的视口覆盖面,冒烟的三条环境场景与排版门的具名任务没有对应的判据。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-506": {
+      "id": "TASK-506",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:42:04+00:00",
+      "updated_at": "2026-10-26T15:46:25+00:00",
+      "touched_round": 502,
+      "category": "detectability",
+      "title": "gateWiring 补三条:冒烟场景有定义且被调用 / 点击下限=1 / 排版门八个具名场景仍登记",
+      "summary": "场景判据按 TASKS 登记行匹配(场景名在注释与日志里也有,只查 includes 会漏)。注入两条均红。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-606": {
+      "id": "CHG-606",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:46:25+00:00",
+      "updated_at": "2026-10-26T15:46:25+00:00",
+      "touched_round": 502,
+      "commit": "2c752510",
+      "title": "gateWiring:具名场景被删时自检要红(含 TASKS 登记行匹配)"
     }
   },
   "edges": [
@@ -42030,6 +42069,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T15:37:49+00:00"
+    },
+    {
+      "from": "CHG-606",
+      "to": "ISS-400",
+      "type": "resolves",
+      "created_at": "2026-10-26T15:46:25+00:00"
+    },
+    {
+      "from": "CHG-606",
+      "to": "TASK-506",
+      "type": "implements",
+      "created_at": "2026-10-26T15:46:25+00:00"
+    },
+    {
+      "from": "ISS-400",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T15:46:25+00:00"
     }
   ]
 }
