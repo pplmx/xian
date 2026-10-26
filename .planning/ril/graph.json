@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 477,
+  "round": 478,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T09:11:50+00:00",
+  "updated_at": "2026-10-26T09:25:16+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 471,
+      "touched_round": 478,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27847,6 +27847,45 @@
       "touched_round": 477,
       "commit": "c62dece7",
       "title": "usage 文档补三条名字/承诺判据(技艺名单、天赋四等、道侣无属性)"
+    },
+    "ISS-376": {
+      "id": "ISS-376",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:18:12+00:00",
+      "updated_at": "2026-10-26T09:25:16+00:00",
+      "touched_round": 478,
+      "title": "旧档兼容只有单测:没人走过「真实启动路径 + 盘上回读」",
+      "summary": "saveMigration 等用例直接调迁移函数,而迁移真正的调用点在 main.ts 的启动序列里(只读页还会跳过)。启动顺序改一次、或迁移挂掉但被 catch 吞了,单测全绿而玩家的老档进不来。本轮实测:标量灵草 7 + 缺五档表的老形状,走真实启动后盘上确实变成 {1:7,2:0,...} 且旧键清掉 —— 现在对,但没有任何门盯着。",
+      "severity": 0.4,
+      "confidence": 0.9
+    },
+    "TASK-482": {
+      "id": "TASK-482",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:18:12+00:00",
+      "updated_at": "2026-10-26T09:25:16+00:00",
+      "touched_round": 478,
+      "category": "detectability",
+      "title": "ui-smoke 增加旧档场景:旧形状落盘 → 真启动 → 盘上回读",
+      "summary": "在界面冒烟里加 checkLegacySave:按旧形状(标量 herb、无 herbs 表)加密落盘,打开 /inventory,再解密读回,断言五档已写回、旧键清掉、7 株一株不少、页面无异常。失败并入 errors,与其余冒烟失败同一条出口。",
+      "severity": 0.4,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-582": {
+      "id": "CHG-582",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:25:15+00:00",
+      "updated_at": "2026-10-26T09:25:16+00:00",
+      "touched_round": 478,
+      "commit": "45a27bf5",
+      "title": "ui-smoke 增 checkLegacySave:旧形状落盘 → 真启动 → 盘上回读"
     }
   },
   "edges": [
@@ -40662,6 +40701,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T09:11:49+00:00"
+    },
+    {
+      "from": "CHG-582",
+      "to": "ISS-376",
+      "type": "resolves",
+      "created_at": "2026-10-26T09:25:15+00:00"
+    },
+    {
+      "from": "CHG-582",
+      "to": "TASK-482",
+      "type": "implements",
+      "created_at": "2026-10-26T09:25:15+00:00"
+    },
+    {
+      "from": "ISS-376",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T09:25:16+00:00"
     }
   ]
 }
