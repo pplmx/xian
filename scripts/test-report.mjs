@@ -258,6 +258,7 @@ const CATEGORIES = [
       "useGameNow",
       "engineTick",
       "modalStack",
+      "singleWriter",
       "swPrecache",
       "smokeReading",
       "absenceLedger",

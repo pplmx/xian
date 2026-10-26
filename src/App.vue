@@ -72,6 +72,7 @@ import {
 } from "@/composables/useServiceWorkerUpdate";
 import { subscribeSaveWriteFailure } from "@/utils/storage";
 import { engine } from "@/core/engine";
+import { saveReader } from "@/core/singleWriter";
 import { notify } from "@/core/notify";
 import { apprenticeReapText } from "@/core/apprenticeService";
 import { applyTheme, initTheme } from "@/core/theme";
@@ -179,7 +180,16 @@ onMounted(() => {
         /* 拿不到 registration 则无更新提示,功能照常 */
       });
   }
-  engine.start();
+  /*
+   * 只读页(多标签的后来者)不启动心跳:它每拍都会改响应式状态,而存储层的闸只挡住
+   * 落盘 —— 让引擎空转只会让这一页的数字慢慢跑到跟存档无关,玩家看到的是一份假读数。
+   * 这一页仍可浏览(存档是打开那一刻的快照),但要写一句话说明为什么它不会保存。
+   */
+  if (saveReader.value) {
+    ui.toast("已在另一处打开 —— 此页只读,进度不会保存。请回到那一页继续。", "warn");
+  } else {
+    engine.start();
+  }
   window.addEventListener("pointerdown", onPointerDown);
 });
 

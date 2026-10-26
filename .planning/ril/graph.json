@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 459,
+  "round": 460,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T04:02:05+00:00",
+  "updated_at": "2026-10-26T04:33:30+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -286,7 +286,7 @@
       "version": 1,
       "created_at": "2026-09-09T12:53:18+00:00",
       "updated_at": "2026-09-09T12:53:18+00:00",
-      "touched_round": 424,
+      "touched_round": 460,
       "summary": "SettingsView/存档系统(导出/导入/重置)"
     },
     "ISS-012": {
@@ -11145,7 +11145,7 @@
       "version": 1,
       "created_at": "2026-09-15T13:23:43+00:00",
       "updated_at": "2026-09-15T13:23:43+00:00",
-      "touched_round": 441,
+      "touched_round": 460,
       "summary": "Service Worker 离线层(public/sw.js + main.ts 注册 + scripts/offline-check.mjs 验证)"
     },
     "EV-170": {
@@ -27108,6 +27108,61 @@
       "touched_round": 459,
       "commit": "26b1cdb8",
       "title": "弹窗栈抽成共用模块;安卓返回键先关栈顶;死导出审计读全部 script 块"
+    },
+    "ISS-357": {
+      "id": "ISS-357",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T04:10:30+00:00",
+      "updated_at": "2026-10-26T04:10:30+00:00",
+      "touched_round": 460,
+      "title": "两个标签页各跑一份心跳,同一条存档被两边轮流覆盖",
+      "summary": "全仓没有任何单写者协商:没有 BroadcastChannel、没有 storage 事件、没有 navigator.locks。两个页面各自 engine.start(),各自节流写同一批 xuanshu.* 分片,后落盘的覆盖先落盘的。典型场景:桌面浏览器开了第二个标签页 / Electron 双击启动两次 —— 闲置那页每 5 秒仍在写它自己的旧状态,把前台那页的进度盖回去,而且双方都没有任何提示。",
+      "severity": 0.7,
+      "confidence": 0.85
+    },
+    "ISS-358": {
+      "id": "ISS-358",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T04:33:19+00:00",
+      "updated_at": "2026-10-26T04:33:19+00:00",
+      "touched_round": 460,
+      "title": "入口模块改成顶层 await 之后,SW 注册的 load 监听永远等不到",
+      "summary": "main.ts 的 SW 注册挂在 window load 上。入口模块一旦有顶层 await(本轮的单写者判定),模块可能在 load 之后才执行完 —— 监听器加上去时那一声已经响过,SW 从不注册、离线能力静默消失。实测:offline-check 卡在 navigator.serviceWorker.ready,一等 150 秒(它没有自带超时,直接挂死)。",
+      "severity": 0.55,
+      "confidence": 0.95
+    },
+    "TASK-463": {
+      "id": "TASK-463",
+      "type": "task",
+      "status": "active",
+      "version": 2,
+      "created_at": "2026-10-26T04:33:20+00:00",
+      "updated_at": "2026-10-26T04:33:30+00:00",
+      "touched_round": 460,
+      "category": "correctness",
+      "title": "多标签单写者:后来者只读;顺带修 SW 注册错过 load 的窗口",
+      "summary": "core/singleWriter 用 Web Locks 的 ifAvailable 选写者:先到者持锁到卸载,后来的拿到 null 就交还、标只读。只读页在 main 里跳过扫描/迁移、在存储层合闸(写与删都空转)、App 不启动引擎并 toast 说明。SW 注册改成 readyState 已 complete 就直接注册。",
+      "severity": 0.7,
+      "confidence": 0.85,
+      "effort": 3,
+      "lock_owner": "xian-loop-460",
+      "lock_until": "2026-10-26T05:33:30+00:00"
+    },
+    "DEC-199": {
+      "id": "DEC-199",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T04:33:30+00:00",
+      "updated_at": "2026-10-26T04:33:30+00:00",
+      "touched_round": 460,
+      "title": "多标签:后来者只读,不做自动接管",
+      "rationale": "写者持有 Web Locks 直到卸载;后来者拿不到就整页只读(存储层合闸、不启引擎、提示一句)。不做「写者走了就接管」:接管页手里是打开那一刻的旧状态,直接开写会把写者最后保存的进度盖掉;要接管必须先重载成最新档,那是一条独立的交互决策。也不选「隐藏页暂停心跳」:它会把后台挂机从全额改成离线折扣(0.9)并受洞府封顶,是平衡改动而非 bug 修复。",
+      "alternatives_rejected": "[\"自动接管:旧状态覆盖新档\",\"隐藏标签页暂停心跳:改后台收益口径,属平衡改动\",\"BroadcastChannel 广播状态:两个写者仍存在,只是更快互相覆盖\"]"
     }
   },
   "edges": [
@@ -39527,6 +39582,30 @@
       "to": "TASK-462",
       "type": "implements",
       "created_at": "2026-10-26T04:01:53+00:00"
+    },
+    {
+      "from": "TASK-463",
+      "to": "ISS-357",
+      "type": "addresses",
+      "created_at": "2026-10-26T04:33:30+00:00"
+    },
+    {
+      "from": "TASK-463",
+      "to": "ISS-358",
+      "type": "addresses",
+      "created_at": "2026-10-26T04:33:30+00:00"
+    },
+    {
+      "from": "ISS-357",
+      "to": "COMP-001",
+      "type": "located_in",
+      "created_at": "2026-10-26T04:33:30+00:00"
+    },
+    {
+      "from": "ISS-358",
+      "to": "COMP-022",
+      "type": "located_in",
+      "created_at": "2026-10-26T04:33:30+00:00"
     }
   ]
 }

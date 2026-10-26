@@ -4,14 +4,25 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { Capacitor } from "@capacitor/core";
 import App from "./App.vue";
 import { router } from "./router";
-import { migrateLocalSchema, preflightScan } from "./utils/storage";
+import { blockSaveWrites, migrateLocalSchema, preflightScan } from "./utils/storage";
+import { acquireSaveWriterRole } from "./core/singleWriter";
 import { useUiStore } from "./stores/ui";
 import { summarizeError, useDiagStore } from "./stores/diag";
 import "./style.css";
 
-// 启动前扫描损坏存档 + 结构升级,避免白屏
-const corrupted = preflightScan();
-migrateLocalSchema();
+/**
+ * 单写者判定放在**所有存档写入之前**:下面的扫描与结构升级都会改盘。
+ *
+ * 同一份存档同时只该有一个写者 —— 两个页面各自跑心跳、各自节流落盘,后写的那份
+ * 会把另一页的进度盖回去(判据与取舍见 core/singleWriter 的文件头)。
+ * 后来的页面在这里就被切成只读:不扫描、不迁移、不写盘,界面上给一句明白话。
+ */
+const isSaveWriter = await acquireSaveWriterRole();
+if (!isSaveWriter) blockSaveWrites();
+
+// 启动前扫描损坏存档 + 结构升级,避免白屏(只读页不碰盘,连修复也不做)
+const corrupted = isSaveWriter ? preflightScan() : [];
+if (isSaveWriter) migrateLocalSchema();
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -65,9 +76,17 @@ if (corrupted.length > 0) {
 // 注册失败静默 —— 有 SW 是增强(断网可重开),没有也不影响在线游玩。
 const isLocalShell = location.protocol === "file:" || Capacitor.isNativePlatform();
 if (import.meta.env.PROD && !isLocalShell && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
+  const registerSw = () => {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
       /* 注册失败不打扰玩家:功能可降级,见 public/sw.js 注释 */
     });
-  });
+  };
+  /*
+   * 不能只挂 load 监听。入口模块里有顶层 await(单写者判定),模块可能在 load
+   * **之后**才执行完 —— 那一句监听器永远等不到,表现是 SW 从不注册、离线能力
+   * 静默消失(offline-check 的 `serviceWorker.ready` 会一直挂着,一等两分半)。
+   * 已经 complete 就直接注册,否则再挂一次性的监听。
+   */
+  if (document.readyState === "complete") registerSw();
+  else window.addEventListener("load", registerSw, { once: true });
 }

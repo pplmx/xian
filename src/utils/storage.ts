@@ -134,13 +134,35 @@ export function saveWriteFailure(): { at: number; keys: string[] } | null {
   return writeFailure;
 }
 
+/**
+ * 只读页(多标签的后来者)对存储层的闸。
+ *
+ * 判定在 `core/singleWriter`:同一份存档同时只该有一个写者,否则两个页面会按各自的
+ * 节流节奏把 `xuanshu.*` 分片轮流覆盖,后落盘的那份赢 —— 玩家在前台练的进度会被
+ * 另一页的旧状态盖回去,而且两边都毫无提示。
+ *
+ * 闸放在这一层而不是各调用点:持久化插件、离线结算、导入、清档都从这里过,
+ * 一处开关管全部;只读页的读路径(导出、界面读档)不受影响。
+ */
+let writesBlocked = false;
+
+/** 把本页切成只读:丢弃待写队列、停掉刷盘、此后所有写入(含删除)都是空操作 */
+export function blockSaveWrites(): void {
+  writesBlocked = true;
+  pending.clear();
+  if (flushTimer !== undefined) {
+    clearTimeout(flushTimer);
+    flushTimer = undefined;
+  }
+}
+
 /** 立即把待落盘内容写出去;单个分片失败时留在队列里等下一次重试 */
 export function flushSaveWrites(): void {
   if (flushTimer !== undefined) {
     clearTimeout(flushTimer);
     flushTimer = undefined;
   }
-  if (pending.size === 0) return;
+  if (writesBlocked || pending.size === 0) return;
   const failed: string[] = [];
   for (const [key, plain] of pending) {
     try {
@@ -193,11 +215,13 @@ const THROTTLED_STORAGE = {
     }
   },
   setItem: (key: string, value: string): void => {
+    if (writesBlocked) return;
     pending.set(key, value);
     if (flushTimer === undefined) flushTimer = setTimeout(flushSaveWrites, SAVE_FLUSH_MS);
   },
   removeItem: (key: string): void => {
     pending.delete(key);
+    if (writesBlocked) return;
     try {
       localStorage.removeItem(key);
     } catch {
