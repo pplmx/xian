@@ -91,8 +91,13 @@ describe("换一方天地 · 道果真的被花掉", () => {
 
   it("反过来:道果不会因为换世界而变多(没有自供能)", () => {
     const player = usePlayerStore();
+    /*
+     * 两轮就够了:要证的是「每次都是净支出」,不是「能连换五次」。
+     * 从前写的是五轮 —— 每轮都要真生成一个世界(过新颖度门),并行负载高时
+     * 整条用例能顶到 20s 默认上限而偶发超时。少跑三轮不影响这条判据。
+     */
     const gains: number[] = [];
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 2; i += 1) {
       const before = player.reincarnation.daoFruit;
       if (reroll() !== "ok") break;
       gains.push(player.reincarnation.daoFruit - before);

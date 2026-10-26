@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 544,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T22:52:58+00:00",
+  "updated_at": "2026-10-26T22:55:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -30258,13 +30258,26 @@
     "CHG-643": {
       "id": "CHG-643",
       "type": "change",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T22:52:58+00:00",
-      "updated_at": "2026-10-26T22:52:58+00:00",
+      "updated_at": "2026-10-26T22:55:20+00:00",
       "touched_round": 544,
       "commit": "6223f262",
       "title": "手册炼制一行补期望炉数"
+    },
+    "ISS-438": {
+      "id": "ISS-438",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:55:19+00:00",
+      "updated_at": "2026-10-26T22:55:19+00:00",
+      "touched_round": 544,
+      "title": "手册的炼制一行没提开炉卡新增的期望炉数",
+      "summary": "界面加了「平均 N 炉成一炉」,手册的炼制一行仍只说品相;两处对不上。",
+      "severity": 0.1,
+      "confidence": 0.9
     }
   },
   "edges": [
@@ -44166,6 +44179,12 @@
       "to": "TASK-543",
       "type": "implements",
       "created_at": "2026-10-26T22:45:39+00:00"
+    },
+    {
+      "from": "CHG-643",
+      "to": "ISS-438",
+      "type": "resolves",
+      "created_at": "2026-10-26T22:55:19+00:00"
     }
   ]
 }
