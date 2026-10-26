@@ -6,8 +6,10 @@
  * 既没有吞吐数字,也没有"数量级退化会被挡住"的闸门。这一份补上后半句。
  *
  * 三条口径:
- *   ① **测的是数量级,不是跑分**:每条都有"每毫秒多少次"的读数,闸门设在实测的**二十分之一**左右
+ *   ① **测的是数量级,不是跑分**:每条都有"每毫秒多少次"的读数,闸门设在实测的**六十分之一**左右
  *      —— 这样偶尔的 CI 抖动不会红,但"某次改动把某条路径拖慢几十倍"一定会被挡住;
+ *      抖动另有一道兜底:首采样低于闸门时重采一次(见 throughput 的注释) —— 实测同一份代码
+ *      忙时量到 46 次/ms、闲时 3448 次/ms,而墙钟吞吐本来就该被这样区分。
  *   ② **用固定种子**:同一份工作量每次跑的是同一批数,读数才有可比性;
  *   ③ **给出"一晚上能跑多少"**:内容作者真正关心的是"我跑一遍全服模拟要多久",所以每条都换算了
  *      一个可感的规模(十万次掉落 / 一万场战斗 / 一百万步离线)。
@@ -28,15 +30,38 @@ function timeMs(work: () => void): number {
   return Math.max(1, Date.now() - start);
 }
 
-/** 读数 + 闸门:返回每毫秒多少次 */
-function throughput(label: string, count: number, minPerMs: number, work: () => void): number {
-  const ms = timeMs(work);
-  const perMs = count / ms;
+/**
+ * 读数 + 闸门:返回每毫秒多少次。
+ *
+ * 为什么允许重采一次:墙钟吞吐会被调度与 IO 抖动打穿 —— 实测同一条掉落用例闲时
+ * 3200~3500 次/ms,机器忙时量到 46 次/ms(慢 70 倍),而代码一个字没改。重采一次
+ * 足以把「一次性停顿」与「真的慢了几十倍」分开:回归会在两次采样里都在。
+ *
+ * `reset` 是给「跑完要断言精确累计值」的用例的(存档往返的 `ok === ROUNDS`):
+ * 重采前必须清零,否则第二轮把计数翻倍 —— 那就不再是重采样,而是掩盖。
+ */
+function throughput(
+  label: string,
+  count: number,
+  minPerMs: number,
+  work: () => void,
+  reset?: () => void,
+): number {
+  const samples: number[] = [];
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    if (attempt > 1) reset?.();
+    samples.push(count / timeMs(work));
+    if (samples[samples.length - 1]! > minPerMs) break;
+  }
+  const best = Math.max(...samples);
   console.log(
-    `  ${label.padEnd(28, " ")} ${count.toLocaleString()} 次 / ${ms} ms = ${perMs.toFixed(1)} 次/ms`,
+    `  ${label.padEnd(28, " ")} ${count.toLocaleString()} 次 / ${Math.round(count / best)} ms = ${best.toFixed(1)} 次/ms`,
   );
-  expect(perMs).toBeGreaterThan(minPerMs);
-  return perMs;
+  if (samples.length > 1) {
+    console.log(`  ↻ 首采样只量到 ${samples[0]!.toFixed(1)} 次/ms(低于闸门),已重采一次`);
+  }
+  expect(best).toBeGreaterThan(minPerMs);
+  return best;
 }
 
 describe("规模实验 —— 批量模拟的吞吐", () => {
@@ -113,16 +138,49 @@ describe("规模实验 —— 批量模拟的吞吐", () => {
     const state: State = { gold: 1234, bag: Array.from({ length: 20 }, (_, i) => `item-${i}`) };
     const ROUNDS = 10_000;
     let ok = 0;
-    const perMs = throughput("存档编解码", ROUNDS, 20, () => {
-      for (let i = 0; i < ROUNDS; i += 1) {
-        const text = encodeSave(state, format, i);
-        const back = decodeSave(text, format);
-        if (back.ok && back.state.gold === state.gold && back.state.bag.length === state.bag.length)
-          ok += 1;
-      }
-    });
+    const perMs = throughput(
+      "存档编解码",
+      ROUNDS,
+      20,
+      () => {
+        for (let i = 0; i < ROUNDS; i += 1) {
+          const text = encodeSave(state, format, i);
+          const back = decodeSave(text, format);
+          if (
+            back.ok &&
+            back.state.gold === state.gold &&
+            back.state.bag.length === state.bag.length
+          )
+            ok += 1;
+        }
+      },
+      // 重采前清零:下面那条 ok === ROUNDS 是精确账,不能被第二轮累加翻倍
+      () => {
+        ok = 0;
+      },
+    );
     expect(ok).toBe(ROUNDS); // 每一圈都真的往返成功了
     console.log(`    → 十万个档约 ${(100_000 / perMs / 1000).toFixed(1)} 秒`);
+  });
+
+  it("判据自证:一次停顿救得回来,真的慢救不回来", () => {
+    /* 首采样故意忙等 40ms:1000 次 → 25 次/ms,低于闸门 50;第二采样几乎瞬时 */
+    const busy = (ms: number): void => {
+      const until = Date.now() + ms;
+      let spin = 0;
+      while (Date.now() < until) spin += 1;
+      void spin;
+    };
+    let first = true;
+    const stallOnce = (): void => {
+      if (!first) return;
+      first = false;
+      busy(40);
+    };
+    expect(throughput("自证-抖动", 1000, 50, stallOnce)).toBeGreaterThan(50);
+
+    /* 每次都慢:重采救不回来 —— 闸门不是被重采样架空的 */
+    expect(() => throughput("自证-真慢", 1000, 50, () => busy(40))).toThrow();
   });
 
   it("属性:十万次带装备的结算", () => {
