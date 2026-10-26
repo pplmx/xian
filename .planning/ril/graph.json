@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 457,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T03:07:07+00:00",
+  "updated_at": "2026-10-26T03:30:12+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -6476,7 +6476,7 @@
       "version": 2,
       "created_at": "2026-09-12T04:35:19+00:00",
       "updated_at": "2026-09-12T05:26:30+00:00",
-      "touched_round": 424,
+      "touched_round": 457,
       "summary": "界面外壳与底部导航(App.vue 外壳 + TopStatusBar + BottomNavigation + 全局浮层 ToastHost + scripts/layout-check.mjs):承载所有页面的固定骨架,也是「真机排版」的观测面"
     },
     "ISS-099": {
@@ -26910,6 +26910,90 @@
       "touched_round": 457,
       "title": "dt<=0 早退把「同一毫秒两拍」与「墙钟回拨」混为一谈,回拨后 lastTickAt 留在未来",
       "confidence": 0.95
+    },
+    "ISS-353": {
+      "id": "ISS-353",
+      "type": "issue",
+      "status": "resolved",
+      "version": 3,
+      "created_at": "2026-10-26T03:13:01+00:00",
+      "updated_at": "2026-10-26T03:30:12+00:00",
+      "touched_round": 457,
+      "title": "背包角标与破境圆点只对眼睛说话 —— 底栏的无障碍名称里没有这两件事",
+      "summary": "当前项本身没问题:RouterLink 在 exact-active 时自己渲染 aria-current=page(原判断被 EV-479 推翻,见 HYP-131)。真正缺的是两枚状态标记:背包角标「3」会被念成「背包 3」,听起来像第 3 项(它说的是有几件新货);破境圆点 aria-hidden 之后读屏完全听不到「此刻可以破境」。",
+      "severity": 0.4,
+      "confidence": 0.95
+    },
+    "TASK-460": {
+      "id": "TASK-460",
+      "type": "task",
+      "status": "resolved",
+      "version": 5,
+      "created_at": "2026-10-26T03:15:44+00:00",
+      "updated_at": "2026-10-26T03:30:12+00:00",
+      "touched_round": 457,
+      "category": "correctness",
+      "title": "底栏角标补读屏等价物;把「当前项」钉成浏览器逐页判据",
+      "summary": "背包角标 aria-hidden + sr-only「N 件新物」,破境圆点补 sr-only「可破境」;uiLayering.spec 守「用 RouterLink、不手写第二份 aria-current」;layout-check 逐页量「恰一枚且指向当前路由」,并用「把 to 写歪」的注入证明会红。",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 2
+    },
+    "COMP-031": {
+      "id": "COMP-031",
+      "type": "component",
+      "status": "abandoned",
+      "version": 2,
+      "created_at": "2026-10-26T03:15:44+00:00",
+      "updated_at": "2026-10-26T03:15:54+00:00",
+      "touched_round": 457,
+      "summary": "(作废)与 COMP-015 重复 —— COMP-015 已涵盖 App 外壳 + TopStatusBar + BottomNavigation;建重了,留作审计轨迹"
+    },
+    "HYP-131": {
+      "id": "HYP-131",
+      "type": "hypothesis",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T03:25:25+00:00",
+      "updated_at": "2026-10-26T03:25:25+00:00",
+      "touched_round": 457,
+      "title": "底部导航的当前项没有 aria-current,读屏拿不到「现在在哪」",
+      "confidence": 0.6
+    },
+    "EV-479": {
+      "id": "EV-479",
+      "type": "evidence",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T03:25:25+00:00",
+      "updated_at": "2026-10-26T03:25:25+00:00",
+      "touched_round": 457,
+      "source": "dist/assets/index-*.js 的 RouterLink 渲染串 + layout-check 注入实验",
+      "title": "vue-router 的 RouterLink 在 exact-active 时渲染 aria-current=page;把页签 to 写歪后才红,不写属性时绿 —— 「没有 aria-current」被推翻",
+      "confidence": 1.0
+    },
+    "DEC-198": {
+      "id": "DEC-198",
+      "type": "decision",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T03:25:42+00:00",
+      "updated_at": "2026-10-26T03:25:42+00:00",
+      "touched_round": 457,
+      "title": "底栏「当前项」交给 RouterLink,判据只量可观测行为",
+      "rationale": "aria-current 是 vue-router 自带行为,再加一份 :aria-current 绑定等于把同一个事实写成两个判据(route.name 相等 vs 路由 exact-active),两者一旦分歧没人说得清哪份对。故组件里不写属性,改为在 layout-check 逐页量「页签页恰有一枚 aria-current=page 且 href 指向当前路由」,并把「换手写 <a>」的注入跑过一遍确认会红。",
+      "alternatives_rejected": "[\"手写 :aria-current 绑定 —— 重复且可能与 exact-active 分歧\",\"只在 uiLayering 做源码级断言 —— 实现一换就假绿,注入实验证明拦不住\"]"
+    },
+    "CHG-561": {
+      "id": "CHG-561",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T03:30:11+00:00",
+      "updated_at": "2026-10-26T03:30:11+00:00",
+      "touched_round": 457,
+      "commit": "e5eb583f",
+      "title": "底栏角标/破境圆点的读屏等价物;aria-current 逐页判据与注入实验"
     }
   },
   "edges": [
@@ -39227,6 +39311,36 @@
       "to": "HYP-130",
       "type": "validates",
       "created_at": "2026-10-26T03:07:00+00:00"
+    },
+    {
+      "from": "TASK-460",
+      "to": "ISS-353",
+      "type": "addresses",
+      "created_at": "2026-10-26T03:15:44+00:00"
+    },
+    {
+      "from": "ISS-353",
+      "to": "COMP-015",
+      "type": "located_in",
+      "created_at": "2026-10-26T03:15:54+00:00"
+    },
+    {
+      "from": "EV-479",
+      "to": "HYP-131",
+      "type": "refutes",
+      "created_at": "2026-10-26T03:25:25+00:00"
+    },
+    {
+      "from": "CHG-561",
+      "to": "ISS-353",
+      "type": "resolves",
+      "created_at": "2026-10-26T03:30:11+00:00"
+    },
+    {
+      "from": "CHG-561",
+      "to": "TASK-460",
+      "type": "implements",
+      "created_at": "2026-10-26T03:30:12+00:00"
     }
   ]
 }
