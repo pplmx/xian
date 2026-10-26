@@ -56,7 +56,7 @@ import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
-import { lateSlices, seedSave } from "./lib/saveFixture.mjs";
+import { decryptSlice, lateSlices, seedSave } from "./lib/saveFixture.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const INDEX = `file://${join(ROOT, "dist/index.html")}`;
@@ -344,6 +344,39 @@ async function runRoute(route) {
   };
 }
 
+/**
+ * 旧档兼容 —— 玩家最痛的一类事故:一次改版之后,老存档进不去、或者进去了却少了东西。
+ *
+ * 单测只测迁移函数本身;这一条走**真实启动路径**:按旧形状加密落盘(标量灵草、
+ * 没有五档表),打开游戏,再从盘上读回来 —— 迁移必须已经写回新形状、旧键清掉、
+ * 且那几株草一株不少。迁移代码在 main.ts 里,任何一次启动顺序改动都可能让它不跑。
+ */
+async function checkLegacySave(browser) {
+  const fails = [];
+  const slices = lateSlices();
+  delete slices.resources.herbs;
+  slices.resources.herb = 7;
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  try {
+    await seedSave(ctx, slices, "__legacyFixture");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/inventory", { waitUntil: "load" });
+    await page.waitForTimeout(1800);
+    const raw = await page.evaluate(() => localStorage.getItem("xuanshu.resources"));
+    const res = JSON.parse(decryptSlice(raw) || "{}");
+    if (!res.herbs) fails.push("旧档的标量灵草没有被迁移成五档");
+    if (res.herb !== undefined) fails.push("迁移之后旧键 herb 还在盘上");
+    if ((res.herbs?.["1"] ?? 0) < 7)
+      fails.push(`旧档攒下的 7 株灵草没保住(实得 ${res.herbs?.["1"]})`);
+    if (pageErrors.length) fails.push(`旧档载入报错:${pageErrors[0]}`);
+  } finally {
+    await ctx.close();
+  }
+  return fails;
+}
+
 /** 固定上限的并发池:一页一个任务,谁空出来谁接下一页 */
 async function runPool(items, limit, worker) {
   const out = Array.from({ length: items.length });
@@ -375,12 +408,14 @@ async function runPool(items, limit, worker) {
 
 const wallT0 = performance.now();
 const results = await runPool(ROUTES, JOBS, runRoute);
+const legacyFails = await checkLegacySave(browser);
 await browser.close();
 const wallMs = Math.round(performance.now() - wallT0);
 
 const clicked = results.reduce((n, r) => n + r.clicked, 0);
 const silent = results.flatMap((r) => r.silent);
 const errors = results.flatMap((r) => r.errors);
+for (const msg of legacyFails) errors.push({ where: "旧档兼容", msg });
 const blockedTotal = results.reduce((n, r) => n + r.blocked, 0);
 
 console.log(`\n界面冒烟:${ROUTES.length} 页,点击 ${clicked} 次(每页上限 ${DEPTH})`);
