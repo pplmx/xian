@@ -328,3 +328,47 @@ describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () =
     expect(direct, `pre-commit 里直接跑了浏览器门:${direct.join("、")}`).toEqual([]);
   });
 });
+
+/** 一道门在失败时会不会真的把退出码弄成非零 */
+function failsLoudly(src: string): boolean {
+  return (
+    /process\.exitCode\s*=\s*[1-9]/.test(src) ||
+    /process\.exit\(\s*[1-9]/.test(src) ||
+    // 只认「显式置退出码」这一种:裸 throw 可能只是启动前置检查(产物没构建),
+    // 与「收集了失败却照样 exit 0」不是一回事 —— 拿它兜底会把空门放过去
+    /\bassert\b/.test(src)
+  );
+}
+
+describe("门禁自检 · 每道门失败时都得真的红", () => {
+  /*
+   * 一道「收集了失败、却照样 exit 0」的门是个静默的空门：它天天打印 ✗，
+   * 却从不拦下任何东西。这类事故不会报错，只会让人以为有保护。
+   * 故把六道浏览器门 + 三道静态门逐个读进来，要求至少有一条能失败的出口。
+   */
+  const GATES = [
+    "scripts/build-timed.mjs",
+    "scripts/first-paint.mjs",
+    "scripts/perf-profile.mjs",
+    "scripts/layout-check.mjs",
+    "scripts/ui-smoke.mjs",
+    "scripts/offline-check.mjs",
+    "scripts/docs-check.mjs",
+    "scripts/env-check.mjs",
+    "scripts/test-report.mjs",
+  ];
+
+  it("九道门都有一条「失败 → 非零退出」的路径", () => {
+    const silent = GATES.filter((rel) => !failsLoudly(readFileSync(join(ROOT, rel), "utf8")));
+    expect(silent, "这些门收集了失败却不会让流水线红").toEqual([]);
+  });
+
+  it("判据自证:只会打印不会失败的门要被认出来", () => {
+    const quiet = `const failures = [];\nfailures.push("x");\nconsole.log(failures);\n`;
+    expect(failsLoudly(quiet), "自证没抓住「只打印、不失败」的门").toBe(false);
+    expect(failsLoudly(`if (bad) process.exitCode = 1;`)).toBe(true);
+    // 裸 throw 不算 —— 它常常只是启动前置检查(产物没构建),与「门是空的」不是一回事
+    expect(failsLoudly(`if (bad) throw new Error("x");`)).toBe(false);
+    expect(failsLoudly(`if (bad) assert.ok(false);`)).toBe(true);
+  });
+});
