@@ -171,7 +171,7 @@
               <span class="w-9 shrink-0 truncate text-[11px] text-ink-soft">{{ row.name }}</span>
               <span
                 v-if="row.wall"
-                class="shrink-0 rounded bg-cinnabar/10 px-1 py-0.5 text-[10px] leading-none text-cinnabar"
+                class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-[10px] leading-none text-cinnabar"
                 >墙</span
               >
               <span class="track-ink h-1.25 min-w-0 flex-1 overflow-hidden rounded-full">

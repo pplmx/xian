@@ -471,3 +471,79 @@ describe("暗场专用色 —— 不随主题换肤,但有名字", () => {
     }
   });
 });
+
+describe("调色板 · 同色底最多 6%", () => {
+  /**
+   * design.md 的硬规矩:「底 = 字色自己 6% 的墨」是品阶方块那类画法 —— 底色比卡片亮
+   * 一点、同色字放上去对比度就低一点。实测 8% 已经掉到 4.44:1(不到 AA 的 4.5),
+   * 故 6% 是既看得见底色、又托得住字的那一档。
+   *
+   * 这一条此前只有人眼:五处 10~15% 的自底一直亮着 —— 羁绊与「墙」两枚朱砂小签、
+   * 装备与法宝的「佩 / 随」两枚玉色小章、词条转移的选中行,全是 10px 小字。
+   * 判据按**每个元素里的每一段字符串字面量**配对:同一个类名里既有 bg-<强色>/N
+   * 又有同色的 text-<强色> 才算 —— 三元分支各写各的不算(GauntletPanel 那种)。
+   */
+  const STRONG_TOKENS = ["cinnabar", "jade", "qing", "gold-ink", "violet-ink"] as const;
+  const TINT = new RegExp(`bg-(${STRONG_TOKENS.join("|")})/(\\d{1,3})\\b`, "g");
+
+  /**
+   * 标签体里允许出现 `>`(v-if="a.bond > 0"),所以不能按 `<[^>]*>` 切 ——
+   * 那样会把整段属性连同 class 一起吞进上一枚不完整的标签里,漏掉真命中。
+   */
+  const TAG = /<[a-zA-Z](?:[^>"']|"[^"]*"|'[^']*')*>/g;
+
+  /** 一枚元素里"一段类名"的集合:静态 class 是整段,`:class` 的三元按分支拆开各算各的 */
+  function classLiterals(tag: string): string[] {
+    const out: string[] = [];
+    for (const m of tag.matchAll(/"([^"]*)"|'([^']*)'/g)) {
+      const value = m[1] ?? m[2] ?? "";
+      if (m[1] !== undefined && value.includes("'")) {
+        out.push(...[...value.matchAll(/'([^']*)'/g)].map((x) => x[1]!));
+      } else {
+        out.push(value);
+      }
+    }
+    return out;
+  }
+
+  function offendersIn(text: string): string[] {
+    const out: string[] = [];
+    for (const tag of text.matchAll(TAG)) {
+      for (const cls of classLiterals(tag[0])) {
+        for (const m of cls.matchAll(TINT)) {
+          const color = m[1]!;
+          const pct = Number(m[2]);
+          if (pct <= 6) continue;
+          if (!new RegExp(`(?<![\\w-])text-${color}(?![\\w-])`).test(cls)) continue;
+          out.push(`bg-${color}/${pct} + text-${color}`);
+        }
+      }
+    }
+    return out;
+  }
+
+  it("强色自底不许浓过 6% —— 10px 小字最先读不出来", () => {
+    const hits: string[] = [];
+    for (const f of filesMatching(resolve(ROOT, "src"), /class=/, /\.vue$/)) {
+      for (const o of offendersIn(readFileSync(resolve(ROOT, f), "utf-8"))) {
+        hits.push(`${f} → ${o}`);
+      }
+    }
+    expect(hits, "同色底浓过 6% —— 降回 6%(design.md 实测 8% 已掉到 4.44:1)").toEqual([]);
+  });
+
+  it("判据自证:10% 被抓住、6% 放行、异色与分支不误伤", () => {
+    expect(offendersIn(`<span class="bg-cinnabar/10 text-cinnabar">`)).toEqual([
+      "bg-cinnabar/10 + text-cinnabar",
+    ]);
+    expect(offendersIn(`<span class="bg-cinnabar/6 text-cinnabar">`)).toEqual([]);
+    // 白字压在 85% 的朱砂印面上:底与字不同色,不算自底
+    expect(offendersIn(`<span class="bg-cinnabar/85 text-paper">`)).toEqual([]);
+    // 三元两个分支各写各的:同一个元素里出现,但不在同一段类名里
+    expect(
+      offendersIn(
+        `<button :class="i === current ? 'bg-cinnabar/85 text-paper' : 'border border-cinnabar/40 text-cinnabar'">`,
+      ),
+    ).toEqual([]);
+  });
+});

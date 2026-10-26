@@ -136,7 +136,7 @@ function doTransfer(): void {
               c.block
                 ? 'cursor-not-allowed text-ink-faint'
                 : targetUid === c.item.uid
-                  ? 'bg-cinnabar/10 text-cinnabar'
+                  ? 'bg-cinnabar/6 text-cinnabar'
                   : 'hoverable:hover:bg-ink/5'
             "
             :disabled="c.block !== null"

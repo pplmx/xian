@@ -19,7 +19,7 @@
     <span class="absolute inset-x-0 top-0 flex items-start justify-between px-1 pt-0.5">
       <span
         v-if="props.equipped"
-        class="rounded-sm bg-jade/15 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
+        class="rounded-sm bg-jade/6 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
         >佩</span
       >
       <span v-else class="w-2.5" aria-hidden="true" />

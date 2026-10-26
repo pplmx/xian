@@ -253,7 +253,7 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
           <span class="text-[10px] text-ink-faint">Lv{{ a.level }}/{{ APPRENTICE_MAX_LEVEL }}</span>
           <span
             v-if="a.bond > 0"
-            class="rounded bg-cinnabar/10 px-1.5 py-0.5 text-[10px] text-cinnabar"
+            class="rounded bg-cinnabar/6 px-1.5 py-0.5 text-[10px] text-cinnabar"
             :title="
               bondNext(a.bond)
                 ? `羁绊 ${a.bond} 趟 · 距「${bondNext(a.bond)!.name}」还差 ${bondNext(a.bond)!.remaining} 趟(完工趟数,纯称谓不带加成)`

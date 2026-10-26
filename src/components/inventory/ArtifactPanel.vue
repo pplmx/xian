@@ -36,7 +36,7 @@
       <!-- 佩戴中的法宝盖「随」章(玉色,与装备格的「佩」同族) —— 靠按钮文字区分太隐晦 -->
       <span
         v-if="row.equipped"
-        class="absolute left-2 top-2 rounded-sm bg-jade/15 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
+        class="absolute left-2 top-2 rounded-sm bg-jade/6 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
         >随</span
       >
       <!-- 天/仙/神右上盖品阶阴文章 —— 与装备/丹药同一套视觉语言(见 qualityTier) -->
