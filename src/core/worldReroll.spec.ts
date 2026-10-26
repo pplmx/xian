@@ -10,7 +10,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { rerollMortalWorld } from "./mortalWorldService";
-import { WORLD_REROLL_FRUIT, rerollWorldByFruit } from "./worldReroll";
+import { WORLD_REROLL_FLOOR, worldRerollCost, rerollWorldByFruit } from "./worldReroll";
 
 /** 把 store 里的三件事按出口的口径递进去 */
 function reroll(): ReturnType<typeof rerollWorldByFruit> {
@@ -43,7 +43,7 @@ describe("换一方天地 · 道果真的被花掉", () => {
       : "none";
     const r = reroll();
     expect(r).toBe("ok");
-    expect(player.reincarnation.daoFruit).toBe(100 - WORLD_REROLL_FRUIT);
+    expect(player.reincarnation.daoFruit).toBe(100 - worldRerollCost(100));
     const after = freshWorld();
     expect(after, "掷完应该有世界").not.toBeNull();
     const afterKey = `${after!.seed}/${after!.bias}/${after!.shapeId}/${after!.chain.length}`;
@@ -52,11 +52,11 @@ describe("换一方天地 · 道果真的被花掉", () => {
 
   it("不够钱时:返回 poor,余额与世界一个字节都没动", () => {
     const player = usePlayerStore();
-    player.reincarnation = { ...player.reincarnation, daoFruit: WORLD_REROLL_FRUIT - 1 } as never;
+    player.reincarnation = { ...player.reincarnation, daoFruit: WORLD_REROLL_FLOOR - 1 } as never;
     const before = freshWorld();
     const beforeKey = before ? `${before.seed}/${before.bias}` : "none";
     expect(reroll()).toBe("poor");
-    expect(player.reincarnation.daoFruit).toBe(WORLD_REROLL_FRUIT - 1);
+    expect(player.reincarnation.daoFruit).toBe(WORLD_REROLL_FLOOR - 1);
     const after = freshWorld();
     expect(after ? `${after.seed}/${after.bias}` : "none").toBe(beforeKey);
   });
@@ -76,7 +76,7 @@ describe("换一方天地 · 道果真的被花掉", () => {
     const control = usePlayerStore();
     control.reincarnation = { ...control.reincarnation, daoFruit: 100 } as never;
     control.major = 3;
-    expect(control.spendDaoFruit(WORLD_REROLL_FRUIT)).toBe(true);
+    expect(control.spendDaoFruit(worldRerollCost(100))).toBe(true);
     expect(JSON.stringify(control.finalStats), "换世界不许顺带加战力").toBe(afterReroll);
   });
 
@@ -90,8 +90,41 @@ describe("换一方天地 · 道果真的被花掉", () => {
     }
     expect(gains.length).toBeGreaterThan(0);
     expect(
-      gains.every((g) => g === -WORLD_REROLL_FRUIT),
-      "每次都必须净支出 15",
+      gains.every((g) => g < 0),
+      "每次都必须净支出",
     ).toBe(true);
+  });
+});
+
+describe("换一方天地 · 定价跟着余额走(不是固定 15 枚)", () => {
+  /*
+   * fruitOutlets 论证过:固定定价 + 无上限余额 = 出口迟早变成免费按钮
+   * (第 20 世手里几千枚道果时,15 枚什么都算不上)。第一版正是那个写法,
+   * 这组判据钉住「跟着余额走」这一条。
+   */
+  it("起步价是地板:余额再少也只收 15 枚", () => {
+    expect(worldRerollCost(0)).toBe(WORLD_REROLL_FLOOR);
+    expect(worldRerollCost(WORLD_REROLL_FLOOR)).toBe(WORLD_REROLL_FLOOR);
+  });
+
+  it("攒得越多换一次越贵 —— 深修的人不能随手刷世界", () => {
+    expect(worldRerollCost(1000)).toBeGreaterThan(worldRerollCost(100));
+    expect(worldRerollCost(10000)).toBeGreaterThan(worldRerollCost(1000));
+    // 自证:如果定价回到常数,这一条会当场红
+    expect(worldRerollCost(10000)).toBeGreaterThan(WORLD_REROLL_FLOOR * 10);
+  });
+
+  it("连换多次:付得起,但余额呈等比衰减 —— 永远不会变成零成本", () => {
+    let balance = 2000;
+    const costs: number[] = [];
+    for (let i = 0; i < 60; i += 1) {
+      const cost = worldRerollCost(balance);
+      if (cost > balance) break;
+      costs.push(cost);
+      balance -= cost;
+    }
+    expect(costs.length, "两千枚应当换得起很多次").toBeGreaterThan(10);
+    expect(balance, "连换之后余额必须真的降下去").toBeLessThan(2000 * 0.2);
+    expect(costs.at(-1), "最后一笔仍在起步价之上").toBeGreaterThanOrEqual(WORLD_REROLL_FLOOR);
   });
 });

@@ -11,16 +11,27 @@
  * 于是出口选「选择权」而不是「力量」:重掷本世之界。玩家拿到的是**另一条路线、
  * 另一处所钟、另一套地貌构成**,不是更高的数。
  *
- * ## 口径
+ * ## 口径:定价按余额走,而不是一个固定数
  *
- *   - 定价固定 15 枚:大约是首世一轮金丹的量级的零头,又明显高于单次转世收益,
- *     不至于每世随手重掷到满意为止。
+ * 第一版钉死 15 枚,当场就踩了 fruitOutlets 论证过的那条:固定定价 + 无上限余额,
+ * 出口迟早变成随手可点的按钮(第 20 世手里几千枚道果时,15 枚什么都算不上)。
+ * 「抬价只能延后,不能解决」—— 所以这里定价**跟着余额走**:一成半,最少 15 枚。
+ *
+ *   - 余额 100 → 15 枚(取地板);余额 1000 → 150 枚。攒得越多,换一次越贵。
+ *   - 连换多次是等比衰减(每次只剩 85%),永远不会变成免费按钮。
  *   - **先掷后扣**:生成器有 200 次上限,掷不出新世界时一分不扣。
  *   - 扣款只走 player.spendDaoFruit —— 与逆旅契同一条出口,余额真的下降。
  */
 
-/** 重掷一次要几枚道果 */
-export const WORLD_REROLL_FRUIT = 15;
+/** 起步价:首世一轮金丹道果的零头,不至于开局就换得起 */
+export const WORLD_REROLL_FLOOR = 15;
+/** 按余额抽成 —— 一成半:攒得越多换一次越贵,出口永远不是免费按钮 */
+export const WORLD_REROLL_RATE = 0.15;
+
+/** 这一次换世界要几枚道果(纯函数,给界面与结算共用) */
+export function worldRerollCost(daoFruit: number): number {
+  return Math.max(WORLD_REROLL_FLOOR, Math.floor(Math.max(0, daoFruit) * WORLD_REROLL_RATE));
+}
 
 export type WorldRerollResult =
   /** 掷到新世界,道果已扣 */
@@ -46,8 +57,9 @@ export interface RerollDeps {
  * 顺序是「先掷、再扣」:掷不出来就什么都不发生,不会出现「扣了钱没换到东西」。
  */
 export function rerollWorldByFruit(deps: RerollDeps): WorldRerollResult {
-  if (deps.daoFruit < WORLD_REROLL_FRUIT) return "poor";
+  const cost = worldRerollCost(deps.daoFruit);
+  if (deps.daoFruit < cost) return "poor";
   const next = deps.reroll();
   if (!next) return "unavailable";
-  return deps.spendFruit(WORLD_REROLL_FRUIT) ? "ok" : "poor";
+  return deps.spendFruit(cost) ? "ok" : "poor";
 }

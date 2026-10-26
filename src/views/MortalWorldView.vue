@@ -26,9 +26,7 @@
           data-world-reroll
           @click="rerollWorld"
         >
-          换一方天地({{ WORLD_REROLL_FRUIT }} 道果{{
-            canRerollWorld ? "" : ` · 尚差 ${shortfall} 枚`
-          }})
+          换一方天地({{ rerollCost }} 道果{{ canRerollWorld ? "" : ` · 尚差 ${shortfall} 枚` }})
         </button>
       </div>
 
@@ -151,7 +149,7 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import { useAdventureStore } from "@/stores/adventure";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
-import { WORLD_REROLL_FRUIT, rerollWorldByFruit } from "@/core/worldReroll";
+import { rerollWorldByFruit, worldRerollCost } from "@/core/worldReroll";
 import { rerollMortalWorld } from "@/core/mortalWorldService";
 import { enemyDef } from "@/data/enemies";
 import { regionDef } from "@/data/regions";
@@ -169,8 +167,10 @@ const adventure = useAdventureStore();
 const player = usePlayerStore();
 const ui = useUiStore();
 /** 换一方天地的按钮态:不够时按钮置灰,并把差多少写出来 */
-const canRerollWorld = computed(() => player.reincarnation.daoFruit >= WORLD_REROLL_FRUIT);
-const shortfall = computed(() => Math.max(0, WORLD_REROLL_FRUIT - player.reincarnation.daoFruit));
+/** 这一次换世界的价(按余额抽成,见 core/worldReroll 的口径) */
+const rerollCost = computed(() => worldRerollCost(player.reincarnation.daoFruit));
+const canRerollWorld = computed(() => player.reincarnation.daoFruit >= rerollCost.value);
+const shortfall = computed(() => Math.max(0, rerollCost.value - player.reincarnation.daoFruit));
 function rerollWorld(): void {
   const r = rerollWorldByFruit({
     daoFruit: player.reincarnation.daoFruit,
