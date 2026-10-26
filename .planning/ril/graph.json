@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 533,
+  "round": 534,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T21:39:10+00:00",
+  "updated_at": "2026-10-26T21:47:20+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29981,6 +29981,45 @@
       "touched_round": 533,
       "commit": "0f8e7ef6",
       "title": "概览行补已过 N/段"
+    },
+    "ISS-431": {
+      "id": "ISS-431",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:47:19+00:00",
+      "updated_at": "2026-10-26T21:47:20+00:00",
+      "touched_round": 534,
+      "title": "换界确认框与世界页概览之后,六门没在同一 HEAD 连跑",
+      "summary": "近两轮动了世界页(概览行补进度、换界确认弹窗、isCleared 接线),排版门与单元测试单独跑过;六门上次连跑还是几轮前。另:图谱里三条「open」其实都是 abandoned,待办清单清空 —— 后续工作只能来自新观察。",
+      "severity": 0.15,
+      "confidence": 0.9
+    },
+    "TASK-537": {
+      "id": "TASK-537",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:47:19+00:00",
+      "updated_at": "2026-10-26T21:47:20+00:00",
+      "touched_round": 534,
+      "category": "verification",
+      "title": "HEAD 跑完整 check:ui 并记档",
+      "summary": "构建计时/首屏/帧率/排版 204 组(含新弹窗)/冒烟/离线八项全部复跑,结果全绿。",
+      "severity": 0.15,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-636": {
+      "id": "CHG-636",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:47:20+00:00",
+      "updated_at": "2026-10-26T21:47:20+00:00",
+      "touched_round": 534,
+      "commit": "9ebb934a",
+      "title": "HEAD(9ebb934a) 六门复跑全绿(无代码改动)"
     }
   },
   "edges": [
@@ -43768,6 +43807,24 @@
       "to": "ISS-430",
       "type": "addresses",
       "created_at": "2026-10-26T21:39:09+00:00"
+    },
+    {
+      "from": "CHG-636",
+      "to": "ISS-431",
+      "type": "resolves",
+      "created_at": "2026-10-26T21:47:20+00:00"
+    },
+    {
+      "from": "CHG-636",
+      "to": "TASK-537",
+      "type": "implements",
+      "created_at": "2026-10-26T21:47:20+00:00"
+    },
+    {
+      "from": "TASK-537",
+      "to": "ISS-431",
+      "type": "addresses",
+      "created_at": "2026-10-26T21:47:20+00:00"
     }
   ]
 }
