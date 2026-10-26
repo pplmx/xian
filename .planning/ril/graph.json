@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 479,
+  "round": 480,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T09:35:18+00:00",
+  "updated_at": "2026-10-26T09:48:32+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 479,
+      "touched_round": 480,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -27925,6 +27925,45 @@
       "touched_round": 479,
       "commit": "0c930069",
       "title": "offlineLedger 增「结算 → 盖章 → 再结算一秒」用例"
+    },
+    "ISS-378": {
+      "id": "ISS-378",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:42:16+00:00",
+      "updated_at": "2026-10-26T09:48:32+00:00",
+      "touched_round": 480,
+      "title": "资源偏向只在首领战进离线:普通战按期望结算,一条都没乘",
+      "summary": "afterWin 是唯一接了偏向的入口,而离线只有首领战走它;普通战(占离线战斗的绝大多数)在 offline.ts 里按期望整段结算,灵石/灵草/玄铁/残页/丹药五条全都没乘 biasChanceMult。于是「矿脉深厚」离线只对首领生效,而归来的卷轴却写着「离线已计入」—— 上一轮我自己写的那句话当时不成立。",
+      "severity": 0.5,
+      "confidence": 0.95
+    },
+    "TASK-484": {
+      "id": "TASK-484",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:42:16+00:00",
+      "updated_at": "2026-10-26T09:48:32+00:00",
+      "touched_round": 480,
+      "category": "correctness",
+      "title": "离线普通战五个渠道各乘一次偏向;确定性用例锁住",
+      "summary": "在 region 循环里取一次 currentWorldBias(),灵石/灵草/玄铁/残页/丹药(钳到 [0,1])各乘 biasChanceMult;用例对比「无偏向 vs 偏向」同一颗世界种子的产出(灵石 1.04~1.2,灵草只在自己渠道变),注入摘掉乘区即红。",
+      "severity": 0.5,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-584": {
+      "id": "CHG-584",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:48:32+00:00",
+      "updated_at": "2026-10-26T09:48:32+00:00",
+      "touched_round": 480,
+      "commit": "67168cd3",
+      "title": "离线普通战五渠道各乘偏向;offlineParity 残页判据改容忍换行"
     }
   },
   "edges": [
@@ -40776,6 +40815,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T09:35:18+00:00"
+    },
+    {
+      "from": "CHG-584",
+      "to": "ISS-378",
+      "type": "resolves",
+      "created_at": "2026-10-26T09:48:32+00:00"
+    },
+    {
+      "from": "CHG-584",
+      "to": "TASK-484",
+      "type": "implements",
+      "created_at": "2026-10-26T09:48:32+00:00"
+    },
+    {
+      "from": "ISS-378",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T09:48:32+00:00"
     }
   ]
 }
