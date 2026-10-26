@@ -130,6 +130,11 @@
  *      自然也碰不到 —— 实测丹房方子卡三列并排时中间只剩 42px(代价折成六行),
  *      器魂详情的「收 起 / 卸 下」各剩 68px、在空格处断成两行。这两类都不是溢出,
  *      横向溢出与越界元素都量不出来。尺子与「只在某一步出现的浮层」共用一份。
+ *   四十九 第二个标签页的只读态:多标签共用一份存档时,后来的那页不启引擎、不写盘
+ *      (判据在 core/singleWriter 与 utils/storage 的单测里)。但「不写」对玩家是不可见的 ——
+ *      数字不动、点了没反应,而解释只有一条三秒就消失的 toast。故这里另开一个 context
+ *      开两页:先开的那页不许有横幅,后开的那页**必须有**一条常驻说明,且 390 宽不撑出
+ *      横向溢出、文字不被裁。这页不巡游(它是另一条上下文里的第二页),巡页永远碰不到。
  *   四十八 底部导航的「当前位置」也要量:颜色与那枚朱砂短笔只对眼睛说话,读屏拿到的是
  *      RouterLink 按 exact-active 自己渲染的 aria-current=page —— 这一条先把「它真的在、
  *      且指向当前路由」量一遍:换手写 <a>、或哪个页签的 to 写歪,当场就红。
@@ -6768,6 +6773,60 @@ const JOBS = (() => {
   return Math.max(2, Math.min(8, (cpus().length || 4) - 1));
 })();
 
+/**
+ * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
+ *
+ * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
+ * 这套行为有单测,但玩家侧只剩「数字不动」—— 三秒的 toast 消失后就没有任何解释。
+ * 判据:同一 context 开两页,先开的那页不许有横幅,后开的那页必须有,且不裁字、不溢出。
+ */
+async function taskReadOnlyTab() {
+  const failures = [];
+  let checked = 0;
+  const contrastFails = [];
+  const pixelContrastFails = [];
+  const zoomFails = [];
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 } });
+  try {
+    const writer = await ctx.newPage();
+    await writer.goto(INDEX + "#/", { waitUntil: "load" });
+    await writer.waitForTimeout(900);
+    const reader = await ctx.newPage();
+    await reader.goto(INDEX + "#/", { waitUntil: "load" });
+    await reader.waitForTimeout(900);
+
+    checked += 2;
+    const writerHas = await writer.evaluate(() => !!document.querySelector("[data-save-reader]"));
+    if (writerHas) failures.push("[390] 写者页不该出现只读横幅");
+
+    const banner = await reader.evaluate(() => {
+      const el = document.querySelector("[data-save-reader]");
+      if (!el) return null;
+      const shell = document.getElementById("app")?.firstElementChild;
+      const r = el.getBoundingClientRect();
+      return {
+        text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        height: Math.round(r.height),
+        // 溢出/裁字:文字自己滚得动或盒子装不下,都算这行没把话说全
+        clipped: el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2,
+        overflowX: shell ? Math.round(shell.scrollWidth - shell.clientWidth) : 0,
+      };
+    });
+    if (!banner) {
+      failures.push("[390] 第二个标签页没有常驻只读说明 —— 只有一次性 toast,玩家会以为游戏坏了");
+    } else {
+      if (!/只读/.test(banner.text)) failures.push(`[390] 只读横幅没把话说清楚:«${banner.text}»`);
+      if (banner.height < 20)
+        failures.push(`[390] 只读横幅只有 ${banner.height}px 高,读不清也点不着`);
+      if (banner.clipped) failures.push(`[390] 只读横幅文字被裁掉:«${banner.text}»`);
+      if (banner.overflowX > 1) failures.push(`[390] 只读横幅撑出横向溢出 ${banner.overflowX}px`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
+}
+
 /** 任务的顺序就是报告里失败清单的顺序 —— 与串行时代逐块打印的顺序一致 */
 const TASKS = [
   ...VIEWPORTS.map((vp) => [`页面巡游[${vp.tag}]`, () => taskPageTour(vp)]),
@@ -6796,6 +6855,7 @@ const TASKS = [
   ["导出失败也说话", taskExportFailure],
   ["坏档也能进游戏", taskBadSave],
   ["iOS 存档风险提示", taskIosNotice],
+  ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],
   ["构建产物 · dvh / 字体栈", taskBuildArtifacts],

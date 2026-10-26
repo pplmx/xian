@@ -27,6 +27,22 @@
 
     <TopStatusBar v-if="game.started && route.name !== 'create'" />
 
+    <!--
+      只读页(多标签后来者)的常驻说明。
+
+      为什么不是一条 toast:toast 三秒后自己消失,而这页**从打开到关闭都不会再写档** ——
+      玩家看着数字不动、点了没反应,却没有任何东西留在屏幕上解释。这条横幅跟着页面一直在,
+      role=status 让读屏在进入时念一次;文案只说两件事:为什么、以及进度不会保存。
+    -->
+    <div
+      v-if="saveReader"
+      data-save-reader
+      role="status"
+      class="relative z-10 flex shrink-0 items-center justify-center border-b border-cinnabar/40 bg-cinnabar/6 px-3 py-1 text-center font-kai text-[11px] leading-relaxed text-cinnabar"
+    >
+      已在另一处打开 · 本页只读,进度不会保存
+    </div>
+
     <main ref="scrollHost" class="relative z-10 min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
       <RouterView v-slot="{ Component }">
         <Transition name="page-fade" mode="out-in" @before-enter="resetScroll">
@@ -185,11 +201,8 @@ onMounted(() => {
    * 落盘 —— 让引擎空转只会让这一页的数字慢慢跑到跟存档无关,玩家看到的是一份假读数。
    * 这一页仍可浏览(存档是打开那一刻的快照),但要写一句话说明为什么它不会保存。
    */
-  if (saveReader.value) {
-    ui.toast("已在另一处打开 —— 此页只读,进度不会保存。请回到那一页继续。", "warn");
-  } else {
-    engine.start();
-  }
+  // 只读页不启引擎;「为什么不动」交给顶部那条常驻横幅(模板里),它不会像 toast 一样消失
+  if (!saveReader.value) engine.start();
   window.addEventListener("pointerdown", onPointerDown);
 });
 
