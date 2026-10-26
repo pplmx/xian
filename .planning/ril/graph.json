@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 515,
+  "round": 516,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T18:19:38+00:00",
+  "updated_at": "2026-10-26T18:33:19+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 514,
+      "touched_round": 516,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -29357,6 +29357,45 @@
       "touched_round": 515,
       "commit": "20177418",
       "title": "换界代价写在按钮下面(换界即换路)"
+    },
+    "ISS-415": {
+      "id": "ISS-415",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:33:19+00:00",
+      "updated_at": "2026-10-26T18:33:19+00:00",
+      "touched_round": 516,
+      "title": "离线盖章是调用方的责任 —— 谁忘了盖章,同一段缺席就结算两遍",
+      "summary": "settleOffline 只读 game.lastActiveAt 决定离了多久,盖章由 engine 结算后紧跟一句 game.stampActive(now)。这是只能靠自觉的契约:新增调用点忘盖章,同一段时间会被结算两遍,而结算里发的是修为/灵石/材料。另:我先写的「源码接线」启发式判据(结算后 1200 字符内出现 stampActive)注入时没红 —— 窗口里还有另一处无关的盖章调用。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-521": {
+      "id": "TASK-521",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:33:19+00:00",
+      "updated_at": "2026-10-26T18:33:19+00:00",
+      "touched_round": 516,
+      "category": "robustness",
+      "title": "盖章挪进 settleOffline(成功路径),判据改成行为断言",
+      "summary": "「离了多久」与「已经算过」变成同一个事实;engine 再盖一次幂等无害。判据:连跑两次第二次不发且 lastActiveAt 落在结算时刻;engine 再盖章也无害。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-620": {
+      "id": "CHG-620",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T18:33:19+00:00",
+      "updated_at": "2026-10-26T18:33:19+00:00",
+      "touched_round": 516,
+      "commit": "cc591131",
+      "title": "离线结算即盖章(不再靠调用方)"
     }
   },
   "edges": [
@@ -42874,6 +42913,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T18:19:38+00:00"
+    },
+    {
+      "from": "CHG-620",
+      "to": "ISS-415",
+      "type": "resolves",
+      "created_at": "2026-10-26T18:33:19+00:00"
+    },
+    {
+      "from": "CHG-620",
+      "to": "TASK-521",
+      "type": "implements",
+      "created_at": "2026-10-26T18:33:19+00:00"
+    },
+    {
+      "from": "ISS-415",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T18:33:19+00:00"
     }
   ]
 }
