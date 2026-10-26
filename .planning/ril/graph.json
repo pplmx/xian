@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 492,
+  "round": 493,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T12:31:43+00:00",
+  "updated_at": "2026-10-26T12:55:40+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 491,
+      "touched_round": 493,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28432,6 +28432,45 @@
       "touched_round": 492,
       "commit": "94c70a11",
       "title": "ui-smoke:每页至少点得到一个控件(门槛 1)"
+    },
+    "ISS-391": {
+      "id": "ISS-391",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:49:54+00:00",
+      "updated_at": "2026-10-26T12:55:40+00:00",
+      "touched_round": 493,
+      "title": "「越挂越沉」没有任何判据:页面/全局表在心跳里悄悄长大,没人量",
+      "summary": "引擎每秒一拍都会改响应式状态;谁在订阅里往 DOM 或全局表里塞东西,开一夜就会慢慢变沉。六个浏览器门都只跑几秒到十几秒,看不出这类问题。本轮实测(有证据):6 分钟挂机堆内存振荡在 6.8~8.5MB、DOM 恒为 314 —— 现在没有泄漏,但也没有任何判据盯着它。",
+      "severity": 0.3,
+      "confidence": 0.85
+    },
+    "TASK-497": {
+      "id": "TASK-497",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:49:54+00:00",
+      "updated_at": "2026-10-26T12:55:40+00:00",
+      "touched_round": 493,
+      "category": "detectability",
+      "title": "ui-smoke 增「挂机稳定」专场景:20 秒内 DOM 不长、堆不翻三倍",
+      "summary": "独立 context 种后期档,3 秒后取样、再等 20 秒取样;DOM 容差 +5,堆只拦「翻三倍且多 20MB」这种明显泄漏;打印两份读数便于判断抖与长。注入每秒 append 一个 div,判据当场红(314 → 334)。",
+      "severity": 0.3,
+      "confidence": 0.85,
+      "effort": 1
+    },
+    "CHG-597": {
+      "id": "CHG-597",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:55:40+00:00",
+      "updated_at": "2026-10-26T12:55:40+00:00",
+      "touched_round": 493,
+      "commit": "2c18a316",
+      "title": "ui-smoke 增 checkSoakStability:20 秒 DOM 不长、堆不翻三倍"
     }
   },
   "edges": [
@@ -41517,6 +41556,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T12:31:43+00:00"
+    },
+    {
+      "from": "CHG-597",
+      "to": "ISS-391",
+      "type": "resolves",
+      "created_at": "2026-10-26T12:55:40+00:00"
+    },
+    {
+      "from": "CHG-597",
+      "to": "TASK-497",
+      "type": "implements",
+      "created_at": "2026-10-26T12:55:40+00:00"
+    },
+    {
+      "from": "ISS-391",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T12:55:40+00:00"
     }
   ]
 }
