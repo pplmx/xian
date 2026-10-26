@@ -3539,3 +3539,33 @@ describe("滚动区 —— 还有下文时要说出来", () => {
     expect(char, "外圈要套 scroll-fade").toContain("scroll-fade");
   });
 });
+
+describe("设计文档的字阶 · 与判据同一份清单", () => {
+  /*
+   * design.md 自称「配色的唯一权威」,字阶也写在那里。它此前写的是「六档」,
+   * 下面却只列了五个数 —— 一份权威文档把自己的档位数说错,后面的人就会照它去长第六档。
+   * 这里把文档里那行清单与 uiLayering 的 PAGE_TIERS 逐个对上,谁改一边都不许。
+   */
+  const DOC = readFileSync(resolve(__dirname, "../../docs/design.md"), "utf8");
+  const DOC_TIERS = [18, 15, 14, 11, 10];
+
+  const listed = (text: string): number[] => {
+    const line = /\*\*字号档位\*\*[:：]([^\n]+)/.exec(text)?.[1] ?? "";
+    return [...line.matchAll(/(\d+)/g)].map((m) => Number(m[1]));
+  };
+
+  it("文档列的档位与 PAGE_TIERS 一致", () => {
+    expect(listed(DOC), "design.md 的字号档位与 PAGE_TIERS 对不上").toEqual(DOC_TIERS);
+  });
+
+  it("标题不再说「六档」", () => {
+    expect(DOC).toMatch(/### 字号只有五档/);
+    expect(DOC, "标题与下面那五个数打架").not.toContain("字号只有六档");
+  });
+
+  it("判据自证:把文档里的 11 改成 12,当场红", () => {
+    expect(listed(DOC.replace("18 / 15 / 14 / 11 / 10", "18 / 15 / 14 / 12 / 10"))).not.toEqual(
+      DOC_TIERS,
+    );
+  });
+});
