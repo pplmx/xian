@@ -473,3 +473,21 @@ describe("加页面必须同时进两扇浏览器门", () => {
     ).toEqual([]);
   });
 });
+
+describe("发版体检自己也得有人看着", () => {
+  /*
+   * release:check 是「打 tag 之前跑的那一条」,它自己断了没人会知道 ——
+   * 脚本被删、命令被摘、判断搬回脚本里(绕开纯函数与单测),都算退化。
+   */
+  const PKG = readFileSync(resolve(__dirname, "../../package.json"), "utf8");
+  const SCRIPT = readFileSync(resolve(__dirname, "../../scripts/release-check.mjs"), "utf8");
+
+  it("命令还挂在 package.json 上", () => {
+    expect(PKG, "release:check 命令没了").toContain('"release:check"');
+  });
+
+  it("判断仍然走 core 的纯函数 —— 脚本里不许自己判", () => {
+    expect(SCRIPT, "脚本不再调用 checkRelease").toContain("checkRelease(");
+    expect(SCRIPT, "脚本里又出现了自己的阻塞文案(判断应留在 core)").not.toContain("blockers.push(");
+  });
+});
