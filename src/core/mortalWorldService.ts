@@ -229,6 +229,10 @@ export interface WorldView {
   ruleText: string;
   /** 资源偏向这一句的兑现方式 —— 与 afterWin 里那个乘区同源 */
   biasText: string;
+  /** 本世几段地界(路线长度)—— 玩家一眼看得出「这一世有多长」 */
+  stages: number;
+  /** 层级跨度的一句话:「层级 3–9」/「层级 5」 —— 值全相同时不写成 5–5 */
+  tierText: string;
   places: PlaceView[];
 }
 
@@ -288,6 +292,8 @@ export function worldView(w: MortalWorld, bossNameOf: (id: string) => string): W
     summary: id.summary,
     ruleText: w.ruleName,
     biasText: biasEffectOf(w.bias)?.label ?? "",
+    stages: w.chain.length,
+    tierText: lo === hi ? `层级 ${lo}` : `层级 ${lo}–${hi}`,
     places,
   };
 }

@@ -5,6 +5,10 @@
       <div>
         <h1 class="font-kai text-[19px] tracking-[0.12em] text-ink">{{ view.title }}</h1>
         <p class="mt-1 t-body text-ink-faint">本世之界 · {{ view.summary }}</p>
+        <!-- 路线形状的一句话:几段、层级跨度多大 —— 概览里先给结论,细节留给下面的路线图 -->
+        <p class="mt-0.5 text-[11px] text-ink-faint" data-world-shape>
+          {{ view.stages }} 段地界 · {{ view.tierText }}
+        </p>
         <p class="mt-0.5 text-[11px] text-cinnabar">
           此世命数:{{ view.ruleText
           }}<span class="text-ink-faint"

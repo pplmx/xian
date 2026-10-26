@@ -18,6 +18,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
+import { worldView } from "./mortalWorldService";
 import { skeletonDistance, terrainOf, visibleFeatures, worldIdentity } from "./mortalIdentity";
 import { generateMortalWorld, type MortalWorld } from "./mortalWorldGen";
 import { biasEffectOf } from "./mortalBias";
@@ -270,5 +271,29 @@ describe("世界的战斗规则 · 界面上那句「其律尚未显化于历练
 
   it("世界本身仍然带着规则 —— 否则这句声明没有意义", () => {
     expect(GEN, "世界不再声明 CombatRules,那句「尚未显化」就该删掉").toMatch(/rules: CombatRules/);
+  });
+});
+
+describe("世界页概览 · 段数与层级跨度", () => {
+  /*
+   * 世界页原先只有名字 + 摘要 + 命数 + 所钟,没有「这一世有多长、跨几层」。
+   * 那两个数是路线图里本来就有的信息(链长、层级最小/最大),给成一句话能让玩家
+   * 在展开路线前就知道份量。这里钉住它与链数据同源,不然又成手写装饰。
+   */
+  it("stages 等于链长,tierText 等于真实层级跨度", () => {
+    for (const w of POOL.slice(0, 12)) {
+      const v = worldView(w, (id) => id);
+      expect(v.stages).toBe(w.chain.length);
+      const tiers = w.chain.map((p) => p.tier);
+      const lo = Math.min(...tiers);
+      const hi = Math.max(...tiers);
+      expect(v.tierText).toBe(lo === hi ? `层级 ${lo}` : `层级 ${lo}–${hi}`);
+    }
+  });
+
+  it("自证:层级全相同时不写成「5–5」", () => {
+    const w = POOL[0]!;
+    const flat = { ...w, chain: w.chain.map((p) => ({ ...p, tier: 5 })) };
+    expect(worldView(flat, (id) => id).tierText).toBe("层级 5");
   });
 });
