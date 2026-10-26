@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 509,
+  "round": 511,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T17:15:13+00:00",
+  "updated_at": "2026-10-26T17:27:55+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 509,
+      "touched_round": 511,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -29123,6 +29123,45 @@
       "touched_round": 509,
       "commit": "779094b2",
       "title": "换一方天地(道果第二个出口)+ 巡游量禁用态等两帧"
+    },
+    "ISS-409": {
+      "id": "ISS-409",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:27:48+00:00",
+      "updated_at": "2026-10-26T17:27:55+00:00",
+      "touched_round": 511,
+      "title": "我给出口定的固定价,正是 fruitOutlets 点名要避免的写法",
+      "summary": "fruitOutlets 已论证「固定定价 + 无上限余额 = 出口迟早变成免费按钮,抬价只能延后」。上一轮换一方天地却钉死 15 枚 —— 第 20 世手里几千枚时,15 枚什么都算不上,出口会退化成「重掷到满意为止」。引用判据不等于遵守判据。",
+      "severity": 0.35,
+      "confidence": 0.95
+    },
+    "TASK-515": {
+      "id": "TASK-515",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:27:48+00:00",
+      "updated_at": "2026-10-26T17:27:55+00:00",
+      "touched_round": 511,
+      "category": "balance",
+      "title": "换一方天地改为按余额抽成(一成半、至少 15 枚)+ 三条定价判据",
+      "summary": "worldRerollCost 纯函数,界面与结算同源;判据含自证「退回常数定价即红」,以及连换十次余额必须真的降。",
+      "severity": 0.35,
+      "confidence": 0.95,
+      "effort": 2
+    },
+    "CHG-614": {
+      "id": "CHG-614",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:27:55+00:00",
+      "updated_at": "2026-10-26T17:27:55+00:00",
+      "touched_round": 511,
+      "commit": "6fd96fc1",
+      "title": "换一方天地改为按余额抽成(一成半、至少 15 枚)"
     }
   },
   "edges": [
@@ -42532,6 +42571,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T17:15:13+00:00"
+    },
+    {
+      "from": "CHG-614",
+      "to": "ISS-409",
+      "type": "resolves",
+      "created_at": "2026-10-26T17:27:55+00:00"
+    },
+    {
+      "from": "CHG-614",
+      "to": "TASK-515",
+      "type": "implements",
+      "created_at": "2026-10-26T17:27:55+00:00"
+    },
+    {
+      "from": "ISS-409",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T17:27:55+00:00"
     }
   ]
 }
