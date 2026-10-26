@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 525,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T20:21:57+00:00",
+  "updated_at": "2026-10-26T20:31:53+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29673,23 +29673,23 @@
     "ISS-423": {
       "id": "ISS-423",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T20:16:08+00:00",
-      "updated_at": "2026-10-26T20:16:08+00:00",
+      "updated_at": "2026-10-26T20:31:53+00:00",
       "touched_round": 525,
       "title": "腾出空间后主题没写到盘上:横幅消失但 xuanshu.settings 分片始终不出现",
-      "summary": "存储写满场景实测:清掉 ballast、横幅「上次写入存档失败」消失之后,页面上的主题确实切了(themeNow !== themeBefore),但 xuanshu.settings 在 localStorage 里 8 秒轮询都读不到。三种解释未排除:①写失败后的只读封存没解除;②节流队列恢复后没再触发;③键或形状读错(persist 包一层 state 的可能已排除)。若属实,玩家的设置与进度在恢复后会停在旧的一份。",
+      "summary": "结论:测量口径问题,不是缺陷。探针读数:正常启动 7 个分片 → 填满配额期间一个不变(写失败保留旧值)→ 腾出空间后变成 18 个(排队分片一起落盘),横幅消失。自愈是对的;早先「读不到 settings」是那条比对依赖了「点击是否真改了档位」,不稳。判据改落在分片数量与 settings 在场。",
       "severity": 0.45,
       "confidence": 0.6
     },
     "TASK-529": {
       "id": "TASK-529",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T20:16:08+00:00",
-      "updated_at": "2026-10-26T20:16:08+00:00",
+      "updated_at": "2026-10-26T20:31:53+00:00",
       "touched_round": 525,
       "category": "robustness",
       "title": "查:写失败自愈之后,封存是否解除、脏分片是否真的落盘",
@@ -29697,6 +29697,17 @@
       "severity": 0.45,
       "confidence": 0.6,
       "effort": 3
+    },
+    "CHG-628": {
+      "id": "CHG-628",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T20:31:53+00:00",
+      "updated_at": "2026-10-26T20:31:53+00:00",
+      "touched_round": 525,
+      "commit": "e9185782",
+      "title": "存储写满自愈后核对盘上分片(≥7 且 settings 在场)"
     }
   },
   "edges": [
@@ -43346,6 +43357,18 @@
       "to": "ISS-423",
       "type": "addresses",
       "created_at": "2026-10-26T20:21:57+00:00"
+    },
+    {
+      "from": "CHG-628",
+      "to": "ISS-423",
+      "type": "resolves",
+      "created_at": "2026-10-26T20:31:53+00:00"
+    },
+    {
+      "from": "CHG-628",
+      "to": "TASK-529",
+      "type": "implements",
+      "created_at": "2026-10-26T20:31:53+00:00"
     }
   ]
 }
