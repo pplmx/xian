@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 471,
+  "round": 472,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T07:56:54+00:00",
+  "updated_at": "2026-10-26T08:20:16+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 467,
+      "touched_round": 472,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -27652,6 +27652,45 @@
       "touched_round": 471,
       "commit": "9a06612a",
       "title": "onBlockedSaveWrite 订阅 + App 弹「这一步没有保存」"
+    },
+    "ISS-371": {
+      "id": "ISS-371",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:10:59+00:00",
+      "updated_at": "2026-10-26T08:20:15+00:00",
+      "touched_round": 472,
+      "title": "顶栏「年龄/寿元」两侧两套缩写:寿元上亿时读成「1234567/1000亿载」",
+      "summary": "模板左侧走 yearsShown 原数(最多加个取整),右侧走 formatYears 的万/亿缩写。日常境界两侧都不到一万,看不出问题;寿元以亿计的境界一开,同一行并排两个量纲 —— 1234567 看上去像个小数,玩家会以为「还早」,而寿元预警其实是按比例算的。",
+      "severity": 0.3,
+      "confidence": 0.95
+    },
+    "TASK-477": {
+      "id": "TASK-477",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:10:59+00:00",
+      "updated_at": "2026-10-26T08:20:16+00:00",
+      "touched_round": 472,
+      "category": "ux-contract",
+      "title": "lifespanPair:两侧同一套缩写,万/亿界与 formatYears 对齐;usage 文档补多开说明",
+      "summary": "新增纯函数 lifespanPair(age,max) 返回两侧文案(≥10000 才走万/亿),模板写一次「载」;D 用例锁三种情形(上亿、不足一万、小数取整)。docs/usage.md 新增「多个标签页 / 多个窗口」,把横幅、恢复、未保存提示三件事写给玩家。",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-577": {
+      "id": "CHG-577",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:20:15+00:00",
+      "updated_at": "2026-10-26T08:20:16+00:00",
+      "touched_round": 472,
+      "commit": "8bdf215b",
+      "title": "lifespanPair:顶栏年龄/寿元同一套缩写;usage 文档补多开一节"
     }
   },
   "edges": [
@@ -40377,6 +40416,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T07:56:54+00:00"
+    },
+    {
+      "from": "CHG-577",
+      "to": "ISS-371",
+      "type": "resolves",
+      "created_at": "2026-10-26T08:20:15+00:00"
+    },
+    {
+      "from": "CHG-577",
+      "to": "TASK-477",
+      "type": "implements",
+      "created_at": "2026-10-26T08:20:15+00:00"
+    },
+    {
+      "from": "ISS-371",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T08:20:15+00:00"
     }
   ]
 }
