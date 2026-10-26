@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 472,
+  "round": 474,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T08:20:16+00:00",
+  "updated_at": "2026-10-26T08:43:31+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 472,
+      "touched_round": 474,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -27691,6 +27691,45 @@
       "touched_round": 472,
       "commit": "8bdf215b",
       "title": "lifespanPair:顶栏年龄/寿元同一套缩写;usage 文档补多开一节"
+    },
+    "ISS-372": {
+      "id": "ISS-372",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:38:33+00:00",
+      "updated_at": "2026-10-26T08:43:31+00:00",
+      "touched_round": 474,
+      "title": "世界的「资源偏向」只进文案与新颖度,不接任何数值",
+      "summary": "worldSemantics.spec 自己记着这条:「摘要写着矿脉深厚之地,而玄铁掉率一分不动」。玩家读到的是一个像承诺的词,实际什么都不发生 —— 界面上出现的每个词都该有兑现,否则就是「看似有信息、实际没信息」。",
+      "severity": 0.45,
+      "confidence": 0.95
+    },
+    "TASK-478": {
+      "id": "TASK-478",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:38:33+00:00",
+      "updated_at": "2026-10-26T08:43:31+00:00",
+      "touched_round": 474,
+      "category": "core-feature",
+      "title": "五条资源偏向各接一个渠道(+15%);世界详情写明兑现方式",
+      "summary": "core/mortalBias 存表(草木丰饶→灵草 / 矿脉深厚→玄铁 / 典籍散佚→残页 / 药气氤氲→丹药 / 灵石充盈→灵石),afterWin 收 bias 参数按渠道相乘,在线与离线都传 currentWorldBias();WorldView 增 biasText,MortalWorldView 显示「此地所钟」。用户已确认方向:微小经济效果、单渠道。",
+      "severity": 0.45,
+      "confidence": 0.95,
+      "effort": 2
+    },
+    "CHG-578": {
+      "id": "CHG-578",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T08:43:30+00:00",
+      "updated_at": "2026-10-26T08:43:31+00:00",
+      "touched_round": 474,
+      "commit": "a2c4b0f3",
+      "title": "资源偏向兑现:五条偏向各乘一个渠道 +15%,世界详情写明;在线/离线同口径"
     }
   },
   "edges": [
@@ -40434,6 +40473,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T08:20:15+00:00"
+    },
+    {
+      "from": "CHG-578",
+      "to": "ISS-372",
+      "type": "resolves",
+      "created_at": "2026-10-26T08:43:30+00:00"
+    },
+    {
+      "from": "CHG-578",
+      "to": "TASK-478",
+      "type": "implements",
+      "created_at": "2026-10-26T08:43:30+00:00"
+    },
+    {
+      "from": "ISS-372",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T08:43:30+00:00"
     }
   ]
 }
