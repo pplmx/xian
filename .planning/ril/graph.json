@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 480,
+  "round": 481,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T09:48:32+00:00",
+  "updated_at": "2026-10-26T10:00:03+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -27964,6 +27964,34 @@
       "touched_round": 480,
       "commit": "67168cd3",
       "title": "离线普通战五渠道各乘偏向;offlineParity 残页判据改容忍换行"
+    },
+    "ISS-379": {
+      "id": "ISS-379",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T10:00:03+00:00",
+      "updated_at": "2026-10-26T10:00:03+00:00",
+      "touched_round": 481,
+      "title": "离线结算只有手写状态用例:组合维度上没有「不崩」的判据",
+      "summary": "忙碌档/空档/深探档各一条,都是手写的一种状态;真实档是境界×区域×出行×时长×洞府×偏向的组合。组合里任何一条抛错,玩家回来就是一屏空白 —— 而手写用例碰不到。本轮注入「取偏向时读 null 世界的字段」验证:组合式随机档能立刻抓到,手写用例不会。",
+      "severity": 0.35,
+      "confidence": 0.9
+    },
+    "TASK-485": {
+      "id": "TASK-485",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T10:00:03+00:00",
+      "updated_at": "2026-10-26T10:00:03+00:00",
+      "touched_round": 481,
+      "category": "detectability",
+      "title": "offlineFuzz:固定种子 120 组随机状态的不变量",
+      "summary": "断言不抛错、灵石/修为有限非负、场次自洽、灵气无 NaN/负;失败带「境界·区域/出行/时长·偏向」上下文;防空转阈值(>20 组打仗、>10 组捡材料)。",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 1
     }
   },
   "edges": [
