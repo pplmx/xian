@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 525,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T20:16:08+00:00",
+  "updated_at": "2026-10-26T20:21:57+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -43340,6 +43340,12 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T20:16:08+00:00"
+    },
+    {
+      "from": "TASK-529",
+      "to": "ISS-423",
+      "type": "addresses",
+      "created_at": "2026-10-26T20:21:57+00:00"
     }
   ]
 }
