@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 528,
+  "round": 529,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T20:53:19+00:00",
+  "updated_at": "2026-10-26T21:04:19+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29786,6 +29786,45 @@
       "touched_round": 528,
       "commit": "1a12fc86",
       "title": "HEAD(1a12fc86) 六门复跑全绿(无代码改动)"
+    },
+    "ISS-426": {
+      "id": "ISS-426",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:04:18+00:00",
+      "updated_at": "2026-10-26T21:04:19+00:00",
+      "touched_round": 529,
+      "title": "手册整份没出现过「人物」与「坊市」—— 系统表数得清,页面这一层漏了",
+      "summary": "usage.md 的系统一览有 17 行(境界/灵根/…/任务),但玩家想查「人物页」「坊市」这两页时读不到任何说明:全文 grep「人物」「角色」「坊市」「市场」皆 0 次。数得清的系统不缺项,缺的是把页面也当系统看。",
+      "severity": 0.25,
+      "confidence": 0.95
+    },
+    "TASK-532": {
+      "id": "TASK-532",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:04:18+00:00",
+      "updated_at": "2026-10-26T21:04:19+00:00",
+      "touched_round": 529,
+      "category": "docs",
+      "title": "补两行 + 每个路由一个玩家会搜的词,少一个就红",
+      "summary": "18 个路由 × 关键词进 usageDocCounts.spec;注入删行即点名 market(坊市)。",
+      "severity": 0.25,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-631": {
+      "id": "CHG-631",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:04:18+00:00",
+      "updated_at": "2026-10-26T21:04:19+00:00",
+      "touched_round": 529,
+      "commit": "55f0d5f1",
+      "title": "手册补「人物」「坊市」并钉住页面覆盖"
     }
   },
   "edges": [
@@ -43483,6 +43522,24 @@
       "to": "ISS-425",
       "type": "addresses",
       "created_at": "2026-10-26T20:53:19+00:00"
+    },
+    {
+      "from": "CHG-631",
+      "to": "ISS-426",
+      "type": "resolves",
+      "created_at": "2026-10-26T21:04:19+00:00"
+    },
+    {
+      "from": "CHG-631",
+      "to": "TASK-532",
+      "type": "implements",
+      "created_at": "2026-10-26T21:04:19+00:00"
+    },
+    {
+      "from": "TASK-532",
+      "to": "ISS-426",
+      "type": "addresses",
+      "created_at": "2026-10-26T21:04:19+00:00"
     }
   ]
 }
