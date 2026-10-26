@@ -371,3 +371,18 @@ describe("轮回审计 · 继承清单最小完备", () => {
     for (const g of groups) expect(g.title, `${g.mode} 组缺界面用语`).toBeTruthy();
   });
 });
+
+describe("玩家手册 · 转世那一节与交割清单同形", () => {
+  /*
+   * 交割清单是「这一世留下什么」的唯一事实源(samsaraAudit 的继承表),而玩家手册里
+   * 也该有一节让没到转世的人先知道代价。两边一旦分家,手册说的与弹窗说的就不是一回事。
+   */
+  const DOC = readFileSync(resolve(__dirname, "../../docs/usage.md"), "utf8");
+
+  it("手册里有「转世:什么留下、什么放下」一节,三组一件不少", () => {
+    expect(DOC, "手册没有转世那一节").toContain("## 转世：什么留下、什么放下");
+    for (const g of heritageGroups()) {
+      expect(DOC, `手册少了「${g.title}」这组 —— 弹窗里有、手册里没有`).toContain(g.title);
+    }
+  });
+});
