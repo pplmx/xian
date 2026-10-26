@@ -15,6 +15,8 @@
  * 若能,名字重复无害;若连摘要也高度相似,才需要增加身份维度。
  * 本轮只度量,不改命名算法。
  */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import { skeletonDistance, terrainOf, visibleFeatures, worldIdentity } from "./mortalIdentity";
 import { generateMortalWorld, type MortalWorld } from "./mortalWorldGen";
@@ -240,5 +242,33 @@ describe("语义完整度 · 结论", () => {
         "\n而不是扩名字词库 —— 后者只会产出更多同样不携带信息的名字",
     );
     expect(pairKeys.size).toBeLessThan(scattered.length);
+  });
+});
+
+describe("世界的战斗规则 · 界面上那句「其律尚未显化于历练」是真话", () => {
+  /*
+   * 世界页一直写着「此世气象之名,其律尚未显化于历练」。这句话是**对玩家的承诺**:
+   * 世界名里那个「天时如刀的废墟之世」不改变任何一场战斗的规则。
+   *
+   * 但它此前只有一半守护:uiLayering 要求界面上必须有这句话,却没人要求这句话继续成立。
+   * 哪天有人把 adventure.mortalWorld.rules 接进 explorationRules(),文案会立刻变成谎话,
+   * 而所有判据照样全绿 —— 故这里钉住事实本身。
+   *
+   * 反过来,若真要接进去:先改世界页那句文案(以及 uiLayering 的断言),再来删这一条。
+   */
+  const EXP = readFileSync(resolve(__dirname, "exploration.ts"), "utf8");
+  const GEN = readFileSync(resolve(__dirname, "mortalWorldGen.ts"), "utf8");
+
+  it("历练的战斗规则只合并道途与逆旅契,不含这一世的规则", () => {
+    const at = EXP.indexOf("currentDaoRules(), lifeTrialRules()");
+    expect(at, "explorationRules 的合并点变了 —— 这条判据的锚点要跟着改").toBeGreaterThan(0);
+    const window = EXP.slice(Math.max(0, at - 300), at + 300);
+    expect(window, "世界的 rules 被接进历练了 —— 世界页那句「其律尚未显化」就得改").not.toContain(
+      "mortalWorld",
+    );
+  });
+
+  it("世界本身仍然带着规则 —— 否则这句声明没有意义", () => {
+    expect(GEN, "世界不再声明 CombatRules,那句「尚未显化」就该删掉").toMatch(/rules: CombatRules/);
   });
 });
