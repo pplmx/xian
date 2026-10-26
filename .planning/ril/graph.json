@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 537,
+  "round": 538,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T22:15:32+00:00",
+  "updated_at": "2026-10-26T22:21:55+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -30137,6 +30137,45 @@
       "touched_round": 537,
       "commit": "148cd358",
       "title": "发版体检加「正文图链必须指本版 tag」"
+    },
+    "ISS-435": {
+      "id": "ISS-435",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:21:55+00:00",
+      "updated_at": "2026-10-26T22:21:55+00:00",
+      "touched_round": 538,
+      "title": "发版体检自己断了没人知道:命令可被摘、判断可搬回脚本",
+      "summary": "release:check 是打 tag 前跑的那一条;命令被摘掉、脚本被删、或判断从 core 的纯函数搬回脚本里绕开单测,都不会有任何门变红 —— 而它正是那条「本地唯一能提前发现发版问题」的路。",
+      "severity": 0.2,
+      "confidence": 0.9
+    },
+    "TASK-541": {
+      "id": "TASK-541",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:21:55+00:00",
+      "updated_at": "2026-10-26T22:21:55+00:00",
+      "touched_round": 538,
+      "category": "detectability",
+      "title": "gateWiring 钉住 release:check 的接线",
+      "summary": "package.json 里还挂着命令;脚本仍调 core 的 checkRelease 且不自己造阻塞文案。注入删除命令即红。",
+      "severity": 0.2,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-640": {
+      "id": "CHG-640",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:21:55+00:00",
+      "updated_at": "2026-10-26T22:21:55+00:00",
+      "touched_round": 538,
+      "commit": "25372b0e",
+      "title": "发版体检的接线也有判据"
     }
   },
   "edges": [
@@ -43996,6 +44035,24 @@
       "to": "ISS-434",
       "type": "addresses",
       "created_at": "2026-10-26T22:15:31+00:00"
+    },
+    {
+      "from": "CHG-640",
+      "to": "ISS-435",
+      "type": "resolves",
+      "created_at": "2026-10-26T22:21:55+00:00"
+    },
+    {
+      "from": "CHG-640",
+      "to": "TASK-541",
+      "type": "implements",
+      "created_at": "2026-10-26T22:21:55+00:00"
+    },
+    {
+      "from": "TASK-541",
+      "to": "ISS-435",
+      "type": "addresses",
+      "created_at": "2026-10-26T22:21:55+00:00"
     }
   ]
 }
