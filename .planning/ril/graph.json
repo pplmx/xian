@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 465,
+  "round": 466,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T06:26:32+00:00",
+  "updated_at": "2026-10-26T06:41:14+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -27418,6 +27418,45 @@
       "touched_round": 465,
       "commit": "fb7dd36c",
       "title": "只读页四档量测 + 像素对比度;坏档场景固定 900ms 换成等卡片出现"
+    },
+    "ISS-365": {
+      "id": "ISS-365",
+      "type": "issue",
+      "status": "resolved",
+      "version": 3,
+      "created_at": "2026-10-26T06:34:42+00:00",
+      "updated_at": "2026-10-26T06:41:14+00:00",
+      "touched_round": 466,
+      "title": "巡页用固定 700ms 等路由分包:忙时量到的是空页,而判据全绿",
+      "summary": "[INFERENCE,机制推断] 路由组件全是懒加载分包;巡页 goto 之后固定等 600~700ms 就调 measurePage/measureZoomScale。分包没就绪时 main 是空的,横向溢出、越界、字号、主值行那一整套判据都在量空页 → 全绿。底部导航在 App 层渲染,所以 navItems=5 那一关也拦不住;主值行空转计数只在\"全都没量到\"时才红,单页空页不会触发。没有实地量到假绿(试着用 page.route 延迟分包验证,本机没能复现延迟窗口),但\"量之前没有任何就绪信号\"是事实 —— 修法是加就绪探测,不是断言它一定发生过。",
+      "severity": 0.5,
+      "confidence": 0.9
+    },
+    "TASK-471": {
+      "id": "TASK-471",
+      "type": "task",
+      "status": "resolved",
+      "version": 3,
+      "created_at": "2026-10-26T06:34:42+00:00",
+      "updated_at": "2026-10-26T06:41:14+00:00",
+      "touched_round": 466,
+      "category": "test-quality",
+      "title": "巡页改成先等 main 有字再量;空页记一条失败",
+      "summary": "新增 openRoute(page, route, settle):goto 之后 waitForFunction(main.innerText 非空,15s),再保留原有固定等待(有些判据量的是稳定态,不能缩);返回读到字数,四处调用点(主巡 / 后期 / 320-late / 200% 缩放)为 0 时各记一条失败。",
+      "severity": 0.5,
+      "confidence": 0.9,
+      "effort": 1.5
+    },
+    "CHG-571": {
+      "id": "CHG-571",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T06:41:09+00:00",
+      "updated_at": "2026-10-26T06:41:14+00:00",
+      "touched_round": 466,
+      "commit": "6cdf54d9",
+      "title": "巡页新增 openRoute 就绪探测;四处调用点空页记失败"
     }
   },
   "edges": [
@@ -40035,6 +40074,18 @@
       "to": "TASK-469",
       "type": "depends_on",
       "created_at": "2026-10-26T06:26:32+00:00"
+    },
+    {
+      "from": "CHG-571",
+      "to": "ISS-365",
+      "type": "resolves",
+      "created_at": "2026-10-26T06:41:09+00:00"
+    },
+    {
+      "from": "CHG-571",
+      "to": "TASK-471",
+      "type": "implements",
+      "created_at": "2026-10-26T06:41:09+00:00"
     }
   ]
 }
