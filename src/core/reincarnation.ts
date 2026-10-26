@@ -182,6 +182,32 @@ export function prepareReincarnation(): ReincarnationView {
     nextLinggen: rollLinggen(rng, aptitudeFloorNow()),
     themeChoices: (fresh.length > 0 ? fresh : pool).map((x) => x.id),
     themeFree: stageAfter.themeFreeChoice,
+    /*
+     * 功法带走的预告:与 confirm 调的是同一套判断(keepsAllGongfa / stage.keepOneGongfa)。
+     * 玩家在确认前看得到「哪一门保层数」,才不会把该练的那门留在低层。
+     *
+     * 注意传承的**先后**:confirm 先 addHeritage(这一世锻出的那一枚)再算 carryGongfa ——
+     * 所以这一世刚锻出「大乘道统」的人,这次转世就能全带层数。预告必须按同一份
+     * 传承表算,否则会出现「预告说回一层、实际全带」(本轮用例正是这样抓到的)。
+     */
+    gongfaKeep: (() => {
+      const learned = useCultivationStore().learned;
+      const gained = lifeForge(player.major)?.id ?? null;
+      const heritageAfter = gained
+        ? [...player.reincarnation.heritage, gained]
+        : [...player.reincarnation.heritage];
+      const keepAll = keepsAllGongfa(heritageAfter as never);
+      const keepOne = !keepAll && stageAfter.keepOneGongfa;
+      let keepOneId: string | null = null;
+      let keepOneLevel = 0;
+      for (const [id, lv] of Object.entries(learned)) {
+        if (keepOne && lv > keepOneLevel) {
+          keepOneId = id;
+          keepOneLevel = lv;
+        }
+      }
+      return { total: Object.keys(learned).length, keepAll, keepOneId, keepOneLevel };
+    })(),
     // ISS-302:这一世到的最高未锻造门槛 —— 深修的「我是谁」。只算不改,confirm 才落账
     heritageGained: lifeForge(player.major)?.id ?? null,
     // 新一世的随机道号草稿(确认页可改回)

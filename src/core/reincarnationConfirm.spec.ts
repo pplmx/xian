@@ -15,6 +15,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { prepareReincarnation, confirmReincarnation } from "./reincarnation";
 import { birthMajorFloor } from "./heritageEffects";
 import { stageAt } from "@/data/samsara";
+import { GONGFA } from "@/data/gongfa";
 
 /*
  * 只把「重掷本世之界」换成直通 —— 它每掷一次要跑门禁重试(最多 200 轮),
@@ -207,6 +208,14 @@ describe("转世预告 · 许诺的数必须兑现", () => {
       player.reincarnation.insight = Math.floor(rand() * 3000);
       player.reincarnation.heritage = HERITAGES.filter(() => rand() < 0.25) as never;
       res.spiritStone = gn(10000);
+      // 练过三部功法(层数各异):转世后「哪一门保层数」正是这条用例要核的预告之一
+      const learned = useCultivationStore().learned;
+      const learnedBefore = {
+        [GONGFA[0]!.id]: 5,
+        [GONGFA[1]!.id]: 2,
+        [GONGFA[2]!.id]: 1,
+      };
+      Object.assign(learned, learnedBefore);
 
       const fruit0 = player.reincarnation.daoFruit;
       const insight0 = player.reincarnation.insight;
@@ -226,6 +235,19 @@ describe("转世预告 · 许诺的数必须兑现", () => {
       if (stage.name !== view.stageName)
         fails.push(`${where} 阶名 ${stage.name} ≠ 预告 ${view.stageName}`);
       if (player.name !== view.nameDraft) fails.push(`${where} 名号没落上`);
+      // 功法预告:层数回一层 / 保一门 / 全带 —— 实际学到的层数必须与预告一致
+      if (view.gongfaKeep.total !== 3) fails.push(`${where} 功法总数 ${view.gongfaKeep.total} ≠ 3`);
+      const after = useCultivationStore().learned;
+      for (const [id, lv] of Object.entries(learnedBefore)) {
+        const want = view.gongfaKeep.keepAll
+          ? lv
+          : id === view.gongfaKeep.keepOneId
+            ? view.gongfaKeep.keepOneLevel
+            : 1;
+        if (after[id] !== want) {
+          fails.push(`${where} 功法 ${id} 实得 ${after[id]} 层,预告 ${want} 层`);
+        }
+      }
       if (dFruit > 0) fruitMoves += 1;
     }
     expect(fails.slice(0, 6)).toEqual([]);

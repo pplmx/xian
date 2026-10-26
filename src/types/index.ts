@@ -1234,6 +1234,23 @@ export interface ReincarnationView {
   toNextStage: number | null;
   /** 睁眼即认得的灵材数 */
   knownMaterials: number;
+  /**
+   * 功法带走计划 —— 转世确认之后到底会掉到几层。
+   *
+   * 「层数回一层」是这一世最容易被低估的一笔损失(练满一部要 125 点悟道点),
+   * 而哪些功法留、哪一门保层数,取决于宿慧阶与宿命传承 —— 玩家在确认前看不到,
+   * 就只能靠猜。这里的数与 confirmReincarnation 实际调的是同一套判断。
+   */
+  gongfaKeep: {
+    /** 练过几部(门类会保留,只是层数回一层) */
+    total: number;
+    /** 大乘道统:层数原样全带 */
+    keepAll: boolean;
+    /** 顶阶宿慧:保留层数的那一门(没有则为 null) */
+    keepOneId: string | null;
+    /** 那一门保留到几层 */
+    keepOneLevel: number;
+  };
   /** 来世灵根(所见即所得:确认即用它,绝不二次 roll —— 见 reincarnation-linggen-visibility 计划) */
   nextLinggen: LinggenProfile;
   /** 可立的命题(id);空数组表示此阶无题可立 */

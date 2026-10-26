@@ -81,6 +81,21 @@
         </p>
       </div>
 
+      <!--
+        功法层数会掉回一层 —— 这是转世里最容易被低估的一笔损失(练满一部要 125 点悟道点)。
+        顶阶宿慧能保住一门、大乘道统能全带,故按玩家真实状态说清「这一世是哪一种」,
+        而不是只写在交割清单那条可展开的说明里。
+      -->
+      <p v-if="view.gongfaKeep.total > 0" data-gongfa-keep class="mt-1.5 t-body text-ink-faint">
+        功法 {{ view.gongfaKeep.total }} 部记得住,层数回到一层<template
+          v-if="view.gongfaKeep.keepAll"
+          >;大乘道统在身,已练的层数原样带走</template
+        ><template v-else-if="view.gongfaKeep.keepOneId"
+          >;唯有「{{ gongfaName(view.gongfaKeep.keepOneId) }}」保留
+          {{ view.gongfaKeep.keepOneLevel }} 层</template
+        >。
+      </p>
+
       <p class="mt-3 t-body text-ink-faint">
         丹方、药性、器纹、敌手的路数——这些所知不随皮囊腐朽。 来世睁眼,你累计认得
         <span class="text-ink tabular">{{ view.knownMaterials }}</span>
@@ -281,6 +296,7 @@ import {
 import { talentDef, TALENT_GRADE_COLORS, TALENT_GRADE_NAMES } from "@/data/talents";
 import { modsText } from "@/data/statNames";
 import { heritageDef } from "@/data/heritage";
+import { gongfaDef } from "@/data/gongfa";
 import { lifeThemeDef, TABOO_NAMES } from "@/data/lifeThemes";
 import { heritageGroups } from "@/core/samsaraAudit";
 import { engine } from "@/core/engine";
@@ -318,6 +334,11 @@ const tappedHeritage = computed(() =>
     .flatMap((g) => g.rows)
     .find((r) => r.id === heritageTap.value),
 );
+
+/** 功法名:层数预告要说出「哪一门」,不能只给 id */
+function gongfaName(id: string): string {
+  return gongfaDef(id)?.name ?? id;
+}
 
 const view = computed(() => ui.reincarnation);
 const reviewTheme = computed(() =>
