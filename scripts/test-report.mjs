@@ -540,6 +540,44 @@ console.log("");
  * 全绿就搁下了。真正的机制是下面这第二条:**未分类也算失败**(漏登记的用例不计入任何一类,
  * 报告就少算了它)。把原因印出来,"0 败 + 退出 1" 这种组合以后再也不会被误读成 flake。
  */
+/**
+ * 空转的 spec —— 文件在、用例一条都没跑。
+ *
+ * 一个 spec 若把所有 it 包在条件里、或整块被注释掉,它仍会出现在报告里,
+ * 只是 assertionResults 为空:既不算过、也不算败,于是「0 败」照样成立。
+ * 磁盘上有、报告里没有同样危险:文件根本没被跑到(排除规则改错、扩展名不对)。
+ * 两种都属于「守住的东西悄悄没了」,故一并算失败。
+ */
+function listSpecFiles(root) {
+  const out = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === "dist") continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith(".spec.ts")) out.push(full);
+    }
+  };
+  if (existsSync(root)) walk(root);
+  return out;
+}
+const specOnDisk = ["src", "packages"].flatMap((rel) => listSpecFiles(join(ROOT, rel)));
+const reportedFiles = new Map(
+  (report?.testResults ?? []).map((f) => [
+    resolve(String(f.name ?? "")),
+    (f.assertionResults ?? []).length,
+  ]),
+);
+const emptySpecs = specOnDisk.filter((file) => reportedFiles.get(resolve(file)) === 0);
+const notRunSpecs = specOnDisk.filter((file) => !reportedFiles.has(resolve(file)));
+if (emptySpecs.length > 0) {
+  console.log(`  ✗ 空转的 spec ${emptySpecs.length} 个 —— 文件在,但一条用例都没跑:`);
+  for (const f of emptySpecs) console.log(`      ${f.replace(ROOT + "/", "")}`);
+}
+if (notRunSpecs.length > 0) {
+  console.log(`  ✗ 没被跑到的 spec ${notRunSpecs.length} 个 —— 报告里没有它们:`);
+  for (const f of notRunSpecs) console.log(`      ${f.replace(ROOT + "/", "")}`);
+}
 const docFailure = docFailures.length > 0 ? `文档里又写回了用例条数(${docFailures.length} 处)` : "";
 const failureReason =
   totalFailed > 0
@@ -548,12 +586,23 @@ const failureReason =
       ? `vitest 自身非零退出(码 ${childExitCode},可能是文件级报错)`
       : uncategorized > 0
         ? `有 ${uncategorized} 个用例没登记分类(报告会少算它们)`
-        : docFailure;
+        : emptySpecs.length > 0
+          ? `有 ${emptySpecs.length} 个 spec 一条用例都没跑(空转)`
+          : notRunSpecs.length > 0
+            ? `有 ${notRunSpecs.length} 个 spec 没被跑到`
+            : docFailure;
 if (failureReason) console.log(`  退出码 1 的原因:${failureReason}\n`);
 // 未分类也算失败:漏登记的用例不计入任何一类,报告便少算了它。
 // 只提示不拦截的话,这个数会一路悄悄涨上去(曾积到 225 个才被发现)。
 // childExitCode!==0 兜底:JSON 里没有 'failed' 条目的文件级报错也绝不假绿。
 // 文档例数不符同样拦截:加删用例而不同步文档,等于把判据写进文档又拆掉。
 process.exit(
-  totalFailed > 0 || childExitCode !== 0 || uncategorized > 0 || docFailures.length > 0 ? 1 : 0,
+  totalFailed > 0 ||
+    childExitCode !== 0 ||
+    uncategorized > 0 ||
+    docFailures.length > 0 ||
+    emptySpecs.length > 0 ||
+    notRunSpecs.length > 0
+    ? 1
+    : 0,
 );

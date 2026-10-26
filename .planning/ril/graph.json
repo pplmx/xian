@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 499,
+  "round": 500,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T15:17:33+00:00",
+  "updated_at": "2026-10-26T15:26:28+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -28705,6 +28705,34 @@
       "touched_round": 499,
       "commit": "7e1fbef6",
       "title": "gateWiring 补「九道门都有显式非零退出」判据"
+    },
+    "ISS-398": {
+      "id": "ISS-398",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T15:26:28+00:00",
+      "updated_at": "2026-10-26T15:26:28+00:00",
+      "touched_round": 500,
+      "title": "空转 / 没被跑到的 spec 不在任何判据里",
+      "summary": "一个 spec 若把所有 it 包在条件里、或整块被注释掉,它仍出现在报告里但 assertionResults 为空:既不算过也不算败,「0 败」照样成立。磁盘上有、报告里没有更危险 —— vitest 的 include 只覆盖 src/** 与 packages/engine/**,别的 packages 下的 spec 会被静默漏掉,而报告不会提它一个字。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-504": {
+      "id": "TASK-504",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T15:26:28+00:00",
+      "updated_at": "2026-10-26T15:26:28+00:00",
+      "touched_round": 500,
+      "category": "detectability",
+      "title": "test-report 把「空转」与「没被跑到」都算失败并逐个列名",
+      "summary": "扫描 src/ 与 packages/ 下的 *.spec.ts,与报告里的文件表对比:有文件无用例 → 空转;在盘上不在报告 → 没跑到;两者都算失败,并把文件名列出来。注入验证两条。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 1
     }
   },
   "edges": [
