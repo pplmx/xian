@@ -28,8 +28,14 @@ export const WORLD_REROLL_FLOOR = 15;
 /** 按余额抽成 —— 一成半:攒得越多换一次越贵,出口永远不是免费按钮 */
 export const WORLD_REROLL_RATE = 0.15;
 
-/** 这一次换世界要几枚道果(纯函数,给界面与结算共用) */
+/**
+ * 这一次换世界要几枚道果(纯函数,给界面与结算共用)。
+ *
+ * 脏值(坏档里的 NaN / Infinity)一律落回起步价 —— 价格本身不能变成 NaN,
+ * 否则 `余额 < 价` 与 `余额 - 价` 都会跟着失效。真正的拒绝在 rerollWorldByFruit 里。
+ */
 export function worldRerollCost(daoFruit: number): number {
+  if (!Number.isFinite(daoFruit)) return WORLD_REROLL_FLOOR;
   return Math.max(WORLD_REROLL_FLOOR, Math.floor(Math.max(0, daoFruit) * WORLD_REROLL_RATE));
 }
 
@@ -57,6 +63,8 @@ export interface RerollDeps {
  * 顺序是「先掷、再扣」:掷不出来就什么都不发生,不会出现「扣了钱没换到东西」。
  */
 export function rerollWorldByFruit(deps: RerollDeps): WorldRerollResult {
+  // 余额本身不合法(坏档):不掷、不扣 —— 与 sanitize 的口径一致,宁可什么都不做
+  if (!Number.isFinite(deps.daoFruit)) return "poor";
   const cost = worldRerollCost(deps.daoFruit);
   if (deps.daoFruit < cost) return "poor";
   const next = deps.reroll();

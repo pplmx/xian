@@ -1,3 +1,4 @@
+/* oxlint-disable no-console -- 价目表要打给人看 */
 /**
  * 换一方天地 —— 道果出口的落地判据。
  *
@@ -112,6 +113,29 @@ describe("换一方天地 · 定价跟着余额走(不是固定 15 枚)", () => 
     expect(worldRerollCost(10000)).toBeGreaterThan(worldRerollCost(1000));
     // 自证:如果定价回到常数,这一条会当场红
     expect(worldRerollCost(10000)).toBeGreaterThan(WORLD_REROLL_FLOOR * 10);
+  });
+
+  it("价目表:各量级余额换一次要多少(含脏值兜底)", () => {
+    const rows = [15, 50, 100, 300, 1000, 3000, 10000, 30000].map(
+      (b) => `${b} → ${worldRerollCost(b)}`,
+    );
+    console.log(`\n换一方天地:余额 → 价(枚)\n  ${rows.join(" · ")}`);
+    expect(worldRerollCost(30000)).toBeGreaterThan(worldRerollCost(3000));
+    // 脏值不许算出负价:负数/NaN 一律落回起步价
+    expect(worldRerollCost(-100)).toBe(WORLD_REROLL_FLOOR);
+    expect(worldRerollCost(Number.NaN)).toBe(WORLD_REROLL_FLOOR);
+    expect(worldRerollCost(Number.POSITIVE_INFINITY)).toBe(WORLD_REROLL_FLOOR);
+  });
+
+  it("坏档:余额是 NaN 时拒绝换世界,一个字节都不动", () => {
+    const player = usePlayerStore();
+    player.reincarnation = { ...player.reincarnation, daoFruit: Number.NaN } as never;
+    const before = freshWorld();
+    const beforeKey = before ? `${before.seed}/${before.bias}` : "none";
+    expect(reroll()).toBe("poor");
+    expect(Number.isNaN(player.reincarnation.daoFruit), "余额不许被写成别的值").toBe(true);
+    const after = freshWorld();
+    expect(after ? `${after.seed}/${after.bias}` : "none").toBe(beforeKey);
   });
 
   it("连换多次:付得起,但余额呈等比衰减 —— 永远不会变成零成本", () => {
