@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 545,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T23:02:04+00:00",
+  "updated_at": "2026-10-26T23:05:33+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -30278,6 +30278,34 @@
       "summary": "界面加了「平均 N 炉成一炉」,手册的炼制一行仍只说品相;两处对不上。",
       "severity": 0.1,
       "confidence": 0.9
+    },
+    "ISS-439": {
+      "id": "ISS-439",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T23:05:33+00:00",
+      "updated_at": "2026-10-26T23:05:33+00:00",
+      "touched_round": 545,
+      "title": "下一段会话的接手点:发版与「概率→直觉」第三处",
+      "summary": "本会话上下文已耗尽,连续多轮只能簿记。两件待办:(1) 发版 —— 唯一阻塞是版本号未定,定后 release:check 会列出其余项;(2) 洗练/掉落仍只给概率,应照 core/breakthrough 的 expectedTries 造带单测的纯函数再接线。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-544": {
+      "id": "TASK-544",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T23:05:33+00:00",
+      "updated_at": "2026-10-26T23:05:33+00:00",
+      "touched_round": 545,
+      "category": "handover",
+      "title": "接手:先跑 release:check,再决定发版或做期望值",
+      "summary": "both-paths-documented-in-ISS",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 1
     }
   },
   "edges": [
