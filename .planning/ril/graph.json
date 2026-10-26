@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 532,
+  "round": 533,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T21:30:51+00:00",
+  "updated_at": "2026-10-26T21:39:10+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29942,6 +29942,45 @@
       "touched_round": 532,
       "commit": "6f58319e",
       "title": "换一方天地加确认框"
+    },
+    "ISS-430": {
+      "id": "ISS-430",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:39:09+00:00",
+      "updated_at": "2026-10-26T21:39:09+00:00",
+      "touched_round": 533,
+      "title": "世界页概览只说了几段、跨几层,走了几段得往下滑",
+      "summary": "上一轮加的概览行给了「6 段地界 · 层级 3–9」,但进度(已通几段)只在下面的路线图里,节点旁一枚「已通」小字。玩家想知道「这世走到哪了」仍要滚动。另:本轮把「不可逆动作有没有确认」列了张表逐个查 —— 批量分解(二步确认)、洞府关窗(后果写明)、换界(上一轮已补)都在。",
+      "severity": 0.15,
+      "confidence": 0.9
+    },
+    "TASK-536": {
+      "id": "TASK-536",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:39:09+00:00",
+      "updated_at": "2026-10-26T21:39:10+00:00",
+      "touched_round": 533,
+      "category": "ux",
+      "title": "worldView 收 isCleared,概览行补「已过 N/段」",
+      "summary": "与路线图同一份链数据;默认恒 false;判据三条(不传为 0 / 通两段报 2 / 不超过总段数)。",
+      "severity": 0.15,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-635": {
+      "id": "CHG-635",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:39:09+00:00",
+      "updated_at": "2026-10-26T21:39:10+00:00",
+      "touched_round": 533,
+      "commit": "0f8e7ef6",
+      "title": "概览行补已过 N/段"
     }
   },
   "edges": [
@@ -43711,6 +43750,24 @@
       "to": "ISS-429",
       "type": "addresses",
       "created_at": "2026-10-26T21:30:51+00:00"
+    },
+    {
+      "from": "CHG-635",
+      "to": "ISS-430",
+      "type": "resolves",
+      "created_at": "2026-10-26T21:39:09+00:00"
+    },
+    {
+      "from": "CHG-635",
+      "to": "TASK-536",
+      "type": "implements",
+      "created_at": "2026-10-26T21:39:09+00:00"
+    },
+    {
+      "from": "TASK-536",
+      "to": "ISS-430",
+      "type": "addresses",
+      "created_at": "2026-10-26T21:39:09+00:00"
     }
   ]
 }
