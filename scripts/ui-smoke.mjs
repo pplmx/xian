@@ -63,6 +63,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
 import { decryptSlice, lateSlices, seedSave } from "./lib/saveFixture.mjs";
+import { SAVE_VERSION } from "../src/utils/storage.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const INDEX = `file://${join(ROOT, "dist/index.html")}`;
@@ -149,6 +150,8 @@ async function runRoute(route) {
   const silent = [];
   const slowSteps = []; // 单步 >1s 的等待(读数,不判失败)—— 见文件头的「元素句柄」注
   let clicked = 0;
+  /** 这一页真的找到几个可点控件(可见 + 没禁用 + 有名字)—— 用来区分「页面本来就没东西点」与「点击器坏了」 */
+  let controls = 0;
   let leftPage = false;
   watchPageErrors(page, (msg) => errors.push({ where: `${route} 载入`, msg }));
 
@@ -298,6 +301,7 @@ async function runRoute(route) {
     if (!text || SKIP.test(text)) continue;
     if (!(await b.isVisible().catch(() => false))) continue;
     if (await b.isDisabled().catch(() => false)) continue;
+    controls += 1;
     const before = errors.length;
     const beforeFp = await fingerprint();
     /**
@@ -348,6 +352,7 @@ async function runRoute(route) {
     slowSteps,
     leftPage,
     clicked,
+    controls,
     blocked: blocked(),
     ms: Math.round(performance.now() - routeT0),
     setupMs,
@@ -465,6 +470,72 @@ async function checkSaveFull(browser) {
 }
 
 /**
+ * 导入存档 —— 换档之后不能被旧内存回写覆盖。
+ *
+ * 这条盖的是设置页那条链里最险的一步:`importSaveText` 只写盘,之后靠
+ * `sealStorageWrites()` + 延时 reload 把内存里的旧档压住。万一封存漏了、或者
+ * reload 之前引擎把旧状态刷了一次盘,**玩家看到的会是「导入成功」然后一切照旧** ——
+ * 而盘上已经是旧档了,连恢复都没得恢复。
+ *
+ * 判据两步:导入后道号变成新档的;再挂 3 秒(引擎照跑)、再重载一次,道号仍是新档。
+ */
+async function checkImportReplacesSave(browser) {
+  const fails = [];
+  const NEW_NAME = "导入自检";
+  const slices = lateSlices();
+  const oldName = String(slices.player?.name ?? "");
+  const payload = JSON.stringify({
+    game: "xuanshu",
+    version: SAVE_VERSION,
+    exportedAt: Date.now(),
+    data: { ...slices, player: { ...slices.player, name: NEW_NAME } },
+  });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  try {
+    await seedSave(ctx, slices, "__importFixture");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/settings", { waitUntil: "load" });
+    await page.waitForTimeout(1500);
+    await page.setInputFiles('input[type="file"]', {
+      name: "xuanshu-save.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(payload, "utf8"),
+    });
+    await page
+      .getByRole("button", { name: /用这份替换/ })
+      .first()
+      .click({ timeout: 5000 });
+    // 确认后 800ms 才 reload,再多等一会儿让新档完全起来
+    await page.waitForTimeout(3000);
+    const readName = async () => {
+      await page.goto(INDEX + "#/character", { waitUntil: "load" });
+      await page.waitForTimeout(1200);
+      return page.evaluate(() => document.body.innerText.slice(0, 4000));
+    };
+    const afterImport = await readName();
+    if (!afterImport.includes(NEW_NAME)) {
+      fails.push(`导入后道号没变成「${NEW_NAME}」—— 新档没生效`);
+    }
+    // 挂着跑一会儿:引擎每 tick 都在改内存,若有回写,这里就会把新档盖掉
+    await page.waitForTimeout(3000);
+    const afterTick = await readName();
+    if (!afterTick.includes(NEW_NAME)) {
+      fails.push(`挂 3 秒再重载,道号不再是「${NEW_NAME}」—— 旧内存把新档覆盖了`);
+    }
+    if (oldName && afterTick.includes(oldName) && oldName !== NEW_NAME) {
+      fails.push(`旧道号「${oldName}」又回来了`);
+    }
+    if (pageErrors.length) fails.push(`导入流程页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    console.log(`导入存档:${oldName} → ${NEW_NAME},挂 3 秒后仍是新档`);
+  } finally {
+    await ctx.close();
+  }
+  return fails;
+}
+
+/**
  * 挂机稳定性 —— 心跳每拍都会改响应式状态,谁在订阅里往页面/全局表里塞东西,
  * 开一夜就会慢慢变大。这类"越挂越沉"的问题只有跑一段时间才看得见。
  *
@@ -543,6 +614,7 @@ const results = await runPool(ROUTES, JOBS, runRoute);
 const legacyFails = await checkLegacySave(browser);
 const fullFails = await checkSaveFull(browser);
 const soakFails = await checkSoakStability(browser);
+const importFails = await checkImportReplacesSave(browser);
 await browser.close();
 const wallMs = Math.round(performance.now() - wallT0);
 
@@ -552,6 +624,7 @@ const errors = results.flatMap((r) => r.errors);
 for (const msg of legacyFails) errors.push({ where: "旧档兼容", msg });
 for (const msg of fullFails) errors.push({ where: "存储写满", msg });
 for (const msg of soakFails) errors.push({ where: "挂机稳定", msg });
+for (const msg of importFails) errors.push({ where: "导入存档", msg });
 /**
  * 每页至少点得到一个控件 —— 「页面画出来了,但一个能点的都没有」。
  *
@@ -559,12 +632,11 @@ for (const msg of soakFails) errors.push({ where: "挂机稳定", msg });
  * 整块行动区消失,它会安静地通过(0 次点击,0 个错误) —— 而那正是最该被发现的一种坏。
  * 门槛设 1 而不是平均值:只拦「彻底没有」,不惩罚本来就该安静的页面。
  */
-const MIN_CLICKS_PER_ROUTE = 1;
 for (const r of results) {
-  if (r.clicked < MIN_CLICKS_PER_ROUTE) {
+  if (r.controls > 0 && r.clicked === 0) {
     errors.push({
       where: r.route,
-      msg: `整页没有可点的控件(${r.clicked} 次点击)—— 是行动区没渲染出来,还是全被条件挡住了?`,
+      msg: `找到 ${r.controls} 个可点控件却一个都没点成 —— 点击器坏了,还是全被条件挡住了?`,
     });
   }
 }

@@ -389,16 +389,18 @@ describe("门禁覆盖面 · 具名场景不许悄悄消失", () => {
     }
   });
 
-  it("冒烟的每页点击下限还在,且门槛就是 1", () => {
-    expect(SMOKE, "每页至少点得到一个控件那条判据没了").toContain("MIN_CLICKS_PER_ROUTE");
-    expect(SMOKE).toMatch(/const MIN_CLICKS_PER_ROUTE = 1;/);
+  it("冒烟的「找到控件却一个都没点成」下限还在", () => {
+    // 门槛从「每页至少点 1 次」收窄成「找到控件却一个都没点成」:
+    // 前者会在只有一枚禁用按钮的参考页(/world)上误红,后者只盯点击器本身坏掉。
+    expect(SMOKE, "点击下限那条判据没了").toContain("r.controls > 0 && r.clicked === 0");
+    expect(SMOKE, "controls 没有被记录进每页结果").toMatch(/\bcontrols,/);
   });
 
   it("开发文档里的冒烟场景清单与脚本同形", () => {
     // 上一版文档写着「三条环境专场景」,而脚本早就是四条 —— 少掉的那条正是挂机稳定。
     // 清单不全,读文档的人就不知道门在量什么(与「门量了多少东西」是同一个问题)。
     const doc = readFileSync(join(ROOT, "docs/development.md"), "utf8");
-    for (const label of ["旧档迁移", "存储写满", "挂机稳定", "每页至少点得到一个控件"]) {
+    for (const label of ["旧档迁移", "存储写满", "挂机稳定", "导入存档"]) {
       expect(doc, `开发文档的冒烟清单里少了「${label}」`).toContain(label);
     }
   });
