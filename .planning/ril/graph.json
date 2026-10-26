@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 517,
+  "round": 518,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T18:52:37+00:00",
+  "updated_at": "2026-10-26T19:03:01+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 517,
+      "touched_round": 518,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -29435,6 +29435,45 @@
       "touched_round": 517,
       "commit": "10e3cd00",
       "title": "冒烟:导入存档场景 + 点击下限收窄"
+    },
+    "ISS-417": {
+      "id": "ISS-417",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:03:01+00:00",
+      "updated_at": "2026-10-26T19:03:01+00:00",
+      "touched_round": 518,
+      "title": "导入场景在确认框缺失时会崩掉整轮冒烟,且成功日志不管成败都打印",
+      "summary": "上一轮新加的场景没包 try:确认框没出现(校验没过、按钮改名、文件读不出来)时异常向上抛,整轮冒烟以退出码 2 结束,报告里只剩一句栈,后续所有场景一个都没跑。另外成功日志无条件打印,失败的轮次里也会出现「挂 3 秒后仍是新档」这句假话。",
+      "severity": 0.25,
+      "confidence": 0.95
+    },
+    "TASK-523": {
+      "id": "TASK-523",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:03:01+00:00",
+      "updated_at": "2026-10-26T19:03:01+00:00",
+      "touched_round": 518,
+      "category": "detectability",
+      "title": "导入场景包 try/catch + 成功日志只在真的成功时打印",
+      "summary": "选文件与点「用这份替换」两步任一断掉都变成一条失败行;注入改用不合法载荷(不必改源码/重建)验证:确认框不出→失败行、不崩;恢复后整轮绿。",
+      "severity": 0.25,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-622": {
+      "id": "CHG-622",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:03:01+00:00",
+      "updated_at": "2026-10-26T19:03:01+00:00",
+      "touched_round": 518,
+      "commit": "8a33aedc",
+      "title": "导入场景失败也说话(不再崩掉整轮)"
     }
   },
   "edges": [
@@ -42988,6 +43027,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T18:52:37+00:00"
+    },
+    {
+      "from": "CHG-622",
+      "to": "ISS-417",
+      "type": "resolves",
+      "created_at": "2026-10-26T19:03:01+00:00"
+    },
+    {
+      "from": "CHG-622",
+      "to": "TASK-523",
+      "type": "implements",
+      "created_at": "2026-10-26T19:03:01+00:00"
+    },
+    {
+      "from": "ISS-417",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T19:03:01+00:00"
     }
   ]
 }
