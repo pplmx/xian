@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 541,
+  "round": 542,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T22:37:22+00:00",
+  "updated_at": "2026-10-26T22:45:39+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -30215,6 +30215,45 @@
       "touched_round": 540,
       "commit": "e1ae325c",
       "title": "突破卡补期望尝试次数"
+    },
+    "ISS-437": {
+      "id": "ISS-437",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:45:39+00:00",
+      "updated_at": "2026-10-26T22:45:39+00:00",
+      "touched_round": 542,
+      "title": "开炉卡只有百分比,没写「平均几炉成一炉」",
+      "summary": "与突破卡同一个病:successRate 以百分比显示,但玩家判断「现在开炉还是先攒材料」时,1/成功率 更直接;recipes.sim 早算过期望,界面没有。",
+      "severity": 0.15,
+      "confidence": 0.9
+    },
+    "TASK-543": {
+      "id": "TASK-543",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:45:39+00:00",
+      "updated_at": "2026-10-26T22:45:39+00:00",
+      "touched_round": 542,
+      "category": "ux",
+      "title": "复用 expectedTries,开炉卡补一行(必成不写)",
+      "summary": "与突破卡同口径,不另造换算。",
+      "severity": 0.15,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-642": {
+      "id": "CHG-642",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T22:45:39+00:00",
+      "updated_at": "2026-10-26T22:45:39+00:00",
+      "touched_round": 542,
+      "commit": "5c4b77b5",
+      "title": "开炉卡补期望炉数"
     }
   },
   "edges": [
@@ -44104,6 +44143,18 @@
       "to": "TASK-542",
       "type": "implements",
       "created_at": "2026-10-26T22:34:46+00:00"
+    },
+    {
+      "from": "CHG-642",
+      "to": "ISS-437",
+      "type": "resolves",
+      "created_at": "2026-10-26T22:45:39+00:00"
+    },
+    {
+      "from": "CHG-642",
+      "to": "TASK-543",
+      "type": "implements",
+      "created_at": "2026-10-26T22:45:39+00:00"
     }
   ]
 }
