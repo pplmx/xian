@@ -264,6 +264,7 @@ const CATEGORIES = [
       "mortalBias",
       "offlineFuzz",
       "reincarnationConfirm",
+      "bountyEconomics",
       "usageDocCounts",
       "swPrecache",
       "smokeReading",

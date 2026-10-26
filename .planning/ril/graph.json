@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 482,
+  "round": 483,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T10:16:04+00:00",
+  "updated_at": "2026-10-26T10:25:15+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -28042,6 +28042,34 @@
       "touched_round": 482,
       "commit": "c5b00a9d",
       "title": "reincarnationConfirm.spec:账目/清档/幂等/跨境界四条判据"
+    },
+    "ISS-381": {
+      "id": "ISS-381",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T10:25:15+00:00",
+      "updated_at": "2026-10-26T10:25:15+00:00",
+      "touched_round": 483,
+      "title": "bountyService 零用例:悬赏价的三条经济承诺没有判据",
+      "summary": "bountyService 是 src/core 里少数没有任何 spec 引用的模块之一。它在注释里承诺「募材高于摆摊售出、低于坊市购入」「募丹同理」「贡器恒低于购入」—— 这三句是套利边界,而没有任何用例盯着。常数(4.5/3/6、1.8/1.2/2.5、35+14r/60+30r)一调,要么开通「买→交悬赏」的无本套利,要么让悬赏板整块变成没人交的装饰,两种都不报错。",
+      "severity": 0.4,
+      "confidence": 0.9
+    },
+    "TASK-487": {
+      "id": "TASK-487",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T10:25:15+00:00",
+      "updated_at": "2026-10-26T10:25:15+00:00",
+      "touched_round": 483,
+      "category": "correctness",
+      "title": "bountyEconomics:7 境界 × 3 类悬赏 + 9 品质档贡器落在 (售出,购入) 带内",
+      "summary": "用坊市真值函数(materialSellPrice/pillSellPrice/stoneByTier)比对,不另抄价目表;另钉换新倒计时到点归零。注入抬价/压价各一条均红。",
+      "severity": 0.4,
+      "confidence": 0.9,
+      "effort": 1
     }
   },
   "edges": [
