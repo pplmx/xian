@@ -432,7 +432,11 @@ function closeReset(): void {
 }
 
 function confirmReset(): void {
-  resetGame();
+  // 只读页(多标签后来者)清不了档:别让玩家以为点了没反应
+  if (resetGame()) return; // 成功时页面立刻就重载了,收尾交给重载
+  resetConfirm.value = false;
+  engine.resume();
+  ui.toast("本页为只读(已在另一处打开),清档没有执行。请回到那一页操作。", "warn");
 }
 
 // 弹窗开着就离开页面时兜底恢复

@@ -198,10 +198,11 @@ export function sealStorageWrites(): void {
  * 重载后就卡在主页、角色是默认的无名散修。清档后 game.started 为 false,
  * 守卫会把任何路由都弹回 welcome,目标页无需在这里指定
  */
-export function resetGame(): void {
+export function resetGame(): boolean {
   engine.stop();
   sealStorageWrites();
-  clearAllSave();
+  // 只读页(多标签后来者)不许清档:清掉的会是另一页正在用的档
+  if (!clearAllSave()) return false;
   // 内存兜底:reload 是异步的,卸载前页面仍在跑。万一两条封存路径都失效,
   // 排队刷盘写回的也是 started:false,守卫照样把人送回 welcome
   try {
@@ -210,6 +211,7 @@ export function resetGame(): void {
     // Pinia 未激活时(理论上不会走到)忽略
   }
   window.location.reload();
+  return true;
 }
 
 /**

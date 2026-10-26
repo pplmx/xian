@@ -6,7 +6,14 @@
  * 幂等:已迁移的新档再跑一遍,数字不变。
  */
 import { describe, expect, it, vi } from "vite-plus/test";
-import { blockSaveWrites, migrateResourcesSlice, persistConfig } from "./storage";
+import {
+  applyImportPayload,
+  blockSaveWrites,
+  clearAllSave,
+  migrateResourcesSlice,
+  persistConfig,
+  type ExportPayload,
+} from "./storage";
 
 describe("存档迁移 · 灵草五品(ISS-306)", () => {
   it("旧标量 herb 全数折成凡品(1),其余四品清零", () => {
@@ -73,6 +80,11 @@ describe("只读页 · 写盘的总闸", () => {
     disk.set("xuanshu.game", "existing");
     storage.removeItem("xuanshu.game");
     expect(disk.get("xuanshu.game"), "只读页也不许删盘上的东西").toBe("existing");
+
+    // 导入与清档走的是**直写**路径(不经节流层),必须同样被挡住 ——
+    // 否则只读页仍能把写者刚存下的档整片换掉
+    expect(clearAllSave(), "只读页不许清档").toBe(false);
+    expect(() => applyImportPayload({} as ExportPayload), "只读页不许导入").toThrow(/只读/);
 
     vi.unstubAllGlobals();
   });

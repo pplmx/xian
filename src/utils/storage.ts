@@ -156,6 +156,15 @@ export function blockSaveWrites(): void {
   }
 }
 
+/**
+ * 直写路径的闸 —— 导入与清档不走节流层(它们要立刻覆盖磁盘、且可能失败回滚),
+ * 故单靠 `writesBlocked` 拦不住;这两个入口必须自己问一句。
+ * 只读页里清档若静默返回,玩家会以为档已经没了 —— 所以这里抛错,由调用方说清楚。
+ */
+function assertWritable(): void {
+  if (writesBlocked) throw new Error("本页为只读(已在另一处打开),不会改动存档");
+}
+
 /** 立即把待落盘内容写出去;单个分片失败时留在队列里等下一次重试 */
 export function flushSaveWrites(): void {
   if (flushTimer !== undefined) {
@@ -431,6 +440,7 @@ export function validateImportPayload(obj: unknown): string | null {
  * 「game 分片还在、player 分片没了」的主页空角色正是这半清状态造出来的。
  */
 export function applyImportPayload(payload: ExportPayload): void {
+  assertWritable();
   // 一 先把现有各片读进内存作快照(原样密文,回滚时按原样写回)
   const backup = new Map<string, string | null>();
   try {
@@ -467,7 +477,9 @@ export function applyImportPayload(payload: ExportPayload): void {
   }
 }
 
-export function clearAllSave(): void {
+export function clearAllSave(): boolean {
+  // 只读页:一片都不许删(否则会把写者刚存下的档清掉)
+  if (writesBlocked) return false;
   // 先丢弃待落盘队列 —— 否则清完档之后那次 flush 会把旧数据原样写回来
   dropPendingWrites();
   // 清档后没有待写内容,旧的「写盘失败」警告已无意义(下次真写不进去会重新浮出来)
@@ -499,4 +511,5 @@ export function clearAllSave(): void {
       // 存储完全不可用,交由重载后的路由守卫兜底
     }
   }
+  return true;
 }
