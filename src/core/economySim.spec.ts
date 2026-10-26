@@ -1,5 +1,7 @@
 /* oxlint-disable no-console -- 模拟器体检报告的正式输出(bun run test:report 依赖) */
 import { describe, expect, it } from "vite-plus/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { fullEconomyAudit, qiFillSeconds } from "./economySim";
 import { BT_QI_COST_RATIO } from "@/data/constants";
 import { MAX_MAJOR, worldOf } from "@/data/realms";
@@ -291,5 +293,30 @@ describe("经济闭环审计(Phase 19 · Phase 40 补界外与修为)", () => {
       rows.push(`第${m}境 ${fill.toFixed(0)}s`);
     }
     console.log(`\n  [灵气回满时长] ${rows.join(" · ")}`);
+  });
+});
+
+describe("界外悟道点的口径附注 · 附注必须与模型对得上", () => {
+  /*
+   * 附注写错比不写更糟:读者会按它去补一遍已经算进去的东西,或者索性不信这一格。
+   * 这里把「注里说的」与「代码里算的」钉在一起 —— 要么两边一致,要么当场红。
+   */
+  const src = readFileSync(resolve(__dirname, "./economySim.ts"), "utf8");
+
+  it("功法进修确实在 wudaoSinkEra 里(附注据此才敢说「已计入」)", () => {
+    expect(src).toMatch(/wudaoSinkEra\s*=\s*GONGFA_UPS_PER_ERA\s*\*\s*gongfaUpCost\(/);
+  });
+
+  it("注里不再声称功法进修未入模型", () => {
+    const notes = [...src.matchAll(/界外出口[^"`]*/g)].map((m) => m[0]);
+    expect(notes.length, "找不到界外出口那条附注 —— 判据放空了").toBeGreaterThan(0);
+    for (const note of notes) {
+      expect(note, `附注与模型不一致:${note}`).not.toContain("功法进修 / 法宝炼化");
+      expect(note).not.toMatch(/功法进修[^,)]*未入模型/);
+    }
+  });
+
+  it("法宝炼化仍未入模型 —— 若哪天入了,这条附注必须一起改", () => {
+    expect(src).not.toContain("artifactUpCost");
   });
 });

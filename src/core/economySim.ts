@@ -86,8 +86,11 @@ export interface ResourceFlow {
    * 这条读数的口径附注 —— 只在"模型没把握"时出现。
    *
    * 审计的红线是"不许把没模型的地方算成健康,也不许算成事故":
-   * 界外的悟道点就是这种情形(它的真出口是功法进修与法宝炼化,本模型没算全),
-   * 于是这一栏明说「出口待补」,而不是让 ratio 报一个吓人的闲置数。
+   * 界外的悟道点就是这种情形 —— 它的真出口有两条,**功法进修已经在模型里**
+   * (`wudaoSinkEra` 含 GONGFA_UPS_PER_ERA × gongfaUpCost),**法宝炼化还没算**,
+   * 于是这一栏明说缺的是哪一条,而不是让 ratio 报一个吓人的闲置数。
+   * 从前这句写的是「功法进修 / 法宝炼化未入模型」—— 把已经算进去的那条也说成没算,
+   * 读的人会白算一遍,或者索性不信这条读数。
    */
   note?: string;
 }
@@ -338,7 +341,7 @@ export function auditEra(major: number): EraAudit {
         "wudao",
         wudaoIncome,
         wudaoSinkEra / amortizeHours,
-        furnace ? "界外出口(功法进修 / 法宝炼化)未入模型 —— 读数待补" : undefined,
+        furnace ? "界外出口待补法宝炼化(功法进修已计入)—— 悟道点这一格偏低" : undefined,
       ),
       make("exp", expIncome, expSinkHour),
       ...(furnace ? [make("daoSource", furnace.potential, furnace.demand)] : []),

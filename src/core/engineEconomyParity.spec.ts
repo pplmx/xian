@@ -72,7 +72,11 @@ describe("经济读数对账 —— 判词与比值", () => {
     );
     for (const era of outer) {
       const flow = era.flows.find((f) => f.resource === "wudao" && f.note)!;
-      expect(flow.note).toContain("未入模型");
+      // 措辞可以是「未入模型」也可以是「待补 X」,但必须点名缺的是哪一条 ——
+      // 只写一句"不准"而不说缺什么,读的人照样不知道该怎么补
+      const note = flow.note!;
+      expect(note).toMatch(/未入模型|待补/);
+      expect(note.length, "note 太短,等于没说").toBeGreaterThan(6);
     }
   });
 });
