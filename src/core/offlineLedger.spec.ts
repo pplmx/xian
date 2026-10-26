@@ -207,6 +207,33 @@ describe("离线总结 · 变动了多少就报多少", () => {
     expect(warn, "顶栏还剩 1 载,告警不该写成仅余 0 载").toMatch(/仅余\s*1\s*载/);
   });
 
+  it("结算之后再结算:只算这一秒 —— 不会把刚才那 60 小时再发一遍", () => {
+    /*
+     * 挂机游戏最贵的一类事故:同一段缺席被结算两次,资源凭空翻倍。
+     *
+     * 契约是这样的 —— `settleOffline` 自己**不盖章**,调用方要在结算之后
+     * `game.stampActive(now)`(engine.start 与 engine.tick 两条路径都这么做)。
+     * 故这里照着真实调用顺序做:结算 → 盖章 → 再结算一秒。
+     */
+    setupBusySave();
+    const game = useGameStore();
+    const now = Date.now();
+    const first = settleOffline(now)!;
+    expect(first.battles, "先得真结出东西,否则这条判据是空转").toBeGreaterThan(0);
+    game.stampActive(now);
+
+    const second = settleOffline(now + 1000)!;
+    expect(second.battles, "一秒钟不该再打一场").toBe(0);
+    const ratio = (a: { m: number; e: number }, b: { m: number; e: number }): number => {
+      const num = (g: { m: number; e: number }): number => g.m * 10 ** g.e;
+      const top = num(a);
+      return top === 0 ? (num(b) === 0 ? 0 : 1) : num(b) / top;
+    };
+    expect(ratio(first.exp, second.exp), "修为被重复结算").toBeLessThan(0.01);
+    expect(ratio(first.stone, second.stone), "灵石被重复结算").toBeLessThan(0.01);
+    expect(second.ageYears, "一秒的寿元流逝不该按 60 小时算").toBeLessThanOrEqual(1);
+  });
+
   it("顶栏与归来卷轴共用 yearsShown 这一把尺", () => {
     const formatSrc = readFileSync(resolve(__dirname, "../utils/format.ts"), "utf8");
     const offlineSrc = readFileSync(resolve(__dirname, "./offline.ts"), "utf8");
