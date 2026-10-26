@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 520,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T19:20:16+00:00",
+  "updated_at": "2026-10-26T19:26:25+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29518,9 +29518,9 @@
       "id": "ISS-419",
       "type": "issue",
       "status": "resolved",
-      "version": 2,
+      "version": 3,
       "created_at": "2026-10-26T19:20:15+00:00",
-      "updated_at": "2026-10-26T19:20:16+00:00",
+      "updated_at": "2026-10-26T19:26:25+00:00",
       "touched_round": 520,
       "title": "最近十余轮改动之后,整套浏览器门没在 HEAD 上复跑过",
       "summary": "自第 494 轮起改了 ui-smoke(三条环境专场景+导入存档)、layout-check(等两帧)、世界页(换天地按钮/代价说明)与若干 store 护栏;这些改动分散在多轮里,单门跑过但六门没有在同一个 HEAD 上连跑。",
@@ -29531,9 +29531,9 @@
       "id": "TASK-525",
       "type": "task",
       "status": "resolved",
-      "version": 2,
+      "version": 3,
       "created_at": "2026-10-26T19:20:15+00:00",
-      "updated_at": "2026-10-26T19:20:16+00:00",
+      "updated_at": "2026-10-26T19:26:25+00:00",
       "touched_round": 520,
       "category": "verification",
       "title": "在 HEAD 上跑一遍完整 check:ui 并记档",
@@ -29541,6 +29541,17 @@
       "severity": 0.15,
       "confidence": 0.9,
       "effort": 1
+    },
+    "CHG-624": {
+      "id": "CHG-624",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:26:24+00:00",
+      "updated_at": "2026-10-26T19:26:25+00:00",
+      "touched_round": 520,
+      "commit": "210f7b4b",
+      "title": "HEAD 全量浏览器门复跑:六门全绿"
     }
   },
   "edges": [
@@ -43124,6 +43135,18 @@
       "to": "TASK-524",
       "type": "implements",
       "created_at": "2026-10-26T19:11:45+00:00"
+    },
+    {
+      "from": "CHG-624",
+      "to": "ISS-419",
+      "type": "resolves",
+      "created_at": "2026-10-26T19:26:25+00:00"
+    },
+    {
+      "from": "CHG-624",
+      "to": "TASK-525",
+      "type": "implements",
+      "created_at": "2026-10-26T19:26:25+00:00"
     }
   ]
 }
