@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 504,
+  "round": 505,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T16:11:21+00:00",
+  "updated_at": "2026-10-26T16:19:08+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -28900,6 +28900,34 @@
       "touched_round": 504,
       "commit": "c698c39a",
       "title": "usage 补「世界的所钟」一节 + 五条偏向与 BIAS_EFFECTS 对账"
+    },
+    "ISS-403": {
+      "id": "ISS-403",
+      "type": "issue",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T16:19:08+00:00",
+      "updated_at": "2026-10-26T16:19:08+00:00",
+      "touched_round": 505,
+      "title": "0~5 境的掉落池里没有任何一味回气丹 —— 灵气是突破门槛资源",
+      "summary": "丹药审计打印「境界 0: 2 味」时自己就写着「池窄意味着前期每次掉的都是同一味,补法是加丹不是改数」。灵气族掉落线原本从六境的泉露才开始,而灵气正是突破的门槛资源:前期玩家捡不到任何一味回气丹,法则 E「池子非空」因为修为丹一直在而照样通过 —— 少了一整族却没人察觉。",
+      "severity": 0.35,
+      "confidence": 0.9
+    },
+    "TASK-509": {
+      "id": "TASK-509",
+      "type": "task",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T16:19:08+00:00",
+      "updated_at": "2026-10-26T16:19:08+00:00",
+      "touched_round": 505,
+      "category": "content",
+      "title": "加一味低境界回气丹「寒潭露」+ 法则 E3 每境都有回气丹",
+      "summary": "灵品掉落、准入 0、qiPct 0.2(弱于六境泉露的三成),与灵乳折算比 0.20;E3 逐境检查灵气族非空,注入摘掉即红;头注释与文档计数 68→69。",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 2
     }
   },
   "edges": [
