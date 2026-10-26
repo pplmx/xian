@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 494,
+  "round": 495,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T13:10:54+00:00",
+  "updated_at": "2026-10-26T13:25:58+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 493,
+      "touched_round": 495,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28510,6 +28510,45 @@
       "touched_round": 494,
       "commit": "b6b86524",
       "title": "两条所钟判据改成认接线的正则(允许空白,仍钉两件事)"
+    },
+    "ISS-393": {
+      "id": "ISS-393",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T13:22:19+00:00",
+      "updated_at": "2026-10-26T13:25:58+00:00",
+      "touched_round": 495,
+      "title": "转世前看不到「哪一门功法的层数带得走」",
+      "summary": "层数回一层是这一世最容易被低估的损失(练满一部 125 点悟道点),而留哪一门取决于宿慧阶(stage.keepOneGongfa)与宿命传承(keepsAllGongfa)。这条规则此前只写在交割清单的一条可展开说明里,玩家要自己推断;推断错了就把该练的那门留在低层。",
+      "severity": 0.3,
+      "confidence": 0.9
+    },
+    "TASK-499": {
+      "id": "TASK-499",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T13:22:19+00:00",
+      "updated_at": "2026-10-26T13:25:58+00:00",
+      "touched_round": 495,
+      "category": "ux-contract",
+      "title": "ReincarnationView 增 gongfaKeep,弹窗写出「保哪一门、几层」",
+      "summary": "prepare 与 confirm 用同一套判断;写预告时发现 confirm 先 addHeritage 再 carryGongfa —— 预告须按「加完之后」的传承表算,否则许诺回一层而实际全带。用例 30 组随机核对预告层数 == 实际层数。",
+      "severity": 0.3,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-599": {
+      "id": "CHG-599",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T13:25:58+00:00",
+      "updated_at": "2026-10-26T13:25:58+00:00",
+      "touched_round": 495,
+      "commit": "c69097cb",
+      "title": "转世弹窗写出「哪一门功法保层数」;预告按加完传承之后的表算"
     }
   },
   "edges": [
@@ -41631,6 +41670,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T13:10:53+00:00"
+    },
+    {
+      "from": "CHG-599",
+      "to": "ISS-393",
+      "type": "resolves",
+      "created_at": "2026-10-26T13:25:58+00:00"
+    },
+    {
+      "from": "CHG-599",
+      "to": "TASK-499",
+      "type": "implements",
+      "created_at": "2026-10-26T13:25:58+00:00"
+    },
+    {
+      "from": "ISS-393",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T13:25:58+00:00"
     }
   ]
 }
