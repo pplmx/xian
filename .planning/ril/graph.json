@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 502,
+  "round": 503,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T15:46:25+00:00",
+  "updated_at": "2026-10-26T15:55:53+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 502,
+      "touched_round": 503,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28822,6 +28822,45 @@
       "touched_round": 502,
       "commit": "2c752510",
       "title": "gateWiring:具名场景被删时自检要红(含 TASKS 登记行匹配)"
+    },
+    "ISS-401": {
+      "id": "ISS-401",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:53:24+00:00",
+      "updated_at": "2026-10-26T15:55:53+00:00",
+      "touched_round": 503,
+      "title": "门禁自检这件事没写进判据表;冒烟场景清单也已漂移(三条 vs 四条)",
+      "summary": "近三轮建起来的一整套门禁自检(退出码 / 覆盖面 / 空转 spec / tag-only 路径)只活在 commit message 与用例注释里,判据表里没有一行;而冒烟那行还写着「三条环境专场景」,实际已是四条(少的是挂机稳定)。读文档的人既不知道有这套自检,也会以为门没在量挂机。",
+      "severity": 0.2,
+      "confidence": 0.9
+    },
+    "TASK-507": {
+      "id": "TASK-507",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:53:24+00:00",
+      "updated_at": "2026-10-26T15:55:53+00:00",
+      "touched_round": 503,
+      "category": "docs",
+      "title": "development.md 补「门禁自检」一行并修冒烟场景清单(附文档同形判据)",
+      "summary": "判据表新增一行说明五类自检;冒烟清单改为四条;gateWiring 增一条「文档清单与脚本同形」判据,注入删掉挂机稳定即红。",
+      "severity": 0.2,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-607": {
+      "id": "CHG-607",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T15:55:53+00:00",
+      "updated_at": "2026-10-26T15:55:53+00:00",
+      "touched_round": 503,
+      "commit": "69b4504b",
+      "title": "development.md 补「门禁自检」判据行 + 冒烟场景清单改四条(附同形判据)"
     }
   },
   "edges": [
@@ -42087,6 +42126,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T15:46:25+00:00"
+    },
+    {
+      "from": "CHG-607",
+      "to": "ISS-401",
+      "type": "resolves",
+      "created_at": "2026-10-26T15:55:53+00:00"
+    },
+    {
+      "from": "CHG-607",
+      "to": "TASK-507",
+      "type": "implements",
+      "created_at": "2026-10-26T15:55:53+00:00"
+    },
+    {
+      "from": "ISS-401",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T15:55:53+00:00"
     }
   ]
 }
