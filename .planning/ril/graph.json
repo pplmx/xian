@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 505,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T16:19:08+00:00",
+  "updated_at": "2026-10-26T16:22:30+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 504,
+      "touched_round": 505,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28904,10 +28904,10 @@
     "ISS-403": {
       "id": "ISS-403",
       "type": "issue",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T16:19:08+00:00",
-      "updated_at": "2026-10-26T16:19:08+00:00",
+      "updated_at": "2026-10-26T16:22:29+00:00",
       "touched_round": 505,
       "title": "0~5 境的掉落池里没有任何一味回气丹 —— 灵气是突破门槛资源",
       "summary": "丹药审计打印「境界 0: 2 味」时自己就写着「池窄意味着前期每次掉的都是同一味,补法是加丹不是改数」。灵气族掉落线原本从六境的泉露才开始,而灵气正是突破的门槛资源:前期玩家捡不到任何一味回气丹,法则 E「池子非空」因为修为丹一直在而照样通过 —— 少了一整族却没人察觉。",
@@ -28917,10 +28917,10 @@
     "TASK-509": {
       "id": "TASK-509",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T16:19:08+00:00",
-      "updated_at": "2026-10-26T16:19:08+00:00",
+      "updated_at": "2026-10-26T16:22:29+00:00",
       "touched_round": 505,
       "category": "content",
       "title": "加一味低境界回气丹「寒潭露」+ 法则 E3 每境都有回气丹",
@@ -28928,6 +28928,17 @@
       "severity": 0.35,
       "confidence": 0.9,
       "effort": 2
+    },
+    "CHG-609": {
+      "id": "CHG-609",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T16:22:29+00:00",
+      "updated_at": "2026-10-26T16:22:30+00:00",
+      "touched_round": 505,
+      "commit": "2a76e8d5",
+      "title": "加「寒潭露」(低境界回气丹)+ 法则 E3 每境都有回气丹"
     }
   },
   "edges": [
@@ -42229,6 +42240,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T16:11:21+00:00"
+    },
+    {
+      "from": "CHG-609",
+      "to": "ISS-403",
+      "type": "resolves",
+      "created_at": "2026-10-26T16:22:29+00:00"
+    },
+    {
+      "from": "CHG-609",
+      "to": "TASK-509",
+      "type": "implements",
+      "created_at": "2026-10-26T16:22:29+00:00"
+    },
+    {
+      "from": "ISS-403",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T16:22:29+00:00"
     }
   ]
 }
