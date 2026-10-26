@@ -6,7 +6,13 @@
  * 退回旧行为而不是让游戏起不来。
  */
 import { describe, expect, it, vi } from "vite-plus/test";
-import { acquireSaveWriterRole, saveReader, type LockLike } from "./singleWriter";
+import {
+  SAVE_WRITER_LOCK,
+  acquireSaveWriterRole,
+  saveReader,
+  saveWriterFree,
+  type LockLike,
+} from "./singleWriter";
 
 /** 极简 LockManager:同名锁同一时刻只有一个持有者,`ifAvailable` 拿不到就回 null */
 function makeLocks(): { locks: LockLike; release: () => void } {
@@ -59,5 +65,50 @@ describe("单写者 · 先到先写,后来的只读", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("只读页 · 席位空出来没有", () => {
+  /*
+   * 只读页的另一半:另一处关掉之后,玩家得知道「现在刷新就能继续」。
+   * 没有这条探测时,横幅一辈子写着「已在另一处打开」—— 玩家只能猜。
+   */
+  it("有人持有 → false;没人持有 → true", async () => {
+    let live: { name: string }[] = [{ name: SAVE_WRITER_LOCK }];
+    const locks: LockLike = {
+      request: async () => null,
+      query: async () => ({ held: live, pending: [] }),
+    };
+    expect(await saveWriterFree(locks)).toBe(false);
+    live = [];
+    expect(await saveWriterFree(locks), "另一处关掉后要看得出来").toBe(true);
+  });
+
+  it("排队等着的也算有人 —— 席位还没真正空出来", async () => {
+    const locks: LockLike = {
+      request: async () => null,
+      query: async () => ({ pending: [{ name: SAVE_WRITER_LOCK }] }),
+    };
+    expect(await saveWriterFree(locks)).toBe(false);
+  });
+
+  it("问不出来就答 false —— 不能让玩家白刷新", async () => {
+    expect(await saveWriterFree(undefined), "没有 LockManager").toBe(false);
+    expect(await saveWriterFree({ request: async () => null }), "没有 query").toBe(false);
+    const broken: LockLike = {
+      request: async () => null,
+      query: async () => {
+        throw new Error("query 炸了");
+      },
+    };
+    expect(await saveWriterFree(broken)).toBe(false);
+  });
+
+  it("只认我们这一把锁:别的锁不算", async () => {
+    const locks: LockLike = {
+      request: async () => null,
+      query: async () => ({ held: [{ name: "someone-else" }] }),
+    };
+    expect(await saveWriterFree(locks)).toBe(true);
   });
 });

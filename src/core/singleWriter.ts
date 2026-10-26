@@ -25,15 +25,16 @@ import { ref } from "vue";
 export const saveReader = ref(false);
 
 /** 锁名:一个字符串域,与存档前缀同源,便于在 DevTools 里认出来 */
-const LOCK_NAME = "xuanshu.save-writer";
+export const SAVE_WRITER_LOCK = "xuanshu.save-writer";
 
-/** 只用到 request 一个方法;抽出来是为了在用例里换掉实现 */
+/** 只用到 request / query 两个方法;抽出来是为了在用例里换掉实现 */
 export type LockLike = {
   request: (
     name: string,
     options: { ifAvailable: true },
     callback: (lock: unknown) => Promise<void> | void,
   ) => Promise<unknown>;
+  query?: () => Promise<{ held?: { name?: string }[]; pending?: { name?: string }[] }>;
 };
 
 /** 探测超时:拿不到结论时按写者处理(fail-open),不让启动卡在锁上 */
@@ -68,7 +69,7 @@ export async function acquireSaveWriterRole(locks = defaultLocks()): Promise<boo
     settle = resolve;
   });
 
-  void locks.request(LOCK_NAME, { ifAvailable: true }, (lock) => {
+  void locks.request(SAVE_WRITER_LOCK, { ifAvailable: true }, (lock) => {
     const got = lock !== null && lock !== undefined;
     settle(got);
     // 拿不到就立刻交还:不排队、不等待 —— 这一页永远只读
@@ -85,4 +86,21 @@ export async function acquireSaveWriterRole(locks = defaultLocks()): Promise<boo
   if (timer !== undefined) clearTimeout(timer);
   saveReader.value = !writer;
   return writer;
+}
+
+/**
+ * 写者席位是不是已经空出来了(另一处关掉了)。
+ *
+ * 只给界面用:只读页据此把提示从「已在另一处打开」换成「另一处已关闭,刷新即可继续」。
+ * 回答不了的时候一律答 `false` —— 宁可不提示,也不要让玩家以为刷新就能写、刷新完还是只读。
+ */
+export async function saveWriterFree(locks = defaultLocks()): Promise<boolean> {
+  if (!locks || typeof locks.query !== "function") return false;
+  try {
+    const state = await locks.query();
+    const live = [...(state.held ?? []), ...(state.pending ?? [])];
+    return !live.some((l) => l.name === SAVE_WRITER_LOCK);
+  } catch {
+    return false;
+  }
 }

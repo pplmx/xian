@@ -6906,6 +6906,48 @@ async function taskReadOnlyTab() {
         `[只读页] ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
       );
     }
+
+    /*
+     * 恢复路径:另一处关掉之后,这一页必须自己说出「刷新就能回来」。
+     *
+     * 只读页的心跳早就不跑了,锁释放这件事**没有任何事件**能推到它 —— 不主动探,
+     * 横幅会永远写着「已在另一处打开」,玩家只能猜(或干脆重开浏览器)。
+     * 判据走完整条路:关掉写者 → 横幅换成可刷新的形态 → 点它 → 横幅消失且锁回到手里。
+     */
+    await reader.emulateMedia({ colorScheme: "light" });
+    await reader.setViewportSize({ width: 390, height: 844 });
+    await reader.waitForTimeout(300);
+    await writer.close();
+    const freed = await reader
+      .waitForFunction(
+        () => document.querySelector("[data-save-reader]")?.hasAttribute("data-save-reader-freed"),
+        { timeout: 12000 },
+      )
+      .then(() => true)
+      .catch(() => false);
+    checked += 1;
+    if (!freed) {
+      failures.push("[只读页 · 恢复] 另一处关掉之后,横幅没有换成「刷新即可继续」—— 玩家只能猜");
+    } else {
+      await reader.evaluate(() => {
+        document.querySelector("[data-save-reader] button")?.click();
+      });
+      const recovered = await reader
+        .waitForFunction(() => !document.querySelector("[data-save-reader]"), { timeout: 12000 })
+        .then(() => true)
+        .catch(() => false);
+      checked += 1;
+      if (!recovered)
+        failures.push("[只读页 · 恢复] 按了「刷新本页」之后横幅还在 —— 没真正回到写者态");
+      const held = await reader.evaluate(async () => {
+        const state = await navigator.locks.query();
+        return (state.held || []).filter((l) => l.name === "xuanshu.save-writer").length;
+      });
+      checked += 1;
+      if (held !== 1) {
+        failures.push(`[只读页 · 恢复] 刷新后没拿到写权(锁持有者 ${held})—— 刷新也只是白刷`);
+      }
+    }
   } finally {
     await ctx.close();
   }

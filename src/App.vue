@@ -37,10 +37,22 @@
     <div
       v-if="saveReader"
       data-save-reader
+      :data-save-reader-freed="writerFreed ? '' : undefined"
       role="status"
-      class="relative z-10 flex shrink-0 items-center justify-center border-b border-cinnabar/40 bg-cinnabar/6 px-3 py-1 text-center font-kai text-[11px] leading-relaxed text-cinnabar"
+      class="relative z-10 flex shrink-0 flex-wrap items-center justify-center gap-x-1 border-b border-cinnabar/40 bg-cinnabar/6 px-3 py-1 text-center font-kai text-[11px] leading-relaxed text-cinnabar"
     >
-      已在另一处打开 · 本页只读,进度不会保存
+      <template v-if="writerFreed">
+        <span>另一处已关闭 ——</span>
+        <button
+          type="button"
+          class="underline underline-offset-2 active:opacity-60"
+          @click="reloadPage"
+        >
+          刷新本页
+        </button>
+        <span>即可继续游玩</span>
+      </template>
+      <template v-else>已在另一处打开 · 本页只读,进度不会保存</template>
     </div>
 
     <main ref="scrollHost" class="relative z-10 min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
@@ -88,7 +100,7 @@ import {
 } from "@/composables/useServiceWorkerUpdate";
 import { subscribeSaveWriteFailure } from "@/utils/storage";
 import { engine } from "@/core/engine";
-import { saveReader } from "@/core/singleWriter";
+import { saveReader, saveWriterFree } from "@/core/singleWriter";
 import { notify } from "@/core/notify";
 import { apprenticeReapText } from "@/core/apprenticeService";
 import { applyTheme, initTheme } from "@/core/theme";
@@ -158,6 +170,13 @@ watch(
   { immediate: true },
 );
 
+/** 只读页每隔多久问一次「写者席位空出来没有」——3 秒够快,又不至于吵 */
+const WRITER_WATCH_MS = 3000;
+const writerFreed = ref(false);
+let writerWatch: number | undefined;
+/** 刷新交给玩家自己按:自动重载会让人以为页面崩了 */
+const reloadPage = (): void => window.location.reload();
+
 onMounted(() => {
   unsubscribeTheme = initTheme(() => settings.theme);
   /*
@@ -203,10 +222,26 @@ onMounted(() => {
    */
   // 只读页不启引擎;「为什么不动」交给顶部那条常驻横幅(模板里),它不会像 toast 一样消失
   if (!saveReader.value) engine.start();
+  /*
+   * 只读页要能看到「现在可以回来了」:另一处关掉之后,锁会自动释放,但这一页的心跳
+   * 早就不跑了 —— 不主动探一下,横幅会一辈子写着「已在另一处打开」,玩家只能猜。
+   * 探到就停表并换文案;不做自动重载:刷新是玩家的动作,自己跳走会让人以为页面崩了。
+   */
+  if (saveReader.value) {
+    writerWatch = window.setInterval(() => {
+      void saveWriterFree().then((free) => {
+        if (!free) return;
+        writerFreed.value = true;
+        if (writerWatch !== undefined) window.clearInterval(writerWatch);
+        ui.toast("另一处已关闭 —— 刷新本页即可继续游玩", "info");
+      });
+    }, WRITER_WATCH_MS);
+  }
   window.addEventListener("pointerdown", onPointerDown);
 });
 
 onUnmounted(() => {
+  if (writerWatch !== undefined) window.clearInterval(writerWatch);
   unsubscribeTheme();
   unsubscribeSaveFailure();
   swHandle?.stop();
