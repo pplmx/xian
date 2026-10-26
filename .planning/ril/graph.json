@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 511,
+  "round": 512,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T17:37:36+00:00",
+  "updated_at": "2026-10-26T17:46:54+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 511,
+      "touched_round": 512,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -29201,6 +29201,45 @@
       "touched_round": 511,
       "commit": "52d48391",
       "title": "换一方天地:非有限余额的价与拒绝(顺带价目表读数)"
+    },
+    "ISS-411": {
+      "id": "ISS-411",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:46:53+00:00",
+      "updated_at": "2026-10-26T17:46:54+00:00",
+      "touched_round": 512,
+      "title": "addDaoFruit 会把坏值直接加进余额 —— 与减法不对称",
+      "summary": "spendDaoFruit 早有 `!(n > 0)` 这道闸(NaN/负数/零都进不去),addDaoFruit 却直接相加:一次非有限值就能把余额写成 NaN,此后所有「够不够」「扣多少」全部失效,而它不报错,要等下次读档被 sanitize 修回来。",
+      "severity": 0.25,
+      "confidence": 0.9
+    },
+    "TASK-517": {
+      "id": "TASK-517",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:46:53+00:00",
+      "updated_at": "2026-10-26T17:46:54+00:00",
+      "touched_round": 512,
+      "category": "robustness",
+      "title": "addDaoFruit 拒非有限值与非正数,并补对称用例",
+      "summary": "两条用例:addDaoFruit 对 NaN/Infinity/负数/零一律不写;spendDaoFruit 对非正数与不足都不扣。",
+      "severity": 0.25,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-616": {
+      "id": "CHG-616",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T17:46:53+00:00",
+      "updated_at": "2026-10-26T17:46:54+00:00",
+      "touched_round": 512,
+      "commit": "2f8645ef",
+      "title": "addDaoFruit 拒坏值(与 spendDaoFruit 对称)"
     }
   },
   "edges": [
@@ -42646,6 +42685,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T17:37:36+00:00"
+    },
+    {
+      "from": "CHG-616",
+      "to": "ISS-411",
+      "type": "resolves",
+      "created_at": "2026-10-26T17:46:53+00:00"
+    },
+    {
+      "from": "CHG-616",
+      "to": "TASK-517",
+      "type": "implements",
+      "created_at": "2026-10-26T17:46:53+00:00"
+    },
+    {
+      "from": "ISS-411",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T17:46:54+00:00"
     }
   ]
 }
