@@ -18,6 +18,9 @@
  * (computeFinalStats),本文件立刻变红。
  */
 import { describe, expect, it, beforeEach } from "vite-plus/test";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { STAT_NAMES } from "@/data/statNames";
 import { createPinia, setActivePinia } from "pinia";
 import type { AnyStatKey, StatMods } from "@/types";
 import { mergeMods, mergeModsDetailed, computeFinalStats } from "./statsCalc";
@@ -187,6 +190,55 @@ describe("属性来源明细 · 面板读的那一份", () => {
     expect(player.cultPerSec, "基础 × (1 + 来源之和) 不等于引擎算出的速率").toBeCloseTo(
       expected,
       6,
+    );
+  });
+});
+
+describe("词条面 · 每个键都得有人读", () => {
+  /*
+   * STAT_NAMES 是 Record<AnyStatKey, string>,「有名字」由类型保证;但「有人读」保证不了 ——
+   * 一个键可以安安稳稳地躺在 StatMods 里、被词条写入、被界面显示,而没有任何一处代码
+   * 读过它。玩家会看到「会心率 +3%」却一点变化也没有,而类型检查、界面判据全都绿。
+   *
+   * 判据写成源码扫描而不是「喂一个值看面板」:多数键的作用点在战斗回合里,不在面板上,
+   * 拿面板读数去判会误伤一大半。这里只问一件事 —— 这个名字在定义文件之外被提到过没有。
+   */
+  const KEYS = Object.keys(STAT_NAMES);
+
+  function sourceText(): { text: string; files: number } {
+    const roots = ["src", "packages/engine/src"].map((rel) => resolve(__dirname, "../..", rel));
+    const files: string[] = [];
+    const walk = (dir: string): void => {
+      let entries;
+      try {
+        entries = readdirSync(dir, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const e of entries) {
+        const full = join(dir, e.name);
+        if (e.isDirectory()) {
+          if (e.name === "node_modules" || e.name === "dist") continue;
+          walk(full);
+        } else if (
+          e.name.endsWith(".ts") &&
+          !e.name.endsWith(".spec.ts") &&
+          e.name !== "statNames.ts"
+        ) {
+          files.push(full);
+        }
+      }
+    };
+    for (const r of roots) walk(r);
+    return { text: files.map((f) => readFileSync(f, "utf-8")).join("\n"), files: files.length };
+  }
+
+  it("每个键在定义文件之外都至少被提到一次", () => {
+    const { text, files } = sourceText();
+    expect(files, "扫描到的源文件太少 —— 路径或过滤条件坏了").toBeGreaterThan(100);
+    const dead = KEYS.filter((key) => !text.includes(key));
+    expect(dead, `这些词条键只在 statNames 里出现过,没有任何代码读它:${dead.join("、")}`).toEqual(
+      [],
     );
   });
 });
