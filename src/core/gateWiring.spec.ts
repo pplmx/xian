@@ -372,3 +372,44 @@ describe("门禁自检 · 每道门失败时都得真的红", () => {
     expect(failsLoudly(`if (bad) assert.ok(false);`)).toBe(true);
   });
 });
+
+describe("门禁覆盖面 · 具名场景不许悄悄消失", () => {
+  /*
+   * 上一条钉的是「门会不会真的失败」,这一条钉的是「门到底还量多少东西」。
+   * 删掉一条具名场景(旧档迁移 / 存储写满 / 挂机稳定 / 走完一次转世)不会让门变红 ——
+   * 它只会少量一类毛病,而报告里仍旧是绿色的勾。
+   */
+  const SMOKE = readFileSync(join(ROOT, "scripts/ui-smoke.mjs"), "utf8");
+  const LAYOUT = readFileSync(join(ROOT, "scripts/layout-check.mjs"), "utf8");
+
+  it("冒烟的三条环境专场景还在", () => {
+    for (const fn of ["checkLegacySave", "checkSaveFull", "checkSoakStability"]) {
+      expect(SMOKE, `${fn} 不见了 —— 这一类毛病从此不再被量`).toContain(`async function ${fn}(`);
+      expect(SMOKE, `${fn} 定义了却没被调用`).toMatch(new RegExp(`await ${fn}\\(`));
+    }
+  });
+
+  it("冒烟的每页点击下限还在,且门槛就是 1", () => {
+    expect(SMOKE, "每页至少点得到一个控件那条判据没了").toContain("MIN_CLICKS_PER_ROUTE");
+    expect(SMOKE).toMatch(/const MIN_CLICKS_PER_ROUTE = 1;/);
+  });
+
+  it("排版门的具名场景一个不少", () => {
+    const critical = [
+      "走完一次转世",
+      "渡劫突破真打一次",
+      "存档导出 / 导入往返",
+      "冷启动落在子页的返回",
+      "浮出的提示条点得掉",
+      "引擎概率弹窗(顿悟 / 洞府巡游)",
+      "智能收纳不扔有投入的件",
+      "一键分解先勾后点",
+    ];
+    // 认「登记进 TASKS 的那一行」,不认零散出现 —— 场景名在注释与日志里也有,
+    // 只查 includes 的话,把登记行删掉照样绿(第一版就这么漏了)
+    const missing = critical.filter(
+      (label) => !new RegExp(`\\["${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}", `).test(LAYOUT),
+    );
+    expect(missing, "这些场景没被登记进 TASKS —— 那一类毛病从此不再被量").toEqual([]);
+  });
+});
