@@ -3569,3 +3569,26 @@ describe("设计文档的字阶 · 与判据同一份清单", () => {
     );
   });
 });
+
+describe("不可逆的动作要先问一句 · 换一方天地", () => {
+  /*
+   * 换界花 15~1500 枚道果,还会把本世路线清零 —— 与转世、重置、导入同一档的不可逆。
+   * 那三处都有确认弹窗,唯独这里曾经是点了就执行:一手滑,最贵的一笔开销加一整条路线
+   * 一起没了。这里钉住「按钮只开确认框、确认之后才真的换」这条结构。
+   */
+  const MW = readFileSync(resolve(__dirname, "../views/MortalWorldView.vue"), "utf8");
+
+  it("按钮只负责开确认框", () => {
+    expect(MW, "按钮不再走确认框,点了就直接换界了").toContain('@click="rerollConfirm = true"');
+    expect(MW, "按钮又直接调 rerollWorld 了").not.toMatch(
+      /data-world-reroll[\s\S]{0,200}?@click="rerollWorld"/,
+    );
+  });
+
+  it("确认框里把代价说全:花多少、剩多少、清零什么", () => {
+    expect(MW, "确认按钮不见了").toContain("data-world-reroll-confirm");
+    expect(MW, "没写要花多少道果").toMatch(/耗[\s\S]{0,60}rerollCost/);
+    expect(MW, "没写换完还剩多少").toMatch(/换完剩/);
+    expect(MW, "没写本世路线会清零").toMatch(/本世路线进度清零/);
+  });
+});

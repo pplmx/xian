@@ -30,7 +30,7 @@
           class="btn-ghost mt-2 min-h-[28px] !px-3 !py-1 text-[11px]"
           :disabled="!canRerollWorld"
           data-world-reroll
-          @click="rerollWorld"
+          @click="rerollConfirm = true"
         >
           换一方天地({{ rerollCost }} 道果{{ canRerollWorld ? "" : ` · 尚差 ${shortfall} 枚` }})
         </button>
@@ -41,6 +41,30 @@
         <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
           换界即换路:已走的本世路线会清零,所钟与地貌构成随之更换。
         </p>
+
+        <BaseModal :open="rerollConfirm" title="换一方天地" @close="rerollConfirm = false">
+          <p class="t-body leading-relaxed">
+            耗 <span class="text-cinnabar tabular">{{ rerollCost }}</span> 枚道果,
+            <span class="text-ink">本世路线进度清零</span>,所钟与地貌重掷。
+          </p>
+          <p class="mt-1 text-[11px] text-ink-faint">
+            现有 {{ player.reincarnation.daoFruit }} 枚 · 换完剩
+            {{ Math.max(0, player.reincarnation.daoFruit - rerollCost) }} 枚。 这一步不可逆 ——
+            走过的地界要重新走。
+          </p>
+          <div class="mt-3 flex justify-end gap-2">
+            <button class="btn-ghost min-h-[32px] !px-3 text-[11px]" @click="rerollConfirm = false">
+              再想想
+            </button>
+            <button
+              class="btn-primary min-h-[32px] !px-4 text-[11px]"
+              data-world-reroll-confirm
+              @click="confirmReroll"
+            >
+              换
+            </button>
+          </div>
+        </BaseModal>
       </div>
 
       <!-- 路线全貌:高低即层级,横距即路程,点大即事多 -->
@@ -155,13 +179,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import { useAdventureStore } from "@/stores/adventure";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
+import BaseModal from "@/components/common/BaseModal.vue";
 import { rerollWorldByFruit, worldRerollCost } from "@/core/worldReroll";
 import { rerollMortalWorld } from "@/core/mortalWorldService";
 import { enemyDef } from "@/data/enemies";
@@ -186,6 +211,14 @@ const canRerollWorld = computed(
   () => player.reincarnation.daoFruit >= rerollCost.value && !adventure.sessionActive,
 );
 const shortfall = computed(() => Math.max(0, rerollCost.value - player.reincarnation.daoFruit));
+const rerollConfirm = ref(false);
+
+/** 确认之后才真的花道果、换界 —— 与种子那份列表上的价钱是同一处算出来的 */
+function confirmReroll(): void {
+  rerollConfirm.value = false;
+  rerollWorld();
+}
+
 function rerollWorld(): void {
   const r = rerollWorldByFruit({
     daoFruit: player.reincarnation.daoFruit,
