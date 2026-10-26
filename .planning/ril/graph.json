@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 521,
+  "round": 522,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T19:39:48+00:00",
+  "updated_at": "2026-10-26T19:50:27+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29591,6 +29591,45 @@
       "touched_round": 521,
       "commit": "c6f4b94a",
       "title": "钉住「其律尚未显化于历练」这句真话"
+    },
+    "ISS-421": {
+      "id": "ISS-421",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:50:26+00:00",
+      "updated_at": "2026-10-26T19:50:27+00:00",
+      "touched_round": 522,
+      "title": "世界名旁那句读起来像「这名字什么也不干」",
+      "summary": "原文案只说「其律尚未显化于历练」,而世界的 CombatRules 其实在生成器里被用来模拟平均胜率、决定候选世界能不能留下来 —— 它塑造了你拿到哪一个世界。文案把「间接有用」写成了「完全没用」。",
+      "severity": 0.2,
+      "confidence": 0.95
+    },
+    "TASK-527": {
+      "id": "TASK-527",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:50:27+00:00",
+      "updated_at": "2026-10-26T19:50:27+00:00",
+      "touched_round": 522,
+      "category": "docs",
+      "title": "改成「成形时校准难度,但不改写历练里的战斗」,断言改认意思",
+      "summary": "uiLayering 那条从「必须出现原句」改成「必须说清不改写战斗」;事实由 worldSemantics.spec 钉着。",
+      "severity": 0.2,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-626": {
+      "id": "CHG-626",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T19:50:27+00:00",
+      "updated_at": "2026-10-26T19:50:27+00:00",
+      "touched_round": 522,
+      "commit": "230d8622",
+      "title": "世界名旁的说明改成「成形时校准难度」"
     }
   },
   "edges": [
@@ -43204,6 +43243,18 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T19:39:48+00:00"
+    },
+    {
+      "from": "CHG-626",
+      "to": "ISS-421",
+      "type": "resolves",
+      "created_at": "2026-10-26T19:50:27+00:00"
+    },
+    {
+      "from": "CHG-626",
+      "to": "TASK-527",
+      "type": "implements",
+      "created_at": "2026-10-26T19:50:27+00:00"
     }
   ]
 }
