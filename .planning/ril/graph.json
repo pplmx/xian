@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 531,
+  "round": 532,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T21:21:41+00:00",
+  "updated_at": "2026-10-26T21:30:51+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -29903,6 +29903,45 @@
       "touched_round": 531,
       "commit": "a7dd589a",
       "title": "手册补今日天道与此世命数"
+    },
+    "ISS-429": {
+      "id": "ISS-429",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:30:50+00:00",
+      "updated_at": "2026-10-26T21:30:51+00:00",
+      "touched_round": 532,
+      "title": "换一方天地点了就执行:不可逆且最贵的一笔,没有确认",
+      "summary": "花 15~1500 枚道果,并把本世路线清零 —— 与转世、重置、导入同一档的不可逆;那三处都有确认弹窗,唯独这里一手滑就执行完。另:上一轮清单里的「承运/功德」在 src 里根本不存在(我列词时想当然了),「洞天/香火」只是文案里的名词,不必进手册。",
+      "severity": 0.35,
+      "confidence": 0.9
+    },
+    "TASK-535": {
+      "id": "TASK-535",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:30:50+00:00",
+      "updated_at": "2026-10-26T21:30:51+00:00",
+      "touched_round": 532,
+      "category": "ux",
+      "title": "换界加确认框:写清花多少、剩多少、清零什么",
+      "summary": "按钮只开框,确认之后才花道果换界;判据两条(按钮不许直接调 rerollWorld / 框里三件事齐全)。",
+      "severity": 0.35,
+      "confidence": 0.9,
+      "effort": 2
+    },
+    "CHG-634": {
+      "id": "CHG-634",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T21:30:51+00:00",
+      "updated_at": "2026-10-26T21:30:51+00:00",
+      "touched_round": 532,
+      "commit": "6f58319e",
+      "title": "换一方天地加确认框"
     }
   },
   "edges": [
@@ -43654,6 +43693,24 @@
       "to": "ISS-428",
       "type": "addresses",
       "created_at": "2026-10-26T21:21:40+00:00"
+    },
+    {
+      "from": "CHG-634",
+      "to": "ISS-429",
+      "type": "resolves",
+      "created_at": "2026-10-26T21:30:51+00:00"
+    },
+    {
+      "from": "CHG-634",
+      "to": "TASK-535",
+      "type": "implements",
+      "created_at": "2026-10-26T21:30:51+00:00"
+    },
+    {
+      "from": "TASK-535",
+      "to": "ISS-429",
+      "type": "addresses",
+      "created_at": "2026-10-26T21:30:51+00:00"
     }
   ]
 }
