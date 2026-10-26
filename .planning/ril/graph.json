@@ -2,7 +2,7 @@
   "ril_version": 1,
   "round": 463,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T05:24:44+00:00",
+  "updated_at": "2026-10-26T05:27:13+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -27254,10 +27254,10 @@
     "ISS-361": {
       "id": "ISS-361",
       "type": "issue",
-      "status": "active",
-      "version": 2,
+      "status": "resolved",
+      "version": 3,
       "created_at": "2026-10-26T05:15:25+00:00",
-      "updated_at": "2026-10-26T05:24:44+00:00",
+      "updated_at": "2026-10-26T05:27:13+00:00",
       "touched_round": 463,
       "title": "吞吐门会被机器抖动打成假红:一次提交被它拦下",
       "summary": "两条墙钟吞吐门都会被机器抖动打成假红。①scale.sim 掉落表:平时 3200~3500 次/ms,忙时 46(<50);②save.sim 迁移链:平时 0.004 ms/次,忙时 0.14(>0.1)。同一份代码差 35~70 倍。本轮两次提交分别被它们拦下。会自己变红的门比没有门更糟;修法不能是无脑重试 —— 存档那条 ok === ROUNDS 是精确账,重采会让计数翻倍。",
@@ -27267,11 +27267,11 @@
     "TASK-466": {
       "id": "TASK-466",
       "type": "task",
-      "status": "active",
-      "version": 1,
+      "status": "resolved",
+      "version": 2,
       "created_at": "2026-10-26T05:15:25+00:00",
-      "updated_at": "2026-10-26T05:15:25+00:00",
-      "touched_round": 462,
+      "updated_at": "2026-10-26T05:27:13+00:00",
+      "touched_round": 463,
       "category": "test-quality",
       "title": "吞吐门改成不被调度抖动冤枉的量法",
       "summary": "可选方案:①量 CPU 时间(engine 包 tsconfig 无 Node 类型,需先解这个约束);②失败时重采样一次,并把「精确累计」类断言(存档 ok===ROUNDS)改成按采样次数据算,不能靠 best-of-N 掩盖真回归。落定前先复现:并发满载下连跑 N 次,记录假红率。",
@@ -27289,6 +27289,17 @@
       "touched_round": 462,
       "commit": "619b864a",
       "title": "只读页常驻横幅;layout-check 新增「第二个标签页」判据"
+    },
+    "CHG-568": {
+      "id": "CHG-568",
+      "type": "change",
+      "status": "active",
+      "version": 1,
+      "created_at": "2026-10-26T05:27:08+00:00",
+      "updated_at": "2026-10-26T05:27:08+00:00",
+      "touched_round": 463,
+      "commit": "85fd14e7",
+      "title": "两条墙钟吞吐门加「首采样不达标重采一次」;精确累计断言配 reset"
     }
   },
   "edges": [
@@ -39810,6 +39821,18 @@
       "to": "COMP-016",
       "type": "located_in",
       "created_at": "2026-10-26T05:15:57+00:00"
+    },
+    {
+      "from": "CHG-568",
+      "to": "ISS-361",
+      "type": "resolves",
+      "created_at": "2026-10-26T05:27:08+00:00"
+    },
+    {
+      "from": "CHG-568",
+      "to": "TASK-466",
+      "type": "implements",
+      "created_at": "2026-10-26T05:27:08+00:00"
     }
   ]
 }
