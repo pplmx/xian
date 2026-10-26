@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 489,
+  "round": 490,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T11:53:24+00:00",
+  "updated_at": "2026-10-26T12:03:49+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 489,
+      "touched_round": 490,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -28315,6 +28315,45 @@
       "touched_round": 489,
       "commit": "7663c30d",
       "title": "usage 补「存档写不进去」一节 + 设置页补「自动重试」"
+    },
+    "ISS-388": {
+      "id": "ISS-388",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:58:47+00:00",
+      "updated_at": "2026-10-26T12:03:49+00:00",
+      "touched_round": 490,
+      "title": "设计文档把自己的字号档位数说错了:写「六档」只列五个",
+      "summary": "design.md 是配色与版式的唯一权威,字号档位也写在那里。标题写「字号只有六档」,正文与 uiLayering.spec 的 PAGE_TIERS 都只有 18/15/14/11/10 五个。权威文档与判据打架时,照文档写的人会长出第六档 —— 而 9/12/13 私档当年正是这么长出来的。",
+      "severity": 0.2,
+      "confidence": 0.95
+    },
+    "TASK-494": {
+      "id": "TASK-494",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T11:58:47+00:00",
+      "updated_at": "2026-10-26T12:03:49+00:00",
+      "touched_round": 490,
+      "category": "docs",
+      "title": "design.md 改成五档 + 文档清单与 PAGE_TIERS 对账判据",
+      "summary": "标题与正文改成五档,写明与 PAGE_TIERS 同一份清单;三条判据:逐个等于、标题不许出现六档、自证改数字即红。",
+      "severity": 0.2,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-594": {
+      "id": "CHG-594",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T12:03:49+00:00",
+      "updated_at": "2026-10-26T12:03:49+00:00",
+      "touched_round": 490,
+      "commit": "e11343a6",
+      "title": "design.md 字阶改五档 + 文档清单与 PAGE_TIERS 对账"
     }
   },
   "edges": [
@@ -41346,6 +41385,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T11:53:24+00:00"
+    },
+    {
+      "from": "CHG-594",
+      "to": "ISS-388",
+      "type": "resolves",
+      "created_at": "2026-10-26T12:03:49+00:00"
+    },
+    {
+      "from": "CHG-594",
+      "to": "TASK-494",
+      "type": "implements",
+      "created_at": "2026-10-26T12:03:49+00:00"
+    },
+    {
+      "from": "ISS-388",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T12:03:49+00:00"
     }
   ]
 }
