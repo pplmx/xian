@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 475,
+  "round": 476,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T08:52:51+00:00",
+  "updated_at": "2026-10-26T09:02:39+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -21894,7 +21894,7 @@
       "version": 1,
       "created_at": "2026-09-19T09:47:08+00:00",
       "updated_at": "2026-09-19T09:47:08+00:00",
-      "touched_round": 475,
+      "touched_round": 476,
       "summary": "水墨设计系统(src/style.css 的语义色变量 + tailwind.config.js 的语义色 utility + docs/design.md 的设计规范):一份变量喂斜杠透明度与 color-mix 两条路径,明暗主题只覆盖通道值。"
     },
     "DEC-174": {
@@ -27769,6 +27769,45 @@
       "touched_round": 475,
       "commit": "7b0b762e",
       "title": "偏向应验时战报补一行「所钟 · …」;三条确定性判据"
+    },
+    "ISS-374": {
+      "id": "ISS-374",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:02:26+00:00",
+      "updated_at": "2026-10-26T09:02:39+00:00",
+      "touched_round": 476,
+      "title": "归来卷轴不提资源偏向:离线多出来的那份没有来历",
+      "summary": "上一轮把偏向接进了 afterWin,在线有战报那行「所钟」,离线的归来卷轴却一个字不提 —— 而离线正是绝大多数进度发生的地方。玩家看到玄铁多了一点,不知道为什么。同一条机制,两个出口只做了一个。",
+      "severity": 0.3,
+      "confidence": 0.95
+    },
+    "TASK-480": {
+      "id": "TASK-480",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:02:26+00:00",
+      "updated_at": "2026-10-26T09:02:39+00:00",
+      "touched_round": 476,
+      "category": "feedback",
+      "title": "biasOfflineNote:卷轴在真打过仗且本世有偏向时补一句",
+      "summary": "纯函数 biasOfflineNote(bias, battles):无偏向 / 旧词 / 零场次都返回 null;文案取 biasEffect.label。offline.ts 在 summary 组装后调用。判据三条纯函数 + 一条源码接线。",
+      "severity": 0.3,
+      "confidence": 0.95,
+      "effort": 1
+    },
+    "CHG-580": {
+      "id": "CHG-580",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T09:02:38+00:00",
+      "updated_at": "2026-10-26T09:02:39+00:00",
+      "touched_round": 476,
+      "commit": "1155dfde",
+      "title": "biasOfflineNote + offline.ts 卷轴补一句「此地所钟」"
     }
   },
   "edges": [
@@ -40548,6 +40587,24 @@
       "to": "COMP-028",
       "type": "located_in",
       "created_at": "2026-10-26T08:52:50+00:00"
+    },
+    {
+      "from": "CHG-580",
+      "to": "ISS-374",
+      "type": "resolves",
+      "created_at": "2026-10-26T09:02:39+00:00"
+    },
+    {
+      "from": "CHG-580",
+      "to": "TASK-480",
+      "type": "implements",
+      "created_at": "2026-10-26T09:02:39+00:00"
+    },
+    {
+      "from": "ISS-374",
+      "to": "COMP-028",
+      "type": "located_in",
+      "created_at": "2026-10-26T09:02:39+00:00"
     }
   ]
 }
