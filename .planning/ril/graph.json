@@ -1,8 +1,8 @@
 {
   "ril_version": 1,
-  "round": 495,
+  "round": 496,
   "created_at": "2026-09-09T11:22:32+00:00",
-  "updated_at": "2026-10-26T13:25:58+00:00",
+  "updated_at": "2026-10-26T13:37:55+00:00",
   "nodes": {
     "ISS-001": {
       "id": "ISS-001",
@@ -10817,7 +10817,7 @@
       "version": 1,
       "created_at": "2026-09-15T12:18:37+00:00",
       "updated_at": "2026-09-15T12:18:37+00:00",
-      "touched_round": 495,
+      "touched_round": 496,
       "summary": "排版/交互自检(scripts/layout-check.mjs):全量路由 × 五档视口的渲染判据与夹具"
     },
     "EV-165": {
@@ -28549,6 +28549,45 @@
       "touched_round": 495,
       "commit": "c69097cb",
       "title": "转世弹窗写出「哪一门功法保层数」;预告按加完传承之后的表算"
+    },
+    "ISS-394": {
+      "id": "ISS-394",
+      "type": "issue",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T13:34:16+00:00",
+      "updated_at": "2026-10-26T13:37:55+00:00",
+      "touched_round": 496,
+      "title": "玩家手册没有「转世」一节:最重的一次不可撤销决定只在弹窗里说",
+      "summary": "轮回是全作最重的一次不可撤销决定,而 docs/usage.md 只在系统一览里提了一句「寿元耗尽入轮回」。真到要转世时玩家读的是手册;弹窗里的交割清单只在事发当口出现一次。手册与弹窗各说一套的风险也在这里:没有判据把两边绑住。",
+      "severity": 0.2,
+      "confidence": 0.9
+    },
+    "TASK-500": {
+      "id": "TASK-500",
+      "type": "task",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T13:34:17+00:00",
+      "updated_at": "2026-10-26T13:37:55+00:00",
+      "touched_round": 496,
+      "category": "docs",
+      "title": "usage 补「转世:什么留下、什么放下」+ 三组标题与 heritageGroups 对账",
+      "summary": "轮廓照 samsaraAudit 的继承表写(三组);判据:手册必须有这一节且三组标题逐一对上组名,注入改标题即红。",
+      "severity": 0.2,
+      "confidence": 0.9,
+      "effort": 1
+    },
+    "CHG-600": {
+      "id": "CHG-600",
+      "type": "change",
+      "status": "resolved",
+      "version": 2,
+      "created_at": "2026-10-26T13:37:55+00:00",
+      "updated_at": "2026-10-26T13:37:55+00:00",
+      "touched_round": 496,
+      "commit": "ea8dcf0f",
+      "title": "usage 补「转世:什么留下、什么放下」+ 三组标题与 heritageGroups 对账"
     }
   },
   "edges": [
@@ -41688,6 +41727,24 @@
       "to": "COMP-019",
       "type": "located_in",
       "created_at": "2026-10-26T13:25:58+00:00"
+    },
+    {
+      "from": "CHG-600",
+      "to": "ISS-394",
+      "type": "resolves",
+      "created_at": "2026-10-26T13:37:55+00:00"
+    },
+    {
+      "from": "CHG-600",
+      "to": "TASK-500",
+      "type": "implements",
+      "created_at": "2026-10-26T13:37:55+00:00"
+    },
+    {
+      "from": "ISS-394",
+      "to": "COMP-019",
+      "type": "located_in",
+      "created_at": "2026-10-26T13:37:55+00:00"
     }
   ]
 }
