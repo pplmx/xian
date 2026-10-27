@@ -9,6 +9,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { rng } from "@/utils/random";
 import {
   expectedMaterialsPerRun,
+  expectedEquipmentTripsPerRun,
   afterWin,
   acquireEquipment,
   ARTIFACT_NEAR_BONUS,
@@ -455,5 +456,25 @@ describe("派发前的材料期望 · 只给件数不给概率", () => {
 
   it("自证:同参数两次调用结果一致(不偷吃随机数)", () => {
     expect(run(1.3)).toBe(run(1.3));
+  });
+});
+
+describe("派发前的装备期望 · 用趟数说话", () => {
+  it("倍率越高,需要的趟数越少,且恒 ≥ 1", () => {
+    const slow = expectedEquipmentTripsPerRun({ mods: {} as never, rewardMult: 1, isBoss: false })!;
+    const fast = expectedEquipmentTripsPerRun({
+      mods: {} as never,
+      rewardMult: 1.6,
+      isBoss: false,
+    })!;
+    expect(fast).toBeLessThan(slow);
+    expect(fast).toBeGreaterThanOrEqual(1);
+  });
+
+  it("自证:同参数两次一致", () => {
+    const a = expectedEquipmentTripsPerRun({ mods: {} as never, rewardMult: 1.2, isBoss: false });
+    expect(a).toBe(
+      expectedEquipmentTripsPerRun({ mods: {} as never, rewardMult: 1.2, isBoss: false }),
+    );
   });
 });

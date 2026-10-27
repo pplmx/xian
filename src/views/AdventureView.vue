@@ -437,6 +437,7 @@
             {{ formatDuration(EXPLORE_MODES[m.id].durationSec) }}
             <br />
             预计材料 ≈ {{ expectedMaterials(m.id) }} 件<br />
+            装备 约 {{ expectedEquipTrips(m.id) }} 趟一件<br />
             收益 ×{{ EXPLORE_MODES[m.id].rewardMult }} · 敌势
             <span :class="EXPLORE_MODES[m.id].dangerMult > 1 ? 'text-cinnabar' : ''"
               >×{{ EXPLORE_MODES[m.id].dangerMult }}</span
@@ -454,7 +455,7 @@ import { useRoute, useRouter } from "vue-router";
 import type { ExploreMode, RegionDef, RegionRecall } from "@/types";
 import { useAdventureStore } from "@/stores/adventure";
 import { useGameStore } from "@/stores/game";
-import { expectedMaterialsPerRun } from "@/core/loot";
+import { expectedEquipmentTripsPerRun, expectedMaterialsPerRun } from "@/core/loot";
 import { currentWorldBias } from "@/core/mortalWorldService";
 import { usePlayerStore } from "@/stores/player";
 import { useSettingsStore } from "@/stores/settings";
@@ -729,5 +730,15 @@ function expectedMaterials(modeId: keyof typeof EXPLORE_MODES): number {
     isBoss: false,
     luck: 0,
   });
+}
+
+/** 装备的期望「趟数」—— 与材料同一行,但用趟数说话(不给概率) */
+function expectedEquipTrips(modeId: keyof typeof EXPLORE_MODES): string {
+  const v = expectedEquipmentTripsPerRun({
+    mods: player.finalStats.mods,
+    rewardMult: EXPLORE_MODES[modeId].rewardMult,
+    isBoss: false,
+  });
+  return v === null ? "—" : String(v);
 }
 </script>

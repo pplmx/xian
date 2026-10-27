@@ -462,3 +462,23 @@ export function expectedMaterialsPerRun(input: {
     chanceOf(entries.page, 1) * meanCount((entries.page as { count?: unknown }).count);
   return Math.round(materials * doubled * 10) / 10;
 }
+
+/**
+ * 一趟历练出装备的期望「趟数」—— 派发前那一行用「约 N 趟一件」而不是百分比。
+ *
+ * 装备命中率有 90% 上限(不给必出神品的口子),按 `EQUIP_DROP_CHANCE × 模式倍率 ×
+ * (1 + 掉落率词条)` 归一后取倒数;命中率为 0 时给 null(不写「无穷趟」)。
+ */
+export function expectedEquipmentTripsPerRun(input: {
+  mods: Parameters<typeof modOf>[0];
+  rewardMult: number;
+  isBoss: boolean;
+}): number | null {
+  const chance = clamp(
+    EQUIP_DROP_CHANCE * input.rewardMult * (1 + modOf(input.mods, "dropRate")),
+    0,
+    0.9,
+  );
+  if (!(chance > 0)) return null;
+  return Math.max(1, Math.round((1 / chance) * 10) / 10);
+}
