@@ -338,6 +338,12 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
   `src/core/loot.ts` 的掉落表 `dropEntries` 是**写在函数里的内联对象**,率与份数都在其中。
   要给期望值,第一步是把这张表抽成纯函数(运行时与期望共用一份),否则就是两本账。
   这会动到 loot 热路径与 lootSim / 装备对账等既有判据,属于**独立任务**,不该顺手做。
+  算式已定稿:逐渠道 `min(cap, chance) × 平均份数`,材料再乘 `(1 + doubleDropRate)`;
+  装备按「多抽一次」处理(`scalesWithAttempts`)。
+  接线建议:在服务层加 `expectedDropsNow()`(读 store 组装 bias / mods / rewardMult / isBoss,
+  调纯函数),历练页显示一行「材料期望 ≈ N 件/场」。rewardMult 的来源已定位:
+  `src/core/exploration.ts:357-360` 是 `modeDef.rewardMult × regionEvent.rewardMult`。
+  想少动形状的话,也可以先只给 `lootSim` 的模拟对照用(它不进玩家界面)。
   坐标:`src/core/loot.ts` 的 `afterWin(region, rewardMult, isBoss, bias?)` 里,`dropEntries`
   在函数体中部(约 L311),常量从 `data/constants` 导入(L12-19),`DropEntry` 来自 `wanxiang-engine`。
   做法:把那个字面量原样搬进 `export function dropEntriesFor(...)`,原地改成调用它 ——
