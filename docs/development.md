@@ -329,10 +329,16 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
 
 ## 待办 · 下一步
 
-两件事按优先级排,做完划掉即可:
+**只剩发版这一步(其余已就绪)**:
 
-- **发版**:唯一阻塞是 `package.json` 的版本号。定下后写 `docs/release-notes/v<版本>.md`
-  (复制上一版正文,**记得把图链里的旧 tag 全部改掉**),跑 `bun run release:check` 看还剩什么,
-  再打 tag 并推送(推送由人决定)。
-- ✅ 掉落的期望读数已落地:派发前的模式行给出「预计材料 ≈ N 件」与「装备 约 N 趟一件」
-  (数值走 `core/loot.ts` 的 `expectedMaterialsPerRun` / `expectedEquipmentTripsPerRun`)。
+```bash
+bun run release:check     # 版本 0.0.2 / 正文就位 / 无旧 tag 图链 / 工作区干净 → 放行
+git tag v0.0.2
+git push origin main v0.0.2
+```
+
+打完后盯流水线三项 —— 这三条**本地永远看不到**:Android 签名、Electron 打包、Release 正文
+(正文取自仓库里的 `docs/release-notes/v0.0.2.md`)。
+
+已完成的近期项,留档备查:掉落期望读数(`expectedMaterialsPerRun` / `expectedEquipmentTripsPerRun`,
+显示在派发前的模式行)、洗练的「约 N 次」、镇压收益的界面说明。
