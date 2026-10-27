@@ -245,6 +245,7 @@ const CATEGORIES = [
       "buildingCardSource",
       "effectWiring",
       "uiLayering",
+      "visualRhythm",
       "itemText",
       "eventText",
       "kaiFontCoverage",
