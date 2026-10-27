@@ -52,7 +52,7 @@
         <p v-if="player.suppressedRegions.length > 0" class="text-[10px] text-ink-soft">
           镇压收益中 <span class="text-gold-ink">{{ player.suppressedRegions.length }} 处</span> ——
           与历练互不冲突,可同时收取;一次只能历练一处。收益随通用灵石倍率一同放大 ——
-          境界越高,同一处产出越多。
+          境界越高,同一处产出越多;转世重修后需重新镇压。
         </p>
         <!--
           途中三档:际遇 / 奇缘 / 机缘。
