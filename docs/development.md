@@ -334,6 +334,10 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
 - **发版**:唯一阻塞是 `package.json` 的版本号。定下后写 `docs/release-notes/v<版本>.md`
   (复制上一版正文,**记得把图链里的旧 tag 全部改掉**),跑 `bun run release:check` 看还剩什么,
   再打 tag 并推送(推送由人决定)。
-- **「概率 → 直觉」的第三处**:洗练与掉落都没有期望读数(两处视图里都搜不到概率/掉率字样)。做法照 `src/core/breakthrough.ts`
+- **掉落的期望读数(先别小看)**:洗练那侧已经给了「约 N 次」;掉落这侧要先看清一件事 ——
+  `src/core/loot.ts` 的掉落表 `dropEntries` 是**写在函数里的内联对象**,率与份数都在其中。
+  要给期望值,第一步是把这张表抽成纯函数(运行时与期望共用一份),否则就是两本账。
+  这会动到 loot 热路径与 lootSim / 装备对账等既有判据,属于**独立任务**,不该顺手做。
+做法照 `src/core/breakthrough.ts`
   的 `expectedTries` —— 先在 `core` 写带单测的纯函数(换算 / 边界 / 单调三条判据),再接进界面;
   **不在视图里现算**。
