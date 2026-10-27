@@ -10,6 +10,7 @@ import { rng } from "@/utils/random";
 import {
   expectedMaterialsPerRun,
   expectedEquipmentTripsPerRun,
+  expectedPillTripsPerRun,
   afterWin,
   acquireEquipment,
   ARTIFACT_NEAR_BONUS,
@@ -476,5 +477,20 @@ describe("派发前的装备期望 · 用趟数说话", () => {
     expect(a).toBe(
       expectedEquipmentTripsPerRun({ mods: {} as never, rewardMult: 1.2, isBoss: false }),
     );
+  });
+});
+
+describe("派发前的丹药期望 · 与装备同口径", () => {
+  it("倍率越高趟数越少,且恒 ≥ 1", () => {
+    const slow = expectedPillTripsPerRun({ rewardMult: 1, isBoss: false })!;
+    const fast = expectedPillTripsPerRun({ rewardMult: 1.6, isBoss: false })!;
+    expect(fast).toBeLessThan(slow);
+    expect(fast).toBeGreaterThanOrEqual(1);
+  });
+
+  it("首领战比普通战更密 —— ×3 真的换来了更少的趟数", () => {
+    const normal = expectedPillTripsPerRun({ rewardMult: 1, isBoss: false })!;
+    const boss = expectedPillTripsPerRun({ rewardMult: 1, isBoss: true })!;
+    expect(boss).toBeLessThan(normal);
   });
 });
