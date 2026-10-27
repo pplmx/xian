@@ -482,3 +482,22 @@ export function expectedEquipmentTripsPerRun(input: {
   if (!(chance > 0)) return null;
   return Math.max(1, Math.round((1 / chance) * 10) / 10);
 }
+
+/**
+ * 一趟历练出丹药的期望「趟数」 —— 与装备同一口径(只给趟数,不给概率)。
+ * 丹药命中率含所钟与模式倍率,首领战另 ×3;派发前的预览按普通战算,故 isBoss 传 false。
+ */
+export function expectedPillTripsPerRun(input: {
+  bias?: string;
+  rewardMult: number;
+  isBoss: boolean;
+}): number | null {
+  const { bias, rewardMult, isBoss } = input;
+  const chance = clamp(
+    PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1) * biasChanceMult(bias, "pill"),
+    0,
+    1,
+  );
+  if (!(chance > 0)) return null;
+  return Math.max(1, Math.round((1 / chance) * 10) / 10);
+}
