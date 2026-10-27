@@ -493,11 +493,17 @@ export function expectedPillTripsPerRun(input: {
   isBoss: boolean;
 }): number | null {
   const { bias, rewardMult, isBoss } = input;
-  const chance = clamp(
+  return tripsFromChance(
     PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1) * biasChanceMult(bias, "pill"),
-    0,
-    1,
   );
-  if (!(chance > 0)) return null;
-  return Math.max(1, Math.round((1 / chance) * 10) / 10);
+}
+
+/**
+ * 命中率 → 「约几趟一次」。三个期望读数共用这一处换算:
+ * 概率一律先钳到 [0, cap],为 0 时给 null(不编「无穷趟」),下限 1(不到一趟不可能)。
+ */
+function tripsFromChance(chance: number, cap = 1): number | null {
+  const p = clamp(chance, 0, cap);
+  if (!(p > 0)) return null;
+  return Math.max(1, Math.round((1 / p) * 10) / 10);
 }
