@@ -330,4 +330,6 @@ uv run scripts/fonts/build-kai-font.py        # 每片约 180 常用字 + 700 �
   差异来自 `resources.addStone` 的**全局灵石倍率**（随修炼/灵脉增长），不是镇压自己乘的。
 - **转世会清零**：`rebirth()` 清空 `suppressedRegions / suppressQualified / suppressedSince`
   （见 `core/samsaraAudit.ts` 的文案断言）。
-- 待定：是否让镇压收入绕开全局倍率（见 `docs/development.md` 的待办）。
+- **当前取舍：保留现状 + 界面说明**。历练页那行已写明「收益随通用灵石倍率一同放大 ——
+  境界越高，同一处产出越多；转世重修后需重新镇压」。不另开一条绕开倍率的入账路径，
+  是因为那会让高境界镇压不再更赚。若日后要改，改动点在 `settleSuppressedRegions` 的灵石入账。
