@@ -234,6 +234,55 @@ export function randomDropArtifact(tier: number): string | null {
   return rng.weighted(pool, (a) => artifactDropWeight(a, tier)).id;
 }
 
+/**
+ * 掉落表本身 —— 与运行时共用同一份。
+ *
+ * 抽出来只有一个理由:期望值要算的就是这张表。若在别处照抄一遍率与份数,
+ * 一旦平衡调整就会变成两本账(本仓最忌的那种)。
+ */
+export function dropEntriesFor(input: {
+  bias?: string;
+  mods: Parameters<typeof modOf>[0];
+  rewardMult: number;
+  isBoss: boolean;
+  luck: number;
+}): Record<string, DropEntry> {
+  const { bias, mods, rewardMult, isBoss, luck } = input;
+  return {
+    // 材料 —— 数量进标量库存,同时抽出"你到底捡到了什么"推进认知
+    herb: { key: "herb", chance: 0.5 * biasChanceMult(bias, "herb"), count: [1, 3] as const },
+    ore: { key: "ore", chance: 0.35 * biasChanceMult(bias, "ore"), count: [1, 2] as const },
+    page: {
+      key: "page",
+      chance: PAGE_DROP_CHANCE * rewardMult * biasChanceMult(bias, "page"),
+      count: [1, 2] as const,
+    },
+    equipment: {
+      key: "equipment",
+      chance: EQUIP_DROP_CHANCE * rewardMult * (1 + modOf(mods, "dropRate")) * (isBoss ? 2.5 : 1),
+      chanceCap: 0.9,
+      attempts: 1,
+      scalesWithAttempts: true,
+      count: 1,
+      scalesWithCount: false,
+      guaranteed: true,
+    },
+    pill: {
+      key: "pill",
+      chance: PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1) * biasChanceMult(bias, "pill"),
+      count: 1,
+      scalesWithCount: false,
+    },
+    // 法宝(稀有)——(1+luck) 可被叠加的 luck 推高,必须进判定前归一到 [0,1](ISS-030)
+    artifact: {
+      key: "artifact",
+      chance: ARTIFACT_DROP_CHANCE * (isBoss ? 6 : 1) * (1 + luck),
+      count: 1,
+      scalesWithCount: false,
+    },
+  } satisfies Record<string, DropEntry>;
+}
+
 /** 战斗胜利掉落 */
 export function afterWin(
   region: RegionDef,
@@ -308,40 +357,9 @@ export function afterWin(
    * 命中当场处理(onHit)也是必须的:生成装备自己还要吃随机数,若等整表掷完再统一生成,
    * 那些掷骰就会挤到丹药/法宝之前 —— 同一场战斗的装备会凭空换一个模样。
    */
-  const dropEntries = {
-    // 材料 —— 数量进标量库存,同时抽出"你到底捡到了什么"推进认知
-    herb: { key: "herb", chance: 0.5 * biasChanceMult(bias, "herb"), count: [1, 3] as const },
-    ore: { key: "ore", chance: 0.35 * biasChanceMult(bias, "ore"), count: [1, 2] as const },
-    page: {
-      key: "page",
-      chance: PAGE_DROP_CHANCE * rewardMult * biasChanceMult(bias, "page"),
-      count: [1, 2] as const,
-    },
-    equipment: {
-      key: "equipment",
-      chance: EQUIP_DROP_CHANCE * rewardMult * (1 + modOf(mods, "dropRate")) * (isBoss ? 2.5 : 1),
-      chanceCap: 0.9,
-      attempts: 1,
-      scalesWithAttempts: true,
-      count: 1,
-      scalesWithCount: false,
-      guaranteed: true,
-    },
-    pill: {
-      key: "pill",
-      chance: PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1) * biasChanceMult(bias, "pill"),
-      count: 1,
-      scalesWithCount: false,
-    },
-    // 法宝(稀有)——(1+luck) 可被叠加的 luck 推高,必须进判定前归一到 [0,1](ISS-030)
-    artifact: {
-      key: "artifact",
-      chance: ARTIFACT_DROP_CHANCE * (isBoss ? 6 : 1) * (1 + luck),
-      count: 1,
-      scalesWithCount: false,
-    },
-  } satisfies Record<string, DropEntry>;
-  type DropKey = keyof typeof dropEntries;
+  const dropEntries = dropEntriesFor({ bias, mods, rewardMult, isBoss, luck });
+  /** 表已由 dropEntriesFor 返回 Record<string, DropEntry>,键在这里显式列出以保住 switch 的穷尽性 */
+  type DropKey = "herb" | "ore" | "page" | "equipment" | "pill" | "artifact";
 
   createDropTable(Object.values(dropEntries)).roll(rng, {
     countMult: doubled,
