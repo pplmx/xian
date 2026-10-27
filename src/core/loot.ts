@@ -430,3 +430,35 @@ export function afterWin(
   if (biasHit && biasEffect) lines.push(`所钟 · ${biasEffect.label}`);
   return { lines, stone: stoneGained, exp, items };
 }
+
+/**
+ * 一趟历练的材料期望件数 —— 派发前那一行「预计材料 ≈ N 件」用。
+ *
+ * 只算材料三渠道(灵草/玄铁/书页):它们有份数区间,期望是 `命中率 × 平均份数`,
+ * 再乘「翻倍」触发率。装备与丹药走各自的稀有度叙事,不在这行里报。
+ * 口径:只给件数、不给概率。
+ */
+export function expectedMaterialsPerRun(input: {
+  bias?: string;
+  mods: Parameters<typeof modOf>[0];
+  rewardMult: number;
+  isBoss: boolean;
+  luck: number;
+}): number {
+  const entries = dropEntriesFor(input);
+  const doubled = 1 + clamp(modOf(input.mods, "doubleDropRate"), 0, 1);
+  const meanCount = (c: unknown): number => {
+    if (typeof c === "number") return c;
+    if (Array.isArray(c) && c.length === 2) return (Number(c[0]) + Number(c[1])) / 2;
+    return 1;
+  };
+  const chanceOf = (e: unknown, cap: number): number => {
+    const obj = e as { chance?: number };
+    return clamp(obj.chance ?? 0, 0, cap);
+  };
+  const materials =
+    chanceOf(entries.herb, 1) * meanCount((entries.herb as { count?: unknown }).count) +
+    chanceOf(entries.ore, 1) * meanCount((entries.ore as { count?: unknown }).count) +
+    chanceOf(entries.page, 1) * meanCount((entries.page as { count?: unknown }).count);
+  return Math.round(materials * doubled * 10) / 10;
+}

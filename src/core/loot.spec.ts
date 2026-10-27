@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { rng } from "@/utils/random";
 import {
+  expectedMaterialsPerRun,
   afterWin,
   acquireEquipment,
   ARTIFACT_NEAR_BONUS,
@@ -430,5 +431,29 @@ describe("forge · 连强到顶总账预览与实付同账", () => {
       },
     ];
     expect(upgradeRestCost("rest-full")).toBe("max");
+  });
+});
+
+describe("派发前的材料期望 · 只给件数不给概率", () => {
+  const run = (rewardMult: number) =>
+    expectedMaterialsPerRun({
+      mods: {} as never,
+      rewardMult,
+      isBoss: false,
+      luck: 0,
+    });
+
+  it("默认档下是一个正数,且已经过一位小数取整", () => {
+    const v = run(1);
+    expect(v).toBeGreaterThan(0);
+    expect(Math.round(v * 10) / 10).toBe(v);
+  });
+
+  it("倍率越高期望越高 —— 收益 ×N 真的换来东西", () => {
+    expect(run(1.6)).toBeGreaterThan(run(1));
+  });
+
+  it("自证:同参数两次调用结果一致(不偷吃随机数)", () => {
+    expect(run(1.3)).toBe(run(1.3));
   });
 });

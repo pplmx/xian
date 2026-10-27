@@ -436,6 +436,7 @@
           <span class="text-right text-[11px] text-ink-faint tabular">
             {{ formatDuration(EXPLORE_MODES[m.id].durationSec) }}
             <br />
+            预计材料 ≈ {{ expectedMaterials(m.id) }} 件<br />
             收益 ×{{ EXPLORE_MODES[m.id].rewardMult }} · 敌势
             <span :class="EXPLORE_MODES[m.id].dangerMult > 1 ? 'text-cinnabar' : ''"
               >×{{ EXPLORE_MODES[m.id].dangerMult }}</span
@@ -453,6 +454,8 @@ import { useRoute, useRouter } from "vue-router";
 import type { ExploreMode, RegionDef, RegionRecall } from "@/types";
 import { useAdventureStore } from "@/stores/adventure";
 import { useGameStore } from "@/stores/game";
+import { expectedMaterialsPerRun } from "@/core/loot";
+import { currentWorldBias } from "@/core/mortalWorldService";
 import { usePlayerStore } from "@/stores/player";
 import { useSettingsStore } from "@/stores/settings";
 import { petDef } from "@/data/pets";
@@ -712,5 +715,19 @@ function heldText(regionId: string): string {
   if (since === undefined) return "—";
   const hours = Math.max(0, Math.floor((now.value - since) / 3_600_000));
   return hours < 24 ? `${hours} 时` : `${Math.floor(hours / 24)} 日`;
+}
+
+/**
+ * 「预计材料 ≈ N 件」—— 派发前给玩家一个可算的盼头。
+ * 区域事件尚未揭晓,故倍率只取模式本身的 rewardMult(措辞用「预计」)。
+ */
+function expectedMaterials(modeId: keyof typeof EXPLORE_MODES): number {
+  return expectedMaterialsPerRun({
+    bias: currentWorldBias(),
+    mods: player.finalStats.mods,
+    rewardMult: EXPLORE_MODES[modeId].rewardMult,
+    isBoss: false,
+    luck: 0,
+  });
 }
 </script>
