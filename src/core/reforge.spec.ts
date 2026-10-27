@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createPinia, setActivePinia } from "pinia";
 import {
+  expectedReforgesFor,
   reforgeCost,
   reforgeEquipment,
   reforgeableAffixIds,
@@ -344,5 +345,30 @@ describe("界面与判定同源 · 条数上限不写死", () => {
     );
     expect(seal, "界面应调用 unsealAffix(与核心同一处)").toContain("unsealAffix");
     expect(seal, "解除按钮文案").toMatch(/解除/);
+  });
+});
+
+describe("洗到指定词条的平均次数", () => {
+  /*
+   * 口径:只给次数、不给概率(与突破卡、开炉卡一致)。
+   * 模型来自引擎:条数按品质区间均匀重掷,不放回抽样下每个槽位边际均匀。
+   */
+  it("洗不出来的词条给 null —— 不编一个好看的数字", () => {
+    expect(expectedReforgesFor(base, "__no_such_affix__")).toBeNull();
+  });
+
+  it("池里每个词条都有次数,且恒 ≥ 1", () => {
+    const pool = reforgeableAffixIds(base);
+    expect(pool.length, "这个 fixture 的可洗池是空的,判据会变成空转").toBeGreaterThan(0);
+    for (const id of pool.slice(0, 4)) {
+      const v = expectedReforgesFor(base, id);
+      expect(v, id).not.toBeNull();
+      expect(v!, id).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("空词条的装备不抛也不出 NaN —— 要么给数,要么给 null", () => {
+    const v = expectedReforgesFor({ ...base, affixes: [] }, "__no_such_affix__");
+    expect(v === null || (Number.isFinite(v) && v >= 1)).toBe(true);
   });
 });

@@ -310,3 +310,22 @@ export function autoReforge(
     affixIds: last ? last.affixes.map((a) => a.id) : [],
   };
 }
+
+/**
+ * 洗到指定词条的平均重铸次数 —— 词条行上「~N 次」那个读数用。
+ *
+ * 条数按品质区间**均匀**重掷(引擎 equipment.rerollAffixes 用的是 rng.int(lo, hi)),
+ * 每次从可洗池里抽 k 条;不放回抽样下每个槽位边际均匀,故命中率 ≈ kbar / P。
+ * 只给次数、不给概率:概率会被后续平衡调整打脸,次数是玩家真正在算的东西。
+ *
+ * 下限 1 —— 可洗池比一次抽的条数还少时公式会算出小于 1 的值,但「不到一次」不存在。
+ */
+export function expectedReforgesFor(inst: EquipmentInstance, affixId: string): number | null {
+  const pool = reforgeableAffixIds(inst);
+  if (!pool.includes(affixId)) return null;
+  const band = qualityDef(inst.quality)?.affixes;
+  if (!band || band.length < 2) return null;
+  const draws = (band[0]! + band[1]!) / 2;
+  if (!(draws > 0)) return null;
+  return Math.max(1, Math.round((pool.length / draws) * 10) / 10);
+}

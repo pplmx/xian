@@ -21,6 +21,7 @@ import { equipmentTemplate } from "@/data/equipment";
 import { affixDef, AFFIXES } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
 import {
+  expectedReforgesFor,
   autoReforge,
   reforgeEquipment,
   reforgeCost,
@@ -165,6 +166,12 @@ watch(inst, () => {
   transferOpen.value = false;
   autoTargets.value = [];
 });
+
+/** 洗到这一条的平均次数(只给次数,不给概率) */
+function triesOf(id: string): number | null {
+  const it = inst.value;
+  return it ? expectedReforgesFor(it, id) : null;
+}
 </script>
 
 <template>
@@ -190,7 +197,8 @@ watch(inst, () => {
         "
         @click="toggleAutoTarget(af.id)"
       >
-        {{ af.name }}
+        {{ af.name
+        }}<span v-if="triesOf(af.id)" class="ml-1 opacity-70">约 {{ triesOf(af.id) }} 次</span>
       </button>
     </div>
     <div v-if="autoTargets.length" class="mt-1.5 space-y-0.5">
