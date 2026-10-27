@@ -321,3 +321,13 @@ uv run scripts/fonts/build-kai-font.py        # 每片约 180 常用字 + 700 �
   "念得出却按不动");点开的是那张清单由玩家挑一缕,不替玩家装某不知名的魂。
   夹具因此要留一缕不装:后期档原先两缕全装上,那枚按钮在 188 页 × 视口那一遍里
   一次都不存在 —— 门量不到的东西,绿得毫无信息(与 `data-value-row` 的活信号同一道理)。
+
+## 镇压：收益受谁影响（查证记录）
+
+- **公式里没有玩家境界**：`suppressYield()` 只看区域层级（`1 + tier × 0.15`），
+  `stoneByTier()` 同样只看区域层级。
+- **但入账受境界影响**：实测同区同长，`major=0` 得 1.8、`major=8` 得 3.34 ——
+  差异来自 `resources.addStone` 的**全局灵石倍率**（随修炼/灵脉增长），不是镇压自己乘的。
+- **转世会清零**：`rebirth()` 清空 `suppressedRegions / suppressQualified / suppressedSince`
+  （见 `core/samsaraAudit.ts` 的文案断言）。
+- 待定：是否让镇压收入绕开全局倍率（见 `docs/development.md` 的待办）。
