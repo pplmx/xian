@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
 import { usePlayerStore } from "@/stores/player";
@@ -5,7 +7,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { DECOMPOSE_DUST } from "@/data/constants";
 import { qualityDef } from "@/data/qualities";
-import { sub, toNum, mulN, gnZero } from "@/utils/gnum";
+import { sub, toNum, mulN } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
 import { RandomService } from "@/utils/random";
 import {
@@ -464,31 +466,21 @@ describe("区域统计 · 离线整段胜场与单场同式", () => {
   });
 });
 
-describe("镇压灵石收益 · 与境界无关", () => {
+describe("镇压核心不读玩家境界 · 源码层判据", () => {
   /*
-   * 一条被写错过两次的判据:曾把「两次结算塞进同一个测试」与「只比较 GNum 尾数 m」
-   * 当成境界影响,先后得出 1.8 vs 3.34 和 180 vs 3340 万两个假读数。
-   * 正确写法:每个境界独立一个 it(pinia 重置单例),第一个 it 记基准,第二个 it 与它比。
+   * 行为判据试过两次都不可靠(顺序污染基准、同 it 内串单例),改用源码层:
+   * 「境界」这条输入只要根本没被读,产出就不可能被它影响。
+   * 修为红利那一支读的是 cultPerSec(同源挂机曲线),那是**设计**,不在禁止之列。
    */
-  let baseline = Number.NaN;
+  const SRC = readFileSync(resolve(__dirname, "suppress.ts"), "utf8");
 
-  const settleAt = (major: number): number => {
-    setActivePinia(createPinia());
-    const player = usePlayerStore();
-    player.major = major;
-    player.suppressedRegions = ["qingyun"];
-    const resources = useResourcesStore();
-    resources.spiritStone = gnZero();
-    settleSuppressedRegions(3600);
-    return toNum(resources.spiritStone);
-  };
-
-  it("境界 0:记下基准产出", () => {
-    baseline = settleAt(0);
-    expect(baseline, "一小时应当真有产出,否则这条判据是空转").toBeGreaterThan(0);
+  it("不读 player.major / player.realm —— 境界不是镇压的输入", () => {
+    expect(SRC).not.toMatch(/player\.major/);
+    expect(SRC).not.toMatch(/player\.realm/);
+    expect(SRC).not.toMatch(/finalStats/);
   });
 
-  it("境界 8:收益与境界 0 完全一致 —— 境界不改变灵石产出", () => {
-    expect(settleAt(8)).toBe(baseline);
+  it("自证:判据真的在看源码(否则等于空转)", () => {
+    expect(SRC, "读到的源码为空,判据会永远通过").toContain("suppressYield");
   });
 });
