@@ -338,6 +338,10 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
   `src/core/loot.ts` 的掉落表 `dropEntries` 是**写在函数里的内联对象**,率与份数都在其中。
   要给期望值,第一步是把这张表抽成纯函数(运行时与期望共用一份),否则就是两本账。
   这会动到 loot 热路径与 lootSim / 装备对账等既有判据,属于**独立任务**,不该顺手做。
+  坐标:`src/core/loot.ts` 的 `afterWin(region, rewardMult, isBoss, bias?)` 里,`dropEntries`
+  在函数体中部(约 L311),常量从 `data/constants` 导入(L12-19),`DropEntry` 来自 `wanxiang-engine`。
+  做法:把那个字面量原样搬进 `export function dropEntriesFor(...)`,原地改成调用它 ——
+  **行为零变化**是安全阀,lootSim / 装备对账若变红说明搬错了。
 做法照 `src/core/breakthrough.ts`
   的 `expectedTries` —— 先在 `core` 写带单测的纯函数(换算 / 边界 / 单调三条判据),再接进界面;
   **不在视图里现算**。
