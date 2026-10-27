@@ -566,6 +566,12 @@ body {
   background: linear-gradient(160deg, #34312a 0%, #4a463d 45%, #2d2b25 100%);
   -webkit-font-smoothing: antialiased;
   user-select: none;
+  /*
+   * 数字一律等宽字形:界面上到处是每秒都在变的读数(灵石、修为、进度 x/y、趟数),
+   * 比例数字会让整行宽度随数值跳动 —— 一眼看上去像在「抖」。
+   * 放在 body 上而不是逐个加 .tabular:漏一处就会有一处跳,而那处最难被注意到。
+   */
+  font-variant-numeric: tabular-nums;
 }
 
 /* ================= 夜间主题 =================
