@@ -340,6 +340,7 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
   这会动到 loot 热路径与 lootSim / 装备对账等既有判据,属于**独立任务**,不该顺手做。
   算式已定稿:逐渠道 `min(cap, chance) × 平均份数`,材料再乘 `(1 + doubleDropRate)`;
   装备按「多抽一次」处理(`scalesWithAttempts`)。
+  口径已定(用户选择):显示在**派发前**,措辞用「预计」(区域事件尚未揭晓,倍率取 `modeDef.rewardMult`)。
   接线建议:在服务层加 `expectedDropsNow()`(读 store 组装 bias / mods / rewardMult / isBoss,
   调纯函数),历练页显示一行「材料期望 ≈ N 件/场」。rewardMult 的来源已定位:
   `src/core/exploration.ts:357-360` 是 `modeDef.rewardMult × regionEvent.rewardMult`。
