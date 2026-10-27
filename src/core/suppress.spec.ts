@@ -475,8 +475,9 @@ describe("镇压核心不读玩家境界 · 源码层判据", () => {
   const SRC = readFileSync(resolve(__dirname, "suppress.ts"), "utf8");
 
   it("不读 player.major / player.realm —— 境界不是镇压的输入", () => {
-    expect(SRC).not.toMatch(/player\.major/);
-    expect(SRC).not.toMatch(/player\.realm/);
+    // 两种写法都要拦:经变量读(player.major)与直接读(usePlayerStore().major)
+    expect(SRC).not.toMatch(/\.major\b/);
+    expect(SRC).not.toMatch(/\.realm\b/);
     expect(SRC).not.toMatch(/finalStats/);
   });
 
