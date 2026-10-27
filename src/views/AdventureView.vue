@@ -445,6 +445,10 @@
           </span>
         </button>
       </div>
+      <!-- 上面两行按普通战算:首领战装备 ×2.5、法宝 ×6,不写清会让人以为亘古不变 -->
+      <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
+        以上按普通战计;首领战的装备与法宝产出另计,高于此数。
+      </p>
     </BaseModal>
   </div>
 </template>
