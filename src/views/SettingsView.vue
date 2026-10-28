@@ -437,7 +437,7 @@ function confirmReset(): void {
   if (resetGame()) return; // 成功时页面立刻就重载了,收尾交给重载
   resetConfirm.value = false;
   engine.resume();
-  ui.toast("本页为只读(已在另一处打开),清档没有执行。请回到那一页操作。", "warn");
+  ui.toast("清档没有执行 —— 本页可能只读,或浏览器拒绝改动存档。请刷新后重试。", "warn");
 }
 
 // 弹窗开着就离开页面时兜底恢复

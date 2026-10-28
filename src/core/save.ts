@@ -200,9 +200,11 @@ export function sealStorageWrites(): void {
  */
 export function resetGame(): boolean {
   engine.stop();
-  sealStorageWrites();
   // 只读页(多标签后来者)不许清档:清掉的会是另一页正在用的档
   if (!clearAllSave()) return false;
+  // 清档已经确认成功后再封存写盘。反过来先封存、清档却失败时,页面会继续
+  // 运行在一套再也写不进 localStorage 的状态里;玩家忽略提示继续玩就白玩。
+  sealStorageWrites();
   // 内存兜底:reload 是异步的,卸载前页面仍在跑。万一两条封存路径都失效,
   // 排队刷盘写回的也是 started:false,守卫照样把人送回 welcome
   try {

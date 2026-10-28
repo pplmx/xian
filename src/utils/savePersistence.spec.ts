@@ -20,6 +20,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import {
   SAVE_FLUSH_MS,
+  buildExportPayload,
   clearAllSave,
   dropPendingWrites,
   flushSaveWrites,
@@ -236,6 +237,41 @@ describe("存档写盘 · 失败不许静默", () => {
     vi.advanceTimersByTime(SAVE_FLUSH_MS);
     expect(calls, "反复失败只该通知一次").toBe(1);
     unsubscribe();
+  });
+
+  it("写盘被占满时,导出仍取队列里的最新分片 —— 备份不能退回旧档", () => {
+    const jam = installJammedStorage(probe);
+    const { storage, serializer, key } = persistConfig("player");
+
+    // 先落一版旧档,再让存储占满,把最新一版留在待写队列里
+    storage.setItem(key, serializer.serialize({ exp: 7 }));
+    flushSaveWrites();
+    jam.allow(false);
+    storage.setItem(key, serializer.serialize({ exp: 8 }));
+
+    // buildExportPayload 会先尝试刷盘;失败后必须改读「读己所写」的队列值,
+    // 否则玩家按提示导出的备份仍是上一版,恰好丢掉写盘失败后的进度
+    const payload = buildExportPayload();
+    expect(payload.data.player).toEqual({ exp: 8 });
+  });
+
+  it("移除与整表清理都被静默拒绝时,清档不能回报成功", () => {
+    const disk = probe.disk;
+    disk.set(storageKey("player"), "still-here");
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => disk.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        disk.set(k, v);
+      },
+      // 部分 WebView 会静默吞掉删除;这里的 clear 也同样无效
+      removeItem: () => undefined,
+      clear: () => undefined,
+      key: () => null,
+      length: 1,
+    });
+
+    expect(clearAllSave(), "存档仍在盘上却回报清档成功,会直接重载并留下旧档").toBe(false);
+    expect(disk.has(storageKey("player"))).toBe(true);
   });
 
   it("清档会清掉旧的失败警告(那批待写内容已经不打算写了)", () => {

@@ -35,7 +35,7 @@ import {
   storageKey,
 } from "@/utils/storage";
 import { readSaveText } from "@/utils/crypto";
-import { exportSaveText, importSaveText, inspectImportText } from "./save";
+import { exportSaveText, importSaveText, inspectImportText, resetGame } from "./save";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
@@ -322,5 +322,33 @@ describe("存档往返 · 导出再导入一模一样", () => {
       )?.name,
     ).toBe("无名散修");
     expect(inspectImportText("完全不是存档")).toBeNull();
+  });
+});
+
+describe("存档重置 · 失败时别把写盘封死", () => {
+  it("清档没有成功时不改写 Storage.prototype.setItem", async () => {
+    class FakeStorage {}
+    vi.stubGlobal("Storage", FakeStorage);
+    vi.stubGlobal("window", {
+      clearInterval: () => undefined,
+      removeEventListener: () => undefined,
+    });
+    vi.stubGlobal("document", { removeEventListener: () => undefined });
+    const disk = new Map([[storageKey("player"), "still-here"]]);
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => disk.get(k) ?? null,
+      setItem: (k: string, v: string) => void disk.set(k, v),
+      removeItem: () => undefined,
+      clear: () => undefined,
+      key: () => null,
+      length: disk.size,
+    });
+
+    expect(resetGame(), "清档失败应如实返回 false").toBe(false);
+    expect(
+      Object.getOwnPropertyDescriptor(FakeStorage.prototype, "setItem"),
+      "清档失败却先封死写盘,玩家忽略提示继续玩会白玩",
+    ).toBeUndefined();
+    vi.unstubAllGlobals();
   });
 });

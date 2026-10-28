@@ -430,11 +430,16 @@ export interface ExportPayload {
 }
 
 export function buildExportPayload(): ExportPayload {
-  // 导出直接读 localStorage,故必须先把待落盘内容写出去,否则导出的是旧档
+  // 先尽力刷盘,让正常路径导出的是磁盘上的最新一版
   flushSaveWrites();
   const data: Record<string, unknown> = {};
   for (const id of PERSISTED_STORES) {
-    const raw = localStorage.getItem(storageKey(id));
+    /*
+     * 刷盘可能刚失败(存储满/被 WebView 拒绝),此时最新一版仍在 pending 里。
+     * 必须走节流层的「读己所写」,否则玩家按提示导出的备份会悄悄退回上一版 ——
+     * 而这正是写盘失败后最需要保住的东西。
+     */
+    const raw = THROTTLED_STORAGE.getItem(storageKey(id));
     if (raw !== null) {
       try {
         data[id] = JSON.parse(readSaveText(raw));
@@ -527,19 +532,21 @@ export function clearAllSave(): boolean {
   // 校验删除结果:removeItem 在个别 WebView 实现上会静默失效,
   // 只要还剩任何一片就整体清空——半清的存档比清干净更糟,
   // 会出现「game 分片还在、player 分片没了」这种卡在主页的空角色
-  const leftover = PERSISTED_STORES.some((id) => {
-    try {
-      return localStorage.getItem(storageKey(id)) !== null;
-    } catch {
-      return false;
-    }
-  });
-  if (leftover) {
+  const hasLeftover = (): boolean =>
+    PERSISTED_STORES.some((id) => {
+      try {
+        return localStorage.getItem(storageKey(id)) !== null;
+      } catch {
+        // 读不了不等于已经删掉:清档结果不确定时不能回报成功
+        return true;
+      }
+    });
+  if (hasLeftover()) {
     try {
       localStorage.clear();
     } catch {
-      // 存储完全不可用,交由重载后的路由守卫兜底
+      // 整表清理也失败:下面的复核会把真实结果报给调用方
     }
   }
-  return true;
+  return !hasLeftover();
 }
