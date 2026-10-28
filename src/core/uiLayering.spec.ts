@@ -1437,6 +1437,18 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(panel?.src, "保底数值要落到面板上").toContain("inscribeFloor");
   });
 
+  it("自动重铸给出真实目标次数,不可达目标不许继续烧钱", () => {
+    const panel = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
+    expect(panel?.src, "候选池与核心同源").toContain("reforgeAffixPool");
+    expect(panel?.src, "选中目标要按当前阈值重算次数").toMatch(
+      /triesOf\(\w+\.affixId,\s*\w+\.minRoll/,
+    );
+    expect(panel?.src, "阈值不可能达到时要明说").toContain("不会命中");
+    expect(panel?.src, "不可达目标也要置灰").toMatch(
+      /:disabled="[^"]*!autoReachable[^"]*!autoAffordable/,
+    );
+  });
+
   it("功法进修付不起置灰+列差 —— 缺哪样、差多少,按钮上直说", () => {
     // 「进修」曾永不置灰,资源不足只弹一句笼统 toast「悟道点或残页不足」,
     // 不报缺哪样也不说差多少 —— 与全仓“付不起置灰+列差”族规脱节。修法与

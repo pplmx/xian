@@ -17,8 +17,7 @@ import { computed, ref, watch } from "vue";
 import { useUiStore } from "@/stores/ui";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
-import { equipmentTemplate } from "@/data/equipment";
-import { affixDef, AFFIXES } from "@/data/affixes";
+import { affixDef } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
 import { skillStageName } from "@/data/crafting";
 import {
@@ -29,6 +28,7 @@ import {
   sealCapacity,
   sealCost,
   inscribeRollFloor,
+  reforgeAffixPool,
   type ReforgeTarget,
 } from "@/core/reforge";
 import { formatGN, formatPercent } from "@/utils/format";
@@ -100,17 +100,14 @@ const autoAffordable = computed(() => {
  */
 const affixOptions = computed(() => {
   if (!inst.value) return [];
-  const tpl = equipmentTemplate(inst.value.templateId);
-  const q = inst.value && qualityDef(inst.value.quality);
-  if (!tpl || !q) return [];
-  return [...AFFIXES]
-    .filter(
-      (a) =>
-        (a.slots === undefined || a.slots.includes(tpl.slot)) &&
-        (a.minRank === undefined || q.rank >= a.minRank),
-    )
-    .sort((a, b) => b.weight - a.weight);
+  return [...reforgeAffixPool(inst.value)].sort((a, b) => b.weight - a.weight);
 });
+
+/** 选中目标按当前阈值与铭纹保底重算约几次;null = 当前不可能命中 */
+function autoTriesOf(target: ReforgeTarget): number | null {
+  return triesOf(target.affixId, target.minRoll ?? 0);
+}
+const autoReachable = computed(() => autoTargets.value.some((t) => autoTriesOf(t) !== null));
 
 function isAutoTarget(id: string): boolean {
   return autoTargets.value.some((t) => t.affixId === id);
@@ -153,6 +150,8 @@ function runAutoReforge(): void {
     } else {
       ui.toast(`灵石/器灵尘见底,洗了 ${out.rolls} 次即止;今一身为 ${now},${cost}`, "warn");
     }
+  } else if (out.stop === "unreachable") {
+    ui.toast("这些目标当前不会命中:封存词条不会重掷,或阈值已到 100%;分文未动", "warn");
   } else {
     // frozen 一档兼两种收法:无位可洗(全封存/无词条),或装备已不在行囊
     const gone = inst.value !== undefined && !inventory.findItem(inst.value.uid);
@@ -176,9 +175,9 @@ watch(inst, () => {
 });
 
 /** 洗到这一条的平均次数(只给次数,不给概率) */
-function triesOf(id: string): number | null {
+function triesOf(id: string, minRoll = 0): number | null {
   const it = inst.value;
-  return it ? expectedReforgesFor(it, id) : null;
+  return it ? expectedReforgesFor(it, id, { minRoll, rollFloor: inscribeFloor.value }) : null;
 }
 </script>
 
@@ -206,30 +205,37 @@ function triesOf(id: string): number | null {
         @click="toggleAutoTarget(af.id)"
       >
         {{ af.name
-        }}<span v-if="triesOf(af.id)" class="ml-1 opacity-70">约 {{ triesOf(af.id) }} 次</span>
+        }}<span v-if="triesOf(af.id)" class="mt-0.5 block text-[9px] text-ink-soft"
+          >约 {{ triesOf(af.id) }} 次</span
+        >
       </button>
     </div>
-    <div v-if="autoTargets.length" class="mt-1.5 space-y-0.5">
-      <p
-        v-for="t in autoTargets"
-        :key="t.affixId"
-        class="flex items-center gap-2 text-[10px] text-ink-faint"
-      >
-        <span class="w-10 shrink-0 font-kai text-ink-soft">{{
-          affixDef(t.affixId)?.name ?? t.affixId
-        }}</span>
-        <input
-          v-model.number="t.minRoll"
-          type="range"
-          min="0"
-          max="1"
-          step="0.05"
-          class="grow accent-cinnabar"
-        />
-        <span class="w-12 shrink-0 text-right tabular"
-          >≥{{ formatPercent(t.minRoll ?? 0, 0) }}</span
+    <div v-if="autoTargets.length" class="mt-1.5 space-y-1">
+      <div v-for="t in autoTargets" :key="t.affixId" class="space-y-0.5 text-[10px] text-ink-faint">
+        <p class="flex items-center gap-2">
+          <span class="w-10 shrink-0 font-kai text-ink-soft">{{
+            affixDef(t.affixId)?.name ?? t.affixId
+          }}</span>
+          <input
+            v-model.number="t.minRoll"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            class="grow accent-cinnabar"
+          />
+          <span class="w-12 shrink-0 text-right tabular"
+            >≥{{ formatPercent(t.minRoll ?? 0, 0) }}</span
+          >
+        </p>
+        <p
+          class="pl-12 text-[9px] tabular"
+          :class="autoTriesOf(t) === null ? 'text-cinnabar' : 'text-ink-soft'"
         >
-      </p>
+          <template v-if="autoTriesOf(t) === null">不会命中</template>
+          <template v-else>按当前门槛,约 {{ autoTriesOf(t) }} 次</template>
+        </p>
+      </div>
     </div>
     <div class="mt-1.5 flex items-center gap-2">
       <span class="text-[10px] text-ink-faint tabular">至多洗</span>
@@ -248,13 +254,15 @@ function triesOf(id: string): number | null {
       >
       <button
         class="btn-ghost ml-auto !px-3 !py-1 !text-[11px]"
-        :disabled="!autoTargets.length || !autoAffordable"
+        :disabled="!autoTargets.length || !autoReachable || !autoAffordable"
         :title="
           !autoTargets.length
             ? '先点一条要洗到的词条'
-            : autoAffordable
-              ? undefined
-              : '灵石或器灵尘不足'
+            : !autoReachable
+              ? '这些目标当前不会命中'
+              : autoAffordable
+                ? undefined
+                : '灵石或器灵尘不足'
         "
         @click="runAutoReforge"
       >
@@ -265,6 +273,9 @@ function triesOf(id: string): number | null {
     <p v-if="autoTargets.length && !autoAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
       尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
       {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
+    </p>
+    <p v-if="autoTargets.length && !autoReachable" class="mt-1 text-[10px] text-cinnabar">
+      这些目标不会命中:封存词条不重掷,或阈值已到 100%。
     </p>
   </div>
   <!-- 重铸与封存 (Phase 30.1) -->

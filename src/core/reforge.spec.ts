@@ -18,6 +18,7 @@ import {
   inscribeRollFloor,
   reforgeCost,
   reforgeEquipment,
+  reforgeAffixPool,
   reforgeableAffixIds,
   sealCapacity,
   sealCost,
@@ -388,29 +389,80 @@ describe("界面与判定同源 · 条数上限不写死", () => {
     expect(seal, "界面应调用 unsealAffix(与核心同一处)").toContain("unsealAffix");
     expect(seal, "解除按钮文案").toMatch(/解除/);
   });
+
+  it("自动重铸候选与核心共用同一份新词条池,不在界面另筛一遍", () => {
+    expect(dialog, "候选池应读 core/reforge 的 reforgeAffixPool").toContain("reforgeAffixPool(");
+    expect(dialog, "界面不得再手抄 AFFIXES 的部位/品质筛选").not.toContain("AFFIXES");
+  });
 });
 
 describe("洗到指定词条的平均次数", () => {
   /*
    * 口径:只给次数、不给概率(与突破卡、开炉卡一致)。
-   * 模型来自引擎:条数按品质区间均匀重掷,不放回抽样下每个槽位边际均匀。
+   * 模型来自引擎:条数按品质区间均匀重掷,候选按自身权重抽取。
    */
   it("洗不出来的词条给 null —— 不编一个好看的数字", () => {
     expect(expectedReforgesFor(base, "__no_such_affix__")).toBeNull();
   });
 
-  it("池里每个词条都有次数,且恒 ≥ 1", () => {
-    const pool = reforgeableAffixIds(base);
-    expect(pool.length, "这个 fixture 的可洗池是空的,判据会变成空转").toBeGreaterThan(0);
-    for (const id of pool.slice(0, 4)) {
-      const v = expectedReforgesFor(base, id);
-      expect(v, id).not.toBeNull();
-      expect(v!, id).toBeGreaterThanOrEqual(1);
-    }
+  it("当前没带、但新词条池里能出的词条,也要给出次数", () => {
+    const pool = reforgeAffixPool(base);
+    const absent = pool.find((a) => !base.affixes.some((cur) => cur.id === a.id));
+    expect(absent, "fixture 里必须有一个当前没带的可抽词条").toBeDefined();
+    const tries = expectedReforgesFor(base, absent!.id);
+    expect(tries, "洗新词条才是玩家要看的那一格").not.toBeNull();
+    expect(tries!).toBeGreaterThanOrEqual(1);
+  });
+
+  it("封存词条不进入新词条池,也不编次数", () => {
+    const target = reforgeAffixPool(base)[0]!;
+    expect(
+      expectedReforgesFor({ ...base, sealedAffixIds: [target.id] }, target.id),
+      "封存的东西不会再从重铸里掷出来",
+    ).toBeNull();
+  });
+
+  it("权重越高的词条越容易遇到,次数要跟着权重走", () => {
+    const pool = [...reforgeAffixPool(base)].sort((a, b) => a.weight - b.weight);
+    const light = pool[0]!;
+    const heavy = pool[pool.length - 1]!;
+    expect(heavy.weight, "fixture 必须覆盖不同权重").toBeGreaterThan(light.weight);
+    expect(expectedReforgesFor(base, heavy.id)!).toBeLessThan(expectedReforgesFor(base, light.id)!);
+  });
+
+  it("目标值与铭纹保底一起进次数:门槛越高越难,保底盖过门槛则不加价", () => {
+    const target = reforgeAffixPool(base)[0]!;
+    const baseTries = expectedReforgesFor(base, target.id)!;
+    const highTries = expectedReforgesFor(base, target.id, { minRoll: 0.9, rollFloor: 0 })!;
+    const coveredTries = expectedReforgesFor(base, target.id, {
+      minRoll: 0.2,
+      rollFloor: 0.3,
+    })!;
+    expect(highTries, "90% 的门槛比只求出词条更难").toBeGreaterThan(baseTries);
+    expect(coveredTries, "保底已经保证过线,次数不该凭空变多").toBe(baseTries);
+    expect(
+      expectedReforgesFor(base, target.id, { minRoll: 0.8, rollFloor: 0.5 }),
+      "保底是 max(掷点, 保底),门限高于保底时不会把剩余区间重新铺满",
+    ).toBe(expectedReforgesFor(base, target.id, { minRoll: 0.8, rollFloor: 0 }));
+    expect(expectedReforgesFor(base, target.id, { minRoll: 1 }), "100% 掷点不存在").toBeNull();
+  });
+
+  it("封存词条会占掉新掷名额,次数按实际可补条数算", () => {
+    const target = reforgeAffixPool(base).find(
+      (a) => !base.affixes.some((cur) => cur.id === a.id),
+    )!;
+    const unsealedTries = expectedReforgesFor(base, target.id)!;
+    const oneSealed = expectedReforgesFor(
+      { ...base, sealedAffixIds: [base.affixes[0]!.id] },
+      target.id,
+    )!;
+    expect(oneSealed, "封一条就少一个可补的新词条位,不该仍按整档条数估").toBeGreaterThan(
+      unsealedTries,
+    );
   });
 
   it("空词条的装备不抛也不出 NaN —— 要么给数,要么给 null", () => {
-    const v = expectedReforgesFor({ ...base, affixes: [] }, "__no_such_affix__");
+    const v = expectedReforgesFor({ ...base, affixes: [] }, reforgeAffixPool(base)[0]!.id);
     expect(v === null || (Number.isFinite(v) && v >= 1)).toBe(true);
   });
 });

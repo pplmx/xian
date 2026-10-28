@@ -12,10 +12,10 @@
  *
  * 原则:不为消耗而消耗——每一笔花销都在改变构筑,而非购买数值。
  */
-import type { EquipmentInstance, GNum } from "@/types";
+import type { AffixDef, EquipmentInstance, GNum } from "@/types";
 import { add, gnZero } from "@/utils/gnum";
 import { rng } from "@/utils/random";
-import { affixDef } from "@/data/affixes";
+import { AFFIXES, affixDef } from "@/data/affixes";
 import { equipmentTemplate } from "@/data/equipment";
 import { qualityDef } from "@/data/qualities";
 import {
@@ -75,6 +75,24 @@ export function reforgeCost(inst: EquipmentInstance): ReforgeCost | null {
 export function reforgeableAffixIds(inst: EquipmentInstance): string[] {
   const sealed = new Set(inst.sealedAffixIds ?? []);
   return inst.affixes.map((a) => a.id).filter((id) => !sealed.has(id));
+}
+
+/**
+ * 重铸**新词条**可抽池 —— 与引擎 `equipment.rerollAffixes` 的筛法同口径:
+ * 部位匹配、品质门槛通过,且排除封存项。当前未封存的旧词条会先被丢弃,
+ * 但同一个 id 仍可能重新抽到,所以它们不排除。
+ */
+export function reforgeAffixPool(inst: EquipmentInstance): AffixDef[] {
+  const template = equipmentTemplate(inst.templateId);
+  const quality = qualityDef(inst.quality);
+  if (!template || !quality) return [];
+  const sealed = new Set(inst.sealedAffixIds ?? []);
+  return AFFIXES.filter(
+    (a) =>
+      !sealed.has(a.id) &&
+      (a.slots === undefined || a.slots.includes(template.slot)) &&
+      (a.minRank === undefined || quality.rank >= a.minRank),
+  );
 }
 
 /**
@@ -229,7 +247,7 @@ export function refRoleMatches(
   return null;
 }
 
-export type AutoReforgeStop = "target" | "budget" | "broke" | "frozen";
+export type AutoReforgeStop = "target" | "budget" | "broke" | "frozen" | "unreachable";
 
 export interface AutoReforgeOutcome {
   /** 实际洗了几次 */
@@ -239,7 +257,7 @@ export interface AutoReforgeOutcome {
   /** 这几次的器灵尘账 */
   dust: number;
   stop: AutoReforgeStop;
-  /** 命中目标的那一条(null = 没洗到,撞了预算/没钱/无位可洗) */
+  /** 命中目标的那一条(null = 没洗到,撞了预算/没钱/无位可洗/目标不可达) */
   hit: { id: string; roll: number } | null;
   /** 收手时这件装备的词条 id 全表 */
   affixIds: string[];
@@ -252,7 +270,8 @@ export interface AutoReforgeOutcome {
  * - target  洗出目标,收手;
  * - budget  洗满预算也没出,收手(不硬刷);
  * - broke   灵石/器灵尘见底,收手;
- * - frozen  这件已无位可洗(全封存)或已不存在。
+ * - frozen  这件已无位可洗(全封存)或已不存在;
+ * - unreachable 目标被封存/不在池里,或要求 100% 掷点,原则上永远撞不上。
  */
 export function autoReforge(
   uid: string,
@@ -280,6 +299,20 @@ export function autoReforge(
         hit,
         affixIds: initial.affixes.map((a) => a.id),
       };
+    const freshIds = new Set(reforgeAffixPool(initial).map((a) => a.id));
+    const canHit = targets.some(
+      (target) => freshIds.has(target.affixId) && (target.minRoll ?? 0) < 1,
+    );
+    if (!canHit) {
+      return {
+        rolls: 0,
+        stone,
+        dust,
+        stop: "unreachable",
+        hit: null,
+        affixIds: initial.affixes.map((a) => a.id),
+      };
+    }
   }
   for (let i = 0; i < maxRolls; i += 1) {
     const inst = inventory.findItem(uid);
@@ -331,21 +364,56 @@ export function autoReforge(
   };
 }
 
+export interface ReforgeOddsOptions {
+  /** 玩家要求的最低掷点(0~1);不给 = 只求这条词条出现 */
+  minRoll?: number;
+  /** 当前铭纹给新词条的掷点下限(0~1),会把低于它的门槛直接盖过去 */
+  rollFloor?: number;
+}
+
 /**
- * 洗到指定词条的平均重铸次数 —— 词条行上「~N 次」那个读数用。
+ * 洗到指定词条(并达到最低掷点)的平均重铸次数 —— 「约 N 次」读数用。
  *
- * 条数按品质区间**均匀**重掷(引擎 equipment.rerollAffixes 用的是 rng.int(lo, hi)),
- * 每次从可洗池里抽 k 条;不放回抽样下每个槽位边际均匀,故命中率 ≈ kbar / P。
+ * 条数按品质区间均匀重掷;封存项占掉的名额不参与重掷,故计算的是实际补几个新词条。
+ * 每次从**真实新词条池**里按权重抽 k 条。
+ * 目标命中率 ≈ k × 目标权重 / 池总权重 × 掷点过线率。
+ * 掷点过线率读当前铭纹保底:门槛低于保底时必过;高于保底时仍是原始均匀掷点
+ * 直接过线(引擎取 max(掷点, 保底),不是把剩余区间重新铺满)。
+ *
  * 只给次数、不给概率:概率会被后续平衡调整打脸,次数是玩家真正在算的东西。
- *
- * 下限 1 —— 可洗池比一次抽的条数还少时公式会算出小于 1 的值,但「不到一次」不存在。
+ * 结果下限 1 —— 「不到一次」不存在。
  */
-export function expectedReforgesFor(inst: EquipmentInstance, affixId: string): number | null {
-  const pool = reforgeableAffixIds(inst);
-  if (!pool.includes(affixId)) return null;
+export function expectedReforgesFor(
+  inst: EquipmentInstance,
+  affixId: string,
+  odds: ReforgeOddsOptions = {},
+): number | null {
+  const pool = reforgeAffixPool(inst);
+  const target = pool.find((a) => a.id === affixId);
+  if (!target) return null;
   const band = qualityDef(inst.quality)?.affixes;
   if (!band || band.length < 2) return null;
-  const draws = (band[0]! + band[1]!) / 2;
+  const sealed = new Set(inst.sealedAffixIds ?? []);
+  const kept = inst.affixes.filter((a) => sealed.has(a.id)).length;
+  const minCount = Math.max(0, Math.floor(band[0]!));
+  const maxCount = Math.max(minCount, Math.floor(band[1]!));
+  let draws = 0;
+  for (let count = minCount; count <= maxCount; count += 1) {
+    draws += Math.max(1, count - kept);
+  }
+  draws /= maxCount - minCount + 1;
   if (!(draws > 0)) return null;
-  return Math.max(1, Math.round((pool.length / draws) * 10) / 10);
+  const totalWeight = pool.reduce((sum, a) => sum + Math.max(0, a.weight), 0);
+  if (!(totalWeight > 0) || !(target.weight > 0)) return null;
+
+  const rawMinRoll = odds.minRoll ?? 0;
+  if (!Number.isFinite(rawMinRoll) || rawMinRoll >= 1) return null;
+  const minRoll = Math.max(0, rawMinRoll);
+  const rawFloor = odds.rollFloor ?? 0;
+  const rollFloor = Number.isFinite(rawFloor) ? Math.max(0, Math.min(1, rawFloor)) : 0;
+  const appearanceChance = Math.min(1, (draws * target.weight) / totalWeight);
+  const rollChance = minRoll <= rollFloor ? 1 : 1 - minRoll;
+  const hitChance = appearanceChance * rollChance;
+  if (!(hitChance > 0)) return null;
+  return Math.max(1, Math.round((1 / hitChance) * 10) / 10);
 }

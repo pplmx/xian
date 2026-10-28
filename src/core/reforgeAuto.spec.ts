@@ -83,11 +83,21 @@ describe("自动重铸", () => {
 
   it("带最低 roll 的目标:命中线过了才算(0.9 的要求对 0.64 不出手)", () => {
     giveWealth();
-    const uid = forgeWeapon();
-    // atk2 已封存保留,但 roll 恒 0.5/0.64,够不着 0.9
-    const out = autoReforge(uid, [{ affixId: "atk2", minRoll: 0.9 }], 3);
+    const uid = forgeWeapon(); // 初始只有 atk2/def2,atk1 是新词条池里的可洗目标
+    // atk1 每洗必出,但 roll 恒 0.64,够不着 0.9
+    const out = autoReforge(uid, [{ affixId: "atk1", minRoll: 0.9 }], 3);
     expect(out.stop, "0.64 够不着 0.9,应撞预算").toBe("budget");
     expect(out.rolls).toBe(3);
+  });
+
+  it("封存词条够不着阈值:不再空烧预算,直接判不可达", () => {
+    giveWealth();
+    const uid = forgeWeapon();
+    const out = autoReforge(uid, [{ affixId: "atk2", minRoll: 0.9 }], 3);
+    expect(out.stop).toBe("unreachable");
+    expect(out.rolls, "封存项不会重掷,洗多少次都撞不上").toBe(0);
+    expect(out.dust).toBe(0);
+    expect(out.stone).toEqual(gn(0));
   });
 
   it("一个目标都不给:分文不动,直接收手(服务层也不烧预算)", () => {
