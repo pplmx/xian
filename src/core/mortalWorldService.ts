@@ -55,8 +55,10 @@ export function rerollMortalWorld(): MortalWorld | null {
     8,
     adventure.mortalBiasHistory,
   );
-  adventure.setMortalWorld(got?.report.world ?? null);
-  return got?.report.world ?? null;
+  // 掷界失败是「什么都没发生」,不是「把旧世界也清掉」。
+  if (!got) return null;
+  adventure.setMortalWorld(got.report.world);
+  return got.report.world;
 }
 
 // ============ 本世路线的可达性 ============

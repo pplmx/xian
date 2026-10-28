@@ -391,18 +391,22 @@ export function skeletonDistance(a: MortalWorld, b: MortalWorld): number {
   const vb = visibleFeatures(b);
   const ia = worldIdentity(a);
   const ib = worldIdentity(b);
+  // 相对曲线会被 min/max 归一化吃掉,但「从浅处入世」与「从深处入世」
+  // 是玩家第一段就看得见的差别,必须单独保留。
+  const startDepth = Math.min(1, Math.abs(va.shape[0]! - vb.shape[0]!) / 3);
   return (
     // 段数不同本身就是很强的差异
-    0.2 * (va.shape.length === vb.shape.length ? 0 : 1) +
-    0.25 * shapeCurveDistance(va.shape, vb.shape) +
-    0.25 * shapeCurveDistance(va.eventDensity, vb.eventDensity) +
+    0.18 * (va.shape.length === vb.shape.length ? 0 : 1) +
+    0.22 * shapeCurveDistance(va.shape, vb.shape) +
+    0.22 * shapeCurveDistance(va.eventDensity, vb.eventDensity) +
     0.15 *
       seqDistance(
         va.terrains.map((t) => TERRAIN_INDEX[t]),
         vb.terrains.map((t) => TERRAIN_INDEX[t]),
       ) +
     0.1 * (va.head === vb.head && va.tail === vb.tail ? 0 : 1) +
-    0.05 * (ia.theme === ib.theme ? 0 : 1)
+    0.05 * (ia.theme === ib.theme ? 0 : 1) +
+    0.08 * startDepth
   );
 }
 
@@ -419,7 +423,8 @@ const TERRAIN_INDEX: Record<TerrainAxis, number> = {
  * 曲线距离:长度可不同,按归一化位置比较形状。
  *
  * 比的是**形状**而非绝对值 —— 四段的短促路线与六段的匀进路线
- * 应当判为不同,即使起止层级相同
+ * 应当判为不同,即使起止层级相同。整条曲线平移造成的「起步深浅」
+ * 另由 skeletonDistance 单列一项,不会被这里的归一化抹掉
  */
 function shapeCurveDistance(a: number[], b: number[]): number {
   if (a.length === 0 || b.length === 0) return 1;

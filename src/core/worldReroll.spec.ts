@@ -6,19 +6,25 @@
  * 这里守它落地后的四条:余额真的下降、掷不出来不扣、不够时什么都不动、
  * 换到的世界里没有任何一处战力读数变化。
  */
-import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
-import { rerollMortalWorld } from "./mortalWorldService";
+import { ensureMortalWorld, rerollMortalWorld } from "./mortalWorldService";
+import { generateGatedMortal } from "./mortalGate";
 import {
   WORLD_REROLL_FLOOR,
   WORLD_REROLL_RATE,
   worldRerollCost,
   rerollWorldByFruit,
 } from "./worldReroll";
+
+vi.mock("./mortalGate", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./mortalGate")>();
+  return { ...actual, generateGatedMortal: vi.fn(actual.generateGatedMortal) };
+});
 
 /** 把 store 里的三件事按出口的口径递进去 */
 function reroll(): ReturnType<typeof rerollWorldByFruit> {
@@ -68,6 +74,27 @@ describe("换一方天地 · 道果真的被花掉", () => {
     expect(player.reincarnation.daoFruit).toBe(WORLD_REROLL_FLOOR - 1);
     const after = freshWorld();
     expect(after ? `${after.seed}/${after.bias}` : "none").toBe(beforeKey);
+  });
+
+  it("掷不出新世界时:返回 unavailable,道果、世界与路线进度都不动", () => {
+    const player = usePlayerStore();
+    const adventure = useAdventureStore();
+    expect(ensureMortalWorld()).not.toBeNull();
+    const before = adventure.mortalWorld!;
+    const beforeKey = `${before.seed}/${before.bias}/${before.shapeId}/${before.chain.length}`;
+    adventure.markNodeCleared(before.chain[0]!.nodeId);
+    const cleared = [...adventure.mortalCleared];
+
+    vi.mocked(generateGatedMortal).mockReturnValueOnce(null);
+    expect(reroll()).toBe("unavailable");
+
+    expect(player.reincarnation.daoFruit).toBe(100);
+    const after = adventure.mortalWorld;
+    expect(after, "掷界失败不该把手里这一世也一起抹掉").not.toBeNull();
+    expect(`${after!.seed}/${after!.bias}/${after!.shapeId}/${after!.chain.length}`).toBe(
+      beforeKey,
+    );
+    expect(adventure.mortalCleared).toEqual(cleared);
   });
 
   it("换世界本身一个战力点都不加 —— 面板的变化全部来自扣掉的那 15 枚道果", () => {

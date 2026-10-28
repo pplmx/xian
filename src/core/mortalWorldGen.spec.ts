@@ -12,6 +12,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   NOVELTY_MIN,
   REGION_NAME_TIER_BAND,
+  ROUTE_SHAPES,
   generateMortalWorld,
   generateSeries,
   materialCapacity,
@@ -19,9 +20,32 @@ import {
   shuffleOnlyWorld,
 } from "./mortalWorldGen";
 import { BIAS_POOL } from "./mortalBias";
-import { REGIONS } from "@/data/regions";
+import { MORTAL_TIER_MAX, REGIONS } from "@/data/regions";
 
 const SERIES = generateSeries(5, 20260904, 10);
+
+describe("凡界生成 · 路线模板", () => {
+  it("每份骨架都低起长跨,且 id / 名字可区分", () => {
+    expect(new Set(ROUTE_SHAPES.map((shape) => shape.id)).size).toBe(ROUTE_SHAPES.length);
+    expect(new Set(ROUTE_SHAPES.map((shape) => shape.name)).size).toBe(ROUTE_SHAPES.length);
+    for (const shape of ROUTE_SHAPES) {
+      expect(shape.tiers.length, `${shape.name} 段数过少`).toBeGreaterThanOrEqual(4);
+      expect(shape.tiers[0], `${shape.name} 起步过深`).toBeLessThanOrEqual(4);
+      expect(
+        Math.max(...shape.tiers) - Math.min(...shape.tiers),
+        `${shape.name} 层级跨度过短`,
+      ).toBeGreaterThanOrEqual(10);
+      for (const tier of shape.tiers) {
+        expect(tier, `${shape.name} 层级越界`).toBeGreaterThanOrEqual(1);
+        expect(tier, `${shape.name} 层级越界`).toBeLessThanOrEqual(MORTAL_TIER_MAX);
+      }
+    }
+    console.log(
+      `\n${ROUTE_SHAPES.length} 份骨架:起点 ${ROUTE_SHAPES.map((shape) => shape.tiers[0]).join("、")},` +
+        `最高 ${ROUTE_SHAPES.map((shape) => Math.max(...shape.tiers)).join("、")} —— 低起长跨全部成立`,
+    );
+  });
+});
 
 describe("凡界生成 · 素材容量", () => {
   it("现有素材的组合空间", () => {

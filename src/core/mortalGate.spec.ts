@@ -34,11 +34,11 @@ describe("验收门 · 路线骨架与事件节奏是否活了", () => {
     expect(lens.size).toBeGreaterThan(0);
   });
 
-  it("骨架不是纯随机:层级仍在合理范围,起点低、终点高", () => {
+  it("骨架不是纯随机:层级仍在合理范围,起点低、跨度大", () => {
     for (const w of WORLDS) {
       const t = w.chain.map((p) => p.tier);
       expect(Math.min(...t)).toBeLessThanOrEqual(4);
-      // 断言的是「路线确实从浅走到深」这条不变量,
+      // 断言的是「路线总体从浅走到深」这条不变量,
       // 不是某个具体终点值 —— 终点受 ±1 扰动影响,写死读数会误报成回归
       expect(Math.max(...t) - Math.min(...t)).toBeGreaterThanOrEqual(10);
       // 全部落在 1~20 内,不会出现无法形成空间认知的跳变
@@ -47,7 +47,7 @@ describe("验收门 · 路线骨架与事件节奏是否活了", () => {
         expect(x).toBeLessThanOrEqual(20);
       }
     }
-    console.log("\n有限模板 + ±1 扰动:起点始终在低层、终点始终在高层,不会生成 2→19→3→17");
+    console.log("\n有限模板 + ±1 扰动:起点始终在低层、跨度始终够大,不会生成 2→19→3→17");
   });
 });
 

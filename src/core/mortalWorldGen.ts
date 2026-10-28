@@ -123,6 +123,7 @@ export interface RouteShape {
 }
 
 export const ROUTE_SHAPES: readonly RouteShape[] = [
+  { id: "shallow", name: "浅入", tiers: [1, 5, 10, 14, 17, 20] },
   { id: "brisk", name: "短促", tiers: [2, 7, 12, 18] },
   { id: "even", name: "匀进", tiers: [2, 5, 8, 11, 14, 17] },
   { id: "longtail", name: "长尾", tiers: [2, 4, 6, 9, 13, 19] },
@@ -130,6 +131,7 @@ export const ROUTE_SHAPES: readonly RouteShape[] = [
   { id: "earlyclimb", name: "前陡后缓", tiers: [2, 7, 12, 15, 17, 18] },
   { id: "weave", name: "深浅交错", tiers: [3, 8, 6, 13, 10, 18] },
   { id: "short_weave", name: "短程交错", tiers: [3, 9, 6, 15, 12] },
+  { id: "steady", name: "稳起", tiers: [4, 6, 10, 13, 17, 20] },
 ];
 
 /**

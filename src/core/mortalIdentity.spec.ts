@@ -18,6 +18,7 @@ import {
   isFocused,
   noveltyGap,
   skeletonDimensions,
+  skeletonDistance,
   skeletonOf,
   skeletonRepeats,
   visibleDistance,
@@ -121,6 +122,20 @@ describe("可见新颖 · 结构与可见的落差", () => {
 });
 
 describe("可见新颖 · 体验骨架去重", () => {
+  it("起步深浅属于骨架差异:整条路线平移仍是不同的开局", () => {
+    const base = WORLDS[0]!;
+    const deeper = {
+      ...base,
+      chain: base.chain.map((place) => ({ ...place, tier: place.tier + 3 })),
+    };
+    const dist = skeletonDistance(base, deeper);
+    expect(dist, "层级整段抬高后骨架距离仍为 0 —— 起步深浅被归一化吃掉了").toBeGreaterThan(0);
+    console.log(
+      `\n同一条路线整体从 ${base.chain[0]!.tier} 档抬到 ${deeper.chain[0]!.tier} 档:` +
+        `\n骨架距离 ${dist.toFixed(3)} > 0 —— 起步深浅不会被「只看曲线形状」抹平`,
+    );
+  });
+
   it("路线形状不再恒定 —— 曾经是当前生成器最明显的可见缺陷", () => {
     const dims = skeletonDimensions(WORLDS);
     const shape = dims.find((d) => d.dim === "路线形状")!;

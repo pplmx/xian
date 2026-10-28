@@ -29,7 +29,7 @@ import {
   isNodeCleared,
   rerollMortalWorld,
 } from "./mortalWorldService";
-import { generateMortalWorld } from "./mortalWorldGen";
+import { ROUTE_SHAPES, generateMortalWorld } from "./mortalWorldGen";
 import { useAdventureStore } from "@/stores/adventure";
 import { REGIONS, regionDef } from "@/data/regions";
 import { startExploration } from "./exploration";
@@ -428,18 +428,26 @@ describe("路线可达性 · 锚点已可删除", () => {
     );
   });
 
-  it("但首段层级仍只有两种取值 —— 骨架模板的既有局限,不是锚点残留", () => {
+  it("首段层级覆盖 1~4 四档 —— 起步深浅也进入轮换", () => {
+    const templateStarts = new Set(ROUTE_SHAPES.map((shape) => shape.tiers[0]!));
+    expect([...templateStarts].sort((a, b) => a - b)).toEqual([1, 2, 3, 4]);
+
     const tiers = new Set<number>();
-    for (let i = 0; i < 12; i += 1) tiers.add(generateMortalWorld(i * 104729 + 7).chain[0]!.tier);
-    // 七种骨架的起点都是 2 或 3,且 jitterTiers 刻意不扰动首点
-    //(首点决定「这一世从多深处起步」,乱动会破坏低起点的手感)
-    expect(tiers.size).toBeGreaterThan(1);
+    const shapes = new Set<string>();
+    for (let i = 0; i < 240; i += 1) {
+      const world = generateMortalWorld(i * 104729 + 7);
+      tiers.add(world.chain[0]!.tier);
+      shapes.add(world.shapeId);
+    }
+    // 首点仍不参与 ±1 扰动:起点是骨架给人的第一印象,不能靠随机抖动改口径。
+    // 但模板库本身要覆盖浅入到稳起,让「这一世从多深处起步」也进入轮换。
+    expect([...tiers].sort((a, b) => a - b)).toEqual([1, 2, 3, 4]);
+    expect(shapes.size, "有骨架从未被真实生成 —— 模板表里多了一份死内容").toBe(ROUTE_SHAPES.length);
     expect(Math.max(...tiers)).toBeLessThanOrEqual(4);
     console.log(
-      `\n十二次生成的首段层级:${[...tiers].sort((a, b) => a - b).join("、")} ——` +
-        "\n首段**地界**已自由,但起步**层级**仍集中在 2~3。" +
-        "\n这是骨架模板的既有局限(七种模板起点都在低位、首点不参与扰动)," +
-        "\n不是锚点残留;要变需扩模板库,属生成器范畴",
+      `\n两百四十次生成的首段层级:${[...tiers].sort((a, b) => a - b).join("、")} ——` +
+        `\n模板起点:${[...templateStarts].sort((a, b) => a - b).join("、")};` +
+        "\n首段**地界**与起步**层级**都已进入轮换,且首点仍不靠随机抖动改口径",
     );
   });
 });
