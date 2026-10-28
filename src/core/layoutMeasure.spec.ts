@@ -14,6 +14,10 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  FULL_COLLECTION_COUNTS,
+  fullCollectionSlices,
+} from "../../scripts/lib/fullCollectionFixture";
 
 const SCRIPT = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf-8");
 
@@ -204,6 +208,34 @@ describe("排版量法口径", () => {
     const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
     expect(perf).toContain("maxDomByView");
     expect(perf).toContain("inventory: 700");
+  });
+
+  it("收藏全收集要有真实规模夹具，运行时门要切进收藏并逐册验续开", () => {
+    /*
+     * 默认后期档只在成就页量到 592 DOM，切进收藏也只有九张空册；终局九册全收
+     * 才会铺出八百多枚 chip。夹具直接从内容表生成全收集状态，perf-profile 必须
+     * 真点「收藏」、真点每册「再看」，并守住交互后的峰值 —— 只看默认成就页，
+     * 「量过了」与「完全没量收藏」在报告里长得一样。
+     */
+    const slices = fullCollectionSlices();
+    const twoState =
+      Object.values(slices.quests.collections).reduce((sum, ids) => sum + ids.length, 0) +
+      Object.keys(slices.lore.materialLore).length +
+      FULL_COLLECTION_COUNTS.branch;
+    expect(FULL_COLLECTION_COUNTS.total).toBeGreaterThan(700);
+    expect(twoState, "七册二态 + 灵材 + 悟道要覆盖九册全部条目").toBe(FULL_COLLECTION_COUNTS.total);
+    expect(Object.keys(slices.cultivation.learned)).toHaveLength(FULL_COLLECTION_COUNTS.gongfa);
+    expect(Object.keys(slices.lore.recipeLore)).toHaveLength(FULL_COLLECTION_COUNTS.pill);
+    expect(Object.keys(slices.lore.equipLore)).toHaveLength(FULL_COLLECTION_COUNTS.equip);
+    expect(slices.inventory.artifacts).toHaveLength(FULL_COLLECTION_COUNTS.artifact);
+
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
+    expect(perf, "collection 视图要换全收集夹具").toContain("fullCollectionSlices");
+    expect(perf).toContain('getByRole("tab", { name: "收藏" })');
+    expect(perf).toContain("data-collection-more");
+    expect(perf).toContain("collectionBatches");
+    expect(perf).toMatch(/collection:\s*\d+/);
+    expect(perf, "收藏要守住逐册续开后的交互峰值").toContain("collection: 1100");
   });
 
   it("巡页与冒烟的路由表都要跟上 router —— 新页面不许悄悄漏在门外", () => {

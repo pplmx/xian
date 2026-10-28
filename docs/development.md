@@ -182,6 +182,12 @@ error: Failed to resolve vite command: GenericFailure, Expected
 点开贡器弹窗,两处各续一批,守住交互后的峰值 DOM ≤ 1100 —— 120 件全铺时实测 1630,
 只量首帧会漏掉这个弹窗。视图表也与 router 逐页对账,坊市、收徒两页不再漏在门外。
 
+收藏图鉴另用一份**全收集夹具**:九册共 809 条全部已收,灵材、丹方、器谱、法宝祭炼
+与悟道分支也已点亮;每部功法各择一条悟道,让全部分支可见。夹具直接从内容表生成,不手抄 id。运行时门会真的切到「收藏」,
+每册先摆 24 枚,再逐个触发「再看」并核对承诺件数 —— 首次进入实测 738 DOM,逐册各续
+一批后峰值 1061;809 条整页全铺是 1326。预算守住峰值 ≤ 1100,既不让终局图鉴一次铺满,
+也不把未识的「???」放出 `UNKNOWN_CAP` 之外。
+
 基线(2026-10-28 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
 
 | 视图 | 最差帧 | 长帧(>50ms) | DOM 节点 |
@@ -189,14 +195,14 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | home / cultivation / adventure / character | 17ms | 0 | 283–381 |
 | **inventory(300 件装备)** | 17ms | 0 | ~632 |
 | codex / souls / titles / settings / build / legacy / dongfu / world / celestial | 17ms | 0 | 205–386 |
-| collection | 17ms | 0 | 592 |
+| collection(全收集九册 + 逐册续一批) | 17ms | 0 | 738 / 峰值 1061 |
 | market(300 件 + 寄卖/贡器各续一批) | 17ms | 0 | 峰值 ~1003 |
 | apprentice | 17ms | 0 | 193 |
 
 并做过规模加压验证:背包塞进 **1000 件装备**仍 60fps、最差帧 17ms、零长帧、DOM 仍是 ~632 ——
 首批窗口不随总件数膨胀,极端规模 + 引擎每秒 tick 也不会把整张清单重新铺开。全 17 个游戏
 视图稳定 ~60fps、零长帧、无崩溃。预算:`最差帧 ≤ 100ms`、`长帧 ≤ 2`、背包 DOM ≤ 700、坊市
-峰值 DOM ≤ 1100(前两项环境变量
+峰值 DOM ≤ 1100、收藏续开峰值 DOM ≤ 1100(前两项环境变量
 `PERF_MAX_FRAME_MS` / `PERF_LONG_FRAMES` 可调)。改动过会显著影响单次渲染量的代码后,
 这些数要跟着重校,连同本表一起。
 

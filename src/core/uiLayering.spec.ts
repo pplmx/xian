@@ -626,6 +626,27 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("全收集图鉴逐册分批露出 —— 余下可续开，已收条目最终都要看得到", () => {
+    /*
+     * 九册全收是 800+ 枚 chip，首帧全铺实测 1326 DOM。每册先给一批，余下由
+     * 「再看 N 件」显式续开；未识的 ??? 仍守原 UNKNOWN_CAP，不能被续开按钮
+     * 顺手放成一面二十屏的 ? 墙。判据同时钉承诺件数与真实窗口函数同源。
+     */
+    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    expect(col?.src).toMatch(/listWindow\(\s*known,/);
+    expect(col?.src).toMatch(/nextListLimit\([\s\S]{0,100}COLLECTION_RENDER_BATCH[\s\S]{0,40}\)/);
+    expect(col?.src).toContain("hiddenKnown");
+    expect(col?.src).toContain(':data-collection-more="cat.key"');
+    expect(col?.src).toContain(
+      ':data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"',
+    );
+    expect(col?.src).toContain(':aria-label="moreKnownLabel(cat)"');
+    expect(col?.src).toContain("hiddenUnknown");
+    expect(col?.src, "??? 仍只铺 UNKNOWN_CAP，不许被续开按钮带走").toContain(
+      "unknown.slice(0, UNKNOWN_CAP)",
+    );
+  });
+
   it("名号尽收有完成感 —— 三十顶全齐的圆满,不许只沉在计数里", () => {
     // 名号页此前只显「14/30 · 佩一枚」的计数,三十顶全齐也没有任何表示 ——
     // 收集的终点(境界阶梯 + 成就赏走完)该有一声,与图鉴「尽收」同族。

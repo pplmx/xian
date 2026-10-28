@@ -29,7 +29,7 @@
  *
  * 基线(2026-10-28 实测,本机 + 无头 chromium,后期档):全 17 视图 ~60fps、
  * 最差帧 17ms、零长帧;背包首批 40 张卡 DOM 632,坊市寄卖 + 贡器各续一批
- * 峰值 1003,其余页面 193–592。
+ * 峰值 1003;全收集图鉴九册各首批 24 枚 DOM 738,逐册续开一批峰值 1061。
  * 预算见 BUDGET,曾有过更糟的读数时任它红。
  */
 import { createServer } from "node:http";
@@ -37,6 +37,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { createServer as createViteServer } from "vite";
 import { lateSlices, showcaseSlices, seedSave } from "./lib/saveFixture.mjs";
 import { watchPageErrors } from "./lib/pageErrors.mjs";
 
@@ -83,9 +84,11 @@ const BUDGET = {
   /**
    * 背包按首批 40 张卡渲染;篇幅仍要滚得到,但 DOM 不许跟着 300 件一起翻几倍。
    * 坊市量的是「寄卖横条 + 贡器弹窗都续开一批」后的峰值:120 件全铺实测 1630,
-   * 两窗各 40 件起、各续到 80 件为 1006,故 1100 只拦整包回潮。
+   * 两窗各 40 件起、各续到 80 件为 1006,故 1100 只拦整包回潮。收藏页用全收集
+   * 夹具量九册,各册首批 24 枚;每个有余额的册子再续开一批后才算交互峰值。
+   * 全收 809 条整页全铺实测 1326 DOM,故 1100 只拦首次进入与逐册续开回潮。
    */
-  maxDomByView: { inventory: 700, market: 1100 },
+  maxDomByView: { inventory: 700, market: 1100, collection: 1100 },
 };
 
 function startServer() {
@@ -186,6 +189,28 @@ async function expandBatch(page, itemSelector, moreSelector) {
   }
 }
 
+/**
+ * 全收集夹具住在 TypeScript 内容层,由 Vite 自己解析 `@/data` 别名。
+ * 只量 collection 时才起一次内存中的 SSR 加载器,不让其它视图为它买单。
+ */
+async function loadFullCollectionSlices() {
+  const vite = await createViteServer({
+    root: ROOT,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+  try {
+    const mod = await vite.ssrLoadModule("/scripts/lib/fullCollectionFixture.ts");
+    return mod.fullCollectionSlices;
+  } finally {
+    await vite.close();
+  }
+}
+
+const fullCollectionSlices =
+  !noSeed && (!only || only === "collection") ? await loadFullCollectionSlices() : null;
+
 const server = await startServer();
 const base = `http://127.0.0.1:${server.address().port}/`;
 
@@ -200,6 +225,10 @@ for (const view of VIEWS) {
   try {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     let slices = (fixture === "showcase" ? showcaseSlices : lateSlices)("light");
+    if (view.name === "collection") {
+      if (!fullCollectionSlices) throw new Error("全收集夹具未载入");
+      slices = { ...slices, ...fullCollectionSlices() };
+    }
     if (bigbag > 0 && (view.name === "inventory" || view.name === "market")) {
       // 造 bigbag 件装备进背包,把「几百件装备的列表重渲染」逼出来 —— 这才是
       // 这类放置游戏 jank 的真实来源(小包 2-3 件量不出列表成本)。
@@ -226,11 +255,18 @@ for (const view of VIEWS) {
     const url = base + (noSeed ? "" : `#${view.route}`);
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForTimeout(2500);
+    if (view.name === "collection") {
+      const collectionTab = page.getByRole("tab", { name: "收藏" });
+      if ((await collectionTab.count()) === 0) throw new Error("收藏页签不存在");
+      await collectionTab.click({ timeout: 3000 });
+      await page.waitForTimeout(350);
+    }
     await page.evaluate(SAMPLER);
     await page.waitForTimeout(secs * 1000);
     const data = await page.evaluate("window.__perfStop()");
     let batch = null;
     let marketBatches = null;
+    let collectionBatches = null;
     let peakNodes = data.nodes;
     if (bigbag > 0 && view.name === "inventory") {
       batch = await expandBatch(page, "main button[data-uid]", 'main button[aria-label^="再看 "]');
@@ -264,6 +300,35 @@ for (const view of VIEWS) {
       peakNodes = await page.evaluate(() => document.querySelectorAll("*").length);
       marketBatches = { consign, candidates };
     }
+    if (view.name === "collection") {
+      const categories = await page
+        .locator("button[data-collection-more]")
+        .evaluateAll((nodes) =>
+          nodes.map((node) => node.getAttribute("data-collection-more")).filter(Boolean),
+        );
+      collectionBatches = [];
+      for (const category of categories) {
+        collectionBatches.push({
+          key: category,
+          ...(await expandBatch(
+            page,
+            `button[data-codex-entry="${category}"]`,
+            `button[data-collection-more="${category}"]`,
+          )),
+        });
+      }
+      if (collectionBatches.length === 0) {
+        collectionBatches.push({
+          key: "all",
+          before: 0,
+          promised: 0,
+          after: 0,
+          ok: false,
+          reason: "全收集夹具没有触发任何续开按钮",
+        });
+      }
+      peakNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+    }
     record = {
       name: view.name,
       route: view.route,
@@ -272,6 +337,7 @@ for (const view of VIEWS) {
       peakNodes,
       batch,
       marketBatches,
+      collectionBatches,
       errors,
     };
     await context.close();
@@ -289,6 +355,7 @@ function batchChecks(r) {
   if (r.batch) checks.push(["续开", r.batch]);
   if (r.marketBatches?.consign) checks.push(["寄卖续开", r.marketBatches.consign]);
   if (r.marketBatches?.candidates) checks.push(["贡器续开", r.marketBatches.candidates]);
+  for (const batch of r.collectionBatches ?? []) checks.push([`收藏/${batch.key}续开`, batch]);
   return checks;
 }
 
@@ -325,7 +392,7 @@ for (const r of results) {
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxDomByView.collection} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);

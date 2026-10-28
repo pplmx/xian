@@ -86,6 +86,7 @@
               v-if="entry.stage >= 1"
               class="chip-ink flex items-center gap-1 active:scale-95"
               :style="{ color: entry.color }"
+              :data-codex-entry="cat.key"
               @click="openDetail(cat, entry)"
             >
               <!-- 灵兽册这类带 icon 的条目,已收录的 chip 前置一枚小章 —— 图鉴终于有貌 -->
@@ -111,6 +112,22 @@
             >
           </template>
           <!--
+            已收条目也会长到几百枚。每册先摆一批,余下的由玩家自己续开 ——
+            未识的 ??? 仍只铺 UNKNOWN_CAP,不跟着续开变成一堵无信息的问号墙。
+          -->
+          <button
+            v-if="cat.hiddenKnown > 0"
+            type="button"
+            class="chip-ink border-cinnabar/50 text-[10px] text-cinnabar active:scale-95"
+            :data-collection-more="cat.key"
+            :data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"
+            :aria-label="moreKnownLabel(cat)"
+            @click="showMoreKnown(cat)"
+          >
+            再看 {{ Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown) }} 件 · 余
+            {{ cat.hiddenKnown }}
+          </button>
+          <!--
             未识者至多铺 UNKNOWN_CAP 枚:装备图鉴有 288 个模板,全铺出来是二十屏的「?」墙 ——
             而每个 ? 都不带一点信息(名字、品阶全遮着),只等于同一个数重复画。【多出来的折成一枚计数章。
           -->
@@ -123,7 +140,7 @@
         </div>
       </section>
       <p class="text-center text-[10px] text-ink-faint">
-        点已收录的条目可看详情 —— 灵材与悟道另分深浅,愈用愈明
+        点已收录的条目可看详情;每册余下的点「再看」续开 —— 灵材与悟道另分深浅,愈用愈明
       </p>
     </template>
 
@@ -198,6 +215,7 @@ import { gongfaFuncText, gongfaMetaText } from "@/ui/itemText";
 import { achievementDirection } from "@/ui/achievementHint";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import { rewardTextAtTier } from "@/core/progress";
+import { listWindow, nextListLimit } from "@/core/listRender";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
@@ -375,17 +393,39 @@ const collectionCats = computed<CodexCat[]>(() => {
  * 未识的只铺前 UNKNOWN_CAP 枚(留出「还有很多格空着」的感觉),其余折成一枚「…+N」。
  */
 const UNKNOWN_CAP = 24;
+/**
+ * 每册只先摆一批已收条目。九册全收是 809 枚 chip,首帧全铺实测 1326 DOM;
+ * 九册各给 24 枚能把首帧压进预算,余下仍可逐批续到完整清单。
+ */
+const COLLECTION_RENDER_BATCH = 24;
+const knownLimits = ref<Record<string, number>>({});
 const visibleCats = computed(() =>
   collectionCats.value.map((cat) => {
     const known = cat.entries.filter((e) => e.stage >= 1);
     const unknown = cat.entries.filter((e) => e.stage < 1);
+    const knownPage = listWindow(known, knownLimits.value[cat.key] ?? COLLECTION_RENDER_BATCH);
     return {
       ...cat,
-      shown: [...known, ...unknown.slice(0, UNKNOWN_CAP)],
+      shown: [...knownPage.visible, ...unknown.slice(0, UNKNOWN_CAP)],
+      knownShown: knownPage.shown,
+      knownTotal: known.length,
+      hiddenKnown: knownPage.hidden,
       hiddenUnknown: Math.max(0, unknown.length - UNKNOWN_CAP),
     };
   }),
 );
+
+function moreKnownLabel(cat: { hiddenKnown: number }): string {
+  const next = Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown);
+  return `再看 ${next} 件 · 余 ${cat.hiddenKnown}`;
+}
+
+function showMoreKnown(cat: { key: string; knownShown: number; knownTotal: number }): void {
+  knownLimits.value = {
+    ...knownLimits.value,
+    [cat.key]: nextListLimit(cat.knownShown, cat.knownTotal, COLLECTION_RENDER_BATCH),
+  };
+}
 
 /** 收藏册里还有「新得」没看过 —— 图鉴默认落在「成就」页,不切进去也看不见有货,门口先亮一点 */
 const collectionHasNew = computed(() =>
