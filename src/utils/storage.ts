@@ -140,6 +140,55 @@ function hasSaveKeyLeftover(): boolean {
   });
 }
 
+/** 只删除本作键域并复核;待写队列与失败状态由调用方决定何时处理 */
+function clearOwnedSaveKeys(): boolean {
+  if (writesBlocked) return false;
+  for (const key of scanSaveKeys().keys) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // 单键失败不阻断其余键,残留由下面的复核如实回报
+    }
+  }
+  return !hasSaveKeyLeftover();
+}
+
+/**
+ * 导入前快照本作键域。键清单里的缺席项也记成 null,
+ * 这样中途失败时能把新写进去、旧档里本来没有的分片删掉。
+ */
+function snapshotOwnedSaveKeys(): Map<string, string | null> | null {
+  const backup = new Map<string, string | null>();
+  for (const key of scanSaveKeys().keys) {
+    try {
+      backup.set(key, localStorage.getItem(key));
+    } catch {
+      return null;
+    }
+  }
+  return backup;
+}
+
+/** 把原分片逐键写回并复核;删除或写入被静默吞掉都不能算回滚成功 */
+function restoreOwnedSaveKeys(backup: Map<string, string | null>): boolean {
+  for (const [key, raw] of backup) {
+    try {
+      if (raw === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, raw);
+    } catch {
+      // 下面统一复核;这里继续尽力恢复其余键
+    }
+  }
+  for (const [key, raw] of backup) {
+    try {
+      if (localStorage.getItem(key) !== raw) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * 刷盘间隔 —— 存档写入从「每次变更」改为「定期批量」。
  *
@@ -173,6 +222,17 @@ const writeFailureHandlers = new Set<WriteFailureHandler>();
 
 function emitWriteFailure(failure: { at: number; keys: string[] } | null): void {
   for (const handler of writeFailureHandlers) handler(failure);
+}
+
+function clearSaveWriteFailure(): void {
+  if (writeFailure === null) return;
+  writeFailure = null;
+  emitWriteFailure(null);
+}
+
+function restoreSaveWriteFailure(failure: { at: number; keys: string[] } | null): void {
+  writeFailure = failure;
+  if (failure !== null) emitWriteFailure(failure);
 }
 
 /** 订阅写盘失败/恢复(注册方负责提示玩家);解构处返回退订函数 */
@@ -287,6 +347,14 @@ export function dropPendingWrites(): void {
     flushTimer = undefined;
   }
   pending.clear();
+}
+
+function restorePendingWrites(backup: Map<string, string>): void {
+  pending.clear();
+  for (const [key, value] of backup) pending.set(key, value);
+  if (pending.size > 0 && flushTimer === undefined && !writesBlocked) {
+    flushTimer = setTimeout(flushSaveWrites, SAVE_FLUSH_MS);
+  }
 }
 
 /**
@@ -530,60 +598,64 @@ export function validateImportPayload(obj: unknown): string | null {
  */
 export function applyImportPayload(payload: ExportPayload): void {
   assertWritable();
-  // 一 先把现有各片读进内存作快照(原样密文,回滚时按原样写回)
-  const backup = new Map<string, string | null>();
-  try {
-    for (const id of PERSISTED_STORES) {
-      backup.set(id, localStorage.getItem(storageKey(id)));
-    }
-  } catch {
-    // 快照读不出时不阻塞:回滚能力降级,但不清成半档的那层仍适合尽力而为
+  // 一 快照本作键域、待写最新值与失败状态。读不全就不开始破坏性写入。
+  const backup = snapshotOwnedSaveKeys();
+  if (backup === null) {
+    throw new Error("读取原存档失败,已取消导入");
   }
-  // 二 清空现有存档
-  clearAllSave();
+  const pendingBackup = new Map(pending);
+  const failureBackup =
+    writeFailure === null ? null : { at: writeFailure.at, keys: [...writeFailure.keys] };
+  // 二 清空现有存档。清不干净就不写入新档 —— 否则会留下新角色配旧背包的混合档。
+  if (!clearOwnedSaveKeys()) {
+    const restored = restoreOwnedSaveKeys(backup);
+    throw new Error(
+      restored
+        ? "清空原存档失败,已回滚,原存档未改动"
+        : "清空原存档失败,且恢复原存档失败;请勿刷新页面,先尝试导出备份",
+    );
+  }
+  dropPendingWrites();
+  clearSaveWriteFailure();
   // 三 逐片写入导入数据
   const failed: string[] = [];
   for (const id of PERSISTED_STORES) {
     const slice = payload.data[id];
     if (slice === undefined) continue;
     try {
-      localStorage.setItem(storageKey(id), encryptSave(JSON.stringify(slice)));
+      const key = storageKey(id);
+      const encoded = encryptSave(JSON.stringify(slice));
+      localStorage.setItem(key, encoded);
+      // 个别 WebView 的 setItem 会静默不落盘:不复核就会把半档当成导入成功
+      if (localStorage.getItem(key) !== encoded) failed.push(id);
     } catch {
       failed.push(id);
     }
   }
   // 四 任一失败:把快照里的旧档救回来,再向上抛,让调用方说「原档还在」
   if (failed.length > 0) {
-    for (const [id, raw] of backup) {
-      try {
-        if (raw === null) localStorage.removeItem(storageKey(id));
-        else localStorage.setItem(storageKey(id), raw);
-      } catch {
-        // 回滚尽力而为:若存储完全不可用,剩下的是已报错的现状
-      }
-    }
-    throw new Error(`写入存档失败(${failed.join("/")}),原存档已保留`);
+    // 先清掉写了一半的导入分片;backup 里本来没有的键会在 restore 时删掉
+    clearOwnedSaveKeys();
+    const restored = restoreOwnedSaveKeys(backup);
+    restorePendingWrites(pendingBackup);
+    restoreSaveWriteFailure(failureBackup);
+    throw new Error(
+      restored
+        ? `写入存档失败(${failed.join("/")}),原存档已保留`
+        : `写入存档失败(${failed.join("/")}),且原存档恢复失败;请勿刷新页面,先尝试导出备份`,
+    );
   }
 }
 
 export function clearAllSave(): boolean {
-  // 只读页:一片都不许删(否则会把写者刚存下的档清掉)
-  if (writesBlocked) return false;
   /*
    * 只清本作键域,绝不调用 localStorage.clear():本作会与博客等同源页面共享
    * localStorage,整表清理会把别的站点的数据一起抹掉。
    * 清掉的范围包括改名前的 yunyin.* 分片与 corrupt.* 坏档备份 —— 它们同样是
    * 「本机修行痕迹」,重置文案承诺彻底抹去,不能只清当前分片。
    */
-  for (const key of scanSaveKeys().keys) {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // 单键失败不阻断其余键,残留由下面的复核如实回报
-    }
-  }
   // removeItem 在个别 WebView 上会静默失效;清不干净就如实回报失败
-  if (hasSaveKeyLeftover()) return false;
+  if (!clearOwnedSaveKeys()) return false;
   /*
    * 只有确认清干净之后才丢弃待写队列 —— 反过来先丢、删除却失败时,
    * 玩家刚玩出来、还没落盘的最新一版会当场退回磁盘上的旧档,而清档
@@ -591,9 +663,6 @@ export function clearAllSave(): boolean {
    */
   dropPendingWrites();
   // 清档后没有待写内容,旧的「写盘失败」警告已无意义;失败路径则原样保留
-  if (writeFailure !== null) {
-    writeFailure = null;
-    emitWriteFailure(null);
-  }
+  clearSaveWriteFailure();
   return true;
 }

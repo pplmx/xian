@@ -22,7 +22,10 @@ import {
   PERSISTED_STORES,
   clearAllSave,
   dropPendingWrites,
+  flushSaveWrites,
+  persistConfig,
   preflightScan,
+  saveWriteFailure,
   storageKey,
   SAVE_VERSION,
 } from "@/utils/storage";
@@ -201,6 +204,119 @@ describe("半损坏档 · 进得了游戏,或者被明确拒绝", () => {
     expect(err, "写盘失败应当报错").not.toBeNull();
     expect(writes.get(storageKey("game")), "回滚后旧 game 分片原样保留").toBe("OLD_GAME");
     expect(writes.get(storageKey("player")), "回滚后旧 player 分片原样保留").toBe("OLD_PLAYER");
+  });
+
+  it("旧档清不干净时明确拒绝导入,不能留下新旧混合档", () => {
+    const before = new Map([
+      [storageKey("game"), "OLD_GAME"],
+      [storageKey("player"), "OLD_PLAYER"],
+      [storageKey("inventory"), "OLD_INVENTORY"],
+    ]);
+    const writes = new Map(before);
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => writes.get(k) ?? null,
+      setItem: (k: string, v: string) => void writes.set(k, v),
+      // 个别 WebView 会静默拒绝删除：清档回报失败，导入不能继续盖写
+      removeItem: () => undefined,
+      clear: () => writes.clear(),
+      key: () => null,
+      length: 0,
+    });
+
+    const err = importSaveText(
+      envelope({
+        game: { started: true, lastActiveAt: Date.now() },
+        player: { major: 7 },
+      }),
+    );
+
+    expect(err, "旧档没清干净就不能回报导入成功").not.toBeNull();
+    expect(
+      Object.fromEntries(writes),
+      "清档失败后仍盖写 game/player，会留下新角色配旧背包的混合档",
+    ).toEqual(Object.fromEntries(before));
+  });
+
+  it("导入写盘失败回滚时,待写最新进度与旧警告也回来", () => {
+    const writes = new Map([
+      [storageKey("game"), "OLD_GAME"],
+      [storageKey("player"), "OLD_PLAYER"],
+    ]);
+    let rejectAll = true;
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => writes.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        if (rejectAll || k === storageKey("resources")) {
+          throw new DOMException("quota", "QuotaExceededError");
+        }
+        writes.set(k, v);
+      },
+      removeItem: (k: string) => void writes.delete(k),
+      clear: () => writes.clear(),
+      key: () => null,
+      length: 0,
+    });
+    const { storage, serializer, key } = persistConfig("player");
+    storage.setItem(key, serializer.serialize({ major: 9 }));
+    flushSaveWrites();
+    expect(saveWriteFailure(), "先制造一次真实的待写失败").not.toBeNull();
+    rejectAll = false;
+
+    const err = importSaveText(
+      envelope({
+        game: { started: true },
+        player: { major: 3 },
+        resources: { spiritStone: { m: 1, e: 4 } },
+      }),
+    );
+
+    expect(err, "导入写盘失败应当报错").not.toBeNull();
+    expect(storage.getItem(key), "回滚后旧档回来了,却丢掉导入前尚未落盘的最新进度").toBe(
+      serializer.serialize({ major: 9 }),
+    );
+    expect(saveWriteFailure(), "导入回滚后旧写盘警告不能凭空消失").not.toBeNull();
+    expect(writes.get(storageKey("game")), "磁盘上的旧档也应原样恢复").toBe("OLD_GAME");
+
+    dropPendingWrites();
+    clearAllSave();
+  });
+
+  it("setItem 静默不落盘时也不能回报导入成功", () => {
+    const before = new Map([
+      [storageKey("game"), "OLD_GAME"],
+      [storageKey("player"), "OLD_PLAYER"],
+      [storageKey("resources"), "OLD_RESOURCES"],
+    ]);
+    const writes = new Map(before);
+    let dropNextResourcesWrite = true;
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => writes.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        if (k === storageKey("resources") && dropNextResourcesWrite) {
+          dropNextResourcesWrite = false;
+          return;
+        }
+        writes.set(k, v);
+      },
+      removeItem: (k: string) => void writes.delete(k),
+      clear: () => writes.clear(),
+      key: () => null,
+      length: 0,
+    });
+
+    const err = importSaveText(
+      envelope({
+        game: { started: true },
+        player: { major: 3 },
+        resources: { spiritStone: { m: 1, e: 4 } },
+      }),
+    );
+
+    expect(err, "写入被静默吞掉时,导入不能回报成功").not.toBeNull();
+    expect(
+      Object.fromEntries(writes),
+      "识别出静默丢写后,应把旧档完整恢复,而不是留下缺 resources 的半档",
+    ).toEqual(Object.fromEntries(before));
   });
 });
 
