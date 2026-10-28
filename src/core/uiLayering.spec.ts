@@ -2613,6 +2613,45 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(store, "MAX_MARKS 被改成私有会让提示失去同源判据").toContain("export const MAX_MARKS");
   });
 
+  it("道痕是独立册 —— 道途页不许混入履历,marks 页签必须真挂面板", () => {
+    // 拆分面板时,条件一度写成 celTab === 'dao':于是道途册同时铺下道途与整卷道痕,
+    // 而点「道痕」册反而什么都不出现。这不是布局噪声,是页签承诺与内容对不上。
+    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    expect(cel?.src, "道痕面板必须挂在 marks 页签").toMatch(
+      /<MarksPanel\s+v-else-if="celTab === 'marks'"/,
+    );
+    expect(cel?.src, "道途册不许再挂道痕面板").not.toMatch(
+      /<MarksPanel\s+v-else-if="celTab === 'dao'"/,
+    );
+  });
+
+  it("道痕 60 则按批回看 —— 只铺当前窗,续开与回翻都把焦点送到新内容", () => {
+    // max-h-64 只裁眼睛看到的高度,不裁 DOM。满卷 60 则每则都带忆战/重写动作,
+    // 整卷铺开会把页签切换拖成一次大渲染;窗口仍须覆盖完整履历并可前后回看。
+    const cel = FILES.find((f) => f.path === "components/celestial/MarksPanel.vue");
+    expect(cel?.src, "道痕要使用共享窗口而不是整卷 v-for").toContain("listWindow(endgame.marks,");
+    expect(cel?.src, "每批 12 则、最多同时保留两批").toMatch(
+      /MARKS_RENDER_BATCH = 12[\s\S]{0,120}MARKS_RENDER_WINDOW = MARKS_RENDER_BATCH \* 2/,
+    );
+    for (const contract of [
+      "data-marks-total",
+      "data-marks-shown",
+      "data-marks-start",
+      "data-mark-row",
+      "data-marks-more",
+      "data-marks-prev",
+      "focusMarksRow",
+    ]) {
+      expect(cel?.src, `道痕分页缺少 ${contract} 契约`).toContain(contract);
+    }
+    expect(cel?.src, "续开要聚焦新露出的第一则").toContain(
+      "firstNewVisibleIndex(shownBefore, shownAfter, MARKS_RENDER_WINDOW)",
+    );
+    expect(cel?.src, "回翻要聚焦当前窗首则").toMatch(
+      /showPreviousMarks\(\)[\s\S]{0,400}focusMarksRow\(\)/,
+    );
+  });
+
   it("归来卷轴配一枚印 —— 石绿「归」印,不走朱砂(那是里程碑的色)", () => {
     // 突破幕有朱砂「破」印 + 全屏墨浪/墨点/金环,归来卷轴此前只有一行淡字 ——
     // 表彰不该偏废:归总是「此行已结」的完成态,该有自己的印。语义色族规不变:

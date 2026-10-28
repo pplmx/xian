@@ -172,6 +172,9 @@
  *   六十 修行页主 / 辅 / 秘三册终局共 66 部。每门按 12 部一批、最多留 24 部,
  *      195 宽下逐门翻到末页再回翻;换门回首批、焦点留在页签,卸下辅修改序后
  *      详情关闭仍能把焦点还给同一部。
+ *   六十一 天界道痕满卷 60 则。道途册与道痕册必须互斥,marks 深链要真的落到履历;
+ *      每 12 则一批、最多留 24 则,195 宽下逐批翻到末页再回翻,焦点跟住新批首则。
+ *      每行的忆战 / 重写 / 旧纪入口也受 28px 触控下限约束。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -184,7 +187,14 @@
 import { chromium } from "playwright";
 import { createServer as createViteServer } from "vite";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
-import { decryptSlice, encryptSlice, seedSave, showcaseSlices } from "./lib/saveFixture.mjs";
+import {
+  decryptSlice,
+  encryptSlice,
+  FULL_MARKS_COUNT,
+  makeFullMarks,
+  seedSave,
+  showcaseSlices,
+} from "./lib/saveFixture.mjs";
 import { TITLES } from "../src/data/titles.ts";
 import { PETS } from "../src/data/pets.ts";
 import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
@@ -7500,6 +7510,247 @@ async function taskGongfaListOverflow() {
 }
 
 /**
+ * 道痕满卷 60 则 —— 整卷每行都带忆战/重写动作,max-h-64 只裁视觉、不裁 DOM。
+ *
+ * 同时守住页签归属:道途册只答道途,marks 册才挂道痕。此前面板条件写成 dao,
+ * 结果是道途页混进整卷履历、点道痕反而空白;这条从深层链接落册开始测。
+ */
+async function taskMarksListOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.endgame = {
+      ...slices.endgame,
+      marks: makeFullMarks(),
+      endgameTutorialSeen: true,
+      resourceDialogSeen: true,
+    };
+    await seedSave(ctx, slices, "__marksListFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/celestial?tab=marks", { waitUntil: "load" });
+    await page.locator("[data-marks-total]").waitFor({ state: "visible", timeout: 10000 });
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+
+    async function readList() {
+      return page.evaluate(() => {
+        const holder = document.querySelector("[data-marks-total]");
+        const rows = [...document.querySelectorAll("[data-mark-row]")];
+        return {
+          total: Number(holder?.getAttribute("data-marks-total")),
+          shown: Number(holder?.getAttribute("data-marks-shown")),
+          start: Number(holder?.getAttribute("data-marks-start")),
+          count: rows.length,
+          ids: rows.map((row) => row.getAttribute("data-mark-row")),
+          focusRow: document.activeElement?.getAttribute("data-mark-row"),
+          marksTab: document
+            .querySelector('[role="tab"][aria-selected="true"]')
+            ?.textContent?.replace(/\s+/g, "")
+            .trim(),
+        };
+      });
+    }
+
+    async function waitForList(total, shown) {
+      await page.waitForFunction(
+        ({ wantedTotal, wantedShown }) => {
+          const holder = document.querySelector("[data-marks-total]");
+          return (
+            holder?.getAttribute("data-marks-total") === String(wantedTotal) &&
+            holder?.getAttribute("data-marks-shown") === String(wantedShown)
+          );
+        },
+        { wantedTotal: total, wantedShown: shown },
+        { timeout: 5000 },
+      );
+    }
+
+    async function waitForFocus(id) {
+      await page
+        .waitForFunction(
+          (rowId) => document.activeElement?.getAttribute("data-mark-row") === rowId,
+          id,
+          { timeout: 3000 },
+        )
+        .catch(() => {});
+    }
+
+    async function checkPagerFit(label) {
+      for (const selector of ["[data-marks-more]", "[data-marks-prev]"]) {
+        const control = page.locator(selector).first();
+        if ((await control.count()) === 0) continue;
+        const fit = await control.evaluate((el) => {
+          const box = el.getBoundingClientRect();
+          return {
+            left: box.left,
+            right: box.right,
+            height: box.height,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+            viewport: window.innerWidth,
+          };
+        });
+        checked += 1;
+        if (
+          fit.left < -1 ||
+          fit.right > fit.viewport + 1 ||
+          fit.scrollWidth > fit.clientWidth + 1 ||
+          fit.height < 27.5
+        ) {
+          failures.push(
+            `[195] ${label}分页入口被挤坏:` +
+              `盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+              `内容 ${fit.scrollWidth}>${fit.clientWidth} / ` +
+              `高 ${Math.round(fit.height * 10) / 10}px`,
+          );
+        }
+      }
+    }
+
+    const initial = await readList();
+    const moreText = ((await page.locator("[data-marks-more]").textContent()) || "")
+      .replace(/\s+/g, " ")
+      .trim();
+    checked += 1;
+    if (
+      initial.total !== FULL_MARKS_COUNT ||
+      initial.shown !== 12 ||
+      initial.start !== 0 ||
+      initial.count !== 12 ||
+      initial.marksTab !== "道痕" ||
+      !new RegExp(`再看\\s*12\\s*则\\s*·\\s*余\\s*48`).test(moreText)
+    ) {
+      failures.push(
+        `[195] 道痕首批应 12/60 且只落在道痕册,` +
+          `实见 ${initial.count} 行 / shown ${initial.shown} / start ${initial.start} / ` +
+          `页签 ${initial.marksTab ?? "无"} «${moreText}»`,
+      );
+    }
+    await checkPagerFit("道痕");
+
+    await page.locator("[data-marks-more]").click({ timeout: 5000 });
+    await waitForList(FULL_MARKS_COUNT, 24);
+    const second = await readList();
+    await waitForFocus(second.ids[12]);
+    const secondFocused = await readList();
+    checked += 1;
+    if (second.count !== 24 || second.start !== 0 || secondFocused.focusRow !== second.ids[12]) {
+      failures.push(
+        `[195] 道痕续开首批后应铺 24 则、焦点落第 13 则,` +
+          `实见 ${second.count} 则 / start ${second.start} / ` +
+          `焦点 ${secondFocused.focusRow ?? "无"}`,
+      );
+    }
+
+    const seen = new Set(initial.ids);
+    for (const id of second.ids) seen.add(id);
+    let current = secondFocused;
+    while (current.shown < FULL_MARKS_COUNT) {
+      const before = current;
+      const shownAfter = Math.min(FULL_MARKS_COUNT, before.shown + 12);
+      await page.locator("[data-marks-more]").click({ timeout: 5000 });
+      await waitForList(FULL_MARKS_COUNT, shownAfter);
+      const after = await readList();
+      const beforeSet = new Set(before.ids);
+      const firstFresh = after.ids.find((id) => !beforeSet.has(id));
+      await waitForFocus(firstFresh);
+      const focused = await readList();
+      const expectedStart = Math.max(0, shownAfter - 24);
+      checked += 1;
+      if (
+        after.start !== expectedStart ||
+        after.count !== Math.min(24, shownAfter) ||
+        focused.focusRow !== firstFresh
+      ) {
+        failures.push(
+          `[195] 道痕续开到 ${shownAfter}/${FULL_MARKS_COUNT} 时窗口不对:` +
+            `start ${after.start}(应 ${expectedStart}) / ${after.count} 行 / ` +
+            `焦点 ${focused.focusRow ?? "无"} / 新首则 ${firstFresh ?? "无"}`,
+        );
+      }
+      for (const id of after.ids) seen.add(id);
+      current = focused;
+    }
+
+    checked += 1;
+    if (seen.size !== FULL_MARKS_COUNT) {
+      failures.push(`[195] 道痕只可达 ${seen.size}/${FULL_MARKS_COUNT} 则 —— 后半卷被静默截断`);
+    }
+
+    const beforeBack = await readList();
+    await page.locator("[data-marks-prev]").click({ timeout: 5000 });
+    await page.waitForFunction(
+      (shown) =>
+        Number(document.querySelector("[data-marks-total]")?.getAttribute("data-marks-shown")) <
+        shown,
+      beforeBack.shown,
+      { timeout: 5000 },
+    );
+    const back = await readList();
+    await waitForFocus(back.ids[0]);
+    const backFocused = await readList();
+    checked += 1;
+    if (
+      back.shown !== 48 ||
+      back.start !== 24 ||
+      back.start >= beforeBack.start ||
+      backFocused.focusRow !== back.ids[0]
+    ) {
+      failures.push(
+        `[195] 道痕回翻没有回到上一页:` +
+          `shown ${beforeBack.shown}→${back.shown} / ` +
+          `start ${beforeBack.start}→${back.start} / 焦点 ${backFocused.focusRow ?? "无"}`,
+      );
+    }
+
+    await page.getByRole("tab", { name: "道途", exact: true }).click({ timeout: 5000 });
+    await page.waitForTimeout(120);
+    const dao = await page.evaluate(() => ({
+      marks: document.querySelectorAll("[data-marks-total]").length,
+      text: document.body.innerText,
+    }));
+    checked += 1;
+    if (dao.marks !== 0 || !dao.text.includes("此生一诺")) {
+      failures.push("[195] 道途册仍混入道痕,或道途正文没有出现 —— 页签内容没有互斥");
+    }
+
+    await page.getByRole("tab", { name: "道痕", exact: true }).click({ timeout: 5000 });
+    await waitForList(FULL_MARKS_COUNT, 12);
+    const returned = await readList();
+    checked += 1;
+    if (returned.count !== 12 || returned.start !== 0 || returned.marksTab !== "道痕") {
+      failures.push(
+        `[195] 回到道痕册没有重新落首批:` +
+          `${returned.count} 行 / start ${returned.start} / 页签 ${returned.marksTab ?? "无"}`,
+      );
+    }
+
+    checked += 1;
+    const layoutProblems = problemsOf(await measurePage(page));
+    if (layoutProblems.length) failures.push(`[195] 道痕满卷 → ${layoutProblems.join(" / ")}`);
+
+    if (pageErrors.length)
+      failures.push(`[195] 道痕满卷场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 构筑对照的道痕很多时,只摆最近八则就是静默截断。
  *
  * 这里造十则带忆战快照的道痕:首批只该有八则和「再看 2 则 · 余 2」;在 195 宽
@@ -9746,6 +9997,7 @@ const TASKS = [
   ["iOS 存档风险提示", taskIosNotice],
   ["修行速服丹药的余量入口", taskQuickPillOverflow],
   ["修行功法三册的分批回看", taskGongfaListOverflow],
+  ["天界道痕满卷的分批回看", taskMarksListOverflow],
   ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
   ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
   ["道侣的历世同行回看", taskBondHistoryOverflow],

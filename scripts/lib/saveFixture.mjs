@@ -11,6 +11,7 @@
  */
 import CryptoJS from "crypto-js";
 import { SAVE_PREFIX } from "../../src/utils/storage.ts";
+import { RULESET_VERSION } from "../../src/data/ruleset.ts";
 
 const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
 
@@ -157,6 +158,34 @@ const item = (uid, templateId, quality, affixes, level = 0) => ({
   affixes,
 });
 const af = (...ids) => ids.map((id) => ({ id, roll: 1 }));
+
+/** 道痕满卷夹具:60 则都带忆战快照,把每行的动作与旧纪标记一起逼出来。 */
+export const FULL_MARKS_COUNT = 60;
+
+export function makeFullMarks(now = Date.now()) {
+  return Array.from({ length: FULL_MARKS_COUNT }, (_, i) => ({
+    life: 80 - i,
+    daoPathId: "sword",
+    targetId: `mark-fixture-${i + 1}`,
+    targetName: `道痕试炼${i + 1}`,
+    cleared: i % 3 !== 0,
+    rounds: 24 + i,
+    buildName: `旧构筑${i + 1}`,
+    powerText: "1万",
+    at: now - i * 1000,
+    ruleset: i % 5 === 0 ? "0.0.1" : RULESET_VERSION,
+    replay: {
+      mods: {},
+      attack: { m: 1200 + i * 80, e: 0 },
+      defense: { m: 700 + i * 40, e: 0 },
+      maxHp: { m: 22000 + i * 600, e: 0 },
+      speed: 2,
+      skills: [],
+      artifacts: [],
+      pactId: null,
+    },
+  }));
+}
 
 /**
  * 「展品」存档 —— 给文档截图用:真仙(仙界)一线,资源充裕、装备成套、法宝在身、

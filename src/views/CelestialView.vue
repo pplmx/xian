@@ -167,7 +167,7 @@
 
       <TrialPanel v-else-if="celTab === 'trial'" :daily="daily" @report="openReport" />
 
-      <MarksPanel v-else-if="celTab === 'dao'" @report="openReport" />
+      <MarksPanel v-else-if="celTab === 'marks'" @report="openReport" />
     </template>
 
     <!-- 战报(远征终局 / 试炼 / 变数) -->

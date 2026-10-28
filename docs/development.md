@@ -235,6 +235,13 @@ error: Failed to resolve vite command: GenericFailure, Expected
 `UNKNOWN_CAP` 之外。续开/回看入口紧接已收批次、排在问号墙之前;新得若藏在后续批次,
 按钮会报「含新得 N」,不让页签亮点在册内失去落点。
 
+天界道痕满卷固定为 60 则,行内同时有忆战、重写与旧纪入口。此前面板条件误写成
+`celTab === 'dao'`,导致道途册混进整卷履历、点「道痕」反而空白;现在道途与道痕
+严格互斥,`?tab=marks` 深链也直接落册。道痕列按 12 则一批、最多保留 24 则,
+续开聚焦新露出的第一则,回翻落当前窗首则;新痕从头部挤入时窗口回首批。195 宽下
+分页入口、60 则可达性与 28px 触控面一起过门。满卷夹具实测逐批 12→24(4 批、滑 3 次),
+道痕页首屏 DOM 279、全流程峰值 362。
+
 基线(2026-10-29 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
 
 | 视图 | 最差帧 | 长帧(>50ms) | DOM 节点 |
@@ -242,7 +249,8 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | home / adventure / character | 17ms | 0 | 283–381 |
 | cultivation(全习得三册,逐门到底并回翻) | 17ms | 0 | 434 / 峰值 533 |
 | **inventory(300 件装备,逐页到底并回翻;法宝、丹方、部位候选与词条转移再翻到末页)** | 17ms | 0 | 643 / 峰值 646 · 法宝 401 · 丹方 609 · 部位候选 955 · 词条转移 913 |
-| codex / souls / titles / settings / build / legacy / dongfu / world / celestial | 17ms | 0 | 205–386 |
+| codex / souls / titles / settings / build / legacy / dongfu / world | 17ms | 0 | 205–386 |
+| celestial(道痕满卷 60 则,逐批到底并回翻) | 17ms | 0 | 279 / 峰值 362 |
 | collection(全收集九册,逐册到底并回翻) | 17ms | 0 | 746 / 峰值 1074 |
 | market(300 件,寄卖/贡器都逐页到底并回翻) | 17ms | 0 | 379 / 峰值 900 |
 | apprentice | 17ms | 0 | 193 |
@@ -250,7 +258,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 并做过规模加压验证:背包塞进 **1000 件装备**仍 60fps、最差帧 17ms、零长帧、峰值 643 DOM ——
 单批窗口不随总件数膨胀,极端规模 + 引擎每秒 tick 也不会把整张清单重新铺开。全 17 个游戏
 视图稳定 ~60fps、零长帧、无崩溃。预算:`最差帧 ≤ 100ms`、`长帧 ≤ 2`、背包 DOM ≤ 700、
-修行功法峰值 DOM ≤ 700、法宝全册峰值 DOM ≤ 1100、丹方全册峰值 DOM ≤ 1100、
+修行功法峰值 DOM ≤ 700、天界道痕峰值 DOM ≤ 700、法宝全册峰值 DOM ≤ 1100、丹方全册峰值 DOM ≤ 1100、
 部位候选峰值 DOM ≤ 1100、词条转移峰值 DOM ≤ 1100、坊市峰值 DOM ≤ 1100、
 收藏续开峰值 DOM ≤ 1100(前两项环境变量 `PERF_MAX_FRAME_MS` /
 `PERF_LONG_FRAMES` 可调)。改动过会

@@ -6,11 +6,17 @@
     <p v-if="endgame.marksFull" class="mt-1.5 px-1 text-[10px] text-amber-ink">
       卷已写满 {{ MAX_MARKS }} 则 —— 后续每一战,都会覆去最古的一道痕
     </p>
-    <div class="mt-2 flex items-center justify-between px-1">
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1">
       <p class="text-[10px] tabular text-ink-faint">
+        <span v-if="endgame.marks.length"
+          >现看 {{ marksPage.start + 1 }}–{{ marksPage.shown }} ·
+        </span>
         规则纪元 {{ RULESET_VERSION }} · 天道共改过 {{ RULESET_CHANGELOG.length }} 次
       </p>
-      <button class="font-kai text-[10px] text-qing active:scale-95" @click="openEra(null)">
+      <button
+        class="inline-flex min-h-[28px] items-center px-1 font-kai text-[10px] text-qing active:scale-95"
+        @click="openEra(null)"
+      >
         纪元变迁史 →
       </button>
     </div>
@@ -29,84 +35,116 @@
         </p>
       </div>
     </div>
-    <div
-      v-if="endgame.marks.length"
-      class="scroll-pane card-ink mt-2 max-h-64 divide-y divide-ink/6 overflow-y-auto px-4"
-    >
+    <template v-if="endgame.marks.length">
       <div
-        v-for="(mark, i) in endgame.marks"
-        :key="i"
-        class="flex items-center gap-2 py-2"
-        :class="rewriteConfirm === i ? 'flex-wrap' : ''"
+        class="scroll-pane card-ink mt-2 max-h-64 divide-y divide-ink/6 overflow-y-auto px-4"
+        :data-marks-total="endgame.marks.length"
+        :data-marks-shown="marksPage.shown"
+        :data-marks-start="marksPage.start"
       >
-        <span class="shrink-0 font-kai text-[11px] text-ink-faint">第{{ mark.life }}世</span>
-        <span class="shrink-0 text-[11px] text-violet-ink">{{
-          mark.daoPathId ? daoPathDef(mark.daoPathId)?.name : "无道"
-        }}</span>
-        <span
-          class="min-w-0 truncate font-kai text-[11px]"
-          :class="mark.cleared ? 'text-ink' : 'text-ink-faint'"
+        <div
+          v-for="mark in marksPage.visible"
+          :key="markKey(mark)"
+          :data-mark-row="markKey(mark)"
+          tabindex="-1"
+          class="flex items-center gap-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cinnabar/40"
+          :class="rewriteConfirm === markKey(mark) ? 'flex-wrap' : ''"
         >
-          {{ mark.targetName }}{{ mark.cleared ? "·破" : "·殁" }}
-        </span>
-        <span class="ml-auto shrink-0 tabular text-[10px] text-ink-faint"
-          >{{ mark.rounds }}回合 · {{ mark.buildName }}</span
-        >
-        <button
-          v-if="isStaleRuleset(mark.ruleset)"
-          class="shrink-0 rounded border border-cinnabar/50 bg-cinnabar/6 px-1 py-0.5 font-kai text-[10px] text-cinnabar active:scale-90"
-          :title="`录于旧纪 ${mark.ruleset},天道已变`"
-          @click="openEra(mark)"
-        >
-          变
-        </button>
-        <button
-          v-if="mark.replay"
-          class="shrink-0 rounded border border-gold-ink/40 px-1.5 py-0.5 font-kai text-[10px] text-gold-ink active:scale-90"
-          title="以当年的构筑重打此战"
-          @click="goReplay(mark)"
-        >
-          忆
-        </button>
-        <!-- 重写要花道源,代价内联在按钮上(不再是 hover 专属),触控面放大,并加一步确认 -->
-        <template v-if="mark.cleared && mark.replay && rewriteConfirm === i">
-          <button
-            class="shrink-0 rounded border border-cinnabar/50 bg-cinnabar/6 px-2 py-1 font-kai text-[10px] text-cinnabar active:scale-90"
-            @click="rewriteConfirm = null"
+          <span class="shrink-0 font-kai text-[11px] text-ink-faint">第{{ mark.life }}世</span>
+          <span class="shrink-0 text-[11px] text-violet-ink">{{
+            mark.daoPathId ? daoPathDef(mark.daoPathId)?.name : "无道"
+          }}</span>
+          <span
+            class="min-w-0 truncate font-kai text-[11px]"
+            :class="mark.cleared ? 'text-ink' : 'text-ink-faint'"
           >
-            再想想
+            {{ mark.targetName }}{{ mark.cleared ? "·破" : "·殁" }}
+          </span>
+          <span class="ml-auto shrink-0 tabular text-[10px] text-ink-faint"
+            >{{ mark.rounds }}回合 · {{ mark.buildName }}</span
+          >
+          <button
+            v-if="isStaleRuleset(mark.ruleset)"
+            class="min-h-[28px] min-w-[28px] shrink-0 rounded border border-cinnabar/50 bg-cinnabar/6 px-1.5 py-0.5 font-kai text-[10px] text-cinnabar active:scale-90"
+            :title="`录于旧纪 ${mark.ruleset},天道已变`"
+            @click="openEra(mark)"
+          >
+            变
           </button>
           <button
-            class="shrink-0 rounded bg-cinnabar px-2 py-1 font-kai text-[10px] text-paper active:scale-90"
-            @click="doRewrite(mark)"
+            v-if="mark.replay"
+            class="min-h-[28px] min-w-[28px] shrink-0 rounded border border-gold-ink/40 px-1.5 py-0.5 font-kai text-[10px] text-gold-ink active:scale-90"
+            title="以当年的构筑重打此战"
+            @click="goReplay(mark)"
           >
-            确认重写
+            忆
           </button>
-          <!--
+          <!-- 重写要花道源,代价内联在按钮上(不再是 hover 专属),触控面放大,并加一步确认 -->
+          <template v-if="mark.cleared && mark.replay && rewriteConfirm === markKey(mark)">
+            <button
+              class="min-h-[28px] shrink-0 rounded border border-cinnabar/50 bg-cinnabar/6 px-2 py-1 font-kai text-[10px] text-cinnabar active:scale-90"
+              @click="rewriteConfirm = null"
+            >
+              再想想
+            </button>
+            <button
+              class="min-h-[28px] shrink-0 rounded bg-cinnabar px-2 py-1 font-kai text-[10px] text-paper active:scale-90"
+              @click="doRewrite(mark)"
+            >
+              确认重写
+            </button>
+            <!--
               判胜规则原本只挂在「写」的 :title 上 —— 而这一步**花的是道源**,
               触屏玩家读不到 hover 就等于「先付钱,判据事后才知道」。
               放进确认态:点「确认重写」之前必先看见这句。整行在确认态才 flex-wrap,
               平时那行还是原来的一行(不为了这一段去改所有行的排版)。
             -->
-          <p class="w-full text-[10px] leading-relaxed text-ink-faint">
-            判胜 —— 以今日之你重打此战,
-            <span class="text-ink-soft">快过 {{ mark.rounds }} 回合</span>
-            即【胜于旧我】;此次花 {{ REWRITE_ENTRY_COST }} 道源,不破不退。
-          </p>
-        </template>
+            <p class="w-full text-[10px] leading-relaxed text-ink-faint">
+              判胜 —— 以今日之你重打此战,
+              <span class="text-ink-soft">快过 {{ mark.rounds }} 回合</span>
+              即【胜于旧我】;此次花 {{ REWRITE_ENTRY_COST }} 道源,不破不退。
+            </p>
+          </template>
+          <button
+            v-else-if="mark.cleared && mark.replay"
+            class="min-h-[28px] shrink-0 rounded border border-cinnabar/40 px-2 py-1 font-kai text-[10px] text-cinnabar active:scale-90"
+            :title="`以今日之你重打此战,快过 ${mark.rounds} 回合即【胜于旧我】`"
+            :class="{ 'border-ink/15 !text-ink-faint': rewriteShort > 0 }"
+            :disabled="rewriteShort > 0"
+            @click="rewriteConfirm = markKey(mark)"
+          >
+            <template v-if="rewriteShort > 0">尚差 {{ rewriteShort }} 道源</template>
+            <template v-else>写(道源{{ REWRITE_ENTRY_COST }})</template>
+          </button>
+        </div>
+      </div>
+      <div
+        v-if="marksPage.start > 0 || marksPage.hidden > 0"
+        class="mt-1.5 flex flex-wrap gap-1 px-1"
+      >
         <button
-          v-else-if="mark.cleared && mark.replay"
-          class="shrink-0 rounded border border-cinnabar/40 px-2 py-1 font-kai text-[10px] text-cinnabar active:scale-90"
-          :title="`以今日之你重打此战,快过 ${mark.rounds} 回合即【胜于旧我】`"
-          :class="{ 'border-ink/15 !text-ink-faint': rewriteShort > 0 }"
-          :disabled="rewriteShort > 0"
-          @click="rewriteConfirm = i"
+          v-if="marksPage.start > 0"
+          type="button"
+          data-marks-prev
+          class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft"
+          :aria-label="previousMarksText"
+          @click="showPreviousMarks"
         >
-          <template v-if="rewriteShort > 0">尚差 {{ rewriteShort }} 道源</template>
-          <template v-else>写(道源{{ REWRITE_ENTRY_COST }})</template>
+          {{ previousMarksText }}
+        </button>
+        <button
+          v-if="marksPage.hidden > 0"
+          type="button"
+          data-marks-more
+          class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar"
+          :aria-label="moreMarksText"
+          :data-promised="Math.min(MARKS_RENDER_BATCH, marksPage.hidden)"
+          @click="showMoreMarks"
+        >
+          {{ moreMarksText }}
         </button>
       </div>
-    </div>
+    </template>
     <p v-else class="empty-note card-ink mt-2 px-4 py-4 text-center text-[11px] text-ink-faint">
       此页尚白。你在天界的每一战,都会留下痕迹。
     </p>
@@ -138,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
 import { MAX_MARKS } from "@/stores/endgame";
 import { daoPathDef } from "@/data/endgame";
@@ -151,6 +189,13 @@ import {
   rulesetChangesSince,
 } from "@/data/ruleset";
 import { useDaoEntry } from "@/composables/useDaoEntry";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import type { ReportView } from "@/components/celestial/reportView";
@@ -161,6 +206,62 @@ const endgame = useEndgameStore();
 const { daoEntryShort } = useDaoEntry();
 /** 忆战重写差多少(付不起置灰):REWRITE_ENTRY_COST 同源 */
 const rewriteShort = computed(() => daoEntryShort(REWRITE_ENTRY_COST));
+
+const MARKS_RENDER_BATCH = 12;
+const MARKS_RENDER_WINDOW = MARKS_RENDER_BATCH * 2;
+const marksLimit = ref(MARKS_RENDER_BATCH);
+const marksPage = computed(() => listWindow(endgame.marks, marksLimit.value, MARKS_RENDER_WINDOW));
+const moreMarksText = computed(() => {
+  const next = Math.min(MARKS_RENDER_BATCH, marksPage.value.hidden);
+  return `再看 ${next} 则 · 余 ${marksPage.value.hidden}`;
+});
+const previousMarksText = computed(
+  () =>
+    `前一批 ${previousListStep(
+      marksPage.value.shown,
+      endgame.marks.length,
+      MARKS_RENDER_BATCH,
+    )} 则`,
+);
+
+function markKey(mark: (typeof endgame.marks)[number]): string {
+  return `${mark.targetId}@${mark.at}`;
+}
+
+function focusMarksRow(index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>("[data-mark-row]");
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function showMoreMarks(): void {
+  const shownBefore = marksPage.value.shown;
+  const shownAfter = nextListLimit(shownBefore, endgame.marks.length, MARKS_RENDER_BATCH);
+  marksLimit.value = shownAfter;
+  focusMarksRow(firstNewVisibleIndex(shownBefore, shownAfter, MARKS_RENDER_WINDOW));
+}
+
+function showPreviousMarks(): void {
+  marksLimit.value = previousListLimit(
+    marksPage.value.shown,
+    endgame.marks.length,
+    MARKS_RENDER_BATCH,
+  );
+  focusMarksRow();
+}
+
+// 新痕从头部挤入会改变整卷序号。回到首批,让刚写下的那一则重新落在视野起点;
+// 若确认态指向已滚出清单的旧痕,也一并收起,避免下一次点击误落到同键新行。
+watch(
+  () => endgame.marks.map(markKey).join("\u0000"),
+  () => {
+    marksLimit.value = MARKS_RENDER_BATCH;
+    if (rewriteConfirm.value && !endgame.marks.some((m) => markKey(m) === rewriteConfirm.value)) {
+      rewriteConfirm.value = null;
+    }
+  },
+);
 
 // ---- 忆战:与过去的自己重临此界 ----
 function goReplay(mark: (typeof endgame.marks)[number]): void {
@@ -180,7 +281,7 @@ function goReplay(mark: (typeof endgame.marks)[number]): void {
 /** 重写确认态(按道痕索引):写入要花道源,需要看明白再点。
  *  重写花道源重打一场,成果不可退 —— 属「不可逆失去资源」的两步武装确认族:
  *  确认词「确认+动词」、取消词一律「再想想」(确认模式分级见 EquipDecomposePanel 文件头)。 */
-const rewriteConfirm = ref<number | null>(null);
+const rewriteConfirm = ref<string | null>(null);
 function goRewrite(mark: (typeof endgame.marks)[number]): void {
   const result = rewriteMark(mark);
   if (result) {
