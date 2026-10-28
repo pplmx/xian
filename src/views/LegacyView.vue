@@ -29,7 +29,7 @@
           }}</span>
         </p>
       </div>
-      <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+      <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] tinylens:grid-cols-1">
         <p class="flex justify-between">
           <span class="text-ink-faint">风险偏好</span>
           <span class="text-ink-soft">{{ profile.riskText }}</span>
@@ -86,7 +86,9 @@
         <p class="mt-1 t-body text-ink-faint">{{ stage.desc }}</p>
 
         <!-- 随神魂不灭的那一份 -->
-        <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-ink/10 pt-2 text-[11px]">
+        <div
+          class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-ink/10 pt-2 text-[11px] tinylens:grid-cols-1"
+        >
           <p class="flex justify-between">
             <span class="text-ink-faint">认得灵材</span>
             <span class="tabular text-ink-soft">{{ lore.knownMaterialCount }} 味</span>
@@ -133,17 +135,61 @@
       </div>
 
       <!-- 历世履历 -->
-      <SectionTitle title="历世履历" :hint="lifeRows.length ? `${lifeRows.length} 世` : '初世'" />
-      <div class="card-ink divide-y divide-ink/6 px-4">
+      <SectionTitle
+        title="历世履历"
+        :hint="lifeRows.length ? `共 ${lifeRows.length} 世` : '初世'"
+      />
+      <div
+        class="card-ink divide-y divide-ink/6 px-4"
+        :data-life-total="lifeRows.length"
+        :data-life-shown="lifePage.shown"
+        :data-life-start="lifePage.start"
+      >
         <template v-if="lifeRows.length">
-          <p v-for="l in lifeRows" :key="l.index" class="flex items-center gap-2 py-2 text-[11px]">
-            <span class="w-11 shrink-0 font-kai text-ink-faint tabular">第{{ l.index }}世</span>
-            <span class="text-ink-soft">{{ l.realmLabel }}</span>
-            <span class="text-[10px] text-ink-faint tabular">寿 {{ l.age }} 载</span>
-            <span v-if="l.themeName" class="text-[10px]" :class="l.resultColor"
+          <div v-if="lifePage.start > 0 || lifePage.hidden > 0" class="flex flex-wrap gap-1 py-2">
+            <button
+              v-if="lifePage.start > 0"
+              type="button"
+              data-life-prev
+              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+              :aria-label="previousLifeText()"
+              @click="showPreviousLives"
+            >
+              {{ previousLifeText() }}
+            </button>
+            <button
+              v-if="lifePage.hidden > 0"
+              type="button"
+              data-life-more
+              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+              :aria-label="moreLifeText()"
+              :data-promised="Math.min(LIFE_RENDER_BATCH, lifePage.hidden)"
+              @click="showMoreLives"
+            >
+              {{ moreLifeText() }}
+            </button>
+          </div>
+          <p
+            v-for="l in lifePage.visible"
+            :key="l.index"
+            :data-life-row="l.index"
+            tabindex="-1"
+            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-[11px]"
+          >
+            <span class="w-11 shrink-0 whitespace-nowrap font-kai text-ink-faint tabular"
+              >第{{ l.index }}世</span
+            >
+            <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ l.realmLabel }}</span>
+            <span class="shrink-0 whitespace-nowrap text-[10px] text-ink-faint tabular"
+              >寿 {{ l.age }} 载</span
+            >
+            <span
+              v-if="l.themeName"
+              class="shrink-0 whitespace-nowrap text-[10px]"
+              :class="l.resultColor"
               >{{ l.themeName }}·{{ l.resultText }}</span
             >
-            <span class="ml-auto shrink-0 tabular text-[10px] text-gold-ink"
+            <span class="ml-auto shrink-0 whitespace-nowrap tabular text-[10px] text-gold-ink"
               >宿慧 +{{ l.insight }}</span
             >
           </p>
@@ -232,20 +278,51 @@
       </div>
 
       <SectionTitle title="行迹录" :hint="`际遇回响 ${lossTotal} 则`" />
-      <div class="card-ink divide-y divide-ink/6 px-4">
+      <div
+        class="card-ink divide-y divide-ink/6 px-4"
+        :data-loss-total="lossTotal"
+        :data-loss-shown="lossPage.shown"
+        :data-loss-start="lossPage.start"
+      >
         <template v-if="lossRows.length">
+          <div v-if="lossPage.start > 0 || lossPage.hidden > 0" class="flex flex-wrap gap-1 py-2">
+            <button
+              v-if="lossPage.start > 0"
+              type="button"
+              data-loss-prev
+              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+              :aria-label="previousLossText()"
+              @click="showPreviousLoss"
+            >
+              {{ previousLossText() }}
+            </button>
+            <button
+              v-if="lossPage.hidden > 0"
+              type="button"
+              data-loss-more
+              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+              :aria-label="moreLossText()"
+              :data-promised="Math.min(LOSS_RENDER_BATCH, lossPage.hidden)"
+              @click="showMoreLoss"
+            >
+              {{ moreLossText() }}
+            </button>
+          </div>
           <p
-            v-for="l in lossRows"
+            v-for="l in lossPage.visible"
             :key="l.eventId + l.at"
-            class="flex items-center gap-2 py-2 text-[11px]"
+            :data-loss-row="l.eventId"
+            tabindex="-1"
+            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-[11px]"
           >
-            <span class="text-[10px] text-ink-faint">{{ formatDate(l.at) }}</span>
-            <span class="text-ink-soft">{{ l.eventName }}</span>
-            <span class="ml-auto shrink-0 text-[10px] text-ink-faint">{{ l.note }}</span>
-          </p>
-          <!-- 只列最近的几则,但抬头报的是**总数** —— 数不许多报也不许少报 -->
-          <p v-if="lossTotal > lossRows.length" class="py-2 text-center text-[10px] text-ink-faint">
-            仅列最近 {{ lossRows.length }} 则
+            <span class="shrink-0 whitespace-nowrap text-[10px] text-ink-faint">{{
+              formatDate(l.at)
+            }}</span>
+            <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ l.eventName }}</span>
+            <span
+              class="ml-auto shrink-0 text-[10px] text-ink-faint tinylens:ml-0 tinylens:basis-full tinylens:whitespace-normal"
+              >{{ l.note }}</span
+            >
           </p>
         </template>
         <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
@@ -276,7 +353,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
@@ -296,6 +373,13 @@ import { regionDef } from "@/data/regions";
 import { eventDef } from "@/data/events";
 import { isNemesis } from "@/core/worldMemory";
 import { chainProgressRows } from "@/core/eventEngine";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 import { formatDate } from "@/utils/time";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
@@ -356,6 +440,46 @@ const lifeRows = computed(() =>
       };
     }),
 );
+const LIFE_RENDER_BATCH = 12;
+const LIFE_RENDER_WINDOW = LIFE_RENDER_BATCH * 2;
+const lifeLimit = ref(LIFE_RENDER_BATCH);
+const lifePage = computed(() => listWindow(lifeRows.value, lifeLimit.value, LIFE_RENDER_WINDOW));
+
+function moreLifeText(): string {
+  const next = Math.min(LIFE_RENDER_BATCH, lifePage.value.hidden);
+  return `再看 ${next} 世 · 余 ${lifePage.value.hidden}`;
+}
+
+function previousLifeText(): string {
+  const step = previousListStep(lifePage.value.shown, lifeRows.value.length, LIFE_RENDER_BATCH);
+  return `前一批 ${step} 世`;
+}
+
+function focusHistoryRow(selector: string, index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>(selector);
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function showMoreLives(): void {
+  const shownBefore = lifePage.value.shown;
+  const shownAfter = nextListLimit(shownBefore, lifeRows.value.length, LIFE_RENDER_BATCH);
+  lifeLimit.value = shownAfter;
+  focusHistoryRow(
+    "[data-life-row]",
+    firstNewVisibleIndex(shownBefore, shownAfter, LIFE_RENDER_WINDOW),
+  );
+}
+
+function showPreviousLives(): void {
+  lifeLimit.value = previousListLimit(
+    lifePage.value.shown,
+    lifeRows.value.length,
+    LIFE_RENDER_BATCH,
+  );
+  focusHistoryRow("[data-life-row]");
+}
 
 /** 征战录:当前未雪耻/已雪耻的宿敌 */
 const nemesisRows = computed(() =>
@@ -370,10 +494,6 @@ const nemesisRows = computed(() =>
     .sort((a, b) => (a.avengedAt ?? 0) - (b.avengedAt ?? 0)),
 );
 
-/** 行迹录:报的是**总数**;列表只列最近的几则(抬头不许少报) */
-const lossTotal = computed(
-  () => Object.values(adventure.eventMemories).filter((m) => m.times >= 2).length,
-);
 /** 征战录:事件余波(世界记忆的最近完成) */
 const lossRows = computed(() =>
   Object.values(adventure.eventMemories)
@@ -384,9 +504,42 @@ const lossRows = computed(() =>
       eventName: eventDef(m.eventId)?.title ?? m.eventId,
       note: `${m.times} 次际遇后,此地已别有风貌`,
     }))
-    .sort((a, b) => b.at - a.at)
-    .slice(0, 8),
+    .sort((a, b) => b.at - a.at),
 );
+const lossTotal = computed(() => lossRows.value.length);
+const LOSS_RENDER_BATCH = 8;
+const LOSS_RENDER_WINDOW = LOSS_RENDER_BATCH * 2;
+const lossLimit = ref(LOSS_RENDER_BATCH);
+const lossPage = computed(() => listWindow(lossRows.value, lossLimit.value, LOSS_RENDER_WINDOW));
+
+function moreLossText(): string {
+  const next = Math.min(LOSS_RENDER_BATCH, lossPage.value.hidden);
+  return `再看 ${next} 则 · 余 ${lossPage.value.hidden}`;
+}
+
+function previousLossText(): string {
+  const step = previousListStep(lossPage.value.shown, lossRows.value.length, LOSS_RENDER_BATCH);
+  return `前一批 ${step} 则`;
+}
+
+function showMoreLoss(): void {
+  const shownBefore = lossPage.value.shown;
+  const shownAfter = nextListLimit(shownBefore, lossRows.value.length, LOSS_RENDER_BATCH);
+  lossLimit.value = shownAfter;
+  focusHistoryRow(
+    "[data-loss-row]",
+    firstNewVisibleIndex(shownBefore, shownAfter, LOSS_RENDER_WINDOW),
+  );
+}
+
+function showPreviousLoss(): void {
+  lossLimit.value = previousListLimit(
+    lossPage.value.shown,
+    lossRows.value.length,
+    LOSS_RENDER_BATCH,
+  );
+  focusHistoryRow("[data-loss-row]");
+}
 
 const profile = computed(() => cultivatorProfile(endgame.marks));
 

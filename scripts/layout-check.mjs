@@ -148,6 +148,9 @@
  *   五十一 构筑对照不许只给最近八则道痕。余量要报数、可续开,续开后的焦点要送到
  *      新露出的第一则;第九则以前的旧构筑还要真能点开对照 —— 只多一行字、点不动
  *      仍是断头路。
+ *   五十二 修仙录的历世履历与行迹录都要能回头。履历再长也只铺当前窗,续开与回翻都要
+ *      把焦点送到新页首则;行迹录不再用「仅列最近八则」封死旧回响。两处都在 195 宽
+ *      下量续开入口与整页排版。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -7294,6 +7297,309 @@ async function taskBuildCompareOverflow() {
 }
 
 /**
+ * 修仙录的两部历史:历世履历与行迹录。
+ *
+ * 30 世验证履历按 12 世一批、同时只留 24 行 DOM,最后一批会滑窗,回翻能回首批;
+ * 12 条旧回响验证行迹录从 8 则起可开完,而不是只剩「仅列最近 8 则」一句。
+ * 续开后焦点必须交给新页首则,否则按掉入口的键盘用户会失去落点。
+ */
+async function taskLegacyHistoryOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const now = Date.now();
+    const lives = Array.from({ length: 30 }, (_, i) => {
+      const index = i + 1;
+      return {
+        index,
+        major: 3 + (i % 6),
+        realmLabel: `旧境${index}`,
+        age: 80 + i,
+        themeId: null,
+        themeResult: null,
+        insight: 17 + i,
+        trialId: null,
+        bond: null,
+        at: now - (30 - i) * 86400000,
+      };
+    });
+    const eventMemories = Object.fromEntries(
+      Array.from({ length: 20 }, (_, i) => {
+        const id = `memory_${String(i + 1).padStart(2, "0")}`;
+        return [
+          id,
+          {
+            eventId: id,
+            times: 2 + (i % 3),
+            lastAt: now - i * 1000,
+            lastChoiceIdx: 0,
+          },
+        ];
+      }),
+    );
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      reincarnation: {
+        ...slices.player.reincarnation,
+        count: lives.length,
+        lives,
+      },
+    };
+    slices.adventure = { ...slices.adventure, eventMemories };
+    await seedSave(ctx, slices, "__legacyHistoryFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/legacy", { waitUntil: "load" });
+
+    const lifeRows = page.locator("[data-life-row]");
+    await lifeRows.first().waitFor({ state: "visible", timeout: 10000 });
+    const lifeInitial = await page.evaluate(() => {
+      const holder = document.querySelector("[data-life-total]");
+      return {
+        total: Number(holder?.getAttribute("data-life-total")),
+        shown: Number(holder?.getAttribute("data-life-shown")),
+        start: Number(holder?.getAttribute("data-life-start")),
+        count: document.querySelectorAll("[data-life-row]").length,
+      };
+    });
+    const lifeMore = page.locator("[data-life-more]").first();
+    const lifeMoreCount = await lifeMore.count();
+    const lifeMoreText = lifeMoreCount
+      ? ((await lifeMore.textContent()) || "").replace(/\s+/g, " ").trim()
+      : "";
+    checked += 1;
+    if (
+      lifeInitial.total !== 30 ||
+      lifeInitial.shown !== 12 ||
+      lifeInitial.start !== 0 ||
+      lifeInitial.count !== 12
+    ) {
+      failures.push(
+        `[320] 历世首批应 12/30 世,实见 ${lifeInitial.count}/${lifeInitial.total}(shown ${lifeInitial.shown}/start ${lifeInitial.start})`,
+      );
+    }
+    if (lifeMoreCount === 0) {
+      failures.push("[320] 后十八世被一次铺完或藏掉了 —— 没有履历续开入口");
+    } else if (!/再看\s*12\s*世\s*·\s*余\s*18/.test(lifeMoreText)) {
+      failures.push(`[320] 履历续开入口没报清余量:«${lifeMoreText}»`);
+    }
+
+    async function checkZoomControl(label, control) {
+      if ((await control.count()) === 0) return;
+      const fit = await control.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          left: box.left,
+          right: box.right,
+          height: box.height,
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+          viewport: window.innerWidth,
+        };
+      });
+      checked += 1;
+      if (fit.left < -1 || fit.right > fit.viewport + 1 || fit.scrollWidth > fit.clientWidth + 1) {
+        failures.push(
+          `[195] ${label}被挤坏:盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+            `内容 ${fit.scrollWidth}>${fit.clientWidth} / 视口 ${fit.viewport}`,
+        );
+      }
+      if (fit.height < 27.5) {
+        failures.push(
+          `[195] ${label}只有 ${Math.round(fit.height * 10) / 10}px 高,低于 28px 触达下限`,
+        );
+      }
+    }
+
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+    await checkZoomControl("履历续开入口", lifeMore);
+    const lifeZoomProblems = problemsOf(await measurePage(page));
+    checked += 1;
+    if (lifeZoomProblems.length) {
+      failures.push(`[195] 轮回页(履历展开前)→ ${lifeZoomProblems.join(" / ")}`);
+    }
+
+    if (lifeMoreCount > 0) {
+      await lifeMore.click({ timeout: 5000 });
+      await page.waitForFunction(
+        () => document.querySelector("[data-life-shown]")?.getAttribute("data-life-shown") === "24",
+        { timeout: 5000 },
+      );
+      const second = await page.evaluate(() => ({
+        count: document.querySelectorAll("[data-life-row]").length,
+        focus: document.activeElement?.getAttribute("data-life-row"),
+      }));
+      checked += 1;
+      if (second.count !== 24 || second.focus !== "18") {
+        failures.push(
+          `[195] 履历续开第一批后应铺 24 世、焦点落第 18 世,实见 ${second.count} 世 / 焦点 ${second.focus ?? "无"}`,
+        );
+      }
+
+      await page.locator("[data-life-more]").first().click({ timeout: 5000 });
+      await page.waitForFunction(
+        () => document.querySelector("[data-life-shown]")?.getAttribute("data-life-shown") === "30",
+        { timeout: 5000 },
+      );
+      const last = await page.evaluate(() => ({
+        count: document.querySelectorAll("[data-life-row]").length,
+        start: Number(document.querySelector("[data-life-total]")?.getAttribute("data-life-start")),
+        focus: document.activeElement?.getAttribute("data-life-row"),
+        hasNewest: !!document.querySelector('[data-life-row="30"]'),
+        hasOldest: !!document.querySelector('[data-life-row="1"]'),
+        hasPrev: !!document.querySelector("[data-life-prev]"),
+      }));
+      checked += 1;
+      if (
+        last.count !== 24 ||
+        last.start !== 6 ||
+        last.focus !== "6" ||
+        last.hasNewest ||
+        !last.hasOldest ||
+        !last.hasPrev
+      ) {
+        failures.push(
+          `[195] 履历末批应滑窗为 24/30、从第 6 行起、焦点第 6 世并可回翻,` +
+            `实见 ${last.count} 行 / start ${last.start} / 焦点 ${last.focus ?? "无"} / ` +
+            `最新世 ${last.hasNewest ? "仍在" : "已滑走"} / 最旧世 ${last.hasOldest ? "在" : "缺失"} / ` +
+            `回翻 ${last.hasPrev ? "在" : "缺失"}`,
+        );
+      }
+      await page.locator("[data-life-prev]").first().click({ timeout: 5000 });
+      await page.waitForFunction(
+        () => document.querySelector("[data-life-shown]")?.getAttribute("data-life-shown") === "24",
+        { timeout: 5000 },
+      );
+      const back = await page.evaluate(() => ({
+        focus: document.activeElement?.getAttribute("data-life-row"),
+        hasNewest: !!document.querySelector('[data-life-row="30"]'),
+      }));
+      checked += 1;
+      if (back.focus !== "30" || !back.hasNewest) {
+        failures.push(
+          `[195] 履历回翻没有回到首批:焦点 ${back.focus ?? "无"} / 最新世 ${back.hasNewest ? "在" : "缺失"}`,
+        );
+      }
+    }
+
+    const fateTab = page.getByRole("tab", { name: /缘\s*迹/ }).first();
+    if ((await fateTab.count()) === 0) {
+      failures.push("[195] 修仙录找不到「缘迹」页签");
+    } else {
+      await fateTab.click({ timeout: 5000 });
+      const lossRows = page.locator("[data-loss-row]");
+      await lossRows.first().waitFor({ state: "visible", timeout: 5000 });
+      const lossInitial = await page.evaluate(() => {
+        const holder = document.querySelector("[data-loss-total]");
+        return {
+          total: Number(holder?.getAttribute("data-loss-total")),
+          shown: Number(holder?.getAttribute("data-loss-shown")),
+          count: document.querySelectorAll("[data-loss-row]").length,
+        };
+      });
+      const lossMore = page.locator("[data-loss-more]").first();
+      const lossMoreCount = await lossMore.count();
+      const lossMoreText = lossMoreCount
+        ? ((await lossMore.textContent()) || "").replace(/\s+/g, " ").trim()
+        : "";
+      checked += 1;
+      if (
+        lossInitial.total !== 20 ||
+        lossInitial.shown !== 8 ||
+        lossInitial.count !== 8 ||
+        lossMoreCount === 0 ||
+        !/再看\s*8\s*则\s*·\s*余\s*12/.test(lossMoreText)
+      ) {
+        failures.push(
+          `[195] 行迹首批应 8/20 则并可再看 8 则,` +
+            `实见 ${lossInitial.count}/${lossInitial.total}(shown ${lossInitial.shown}) «${lossMoreText}»`,
+        );
+      }
+      await checkZoomControl("行迹续开入口", lossMore);
+
+      if (lossMoreCount > 0) {
+        await lossMore.click({ timeout: 5000 });
+        await page.waitForFunction(
+          () =>
+            document.querySelector("[data-loss-shown]")?.getAttribute("data-loss-shown") === "16",
+          { timeout: 5000 },
+        );
+        const lossSecond = await page.evaluate(() => ({
+          count: document.querySelectorAll("[data-loss-row]").length,
+          focus: document.activeElement?.getAttribute("data-loss-row"),
+        }));
+        checked += 1;
+        if (lossSecond.count !== 16 || lossSecond.focus !== "memory_09") {
+          failures.push(
+            `[195] 行迹续开第一批后应铺 16 则、焦点 memory_09,` +
+              `实见 ${lossSecond.count} 则 / 焦点 ${lossSecond.focus ?? "无"}`,
+          );
+        }
+        await page.locator("[data-loss-more]").first().click({ timeout: 5000 });
+        await page.waitForFunction(
+          () =>
+            document.querySelector("[data-loss-shown]")?.getAttribute("data-loss-shown") === "20",
+          { timeout: 5000 },
+        );
+        const lossLast = await page.evaluate(() => ({
+          count: document.querySelectorAll("[data-loss-row]").length,
+          start: Number(
+            document.querySelector("[data-loss-total]")?.getAttribute("data-loss-start"),
+          ),
+          focus: document.activeElement?.getAttribute("data-loss-row"),
+          hasNewest: !!document.querySelector('[data-loss-row="memory_01"]'),
+          hasOldest: !!document.querySelector('[data-loss-row="memory_20"]'),
+          stillMore: !!document.querySelector("[data-loss-more]"),
+          hasPrev: !!document.querySelector("[data-loss-prev]"),
+        }));
+        checked += 1;
+        if (
+          lossLast.count !== 16 ||
+          lossLast.start !== 4 ||
+          lossLast.focus !== "memory_17" ||
+          lossLast.hasNewest ||
+          !lossLast.hasOldest ||
+          lossLast.stillMore ||
+          !lossLast.hasPrev
+        ) {
+          failures.push(
+            `[195] 行迹末批应滑窗为 16/20、从第 5 则起、焦点 memory_17 并可回翻,` +
+              `实见 ${lossLast.count} 则 / start ${lossLast.start} / 焦点 ${lossLast.focus ?? "无"} / ` +
+              `最新迹 ${lossLast.hasNewest ? "仍在" : "已滑走"} / ` +
+              `最旧迹 ${lossLast.hasOldest ? "在" : "缺失"} / ` +
+              `续开 ${lossLast.stillMore ? "仍在" : "已收"} / 回翻 ${lossLast.hasPrev ? "在" : "缺失"}`,
+          );
+        }
+      }
+      const lossZoomProblems = problemsOf(await measurePage(page));
+      checked += 1;
+      if (lossZoomProblems.length) {
+        failures.push(`[195] 缘迹页(行迹展开后)→ ${lossZoomProblems.join(" / ")}`);
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[320] 修仙录历史场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -7456,6 +7762,7 @@ const TASKS = [
   ["iOS 存档风险提示", taskIosNotice],
   ["修行速服丹药的余量入口", taskQuickPillOverflow],
   ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
+  ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],

@@ -1755,6 +1755,29 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(build?.src, "余量不能静默消失").toContain("data-compare-more");
   });
 
+  it("历世履历再长也要分批回看 —— 不许把整部家谱一次塞进 DOM", () => {
+    const legacy = FILES.find((f) => f.path === "views/LegacyView.vue");
+    expect(legacy?.src, "履历要有独立的可见窗").toMatch(
+      /const lifePage = computed\([\s\S]{0,160}listWindow\(\s*lifeRows\.value,\s*lifeLimit\.value,\s*LIFE_RENDER_WINDOW,?\s*\)/,
+    );
+    expect(legacy?.src, "只渲染当前窗内的历世").toContain("lifePage.visible");
+    expect(legacy?.src, "余下的历世要能续开").toContain("data-life-more");
+    expect(legacy?.src, "滑走的首批要能回翻").toContain("data-life-prev");
+  });
+
+  it("行迹录只列八则时也要有回头路 —— 总数与清单必须同源", () => {
+    const legacy = FILES.find((f) => f.path === "views/LegacyView.vue");
+    expect(legacy?.src, "旧回响不许被 slice 永久藏掉").not.toContain(".slice(0, 8)");
+    expect(legacy?.src, "总数直接取完整清单").toMatch(
+      /const lossTotal = computed\(\(\) => lossRows\.value\.length\)/,
+    );
+    expect(legacy?.src, "行迹也走同一个长列表窗口").toMatch(
+      /const lossPage = computed\([\s\S]{0,160}listWindow\(\s*lossRows\.value,\s*lossLimit\.value,\s*LOSS_RENDER_WINDOW,?\s*\)/,
+    );
+    expect(legacy?.src, "旧回响要能续开").toContain("data-loss-more");
+    expect(legacy?.src, "滑走的旧回响要能回翻").toContain("data-loss-prev");
+  });
+
   it("悬赏贡器不许显占位 0 灵石 · 辅修席满要置灰", () => {
     // ① 贡器单的 reward 是占位 gnZero,逐单真价在交货时按所交品质现算(equipBountyReward)。
     //    价签若一视同仁 formatGN(o.reward) 就亮「0 灵石」——对不上任何结算的假数。
