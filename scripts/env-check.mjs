@@ -52,22 +52,48 @@ if (!raw) {
 
 const actual = raw.replace(/^v/, "").split("-")[0];
 const parse = (v) => v.split(".").map((n) => Number.parseInt(n, 10));
-const [aMaj, aMin, aPat] = parse(actual);
-const [rMaj, rMin, rPat] = parse(required);
+const atLeast = (candidate, minimum) => {
+  const a = parse(candidate);
+  const r = parse(minimum);
+  if (a.length > 3 || r.length > 3 || [...a, ...r].some(Number.isNaN)) return null;
+  for (let i = 0; i < 3; i += 1) {
+    const left = a[i] ?? 0;
+    const right = r[i] ?? 0;
+    if (left !== right) return left > right;
+  }
+  return true;
+};
 
-if ([aMaj, aMin, aPat, rMaj, rMin, rPat].some(Number.isNaN)) {
+if (atLeast(actual, required) === null) {
   console.error(`版本号解析失败:bun 实际 ${raw},要求 >= ${required}`);
   process.exit(1);
 }
 
-const ok =
-  aMaj > rMaj || (aMaj === rMaj && aMin > rMin) || (aMaj === rMaj && aMin === rMin && aPat >= rPat);
-
-if (!ok) {
+if (!atLeast(actual, required)) {
   console.error(
     `bun 版本过旧:需要 >= ${required}(package.json 的 packageManager 声明),实际 ${raw}。\n` +
       `  本地:mise / brew / npm 等按你装 bun 的方式升级;\n` +
       `  CI:setup-vp 会按 packageManager 安装,这里红了先看 workflow 有没有手抄旧版本。`,
+  );
+  process.exit(1);
+}
+
+/**
+ * Node 只约束**开发/构建工具链**,不是浏览器运行时。CI 的 `node-version`
+ * 必须与 `engines.node` 同一下限;这里先把本机也拦在最早处。
+ */
+const requiredNode = /^>=\s*(\d+(?:\.\d+){0,2})$/.exec(pkg.engines?.node ?? "")?.[1] ?? "";
+const actualNode = process.versions.node;
+if (!requiredNode) {
+  console.error(
+    `package.json 的 engines.node 必须是 \`>=x[.y[.z]]\`,实际:${pkg.engines?.node || "(未声明)"}`,
+  );
+  process.exit(1);
+}
+if (atLeast(actualNode, requiredNode) !== true) {
+  console.error(
+    `Node 版本过旧:需要 >= ${requiredNode}(package.json 的 engines.node),实际 ${actualNode}。\n` +
+      `  本地:升级 Node;CI:检查 setup-vp 的 node-version 是否仍是旧值。`,
   );
   process.exit(1);
 }
@@ -126,7 +152,8 @@ if (cliVersion && majorMinor(cliVersion) !== majorMinor(pinnedCli)) {
 }
 
 console.log(
-  `环境自检通过:bun ${actual} >= ${required}(packageManager 一致)` +
+  `环境自检通过:node ${actualNode} >= ${requiredNode}(engines 一致) · ` +
+    `bun ${actual} >= ${required}(packageManager 一致)` +
     (cliVersion
       ? ` · vp ${cliVersion}${majorMinor(cliVersion) === majorMinor(pinnedCli) ? ` 与 catalog ${pinnedCli} 同版` : ` 与 catalog ${pinnedCli} 不同版(仅告警)`}`
       : " · 未探测到 vp,跳过 CLI 版本核对"),

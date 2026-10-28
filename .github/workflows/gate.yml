@@ -17,7 +17,7 @@ name: 共享静态门禁 (可复用工作流)
 #       bun run check(env + 类型 + lint + 文档) + test + test:report +
 #       build + check:engine + check:engine:standalone
 #
-# 运行时 pin:Node 22(与 engines >=22.18 一致)、Bun 走 packageManager(1.4.2)、
+# 运行时 pin:Node 24(与 engines >=24 一致)、Bun 走 packageManager(1.4.3)、
 # Vite+ 用 version-file 从 package.json 的 catalog 解到 lockfile 版本(不再手抄,杜绝漂移)。
 on:
   workflow_call:

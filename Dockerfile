@@ -1,7 +1,7 @@
 # ===== Stage 1: 构建阶段 =====
-# 钉死与 package.json 的 packageManager(bun@1.4.2)一致:浮动的 :1 标签
+# 钉死与 package.json 的 packageManager(bun@1.4.3)一致:浮动的 :1 标签
 # 会在 bun 出新版时悄悄换基础镜像,而锁文件与安装行为都可能随之漂移。
-FROM oven/bun:1.4.2-alpine AS builder
+FROM oven/bun:1.4.3-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app

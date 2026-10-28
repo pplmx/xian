@@ -31,7 +31,7 @@
  * 判据只看**真实的命令**(行首是 `#` 的注释行跳过),不解析 YAML:`run:` 的写法
  * 就那么几种,能静态数出来的,就该有一条会自己跑的判据。
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -40,10 +40,14 @@ const WORKFLOWS = join(ROOT, ".github/workflows");
 const ACTIONS = join(ROOT, ".github/actions");
 const PRE_COMMIT = join(ROOT, ".vite-hooks/pre-commit");
 
-/** package.json 的 scripts(名字 → 命令正文) */
+/** package.json 的本仓契约(脚本、运行时与直接依赖) */
 const PKG = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
   scripts: Record<string, string>;
   catalog?: Record<string, string>;
+  engines?: { node?: string };
+  packageManager?: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
 };
 
 /** package.json 的 scripts(名字 → 命令正文) */
@@ -194,6 +198,11 @@ function workflowsText(): string {
   return `${readDir(WORKFLOWS)}\n${readDir(ACTIONS)}`;
 }
 
+/** 版本范围的主版本(Vue Router ^5.4.0 → 5) */
+function majorOf(range: string | undefined): string {
+  return /(\d+)/.exec(range ?? "")?.[1] ?? "";
+}
+
 /** 六个浏览器门 —— 需要先 build、需要 playwright chromium,一轮约五分钟 */
 const BROWSER_GATES = [
   "scripts/build-timed.mjs",
@@ -326,6 +335,75 @@ describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () =
     const pre = codeOnly(readFileSync(PRE_COMMIT, "utf8"));
     const direct = BROWSER_GATES.filter((script) => pre.includes(script));
     expect(direct, `pre-commit 里直接跑了浏览器门:${direct.join("、")}`).toEqual([]);
+  });
+});
+
+describe("工具链契约 —— 同一版本只留在可校验的源头", () => {
+  it("packageManager、Docker 镜像与 CI 使用的是同一套 Bun / Node", () => {
+    const bun = /^bun@(\d+\.\d+\.\d+)$/.exec(PKG.packageManager ?? "")?.[1] ?? "";
+    expect(bun, "package.json 的 packageManager 必须是 bun@x.y.z").not.toBe("");
+
+    const dockerImages = ["Dockerfile", "Dockerfile.ci"]
+      .filter((rel) => existsSync(join(ROOT, rel)))
+      .flatMap((rel) =>
+        [...readFileSync(join(ROOT, rel), "utf8").matchAll(/oven\/bun:(\d+\.\d+\.\d+)-/g)].map(
+          (m) => ({ rel, version: m[1] as string }),
+        ),
+      );
+    expect(dockerImages.length, "Dockerfile 里一个钉死的 Bun 镜像都没读到").toBeGreaterThan(0);
+    expect(
+      dockerImages.filter((i) => i.version !== bun),
+      `Docker 的 Bun 镜像必须与 packageManager(bun@${bun})同版`,
+    ).toEqual([]);
+
+    const nodeMin = /^>=?\s*(\d+)/.exec(PKG.engines?.node ?? "")?.[1] ?? "";
+    expect(nodeMin, "package.json 的 engines.node 必须写下限").not.toBe("");
+    const configured = [
+      join(ROOT, ".github/actions/setup-vp-install/action.yml"),
+      join(ROOT, ".github/workflows/build.yml"),
+    ].flatMap((file) =>
+      [...readFileSync(file, "utf8").matchAll(/node-version:\s*["']([^"']+)["']/g)].map((m) => ({
+        rel: file.slice(ROOT.length + 1),
+        version: m[1] as string,
+      })),
+    );
+    expect(configured.length, "CI 里一个 node-version 都没读到").toBeGreaterThan(0);
+    expect(
+      configured.filter((i) => Number(majorOf(i.version)) < Number(nodeMin)),
+      `CI 的 Node 低于 engines.node(${PKG.engines?.node})`,
+    ).toEqual([]);
+  });
+
+  it("README 的运行时版本与 package.json 同源", () => {
+    const bun = /^bun@(.+)$/.exec(PKG.packageManager ?? "")?.[1] ?? "";
+    const node = /^>=?\s*(.+)$/.exec(PKG.engines?.node ?? "")?.[1] ?? "";
+    for (const rel of ["README.md", "docs/development.md"]) {
+      const text = readFileSync(join(ROOT, rel), "utf8");
+      expect(text, `${rel} 里的 Bun 版本没跟上 packageManager`).toContain(`Bun** ${bun}`);
+      expect(text, `${rel} 里的 packageManager 版本没跟上`).toContain(`bun@${bun}`);
+      expect(text, `${rel} 里的 Node 下限没跟上 engines.node`).toContain(`Node** ≥ ${node}`);
+      expect(text, `${rel} 里的 engines.node 没跟上`).toContain(`engines.node >= ${node}`);
+    }
+    expect(readFileSync(join(ROOT, "docs/deployment.md"), "utf8")).toContain(
+      `oven/bun:${bun}-alpine`,
+    );
+  });
+
+  it("README 技术栈表的主版本跟随直接依赖", () => {
+    const readme = readFileSync(join(ROOT, "README.md"), "utf8");
+    const routerMajor = majorOf(PKG.dependencies?.["vue-router"]);
+    expect(routerMajor, "Vue Router 在 package.json 里没有直接依赖").not.toBe("");
+    const routerRow = /\| Vue Router \| ([^|]+) \|/.exec(readme)?.[1]?.trim() ?? "";
+    expect(routerRow, "README 技术栈表里的 Vue Router 主版本没跟上依赖").toBe(routerMajor);
+
+    const capacitorMajor = majorOf(PKG.dependencies?.["@capacitor/core"]);
+    expect(capacitorMajor, "Capacitor 在 package.json 里没有直接依赖").not.toBe("");
+    const electron = majorOf(PKG.devDependencies?.electron);
+    expect(electron, "Electron 在 package.json 里没有直接依赖").not.toBe("");
+    const desktopRow = /\| Electron \/ Capacitor \| ([^|]+) \|/.exec(readme)?.[1]?.trim() ?? "";
+    expect(desktopRow, "README 技术栈表里的 Electron / Capacitor 主版本没跟上依赖").toBe(
+      `${electron} / ${capacitorMajor}`,
+    );
   });
 });
 

@@ -51,7 +51,7 @@
 
 ## 快速开始
 
-需要 [Bun](https://bun.sh) 1.4.2(与 `package.json` 的 `packageManager` 一致)。
+需要 [Bun](https://bun.sh) 1.4.3(与 `package.json` 的 `packageManager` 一致)。
 
 ```bash
 vp install      # 安装依赖(底层走 bun)
@@ -73,15 +73,15 @@ vp check        # 环境/类型/文档自检 + Oxlint
 
 | 角色 | 谁来当 | 承担的事 |
 | --- | --- | --- |
-| 包管理器 + 脚本执行器 | **Bun** 1.4.2 | 装依赖、锁文件(`bun.lock`)、跑 `package.json` 脚本。`packageManager: bun@1.4.2` 明确的正是这一层 |
-| 工具链兼容基准 | **Node** ≥ 22.18 | `engines.node` 表达的是"跑 Vue/Vite/vue-tsc/Oxlint 这条工具链至少要 Node 22.18",**不是**「应用跑在 Node 上」 |
+| 包管理器 + 脚本执行器 | **Bun** 1.4.3 | 装依赖、锁文件(`bun.lock`)、跑 `package.json` 脚本。`packageManager: bun@1.4.3` 明确的正是这一层 |
+| 工具链兼容基准 | **Node** ≥ 24 | `engines.node` 表达的是"跑 Vue/Vite/vue-tsc/Oxlint 这条工具链至少要 Node 24",**不是**「应用跑在 Node 上」 |
 | 生产运行时 | **浏览器** | Web / PWA 的最终宿主,应用代码在这里跑 |
 | 平台运行时 | **Electron / Capacitor** | 把同一份 Web 产物包进 Windows 桌面与 Android 的壳 |
 
-`engines.node >= 22.18` 与 `packageManager: bun@1.4.2` 并存**不矛盾**:前者声明
+`engines.node >= 24` 与 `packageManager: bun@1.4.3` 并存**不矛盾**:前者声明
 「工具链需要多新的 Node」(通常是 CI / Docker 的基础镜像),后者声明
 「安装与脚本托管交给 Bun」。两者约束的是不同层次 —— 只要包管理走 Bun、
-工具链跑在 ≥22.18 的 Node 上即可,两个字段描述的是同一套开发环境的两半。
+工具链跑在 ≥24 的 Node 上即可,两个字段描述的是同一套开发环境的两半。
 
 ## 文档
 
@@ -120,11 +120,11 @@ vp check        # 环境/类型/文档自检 + Oxlint
 | Vite | 8 | 构建与开发服务器 |
 | Pinia | 3 | 状态管理(18 个 store,除瞬态 `ui` 外 17 个自动持久化) |
 | Tailwind CSS | 3.4 | 水墨色系语义色与暗色主题 |
-| Vue Router | 4 | 客户端路由(hash 模式) |
+| Vue Router | 5 | 客户端路由(hash 模式) |
 | Tone.js | 15 | FluidR3 乐器采样播放(BGM + SFX) |
 | CryptoJS | 4 | 存档 AES 加密 |
 | Vitest | 5 | 单元测试与平衡审计(全量 377 个 spec,含公共库 `packages/engine` 的 80 个) |
-| Electron / Capacitor | 39 / 8 | Windows 桌面与 Android 打包 |
+| Electron / Capacitor | 44 / 8 | Windows 桌面与 Android 打包 |
 
 ## 许可证
 

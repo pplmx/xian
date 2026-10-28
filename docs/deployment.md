@@ -98,7 +98,7 @@ Compose v1 的旧 CLI 把命令换成 `docker-compose` 即可(`docker-compose.ym
 
 ## 镜像架构
 
-- **构建阶段**:`oven/bun:1.4.2-alpine`(与 `packageManager` 一致),`bun install --frozen-lockfile` 后跑 `bun run build`;
+- **构建阶段**:`oven/bun:1.4.3-alpine`(与 `packageManager` 一致),`bun install --frozen-lockfile` 后跑 `bun run build`;
 - **生产阶段**:`nginx:alpine` + `dist/`(约 4MB 静态产物)+ `nginx.conf`,多阶段构建让最终镜像
   只比基础 nginx 多这一份产物;
 - **CI 镜像**:`Dockerfile.ci` 不在容器内构建 —— 前端由 runner 上的 Bun 构建好,镜像只负责把
