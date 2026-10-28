@@ -39,6 +39,19 @@ export interface ReforgeCost {
 }
 
 /**
+ * 铭纹给**新词条**的掷点下限:0~30%,随熟练度线性抬高。
+ *
+ * 只兜底,不改抽取池:铭纹高只保证洗出来的东西不总是谷底,不能凭空指定词条。
+ * 30% 封顶是因为掷点仍要留出大头随机空间 —— 若保底再高,"洗练"会从赌搭配
+ * 退化成按次数领固定数值。合法熟练度本就落在 0~100;非法值一律按尚未入门处理,
+ * 不许把 NaN 漏进装备词条。
+ */
+export function inscribeRollFloor(level: number): number {
+  if (!Number.isFinite(level)) return 0;
+  return Math.max(0, Math.min(1, level / 100)) * 0.3;
+}
+
+/**
  * 重铸成本:灵石 = stoneByTier(阶数) × (1 + 封存数 × REFORGE_SEAL_LOAD);
  * 器灵尘 = REFORGE_DUST_BASE × (1 + 封存数)。
  *
@@ -108,13 +121,20 @@ export function reforgeEquipment(uid: string, quiet = false): boolean {
   const template = equipmentTemplate(inst.templateId);
   const sealed = inst.sealedAffixIds ?? [];
   const kept = inst.affixes.filter((a) => sealed.includes(a.id));
-  const affixes = ENGINE_WORLD.equipment.rerollAffixes(inst.affixes, {
-    rng,
-    quality: qualityDef(inst.quality),
-    tier: inst.tier,
-    slot: template?.slot,
-    keep: sealed,
-  });
+  const lore = useLoreStore();
+  const rollFloor = inscribeRollFloor(lore.skillLevel("inscribe"));
+  const affixes = ENGINE_WORLD.equipment
+    .rerollAffixes(inst.affixes, {
+      rng,
+      quality: qualityDef(inst.quality),
+      tier: inst.tier,
+      slot: template?.slot,
+      keep: sealed,
+    })
+    // 封存项保持原对象与原掷点;新词条只抬下限,不额外消耗随机源。
+    .map((affix) =>
+      sealed.includes(affix.id) ? affix : { ...affix, roll: Math.max(affix.roll, rollFloor) },
+    );
   const before = inst.affixes.length;
   const sealedNote = kept.length > 0 ? `(封存 ${kept.length} 条未动)` : "";
   const countNote =
@@ -126,7 +146,7 @@ export function reforgeEquipment(uid: string, quiet = false): boolean {
   noteSmithingUsed(inst.tier, true);
   // 重铸更是刻纹 —— 铭纹技艺此前定义了却从没人涨过(玩家反馈「铭纹熟练度老版本为0,
   // 新版本没看到新系统」),真正「刻纹引灵」的活儿就该长这门手艺
-  useLoreStore().addSkillExp("inscribe", 10 * (1 + inst.tier * 0.2));
+  lore.addSkillExp("inscribe", 10 * (1 + inst.tier * 0.2));
 
   if (!quiet) notify(`重铸而成:词条 ${countNote}${sealedNote}`, "success");
   return true;

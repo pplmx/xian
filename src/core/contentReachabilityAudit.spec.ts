@@ -14,9 +14,9 @@
  *
  *   凡被消费的知识,必有获取路径。
  *
- * 尚未接入的骨架(炼器图纸、铭纹技艺)因无人消费而自然豁免 —— 它们不是死内容,
- * 只是还没接上的接口。而一旦有人让某张配方开始吃 inscribe、或往库里放第一张
- * 图纸,豁免会自动失效,这里就会变红,提醒他先修路再放内容。
+ * 炼器图纸仍是未接骨架,因无人消费而自然豁免 —— 它不是死内容,只是还没接上的接口。
+ * 铭纹已由重铸消费:新词条掷点下限随熟练度上升。一旦有人往库里放第一张图纸,
+ * 豁免会自动失效,这里就会变红,提醒他先修路再放内容。
  *
  * 与 loreService.spec.ts 的分工:那边测藏经阁这条路本身走不走得通(速度、
  * 顺序、边界),这边测全部内容清单有没有漏网的。
@@ -59,6 +59,7 @@ import { gongfaAffinity } from "./linggenAffinity";
 import { rollFieldMaterial, seedLoreIfNeeded, studiableRecipes } from "./loreService";
 import { learnRandomGongfa } from "./gongfaService";
 import { craftPill } from "./pillService";
+import { inscribeRollFloor } from "./reforge";
 
 const CRAFTABLE = PILLS.filter((p) => p.recipe);
 const NOTHING_KNOWN = (): number => 0;
@@ -412,6 +413,12 @@ describe("内容可达性 · 炼器骨架", () => {
     const isSourced = (code.match(/\bstudyBlueprint\s*\(/g) ?? []).length > 1;
     expect(isConsumed).toBe(isSourced);
   });
+
+  it("铭纹已有真实消费:重铸的新词条掷点下限由它决定", () => {
+    expect(inscribeRollFloor(0)).toBe(0);
+    expect(inscribeRollFloor(50)).toBeGreaterThan(0);
+    expect(inscribeRollFloor(100)).toBeGreaterThan(inscribeRollFloor(50));
+  });
 });
 
 describe("内容可达性 · 全局报告", () => {
@@ -439,8 +446,8 @@ describe("内容可达性 · 全局报告", () => {
     const fromReforgeIds = Object.keys(REFORGE_SOURCE) as SkillId[];
     const sourcedSkills = new Set<SkillId>([...fromMaterials, ...fromAlchemy, ...fromReforgeIds]);
     const unwired = SKILL_IDS.filter((id) => !sourcedSkills.has(id));
-    // 铭纹的消费 = 有方子/内容吃它;如今只有来源(重铸),去向尚未接通
-    const inscribeConsumed = fromAlchemy.has("inscribe");
+    // 铭纹的消费 = 重铸用 skillLevel("inscribe") 决定新词条掷点下限
+    const inscribeConsumed = inscribeRollFloor(50) > 0;
 
     console.log("\n  —— 内容可达性审计 ——");
     console.log(`  丹方   ${reachableRecipes.size}/${CRAFTABLE.length} 可达    藏经阁求索`);
@@ -456,12 +463,13 @@ describe("内容可达性 · 全局报告", () => {
     }
     // 每一门技艺都得有来源(能涨)才不负有定义 —— 锁死,不许再退回"铭纹无来源"的误报
     expect(unwired).toEqual([]);
-    // 来源≠消费:铭纹的来源(重铸)有了,但炼器道的**内容消费**还没接,分两句说清
+    // 来源与消费是两条账:重铸涨铭纹经验,inscribeRollFloor 则让铭纹真实影响重铸结果
     expect(REFORGE_SOURCE.inscribe).toBe(true);
-    if (!inscribeConsumed) {
-      console.log("  铭纹  有来源(重铸)无内容消费 —— 炼器道的去向尚未接通,不算死内容\n");
-    }
-    console.log("  炼器图纸:blueprintLore 有字段无内容,studyBlueprint 尚无调用点\n");
+    expect(inscribeConsumed, "铭纹被重铸消费后,可达性报告仍不得退回来路不明").toBe(true);
+    console.log("  铭纹  有来源也有消费  重铸新词条掷点下限随熟练度上升\n");
+    console.log(
+      "  炼器图纸:blueprintLore 有字段无内容,studyBlueprint 尚无调用点;铭纹已由重铸消费\n",
+    );
 
     expect(reachableRecipes.size).toBe(CRAFTABLE.length);
   });

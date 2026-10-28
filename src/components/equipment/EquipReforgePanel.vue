@@ -20,6 +20,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { equipmentTemplate } from "@/data/equipment";
 import { affixDef, AFFIXES } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
+import { skillStageName } from "@/data/crafting";
 import {
   expectedReforgesFor,
   autoReforge,
@@ -27,15 +28,18 @@ import {
   reforgeCost,
   sealCapacity,
   sealCost,
+  inscribeRollFloor,
   type ReforgeTarget,
 } from "@/core/reforge";
 import { formatGN, formatPercent } from "@/utils/format";
 import { toNum, subClamp } from "@/utils/gnum";
+import { useLoreStore } from "@/stores/lore";
 import AffixTransferPanel from "./AffixTransferPanel.vue";
 
 const ui = useUiStore();
 const inventory = useInventoryStore();
 const resources = useResourcesStore();
+const lore = useLoreStore();
 
 const inst = computed(() =>
   ui.equipDetailUid ? inventory.findItem(ui.equipDetailUid) : undefined,
@@ -60,6 +64,10 @@ const sealShortfall = computed(() =>
 );
 /** 这一件按品质能有多少条词条:上限来自品质表,不在界面里另写一份 */
 const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).affixes[1] : 0));
+/** 铭纹决定新词条掷点下限;阶段名与技艺进度条同源,不给重铸面板再造一套等级名 */
+const inscribeLevel = computed(() => lore.skillLevel("inscribe"));
+const inscribeFloor = computed(() => inscribeRollFloor(inscribeLevel.value));
+const inscribeStage = computed(() => skillStageName(inscribeLevel.value));
 
 function doReforge(): void {
   if (inst.value) reforgeEquipment(inst.value.uid);
@@ -301,6 +309,9 @@ function triesOf(id: string): number | null {
     <p v-if="reforgeCostVal" class="text-center text-[10px] leading-relaxed text-ink-faint">
       重掷未封存的词条:条数(≤{{ affixCap }} 条)与数值一并重掷,封存的不动 ·
       不限次数,成本随阶数与封存数走
+    </p>
+    <p v-if="reforgeCostVal" class="text-center text-[10px] text-qing tabular">
+      铭纹·{{ inscribeStage }}:新词条掷点 ≥ {{ formatPercent(inscribeFloor, 0) }},封存不受
     </p>
     <p v-if="inst" class="text-center text-[10px] text-ink-faint tabular">
       已重铸 {{ inst.reforgeCount ?? 0 }} 次 · 已封存 {{ (inst.sealedAffixIds ?? []).length }}/{{

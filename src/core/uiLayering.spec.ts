@@ -1430,6 +1430,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(dlg?.src, "技艺要有进度条可读").toContain("<ProgressBar");
   });
 
+  it("铭纹的用处露在重铸决策点 —— 不只长一条进度", () => {
+    const panel = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
+    expect(panel?.src, "重铸面板要读取铭纹保底(与核心同一函数)").toContain("inscribeRollFloor");
+    expect(panel?.src, "新词条掷点保底必须写成玩家看得懂的话").toContain("新词条");
+    expect(panel?.src, "保底数值要落到面板上").toContain("inscribeFloor");
+  });
+
   it("功法进修付不起置灰+列差 —— 缺哪样、差多少,按钮上直说", () => {
     // 「进修」曾永不置灰,资源不足只弹一句笼统 toast「悟道点或残页不足」,
     // 不报缺哪样也不说差多少 —— 与全仓“付不起置灰+列差”族规脱节。修法与

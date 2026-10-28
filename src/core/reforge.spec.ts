@@ -15,6 +15,7 @@ import { resolve } from "node:path";
 import { createPinia, setActivePinia } from "pinia";
 import {
   expectedReforgesFor,
+  inscribeRollFloor,
   reforgeCost,
   reforgeEquipment,
   reforgeableAffixIds,
@@ -27,6 +28,7 @@ import { REFORGE_DUST_BASE, REFORGE_SEAL_LOAD, REFORGE_STONE_BASE } from "@/data
 import { qualityDef } from "@/data/qualities";
 import { rng } from "@/utils/random";
 import { useInventoryStore } from "@/stores/inventory";
+import { useLoreStore } from "@/stores/lore";
 import { useResourcesStore } from "@/stores/resources";
 import { gn } from "@/utils/gnum";
 import type { EquipmentInstance } from "@/types";
@@ -208,6 +210,31 @@ describe("重铸动作 · 条数与数值一起重掷", () => {
     );
   });
 
+  it("铭纹抬高新词条掷点下限,封存词条原样不动", () => {
+    const inst: EquipmentInstance = {
+      ...base,
+      uid: "inscribed",
+      affixes: [
+        { id: "atk1", roll: 0.1 },
+        { id: "def1", roll: 0.2 },
+      ],
+      sealedAffixIds: ["atk1"],
+    };
+    setup(inst);
+    const lore = useLoreStore();
+    lore.skillExp = { ...lore.skillExp, inscribe: 6000 };
+    const floor = inscribeRollFloor(lore.skillLevel("inscribe"));
+    expect(floor).toBeGreaterThan(0);
+    vi.spyOn(rng, "next").mockReturnValue(0);
+
+    expect(reforgeEquipment("inscribed")).toBe(true);
+    const after = useInventoryStore().findItem("inscribed")!;
+    expect(after.affixes.find((a) => a.id === "atk1")?.roll, "封存的掷点不动").toBe(0.1);
+    for (const affix of after.affixes.filter((a) => a.id !== "atk1")) {
+      expect(affix.roll, `${affix.id} 没吃到铭纹保底`).toBeCloseTo(floor, 10);
+    }
+  });
+
   it("资源不足时不动装备、不记账", () => {
     const inst: EquipmentInstance = { ...base, uid: "poor" };
     useInventoryStore().items = [inst];
@@ -223,6 +250,21 @@ describe("重铸动作 · 条数与数值一起重掷", () => {
     expect(sealAffix("seal", "atk1")).toBe(true);
     expect(useInventoryStore().findItem("seal")!.sealedAffixIds).toEqual(["atk1"]);
     expect(sealAffix("seal", "def1"), "只剩一条可重掷位,封不了").toBe(false);
+  });
+});
+
+describe("铭纹保底曲线", () => {
+  it("生疏为零、随熟练度单调上升,并在大成封顶", () => {
+    expect(inscribeRollFloor(0)).toBe(0);
+    expect(inscribeRollFloor(50)).toBeGreaterThan(0);
+    expect(inscribeRollFloor(100)).toBeGreaterThan(inscribeRollFloor(50));
+    expect(inscribeRollFloor(120)).toBe(inscribeRollFloor(100));
+  });
+
+  it("非法熟练度不制造 NaN 保底", () => {
+    expect(inscribeRollFloor(Number.NaN)).toBe(0);
+    expect(inscribeRollFloor(Number.POSITIVE_INFINITY)).toBe(0);
+    expect(inscribeRollFloor(Number.NEGATIVE_INFINITY)).toBe(0);
   });
 });
 
