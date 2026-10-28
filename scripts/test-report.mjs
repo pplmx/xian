@@ -53,6 +53,7 @@ const CATEGORIES = [
       "gnum",
       "format",
       "timeUnits",
+      "listRender",
       "savePlaintext",
       "formulas",
       "linggenGen",

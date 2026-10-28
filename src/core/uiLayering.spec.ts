@@ -642,8 +642,22 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
     expect(col?.src).toContain(':aria-label="moreKnownLabel(cat)"');
     expect(col?.src).toContain("hiddenUnknown");
+    expect(col?.src, "首批之后的「新得」不能被续开入口吞掉").toContain("hiddenNew");
+    expect(col?.src, "藏着新得时，续开按钮要报出来").toContain("含新得 ${cat.hiddenNew}");
+    expect(col?.src, "新得只数首批之后的那一段，不能把已展示的又数一遍").toMatch(
+      /known\s*\.slice\(knownPage\.shown\)\s*\.filter\(\(entry\) => quests\.isEntryNew/,
+    );
     expect(col?.src, "??? 仍只铺 UNKNOWN_CAP，不许被续开按钮带走").toContain(
       "unknown.slice(0, UNKNOWN_CAP)",
+    );
+
+    const knownLoop = col?.src.indexOf('v-for="entry in cat.knownVisible"') ?? -1;
+    const moreButton = col?.src.indexOf('data-collection-more="cat.key"') ?? -1;
+    const unknownLoop = col?.src.indexOf('v-for="entry in cat.unknownVisible"') ?? -1;
+    expect(col?.src, "已收批次要先渲染").toContain('v-for="entry in cat.knownVisible"');
+    expect(moreButton, "续开按钮要紧接已收批次").toBeGreaterThan(knownLoop);
+    expect(unknownLoop, "未识问号要排在续开按钮之后，不能把入口压到问号墙下面").toBeGreaterThan(
+      moreButton,
     );
   });
 

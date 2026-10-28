@@ -28,6 +28,6 @@ export function listWindow<T>(items: readonly T[], limit: number): ListWindow<T>
 /** 再开一批;清单变短时直接把窗口收口到真实件数 */
 export function nextListLimit(shown: number, total: number, batch: number): number {
   const current = clampCount(shown, total);
-  const step = Math.max(1, Math.trunc(batch));
+  const step = Number.isFinite(batch) ? Math.max(1, Math.trunc(batch)) : 1;
   return Math.min(total, current + step);
 }

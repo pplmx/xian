@@ -81,9 +81,8 @@
         </p>
         <p v-else class="mt-1 text-[10px] text-ink-faint">{{ cat.source }}</p>
         <div class="card-ink mt-2 flex flex-wrap gap-1.5 px-3.5 py-3">
-          <template v-for="entry in cat.shown" :key="entry.id">
+          <template v-for="entry in cat.knownVisible" :key="entry.id">
             <button
-              v-if="entry.stage >= 1"
               class="chip-ink flex items-center gap-1 active:scale-95"
               :style="{ color: entry.color }"
               :data-codex-entry="cat.key"
@@ -104,12 +103,6 @@
                 >新</span
               >
             </button>
-            <span
-              v-else
-              class="chip-ink border-ink/15 text-ink-faint"
-              :title="`尚未收录 · ${cat.source}`"
-              >???</span
-            >
           </template>
           <!--
             已收条目也会长到几百枚。每册先摆一批,余下的由玩家自己续开 ——
@@ -118,15 +111,19 @@
           <button
             v-if="cat.hiddenKnown > 0"
             type="button"
-            class="chip-ink border-cinnabar/50 text-[10px] text-cinnabar active:scale-95"
+            class="chip-ink border-cinnabar/50 !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
             :data-collection-more="cat.key"
             :data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"
             :aria-label="moreKnownLabel(cat)"
             @click="showMoreKnown(cat)"
           >
-            再看 {{ Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown) }} 件 · 余
-            {{ cat.hiddenKnown }}
+            {{ moreKnownLabel(cat) }}
           </button>
+          <template v-for="entry in cat.unknownVisible" :key="entry.id">
+            <span class="chip-ink border-ink/15 text-ink-faint" :title="`尚未收录 · ${cat.source}`"
+              >???</span
+            >
+          </template>
           <!--
             未识者至多铺 UNKNOWN_CAP 枚:装备图鉴有 288 个模板,全铺出来是二十屏的「?」墙 ——
             而每个 ? 都不带一点信息(名字、品阶全遮着),只等于同一个数重复画。【多出来的折成一枚计数章。
@@ -389,7 +386,7 @@ const collectionCats = computed<CodexCat[]>(() => {
  * 未识的「???」至多铺这么多枚。
  *
  * 装备图鉴有 288 个模板 —— 全铺出来是二十屏的「?」墙,而每个 ? 都不带一点信息
- * (名字/品阶/描述全遮着),多铺一枚与少铺一枚读到的东西完全一样。故已收录的照旧全列,
+ * (名字/品阶/描述全遮着),多铺一枚与少铺一枚读到的东西完全一样。故已收录的按批续开,
  * 未识的只铺前 UNKNOWN_CAP 枚(留出「还有很多格空着」的感觉),其余折成一枚「…+N」。
  */
 const UNKNOWN_CAP = 24;
@@ -404,20 +401,26 @@ const visibleCats = computed(() =>
     const known = cat.entries.filter((e) => e.stage >= 1);
     const unknown = cat.entries.filter((e) => e.stage < 1);
     const knownPage = listWindow(known, knownLimits.value[cat.key] ?? COLLECTION_RENDER_BATCH);
+    const hiddenNew = known
+      .slice(knownPage.shown)
+      .filter((entry) => quests.isEntryNew(cat.key, entry.id)).length;
     return {
       ...cat,
-      shown: [...knownPage.visible, ...unknown.slice(0, UNKNOWN_CAP)],
+      knownVisible: knownPage.visible,
+      unknownVisible: unknown.slice(0, UNKNOWN_CAP),
       knownShown: knownPage.shown,
       knownTotal: known.length,
       hiddenKnown: knownPage.hidden,
+      hiddenNew,
       hiddenUnknown: Math.max(0, unknown.length - UNKNOWN_CAP),
     };
   }),
 );
 
-function moreKnownLabel(cat: { hiddenKnown: number }): string {
+function moreKnownLabel(cat: { hiddenKnown: number; hiddenNew: number }): string {
   const next = Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown);
-  return `再看 ${next} 件 · 余 ${cat.hiddenKnown}`;
+  const fresh = cat.hiddenNew > 0 ? ` · 含新得 ${cat.hiddenNew}` : "";
+  return `再看 ${next} 件 · 余 ${cat.hiddenKnown}${fresh}`;
 }
 
 function showMoreKnown(cat: { key: string; knownShown: number; knownTotal: number }): void {
