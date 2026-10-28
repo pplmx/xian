@@ -28,7 +28,7 @@ import { useAdventureStore } from "@/stores/adventure";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { EXPLORE_BATTLE_INTERVAL } from "@/data/constants";
-import { gn, toNum } from "@/utils/gnum";
+import { gn, sub, toNum } from "@/utils/gnum";
 
 // rng 全响应固定:概率判定处处 0.5、pick 恒取首项 —— 序列确定
 vi.mock("@/utils/random", async (importOriginal) => {
@@ -205,6 +205,27 @@ describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", ()
     expect(s!.notes.join("\n")).toContain("连胜 3 场");
     expect(s!.notes.join("\n")).toContain("连胜 5 场");
     expect(s!.notes.join("\n")).toContain("悟道点 +1");
+  });
+
+  it("离线连胜赏格也并入会话账:灵石与悟道都不漏", () => {
+    const run = (startStreak: number) => {
+      setActivePinia(createPinia());
+      seedSession("normal");
+      const player = usePlayerStore();
+      player.initCharacter("离线连胜对账", { roots: [] } as never);
+      player.winStreak = startStreak;
+      settleOffline(Date.now())!;
+      return useAdventureStore().session!;
+    };
+
+    // 从 100 起不会再跨档;从 0 起这一段会跨 3/5/10,两档差应正是赏格合计。
+    const noReward = run(100);
+    const rewarded = run(0);
+    expect(toNum(sub(rewarded.stoneGain, noReward.stoneGain)), "三档灵石合计 160").toBeCloseTo(
+      160,
+      6,
+    );
+    expect(rewarded.wudaoGain - noReward.wudaoGain, "三档悟道合计 8").toBe(8);
   });
 
   it("离线历练照在线攒道侣机会点:只补记账,三维与待决事件原样", () => {

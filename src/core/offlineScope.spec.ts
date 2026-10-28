@@ -162,9 +162,9 @@ describe("离线的作用域 · 在途的东西一律不动", () => {
     expect(stoneGained, "与会话面板同源的这份账必须记上").toBeGreaterThan(0);
     expect(expGained).toBeGreaterThan(0);
     /**
-     * 会话记的是**战斗**那一份,离线总结还含自动结算的际遇与闭关修炼 ——
-     * 故这里是包含关系而不是等号:份量要占大头,但不会被别的来源算进来。
-     * 回归红线是上面的 > 0:旧实现压根不往会话里写收益(挂一夜回来面板还停在 0)。
+     * 会话记的是战斗与际遇等历练来源,离线总结还含闭关修炼、建筑与镇压被动 ——
+     * 故这里是包含关系而不是等号:历练应占大头,但不会被整段离线收益冒充。
+     * 回归红线是上面的 > 0:旧实现压根不往会话里写战斗收益(挂一夜回来面板还停在 0)。
      */
     expect(stoneGained, "会话灵石账不该超过离线总账").toBeLessThanOrEqual(toNum(summary!.stone));
     expect(expGained, "会话修为账不该超过离线总账").toBeLessThan(toNum(summary!.exp));

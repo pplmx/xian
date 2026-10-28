@@ -129,12 +129,12 @@ describe("连胜(Phase 28 · 曾经无调用方,TASK-022 接线后)", () => {
     player.initCharacter("连胜测试", { roots: [] } as never);
 
     player.winStreak = 2;
-    recordWin();
+    expect(recordWin()).toEqual({ streak: 3, stone: 20, wudao: 1 });
     expect(player.winStreak).toBe(3);
     expect(toNum(resources.spiritStone)).toBe(20);
     expect(resources.wudao).toBe(1);
 
-    recordWin(); // 4:非奖励档
+    expect(recordWin(), "4 不是奖励档,不返回赏格").toBeNull();
     expect(player.winStreak).toBe(4);
     expect(toNum(resources.spiritStone)).toBe(20);
 

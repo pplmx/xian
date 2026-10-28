@@ -203,6 +203,29 @@ describe("连胜(TASK-022 接线 · runBattle 胜负驱动 player.winStreak)", (
       "3 档赏的悟道该写进这一趟的会话账,结束总结才有得报",
     ).toBe(1);
   });
+
+  it("连胜档赏的灵石也并入会话账,与悟道同源", () => {
+    /** 同一套确定性战斗、同一个起始状态,只差跨没跨过 3 档。 */
+    const oneWin = (startStreak: number) => {
+      setActivePinia(createPinia());
+      const player = usePlayerStore();
+      player.initCharacter("连胜对账", { roots: [] } as never);
+      player.winStreak = startStreak;
+      combatWin.value = true;
+      const now = Date.now();
+      forgeSession(now);
+      tickExploration(now, 0);
+      return useAdventureStore().session!;
+    };
+
+    const plain = oneWin(0);
+    const rewarded = oneWin(2);
+    expect(toNum(sub(rewarded.stoneGain, plain.stoneGain)), "3 档应多记 20 灵石").toBeCloseTo(
+      20,
+      6,
+    );
+    expect(rewarded.wudaoGain - plain.wudaoGain, "3 档应多记 1 悟道").toBe(1);
+  });
 });
 
 /**

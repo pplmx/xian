@@ -230,8 +230,15 @@ export function consumeBreakthroughPrep(): number {
   return s.bonus;
 }
 
-/** 记录连胜 */
-export function recordWin(): void {
+/** 一次跨档发出的连胜赏格(逐场与整批判定共用这一份形状) */
+export interface StreakBatchReward {
+  streak: number;
+  stone: number;
+  wudao: number;
+}
+
+/** 记录连胜;跨档时返回这一场发出的赏格,供历练会话同账累计。 */
+export function recordWin(): StreakBatchReward | null {
   const player = usePlayerStore();
   player.incrementWinStreak();
 
@@ -246,7 +253,9 @@ export function recordWin(): void {
     // 奖励必须报数:同一场战斗里镇压、雪耻都有 toast,唯独 3/5/10 档的赏赐
     // 一直静默入袋 —— 白拿的灵石与悟道,账上要有声音(全库审计抓出的真缺口)
     notify(`连胜 ${streak} 场,赏灵石 ${reward.stone} · 悟道点 ${reward.wudao}`, "rare");
+    return { ...reward };
   }
+  return null;
 }
 
 /** 记录失败(重置连胜) */
@@ -256,13 +265,6 @@ export function recordLoss(): void {
   player.resetWinStreak();
   // 贺有赏、断有音:连胜被掐断的那一下要出声(别让玩家某天回过神才发现 3 连胜没了)
   if (streak > 0) notify(`连胜 ${streak} 场就此而止,前功须从头再积`, "warn");
-}
-
-/** 整批入账时发下的连胜赏格(与逐场 recordWin 同一张表) */
-export interface StreakBatchReward {
-  streak: number;
-  stone: number;
-  wudao: number;
 }
 
 /** 归来卷轴里一条赏格的写法(与在线 recordWin 的 toast 同一套数,不另抄一份) */

@@ -32,4 +32,14 @@ describe("历练战绩文案", () => {
     );
     expect(panel).toContain("sessionRecordText");
   });
+
+  it("战斗面板四格都真有数:战绩、际遇、拾获、悟道", () => {
+    const panel = readFileSync(
+      resolve(__dirname, "../components/adventure/CombatPanel.vue"),
+      "utf8",
+    );
+    expect(panel, "网格声明了四列,就不能只放三格而空着一列").toContain("grid-cols-4");
+    expect(panel).toContain(">悟道</p>");
+    expect(panel, "第四格读会话里已累计的悟道,不另算一份").toContain("session?.wudaoGain");
+  });
 });

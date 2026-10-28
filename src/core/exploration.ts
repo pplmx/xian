@@ -10,9 +10,8 @@ import type {
   RegionDef,
 } from "@/types";
 import { rng } from "@/utils/random";
-import { add, gnZero } from "@/utils/gnum";
+import { add, gn, gnZero } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
-import { useResourcesStore } from "@/stores/resources";
 import { enemyDef } from "@/data/enemies";
 import { regionDef } from "@/data/regions";
 import {
@@ -350,9 +349,8 @@ function runBattle(now: number): void {
     // 累计胜场:区域之主的门槛认它(见上面那段)——战败结束整趟,但这份进度不清零
     adventure.addRegionWins(region.id);
     // Phase 28 连胜:再下一城,3/5/10 档发放只管奖(见 earlyGameService.recordWin)。
-    // 档位赏的悟道同时写进本趟会话账 —— 结束总结要报,别让悟道只活在账本里(离线早有此数)
-    const wudaoBefore = useResourcesStore().wudao;
-    recordStreakWin();
+    // 档位赏的灵石与悟道一起写进本趟会话账,不能只报战斗掉落、漏掉同场发的赏。
+    const streakReward = recordStreakWin();
     // Phase 31 A2:区域事件掉落修正(妖潮/古墓/商队更丰)
     const regReward = regEv ? (regionEventDef(regEv.eventId)?.rewardMult ?? 1) : 1;
     const drops = afterWin(
@@ -368,10 +366,10 @@ function runBattle(now: number): void {
     adventure.setSession({
       ...s,
       wins: s.wins + 1,
-      stoneGain: add(s.stoneGain, drops.stone),
+      stoneGain: add(add(s.stoneGain, drops.stone), gn(streakReward?.stone ?? 0)),
       expGain: add(s.expGain, drops.exp),
       itemGain: s.itemGain + drops.items,
-      wudaoGain: s.wudaoGain + Math.max(0, useResourcesStore().wudao - wudaoBefore),
+      wudaoGain: s.wudaoGain + (streakReward?.wudao ?? 0),
       nextBattleAt: nextBattleTime(now),
     });
     if (eDef.isBoss) {

@@ -286,7 +286,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
    * 折进会话总账 —— 玩家挂了一夜再回来接着打时,战斗页上的「本次所得」不该把离线段漏掉。
    * 离线本来就按期望值整段结算,这里记的也是同一份数(不是另算一套)。
    */
-  const trip = { stone: gnZero(), exp: gnZero(), items: 0 };
+  const trip = { stone: gnZero(), exp: gnZero(), items: 0, wudao: 0 };
   if (session) {
     const region = regionDef(session.regionId);
     /**
@@ -489,6 +489,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
          * 这里按「胜场接上、败场收尾」的同一顺序整批结算。
          */
         for (const reward of recordWinStreakBatch(wins, battles - wins)) {
+          trip.stone = add(trip.stone, gn(reward.stone));
+          trip.wudao += reward.wudao;
           notes.push(`途中${streakRewardText(reward.streak, reward.stone, reward.wudao)}`);
         }
         /**
@@ -680,6 +682,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             notes.push(`挂单之间,你已将【${bossDef.name}】斩于剑下(离线战果,收益折损)`);
             // 首领胜也是一场胜:连胜照推,跨过赏格档照发(与在线 runBattle 同一本账)
             for (const reward of recordWinStreakBatch(1, 0)) {
+              trip.stone = add(trip.stone, gn(reward.stone));
+              trip.wudao += reward.wudao;
               notes.push(`斩将之后${streakRewardText(reward.streak, reward.stone, reward.wudao)}`);
             }
             /**
@@ -733,6 +737,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
           stoneGain: add(current.stoneGain, trip.stone),
           expGain: add(current.expGain, trip.exp),
           itemGain: current.itemGain + trip.items,
+          wudaoGain: current.wudaoGain + trip.wudao,
           // 与在线 nextBattleTime 同源:速度加成要除以 speed,否则恢复后首战被拖慢一拍
           nextBattleAt: nowMs + (EXPLORE_BATTLE_INTERVAL * 1000) / speed,
         });

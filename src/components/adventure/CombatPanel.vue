@@ -40,6 +40,10 @@
           <p class="text-[10px] text-ink-faint">拾获</p>
           <p class="tabular text-[13px] text-ink">{{ session?.itemGain ?? 0 }}</p>
         </div>
+        <div>
+          <p class="text-[10px] text-ink-faint">悟道</p>
+          <p class="tabular text-[13px] text-ink">{{ session?.wudaoGain ?? 0 }}</p>
+        </div>
       </div>
       <!--
         连胜与本次所得并排一行:两者都是「这一趟的账」,各占半行、长短自定,
