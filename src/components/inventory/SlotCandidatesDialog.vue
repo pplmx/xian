@@ -5,10 +5,52 @@
     :title="slotName ? EQUIP_SLOT_NAMES[slotName] : ''"
     @close="emit('close')"
   >
-    <div v-if="pickerRows.length" class="space-y-1.5">
+    <div
+      v-if="pickerRows.length"
+      class="space-y-1.5"
+      :data-slot-candidate-total="pickerRows.length"
+      :data-slot-candidate-shown="candidatePage.shown"
+      :data-slot-candidate-start="candidatePage.start"
+    >
+      <!--
+        大行囊按部位摊开后,同一槽仍可能几十件。先铺一批,余件显式续开;
+        窗口最多留两批,回翻保证前面几批也仍可达。
+      -->
+      <p class="pb-1 text-center text-[10px] text-ink-faint tabular">
+        共 {{ pickerRows.length }} 件 · 现看 {{ candidatePage.start + 1 }}–{{ candidatePage.shown }}
+        · 佩戴中置顶
+      </p>
       <div
-        v-for="row in pickerRows"
+        v-if="candidatePage.start > 0 || candidatePage.hidden > 0"
+        class="flex flex-wrap justify-center gap-1"
+      >
+        <button
+          v-if="candidatePage.start > 0"
+          type="button"
+          data-slot-candidate-prev
+          class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+          :aria-label="previousCandidateText"
+          @click="showPreviousCandidates"
+        >
+          {{ previousCandidateText }}
+        </button>
+        <button
+          v-if="candidatePage.hidden > 0"
+          type="button"
+          data-slot-candidate-more
+          class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+          :aria-label="moreCandidateText"
+          :data-promised="Math.min(SLOT_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
+          @click="showMoreCandidates"
+        >
+          {{ moreCandidateText }}
+        </button>
+      </div>
+      <div
+        v-for="row in candidatePage.visible"
         :key="row.item.uid"
+        :data-slot-candidate="row.item.uid"
+        tabindex="-1"
         class="flex items-center gap-2.5 rounded-md px-2.5 py-2"
         :class="row.equipped ? 'bg-jade/10' : 'bg-paper-deep/70'"
       >
@@ -75,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
@@ -86,6 +128,13 @@ import { isRareQuality } from "@/ui/qualityTier";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { equippablePower } from "@/core/equipBest";
 import { formatGN } from "@/utils/format";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 import type { EquipSlot, EquipmentInstance } from "@/types";
 
 const props = defineProps<{ slotName: EquipSlot | null }>();
@@ -145,12 +194,80 @@ const pickerRows = computed(() => {
     });
 });
 
+const SLOT_CANDIDATE_RENDER_BATCH = 12;
+const SLOT_CANDIDATE_RENDER_WINDOW = SLOT_CANDIDATE_RENDER_BATCH * 2;
+const candidateLimit = ref(SLOT_CANDIDATE_RENDER_BATCH);
+const candidatePage = computed(() =>
+  listWindow(pickerRows.value, candidateLimit.value, SLOT_CANDIDATE_RENDER_WINDOW),
+);
+
+const moreCandidateText = computed(() => {
+  const next = Math.min(SLOT_CANDIDATE_RENDER_BATCH, candidatePage.value.hidden);
+  return `再看 ${next} 件 · 余 ${candidatePage.value.hidden}`;
+});
+const previousCandidateText = computed(
+  () =>
+    `前一批 ${previousListStep(
+      candidatePage.value.shown,
+      pickerRows.value.length,
+      SLOT_CANDIDATE_RENDER_BATCH,
+    )} 件`,
+);
+
+function focusCandidate(index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>("[data-slot-candidate]");
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function focusCandidateById(uid: string): void {
+  void nextTick(() => {
+    document.querySelector<HTMLElement>(`[data-slot-candidate="${CSS.escape(uid)}"]`)?.focus();
+  });
+}
+
+function showMoreCandidates(): void {
+  const shownBefore = candidatePage.value.shown;
+  const shownAfter = nextListLimit(
+    shownBefore,
+    pickerRows.value.length,
+    SLOT_CANDIDATE_RENDER_BATCH,
+  );
+  candidateLimit.value = shownAfter;
+  focusCandidate(firstNewVisibleIndex(shownBefore, shownAfter, SLOT_CANDIDATE_RENDER_WINDOW));
+}
+
+function showPreviousCandidates(): void {
+  candidateLimit.value = previousListLimit(
+    candidatePage.value.shown,
+    pickerRows.value.length,
+    SLOT_CANDIDATE_RENDER_BATCH,
+  );
+  focusCandidate();
+}
+
+// 换一个部位是换一份清单,窗口不能停在上一个部位的「第二批」。
+watch(
+  () => props.slotName,
+  () => {
+    candidateLimit.value = SLOT_CANDIDATE_RENDER_BATCH;
+  },
+);
+
 function equipItem(uid: string): void {
-  if (props.slotName) inventory.equip(uid, props.slotName);
+  if (!props.slotName) return;
+  inventory.equip(uid, props.slotName);
+  // 佩戴件会跳到第一行;若窗口还停在后面的批次,玩家刚选的这件反而从 DOM 消失。
+  candidateLimit.value = SLOT_CANDIDATE_RENDER_BATCH;
+  focusCandidateById(uid);
 }
 
 function unequipSlot(): void {
-  if (props.slotName) inventory.unequip(props.slotName);
+  if (!props.slotName) return;
+  inventory.unequip(props.slotName);
+  candidateLimit.value = SLOT_CANDIDATE_RENDER_BATCH;
+  focusCandidate();
 }
 
 /** 详情弹窗是全局的(ui.equipDetailUid)—— 装备卡与候选行写的是同一个入口,无第二本账 */

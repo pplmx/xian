@@ -68,6 +68,7 @@
         <button
           v-for="row in slotRows"
           :key="row.slot"
+          :data-equip-slot="row.slot"
           class="card-ink flex flex-col items-center gap-1 px-2 py-2.5 active:scale-95"
           @click="pickerSlot = row.slot"
         >

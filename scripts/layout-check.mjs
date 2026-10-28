@@ -159,6 +159,9 @@
  *      一批,续开、滑窗、回翻与焦点走同一套长列表规则;195 宽下入口与整扇弹窗都要能读。
  *   五十五 名号与灵兽两册共 69 条也要分批回看。当前相伴必须压过品阶排在第一,
  *      不能藏在同品阶之后;续开、滑窗、回翻与焦点同上一套,195 宽下整页仍可读。
+ *   五十六 部位候选按 12 件一批、最多留 24 件。300 件后期背包里同槽仍有几十件,
+ *      续开与回翻必须真的可达;换装后佩戴件跳到顶部,窗口要回首批并把焦点送过去。
+ *      195 宽下另把候选续到第二批,量分页读数、入口与候选行是否被挤坏。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -173,6 +176,7 @@ import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
 import { decryptSlice, encryptSlice, seedSave, showcaseSlices } from "./lib/saveFixture.mjs";
 import { TITLES } from "../src/data/titles.ts";
 import { PETS } from "../src/data/pets.ts";
+import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
 import { qualityDef } from "../src/data/qualities.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { cpus } from "node:os";
@@ -6518,6 +6522,20 @@ async function taskDialogZoom() {
   let checked = 0;
   const enc = encryptSlice;
   const gn = (m, e) => ({ m, e });
+  const zoomWeaponTemplates = EQUIPMENT_TEMPLATES.filter(
+    (tpl) => tpl.slot === "weapon" && !["w_zidian", "w_hanfeng"].includes(tpl.id),
+  );
+  if (zoomWeaponTemplates.length < 13) {
+    throw new Error("200% 浮层夹具需要至少 13 个真实武器模板");
+  }
+  const extraWeaponCandidates = zoomWeaponTemplates.slice(0, 13).map((tpl, i) => ({
+    uid: `dlg_candidate_${i}`,
+    templateId: tpl.id,
+    quality: "mortal",
+    tier: 20,
+    level: 0,
+    affixes: [],
+  }));
   const slices = {
     game: {
       started: true,
@@ -6581,6 +6599,7 @@ async function taskDialogZoom() {
           level: 0,
           affixes: [{ id: "low2", roll: 0.6 }],
         },
+        ...extraWeaponCandidates,
       ],
       equipped: { weapon: "dlg_w" },
       pills: { p_jvqidan: 5 },
@@ -6660,6 +6679,14 @@ async function taskDialogZoom() {
       .locator("main button", { hasText: /雾隐长枪/ })
       .first()
       .click({ timeout: 3000 });
+  });
+  /*
+   * 部位候选在大行囊里也会长到几十条。195px 下既要能读分页读数与两枚入口,
+   * 续到第二批后也不能把候选行、战差与「换上」挤成竖排。
+   */
+  await probe("部位候选 · 第二批", "/inventory", async () => {
+    await page.locator('[data-equip-slot="weapon"]').first().click({ timeout: 3000 });
+    await page.locator("[data-slot-candidate-more]").first().click({ timeout: 3000 });
   });
   /*
    * 自动重铸此前只量到装备详情外壳,展开后的阈值滑杆 / 预算行从未进过 200% 档。

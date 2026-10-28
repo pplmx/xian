@@ -29,8 +29,9 @@
  *
  * 基线(2026-10-29 实测,本机 + 无头 chromium,后期档):全 17 视图 ~60fps、
  * 最差帧 17ms、零长帧;300 件背包逐页翻到底峰值 643,1000 件仍为 643;
- * 坊市寄卖 + 贡器各翻到末页峰值 900;全收集九册共 809 条逐册翻到末页再回翻,
- * 峰值 1074。预算见 BUDGET,曾有过更糟的读数时任它红。
+ * 同包点开武器槽、部位候选逐页到底再回翻峰值 893;坊市寄卖 + 贡器各翻到末页峰值
+ * 900;全收集九册共 809 条逐册翻到末页再回翻,峰值 1074。预算见 BUDGET,曾有过
+ * 更糟的读数时任它红。
  */
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
@@ -173,6 +174,7 @@ const ITEM_FINGERPRINT_ATTRS = [
   "data-uid",
   "data-consign-uid",
   "data-equip-candidate",
+  "data-slot-candidate",
   "data-codex-id",
 ];
 
@@ -512,6 +514,7 @@ for (const view of VIEWS) {
     await page.waitForTimeout(secs * 1000);
     const data = await page.evaluate("window.__perfStop()");
     let batch = null;
+    let slotCandidates = null;
     let marketBatches = null;
     let collectionBatches = null;
     let peakNodes = data.nodes;
@@ -532,6 +535,45 @@ for (const view of VIEWS) {
         },
       );
       peakNodes = Math.max(peakNodes, batch.peakNodes);
+      try {
+        const trigger = page.locator('[data-equip-slot="weapon"]').first();
+        if ((await trigger.count()) === 0) throw new Error("没有武器槽入口");
+        await trigger.click({ timeout: 3000 });
+        await page.waitForTimeout(120);
+        const total = Number(
+          await page
+            .locator("[data-slot-candidate-total]")
+            .first()
+            .getAttribute("data-slot-candidate-total"),
+        );
+        if (!Number.isFinite(total) || total <= 0) throw new Error("部位候选没有报总数");
+        slotCandidates = await expandAllBatches(
+          page,
+          "[data-slot-candidate]",
+          "button[data-slot-candidate-more]",
+          {
+            selector: "[data-slot-candidate-total]",
+            attribute: "data-slot-candidate-total",
+            count: total,
+          },
+          {
+            startSelector: "[data-slot-candidate-total]",
+            startAttribute: "data-slot-candidate-start",
+            previousSelector: "button[data-slot-candidate-prev]",
+          },
+        );
+      } catch (error) {
+        slotCandidates = {
+          before: 0,
+          promised: 0,
+          after: 0,
+          steps: 0,
+          slides: 0,
+          peakNodes: 0,
+          ok: false,
+          reason: String(error),
+        };
+      }
     }
     if (bigbag > 0 && view.name === "market") {
       const consign = await expandAllBatches(
@@ -649,6 +691,7 @@ for (const view of VIEWS) {
       nodes: data.nodes,
       peakNodes,
       batch,
+      slotCandidates,
       marketBatches,
       collectionBatches,
       errors,
@@ -666,6 +709,7 @@ server.close();
 function batchChecks(r) {
   const checks = [];
   if (r.batch) checks.push(["续开", r.batch]);
+  if (r.slotCandidates) checks.push(["部位候选续开", r.slotCandidates]);
   if (r.marketBatches?.consign) checks.push(["寄卖续开", r.marketBatches.consign]);
   if (r.marketBatches?.candidates) checks.push(["贡器续开", r.marketBatches.candidates]);
   for (const batch of r.collectionBatches ?? []) checks.push([`收藏/${batch.key}续开`, batch]);
@@ -679,7 +723,7 @@ for (const r of results) {
       ([label, b]) =>
         `${label}=${b.before}→${b.after}${b.steps > 1 ? `(${b.steps}批/滑${b.slides})` : ""}${
           b.finalNodes && b.finalNodes !== b.peakNodes ? ` 收=${b.finalNodes}` : ""
-        }`,
+        }${label === "部位候选续开" && b.peakNodes ? ` peak=${b.peakNodes}` : ""}`,
     )
     .join(" ");
   const deepDom = (r.peakNodes ?? r.nodes) !== r.nodes ? ` peak=${r.peakNodes}` : "";
@@ -703,6 +747,10 @@ for (const r of results) {
     failures.push(
       `${r.name}: DOM ${r.peakNodes ?? r.nodes} > ${BUDGET.maxDomByView[r.name]} —— 长列表是否又整批进首帧了`,
     );
+  else if (gate && r.slotCandidates?.peakNodes > 1100)
+    failures.push(
+      `${r.name}: 部位候选 DOM ${r.slotCandidates.peakNodes} > 1100 —— 候选表是否又整批进弹窗了`,
+    );
   else if (gate && checks.some(([, b]) => !b.ok)) {
     const [label, bad] = checks.find(([, b]) => !b.ok);
     failures.push(
@@ -712,7 +760,7 @@ for (const r of results) {
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxDomByView.collection} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 部位候选峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxDomByView.collection} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);

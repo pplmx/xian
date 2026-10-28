@@ -470,6 +470,49 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(picker?.src).toContain("powerOf(occupant)");
   });
 
+  it("部位候选再长也只铺当前窗 —— 逐批换装、回翻与换选回首批", () => {
+    // 大行囊按部位摊开后仍可能把几十条候选一次塞进弹窗;换装后佩戴件又会按排序
+    // 跳到顶部,若窗口还停在后面,玩家刚点的选项会从 DOM 里消失并带走焦点。
+    // 候选表因此与背包/图鉴/名号共用同一套分批、滑窗、回翻与聚焦规则。
+    const picker = FILES.find((f) => f.path === "components/inventory/SlotCandidatesDialog.vue");
+    expect(picker?.src, "候选表要复用长列表窗口").toMatch(
+      /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
+    );
+    expect(picker?.src, "候选表按 12 件一批、最多留 24 件").toMatch(
+      /SLOT_CANDIDATE_RENDER_BATCH\s*=\s*12[\s\S]{0,140}SLOT_CANDIDATE_RENDER_WINDOW\s*=\s*SLOT_CANDIDATE_RENDER_BATCH\s*\*\s*2/,
+    );
+    expect(picker?.src, "只循环当前窗口,不许再整表铺开").toMatch(
+      /v-for="row in candidatePage\.visible"/,
+    );
+    for (const attr of ["total", "shown", "start"]) {
+      expect(picker?.src, `候选表要暴露 ${attr} 读数给运行时门`).toContain(
+        `data-slot-candidate-${attr}`,
+      );
+    }
+    expect(picker?.src, "候选行要有稳定指纹").toContain(":data-slot-candidate=");
+    expect(picker?.src, "余件要能续开").toContain("data-slot-candidate-more");
+    expect(picker?.src, "滑走的批次要能回翻").toContain("data-slot-candidate-prev");
+    expect(picker?.src, "续开焦点要落到新露出的第一件").toMatch(
+      /firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*SLOT_CANDIDATE_RENDER_WINDOW\s*\)/,
+    );
+    expect(picker?.src, "换部位时窗口要回到首批").toMatch(
+      /watch\(\s*\(\)\s*=>\s*props\.slotName[\s\S]{0,180}candidateLimit\.value\s*=\s*SLOT_CANDIDATE_RENDER_BATCH/,
+    );
+    expect(picker?.src, "换装后要回首批并把焦点送到新佩戴件").toMatch(
+      /candidateLimit\.value\s*=\s*SLOT_CANDIDATE_RENDER_BATCH[\s\S]{0,160}focusCandidateById\(uid\)/,
+    );
+    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    expect(inv?.src, "槽位入口要有稳定落点,运行时门才能真点开候选表").toContain(
+      ':data-equip-slot="row.slot"',
+    );
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf8");
+    expect(perf, "运行时门要按稳定的候选行落点核对件数").toContain('"[data-slot-candidate]"');
+    expect(perf, "运行时门要逐批点开部位候选,不能只验源码").toContain(
+      "button[data-slot-candidate-more]",
+    );
+    expect(perf, "运行时门要核对回翻与前一批入口").toContain("button[data-slot-candidate-prev]");
+  });
+
   it("秘境付不起置灰+报差 —— 别只沉到底、点了才 toast", () => {
     // 秘境入口曾用 opacity-60 假装灰(仍可点、点了才 toast 原因),不入「付不起置灰+列差」
     // 的族规。钉死:付不起真禁用,禁用态**压色不压字**(底色与边框让位,字一个不降),
