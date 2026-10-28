@@ -60,6 +60,7 @@
             :aria-selected="gongfaCat === g.type"
             :aria-label="`${GONGFA_TYPE_NAMES[g.type]} ${g.items.length} 部`"
             :tabindex="gongfaCat === g.type ? 0 : -1"
+            :data-gongfa-cat="g.type"
             class="flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 font-kai text-[14px] tracking-[0.14em]"
             :class="
               gongfaCat === g.type
@@ -79,13 +80,16 @@
         </div>
 
         <p
-          v-if="gongfaPoolLeft[gongfaCat] > 0"
-          class="border-b border-ink/7 px-3 py-1.5 text-[11px] text-ink-faint"
+          class="flex flex-wrap gap-x-1.5 border-b border-ink/7 px-3 py-1.5 text-[11px] text-ink-faint"
         >
-          此门已习 {{ activeGongfaItems.length }} 部 · 参悟池尚余 {{ gongfaPoolLeft[gongfaCat] }} 部
-        </p>
-        <p v-else class="border-b border-ink/7 px-3 py-1.5 text-[11px] text-ink-faint">
-          此门已收全,待更高境界再探
+          <span>此门已习 {{ activeGongfaItems.length }} 部</span>
+          <span v-if="activeGongfaItems.length" class="tabular"
+            >· 现看 {{ gongfaPage.start + 1 }}–{{ gongfaPage.shown }}</span
+          >
+          <span v-if="gongfaPoolLeft[gongfaCat] > 0"
+            >· 参悟池尚余 {{ gongfaPoolLeft[gongfaCat] }} 部</span
+          >
+          <span v-else>· 已收全,待更高境界再探</span>
         </p>
 
         <div
@@ -95,10 +99,14 @@
           :id="`gongfa-cat-panel-${gongfaCat}`"
           :aria-labelledby="`gongfa-cat-tab-${gongfaCat}`"
           :aria-label="GONGFA_TYPE_NAMES[gongfaCat]"
+          :data-gongfa-total="activeGongfaItems.length"
+          :data-gongfa-shown="gongfaPage.shown"
+          :data-gongfa-start="gongfaPage.start"
         >
           <button
-            v-for="def in activeGongfaItems"
+            v-for="def in gongfaPage.visible"
             :key="def.id"
+            :data-gongfa-row="def.id"
             class="flex w-full flex-col gap-1 px-3 py-2.5 text-left active:bg-ink/4"
             @click="ui.gongfaDetailId = def.id"
           >
@@ -164,6 +172,36 @@
             <template v-else>此门尚无习得。藏经阁参悟之后,会出现在这里。</template>
           </p>
         </div>
+        <!--
+          门内只铺当前窗:外层 max-h-72 只裁视觉,不裁 DOM。续开与回翻放到滚动框外,
+          玩家不必先滑到底才能继续;续开后焦点仍交给新露出的第一行。
+        -->
+        <div
+          v-if="gongfaPage.start > 0 || gongfaPage.hidden > 0"
+          class="flex flex-wrap gap-1 border-t border-ink/7 p-1.5"
+        >
+          <button
+            v-if="gongfaPage.start > 0"
+            type="button"
+            data-gongfa-prev
+            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft"
+            :aria-label="previousGongfaText"
+            @click="showPreviousGongfa"
+          >
+            {{ previousGongfaText }}
+          </button>
+          <button
+            v-if="gongfaPage.hidden > 0"
+            type="button"
+            data-gongfa-more
+            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar"
+            :aria-label="moreGongfaText"
+            :data-promised="Math.min(GONGFA_RENDER_BATCH, gongfaPage.hidden)"
+            @click="showMoreGongfa"
+          >
+            {{ moreGongfaText }}
+          </button>
+        </div>
       </div>
 
       <!--
@@ -196,7 +234,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -208,6 +246,13 @@ import { canEnlighten as canEnlightenGongfa, gongfaBranchDef } from "@/data/gong
 import { COMPREHEND_PAGE_COST } from "@/data/constants";
 import { qualityDef } from "@/data/qualities";
 import { isRareQuality } from "@/ui/qualityTier";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
@@ -251,6 +296,74 @@ const activeGongfaItems = computed(
   () => gongfaCategories.value.find((g) => g.type === gongfaCat.value)?.items ?? [],
 );
 const learnedCount = computed(() => gongfaCategories.value.reduce((n, g) => n + g.items.length, 0));
+
+const GONGFA_RENDER_BATCH = 12;
+const GONGFA_RENDER_WINDOW = GONGFA_RENDER_BATCH * 2;
+const gongfaLimit = ref(GONGFA_RENDER_BATCH);
+const gongfaPage = computed(() =>
+  listWindow(activeGongfaItems.value, gongfaLimit.value, GONGFA_RENDER_WINDOW),
+);
+const moreGongfaText = computed(() => {
+  const next = Math.min(GONGFA_RENDER_BATCH, gongfaPage.value.hidden);
+  return `再看 ${next} 部 · 余 ${gongfaPage.value.hidden}`;
+});
+const previousGongfaText = computed(
+  () =>
+    `前一批 ${previousListStep(
+      gongfaPage.value.shown,
+      activeGongfaItems.value.length,
+      GONGFA_RENDER_BATCH,
+    )} 部`,
+);
+
+function focusGongfaRow(index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>("[data-gongfa-row]");
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function showMoreGongfa(): void {
+  const shownBefore = gongfaPage.value.shown;
+  const shownAfter = nextListLimit(
+    shownBefore,
+    activeGongfaItems.value.length,
+    GONGFA_RENDER_BATCH,
+  );
+  gongfaLimit.value = shownAfter;
+  focusGongfaRow(firstNewVisibleIndex(shownBefore, shownAfter, GONGFA_RENDER_WINDOW));
+}
+
+function showPreviousGongfa(): void {
+  gongfaLimit.value = previousListLimit(
+    gongfaPage.value.shown,
+    activeGongfaItems.value.length,
+    GONGFA_RENDER_BATCH,
+  );
+  focusGongfaRow();
+}
+
+// 换门就是换一份书册,窗口回到首批;焦点仍留在页签上,由玩家自己决定何时进列表。
+watch(gongfaCat, () => {
+  gongfaLimit.value = GONGFA_RENDER_BATCH;
+});
+
+// 装配会改变门内排序。若详情正开着,把窗口重开到目标行所在批,让 BaseModal
+// 关闭时仍能把焦点还给同一部功法;没有目标时才回首批。
+watch(
+  () => activeGongfaItems.value.map((def) => def.id).join("\u0000"),
+  () => {
+    const detailId = ui.gongfaDetailId;
+    const index = detailId ? activeGongfaItems.value.findIndex((def) => def.id === detailId) : -1;
+    gongfaLimit.value =
+      index >= 0
+        ? Math.min(
+            activeGongfaItems.value.length,
+            Math.ceil((index + 1) / GONGFA_RENDER_BATCH) * GONGFA_RENDER_BATCH,
+          )
+        : GONGFA_RENDER_BATCH;
+  },
+);
 
 /** 逐门参悟池余量 —— 与全局 comprehendLeft 同源,仅按门过滤:minRealm ≤ 当前 + 1 且未习得 */
 const gongfaPoolLeft = computed<Record<GongfaType, number>>(() => {

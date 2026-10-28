@@ -169,6 +169,9 @@
  *   五十九 词条转移的候选是整包装备的横切面:无部位限制的词条能落到全部藏品上。
  *      195 宽下按 12 件一批、最多留 24 件逐批翻到末页再回翻,续开焦点跟住新批;
  *      候选行、件数读数与两枚入口都不许把详情弹窗挤坏。
+ *   六十 修行页主 / 辅 / 秘三册终局共 66 部。每门按 12 部一批、最多留 24 部,
+ *      195 宽下逐门翻到末页再回翻;换门回首批、焦点留在页签,卸下辅修改序后
+ *      详情关闭仍能把焦点还给同一部。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -185,6 +188,7 @@ import { decryptSlice, encryptSlice, seedSave, showcaseSlices } from "./lib/save
 import { TITLES } from "../src/data/titles.ts";
 import { PETS } from "../src/data/pets.ts";
 import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
+import { GONGFA } from "../src/data/gongfa.ts";
 import { qualityDef } from "../src/data/qualities.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { cpus } from "node:os";
@@ -7206,6 +7210,296 @@ async function taskQuickPillOverflow() {
 }
 
 /**
+ * 修行页三册功法 —— 终局 66 部,外层 max-h-72 只裁视觉不裁 DOM。
+ *
+ * 用全习得夹具逐门走完:每门首批 12、最多留 24、末页可回翻;换门回首批且焦点
+ * 留在页签。辅修卸下后该部会从置顶落到低品位置,窗口要重开到它所在批,关闭详情
+ * 后 BaseModal 仍能把焦点还给同一部 —— 否则玩家刚操作完就被抛回页顶。
+ */
+async function taskGongfaListOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const counts = {
+      main: GONGFA.filter((gongfa) => gongfa.type === "main").length,
+      sub: GONGFA.filter((gongfa) => gongfa.type === "sub").length,
+      secret: GONGFA.filter((gongfa) => gongfa.type === "secret").length,
+    };
+    const seededSub =
+      GONGFA.find((gongfa) => gongfa.type === "sub" && gongfa.quality === "mortal") ??
+      GONGFA.find((gongfa) => gongfa.type === "sub");
+    if (!seededSub || counts.main === 0 || counts.sub === 0 || counts.secret === 0) {
+      throw new Error("功法全习得夹具取不到三册内容");
+    }
+
+    const slices = showcaseSlices("light");
+    slices.cultivation = {
+      learned: Object.fromEntries(GONGFA.map((gongfa) => [gongfa.id, gongfa.maxLevel])),
+      mainGongfa: null,
+      subGongfa: [seededSub.id],
+      buffs: [],
+      gongfaBranch: {},
+    };
+    await seedSave(ctx, slices, "__gongfaListFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/cultivation", { waitUntil: "load" });
+    await page.locator("[data-gongfa-total]").waitFor({ state: "visible", timeout: 10000 });
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+
+    async function readList() {
+      return page.evaluate(() => {
+        const holder = document.querySelector("[data-gongfa-total]");
+        const rows = [...document.querySelectorAll("[data-gongfa-row]")];
+        return {
+          total: Number(holder?.getAttribute("data-gongfa-total")),
+          shown: Number(holder?.getAttribute("data-gongfa-shown")),
+          start: Number(holder?.getAttribute("data-gongfa-start")),
+          count: rows.length,
+          ids: rows.map((row) => row.getAttribute("data-gongfa-row")),
+          focusRow: document.activeElement?.getAttribute("data-gongfa-row"),
+          focusCat: document.activeElement?.getAttribute("data-gongfa-cat"),
+        };
+      });
+    }
+
+    async function waitForList(total, shown) {
+      await page.waitForFunction(
+        ({ wantedTotal, wantedShown }) => {
+          const holder = document.querySelector("[data-gongfa-total]");
+          return (
+            holder?.getAttribute("data-gongfa-total") === String(wantedTotal) &&
+            holder?.getAttribute("data-gongfa-shown") === String(wantedShown)
+          );
+        },
+        { wantedTotal: total, wantedShown: shown },
+        { timeout: 5000 },
+      );
+    }
+
+    async function waitForFocus(id) {
+      await page
+        .waitForFunction(
+          (rowId) => document.activeElement?.getAttribute("data-gongfa-row") === rowId,
+          id,
+          { timeout: 3000 },
+        )
+        .catch(() => {});
+    }
+
+    async function checkPagerFit(label) {
+      for (const selector of ["[data-gongfa-more]", "[data-gongfa-prev]"]) {
+        const control = page.locator(selector).first();
+        if ((await control.count()) === 0) continue;
+        const fit = await control.evaluate((el) => {
+          const box = el.getBoundingClientRect();
+          return {
+            left: box.left,
+            right: box.right,
+            height: box.height,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+            viewport: window.innerWidth,
+          };
+        });
+        checked += 1;
+        if (
+          fit.left < -1 ||
+          fit.right > fit.viewport + 1 ||
+          fit.scrollWidth > fit.clientWidth + 1 ||
+          fit.height < 27.5
+        ) {
+          failures.push(
+            `[195] ${label}分页入口被挤坏:` +
+              `盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+              `内容 ${fit.scrollWidth}>${fit.clientWidth} / ` +
+              `高 ${Math.round(fit.height * 10) / 10}px`,
+          );
+        }
+      }
+    }
+
+    async function exerciseDoor(cat, label, total) {
+      await page.locator(`[data-gongfa-cat="${cat}"]`).click({ timeout: 5000 });
+      await waitForList(total, 12);
+      const initial = await readList();
+      const more = page.locator("[data-gongfa-more]").first();
+      const moreText = ((await more.textContent()) || "").replace(/\s+/g, " ").trim();
+      const morePromised = Math.min(12, total - 12);
+      checked += 1;
+      if (
+        initial.total !== total ||
+        initial.shown !== 12 ||
+        initial.start !== 0 ||
+        initial.count !== 12 ||
+        initial.focusCat !== cat ||
+        !new RegExp(`再看\\s*${morePromised}\\s*部\\s*·\\s*余\\s*${total - 12}`).test(moreText)
+      ) {
+        failures.push(
+          `[195] ${label}首批应 12/${total} 且焦点留在页签,` +
+            `实见 ${initial.count} 行 / start ${initial.start} / ` +
+            `焦点 ${initial.focusCat ?? initial.focusRow ?? "无"} «${moreText}»`,
+        );
+      }
+      await checkPagerFit(label);
+
+      await more.click({ timeout: 5000 });
+      const secondShown = Math.min(24, total);
+      await waitForList(total, secondShown);
+      const second = await readList();
+      await waitForFocus(second.ids[12]);
+      const secondFocused = await readList();
+      checked += 1;
+      if (
+        second.shown !== secondShown ||
+        second.start !== 0 ||
+        second.count !== secondShown ||
+        secondFocused.focusRow !== second.ids[12]
+      ) {
+        failures.push(
+          `[195] ${label}续开首批后应铺 ${secondShown} 部、焦点落第 13 部,` +
+            `实见 ${second.count} 部 / start ${second.start} / ` +
+            `焦点 ${secondFocused.focusRow ?? "无"}`,
+        );
+      }
+
+      let current = secondFocused;
+      while (current.shown < total) {
+        const before = current;
+        const shownAfter = Math.min(total, before.shown + 12);
+        await page.locator("[data-gongfa-more]").first().click({ timeout: 5000 });
+        await waitForList(total, shownAfter);
+        const after = await readList();
+        const beforeSet = new Set(before.ids);
+        const firstFresh = after.ids.find((id) => !beforeSet.has(id));
+        await waitForFocus(firstFresh);
+        const focused = await readList();
+        const expectedStart = Math.max(0, shownAfter - 24);
+        checked += 1;
+        if (
+          after.shown !== shownAfter ||
+          after.start !== expectedStart ||
+          after.count !== shownAfter - expectedStart ||
+          !firstFresh ||
+          focused.focusRow !== firstFresh
+        ) {
+          failures.push(
+            `[195] ${label}续开到第 ${shownAfter} 部时窗口不对:` +
+              `应 ${shownAfter - expectedStart} 行 / start ${expectedStart} / ` +
+              `焦点 ${firstFresh ?? "无"},实见 ${after.count} 行 / start ${after.start} / ` +
+              `焦点 ${focused.focusRow ?? "无"}(shown ${after.shown})`,
+          );
+        }
+        current = focused;
+      }
+
+      const expectedStart = Math.max(0, total - 24);
+      const expectedCount = total - expectedStart;
+      const previous = page.locator("[data-gongfa-prev]").first();
+      checked += 1;
+      if (
+        current.start !== expectedStart ||
+        current.count !== expectedCount ||
+        (await page.locator("[data-gongfa-more]").count()) > 0
+      ) {
+        failures.push(
+          `[195] ${label}末批应铺 ${expectedCount}/${total}、从第 ${expectedStart + 1} 部起,` +
+            `实见 ${current.count} 部 / start ${current.start}`,
+        );
+      }
+      if (expectedStart > 0) {
+        const before = current;
+        await previous.click({ timeout: 5000 });
+        await page.waitForFunction(
+          (shown) =>
+            Number(
+              document.querySelector("[data-gongfa-total]")?.getAttribute("data-gongfa-shown"),
+            ) < shown,
+          before.shown,
+          { timeout: 5000 },
+        );
+        const back = await readList();
+        await waitForFocus(back.ids[0]);
+        const backFocused = await readList();
+        checked += 1;
+        if (back.start >= before.start || backFocused.focusRow !== back.ids[0]) {
+          failures.push(
+            `[195] ${label}回翻没有回到上一页:` +
+              `start ${before.start} → ${back.start} / 焦点 ${backFocused.focusRow ?? "无"}`,
+          );
+        }
+      }
+    }
+
+    await exerciseDoor("main", "主修册", counts.main);
+    await exerciseDoor("sub", "辅修册", counts.sub);
+    await exerciseDoor("secret", "秘术册", counts.secret);
+
+    await page.locator('[data-gongfa-cat="main"]').click({ timeout: 5000 });
+    await waitForList(counts.main, 12);
+    const resetMain = await readList();
+    checked += 1;
+    if (resetMain.start !== 0 || resetMain.count !== 12 || resetMain.focusCat !== "main") {
+      failures.push(
+        `[195] 换回主修册没有回首批并守住页签焦点:` +
+          `${resetMain.count} 部 / start ${resetMain.start} / 焦点 ${resetMain.focusCat ?? "无"}`,
+      );
+    }
+
+    await page.locator('[data-gongfa-cat="sub"]').click({ timeout: 5000 });
+    await waitForList(counts.sub, 12);
+    const beforeRemove = await readList();
+    checked += 1;
+    if (!beforeRemove.ids.includes(seededSub.id)) {
+      failures.push(`[195] 当前辅修 ${seededSub.id} 没有按装配置顶,改序后无法验证焦点`);
+    }
+    await page.locator(`[data-gongfa-row="${seededSub.id}"]`).click({ timeout: 5000 });
+    await page.getByRole("button", { name: "卸下辅修", exact: true }).click({ timeout: 5000 });
+    await page.keyboard.press("Escape");
+    await waitForFocus(seededSub.id);
+    await page
+      .locator(".modal-panel")
+      .waitFor({ state: "detached", timeout: 3000 })
+      .catch(() => {});
+    const afterRemove = await readList();
+    checked += 1;
+    if (
+      !afterRemove.ids.includes(seededSub.id) ||
+      afterRemove.focusRow !== seededSub.id ||
+      afterRemove.shown <= 12
+    ) {
+      failures.push(
+        `[195] 卸下辅修后没有按新位置重开窗口并归还焦点:` +
+          `目标${afterRemove.ids.includes(seededSub.id) ? "在" : "不在"}窗内 / ` +
+          `shown ${afterRemove.shown} / 焦点 ${afterRemove.focusRow ?? "无"}`,
+      );
+    }
+
+    checked += 1;
+    const layoutProblems = problemsOf(await measurePage(page));
+    if (layoutProblems.length) failures.push(`[195] 修行功法三册 → ${layoutProblems.join(" / ")}`);
+
+    if (pageErrors.length)
+      failures.push(`[195] 修行功法三册场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 构筑对照的道痕很多时,只摆最近八则就是静默截断。
  *
  * 这里造十则带忆战快照的道痕:首批只该有八则和「再看 2 则 · 余 2」;在 195 宽
@@ -9451,6 +9745,7 @@ const TASKS = [
   ["坏档也能进游戏", taskBadSave],
   ["iOS 存档风险提示", taskIosNotice],
   ["修行速服丹药的余量入口", taskQuickPillOverflow],
+  ["修行功法三册的分批回看", taskGongfaListOverflow],
   ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
   ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
   ["道侣的历世同行回看", taskBondHistoryOverflow],

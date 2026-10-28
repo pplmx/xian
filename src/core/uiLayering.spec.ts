@@ -421,6 +421,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cult?.src).not.toMatch(/role="tab"[\s\S]{0,400}?btn-seal/);
   });
 
+  it("已习功法按门分批回看 —— 不得再把整门书册一次铺进 DOM", () => {
+    // 主修终局 28 部,外层的 max-h-72 只裁视觉不裁 DOM。门内清单与换签后的窗口
+    // 都要走 core/listRender;续开后的焦点按新露出的第一项落位,不能还停在旧批。
+    const cult = FILES.find((f) => f.path === "components/cultivation/GongfaSection.vue");
+    expect(cult?.src).toContain("const GONGFA_RENDER_BATCH = 12");
+    expect(cult?.src).toContain("const GONGFA_RENDER_WINDOW = GONGFA_RENDER_BATCH * 2");
+    expect(cult?.src).toContain('v-for="def in gongfaPage.visible"');
+    expect(cult?.src).toContain(':data-gongfa-row="def.id"');
+    expect(cult?.src).toContain("data-gongfa-more");
+    expect(cult?.src).toContain("data-gongfa-prev");
+    expect(cult?.src).toContain("firstNewVisibleIndex");
+    expect(cult?.src).not.toMatch(/v-for="def in activeGongfaItems"/);
+    expect(cult?.src).toMatch(/watch\([\s\S]{0,220}?gongfaLimit\.value = GONGFA_RENDER_BATCH/);
+  });
+
   it("灵草坊买十用十株的门槛 + 付不起摆短差 —— 灯灰必须说出差多少", () => {
     // 买10 曾拿单株价当门槛(够 1 株就亮),点了才弹「灵石不足」;付不起了也只
     // 沉到底不报差,与法宝炼化的「尚差」句式不一致。两者一起钉死:

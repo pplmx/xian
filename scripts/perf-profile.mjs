@@ -30,8 +30,9 @@
  * 基线(2026-10-29 实测,本机 + 无头 chromium,后期档):全 17 视图 ~60fps、
  * 最差帧 17ms、零长帧;300 件背包逐页翻到底峰值 643,1000 件仍为 643;
  * 全 45 件法宝逐批翻到末页再回翻峰值 401;54 张丹方同窗峰值 609;同包点开武器槽、
- * 部位候选逐页到底再回翻峰值 893;坊市寄卖 + 贡器各翻到末页峰值 900;全收集九册
- * 共 809 条逐册翻到末页再回翻,峰值 1074。预算见 BUDGET,曾有过更糟的读数时任它红。
+ * 部位候选逐页到底再回翻峰值 955;词条转移候选逐页到底峰值 913;坊市寄卖 + 贡器
+ * 各翻到末页峰值 900;全收集九册共 809 条逐册翻到末页再回翻,峰值 1074;
+ * 全习得三册功法逐门翻到末页,峰值 533。预算见 BUDGET,曾有过更糟的读数时任它红。
  */
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
@@ -85,13 +86,15 @@ const BUDGET = {
   /**
    * 背包一次只留 32 张卡,可前后逐批翻完 300 件;80 张一窗实测 1048,故不设两批。
    * 法宝全册 45 张密卡按 6+6 滑窗,全流程峰值 401;丹方 54 张同窗,峰值 609。
-   * 词条转移 299 件候选按 12+12 滑窗,逐批开完峰值 913。三条密清单单独守 1100,
+   * 词条转移 299 件候选按 12+12 滑窗,逐批开完峰值 913。四条密清单单独守 1100,
    * 不松动背包首屏预算。
    * 坊市是短横条/弹窗行,每窗最多 64 条;寄卖与贡器都逐页翻到末页再回翻一批。
    * 收藏每册每窗最多 48 枚,九册都翻到末页再回翻;809 条整页全铺实测 1326 DOM。
+   * 修行页三册功法每窗最多 24 部,全习得 66 部逐门翻完;单门整册铺开也会随内容增长,
+   * 故单独守住 700 DOM。
    * 1100 拦的是窗口上限失效、点击越多 DOM 越长的回潮。
    */
-  maxDomByView: { inventory: 700, market: 1100, collection: 1100 },
+  maxDomByView: { cultivation: 700, inventory: 700, market: 1100, collection: 1100 },
 };
 
 function startServer() {
@@ -181,6 +184,7 @@ const ITEM_FINGERPRINT_ATTRS = [
   "data-artifact-row",
   "data-recipe-row",
   "data-affix-candidate",
+  "data-gongfa-row",
   "data-codex-id",
 ];
 
@@ -288,7 +292,7 @@ async function rewindBatch(
     const beforeFirst = beforeItems[0] ?? "";
     const beforeSet = new Set(beforeItems);
     const promised = Number(
-      /前一批\s*(\d+)\s*[件张顶只条]/.exec(
+      /前一批\s*(\d+)\s*[件张顶只条部]/.exec(
         (await previous.getAttribute("aria-label")) ?? "",
       )?.[1] ?? 0,
     );
@@ -502,7 +506,7 @@ const {
   makeBigBagItems,
   makeAffixTransferBag,
 } = await loadBenchModules(
-  !noSeed && (!only || only === "collection"),
+  !noSeed && (!only || only === "collection" || only === "cultivation"),
   !noSeed && bigbag > 0 && (!only || only === "inventory" || only === "market"),
   !noSeed && (!only || only === "inventory"),
   !noSeed && (!only || only === "inventory"),
@@ -526,6 +530,10 @@ for (const view of VIEWS) {
     if (view.name === "collection") {
       if (!fullCollectionSlices) throw new Error("全收集夹具未载入");
       slices = { ...slices, ...fullCollectionSlices() };
+    }
+    if (view.name === "cultivation") {
+      if (!fullCollectionSlices) throw new Error("全习得功法夹具未载入");
+      slices = { ...slices, cultivation: fullCollectionSlices().cultivation };
     }
     if (view.name === "inventory") {
       if (!fullArtifactSlices || !fullRecipeSlices) throw new Error("全册夹具未载入");
@@ -586,6 +594,7 @@ for (const view of VIEWS) {
     let affixTransfer = null;
     let marketBatches = null;
     let collectionBatches = null;
+    let gongfaBatches = null;
     let peakNodes = data.nodes;
     if (bigbag > 0 && view.name === "inventory") {
       batch = await expandAllBatches(
@@ -867,6 +876,47 @@ for (const view of VIEWS) {
       );
       marketBatches = { consign, candidates };
     }
+    if (view.name === "cultivation") {
+      gongfaBatches = [];
+      for (const [key, label] of [
+        ["main", "主修"],
+        ["sub", "辅修"],
+        ["secret", "秘术"],
+      ]) {
+        await page.locator(`[data-gongfa-cat="${key}"]`).click({ timeout: 3000 });
+        await page.waitForTimeout(120);
+        const total = Number(
+          await page.locator("[data-gongfa-total]").first().getAttribute("data-gongfa-total"),
+        );
+        if (!Number.isFinite(total) || total <= 12) {
+          throw new Error(`${label}册没有形成多批清单(${total})`);
+        }
+        gongfaBatches.push({
+          key,
+          label,
+          ...(await expandAllBatches(
+            page,
+            "[data-gongfa-row]",
+            "button[data-gongfa-more]",
+            {
+              selector: "[data-gongfa-total]",
+              attribute: "data-gongfa-total",
+              count: total,
+            },
+            {
+              startSelector: "[data-gongfa-total]",
+              startAttribute: "data-gongfa-start",
+              previousSelector: "button[data-gongfa-prev]",
+            },
+          )),
+        });
+      }
+      peakNodes = Math.max(
+        peakNodes,
+        ...gongfaBatches.map((batch) => batch.peakNodes ?? 0),
+        await page.evaluate(() => document.querySelectorAll("*").length),
+      );
+    }
     if (view.name === "collection") {
       const categories = await page
         .locator("button[data-collection-more]")
@@ -932,6 +982,7 @@ for (const view of VIEWS) {
       affixTransfer,
       marketBatches,
       collectionBatches,
+      gongfaBatches,
       errors,
     };
     await context.close();
@@ -951,6 +1002,7 @@ function batchChecks(r) {
   if (r.recipeBatches) checks.push(["丹方续开", r.recipeBatches]);
   if (r.slotCandidates) checks.push(["部位候选续开", r.slotCandidates]);
   if (r.affixTransfer) checks.push(["词条转移续开", r.affixTransfer]);
+  for (const batch of r.gongfaBatches ?? []) checks.push([`功法/${batch.label}续开`, batch]);
   if (r.marketBatches?.consign) checks.push(["寄卖续开", r.marketBatches.consign]);
   if (r.marketBatches?.candidates) checks.push(["贡器续开", r.marketBatches.candidates]);
   for (const batch of r.collectionBatches ?? []) checks.push([`收藏/${batch.key}续开`, batch]);
@@ -964,7 +1016,13 @@ for (const r of results) {
       ([label, b]) =>
         `${label}=${b.before}→${b.after}${b.steps > 1 ? `(${b.steps}批/滑${b.slides})` : ""}${
           b.finalNodes && b.finalNodes !== b.peakNodes ? ` 收=${b.finalNodes}` : ""
-        }${["法宝续开", "丹方续开", "部位候选续开", "词条转移续开"].includes(label) && b.peakNodes ? ` peak=${b.peakNodes}` : ""}`,
+        }${
+          (["法宝续开", "丹方续开", "部位候选续开", "词条转移续开"].includes(label) ||
+            label.startsWith("功法/")) &&
+          b.peakNodes
+            ? ` peak=${b.peakNodes}`
+            : ""
+        }`,
     )
     .join(" ");
   const deepDom = (r.peakNodes ?? r.nodes) !== r.nodes ? ` peak=${r.peakNodes}` : "";
@@ -980,14 +1038,6 @@ for (const r of results) {
     failures.push(`${r.name}: 最差帧 ${r.max}ms > ${BUDGET.maxFrameMs}ms`);
   else if (gate && r.over50ms > BUDGET.longFramesMax)
     failures.push(`${r.name}: ${r.over50ms} 帧 >50ms 长帧 > ${BUDGET.longFramesMax}`);
-  else if (
-    gate &&
-    BUDGET.maxDomByView[r.name] &&
-    (r.peakNodes ?? r.nodes) > BUDGET.maxDomByView[r.name]
-  )
-    failures.push(
-      `${r.name}: DOM ${r.peakNodes ?? r.nodes} > ${BUDGET.maxDomByView[r.name]} —— 长列表是否又整批进首帧了`,
-    );
   else if (gate && r.slotCandidates?.peakNodes > 1100)
     failures.push(
       `${r.name}: 部位候选 DOM ${r.slotCandidates.peakNodes} > 1100 —— 候选表是否又整批进弹窗了`,
@@ -1004,7 +1054,27 @@ for (const r of results) {
     failures.push(
       `${r.name}: 词条转移候选 DOM ${r.affixTransfer.peakNodes} > 1100 —— 整包候选是否又铺进小滚动框了`,
     );
-  else if (gate && checks.some(([, b]) => !b.ok)) {
+  else if (
+    gate &&
+    r.gongfaBatches?.some(
+      (batch) => batch.peakNodes > (BUDGET.maxDomByView[r.name] ?? Number.POSITIVE_INFINITY),
+    )
+  ) {
+    const bad = r.gongfaBatches.find(
+      (batch) => batch.peakNodes > (BUDGET.maxDomByView[r.name] ?? Number.POSITIVE_INFINITY),
+    );
+    failures.push(
+      `${r.name}: 功法/${bad.label}册 DOM ${bad.peakNodes} > ${BUDGET.maxDomByView[r.name]} —— 整门书册是否又进了 DOM`,
+    );
+  } else if (
+    gate &&
+    BUDGET.maxDomByView[r.name] &&
+    (r.peakNodes ?? r.nodes) > BUDGET.maxDomByView[r.name]
+  ) {
+    failures.push(
+      `${r.name}: DOM ${r.peakNodes ?? r.nodes} > ${BUDGET.maxDomByView[r.name]} —— 长列表是否又整批进首帧了`,
+    );
+  } else if (gate && checks.some(([, b]) => !b.ok)) {
     const [label, bad] = checks.find(([, b]) => !b.ok);
     failures.push(
       `${r.name}: ${label}批次未兑现(承诺 +${bad.promised},实际 ${bad.before}→${bad.after};${bad.reason ?? "无异常"})`,
@@ -1013,7 +1083,7 @@ for (const r of results) {
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxDomByView.collection} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 修行功法 DOM ≤ ${BUDGET.maxDomByView.cultivation} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxDomByView.collection} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);
