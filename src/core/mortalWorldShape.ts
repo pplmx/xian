@@ -7,6 +7,7 @@
  *
  * - 静态素材(区域名、敌人、规则、骨架名)与派生账(首领回退段)从权威表重建;
  * - 任一引用已不存在、id 重复或数值越界,整界作废 —— 半截世界比没有世界更难救;
+ * - 路线进度只认当前世界从首段起的连续前缀,断档与旧节点不能越权开放后段;
  * - 完整世界经 JSON 往返后必须逐字段等价,不能因为修形悄悄换掉玩家的路线。
  */
 import type { MortalPlace, MortalWorld } from "./mortalWorldGen";
@@ -147,4 +148,22 @@ export function restoreMortalWorld(raw: unknown): MortalWorld | null {
     bias,
     bossFallbackAt,
   };
+}
+
+/**
+ * 把存档里的路线进度修成当前世界的连续前缀。
+ *
+ * `mortalCleared` 是解锁凭据而不是历史清单:只保留从首段开始一段不缺的节点。
+ * 乱序与重复按路线顺序重排;首个断档之后即使有记录也不再作数,
+ * 否则手改档只要写上后段 id,就能直接越过未走的前置。
+ */
+export function restoreMortalCleared(raw: unknown, world: MortalWorld | null): string[] {
+  if (!world || !Array.isArray(raw)) return [];
+  const saved = new Set(raw.filter((id): id is string => typeof id === "string"));
+  const prefix: string[] = [];
+  for (const place of world.chain) {
+    if (!saved.has(place.nodeId)) break;
+    prefix.push(place.nodeId);
+  }
+  return prefix;
 }

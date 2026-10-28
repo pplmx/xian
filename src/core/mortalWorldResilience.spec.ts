@@ -13,14 +13,14 @@ import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { useAdventureStore } from "@/stores/adventure";
 import { ENEMIES } from "@/data/enemies";
-import { MORTAL_REGIONS, MORTAL_TIER_MAX } from "@/data/regions";
+import { MORTAL_REGIONS, MORTAL_TIER_MAX, REGIONS } from "@/data/regions";
 import {
   REGION_NAME_TIER_BAND,
   ROUTE_SHAPES,
   generateMortalWorld,
   type MortalWorld,
 } from "./mortalWorldGen";
-import { worldView } from "./mortalWorldService";
+import { canEnterNode, worldView } from "./mortalWorldService";
 
 function persisted(w: MortalWorld): MortalWorld {
   return JSON.parse(JSON.stringify(w)) as MortalWorld;
@@ -37,15 +37,16 @@ describe("本世之界 · 读档修形", () => {
   it("完整世界经存档往返后保持原样,本世路线进度也不丢", () => {
     const adventure = useAdventureStore();
     const w = generateMortalWorld(20261029);
+    const cleared = w.chain.slice(0, 2).map((p) => p.nodeId);
     adventure.$patch({
       mortalWorld: persisted(w),
-      mortalCleared: [w.chain[1]!.nodeId],
+      mortalCleared: cleared,
     });
 
     adventure.sanitize();
 
     expect(adventure.mortalWorld).toEqual(w);
-    expect(adventure.mortalCleared).toEqual([w.chain[1]!.nodeId]);
+    expect(adventure.mortalCleared).toEqual(cleared);
     expect(() =>
       worldView(
         adventure.mortalWorld!,
@@ -53,6 +54,63 @@ describe("本世之界 · 读档修形", () => {
         (nodeId) => adventure.mortalCleared.includes(nodeId),
       ),
     ).not.toThrow();
+  });
+
+  it("路线进度只留当前世界从首段起的连续前缀,乱序、重复和旧节点都截掉", () => {
+    const adventure = useAdventureStore();
+    const w = generateMortalWorld(20261029);
+    const [first, second, , fourth] = w.chain;
+    adventure.$patch({
+      mortalWorld: persisted(w),
+      mortalCleared: [
+        fourth!.nodeId,
+        "old_world_node",
+        first!.nodeId,
+        first!.nodeId,
+        second!.nodeId,
+      ],
+    });
+
+    adventure.sanitize();
+
+    expect(adventure.mortalCleared).toEqual([first!.nodeId, second!.nodeId]);
+  });
+
+  it("断档进度不能越过前置节点授权后一段", () => {
+    const adventure = useAdventureStore();
+    const w = generateMortalWorld(20261029);
+    const [first, , third, fourth] = w.chain;
+    adventure.$patch({
+      mortalWorld: persisted(w),
+      mortalCleared: [first!.nodeId, third!.nodeId],
+    });
+
+    adventure.sanitize();
+
+    expect(adventure.mortalCleared).toEqual([first!.nodeId]);
+    expect(canEnterNode(third!.nodeId), "第三段的前置第二段未通,不能开放").toBe(false);
+    expect(canEnterNode(fourth!.nodeId), "第四段更不能被断档进度带开").toBe(false);
+  });
+
+  it("完整世界保留胜场,路线外仍可凭旧链历练的地界也不丢", () => {
+    const adventure = useAdventureStore();
+    const w = generateMortalWorld(20261029);
+    const outside = REGIONS.find((r) => !w.chain.some((p) => p.fromId === r.id))!;
+    const wins = { [w.chain[0]!.fromId]: 8, [outside.id]: 3 };
+    adventure.$patch({ mortalWorld: persisted(w), regionWins: wins });
+
+    adventure.sanitize();
+
+    expect(adventure.regionWins).toEqual(wins);
+  });
+
+  it("本来就没有世界栏的旧档,胜场不被误当成坏界清空", () => {
+    const adventure = useAdventureStore();
+    adventure.$patch({ mortalWorld: null, regionWins: { qingyun: 7 } });
+
+    adventure.sanitize();
+
+    expect(adventure.regionWins).toEqual({ qingyun: 7 });
   });
 
   const BROKEN: { name: string; damage: (w: MortalWorld) => void }[] = [
@@ -154,12 +212,17 @@ describe("本世之界 · 读档修形", () => {
       const w = persisted(generateMortalWorld(20261029));
       const staleNode = w.chain[0]!.nodeId;
       damage(w);
-      adventure.$patch({ mortalWorld: w, mortalCleared: [staleNode] });
+      adventure.$patch({
+        mortalWorld: w,
+        mortalCleared: [staleNode],
+        regionWins: { qingyun: 7, old_world_region: 3 },
+      });
 
       expect(() => adventure.sanitize()).not.toThrow();
 
       expect(adventure.mortalWorld, "坏世界必须回落到「暂无世界」").toBeNull();
       expect(adventure.mortalCleared, "旧世界的节点进度不能挂到下一世").toEqual([]);
+      expect(adventure.regionWins, "旧世界的叩门进度也必须跟世界一起作废").toEqual({});
     });
   }
 

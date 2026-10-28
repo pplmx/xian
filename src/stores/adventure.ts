@@ -6,7 +6,7 @@ import { persistConfig } from "@/utils/storage";
 import { regionDef } from "@/data/regions";
 import { ENGINE_WORLD } from "@/core/engineWorld";
 import { BIAS_POOL } from "@/core/mortalBias";
-import { restoreMortalWorld } from "@/core/mortalWorldShape";
+import { restoreMortalCleared, restoreMortalWorld } from "@/core/mortalWorldShape";
 import { gn } from "@/utils/gnum";
 import {
   asFiniteNumber,
@@ -81,7 +81,6 @@ export const useAdventureStore = defineStore(
     function sanitize(): void {
       unlocked.value = asStringArray(unlocked.value);
       if (unlocked.value.length === 0) unlocked.value = ["qingyun"];
-      mortalCleared.value = asStringArray(mortalCleared.value);
       cleared.value = asStringArray(cleared.value);
       /**
        * 复聚表:只留表上认得、且此刻确实没靖的那些。两者同时出现(坏档或旧版本
@@ -157,9 +156,13 @@ export const useAdventureStore = defineStore(
         ? { ...lb, loot: lb.loot === undefined ? undefined : asStringArray(lb.loot) }
         : null;
       eventMemories.value = asRecord(eventMemories.value);
+      const hadMortalWorld = mortalWorld.value !== null && mortalWorld.value !== undefined;
       const restoredWorld = restoreMortalWorld(mortalWorld.value);
       mortalWorld.value = restoredWorld;
-      if (!restoredWorld) mortalCleared.value = [];
+      mortalCleared.value = restoreMortalCleared(mortalCleared.value, restoredWorld);
+      // 没有世界栏是旧档兼容路径;但原本有世界却修不回来,说明旧世界已作废,
+      // 叩门胜场也必须随世界一起清零,不能挂到下一次生成的新世界。
+      if (hadMortalWorld && !restoredWorld) regionWins.value = {};
       const biasHistory = asStringArray(mortalBiasHistory.value).filter((bias) =>
         BIAS_POOL.includes(bias as (typeof BIAS_POOL)[number]),
       );
