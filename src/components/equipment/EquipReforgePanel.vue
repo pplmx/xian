@@ -193,7 +193,7 @@ function triesOf(id: string, minRoll = 0): number | null {
     class="mt-3 rounded-md border border-ink/15 bg-paper-deep/50 px-3 py-2"
   >
     <p class="mb-1 text-[11px] text-ink-soft">洗到这些词条出现就停(任一命中即停,至多 3 条)</p>
-    <div class="scroll-pane grid max-h-36 grid-cols-3 gap-1 overflow-y-auto">
+    <div class="scroll-pane grid max-h-36 grid-cols-3 gap-1 overflow-y-auto tinylens:grid-cols-2">
       <button
         v-for="af in affixOptions"
         :key="af.id"
@@ -222,7 +222,7 @@ function triesOf(id: string, minRoll = 0): number | null {
             min="0"
             max="1"
             step="0.05"
-            class="grow accent-cinnabar"
+            class="min-w-0 grow accent-cinnabar"
           />
           <span class="w-12 shrink-0 text-right tabular"
             >≥{{ formatPercent(t.minRoll ?? 0, 0) }}</span
@@ -237,23 +237,22 @@ function triesOf(id: string, minRoll = 0): number | null {
         </p>
       </div>
     </div>
-    <div class="mt-1.5 flex items-center gap-2">
-      <span class="text-[10px] text-ink-faint tabular">至多洗</span>
-      <input
-        v-model.number="autoBudget"
-        type="number"
-        min="1"
-        max="500"
-        aria-label="自动重铸至多洗几次"
-        class="w-16 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
-        @change="clampAutoBudget"
-      />
-      <span class="text-[10px] text-ink-faint tabular"
-        >次 · 每洗 器灵尘×{{ reforgeCostVal.dust }} · 灵石
-        {{ formatGN(reforgeCostVal.stone) }}</span
-      >
+    <div class="mt-1.5 flex flex-wrap items-center gap-2">
+      <label class="flex min-w-0 items-center gap-1">
+        <span class="text-[10px] text-ink-faint tabular">至多洗</span>
+        <input
+          v-model.number="autoBudget"
+          type="number"
+          min="1"
+          max="500"
+          aria-label="自动重铸至多洗几次"
+          class="w-16 min-w-0 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
+          @change="clampAutoBudget"
+        />
+        <span class="text-[10px] text-ink-faint tabular">次</span>
+      </label>
       <button
-        class="btn-ghost ml-auto !px-3 !py-1 !text-[11px]"
+        class="btn-ghost ml-auto shrink-0 whitespace-nowrap !px-3 !py-1 !text-[11px]"
         :disabled="!autoTargets.length || !autoReachable || !autoAffordable"
         :title="
           !autoTargets.length
@@ -269,6 +268,9 @@ function triesOf(id: string, minRoll = 0): number | null {
         开 洗
       </button>
     </div>
+    <p class="mt-1 text-[10px] text-ink-faint tabular">
+      每洗 器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
+    </p>
     <!-- 首洗就付不起,预告就把它摆出来(与重铸/封存同款):灰钮不许只有 broke toast -->
     <p v-if="autoTargets.length && !autoAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
       尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
@@ -280,15 +282,15 @@ function triesOf(id: string, minRoll = 0): number | null {
   </div>
   <!-- 重铸与封存 (Phase 30.1) -->
   <template v-if="reforgeCostVal || sealCostVal">
-    <div class="flex gap-2 text-[11px]">
+    <div class="flex gap-2 text-[11px] tinylens:flex-col">
       <button
         v-if="reforgeCostVal"
-        class="btn-ghost flex-1 !py-1"
+        class="btn-ghost flex-1 !py-1 tinylens:flex-col"
         :disabled="!reforgeAffordable"
         @click="doReforge"
       >
         重铸词条
-        <span class="ml-1 tabular text-[10px] text-ink-faint">
+        <span class="ml-1 tabular text-[10px] text-ink-faint tinylens:ml-0">
           器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
         </span>
       </button>
@@ -333,16 +335,17 @@ function triesOf(id: string, minRoll = 0): number | null {
       v-if="reforgeCostVal"
       class="btn-ghost w-full !py-1 !text-[11px]"
       :aria-expanded="autoOpen"
+      :title="autoOpen ? undefined : '洗到指定词条即停'"
       @click="autoOpen = !autoOpen"
     >
-      {{ autoOpen ? "收起自动重铸" : "自动重铸 · 洗到指定词条即停" }}
+      {{ autoOpen ? "收起自动重铸" : "自动重铸" }}
     </button>
     <button
       class="btn-ghost w-full !py-1 !text-[11px]"
       :aria-expanded="transferOpen"
       @click="transferOpen = !transferOpen"
     >
-      {{ transferOpen ? "收起词条转移" : "词条转移 · 抽一条给别的装备" }}
+      {{ transferOpen ? "收起词条转移" : "词条转移 · 移至别件" }}
     </button>
     <AffixTransferPanel v-if="transferOpen && inst" :source="inst" @close="transferOpen = false" />
   </template>

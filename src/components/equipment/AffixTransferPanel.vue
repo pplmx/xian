@@ -10,6 +10,7 @@
 import { computed, ref, watch } from "vue";
 import type { EquipmentInstance } from "@/types";
 import { affixDef } from "@/data/affixes";
+import { equipmentTemplate } from "@/data/equipment";
 import { QUALITIES, qualityDef } from "@/data/qualities";
 import { formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
@@ -91,12 +92,15 @@ function doTransfer(): void {
 
 <template>
   <div class="rounded-lg border border-ink/10 bg-paper-deep/60 p-3 text-[12px]">
-    <div class="mb-2 flex items-center gap-2">
-      <span class="font-medium text-ink">词条转移</span>
-      <span class="text-[10px] text-ink-faint"
+    <div class="mb-2 flex flex-wrap items-center gap-2">
+      <span class="shrink-0 font-medium text-ink tinylens:order-1">词条转移</span>
+      <span class="text-[10px] text-ink-faint tinylens:order-3 tinylens:basis-full"
         >抽走源件一条词条,落到另一件上;源件保留,被移走与被顶替的词条皆不可回</span
       >
-      <button class="btn-ghost ml-auto !px-2 !py-0.5 text-[11px]" @click="emit('close')">
+      <button
+        class="btn-ghost ml-auto shrink-0 whitespace-nowrap !px-2 !py-0.5 text-[11px] tinylens:order-2"
+        @click="emit('close')"
+      >
         收起
       </button>
     </div>
@@ -131,7 +135,7 @@ function doTransfer(): void {
           <button
             v-for="c in candidates"
             :key="c.item.uid"
-            class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-[11px]"
+            class="flex w-full flex-wrap items-center gap-2 rounded px-2 py-1 text-left text-[11px]"
             :class="
               c.block
                 ? 'cursor-not-allowed text-ink-faint'
@@ -145,16 +149,19 @@ function doTransfer(): void {
               replaceId = null;
             "
           >
-            <span>{{ affixDef(affixId)?.name ?? affixId }} →</span>
+            <span class="whitespace-nowrap">{{ affixDef(affixId)?.name ?? affixId }} →</span>
+            <span class="whitespace-nowrap">{{
+              equipmentTemplate(c.item.templateId)?.name ?? c.item.templateId
+            }}</span>
             <!--
               `c.item.quality` 是品阶 **id**(excellent / profound / earth),
               不是给玩家看的名字。坊市货架犯过同一个错 —— 这里同修:
               取 qualityDef(...).name,并带上品阶色。
             -->
-            <span :style="{ color: qualityDef(c.item.quality).color }"
+            <span class="whitespace-nowrap" :style="{ color: qualityDef(c.item.quality).color }"
               >{{ qualityDef(c.item.quality).name }}·{{ c.item.tier }} 阶</span
             >
-            <span class="ml-auto">
+            <span class="ml-auto shrink-0 tinylens:ml-0">
               {{ c.worn ? "已装备" : "" }}
               {{
                 c.block === "dup"
@@ -171,13 +178,16 @@ function doTransfer(): void {
       <!-- 选落位 -->
       <div v-if="target && landings.length" class="mb-2">
         <p class="mb-1 text-[10px] text-ink-faint">
-          落在哪里?({{ target.affixes.length }} / {{ qualityDef(target.quality).affixes[1] }} 条)
+          落在「{{ equipmentTemplate(target.templateId)?.name ?? target.templateId }}」哪里?<span
+            class="whitespace-nowrap"
+            >({{ target.affixes.length }}/{{ qualityDef(target.quality).affixes[1] }} 条)</span
+          >
         </p>
         <div class="space-y-1">
           <button
             v-for="l in landings"
             :key="l.replaceId ?? '__new__'"
-            class="flex w-full items-center gap-2 rounded px-2 py-1 text-left text-[11px]"
+            class="flex w-full flex-wrap items-center gap-2 rounded px-2 py-1 text-left text-[11px]"
             :class="l.check.ok ? 'hoverable:hover:bg-ink/5' : 'cursor-not-allowed text-ink-faint'"
             :disabled="!l.check.ok"
             @click="
@@ -185,12 +195,12 @@ function doTransfer(): void {
               seal = false;
             "
           >
-            <span>{{
+            <span class="min-w-0">{{
               l.replaceId === null
                 ? "新增一条"
                 : `顶替「${affixDef(l.replaceId!)?.name ?? l.replaceId}」(旧条消散)`
             }}</span>
-            <span v-if="!l.check.ok" class="ml-auto">{{
+            <span v-if="!l.check.ok" class="ml-auto shrink-0 tinylens:ml-0">{{
               transferBlockText(l.check.block, affixId!)
             }}</span>
             <span v-else class="ml-auto">

@@ -89,7 +89,7 @@
           <li
             v-for="(line, i) in resolved.affixLines"
             :key="line.id"
-            class="flex items-center gap-2 py-1.5 pl-2 pr-1.5"
+            class="flex flex-wrap items-center gap-2 py-1.5 pl-2 pr-1.5"
             :class="i > 0 ? 'border-t border-violet-ink/15' : ''"
             :style="{ borderLeft: `2px solid ${AFFIX_RARITY_META[line.rarity].color}` }"
           >
@@ -105,12 +105,14 @@
             >
               {{ AFFIX_RARITY_META[line.rarity].name }}
             </span>
-            <span class="ml-auto min-w-0 text-right text-[11px] leading-snug text-ink-soft">
+            <span
+              class="ml-auto min-w-0 text-right text-[11px] leading-snug text-ink-soft tinylens:order-3 tinylens:basis-full tinylens:text-left"
+            >
               {{ line.before }}<span class="tabular font-medium text-ink">{{ line.value }}</span
               >{{ line.after }}
             </span>
             <!-- 封存/解除操作组随面板走(EquipSealPanel,自读同一份 inst) -->
-            <EquipSealPanel :affix-id="line.id" :name="line.name" />
+            <EquipSealPanel class="tinylens:order-2" :affix-id="line.id" :name="line.name" />
           </li>
         </ul>
         <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
@@ -192,7 +194,7 @@
           (EquipReforgePanel,自读同一份 inst;武装态互斥,分家只会造出跨面板接线)。
         -->
         <EquipReforgePanel />
-        <div class="flex gap-2">
+        <div class="flex gap-2 tinylens:flex-col">
           <button class="btn-seal flex-1" @click="toggleEquip">
             {{ isEquipped ? "卸 下" : "装 备" }}
           </button>

@@ -6476,6 +6476,14 @@ async function taskDialogZoom() {
             { id: "low2", roll: 0.6 },
           ],
         },
+        {
+          uid: "dlg_w2",
+          templateId: "w_hanfeng",
+          quality: "immortal",
+          tier: 20,
+          level: 0,
+          affixes: [{ id: "low2", roll: 0.6 }],
+        },
       ],
       equipped: { weapon: "dlg_w" },
       pills: { p_jvqidan: 5 },
@@ -6541,8 +6549,12 @@ async function taskDialogZoom() {
     const problems = dialogZoomProblems(await measureDialogZoom(page, { width: 390, height: 844 }));
     if (problems.length)
       failures.push(`[195] 浮层「${label}」在 200% 下坏了:${problems.join(" / ")}`);
-    await page.keyboard.press("Escape").catch(() => {});
-    await page.waitForTimeout(400);
+    // 新探针会叠开两层装备详情;Escape 只收最上层,故逐层关到没有浮层为止。
+    for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+      await page.keyboard.press("Escape").catch(() => {});
+      await page.waitForTimeout(200);
+    }
+    await page.waitForTimeout(200);
   };
 
   // 点的是槽位行(「武器 雾隐长枪 +3」)—— 装备详情由它打开,不是背包列表
@@ -6551,6 +6563,48 @@ async function taskDialogZoom() {
       .locator("main button", { hasText: /雾隐长枪/ })
       .first()
       .click({ timeout: 3000 });
+  });
+  /*
+   * 自动重铸此前只量到装备详情外壳,展开后的阈值滑杆 / 预算行从未进过 200% 档。
+   * 195 CSS px 下实测滑杆与「开 洗」会顶出面板右侧;这条把「展开后再量」也钉住。
+   */
+  await probe("装备详情 · 自动重铸", "/inventory", async () => {
+    await page
+      .locator("main button", { hasText: /雾隐长枪/ })
+      .first()
+      .click({ timeout: 3000 });
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: /雾隐长枪/ })
+      .click({ timeout: 3000 });
+    await page.getByRole("button", { name: /自动重铸/ }).click({ timeout: 3000 });
+    await page
+      .getByRole("button", { name: /约 .* 次/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+  /*
+   * 转移面板的标题、长说明与「收起」共享一行;195px 下标题会被挤成 12px 竖排。
+   * 一路点到候选与落位,把标题之后的单据行也纳入同一扇弹窗。
+   */
+  await probe("装备详情 · 词条转移落位", "/inventory", async () => {
+    await page
+      .locator("main button", { hasText: /雾隐长枪/ })
+      .first()
+      .click({ timeout: 3000 });
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: /雾隐长枪/ })
+      .click({ timeout: 3000 });
+    await page.getByRole("button", { name: /词条转移/ }).click({ timeout: 3000 });
+    const detail = page.locator(".modal-panel").filter({ hasText: /重铸词条|自动重铸/ });
+    await detail.getByRole("button", { name: "绝境道心", exact: true }).click({ timeout: 3000 });
+    await detail
+      .locator("button")
+      .filter({ hasText: /→.*仙品/ })
+      .first()
+      .click({ timeout: 3000 });
+    await detail.getByRole("button", { name: /新增一条/ }).click({ timeout: 3000 });
   });
   await probe("开炉炼丹", "/inventory", async () => {
     const tab = page.getByRole("tab", { name: /丹/ }).first();
