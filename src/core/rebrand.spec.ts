@@ -102,15 +102,18 @@ describe("更名 —— 《玄枢录》", () => {
   });
 
   it("更名之后,老玩家的分片会被搬到新前缀(且新档优先)", () => {
-    localStorage.setItem(`${LEGACY_SAVE_PREFIX}player`, "old-player");
-    localStorage.setItem(`${LEGACY_SAVE_PREFIX}resources`, "old-resources");
-    localStorage.setItem(storageKey("resources"), "new-resources"); // 新档已存在 → 不被覆盖
+    const oldPlayer = JSON.stringify({ source: "old-player" });
+    const oldResources = JSON.stringify({ source: "old-resources" });
+    const newResources = JSON.stringify({ source: "new-resources" });
+    localStorage.setItem(`${LEGACY_SAVE_PREFIX}player`, oldPlayer);
+    localStorage.setItem(`${LEGACY_SAVE_PREFIX}resources`, oldResources);
+    localStorage.setItem(storageKey("resources"), newResources); // 新档已存在 → 不被覆盖
 
     const moved = migrateLegacyPrefix();
 
     expect(moved).toBe(1);
-    expect(localStorage.getItem(storageKey("player"))).toBe("old-player");
-    expect(localStorage.getItem(storageKey("resources"))).toBe("new-resources");
+    expect(localStorage.getItem(storageKey("player"))).toBe(oldPlayer);
+    expect(localStorage.getItem(storageKey("resources"))).toBe(newResources);
     expect(localStorage.getItem(`${LEGACY_SAVE_PREFIX}player`)).toBeNull();
     expect(localStorage.getItem(`${LEGACY_SAVE_PREFIX}resources`)).toBeNull();
     expect(SAVE_PREFIX).toBe("xuanshu.");

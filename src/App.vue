@@ -95,7 +95,7 @@ import {
   useServiceWorkerUpdate,
   type ServiceWorkerUpdateHandle,
 } from "@/composables/useServiceWorkerUpdate";
-import { onBlockedSaveWrite, subscribeSaveWriteFailure } from "@/utils/storage";
+import { onBlockedSaveWrite, saveWriteFailure, subscribeSaveWriteFailure } from "@/utils/storage";
 import { engine } from "@/core/engine";
 import { saveReader, saveWriterFree } from "@/core/singleWriter";
 import { settleReturn } from "@/composables/useReturnSettle";
@@ -180,10 +180,15 @@ onMounted(() => {
    * 而他可能正玩得兴起。这里只说两件事 —— 出事了(并给出可做的事:导出备份),
    * 以及什么时候好了。反复失败不重复弹(订阅只在状态翻转时回调)。
    */
+  const warnSaveFailure = (): void => {
+    ui.toast("存档写入失败 —— 浏览器存储可能已满,建议先导出备份", "warn");
+  };
   unsubscribeSaveFailure = subscribeSaveWriteFailure((failure) => {
-    if (failure) ui.toast("存档写入失败 —— 浏览器存储可能已满,建议先导出备份", "warn");
+    if (failure) warnSaveFailure();
     else ui.toast("存档已恢复写入", "info");
   });
+  // 启动迁移可能在 App 订阅之前就已经写失败;别因错过那一次回调而静默带病运行。
+  if (saveWriteFailure() !== null) warnSaveFailure();
   /*
    * 只读页的操作在内存里都「成功」,只是不落盘 —— 不吭声的话,玩家刷新后才发现白忙。
    * 拦下第一笔写入时当场说一声,别让他以为存上了。

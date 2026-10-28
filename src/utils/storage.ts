@@ -4,7 +4,7 @@
  */
 
 import type { StateTree } from "pinia";
-import { encryptSave, readSaveText } from "./crypto";
+import { decryptSave, encryptSave, readSaveText } from "./crypto";
 
 export const SAVE_PREFIX = "xuanshu.";
 /**
@@ -516,20 +516,36 @@ export function migrateResourcesSlice(data: Record<string, unknown>): Record<str
 export function migrateLocalSchema(): void {
   try {
     migrateLegacyPrefix();
-    for (const [key, fn] of [
-      ["inventory", migrateInventorySlice],
-      ["resources", migrateResourcesSlice],
-    ] as const) {
+  } catch {
+    // 前缀迁移失败不该阻断下面的分片升级
+  }
+  let queued = false;
+  for (const [key, fn] of [
+    ["inventory", migrateInventorySlice],
+    ["resources", migrateResourcesSlice],
+  ] as const) {
+    try {
       const storeKey = storageKey(key);
       const raw = localStorage.getItem(storeKey);
       if (raw === null) continue;
       const data = JSON.parse(readSaveText(raw)) as Record<string, unknown>;
       const migrated = fn(data);
-      localStorage.setItem(storeKey, encryptSave(JSON.stringify(migrated)));
+      const plain = JSON.stringify(migrated);
+      // 已经是密文且形状没变的分片不重写,避免每次启动都跑一遍 AES 与同步写盘
+      if (decryptSave(raw) !== null && plain === JSON.stringify(data)) continue;
+      /*
+       * 迁移结果先入待写队列再刷盘。个别 WebView 会静默吞掉 setItem:
+       * 若这里只做一次直写就继续启动,Pinia 会按盘上的旧形状水合,下一次
+       * store 落盘就把迁移前才有的字段(如 v1 单法宝位)覆盖掉。
+       * 队列同时服务「读己所写」,所以写盘失败时内存仍拿得到迁移后的值。
+       */
+      THROTTLED_STORAGE.setItem(storeKey, plain);
+      queued = true;
+    } catch {
+      // 单个坏分片不阻断其它分片升级;损坏隔离仍由 preflightScan 负责
     }
-  } catch {
-    // 损坏数据交由 preflightScan 兜底
   }
+  if (queued) flushSaveWrites();
 }
 
 /**
@@ -550,7 +566,8 @@ export function migrateLegacyPrefix(): number {
     for (const oldKey of legacy) {
       const target = SAVE_PREFIX + oldKey.slice(LEGACY_SAVE_PREFIX.length);
       const value = localStorage.getItem(oldKey);
-      if (value !== null && localStorage.getItem(target) === null) {
+      const targetValue = localStorage.getItem(target);
+      if (value !== null && targetValue === null) {
         // 写入可能被静默吞掉。旧键是唯一副本,确认新键读回一致前不能删。
         if (!writeVerified(target, value)) {
           try {
@@ -561,6 +578,12 @@ export function migrateLegacyPrefix(): number {
           continue;
         }
         moved += 1;
+      } else if (value !== null && !isReadableSaveValue(targetValue)) {
+        /*
+         * 新键存在但坏到连隔离都写不进去备份时,启动前缀迁移不能再删旧键。
+         * 下次存储恢复后,preflightScan 先备份/移走坏新键,这条旧档仍可搬过去。
+         */
+        continue;
       }
       localStorage.removeItem(oldKey);
     }
@@ -568,6 +591,16 @@ export function migrateLegacyPrefix(): number {
     // 配额不足 / 隐私模式禁写:交给 preflightScan 与后续兜底,别在这里炸启动
   }
   return moved;
+}
+
+function isReadableSaveValue(raw: string | null): boolean {
+  if (raw === null) return false;
+  try {
+    JSON.parse(readSaveText(raw));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export interface ExportPayload {

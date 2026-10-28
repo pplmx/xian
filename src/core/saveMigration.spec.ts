@@ -18,13 +18,18 @@ import { createApp } from "vue";
 import { createPinia, setActivePinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import {
+  LEGACY_SAVE_PREFIX,
   clearAllSave,
   dropPendingWrites,
+  flushSaveWrites,
   migrateInventorySlice,
+  migrateLegacyPrefix,
   migrateLocalSchema,
+  preflightScan,
+  saveWriteFailure,
   storageKey,
 } from "@/utils/storage";
-import { decryptSave } from "@/utils/crypto";
+import { decryptSave, readSaveText } from "@/utils/crypto";
 import { importSaveText } from "./save";
 import { useInventoryStore } from "@/stores/inventory";
 import { useGameStore } from "@/stores/game";
@@ -41,6 +46,32 @@ function installStorage(): Map<string, string> {
     length: 0,
   });
   return disk;
+}
+
+function installDroppingStorage(): {
+  disk: Map<string, string>;
+  allowWrites: (ok: boolean) => void;
+} {
+  const disk = new Map<string, string>();
+  let dropping = false;
+  vi.stubGlobal("localStorage", {
+    getItem: (k: string) => disk.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      if (!dropping) disk.set(k, v);
+    },
+    removeItem: (k: string) => void disk.delete(k),
+    clear: () => disk.clear(),
+    key: (i: number) => [...disk.keys()][i] ?? null,
+    get length() {
+      return disk.size;
+    },
+  });
+  return {
+    disk,
+    allowWrites: (ok) => {
+      dropping = !ok;
+    },
+  };
 }
 
 function bootStores(): void {
@@ -114,6 +145,50 @@ describe("迁移 · 启动时就地升级本机分片", () => {
     bootStores();
     expect(usePlayerStore().major, "明文 player 分片没读回来").toBe(6);
     expect(useInventoryStore().equippedArtifacts).toEqual(["af_youming"]);
+  });
+
+  it("总迁移写盘失败时,内存仍读迁移值,恢复后不会把法宝写丢", () => {
+    const { disk, allowWrites } = installDroppingStorage();
+    disk.set(storageKey("inventory"), JSON.stringify(LEGACY_V1));
+    allowWrites(false);
+
+    migrateLocalSchema();
+    expect(saveWriteFailure(), "启动迁移写失败也要进入全局存档警告").not.toBeNull();
+    bootStores();
+    const inventory = useInventoryStore();
+    expect(
+      inventory.equippedArtifacts,
+      "磁盘没写成时仍按旧形状加载,法宝位会空着,下一次刷盘就把旧法宝覆盖掉",
+    ).toEqual(["af_youming"]);
+
+    inventory.sanitize();
+    allowWrites(true);
+    flushSaveWrites();
+    const stored = JSON.parse(decryptSave(disk.get(storageKey("inventory"))!)!);
+    expect(stored.equippedArtifacts).toEqual(["af_youming"]);
+  });
+
+  it("坏的新前缀键无法隔离时,旧前缀仍是下一次启动可救的唯一副本", () => {
+    const { disk, allowWrites } = installDroppingStorage();
+    const oldKey = `${LEGACY_SAVE_PREFIX}player`;
+    const newKey = storageKey("player");
+    const validLegacy = JSON.stringify({ major: 6, age: 300 });
+    disk.set(newKey, "这不是 JSON");
+    disk.set(oldKey, validLegacy);
+    allowWrites(false);
+
+    expect(preflightScan()).toEqual(["player"]);
+    expect(disk.get(newKey), "坏档写不进备份时应保留原键").toBe("这不是 JSON");
+    migrateLegacyPrefix();
+    expect(disk.get(oldKey), "新键坏到隔离都失败,却把仍可读的旧档删了,这份进度就永久丢了").toBe(
+      validLegacy,
+    );
+
+    allowWrites(true);
+    preflightScan();
+    migrateLegacyPrefix();
+    expect(JSON.parse(readSaveText(disk.get(newKey)!))).toEqual({ major: 6, age: 300 });
+    expect(disk.has(oldKey)).toBe(false);
   });
 });
 
