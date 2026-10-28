@@ -55,3 +55,25 @@ export function previousListLimit(shown: number, total: number, batch: number): 
   const previousPage = Math.floor((current - 1) / step) * step;
   return Math.max(firstPage, previousPage);
 }
+
+/**
+ * 续开后,新露出的第一件在当前 visible 数组里的索引。
+ *
+ * 可见窗大于一批时,第一次续开是追加 —— 焦点若回到 visible[0],键盘用户仍停在旧内容;
+ * 窗口滑走时才该从 0 开始。界面只负责按这个索引聚焦,别各自猜。
+ */
+export function firstNewVisibleIndex(
+  shownBefore: number,
+  shownAfter: number,
+  maxVisible: number,
+): number {
+  const before = Number.isFinite(shownBefore) ? Math.max(0, Math.trunc(shownBefore)) : 0;
+  const normalizedAfter = Number.isFinite(shownAfter)
+    ? Math.max(0, Math.trunc(shownAfter))
+    : before;
+  if (normalizedAfter <= before) return 0;
+  const after = normalizedAfter;
+  const windowSize = Number.isFinite(maxVisible) ? Math.max(0, Math.trunc(maxVisible)) : after;
+  const start = Math.max(0, after - windowSize);
+  return Math.max(0, before - start);
+}

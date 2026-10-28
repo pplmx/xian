@@ -232,7 +232,12 @@ import { gongfaFuncText, gongfaMetaText } from "@/ui/itemText";
 import { achievementDirection } from "@/ui/achievementHint";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import { rewardTextAtTier } from "@/core/progress";
-import { listWindow, nextListLimit, previousListLimit } from "@/core/listRender";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+} from "@/core/listRender";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
@@ -454,18 +459,23 @@ function previousKnownLabel(cat: { knownStart: number }): string {
   return `前一批 ${Math.min(COLLECTION_RENDER_BATCH, cat.knownStart)} 件`;
 }
 
-function focusFirstKnown(key: string): void {
+function focusKnown(key: string, index = 0): void {
   void nextTick(() => {
-    document.querySelector<HTMLButtonElement>(`button[data-codex-entry="${key}"]`)?.focus();
+    const entries = document.querySelectorAll<HTMLButtonElement>(
+      `button[data-codex-entry="${key}"]`,
+    );
+    entries[Math.min(Math.max(0, index), entries.length - 1)]?.focus();
   });
 }
 
 function showMoreKnown(cat: { key: string; knownShown: number; knownTotal: number }): void {
+  const shownBefore = cat.knownShown;
+  const shownAfter = nextListLimit(shownBefore, cat.knownTotal, COLLECTION_RENDER_BATCH);
   knownLimits.value = {
     ...knownLimits.value,
-    [cat.key]: nextListLimit(cat.knownShown, cat.knownTotal, COLLECTION_RENDER_BATCH),
+    [cat.key]: shownAfter,
   };
-  focusFirstKnown(cat.key);
+  focusKnown(cat.key, firstNewVisibleIndex(shownBefore, shownAfter, COLLECTION_RENDER_WINDOW));
 }
 
 function showPreviousKnown(cat: { key: string; knownShown: number; knownTotal: number }): void {
@@ -473,7 +483,7 @@ function showPreviousKnown(cat: { key: string; knownShown: number; knownTotal: n
     ...knownLimits.value,
     [cat.key]: previousListLimit(cat.knownShown, cat.knownTotal, COLLECTION_RENDER_BATCH),
   };
-  focusFirstKnown(cat.key);
+  focusKnown(cat.key);
 }
 
 /** 收藏册里还有「新得」没看过 —— 图鉴默认落在「成就」页,不切进去也看不见有货,门口先亮一点 */

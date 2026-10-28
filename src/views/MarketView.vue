@@ -38,6 +38,7 @@ import {
   nextInventoryLimit,
   previousInventoryLimit,
 } from "@/core/inventoryRender";
+import { firstNewVisibleIndex } from "@/core/listRender";
 import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
@@ -249,18 +250,20 @@ const equipCandidatePrevLabel = computed(
   () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.value.start)} 件`,
 );
 function showMoreEquipCandidates(): void {
-  equipCandidateLimit.value = nextInventoryLimit(
-    equipCandidatePage.value.shown,
-    equipCandidates.value.length,
+  const shownBefore = equipCandidatePage.value.shown;
+  const shownAfter = nextInventoryLimit(shownBefore, equipCandidates.value.length);
+  equipCandidateLimit.value = shownAfter;
+  focusItem(
+    "button[data-equip-candidate]",
+    firstNewVisibleIndex(shownBefore, shownAfter, MARKET_RENDER_WINDOW),
   );
-  focusFirst("button[data-equip-candidate]");
 }
 function showPreviousEquipCandidates(): void {
   equipCandidateLimit.value = previousInventoryLimit(
     equipCandidatePage.value.shown,
     equipCandidates.value.length,
   );
-  focusFirst("button[data-equip-candidate]");
+  focusItem("button[data-equip-candidate]");
 }
 
 const consignLimit = ref(INVENTORY_RENDER_BATCH);
@@ -275,18 +278,24 @@ const consignPrevLabel = computed(
   () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, consignPage.value.start)} 件`,
 );
 function showMoreConsign(): void {
-  consignLimit.value = nextInventoryLimit(consignPage.value.shown, inventory.bagItems.length);
-  focusFirst("button[data-consign-uid]");
+  const shownBefore = consignPage.value.shown;
+  const shownAfter = nextInventoryLimit(shownBefore, inventory.bagItems.length);
+  consignLimit.value = shownAfter;
+  focusItem(
+    "button[data-consign-uid]",
+    firstNewVisibleIndex(shownBefore, shownAfter, MARKET_RENDER_WINDOW),
+  );
 }
 function showPreviousConsign(): void {
   consignLimit.value = previousInventoryLimit(consignPage.value.shown, inventory.bagItems.length);
-  focusFirst("button[data-consign-uid]");
+  focusItem("button[data-consign-uid]");
 }
 
-/** 翻页会滑掉上一批;把焦点送到新一批首件,键盘与读屏都不会落在已消失的按钮上。 */
-function focusFirst(selector: string): void {
+/** 续开送到新露出首件,回翻送到当前页首件;焦点不留在已消失的按钮上。 */
+function focusItem(selector: string, index = 0): void {
   void nextTick(() => {
-    document.querySelector<HTMLElement>(selector)?.focus();
+    const items = document.querySelectorAll<HTMLElement>(selector);
+    items[Math.min(Math.max(0, index), items.length - 1)]?.focus();
   });
 }
 

@@ -198,7 +198,7 @@ describe("排版量法口径", () => {
     expect(view).toContain('v-for="row in itemPage.visible"');
     expect(view).toContain(':is-new="inventory.isNewItem(row.item.uid)"');
     expect(view).toMatch(
-      /nextInventoryLimit\(\s*itemPage\.value\.shown,\s*allItems\.value\.length\s*\)/,
+      /const shownBefore = itemPage\.value\.shown;[\s\S]{0,120}nextInventoryLimit\(\s*shownBefore,\s*allItems\.value\.length\s*\)/,
     );
     expect(view).toContain("previousInventoryLimit");
     expect(view).toContain("data-inventory-prev");
@@ -218,8 +218,29 @@ describe("排版量法口径", () => {
     expect(perf).toContain("data-inventory-total");
     expect(perf).toContain("夹具只装进");
     expect(perf).toContain("newVisible === promised");
+    expect(perf).toContain("焦点没有落到新露出条目");
+    expect(perf).toContain("!beforeSet.has(focused)");
     expect(perf).toContain("startAfter < startBefore");
     expect(perf).toContain("清单只可达");
+  });
+
+  it("寄卖逐页验收只交一份续开选择器，总量与回翻契约不右移", () => {
+    /*
+     * expandAllBatches 的第 4 / 5 参是总量与回翻契约。若在续开选择器后再抄一遍
+     * 选择器，两个配置对象会整体右移：运行时门会拿对象当选择器，件数校验与回翻
+     * 校验都失效。这里钉住调用前缀，避免“门在，但没按预期验收”。
+     */
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
+    const start = perf.indexOf("const consign = await expandAllBatches(");
+    const end = perf.indexOf("let candidates;", start);
+    expect(start, "寄卖逐页验收调用要能定位到 —— 定位不到这条就是空转").toBeGreaterThan(-1);
+    expect(end, "寄卖逐页验收调用的结尾要能定位到").toBeGreaterThan(start);
+
+    const call = perf.slice(start, end);
+    expect(call.match(/button\[data-market-more="consign"\]/g) ?? []).toHaveLength(1);
+    expect(call).toContain('selector: "[data-market-consign-total]"');
+    expect(call).toContain('startSelector: "[data-market-consign-start]"');
+    expect(call).toContain("previousSelector: '[data-market-prev=\"consign\"]'");
   });
 
   it("大背包性能夹具只取真实 14 阶模板，300 件必须真的进得去", () => {

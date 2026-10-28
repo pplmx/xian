@@ -18,6 +18,7 @@ import {
   inventoryWindow,
   nextInventoryLimit,
 } from "@/core/inventoryRender";
+import { firstNewVisibleIndex } from "@/core/listRender";
 
 function inst(uid: string): Record<string, unknown> {
   return { uid, templateId: "w_hanfeng", quality: "fine", tier: 3, level: 0, affixes: [] };
@@ -142,5 +143,19 @@ describe("背包藏品 · 首屏渲染预算", () => {
     expect(nextInventoryLimit(20, 120, 20)).toBe(40);
     expect(nextInventoryLimit(110, 120, 20)).toBe(120);
     expect(nextInventoryLimit(40, 120, 0)).toBe(41);
+  });
+
+  it("续开后的键盘焦点落到新露出第一件,不退回旧批首件", () => {
+    // 背包窗口恰好一批,续开即整批滑走;坊市首批 32→64 是追加,不能把焦点送回第 1 件。
+    expect(firstNewVisibleIndex(32, 64, 32)).toBe(0);
+    expect(firstNewVisibleIndex(32, 64, 64)).toBe(32);
+
+    // 图鉴两批一窗:48→72 时滑掉前一批;48→66 时末批只新露 18 件。
+    expect(firstNewVisibleIndex(48, 72, 48)).toBe(24);
+    expect(firstNewVisibleIndex(48, 66, 48)).toBe(30);
+
+    // 没有新露出内容或上游读数坏掉时,回落到当前窗口首件,不许把焦点留在消失的按钮上。
+    expect(firstNewVisibleIndex(32, 32, 32)).toBe(0);
+    expect(firstNewVisibleIndex(Number.NaN, 32, 64)).toBe(0);
   });
 });

@@ -668,6 +668,31 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("长列表续开的焦点跟着新批走 —— 键盘与读屏不许被拉回旧批首件", () => {
+    /*
+     * 坊市与图鉴的可见窗能容纳两批。首批「再看」只追加、不滑页，若一律 focus 第一条，
+     * 键盘用户点完仍停在旧内容；读屏也听不到刚展开的那一批。统一让核心函数算
+     * 新露出的第一件在当前窗口里的索引，三个长列表都接同一把尺。
+     */
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    expect(market?.src, "寄卖续开焦点要落到新批").toMatch(
+      /const shownBefore = consignPage\.value\.shown[\s\S]{0,320}firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*MARKET_RENDER_WINDOW\s*\)/,
+    );
+    expect(market?.src, "贡器续开焦点也要落到新批").toMatch(
+      /const shownBefore = equipCandidatePage\.value\.shown[\s\S]{0,360}firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*MARKET_RENDER_WINDOW\s*\)/,
+    );
+
+    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    expect(col?.src, "图鉴续开焦点要落到新批").toMatch(
+      /const shownBefore = cat\.knownShown[\s\S]{0,420}firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*COLLECTION_RENDER_WINDOW\s*\)/,
+    );
+
+    const inventory = FILES.find((f) => f.path === "views/InventoryView.vue");
+    expect(inventory?.src, "背包也接同一把焦点尺").toMatch(
+      /const shownBefore = itemPage\.value\.shown[\s\S]{0,320}firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*INVENTORY_RENDER_WINDOW\s*\)/,
+    );
+  });
+
   it("名号尽收有完成感 —— 三十顶全齐的圆满,不许只沉在计数里", () => {
     // 名号页此前只显「14/30 · 佩一枚」的计数,三十顶全齐也没有任何表示 ——
     // 收集的终点(境界阶梯 + 成就赏走完)该有一声,与图鉴「尽收」同族。
@@ -1608,7 +1633,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /inventoryWindow\(\s*inventory\.bagItems,\s*consignLimit\.value,\s*MARKET_RENDER_WINDOW/,
     );
     expect(market?.src, "续开必须回到同一份完整 bagItems").toMatch(
-      /nextInventoryLimit\(consignPage\.value\.shown,\s*inventory\.bagItems\.length\)/,
+      /const shownBefore = consignPage\.value\.shown;[\s\S]{0,120}nextInventoryLimit\(\s*shownBefore,\s*inventory\.bagItems\.length\)/,
     );
     expect(market?.src, "贡器候选同样不许一次铺满整包").toContain(
       'v-for="it in equipCandidatePage.visible"',

@@ -169,16 +169,37 @@ const SAMPLER = `
  * 否则就是把按钮点成了空转。
  * 选择器都走稳定的 data-* 落点,不拿人话文本当机器判据。
  */
+const ITEM_FINGERPRINT_ATTRS = [
+  "data-uid",
+  "data-consign-uid",
+  "data-equip-candidate",
+  "data-codex-id",
+];
+
 async function visibleFingerprints(items) {
-  return items.evaluateAll((nodes) =>
-    nodes.map((el) => {
-      for (const key of ["data-uid", "data-consign-uid", "data-equip-candidate", "data-codex-id"]) {
-        const value = el.getAttribute(key);
-        if (value) return `${key}:${value}`;
-      }
-      return el.outerHTML;
-    }),
+  return items.evaluateAll(
+    (nodes, keys) =>
+      nodes.map((el) => {
+        for (const key of keys) {
+          const value = el.getAttribute(key);
+          if (value) return `${key}:${value}`;
+        }
+        return el.outerHTML;
+      }),
+    ITEM_FINGERPRINT_ATTRS,
   );
+}
+
+async function activeFingerprint(page) {
+  return page.evaluate((keys) => {
+    const el = document.activeElement;
+    if (!(el instanceof HTMLElement)) return null;
+    for (const key of keys) {
+      const value = el.getAttribute(key);
+      if (value) return `${key}:${value}`;
+    }
+    return null;
+  }, ITEM_FINGERPRINT_ATTRS);
 }
 
 async function expandBatch(page, itemSelector, moreSelector) {
@@ -202,15 +223,26 @@ async function expandBatch(page, itemSelector, moreSelector) {
     const afterItems = await visibleFingerprints(items);
     const afterFirst = afterItems[0] ?? "";
     const newVisible = afterItems.filter((fingerprint) => !beforeSet.has(fingerprint)).length;
+    const focused = await activeFingerprint(page);
+    const focusMoved = focused !== null && !beforeSet.has(focused);
     const appended = after === before + promised && newVisible === promised;
     const slid = afterFirst !== beforeFirst && newVisible === promised;
+    const reason =
+      !appended && !slid
+        ? "续开没有兑现承诺件数"
+        : !focusMoved
+          ? "焦点没有落到新露出条目"
+          : undefined;
     return {
       before,
       promised,
       after,
       newVisible,
+      focused,
+      focusMoved,
       mode: appended ? "append" : slid ? "slide" : "broken",
-      ok: appended || slid,
+      ok: (appended || slid) && focusMoved,
+      reason,
     };
   } catch (error) {
     return {

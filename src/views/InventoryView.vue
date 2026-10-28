@@ -436,10 +436,12 @@ import { equipAllBest, equipSetCombo } from "@/core/equipBest";
 import { equipSetDef, setCounts, type EquipSetDef } from "@/core/equipSet";
 import {
   INVENTORY_RENDER_BATCH,
+  INVENTORY_RENDER_WINDOW,
   inventoryWindow,
   nextInventoryLimit,
   previousInventoryLimit,
 } from "@/core/inventoryRender";
+import { firstNewVisibleIndex } from "@/core/listRender";
 import { useLoreStore } from "@/stores/lore";
 import { formatGN, formatExact, formatNum, formatPercent } from "@/utils/format";
 import { colorWithAlpha } from "@/ui/colorVar";
@@ -579,20 +581,23 @@ const previousItemsLabel = computed(
   () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, itemPage.value.start)} 件`,
 );
 
-function focusFirstItem(): void {
+function focusItem(index = 0): void {
   void nextTick(() => {
-    document.querySelector<HTMLButtonElement>("main button[data-uid]")?.focus();
+    const items = document.querySelectorAll<HTMLButtonElement>("main button[data-uid]");
+    items[Math.min(Math.max(0, index), items.length - 1)]?.focus();
   });
 }
 
 function showMoreItems(): void {
-  itemRenderLimit.value = nextInventoryLimit(itemPage.value.shown, allItems.value.length);
-  focusFirstItem();
+  const shownBefore = itemPage.value.shown;
+  const shownAfter = nextInventoryLimit(shownBefore, allItems.value.length);
+  itemRenderLimit.value = shownAfter;
+  focusItem(firstNewVisibleIndex(shownBefore, shownAfter, INVENTORY_RENDER_WINDOW));
 }
 
 function showPreviousItems(): void {
   itemRenderLimit.value = previousInventoryLimit(itemPage.value.shown, allItems.value.length);
-  focusFirstItem();
+  focusItem();
 }
 
 /** 部位候选弹窗(pickerRows / 换装 / 卸下)在 SlotCandidatesDialog —— 候选的账随弹窗走 */
