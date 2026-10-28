@@ -23,9 +23,8 @@ import {
   dropPendingWrites,
   flushSaveWrites,
   migrateInventorySlice,
-  migrateLegacyPrefix,
   migrateLocalSchema,
-  preflightScan,
+  prepareLocalSave,
   saveWriteFailure,
   storageKey,
 } from "@/utils/storage";
@@ -42,8 +41,10 @@ function installStorage(): Map<string, string> {
     setItem: (k: string, v: string) => void disk.set(k, v),
     removeItem: (k: string) => void disk.delete(k),
     clear: () => disk.clear(),
-    key: () => null,
-    length: 0,
+    key: (i: number) => [...disk.keys()][i] ?? null,
+    get length() {
+      return disk.size;
+    },
   });
   return disk;
 }
@@ -168,7 +169,7 @@ describe("迁移 · 启动时就地升级本机分片", () => {
     expect(stored.equippedArtifacts).toEqual(["af_youming"]);
   });
 
-  it("坏的新前缀键无法隔离时,旧前缀仍是下一次启动可救的唯一副本", () => {
+  it("坏新前缀隔离成功后,同一次启动把旧档搬进新键", () => {
     const { disk, allowWrites } = installDroppingStorage();
     const oldKey = `${LEGACY_SAVE_PREFIX}player`;
     const newKey = storageKey("player");
@@ -177,17 +178,32 @@ describe("迁移 · 启动时就地升级本机分片", () => {
     disk.set(oldKey, validLegacy);
     allowWrites(false);
 
-    expect(preflightScan()).toEqual(["player"]);
+    expect(prepareLocalSave()).toEqual(["player"]);
     expect(disk.get(newKey), "坏档写不进备份时应保留原键").toBe("这不是 JSON");
-    migrateLegacyPrefix();
     expect(disk.get(oldKey), "新键坏到隔离都失败,却把仍可读的旧档删了,这份进度就永久丢了").toBe(
       validLegacy,
     );
 
     allowWrites(true);
-    preflightScan();
-    migrateLegacyPrefix();
-    expect(JSON.parse(readSaveText(disk.get(newKey)!))).toEqual({ major: 6, age: 300 });
+    expect(prepareLocalSave()).toEqual(["player"]);
+    expect(disk.get(`corrupt.${newKey}`), "隔离后的坏新键应留下原文").toBe("这不是 JSON");
+    const recovered = disk.get(newKey);
+    expect(recovered, "坏新键搬走后没再搬旧档,默认状态会把这份进度盖掉").toBeDefined();
+    expect(JSON.parse(readSaveText(recovered!))).toEqual({ major: 6, age: 300 });
+    expect(disk.has(oldKey)).toBe(false);
+  });
+
+  it("坏掉的旧前缀档先隔离再水合,不会被默认状态覆盖", () => {
+    const disk = installStorage();
+    const oldKey = `${LEGACY_SAVE_PREFIX}player`;
+    const raw = "旧档坏了,但原文仍值得留给人救";
+    disk.set(oldKey, raw);
+
+    const corrupted = prepareLocalSave();
+
+    expect(corrupted).toEqual(["player"]);
+    expect(disk.get(`corrupt.${storageKey("player")}`), "坏旧档要先备份再移出主键").toBe(raw);
+    expect(disk.has(storageKey("player")), "坏旧档不能留在主键等默认状态覆盖").toBe(false);
     expect(disk.has(oldKey)).toBe(false);
   });
 });

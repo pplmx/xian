@@ -13,6 +13,7 @@
  */
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { storageKey } from "@/utils/storage";
 
 class MemStorage {
   private map = new Map<string, string>();
@@ -59,6 +60,7 @@ function stubClipboard(available: boolean): void {
 describe("savePlatform · Web 剪贴板兜底", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    localStorage.clear();
     mocks.saveAs.mockReset();
     mocks.clipboardWrite.mockReset();
     mocks.clipboardWrite.mockResolvedValue(undefined);
@@ -104,5 +106,18 @@ describe("savePlatform · Web 剪贴板兜底", () => {
       mocks.clipboardWrite,
       "即便下载看似成功,剪贴板照写 —— 这是唯一的保底",
     ).toHaveBeenCalled();
+  });
+
+  it("有坏分片时仍导出可读部分,但不能回报成一份完整备份", async () => {
+    localStorage.setItem(storageKey("game"), JSON.stringify({ started: true }));
+    localStorage.setItem(storageKey("player"), JSON.stringify({ major: 5 }));
+    localStorage.setItem(storageKey("inventory"), "这不是 JSON");
+    mocks.saveAs.mockReturnValue(undefined);
+
+    const { exportSaveToDevice } = await import("./savePlatform");
+    const msg = await exportSaveToDevice();
+
+    expect(msg, "缺片备份不能返回 null,否则设置页会把上次导出记成今天").toContain("不完整");
+    expect(mocks.clipboardWrite, "坏片不能让整份备份都导不出来").toHaveBeenCalled();
   });
 });

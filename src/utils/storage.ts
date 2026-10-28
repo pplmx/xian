@@ -15,7 +15,7 @@ export const SAVE_PREFIX = "xuanshu.";
  * 把旧前缀下的分片原样搬到新前缀(值本身就是密文,搬过去照样能解)。
  */
 export const LEGACY_SAVE_PREFIX = "yunyin.";
-/** 更名前导出文件里写的游戏标识(`buildExportPayload` 曾经写的就是它) */
+/** 更名前导出文件里写的游戏标识 */
 export const LEGACY_GAME_ID = "yunyin-xiuxian";
 export const SAVE_VERSION = 2;
 
@@ -374,15 +374,20 @@ function restorePendingWrites(backup: Map<string, string>): void {
  *
  * getItem 必须优先读队列,否则「刚写又读」会拿到磁盘上的旧值
  */
+function readThrottledValue(key: string): { ok: true; value: string | null } | { ok: false } {
+  const queued = pending.get(key);
+  if (queued !== undefined) return { ok: true, value: queued };
+  try {
+    return { ok: true, value: localStorage.getItem(key) };
+  } catch {
+    return { ok: false };
+  }
+}
+
 const THROTTLED_STORAGE = {
   getItem: (key: string): string | null => {
-    const queued = pending.get(key);
-    if (queued !== undefined) return queued;
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
+    const read = readThrottledValue(key);
+    return read.ok ? read.value : null;
   },
   setItem: (key: string, value: string): void => {
     if (writesBlocked) {
@@ -514,11 +519,35 @@ export function migrateResourcesSlice(data: Record<string, unknown>): Record<str
  * 本地存档结构升级(在 Pinia 水合之前执行);顺带把旧明文档一次性转为密文
  */
 export function migrateLocalSchema(): void {
+  migrateLegacyPrefixSafely();
+  migrateSchemaSlices();
+}
+
+/**
+ * 启动时的存档维护顺序:先搬旧前缀,再隔离坏档,重试搬旧前缀,最后升级结构。
+ *
+ * 坏掉的旧前缀若直接搬到新键再水合,Pinia 会把它当空档,随后默认状态落盘
+ * 就把原文盖掉了。先搬再扫,坏旧档至少会进 `corrupt.*` 备份;而新键坏、
+ * 旧键好的一对要在扫描移走坏键后再搬一次,否则下一次水合并落默认档时,
+ * 这条旧键会被可读的新默认档取代。
+ */
+export function prepareLocalSave(): string[] {
+  migrateLegacyPrefixSafely();
+  const corrupted = preflightScan();
+  // 扫描可能刚移走挡住旧档的坏新键;再走完整入口,先补搬旧档,再升级结构。
+  migrateLocalSchema();
+  return corrupted;
+}
+
+function migrateLegacyPrefixSafely(): void {
   try {
     migrateLegacyPrefix();
   } catch {
     // 前缀迁移失败不该阻断下面的分片升级
   }
+}
+
+function migrateSchemaSlices(): void {
   let queued = false;
   for (const [key, fn] of [
     ["inventory", migrateInventorySlice],
@@ -608,28 +637,57 @@ export interface ExportPayload {
   version: number;
   exportedAt: number;
   data: Record<string, unknown>;
+  /** 导出时未能装进备份的分片;缺省表示这份备份完整 */
+  skipped?: string[];
 }
 
-export function buildExportPayload(): ExportPayload {
+export interface ExportSnapshot {
+  payload: ExportPayload;
+  /** 键还在、但读或解析失败的分片 —— 这份备份明确少了它们 */
+  skipped: string[];
+}
+
+/**
+ * 生成导出快照,同时报告哪些分片没能装进去。
+ *
+ * 坏分片不能拖垮整份备份,但也不能悄悄少一块:调用方要把 `skipped`
+ * 传给玩家,并且不能把它记成一次完整导出。
+ */
+export function buildExportSnapshot(): ExportSnapshot {
   // 先尽力刷盘,让正常路径导出的是磁盘上的最新一版
   flushSaveWrites();
   const data: Record<string, unknown> = {};
+  const skipped: string[] = [];
   for (const id of PERSISTED_STORES) {
     /*
      * 刷盘可能刚失败(存储满/被 WebView 拒绝),此时最新一版仍在 pending 里。
      * 必须走节流层的「读己所写」,否则玩家按提示导出的备份会悄悄退回上一版 ——
      * 而这正是写盘失败后最需要保住的东西。
      */
-    const raw = THROTTLED_STORAGE.getItem(storageKey(id));
+    const read = readThrottledValue(storageKey(id));
+    if (!read.ok) {
+      skipped.push(id);
+      continue;
+    }
+    const raw = read.value;
     if (raw !== null) {
       try {
         data[id] = JSON.parse(readSaveText(raw));
       } catch {
-        // 跳过损坏分片
+        skipped.push(id);
       }
     }
   }
-  return { game: "xuanshu", version: SAVE_VERSION, exportedAt: Date.now(), data };
+  return {
+    payload: {
+      game: "xuanshu",
+      version: SAVE_VERSION,
+      exportedAt: Date.now(),
+      data,
+      ...(skipped.length > 0 ? { skipped } : {}),
+    },
+    skipped,
+  };
 }
 
 /** 校验导入数据结构,返回错误信息;null 表示通过 */

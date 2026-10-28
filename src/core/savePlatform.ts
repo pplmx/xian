@@ -10,12 +10,20 @@
 import { Capacitor } from "@capacitor/core";
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
 import { saveAs } from "file-saver";
-import { exportSaveText } from "./save";
+import { STORE_NAMES } from "@/utils/storage";
+import { exportSaveSnapshot } from "./save";
 import { notify } from "./notify";
+
+function incompleteWarning(skipped: string[]): string | null {
+  if (skipped.length === 0) return null;
+  const names = skipped.map((id) => STORE_NAMES[id] ?? id).join("、");
+  return `存档分片「${names}」无法读取,这份备份不完整`;
+}
 
 /** 本机存档导出:按平台落到可被用户取走的地方,成功返回提示,失败返回 null */
 export async function exportSaveToDevice(): Promise<string | null> {
-  const text = exportSaveText();
+  const { text, skipped } = exportSaveSnapshot();
+  const incomplete = incompleteWarning(skipped);
   if (Capacitor.isNativePlatform()) {
     try {
       // Documents 在部分 Android 上需运行时授权,先问一句,被拒就如实告知
@@ -29,6 +37,10 @@ export async function exportSaveToDevice(): Promise<string | null> {
         directory: Directory.Documents,
         encoding: Encoding.UTF8,
       });
+      if (incomplete) {
+        notify(`已导出到「文档/Export/${file}」,但${incomplete}`, "warn");
+        return incomplete;
+      }
       notify(`已导出到「文档/Export/${file}」`, "success");
       return null;
     } catch {
@@ -71,15 +83,28 @@ export async function exportSaveToDevice(): Promise<string | null> {
   }
 
   if (downloaded && clipped) {
+    if (incomplete) {
+      notify(`已导出「${file}」,但${incomplete}`, "warn");
+      return incomplete;
+    }
     notify(`已导出「${file}」(存档文本也已复制到剪贴板备用)`, "success");
     return null;
   }
   if (downloaded) {
+    if (incomplete) {
+      notify(`已导出「${file}」,但${incomplete}`, "warn");
+      return incomplete;
+    }
     notify(`已导出「${file}」`, "success");
     return null;
   }
   if (clipped) {
-    notify("浏览器没能下载 —— 存档文本已复制到剪贴板,新建文本粘贴并另存为 .save 即可导入", "warn");
+    const tail = incomplete ? `;但${incomplete}` : "";
+    notify(
+      `浏览器没能下载 —— 存档文本已复制到剪贴板,新建文本粘贴并另存为 .save 即可导入${tail}`,
+      "warn",
+    );
+    if (incomplete) return incomplete;
     return "存档已复制到剪贴板";
   }
   notify("浏览器既不能下载也复制不了存档,请换一个浏览器打开后再导出", "warn");

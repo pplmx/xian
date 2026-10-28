@@ -356,7 +356,7 @@ describe("导入 · 确认框与导入路径同源", () => {
 
   it("本作的档即使缺分片也进确认框 —— 那是导出侧会产出的形状", () => {
     /**
-     * 这条与上一条是一对:`buildExportPayload` 只打包**存在**的分片,
+     * 这条与上一条是一对:`buildExportSnapshot` 只打包**存在**的分片,
      * 刚建号还没写过档时 data.player 可以缺席。那是本作自己会产出的东西,
      * 挡在确认框外就成了"自己的存档自己导不回来"。
      * 实测:把门槛收紧成全套 validateImportPayload 时,saveRoundTrip 那条正例当场红。

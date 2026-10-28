@@ -35,7 +35,7 @@ import {
   storageKey,
 } from "@/utils/storage";
 import { readSaveText } from "@/utils/crypto";
-import { exportSaveText, importSaveText, inspectImportText, resetGame } from "./save";
+import { exportSaveSnapshot, importSaveText, inspectImportText, resetGame } from "./save";
 import { engine } from "./engine";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
@@ -148,7 +148,8 @@ describe("存档往返 · 导出再导入一模一样", () => {
     await nextTick();
     flushSaveWrites();
 
-    const text = exportSaveText();
+    const { text, skipped } = exportSaveSnapshot();
+    expect(skipped, "完整存档导出不该报缺片").toEqual([]);
     const payload = JSON.parse(readSaveText(text)) as {
       version: number;
       data: Record<string, unknown>;
@@ -209,6 +210,52 @@ describe("存档往返 · 导出再导入一模一样", () => {
     expect(Object.keys(cultivation2.learned), "导入后功法没回来").toContain("m_taixuan");
   });
 
+  it("坏分片不拖垮可读部分,但导出结果必须点名缺片", () => {
+    localStorage.setItem(storageKey("game"), JSON.stringify({ started: true }));
+    localStorage.setItem(storageKey("player"), JSON.stringify({ major: 5 }));
+    localStorage.setItem(storageKey("inventory"), "这不是 JSON");
+
+    const out = exportSaveSnapshot();
+    const payload = JSON.parse(readSaveText(out.text)) as {
+      data: Record<string, unknown>;
+      skipped?: string[];
+    };
+
+    expect(out.skipped).toEqual(["inventory"]);
+    expect(payload.skipped, "缺片事实要随备份文件一起走,不能只活在这次 toast 里").toEqual([
+      "inventory",
+    ]);
+    expect(payload.data.game).toEqual({ started: true });
+    expect(payload.data.player).toEqual({ major: 5 });
+    expect(payload.data, "读不出来的分片不能伪装成已备份").not.toHaveProperty("inventory");
+    expect(inspectImportText(out.text)?.skipped).toEqual(["inventory"]);
+  });
+
+  it("分片读取抛错也算缺片,不能伪装成原本没有这一块", () => {
+    const disk = new Map([
+      [storageKey("game"), JSON.stringify({ started: true })],
+      [storageKey("player"), JSON.stringify({ major: 5 })],
+    ]);
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => {
+        if (key === storageKey("player")) throw new DOMException("blocked", "SecurityError");
+        return disk.get(key) ?? null;
+      },
+      setItem: (key: string, value: string) => void disk.set(key, value),
+      removeItem: (key: string) => void disk.delete(key),
+      clear: () => disk.clear(),
+      key: (i: number) => [...disk.keys()][i] ?? null,
+      get length() {
+        return disk.size;
+      },
+    });
+
+    const out = exportSaveSnapshot();
+
+    expect(out.skipped).toEqual(["player"]);
+    expect(JSON.parse(readSaveText(out.text)).data.game).toEqual({ started: true });
+  });
+
   /**
    * 战报里那些「读数」也要活着回来。
    *
@@ -262,7 +309,7 @@ describe("存档往返 · 导出再导入一模一样", () => {
     await nextTick();
     flushSaveWrites();
 
-    const text = exportSaveText();
+    const { text } = exportSaveSnapshot();
     dropPendingWrites();
     clearAllSave();
     const err = importSaveText(text);
@@ -301,14 +348,27 @@ describe("存档往返 · 导出再导入一模一样", () => {
     player.major = 7;
     player.sub = 3;
     flushSaveWrites();
-    const text = exportSaveText();
+    const { text } = exportSaveSnapshot();
 
     const info = inspectImportText(text);
     expect(info, "自己导的档应当检视得出身份").not.toBeNull();
     expect(info!.version, "检视版本应与当前一致").toBe(SAVE_VERSION);
     expect(info!.tooNew, "同版本的档不该误报高于当前").toBe(false);
+    expect(info!.skipped, "完整备份不该凭空多出缺片").toEqual([]);
+    expect(info!.missingCritical, "完整备份没有关键分片缺失").toBe(false);
     expect(info!.exportedAt, "应如实报导出时间").toBeGreaterThan(0);
     expect(info!.realmLabel).not.toBe("");
+
+    const missingPlayer = inspectImportText(
+      JSON.stringify({
+        game: "xuanshu",
+        version: SAVE_VERSION,
+        exportedAt: 1,
+        data: { game: { started: true } },
+        skipped: ["player"],
+      }),
+    );
+    expect(missingPlayer?.missingCritical, "缺角色分片的档无法通过导入校验").toBe(true);
 
     // tooNew:版本比当前大,确认前就该被标出来
     const tooNew = inspectImportText(

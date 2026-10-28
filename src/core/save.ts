@@ -3,7 +3,7 @@
  */
 import {
   applyImportPayload,
-  buildExportPayload,
+  buildExportSnapshot,
   clearAllSave,
   LEGACY_GAME_ID,
   migrateInventorySlice,
@@ -55,9 +55,16 @@ function migrate(payload: ExportPayload): ExportPayload {
   return migrated;
 }
 
-export function exportSaveText(): string {
-  // 导出为密文,防手改;导入时兼容旧版明文 JSON
-  return encryptSave(JSON.stringify(buildExportPayload()));
+export interface SaveExportSnapshot {
+  /** 导出为密文,防手改;导入时兼容旧版明文 JSON */
+  text: string;
+  /** 读不出来的分片;空数组才是一份完整备份 */
+  skipped: string[];
+}
+
+export function exportSaveSnapshot(): SaveExportSnapshot {
+  const { payload, skipped } = buildExportSnapshot();
+  return { text: encryptSave(JSON.stringify(payload)), skipped };
 }
 
 /** 导入存档文本(密文或旧版明文皆可);成功返回 null,失败返回错误信息 */
@@ -109,6 +116,10 @@ export interface ImportInspect {
   exportedAt: number;
   /** 备份版本高于当前游戏:确认前就该亮出来,别等点完「用这份替换」才弹错 */
   tooNew: boolean;
+  /** 导出时缺失的分片:导入后这些部分会回到默认值 */
+  skipped: string[];
+  /** 连导入门槛都过不了的缺片(player/game) */
+  missingCritical: boolean;
 }
 
 /**
@@ -124,7 +135,7 @@ export interface ImportInspect {
  * 玩家读到的是"这是一份像样的存档",点下去才被告知根本不是本作的档。
  * 从别的游戏拷来的 .save、拿 JSON 手工拼出来的东西,都会走到这条路上。
  *
- * 但也不能直接套 `validateImportPayload`:`buildExportPayload` 只打包**存在**
+ * 但也不能直接套 `validateImportPayload`:`buildExportSnapshot` 只打包**存在**
  * 的分片,刚建号还没写过档时导出里可以没有 `data.player` —— 那是本作自己会产出的
  * 东西,不该被挡在确认框外(实测:收紧成全套校验后,saveRoundTrip 那条正例当场红)。
  * 故门槛取两者交集:必须是本作的标识(认更名前的旧标识),且版本号可读。
@@ -145,12 +156,18 @@ export function inspectImportText(text: string): ImportInspect | null {
     const player = parsed.data?.player;
     const major = typeof player?.major === "number" ? player.major : 0;
     const sub = typeof player?.sub === "number" ? player.sub : 0;
+    const skipped = Array.isArray(parsed.skipped)
+      ? parsed.skipped.filter((id): id is string => typeof id === "string")
+      : [];
+    const missingCritical = skipped.includes("player") || skipped.includes("game");
     return {
       name: typeof player?.name === "string" && player.name ? player.name : "无名散修",
       realmLabel: realmLabel(major, sub),
       version: parsed.version as number,
       exportedAt: parsed.exportedAt,
       tooNew,
+      skipped,
+      missingCritical,
     };
   } catch {
     return null;

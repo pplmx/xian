@@ -55,7 +55,7 @@ function defaultLocks(): LockLike | undefined {
  * 认领写者席位。返回 true 表示本页可以写档;false 表示已有页面在写,本页只读。
  *
  * 调用点必须在**任何存档写入之前**(main.ts 的启动序列最前面):preflightScan /
- * migrateLocalSchema 都会改盘,只读页不该跑它们。
+ * prepareLocalSave 都会改盘,只读页不该跑它。
  */
 export async function acquireSaveWriterRole(locks = defaultLocks()): Promise<boolean> {
   if (!locks) {

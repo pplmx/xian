@@ -287,16 +287,37 @@
           <span>导出 {{ formatClock(importInspect.exportedAt) }}</span>
           <span v-if="importInspect.tooNew">高于当前 v{{ SAVE_VERSION }},无法导入</span>
         </p>
+        <p
+          v-if="importInspect.skipped.length"
+          class="mt-1 text-[10px] leading-relaxed text-cinnabar"
+        >
+          <template v-if="importInspect.missingCritical">
+            导出时缺少「{{
+              importInspect.skipped.map((id) => STORE_NAMES[id] ?? id).join("、")
+            }}」;关键分片缺失,这份备份无法导入。
+          </template>
+          <template v-else>
+            导出时缺少「{{
+              importInspect.skipped.map((id) => STORE_NAMES[id] ?? id).join("、")
+            }}」;导入后这些部分会回到默认值。
+          </template>
+        </p>
       </div>
       <template #footer>
         <div class="flex gap-2">
           <button class="btn-ghost flex-1" @click="closeImport">再想想</button>
           <button
             class="btn-seal flex-1"
-            :disabled="importInspect?.tooNew === true"
+            :disabled="importInspect?.tooNew === true || importInspect?.missingCritical === true"
             @click="confirmImport"
           >
-            {{ importInspect?.tooNew === true ? "无法导入(版本过高)" : "用这份替换" }}
+            {{
+              importInspect?.missingCritical === true
+                ? "无法导入(关键分片缺失)"
+                : importInspect?.tooNew === true
+                  ? "无法导入(版本过高)"
+                  : "用这份替换"
+            }}
           </button>
         </div>
       </template>

@@ -20,7 +20,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import {
   SAVE_FLUSH_MS,
-  buildExportPayload,
+  buildExportSnapshot,
   clearAllSave,
   dropPendingWrites,
   flushSaveWrites,
@@ -282,9 +282,9 @@ describe("存档写盘 · 失败不许静默", () => {
     jam.allow(false);
     storage.setItem(key, serializer.serialize({ exp: 8 }));
 
-    // buildExportPayload 会先尝试刷盘;失败后必须改读「读己所写」的队列值,
+    // buildExportSnapshot 会先尝试刷盘;失败后必须改读「读己所写」的队列值,
     // 否则玩家按提示导出的备份仍是上一版,恰好丢掉写盘失败后的进度
-    const payload = buildExportPayload();
+    const { payload } = buildExportSnapshot();
     expect(payload.data.player).toEqual({ exp: 8 });
   });
 

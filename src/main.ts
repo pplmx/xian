@@ -4,7 +4,7 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { Capacitor } from "@capacitor/core";
 import App from "./App.vue";
 import { router } from "./router";
-import { blockSaveWrites, migrateLocalSchema, preflightScan } from "./utils/storage";
+import { blockSaveWrites, prepareLocalSave } from "./utils/storage";
 import { acquireSaveWriterRole } from "./core/singleWriter";
 import { recordRuntimeDiagnostic, summarizeError } from "./core/diagnostics";
 import { useUiStore } from "./stores/ui";
@@ -21,9 +21,9 @@ import "./style.css";
 const isSaveWriter = await acquireSaveWriterRole();
 if (!isSaveWriter) blockSaveWrites();
 
-// 启动前扫描损坏存档 + 结构升级,避免白屏(只读页不碰盘,连修复也不做)
-const corrupted = isSaveWriter ? preflightScan() : [];
-if (isSaveWriter) migrateLocalSchema();
+// 启动前搬旧前缀 → 隔离坏档 → 结构升级,顺序由 storage 层钉住
+// (只读页不碰盘,连修复也不做)
+const corrupted = isSaveWriter ? prepareLocalSave() : [];
 
 const app = createApp(App);
 const pinia = createPinia();

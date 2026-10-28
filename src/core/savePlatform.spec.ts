@@ -11,7 +11,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 
-/** node 测试环境无 localStorage,导出路径内部(buildExportPayload)要读它,补一个最小桩 */
+/** node 测试环境无 localStorage,导出路径内部(buildExportSnapshot)要读它,补一个最小桩 */
 class MemStorage {
   private map = new Map<string, string>();
   getItem(k: string): string | null {

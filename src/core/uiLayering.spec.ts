@@ -2031,6 +2031,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(s?.src, "导入确认期间引擎要暂停(与重置同款,防 persist 回写)").toContain(
       "engine.pause()",
     );
+    expect(s?.src, "残缺备份要在确认框点名缺片,不能导入后才少一块").toContain(
+      "importInspect.skipped",
+    );
+    expect(s?.src, "缺 player/game 的备份必须禁用导入按钮").toContain(
+      "importInspect?.missingCritical === true",
+    );
   });
 
   it("强色文字不叠透明度 —— 要淡是换 token,不许元素级 opacity", () => {

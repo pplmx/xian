@@ -869,8 +869,8 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     const view = src("../views/SettingsView.vue");
     // 备份版本高于当前就必然导入失败(storage 会拒);确认前已明示「无法导入」,
     // 确认钮却仍可点就没意义 —— 应与付不起一样置灰改口
-    expect(view, "导入确认钮在版本过高时置灰").toContain(
-      ':disabled="importInspect?.tooNew === true"',
+    expect(view, "导入确认钮在版本过高时置灰").toMatch(
+      /:disabled="[^"]*importInspect\?\.tooNew === true[^"]*"/,
     );
     expect(view, "不可行的确应改口").toContain('"无法导入(版本过高)"');
     expect(view, "版本过高与否取自 inspect(不另写死)").toContain("importInspect.tooNew");
