@@ -153,6 +153,8 @@
  *      下量续开入口与整页排版。
  *   五十三 道侣弹窗的「历世同行」按最近一世在前分批铺开。履历没有上限,不能把整部
  *      旧缘一次塞进固定滚动框;续开、滑窗、回翻与焦点都要真走通,且 195 宽下能读。
+ *   五十四 器魂页的两册(散置形意 / 凝炼台)同样没有数量上限。两册都按价值降序先摆
+ *      一批,续开、滑窗、回翻与焦点走同一套长列表规则;195 宽下入口与整扇弹窗都要能读。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -7821,6 +7823,272 @@ async function taskBondHistoryOverflow() {
 }
 
 /**
+ * 器魂两册 —— 散置形意与可凝法器都没有数量上限。
+ *
+ * 30 条夹具分别验证:价值高者先见、首批 12 条、续开至 24 条后焦点落到新页首条;
+ * 再续一批只保留 24 行 DOM,旧批滑出、最末一条仍可达;回翻回首批并聚焦首条。
+ * 两扇弹窗都要在 195 宽下量续开入口与整扇版面。
+ */
+async function taskSoulListOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const pad = (n) => String(n).padStart(2, "0");
+    const souls = [
+      {
+        uid: "soul_high",
+        type: "gangdun",
+        grade: 5,
+        fromName: "化真古盾",
+      },
+      ...Array.from({ length: 29 }, (_, i) => ({
+        uid: `soul_${pad(i + 1)}`,
+        type: "fengmang",
+        grade: 0,
+        fromName: `旧器${pad(i + 1)}`,
+      })),
+    ];
+    const forgeItems = Array.from({ length: 30 }, (_, i) => ({
+      uid: `forge_${pad(i + 1)}`,
+      templateId: "w_zidian",
+      quality: "mortal",
+      tier: i + 1,
+      level: 0,
+      affixes: [{ id: "crit1", roll: 1 }],
+    }));
+    const slices = showcaseSlices("light");
+    slices.endgame = { ...slices.endgame, souls, equippedSouls: [] };
+    slices.inventory = { ...slices.inventory, items: forgeItems, equipped: {} };
+    await seedSave(ctx, slices, "__soulListFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/souls", { waitUntil: "load" });
+
+    async function readList(kind) {
+      return page.evaluate((key) => {
+        const holder = document.querySelector(`[data-soul-${key}-total]`);
+        const rows = [...document.querySelectorAll(`[data-soul-${key}-row]`)];
+        return {
+          total: Number(holder?.getAttribute(`data-soul-${key}-total`)),
+          shown: Number(holder?.getAttribute(`data-soul-${key}-shown`)),
+          start: Number(holder?.getAttribute(`data-soul-${key}-start`)),
+          count: rows.length,
+          ids: rows.map((row) => row.getAttribute(`data-soul-${key}-row`)),
+          focus: document.activeElement?.getAttribute(`data-soul-${key}-row`),
+        };
+      }, kind);
+    }
+
+    async function exerciseList({
+      kind,
+      unit,
+      firstId,
+      initialLastId,
+      secondFocus,
+      finalFocus,
+      oldestId,
+    }) {
+      const more = page.locator(`[data-soul-${kind}-more]`).first();
+      const moreCount = await more.count();
+      const moreText = moreCount
+        ? ((await more.textContent()) || "").replace(/\s+/g, " ").trim()
+        : "";
+      const initial = await readList(kind);
+      checked += 1;
+      if (
+        initial.total !== 30 ||
+        initial.shown !== 12 ||
+        initial.start !== 0 ||
+        initial.count !== 12 ||
+        initial.ids[0] !== firstId ||
+        initial.ids.at(-1) !== initialLastId ||
+        moreCount === 0 ||
+        !new RegExp(`再看\\s*12\\s*${unit}\\s*·\\s*余\\s*18`).test(moreText)
+      ) {
+        failures.push(
+          `[320] 器魂${kind === "idle" ? "散置形意" : "凝炼台"}首批应 12/30 ` +
+            `(${firstId} → ${initialLastId})并可再看 12 ${unit},` +
+            `实见 ${initial.ids[0] ?? "无"} → ${initial.ids.at(-1) ?? "无"} / ${initial.count} 行` +
+            `(shown ${initial.shown} / total ${initial.total}) «${moreText}»`,
+        );
+      }
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      if (moreCount > 0) {
+        await more.scrollIntoViewIfNeeded();
+        const fit = await more.evaluate((el) => {
+          const box = el.getBoundingClientRect();
+          return {
+            left: box.left,
+            right: box.right,
+            height: box.height,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+            viewport: window.innerWidth,
+          };
+        });
+        checked += 1;
+        if (
+          fit.left < -1 ||
+          fit.right > fit.viewport + 1 ||
+          fit.scrollWidth > fit.clientWidth + 1 ||
+          fit.height < 27.5
+        ) {
+          failures.push(
+            `[195] 器魂${kind === "idle" ? "散置形意" : "凝炼台"}续开入口被挤坏:` +
+              `盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+              `内容 ${fit.scrollWidth}>${fit.clientWidth} / ` +
+              `高 ${Math.round(fit.height * 10) / 10}px / 视口 ${fit.viewport}`,
+          );
+        }
+      }
+
+      checked += 1;
+      const dialogProblems = dialogZoomProblems(
+        await measureDialogZoom(page, { width: 390, height: 844 }),
+      );
+      if (dialogProblems.length) {
+        failures.push(
+          `[195] 器魂${kind === "idle" ? "散置形意" : "凝炼台"} → ${dialogProblems.join(" / ")}`,
+        );
+      }
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      if (moreCount > 0) {
+        await page.locator(`[data-soul-${kind}-more]`).first().click({ timeout: 5000 });
+        await page.waitForFunction(
+          (key) =>
+            document
+              .querySelector(`[data-soul-${key}-total]`)
+              ?.getAttribute(`data-soul-${key}-shown`) === "24",
+          kind,
+          { timeout: 5000 },
+        );
+        const second = await readList(kind);
+        checked += 1;
+        if (second.count !== 24 || second.focus !== secondFocus) {
+          failures.push(
+            `[195] 器魂${kind === "idle" ? "散置形意" : "凝炼台"}续开第一批后应铺 24 条、` +
+              `焦点落 ${secondFocus},实见 ${second.count} 条 / 焦点 ${second.focus ?? "无"}`,
+          );
+        }
+
+        await page.locator(`[data-soul-${kind}-more]`).first().click({ timeout: 5000 });
+        await page.waitForFunction(
+          (key) =>
+            document
+              .querySelector(`[data-soul-${key}-total]`)
+              ?.getAttribute(`data-soul-${key}-shown`) === "30",
+          kind,
+          { timeout: 5000 },
+        );
+        const last = await readList(kind);
+        checked += 1;
+        if (
+          last.count !== 24 ||
+          last.start !== 6 ||
+          last.focus !== finalFocus ||
+          last.ids.includes(firstId) ||
+          !last.ids.includes(oldestId) ||
+          (await page.locator(`[data-soul-${kind}-prev]`).count()) === 0
+        ) {
+          failures.push(
+            `[195] 器魂${kind === "idle" ? "散置形意" : "凝炼台"}末批应滑窗为 24/30、` +
+              `从第 7 行起、焦点 ${finalFocus} 并可回翻,` +
+              `实见 ${last.count} 行 / start ${last.start} / 焦点 ${last.focus ?? "无"} / ` +
+              `首批 ${last.ids.includes(firstId) ? "仍在" : "已滑走"} / ` +
+              `最末 ${last.ids.includes(oldestId) ? "在" : "缺失"}`,
+          );
+        }
+
+        await page.locator(`[data-soul-${kind}-prev]`).first().click({ timeout: 5000 });
+        await page.waitForFunction(
+          (key) =>
+            document
+              .querySelector(`[data-soul-${key}-total]`)
+              ?.getAttribute(`data-soul-${key}-shown`) === "24",
+          kind,
+          { timeout: 5000 },
+        );
+        const back = await readList(kind);
+        checked += 1;
+        if (back.focus !== firstId || !back.ids.includes(firstId)) {
+          failures.push(
+            `[195] 器魂${kind === "idle" ? "散置形意" : "凝炼台"}回翻没有回到首批:` +
+              `焦点 ${back.focus ?? "无"} / 首批 ${back.ids.includes(firstId) ? "在" : "缺失"}`,
+          );
+        }
+      }
+    }
+
+    const idleEntry = page
+      .locator("main button")
+      .filter({ hasText: /散置形意/ })
+      .first();
+    await idleEntry.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+    checked += 1;
+    if ((await idleEntry.count()) === 0) {
+      failures.push("[320] 器魂页找不到「散置形意」入口 —— 闲置两册没有量到");
+    } else {
+      await idleEntry.click({ timeout: 5000 });
+      await page.locator("[data-soul-idle-total]").waitFor({ state: "visible", timeout: 5000 });
+      await exerciseList({
+        kind: "idle",
+        unit: "缕",
+        firstId: "soul_high",
+        initialLastId: "soul_11",
+        secondFocus: "soul_12",
+        finalFocus: "soul_24",
+        oldestId: "soul_29",
+      });
+      await page.keyboard.press("Escape");
+      await page.locator("[data-soul-idle-total]").waitFor({ state: "hidden", timeout: 5000 });
+
+      const forgeEntry = page
+        .locator("main button")
+        .filter({ hasText: /凝炼台/ })
+        .first();
+      await forgeEntry.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+      checked += 1;
+      if ((await forgeEntry.count()) === 0) {
+        failures.push("[320] 器魂页找不到「凝炼台」入口 —— 可凝册没有量到");
+      } else {
+        await forgeEntry.click({ timeout: 5000 });
+        await page.locator("[data-soul-forge-total]").waitFor({ state: "visible", timeout: 5000 });
+        await exerciseList({
+          kind: "forge",
+          unit: "件",
+          firstId: "forge_30",
+          initialLastId: "forge_19",
+          secondFocus: "forge_18",
+          finalFocus: "forge_06",
+          oldestId: "forge_01",
+        });
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[320] 器魂两册场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -7985,6 +8253,7 @@ const TASKS = [
   ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
   ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
   ["道侣的历世同行回看", taskBondHistoryOverflow],
+  ["器魂两册的分批回看", taskSoulListOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],

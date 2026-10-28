@@ -247,47 +247,85 @@
     <!-- 散置形意 -->
     <BaseModal :open="idleOpen" title="散置形意" @close="idleOpen = false">
       <div
-        v-if="idleSouls.length > 0"
-        class="scroll-pane card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4"
+        v-if="idleSoulRows.length > 0"
+        :data-soul-idle-total="idleSoulRows.length"
+        :data-soul-idle-shown="idleSoulPage.shown"
+        :data-soul-idle-start="idleSoulPage.start"
       >
-        <div
-          v-for="soul in idleSouls"
-          :key="soul.uid"
-          class="flex items-center justify-between gap-2 py-2.5"
-        >
-          <div class="min-w-0">
-            <p class="truncate text-[11px]" :style="{ color: soulColor(soul) }">
-              {{ soulLabel(soul) }}
-            </p>
-            <p class="text-[10px] text-ink-faint">
-              凝自「{{ soul.fromName }}」 · {{ soulModText(soul) }}
-            </p>
-          </div>
-          <div class="flex shrink-0 gap-1">
-            <button
-              class="btn-ghost !px-2.5 !py-1 !text-[11px]"
-              :disabled="slotsFull"
-              @click="wearSoul(soul.uid)"
-            >
-              {{ slotsFull ? "槽已满" : "装配" }}
-            </button>
-            <template v-if="pendingDissolveUid !== soul.uid">
+        <p class="mb-1 flex flex-wrap items-baseline justify-between gap-1 text-[10px]">
+          <span class="text-ink-faint">品阶高者在前</span>
+          <span class="tabular text-ink-faint">共 {{ idleSoulRows.length }} 缕</span>
+        </p>
+        <div class="scroll-pane card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4">
+          <div
+            v-for="soul in idleSoulPage.visible"
+            :key="soul.uid"
+            :data-soul-idle-row="soul.uid"
+            tabindex="-1"
+            class="flex items-center justify-between gap-2 py-2.5 tinylens:flex-col tinylens:items-stretch"
+          >
+            <div class="min-w-0">
+              <p class="truncate text-[11px]" :style="{ color: soulColor(soul) }">
+                {{ soulLabel(soul) }}
+              </p>
+              <p class="text-[10px] leading-relaxed text-ink-faint">
+                凝自「{{ soul.fromName }}」 · {{ soulModText(soul) }}
+              </p>
+            </div>
+            <div class="flex shrink-0 flex-wrap gap-1 tinylens:justify-end">
               <button
-                class="btn-ghost !px-2 !py-1 !text-[11px] !text-ink-faint"
-                @click="pendingDissolveUid = soul.uid"
+                class="btn-ghost !px-2.5 !py-1 !text-[11px]"
+                :disabled="slotsFull"
+                @click="wearSoul(soul.uid)"
               >
-                散去
+                {{ slotsFull ? "槽已满" : "装配" }}
               </button>
-            </template>
-            <template v-else>
-              <button class="btn-seal !px-2 !py-1 !text-[11px]" @click="doDissolve(soul.uid)">
-                确认散去
-              </button>
-              <button class="btn-ghost !px-2 !py-1 !text-[11px]" @click="pendingDissolveUid = null">
-                再想想
-              </button>
-            </template>
+              <template v-if="pendingDissolveUid !== soul.uid">
+                <button
+                  class="btn-ghost !px-2 !py-1 !text-[11px] !text-ink-faint"
+                  @click="pendingDissolveUid = soul.uid"
+                >
+                  散去
+                </button>
+              </template>
+              <template v-else>
+                <button class="btn-seal !px-2 !py-1 !text-[11px]" @click="doDissolve(soul.uid)">
+                  确认散去
+                </button>
+                <button
+                  class="btn-ghost !px-2 !py-1 !text-[11px]"
+                  @click="pendingDissolveUid = null"
+                >
+                  再想想
+                </button>
+              </template>
+            </div>
           </div>
+        </div>
+        <div
+          v-if="idleSoulPage.start > 0 || idleSoulPage.hidden > 0"
+          class="mt-1.5 flex flex-wrap gap-1"
+        >
+          <button
+            v-if="idleSoulPage.start > 0"
+            type="button"
+            data-soul-idle-prev
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            :aria-label="previousListText(idleSoulPage.shown, idleSoulRows.length, '缕')"
+            @click="showPreviousIdleSouls"
+          >
+            {{ previousListText(idleSoulPage.shown, idleSoulRows.length, "缕") }}
+          </button>
+          <button
+            v-if="idleSoulPage.hidden > 0"
+            type="button"
+            data-soul-idle-more
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            :aria-label="moreListText(idleSoulPage.hidden, '缕')"
+            @click="showMoreIdleSouls"
+          >
+            {{ moreListText(idleSoulPage.hidden, "缕") }}
+          </button>
         </div>
       </div>
       <p v-else class="px-4 py-6 text-center t-body text-ink-faint">
@@ -310,56 +348,91 @@
         >
       </p>
       <div
-        v-if="refinable.length > 0"
-        class="scroll-pane card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4"
+        v-if="refinableRows.length > 0"
+        :data-soul-forge-total="refinableRows.length"
+        :data-soul-forge-shown="refinablePage.shown"
+        :data-soul-forge-start="refinablePage.start"
       >
-        <div
-          v-for="row in refinable"
-          :key="row.inst.uid"
-          class="flex items-center justify-between gap-2 py-2.5"
-        >
-          <div class="min-w-0">
-            <p class="truncate text-[11px] text-ink-soft">{{ row.name }}</p>
-            <p class="truncate text-[10px] text-ink-faint">
-              将凝出
-              <span :style="{ color: soulGradeDef(row.gradeRank).color }"
-                >{{ soulGradeDef(row.gradeRank).name }}·{{ row.typeName }}</span
-              >
-              <!-- 给什么要有数:魂效果是确定的,就在入炉前说出来(与闲置形意的读数同款) -->
-              <span v-if="modsText(row.mods)" class="ml-1 text-ink-soft">{{
-                modsText(row.mods)
-              }}</span>
-            </p>
-            <!--
-              同类隐患:自动收纳一律不动"已淬养"的件,而手动入炉会把它连同强化投入一起毁掉。
-              手动动作不拦,但必须说清代价 —— 玩家不该在按下确认后才发现自己练过它。
-              投入要报数:尘几许、灵石几许(enhanceInvested 同款,不是一句定性)。
-            -->
-            <p
-              v-if="row.invested && row.investedCost"
-              class="text-[10px] leading-relaxed text-cinnabar"
-            >
-              此器已淬养,入炉将连同强化投入一并失去(器灵尘×{{ row.investedCost.dust }} · 灵石
-              {{ formatGN(row.investedCost.stone) }})
-            </p>
-          </div>
-          <!-- 入炉二步确认:毁的是原器,不按一个「入 炉」就直接交代了 -->
-          <button
-            v-if="pendingRefineUid !== row.inst.uid"
-            class="btn-ghost !px-3 !py-1 !text-[11px]"
-            :disabled="!canAffordRefine"
-            @click="pendingRefineUid = row.inst.uid"
+        <p class="mb-1 flex flex-wrap items-baseline justify-between gap-1 text-[10px]">
+          <span class="text-ink-faint">品质高者在前</span>
+          <span class="tabular text-ink-faint">共 {{ refinableRows.length }} 件</span>
+        </p>
+        <div class="scroll-pane card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4">
+          <div
+            v-for="row in refinablePage.visible"
+            :key="row.inst.uid"
+            :data-soul-forge-row="row.inst.uid"
+            tabindex="-1"
+            class="flex items-center justify-between gap-2 py-2.5 tinylens:flex-col tinylens:items-stretch"
           >
-            入 炉
-          </button>
-          <div v-else class="flex shrink-0 items-center gap-1.5">
-            <button class="btn-seal !px-2.5 !py-1 !text-[11px]" @click="doRefine(row.inst.uid)">
-              确认凝炼
+            <div class="min-w-0">
+              <p class="truncate text-[11px] text-ink-soft">{{ row.name }}</p>
+              <p class="truncate text-[10px] text-ink-faint">
+                将凝出
+                <span :style="{ color: soulGradeDef(row.gradeRank).color }"
+                  >{{ soulGradeDef(row.gradeRank).name }}·{{ row.typeName }}</span
+                >
+              </p>
+              <!-- 给什么要有数:魂效果是确定的,就在入炉前说出来(与闲置形意的读数同款) -->
+              <p v-if="modsText(row.mods)" class="truncate text-[10px] text-ink-soft">
+                {{ modsText(row.mods) }}
+              </p>
+              <!--
+                同类隐患:自动收纳一律不动"已淬养"的件,而手动入炉会把它连同强化投入一起毁掉。
+                手动动作不拦,但必须说清代价 —— 玩家不该在按下确认后才发现自己练过它。
+                投入要报数:尘几许、灵石几许(enhanceInvested 同款,不是一句定性)。
+              -->
+              <p
+                v-if="row.invested && row.investedCost"
+                class="text-[10px] leading-relaxed text-cinnabar"
+              >
+                此器已淬养,入炉将连同强化投入一并失去(器灵尘×{{ row.investedCost.dust }} · 灵石
+                {{ formatGN(row.investedCost.stone) }})
+              </p>
+            </div>
+            <!-- 入炉二步确认:毁的是原器,不按一个「入 炉」就直接交代了 -->
+            <button
+              v-if="pendingRefineUid !== row.inst.uid"
+              class="btn-ghost !px-3 !py-1 !text-[11px] tinylens:self-end"
+              :disabled="!canAffordRefine"
+              @click="pendingRefineUid = row.inst.uid"
+            >
+              入 炉
             </button>
-            <button class="btn-ghost !px-2.5 !py-1 !text-[11px]" @click="pendingRefineUid = null">
-              再想想
-            </button>
+            <div v-else class="flex shrink-0 items-center gap-1.5 tinylens:self-end">
+              <button class="btn-seal !px-2.5 !py-1 !text-[11px]" @click="doRefine(row.inst.uid)">
+                确认凝炼
+              </button>
+              <button class="btn-ghost !px-2.5 !py-1 !text-[11px]" @click="pendingRefineUid = null">
+                再想想
+              </button>
+            </div>
           </div>
+        </div>
+        <div
+          v-if="refinablePage.start > 0 || refinablePage.hidden > 0"
+          class="mt-1.5 flex flex-wrap gap-1"
+        >
+          <button
+            v-if="refinablePage.start > 0"
+            type="button"
+            data-soul-forge-prev
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            :aria-label="previousListText(refinablePage.shown, refinableRows.length, '件')"
+            @click="showPreviousRefinable"
+          >
+            {{ previousListText(refinablePage.shown, refinableRows.length, "件") }}
+          </button>
+          <button
+            v-if="refinablePage.hidden > 0"
+            type="button"
+            data-soul-forge-more
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            :aria-label="moreListText(refinablePage.hidden, '件')"
+            @click="showMoreRefinable"
+          >
+            {{ moreListText(refinablePage.hidden, "件") }}
+          </button>
         </div>
       </div>
       <p v-else class="px-4 py-6 text-center t-body text-ink-faint">
@@ -375,12 +448,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
 import { formatGN, formatNum } from "@/utils/format";
 import { modsText } from "@/data/statNames";
 import { equipmentTemplate } from "@/data/equipment";
+import { qualityDef } from "@/data/qualities";
 import {
   SOUL_SLOTS,
   soulGradeDef,
@@ -401,6 +475,13 @@ import {
 import { hasInvestment } from "@/core/smartKeep";
 import { enhanceInvested } from "@/core/salvage";
 import { endgameUnlocked } from "@/core/endgameService";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 import { useEndgameStore } from "@/stores/endgame";
 import { useInventoryStore } from "@/stores/inventory";
 import SectionTitle from "@/components/common/SectionTitle.vue";
@@ -495,6 +576,97 @@ const refinable = computed(() => {
         investedCost: invested ? enhanceInvested(inst) : null,
       };
     });
+});
+
+const SOUL_RENDER_BATCH = 12;
+const SOUL_RENDER_WINDOW = SOUL_RENDER_BATCH * 2;
+const idleSoulLimit = ref(SOUL_RENDER_BATCH);
+const refinableLimit = ref(SOUL_RENDER_BATCH);
+
+/** 闲置形意按品阶降序:槽位只有三处,先让最值得装配的那缕露在首批。 */
+const idleSoulRows = computed(() =>
+  [...idleSouls.value].sort(
+    (a, b) =>
+      b.grade - a.grade ||
+      soulName(a).localeCompare(soulName(b), "zh-CN") ||
+      a.uid.localeCompare(b.uid),
+  ),
+);
+const idleSoulPage = computed(() =>
+  listWindow(idleSoulRows.value, idleSoulLimit.value, SOUL_RENDER_WINDOW),
+);
+
+/** 可凝法器与行囊同排法:品质降序、层级降序,不让低阶旧件占满首批。 */
+const refinableRows = computed(() =>
+  [...refinable.value].sort(
+    (a, b) =>
+      qualityDef(b.inst.quality).rank - qualityDef(a.inst.quality).rank ||
+      b.inst.tier - a.inst.tier ||
+      a.inst.uid.localeCompare(b.inst.uid),
+  ),
+);
+const refinablePage = computed(() =>
+  listWindow(refinableRows.value, refinableLimit.value, SOUL_RENDER_WINDOW),
+);
+
+function moreListText(hidden: number, unit: string): string {
+  const next = Math.min(SOUL_RENDER_BATCH, hidden);
+  return `再看 ${next} ${unit} · 余 ${hidden}`;
+}
+
+function previousListText(shown: number, total: number, unit: string): string {
+  const step = previousListStep(shown, total, SOUL_RENDER_BATCH);
+  return `前一批 ${step} ${unit}`;
+}
+
+function focusSoulRow(selector: string, index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>(selector);
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function showMoreIdleSouls(): void {
+  const shownBefore = idleSoulPage.value.shown;
+  const shownAfter = nextListLimit(shownBefore, idleSoulRows.value.length, SOUL_RENDER_BATCH);
+  idleSoulLimit.value = shownAfter;
+  focusSoulRow(
+    "[data-soul-idle-row]",
+    firstNewVisibleIndex(shownBefore, shownAfter, SOUL_RENDER_WINDOW),
+  );
+}
+
+function showPreviousIdleSouls(): void {
+  idleSoulLimit.value = previousListLimit(
+    idleSoulPage.value.shown,
+    idleSoulRows.value.length,
+    SOUL_RENDER_BATCH,
+  );
+  focusSoulRow("[data-soul-idle-row]");
+}
+
+function showMoreRefinable(): void {
+  const shownBefore = refinablePage.value.shown;
+  const shownAfter = nextListLimit(shownBefore, refinableRows.value.length, SOUL_RENDER_BATCH);
+  refinableLimit.value = shownAfter;
+  focusSoulRow(
+    "[data-soul-forge-row]",
+    firstNewVisibleIndex(shownBefore, shownAfter, SOUL_RENDER_WINDOW),
+  );
+}
+
+function showPreviousRefinable(): void {
+  refinableLimit.value = previousListLimit(
+    refinablePage.value.shown,
+    refinableRows.value.length,
+    SOUL_RENDER_BATCH,
+  );
+  focusSoulRow("[data-soul-forge-row]");
+}
+
+watch([idleOpen, forgeOpen], ([idle, forge]) => {
+  if (idle) idleSoulLimit.value = SOUL_RENDER_BATCH;
+  if (forge) refinableLimit.value = SOUL_RENDER_BATCH;
 });
 
 function soulLabel(soul: SoulInstance): string {

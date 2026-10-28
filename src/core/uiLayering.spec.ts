@@ -1791,6 +1791,34 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(bond?.src, "滑走的旧缘要能回翻").toContain("data-bond-history-prev");
   });
 
+  it("器魂两册再长也只铺当前窗 —— 闲置形意与可凝法器都能分批回看", () => {
+    // 器魂没有持有上限，可凝法器也会随背包一起增长；两册若整份铺进 max-h-64，
+    // DOM 会跟着存档无限长大。两册都走同一套列表窗口，并让高品阶先见。
+    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    expect(souls?.src, "闲置形意按品阶降序").toMatch(
+      /const idleSoulRows = computed\([\s\S]{0,220}\.sort\(\s*\(a, b\) =>[\s\S]{0,80}b\.grade - a\.grade/,
+    );
+    expect(souls?.src, "闲置形意走同一套列表窗口").toMatch(
+      /const idleSoulPage = computed\([\s\S]{0,180}listWindow\(\s*idleSoulRows\.value,\s*idleSoulLimit\.value,\s*SOUL_RENDER_WINDOW/,
+    );
+    expect(souls?.src, "可凝法器按品质与层级降序").toMatch(
+      /const refinableRows = computed\([\s\S]{0,260}\.sort\(\s*\(a, b\) =>[\s\S]{0,140}qualityDef\(b\.inst\.quality\)\.rank[\s\S]{0,160}b\.inst\.tier/,
+    );
+    expect(souls?.src, "可凝法器走同一套列表窗口").toMatch(
+      /const refinablePage = computed\([\s\S]{0,180}listWindow\(\s*refinableRows\.value,\s*refinableLimit\.value,\s*SOUL_RENDER_WINDOW/,
+    );
+    expect(souls?.src, "两册都只渲染当前窗").toContain("idleSoulPage.visible");
+    expect(souls?.src).toContain("refinablePage.visible");
+    for (const marker of [
+      "data-soul-idle-more",
+      "data-soul-idle-prev",
+      "data-soul-forge-more",
+      "data-soul-forge-prev",
+    ]) {
+      expect(souls?.src, `缺少 ${marker}`).toContain(marker);
+    }
+  });
+
   it("悬赏贡器不许显占位 0 灵石 · 辅修席满要置灰", () => {
     // ① 贡器单的 reward 是占位 gnZero,逐单真价在交货时按所交品质现算(equipBountyReward)。
     //    价签若一视同仁 formatGN(o.reward) 就亮「0 灵石」——对不上任何结算的假数。
