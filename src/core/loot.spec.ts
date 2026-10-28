@@ -87,6 +87,7 @@ describe("自动回收 · 装备入包前的第一道闸", () => {
       const gained = resources.wudao - before;
       expect(gained, "重复法宝本身应折 10 悟道").toBe(10);
       expect((drops as { wudao?: number }).wudao, "掉落回执必须与资源账报同一份悟道").toBe(gained);
+      expect(drops.items, "折化后的法宝没有新增实物,不能记成拾获一件").toBe(0);
     } finally {
       vi.restoreAllMocks();
     }

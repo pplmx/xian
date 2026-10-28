@@ -51,7 +51,7 @@ export interface DropSummary {
   exp: GNum;
   /** 重复法宝折化入账的悟道点(没有重复则 0) */
   wudao: number;
-  /** 战报里的实物条数(残页/装备/丹药/法宝);「战利品翻倍」这类提示不算拾获 */
+  /** 战报里真正新增的实物条数(残页/装备/丹药/法宝);重复法宝折化只计悟道,不算拾获 */
   items: number;
 }
 
@@ -185,6 +185,8 @@ export function acquireEquipment(
 
 export interface ArtifactAcquireResult {
   line: string;
+  /** 是否真的新增了一件法宝;false = 已有,本次折成悟道点 */
+  added: boolean;
   /** 已拥有时实际折入资源账的悟道点 —— 调用方要把同一份数并进所在会话 */
   wudao: number;
 }
@@ -194,14 +196,14 @@ export function acquireArtifact(defId: string, quiet = false): ArtifactAcquireRe
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
   const def = artifactDef(defId);
-  if (!def) return { line: "", wudao: 0 };
+  if (!def) return { line: "", added: false, wudao: 0 };
   collect("artifact", defId);
   if (!inventory.addArtifact(defId)) {
     resources.addSmall("wudao", 10);
-    return { line: `法宝「${def.name}」(已拥有,化作悟道点×10)`, wudao: 10 };
+    return { line: `法宝「${def.name}」(已拥有,化作悟道点×10)`, added: false, wudao: 10 };
   }
   if (!quiet) notify(`天降机缘!获得法宝「${def.name}」`, "rare");
-  return { line: `法宝「${def.name}」`, wudao: 0 };
+  return { line: `法宝「${def.name}」`, added: true, wudao: 0 };
 }
 
 /**
@@ -439,7 +441,7 @@ export function afterWin(
             const gained = acquireArtifact(artId);
             lines.push(gained.line);
             wudao += gained.wudao;
-            items += 1;
+            if (gained.added) items += 1;
           }
           break;
         }

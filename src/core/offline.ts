@@ -551,7 +551,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
           const gained = acquireArtifact(artId, true);
           if (!gained.line) break;
           trip.wudao += gained.wudao;
-          trip.items += 1;
+          if (gained.added) trip.items += 1;
           notes.push(`途中拾得${gained.line}`);
         }
         /**

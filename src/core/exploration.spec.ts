@@ -254,9 +254,9 @@ describe("连胜(TASK-022 接线 · runBattle 胜负驱动 player.winStreak)", (
 
     const gained = resources.wudao - wudaoBefore;
     expect(gained, "随机流只放行法宝,且墨玉葫芦已拥有 → 折 10 悟道").toBe(10);
-    expect(useAdventureStore().session!.wudaoGain, "法宝折化的悟道与资源账必须写进同一趟所得").toBe(
-      gained,
-    );
+    const session = useAdventureStore().session!;
+    expect(session.wudaoGain, "法宝折化的悟道与资源账必须写进同一趟所得").toBe(gained);
+    expect(session.itemGain, "重复法宝折成悟道后没有实物入囊").toBe(0);
   });
 });
 

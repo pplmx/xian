@@ -22,6 +22,7 @@ import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
 import { settleOffline } from "./offline";
 import { recordWinStreakBatch } from "./earlyGameService";
+import { rng } from "@/utils/random";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
@@ -29,6 +30,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useSettingsStore } from "@/stores/settings";
 import { EXPLORE_BATTLE_INTERVAL } from "@/data/constants";
+import { ARTIFACTS } from "@/data/artifacts";
 import { gn, sub, toNum } from "@/utils/gnum";
 
 // rng 全响应固定:概率判定处处 0.5、pick 恒取首项 —— 序列确定
@@ -230,6 +232,34 @@ describe("离线 events 封顶 40 不蒸发超额遭遇 · 非事即战闭合", 
     expect(receipt!.lines.join("\n"), "丹药明细应与事件结算回执同源").toMatch(/丹药「.+」×2/);
   });
 
+  it("离线重复法宝的回执只说折化来源,不把悟道总数重抄成际遇所得", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const inventory = useInventoryStore();
+    for (const artifact of ARTIFACTS) inventory.addArtifact(artifact.id);
+    useAdventureStore().setPendingEvent("ev_wine_immortal", useGameStore().lastActiveAt);
+    // 际遇默认项的第一后果是修为、第二才是法宝;仅在本用例把后果掷到第二项。
+    // 法宝池本身没有 effects 字段，仍取首件（此时全部已有，必走折化）。
+    const weighted = vi.spyOn(rng, "weighted").mockImplementation(<T>(items: readonly T[]): T => {
+      const outcomes = items as readonly { effects?: unknown }[];
+      return outcomes.length > 1 && outcomes.every((item) => "effects" in item)
+        ? items[1]!
+        : items[0]!;
+    });
+    let summary;
+    try {
+      summary = settleOffline(Date.now())!;
+    } finally {
+      weighted.mockRestore();
+    }
+    const receipt = summary.eventReceipts.find((r) => r.title === "醉卧仙人");
+    const lines = receipt?.lines.join("\n") ?? "";
+
+    expect(receipt, "重复法宝化作悟道后,归来回执仍要说明这笔悟道的来历").toBeDefined();
+    expect(lines).toContain("法宝「墨玉葫芦」已拥有,化作悟道点");
+    expect(lines, "悟道已进资源总账,回执不应再抄一遍 ×10").not.toContain("×10");
+  });
+
   it("会话在离线开始前已结束:不再补打区域之主", () => {
     setActivePinia(createPinia());
     seedSession("normal");
@@ -315,6 +345,7 @@ describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", ()
       return {
         resourceGain: resources.wudao - before,
         sessionGain: useAdventureStore().session!.wudaoGain,
+        itemGain: useAdventureStore().session!.itemGain,
       };
     };
 
@@ -326,6 +357,7 @@ describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", ()
     expect(duplicate.sessionGain - fresh.sessionGain, "会话账也要多这 10 点,不能只在资源账里").toBe(
       10,
     );
+    expect(duplicate.itemGain - fresh.itemGain, "折化没有新增实物，拾获件数不该跟着 +1").toBe(-1);
   });
 
   it("离线历练照在线攒道侣机会点:只补记账,三维与待决事件原样", () => {

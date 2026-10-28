@@ -317,9 +317,11 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
       if (!id) return null;
       const def = pillDef(id);
       if (!def) return null;
-      acquirePill(id, effect.count);
       const count = Number.isFinite(effect.count) ? Math.max(0, Math.floor(effect.count)) : 0;
-      const line = `丹药「${def.name}」×${effect.count}`;
+      // 先按实际发得出手的整数落袋，再从同一个数生成文案与回执 ——
+      // 否则 1.9 枚会实发 1 枚、界面却写 ×1.9，结算与文案各说一套。
+      if (count <= 0 || !acquirePill(id, count)) return null;
+      const line = `丹药「${def.name}」×${count}`;
       return applied(line, { items: count, receipt: line });
     }
     case "recipe": {
@@ -356,7 +358,7 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
       if (!acquired.line) return null;
       const line = `获得 ${acquired.line}`;
       return applied(line, {
-        items: 1,
+        items: acquired.added ? 1 : 0,
         receipt:
           acquired.wudao > 0 ? `法宝「${artifactDef(id)?.name ?? id}」已拥有,化作悟道点` : line,
       });

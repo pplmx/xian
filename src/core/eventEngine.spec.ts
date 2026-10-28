@@ -257,7 +257,28 @@ describe("事件装备回执 · 离线卷轴要能列出来", () => {
   });
 
   it("重复法宝折成悟道点时,归来回执只说来源、不重抄总账数字", () => {
+    const adventure = useAdventureStore();
+    const resources = useResourcesStore();
     useInventoryStore().addArtifact("af_muyu");
+    // 先结清「首次际遇」可能触发的成就，避免无关悟道混进这段会话账。
+    track("events");
+    adventure.$patch({
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: 0,
+        endsAt: 1_000_000,
+        nextBattleAt: 0,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: gn(0),
+        expGain: gn(0),
+        itemGain: 0,
+        wudaoGain: 0,
+      },
+    });
+    const wudao = resources.wudao;
     const def: EventDef = {
       id: "ev_test_duplicate_artifact",
       title: "旧藏",
@@ -280,8 +301,57 @@ describe("事件装备回执 · 离线卷轴要能列出来", () => {
 
     const res = resolveEventChoice(def, 0, 3);
 
+    expect(resources.wudao - wudao).toBe(10);
     expect(res.lines.join("\n")).toContain("化作悟道点×10");
     expect(res.notableLines).toEqual(["法宝「墨玉葫芦」已拥有,化作悟道点"]);
+    expect(adventure.session!.wudaoGain, "折化所得仍要进本趟悟道账").toBe(10);
+    expect(adventure.session!.itemGain, "法宝没有入囊，不能冒充拾获一件").toBe(0);
+  });
+
+  it("丹药件数先按实结取整,再同时写进背包、文案、回执与会话账", () => {
+    const adventure = useAdventureStore();
+    adventure.$patch({
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: 0,
+        endsAt: 1_000_000,
+        nextBattleAt: 0,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: gn(0),
+        expGain: gn(0),
+        itemGain: 0,
+        wudaoGain: 0,
+      },
+    });
+    const def: EventDef = {
+      id: "ev_test_fractional_pill",
+      title: "零散丹丸",
+      text: "",
+      tags: ["general"],
+      weight: 1,
+      choices: [
+        {
+          label: "收下",
+          outcomes: [
+            {
+              weight: 1,
+              text: "药囊里还剩一枚半。",
+              effects: [{ type: "pill", id: "p_huichun", count: 1.9 }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const res = resolveEventChoice(def, 0, 3);
+
+    expect(useInventoryStore().pills.p_huichun, "实数只发得出一枚").toBe(1);
+    expect(res.lines).toEqual(["丹药「回灵丹」×1"]);
+    expect(res.notableLines).toEqual(["丹药「回灵丹」×1"]);
+    expect(adventure.session!.itemGain).toBe(1);
   });
 });
 
