@@ -10,9 +10,9 @@ import { ref } from "vue";
 import { persistConfig } from "@/utils/storage";
 import { rng } from "@/utils/random";
 import { useResourcesStore } from "@/stores/resources";
-import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { herbGradeOfMajor } from "@/data/herbGrades";
+import { acquirePill } from "@/core/progress";
 import {
   APPRENTICE_MAX_LEVEL,
   APPRENTICES,
@@ -68,7 +68,6 @@ function clampKarma(v: unknown): number {
 /** 把一趟产出入账到资源/背包 */
 function applySpoils(spoils: TaskSpoils, originMajor?: number): void {
   const resources = useResourcesStore();
-  const inventory = useInventoryStore();
   // 灵草按**出发境界**定品(与 offline 的「按产地定品」同口径):addSmall 会落到当前
   // 境界那档,离线升境再归来时,弟子带回的旧界草会堆进新界档,与原产地账脱节
   if (spoils.herb)
@@ -80,7 +79,7 @@ function applySpoils(spoils: TaskSpoils, originMajor?: number): void {
   if (spoils.dust) resources.addSmall("dust", spoils.dust);
   if (spoils.wudao) resources.addSmall("wudao", spoils.wudao);
   if (spoils.stone) resources.addStone(spoils.stone);
-  if (spoils.pillId && spoils.pillCount) inventory.addPill(spoils.pillId, spoils.pillCount);
+  if (spoils.pillId && spoils.pillCount) acquirePill(spoils.pillId, spoils.pillCount);
 }
 
 export const useApprenticeStore = defineStore(

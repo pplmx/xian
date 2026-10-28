@@ -21,6 +21,7 @@ import { bearableRank } from "./craftability";
 import { softChance } from "wanxiang-engine";
 import { useLoreStore } from "@/stores/lore";
 import { useDongfuStore } from "@/stores/dongfu";
+import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { notify } from "./notify";
 import { collect } from "./progress";
@@ -434,17 +435,25 @@ const STARTER_SKILLS: readonly SkillId[] = [
  */
 export function seedLoreIfNeeded(): void {
   const lore = useLoreStore();
+  // 旧档可能已有丹药或掌握度,却是在「获得即收录」之前写的。补收必须放在
+  // seeded 早退之前:真实的旧档早已播种过,不补这一遍就永远漏录。
+  for (const [id, count] of Object.entries(useInventoryStore().pills)) {
+    if (count > 0 && pillDef(id)) collect("pill", id);
+  }
+  for (const p of PILLS) {
+    if (p.recipe && lore.recipeMastery(p.id) > 0) studyRecipe(p.id, 0);
+  }
   if (lore.seeded) return;
   const dongfu = useDongfuStore();
   const player = usePlayerStore();
 
   for (const id of STARTER_RECIPES) {
-    if (lore.recipeMastery(id) <= 0) lore.addRecipeMastery(id, 1);
+    if (lore.recipeMastery(id) <= 0) studyRecipe(id, 1);
   }
   for (const p of PILLS) {
     if (!p.recipe) continue;
     const reachable = (p.alchemyLevel ?? 1) <= dongfu.alchemyLevel && p.minRealm <= player.major;
-    if (reachable && lore.recipeMastery(p.id) <= 0) lore.addRecipeMastery(p.id, LEGACY_MASTERY);
+    if (reachable && lore.recipeMastery(p.id) <= 0) studyRecipe(p.id, LEGACY_MASTERY);
   }
   // 入门方子里的药必然见过,否则新号连第一炉都开不出来
   for (const id of STARTER_RECIPES) {

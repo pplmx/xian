@@ -12,6 +12,8 @@ import { setActivePinia, createPinia } from "pinia";
 import { useApprenticeStore } from "./apprentice";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
+import { useInventoryStore } from "@/stores/inventory";
+import { useQuestsStore } from "@/stores/quests";
 import { STARTER_APPRENTICE, APPRENTICE_MAX_LEVEL } from "@/data/apprentices";
 
 function seed(): void {
@@ -75,6 +77,22 @@ describe("收徒 store", () => {
     expect(appr.task).toBeNull();
     expect(a.apprentices[0]!.level).toBe(2);
     expect(res.herb).toBeGreaterThan(herbBefore);
+  });
+
+  it("寻宝弟子带回的丹药同时进背包与丹方录", () => {
+    seed();
+    const a = useApprenticeStore();
+    const inventory = useInventoryStore();
+    a.sync();
+    const appr = a.apprentices[0]!;
+    const t = Date.now();
+    appr.task = { spec: "seek", startAt: t, finishAt: t + 1, rewardMajor: 0 };
+
+    const reaped = a.collectFinished(t + 2, 0);
+    const pillId = reaped[0]!.spoils.pillId!;
+
+    expect(inventory.pills[pillId]).toBeGreaterThan(0);
+    expect(useQuestsStore().collections.pill).toContain(pillId);
   });
 
   it("sanitize:坏位丢弃、坏任务当归闲置、越界等级夹回", () => {

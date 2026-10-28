@@ -21,9 +21,10 @@ import { PILLS, pillDef } from "@/data/pills";
 import { createPinia, setActivePinia } from "pinia";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
+import { useInventoryStore } from "@/stores/inventory";
 import { stoneByTier } from "./formulas";
 import { dailyTaskDef } from "./engineDailies";
-import { rewardTextAtTier, trackRealm, playerTier } from "./progress";
+import { grantReward, rewardTextAtTier, trackRealm, playerTier } from "./progress";
 import { formatGN } from "@/utils/format";
 
 const SRC = resolve(__dirname, "..");
@@ -71,6 +72,17 @@ describe("奖励可达性 · 丹药与成就条件", () => {
       if (b?.pillId) expect(pillDef(b.pillId), `奖励引用了不存在的丹药 ${b.pillId}`).toBeDefined();
     }
     expect(PILLS.length).toBeGreaterThan(0);
+  });
+
+  it("奖励发放的丹药同时进背包与丹方录", () => {
+    setActivePinia(createPinia());
+    const inventory = useInventoryStore();
+    const quests = useQuestsStore();
+
+    expect(grantReward({ pillId: "p_jvqidan" })).toContain("丹药「聚气丹」");
+
+    expect(inventory.pills["p_jvqidan"]).toBe(1);
+    expect(quests.collections.pill).toContain("p_jvqidan");
   });
 
   it("成就里的 `realm_<major>_<sub>` 条件必须真的有人求值(不是死分支)", () => {

@@ -30,7 +30,7 @@ import { biasChanceMult, biasEffectOf } from "./mortalBias";
 import { personalityEffects } from "./petPersonality";
 import { compareEvictable, keepVerdict, shouldAutoRecycle, smartKeepEnabled } from "./smartKeep";
 import { salvageOf } from "./salvage";
-import { checkQualityAchievement, collect, track } from "./progress";
+import { acquirePill, checkQualityAchievement, collect, track } from "./progress";
 import { harvestMaterials } from "./loreService";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -293,7 +293,6 @@ export function afterWin(
 ): DropSummary {
   const player = usePlayerStore();
   const resources = useResourcesStore();
-  const inventory = useInventoryStore();
   const mods = player.finalStats.mods;
   const lines: string[] = [];
   /**
@@ -401,8 +400,7 @@ export function afterWin(
           if (biasEffect?.channel === "pill") biasHit = true;
           const pillId = randomDropPill(player.major);
           if (pillId) {
-            inventory.addPill(pillId, 1);
-            collect("pill", pillId);
+            acquirePill(pillId, 1);
             const def = PILLS.find((p) => p.id === pillId);
             lines.push(`丹药「${def?.name ?? ""}」`);
             items += 1;

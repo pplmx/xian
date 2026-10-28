@@ -28,7 +28,7 @@ import { acquireArtifact, acquireEquipment, randomDropArtifact } from "./loot";
 import { learnRandomGongfa } from "./gongfaService";
 import { discoverRecipe } from "./loreService";
 import { fortuneAffinity, rootElements } from "./linggenAffinity";
-import { collect, track } from "./progress";
+import { acquirePill, collect, track } from "./progress";
 import { recordEvent } from "./worldMemory";
 import { recordFortuneChoice } from "./fortuneChain";
 import { modOf } from "./statsCalc";
@@ -36,7 +36,6 @@ import { deckPool, drawFrom, inBand } from "wanxiang-engine";
 import { createChoiceSystem, type ChoiceDef } from "wanxiang-engine";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
-import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useAdventureStore } from "@/stores/adventure";
 import { useQuestsStore } from "@/stores/quests";
@@ -257,7 +256,6 @@ export function choiceAvailable(choice: EventChoice, tier: number): boolean {
 function applyEffect(effect: EventEffect, tier: number): string | null {
   const player = usePlayerStore();
   const resources = useResourcesStore();
-  const inventory = useInventoryStore();
   const cultivation = useCultivationStore();
   switch (effect.type) {
     case "stone": {
@@ -291,8 +289,7 @@ function applyEffect(effect: EventEffect, tier: number): string | null {
       if (!id) return null;
       const def = pillDef(id);
       if (!def) return null;
-      inventory.addPill(id, effect.count);
-      collect("pill", id);
+      acquirePill(id, effect.count);
       return `丹药「${def.name}」×${effect.count}`;
     }
     case "recipe": {

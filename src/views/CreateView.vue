@@ -138,7 +138,7 @@ import { randomDaoName } from "@/data/names";
 import { ELEMENTS } from "@/data/linggen";
 import { generateEquipment } from "@/core/equipGen";
 import { acquireEquipment } from "@/core/loot";
-import { trackRealm } from "@/core/progress";
+import { acquirePill, trackRealm } from "@/core/progress";
 import { seedLoreIfNeeded } from "@/core/loreService";
 import { equipmentTemplate } from "@/data/equipment";
 import { useGameStore } from "@/stores/game";
@@ -213,7 +213,7 @@ function begin(): void {
   acquireEquipment(starter, { quiet: true, forceKeep: true }); // forceKeep:开局馈赠不受自动回收规则影响
   const tpl = equipmentTemplate(starter.templateId);
   if (tpl) inventory.equip(starter.uid, tpl.slot);
-  inventory.addPill("p_jvqisan", 3);
+  acquirePill("p_jvqisan", 3);
   // 开局所知:三张入门丹方与方中药材(见 core/loreService.ts)
   seedLoreIfNeeded();
   game.markStarted();

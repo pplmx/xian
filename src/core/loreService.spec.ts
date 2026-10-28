@@ -28,6 +28,7 @@ import {
   studyTick,
 } from "./loreService";
 import { useLoreStore } from "@/stores/lore";
+import { useInventoryStore } from "@/stores/inventory";
 import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
@@ -155,6 +156,36 @@ describe("藏经阁钻研(挂机推演)", () => {
     );
     expect(learned, "这一拍应翻出一张新方").toBeDefined();
     expect(quests.collections.pill).toContain(learned);
+  });
+
+  it("新档播种的入门丹方同时进丹方录 —— 会炼与已录不许分家", () => {
+    const player = usePlayerStore();
+    player.major = 0;
+    seedLoreIfNeeded();
+
+    const quests = useQuestsStore();
+    expect(quests.collections.pill).toEqual(
+      expect.arrayContaining(["p_jvqisan", "p_jvqidan", "p_huichun"]),
+    );
+  });
+
+  it("旧档已有掌握度但漏了收录,播种时一并自愈", () => {
+    const lore = useLoreStore();
+    lore.recipeLore = { p_lingru: 0.5 };
+    lore.seeded = true;
+
+    seedLoreIfNeeded();
+
+    expect(useQuestsStore().collections.pill).toContain("p_lingru");
+  });
+
+  it("旧档背包里已有丹药但漏了收录,启动时一并自愈", () => {
+    useInventoryStore().addPill("p_jvqidan", 1);
+    useLoreStore().seeded = true;
+
+    seedLoreIfNeeded();
+
+    expect(useQuestsStore().collections.pill).toContain("p_jvqidan");
   });
 
   it("一次心跳只办一件事,不会一口气刷出整架书", () => {

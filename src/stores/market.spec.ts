@@ -15,6 +15,7 @@ import { useMarketStore } from "./market";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
+import { useQuestsStore } from "@/stores/quests";
 import { MARKET_REFRESH_SECONDS, MARKET_SLOTS, type MarketSlot } from "@/data/market";
 import type { EquipmentInstance } from "@/types";
 import { gn, toNum } from "@/utils/gnum";
@@ -61,6 +62,27 @@ describe("坊市 store", () => {
     expect(r).toBe("ok");
     expect(JSON.stringify(market.stock[0]!.sold)).toBe("true");
     expect(JSON.stringify(res.spiritStone)).not.toBe(JSON.stringify(before));
+  });
+
+  it("买下的丹药同时进背包与丹方录", () => {
+    seedPlayerAndFunds();
+    const market = useMarketStore();
+    const inventory = useInventoryStore();
+    market.stock = [
+      {
+        kind: "pill",
+        idx: 0,
+        pillId: "p_jvqidan",
+        count: 2,
+        price: gn(10),
+        sold: false,
+      },
+    ];
+    market.stockedAt = Date.now();
+
+    expect(market.buy(0)).toBe("ok");
+    expect(inventory.pills["p_jvqidan"]).toBe(2);
+    expect(useQuestsStore().collections.pill).toContain("p_jvqidan");
   });
 
   it("sanitize:坏格整格丢弃,只剩合法格,时刻夹回非负", () => {

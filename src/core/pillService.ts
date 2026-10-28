@@ -15,7 +15,7 @@ import { expFromSecs, stoneByTier } from "./formulas";
 import { maxTierForMajor } from "@/data/regions";
 import { herbGradeOfMajor, type HerbGrade } from "@/data/herbGrades";
 import { modsText } from "@/data/statNames";
-import { collect, track } from "./progress";
+import { acquirePill, collect, track } from "./progress";
 import { craftability, knownRecipes } from "./craftability";
 import { runCraft, spentOf } from "./engineCraft";
 import { buffOverflowOf } from "./engineBuffs";
@@ -220,7 +220,6 @@ export interface CraftOutcome {
  */
 export function craftPill(id: string, quiet = false): CraftOutcome {
   const resources = useResourcesStore();
-  const inventory = useInventoryStore();
   const def = pillDef(id);
   const able = craftability(id);
   const cost = pillCraftCost(id);
@@ -268,9 +267,8 @@ export function craftPill(id: string, quiet = false): CraftOutcome {
   }
 
   const extra = roll.extra;
-  inventory.addPill(id, roll.produced);
+  acquirePill(id, roll.produced);
   track("pillsCrafted", roll.produced);
-  collect("pill", id);
   if (!quiet) {
     playSfx("success");
     notify(

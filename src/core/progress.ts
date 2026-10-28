@@ -80,10 +80,23 @@ export function playerTier(): number {
   return Math.min(20, player.major * 2 + 1 + (player.sub >= 5 ? 1 : 0));
 }
 
+/**
+ * 丹药入账漏斗 —— 生产掉落 / 购买 / 炼制 / 弟子带回 / 奖励共用。
+ *
+ * 背包里的丹与丹方录里的「已录」是同一笔获得事实,不能各写各的:
+ * 只进背包会让图鉴一直盖着「???」,只进图鉴又会让玩家看得见却吃不到。
+ */
+export function acquirePill(id: string, count = 1): boolean {
+  const n = Math.floor(count);
+  if (!pillDef(id) || !Number.isFinite(count) || n <= 0) return false;
+  useInventoryStore().addPill(id, n);
+  collect("pill", id);
+  return true;
+}
+
 export function grantReward(bundle: RewardBundle, quiet = false): string[] {
   const resources = useResourcesStore();
   const quests = useQuestsStore();
-  const inventory = useInventoryStore();
   const lines: string[] = [];
   if (bundle.stoneTier) {
     const v = stoneByTier(playerTier(), bundle.stoneTier);
@@ -110,8 +123,7 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
     resources.addSmall("dust", bundle.dust);
     lines.push(`器灵尘×${bundle.dust}`);
   }
-  if (bundle.pillId && pillDef(bundle.pillId)) {
-    inventory.addPill(bundle.pillId, 1);
+  if (bundle.pillId && acquirePill(bundle.pillId, 1)) {
     lines.push(`丹药「${pillDef(bundle.pillId)!.name}」`);
   }
   if (bundle.titleId && titleDef(bundle.titleId)) {

@@ -69,7 +69,7 @@ import {
 import { recordWinStreakBatch, streakRewardText } from "./earlyGameService";
 import { modOf } from "./statsCalc";
 import { personalityEffects } from "./petPersonality";
-import { collect, track } from "./progress";
+import { acquirePill, track } from "./progress";
 import { equipmentTemplate } from "@/data/equipment";
 import { herbGradeOfMajor } from "@/data/herbGrades";
 import { tierMajor } from "./tierScale";
@@ -508,8 +508,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         for (let i = 0; i < pillCount; i += 1) {
           const pillId = randomDropPill(player.major);
           if (!pillId) break;
-          inventory.addPill(pillId, 1);
-          collect("pill", pillId);
+          acquirePill(pillId, 1);
           trip.items += 1;
         }
         if (pillCount > 0) {

@@ -8,6 +8,8 @@
  * 故这里直接读源码文本,把「谁都不许再抄一遍」写成断言。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 const SOURCES = import.meta.glob(
   [
@@ -141,5 +143,46 @@ describe("同源审计 · 收徒成本", () => {
     expect(/stoneByTier\s*\(\s*major\s*,\s*APPRENTICE_RECRUIT_TIER_AMOUNT/.test(bad)).toBe(true);
     const good = "const cost = apprenticeRecruitCost(major);";
     expect(/stoneByTier\s*\(\s*major\s*,\s*APPRENTICE_RECRUIT_TIER_AMOUNT/.test(good)).toBe(false);
+  });
+});
+
+/**
+ * 同源审计 · 丹药获得
+ *
+ * 背包里的丹与丹方录的已录是同一笔获得事实。任何取丹路径绕过 `acquirePill` 直接
+ * 写背包,都会造出「背包里有丹、图鉴仍显示未录」的第二本账。
+ */
+describe("同源审计 · 丹药获得", () => {
+  const SRC = resolve(__dirname, "..");
+
+  function walk(dir: string, out: string[] = []): string[] {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) walk(full, out);
+      else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".spec.ts")) out.push(full);
+    }
+    return out;
+  }
+
+  it("生产代码只有 acquirePill 能直接写 inventory.addPill", () => {
+    const hits = walk(SRC)
+      .map(
+        (file) =>
+          [
+            file.slice(SRC.length + 1),
+            readFileSync(file, "utf8")
+              .replace(/\/\*[\s\S]*?\*\//g, "")
+              .replace(/\/\/.*$/gm, ""),
+          ] as const,
+      )
+      .filter(([, src]) => /\.addPill\s*\(/.test(src))
+      .map(([file]) => file);
+
+    expect(hits).toEqual(["core/progress.ts"]);
+  });
+
+  it("自证:绕过漏斗的写法会被判红", () => {
+    expect(/\.addPill\s*\(/.test("inventory.addPill(id, 1);")).toBe(true);
+    expect(/\.addPill\s*\(/.test("acquirePill(id, 1);")).toBe(false);
   });
 });

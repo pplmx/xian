@@ -11,7 +11,7 @@ import { persistConfig } from "@/utils/storage";
 import { rng } from "@/utils/random";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
-import { track } from "@/core/progress";
+import { acquirePill, track } from "@/core/progress";
 import { useInventoryStore } from "@/stores/inventory";
 import { pillDef } from "@/data/pills";
 import { equipmentTemplate } from "@/data/equipment";
@@ -167,7 +167,7 @@ export const useMarketStore = defineStore(
       const resources = useResourcesStore();
       if (!resources.spendStone(slot.price)) return "poor";
       if (slot.kind === "pill") {
-        inventory.addPill(slot.pillId, slot.count);
+        acquirePill(slot.pillId, slot.count);
       } else if (slot.kind === "material") {
         resources.addSmall(slot.matId, slot.count);
       } else {
