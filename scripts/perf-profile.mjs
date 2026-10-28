@@ -257,7 +257,7 @@ async function expandBatch(page, itemSelector, moreSelector) {
   }
 }
 
-/** 从末页回翻一批:件数不必变,但窗口首件必须换人。 */
+/** 从末页回翻一批:件数不必变,但承诺的新露件数必须兑现且窗口首件必须换人。 */
 async function rewindBatch(
   page,
   itemSelector,
@@ -301,6 +301,18 @@ async function rewindBatch(
           .first()
           .evaluate((el) => ({ ...el.dataset }))
       : null;
+    const revealedAsPromised = newVisible === promised;
+    const startMovedBack = startAfter < startBefore;
+    const reason =
+      afterFirst === beforeFirst
+        ? "回翻没有换页"
+        : !revealedAsPromised
+          ? `回翻只新露 ${newVisible} 件,承诺 ${promised} 件`
+          : !Number.isFinite(startBefore) || !Number.isFinite(startAfter)
+            ? "回翻缺少窗口起点"
+            : !startMovedBack
+              ? `回翻起点未前移:${startBefore} -> ${startAfter}`
+              : undefined;
     return {
       promised,
       before,
@@ -309,12 +321,8 @@ async function rewindBatch(
       startBefore,
       startAfter,
       state,
-      ok:
-        afterFirst !== beforeFirst &&
-        newVisible > 0 &&
-        Number.isFinite(startBefore) &&
-        Number.isFinite(startAfter) &&
-        startAfter < startBefore,
+      ok: reason === undefined,
+      reason,
     };
   } catch (error) {
     return {

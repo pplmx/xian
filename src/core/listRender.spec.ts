@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { listWindow, nextListLimit, previousListLimit } from "./listRender";
+import { listWindow, nextListLimit, previousListLimit, previousListStep } from "./listRender";
 
 const items = Array.from({ length: 120 }, (_, i) => i);
 
@@ -57,5 +57,13 @@ describe("长列表渐进窗口", () => {
     expect(previousListLimit(66, 66, 24)).toBe(48);
     expect(previousListLimit(999, 12, 24)).toBe(12);
     expect(previousListLimit(40, 120, 0)).toBe(40);
+  });
+
+  it("前翻按钮只报真正换回的行数,末页短批不许冒充整批", () => {
+    expect(previousListStep(300, 300, 32)).toBe(12);
+    expect(previousListStep(66, 66, 24)).toBe(18);
+    expect(previousListStep(48, 120, 24)).toBe(24);
+    expect(previousListStep(24, 120, 24)).toBe(0);
+    expect(previousListStep(40, 120, 0)).toBe(0);
   });
 });

@@ -693,6 +693,39 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("长列表回翻只报真正换回的行数 —— 末页短批不许冒充整批", () => {
+    /*
+     * 300→288 时可见窗只换回 12 件,旧标签却按 min(32, start) 报「前一批 32 件」。
+     * 回翻标签与按钮动作必须共用同一个步长真值，运行时门也要核对实际新露件数。
+     */
+    const inventory = FILES.find((f) => f.path === "views/InventoryView.vue");
+    expect(inventory?.src, "背包回翻标签要读真实步长").toMatch(
+      /previousItemsLabel[\s\S]{0,500}previousListStep\(\s*itemPage\.value\.shown,\s*allItems\.value\.length,\s*INVENTORY_RENDER_BATCH,?\s*\)/,
+    );
+
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    expect(market?.src, "贡器回翻标签要读真实步长").toMatch(
+      /equipCandidatePrevLabel[\s\S]{0,500}previousListStep\(\s*equipCandidatePage\.value\.shown,\s*equipCandidates\.value\.length,\s*INVENTORY_RENDER_BATCH,?\s*\)/,
+    );
+    expect(market?.src, "寄卖回翻标签要读真实步长").toMatch(
+      /consignPrevLabel[\s\S]{0,500}previousListStep\(\s*consignPage\.value\.shown,\s*inventory\.bagItems\.length,\s*INVENTORY_RENDER_BATCH,?\s*\)/,
+    );
+
+    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    expect(col?.src, "图鉴回翻标签要读真实步长").toMatch(
+      /previousKnownLabel\(cat: \{ knownShown: number; knownTotal: number \}\)[\s\S]{0,300}previousListStep\(\s*cat\.knownShown,\s*cat\.knownTotal,\s*COLLECTION_RENDER_BATCH,?\s*\)/,
+    );
+
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
+    const rewindStart = perf.indexOf("async function rewindBatch(");
+    const rewindEnd = perf.indexOf("/** 一直点到这一份清单的末页", rewindStart);
+    expect(rewindStart, "回翻运行时门要能定位到 —— 定位不到这条就是空转").toBeGreaterThan(-1);
+    expect(rewindEnd).toBeGreaterThan(rewindStart);
+    const rewind = perf.slice(rewindStart, rewindEnd);
+    expect(rewind, "回翻运行时门要核对承诺件数").toContain("newVisible === promised");
+    expect(rewind, "门变红时要报出实际与承诺").toMatch(/回翻只新露.*承诺/);
+  });
+
   it("名号尽收有完成感 —— 三十顶全齐的圆满,不许只沉在计数里", () => {
     // 名号页此前只显「14/30 · 佩一枚」的计数,三十顶全齐也没有任何表示 ——
     // 收集的终点(境界阶梯 + 成就赏走完)该有一声,与图鉴「尽收」同族。

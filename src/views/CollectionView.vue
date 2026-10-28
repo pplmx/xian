@@ -237,6 +237,7 @@ import {
   listWindow,
   nextListLimit,
   previousListLimit,
+  previousListStep,
 } from "@/core/listRender";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
@@ -455,8 +456,8 @@ function moreKnownLabel(cat: { hiddenKnown: number; hiddenNew: number }): string
   return `再看 ${next} 件 · 余 ${cat.hiddenKnown}${fresh}`;
 }
 
-function previousKnownLabel(cat: { knownStart: number }): string {
-  return `前一批 ${Math.min(COLLECTION_RENDER_BATCH, cat.knownStart)} 件`;
+function previousKnownLabel(cat: { knownShown: number; knownTotal: number }): string {
+  return `前一批 ${previousListStep(cat.knownShown, cat.knownTotal, COLLECTION_RENDER_BATCH)} 件`;
 }
 
 function focusKnown(key: string, index = 0): void {

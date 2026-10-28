@@ -38,7 +38,7 @@ import {
   nextInventoryLimit,
   previousInventoryLimit,
 } from "@/core/inventoryRender";
-import { firstNewVisibleIndex } from "@/core/listRender";
+import { firstNewVisibleIndex, previousListStep } from "@/core/listRender";
 import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
@@ -247,7 +247,12 @@ const equipCandidateMoreLabel = computed(() => {
   return `再看 ${next} 件 · 余 ${equipCandidatePage.value.hidden}`;
 });
 const equipCandidatePrevLabel = computed(
-  () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.value.start)} 件`,
+  () =>
+    `前一批 ${previousListStep(
+      equipCandidatePage.value.shown,
+      equipCandidates.value.length,
+      INVENTORY_RENDER_BATCH,
+    )} 件`,
 );
 function showMoreEquipCandidates(): void {
   const shownBefore = equipCandidatePage.value.shown;
@@ -275,7 +280,12 @@ const consignMoreLabel = computed(() => {
   return `再看 ${next} 件 · 余 ${consignPage.value.hidden}`;
 });
 const consignPrevLabel = computed(
-  () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, consignPage.value.start)} 件`,
+  () =>
+    `前一批 ${previousListStep(
+      consignPage.value.shown,
+      inventory.bagItems.length,
+      INVENTORY_RENDER_BATCH,
+    )} 件`,
 );
 function showMoreConsign(): void {
   const shownBefore = consignPage.value.shown;

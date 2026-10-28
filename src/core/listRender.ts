@@ -56,6 +56,12 @@ export function previousListLimit(shown: number, total: number, batch: number): 
   return Math.max(firstPage, previousPage);
 }
 
+/** 前翻会真正换回多少件;末页短批不能按完整批量报数。 */
+export function previousListStep(shown: number, total: number, batch: number): number {
+  const current = clampCount(shown, total);
+  return current - previousListLimit(current, total, batch);
+}
+
 /**
  * 续开后,新露出的第一件在当前 visible 数组里的索引。
  *

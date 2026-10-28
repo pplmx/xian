@@ -441,7 +441,7 @@ import {
   nextInventoryLimit,
   previousInventoryLimit,
 } from "@/core/inventoryRender";
-import { firstNewVisibleIndex } from "@/core/listRender";
+import { firstNewVisibleIndex, previousListStep } from "@/core/listRender";
 import { useLoreStore } from "@/stores/lore";
 import { formatGN, formatExact, formatNum, formatPercent } from "@/utils/format";
 import { colorWithAlpha } from "@/ui/colorVar";
@@ -578,7 +578,12 @@ const moreItemsLabel = computed(() => {
   return `再看 ${next} 件 · 余 ${itemPage.value.hidden}${hiddenNewCount.value ? ` · 新入包 ${hiddenNewCount.value}` : ""}`;
 });
 const previousItemsLabel = computed(
-  () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, itemPage.value.start)} 件`,
+  () =>
+    `前一批 ${previousListStep(
+      itemPage.value.shown,
+      allItems.value.length,
+      INVENTORY_RENDER_BATCH,
+    )} 件`,
 );
 
 function focusItem(index = 0): void {
