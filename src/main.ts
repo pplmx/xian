@@ -6,8 +6,9 @@ import App from "./App.vue";
 import { router } from "./router";
 import { blockSaveWrites, migrateLocalSchema, preflightScan } from "./utils/storage";
 import { acquireSaveWriterRole } from "./core/singleWriter";
+import { recordRuntimeDiagnostic, summarizeError } from "./core/diagnostics";
 import { useUiStore } from "./stores/ui";
-import { summarizeError, useDiagStore } from "./stores/diag";
+import { useDiagStore } from "./stores/diag";
 import "./style.css";
 
 /**
@@ -30,6 +31,8 @@ pinia.use(piniaPluginPersistedstate);
 
 app.use(pinia);
 app.use(router);
+// 先建诊断 store，让它接上 core 的运行期异常端口；引擎随后才在 App 里启动。
+useDiagStore();
 
 /**
  * 异常留档 —— 诊断本身不许再抛,故整段包在 try 里。
@@ -38,11 +41,7 @@ app.use(router);
  * 那句「已记录」是空话,玩家报问题时我们手上什么都没有。
  */
 function noteError(info: string, err: unknown): void {
-  try {
-    useDiagStore().record({ info, message: summarizeError(err), route: location.hash });
-  } catch {
-    /* 连留档都失败时不许再抛:诊断不能变成第二个故障源 */
-  }
+  recordRuntimeDiagnostic({ info, message: summarizeError(err), route: location.hash });
 }
 
 app.config.errorHandler = (err, _instance, info) => {

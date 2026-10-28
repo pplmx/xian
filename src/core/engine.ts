@@ -30,10 +30,16 @@ import { enginePaused, pauseElapsedMs, setEnginePaused } from "./enginePause";
 import { notify } from "./notify";
 import { expiredBuffNames as expiredBuffNamesOf } from "./engineBuffs";
 import { setDeathDialog } from "./uiPort";
+import { formatDuration } from "@/utils/format";
+import { recordRuntimeDiagnostic, summarizeError } from "./diagnostics";
 
 export { enginePaused } from "./enginePause";
 
 const PERIODIC_CHECK_SEC = 30;
+/** 墙钟小幅校正不打扰玩家;真正能让人察觉的回拨才提示 */
+const CLOCK_ROLLBACK_NOTICE_SEC = 5;
+/** 同一类引擎异常连续发生时,诊断照常累计次数,但 toast 最多每分钟一次 */
+const ENGINE_ERROR_NOTICE_MS = 60_000;
 
 class GameEngine {
   private timer: number | undefined;
@@ -41,6 +47,7 @@ class GameEngine {
   private lastStampAt = 0;
   private periodicAccum = 0;
   private deathAnnounced = false;
+  private lastErrorNoticeAt = 0;
 
   start(): void {
     const now = Date.now();
@@ -56,7 +63,7 @@ class GameEngine {
         settleOffline(now);
       }
     } catch (err) {
-      console.error("[引擎] 离线结算异常", err);
+      this.reportError("engine.offline", "离线结算异常", err);
     }
     game.stampActive(now);
     this.lastTickAt = now;
@@ -99,8 +106,40 @@ class GameEngine {
     try {
       this.tick();
     } catch (err) {
-      console.error("[引擎] Tick 异常", err);
+      /*
+       * 失败的一拍也可能已经改了一半状态。基准必须推平到当下:
+       * 留在失败前会让下一拍重算同一段(重复推进),持续报错还会把累计差值
+       * 推过 OFFLINE_MIN_SECONDS,恢复时误走离线结算。游玩时长基准同理。
+       */
+      const now = Date.now();
+      this.lastTickAt = now;
+      this.lastStampAt = now;
+      this.reportError("engine.tick", "Tick 异常", err);
     }
+  }
+
+  /**
+   * 心跳里的异常被 catch 后不会进全局 errorHandler —— 从前它们只落在控制台,
+   * 手机的设置页诊断与导出存档里一个字都没有。这里把同一处故障接进现有留档,
+   * 并给玩家一次可行动提示;连续坏拍只累计诊断次数,不让 toast 每秒刷屏。
+   */
+  private reportError(info: string, label: string, err: unknown): void {
+    console.error(`[引擎] ${label}`, err);
+    recordRuntimeDiagnostic({
+      info,
+      message: summarizeError(err),
+      route: typeof location === "undefined" ? "" : location.hash,
+    });
+    const now = Date.now();
+    if (
+      this.lastErrorNoticeAt > 0 &&
+      now >= this.lastErrorNoticeAt &&
+      now - this.lastErrorNoticeAt < ENGINE_ERROR_NOTICE_MS
+    ) {
+      return;
+    }
+    this.lastErrorNoticeAt = now;
+    notify("引擎推进异常,已记入设置页诊断;若持续出现,请先导出存档", "warn");
   }
 
   private tick(): void {
@@ -120,15 +159,21 @@ class GameEngine {
       /**
        * 同一毫秒两拍(可见性回调撞上 interval)不必推进;墙钟倒退则是另一回事 ——
        * 基准留在未来会让往后每一拍都算出负数、提前返回,心跳要停到墙钟自己追平为止
-       * (手改时间 / NTP 校正之后,修为、灵气、建筑、历练一起停,界面上还没有提示)。
+       * (手改时间 / NTP 校正之后,修为、灵气、建筑、历练会一起停)。
        * 回拨时把三枚基准一起挪到当下,游戏从回拨后的时钟接着走;那一刻的差值为负,
-       * 本来就没有可结算的时长,故不补也不发归来账。
+       * 本来就没有可结算的时长,故不补也不发归来账,但大幅回拨要告诉玩家发生了什么。
        */
       if (dt < 0) {
         console.warn("[引擎] 墙钟回拨,心跳基准重设", Math.round(-dt), "秒");
         this.lastTickAt = now;
         this.lastStampAt = now;
         game.stampActive(now);
+        if (-dt >= CLOCK_ROLLBACK_NOTICE_SEC) {
+          notify(
+            `系统时间向后调整了约 ${formatDuration(-dt)},已按新时钟继续;这段不计离线收益`,
+            "warn",
+          );
+        }
       }
       return;
     }
@@ -142,7 +187,7 @@ class GameEngine {
       try {
         settleOffline(now);
       } catch (err) {
-        console.error("[引擎] 离线结算异常", err);
+        this.reportError("engine.offline", "离线结算异常", err);
       }
       /**
        * 缺席时段**只走离线这本账**,不再进 `totalPlaySec` —— 故这里把盖章基准

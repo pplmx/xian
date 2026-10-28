@@ -15,8 +15,11 @@
  */
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { DIAG_MESSAGE_MAX, setRuntimeDiagnosticSink } from "@/core/diagnostics";
 import { persistConfig } from "@/utils/storage";
 import { asArray, asFiniteNumber } from "@/utils/saveShape";
+
+export { DIAG_MESSAGE_MAX, summarizeError } from "@/core/diagnostics";
 
 export interface DiagEntry {
   /** 发生时刻 */
@@ -33,19 +36,6 @@ export interface DiagEntry {
 
 /** 只留最近这么多条:够定位一次问题,又不至于把存档撑大 */
 export const DIAG_MAX = 20;
-/** 单条摘要长度上限 */
-export const DIAG_MESSAGE_MAX = 200;
-
-/** 把任意异常值压成一行摘要(不记调用栈,不留原始对象) */
-export function summarizeError(err: unknown): string {
-  if (err instanceof Error) return `${err.name}: ${err.message}`.slice(0, DIAG_MESSAGE_MAX);
-  if (typeof err === "string") return err.slice(0, DIAG_MESSAGE_MAX);
-  try {
-    return JSON.stringify(err).slice(0, DIAG_MESSAGE_MAX);
-  } catch {
-    return String(err).slice(0, DIAG_MESSAGE_MAX);
-  }
-}
 
 export const useDiagStore = defineStore(
   "diag",
@@ -92,6 +82,10 @@ export const useDiagStore = defineStore(
     function clear(): void {
       errors.value = [];
     }
+
+    // core 的运行期异常经端口上报到这里；与 notify 一样，经 useDiagStore()
+    // 转发，测试里换 Pinia / spy 仍然拦得住。
+    setRuntimeDiagnosticSink((input) => useDiagStore().record(input));
 
     return { errors, record, clear, sanitize };
   },
