@@ -174,20 +174,25 @@ error: Failed to resolve vite command: GenericFailure, Expected
 背包视图按**真实规模**量(`--bigbag N`,默认 300 件):这类放置游戏 jank 的真实来源是
 玩家攒下几百件装备后,背列表随每秒心跳整块重渲染。小包 2-3 件量不出列表成本,故默认
 压到 300 件(远超在线能攒的典型规模,仍 60fps;`--bigbag 0` 或 `PERF_BIGBAG` 可调)。
+藏品列表按 40 件一批渐进放出,滚到底点「再看」才续开下一批;首帧不再把 300 张装备卡
+一次塞进 DOM,`perf-profile` 同时守住背包 DOM ≤ 700。40 只是单帧渲染窗口,不是持有上限;
+完整清单仍在同一排序里,只是分批露出。
 
-基线(2026-10-13 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
+基线(2026-10-28 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
 
 | 视图 | 最差帧 | 长帧(>50ms) | DOM 节点 |
 | --- | --- | --- | --- |
-| home / cultivation / adventure / character | 17ms | 0 | 187–294 |
-| **inventory(300 件装备)** | 17ms | 0 | ~1230 |
-| codex / souls / titles / settings / build / legacy / dongfu / world / celestial | 17ms | 0 | 162–492 |
+| home / cultivation / adventure / character | 17ms | 0 | 283–381 |
+| **inventory(300 件装备)** | 17ms | 0 | ~631 |
+| codex / souls / titles / settings / build / legacy / dongfu / world / celestial | 17ms | 0 | 205–386 |
+| collection | 17ms | 0 | 592 |
 
-并做过规模加压验证:背包塞进 **1000 件装备**(DOM ~3740)仍 60fps、最差帧 17ms、零长帧 ——
-即使极端规模 + 引擎每秒 tick,列表重渲染也没有造成可感知的 jank。全 15 个游戏视图稳定
-~60fps、零长帧、无崩溃。预算:`最差帧 ≤ 100ms`、`长帧 ≤ 2`(环境变量
+并做过规模加压验证:背包塞进 **1000 件装备**仍 60fps、最差帧 17ms、零长帧、DOM 仍是 ~631 ——
+首批窗口不随总件数膨胀,极端规模 + 引擎每秒 tick 也不会把整张清单重新铺开。全 15 个游戏
+视图稳定 ~60fps、零长帧、无崩溃。预算:`最差帧 ≤ 100ms`、`长帧 ≤ 2`、背包 DOM ≤ 700(前两项
+环境变量
 `PERF_MAX_FRAME_MS` / `PERF_LONG_FRAMES` 可调)。改动过会显著影响单次渲染量的代码后,
-这两个数要跟着重校,连同本表一起。
+这些数要跟着重校,连同本表一起。
 
 ### 显示心跳的粒度(为什么秒针能走、`totalPlaySec` 仍是 5 秒一盖)
 

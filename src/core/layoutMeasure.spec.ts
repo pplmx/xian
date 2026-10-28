@@ -179,6 +179,33 @@ describe("排版量法口径", () => {
     expect(vite).toContain("codeSplitting:");
   });
 
+  it("背包 300 件不许把全部装备卡塞进首帧 —— 分批放出并与运行时门同一条预算", () => {
+    /*
+     * 300 件时每张 EquipmentCard 都是一枚按钮加分角标,全量渲染实测 DOM 约 1955;
+     * 帧率尚绿不代表没有维护成本,后续加一枚词条/印章都会再乘 300。背包先放首批,
+     * 余下由玩家显式续开;每张卡只接收父级算好的 isNew,不再各自订阅库存单例。
+     */
+    const view = readFileSync(resolve(__dirname, "../views/InventoryView.vue"), "utf-8");
+    expect(view).toContain("inventoryWindow(allItems");
+    expect(view).toContain('v-for="row in itemPage.visible"');
+    expect(view).toContain(':is-new="inventory.isNewItem(row.item.uid)"');
+    expect(view).toMatch(
+      /nextInventoryLimit\(\s*itemPage\.value\.shown,\s*allItems\.value\.length\s*\)/,
+    );
+    expect(view).toContain("itemPage.hidden > 0");
+
+    const card = readFileSync(
+      resolve(__dirname, "../components/equipment/EquipmentCard.vue"),
+      "utf-8",
+    );
+    expect(card).toContain("isNew?: boolean");
+    expect(card).not.toContain('from "@/stores/inventory"');
+
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
+    expect(perf).toContain("maxDomByView");
+    expect(perf).toContain("inventory: 700");
+  });
+
   it("巡页与冒烟的路由表都要跟上 router —— 新页面不许悄悄漏在门外", () => {
     /*
      * ROUTES 是手抄的一份清单。新增一个页面却忘了加进来,那一刻起它就再也不被任何

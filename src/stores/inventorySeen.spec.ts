@@ -13,6 +13,11 @@
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { useInventoryStore } from "@/stores/inventory";
+import {
+  INVENTORY_RENDER_BATCH,
+  inventoryWindow,
+  nextInventoryLimit,
+} from "@/core/inventoryRender";
 
 function inst(uid: string): Record<string, unknown> {
   return { uid, templateId: "w_hanfeng", quality: "fine", tier: 3, level: 0, affixes: [] };
@@ -107,5 +112,27 @@ describe("背包「新」角标 · 洗档纪律", () => {
     inv.seenUids = [42, "uA", null] as never;
     inv.sanitize();
     expect(inv.seenUids).toEqual(["uA"]);
+  });
+});
+
+describe("背包藏品 · 首屏渲染预算", () => {
+  it("300 件先只放出首批,再按同样批次追加 —— 滚动可达不等于一次全进 DOM", () => {
+    const items = Array.from({ length: 300 }, (_, i) => i);
+    const first = inventoryWindow(items, INVENTORY_RENDER_BATCH);
+    expect(first.visible).toEqual(items.slice(0, INVENTORY_RENDER_BATCH));
+    expect(first.shown).toBe(INVENTORY_RENDER_BATCH);
+    expect(first.hidden).toBe(300 - INVENTORY_RENDER_BATCH);
+
+    const next = nextInventoryLimit(first.shown, items.length);
+    expect(next).toBe(INVENTORY_RENDER_BATCH * 2);
+    expect(inventoryWindow(items, next).hidden).toBe(300 - INVENTORY_RENDER_BATCH * 2);
+  });
+
+  it("计数夹在真实区间里:缩包不越界,末批自动收口", () => {
+    const items = Array.from({ length: 73 }, (_, i) => i);
+    expect(inventoryWindow(items, 999).hidden).toBe(0);
+    expect(inventoryWindow(items, -1).visible).toEqual([]);
+    expect(nextInventoryLimit(60, items.length)).toBe(items.length);
+    expect(nextInventoryLimit(60, 12)).toBe(12);
   });
 });

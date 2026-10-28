@@ -27,8 +27,9 @@
  * 不得崩溃、不得有未处理的页面异常或应用自己的 console.error(同一把尺子,见 lib/pageErrors.mjs)。CI 机器比本机核多但单核弱,故上限按
  * 「本机读数留出数倍余量」定 —— 红的是「成倍长回去」那类回归,不是机器抖动。
  *
- * 基线(2026-10-13 实测,本机 + 无头 chromium,后期档):全视图 ~60fps、
- * 最差帧 17ms、零长帧、DOM 187–288。预算见 BUDGET,曾有过更糟的读数时任它红。
+ * 基线(2026-10-28 实测,本机 + 无头 chromium,后期档):全视图 ~60fps、
+ * 最差帧 17ms、零长帧;背包首批 40 张卡 DOM 631,其余页面 205–592。
+ * 预算见 BUDGET,曾有过更糟的读数时任它红。
  */
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
@@ -76,6 +77,8 @@ const BUDGET = {
   maxFrameMs: Number(process.env.PERF_MAX_FRAME_MS ?? 100),
   /** 单视图 >50ms 长帧数量上限 */
   longFramesMax: Number(process.env.PERF_LONG_FRAMES ?? 2),
+  /** 背包按首批 40 张卡渲染;篇幅仍要滚得到,但 DOM 不许跟着 300 件一起翻几倍 */
+  maxDomByView: { inventory: 700 },
 };
 
 function startServer() {
@@ -191,7 +194,25 @@ for (const view of VIEWS) {
     await page.evaluate(SAMPLER);
     await page.waitForTimeout(secs * 1000);
     const data = await page.evaluate("window.__perfStop()");
-    record = { name: view.name, route: view.route, ...data, errors };
+    let batch = null;
+    if (bigbag > 0 && view.name === "inventory") {
+      try {
+        const cards = page.locator("main button[data-uid]");
+        const more = page.getByRole("button", { name: /再看 \d+ 件/ }).first();
+        const before = await cards.count();
+        const label = (await more.getAttribute("aria-label", { timeout: 3000 })) ?? "";
+        const promised = Number(/再看\s*(\d+)\s*件/.exec(label)?.[1]);
+        if (!Number.isFinite(promised) || promised <= 0)
+          throw new Error(`续开按钮没有报件数:${label}`);
+        await more.click({ timeout: 3000 });
+        await page.waitForTimeout(120);
+        const after = await cards.count();
+        batch = { before, promised, after, ok: after === before + promised };
+      } catch (error) {
+        batch = { before: 0, promised: 0, after: 0, ok: false, reason: String(error) };
+      }
+    }
+    record = { name: view.name, route: view.route, ...data, batch, errors };
     await context.close();
   } catch (err) {
     record = { name: view.name, route: view.route, crashed: String(err).slice(0, 160) };
@@ -206,8 +227,8 @@ for (const r of results) {
   const state = r.crashed
     ? `✗ ${r.name} CRASHED: ${r.crashed}`
     : `✓ ${r.name.padEnd(11)} frames=${r.frames} max=${r.max}ms p95=${r.p95}ms med=${r.median}ms >50ms=${r.over50ms} dom=${r.nodes}${
-        r.errors.length ? ` errors=${r.errors.join("|").slice(0, 60)}` : ""
-      }`;
+        r.batch ? ` batch=${r.batch.before}→${r.batch.after}` : ""
+      }${r.errors.length ? ` errors=${r.errors.join("|").slice(0, 60)}` : ""}`;
   console.log(state);
   if (r.crashed) failures.push(`${r.name}: 崩溃 (${r.crashed})`);
   else if (r.errors.length) failures.push(`${r.name}: 页面异常 (${r.errors[0].slice(0, 80)})`);
@@ -215,10 +236,18 @@ for (const r of results) {
     failures.push(`${r.name}: 最差帧 ${r.max}ms > ${BUDGET.maxFrameMs}ms`);
   else if (gate && r.over50ms > BUDGET.longFramesMax)
     failures.push(`${r.name}: ${r.over50ms} 帧 >50ms 长帧 > ${BUDGET.longFramesMax}`);
+  else if (gate && BUDGET.maxDomByView[r.name] && r.nodes > BUDGET.maxDomByView[r.name])
+    failures.push(
+      `${r.name}: DOM ${r.nodes} > ${BUDGET.maxDomByView[r.name]} —— 长列表是否又整批进首帧了`,
+    );
+  else if (gate && r.batch && !r.batch.ok)
+    failures.push(
+      `${r.name}: 续开批次未兑现(承诺 +${r.batch.promised},实际 ${r.batch.before}→${r.batch.after};${r.batch.reason ?? "无异常"})`,
+    );
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);

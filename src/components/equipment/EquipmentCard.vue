@@ -85,17 +85,15 @@ import { equipmentTemplate } from "@/data/equipment";
 import { qualityDef } from "@/data/qualities";
 import { colorWithAlpha } from "@/ui/colorVar";
 import { equipSetDef } from "@/core/equipSet";
-import { useInventoryStore } from "@/stores/inventory";
 import GameIcon from "@/components/common/GameIcon.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import { isRareQuality, qualityTierStyle } from "@/ui/qualityTier";
 
-const props = defineProps<{ item: EquipmentInstance; equipped?: boolean }>();
+const props = defineProps<{ item: EquipmentInstance; equipped?: boolean; isNew?: boolean }>();
 const emit = defineEmits<{ open: [uid: string] }>();
 
-const inventory = useInventoryStore();
-/** 顶部中央那枚「新」:新入包、还没开过背包看它(账在 inventory store,见 inventorySeen.spec) */
-const isNew = computed(() => inventory.isNewItem(props.item.uid));
+/** 顶部中央那枚「新」由父级统一算好:几百张卡不再各自订阅库存单例 */
+const isNew = computed(() => props.isNew === true);
 
 const template = computed(() => equipmentTemplate(props.item.templateId));
 const quality = computed(() => qualityDef(props.item.quality));

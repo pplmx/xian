@@ -121,7 +121,7 @@
       <div v-if="allItems.length" class="mt-4">
         <SectionTitle
           title="全部藏品"
-          :hint="`${allItems.length} 件 · 行囊 ${inventory.bagItems.length}/${BAG_CAPACITY}`"
+          :hint="`${allItems.length} 件 · 已列 ${itemPage.shown} · 行囊 ${inventory.bagItems.length}/${BAG_CAPACITY}`"
         />
         <!-- 方格背包:五列格子 + 空槽占位,一眼看出还剩多少地方 -->
         <!--
@@ -132,13 +132,23 @@
         -->
         <div class="mt-2 grid grid-cols-4 gap-2">
           <EquipmentCard
-            v-for="row in allItems"
+            v-for="row in itemPage.visible"
             :key="row.item.uid"
             :item="row.item"
             :equipped="row.equipped"
+            :is-new="inventory.isNewItem(row.item.uid)"
             @open="openDetail"
           />
         </div>
+        <!-- 首屏只放一批:每张卡都有七八枚状态角标,300 件全铺会让 DOM 与后续改卡成本一起乘 300 -->
+        <button
+          v-if="itemPage.hidden > 0"
+          class="btn-ghost mt-3 w-full !py-2 !text-[11px]"
+          :aria-label="moreItemsLabel"
+          @click="showMoreItems"
+        >
+          {{ moreItemsLabel }}
+        </button>
       </div>
       <p v-else class="empty-note mt-8 text-center text-[11px] text-ink-faint">
         行囊空空,去历练中寻些机缘吧
@@ -405,6 +415,11 @@ import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { PILL_BATCH, usePill, usePillBatch } from "@/core/pillService";
 import { equipAllBest, equipSetCombo } from "@/core/equipBest";
 import { equipSetDef, setCounts, type EquipSetDef } from "@/core/equipSet";
+import {
+  INVENTORY_RENDER_BATCH,
+  inventoryWindow,
+  nextInventoryLimit,
+} from "@/core/inventoryRender";
 import { useLoreStore } from "@/stores/lore";
 import { formatGN, formatExact, formatNum, formatPercent } from "@/utils/format";
 import { colorWithAlpha } from "@/ui/colorVar";
@@ -528,6 +543,22 @@ const allItems = computed(() =>
       return dq !== 0 ? dq : b.item.tier - a.item.tier;
     }),
 );
+
+const itemRenderLimit = ref(INVENTORY_RENDER_BATCH);
+const itemPage = computed(() => inventoryWindow(allItems.value, itemRenderLimit.value));
+const hiddenNewCount = computed(
+  () =>
+    allItems.value.slice(itemPage.value.shown).filter((row) => inventory.isNewItem(row.item.uid))
+      .length,
+);
+const moreItemsLabel = computed(() => {
+  const next = Math.min(INVENTORY_RENDER_BATCH, itemPage.value.hidden);
+  return `再看 ${next} 件 · 余 ${itemPage.value.hidden}${hiddenNewCount.value ? ` · 新入包 ${hiddenNewCount.value}` : ""}`;
+});
+
+function showMoreItems(): void {
+  itemRenderLimit.value = nextInventoryLimit(itemPage.value.shown, allItems.value.length);
+}
 
 /** 部位候选弹窗(pickerRows / 换装 / 卸下)在 SlotCandidatesDialog —— 候选的账随弹窗走 */
 
