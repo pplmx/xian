@@ -118,10 +118,15 @@
       </button>
 
       <!-- 全部藏品(含佩戴中):部位槽之下的完整清单 -->
-      <div v-if="allItems.length" class="mt-4">
+      <div
+        v-if="allItems.length"
+        class="mt-4"
+        :data-inventory-total="allItems.length"
+        :data-inventory-start="itemPage.start"
+      >
         <SectionTitle
           title="全部藏品"
-          :hint="`${allItems.length} 件 · 已列 ${itemPage.shown} · 行囊 ${inventory.bagItems.length}/${BAG_CAPACITY}`"
+          :hint="`${allItems.length} 件 · 现看 ${itemPage.start + 1}–${itemPage.shown} · 行囊 ${inventory.bagItems.length}/${BAG_CAPACITY}`"
         />
         <!-- 方格背包:五列格子 + 空槽占位,一眼看出还剩多少地方 -->
         <!--
@@ -140,15 +145,29 @@
             @open="openDetail"
           />
         </div>
-        <!-- 首屏只放一批:每张卡都有七八枚状态角标,300 件全铺会让 DOM 与后续改卡成本一起乘 300 -->
-        <button
-          v-if="itemPage.hidden > 0"
-          class="btn-ghost mt-3 w-full !py-2 !text-[11px]"
-          :aria-label="moreItemsLabel"
-          @click="showMoreItems"
-        >
-          {{ moreItemsLabel }}
-        </button>
+        <!--
+          背包一次只留一批卡:80 张实测 1048 DOM,已越过 700 的预算。
+          「再看」前移到下一批并滑掉上一批,「前一批」保证整份行囊仍逐件可达。
+        -->
+        <div v-if="itemPage.hidden > 0 || itemPage.start > 0" class="mt-3 flex gap-2">
+          <button
+            v-if="itemPage.start > 0"
+            data-inventory-prev
+            class="btn-ghost flex-1 !py-2 !text-[11px]"
+            :aria-label="previousItemsLabel"
+            @click="showPreviousItems"
+          >
+            {{ previousItemsLabel }}
+          </button>
+          <button
+            v-if="itemPage.hidden > 0"
+            class="btn-ghost flex-1 !py-2 !text-[11px]"
+            :aria-label="moreItemsLabel"
+            @click="showMoreItems"
+          >
+            {{ moreItemsLabel }}
+          </button>
+        </div>
       </div>
       <p v-else class="empty-note mt-8 text-center text-[11px] text-ink-faint">
         行囊空空,去历练中寻些机缘吧
@@ -391,7 +410,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from "vue";
+import { computed, nextTick, onUnmounted, ref } from "vue";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
@@ -419,6 +438,7 @@ import {
   INVENTORY_RENDER_BATCH,
   inventoryWindow,
   nextInventoryLimit,
+  previousInventoryLimit,
 } from "@/core/inventoryRender";
 import { useLoreStore } from "@/stores/lore";
 import { formatGN, formatExact, formatNum, formatPercent } from "@/utils/format";
@@ -555,9 +575,24 @@ const moreItemsLabel = computed(() => {
   const next = Math.min(INVENTORY_RENDER_BATCH, itemPage.value.hidden);
   return `再看 ${next} 件 · 余 ${itemPage.value.hidden}${hiddenNewCount.value ? ` · 新入包 ${hiddenNewCount.value}` : ""}`;
 });
+const previousItemsLabel = computed(
+  () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, itemPage.value.start)} 件`,
+);
+
+function focusFirstItem(): void {
+  void nextTick(() => {
+    document.querySelector<HTMLButtonElement>("main button[data-uid]")?.focus();
+  });
+}
 
 function showMoreItems(): void {
   itemRenderLimit.value = nextInventoryLimit(itemPage.value.shown, allItems.value.length);
+  focusFirstItem();
+}
+
+function showPreviousItems(): void {
+  itemRenderLimit.value = previousInventoryLimit(itemPage.value.shown, allItems.value.length);
+  focusFirstItem();
 }
 
 /** 部位候选弹窗(pickerRows / 换装 / 卸下)在 SlotCandidatesDialog —— 候选的账随弹窗走 */

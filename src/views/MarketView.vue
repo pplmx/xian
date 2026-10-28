@@ -4,7 +4,7 @@
  * 货架按墙钟刷新,离线照走;寄卖到时辰自售入账。判据与价签全在
  * core/marketService(纯)与 stores/market(编排),本页只做展示与点击。
  */
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
 import { useMarketStore } from "@/stores/market";
@@ -33,8 +33,10 @@ import {
 } from "@/core/marketService";
 import {
   INVENTORY_RENDER_BATCH,
+  MARKET_RENDER_WINDOW,
   inventoryWindow,
   nextInventoryLimit,
+  previousInventoryLimit,
 } from "@/core/inventoryRender";
 import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
 import { notify } from "@/core/notify";
@@ -237,27 +239,55 @@ const equipCandidates = computed(() => {
  */
 const equipCandidateLimit = ref(INVENTORY_RENDER_BATCH);
 const equipCandidatePage = computed(() =>
-  inventoryWindow(equipCandidates.value, equipCandidateLimit.value),
+  inventoryWindow(equipCandidates.value, equipCandidateLimit.value, MARKET_RENDER_WINDOW),
 );
 const equipCandidateMoreLabel = computed(() => {
   const next = Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.value.hidden);
   return `再看 ${next} 件 · 余 ${equipCandidatePage.value.hidden}`;
 });
+const equipCandidatePrevLabel = computed(
+  () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.value.start)} 件`,
+);
 function showMoreEquipCandidates(): void {
   equipCandidateLimit.value = nextInventoryLimit(
     equipCandidatePage.value.shown,
     equipCandidates.value.length,
   );
+  focusFirst("button[data-equip-candidate]");
+}
+function showPreviousEquipCandidates(): void {
+  equipCandidateLimit.value = previousInventoryLimit(
+    equipCandidatePage.value.shown,
+    equipCandidates.value.length,
+  );
+  focusFirst("button[data-equip-candidate]");
 }
 
 const consignLimit = ref(INVENTORY_RENDER_BATCH);
-const consignPage = computed(() => inventoryWindow(inventory.bagItems, consignLimit.value));
+const consignPage = computed(() =>
+  inventoryWindow(inventory.bagItems, consignLimit.value, MARKET_RENDER_WINDOW),
+);
 const consignMoreLabel = computed(() => {
   const next = Math.min(INVENTORY_RENDER_BATCH, consignPage.value.hidden);
   return `再看 ${next} 件 · 余 ${consignPage.value.hidden}`;
 });
+const consignPrevLabel = computed(
+  () => `前一批 ${Math.min(INVENTORY_RENDER_BATCH, consignPage.value.start)} 件`,
+);
 function showMoreConsign(): void {
   consignLimit.value = nextInventoryLimit(consignPage.value.shown, inventory.bagItems.length);
+  focusFirst("button[data-consign-uid]");
+}
+function showPreviousConsign(): void {
+  consignLimit.value = previousInventoryLimit(consignPage.value.shown, inventory.bagItems.length);
+  focusFirst("button[data-consign-uid]");
+}
+
+/** 翻页会滑掉上一批;把焦点送到新一批首件,键盘与读屏都不会落在已消失的按钮上。 */
+function focusFirst(selector: string): void {
+  void nextTick(() => {
+    document.querySelector<HTMLElement>(selector)?.focus();
+  });
 }
 
 // 换版瞬间收起点选窗:挑单是**对着旧单**挑的,新单同号未必还是贡器单 ——
@@ -508,11 +538,15 @@ function bountyShort(o: BountySlot): string | null {
       <p class="mb-2 text-[11px] text-ink-faint">
         交付就没了 —— 挑一件你舍得交的。价随所交之品质现算。
       </p>
-      <div class="space-y-1">
+      <div
+        class="space-y-1"
+        :data-market-candidate-total="equipCandidates.length"
+        :data-market-candidate-start="equipCandidatePage.start"
+      >
         <button
           v-for="it in equipCandidatePage.visible"
           :key="it.uid"
-          data-equip-candidate
+          :data-equip-candidate="it.uid"
           class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-[11px] hoverable:hover:border-cinnabar"
           @click="deliverPicked(it.uid)"
         >
@@ -536,16 +570,30 @@ function bountyShort(o: BountySlot): string | null {
           </span>
           <span class="shrink-0 text-cinnabar">交付</span>
         </button>
-        <button
-          v-if="equipCandidatePage.hidden > 0"
-          data-market-more="equip"
-          :data-promised="Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.hidden)"
-          class="btn-ghost min-h-[28px] w-full !py-1 text-[10px]"
-          :aria-label="equipCandidateMoreLabel"
-          @click="showMoreEquipCandidates"
+        <div
+          v-if="equipCandidatePage.hidden > 0 || equipCandidatePage.start > 0"
+          class="flex gap-1"
         >
-          {{ equipCandidateMoreLabel }}
-        </button>
+          <button
+            v-if="equipCandidatePage.start > 0"
+            data-market-prev="equip"
+            class="btn-ghost min-h-[28px] flex-1 !py-1 text-[10px]"
+            :aria-label="equipCandidatePrevLabel"
+            @click="showPreviousEquipCandidates"
+          >
+            {{ equipCandidatePrevLabel }}
+          </button>
+          <button
+            v-if="equipCandidatePage.hidden > 0"
+            data-market-more="equip"
+            :data-promised="Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.hidden)"
+            class="btn-ghost min-h-[28px] flex-1 !py-1 text-[10px]"
+            :aria-label="equipCandidateMoreLabel"
+            @click="showMoreEquipCandidates"
+          >
+            {{ equipCandidateMoreLabel }}
+          </button>
+        </div>
         <p v-if="equipCandidates.length === 0" class="text-[11px] text-ink-faint">没有够阶的兵刃</p>
       </div>
     </BaseModal>
@@ -572,7 +620,11 @@ function bountyShort(o: BountySlot): string | null {
         </div>
 
         <!-- 寄卖入口:挑一件背包装备上架 -->
-        <div class="rounded-lg border border-ink/10 bg-paper-deep/40 px-3 py-2">
+        <div
+          class="rounded-lg border border-ink/10 bg-paper-deep/40 px-3 py-2"
+          :data-market-consign-total="inventory.bagItems.length"
+          :data-market-consign-start="consignPage.start"
+        >
           <p class="mb-1 text-[10px] text-ink-faint">
             寄卖一件背包装备({{ MARKET_CONSIGN_SLOTS }} 格,约
             {{ MARKET_CONSIGN_SECONDS / 60 }} 分自售入账,离包即定)
@@ -610,16 +662,27 @@ function bountyShort(o: BountySlot): string | null {
                 >行囊空空 —— 去历练中寻些机缘吧</span
               >
             </div>
-            <button
-              v-if="consignPage.hidden > 0"
-              data-market-more="consign"
-              :data-promised="Math.min(INVENTORY_RENDER_BATCH, consignPage.hidden)"
-              class="btn-ghost mt-1 min-h-[28px] w-full !py-1 text-[10px]"
-              :aria-label="consignMoreLabel"
-              @click="showMoreConsign"
-            >
-              {{ consignMoreLabel }}
-            </button>
+            <div v-if="consignPage.hidden > 0 || consignPage.start > 0" class="mt-1 flex gap-1">
+              <button
+                v-if="consignPage.start > 0"
+                data-market-prev="consign"
+                class="btn-ghost min-h-[28px] flex-1 !py-1 text-[10px]"
+                :aria-label="consignPrevLabel"
+                @click="showPreviousConsign"
+              >
+                {{ consignPrevLabel }}
+              </button>
+              <button
+                v-if="consignPage.hidden > 0"
+                data-market-more="consign"
+                :data-promised="Math.min(INVENTORY_RENDER_BATCH, consignPage.hidden)"
+                class="btn-ghost min-h-[28px] flex-1 !py-1 text-[10px]"
+                :aria-label="consignMoreLabel"
+                @click="showMoreConsign"
+              >
+                {{ consignMoreLabel }}
+              </button>
+            </div>
           </template>
           <p v-else class="text-[10px] text-ink-faint">
             已上满 {{ MARKET_CONSIGN_SLOTS }} 格,待手头一张空闲

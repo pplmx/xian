@@ -68,7 +68,14 @@
 
     <!-- 收藏图鉴 -->
     <template v-else>
-      <section v-for="cat in visibleCats" :key="cat.key">
+      <section
+        v-for="cat in visibleCats"
+        :key="cat.key"
+        :data-collection-category="cat.key"
+        :data-collection-start="cat.knownStart"
+        :data-collection-shown="cat.knownShown"
+        :data-collection-total="cat.knownTotal"
+      >
         <SectionTitle :title="cat.name" :hint="cat.hint" />
         <!--
           未收录的条目只是一片「???」—— 得告诉玩家去哪儿找,否则这一册只能干瞪眼。
@@ -86,6 +93,7 @@
               class="chip-ink flex items-center gap-1 active:scale-95"
               :style="{ color: entry.color }"
               :data-codex-entry="cat.key"
+              :data-codex-id="entry.id"
               @click="openDetail(cat, entry)"
             >
               <!-- 灵兽册这类带 icon 的条目,已收录的 chip 前置一枚小章 —— 图鉴终于有貌 -->
@@ -108,17 +116,29 @@
             已收条目也会长到几百枚。每册先摆一批,余下的由玩家自己续开 ——
             未识的 ??? 仍只铺 UNKNOWN_CAP,不跟着续开变成一堵无信息的问号墙。
           -->
-          <button
-            v-if="cat.hiddenKnown > 0"
-            type="button"
-            class="chip-ink border-cinnabar/50 !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
-            :data-collection-more="cat.key"
-            :data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"
-            :aria-label="moreKnownLabel(cat)"
-            @click="showMoreKnown(cat)"
-          >
-            {{ moreKnownLabel(cat) }}
-          </button>
+          <div v-if="cat.knownStart > 0 || cat.hiddenKnown > 0" class="flex gap-1">
+            <button
+              v-if="cat.knownStart > 0"
+              type="button"
+              class="chip-ink border-ink/25 !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+              :data-collection-prev="cat.key"
+              :aria-label="previousKnownLabel(cat)"
+              @click="showPreviousKnown(cat)"
+            >
+              {{ previousKnownLabel(cat) }}
+            </button>
+            <button
+              v-if="cat.hiddenKnown > 0"
+              type="button"
+              class="chip-ink border-cinnabar/50 !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+              :data-collection-more="cat.key"
+              :data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"
+              :aria-label="moreKnownLabel(cat)"
+              @click="showMoreKnown(cat)"
+            >
+              {{ moreKnownLabel(cat) }}
+            </button>
+          </div>
           <template v-for="entry in cat.unknownVisible" :key="entry.id">
             <span class="chip-ink border-ink/15 text-ink-faint" :title="`尚未收录 · ${cat.source}`"
               >???</span
@@ -137,7 +157,7 @@
         </div>
       </section>
       <p class="text-center text-[10px] text-ink-faint">
-        点已收录的条目可看详情;每册余下的点「再看」续开 —— 灵材与悟道另分深浅,愈用愈明
+        点已收录的条目可看详情;每册按批翻看,「再看 / 前一批」前后可达 —— 灵材与悟道另分深浅,愈用愈明
       </p>
     </template>
 
@@ -187,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useQuestsStore } from "@/stores/quests";
 import type { CollectionCategory } from "@/types";
 import { ACHIEVEMENTS } from "@/data/achievements";
@@ -212,7 +232,7 @@ import { gongfaFuncText, gongfaMetaText } from "@/ui/itemText";
 import { achievementDirection } from "@/ui/achievementHint";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import { rewardTextAtTier } from "@/core/progress";
-import { listWindow, nextListLimit } from "@/core/listRender";
+import { listWindow, nextListLimit, previousListLimit } from "@/core/listRender";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
@@ -392,15 +412,21 @@ const collectionCats = computed<CodexCat[]>(() => {
 const UNKNOWN_CAP = 24;
 /**
  * 每册只先摆一批已收条目。九册全收是 809 枚 chip,首帧全铺实测 1326 DOM;
- * 九册各给 24 枚能把首帧压进预算,余下仍可逐批续到完整清单。
+ * 九册各给 24 枚能把首帧压进预算;可见窗口最多两批,继续前翻时滑掉最早一批,
+ * 九册都翻到末页也不会让 DOM 随点击数无限增长,整份清单仍可前后逐批到达。
  */
 const COLLECTION_RENDER_BATCH = 24;
+const COLLECTION_RENDER_WINDOW = COLLECTION_RENDER_BATCH * 2;
 const knownLimits = ref<Record<string, number>>({});
 const visibleCats = computed(() =>
   collectionCats.value.map((cat) => {
     const known = cat.entries.filter((e) => e.stage >= 1);
     const unknown = cat.entries.filter((e) => e.stage < 1);
-    const knownPage = listWindow(known, knownLimits.value[cat.key] ?? COLLECTION_RENDER_BATCH);
+    const knownPage = listWindow(
+      known,
+      knownLimits.value[cat.key] ?? COLLECTION_RENDER_BATCH,
+      COLLECTION_RENDER_WINDOW,
+    );
     const hiddenNew = known
       .slice(knownPage.shown)
       .filter((entry) => quests.isEntryNew(cat.key, entry.id)).length;
@@ -408,6 +434,7 @@ const visibleCats = computed(() =>
       ...cat,
       knownVisible: knownPage.visible,
       unknownVisible: unknown.slice(0, UNKNOWN_CAP),
+      knownStart: knownPage.start,
       knownShown: knownPage.shown,
       knownTotal: known.length,
       hiddenKnown: knownPage.hidden,
@@ -423,11 +450,30 @@ function moreKnownLabel(cat: { hiddenKnown: number; hiddenNew: number }): string
   return `再看 ${next} 件 · 余 ${cat.hiddenKnown}${fresh}`;
 }
 
+function previousKnownLabel(cat: { knownStart: number }): string {
+  return `前一批 ${Math.min(COLLECTION_RENDER_BATCH, cat.knownStart)} 件`;
+}
+
+function focusFirstKnown(key: string): void {
+  void nextTick(() => {
+    document.querySelector<HTMLButtonElement>(`button[data-codex-entry="${key}"]`)?.focus();
+  });
+}
+
 function showMoreKnown(cat: { key: string; knownShown: number; knownTotal: number }): void {
   knownLimits.value = {
     ...knownLimits.value,
     [cat.key]: nextListLimit(cat.knownShown, cat.knownTotal, COLLECTION_RENDER_BATCH),
   };
+  focusFirstKnown(cat.key);
+}
+
+function showPreviousKnown(cat: { key: string; knownShown: number; knownTotal: number }): void {
+  knownLimits.value = {
+    ...knownLimits.value,
+    [cat.key]: previousListLimit(cat.knownShown, cat.knownTotal, COLLECTION_RENDER_BATCH),
+  };
+  focusFirstKnown(cat.key);
 }
 
 /** 收藏册里还有「新得」没看过 —— 图鉴默认落在「成就」页,不切进去也看不见有货,门口先亮一点 */

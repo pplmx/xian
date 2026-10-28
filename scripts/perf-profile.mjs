@@ -27,10 +27,10 @@
  * 不得崩溃、不得有未处理的页面异常或应用自己的 console.error(同一把尺子,见 lib/pageErrors.mjs)。CI 机器比本机核多但单核弱,故上限按
  * 「本机读数留出数倍余量」定 —— 红的是「成倍长回去」那类回归,不是机器抖动。
  *
- * 基线(2026-10-28 实测,本机 + 无头 chromium,后期档):全 17 视图 ~60fps、
- * 最差帧 17ms、零长帧;背包首批 40 张卡 DOM 632,坊市寄卖 + 贡器各续一批
- * 峰值 1003;全收集图鉴九册各首批 24 枚 DOM 738,逐册续开一批峰值 1061。
- * 预算见 BUDGET,曾有过更糟的读数时任它红。
+ * 基线(2026-10-29 实测,本机 + 无头 chromium,后期档):全 17 视图 ~60fps、
+ * 最差帧 17ms、零长帧;300 件背包逐页翻到底峰值 643,1000 件仍为 643;
+ * 坊市寄卖 + 贡器各翻到末页峰值 900;全收集九册共 809 条逐册翻到末页再回翻,
+ * 峰值 1074。预算见 BUDGET,曾有过更糟的读数时任它红。
  */
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
@@ -82,11 +82,10 @@ const BUDGET = {
   /** 单视图 >50ms 长帧数量上限 */
   longFramesMax: Number(process.env.PERF_LONG_FRAMES ?? 2),
   /**
-   * 背包按首批 40 张卡渲染;篇幅仍要滚得到,但 DOM 不许跟着 300 件一起翻几倍。
-   * 坊市量的是「寄卖横条 + 贡器弹窗都续开一批」后的峰值:120 件全铺实测 1630,
-   * 两窗各 40 件起、各续到 80 件为 1006,故 1100 只拦整包回潮。收藏页用全收集
-   * 夹具量九册,各册首批 24 枚;每个有余额的册子再续开一批后才算交互峰值。
-   * 全收 809 条整页全铺实测 1326 DOM,故 1100 只拦首次进入与逐册续开回潮。
+   * 背包一次只留 32 张卡,可前后逐批翻完 300 件;80 张一窗实测 1048,故不设两批。
+   * 坊市是短横条/弹窗行,每窗最多 64 条;寄卖与贡器都逐页翻到末页再回翻一批。
+   * 收藏每册每窗最多 48 枚,九册都翻到末页再回翻;809 条整页全铺实测 1326 DOM。
+   * 1100 拦的是窗口上限失效、点击越多 DOM 越长的回潮。
    */
   maxDomByView: { inventory: 700, market: 1100, collection: 1100 },
 };
@@ -166,13 +165,30 @@ const SAMPLER = `
 
 /**
  * 点一次「再看 N 件」,核对按钮承诺与 DOM 实际新增完全相等。
+ * 窗口到顶后「再看」会滑掉上一批:件数不变,但首批条目必须换人,
+ * 否则就是把按钮点成了空转。
  * 选择器都走稳定的 data-* 落点,不拿人话文本当机器判据。
  */
+async function visibleFingerprints(items) {
+  return items.evaluateAll((nodes) =>
+    nodes.map((el) => {
+      for (const key of ["data-uid", "data-consign-uid", "data-equip-candidate", "data-codex-id"]) {
+        const value = el.getAttribute(key);
+        if (value) return `${key}:${value}`;
+      }
+      return el.outerHTML;
+    }),
+  );
+}
+
 async function expandBatch(page, itemSelector, moreSelector) {
   try {
     const items = page.locator(itemSelector);
     const more = page.locator(moreSelector).first();
     const before = await items.count();
+    const beforeItems = await visibleFingerprints(items);
+    const beforeFirst = beforeItems[0] ?? "";
+    const beforeSet = new Set(beforeItems);
     if ((await more.count()) === 0) throw new Error(`续开按钮不存在:${moreSelector}`);
     const promised = Number(
       (await more.getAttribute("data-promised")) ??
@@ -183,17 +199,193 @@ async function expandBatch(page, itemSelector, moreSelector) {
     await more.click({ timeout: 3000 });
     await page.waitForTimeout(120);
     const after = await items.count();
-    return { before, promised, after, ok: after === before + promised };
+    const afterItems = await visibleFingerprints(items);
+    const afterFirst = afterItems[0] ?? "";
+    const newVisible = afterItems.filter((fingerprint) => !beforeSet.has(fingerprint)).length;
+    const appended = after === before + promised && newVisible === promised;
+    const slid = afterFirst !== beforeFirst && newVisible === promised;
+    return {
+      before,
+      promised,
+      after,
+      newVisible,
+      mode: appended ? "append" : slid ? "slide" : "broken",
+      ok: appended || slid,
+    };
   } catch (error) {
-    return { before: 0, promised: 0, after: 0, ok: false, reason: String(error) };
+    return {
+      before: 0,
+      promised: 0,
+      after: 0,
+      newVisible: 0,
+      mode: "broken",
+      ok: false,
+      reason: String(error),
+    };
+  }
+}
+
+/** 从末页回翻一批:件数不必变,但窗口首件必须换人。 */
+async function rewindBatch(
+  page,
+  itemSelector,
+  previousSelector,
+  stateSelector = null,
+  startAttribute = null,
+) {
+  try {
+    const items = page.locator(itemSelector);
+    const previous = page.locator(previousSelector).first();
+    const before = await items.count();
+    if (before === 0) throw new Error("回翻前清单为空");
+    if ((await previous.count()) === 0) throw new Error(`前翻按钮不存在:${previousSelector}`);
+    const startBeforeRaw =
+      stateSelector && startAttribute
+        ? await page.locator(stateSelector).first().getAttribute(startAttribute)
+        : null;
+    const startBefore = startBeforeRaw === null ? Number.NaN : Number(startBeforeRaw);
+    const beforeItems = await visibleFingerprints(items);
+    const beforeFirst = beforeItems[0] ?? "";
+    const beforeSet = new Set(beforeItems);
+    const promised = Number(
+      /前一批\s*(\d+)\s*件/.exec((await previous.getAttribute("aria-label")) ?? "")?.[1] ?? 0,
+    );
+    if (!Number.isFinite(promised) || promised <= 0)
+      throw new Error(`前翻按钮没有报件数:${previousSelector}`);
+    await previous.click({ timeout: 3000 });
+    await page.waitForTimeout(120);
+    const after = await items.count();
+    const afterItems = await visibleFingerprints(items);
+    const afterFirst = afterItems[0] ?? "";
+    const newVisible = afterItems.filter((fingerprint) => !beforeSet.has(fingerprint)).length;
+    const startAfterRaw =
+      stateSelector && startAttribute
+        ? await page.locator(stateSelector).first().getAttribute(startAttribute)
+        : null;
+    const startAfter = startAfterRaw === null ? Number.NaN : Number(startAfterRaw);
+    const state = stateSelector
+      ? await page
+          .locator(stateSelector)
+          .first()
+          .evaluate((el) => ({ ...el.dataset }))
+      : null;
+    return {
+      promised,
+      before,
+      after,
+      newVisible,
+      startBefore,
+      startAfter,
+      state,
+      ok:
+        afterFirst !== beforeFirst &&
+        newVisible > 0 &&
+        Number.isFinite(startBefore) &&
+        Number.isFinite(startAfter) &&
+        startAfter < startBefore,
+    };
+  } catch (error) {
+    return {
+      promised: 0,
+      before: 0,
+      after: 0,
+      newVisible: 0,
+      startBefore: Number.NaN,
+      startAfter: Number.NaN,
+      ok: false,
+      reason: String(error),
+    };
+  }
+}
+
+/** 一直点到这一份清单的末页,每一拍都记 DOM 峰值 —— 只点一次会把「还能继续长」漏掉。 */
+async function expandAllBatches(
+  page,
+  itemSelector,
+  moreSelector,
+  expectedTotal = null,
+  rewindSpec = null,
+) {
+  const steps = [];
+  let peakNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+  try {
+    if (expectedTotal) {
+      const total = Number(
+        await page.locator(expectedTotal.selector).first().getAttribute(expectedTotal.attribute),
+      );
+      if (total !== expectedTotal.count) {
+        throw new Error(
+          `夹具只装进 ${total} 件,承诺 ${expectedTotal.count} 件 —— 无效模板或被容量截短`,
+        );
+      }
+    }
+    while ((await page.locator(moreSelector).count()) > 0) {
+      if (steps.length >= 100) throw new Error("续开超过 100 批,疑似按钮不收敛");
+      const step = await expandBatch(page, itemSelector, moreSelector);
+      steps.push(step);
+      peakNodes = Math.max(
+        peakNodes,
+        await page.evaluate(() => document.querySelectorAll("*").length),
+      );
+      if (!step.ok) throw new Error(step.reason ?? `批次异常:${JSON.stringify(step)}`);
+    }
+    if (steps.length === 0) throw new Error(`没有可续开的批次:${moreSelector}`);
+    let rewind = null;
+    if (rewindSpec) {
+      const start = Number(
+        await page
+          .locator(rewindSpec.startSelector)
+          .first()
+          .getAttribute(rewindSpec.startAttribute),
+      );
+      if (start > 0) {
+        rewind = await rewindBatch(
+          page,
+          itemSelector,
+          rewindSpec.previousSelector,
+          rewindSpec.startSelector,
+          rewindSpec.startAttribute,
+        );
+        if (!rewind.ok) throw new Error(rewind.reason ?? `回翻未换页:${JSON.stringify(rewind)}`);
+      }
+    }
+    const finalNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+    return {
+      before: steps[0].before,
+      after: steps.at(-1).after,
+      promised: steps.reduce((sum, step) => sum + step.promised, 0),
+      steps: steps.length,
+      slides: steps.filter((step) => step.mode === "slide").length,
+      peakNodes,
+      finalNodes,
+      rewind,
+      ok: true,
+    };
+  } catch (error) {
+    const finalNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+    return {
+      before: steps[0]?.before ?? 0,
+      after: steps.at(-1)?.after ?? 0,
+      promised: steps.reduce((sum, step) => sum + step.promised, 0),
+      steps: steps.length,
+      slides: steps.filter((step) => step.mode === "slide").length,
+      peakNodes,
+      finalNodes,
+      rewind: null,
+      ok: false,
+      reason: String(error),
+    };
   }
 }
 
 /**
- * 全收集夹具住在 TypeScript 内容层,由 Vite 自己解析 `@/data` 别名。
- * 只量 collection 时才起一次内存中的 SSR 加载器,不让其它视图为它买单。
+ * 规模夹具住在 TypeScript 内容层,由 Vite 自己解析 `@/data` 别名。
+ * 只有本轮真要量收藏或大背包时才起一次内存中的 SSR 加载器,不让其它视图为它买单。
  */
-async function loadFullCollectionSlices() {
+async function loadBenchModules(needsCollection, needsBigBag) {
+  if (!needsCollection && !needsBigBag) {
+    return { fullCollectionSlices: null, makeBigBagItems: null };
+  }
   const vite = await createViteServer({
     root: ROOT,
     server: { middlewareMode: true },
@@ -201,15 +393,23 @@ async function loadFullCollectionSlices() {
     logLevel: "silent",
   });
   try {
-    const mod = await vite.ssrLoadModule("/scripts/lib/fullCollectionFixture.ts");
-    return mod.fullCollectionSlices;
+    const collection = needsCollection
+      ? await vite.ssrLoadModule("/scripts/lib/fullCollectionFixture.ts")
+      : null;
+    const bag = needsBigBag ? await vite.ssrLoadModule("/scripts/lib/bigBagFixture.ts") : null;
+    return {
+      fullCollectionSlices: collection?.fullCollectionSlices ?? null,
+      makeBigBagItems: bag?.makeBigBagItems ?? null,
+    };
   } finally {
     await vite.close();
   }
 }
 
-const fullCollectionSlices =
-  !noSeed && (!only || only === "collection") ? await loadFullCollectionSlices() : null;
+const { fullCollectionSlices, makeBigBagItems } = await loadBenchModules(
+  !noSeed && (!only || only === "collection"),
+  !noSeed && bigbag > 0 && (!only || only === "inventory" || only === "market"),
+);
 
 const server = await startServer();
 const base = `http://127.0.0.1:${server.address().port}/`;
@@ -232,19 +432,8 @@ for (const view of VIEWS) {
     if (bigbag > 0 && (view.name === "inventory" || view.name === "market")) {
       // 造 bigbag 件装备进背包,把「几百件装备的列表重渲染」逼出来 —— 这才是
       // 这类放置游戏 jank 的真实来源(小包 2-3 件量不出列表成本)。
-      const templates = ["w_chensha", "b_xingluo", "a_zhenhong", "a_luoxiao"];
-      const items = Array.from({ length: bigbag }, (_, i) => ({
-        uid: `big_${i}`,
-        templateId: templates[i % templates.length],
-        quality: ["mortal", "spirit", "earth", "heaven"][i % 4],
-        // 后期档主境界是 14;贡器候选也逼到整包都有资格,不能只量空弹窗。
-        tier: 14,
-        level: 0,
-        affixes: [
-          { id: "bs3", roll: 1 },
-          { id: "low2", roll: 1 },
-        ],
-      }));
+      if (!makeBigBagItems) throw new Error("大背包夹具未载入");
+      const items = makeBigBagItems(bigbag);
       slices = { ...slices, inventory: { ...slices.inventory, items } };
     }
     await seedSave(context, slices);
@@ -269,13 +458,38 @@ for (const view of VIEWS) {
     let collectionBatches = null;
     let peakNodes = data.nodes;
     if (bigbag > 0 && view.name === "inventory") {
-      batch = await expandBatch(page, "main button[data-uid]", 'main button[aria-label^="再看 "]');
+      batch = await expandAllBatches(
+        page,
+        "main button[data-uid]",
+        'main button[aria-label^="再看 "]',
+        {
+          selector: "[data-inventory-total]",
+          attribute: "data-inventory-total",
+          count: bigbag,
+        },
+        {
+          startSelector: "[data-inventory-start]",
+          startAttribute: "data-inventory-start",
+          previousSelector: "[data-inventory-prev]",
+        },
+      );
+      peakNodes = Math.max(peakNodes, batch.peakNodes);
     }
     if (bigbag > 0 && view.name === "market") {
-      const consign = await expandBatch(
+      const consign = await expandAllBatches(
         page,
         "button[data-consign-uid]",
         'button[data-market-more="consign"]',
+        {
+          selector: "[data-market-consign-total]",
+          attribute: "data-market-consign-total",
+          count: bigbag,
+        },
+        {
+          startSelector: "[data-market-consign-start]",
+          startAttribute: "data-market-consign-start",
+          previousSelector: '[data-market-prev="consign"]',
+        },
       );
       let candidates;
       try {
@@ -283,21 +497,39 @@ for (const view of VIEWS) {
         if ((await trigger.count()) === 0) throw new Error("没有贡器悬赏入口");
         await trigger.click({ timeout: 3000 });
         await page.waitForTimeout(120);
-        candidates = await expandBatch(
+        candidates = await expandAllBatches(
           page,
           "button[data-equip-candidate]",
           'button[data-market-more="equip"]',
+          {
+            selector: "[data-market-candidate-total]",
+            attribute: "data-market-candidate-total",
+            count: bigbag,
+          },
+          {
+            startSelector: "[data-market-candidate-start]",
+            startAttribute: "data-market-candidate-start",
+            previousSelector: '[data-market-prev="equip"]',
+          },
         );
       } catch (error) {
         candidates = {
           before: 0,
           promised: 0,
           after: 0,
+          steps: 0,
+          slides: 0,
+          peakNodes: 0,
           ok: false,
           reason: String(error),
         };
       }
-      peakNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+      peakNodes = Math.max(
+        peakNodes,
+        consign.peakNodes ?? 0,
+        candidates.peakNodes ?? 0,
+        await page.evaluate(() => document.querySelectorAll("*").length),
+      );
       marketBatches = { consign, candidates };
     }
     if (view.name === "collection") {
@@ -310,10 +542,16 @@ for (const view of VIEWS) {
       for (const category of categories) {
         collectionBatches.push({
           key: category,
-          ...(await expandBatch(
+          ...(await expandAllBatches(
             page,
             `button[data-codex-entry="${category}"]`,
             `button[data-collection-more="${category}"]`,
+            null,
+            {
+              startSelector: `section[data-collection-category="${category}"]`,
+              startAttribute: "data-collection-start",
+              previousSelector: `button[data-collection-prev="${category}"]`,
+            },
           )),
         });
       }
@@ -323,11 +561,18 @@ for (const view of VIEWS) {
           before: 0,
           promised: 0,
           after: 0,
+          steps: 0,
+          slides: 0,
+          peakNodes: 0,
           ok: false,
           reason: "全收集夹具没有触发任何续开按钮",
         });
       }
-      peakNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+      peakNodes = Math.max(
+        peakNodes,
+        ...collectionBatches.map((batch) => batch.peakNodes ?? 0),
+        await page.evaluate(() => document.querySelectorAll("*").length),
+      );
     }
     record = {
       name: view.name,
@@ -361,7 +606,14 @@ function batchChecks(r) {
 
 for (const r of results) {
   const checks = r.crashed ? [] : batchChecks(r);
-  const batchText = checks.map(([label, b]) => `${label}=${b.before}→${b.after}`).join(" ");
+  const batchText = checks
+    .map(
+      ([label, b]) =>
+        `${label}=${b.before}→${b.after}${b.steps > 1 ? `(${b.steps}批/滑${b.slides})` : ""}${
+          b.finalNodes && b.finalNodes !== b.peakNodes ? ` 收=${b.finalNodes}` : ""
+        }`,
+    )
+    .join(" ");
   const deepDom = (r.peakNodes ?? r.nodes) !== r.nodes ? ` peak=${r.peakNodes}` : "";
   const state = r.crashed
     ? `✗ ${r.name} CRASHED: ${r.crashed}`

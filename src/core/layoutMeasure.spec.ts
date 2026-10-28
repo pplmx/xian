@@ -18,6 +18,8 @@ import {
   FULL_COLLECTION_COUNTS,
   fullCollectionSlices,
 } from "../../scripts/lib/fullCollectionFixture";
+import { makeBigBagItems } from "../../scripts/lib/bigBagFixture";
+import { equipmentTemplate } from "../data/equipment";
 
 const SCRIPT = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf-8");
 
@@ -191,11 +193,15 @@ describe("排版量法口径", () => {
      */
     const view = readFileSync(resolve(__dirname, "../views/InventoryView.vue"), "utf-8");
     expect(view).toContain("inventoryWindow(allItems");
+    expect(view).toContain("data-inventory-total");
+    expect(view).toContain("data-inventory-start");
     expect(view).toContain('v-for="row in itemPage.visible"');
     expect(view).toContain(':is-new="inventory.isNewItem(row.item.uid)"');
     expect(view).toMatch(
       /nextInventoryLimit\(\s*itemPage\.value\.shown,\s*allItems\.value\.length\s*\)/,
     );
+    expect(view).toContain("previousInventoryLimit");
+    expect(view).toContain("data-inventory-prev");
     expect(view).toContain("itemPage.hidden > 0");
 
     const card = readFileSync(
@@ -208,6 +214,24 @@ describe("排版量法口径", () => {
     const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
     expect(perf).toContain("maxDomByView");
     expect(perf).toContain("inventory: 700");
+    expect(perf).toContain("makeBigBagItems");
+    expect(perf).toContain("data-inventory-total");
+    expect(perf).toContain("夹具只装进");
+    expect(perf).toContain("newVisible === promised");
+    expect(perf).toContain("startAfter < startBefore");
+  });
+
+  it("大背包性能夹具只取真实 14 阶模板，300 件必须真的进得去", () => {
+    const rows = makeBigBagItems(300);
+    expect(rows).toHaveLength(300);
+    expect(new Set(rows.map((row) => row.templateId)).size).toBeGreaterThanOrEqual(4);
+    for (const row of rows) {
+      const template = equipmentTemplate(row.templateId);
+      expect(template, `夹具模板 ${row.templateId} 不在装备表里`).toBeDefined();
+      expect(template?.tier).toBe(14);
+    }
+    expect(makeBigBagItems(2.9)).toHaveLength(2);
+    expect(makeBigBagItems(Number.NaN)).toHaveLength(0);
   });
 
   it("收藏全收集要有真实规模夹具，运行时门要切进收藏并逐册验续开", () => {
@@ -234,6 +258,7 @@ describe("排版量法口径", () => {
     expect(perf).toContain('getByRole("tab", { name: "收藏" })');
     expect(perf).toContain("data-collection-more");
     expect(perf).toContain("collectionBatches");
+    expect(perf).toContain("rewindSpec");
     expect(perf).toMatch(/collection:\s*\d+/);
     expect(perf, "收藏要守住逐册续开后的交互峰值").toContain("collection: 1100");
   });

@@ -116,7 +116,7 @@ describe("背包「新」角标 · 洗档纪律", () => {
 });
 
 describe("背包藏品 · 首屏渲染预算", () => {
-  it("300 件先只放出首批,再按同样批次追加 —— 滚动可达不等于一次全进 DOM", () => {
+  it("300 件先只放出首批,再按同样批次前翻 —— 滚动可达不等于一次全进 DOM", () => {
     const items = Array.from({ length: 300 }, (_, i) => i);
     const first = inventoryWindow(items, INVENTORY_RENDER_BATCH);
     expect(first.visible).toEqual(items.slice(0, INVENTORY_RENDER_BATCH));
@@ -125,7 +125,9 @@ describe("背包藏品 · 首屏渲染预算", () => {
 
     const next = nextInventoryLimit(first.shown, items.length);
     expect(next).toBe(INVENTORY_RENDER_BATCH * 2);
-    expect(inventoryWindow(items, next).hidden).toBe(300 - INVENTORY_RENDER_BATCH * 2);
+    const second = inventoryWindow(items, next);
+    expect(second.visible).toEqual(items.slice(INVENTORY_RENDER_BATCH, INVENTORY_RENDER_BATCH * 2));
+    expect(second.hidden).toBe(300 - INVENTORY_RENDER_BATCH * 2);
   });
 
   it("计数夹在真实区间里:缩包不越界,末批自动收口", () => {

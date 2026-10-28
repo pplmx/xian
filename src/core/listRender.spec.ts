@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { listWindow, nextListLimit } from "./listRender";
+import { listWindow, nextListLimit, previousListLimit } from "./listRender";
 
 const items = Array.from({ length: 120 }, (_, i) => i);
 
@@ -35,5 +35,27 @@ describe("长列表渐进窗口", () => {
     expect(nextListLimit(40, 120, -24)).toBe(41);
     expect(nextListLimit(40, 120, Number.NaN)).toBe(41);
     expect(nextListLimit(40, 120, Number.POSITIVE_INFINITY)).toBe(41);
+  });
+
+  it("可渲染窗口封顶:继续前翻时丢最早一批,不让 DOM 随点击无限长", () => {
+    const first = listWindow(items, 48, 48);
+    expect(first.visible).toEqual(items.slice(0, 48));
+    expect(first.start).toBe(0);
+
+    const third = listWindow(items, 72, 48);
+    expect(third.visible).toEqual(items.slice(24, 72));
+    expect(third.start).toBe(24);
+    expect(third.shown).toBe(72);
+    expect(third.hidden).toBe(48);
+    expect(third.visible).toHaveLength(48);
+  });
+
+  it("前翻以整批回退,不会退到第一批之前或把短清单越过末页", () => {
+    expect(previousListLimit(72, 120, 24)).toBe(48);
+    expect(previousListLimit(48, 120, 24)).toBe(24);
+    expect(previousListLimit(24, 120, 24)).toBe(24);
+    expect(previousListLimit(66, 66, 24)).toBe(48);
+    expect(previousListLimit(999, 12, 24)).toBe(12);
+    expect(previousListLimit(40, 120, 0)).toBe(40);
   });
 });

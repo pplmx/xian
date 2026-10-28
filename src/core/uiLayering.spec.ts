@@ -626,17 +626,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
-  it("全收集图鉴逐册分批露出 —— 余下可续开，已收条目最终都要看得到", () => {
+  it("全收集图鉴逐册滑动翻看 —— 前后可达，点击再多也不让 DOM 无限长", () => {
     /*
      * 九册全收是 800+ 枚 chip，首帧全铺实测 1326 DOM。每册先给一批，余下由
-     * 「再看 N 件」显式续开；未识的 ??? 仍守原 UNKNOWN_CAP，不能被续开按钮
-     * 顺手放成一面二十屏的 ? 墙。判据同时钉承诺件数与真实窗口函数同源。
+     * 「再看 N 件」翻到下一批，可见窗口最多两批；未识的 ??? 仍守原
+     * UNKNOWN_CAP。继续前翻会滑掉最早一批，并留「前一批」回看，
+     * 所以全清单仍可达而 DOM 有硬顶。
      */
     const col = FILES.find((f) => f.path === "views/CollectionView.vue");
     expect(col?.src).toMatch(/listWindow\(\s*known,/);
     expect(col?.src).toMatch(/nextListLimit\([\s\S]{0,100}COLLECTION_RENDER_BATCH[\s\S]{0,40}\)/);
+    expect(col?.src).toContain("COLLECTION_RENDER_WINDOW");
+    expect(col?.src).toContain("previousListLimit");
     expect(col?.src).toContain("hiddenKnown");
     expect(col?.src).toContain(':data-collection-more="cat.key"');
+    expect(col?.src).toContain(':data-collection-prev="cat.key"');
     expect(col?.src).toContain(
       ':data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"',
     );
@@ -649,6 +653,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
     expect(col?.src, "??? 仍只铺 UNKNOWN_CAP，不许被续开按钮带走").toContain(
       "unknown.slice(0, UNKNOWN_CAP)",
+    );
+    expect(col?.src, "窗口起点要让门能验证「确实滑过页」").toContain(
+      ':data-collection-start="cat.knownStart"',
     );
 
     const knownLoop = col?.src.indexOf('v-for="entry in cat.knownVisible"') ?? -1;
@@ -1595,6 +1602,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
     expect(market?.src, "寄卖首批只遍历渲染窗口").toContain('v-for="it in consignPage.visible"');
     expect(market?.src, "余件必须显式续开,不许静默截断").toContain("consignPage.hidden > 0");
+    expect(market?.src, "窗口封顶后要能回看前一批").toContain('data-market-prev="consign"');
+    expect(market?.src, "回看必须走同一窗口函数").toContain("previousInventoryLimit");
+    expect(market?.src, "寄卖窗口要有硬顶").toMatch(
+      /inventoryWindow\(\s*inventory\.bagItems,\s*consignLimit\.value,\s*MARKET_RENDER_WINDOW/,
+    );
     expect(market?.src, "续开必须回到同一份完整 bagItems").toMatch(
       /nextInventoryLimit\(consignPage\.value\.shown,\s*inventory\.bagItems\.length\)/,
     );
@@ -1602,6 +1614,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       'v-for="it in equipCandidatePage.visible"',
     );
     expect(market?.src, "贡器候选余件也要显式续开").toContain("equipCandidatePage.hidden > 0");
+    expect(market?.src, "贡器候选窗口也要能回看并封顶").toContain('data-market-prev="equip"');
     expect(market?.src, "售丹数量要写「现持」点明,不许裸 (N)").toContain("(现持 ");
     expect(market?.src, "售丹每颗要有成功反馈 toast").toMatch(/已售 1 颗.*得 .*石/);
   });
