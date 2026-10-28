@@ -17,6 +17,11 @@ import { resolve } from "node:path";
 const ROOT = resolve(__dirname, "../..");
 const RAW_BUILD = readFileSync(resolve(ROOT, ".github/workflows/build.yml"), "utf8");
 const RAW_GRADLE = readFileSync(resolve(ROOT, "android/app/build.gradle"), "utf8");
+const RAW_MANIFEST = readFileSync(
+  resolve(ROOT, "android/app/src/main/AndroidManifest.xml"),
+  "utf8",
+);
+const PRIVACY = readFileSync(resolve(ROOT, "public/privacy.html"), "utf8");
 
 /**
  * 判据只看**生效的代码**,不看注释 —— 两处历史事故的说明文字里都原样引用了坏的写法
@@ -59,6 +64,18 @@ describe("发版流水线 · 两条历史事故的护栏", () => {
   it("写权限只给 release job —— 构建 job 手里不该攥着能发版的 token", () => {
     const writes = [...BUILD.matchAll(/contents:\s*write/g)].length;
     expect(writes, "contents: write 只允许出现在 release job 里一次").toBe(1);
+  });
+});
+
+describe("Android 隐私 · 系统备份不许绕过导出/导入", () => {
+  it("自动云备份与换机迁移关闭 —— 存档只留本机", () => {
+    expect(PRIVACY, "隐私政策的「不跨设备同步」承诺没了 —— 这条 Android 判据失去对象").toContain(
+      "不会在你的多个设备之间同步",
+    );
+    expect(
+      RAW_MANIFEST,
+      "allowBackup=true 会把 WebView 存档交给系统云备份/换机迁移,与隐私政策冲突",
+    ).toMatch(/android:allowBackup="false"/);
   });
 });
 

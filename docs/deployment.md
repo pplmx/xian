@@ -40,6 +40,8 @@ CI 会把签好的 APK 作为 `android-apk` 产物上传;本地出包在
 `android/app/build/outputs/apk/release/xuanshu-<版本号>.apk`。
 把 APK 传到手机后点击安装(系统会提示允许安装未知来源应用,放行即可);
 覆盖安装需签名一致 —— 自己构建的包与官方签名不同,要先卸载旧版。
+Android 清单显式关闭系统自动备份与换机迁移:存档只留本机,换设备仍走游戏内的
+「导出 / 导入」,不由系统云服务悄悄同步。
 
 ```bash
 bun run build:android    # 同步 Web 产物到 Android 工程(Capacitor)
