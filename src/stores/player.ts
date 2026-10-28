@@ -7,7 +7,7 @@ import { persistConfig } from "@/utils/storage";
 import { realmDef, realmLabel, worldOf, SUB_NAMES, MAX_MAJOR } from "@/data/realms";
 import { SUB_LEVELS, START_AGE } from "@/data/constants";
 import { QI_BANK_MULT, QI_RICH_THRESHOLD_RATIO } from "@/data/constants";
-import { legacyInsightOf } from "@/data/samsara";
+import { insightOnLoad } from "@/data/samsara";
 import { titleDef } from "@/data/titles";
 import { COMPANION_SYSTEM } from "@/core/engineWorld";
 import { mentorDef } from "@/data/mentors";
@@ -780,10 +780,7 @@ export const usePlayerStore = defineStore(
               (id): id is string => typeof id === "string" && !!heritageDef(id),
             )
           : [],
-        insight:
-          Number.isFinite(r?.insight) && (r?.insight !== 0 || count === 0)
-            ? Math.max(0, r.insight)
-            : legacyInsightOf(count),
+        insight: insightOnLoad(r?.insight, count),
         lives: Array.isArray(r?.lives) ? r.lives : [],
         vow: r?.vow ?? null,
         trial: r?.trial ?? null,

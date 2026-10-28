@@ -61,7 +61,6 @@ const AUDIT_MODULES = new Set([
   "core/ecosystemHealth.ts",
   "core/fingerprints.ts",
   "core/fruitOutlets.ts",
-  "core/impactSurface.ts",
   "core/inflationAudit.ts",
   "core/lootSim.ts",
   "core/mortalGate.ts",

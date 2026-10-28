@@ -134,7 +134,6 @@ const CATEGORIES = [
       "contentGateAudit",
       "shallowRebirthGains",
       "narrowingImpact",
-      "impactSurface",
       "compoundingAudit",
       "daoFruitRoles",
       "fruitOutlets",

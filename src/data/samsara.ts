@@ -197,6 +197,20 @@ export function legacyInsightOf(count: number): number {
 }
 
 /**
+ * 读档时的存量宿慧口径。
+ *
+ * 新档的 `insight: 0` 是合法值;但字段已建立、玩家又已经转过世时,这个 0
+ * 说明存档跨过了新体系上线,必须按历世次数补折算。缺失、坏值走同一条补账路。
+ * 读档入口只认这里,避免显示、迁移与后续审计各算各的。
+ */
+export function insightOnLoad(raw: unknown, count: number): number {
+  const safeCount = Number.isFinite(count) ? Math.max(0, count) : 0;
+  const valid = typeof raw === "number" && Number.isFinite(raw);
+  if (valid && (raw !== 0 || safeCount === 0)) return Math.max(0, raw);
+  return legacyInsightOf(safeCount);
+}
+
+/**
  * 多少宿慧折一点灵根资质地板。
  *
  * 与旧口径(转世次数 × 5)取较大值,见 core/samsaraService.ts 的 aptitudeFloorNow ——

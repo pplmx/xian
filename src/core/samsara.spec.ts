@@ -317,7 +317,7 @@ describe("轮回带走的那一份", () => {
     expect(useLoreStore().knownMaterialCount).toBe(0);
   });
 
-  /** legacyInsightOf 与 player.sanitize 各算各的,口径一旦分叉,老存档的显示与实际就对不上 */
+  /** 读档必须走 legacyInsightOf 同一条折算口径,否则老存档的显示与实际会对不上 */
   it("旧存档迁移补齐的宿慧,与折算口径一致", () => {
     const player = usePlayerStore();
     // 模拟 Phase 32.5 之前的存档:reincarnation 只有 count / daoFruit / talents 三项
@@ -332,6 +332,27 @@ describe("轮回带走的那一份", () => {
     player.addInsight(50);
     player.sanitize();
     expect(player.reincarnation.insight).toBe(legacyInsightOf(7) + 50);
+  });
+
+  it("字段已建但值为 0 的老档补折算,真正的新档仍保留 0", () => {
+    const player = usePlayerStore();
+    // 中途版本已建 insight 字段,但玩家在此之前已经转过世 —— 0 不是合法存量
+    player.reincarnation = {
+      ...player.reincarnation,
+      count: 4,
+      insight: 0,
+    };
+    player.sanitize();
+    expect(player.reincarnation.insight).toBe(legacyInsightOf(4));
+
+    // 尚未转世的新档没有历世可补,0 必须原样保留
+    player.reincarnation = {
+      ...player.reincarnation,
+      count: 0,
+      insight: 0,
+    };
+    player.sanitize();
+    expect(player.reincarnation.insight).toBe(0);
   });
 });
 
