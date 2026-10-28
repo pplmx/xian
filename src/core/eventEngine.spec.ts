@@ -223,6 +223,36 @@ describe("事件装备回执 · 离线卷轴要能列出来", () => {
     expect(res.equipment[0]!.recycled, "智能收纳判废时应标成回收件").toBe(true);
     expect(res.recycledDust, "化尘量的回执要与实际入账同源").toBeGreaterThan(0);
   });
+
+  it("丹药等无法从总资源差额区分的所得,也要带回逐项回执", () => {
+    const def: EventDef = {
+      id: "ev_test_notable_receipt",
+      title: "药囊",
+      text: "",
+      tags: ["general"],
+      weight: 1,
+      choices: [
+        {
+          label: "打开",
+          isDefault: true,
+          outcomes: [
+            {
+              weight: 1,
+              text: "囊中有药,也有草。",
+              effects: [
+                { type: "material", id: "herb", amount: 10 },
+                { type: "pill", id: "p_huichun", count: 2 },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const res = resolveEventChoice(def, 0, 3);
+
+    expect(res.notableLines, "丹药不能只剩资源汇总里看不见的一行").toEqual(["丹药「回灵丹」×2"]);
+  });
 });
 
 describe("奇缘授方 · 文案承诺必须落成知识", () => {

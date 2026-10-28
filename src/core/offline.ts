@@ -214,10 +214,17 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const equipmentGained: OfflineSummary["equipment"] = [];
   /** 离线期间未入包(自动回收/满包化尘)装备化作的器灵尘 */
   let recycledDust = 0;
-  const collectEventEquipment = (res: EventResolution | null): void => {
+  const eventReceipts: OfflineSummary["eventReceipts"] = [];
+  const collectEventReceipt = (res: EventResolution | null): void => {
     if (!res) return;
     equipmentGained.push(...res.equipment);
     recycledDust += res.recycledDust;
+    if (res.notableLines.length === 0) return;
+    const same = eventReceipts.find(
+      (r) => r.title === res.title && r.lines.join("\n") === res.notableLines.join("\n"),
+    );
+    if (same) same.count += 1;
+    else eventReceipts.push({ title: res.title, lines: res.notableLines, count: 1 });
   };
 
   // ---- 修炼 ----
@@ -624,10 +631,10 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       if (offlineEventPool.length === 0) offlineEventPool = DEFAULT_OFFLINE_EVENT_IDS;
       for (let i = 0; i < evCap; i += 1) {
         if (adventure.pendingEventId) {
-          collectEventEquipment(autoResolveEvent(adventure.pendingEventId, region.tier));
+          collectEventReceipt(autoResolveEvent(adventure.pendingEventId, region.tier));
           adventure.setPendingEvent(null, nowMs);
         } else {
-          collectEventEquipment(autoResolveEvent(rng.pick(offlineEventPool), region.tier));
+          collectEventReceipt(autoResolveEvent(rng.pick(offlineEventPool), region.tier));
         }
       }
       // 事件只实际结算了 evCap 个;events 此前按全程估算,超额部分只是"路上料到"、
@@ -792,6 +799,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     events,
     equipment: equipmentGained,
     recycledDust,
+    eventReceipts,
     notes,
   };
   if (player.expFull) notes.push("修为已至圆满,可尝试突破");

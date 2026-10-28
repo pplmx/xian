@@ -2694,9 +2694,26 @@ async function taskLateTour() {
          */
         revived: ["luoxia"],
         mortalCleared: [],
-        session: null,
-        pendingEventId: null,
-        pendingEventSince: 0,
+        /*
+         * 留一程只有一分钟、且带待决际遇的历练:离线结算会在归零前把它自动收掉，
+         * 让归来卷轴真画出新增的「际遇结果」块 —— 只写 session:null 的话，这块永远量不到。
+         */
+        session: {
+          regionId: "qingyun",
+          mode: "normal",
+          startedAt: Date.now() - 9 * 3600000,
+          endsAt: Date.now() - 9 * 3600000 + 60000,
+          nextBattleAt: Date.now() - 9 * 3600000 + 12000,
+          wins: 0,
+          losses: 0,
+          events: 0,
+          stoneGain: gn(0, 0),
+          expGain: gn(0, 0),
+          itemGain: 0,
+          wudaoGain: 0,
+        },
+        pendingEventId: "ev_rescue_disciple",
+        pendingEventSince: Date.now() - 9 * 3600000,
         seenOnceEvents: [],
         lastBattle: null,
         eventMemories: {},
@@ -2748,6 +2765,8 @@ async function taskLateTour() {
         text: text.slice(0, 200),
         leaks: /NaN|undefined|Infinity/.test(text),
         rows: text.split("\n").filter((l) => l.includes("+")).length,
+        hasEventReceipts: text.includes("际遇结果"),
+        hasPillReceipt: /丹药「.+」×2/.test(text),
       };
     });
     if (!offline) {
@@ -2757,6 +2776,10 @@ async function taskLateTour() {
       if (offline.leaks)
         failures.push(`[390] 后期档:归来卷轴漏出占位符 —— ${offline.text.slice(0, 60)}`);
       if (offline.rows === 0) failures.push("[390] 后期档:归来卷轴一条收益都没列");
+      if (!offline.hasEventReceipts)
+        failures.push("[390] 后期档:自动际遇结算了,归来卷轴却没有「际遇结果」");
+      if (!offline.hasPillReceipt)
+        failures.push("[390] 后期档:际遇给了丹药,归来卷轴却认不出得了什么");
       /*
        * 卷轴本身也要过 200% 那一档。
        *

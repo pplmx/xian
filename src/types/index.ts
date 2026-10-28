@@ -1150,7 +1150,17 @@ export interface OfflineSummary {
   equipment: { name: string; quality: QualityId; recycled?: boolean }[];
   /** 期间未入包装备化作的器灵尘总量 */
   recycledDust: number;
+  /** 无法从资源总差额与装备清单辨认的际遇所得(丹药/法宝/功法/增益等) */
+  eventReceipts: OfflineEventReceipt[];
   notes: string[];
+}
+
+export interface OfflineEventReceipt {
+  title: string;
+  /** 同一次际遇的可辨认结果;资源类已由上方总账汇总,这里不重复 */
+  lines: string[];
+  /** 同名同结果折叠次数 */
+  count: number;
 }
 
 // ============ 历练会话 ============

@@ -217,6 +217,19 @@ describe("离线 events 封顶 40 不蒸发超额遭遇 · 非事即战闭合", 
     );
   });
 
+  it("自动际遇的丹药所得写进归来回执", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const adventure = useAdventureStore();
+    adventure.setPendingEvent("ev_rescue_disciple", useGameStore().lastActiveAt);
+
+    const summary = settleOffline(Date.now())!;
+    const receipt = summary.eventReceipts.find((r) => r.title === "遇袭的弟子");
+
+    expect(receipt, "际遇只报次数、不报得了什么,丹药等于凭空消失").toBeDefined();
+    expect(receipt!.lines.join("\n"), "丹药明细应与事件结算回执同源").toMatch(/丹药「.+」×2/);
+  });
+
   it("会话在离线开始前已结束:不再补打区域之主", () => {
     setActivePinia(createPinia());
     seedSession("normal");

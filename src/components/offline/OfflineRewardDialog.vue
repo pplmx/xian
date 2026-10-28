@@ -76,6 +76,29 @@
               </span>
             </p>
           </li>
+          <li v-if="eventReceipts.length" class="rounded-md bg-paper-deep/70 px-3 py-2">
+            <p class="mb-1.5 flex items-center gap-2 text-[14px] text-ink-soft">
+              <GameIcon name="star" :size="15" class="text-ink-faint" />
+              际遇结果
+            </p>
+            <ul class="space-y-2">
+              <li v-for="(receipt, i) in eventReceipts" :key="i">
+                <p class="flex items-baseline justify-between gap-2 text-[11px]">
+                  <span class="font-kai text-ink-soft">{{ receipt.title }}</span>
+                  <span v-if="receipt.count > 1" class="tabular text-ink-faint">
+                    ×{{ receipt.count }}
+                  </span>
+                </p>
+                <p
+                  v-for="(line, j) in receipt.lines"
+                  :key="j"
+                  class="mt-0.5 text-[11px] leading-relaxed text-ink"
+                >
+                  {{ line }}
+                </p>
+              </li>
+            </ul>
+          </li>
         </ul>
       </template>
       <p v-for="(note, i) in summary.notes" :key="i" class="mt-2 text-[11px] text-ink-faint">
@@ -183,6 +206,8 @@ const roadRows = computed(() => rows.value.filter((r) => !r.gain));
 
 /** 真正入行囊的装备(回收件已并入"回收化尘"行,不在此重复列出) */
 const savedEquipment = computed(() => summary.value?.equipment.filter((e) => !e.recycled) ?? []);
+/** 资源总差额看不出的际遇所得:丹药、法宝、功法、丹方、灵兽与增益 */
+const eventReceipts = computed(() => summary.value?.eventReceipts ?? []);
 
 function close(): void {
   ui.offlineSummary = null;

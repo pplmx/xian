@@ -371,8 +371,11 @@ function randomEventPill(major: number): string | null {
 }
 
 export interface EventResolution {
+  title: string;
   outcomeText: string;
   lines: string[];
+  /** 总资源差额与装备清单辨认不出的逐项所得(丹药/法宝/功法/增益等) */
+  notableLines: string[];
   /** 这次抉择真正产出的装备(含未入包、已化尘的件) */
   equipment: EventEquipmentGain[];
   /** 其中未入包装备实际折出的器灵尘 */
@@ -396,6 +399,8 @@ interface EventApplyContext {
   /** 离线归来卷轴要如实列出事件所得装备,不能只剩一句文案。 */
   equipment: EventEquipmentGain[];
   recycledDust: number;
+  /** 丹药等无法从资源总差额辨认的结果,原样留给归来回执 */
+  notableLines: string[];
 }
 
 /**
@@ -416,10 +421,36 @@ function itemGainOf(effect: EventEffect): number {
   }
 }
 
+/**
+ * 资源、修为、材料与装备已有归来总账承载;其余所得必须单独留回执。
+ * 典型反例:丹药进入背包后，资源差额与装备清单都无法证明这是哪一枚。
+ */
+function needsReceiptLine(type: EventEffect["type"]): boolean {
+  switch (type) {
+    case "stone":
+    case "exp":
+    case "material":
+    case "equipment":
+    case "nothing":
+      return false;
+    case "pill":
+    case "artifact":
+    case "recipe":
+    case "gongfa":
+    case "buff":
+    case "lifespan":
+    case "pet":
+      return true;
+  }
+}
+
 export const CHOICES = createChoiceSystem<EventEffect, EventApplyContext>({
   interpret: (effect, ctx) => {
     const line = applyEffect(effect, ctx);
-    if (line) ctx.itemGain += itemGainOf(effect);
+    if (line) {
+      ctx.itemGain += itemGainOf(effect);
+      if (needsReceiptLine(effect.type)) ctx.notableLines.push(line);
+    }
     return line;
   },
 });
@@ -450,7 +481,13 @@ export function resolveEventChoice(
   const stoneBefore = { ...resources.spiritStone };
   const expBefore = { ...player.exp };
   const wudaoBefore = resources.wudao;
-  const applyCtx: EventApplyContext = { tier, itemGain: 0, equipment: [], recycledDust: 0 };
+  const applyCtx: EventApplyContext = {
+    tier,
+    itemGain: 0,
+    equipment: [],
+    recycledDust: 0,
+    notableLines: [],
+  };
   const receipt = CHOICES.resolve(asChoice(choice, tier), applyCtx, rng);
   const session = adventure.session;
   if (session) {
@@ -485,8 +522,10 @@ export function resolveEventChoice(
     recordFortuneChoice(def.id, isDefault ? "leave" : "take");
   }
   return {
+    title: def.title,
     outcomeText: receipt.text,
     lines: receipt.lines,
+    notableLines: applyCtx.notableLines,
     equipment: applyCtx.equipment,
     recycledDust: applyCtx.recycledDust,
   };
@@ -499,7 +538,7 @@ export function autoResolveEvent(eventId: string, tier: number): EventResolution
   // 三级兜底(默认且可选 → 第一条可选 → 第一条)由库回答,免得界面与离线各写一遍
   const idx = CHOICES.defaultIndex(
     def.choices.map((c) => asChoice(c, tier)),
-    { tier, itemGain: 0, equipment: [], recycledDust: 0 },
+    { tier, itemGain: 0, equipment: [], recycledDust: 0, notableLines: [] },
   );
   return resolveEventChoice(def, idx, tier);
 }
