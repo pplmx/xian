@@ -2744,6 +2744,12 @@ async function taskLateTour() {
       Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]),
     );
     await ctx.addInitScript((decisivePayload) => {
+      /*
+       * 事件后果也是随机掷的。这里必须赶在应用模块初始化前钉死:
+       * RandomService 构造时已经把 Math.random 的函数引用收走,页面起来后再改
+       * 不影响它。否则「遇袭的弟子」有 35% 落到重伤分支,丹药回执这条判据会偶发假红。
+       */
+      Math.random = () => 0;
       if (localStorage.getItem("__layoutSeeded")) return;
       for (const [k, v] of Object.entries(decisivePayload)) localStorage.setItem(k, v);
       localStorage.setItem("__layoutSeeded", "1");

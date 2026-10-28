@@ -2382,6 +2382,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(char?.src, "卡状可点元素(试炼卡)也要带按压反馈").toContain("active:scale-99");
   });
 
+  it("可交互 chip 自己守 28px 触控下限,装饰 chip 不跟着变胖", () => {
+    /*
+     * chip-ink 原本只有 22.5px 高,修行页的状态胶囊在后期档被排版门抓红。
+     * 触控下限只该落在交互按钮上;品阶、首领等 span 装饰 chip 尺寸不应被连带改掉。
+     */
+    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    expect(css, "button.chip-ink 要自带 28px 最小高度").toMatch(
+      /button\.chip-ink\s*\{[^}]*min-height:\s*28px;/s,
+    );
+    expect(css, "装饰用的 chip-ink 基类不该整体抬高").not.toMatch(
+      /^[ \t]*\.chip-ink\s*\{[^}]*min-height:/ms,
+    );
+  });
+
   it("踏入仙途要有到首页的读屏起手句 —— 鉴定播报不随路由跳转断档", () => {
     // 灵根鉴定定格播报(aria-live polite)定格后 400ms 就随 router.push('/') 卸载,
     // 读屏可能当场切断;而首页此前全无 aria-live。CreateView 跳转前把起手句交给

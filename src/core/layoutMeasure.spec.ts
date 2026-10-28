@@ -127,6 +127,21 @@ describe("排版量法口径", () => {
     expect(SCRIPT).toMatch(/if \(el\.hasAttribute\("disabled"\)\) continue; \/\/ 禁用态是原因句/);
   });
 
+  it("后期档的随机际遇要在模块初始化前钉死 —— 否则丹药回执偶发假红", () => {
+    /*
+     * RandomService 在构造时就捕获了 Math.random 的函数引用。页面加载后再修改
+     * 只影响后续新建的实例,不影响已经收走引用的全局 rng —— 后期档夹具必须把
+     * 固定值放进 addInitScript,才能在「遇袭的弟子」掷后果之前生效。
+     */
+    const start = SCRIPT.indexOf("const latePayload = Object.fromEntries(");
+    const end = SCRIPT.indexOf("const page = await ctx.newPage();", start);
+    expect(start, "后期档夹具要能定位到 —— 定位不到这条就是空转").toBeGreaterThan(-1);
+    expect(end, "后期档夹具要能定位到 page 创建之前").toBeGreaterThan(start);
+    const lateSeed = SCRIPT.slice(start, end);
+    expect(lateSeed).toContain("Math.random = () => 0;");
+    expect(lateSeed).toContain("await ctx.addInitScript(");
+  });
+
   it("巡页与冒烟的路由表都要跟上 router —— 新页面不许悄悄漏在门外", () => {
     /*
      * ROUTES 是手抄的一份清单。新增一个页面却忘了加进来,那一刻起它就再也不被任何
