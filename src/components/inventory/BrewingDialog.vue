@@ -45,7 +45,13 @@
       炉前还是白身 —— 备一味
       <span class="text-qing">安神 · 澄心 · 定心</span>,双成 / 心得 / 护料即刻各涨一截
     </p>
-    <div v-if="recipes.length" class="scroll-pane max-h-64 space-y-2 overflow-y-auto">
+    <div
+      v-if="recipes.length"
+      class="scroll-pane max-h-64 space-y-2 overflow-y-auto"
+      :data-recipe-total="filteredRecipes.length"
+      :data-recipe-shown="filteredRecipePage.shown"
+      :data-recipe-start="filteredRecipePage.start"
+    >
       <input
         v-model="recipeQuery"
         type="text"
@@ -55,12 +61,25 @@
         placeholder="搜方名…"
       />
       <p
+        v-if="filteredRecipes.length"
+        class="px-0.5 text-center text-[10px] text-ink-faint tabular"
+      >
+        {{ recipeQuery.trim() ? "搜得" : "丹方共" }} {{ filteredRecipes.length }} 张 · 现看
+        {{ filteredRecipePage.start + 1 }}–{{ filteredRecipePage.shown }}
+      </p>
+      <p
         v-if="recipeQuery.trim() !== '' && !filteredRecipes.length"
         class="px-0.5 text-[10px] text-ink-faint"
       >
         没有叫「{{ recipeQuery.trim() }}」的方子
       </p>
-      <div v-for="r in filteredRecipes" :key="r.def.id" class="card-ink px-3.5 py-2.5">
+      <div
+        v-for="r in filteredRecipePage.visible"
+        :key="r.def.id"
+        :data-recipe-row="r.def.id"
+        tabindex="-1"
+        class="card-ink px-3.5 py-2.5"
+      >
         <!--
           左图 + 中信息 + 右把握:两个按钮下移到卡底 —— 三列挤在一行时,
           中间的「方名 / 代价 / 成品」只剩一百来像素,「聚气散」被折成「聚气/散」(实测)。
@@ -169,6 +188,32 @@
           </button>
         </div>
       </div>
+      <div
+        v-if="filteredRecipePage.hidden > 0 || filteredRecipePage.start > 0"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          v-if="filteredRecipePage.start > 0"
+          type="button"
+          data-recipe-prev
+          class="btn-ghost min-w-0 flex-1 !py-2 !text-[11px] tinylens:basis-full tinylens:whitespace-nowrap"
+          :aria-label="previousRecipeText"
+          @click="showPreviousRecipes"
+        >
+          {{ previousRecipeText }}
+        </button>
+        <button
+          v-if="filteredRecipePage.hidden > 0"
+          type="button"
+          data-recipe-more
+          class="btn-ghost min-w-0 flex-1 !py-2 !text-[11px] tinylens:basis-full tinylens:whitespace-nowrap"
+          :aria-label="moreRecipeText"
+          :data-promised="Math.min(RECIPE_RENDER_BATCH, filteredRecipePage.hidden)"
+          @click="showMoreRecipes"
+        >
+          {{ moreRecipeText }}
+        </button>
+      </div>
     </div>
     <!--
       百工技艺:做得多就精。技艺一直在影响成丹 —— 境地与进度条都在这,看得见自己在长。
@@ -226,7 +271,7 @@
 
 <script setup lang="ts">
 import { expectedTries } from "@/core/breakthrough";
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -239,6 +284,13 @@ import { useResourcesStore } from "@/stores/resources";
 import { formatGN, formatPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { useBrewing } from "@/composables/useBrewing";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 
 defineProps<{ open: boolean }>();
 // craftOpen(页面状态)留 InventoryView,这里只回传事件:关炉走 close,
@@ -256,11 +308,22 @@ const {
   studyLine,
   herbGradeHeld,
   rateClass,
-  craftPill,
-  craftBatch,
+  craftPill: brewOne,
+  craftBatch: brewBatch,
   batchGuaranteeText,
   pillFuncText,
 } = useBrewing();
+
+/** 炉前动作会耗料并改变「可炼优先」的排序,窗口移动后仍把焦点送回同一张方。 */
+function craftPill(id: string): void {
+  brewOne(id);
+  focusRecipeRowById(id);
+}
+
+function craftBatch(id: string): void {
+  brewBatch(id);
+  focusRecipeRowById(id);
+}
 
 /** 炉前搜方名:方子一旦上手得多照单海搜,输入即滤(空白显示全部) */
 const recipeQuery = ref("");
@@ -270,6 +333,71 @@ const filteredRecipes = computed(() => {
   const q = recipeQuery.value.trim();
   if (!q) return recipes.value;
   return recipes.value.filter((r) => r.def.name.includes(q));
+});
+
+const RECIPE_RENDER_BATCH = 6;
+const RECIPE_RENDER_WINDOW = RECIPE_RENDER_BATCH * 2;
+const recipeLimit = ref(RECIPE_RENDER_BATCH);
+const filteredRecipePage = computed(() =>
+  listWindow(filteredRecipes.value, recipeLimit.value, RECIPE_RENDER_WINDOW),
+);
+const moreRecipeText = computed(() => {
+  const next = Math.min(RECIPE_RENDER_BATCH, filteredRecipePage.value.hidden);
+  return `再看 ${next} 张 · 余 ${filteredRecipePage.value.hidden}`;
+});
+const previousRecipeText = computed(
+  () =>
+    `前一批 ${previousListStep(
+      filteredRecipePage.value.shown,
+      filteredRecipes.value.length,
+      RECIPE_RENDER_BATCH,
+    )} 张`,
+);
+
+function focusRecipeRow(index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>("[data-recipe-row]");
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function focusRecipeRowById(id: string): void {
+  void nextTick(() => {
+    const selector = `[data-recipe-row="${CSS.escape(id)}"]`;
+    const row = document.querySelector<HTMLElement>(selector);
+    if (row) {
+      row.focus();
+      return;
+    }
+    // 炼制耗料后「可炼优先」会改序。若目标滑出当前窗,按它新位置所在批次的
+    // 末尾重开窗;向上越过窗界时同样收口到那一批,焦点都不留在已销毁的节点上。
+    const index = filteredRecipes.value.findIndex((candidate) => candidate.def.id === id);
+    if (index < 0) return;
+    const pageEnd = Math.ceil((index + 1) / RECIPE_RENDER_BATCH) * RECIPE_RENDER_BATCH;
+    recipeLimit.value = Math.min(filteredRecipes.value.length, pageEnd);
+    void nextTick(() => document.querySelector<HTMLElement>(selector)?.focus());
+  });
+}
+
+function showMoreRecipes(): void {
+  const shownBefore = filteredRecipePage.value.shown;
+  const shownAfter = nextListLimit(shownBefore, filteredRecipes.value.length, RECIPE_RENDER_BATCH);
+  recipeLimit.value = shownAfter;
+  focusRecipeRow(firstNewVisibleIndex(shownBefore, shownAfter, RECIPE_RENDER_WINDOW));
+}
+
+function showPreviousRecipes(): void {
+  recipeLimit.value = previousListLimit(
+    filteredRecipePage.value.shown,
+    filteredRecipes.value.length,
+    RECIPE_RENDER_BATCH,
+  );
+  focusRecipeRow();
+}
+
+// 换搜索词就是换一份清单。只重置窗口,不把焦点从输入框抢到第一张方子。
+watch(recipeQuery, () => {
+  recipeLimit.value = RECIPE_RENDER_BATCH;
 });
 
 /**

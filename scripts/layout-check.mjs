@@ -164,6 +164,8 @@
  *      195 宽下另把候选续到第二批,量分页读数、入口与候选行是否被挤坏。
  *   五十七 法宝全册共 45 张密卡,按 6 件一批、最多留 12 件。195 宽下逐批翻到末页
  *      再回翻,随身 / 炼化改序后焦点仍要跟住同一件;整页不许被双按钮或代价行挤坏。
+ *   五十八 开炉丹方共 54 张,按 6 张一批、最多留 12 张。搜索换词要重置窗口且不抢
+ *      输入焦点;195 宽下逐批翻到末页再回翻,炼制耗料改序后焦点仍要跟住同一张方。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -8751,6 +8753,296 @@ async function taskArtifactListOverflow() {
 }
 
 /**
+ * 开炉丹方 —— 54 张方子每张都摊代价、成品、把握、双成、存货与两枚动作。
+ *
+ * max-h-64 只限制眼睛看到的滚动框,不限制 DOM;这里验证 6 张一批、12 张滑窗,
+ * 搜索换词时窗口回到首批且不抢输入焦点,逐批翻到末页仍覆盖全部方子。最后在
+ * 195 宽下真炼一炉,确认耗料改序后焦点仍跟住同一张方,而不是落到被销毁的节点。
+ */
+async function taskRecipeListOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  let vite = null;
+  try {
+    vite = await createViteServer({
+      root: ROOT,
+      server: { middlewareMode: true },
+      appType: "custom",
+      logLevel: "silent",
+    });
+    const recipeFixture = await vite.ssrLoadModule("/scripts/lib/fullRecipeFixture.ts");
+    const recipeState = recipeFixture.fullRecipeSlices();
+    const total = Number(recipeFixture.FULL_RECIPE_COUNT);
+    const searchName = String(recipeFixture.FULL_RECIPE_SEARCH_NAME);
+    const slices = showcaseSlices("light");
+    slices.lore = { ...slices.lore, ...recipeState.lore };
+    slices.resources = { ...slices.resources, ...recipeState.resources };
+    await seedSave(ctx, slices, "__recipeListFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/inventory", { waitUntil: "load" });
+    await page.getByRole("tab", { name: /丹/ }).first().click({ timeout: 5000 });
+    await page
+      .locator("main button", { hasText: /开炉炼丹/ })
+      .first()
+      .click({ timeout: 5000 });
+    await page.locator("[data-recipe-total]").first().waitFor({ state: "visible", timeout: 10000 });
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+
+    async function readList() {
+      return page.evaluate(() => {
+        const holder = document.querySelector("[data-recipe-total]");
+        const rows = [...document.querySelectorAll("[data-recipe-row]")];
+        return {
+          total: Number(holder?.getAttribute("data-recipe-total")),
+          shown: Number(holder?.getAttribute("data-recipe-shown")),
+          start: Number(holder?.getAttribute("data-recipe-start")),
+          count: rows.length,
+          ids: rows.map((row) => row.getAttribute("data-recipe-row")),
+          focus: document.activeElement?.getAttribute("data-recipe-row"),
+          searchFocused: document.activeElement?.getAttribute("aria-label") === "搜方名",
+        };
+      });
+    }
+
+    async function waitForShown(shown) {
+      await page.waitForFunction(
+        (wanted) =>
+          document.querySelector("[data-recipe-total]")?.getAttribute("data-recipe-shown") ===
+          String(wanted),
+        shown,
+        { timeout: 5000 },
+      );
+    }
+
+    async function waitForTotal(count) {
+      await page.waitForFunction(
+        (wanted) =>
+          document.querySelector("[data-recipe-total]")?.getAttribute("data-recipe-total") ===
+          String(wanted),
+        count,
+        { timeout: 5000 },
+      );
+    }
+
+    async function waitForFocus(id) {
+      await page
+        .waitForFunction(
+          (rowId) => document.activeElement?.getAttribute("data-recipe-row") === rowId,
+          id,
+          { timeout: 2000 },
+        )
+        .catch(() => {});
+    }
+
+    const initial = await readList();
+    const more = page.locator("[data-recipe-more]").first();
+    const moreText = ((await more.textContent()) || "").replace(/\s+/g, " ").trim();
+    checked += 1;
+    if (
+      initial.total !== total ||
+      initial.shown !== 6 ||
+      initial.start !== 0 ||
+      initial.count !== 6 ||
+      !new RegExp(`再看\\s*6\\s*张\\s*·\\s*余\\s*${total - 6}`).test(moreText)
+    ) {
+      failures.push(
+        `[195] 丹方首批应 6/${total},实见 ${initial.count} 行 ` +
+          `(shown ${initial.shown} / total ${initial.total}) «${moreText}»`,
+      );
+    }
+
+    const fit = await more.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return {
+        left: box.left,
+        right: box.right,
+        height: box.height,
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+        viewport: window.innerWidth,
+      };
+    });
+    checked += 1;
+    if (
+      fit.left < -1 ||
+      fit.right > fit.viewport + 1 ||
+      fit.scrollWidth > fit.clientWidth + 1 ||
+      fit.height < 27.5
+    ) {
+      failures.push(
+        `[195] 丹方续开入口被挤坏:盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+          `内容 ${fit.scrollWidth}>${fit.clientWidth} / 高 ${Math.round(fit.height * 10) / 10}px`,
+      );
+    }
+    const panelOverflow = await page.locator(".modal-panel").evaluate((el) => ({
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    }));
+    checked += 1;
+    if (panelOverflow.scrollWidth > panelOverflow.clientWidth + 1) {
+      failures.push(
+        `[195] 丹方弹窗横向溢出:${panelOverflow.scrollWidth}>${panelOverflow.clientWidth}`,
+      );
+    }
+    checked += 1;
+    const layoutProblems = problemsOf(await measurePage(page));
+    if (layoutProblems.length) failures.push(`[195] 丹方册 → ${layoutProblems.join(" / ")}`);
+
+    await more.click({ timeout: 5000 });
+    await waitForShown(12);
+    await waitForFocus((await readList()).ids[6]);
+    const second = await readList();
+    checked += 1;
+    if (
+      second.shown !== 12 ||
+      second.start !== 0 ||
+      second.count !== 12 ||
+      second.focus !== second.ids[6]
+    ) {
+      failures.push(
+        `[195] 丹方续开首批后应铺 12 张、焦点落第 7 张,` +
+          `实见 ${second.count} 张 / start ${second.start} / 焦点 ${second.focus ?? "无"}`,
+      );
+    }
+
+    let last = second;
+    while (last.shown < total) {
+      const shownBefore = last.shown;
+      const shownAfter = Math.min(total, shownBefore + 6);
+      await page.locator("[data-recipe-more]").first().click({ timeout: 5000 });
+      await waitForShown(shownAfter);
+      last = await readList();
+      const expectedStart = Math.max(0, shownAfter - 12);
+      const newCount = shownAfter - shownBefore;
+      const focusId = last.ids[12 - newCount];
+      await waitForFocus(focusId);
+      const focused = await readList();
+      checked += 1;
+      if (
+        last.shown !== shownAfter ||
+        last.start !== expectedStart ||
+        last.count !== shownAfter - expectedStart ||
+        focused.focus !== focusId
+      ) {
+        failures.push(
+          `[195] 丹方续开到第 ${shownAfter} 张时窗口不对:` +
+            `应 ${shownAfter - expectedStart} 行 / start ${expectedStart} / 焦点 ${focusId},` +
+            `实见 ${last.count} 行 / start ${last.start} / ` +
+            `焦点 ${focused.focus ?? "无"}(shown ${last.shown})`,
+        );
+      }
+    }
+    const lastStart = total - 12;
+    checked += 1;
+    if (
+      last.count !== 12 ||
+      last.start !== lastStart ||
+      (await page.locator("[data-recipe-more]").count()) > 0 ||
+      (await page.locator("[data-recipe-prev]").count()) === 0
+    ) {
+      failures.push(
+        `[195] 丹方末批应滑窗为 12/${total}、从第 ${lastStart + 1} 张起并可回翻,` +
+          `实见 ${last.count} 张 / start ${last.start}`,
+      );
+    }
+
+    await page.locator("[data-recipe-prev]").first().click({ timeout: 5000 });
+    const backShown = Math.floor((total - 1) / 6) * 6;
+    const backStart = Math.max(0, backShown - 12);
+    await waitForShown(backShown);
+    const back = await readList();
+    await waitForFocus(back.ids[0]);
+    const backFocused = await readList();
+    checked += 1;
+    if (back.start !== backStart || back.count !== 12 || backFocused.focus !== back.ids[0]) {
+      failures.push(
+        `[195] 丹方回翻没有回到上一页:应 start ${backStart} / 12 张 / 焦点页首,` +
+          `实见 start ${back.start} / ${back.count} 张 / 焦点 ${backFocused.focus ?? "无"}`,
+      );
+    }
+
+    const search = page.locator('input[aria-label="搜方名"]').first();
+    await search.fill(searchName);
+    await waitForTotal(1);
+    await waitForShown(1);
+    const searched = await readList();
+    checked += 1;
+    if (
+      searched.total !== 1 ||
+      searched.shown !== 1 ||
+      searched.start !== 0 ||
+      searched.count !== 1 ||
+      !searched.searchFocused
+    ) {
+      failures.push(
+        `[195] 搜方名后窗口应重置为 1/1 且焦点留在输入框,` +
+          `实见 ${searched.count}/${searched.total} / start ${searched.start} / ` +
+          `输入框 ${searched.searchFocused ? "有焦点" : "失焦"}`,
+      );
+    }
+
+    await search.fill("");
+    await waitForTotal(total);
+    await waitForShown(6);
+    const cleared = await readList();
+    checked += 1;
+    if (
+      cleared.shown !== 6 ||
+      cleared.start !== 0 ||
+      cleared.count !== 6 ||
+      !cleared.searchFocused
+    ) {
+      failures.push(
+        `[195] 清空搜索后应回首批 6 张且焦点仍留输入框,` +
+          `实见 ${cleared.count} 张 / start ${cleared.start} / ` +
+          `输入框 ${cleared.searchFocused ? "有焦点" : "失焦"}`,
+      );
+    }
+
+    await page.locator("[data-recipe-more]").first().click({ timeout: 5000 });
+    await waitForShown(12);
+    const craftList = await readList();
+    const craftId = craftList.ids[6];
+    const craftRow = page.locator(`[data-recipe-row="${craftId}"]`);
+    const craftButton = craftRow.locator("button").first();
+    if ((await craftButton.count()) === 0 || !(await craftButton.isEnabled())) {
+      failures.push(`[195] 丹方焦点探针的 ${craftId} 不可炼制 —— 夹具算错了`);
+    } else {
+      await craftButton.click({ timeout: 5000 });
+      await waitForFocus(craftId);
+      const crafted = await readList();
+      checked += 1;
+      if (crafted.focus !== craftId || !crafted.ids.includes(craftId)) {
+        failures.push(
+          `[195] 炼制耗料后焦点没有留在原方:应 ${craftId},` +
+            `实见 ${crafted.focus ?? "无"} / 当前窗 ${crafted.ids.join(",")}`,
+        );
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[320] 丹方全册场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+    await vite?.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -8918,6 +9210,7 @@ const TASKS = [
   ["器魂两册的分批回看", taskSoulListOverflow],
   ["名号与灵兽两册的分批回看", taskTitlePetOverflow],
   ["法宝全册的分批回看", taskArtifactListOverflow],
+  ["开炉丹方的分批回看", taskRecipeListOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],

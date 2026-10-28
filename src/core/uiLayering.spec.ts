@@ -872,6 +872,51 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("开炉丹方渐进铺开 —— 搜索重置窗口,炼制后焦点留在原方", () => {
+    // 54 张丹方每张都摊代价、成品、把握、双成、存货与两枚动作。整册塞进
+    // max-h-64 只是视觉上滚动,DOM 仍会一次铺满;长列表规则必须进开炉弹窗。
+    const dialog = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    expect(dialog?.src, "丹方册要复用长列表窗口").toMatch(
+      /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
+    );
+    expect(dialog?.src, "丹方按 6 张一批、最多留 12 张").toMatch(
+      /RECIPE_RENDER_BATCH\s*=\s*6[\s\S]{0,140}RECIPE_RENDER_WINDOW\s*=\s*RECIPE_RENDER_BATCH\s*\*\s*2/,
+    );
+    expect(dialog?.src, "只循环当前窗口,不许再整册铺开").toMatch(
+      /v-for="r in filteredRecipePage\.visible"/,
+    );
+    for (const attr of ["total", "shown", "start"]) {
+      expect(dialog?.src, `丹方册要暴露 ${attr} 读数给运行时门`).toContain(`data-recipe-${attr}`);
+    }
+    expect(dialog?.src, "丹方卡要有稳定指纹与可编程焦点").toContain(":data-recipe-row=");
+    expect(dialog?.src, "余方要能续开").toContain("data-recipe-more");
+    expect(dialog?.src, "滑走的批次要能回翻").toContain("data-recipe-prev");
+    expect(dialog?.src, "续开焦点要落到新露出的第一张").toMatch(
+      /firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*RECIPE_RENDER_WINDOW\s*\)/,
+    );
+    expect(dialog?.src, "搜索词变化只重置窗口,不许抢走搜索框焦点").toMatch(
+      /watch\(\s*recipeQuery,\s*\(\)\s*=>\s*\{\s*recipeLimit\.value\s*=\s*RECIPE_RENDER_BATCH;?\s*\}\)/,
+    );
+    expect(dialog?.src, "炼制与连炼后都要按同一张方的新位置补焦点").toMatch(
+      /craftPill:\s*brewOne[\s\S]{0,900}function craftPill\(id: string\): void \{\s*brewOne\(id\);\s*focusRecipeRowById\(id\);/,
+    );
+    expect(dialog?.src).toMatch(
+      /craftBatch:\s*brewBatch[\s\S]{0,900}function craftBatch\(id: string\): void \{\s*brewBatch\(id\);\s*focusRecipeRowById\(id\);/,
+    );
+    const fixture = readFileSync(
+      resolve(__dirname, "../../scripts/lib/fullRecipeFixture.ts"),
+      "utf8",
+    );
+    expect(fixture, "全丹方夹具必须从内容表生成,不许手抄 id").toContain("PILLS");
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf8");
+    expect(perf, "运行时门要按丹方卡落点核对件数").toContain('"[data-recipe-row]"');
+    expect(perf, "运行时门要逐批翻完整丹方册").toContain("button[data-recipe-more]");
+    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+    expect(layout, "195 宽要逐批翻完丹方并复核搜索与炼制后的焦点").toContain(
+      '["开炉丹方的分批回看", taskRecipeListOverflow]',
+    );
+  });
+
   it("洞府营造尽善有完成感 —— 七座俱至顶的圆满,不许只沉在各自卡面", () => {
     // 各卡到了顶只会各自说「已至顶档」,整座洞府全满却没有一句话 —— 家业
     // 经营到头的圆满该有一声(与图鉴尽收/名号尽收同族)。判据读 store 的
