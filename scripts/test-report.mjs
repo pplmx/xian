@@ -267,6 +267,7 @@ const CATEGORIES = [
       "useReturnSettle",
       "readOnlySettle",
       "mortalBias",
+      "mortalWorldResilience",
       "offlineFuzz",
       "reincarnationConfirm",
       "bountyEconomics",

@@ -6,6 +6,7 @@ import { persistConfig } from "@/utils/storage";
 import { regionDef } from "@/data/regions";
 import { ENGINE_WORLD } from "@/core/engineWorld";
 import { BIAS_POOL } from "@/core/mortalBias";
+import { restoreMortalWorld } from "@/core/mortalWorldShape";
 import { gn } from "@/utils/gnum";
 import {
   asFiniteNumber,
@@ -156,7 +157,9 @@ export const useAdventureStore = defineStore(
         ? { ...lb, loot: lb.loot === undefined ? undefined : asStringArray(lb.loot) }
         : null;
       eventMemories.value = asRecord(eventMemories.value);
-      mortalWorld.value = asObjectOrNull(mortalWorld.value);
+      const restoredWorld = restoreMortalWorld(mortalWorld.value);
+      mortalWorld.value = restoredWorld;
+      if (!restoredWorld) mortalCleared.value = [];
       const biasHistory = asStringArray(mortalBiasHistory.value).filter((bias) =>
         BIAS_POOL.includes(bias as (typeof BIAS_POOL)[number]),
       );
