@@ -89,9 +89,9 @@ describe("同源审计 · 区域之主的门槛", () => {
 describe("同源审计 · 历练收益账", () => {
   it("会话收益取 afterWin 真实入账,不自己按层级另算,也不数文案行", () => {
     const src = readSrc("exploration.ts");
-    expect(src, "会话该记 afterWin 报的 drops.stone / drops.exp / drops.items").toMatch(
-      /drops\.(stone|exp|items)/,
-    );
+    for (const field of ["stone", "exp", "wudao", "items"]) {
+      expect(src, `会话该记 afterWin 报的 drops.${field}`).toContain(`drops.${field}`);
+    }
     expect(src, "自己按层级算一份灵石 = 与行囊对不上的第二套账").not.toMatch(/stoneByTier\s*\(/);
     expect(src, "items 属实物件数,不许拿文案行数充数").not.toMatch(/drops\.lines\.length/);
   });
@@ -100,6 +100,7 @@ describe("同源审计 · 历练收益账", () => {
     const src = readSrc("offline.ts");
     expect(src).toMatch(/stoneGain:\s*add\(current\.stoneGain/);
     expect(src).toMatch(/expGain:\s*add\(current\.expGain/);
+    expect(src).toMatch(/wudaoGain:\s*current\.wudaoGain \+ trip\.wudao/);
   });
 });
 

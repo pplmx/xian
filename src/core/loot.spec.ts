@@ -28,7 +28,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { useSettingsStore } from "@/stores/settings";
 import { qualityDef } from "@/data/qualities";
-import { BAG_CAPACITY, DECOMPOSE_DUST } from "@/data/constants";
+import { ARTIFACT_DROP_CHANCE, BAG_CAPACITY, DECOMPOSE_DUST } from "@/data/constants";
 import { useLoreStore } from "@/stores/lore";
 import { useQuestsStore } from "@/stores/quests";
 import { gn, toNum } from "@/utils/gnum";
@@ -66,6 +66,27 @@ describe("自动回收 · 装备入包前的第一道闸", () => {
       const region = regionDef("qingyun")!;
       afterWin(region, 1, true);
       expect(spy).toHaveBeenCalled();
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("重复法宝折化的悟道写进掉落回执,不是只进资源账", () => {
+    const player = usePlayerStore();
+    player.initCharacter("法宝折算对账", { roots: [] } as never);
+    const inventory = useInventoryStore();
+    const resources = useResourcesStore();
+    inventory.addArtifact("af_muyu");
+    const before = resources.wudao;
+
+    try {
+      // 只放行法宝那一掷:重复获得墨玉葫芦应折 10 悟道,其余掉落都不掺进来。
+      vi.spyOn(rng, "chance").mockImplementation((p) => p > 0 && p < ARTIFACT_DROP_CHANCE * 1.25);
+      vi.spyOn(rng, "weighted").mockImplementation(<T>(items: readonly T[]) => items[0]!);
+      const drops = afterWin(regionDef("qingyun")!, 1, false);
+      const gained = resources.wudao - before;
+      expect(gained, "重复法宝本身应折 10 悟道").toBe(10);
+      expect((drops as { wudao?: number }).wudao, "掉落回执必须与资源账报同一份悟道").toBe(gained);
     } finally {
       vi.restoreAllMocks();
     }

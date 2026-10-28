@@ -49,6 +49,8 @@ export interface DropSummary {
   stone: GNum;
   /** 本次真正入账的修为(与 gainExp 的同一份数) */
   exp: GNum;
+  /** 重复法宝折化入账的悟道点(没有重复则 0) */
+  wudao: number;
   /** 战报里的实物条数(残页/装备/丹药/法宝);「战利品翻倍」这类提示不算拾获 */
   items: number;
 }
@@ -181,19 +183,25 @@ export function acquireEquipment(
   return { line: `${label}(${prefix},${first?.line ?? ""})`, bagged: false, dust, stone };
 }
 
+export interface ArtifactAcquireResult {
+  line: string;
+  /** 已拥有时实际折入资源账的悟道点 —— 调用方要把同一份数并进所在会话 */
+  wudao: number;
+}
+
 /** 获得法宝:重复则折算悟道点 */
-export function acquireArtifact(defId: string, quiet = false): string {
+export function acquireArtifact(defId: string, quiet = false): ArtifactAcquireResult {
   const inventory = useInventoryStore();
   const resources = useResourcesStore();
   const def = artifactDef(defId);
-  if (!def) return "";
+  if (!def) return { line: "", wudao: 0 };
   collect("artifact", defId);
   if (!inventory.addArtifact(defId)) {
     resources.addSmall("wudao", 10);
-    return `法宝「${def.name}」(已拥有,化作悟道点×10)`;
+    return { line: `法宝「${def.name}」(已拥有,化作悟道点×10)`, wudao: 10 };
   }
   if (!quiet) notify(`天降机缘!获得法宝「${def.name}」`, "rare");
-  return `法宝「${def.name}」`;
+  return { line: `法宝「${def.name}」`, wudao: 0 };
 }
 
 /**
@@ -320,6 +328,7 @@ export function afterWin(
   const biasEffect = biasEffectOf(bias);
   let biasHit = false;
   let items = 0;
+  let wudao = 0;
   const tier = region.tier;
   const bossMult = isBoss ? 4 : 1;
   // 福缘的翻倍判定同样先归一:倍率叠出 1 以上时,"翻倍"不该变成"必翻"
@@ -427,7 +436,9 @@ export function afterWin(
         case "artifact": {
           const artId = randomDropArtifact(tier);
           if (artId) {
-            lines.push(acquireArtifact(artId));
+            const gained = acquireArtifact(artId);
+            lines.push(gained.line);
+            wudao += gained.wudao;
             items += 1;
           }
           break;
@@ -443,7 +454,7 @@ export function afterWin(
 
   // 「所钟」应验了才写:文案与乘区同源(core/mortalBias 的 label),不是另一处手写
   if (biasHit && biasEffect) lines.push(`所钟 · ${biasEffect.label}`);
-  return { lines, stone: stoneGained, exp, items };
+  return { lines, stone: stoneGained, exp, wudao, items };
 }
 
 /**

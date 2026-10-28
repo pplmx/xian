@@ -369,7 +369,7 @@ function runBattle(now: number): void {
       stoneGain: add(add(s.stoneGain, drops.stone), gn(streakReward?.stone ?? 0)),
       expGain: add(s.expGain, drops.exp),
       itemGain: s.itemGain + drops.items,
-      wudaoGain: s.wudaoGain + (streakReward?.wudao ?? 0),
+      wudaoGain: s.wudaoGain + drops.wudao + (streakReward?.wudao ?? 0),
       nextBattleAt: nextBattleTime(now),
     });
     if (eDef.isBoss) {

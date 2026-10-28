@@ -17,6 +17,7 @@ import { engine, enginePaused } from "./engine";
 import { useCultivationStore } from "@/stores/cultivation";
 import { gnZero, sub, toNum } from "@/utils/gnum";
 import { useResourcesStore } from "@/stores/resources";
+import { useInventoryStore } from "@/stores/inventory";
 import { useUiStore } from "@/stores/ui";
 import { EVENT_AUTO_RESOLVE_SECONDS, EXPLORE_BOSS_AFTER_WINS } from "@/data/constants";
 import { tickExploration, startExploration, winsUntilRegionBoss } from "./exploration";
@@ -39,9 +40,10 @@ import { hoursUntilRevive, REVIVE_AFTER_HOURS } from "./worldMemory";
  */
 const CAUTIOUS_LOSS_REDUCTION = 0.04;
 
-const { protect, combatWin } = vi.hoisted(() => ({
+const { protect, combatWin, artifactOnly } = vi.hoisted(() => ({
   protect: { value: false },
   combatWin: { value: false },
+  artifactOnly: { value: false },
 }));
 
 vi.mock("@/utils/random", async (importOriginal) => {
@@ -55,7 +57,9 @@ vi.mock("@/utils/random", async (importOriginal) => {
       pick: <T>(arr: readonly T[]): T => arr[0]!,
       weighted: <T>(arr: readonly T[]): T => arr[0]!,
       chance: (p: number): boolean =>
-        protect.value === true && Math.abs(p - CAUTIOUS_LOSS_REDUCTION) < 1e-9,
+        artifactOnly.value
+          ? p > 0 && p < 0.02
+          : protect.value === true && Math.abs(p - CAUTIOUS_LOSS_REDUCTION) < 1e-9,
     },
   };
 });
@@ -71,6 +75,12 @@ vi.mock("./combat", async (importOriginal) => {
         : { win: false, rounds: 5, playerHpPct: 0.4 },
     makeEnemySnap: () => ({ hp: 100, def: 10, atk: 10 }),
   };
+});
+
+afterEach(() => {
+  protect.value = false;
+  combatWin.value = false;
+  artifactOnly.value = false;
 });
 
 function forgeSession(now: number): void {
@@ -95,6 +105,7 @@ describe("灵兽性格 · 败北保护(lossReduction 接入 runBattle)", () => {
     setActivePinia(createPinia());
     protect.value = false;
     combatWin.value = false;
+    artifactOnly.value = false;
   });
 
   it("谨慎灵兽败北时护住:不加重伤、不计败绩、历练继续", () => {
@@ -225,6 +236,27 @@ describe("连胜(TASK-022 接线 · runBattle 胜负驱动 player.winStreak)", (
       6,
     );
     expect(rewarded.wudaoGain - plain.wudaoGain, "3 档应多记 1 悟道").toBe(1);
+  });
+
+  it("重复法宝折化的悟道也并入本趟会话账", () => {
+    const player = usePlayerStore();
+    player.initCharacter("法宝折算", { roots: [] } as never);
+    const inventory = useInventoryStore();
+    const resources = useResourcesStore();
+    inventory.addArtifact("af_muyu");
+    const wudaoBefore = resources.wudao;
+    combatWin.value = true;
+    artifactOnly.value = true;
+    const now = Date.now();
+    forgeSession(now);
+
+    tickExploration(now, 0);
+
+    const gained = resources.wudao - wudaoBefore;
+    expect(gained, "随机流只放行法宝,且墨玉葫芦已拥有 → 折 10 悟道").toBe(10);
+    expect(useAdventureStore().session!.wudaoGain, "法宝折化的悟道与资源账必须写进同一趟所得").toBe(
+      gained,
+    );
   });
 });
 

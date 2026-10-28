@@ -526,10 +526,11 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         for (let i = 0; i < artifactCount; i += 1) {
           const artId = randomDropArtifact(region.tier);
           if (!artId) break;
-          const line = acquireArtifact(artId, true);
-          if (!line) break;
+          const gained = acquireArtifact(artId, true);
+          if (!gained.line) break;
+          trip.wudao += gained.wudao;
           trip.items += 1;
-          notes.push(`途中拾得${line}`);
+          notes.push(`途中拾得${gained.line}`);
         }
         /**
          * 道侣机会点与在线同源:在线首个胜场与败北各走一次 offerBondEvent,机会点随之 +1;
@@ -656,6 +657,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             trip.stone = add(trip.stone, drops.stone);
             trip.exp = add(trip.exp, drops.exp);
             trip.items += drops.items;
+            trip.wudao += drops.wudao;
             track("kills");
             track("bossKills");
             // 首领胜也是会话里的一场胜(与在线 runBattle 同口径)

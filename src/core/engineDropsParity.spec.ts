@@ -166,7 +166,7 @@ function legacyDrops(
   if (rng.chance(capChance(ARTIFACT_DROP_CHANCE * (isBoss ? 6 : 1) * (1 + luck)))) {
     const artId = randomDropArtifact(tier);
     if (artId) {
-      lines.push(acquireArtifact(artId));
+      lines.push(acquireArtifact(artId).line);
       items += 1;
     }
   }

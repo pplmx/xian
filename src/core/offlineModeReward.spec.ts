@@ -228,6 +228,34 @@ describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", ()
     expect(rewarded.wudaoGain - noReward.wudaoGain, "三档悟道合计 8").toBe(8);
   });
 
+  it("离线重复法宝折化的悟道也并入会话账", () => {
+    const run = (alreadyOwned: boolean) => {
+      setActivePinia(createPinia());
+      seedSession("normal");
+      const player = usePlayerStore();
+      player.initCharacter("离线法宝对账", { roots: [] } as never);
+      // 避开连胜赏格这条独立的悟道来源。
+      player.winStreak = 100;
+      if (alreadyOwned) useInventoryStore().addArtifact("af_muyu");
+      const resources = useResourcesStore();
+      const before = resources.wudao;
+      settleOffline(Date.now())!;
+      return {
+        resourceGain: resources.wudao - before,
+        sessionGain: useAdventureStore().session!.wudaoGain,
+      };
+    };
+
+    const fresh = run(false);
+    const duplicate = run(true);
+    expect(duplicate.resourceGain - fresh.resourceGain, "只多一次重复折化,资源账应多 10 悟道").toBe(
+      10,
+    );
+    expect(duplicate.sessionGain - fresh.sessionGain, "会话账也要多这 10 点,不能只在资源账里").toBe(
+      10,
+    );
+  });
+
   it("离线历练照在线攒道侣机会点:只补记账,三维与待决事件原样", () => {
     setActivePinia(createPinia());
     seedSession("normal");

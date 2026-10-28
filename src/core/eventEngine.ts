@@ -313,7 +313,7 @@ function applyEffect(effect: EventEffect, tier: number): string | null {
     case "artifact": {
       const id = effect.id ?? randomDropArtifact(tier);
       if (!id) return null;
-      return `获得 ${acquireArtifact(id)}`;
+      return `获得 ${acquireArtifact(id).line}`;
     }
     case "buff": {
       const def = buffDef(effect.id);
