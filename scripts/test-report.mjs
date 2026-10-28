@@ -270,6 +270,7 @@ const CATEGORIES = [
       "bountyEconomics",
       "bossArchetypes",
       "releasePipeline",
+      "electronSecurity",
       "releaseCheck",
       "worldReroll",
       "usageDocCounts",

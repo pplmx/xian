@@ -1,7 +1,14 @@
-import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } from "electron";
+import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, session, shell } from "electron";
 import path from "node:path";
 import fs from "node:fs";
+import { pathToFileURL } from "node:url";
 import pkg from "../package.json";
+import {
+  REMOTE_REQUEST_URL_FILTERS,
+  isAppEntryUrl,
+  isExternalWebUrl,
+  isRemoteRequestUrl,
+} from "../src/utils/shellUrlPolicy";
 
 // 窗口标题与托盘提示（package.json 没有 title 字段，取 electron-builder 的 productName）
 const APP_TITLE = pkg.build.productName;
@@ -14,6 +21,7 @@ const preloadPath = path.join(appRoot, "dist-electron", "preload.js");
 
 // 构建产物路径（Vite 输出到 dist/）
 const distPath = path.join(appRoot, "dist");
+const appEntryUrl = pathToFileURL(path.join(distPath, "index.html")).href;
 
 // 静态资源路径
 const publicPath = path.join(appRoot, "public");
@@ -168,27 +176,30 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
       preload: preloadPath,
     },
   });
 
   createAppMenu();
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isExternalWebUrl(url)) {
+      void shell.openExternal(url).catch((err) => console.error("外部链接打开失败:", err));
+    }
+    return { action: "deny" };
+  });
+  const keepInApp = (event, url) => {
+    if (!isAppEntryUrl(url, appEntryUrl)) event.preventDefault();
+  };
+  win.webContents.on("will-navigate", keepInApp);
+  win.webContents.on("will-redirect", keepInApp);
+
   // loadFile 失败(如开发态没先 build 出 dist)要给一句实话,别让拒绝静默飘走
   win
     .loadFile(path.join(distPath, "index.html"))
     .catch((err) => console.error("主页面载入失败:", err));
-
-  // WebDAV CORS 绕过：对所有非同源请求注入 CORS 响应头
-  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    const headers = { ...details.responseHeaders };
-    headers["access-control-allow-origin"] = ["*"];
-    headers["access-control-allow-methods"] = ["GET, PUT, DELETE, PROPFIND, HEAD, OPTIONS"];
-    headers["access-control-allow-headers"] = ["Authorization, Content-Type, Depth"];
-    // 剥离 WWW-Authenticate 防止浏览器弹出原生认证对话框（由应用自行处理认证错误）
-    delete headers["www-authenticate"];
-    delete headers["WWW-Authenticate"];
-    callback({ responseHeaders: headers });
-  });
 
   // 窗口关闭事件
   win.on("close", (e) => {
@@ -239,6 +250,11 @@ ipcMain.handle("quit-app", () => {
 void app
   .whenReady()
   .then(() => {
+    // 会话只装一次：重启窗口不会重复接管回调；显式外链走系统浏览器，不经过这里。
+    session.defaultSession.webRequest.onBeforeRequest(
+      { urls: [...REMOTE_REQUEST_URL_FILTERS] },
+      (details, callback) => callback(isRemoteRequestUrl(details.url) ? { cancel: true } : {}),
+    );
     createWindow();
 
     // 如果启用了托盘功能，创建托盘
