@@ -7,12 +7,41 @@ import { qualityDef } from "@/data/qualities";
 import { COMPREHEND_PAGE_COST } from "@/data/constants";
 import { GONGFA_SYSTEM } from "./engineWorld";
 import { gongfaAffinity, rootElements } from "./linggenAffinity";
-import { collect, track } from "./progress";
+import { collect, isCollected, track } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useDongfuStore } from "@/stores/dongfu";
 import { notify } from "./notify";
+
+/**
+ * 功法习得漏斗 —— 人物状态、图鉴与修习计数是同一笔获得事实。
+ * 只有真正从「未习得」变为「已习得」时才记两本账,重复调用保持幂等。
+ */
+export function learnGongfa(id: string): boolean {
+  if (!gongfaDef(id)) return false;
+  const cultivation = useCultivationStore();
+  if (!cultivation.learn(id)) return false;
+  collect("gongfa", id);
+  track("gongfaLearned");
+  return true;
+}
+
+/**
+ * 旧档补账:统一入口上线前,有些路径只写了 cultivation.learned。
+ * 以「是否已录图鉴」为迁移标记,只补缺的一条并补一次计数;重复启动不再增加。
+ */
+export function syncLearnedGongfa(): number {
+  const cultivation = useCultivationStore();
+  let repaired = 0;
+  for (const id of Object.keys(cultivation.learned)) {
+    if (!gongfaDef(id) || isCollected("gongfa", id)) continue;
+    collect("gongfa", id);
+    track("gongfaLearned");
+    repaired += 1;
+  }
+  return repaired;
+}
 
 /** 随机习得一部功法(事件/掉落),返回功法名;无可学返回 null */
 export function learnRandomGongfa(specificId?: string): string | null {
@@ -20,11 +49,7 @@ export function learnRandomGongfa(specificId?: string): string | null {
   const cultivation = useCultivationStore();
   if (specificId) {
     const def = gongfaDef(specificId);
-    if (def && cultivation.learn(specificId)) {
-      collect("gongfa", specificId);
-      track("gongfaLearned");
-      return def.name;
-    }
+    if (def && learnGongfa(specificId)) return def.name;
     return null;
   }
   const pool = GONGFA.filter((g) => g.minRealm <= player.major + 1 && !cultivation.learned[g.id]);
@@ -36,10 +61,7 @@ export function learnRandomGongfa(specificId?: string): string | null {
     pool,
     (g) => (100 / (1 + qualityDef(g.quality).rank * 1.5)) * gongfaAffinity(g.element, elements),
   );
-  cultivation.learn(picked.id);
-  collect("gongfa", picked.id);
-  track("gongfaLearned");
-  return picked.name;
+  return learnGongfa(picked.id) ? picked.name : null;
 }
 
 /** 藏经阁参悟:消耗残页随机习得 */

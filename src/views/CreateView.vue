@@ -139,6 +139,7 @@ import { ELEMENTS } from "@/data/linggen";
 import { generateEquipment } from "@/core/equipGen";
 import { acquireEquipment } from "@/core/loot";
 import { acquirePill, trackRealm } from "@/core/progress";
+import { learnGongfa } from "@/core/gongfaService";
 import { seedLoreIfNeeded } from "@/core/loreService";
 import { equipmentTemplate } from "@/data/equipment";
 import { useGameStore } from "@/stores/game";
@@ -207,7 +208,7 @@ function begin(): void {
   const finalName = name.value.trim().slice(0, 8) || "无名散修";
   player.initCharacter(finalName, profile.value);
   // 开局馈赠:入门功法 + 一柄竹剑 + 三枚聚气散
-  cultivation.learn("m_taixuan");
+  learnGongfa("m_taixuan");
   cultivation.equipMain("m_taixuan");
   const starter = generateEquipment(1, rng, { slot: "weapon" });
   acquireEquipment(starter, { quiet: true, forceKeep: true }); // forceKeep:开局馈赠不受自动回收规则影响

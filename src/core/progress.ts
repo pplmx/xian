@@ -351,3 +351,8 @@ export function trackRealm(): void {
 export function collect(category: CollectionCategory, id: string): void {
   useQuestsStore().collect(category, id);
 }
+
+/** 某条目是否已入图鉴 —— 给补账逻辑判断迁移是否已经完成 */
+export function isCollected(category: CollectionCategory, id: string): boolean {
+  return useQuestsStore().collections[category].includes(id);
+}

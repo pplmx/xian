@@ -1,9 +1,65 @@
 import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
 import { GONGFA } from "@/data/gongfa";
-import { upgradeGongfaAll } from "./gongfaService";
+import {
+  learnGongfa,
+  learnRandomGongfa,
+  syncLearnedGongfa,
+  upgradeGongfaAll,
+} from "./gongfaService";
 import { useCultivationStore } from "@/stores/cultivation";
+import { useQuestsStore } from "@/stores/quests";
 import { useResourcesStore } from "@/stores/resources";
+
+describe("功法习得漏斗", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("首次习得同时写功法、图鉴与计数,重复习得不再记账", () => {
+    const cultivation = useCultivationStore();
+    const quests = useQuestsStore();
+
+    expect(learnGongfa("m_taixuan")).toBe(true);
+    expect(cultivation.learned.m_taixuan).toBe(1);
+    expect(quests.collections.gongfa).toContain("m_taixuan");
+    expect(quests.counter("gongfaLearned")).toBe(1);
+
+    expect(learnGongfa("m_taixuan")).toBe(false);
+    expect(quests.collections.gongfa).toEqual(["m_taixuan"]);
+    expect(quests.counter("gongfaLearned")).toBe(1);
+  });
+
+  it("随机习得走同一漏斗,指定与抽取两条分支都不漏记", () => {
+    const quests = useQuestsStore();
+
+    expect(learnRandomGongfa("m_lihuo")).toBe("离火焚天诀");
+    expect(quests.collections.gongfa).toContain("m_lihuo");
+    expect(quests.counter("gongfaLearned")).toBe(1);
+
+    const randomName = learnRandomGongfa();
+    const randomDef = GONGFA.find((g) => g.name === randomName);
+    expect(randomDef, "随机习得必须返回功法库里真实存在的一部").toBeDefined();
+    expect(quests.collections.gongfa).toContain(randomDef!.id);
+    expect(quests.counter("gongfaLearned")).toBe(2);
+  });
+
+  it("旧档只补未录功法,重复补账不把计数越垒越高", () => {
+    const cultivation = useCultivationStore();
+    const quests = useQuestsStore();
+    cultivation.learn("m_taixuan");
+    cultivation.learn("m_lihuo");
+    quests.collect("gongfa", "m_taixuan");
+    quests.inc("gongfaLearned");
+
+    expect(syncLearnedGongfa()).toBe(1);
+    expect(quests.collections.gongfa).toEqual(["m_taixuan", "m_lihuo"]);
+    expect(quests.counter("gongfaLearned")).toBe(2);
+
+    expect(syncLearnedGongfa()).toBe(0);
+    expect(quests.counter("gongfaLearned")).toBe(2);
+  });
+});
 
 describe("功法进修", () => {
   beforeEach(() => {

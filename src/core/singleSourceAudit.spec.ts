@@ -33,6 +33,17 @@ function readSrc(fileName: string): string {
   return hit[1];
 }
 
+const SRC = resolve(__dirname, "..");
+
+function walk(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) walk(full, out);
+    else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".spec.ts")) out.push(full);
+  }
+  return out;
+}
+
 describe("同源审计 · 镇压速率", () => {
   it("历练页的镇压速率走 suppressRateFor,自己不许再算一遍 stoneByTier", () => {
     const src = readSrc("AdventureView.vue");
@@ -153,17 +164,6 @@ describe("同源审计 · 收徒成本", () => {
  * 写背包,都会造出「背包里有丹、图鉴仍显示未录」的第二本账。
  */
 describe("同源审计 · 丹药获得", () => {
-  const SRC = resolve(__dirname, "..");
-
-  function walk(dir: string, out: string[] = []): string[] {
-    for (const entry of readdirSync(dir)) {
-      const full = join(dir, entry);
-      if (statSync(full).isDirectory()) walk(full, out);
-      else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".spec.ts")) out.push(full);
-    }
-    return out;
-  }
-
   it("生产代码只有 acquirePill 能直接写 inventory.addPill", () => {
     const hits = walk(SRC)
       .map(
@@ -184,5 +184,42 @@ describe("同源审计 · 丹药获得", () => {
   it("自证:绕过漏斗的写法会被判红", () => {
     expect(/\.addPill\s*\(/.test("inventory.addPill(id, 1);")).toBe(true);
     expect(/\.addPill\s*\(/.test("acquirePill(id, 1);")).toBe(false);
+  });
+});
+
+/**
+ * 同源审计 · 功法习得
+ *
+ * 习得、图鉴收录与 `gongfaLearned` 计数是同一笔获得事实。除统一入口外直接调用
+ * `cultivation.learn`,会造出「人物页已会、图鉴没录、任务不计数」的第二本账。
+ */
+describe("同源审计 · 功法习得", () => {
+  const LEARN_CALL = /\bcultivation\.learn\s*\(/;
+
+  it("生产代码只有 core/gongfaService.ts 能直接调用 cultivation.learn", () => {
+    const hits = walk(SRC)
+      .map(
+        (file) =>
+          [
+            file.slice(SRC.length + 1),
+            readFileSync(file, "utf8")
+              .replace(/\/\*[\s\S]*?\*\//g, "")
+              .replace(/\/\/.*$/gm, ""),
+          ] as const,
+      )
+      .filter(([, src]) => LEARN_CALL.test(src))
+      .map(([file]) => file);
+
+    expect(hits).toEqual(["core/gongfaService.ts"]);
+  });
+
+  it("旧档补账接在引擎启动路径上,不是只在测试里可调", () => {
+    const engine = readFileSync(join(SRC, "core/engine.ts"), "utf8");
+    expect(engine, "启动时须补录旧档已习得但漏记的功法").toMatch(/syncLearnedGongfa\s*\(/);
+  });
+
+  it("自证:绕过统一入口的写法会被判红", () => {
+    expect(LEARN_CALL.test('cultivation.learn("m_taixuan");')).toBe(true);
+    expect(LEARN_CALL.test('learnGongfa("m_taixuan");')).toBe(false);
   });
 });

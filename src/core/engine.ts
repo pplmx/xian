@@ -25,6 +25,7 @@ import {
 } from "./earlyGameService";
 import { settleSuppressedRegions } from "./suppress";
 import { studyTick, seedLoreIfNeeded } from "./loreService";
+import { syncLearnedGongfa } from "./gongfaService";
 import { flushSaveWrites } from "@/utils/storage";
 import { enginePaused, pauseElapsedMs, setEnginePaused } from "./enginePause";
 import { notify } from "./notify";
@@ -59,6 +60,8 @@ class GameEngine {
       // 先翻日再结算离线:跨午夜归来时,离线收益记入"归来之日"的日课,
       // 而不是先攒进昨日 delta(可能顺手领走昨日未领奖励)再被 rollover 重置
       rolloverDailyIfNeeded();
+      // 旧档可能在统一入口上线前直接习得功法:启动时补齐图鉴与修习计数
+      if (game.started) syncLearnedGongfa();
       if (game.started && game.lastActiveAt > 0) {
         settleOffline(now);
       }
