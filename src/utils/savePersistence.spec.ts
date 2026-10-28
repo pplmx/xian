@@ -274,6 +274,34 @@ describe("存档写盘 · 失败不许静默", () => {
     expect(disk.has(storageKey("player"))).toBe(true);
   });
 
+  it("清档失败时,待写进度与失败警告都不能先行清掉", () => {
+    const jam = installJammedStorage(probe);
+    const { storage, serializer, key } = persistConfig("player");
+    jam.allow(true);
+    probe.disk.set(key, serializer.serialize({ exp: 7 }));
+    jam.allow(false);
+    storage.setItem(key, serializer.serialize({ exp: 8 }));
+    flushSaveWrites();
+    expect(saveWriteFailure(), "先制造一次真实的写盘失败").not.toBeNull();
+
+    // 删除与整表清理都被静默吞掉:这次清档最终会如实回报 false
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => probe.disk.get(k) ?? null,
+      setItem: (k: string, v: string) => void probe.disk.set(k, v),
+      removeItem: () => undefined,
+      clear: () => undefined,
+      key: () => null,
+      length: probe.disk.size,
+    });
+
+    expect(clearAllSave(), "存档还在盘上时不能回报成功").toBe(false);
+    expect(
+      serializer.deserialize(storage.getItem(key)!),
+      "清档没成功却丢掉待写队列,玩家刚玩的进度会退回上一版",
+    ).toEqual({ exp: 8 });
+    expect(saveWriteFailure(), "清档没成功却清掉失败警告,等于谎报写盘已恢复").not.toBeNull();
+  });
+
   it("清档会清掉旧的失败警告(那批待写内容已经不打算写了)", () => {
     const jam = installJammedStorage(probe);
     const seen: (string[] | null)[] = [];

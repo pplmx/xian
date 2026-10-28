@@ -515,13 +515,6 @@ export function applyImportPayload(payload: ExportPayload): void {
 export function clearAllSave(): boolean {
   // 只读页:一片都不许删(否则会把写者刚存下的档清掉)
   if (writesBlocked) return false;
-  // 先丢弃待落盘队列 —— 否则清完档之后那次 flush 会把旧数据原样写回来
-  dropPendingWrites();
-  // 清档后没有待写内容,旧的「写盘失败」警告已无意义(下次真写不进去会重新浮出来)
-  if (writeFailure !== null) {
-    writeFailure = null;
-    emitWriteFailure(null);
-  }
   for (const id of PERSISTED_STORES) {
     try {
       localStorage.removeItem(storageKey(id));
@@ -548,5 +541,17 @@ export function clearAllSave(): boolean {
       // 整表清理也失败:下面的复核会把真实结果报给调用方
     }
   }
-  return !hasLeftover();
+  if (hasLeftover()) return false;
+  /*
+   * 只有确认清干净之后才丢弃待写队列 —— 反过来先丢、删除却失败时,
+   * 玩家刚玩出来、还没落盘的最新一版会当场退回磁盘上的旧档,而清档
+   * 本身又没有成功,等于双重损失。同步执行期间刷盘定时器不会插进来。
+   */
+  dropPendingWrites();
+  // 清档后没有待写内容,旧的「写盘失败」警告已无意义;失败路径则原样保留
+  if (writeFailure !== null) {
+    writeFailure = null;
+    emitWriteFailure(null);
+  }
+  return true;
 }

@@ -190,7 +190,10 @@ export function sealStorageWrites(): void {
 
 /**
  * 清空全部存档并回到欢迎页。
- * 顺序:停引擎(去掉 beforeunload 写档)→ 封存写盘(丢弃排队刷盘)→ 清档 → 重载
+ * 顺序:先确认清档成功 → 停引擎(去掉 beforeunload 写档)→ 封存写盘 → 重载
+ *
+ * 清档必须先做:失败时调用方只会 resume() 暂停中的引擎,而 resume() 不会
+ * 重新注册 start() 建立的 interval/listener;若先停引擎,这次失败会让心跳永久停住。
  *
  * 不碰 location.hash:改 hash 会先触发一次 SPA 路由导航,守卫与新页面挂载期间
  * 内存里的 store 仍是旧状态,persist 订阅会把刚清掉的分片回写。实测 Android
@@ -199,9 +202,9 @@ export function sealStorageWrites(): void {
  * 守卫会把任何路由都弹回 welcome,目标页无需在这里指定
  */
 export function resetGame(): boolean {
-  engine.stop();
   // 只读页(多标签后来者)不许清档:清掉的会是另一页正在用的档
   if (!clearAllSave()) return false;
+  engine.stop();
   // 清档已经确认成功后再封存写盘。反过来先封存、清档却失败时,页面会继续
   // 运行在一套再也写不进 localStorage 的状态里;玩家忽略提示继续玩就白玩。
   sealStorageWrites();

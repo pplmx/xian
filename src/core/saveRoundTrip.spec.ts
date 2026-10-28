@@ -19,7 +19,7 @@
  * 故障注入:把 PERSISTED_STORES 里任一项删掉(清单那条红),或让 applyImportPayload
  * 跳过一个分片(往返那条红)。
  */
-import { describe, expect, it, beforeEach, vi } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { createPinia, setActivePinia } from "pinia";
@@ -36,6 +36,7 @@ import {
 } from "@/utils/storage";
 import { readSaveText } from "@/utils/crypto";
 import { exportSaveText, importSaveText, inspectImportText, resetGame } from "./save";
+import { engine } from "./engine";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
@@ -325,16 +326,23 @@ describe("存档往返 · 导出再导入一模一样", () => {
   });
 });
 
-describe("存档重置 · 失败时别把写盘封死", () => {
-  it("清档没有成功时不改写 Storage.prototype.setItem", async () => {
+describe("存档重置 · 清档成功后才停引擎和封存写盘", () => {
+  let disk: Map<string, string>;
+  let reload: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     class FakeStorage {}
     vi.stubGlobal("Storage", FakeStorage);
+    reload = vi.fn();
     vi.stubGlobal("window", {
       clearInterval: () => undefined,
       removeEventListener: () => undefined,
+      location: { reload },
     });
     vi.stubGlobal("document", { removeEventListener: () => undefined });
-    const disk = new Map([[storageKey("player"), "still-here"]]);
+    disk = new Map([[storageKey("player"), "still-here"]]);
     vi.stubGlobal("localStorage", {
       getItem: (k: string) => disk.get(k) ?? null,
       setItem: (k: string, v: string) => void disk.set(k, v),
@@ -343,12 +351,45 @@ describe("存档重置 · 失败时别把写盘封死", () => {
       key: () => null,
       length: disk.size,
     });
+    Object.defineProperty(window, "localStorage", { value: localStorage, configurable: true });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("清档失败时不停引擎,否则调用方 resume() 也补不回已注销的心跳", () => {
+    const stop = vi.spyOn(engine, "stop");
 
     expect(resetGame(), "清档失败应如实返回 false").toBe(false);
+    expect(stop, "清档失败却停掉引擎,弹窗关闭后心跳会永久停住").not.toHaveBeenCalled();
     expect(
-      Object.getOwnPropertyDescriptor(FakeStorage.prototype, "setItem"),
+      Object.getOwnPropertyDescriptor(Storage.prototype, "setItem"),
       "清档失败却先封死写盘,玩家忽略提示继续玩会白玩",
     ).toBeUndefined();
-    vi.unstubAllGlobals();
+    expect(reload, "清档失败却重载页面,等于假装重置完成").not.toHaveBeenCalled();
+  });
+
+  it("清档成功后停引擎、封存写盘并重载", () => {
+    disk.set(storageKey("player"), "old-run");
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => disk.get(k) ?? null,
+      setItem: (k: string, v: string) => void disk.set(k, v),
+      removeItem: (k: string) => void disk.delete(k),
+      clear: () => disk.clear(),
+      key: () => null,
+      length: disk.size,
+    });
+    Object.defineProperty(window, "localStorage", { value: localStorage, configurable: true });
+    const stop = vi.spyOn(engine, "stop");
+
+    expect(resetGame(), "存档已清干净时应回报成功").toBe(true);
+    expect(stop, "清档成功后仍应停掉旧页面心跳").toHaveBeenCalledOnce();
+    expect(
+      Object.getOwnPropertyDescriptor(Storage.prototype, "setItem")?.value,
+      "清档成功后应封存排队写盘",
+    ).toBeTypeOf("function");
+    expect(reload, "清档成功后应重载回欢迎页").toHaveBeenCalledOnce();
   });
 });
