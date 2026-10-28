@@ -19,19 +19,24 @@ import { AFFIXES, affixDef } from "@/data/affixes";
 import { equipmentTemplate } from "@/data/equipment";
 import { qualityDef } from "@/data/qualities";
 import {
+  BLUEPRINT_MASTERY_PER_REFORGE,
+  BLUEPRINT_ROLL_BONUS_MAX,
+  INSCRIBE_ROLL_FLOOR_MAX,
   REFORGE_DUST_BASE,
+  REFORGE_ROLL_FLOOR_CAP,
   REFORGE_SEAL_LOAD,
   REFORGE_STONE_BASE,
   SEAL_STONE_BASE,
 } from "@/data/constants";
 import { stoneByTier } from "./formulas";
-import { noteSmithingUsed } from "./loreService";
+import { noteSmithingUsed, studyBlueprint } from "./loreService";
 import { track } from "./progress";
 import { ENGINE_WORLD } from "./engineWorld";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
 import { useResourcesStore } from "@/stores/resources";
 import { notify } from "./notify";
+import { formatPercent } from "@/utils/format";
 
 export interface ReforgeCost {
   stone: GNum;
@@ -48,7 +53,27 @@ export interface ReforgeCost {
  */
 export function inscribeRollFloor(level: number): number {
   if (!Number.isFinite(level)) return 0;
-  return Math.max(0, Math.min(1, level / 100)) * 0.3;
+  return Math.max(0, Math.min(1, level / 100)) * INSCRIBE_ROLL_FLOOR_MAX;
+}
+
+/**
+ * 器谱给**当前装备模板**新词条的掷点保底。
+ *
+ * 器谱是逐模板的深耕:常洗一把剑,不会因此看懂别的刀。它给的是额外保底,
+ * 与全局铭纹相加,但两者合计仍有上限 —— 否则反复洗同一件就能把随机掷点
+ * 推到必然高值,重铸会从搭配赌局退化成固定领数。
+ */
+export function blueprintRollBonus(mastery: number): number {
+  if (!Number.isFinite(mastery)) return 0;
+  return Math.max(0, Math.min(1, mastery)) * BLUEPRINT_ROLL_BONUS_MAX;
+}
+
+/** 重铸新词条实际吃的掷点保底 = 铭纹 + 当前模板器谱(封顶) */
+export function effectiveReforgeRollFloor(inscribeLevel: number, blueprintMastery: number): number {
+  return Math.min(
+    REFORGE_ROLL_FLOOR_CAP,
+    inscribeRollFloor(inscribeLevel) + blueprintRollBonus(blueprintMastery),
+  );
 }
 
 /**
@@ -140,7 +165,8 @@ export function reforgeEquipment(uid: string, quiet = false): boolean {
   const sealed = inst.sealedAffixIds ?? [];
   const kept = inst.affixes.filter((a) => sealed.includes(a.id));
   const lore = useLoreStore();
-  const rollFloor = inscribeRollFloor(lore.skillLevel("inscribe"));
+  const blueprintBefore = lore.blueprintMastery(inst.templateId);
+  const rollFloor = effectiveReforgeRollFloor(lore.skillLevel("inscribe"), blueprintBefore);
   const affixes = ENGINE_WORLD.equipment
     .rerollAffixes(inst.affixes, {
       rng,
@@ -165,8 +191,16 @@ export function reforgeEquipment(uid: string, quiet = false): boolean {
   // 重铸更是刻纹 —— 铭纹技艺此前定义了却从没人涨过(玩家反馈「铭纹熟练度老版本为0,
   // 新版本没看到新系统」),真正「刻纹引灵」的活儿就该长这门手艺
   lore.addSkillExp("inscribe", 10 * (1 + inst.tier * 0.2));
+  // 成功重铸也是照着这张器谱走了一遍:同模板的掌握度只增不减
+  const blueprintAfter = studyBlueprint(inst.templateId, BLUEPRINT_MASTERY_PER_REFORGE);
 
-  if (!quiet) notify(`重铸而成:词条 ${countNote}${sealedNote}`, "success");
+  if (!quiet) {
+    const blueprintNote =
+      blueprintBefore < 1 && blueprintAfter >= 1
+        ? ` · 「${template?.name ?? "此器"}」器谱已读通`
+        : ` · 器谱 ${formatPercent(blueprintAfter, 0)}`;
+    notify(`重铸而成:词条 ${countNote}${sealedNote}${blueprintNote}`, "success");
+  }
   return true;
 }
 

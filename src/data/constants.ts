@@ -297,6 +297,14 @@ export const REFORGE_STONE_BASE = 40;
 export const REFORGE_SEAL_LOAD = 0.6;
 /** 重铸器灵尘消耗 = 基础 × (1 + 封存数)(器灵尘另有来路,故不叠阶数) */
 export const REFORGE_DUST_BASE = 30;
+/** 铭纹单独能给的新词条掷点保底上限 */
+export const INSCRIBE_ROLL_FLOOR_MAX = 0.3;
+/** 每次成功重铸给该模板的器谱掌握度;50 次读通一张图 */
+export const BLUEPRINT_MASTERY_PER_REFORGE = 0.02;
+/** 器谱读通时额外给**该模板**新词条的掷点保底 */
+export const BLUEPRINT_ROLL_BONUS_MAX = 0.15;
+/** 铭纹 + 器谱合计的新词条掷点保底上限 */
+export const REFORGE_ROLL_FLOOR_CAP = INSCRIBE_ROLL_FLOOR_MAX + BLUEPRINT_ROLL_BONUS_MAX;
 /** 封存一个词条的灵石倍率(第 n 次封存 ×n) */
 export const SEAL_STONE_BASE = 200;
 /**

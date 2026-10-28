@@ -14,9 +14,8 @@
  *
  *   凡被消费的知识,必有获取路径。
  *
- * 炼器图纸仍是未接骨架,因无人消费而自然豁免 —— 它不是死内容,只是还没接上的接口。
- * 铭纹已由重铸消费:新词条掷点下限随熟练度上升。一旦有人往库里放第一张图纸,
- * 豁免会自动失效,这里就会变红,提醒他先修路再放内容。
+ * 器谱已接通:成功重铸会给当前装备模板记掌握度,掌握度再抬高该模板新词条的
+ * 掷点保底。铭纹仍是全局技艺,器谱则是逐模板的深耕,两端由下面的源码判据一起守。
  *
  * 与 loreService.spec.ts 的分工:那边测藏经阁这条路本身走不走得通(速度、
  * 顺序、边界),这边测全部内容清单有没有漏网的。
@@ -59,7 +58,7 @@ import { gongfaAffinity } from "./linggenAffinity";
 import { rollFieldMaterial, seedLoreIfNeeded, studiableRecipes } from "./loreService";
 import { learnRandomGongfa } from "./gongfaService";
 import { craftPill } from "./pillService";
-import { inscribeRollFloor } from "./reforge";
+import { blueprintRollBonus, effectiveReforgeRollFloor, inscribeRollFloor } from "./reforge";
 
 const CRAFTABLE = PILLS.filter((p) => p.recipe);
 const NOTHING_KNOWN = (): number => 0;
@@ -388,8 +387,8 @@ describe("内容可达性 · 技艺", () => {
 
 describe("内容可达性 · 炼器骨架", () => {
   /**
-   * 源码文本级的守卫。炼器道眼下连一张图纸的定义都没有,无表可遍历,
-   * 于是换个问法:代码里有没有人在读图纸掌握度?有没有人在给?
+   * 源码文本级的守卫。器谱以装备模板为键,没有独立数据表可遍历,
+   * 于是换个问法:代码里有没有人在读掌握度?有没有人在给?
    *
    * 这条守的正是本文件开头那句承诺 —— 豁免必须会自动失效。只要有谁写下
    * 第一处 `lore.blueprintMastery(...)` 而没有同时修出 studyBlueprint 的
@@ -418,6 +417,12 @@ describe("内容可达性 · 炼器骨架", () => {
     expect(inscribeRollFloor(0)).toBe(0);
     expect(inscribeRollFloor(50)).toBeGreaterThan(0);
     expect(inscribeRollFloor(100)).toBeGreaterThan(inscribeRollFloor(50));
+  });
+
+  it("器谱也有真实消费:逐模板抬高本品新词条的掷点保底", () => {
+    expect(blueprintRollBonus(0)).toBe(0);
+    expect(blueprintRollBonus(0.5)).toBeGreaterThan(0);
+    expect(effectiveReforgeRollFloor(0, 1)).toBeGreaterThan(effectiveReforgeRollFloor(0, 0));
   });
 });
 
@@ -467,9 +472,7 @@ describe("内容可达性 · 全局报告", () => {
     expect(REFORGE_SOURCE.inscribe).toBe(true);
     expect(inscribeConsumed, "铭纹被重铸消费后,可达性报告仍不得退回来路不明").toBe(true);
     console.log("  铭纹  有来源也有消费  重铸新词条掷点下限随熟练度上升\n");
-    console.log(
-      "  炼器图纸:blueprintLore 有字段无内容,studyBlueprint 尚无调用点;铭纹已由重铸消费\n",
-    );
+    console.log("  器谱  有来源也有消费  成功重铸精进当前模板,再抬高本品新词条保底\n");
 
     expect(reachableRecipes.size).toBe(CRAFTABLE.length);
   });

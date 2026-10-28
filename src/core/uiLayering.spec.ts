@@ -1424,6 +1424,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(dlg?.src, "必须含锻打与铭纹两项(set of smithing/inscribe)").toContain(
       '"smithing", "inscribe"',
     );
+    expect(dlg?.src, "器谱进度也要露在铁砧前").toContain("blueprintMastery");
     expect(dlg?.src, "判据必须与技艺表同源(skillStageProgress),不另起一套").toContain(
       "skillStageProgress",
     );
@@ -1433,8 +1434,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("铭纹的用处露在重铸决策点 —— 不只长一条进度", () => {
     const panel = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
     expect(panel?.src, "重铸面板要读取铭纹保底(与核心同一函数)").toContain("inscribeRollFloor");
+    expect(panel?.src, "器谱要与铭纹合成实际保底,不许各算一套").toContain(
+      "effectiveReforgeRollFloor",
+    );
     expect(panel?.src, "新词条掷点保底必须写成玩家看得懂的话").toContain("新词条");
-    expect(panel?.src, "保底数值要落到面板上").toContain("inscribeFloor");
+    expect(panel?.src, "保底数值要落到面板上").toContain("reforgeFloor");
   });
 
   it("自动重铸给出真实目标次数,不可达目标不许继续烧钱", () => {

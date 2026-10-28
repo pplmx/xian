@@ -14,6 +14,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createPinia, setActivePinia } from "pinia";
 import {
+  blueprintRollBonus,
+  effectiveReforgeRollFloor,
   expectedReforgesFor,
   inscribeRollFloor,
   reforgeCost,
@@ -25,7 +27,14 @@ import {
   sealAffix,
   unsealAffix,
 } from "./reforge";
-import { REFORGE_DUST_BASE, REFORGE_SEAL_LOAD, REFORGE_STONE_BASE } from "@/data/constants";
+import {
+  BLUEPRINT_MASTERY_PER_REFORGE,
+  BLUEPRINT_ROLL_BONUS_MAX,
+  REFORGE_DUST_BASE,
+  REFORGE_ROLL_FLOOR_CAP,
+  REFORGE_SEAL_LOAD,
+  REFORGE_STONE_BASE,
+} from "@/data/constants";
 import { qualityDef } from "@/data/qualities";
 import { rng } from "@/utils/random";
 import { useInventoryStore } from "@/stores/inventory";
@@ -236,6 +245,29 @@ describe("重铸动作 · 条数与数值一起重掷", () => {
     }
   });
 
+  it("成功重铸精进当前模板器谱,不串到别的装备", () => {
+    const inst: EquipmentInstance = { ...base, uid: "blueprint-gain" };
+    setup(inst);
+    const lore = useLoreStore();
+    expect(reforgeEquipment("blueprint-gain")).toBe(true);
+    expect(lore.blueprintMastery("w_zhuqing")).toBeCloseTo(BLUEPRINT_MASTERY_PER_REFORGE, 10);
+    expect(lore.blueprintMastery("w_xuantie"), "洗剑不会顺带看懂别的剑").toBe(0);
+  });
+
+  it("器谱读通后,这件的新词条立刻吃到额外掷点保底", () => {
+    const inst: EquipmentInstance = { ...base, uid: "blueprint-floor" };
+    setup(inst);
+    useLoreStore().blueprintLore = { [inst.templateId]: 1 };
+    vi.spyOn(rng, "next").mockReturnValue(0);
+    expect(reforgeEquipment("blueprint-floor")).toBe(true);
+    const after = useInventoryStore().findItem("blueprint-floor")!;
+    for (const affix of after.affixes) {
+      expect(affix.roll, `${affix.id} 没吃到器谱保底`).toBeGreaterThanOrEqual(
+        BLUEPRINT_ROLL_BONUS_MAX,
+      );
+    }
+  });
+
   it("资源不足时不动装备、不记账", () => {
     const inst: EquipmentInstance = { ...base, uid: "poor" };
     useInventoryStore().items = [inst];
@@ -266,6 +298,27 @@ describe("铭纹保底曲线", () => {
     expect(inscribeRollFloor(Number.NaN)).toBe(0);
     expect(inscribeRollFloor(Number.POSITIVE_INFINITY)).toBe(0);
     expect(inscribeRollFloor(Number.NEGATIVE_INFINITY)).toBe(0);
+  });
+});
+
+describe("器谱保底曲线", () => {
+  it("生疏为零、随掌握度上升,读通给满额额外保底", () => {
+    expect(blueprintRollBonus(0)).toBe(0);
+    expect(blueprintRollBonus(0.5)).toBeGreaterThan(0);
+    expect(blueprintRollBonus(1)).toBe(BLUEPRINT_ROLL_BONUS_MAX);
+    expect(blueprintRollBonus(2), "越界存档按读通夹紧").toBe(BLUEPRINT_ROLL_BONUS_MAX);
+  });
+
+  it("与铭纹相加后仍封顶 —— 器谱不是另一套无限保底", () => {
+    expect(effectiveReforgeRollFloor(0, 0)).toBe(0);
+    expect(effectiveReforgeRollFloor(0, 1)).toBe(BLUEPRINT_ROLL_BONUS_MAX);
+    expect(effectiveReforgeRollFloor(100, 1)).toBe(REFORGE_ROLL_FLOOR_CAP);
+  });
+
+  it("非法掌握度不制造 NaN 保底", () => {
+    expect(blueprintRollBonus(Number.NaN)).toBe(0);
+    expect(blueprintRollBonus(Number.POSITIVE_INFINITY)).toBe(0);
+    expect(effectiveReforgeRollFloor(0, Number.NaN)).toBe(0);
   });
 });
 

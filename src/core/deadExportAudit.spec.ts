@@ -34,10 +34,7 @@ const SRC = resolve(__dirname, "..");
  * 每一项都必须写清「为什么留」和「什么时候销账」,
  * 写不出这两句的,就是一具应该删掉的尸体。
  */
-const ALLOWLIST: Record<string, string> = {
-  // 已被别的审计钉住的两端
-  studyBlueprint: '炼器图纸骨架:contentReachabilityAudit 已钉"读与给必须一起接",此处不重复扣押',
-};
+const ALLOWLIST: Record<string, string> = {};
 
 /**
  * 审计/分析模块 —— 它们的导出本就不是给游戏运行时用的,而是给用例读的

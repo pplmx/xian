@@ -20,7 +20,10 @@ import { useResourcesStore } from "@/stores/resources";
 import { affixDef } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
 import { skillStageName } from "@/data/crafting";
+import { BLUEPRINT_MASTERY_PER_REFORGE, BLUEPRINT_ROLL_BONUS_MAX } from "@/data/constants";
 import {
+  blueprintRollBonus,
+  effectiveReforgeRollFloor,
   expectedReforgesFor,
   autoReforge,
   reforgeEquipment,
@@ -68,6 +71,15 @@ const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).aff
 const inscribeLevel = computed(() => lore.skillLevel("inscribe"));
 const inscribeFloor = computed(() => inscribeRollFloor(inscribeLevel.value));
 const inscribeStage = computed(() => skillStageName(inscribeLevel.value));
+/** 器谱逐模板:洗这一件会精进这张图,不会顺带看懂别的装备 */
+const blueprintMastery = computed(() =>
+  inst.value ? lore.blueprintMastery(inst.value.templateId) : 0,
+);
+const blueprintBonus = computed(() => blueprintRollBonus(blueprintMastery.value));
+/** 实际喂给重铸判定的保底:铭纹与器谱相加后封顶,与 core/reforge 同源 */
+const reforgeFloor = computed(() =>
+  effectiveReforgeRollFloor(inscribeLevel.value, blueprintMastery.value),
+);
 
 function doReforge(): void {
   if (inst.value) reforgeEquipment(inst.value.uid);
@@ -177,7 +189,7 @@ watch(inst, () => {
 /** 洗到这一条的平均次数(只给次数,不给概率) */
 function triesOf(id: string, minRoll = 0): number | null {
   const it = inst.value;
-  return it ? expectedReforgesFor(it, id, { minRoll, rollFloor: inscribeFloor.value }) : null;
+  return it ? expectedReforgesFor(it, id, { minRoll, rollFloor: reforgeFloor.value }) : null;
 }
 </script>
 
@@ -324,7 +336,13 @@ function triesOf(id: string, minRoll = 0): number | null {
       不限次数,成本随阶数与封存数走
     </p>
     <p v-if="reforgeCostVal" class="text-center text-[10px] text-qing tabular">
-      铭纹·{{ inscribeStage }}:新词条掷点 ≥ {{ formatPercent(inscribeFloor, 0) }},封存不受
+      新词条掷点 ≥ {{ formatPercent(reforgeFloor, 0) }}（铭纹·{{ inscribeStage }}
+      {{ formatPercent(inscribeFloor, 0) }} + 器谱 {{ formatPercent(blueprintBonus, 0) }}）,封存不受
+    </p>
+    <p v-if="reforgeCostVal" class="text-center text-[10px] text-ink-faint tabular">
+      器谱 {{ formatPercent(blueprintMastery, 0) }} · 每次成功重铸 +
+      {{ formatPercent(BLUEPRINT_MASTERY_PER_REFORGE, 0) }},读通额外保底 +
+      {{ formatPercent(BLUEPRINT_ROLL_BONUS_MAX, 0) }}
     </p>
     <p v-if="inst" class="text-center text-[10px] text-ink-faint tabular">
       已重铸 {{ inst.reforgeCount ?? 0 }} 次 · 已封存 {{ (inst.sealedAffixIds ?? []).length }}/{{

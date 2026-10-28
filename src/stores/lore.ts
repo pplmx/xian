@@ -30,11 +30,11 @@ export const useLoreStore = defineStore(
     /** 丹方掌握度 0~1 */
     const recipeLore = ref<Record<string, number>>({});
     /**
-     * 图纸掌握度 0~1 —— 炼器道的预留字段,眼下尚无内容也无获取路径。
+     * 器谱掌握度 0~1,按装备模板记账。
      *
-     * 别照着丹方的样子给它加消费点:一旦有代码开始读 blueprintMastery,
-     * 而 studyBlueprint 仍无调用点,就又是一条"看得见拿不到"的死内容。
-     * contentReachabilityAudit.spec.ts 钉着这一条,两头要接一起接。
+     * 每次成功重铸都会精进同模板的器谱(见 core/reforge),器谱再抬高
+     * 该模板新词条的掷点保底。读写两端由 contentReachabilityAudit.spec.ts
+     * 一起钉住,不许退回"有字段、没来路"的死内容。
      */
     const blueprintLore = ref<Record<string, number>>({});
     /** 技艺累积经验 */

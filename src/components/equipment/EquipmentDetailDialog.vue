@@ -163,12 +163,12 @@
           class="flex items-center gap-2 text-[10px] text-ink-faint"
         >
           <span class="w-10 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
-          <span class="w-12 shrink-0 tabular" :class="s.stage === '生疏' ? '' : 'text-jade'">{{
+          <span class="w-12 shrink-0 tabular" :class="s.active ? 'text-jade' : ''">{{
             s.stage
           }}</span>
           <ProgressBar
             :value="s.progress"
-            :color="s.stage === '生疏' ? 'var(--color-ink-faint)' : 'var(--color-jade)'"
+            :color="s.active ? 'var(--color-jade)' : 'var(--color-ink-faint)'"
             :height="3"
             class="flex-1"
           />
@@ -252,13 +252,33 @@ const resources = useResourcesStore();
 
 const loreStore = useLoreStore();
 
-/** 炼器技艺进度:锻打/铭纹正是在这个界面(强化/重铸)里长的 —— 露在铁砧前(与 DanFang 技艺表同源) */
+/**
+ * 炼器技艺进度:锻打/铭纹正是在这个界面(强化/重铸)里长的;
+ * 器谱则按当前装备模板单独精进 —— 三行都露在铁砧前。
+ */
 const forgeSkills = computed(() => {
   const ids = new Set(["smithing", "inscribe"]);
-  return SKILLS.filter((s) => ids.has(s.id)).map((s) => {
+  const skills = SKILLS.filter((s) => ids.has(s.id)).map((s) => {
     const lv = loreStore.skillLevel(s.id);
-    return { id: s.id, name: s.name, stage: skillStageName(lv), progress: skillStageProgress(lv) };
+    return {
+      id: s.id,
+      name: s.name,
+      stage: skillStageName(lv),
+      progress: skillStageProgress(lv),
+      active: skillStageName(lv) !== "生疏",
+    };
   });
+  const mastery = inst.value ? loreStore.blueprintMastery(inst.value.templateId) : 0;
+  return [
+    ...skills,
+    {
+      id: "blueprint",
+      name: "器谱",
+      stage: mastery >= 1 ? "通晓" : mastery > 0 ? "研读" : "未读",
+      progress: mastery,
+      active: mastery > 0,
+    },
+  ];
 });
 
 const inst = computed(() =>
