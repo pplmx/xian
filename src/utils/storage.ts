@@ -86,6 +86,60 @@ export function storageKey(storeId: string): string {
   return SAVE_PREFIX + storeId;
 }
 
+const SAVE_KEY_PREFIXES = [SAVE_PREFIX, LEGACY_SAVE_PREFIX] as const;
+
+/** 本作存储键:当前/改名前的分片,以及由它们派生的坏档备份 */
+function isSaveOwnedKey(key: string): boolean {
+  return SAVE_KEY_PREFIXES.some(
+    (prefix) => key.startsWith(prefix) || key.startsWith(`corrupt.${prefix}`),
+  );
+}
+
+/** 即使 Storage 枚举不可用,这些由分片清单派生的键也一定能尝试删除 */
+function knownSaveKeys(): string[] {
+  const keys: string[] = [];
+  for (const id of PERSISTED_STORES) {
+    for (const prefix of SAVE_KEY_PREFIXES) {
+      keys.push(prefix + id, `corrupt.${prefix}${id}`);
+    }
+  }
+  return keys;
+}
+
+/**
+ * 列出所有归本作所有的键。
+ *
+ * `complete=false` 表示 Storage 枚举本身失败:此时仍返回清单里已知的键用于清理,
+ * 但调用方不能把「没找到残留」当成「已经清干净」。
+ */
+function scanSaveKeys(): { keys: string[]; complete: boolean } {
+  const keys = new Set(knownSaveKeys());
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      // length 内的 key() 不该返回 null;若个别 WebView 静默坏了,不能当成枚举完整
+      if (key === null) return { keys: [...keys], complete: false };
+      if (isSaveOwnedKey(key)) keys.add(key);
+    }
+  } catch {
+    return { keys: [...keys], complete: false };
+  }
+  return { keys: [...keys], complete: true };
+}
+
+function hasSaveKeyLeftover(): boolean {
+  const scan = scanSaveKeys();
+  if (!scan.complete) return true;
+  return scan.keys.some((key) => {
+    try {
+      return localStorage.getItem(key) !== null;
+    } catch {
+      // 读不了不等于已经删掉:清档结果不确定时不能回报成功
+      return true;
+    }
+  });
+}
+
 /**
  * 刷盘间隔 —— 存档写入从「每次变更」改为「定期批量」。
  *
@@ -515,33 +569,21 @@ export function applyImportPayload(payload: ExportPayload): void {
 export function clearAllSave(): boolean {
   // 只读页:一片都不许删(否则会把写者刚存下的档清掉)
   if (writesBlocked) return false;
-  for (const id of PERSISTED_STORES) {
+  /*
+   * 只清本作键域,绝不调用 localStorage.clear():本作会与博客等同源页面共享
+   * localStorage,整表清理会把别的站点的数据一起抹掉。
+   * 清掉的范围包括改名前的 yunyin.* 分片与 corrupt.* 坏档备份 —— 它们同样是
+   * 「本机修行痕迹」,重置文案承诺彻底抹去,不能只清当前分片。
+   */
+  for (const key of scanSaveKeys().keys) {
     try {
-      localStorage.removeItem(storageKey(id));
+      localStorage.removeItem(key);
     } catch {
-      // 单键失败不阻断其余键,残留交由下面的兜底处理
+      // 单键失败不阻断其余键,残留由下面的复核如实回报
     }
   }
-  // 校验删除结果:removeItem 在个别 WebView 实现上会静默失效,
-  // 只要还剩任何一片就整体清空——半清的存档比清干净更糟,
-  // 会出现「game 分片还在、player 分片没了」这种卡在主页的空角色
-  const hasLeftover = (): boolean =>
-    PERSISTED_STORES.some((id) => {
-      try {
-        return localStorage.getItem(storageKey(id)) !== null;
-      } catch {
-        // 读不了不等于已经删掉:清档结果不确定时不能回报成功
-        return true;
-      }
-    });
-  if (hasLeftover()) {
-    try {
-      localStorage.clear();
-    } catch {
-      // 整表清理也失败:下面的复核会把真实结果报给调用方
-    }
-  }
-  if (hasLeftover()) return false;
+  // removeItem 在个别 WebView 上会静默失效;清不干净就如实回报失败
+  if (hasSaveKeyLeftover()) return false;
   /*
    * 只有确认清干净之后才丢弃待写队列 —— 反过来先丢、删除却失败时,
    * 玩家刚玩出来、还没落盘的最新一版会当场退回磁盘上的旧档,而清档

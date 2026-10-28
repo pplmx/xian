@@ -378,8 +378,10 @@ describe("存档重置 · 清档成功后才停引擎和封存写盘", () => {
       setItem: (k: string, v: string) => void disk.set(k, v),
       removeItem: (k: string) => void disk.delete(k),
       clear: () => disk.clear(),
-      key: () => null,
-      length: disk.size,
+      key: (i: number) => [...disk.keys()][i] ?? null,
+      get length() {
+        return disk.size;
+      },
     });
     Object.defineProperty(window, "localStorage", { value: localStorage, configurable: true });
     const stop = vi.spyOn(engine, "stop");

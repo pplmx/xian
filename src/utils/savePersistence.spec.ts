@@ -284,7 +284,7 @@ describe("存档写盘 · 失败不许静默", () => {
     flushSaveWrites();
     expect(saveWriteFailure(), "先制造一次真实的写盘失败").not.toBeNull();
 
-    // 删除与整表清理都被静默吞掉:这次清档最终会如实回报 false
+    // 单键删除被静默吞掉,键枚举也不可信:这次清档最终会如实回报 false
     vi.stubGlobal("localStorage", {
       getItem: (k: string) => probe.disk.get(k) ?? null,
       setItem: (k: string, v: string) => void probe.disk.set(k, v),

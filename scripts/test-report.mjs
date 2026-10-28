@@ -231,6 +231,7 @@ const CATEGORIES = [
       "saveBackup",
       "importCorruption",
       "saveMigration",
+      "clearSave",
       "storage.spec",
       "codexSource",
       "achievementHint",
