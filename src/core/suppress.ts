@@ -212,8 +212,10 @@ export interface SuppressedYield {
   /** 镇守道韵:这一段镇压折算的修为点数(与挂机同源,见 SUPPRESS_EXP_PER_REGION) */
   expGain: GNum;
   equipment: { name: string; quality: QualityId; recycled?: boolean }[];
-  /** 未入包(自动回收/满包化尘)装备化作的器灵尘(由 acquireEquipment 记账) */
+  /** 装备折算产生的器灵尘(含自动回收、满包与腾位旧件) */
   recycledDust: number;
+  /** 实际折算掉的装备件数 */
+  recycledEquipment: number;
   /** 各地界的物产累计(灵草/玄铁/残页/器灵尘) */
   resources: { id: SuppressResource; name: string; amount: number }[];
   /**
@@ -238,6 +240,7 @@ export function settleSuppressedRegions(
     expGain: gnZero(),
     equipment: [],
     recycledDust: 0,
+    recycledEquipment: 0,
     resources: [],
     revived: [],
   };
@@ -327,7 +330,8 @@ export function settleSuppressedRegions(
         quality: equip.quality,
         recycled: !res.bagged,
       });
-      if (!res.bagged) total.recycledDust += res.dust;
+      total.recycledDust += res.dust;
+      total.recycledEquipment += res.recycled;
     }
   }
 

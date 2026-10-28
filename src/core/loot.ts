@@ -3,7 +3,7 @@
  */
 import type { ArtifactDef, EquipmentInstance, GNum, QualityId, RegionDef } from "@/types";
 import { rng } from "@/utils/random";
-import { gnZero, isZero } from "@/utils/gnum";
+import { add, gnZero, isZero } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
 import { qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
@@ -60,9 +60,11 @@ export interface AcquireResult {
   line: string;
   /** 是否真正入了行囊(未入 = 自动化尘或满包化尘) */
   bagged: boolean;
-  /** 本次拾取带来的器灵尘增量(化尘时为尘量,入包为 0) */
+  /** 本次实际折算掉的装备件数(自动回收、满包、腾位旧件) */
+  recycled: number;
+  /** 本次折算带来的器灵尘增量(腾位旧件也可能有,单纯入包为 0) */
   dust: number;
-  /** 本次拾取带来的灵石返还(化尘时可能有 —— 被挤掉的旧件若练过) */
+  /** 本次折算带来的灵石返还(被挤掉的旧件若练过) */
   stone: GNum;
 }
 
@@ -152,24 +154,36 @@ export function acquireEquipment(
 
   if (keepExactly) {
     if (!inventory.addEquipment(inst)) {
-      return { line: `${label}(行囊已满)`, bagged: false, dust: 0, stone: gnZero() };
+      return {
+        line: `${label}(行囊已满)`,
+        bagged: false,
+        recycled: 0,
+        dust: 0,
+        stone: gnZero(),
+      };
     }
     recordEquipmentGained(inst);
     if (!quiet && q.rank >= 3) notify(`灵光乍现,拾得「${label}」`, "rare");
-    return { line: label, bagged: true, dust: 0, stone: gnZero() };
+    return { line: label, bagged: true, recycled: 0, dust: 0, stone: gnZero() };
   }
 
   const result = EQUIP_INTAKE.admit({ items: inventory.items }, inst, { force: forceKeep });
-  const first = result.yields[0];
-  const dust = first?.yield?.dust ?? 0;
-  const stone = first?.yield?.stone ?? gnZero();
+  // 腾位成功时新件入包,但回执里的尘来自被挤掉的旧件;以 yields 为准则不会漏记。
+  const recycled = result.yields.length;
+  const dust = result.yields.reduce((sum, row) => sum + (row.yield?.dust ?? 0), 0);
+  const stone = result.yields.reduce(
+    (sum, row) => add(sum, row.yield?.stone ?? gnZero()),
+    gnZero(),
+  );
+  const converted = result.lines.join(" · ");
 
   if (result.admitted) {
     if (result.evicted) {
       const oldName = equipmentTemplate(result.evicted.templateId)?.name ?? "旧物";
       return {
-        line: `${label}(收纳规则腾位:${oldName}${first?.line ?? ""})`,
+        line: `${label}(收纳规则腾位:${oldName}${converted ? `,${converted}` : ""})`,
         bagged: true,
+        recycled,
         dust,
         stone,
       };
@@ -177,10 +191,16 @@ export function acquireEquipment(
     if (!quiet && q.rank >= 3) {
       notify(`灵光乍现,拾得「${label}」`, "rare");
     }
-    return { line: label, bagged: true, dust: 0, stone: gnZero() };
+    return { line: label, bagged: true, recycled: 0, dust: 0, stone: gnZero() };
   }
   const prefix = result.reason === "rejected" ? "自动回收" : "行囊已满";
-  return { line: `${label}(${prefix},${first?.line ?? ""})`, bagged: false, dust, stone };
+  return {
+    line: `${label}(${prefix},${converted})`,
+    bagged: false,
+    recycled,
+    dust,
+    stone,
+  };
 }
 
 export interface ArtifactAcquireResult {

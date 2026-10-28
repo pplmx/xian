@@ -2,7 +2,7 @@
  * 入库漏斗对账 —— 装备入账交给库的入库层之后,四条去路的**文案与去向**与迁移前一一对应。
  *
  * 与 engineParity 同一条纪律。冻结的是迁移前那四条文案与它们各自的去向
- * (`AcquireResult` 的 line / bagged / dust / stone):
+ * (`AcquireResult` 的 line / bagged / dust / stone),并补上折算件数:
  *   ① 被自动回收   → `(自动回收,…)`、不入包、有化尘;
  *   ② 行囊已满     → `(行囊已满,…)`、不入包、有化尘;
  *   ③ 收纳规则腾位 → `(收纳规则腾位:旧件…化尘…)`、**入包**、且带被挤掉那件的化尘;
@@ -59,6 +59,7 @@ describe("入库漏斗对账 —— 四条去路的文案与去向", () => {
     expect(result.line).toMatch(/^.+\(自动回收,化作器灵尘×\d+\)$/);
     expect(result.bagged).toBe(false);
     expect(result.dust).toBeGreaterThan(0);
+    expect(result.recycled).toBe(1);
     expect(resources.dust).toBe(result.dust); // 折算到账,与回执同一份数
     expect(useInventoryStore().items.length).toBe(0);
   });
@@ -73,6 +74,7 @@ describe("入库漏斗对账 —— 四条去路的文案与去向", () => {
     expect(result.line).toMatch(/\(行囊已满,化作器灵尘×\d+\)$/);
     expect(result.bagged).toBe(false);
     expect(result.dust).toBeGreaterThan(0);
+    expect(result.recycled).toBe(1);
     expect(inventory.items.length).toBe(BAG_CAPACITY); // 满着的还是满着
   });
 
@@ -85,6 +87,7 @@ describe("入库漏斗对账 —— 四条去路的文案与去向", () => {
     expect(result.line).toMatch(/\(收纳规则腾位:.+化作器灵尘×\d+\)$/);
     expect(result.bagged).toBe(true);
     expect(result.dust).toBeGreaterThan(0); // 被挤掉那件的化尘
+    expect(result.recycled, "入包也可能折掉一件旧物,件数不能只看 bagged").toBe(1);
     expect(inventory.items.length).toBe(before); // 挤一件、进一件
     expect(inventory.items.some((it) => it.quality === "divine")).toBe(true);
   });
@@ -96,6 +99,7 @@ describe("入库漏斗对账 —— 四条去路的文案与去向", () => {
     expect(result.line).not.toContain("(");
     expect(result.bagged).toBe(true);
     expect(result.dust).toBe(0);
+    expect(result.recycled).toBe(0);
     expect(Number(result.stone.e)).toBe(0);
   });
 

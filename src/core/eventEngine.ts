@@ -309,7 +309,8 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
         quality: inst.quality,
         recycled: !acquired.bagged,
       });
-      if (!acquired.bagged) ctx.recycledDust += acquired.dust;
+      ctx.recycledEquipment += acquired.recycled;
+      ctx.recycledDust += acquired.dust;
       return applied(`获得 ${acquired.line}`, { items: 1 });
     }
     case "pill": {
@@ -421,8 +422,10 @@ export interface EventResolution {
   notableLines: string[];
   /** 这次抉择真正产出的装备(含未入包、已化尘的件) */
   equipment: EventEquipmentGain[];
-  /** 其中未入包装备实际折出的器灵尘 */
+  /** 其中装备折算产生的器灵尘(含腾位旧件) */
   recycledDust: number;
+  /** 其中实际折算掉的装备件数(含腾位旧件) */
+  recycledEquipment: number;
 }
 
 export interface EventEquipmentGain {
@@ -442,6 +445,7 @@ interface EventApplyContext {
   /** 离线归来卷轴要如实列出事件所得装备,不能只剩一句文案。 */
   equipment: EventEquipmentGain[];
   recycledDust: number;
+  recycledEquipment: number;
   /** 离线归来回执要单独说明的所得;由实际结算分支决定,不看效果类型猜 */
   notableLines: string[];
 }
@@ -487,6 +491,7 @@ export function resolveEventChoice(
     itemGain: 0,
     equipment: [],
     recycledDust: 0,
+    recycledEquipment: 0,
     notableLines: [],
   };
   const receipt = CHOICES.resolve(asChoice(choice, tier), applyCtx, rng);
@@ -529,6 +534,7 @@ export function resolveEventChoice(
     notableLines: applyCtx.notableLines,
     equipment: applyCtx.equipment,
     recycledDust: applyCtx.recycledDust,
+    recycledEquipment: applyCtx.recycledEquipment,
   };
 }
 
@@ -539,7 +545,14 @@ export function autoResolveEvent(eventId: string, tier: number): EventResolution
   // 三级兜底(默认且可选 → 第一条可选 → 第一条)由库回答,免得界面与离线各写一遍
   const idx = CHOICES.defaultIndex(
     def.choices.map((c) => asChoice(c, tier)),
-    { tier, itemGain: 0, equipment: [], recycledDust: 0, notableLines: [] },
+    {
+      tier,
+      itemGain: 0,
+      equipment: [],
+      recycledDust: 0,
+      recycledEquipment: 0,
+      notableLines: [],
+    },
   );
   return resolveEventChoice(def, idx, tier);
 }

@@ -212,13 +212,16 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     }
   }
   const equipmentGained: OfflineSummary["equipment"] = [];
-  /** 离线期间未入包(自动回收/满包化尘)装备化作的器灵尘 */
+  /** 离线期间装备折算产生的器灵尘(含自动回收、满包与腾位旧件) */
   let recycledDust = 0;
+  /** 与上面那笔尘同源的折算件数;不能过后从装备清单里二次猜 */
+  let recycledEquipment = 0;
   const eventReceipts: OfflineSummary["eventReceipts"] = [];
   const collectEventReceipt = (res: EventResolution | null): void => {
     if (!res) return;
     equipmentGained.push(...res.equipment);
     recycledDust += res.recycledDust;
+    recycledEquipment += res.recycledEquipment;
     if (res.notableLines.length === 0) return;
     const same = eventReceipts.find(
       (r) => r.title === res.title && r.lines.join("\n") === res.notableLines.join("\n"),
@@ -278,6 +281,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       equipmentGained.push(eq);
     }
     recycledDust += suppressYield.recycledDust;
+    recycledEquipment += suppressYield.recycledEquipment;
   }
 
   // ---- 历练挂机 ----
@@ -485,7 +489,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             quality: inst.quality,
             recycled: !res.bagged,
           });
-          if (!res.bagged) recycledDust += res.dust;
+          recycledDust += res.dust;
+          recycledEquipment += res.recycled;
         }
         trip.items += realCount;
         if (equipCount > realCount) {
@@ -493,6 +498,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
           resources.addSmall("dust", dust);
           // 并入「回收化尘」对账,归账弹窗才不少报实收(此前只在 note 定性、无数字可核)
           recycledDust += dust;
+          recycledEquipment += equipCount - realCount;
           notes.push(`另有 ${equipCount - realCount} 件寻常之物,已折作器灵尘`);
         }
         if (wins < battles) {
@@ -799,6 +805,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     events,
     equipment: equipmentGained,
     recycledDust,
+    recycledEquipment,
     eventReceipts,
     notes,
   };

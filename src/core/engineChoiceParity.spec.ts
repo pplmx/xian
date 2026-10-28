@@ -92,7 +92,14 @@ describe("事件抉择对账 —— 掷后果与兜底逐次相同", () => {
         if (def.choices.length === 0) continue;
         const now = CHOICES.defaultIndex(
           def.choices.map((c) => asChoice(c, TIER)),
-          { tier: TIER, itemGain: 0, equipment: [], recycledDust: 0, notableLines: [] },
+          {
+            tier: TIER,
+            itemGain: 0,
+            equipment: [],
+            recycledDust: 0,
+            recycledEquipment: 0,
+            notableLines: [],
+          },
         );
         expect(now, `${def.id}`).toBe(refDefaultIndex(def, TIER));
         compared += 1;
@@ -114,7 +121,14 @@ describe("事件抉择对账 —— 掷后果与兜底逐次相同", () => {
     useResourcesStore().spiritStone = { m: 1, e: 12 }; // 够付
     const receipt = CHOICES.resolve(
       asChoice(withStone.choice, TIER),
-      { tier: TIER, itemGain: 0, equipment: [], recycledDust: 0, notableLines: [] },
+      {
+        tier: TIER,
+        itemGain: 0,
+        equipment: [],
+        recycledDust: 0,
+        recycledEquipment: 0,
+        notableLines: [],
+      },
       createRng(3),
     );
     expect(receipt.text).toBe(refRoll(withStone.choice, 3));

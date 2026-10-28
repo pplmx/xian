@@ -10,7 +10,7 @@
  */
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
-import type { EventDef } from "@/types";
+import type { EquipmentInstance, EventDef } from "@/types";
 import { add, gn, gte, mulN, sub, toNum } from "@/utils/gnum";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
@@ -23,6 +23,7 @@ import { useSettingsStore } from "@/stores/settings";
 import { eventDef } from "@/data/events";
 import { GONGFA } from "@/data/gongfa";
 import { PILLS } from "@/data/pills";
+import { BAG_CAPACITY } from "@/data/constants";
 import { resolveEventChoice } from "./eventEngine";
 import { stoneByTier } from "./formulas";
 import { track } from "./progress";
@@ -224,6 +225,54 @@ describe("事件装备回执 · 离线卷轴要能列出来", () => {
     expect(res.equipment, "装备事件要把实体带回调用方,离线才能列进所得清单").toHaveLength(1);
     expect(res.equipment[0]!.recycled, "智能收纳判废时应标成回收件").toBe(true);
     expect(res.recycledDust, "化尘量的回执要与实际入账同源").toBeGreaterThan(0);
+  });
+
+  it("腾位时入包的新件与折掉的旧件分开记账,回收件数不能按入包与否猜", () => {
+    useSettingsStore().smartKeep = {
+      enabled: true,
+      minQuality: 3,
+      minTier: 0,
+      junkBelowLine: false,
+      keepCoreAffix: false,
+      keepComboPiece: false,
+      keepPerfectRolls: false,
+      keepSetPiece: false,
+    };
+    const inventory = useInventoryStore();
+    inventory.items = Array.from({ length: BAG_CAPACITY }, (_, i) => ({
+      uid: `ev-full-${i}`,
+      templateId: "b_qingyun",
+      quality: "mortal",
+      tier: 3,
+      level: 0,
+      affixes: [],
+    })) satisfies EquipmentInstance[];
+    const def: EventDef = {
+      id: "ev_test_equipment_evict",
+      title: "神兵匣",
+      text: "",
+      tags: ["general"],
+      weight: 1,
+      choices: [
+        {
+          label: "打开",
+          outcomes: [
+            {
+              weight: 1,
+              text: "匣中神兵择主。",
+              effects: [{ type: "equipment", minQualityRank: 8 }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const res = resolveEventChoice(def, 0, 3);
+
+    expect(res.equipment[0]?.recycled, "新件入包,不能伪称它自己被回收").toBe(false);
+    expect(res.recycledEquipment, "被挤掉的旧件也是一件折化产出").toBe(1);
+    expect(res.recycledDust, "腾位旧件化出的尘也要进归来账").toBeGreaterThan(0);
+    expect(inventory.items).toHaveLength(BAG_CAPACITY);
   });
 
   it("丹药等无法从总资源差额区分的所得,也要带回逐项回执", () => {

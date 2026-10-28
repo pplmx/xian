@@ -298,10 +298,12 @@ describe("区域镇压系统", () => {
         expect(inventory.items.length).toBe(itemsBefore);
         expect(dustGain).toBe(DECOMPOSE_DUST[qualityDef(eq.quality).rank] ?? 1);
         expect(total!.recycledDust).toBe(dustGain);
+        expect(total!.recycledEquipment).toBe(1);
       } else {
         expect(inventory.items.length).toBe(itemsBefore + 1);
         expect(dustGain).toBe(0);
         expect(total!.recycledDust).toBe(0);
+        expect(total!.recycledEquipment).toBe(0);
       }
     });
 

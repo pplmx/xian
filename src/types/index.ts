@@ -1148,8 +1148,10 @@ export interface OfflineSummary {
   events: number;
   /** 产出装备清单;回收(自动回收/满包化尘)的件以 recycled 标注 */
   equipment: { name: string; quality: QualityId; recycled?: boolean }[];
-  /** 期间未入包装备化作的器灵尘总量 */
+  /** 期间装备折算产生的器灵尘总量 */
   recycledDust: number;
+  /** 与 recycledDust 同源的折算件数(含腾位旧件) */
+  recycledEquipment: number;
   /** 无法从资源总差额与装备清单辨认的际遇所得(丹药/法宝/功法/增益等) */
   eventReceipts: OfflineEventReceipt[];
   notes: string[];

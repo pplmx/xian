@@ -217,6 +217,10 @@ describe("离线 events 封顶 40 不蒸发超额遭遇 · 非事即战闭合", 
     expect(withEvent.recycledDust, "事件装备化尘也要并入归来卷轴").toBeGreaterThan(
       plain.recycledDust,
     );
+    expect(
+      withEvent.recycledEquipment,
+      "回收件数由结算当场记,不能从清单里二次猜",
+    ).toBeGreaterThanOrEqual(withEvent.equipment.filter((e) => e.recycled).length);
   });
 
   it("自动际遇的丹药所得写进归来回执", () => {

@@ -2192,6 +2192,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(dlg?.src, "残页要缩写").toContain("+${formatNum(s.page)}");
     expect(dlg?.src, "器灵尘总额要缩写").toContain("+${formatNum(s.dust)}");
     expect(dlg?.src, "回收件数只报件数,化尘额不重复记第二遍").toContain("已折入器灵尘");
+    expect(dlg?.src, "回收件数取结算回执,不能从装备清单二次猜").toContain("s.recycledEquipment");
     expect(dlg?.src, "区域之主战要单列胜负,不能混进寻常历练").toContain("s.bossBattles");
     expect(dlg?.src, "丹药/法宝等无法从总差额区分的际遇所得要逐项可见").toContain("eventReceipts");
     expect(dlg?.src, "际遇明细要有自己的标题,不能混进普通资源行").toContain("际遇结果");

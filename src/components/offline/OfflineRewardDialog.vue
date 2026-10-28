@@ -161,12 +161,11 @@ const rows = computed<RewardRow[]>(() => {
   if (s.dust > 0)
     list.push({ icon: "sparkles", label: "器灵尘", value: `+${formatNum(s.dust)}`, gain: true });
   // 化尘总额已经单列一行动账;这里只交代有多少件没进包,避免把同一笔尘报两遍。
-  if (s.recycledDust > 0) {
-    const recycled = s.equipment.filter((e) => e.recycled).length;
+  if (s.recycledDust > 0 || s.recycledEquipment > 0) {
     list.push({
       icon: "sparkles",
       label: "回收装备",
-      value: `${recycled} 件 · 已折入器灵尘`,
+      value: `${s.recycledEquipment} 件 · 已折入器灵尘`,
       gain: false,
       cls: "text-ink-faint",
     });
