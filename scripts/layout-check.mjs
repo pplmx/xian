@@ -106,6 +106,8 @@
  *      印章、纸纹、以及半透明的纸叠在深色天幕上,真实像素比色号暗一截,那条量不到。
  *      故这里直接采样屏幕像素:把文字临时藏起来拍一张,逐像素算「这枚字落在这一像素上
  *      读不读得出来」,读不出来的像素超过两成就报红。
+ *      滚到中段时,页签栏会按设计盖住已经滚到它下面的标题;采样只取主滚动区里真正露出
+ *      的那一截,不把被吸顶栏盖住的文字当成「屏幕上的字」。
  *   四十三 28px 触达下限的量法要确定:1280×800 的 /adventure 上报过一次「28px」的红,
  *      四舍五入后正好等于下限,实际是 27.6px 的子像素抖动,而那个按钮声明的是
  *      min-h-[28px]。一条会自己变红的门比没有门更糟,故四处量 28px 的地方统一:声明的
@@ -155,6 +157,8 @@
  *      旧缘一次塞进固定滚动框;续开、滑窗、回翻与焦点都要真走通,且 195 宽下能读。
  *   五十四 器魂页的两册(散置形意 / 凝炼台)同样没有数量上限。两册都按价值降序先摆
  *      一批,续开、滑窗、回翻与焦点走同一套长列表规则;195 宽下入口与整扇弹窗都要能读。
+ *   五十五 名号与灵兽两册共 69 条也要分批回看。当前相伴必须压过品阶排在第一,
+ *      不能藏在同品阶之后;续开、滑窗、回翻与焦点同上一套,195 宽下整页仍可读。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -167,6 +171,9 @@
 import { chromium } from "playwright";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
 import { decryptSlice, encryptSlice, seedSave, showcaseSlices } from "./lib/saveFixture.mjs";
+import { TITLES } from "../src/data/titles.ts";
+import { PETS } from "../src/data/pets.ts";
+import { qualityDef } from "../src/data/qualities.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -1394,6 +1401,9 @@ async function measurePixelContrast(page, sampler, dpr) {
     );
   });
   const targets = await page.evaluate(() => {
+    const mainBox = document.querySelector("main")?.getBoundingClientRect();
+    const rail = document.querySelector(".tab-rail");
+    const railBox = rail?.getBoundingClientRect();
     const parse = (c) => {
       const m = /rgba?\(([^)]+)\)/.exec(c);
       if (!m) return null;
@@ -1454,20 +1464,44 @@ async function measurePixelContrast(page, sampler, dpr) {
       const r = el.getBoundingClientRect();
       if (r.width < 2 || r.height < 2) continue;
       if (!gradientBase(el, r)) continue;
+      const inMain = Boolean(el.closest("main"));
       const range = document.createRange();
       const rects = [];
       for (const node of texts) {
         range.selectNodeContents(node);
         for (const box of range.getClientRects()) {
+          const clip =
+            inMain && mainBox
+              ? mainBox
+              : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+          const left = Math.max(box.left, clip.left);
+          const right = Math.min(box.right, clip.right);
+          let top = Math.max(box.top, clip.top);
+          const bottom = Math.min(box.bottom, clip.bottom);
+          /*
+           * 吸顶页签栏是内容滚动时故意压在上面的固定层。页签自己的字仍要量;
+           * 正文滚到栏下则只留下栏底以下那截,整块都被盖住时直接跳过。
+           */
           if (
-            box.width > 1 &&
-            box.height > 1 &&
-            box.top >= 0 &&
-            box.bottom <= innerHeight &&
-            box.left >= 0 &&
-            box.right <= innerWidth
+            rail &&
+            !rail.contains(el) &&
+            railBox &&
+            left < railBox.right &&
+            right > railBox.left &&
+            top < railBox.bottom &&
+            bottom > railBox.top
           ) {
-            rects.push([box.left, box.top, box.width, box.height]);
+            top = Math.max(top, railBox.bottom);
+          }
+          if (
+            right - left > 1 &&
+            bottom - top > 1 &&
+            top >= 0 &&
+            bottom <= innerHeight &&
+            left >= 0 &&
+            right <= innerWidth
+          ) {
+            rects.push([left, top, right - left, bottom - top]);
           }
         }
       }
@@ -8089,6 +8123,295 @@ async function taskSoulListOverflow() {
 }
 
 /**
+ * 名号 / 灵兽全册 —— 69 条终局清单的两册回看。
+ *
+ * 两册此前都整份铺进 DOM,而名号页永远同时拥有全部称号、灵兽页也会随着收集
+ * 长到四十只。更隐蔽的一处是「相伴中」只排在品阶之后:低品阶的当前伙伴会被
+ * 高品阶旧收藏压到后面。这里用全拥有夹具把两件事一起量到底。
+ */
+async function taskTitlePetOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const activePet = PETS[0];
+    const wornTitle = TITLES.at(-1);
+    if (!activePet || !wornTitle) throw new Error("名号 / 灵兽夹具取不到首尾条目");
+    const activePetId = activePet.id;
+    const wornTitleId = wornTitle.id;
+    const petSorted = [...PETS].sort(
+      (a, b) =>
+        Number(b.id === activePetId) - Number(a.id === activePetId) ||
+        qualityDef(b.quality).rank - qualityDef(a.quality).rank,
+    );
+    const titleSorted = [wornTitle, ...TITLES.filter((title) => title.id !== wornTitleId)];
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      titleId: wornTitleId,
+      petId: activePetId,
+    };
+    slices.quests = {
+      ...slices.quests,
+      titlesOwned: TITLES.map((title) => title.id),
+      collections: {
+        ...slices.quests.collections,
+        pet: PETS.map((pet) => pet.id),
+      },
+      petCompanions: PETS.map((pet) => pet.id),
+    };
+    await seedSave(ctx, slices, "__titlePetFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/titles", { waitUntil: "load" });
+
+    async function readList(kind) {
+      return page.evaluate((key) => {
+        const holder = document.querySelector(`[data-${key}-total]`);
+        const rows = [...document.querySelectorAll(`[data-${key}-row]`)];
+        return {
+          total: Number(holder?.getAttribute(`data-${key}-total`)),
+          shown: Number(holder?.getAttribute(`data-${key}-shown`)),
+          start: Number(holder?.getAttribute(`data-${key}-start`)),
+          count: rows.length,
+          ids: rows.map((row) => row.getAttribute(`data-${key}-row`)),
+          focus: document.activeElement?.getAttribute(`data-${key}-row`),
+        };
+      }, kind);
+    }
+
+    async function waitForShown(kind, shown) {
+      await page.waitForFunction(
+        ({ key, wanted }) =>
+          document.querySelector(`[data-${key}-total]`)?.getAttribute(`data-${key}-shown`) ===
+          String(wanted),
+        { key: kind, wanted: shown },
+        { timeout: 5000 },
+      );
+    }
+
+    async function waitForFocus(kind, id) {
+      await page
+        .waitForFunction(
+          ({ key, rowId }) => document.activeElement?.getAttribute(`data-${key}-row`) === rowId,
+          { key: kind, rowId: id },
+          { timeout: 2000 },
+        )
+        .catch(() => {});
+    }
+
+    async function checkMoreFit(kind, label) {
+      const more = page.locator(`[data-${kind}-more]`).first();
+      if ((await more.count()) === 0) return;
+      await more.scrollIntoViewIfNeeded();
+      const fit = await more.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          left: box.left,
+          right: box.right,
+          height: box.height,
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+          viewport: window.innerWidth,
+        };
+      });
+      checked += 1;
+      if (
+        fit.left < -1 ||
+        fit.right > fit.viewport + 1 ||
+        fit.scrollWidth > fit.clientWidth + 1 ||
+        fit.height < 27.5
+      ) {
+        failures.push(
+          `[195] ${label}续开入口被挤坏:` +
+            `盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+            `内容 ${fit.scrollWidth}>${fit.clientWidth} / ` +
+            `高 ${Math.round(fit.height * 10) / 10}px / 视口 ${fit.viewport}`,
+        );
+      }
+    }
+
+    async function exerciseList({ kind, label, unit, total, sortedIds }) {
+      const initial = await readList(kind);
+      const more = page.locator(`[data-${kind}-more]`).first();
+      const moreText = ((await more.textContent()) || "").replace(/\s+/g, " ").trim();
+      const remaining = total - 12;
+      checked += 1;
+      if (
+        initial.total !== total ||
+        initial.shown !== 12 ||
+        initial.start !== 0 ||
+        initial.count !== 12 ||
+        initial.ids[0] !== sortedIds[0] ||
+        initial.ids.at(-1) !== sortedIds[11] ||
+        !new RegExp(`再看\\s*12\\s*${unit}\\s*·\\s*余\\s*${remaining}`).test(moreText)
+      ) {
+        failures.push(
+          `[320] ${label}首批应 12/${total}(${sortedIds[0]} → ${sortedIds[11]}),` +
+            `实见 ${initial.ids[0] ?? "无"} → ${initial.ids.at(-1) ?? "无"} / ${initial.count} 行 ` +
+            `(shown ${initial.shown} / total ${initial.total}) «${moreText}»`,
+        );
+      }
+
+      await checkMoreFit(kind, label);
+      checked += 1;
+      const zoomProblems = problemsOf(await measurePage(page));
+      if (zoomProblems.length) {
+        failures.push(`[195] ${label} → ${zoomProblems.join(" / ")}`);
+      }
+
+      await page.locator(`[data-${kind}-more]`).first().click({ timeout: 5000 });
+      await waitForShown(kind, 24);
+      await waitForFocus(kind, sortedIds[12]);
+      const second = await readList(kind);
+      checked += 1;
+      if (
+        second.shown !== 24 ||
+        second.start !== 0 ||
+        second.count !== 24 ||
+        second.focus !== sortedIds[12]
+      ) {
+        failures.push(
+          `[195] ${label}续开第一批后应铺 24 条、焦点落 ${sortedIds[12]},` +
+            `实见 ${second.count} 条 / start ${second.start} / 焦点 ${second.focus ?? "无"}`,
+        );
+      }
+
+      let last = second;
+      let shownBefore = second.shown;
+      let finalFocus = sortedIds[12];
+      while (shownBefore < total) {
+        const shownAfter = Math.min(total, shownBefore + 12);
+        const focusId = sortedIds[shownBefore];
+        await page.locator(`[data-${kind}-more]`).first().click({ timeout: 5000 });
+        await waitForShown(kind, shownAfter);
+        await waitForFocus(kind, focusId);
+        last = await readList(kind);
+        const expectedStart = Math.max(0, shownAfter - 24);
+        const expectedCount = shownAfter - expectedStart;
+        checked += 1;
+        if (
+          last.shown !== shownAfter ||
+          last.start !== expectedStart ||
+          last.count !== expectedCount ||
+          last.focus !== focusId
+        ) {
+          failures.push(
+            `[195] ${label}续开到第 ${shownAfter} 条时窗口不对:` +
+              `应 ${expectedCount} 行 / start ${expectedStart} / ` +
+              `焦点 ${focusId},实见 ${last.count} 行 / start ${last.start} / ` +
+              `焦点 ${last.focus ?? "无"}(shown ${last.shown})`,
+          );
+        }
+        finalFocus = focusId;
+        shownBefore = shownAfter;
+      }
+      const expectedStart = total - 24;
+      checked += 1;
+      if (
+        last.count !== 24 ||
+        last.start !== expectedStart ||
+        last.focus !== finalFocus ||
+        last.ids.includes(sortedIds[0]) ||
+        !last.ids.includes(sortedIds.at(-1)) ||
+        (await page.locator(`[data-${kind}-more]`).count()) > 0 ||
+        (await page.locator(`[data-${kind}-prev]`).count()) === 0
+      ) {
+        failures.push(
+          `[195] ${label}末批应滑窗为 24/${total}、从第 ${expectedStart + 1} 行起、` +
+            `焦点 ${finalFocus} 并可回翻,` +
+            `实见 ${last.count} 行 / start ${last.start} / 焦点 ${last.focus ?? "无"} / ` +
+            `首批 ${last.ids.includes(sortedIds[0]) ? "仍在" : "已滑走"} / ` +
+            `末件 ${last.ids.includes(sortedIds.at(-1)) ? "在" : "缺失"}`,
+        );
+      }
+
+      const backShown = Math.max(12, Math.floor((total - 1) / 12) * 12);
+      const backStart = backShown - 24;
+      await page.locator(`[data-${kind}-prev]`).first().click({ timeout: 5000 });
+      await waitForShown(kind, backShown);
+      await waitForFocus(kind, sortedIds[backStart]);
+      const back = await readList(kind);
+      checked += 1;
+      if (
+        back.start !== backStart ||
+        back.count !== 24 ||
+        back.focus !== sortedIds[backStart] ||
+        !back.ids.includes(sortedIds[backStart])
+      ) {
+        failures.push(
+          `[195] ${label}回翻没有回到上一页:` +
+            `应 start ${backStart} / 24 行 / 焦点 ${sortedIds[backStart]},` +
+            `实见 start ${back.start} / ${back.count} 行 / 焦点 ${back.focus ?? "无"}`,
+        );
+      }
+
+      const selectedId = sortedIds[backStart + 12];
+      await page.locator(`[data-${kind}-row="${selectedId}"] button`).first().click({
+        timeout: 5000,
+      });
+      await waitForShown(kind, 12);
+      await waitForFocus(kind, selectedId);
+      const selected = await readList(kind);
+      checked += 1;
+      if (
+        selected.shown !== 12 ||
+        selected.start !== 0 ||
+        selected.count !== 12 ||
+        selected.ids[0] !== selectedId ||
+        selected.focus !== selectedId
+      ) {
+        failures.push(
+          `[195] ${label}换选后没有回到首批并露出新选:` +
+            `应 ${selectedId} 在首行 / 12 行 / 焦点同项,` +
+            `实见首行 ${selected.ids[0] ?? "无"} / ${selected.count} 行 / ` +
+            `焦点 ${selected.focus ?? "无"}(shown ${selected.shown})`,
+        );
+      }
+    }
+
+    await page.locator("[data-title-total]").waitFor({ state: "visible", timeout: 10000 });
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+    await exerciseList({
+      kind: "title",
+      label: "名号册",
+      unit: "顶",
+      total: TITLES.length,
+      sortedIds: titleSorted.map((title) => title.id),
+    });
+
+    const petTab = page.getByRole("tab", { name: /灵兽/ }).first();
+    await petTab.click({ timeout: 5000 });
+    await page.locator("[data-pet-total]").waitFor({ state: "visible", timeout: 5000 });
+    await settleVisuals(page);
+    await exerciseList({
+      kind: "pet",
+      label: "灵兽册",
+      unit: "只",
+      total: PETS.length,
+      sortedIds: petSorted.map((pet) => pet.id),
+    });
+
+    if (pageErrors.length)
+      failures.push(`[320] 名号 / 灵兽两册场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -8254,6 +8577,7 @@ const TASKS = [
   ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
   ["道侣的历世同行回看", taskBondHistoryOverflow],
   ["器魂两册的分批回看", taskSoulListOverflow],
+  ["名号与灵兽两册的分批回看", taskTitlePetOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],

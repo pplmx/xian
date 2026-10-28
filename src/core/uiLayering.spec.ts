@@ -738,6 +738,53 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(tit?.src, "全收后的那句「尽收」要直说(名号尽收),不许只有计数").toContain("名号尽收");
   });
 
+  it("名号与灵兽两册渐进铺开 —— 当前相伴置顶,余册可续开与回翻", () => {
+    const tit = FILES.find((f) => f.path === "views/TitlesView.vue");
+    expect(tit?.src, "两册都要复用长列表窗口,不许各自整册铺进 DOM").toMatch(
+      /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
+    );
+    expect(tit?.src, "名号册按 12 条一批、最多留 24 条").toMatch(
+      /TITLE_RENDER_BATCH\s*=\s*12[\s\S]{0,120}TITLE_RENDER_WINDOW\s*=\s*TITLE_RENDER_BATCH\s*\*\s*2/,
+    );
+    expect(tit?.src, "灵兽册按 12 条一批、最多留 24 条").toMatch(
+      /PET_RENDER_BATCH\s*=\s*12[\s\S]{0,120}PET_RENDER_WINDOW\s*=\s*PET_RENDER_BATCH\s*\*\s*2/,
+    );
+    expect(tit?.src, "名号只循环当前窗,不许再循环整份 titleRows").toMatch(
+      /v-for="row in titlePage\.visible"/,
+    );
+    expect(tit?.src, "灵兽只循环当前窗,不许再循环整份 petRows").toMatch(
+      /v-for="row in petPage\.visible"/,
+    );
+    for (const key of ["title", "pet"]) {
+      for (const attr of ["total", "shown", "start"]) {
+        expect(tit?.src, `${key} 册要暴露 ${attr} 读数给运行时门`).toContain(`data-${key}-${attr}`);
+      }
+      expect(tit?.src, `${key} 册要有逐行指纹`).toContain(`:data-${key}-row=`);
+      expect(tit?.src, `${key} 册要有续开入口`).toContain(`data-${key}-more`);
+      expect(tit?.src, `${key} 册要有回翻入口`).toContain(`data-${key}-prev`);
+    }
+    // 当前相伴是玩家现在的选择,必须排在已结缘者里的第一行;
+    // 原实现先按品阶排,低品阶的相伴灵兽会被更高品阶的旧收藏压到后面。
+    expect(tit?.src, "相伴灵兽必须早于品阶排序,不能只当同品阶的次序键").toMatch(
+      /Number\(b\.active\)\s*-\s*Number\(a\.active\)[\s\S]{0,160}qualityDef\(b\.def\.quality\)\.rank/,
+    );
+    // 换佩/换伴会改排序:若窗口仍停在第 N 页,新选项会被排到顶部却不在 DOM 里。
+    // 换选后回首批,并把焦点送到新选那一行;卸下则停在首批首行。
+    expect(tit?.src, "换名号后要回首批并把焦点送到新佩项").toMatch(
+      /titleLimit\.value\s*=\s*TITLE_RENDER_BATCH[\s\S]{0,120}focusListRowById\("data-title-row",\s*id\)/,
+    );
+    expect(tit?.src, "换灵兽后要回首批并把焦点送到新伴项").toMatch(
+      /petLimit\.value\s*=\s*PET_RENDER_BATCH[\s\S]{0,120}focusListRowById\("data-pet-row",\s*id\)/,
+    );
+    expect(tit?.src, "灵兽行在 195 宽下要上下叠放,不能把名字挤成竖排").toContain(
+      "tinylens:flex-col tinylens:items-stretch",
+    );
+    expect(tit?.src, "灵兽名、品阶与相伴态过窄时要换行").toMatch(
+      /class="flex flex-wrap items-center gap-x-2 gap-y-0\.5"/,
+    );
+    expect(tit?.src, "唤来 / 暂别在触屏上至少 28px 高").toContain("btn-ghost min-h-7");
+  });
+
   it("洞府营造尽善有完成感 —— 七座俱至顶的圆满,不许只沉在各自卡面", () => {
     // 各卡到了顶只会各自说「已至顶档」,整座洞府全满却没有一句话 —— 家业
     // 经营到头的圆满该有一声(与图鉴尽收/名号尽收同族)。判据读 store 的
