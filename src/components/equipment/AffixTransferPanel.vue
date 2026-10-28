@@ -7,7 +7,7 @@
  * 界面不另写一套「接不接、多少钱」。落位「新增 / 顶替」也按 transferLandings 的
  * 展示序铺开(先常见低值的,可成的在前)。
  */
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import type { EquipmentInstance } from "@/types";
 import { affixDef } from "@/data/affixes";
 import { equipmentTemplate } from "@/data/equipment";
@@ -18,6 +18,13 @@ import { useResourcesStore } from "@/stores/resources";
 import { planTransfer, transferLandings, type TransferRequest } from "@/core/affixTransfer";
 import { transferAffix, transferCandidates, transferShort } from "@/composables/useAffixTransfer";
 import { transferBlockText } from "@/ui/affixTransferText";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 
 const props = defineProps<{ source: EquipmentInstance | null }>();
 const emit = defineEmits<{ close: [] }>();
@@ -44,6 +51,24 @@ watch(
 const source = computed(() => props.source);
 const candidates = computed(() =>
   source.value && affixId.value ? transferCandidates(source.value, affixId.value) : [],
+);
+const AFFIX_CANDIDATE_RENDER_BATCH = 12;
+const AFFIX_CANDIDATE_RENDER_WINDOW = AFFIX_CANDIDATE_RENDER_BATCH * 2;
+const candidateLimit = ref(AFFIX_CANDIDATE_RENDER_BATCH);
+const candidatePage = computed(() =>
+  listWindow(candidates.value, candidateLimit.value, AFFIX_CANDIDATE_RENDER_WINDOW),
+);
+const moreCandidateText = computed(() => {
+  const next = Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.value.hidden);
+  return `再看 ${next} 件 · 余 ${candidatePage.value.hidden}`;
+});
+const previousCandidateText = computed(
+  () =>
+    `前一批 ${previousListStep(
+      candidatePage.value.shown,
+      candidates.value.length,
+      AFFIX_CANDIDATE_RENDER_BATCH,
+    )} 件`,
 );
 const target = computed(
   () => candidates.value.find((c) => c.item.uid === targetUid.value)?.item ?? null,
@@ -77,6 +102,38 @@ function pick(id: string): void {
   seal.value = false;
 }
 
+function focusCandidate(index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>("[data-affix-candidate]");
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function showMoreCandidates(): void {
+  const shownBefore = candidatePage.value.shown;
+  const shownAfter = nextListLimit(
+    shownBefore,
+    candidates.value.length,
+    AFFIX_CANDIDATE_RENDER_BATCH,
+  );
+  candidateLimit.value = shownAfter;
+  focusCandidate(firstNewVisibleIndex(shownBefore, shownAfter, AFFIX_CANDIDATE_RENDER_WINDOW));
+}
+
+function showPreviousCandidates(): void {
+  candidateLimit.value = previousListLimit(
+    candidatePage.value.shown,
+    candidates.value.length,
+    AFFIX_CANDIDATE_RENDER_BATCH,
+  );
+  focusCandidate();
+}
+
+// 换一条源词条就是换一份候选清单,窗口不能停在上一条的「第二批」。
+watch(affixId, () => {
+  candidateLimit.value = AFFIX_CANDIDATE_RENDER_BATCH;
+});
+
 function doTransfer(): void {
   if (!source.value || !target.value || !affixId.value || !plan.value) return;
   const req: TransferRequest = {
@@ -98,7 +155,7 @@ function doTransfer(): void {
         >抽走源件一条词条,落到另一件上;源件保留,被移走与被顶替的词条皆不可回</span
       >
       <button
-        class="btn-ghost ml-auto shrink-0 whitespace-nowrap !px-2 !py-0.5 text-[11px] tinylens:order-2"
+        class="btn-ghost ml-auto min-h-[28px] shrink-0 whitespace-nowrap !px-2 !py-0.5 text-[11px] tinylens:order-2"
         @click="emit('close')"
       >
         收起
@@ -130,48 +187,104 @@ function doTransfer(): void {
 
       <!-- 选目标件 -->
       <div v-if="affixId" class="mb-2">
-        <p class="mb-1 text-[10px] text-ink-faint">落到哪一件?</p>
-        <div class="scroll-pane max-h-24 space-y-1 overflow-y-auto">
+        <p
+          class="mb-1 flex flex-wrap items-baseline justify-between gap-x-2 text-[10px] text-ink-faint"
+        >
+          <span>落到哪一件?</span>
+          <span
+            v-if="candidates.length"
+            class="tabular"
+            :data-affix-candidate-total="candidates.length"
+            :data-affix-candidate-shown="candidatePage.shown"
+            :data-affix-candidate-start="candidatePage.start"
+          >
+            共 {{ candidates.length }} 件 · 现看 {{ candidatePage.start + 1 }}–{{
+              candidatePage.shown
+            }}
+          </span>
+        </p>
+        <div
+          v-if="candidatePage.start > 0 || candidatePage.hidden > 0"
+          class="mb-1 flex flex-wrap justify-center gap-1"
+        >
           <button
-            v-for="c in candidates"
+            v-if="candidatePage.start > 0"
+            type="button"
+            data-affix-candidate-prev
+            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            :aria-label="previousCandidateText"
+            @click="showPreviousCandidates"
+          >
+            {{ previousCandidateText }}
+          </button>
+          <button
+            v-if="candidatePage.hidden > 0"
+            type="button"
+            data-affix-candidate-more
+            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            :aria-label="moreCandidateText"
+            :data-promised="Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
+            @click="showMoreCandidates"
+          >
+            {{ moreCandidateText }}
+          </button>
+        </div>
+        <div class="scroll-pane max-h-24 space-y-1 overflow-y-auto">
+          <div
+            v-for="c in candidatePage.visible"
             :key="c.item.uid"
-            class="flex w-full flex-wrap items-center gap-2 rounded px-2 py-1 text-left text-[11px]"
+            :data-affix-candidate="c.item.uid"
+            tabindex="-1"
+            class="rounded"
             :class="
               c.block
-                ? 'cursor-not-allowed text-ink-faint'
+                ? 'text-ink-faint'
                 : targetUid === c.item.uid
                   ? 'bg-cinnabar/6 text-cinnabar'
-                  : 'hoverable:hover:bg-ink/5'
-            "
-            :disabled="c.block !== null"
-            @click="
-              targetUid = c.item.uid;
-              replaceId = null;
+                  : ''
             "
           >
-            <span class="whitespace-nowrap">{{ affixDef(affixId)?.name ?? affixId }} →</span>
-            <span class="whitespace-nowrap">{{
-              equipmentTemplate(c.item.templateId)?.name ?? c.item.templateId
-            }}</span>
-            <!--
-              `c.item.quality` 是品阶 **id**(excellent / profound / earth),
-              不是给玩家看的名字。坊市货架犯过同一个错 —— 这里同修:
-              取 qualityDef(...).name,并带上品阶色。
-            -->
-            <span class="whitespace-nowrap" :style="{ color: qualityDef(c.item.quality).color }"
-              >{{ qualityDef(c.item.quality).name }}·{{ c.item.tier }} 阶</span
+            <button
+              type="button"
+              class="flex min-h-[28px] w-full flex-wrap items-center gap-2 rounded px-2 py-1.5 text-left text-[11px]"
+              :class="c.block ? 'cursor-not-allowed text-ink-faint' : 'hoverable:hover:bg-ink/5'"
+              :disabled="c.block !== null"
+              @click="
+                targetUid = c.item.uid;
+                replaceId = null;
+              "
             >
-            <span class="ml-auto shrink-0 tinylens:ml-0">
-              {{ c.worn ? "已装备" : "" }}
-              {{
-                c.block === "dup"
-                  ? "已有更高"
-                  : c.block === "rank"
-                    ? `需 ≥ ${minQualityName()}`
-                    : ""
-              }}
-            </span>
-          </button>
+              <span class="shrink-0 whitespace-nowrap"
+                >{{ affixDef(affixId)?.name ?? affixId }} →</span
+              >
+              <span class="shrink-0 whitespace-nowrap">{{
+                equipmentTemplate(c.item.templateId)?.name ?? c.item.templateId
+              }}</span>
+              <!--
+                `c.item.quality` 是品阶 **id**(excellent / profound / earth),
+                不是给玩家看的名字。坊市货架犯过同一个错 —— 这里同修:
+                取 qualityDef(...).name,并带上品阶色。
+              -->
+              <span
+                class="shrink-0 whitespace-nowrap"
+                :style="{ color: qualityDef(c.item.quality).color }"
+                >{{ qualityDef(c.item.quality).name }}·{{ c.item.tier }} 阶</span
+              >
+              <span class="ml-auto shrink-0 tinylens:ml-0">
+                {{ c.worn ? "已装备" : "" }}
+                {{
+                  c.block === "dup"
+                    ? "已有更高"
+                    : c.block === "rank"
+                      ? `需 ≥ ${minQualityName()}`
+                      : ""
+                }}
+              </span>
+            </button>
+          </div>
+          <p v-if="!candidates.length" class="px-2 py-2 text-center text-[10px] text-ink-faint">
+            行囊里没有能接这一条的件。
+          </p>
         </div>
       </div>
 

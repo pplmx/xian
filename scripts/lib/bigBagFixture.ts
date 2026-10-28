@@ -7,6 +7,7 @@
  */
 import type { EquipmentInstance, QualityId } from "../../src/types";
 import { EQUIPMENT_TEMPLATES } from "../../src/data/equipment";
+import { AFFIXES } from "../../src/data/affixes";
 
 const BENCH_TIER = 14;
 const QUALITIES: QualityId[] = ["mortal", "spirit", "earth", "heaven"];
@@ -26,4 +27,37 @@ export function makeBigBagItems(count: number): EquipmentInstance[] {
       { id: "low2", roll: 1 },
     ],
   }));
+}
+
+/**
+ * 词条转移候选夹具 —— 源件挂一条无部位、无品质门槛的词条,其余整包都是候选。
+ * 源件固定成 14 阶武器,让现有的部位候选门与转移门共用同一份真实大行囊。
+ */
+export function makeAffixTransferBag(count: number) {
+  const items = makeBigBagItems(count);
+  const source = items[0];
+  if (!source) throw new Error("转移候选夹具至少需要一件源装备");
+  const weapon = EQUIPMENT_TEMPLATES.find(
+    (template) => template.tier === BENCH_TIER && template.slot === "weapon",
+  );
+  if (!weapon) throw new Error(`${BENCH_TIER} 阶没有武器模板,转移候选夹具失效`);
+  const affix = AFFIXES.find((def) => def.slots === undefined && def.minRank === undefined);
+  if (!affix) throw new Error("词条表里没有无部位、无品质门槛的转移源词条");
+
+  items[0] = {
+    ...source,
+    templateId: weapon.id,
+    // 全部藏品按品阶→层级排序;源件排进首批,运行时门才能直接从背包卡打开详情,
+    // 不必先叠一层部位候选弹窗再把背景里的旧读数算进来。
+    quality: "heaven",
+    affixes: [{ id: affix.id, roll: 0.8 }, ...source.affixes.filter((row) => row.id !== affix.id)],
+  };
+  return {
+    items,
+    sourceUid: source.uid,
+    sourceSlot: weapon.slot,
+    affixId: affix.id,
+    affixName: affix.name,
+    candidateCount: items.length - 1,
+  };
 }

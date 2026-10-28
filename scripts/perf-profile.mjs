@@ -85,7 +85,8 @@ const BUDGET = {
   /**
    * 背包一次只留 32 张卡,可前后逐批翻完 300 件;80 张一窗实测 1048,故不设两批。
    * 法宝全册 45 张密卡按 6+6 滑窗,全流程峰值 401;丹方 54 张同窗,峰值 609。
-   * 两者单独守 1100,不松动背包首屏预算。
+   * 词条转移 299 件候选按 12+12 滑窗,逐批开完峰值 913。三条密清单单独守 1100,
+   * 不松动背包首屏预算。
    * 坊市是短横条/弹窗行,每窗最多 64 条;寄卖与贡器都逐页翻到末页再回翻一批。
    * 收藏每册每窗最多 48 枚,九册都翻到末页再回翻;809 条整页全铺实测 1326 DOM。
    * 1100 拦的是窗口上限失效、点击越多 DOM 越长的回潮。
@@ -179,6 +180,7 @@ const ITEM_FINGERPRINT_ATTRS = [
   "data-slot-candidate",
   "data-artifact-row",
   "data-recipe-row",
+  "data-affix-candidate",
   "data-codex-id",
 ];
 
@@ -457,6 +459,7 @@ async function loadBenchModules(needsCollection, needsBigBag, needsArtifacts, ne
       fullRecipeSlices: null,
       fullRecipeCount: 0,
       makeBigBagItems: null,
+      makeAffixTransferBag: null,
     };
   }
   const vite = await createViteServer({
@@ -483,6 +486,7 @@ async function loadBenchModules(needsCollection, needsBigBag, needsArtifacts, ne
       fullRecipeSlices: recipes?.fullRecipeSlices ?? null,
       fullRecipeCount: recipes?.FULL_RECIPE_COUNT ?? 0,
       makeBigBagItems: bag?.makeBigBagItems ?? null,
+      makeAffixTransferBag: bag?.makeAffixTransferBag ?? null,
     };
   } finally {
     await vite.close();
@@ -496,6 +500,7 @@ const {
   fullRecipeSlices,
   fullRecipeCount,
   makeBigBagItems,
+  makeAffixTransferBag,
 } = await loadBenchModules(
   !noSeed && (!only || only === "collection"),
   !noSeed && bigbag > 0 && (!only || only === "inventory" || only === "market"),
@@ -517,6 +522,7 @@ for (const view of VIEWS) {
   try {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     let slices = (fixture === "showcase" ? showcaseSlices : lateSlices)("light");
+    let affixTransferFixture = null;
     if (view.name === "collection") {
       if (!fullCollectionSlices) throw new Error("全收集夹具未载入");
       slices = { ...slices, ...fullCollectionSlices() };
@@ -539,9 +545,22 @@ for (const view of VIEWS) {
     if (bigbag > 0 && (view.name === "inventory" || view.name === "market")) {
       // 造 bigbag 件装备进背包,把「几百件装备的列表重渲染」逼出来 —— 这才是
       // 这类放置游戏 jank 的真实来源(小包 2-3 件量不出列表成本)。
-      if (!makeBigBagItems) throw new Error("大背包夹具未载入");
-      const items = makeBigBagItems(bigbag);
-      slices = { ...slices, inventory: { ...slices.inventory, items } };
+      if (view.name === "inventory") {
+        if (!makeAffixTransferBag) throw new Error("转移候选夹具未载入");
+        affixTransferFixture = makeAffixTransferBag(bigbag);
+        slices = {
+          ...slices,
+          inventory: {
+            ...slices.inventory,
+            items: affixTransferFixture.items,
+            equipped: { [affixTransferFixture.sourceSlot]: affixTransferFixture.sourceUid },
+          },
+        };
+      } else {
+        if (!makeBigBagItems) throw new Error("大背包夹具未载入");
+        const items = makeBigBagItems(bigbag);
+        slices = { ...slices, inventory: { ...slices.inventory, items } };
+      }
     }
     await seedSave(context, slices);
     const page = await context.newPage();
@@ -564,6 +583,7 @@ for (const view of VIEWS) {
     let artifactBatches = null;
     let recipeBatches = null;
     let slotCandidates = null;
+    let affixTransfer = null;
     let marketBatches = null;
     let collectionBatches = null;
     let peakNodes = data.nodes;
@@ -665,6 +685,91 @@ for (const view of VIEWS) {
       if ((await equipTab.count()) === 0) throw new Error("装备页签不存在");
       await equipTab.click({ timeout: 3000 });
       await page.waitForTimeout(120);
+      try {
+        if (!affixTransferFixture) throw new Error("转移候选夹具未带进当前视图");
+        for (let i = 0; i < 20; i += 1) {
+          const previous = page.locator("[data-inventory-prev]").first();
+          if ((await previous.count()) === 0) break;
+          await previous.click({ timeout: 3000 });
+        }
+        const sourceCard = page.locator(
+          `main button[data-uid="${affixTransferFixture.sourceUid}"]`,
+        );
+        await sourceCard.waitFor({ state: "visible", timeout: 3000 });
+        await sourceCard.click({ timeout: 3000 });
+        await page
+          .getByRole("button", { name: /词条转移 · 移至别件/ })
+          .first()
+          .click({ timeout: 3000 });
+        await page
+          .getByRole("button", { name: affixTransferFixture.affixName, exact: true })
+          .first()
+          .click({ timeout: 3000 });
+        await page
+          .locator("[data-affix-candidate-total]")
+          .first()
+          .waitFor({ state: "visible", timeout: 3000 });
+        const total = Number(
+          await page
+            .locator("[data-affix-candidate-total]")
+            .first()
+            .getAttribute("data-affix-candidate-total"),
+        );
+        if (total !== affixTransferFixture.candidateCount) {
+          throw new Error(
+            `转移夹具只装进 ${total} 件候选,承诺 ${affixTransferFixture.candidateCount} 件`,
+          );
+        }
+        affixTransfer = await expandAllBatches(
+          page,
+          "[data-affix-candidate]",
+          "button[data-affix-candidate-more]",
+          {
+            selector: "[data-affix-candidate-total]",
+            attribute: "data-affix-candidate-total",
+            count: affixTransferFixture.candidateCount,
+          },
+          {
+            startSelector: "[data-affix-candidate-total]",
+            startAttribute: "data-affix-candidate-start",
+            previousSelector: "button[data-affix-candidate-prev]",
+          },
+        );
+        await page.keyboard.press("Escape");
+      } catch (error) {
+        await page.keyboard.press("Escape").catch(() => {});
+        const pageState = await page
+          .evaluate((uid) => ({
+            hash: location.hash,
+            tabs: [...document.querySelectorAll("[role=tab]")].map((el) =>
+              (el.textContent || "").trim(),
+            ),
+            inventoryTotal:
+              document
+                .querySelector("[data-inventory-total]")
+                ?.getAttribute("data-inventory-total") ?? null,
+            cards: [...document.querySelectorAll("main button[data-uid]")]
+              .slice(0, 16)
+              .map((el) => el.getAttribute("data-uid")),
+            sourceCards: document.querySelectorAll(`main button[data-uid="${String(uid)}"]`).length,
+          }))
+          .catch(() => null);
+        affixTransfer = {
+          before: 0,
+          promised: 0,
+          after: 0,
+          steps: 0,
+          slides: 0,
+          peakNodes: 0,
+          ok: false,
+          reason: `${String(error)}${pageState ? `; 当前 ${JSON.stringify(pageState)}` : ""}`,
+        };
+      }
+      await page
+        .locator("[data-affix-candidate-total]")
+        .first()
+        .waitFor({ state: "detached", timeout: 3000 })
+        .catch(() => {});
       try {
         const trigger = page.locator('[data-equip-slot="weapon"]').first();
         if ((await trigger.count()) === 0) throw new Error("没有武器槽入口");
@@ -824,6 +929,7 @@ for (const view of VIEWS) {
       artifactBatches,
       recipeBatches,
       slotCandidates,
+      affixTransfer,
       marketBatches,
       collectionBatches,
       errors,
@@ -844,6 +950,7 @@ function batchChecks(r) {
   if (r.artifactBatches) checks.push(["法宝续开", r.artifactBatches]);
   if (r.recipeBatches) checks.push(["丹方续开", r.recipeBatches]);
   if (r.slotCandidates) checks.push(["部位候选续开", r.slotCandidates]);
+  if (r.affixTransfer) checks.push(["词条转移续开", r.affixTransfer]);
   if (r.marketBatches?.consign) checks.push(["寄卖续开", r.marketBatches.consign]);
   if (r.marketBatches?.candidates) checks.push(["贡器续开", r.marketBatches.candidates]);
   for (const batch of r.collectionBatches ?? []) checks.push([`收藏/${batch.key}续开`, batch]);
@@ -857,7 +964,7 @@ for (const r of results) {
       ([label, b]) =>
         `${label}=${b.before}→${b.after}${b.steps > 1 ? `(${b.steps}批/滑${b.slides})` : ""}${
           b.finalNodes && b.finalNodes !== b.peakNodes ? ` 收=${b.finalNodes}` : ""
-        }${["法宝续开", "丹方续开", "部位候选续开"].includes(label) && b.peakNodes ? ` peak=${b.peakNodes}` : ""}`,
+        }${["法宝续开", "丹方续开", "部位候选续开", "词条转移续开"].includes(label) && b.peakNodes ? ` peak=${b.peakNodes}` : ""}`,
     )
     .join(" ");
   const deepDom = (r.peakNodes ?? r.nodes) !== r.nodes ? ` peak=${r.peakNodes}` : "";
@@ -893,6 +1000,10 @@ for (const r of results) {
     failures.push(
       `${r.name}: 丹方全册 DOM ${r.recipeBatches.peakNodes} > 1100 —— 方子是否又整册进弹窗了`,
     );
+  else if (gate && r.affixTransfer?.peakNodes > 1100)
+    failures.push(
+      `${r.name}: 词条转移候选 DOM ${r.affixTransfer.peakNodes} > 1100 —— 整包候选是否又铺进小滚动框了`,
+    );
   else if (gate && checks.some(([, b]) => !b.ok)) {
     const [label, bad] = checks.find(([, b]) => !b.ok);
     failures.push(
@@ -902,7 +1013,7 @@ for (const r of results) {
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxDomByView.collection} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxDomByView.collection} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);

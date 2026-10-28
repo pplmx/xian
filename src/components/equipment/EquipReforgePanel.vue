@@ -364,7 +364,7 @@ function triesOf(id: string, minRoll = 0): number | null {
     </p>
     <button
       v-if="reforgeCostVal"
-      class="btn-ghost w-full !py-1 !text-[11px]"
+      class="btn-ghost min-h-[28px] w-full !py-1 !text-[11px]"
       :aria-expanded="autoOpen"
       :title="autoOpen ? undefined : '洗到指定词条即停'"
       @click="autoOpen = !autoOpen"
@@ -372,7 +372,7 @@ function triesOf(id: string, minRoll = 0): number | null {
       {{ autoOpen ? "收起自动重铸" : "自动重铸" }}
     </button>
     <button
-      class="btn-ghost w-full !py-1 !text-[11px]"
+      class="btn-ghost min-h-[28px] w-full !py-1 !text-[11px]"
       :aria-expanded="transferOpen"
       @click="transferOpen = !transferOpen"
     >

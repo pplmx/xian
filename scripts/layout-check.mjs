@@ -166,6 +166,9 @@
  *      再回翻,随身 / 炼化改序后焦点仍要跟住同一件;整页不许被双按钮或代价行挤坏。
  *   五十八 开炉丹方共 54 张,按 6 张一批、最多留 12 张。搜索换词要重置窗口且不抢
  *      输入焦点;195 宽下逐批翻到末页再回翻,炼制耗料改序后焦点仍要跟住同一张方。
+ *   五十九 词条转移的候选是整包装备的横切面:无部位限制的词条能落到全部藏品上。
+ *      195 宽下按 12 件一批、最多留 24 件逐批翻到末页再回翻,续开焦点跟住新批;
+ *      候选行、件数读数与两枚入口都不许把详情弹窗挤坏。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -9043,6 +9046,250 @@ async function taskRecipeListOverflow() {
 }
 
 /**
+ * 词条转移候选 —— 无部位限制的词条能落到整包藏品上,max-h-24 只裁视觉不裁 DOM。
+ *
+ * 夹具用满 120 格行囊,源件是佩戴中的天品武器、挂一条无门槛词条,其余 119 件全是候选。
+ * 从天品置顶的全藏品卡直接开详情,避免把部位候选弹窗叠在下面量进无干读数。
+ * 195 宽下验证 12 件首批、24 件滑窗、逐批到末页再回翻,焦点跟住新露出第一件;
+ * 候选行与件数读数、续开/回翻入口也不许把装备详情弹窗挤坏。
+ */
+async function taskAffixTransferOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  let vite = null;
+  try {
+    vite = await createViteServer({
+      root: ROOT,
+      server: { middlewareMode: true },
+      appType: "custom",
+      logLevel: "silent",
+    });
+    const fixtureModule = await vite.ssrLoadModule("/scripts/lib/bigBagFixture.ts");
+    const fixture = fixtureModule.makeAffixTransferBag(120);
+    const total = Number(fixture.candidateCount);
+    const slices = showcaseSlices("light");
+    slices.inventory = {
+      ...slices.inventory,
+      items: fixture.items,
+      equipped: { [fixture.sourceSlot]: fixture.sourceUid },
+      artifacts: [],
+      equippedArtifacts: [],
+    };
+    await seedSave(ctx, slices, "__affixTransferFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/inventory", { waitUntil: "load" });
+    const sourceCard = page.locator(`main button[data-uid="${fixture.sourceUid}"]`);
+    await sourceCard.waitFor({ state: "visible", timeout: 10000 });
+    await sourceCard.click({ timeout: 5000 });
+    await page
+      .getByRole("button", { name: /词条转移 · 移至别件/ })
+      .first()
+      .click({ timeout: 5000 });
+    await page
+      .getByRole("button", { name: fixture.affixName, exact: true })
+      .first()
+      .click({ timeout: 5000 });
+    await page
+      .locator("[data-affix-candidate-total]")
+      .first()
+      .waitFor({ state: "visible", timeout: 5000 });
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+
+    async function readList() {
+      return page.evaluate(() => {
+        const holder = document.querySelector("[data-affix-candidate-total]");
+        const rows = [...document.querySelectorAll("[data-affix-candidate]")];
+        return {
+          total: Number(holder?.getAttribute("data-affix-candidate-total")),
+          shown: Number(holder?.getAttribute("data-affix-candidate-shown")),
+          start: Number(holder?.getAttribute("data-affix-candidate-start")),
+          count: rows.length,
+          ids: rows.map((row) => row.getAttribute("data-affix-candidate")),
+          focus: document.activeElement?.getAttribute("data-affix-candidate"),
+        };
+      });
+    }
+
+    async function waitForShown(shown) {
+      await page.waitForFunction(
+        (wanted) =>
+          document
+            .querySelector("[data-affix-candidate-total]")
+            ?.getAttribute("data-affix-candidate-shown") === String(wanted),
+        shown,
+        { timeout: 5000 },
+      );
+    }
+
+    async function waitForFocus(id) {
+      await page
+        .waitForFunction(
+          (rowId) => document.activeElement?.getAttribute("data-affix-candidate") === rowId,
+          id,
+          { timeout: 2000 },
+        )
+        .catch(() => {});
+    }
+
+    const initial = await readList();
+    const more = page.locator("[data-affix-candidate-more]").first();
+    const moreText = ((await more.textContent()) || "").replace(/\s+/g, " ").trim();
+    checked += 1;
+    if (
+      initial.total !== total ||
+      initial.shown !== 12 ||
+      initial.start !== 0 ||
+      initial.count !== 12 ||
+      !new RegExp(`再看\\s*12\\s*件\\s*·\\s*余\\s*${total - 12}`).test(moreText)
+    ) {
+      failures.push(
+        `[195] 词条转移候选首批应 12/${total},实见 ${initial.count} 行 ` +
+          `(shown ${initial.shown} / total ${initial.total}) «${moreText}»`,
+      );
+    }
+
+    const fit = await more.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return {
+        left: box.left,
+        right: box.right,
+        height: box.height,
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+        viewport: window.innerWidth,
+      };
+    });
+    checked += 1;
+    if (
+      fit.left < -1 ||
+      fit.right > fit.viewport + 1 ||
+      fit.scrollWidth > fit.clientWidth + 1 ||
+      fit.height < 27.5
+    ) {
+      failures.push(
+        `[195] 词条转移续开入口被挤坏:盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+          `内容 ${fit.scrollWidth}>${fit.clientWidth} / 高 ${Math.round(fit.height * 10) / 10}px`,
+      );
+    }
+    const panelOverflow = await page
+      .locator("[data-affix-candidate-total]")
+      .first()
+      .evaluate((el) => {
+        const panel = el.closest(".modal-panel");
+        return {
+          scrollWidth: panel?.scrollWidth ?? 0,
+          clientWidth: panel?.clientWidth ?? 0,
+        };
+      });
+    checked += 1;
+    if (panelOverflow.scrollWidth > panelOverflow.clientWidth + 1) {
+      failures.push(
+        `[195] 词条转移弹窗横向溢出:${panelOverflow.scrollWidth}>${panelOverflow.clientWidth}`,
+      );
+    }
+    checked += 1;
+    const layoutProblems = problemsOf(await measurePage(page));
+    if (layoutProblems.length)
+      failures.push(`[195] 词条转移候选册 → ${layoutProblems.join(" / ")}`);
+
+    await more.click({ timeout: 5000 });
+    await waitForShown(24);
+    const second = await readList();
+    await waitForFocus(second.ids[12]);
+    const secondFocused = await readList();
+    checked += 1;
+    if (
+      second.shown !== 24 ||
+      second.start !== 0 ||
+      second.count !== 24 ||
+      secondFocused.focus !== second.ids[12]
+    ) {
+      failures.push(
+        `[195] 词条转移续开首批后应铺 24 件、焦点落第 13 件,` +
+          `实见 ${second.count} 件 / start ${second.start} / 焦点 ${secondFocused.focus ?? "无"}`,
+      );
+    }
+
+    let last = secondFocused;
+    while (last.shown < total) {
+      const shownBefore = last.shown;
+      const shownAfter = Math.min(total, shownBefore + 12);
+      await page.locator("[data-affix-candidate-more]").first().click({ timeout: 5000 });
+      await waitForShown(shownAfter);
+      const shown = await readList();
+      const expectedStart = Math.max(0, shownAfter - 24);
+      const focusIndex = shownBefore - expectedStart;
+      await waitForFocus(shown.ids[focusIndex]);
+      const focused = await readList();
+      checked += 1;
+      if (
+        shown.shown !== shownAfter ||
+        shown.start !== expectedStart ||
+        shown.count !== shownAfter - expectedStart ||
+        focused.focus !== shown.ids[focusIndex]
+      ) {
+        failures.push(
+          `[195] 词条转移续开到第 ${shownAfter} 件时窗口不对:` +
+            `应 ${shownAfter - expectedStart} 行 / start ${expectedStart} / ` +
+            `焦点 ${shown.ids[focusIndex]},实见 ${shown.count} 行 / start ${shown.start} / ` +
+            `焦点 ${focused.focus ?? "无"}(shown ${shown.shown})`,
+        );
+      }
+      last = shown;
+    }
+
+    const lastStart = total - 24;
+    const previous = page.locator("[data-affix-candidate-prev]").first();
+    const previousText = ((await previous.textContent()) || "").replace(/\s+/g, " ").trim();
+    checked += 1;
+    if (
+      last.count !== 24 ||
+      last.start !== lastStart ||
+      (await page.locator("[data-affix-candidate-more]").count()) > 0 ||
+      !new RegExp(`前一批\\s*11\\s*件`).test(previousText)
+    ) {
+      failures.push(
+        `[195] 词条转移末批应滑窗为 24/${total}、从第 ${lastStart + 1} 件起,` +
+          `回翻入口报「前一批 11 件」,实见 ${last.count} 件 / start ${last.start} / «${previousText}»`,
+      );
+    }
+
+    await previous.click({ timeout: 5000 });
+    await waitForShown(108);
+    const back = await readList();
+    await waitForFocus(back.ids[0]);
+    const backFocused = await readList();
+    checked += 1;
+    if (back.start !== 84 || back.count !== 24 || backFocused.focus !== back.ids[0]) {
+      failures.push(
+        `[195] 词条转移回翻没有回到上一页:应 start 84 / 24 件 / 焦点页首,` +
+          `实见 start ${back.start} / ${back.count} 件 / 焦点 ${backFocused.focus ?? "无"}`,
+      );
+    }
+
+    if (pageErrors.length)
+      failures.push(`[320] 词条转移候选场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+    await vite?.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -9211,6 +9458,7 @@ const TASKS = [
   ["名号与灵兽两册的分批回看", taskTitlePetOverflow],
   ["法宝全册的分批回看", taskArtifactListOverflow],
   ["开炉丹方的分批回看", taskRecipeListOverflow],
+  ["词条转移候选的分批回看", taskAffixTransferOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],

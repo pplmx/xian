@@ -917,6 +917,50 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("词条转移候选渐进铺开 —— 大行囊不许整册塞进小滚动框", () => {
+    // 转移候选是整包装备的横切面:不限部位的词条能落到所有藏品上。max-h-24
+    // 只裁掉眼睛看到的部分,DOM 仍会随行囊长满;候选也要走同一套长列表规则。
+    const xfer = FILES.find((f) => f.path === "components/equipment/AffixTransferPanel.vue");
+    expect(xfer?.src, "转移候选要复用长列表窗口").toMatch(
+      /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
+    );
+    expect(xfer?.src, "候选按 12 件一批、最多留 24 件").toMatch(
+      /AFFIX_CANDIDATE_RENDER_BATCH\s*=\s*12[\s\S]{0,160}AFFIX_CANDIDATE_RENDER_WINDOW\s*=\s*AFFIX_CANDIDATE_RENDER_BATCH\s*\*\s*2/,
+    );
+    expect(xfer?.src, "只循环当前窗口,不许再整包铺开").toMatch(
+      /v-for="c in candidatePage\.visible"/,
+    );
+    for (const attr of ["total", "shown", "start"]) {
+      expect(xfer?.src, `候选册要暴露 ${attr} 读数给运行时门`).toContain(
+        `data-affix-candidate-${attr}`,
+      );
+    }
+    expect(xfer?.src, "候选行要有稳定指纹与可编程焦点").toContain(":data-affix-candidate=");
+    expect(xfer?.src, "候选三段读数不许在窄屏被压成竖排").toContain(
+      'class="shrink-0 whitespace-nowrap"',
+    );
+    expect(xfer?.src, "候选行要给足 28px 触控高度").toContain("flex min-h-[28px]");
+    expect(xfer?.src, "余件要能续开").toContain("data-affix-candidate-more");
+    expect(xfer?.src, "滑走的批次要能回翻").toContain("data-affix-candidate-prev");
+    expect(xfer?.src, "续开焦点要落到新露出的第一件").toMatch(
+      /firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*AFFIX_CANDIDATE_RENDER_WINDOW\s*\)/,
+    );
+    expect(xfer?.src, "换一条源词条就是换一份候选,窗口要回首批").toMatch(
+      /watch\(\s*affixId,\s*\(\)\s*=>\s*\{\s*candidateLimit\.value\s*=\s*AFFIX_CANDIDATE_RENDER_BATCH;?\s*\}\)/,
+    );
+    const fixture = readFileSync(resolve(__dirname, "../../scripts/lib/bigBagFixture.ts"), "utf8");
+    expect(fixture, "转移规模夹具从词条表挑无部位限制的源词条").toContain("makeAffixTransferBag");
+    expect(fixture, "源词条不许手写 id").toContain("AFFIXES.find");
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf8");
+    expect(perf, "运行时门要按候选行落点核对件数").toContain('"[data-affix-candidate]"');
+    expect(perf, "运行时门要逐批翻完整候选册").toContain("button[data-affix-candidate-more]");
+    expect(perf, "报告要单列词条转移候选的续开结果").toContain("词条转移续开");
+    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+    expect(layout, "195 宽要逐批翻完转移候选并复核焦点").toContain(
+      '["词条转移候选的分批回看", taskAffixTransferOverflow]',
+    );
+  });
+
   it("洞府营造尽善有完成感 —— 七座俱至顶的圆满,不许只沉在各自卡面", () => {
     // 各卡到了顶只会各自说「已至顶档」,整座洞府全满却没有一句话 —— 家业
     // 经营到头的圆满该有一声(与图鉴尽收/名号尽收同族)。判据读 store 的
