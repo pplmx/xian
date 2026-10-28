@@ -172,7 +172,7 @@ export function stopExploration(reason: "manual" | "defeat" | "complete"): void 
   if (s.wins + s.losses >= 3 || reason === "complete") {
     track("explores");
   }
-  // 总结带上这一趟的实际所得(会话账目即 afterWin 的真实入账)。
+  // 总结带上这一趟的实际所得 —— 战斗 afterWin 与际遇结算写进同一份会话账。
   // 战绩报「胜/负」两本账:只报胜场时,「胜 2 场」分不出是两战全胜还是九战两胜,
   // 而这恰恰是「这趟值不值得再来」与「胜+负 ≥3 才算走过一趟」要看的数。
   const record = sessionRecordText(s);

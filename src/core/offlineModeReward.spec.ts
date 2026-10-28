@@ -163,6 +163,24 @@ describe("离线 events 封顶 40 不蒸发超额遭遇 · 非事即战闭合", 
     // 旧实现 battles 按「未封顶的 events」取差,events>40 时遭遇=事+战少了(544<600)
     expect(s!.battles + s!.events, "遭遇 = 事 + 战,全数闭合").toBe(540);
   });
+
+  it("际遇写进会话的收益,不被离线收尾的旧会话覆盖", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const adventure = useAdventureStore();
+    const resources = useResourcesStore();
+    // 夜遇同道默认彻夜长谈,首项固定给 5 点悟道;rng mock 保证必走首项。
+    adventure.setPendingEvent("ev_night_talk", useGameStore().lastActiveAt);
+    const wudaoBefore = resources.wudao;
+
+    settleOffline(Date.now())!;
+
+    expect(resources.wudao, "预置的待决际遇应先真实结算").toBeGreaterThan(wudaoBefore);
+    expect(
+      adventure.session!.wudaoGain,
+      "事件收益已写进当前会话;收尾若拿结算前的旧 session 展开就会把它覆盖成 0",
+    ).toBeGreaterThanOrEqual(5);
+  });
 });
 
 describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", () => {

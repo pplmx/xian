@@ -4,6 +4,7 @@
 import type { EventChoice, EventDef, EventEffect, RegionDef } from "@/types";
 import { RandomService, rng } from "@/utils/random";
 import { formatGN, formatNum, formatPercent, formatYears } from "@/utils/format";
+import { add, subClamp } from "@/utils/gnum";
 import { EVENTS, FORTUNE_EVENTS, eventDef } from "@/data/events";
 import { CHAINS, CHAIN_EVENTS, chainOfEvent } from "@/data/chains";
 import { realmDef } from "@/data/realms";
@@ -370,8 +371,36 @@ export interface EventResolution {
  * 事件结算走库的抉择层(见 packages/engine 的 choices):加权掷后果、逐条解释效果、
  * 回执照收;效果怎么解释仍是本作的事(下面那个 `interpret`)。
  */
-export const CHOICES = createChoiceSystem<EventEffect, number>({
-  interpret: (effect, tier) => applyEffect(effect, tier),
+interface EventApplyContext {
+  tier: number;
+  /** 解释器逐条结算时累计的实物件数;回执只有文案,数量得在结算当场记。 */
+  itemGain: number;
+}
+
+/**
+ * 一条效果算不算「拾获」。口径与战斗掉落一致:
+ * 装备 / 丹药 / 法宝各算实物,残页按一次命中算一件;材料、悟道与知识不算。
+ */
+function itemGainOf(effect: EventEffect): number {
+  switch (effect.type) {
+    case "equipment":
+    case "artifact":
+      return 1;
+    case "pill":
+      return Number.isFinite(effect.count) ? Math.max(0, Math.floor(effect.count)) : 0;
+    case "material":
+      return effect.id === "page" && effect.amount > 0 ? 1 : 0;
+    default:
+      return 0;
+  }
+}
+
+export const CHOICES = createChoiceSystem<EventEffect, EventApplyContext>({
+  interpret: (effect, ctx) => {
+    const line = applyEffect(effect, ctx.tier);
+    if (line) ctx.itemGain += itemGainOf(effect);
+    return line;
+  },
 });
 
 /** 本作的选项 → 库认的形状(只差一个"能不能选"的包装) */
@@ -392,15 +421,25 @@ export function resolveEventChoice(
   tier: number,
 ): EventResolution {
   const adventure = useAdventureStore();
+  const player = usePlayerStore();
   const resources = useResourcesStore();
   const choice = def.choices[choiceIdx] ?? def.choices[0]!;
-  // 会话账:际遇给的悟道(含重复法宝折化)逐次写进这一趟 —— 结束总结才报得出数,离线早用同口径
+  // 会话账:际遇给的灵石 / 修为 / 实物 / 悟道逐次写进这一趟。
+  // 结束总结与战斗面板都读这同一份,不能让事件收益只出现在弹窗里。
+  const stoneBefore = { ...resources.spiritStone };
+  const expBefore = { ...player.exp };
   const wudaoBefore = resources.wudao;
-  const receipt = CHOICES.resolve(asChoice(choice, tier), tier, rng);
+  const applyCtx: EventApplyContext = { tier, itemGain: 0 };
+  const receipt = CHOICES.resolve(asChoice(choice, tier), applyCtx, rng);
   const session = adventure.session;
-  const gained = resources.wudao - wudaoBefore;
-  if (session && gained > 0) {
-    adventure.setSession({ ...session, wudaoGain: session.wudaoGain + gained });
+  if (session) {
+    adventure.setSession({
+      ...session,
+      stoneGain: add(session.stoneGain, subClamp(resources.spiritStone, stoneBefore)),
+      expGain: add(session.expGain, subClamp(player.exp, expBefore)),
+      itemGain: session.itemGain + applyCtx.itemGain,
+      wudaoGain: session.wudaoGain + Math.max(0, resources.wudao - wudaoBefore),
+    });
   }
   if (def.once) adventure.markEventSeen(def.id);
   collect("event", def.id);
@@ -410,7 +449,7 @@ export function resolveEventChoice(
   const chain = chainOfEvent(def.id);
   if (chain) {
     const ended = def.choices[choiceIdx]?.endsChain ?? false;
-    usePlayerStore().setEventChain(
+    player.setEventChain(
       chain.chain.id,
       // 断缘记负哨兵,与「走完」区分:奇缘录据此标「缘断」而非「已了」
       ended ? -chain.chain.stages.length : chain.stage + 1,
@@ -434,7 +473,7 @@ export function autoResolveEvent(eventId: string, tier: number): EventResolution
   // 三级兜底(默认且可选 → 第一条可选 → 第一条)由库回答,免得界面与离线各写一遍
   const idx = CHOICES.defaultIndex(
     def.choices.map((c) => asChoice(c, tier)),
-    tier,
+    { tier, itemGain: 0 },
   );
   return resolveEventChoice(def, idx, tier);
 }

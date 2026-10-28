@@ -92,7 +92,7 @@ describe("事件抉择对账 —— 掷后果与兜底逐次相同", () => {
         if (def.choices.length === 0) continue;
         const now = CHOICES.defaultIndex(
           def.choices.map((c) => asChoice(c, TIER)),
-          TIER,
+          { tier: TIER, itemGain: 0 },
         );
         expect(now, `${def.id}`).toBe(refDefaultIndex(def, TIER));
         compared += 1;
@@ -112,7 +112,11 @@ describe("事件抉择对账 —— 掷后果与兜底逐次相同", () => {
     if (!withStone) return; // 内容里若一个都没有,这条不适用
     usePlayerStore().major = 8;
     useResourcesStore().spiritStone = { m: 1, e: 12 }; // 够付
-    const receipt = CHOICES.resolve(asChoice(withStone.choice, TIER), TIER, createRng(3));
+    const receipt = CHOICES.resolve(
+      asChoice(withStone.choice, TIER),
+      { tier: TIER, itemGain: 0 },
+      createRng(3),
+    );
     expect(receipt.text).toBe(refRoll(withStone.choice, 3));
     for (const line of receipt.lines) expect(typeof line).toBe("string");
   });

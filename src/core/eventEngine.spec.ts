@@ -11,7 +11,7 @@
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import type { EventDef } from "@/types";
-import { add, gn, gte, mulN, sub } from "@/utils/gnum";
+import { add, gn, gte, mulN, sub, toNum } from "@/utils/gnum";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useAdventureStore } from "@/stores/adventure";
@@ -73,7 +73,7 @@ describe("事件结算 · 灵石代价守恒", () => {
   });
 });
 
-describe("事件悟道入会话账(haul 要有数可报)", () => {
+describe("事件收益入会话账(haul 与战斗面板要有数可报)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
@@ -112,6 +112,71 @@ describe("事件悟道入会话账(haul 要有数可报)", () => {
     resolveEventChoice(def, 1, 1);
     expect(resources.wudao - before).toBe(4);
     expect(adventure.session).toBeNull();
+  });
+
+  it("事件给的灵石、修为与实物也计入会话,不只记悟道", () => {
+    const player = usePlayerStore();
+    player.initCharacter("际遇记账", { roots: [] } as never);
+    const resources = useResourcesStore();
+    const adventure = useAdventureStore();
+    // 先结清首次计数触发的日课/成就,基线只量这次际遇本身;别把别的奖励混进来。
+    track("events");
+    adventure.$patch({
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: 0,
+        endsAt: 1_000_000,
+        nextBattleAt: 0,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: gn(0),
+        expGain: gn(0),
+        itemGain: 0,
+        wudaoGain: 0,
+      },
+    });
+    const stoneBefore = { ...resources.spiritStone };
+    const expBefore = { ...player.exp };
+    const def: EventDef = {
+      id: "ev_test_session_gain",
+      title: "山道遗落",
+      text: "",
+      tags: ["general"],
+      weight: 1,
+      choices: [
+        {
+          label: "全部收下",
+          outcomes: [
+            {
+              weight: 1,
+              text: "你收起散落的行囊。",
+              effects: [
+                { type: "stone", tierAmount: 60 },
+                { type: "exp", secs: 60 },
+                { type: "material", id: "page", amount: 8 },
+                { type: "pill", id: "p_jvqidan", count: 2 },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const res = resolveEventChoice(def, 0, 3);
+    const session = adventure.session!;
+
+    expect(res.lines).toHaveLength(4);
+    expect(toNum(session.stoneGain), "事件给的灵石没入本次所得").toBeCloseTo(
+      toNum(sub(resources.spiritStone, stoneBefore)),
+      6,
+    );
+    expect(toNum(session.expGain), "事件给的修为没入本次所得").toBeCloseTo(
+      toNum(sub(player.exp, expBefore)),
+      6,
+    );
+    expect(session.itemGain, "残页一份 + 丹药两枚,都应算拾获").toBe(3);
   });
 });
 

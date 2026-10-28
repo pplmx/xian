@@ -721,15 +721,18 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         track("explores");
         notes.push(`${region.name}之行圆满结束`);
       } else {
+        // 际遇会把收益实时叠进当前会话;收尾必须以这份最新账为底,
+        // 再并入整段战斗的 trip,否则拿进入循环前的旧 session 展开会把际遇覆盖掉。
+        const current = adventure.session ?? session;
         adventure.setSession({
-          ...session,
-          wins: session.wins + sessionWins,
-          losses: session.losses + sessionLosses,
-          events: session.events + events,
+          ...current,
+          wins: current.wins + sessionWins,
+          losses: current.losses + sessionLosses,
+          events: current.events + events,
           // 挂机所得计入这趟总账(与在线同一份会话字段,回来接着打的数才是整趟的数)
-          stoneGain: add(session.stoneGain, trip.stone),
-          expGain: add(session.expGain, trip.exp),
-          itemGain: session.itemGain + trip.items,
+          stoneGain: add(current.stoneGain, trip.stone),
+          expGain: add(current.expGain, trip.exp),
+          itemGain: current.itemGain + trip.items,
           // 与在线 nextBattleTime 同源:速度加成要除以 speed,否则恢复后首战被拖慢一拍
           nextBattleAt: nowMs + (EXPLORE_BATTLE_INTERVAL * 1000) / speed,
         });

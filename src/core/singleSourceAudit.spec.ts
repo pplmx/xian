@@ -98,8 +98,8 @@ describe("同源审计 · 历练收益账", () => {
 
   it("离线把挂机所得折进会话(回来接着打时面板不漏离线段)", () => {
     const src = readSrc("offline.ts");
-    expect(src).toMatch(/stoneGain:\s*add\(session\.stoneGain/);
-    expect(src).toMatch(/expGain:\s*add\(session\.expGain/);
+    expect(src).toMatch(/stoneGain:\s*add\(current\.stoneGain/);
+    expect(src).toMatch(/expGain:\s*add\(current\.expGain/);
   });
 });
 

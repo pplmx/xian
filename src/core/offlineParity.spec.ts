@@ -126,8 +126,8 @@ describe("离线历练 · 战后语义与在线同源", () => {
   it("离线会话账记胜负两本:普通战整批、首领胜败各一场", () => {
     const offline = readFileSync(src("./offline.ts"), "utf8");
     // 会话推进处:两本账都进 setSession
-    expect(offline).toMatch(/wins: session\.wins \+ sessionWins/);
-    expect(offline).toMatch(/losses: session\.losses \+ sessionLosses/);
+    expect(offline).toMatch(/wins: current\.wins \+ sessionWins/);
+    expect(offline).toMatch(/losses: current\.losses \+ sessionLosses/);
     // 首领两臂各记一场(在线同一口径:胜败都是一场)
     expect(offline).toContain("sessionWins += 1");
     expect(offline).toContain("sessionLosses += 1");
