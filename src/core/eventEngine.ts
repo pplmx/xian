@@ -24,6 +24,7 @@ import { buffDef } from "@/data/buffs";
 import { PETS, petDef } from "@/data/pets";
 import { qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
+import { artifactDef } from "@/data/artifacts";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { generateEquipment } from "./equipGen";
 import { acquireArtifact, acquireEquipment, randomDropArtifact } from "./loot";
@@ -255,7 +256,23 @@ export function choiceAvailable(choice: EventChoice, tier: number): boolean {
   }
 }
 
-function applyEffect(effect: EventEffect, ctx: EventApplyContext): string | null {
+interface AppliedEventEffect {
+  /** 当场弹窗/通知里的完整结果 */
+  line: string;
+  /** 离线归来回执的独立说明;资源总账已覆盖的结果不再报第二遍数字 */
+  receipt?: string;
+  /** 这次真正拾获的实物件数 */
+  items: number;
+}
+
+function applied(
+  line: string,
+  options: { items?: number; receipt?: string } = {},
+): AppliedEventEffect {
+  return { line, items: options.items ?? 0, receipt: options.receipt };
+}
+
+function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventEffect | null {
   const player = usePlayerStore();
   const resources = useResourcesStore();
   const cultivation = useCultivationStore();
@@ -264,21 +281,23 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): string | null
       const v = stoneByTier(ctx.tier, Math.abs(effect.tierAmount));
       if (effect.tierAmount >= 0) {
         resources.addStone(v);
-        return `灵石 +${formatGN(v)}`;
+        return applied(`灵石 +${formatGN(v)}`);
       }
       // 入不敷出就拒绝,不「把整份余额奉上」——传余额拷贝会让 gte 恒真、清零收场
       if (!resources.spendStone(v)) return null;
-      return `灵石 -${formatGN(v)}`;
+      return applied(`灵石 -${formatGN(v)}`);
     }
     case "exp": {
       // 与丹药、一场遭遇同一把尺子:等效闭关时长,封顶不满一层(见 formulas.expFromSecs)
       const v = expFromSecs(player.expReq, effect.secs, player.cultPerSec, INSTANT_EXP_LAYER_CAP);
       player.gainExp(v);
-      return `修为 +${formatGN(v)}`;
+      return applied(`修为 +${formatGN(v)}`);
     }
     case "material":
       resources.addSmall(effect.id, effect.amount);
-      return `${RESOURCE_LABELS[effect.id]} +${effect.amount}`;
+      return applied(`${RESOURCE_LABELS[effect.id]} +${effect.amount}`, {
+        items: effect.id === "page" && effect.amount > 0 ? 1 : 0,
+      });
     case "equipment": {
       const inst = generateEquipment(Math.max(ctx.tier, 1), rng, {
         luck: modOf(player.finalStats.mods, "luck"),
@@ -291,7 +310,7 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): string | null
         recycled: !acquired.bagged,
       });
       if (!acquired.bagged) ctx.recycledDust += acquired.dust;
-      return `获得 ${acquired.line}`;
+      return applied(`获得 ${acquired.line}`, { items: 1 });
     }
     case "pill": {
       const id = effect.id ?? randomEventPill(player.major);
@@ -299,35 +318,55 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): string | null
       const def = pillDef(id);
       if (!def) return null;
       acquirePill(id, effect.count);
-      return `丹药「${def.name}」×${effect.count}`;
+      const count = Number.isFinite(effect.count) ? Math.max(0, Math.floor(effect.count)) : 0;
+      const line = `丹药「${def.name}」×${effect.count}`;
+      return applied(line, { items: count, receipt: line });
     }
     case "recipe": {
       const found = discoverRecipe(FORTUNE_RECIPE_MASTERY);
       if (found) {
-        return `丹方「${found.name}」· 掌握 +${formatPercent(FORTUNE_RECIPE_MASTERY, 0)}`;
+        const line = `丹方「${found.name}」· 掌握 +${formatPercent(FORTUNE_RECIPE_MASTERY, 0)}`;
+        return applied(line, { receipt: line });
       }
       resources.addSmall("wudao", FORTUNE_RECIPE_FALLBACK_WUDAO);
       resources.addSmall("page", FORTUNE_RECIPE_FALLBACK_PAGE);
-      return `已识尽可学丹方 · 悟道 +${formatNum(
-        FORTUNE_RECIPE_FALLBACK_WUDAO,
-      )} · 残页 +${formatNum(FORTUNE_RECIPE_FALLBACK_PAGE)}`;
+      return applied(
+        `已识尽可学丹方 · 悟道 +${formatNum(
+          FORTUNE_RECIPE_FALLBACK_WUDAO,
+        )} · 残页 +${formatNum(FORTUNE_RECIPE_FALLBACK_PAGE)}`,
+        { items: 1, receipt: "可学丹方已尽,悟道与残页已并入总账" },
+      );
     }
     case "gongfa": {
       const learnt = learnRandomGongfa(effect.id);
-      if (learnt) return `习得功法《${learnt}》`;
+      if (learnt) {
+        const line = `习得功法《${learnt}》`;
+        return applied(line, { receipt: line });
+      }
       resources.addSmall("page", 10);
-      return "功法残页 +10(已尽览此道)";
+      return applied("功法残页 +10(已尽览此道)", {
+        items: 1,
+        receipt: "此道功法已尽,残页已并入总账",
+      });
     }
     case "artifact": {
       const id = effect.id ?? randomDropArtifact(ctx.tier);
       if (!id) return null;
-      return `获得 ${acquireArtifact(id).line}`;
+      const acquired = acquireArtifact(id);
+      if (!acquired.line) return null;
+      const line = `获得 ${acquired.line}`;
+      return applied(line, {
+        items: 1,
+        receipt:
+          acquired.wudao > 0 ? `法宝「${artifactDef(id)?.name ?? id}」已拥有,化作悟道点` : line,
+      });
     }
     case "buff": {
       const def = buffDef(effect.id);
       if (!def) return null;
       cultivation.addBuff(effect.id, Date.now());
-      return def.kind === "injury" ? `陷入「${def.name}」状态` : `获得「${def.name}」加持`;
+      const line = def.kind === "injury" ? `陷入「${def.name}」状态` : `获得「${def.name}」加持`;
+      return applied(line, { receipt: line });
     }
     case "lifespan": {
       // 界外一律写比例:金仙的寿元是一亿载,「延寿八百载」那点绝对年数在界外
@@ -338,7 +377,8 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): string | null
           : (effect.years ?? 0);
       if (years <= 0) return null;
       player.addLifespan(years);
-      return `寿元 +${formatYears(years)}`;
+      const line = `寿元 +${formatYears(years)}`;
+      return applied(line, { receipt: line });
     }
     case "pet": {
       const quests = useQuestsStore();
@@ -352,12 +392,13 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): string | null
       const id = effect.id ?? (pool.length ? rng.pick(pool).id : null);
       if (!id || owned.has(id)) {
         resources.addSmall("herb", 10);
-        return "灵草 +10";
+        return applied("灵草 +10", { receipt: "灵兽已有归处,灵草已并入总账" });
       }
       collect("pet", id);
       if (!player.petId) player.setPet(id);
       const def = petDef(id);
-      return `灵兽「${def?.name ?? ""}」愿意追随于你`;
+      const line = `灵兽「${def?.name ?? ""}」愿意追随于你`;
+      return applied(line, { receipt: line });
     }
     case "nothing":
       return null;
@@ -374,7 +415,7 @@ export interface EventResolution {
   title: string;
   outcomeText: string;
   lines: string[];
-  /** 总资源差额与装备清单辨认不出的逐项所得(丹药/法宝/功法/增益等) */
+  /** 离线归来回执要单独说明的所得;资源类只说来源,不重抄总账数字 */
   notableLines: string[];
   /** 这次抉择真正产出的装备(含未入包、已化尘的件) */
   equipment: EventEquipmentGain[];
@@ -399,59 +440,17 @@ interface EventApplyContext {
   /** 离线归来卷轴要如实列出事件所得装备,不能只剩一句文案。 */
   equipment: EventEquipmentGain[];
   recycledDust: number;
-  /** 丹药等无法从资源总差额辨认的结果,原样留给归来回执 */
+  /** 离线归来回执要单独说明的所得;由实际结算分支决定,不看效果类型猜 */
   notableLines: string[];
-}
-
-/**
- * 一条效果算不算「拾获」。口径与战斗掉落一致:
- * 装备 / 丹药 / 法宝各算实物,残页按一次命中算一件;材料、悟道与知识不算。
- */
-function itemGainOf(effect: EventEffect): number {
-  switch (effect.type) {
-    case "equipment":
-    case "artifact":
-      return 1;
-    case "pill":
-      return Number.isFinite(effect.count) ? Math.max(0, Math.floor(effect.count)) : 0;
-    case "material":
-      return effect.id === "page" && effect.amount > 0 ? 1 : 0;
-    default:
-      return 0;
-  }
-}
-
-/**
- * 资源、修为、材料与装备已有归来总账承载;其余所得必须单独留回执。
- * 典型反例:丹药进入背包后，资源差额与装备清单都无法证明这是哪一枚。
- */
-function needsReceiptLine(type: EventEffect["type"]): boolean {
-  switch (type) {
-    case "stone":
-    case "exp":
-    case "material":
-    case "equipment":
-    case "nothing":
-      return false;
-    case "pill":
-    case "artifact":
-    case "recipe":
-    case "gongfa":
-    case "buff":
-    case "lifespan":
-    case "pet":
-      return true;
-  }
 }
 
 export const CHOICES = createChoiceSystem<EventEffect, EventApplyContext>({
   interpret: (effect, ctx) => {
-    const line = applyEffect(effect, ctx);
-    if (line) {
-      ctx.itemGain += itemGainOf(effect);
-      if (needsReceiptLine(effect.type)) ctx.notableLines.push(line);
-    }
-    return line;
+    const result = applyEffect(effect, ctx);
+    if (!result) return null;
+    ctx.itemGain += result.items;
+    if (result.receipt) ctx.notableLines.push(result.receipt);
+    return result.line;
   },
 });
 

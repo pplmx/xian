@@ -15,11 +15,13 @@ import { add, gn, gte, mulN, sub, toNum } from "@/utils/gnum";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useAdventureStore } from "@/stores/adventure";
+import { useCultivationStore } from "@/stores/cultivation";
 import { useLoreStore } from "@/stores/lore";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { useSettingsStore } from "@/stores/settings";
 import { eventDef } from "@/data/events";
+import { GONGFA } from "@/data/gongfa";
 import { PILLS } from "@/data/pills";
 import { resolveEventChoice } from "./eventEngine";
 import { stoneByTier } from "./formulas";
@@ -253,6 +255,34 @@ describe("事件装备回执 · 离线卷轴要能列出来", () => {
 
     expect(res.notableLines, "丹药不能只剩资源汇总里看不见的一行").toEqual(["丹药「回灵丹」×2"]);
   });
+
+  it("重复法宝折成悟道点时,归来回执只说来源、不重抄总账数字", () => {
+    useInventoryStore().addArtifact("af_muyu");
+    const def: EventDef = {
+      id: "ev_test_duplicate_artifact",
+      title: "旧藏",
+      text: "",
+      tags: ["general"],
+      weight: 1,
+      choices: [
+        {
+          label: "取出",
+          outcomes: [
+            {
+              weight: 1,
+              text: "匣中还是那枚熟悉的葫芦。",
+              effects: [{ type: "artifact", id: "af_muyu" }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const res = resolveEventChoice(def, 0, 3);
+
+    expect(res.lines.join("\n")).toContain("化作悟道点×10");
+    expect(res.notableLines).toEqual(["法宝「墨玉葫芦」已拥有,化作悟道点"]);
+  });
 });
 
 describe("奇缘授方 · 文案承诺必须落成知识", () => {
@@ -301,11 +331,28 @@ describe("奇缘授方 · 文案承诺必须落成知识", () => {
     const player = usePlayerStore();
     const lore = useLoreStore();
     const resources = useResourcesStore();
+    const adventure = useAdventureStore();
     player.major = 2;
     // 境界是在本用例里直接抬上来的:先让成就/主线结清,再取保底基线，
     // 免得那笔与授方无关的悟道混进要核对的 10 点。
     track("events");
     lore.recipeLore = Object.fromEntries(PILLS.filter((p) => p.recipe).map((p) => [p.id, 1]));
+    adventure.$patch({
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: 0,
+        endsAt: 1_000_000,
+        nextBattleAt: 0,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: gn(0),
+        expGain: gn(0),
+        itemGain: 0,
+        wudaoGain: 0,
+      },
+    });
     const wudao = resources.wudao;
     const page = resources.page;
 
@@ -314,5 +361,55 @@ describe("奇缘授方 · 文案承诺必须落成知识", () => {
     expect(resources.wudao - wudao).toBe(10);
     expect(resources.page - page).toBe(6);
     expect(res.lines.join("\n")).toContain("已识尽");
+    expect(res.notableLines, "资源兜底不该在归来回执里重抄一遍数字").toEqual([
+      "可学丹方已尽,悟道与残页已并入总账",
+    ]);
+    expect(adventure.session!.itemGain, "兜底给的残页仍是一份拾获").toBe(1);
+  });
+
+  it("功法已尽时的残页兜底也只进总账,不把同一笔数报两遍", () => {
+    const player = usePlayerStore();
+    const cultivation = useCultivationStore();
+    const resources = useResourcesStore();
+    const adventure = useAdventureStore();
+    player.major = 2;
+    track("events");
+    cultivation.learned = Object.fromEntries(GONGFA.map((g) => [g.id, 1]));
+    adventure.$patch({
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: 0,
+        endsAt: 1_000_000,
+        nextBattleAt: 0,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: gn(0),
+        expGain: gn(0),
+        itemGain: 0,
+        wudaoGain: 0,
+      },
+    });
+    const page = resources.page;
+    const def: EventDef = {
+      id: "ev_test_gongfa_fallback",
+      title: "残卷",
+      text: "",
+      tags: ["general"],
+      weight: 1,
+      choices: [
+        {
+          label: "展开",
+          outcomes: [{ weight: 1, text: "卷中功法早已学过。", effects: [{ type: "gongfa" }] }],
+        },
+      ],
+    };
+
+    const res = resolveEventChoice(def, 0, 4);
+
+    expect(resources.page - page).toBe(10);
+    expect(res.notableLines).toEqual(["此道功法已尽,残页已并入总账"]);
+    expect(adventure.session!.itemGain).toBe(1);
   });
 });
