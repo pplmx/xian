@@ -223,3 +223,35 @@ describe("同源审计 · 功法习得", () => {
     expect(LEARN_CALL.test('learnGongfa("m_taixuan");')).toBe(false);
   });
 });
+
+/**
+ * 同源审计 · 装备获得
+ *
+ * 入包只是获得装备的一部分:见闻、图鉴、获得计数与品质成就也必须一起落账。
+ * 坊市等已付费路径可以要求「原样入包或失败」,但仍须走 acquireEquipment 的统一收口。
+ */
+describe("同源审计 · 装备获得", () => {
+  it("生产代码只有 core/loot.ts 能直接写 inventory.addEquipment", () => {
+    const hits = walk(SRC)
+      .map(
+        (file) =>
+          [
+            file.slice(SRC.length + 1),
+            readFileSync(file, "utf8")
+              .replace(/\/\*[\s\S]*?\*\//g, "")
+              .replace(/\/\/.*$/gm, ""),
+          ] as const,
+      )
+      .filter(([, src]) => /\.addEquipment\s*\(/.test(src))
+      .map(([file]) => file);
+
+    expect(hits).toEqual(["core/loot.ts"]);
+  });
+
+  it("自证:绕过漏斗直接加装备会被判红", () => {
+    expect(/\.addEquipment\s*\(/.test("inventory.addEquipment(item);")).toBe(true);
+    expect(/\.addEquipment\s*\(/.test("acquireEquipment(item, { keepExactly: true });")).toBe(
+      false,
+    );
+  });
+});

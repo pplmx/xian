@@ -28,8 +28,9 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { useSettingsStore } from "@/stores/settings";
 import { qualityDef } from "@/data/qualities";
-import { DECOMPOSE_DUST } from "@/data/constants";
+import { BAG_CAPACITY, DECOMPOSE_DUST } from "@/data/constants";
 import { useLoreStore } from "@/stores/lore";
+import { useQuestsStore } from "@/stores/quests";
 import { gn, toNum } from "@/utils/gnum";
 import type { EquipmentInstance, QualityId } from "@/types";
 
@@ -393,6 +394,40 @@ describe("装备见闻 · 入账那一刻就记下成色", () => {
     ];
     expect(upgradeEquipment("used-2"), "强化应当成功(素材已给足)").toBe(true);
     expect(lore.equipSeen("w_qingshuang")?.u, "强化过也算上手").toBe(1);
+  });
+
+  it("确权直收只做原子入包:满包失败时不折算、不记图鉴与获得计数", () => {
+    setActivePinia(createPinia());
+    const inventory = useInventoryStore();
+    const resources = useResourcesStore();
+    const quests = useQuestsStore();
+    const lore = useLoreStore();
+    inventory.items = Array.from({ length: BAG_CAPACITY }, (_, i) => ({
+      uid: `full-${i}`,
+      templateId: "w_zhuqing",
+      quality: "mortal" as const,
+      tier: 1,
+      level: 0,
+      affixes: [],
+    }));
+    const dustBefore = resources.dust;
+    const stoneBefore = resources.spiritStone;
+    const item = mkItem("exact-keep", "divine", 24, "w_zhuqing");
+
+    const blocked = acquireEquipment(item, { quiet: true, keepExactly: true });
+
+    expect(blocked.bagged).toBe(false);
+    expect(resources.dust, "买来的东西收不下时不能偷偷化尘").toBe(dustBefore);
+    expect(resources.spiritStone, "也不能产生灵石返还").toEqual(stoneBefore);
+    expect(quests.counter("equipsGained")).toBe(0);
+    expect(quests.collections.equip).not.toContain("w_zhuqing");
+    expect(lore.equipSeen("w_zhuqing"), "未成交就不该写成已获得").toBeUndefined();
+
+    inventory.items = [];
+    expect(acquireEquipment(item, { quiet: true, keepExactly: true }).bagged).toBe(true);
+    expect(quests.counter("equipsGained")).toBe(1);
+    expect(quests.collections.equip).toContain("w_zhuqing");
+    expect(lore.equipSeen("w_zhuqing")).toEqual({ q: 8, t: 24, u: 0 });
   });
 });
 

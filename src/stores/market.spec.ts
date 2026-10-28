@@ -16,9 +16,16 @@ import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { useQuestsStore } from "@/stores/quests";
-import { MARKET_REFRESH_SECONDS, MARKET_SLOTS, type MarketSlot } from "@/data/market";
+import { useLoreStore } from "@/stores/lore";
+import {
+  MARKET_REFRESH_SECONDS,
+  MARKET_SLOTS,
+  type MarketEquipSlot,
+  type MarketSlot,
+} from "@/data/market";
 import type { EquipmentInstance } from "@/types";
 import { gn, toNum } from "@/utils/gnum";
+import { marketEquipInstance } from "@/core/marketService";
 
 function seedPlayerAndFunds(): void {
   const p = usePlayerStore();
@@ -83,6 +90,35 @@ describe("坊市 store", () => {
     expect(market.buy(0)).toBe("ok");
     expect(inventory.pills["p_jvqidan"]).toBe(2);
     expect(useQuestsStore().collections.pill).toContain("p_jvqidan");
+  });
+
+  it("买下的装备同时进背包、图鉴见闻、获得计数与品质成就", () => {
+    seedPlayerAndFunds();
+    const market = useMarketStore();
+    const inventory = useInventoryStore();
+    const quests = useQuestsStore();
+    const lore = useLoreStore();
+    const stockedAt = Date.now();
+    const slot: MarketEquipSlot = {
+      kind: "equipment",
+      idx: 0,
+      tier: 24,
+      minQualityRank: 8,
+      price: gn(1),
+      sold: false,
+    };
+    const expected = marketEquipInstance(slot, stockedAt);
+    market.stock = [slot];
+    market.stockedAt = stockedAt;
+
+    expect(market.buy(0)).toBe("ok");
+
+    const bought = inventory.items.find((it) => it.templateId === expected.templateId);
+    expect(bought, "买下的装备应真正进包").toBeDefined();
+    expect(quests.collections.equip).toContain(expected.templateId);
+    expect(lore.equipSeen(expected.templateId)).toEqual({ q: 8, t: 24, u: 0 });
+    expect(quests.counter("equipsGained")).toBe(1);
+    expect(quests.hasAchieved("a_q8"), "神品装备的品质成就应随购买解锁").toBe(true);
   });
 
   it("sanitize:坏格整格丢弃,只剩合法格,时刻夹回非负", () => {
@@ -184,15 +220,17 @@ describe("坊市 store", () => {
     expect(market.consign.length).toBe(0); // 格清
   });
 
-  it("买装备的落袋原子性:入包失败要退回灵石,不许「花了钱没拿到货」", () => {
+  it("买装备走统一装备漏斗:确权直收失败才退款,不标 sold", () => {
     // 采购前有 bagFull 预检,但「预检到落袋」之间可能被同一帧别的掉落挤满 ——
-    // 防御臂必须是:addEquipment 返回 false 时退回灵石、返回 bagfull、不标 sold。
+    // 防御臂必须是:确权直收失败时退回灵石、返回 bagfull、不标 sold。
     const src = readFileSync(resolve(__dirname, "market.ts"), "utf-8");
-    expect(src).toContain("admitted = inventory.addEquipment");
+    expect(src).toContain("acquireEquipment(marketEquipInstance(slot, stockedAt.value)");
+    expect(src).toContain("keepExactly: true");
+    expect(src, "坊市不得绕开装备入账漏斗直接写背包").not.toContain("inventory.addEquipment");
     expect(src, "入包失败要退回灵石").toContain("resources.addStone(slot.price);");
     expect(src, "回退后要返回 bagfull").toContain('return "bagfull";');
     expect(src, "失败分支不得走到标 sold").toMatch(
-      /admitted = inventory\.addEquipment[\s\S]{0,200}return "bagfull";/,
+      /if \(!acquired\.bagged\)[\s\S]{0,200}return "bagfull";/,
     );
   });
 });

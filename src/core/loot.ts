@@ -64,6 +64,15 @@ export interface AcquireResult {
   stone: GNum;
 }
 
+/** 装备首次获得的三本账:见闻、图鉴、计数与品质成就。 */
+function recordEquipmentGained(inst: EquipmentInstance): void {
+  const q = qualityDef(inst.quality);
+  useLoreStore().noteEquipSeen(inst.templateId, q.rank, inst.tier);
+  track("equipsGained");
+  collect("equip", inst.templateId);
+  checkQualityAchievement(q.rank);
+}
+
 /**
  * 装备入账漏斗 —— **唯一的一处**(历练 / 离线 / 际遇 / 秘境 / 镇压 / 开局馈赠都走它)。
  *
@@ -97,11 +106,7 @@ const EQUIP_INTAKE = createIntake<EquipmentInstance, { dust: number; stone: GNum
       .sort(compareEvictable)[0];
   },
   witness: (inst) => {
-    const q = qualityDef(inst.quality);
-    useLoreStore().noteEquipSeen(inst.templateId, q.rank, inst.tier);
-    track("equipsGained");
-    collect("equip", inst.templateId);
-    checkQualityAchievement(q.rank);
+    recordEquipmentGained(inst);
   },
   fallback: (inst) => {
     const gain = salvageOf(inst);
@@ -129,16 +134,28 @@ const STONE_SETTLEMENT = createSettlement<GNum>({ resources: STONE_LEDGER }, gnu
  *
  * 无论在线(战斗掉落 / 事件 / 镇压)还是离线(挂机结算),都走这一个漏斗 ——
  * 见证、裁决、腾位、折算的顺序见 `EQUIP_INTAKE`。
+ *
+ * `keepExactly` 给已经付过代价的装备(如坊市购入):只接受原样入包,
+ * 不自动回收、不腾位、不折算。失败时调用方负责退款,获得账一笔都不写。
  */
 export function acquireEquipment(
   inst: EquipmentInstance,
-  opts: { quiet?: boolean; forceKeep?: boolean } = {},
+  opts: { quiet?: boolean; forceKeep?: boolean; keepExactly?: boolean } = {},
 ): AcquireResult {
-  const { quiet = false, forceKeep = false } = opts;
+  const { quiet = false, forceKeep = false, keepExactly = false } = opts;
   const inventory = useInventoryStore();
   const q = qualityDef(inst.quality);
   const t = equipmentTemplate(inst.templateId);
   const label = `${q.name}·${t?.name ?? "不明之物"}`;
+
+  if (keepExactly) {
+    if (!inventory.addEquipment(inst)) {
+      return { line: `${label}(行囊已满)`, bagged: false, dust: 0, stone: gnZero() };
+    }
+    recordEquipmentGained(inst);
+    if (!quiet && q.rank >= 3) notify(`灵光乍现,拾得「${label}」`, "rare");
+    return { line: label, bagged: true, dust: 0, stone: gnZero() };
+  }
 
   const result = EQUIP_INTAKE.admit({ items: inventory.items }, inst, { force: forceKeep });
   const first = result.yields[0];
