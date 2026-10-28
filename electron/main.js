@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, session, shell } from "electron";
+import { app, BrowserWindow, Tray, Menu, nativeImage, session, shell } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -15,9 +15,6 @@ const APP_TITLE = pkg.build.productName;
 
 // 应用根目录（开发时是项目根目录，打包后是 app.asar）
 const appRoot = app.getAppPath();
-
-// preload 路径
-const preloadPath = path.join(appRoot, "dist-electron", "preload.js");
 
 // 构建产物路径（Vite 输出到 dist/）
 const distPath = path.join(appRoot, "dist");
@@ -61,6 +58,14 @@ let win = null;
 let tray = null;
 let isQuitting = false;
 
+const revealWindow = () => {
+  if (!win) return false;
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+  return true;
+};
+
 // 销毁托盘
 const destroyTray = () => {
   if (tray) {
@@ -90,7 +95,7 @@ const createTray = () => {
   tray.setToolTip(APP_TITLE);
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: "显示窗口", click: () => win?.show() },
+    { label: "显示窗口", click: revealWindow },
     { type: "separator" },
     {
       label: "退出",
@@ -102,7 +107,7 @@ const createTray = () => {
   ]);
 
   tray.setContextMenu(contextMenu);
-  tray.on("double-click", () => win?.show());
+  tray.on("double-click", revealWindow);
 };
 
 // 创建应用菜单
@@ -179,7 +184,6 @@ const createWindow = () => {
       sandbox: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
-      preload: preloadPath,
     },
   });
 
@@ -209,66 +213,44 @@ const createWindow = () => {
       createTray();
     }
   });
+  win.on("closed", () => {
+    win = null;
+  });
 };
 
-// IPC 处理
-ipcMain.handle("get-settings", () => settings);
-
-ipcMain.handle("set-settings", (_, newSettings) => {
-  settings = { ...settings, ...newSettings };
-  saveSettings(settings);
-
-  // 处理开机自启动
-  setAutoLaunch(settings.autoLaunch);
-
-  // 处理托盘
-  if (settings.closeToTray) {
-    createTray();
-  } else {
-    destroyTray();
-  }
-
-  return { needRestart: false };
-});
-
-ipcMain.handle("restart-window", () => {
-  if (win) {
-    const bounds = win.getBounds();
-    win.destroy();
-    createWindow();
-    win.setBounds(bounds);
-  }
-});
-
-ipcMain.handle("quit-app", () => {
-  isQuitting = true;
+// 两个实例会共用同一份 Chromium 存储,并发写盘只会把存档变成最后写入者的盲盒。
+if (!app.requestSingleInstanceLock()) {
   app.quit();
-});
-
-// 引导期:就绪后再建窗。void 表明这是一条"点火后不再等"的链;引导失败要显式
-// 退出,不留一个没内容的半启动窗口挂着(玩家只会看到黑屏)
-void app
-  .whenReady()
-  .then(() => {
-    // 会话只装一次：重启窗口不会重复接管回调；显式外链走系统浏览器，不经过这里。
-    session.defaultSession.webRequest.onBeforeRequest(
-      { urls: [...REMOTE_REQUEST_URL_FILTERS] },
-      (details, callback) => callback(isRemoteRequestUrl(details.url) ? { cancel: true } : {}),
-    );
-    createWindow();
-
-    // 如果启用了托盘功能，创建托盘
-    if (settings.closeToTray) {
-      createTray();
-    }
-
-    // 应用开机自启动设置
-    setAutoLaunch(settings.autoLaunch);
-  })
-  .catch((err) => {
-    console.error("应用启动失败:", err);
-    app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (!revealWindow() && app.isReady()) createWindow();
   });
+
+  // 引导期:就绪后再建窗。void 表明这是一条"点火后不再等"的链;引导失败要显式
+  // 退出,不留一个没内容的半启动窗口挂着(玩家只会看到黑屏)
+  void app
+    .whenReady()
+    .then(() => {
+      // 会话只装一次；显式外链走系统浏览器，不经过这里。
+      session.defaultSession.webRequest.onBeforeRequest(
+        { urls: [...REMOTE_REQUEST_URL_FILTERS] },
+        (details, callback) => callback(isRemoteRequestUrl(details.url) ? { cancel: true } : {}),
+      );
+      createWindow();
+
+      // 如果启用了托盘功能，创建托盘
+      if (settings.closeToTray) {
+        createTray();
+      }
+
+      // 应用开机自启动设置
+      setAutoLaunch(settings.autoLaunch);
+    })
+    .catch((err) => {
+      console.error("应用启动失败:", err);
+      app.quit();
+    });
+}
 
 app.on("before-quit", () => {
   isQuitting = true;
@@ -281,9 +263,5 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  if (win) {
-    win.show();
-  } else {
-    createWindow();
-  }
+  if (!revealWindow()) createWindow();
 });

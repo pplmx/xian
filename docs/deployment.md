@@ -59,6 +59,7 @@ bun run build:electron   # 输出 pkg/xuanshu-<版本号>-win.zip
 解压后运行其中的 `玄枢录.exe`。未签名 exe 被杀毒软件误报是通病,加入白名单即可。
 桌面壳把渲染器的 HTTP/WebSocket 请求全部取消,主窗口也锁定在打包后的本地入口;
 隐私页里的 GitHub 外链只交给系统浏览器打开,不会在应用内新建联网窗口。
+重复启动只会唤回已有窗口,不会让两个进程并发写同一份存档;渲染器也没有 preload / IPC 桥。
 
 ## Docker
 

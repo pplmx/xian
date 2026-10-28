@@ -7,7 +7,7 @@
  * 同时钉住，避免安全边界只活在一句注释里。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   REMOTE_REQUEST_URL_FILTERS,
@@ -19,6 +19,9 @@ import {
 const ROOT = resolve(__dirname, "../..");
 const RAW_MAIN = readFileSync(resolve(ROOT, "electron/main.js"), "utf8");
 const MAIN = RAW_MAIN.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const PKG = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8")) as {
+  scripts: Record<string, string>;
+};
 
 const ENTRY = "file:///opt/%E7%8E%84%E6%9E%A2%E5%BD%95/dist/index.html";
 
@@ -88,5 +91,29 @@ describe("Electron 主进程接线", () => {
     expect(MAIN).toContain("REMOTE_REQUEST_URL_FILTERS");
     expect(MAIN).toContain("isRemoteRequestUrl(details.url)");
     expect(MAIN).toContain("cancel: true");
+  });
+
+  it("零消费的 preload / IPC 桥已经退场", () => {
+    expect(existsSync(resolve(ROOT, "electron/preload.js")), "没有页面调用方的桥还留着").toBe(
+      false,
+    );
+    expect(MAIN, "主进程还在暴露无人调用的 IPC").not.toMatch(/\bipcMain\b/);
+    expect(MAIN, "BrowserWindow 又重新挂 preload 了").not.toMatch(/\bpreload\s*:/);
+    expect(PKG.scripts["build:electron"], "构建脚本仍在产出无人加载的 preload").not.toContain(
+      "electron/preload.js",
+    );
+  });
+
+  it("单实例运行：再次启动只唤回已有窗口，避免并发写同一份存档", () => {
+    expect(MAIN).toMatch(
+      /if\s*\(!app\.requestSingleInstanceLock\(\)\)\s*\{\s*app\.quit\(\);\s*\}\s*else\s*\{/,
+    );
+    expect(MAIN).toContain('app.on("second-instance"');
+    expect(MAIN).toContain("win.restore()");
+    expect(MAIN).toContain("win.show()");
+    expect(MAIN).toContain("win.focus()");
+    expect(MAIN, "关闭后指针不清，macOS 再激活会拿到已销毁窗口").toMatch(
+      /win\.on\("closed",\s*\(\)\s*=>\s*\{\s*win\s*=\s*null;/,
+    );
   });
 });

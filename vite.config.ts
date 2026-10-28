@@ -166,14 +166,6 @@ export default defineConfig({
           "no-console": "off",
         },
       },
-      {
-        /* Electron 沙箱 preload 只能用 CommonJS:BrowserWindow 未开 sandbox:false
-           时 ESM preload 根本不加载 —— 这句 require 是平台强制的形态,不是残留。 */
-        files: ["electron/preload.js"],
-        rules: {
-          "no-require-imports": "off",
-        },
-      },
     ],
     options: {
       typeAware: true,
