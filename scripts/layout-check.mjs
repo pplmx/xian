@@ -162,6 +162,8 @@
  *   五十六 部位候选按 12 件一批、最多留 24 件。300 件后期背包里同槽仍有几十件,
  *      续开与回翻必须真的可达;换装后佩戴件跳到顶部,窗口要回首批并把焦点送过去。
  *      195 宽下另把候选续到第二批,量分页读数、入口与候选行是否被挤坏。
+ *   五十七 法宝全册共 45 张密卡,按 6 件一批、最多留 12 件。195 宽下逐批翻到末页
+ *      再回翻,随身 / 炼化改序后焦点仍要跟住同一件;整页不许被双按钮或代价行挤坏。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -172,6 +174,7 @@
  * 否则机器一忙,「等了 300ms」就不再等于「已经就位」,门会在真回归之外自己变红。
  */
 import { chromium } from "playwright";
+import { createServer as createViteServer } from "vite";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
 import { decryptSlice, encryptSlice, seedSave, showcaseSlices } from "./lib/saveFixture.mjs";
 import { TITLES } from "../src/data/titles.ts";
@@ -3815,19 +3818,37 @@ async function taskSaveRoundTrip() {
     await page.waitForTimeout(1000);
     await page.evaluate(() => {
       window.__beforeImport = "alive";
+      window.name = "";
+      const captureToasts = () => {
+        const text = [...document.querySelectorAll(".pointer-events-none.fixed button")]
+          .map((button) => (button.textContent || "").trim())
+          .filter(Boolean)
+          .join("|");
+        if (text) window.name = `__layoutImportToasts:${text}`;
+      };
+      new MutationObserver(captureToasts).observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+      captureToasts();
     });
     await page.locator("input[type=file]").first().setInputFiles(savePath);
     await page.waitForTimeout(500);
     // 导入是「整体替换本机进度」的不可逆操作 —— 与重置同纪律,先弹确认,点「用这份替换」才落库。
     // 判据仍盯着原来的事(成功提示 + 重新入定 + 灵石回到导出那一刻),只是要穿过这扇确认门。
     await page.getByRole("button", { name: /用这份替换/ }).click();
-    await page.waitForTimeout(700);
-    const toast = await page.evaluate(() =>
-      [...document.querySelectorAll(".pointer-events-none.fixed button")]
-        .map((b) => (b.textContent || "").trim())
-        .join("|"),
-    );
-    await page.waitForTimeout(2600);
+    await page.waitForTimeout(3000);
+    /*
+     * 成功提示只活到 800ms 后的 reload;并发一忙,固定等 700ms 再回读时页面
+     * 可能已经重载,提示随旧文档一起没了。导入成功又刚好会调用 sealStorageWrites()
+     * 封掉 Storage.prototype.setItem,故记录放 window.name —— 跨导航留得住,
+     * 也不受封存影响,验的仍是玩家真看见过的那一句。
+     */
+    const toast = await page.evaluate(() => {
+      const prefix = "__layoutImportToasts:";
+      return window.name.startsWith(prefix) ? window.name.slice(prefix.length) : "";
+    });
     const after = await readFormatted(page, "灵石");
     const reloaded = await page.evaluate(() => window.__beforeImport === undefined);
     if (!/导入成功/.test(toast))
@@ -8439,6 +8460,297 @@ async function taskTitlePetOverflow() {
 }
 
 /**
+ * 法宝全册 —— 45 张名/描述/被动/神通/代价/双按钮密卡,不许整册铺进页面。
+ *
+ * 这里补齐三件运行时事实:六件首批、十二件滑窗、195 宽下双按钮与代价行不变形;
+ * 逐批翻到末页再回翻,既证全册可达,也证焦点跟着新批走。最后真按「随身」与
+ * 「炼化」:前者不改排序但焦点要留在原卡,后者会按祭炼等级改序,卡若越过窗口
+ * 必须按新位置所在批次重开窗,仍把焦点送回同一件。
+ */
+async function taskArtifactListOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  let vite = null;
+  try {
+    // 法宝内容表走 Vite 解析 @/ 别名,不手抄 id,也不要求 Bun 直接理解应用别名。
+    vite = await createViteServer({
+      root: ROOT,
+      server: { middlewareMode: true },
+      appType: "custom",
+      logLevel: "silent",
+    });
+    const artifactFixture = await vite.ssrLoadModule("/scripts/lib/fullArtifactFixture.ts");
+    const artifactRows = artifactFixture.fullArtifactRows();
+    const sortedIds = artifactRows.map((artifact) => artifact.defId);
+    const total = artifactRows.length;
+
+    const slices = showcaseSlices("light");
+    slices.resources = {
+      ...slices.resources,
+      spiritStone: { m: 9, e: 30 },
+      wudao: 500000,
+    };
+    slices.inventory = {
+      ...slices.inventory,
+      items: [],
+      equipped: {},
+      artifacts: artifactRows.map(({ defId, level }) => ({ defId, level })),
+      equippedArtifacts: [],
+    };
+    await seedSave(ctx, slices, "__artifactListFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/inventory", { waitUntil: "load" });
+    await page
+      .getByRole("tab", { name: /法\s*宝/ })
+      .first()
+      .click({ timeout: 5000 });
+    await page.locator("[data-artifact-total]").waitFor({ state: "visible", timeout: 10000 });
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+
+    async function readList() {
+      return page.evaluate(() => {
+        const holder = document.querySelector("[data-artifact-total]");
+        const rows = [...document.querySelectorAll("[data-artifact-row]")];
+        return {
+          total: Number(holder?.getAttribute("data-artifact-total")),
+          shown: Number(holder?.getAttribute("data-artifact-shown")),
+          start: Number(holder?.getAttribute("data-artifact-start")),
+          count: rows.length,
+          ids: rows.map((row) => row.getAttribute("data-artifact-row")),
+          focus: document.activeElement?.getAttribute("data-artifact-row"),
+        };
+      });
+    }
+
+    async function waitForShown(shown) {
+      await page.waitForFunction(
+        (wanted) =>
+          document.querySelector("[data-artifact-total]")?.getAttribute("data-artifact-shown") ===
+          String(wanted),
+        shown,
+        { timeout: 5000 },
+      );
+    }
+
+    async function waitForFocus(id) {
+      await page
+        .waitForFunction(
+          (rowId) => document.activeElement?.getAttribute("data-artifact-row") === rowId,
+          id,
+          { timeout: 2000 },
+        )
+        .catch(() => {});
+    }
+
+    const initial = await readList();
+    const more = page.locator("[data-artifact-more]").first();
+    const moreText = ((await more.textContent()) || "").replace(/\s+/g, " ").trim();
+    checked += 1;
+    if (
+      initial.total !== total ||
+      initial.shown !== 6 ||
+      initial.start !== 0 ||
+      initial.count !== 6 ||
+      initial.ids[0] !== sortedIds[0] ||
+      initial.ids.at(-1) !== sortedIds[5] ||
+      !new RegExp(`再看\\s*6\\s*件\\s*·\\s*余\\s*${total - 6}`).test(moreText)
+    ) {
+      failures.push(
+        `[320] 法宝册首批应 6/${total}(${sortedIds[0]} → ${sortedIds[5]}),` +
+          `实见 ${initial.ids[0] ?? "无"} → ${initial.ids.at(-1) ?? "无"} / ${initial.count} 行 ` +
+          `(shown ${initial.shown} / total ${initial.total}) «${moreText}»`,
+      );
+    }
+
+    const fit = await more.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return {
+        left: box.left,
+        right: box.right,
+        height: box.height,
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+        viewport: window.innerWidth,
+      };
+    });
+    checked += 1;
+    if (
+      fit.left < -1 ||
+      fit.right > fit.viewport + 1 ||
+      fit.scrollWidth > fit.clientWidth + 1 ||
+      fit.height < 27.5
+    ) {
+      failures.push(
+        `[195] 法宝册续开入口被挤坏:` +
+          `盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+          `内容 ${fit.scrollWidth}>${fit.clientWidth} / ` +
+          `高 ${Math.round(fit.height * 10) / 10}px / 视口 ${fit.viewport}`,
+      );
+    }
+    checked += 1;
+    const layoutProblems = problemsOf(await measurePage(page));
+    if (layoutProblems.length) failures.push(`[195] 法宝册 → ${layoutProblems.join(" / ")}`);
+
+    await more.click({ timeout: 5000 });
+    await waitForShown(12);
+    await waitForFocus(sortedIds[6]);
+    const second = await readList();
+    checked += 1;
+    if (
+      second.shown !== 12 ||
+      second.start !== 0 ||
+      second.count !== 12 ||
+      second.focus !== sortedIds[6]
+    ) {
+      failures.push(
+        `[195] 法宝册续开首批后应铺 12 件、焦点落 ${sortedIds[6]},` +
+          `实见 ${second.count} 件 / start ${second.start} / 焦点 ${second.focus ?? "无"}`,
+      );
+    }
+
+    let last = second;
+    let shownBefore = second.shown;
+    let finalFocus = sortedIds[6];
+    while (shownBefore < total) {
+      const shownAfter = Math.min(total, shownBefore + 6);
+      const focusId = sortedIds[shownBefore];
+      await page.locator("[data-artifact-more]").first().click({ timeout: 5000 });
+      await waitForShown(shownAfter);
+      await waitForFocus(focusId);
+      last = await readList();
+      const expectedStart = Math.max(0, shownAfter - 12);
+      const expectedCount = shownAfter - expectedStart;
+      checked += 1;
+      if (
+        last.shown !== shownAfter ||
+        last.start !== expectedStart ||
+        last.count !== expectedCount ||
+        last.focus !== focusId
+      ) {
+        failures.push(
+          `[195] 法宝册续开到第 ${shownAfter} 件时窗口不对:` +
+            `应 ${expectedCount} 行 / start ${expectedStart} / 焦点 ${focusId},` +
+            `实见 ${last.count} 行 / start ${last.start} / ` +
+            `焦点 ${last.focus ?? "无"}(shown ${last.shown})`,
+        );
+      }
+      finalFocus = focusId;
+      shownBefore = shownAfter;
+    }
+    const lastStart = total - 12;
+    checked += 1;
+    if (
+      last.count !== 12 ||
+      last.start !== lastStart ||
+      last.focus !== finalFocus ||
+      last.ids.includes(sortedIds[0]) ||
+      !last.ids.includes(sortedIds.at(-1)) ||
+      (await page.locator("[data-artifact-more]").count()) > 0 ||
+      (await page.locator("[data-artifact-prev]").count()) === 0
+    ) {
+      failures.push(
+        `[195] 法宝册末批应滑窗为 12/${total}、从第 ${lastStart + 1} 件起、` +
+          `焦点 ${finalFocus} 并可回翻,` +
+          `实见 ${last.count} 件 / start ${last.start} / 焦点 ${last.focus ?? "无"} / ` +
+          `首批 ${last.ids.includes(sortedIds[0]) ? "仍在" : "已滑走"} / ` +
+          `末件 ${last.ids.includes(sortedIds.at(-1)) ? "在" : "缺失"}`,
+      );
+    }
+
+    await page.locator("[data-artifact-prev]").first().click({ timeout: 5000 });
+    const backShown = Math.floor((total - 1) / 6) * 6;
+    const backStart = backShown - 12;
+    await waitForShown(backShown);
+    await waitForFocus(sortedIds[backStart]);
+    const back = await readList();
+    checked += 1;
+    if (
+      back.start !== backStart ||
+      back.count !== 12 ||
+      back.focus !== sortedIds[backStart] ||
+      !back.ids.includes(sortedIds[backStart])
+    ) {
+      failures.push(
+        `[195] 法宝册回翻没有回到上一页:` +
+          `应 start ${backStart} / 12 件 / 焦点 ${sortedIds[backStart]},` +
+          `实见 start ${back.start} / ${back.count} 件 / 焦点 ${back.focus ?? "无"}`,
+      );
+    }
+
+    const toggledId = back.ids[0];
+    if (toggledId) {
+      await page.locator(`[data-artifact-row="${toggledId}"] button`).first().click({
+        timeout: 5000,
+      });
+      await waitForFocus(toggledId);
+      const toggled = await readList();
+      checked += 1;
+      if (toggled.focus !== toggledId || !toggled.ids.includes(toggledId)) {
+        failures.push(
+          `[195] 法宝随身后焦点没有留在原卡:` +
+            `应 ${toggledId},实见焦点 ${toggled.focus ?? "无"} / ` +
+            `当前窗口 ${toggled.ids.join(",")}`,
+        );
+      }
+    }
+
+    // 夹具把回翻窗首卡排成「炼化后会越过窗界」的那一件,焦点判据才不是空转。
+    const upgradeId = back.ids[0];
+    if (!upgradeId) {
+      failures.push("[195] 法宝册找不到可炼化的卡 —— 改序焦点判据没有对象");
+    } else {
+      const row = page.locator(`[data-artifact-row="${upgradeId}"]`);
+      const upgrade = row
+        .locator("button")
+        .filter({ hasText: /炼\s*化/ })
+        .first();
+      if ((await upgrade.count()) === 0 || !(await upgrade.isEnabled())) {
+        failures.push(`[195] 法宝册跨窗焦点判据的 ${upgradeId} 不可炼化 —— 夹具或代价算错了`);
+      } else {
+        await upgrade.click({ timeout: 5000 });
+        await waitForFocus(upgradeId);
+        const refined = await readList();
+        checked += 1;
+        if (
+          refined.focus !== upgradeId ||
+          !refined.ids.includes(upgradeId) ||
+          refined.shown !== backStart ||
+          refined.start !== backStart - 12 ||
+          refined.count !== 12
+        ) {
+          failures.push(
+            `[195] 法宝炼化越过窗界后没有按新位置重开窗:` +
+              `应 12 件 / start ${backStart - 12} / shown ${backStart} / 焦点 ${upgradeId},` +
+              `实见焦点 ${refined.focus ?? "无"} / shown ${refined.shown} / ` +
+              `start ${refined.start} / ${refined.count} 件`,
+          );
+        }
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[320] 法宝全册场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+    await vite?.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -8605,6 +8917,7 @@ const TASKS = [
   ["道侣的历世同行回看", taskBondHistoryOverflow],
   ["器魂两册的分批回看", taskSoulListOverflow],
   ["名号与灵兽两册的分批回看", taskTitlePetOverflow],
+  ["法宝全册的分批回看", taskArtifactListOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],

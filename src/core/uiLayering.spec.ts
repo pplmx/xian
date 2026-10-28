@@ -828,6 +828,50 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(tit?.src, "唤来 / 暂别在触屏上至少 28px 高").toContain("btn-ghost min-h-7");
   });
 
+  it("法宝全册渐进铺开 —— 祭炼与随身改序后焦点不许丢", () => {
+    // 45 件法宝每张都是名/描述/被动/神通/代价/双按钮的密卡,整册铺开会把
+    // 背包法宝页变成一场 DOM 洪峰。与其它长列表共用同一套分批、滑窗、回翻与聚焦规则。
+    const panel = FILES.find((f) => f.path === "components/inventory/ArtifactPanel.vue");
+    expect(panel?.src, "法宝册要复用长列表窗口").toMatch(
+      /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
+    );
+    expect(panel?.src, "法宝卡按 6 件一批、最多留 12 件").toMatch(
+      /ARTIFACT_RENDER_BATCH\s*=\s*6[\s\S]{0,140}ARTIFACT_RENDER_WINDOW\s*=\s*ARTIFACT_RENDER_BATCH\s*\*\s*2/,
+    );
+    expect(panel?.src, "只循环当前窗口,不许再整册铺开").toMatch(
+      /v-for="row in artifactPage\.visible"/,
+    );
+    for (const attr of ["total", "shown", "start"]) {
+      expect(panel?.src, `法宝册要暴露 ${attr} 读数给运行时门`).toContain(`data-artifact-${attr}`);
+    }
+    expect(panel?.src, "法宝卡要有稳定指纹").toContain(":data-artifact-row=");
+    expect(panel?.src, "余件要能续开").toContain("data-artifact-more");
+    expect(panel?.src, "滑走的批次要能回翻").toContain("data-artifact-prev");
+    expect(panel?.src, "续开焦点要落到新露出的第一件").toMatch(
+      /firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*ARTIFACT_RENDER_WINDOW\s*\)/,
+    );
+    expect(panel?.src, "随身 / 收回后焦点要跟住同一件").toContain("focusArtifactRowById(defId)");
+    expect(panel?.src, "祭炼改序越过窗口后要按卡片新位置所在批次重开窗").toMatch(
+      /function focusArtifactRowById[\s\S]{0,900}findIndex[\s\S]{0,400}Math\.ceil\([\s\S]{0,160}artifactLimit\.value\s*=/,
+    );
+    expect(panel?.src, "祭炼成功也要走同一条焦点账").toMatch(
+      /function refineArtifact[\s\S]{0,160}upgradeArtifact\(defId\)[\s\S]{0,160}focusArtifactRowById\(defId\)/,
+    );
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf8");
+    expect(perf, "运行时门要按法宝卡落点核对件数").toContain('"[data-artifact-row]"');
+    expect(perf, "运行时门要逐批翻完整法宝册").toContain("button[data-artifact-more]");
+    expect(perf, "运行时门要核对法宝册回翻").toContain("button[data-artifact-prev]");
+    const fixture = readFileSync(
+      resolve(__dirname, "../../scripts/lib/fullArtifactFixture.ts"),
+      "utf8",
+    );
+    expect(fixture, "全册夹具必须从内容表生成,不许手抄 45 个 id").toContain("ARTIFACTS.map");
+    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+    expect(layout, "195 宽要逐批翻完法宝册并复核祭炼后的焦点").toContain(
+      '["法宝全册的分批回看", taskArtifactListOverflow]',
+    );
+  });
+
   it("洞府营造尽善有完成感 —— 七座俱至顶的圆满,不许只沉在各自卡面", () => {
     // 各卡到了顶只会各自说「已至顶档」,整座洞府全满却没有一句话 —— 家业
     // 经营到头的圆满该有一声(与图鉴尽收/名号尽收同族)。判据读 store 的

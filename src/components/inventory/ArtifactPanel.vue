@@ -14,105 +14,143 @@
     祭炼一重,被动与神通各强 {{ formatPercent(ARTIFACT_LEVEL_BONUS) }},至多
     {{ cnNumber(ARTIFACT_MAX_LEVEL) }} 重 —— 顶到封顶的不再涨,卡片上标着
   </p>
-  <div v-if="artifactRows.length" class="mt-2 space-y-2.5">
-    <!--
+  <div
+    v-if="artifactRows.length"
+    class="mt-2"
+    :data-artifact-total="artifactRows.length"
+    :data-artifact-shown="artifactPage.shown"
+    :data-artifact-start="artifactPage.start"
+  >
+    <p class="pb-1 text-center text-[10px] text-ink-faint tabular">
+      法宝共 {{ artifactRows.length }} 件 · 现看 {{ artifactPage.start + 1 }}–{{
+        artifactPage.shown
+      }}
+    </p>
+    <div class="space-y-2.5">
+      <!--
       法宝行卡的品阶晕染:边框随档加深(qualityTier 同源),天/仙/神另有角章。
       底色**固定 6%**(不随档):法宝行是多行文字密卡(名/描述/被动/神通 11-14px),
       进阶档的 10% 与稀有档的 13% 底会把文字对比度压破 AA(货架 4.35:1 的同一教训,
       见 MarketView shelfTier)—— 档位线索由边框与角章承担,底色退回弱晕。
     -->
-    <div
-      v-for="row in artifactRows"
-      :key="row.def.id"
-      class="card-ink relative px-4 py-3"
-      :style="{
-        borderColor: colorWithAlpha(
-          qualityDef(row.def.quality).color,
-          tierOf(row.def.quality).border,
-        ),
-        background: colorWithAlpha(qualityDef(row.def.quality).color, 0.06),
-      }"
-    >
-      <!-- 佩戴中的法宝盖「随」章(玉色,与装备格的「佩」同族) —— 靠按钮文字区分太隐晦 -->
-      <span
-        v-if="row.equipped"
-        class="absolute left-2 top-2 rounded-sm bg-jade/6 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
-        >随</span
+      <div
+        v-for="row in artifactPage.visible"
+        :key="row.def.id"
+        :data-artifact-row="row.def.id"
+        tabindex="-1"
+        class="card-ink relative px-4 py-3"
+        :style="{
+          borderColor: colorWithAlpha(
+            qualityDef(row.def.quality).color,
+            tierOf(row.def.quality).border,
+          ),
+          background: colorWithAlpha(qualityDef(row.def.quality).color, 0.06),
+        }"
       >
-      <!-- 天/仙/神右上盖品阶阴文章 —— 与装备/丹药同一套视觉语言(见 qualityTier) -->
-      <span v-if="isRareQuality(row.def.quality)" class="absolute right-2 top-2 leading-none">
-        <QualitySeal :quality="row.def.quality" :size="16" />
-      </span>
-      <div class="flex items-center gap-2">
-        <GameIcon
-          :name="row.def.icon"
-          :size="18"
-          :style="{ color: qualityDef(row.def.quality).color }"
+        <!-- 佩戴中的法宝盖「随」章(玉色,与装备格的「佩」同族) —— 靠按钮文字区分太隐晦 -->
+        <span
+          v-if="row.equipped"
+          class="absolute left-2 top-2 rounded-sm bg-jade/6 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
+          >随</span
+        >
+        <!-- 天/仙/神右上盖品阶阴文章 —— 与装备/丹药同一套视觉语言(见 qualityTier) -->
+        <span v-if="isRareQuality(row.def.quality)" class="absolute right-2 top-2 leading-none">
+          <QualitySeal :quality="row.def.quality" :size="16" />
+        </span>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <GameIcon
+            :name="row.def.icon"
+            :size="18"
+            :style="{ color: qualityDef(row.def.quality).color }"
+          />
+          <span
+            class="font-kai text-[14px]"
+            :style="{ color: qualityDef(row.def.quality).color }"
+            >{{ row.def.name }}</span
+          >
+          <QualityTag :quality="row.def.quality" />
+          <!-- 「重」而不是「阶」:阶是地界与装备层级的词,法宝这一头说的是祭炼了几重 -->
+          <span class="ml-auto shrink-0 tabular text-[11px] text-gold-ink">{{
+            artifactLevelLabel(row.owned.level)
+          }}</span>
+        </div>
+        <!-- 祭炼进度条:离满重还有多远,2px 细条(与成就组头同一根尺) -->
+        <ProgressBar
+          class="mt-1.5"
+          :value="row.owned.level / ARTIFACT_MAX_LEVEL"
+          color="var(--color-gold-ink)"
+          :height="2"
         />
-        <span class="font-kai text-[14px]" :style="{ color: qualityDef(row.def.quality).color }">{{
-          row.def.name
-        }}</span>
-        <QualityTag :quality="row.def.quality" />
-        <!-- 「重」而不是「阶」:阶是地界与装备层级的词,法宝这一头说的是祭炼了几重 -->
-        <span class="ml-auto tabular text-[11px] text-gold-ink">{{
-          artifactLevelLabel(row.owned.level)
-        }}</span>
-      </div>
-      <!-- 祭炼进度条:离满重还有多远,2px 细条(与成就组头同一根尺) -->
-      <ProgressBar
-        class="mt-1.5"
-        :value="row.owned.level / ARTIFACT_MAX_LEVEL"
-        color="var(--color-gold-ink)"
-        :height="2"
-      />
-      <p class="mt-1.5 t-body text-ink-faint">{{ row.def.desc }}</p>
-      <p class="mt-1 text-[11px] text-qing">
-        {{ passiveLines(row.def.id, row.owned.level).join(" · ") }}
-      </p>
-      <!--
+        <p class="mt-1.5 t-body text-ink-faint">{{ row.def.desc }}</p>
+        <p class="mt-1 text-[11px] text-qing">
+          {{ passiveLines(row.def.id, row.owned.level).join(" · ") }}
+        </p>
+        <!--
         神通说明按品阶与祭炼等级现算:效果随「品阶 × (1+0.08×重数)」走,
         文案不能停在基线那一句
         (见 data/artifacts.artifactActiveText —— 战斗与这句话读的是同一个函数)
       -->
-      <p class="mt-1 text-[11px] text-violet-ink">
-        神通「{{ row.def.active.name }}」:{{ artifactActiveText(row.def, row.owned.level) }}
-      </p>
-      <!--
+        <p class="mt-1 text-[11px] text-violet-ink">
+          神通「{{ row.def.active.name }}」:{{ artifactActiveText(row.def, row.owned.level) }}
+        </p>
+        <!--
         下一重给多少:按钮只报代价,玩家得自己按 ×1.08 心算 —— 而「值不值」
         正是按下之前要想清楚的事(数值由 artifactNextLevelGain 算,含封顶提示)。
       -->
-      <p
-        v-if="nextGainText(row.def.id, row.owned.level)"
-        class="mt-1 text-[10px] leading-relaxed text-ink-faint tabular"
-      >
-        下一重:{{ nextGainText(row.def.id, row.owned.level) }}
-      </p>
-      <div class="mt-2.5 flex gap-2">
-        <button
-          class="btn-seal flex-1 !py-1.5 !text-[11px]"
-          :class="{ '!bg-ink-faint': row.equipped }"
-          @click="toggleArtifact(row.def.id)"
+        <p
+          v-if="nextGainText(row.def.id, row.owned.level)"
+          class="mt-1 text-[10px] leading-relaxed text-ink-faint tabular"
         >
-          {{ row.equipped ? "收回法宝" : "祭炼随身" }}
-        </button>
-        <button
-          v-if="row.upCost"
-          class="btn-ghost flex-1 !py-1.5 !text-[11px] tabular"
-          :disabled="!row.upAffordable"
-          @click="upgradeArtifact(row.def.id)"
-        >
-          <!--
+          下一重:{{ nextGainText(row.def.id, row.owned.level) }}
+        </p>
+        <div class="mt-2.5 flex gap-2 tinylens:flex-col">
+          <button
+            class="btn-seal flex-1 !py-1.5 !text-[11px]"
+            :class="{ '!bg-ink-faint': row.equipped }"
+            @click="toggleArtifact(row.def.id)"
+          >
+            {{ row.equipped ? "收回法宝" : "祭炼随身" }}
+          </button>
+          <button
+            v-if="row.upCost"
+            class="btn-ghost flex-1 !py-1.5 !text-[11px] tabular"
+            :disabled="!row.upAffordable"
+            @click="refineArtifact(row.def.id)"
+          >
+            <!--
             两种代价都要写出来:炼化既扣悟道点、也扣灵石(见 forge.artifactUpCost),
             而按钮此前只报悟道 —— 玩家按标签算账,回头发现灵石也少了一大截。
           -->
-          炼化(悟道点 {{ row.upCost.wudao }} · 灵石 {{ formatGN(row.upCost.stone) }})
-        </button>
+            炼化(悟道点 {{ row.upCost.wudao }} · 灵石 {{ formatGN(row.upCost.stone) }})
+          </button>
+        </div>
+        <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完 -->
+        <p v-if="row.upCost && !row.upAffordable" class="mt-1.5 text-[10px] text-cinnabar tabular">
+          尚差 悟道点 {{ Math.max(0, row.upCost.wudao - resources.wudao) }} · 灵石
+          {{ formatGN(Math.max(0, toNum(row.upCost.stone) - toNum(resources.spiritStone))) }}
+        </p>
       </div>
-      <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完 -->
-      <p v-if="row.upCost && !row.upAffordable" class="mt-1.5 text-[10px] text-cinnabar tabular">
-        尚差 悟道点 {{ Math.max(0, row.upCost.wudao - resources.wudao) }} · 灵石
-        {{ formatGN(Math.max(0, toNum(row.upCost.stone) - toNum(resources.spiritStone))) }}
-      </p>
+    </div>
+    <div v-if="artifactPage.hidden > 0 || artifactPage.start > 0" class="mt-3 flex flex-wrap gap-2">
+      <button
+        v-if="artifactPage.start > 0"
+        data-artifact-prev
+        class="btn-ghost min-w-0 flex-1 !py-2 !text-[11px] tinylens:basis-full tinylens:whitespace-nowrap"
+        :aria-label="previousArtifactText"
+        @click="showPreviousArtifacts"
+      >
+        {{ previousArtifactText }}
+      </button>
+      <button
+        v-if="artifactPage.hidden > 0"
+        data-artifact-more
+        class="btn-ghost min-w-0 flex-1 !py-2 !text-[11px] tinylens:basis-full tinylens:whitespace-nowrap"
+        :aria-label="moreArtifactText"
+        :data-promised="Math.min(ARTIFACT_RENDER_BATCH, artifactPage.hidden)"
+        @click="showMoreArtifacts"
+      >
+        {{ moreArtifactText }}
+      </button>
     </div>
   </div>
   <p v-else class="empty-note mt-16 text-center text-[11px] text-ink-faint">
@@ -126,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, nextTick, ref } from "vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
@@ -153,6 +191,13 @@ import {
 import { artifactSlotBonus } from "@/core/heritageEffects";
 import { REALMS } from "@/data/realms";
 import { artifactUpCost, upgradeArtifact } from "@/core/forge";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 import { cnNumber, formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { STAT_NAMES } from "@/data/statNames";
@@ -195,9 +240,74 @@ const artifactRows = computed(() =>
     ),
 );
 
+const ARTIFACT_RENDER_BATCH = 6;
+const ARTIFACT_RENDER_WINDOW = ARTIFACT_RENDER_BATCH * 2;
+const artifactLimit = ref(ARTIFACT_RENDER_BATCH);
+const artifactPage = computed(() =>
+  listWindow(artifactRows.value, artifactLimit.value, ARTIFACT_RENDER_WINDOW),
+);
+const moreArtifactText = computed(() => {
+  const next = Math.min(ARTIFACT_RENDER_BATCH, artifactPage.value.hidden);
+  return `再看 ${next} 件 · 余 ${artifactPage.value.hidden}`;
+});
+const previousArtifactText = computed(
+  () =>
+    `前一批 ${previousListStep(
+      artifactPage.value.shown,
+      artifactRows.value.length,
+      ARTIFACT_RENDER_BATCH,
+    )} 件`,
+);
+
+function focusArtifactRow(index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>("[data-artifact-row]");
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function focusArtifactRowById(defId: string): void {
+  void nextTick(() => {
+    const selector = `[data-artifact-row="${CSS.escape(defId)}"]`;
+    const row = document.querySelector<HTMLElement>(selector);
+    if (row) {
+      row.focus();
+      return;
+    }
+    // 炼化升高祭炼等级后会改同品阶内的次序,卡片可能跨出当前滑窗。
+    // 把它新位置所在批次的末尾设为上限,前后移动都能重新把它纳入窗口。
+    const index = artifactRows.value.findIndex((candidate) => candidate.def.id === defId);
+    if (index < 0) return;
+    const pageEnd = Math.ceil((index + 1) / ARTIFACT_RENDER_BATCH) * ARTIFACT_RENDER_BATCH;
+    artifactLimit.value = Math.min(artifactRows.value.length, pageEnd);
+    void nextTick(() => document.querySelector<HTMLElement>(selector)?.focus());
+  });
+}
+
+function showMoreArtifacts(): void {
+  const shownBefore = artifactPage.value.shown;
+  const shownAfter = nextListLimit(shownBefore, artifactRows.value.length, ARTIFACT_RENDER_BATCH);
+  artifactLimit.value = shownAfter;
+  focusArtifactRow(firstNewVisibleIndex(shownBefore, shownAfter, ARTIFACT_RENDER_WINDOW));
+}
+
+function showPreviousArtifacts(): void {
+  artifactLimit.value = previousListLimit(
+    artifactPage.value.shown,
+    artifactRows.value.length,
+    ARTIFACT_RENDER_BATCH,
+  );
+  focusArtifactRow();
+}
+
 function toggleArtifact(defId: string): void {
   const result = inventory.toggleArtifact(defId, artifactSlots.value);
   if (result === "replaced") ui.toast("法宝位已满,替换了最早祭炼的一件", "info");
+  focusArtifactRowById(defId);
+}
+
+function refineArtifact(defId: string): void {
+  if (upgradeArtifact(defId)) focusArtifactRowById(defId);
 }
 
 function passiveLines(defId: string, level: number): string[] {
