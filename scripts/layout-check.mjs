@@ -154,7 +154,7 @@
 import { chromium } from "playwright";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
 import { decryptSlice, encryptSlice } from "./lib/saveFixture.mjs";
-import { mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6171,7 +6171,28 @@ async function taskBadSave() {
     if (!/损坏|异常|隔离/.test(boot.toasts))
       failures.push(`[390] 坏档场景:启动时没有交代坏档(${boot.toasts || "无提示"})`);
     if (!boot.backedUp) failures.push("[390] 坏档场景:坏掉的分片没有被隔离备份(原档直接丢了)");
-    await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
+    /*
+     * 冷启动时 app.mount 会早于 router 的首轮导航落定。若这时立刻把 hash 改成
+     * /settings,首轮导航的尾帧仍可能把它写回 / —— 下面的 20 秒便只是在等一个
+     * 已经被覆盖的目标(全量并发跑时实测当前页停在 #/,单跑却过)。
+     * 先等首轮导航真的落在 /,再改 hash;这里不碰判据,只消除启动竞态。
+     */
+    const bootRouteSettled = await page
+      .waitForFunction(() => location.hash === "#/", { timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!bootRouteSettled)
+      failures.push(
+        `[390] 坏档场景:首轮导航未落在首页(当前页:${
+          (await page.evaluate(() => location.hash)) || "?"
+        })`,
+      );
+    await page.evaluate(() => {
+      location.hash = "#/settings";
+    });
+    await page
+      .waitForFunction(() => location.hash.startsWith("#/settings"), { timeout: 5000 })
+      .catch(() => undefined);
     /**
      * 等那张卡真的画出来 —— 不要固定 900ms。
      *
@@ -6732,6 +6753,32 @@ async function taskBuildArtifacts() {
       );
     } else if (!/Kaiti SC|KaiTi/.test(kaiRule[1])) {
       failures.push("楷体栈里没了系统楷体兜底 —— 子集外的生僻字会直接掉到衬线");
+    }
+
+    /*
+     * JS 单块上限与加密库分包。
+     *
+     * 此前 player 组 504KB,构建器每次都在报告末尾发「chunk >500KB」警告,但没有任何
+     * 门会因此失败 —— 警告看久了就等同于不存在。crypto-js 稳定、独立,拆成 vendor-crypto
+     * 后 player 降到约 486KB、首屏总字节几乎不变;这里把两件事一起钉住:
+     *   ① 任一块 JS 超过 500,000 字节即红(与构建器警告同一条线);
+     *   ② vendor-crypto 必须真在产物里,否则配置被删了、警告也会悄悄回来。
+     */
+    checked += 1;
+    const jsChunks = readdirSync(dir)
+      .filter((f) => f.endsWith(".js"))
+      .map((f) => ({ name: f, bytes: statSync(join(dir, f)).size }));
+    const oversized = jsChunks.filter((chunk) => chunk.bytes > 500_000);
+    if (oversized.length) {
+      failures.push(
+        `构建产物有 ${oversized.length} 个 JS 块超过 500KB:${oversized
+          .sort((a, b) => b.bytes - a.bytes)
+          .map((chunk) => `${chunk.name} ${(chunk.bytes / 1024).toFixed(1)}KB`)
+          .join(" / ")}`,
+      );
+    }
+    if (!jsChunks.some((chunk) => /^vendor-crypto-.*\.js$/.test(chunk.name))) {
+      failures.push("构建产物里没有 vendor-crypto —— crypto-js 又被并回 player,500KB 警告会回来");
     }
   }
 

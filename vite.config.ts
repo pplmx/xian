@@ -271,6 +271,30 @@ export default defineConfig({
       },
     },
   ]),
+  build: {
+    rolldownOptions: {
+      output: {
+        /*
+         * AES 依赖单独成块。
+         *
+         * 此前 crypto-js 与本作状态/内容一起落在 player 组:504KB,刚越过 Vite 的
+         * 500KB 警告线,而它又是最稳定、最该跨版本复用的一层。拆出后 player 约
+         * 486KB、vendor-crypto 约 18KB,首屏总字节几乎不变(实测仅 +0.2KB),
+         * 但内容更新时浏览器可继续命中加密库缓存;判据在 layout-check 的构建产物
+         * 任务(任一 JS >500KB 或 vendor-crypto 丢失都会红)。
+         */
+        codeSplitting: {
+          groups: [
+            {
+              name: "vendor-crypto",
+              test: /[\\/]node_modules[\\/].*[\\/]crypto-js[\\/]/,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       // 用 import.meta.dirname 而非 __dirname:Vite 8 的 configLoader: 'native'

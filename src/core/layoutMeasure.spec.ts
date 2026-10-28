@@ -142,6 +142,43 @@ describe("排版量法口径", () => {
     expect(lateSeed).toContain("await ctx.addInitScript(");
   });
 
+  it("坏档场景要等首轮导航落定后再进设置页 —— 20 秒不替启动竞态买单", () => {
+    /*
+     * app.mount 早于 router 首轮导航落定。坏档任务若在 mount 后立刻把 hash 改成
+     * /settings,首轮导航仍可能把它写回 /;并发全量跑时实测卡满 20 秒,而单跑
+     * 同一份产物正常。先等首轮导航落到 /,再走设置页,判据本身不动。
+     */
+    const start = SCRIPT.indexOf("async function taskBadSave()");
+    const end = SCRIPT.indexOf("/** iOS 存档风险提示 */", start);
+    expect(start, "坏档任务要能定位到 —— 定位不到这条就是空转").toBeGreaterThan(-1);
+    expect(end, "坏档任务的结尾要能定位到").toBeGreaterThan(start);
+    const task = SCRIPT.slice(start, end);
+    expect(task).toContain('.waitForFunction(() => location.hash === "#/", { timeout: 5000 })');
+    expect(task).toContain('location.hash = "#/settings";');
+    expect(task).toContain('.waitForFunction(() => location.hash.startsWith("#/settings")');
+    expect(task).not.toContain('page.goto(INDEX + "#" + "/settings"');
+  });
+
+  it("构建产物守住单块 500KB,并把 crypto-js 单独留成可缓存块", () => {
+    /*
+     * 构建器的 chunk 警告不会让任何门失败;警告看久了就等于不存在。这里钉住
+     * 运行期产物判据(任一块 JS >500,000 字节即红)与分包配置(crypto-js 必须
+     * 单独成 vendor-crypto),避免下一次「顺手合并」把 504KB 的 player 组带回来。
+     */
+    const start = SCRIPT.indexOf("async function taskBuildArtifacts()");
+    const end = SCRIPT.indexOf("/**\n * 开局前两页", start);
+    expect(start, "构建产物任务要能定位到 —— 定位不到这条就是空转").toBeGreaterThan(-1);
+    expect(end, "构建产物任务的结尾要能定位到").toBeGreaterThan(start);
+    const task = SCRIPT.slice(start, end);
+    expect(task).toContain("chunk.bytes > 500_000");
+    expect(task).toContain("/^vendor-crypto-.*\\.js$/");
+
+    const vite = readFileSync(resolve(__dirname, "../../vite.config.ts"), "utf-8");
+    expect(vite).toContain('name: "vendor-crypto"');
+    expect(vite).toContain("crypto-js");
+    expect(vite).toContain("codeSplitting:");
+  });
+
   it("巡页与冒烟的路由表都要跟上 router —— 新页面不许悄悄漏在门外", () => {
     /*
      * ROUTES 是手抄的一份清单。新增一个页面却忘了加进来,那一刻起它就再也不被任何
