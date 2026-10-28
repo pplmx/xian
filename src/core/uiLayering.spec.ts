@@ -1740,6 +1740,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("构筑对照不许只给最近八则 —— 道痕余量可续开,旧构筑仍可达", () => {
+    // 道痕最多留 60 则，构筑对照却只切最近 8 则：再往前的历史构筑既没有计数，
+    // 也没有续开入口，玩家会以为道痕里只剩这些。全量候选与可见窗必须分开。
+    const build = FILES.find((f) => f.path === "views/BuildView.vue");
+    expect(build?.src, "先保留全部可比道痕").toContain("const compareRows = computed");
+    expect(build?.src, "可见窗走长列表同一把尺").toMatch(
+      /const comparePage = computed\([\s\S]{0,160}listWindow\(compareRows\.value, compareLimit\.value\)/,
+    );
+    expect(build?.src, "续开必须按全量道痕收敛").toMatch(
+      /nextListLimit\(\s*comparePage\.value\.shown,\s*compareRows\.value\.length,\s*COMPARE_BATCH,?\s*\)/,
+    );
+    expect(build?.src, "每条候选要有稳定判据").toContain("data-compare-candidate");
+    expect(build?.src, "余量不能静默消失").toContain("data-compare-more");
+  });
+
   it("悬赏贡器不许显占位 0 灵石 · 辅修席满要置灰", () => {
     // ① 贡器单的 reward 是占位 gnZero,逐单真价在交货时按所交品质现算(equipBountyReward)。
     //    价签若一视同仁 formatGN(o.reward) 就亮「0 灵石」——对不上任何结算的假数。

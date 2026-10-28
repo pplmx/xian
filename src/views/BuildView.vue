@@ -271,21 +271,38 @@
         <p class="text-[11px] text-ink-faint">
           以当前构筑,对照道痕中冻结的一套过往构筑,看四天局面各有何异。
         </p>
-        <div class="mt-2 flex flex-wrap gap-1.5">
+        <div
+          class="mt-2 flex flex-wrap gap-1.5"
+          :data-compare-total="compareRows.length"
+          :data-compare-shown="comparePage.shown"
+        >
           <button
             v-for="c in compareCandidates"
             :key="c.at"
+            type="button"
+            :data-compare-candidate="c.at"
             class="chip-ink"
             :class="
               compareAt === c.at ? 'border-cinnabar text-cinnabar' : 'border-ink/25 text-ink-faint'
             "
+            :aria-pressed="compareAt === c.at"
             @click="pickCompare(c.at)"
           >
             第{{ c.life }}世·{{ c.buildName }}
           </button>
         </div>
+        <button
+          v-if="comparePage.hidden > 0"
+          type="button"
+          data-compare-more
+          class="chip-ink mt-1.5 border-cinnabar/50 text-[10px] text-cinnabar active:scale-95"
+          :aria-label="compareMoreText"
+          @click="showMoreCompare"
+        >
+          {{ compareMoreText }}
+        </button>
         <template v-if="compareResult">
-          <div class="mt-2 space-y-0.5">
+          <div class="mt-2 space-y-0.5" :data-compare-result="compareAt">
             <p
               v-for="row in compareResult.rows"
               :key="row.worldName"
@@ -342,7 +359,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import {
   detectBuild,
@@ -362,6 +379,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { applyLoadout, captureLoadout, deleteLoadout } from "@/core/loadoutService";
 import { useLoadoutsStore, MAX_LOADOUTS } from "@/stores/loadouts";
 import { cnNumber, formatPercent } from "@/utils/format";
+import { firstNewVisibleIndex, listWindow, nextListLimit } from "@/core/listRender";
 import { STAT_NAMES } from "@/data/statNames";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
@@ -422,15 +440,42 @@ function winTextCls(rate: number): string {
 const endgame = useEndgameStore();
 const compareAt = ref<number | null>(null);
 const compareResult = ref<CompareReport | null>(null);
+const COMPARE_BATCH = 8;
+const compareLimit = ref(COMPARE_BATCH);
 
-const compareCandidates = computed(() =>
+const compareRows = computed(() =>
   endgameUnlocked()
     ? endgame.marks
         .filter((m) => m.replay !== undefined)
-        .slice(0, 8)
         .map((m) => ({ at: m.at, life: m.life, buildName: m.buildName }))
     : [],
 );
+const comparePage = computed(() => listWindow(compareRows.value, compareLimit.value));
+const compareCandidates = computed(() => comparePage.value.visible);
+const compareMoreText = computed(() => {
+  const next = Math.min(COMPARE_BATCH, comparePage.value.hidden);
+  return `再看 ${next} 则 · 余 ${comparePage.value.hidden}`;
+});
+
+function focusCompare(index = 0): void {
+  void nextTick(() => {
+    const candidates = document.querySelectorAll<HTMLButtonElement>(
+      "button[data-compare-candidate]",
+    );
+    candidates[Math.min(Math.max(0, index), candidates.length - 1)]?.focus();
+  });
+}
+
+function showMoreCompare(): void {
+  const shownBefore = comparePage.value.shown;
+  const shownAfter = nextListLimit(
+    comparePage.value.shown,
+    compareRows.value.length,
+    COMPARE_BATCH,
+  );
+  compareLimit.value = shownAfter;
+  focusCompare(firstNewVisibleIndex(shownBefore, shownAfter, shownAfter));
+}
 
 function pickCompare(at: number): void {
   compareAt.value = at;

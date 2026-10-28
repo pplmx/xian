@@ -145,6 +145,9 @@
  *   五十 修行页的丹药速服只铺前四味。第五味起必须报「另有 N 味」,并能一键落到背包的
  *      丹药页签 —— 只截断不交代,玩家会以为丹匣里只剩四味;直达链接若落回装备页,
  *      这条入口也只是换了个地方继续藏。
+ *   五十一 构筑对照不许只给最近八则道痕。余量要报数、可续开,续开后的焦点要送到
+ *      新露出的第一则;第九则以前的旧构筑还要真能点开对照 —— 只多一行字、点不动
+ *      仍是断头路。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -7109,6 +7112,188 @@ async function taskQuickPillOverflow() {
 }
 
 /**
+ * 构筑对照的道痕很多时,只摆最近八则就是静默截断。
+ *
+ * 这里造十则带忆战快照的道痕:首批只该有八则和「再看 2 则 · 余 2」;在 195 宽
+ * (200% 缩放档)入口仍要够大、不裁字。续开后十条都在,焦点落到第九则,再真点
+ * 这一则旧构筑,对照结果必须出来。
+ */
+async function taskBuildCompareOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const now = Date.now();
+    const marks = Array.from({ length: 10 }, (_, i) => {
+      const life = 12 - i;
+      return {
+        life,
+        daoPathId: "sword",
+        targetId: "chiyan",
+        targetName: "赤炎天",
+        cleared: true,
+        rounds: 30 + i,
+        buildName: `旧构筑${life}`,
+        powerText: "1万",
+        at: now - i * 1000,
+        replay: {
+          mods: {},
+          attack: { m: 1200 + i * 80, e: 0 },
+          defense: { m: 700 + i * 40, e: 0 },
+          maxHp: { m: 22000 + i * 600, e: 0 },
+          speed: 2,
+          skills: [],
+          artifacts: [],
+          pactId: null,
+        },
+      };
+    });
+    const slices = showcaseSlices("light");
+    slices.endgame = { ...slices.endgame, marks };
+    await seedSave(ctx, slices, "__buildCompareFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/build", { waitUntil: "load" });
+
+    const candidates = page.locator("[data-compare-candidate]");
+    await candidates.first().waitFor({ state: "visible", timeout: 10000 });
+    const more = page.locator("[data-compare-more]").first();
+    const initial = await page.evaluate(() => {
+      const holder = document.querySelector("[data-compare-total]");
+      return {
+        total: Number(holder?.getAttribute("data-compare-total")),
+        shown: Number(holder?.getAttribute("data-compare-shown")),
+        count: document.querySelectorAll("[data-compare-candidate]").length,
+      };
+    });
+    const moreCount = await more.count();
+    const moreText = moreCount
+      ? ((await more.textContent()) || "").replace(/\s+/g, " ").trim()
+      : "";
+    checked += 1;
+    if (initial.total !== 10 || initial.shown !== 8 || initial.count !== 8) {
+      failures.push(
+        `[320] 构筑对照首批应 8/10 则,实见 ${initial.count}/${initial.total}(shown ${initial.shown})`,
+      );
+    }
+    if (moreCount === 0) {
+      failures.push("[320] 后两则道痕被静默截掉了 —— 没有续开入口");
+    } else if (!/再看\s*2\s*则\s*·\s*余\s*2/.test(moreText)) {
+      failures.push(`[320] 续开入口没报清余量:«${moreText}»`);
+    }
+
+    if (moreCount > 0) {
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      const fit = await more.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          left: box.left,
+          right: box.right,
+          width: box.width,
+          height: box.height,
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+          viewport: window.innerWidth,
+        };
+      });
+      checked += 1;
+      if (fit.left < -1 || fit.right > fit.viewport + 1 || fit.scrollWidth > fit.clientWidth + 1) {
+        failures.push(
+          `[195] 续开入口被挤坏:盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+            `内容 ${fit.scrollWidth}>${fit.clientWidth} / 视口 ${fit.viewport}`,
+        );
+      }
+      if (fit.height < 27.5) {
+        failures.push(
+          `[195] 续开入口只有 ${Math.round(fit.height * 10) / 10}px 高,低于 28px 触达下限`,
+        );
+      }
+
+      const ninth = marks[8];
+      await more.click({ timeout: 5000 });
+      const expanded = await page
+        .waitForFunction(
+          () => {
+            const holder = document.querySelector("[data-compare-total]");
+            return (
+              document.querySelectorAll("[data-compare-candidate]").length === 10 &&
+              holder?.getAttribute("data-compare-shown") === "10"
+            );
+          },
+          { timeout: 5000 },
+        )
+        .then(() => true)
+        .catch(() => false);
+      checked += 1;
+      if (!expanded) {
+        failures.push(`[195] 点续开后没有放出全部十则,实见 ${await candidates.count()} 则`);
+      } else {
+        if ((await page.locator("[data-compare-more]").count()) !== 0) {
+          failures.push("[195] 十则已全部展开,续开入口却还在");
+        }
+        const focused = await page.evaluate(() => ({
+          at: document.activeElement?.getAttribute("data-compare-candidate"),
+          text: (document.activeElement?.textContent || "").replace(/\s+/g, " ").trim(),
+        }));
+        checked += 1;
+        if (focused.at !== String(ninth.at)) {
+          failures.push(
+            `[195] 续开后焦点没送到第九则:落在 «${focused.text || "无"}»(${focused.at ?? "非候选"})`,
+          );
+        }
+
+        const oldCandidate = page.locator(`[data-compare-candidate="${ninth.at}"]`).first();
+        await oldCandidate.click({ timeout: 5000 });
+        const result = page.locator(`[data-compare-result="${ninth.at}"]`).first();
+        const opened = await result
+          .waitFor({ state: "visible", timeout: 5000 })
+          .then(() => true)
+          .catch(() => false);
+        checked += 1;
+        if (!opened) {
+          failures.push(`[195] 第九则旧构筑「${ninth.buildName}」点不开对照`);
+        } else {
+          const report = await result.evaluate((el) => ({
+            text: (el.innerText || "").replace(/\s+/g, " ").trim(),
+            pressed: el.parentElement
+              ?.querySelector(
+                `[data-compare-candidate="${el.getAttribute("data-compare-result")}"]`,
+              )
+              ?.getAttribute("aria-pressed"),
+          }));
+          if (!/今\s/.test(report.text) || !/彼\s/.test(report.text)) {
+            failures.push(`[195] 旧构筑对照结果没有今昔两列:«${report.text.slice(0, 80)}»`);
+          }
+          if (report.pressed !== "true") {
+            failures.push("[195] 点开旧构筑后,候选没有标成当前对照");
+          }
+          if (/NaN|undefined|Infinity/.test(report.text)) {
+            failures.push(`[195] 旧构筑对照漏出占位符:«${report.text.slice(0, 80)}»`);
+          }
+        }
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[320] 构筑对照场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -7270,6 +7455,7 @@ const TASKS = [
   ["坏档也能进游戏", taskBadSave],
   ["iOS 存档风险提示", taskIosNotice],
   ["修行速服丹药的余量入口", taskQuickPillOverflow],
+  ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],
