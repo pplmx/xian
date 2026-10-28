@@ -135,10 +135,9 @@ export interface ImportInspect {
  * 玩家读到的是"这是一份像样的存档",点下去才被告知根本不是本作的档。
  * 从别的游戏拷来的 .save、拿 JSON 手工拼出来的东西,都会走到这条路上。
  *
- * 但也不能直接套 `validateImportPayload`:`buildExportSnapshot` 只打包**存在**
- * 的分片,刚建号还没写过档时导出里可以没有 `data.player` —— 那是本作自己会产出的
- * 东西,不该被挡在确认框外(实测:收紧成全套校验后,saveRoundTrip 那条正例当场红)。
- * 故门槛取两者交集:必须是本作的标识(认更名前的旧标识),且版本号可读。
+ * 但也不能直接套 `validateImportPayload`:本作的档即使缺关键分片,也该让玩家看见
+ * 缺的是哪一块再拒绝,而不是只弹一句「无法导入」。故门槛取两者交集:必须是本作的
+ * 标识(认更名前的旧标识),且版本号可读;缺片则交给确认框置灰并点名。
  *
  * 返回 null 表示"这份东西不该进确认框",由调用方按导入路径的报错处理。
  */
@@ -153,12 +152,23 @@ export function inspectImportText(text: string): ImportInspect | null {
     if (game !== "xuanshu" && game !== LEGACY_GAME_ID) return null;
     if (typeof parsed.version !== "number" || typeof parsed.exportedAt !== "number") return null;
     const tooNew = parsed.version > SAVE_VERSION;
-    const player = parsed.data?.player;
+    const data =
+      typeof parsed.data === "object" && parsed.data !== null
+        ? (parsed.data as Record<string, unknown>)
+        : undefined;
+    const player =
+      typeof data?.player === "object" && data.player !== null
+        ? (data.player as { name?: unknown; major?: unknown; sub?: unknown })
+        : undefined;
     const major = typeof player?.major === "number" ? player.major : 0;
     const sub = typeof player?.sub === "number" ? player.sub : 0;
-    const skipped = Array.isArray(parsed.skipped)
+    const declaredSkipped = Array.isArray(parsed.skipped)
       ? parsed.skipped.filter((id): id is string => typeof id === "string")
       : [];
+    const inferredMissing = (["player", "game"] as const).filter(
+      (id) => typeof data?.[id] !== "object" || data[id] === null,
+    );
+    const skipped = [...new Set([...declaredSkipped, ...inferredMissing])];
     const missingCritical = skipped.includes("player") || skipped.includes("game");
     return {
       name: typeof player?.name === "string" && player.name ? player.name : "无名散修",

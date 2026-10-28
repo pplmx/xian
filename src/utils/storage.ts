@@ -457,7 +457,7 @@ export function preflightScan(): string[] {
       corrupted.push(id);
       try {
         const raw = localStorage.getItem(key);
-        if (raw !== null && writeVerified(`corrupt.${key}`, raw)) {
+        if (raw !== null && backupCorruptValue(key, raw)) {
           // 备份读回一致后才删原片;写不进时留下唯一副本,下次启动再试
           try {
             localStorage.removeItem(key);
@@ -471,6 +471,28 @@ export function preflightScan(): string[] {
     }
   }
   return corrupted;
+}
+
+/**
+ * 坏档备份键已存在时追加 `.1`、`.2`……
+ *
+ * 同一分片的新旧前缀可能先后损坏:第一次隔离已把新键原文写进基础备份键,
+ * 第二次若直接覆盖,前一份原文就永久丢了。
+ */
+function backupCorruptValue(key: string, raw: string): boolean {
+  const base = `corrupt.${key}`;
+  for (let copy = 0; copy < 100; copy += 1) {
+    const backupKey = copy === 0 ? base : `${base}.${copy}`;
+    try {
+      const existing = localStorage.getItem(backupKey);
+      if (existing === raw) return true;
+      if (existing !== null) continue;
+    } catch {
+      return false;
+    }
+    return writeVerified(backupKey, raw);
+  }
+  return false;
 }
 
 /** v1 → v2:单法宝位升级为多法宝位(幂等,顺带清理残留旧字段) */
@@ -524,19 +546,22 @@ export function migrateLocalSchema(): void {
 }
 
 /**
- * 启动时的存档维护顺序:先搬旧前缀,再隔离坏档,重试搬旧前缀,最后升级结构。
+ * 启动时的存档维护顺序:先搬旧前缀,再隔离坏档,重试搬旧前缀并升级结构,
+ * 最后再次隔离。
  *
  * 坏掉的旧前缀若直接搬到新键再水合,Pinia 会把它当空档,随后默认状态落盘
  * 就把原文盖掉了。先搬再扫,坏旧档至少会进 `corrupt.*` 备份;而新键坏、
  * 旧键好的一对要在扫描移走坏键后再搬一次,否则下一次水合并落默认档时,
- * 这条旧键会被可读的新默认档取代。
+ * 这条旧键会被可读的新默认档取代。第二次搬完后必须再扫一次:坏新键隔离后
+ * 空出的主键可能刚被坏旧键补进来,不能留给 Pinia 水合。
  */
 export function prepareLocalSave(): string[] {
   migrateLegacyPrefixSafely();
-  const corrupted = preflightScan();
-  // 扫描可能刚移走挡住旧档的坏新键;再走完整入口,先补搬旧档,再升级结构。
+  const corrupted = new Set(preflightScan());
+  // 扫描可能刚移走挡住旧档的坏新键;补搬并升级后要再隔离一次,再交给 Pinia。
   migrateLocalSchema();
-  return corrupted;
+  for (const id of preflightScan()) corrupted.add(id);
+  return [...corrupted];
 }
 
 function migrateLegacyPrefixSafely(): void {

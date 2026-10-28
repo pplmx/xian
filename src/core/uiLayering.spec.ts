@@ -2037,6 +2037,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(s?.src, "缺 player/game 的备份必须禁用导入按钮").toContain(
       "importInspect?.missingCritical === true",
     );
+    expect(s?.src, "关键分片缺失要把原因摊在按钮上方,不能只留一个灰色按钮").toContain(
+      "importInspect.skipped.length || importInspect.missingCritical",
+    );
   });
 
   it("强色文字不叠透明度 —— 要淡是换 token,不许元素级 opacity", () => {

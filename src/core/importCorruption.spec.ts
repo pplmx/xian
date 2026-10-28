@@ -354,12 +354,11 @@ describe("导入 · 确认框与导入路径同源", () => {
     }
   });
 
-  it("本作的档即使缺分片也进确认框 —— 那是导出侧会产出的形状", () => {
+  it("本作的档缺关键分片仍进确认框 —— 摊开缺什么,但按钮不可导入", () => {
     /**
      * 这条与上一条是一对:`buildExportSnapshot` 只打包**存在**的分片,
-     * 刚建号还没写过档时 data.player 可以缺席。那是本作自己会产出的东西,
-     * 挡在确认框外就成了"自己的存档自己导不回来"。
-     * 实测:把门槛收紧成全套 validateImportPayload 时,saveRoundTrip 那条正例当场红。
+     * 刚建号还没写过档时 data.player 可以缺席。它仍是本作的档,值得开框
+     * 把「缺哪一片」摊开;但缺关键分片过不了导入校验,按钮必须禁用。
      */
     const noPlayer = JSON.stringify({
       game: "xuanshu",
@@ -371,6 +370,21 @@ describe("导入 · 确认框与导入路径同源", () => {
     expect(info, "本作的档缺 player 分片,仍该开确认框").not.toBeNull();
     expect(info!.name, "缺名字时说「无名散修」,不编一个").toBe("无名散修");
     expect(info!.tooNew).toBe(false);
+    expect(info!.skipped, "检视要把实际缺的 player 点名,不能只给一个泛泛的禁用态").toContain(
+      "player",
+    );
+    expect(info!.missingCritical, "缺 player 的档过不了导入校验,按钮必须禁用").toBe(true);
+
+    const noGame = JSON.stringify({
+      game: "xuanshu",
+      version: SAVE_VERSION,
+      exportedAt: 1_700_000_000_000,
+      data: { player: { name: "有角色", major: 2, sub: 1 } },
+    });
+    const noGameInfo = inspectImportText(noGame);
+    expect(noGameInfo, "本作的档缺 game 分片,仍该开确认框").not.toBeNull();
+    expect(noGameInfo!.skipped, "检视也要把实际缺的 game 点名").toContain("game");
+    expect(noGameInfo!.missingCritical, "缺 game 的档同样过不了导入校验").toBe(true);
   });
 
   it("版本更高的档仍进确认框 —— 它是本作的档,该让玩家看见版本号再决定", () => {

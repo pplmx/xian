@@ -343,10 +343,12 @@ describe("存档往返 · 导出再导入一模一样", () => {
     expect(localStorage.getItem(storageKey("player")), "导入失败却动了现有存档").toBe(before);
   });
 
-  it("检视导入能看到备份的身份与版本(确认前摊开,不改存档)", () => {
+  it("检视导入能看到备份的身份与版本(确认前摊开,不改存档)", async () => {
+    useGameStore().markStarted();
     const player = usePlayerStore();
     player.major = 7;
     player.sub = 3;
+    await nextTick();
     flushSaveWrites();
     const { text } = exportSaveSnapshot();
 

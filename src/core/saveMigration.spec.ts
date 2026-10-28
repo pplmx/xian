@@ -206,6 +206,22 @@ describe("迁移 · 启动时就地升级本机分片", () => {
     expect(disk.has(storageKey("player")), "坏旧档不能留在主键等默认状态覆盖").toBe(false);
     expect(disk.has(oldKey)).toBe(false);
   });
+
+  it("新旧前缀同时损坏时,最后一次隔离后不能把坏旧档留在主键", () => {
+    const disk = installStorage();
+    const oldKey = `${LEGACY_SAVE_PREFIX}player`;
+    const newKey = storageKey("player");
+    disk.set(newKey, "新键坏档");
+    disk.set(oldKey, "旧键坏档");
+
+    const corrupted = prepareLocalSave();
+
+    expect(corrupted).toEqual(["player"]);
+    expect(disk.has(newKey), "坏旧档被重新搬回主键后,默认状态会立刻把它盖掉").toBe(false);
+    expect(disk.has(oldKey), "已隔离的坏旧档不该继续留在旧键").toBe(false);
+    expect(disk.get(`corrupt.${newKey}`), "第一份坏新键原文不能被第二次隔离覆盖").toBe("新键坏档");
+    expect(disk.get(`corrupt.${newKey}.1`), "坏旧档搬进主键后也要留下自己的原文").toBe("旧键坏档");
+  });
 });
 
 describe("迁移 · 导入一份 v1 存档", () => {

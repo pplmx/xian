@@ -149,7 +149,7 @@
           corruptedNotice.map((id) => STORE_NAMES[id] ?? id).join("、")
         }}。损坏的原档没有删除,仍在本机。备份键:<span class="break-all">{{ corruptKeys }}</span
         >;备份失败时仍在原键:<span class="break-all">{{ sourceKeys }}</span
-        >。若手上还有导出的备份,可在此导入恢复。
+        >。同一片多次损坏时,后续原文会追加 .1/.2。若手上还有导出的备份,可在此导入恢复。
         <button
           class="mt-1 block text-ink-faint underline active:opacity-60"
           @click="ui.corruptedNotice = []"
@@ -288,16 +288,16 @@
           <span v-if="importInspect.tooNew">高于当前 v{{ SAVE_VERSION }},无法导入</span>
         </p>
         <p
-          v-if="importInspect.skipped.length"
+          v-if="importInspect.skipped.length || importInspect.missingCritical"
           class="mt-1 text-[10px] leading-relaxed text-cinnabar"
         >
           <template v-if="importInspect.missingCritical">
-            导出时缺少「{{
+            这份备份缺少「{{
               importInspect.skipped.map((id) => STORE_NAMES[id] ?? id).join("、")
             }}」;关键分片缺失,这份备份无法导入。
           </template>
           <template v-else>
-            导出时缺少「{{
+            这份备份缺少「{{
               importInspect.skipped.map((id) => STORE_NAMES[id] ?? id).join("、")
             }}」;导入后这些部分会回到默认值。
           </template>
