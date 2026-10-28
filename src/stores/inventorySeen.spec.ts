@@ -135,4 +135,10 @@ describe("背包藏品 · 首屏渲染预算", () => {
     expect(nextInventoryLimit(60, items.length)).toBe(items.length);
     expect(nextInventoryLimit(60, 12)).toBe(12);
   });
+
+  it("同一窗口可换步长:坊市短横条按更小批次续开,也守住末批收口", () => {
+    expect(nextInventoryLimit(20, 120, 20)).toBe(40);
+    expect(nextInventoryLimit(110, 120, 20)).toBe(120);
+    expect(nextInventoryLimit(40, 120, 0)).toBe(41);
+  });
 });

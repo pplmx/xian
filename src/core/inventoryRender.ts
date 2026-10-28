@@ -29,7 +29,12 @@ export function inventoryWindow<T>(items: readonly T[], limit: number): Inventor
 }
 
 /** 再开一批;清单变短时直接把窗口收口到真实件数 */
-export function nextInventoryLimit(shown: number, total: number): number {
+export function nextInventoryLimit(
+  shown: number,
+  total: number,
+  batch = INVENTORY_RENDER_BATCH,
+): number {
   const current = clampCount(shown, total);
-  return Math.min(total, current + INVENTORY_RENDER_BATCH);
+  const step = Math.max(1, Math.trunc(batch));
+  return Math.min(total, current + step);
 }

@@ -251,6 +251,35 @@ describe("排版量法口径", () => {
       [...smoked].filter((p) => !declared.has(p)),
       "冒烟清单里有 router 不认识的路由",
     ).toEqual([]);
+
+    /*
+     * perf-profile 也有自己的一份游戏视图表。它此前漏了坊市与收徒两页:
+     * 两页都在 router 里、冒烟也点得到,却从来没被帧率/DOM 预算量过。
+     * 「门全绿」和「两页没量」在报告里长得一样,故这里与 router 逐页对账。
+     */
+    const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
+    const perfBlock = /const VIEWS = \[([\s\S]*?)\];/.exec(perf)?.[1];
+    expect(perfBlock, "perf-profile 的 VIEWS 要能定位得到").toBeTruthy();
+    const measured = new Set(
+      [...(perfBlock ?? "").matchAll(/route: "([^"]+)"/g)].map((m) => m[1]!),
+    );
+    expect(measured.size, "perf-profile 的 VIEWS 不许是空的").toBeGreaterThan(10);
+    expect(
+      [...declared].filter((p) => !measured.has(p)),
+      "这些页面在 router 里,却没进帧率/DOM 预算",
+    ).toEqual([]);
+    expect(
+      [...measured].filter((p) => !declared.has(p)),
+      "帧率/DOM 预算里有 router 不认识的路由",
+    ).toEqual([]);
+    expect(perf, "坊市要守住寄卖 + 贡器弹窗的峰值 DOM").toContain("market: 1100");
+
+    /*
+     * 只传 --view / --no-gate 时,旧写法会把 --view 当秒数读成 NaN,
+     * 采样器只跑一帧并报负数。参数缺口要回落到 3 秒,不能把「没量」伪装成绿色。
+     */
+    expect(perf).toContain('const si = args.indexOf("--seconds")');
+    expect(perf).toContain("Number.isFinite(parsedSecs) && parsedSecs > 0 ? parsedSecs : 3");
   });
 
   it("控件套控件的判据:宿主按按钮语义选,内层排除 -1,且带活信号", () => {

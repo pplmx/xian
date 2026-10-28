@@ -31,6 +31,11 @@ import {
   pillSellPrice,
   materialSellPrice,
 } from "@/core/marketService";
+import {
+  INVENTORY_RENDER_BATCH,
+  inventoryWindow,
+  nextInventoryLimit,
+} from "@/core/inventoryRender";
 import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
@@ -176,6 +181,7 @@ function claimBounty(idx: number): void {
   // 贡器要选交哪一件,不能悄悄拿走行囊里顺着序排在第一件的够格兵刃
   // (可能正是刚重铸/升级过的心头好) —— 点开挑一件,再交。
   if (slot && slot.kind === "equip") {
+    equipCandidateLimit.value = INVENTORY_RENDER_BATCH;
     equipPick.value = idx;
     return;
   }
@@ -224,6 +230,35 @@ const equipCandidates = computed(() => {
   if (!slot || slot.kind !== "equip" || slot.claimed) return [];
   return inventory.bagItems.filter((e) => e.tier >= slot.tier);
 });
+
+/**
+ * 贡器候选与寄卖横条都可能对着整只行囊。两者都只先铺一批,余件用显式续开补到
+ * 同一份完整清单里 —— 既保住「整包都寄得出去」,也不让 120 行候选一次压进首帧。
+ */
+const equipCandidateLimit = ref(INVENTORY_RENDER_BATCH);
+const equipCandidatePage = computed(() =>
+  inventoryWindow(equipCandidates.value, equipCandidateLimit.value),
+);
+const equipCandidateMoreLabel = computed(() => {
+  const next = Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.value.hidden);
+  return `再看 ${next} 件 · 余 ${equipCandidatePage.value.hidden}`;
+});
+function showMoreEquipCandidates(): void {
+  equipCandidateLimit.value = nextInventoryLimit(
+    equipCandidatePage.value.shown,
+    equipCandidates.value.length,
+  );
+}
+
+const consignLimit = ref(INVENTORY_RENDER_BATCH);
+const consignPage = computed(() => inventoryWindow(inventory.bagItems, consignLimit.value));
+const consignMoreLabel = computed(() => {
+  const next = Math.min(INVENTORY_RENDER_BATCH, consignPage.value.hidden);
+  return `再看 ${next} 件 · 余 ${consignPage.value.hidden}`;
+});
+function showMoreConsign(): void {
+  consignLimit.value = nextInventoryLimit(consignPage.value.shown, inventory.bagItems.length);
+}
 
 // 换版瞬间收起点选窗:挑单是**对着旧单**挑的,新单同号未必还是贡器单 ——
 // equipCandidates 会因此空掉,窗口就挂成一张空列表;收掉让玩家按新单再点。
@@ -449,6 +484,7 @@ function bountyShort(o: BountySlot): string | null {
             }}
           </span>
           <button
+            :data-bounty-equip="o.kind === 'equip' ? o.idx : undefined"
             class="btn-seal min-h-[28px] !px-3 !py-1 text-[11px]"
             :disabled="o.claimed || !!bountyShort(o)"
             @click="claimBounty(o.idx)"
@@ -474,8 +510,9 @@ function bountyShort(o: BountySlot): string | null {
       </p>
       <div class="space-y-1">
         <button
-          v-for="it in equipCandidates"
+          v-for="it in equipCandidatePage.visible"
           :key="it.uid"
+          data-equip-candidate
           class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-[11px] hoverable:hover:border-cinnabar"
           @click="deliverPicked(it.uid)"
         >
@@ -498,6 +535,16 @@ function bountyShort(o: BountySlot): string | null {
             >收 {{ equipBountyText(it) }}
           </span>
           <span class="shrink-0 text-cinnabar">交付</span>
+        </button>
+        <button
+          v-if="equipCandidatePage.hidden > 0"
+          data-market-more="equip"
+          :data-promised="Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.hidden)"
+          class="btn-ghost min-h-[28px] w-full !py-1 text-[10px]"
+          :aria-label="equipCandidateMoreLabel"
+          @click="showMoreEquipCandidates"
+        >
+          {{ equipCandidateMoreLabel }}
         </button>
         <p v-if="equipCandidates.length === 0" class="text-[11px] text-ink-faint">没有够阶的兵刃</p>
       </div>
@@ -530,40 +577,50 @@ function bountyShort(o: BountySlot): string | null {
             寄卖一件背包装备({{ MARKET_CONSIGN_SLOTS }} 格,约
             {{ MARKET_CONSIGN_SECONDS / 60 }} 分自售入账,离包即定)
           </p>
-          <div
-            v-if="market.consign.length < MARKET_CONSIGN_SLOTS"
-            class="scroll-pane flex gap-1 overflow-x-auto"
-          >
-            <!--
-              这一枚是「挑一件去寄售」的候选。原先印的是 {{ it.quality }} —— 品阶的
-              **id**（excellent / profound / earth），玩家看到的是英文枚举，不是品阶名。
-              而且整枚只有「品阶·阶数·价格」,没有装备名 —— 同一阶数的两件根本分不出。
-              改成:装备名(带品阶色) · 品阶名 · 阶数 · 价。
-            -->
-            <button
-              v-for="it in inventory.bagItems"
-              :key="it.uid"
-              class="inline-flex min-h-[28px] shrink-0 items-center rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
-              @click="consign(it.uid)"
-            >
-              <QualitySeal
-                v-if="isRareQuality(it.quality)"
-                :quality="it.quality"
-                :size="12"
-                class="mr-1"
-              />
-              <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">{{
-                equipmentTemplate(it.templateId)?.name ?? "?"
-              }}</span>
-              <span class="text-ink-faint"
-                >· {{ qualityDef(it.quality).name }}{{ it.tier }}阶 ·
-                {{ formatGN(consignPrice(it.tier, qualityDef(it.quality).rank)) }} 石</span
+          <template v-if="market.consign.length < MARKET_CONSIGN_SLOTS">
+            <div class="scroll-pane flex gap-1 overflow-x-auto">
+              <!--
+                这一枚是「挑一件去寄售」的候选。原先印的是 {{ it.quality }} —— 品阶的
+                **id**（excellent / profound / earth），玩家看到的是英文枚举，不是品阶名。
+                而且整枚只有「品阶·阶数·价格」,没有装备名 —— 同一阶数的两件根本分不出。
+                改成:装备名(带品阶色) · 品阶名 · 阶数 · 价。
+              -->
+              <button
+                v-for="it in consignPage.visible"
+                :key="it.uid"
+                :data-consign-uid="it.uid"
+                class="inline-flex min-h-[28px] shrink-0 items-center rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
+                @click="consign(it.uid)"
               >
-            </button>
-            <span v-if="inventory.bagItems.length === 0" class="text-[10px] text-ink-faint"
-              >行囊空空 —— 去历练中寻些机缘吧</span
+                <QualitySeal
+                  v-if="isRareQuality(it.quality)"
+                  :quality="it.quality"
+                  :size="12"
+                  class="mr-1"
+                />
+                <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">{{
+                  equipmentTemplate(it.templateId)?.name ?? "?"
+                }}</span>
+                <span class="text-ink-faint"
+                  >· {{ qualityDef(it.quality).name }}{{ it.tier }}阶 ·
+                  {{ formatGN(consignPrice(it.tier, qualityDef(it.quality).rank)) }} 石</span
+                >
+              </button>
+              <span v-if="inventory.bagItems.length === 0" class="text-[10px] text-ink-faint"
+                >行囊空空 —— 去历练中寻些机缘吧</span
+              >
+            </div>
+            <button
+              v-if="consignPage.hidden > 0"
+              data-market-more="consign"
+              :data-promised="Math.min(INVENTORY_RENDER_BATCH, consignPage.hidden)"
+              class="btn-ghost mt-1 min-h-[28px] w-full !py-1 text-[10px]"
+              :aria-label="consignMoreLabel"
+              @click="showMoreConsign"
             >
-          </div>
+              {{ consignMoreLabel }}
+            </button>
+          </template>
           <p v-else class="text-[10px] text-ink-faint">
             已上满 {{ MARKET_CONSIGN_SLOTS }} 格,待手头一张空闲
           </p>

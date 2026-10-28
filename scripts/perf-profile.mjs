@@ -27,8 +27,9 @@
  * 不得崩溃、不得有未处理的页面异常或应用自己的 console.error(同一把尺子,见 lib/pageErrors.mjs)。CI 机器比本机核多但单核弱,故上限按
  * 「本机读数留出数倍余量」定 —— 红的是「成倍长回去」那类回归,不是机器抖动。
  *
- * 基线(2026-10-28 实测,本机 + 无头 chromium,后期档):全视图 ~60fps、
- * 最差帧 17ms、零长帧;背包首批 40 张卡 DOM 631,其余页面 205–592。
+ * 基线(2026-10-28 实测,本机 + 无头 chromium,后期档):全 17 视图 ~60fps、
+ * 最差帧 17ms、零长帧;背包首批 40 张卡 DOM 632,坊市寄卖 + 贡器各续一批
+ * 峰值 1003,其余页面 193–592。
  * 预算见 BUDGET,曾有过更糟的读数时任它红。
  */
 import { createServer } from "node:http";
@@ -54,7 +55,9 @@ const MIME = {
 const extOf = (p) => p.slice(p.lastIndexOf("."));
 
 const args = process.argv.slice(2);
-const secs = Number(args[args.indexOf("--seconds") + 1] ?? 3);
+const si = args.indexOf("--seconds");
+const parsedSecs = si >= 0 ? Number(args[si + 1] ?? 3) : 3;
+const secs = Number.isFinite(parsedSecs) && parsedSecs > 0 ? parsedSecs : 3;
 const vi = args.indexOf("--view");
 const only = vi >= 0 ? args[vi + 1] : undefined;
 const fixture = args.includes("--showcase") ? "showcase" : "late";
@@ -77,8 +80,12 @@ const BUDGET = {
   maxFrameMs: Number(process.env.PERF_MAX_FRAME_MS ?? 100),
   /** 单视图 >50ms 长帧数量上限 */
   longFramesMax: Number(process.env.PERF_LONG_FRAMES ?? 2),
-  /** 背包按首批 40 张卡渲染;篇幅仍要滚得到,但 DOM 不许跟着 300 件一起翻几倍 */
-  maxDomByView: { inventory: 700 },
+  /**
+   * 背包按首批 40 张卡渲染;篇幅仍要滚得到,但 DOM 不许跟着 300 件一起翻几倍。
+   * 坊市量的是「寄卖横条 + 贡器弹窗都续开一批」后的峰值:120 件全铺实测 1630,
+   * 两窗各 40 件起、各续到 80 件为 1006,故 1100 只拦整包回潮。
+   */
+  maxDomByView: { inventory: 700, market: 1100 },
 };
 
 function startServer() {
@@ -116,6 +123,8 @@ const VIEWS = [
   { route: "/dongfu", name: "dongfu" },
   { route: "/world", name: "world" },
   { route: "/celestial", name: "celestial" },
+  { route: "/market", name: "market" },
+  { route: "/apprentice", name: "apprentice" },
 ];
 
 /** 页内采样器:记录相邻帧间隔,`__perfStop()` 时汇总。IIFE 用 void 包裹,
@@ -152,6 +161,31 @@ const SAMPLER = `
   })();
 `;
 
+/**
+ * 点一次「再看 N 件」,核对按钮承诺与 DOM 实际新增完全相等。
+ * 选择器都走稳定的 data-* 落点,不拿人话文本当机器判据。
+ */
+async function expandBatch(page, itemSelector, moreSelector) {
+  try {
+    const items = page.locator(itemSelector);
+    const more = page.locator(moreSelector).first();
+    const before = await items.count();
+    if ((await more.count()) === 0) throw new Error(`续开按钮不存在:${moreSelector}`);
+    const promised = Number(
+      (await more.getAttribute("data-promised")) ??
+        /再看\s*(\d+)\s*件/.exec((await more.getAttribute("aria-label")) ?? "")?.[1],
+    );
+    if (!Number.isFinite(promised) || promised <= 0)
+      throw new Error(`续开按钮没有报件数:${moreSelector}`);
+    await more.click({ timeout: 3000 });
+    await page.waitForTimeout(120);
+    const after = await items.count();
+    return { before, promised, after, ok: after === before + promised };
+  } catch (error) {
+    return { before: 0, promised: 0, after: 0, ok: false, reason: String(error) };
+  }
+}
+
 const server = await startServer();
 const base = `http://127.0.0.1:${server.address().port}/`;
 
@@ -166,7 +200,7 @@ for (const view of VIEWS) {
   try {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     let slices = (fixture === "showcase" ? showcaseSlices : lateSlices)("light");
-    if (bigbag > 0 && view.name === "inventory") {
+    if (bigbag > 0 && (view.name === "inventory" || view.name === "market")) {
       // 造 bigbag 件装备进背包,把「几百件装备的列表重渲染」逼出来 —— 这才是
       // 这类放置游戏 jank 的真实来源(小包 2-3 件量不出列表成本)。
       const templates = ["w_chensha", "b_xingluo", "a_zhenhong", "a_luoxiao"];
@@ -174,7 +208,8 @@ for (const view of VIEWS) {
         uid: `big_${i}`,
         templateId: templates[i % templates.length],
         quality: ["mortal", "spirit", "earth", "heaven"][i % 4],
-        tier: 9,
+        // 后期档主境界是 14;贡器候选也逼到整包都有资格,不能只量空弹窗。
+        tier: 14,
         level: 0,
         affixes: [
           { id: "bs3", roll: 1 },
@@ -195,24 +230,50 @@ for (const view of VIEWS) {
     await page.waitForTimeout(secs * 1000);
     const data = await page.evaluate("window.__perfStop()");
     let batch = null;
+    let marketBatches = null;
+    let peakNodes = data.nodes;
     if (bigbag > 0 && view.name === "inventory") {
-      try {
-        const cards = page.locator("main button[data-uid]");
-        const more = page.getByRole("button", { name: /再看 \d+ 件/ }).first();
-        const before = await cards.count();
-        const label = (await more.getAttribute("aria-label", { timeout: 3000 })) ?? "";
-        const promised = Number(/再看\s*(\d+)\s*件/.exec(label)?.[1]);
-        if (!Number.isFinite(promised) || promised <= 0)
-          throw new Error(`续开按钮没有报件数:${label}`);
-        await more.click({ timeout: 3000 });
-        await page.waitForTimeout(120);
-        const after = await cards.count();
-        batch = { before, promised, after, ok: after === before + promised };
-      } catch (error) {
-        batch = { before: 0, promised: 0, after: 0, ok: false, reason: String(error) };
-      }
+      batch = await expandBatch(page, "main button[data-uid]", 'main button[aria-label^="再看 "]');
     }
-    record = { name: view.name, route: view.route, ...data, batch, errors };
+    if (bigbag > 0 && view.name === "market") {
+      const consign = await expandBatch(
+        page,
+        "button[data-consign-uid]",
+        'button[data-market-more="consign"]',
+      );
+      let candidates;
+      try {
+        const trigger = page.locator("[data-bounty-equip]").first();
+        if ((await trigger.count()) === 0) throw new Error("没有贡器悬赏入口");
+        await trigger.click({ timeout: 3000 });
+        await page.waitForTimeout(120);
+        candidates = await expandBatch(
+          page,
+          "button[data-equip-candidate]",
+          'button[data-market-more="equip"]',
+        );
+      } catch (error) {
+        candidates = {
+          before: 0,
+          promised: 0,
+          after: 0,
+          ok: false,
+          reason: String(error),
+        };
+      }
+      peakNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+      marketBatches = { consign, candidates };
+    }
+    record = {
+      name: view.name,
+      route: view.route,
+      ...data,
+      nodes: data.nodes,
+      peakNodes,
+      batch,
+      marketBatches,
+      errors,
+    };
     await context.close();
   } catch (err) {
     record = { name: view.name, route: view.route, crashed: String(err).slice(0, 160) };
@@ -223,11 +284,22 @@ await browser.close();
 server.close();
 
 // ---- 报告 ----
+function batchChecks(r) {
+  const checks = [];
+  if (r.batch) checks.push(["续开", r.batch]);
+  if (r.marketBatches?.consign) checks.push(["寄卖续开", r.marketBatches.consign]);
+  if (r.marketBatches?.candidates) checks.push(["贡器续开", r.marketBatches.candidates]);
+  return checks;
+}
+
 for (const r of results) {
+  const checks = r.crashed ? [] : batchChecks(r);
+  const batchText = checks.map(([label, b]) => `${label}=${b.before}→${b.after}`).join(" ");
+  const deepDom = (r.peakNodes ?? r.nodes) !== r.nodes ? ` peak=${r.peakNodes}` : "";
   const state = r.crashed
     ? `✗ ${r.name} CRASHED: ${r.crashed}`
-    : `✓ ${r.name.padEnd(11)} frames=${r.frames} max=${r.max}ms p95=${r.p95}ms med=${r.median}ms >50ms=${r.over50ms} dom=${r.nodes}${
-        r.batch ? ` batch=${r.batch.before}→${r.batch.after}` : ""
+    : `✓ ${r.name.padEnd(11)} frames=${r.frames} max=${r.max}ms p95=${r.p95}ms med=${r.median}ms >50ms=${r.over50ms} dom=${r.nodes}${deepDom}${
+        batchText ? ` ${batchText}` : ""
       }${r.errors.length ? ` errors=${r.errors.join("|").slice(0, 60)}` : ""}`;
   console.log(state);
   if (r.crashed) failures.push(`${r.name}: 崩溃 (${r.crashed})`);
@@ -236,18 +308,24 @@ for (const r of results) {
     failures.push(`${r.name}: 最差帧 ${r.max}ms > ${BUDGET.maxFrameMs}ms`);
   else if (gate && r.over50ms > BUDGET.longFramesMax)
     failures.push(`${r.name}: ${r.over50ms} 帧 >50ms 长帧 > ${BUDGET.longFramesMax}`);
-  else if (gate && BUDGET.maxDomByView[r.name] && r.nodes > BUDGET.maxDomByView[r.name])
+  else if (
+    gate &&
+    BUDGET.maxDomByView[r.name] &&
+    (r.peakNodes ?? r.nodes) > BUDGET.maxDomByView[r.name]
+  )
     failures.push(
-      `${r.name}: DOM ${r.nodes} > ${BUDGET.maxDomByView[r.name]} —— 长列表是否又整批进首帧了`,
+      `${r.name}: DOM ${r.peakNodes ?? r.nodes} > ${BUDGET.maxDomByView[r.name]} —— 长列表是否又整批进首帧了`,
     );
-  else if (gate && r.batch && !r.batch.ok)
+  else if (gate && checks.some(([, b]) => !b.ok)) {
+    const [label, bad] = checks.find(([, b]) => !b.ok);
     failures.push(
-      `${r.name}: 续开批次未兑现(承诺 +${r.batch.promised},实际 ${r.batch.before}→${r.batch.after};${r.batch.reason ?? "无异常"})`,
+      `${r.name}: ${label}批次未兑现(承诺 +${bad.promised},实际 ${bad.before}→${bad.after};${bad.reason ?? "无异常"})`,
     );
+  }
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);

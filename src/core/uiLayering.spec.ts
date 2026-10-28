@@ -1547,17 +1547,26 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(market?.src, "售玄铁不足要列差").toContain("尚差 ${oreSellShort} 玄铁");
   });
 
-  it("寄卖列全件背包 + 即时售丹有声 —— 别把第 13 件藏起来、售丹不许哑卖", () => {
+  it("寄卖分批复现全件背包 + 即时售丹有声 —— 别把第 13 件藏起来、售丹不许哑卖", () => {
     // ① 寄卖是背包装备唯一出手口,却只渲染前 12 件(bagItems.slice(0,12))——
     //    背包容量 120,第 13 件往后连按钮都没有、也不说明,晚期玩家那件刚
-    //    洗出来的货永远寄不出去。整行本就 overflow-x-auto 可横滑,列全即可。
+    //    洗出来的货永远寄不出去。现在与背包装备走同一套渲染窗口:首批只画一批,
+    //    「再看 N 件」显式续开 —— 既不许静默截断,也不许把 120 枚横条一次塞进 DOM。
     // ② 售丹按钮写「(N)」读起来像卖一整类,实际一按只出一颗且零反馈;
     //    改成「现持 N」点明数量,并给每颗成功/失败的 toast,不许闷声。
     const market = FILES.find((f) => f.path === "views/MarketView.vue");
     expect(market?.src, "寄卖要列全背包,不许 slice 截断").not.toContain(
       "inventory.bagItems.slice(0, 12)",
     );
-    expect(market?.src, "寄卖要遍历整包 bagItems").toContain('v-for="it in inventory.bagItems"');
+    expect(market?.src, "寄卖首批只遍历渲染窗口").toContain('v-for="it in consignPage.visible"');
+    expect(market?.src, "余件必须显式续开,不许静默截断").toContain("consignPage.hidden > 0");
+    expect(market?.src, "续开必须回到同一份完整 bagItems").toMatch(
+      /nextInventoryLimit\(consignPage\.value\.shown,\s*inventory\.bagItems\.length\)/,
+    );
+    expect(market?.src, "贡器候选同样不许一次铺满整包").toContain(
+      'v-for="it in equipCandidatePage.visible"',
+    );
+    expect(market?.src, "贡器候选余件也要显式续开").toContain("equipCandidatePage.hidden > 0");
     expect(market?.src, "售丹数量要写「现持」点明,不许裸 (N)").toContain("(现持 ");
     expect(market?.src, "售丹每颗要有成功反馈 toast").toMatch(/已售 1 颗.*得 .*石/);
   });
