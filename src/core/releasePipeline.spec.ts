@@ -21,7 +21,23 @@ const RAW_MANIFEST = readFileSync(
   resolve(ROOT, "android/app/src/main/AndroidManifest.xml"),
   "utf8",
 );
+const NETWORK_CONFIG_FILE = resolve(
+  ROOT,
+  "android/app/src/main/res/xml/network_security_config.xml",
+);
+const NETWORK_CONFIG = existsSync(NETWORK_CONFIG_FILE)
+  ? readFileSync(NETWORK_CONFIG_FILE, "utf8")
+  : "";
+const RAW_MIGRATOR = readFileSync(
+  resolve(ROOT, "android/app/src/main/java/com/mystvio/xuanshu/SaveMigrator.java"),
+  "utf8",
+);
 const PRIVACY = readFileSync(resolve(ROOT, "public/privacy.html"), "utf8");
+const PRIVACY_DIALOG = readFileSync(
+  resolve(ROOT, "src/components/common/PrivacyDialog.vue"),
+  "utf8",
+);
+const PRIVACY_DIALOG_TEXT = PRIVACY_DIALOG.replace(/\s+/g, "");
 
 /**
  * 判据只看**生效的代码**,不看注释 —— 两处历史事故的说明文字里都原样引用了坏的写法
@@ -32,6 +48,7 @@ const BUILD = RAW_BUILD.split("\n")
   .filter((line) => !line.trimStart().startsWith("#"))
   .join("\n");
 const GRADLE = RAW_GRADLE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const MIGRATOR = RAW_MIGRATOR.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
 describe("发版流水线 · 两条历史事故的护栏", () => {
   it("只在 tag(v*.*.*)上触发 —— main 的提交不再顺手发版", () => {
@@ -76,6 +93,45 @@ describe("Android 隐私 · 系统备份不许绕过导出/导入", () => {
       RAW_MANIFEST,
       "allowBackup=true 会把 WebView 存档交给系统云备份/换机迁移,与隐私政策冲突",
     ).toMatch(/android:allowBackup="false"/);
+  });
+
+  it("权限清单与隐私页同一份账 —— 去掉没用的,公开真正申请的", () => {
+    expect(RAW_MANIFEST, "ACCESS_NETWORK_STATE 没有任何读取方,不应继续随包申请").not.toContain(
+      "android.permission.ACCESS_NETWORK_STATE",
+    );
+    expect(RAW_MANIFEST, "Android 8~9 导出文档仍需要这条受限权限").toContain(
+      "android.permission.WRITE_EXTERNAL_STORAGE",
+    );
+    expect(RAW_MANIFEST, "存储权限若不封顶,Android 10+ 也会背上不必要的敏感权限").toMatch(
+      /android:name="android\.permission\.WRITE_EXTERNAL_STORAGE"\s+android:maxSdkVersion="28"/,
+    );
+    expect(PRIVACY, "隐私页只报了旧的两项,漏掉了真实存在的存储权限").toContain("以下三项权限");
+    expect(PRIVACY).toContain("<code>WRITE_EXTERNAL_STORAGE</code>");
+    expect(PRIVACY, "已移除的权限不该继续写在隐私页上").not.toContain(
+      "<code>ACCESS_NETWORK_STATE</code>",
+    );
+    expect(PRIVACY_DIALOG_TEXT, "游戏内短版隐私说明也要交代备份与换机路径").toContain(
+      "系统自动备份已关闭,换设备请使用「导出/导入」",
+    );
+  });
+
+  it("明文 HTTP 只留给本地迁移 —— 其余域一律拒绝", () => {
+    expect(RAW_MANIFEST).toMatch(/android:usesCleartextTraffic="false"/);
+    expect(RAW_MANIFEST).toMatch(/android:networkSecurityConfig="@xml\/network_security_config"/);
+    expect(NETWORK_CONFIG, "网络白名单文件不见了").toMatch(
+      /<base-config\s+cleartextTrafficPermitted="false"\s*\/>/,
+    );
+    const domains = [...NETWORK_CONFIG.matchAll(/<domain\b[^>]*>([^<]+)<\/domain>/g)].map(
+      (m) => m[1],
+    );
+    expect(domains, "只允许旧存档的 localhost origin,不能顺带放开别的域").toEqual(["localhost"]);
+  });
+
+  it("迁移服务器真的只绑回环地址 —— NanoHTTPD 无主机名构造器会监听所有网卡", () => {
+    expect(MIGRATOR, "迁移服务又绑到通配地址了").toMatch(
+      /MigrationServer\(int port\)\s*\{\s*super\("localhost", port\);/,
+    );
+    expect(MIGRATOR).not.toMatch(/super\(port\)/);
   });
 });
 

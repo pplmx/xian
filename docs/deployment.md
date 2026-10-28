@@ -42,6 +42,8 @@ CI 会把签好的 APK 作为 `android-apk` 产物上传;本地出包在
 覆盖安装需签名一致 —— 自己构建的包与官方签名不同,要先卸载旧版。
 Android 清单显式关闭系统自动备份与换机迁移:存档只留本机,换设备仍走游戏内的
 「导出 / 导入」,不由系统云服务悄悄同步。
+首次启动的旧档迁移服务只绑定 `localhost`;网络安全配置默认拒绝明文 HTTP,仅给
+`http://localhost` 留出这一条本机回环例外。
 
 ```bash
 bun run build:android    # 同步 Web 产物到 Android 工程(Capacitor)

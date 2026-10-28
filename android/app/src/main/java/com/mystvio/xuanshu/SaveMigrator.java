@@ -160,7 +160,8 @@ public class SaveMigrator {
     /** NanoHTTPD 迁移服务器，只返回一个迁移 HTML 页面 */
     private static class MigrationServer extends NanoHTTPD {
         MigrationServer(int port) {
-            super(port);
+            // NanoHTTPD(port) 会把服务绑到通配地址；回环迁移不能顺带暴露给局域网。
+            super("localhost", port);
         }
 
         @Override

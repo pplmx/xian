@@ -478,8 +478,8 @@
       <section id="platforms">
         <h2>七、各平台的补充说明</h2>
 
-        <h3>Android 版关于网络权限</h3>
-        <p>安装包中声明了以下两项权限：</p>
+        <h3>Android 版关于权限</h3>
+        <p>安装包中声明了以下三项权限：</p>
         <div class="table-wrap">
           <table>
             <thead>
@@ -496,9 +496,12 @@
                 <td>仅一处用途：首次启动的本地存档迁移（见下）——不涉及网络</td>
               </tr>
               <tr>
-                <td><code>ACCESS_NETWORK_STATE</code></td>
-                <td><span class="no">否</span></td>
-                <td>打包框架（Capacitor）模板的默认声明，游戏未读取网络状态</td>
+                <td><code>WRITE_EXTERNAL_STORAGE</code></td>
+                <td><span class="yes">是（仅 Android 8~9）</span></td>
+                <td>
+                  仅在你主动导出存档时写入「文档」目录；该权限限定到 Android 9（API 28），Android 10
+                  及以上不申请
+                </td>
               </tr>
             </tbody>
           </table>
@@ -516,11 +519,18 @@
           <li>
             迁移<strong>只执行一次</strong>，完成后不再启动；全新安装且无旧存档的用户会直接跳过该流程。
           </li>
+          <li>
+            Android 网络安全配置默认拒绝所有明文 HTTP，只为本机迁移放行
+            <code>localhost</code>；迁移服务也只绑定回环地址，不对局域网开放。
+          </li>
         </ul>
         <p>
-          除上述两项外，游戏不进行任何网络通信。你可以自行验证：拔掉网线（或开飞行模式）后功能完全正常——因为它本来就不需要网络。
+          除上述本地回环迁移外，游戏不进行任何网络通信。你可以自行验证：拔掉网线（或开飞行模式）后功能完全正常——因为它本来就不需要网络。
         </p>
-        <p>游戏未申请存储、位置、相机、麦克风、通讯录、电话等任何敏感权限。</p>
+        <p>
+          除 Android 8~9
+          写入「文档」所需的受限存储权限外，游戏未申请位置、相机、麦克风、通讯录、电话等其他敏感权限。
+        </p>
 
         <h3>Windows 桌面版</h3>
         <p>

@@ -30,6 +30,10 @@
           >
           —— 断网与联网的表现完全一致。
         </p>
+        <p class="mt-1 text-ink-faint">
+          Android 首次启动只在本机回环地址迁移旧存档;系统自动备份已关闭,换设备请使用「导出 /
+          导入」。
+        </p>
       </section>
       <section>
         <h4 class="mb-0.5 font-kai text-[14px] text-ink">五、不接入任何第三方</h4>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <!-- 游戏没有远端明文请求；仅旧版存档迁移使用 http://localhost。 -->
+  <base-config cleartextTrafficPermitted="false" />
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="false">localhost</domain>
+  </domain-config>
+</network-security-config>

@@ -36,6 +36,8 @@ export async function exportSaveToDevice(): Promise<string | null> {
         data: text,
         directory: Directory.Documents,
         encoding: Encoding.UTF8,
+        // 首次导出时 Export/ 还不存在;recursive=false 会让写文件在父目录这步失败。
+        recursive: true,
       });
       if (incomplete) {
         notify(`已导出到「文档/Export/${file}」,但${incomplete}`, "warn");
