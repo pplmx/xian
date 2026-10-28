@@ -67,9 +67,9 @@ describe("资源偏向 · 真的接进了结算", () => {
   it("在线与离线都传本世偏向 —— 两套账同一口径", () => {
     expect(onlineSrc, "在线战斗没传偏向").toContain("currentWorldBias()");
     expect(offlineSrc, "离线战斗没传偏向").toContain("currentWorldBias()");
-    // 同上:允许换行与空格,但两件事必须同时在场 —— 本世偏向、这个人的场次
+    // 同上:允许换行与空格,但两件事必须同时在场 —— 本世偏向、这个人的总场次
     expect(offlineSrc, "归来卷轴没写这一句 —— 多出来的那份没有来历").toMatch(
-      /biasOfflineNote\(\s*currentWorldBias\(\)\s*,\s*summary\.battles\s*\)/,
+      /biasOfflineNote\(\s*currentWorldBias\(\)\s*,\s*summary\.battles\s*\+\s*summary\.bossBattles\s*\)/,
     );
   });
 });

@@ -1,7 +1,7 @@
 /**
  * 事件引擎 —— 挑选事件 / 结算选项 / 应用效果
  */
-import type { EventChoice, EventDef, EventEffect, RegionDef } from "@/types";
+import type { EventChoice, EventDef, EventEffect, QualityId, RegionDef } from "@/types";
 import { RandomService, rng } from "@/utils/random";
 import { formatGN, formatNum, formatPercent, formatYears } from "@/utils/format";
 import { add, subClamp } from "@/utils/gnum";
@@ -23,6 +23,7 @@ import { pillDef, PILLS } from "@/data/pills";
 import { buffDef } from "@/data/buffs";
 import { PETS, petDef } from "@/data/pets";
 import { qualityDef } from "@/data/qualities";
+import { equipmentTemplate } from "@/data/equipment";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { generateEquipment } from "./equipGen";
 import { acquireArtifact, acquireEquipment, randomDropArtifact } from "./loot";
@@ -254,13 +255,13 @@ export function choiceAvailable(choice: EventChoice, tier: number): boolean {
   }
 }
 
-function applyEffect(effect: EventEffect, tier: number): string | null {
+function applyEffect(effect: EventEffect, ctx: EventApplyContext): string | null {
   const player = usePlayerStore();
   const resources = useResourcesStore();
   const cultivation = useCultivationStore();
   switch (effect.type) {
     case "stone": {
-      const v = stoneByTier(tier, Math.abs(effect.tierAmount));
+      const v = stoneByTier(ctx.tier, Math.abs(effect.tierAmount));
       if (effect.tierAmount >= 0) {
         resources.addStone(v);
         return `灵石 +${formatGN(v)}`;
@@ -279,11 +280,18 @@ function applyEffect(effect: EventEffect, tier: number): string | null {
       resources.addSmall(effect.id, effect.amount);
       return `${RESOURCE_LABELS[effect.id]} +${effect.amount}`;
     case "equipment": {
-      const inst = generateEquipment(Math.max(tier, 1), rng, {
+      const inst = generateEquipment(Math.max(ctx.tier, 1), rng, {
         luck: modOf(player.finalStats.mods, "luck"),
         minQualityRank: effect.minQualityRank,
       });
-      return `获得 ${acquireEquipment(inst).line}`;
+      const acquired = acquireEquipment(inst);
+      ctx.equipment.push({
+        name: equipmentTemplate(inst.templateId)?.name ?? "未知",
+        quality: inst.quality,
+        recycled: !acquired.bagged,
+      });
+      if (!acquired.bagged) ctx.recycledDust += acquired.dust;
+      return `获得 ${acquired.line}`;
     }
     case "pill": {
       const id = effect.id ?? randomEventPill(player.major);
@@ -311,7 +319,7 @@ function applyEffect(effect: EventEffect, tier: number): string | null {
       return "功法残页 +10(已尽览此道)";
     }
     case "artifact": {
-      const id = effect.id ?? randomDropArtifact(tier);
+      const id = effect.id ?? randomDropArtifact(ctx.tier);
       if (!id) return null;
       return `获得 ${acquireArtifact(id).line}`;
     }
@@ -365,6 +373,16 @@ function randomEventPill(major: number): string | null {
 export interface EventResolution {
   outcomeText: string;
   lines: string[];
+  /** 这次抉择真正产出的装备(含未入包、已化尘的件) */
+  equipment: EventEquipmentGain[];
+  /** 其中未入包装备实际折出的器灵尘 */
+  recycledDust: number;
+}
+
+export interface EventEquipmentGain {
+  name: string;
+  quality: QualityId;
+  recycled?: boolean;
 }
 
 /**
@@ -375,6 +393,9 @@ interface EventApplyContext {
   tier: number;
   /** 解释器逐条结算时累计的实物件数;回执只有文案,数量得在结算当场记。 */
   itemGain: number;
+  /** 离线归来卷轴要如实列出事件所得装备,不能只剩一句文案。 */
+  equipment: EventEquipmentGain[];
+  recycledDust: number;
 }
 
 /**
@@ -397,7 +418,7 @@ function itemGainOf(effect: EventEffect): number {
 
 export const CHOICES = createChoiceSystem<EventEffect, EventApplyContext>({
   interpret: (effect, ctx) => {
-    const line = applyEffect(effect, ctx.tier);
+    const line = applyEffect(effect, ctx);
     if (line) ctx.itemGain += itemGainOf(effect);
     return line;
   },
@@ -429,7 +450,7 @@ export function resolveEventChoice(
   const stoneBefore = { ...resources.spiritStone };
   const expBefore = { ...player.exp };
   const wudaoBefore = resources.wudao;
-  const applyCtx: EventApplyContext = { tier, itemGain: 0 };
+  const applyCtx: EventApplyContext = { tier, itemGain: 0, equipment: [], recycledDust: 0 };
   const receipt = CHOICES.resolve(asChoice(choice, tier), applyCtx, rng);
   const session = adventure.session;
   if (session) {
@@ -463,7 +484,12 @@ export function resolveEventChoice(
     const isDefault = def.choices[choiceIdx]?.isDefault ?? false;
     recordFortuneChoice(def.id, isDefault ? "leave" : "take");
   }
-  return { outcomeText: receipt.text, lines: receipt.lines };
+  return {
+    outcomeText: receipt.text,
+    lines: receipt.lines,
+    equipment: applyCtx.equipment,
+    recycledDust: applyCtx.recycledDust,
+  };
 }
 
 /** 离线/超时自动按默认选项结算 */
@@ -473,7 +499,7 @@ export function autoResolveEvent(eventId: string, tier: number): EventResolution
   // 三级兜底(默认且可选 → 第一条可选 → 第一条)由库回答,免得界面与离线各写一遍
   const idx = CHOICES.defaultIndex(
     def.choices.map((c) => asChoice(c, tier)),
-    { tier, itemGain: 0 },
+    { tier, itemGain: 0, equipment: [], recycledDust: 0 },
   );
   return resolveEventChoice(def, idx, tier);
 }

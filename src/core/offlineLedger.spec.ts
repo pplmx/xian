@@ -81,6 +81,8 @@ describe("离线总结 · 变动了多少就报多少", () => {
       qi: resources.qi,
       herb: resources.herb,
       ore: resources.ore,
+      page: resources.page,
+      dust: resources.dust,
       wudao: resources.wudao,
       age: player.age,
     };
@@ -92,12 +94,15 @@ describe("离线总结 · 变动了多少就报多少", () => {
       qi: resources.qi - before.qi,
       herb: resources.herb - before.herb,
       ore: resources.ore - before.ore,
+      page: resources.page - before.page,
+      dust: resources.dust - before.dust,
       wudao: resources.wudao - before.wudao,
       age: player.age - before.age,
     };
     console.log(
       `\n60h 归来:修为 +${summary.exp.m}e${summary.exp.e} · 灵石 +${summary.stone.m}e${summary.stone.e}` +
         ` · 灵气 +${summary.qi}(实 ${delta.qi}) · 灵草 +${summary.herb} · 玄铁 +${summary.ore}` +
+        ` · 残页 +${summary.page}(实 ${delta.page}) · 器灵尘 +${summary.dust}(实 ${delta.dust})` +
         ` · 悟道 +${summary.wudao} · 战斗 ${summary.battles} · 寿元 -${summary.ageYears}`,
     );
 
@@ -105,6 +110,8 @@ describe("离线总结 · 变动了多少就报多少", () => {
     expect(summary.qi, "灵气回充没报,或报的数不是实际差额").toBeCloseTo(delta.qi, 0);
     expect(summary.herb).toBe(delta.herb);
     expect(summary.ore).toBe(delta.ore);
+    expect(summary.page, "残页涨了但摘要没这一项").toBe(delta.page);
+    expect(summary.dust, "器灵尘涨了但摘要没这一项").toBe(delta.dust);
     expect(summary.wudao).toBe(delta.wudao);
     // 二 寿元:流逝多少就报多少(它不受离线上限约束,按真实时长算)
     expect(summary.ageYears, "寿元流逝没报").toBeCloseTo(delta.age, 0);

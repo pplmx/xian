@@ -131,18 +131,19 @@ const rows = computed<RewardRow[]>(() => {
     list.push({ icon: "leaf", label: "灵草", value: `+${formatNum(s.herb)}`, gain: true });
   if (s.ore > 0)
     list.push({ icon: "mountain", label: "玄铁", value: `+${formatNum(s.ore)}`, gain: true });
+  if (s.page > 0)
+    list.push({ icon: "scroll", label: "功法残页", value: `+${formatNum(s.page)}`, gain: true });
   if (s.wudao > 0)
     list.push({ icon: "book", label: "悟道点", value: `+${formatNum(s.wudao)}`, gain: true });
-  // 自动回收的产出不入行囊、只化器灵尘,单独成行,免得玩家以为掉了没捡到。
-  // 值那一段在 195 CSS px 下只有 89px 可用:「7 件 · 器灵尘+12」要 112px,
-  // 必折两行。尘是器灵尘的通用简称(见 AGENTS 的「尚差 灵石 X · 尘 Y」),
-  // 这里用简称把一行放下 —— 全称在分解/重铸的代价行里仍在。
+  if (s.dust > 0)
+    list.push({ icon: "sparkles", label: "器灵尘", value: `+${formatNum(s.dust)}`, gain: true });
+  // 化尘总额已经单列一行动账;这里只交代有多少件没进包,避免把同一笔尘报两遍。
   if (s.recycledDust > 0) {
     const recycled = s.equipment.filter((e) => e.recycled).length;
     list.push({
       icon: "sparkles",
-      label: "回收化尘",
-      value: `${recycled} 件 · 尘 +${formatNum(s.recycledDust)}`,
+      label: "回收装备",
+      value: `${recycled} 件 · 已折入器灵尘`,
       gain: false,
       cls: "text-ink-faint",
     });
@@ -159,8 +160,15 @@ const rows = computed<RewardRow[]>(() => {
   if (s.battles > 0)
     list.push({
       icon: "swords",
-      label: "历练战斗",
+      label: "寻常历练",
       value: `${s.wins} 胜 / ${s.battles} 战`,
+      gain: false,
+    });
+  if (s.bossBattles > 0)
+    list.push({
+      icon: "crown",
+      label: "区域之主",
+      value: `${s.bossWins} 胜 / ${s.bossBattles} 战`,
       gain: false,
     });
   if (s.events > 0)

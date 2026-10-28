@@ -97,10 +97,16 @@ describe("离线结算 · 随机状态不变量", () => {
         if (s.battles < 0 || s.wins < 0 || s.wins > s.battles) {
           fails.push(`#${i} 场次不自洽:${s.wins}/${s.battles}(${where})`);
         }
+        if (s.bossBattles < 0 || s.bossWins < 0 || s.bossWins > s.bossBattles) {
+          fails.push(`#${i} 首领场次不自洽:${s.bossWins}/${s.bossBattles}(${where})`);
+        }
+        if (s.page < 0 || s.dust < 0) {
+          fails.push(`#${i} 残页/器灵尘增量为负(${where})`);
+        }
         if (!Number.isFinite(resources.qi) || resources.qi < 0) {
           fails.push(`#${i} 灵气成了脏数:${resources.qi}(${where})`);
         }
-        if (s.battles > 0) withBattles += 1;
+        if (s.battles + s.bossBattles > 0) withBattles += 1;
         if (s.herb + s.ore > 0) withItems += 1;
       } catch (e) {
         fails.push(`#${i} 抛错:${(e as Error).message}(${where})`);

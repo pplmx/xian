@@ -27,6 +27,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
+import { useSettingsStore } from "@/stores/settings";
 import { EXPLORE_BATTLE_INTERVAL } from "@/data/constants";
 import { gn, sub, toNum } from "@/utils/gnum";
 
@@ -180,6 +181,64 @@ describe("离线 events 封顶 40 不蒸发超额遭遇 · 非事即战闭合", 
       adventure.session!.wudaoGain,
       "事件收益已写进当前会话;收尾若拿结算前的旧 session 展开就会把它覆盖成 0",
     ).toBeGreaterThanOrEqual(5);
+  });
+
+  it("际遇获得的装备也进归来所得清单,与自动回收同账", () => {
+    const run = (withEvent: boolean) => {
+      setActivePinia(createPinia());
+      seedSession("normal");
+      useSettingsStore().smartKeep = {
+        enabled: true,
+        minQuality: 8,
+        minTier: 0,
+        junkBelowLine: true,
+        keepCoreAffix: false,
+        keepComboPiece: false,
+        keepPerfectRolls: false,
+        keepSetPiece: false,
+      };
+      if (withEvent) {
+        useAdventureStore().setPendingEvent("ev_lost_monk", useGameStore().lastActiveAt);
+      }
+      return settleOffline(Date.now())!;
+    };
+
+    const plain = run(false);
+    const withEvent = run(true);
+    expect(withEvent.equipment.length, "际遇必得一件装备,归来清单比无事件时恰多这一件").toBe(
+      plain.equipment.length + 1,
+    );
+    expect(
+      withEvent.equipment.some((e) => e.recycled),
+      "事件装备被收纳规则判废时,清单要标回收而不是消失",
+    ).toBe(true);
+    expect(withEvent.recycledDust, "事件装备化尘也要并入归来卷轴").toBeGreaterThan(
+      plain.recycledDust,
+    );
+  });
+
+  it("会话在离线开始前已结束:不再补打区域之主", () => {
+    setActivePinia(createPinia());
+    seedSession("normal");
+    const game = useGameStore();
+    const player = usePlayerStore();
+    const adventure = useAdventureStore();
+    player.initCharacter("过期会话", { roots: [] } as never);
+    player.major = 20;
+    adventure.addRegionWins("qingyun", 10);
+    adventure.setSession({
+      ...adventure.session!,
+      endsAt: game.lastActiveAt - 1000,
+    });
+
+    const summary = settleOffline(Date.now())!;
+
+    expect(summary.battles, "会话已结束,离线不该凭空补一场").toBe(0);
+    expect(summary.wins).toBe(0);
+    expect(adventure.cleared, "过期会话不该把区域之主战果补记进档").not.toContain("qingyun");
+    const notes = summary.notes.join("\n");
+    expect(notes, "也不该报一场根本没发生的首领战").not.toContain("斩于剑下");
+    expect(notes, "连首领惜败都不该在过期会话里补记").not.toContain("区域之主");
   });
 });
 

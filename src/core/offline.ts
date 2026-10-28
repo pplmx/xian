@@ -42,7 +42,7 @@ import {
   randomDropArtifact,
   randomDropPill,
 } from "./loot";
-import { autoResolveEvent, regionEventPoolFor } from "./eventEngine";
+import { autoResolveEvent, regionEventPoolFor, type EventResolution } from "./eventEngine";
 import {
   clearRegionAndUnlockNext,
   exploreEventChance,
@@ -214,6 +214,11 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const equipmentGained: OfflineSummary["equipment"] = [];
   /** 离线期间未入包(自动回收/满包化尘)装备化作的器灵尘 */
   let recycledDust = 0;
+  const collectEventEquipment = (res: EventResolution | null): void => {
+    if (!res) return;
+    equipmentGained.push(...res.equipment);
+    recycledDust += res.recycledDust;
+  };
 
   // ---- 修炼 ----
   const expBefore = { ...player.exp };
@@ -226,6 +231,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   // ---- 建筑产出 ----
   const herbBefore = resources.herb;
   const oreBefore = resources.ore;
+  const pageBefore = resources.page;
+  const dustBefore = resources.dust;
   const wudaoBefore = resources.wudao;
   // 灵石基准与修为/材料/悟道同点起账:都锚在建筑产出与镇压收益**之前**,否则
   // 归来卷轴的「灵石 +X」会漏掉镇压诸域被动入账(修为/材料/悟道却都算进去了)。
@@ -279,6 +286,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
    */
   let sessionWins = 0;
   let sessionLosses = 0;
+  /** 本段普通战之外的区域之主战;归来卷轴的胜负与经历场次必须把它算进去 */
+  let bossFights = 0;
+  let bossWins = 0;
   const session = adventure.session;
   /**
    * 挂机期间这趟历练的所得(灵石/修为/实物)。
@@ -366,6 +376,11 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         // 也就不该按 region.tier 凭空掉高阶装备。给句说明,免得满屏"失利"看不明。
         if (winRate === 0) {
           notes.push(`此地之敌远胜于你,离线切磋无一胜绩,未得收获`);
+          // 事件同样是这一程的产出渠道:若只清战斗掉落，事件仍会按高阶区域发装备，
+          // 「打不过 → 零收获」就只是半句话。把这段遭遇全数还原成战斗，
+          // 既不留事件收益，也让归来卷轴的场次仍与真实时间闭合。
+          events = 0;
+          battles = encounters;
         }
         wins = Math.round(battles * winRate);
         // 会话两本账:普通战按估算的胜负场整批入账
@@ -609,10 +624,10 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       if (offlineEventPool.length === 0) offlineEventPool = DEFAULT_OFFLINE_EVENT_IDS;
       for (let i = 0; i < evCap; i += 1) {
         if (adventure.pendingEventId) {
-          autoResolveEvent(adventure.pendingEventId, region.tier);
+          collectEventEquipment(autoResolveEvent(adventure.pendingEventId, region.tier));
           adventure.setPendingEvent(null, nowMs);
         } else {
-          autoResolveEvent(rng.pick(offlineEventPool), region.tier);
+          collectEventEquipment(autoResolveEvent(rng.pick(offlineEventPool), region.tier));
         }
       }
       // 事件只实际结算了 evCap 个;events 此前按全程估算,超额部分只是"路上料到"、
@@ -628,11 +643,13 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
       adventure.addRegionWins(region.id, wins);
       // 与在线同一个判据:门槛与节奏都由库的副本系统回答(见 winsUntilRegionBoss)
       if (
+        battles > 0 &&
         winsUntilRegionBoss(adventure.winsIn(region.id), adventure.cleared.includes(region.id)) ===
-        0
+          0
       ) {
         const bossDef = enemyDef(placeContent(region.id).boss);
         if (bossDef) {
+          bossFights += 1;
           const bossDanger = dangerFactorFor(
             modeDef.dangerMult,
             region.danger,
@@ -647,6 +664,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
           );
           noteEnemy(bossDef.id, bossResult.win);
           if (bossResult.win) {
+            bossWins += 1;
             // 首领战奖励同样并入事件加丰倍率(在线 boss 也是 mode×regReward,离线再叠收益折损)
             const drops = afterWin(
               region,
@@ -763,10 +781,14 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     qi: Math.round(resources.qi - qiBefore),
     herb: resources.herb - herbBefore,
     ore: resources.ore - oreBefore,
+    page: resources.page - pageBefore,
+    dust: resources.dust - dustBefore,
     wudao: resources.wudao - wudaoBefore,
     ageYears: yearsDeltaShown(ageBefore, player.age),
     battles,
     wins,
+    bossBattles: bossFights,
+    bossWins,
     events,
     equipment: equipmentGained,
     recycledDust,
@@ -804,7 +826,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   if (endgameStore.worldRun) notes.push("那趟远征仍在途 —— 层数与战绩原样留着,回来接着走");
 
   // 这一世的「资源偏向」在离线里也乘了(同一处 afterWin):卷轴说一声,别让那点多出来的玄铁没有来历
-  const biasNote = biasOfflineNote(currentWorldBias(), summary.battles);
+  const biasNote = biasOfflineNote(currentWorldBias(), summary.battles + summary.bossBattles);
   if (biasNote) notes.push(biasNote);
 
   if (dtSec >= OFFLINE_MODAL_MIN_SECONDS) {

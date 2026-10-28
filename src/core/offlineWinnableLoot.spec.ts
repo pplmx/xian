@@ -62,6 +62,7 @@ describe("离线历练 · 打不打得过才结算收益", () => {
     expect(s).not.toBeNull();
     expect(s!.wins, "打不过不该有胜场").toBe(0);
     expect(s!.battles, "确实发生了战斗(只是全负)").toBeGreaterThan(0);
+    expect(s!.events, "打不过也不该改用际遇绕过「零收获」").toBe(0);
     expect(s!.equipment?.length ?? 0, "打不过不该白拿该区域高阶装备").toBe(0);
     // 关键:不再用「境界门槛」强制了断会话 —— 挂高阶只因打不过而零收益,会话仍在
     expect(adventure.session, "打不过不应被「境界门槛」强制了断会话").not.toBeNull();

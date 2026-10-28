@@ -2189,7 +2189,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(dlg?.src, "灵草要缩写").toContain("+${formatNum(s.herb)}");
     expect(dlg?.src, "玄铁要缩写").toContain("+${formatNum(s.ore)}");
     expect(dlg?.src, "悟道点要缩写").toContain("+${formatNum(s.wudao)}");
-    expect(dlg?.src, "器灵尘要缩写").toContain("+${formatNum(s.recycledDust)}");
+    expect(dlg?.src, "残页要缩写").toContain("+${formatNum(s.page)}");
+    expect(dlg?.src, "器灵尘总额要缩写").toContain("+${formatNum(s.dust)}");
+    expect(dlg?.src, "回收件数只报件数,化尘额不重复记第二遍").toContain("已折入器灵尘");
+    expect(dlg?.src, "区域之主战要单列胜负,不能混进寻常历练").toContain("s.bossBattles");
   });
 
   it("提示条全库开口 —— toast 承载动作结果,不许对读屏全哑", () => {

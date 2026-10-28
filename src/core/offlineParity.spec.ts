@@ -159,8 +159,8 @@ describe("离线历练 · 战后语义与在线同源", () => {
     const summary = settleOffline(Date.now());
     expect(summary, "这一档应当结算出离线收益").not.toBeNull();
     expect(summary!.wins, "60 小时挂机不该一场没赢").toBeGreaterThan(0);
-    // summary.wins is regular fights only; a boss kill writes one extra region fight
-    const bossExtra = summary!.notes.some((n) => n.includes("斩于剑下")) ? 1 : 0;
+    // 普通战线与首领战分栏报;regionStats 只记胜场,故两边分别相加。
+    const bossExtra = summary!.bossWins;
     expect(player.regionStats.qingyun?.totalFights, "离线胜场必须写入 regionStats").toBe(
       summary!.wins + bossExtra,
     );

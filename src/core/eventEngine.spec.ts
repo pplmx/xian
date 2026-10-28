@@ -18,6 +18,7 @@ import { useAdventureStore } from "@/stores/adventure";
 import { useLoreStore } from "@/stores/lore";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
+import { useSettingsStore } from "@/stores/settings";
 import { eventDef } from "@/data/events";
 import { PILLS } from "@/data/pills";
 import { resolveEventChoice } from "./eventEngine";
@@ -177,6 +178,50 @@ describe("事件收益入会话账(haul 与战斗面板要有数可报)", () => 
       6,
     );
     expect(session.itemGain, "残页一份 + 丹药两枚,都应算拾获").toBe(3);
+  });
+});
+
+describe("事件装备回执 · 离线卷轴要能列出来", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("事件获得的装备带回实体与化尘明细,不只留一行文案", () => {
+    useSettingsStore().smartKeep = {
+      enabled: true,
+      minQuality: 8,
+      minTier: 0,
+      junkBelowLine: true,
+      keepCoreAffix: false,
+      keepComboPiece: false,
+      keepPerfectRolls: false,
+      keepSetPiece: false,
+    };
+    const def: EventDef = {
+      id: "ev_test_equipment_receipt",
+      title: "古匣",
+      text: "",
+      tags: ["general"],
+      weight: 1,
+      choices: [
+        {
+          label: "打开",
+          outcomes: [
+            {
+              weight: 1,
+              text: "匣中是一件旧器。",
+              effects: [{ type: "equipment", minQualityRank: 1 }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const res = resolveEventChoice(def, 0, 3);
+
+    expect(res.equipment, "装备事件要把实体带回调用方,离线才能列进所得清单").toHaveLength(1);
+    expect(res.equipment[0]!.recycled, "智能收纳判废时应标成回收件").toBe(true);
+    expect(res.recycledDust, "化尘量的回执要与实际入账同源").toBeGreaterThan(0);
   });
 });
 

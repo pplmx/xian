@@ -1133,11 +1133,18 @@ export interface OfflineSummary {
   qi: number;
   herb: number;
   ore: number;
+  /** 功法残页实际增量 */
+  page: number;
+  /** 器灵尘实际增量(含自动回收、事件与战斗掉落折算) */
+  dust: number;
   wudao: number;
   /** 离线期间流逝的寿元(年)—— 是代价,不是收益,但玩家该知道 */
   ageYears: number;
   battles: number;
   wins: number;
+  /** 普通遭遇之外的区域之主战(单独报,避免把额外一场混进按时间闭合的场次) */
+  bossBattles: number;
+  bossWins: number;
   events: number;
   /** 产出装备清单;回收(自动回收/满包化尘)的件以 recycled 标注 */
   equipment: { name: string; quality: QualityId; recycled?: boolean }[];
