@@ -145,10 +145,11 @@
         v-if="corruptedNotice.length"
         class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-[11px] leading-relaxed text-cinnabar"
       >
-        启动时发现 {{ corruptedNotice.length }} 个存档分片损坏,已隔离修复:{{
+        启动时发现 {{ corruptedNotice.length }} 个存档分片损坏,已跳过损坏内容:{{
           corruptedNotice.map((id) => STORE_NAMES[id] ?? id).join("、")
-        }}。损坏的原档没有删除,仍留在本机(键名 <span class="break-all">{{ corruptKeys }}</span
-        >)—— 若手上还有导出的备份,可在此导入恢复。
+        }}。损坏的原档没有删除,仍在本机。备份键:<span class="break-all">{{ corruptKeys }}</span
+        >;备份失败时仍在原键:<span class="break-all">{{ sourceKeys }}</span
+        >。若手上还有导出的备份,可在此导入恢复。
         <button
           class="mt-1 block text-ink-faint underline active:opacity-60"
           @click="ui.corruptedNotice = []"
@@ -348,6 +349,8 @@ const corruptedNotice = computed<string[]>(() => ui.corruptedNotice);
 const corruptKeys = computed(() =>
   corruptedNotice.value.map((id) => `corrupt.${storageKey(id)}`).join("、"),
 );
+/** 备份写不进时,preflightScan 会保留原分片供下次重试 */
+const sourceKeys = computed(() => corruptedNotice.value.map(storageKey).join("、"));
 
 /** 最近一条异常(诊断块里只展示这一条,其余随复制/导出带走) */
 const latestError = computed(() => diag.errors[diag.errors.length - 1] ?? null);

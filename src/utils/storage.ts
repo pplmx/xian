@@ -153,6 +153,16 @@ function clearOwnedSaveKeys(): boolean {
   return !hasSaveKeyLeftover();
 }
 
+/** 写入后立刻读回;吞写、写错值或读失败都按「没落盘」处理 */
+function writeVerified(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return localStorage.getItem(key) === value;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 导入前快照本作键域。键清单里的缺席项也记成 null,
  * 这样中途失败时能把新写进去、旧档里本来没有的分片删掉。
@@ -317,7 +327,9 @@ export function flushSaveWrites(): void {
   for (const [key, plain] of pending) {
     try {
       // 加密只在这里做一次,而不是每次 store 变更都做
-      localStorage.setItem(key, encryptSave(plain));
+      const encoded = encryptSave(plain);
+      // 个别 WebView 会静默吞写:不复核就会删掉队列,把没落盘的一批当成成功
+      if (!writeVerified(key, encoded)) failed.push(key);
     } catch {
       // 单键失败不阻断其余键;失败的那一片留在队列里,下次再写
       failed.push(key);
@@ -440,8 +452,14 @@ export function preflightScan(): string[] {
       corrupted.push(id);
       try {
         const raw = localStorage.getItem(key);
-        if (raw !== null) localStorage.setItem(`corrupt.${key}`, raw);
-        localStorage.removeItem(key);
+        if (raw !== null && writeVerified(`corrupt.${key}`, raw)) {
+          // 备份读回一致后才删原片;写不进时留下唯一副本,下次启动再试
+          try {
+            localStorage.removeItem(key);
+          } catch {
+            // 备份已经在,原片删不掉最多重复隔离,不能反过来丢原档
+          }
+        }
       } catch {
         // 存储不可用时放弃备份,仅保证游戏可启动
       }
@@ -533,7 +551,15 @@ export function migrateLegacyPrefix(): number {
       const target = SAVE_PREFIX + oldKey.slice(LEGACY_SAVE_PREFIX.length);
       const value = localStorage.getItem(oldKey);
       if (value !== null && localStorage.getItem(target) === null) {
-        localStorage.setItem(target, value);
+        // 写入可能被静默吞掉。旧键是唯一副本,确认新键读回一致前不能删。
+        if (!writeVerified(target, value)) {
+          try {
+            localStorage.removeItem(target);
+          } catch {
+            // 清掉可能写坏的新键只是尽力而为;旧键无论如何都先留着
+          }
+          continue;
+        }
         moved += 1;
       }
       localStorage.removeItem(oldKey);
@@ -625,9 +651,8 @@ export function applyImportPayload(payload: ExportPayload): void {
     try {
       const key = storageKey(id);
       const encoded = encryptSave(JSON.stringify(slice));
-      localStorage.setItem(key, encoded);
       // 个别 WebView 的 setItem 会静默不落盘:不复核就会把半档当成导入成功
-      if (localStorage.getItem(key) !== encoded) failed.push(id);
+      if (!writeVerified(key, encoded)) failed.push(id);
     } catch {
       failed.push(id);
     }

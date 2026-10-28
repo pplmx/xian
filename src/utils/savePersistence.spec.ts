@@ -223,6 +223,39 @@ describe("存档写盘 · 失败不许静默", () => {
     unsubscribe();
   });
 
+  it("setItem 静默吞写时,也不能把这一批当成已落盘", () => {
+    let dropWrites = true;
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => probe.disk.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        if (dropWrites) return;
+        probe.disk.set(k, v);
+        probe.writes += 1;
+      },
+      removeItem: (k: string) => probe.disk.delete(k),
+      clear: () => probe.disk.clear(),
+      key: () => null,
+      length: 0,
+    });
+    const seen: (string[] | null)[] = [];
+    const unsubscribe = subscribeSaveWriteFailure((f) => seen.push(f ? f.keys : null));
+    const { storage, serializer, key } = persistConfig("player");
+
+    storage.setItem(key, serializer.serialize({ exp: 1 }));
+    flushSaveWrites();
+    expect(saveWriteFailure(), "setItem 没抛错、但盘上没有这一版,仍必须报失败").not.toBeNull();
+    expect(seen, "静默吞写也要通知订阅方").toEqual([[key]]);
+    expect(serializer.deserialize(storage.getItem(key)!), "未落盘的最新一版必须留在队列里").toEqual(
+      { exp: 1 },
+    );
+
+    dropWrites = false;
+    flushSaveWrites();
+    expect(probe.writes, "恢复后重试应当真的写进去").toBe(1);
+    expect(saveWriteFailure(), "确认落盘后警告要清掉").toBeNull();
+    unsubscribe();
+  });
+
   it("持续失败不重复轰炸:只在状态翻转时通知一次", () => {
     const jam = installJammedStorage(probe);
     let calls = 0;

@@ -12,6 +12,8 @@ import {
   clearAllSave,
   migrateResourcesSlice,
   persistConfig,
+  preflightScan,
+  storageKey,
   type ExportPayload,
 } from "./storage";
 
@@ -45,6 +47,42 @@ describe("存档迁移 · 灵草五品(ISS-306)", () => {
     const once = migrateResourcesSlice({ herb: 42 } as Record<string, unknown>);
     const twice = migrateResourcesSlice(once);
     expect(twice).toEqual(once);
+  });
+});
+
+describe("损坏分片隔离 · 原档不能在没有备份时消失", () => {
+  it("备份读回一致后,才移除损坏的原分片", () => {
+    const disk = new Map([[storageKey("player"), "不是 JSON"]]);
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => disk.get(k) ?? null,
+      setItem: (k: string, v: string) => void disk.set(k, v),
+      removeItem: (k: string) => void disk.delete(k),
+      clear: () => disk.clear(),
+      key: () => null,
+      length: 0,
+    });
+
+    expect(preflightScan()).toEqual(["player"]);
+    expect(disk.get(`corrupt.${storageKey("player")}`)).toBe("不是 JSON");
+    expect(disk.has(storageKey("player"))).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it("备份写入被静默吞掉时,损坏原片继续留在原键等下次重试", () => {
+    const disk = new Map([[storageKey("player"), "不是 JSON"]]);
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => disk.get(k) ?? null,
+      setItem: () => undefined,
+      removeItem: (k: string) => void disk.delete(k),
+      clear: () => disk.clear(),
+      key: () => null,
+      length: 0,
+    });
+
+    expect(preflightScan()).toEqual(["player"]);
+    expect(disk.get(storageKey("player")), "备份没写成却删原键,原档就永久丢了").toBe("不是 JSON");
+    expect(disk.has(`corrupt.${storageKey("player")}`)).toBe(false);
+    vi.unstubAllGlobals();
   });
 });
 

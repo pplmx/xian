@@ -64,7 +64,7 @@ app.mount("#app");
 
 if (corrupted.length > 0) {
   useUiStore().corruptedNotice = corrupted;
-  useUiStore().toast("检测到部分存档数据异常,已为你隔离修复", "warn");
+  useUiStore().toast("检测到部分存档数据异常,已跳过损坏内容,原档保留在本机", "warn");
 }
 
 // PWA 离线缓存:只在生产构建、且只在**真正的网页部署**上注册。

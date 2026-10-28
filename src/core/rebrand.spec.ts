@@ -117,6 +117,29 @@ describe("更名 —— 《玄枢录》", () => {
     expect(disk.size).toBe(2);
   });
 
+  it("旧前缀搬到新键没写成时,旧键不能先删掉", () => {
+    disk.set(`${LEGACY_SAVE_PREFIX}player`, "old-player");
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => disk.get(k) ?? null,
+      // 个别 WebView 的 setItem 会不抛错、也不落盘
+      setItem: () => undefined,
+      removeItem: (k: string) => void disk.delete(k),
+      clear: () => disk.clear(),
+      key: (i: number) => [...disk.keys()][i] ?? null,
+      get length() {
+        return disk.size;
+      },
+    });
+
+    const moved = migrateLegacyPrefix();
+
+    expect(moved, "没有真正搬到新键就不能算迁移成功").toBe(0);
+    expect(localStorage.getItem(`${LEGACY_SAVE_PREFIX}player`), "旧档是唯一副本,不能删").toBe(
+      "old-player",
+    );
+    expect(localStorage.getItem(storageKey("player"))).toBeNull();
+  });
+
   it("更名前导出的存档仍然导入得进来", () => {
     const legacyPayload = {
       game: LEGACY_GAME_ID,
