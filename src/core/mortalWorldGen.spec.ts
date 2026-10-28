@@ -10,7 +10,6 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import {
-  BIAS_POOL,
   NOVELTY_MIN,
   REGION_NAME_TIER_BAND,
   generateMortalWorld,
@@ -19,6 +18,7 @@ import {
   mortalNovelty,
   shuffleOnlyWorld,
 } from "./mortalWorldGen";
+import { BIAS_POOL } from "./mortalBias";
 import { REGIONS } from "@/data/regions";
 
 const SERIES = generateSeries(5, 20260904, 10);
@@ -180,15 +180,14 @@ describe("凡界生成 · 可行性结论", () => {
     expect(avgNov).toBeGreaterThan(NOVELTY_MIN);
   });
 
-  it("已知弱点一:资源偏向的分布过窄", () => {
-    // 五世里资源偏向几乎不变 —— 它在生成末尾抽取,受前面 rng 消耗影响,
-    // 实际多样性远低于候选池。这是当前生成器的真实缺陷,不掩饰
+  it("资源偏向五世覆盖全池", () => {
+    // 资源偏向会改写本世各条产出乘区,是玩家能看见、也能据此调整路线的一维。
+    // 它不能只在代码里随机,却在连续五世里漏掉整整一种世界。
     const used = new Set(SERIES.map((s) => s.world.bias));
     console.log(
-      `\n候选偏向 ${BIAS_POOL.length} 种,五世实际只用到 ${used.size} 种:${[...used].join("、")}` +
-        "\n——生成器的这一维多样性不足,接入前需要修正抽取方式",
+      `\n候选偏向 ${BIAS_POOL.length} 种,五世实际用到 ${used.size} 种:${[...used].join("、")}`,
     );
-    expect(used.size).toBeLessThan(BIAS_POOL.length);
+    expect(used.size).toBe(BIAS_POOL.length);
   });
 
   it("新颖度门已开始实际否决候选 —— 从「未受考验」变为「在起作用」", () => {

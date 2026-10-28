@@ -20,6 +20,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { useDongfuStore } from "@/stores/dongfu";
 import { gn, toNum } from "@/utils/gnum";
 import { REGIONS } from "@/data/regions";
+import { BIAS_POOL } from "./mortalBias";
 
 /** 线性同余:固定种子 → 固定序列(不依赖全局 rng,免得被别的用例改掉) */
 function lcg(seed: number): () => number {
@@ -31,7 +32,6 @@ function lcg(seed: number): () => number {
 }
 
 const MODES = ["normal", "deep", "risky", "prolonged"] as const;
-const BIASES = ["草木丰饶", "矿脉深厚", "典籍散佚", "灵石充盈", "药气氤氲"] as const;
 
 describe("离线结算 · 随机状态不变量", () => {
   beforeEach(() => setActivePinia(createPinia()));
@@ -53,7 +53,7 @@ describe("离线结算 · 随机状态不变量", () => {
       const major = Math.floor(rand() * 21);
       const region = REGIONS[Math.floor(rand() * REGIONS.length)]!;
       const mode = MODES[Math.floor(rand() * MODES.length)]!;
-      const bias = rand() < 0.4 ? undefined : BIASES[Math.floor(rand() * BIASES.length)];
+      const bias = rand() < 0.4 ? undefined : BIAS_POOL[Math.floor(rand() * BIAS_POOL.length)];
 
       game.markStarted();
       game.lastActiveAt = Date.now() - hours * 3600_000;

@@ -18,6 +18,14 @@ export interface BiasEffect {
   label: string;
 }
 
+/**
+ * 资源偏向的唯一取值池。
+ *
+ * 生成器、换界轮转、存档修复与审计都从这里取；若只在各文件里各抄一份，
+ * 新增一种偏向时很容易出现「能生成、却被清洗掉」或「测试以为已覆盖」的假绿。
+ */
+export const BIAS_POOL = ["草木丰饶", "矿脉深厚", "典籍散佚", "灵石充盈", "药气氤氲"] as const;
+
 export const BIAS_EFFECTS: Readonly<Record<string, BiasEffect>> = {
   草木丰饶: { channel: "herb", mult: 1.15, label: "灵草掉落 +15%" },
   矿脉深厚: { channel: "ore", mult: 1.15, label: "玄铁掉落 +15%" },

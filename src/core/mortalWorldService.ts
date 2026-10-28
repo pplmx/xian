@@ -38,7 +38,7 @@ function historyOf(cur: MortalWorld | null): MortalWorld[] {
 export function ensureMortalWorld(): MortalWorld | null {
   const adventure = useAdventureStore();
   if (adventure.mortalWorld) return adventure.mortalWorld;
-  const got = generateGatedMortal(Date.now() % 1_000_003, [], 200, 8);
+  const got = generateGatedMortal(Date.now() % 1_000_003, [], 200, 8, adventure.mortalBiasHistory);
   if (!got) return null;
   adventure.setMortalWorld(got.report.world);
   return got.report.world;
@@ -48,7 +48,13 @@ export function ensureMortalWorld(): MortalWorld | null {
 export function rerollMortalWorld(): MortalWorld | null {
   const adventure = useAdventureStore();
   const prev = adventure.mortalWorld;
-  const got = generateGatedMortal(Date.now() % 1_000_003, historyOf(prev), 200, 8);
+  const got = generateGatedMortal(
+    Date.now() % 1_000_003,
+    historyOf(prev),
+    200,
+    8,
+    adventure.mortalBiasHistory,
+  );
   adventure.setMortalWorld(got?.report.world ?? null);
   return got?.report.world ?? null;
 }

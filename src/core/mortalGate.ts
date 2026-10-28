@@ -26,8 +26,10 @@ import {
   auditMortalWorld,
   generateMortalWorld,
   mortalNovelty,
+  unseenMortalBiases,
 } from "./mortalWorldGen";
 import { rhythmNovelty, skeletonNovelty } from "./mortalIdentity";
+import { BIAS_POOL } from "./mortalBias";
 
 /** 各门的最低线 */
 export const GATES = {
@@ -87,12 +89,15 @@ export interface GatedWorld {
   report: GateReport;
   /** 被弃用的候选数 */
   rejected: number;
-  /** 各门的否决次数统计 —— 看哪一门在真正起作用 */
+  /** 各门与生成前置约束的否决次数统计 —— 看哪一项在真正起作用 */
   rejectionsByGate: Record<string, number>;
 }
 
 /**
  * 生成一个过四门的凡界。
+ *
+ * 四门之外先补齐最近几世尚未出现的资源偏向:它不参与评分,
+ * 也不能被其他高分维度抵消,只负责让五世产出路线不重复。
  *
  * 返回否决统计:若某一门从未否决过任何候选,说明它形同虚设 ——
  * 这正是上一轮「新颖度门累计弃用 0」暴露的问题
@@ -102,10 +107,17 @@ export function generateGatedMortal(
   history: MortalWorld[] = [],
   maxTries = 300,
   runs = 10,
+  recentBiases: readonly string[] = [],
 ): GatedWorld | null {
   const rejectionsByGate: Record<string, number> = {};
+  const unseenBiases = unseenMortalBiases([...recentBiases, ...history.map((w) => w.bias)]);
   for (let t = 0; t < maxTries; t += 1) {
     const world = generateMortalWorld(baseSeed + t * 7919);
+    // 五世轮转不是审计层专属：真实换界也要先补齐尚未见过的产出路线。
+    if (unseenBiases.size > 0 && !unseenBiases.has(world.bias)) {
+      rejectionsByGate["资源偏向"] = (rejectionsByGate["资源偏向"] ?? 0) + 1;
+      continue;
+    }
     const report = evaluateGates(world, history, runs);
     if (report.passed) return { report, rejected: t, rejectionsByGate };
     for (const f of report.failed) rejectionsByGate[f] = (rejectionsByGate[f] ?? 0) + 1;
@@ -117,11 +129,14 @@ export function generateGatedMortal(
 export function generateGatedSeries(n: number, baseSeed = 20260904, runs = 10): GatedWorld[] {
   const out: GatedWorld[] = [];
   const history: MortalWorld[] = [];
+  const recentBiases: string[] = [];
   for (let i = 0; i < n; i += 1) {
-    const got = generateGatedMortal(baseSeed + i * 104729, history, 300, runs);
+    const got = generateGatedMortal(baseSeed + i * 104729, history, 300, runs, recentBiases);
     if (!got) break;
     out.push(got);
     history.push(got.report.world);
+    recentBiases.push(got.report.world.bias);
+    if (recentBiases.length > BIAS_POOL.length) recentBiases.shift();
   }
   return out;
 }

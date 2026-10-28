@@ -5,6 +5,7 @@ import type { AdventureSession, LastBattleView } from "@/types";
 import { persistConfig } from "@/utils/storage";
 import { regionDef } from "@/data/regions";
 import { ENGINE_WORLD } from "@/core/engineWorld";
+import { BIAS_POOL } from "@/core/mortalBias";
 import { gn } from "@/utils/gnum";
 import {
   asFiniteNumber,
@@ -26,6 +27,13 @@ export const useAdventureStore = defineStore(
      * 实际历练仍走 REGIONS,两者通过 fromId 对应
      */
     const mortalWorld = ref<import("@/core/mortalWorldGen").MortalWorld | null>(null);
+    /**
+     * 最近至多五世（含当前）的资源偏向。
+     *
+     * 生成器只凭当前世界无法知道更早几世走过哪条产出路线；
+     * 这份短历史让「五世覆盖全池」在真实换界与刷新后都能成立。
+     */
+    const mortalBiasHistory = ref<string[]>([]);
     /**
      * 本世已通的路线节点。
      *
@@ -149,6 +157,16 @@ export const useAdventureStore = defineStore(
         : null;
       eventMemories.value = asRecord(eventMemories.value);
       mortalWorld.value = asObjectOrNull(mortalWorld.value);
+      const biasHistory = asStringArray(mortalBiasHistory.value).filter((bias) =>
+        BIAS_POOL.includes(bias as (typeof BIAS_POOL)[number]),
+      );
+      const worldBias = mortalWorld.value?.bias;
+      const currentBias =
+        typeof worldBias === "string" && BIAS_POOL.includes(worldBias as (typeof BIAS_POOL)[number])
+          ? worldBias
+          : null;
+      if (currentBias && biasHistory.at(-1) !== currentBias) biasHistory.push(currentBias);
+      mortalBiasHistory.value = biasHistory.slice(-BIAS_POOL.length);
     }
 
     const sessionActive = computed(() => session.value !== null);
@@ -240,7 +258,12 @@ export const useAdventureStore = defineStore(
     }
 
     function setMortalWorld(w: import("@/core/mortalWorldGen").MortalWorld | null): void {
+      const previous = mortalWorld.value;
       mortalWorld.value = w;
+      const validBias = w && BIAS_POOL.includes(w.bias as (typeof BIAS_POOL)[number]);
+      if (w && validBias && (previous?.seed !== w.seed || previous?.bias !== w.bias)) {
+        mortalBiasHistory.value = [...mortalBiasHistory.value, w.bias].slice(-BIAS_POOL.length);
+      }
       // 换界即换路:本世进度不跨界继承
       mortalCleared.value = [];
       // 门路也是本世的:换一片天地,旧地界的叩门资格不再作数
@@ -256,6 +279,7 @@ export const useAdventureStore = defineStore(
 
     return {
       mortalWorld,
+      mortalBiasHistory,
       mortalCleared,
       regionWins,
       setMortalWorld,

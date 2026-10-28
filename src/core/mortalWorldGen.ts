@@ -33,6 +33,7 @@ import { powerScale } from "./formulas";
 import { mulN } from "@/utils/gnum";
 import { jaccardDistance } from "@/utils/setMath";
 import { NOVELTY_MIN } from "./worldGen";
+import { BIAS_POOL } from "./mortalBias";
 
 /**
  * 落名的「名实相符」带宽:一个区域名字的静态档位,与它在凡界里的落座档
@@ -92,7 +93,18 @@ export interface MortalWorld {
 }
 
 const FOES_PER_PLACE = 3;
-const BIASES = ["草木丰饶", "矿脉深厚", "典籍散佚", "灵石充盈", "药气氤氲"] as const;
+
+/**
+ * 最近几世尚未出现的资源偏向。
+ *
+ * 传进来的可以是完整世界历史，也可以只是从存档里留下的偏向序列。
+ * 空集表示五种都见过，生成器回到正常随机，不再人为筛候选。
+ */
+export function unseenMortalBiases(seen: Iterable<string>): ReadonlySet<string> {
+  const unseen = new Set<string>(BIAS_POOL);
+  for (const bias of seen) unseen.delete(bias);
+  return unseen;
+}
 
 /**
  * 路线骨架模板。
@@ -279,7 +291,7 @@ export function generateMortalWorld(seed: number): MortalWorld {
   const tiers = jitterTiers(shape.tiers, rng);
   const density = resampleRhythm(rhythm.curve, tiers.length);
   // 资源偏向提前抽取,避免被后续 rng 消耗挤到同一取值(上一轮记下的弱点)
-  const bias = BIASES[rng.int(0, BIASES.length - 1)]!;
+  const bias = BIAS_POOL[rng.int(0, BIAS_POOL.length - 1)]!;
 
   // 地界组合:按「名实相符」落名 —— 每一档只收静态档位邻近的区域,
   // 免得青云山麓(静态 1 阶)坐进终局档刷出鸿蒙古魔,或鸿蒙裂隙冒充 2 档开场
@@ -547,8 +559,12 @@ export function generateApprovedMortal(
   maxTries = 120,
   runs = 12,
 ): ApprovedMortalWorld | null {
+  const unseenBiases = unseenMortalBiases(history.map((w) => w.bias));
   for (let t = 0; t < maxTries; t += 1) {
     const world = generateMortalWorld(baseSeed + t * 7919);
+    // 资源偏向会改写本世各条产出乘区,是玩家看得见的一维。
+    // 尚未见全五种时先补未见的,避免连续几世只在同一两条经济路线里打转。
+    if (unseenBiases.size > 0 && !unseenBiases.has(world.bias)) continue;
     const audit = auditMortalWorld(world, runs);
     if (!audit.passed) continue;
     const novelty = mortalNovelty(world, history);
@@ -599,8 +615,5 @@ export function materialCapacity(): MaterialCapacity {
     chainCombos: Math.round(combos),
   };
 }
-
-/** 资源偏向的取值集合 —— 供审计检查分布 */
-export const BIAS_POOL: readonly string[] = BIASES;
 
 export { NOVELTY_MIN };

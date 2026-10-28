@@ -11,17 +11,24 @@ import { createPinia, setActivePinia } from "pinia";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
-import { BIAS_EFFECTS, biasChanceMult, biasEffectOf, biasOfflineNote } from "./mortalBias";
+import {
+  BIAS_EFFECTS,
+  BIAS_POOL,
+  biasChanceMult,
+  biasEffectOf,
+  biasOfflineNote,
+} from "./mortalBias";
 import { afterWin } from "./loot";
 import { REGIONS } from "@/data/regions";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 
-const BIASES = ["草木丰饶", "矿脉深厚", "典籍散佚", "灵石充盈", "药气氤氲"] as const;
-
 describe("资源偏向 · 表与乘区", () => {
   it("五条偏向各有渠道,幅度在 10%~15%,且标签里写着同一个数", () => {
-    for (const b of BIASES) {
+    expect(new Set(BIAS_POOL), "生成池与兑现表不是同一份名单").toEqual(
+      new Set(Object.keys(BIAS_EFFECTS)),
+    );
+    for (const b of BIAS_POOL) {
       const e = biasEffectOf(b);
       expect(e, `${b} 没有兑现表项`).toBeDefined();
       expect(e!.mult).toBeGreaterThanOrEqual(1.1);
@@ -31,8 +38,8 @@ describe("资源偏向 · 表与乘区", () => {
       );
     }
     // 渠道两两不同:五条偏向不该有两条乘在同一处
-    const channels = new Set(BIASES.map((b) => BIAS_EFFECTS[b]!.channel));
-    expect(channels.size).toBe(BIASES.length);
+    const channels = new Set(BIAS_POOL.map((b) => BIAS_EFFECTS[b]!.channel));
+    expect(channels.size).toBe(BIAS_POOL.length);
   });
 
   it("只放大对得上的渠道;别的渠道与未知偏向一律 1", () => {
