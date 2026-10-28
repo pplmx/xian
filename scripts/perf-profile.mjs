@@ -308,6 +308,7 @@ async function expandAllBatches(
 ) {
   const steps = [];
   let peakNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+  let seen = null;
   try {
     if (expectedTotal) {
       const total = Number(
@@ -318,6 +319,7 @@ async function expandAllBatches(
           `夹具只装进 ${total} 件,承诺 ${expectedTotal.count} 件 —— 无效模板或被容量截短`,
         );
       }
+      seen = new Set(await visibleFingerprints(page.locator(itemSelector)));
     }
     while ((await page.locator(moreSelector).count()) > 0) {
       if (steps.length >= 100) throw new Error("续开超过 100 批,疑似按钮不收敛");
@@ -328,8 +330,24 @@ async function expandAllBatches(
         await page.evaluate(() => document.querySelectorAll("*").length),
       );
       if (!step.ok) throw new Error(step.reason ?? `批次异常:${JSON.stringify(step)}`);
+      if (seen) {
+        const fresh = (await visibleFingerprints(page.locator(itemSelector))).filter(
+          (fingerprint) => !seen.has(fingerprint),
+        );
+        if (fresh.length !== step.promised) {
+          throw new Error(
+            `续开跨批重复:承诺 +${step.promised},全程首次可见 ${fresh.length} —— 有旧条目被反复翻出`,
+          );
+        }
+        for (const fingerprint of fresh) seen.add(fingerprint);
+      }
     }
     if (steps.length === 0) throw new Error(`没有可续开的批次:${moreSelector}`);
+    if (seen && seen.size !== expectedTotal.count) {
+      throw new Error(
+        `清单只可达 ${seen.size}/${expectedTotal.count} 件 —— 续开按钮提前消失或漏页`,
+      );
+    }
     let rewind = null;
     if (rewindSpec) {
       const start = Number(
@@ -540,13 +558,23 @@ for (const view of VIEWS) {
         );
       collectionBatches = [];
       for (const category of categories) {
+        const categoryTotal = Number(
+          await page
+            .locator(`section[data-collection-category="${category}"]`)
+            .first()
+            .getAttribute("data-collection-total"),
+        );
         collectionBatches.push({
           key: category,
           ...(await expandAllBatches(
             page,
             `button[data-codex-entry="${category}"]`,
             `button[data-collection-more="${category}"]`,
-            null,
+            {
+              selector: `section[data-collection-category="${category}"]`,
+              attribute: "data-collection-total",
+              count: categoryTotal,
+            },
             {
               startSelector: `section[data-collection-category="${category}"]`,
               startAttribute: "data-collection-start",

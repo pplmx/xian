@@ -219,6 +219,7 @@ describe("排版量法口径", () => {
     expect(perf).toContain("夹具只装进");
     expect(perf).toContain("newVisible === promised");
     expect(perf).toContain("startAfter < startBefore");
+    expect(perf).toContain("清单只可达");
   });
 
   it("大背包性能夹具只取真实 14 阶模板，300 件必须真的进得去", () => {
