@@ -216,7 +216,7 @@
     <p v-else class="px-1 py-6 text-center t-body text-ink-faint">
       你还不知道任何丹方。
       <br />
-      <span class="text-[10px]">去藏经阁参悟,或向师长讨教,新方自会翻出</span>
+      <span class="text-[10px]">去藏经阁参悟,或留意「失传丹方」奇缘,新方自会翻出</span>
     </p>
     <template #footer>
       <button class="btn-seal w-full" @click="emit('close')">收 炉</button>

@@ -31,6 +31,7 @@ import { useLoreStore } from "@/stores/lore";
 import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
+import { useQuestsStore } from "@/stores/quests";
 
 const CRAFTABLE = PILLS.filter((p) => p.recipe);
 const NOTHING_KNOWN = (): number => 0;
@@ -136,6 +137,24 @@ describe("藏经阁钻研(挂机推演)", () => {
     const fresh = Object.entries(lore.recipeLore).find(([, v]) => v > 0 && v < 1);
     expect(fresh).toBeDefined();
     expect(fresh![1]).toBeCloseTo(NEW_RECIPE_START, 6);
+  });
+
+  it("新翻到的方子同时进丹方录 —— 知道了名字,图鉴不该还遮成 ???", () => {
+    const player = usePlayerStore();
+    player.major = 1;
+    useDongfuStore().setLevel("library", 4);
+    seedLoreIfNeeded();
+    const lore = useLoreStore();
+    const quests = useQuestsStore();
+    const before = new Set(Object.keys(lore.recipeLore).filter((id) => lore.recipeMastery(id) > 0));
+
+    studyTick(3600 * 24);
+
+    const learned = Object.keys(lore.recipeLore).find(
+      (id) => lore.recipeMastery(id) > 0 && !before.has(id),
+    );
+    expect(learned, "这一拍应翻出一张新方").toBeDefined();
+    expect(quests.collections.pill).toContain(learned);
   });
 
   it("一次心跳只办一件事,不会一口气刷出整架书", () => {

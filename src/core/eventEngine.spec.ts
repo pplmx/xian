@@ -15,9 +15,14 @@ import { add, gn, gte, mulN, sub } from "@/utils/gnum";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useAdventureStore } from "@/stores/adventure";
+import { useLoreStore } from "@/stores/lore";
+import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
 import { eventDef } from "@/data/events";
+import { PILLS } from "@/data/pills";
 import { resolveEventChoice } from "./eventEngine";
 import { stoneByTier } from "./formulas";
+import { track } from "./progress";
 
 describe("事件结算 · 灵石代价守恒", () => {
   beforeEach(() => {
@@ -107,5 +112,67 @@ describe("事件悟道入会话账(haul 要有数可报)", () => {
     resolveEventChoice(def, 1, 1);
     expect(resources.wudao - before).toBe(4);
     expect(adventure.session).toBeNull();
+  });
+});
+
+describe("奇缘授方 · 文案承诺必须落成知识", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  const recipeEvent = (): EventDef => ({
+    id: "ev_test_recipe",
+    title: "失传丹方",
+    text: "",
+    tags: ["general"],
+    weight: 1,
+    choices: [
+      {
+        label: "记下丹方",
+        outcomes: [{ weight: 1, text: "你记下了丹方。", effects: [{ type: "recipe" }] }],
+      },
+    ],
+  });
+
+  it("有未学方时给真方子、写进丹方录,并报出方名与掌握度", () => {
+    const player = usePlayerStore();
+    const lore = useLoreStore();
+    const quests = useQuestsStore();
+    player.major = 2;
+
+    const before = new Set(
+      Object.entries(lore.recipeLore)
+        .filter(([, mastery]) => mastery > 0)
+        .map(([id]) => id),
+    );
+    const res = resolveEventChoice(recipeEvent(), 0, 4);
+    const learned = Object.entries(lore.recipeLore).find(
+      ([id, mastery]) => mastery > 0 && !before.has(id),
+    );
+
+    expect(learned, "奇缘只说「收下丹方」,知识库里却没有新方").toBeDefined();
+    expect(learned![1]).toBeGreaterThan(0);
+    expect(quests.collections.pill, "得方之后图鉴仍遮成 ???").toContain(learned![0]);
+    expect(res.lines.join("\n")).toContain("丹方「");
+    expect(res.lines.join("\n")).toContain("掌握");
+  });
+
+  it("已识尽可学之方时折成悟道与残页,不把重复奇缘吞成空转", () => {
+    const player = usePlayerStore();
+    const lore = useLoreStore();
+    const resources = useResourcesStore();
+    player.major = 2;
+    // 境界是在本用例里直接抬上来的:先让成就/主线结清,再取保底基线，
+    // 免得那笔与授方无关的悟道混进要核对的 10 点。
+    track("events");
+    lore.recipeLore = Object.fromEntries(PILLS.filter((p) => p.recipe).map((p) => [p.id, 1]));
+    const wudao = resources.wudao;
+    const page = resources.page;
+
+    const res = resolveEventChoice(recipeEvent(), 0, 4);
+
+    expect(resources.wudao - wudao).toBe(10);
+    expect(resources.page - page).toBe(6);
+    expect(res.lines.join("\n")).toContain("已识尽");
   });
 });

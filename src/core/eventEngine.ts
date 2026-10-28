@@ -3,14 +3,21 @@
  */
 import type { EventChoice, EventDef, EventEffect, RegionDef } from "@/types";
 import { RandomService, rng } from "@/utils/random";
-import { formatGN, formatYears } from "@/utils/format";
+import { formatGN, formatNum, formatPercent, formatYears } from "@/utils/format";
 import { EVENTS, FORTUNE_EVENTS, eventDef } from "@/data/events";
 import { CHAINS, CHAIN_EVENTS, chainOfEvent } from "@/data/chains";
 import { realmDef } from "@/data/realms";
 // 三档触发概率是同一份数据(见 data/constants 那段注释):际遇在 exploration 掷,
 // 奇缘与机缘在这里从上一步的结果里再掷一次。数字不在本文件另写一遍 ——
 // core/eventTier 要把这条乘法链讲给玩家听,两边各写一份就会互相撒谎。
-import { CHAIN_STAGE_CHANCE, FORTUNE_CHANCE, INSTANT_EXP_LAYER_CAP } from "@/data/constants";
+import {
+  CHAIN_STAGE_CHANCE,
+  FORTUNE_CHANCE,
+  FORTUNE_RECIPE_FALLBACK_PAGE,
+  FORTUNE_RECIPE_FALLBACK_WUDAO,
+  FORTUNE_RECIPE_MASTERY,
+  INSTANT_EXP_LAYER_CAP,
+} from "@/data/constants";
 import { pillDef, PILLS } from "@/data/pills";
 import { buffDef } from "@/data/buffs";
 import { PETS, petDef } from "@/data/pets";
@@ -19,6 +26,7 @@ import { expFromSecs, stoneByTier } from "./formulas";
 import { generateEquipment } from "./equipGen";
 import { acquireArtifact, acquireEquipment, randomDropArtifact } from "./loot";
 import { learnRandomGongfa } from "./gongfaService";
+import { discoverRecipe } from "./loreService";
 import { fortuneAffinity, rootElements } from "./linggenAffinity";
 import { collect, track } from "./progress";
 import { recordEvent } from "./worldMemory";
@@ -286,6 +294,17 @@ function applyEffect(effect: EventEffect, tier: number): string | null {
       inventory.addPill(id, effect.count);
       collect("pill", id);
       return `丹药「${def.name}」×${effect.count}`;
+    }
+    case "recipe": {
+      const found = discoverRecipe(FORTUNE_RECIPE_MASTERY);
+      if (found) {
+        return `丹方「${found.name}」· 掌握 +${formatPercent(FORTUNE_RECIPE_MASTERY, 0)}`;
+      }
+      resources.addSmall("wudao", FORTUNE_RECIPE_FALLBACK_WUDAO);
+      resources.addSmall("page", FORTUNE_RECIPE_FALLBACK_PAGE);
+      return `已识尽可学丹方 · 悟道 +${formatNum(
+        FORTUNE_RECIPE_FALLBACK_WUDAO,
+      )} · 残页 +${formatNum(FORTUNE_RECIPE_FALLBACK_PAGE)}`;
     }
     case "gongfa": {
       const learnt = learnRandomGongfa(effect.id);

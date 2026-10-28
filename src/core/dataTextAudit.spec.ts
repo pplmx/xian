@@ -785,7 +785,8 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
   });
 
   it("丹方熟练度的话必须与机制同向 —— 「多炼几炉」不许回来", () => {
-    // 熟练度的真实来路只有两条:藏经阁被动钻研(需经阁,studyTick)+ 炸炉长记性(+0.02);
+    // 熟练度的真实来路:奇缘授下起手掌握,藏经阁被动钻研(需经阁,studyTick)继续精进,
+    // 炸炉长记性(+0.02);
     // 成功开炉不涨分毫(pillService 只在 !succeeded 分支 addRecipeMastery)。
     // 「多炼几炉便到通晓」与机制相反 —— 玩家照它说的连炼十炉一分不涨,下一个结论就是游戏坏了。
     const view = src("../views/InventoryView.vue");
@@ -793,6 +794,15 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     // 真话要点名来路:读书(钻研)是主路;炸炉也长记性是这机制的独特性格,顺带说破免得玩家只敢求稳
     expect(view, "要说清真实来路(藏经阁钻研)").toContain("钻研");
     expect(view, "要说清真实来路(炸炉也长记性)").toContain("炸炉");
+  });
+
+  it("不知道丹方时的来路与真实入口同向 —— 不许再承诺不存在的师长授方", () => {
+    const brew = src("../components/inventory/BrewingDialog.vue");
+    const inventory = src("../views/InventoryView.vue");
+    expect(brew, "空方时要点名真实存在的奇缘来路").toContain("奇缘");
+    expect(inventory, "未知方提示要点名真实存在的奇缘来路").toContain("奇缘");
+    expect(brew, "师承目前只有评价,没有授方入口").not.toContain("师长讨教");
+    expect(inventory, "师承目前只有评价,没有授方入口").not.toContain("师长讨教");
   });
 
   it("图鉴的用具三类取自 itemText 的功用函数", () => {

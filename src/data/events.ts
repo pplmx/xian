@@ -2016,12 +2016,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
     ["general"],
     [
       c("记下丹方", [
-        o(
-          60,
-          "丹方奥妙无穷,你收下残页,悟得炼丹真意。",
-          { type: "material", id: "wudao", amount: 10 },
-          { type: "material", id: "page", amount: 6 },
-        ),
+        o(60, "丹方奥妙无穷,你逐字摹下,已得几分炼丹真意。", { type: "recipe" }),
         o(40, "丹方后半已被虫蛀,只得残缺几字。", { type: "material", id: "page", amount: 12 }),
       ]),
       c("放回原处", [o(1, "前人遗物,你不敢轻动,悄然离开。")], { isDefault: true }),

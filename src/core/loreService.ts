@@ -23,6 +23,7 @@ import { useLoreStore } from "@/stores/lore";
 import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { notify } from "./notify";
+import { collect } from "./progress";
 
 /** 认知层 1→2 所需的照面次数 */
 export const SEEN_FOR_NATURE = 4;
@@ -246,9 +247,17 @@ export function noteEnemyMany(enemyId: string, wins: number, losses: number): bo
   return true;
 }
 
-/** 研读丹方(典籍、师承、事件都走这里) */
+/**
+ * 研读丹方(典籍、奇缘、事件都走这里)。
+ *
+ * 一张方子只要开始读,就该同时进入丹方录 —— 知道它叫什么、有没有见过成品,
+ * 与知不知道药方是两本账。把它们在同一写入点落账,藏经阁翻书与奇缘授方
+ * 才不会各自漏收录。
+ */
 export function studyRecipe(id: string, amount: number): number {
-  return useLoreStore().addRecipeMastery(id, amount);
+  const mastery = useLoreStore().addRecipeMastery(id, amount);
+  if (mastery > 0) collect("pill", id);
+  return mastery;
 }
 
 /** 研读器谱 */
@@ -328,6 +337,16 @@ export function studiableRecipes(major: number, masteryOf: (id: string) => numbe
   return PILLS.filter(
     (p) => p.recipe && masteryOf(p.id) <= 0 && p.minRealm <= major && rankOf(p) <= ceiling,
   ).sort((a, b) => rankOf(a) - rankOf(b) || a.minRealm - b.minRealm);
+}
+
+/** 从当前可学而未得的方子里随机授一张,并记入丹方录 */
+export function discoverRecipe(mastery: number): PillDef | null {
+  const lore = useLoreStore();
+  const found = studiableRecipes(usePlayerStore().major, (id) => lore.recipeMastery(id));
+  if (found.length === 0) return null;
+  const def = rng.pick(found);
+  studyRecipe(def.id, mastery);
+  return def;
 }
 
 /**

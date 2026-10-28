@@ -4,7 +4,12 @@
  */
 import type { EventChoice } from "@/types";
 import { stoneByTier } from "@/core/formulas";
-import { formatGN } from "@/utils/format";
+import {
+  FORTUNE_RECIPE_FALLBACK_PAGE,
+  FORTUNE_RECIPE_FALLBACK_WUDAO,
+  FORTUNE_RECIPE_MASTERY,
+} from "@/data/constants";
+import { formatGN, formatNum, formatPercent } from "@/utils/format";
 import { useResourcesStore } from "@/stores/resources";
 import { toNum } from "@/utils/gnum";
 
@@ -18,15 +23,39 @@ function stoneCosts(choice: EventChoice): number[] {
   return out;
 }
 
+/** 奇缘授方的收益与保底 —— 有 recipe 效果的选项在按下前就把两种去向摊开 */
+function recipeHintText(choice: EventChoice): string {
+  const total = choice.outcomes.reduce((sum, outcome) => sum + Math.max(0, outcome.weight), 0);
+  const recipeWeight = choice.outcomes.reduce(
+    (sum, outcome) =>
+      sum +
+      (outcome.effects.some((effect) => effect.type === "recipe")
+        ? Math.max(0, outcome.weight)
+        : 0),
+    0,
+  );
+  if (recipeWeight <= 0 || total <= 0) return "";
+  const chance = formatPercent(recipeWeight / total, 0);
+  return `${chance} 得未学丹方 · 掌握 +${formatPercent(
+    FORTUNE_RECIPE_MASTERY,
+    0,
+  )} · 已识尽则悟道 ${formatNum(FORTUNE_RECIPE_FALLBACK_WUDAO)} · 残页 ${formatNum(
+    FORTUNE_RECIPE_FALLBACK_PAGE,
+  )}`;
+}
+
 export function choiceHintText(choice: EventChoice, tier: number): string {
   const costs = stoneCosts(choice);
+  const recipeHint = recipeHintText(choice);
   const payers = choice.outcomes.filter((o) =>
     o.effects.some((e) => e.type === "stone" && e.tierAmount < 0),
   ).length;
   if (costs.length === 0) {
     if (choice.cond?.type === "stone")
-      return `需备灵石 ${formatGN(stoneByTier(tier, choice.cond.tierAmount))}`;
-    return choice.hint ?? "";
+      return [`需备灵石 ${formatGN(stoneByTier(tier, choice.cond.tierAmount))}`, recipeHint]
+        .filter(Boolean)
+        .join(" · ");
+    return [choice.hint, recipeHint].filter(Boolean).join(" · ");
   }
   const lo = Math.min(...costs);
   const hi = Math.max(...costs);
@@ -40,7 +69,7 @@ export function choiceHintText(choice: EventChoice, tier: number): string {
   const reserve = gate > hi ? ` · 需备足 ${formatGN(stoneByTier(tier, gate))}` : "";
   // 手写 hint 若只说了「要灵石」,被算出来的数字替掉;说了别的(「额外之财归你」)则保留
   const extra = choice.hint && !choice.hint.includes("灵石") ? `${choice.hint} · ` : "";
-  return `${extra}${spend}${reserve}`;
+  return `${extra}${spend}${reserve}${recipeHint ? ` · ${recipeHint}` : ""}`;
 }
 
 /**

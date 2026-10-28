@@ -599,6 +599,13 @@ export type EventEffect =
   | { type: "material"; id: "herb" | "ore" | "page" | "dust" | "wudao"; amount: number }
   | { type: "equipment"; minQualityRank?: number }
   | { type: "pill"; id?: string; count: number }
+  /**
+   * 奇缘授方 —— 从当前境界读得懂、尚未入手的丹方里取一张。
+   *
+   * 只给「听说过、抄下来了」的起手掌握度,不直接通晓;若可学方已尽,
+   * 结算必须折成悟道与残页,不能把一次稀有际遇吞成空转。
+   */
+  | { type: "recipe" }
   | { type: "gongfa"; id?: string }
   | { type: "artifact"; id?: string }
   | { type: "buff"; id: string }

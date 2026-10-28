@@ -21,6 +21,7 @@ import { formatGN } from "@/utils/format";
 import { useResourcesStore } from "@/stores/resources";
 import { gn } from "@/utils/gnum";
 import { choiceHintText, stoneShortHint } from "./eventText";
+import { eventDef } from "@/data/events";
 
 describe("choiceHintText", () => {
   beforeEach(() => {
@@ -77,5 +78,14 @@ describe("choiceHintText", () => {
   it("际遇弹窗在置灰选项旁列出尚差(stone-gated),不只给「需备灵石」", () => {
     const src = readFileSync(resolve(__dirname, "../components/adventure/EventDialog.vue"), "utf8");
     expect(src).toContain("stoneShortHint(choice, tier)");
+  });
+
+  it("失传丹方在按之前摊开得方、掌握度与学尽后的保底", () => {
+    const def = eventDef("ft_ancient_elixir")!;
+    const text = choiceHintText(def.choices[0]!, 4);
+    expect(text).toContain("未学丹方");
+    expect(text).toContain("掌握 +35%");
+    expect(text).toContain("悟道 10");
+    expect(text).toContain("残页 6");
   });
 });

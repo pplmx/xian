@@ -531,6 +531,15 @@ export const FIELD_ORE_PER_HOUR = 2.4;
 export const LIBRARY_WUDAO_PER_HOUR = 1.5;
 /** 藏经阁参悟功法消耗残页 */
 export const COMPREHEND_PAGE_COST = 12;
+/**
+ * 奇缘「失传丹方」的授方口径。
+ *
+ * 文案、结算与图鉴测试都读这一组数:奇缘只给起手掌握度,后续仍靠藏经阁
+ * 读通;可学方已尽时折成悟道与残页,避免稀有奇缘空转。
+ */
+export const FORTUNE_RECIPE_MASTERY = 0.35;
+export const FORTUNE_RECIPE_FALLBACK_WUDAO = 10;
+export const FORTUNE_RECIPE_FALLBACK_PAGE = 6;
 
 // ============ 藏经阁低级保底(快赢3 / ISS-303) ============
 /** 享受保底的藏经阁等级上限(低级藏经阁给个起步产出,别让前期功法完全卡死) */
