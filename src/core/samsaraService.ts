@@ -55,6 +55,7 @@ import { useCultivationStore } from "@/stores/cultivation";
 import type { CounterKey } from "@/types";
 import { deltaOf, deltaSince, snapshotOf } from "wanxiang-engine";
 import { notify } from "./notify";
+import { isBlueprintMastered } from "./blueprintMastery";
 
 // ============ 宿慧折算(纯函数,可独立测试) ============
 
@@ -89,7 +90,7 @@ export function loreInsight(snap: LoreSnapshot): number {
     if (v >= 1) sum += INSIGHT_PER_RECIPE;
   }
   for (const v of Object.values(snap.blueprintLore)) {
-    if (v >= 1) sum += INSIGHT_PER_BLUEPRINT;
+    if (isBlueprintMastered(v)) sum += INSIGHT_PER_BLUEPRINT;
   }
   let skillSum = 0;
   for (const id of SKILL_IDS) {

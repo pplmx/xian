@@ -1451,6 +1451,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
     expect(panel?.src, "新词条掷点保底必须写成玩家看得懂的话").toContain("新词条");
     expect(panel?.src, "保底数值要落到面板上").toContain("reforgeFloor");
+    expect(panel?.src, "器谱离读通还有几次要摊在按重铸之前").toContain(
+      "blueprintReforgesUntilMastered",
+    );
+    expect(panel?.src, "读通器谱的宿慧收益要与数据源同源").toContain("INSIGHT_PER_BLUEPRINT");
   });
 
   it("自动重铸给出真实目标次数,不可达目标不许继续烧钱", () => {

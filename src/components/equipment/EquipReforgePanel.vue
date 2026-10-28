@@ -37,6 +37,8 @@ import {
 import { formatGN, formatPercent } from "@/utils/format";
 import { toNum, subClamp } from "@/utils/gnum";
 import { useLoreStore } from "@/stores/lore";
+import { blueprintReforgesUntilMastered } from "@/core/blueprintMastery";
+import { INSIGHT_PER_BLUEPRINT } from "@/data/samsara";
 import AffixTransferPanel from "./AffixTransferPanel.vue";
 
 const ui = useUiStore();
@@ -76,6 +78,9 @@ const blueprintMastery = computed(() =>
   inst.value ? lore.blueprintMastery(inst.value.templateId) : 0,
 );
 const blueprintBonus = computed(() => blueprintRollBonus(blueprintMastery.value));
+const blueprintReforgesLeft = computed(() =>
+  blueprintReforgesUntilMastered(blueprintMastery.value),
+);
 /** 实际喂给重铸判定的保底:铭纹与器谱相加后封顶,与 core/reforge 同源 */
 const reforgeFloor = computed(() =>
   effectiveReforgeRollFloor(inscribeLevel.value, blueprintMastery.value),
@@ -341,8 +346,16 @@ function triesOf(id: string, minRoll = 0): number | null {
     </p>
     <p v-if="reforgeCostVal" class="text-center text-[10px] text-ink-faint tabular">
       器谱 {{ formatPercent(blueprintMastery, 0) }} · 每次成功重铸 +
-      {{ formatPercent(BLUEPRINT_MASTERY_PER_REFORGE, 0) }},读通额外保底 +
-      {{ formatPercent(BLUEPRINT_ROLL_BONUS_MAX, 0) }}
+      {{ formatPercent(BLUEPRINT_MASTERY_PER_REFORGE, 0) }} ·
+      <template v-if="blueprintReforgesLeft > 0">
+        再成功重铸 {{ blueprintReforgesLeft }} 次读通
+      </template>
+      <template v-else>已读通</template>
+    </p>
+    <p v-if="reforgeCostVal" class="text-center text-[10px] text-ink-faint tabular">
+      读通后:额外保底 +{{ formatPercent(BLUEPRINT_ROLL_BONUS_MAX, 0) }} · 宿慧 +{{
+        INSIGHT_PER_BLUEPRINT
+      }}
     </p>
     <p v-if="inst" class="text-center text-[10px] text-ink-faint tabular">
       已重铸 {{ inst.reforgeCount ?? 0 }} 次 · 已封存 {{ (inst.sealedAffixIds ?? []).length }}/{{

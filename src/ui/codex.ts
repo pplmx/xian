@@ -36,6 +36,7 @@ import { useQuestsStore } from "@/stores/quests";
 import { usePlayerStore } from "@/stores/player";
 import { PETS } from "@/data/pets";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
+import { clampBlueprintMastery, isBlueprintMastered } from "@/core/blueprintMastery";
 import { formatPercent } from "@/utils/format";
 import { modsText } from "../data/statNames";
 import {
@@ -329,8 +330,8 @@ export function describeEquipment(
   if (stage >= 1 && seen) {
     lines.push(`见过最好的:${qualityOfRank(seen.q).name} · ${seen.t} 阶`);
   }
-  const mastery = Math.max(0, Math.min(1, blueprintMastery || 0));
-  if (mastery >= 1) lines.push("器谱:已读通");
+  const mastery = clampBlueprintMastery(blueprintMastery);
+  if (isBlueprintMastered(mastery)) lines.push("器谱:已读通");
   else if (mastery > 0) lines.push(`器谱:研读 ${formatPercent(mastery)}`);
   return {
     id: def.id,

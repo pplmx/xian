@@ -32,11 +32,13 @@ import { stoneByTier } from "./formulas";
 import { noteSmithingUsed, studyBlueprint } from "./loreService";
 import { track } from "./progress";
 import { ENGINE_WORLD } from "./engineWorld";
+import { clampBlueprintMastery, isBlueprintMastered } from "./blueprintMastery";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
 import { useResourcesStore } from "@/stores/resources";
 import { notify } from "./notify";
 import { formatPercent } from "@/utils/format";
+import { INSIGHT_PER_BLUEPRINT } from "@/data/samsara";
 
 export interface ReforgeCost {
   stone: GNum;
@@ -64,8 +66,7 @@ export function inscribeRollFloor(level: number): number {
  * 推到必然高值,重铸会从搭配赌局退化成固定领数。
  */
 export function blueprintRollBonus(mastery: number): number {
-  if (!Number.isFinite(mastery)) return 0;
-  return Math.max(0, Math.min(1, mastery)) * BLUEPRINT_ROLL_BONUS_MAX;
+  return clampBlueprintMastery(mastery) * BLUEPRINT_ROLL_BONUS_MAX;
 }
 
 /** 重铸新词条实际吃的掷点保底 = 铭纹 + 当前模板器谱(封顶) */
@@ -195,11 +196,15 @@ export function reforgeEquipment(uid: string, quiet = false): boolean {
   const blueprintAfter = studyBlueprint(inst.templateId, BLUEPRINT_MASTERY_PER_REFORGE);
 
   if (!quiet) {
-    const blueprintNote =
-      blueprintBefore < 1 && blueprintAfter >= 1
-        ? ` · 「${template?.name ?? "此器"}」器谱已读通`
-        : ` · 器谱 ${formatPercent(blueprintAfter, 0)}`;
-    notify(`重铸而成:词条 ${countNote}${sealedNote}${blueprintNote}`, "success");
+    const readThroughThisTime =
+      !isBlueprintMastered(blueprintBefore) && isBlueprintMastered(blueprintAfter);
+    const blueprintNote = readThroughThisTime
+      ? ` · 「${template?.name ?? "此器"}」器谱已读通 · 宿慧 +${INSIGHT_PER_BLUEPRINT}`
+      : ` · 器谱 ${formatPercent(blueprintAfter, 0)}`;
+    notify(
+      `重铸而成:词条 ${countNote}${sealedNote}${blueprintNote}`,
+      readThroughThisTime ? "rare" : "success",
+    );
   }
   return true;
 }

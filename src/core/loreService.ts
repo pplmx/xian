@@ -251,7 +251,7 @@ export function studyRecipe(id: string, amount: number): number {
   return useLoreStore().addRecipeMastery(id, amount);
 }
 
-/** 研读图纸 */
+/** 研读器谱 */
 export function studyBlueprint(id: string, amount: number): number {
   return useLoreStore().addBlueprintMastery(id, amount);
 }

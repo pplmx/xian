@@ -61,6 +61,7 @@ const CATEGORIES = [
       "quests",
       "codex",
       "craftability",
+      "blueprintMastery",
       "reforge",
       "affixTransfer",
       "useAffixTransfer",

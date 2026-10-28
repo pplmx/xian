@@ -244,6 +244,7 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import { useLoreStore } from "@/stores/lore";
 import { SKILLS, skillStageName, skillStageProgress } from "@/data/crafting";
+import { isBlueprintMastered } from "@/core/blueprintMastery";
 
 const ui = useUiStore();
 const inventory = useInventoryStore();
@@ -274,7 +275,7 @@ const forgeSkills = computed(() => {
     {
       id: "blueprint",
       name: "器谱",
-      stage: mastery >= 1 ? "通晓" : mastery > 0 ? "研读" : "未读",
+      stage: isBlueprintMastered(mastery) ? "通晓" : mastery > 0 ? "研读" : "未读",
       progress: mastery,
       active: mastery > 0,
     },

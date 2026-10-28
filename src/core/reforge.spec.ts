@@ -40,6 +40,7 @@ import { rng } from "@/utils/random";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
 import { useResourcesStore } from "@/stores/resources";
+import { useUiStore } from "@/stores/ui";
 import { gn } from "@/utils/gnum";
 import type { EquipmentInstance } from "@/types";
 
@@ -252,6 +253,19 @@ describe("重铸动作 · 条数与数值一起重掷", () => {
     expect(reforgeEquipment("blueprint-gain")).toBe(true);
     expect(lore.blueprintMastery("w_zhuqing")).toBeCloseTo(BLUEPRINT_MASTERY_PER_REFORGE, 10);
     expect(lore.blueprintMastery("w_xuantie"), "洗剑不会顺带看懂别的剑").toBe(0);
+  });
+
+  it("读通器谱的当次重铸报清宿慧收益,并升为稀有提示", () => {
+    const inst: EquipmentInstance = { ...base, uid: "blueprint-read" };
+    setup(inst);
+    useLoreStore().blueprintLore = { [inst.templateId]: 0.98 };
+    const ui = useUiStore();
+
+    expect(reforgeEquipment("blueprint-read")).toBe(true);
+    const toast = ui.toasts.at(-1)!;
+    expect(toast.text).toContain("器谱已读通");
+    expect(toast.text, "读通收益要在发生当刻说清").toContain("宿慧 +1");
+    expect(toast.kind).toBe("rare");
   });
 
   it("器谱读通后,这件的新词条立刻吃到额外掷点保底", () => {

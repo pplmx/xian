@@ -11,6 +11,7 @@ import { LORE_MAX } from "@/data/materials";
 import { SKILL_IDS, skillLevelFromExp, type SkillId } from "@/data/crafting";
 import { persistConfig } from "@/utils/storage";
 import { codexAdvanceEnemyLoreIfDue, rememberEquip } from "@/core/engineCodex";
+import { clampBlueprintMastery, isBlueprintMastered } from "@/core/blueprintMastery";
 
 // 档位表住在 core/loreThresholds(与图鉴的规则分开:规则在库、口径在本作);这里转出
 import { ENEMY_LORE_MAX } from "@/core/loreThresholds";
@@ -74,7 +75,7 @@ export const useLoreStore = defineStore(
     );
     /** 已读通(掌握度满)的器谱数 */
     const masteredBlueprintCount = computed(
-      () => Object.values(blueprintLore.value).filter((v) => v >= 1).length,
+      () => Object.values(blueprintLore.value).filter(isBlueprintMastered).length,
     );
     /** 已洞悉(认知层 = 上限)的敌人种数 */
     const masteredEnemyCount = computed(
@@ -147,7 +148,7 @@ export const useLoreStore = defineStore(
     }
 
     function addBlueprintMastery(id: string, delta: number): number {
-      const next = Math.max(0, Math.min(1, blueprintMastery(id) + delta));
+      const next = clampBlueprintMastery(blueprintMastery(id) + delta);
       blueprintLore.value = { ...blueprintLore.value, [id]: next };
       return next;
     }
