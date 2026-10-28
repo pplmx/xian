@@ -292,6 +292,7 @@
         <button
           v-for="p in quickPills"
           :key="p.def!.id"
+          data-quick-pill
           class="card-ink flex items-center gap-2 px-3 py-2 text-left active:scale-98"
           :disabled="p.overflow === 'full'"
           @click="usePill(p.def!.id)"
@@ -323,6 +324,17 @@
           </span>
         </button>
       </div>
+      <!-- 速服只铺前四味;余量不能静默消失,给出去丹匣逐味查看的直达入口 -->
+      <RouterLink
+        v-if="quickPillsHidden > 0"
+        data-quick-pills-hidden
+        :to="{ path: '/inventory', query: { tab: 'pill' } }"
+        :aria-label="`另有 ${quickPillsHidden} 味可服丹药，前往丹匣查看`"
+        class="tap-row mt-2 w-full justify-between rounded-sm border border-ink/10 px-3 py-2 text-[10px] text-ink-faint active:scale-99"
+      >
+        <span>另有 {{ quickPillsHidden }} 味</span>
+        <span class="text-qing">去丹匣 ›</span>
+      </RouterLink>
     </section>
 
     <!-- 功法区(主修卡/一门一册书目/参悟)→ GongfaSection,整块随本体迁入 -->
@@ -335,6 +347,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { RouterLink } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -572,8 +585,10 @@ function quickPillBrief(def: PillDef): string {
   return "";
 }
 
+const QUICK_PILL_LIMIT = 4;
+
 /** 修行相关丹药快捷栏:按品质降序,越珍稀的越靠前(原为插入序,先拿到什么显什么) */
-const quickPills = computed(() =>
+const quickPillRows = computed(() =>
   Object.entries(inventory.pills)
     .map(([id, count]) => ({ def: pillDef(id), count }))
     .filter((x) => x.def !== undefined && x.count > 0)
@@ -592,7 +607,9 @@ const quickPills = computed(() =>
           ? buffOverflowOf(cultivation.buffs, x.def!.buffId, now.value)
           : "none",
     }))
-    .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank)
-    .slice(0, 4),
+    .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank),
 );
+
+const quickPills = computed(() => quickPillRows.value.slice(0, QUICK_PILL_LIMIT));
+const quickPillsHidden = computed(() => quickPillRows.value.length - quickPills.value.length);
 </script>

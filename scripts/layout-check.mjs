@@ -142,6 +142,9 @@
  *      且指向当前路由」量一遍:换手写 <a>、或哪个页签的 to 写歪,当场就红。
  *      判据逐页点一次 aria-current=page —— 恰有一枚、且指向当前路由;不在五个页签上时
  *      (market / settings 等)一枚都不许有。源码级那条在 uiLayering.spec 里先拦一道。
+ *   五十 修行页的丹药速服只铺前四味。第五味起必须报「另有 N 味」,并能一键落到背包的
+ *      丹药页签 —— 只截断不交代,玩家会以为丹匣里只剩四味;直达链接若落回装备页,
+ *      这条入口也只是换了个地方继续藏。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -153,7 +156,7 @@
  */
 import { chromium } from "playwright";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
-import { decryptSlice, encryptSlice } from "./lib/saveFixture.mjs";
+import { decryptSlice, encryptSlice, seedSave, showcaseSlices } from "./lib/saveFixture.mjs";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -6983,6 +6986,129 @@ const JOBS = (() => {
 })();
 
 /**
+ * 修行页只铺四味速服丹;余量要报数,并提供能真正落到丹匣的直达入口。
+ *
+ * 展品档恰好有五味可速服丹药:前四味进快捷栏,第五味只该在「另有 1 味」里出现。
+ * 判据走玩家真实路径:320 窄屏看余量 → 195(200% 档的有效宽度)看入口不挤 →
+ * 点进背包后「丹药」页签必须已选中且丹匣内容在场。
+ */
+async function taskQuickPillOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__quickPillFixture");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    await page.goto(INDEX + "#/cultivation", { waitUntil: "load" });
+    const cards = page.locator("[data-quick-pill]");
+    await cards.first().waitFor({ state: "visible", timeout: 10000 });
+    const instanceCount = await cards.count();
+    const hidden = page.locator("[data-quick-pills-hidden]").first();
+    const hiddenCount = await hidden.count();
+    const hiddenText = hiddenCount
+      ? ((await hidden.textContent()) || "").replace(/\s+/g, " ").trim()
+      : "";
+    const hiddenLabel = hiddenCount ? ((await hidden.getAttribute("aria-label")) || "").trim() : "";
+    checked += 1;
+    if (instanceCount !== 4) {
+      failures.push(`[320] 修行速服应只铺前四味,实见 ${instanceCount} 味`);
+    }
+    if (hiddenCount === 0) {
+      failures.push("[320] 第五味丹药被静默截掉了 —— 没有「另有 N 味」入口");
+    } else {
+      if (!/另有\s*1\s*味/.test(hiddenText) || !/去丹匣/.test(hiddenText)) {
+        failures.push(`[320] 余量入口没把数与去处说全:«${hiddenText}»`);
+      }
+      if (!/另有\s*1\s*味可服丹药.*前往丹匣查看/.test(hiddenLabel)) {
+        failures.push(`[320] 余量入口的可访问名说不清:«${hiddenLabel}»`);
+      }
+    }
+
+    if (hiddenCount > 0) {
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      const fit = await hidden.evaluate((el) => {
+        const row = el.getBoundingClientRect();
+        const kids = [...el.querySelectorAll("span")].map((span) => {
+          const r = span.getBoundingClientRect();
+          return { left: r.left, right: r.right, width: r.width };
+        });
+        return {
+          left: row.left,
+          right: row.right,
+          width: row.width,
+          height: row.height,
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+          viewport: window.innerWidth,
+          kids,
+        };
+      });
+      checked += 1;
+      const outside =
+        fit.left < -1 ||
+        fit.right > fit.viewport + 1 ||
+        fit.kids.some((r) => r.right > fit.right + 1);
+      const clipped = fit.scrollWidth > fit.clientWidth + 1;
+      if (outside || clipped) {
+        failures.push(
+          `[195] 余量入口被挤坏:盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+            `内容 ${fit.scrollWidth}>${fit.clientWidth} / 视口 ${fit.viewport}`,
+        );
+      }
+      if (fit.height < 27.5) {
+        failures.push(
+          `[195] 余量入口只有 ${Math.round(fit.height * 10) / 10}px 高,低于 28px 触达下限`,
+        );
+      }
+
+      await page.setViewportSize({ width: 320, height: 568 });
+      await settleVisuals(page);
+      await hidden.click({ timeout: 5000 });
+      const arrived = await page
+        .waitForFunction(
+          () =>
+            location.hash === "#/inventory?tab=pill" &&
+            document.body.innerText.includes("开炉炼丹"),
+          { timeout: 10000 },
+        )
+        .then(() => true)
+        .catch(() => false);
+      checked += 1;
+      if (!arrived) {
+        failures.push("[320] 点「去丹匣」没有落到背包丹药页 —— 余量入口仍是断头路");
+      } else {
+        const selected = await page
+          .getByRole("tab", { name: /丹药/ })
+          .first()
+          .getAttribute("aria-selected");
+        checked += 1;
+        if (selected !== "true") {
+          failures.push("[320] 已到 /inventory?tab=pill,但「丹药」页签没有选中");
+        }
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[320] 速服余量场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -7143,6 +7269,7 @@ const TASKS = [
   ["导出失败也说话", taskExportFailure],
   ["坏档也能进游戏", taskBadSave],
   ["iOS 存档风险提示", taskIosNotice],
+  ["修行速服丹药的余量入口", taskQuickPillOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],

@@ -1719,6 +1719,27 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(char?.src, "兵解置灰要列门槛境名,不许只有定性").toContain("境方可自行兵解");
   });
 
+  it("修行快捷丹药超过四味要报余量并直达丹匣,不许静默截断", () => {
+    // 修行页按品阶取前四味做速服入口；玩家收着更多可服丹药时，旧实现直接 slice，
+    // 既不说还有几味，也没有去丹匣的入口 —— 最该服的那几味反而可能永远看不见。
+    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    expect(cult?.src, "快捷栏要先保留完整候选再切前四味").toMatch(
+      /const quickPills = computed\(\(\) => quickPillRows\.value\.slice\(0, QUICK_PILL_LIMIT\)\)/,
+    );
+    expect(cult?.src, "隐藏数必须由全量候选与现列条目同源相减").toMatch(
+      /const quickPillsHidden = computed\([\s\S]{0,120}quickPillRows\.value\.length - quickPills\.value\.length/,
+    );
+    expect(cult?.src, "余量不能只活在 computed 里").toContain("data-quick-pills-hidden");
+    expect(cult?.src, "余量入口要直达丹匣页签").toMatch(
+      /<RouterLink[\s\S]{0,300}path:\s*['"]\/inventory['"][\s\S]{0,120}tab:\s*['"]pill['"]/,
+    );
+
+    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    expect(inv?.src, "背包要认 ?tab=pill，否则直达入口仍落在装备页").toMatch(
+      /route\.query\.tab[\s\S]{0,240}tab\.value\s*=\s*route\.query\.tab/,
+    );
+  });
+
   it("悬赏贡器不许显占位 0 灵石 · 辅修席满要置灰", () => {
     // ① 贡器单的 reward 是占位 gnZero,逐单真价在交货时按所交品质现算(equipBountyReward)。
     //    价签若一视同仁 formatGN(o.reward) 就亮「0 灵石」——对不上任何结算的假数。

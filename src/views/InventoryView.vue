@@ -410,7 +410,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref } from "vue";
+import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
@@ -483,7 +484,20 @@ const marketOpen = ref(false);
 const lore = useLoreStore();
 
 type Tab = "equip" | "pill" | "material" | "artifact";
-const tab = ref<Tab>("equip");
+const route = useRoute();
+
+function isInventoryTab(value: unknown): value is Tab {
+  return value === "equip" || value === "pill" || value === "material" || value === "artifact";
+}
+
+// 修行页的「另有 N 味」直达丹匣;浏览器前进/后退落到不同 query 时也跟同一处意图。
+const tab = ref<Tab>(isInventoryTab(route.query.tab) ? route.query.tab : "equip");
+watch(
+  () => route.query.tab,
+  () => {
+    if (isInventoryTab(route.query.tab)) tab.value = route.query.tab;
+  },
+);
 
 /**
  * 丹药签的「现在能开炉」圆点:有一味方子门槛(blockers 空)且料钱两道账都付得起
