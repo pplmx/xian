@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { ENEMIES, enemyDef } from "@/data/enemies";
+import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
 import { MATERIALS, LORE_MAX } from "@/data/materials";
 import { PILLS } from "@/data/pills";
 import { REALMS } from "@/data/realms";
@@ -23,6 +24,7 @@ import {
 } from "@/data/lifeThemes";
 import {
   INSIGHT_PER_ENEMY,
+  INSIGHT_PER_BLUEPRINT,
   INSIGHT_PER_MATERIAL,
   INSIGHT_PER_MATERIAL_MASTERED,
   INSIGHT_PER_RECIPE,
@@ -54,7 +56,7 @@ const RECIPE_COUNT = PILLS.filter((p) => p.recipe).length;
 const MAX_MAJOR = REALMS.length - 1;
 
 function emptySnap(): LoreSnapshot {
-  return { materialLore: {}, recipeLore: {}, skillExp: {}, enemyLore: {} };
+  return { materialLore: {}, recipeLore: {}, blueprintLore: {}, skillExp: {}, enemyLore: {} };
 }
 
 describe("宿慧折算(loreInsight)", () => {
@@ -72,6 +74,11 @@ describe("宿慧折算(loreInsight)", () => {
   it("丹方只在通晓(掌握度满)时计,半懂不懂不算", () => {
     expect(loreInsight({ ...emptySnap(), recipeLore: { p_a: 0.9 } })).toBe(0);
     expect(loreInsight({ ...emptySnap(), recipeLore: { p_a: 1 } })).toBe(INSIGHT_PER_RECIPE);
+  });
+
+  it("器谱只在读通(掌握度满)时计,研读到一半不算", () => {
+    expect(loreInsight({ ...emptySnap(), blueprintLore: { w_a: 0.9 } })).toBe(0);
+    expect(loreInsight({ ...emptySnap(), blueprintLore: { w_a: 1 } })).toBe(INSIGHT_PER_BLUEPRINT);
   });
 
   it("敌人只在洞悉(认知层满)时计", () => {
@@ -131,6 +138,7 @@ describe("轮回阶段(SAMSARA_STAGES)", () => {
     const maxLore =
       MATERIALS.length * (INSIGHT_PER_MATERIAL + INSIGHT_PER_MATERIAL_MASTERED) +
       RECIPE_COUNT * INSIGHT_PER_RECIPE +
+      EQUIPMENT_TEMPLATES.length * INSIGHT_PER_BLUEPRINT +
       (SKILL_IDS.length * 100) / INSIGHT_SKILL_DIV +
       ENEMIES.length * INSIGHT_PER_ENEMY;
     expect(maxLore).toBeGreaterThanOrEqual(SAMSARA_STAGES[2]!.insight);
@@ -298,6 +306,19 @@ describe("轮回带走的那一份", () => {
     expect(totalInsight()).toBe(30);
     lore.advanceLore(MATERIALS[0]!.id, 1);
     expect(totalInsight()).toBe(30 + INSIGHT_PER_MATERIAL);
+  });
+
+  it("读通器谱当场计入宿慧与轮回录,不必等下一次重铸或转世", () => {
+    const lore = useLoreStore();
+    const templateId = EQUIPMENT_TEMPLATES[0]!.id;
+
+    lore.addBlueprintMastery(templateId, 0.98);
+    expect(totalInsight()).toBe(0);
+    expect(lore.masteredBlueprintCount).toBe(0);
+
+    lore.addBlueprintMastery(templateId, 0.02);
+    expect(totalInsight()).toBe(INSIGHT_PER_BLUEPRINT);
+    expect(lore.masteredBlueprintCount).toBe(1);
   });
 
   it("睁眼即识只补足、不清零:已通晓的灵材不会被降回「已辨识」", () => {

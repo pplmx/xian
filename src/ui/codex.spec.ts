@@ -229,6 +229,14 @@ describe("图鉴 · 用具三类的收录深度", () => {
     }
   });
 
+  it("装备:器谱读到几分写进图鉴 —— 读过就是读过,不必留着那一件", () => {
+    const t = equipmentTemplate("w_zhuqing")!;
+    const seen = { q: qualityDef("mortal").rank, t: 3, u: 1 };
+    expect(describeEquipment(t, seen, true, 0).desc).not.toContain("器谱:");
+    expect(describeEquipment(t, seen, true, 0.42).desc).toContain("器谱:研读 42%");
+    expect(describeEquipment(t, seen, true, 1).desc).toContain("器谱:已读通");
+  });
+
   it("法宝:祭炼重数决定深度,到九重封顶;功用行给的是本人那一份", () => {
     const fuchen = artifactDef("af_xuanxu")!;
     expect(artifactStage(0, false)).toBe(0);

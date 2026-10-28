@@ -36,6 +36,7 @@ import { useQuestsStore } from "@/stores/quests";
 import { usePlayerStore } from "@/stores/player";
 import { PETS } from "@/data/pets";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
+import { formatPercent } from "@/utils/format";
 import { modsText } from "../data/statNames";
 import {
   artifactFuncText,
@@ -270,8 +271,8 @@ export function branchCodex(): CodexCat {
 // 与灵材谱同一套做法:**不回写一份新状态去记「第几层」**,而是按已有的状态分层揭示,
 // 并各附一句「还差什么」。这样旧存档立刻就有得看,也不会出现两处记录互相分叉。
 //
-// 三处深度取自:装备见闻(lore.equipLore)、法宝祭炼重数(inventory.artifacts)、
-// 丹方掌握度(lore.recipeLore)。
+// 深度取自:装备见闻(lore.equipLore)与逐模板器谱(lore.blueprintLore)、
+// 法宝祭炼重数(inventory.artifacts)、丹方掌握度(lore.recipeLore)。
 
 /**
  * 装备收录深度:0 未录 / 1 已入目 / 2 曾上手 / 3 见过天品
@@ -321,12 +322,16 @@ export function describeEquipment(
   def: EquipmentTemplate,
   seen: EquipSeen | undefined,
   collected: boolean,
+  blueprintMastery = 0,
 ): CodexEntry {
   const stage = equipStage(seen, collected);
   const lines = [def.desc, equipFuncText(def)].filter(Boolean);
   if (stage >= 1 && seen) {
     lines.push(`见过最好的:${qualityOfRank(seen.q).name} · ${seen.t} 阶`);
   }
+  const mastery = Math.max(0, Math.min(1, blueprintMastery || 0));
+  if (mastery >= 1) lines.push("器谱:已读通");
+  else if (mastery > 0) lines.push(`器谱:研读 ${formatPercent(mastery)}`);
   return {
     id: def.id,
     name: def.name,
@@ -438,7 +443,12 @@ export function equipCodex(): CodexCat {
   const quests = useQuestsStore();
   const owned = new Set(quests.collections.equip);
   const entries = EQUIPMENT_TEMPLATES.map((def) => ({
-    ...describeEquipment(def, lore.equipSeen(def.id), owned.has(def.id)),
+    ...describeEquipment(
+      def,
+      lore.equipSeen(def.id),
+      owned.has(def.id),
+      lore.blueprintMastery(def.id),
+    ),
     foot: { label: "收录时间", value: collectedTimeText(quests.collectedAt[`equip:${def.id}`]) },
   })).sort((a, b) => b.stage - a.stage);
   const seen = entries.filter((e) => e.stage >= 1).length;

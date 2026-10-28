@@ -40,7 +40,7 @@ describe("浅轮回收益 · 金丹一世能推进什么", () => {
     expect(names).toContain("先天之姿");
     expect(names).toContain("灵脉");
     expect(names).toContain("灵兽");
-    expect(names).toContain("认知(材料/丹方/敌手/技艺)");
+    expect(names).toContain("认知(材料/丹方/器谱/敌手/技艺)");
     expect(names).toContain("成就与图鉴");
     console.log(`\n有上限但浅轮回可刷满:${names.join("、")}`);
   });

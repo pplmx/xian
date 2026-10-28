@@ -96,6 +96,10 @@
             <span class="tabular text-ink-soft">{{ lore.masteredRecipeCount }} 张</span>
           </p>
           <p class="flex justify-between">
+            <span class="text-ink-faint">读通器谱</span>
+            <span class="tabular text-ink-soft">{{ lore.masteredBlueprintCount }} 张</span>
+          </p>
+          <p class="flex justify-between">
             <span class="text-ink-faint">洞悉敌手</span>
             <span class="tabular text-ink-soft">{{ lore.masteredEnemyCount }} 种</span>
           </p>

@@ -105,7 +105,7 @@ export const SHALLOW_GAINS: ShallowGainRow[] = [
   },
   {
     id: "lore",
-    name: "认知(材料/丹方/敌手/技艺)",
+    name: "认知(材料/丹方/器谱/敌手/技艺)",
     kind: "capped",
     perLife: "日常行为持续推进",
     cap: null,

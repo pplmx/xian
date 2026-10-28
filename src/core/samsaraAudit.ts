@@ -218,9 +218,9 @@ export const HERITAGE: HeritageRow[] = [
   },
   {
     id: "lore",
-    name: "认知(丹方/药性/器纹/敌手)",
+    name: "认知(丹方/药性/器谱/敌手)",
     mode: "full",
-    detail: "lore store 整体不清,另按宿慧阶位 carryLore 补齐",
+    detail: "lore store 整体不清:丹方、药性、铭纹、器谱、敌手路数全留;另按宿慧阶位 carryLore 补齐",
     kind: "legacy",
     power: "none",
     compressesGrowth: false,

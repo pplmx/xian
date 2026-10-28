@@ -176,6 +176,13 @@ export const INSIGHT_PER_MATERIAL = 3;
 export const INSIGHT_PER_MATERIAL_MASTERED = 5;
 /** 通晓一张丹方(掌握度 = 1) */
 export const INSIGHT_PER_RECIPE = 4;
+/**
+ * 读通一张器谱(掌握度 = 1)。
+ *
+ * 器谱按装备模板分开记,总数远多于丹方,且每张都要长期重铸才读得通;
+ * 单张只计 1 点,既承认这份所知,又不会让单世刷满器谱就顶到「百世老修」。
+ */
+export const INSIGHT_PER_BLUEPRINT = 1;
 /** 九项技艺熟练度之和(0~900)除以此数计入 */
 export const INSIGHT_SKILL_DIV = 20;
 /** 洞悉一种敌人(敌人认知层 = 3) */

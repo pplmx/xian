@@ -72,6 +72,10 @@ export const useLoreStore = defineStore(
     const masteredRecipeCount = computed(
       () => Object.values(recipeLore.value).filter((v) => v >= 1).length,
     );
+    /** 已读通(掌握度满)的器谱数 */
+    const masteredBlueprintCount = computed(
+      () => Object.values(blueprintLore.value).filter((v) => v >= 1).length,
+    );
     /** 已洞悉(认知层 = 上限)的敌人种数 */
     const masteredEnemyCount = computed(
       () => Object.values(enemyLore.value).filter((v) => v >= ENEMY_LORE_MAX).length,
@@ -272,6 +276,7 @@ export const useLoreStore = defineStore(
       masteredMaterialCount,
       knownRecipeCount,
       masteredRecipeCount,
+      masteredBlueprintCount,
       masteredEnemyCount,
       loreOf,
       seenOf,

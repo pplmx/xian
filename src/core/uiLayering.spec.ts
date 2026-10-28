@@ -1431,6 +1431,18 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(dlg?.src, "技艺要有进度条可读").toContain("<ProgressBar");
   });
 
+  it("读通的器谱也是轮回遗产 —— 宿慧里计一份,轮回录里看得见", () => {
+    const legacy = FILES.find((f) => f.path === "views/LegacyView.vue");
+    expect(legacy?.src, "轮回录要列读通的器谱数").toContain("masteredBlueprintCount");
+    expect(legacy?.src, "器谱要与灵材、丹方、敌手同处「随神魂不灭」一栏").toContain("读通器谱");
+
+    const rebirth = FILES.find((f) => f.path === "components/character/ReincarnationDialog.vue");
+    expect(rebirth?.src, "转世说明要把器谱列进随神魂带走的认知").toContain("器谱");
+
+    const codex = readFileSync(resolve(__dirname, "../ui/codex.ts"), "utf8");
+    expect(codex, "装备图鉴也要读同一份逐模板器谱").toContain("blueprintMastery(def.id)");
+  });
+
   it("铭纹的用处露在重铸决策点 —— 不只长一条进度", () => {
     const panel = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
     expect(panel?.src, "重铸面板要读取铭纹保底(与核心同一函数)").toContain("inscribeRollFloor");

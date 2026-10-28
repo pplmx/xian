@@ -12,7 +12,7 @@
  *   不再承担任何成长职责。
  * - **轮回阶段**(data/samsara.ts)由宿慧决定,开的全是信息与知识:转世睁眼即认得
  *   哪些药、战前看不看得见敌人机制、命题能不能自选。一分属性也不给。
- * - **轮回遗产**是认知本身(stores/lore.ts):灵材、丹方、图纸、技艺、敌人路数
+ * - **轮回遗产**是认知本身(stores/lore.ts):灵材、丹方、器谱、技艺、敌人路数
  *   —— 这些跨世**完全不清零、不折减**。第一世不认得玄铁,第七世一眼认出,
  *   靠的就是这条。
  *
@@ -30,6 +30,7 @@ import { SKILL_IDS, skillLevelFromExp } from "@/data/crafting";
 import { REINCARNATE_APTITUDE_FLOOR } from "@/data/constants";
 import {
   INSIGHT_PER_APTITUDE,
+  INSIGHT_PER_BLUEPRINT,
   INSIGHT_PER_ENEMY,
   INSIGHT_PER_LIFE_REALM,
   INSIGHT_PER_MATERIAL,
@@ -63,6 +64,8 @@ export interface LoreSnapshot {
   materialLore: Record<string, number>;
   /** 丹方 id → 掌握度 0~1 */
   recipeLore: Record<string, number>;
+  /** 装备模板 id → 器谱掌握度 0~1 */
+  blueprintLore: Record<string, number>;
   /** 技艺 id → 累积经验 */
   skillExp: Record<string, number>;
   /** 敌人 id → 认知层 0~3 */
@@ -72,7 +75,8 @@ export interface LoreSnapshot {
 /**
  * 由认知折算的宿慧(现量)。
  *
- * 四项各计各的:认得多少药、通几张方、九项技艺练到什么份上、洞悉几种敌手。
+ * 五项各计各的:认得多少药、通几张方、读通几张器谱、九项技艺练到什么份上、
+ * 洞悉几种敌手。
  * 通晓用法的药在"认得"之上再计一份 —— 认得它叫什么和会用它,是两回事。
  */
 export function loreInsight(snap: LoreSnapshot): number {
@@ -83,6 +87,9 @@ export function loreInsight(snap: LoreSnapshot): number {
   }
   for (const v of Object.values(snap.recipeLore)) {
     if (v >= 1) sum += INSIGHT_PER_RECIPE;
+  }
+  for (const v of Object.values(snap.blueprintLore)) {
+    if (v >= 1) sum += INSIGHT_PER_BLUEPRINT;
   }
   let skillSum = 0;
   for (const id of SKILL_IDS) {
@@ -107,6 +114,7 @@ function snapshotLore(): LoreSnapshot {
   return {
     materialLore: lore.materialLore,
     recipeLore: lore.recipeLore,
+    blueprintLore: lore.blueprintLore,
     skillExp: lore.skillExp,
     enemyLore: lore.enemyLore,
   };
