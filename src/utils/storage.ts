@@ -18,6 +18,14 @@ export const LEGACY_SAVE_PREFIX = "yunyin.";
 /** 更名前导出文件里写的游戏标识 */
 export const LEGACY_GAME_ID = "yunyin-xiuxian";
 export const SAVE_VERSION = 2;
+/**
+ * Android 首启迁移写完旧档后、原生 reload 前的免刷盘标记。
+ *
+ * 新页面先启动时，引擎会把默认 `xuanshu.game` 排进节流队列；迁移注入旧档后
+ * 若直接 reload，`beforeunload` / `pagehide` 的 flush 会把默认档盖到旧档上。
+ * 标记必须在读回确认成功之后才设置，重载后的新文档会自然丢失它。
+ */
+export const SAVE_MIGRATION_RELOAD_FLAG = "__xuanshuSaveMigrationReload";
 
 /** 参与持久化的 store id 列表(导出/导入/重置的键清单) */
 export const PERSISTED_STORES = [
@@ -322,7 +330,7 @@ export function flushSaveWrites(): void {
     clearTimeout(flushTimer);
     flushTimer = undefined;
   }
-  if (writesBlocked || pending.size === 0) return;
+  if (writesBlocked || migrationReloadInProgress() || pending.size === 0) return;
   const failed: string[] = [];
   for (const [key, plain] of pending) {
     try {
@@ -350,6 +358,15 @@ export function flushSaveWrites(): void {
     writeFailure = null;
     emitWriteFailure(null);
   }
+}
+
+type SaveMigrationWindow = Window & { __xuanshuSaveMigrationReload?: boolean };
+
+function migrationReloadInProgress(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    (window as SaveMigrationWindow)[SAVE_MIGRATION_RELOAD_FLAG] === true
+  );
 }
 
 /** 丢弃待落盘内容 —— 清档/导入前必须调用,否则排队的旧数据会把新状态覆盖回去 */

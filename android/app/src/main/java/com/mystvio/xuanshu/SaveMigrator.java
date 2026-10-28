@@ -26,6 +26,42 @@ public class SaveMigrator {
     private static final String PREFS_NAME = "save_migration";
     private static final String KEY_DONE = "migration_done_v2";
     private static final int OLD_PORT = 8080;
+    /**
+     * 旧 WebView 的 localStorage 键域。
+     *
+     * 这不是当前游戏读的键。迁移时必须把 `yunyinxiang_save_player` 改写成
+     * `xuanshu.player`；原名搬过去只会得到一组主程序永远不看的死键。
+     */
+    private static final String LEGACY_ANDROID_SAVE_PREFIX = "yunyinxiang_save_";
+    /** 与 src/utils/storage.ts 的 SAVE_PREFIX 同一份账（跨语言判据见 saveMigratorContract.spec）。 */
+    private static final String CURRENT_SAVE_PREFIX = "xuanshu.";
+    /** 更名前那一代前缀；当前 WebView 里若已有它，也不能被旧 Android 档覆盖。 */
+    private static final String REBRAND_SAVE_PREFIX = "yunyin.";
+    /**
+     * 当前真正参与持久化的 store id。
+     *
+     * 不能拿 `xuanshu.` 前缀一刀切：主题首帧键也叫这个前缀，却会在正常启动时写入；
+     * 若把它当已有档，玩家设过主题后旧档就永远迁不进来。
+     */
+    private static final String[] CURRENT_SAVE_STORE_IDS = {
+        "game",
+        "player",
+        "resources",
+        "inventory",
+        "cultivation",
+        "dongfu",
+        "adventure",
+        "quests",
+        "settings",
+        "loadouts",
+        "endgame",
+        "lore",
+        "pacing",
+        "diag",
+        "market",
+        "bounty",
+        "apprentice"
+    };
 
     private final Context context;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -171,7 +207,7 @@ public class SaveMigrator {
                 + "  var saves = {};"
                 + "  for (var i = 0; i < localStorage.length; i++) {"
                 + "    var key = localStorage.key(i);"
-                + "    if (key.indexOf('yunyinxiang_save_') === 0) {"
+                + "    if (key.indexOf('" + LEGACY_ANDROID_SAVE_PREFIX + "') === 0) {"
                 + "      saves[key] = localStorage.getItem(key);"
                 + "    }"
                 + "  }"
@@ -197,8 +233,14 @@ public class SaveMigrator {
     private class MigrationBridge {
         @JavascriptInterface
         public void onSaveData(String key, String value) {
+            if (key == null || value == null) return;
             Log.d(TAG, "收到存档: " + key + " (" + value.length() + " 字符)");
-            collectedSaves.put(key, value);
+            String currentKey = currentSaveKey(key);
+            if (currentKey == null) {
+                Log.w(TAG, "忽略无法映射到当前存档域的旧键: " + key);
+                return;
+            }
+            collectedSaves.put(currentKey, value);
         }
 
         @JavascriptInterface
@@ -226,48 +268,124 @@ public class SaveMigrator {
     public static void injectSaves(WebView webView, Map<String, String> saves, Context context) {
         if (saves == null || saves.isEmpty()) return;
 
-        // 先检查新版 localStorage 是否已有存档
-        webView.evaluateJavascript(
-            "(function(){" +
-            "  for(var i=0;i<localStorage.length;i++){" +
-            "    if(localStorage.key(i).indexOf('yunyinxiang_save_')===0) return 'has_data';" +
-            "  }" +
-            "  return 'empty';" +
-            "})();",
-            result -> {
-                // evaluateJavascript 返回值带引号，如 "\"has_data\""
-                if (result != null && result.contains("has_data")) {
-                    Log.d(TAG, "新版已有存档，跳过迁移注入，避免覆盖");
-                    new Handler(Looper.getMainLooper()).post(() ->
-                        Toast.makeText(context, "新版已有存档，跳过旧版迁移", Toast.LENGTH_LONG).show()
-                    );
-                    return;
-                }
-
-                // 新版无存档，安全注入
-                StringBuilder js = new StringBuilder("(function(){");
-                for (Map.Entry<String, String> entry : saves.entrySet()) {
-                    String key = escapeJs(entry.getKey());
-                    String value = escapeJs(entry.getValue());
-                    js.append("localStorage.setItem('").append(key).append("','").append(value).append("');");
-                }
-                js.append("location.reload();");
-                js.append("})();");
-
-                webView.evaluateJavascript(js.toString(), r -> {
-                    Log.d(TAG, "存档注入完成，共 " + saves.size() + " 条，页面已刷新");
-                    // 注入成功才标记完成，下次不再迁移
-                    markDone(context);
-                });
+        webView.evaluateJavascript(injectionScript(saves), result -> {
+            // evaluateJavascript 的字符串返回值带引号，如 "\"has_data\""
+            if ("\"has_data\"".equals(result)) {
+                Log.d(TAG, "新版已有存档，跳过迁移注入，避免覆盖");
+                showToast(context, "新版已有存档，跳过旧版迁移");
+                return;
             }
+            if ("\"ok\"".equals(result)) {
+                markDone(context);
+                Log.d(TAG, "存档注入并逐键读回成功，共 " + saves.size() + " 条，准备重新加载");
+                showToast(context, "旧版存档已迁移，正在重新载入");
+                webView.reload();
+                return;
+            }
+            Log.e(TAG, "存档注入失败，未标记完成: " + result);
+            showToast(context, "旧版存档写入失败，已清理半成品，下次启动会重试");
+        });
+    }
+
+    /**
+     * 旧 key 只能映射到当前键域；映射后主程序才认识。
+     * 后缀限制在 store id 的字符集，避免把旧 origin 里任意键带进当前存档域。
+     */
+    static String currentSaveKey(String legacyKey) {
+        if (legacyKey == null || !legacyKey.startsWith(LEGACY_ANDROID_SAVE_PREFIX)) return null;
+        String storeId = legacyKey.substring(LEGACY_ANDROID_SAVE_PREFIX.length());
+        if (storeId.isEmpty()) return null;
+        for (int i = 0; i < storeId.length(); i++) {
+            char c = storeId.charAt(i);
+            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                || (c >= '0' && c <= '9') || c == '_' || c == '-')) {
+                return null;
+            }
+        }
+        return CURRENT_SAVE_PREFIX + legacyKey.substring(LEGACY_ANDROID_SAVE_PREFIX.length());
+    }
+
+    private static String injectionScript(Map<String, String> saves) {
+        StringBuilder js = new StringBuilder("(function(){");
+        js.append("var currentKeys=[");
+        for (int i = 0; i < CURRENT_SAVE_STORE_IDS.length; i++) {
+            if (i > 0) js.append(',');
+            js.append(jsString(CURRENT_SAVE_PREFIX + CURRENT_SAVE_STORE_IDS[i]));
+        }
+        js.append("];");
+        js.append("for(var i=0;i<localStorage.length;i++){");
+        js.append("var key=localStorage.key(i);");
+        js.append("if(!key) continue;");
+        js.append("if(key.indexOf(").append(jsString(REBRAND_SAVE_PREFIX))
+            .append(")===0) return 'has_data';");
+        js.append("for(var j=0;j<currentKeys.length;j++){");
+        js.append("if(key===currentKeys[j]) return 'has_data';");
+        js.append("}}");
+        js.append("var entries=[");
+        boolean first = true;
+        for (Map.Entry<String, String> entry : saves.entrySet()) {
+            if (!first) js.append(',');
+            first = false;
+            js.append('[').append(jsString(entry.getKey())).append(',')
+                .append(jsString(entry.getValue())).append(']');
+        }
+        js.append("];var written=[];var ok=true;");
+        js.append("try{");
+        js.append("for(var i=0;i<entries.length;i++){");
+        js.append("localStorage.setItem(entries[i][0],entries[i][1]);");
+        js.append("written.push(entries[i][0]);");
+        js.append("}");
+        js.append("for(var j=0;j<entries.length;j++){");
+        js.append("var key=entries[j][0];var value=entries[j][1];");
+        js.append("if(localStorage.getItem(key) !== value){ok=false;break;}");
+        js.append("}");
+        js.append("}catch(e){ok=false;}");
+        js.append("if(!ok){");
+        js.append("for(var k=0;k<written.length;k++){");
+        js.append("try{localStorage.removeItem(written[k]);}catch(ignore){}");
+        js.append("}");
+        js.append("return 'failed';");
+        js.append("}");
+        // 读回确认成功后才放行 reload；新文档会丢掉这个窗口级标记。
+        js.append("window.__xuanshuSaveMigrationReload=true;");
+        js.append("return 'ok';");
+        js.append("})();");
+        return js.toString();
+    }
+
+    private static void showToast(Context context, String message) {
+        new Handler(Looper.getMainLooper()).post(() ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         );
+    }
+
+    private static String jsString(String s) {
+        return "'" + escapeJs(s) + "'";
     }
 
     /** 转义 JS 单引号字符串中的特殊字符 */
     private static String escapeJs(String s) {
-        return s.replace("\\", "\\\\")
-                .replace("'", "\\'")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r");
+        StringBuilder escaped = new StringBuilder(s.length() + 16);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '\\': escaped.append("\\\\"); break;
+                case '\'': escaped.append("\\'"); break;
+                case '\n': escaped.append("\\n"); break;
+                case '\r': escaped.append("\\r"); break;
+                case '\t': escaped.append("\\t"); break;
+                case '\b': escaped.append("\\b"); break;
+                case '\f': escaped.append("\\f"); break;
+                case '\u2028': escaped.append("\\u2028"); break;
+                case '\u2029': escaped.append("\\u2029"); break;
+                default:
+                    if (c < 0x20) {
+                        escaped.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        escaped.append(c);
+                    }
+            }
+        }
+        return escaped.toString();
     }
 }

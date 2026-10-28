@@ -233,6 +233,7 @@ const CATEGORIES = [
       "saveBackup",
       "importCorruption",
       "saveMigration",
+      "saveMigratorContract",
       "clearSave",
       "storage.spec",
       "codexSource",

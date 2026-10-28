@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.widget.Toast;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -144,8 +143,6 @@ public class MainActivity extends BridgeActivity {
                         WebView wv = getBridge().getWebView();
                         if (wv != null) {
                             SaveMigrator.injectSaves(wv, saves, MainActivity.this);
-                            Toast.makeText(MainActivity.this,
-                                "存档迁移完成！重新加载中...", Toast.LENGTH_LONG).show();
                         }
                     }, 2000);
                 }

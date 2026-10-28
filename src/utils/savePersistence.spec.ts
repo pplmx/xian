@@ -20,6 +20,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import {
   SAVE_FLUSH_MS,
+  SAVE_MIGRATION_RELOAD_FLAG,
   buildExportSnapshot,
   clearAllSave,
   dropPendingWrites,
@@ -112,6 +113,27 @@ describe("存档写盘 · 频次有上界", () => {
 });
 
 describe("存档写盘 · 省下的电不能拿存档换", () => {
+  it("旧档注入成功后的重载不刷默认档 —— 否则 beforeunload 会把它盖回去", () => {
+    const { storage, serializer, key } = persistConfig("game");
+    probe.disk.set(key, "injected-old-save");
+    storage.setItem(key, serializer.serialize({ started: false, lastActiveAt: 1 }));
+    vi.stubGlobal("window", { [SAVE_MIGRATION_RELOAD_FLAG]: true });
+
+    flushSaveWrites();
+
+    expect(probe.writes, "迁移重载前仍然刷了默认档").toBe(0);
+    expect(probe.disk.get(key), "刚注入的旧档被默认档覆盖了").toBe("injected-old-save");
+
+    // 标记只挡这一次卸载；普通刷盘仍要证明队列没被偷偷丢掉。
+    vi.stubGlobal("window", { [SAVE_MIGRATION_RELOAD_FLAG]: false });
+    flushSaveWrites();
+    expect(probe.writes).toBe(1);
+    expect(serializer.deserialize(probe.disk.get(key)!)).toEqual({
+      started: false,
+      lastActiveAt: 1,
+    });
+  });
+
   it("落盘内容是最后一次变更,且能被反序列化读回", () => {
     const { storage, serializer, key } = persistConfig("player");
     for (let i = 0; i < 10; i += 1)
