@@ -151,6 +151,8 @@
  *   五十二 修仙录的历世履历与行迹录都要能回头。履历再长也只铺当前窗,续开与回翻都要
  *      把焦点送到新页首则;行迹录不再用「仅列最近八则」封死旧回响。两处都在 195 宽
  *      下量续开入口与整页排版。
+ *   五十三 道侣弹窗的「历世同行」按最近一世在前分批铺开。履历没有上限,不能把整部
+ *      旧缘一次塞进固定滚动框;续开、滑窗、回翻与焦点都要真走通,且 195 宽下能读。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -7600,6 +7602,225 @@ async function taskLegacyHistoryOverflow() {
 }
 
 /**
+ * 道侣弹窗的历世同行 —— 每一世追加一笔,没有上限。
+ *
+ * 30 段旧缘验证:最近一段排在最前,首批 12 段;续开至 24 段后焦点落到新页第一段;
+ * 再过一批到 30 段时只保留 24 行 DOM,最早的一批滑出、最旧的一段仍可达;回翻回到
+ * 首批并聚焦最近一段。弹窗在 195 宽下另过 dialogZoomProblems,续开入口守住 28px。
+ */
+async function taskBondHistoryOverflow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    const bonds = Array.from({ length: 30 }, (_, i) => ({
+      daoluId: `history_${i + 1}`,
+      name: `旧缘${String(i + 1).padStart(2, "0")}`,
+      stage: "pledged",
+      ending: i % 2 === 0 ? "accompanied" : "parted",
+      shared: i + 1,
+    }));
+    slices.player = {
+      ...slices.player,
+      reincarnation: {
+        ...slices.player.reincarnation,
+        count: bonds.length,
+        bonds,
+      },
+    };
+    await seedSave(ctx, slices, "__bondHistoryFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX + "#/character", { waitUntil: "load" });
+
+    const bondCard = page
+      .locator("main button")
+      .filter({ hasText: /道\s*侣/ })
+      .first();
+    await bondCard.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+    checked += 1;
+    if ((await bondCard.count()) === 0) {
+      failures.push("[320] 人物页找不到「道侣」入口 —— 历世同行没有量到");
+    } else {
+      await bondCard.click({ timeout: 5000 });
+      await page.getByRole("dialog").waitFor({ state: "visible", timeout: 5000 });
+      await page.locator("[data-bond-history-total]").waitFor({ state: "visible", timeout: 5000 });
+    }
+
+    const initial = await page.evaluate(() => {
+      const holder = document.querySelector("[data-bond-history-total]");
+      const rows = [...document.querySelectorAll("[data-bond-history-row]")];
+      return {
+        total: Number(holder?.getAttribute("data-bond-history-total")),
+        shown: Number(holder?.getAttribute("data-bond-history-shown")),
+        start: Number(holder?.getAttribute("data-bond-history-start")),
+        count: rows.length,
+        first: rows[0]?.getAttribute("data-bond-history-row"),
+        last: rows.at(-1)?.getAttribute("data-bond-history-row"),
+      };
+    });
+    const historyMore = page.locator("[data-bond-history-more]").first();
+    const historyMoreCount = await historyMore.count();
+    const historyMoreText = historyMoreCount
+      ? ((await historyMore.textContent()) || "").replace(/\s+/g, " ").trim()
+      : "";
+    checked += 1;
+    if (
+      initial.total !== 30 ||
+      initial.shown !== 12 ||
+      initial.start !== 0 ||
+      initial.count !== 12 ||
+      initial.first !== "旧缘30" ||
+      initial.last !== "旧缘19" ||
+      historyMoreCount === 0 ||
+      !/再看\s*12\s*段\s*·\s*余\s*18/.test(historyMoreText)
+    ) {
+      failures.push(
+        `[320] 历世同行首批应最近 12/30 段(旧缘30 → 旧缘19)并可再看 12 段,` +
+          `实见 ${initial.first ?? "无"} → ${initial.last ?? "无"} / ${initial.count} 行` +
+          `(shown ${initial.shown} / total ${initial.total}) «${historyMoreText}»`,
+      );
+    }
+
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+    if (historyMoreCount > 0) {
+      await historyMore.scrollIntoViewIfNeeded();
+      const fit = await historyMore.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          left: box.left,
+          right: box.right,
+          height: box.height,
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+          viewport: window.innerWidth,
+        };
+      });
+      checked += 1;
+      if (
+        fit.left < -1 ||
+        fit.right > fit.viewport + 1 ||
+        fit.scrollWidth > fit.clientWidth + 1 ||
+        fit.height < 27.5
+      ) {
+        failures.push(
+          `[195] 历世同行续开入口被挤坏:盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
+            `内容 ${fit.scrollWidth}>${fit.clientWidth} / 高 ${Math.round(fit.height * 10) / 10}px / ` +
+            `视口 ${fit.viewport}`,
+        );
+      }
+    }
+
+    checked += 1;
+    const dialogProblems = dialogZoomProblems(
+      await measureDialogZoom(page, { width: 390, height: 844 }),
+    );
+    if (dialogProblems.length) {
+      failures.push(`[195] 道侣弹窗 · 历世同行 → ${dialogProblems.join(" / ")}`);
+    }
+
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+    if (historyMoreCount > 0) {
+      await page.locator("[data-bond-history-more]").first().click({ timeout: 5000 });
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector("[data-bond-history-shown]")
+            ?.getAttribute("data-bond-history-shown") === "24",
+        { timeout: 5000 },
+      );
+      const second = await page.evaluate(() => ({
+        count: document.querySelectorAll("[data-bond-history-row]").length,
+        focus: document.activeElement?.getAttribute("data-bond-history-row"),
+      }));
+      checked += 1;
+      if (second.count !== 24 || second.focus !== "旧缘18") {
+        failures.push(
+          `[195] 历世同行续开第一批后应铺 24 段、焦点落旧缘18,` +
+            `实见 ${second.count} 段 / 焦点 ${second.focus ?? "无"}`,
+        );
+      }
+
+      await page.locator("[data-bond-history-more]").first().click({ timeout: 5000 });
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector("[data-bond-history-shown]")
+            ?.getAttribute("data-bond-history-shown") === "30",
+        { timeout: 5000 },
+      );
+      const last = await page.evaluate(() => ({
+        count: document.querySelectorAll("[data-bond-history-row]").length,
+        start: Number(
+          document
+            .querySelector("[data-bond-history-total]")
+            ?.getAttribute("data-bond-history-start"),
+        ),
+        focus: document.activeElement?.getAttribute("data-bond-history-row"),
+        hasNewest: !!document.querySelector('[data-bond-history-row="旧缘30"]'),
+        hasOldest: !!document.querySelector('[data-bond-history-row="旧缘01"]'),
+        hasPrev: !!document.querySelector("[data-bond-history-prev]"),
+      }));
+      checked += 1;
+      if (
+        last.count !== 24 ||
+        last.start !== 6 ||
+        last.focus !== "旧缘06" ||
+        last.hasNewest ||
+        !last.hasOldest ||
+        !last.hasPrev
+      ) {
+        failures.push(
+          `[195] 历世同行末批应滑窗为 24/30、从第 7 行起、焦点旧缘06 并可回翻,` +
+            `实见 ${last.count} 行 / start ${last.start} / 焦点 ${last.focus ?? "无"} / ` +
+            `最近段 ${last.hasNewest ? "仍在" : "已滑走"} / ` +
+            `最旧段 ${last.hasOldest ? "在" : "缺失"} / 回翻 ${last.hasPrev ? "在" : "缺失"}`,
+        );
+      }
+
+      await page.locator("[data-bond-history-prev]").first().click({ timeout: 5000 });
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector("[data-bond-history-shown]")
+            ?.getAttribute("data-bond-history-shown") === "24",
+        { timeout: 5000 },
+      );
+      const back = await page.evaluate(() => ({
+        focus: document.activeElement?.getAttribute("data-bond-history-row"),
+        hasNewest: !!document.querySelector('[data-bond-history-row="旧缘30"]'),
+      }));
+      checked += 1;
+      if (back.focus !== "旧缘30" || !back.hasNewest) {
+        failures.push(
+          `[195] 历世同行回翻没有回到首批:焦点 ${back.focus ?? "无"} / ` +
+            `最近段 ${back.hasNewest ? "在" : "缺失"}`,
+        );
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[320] 道侣历世同行场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 只读页(第二个标签页)—— 必须把「为什么不动」常驻说出来。
  *
  * 多标签共用一份存档时,后来的那页由 core/singleWriter 判成只读:不启引擎、存储层合闸。
@@ -7763,6 +7984,7 @@ const TASKS = [
   ["修行速服丹药的余量入口", taskQuickPillOverflow],
   ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
   ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
+  ["道侣的历世同行回看", taskBondHistoryOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],

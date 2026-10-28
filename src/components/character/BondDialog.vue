@@ -130,25 +130,74 @@
     </RouterLink>
 
     <template v-if="pastBonds.length">
-      <p class="mt-4 font-kai text-[14px] tracking-widest text-ink-soft">历世同行</p>
-      <div class="scroll-pane mt-2 max-h-40 space-y-1.5 overflow-y-auto">
-        <p v-for="(r, i) in pastBonds" :key="i" class="flex justify-between text-[11px]">
-          <span class="text-ink-soft">{{ r.name }}</span>
-          <span class="text-ink-faint"
-            >{{ STAGE_NAMES[r.stage] }} · {{ ENDING_NAMES[r.ending] }}</span
-          >
+      <div
+        class="mt-4"
+        :data-bond-history-total="pastBondRows.length"
+        :data-bond-history-shown="pastBondPage.shown"
+        :data-bond-history-start="pastBondPage.start"
+      >
+        <p class="flex flex-wrap items-baseline justify-between gap-1">
+          <span class="font-kai text-[14px] tracking-widest text-ink-soft">历世同行</span>
+          <span class="text-[10px] text-ink-faint tabular">共 {{ pastBondRows.length }} 段</span>
         </p>
+        <div class="scroll-pane mt-2 max-h-40 space-y-1.5 overflow-y-auto">
+          <p
+            v-for="(r, i) in pastBondPage.visible"
+            :key="`${r.daoluId}-${r.shared}-${r.ending}-${pastBondPage.start + i}`"
+            :data-bond-history-row="r.name"
+            tabindex="-1"
+            class="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-[11px]"
+          >
+            <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ r.name }}</span>
+            <span class="ml-auto shrink-0 whitespace-nowrap text-ink-faint"
+              >{{ STAGE_NAMES[r.stage] }} · {{ ENDING_NAMES[r.ending] }}</span
+            >
+          </p>
+        </div>
+        <div
+          v-if="pastBondPage.start > 0 || pastBondPage.hidden > 0"
+          class="mt-1.5 flex flex-wrap gap-1"
+        >
+          <button
+            v-if="pastBondPage.start > 0"
+            type="button"
+            data-bond-history-prev
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            :aria-label="previousPastBondText()"
+            @click="showPreviousPastBonds"
+          >
+            {{ previousPastBondText() }}
+          </button>
+          <button
+            v-if="pastBondPage.hidden > 0"
+            type="button"
+            data-bond-history-more
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            :aria-label="morePastBondText()"
+            :data-promised="Math.min(BOND_HISTORY_RENDER_BATCH, pastBondPage.hidden)"
+            @click="showMorePastBonds"
+          >
+            {{ morePastBondText() }}
+          </button>
+        </div>
       </div>
     </template>
   </BaseModal>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { ENDING_NAMES, LEAN_NAMES, STAGE_NAMES, TEMPER_NAMES } from "@/data/daolu";
 import { chooseBondEvent, herStance, nextGateHint, respondIntent } from "@/core/daoluService";
 import { RESPONSE_NAMES, SPARK_NAMES } from "@/data/bondIntent";
 import { TRIGGER_NAMES } from "@/data/bondEvents";
+import {
+  firstNewVisibleIndex,
+  listWindow,
+  nextListLimit,
+  previousListLimit,
+  previousListStep,
+} from "@/core/listRender";
 import { useBondOverview } from "@/composables/useBondOverview";
 import BaseModal from "@/components/common/BaseModal.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
@@ -165,6 +214,54 @@ const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
 const { bond, bondDef, pastBonds, pendingEvent, herIntent } = useBondOverview();
+const pastBondRows = computed(() => [...pastBonds.value].reverse());
+const BOND_HISTORY_RENDER_BATCH = 12;
+const BOND_HISTORY_RENDER_WINDOW = BOND_HISTORY_RENDER_BATCH * 2;
+const bondHistoryLimit = ref(BOND_HISTORY_RENDER_BATCH);
+const pastBondPage = computed(() =>
+  listWindow(pastBondRows.value, bondHistoryLimit.value, BOND_HISTORY_RENDER_WINDOW),
+);
+
+function morePastBondText(): string {
+  const next = Math.min(BOND_HISTORY_RENDER_BATCH, pastBondPage.value.hidden);
+  return `再看 ${next} 段 · 余 ${pastBondPage.value.hidden}`;
+}
+
+function previousPastBondText(): string {
+  const step = previousListStep(
+    pastBondPage.value.shown,
+    pastBondRows.value.length,
+    BOND_HISTORY_RENDER_BATCH,
+  );
+  return `前一批 ${step} 段`;
+}
+
+function focusPastBond(index = 0): void {
+  void nextTick(() => {
+    const rows = document.querySelectorAll<HTMLElement>("[data-bond-history-row]");
+    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
+  });
+}
+
+function showMorePastBonds(): void {
+  const shownBefore = pastBondPage.value.shown;
+  const shownAfter = nextListLimit(
+    shownBefore,
+    pastBondRows.value.length,
+    BOND_HISTORY_RENDER_BATCH,
+  );
+  bondHistoryLimit.value = shownAfter;
+  focusPastBond(firstNewVisibleIndex(shownBefore, shownAfter, BOND_HISTORY_RENDER_WINDOW));
+}
+
+function showPreviousPastBonds(): void {
+  bondHistoryLimit.value = previousListLimit(
+    pastBondPage.value.shown,
+    pastBondRows.value.length,
+    BOND_HISTORY_RENDER_BATCH,
+  );
+  focusPastBond();
+}
 
 const bondMeters = computed(() =>
   bond.value
@@ -188,7 +285,10 @@ const herLine = computed(() => (pendingEvent.value ? herStance(pendingEvent.valu
 watch(
   () => props.open,
   (open) => {
-    if (open) lastEventText.value = "";
+    if (open) {
+      lastEventText.value = "";
+      bondHistoryLimit.value = BOND_HISTORY_RENDER_BATCH;
+    }
   },
 );
 function pickChoice(choiceId: string): void {

@@ -1778,6 +1778,19 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(legacy?.src, "滑走的旧回响要能回翻").toContain("data-loss-prev");
   });
 
+  it("历世同行再长也只铺当前窗 —— 最近一段先见，旧缘仍可回看", () => {
+    // 道侣履历每世追加一笔，却没有上限；弹窗曾把整份履历一次铺进固定滚动框，
+    // 而且按追加顺序最旧在前 —— 玩家打开只看见最早几世，最近一段反而埋在底部。
+    const bond = FILES.find((f) => f.path === "components/character/BondDialog.vue");
+    expect(bond?.src, "最近一段同行先出现").toContain("[...pastBonds.value].reverse()");
+    expect(bond?.src, "履历走同一套长列表窗口").toMatch(
+      /const pastBondPage = computed\([\s\S]{0,180}listWindow\(\s*pastBondRows\.value,\s*bondHistoryLimit\.value,\s*BOND_HISTORY_RENDER_WINDOW,?\s*\)/,
+    );
+    expect(bond?.src, "只渲染当前窗内的旧缘").toContain("pastBondPage.visible");
+    expect(bond?.src, "余下的旧缘要能续开").toContain("data-bond-history-more");
+    expect(bond?.src, "滑走的旧缘要能回翻").toContain("data-bond-history-prev");
+  });
+
   it("悬赏贡器不许显占位 0 灵石 · 辅修席满要置灰", () => {
     // ① 贡器单的 reward 是占位 gnZero,逐单真价在交货时按所交品质现算(equipBountyReward)。
     //    价签若一视同仁 formatGN(o.reward) 就亮「0 灵石」——对不上任何结算的假数。
