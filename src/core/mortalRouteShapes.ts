@@ -5,6 +5,14 @@
  * 把生成器、战斗模拟与构筑识别整条依赖链接进每个 store 用例。
  */
 
+/**
+ * 区域名静态档位与节点落座档位允许的最大偏差。
+ *
+ * 青云山麓(静态 1 阶)只坐 1~4 档,鸿蒙裂隙只坐 17~20 档 ——
+ * 新手村名不再端出终局怪,鸿蒙名也不再冒充开场(玩家反馈「青云山麓刷鸿蒙古魔」的错位源头)。
+ */
+export const REGION_NAME_TIER_BAND = 3;
+
 export interface RouteShape {
   id: string;
   name: string;

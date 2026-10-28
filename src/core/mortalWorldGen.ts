@@ -34,17 +34,10 @@ import { mulN } from "@/utils/gnum";
 import { jaccardDistance } from "@/utils/setMath";
 import { NOVELTY_MIN } from "./worldGen";
 import { BIAS_POOL } from "./mortalBias";
-import { RHYTHM_ARCHETYPES, ROUTE_SHAPES } from "./mortalRouteShapes";
+import { REGION_NAME_TIER_BAND, RHYTHM_ARCHETYPES, ROUTE_SHAPES } from "./mortalRouteShapes";
 
-export { RHYTHM_ARCHETYPES, ROUTE_SHAPES } from "./mortalRouteShapes";
+export { REGION_NAME_TIER_BAND, RHYTHM_ARCHETYPES, ROUTE_SHAPES } from "./mortalRouteShapes";
 export type { RhythmArchetype, RouteShape } from "./mortalRouteShapes";
-
-/**
- * 落名的「名实相符」带宽:一个区域名字的静态档位,与它在凡界里的落座档
- * 相差不得超过此值。青云山麓(静态 1 阶)只坐 1~4 档,鸿蒙裂隙只坐 17~20 档 ——
- * 新手村名不再端出终局怪,鸿蒙名也不再冒充开场(玩家反馈「青云山麓刷鸿蒙古魔」的错位源头)。
- */
-export const REGION_NAME_TIER_BAND = 3;
 
 // ============ 一、世界结构 ============
 

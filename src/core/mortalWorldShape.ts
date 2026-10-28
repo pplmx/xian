@@ -5,12 +5,12 @@
  * 「mortalWorld 是对象」会把空链、重复节点和坏层级原样带进渲染与战斗。
  * 这里按生成器的不变量重建一份可用的世界:
  *
- * - 静态素材(区域名、敌人、规则、骨架名)从当前数据表重新取,存档只提供选择;
+ * - 静态素材(区域名、敌人、规则、骨架名)与派生账(首领回退段)从权威表重建;
  * - 任一引用已不存在、id 重复或数值越界,整界作废 —— 半截世界比没有世界更难救;
  * - 完整世界经 JSON 往返后必须逐字段等价,不能因为修形悄悄换掉玩家的路线。
  */
 import type { MortalPlace, MortalWorld } from "./mortalWorldGen";
-import { RHYTHM_ARCHETYPES, ROUTE_SHAPES } from "./mortalRouteShapes";
+import { REGION_NAME_TIER_BAND, RHYTHM_ARCHETYPES, ROUTE_SHAPES } from "./mortalRouteShapes";
 import { BIAS_POOL } from "./mortalBias";
 import { MORTAL_REGIONS, MORTAL_TIER_MAX } from "@/data/regions";
 import { enemyDef } from "@/data/enemies";
@@ -87,15 +87,17 @@ export function restoreMortalWorld(raw: unknown): MortalWorld | null {
       nodeId === null ||
       !region ||
       tier === null ||
+      Math.abs(region.tier - tier) > REGION_NAME_TIER_BAND ||
       !enemies ||
       !tags ||
       !boss ||
       boss.archetype === undefined ||
+      boss.tier > MORTAL_TIER_MAX ||
       nodeIds.has(nodeId) ||
       regionIds.has(region.id) ||
       !enemies.every((id) => {
         const def = enemyDef(id);
-        return def !== undefined && def.archetype === undefined;
+        return def !== undefined && def.archetype === undefined && def.tier <= MORTAL_TIER_MAX;
       }) ||
       !tags.every((tag) => EVENT_TAGS.has(tag))
     ) {
@@ -116,11 +118,21 @@ export function restoreMortalWorld(raw: unknown): MortalWorld | null {
     });
   }
 
-  const fallbacks = Array.isArray(o.bossFallbackAt)
-    ? o.bossFallbackAt.filter(
-        (i): i is number => Number.isSafeInteger(i) && i >= 0 && i < chain.length,
-      )
-    : [];
+  if (chain.length !== shape.tiers.length) return null;
+  for (let i = 0; i < chain.length; i += 1) {
+    const seat = shape.tiers[i]!;
+    if (i === 0 ? chain[i]!.tier !== seat : Math.abs(chain[i]!.tier - seat) > 1) {
+      return null;
+    }
+  }
+
+  const seenBosses = new Set<string>();
+  const bossFallbackAt: number[] = [];
+  for (let i = 0; i < chain.length; i += 1) {
+    const boss = chain[i]!.boss;
+    if (seenBosses.has(boss)) bossFallbackAt.push(i);
+    else seenBosses.add(boss);
+  }
 
   return {
     seed,
@@ -133,6 +145,6 @@ export function restoreMortalWorld(raw: unknown): MortalWorld | null {
     ruleName: rule.name,
     rules: rule.rules,
     bias,
-    bossFallbackAt: [...new Set(fallbacks)],
+    bossFallbackAt,
   };
 }
