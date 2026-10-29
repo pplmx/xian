@@ -729,6 +729,25 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(col?.src, "旧的一整墙 ??? 文案已经退场").not.toContain("成时自见");
   });
 
+  it("藏珍谱先报新得或将满，再把九册收成可展开卷目", () => {
+    // 九册同时铺开时,首屏可能连续三册全是 ???,玩家既看不到整体进度,
+    // 也不知道哪一册值得先翻。判据:卷首读同一份 collectionProgress 汇总,
+    // 有新得先列新得、无新得列将满;册目是带 aria 的真按钮,新得册默认展开。
+    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    expect(col?.src).toContain("collectionProgressOverview");
+    expect(col?.src).toContain("data-collection-hero");
+    expect(col?.src).toContain("data-collection-category-toggle");
+    expect(col?.src).toContain(':aria-expanded="isCollectionCategoryOpen(cat.key)"');
+    expect(col?.src).toContain(':aria-controls="collectionCategoryBodyId(cat.key)"');
+    expect(col?.src).toContain("revealCollectionCategory(row.key)");
+    expect(col?.src, "新得册与将满册要分开报").toContain("眼下新得");
+    expect(col?.src, "无新得时卷首改报将满之册").toContain("将满之册");
+    expect(col?.src, "册目内容按展开态渲染").toContain('v-if="isCollectionCategoryOpen(cat.key)"');
+    expect(col?.src, "展开态必须给测试与读屏一个稳定落点").toContain(
+      ':data-collection-category-body="cat.key"',
+    );
+  });
+
   it("全收集图鉴逐册滑动翻看 —— 前后可达，点击再多也不让 DOM 无限长", () => {
     /*
      * 九册全收是 800+ 枚 chip，首帧全铺实测 1326 DOM。每册先给一批，余下由

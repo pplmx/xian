@@ -974,12 +974,17 @@ for (const view of VIEWS) {
     }
     if (view.name === "collection") {
       const categories = await page
-        .locator("button[data-collection-more]")
+        .locator("button[data-collection-category-toggle]")
         .evaluateAll((nodes) =>
-          nodes.map((node) => node.getAttribute("data-collection-more")).filter(Boolean),
+          nodes.map((node) => node.getAttribute("data-collection-category-toggle")).filter(Boolean),
         );
       collectionBatches = [];
       for (const category of categories) {
+        const toggle = page.locator(`button[data-collection-category-toggle="${category}"]`);
+        if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+          await toggle.click({ timeout: 3000 });
+          await page.waitForTimeout(120);
+        }
         const categoryTotal = Number(
           await page
             .locator(`section[data-collection-category="${category}"]`)
@@ -1004,6 +1009,8 @@ for (const view of VIEWS) {
             },
           )),
         });
+        await toggle.click({ timeout: 3000 });
+        await page.waitForTimeout(80);
       }
       if (collectionBatches.length === 0) {
         collectionBatches.push({

@@ -303,6 +303,7 @@ describe("排版量法口径", () => {
     const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
     expect(perf, "collection 视图要换全收集夹具").toContain("fullCollectionSlices");
     expect(perf).toContain('getByRole("tab", { name: "收藏" })');
+    expect(perf, "册目收口后,运行时门要先逐册展开").toContain("data-collection-category-toggle");
     expect(perf).toContain("data-collection-more");
     expect(perf).toContain("collectionBatches");
     expect(perf).toContain("rewindSpec");

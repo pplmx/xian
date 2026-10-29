@@ -187,6 +187,8 @@
  *      四界卷目默认只开当前界,其余收口,点开后要真的铺出该界境界。
  *   六十六 成就谱首屏的眼下可追:卷首先列最近三枚并写明条件/进度;方向卷目
  *      默认只开最近一路,点最近一枚或换一路时要真的展开目标卷。
+ *   六十七 藏珍谱首屏的新得优先:卷首先报整体收录与新得/将满册目;有新得的册
+ *      最多先展开三册,其余收着。点卷首册目或册目题头时,目标册要真的铺出来。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -6410,6 +6412,182 @@ async function taskAchievementFold() {
   };
 }
 
+/** 藏珍谱首屏的新得优先:卷首报新得,九册最多先展开三册值得看的 */
+async function taskCollectionFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    const now = Date.now();
+    const gongfa = [GONGFA[0].id, GONGFA[1].id];
+    const pet = [PETS[0].id];
+    slices.quests.lastCollectionViewAt = now - 60_000;
+    slices.quests.collections = {
+      ...slices.quests.collections,
+      gongfa,
+      pet,
+    };
+    slices.quests.collectedAt = {
+      [`gongfa:${gongfa[0]}`]: now,
+      [`gongfa:${gongfa[1]}`]: now,
+      [`pet:${pet[0]}`]: now,
+    };
+    await seedSave(ctx, slices, "__collectionFold");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/collection", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-collection] 藏珍与成就没渲染出来,首屏判据没量到东西");
+    } else {
+      const tab = page.getByRole("tab", { name: "收藏" });
+      if ((await tab.count()) === 0) {
+        failures.push("[390-collection] 收藏页签不存在");
+      } else {
+        await tab.click({ timeout: 3000 });
+        await page.waitForTimeout(250);
+      }
+
+      const read = () =>
+        page.evaluate(() => {
+          const nav = document.querySelector("nav")?.getBoundingClientRect();
+          const hero = document.querySelector("[data-collection-hero]");
+          const heroRect = hero?.getBoundingClientRect();
+          const toggles = [...document.querySelectorAll("[data-collection-category-toggle]")].map(
+            (btn) => {
+              const key = btn.getAttribute("data-collection-category-toggle") ?? "";
+              const bodyId = btn.getAttribute("aria-controls") || "";
+              const body = bodyId ? document.getElementById(bodyId) : null;
+              return {
+                key,
+                expanded: btn.getAttribute("aria-expanded") ?? null,
+                bodyExists: Boolean(body),
+                bodyVisible: Boolean(
+                  body &&
+                  getComputedStyle(body).display !== "none" &&
+                  body.getBoundingClientRect().height > 0,
+                ),
+                bodyText: (body?.textContent || "").replace(/\s+/g, " ").trim(),
+              };
+            },
+          );
+          const jumps = [...document.querySelectorAll("[data-collection-jump]")].map((btn) => ({
+            key: btn.getAttribute("data-collection-jump") ?? "",
+            text: (btn.textContent || "").replace(/\s+/g, " ").trim(),
+          }));
+          return {
+            navTop: nav?.top ?? innerHeight,
+            heroTop: heroRect?.top ?? null,
+            heroBottom: heroRect?.bottom ?? null,
+            heroText: (hero?.textContent || "").replace(/\s+/g, " ").trim(),
+            toggles,
+            jumps,
+          };
+        });
+
+      const fold = await read();
+      checked += 1;
+      if (fold.heroTop === null || fold.heroBottom === null) {
+        failures.push("[390-collection] 首屏没有藏珍谱卷首");
+      } else if (fold.heroBottom > fold.navTop + 1) {
+        failures.push(
+          `[390-collection] 藏珍谱卷首被推到折线以下(hero bottom ${Math.round(fold.heroBottom)} / nav top ${Math.round(fold.navTop)})`,
+        );
+      }
+      if (
+        !fold.heroText.includes("藏珍谱") ||
+        !fold.heroText.includes("眼下新得") ||
+        !fold.heroText.includes("3 枚待看")
+      ) {
+        failures.push("[390-collection] 卷首没有把整体进度与新得数摊开");
+      }
+      if (fold.toggles.length !== 9) {
+        failures.push(`[390-collection] 应列九册,实见 ${fold.toggles.length} 册`);
+      }
+      if (fold.toggles.some((row) => !row.bodyExists)) {
+        failures.push("[390-collection] 册目的 aria-controls 指向了不存在的区域");
+      }
+      const openKeys = fold.toggles
+        .filter((row) => row.expanded === "true")
+        .map((row) => row.key)
+        .sort();
+      if (
+        openKeys.join(",") !== "gongfa,pet" ||
+        fold.toggles.filter((row) => row.bodyVisible).length !== 2
+      ) {
+        failures.push(
+          `[390-collection] 有新得的两册应默认展开(open=${openKeys.join(",") || "无"})`,
+        );
+      }
+      const gongfaBody = fold.toggles.find((row) => row.key === "gongfa")?.bodyText ?? "";
+      const petBody = fold.toggles.find((row) => row.key === "pet")?.bodyText ?? "";
+      if (!gongfaBody.includes(GONGFA[0].name) || !petBody.includes(PETS[0].name)) {
+        failures.push("[390-collection] 默认展开的册目没有铺出对应条目");
+      }
+      if (
+        !fold.jumps.some((row) => row.key === "gongfa") ||
+        !fold.jumps.some((row) => row.key === "pet")
+      ) {
+        failures.push("[390-collection] 卷首没有列出有新得的册目入口");
+      }
+
+      await page
+        .locator('[data-collection-category-toggle="pet"]')
+        .click({ timeout: 3000 })
+        .catch(() => {});
+      await page.waitForTimeout(120);
+      checked += 1;
+      const collapsed = await read();
+      if (collapsed.toggles.find((row) => row.key === "pet")?.expanded !== "false") {
+        failures.push("[390-collection] 点开着的册目题头没有收册");
+      }
+
+      await page
+        .locator('[data-collection-jump="pet"]')
+        .click({ timeout: 3000 })
+        .catch(() => {});
+      await page.waitForTimeout(350);
+      checked += 1;
+      const jumped = await read();
+      const petToggle = jumped.toggles.find((row) => row.key === "pet");
+      if (petToggle?.expanded !== "true" || !petToggle.bodyVisible) {
+        failures.push("[390-collection] 点卷首的新得册目没有展开目标册");
+      }
+
+      await page
+        .locator('[data-collection-category-toggle="equip"]')
+        .click({ timeout: 3000 })
+        .catch(() => {});
+      await page.waitForTimeout(120);
+      checked += 1;
+      const reopened = await read();
+      const equipToggle = reopened.toggles.find((row) => row.key === "equip");
+      if (equipToggle?.expanded !== "true" || !equipToggle.bodyVisible) {
+        failures.push("[390-collection] 点收着的册目题头没有铺出该册");
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[390-collection] 藏珍谱首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 /**
  * 前尘山河 —— 跨世历史在 320 与 195 宽下必须真的画得出来。
  *
@@ -10796,6 +10974,7 @@ const TASKS = [
   ["洞府首屏的营造优先", taskDongfuFold],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
+  ["藏珍谱首屏的新得优先", taskCollectionFold],
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
   ["背包里的账目", taskInventoryAccounting],
