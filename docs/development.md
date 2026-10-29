@@ -73,7 +73,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 392 个 spec;本作自己那部分 312 个) |
+| `bun run test` | 全量用例(全量 394 个 spec;本作自己那部分 314 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -97,7 +97,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 392 个 spec(本作自己那部分 312 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 394 个 spec(本作自己那部分 314 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -250,6 +250,10 @@ error: Failed to resolve vite command: GenericFailure, Expected
 门庭页卷首先报「在途 / 闲置 / 最近归来」,一键派发直接报这次会派走几人;在途差事
 补了按墙钟推进的进度条与读屏值。运行时门用 1 名在途 + 1 名闲置夹具核对卷首、
 最近归期与派发后的 2/0 换口,避免按钮、计数与逐单状态各说一套。
+
+器魂页卷首同报「装配 / 闲置 / 可凝」;可凝不再只数行囊资格,而是按道源还能开几炉
+折算。天界入口、器魂卷首与凝炼台共用 `core/soulOverview` 的同一份账,付不起时直接
+列「尚差 N 道源」,不会在入口先写一句 N 件可凝、点进去才看见按钮全灰。
 
 基线(2026-10-30 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
 

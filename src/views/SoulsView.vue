@@ -33,6 +33,38 @@
         </div>
       </div>
 
+      <!-- 卷首先报此刻:槽位、闲置与可凝各有多少当下能动手 -->
+      <div
+        class="card-ink grid grid-cols-3 divide-x divide-ink/10 px-2 py-2 text-center"
+        data-soul-pulse
+      >
+        <p>
+          <span class="block text-[10px] text-ink-faint">装配</span>
+          <span class="block text-[11px] tabular text-ink-soft" data-soul-pulse-active
+            >{{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}</span
+          >
+        </p>
+        <p>
+          <span class="block text-[10px] text-ink-faint">闲置</span>
+          <span class="block text-[11px] tabular text-ink-soft" data-soul-pulse-idle
+            >{{ soulPulse.idleSouls.length }} 缕</span
+          >
+        </p>
+        <p>
+          <span class="block text-[10px] text-ink-faint">可凝</span>
+          <span class="block text-[11px] tabular text-ink-soft" data-soul-pulse-refine
+            >{{ soulPulse.affordableRefines }}/{{ soulPulse.refinableCount }} 件</span
+          >
+        </p>
+        <p
+          v-if="soulPulse.refinableCount > 0 && soulPulse.shortfall > 0"
+          class="col-span-3 border-t border-ink/10 px-2 pt-1.5 text-[10px] text-cinnabar"
+        >
+          道源不足:{{ soulPulse.refinableCount }} 件待凝,尚差
+          {{ formatGN(soulPulse.shortfall) }} 道源可开一炉
+        </p>
+      </div>
+
       <!-- 何谓器魂 -->
       <section>
         <SectionTitle title="何谓器魂" hint="形销而意存,多一条路数" />
@@ -68,7 +100,10 @@
 
       <!-- 已凝形意 -->
       <section>
-        <SectionTitle title="已凝形意" :hint="`${endgame.activeSouls.length} / ${SOUL_SLOTS} 缕`" />
+        <SectionTitle
+          title="已凝形意"
+          :hint="`${soulPulse.activeCount} / ${soulPulse.slotTotal} 缕`"
+        />
         <!--
           三列只在「格子够宽」时成立。200% 缩放档(390 的机型放大一倍,布局视口只剩
           195 CSS px)下每格只有 49px,「显形·锋魂」六个字必然折成两截 —— 而本作按
@@ -140,7 +175,7 @@
                 清单(由玩家挑一缕),而不是替玩家装某不知名的魂。
               -->
               <button
-                v-if="idleSouls.length > 0"
+                v-if="soulPulse.idleSouls.length > 0"
                 class="tap-row mt-1 min-w-[28px] px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
                 aria-label="空槽 · 挑一缕装配"
                 @click="idleOpen = true"
@@ -169,10 +204,10 @@
             <span class="block t-card">散置形意</span>
             <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
               {{
-                idleSouls.length > 0
-                  ? slotsFull
-                    ? `${idleSouls.length} 缕待用 · 槽位已满,先散去一缕`
-                    : `${idleSouls.length} 缕待用 · 装配或散去`
+                soulPulse.idleSouls.length > 0
+                  ? soulPulse.slotsFull
+                    ? `${soulPulse.idleSouls.length} 缕待用 · 槽位已满,先散去一缕`
+                    : `${soulPulse.idleSouls.length} 缕待用 · 装配或散去`
                   : "暂无闲置器魂"
               }}
             </span>
@@ -192,8 +227,10 @@
             <span class="block t-card">凝炼台</span>
             <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
               {{
-                refinable.length > 0
-                  ? `${refinable.length} 件可凝 · 道源 ${SOUL_REFINE_COST}/枚`
+                soulPulse.refinableCount > 0
+                  ? soulPulse.affordableRefines > 0
+                    ? `${soulPulse.affordableRefines}/${soulPulse.refinableCount} 件此刻可凝 · 每枚 ${SOUL_REFINE_COST} 道源`
+                    : `${soulPulse.refinableCount} 件待凝 · 尚差 ${formatGN(soulPulse.shortfall)} 道源开一炉`
                   : "行囊中无可凝之器"
               }}
             </span>
@@ -275,10 +312,10 @@
             <div class="flex shrink-0 flex-wrap gap-1 tinylens:justify-end">
               <button
                 class="btn-ghost !px-2.5 !py-1 !text-[11px]"
-                :disabled="slotsFull"
+                :disabled="soulPulse.slotsFull"
                 @click="wearSoul(soul.uid)"
               >
-                {{ slotsFull ? "槽已满" : "装配" }}
+                {{ soulPulse.slotsFull ? "槽已满" : "装配" }}
               </button>
               <template v-if="pendingDissolveUid !== soul.uid">
                 <button
@@ -342,9 +379,12 @@
     <BaseModal :open="forgeOpen" title="凝炼台" @close="forgeOpen = false">
       <p class="mb-2 t-body text-ink-faint">
         入炉即毁原器,耗道源 {{ SOUL_REFINE_COST }}。
+        <span v-if="soulPulse.refinableCount > 0"
+          >此刻可凝 {{ soulPulse.affordableRefines }}/{{ soulPulse.refinableCount }} 件。</span
+        >
         <!-- 付不起置灰+列差(与秘境道源/聚气丹同款):灰按钮不告诉差多少等于没说完 -->
-        <span v-if="refineShort > 0" class="text-cinnabar"
-          >尚差 {{ formatGN(refineShort) }} 道源</span
+        <span v-if="soulPulse.shortfall > 0" class="text-cinnabar"
+          >尚差 {{ formatGN(soulPulse.shortfall) }} 道源可开一炉</span
         >
       </p>
       <div
@@ -464,7 +504,6 @@ import {
   type SoulInstance,
 } from "@/data/souls";
 import {
-  canRefine,
   dissolveSoul,
   previewSoul,
   refineEquipment,
@@ -472,6 +511,7 @@ import {
   SOUL_REFINE_COST,
   wearSoul,
 } from "@/core/soulService";
+import { soulOverview } from "@/core/soulOverview";
 import { hasInvestment } from "@/core/smartKeep";
 import { enhanceInvested } from "@/core/salvage";
 import { endgameUnlocked } from "@/core/endgameService";
@@ -529,10 +569,19 @@ const pendingRefineUid = ref<string | null>(null);
 /** 散去形意同样二步确认:器魂是花道源与一件法器凝出来的,一脚碎掉连个反悔都没有 */
 const pendingDissolveUid = ref<string | null>(null);
 
-/** 道源不够 20 置灰凝炼入口 —— 正是秘境/聚气丹同款的「付不起要直说」 */
-const canAffordRefine = computed(() => endgame.daoSource >= SOUL_REFINE_COST);
-/** 凝炼短差(付不起置灰+列差):与 RealmCodexView askShort 同款 —— 裸相减不保底会有负号 */
-const refineShort = computed(() => Math.max(0, SOUL_REFINE_COST - endgame.daoSource));
+/** 卷首、入口与凝炼台共用同一份「此刻能做」的账。 */
+const soulPulse = computed(() =>
+  soulOverview({
+    activeSouls: endgame.activeSouls,
+    soulList: endgame.soulList,
+    items: inventory.items,
+    equippedUids: inventory.equippedUids,
+    daoSource: endgame.daoSource,
+  }),
+);
+
+/** 道源够一枚就允许开确认；短差由 soulPulse 统一报出。 */
+const canAffordRefine = computed(() => soulPulse.value.affordableRefines > 0);
 
 /** 二步确认后真正入炉;成功后收拢确认态 */
 function doRefine(uid: string): void {
@@ -546,37 +595,24 @@ function doDissolve(uid: string): void {
   pendingDissolveUid.value = null;
 }
 
-/** 未装配的器魂 */
-const idleSouls = computed(() =>
-  endgame.soulList.filter((s) => !endgame.activeSouls.some((a) => a.uid === s.uid)),
+/** 可入炉的法器已由 core 过滤；这里只把每件摊成卡面要读的预览。 */
+const refinableCards = computed(() =>
+  soulPulse.value.refinable.map((inst) => {
+    const preview = previewSoul(inst);
+    const invested = hasInvestment(inst);
+    return {
+      inst,
+      name: equipmentTemplate(inst.templateId)?.name ?? "无名法器",
+      typeName: preview.type?.name ?? "器魂",
+      gradeRank: preview.gradeRank,
+      // 将凝出的器的数值模组 —— 预览即成品(soulForge.previewSoul.mods)
+      mods: preview.mods,
+      invested,
+      // 已淬养者的强化投入:不可逆确认里该有两笔具体的数(尘/灵石),不能只有一句定性
+      investedCost: invested ? enhanceInvested(inst) : null,
+    };
+  }),
 );
-
-/** 神魂槽已满:散置窗里的闲置器魂装不进去,装配须先散去一缕 */
-const slotsFull = computed(() => endgame.activeSouls.length >= SOUL_SLOTS);
-
-/** 可入炉的法器:未锁定、未穿戴、且确有形意可存 */
-const refinable = computed(() => {
-  const wearing = new Set(
-    Object.values(inventory.equipped).filter((v): v is string => typeof v === "string"),
-  );
-  return inventory.items
-    .filter((it) => !it.locked && !wearing.has(it.uid) && canRefine(it))
-    .map((inst) => {
-      const preview = previewSoul(inst);
-      const invested = hasInvestment(inst);
-      return {
-        inst,
-        name: equipmentTemplate(inst.templateId)?.name ?? "无名法器",
-        typeName: preview.type?.name ?? "器魂",
-        gradeRank: preview.gradeRank,
-        // 将凝出的器的数值模组 —— 预览即成品(soulForge.previewSoul.mods)
-        mods: preview.mods,
-        invested,
-        // 已淬养者的强化投入:不可逆确认里该有两笔具体的数(尘/灵石),不能只有一句定性
-        investedCost: invested ? enhanceInvested(inst) : null,
-      };
-    });
-});
 
 const SOUL_RENDER_BATCH = 12;
 const SOUL_RENDER_WINDOW = SOUL_RENDER_BATCH * 2;
@@ -585,7 +621,7 @@ const refinableLimit = ref(SOUL_RENDER_BATCH);
 
 /** 闲置形意按品阶降序:槽位只有三处,先让最值得装配的那缕露在首批。 */
 const idleSoulRows = computed(() =>
-  [...idleSouls.value].sort(
+  [...soulPulse.value.idleSouls].sort(
     (a, b) =>
       b.grade - a.grade ||
       soulName(a).localeCompare(soulName(b), "zh-CN") ||
@@ -598,7 +634,7 @@ const idleSoulPage = computed(() =>
 
 /** 可凝法器与行囊同排法:品质降序、层级降序,不让低阶旧件占满首批。 */
 const refinableRows = computed(() =>
-  [...refinable.value].sort(
+  [...refinableCards.value].sort(
     (a, b) =>
       qualityDef(b.inst.quality).rank - qualityDef(a.inst.quality).rank ||
       b.inst.tier - a.inst.tier ||

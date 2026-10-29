@@ -149,7 +149,8 @@
             <span class="min-w-0 flex-1">
               <span class="block t-card">器 魂</span>
               <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
-                凡器承不住天道,只余形意 · 已凝 {{ endgame.activeSouls.length }}/{{ SOUL_SLOTS }}
+                凡器承不住天道,只余形意 · 已凝
+                {{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}
               </span>
             </span>
             <span class="shrink-0 text-[11px] text-ink-faint">›</span>
@@ -286,10 +287,10 @@ import { useRoute, useRouter } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useEndgameStore } from "@/stores/endgame";
-import { SOUL_SLOTS } from "@/data/souls";
 import { DAO_PATHS, daoPathDef } from "@/data/endgame";
 import { todayChallenge } from "@/core/dailyChallenge";
 import { chooseDaoPath, endgameUnlocked } from "@/core/endgameService";
+import { soulOverview } from "@/core/soulOverview";
 import { currentDaoNarrative } from "@/core/identity";
 import type { StepOutcome } from "@/core/expedition";
 import { detectBuild } from "@/core/buildDetect";
@@ -318,6 +319,17 @@ const player = usePlayerStore();
 
 const inventory = useInventoryStore();
 const endgame = useEndgameStore();
+
+/** 天界入口与器魂页共用同一份槽位账。 */
+const soulPulse = computed(() =>
+  soulOverview({
+    activeSouls: endgame.activeSouls,
+    soulList: endgame.soulList,
+    items: inventory.items,
+    equippedUids: inventory.equippedUids,
+    daoSource: endgame.daoSource,
+  }),
+);
 
 const unlocked = computed(() => endgameUnlocked());
 

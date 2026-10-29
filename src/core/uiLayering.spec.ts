@@ -1348,7 +1348,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      */
     const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
     expect(souls?.src, "空槽的装配入口要有条件").toMatch(
-      /<template v-else>[\s\S]*?v-if="idleSouls\.length > 0"[\s\S]*?@click="idleOpen = true"/,
+      /<template v-else>[\s\S]*?v-if="soulPulse\.idleSouls\.length > 0"[\s\S]*?@click="idleOpen = true"/,
     );
     expect(souls?.src, "装配入口的读屏名要说清是空槽且要挑一缕").toContain(
       'aria-label="空槽 · 挑一缕装配"',
@@ -2305,6 +2305,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
     ]) {
       expect(souls?.src, `缺少 ${marker}`).toContain(marker);
     }
+  });
+
+  it("器魂卷首、天界入口与凝炼台共用一份可凝与道源汇总", () => {
+    // 「可凝」曾只数行囊资格:道源不够时入口仍写 N 件可凝,点进去才看到付不起。
+    // 现在卷首、入口、凝炼台与天界入口都读 core/soulOverview 的同一份账。
+    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    expect(souls?.src, "卷首先报此刻").toContain("data-soul-pulse");
+    expect(souls?.src, "可做判据收进 core").toContain("soulOverview(");
+    expect(souls?.src, "入口读同一份可凝数").toContain("soulPulse.affordableRefines");
+    expect(souls?.src, "付不起要列短差").toContain("soulPulse.shortfall");
+    expect(souls?.src, "视图不再自行过滤可凝件").not.toContain("const refinable = computed");
+
+    const celestial = FILES.find((f) => f.path === "views/CelestialView.vue");
+    expect(celestial?.src, "天界入口也读同一份槽位账").toContain("soulOverview(");
+    expect(celestial?.src, "入口报的是同一份已凝数").toContain("soulPulse.activeCount");
   });
 
   it("悬赏贡器不许显占位 0 灵石 · 辅修席满要置灰", () => {

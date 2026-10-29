@@ -5,15 +5,12 @@
  * 天界只认器魂,人间只认法器——同一件东西不可能两头都占。
  */
 import { refineSoul, previewSoul, canRefine } from "./soulForge";
-import { soulName, SOUL_SLOTS } from "@/data/souls";
+import { SOUL_REFINE_COST, soulName, SOUL_SLOTS } from "@/data/souls";
 import { equipmentTemplate } from "@/data/equipment";
 import { track } from "./progress";
 import { useInventoryStore } from "@/stores/inventory";
 import { useEndgameStore } from "@/stores/endgame";
 import { notify } from "./notify";
-
-/** 凝炼一枚器魂需耗的道源 */
-export const SOUL_REFINE_COST = 20;
 
 /**
  * 凝炼:销毁装备,得一枚器魂。
@@ -79,4 +76,4 @@ export function dissolveSoul(uid: string): void {
   notify(`${soulName(soul)}散入天地`, "info");
 }
 
-export { previewSoul, canRefine };
+export { SOUL_REFINE_COST, previewSoul };

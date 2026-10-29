@@ -21,6 +21,9 @@ import type { AnyStatKey, StatMods } from "@/types";
 /** 器魂可装配槽位:少于流派数,逼出取舍 */
 export const SOUL_SLOTS = 3;
 
+/** 凝炼一枚器魂需耗的道源 —— 入口报价、按钮置灰与结算共用这一份 */
+export const SOUL_REFINE_COST = 20;
+
 export type SoulTypeId = "beishui" | "gangdun" | "fanzhen" | "lianji" | "muze" | "fengmang";
 
 export interface SoulTypeDef {
