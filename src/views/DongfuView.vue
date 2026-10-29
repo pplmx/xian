@@ -29,48 +29,7 @@
     </div>
     <div class="ink-divider" aria-hidden="true" />
 
-    <!-- 家业两案入口:坊市(灵石周转)与收徒(弟子跑腿) -->
-    <section>
-      <SectionTitle title="家业 · 财与人" :hint="`灵石往来 · 弟子跑腿`" />
-      <!--
-        两案入口此前只有名字 + 一句定性介绍,点进去才知道家底如何。各补一行真读数:
-        坊市报手上灵石(它唯一的通用货币),门庭报在途弟子数 —— 都是玩家此刻就能决定的依据。
-      -->
-      <div class="mt-2 grid grid-cols-2 gap-2.5">
-        <RouterLink
-          to="/market"
-          class="card-ink flex flex-col justify-between gap-2 px-3 py-3 active:scale-99"
-        >
-          <div>
-            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">坊市</p>
-            <p class="mt-0.5 text-[11px] text-ink-faint">购丹续料、购兵刃,兼售寄卖</p>
-          </div>
-          <p class="text-[11px] text-ink-soft tabular">
-            囊中 <span class="text-cinnabar">{{ formatGN(stone) }}</span> 灵石
-          </p>
-        </RouterLink>
-        <RouterLink
-          to="/apprentice"
-          class="card-ink flex flex-col justify-between gap-2 px-3 py-3 active:scale-99"
-        >
-          <div>
-            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">门庭有徒</p>
-            <p class="mt-0.5 text-[11px] text-ink-faint">弟子离线跑腿,归来带回资材</p>
-          </div>
-          <p class="text-[11px] text-ink-soft tabular">
-            {{
-              apprentices.length
-                ? apprenticeBusy
-                  ? `在途 ${apprenticeBusy} 人 · 门下 ${apprentices.length} 人`
-                  : `门前 ${apprentices.length} 人皆待命`
-                : "门下尚无弟子"
-            }}
-          </p>
-        </RouterLink>
-      </div>
-    </section>
-
-    <!-- 建筑 -->
+    <!-- 建筑先于家业:这一页的第一任务是营造,坊市与门庭是去别页的入口 -->
     <section>
       <!-- 家业总览的一份子:已营几座在首页入口可见,洞府页自己反倒没有 —— 补进营造题头 -->
       <SectionTitle
@@ -116,6 +75,47 @@
         <span class="chip-ink border-jade/60 text-[10px] text-jade">营造尽善</span>
         {{ cnNumber(BUILDINGS.length) }} 座建筑俱已至顶 —— 此间经营,已然圆满
       </p>
+    </section>
+
+    <!-- 家业两案入口:坊市(灵石周转)与收徒(弟子跑腿) -->
+    <section>
+      <SectionTitle title="家业 · 财与人" :hint="`灵石往来 · 弟子跑腿`" />
+      <!--
+        两案入口此前只有名字 + 一句定性介绍,点进去才知道家底如何。各补一行真读数:
+        坊市报手上灵石(它唯一的通用货币),门庭报在途弟子数 —— 都是玩家此刻就能决定的依据。
+      -->
+      <div class="mt-2 grid grid-cols-2 gap-2.5">
+        <RouterLink
+          to="/market"
+          class="card-ink flex flex-col justify-between gap-2 px-3 py-3 active:scale-99"
+        >
+          <div>
+            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">坊市</p>
+            <p class="mt-0.5 text-[11px] text-ink-faint">购丹续料、购兵刃,兼售寄卖</p>
+          </div>
+          <p class="text-[11px] text-ink-soft tabular">
+            囊中 <span class="text-cinnabar">{{ formatGN(stone) }}</span> 灵石
+          </p>
+        </RouterLink>
+        <RouterLink
+          to="/apprentice"
+          class="card-ink flex flex-col justify-between gap-2 px-3 py-3 active:scale-99"
+        >
+          <div>
+            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">门庭有徒</p>
+            <p class="mt-0.5 text-[11px] text-ink-faint">弟子离线跑腿,归来带回资材</p>
+          </div>
+          <p class="text-[11px] text-ink-soft tabular">
+            {{
+              apprentices.length
+                ? apprenticeBusy
+                  ? `在途 ${apprenticeBusy} 人 · 门下 ${apprentices.length} 人`
+                  : `门前 ${apprentices.length} 人皆待命`
+                : "门下尚无弟子"
+            }}
+          </p>
+        </RouterLink>
+      </div>
     </section>
 
     <!--

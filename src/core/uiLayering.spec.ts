@@ -1023,6 +1023,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("洞府营造先于家业入口 —— 首屏先给能动手的营造,再给财与人", () => {
+    // 洞府页的第一任务是把材料变成建筑等级;家业两案是去别页的入口。
+    // 390 首屏里家业双卡曾把首座建筑的升级键整个推到折线以下,故顺序本身要钉住。
+    const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
+    const buildAt = dv?.src.indexOf('title="营造"') ?? -1;
+    const estateAt = dv?.src.indexOf('title="家业 · 财与人"') ?? -1;
+    expect(buildAt, "营造题头要定位得到").toBeGreaterThan(-1);
+    expect(estateAt, "家业题头要定位得到").toBeGreaterThan(-1);
+    expect(buildAt, "营造必须排在家业之前,先露可执行的升级键").toBeLessThan(estateAt);
+  });
+
   it("首页状态行不许退回最弱档 —— 主角位「此刻状态」不该比次要天时还哑", () => {
     // 主页 hero 的「现在在干嘛」(修炼/闭关/历练…)此前整行 text-ink-faint,紧邻
     // 下方的次要天时反而 font-kai 披金 —— 层级倒挂。提一档 ink-soft 并配楷体,
@@ -1645,6 +1656,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ["components/adventure/SecretRealmCard.vue", ':aria-expanded="cardExpanded"'],
       // 秘境名录是历练页的支线,默认只亮最近两处;展开/收起要把状态报给读屏
       ["components/adventure/SecretRealmCard.vue", ':aria-expanded="secretListExpanded"'],
+      // 建筑卡把完整效果与连升账收进详情,主键先露;展开态同样要报给读屏
+      ["components/dongfu/BuildingCard.vue", ':aria-expanded="detailsOpen"'],
     ];
     for (const [path, needle] of checks) {
       const f = FILES.find((x) => x.path === path);
@@ -2448,6 +2461,28 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const b = FILES.find((f) => f.path === "components/dongfu/BuildingCard.vue");
     expect(b?.src, "建筑连升读屏名要插批量常量").toContain("`连升 ${BUILD_BATCH} 级`");
     expect(b?.src, "不许退回手写「连升 5 级」").not.toContain('aria-label="连升 5 级"');
+  });
+
+  it("建筑卡默认收口详情,主升级键先露 —— 完整效果与连升账要点得开", () => {
+    // 一张卡同时铺当前效果、下一级、连升成本、连升净得与联动信息,390 双列时
+    // 卡面像账本,首屏只剩阅读没有行动。卡面只留「当前首项 + 下一级首项 + 主键」,
+    // 完整效果、联动与连升账收进 disclosure;展开态必须报给读屏。
+    const b = FILES.find((f) => f.path === "components/dongfu/BuildingCard.vue");
+    expect(b?.src, "主升级键要有稳定运行时指纹").toContain("data-building-action");
+    expect(b?.src, "详情开关要有稳定运行时指纹").toContain("data-building-detail-toggle");
+    expect(b?.src, "详情开关要把展开态报给读屏").toContain(':aria-expanded="detailsOpen"');
+    expect(b?.src, "详情开关要关联正文").toContain(':aria-controls="detailId"');
+    expect(b?.src, "详情正文默认收起").toMatch(/<div v-show="detailsOpen" :id="detailId"/);
+    expect(b?.src, "收起态要留完整效果入口").toContain("当前效果");
+    expect(b?.src, "收起态要留连升入口").toContain("连升×{{ batch.levels }}");
+
+    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+    expect(layout, "390 首屏要实测首枚可用升级键").toContain(
+      '["洞府首屏的营造优先", taskDongfuFold]',
+    );
+    expect(layout, "运行时门要按稳定指纹找主升级键").toContain(
+      'document.querySelectorAll("[data-building-action]:not([disabled])")',
+    );
   });
 
   it("灵气充盈的阈值比率读常量 —— 不许手写「容量一半」当比例改了只顾一头", () => {

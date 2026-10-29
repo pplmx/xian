@@ -180,6 +180,9 @@
  *      三世都在、顺序由近及远、世界名/段数来自同一份世界视图,标题不截断、行不越界。
  *   六十三 历练首屏的主线优先:未入秘境时整张秘境卡只露一行,「历练」标题先于
  *      支线;390 首屏里第一处地界的「出发」要完整露出,不能被支线卡推到折线以下。
+ *   六十四 洞府首屏的营造优先:营造排在家业入口之前,建筑卡默认只露当前效果、
+ *      下一级变化与主升级键;390 首屏里第一枚可用的升级/建造键要在底栏以上,
+ *      完整效果与连升账由 aria-expanded 详情展开。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -5962,6 +5965,118 @@ async function taskAdventureFold() {
   };
 }
 
+/** 洞府首屏的营造优先:主升级键要在底栏以上,完整账要点得开 */
+async function taskDongfuFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__dongfuFold");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/dongfu", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-dongfu] 洞府页没渲染出来,首屏判据没量到东西");
+    } else {
+      const fold = await page.evaluate(() => {
+        const nav = document.querySelector("nav")?.getBoundingClientRect();
+        const buildTitle = [...document.querySelectorAll("h2")].find(
+          (el) => (el.textContent || "").trim() === "营造",
+        );
+        const estateTitle = [...document.querySelectorAll("h2")].find(
+          (el) => (el.textContent || "").trim() === "家业 · 财与人",
+        );
+        const action = [
+          ...document.querySelectorAll("[data-building-action]:not([disabled])"),
+        ].find((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        });
+        const card = action?.closest(".card-ink");
+        const toggle = card?.querySelector("[data-building-detail-toggle]");
+        const detailId = toggle?.getAttribute("aria-controls") || "";
+        const detail = detailId ? document.getElementById(detailId) : null;
+        const actionRect = action?.getBoundingClientRect();
+        return {
+          navTop: nav?.top ?? innerHeight,
+          buildTitleTop: buildTitle?.getBoundingClientRect().top ?? null,
+          estateTitleTop: estateTitle?.getBoundingClientRect().top ?? null,
+          actionTop: actionRect?.top ?? null,
+          actionBottom: actionRect?.bottom ?? null,
+          toggleExpanded: toggle?.getAttribute("aria-expanded") ?? null,
+          detailVisible: Boolean(
+            detail &&
+            getComputedStyle(detail).display !== "none" &&
+            detail.getBoundingClientRect().height > 0,
+          ),
+        };
+      });
+      checked += 1;
+      if (fold.buildTitleTop === null || fold.estateTitleTop === null) {
+        failures.push("[390-dongfu] 首屏找不到「营造」或「家业 · 财与人」题头");
+      } else if (fold.buildTitleTop >= fold.estateTitleTop) {
+        failures.push("[390-dongfu] 「营造」没有排在家业入口之前");
+      }
+      if (fold.actionTop === null || fold.actionBottom === null) {
+        failures.push("[390-dongfu] 首屏找不到任何可用的建筑升级/建造键");
+      } else if (fold.actionBottom > fold.navTop + 1) {
+        failures.push(
+          `[390-dongfu] 首枚可用营造键被推到折线以下(action bottom ${Math.round(fold.actionBottom)} / nav top ${Math.round(fold.navTop)})`,
+        );
+      }
+      if (fold.toggleExpanded !== "false" || fold.detailVisible) {
+        failures.push(
+          `[390-dongfu] 建筑卡详情没有默认收口(aria-expanded=${fold.toggleExpanded}, visible=${fold.detailVisible})`,
+        );
+      }
+
+      const toggle = page.locator("[data-building-detail-toggle]").first();
+      if ((await toggle.count()) === 0) {
+        failures.push("[390-dongfu] 建筑卡没有详情开关");
+      } else {
+        await toggle.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(120);
+        checked += 1;
+        const opened = await page.evaluate(() => {
+          const toggle = document.querySelector("[data-building-detail-toggle]");
+          const detailId = toggle?.getAttribute("aria-controls") || "";
+          const detail = detailId ? document.getElementById(detailId) : null;
+          return {
+            expanded: toggle?.getAttribute("aria-expanded") ?? null,
+            visible: Boolean(
+              detail &&
+              getComputedStyle(detail).display !== "none" &&
+              detail.getBoundingClientRect().height > 0,
+            ),
+            text: (detail?.textContent || "").replace(/\s+/g, " ").trim(),
+          };
+        });
+        if (opened.expanded !== "true" || !opened.visible || !/当前效果/.test(opened.text)) {
+          failures.push("[390-dongfu] 建筑卡点开详情后没有铺出完整效果");
+        }
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[390-dongfu] 洞府首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 /**
  * 前尘山河 —— 跨世历史在 320 与 195 宽下必须真的画得出来。
  *
@@ -10345,6 +10460,7 @@ const TASKS = [
   ["一键分解先勾后点", taskDecompose],
   ["法宝炼化的两笔账", taskArtifactRefine],
   ["洞府营造的账目", taskDongfuBuild],
+  ["洞府首屏的营造优先", taskDongfuFold],
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
   ["背包里的账目", taskInventoryAccounting],
