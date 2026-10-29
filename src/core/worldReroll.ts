@@ -39,6 +39,30 @@ export function worldRerollCost(daoFruit: number): number {
   return Math.max(WORLD_REROLL_FLOOR, Math.floor(Math.max(0, daoFruit) * WORLD_REROLL_RATE));
 }
 
+export interface WorldRerollQuote {
+  cost: number;
+  /** 还差多少枚;付得起时为 0 */
+  shortfall: number;
+  /** 为什么不能换;null 表示可以换 */
+  blockedBy: "busy" | "poor" | null;
+}
+
+/**
+ * 换界按钮与结算共用的门槛报价。
+ *
+ * 界面此前自己拼「余额够不够 + 是否历练中」,于是同时缺钱又历练中时会报
+ * 「尚差 N 枚」,把更硬的拦截原因藏掉。这里一次给出价钱、短差与主拦截,
+ * 界面负责把两个原因都念出来,结算按同一个 blockedBy 拒绝。
+ */
+export function worldRerollQuote(daoFruit: number, sessionActive: boolean): WorldRerollQuote {
+  const cost = worldRerollCost(daoFruit);
+  if (!Number.isFinite(daoFruit)) return { cost, shortfall: cost, blockedBy: "poor" };
+  const shortfall = Math.max(0, cost - daoFruit);
+  if (sessionActive) return { cost, shortfall, blockedBy: "busy" };
+  if (shortfall > 0) return { cost, shortfall, blockedBy: "poor" };
+  return { cost, shortfall: 0, blockedBy: null };
+}
+
 export type WorldRerollResult =
   /** 掷到新世界,道果已扣 */
   | "ok"
@@ -67,17 +91,14 @@ export interface RerollDeps {
  * 顺序是「先掷、再扣」:掷不出来就什么都不发生,不会出现「扣了钱没换到东西」。
  */
 export function rerollWorldByFruit(deps: RerollDeps): WorldRerollResult {
-  // 余额本身不合法(坏档):不掷、不扣 —— 与 sanitize 的口径一致,宁可什么都不做
-  if (!Number.isFinite(deps.daoFruit)) return "poor";
+  // 余额与历练闸走同一份报价:界面报什么原因,结算就拒什么原因
+  const quote = worldRerollQuote(deps.daoFruit, deps.sessionActive);
+  if (quote.blockedBy) return quote.blockedBy;
   /*
-   * 历练途中不许换界:setMortalWorld 会把本世路线进度清零(「换界即换路」),
-   * 途中换掉等于把玩家正在走的那条路抽走 —— 而这一趟的所得还没结算。
+   * 上面已挡住历练途中换界:setMortalWorld 会清空路线,而这一趟还没结算。
    * 与「掷不出就不扣」同一个口径:不制造说不清的损失。
    */
-  if (deps.sessionActive) return "busy";
-  const cost = worldRerollCost(deps.daoFruit);
-  if (deps.daoFruit < cost) return "poor";
   const next = deps.reroll();
   if (!next) return "unavailable";
-  return deps.spendFruit(cost) ? "ok" : "poor";
+  return deps.spendFruit(quote.cost) ? "ok" : "poor";
 }

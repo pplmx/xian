@@ -18,6 +18,7 @@ import {
   WORLD_REROLL_FLOOR,
   WORLD_REROLL_RATE,
   worldRerollCost,
+  worldRerollQuote,
   rerollWorldByFruit,
 } from "./worldReroll";
 
@@ -230,6 +231,29 @@ describe("换一方天地 · 历练途中不换界", () => {
     expect(reroll()).toBe("busy");
     adventure.session = null as never;
     expect(reroll()).toBe("ok");
+  });
+
+  it("门槛报价与结算同源:历练中优先报 busy,缺钱与数值坏档都报 poor", () => {
+    expect(worldRerollQuote(100, false)).toEqual({
+      cost: WORLD_REROLL_FLOOR,
+      shortfall: 0,
+      blockedBy: null,
+    });
+    expect(worldRerollQuote(WORLD_REROLL_FLOOR - 3, false)).toEqual({
+      cost: WORLD_REROLL_FLOOR,
+      shortfall: 3,
+      blockedBy: "poor",
+    });
+    expect(worldRerollQuote(WORLD_REROLL_FLOOR - 3, true)).toEqual({
+      cost: WORLD_REROLL_FLOOR,
+      shortfall: 3,
+      blockedBy: "busy",
+    });
+    expect(worldRerollQuote(Number.NaN, true)).toEqual({
+      cost: WORLD_REROLL_FLOOR,
+      shortfall: WORLD_REROLL_FLOOR,
+      blockedBy: "poor",
+    });
   });
 });
 

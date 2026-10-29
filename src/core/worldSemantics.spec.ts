@@ -305,6 +305,18 @@ describe("世界页概览 · 段数与层级跨度", () => {
     expect(v.clearedStages, "不许超过总段数").toBeLessThanOrEqual(v.stages);
   });
 
+  it("断档与乱序记录不算已过:概览只数从首段起的连续前缀", () => {
+    const w = POOL[0]!;
+    const [first, , third] = w.chain;
+    const saved = new Set([first!.nodeId, third!.nodeId]);
+    const v = worldView(
+      w,
+      (id) => id,
+      (nodeId) => saved.has(nodeId),
+    );
+    expect(v.clearedStages, "只通了首段,后面的断档记录不能凑成 2").toBe(1);
+  });
+
   it("自证:层级全相同时不写成「5–5」", () => {
     const w = POOL[0]!;
     const flat = { ...w, chain: w.chain.map((p) => ({ ...p, tier: 5 })) };

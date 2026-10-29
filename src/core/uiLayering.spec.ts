@@ -4162,4 +4162,10 @@ describe("不可逆的动作要先问一句 · 换一方天地", () => {
     expect(MW, "没写换完还剩多少").toMatch(/换完剩/);
     expect(MW, "没写本世路线会清零").toMatch(/本世路线进度清零/);
   });
+
+  it("禁用时把真正拦住玩家的原因写出来", () => {
+    expect(MW, "按钮门槛要来自核心报价,不许在视图另拼一套").toContain("worldRerollQuote");
+    expect(MW, "历练中禁用却没写原因").toContain("历练中");
+    expect(MW, "缺道果时仍要报差多少").toContain("尚差");
+  });
 });

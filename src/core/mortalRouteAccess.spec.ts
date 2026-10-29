@@ -94,6 +94,30 @@ describe("路线可达性 · 新号", () => {
     if (w.chain.length > 2) expect(canEnterNode(w.chain[2]!.nodeId)).toBe(false);
     console.log("\n通第一段 → 第二段开,第三段仍锁");
   });
+
+  it("乱序写入后段记录也不越权:准入与阶段提示都只认连续前缀", () => {
+    const adventure = useAdventureStore();
+    adventure.unlocked = [];
+    const w = ensureMortalWorld()!;
+    adventure.markNodeCleared(w.chain[2]!.nodeId);
+
+    expect(canEnterNode(w.chain[1]!.nodeId), "首段未通,第二段不能开").toBe(false);
+    expect(canEnterNode(w.chain[3]!.nodeId), "第三段记录不能把第四段也带开").toBe(false);
+    expect(
+      mortalStageStatuses(
+        w.chain.map((p) => p.nodeId),
+        adventure.mortalCleared,
+      ),
+    ).toEqual(
+      w.chain.map((_, i) =>
+        i === 0
+          ? { state: "current" }
+          : i === 1
+            ? { state: "blocked", waitsFor: w.chain[0]!.nodeId }
+            : { state: "blocked", waitsFor: null },
+      ),
+    );
+  });
 });
 
 describe("路线可达性 · 按 route index 而非 tier", () => {

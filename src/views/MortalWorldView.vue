@@ -34,7 +34,7 @@
           data-world-reroll
           @click="rerollConfirm = true"
         >
-          换一方天地({{ rerollCost }} 道果{{ canRerollWorld ? "" : ` · 尚差 ${shortfall} 枚` }})
+          换一方天地({{ rerollCost }} 道果{{ rerollBlockText }})
         </button>
         <!--
           换界的代价必须写在按钮下面:setMortalWorld 会把本世路线进度清零(「换界即换路」)。
@@ -197,7 +197,7 @@ import { useAdventureStore } from "@/stores/adventure";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
 import BaseModal from "@/components/common/BaseModal.vue";
-import { rerollWorldByFruit, worldRerollCost } from "@/core/worldReroll";
+import { rerollWorldByFruit, worldRerollQuote } from "@/core/worldReroll";
 import { rerollMortalWorld } from "@/core/mortalWorldService";
 import { enemyDef } from "@/data/enemies";
 import { regionDef } from "@/data/regions";
@@ -214,13 +214,20 @@ import {
 const adventure = useAdventureStore();
 const player = usePlayerStore();
 const ui = useUiStore();
-/** 换一方天地的按钮态:不够时按钮置灰,并把差多少写出来 */
-/** 这一次换世界的价(按余额抽成,见 core/worldReroll 的口径) */
-const rerollCost = computed(() => worldRerollCost(player.reincarnation.daoFruit));
-const canRerollWorld = computed(
-  () => player.reincarnation.daoFruit >= rerollCost.value && !adventure.sessionActive,
+/** 换界按钮与结算共用同一条门槛:价、短差与主拦截只算一次 */
+const rerollQuote = computed(() =>
+  worldRerollQuote(player.reincarnation.daoFruit, adventure.sessionActive),
 );
-const shortfall = computed(() => Math.max(0, rerollCost.value - player.reincarnation.daoFruit));
+const rerollCost = computed(() => rerollQuote.value.cost);
+const canRerollWorld = computed(() => rerollQuote.value.blockedBy === null);
+/** 禁用不能只灰不说:历练中与缺道果同时成立时,两个原因都写出来 */
+const rerollBlockText = computed(() => {
+  const quote = rerollQuote.value;
+  const reasons: string[] = [];
+  if (quote.blockedBy === "busy") reasons.push("历练中");
+  if (quote.shortfall > 0) reasons.push(`尚差 ${quote.shortfall} 枚`);
+  return reasons.length > 0 ? ` · ${reasons.join(" · ")}` : "";
+});
 const rerollConfirm = ref(false);
 
 /** 确认之后才真的花道果、换界 —— 与种子那份列表上的价钱是同一处算出来的 */

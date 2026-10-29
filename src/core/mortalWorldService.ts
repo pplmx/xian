@@ -77,9 +77,18 @@ export function canEnterNode(nodeId: string): boolean {
   if (!w) return false;
   const i = w.chain.findIndex((p) => p.nodeId === nodeId);
   if (i < 0) return false;
-  // 首段天然可进入,与旧 REGIONS 解锁链无关
-  if (i === 0) return true;
-  return adventure.mortalCleared.includes(w.chain[i - 1]!.nodeId);
+  /*
+   * 首段天然可进入;后段只认从首段起一段不缺的连续前缀。
+   * 不能只看「前一段 id 在不在表里」—— 手改档或异常写入一条第三段记录时,
+   * 第四段会因此被误开。阶段提示已按前缀计算,准入必须共用同一条规则。
+   */
+  return (
+    i <=
+    clearedPrefixLength(
+      w.chain.map((p) => p.nodeId),
+      adventure.mortalCleared,
+    )
+  );
 }
 
 /** 本世某节点是否已通 */
@@ -91,6 +100,14 @@ export type MortalStageStatus =
   | { state: "cleared" }
   | { state: "current" }
   | { state: "blocked"; waitsFor: string | null };
+
+/** 已通到第几段:只数从首段起连续的节点,返回首个未通段的下标 */
+function clearedPrefixLength(nodeIds: readonly string[], clearedIds: readonly string[]): number {
+  const cleared = new Set(clearedIds);
+  let current = 0;
+  while (current < nodeIds.length && cleared.has(nodeIds[current]!)) current += 1;
+  return current;
+}
 
 /**
  * 路线列表的阶段提示。
@@ -104,9 +121,7 @@ export function mortalStageStatuses(
   nodeIds: readonly string[],
   clearedIds: readonly string[],
 ): MortalStageStatus[] {
-  const cleared = new Set(clearedIds);
-  let current = 0;
-  while (current < nodeIds.length && cleared.has(nodeIds[current]!)) current += 1;
+  const current = clearedPrefixLength(nodeIds, clearedIds);
   return nodeIds.map((_, i) => {
     if (i < current) return { state: "cleared" };
     if (i === current) return { state: "current" };
@@ -331,13 +346,18 @@ export function worldView(
       bossName: bossNameOf(p.boss),
     };
   });
+  let clearedStages = 0;
+  for (const p of w.chain) {
+    if (!isCleared(p.nodeId)) break;
+    clearedStages += 1;
+  }
   return {
     title: id.name,
     summary: id.summary,
     ruleText: w.ruleName,
     biasText: biasEffectOf(w.bias)?.label ?? "",
     stages: w.chain.length,
-    clearedStages: w.chain.filter((p) => isCleared(p.nodeId)).length,
+    clearedStages,
     tierText: lo === hi ? `层级 ${lo}` : `层级 ${lo}–${hi}`,
     places,
   };
