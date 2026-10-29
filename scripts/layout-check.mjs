@@ -185,6 +185,8 @@
  *      完整效果与连升账由 aria-expanded 详情展开。
  *   六十五 界域志首屏的此刻优先:当前境、全路序号与前后境要先落在折线内;
  *      四界卷目默认只开当前界,其余收口,点开后要真的铺出该界境界。
+ *   六十六 成就谱首屏的眼下可追:卷首先列最近三枚并写明条件/进度;方向卷目
+ *      默认只开最近一路,点最近一枚或换一路时要真的展开目标卷。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -6232,6 +6234,182 @@ async function taskCodexFold() {
   };
 }
 
+/** 成就谱首屏的眼下可追:先列最近三枚,方向卷目按需展开 */
+async function taskAchievementFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.quests.counters = { kills: 48, explores: 9 };
+    slices.quests.achieved = [
+      "a_r0",
+      "a_r1",
+      "a_r2",
+      "a_r3",
+      "a_r4",
+      "a_r5",
+      "a_r6",
+      "a_r7",
+      "a_r8",
+      "a_r9",
+      "a_q4",
+      "a_q6",
+      "a_q7",
+    ];
+    await seedSave(ctx, slices, "__achievementFold");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/collection", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-achievement] 藏珍与成就没渲染出来,首屏判据没量到东西");
+    } else {
+      const readGroups = () =>
+        page.evaluate(() => {
+          const nav = document.querySelector("nav")?.getBoundingClientRect();
+          const hero = document.querySelector("[data-achievement-hero]");
+          const heroRect = hero?.getBoundingClientRect();
+          const jumps = [...document.querySelectorAll("[data-achievement-jump]")].map((btn) => ({
+            id: btn.getAttribute("data-achievement-jump") ?? "",
+            direction: btn.getAttribute("data-achievement-jump-direction") ?? "",
+            text: (btn.textContent || "").replace(/\s+/g, " ").trim(),
+          }));
+          const toggles = [...document.querySelectorAll("[data-achievement-group-toggle]")].map(
+            (btn) => {
+              const bodyId = btn.getAttribute("aria-controls") || "";
+              const body = bodyId ? document.getElementById(bodyId) : null;
+              return {
+                direction: btn.getAttribute("data-achievement-group-toggle") ?? "",
+                expanded: btn.getAttribute("aria-expanded") ?? null,
+                bodyVisible: Boolean(
+                  body &&
+                  getComputedStyle(body).display !== "none" &&
+                  body.getBoundingClientRect().height > 0,
+                ),
+                bodyText: (body?.textContent || "").replace(/\s+/g, " ").trim(),
+                bodyIds: [...(body?.querySelectorAll("[data-achievement-id]") ?? [])].map(
+                  (row) => row.getAttribute("data-achievement-id") ?? "",
+                ),
+              };
+            },
+          );
+          const open = toggles.filter((row) => row.expanded === "true");
+          return {
+            navTop: nav?.top ?? innerHeight,
+            heroTop: heroRect?.top ?? null,
+            heroBottom: heroRect?.bottom ?? null,
+            heroText: (hero?.textContent || "").replace(/\s+/g, " ").trim(),
+            jumps,
+            toggles,
+            open,
+          };
+        });
+
+      const fold = await readGroups();
+      checked += 1;
+      if (fold.heroTop === null || fold.heroBottom === null) {
+        failures.push("[390-achievement] 首屏没有成就谱卷首");
+      } else if (fold.heroBottom > fold.navTop + 1) {
+        failures.push(
+          `[390-achievement] 成就谱卷首被推到折线以下(hero bottom ${Math.round(fold.heroBottom)} / nav top ${Math.round(fold.navTop)})`,
+        );
+      }
+      if (fold.jumps.length !== 3) {
+        failures.push(`[390-achievement] 眼下可追应列 3 枚,实见 ${fold.jumps.length} 枚`);
+      }
+      if (!fold.heroText.includes("初试锋芒") || !fold.heroText.includes("48 / 50")) {
+        failures.push("[390-achievement] 卷首没有把最近成就的名称与真实进度摊开");
+      }
+      if (fold.open.length !== 1 || !fold.open[0]?.bodyVisible) {
+        failures.push(
+          `[390-achievement] 方向卷目应默认只开一路(open=${fold.open.length}, visible=${fold.open[0]?.bodyVisible})`,
+        );
+      }
+      if (
+        !fold.open[0]?.bodyText.includes("击败 50 个敌人") ||
+        fold.open[0]?.bodyText.includes("???")
+      ) {
+        failures.push("[390-achievement] 默认展开的成就行没有直接写明条件,仍在用「???」遮名");
+      }
+
+      const currentDirection = fold.open[0]?.direction ?? "";
+      const jump = fold.jumps.find((row) => row.direction && row.direction !== currentDirection);
+      if (!jump) {
+        failures.push("[390-achievement] 眼下可追没有跨方向的目标可供验证");
+      } else {
+        await page
+          .locator(`[data-achievement-jump="${jump.id}"]`)
+          .click({ timeout: 3000 })
+          .catch(() => {});
+        await page.waitForTimeout(350);
+        checked += 1;
+        const jumped = await readGroups();
+        const open = jumped.open[0];
+        if (
+          jumped.open.length !== 1 ||
+          open?.direction !== jump.direction ||
+          !open?.bodyVisible ||
+          !open.bodyIds.includes(jump.id)
+        ) {
+          failures.push(
+            `[390-achievement] 点「${jump.id}」没有展开目标方向卷目` +
+              `(期望 ${jump.direction},实见 ${open?.direction ?? "无"})`,
+          );
+        }
+      }
+
+      const openToggle = page
+        .locator('[data-achievement-group-toggle][aria-expanded="true"]')
+        .first();
+      if ((await openToggle.count()) === 0) {
+        failures.push("[390-achievement] 当前没有可收起的成就卷目");
+      } else {
+        await openToggle.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(120);
+        checked += 1;
+        const collapsed = await readGroups();
+        if (collapsed.open.length !== 0) {
+          failures.push("[390-achievement] 点开着的方向题头没有收卷");
+        }
+      }
+
+      const closedToggle = page
+        .locator('[data-achievement-group-toggle][aria-expanded="false"]')
+        .first();
+      if ((await closedToggle.count()) === 0) {
+        failures.push("[390-achievement] 没有收着的方向卷目可供换开");
+      } else {
+        await closedToggle.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(120);
+        checked += 1;
+        const reopened = await readGroups();
+        if (reopened.open.length !== 1 || !reopened.open[0]?.bodyVisible) {
+          failures.push("[390-achievement] 点收着的方向题头没有铺出该方向成就");
+        }
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[390-achievement] 成就谱首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 /**
  * 前尘山河 —— 跨世历史在 320 与 195 宽下必须真的画得出来。
  *
@@ -10617,6 +10795,7 @@ const TASKS = [
   ["洞府营造的账目", taskDongfuBuild],
   ["洞府首屏的营造优先", taskDongfuFold],
   ["界域志首屏的此刻优先", taskCodexFold],
+  ["成就谱首屏的眼下可追", taskAchievementFold],
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
   ["背包里的账目", taskInventoryAccounting],

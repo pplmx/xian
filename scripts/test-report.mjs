@@ -241,6 +241,7 @@ const CATEGORIES = [
       "storage.spec",
       "codexSource",
       "achievementHint",
+      "achievementProgress",
       "titleLadder",
       "artifactEffects",
       "dataHeaderAudit",

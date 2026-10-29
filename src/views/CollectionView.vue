@@ -15,55 +15,172 @@
 
     <!-- 成就 -->
     <template v-if="tab === 'achievement'">
-      <SectionTitle
-        title="成就"
-        :hint="`${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length}`"
-      />
       <!--
-        全局进度条:六十几项成就的「整体走多远了」给一根条 —— 数字要读,
-        条是扫一眼。颜色 jade(推进态),与组内细条同色不同高度,层级靠粗细分。
+        卷首先报「此刻」:整体走到哪、眼下哪三枚最近。
+        名称与条件全部摊开,玩家才知道该往哪使劲;不再用一整墙「???」代替目标。
       -->
-      <ProgressBar
-        class="mt-2"
-        :value="achievementCounts(achievementStateOf(quests.achieved)).done / ACHIEVEMENTS.length"
-        color="var(--color-jade)"
-        :height="3"
-      />
-      <div class="card-ink mt-2 divide-y divide-ink/6 px-4">
-        <template v-for="g in achievementGroups" :key="g.direction">
-          <!-- 方向小标题:把六十多个「???」按「往哪使劲」归拢,组头给出该方向的达成进度 -->
-          <p class="flex items-center justify-between py-1.5 text-[10px] text-ink-faint">
-            <span class="font-kai tracking-widest">{{ g.direction }}</span>
-            <span class="tabular">{{ g.done }}/{{ g.total }}</span>
+      <div class="card-ink mt-2 px-4 py-3" data-achievement-hero>
+        <div class="flex items-end justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">成就谱</p>
+            <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+              名称与条件不再藏着；做成一枚，记一枚。
+            </p>
+          </div>
+          <p class="shrink-0 font-kai text-[18px] text-cinnabar tabular">
+            {{ doneCount
+            }}<span class="text-[11px] text-ink-faint">/{{ ACHIEVEMENTS.length }}</span>
           </p>
-          <!-- 组内细条:这一路走到哪了,2px 不与全局条争粗细 -->
-          <ProgressBar
-            class="pb-1.5"
-            :value="g.total > 0 ? g.done / g.total : 0"
-            color="var(--color-jade)"
-            :height="2"
-          />
-          <div v-for="row in g.rows" :key="row.id" class="flex items-center gap-3 py-2.5">
+        </div>
+        <ProgressBar
+          class="mt-2"
+          :value="doneCount / ACHIEVEMENTS.length"
+          color="var(--color-jade)"
+          :height="3"
+        />
+        <div class="ink-divider-mark my-3" />
+        <div class="flex items-baseline justify-between gap-2">
+          <p class="font-kai text-[11px] tracking-widest text-ink-soft">眼下可追</p>
+          <p class="text-[10px] text-ink-faint">按完成比例</p>
+        </div>
+        <div v-if="nearestAchievements.length" class="mt-1.5 space-y-1">
+          <button
+            v-for="row in nearestAchievements"
+            :key="row.def.id"
+            type="button"
+            class="flex min-h-8 w-full items-start gap-2 rounded px-1.5 py-1.5 text-left active:bg-ink/5"
+            :data-achievement-jump="row.def.id"
+            :data-achievement-jump-direction="row.direction"
+            :aria-label="`查看成就 ${row.def.name}`"
+            @click="revealAchievement(row)"
+          >
             <span
-              class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-kai"
-              :class="row.done ? 'border-gold-ink text-gold-ink' : 'border-ink/15 text-ink-faint'"
-            >
-              {{ row.done ? "成" : "未" }}
+              class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
+              :class="row.ratio > 0 ? 'bg-cinnabar' : 'bg-ink/20'"
+            />
+            <span class="min-w-0 flex-1">
+              <span
+                class="flex items-baseline justify-between gap-2 tinylens:flex-col tinylens:items-start tinylens:gap-0"
+              >
+                <span class="truncate font-kai text-[11px] text-ink">{{ row.def.name }}</span>
+                <span class="shrink-0 tabular text-[10px] text-qing">{{ row.label }}</span>
+              </span>
+              <span class="mt-0.5 block truncate text-[10px] text-ink-faint">{{
+                row.def.desc
+              }}</span>
             </span>
-            <div class="min-w-0">
-              <p class="font-kai text-[11px]" :class="row.done ? 'text-ink' : 'text-ink-faint'">
-                {{ row.name }}
-              </p>
-              <p class="truncate text-[10px] text-ink-faint">{{ row.desc }}</p>
-              <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏(见 rewardText 含 titleId) -->
-              <p v-if="row.done && row.rewardText" class="text-[10px] text-qing tabular">
-                {{ row.rewardText }}
-              </p>
+            <span class="mt-0.5 shrink-0 text-[10px] text-ink-faint" aria-hidden="true">›</span>
+          </button>
+        </div>
+        <p v-else class="mt-2 text-[10px] text-jade">全谱已成，往后的路只看你怎么走。</p>
+      </div>
+
+      <div class="mt-3 space-y-2">
+        <section
+          v-for="(g, gi) in achievementGroups"
+          :key="g.direction"
+          class="card-ink overflow-hidden"
+          :data-achievement-group="g.direction"
+        >
+          <button
+            type="button"
+            class="flex w-full items-start gap-3 px-4 py-3 text-left active:bg-ink/5"
+            :data-achievement-group-toggle="g.direction"
+            :aria-expanded="isGroupOpen(g.direction)"
+            :aria-controls="groupBodyId(gi)"
+            @click="toggleGroup(g.direction)"
+          >
+            <span class="min-w-0 flex-1">
+              <span class="flex items-baseline justify-between gap-2">
+                <span class="font-kai text-[14px] tracking-[0.2em] text-ink">{{
+                  g.direction
+                }}</span>
+                <span class="shrink-0 tabular text-[11px] text-ink-faint"
+                  >{{ g.done }}/{{ g.total }}</span
+                >
+              </span>
+              <ProgressBar
+                class="mt-1.5"
+                :value="g.total > 0 ? g.done / g.total : 0"
+                color="var(--color-jade)"
+                :height="2"
+              />
+              <span class="mt-1 block truncate text-[10px] text-ink-faint">
+                {{
+                  g.done === g.total
+                    ? "此路已尽，点开回看"
+                    : g.nearest
+                      ? `最近：${g.nearest.def.name} · ${g.nearest.label}`
+                      : "尚无可量化目标"
+                }}
+              </span>
+            </span>
+            <span
+              class="mt-0.5 shrink-0 text-[11px] transition-transform"
+              :class="isGroupOpen(g.direction) ? 'rotate-180 text-cinnabar' : 'text-ink-faint'"
+              aria-hidden="true"
+              >▾</span
+            >
+          </button>
+          <div
+            v-if="isGroupOpen(g.direction)"
+            :id="groupBodyId(gi)"
+            :data-achievement-group-body="g.direction"
+            class="border-t border-ink/6"
+          >
+            <div
+              v-for="row in g.rows"
+              :key="row.def.id"
+              :data-achievement-id="row.def.id"
+              class="flex items-start gap-3 border-b border-ink/6 px-4 py-2.5 last:border-b-0"
+            >
+              <span
+                class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[10px] font-kai"
+                :class="
+                  row.done
+                    ? 'border-gold-ink text-gold-ink'
+                    : row.target !== null
+                      ? 'border-cinnabar/40 text-cinnabar'
+                      : 'border-ink/15 text-ink-faint'
+                "
+              >
+                {{ row.done ? "成" : row.percent === null ? "未" : `${row.percent}%` }}
+              </span>
+              <div class="min-w-0 flex-1">
+                <div
+                  class="flex items-baseline justify-between gap-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
+                >
+                  <p class="font-kai text-[11px]" :class="row.done ? 'text-ink' : 'text-ink-soft'">
+                    {{ row.def.name }}
+                  </p>
+                  <span
+                    class="shrink-0 tabular text-[10px]"
+                    :class="row.done ? 'text-gold-ink' : 'text-qing'"
+                    >{{ row.label }}</span
+                  >
+                </div>
+                <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+                  {{ row.def.desc }}
+                </p>
+                <ProgressBar
+                  v-if="!row.done && row.target !== null"
+                  class="mt-1.5"
+                  :value="row.ratio"
+                  color="var(--color-cinnabar)"
+                  :height="2"
+                />
+                <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏(见 rewardText 含 titleId) -->
+                <p v-if="row.done && row.rewardText" class="mt-0.5 text-[10px] text-qing tabular">
+                  {{ row.rewardText }}
+                </p>
+              </div>
             </div>
           </div>
-        </template>
+        </section>
       </div>
-      <p class="text-center text-[10px] text-ink-faint">功成之日,名目自现</p>
+      <p class="text-center text-[10px] text-ink-faint">
+        未达成也写明条件；卷目按方向收着，点开可逐条对账
+      </p>
     </template>
 
     <!-- 收藏图鉴 -->
@@ -209,6 +326,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useQuestsStore } from "@/stores/quests";
+import { useInventoryStore } from "@/stores/inventory";
+import { usePlayerStore } from "@/stores/player";
 import type { CollectionCategory } from "@/types";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { GONGFA } from "@/data/gongfa";
@@ -230,7 +349,11 @@ import {
 } from "@/ui/codex";
 import { gongfaFuncText, gongfaMetaText } from "@/ui/itemText";
 import { achievementDirection } from "@/ui/achievementHint";
-import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
+import {
+  achievementProgressRows,
+  nearestAchievementRows,
+  type AchievementProgressRow,
+} from "@/core/achievementProgress";
 import { rewardTextAtTier } from "@/core/progress";
 import {
   firstNewVisibleIndex,
@@ -246,6 +369,8 @@ import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 
 const quests = useQuestsStore();
+const inventory = useInventoryStore();
+const player = usePlayerStore();
 
 type Tab = "achievement" | "collection";
 const tab = ref<Tab>("achievement");
@@ -265,35 +390,40 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "collection", label: "收藏" },
 ];
 
-/**
- * 成就一律先以「???」示人,达成之后才现名目。
- *
- * 既然未达成的全都遮住,原先的 hidden 标记(未达成时整行不列出)就没了着落 ——
- * 它与寻常未达成者长得一模一样。故此处不再筛除,全量位子一个不少。
- */
-const achievementRows = computed(() =>
-  ACHIEVEMENTS.map((a) => {
-    const done = quests.hasAchieved(a.id);
-    return {
-      id: a.id,
-      done,
-      // 方向:未达成者靠它分组归位(见 achievementGroups)—— 名字仍遮着
-      direction: achievementDirection(a.cond),
-      name: done ? a.name : "???",
-      // 方向已提到组头,行里不再重写;名字成时自现
-      desc: done ? a.desc : "尚未达成 · 成时自见",
-      // 达成才现赏:名目成时、所获同露 —— 按「达成时 tier」折实(实发额,不再随当前
-      // 层级漂移);含称号(29/62 的大头),与发赏同一套换算
-      rewardText:
-        done && a.reward ? rewardTextAtTier(a.reward, quests.achievedTiers[a.id] ?? 1) : "",
-    };
-  }),
+type AchievementRow = AchievementProgressRow & { direction: string; rewardText: string };
+
+/** 品质型成就的进度只看当前持有最高品质；它是 "现持" 口径，不是历史最高记录。 */
+const maxQualityRank = computed(() =>
+  inventory.items.reduce((max, item) => Math.max(max, qualityDef(item.quality).rank), 0),
 );
 
 /**
- * 成就按「方向」分组 —— 六十多个「???」平铺是一张白纸;按「往哪使劲」归拢之后,
- * 一眼看得出这一路在做什么、还差哪些。组头给出该方向的进度,组内已达成者置顶。
- * 组序:已达成多的在前 → 条目多的在前(0 达成的局,就看哪个方向摊得厚)。
+ * 成就谱不再把未达成者遮成「???」:名称、条件与可量化进度全部摊开。
+ * 达成与否仍只读 quests.achieved,这里只补 "离目标还有多远" 的派生读数。
+ */
+const achievementRows = computed<AchievementRow[]>(() =>
+  achievementProgressRows(ACHIEVEMENTS, {
+    achieved: quests.achieved,
+    counters: quests.counters,
+    major: player.major,
+    maxQualityRank: maxQualityRank.value,
+  }).map((row) => ({
+    ...row,
+    direction: achievementDirection(row.def.cond),
+    // 达成才现赏:按「达成时 tier」折实(实发额,不再随当前层级漂移);含称号。
+    rewardText:
+      row.done && row.def.reward
+        ? rewardTextAtTier(row.def.reward, quests.achievedTiers[row.def.id] ?? 1)
+        : "",
+  })),
+);
+
+const doneCount = computed(() => achievementRows.value.filter((row) => row.done).length);
+const nearestAchievements = computed(() => nearestAchievementRows(achievementRows.value, 3));
+
+/**
+ * 成就按「方向」分组:组头先报这一路的进度与最近一枚,组内未达成者按完成比例
+ * 置顶,已达成者落到后面回看。组序先把还没走完的路放前面,再按最近完成比例排。
  */
 const achievementGroups = computed(() => {
   const map = new Map<string, { direction: string; rows: typeof achievementRows.value }>();
@@ -303,14 +433,71 @@ const achievementGroups = computed(() => {
     map.set(row.direction, g);
   }
   return [...map.values()]
-    .map((g) => ({
-      ...g,
-      rows: [...g.rows].sort((a, b) => Number(b.done) - Number(a.done)),
-      done: g.rows.filter((r) => r.done).length,
-      total: g.rows.length,
-    }))
-    .sort((a, b) => b.done - a.done || b.total - a.total);
+    .map((g) => {
+      const rows = [...g.rows].sort(
+        (a, b) =>
+          Number(a.done) - Number(b.done) ||
+          b.ratio - a.ratio ||
+          (a.gap ?? Number.MAX_SAFE_INTEGER) - (b.gap ?? Number.MAX_SAFE_INTEGER) ||
+          a.def.id.localeCompare(b.def.id),
+      );
+      return {
+        direction: g.direction,
+        rows,
+        done: rows.filter((row) => row.done).length,
+        total: rows.length,
+        nearest: nearestAchievementRows(rows, 1)[0] ?? null,
+      };
+    })
+    .sort(
+      (a, b) =>
+        Number(a.done === a.total) - Number(b.done === b.total) ||
+        (b.nearest?.ratio ?? -1) - (a.nearest?.ratio ?? -1) ||
+        b.done - a.done ||
+        b.total - a.total,
+    );
 });
+
+const openDirection = ref<string | null>(null);
+const groupStateReady = ref(false);
+watch(
+  achievementGroups,
+  (groups) => {
+    if (!groupStateReady.value) {
+      const nearestId = nearestAchievements.value[0]?.def.id;
+      openDirection.value =
+        groups.find((group) => group.nearest?.def.id === nearestId)?.direction ??
+        groups[0]?.direction ??
+        null;
+      groupStateReady.value = true;
+      return;
+    }
+    if (openDirection.value && !groups.some((group) => group.direction === openDirection.value)) {
+      openDirection.value = groups[0]?.direction ?? null;
+    }
+  },
+  { immediate: true },
+);
+
+function isGroupOpen(direction: string): boolean {
+  return openDirection.value === direction;
+}
+
+function toggleGroup(direction: string): void {
+  openDirection.value = openDirection.value === direction ? null : direction;
+}
+
+function groupBodyId(index: number): string {
+  return `achievement-group-body-${index}`;
+}
+
+function revealAchievement(row: AchievementRow): void {
+  openDirection.value = row.direction;
+  void nextTick(() => {
+    const target = document.querySelector<HTMLElement>(`[data-achievement-id="${row.def.id}"]`);
+    target?.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+}
 
 /**
  * 原有七类只有"收没收录"两态,在此补齐 CodexEntry 的深度字段:

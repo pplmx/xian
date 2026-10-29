@@ -1,8 +1,8 @@
 /**
- * 成就方向 · 每个「???」都得有地方可去
+ * 成就方向 · 每条成就都得有地方可去
  *
- * 未达成的成就在界面上不现名目(成时自现),但**方向**得给:「方向:历练际遇」
- * 让玩家知道哪儿跟他有关。方向由条件推出,故这里守三件事:
+ * 名称与条件已直接示人,方向负责把条目收成可读卷目。方向由条件推出,
+ * 故这里守三件事:
  *
  *   一 每条成就都定得出方向(不许出现 undefined / 空话);
  *   二 计数器联合类型里的每一个键,方向表里都有 —— 从 types/index.ts 扫出来核,
@@ -31,7 +31,7 @@ function counterKeysFromTypes(): string[] {
   return [...new Set([...block.matchAll(/["']([A-Za-z]+)["']/g)].map((m) => m[1]!))];
 }
 
-describe("成就方向 · 每个「???」都有地方可去", () => {
+describe("成就方向 · 每条成就都有地方可去", () => {
   it("每条成就都定得出方向,不是空话", () => {
     const bad: string[] = [];
     for (const a of ACHIEVEMENTS) {
@@ -45,10 +45,9 @@ describe("成就方向 · 每个「???」都有地方可去", () => {
     const declared = counterKeysFromTypes();
     expect(declared.length, "一个计数器都没扫到,断言形同虚设").toBeGreaterThan(10);
     const missing = declared.filter((k) => !(k in COUNTER_DIRECTIONS));
-    expect(
-      missing,
-      `这些计数器没有方向 —— 用到它的成就只会显示「???」:${missing.join("、")}`,
-    ).toEqual([]);
+    expect(missing, `这些计数器没有方向 —— 用到它的成就只会无处归类:${missing.join("、")}`).toEqual(
+      [],
+    );
   });
 
   it("反向也不许多:方向表里不许有已经消失的计数器", () => {

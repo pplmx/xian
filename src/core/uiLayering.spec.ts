@@ -712,6 +712,23 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("成就谱先给眼下可追，再把方向收成可展开卷目", () => {
+    // 66 个「???」既不给条件也不给距离,玩家无法据此安排下一步。
+    // 判据:进度由 achievementProgress 派生;卷首先列最近三枚;名称与条件直接露;
+    // 每个方向是带 aria-expanded / aria-controls 的真按钮,默认只开最近的一组。
+    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    expect(col?.src).toContain("achievementProgressRows");
+    expect(col?.src).toContain("nearestAchievementRows(achievementRows.value, 3)");
+    expect(col?.src).toContain("data-achievement-hero");
+    expect(col?.src).toContain("data-achievement-group-toggle");
+    expect(col?.src).toContain(':aria-expanded="isGroupOpen(g.direction)"');
+    expect(col?.src).toContain(':aria-controls="groupBodyId(gi)"');
+    expect(col?.src).toContain("revealAchievement(row)");
+    expect(col?.src, "未达成者的名称要直接露出来").toContain("{{ row.def.name }}");
+    expect(col?.src, "未达成者的条件要直接露出来").toContain("{{ row.def.desc }}");
+    expect(col?.src, "旧的一整墙 ??? 文案已经退场").not.toContain("成时自见");
+  });
+
   it("全收集图鉴逐册滑动翻看 —— 前后可达，点击再多也不让 DOM 无限长", () => {
     /*
      * 九册全收是 800+ 枚 chip，首帧全铺实测 1326 DOM。每册先给一批，余下由

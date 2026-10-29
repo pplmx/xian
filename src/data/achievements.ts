@@ -1,8 +1,8 @@
 /**
  * 成就库 —— 66 个,长期目标
  *
- * 未达成者在界面上一律以「???」示人(见 views/CollectionView.vue),
- * 所以此表不再有"隐藏成就"一说 —— 每个位子人人平等,成了才现名目。
+ * 未达成者也直接露出名称与条件:成就不是猜谜,玩家要能据此安排下一步。
+ * 可量化进度由 core/achievementProgress 从计数器、境界与持有品质派生。
  */
 import type { AchievementDef, AchvCond, CounterKey, RewardBundle } from "@/types";
 
