@@ -36,6 +36,7 @@ import { pillDef } from "@/data/pills";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { notify } from "@/core/notify";
+import GameIcon from "@/components/common/GameIcon.vue";
 
 const router = useRouter();
 const appr = useApprenticeStore();
@@ -171,13 +172,20 @@ const dispatchLabel = computed(() => {
  */
 const taskTap = ref<string | null>(null); // `${uid}:${spec}`
 
+function taskKey(uid: string, spec: ApprenticeSpec): string {
+  return `${uid}:${spec}`;
+}
+
+function isTaskOpen(uid: string, spec: ApprenticeSpec): boolean {
+  return taskTap.value === taskKey(uid, spec);
+}
+
 function tapTask(uid: string, spec: ApprenticeSpec): void {
-  const key = `${uid}:${spec}`;
-  if (taskTap.value === key) {
+  if (isTaskOpen(uid, spec)) {
     taskTap.value = null;
     send(uid, spec);
   } else {
-    taskTap.value = key;
+    taskTap.value = taskKey(uid, spec);
   }
 }
 
@@ -283,18 +291,36 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
         <!-- 闲置:可派活 -->
         <div v-else class="mt-1.5">
           <p class="mb-1 text-[10px] text-ink-faint">派去:</p>
-          <div class="flex flex-wrap gap-1">
+          <div class="grid grid-cols-2 gap-1.5 tinylens:grid-cols-1">
             <button
               v-for="t in APPRENTICE_TASKS"
               :key="t.spec"
-              class="rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar active:scale-95"
-              :aria-expanded="taskTap === a.uid + ':' + t.spec"
+              class="flex min-h-[44px] w-full items-center gap-1.5 rounded-md border px-1.5 py-1 text-left transition-colors active:scale-[0.98]"
+              :class="
+                isTaskOpen(a.uid, t.spec)
+                  ? 'border-cinnabar/35 bg-cinnabar/4'
+                  : 'border-ink/10 bg-paper/35 hoverable:hover:border-cinnabar'
+              "
+              :aria-expanded="isTaskOpen(a.uid, t.spec)"
               @click="tapTask(a.uid, t.spec)"
             >
-              <span class="block"
-                >{{ t.name }}({{ Math.round(apprenticeTaskSeconds(t.spec) / 60) }}分)</span
+              <span
+                class="shrink-0"
+                :class="isTaskOpen(a.uid, t.spec) ? 'text-cinnabar' : 'text-ink-faint'"
               >
-              <span class="block text-ink-faint">{{ taskYield(a, t.spec) }}</span>
+                <GameIcon :name="t.icon" :size="15" />
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="flex items-baseline justify-between gap-1">
+                  <span class="font-kai text-[11px] tracking-[0.05em] text-ink">{{ t.name }}</span>
+                  <span class="shrink-0 text-[10px] tabular text-ink-faint"
+                    >{{ Math.round(apprenticeTaskSeconds(t.spec) / 60) }} 分</span
+                  >
+                </span>
+                <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{
+                  taskYield(a, t.spec)
+                }}</span>
+              </span>
             </button>
           </div>
           <!-- 任务说明点开直出(与适配理由/天赋芯片同族)::title 在手机上是死提示。

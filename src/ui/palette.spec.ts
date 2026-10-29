@@ -286,8 +286,9 @@ describe("调色板 · 文字不叠透明度", () => {
    *    见 design.md「需要更淡的装饰性线条/色块用墨的 15%」);其余档位(如曾经的
    *    ink-faint/40、ink/25)都该落在整色 token 上。
    */
+  const INK_TEXT = new Set(["ink", "ink-soft", "ink-faint"]);
   const STRONG = [...LIGHT.keys()].filter(
-    (n) => !SURFACES.has(n) && n !== SEAL && !n.endsWith("-ink") && !n.startsWith("ink"),
+    (n) => !SURFACES.has(n) && n !== SEAL && !INK_TEXT.has(n),
   );
   it("语义强色作字色不叠透明度", () => {
     expect(STRONG.length).toBeGreaterThan(0);
@@ -308,8 +309,8 @@ describe("调色板 · 文字不叠透明度", () => {
       /\.(vue|ts)$/,
     )) {
       const text = readFileSync(resolve(ROOT, f), "utf-8");
-      for (const m of text.matchAll(/text-(?:ink|ink-soft|ink-faint)(?:\/([0-9]{1,2}))?\b/g)) {
-        if (m[1] !== undefined && m[1] !== "15") hits.push(`${f} → text-…/n${m[1]}`);
+      for (const m of text.matchAll(/text-(ink(?:-soft|-faint)?)(?:\/([0-9]{1,2}))?\b/g)) {
+        if (m[2] !== undefined && m[2] !== "15") hits.push(`${f} → text-…/${m[2]}`);
       }
     }
     expect(hits, "墨色文字叠了非 /15 的透明度——该换整色 token").toEqual([]);

@@ -132,7 +132,7 @@
           -->
           <span class="font-kai text-[10px] tracking-[0.15em] text-ink-faint">
             {{ row.name }}
-            <span v-if="row.stock" class="tracking-normal text-ink-faint/70">·{{ row.stock }}</span>
+            <span v-if="row.stock" class="tracking-normal text-ink-faint">·{{ row.stock }}</span>
           </span>
           <template v-if="row.item && row.template">
             <GameIcon

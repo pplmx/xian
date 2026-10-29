@@ -18,7 +18,7 @@
       <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
         <p v-for="r in identityRoots" :key="r.label" class="flex justify-between gap-2">
           <span class="shrink-0 text-ink-faint">{{ r.label }}</span
-          ><span class="truncate" :class="r.value ? 'text-ink-soft' : 'text-ink-faint/70'">{{
+          ><span class="truncate" :class="r.value ? 'text-ink-soft' : 'text-ink-faint'">{{
             r.value || "—"
           }}</span>
         </p>

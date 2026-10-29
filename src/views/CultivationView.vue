@@ -225,12 +225,7 @@
           }}
         </button>
         <!-- 灵气不足只报四字,拦下的却是「还差多少、回够要多久」 —— 补齐直显,与突破钮 btQiBlock 同款 -->
-        <p
-          v-if="repairBlock"
-          class="mt-1 text-center text-[10px] leading-relaxed text-cinnabar tabular"
-        >
-          尚差 {{ repairBlock.short }} 灵气,按当前回复{{ repairBlock.eta }}
-        </p>
+        <QiShortfallNote v-if="repairBlock" :short="repairBlock.short" :eta="repairBlock.eta" />
       </div>
     </div>
 
@@ -386,6 +381,7 @@ import RealmLadder from "@/components/cultivation/RealmLadder.vue";
 import GongfaSection from "@/components/cultivation/GongfaSection.vue";
 import BreakthroughCard from "@/components/cultivation/BreakthroughCard.vue";
 import RetreatCard from "@/components/cultivation/RetreatCard.vue";
+import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();

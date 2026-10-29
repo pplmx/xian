@@ -75,7 +75,7 @@
                 :key="`d${i}`"
                 class="flex gap-1.5 text-[11px] leading-relaxed"
               >
-                <span class="shrink-0 text-gold-ink/70">◈</span>
+                <span class="shrink-0 text-gold-ink">◈</span>
                 <span class="min-w-0 text-gold-ink">{{ r }}</span>
               </p>
             </div>

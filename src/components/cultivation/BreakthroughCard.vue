@@ -159,9 +159,7 @@
       {{ btInfo.ready ? (btInfo.needTribulation ? "引 劫 突 破" : "尝 试 突 破") : btInfo.reason }}
     </button>
     <!-- 灵气不足是四个字,拦下的却是「还差多少、回够要多久」 —— 补齐直显,别让玩家点开灵气数才看见等待值(与修为 ETA 同款口径) -->
-    <p v-if="btQiBlock" class="mt-1 text-center text-[10px] leading-relaxed text-cinnabar tabular">
-      尚差 {{ btQiBlock.short }} 灵气,按当前回复{{ btQiBlock.eta }}
-    </p>
+    <QiShortfallNote v-if="btQiBlock" :short="btQiBlock.short" :eta="btQiBlock.eta" />
   </div>
 </template>
 
@@ -192,6 +190,7 @@ import {
   formatPercent,
 } from "@/utils/format";
 import TribulationPanel from "@/components/cultivation/TribulationPanel.vue";
+import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
 import { useGameNow } from "@/composables/useGameNow";
 
 const player = usePlayerStore();

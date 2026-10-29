@@ -185,7 +185,7 @@
               <!-- 明细口:收着时是一枚淡「›」,展开时转 90° 并转朱砂 -->
               <span
                 class="w-2 text-[10px] leading-none transition-transform"
-                :class="breakdownKey === row.key ? 'rotate-90 text-cinnabar' : 'text-ink-faint/60'"
+                :class="breakdownKey === row.key ? 'rotate-90 text-cinnabar' : 'text-ink-faint'"
                 aria-hidden="true"
                 >›</span
               >

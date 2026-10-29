@@ -82,7 +82,7 @@
           :key="line"
           class="flex gap-1.5 text-[10px] leading-relaxed text-ink-faint"
         >
-          <span class="shrink-0 text-ink-faint/60">·</span>
+          <span class="shrink-0 text-ink/15">·</span>
           <span>{{ line }}</span>
         </li>
       </ul>

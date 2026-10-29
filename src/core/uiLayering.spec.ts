@@ -1671,6 +1671,27 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(appr?.src, "右侧收徒按钮贴右").toContain("justify-self-end");
   });
 
+  it("门庭派活卡排成等高两列 —— 五个产出项目前靠内容宽窄拼成 3+2 的锯齿", () => {
+    /*
+     * 派活是这一页唯一的分支动作,五枚任务原先走 flex-wrap:按钮宽度由文案决定,
+     * 390 宽下第一行 3 枚、第二行 2 枚且逐枚不等宽,像一组没对齐的标签。
+     * 两列等宽让五枚产出在同一把尺上比较;200% 缩放(195 CSS px)再收一列,
+     * 不把产出文案挤成窄胶囊。图标取任务数据里的 icon,选中态用淡朱砂边底报出。
+     */
+    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    expect(appr?.src, "派活卡要排成稳定的两列网格").toMatch(
+      /grid grid-cols-2 gap-1\.5 tinylens:grid-cols-1/,
+    );
+    expect(appr?.src, "每枚任务卡占满单元格并留足触达高度").toContain("min-h-[44px] w-full");
+    expect(appr?.src, "任务图标读 APPRENTICE_TASKS 的 icon,不另抄一套").toContain(':name="t.icon"');
+    expect(appr?.src, "选中态用 4% 朱砂底与可读边框,不用实心彩胶囊").toContain(
+      "'border-cinnabar/35 bg-cinnabar/4'",
+    );
+    expect(appr?.src, "展开态与派发判定共用同一个任务 key 谓词").toContain(
+      ':aria-expanded="isTaskOpen(a.uid, t.spec)"',
+    );
+  });
+
   it("毁器/交器代价的数字不许被弹列换行裁掉 —— 决策信息只在宽屏看得出就不算完整", () => {
     // 两处「按下前必须看清数字」的文案曾被 truncate(nowrap+ellipsis):
     //  · 器魂凝炼台的「已淬养」警示 —— 320 宽下标题列只剩 167px,而整句要 310px,
@@ -1785,7 +1806,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       // 转世交割清单里点开的那一条(heritageTap)—— 只换措辞不报状态,读屏分不清
       ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageTap === r.id"'],
       // 门庭派活的两步钮:第一下展开任务说明、再点同枚才派出 —— 新登的 disclosure
-      ["views/ApprenticeView.vue", ":aria-expanded=\"taskTap === a.uid + ':' + t.spec\""],
+      ["views/ApprenticeView.vue", ':aria-expanded="isTaskOpen(a.uid, t.spec)"'],
       // 秘境整卡先收成一行;这张卡与卡内名录各有一层 disclosure
       ["components/adventure/SecretRealmCard.vue", ':aria-expanded="cardExpanded"'],
       // 秘境名录是历练页的支线,默认只亮最近两处;展开/收起要把状态报给读屏
@@ -2535,9 +2556,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cult?.src, "没有伤势时连入口都不出现,短差句也不许单独挂出来").toContain(
       "if (!repair.value.injured || repair.value.affordable) return null;",
     );
-    expect(cult?.src, "短差句要与突破钮同款(尚差 X,按当前回复约 Y)").toContain(
-      "尚差 {{ repairBlock.short }} 灵气,按当前回复{{ repairBlock.eta }}",
-    );
+    expect(cult?.src, "短差句要与突破钮共用同一枚展示").toContain("<QiShortfallNote");
+    expect(cult?.src, "短差值接共享展示").toContain(':short="repairBlock.short"');
+    expect(cult?.src, "回够时长接共享展示").toContain(':eta="repairBlock.eta"');
   });
 
   it("出秘境要二步确认 —— 付过门票的独一份内容,误触不该直接清空", () => {

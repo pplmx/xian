@@ -324,7 +324,13 @@ describe("文案数值对账 · 视图不手抄数字", () => {
     // reason 报「灵气不足」时,按钮下方必须有 btQiBlock 的短差与 ETA;删/收缩成四字立刻红
     expect(view).toContain('btInfo.value.reason !== "灵气不足"');
     expect(view).toContain('v-if="btQiBlock"');
-    expect(view).toContain("尚差 {{ btQiBlock.short }}");
+    expect(view, "短差与回够时长共用一处展示").toContain("<QiShortfallNote");
+    expect(view).toContain(':short="btQiBlock.short"');
+    expect(view).toContain(':eta="btQiBlock.eta"');
+    // 灵气可到亿级;裸整数会把一行撑成一串看不清位数的数字,展示必须与 HUD 同用缩写。
+    const note = src("../components/cultivation/QiShortfallNote.vue");
+    expect(note, "短差按中文数量级缩写").toContain("formatNum(short)");
+    expect(note, "图标与警示句同色,不引入第三枚强色").toContain('name="wind"');
   });
 
   it("灵气「已封顶」用琥珀色 —— qing 会读成祥和安好,实则攒到天花板", () => {
