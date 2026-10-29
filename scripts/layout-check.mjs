@@ -6424,6 +6424,10 @@ async function taskCollectionFold() {
   });
   try {
     const slices = showcaseSlices("light");
+    // 展品档丹匣里的药会在启动时补收进丹方录;本判据只造功法/灵兽两册新得,
+    // 故清空丹匣并标认知已播种,避免启动自愈再造出第三册新得。
+    slices.inventory.pills = {};
+    slices.lore = { seeded: true };
     const now = Date.now();
     const gongfa = [GONGFA[0].id, GONGFA[1].id];
     const pet = [PETS[0].id];
@@ -6507,7 +6511,7 @@ async function taskCollectionFold() {
         !fold.heroText.includes("眼下新得") ||
         !fold.heroText.includes("3 枚待看")
       ) {
-        failures.push("[390-collection] 卷首没有把整体进度与新得数摊开");
+        failures.push(`[390-collection] 卷首没有把整体进度与新得数摊开(«${fold.heroText}»)`);
       }
       if (fold.toggles.length !== 9) {
         failures.push(`[390-collection] 应列九册,实见 ${fold.toggles.length} 册`);
