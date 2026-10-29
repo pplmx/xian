@@ -2554,6 +2554,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(store, "尾账要带弟子名").toContain("name: apprenticeDef(appr.archId)?.name");
   });
 
+  it("门庭卷首先报在途、闲置与最近归期 —— 差事进度同走纯函数", () => {
+    // 弟子卡原先只在路上时给一个倒计时,页面上没有一眼可读的「几个人在家、几个人
+    // 在途、最近谁先回来」;一键派发也不报这次会派走几人。汇总若散在模板里各数一遍,
+    // 迟早出现卷首与按钮对不上。故卷首、按钮与逐单进度都接同一份 core 真值。
+    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    expect(appr?.src, "门庭汇总要调 apprenticeOverview").toContain("apprenticeOverview(");
+    expect(appr?.src, "卷首要挂稳定落点").toContain("data-apprentice-pulse");
+    expect(appr?.src, "在途/闲置读同一份 pulse").toContain("pulse.away");
+    expect(appr?.src, "最近归期读同一份 pulse").toContain("pulse.value.nextReturnAt");
+    expect(appr?.src, "派发文案要报这次派走几人").toContain("pulse.value.idle");
+    expect(appr?.src, "逐单进度要调纯函数").toContain("apprenticeTaskProgress(a.task");
+    expect(appr?.src, "进度条要有读屏语义").toContain('role="progressbar"');
+  });
+
   it("「各尽其长」按钮与回执要照实说门 —— 并列退回本职时不许喊「最缺的门」", () => {
     // 一键派发把全部闲置弟子派走,是玩家能做的几件「一锤子」事之一;可按钮原话
     // 「派闲置弟子去最缺的门」与回执「已派往最缺的门」在**并列**时是假的 ——

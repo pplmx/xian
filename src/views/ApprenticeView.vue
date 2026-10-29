@@ -24,8 +24,10 @@ import {
   type ApprenticeSpec,
 } from "@/data/apprentices";
 import {
+  apprenticeOverview,
   apprenticeRecruitCost,
   apprenticeSpoils,
+  apprenticeTaskProgress,
   apprenticeTaskSeconds,
   apprenticeReapText,
   needTargetDoor,
@@ -37,6 +39,7 @@ import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { notify } from "@/core/notify";
 import GameIcon from "@/components/common/GameIcon.vue";
+import ProgressBar from "@/components/common/ProgressBar.vue";
 
 const router = useRouter();
 const appr = useApprenticeStore();
@@ -72,6 +75,8 @@ onUnmounted(() => {
 });
 
 const slots = computed(() => apprenticeSlots(player.major));
+/** 门庭卷首、派发按钮与朱点共用的唯一汇总。 */
+const pulse = computed(() => apprenticeOverview(appr.apprentices));
 
 function secondsLeft(finishAt: number): number {
   return Math.max(0, Math.ceil((finishAt - now.value) / 1000));
@@ -94,7 +99,7 @@ function bondNext(bond: number): { name: string; remaining: number } | null {
 
 /** 收徒成本与槽位 —— 直接问 service 那一处实现(不再在这里算一遍同一式子) */
 const recruitCost = computed(() => apprenticeRecruitCost(player.major));
-const slotsFull = computed(() => appr.apprentices.length >= slots.value);
+const slotsFull = computed(() => pulse.value.total >= slots.value);
 const recruitShort = computed(() =>
   Math.max(0, toNum(recruitCost.value) - toNum(resources.spiritStone)),
 );
@@ -119,8 +124,7 @@ function taskYield(a: OwnedApprentice, spec: ApprenticeSpec): string {
 
 function doRecruit(): void {
   const r = appr.recruit(player.major);
-  if (r === "full")
-    notify(`槽位已满(${appr.apprentices.length}/${slots.value}),收不下新弟子`, "warn");
+  if (r === "full") notify(`槽位已满(${pulse.value.total}/${slots.value}),收不下新弟子`, "warn");
   else if (r === "poor") notify("灵石不足,收徒不成", "warn");
 }
 
@@ -156,12 +160,28 @@ function doDispatchAll(): void {
     "success",
   );
 }
-const hasIdle = computed(() => appr.apprentices.some((x) => !x.task));
+const hasIdle = computed(() => pulse.value.idle > 0);
 /** 按钮文案与派发判定同源:有单门胜出报「派去最缺的门」,并列退回「各就本职」 */
 const dispatchLabel = computed(() => {
   const target = needTargetDoor(dispatchStock());
-  return target ? `各尽其长 · 派去「${taskDef(target).name}」` : "各尽其长 · 各就本职";
+  const idle = pulse.value.idle;
+  return target
+    ? `派闲置 ${idle} 人 · 去「${taskDef(target).name}」`
+    : `派闲置 ${idle} 人 · 各就本职`;
 });
+
+/** 卷首只报最近一单；逐单归期仍在各自卡上。 */
+const nextReturnText = computed(() => {
+  const at = pulse.value.nextReturnAt;
+  if (at === null) return "无人在途";
+  if (at <= now.value) return "即将归来";
+  const spec = pulse.value.nextReturnSpec;
+  return `${spec ? taskDef(spec).name : "差事"} ${formatCountdown(secondsLeft(at))}`;
+});
+
+function taskProgress(a: OwnedApprentice): number {
+  return a.task ? apprenticeTaskProgress(a.task, now.value) : 0;
+}
 
 /**
  * 派活任务说明点按展开 —— 与适配理由/天赋芯片同族(「点一下展开一行」)。
@@ -230,7 +250,7 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
       >
         {{
           slotsFull
-            ? `已收满 ${appr.apprentices.length}/${slots}`
+            ? `已收满 ${pulse.total}/${slots}`
             : recruitShort > 0
               ? `收徒 · 尚差 ${formatGN(recruitShort)} 石`
               : `收徒 ${formatGN(recruitCost)} 石`
@@ -240,13 +260,51 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
 
     <!-- 弟子 -->
     <div v-if="appr.apprentices.length" class="space-y-2">
-      <button
-        class="btn-seal min-h-[28px] w-full !py-1 text-[11px]"
-        :disabled="!hasIdle"
-        @click="doDispatchAll"
+      <!-- 卷首先报门庭此刻:谁在家、谁在路上、最近何时回来;一键派发也收在这里。 -->
+      <div
+        class="card-ink px-3 py-2.5"
+        data-apprentice-pulse
+        :data-apprentice-total="pulse.total"
+        :data-apprentice-idle="pulse.idle"
+        :data-apprentice-away="pulse.away"
       >
-        {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
-      </button>
+        <div class="flex items-baseline justify-between gap-2">
+          <span class="font-kai text-[14px] tracking-[0.22em] text-ink">门庭今日</span>
+          <span class="text-[10px] text-ink-faint">共 {{ pulse.total }} 名弟子</span>
+        </div>
+        <div
+          class="mt-2 grid grid-cols-3 divide-x divide-ink/10 text-center tinylens:grid-cols-1 tinylens:divide-x-0 tinylens:divide-y tinylens:divide-ink/10"
+        >
+          <p class="px-1 py-1">
+            <span class="block text-[10px] text-ink-faint">在途</span>
+            <span class="block text-[11px] tabular text-ink-soft" data-apprentice-away
+              >{{ pulse.away }} 人</span
+            >
+          </p>
+          <p class="px-1 py-1">
+            <span class="block text-[10px] text-ink-faint">闲置</span>
+            <span
+              class="block text-[11px] tabular"
+              :class="pulse.idle > 0 ? 'text-cinnabar' : 'text-ink-soft'"
+              data-apprentice-idle
+              >{{ pulse.idle }} 人</span
+            >
+          </p>
+          <p class="px-1 py-1">
+            <span class="block text-[10px] text-ink-faint">最近归来</span>
+            <span class="block text-[11px] tabular text-ink-soft" data-apprentice-next-return>{{
+              nextReturnText
+            }}</span>
+          </p>
+        </div>
+        <button
+          class="btn-seal mt-2 min-h-[28px] w-full !py-1 text-[11px]"
+          :disabled="!hasIdle"
+          @click="doDispatchAll"
+        >
+          {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
+        </button>
+      </div>
       <div
         v-for="a in appr.apprentices"
         :key="a.uid"
@@ -278,14 +336,27 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
         </div>
 
         <!-- 在途 -->
-        <div v-if="a.task" class="mt-1.5 flex items-center gap-2 text-[11px]">
-          <span class="rounded bg-ink/5 px-1.5 py-0.5">{{ taskDef(a.task.spec).name }}</span>
-          <span class="tabular text-ink-faint"
-            >归期
-            <span class="countdown-slot">{{
-              formatCountdown(secondsLeft(a.task.finishAt))
-            }}</span></span
-          >
+        <div v-if="a.task" class="mt-1.5" :data-apprentice-task-progress="taskProgress(a)">
+          <div class="flex items-center gap-2 text-[11px]">
+            <span class="rounded bg-ink/5 px-1.5 py-0.5">{{ taskDef(a.task.spec).name }}</span>
+            <span class="tabular text-ink-faint"
+              >归期
+              <span class="countdown-slot">{{
+                formatCountdown(secondsLeft(a.task.finishAt))
+              }}</span></span
+            >
+          </div>
+          <ProgressBar
+            class="mt-1.5"
+            :value="taskProgress(a)"
+            color="var(--color-jade)"
+            :height="4"
+            role="progressbar"
+            :aria-label="`${taskDef(a.task.spec).name}进度`"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            :aria-valuenow="taskProgress(a) * 100"
+          />
         </div>
 
         <!-- 闲置:可派活 -->

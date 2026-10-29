@@ -115,6 +115,53 @@ export function taskDone(appr: OwnedApprentice, now: number): boolean {
   return appr.task !== null && now >= appr.task.finishAt;
 }
 
+/** 门庭卷首的一份真值：在途、闲置与最近一单归期。 */
+export interface ApprenticeOverview {
+  total: number;
+  idle: number;
+  away: number;
+  nextReturnAt: number | null;
+  nextReturnSpec: ApprenticeSpec | null;
+}
+
+/**
+ * 弟子列表只在这里汇总一次。页签、朱点、按钮与卷首读数若各数一遍，
+ * 迟早会出现「写着 2 人闲置，点派发却说无人在家」的两本账。
+ */
+export function apprenticeOverview(apprentices: readonly OwnedApprentice[]): ApprenticeOverview {
+  let idle = 0;
+  let nextReturnAt: number | null = null;
+  let nextReturnSpec: ApprenticeSpec | null = null;
+  for (const appr of apprentices) {
+    if (!appr.task) {
+      idle += 1;
+      continue;
+    }
+    if (nextReturnAt === null || appr.task.finishAt < nextReturnAt) {
+      nextReturnAt = appr.task.finishAt;
+      nextReturnSpec = appr.task.spec;
+    }
+  }
+  return {
+    total: apprentices.length,
+    idle,
+    away: apprentices.length - idle,
+    nextReturnAt,
+    nextReturnSpec,
+  };
+}
+
+/** 差事进度按墙钟线性推进；坏时长也不把 NaN 送进界面。 */
+export function apprenticeTaskProgress(
+  task: Pick<NonNullable<OwnedApprentice["task"]>, "startAt" | "finishAt">,
+  now: number,
+): number {
+  if (!Number.isFinite(now)) return 0;
+  const span = task.finishAt - task.startAt;
+  if (!Number.isFinite(span) || span <= 0) return now >= task.finishAt ? 1 : 0;
+  return Math.max(0, Math.min(1, (now - task.startAt) / span));
+}
+
 /* ---- 「各尽其长」一键派发 ---- */
 
 /** 一键派发所需的一份库存快照(缺者分高:score = 目标水位 ÷ (现存量 + 1)) */

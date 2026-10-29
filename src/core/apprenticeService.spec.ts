@@ -8,7 +8,24 @@
  *   · 任务完工只看墙钟 finishAt。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { apprenticeSpoils, taskDone, type OwnedApprentice } from "./apprenticeService";
+import {
+  apprenticeOverview,
+  apprenticeSpoils,
+  apprenticeTaskProgress,
+  taskDone,
+  type OwnedApprentice,
+} from "./apprenticeService";
+
+function apprentice(over: Partial<OwnedApprentice> = {}): OwnedApprentice {
+  return {
+    uid: "u",
+    archId: "ap_lingtong",
+    level: 1,
+    bond: 0,
+    task: null,
+    ...over,
+  };
+}
 
 describe("apprenticeSpoils 天赋加成", () => {
   it("数值类天赋门类 ×1.25 取 floor:采药灵童采药 Lv1 得 7 草", () => {
@@ -35,14 +52,59 @@ describe("apprenticeSpoils 天赋加成", () => {
 
 describe("taskDone", () => {
   it("按墙钟 finishAt 判完工", () => {
-    const a: OwnedApprentice = {
-      uid: "u",
-      archId: "ap_lingtong",
-      level: 1,
-      bond: 0,
+    const a = apprentice({
       task: { spec: "seek", startAt: 1000, finishAt: 2000 },
-    };
+    });
     expect(taskDone(a, 1000)).toBe(false);
     expect(taskDone(a, 2000)).toBe(true);
+  });
+});
+
+describe("门庭今日", () => {
+  it("在途、闲置与最近归期只从弟子列表算一次", () => {
+    const overview = apprenticeOverview([
+      apprentice({ uid: "idle" }),
+      apprentice({
+        uid: "later",
+        task: { spec: "herb", startAt: 0, finishAt: 5000 },
+      }),
+      apprentice({
+        uid: "sooner",
+        task: { spec: "study", startAt: 0, finishAt: 3000 },
+      }),
+    ]);
+
+    expect(overview).toEqual({
+      total: 3,
+      idle: 1,
+      away: 2,
+      nextReturnAt: 3000,
+      nextReturnSpec: "study",
+    });
+  });
+
+  it("空门庭不编造归期", () => {
+    expect(apprenticeOverview([])).toEqual({
+      total: 0,
+      idle: 0,
+      away: 0,
+      nextReturnAt: null,
+      nextReturnSpec: null,
+    });
+  });
+});
+
+describe("差事进度", () => {
+  it("按墙钟在起止之间推进,并把越界值夹在 0~1", () => {
+    const task = { startAt: 1000, finishAt: 5000 };
+    expect(apprenticeTaskProgress(task, 1000)).toBe(0);
+    expect(apprenticeTaskProgress(task, 3000)).toBe(0.5);
+    expect(apprenticeTaskProgress(task, 9000)).toBe(1);
+  });
+
+  it("零时长与坏值都不泄漏 NaN", () => {
+    expect(apprenticeTaskProgress({ startAt: 1000, finishAt: 1000 }, 999)).toBe(0);
+    expect(apprenticeTaskProgress({ startAt: 1000, finishAt: 1000 }, 1000)).toBe(1);
+    expect(apprenticeTaskProgress({ startAt: Number.NaN, finishAt: 1000 }, 1000)).toBe(1);
   });
 });

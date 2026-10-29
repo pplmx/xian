@@ -192,6 +192,8 @@
  *   六十八 背包先报新得与可换槽位:整册先列本次新得,「只看新得」只铺新件;
  *      一键按钮报的可动槽数必须与卷首逐槽入口一致,点下去正好全部换完。
  *      195 宽下新得卷首、分页入口与从可动槽打开的候选弹窗都不许被挤坏。
+ *   六十九 门庭先报今日:在途 / 闲置 / 最近归期来自同一份弟子汇总;在途差事
+ *      要有可见进度与读屏进度值。一键派发后卷首与按钮必须同步换口。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -4392,6 +4394,139 @@ async function taskInventoryAttention() {
     console.log(
       `\n背包新得:${newUids.length} 件先列 · 只看新得 ${filtered.cards.length} 件 · ` +
         `可动 ${beforeApply.upgradeCount} 槽 → 一键换装后 ${applied.upgradeCount} 槽`,
+    );
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
+}
+
+/** 门庭先报今日:在途、闲置、最近归期与差事进度 */
+async function taskApprenticePulse() {
+  const failures = [];
+  let checked = 0;
+  const contrastFails = [];
+  const pixelContrastFails = [];
+  const zoomFails = [];
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const now = Date.now();
+    const slices = showcaseSlices("light");
+    slices.apprentice = {
+      apprentices: [
+        { uid: "pulse_idle", archId: "ap_luanniao", level: 2, bond: 4, task: null },
+        {
+          uid: "pulse_away",
+          archId: "ap_kuangtou",
+          level: 3,
+          bond: 12,
+          task: {
+            spec: "herb",
+            startAt: now - 15 * 60_000,
+            finishAt: now + 15 * 60_000,
+            rewardMajor: 9,
+          },
+        },
+      ],
+      rebirthKarma: 0,
+    };
+    await seedSave(ctx, slices, "__apprenticePulseFixture");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const textLength = await openRoute(page, "/apprentice", 800);
+    if (textLength === 0) failures.push("[390] 门庭场景:页面没有渲染出来");
+    await clearOverlays(page);
+
+    const read = () =>
+      page.evaluate(() => {
+        const pulse = document.querySelector("[data-apprentice-pulse]");
+        const dispatch = pulse?.querySelector("button");
+        const taskRows = [...document.querySelectorAll("[data-apprentice-task-progress]")];
+        const bars = [...document.querySelectorAll('[role="progressbar"]')];
+        return {
+          total: Number(pulse?.getAttribute("data-apprentice-total")),
+          idle: Number(pulse?.getAttribute("data-apprentice-idle")),
+          away: Number(pulse?.getAttribute("data-apprentice-away")),
+          next: (pulse?.querySelector("[data-apprentice-next-return]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          progress: taskRows.map((row) =>
+            Number(row.getAttribute("data-apprentice-task-progress")),
+          ),
+          aria: bars.map((bar) => Number(bar.getAttribute("aria-valuenow"))),
+          dispatchDisabled: dispatch?.hasAttribute("disabled") ?? true,
+          dispatchText: (dispatch?.textContent || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+
+    const initial = await read();
+    checked += 1;
+    if (initial.total !== 2 || initial.idle !== 1 || initial.away !== 1) {
+      failures.push(
+        `[390] 门庭场景:卷首应为 2 名 / 在途 1 / 闲置 1,实见 ` +
+          `${initial.total} / ${initial.away} / ${initial.idle}`,
+      );
+    }
+    if (!initial.next.includes("采灵药")) {
+      failures.push(`[390] 门庭场景:最近归期没有指向在途的采灵药(«${initial.next}»)`);
+    }
+    if (
+      initial.progress.length !== 1 ||
+      !(initial.progress[0] > 0.35 && initial.progress[0] < 0.65)
+    ) {
+      failures.push(
+        `[390] 门庭场景:在途差事进度应接近一半,实见 ${initial.progress.join(",") || "无"}`,
+      );
+    }
+    if (initial.aria.length !== 1 || Math.abs(initial.aria[0] - initial.progress[0] * 100) > 1) {
+      failures.push(
+        `[390] 门庭场景:进度条读屏值 ${initial.aria.join(",") || "无"} ` +
+          `与可视进度 ${initial.progress.join(",") || "无"} 不同源`,
+      );
+    }
+    if (initial.dispatchDisabled || !initial.dispatchText.includes("派闲置 1 人")) {
+      failures.push(`[390] 门庭场景:派发按钮没有报出这次会派走 1 人(«${initial.dispatchText}»)`);
+    }
+
+    await page.locator("[data-apprentice-pulse] button").click({ timeout: 3000 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-apprentice-pulse]")?.getAttribute("data-apprentice-idle") ===
+        "0",
+      { timeout: 3000 },
+    );
+    await settleVisuals(page);
+    const after = await read();
+    checked += 1;
+    if (after.total !== 2 || after.idle !== 0 || after.away !== 2) {
+      failures.push(
+        `[390] 门庭场景:一键派发后应为在途 2 / 闲置 0,实见 ` + `${after.away} / ${after.idle}`,
+      );
+    }
+    if (
+      !after.dispatchDisabled ||
+      after.dispatchText !== "弟子都在路上" ||
+      after.progress.length !== 2 ||
+      after.aria.length !== 2
+    ) {
+      failures.push(
+        `[390] 门庭场景:派完后按钮«${after.dispatchText}» / 进度 ${after.progress.length} 条,` +
+          `应与卷首一起换口`,
+      );
+    }
+
+    if (pageErrors.length)
+      failures.push(`[390] 门庭场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    console.log(
+      `\n门庭今日:在途 ${initial.away} / 闲置 ${initial.idle} · ` +
+        `最近 ${initial.next} · 一键派发后 ${after.away} / ${after.idle}`,
     );
   } finally {
     await ctx.close();
@@ -11281,6 +11416,7 @@ const TASKS = [
   ["存档导出 / 导入往返", taskSaveRoundTrip],
   ["智能收纳不扔有投入的件", taskSmartKeep],
   ["背包先报新得与可换槽位", taskInventoryAttention],
+  ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],
   ["法宝炼化的两笔账", taskArtifactRefine],
   ["洞府营造的账目", taskDongfuBuild],
