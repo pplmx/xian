@@ -194,6 +194,7 @@ const CATEGORIES = [
       "buildingService.spec",
       "market.spec",
       "marketStock.spec",
+      "marketOverview.spec",
       "bounty",
     ],
   },

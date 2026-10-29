@@ -2086,6 +2086,28 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(market?.src, "售玄铁不足要列差").toContain("尚差 ${oreSellShort} 玄铁");
   });
 
+  it("坊市先报此刻,再把货架 / 悬赏 / 售出分成三册", () => {
+    /*
+     * 坊市此前把三件互不相干的事一路竖排:货架六格、悬赏四单、寄卖与即时售,
+     * 玩家想寄一件旧兵刃得先滚过整块卖货区。现在卷首先报「可买 / 可交 / 寄售」,
+     * 页签再带路;可交数与逐单缺口必须共用 core/marketOverview 的一份判据,
+     * 不许页签另算一遍「看起来能交」。
+     */
+    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    expect(market?.src, "卷首市况要走 core/marketOverview").toContain("marketOverview(");
+    expect(market?.src, "逐单缺口与可交数要共用 bountyStatus").toContain(
+      "bountyStatus(o, bountyHoldings.value)",
+    );
+    expect(market?.src, "货架 / 悬赏 / 售出要收成吸顶页签").toContain(
+      '<InkTabs v-model="marketTab" :tabs="marketTabRows" />',
+    );
+    for (const marker of ["data-market-pulse-goods", "data-market-pulse-bounties"]) {
+      expect(market?.src, `卷首缺少 ${marker}`).toContain(marker);
+    }
+    expect(market?.src, "寄售数要从同一份市况真值报出").toContain("marketPulse.consignCount");
+    expect(market?.src, "切册后顶栏时钟要跟着当前册走").toContain("headerClock.title");
+  });
+
   it("寄卖分批复现全件背包 + 即时售丹有声 —— 别把第 13 件藏起来、售丹不许哑卖", () => {
     // ① 寄卖是背包装备唯一出手口,却只渲染前 12 件(bagItems.slice(0,12))——
     //    背包容量 120,第 13 件往后连按钮都没有、也不说明,晚期玩家那件刚

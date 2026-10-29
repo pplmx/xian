@@ -40,6 +40,7 @@ import {
 } from "@/core/inventoryRender";
 import { firstNewVisibleIndex, previousListStep } from "@/core/listRender";
 import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
+import { bountyStatus, marketOverview } from "@/core/marketOverview";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
 import { qualityDef, QUALITIES } from "@/data/qualities";
@@ -49,6 +50,7 @@ import { isRareQuality, qualityTierStyle } from "@/ui/qualityTier";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkTabs from "@/components/common/InkTabs.vue";
 
 const router = useRouter();
 const market = useMarketStore();
@@ -62,6 +64,7 @@ let timer: number | undefined;
 
 onMounted(() => {
   market.sync(Date.now());
+  bounty.sync(Date.now());
   // 挂载一拍自然售出的寄卖,给一声(开页回城不该只盯着数字变;此后每秒定时器里的递进又自可见)
   const sold = market.collectConsign(Date.now());
   if (sold.length) notify(`「${sold.join("、")}」已自售,灵石到账`, "success");
@@ -89,6 +92,65 @@ onUnmounted(() => {
 });
 
 const remainingSec = computed(() => marketRemainingSec(market.stockedAt, now.value));
+
+type MarketTab = "shelf" | "bounty" | "sell";
+const MARKET_TABS: { id: MarketTab; label: string }[] = [
+  { id: "shelf", label: "货架" },
+  { id: "bounty", label: "悬赏" },
+  { id: "sell", label: "售出" },
+];
+const marketTab = ref<MarketTab>("shelf");
+
+const bountyHoldings = computed(() => ({
+  herbs: resources.herb,
+  ore: resources.ore,
+  pills: inventory.pills,
+  bagTiers: inventory.bagItems.map((item) => item.tier),
+}));
+
+/** 卷首市况与页签朱点共用这一份真值，避免「亮着可交、点进去却缺货」。 */
+const marketPulse = computed(() =>
+  marketOverview(market.stock, bounty.orders, bountyHoldings.value, market.consign.length),
+);
+const marketTabRows = computed(() =>
+  MARKET_TABS.map((t) => ({
+    ...t,
+    dot:
+      (t.id === "bounty" && marketPulse.value.claimableBounties > 0) ||
+      (t.id === "sell" && marketPulse.value.consignCount > 0),
+  })),
+);
+
+// 在长货架底部换册时，内容区会继承旧的 scrollTop；新册较短时便落在半截。
+watch(marketTab, () => {
+  void nextTick(() => {
+    const host = document.querySelector<HTMLElement>("main");
+    if (host) host.scrollTop = 0;
+  });
+});
+
+/** 顶栏只报当前这一册的时钟；切到悬赏后仍挂货架倒计时会像另一本账。 */
+const headerClock = computed(() => {
+  if (marketTab.value === "bounty") {
+    return {
+      label: "换榜",
+      text: formatCountdown(bountyRemainingSec(bounty.bountyAt, now.value)),
+      title: `${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`,
+    };
+  }
+  if (marketTab.value === "sell") {
+    return {
+      label: "寄售",
+      text: `${marketPulse.value.consignCount}/${MARKET_CONSIGN_SLOTS}`,
+      title: `${MARKET_CONSIGN_SECONDS / 60} 分钟自售入账`,
+    };
+  }
+  return {
+    label: "换货",
+    text: formatCountdown(remainingSec.value),
+    title: `${MARKET_REFRESH_SECONDS / 3600} 小时一换`,
+  };
+});
 
 /**
  * 货架装备预览(确定性实例,只取它与品质,不落库)。缓成 per-slot 表:
@@ -163,7 +225,12 @@ function stoneShort(cost: GNum): number {
   return Math.max(0, toNum(cost) - toNum(resources.spiritStone));
 }
 function consign(uid: string): void {
-  market.consignEquip(uid, Date.now());
+  const item = inventory.bagItems.find((it) => it.uid === uid);
+  const name = item ? (equipmentTemplate(item.templateId)?.name ?? "兵刃") : "兵刃";
+  const r = market.consignEquip(uid, Date.now());
+  if (r === "ok") notify(`已将「${name}」交去寄卖`, "success");
+  else if (r === "full") notify(`寄卖已满 ${MARKET_CONSIGN_SLOTS} 格,等一件到时再来`, "warn");
+  else notify("这件已不在行囊里,换一件再寄卖", "warn");
 }
 function sellPill(id: string): void {
   const sold = market.sellPill(id);
@@ -202,7 +269,7 @@ const equipPick = ref<number | null>(null);
  * 够格的兵刃,不能悄悄拿走行囊里顺着序排在第一件的心头好(见 claimBounty 的注释)。
  */
 const autoClaimable = computed(() =>
-  bounty.orders.filter((o) => !o.claimed && o.kind !== "equip" && bountyShort(o) === null),
+  bounty.orders.filter((o) => !o.claimed && o.kind !== "equip" && bountyReady(o)),
 );
 
 /** 一键交掉所有现成可交的非贡器单:逐单走 store 的 claim,合一条总账汇报 */
@@ -331,21 +398,11 @@ function equipBountyText(it: EquipmentInstance): string {
 
 /** 逐单交货短差:够交回 null,不够列「需 N X,缺 M」(与「尚差 N 石」同一纪律) */
 function bountyShort(o: BountySlot): string | null {
-  if (o.claimed) return null;
-  if (o.kind === "herb" || o.kind === "ore") {
-    const isHerb = o.kind === "herb";
-    const have = isHerb ? resources.herb : resources.ore;
-    if (have >= o.target) return null;
-    return `需 ${o.target} ${isHerb ? "灵草" : "玄铁"},缺 ${o.target - have}`;
-  }
-  if (o.kind === "pill") {
-    const have = inventory.pills[o.kindId] ?? 0;
-    if (have >= o.target) return null;
-    return `需 ${o.target} ${pillDef(o.kindId)?.name ?? o.kindId},缺 ${o.target - have}`;
-  }
-  const have = inventory.bagItems.filter((e) => e.tier >= o.tier).length;
-  if (have > 0) return null;
-  return `缺一件 ≥${o.tier} 阶兵刃`;
+  return bountyStatus(o, bountyHoldings.value).shortText;
+}
+
+function bountyReady(o: BountySlot): boolean {
+  return bountyStatus(o, bountyHoldings.value).ready;
 }
 </script>
 
@@ -371,15 +428,45 @@ function bountyShort(o: BountySlot): string | null {
       </div>
       <span
         class="rounded-md border border-ink/10 px-1.5 py-0.5 text-[10px] tabular text-ink-faint"
-        :title="`${MARKET_REFRESH_SECONDS / 3600} 小时一换`"
+        :title="headerClock.title"
       >
-        刷新
-        <span class="countdown-slot">{{ formatCountdown(remainingSec) }}</span>
+        {{ headerClock.label }}
+        <span class="countdown-slot">{{ headerClock.text }}</span>
       </span>
     </div>
 
+    <!-- 卷首先报此刻:三册各有多少当下可做,页签只负责带路。 -->
+    <div
+      class="card-ink grid grid-cols-3 divide-x divide-ink/10 px-2 py-2 text-center"
+      data-market-pulse
+    >
+      <p>
+        <span class="block text-[10px] text-ink-faint">可买</span>
+        <span class="block text-[11px] tabular text-ink-soft" data-market-pulse-goods
+          >{{ marketPulse.availableGoods }} 件</span
+        >
+      </p>
+      <p>
+        <span class="block text-[10px] text-ink-faint">可交</span>
+        <span
+          class="block text-[11px] tabular"
+          :class="marketPulse.claimableBounties > 0 ? 'text-cinnabar' : 'text-ink-soft'"
+          data-market-pulse-bounties
+          >{{ marketPulse.claimableBounties }} 单</span
+        >
+      </p>
+      <p>
+        <span class="block text-[10px] text-ink-faint">寄售</span>
+        <span class="block text-[11px] tabular text-ink-soft" data-market-pulse-consign
+          >{{ marketPulse.consignCount }}/{{ MARKET_CONSIGN_SLOTS }}</span
+        >
+      </p>
+    </div>
+
+    <InkTabs v-model="marketTab" :tabs="marketTabRows" />
+
     <!-- 货架 -->
-    <section>
+    <section v-show="marketTab === 'shelf'">
       <SectionTitle title="货架" hint="时辰一到自会换新" />
       <div class="mt-2 space-y-2">
         <div
@@ -468,7 +555,7 @@ function bountyShort(o: BountySlot): string | null {
     </section>
 
     <!-- 悬赏板:商号收购 -->
-    <section>
+    <section v-show="marketTab === 'bounty'">
       <!-- 极窄档(≤220 CSS px)同一行塞不下「标题 + 一键领取 + 换新倒计时」:标题被压到
            19px 一字一行 —— 改成纵向堆叠,320 / 390 两档不动。 -->
       <div
@@ -535,7 +622,7 @@ function bountyShort(o: BountySlot): string | null {
           <button
             :data-bounty-equip="o.kind === 'equip' ? o.idx : undefined"
             class="btn-seal min-h-[28px] !px-3 !py-1 text-[11px]"
-            :disabled="o.claimed || !!bountyShort(o)"
+            :disabled="o.claimed || !bountyReady(o)"
             @click="claimBounty(o.idx)"
           >
             {{ o.claimed ? "已交" : "交货" }}
@@ -618,7 +705,7 @@ function bountyShort(o: BountySlot): string | null {
     </BaseModal>
 
     <!-- 售出:寄卖装备 + 即时售丹/料 -->
-    <section>
+    <section v-show="marketTab === 'sell'">
       <SectionTitle title="售出" />
       <div class="mt-2">
         <!-- 寄卖中的 -->
