@@ -12,8 +12,6 @@
         <MortalWorldRibbon :view="worldOverview" :statuses="worldStatuses" />
         <div class="ink-divider" aria-hidden="true" />
 
-        <SecretRealmCard />
-
         <SectionTitle title="历练" hint="行万里路,炼一颗心" />
         <!--
           星象是背景条件,不是行动:整句压成 ink-soft,只把「利在何处」那一个地名留在
@@ -71,7 +69,9 @@
             关掉
           </button>
         </p>
-        <div class="space-y-2.5">
+        <!-- 秘境是支线:未入时默认只露一行,主线的地界选择先落到眼前 -->
+        <SecretRealmCard />
+        <div data-adventure-regions class="space-y-2.5">
           <template v-for="group in groupedRows" :key="group.world.id">
             <div class="flex items-center gap-2 pt-1">
               <span class="font-kai text-[11px] tracking-[0.3em] text-ink-soft">{{

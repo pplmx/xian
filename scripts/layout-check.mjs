@@ -178,6 +178,8 @@
  *   六十二 前尘山河三世同册:世界页默认只有当前世界,历史册在空档与后期档里
  *      都不会出现。夹具另造三世旧世界,在 320 与 195(200% 缩放档)下量历史行:
  *      三世都在、顺序由近及远、世界名/段数来自同一份世界视图,标题不截断、行不越界。
+ *   六十三 历练首屏的主线优先:未入秘境时整张秘境卡只露一行,「历练」标题先于
+ *      支线;390 首屏里第一处地界的「出发」要完整露出,不能被支线卡推到折线以下。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -5854,6 +5856,112 @@ async function taskSecretRealm320() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/** 历练首屏的主线优先:秘境支线默认收口,首个地界行动要在首屏里看得见 */
+async function taskAdventureFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__adventureFold");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/adventure", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-adventure] 历练页没渲染出来,首屏判据没量到东西");
+    } else {
+      const fold = await page.evaluate(() => {
+        const nav = document.querySelector("nav")?.getBoundingClientRect();
+        const title = [...document.querySelectorAll("h2")].find(
+          (el) => (el.textContent || "").trim() === "历练",
+        );
+        const secret = document.querySelector("[data-secret-realm-card]");
+        const toggle = secret?.querySelector("[data-secret-realm-card-toggle]");
+        const action = [
+          ...document.querySelectorAll("[data-adventure-regions] [data-region-action]"),
+        ].find((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        });
+        const titleRect = title?.getBoundingClientRect();
+        const secretRect = secret?.getBoundingClientRect();
+        const actionRect = action?.getBoundingClientRect();
+        return {
+          navTop: nav?.top ?? innerHeight,
+          titleTop: titleRect?.top ?? null,
+          actionTop: actionRect?.top ?? null,
+          actionBottom: actionRect?.bottom ?? null,
+          secretHeight: secretRect?.height ?? null,
+          cardExpanded: toggle?.getAttribute("aria-expanded") ?? null,
+          hasBody: Boolean(document.querySelector("#secret-realm-body")),
+        };
+      });
+      checked += 1;
+      if (fold.cardExpanded !== "false") {
+        failures.push(
+          `[390-adventure] 未入秘境时支线卡没有默认收口(aria-expanded=${fold.cardExpanded})`,
+        );
+      }
+      if (fold.secretHeight === null || fold.secretHeight > 80) {
+        failures.push(`[390-adventure] 秘境支线收口后仍占 ${fold.secretHeight ?? "?"}px,超过 80px`);
+      }
+      if (fold.actionTop === null || fold.actionBottom === null) {
+        failures.push("[390-adventure] 首屏找不到任何地界行动入口");
+      } else {
+        if (fold.titleTop === null || fold.titleTop > fold.actionTop) {
+          failures.push("[390-adventure] 「历练」标题没有排在地界行动之前");
+        }
+        if (fold.actionBottom > fold.navTop + 1) {
+          failures.push(
+            `[390-adventure] 首处地界的行动入口被推到折线以下(action bottom ${Math.round(fold.actionBottom)} / nav top ${Math.round(fold.navTop)})`,
+          );
+        }
+      }
+      const toggle = page.locator("[data-secret-realm-card-toggle]").first();
+      if ((await toggle.count()) === 0) {
+        failures.push("[390-adventure] 收口后的秘境卡没有展开入口");
+      } else {
+        await toggle.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(120);
+        checked += 1;
+        const opened = await page.evaluate(() => ({
+          expanded:
+            document
+              .querySelector("[data-secret-realm-card-toggle]")
+              ?.getAttribute("aria-expanded") ?? null,
+          hasBody: (() => {
+            const body = document.querySelector("#secret-realm-body");
+            if (!body) return false;
+            return (
+              getComputedStyle(body).display !== "none" && body.getBoundingClientRect().height > 0
+            );
+          })(),
+        }));
+        if (opened.expanded !== "true" || !opened.hasBody) {
+          failures.push("[390-adventure] 秘境卡点「展开」后没有真正铺出名录");
+        }
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[390-adventure] 历练首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 /**
  * 前尘山河 —— 跨世历史在 320 与 195 宽下必须真的画得出来。
  *
@@ -10243,6 +10351,7 @@ const TASKS = [
   ["真打一场历练战斗", taskCombatReplay],
   ["敌人卡最挤的一档", taskEnemyCard],
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],
+  ["历练首屏主线优先", taskAdventureFold],
   ["前尘山河三世同册", taskWorldHistory],
   ["切后台立即落盘", taskPersistTiming],
   ["导出失败也说话", taskExportFailure],

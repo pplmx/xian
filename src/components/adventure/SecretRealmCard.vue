@@ -9,12 +9,13 @@
     v-if="unlocked"
     class="card-ink px-4 py-3"
     :class="state ? 'border-l-2 border-l-qing/70' : ''"
+    data-secret-realm-card
   >
     <p class="flex flex-wrap items-center gap-2">
       <span class="font-kai text-[15px] tracking-[0.2em] text-ink">秘境</span>
       <span class="chip-ink !text-[10px]"
-        >{{ gate === "celestial" ? "天界秘境" : "凡境秘境" }} · {{ cnNumber(SECRET_LAYERS) }}层 ·
-        出则散</span
+        >{{ gate === "celestial" ? "天界" : "凡境" }} · {{ list.length }} 处 ·
+        {{ cnNumber(SECRET_LAYERS) }}层 · 出则散</span
       >
       <!-- 三枚点:已过 / 当前 / 未至 —— 数字不删,点只是把「走到第几层」变成一眼可数 -->
       <span
@@ -31,148 +32,168 @@
         </span>
         第 {{ state.layer }}/{{ SECRET_LAYERS }} 层
       </span>
+      <!--
+        未入时把整张卡收成一行。秘境是支线,默认不该用两张名录把历练页首屏
+        推到地界列表之前;想进去的人再展开,已在境中的人始终看到完整状态。
+      -->
+      <button
+        v-else
+        type="button"
+        class="ml-auto inline-flex min-h-[28px] min-w-[28px] items-center justify-end px-1 text-[10px] text-qing active:opacity-60"
+        :aria-expanded="cardExpanded"
+        aria-controls="secret-realm-body"
+        :aria-label="cardExpanded ? '收起秘境名录' : '展开秘境名录'"
+        data-secret-realm-card-toggle
+        @click="cardExpanded = !cardExpanded"
+      >
+        {{ cardExpanded ? "收起" : "展开" }}
+      </button>
     </p>
 
-    <!-- 在境中 -->
-    <template v-if="state">
-      <p class="mt-1.5 t-body text-ink-soft">{{ def?.name }} · {{ def?.desc }}</p>
-      <p class="mt-1 text-[10px] leading-relaxed text-violet-ink">
-        此地规则:{{ state.rules.join(" · ") }}
-      </p>
-      <p v-if="builtinRulesText" class="mt-0.5 text-[10px] leading-relaxed text-ink-soft">
-        本境之则:{{ builtinRulesText }}
-      </p>
-      <p
-        v-if="state.spoils.length"
-        class="scroll-pane mt-1 max-h-24 overflow-y-auto text-[10px] leading-relaxed text-ink-faint"
-      >
-        <span v-for="(s, i) in state.spoils" :key="i" class="block">· {{ s }}</span>
-      </p>
-      <!-- 战前预览:与实战同源 —— 敌人/胜算(secretLayerPreview)本层即准,「所见即所打」 -->
-      <!-- 组内不断、组间可换行:整行 nowrap 在 320 宽上会顶出卡片,全放开又会让「本层劫:xxx」被拆成两截 -->
-      <p
-        v-if="preview"
-        class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] leading-relaxed text-ink-soft"
-      >
-        <span class="whitespace-nowrap">
-          <template v-if="preview.foe">
-            本层劫:<span class="text-ink">{{ preview.foe.name }}</span>
-            <span :class="preview.rate < 0.35 ? 'text-cinnabar' : 'text-ink'"
-              >· {{ preview.winText }}</span
-            >
-          </template>
-          <template v-else>本层劫:<span class="text-ink">莫测</span></template>
-        </span>
-        <span class="whitespace-nowrap"
-          >· 战利:灵石 +{{ formatGN(preview.reward.stone) }} · 灵草 +{{
-            preview.reward.material
-          }}</span
+    <div v-show="state || cardExpanded" id="secret-realm-body">
+      <!-- 在境中 -->
+      <template v-if="state">
+        <p class="mt-1.5 t-body text-ink-soft">{{ def?.name }} · {{ def?.desc }}</p>
+        <p class="mt-1 text-[10px] leading-relaxed text-violet-ink">
+          此地规则:{{ state.rules.join(" · ") }}
+        </p>
+        <p v-if="builtinRulesText" class="mt-0.5 text-[10px] leading-relaxed text-ink-soft">
+          本境之则:{{ builtinRulesText }}
+        </p>
+        <p
+          v-if="state.spoils.length"
+          class="scroll-pane mt-1 max-h-24 overflow-y-auto text-[10px] leading-relaxed text-ink-faint"
         >
-      </p>
-      <!--
-        隐性机制随预览披露(同源,不手写):逐出门槛、层间回血/损血、终层宝藏 ——
-        这三样按下去决定成败/去留,不许只活到战报/结算才见。
-      -->
-      <p v-if="preview" class="mt-0.5 text-[10px] leading-relaxed tabular">
-        <span :class="preview.lossesLeft <= 1 ? 'text-cinnabar' : 'text-ink-faint'"
-          >再败 {{ preview.lossesLeft === 0 ? "即逐出" : `${preview.lossesLeft} 场逐出` }}</span
-        ><template v-if="preview.healBetweenPct && preview.healBetweenPct !== 0"
-          ><span class="text-ink-faint">
-            · 层间{{ preview.healBetweenPct > 0 ? "回血" : "损血" }}
-            {{ formatPercent(Math.abs(preview.healBetweenPct), 0) }}</span
-          ></template
-        ><template v-if="preview.isFinalLayer"
-          ><span class="text-gold-ink">
-            · 终层通关得随机装备 + 悟道点 {{ SECRET_FINAL_WUDAO }}</span
-          ></template
+          <span v-for="(s, i) in state.spoils" :key="i" class="block">· {{ s }}</span>
+        </p>
+        <!-- 战前预览:与实战同源 —— 敌人/胜算(secretLayerPreview)本层即准,「所见即所打」 -->
+        <!-- 组内不断、组间可换行:整行 nowrap 在 320 宽上会顶出卡片,全放开又会让「本层劫:xxx」被拆成两截 -->
+        <p
+          v-if="preview"
+          class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] leading-relaxed text-ink-soft"
         >
-      </p>
-      <!--
-        极窄档(195 CSS px)上下叠:两枚 flex-1 并排时每枚只剩 61px,「再 入 一 层」
-        五个字(带字距)放不下,当场折成三行、按钮涨到 84px 高(自检在后期档量到)。
-        叠起来每枚拿到整行 137px,一行放得下;320 / 390 两档不受影响。
-      -->
-      <div class="mt-2 flex gap-2 tinylens:flex-col">
-        <!-- 出秘境是二步确认:整趟是付过门票的独一份内容,误触不该直接清空 —— 与删快照同族 -->
-        <template v-if="!confirmAbandon">
-          <button class="btn-seal flex-1 !py-1.5 !text-[14px]" @click="fight">再 入 一 层</button>
-          <button class="btn-ghost flex-1 !py-1.5 !text-[14px]" @click="confirmAbandon = true">
-            出 秘 境
-          </button>
-        </template>
-        <template v-else>
-          <button class="btn-seal flex-1 !py-1.5 !text-[14px]" @click="doAbandon()">
-            确认弃境
-          </button>
-          <button class="btn-ghost flex-1 !py-1.5 !text-[14px]" @click="confirmAbandon = false">
-            再想想
-          </button>
-        </template>
-      </div>
-    </template>
-
-    <!-- 未入:择一处 -->
-    <template v-else>
-      <!-- 身在另一册的境中:先说明进不去,不摆一列点了才被拒的门 -->
-      <p v-if="elsewhere" class="mt-1 text-[10px] leading-relaxed text-ink-faint">
-        身在「{{ elsewhere.name }}」秘境之中 —— 出而后再来择境。
-      </p>
-      <div v-else class="mt-1">
-        <!--
-          秘境是支线,不该用八张说明卡把历练首屏整页占满。
-          先亮当前境界最近的两处,余册由玩家自己展开;名录总数仍直说。
-        -->
-        <div id="secret-realm-list" class="space-y-1.5">
-          <button
-            v-for="r in visibleList"
-            :key="r.id"
-            class="w-full rounded-md bg-paper-deep/30 px-3 py-2 text-left active:scale-99"
-            :class="{ 'border border-ink/10': !canPay(r) }"
-            :disabled="!canPay(r)"
-            @click="enter(r.id)"
+          <span class="whitespace-nowrap">
+            <template v-if="preview.foe">
+              本层劫:<span class="text-ink">{{ preview.foe.name }}</span>
+              <span :class="preview.rate < 0.35 ? 'text-cinnabar' : 'text-ink'"
+                >· {{ preview.winText }}</span
+              >
+            </template>
+            <template v-else>本层劫:<span class="text-ink">莫测</span></template>
+          </span>
+          <span class="whitespace-nowrap"
+            >· 战利:灵石 +{{ formatGN(preview.reward.stone) }} · 灵草 +{{
+              preview.reward.material
+            }}</span
           >
-            <span class="flex flex-wrap items-baseline gap-2">
-              <span class="font-kai text-[14px] text-ink">{{ r.name }}</span>
-              <!-- 付不起就报差(与聚气丹/建筑/法宝同款):一盏灰灯不说差多少等于没说完 -->
-              <span
-                class="text-[10px] tabular"
-                :class="canPay(r) ? 'text-ink-faint' : 'text-cinnabar'"
-              >
-                {{ payText(r) }}
-              </span>
-              <!-- 入境的箭头跟 canPay 走:付不起时它不该还是一枚亮着的青箭头 -->
-              <span class="ml-auto text-[10px]" :class="canPay(r) ? 'text-qing' : 'text-ink-faint'"
-                >入 境 →</span
-              >
-            </span>
-            <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{
-              r.desc
-            }}</span>
-          </button>
-          <p v-if="list.length === 0" class="empty-note text-center text-[11px] text-ink-faint">
-            {{
-              gate === "celestial"
-                ? "尚无天界秘境可探 —— 天界册真仙起,自有去处。"
-                : "尚无凡境秘境可探 —— 凡境册元婴起,自有去处。"
-            }}
-          </p>
+        </p>
+        <!--
+          隐性机制随预览披露(同源,不手写):逐出门槛、层间回血/损血、终层宝藏 ——
+          这三样按下去决定成败/去留,不许只活到战报/结算才见。
+        -->
+        <p v-if="preview" class="mt-0.5 text-[10px] leading-relaxed tabular">
+          <span :class="preview.lossesLeft <= 1 ? 'text-cinnabar' : 'text-ink-faint'"
+            >再败 {{ preview.lossesLeft === 0 ? "即逐出" : `${preview.lossesLeft} 场逐出` }}</span
+          ><template v-if="preview.healBetweenPct && preview.healBetweenPct !== 0"
+            ><span class="text-ink-faint">
+              · 层间{{ preview.healBetweenPct > 0 ? "回血" : "损血" }}
+              {{ formatPercent(Math.abs(preview.healBetweenPct), 0) }}</span
+            ></template
+          ><template v-if="preview.isFinalLayer"
+            ><span class="text-gold-ink">
+              · 终层通关得随机装备 + 悟道点 {{ SECRET_FINAL_WUDAO }}</span
+            ></template
+          >
+        </p>
+        <!--
+          极窄档(195 CSS px)上下叠:两枚 flex-1 并排时每枚只剩 61px,「再 入 一 层」
+          五个字(带字距)放不下,当场折成三行、按钮涨到 84px 高(自检在后期档量到)。
+          叠起来每枚拿到整行 137px,一行放得下;320 / 390 两档不受影响。
+        -->
+        <div class="mt-2 flex gap-2 tinylens:flex-col">
+          <!-- 出秘境是二步确认:整趟是付过门票的独一份内容,误触不该直接清空 —— 与删快照同族 -->
+          <template v-if="!confirmAbandon">
+            <button class="btn-seal flex-1 !py-1.5 !text-[14px]" @click="fight">再 入 一 层</button>
+            <button class="btn-ghost flex-1 !py-1.5 !text-[14px]" @click="confirmAbandon = true">
+              出 秘 境
+            </button>
+          </template>
+          <template v-else>
+            <button class="btn-seal flex-1 !py-1.5 !text-[14px]" @click="doAbandon()">
+              确认弃境
+            </button>
+            <button class="btn-ghost flex-1 !py-1.5 !text-[14px]" @click="confirmAbandon = false">
+              再想想
+            </button>
+          </template>
         </div>
-        <button
-          v-if="list.length > SECRET_REALM_PREVIEW"
-          class="mt-1.5 flex min-h-[28px] w-full items-center justify-center rounded-md border border-dashed border-ink/15 px-3 py-1 text-[10px] text-ink-faint active:scale-99 active:text-ink-soft"
-          :aria-expanded="secretListExpanded"
-          aria-controls="secret-realm-list"
-          data-secret-realm-toggle
-          @click="secretListExpanded = !secretListExpanded"
-        >
-          {{
-            secretListExpanded
-              ? `收起秘境名录 · 共 ${list.length} 处`
-              : `展开其余 ${list.length - SECRET_REALM_PREVIEW} 处 · 共 ${list.length} 处`
-          }}
-        </button>
-      </div>
-    </template>
+      </template>
+
+      <!-- 未入:择一处 -->
+      <template v-else>
+        <!-- 身在另一册的境中:先说明进不去,不摆一列点了才被拒的门 -->
+        <p v-if="elsewhere" class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          身在「{{ elsewhere.name }}」秘境之中 —— 出而后再来择境。
+        </p>
+        <div v-else class="mt-1">
+          <!--
+            秘境是支线,不该用八张说明卡把历练首屏整页占满。
+            先亮当前境界最近的两处,余册由玩家自己展开;名录总数仍直说。
+          -->
+          <div id="secret-realm-list" class="space-y-1.5">
+            <button
+              v-for="r in visibleList"
+              :key="r.id"
+              class="w-full rounded-md bg-paper-deep/30 px-3 py-2 text-left active:scale-99"
+              :class="{ 'border border-ink/10': !canPay(r) }"
+              :disabled="!canPay(r)"
+              @click="enter(r.id)"
+            >
+              <span class="flex flex-wrap items-baseline gap-2">
+                <span class="font-kai text-[14px] text-ink">{{ r.name }}</span>
+                <!-- 付不起就报差(与聚气丹/建筑/法宝同款):一盏灰灯不说差多少等于没说完 -->
+                <span
+                  class="text-[10px] tabular"
+                  :class="canPay(r) ? 'text-ink-faint' : 'text-cinnabar'"
+                >
+                  {{ payText(r) }}
+                </span>
+                <!-- 入境的箭头跟 canPay 走:付不起时它不该还是一枚亮着的青箭头 -->
+                <span
+                  class="ml-auto text-[10px]"
+                  :class="canPay(r) ? 'text-qing' : 'text-ink-faint'"
+                  >入 境 →</span
+                >
+              </span>
+              <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{
+                r.desc
+              }}</span>
+            </button>
+            <p v-if="list.length === 0" class="empty-note text-center text-[11px] text-ink-faint">
+              {{
+                gate === "celestial"
+                  ? "尚无天界秘境可探 —— 天界册真仙起,自有去处。"
+                  : "尚无凡境秘境可探 —— 凡境册元婴起,自有去处。"
+              }}
+            </p>
+          </div>
+          <button
+            v-if="list.length > SECRET_REALM_PREVIEW"
+            class="mt-1.5 flex min-h-[28px] w-full items-center justify-center rounded-md border border-dashed border-ink/15 px-3 py-1 text-[10px] text-ink-faint active:scale-99 active:text-ink-soft"
+            :aria-expanded="secretListExpanded"
+            aria-controls="secret-realm-list"
+            data-secret-realm-toggle
+            @click="secretListExpanded = !secretListExpanded"
+          >
+            {{
+              secretListExpanded
+                ? `收起秘境名录 · 共 ${list.length} 处`
+                : `展开其余 ${list.length - SECRET_REALM_PREVIEW} 处 · 共 ${list.length} 处`
+            }}
+          </button>
+        </div>
+      </template>
+    </div>
   </section>
 
   <!-- 未解锁:inert 占位(仿天界「未至真仙」)—— 灰注开启境界,不可点、不进焦点 -->
@@ -231,6 +252,8 @@ const unlocked = computed(() => realmUnlock(props.gate));
 /** 出秘境二步确认:整趟是付过门票的独一份内容,误触「出」就该血亏(与删快照同族) */
 const confirmAbandon = ref(false);
 const SECRET_REALM_PREVIEW = 2;
+/** 未入时先收成一行;秘境是支线,主线地界列表要先落到眼前 */
+const cardExpanded = ref(false);
 const secretListExpanded = ref(false);
 /**
  * 在境中(仅认本册):currentRealm 是全局单份、不分册 —— 不筛的话,身在凡境的境中

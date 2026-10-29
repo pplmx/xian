@@ -252,10 +252,16 @@ describe("秘境 · 推得动、出得来", () => {
     expect(corpus).toContain("abandonRealm(");
   });
 
-  it("秘境名录默认只铺最近两处,余册可展开 —— 支线不许占满历练首屏", () => {
+  it("秘境名录默认收口,展开后只铺最近两处 —— 支线不许占满历练首屏", () => {
     const card = readFileSync(
       resolve(__dirname, "../components/adventure/SecretRealmCard.vue"),
       "utf8",
+    );
+    expect(card, "未入秘境时整张卡默认收起").toContain("const cardExpanded = ref(false)");
+    expect(card, "收起态要有独立展开入口").toContain("data-secret-realm-card-toggle");
+    expect(card, "展开态要报给读屏").toContain(':aria-expanded="cardExpanded"');
+    expect(card, "收起时只露卡头,名录仍在 DOM 里等展开").toContain(
+      'v-show="state || cardExpanded"',
     );
     expect(card, "默认窗口只铺两处").toContain("SECRET_REALM_PREVIEW = 2");
     expect(card, "列表渲染必须走收口后的 visibleList").toContain('v-for="r in visibleList"');

@@ -1641,6 +1641,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageTap === r.id"'],
       // 门庭派活的两步钮:第一下展开任务说明、再点同枚才派出 —— 新登的 disclosure
       ["views/ApprenticeView.vue", ":aria-expanded=\"taskTap === a.uid + ':' + t.spec\""],
+      // 秘境整卡先收成一行;这张卡与卡内名录各有一层 disclosure
+      ["components/adventure/SecretRealmCard.vue", ':aria-expanded="cardExpanded"'],
       // 秘境名录是历练页的支线,默认只亮最近两处;展开/收起要把状态报给读屏
       ["components/adventure/SecretRealmCard.vue", ':aria-expanded="secretListExpanded"'],
     ];
@@ -3091,6 +3093,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(ribbon?.src, "行旅条读同一份世界视图").toContain("WorldView | null");
     expect(ribbon?.src, "行旅条读同一份阶段结果").toContain("MortalStageStatus[]");
     expect(ribbon?.src, "读屏名要带进度与眼下去处").toContain("linkLabel");
+  });
+
+  it("历练首屏先给主线:标题在秘境支线之前,支线默认收口", () => {
+    const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
+    const src = adventure?.src ?? "";
+    const titleAt = src.indexOf('<SectionTitle title="历练"');
+    const secretAt = src.indexOf("<SecretRealmCard");
+    expect(titleAt, "历练标题要能找到").toBeGreaterThan(-1);
+    expect(secretAt, "秘境卡要能找到").toBeGreaterThan(titleAt);
+    expect(src, "地界列表要挂稳定落点").toContain("data-adventure-regions");
+    const secret = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
+    expect(secret?.src, "未入秘境时卡默认收起").toContain("const cardExpanded = ref(false)");
+    expect(secret?.src, "收起态要留展开入口").toContain("data-secret-realm-card-toggle");
+    expect(secret?.src, "只有展开或已在境中才露出名录").toContain('v-show="state || cardExpanded"');
   });
 
   it("行旅条说眼下可往时,历练列表必须把同一段路摆在可见首位", () => {
