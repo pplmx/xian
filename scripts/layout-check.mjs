@@ -6434,6 +6434,12 @@ async function taskCollectionFold() {
     const gongfa = [GONGFA[0].id, GONGFA[1].id];
     const pet = [PETS[0].id];
     const event = [EVENTS[0].id];
+    const freshEntryText = new Map([
+      ["equip", EQUIPMENT_TEMPLATES[0].name],
+      ["gongfa", GONGFA[0].name],
+      ["pet", PETS[0].name],
+      ["event", EVENTS[0].title],
+    ]);
     slices.quests.lastCollectionViewAt = now - 60_000;
     slices.quests.collections = {
       ...slices.quests.collections,
@@ -6540,22 +6546,20 @@ async function taskCollectionFold() {
         .filter((row) => row.expanded === "true")
         .map((row) => row.key)
         .sort();
+      const jumpKeys = fold.jumps.map((row) => row.key).sort();
       if (
-        openKeys.join(",") !== "equip,gongfa,pet" ||
+        openKeys.join(",") !== jumpKeys.join(",") ||
         fold.toggles.filter((row) => row.bodyVisible).length !== 3
       ) {
         failures.push(
           `[390-collection] 新得最多的三册应默认展开(open=${openKeys.join(",") || "无"})`,
         );
       }
-      const equipBody = fold.toggles.find((row) => row.key === "equip")?.bodyText ?? "";
-      const gongfaBody = fold.toggles.find((row) => row.key === "gongfa")?.bodyText ?? "";
-      const petBody = fold.toggles.find((row) => row.key === "pet")?.bodyText ?? "";
-      if (
-        !equipBody.includes(EQUIPMENT_TEMPLATES[0].name) ||
-        !gongfaBody.includes(GONGFA[0].name) ||
-        !petBody.includes(PETS[0].name)
-      ) {
+      const highlightedWithoutEntry = fold.jumps.filter((row) => {
+        const body = fold.toggles.find((toggle) => toggle.key === row.key)?.bodyText ?? "";
+        return !body.includes(freshEntryText.get(row.key) ?? "");
+      });
+      if (highlightedWithoutEntry.length > 0) {
         failures.push("[390-collection] 默认展开的册目没有铺出对应条目");
       }
       if (
@@ -6572,6 +6576,8 @@ async function taskCollectionFold() {
       if (!fold.moreNewText.includes("另有 1 册新得")) {
         failures.push(`[390-collection] 第四册新得没有在卷首报出余量(«${fold.moreNewText}»)`);
       }
+      const remainingNewKey =
+        [...freshEntryText.keys()].find((key) => !fold.jumps.some((row) => row.key === key)) ?? "";
       await page.locator("[data-collection-more-new]").click({ timeout: 3000 });
       await page.waitForFunction(
         () =>
@@ -6579,15 +6585,16 @@ async function taskCollectionFold() {
           false,
       );
       const expanded = await read();
-      const eventBody = expanded.toggles.find((row) => row.key === "event")?.bodyText ?? "";
+      const remainingBody =
+        expanded.toggles.find((row) => row.key === remainingNewKey)?.bodyText ?? "";
       if (
         expanded.moreNewExpanded !== "true" ||
-        !expanded.toggles.find((row) => row.key === "event")?.bodyVisible ||
-        !eventBody.includes(EVENTS[0].title) ||
+        !expanded.toggles.find((row) => row.key === remainingNewKey)?.bodyVisible ||
+        !remainingBody.includes(freshEntryText.get(remainingNewKey) ?? "") ||
         !expanded.heroText.includes("4 册有新得，已展 4 册")
       ) {
         failures.push(
-          `[390-collection] 余册入口没有真正展开第四册新得(«${expanded.heroText}» / «${eventBody}»)`,
+          `[390-collection] 余册入口没有真正展开第四册新得(«${expanded.heroText}» / «${remainingBody}»)`,
         );
       }
       await page.locator("[data-collection-more-new]").click({ timeout: 3000 });
@@ -6599,7 +6606,7 @@ async function taskCollectionFold() {
       const collapsedAgain = await read();
       if (
         collapsedAgain.moreNewExpanded !== "false" ||
-        collapsedAgain.toggles.find((row) => row.key === "event")?.bodyVisible ||
+        collapsedAgain.toggles.find((row) => row.key === remainingNewKey)?.bodyVisible ||
         !collapsedAgain.heroText.includes("4 册有新得，已展 3 册")
       ) {
         failures.push(

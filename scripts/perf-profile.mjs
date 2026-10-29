@@ -411,7 +411,14 @@ async function expandAllBatches(
         for (const fingerprint of fresh) seen.add(fingerprint);
       }
     }
-    if (steps.length === 0) throw new Error(`没有可续开的批次:${moreSelector}`);
+    const singleWindow =
+      steps.length === 0 &&
+      seen !== null &&
+      expectedTotal !== null &&
+      seen.size === expectedTotal.count;
+    if (steps.length === 0 && !singleWindow) {
+      throw new Error(`没有可续开的批次:${moreSelector}`);
+    }
     if (seen && seen.size !== expectedTotal.count) {
       throw new Error(
         `清单只可达 ${seen.size}/${expectedTotal.count} 件 —— 续开按钮提前消失或漏页`,
@@ -438,11 +445,12 @@ async function expandAllBatches(
     }
     const finalNodes = await page.evaluate(() => document.querySelectorAll("*").length);
     return {
-      before: steps[0].before,
-      after: steps.at(-1).after,
+      before: steps[0]?.before ?? seen?.size ?? 0,
+      after: steps.at(-1)?.after ?? seen?.size ?? 0,
       promised: steps.reduce((sum, step) => sum + step.promised, 0),
       steps: steps.length,
       slides: steps.filter((step) => step.mode === "slide").length,
+      singleWindow,
       peakNodes,
       finalNodes,
       rewind,
@@ -1078,9 +1086,9 @@ for (const r of results) {
   const batchText = checks
     .map(
       ([label, b]) =>
-        `${label}=${b.before}→${b.after}${b.steps > 1 ? `(${b.steps}批/滑${b.slides})` : ""}${
-          b.finalNodes && b.finalNodes !== b.peakNodes ? ` 收=${b.finalNodes}` : ""
-        }${
+        `${label}=${b.before}→${b.after}${
+          b.singleWindow ? "(单窗)" : b.steps > 1 ? `(${b.steps}批/滑${b.slides})` : ""
+        }${b.finalNodes && b.finalNodes !== b.peakNodes ? ` 收=${b.finalNodes}` : ""}${
           (["法宝续开", "丹方续开", "部位候选续开", "词条转移续开"].includes(label) ||
             label.startsWith("功法/") ||
             label === "道痕续开") &&

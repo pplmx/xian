@@ -307,6 +307,11 @@ describe("排版量法口径", () => {
     expect(perf).toContain("data-collection-more");
     expect(perf).toContain("collectionBatches");
     expect(perf).toContain("rewindSpec");
+    expect(perf, "一窗已经全量的册目要按完整清单收口,不能把 0 次续开误判成失败").toContain(
+      "const singleWindow =",
+    );
+    expect(perf).toContain("seen.size === expectedTotal.count");
+    expect(perf).toContain("singleWindow,");
     expect(perf).toMatch(/collection:\s*\d+/);
     expect(perf, "收藏要守住逐册续开后的交互峰值").toContain("collection: 1100");
   });
