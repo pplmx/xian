@@ -5,11 +5,13 @@
     经 NativeApp 桥量来,桥缺位(网页/iOS/桌面)恒 0,max 退化成 env(),与旧渲染逐位相同。
   -->
   <nav
-    class="relative z-20 shrink-0 border-t border-ink/15 bg-paper-deep/95 backdrop-blur"
+    class="bottom-dock relative z-20 shrink-0 border-t border-transparent bg-paper-deep/95 backdrop-blur"
     :style="`padding-bottom: max(env(safe-area-inset-bottom), ${navInset}px)`"
   >
     <div class="ink-divider absolute -top-px inset-x-0" />
-    <div class="grid grid-cols-5">
+    <div
+      class="bottom-dock-rail mx-2 mt-2 grid grid-cols-5 gap-0.5 border border-ink/10 bg-paper/60 p-0.5"
+    >
       <!--
         当前在哪一页交给 RouterLink:它在 exact-active 时自己渲染 aria-current="page"
         (vue-router 的 aria-current-value 默认值就是 page)。这里不再手写一份 ——
@@ -20,8 +22,12 @@
         v-for="tab in TABS"
         :key="tab.name"
         :to="tab.to"
-        class="relative flex flex-col items-center gap-0.5 py-2 transition-colors short:gap-0 short:py-1"
-        :class="route.name === tab.name ? 'text-cinnabar' : 'text-ink-faint active:text-ink-soft'"
+        class="bottom-dock-tab relative flex min-h-[46px] flex-col items-center justify-center gap-0.5 px-0.5 py-1 transition-colors short:min-h-[40px] short:gap-0 short:py-0.5"
+        :class="
+          route.name === tab.name
+            ? 'text-cinnabar bg-paper-deep/75'
+            : 'text-ink-faint active:text-ink-soft'
+        "
       >
         <!--
           落笔 —— 当前这栏顶上压一道朱砂短笔,像夹在书页间的那枚书签带。
@@ -35,10 +41,15 @@
           aria-hidden="true"
         />
         <span
-          class="relative transition-transform duration-200"
-          :class="route.name === tab.name ? '-translate-y-0.5 scale-110' : ''"
+          class="relative grid h-7 w-8 place-items-center transition-transform duration-200"
+          :class="route.name === tab.name ? '-translate-y-0.5 scale-105' : ''"
         >
-          <GameIcon :name="tab.icon" :size="20" />
+          <span
+            v-if="route.name === tab.name"
+            class="pointer-events-none absolute inset-0 border border-cinnabar/20 bg-cinnabar/6"
+            aria-hidden="true"
+          />
+          <GameIcon :name="tab.icon" :size="20" class="relative" />
           <!--
             行囊有没看过的新件:从任何页都看得见「有新货」,开包即隐。量价分档 ——
             恰好一件还是原来的小点(轻晃不吵),≥2 件升级成计数徽标「N」(9+ 封顶);
@@ -72,7 +83,10 @@
             aria-hidden="true"
           />
         </span>
-        <span class="font-kai text-[11px] tracking-[0.2em] short:text-[10px]">{{ tab.label }}</span>
+        <span
+          class="relative font-kai text-[11px] tracking-[0.2em] short:text-[10px] tinylens:text-[10px] tinylens:tracking-normal"
+          >{{ tab.label }}</span
+        >
         <!--
           视觉上说得清、读屏里也要说得出。
 

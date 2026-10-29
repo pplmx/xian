@@ -13,7 +13,7 @@
           aria-modal="true"
           :aria-label="props.ariaLabel || props.title || undefined"
           tabindex="-1"
-          class="modal-panel paper-grain relative w-full max-h-[82vh] flex flex-col overflow-hidden rounded-xl border border-ink/20 bg-paper shadow-2xl outline-none"
+          class="modal-panel paper-grain relative w-full max-h-[82vh] flex flex-col overflow-hidden rounded-[4px] border border-ink/20 border-t-2 border-t-[var(--world-bar)] bg-paper shadow-2xl outline-none"
           :class="props.wide ? 'max-w-100' : 'max-w-90'"
           @keydown="onPanelKeydown"
         >
@@ -65,7 +65,10 @@
           <div class="scroll-pane relative z-10 overflow-y-auto px-5 py-3 grow tinylens:px-3">
             <slot />
           </div>
-          <footer v-if="$slots.footer" class="relative z-10 px-5 pb-5 pt-2 shrink-0 tinylens:px-3">
+          <footer
+            v-if="$slots.footer"
+            class="relative z-10 shrink-0 border-t border-ink/10 px-5 pb-5 pt-3 tinylens:px-3"
+          >
             <slot name="footer" />
           </footer>
         </div>

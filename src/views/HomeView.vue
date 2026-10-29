@@ -9,7 +9,7 @@
     <InstallToHomeNotice />
 
     <!-- 人物水墨主视觉 -->
-    <div class="card-ink relative overflow-hidden px-4 pb-4 pt-5">
+    <div data-home-hero class="card-ink home-hero relative overflow-hidden px-4 pb-4 pt-3">
       <!-- 远山:墨色随世界微染(异地即异色,仍 8% 极淡、只在氛围层) -->
       <svg
         class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8"
@@ -28,7 +28,13 @@
           opacity="0.6"
         />
       </svg>
-      <div class="relative z-10 flex items-start justify-between">
+      <div
+        class="relative z-10 flex items-center justify-between border-b border-ink/10 pb-2 text-[10px]"
+      >
+        <span class="font-kai tracking-[0.3em] text-cinnabar">今日 · 洞府</span>
+        <span class="text-ink-faint">{{ player.worldName }}</span>
+      </div>
+      <div class="relative z-10 mt-3 flex items-start justify-between">
         <div class="min-w-0 flex-1">
           <!--
             主角位是「玩家此刻状态」,却落在最弱档(text-ink-faint),下方次要的今日天时

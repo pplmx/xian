@@ -11400,6 +11400,92 @@ async function taskReadOnlyTab() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/**
+ * 玄枢图:顶栏那枚「玄」印是全站册目的唯一入口。
+ *
+ * 底栏只有五册,而洞府营造、坊市、器魂、天界等页面都从这枚印进入。这里不只数
+ * 入口数量:在 390 与 200% 缩放档(195)各开一次,量册目本身有没有把页面撑坏,
+ * 并真的点一册跳到对应路由。册目是新壳层的高频入口,不能只在源码里有 17 条数据。
+ */
+async function taskAtlasNavigation() {
+  const failures = [];
+  let checked = 0;
+  const contrastFails = [];
+  const pixelContrastFails = [];
+  const zoomFails = [];
+  const cases = [
+    { width: 390, height: 844, dpr: 3, tag: "390" },
+    { width: 195, height: 422, dpr: 1, tag: "195" },
+  ];
+
+  for (const vp of cases) {
+    const ctx = await auditContext({
+      viewport: { width: vp.width, height: vp.height },
+      deviceScaleFactor: vp.dpr,
+      isMobile: true,
+      hasTouch: true,
+    });
+    try {
+      await seedSave(ctx, showcaseSlices("light"));
+      const page = await ctx.newPage();
+      const pageErrors = [];
+      watchPageErrors(page, pageErrors);
+      const textLength = await openRoute(page, "/", 500);
+      if (textLength === 0) failures.push(`[${vp.tag}] 玄枢图场景:首页没有渲染出来`);
+      await clearOverlays(page);
+
+      await page.locator("[data-atlas-trigger]").click();
+      await page.waitForSelector("[data-nav-atlas]", { timeout: 3000 }).catch(() => undefined);
+      const state = await page.evaluate(() => {
+        const atlas = document.querySelector("[data-nav-atlas]");
+        const entries = [...document.querySelectorAll("[data-atlas-entry]")];
+        const current = document.querySelector(".atlas-current");
+        return {
+          present: !!atlas,
+          entries: entries.length,
+          current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
+          active: entries.filter((el) => el.getAttribute("aria-current") === "page").length,
+        };
+      });
+      checked += 1;
+      if (!state.present) failures.push(`[${vp.tag}] 玄枢图没有打开`);
+      if (state.entries !== 17) {
+        failures.push(`[${vp.tag}] 玄枢图册目 ${state.entries} 条(应为 17)`);
+      }
+      if (!state.current.includes("修行") || !state.current.includes("洞府总览")) {
+        failures.push(`[${vp.tag}] 玄枢图卷首没有报出当前落点:${state.current}`);
+      }
+      if (state.active !== 1) {
+        failures.push(`[${vp.tag}] 玄枢图当前册标了 ${state.active} 次(应恰为 1)`);
+      }
+
+      const problems = problemsOf(await measurePage(page));
+      checked += 1;
+      for (const problem of problems) failures.push(`[${vp.tag}] 玄枢图:${problem}`);
+
+      if (vp.tag === "390") {
+        const souls = page.locator('[data-atlas-entry][href="#/souls"]');
+        await souls.click();
+        const jumped = await page
+          .waitForFunction(() => location.hash === "#/souls", { timeout: 4000 })
+          .then(() => true)
+          .catch(() => false);
+        checked += 1;
+        if (!jumped) failures.push("[390] 玄枢图点「器魂」没有跳到 /souls");
+        if ((await page.locator("[data-nav-atlas]").count()) !== 0) {
+          failures.push("[390] 玄枢图点选后没有收起");
+        }
+      }
+      if (pageErrors.length) {
+        failures.push(`[${vp.tag}] 玄枢图场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+      }
+    } finally {
+      await ctx.close();
+    }
+  }
+  return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
+}
+
 /** 任务的顺序就是报告里失败清单的顺序 —— 与串行时代逐块打印的顺序一致 */
 const TASKS = [
   ...VIEWPORTS.map((vp) => [`页面巡游[${vp.tag}]`, () => taskPageTour(vp)]),
@@ -11449,6 +11535,7 @@ const TASKS = [
   ["词条转移候选的分批回看", taskAffixTransferOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
+  ["玄枢图与全站册目", taskAtlasNavigation],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],
   ["构建产物 · dvh / 字体栈", taskBuildArtifacts],
 ];

@@ -55,7 +55,10 @@
       <template v-else>已在另一处打开 · 本页只读,进度不会保存</template>
     </div>
 
-    <main ref="scrollHost" class="relative z-10 min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+    <main
+      ref="scrollHost"
+      class="folio-surface relative z-10 min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+    >
       <RouterView v-slot="{ Component }">
         <Transition name="page-fade" mode="out-in" @before-enter="resetScroll">
           <component :is="Component" />

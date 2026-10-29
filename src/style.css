@@ -659,6 +659,83 @@ html[data-theme="dark"] .btn-seal:disabled {
 }
 
 /*
+ * 玄枢图的入口与卷目栏。
+ *
+ * 这是全站第一处「跨页」入口:底栏只放最常用的五册,其余页面从顶栏这枚小印进入。
+ * 印面用方角、内框与一道极淡的纸底,和欢迎页的方印同族;不用圆角图标按钮,
+ * 免得它读成又一个现代 App 的汉堡菜单。
+ */
+.app-masthead {
+  background-image: linear-gradient(
+    180deg,
+    rgb(var(--color-paper-rgb) / 0.5),
+    rgb(var(--color-paper-deep-rgb) / 0.16)
+  );
+}
+
+.folio-surface {
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent 6px,
+      rgb(var(--color-ink-rgb) / 0.055) 6px,
+      rgb(var(--color-ink-rgb) / 0.055) 7px,
+      transparent 7px
+    ),
+    linear-gradient(
+      270deg,
+      transparent 6px,
+      rgb(var(--color-ink-rgb) / 0.035) 6px,
+      rgb(var(--color-ink-rgb) / 0.035) 7px,
+      transparent 7px
+    );
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.atlas-trigger {
+  border-radius: 2px;
+  background: rgb(var(--color-paper-rgb) / 0.52);
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--color-paper-rgb) / 0.32),
+    0 1px 0 rgb(var(--color-ink-rgb) / 0.08);
+}
+
+.atlas-trigger:active {
+  background: rgb(var(--color-ink-rgb) / 0.06);
+}
+
+.masthead-route {
+  position: relative;
+}
+
+.masthead-route::before {
+  content: "";
+  width: 3px;
+  height: 3px;
+  flex: none;
+  border-radius: 999px;
+  background: rgb(var(--color-ink-rgb) / 0.2);
+}
+
+.bottom-dock-rail {
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    0 1px 3px rgb(var(--shadow-ink-rgb) / 0.06);
+}
+
+.bottom-dock-tab {
+  border-radius: 2px;
+}
+
+html[data-theme="dark"] .bottom-dock-rail {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 1px 3px rgb(var(--shadow-ink-rgb) / 0.08);
+}
+
+/*
  * 楷体 —— 随包分发的一份子集(霞鹜文楷 GB 屏幕阅读版,SIL OFL 1.1)
  *
  * 为什么需要它:iOS 有 Kaiti SC、Windows 有 KaiTi,**安卓一个楷体都没有**。而这套
@@ -1027,13 +1104,26 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     position: relative;
     background: rgb(var(--color-paper-lifted-rgb));
     border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
-    border-radius: 10px;
+    border-radius: 4px;
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.5),
       0 1px 2px rgb(var(--shadow-ink-rgb) / 0.06),
       0 4px 14px rgb(var(--shadow-ink-rgb) / 0.05);
     /* 触感统一:btn-seal/btn-ghost/chip-ink 按压都是 0.12s 滑移,拿 card-ink 当按钮处不该硬跳 */
     transition: transform 0.12s ease;
+  }
+
+  /*
+   * 纸笺的内框:四角收在纸边以内 4px,让卡面读成一张压过边的笺,
+   * 而不是一枚圆角 App 卡。只画在装饰层,不接点击,也不改任何内容尺寸。
+   */
+  .card-ink::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.035);
+    border-radius: 2px;
+    pointer-events: none;
   }
 
   /*
@@ -1136,7 +1226,7 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     background: var(--color-cinnabar);
     color: #f6f1e5;
     font-family: var(--font-kai);
-    border-radius: 8px;
+    border-radius: 3px;
     padding: 10px 18px;
     letter-spacing: 0.12em;
     /*
@@ -1197,7 +1287,7 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     border: 1px solid rgb(var(--color-ink-rgb) / 0.3);
     color: var(--color-ink-soft);
     font-family: var(--font-kai);
-    border-radius: 8px;
+    border-radius: 3px;
     padding: 9px 16px;
     letter-spacing: 0.1em;
     background: transparent;
@@ -1230,7 +1320,7 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     gap: 3px;
     font-size: 11px;
     padding: 2px 8px;
-    border-radius: 999px;
+    border-radius: 2px;
     border: 1px solid currentColor;
     line-height: 1.5;
     white-space: nowrap;
