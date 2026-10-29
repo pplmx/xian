@@ -542,7 +542,8 @@ const repair = computed(() => qiRepairView());
  * 灰钮不能只报「需 X」,站在钮前的人要知道差多少、等多久。
  */
 const repairBlock = computed(() => {
-  if (repair.value.affordable) return null;
+  // 没有伤势时连疗伤入口都不存在,短差句也不该单独挂在卡里。
+  if (!repair.value.injured || repair.value.affordable) return null;
   const short = Math.max(0, Math.ceil(repair.value.cost - resources.qi));
   const sec =
     player.qiRegenPerSec > 0 ? Math.ceil(short / player.qiRegenPerSec) : Number.POSITIVE_INFINITY;

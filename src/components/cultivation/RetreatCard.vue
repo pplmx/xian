@@ -27,7 +27,7 @@
     <button
       v-if="!retreating"
       type="button"
-      class="chip-ink mt-2 w-full !py-1.5 text-[11px]"
+      class="chip-ink mt-2 w-full justify-center !py-1.5 text-center !whitespace-normal text-[11px] leading-relaxed"
       @click="beginRetreat"
     >
       闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)

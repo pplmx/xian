@@ -251,6 +251,20 @@ describe("秘境 · 推得动、出得来", () => {
     expect(corpus).toContain("fightSecretLayer(");
     expect(corpus).toContain("abandonRealm(");
   });
+
+  it("秘境名录默认只铺最近两处,余册可展开 —— 支线不许占满历练首屏", () => {
+    const card = readFileSync(
+      resolve(__dirname, "../components/adventure/SecretRealmCard.vue"),
+      "utf8",
+    );
+    expect(card, "默认窗口只铺两处").toContain("SECRET_REALM_PREVIEW = 2");
+    expect(card, "列表渲染必须走收口后的 visibleList").toContain('v-for="r in visibleList"');
+    expect(card, "余册要能展开且报状态").toContain(':aria-expanded="secretListExpanded"');
+    expect(card, "展开控制要有稳定落点给运行时门").toContain("data-secret-realm-toggle");
+    expect(card, "名录数只表示已到境界,不能把付不起、灰着的秘境也叫「可入」").not.toContain(
+      "处可入",
+    );
+  });
 });
 
 describe("秘境 · 两阶(凡境灵石 / 天界道源)", () => {

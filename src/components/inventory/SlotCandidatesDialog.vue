@@ -21,32 +21,6 @@
         · 佩戴中置顶
       </p>
       <div
-        v-if="candidatePage.start > 0 || candidatePage.hidden > 0"
-        class="flex flex-wrap justify-center gap-1"
-      >
-        <button
-          v-if="candidatePage.start > 0"
-          type="button"
-          data-slot-candidate-prev
-          class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
-          :aria-label="previousCandidateText"
-          @click="showPreviousCandidates"
-        >
-          {{ previousCandidateText }}
-        </button>
-        <button
-          v-if="candidatePage.hidden > 0"
-          type="button"
-          data-slot-candidate-more
-          class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
-          :aria-label="moreCandidateText"
-          :data-promised="Math.min(SLOT_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
-          @click="showMoreCandidates"
-        >
-          {{ moreCandidateText }}
-        </button>
-      </div>
-      <div
         v-for="row in candidatePage.visible"
         :key="row.item.uid"
         :data-slot-candidate="row.item.uid"
@@ -106,6 +80,33 @@
           @click="equipItem(row.item.uid)"
         >
           换上
+        </button>
+      </div>
+      <!-- 读完当前批再续开:回翻/续开不挡在本批首行之前。 -->
+      <div
+        v-if="candidatePage.start > 0 || candidatePage.hidden > 0"
+        class="flex flex-wrap justify-center gap-1 pt-1"
+      >
+        <button
+          v-if="candidatePage.start > 0"
+          type="button"
+          data-slot-candidate-prev
+          class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+          :aria-label="previousCandidateText"
+          @click="showPreviousCandidates"
+        >
+          {{ previousCandidateText }}
+        </button>
+        <button
+          v-if="candidatePage.hidden > 0"
+          type="button"
+          data-slot-candidate-more
+          class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+          :aria-label="moreCandidateText"
+          :data-promised="Math.min(SLOT_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
+          @click="showMoreCandidates"
+        >
+          {{ moreCandidateText }}
         </button>
       </div>
     </div>

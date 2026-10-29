@@ -41,29 +41,6 @@
         :data-title-shown="titlePage.shown"
         :data-title-start="titlePage.start"
       >
-        <div v-if="titlePage.start > 0 || titlePage.hidden > 0" class="flex flex-wrap gap-1 py-2">
-          <button
-            v-if="titlePage.start > 0"
-            type="button"
-            data-title-prev
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
-            :aria-label="previousTitleText()"
-            @click="showPreviousTitles"
-          >
-            {{ previousTitleText() }}
-          </button>
-          <button
-            v-if="titlePage.hidden > 0"
-            type="button"
-            data-title-more
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
-            :aria-label="moreTitleText()"
-            :data-promised="Math.min(TITLE_RENDER_BATCH, titlePage.hidden)"
-            @click="showMoreTitles"
-          >
-            {{ moreTitleText() }}
-          </button>
-        </div>
         <!-- 极窄档(≤220 CSS px):左侧徽章 + 名字/描述/词条三行 + 右侧佩/藏按钮,中间那块
              被压到 35px(「修炼速度 +2%」一字一行)—— 允许换行。320 / 390 两档不动。 -->
         <div
@@ -102,6 +79,30 @@
             {{ row.worn ? "卸下" : "佩戴" }}
           </button>
         </div>
+        <!-- 分页动作放在读完之后:读完当前批就往下继续,不必再滚回册首找「再看」。 -->
+        <div v-if="titlePage.start > 0 || titlePage.hidden > 0" class="flex flex-wrap gap-1 py-2">
+          <button
+            v-if="titlePage.start > 0"
+            type="button"
+            data-title-prev
+            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            :aria-label="previousTitleText()"
+            @click="showPreviousTitles"
+          >
+            {{ previousTitleText() }}
+          </button>
+          <button
+            v-if="titlePage.hidden > 0"
+            type="button"
+            data-title-more
+            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            :aria-label="moreTitleText()"
+            :data-promised="Math.min(TITLE_RENDER_BATCH, titlePage.hidden)"
+            @click="showMoreTitles"
+          >
+            {{ moreTitleText() }}
+          </button>
+        </div>
       </div>
     </template>
 
@@ -134,29 +135,6 @@
         :data-pet-shown="petPage.shown"
         :data-pet-start="petPage.start"
       >
-        <div v-if="petPage.start > 0 || petPage.hidden > 0" class="flex flex-wrap gap-1 py-2">
-          <button
-            v-if="petPage.start > 0"
-            type="button"
-            data-pet-prev
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
-            :aria-label="previousPetText()"
-            @click="showPreviousPets"
-          >
-            {{ previousPetText() }}
-          </button>
-          <button
-            v-if="petPage.hidden > 0"
-            type="button"
-            data-pet-more
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
-            :aria-label="morePetText()"
-            :data-promised="Math.min(PET_RENDER_BATCH, petPage.hidden)"
-            @click="showMorePets"
-          >
-            {{ morePetText() }}
-          </button>
-        </div>
         <div
           v-for="row in petPage.visible"
           :key="row.def.id"
@@ -215,6 +193,29 @@
             @click="togglePet(row.def.id)"
           >
             {{ row.active ? "暂别" : "唤来" }}
+          </button>
+        </div>
+        <div v-if="petPage.start > 0 || petPage.hidden > 0" class="flex flex-wrap gap-1 py-2">
+          <button
+            v-if="petPage.start > 0"
+            type="button"
+            data-pet-prev
+            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            :aria-label="previousPetText()"
+            @click="showPreviousPets"
+          >
+            {{ previousPetText() }}
+          </button>
+          <button
+            v-if="petPage.hidden > 0"
+            type="button"
+            data-pet-more
+            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            :aria-label="morePetText()"
+            :data-promised="Math.min(PET_RENDER_BATCH, petPage.hidden)"
+            @click="showMorePets"
+          >
+            {{ morePetText() }}
           </button>
         </div>
       </div>

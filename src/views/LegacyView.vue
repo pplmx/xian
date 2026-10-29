@@ -146,29 +146,6 @@
         :data-life-start="lifePage.start"
       >
         <template v-if="lifeRows.length">
-          <div v-if="lifePage.start > 0 || lifePage.hidden > 0" class="flex flex-wrap gap-1 py-2">
-            <button
-              v-if="lifePage.start > 0"
-              type="button"
-              data-life-prev
-              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
-              :aria-label="previousLifeText()"
-              @click="showPreviousLives"
-            >
-              {{ previousLifeText() }}
-            </button>
-            <button
-              v-if="lifePage.hidden > 0"
-              type="button"
-              data-life-more
-              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
-              :aria-label="moreLifeText()"
-              :data-promised="Math.min(LIFE_RENDER_BATCH, lifePage.hidden)"
-              @click="showMoreLives"
-            >
-              {{ moreLifeText() }}
-            </button>
-          </div>
           <p
             v-for="l in lifePage.visible"
             :key="l.index"
@@ -193,6 +170,29 @@
               >宿慧 +{{ l.insight }}</span
             >
           </p>
+          <div v-if="lifePage.start > 0 || lifePage.hidden > 0" class="flex flex-wrap gap-1 py-2">
+            <button
+              v-if="lifePage.start > 0"
+              type="button"
+              data-life-prev
+              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+              :aria-label="previousLifeText()"
+              @click="showPreviousLives"
+            >
+              {{ previousLifeText() }}
+            </button>
+            <button
+              v-if="lifePage.hidden > 0"
+              type="button"
+              data-life-more
+              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+              :aria-label="moreLifeText()"
+              :data-promised="Math.min(LIFE_RENDER_BATCH, lifePage.hidden)"
+              @click="showMoreLives"
+            >
+              {{ moreLifeText() }}
+            </button>
+          </div>
         </template>
         <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
           此为初世。你尚未死过一次,也就还没有什么可以回忆。
@@ -285,6 +285,22 @@
         :data-loss-start="lossPage.start"
       >
         <template v-if="lossRows.length">
+          <p
+            v-for="l in lossPage.visible"
+            :key="l.eventId + l.at"
+            :data-loss-row="l.eventId"
+            tabindex="-1"
+            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-[11px]"
+          >
+            <span class="shrink-0 whitespace-nowrap text-[10px] text-ink-faint">{{
+              formatDate(l.at)
+            }}</span>
+            <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ l.eventName }}</span>
+            <span
+              class="ml-auto shrink-0 text-[10px] text-ink-faint tinylens:ml-0 tinylens:basis-full tinylens:whitespace-normal"
+              >{{ l.note }}</span
+            >
+          </p>
           <div v-if="lossPage.start > 0 || lossPage.hidden > 0" class="flex flex-wrap gap-1 py-2">
             <button
               v-if="lossPage.start > 0"
@@ -308,22 +324,6 @@
               {{ moreLossText() }}
             </button>
           </div>
-          <p
-            v-for="l in lossPage.visible"
-            :key="l.eventId + l.at"
-            :data-loss-row="l.eventId"
-            tabindex="-1"
-            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-[11px]"
-          >
-            <span class="shrink-0 whitespace-nowrap text-[10px] text-ink-faint">{{
-              formatDate(l.at)
-            }}</span>
-            <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ l.eventName }}</span>
-            <span
-              class="ml-auto shrink-0 text-[10px] text-ink-faint tinylens:ml-0 tinylens:basis-full tinylens:whitespace-normal"
-              >{{ l.note }}</span
-            >
-          </p>
         </template>
         <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
           世界尚未记住你的足迹。此录待你行过此世,自会留下回响。

@@ -12,7 +12,7 @@
   >
     <p class="flex flex-wrap items-center gap-2">
       <span class="font-kai text-[15px] tracking-[0.2em] text-ink">秘境</span>
-      <span class="chip-ink !text-[9px]"
+      <span class="chip-ink !text-[10px]"
         >{{ gate === "celestial" ? "天界秘境" : "凡境秘境" }} · {{ cnNumber(SECRET_LAYERS) }}层 ·
         出则散</span
       >
@@ -95,16 +95,16 @@
       <div class="mt-2 flex gap-2 tinylens:flex-col">
         <!-- 出秘境是二步确认:整趟是付过门票的独一份内容,误触不该直接清空 —— 与删快照同族 -->
         <template v-if="!confirmAbandon">
-          <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="fight">再 入 一 层</button>
-          <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="confirmAbandon = true">
+          <button class="btn-seal flex-1 !py-1.5 !text-[14px]" @click="fight">再 入 一 层</button>
+          <button class="btn-ghost flex-1 !py-1.5 !text-[14px]" @click="confirmAbandon = true">
             出 秘 境
           </button>
         </template>
         <template v-else>
-          <button class="btn-seal flex-1 !py-1.5 !text-[12px]" @click="doAbandon()">
+          <button class="btn-seal flex-1 !py-1.5 !text-[14px]" @click="doAbandon()">
             确认弃境
           </button>
-          <button class="btn-ghost flex-1 !py-1.5 !text-[12px]" @click="confirmAbandon = false">
+          <button class="btn-ghost flex-1 !py-1.5 !text-[14px]" @click="confirmAbandon = false">
             再想想
           </button>
         </template>
@@ -117,38 +117,60 @@
       <p v-if="elsewhere" class="mt-1 text-[10px] leading-relaxed text-ink-faint">
         身在「{{ elsewhere.name }}」秘境之中 —— 出而后再来择境。
       </p>
-      <div v-else class="mt-1 space-y-1.5">
-        <button
-          v-for="r in list"
-          :key="r.id"
-          class="w-full rounded-md bg-paper-deep/30 px-3 py-2 text-left active:scale-99"
-          :class="{ 'border border-ink/10': !canPay(r) }"
-          :disabled="!canPay(r)"
-          @click="enter(r.id)"
-        >
-          <span class="flex flex-wrap items-baseline gap-2">
-            <span class="font-kai text-[13px] text-ink">{{ r.name }}</span>
-            <!-- 付不起就报差(与聚气丹/建筑/法宝同款):一盏灰灯不说差多少等于没说完 -->
-            <span
-              class="text-[10px] tabular"
-              :class="canPay(r) ? 'text-ink-faint' : 'text-cinnabar'"
-            >
-              {{ payText(r) }}
+      <div v-else class="mt-1">
+        <!--
+          秘境是支线,不该用八张说明卡把历练首屏整页占满。
+          先亮当前境界最近的两处,余册由玩家自己展开;名录总数仍直说。
+        -->
+        <div id="secret-realm-list" class="space-y-1.5">
+          <button
+            v-for="r in visibleList"
+            :key="r.id"
+            class="w-full rounded-md bg-paper-deep/30 px-3 py-2 text-left active:scale-99"
+            :class="{ 'border border-ink/10': !canPay(r) }"
+            :disabled="!canPay(r)"
+            @click="enter(r.id)"
+          >
+            <span class="flex flex-wrap items-baseline gap-2">
+              <span class="font-kai text-[14px] text-ink">{{ r.name }}</span>
+              <!-- 付不起就报差(与聚气丹/建筑/法宝同款):一盏灰灯不说差多少等于没说完 -->
+              <span
+                class="text-[10px] tabular"
+                :class="canPay(r) ? 'text-ink-faint' : 'text-cinnabar'"
+              >
+                {{ payText(r) }}
+              </span>
+              <!-- 入境的箭头跟 canPay 走:付不起时它不该还是一枚亮着的青箭头 -->
+              <span class="ml-auto text-[10px]" :class="canPay(r) ? 'text-qing' : 'text-ink-faint'"
+                >入 境 →</span
+              >
             </span>
-            <!-- 入境的箭头跟 canPay 走:付不起时它不该还是一枚亮着的青箭头 -->
-            <span class="ml-auto text-[10px]" :class="canPay(r) ? 'text-qing' : 'text-ink-faint'"
-              >入 境 →</span
-            >
-          </span>
-          <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{ r.desc }}</span>
-        </button>
-        <p v-if="list.length === 0" class="empty-note text-center text-[11px] text-ink-faint">
+            <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{
+              r.desc
+            }}</span>
+          </button>
+          <p v-if="list.length === 0" class="empty-note text-center text-[11px] text-ink-faint">
+            {{
+              gate === "celestial"
+                ? "尚无天界秘境可探 —— 天界册真仙起,自有去处。"
+                : "尚无凡境秘境可探 —— 凡境册元婴起,自有去处。"
+            }}
+          </p>
+        </div>
+        <button
+          v-if="list.length > SECRET_REALM_PREVIEW"
+          class="mt-1.5 flex min-h-[28px] w-full items-center justify-center rounded-md border border-dashed border-ink/15 px-3 py-1 text-[10px] text-ink-faint active:scale-99 active:text-ink-soft"
+          :aria-expanded="secretListExpanded"
+          aria-controls="secret-realm-list"
+          data-secret-realm-toggle
+          @click="secretListExpanded = !secretListExpanded"
+        >
           {{
-            gate === "celestial"
-              ? "尚无天界秘境可探 —— 天界册真仙起,自有去处。"
-              : "尚无凡境秘境可探 —— 凡境册元婴起,自有去处。"
+            secretListExpanded
+              ? `收起秘境名录 · 共 ${list.length} 处`
+              : `展开其余 ${list.length - SECRET_REALM_PREVIEW} 处 · 共 ${list.length} 处`
           }}
-        </p>
+        </button>
       </div>
     </template>
   </section>
@@ -165,7 +187,9 @@
   >
     <p class="flex items-center gap-2">
       <span class="font-kai text-[15px] tracking-[0.2em] text-ink">秘境</span>
-      <span class="chip-ink !text-[9px]">{{ gate === "celestial" ? "天界秘境" : "凡境秘境" }}</span>
+      <span class="chip-ink !text-[10px]">{{
+        gate === "celestial" ? "天界秘境" : "凡境秘境"
+      }}</span>
     </p>
     <p class="mt-1.5 t-body text-ink-faint">
       {{ gate === "celestial" ? "天界册 · 真仙起(道源)" : "凡境册 · 元婴起(灵石)" }}
@@ -206,6 +230,8 @@ const endgame = useEndgameStore();
 const unlocked = computed(() => realmUnlock(props.gate));
 /** 出秘境二步确认:整趟是付过门票的独一份内容,误触「出」就该血亏(与删快照同族) */
 const confirmAbandon = ref(false);
+const SECRET_REALM_PREVIEW = 2;
+const secretListExpanded = ref(false);
 /**
  * 在境中(仅认本册):currentRealm 是全局单份、不分册 —— 不筛的话,身在凡境的境中
  * 时,天界册(试炼域)这张卡也会以「天界秘境」的册头渲染凡境的境况,册头与内容
@@ -227,6 +253,9 @@ const elsewhere = computed(() => {
   return d && d.gate !== props.gate ? d : null;
 });
 const list = computed(() => availableRealms(props.gate));
+const visibleList = computed(() =>
+  secretListExpanded.value ? list.value : list.value.slice(0, SECRET_REALM_PREVIEW),
+);
 const def = computed<SecretRealmDef | undefined>(() =>
   state.value ? secretRealmDef(state.value.realmId) : undefined,
 );

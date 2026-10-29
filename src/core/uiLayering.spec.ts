@@ -507,6 +507,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(picker?.src, "候选行要有稳定指纹").toContain(":data-slot-candidate=");
     expect(picker?.src, "余件要能续开").toContain("data-slot-candidate-more");
     expect(picker?.src, "滑走的批次要能回翻").toContain("data-slot-candidate-prev");
+    expect(
+      picker?.src.indexOf("data-slot-candidate-more"),
+      "候选续开要排在当前批之后:读完再往下走,不必滚回弹窗首行",
+    ).toBeGreaterThan(picker?.src.indexOf('v-for="row in candidatePage.visible"') ?? -1);
     expect(picker?.src, "续开焦点要落到新露出的第一件").toMatch(
       /firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*SLOT_CANDIDATE_RENDER_WINDOW\s*\)/,
     );
@@ -820,6 +824,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
       expect(tit?.src, `${key} 册要有逐行指纹`).toContain(`:data-${key}-row=`);
       expect(tit?.src, `${key} 册要有续开入口`).toContain(`data-${key}-more`);
       expect(tit?.src, `${key} 册要有回翻入口`).toContain(`data-${key}-prev`);
+      expect(
+        tit?.src.indexOf(`data-${key}-more`),
+        `${key} 册的续开要排在当前批之后:读完再往下走,不必滚回册首`,
+      ).toBeGreaterThan(tit?.src.indexOf(`v-for="row in ${key}Page.visible"`) ?? -1);
     }
     // 当前相伴是玩家现在的选择,必须排在已结缘者里的第一行;
     // 原实现先按品阶排,低品阶的相伴灵兽会被更高品阶的旧收藏压到后面。
@@ -957,6 +965,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(xfer?.src, "候选行要给足 28px 触控高度").toContain("flex min-h-[28px]");
     expect(xfer?.src, "余件要能续开").toContain("data-affix-candidate-more");
     expect(xfer?.src, "滑走的批次要能回翻").toContain("data-affix-candidate-prev");
+    expect(
+      xfer?.src.indexOf("data-affix-candidate-more"),
+      "词条转移续开也要排在当前批之后,与其它长列表同向",
+    ).toBeGreaterThan(xfer?.src.indexOf('v-for="c in candidatePage.visible"') ?? -1);
     expect(xfer?.src, "续开焦点要落到新露出的第一件").toMatch(
       /firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*AFFIX_CANDIDATE_RENDER_WINDOW\s*\)/,
     );
@@ -1098,6 +1110,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(retreatCard?.src, "闪的触发是 retreating 由假转真那一瞬(5 分钟到时不再闪)").toMatch(
       /nv && !ov\) retreatFlash\.value = true/,
     );
+    expect(
+      retreatCard?.src,
+      "闭关入口在 195px 下必须换行:chip-ink 的 nowrap 会把主滚动区撑宽并滚偏整页",
+    ).toMatch(/class="chip-ink[^"]*!whitespace-normal[^"]*"/);
   });
 
   it("境遇结算收益行要逐行晕开 —— 与离线卷轴同款节奏,不许瞬时同现", () => {
@@ -1376,9 +1392,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("页签条在极窄档去字距并锁一行 —— 六枚页签不许各自折成两行", () => {
     /*
      * InkTabs 供六个页面共用,标签全是 2 字。常态字距 0.2em 是那枚墨块的呼吸,但
-     * 200% 缩放档(195 CSS px)下 6 枚页签每枚只剩 26px:2 字 13px 加字距要 31px,
-     * 实测六枚全折成两行。极窄档去字距后文字 26px 正好填满,但**边界抖动仍会折**
-     * (实测仍 2 行),故两条一起要:tracking 归零 + nowrap。
+     * 200% 缩放档(195 CSS px)下 6 枚页签每枚只剩 26px:2 字 14px 加字距要 34px,
+     * 实测六枚全折成两行。极窄档收到 11px 并去字距后,文字 22px 留出余量,但仍会
+     * 因边界抖动折行,故两条一起要:字号收口 + tracking 归零 + nowrap。
      */
     const tabs = FILES.find((f) => f.path === "components/common/InkTabs.vue");
     const cls = /class="([^"]*font-kai[^"]*)"/.exec(tabs?.src ?? "")?.[1];
@@ -1386,6 +1402,19 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cls, "常态保留那口呼吸(字距 0.2em)").toContain("tracking-[0.2em]");
     expect(cls, "极窄档去字距").toContain("tinylens:tracking-normal");
     expect(cls, "极窄档锁一行(只去字距仍会因边界抖动折行)").toContain("tinylens:whitespace-nowrap");
+  });
+
+  it("页签选中态走淡底墨字 + 朱砂小印,不压成实心墨块", () => {
+    const tabs = FILES.find((f) => f.path === "components/common/InkTabs.vue");
+    expect(tabs?.src, "选中态要有淡纸底").toContain("bg-paper-deep/70");
+    expect(tabs?.src, "选中态文字仍是墨字").toContain("text-ink");
+    expect(tabs?.src, "选中态要留一枚朱砂小印").toContain("bg-cinnabar/70");
+    expect(tabs?.src, "不许退回实心墨块 + 反白字").not.toMatch(
+      /rounded-md bg-ink shadow[\s\S]{0,120}text-paper/,
+    );
+    const cls = /class="([^"]*font-kai[^"]*)"/.exec(tabs?.src ?? "")?.[1];
+    expect(cls, "页签字号要落在页面字阶内").toContain("text-[14px]");
+    expect(cls, "极窄档用 11px 收口").toContain("tinylens:text-[11px]");
   });
 
   it("极窄档的顶栏与行要放开 —— 三段横排塞不下时不许把标题压成一字一行", () => {
@@ -1519,7 +1548,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("洞府离线存续当前档要实底点亮 —— 不许退回淡染的哑当前态", () => {
     // 离线上限阶梯「现在第几档」曾只有 6% 底 + 50% 边框,是全库最哑的当前态
-    // 指示器(对照 InkTabs 实心墨块 / 行程点实底呼吸)。当前档改实底 paper 字。
+    // 指示器(对照 InkTabs 淡纸底 + 朱砂小印 / 行程点实底呼吸)。当前档改实底 paper 字。
     const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
     expect(dv?.src, "当前档必须实底 + paper 字 + 楷体").toMatch(/bg-cinnabar text-paper font-kai/);
   });
@@ -1612,6 +1641,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageTap === r.id"'],
       // 门庭派活的两步钮:第一下展开任务说明、再点同枚才派出 —— 新登的 disclosure
       ["views/ApprenticeView.vue", ":aria-expanded=\"taskTap === a.uid + ':' + t.spec\""],
+      // 秘境名录是历练页的支线,默认只亮最近两处;展开/收起要把状态报给读屏
+      ["components/adventure/SecretRealmCard.vue", ':aria-expanded="secretListExpanded"'],
     ];
     for (const [path, needle] of checks) {
       const f = FILES.find((x) => x.path === path);
@@ -2001,6 +2032,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(legacy?.src, "只渲染当前窗内的历世").toContain("lifePage.visible");
     expect(legacy?.src, "余下的历世要能续开").toContain("data-life-more");
     expect(legacy?.src, "滑走的首批要能回翻").toContain("data-life-prev");
+    expect(
+      legacy?.src.indexOf("data-life-more"),
+      "续开要排在当前批之后:读完这一世再往下走,不必滚回册首找按钮",
+    ).toBeGreaterThan(legacy?.src.indexOf('v-for="l in lifePage.visible"') ?? -1);
   });
 
   it("行迹录只列八则时也要有回头路 —— 总数与清单必须同源", () => {
@@ -2014,6 +2049,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
     expect(legacy?.src, "旧回响要能续开").toContain("data-loss-more");
     expect(legacy?.src, "滑走的旧回响要能回翻").toContain("data-loss-prev");
+    expect(
+      legacy?.src.indexOf("data-loss-more"),
+      "行迹续开也要排在当前批之后,与历世履历同向",
+    ).toBeGreaterThan(legacy?.src.indexOf('v-for="l in lossPage.visible"') ?? -1);
   });
 
   it("历世同行再长也只铺当前窗 —— 最近一段先见，旧缘仍可回看", () => {
@@ -2344,6 +2383,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 同文件突破钮 btQiBlock 已补齐短差+ETA,此处照同一口径收口。
     const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
     expect(cult?.src, "疗伤灰钮要现算短差").toMatch(/const repairBlock = computed\(/);
+    expect(cult?.src, "没有伤势时连入口都不出现,短差句也不许单独挂出来").toContain(
+      "if (!repair.value.injured || repair.value.affordable) return null;",
+    );
     expect(cult?.src, "短差句要与突破钮同款(尚差 X,按当前回复约 Y)").toContain(
       "尚差 {{ repairBlock.short }} 灵气,按当前回复{{ repairBlock.eta }}",
     );
@@ -2988,6 +3030,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 措辞可以变,意思不能丢:它参与成形校准,但**不改写历练里的战斗**。
     // 事实本身由 worldSemantics.spec 钉着(历练的合并点不含 mortalWorld)。
     expect(mw?.src, "要明说它不改写战斗,免得玩家以为真被降能").toContain("不改写历练里的战斗");
+    expect(mw?.src, "同一条规则不要又叫「气象之名」").not.toContain("此世气象之名");
   });
 
   it("锁定路线只把可行动的那一段说一次,后段不再逐卡复读", () => {
@@ -2999,6 +3042,86 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(worldView?.src, "不许逐卡重复同一个全局目的地").not.toContain(
       "entryBlockReason(p.regionId)",
     );
+  });
+
+  it("本世地界的出发钮服从统一准入 —— 旧链已开的中段不能只画锁", () => {
+    /*
+     * 旧链全开的老存档可以绕开路线顺序,这是 `canEnterRegion` 已明确接受的
+     * 兼容代价;但世界页此前仍只看 `canEnterNode`,把路线中段画成锁并写
+     * 「须先通」,而玩家从历练页其实能直接出发。两个入口对同一处地界说
+     * 两套话,正是这轮要收掉的裂缝。
+     */
+    const worldView = FILES.find((f) => f.path === "views/MortalWorldView.vue");
+    expect(worldView?.src, "出发资格要读统一准入谓词").toMatch(
+      /function canDepart\(regionId: string\): boolean \{\s*return canEnterRegion\(regionId\);/,
+    );
+    expect(worldView?.src, "按钮条件也要用同一个谓词").toContain('v-if="canDepart(p.regionId)"');
+    expect(worldView?.src, "锁图标与拦截理由不能再只认路线顺序").not.toContain(
+      "unlocked(p.nodeId)",
+    );
+    expect(worldView?.src, "旧链可先行时要给玩家一个可见状态").toContain("旧路可往");
+  });
+
+  it("山河行旅图三种阶段同时有图形、文字与读屏名,不只靠颜色", () => {
+    const map = FILES.find((f) => f.path === "components/world/MortalRouteMap.vue");
+    expect(map?.src, "路线图要挂稳定落点,运行时与判据才认得出它").toContain("data-world-route-map");
+    expect(map?.src, "图本身要有随阶段与段数变化的可访问名").toContain("mapLabel");
+    expect(map?.src, "已通不能只剩绿色圆点").toContain(">已通");
+    expect(map?.src, "眼下不能只剩石青圆点").toContain(">眼下");
+    expect(map?.src, "未至不能只剩虚线框").toContain(">未至");
+    expect(map?.src, "路线笔路要走可单测的手卷函数").toContain("smoothRoutePath");
+    expect(map?.src, "已走实线要停在最后已通节点,不许按整条路等比例越界").toContain(
+      "clearedRoutePath",
+    );
+    expect(map?.src, "阶段状态仍由 mortalStageStatuses 的同一份结果驱动").toContain(
+      "MortalStageStatus[]",
+    );
+  });
+
+  it("历练页的行旅条复用世界视图与阶段判据,不另造一套进度", () => {
+    const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
+    const ribbon = FILES.find((f) => f.path === "components/world/MortalWorldRibbon.vue");
+    expect(adventure?.src, "历练页要真的挂上行旅条").toContain("<MortalWorldRibbon");
+    expect(adventure?.src, "首次进历练时本世之界要凝成,不能只等观象页").toContain(
+      "if (!adventure.mortalWorld) ensureMortalWorld()",
+    );
+    expect(adventure?.src, "进度只认 mortalStageStatuses").toContain("mortalStageStatuses(");
+    expect(adventure?.src, "世界名与路线只认 worldView").toContain("worldView(");
+    expect(ribbon?.src, "行旅条要挂稳定落点").toContain("data-world-ribbon");
+    expect(ribbon?.src, "行旅条读同一份世界视图").toContain("WorldView | null");
+    expect(ribbon?.src, "行旅条读同一份阶段结果").toContain("MortalStageStatus[]");
+    expect(ribbon?.src, "读屏名要带进度与眼下去处").toContain("linkLabel");
+  });
+
+  it("行旅条说眼下可往时,历练列表必须把同一段路摆在可见首位", () => {
+    const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
+    expect(adventure?.src, "可见范围要收口到可单测的同一实现").toContain("visibleRegionRows(");
+    expect(adventure?.src, "当前段要从阶段判据反查区域,不许另猜").toContain("currentRouteRegionId");
+    expect(adventure?.src, "当前段与首个可行动段都是可见钉子").toContain("pinned");
+    expect(adventure?.src, "当前段要在卡上明说「本世眼下」").toContain("data-route-current");
+    expect(adventure?.src, "当前界域要排到最前").toContain(
+      "b.rows.some((row) => row.isRouteCurrent)",
+    );
+    expect(
+      adventure?.src.match(/Number\(b\.isRouteCurrent\) - Number\(a\.isRouteCurrent\)/g),
+      "当前卡也要在同界域内排到最前 —— 少这一层,高境界的长列表仍会把眼下埋掉",
+    ).toHaveLength(1);
+  });
+
+  it("历练页的锁定原因只留一条:路线内说路线,路线外才退回旧链", () => {
+    const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
+    expect(adventure?.src, "旧链的「需先击败」只能在路线判据没有给出理由时兜底").toContain(
+      'v-if="!row.canEnter && !row.blockReason"',
+    );
+    expect(adventure?.src, "路线内的拦截理由仍要显示").toContain('v-if="row.blockReason"');
+  });
+
+  it("前尘山河要把跨世世界史摊开,不让去重记录只活在 store 里", () => {
+    const world = FILES.find((f) => f.path === "views/MortalWorldView.vue");
+    expect(world?.src, "世界页要读取最近几世的历史").toContain("mortalWorldHistory");
+    expect(world?.src, "历史行要复用当前世界的同一份视图翻译").toContain("historyRows");
+    expect(world?.src, "历史册要有稳定落点给运行时门").toContain("data-world-history");
+    expect(world?.src, "历史世界名与路线长度不许另拼一套").toContain("worldHistoryRows(");
   });
 });
 
@@ -3429,6 +3552,7 @@ describe("主巡页 · 字阶同一套", () => {
     "views/CelestialView.vue",
     "views/SoulsView.vue",
     "views/AdventureView.vue",
+    "components/adventure/SecretRealmCard.vue",
     "views/BuildView.vue",
     "views/CollectionView.vue",
     "views/LegacyView.vue",
@@ -4167,5 +4291,14 @@ describe("不可逆的动作要先问一句 · 换一方天地", () => {
     expect(MW, "按钮门槛要来自核心报价,不许在视图另拼一套").toContain("worldRerollQuote");
     expect(MW, "历练中禁用却没写原因").toContain("历练中");
     expect(MW, "缺道果时仍要报差多少").toContain("尚差");
+  });
+
+  it("来源说明承认道果换界,不能再说只有兵解能换", () => {
+    expect(MW, "页面已有道果换界按钮,说明却还说唯有兵解").not.toContain("唯有");
+    expect(MW, "换界入口已存在,不能再把这一世写成绝不会变").not.toMatch(/>这一世之内不会再变。</);
+    expect(MW, "换界按钮就在上方,不能再说「不重掷」").not.toContain("不重掷,这一世之内不会再变");
+    expect(MW, "天地不会自行变,要写成「不主动换界就不会再变」").toContain("不主动换界就不会再变");
+    expect(MW, "来源说明要同时交代道果重掷与兵解转世").toMatch(/道果[\s\S]{0,80}兵解转世/);
+    expect(MW, "道果重掷仍要明说清空本世路线进度").toContain("清空本世路线进度");
   });
 });

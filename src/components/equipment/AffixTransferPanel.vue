@@ -203,32 +203,6 @@ function doTransfer(): void {
             }}
           </span>
         </p>
-        <div
-          v-if="candidatePage.start > 0 || candidatePage.hidden > 0"
-          class="mb-1 flex flex-wrap justify-center gap-1"
-        >
-          <button
-            v-if="candidatePage.start > 0"
-            type="button"
-            data-affix-candidate-prev
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
-            :aria-label="previousCandidateText"
-            @click="showPreviousCandidates"
-          >
-            {{ previousCandidateText }}
-          </button>
-          <button
-            v-if="candidatePage.hidden > 0"
-            type="button"
-            data-affix-candidate-more
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
-            :aria-label="moreCandidateText"
-            :data-promised="Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
-            @click="showMoreCandidates"
-          >
-            {{ moreCandidateText }}
-          </button>
-        </div>
         <div class="scroll-pane max-h-24 space-y-1 overflow-y-auto">
           <div
             v-for="c in candidatePage.visible"
@@ -285,6 +259,33 @@ function doTransfer(): void {
           <p v-if="!candidates.length" class="px-2 py-2 text-center text-[10px] text-ink-faint">
             行囊里没有能接这一条的件。
           </p>
+        </div>
+        <!-- 候选在滚动框内读完,续开/回翻紧跟在本批之后,不让玩家滚回框首找入口。 -->
+        <div
+          v-if="candidatePage.start > 0 || candidatePage.hidden > 0"
+          class="mt-1 flex flex-wrap justify-center gap-1"
+        >
+          <button
+            v-if="candidatePage.start > 0"
+            type="button"
+            data-affix-candidate-prev
+            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            :aria-label="previousCandidateText"
+            @click="showPreviousCandidates"
+          >
+            {{ previousCandidateText }}
+          </button>
+          <button
+            v-if="candidatePage.hidden > 0"
+            type="button"
+            data-affix-candidate-more
+            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            :aria-label="moreCandidateText"
+            :data-promised="Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
+            @click="showMoreCandidates"
+          >
+            {{ moreCandidateText }}
+          </button>
         </div>
       </div>
 
