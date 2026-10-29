@@ -196,7 +196,11 @@
             <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
               {{
                 collectionOverview.newCount > 0
-                  ? `${collectionOverview.newRows.length} 册有新得，先展开 ${collectionOverview.initialOpenKeys.length} 册；余册收着。`
+                  ? `${collectionOverview.newRows.length} 册有新得，已展 ${openedNewCount} 册${
+                      collectionOverview.newRows.length > openedNewCount
+                        ? `；余 ${collectionOverview.newRows.length - openedNewCount} 册可展开。`
+                        : "。"
+                    }`
                   : collectionOverview.known > 0
                     ? "先看将满的一册；余册收着，点开再翻。"
                     : "九册尚未开册；点开一册，看来源与收录进度。"
@@ -277,13 +281,13 @@
             :aria-expanded="collectionMoreNewOpen"
             :aria-label="
               collectionMoreNewOpen
-                ? `另有 ${collectionMoreNewCount} 册新得已展开，点按回到第一册`
+                ? `另有 ${collectionMoreNewCount} 册新得已展开，点按收起`
                 : `另有 ${collectionMoreNewCount} 册新得未列于此，点按一并展开`
             "
             :aria-controls="
               collectionMoreNewRows.map((row) => collectionCategoryBodyId(row.key)).join(' ')
             "
-            @click="revealRemainingNewCategories"
+            @click="toggleRemainingNewCategories"
           >
             <span>
               {{
@@ -293,7 +297,7 @@
               }}
             </span>
             <span class="shrink-0 text-cinnabar">
-              {{ collectionMoreNewOpen ? "已展开" : "展开 →" }}
+              {{ collectionMoreNewOpen ? "收起余册" : "展开余册 →" }}
             </span>
           </button>
         </template>
@@ -845,6 +849,10 @@ const collectionMoreNewRows = computed(() =>
 const collectionMoreNewCount = computed(() => collectionMoreNewRows.value.length);
 
 const openCollectionKeys = ref<Set<string>>(new Set());
+const openedNewCount = computed(
+  () =>
+    collectionOverview.value.newRows.filter((row) => openCollectionKeys.value.has(row.key)).length,
+);
 const collectionMoreNewOpen = computed(
   () =>
     collectionMoreNewRows.value.length > 0 &&
@@ -911,9 +919,18 @@ function revealCollectionCategory(key: string): void {
   });
 }
 
-function revealRemainingNewCategories(): void {
+function toggleRemainingNewCategories(): void {
   const rows = collectionMoreNewRows.value;
   if (rows.length === 0) return;
+  if (collectionMoreNewOpen.value) {
+    const next = new Set(openCollectionKeys.value);
+    for (const row of rows) next.delete(row.key);
+    openCollectionKeys.value = next;
+    void nextTick(() => {
+      document.querySelector<HTMLElement>("[data-collection-more-new]")?.focus();
+    });
+    return;
+  }
   openCollectionKeys.value = new Set([...openCollectionKeys.value, ...rows.map((row) => row.key)]);
   void nextTick(() => {
     const target = document.querySelector<HTMLElement>(

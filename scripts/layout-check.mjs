@@ -6575,7 +6575,7 @@ async function taskCollectionFold() {
       await page.locator("[data-collection-more-new]").click({ timeout: 3000 });
       await page.waitForFunction(
         () =>
-          document.querySelector("[data-collection-more-new]")?.textContent?.includes("已展开") ??
+          document.querySelector("[data-collection-more-new]")?.textContent?.includes("收起余册") ??
           false,
       );
       const expanded = await read();
@@ -6583,9 +6583,28 @@ async function taskCollectionFold() {
       if (
         expanded.moreNewExpanded !== "true" ||
         !expanded.toggles.find((row) => row.key === "event")?.bodyVisible ||
-        !eventBody.includes(EVENTS[0].title)
+        !eventBody.includes(EVENTS[0].title) ||
+        !expanded.heroText.includes("4 册有新得，已展 4 册")
       ) {
-        failures.push("[390-collection] 余册入口没有真正展开第四册新得");
+        failures.push(
+          `[390-collection] 余册入口没有真正展开第四册新得(«${expanded.heroText}» / «${eventBody}»)`,
+        );
+      }
+      await page.locator("[data-collection-more-new]").click({ timeout: 3000 });
+      await page.waitForFunction(
+        () =>
+          document.querySelector("[data-collection-more-new]")?.textContent?.includes("展开余册") ??
+          false,
+      );
+      const collapsedAgain = await read();
+      if (
+        collapsedAgain.moreNewExpanded !== "false" ||
+        collapsedAgain.toggles.find((row) => row.key === "event")?.bodyVisible ||
+        !collapsedAgain.heroText.includes("4 册有新得，已展 3 册")
+      ) {
+        failures.push(
+          `[390-collection] 余册入口没有收回第四册新得(«${collapsedAgain.heroText}» / aria=${collapsedAgain.moreNewExpanded})`,
+        );
       }
 
       await page

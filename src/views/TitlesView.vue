@@ -35,6 +35,30 @@
         <span class="chip-ink border-jade/60 text-[10px] text-jade">名号尽收</span>
         {{ TITLES.length }} 顶名号皆入囊中 —— 这一世的名,走到头了
       </p>
+      <div v-if="nextTitle" class="card-ink mt-2 px-4 py-3" data-title-guide>
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <p class="font-kai text-[11px] tracking-widest text-ink-soft">下一顶名号</p>
+          <p class="text-[10px] text-ink-faint">按成就进度</p>
+        </div>
+        <div class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <p class="min-w-0 font-kai text-[14px] text-ink">{{ nextTitle.def.name }}</p>
+          <p class="shrink-0 text-[10px] text-cinnabar tabular">
+            {{ nextTitle.progress.label }}
+          </p>
+        </div>
+        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+          名号获自「{{ nextTitle.source.name }}」 · {{ nextTitle.source.desc }}
+        </p>
+        <ProgressBar
+          class="mt-1.5"
+          :value="nextTitle.progress.ratio"
+          color="var(--color-cinnabar)"
+          :height="2"
+        />
+        <p v-if="nextTitle.progress.gap !== null" class="mt-1 text-[10px] text-cinnabar tabular">
+          尚差 {{ nextTitle.progress.gap }} —— 进度来自成就，不另算一套
+        </p>
+      </div>
       <div
         class="card-ink divide-y divide-ink/6 px-4"
         :data-title-total="titleRows.length"
@@ -70,6 +94,18 @@
             <p v-if="row.owned && row.modText" class="text-[10px] text-qing tabular">
               {{ row.modText }}
             </p>
+            <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+              名号获自「{{ row.source.name }}」<template v-if="!row.owned">
+                · {{ titleSourceProgressText(row) }}</template
+              >
+            </p>
+            <ProgressBar
+              v-if="!row.owned && row.progress.target !== null"
+              class="mt-1"
+              :value="row.progress.ratio"
+              color="var(--color-cinnabar)"
+              :height="1"
+            />
           </div>
           <button
             v-if="row.owned"
@@ -225,8 +261,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref } from "vue";
+import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
+import { ACHIEVEMENTS } from "@/data/achievements";
 import { TITLES } from "@/data/titles";
 import { PETS } from "@/data/pets";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
@@ -243,12 +281,18 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
+import {
+  nearestTitleProgressRows,
+  titleProgressRows,
+  type TitleProgressRow,
+} from "@/core/titleProgress";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 
 const player = usePlayerStore();
+const inventory = useInventoryStore();
 const quests = useQuestsStore();
 
 type Tab = "title" | "pet";
@@ -265,15 +309,32 @@ const ownedCount = computed(
 /** 名号尽收:全齐才算(与标题计数同源,不另起一套判据) */
 const titlesAllOwned = computed(() => ownedCount.value === TITLES.length && TITLES.length > 0);
 
+const maxQualityRank = computed(() =>
+  inventory.items.reduce((max, item) => Math.max(max, qualityDef(item.quality).rank), 0),
+);
+const titleProgress = computed(() =>
+  titleProgressRows(TITLES, ACHIEVEMENTS, {
+    achieved: quests.achieved,
+    counters: quests.counters,
+    major: player.major,
+    maxQualityRank: maxQualityRank.value,
+  }),
+);
+const nextTitle = computed(
+  () => nearestTitleProgressRows(titleProgress.value, new Set(quests.titlesOwned), 1)[0] ?? null,
+);
+
 /** 全量陈列:佩戴中 > 已拥有 > 未获得 */
 const titleRows = computed(() => {
   const ownedSet = new Set(quests.titlesOwned);
-  return TITLES.map((def) => ({
-    def,
-    owned: ownedSet.has(def.id),
-    worn: player.titleId === def.id,
-    modText: modsText(def.mods),
-  })).sort((a, b) => Number(b.worn) - Number(a.worn) || Number(b.owned) - Number(a.owned));
+  return titleProgress.value
+    .map((row) => ({
+      ...row,
+      owned: ownedSet.has(row.def.id),
+      worn: player.titleId === row.def.id,
+      modText: modsText(row.def.mods),
+    }))
+    .sort((a, b) => Number(b.worn) - Number(a.worn) || Number(b.owned) - Number(a.owned));
 });
 
 const TITLE_RENDER_BATCH = 12;
@@ -291,6 +352,13 @@ function moreTitleText(): string {
 function previousTitleText(): string {
   const step = previousListStep(titlePage.value.shown, titleRows.value.length, TITLE_RENDER_BATCH);
   return `前一批 ${step} 顶`;
+}
+
+function titleSourceProgressText(row: TitleProgressRow): string {
+  const gap = row.progress.gap;
+  return gap === null
+    ? row.source.desc
+    : `${row.source.desc} · ${row.progress.label} · 尚差 ${gap}`;
 }
 
 function showMoreTitles(): void {

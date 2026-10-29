@@ -747,10 +747,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
     expect(col?.src, "超过三册的新得不能静默消失").toContain("collectionMoreNewCount");
     expect(col?.src).toContain("data-collection-more-new");
-    expect(col?.src, "余册提示必须是一键展开入口,不是被动脚注").toContain(
-      "revealRemainingNewCategories",
+    expect(col?.src, "余册提示必须是一键收展入口,不是被动脚注").toContain(
+      "toggleRemainingNewCategories",
     );
     expect(col?.src).toContain(':aria-expanded="collectionMoreNewOpen"');
+    expect(col?.src, "余册全开时按钮要说能收起,不能写死成已展开").toContain("收起余册");
+    expect(col?.src, "卷首已展数要随折叠状态变,不能写死成初始三册").toContain("openedNewCount");
     const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
     expect(layout, "布局门要点到余册入口并核对展开结果").toContain(
       'locator("[data-collection-more-new]").click',
@@ -872,6 +874,24 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /titlesAllOwned = computed\([\s\S]{0,80}ownedCount\.value === TITLES\.length/,
     );
     expect(tit?.src, "全收后的那句「尽收」要直说(名号尽收),不许只有计数").toContain("名号尽收");
+  });
+
+  it("名号页先报下一顶 —— 来源、进度与缺口都从发放成就来", () => {
+    // 名号表只有名字/描述/词条,来源在成就 reward.titleId 上。
+    // 页首若只按拥有状态平铺,玩家看不到「下一顶从哪来、还差多少」。
+    const tit = FILES.find((f) => f.path === "views/TitlesView.vue");
+    expect(tit?.src, "名号来源要由 core 按 reward.titleId 对齐").toContain(
+      "titleProgressRows(TITLES, ACHIEVEMENTS",
+    );
+    expect(tit?.src, "下一顶要从未拥有者里按进度选").toContain("nearestTitleProgressRows");
+    expect(tit?.src).toContain("data-title-guide");
+    expect(tit?.src).toContain("下一顶名号");
+    expect(tit?.src, "两处都要把来源说穿").toContain("名号获自");
+    const core = readFileSync(resolve(__dirname, "titleProgress.ts"), "utf8");
+    expect(core, "来源不能另写一张表").toContain("reward?.titleId");
+    expect(core, "可量化进度要先于纯条件").toContain(
+      "Number(a.progress.target === null) - Number(b.progress.target === null)",
+    );
   });
 
   it("名号与灵兽两册渐进铺开 —— 当前相伴置顶,余册可续开与回翻", () => {
