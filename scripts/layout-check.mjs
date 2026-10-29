@@ -175,6 +175,9 @@
  *   六十一 天界道痕满卷 60 则。道途册与道痕册必须互斥,marks 深链要真的落到履历;
  *      每 12 则一批、最多留 24 则,195 宽下逐批翻到末页再回翻,焦点跟住新批首则。
  *      每行的忆战 / 重写 / 旧纪入口也受 28px 触控下限约束。
+ *   六十二 前尘山河三世同册:世界页默认只有当前世界,历史册在空档与后期档里
+ *      都不会出现。夹具另造三世旧世界,在 320 与 195(200% 缩放档)下量历史行:
+ *      三世都在、顺序由近及远、世界名/段数来自同一份世界视图,标题不截断、行不越界。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -531,6 +534,24 @@ async function measurePage(page) {
         return {
           scrollLeft: Math.round(shell.scrollLeft),
           overflowX: Math.round(shell.scrollWidth - shell.clientWidth),
+        };
+      })(),
+      /**
+       * 主内容区自己的横向余量。
+       *
+       * main 是 overflow-x-hidden:被 nowrap 撑宽的子元素仍可能把滚动区的 scrollWidth
+       * 撑大,而它自己的盒子与子元素矩形都还在视口内,横向溢出与越界元素量不出来。
+       * 直到 focus() 把 scrollLeft 推走,整页才突然左移。修行页的闭关按钮就是这么
+       * 一路绿到功法详情打开:按钮 127px、内容 214px,main.scrollLeft 随即变成 17px。
+       */
+      contentShift: (() => {
+        const main = document.querySelector("main");
+        if (!main) return null;
+        return {
+          scrollLeft: Math.round(main.scrollLeft),
+          scrollWidth: Math.round(main.scrollWidth),
+          clientWidth: Math.round(main.clientWidth),
+          overflowX: Math.round(main.scrollWidth - main.clientWidth),
         };
       })(),
       overflows,
@@ -1257,6 +1278,14 @@ function zoomProblems(info, tag) {
       `外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`,
     );
   }
+  if (info.contentShift && info.contentShift.scrollLeft !== 0) {
+    problems.push(`主内容区被滚偏(scrollLeft ${info.contentShift.scrollLeft}px)`);
+  }
+  if (info.contentShift && info.contentShift.overflowX > 1) {
+    problems.push(
+      `主内容区横向可滚(${info.contentShift.scrollWidth}>${info.contentShift.clientWidth},余 ${info.contentShift.overflowX}px)`,
+    );
+  }
   if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
   if (info.valueRows?.length) problems.push(`主值行在 200% 下折行:${info.valueRows.join(" | ")}`);
   /*
@@ -1805,6 +1834,14 @@ function problemsOf(info) {
   if (info.shellShift && (info.shellShift.scrollLeft !== 0 || info.shellShift.overflowX > 1)) {
     problems.push(
       `外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`,
+    );
+  }
+  if (info.contentShift && info.contentShift.scrollLeft !== 0) {
+    problems.push(`主内容区被滚偏(scrollLeft ${info.contentShift.scrollLeft}px)`);
+  }
+  if (info.contentShift && info.contentShift.overflowX > 1) {
+    problems.push(
+      `主内容区横向可滚(${info.contentShift.scrollWidth}>${info.contentShift.clientWidth},余 ${info.contentShift.overflowX}px)`,
     );
   }
   if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
@@ -5817,6 +5854,205 @@ async function taskSecretRealm320() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/**
+ * 前尘山河 —— 跨世历史在 320 与 195 宽下必须真的画得出来。
+ *
+ * 空档与后期档都只有当前这一世,`data-world-history` 永远不会出现;历史行里的
+ * 世界名、段数、摘要与三条气象又比普通列表长,最容易在 195 宽被挤成竖排或截断。
+ * 夹具用真实生成器造三世旧世界,再从近到远核对顺序与字段,最后把整页交给
+ * measurePage —— 历史册不许成为一块“只在 390 截图中看过”的孤岛。
+ */
+async function taskWorldHistory() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  let vite = null;
+  try {
+    vite = await createViteServer({
+      root: ROOT,
+      server: { middlewareMode: true },
+      appType: "custom",
+      logLevel: "silent",
+    });
+    const fixtureModule = await vite.ssrLoadModule("/scripts/lib/worldHistoryFixture.ts");
+    const fixture = fixtureModule.makeWorldHistoryFixture();
+    const slices = showcaseSlices("light");
+    slices.adventure = {
+      mortalWorld: fixture.mortalWorld,
+      mortalWorldHistory: fixture.mortalWorldHistory,
+      mortalBiasHistory: fixture.mortalBiasHistory,
+      // 旧链全开的老存档:世界页的出发钮必须与历练守卫同源,不能把中段只画成锁。
+      unlocked: fixture.mortalWorld.chain.map((place) => place.fromId),
+    };
+    await seedSave(ctx, slices, "__worldHistoryFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/world", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[320] 前尘山河场景:世界页没渲染出来");
+    }
+    const routeAccess = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll("[data-stage-can-depart]")];
+      return {
+        total: rows.length,
+        departable: rows.filter((row) => row.getAttribute("data-stage-can-depart") === "true")
+          .length,
+        oldRoad: rows.some((row) => (row.textContent || "").includes("旧路可往")),
+      };
+    });
+    checked += 1;
+    if (routeAccess.total !== fixture.mortalWorld.chain.length) {
+      failures.push(
+        `[320] 本世地界应有 ${fixture.mortalWorld.chain.length} 段,实见 ${routeAccess.total} 段`,
+      );
+    }
+    if (routeAccess.departable !== fixture.mortalWorld.chain.length) {
+      failures.push(
+        `[320] 旧链全开时本世地界应有 ${fixture.mortalWorld.chain.length} 段可出发,` +
+          `实见 ${routeAccess.departable} 段`,
+      );
+    }
+    if (!routeAccess.oldRoad) {
+      failures.push("[320] 旧链已开的中段没有标出「旧路可往」");
+    }
+    const historyReady = await page
+      .locator("[data-world-history]")
+      .waitFor({ state: "visible", timeout: 10000 })
+      .then(() => true)
+      .catch(() => false);
+    checked += 1;
+    if (!historyReady) {
+      failures.push("[320] 前尘山河场景:历史册没出现(夹具的三世旧世界没被读出来?)");
+    } else {
+      for (const [width, height, tag] of [
+        [320, 568, "320"],
+        [195, 422, "195·200%"],
+      ]) {
+        await page.setViewportSize({ width, height });
+        await settleVisuals(page);
+        const info = await measurePage(page);
+        checked += 1;
+        const problems = problemsOf(info);
+        if (problems.length) failures.push(`[${tag}] /world → ${problems.join(" / ")}`);
+
+        const history = await page.evaluate(() => {
+          const box = document.querySelector("[data-world-history]");
+          if (!box) return null;
+          const rows = [...box.querySelectorAll("[data-world-history-row]")];
+          const boxRect = box.getBoundingClientRect();
+          return {
+            count: rows.length,
+            box: {
+              left: boxRect.left,
+              right: boxRect.right,
+              width: boxRect.width,
+              scrollWidth: box.scrollWidth,
+              clientWidth: box.clientWidth,
+            },
+            rows: rows.map((row) => {
+              const rect = row.getBoundingClientRect();
+              const label = row.querySelector("[data-world-history-label]");
+              const title = row.querySelector("[data-world-history-title]");
+              const stages = row.querySelector("[data-world-history-stages]");
+              const titleRect = title?.getBoundingClientRect();
+              return {
+                label: (label?.textContent || "").trim(),
+                title: (title?.textContent || "").trim(),
+                stages: (stages?.textContent || "").trim(),
+                text: (row.innerText || "").replace(/\s+/g, " ").trim(),
+                left: rect.left,
+                right: rect.right,
+                width: rect.width,
+                scrollWidth: row.scrollWidth,
+                clientWidth: row.clientWidth,
+                titleWidth: titleRect?.width ?? 0,
+                titleScrollWidth: title?.scrollWidth ?? 0,
+                titleClientWidth: title?.clientWidth ?? 0,
+              };
+            }),
+          };
+        });
+        checked += 1;
+        if (!history) {
+          failures.push(`[${tag}] 前尘山河场景:历史册在量测时消失了`);
+          continue;
+        }
+        if (history.count !== fixture.expectedRows.length) {
+          failures.push(
+            `[${tag}] 前尘山河应有 ${fixture.expectedRows.length} 世,实见 ${history.count} 世`,
+          );
+        }
+        if (history.box.scrollWidth > history.box.clientWidth + 1) {
+          failures.push(
+            `[${tag}] 前尘山河册横向裁切:${history.box.scrollWidth}>${history.box.clientWidth}`,
+          );
+        }
+        for (let i = 0; i < Math.min(history.rows.length, fixture.expectedRows.length); i += 1) {
+          const row = history.rows[i];
+          const expected = fixture.expectedRows[i];
+          const expectedLabel = `前${["一", "二", "三"][i]}世`;
+          if (row.label !== expectedLabel) {
+            failures.push(
+              `[${tag}] 前尘山河第 ${i + 1} 行世序是「${row.label}」,应为「${expectedLabel}」`,
+            );
+          }
+          if (row.title !== expected.title) {
+            failures.push(
+              `[${tag}] 前尘山河第 ${i + 1} 行世界名「${row.title}」,应为「${expected.title}」`,
+            );
+          }
+          if (row.stages !== `${expected.stages} 段`) {
+            failures.push(
+              `[${tag}] 前尘山河第 ${i + 1} 行段数是「${row.stages}」,应为 ${expected.stages} 段`,
+            );
+          }
+          if (
+            row.left < history.box.left - 1 ||
+            row.right > history.box.right + 1 ||
+            row.scrollWidth > row.clientWidth + 1
+          ) {
+            failures.push(
+              `[${tag}] 前尘山河第 ${i + 1} 行越出册面:` +
+                `${Math.round(row.left)}..${Math.round(row.right)} / ` +
+                `册 ${Math.round(history.box.left)}..${Math.round(history.box.right)} / ` +
+                `内容 ${row.scrollWidth}>${row.clientWidth}`,
+            );
+          }
+          if (
+            row.titleWidth < 40 ||
+            row.titleScrollWidth > row.titleClientWidth + 1 ||
+            !row.text ||
+            /NaN|undefined/.test(row.text)
+          ) {
+            failures.push(
+              `[${tag}] 前尘山河第 ${i + 1} 行文字被挤坏:` +
+                `标题 ${Math.round(row.titleWidth)}px / 内容 ${row.titleScrollWidth}>` +
+                `${row.titleClientWidth} / «${row.text.slice(0, 48)}»`,
+            );
+          }
+        }
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[320] 前尘山河场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+    await vite?.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 切后台立即落盘 */
 async function taskPersistTiming() {
   const failures = [];
@@ -6962,6 +7198,16 @@ async function taskPreGameTour() {
             overflowX: Math.round(shell.scrollWidth - shell.clientWidth),
           };
         })(),
+        contentShift: (() => {
+          const main = document.querySelector("main");
+          if (!main) return null;
+          return {
+            scrollLeft: Math.round(main.scrollLeft),
+            scrollWidth: Math.round(main.scrollWidth),
+            clientWidth: Math.round(main.clientWidth),
+            overflowX: Math.round(main.scrollWidth - main.clientWidth),
+          };
+        })(),
         overflows,
         unnamed: [...document.querySelectorAll("button, a, [role=button]")]
           .filter((el) => {
@@ -6996,6 +7242,12 @@ async function taskPreGameTour() {
     if (info.shellShift && (info.shellShift.scrollLeft !== 0 || info.shellShift.overflowX > 1))
       problems.push(
         `外壳被滚偏(scrollLeft ${info.shellShift.scrollLeft} / 横向可滚 ${info.shellShift.overflowX}px)`,
+      );
+    if (info.contentShift && info.contentShift.scrollLeft !== 0)
+      problems.push(`主内容区被滚偏(scrollLeft ${info.contentShift.scrollLeft}px)`);
+    if (info.contentShift && info.contentShift.overflowX > 1)
+      problems.push(
+        `主内容区横向可滚(${info.contentShift.scrollWidth}>${info.contentShift.clientWidth},余 ${info.contentShift.overflowX}px)`,
       );
     if (info.overflows.length) problems.push(`越界元素:${info.overflows.join(", ")}`);
     if (info.unnamed.length) problems.push(`无名控件:${info.unnamed.join(" | ")}`);
@@ -9991,6 +10243,7 @@ const TASKS = [
   ["真打一场历练战斗", taskCombatReplay],
   ["敌人卡最挤的一档", taskEnemyCard],
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],
+  ["前尘山河三世同册", taskWorldHistory],
   ["切后台立即落盘", taskPersistTiming],
   ["导出失败也说话", taskExportFailure],
   ["坏档也能进游戏", taskBadSave],

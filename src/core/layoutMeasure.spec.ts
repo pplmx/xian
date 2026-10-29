@@ -35,6 +35,20 @@ describe("排版量法口径", () => {
     expect(SCRIPT).toContain("if (r.width <= 0 || (!rightOver && !leftOver)) return false;");
   });
 
+  it("主内容区自身也要量横向余量与 scrollLeft —— overflow-hidden 会藏住被撑宽的滚动区", () => {
+    /*
+     * 实测:修行页的闭关按钮继承 chip-ink 的 nowrap,在 195px 下内容宽 214px、按钮盒
+     * 只有 127px。外层 main 是 overflow-x-hidden,子元素的 getBoundingClientRect()
+     * 仍落在视口内,横向溢出与越界元素都量不出来;直到打开功法详情触发焦点滚动,
+     * main.scrollLeft 才变成 17px,整页左移。故必须直接量滚动宿主自己的可滚余量。
+     */
+    expect(SCRIPT).toContain("contentShift:");
+    expect(SCRIPT).toContain("scrollWidth: Math.round(main.scrollWidth)");
+    expect(SCRIPT).toContain("clientWidth: Math.round(main.clientWidth)");
+    expect(SCRIPT).toContain("主内容区被滚偏");
+    expect(SCRIPT).toContain("主内容区横向可滚");
+  });
+
   it("装饰层按计算后的 pointer-events 豁免;滚动轨算设计,hidden 不豁免", () => {
     // 不是按类名找 .pointer-events-none —— 自定义类关事件的装饰层会漏
     expect(SCRIPT).toContain('getComputedStyle(node).pointerEvents === "none"');
@@ -95,6 +109,17 @@ describe("排版量法口径", () => {
      */
     expect(SCRIPT).toContain("200% 缩放档上版面坏了(后期档)");
     expect(SCRIPT).toMatch(/\[390-late\] \$\{route\} → \$\{zoomBad\.join/);
+  });
+
+  it("前尘山河要真的量到三世,不能只留一个空 data 落点", () => {
+    // 空档与后期档都只有当前世界,历史册永远不会出现;只查模板里有没有
+    // data-world-history,等于量了一个永远不渲染的契约。
+    expect(SCRIPT).toContain("worldHistoryFixture");
+    expect(SCRIPT).toContain("fixture.expectedRows.length");
+    expect(SCRIPT).toContain("[data-world-history-row]");
+    expect(SCRIPT).toContain("[data-world-history-title]");
+    expect(SCRIPT).toContain("[data-world-history-stages]");
+    expect(SCRIPT).toContain('["前尘山河三世同册", taskWorldHistory]');
   });
 
   it("只在某个时刻弹一次的浮层也要过缩放档 —— 巡页永远碰不到它们", () => {
