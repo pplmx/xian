@@ -19,73 +19,172 @@
     <InkTabs v-model="codexTab" :tabs="codexTabRows" />
 
     <template v-if="codexTab === 'realm'">
-      <!-- 界域与境界:逐境写明出处与承接 -->
-      <!-- 每一界的段名字带它自己的色(人间朱/仙青/神紫/混沌蓝) —— 这条路历过几界,色卡一样摊开;
-         此刻所在的格子随你身处之界的信标色亮起(见 .codex-current) -->
+      <!--
+        卷首先报此刻:从前一进「界域」先看到炼气,当前的真仙要滚过整卷人间界。
+        现在先给当前境、所在界、全路序号与前/后两境,再把四界当卷目展开。
+      -->
+      <section
+        data-realm-current
+        :data-current-realm-id="currentRealm.def.id"
+        :data-current-world-id="currentRealm.world.id"
+        class="card-ink overflow-hidden px-4 py-3"
+      >
+        <div class="flex items-start justify-between gap-3 tinylens:flex-col tinylens:gap-1">
+          <div class="min-w-0">
+            <p class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px]">
+              <span class="world-label font-kai tracking-[0.24em]">{{
+                currentRealm.world.name
+              }}</span>
+              <span class="text-ink-faint">· 此刻在此</span>
+            </p>
+            <p class="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span
+                data-current-realm-name
+                class="font-kai text-[18px] tracking-[0.18em] text-ink"
+                >{{ currentRealm.def.name }}</span
+              >
+              <span class="text-[10px] text-ink-faint">{{ currentRealm.def.basis }}</span>
+            </p>
+            <p class="mt-1 t-body text-ink-soft">{{ currentRealm.def.desc }}</p>
+          </div>
+          <span class="shrink-0 text-[10px] text-ink-faint tabular">
+            第 {{ currentRealm.globalPosition }} / {{ REALMS.length }} 境
+          </span>
+        </div>
+
+        <div class="mt-3">
+          <RealmLadder :major="player.major" />
+        </div>
+
+        <div
+          class="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-ink/10 pt-2"
+        >
+          <button
+            v-if="currentRealm.previous"
+            data-realm-step="prev"
+            class="tap-row min-h-[28px] text-[10px] text-qing active:opacity-60"
+            @click="gotoRealm(currentRealm.previous.def.id)"
+          >
+            ← 前境 · {{ currentRealm.previous.def.name }}
+          </button>
+          <span v-else class="text-[10px] text-ink-faint">仙路起笔</span>
+          <span data-current-world-position class="text-[10px] text-ink-faint tabular">
+            {{ currentRealm.world.name }} {{ currentRealm.worldPosition }}/{{
+              currentRealm.worldTotal
+            }}
+          </span>
+          <button
+            v-if="currentRealm.next"
+            data-realm-step="next"
+            class="tap-row min-h-[28px] text-[10px] text-qing active:opacity-60"
+            @click="gotoRealm(currentRealm.next.def.id)"
+          >
+            后境 · {{ currentRealm.next.def.name }} →
+          </button>
+          <span v-else class="text-[10px] text-ink-faint">已至此卷末</span>
+        </div>
+      </section>
+
+      <SectionTitle title="境界卷目" :hint="`${WORLDS.length} 界 · ${REALMS.length} 境`" />
+      <!--
+        每一界的段名字带它自己的色(人间朱/仙青/神紫/混沌蓝) —— 这条路历过几界,色卡一样摊开;
+        当前卷默认展开,其余三卷收口;此刻所在的格子仍随你身处之界亮起(见 .codex-current)。
+      -->
       <section
         v-for="row in worldRows"
         :key="row.world.id"
         class="card-ink px-4 py-3"
         :data-world="row.world.id"
       >
-        <div class="flex items-baseline gap-2">
-          <span class="world-seal font-kai text-[15px] tracking-[0.25em]">{{
-            row.world.name
-          }}</span>
-          <span class="text-[10px] text-ink-faint"
-            >第 {{ row.world.start + 1 }}–{{ row.world.end + 1 }} 境</span
-          >
-        </div>
-        <p class="mt-0.5 t-body text-ink-faint">{{ row.world.desc }}</p>
-        <div class="mt-2 space-y-2">
-          <div
-            v-for="cell in row.realms"
-            :id="`realm-${cell.def.id}`"
-            :key="cell.def.id"
-            class="rounded-md px-2.5 py-2"
-            :class="cell.index === player.major ? 'codex-current' : 'bg-paper-deep/50'"
-          >
-            <p class="flex items-baseline gap-2">
-              <span
-                class="font-kai text-[14px] tracking-wider"
-                :class="
-                  cell.index === player.major
-                    ? ''
-                    : cell.index < player.major
-                      ? 'text-ink-soft'
-                      : 'text-ink-faint'
-                "
+        <button
+          type="button"
+          data-world-toggle
+          :data-world-state="row.state"
+          class="flex min-h-[44px] w-full items-center gap-3 text-left active:opacity-70"
+          :aria-expanded="isWorldOpen(row.world.id)"
+          :aria-controls="worldBodyId(row.world.id)"
+          @click="toggleWorld(row.world.id)"
+        >
+          <span class="min-w-0 flex-1">
+            <span class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span class="world-seal font-kai text-[15px] tracking-[0.25em]">{{
+                row.world.name
+              }}</span>
+              <span class="text-[10px] text-ink-faint"
+                >第 {{ row.world.start + 1 }}–{{ row.world.end + 1 }} 境</span
               >
-                {{ cell.def.name }}
-              </span>
-              <!-- 基准(内丹/道基…)是分类签,不是主角字:压到 10px 的淡字,
-                   与境界名同基线但不争大小 -->
-              <span class="text-[10px] text-ink-faint">{{ cell.def.basis }}</span>
-              <span v-if="cell.index === player.major" class="text-[10px] text-cinnabar"
-                >此刻在此</span
-              >
-            </p>
-            <!-- 一句提要 + 一段释文:提要走 ink-soft、释文走 faint,两级靠颜色分而非靠留白 -->
-            <p class="mt-0.5 t-body text-ink-soft">{{ cell.def.desc }}</p>
-            <p class="mt-0.5 t-body text-ink-faint">{{ cell.def.lore }}</p>
-            <!-- 此境所据何典:把「境界 → 原典」这条来路直接摆在该境底下 -->
-            <!-- 所据何典:点一下就跳到「典籍」那一册 —— codex 要能顺着来路追下去 -->
-            <p
-              v-if="classicsOf(cell.def.id).length"
-              class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[10px] text-ink-faint"
+            </span>
+            <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
+              <span :class="worldStateClass(row)">{{ worldStatusText(row) }}</span>
+              <span class="text-ink-faint">{{ isWorldOpen(row.world.id) ? "收卷" : "展卷" }}</span>
+            </span>
+          </span>
+          <span
+            class="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-ink/10 text-[11px] text-ink-faint transition-transform"
+            :class="isWorldOpen(row.world.id) ? 'rotate-180' : ''"
+            aria-hidden="true"
+            >▾</span
+          >
+        </button>
+        <span class="mt-1 block h-0.5 overflow-hidden rounded-full bg-ink/10" aria-hidden="true">
+          <span
+            class="block h-full rounded-full"
+            :class="row.state === 'past' ? 'bg-jade/70' : 'bg-cinnabar/70'"
+            :style="{ width: `${(row.entered / row.total) * 100}%` }"
+          />
+        </span>
+        <div v-show="isWorldOpen(row.world.id)" :id="worldBodyId(row.world.id)" class="mt-2">
+          <p class="t-body text-ink-faint">{{ row.world.desc }}</p>
+          <div class="mt-2 space-y-2">
+            <div
+              v-for="cell in row.realms"
+              :id="`realm-${cell.def.id}`"
+              :key="cell.def.id"
+              class="rounded-md px-2.5 py-2"
+              :class="cell.index === player.major ? 'codex-current' : 'bg-paper-deep/50'"
             >
-              <span>所据:</span>
-              <!-- 行内链接给 28px 触达面(inline-flex min-h),与历练页那枚同款 -->
-              <button
-                v-for="c in classicsOf(cell.def.id)"
-                :key="c.id"
-                class="inline-flex min-h-[28px] items-center text-qing underline underline-offset-2 active:opacity-60"
-                :aria-label="`查看典籍《${c.title}》`"
-                @click="gotoClassic(c.id)"
+              <p class="flex items-baseline gap-2">
+                <span
+                  class="font-kai text-[14px] tracking-wider"
+                  :class="
+                    cell.index === player.major
+                      ? ''
+                      : cell.index < player.major
+                        ? 'text-ink-soft'
+                        : 'text-ink-faint'
+                  "
+                >
+                  {{ cell.def.name }}
+                </span>
+                <!-- 基准(内丹/道基…)是分类签,不是主角字:压到 10px 的淡字,
+                   与境界名同基线但不争大小 -->
+                <span class="text-[10px] text-ink-faint">{{ cell.def.basis }}</span>
+                <span v-if="cell.index === player.major" class="text-[10px] text-cinnabar"
+                  >此刻在此</span
+                >
+              </p>
+              <!-- 一句提要 + 一段释文:提要走 ink-soft、释文走 faint,两级靠颜色分而非靠留白 -->
+              <p class="mt-0.5 t-body text-ink-soft">{{ cell.def.desc }}</p>
+              <p class="mt-0.5 t-body text-ink-faint">{{ cell.def.lore }}</p>
+              <!-- 此境所据何典:把「境界 → 原典」这条来路直接摆在该境底下 -->
+              <!-- 所据何典:点一下就跳到「典籍」那一册 —— codex 要能顺着来路追下去 -->
+              <p
+                v-if="classicsOf(cell.def.id).length"
+                class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[10px] text-ink-faint"
               >
-                《{{ c.title }}》
-              </button>
-            </p>
+                <span>所据:</span>
+                <!-- 行内链接给 28px 触达面(inline-flex min-h),与历练页那枚同款 -->
+                <button
+                  v-for="c in classicsOf(cell.def.id)"
+                  :key="c.id"
+                  class="inline-flex min-h-[28px] items-center text-qing underline underline-offset-2 active:opacity-60"
+                  :aria-label="`查看典籍《${c.title}》`"
+                  @click="gotoClassic(c.id)"
+                >
+                  《{{ c.title }}》
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -439,13 +538,21 @@ import { IMAGES, MANSIONS, type ImageId } from "@/data/xiangxiu";
 import { GATES } from "@/data/qimen";
 import { cnNumber, formatCountdown, formatPercent } from "@/utils/format";
 import { MANSION_EVENT_LUCK, favoredWorld, todayMansion, todayMansionLine } from "@/core/astronomy";
-import { worldDef } from "@/data/realms";
+import { worldDef, worldOf } from "@/data/realms";
 import type { WorldId } from "@/types";
 import { modsText } from "@/data/statNames";
+import {
+  realmCodexCurrent,
+  realmCodexInitialWorld,
+  realmCodexWorldRows,
+  realmCodexWorldStatus,
+  type RealmCodexWorldRow,
+} from "@/core/realmCodex";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import ValueRow from "@/components/common/ValueRow.vue";
 import SectionMark from "@/components/common/SectionMark.vue";
+import RealmLadder from "@/components/cultivation/RealmLadder.vue";
 import { useGameNow } from "@/composables/useGameNow";
 
 const player = usePlayerStore();
@@ -597,14 +704,40 @@ const imageWorldMap = computed(() =>
   IMAGES.map((i) => `${i.direction}配${worldName(i.world)}`).join("、"),
 );
 
-const worldRows = computed(() =>
-  WORLDS.map((w) => ({
-    world: w,
-    realms: REALMS.map((def, index) => ({ def, index })).filter(
-      (c) => c.index >= w.start && c.index <= w.end,
-    ),
-  })),
+const currentRealm = computed(() => realmCodexCurrent(player.major));
+const worldRows = computed(() => realmCodexWorldRows(player.major));
+/** 卷目默认只开当前界;换境之后新所在的一卷也自动展开,不把玩家留在旧卷。 */
+const openWorlds = ref<Record<string, boolean>>({
+  [realmCodexInitialWorld(player.major)]: true,
+});
+watch(
+  () => player.major,
+  (major) => {
+    openWorlds.value[realmCodexInitialWorld(major)] = true;
+  },
 );
+
+function isWorldOpen(id: string): boolean {
+  return openWorlds.value[id] === true;
+}
+
+function toggleWorld(id: string): void {
+  openWorlds.value[id] = !isWorldOpen(id);
+}
+
+function worldBodyId(id: string): string {
+  return `realm-world-${id}`;
+}
+
+function worldStatusText(row: RealmCodexWorldRow): string {
+  return realmCodexWorldStatus(row);
+}
+
+function worldStateClass(row: RealmCodexWorldRow): string {
+  if (row.state === "past") return "text-jade";
+  if (row.state === "current") return "text-cinnabar";
+  return "text-ink-faint";
+}
 
 function realmName(id: string): string {
   const idx = REALMS.findIndex((r) => r.id === id);
@@ -631,6 +764,8 @@ function gotoClassic(id: string): void {
   void jumpTo("classics", `classic-${id}`);
 }
 function gotoRealm(id: string): void {
+  const index = REALMS.findIndex((realm) => realm.id === id);
+  if (index >= 0) openWorlds.value[worldOf(index).id] = true;
   void jumpTo("realm", `realm-${id}`);
 }
 

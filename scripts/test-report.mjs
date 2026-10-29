@@ -122,6 +122,7 @@ const CATEGORIES = [
       "realmBanking",
       "realmNaming",
       "realmLadder",
+      "realmCodex",
       "classics",
       "progressionDoc",
       "progressionSim",

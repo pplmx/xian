@@ -665,6 +665,30 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(css).toMatch(/\.codex-current[\s\S]{0,80}var\(--color-qing\)/);
   });
 
+  it("界域志先报此刻,再把四界收成可展开的卷目", () => {
+    // 从前界域册从炼气起排,已经飞升的玩家要滚过整个人间界才看见自己。
+    // 现在卷首先报当前境与前后境,四界默认只开当前卷;典籍互链跳回来时也要先开目标卷。
+    const codex = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    expect(codex?.src, "卷首要标出当前境,运行时判据靠它找首屏").toContain("data-realm-current");
+    expect(codex?.src, "当前境与前后境要从 realmCodex 纯函数派生").toContain(
+      "realmCodexCurrent(player.major)",
+    );
+    expect(codex?.src, "四界卷目要从 REALMS / WORLDS 派生").toContain(
+      "realmCodexWorldRows(player.major)",
+    );
+    expect(codex?.src, "卷首复用修炼页的 21 境刻度,不另画一套").toContain("<RealmLadder");
+    expect(codex?.src, "世界题头必须是带 aria-expanded 的展开按钮").toContain(
+      ':aria-expanded="isWorldOpen(row.world.id)"',
+    );
+    expect(codex?.src, "展开按钮要指向自己的卷身").toContain(
+      ':aria-controls="worldBodyId(row.world.id)"',
+    );
+    expect(codex?.src, "初次只开当前界").toContain("realmCodexInitialWorld(player.major)");
+    expect(codex?.src, "典籍互链跳回境界时要先展开目标世界,否则 scrollIntoView 找不到目标").toMatch(
+      /openWorlds\.value\[worldOf\(index\)\.id\] = true/,
+    );
+  });
+
   it("今日日课全毕有关闭感 —— 「今天做完了」不许再哑掉", () => {
     // 三条日课都结清后只有各自一个「已成」,没有「今天没漏事」的一句话 ——
     // 放置玩家的"可以放手挂机"该有一声。判据与发赏同源(每行 done),不许另起一套。

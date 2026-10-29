@@ -183,6 +183,8 @@
  *   六十四 洞府首屏的营造优先:营造排在家业入口之前,建筑卡默认只露当前效果、
  *      下一级变化与主升级键;390 首屏里第一枚可用的升级/建造键要在底栏以上,
  *      完整效果与连升账由 aria-expanded 详情展开。
+ *   六十五 界域志首屏的此刻优先:当前境、全路序号与前后境要先落在折线内;
+ *      四界卷目默认只开当前界,其余收口,点开后要真的铺出该界境界。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -6077,6 +6079,159 @@ async function taskDongfuFold() {
   };
 }
 
+/** 界域志首屏的此刻优先:当前境先到眼前,四界卷目按需展开 */
+async function taskCodexFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__codexFold");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/codex", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-codex] 界域志没渲染出来,首屏判据没量到东西");
+    } else {
+      const fold = await page.evaluate(() => {
+        const nav = document.querySelector("nav")?.getBoundingClientRect();
+        const hero = document.querySelector("[data-realm-current]");
+        const heroRect = hero?.getBoundingClientRect();
+        const name = (hero?.querySelector("[data-current-realm-name]")?.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        const worldPos = (hero?.querySelector("[data-current-world-position]")?.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        const toggles = [...document.querySelectorAll("[data-world-toggle]")];
+        const readToggle = (btn) => {
+          const bodyId = btn?.getAttribute("aria-controls") || "";
+          const body = bodyId ? document.getElementById(bodyId) : null;
+          return {
+            state: btn?.getAttribute("data-world-state") ?? null,
+            expanded: btn?.getAttribute("aria-expanded") ?? null,
+            bodyVisible: Boolean(
+              body &&
+              getComputedStyle(body).display !== "none" &&
+              body.getBoundingClientRect().height > 0,
+            ),
+            text: (body?.textContent || "").replace(/\s+/g, " ").trim(),
+          };
+        };
+        const current = toggles.find((btn) => btn.getAttribute("data-world-state") === "current");
+        const nonCurrent = toggles
+          .filter((btn) => btn.getAttribute("data-world-state") !== "current")
+          .map(readToggle);
+        return {
+          navTop: nav?.top ?? innerHeight,
+          heroTop: heroRect?.top ?? null,
+          heroBottom: heroRect?.bottom ?? null,
+          name,
+          worldPos,
+          current: readToggle(current),
+          nonCurrentOpen: nonCurrent.some((row) => row.expanded === "true" || row.bodyVisible),
+        };
+      });
+      checked += 1;
+      if (fold.heroTop === null || fold.heroBottom === null) {
+        failures.push("[390-codex] 界域志首屏没有当前境卷首");
+      } else if (fold.heroBottom > fold.navTop + 1) {
+        failures.push(
+          `[390-codex] 当前境卷首被推到折线以下(hero bottom ${Math.round(fold.heroBottom)} / nav top ${Math.round(fold.navTop)})`,
+        );
+      }
+      if (!fold.name.includes("真仙") || !fold.worldPos.includes("仙界 1/5")) {
+        failures.push(
+          `[390-codex] 卷首没有报出当前境与界内序号(境「${fold.name}」/ 位置「${fold.worldPos}」)`,
+        );
+      }
+      if (fold.current.expanded !== "true" || !fold.current.bodyVisible) {
+        failures.push(
+          `[390-codex] 当前界没有默认展开(aria-expanded=${fold.current.expanded}, visible=${fold.current.bodyVisible})`,
+        );
+      }
+      if (fold.nonCurrentOpen) {
+        failures.push("[390-codex] 非当前界默认没有收口,卷首又被长列表顶走");
+      }
+
+      const currentToggle = page.locator('[data-world-toggle][data-world-state="current"]').first();
+      if ((await currentToggle.count()) === 0) {
+        failures.push("[390-codex] 当前界没有卷目开关");
+      } else {
+        await currentToggle.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(120);
+        checked += 1;
+        const collapsed = await page.evaluate(() => {
+          const btn = document.querySelector('[data-world-toggle][data-world-state="current"]');
+          const bodyId = btn?.getAttribute("aria-controls") || "";
+          const body = bodyId ? document.getElementById(bodyId) : null;
+          return {
+            expanded: btn?.getAttribute("aria-expanded") ?? null,
+            visible: Boolean(
+              body &&
+              getComputedStyle(body).display !== "none" &&
+              body.getBoundingClientRect().height > 0,
+            ),
+          };
+        });
+        if (collapsed.expanded !== "false" || collapsed.visible) {
+          failures.push(
+            `[390-codex] 点当前界题头没有收卷(aria-expanded=${collapsed.expanded}, visible=${collapsed.visible})`,
+          );
+        }
+      }
+
+      const futureToggle = page.locator('[data-world-toggle][data-world-state="future"]').first();
+      if ((await futureToggle.count()) === 0) {
+        failures.push("[390-codex] 没有未至界可供展开");
+      } else {
+        await futureToggle.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(120);
+        checked += 1;
+        const opened = await page.evaluate(() => {
+          const btn = document.querySelector('[data-world-toggle][data-world-state="future"]');
+          const bodyId = btn?.getAttribute("aria-controls") || "";
+          const body = bodyId ? document.getElementById(bodyId) : null;
+          return {
+            expanded: btn?.getAttribute("aria-expanded") ?? null,
+            visible: Boolean(
+              body &&
+              getComputedStyle(body).display !== "none" &&
+              body.getBoundingClientRect().height > 0,
+            ),
+            text: (body?.textContent || "").replace(/\s+/g, " ").trim(),
+          };
+        });
+        if (
+          opened.expanded !== "true" ||
+          !opened.visible ||
+          !/神人/.test(opened.text) ||
+          !/神帝/.test(opened.text)
+        ) {
+          failures.push("[390-codex] 未至界点开后没有铺出该界境界");
+        }
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[390-codex] 界域志首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 /**
  * 前尘山河 —— 跨世历史在 320 与 195 宽下必须真的画得出来。
  *
@@ -10461,6 +10616,7 @@ const TASKS = [
   ["法宝炼化的两笔账", taskArtifactRefine],
   ["洞府营造的账目", taskDongfuBuild],
   ["洞府首屏的营造优先", taskDongfuFold],
+  ["界域志首屏的此刻优先", taskCodexFold],
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
   ["背包里的账目", taskInventoryAccounting],
