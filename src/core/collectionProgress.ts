@@ -35,6 +35,7 @@ function finiteInt(value: unknown, fallback = 0): number {
 export function collectionProgressOverview(
   categories: readonly CollectionProgressCategory[],
 ): CollectionProgressOverview {
+  const orderOf = new Map(categories.map((category, index) => [category.key, index]));
   const rows = categories.map((category) => {
     const total = Math.max(0, finiteInt(category.total));
     const known = Math.min(total, Math.max(0, finiteInt(category.known)));
@@ -49,16 +50,15 @@ export function collectionProgressOverview(
       complete: total > 0 && known >= total,
     };
   });
-  const newRows = rows.filter((row) => row.newCount > 0);
+  const byCategoryOrder = (a: CollectionProgressRow, b: CollectionProgressRow) =>
+    (orderOf.get(a.key) ?? Number.MAX_SAFE_INTEGER) -
+    (orderOf.get(b.key) ?? Number.MAX_SAFE_INTEGER);
+  const newRows = rows
+    .filter((row) => row.newCount > 0)
+    .sort((a, b) => b.newCount - a.newCount || b.ratio - a.ratio || byCategoryOrder(a, b));
   const nearestRows = rows
     .filter((row) => !row.complete && row.known > 0)
-    .sort(
-      (a, b) =>
-        b.ratio - a.ratio ||
-        a.remaining - b.remaining ||
-        categories.findIndex((category) => category.key === a.key) -
-          categories.findIndex((category) => category.key === b.key),
-    );
+    .sort((a, b) => b.ratio - a.ratio || a.remaining - b.remaining || byCategoryOrder(a, b));
   return {
     rows,
     known: rows.reduce((sum, row) => sum + row.known, 0),

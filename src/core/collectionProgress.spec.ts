@@ -46,12 +46,33 @@ describe("藏珍谱 · 从同一份图鉴条目派生", () => {
     expect(overview.initialOpenKeys).toEqual(["gongfa", "pet"]);
   });
 
+  it("新得跨册时先报新得最多的册，再按收录比例与原序排", () => {
+    const overview = collectionProgressOverview([
+      category("equip", 1, 10, 1),
+      category("gongfa", 4, 10, 4),
+      category("pill", 2, 10, 2),
+      category("pet", 3, 10, 3),
+    ]);
+    expect(overview.newRows.map((row) => row.key)).toEqual(["gongfa", "pet", "pill", "equip"]);
+    expect(overview.initialOpenKeys).toEqual(["gongfa", "pet", "pill"]);
+  });
+
+  it("新得数相同时按收录比例降序，比例相同再守原册序", () => {
+    const overview = collectionProgressOverview([
+      category("equip", 1, 10, 1),
+      category("gongfa", 3, 10, 1),
+      category("pill", 1, 20, 1),
+      category("pet", 2, 10, 1),
+    ]);
+    expect(overview.newRows.map((row) => row.key)).toEqual(["gongfa", "pet", "equip", "pill"]);
+  });
+
   it("新得跨四册时只默认展开前三册，余册仍留在新得清单里", () => {
     const overview = collectionProgressOverview([
       category("equip", 1, 10, 1),
-      category("gongfa", 2, 10, 1),
-      category("pill", 3, 10, 1),
-      category("pet", 4, 10, 1),
+      category("gongfa", 1, 10, 1),
+      category("pill", 1, 10, 1),
+      category("pet", 1, 10, 1),
     ]);
     expect(overview.newRows.map((row) => row.key)).toEqual(["equip", "gongfa", "pill", "pet"]);
     expect(overview.initialOpenKeys).toEqual(["equip", "gongfa", "pill"]);

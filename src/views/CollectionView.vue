@@ -229,40 +229,74 @@
             }}
           </p>
         </div>
-        <div v-if="collectionHighlights.length" class="mt-1.5 space-y-1">
-          <button
-            v-for="row in collectionHighlights"
-            :key="row.key"
-            type="button"
-            class="flex min-h-8 w-full items-start gap-2 rounded px-1.5 py-1.5 text-left active:bg-ink/5"
-            :data-collection-jump="row.key"
-            :aria-label="`查看 ${row.name}`"
-            @click="revealCollectionCategory(row.key)"
-          >
-            <span
-              class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
-              :class="row.newCount > 0 ? 'bg-cinnabar' : 'bg-qing/60'"
-            />
-            <span class="min-w-0 flex-1">
-              <span
-                class="flex items-baseline justify-between gap-2 tinylens:flex-col tinylens:items-start tinylens:gap-0"
-              >
-                <span class="truncate font-kai text-[11px] text-ink">{{ row.name }}</span>
-                <span class="shrink-0 tabular text-[10px] text-qing">
-                  {{ row.known }} / {{ row.total }}
+        <template v-if="collectionHighlights.length">
+          <div class="mt-1.5 grid grid-cols-[repeat(auto-fit,minmax(96px,1fr))] gap-1.5">
+            <button
+              v-for="row in collectionHighlights"
+              :key="row.key"
+              type="button"
+              class="flex min-h-[76px] min-w-0 flex-col rounded-md border border-ink/10 bg-paper-deep/40 px-2.5 py-2 text-left active:bg-ink/5"
+              :data-collection-jump="row.key"
+              :aria-label="
+                row.newCount > 0
+                  ? `${row.name}，新得 ${row.newCount} 枚，已录 ${row.known}/${row.total}，点开查看`
+                  : `${row.name}，已录 ${row.known}/${row.total}，还差 ${row.remaining} 枚，点开查看`
+              "
+              @click="revealCollectionCategory(row.key)"
+            >
+              <span class="flex min-w-0 items-start justify-between gap-1">
+                <span class="truncate font-kai text-[11px] tracking-[0.08em] text-ink">{{
+                  row.name
+                }}</span>
+                <span class="mt-0.5 shrink-0 text-[10px] text-ink-faint" aria-hidden="true">›</span>
+              </span>
+              <span class="mt-auto flex min-w-0 items-baseline justify-between gap-1 pt-2">
+                <span v-if="row.newCount > 0" class="shrink-0 tabular text-[10px] text-cinnabar"
+                  >新 {{ row.newCount }}</span
+                >
+                <span v-else class="truncate tabular text-[10px] text-qing"
+                  >还差 {{ row.remaining }}</span
+                >
+                <span class="shrink-0 tabular text-[10px] text-ink-faint">
+                  {{ row.known }}/{{ row.total }}
                 </span>
               </span>
-              <span class="mt-0.5 block truncate text-[10px] text-ink-faint">
-                {{
-                  row.newCount > 0
-                    ? `新得 ${row.newCount} 枚 · 点开先看这一册`
-                    : `还差 ${row.remaining} 枚 · 点开看来源`
-                }}
-              </span>
+              <ProgressBar
+                class="mt-1.5"
+                :value="row.ratio"
+                :color="row.newCount > 0 ? 'var(--color-cinnabar)' : 'var(--color-qing)'"
+                :height="2"
+              />
+            </button>
+          </div>
+          <button
+            v-if="collectionMoreNewCount > 0"
+            type="button"
+            class="mt-2 flex w-full items-center justify-between gap-2 rounded-md border border-cinnabar/25 bg-cinnabar/5 px-2.5 py-2 text-left text-[10px] text-ink-faint active:bg-cinnabar/10"
+            data-collection-more-new
+            :aria-expanded="collectionMoreNewOpen"
+            :aria-label="
+              collectionMoreNewOpen
+                ? `另有 ${collectionMoreNewCount} 册新得已展开，点按回到第一册`
+                : `另有 ${collectionMoreNewCount} 册新得未列于此，点按一并展开`
+            "
+            :aria-controls="
+              collectionMoreNewRows.map((row) => collectionCategoryBodyId(row.key)).join(' ')
+            "
+            @click="revealRemainingNewCategories"
+          >
+            <span>
+              {{
+                collectionMoreNewOpen
+                  ? `另有 ${collectionMoreNewCount} 册新得已展开`
+                  : `另有 ${collectionMoreNewCount} 册新得未列于此`
+              }}
             </span>
-            <span class="mt-0.5 shrink-0 text-[10px] text-ink-faint" aria-hidden="true">›</span>
+            <span class="shrink-0 text-cinnabar">
+              {{ collectionMoreNewOpen ? "已展开" : "展开 →" }}
+            </span>
           </button>
-        </div>
+        </template>
         <p v-else-if="collectionOverview.known > 0" class="mt-2 text-[10px] text-jade">
           已开之册皆尽收，余册待你从历练、炼丹与奇缘里启封。
         </p>
@@ -805,8 +839,17 @@ const collectionHighlights = computed<CollectionProgressRow[]>(() => {
       : collectionOverview.value.nearestRows;
   return rows.slice(0, COLLECTION_INITIAL_OPEN_MAX);
 });
+const collectionMoreNewRows = computed(() =>
+  collectionOverview.value.newRows.slice(COLLECTION_INITIAL_OPEN_MAX),
+);
+const collectionMoreNewCount = computed(() => collectionMoreNewRows.value.length);
 
 const openCollectionKeys = ref<Set<string>>(new Set());
+const collectionMoreNewOpen = computed(
+  () =>
+    collectionMoreNewRows.value.length > 0 &&
+    collectionMoreNewRows.value.every((row) => openCollectionKeys.value.has(row.key)),
+);
 const collectionStateReady = ref(false);
 watch(
   collectionOverview,
@@ -865,6 +908,19 @@ function revealCollectionCategory(key: string): void {
       `[data-collection-category-toggle="${CSS.escape(key)}"]`,
     );
     target?.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+}
+
+function revealRemainingNewCategories(): void {
+  const rows = collectionMoreNewRows.value;
+  if (rows.length === 0) return;
+  openCollectionKeys.value = new Set([...openCollectionKeys.value, ...rows.map((row) => row.key)]);
+  void nextTick(() => {
+    const target = document.querySelector<HTMLElement>(
+      `[data-collection-category-toggle="${CSS.escape(rows[0]!.key)}"]`,
+    );
+    target?.scrollIntoView({ block: "center", behavior: "smooth" });
+    target?.focus({ preventScroll: true });
   });
 }
 

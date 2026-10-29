@@ -212,6 +212,7 @@ import {
 import { TITLES } from "../src/data/titles.ts";
 import { PETS } from "../src/data/pets.ts";
 import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
+import { EVENTS } from "../src/data/events.ts";
 import { GONGFA } from "../src/data/gongfa.ts";
 import { qualityDef } from "../src/data/qualities.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
@@ -6424,23 +6425,29 @@ async function taskCollectionFold() {
   });
   try {
     const slices = showcaseSlices("light");
-    // 展品档丹匣里的药会在启动时补收进丹方录;本判据只造功法/灵兽两册新得,
-    // 故清空丹匣并标认知已播种,避免启动自愈再造出第三册新得。
+    // 展品档丹匣里的药会在启动时补收进丹方录;本判据自己造四册新得,
+    // 故清空丹匣并标认知已播种,避免启动自愈再造出第五册。
     slices.inventory.pills = {};
     slices.lore = { seeded: true };
     const now = Date.now();
+    const equip = [EQUIPMENT_TEMPLATES[0].id];
     const gongfa = [GONGFA[0].id, GONGFA[1].id];
     const pet = [PETS[0].id];
+    const event = [EVENTS[0].id];
     slices.quests.lastCollectionViewAt = now - 60_000;
     slices.quests.collections = {
       ...slices.quests.collections,
+      equip,
       gongfa,
       pet,
+      event,
     };
     slices.quests.collectedAt = {
+      [`equip:${equip[0]}`]: now,
       [`gongfa:${gongfa[0]}`]: now,
       [`gongfa:${gongfa[1]}`]: now,
       [`pet:${pet[0]}`]: now,
+      [`event:${event[0]}`]: now,
     };
     await seedSave(ctx, slices, "__collectionFold");
 
@@ -6483,10 +6490,17 @@ async function taskCollectionFold() {
               };
             },
           );
-          const jumps = [...document.querySelectorAll("[data-collection-jump]")].map((btn) => ({
-            key: btn.getAttribute("data-collection-jump") ?? "",
-            text: (btn.textContent || "").replace(/\s+/g, " ").trim(),
-          }));
+          const jumps = [...document.querySelectorAll("[data-collection-jump]")].map((btn) => {
+            const rect = btn.getBoundingClientRect();
+            return {
+              key: btn.getAttribute("data-collection-jump") ?? "",
+              text: (btn.textContent || "").replace(/\s+/g, " ").trim(),
+              top: Math.round(rect.top),
+              left: Math.round(rect.left),
+              width: Math.round(rect.width),
+            };
+          });
+          const moreNew = document.querySelector("[data-collection-more-new]");
           return {
             navTop: nav?.top ?? innerHeight,
             heroTop: heroRect?.top ?? null,
@@ -6494,6 +6508,8 @@ async function taskCollectionFold() {
             heroText: (hero?.textContent || "").replace(/\s+/g, " ").trim(),
             toggles,
             jumps,
+            moreNewText: (moreNew?.textContent || "").replace(/\s+/g, " ").trim(),
+            moreNewExpanded: moreNew?.getAttribute("aria-expanded") ?? null,
           };
         });
 
@@ -6509,7 +6525,8 @@ async function taskCollectionFold() {
       if (
         !fold.heroText.includes("藏珍谱") ||
         !fold.heroText.includes("眼下新得") ||
-        !fold.heroText.includes("3 枚待看")
+        !fold.heroText.includes("4 册有新得") ||
+        !fold.heroText.includes("5 枚待看")
       ) {
         failures.push(`[390-collection] 卷首没有把整体进度与新得数摊开(«${fold.heroText}»)`);
       }
@@ -6524,16 +6541,21 @@ async function taskCollectionFold() {
         .map((row) => row.key)
         .sort();
       if (
-        openKeys.join(",") !== "gongfa,pet" ||
-        fold.toggles.filter((row) => row.bodyVisible).length !== 2
+        openKeys.join(",") !== "equip,gongfa,pet" ||
+        fold.toggles.filter((row) => row.bodyVisible).length !== 3
       ) {
         failures.push(
-          `[390-collection] 有新得的两册应默认展开(open=${openKeys.join(",") || "无"})`,
+          `[390-collection] 新得最多的三册应默认展开(open=${openKeys.join(",") || "无"})`,
         );
       }
+      const equipBody = fold.toggles.find((row) => row.key === "equip")?.bodyText ?? "";
       const gongfaBody = fold.toggles.find((row) => row.key === "gongfa")?.bodyText ?? "";
       const petBody = fold.toggles.find((row) => row.key === "pet")?.bodyText ?? "";
-      if (!gongfaBody.includes(GONGFA[0].name) || !petBody.includes(PETS[0].name)) {
+      if (
+        !equipBody.includes(EQUIPMENT_TEMPLATES[0].name) ||
+        !gongfaBody.includes(GONGFA[0].name) ||
+        !petBody.includes(PETS[0].name)
+      ) {
         failures.push("[390-collection] 默认展开的册目没有铺出对应条目");
       }
       if (
@@ -6541,6 +6563,29 @@ async function taskCollectionFold() {
         !fold.jumps.some((row) => row.key === "pet")
       ) {
         failures.push("[390-collection] 卷首没有列出有新得的册目入口");
+      }
+      if (fold.jumps.length !== 3 || new Set(fold.jumps.map((row) => row.top)).size !== 1) {
+        failures.push(
+          `[390-collection] 三册新得应并排成索引(实见 ${fold.jumps.map((row) => `${row.key}@${row.top}`).join(" / ")})`,
+        );
+      }
+      if (!fold.moreNewText.includes("另有 1 册新得")) {
+        failures.push(`[390-collection] 第四册新得没有在卷首报出余量(«${fold.moreNewText}»)`);
+      }
+      await page.locator("[data-collection-more-new]").click({ timeout: 3000 });
+      await page.waitForFunction(
+        () =>
+          document.querySelector("[data-collection-more-new]")?.textContent?.includes("已展开") ??
+          false,
+      );
+      const expanded = await read();
+      const eventBody = expanded.toggles.find((row) => row.key === "event")?.bodyText ?? "";
+      if (
+        expanded.moreNewExpanded !== "true" ||
+        !expanded.toggles.find((row) => row.key === "event")?.bodyVisible ||
+        !eventBody.includes(EVENTS[0].title)
+      ) {
+        failures.push("[390-collection] 余册入口没有真正展开第四册新得");
       }
 
       await page

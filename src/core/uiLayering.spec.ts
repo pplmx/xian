@@ -742,6 +742,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(col?.src).toContain("revealCollectionCategory(row.key)");
     expect(col?.src, "新得册与将满册要分开报").toContain("眼下新得");
     expect(col?.src, "无新得时卷首改报将满之册").toContain("将满之册");
+    expect(col?.src, "三册入口压成一眼能扫完的索引").toContain(
+      "grid-cols-[repeat(auto-fit,minmax(96px,1fr))]",
+    );
+    expect(col?.src, "超过三册的新得不能静默消失").toContain("collectionMoreNewCount");
+    expect(col?.src).toContain("data-collection-more-new");
+    expect(col?.src, "余册提示必须是一键展开入口,不是被动脚注").toContain(
+      "revealRemainingNewCategories",
+    );
+    expect(col?.src).toContain(':aria-expanded="collectionMoreNewOpen"');
+    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+    expect(layout, "布局门要点到余册入口并核对展开结果").toContain(
+      'locator("[data-collection-more-new]").click',
+    );
+    expect(layout).toContain("余册入口没有真正展开第四册新得");
     expect(col?.src, "册目内容按展开态渲染").toContain('v-if="isCollectionCategoryOpen(cat.key)"');
     expect(col?.src, "展开态必须给测试与读屏一个稳定落点").toContain(
       ':data-collection-category-body="cat.key"',
