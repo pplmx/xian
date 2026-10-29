@@ -508,26 +508,9 @@ import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useQuestsStore } from "@/stores/quests";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
-import type { CollectionCategory } from "@/types";
 import { ACHIEVEMENTS } from "@/data/achievements";
-import { GONGFA } from "@/data/gongfa";
-import { EVENTS } from "@/data/events";
-import { chainOfEvent } from "@/data/chains";
-import { TALENTS, TALENT_GRADE_COLORS } from "@/data/talents";
 import { qualityDef } from "@/data/qualities";
-import {
-  CODEX_SOURCES,
-  artifactCodex,
-  branchCodex,
-  collectedTimeText,
-  equipCodex,
-  materialCodex,
-  petCodex,
-  pillCodex,
-  type CodexCat,
-  type CodexEntry,
-} from "@/ui/codex";
-import { gongfaFuncText, gongfaMetaText } from "@/ui/itemText";
+import { collectionCodex, type CodexCat, type CodexEntry } from "@/ui/codex";
 import { achievementDirection } from "@/ui/achievementHint";
 import {
   achievementProgressRows,
@@ -536,7 +519,7 @@ import {
 } from "@/core/achievementProgress";
 import {
   COLLECTION_INITIAL_OPEN_MAX,
-  collectionProgressOverview,
+  collectionProgressOverviewFromCodex,
   type CollectionProgressRow,
 } from "@/core/collectionProgress";
 import { rewardTextAtTier } from "@/core/progress";
@@ -683,101 +666,8 @@ function revealAchievement(row: AchievementRow): void {
   });
 }
 
-/**
- * 原有七类只有"收没收录"两态,在此补齐 CodexEntry 的深度字段:
- * stage 1 即已收录,不设更深的层。深浅之别是灵材谱与悟道录才有的事。
- */
-function makeCat(
-  key: CollectionCategory,
-  name: string,
-  ownedIds: string[],
-  defs: { id: string; name: string; desc?: string; meta?: string; color?: string; rank?: number }[],
-): CodexCat {
-  const owned = new Set(ownedIds);
-  // 默认从好到差:品质 rank 降序(有品阶的一类喂 rank)→ 已收录置顶 → 原序
-  // (没喂 rank 的一类同级里保住手排的叙事序,不按名字打乱)
-  const rows = defs
-    .map((d, idx) => ({
-      idx,
-      rank: d.rank ?? 0,
-      entry: {
-        id: d.id,
-        name: d.name,
-        desc: d.desc ?? "",
-        meta: d.meta ?? "",
-        color: d.color,
-        stage: owned.has(d.id) ? 1 : 0,
-        stageName: "",
-        badge: "",
-        hint: "",
-        foot: { label: "收录时间", value: collectedTimeText(quests.collectedAt[`${key}:${d.id}`]) },
-      },
-    }))
-    .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.idx - b.idx);
-  const entries = rows.map((r) => r.entry);
-  const known = entries.filter((e) => e.stage >= 1).length;
-  return { key, name, hint: `${known}/${defs.length}`, source: CODEX_SOURCES[key], entries };
-}
-
-/**
- * 九类图鉴的排布。
- *
- * 悟道录紧随功法阁、灵材谱紧随丹方录 —— 各自与所属的那条线挨在一处,
- * 翻到功法就看得见它的岔路,翻到丹药就看得见炼它的料。
- */
-const collectionCats = computed<CodexCat[]>(() => {
-  const c = quests.collections;
-  return [
-    // 装备/法宝/丹药三类走带深浅的派生视图(见 ui/codex:收录深度一节),
-    // 其余四类仍是「收没收录」两态,故共用 makeCat
-    equipCodex(),
-    makeCat(
-      "gongfa",
-      "功法阁",
-      c.gongfa,
-      GONGFA.map((g) => ({
-        id: g.id,
-        name: g.name,
-        desc: [g.desc, gongfaFuncText(g)].filter(Boolean).join("\n"),
-        meta: gongfaMetaText(g),
-        color: qualityDef(g.quality).color,
-        rank: qualityDef(g.quality).rank,
-      })),
-    ),
-    branchCodex(),
-    pillCodex(),
-    materialCodex(),
-    artifactCodex(),
-    // 灵兽册走深浅派生视图:结缘之外还有「曾相伴/相伴中」两档相伴史(见 ui/codex 灵兽册)
-    petCodex(),
-    makeCat(
-      "event",
-      "见闻志",
-      c.event,
-      // 奇缘的阶段事件与普通际遇同表,但在见闻志里得各归各的名 ——
-      // 奇缘标「奇缘」、普通际遇标「历练际遇」,免得玩家以为那条缘也能随便撞见
-      EVENTS.map((e) => ({
-        id: e.id,
-        name: e.title,
-        desc: e.text,
-        meta: chainOfEvent(e.id) ? "奇缘" : "历练际遇",
-      })),
-    ),
-    makeCat(
-      "talent",
-      "天赋鉴",
-      c.talent,
-      TALENTS.map((t) => ({
-        id: t.id,
-        name: t.name,
-        desc: t.desc,
-        meta: "先天之姿",
-        color: TALENT_GRADE_COLORS[t.grade],
-        rank: t.grade,
-      })),
-    ),
-  ];
-});
+/** 九册的唯一装配在 ui/codex；本页只做展开、分批与呈现。 */
+const collectionCats = computed<CodexCat[]>(() => collectionCodex());
 
 /**
  * 未识的「???」至多铺这么多枚。
@@ -811,7 +701,6 @@ const visibleCats = computed(() =>
       ...cat,
       knownVisible: knownPage.visible,
       unknownVisible: unknown.slice(0, UNKNOWN_CAP),
-      newTotal: known.filter((entry) => quests.isEntryNew(cat.key, entry.id)).length,
       knownStart: knownPage.start,
       knownShown: knownPage.shown,
       knownTotal: known.length,
@@ -823,14 +712,8 @@ const visibleCats = computed(() =>
 );
 
 const collectionOverview = computed(() =>
-  collectionProgressOverview(
-    visibleCats.value.map((cat) => ({
-      key: cat.key,
-      name: cat.name,
-      known: cat.knownTotal,
-      total: cat.entries.length,
-      newCount: cat.newTotal,
-    })),
+  collectionProgressOverviewFromCodex(collectionCats.value, (key, id) =>
+    quests.isEntryNew(key, id),
   ),
 );
 const collectionProgressByKey = computed(

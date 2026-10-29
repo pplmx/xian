@@ -6,6 +6,13 @@ export interface CollectionProgressCategory {
   newCount: number;
 }
 
+/** 图鉴侧的最小条目形状：只认 id 与收录深度，不把 UI 文案搬进 core。 */
+export interface CollectionCodexCategory {
+  key: string;
+  name: string;
+  entries: readonly { id: string; stage: number }[];
+}
+
 export interface CollectionProgressRow extends CollectionProgressCategory {
   ratio: number;
   remaining: number;
@@ -71,4 +78,30 @@ export function collectionProgressOverview(
         ? newRows.slice(0, COLLECTION_INITIAL_OPEN_MAX).map((row) => row.key)
         : nearestRows.slice(0, 1).map((row) => row.key),
   };
+}
+
+/**
+ * 九册图鉴的卷首读数只从 CodexEntry.stage 派生。
+ *
+ * 人物页入口与藏珍页此前各数一遍：一边数 quests.collections 的 id，一边数
+ * stage ≥ 1。装备「已入目」、灵材「已辨识」、悟道「已见」都可能是 stage 1
+ * 而尚未进收藏 id 的合法状态，两处迟早分叉。这里把「已录」与「新得」的判据
+ * 一起收口，页面只负责把同一份九册递进来。
+ */
+export function collectionProgressOverviewFromCodex(
+  categories: readonly CollectionCodexCategory[],
+  isNew: (categoryKey: string, id: string) => boolean = () => false,
+): CollectionProgressOverview {
+  return collectionProgressOverview(
+    categories.map((category) => {
+      const knownEntries = category.entries.filter((entry) => entry.stage >= 1);
+      return {
+        key: category.key,
+        name: category.name,
+        known: knownEntries.length,
+        total: category.entries.length,
+        newCount: knownEntries.filter((entry) => isNew(category.key, entry.id)).length,
+      };
+    }),
+  );
 }

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { collectionProgressOverview, type CollectionProgressCategory } from "./collectionProgress";
+import {
+  collectionProgressOverview,
+  collectionProgressOverviewFromCodex,
+  type CollectionProgressCategory,
+} from "./collectionProgress";
 
 function category(
   key: string,
@@ -104,5 +108,30 @@ describe("藏珍谱 · 从同一份图鉴条目派生", () => {
     const overview = collectionProgressOverview([category("equip", 2, 10, -3)]);
     expect(overview.newRows).toEqual([]);
     expect(overview.newCount).toBe(0);
+  });
+
+  it("从图鉴条目汇总时以 stage ≥ 1 计已录，新得也只算已录条目", () => {
+    const overview = collectionProgressOverviewFromCodex(
+      [
+        {
+          key: "equip",
+          name: "装备图鉴",
+          entries: [
+            { id: "seen", stage: 1 },
+            { id: "unknown", stage: 0 },
+            { id: "mastered", stage: 3 },
+          ],
+        },
+        {
+          key: "pet",
+          name: "灵兽册",
+          entries: [{ id: "companion", stage: 2 }],
+        },
+      ],
+      (_key, id) => id === "unknown" || id === "mastered",
+    );
+
+    expect(overview).toMatchObject({ known: 3, total: 4, newCount: 1 });
+    expect(overview.newRows.map((row) => row.key)).toEqual(["equip"]);
   });
 });

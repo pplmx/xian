@@ -813,7 +813,7 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
 
   it("图鉴的用具三类取自 itemText 的功用函数", () => {
     // 装备/法宝/丹药三类已收进 codex 的派生视图,功用行在那里拼;
-    // 功法阁仍是两态列表,由视图直接拼 —— 两边都得取同一份文案函数
+    // 功法阁也由 codex 装配 —— 所有类别都得取同一份文案函数
     const codexSrc = src("../ui/codex.ts");
     for (const fn of [
       "equipFuncText",
@@ -825,9 +825,8 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     ]) {
       expect(codexSrc, `图鉴该用 ${fn} 讲功用与出处`).toContain(fn);
     }
-    const view = src("../views/CollectionView.vue");
     for (const fn of ["gongfaFuncText", "gongfaMetaText"]) {
-      expect(view, `功法阁该用 ${fn}`).toContain(fn);
+      expect(codexSrc, `功法阁该用 ${fn}`).toContain(fn);
     }
   });
 
@@ -1018,10 +1017,12 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
 
   it("图鉴的用具三类走带深度的派生视图,而不是就地拼两态", () => {
     const view = src("../views/CollectionView.vue");
+    const codex = src("../ui/codex.ts");
+    expect(view, "藏珍页读九册的唯一装配").toContain("collectionCodex()");
     for (const fn of ["equipCodex()", "artifactCodex()", "pillCodex()"]) {
-      expect(view, `图鉴该用 ${fn}(含收录深度)`).toContain(fn);
+      expect(codex, `图鉴装配该用 ${fn}(含收录深度)`).toContain(fn);
     }
-    expect(view, "收录时刻的口径收在 codex,界面不再自己写一份").toContain("collectedTimeText(");
+    expect(codex, "收录时刻的口径收在 codex,界面不再自己写一份").toContain("collectedTimeText(");
     expect(view, "界面里不该再出现日期格式化的第二份").not.toContain("toLocaleString(");
   });
 

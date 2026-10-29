@@ -804,6 +804,25 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("人物页与藏珍页的图鉴计数同源 —— 九册装配与 stage 汇总只此一份", () => {
+    // 人物页入口此前按 quests.collections 的 id 另数一遍,藏珍页按 CodexEntry.stage 汇总。
+    // 两边现在碰巧一样,不代表以后一样:装备「已入目」、灵材「已辨识」、悟道「已见」
+    // 都是 stage 语义,不能退回到只数收藏 id。九册装配与汇总统一收进 codex/core。
+    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const codex = readFileSync(resolve(__dirname, "../ui/codex.ts"), "utf8");
+    expect(codex, "九册装配要住在图鉴模块").toContain("export function collectionCodex");
+    expect(char?.src, "人物页读同一份九册").toContain("collectionCodex()");
+    expect(char?.src, "人物页读同一份 stage 汇总").toContain(
+      "collectionProgressOverviewFromCodex(",
+    );
+    expect(char?.src, "人物页不再自己数收藏 id").not.toContain("knownIn(");
+    expect(col?.src, "藏珍页读同一份九册").toContain("collectionCodex()");
+    expect(col?.src, "藏珍页的新得也从同一份汇总来").toContain(
+      "collectionProgressOverviewFromCodex(",
+    );
+  });
+
   it("全收集图鉴逐册滑动翻看 —— 前后可达，点击再多也不让 DOM 无限长", () => {
     /*
      * 九册全收是 800+ 枚 chip，首帧全铺实测 1326 DOM。每册先给一批，余下由

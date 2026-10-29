@@ -23,11 +23,14 @@
 import { ELEMENTS } from "@/data/linggen";
 import { LORE_MAX, LORE_STAGE_NAMES, MATERIALS, type MaterialDef } from "@/data/materials";
 import { GONGFA_BRANCHES, canEnlighten, type GongfaBranchDef } from "@/data/gongfaBranches";
-import { GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
+import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
 import { QUALITIES, qualityDef } from "@/data/qualities";
 import { ARTIFACTS, ARTIFACT_MAX_LEVEL } from "@/data/artifacts";
 import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
 import { PILLS } from "@/data/pills";
+import { EVENTS } from "@/data/events";
+import { chainOfEvent } from "@/data/chains";
+import { TALENTS, TALENT_GRADE_COLORS } from "@/data/talents";
 import type { ArtifactDef, CollectionCategory, EquipmentTemplate, PetDef, PillDef } from "@/types";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
@@ -44,6 +47,8 @@ import {
   artifactMetaText,
   equipFuncText,
   equipMetaText,
+  gongfaFuncText,
+  gongfaMetaText,
   petFuncText,
   petTraitText,
   pillFuncText,
@@ -608,6 +613,93 @@ export function petCodex(): CodexCat {
     source: CODEX_SOURCES.pet,
     entries,
   };
+}
+
+/** 其余四类仍是「收没收录」两态，按同一套卷目标题与来源装配。 */
+function makeCollectionCat(
+  key: CollectionCategory,
+  name: string,
+  ownedIds: string[],
+  defs: { id: string; name: string; desc?: string; meta?: string; color?: string; rank?: number }[],
+): CodexCat {
+  const quests = useQuestsStore();
+  const owned = new Set(ownedIds);
+  const rows = defs
+    .map((d, idx) => ({
+      idx,
+      rank: d.rank ?? 0,
+      entry: {
+        id: d.id,
+        name: d.name,
+        desc: d.desc ?? "",
+        meta: d.meta ?? "",
+        color: d.color,
+        stage: owned.has(d.id) ? 1 : 0,
+        stageName: "",
+        badge: "",
+        hint: "",
+        foot: { label: "收录时间", value: collectedTimeText(quests.collectedAt[`${key}:${d.id}`]) },
+      },
+    }))
+    .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.idx - b.idx);
+  const entries = rows.map((r) => r.entry);
+  const known = entries.filter((e) => e.stage >= 1).length;
+  return { key, name, hint: `${known}/${defs.length}`, source: CODEX_SOURCES[key], entries };
+}
+
+/**
+ * 九册图鉴的唯一装配处。
+ *
+ * 人物页只读总数，藏珍页要逐册展开；两边若各自拼一遍条目，装备「已入目」、
+ * 灵材「已辨识」、悟道「已见」这些 stage 语义迟早会跟收藏 id 分叉。
+ */
+export function collectionCodex(): CodexCat[] {
+  const c = useQuestsStore().collections;
+  return [
+    equipCodex(),
+    makeCollectionCat(
+      "gongfa",
+      "功法阁",
+      c.gongfa,
+      GONGFA.map((g) => ({
+        id: g.id,
+        name: g.name,
+        desc: [g.desc, gongfaFuncText(g)].filter(Boolean).join("\n"),
+        meta: gongfaMetaText(g),
+        color: qualityDef(g.quality).color,
+        rank: qualityDef(g.quality).rank,
+      })),
+    ),
+    branchCodex(),
+    pillCodex(),
+    materialCodex(),
+    artifactCodex(),
+    petCodex(),
+    makeCollectionCat(
+      "event",
+      "见闻志",
+      c.event,
+      EVENTS.map((e) => ({
+        id: e.id,
+        name: e.title,
+        desc: e.text,
+        meta: chainOfEvent(e.id) ? "奇缘" : "历练际遇",
+      })),
+    ),
+    makeCollectionCat(
+      "talent",
+      "天赋鉴",
+      c.talent,
+      TALENTS.map((t) => ({
+        id: t.id,
+        name: t.name,
+        desc: t.desc,
+        meta: "先天之姿",
+        color: TALENT_GRADE_COLORS[t.grade],
+        rank: t.grade,
+      })),
+    ),
+  ];
 }
 
 /**

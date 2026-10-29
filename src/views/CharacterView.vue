@@ -339,7 +339,7 @@
           tone="gold"
           action="翻阅"
           :badge="quests.hasCollectionNew ? '有新得' : ''"
-          :sub="`成就 ${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length} · 图鉴 ${collectHave}/${collectTotal}`"
+          :sub="`成就 ${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length} · 图鉴 ${collectionSummary.known}/${collectionSummary.total}`"
         />
 
         <NavCard
@@ -393,15 +393,10 @@ import { STAGE_NAMES } from "@/data/daolu";
 import { useQuestsStore } from "@/stores/quests";
 import { ELEMENTS } from "@/data/linggen";
 import { titleDef } from "@/data/titles";
-import { petDef, PETS } from "@/data/pets";
-import { talentDef, TALENTS } from "@/data/talents";
+import { petDef } from "@/data/pets";
+import { talentDef } from "@/data/talents";
 import { ACHIEVEMENTS } from "@/data/achievements";
-import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
-import { GONGFA } from "@/data/gongfa";
-import { PILLS } from "@/data/pills";
-import { ARTIFACTS } from "@/data/artifacts";
 import { REALMS, WORLDS } from "@/data/realms";
-import { EVENTS } from "@/data/events";
 import { detectBuild } from "@/core/buildDetect";
 import { useLoadoutsStore } from "@/stores/loadouts";
 import { isSoftCapped, modOf } from "@/core/statsCalc";
@@ -412,7 +407,8 @@ import {
   SHIELD_CAP_RATIO,
   SOFT_CAPS,
 } from "@/data/constants";
-import { branchCodex, materialCodex } from "@/ui/codex";
+import { collectionCodex } from "@/ui/codex";
+import { collectionProgressOverviewFromCodex } from "@/core/collectionProgress";
 import { mentorVerdict } from "@/core/mentorService";
 import { buildIdentity } from "@/core/identityService";
 import { rootElements, tendencyLines } from "@/core/linggenAffinity";
@@ -575,34 +571,8 @@ const ownedTalents = computed(() =>
   player.reincarnation.talents.map((id) => talentDef(id)).filter((t) => t !== undefined),
 );
 
-const knownIn = (ids: string[], table: readonly { id: string }[]): number => {
-  const tableIds = new Set(table.map((row) => row.id));
-  return new Set(ids.filter((id) => tableIds.has(id))).size;
-};
-
-const collectHave = computed(
-  () =>
-    knownIn(quests.collections.equip, EQUIPMENT_TEMPLATES) +
-    knownIn(quests.collections.gongfa, GONGFA) +
-    knownIn(quests.collections.pill, PILLS) +
-    knownIn(quests.collections.artifact, ARTIFACTS) +
-    knownIn(quests.collections.pet, PETS) +
-    knownIn(quests.collections.event, EVENTS) +
-    knownIn(quests.collections.talent, TALENTS) +
-    // 图鉴页还有灵材谱与悟道录两类(派生视图,见 ui/codex.ts),计数要带上,否则两页对不上
-    branchCodex().entries.filter((e) => e.stage > 0).length +
-    materialCodex().entries.filter((e) => e.stage > 0).length,
-);
-const collectTotal =
-  EQUIPMENT_TEMPLATES.length +
-  GONGFA.length +
-  PILLS.length +
-  ARTIFACTS.length +
-  PETS.length +
-  EVENTS.length +
-  TALENTS.length +
-  branchCodex().entries.length +
-  materialCodex().entries.length;
+/** 图鉴入口与藏珍页共用同一份九册装配与 stage 汇总。 */
+const collectionSummary = computed(() => collectionProgressOverviewFromCodex(collectionCodex()));
 
 // ---- 轮回 ----
 const rebirthOpen = ref(false);

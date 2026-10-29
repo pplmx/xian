@@ -187,8 +187,8 @@ describe("奇缘 · 不进区域随机池,但真的会出现", () => {
   it("见闻志里奇缘与际遇各归各的名(阶段事件与普通事件同表)", () => {
     // 事件同表是引擎的需要;展示层若一律写「历练际遇」,玩家会以为那条缘
     // 也能在随便哪个地界撞见 —— 与「奇缘不属于任何地界」这条契约正好相反。
-    const view = readFileSync(resolve(__dirname, "../views/CollectionView.vue"), "utf8");
-    expect(view, "见闻志应按 chainOfEvent 分出奇缘").toContain(
+    const codex = readFileSync(resolve(__dirname, "../ui/codex.ts"), "utf8");
+    expect(codex, "见闻志应按 chainOfEvent 分出奇缘").toContain(
       'chainOfEvent(e.id) ? "奇缘" : "历练际遇"',
     );
   });
