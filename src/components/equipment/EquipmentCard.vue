@@ -6,6 +6,7 @@
       background: colorWithAlpha(quality.color, tier.bg),
     }"
     :data-uid="props.item.uid"
+    :data-equipment-new="isNew ? 'true' : undefined"
     :aria-label="label"
     @click="emit('open', props.item.uid)"
   >

@@ -323,6 +323,46 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(tw).toContain(`"new-pop": "new-pop`);
   });
 
+  it("背包先报本次新得与会动的槽位 —— 新货不许埋在旧藏之后", () => {
+    /*
+     * 底栏只在「有新货」时亮;开包后若仍按品阶整包排序,新得可能落到后面的批次,
+     * 玩家看到徽标却找不到是哪几件。卷首要能报新得数、切到只看新得,藏品组内
+     * 先新后旧;一键换装也要报出真正会动的槽,不能只写一句「换最强」。
+     */
+    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    expect(inv?.src, "藏品排序要走先新后旧的唯一函数").toContain("sortInventoryForAttention(");
+    expect(inv?.src, "每行把 isNew 一并交给排序与卡片").toMatch(
+      /inventory\.items\.map\(\(item\) => \(\{[\s\S]{0,180}?isNew:\s*inventory\.isNewItem\(item\.uid\)/,
+    );
+    expect(inv?.src, "卡片的新角标读该行快照,不在模板里重查库存").toContain(':is-new="row.isNew"');
+    expect(inv?.src, "新得入口要能切只看新得").toContain("data-inventory-new-toggle");
+    expect(inv?.src, "藏品区要暴露当前范围给运行时门").toContain(
+      ':data-inventory-scope="itemScope"',
+    );
+    expect(inv?.src, "卷首要报新得数").toContain(
+      ':data-inventory-new-count="inventory.newItemCount"',
+    );
+    expect(inv?.src, "收纳与分解运行时门要直接读行囊件数").toContain(
+      ':data-inventory-bag-count="inventory.bagItems.length"',
+    );
+
+    expect(inv?.src, "换装报价要读一键换装的同一份核心清单").toContain("equipUpgrades(inventory)");
+    expect(inv?.src, "卷首要报会动几槽").toContain(
+      ':data-inventory-upgrade-count="upgradeRows.length"',
+    );
+    expect(inv?.src, "每个可动槽要能直接打开候选").toContain(
+      ':data-inventory-upgrade-slot="row.slot"',
+    );
+    expect(inv?.src, "槽位卡要标出可换").toContain(
+      ':data-equip-upgrade="row.upgrade ? row.upgrade.slot : undefined"',
+    );
+    expect(inv?.src, "一键按钮要报会动几槽并同源置灰").toMatch(
+      /:disabled="upgradeRows\.length === 0"[\s\S]{0,420}?换上 \$\{upgradeRows\.length\} 槽最强/,
+    );
+    expect(inv?.src, "空槽或无候选时不许谎称九槽已是最强").not.toContain("九槽已是最强");
+    expect(inv?.src, "无事可换时要把真实状态说清楚").toContain("已无可换之器");
+  });
+
   it("开炉幕「把握」的语义色是真类 —— 七成以上放心开炉不许落回继承色", () => {
     // 把握度是全开炉决策里最关键的风险读数:「≥70% 放心开炉」的绿与「<30% 在赌」的红
     // 若落进不存在的色类(text-jade-ink / text-crimson-ink),整条语义色就静默消失。
@@ -838,7 +878,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      */
     const inventory = FILES.find((f) => f.path === "views/InventoryView.vue");
     expect(inventory?.src, "背包回翻标签要读真实步长").toMatch(
-      /previousItemsLabel[\s\S]{0,500}previousListStep\(\s*itemPage\.value\.shown,\s*allItems\.value\.length,\s*INVENTORY_RENDER_BATCH,?\s*\)/,
+      /previousItemsLabel[\s\S]{0,500}previousListStep\(\s*itemPage\.value\.shown,\s*visibleItems\.value\.length,\s*INVENTORY_RENDER_BATCH,?\s*\)/,
     );
 
     const market = FILES.find((f) => f.path === "views/MarketView.vue");

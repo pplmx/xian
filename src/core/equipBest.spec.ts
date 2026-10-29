@@ -16,9 +16,9 @@ import { createPinia, setActivePinia } from "pinia";
 import { useInventoryStore } from "@/stores/inventory";
 import {
   equipAllBest,
-  equipBestFor,
   bestEquipFor,
   betterEquip,
+  equipUpgrades,
   equipSetCombo,
   equippablePower,
   type EquipInventory,
@@ -138,7 +138,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     const step = item("head", "fine", 9);
     const better = item("head", "excellent", 6);
     add(inv, step, better);
-    expect(equipBestFor(inv, "head"), "空槽应当上一件").toBe(true);
+    expect(equipAllBest(inv), "空槽应当上一件").toBe(1);
     const picked = inv.items.find((i) => i.uid === inv.equipped["head"])!;
     const other = picked === better ? step : better;
     // 真实战力为准:穿上去的那件就是更强的(不奉行「品质保底」)
@@ -150,7 +150,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     const best = item("body", "immortal", 20, 5);
     add(inv, best);
     inv.equip(best.uid, "body");
-    expect(equipBestFor(inv, "body"), "本就是最强,不该来回换").toBe(false);
+    expect(equipAllBest(inv), "本就是最强,不该来回换").toBe(0);
   });
 
   it("已穿的更强就不换(真实战力口径)", () => {
@@ -160,7 +160,7 @@ describe("一键换装 · 「最强」按真实战力", () => {
     add(inv, worn, weaker);
     inv.equip(worn.uid, "necklace");
     expect(equippablePower(weaker)).toBeLessThan(equippablePower(worn));
-    expect(equipBestFor(inv, "necklace"), "已穿更强的,不该被更弱件换下").toBe(false);
+    expect(equipAllBest(inv), "已穿更强的,不该被更弱件换下").toBe(0);
     expect(inv.equipped["necklace"]).toBe(worn.uid);
   });
 
@@ -196,6 +196,57 @@ describe("一键换装 · 「最强」按真实战力", () => {
     for (const slot of ["head", "body", "necklace", "weapon"] as EquipSlot[]) {
       expect(inv.equipped[slot], `${slot} 槽应已穿上`).toBeTruthy();
     }
+  });
+});
+
+describe("一键换装 · 先报会动的槽位", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("只列空悬与真会换强的槽,已穿更强的不进单", () => {
+    const inv = useInventoryStore();
+    const wornWeapon = item("weapon", "heaven", 12, 5);
+    const betterWeapon = item("weapon", "immortal", 13, 0);
+    const wornBody = item("body", "heaven", 15, 8);
+    const weakerBody = item("body", "heaven", 14);
+    const emptyHead = item("head", "fine", 6);
+    add(inv, wornWeapon, betterWeapon, wornBody, weakerBody, emptyHead);
+    inv.equip(wornWeapon.uid, "weapon");
+    inv.equip(wornBody.uid, "body");
+
+    const rows = equipUpgrades(inv);
+    expect(rows.map((row) => row.slot)).toEqual(["head", "weapon"]);
+    expect(rows[0]).toMatchObject({ slot: "head", empty: true, current: undefined });
+    expect(rows[1]).toMatchObject({ slot: "weapon", empty: false });
+    expect(rows[1]!.current?.uid).toBe(wornWeapon.uid);
+    expect(rows[1]!.item.uid).toBe(betterWeapon.uid);
+    expect(rows.some((row) => row.slot === "body")).toBe(false);
+  });
+
+  it("报价与真正的一键换装逐槽对得上", () => {
+    const inv = useInventoryStore();
+    add(
+      inv,
+      item("head", "fine", 6),
+      item("body", "excellent", 8),
+      item("necklace", "mortal", 3),
+      item("weapon", "spirit", 10),
+    );
+    const rows = equipUpgrades(inv);
+    expect(rows.map((row) => row.slot).sort()).toEqual(
+      ["body", "head", "necklace", "weapon"].sort(),
+    );
+    expect(equipAllBest(inv)).toBe(rows.length);
+    expect(equipUpgrades(inv)).toEqual([]);
+  });
+
+  it("整身已是最强时报价为空 —— 按钮可据同一份读数置灰", () => {
+    const inv = useInventoryStore();
+    const best = item("body", "immortal", 20, 5);
+    add(inv, best);
+    inv.equip(best.uid, "body");
+    expect(equipUpgrades(inv)).toEqual([]);
   });
 });
 

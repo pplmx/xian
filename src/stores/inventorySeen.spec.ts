@@ -80,6 +80,17 @@ describe("背包「新」角标 · 标记语义", () => {
     inv.markInventorySeen(); // 开包
     expect(inv.newItemCount).toBe(0);
   });
+
+  it("newItems 与角标读数同源,佩戴中的新件也算", () => {
+    const inv = useInventoryStore();
+    inv.items = [inst("uA") as never];
+    inv.markInventorySeen();
+    inv.items = [inst("uA") as never, inst("uC") as never, inst("uD") as never];
+    inv.equipped = { weapon: "uC" };
+    expect(inv.newItems.map((item) => item.uid)).toEqual(["uC", "uD"]);
+    expect(inv.newItemCount).toBe(inv.newItems.length);
+    expect(inv.hasNewItem).toBe(true);
+  });
 });
 
 describe("背包「新」角标 · 洗档纪律", () => {

@@ -217,13 +217,13 @@ describe("排版量法口径", () => {
      * 余下由玩家显式续开;每张卡只接收父级算好的 isNew,不再各自订阅库存单例。
      */
     const view = readFileSync(resolve(__dirname, "../views/InventoryView.vue"), "utf-8");
-    expect(view).toContain("inventoryWindow(allItems");
+    expect(view).toContain("inventoryWindow(visibleItems");
     expect(view).toContain("data-inventory-total");
     expect(view).toContain("data-inventory-start");
     expect(view).toContain('v-for="row in itemPage.visible"');
-    expect(view).toContain(':is-new="inventory.isNewItem(row.item.uid)"');
+    expect(view).toContain(':is-new="row.isNew"');
     expect(view).toMatch(
-      /const shownBefore = itemPage\.value\.shown;[\s\S]{0,120}nextInventoryLimit\(\s*shownBefore,\s*allItems\.value\.length\s*\)/,
+      /const shownBefore = itemPage\.value\.shown;[\s\S]{0,120}nextInventoryLimit\(\s*shownBefore,\s*visibleItems\.value\.length\s*\)/,
     );
     expect(view).toContain("previousInventoryLimit");
     expect(view).toContain("data-inventory-prev");

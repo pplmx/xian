@@ -5,6 +5,69 @@
 
     <!-- 装备:部位槽,点击唤起部位列表 -->
     <template v-if="tab === 'equip'">
+      <!--
+        行囊卷首 —— 先回答「这一批有什么、哪里真会变强」。
+        底栏的新货徽标只说有货,而藏品原先按品阶排序,新得可能落到后面的批次;
+        一键换装也只写「换最强」,不报到底会动几个槽。两件事都在这里先摊开。
+      -->
+      <div
+        class="card-ink mt-3 px-4 py-3"
+        data-inventory-overview
+        :data-inventory-bag-count="inventory.bagItems.length"
+        :data-inventory-new-count="inventory.newItemCount"
+        :data-inventory-upgrade-count="upgradeRows.length"
+      >
+        <div class="flex items-baseline justify-between gap-2">
+          <span class="font-kai text-[14px] tracking-[0.25em] text-ink">行 囊</span>
+          <span class="text-[11px] text-ink-soft tabular"
+            >{{ inventory.bagItems.length }}/{{ BAG_CAPACITY }}</span
+          >
+        </div>
+        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[10px]">
+          <span class="text-ink-faint"
+            >器灵尘
+            <span class="text-ink-soft tabular">{{ formatExact(resources.dust) }}</span></span
+          >
+          <button
+            v-if="inventory.newItemCount > 0"
+            type="button"
+            data-inventory-new-toggle
+            class="tap-row -my-1 py-1 font-kai tracking-wider text-cinnabar active:opacity-60"
+            :aria-pressed="itemScope === 'new'"
+            @click="itemScope = itemScope === 'new' ? 'all' : 'new'"
+          >
+            {{
+              itemScope === "new" ? "看全部藏品" : `新得 ${inventory.newItemCount} 件 · 只看新得`
+            }}
+          </button>
+          <span v-else class="text-ink-faint">此批已看尽</span>
+        </div>
+        <div class="ink-divider-mark my-2.5" />
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <span class="text-[11px]" :class="upgradeRows.length ? 'text-ink-soft' : 'text-jade'">
+            {{ upgradeRows.length ? `可动 ${upgradeRows.length} 槽` : "已无可换之器" }}
+          </span>
+          <span class="text-[10px] text-ink-faint">只计真实战力更高</span>
+        </div>
+        <div v-if="upgradeRows.length" class="mt-1.5 flex flex-wrap gap-1.5">
+          <button
+            v-for="row in upgradeRows"
+            :key="row.slot"
+            type="button"
+            :data-inventory-upgrade-slot="row.slot"
+            class="chip-ink !px-2 !py-1 text-[10px] active:scale-95"
+            :aria-label="`查看${EQUIP_SLOT_NAMES[row.slot]}候选，${upgradeText(row)}`"
+            @click="pickerSlot = row.slot"
+          >
+            {{ EQUIP_SLOT_NAMES[row.slot] }}
+            <span class="tabular text-jade">{{ upgradeText(row) }}</span>
+          </button>
+        </div>
+        <p v-else class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          行囊里没有可补上空槽或换上更强的藏品。
+        </p>
+      </div>
+
       <!-- 装备共鸣:机制是活的,玩家却看不见 —— 同组两件即共鸣,（2/2）亮起 -->
       <div v-if="setRows.length" class="card-ink mt-3 px-4 py-2.5">
         <p class="text-[10px] text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
@@ -29,24 +92,7 @@
           </button>
         </p>
       </div>
-      <!--
-        行囊读数与两个动作此前挤在同一行:11px 的三个数 + 11px 的两个按钮,
-        320 宽下「行囊 30 · 器灵尘 123,456 收纳·启 分解」几乎要折。
-        读数归读数、动作归动作 —— 动作单独一行,并各带自己的语义色。
-      -->
-      <div class="mt-3 flex items-baseline justify-between px-1">
-        <span class="text-[11px] text-ink-faint tabular">行囊</span>
-        <!--
-          器灵尘走 formatExact 全量展开,不走 formatNum 的缩写 ——
-          它是要对账的钱(强化扣多少、分解给多少都按它算),
-          缩成「5千」就等于把账本藏起来一半。行囊数是小整数,照旧。
-        -->
-        <span class="text-[11px] text-ink-soft tabular">
-          {{ inventory.bagItems.length }}/{{ BAG_CAPACITY }} ·
-          <span class="text-ink-faint">器灵尘</span> {{ formatExact(resources.dust) }}
-        </span>
-      </div>
-      <div class="mt-1.5 flex gap-2">
+      <div class="mt-2 flex gap-2">
         <button
           class="chip-ink flex-1 !justify-center !py-1.5 text-[11px]"
           aria-label="智能收纳设置"
@@ -69,9 +115,16 @@
           v-for="row in slotRows"
           :key="row.slot"
           :data-equip-slot="row.slot"
-          class="card-ink flex flex-col items-center gap-1 px-2 py-2.5 active:scale-95"
+          :data-equip-upgrade="row.upgrade ? row.upgrade.slot : undefined"
+          class="card-ink relative flex flex-col items-center gap-1 px-2 py-2.5 active:scale-95"
           @click="pickerSlot = row.slot"
         >
+          <span
+            v-if="row.upgrade"
+            class="absolute right-1 top-1 font-kai text-[10px] leading-none text-jade"
+            aria-hidden="true"
+            >换</span
+          >
           <!--
             槽名与下面的装备名同为 10px 时,一格里两层字一样重,读的人得先分辨
             「哪个是我的东西」。槽名走楷体 + 字距:外形一变就认得出是题头而非内容;
@@ -112,23 +165,25 @@
       -->
       <button
         class="btn-ghost mt-2 w-full !py-2 !text-[11px]"
-        aria-label="一键各部位换最强"
+        :disabled="upgradeRows.length === 0"
+        :aria-label="
+          upgradeRows.length ? `一键换上 ${upgradeRows.length} 个槽位的最强装备` : '已无可换之器'
+        "
         @click="wearEquipBest"
       >
-        一键 · 各部位换最强
+        {{ upgradeRows.length ? `一键 · 换上 ${upgradeRows.length} 槽最强` : "已无可换之器" }}
       </button>
 
       <!-- 全部藏品(含佩戴中):部位槽之下的完整清单 -->
       <div
-        v-if="allItems.length"
+        v-if="visibleItems.length"
         class="mt-4"
-        :data-inventory-total="allItems.length"
+        :data-inventory-total="visibleItems.length"
         :data-inventory-start="itemPage.start"
+        :data-inventory-scope="itemScope"
+        :data-inventory-new-total="inventory.newItemCount"
       >
-        <SectionTitle
-          title="全部藏品"
-          :hint="`${allItems.length} 件 · 现看 ${itemPage.start + 1}–${itemPage.shown} · 行囊 ${inventory.bagItems.length}/${BAG_CAPACITY}`"
-        />
+        <SectionTitle :title="itemScope === 'new' ? '本次新得' : '全部藏品'" :hint="itemListHint" />
         <!-- 方格背包:五列格子 + 空槽占位,一眼看出还剩多少地方 -->
         <!--
           四列,不是五列 —— 390 宽下五列每格只剩 ~70px,而格子里要装图标、名字、
@@ -142,7 +197,7 @@
             :key="row.item.uid"
             :item="row.item"
             :equipped="row.equipped"
-            :is-new="inventory.isNewItem(row.item.uid)"
+            :is-new="row.isNew"
             @open="openDetail"
           />
         </div>
@@ -434,8 +489,9 @@ import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { BAG_CAPACITY } from "@/data/constants";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { PILL_BATCH, usePill, usePillBatch } from "@/core/pillService";
-import { equipAllBest, equipSetCombo } from "@/core/equipBest";
+import { equipAllBest, equipSetCombo, equipUpgrades, type EquipUpgrade } from "@/core/equipBest";
 import { equipSetDef, setCounts, type EquipSetDef } from "@/core/equipSet";
+import { sortInventoryForAttention } from "@/core/inventoryPriority";
 import {
   INVENTORY_RENDER_BATCH,
   INVENTORY_RENDER_WINDOW,
@@ -531,6 +587,8 @@ const SLOTS: EquipSlot[] = [
   "talisman",
 ];
 const pickerSlot = ref<EquipSlot | null>(null);
+type ItemScope = "all" | "new";
+const itemScope = ref<ItemScope>("all");
 
 /** 装备共鸣:已装备件里的同组计数(未满也列出来,让玩家知道差几件) */
 const setRows = computed(() => {
@@ -544,16 +602,23 @@ const setRows = computed(() => {
     .sort((a, b) => Number(b.active) - Number(a.active) || b.count - a.count);
 });
 
-/** 一键穿最强:换成几件就报几件,没换就说"已是最佳"(与核心同一套不降级口径) */
+/** 一键穿最强:换成几件就报几件,无事可换也照实说(与核心同一套清单) */
 function wearEquipBest(): void {
   const n = equipAllBest(inventory);
-  ui.toast(n > 0 ? `一键换装:换上 ${n} 件` : "已是最佳,无需更动", n > 0 ? "success" : "info");
+  ui.toast(n > 0 ? `一键换装:换上 ${n} 件` : "已无可换之器,无需更动", n > 0 ? "success" : "info");
 }
 
 /** 穿齐某套:换成几件报几件;已穿更强的不动,幂等 */
 function wearSetOf(setId: string): void {
   const n = equipSetCombo(inventory, setId);
   ui.toast(n > 0 ? `穿齐共鸣:换上 ${n} 件` : "此套已是最佳,无需更动", n > 0 ? "success" : "info");
+}
+
+/** 一键换装实际会动的槽 —— 卷首报价、槽位提示与按钮共用这一份 */
+const upgradeRows = computed(() => equipUpgrades(inventory));
+
+function upgradeText(row: EquipUpgrade): string {
+  return row.empty ? "补齐" : `战 +${formatGN(Math.round(row.delta))}`;
 }
 
 const slotRows = computed(() =>
@@ -567,27 +632,37 @@ const slotRows = computed(() =>
       template: item ? equipmentTemplate(item.templateId) : undefined,
       stock: inventory.bagItems.filter((it) => equipmentTemplate(it.templateId)?.slot === slot)
         .length,
+      upgrade: upgradeRows.value.find((row) => row.slot === slot),
     };
   }),
 );
 
-/** 全部藏品(含佩戴中),按品质/层级降序 */
+/** 全部藏品(含佩戴中):本次新得先列,两组内部再按品质/层级降序 */
 const allItems = computed(() =>
-  inventory.items
-    .map((item) => ({ item, equipped: inventory.equippedUids.has(item.uid) }))
-    .sort((a, b) => {
-      const dq = qualityDef(b.item.quality).rank - qualityDef(a.item.quality).rank;
-      return dq !== 0 ? dq : b.item.tier - a.item.tier;
-    }),
+  sortInventoryForAttention(
+    inventory.items.map((item) => ({
+      item,
+      equipped: inventory.equippedUids.has(item.uid),
+      isNew: inventory.isNewItem(item.uid),
+    })),
+  ),
 );
 
-const itemRenderLimit = ref(INVENTORY_RENDER_BATCH);
-const itemPage = computed(() => inventoryWindow(allItems.value, itemRenderLimit.value));
-const hiddenNewCount = computed(
-  () =>
-    allItems.value.slice(itemPage.value.shown).filter((row) => inventory.isNewItem(row.item.uid))
-      .length,
+const visibleItems = computed(() =>
+  itemScope.value === "new" ? allItems.value.filter((row) => row.isNew) : allItems.value,
 );
+const itemRenderLimit = ref(INVENTORY_RENDER_BATCH);
+const itemPage = computed(() => inventoryWindow(visibleItems.value, itemRenderLimit.value));
+const hiddenNewCount = computed(
+  () => visibleItems.value.slice(itemPage.value.shown).filter((row) => row.isNew).length,
+);
+const itemListHint = computed(() => {
+  const total = visibleItems.value.length;
+  const range = `现看 ${itemPage.value.start + 1}–${itemPage.value.shown}`;
+  if (itemScope.value === "new") return `${total} 件本次新得 · ${range}`;
+  const newText = inventory.newItemCount ? ` · 新得 ${inventory.newItemCount} 件先列` : "";
+  return `${total} 件${newText} · ${range}`;
+});
 const moreItemsLabel = computed(() => {
   const next = Math.min(INVENTORY_RENDER_BATCH, itemPage.value.hidden);
   return `再看 ${next} 件 · 余 ${itemPage.value.hidden}${hiddenNewCount.value ? ` · 新入包 ${hiddenNewCount.value}` : ""}`;
@@ -596,9 +671,19 @@ const previousItemsLabel = computed(
   () =>
     `前一批 ${previousListStep(
       itemPage.value.shown,
-      allItems.value.length,
+      visibleItems.value.length,
       INVENTORY_RENDER_BATCH,
     )} 件`,
+);
+
+watch(itemScope, () => {
+  itemRenderLimit.value = INVENTORY_RENDER_BATCH;
+});
+watch(
+  () => inventory.newItemCount,
+  (count) => {
+    if (count === 0) itemScope.value = "all";
+  },
 );
 
 function focusItem(index = 0): void {
@@ -610,13 +695,13 @@ function focusItem(index = 0): void {
 
 function showMoreItems(): void {
   const shownBefore = itemPage.value.shown;
-  const shownAfter = nextInventoryLimit(shownBefore, allItems.value.length);
+  const shownAfter = nextInventoryLimit(shownBefore, visibleItems.value.length);
   itemRenderLimit.value = shownAfter;
   focusItem(firstNewVisibleIndex(shownBefore, shownAfter, INVENTORY_RENDER_WINDOW));
 }
 
 function showPreviousItems(): void {
-  itemRenderLimit.value = previousInventoryLimit(itemPage.value.shown, allItems.value.length);
+  itemRenderLimit.value = previousInventoryLimit(itemPage.value.shown, visibleItems.value.length);
   focusItem();
 }
 

@@ -189,6 +189,9 @@
  *      默认只开最近一路,点最近一枚或换一路时要真的展开目标卷。
  *   六十七 藏珍谱首屏的新得优先:卷首先报整体收录与新得/将满册目;有新得的册
  *      最多先展开三册,其余收着。点卷首册目或册目题头时,目标册要真的铺出来。
+ *   六十八 背包先报新得与可换槽位:整册先列本次新得,「只看新得」只铺新件;
+ *      一键按钮报的可动槽数必须与卷首逐槽入口一致,点下去正好全部换完。
+ *      195 宽下新得卷首、分页入口与从可动槽打开的候选弹窗都不许被挤坏。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -4089,10 +4092,10 @@ async function taskSmartKeep() {
     checked += 1;
     const bagCount = () =>
       page.evaluate(() => {
-        const m =
-          /行囊\s*(\d+)/.exec(document.querySelector("main")?.innerText || "") ||
-          /藏品\s*(\d+)/.exec(document.querySelector("main")?.innerText || "");
-        return m ? Number(m[1]) : null;
+        const raw = document
+          .querySelector("[data-inventory-bag-count]")
+          ?.getAttribute("data-inventory-bag-count");
+        return raw === null || raw === undefined ? null : Number(raw);
       });
     const opened = await page
       .locator("main button", { hasText: /收纳/ })
@@ -4159,6 +4162,240 @@ async function taskSmartKeep() {
     await ctx.close();
   }
 
+  return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
+}
+
+/** 背包先报本次新得与真正会动的换装槽位 */
+async function taskInventoryAttention() {
+  const failures = [];
+  let checked = 0;
+  const contrastFails = [];
+  const pixelContrastFails = [];
+  const zoomFails = [];
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    const newUids = ["attention_w", "shot_w", "bag_r", "bag_n", "bag_bo"];
+    const items = [
+      ...slices.inventory.items,
+      {
+        uid: "attention_w",
+        templateId: "w_xuantie",
+        quality: "divine",
+        tier: 20,
+        level: 0,
+        affixes: [],
+      },
+    ];
+    const { head: _emptyHead, ...equipped } = slices.inventory.equipped;
+    slices.inventory = {
+      ...slices.inventory,
+      items,
+      equipped,
+      // 五件新得压过旧藏;佩戴中的新武器也保留「新」,与底导读数同源。
+      seenUids: items.filter((it) => !newUids.includes(it.uid)).map((it) => it.uid),
+      seenSeeded: true,
+    };
+    await seedSave(ctx, slices, "__inventoryAttentionFixture");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const textLength = await openRoute(page, "/inventory", 800);
+    if (textLength === 0) failures.push("[390] 背包新得场景:页面没有渲染出来");
+    await clearOverlays(page);
+
+    const read = () =>
+      page.evaluate(() => {
+        const overview = document.querySelector("[data-inventory-overview]");
+        const list = document.querySelector("[data-inventory-scope]");
+        const cards = [...document.querySelectorAll("main button[data-uid]")];
+        const oneClick = [...document.querySelectorAll("main button")].find((button) =>
+          /一键 ·|已无可换之器/.test(button.textContent || ""),
+        );
+        const upgradeSlots = [...document.querySelectorAll("[data-inventory-upgrade-slot]")]
+          .map((button) => button.getAttribute("data-inventory-upgrade-slot"))
+          .filter((slot) => !!slot)
+          .sort((a, b) => a.localeCompare(b));
+        const markedSlots = [...document.querySelectorAll("[data-equip-upgrade]")]
+          .map((button) => button.getAttribute("data-equip-upgrade"))
+          .filter((slot) => !!slot)
+          .sort((a, b) => a.localeCompare(b));
+        return {
+          newCount: Number(overview?.getAttribute("data-inventory-new-count")),
+          upgradeCount: Number(overview?.getAttribute("data-inventory-upgrade-count")),
+          scope: list?.getAttribute("data-inventory-scope") ?? null,
+          visibleTotal: Number(list?.getAttribute("data-inventory-total")),
+          cards: cards.map((card) => card.getAttribute("data-uid")),
+          newCards: cards
+            .filter((card) => card.getAttribute("data-equipment-new") === "true")
+            .map((card) => card.getAttribute("data-uid")),
+          upgradeSlots,
+          markedSlots,
+          oneClick: {
+            disabled: oneClick?.hasAttribute("disabled") ?? true,
+            text: (oneClick?.textContent || "").replace(/\s+/g, " ").trim(),
+          },
+        };
+      });
+
+    const initial = await read();
+    const expectedFirst = ["attention_w", "shot_w", "bag_r", "bag_n", "bag_bo"];
+    checked += 1;
+    if (initial.newCount !== newUids.length) {
+      failures.push(
+        `[390] 背包新得场景:卷首应报 ${newUids.length} 件新得,实见 ${initial.newCount}`,
+      );
+    }
+    if (
+      initial.scope !== "all" ||
+      initial.visibleTotal !== items.length ||
+      initial.cards.length === 0
+    ) {
+      failures.push(
+        `[390] 背包新得场景:全部藏品范围不对(scope ${initial.scope} / ` +
+          `total ${initial.visibleTotal} / cards ${initial.cards.length},应 ${items.length})`,
+      );
+    }
+    if (initial.cards.slice(0, expectedFirst.length).join(",") !== expectedFirst.join(",")) {
+      failures.push(
+        `[390] 背包新得场景:新得没有整体置顶 —— 首批 ${initial.cards
+          .slice(0, expectedFirst.length)
+          .join(",")}(应 ${expectedFirst.join(",")})`,
+      );
+    }
+    if (initial.newCards.length !== newUids.length) {
+      failures.push(
+        `[390] 背包新得场景:卡片「新」角标 ${initial.newCards.length} 件,卷首报 ${initial.newCount} 件`,
+      );
+    }
+    if (
+      initial.upgradeCount < 2 ||
+      initial.upgradeSlots.length !== initial.upgradeCount ||
+      initial.markedSlots.join(",") !== initial.upgradeSlots.join(",")
+    ) {
+      failures.push(
+        `[390] 背包换装场景:卷首报价 ${initial.upgradeCount} 槽 / 逐槽入口 ` +
+          `${initial.upgradeSlots.join(",") || "无"} / 槽位标记 ${initial.markedSlots.join(",") || "无"}`,
+      );
+    }
+    if (!initial.oneClick.text.includes(`换上 ${initial.upgradeCount} 槽最强`)) {
+      failures.push(
+        `[390] 背包换装场景:一键按钮没有报出 ${initial.upgradeCount} 槽(«${initial.oneClick.text}»`,
+      );
+    }
+
+    await page.locator("[data-inventory-new-toggle]").click({ timeout: 3000 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-inventory-scope]")?.getAttribute("data-inventory-scope") ===
+        "new",
+      { timeout: 3000 },
+    );
+    await settleVisuals(page);
+    const filtered = await read();
+    checked += 1;
+    if (
+      filtered.visibleTotal !== newUids.length ||
+      filtered.cards.length !== newUids.length ||
+      filtered.newCards.length !== newUids.length
+    ) {
+      failures.push(
+        `[195] 只看新得应只铺 ${newUids.length} 件,实见 total ${filtered.visibleTotal} / ` +
+          `cards ${filtered.cards.length} / 带新角标 ${filtered.newCards.length}`,
+      );
+    }
+
+    await page.locator("[data-inventory-new-toggle]").click({ timeout: 3000 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-inventory-scope]")?.getAttribute("data-inventory-scope") ===
+        "all",
+      { timeout: 3000 },
+    );
+    await settleVisuals(page);
+    zoomSeen += 1;
+    const zoom = await measureZoomScale(page, { width: 390, height: 844 });
+    const zoomBad = zoomProblems(zoom, "390");
+    if (zoomBad.length) failures.push(`[195] 背包新得卷首与藏品册 → ${zoomBad.join(" / ")}`);
+
+    const firstUpgrade = page.locator("[data-inventory-upgrade-slot]").first();
+    const firstUpgradeSlot = await firstUpgrade.getAttribute("data-inventory-upgrade-slot");
+    if (!firstUpgradeSlot) {
+      failures.push("[195] 背包换装场景:卷首没有可动槽入口 —— 判据没量到东西");
+    } else {
+      await firstUpgrade.click({ timeout: 3000 });
+      await page
+        .locator("[data-slot-candidate-total]")
+        .first()
+        .waitFor({ state: "visible", timeout: 3000 });
+      checked += 1;
+      const dialogBad = dialogZoomProblems(
+        await measureDialogZoom(page, { width: 390, height: 844 }),
+      );
+      if (dialogBad.length) {
+        failures.push(`[195] ${firstUpgradeSlot} 候选弹窗 → ${dialogBad.join(" / ")}`);
+      }
+      await page.keyboard.press("Escape");
+      await page
+        .locator("[data-slot-candidate-total]")
+        .first()
+        .waitFor({ state: "detached", timeout: 3000 });
+    }
+
+    const beforeApply = await read();
+    await page
+      .locator("main button", { hasText: /一键 · 换上 \d+ 槽最强/ })
+      .first()
+      .click({ timeout: 3000 });
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector("[data-inventory-overview]")
+          ?.getAttribute("data-inventory-upgrade-count") === "0",
+      { timeout: 3000 },
+    );
+    await settleVisuals(page);
+    const applied = await read();
+    const toast = await page.evaluate(() =>
+      [...document.querySelectorAll(".pointer-events-none.fixed button")]
+        .map((button) => (button.textContent || "").replace(/\s+/g, " ").trim())
+        .join("|"),
+    );
+    checked += 1;
+    if (
+      applied.upgradeCount !== 0 ||
+      applied.upgradeSlots.length !== 0 ||
+      applied.markedSlots.length !== 0 ||
+      !applied.oneClick.disabled ||
+      applied.oneClick.text !== "已无可换之器"
+    ) {
+      failures.push(
+        `[390] 一键换装后仍有残留:报价 ${applied.upgradeCount} / 入口 ` +
+          `${applied.upgradeSlots.join(",") || "无"} / 标记 ${applied.markedSlots.join(",") || "无"} / ` +
+          `按钮«${applied.oneClick.text}»(${applied.oneClick.disabled ? "已禁用" : "仍可点"})`,
+      );
+    }
+    if (!toast.includes(`换上 ${beforeApply.upgradeCount} 件`)) {
+      failures.push(
+        `[390] 背包换装场景:报价 ${beforeApply.upgradeCount} 槽,落库提示却是 «${toast || "无提示"}»`,
+      );
+    }
+
+    if (pageErrors.length)
+      failures.push(`[390] 背包新得场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    console.log(
+      `\n背包新得:${newUids.length} 件先列 · 只看新得 ${filtered.cards.length} 件 · ` +
+        `可动 ${beforeApply.upgradeCount} 槽 → 一键换装后 ${applied.upgradeCount} 槽`,
+    );
+  } finally {
+    await ctx.close();
+  }
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
@@ -4283,10 +4520,10 @@ async function taskDecompose() {
     /** 行囊件数(只读 main;弹窗 Teleport 到 body,不在这棵子树里) */
     const bagCount = () =>
       page.evaluate(() => {
-        const m =
-          /行囊\s*(\d+)/.exec(document.querySelector("main")?.innerText || "") ||
-          /藏品\s*(\d+)/.exec(document.querySelector("main")?.innerText || "");
-        return m ? Number(m[1]) : null;
+        const raw = document
+          .querySelector("[data-inventory-bag-count]")
+          ?.getAttribute("data-inventory-bag-count");
+        return raw === null || raw === undefined ? null : Number(raw);
       });
     /** 背包页顶上那栏「器灵尘 N」 */
     const dustCount = () =>
@@ -11043,6 +11280,7 @@ const TASKS = [
   ["挂机真的在挂着跑", taskIdleTick],
   ["存档导出 / 导入往返", taskSaveRoundTrip],
   ["智能收纳不扔有投入的件", taskSmartKeep],
+  ["背包先报新得与可换槽位", taskInventoryAttention],
   ["一键分解先勾后点", taskDecompose],
   ["法宝炼化的两笔账", taskArtifactRefine],
   ["洞府营造的账目", taskDongfuBuild],

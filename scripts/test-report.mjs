@@ -54,6 +54,7 @@ const CATEGORIES = [
       "format",
       "timeUnits",
       "listRender",
+      "inventoryPriority",
       "savePlaintext",
       "formulas",
       "linggenGen",

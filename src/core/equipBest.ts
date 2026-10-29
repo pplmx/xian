@@ -106,6 +106,14 @@ export interface EquipInventory {
   findItem(uid: string): EquipmentInstance | undefined;
 }
 
+export interface EquipUpgrade {
+  slot: EquipSlot;
+  item: EquipmentInstance;
+  current?: EquipmentInstance;
+  empty: boolean;
+  delta: number;
+}
+
 /** 该槽该穿的最强一件(该槽无任何可穿戴时返回 null) */
 export function bestEquipFor(inv: EquipInventory, slot: EquipSlot): EquipmentInstance | null {
   const pool = inv.items.filter((i) => equipmentTemplate(i.templateId)?.slot === slot);
@@ -113,22 +121,44 @@ export function bestEquipFor(inv: EquipInventory, slot: EquipSlot): EquipmentIns
   return pool.reduce((a, b) => (stronger(b, a) ? b : a));
 }
 
-/** 一键换装单槽:换上最强一件,已是则不动。返回是否真的换了 */
-export function equipBestFor(inv: EquipInventory, slot: EquipSlot): boolean {
-  const best = bestEquipFor(inv, slot);
-  if (!best) return false;
-  if (inv.equipped[slot] === best.uid) return false;
-  inv.equip(best.uid, slot);
-  return true;
+/**
+ * 一键换装将动哪几个槽位 —— 按钮与槽位提示读同一份清单。
+ *
+ * 空槽先报，其次按真实战力增量降序；只列确实会换上的槽。这样卷首说「可动 N 槽」
+ * 时，点下去也正好动 N 槽，不会出现报价与落库两套判据。
+ */
+export function equipUpgrades(inv: EquipInventory): EquipUpgrade[] {
+  const rows: EquipUpgrade[] = [];
+  for (const slot of SLOT_COURIER) {
+    const best = bestEquipFor(inv, slot);
+    if (!best || inv.equipped[slot] === best.uid) continue;
+    const currentUid = inv.equipped[slot];
+    const current = currentUid ? inv.findItem(currentUid) : undefined;
+    if (current && !stronger(best, current)) continue;
+    const bestPower = equippablePower(best);
+    const currentPower = current ? equippablePower(current) : 0;
+    const delta = bestPower - currentPower;
+    rows.push({
+      slot,
+      item: best,
+      current,
+      empty: !current,
+      delta: Number.isFinite(delta) ? delta : 0,
+    });
+  }
+  return rows.sort(
+    (a, b) =>
+      Number(b.empty) - Number(a.empty) ||
+      b.delta - a.delta ||
+      SLOT_COURIER.indexOf(a.slot) - SLOT_COURIER.indexOf(b.slot),
+  );
 }
 
 /** 一键换装全部可穿槽(法宝另走 equippedArtifacts,不在这九个里) */
 export function equipAllBest(inv: EquipInventory): number {
-  let changed = 0;
-  for (const slot of SLOT_COURIER) {
-    if (equipBestFor(inv, slot)) changed += 1;
-  }
-  return changed;
+  const rows = equipUpgrades(inv);
+  for (const row of rows) inv.equip(row.item.uid, row.slot);
+  return rows.length;
 }
 
 /**
