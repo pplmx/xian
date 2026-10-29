@@ -1,179 +1,217 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
     <template v-if="view">
-      <!-- 世界身份占据第一视觉位:标题是这一世的名字,不是通用标签 -->
-      <div>
-        <h1 class="font-kai text-[19px] tracking-[0.12em] text-ink">{{ view.title }}</h1>
-        <p class="mt-1 t-body text-ink-faint">本世之界 · {{ view.summary }}</p>
-        <!-- 路线形状的一句话:几段、层级跨度多大 —— 概览里先给结论,细节留给下面的路线图 -->
-        <p class="mt-0.5 text-[11px] text-ink-faint" data-world-shape>
-          {{ view.stages }} 段地界 · {{ view.tierText }} · 已过 {{ view.clearedStages }}/{{
-            view.stages
-          }}
-        </p>
-        <p class="mt-0.5 text-[11px] text-cinnabar">
-          此世命数:{{ view.ruleText
-          }}<span class="text-ink-faint"
-            >（此世气象之名:成形时用它校准难度,但它不改写历练里的战斗）</span
-          >
-        </p>
-        <!--
-          资源偏向必须写明兑现方式:摘要里那句「矿脉深厚之地」若没有数字跟着,
-          玩家会把它当纯flavor —— 而它现在真的乘在玄铁掉率上(见 core/mortalBias)。
-        -->
-        <p v-if="view.biasText" class="mt-0.5 text-[11px] text-ink-faint">
-          此地所钟:{{ view.biasText }}
-        </p>
-        <!--
-          道果出口之一:换一方天地。发的是**选择权**,不是数值 —— 出口的发放物不得属于
-          StatMods 命名空间(见 core/fruitOutlets.spec 的结论)。不够时把差多少写出来。
-        -->
-        <button
-          class="btn-ghost mt-2 min-h-[28px] !px-3 !py-1 text-[11px]"
-          :disabled="!canRerollWorld"
-          data-world-reroll
-          @click="rerollConfirm = true"
-        >
-          换一方天地({{ rerollCost }} 道果{{ rerollBlockText }})
-        </button>
-        <!--
-          换界的代价必须写在按钮下面:setMortalWorld 会把本世路线进度清零(「换界即换路」)。
-          只说价、不说会清进度,等于让玩家在不知情的情况下丢掉已经走过的路。
-        -->
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
-          换界即换路:已走的本世路线会清零,所钟与地貌构成随之更换。
-        </p>
-
-        <BaseModal :open="rerollConfirm" title="换一方天地" @close="rerollConfirm = false">
-          <p class="t-body leading-relaxed">
-            耗 <span class="text-cinnabar tabular">{{ rerollCost }}</span> 枚道果,
-            <span class="text-ink">本世路线进度清零</span>,所钟与地貌重掷。
-          </p>
-          <p class="mt-1 text-[11px] text-ink-faint">
-            现有 {{ player.reincarnation.daoFruit }} 枚 · 换完剩
-            {{ Math.max(0, player.reincarnation.daoFruit - rerollCost) }} 枚。 这一步不可逆 ——
-            走过的地界要重新走。
-          </p>
-          <div class="mt-3 flex justify-end gap-2">
-            <button class="btn-ghost min-h-[32px] !px-3 text-[11px]" @click="rerollConfirm = false">
-              再想想
-            </button>
-            <button
-              class="btn-primary min-h-[32px] !px-4 text-[11px]"
-              data-world-reroll-confirm
-              @click="confirmReroll"
-            >
-              换
-            </button>
-          </div>
-        </BaseModal>
-      </div>
-
-      <!-- 路线全貌:高低即层级,横距即路程,点大即事多 -->
-      <div class="card-ink px-3 py-2">
+      <!-- 世界身份是这一页的卷首:先读此世之名,再读路怎么走 -->
+      <section class="card-ink relative overflow-hidden rounded-xl px-4 pb-3.5 pt-4">
         <svg
-          :viewBox="`0 0 ${VIEW_W} ${VIEW_H}`"
-          class="h-16 w-full"
-          role="img"
-          aria-label="本世路线"
+          class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8"
+          viewBox="0 0 400 110"
+          preserveAspectRatio="none"
+          aria-hidden="true"
         >
-          <polyline
-            :points="polyline"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1"
-            class="text-ink/15"
-          />
-          <circle
-            v-for="p in view.places"
-            :key="p.nodeId"
-            :cx="p.x"
-            :cy="p.y"
-            :r="p.r"
-            :class="
-              cleared(p.nodeId) ? 'text-jade' : unlocked(p.nodeId) ? 'text-qing' : 'text-ink-faint'
-            "
+          <path
+            d="M0 110 L52 48 L86 76 L132 32 L174 79 L216 55 L264 88 L318 38 L360 70 L400 45 L400 110 Z"
             fill="currentColor"
-            :fill-opacity="unlocked(p.nodeId) ? 0.85 : 0.35"
+          />
+          <path
+            d="M0 110 L42 84 L93 103 L142 74 L188 101 L238 82 L290 104 L337 79 L400 96 L400 110 Z"
+            fill="currentColor"
+            opacity="0.5"
           />
         </svg>
-        <p class="mt-0.5 text-center text-[10px] text-ink-faint">
-          高处境深 · 远处路长 · 点大处事多
-        </p>
-      </div>
 
-      <SectionTitle title="本世地界" hint="这一世的路,按段而行" />
-      <div class="space-y-2">
-        <div
-          v-for="(p, routeIndex) in view.places"
-          :key="p.nodeId"
-          class="card-ink flex items-center gap-3 px-3 py-2.5"
-          :class="{ 'border-dashed border-ink/15': !unlocked(p.nodeId) }"
-          :data-stage-state="stageStatuses[routeIndex]?.state"
-        >
-          <span
-            class="grid h-9 w-9 shrink-0 place-items-center rounded-md"
-            :class="unlocked(p.nodeId) ? 'bg-qing/6 text-qing' : 'bg-ink/6 text-ink-faint'"
-          >
-            <GameIcon
-              :name="unlocked(p.nodeId) ? (regionDef(p.regionId)?.icon ?? 'mountain') : 'lock'"
-              :size="16"
-            />
-          </span>
-          <div class="min-w-0 grow">
-            <p class="flex items-baseline gap-1.5">
-              <span class="truncate font-kai text-[14px] text-ink">{{ p.name }}</span>
-              <span class="shrink-0 text-[11px] text-qing">{{ p.terrain }}</span>
-              <span v-if="cleared(p.nodeId)" class="shrink-0 text-[10px] text-jade">已通</span>
-              <span v-else-if="isCurrentStage(routeIndex)" class="shrink-0 text-[10px] text-qing">
-                眼下可往
-              </span>
-            </p>
-            <p class="mt-0.5 flex items-center gap-2 text-[10px] text-ink-faint">
-              <span class="truncate">镇守 {{ p.bossName }}</span>
-              <span class="flex shrink-0 gap-0.5">
-                <span
-                  v-for="n in p.eventLevel"
-                  :key="n"
-                  class="h-1 w-1 rounded-full bg-gold-ink/60"
-                />
-              </span>
-            </p>
-            <!-- 锁住的地界要给一句"为什么现在去不了",而不是只画把锁 -->
-            <p
-              v-if="!unlocked(p.nodeId)"
-              class="mt-0.5 text-[10px] leading-relaxed"
-              :class="isNextLocked(routeIndex) ? 'text-cinnabar' : 'text-ink-faint'"
+        <div class="relative">
+          <div class="flex items-start gap-3">
+            <div class="min-w-0 flex-1">
+              <p class="text-[10px] tracking-[0.32em] text-cinnabar">本世之界</p>
+              <h1 class="mt-1 font-kai text-[19px] leading-snug tracking-[0.12em] text-ink">
+                {{ view.title }}
+              </h1>
+              <p class="mt-1 t-body text-ink-faint">{{ view.summary }}</p>
+            </div>
+            <span
+              class="grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-cinnabar/45 font-kai text-[15px] text-cinnabar"
+              aria-hidden="true"
+              >界</span
             >
-              {{ lockedHint(routeIndex) }}
-            </p>
           </div>
-          <!-- 已通的段落照样能再去 —— 「已通」是记号,不是封路 -->
+
+          <div class="mt-3 grid grid-cols-3 border-y border-ink/10 py-2" data-world-shape>
+            <div class="min-w-0 border-r border-ink/10 pr-2">
+              <p class="text-[10px] text-ink-faint">地界</p>
+              <p class="mt-0.5 font-kai text-[15px] text-ink tabular">{{ view.stages }}</p>
+            </div>
+            <div class="min-w-0 border-r border-ink/10 px-2">
+              <p class="text-[10px] text-ink-faint">层级</p>
+              <p class="mt-0.5 font-kai text-[15px] text-ink tabular">{{ tierRangeText }}</p>
+            </div>
+            <div class="min-w-0 pl-2">
+              <p class="text-[10px] text-ink-faint">已行</p>
+              <p class="mt-0.5 font-kai text-[15px] text-ink tabular">
+                {{ view.clearedStages
+                }}<span class="text-[10px] text-ink-faint"> / {{ view.stages }}</span>
+              </p>
+            </div>
+          </div>
+
+          <p class="mt-2 text-[11px]">
+            <span class="text-cinnabar">此世命数:</span>
+            <span class="ml-1 font-kai text-[14px] text-ink">{{ view.ruleText }}</span>
+          </p>
+          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+            这条命数只参与成形时的难度校准,不改写历练里的战斗。
+          </p>
+          <!--
+            资源偏向必须写明兑现方式:摘要里那句「矿脉深厚之地」若没有数字跟着,
+            玩家会把它当纯flavor —— 而它现在真的乘在玄铁掉率上(见 core/mortalBias)。
+          -->
+          <p v-if="view.biasText" class="mt-1 text-[11px] text-ink-faint">
+            <span class="text-qing">此地所钟</span> · {{ view.biasText }}
+          </p>
+          <!--
+            道果出口之一:换一方天地。发的是**选择权**,不是数值 —— 出口的发放物不得属于
+            StatMods 命名空间(见 core/fruitOutlets.spec 的结论)。不够时把差多少写出来。
+          -->
           <button
-            v-if="unlocked(p.nodeId)"
-            class="btn-seal shrink-0 !px-3 !py-1.5 !text-[11px]"
-            @click="depart(p.regionId)"
+            class="btn-ghost mt-3 min-h-[28px] max-w-full !px-3 !py-1 text-[11px]"
+            :disabled="!canRerollWorld"
+            data-world-reroll
+            @click="rerollConfirm = true"
           >
-            出 发
+            换一方天地({{ rerollCost }} 道果{{ rerollBlockText }})
+          </button>
+          <!--
+            换界的代价必须写在按钮下面:setMortalWorld 会把本世路线进度清零(「换界即换路」)。
+            只说价、不说会清进度,等于让玩家在不知情的情况下丢掉已经走过的路。
+          -->
+          <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+            换界即换路:已走的本世路线会清零,所钟与地貌构成重新掷定。
+          </p>
+        </div>
+      </section>
+
+      <BaseModal :open="rerollConfirm" title="换一方天地" @close="rerollConfirm = false">
+        <p class="t-body leading-relaxed">
+          耗 <span class="text-cinnabar tabular">{{ rerollCost }}</span> 枚道果,
+          <span class="text-ink">本世路线进度清零</span>,所钟与地貌重掷。
+        </p>
+        <p class="mt-1 text-[11px] text-ink-faint">
+          现有 {{ player.reincarnation.daoFruit }} 枚 · 换完剩
+          {{ Math.max(0, player.reincarnation.daoFruit - rerollCost) }} 枚。 这一步不可逆 ——
+          走过的地界要重新走。
+        </p>
+        <div class="mt-3 flex justify-end gap-2">
+          <button class="btn-ghost min-h-[32px] !px-3 text-[11px]" @click="rerollConfirm = false">
+            再想想
+          </button>
+          <button
+            class="btn-primary min-h-[32px] !px-4 text-[11px]"
+            data-world-reroll-confirm
+            @click="confirmReroll"
+          >
+            换
           </button>
         </div>
-      </div>
+      </BaseModal>
+
+      <MortalRouteMap :places="view.places" :statuses="stageStatuses" :tier-text="view.tierText" />
+
+      <SectionTitle title="本世地界" :hint="`${view.clearedStages}/${view.stages} 程已行`" />
+      <ol class="space-y-2">
+        <li
+          v-for="(p, routeIndex) in view.places"
+          :key="p.nodeId"
+          class="card-ink relative overflow-hidden px-3 py-3"
+          :class="stageCardClass(routeIndex)"
+          :data-stage-state="stageStatuses[routeIndex]?.state"
+          :data-stage-index="routeIndex + 1"
+          :data-stage-can-depart="canDepart(p.regionId)"
+        >
+          <div class="flex items-start gap-3">
+            <div class="flex w-9 shrink-0 flex-col items-center">
+              <span
+                class="relative grid h-9 w-9 place-items-center rounded-md border"
+                :class="stageMarkerClass(routeIndex)"
+              >
+                <GameIcon
+                  :name="
+                    canDepart(p.regionId) ? (regionDef(p.regionId)?.icon ?? 'mountain') : 'lock'
+                  "
+                  :size="16"
+                />
+                <span
+                  v-if="isCurrentStage(routeIndex)"
+                  class="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-qing animate-breathe"
+                  aria-hidden="true"
+                />
+              </span>
+              <span class="mt-1 text-[10px] text-ink-faint tabular">{{ routeIndex + 1 }}</span>
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                <span class="min-w-0 truncate font-kai text-[14px] tracking-[0.14em] text-ink">{{
+                  p.name
+                }}</span>
+                <span class="shrink-0 text-[11px] text-qing">{{ p.terrain }}</span>
+                <span v-if="cleared(p.nodeId)" class="shrink-0 text-[10px] text-jade">已通</span>
+                <span v-else-if="isCurrentStage(routeIndex)" class="shrink-0 text-[10px] text-qing">
+                  眼下可往
+                </span>
+                <!-- 旧链已开、路线尚未轮到的中段:进度仍按路线走,但入口不能假装上锁 -->
+                <span v-else-if="canDepart(p.regionId)" class="shrink-0 text-[10px] text-qing">
+                  旧路可往
+                </span>
+              </div>
+              <p class="mt-1 flex items-center gap-2 text-[10px] text-ink-faint">
+                <span class="truncate">镇守 {{ p.bossName }}</span>
+                <span class="flex shrink-0 gap-0.5" aria-hidden="true">
+                  <span
+                    v-for="n in p.eventLevel"
+                    :key="n"
+                    class="h-1 w-1 rounded-full bg-gold-ink/60"
+                  />
+                </span>
+              </p>
+              <!-- 锁住的地界要给一句"为什么现在去不了",而不是只画把锁 -->
+              <p
+                v-if="!canDepart(p.regionId)"
+                class="mt-1 text-[10px] leading-relaxed"
+                :class="isNextLocked(routeIndex) ? 'text-cinnabar' : 'text-ink-faint'"
+              >
+                {{ lockedHint(routeIndex) }}
+              </p>
+              <!-- 已通的段落照样能再去 —— 「已通」是记号,不是封路 -->
+              <div v-if="canDepart(p.regionId)" class="mt-2 flex justify-end">
+                <button
+                  class="btn-seal min-h-[28px] !px-4 !py-1 !text-[11px]"
+                  @click="depart(p.regionId)"
+                >
+                  出 发
+                </button>
+              </div>
+            </div>
+          </div>
+        </li>
+      </ol>
 
       <!--
-        换界规则必须写明:目前唯一的换界时机是兵解转世,玩家没有主动手段。
-        规则存在却不告诉玩家,和没有规则一样糟
+        换界规则必须与按钮同源:道果重掷与兵解转世都能另开天地,
+        两条路都会清空本世路线进度。规则存在却不告诉玩家,和没有规则一样糟。
       -->
       <div class="card-ink px-4 py-3">
         <p class="font-kai text-[14px] tracking-widest text-ink-soft">此界从何而来</p>
         <p class="mt-1.5 t-body text-ink-faint">
           你睁眼时,天地已成此形。所历地界、途中缓急、镇守之物皆随此世而定,
           <!-- 标点跟着前一句走:单独成行会在窄屏上被折成孤零零一个句号 -->
-          <span class="text-ink-soft">这一世之内不会再变。</span>
+          <span class="text-ink-soft">此形既成,不主动换界就不会再变。</span>
         </p>
         <p class="mt-1 t-body text-ink-faint">
-          唯有
+          舍
+          <span class="text-cinnabar">道果</span>
+          可立即换一方天地,清空本世路线进度; 待
           <span class="text-violet-ink">兵解转世</span>
-          ,方另开一片天地—— 与此世不同的地界、不同的路、不同的规矩。
+          ,也会另开一片天地—— 与此世不同的地界、不同的路、不同的规矩。
         </p>
         <p class="mt-1 t-body text-ink-faint">
           此外诸界仍在,可回
@@ -181,6 +219,40 @@
           处另择他地,不必只走此路。
         </p>
       </div>
+
+      <template v-if="historyRows.length">
+        <SectionTitle title="前尘山河" :hint="`最近 ${historyRows.length} 世`" />
+        <div class="card-ink divide-y divide-ink/6 px-4" data-world-history>
+          <div
+            v-for="(h, i) in historyRows"
+            :key="h.seed"
+            class="py-2.5"
+            :data-world-history-row="i + 1"
+          >
+            <p class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span class="shrink-0 text-[10px] text-ink-faint tabular" data-world-history-label>{{
+                pastWorldLabel(i)
+              }}</span>
+              <span
+                class="min-w-0 font-kai text-[14px] tracking-[0.1em] text-ink"
+                data-world-history-title
+                >{{ h.title }}</span
+              >
+              <span
+                class="ml-auto shrink-0 text-[10px] text-ink-faint tabular"
+                data-world-history-stages
+                >{{ h.stages }} 段</span
+              >
+            </p>
+            <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">{{ h.summary }}</p>
+            <p class="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px]">
+              <span class="text-ink-faint">{{ h.tierText }}</span>
+              <span class="text-cinnabar">命数 {{ h.ruleText }}</span>
+              <span v-if="h.biasText" class="text-qing">所钟 {{ h.biasText }}</span>
+            </p>
+          </div>
+        </div>
+      </template>
     </template>
     <p v-else class="empty-note text-center text-[11px] text-ink-faint">
       此世气象尚未凝成。天地未就,不妨先去历练,待此世凝成再来。
@@ -193,21 +265,22 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import MortalRouteMap from "@/components/world/MortalRouteMap.vue";
 import { useAdventureStore } from "@/stores/adventure";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
 import BaseModal from "@/components/common/BaseModal.vue";
 import { rerollWorldByFruit, worldRerollQuote } from "@/core/worldReroll";
-import { rerollMortalWorld } from "@/core/mortalWorldService";
+import { rollMortalWorld } from "@/core/mortalWorldService";
 import { enemyDef } from "@/data/enemies";
 import { regionDef } from "@/data/regions";
+import { cnNumber } from "@/utils/format";
 import {
-  VIEW_H,
-  VIEW_W,
-  canEnterNode,
+  canEnterRegion,
   ensureMortalWorld,
   isNodeCleared,
   mortalStageStatuses,
+  worldHistoryRows,
   worldView,
 } from "@/core/mortalWorldService";
 
@@ -240,7 +313,8 @@ function rerollWorld(): void {
   const r = rerollWorldByFruit({
     daoFruit: player.reincarnation.daoFruit,
     spendFruit: (n) => player.spendDaoFruit(n),
-    reroll: () => rerollMortalWorld(),
+    reroll: () => rollMortalWorld(),
+    commit: (next) => adventure.setMortalWorld(next),
     sessionActive: adventure.sessionActive,
   });
   if (r === "ok") ui.toast("此方天地已换 —— 又是一条没走过的路", "rare");
@@ -257,16 +331,26 @@ const view = computed(() => {
   return worldView(w, (id) => enemyDef(id)?.name ?? id, cleared);
 });
 
-/** 路线折线 —— 纵向绑定层级,故回落看得见 */
-const polyline = computed(() =>
-  view.value ? view.value.places.map((p) => `${p.x},${p.y}`).join(" ") : "",
-);
+const tierRangeText = computed(() => view.value?.tierText.replace(/^层级\s*/, "") ?? "");
 const stageStatuses = computed(() =>
   mortalStageStatuses(view.value?.places.map((p) => p.nodeId) ?? [], adventure.mortalCleared),
 );
+/** 前尘只留最近几世;倒序让玩家先看见刚走过的上一世 */
+const historyRows = computed(() =>
+  worldHistoryRows(adventure.mortalWorldHistory, (id) => enemyDef(id)?.name ?? id),
+);
 
-function unlocked(nodeId: string): boolean {
-  return canEnterNode(nodeId);
+function pastWorldLabel(index: number): string {
+  return `前${cnNumber(index + 1)}世`;
+}
+
+/**
+ * 出发资格只认历练守卫同一个谓词。
+ *
+ * 本世路线管的是阶段进度;旧链已开的地界仍可先行,不能在这里又画一把锁。
+ */
+function canDepart(regionId: string): boolean {
+  return canEnterRegion(regionId);
 }
 
 function cleared(nodeId: string): boolean {
@@ -275,6 +359,20 @@ function cleared(nodeId: string): boolean {
 
 function isCurrentStage(index: number): boolean {
   return stageStatuses.value[index]?.state === "current";
+}
+
+function stageCardClass(index: number): string {
+  const state = stageStatuses.value[index]?.state;
+  if (state === "current") return "border-qing/45 bg-qing/4";
+  if (state === "cleared") return "border-jade/25";
+  return "border-dashed border-ink/15";
+}
+
+function stageMarkerClass(index: number): string {
+  const state = stageStatuses.value[index]?.state;
+  if (state === "cleared") return "border-jade/35 bg-jade/6 text-jade";
+  if (state === "current") return "border-qing/45 bg-qing/6 text-qing";
+  return "border-ink/15 bg-ink/4 text-ink-faint";
 }
 
 function isNextLocked(index: number): boolean {

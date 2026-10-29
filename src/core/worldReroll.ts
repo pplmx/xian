@@ -73,14 +73,16 @@ export type WorldRerollResult =
   /** 这一世还没有世界,或生成器掷不出新世界 —— 一个字节也没动 */
   | "unavailable";
 
-/** 出口需要的那三件事 —— 由调用方给,core 不碰 store(见 layeringAudit 的基线) */
-export interface RerollDeps {
+/** 出口需要的那几件事 —— 由调用方给,core 不碰 store(见 layeringAudit 的基线) */
+export interface RerollDeps<T extends object = object> {
   /** 当前道果余额 */
   daoFruit: number;
   /** 扣款:成功返回 true(与 player.spendDaoFruit 同形) */
   spendFruit: (n: number) => boolean;
-  /** 重掷本世之界:掷不出返回 null(具体世界类型由调用方的服务决定) */
-  reroll: () => object | null;
+  /** 只掷候选世界:掷不出返回 null,不许在这里落盘 */
+  reroll: () => T | null;
+  /** 扣款成功后才提交候选世界 */
+  commit: (next: T) => void;
   /** 是否有一趟历练在途中(setMortalWorld 会清空本世路线进度,途中换界等于把路抽走) */
   sessionActive: boolean;
 }
@@ -88,9 +90,9 @@ export interface RerollDeps {
 /**
  * 花道果换一方天地。
  *
- * 顺序是「先掷、再扣」:掷不出来就什么都不发生,不会出现「扣了钱没换到东西」。
+ * 顺序是「先掷、再扣、后落地」:掷不出来不扣钱,扣款失败也不先换世界。
  */
-export function rerollWorldByFruit(deps: RerollDeps): WorldRerollResult {
+export function rerollWorldByFruit<T extends object>(deps: RerollDeps<T>): WorldRerollResult {
   // 余额与历练闸走同一份报价:界面报什么原因,结算就拒什么原因
   const quote = worldRerollQuote(deps.daoFruit, deps.sessionActive);
   if (quote.blockedBy) return quote.blockedBy;
@@ -100,5 +102,7 @@ export function rerollWorldByFruit(deps: RerollDeps): WorldRerollResult {
    */
   const next = deps.reroll();
   if (!next) return "unavailable";
-  return deps.spendFruit(quote.cost) ? "ok" : "poor";
+  if (!deps.spendFruit(quote.cost)) return "poor";
+  deps.commit(next);
+  return "ok";
 }

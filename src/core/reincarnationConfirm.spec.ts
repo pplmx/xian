@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { prepareReincarnation, confirmReincarnation } from "./reincarnation";
 import { birthMajorFloor } from "./heritageEffects";
+import { generateMortalWorld } from "./mortalWorldGen";
 import { stageAt } from "@/data/samsara";
 import { GONGFA } from "@/data/gongfa";
 
@@ -116,6 +117,24 @@ describe("转世确认 · 不可撤销的那一次结算", () => {
     expect(adventure.cleared).toEqual([]);
     expect(player.name).toBe("守拙散人");
     expect(toNum(player.exp)).toBe(0);
+  });
+
+  it("掷不出新天地时,旧世界与旧路线也不许带进下一世", () => {
+    seedLife();
+    const adventure = useAdventureStore();
+    const oldWorld = generateMortalWorld(95_000);
+    adventure.setMortalWorld(oldWorld);
+    adventure.markNodeCleared(oldWorld.chain[0]!.nodeId);
+
+    prepareReincarnation();
+    confirmReincarnation(null, null);
+
+    expect(adventure.mortalWorld, "旧世界不能冒充新一世").toBeNull();
+    expect(adventure.mortalCleared, "旧路线进度不能带进新一世").toEqual([]);
+    expect(
+      adventure.mortalWorldHistory.map((w) => w.seed),
+      "掷不出新天地时,旧世界仍要进前尘与去重历史",
+    ).toContain(oldWorld.seed);
   });
 
   it("再点一次:什么都不再发(连点与恢复流程都会走到这里)", () => {

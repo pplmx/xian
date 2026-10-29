@@ -8,25 +8,8 @@
       <CombatPanel v-if="adventure.sessionActive" />
 
       <div v-else class="space-y-4">
-        <!--
-          本世之界:链接入口,详情另开一页。历练地图仍在下方,照旧可走。
-
-          从前它与秘境卡、地界卡长得一模一样(同是 card-ink、同是 px-4 py-3),
-          页首三张同尺寸卡把「去哪儿」与「这是什么」拉成了同一档：
-          它其实只是一条书目 —— 一行标题 + 一句提要 + 一个指向,不该占一张卡的版面。
-        -->
-        <RouterLink to="/world" class="flex items-center gap-2.5 pb-2 active:scale-99">
-          <span class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-qing/6 text-qing">
-            <GameIcon name="cloud" :size="15" />
-          </span>
-          <span class="min-w-0 grow">
-            <span class="block font-kai text-[14px] tracking-[0.2em] text-ink">本世之界</span>
-            <span class="block truncate text-[10px] leading-relaxed text-ink-faint">{{
-              worldBrief
-            }}</span>
-          </span>
-          <span class="shrink-0 text-[11px] text-qing">观 象 →</span>
-        </RouterLink>
+        <!-- 本世行旅条:历练是路线真正落地的地方,这里给进度与眼下去处,详情仍归世界页 -->
+        <MortalWorldRibbon :view="worldOverview" :statuses="worldStatuses" />
         <div class="ink-divider" aria-hidden="true" />
 
         <SecretRealmCard />
@@ -137,6 +120,12 @@
                       data-region-name
                       class="font-kai whitespace-nowrap text-[15px] tracking-wider text-ink"
                       >{{ row.def.name }}</span
+                    >
+                    <span
+                      v-if="row.isRouteCurrent"
+                      data-route-current
+                      class="chip-ink border-qing/60 text-[10px] text-qing"
+                      >本世眼下</span
                     >
                     <span
                       v-if="row.suppressed"
@@ -263,7 +252,11 @@
                   转为镇压收益
                 </button>
               </div>
-              <p v-if="!row.canEnter" class="mt-2 t-body text-ink-faint">
+              <!--
+                路线内已有统一理由时,不再同时念旧链前置 —— 两套顺序可能指向不同地界,
+                同屏两句会把「眼下该往哪」说成互相打架的两件事。
+              -->
+              <p v-if="!row.canEnter && !row.blockReason" class="mt-2 t-body text-ink-faint">
                 需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。
               </p>
               <!--
@@ -475,9 +468,17 @@ import { REGIONS, regionDef, DANGER_NAMES } from "@/data/regions";
 import { worldOf, type WorldDef } from "@/data/realms";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import SecretRealmCard from "@/components/adventure/SecretRealmCard.vue";
+import MortalWorldRibbon from "@/components/world/MortalWorldRibbon.vue";
 import { todayMansion, favoredWorld, todayMansionLine, MANSION_EVENT_LUCK } from "@/core/astronomy";
 import { worldDef } from "@/data/realms";
-import { canEnterRegion, entryBlockReason, worldView } from "@/core/mortalWorldService";
+import {
+  canEnterRegion,
+  entryBlockReason,
+  ensureMortalWorld,
+  mortalStageStatuses,
+  visibleRegionRows,
+  worldView,
+} from "@/core/mortalWorldService";
 import { biasEffectOf } from "@/core/mortalBias";
 import { isRetreating } from "@/core/earlyGameService";
 import { REALMS } from "@/data/realms";
@@ -544,12 +545,23 @@ const chainPending = computed(() => pendingChainStages(player.major).length > 0)
 /** 本世所钟:只在一个渠道上 +15%,与世界页/战报/归来卷轴同一个标签源 */
 const biasLabel = computed(() => biasEffectOf(adventure.mortalWorld?.bias)?.label ?? "");
 
-/** 顶部链接的一句话:说清这一世是什么世界 */
-const worldBrief = computed(() => {
+/** 顶部行旅条:世界名、路线进度与眼下去处都从世界页同一份视图来 */
+const worldOverview = computed(() => {
   const w = adventure.mortalWorld;
-  if (!w) return "此世气象未明,一观便知";
-  const view = worldView(w, (id) => id);
-  return view.title;
+  return w ? worldView(w, (id) => id) : null;
+});
+const worldStatuses = computed(() => {
+  const view = worldOverview.value;
+  if (!view) return [];
+  return mortalStageStatuses(
+    view.places.map((place) => place.nodeId),
+    adventure.mortalCleared,
+  );
+});
+/** 行旅条说「眼下可往」的那一处 —— 历练列表必须能在同一屏里找到同一段路 */
+const currentRouteRegionId = computed(() => {
+  const index = worldStatuses.value.findIndex((status) => status.state === "current");
+  return index < 0 ? null : (worldOverview.value?.places[index]?.regionId ?? null);
 });
 
 /** 今日星象:值日之宿所利界域,由此知今日该往哪一片地界走 */
@@ -569,6 +581,8 @@ const adaptExpand = ref<string | null>(null);
  * 世界页只负责把「去哪」交回来
  */
 onMounted(() => {
+  // 本世之界不能只活在观象页:历练是它真正执行的地方,首次进来就凝成。
+  if (!adventure.mortalWorld) ensureMortalWorld();
   const go = route.query.go;
   if (typeof go !== "string") return;
   const r = regionDef(go);
@@ -593,6 +607,7 @@ const regionRows = computed(() =>
     // 妖气复聚是落盘的世界状态(见 core/regionRevival),不是"镇压到点"的临时读数
     const revived = adventure.revived.includes(r.id);
     return {
+      id: r.id,
       def: r,
       // 旧链:这处地界是否**已被发现** —— 决定列表可见性、锁图标与简介
       unlocked: adventure.unlocked.includes(r.id),
@@ -601,6 +616,7 @@ const regionRows = computed(() =>
       // 若拿准入当可见性,路线上未轮到的地界会把后面能进的一并藏掉
       canEnter: canEnterRegion(r.id),
       blockReason: entryBlockReason(r.id),
+      isRouteCurrent: currentRouteRegionId.value === r.id,
       cleared: adventure.cleared.includes(r.id),
       suppressed,
       revived,
@@ -629,15 +645,14 @@ const preview = computed(() => {
 });
 
 /**
- * 只展示到「第一个既未发现、也进不去」为止再多一个,保持神秘感。
- *
- * 截断条件必须带上 canEnter:本世路线的首段可能排在地界表靠后的位置,
- * 若只按旧链截断,它会被挡在可见范围外 —— 实测新号因此整页 0 个出发按钮
+ * 只展示到「第一个既未发现、也进不去」为止再多一个,保持神秘感;
+ * 路线当前段与首个可行动段是钉子,不能落在线外。
  */
 const visibleRows = computed(() => {
-  const rows = regionRows.value;
-  const firstLocked = rows.findIndex((r) => !r.unlocked && !r.canEnter);
-  return firstLocked < 0 ? rows : rows.slice(0, firstLocked + 1);
+  const pinned = [currentRouteRegionId.value, regionRows.value.find((r) => r.canEnter)?.id].filter(
+    (id): id is string => id !== null && id !== undefined,
+  );
+  return visibleRegionRows(regionRows.value, pinned);
 });
 
 /** 按界域分组展示:人间界/仙界/神界/混沌海的历练地界各自成段,便于在高界导航 */
@@ -648,6 +663,15 @@ const groupedRows = computed(() => {
     const hit = groups.find((g) => g.world.id === world.id);
     if (hit) hit.rows.push(row);
     else groups.push({ world, rows: [row] });
+  }
+  // 眼下去处优先:即便旧链在高境界早已开出一长串地界,当前路线也不该埋在下面。
+  groups.sort(
+    (a, b) =>
+      Number(b.rows.some((row) => row.isRouteCurrent)) -
+      Number(a.rows.some((row) => row.isRouteCurrent)),
+  );
+  for (const group of groups) {
+    group.rows.sort((a, b) => Number(b.isRouteCurrent) - Number(a.isRouteCurrent));
   }
   return groups;
 });

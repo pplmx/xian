@@ -6,7 +6,12 @@ import { persistConfig } from "@/utils/storage";
 import { regionDef } from "@/data/regions";
 import { ENGINE_WORLD } from "@/core/engineWorld";
 import { BIAS_POOL } from "@/core/mortalBias";
-import { restoreMortalCleared, restoreMortalWorld } from "@/core/mortalWorldShape";
+import {
+  MORTAL_WORLD_HISTORY_LIMIT,
+  restoreMortalCleared,
+  restoreMortalWorld,
+  restoreMortalWorldHistory,
+} from "@/core/mortalWorldShape";
 import { gn } from "@/utils/gnum";
 import {
   asFiniteNumber,
@@ -28,6 +33,13 @@ export const useAdventureStore = defineStore(
      * 实际历练仍走 REGIONS,两者通过 fromId 对应
      */
     const mortalWorld = ref<import("@/core/mortalWorldGen").MortalWorld | null>(null);
+    /**
+     * 最近四世的完整世界(不含当前)。
+     *
+     * 生成门要拿全部历史比新,而不是只跟上一世比;否则第三次转世起
+     * 就可能撞回第一世。只留四世是存档体积与一轮偏向覆盖之间的取舍。
+     */
+    const mortalWorldHistory = ref<import("@/core/mortalWorldGen").MortalWorld[]>([]);
     /**
      * 最近至多五世（含当前）的资源偏向。
      *
@@ -159,6 +171,7 @@ export const useAdventureStore = defineStore(
       const hadMortalWorld = mortalWorld.value !== null && mortalWorld.value !== undefined;
       const restoredWorld = restoreMortalWorld(mortalWorld.value);
       mortalWorld.value = restoredWorld;
+      mortalWorldHistory.value = restoreMortalWorldHistory(mortalWorldHistory.value, restoredWorld);
       mortalCleared.value = restoreMortalCleared(mortalCleared.value, restoredWorld);
       // 没有世界栏是旧档兼容路径;但原本有世界却修不回来,说明旧世界已作废,
       // 叩门胜场也必须随世界一起清零,不能挂到下一次生成的新世界。
@@ -263,8 +276,24 @@ export const useAdventureStore = defineStore(
       lastBattle.value = view;
     }
 
+    /**
+     * 把一世世界放进前尘与生成去重历史。
+     *
+     * 正常换界由 setMortalWorld 自动归档上一世;但转世掷界失败时,当前世界要先清掉,
+     * 不能因此从历史里消失 —— 否则前尘少一世,下一次生成还可能把它当成没发生过。
+     */
+    function archiveMortalWorld(world: import("@/core/mortalWorldGen").MortalWorld | null): void {
+      if (!world) return;
+      const kept = mortalWorldHistory.value.filter((past) => past.seed !== world.seed);
+      mortalWorldHistory.value = [...kept, world].slice(-MORTAL_WORLD_HISTORY_LIMIT);
+    }
+
     function setMortalWorld(w: import("@/core/mortalWorldGen").MortalWorld | null): void {
       const previous = mortalWorld.value;
+      if (w) {
+        mortalWorldHistory.value = mortalWorldHistory.value.filter((past) => past.seed !== w.seed);
+        if (previous && previous.seed !== w.seed) archiveMortalWorld(previous);
+      }
       mortalWorld.value = w;
       const validBias = w && BIAS_POOL.includes(w.bias as (typeof BIAS_POOL)[number]);
       if (w && validBias && (previous?.seed !== w.seed || previous?.bias !== w.bias)) {
@@ -285,6 +314,8 @@ export const useAdventureStore = defineStore(
 
     return {
       mortalWorld,
+      mortalWorldHistory,
+      archiveMortalWorld,
       mortalBiasHistory,
       mortalCleared,
       regionWins,

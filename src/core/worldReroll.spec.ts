@@ -12,7 +12,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
-import { ensureMortalWorld, rerollMortalWorld } from "./mortalWorldService";
+import { ensureMortalWorld, rollMortalWorld } from "./mortalWorldService";
+import { generateMortalWorld } from "./mortalWorldGen";
 import { generateGatedMortal } from "./mortalGate";
 import {
   WORLD_REROLL_FLOOR,
@@ -30,11 +31,13 @@ vi.mock("./mortalGate", async (importOriginal) => {
 /** 把 store 里的三件事按出口的口径递进去 */
 function reroll(): ReturnType<typeof rerollWorldByFruit> {
   const player = usePlayerStore();
+  const adventure = useAdventureStore();
   return rerollWorldByFruit({
     daoFruit: player.reincarnation.daoFruit,
     spendFruit: (n) => player.spendDaoFruit(n),
-    reroll: () => rerollMortalWorld(),
-    sessionActive: useAdventureStore().sessionActive,
+    reroll: () => rollMortalWorld(),
+    commit: (next) => adventure.setMortalWorld(next),
+    sessionActive: adventure.sessionActive,
   });
 }
 
@@ -77,6 +80,26 @@ describe("换一方天地 · 道果真的被花掉", () => {
     expect(after ? `${after.seed}/${after.bias}` : "none").toBe(beforeKey);
   });
 
+  it("扣款失败时:候选世界也不许先落地", () => {
+    const adventure = useAdventureStore();
+    const current = generateMortalWorld(93_000);
+    const candidate = generateMortalWorld(94_000);
+    adventure.setMortalWorld(current);
+    const commit = vi.fn();
+
+    const result = rerollWorldByFruit({
+      daoFruit: 100,
+      spendFruit: () => false,
+      reroll: () => candidate,
+      commit,
+      sessionActive: false,
+    });
+
+    expect(result).toBe("poor");
+    expect(commit, "扣款没成功却提交了候选世界").not.toHaveBeenCalled();
+    expect(adventure.mortalWorld?.seed).toBe(current.seed);
+  });
+
   it("掷不出新世界时:返回 unavailable,道果、世界与路线进度都不动", () => {
     const player = usePlayerStore();
     const adventure = useAdventureStore();
@@ -86,7 +109,10 @@ describe("换一方天地 · 道果真的被花掉", () => {
     adventure.markNodeCleared(before.chain[0]!.nodeId);
     const cleared = [...adventure.mortalCleared];
 
-    vi.mocked(generateGatedMortal).mockReturnValueOnce(null);
+    vi.mocked(generateGatedMortal)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce(null);
     expect(reroll()).toBe("unavailable");
 
     expect(player.reincarnation.daoFruit).toBe(100);
@@ -254,6 +280,48 @@ describe("换一方天地 · 历练途中不换界", () => {
       shortfall: WORLD_REROLL_FLOOR,
       blockedBy: "poor",
     });
+  });
+
+  // 真实生成门会跑若干候选；给它足够超时，判据本身不变。
+  it("真实换界把四旧一现全部交给生成门,并在成功后把上一世移入历史", () => {
+    const player = usePlayerStore();
+    const adventure = useAdventureStore();
+    player.reincarnation = { ...player.reincarnation, daoFruit: 100 } as never;
+    const older = [1, 2, 3, 4].map((seed) => generateMortalWorld(80_000 + seed));
+    const current = generateMortalWorld(90_000);
+    adventure.$patch({
+      mortalWorld: current,
+      mortalWorldHistory: older,
+    } as never);
+    vi.mocked(generateGatedMortal).mockClear();
+
+    expect(reroll()).toBe("ok");
+
+    const call = vi.mocked(generateGatedMortal).mock.calls.at(-1);
+    expect(call?.[1]?.map((w) => w.seed)).toEqual([...older, current].map((w) => w.seed));
+    expect(adventure.mortalWorldHistory.map((w) => w.seed)).toEqual(
+      [...older.slice(1), current].map((w) => w.seed),
+    );
+  }, 15_000);
+
+  it("一个种子窗口过不了门时换起点再试,不把偶发失败丢给玩家", () => {
+    const player = usePlayerStore();
+    const adventure = useAdventureStore();
+    player.reincarnation = { ...player.reincarnation, daoFruit: 100 } as never;
+    const current = generateMortalWorld(91_000);
+    const replacement = generateMortalWorld(92_000);
+    adventure.$patch({ mortalWorld: current, mortalWorldHistory: [] } as never);
+    vi.mocked(generateGatedMortal).mockClear();
+    vi.mocked(generateGatedMortal)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce({ report: { world: replacement } } as never);
+
+    expect(reroll()).toBe("ok");
+
+    const calls = vi.mocked(generateGatedMortal).mock.calls;
+    expect(calls).toHaveLength(2);
+    expect(calls[0]![0]).not.toBe(calls[1]![0]);
+    expect(adventure.mortalWorld?.seed).toBe(replacement.seed);
   });
 });
 

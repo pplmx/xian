@@ -322,4 +322,26 @@ describe("世界页概览 · 段数与层级跨度", () => {
     const flat = { ...w, chain: w.chain.map((p) => ({ ...p, tier: 5 })) };
     expect(worldView(flat, (id) => id).tierText).toBe("层级 5");
   });
+
+  it("同层相邻段也各有落点 —— 否则行旅图把两段路叠成一枚点", () => {
+    // seed 37 的路线是 2,2,6,8,14,19;前两段同层。若横距直接取层级差,
+    // 两枚节点会落在同一 x 上,玩家看到的「六段路」实际只剩五枚点。
+    const w = generateMortalWorld(37);
+    const places = worldView(w, (id) => id).places;
+    expect(places[0]!.y).toBe(places[1]!.y);
+    expect(places[1]!.x).toBeGreaterThan(places[0]!.x);
+    expect(new Set(places.map((p) => p.x)).size).toBe(places.length);
+  });
+
+  it("窄跨段也留出外圈间距 —— 节点不许在行旅图上互相压住", () => {
+    // seed 1676 的 3→8→7 段在旧算法里只剩约 10px 横距,而两枚节点的外圈
+    // 合计约 19px;地图会把相邻两段读成一团。2 份最小横距把最窄处撑开。
+    const w = generateMortalWorld(1676);
+    const places = worldView(w, (id) => id).places;
+    for (let i = 1; i < places.length; i += 1) {
+      const gap = places[i]!.x - places[i - 1]!.x;
+      const ringNeed = places[i]!.r + places[i - 1]!.r + 8;
+      expect(gap).toBeGreaterThanOrEqual(ringNeed);
+    }
+  });
 });

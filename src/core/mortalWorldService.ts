@@ -23,10 +23,70 @@ import { terrainOf, worldIdentity } from "./mortalIdentity";
 import { REGIONS } from "@/data/regions";
 import { useAdventureStore } from "@/stores/adventure";
 import { biasEffectOf } from "./mortalBias";
+import { MORTAL_WORLD_HISTORY_LIMIT } from "./mortalWorldShape";
 
-/** 生成本世世界所用的历史(暂只与自身去重,跨世历史留待接入轮回时补) */
+/**
+ * 生成门一次会试 200 个相邻种子，但固定起点仍有约 5% 的窗口整段过不了门。
+ * 换三个互不重叠的起点再试，失败概率降到万分之一量级；只有整轮都失败
+ * 才向玩家报「掷不出」，门本身不降级。
+ */
+const MORTAL_SEED_RANGE = 1_000_003;
+const MORTAL_SEED_RETRY_STEP = 104_729;
+const MORTAL_SEED_ATTEMPTS = 3;
+
+function generateMortalWithRetry(
+  history: MortalWorld[],
+  recentBiases: readonly string[],
+): MortalWorld | null {
+  const startedAt = Date.now();
+  for (let attempt = 0; attempt < MORTAL_SEED_ATTEMPTS; attempt += 1) {
+    const got = generateGatedMortal(
+      (startedAt + attempt * MORTAL_SEED_RETRY_STEP) % MORTAL_SEED_RANGE,
+      history,
+      200,
+      8,
+      recentBiases,
+    );
+    if (got) return got.report.world;
+  }
+  return null;
+}
+
+/**
+ * 生成门看到的完整历史:最近四世 + 当前世界。
+ *
+ * 旧实现只传当前一世,于是第三世只避开第二世,仍可能抽回第一世。
+ * 同种子以当前世界为准,再按最近顺序截断;纯函数便于把「历史真的进了门」钉成用例。
+ */
+export function mortalGenerationHistory(
+  past: readonly MortalWorld[],
+  current: MortalWorld | null,
+): MortalWorld[] {
+  const bySeed = new Map<number, MortalWorld>();
+  for (const world of past) {
+    bySeed.delete(world.seed);
+    bySeed.set(world.seed, world);
+  }
+  if (current) {
+    bySeed.delete(current.seed);
+    bySeed.set(current.seed, current);
+  }
+  return [...bySeed.values()].slice(-(MORTAL_WORLD_HISTORY_LIMIT + 1));
+}
+
 function historyOf(cur: MortalWorld | null): MortalWorld[] {
-  return cur ? [cur] : [];
+  return mortalGenerationHistory(useAdventureStore().mortalWorldHistory, cur);
+}
+
+/**
+ * 只掷界,不落盘。
+ *
+ * 换界要先掷、再扣道果,扣款成功后才能把候选世界交给 store。
+ * 若生成与提交揉在一起,扣款失败时世界已经先换了,账与世界就对不上。
+ */
+export function rollMortalWorld(): MortalWorld | null {
+  const adventure = useAdventureStore();
+  return generateMortalWithRetry(historyOf(adventure.mortalWorld), adventure.mortalBiasHistory);
 }
 
 /**
@@ -38,27 +98,20 @@ function historyOf(cur: MortalWorld | null): MortalWorld[] {
 export function ensureMortalWorld(): MortalWorld | null {
   const adventure = useAdventureStore();
   if (adventure.mortalWorld) return adventure.mortalWorld;
-  const got = generateGatedMortal(Date.now() % 1_000_003, [], 200, 8, adventure.mortalBiasHistory);
-  if (!got) return null;
-  adventure.setMortalWorld(got.report.world);
-  return got.report.world;
+  const world = rollMortalWorld();
+  if (!world) return null;
+  adventure.setMortalWorld(world);
+  return world;
 }
 
 /** 换一个本世之界(转世时调用) */
 export function rerollMortalWorld(): MortalWorld | null {
   const adventure = useAdventureStore();
-  const prev = adventure.mortalWorld;
-  const got = generateGatedMortal(
-    Date.now() % 1_000_003,
-    historyOf(prev),
-    200,
-    8,
-    adventure.mortalBiasHistory,
-  );
+  const world = rollMortalWorld();
   // 掷界失败是「什么都没发生」,不是「把旧世界也清掉」。
-  if (!got) return null;
-  adventure.setMortalWorld(got.report.world);
-  return got.report.world;
+  if (!world) return null;
+  adventure.setMortalWorld(world);
+  return world;
 }
 
 // ============ 本世路线的可达性 ============
@@ -130,6 +183,32 @@ export function mortalStageStatuses(
       waitsFor: i === current + 1 ? (nodeIds[current] ?? null) : null,
     };
   });
+}
+
+export interface RegionVisibilityRow {
+  id: string;
+  unlocked: boolean;
+  canEnter: boolean;
+}
+
+/**
+ * 历练列表的可见范围。
+ *
+ * 旧算法只截到第一处「未发现且进不去」的行,再留一行作悬念。它默认
+ * 旧解锁链按地界表顺序推进,但本世路线可以跳到表尾:于是行旅条明明说
+ * 「眼下可往古战场遗迹」,下方历练列表却只剩青云山麓与落霞谷。
+ *
+ * 钉子只负责「始终可见」,不扩张整张表:已发现或可行动的行照旧铺到
+ * 第一处未知锁,路线当前段与首个可行动段即使排在截断之后也要保留。
+ */
+export function visibleRegionRows<T extends RegionVisibilityRow>(
+  rows: readonly T[],
+  pinnedIds: readonly string[] = [],
+): T[] {
+  const firstLocked = rows.findIndex((row) => !row.unlocked && !row.canEnter);
+  if (firstLocked < 0) return [...rows];
+  const pinned = new Set(pinnedIds);
+  return rows.filter((row, index) => index <= firstLocked || pinned.has(row.id));
 }
 
 /**
@@ -291,6 +370,16 @@ export interface WorldView {
   places: PlaceView[];
 }
 
+export interface WorldHistoryRow {
+  seed: number;
+  title: string;
+  summary: string;
+  stages: number;
+  tierText: string;
+  ruleText: string;
+  biasText: string;
+}
+
 function regionName(id: string): string {
   return REGIONS.find((r) => r.id === id)?.name ?? id;
 }
@@ -314,8 +403,11 @@ export function worldView(
   const range = Math.max(1, hi - lo);
 
   // 横坐标按累积路程:跨度大的一段占更宽的横向距离。
-  // 不设固定最小间距 —— 固定基础宽度会把跨度差异整个压平
-  const spans = w.chain.map((p, i) => (i === 0 ? 0 : Math.abs(p.tier - w.chain[i - 1]!.tier)));
+  // 同层或窄跨段也必须留出最小横距 —— 否则两枚节点连同外圈会叠在一起,
+  // 玩家看不出这一世其实有两段路;较大跨度仍按比例拉开。
+  const spans = w.chain.map((p, i) =>
+    i === 0 ? 0 : Math.max(2, Math.abs(p.tier - w.chain[i - 1]!.tier)),
+  );
   const total = spans.reduce((a, b) => a + b, 0) || 1;
   let acc = 0;
   const xs = spans.map((sp) => {
@@ -361,4 +453,26 @@ export function worldView(
     tierText: lo === hi ? `层级 ${lo}` : `层级 ${lo}–${hi}`,
     places,
   };
+}
+
+/**
+ * 前尘山河只负责把最近几世翻到最前，字段仍全部走 `worldView`。
+ * 这样历史世界与当前世界共用同一套身份、段数、层级与所钟口径。
+ */
+export function worldHistoryRows(
+  worlds: readonly MortalWorld[],
+  bossNameOf: (id: string) => string,
+): WorldHistoryRow[] {
+  return [...worlds].reverse().map((w) => {
+    const past = worldView(w, bossNameOf);
+    return {
+      seed: w.seed,
+      title: past.title,
+      summary: past.summary,
+      stages: past.stages,
+      tierText: past.tierText,
+      ruleText: past.ruleText,
+      biasText: past.biasText,
+    };
+  });
 }

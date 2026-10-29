@@ -20,7 +20,13 @@ import {
   generateMortalWorld,
   type MortalWorld,
 } from "./mortalWorldGen";
-import { canEnterNode, worldView } from "./mortalWorldService";
+import { MORTAL_WORLD_HISTORY_LIMIT } from "./mortalWorldShape";
+import {
+  canEnterNode,
+  mortalGenerationHistory,
+  worldHistoryRows,
+  worldView,
+} from "./mortalWorldService";
 
 function persisted(w: MortalWorld): MortalWorld {
   return JSON.parse(JSON.stringify(w)) as MortalWorld;
@@ -111,6 +117,69 @@ describe("本世之界 · 读档修形", () => {
     adventure.sanitize();
 
     expect(adventure.regionWins).toEqual({ qingyun: 7 });
+  });
+
+  it("历史世界逐棵修形:坏树剔除、当前世界去重,只留最近四世", () => {
+    const adventure = useAdventureStore();
+    const older = [1, 2, 3, 4, 5, 6].map((seed) => persisted(generateMortalWorld(30_000 + seed)));
+    const current = persisted(generateMortalWorld(40_000));
+    adventure.$patch({
+      mortalWorld: current,
+      mortalWorldHistory: [...older, current, { broken: true }, older.at(-1)!],
+    } as never);
+
+    adventure.sanitize();
+
+    expect(adventure.mortalWorldHistory.map((w) => w.seed)).toEqual(
+      older.slice(-MORTAL_WORLD_HISTORY_LIMIT).map((w) => w.seed),
+    );
+  });
+
+  it("换界把上一世记进历史,刷新修形后仍在且不含当前世界", () => {
+    const adventure = useAdventureStore();
+    const first = generateMortalWorld(51_001);
+    const second = generateMortalWorld(52_002);
+
+    adventure.setMortalWorld(first);
+    adventure.setMortalWorld(second);
+    expect(adventure.mortalWorldHistory.map((w) => w.seed)).toEqual([first.seed]);
+
+    adventure.sanitize();
+
+    expect(adventure.mortalWorld?.seed).toBe(second.seed);
+    expect(adventure.mortalWorldHistory.map((w) => w.seed)).toEqual([first.seed]);
+  });
+
+  it("生成门历史按种子去重、当前世界置后,并限制为四旧一现", () => {
+    const pool = [1, 2, 3, 4, 5, 6].map((seed) => generateMortalWorld(60_000 + seed));
+    const current = pool[2]!;
+
+    const history = mortalGenerationHistory(pool, current);
+
+    expect(history.map((w) => w.seed)).toEqual([
+      pool[1]!.seed,
+      pool[3]!.seed,
+      pool[4]!.seed,
+      pool[5]!.seed,
+      current.seed,
+    ]);
+  });
+
+  it("前尘山河按最近一世在前,字段仍走 worldView 的同一套翻译", () => {
+    const older = generateMortalWorld(61_001);
+    const newer = generateMortalWorld(62_002);
+    const rows = worldHistoryRows([older, newer], (id) => id);
+    const expected = worldView(newer, (id) => id);
+
+    expect(rows.map((row) => row.seed)).toEqual([newer.seed, older.seed]);
+    expect(rows[0]).toMatchObject({
+      title: expected.title,
+      summary: expected.summary,
+      stages: expected.stages,
+      tierText: expected.tierText,
+      ruleText: expected.ruleText,
+      biasText: expected.biasText,
+    });
   });
 
   const BROKEN: { name: string; damage: (w: MortalWorld) => void }[] = [

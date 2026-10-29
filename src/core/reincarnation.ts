@@ -326,7 +326,11 @@ export function confirmReincarnation(
   adventure.setPendingEvent(null, 0);
   adventure.unlocked = ["qingyun"];
   // 新的一世,新的天地:换一个本世之界(与上一世去重)
-  rerollMortalWorld();
+  const endedWorld = adventure.mortalWorld;
+  if (!rerollMortalWorld()) {
+    adventure.archiveMortalWorld(endedWorld);
+    adventure.setMortalWorld(null);
+  }
   // 关系归档:历史留下,人不留下。只写一条记录,不产出任何资源
   const bondRec = archiveBond();
   if (bondRec) player.recordBond(bondRec);

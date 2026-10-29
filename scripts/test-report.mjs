@@ -71,6 +71,7 @@ const CATEGORIES = [
       "savePersistence",
       "enginePause",
       "setMath",
+      "routeMap",
       "dongfu.spec",
       "ui.spec",
     ],

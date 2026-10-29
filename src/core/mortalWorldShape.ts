@@ -19,6 +19,8 @@ import { mutatorDef } from "@/data/mutators";
 
 const MAX_CHAIN = 32;
 const MAX_ITEMS_PER_NODE = 16;
+/** 生成门需要跨世去重,但不能让旧世界无限撑大存档 —— 最近四世 + 当前一世足够覆盖一轮资源偏向 */
+export const MORTAL_WORLD_HISTORY_LIMIT = 4;
 
 function record(v: unknown): Record<string, unknown> | null {
   return v !== null && typeof v === "object" && !Array.isArray(v)
@@ -166,4 +168,27 @@ export function restoreMortalCleared(raw: unknown, world: MortalWorld | null): s
     prefix.push(place.nodeId);
   }
   return prefix;
+}
+
+/**
+ * 修出可供生成门比新的旧世界历史。
+ *
+ * 存档里按旧到新排列。坏树只丢那一棵,不拖垮整份历史;当前世界与重复种子
+ * 从历史剔除,再从尾部截到最近四世。这样跨刷新仍能避开前三世,
+ * 存档的增长又有硬上限。
+ */
+export function restoreMortalWorldHistory(
+  raw: unknown,
+  current: MortalWorld | null,
+): MortalWorld[] {
+  if (!Array.isArray(raw)) return [];
+  const seeds = new Set<number>(current ? [current.seed] : []);
+  const newestFirst: MortalWorld[] = [];
+  for (let i = raw.length - 1; i >= 0 && newestFirst.length < MORTAL_WORLD_HISTORY_LIMIT; i -= 1) {
+    const world = restoreMortalWorld(raw[i]);
+    if (!world || seeds.has(world.seed)) continue;
+    seeds.add(world.seed);
+    newestFirst.push(world);
+  }
+  return newestFirst.reverse();
 }

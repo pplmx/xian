@@ -29,6 +29,7 @@ import {
   isNodeCleared,
   mortalStageStatuses,
   rerollMortalWorld,
+  visibleRegionRows,
 } from "./mortalWorldService";
 import { ROUTE_SHAPES, generateMortalWorld } from "./mortalWorldGen";
 import { useAdventureStore } from "@/stores/adventure";
@@ -403,6 +404,27 @@ describe("路线可达性 · 界面与守卫共用一个谓词", () => {
         `\n  旧语义:可见 ${oldVisible.length} 行,出发按钮 ${oldButtons} 个 ← 玩家卡死在这里` +
         `\n  现语义:可见 ${newVisible.length} 行,出发按钮 ${newButtons} 个`,
     );
+  });
+
+  it("路线当前段排在旧链截断之后时,历练列表仍必须把它留在可见范围", () => {
+    const rows = [
+      { id: "qingyun", unlocked: true, canEnter: true },
+      { id: "luoxia", unlocked: true, canEnter: true },
+      { id: "heifeng", unlocked: false, canEnter: false },
+      { id: "hantan", unlocked: false, canEnter: false },
+      { id: "wanyao", unlocked: false, canEnter: false },
+      { id: "guzhanchang", unlocked: false, canEnter: true },
+    ];
+    const firstLocked = rows.findIndex((row) => !row.unlocked && !row.canEnter);
+    const oldVisible = rows.slice(0, firstLocked + 1);
+
+    expect(oldVisible.map((row) => row.id)).not.toContain("guzhanchang");
+    expect(visibleRegionRows(rows, ["guzhanchang"]).map((row) => row.id)).toEqual([
+      "qingyun",
+      "luoxia",
+      "heifeng",
+      "guzhanchang",
+    ]);
   });
 
   it("拒绝不再静默,且理由指向眼下就能去的那一段", () => {
