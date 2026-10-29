@@ -1,15 +1,6 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <div class="flex items-center gap-2">
-      <RouterLink
-        to="/character"
-        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
-        >← 人物</RouterLink
-      >
-      <span class="text-[11px] text-ink-faint">·</span>
-      <!-- 抬头与人物页入口同名(名号与灵兽):同一处地方,只许一个名字 -->
-      <span class="text-[11px] text-ink-soft">名号与灵兽</span>
-    </div>
+    <FolioPageHeader title="名号与灵兽" back-to="character" back-label="人物" />
     <!-- 页签 -->
     <InkTabs v-model="tab" :tabs="TABS" />
 
@@ -287,6 +278,7 @@ import {
   type TitleProgressRow,
 } from "@/core/titleProgress";
 import SectionTitle from "@/components/common/SectionTitle.vue";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";

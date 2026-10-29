@@ -1,5 +1,22 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+    <FolioPageHeader title="天 界" back-to="home" back-label="返回">
+      <template #action>
+        <div
+          v-if="unlocked"
+          class="flex items-center justify-end gap-2 tinylens:w-full tinylens:justify-between"
+        >
+          <span class="chip-ink border-cinnabar/50 text-[10px] text-cinnabar">此世消耗</span>
+          <button class="text-left active:opacity-60" @click="openDaoSourceDialog()">
+            <span class="block text-[10px] leading-tight text-ink-faint">叩问天道·试一试</span>
+            <span class="block tabular font-kai text-[17px] leading-tight text-cinnabar">{{
+              formatNum(endgame.daoSource)
+            }}</span>
+          </button>
+        </div>
+      </template>
+    </FolioPageHeader>
+
     <!-- 未至真仙 -->
     <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
       <p class="font-kai text-[22px] tracking-[0.4em] text-ink">天 界</p>
@@ -13,20 +30,6 @@
     </div>
 
     <template v-else>
-      <!-- 道源(Phase 30.9:生命周期标签 + 用途说明入口) -->
-      <div class="card-ink flex items-center justify-between gap-2 px-4 py-3">
-        <p class="font-kai text-[15px] tracking-[0.3em] text-ink">天 界</p>
-        <div class="flex items-center gap-2">
-          <span class="chip-ink border-cinnabar/50 text-[10px] text-cinnabar">此世消耗</span>
-          <button class="text-left active:opacity-60" @click="openDaoSourceDialog()">
-            <span class="block text-[10px] leading-tight text-ink-faint">叩问天道·试一试</span>
-            <span class="block tabular font-kai text-[17px] leading-tight text-cinnabar">{{
-              formatNum(endgame.daoSource)
-            }}</span>
-          </button>
-        </div>
-      </div>
-
       <!-- 页签:长卷分册 -->
       <InkTabs v-model="celTab" :tabs="celTabRows" />
 
@@ -297,6 +300,7 @@ import { detectBuild } from "@/core/buildDetect";
 import { foeOriginLines } from "@/core/battleAnalysis";
 import { swordPurity, SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
 import { formatNum, formatPercent } from "@/utils/format";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";

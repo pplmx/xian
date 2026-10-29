@@ -257,6 +257,7 @@ const CATEGORIES = [
       "buildingCardSource",
       "effectWiring",
       "uiLayering",
+      "folioMasthead",
       "navigation",
       "visualRhythm",
       "itemText",

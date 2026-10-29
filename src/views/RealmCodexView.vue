@@ -1,16 +1,12 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <div class="flex items-center gap-2">
-      <RouterLink
-        to="/character"
-        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
-        >← 人物</RouterLink
-      >
-      <span class="text-[11px] text-ink-faint">·</span>
-      <span class="text-[11px] text-ink-soft">界域志</span>
-    </div>
-
-    <SectionTitle title="界域志" :hint="`境界名从哪来 · 已至「${realmDef(player.major).name}」`" />
+    <FolioPageHeader title="界域志" back-to="character" back-label="人物">
+      <template #meta>
+        <p class="mt-1.5 text-[10px] text-ink-faint">
+          境界名从哪来 · 已至「{{ realmDef(player.major).name }}」
+        </p>
+      </template>
+    </FolioPageHeader>
     <!--
       这一册装着两半:界域 / 典籍是「名物的来路」(只读),周易 / 紫微 / 星象 /
       奇门是「术数四门」(有当下)。两半混在一排页签里,若不标出来就看不出后四册是活的 ——
@@ -548,6 +544,7 @@ import {
   realmCodexWorldStatus,
   type RealmCodexWorldRow,
 } from "@/core/realmCodex";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import ValueRow from "@/components/common/ValueRow.vue";

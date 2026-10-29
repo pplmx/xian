@@ -6,8 +6,6 @@
  * 本页只做:展示弟子与在途任务、派活、收徒、一拍 collectFinished。
  */
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { useRouter } from "vue-router";
-import { goBack } from "@/router/goBack";
 import { useApprenticeStore, type ApprenticeReap } from "@/stores/apprentice";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -38,10 +36,10 @@ import { pillDef } from "@/data/pills";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { notify } from "@/core/notify";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 
-const router = useRouter();
 const appr = useApprenticeStore();
 const player = usePlayerStore();
 const resources = useResourcesStore();
@@ -219,44 +217,28 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
 
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!-- 抬头:标题要永远居中 —— 左侧「← 返回」固定、右侧收徒按钮随剩余灵石几档换长(收徒 · 尚差 X 石 /
-         收徒 NNN 石 / 已收满 N/M),justify-between 下标题随右侧宽窄左右游移;故沿用器魂顶栏同款
-         两侧均分网格,标题落点锁死(界规见 uiLayering.spec 的「器魂顶栏标题锁居中」)。 -->
-    <div
-      class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 tinylens:flex tinylens:flex-col tinylens:items-stretch tinylens:gap-1"
+    <FolioPageHeader
+      title="门庭有徒"
+      :subtitle="`弟子跑腿,资材自来 · ${slots} 槽`"
+      back-to="dongfu"
+      back-label="返回"
     >
-      <!-- 「← 返回」不许被挤成竖排:1fr 列在收徒价巨大(320-late 的 收徒 15.14万 石,
-           nowrap 后整牌很宽)时会把左列压到 min-content 一字一行 —— nowrap 把返回
-           锁成一行(1fr 的 min 就抬到整行宽),挤压由中间 min-w-0 的标题列吸收。 -->
-      <button
-        class="tap-row -my-1.5 justify-self-start py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
-        @click="goBack(router, { name: 'dongfu' })"
-      >
-        ← 返回
-      </button>
-      <div
-        class="min-w-0 justify-self-center text-center tinylens:justify-self-auto tinylens:text-left"
-      >
-        <p class="font-kai text-[15px] tracking-[0.3em] text-ink">门庭有徒</p>
-        <p class="text-[10px] text-ink-faint">弟子跑腿,资材自来 · {{ slots }} 槽</p>
-      </div>
-      <!-- 收徒按钮:三档文案都写成一行的短牌(已收满 1/1、收徒 15.14万 石),320 窄屏上
-           会被 1fr 列挤到折行(数字断行看着像乱码)—— whitespace-nowrap 锁住,挤的是中间
-           min-w-0 的标题列,不是按钮自己;min-h-[28px] 是触达下限(排版自检的尺子)。 -->
-      <button
-        class="btn-seal min-h-[28px] !px-2 !py-1 justify-self-end whitespace-nowrap text-[11px]"
-        :disabled="slotsFull || recruitShort > 0"
-        @click="doRecruit"
-      >
-        {{
-          slotsFull
-            ? `已收满 ${pulse.total}/${slots}`
-            : recruitShort > 0
-              ? `收徒 · 尚差 ${formatGN(recruitShort)} 石`
-              : `收徒 ${formatGN(recruitCost)} 石`
-        }}
-      </button>
-    </div>
+      <template #action>
+        <button
+          class="btn-seal min-h-[28px] !px-2 !py-1 whitespace-nowrap text-[11px] tinylens:w-full"
+          :disabled="slotsFull || recruitShort > 0"
+          @click="doRecruit"
+        >
+          {{
+            slotsFull
+              ? `已收满 ${pulse.total}/${slots}`
+              : recruitShort > 0
+                ? `收徒 · 尚差 ${formatGN(recruitShort)} 石`
+                : `收徒 ${formatGN(recruitCost)} 石`
+          }}
+        </button>
+      </template>
+    </FolioPageHeader>
 
     <!-- 弟子 -->
     <div v-if="appr.apprentices.length" class="space-y-2">

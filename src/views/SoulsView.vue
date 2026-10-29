@@ -1,5 +1,19 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+    <FolioPageHeader title="器 魂" back-to="celestial" back-label="天界">
+      <template #action>
+        <div
+          v-if="unlocked"
+          class="flex items-baseline justify-end gap-2 tinylens:w-full tinylens:justify-between"
+        >
+          <span class="text-[10px] text-ink-faint">道源</span>
+          <span class="tabular font-kai text-[15px] leading-tight text-cinnabar">{{
+            formatNum(endgame.daoSource)
+          }}</span>
+        </div>
+      </template>
+    </FolioPageHeader>
+
     <!-- 未至真仙 -->
     <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
       <p class="font-kai text-[22px] tracking-[0.4em] text-ink">器 魂</p>
@@ -13,26 +27,6 @@
     </div>
 
     <template v-else>
-      <!-- 抬头:标题要永远居中 —— 左侧「← 天界」固定、右侧道源数字随位数伸缩,
-           justify-between 下标题随右侧宽窄左右游移;改用 1fr_auto_1fr 网格,
-           两侧均分,中间的「器 魂」落点锁死,与洞府同型顶栏同款体验 -->
-      <div class="card-ink grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3">
-        <!-- 同洞府:标签写着「天界」,冷启动时也得真的去天界,而不是退出游戏 -->
-        <button
-          class="tap-row -my-1.5 justify-self-start py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
-          @click="goBack(router, { name: 'celestial' })"
-        >
-          ← 天界
-        </button>
-        <p class="font-kai text-[15px] tracking-[0.3em] text-ink">器 魂</p>
-        <div class="justify-self-end text-right">
-          <span class="block text-[10px] leading-tight text-ink-faint">道源</span>
-          <span class="block tabular font-kai text-[15px] leading-tight text-cinnabar">{{
-            formatNum(endgame.daoSource)
-          }}</span>
-        </div>
-      </div>
-
       <!-- 卷首先报此刻:槽位、闲置与可凝各有多少当下能动手 -->
       <div
         class="card-ink grid grid-cols-3 divide-x divide-ink/10 px-2 py-2 text-center"
@@ -489,8 +483,6 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
-import { useRouter } from "vue-router";
-import { goBack } from "@/router/goBack";
 import { formatGN, formatNum } from "@/utils/format";
 import { modsText } from "@/data/statNames";
 import { equipmentTemplate } from "@/data/equipment";
@@ -524,10 +516,10 @@ import {
 } from "@/core/listRender";
 import { useEndgameStore } from "@/stores/endgame";
 import { useInventoryStore } from "@/stores/inventory";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 
-const router = useRouter();
 const endgame = useEndgameStore();
 const inventory = useInventoryStore();
 

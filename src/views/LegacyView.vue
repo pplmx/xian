@@ -1,15 +1,11 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <div class="flex items-center gap-2">
-      <RouterLink
-        to="/character"
-        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
-        >← 人物</RouterLink
-      >
-      <span class="text-[11px] text-ink-faint">·</span>
-      <span class="text-[11px] text-ink-soft">修仙录</span>
-    </div>
-    <SectionTitle title="修仙录" hint="这一部,只写你自己" />
+    <FolioPageHeader
+      title="修仙录"
+      subtitle="这一部,只写你自己"
+      back-to="character"
+      back-label="人物"
+    />
 
     <!-- 修行画像 -->
     <div v-if="profile" class="card-ink px-4 py-3">
@@ -381,6 +377,7 @@ import {
   previousListStep,
 } from "@/core/listRender";
 import { formatDate } from "@/utils/time";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";

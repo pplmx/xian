@@ -1,15 +1,6 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <div class="flex items-center gap-2">
-      <RouterLink
-        to="/character"
-        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
-        >← 人物</RouterLink
-      >
-      <span class="text-[11px] text-ink-faint">·</span>
-      <!-- 抬头与人物页入口同名(藏珍与成就):这一页含「成就」一册,只叫「图鉴」就少了一半 -->
-      <span class="text-[11px] text-ink-soft">藏珍与成就</span>
-    </div>
+    <FolioPageHeader title="藏珍与成就" back-to="character" back-label="人物" />
     <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
     <InkTabs v-model="tab" :tabs="tabRows" />
 
@@ -531,6 +522,7 @@ import {
   previousListStep,
 } from "@/core/listRender";
 import ProgressBar from "@/components/common/ProgressBar.vue";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";

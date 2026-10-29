@@ -1,15 +1,11 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <div class="flex items-center gap-2">
-      <RouterLink
-        to="/character"
-        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
-        >← 人物</RouterLink
-      >
-      <span class="text-[11px] text-ink-faint">·</span>
-      <span class="text-[11px] text-ink-soft">流派</span>
-    </div>
-    <SectionTitle title="流派" hint="道路由构筑自然成形" />
+    <FolioPageHeader
+      title="流派"
+      subtitle="道路由构筑自然成形"
+      back-to="character"
+      back-label="人物"
+    />
     <div class="card-ink px-4 py-3">
       <template v-if="build">
         <div class="flex items-center gap-3">
@@ -381,6 +377,7 @@ import { useLoadoutsStore, MAX_LOADOUTS } from "@/stores/loadouts";
 import { cnNumber, formatPercent } from "@/utils/format";
 import { firstNewVisibleIndex, listWindow, nextListLimit } from "@/core/listRender";
 import { STAT_NAMES } from "@/data/statNames";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import BaseModal from "@/components/common/BaseModal.vue";

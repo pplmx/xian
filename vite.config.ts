@@ -286,6 +286,16 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             {
+              /*
+               * GameIcon 被十余个懒加载页面共同依赖,原先与 Vue 运行时一起落成
+               * 501KB 的共享块,刚好越过全站单块上限。把 Vue 运行时与路由单独
+               * 拆成稳定 vendor 层:图标块回到几十 KB,运行时也能跨版本复用。
+               */
+              name: "vendor-vue",
+              test: /[\\/]node_modules[\\/](?:@vue|vue|vue-router)[\\/]/,
+              priority: 20,
+            },
+            {
               name: "vendor-crypto",
               test: /[\\/]node_modules[\\/].*[\\/]crypto-js[\\/]/,
               priority: 10,

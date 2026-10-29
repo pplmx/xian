@@ -1289,12 +1289,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
-  it("器魂顶栏标题锁居中 —— 不许随道源位数左右游移", () => {
-    // 左侧「← 天界」固定、右侧道源数字随位数伸缩,justify-between 下标题永远
-    // 不居中且游移;用 1fr_auto_1fr 网格让两侧均分、标题落点锁死。
+  it("器魂沿用册页卷首 —— 道源读数收进独立动作槽", () => {
+    // 详情页不再各手搓一条「返回 / 标题 / 读数」三栏。统一卷首把道源放进
+    // action 槽,标题天然按册页左缘落位,不再随数字位数或返回文案漂移。
     const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
-    expect(souls?.src, "顶栏必须用两侧均分网格").toContain("grid-cols-[1fr_auto_1fr]");
-    expect(souls?.src, "右侧信息块贴右,标题守着正中").toContain("justify-self-end");
+    expect(souls?.src, "器魂页要接共同卷首").toContain('<FolioPageHeader title="器 魂"');
+    expect(souls?.src, "天界返回兜底要写清").toContain('back-to="celestial"');
+    expect(souls?.src, "道源读数要进独立动作槽").toContain("<template #action>");
+    expect(souls?.src, "道源仍读同一份 endgame 数据").toContain("formatNum(endgame.daoSource)");
   });
 
   it("器魂槽位:卡壳不许自称按钮,两个动作各用原生 button —— 读屏听到的与按得动的必须同源", () => {
@@ -1591,17 +1593,19 @@ describe("界面分层 · 浮层只有一个出处", () => {
      */
     const market = FILES.find((f) => f.path === "views/MarketView.vue");
     const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
-    // 坊市顶栏 + 悬赏板题头 + 货架/悬赏行
-    expect(market?.src, "坊市顶栏极窄档要纵向堆叠").toMatch(
-      /class="card-ink flex[^"]*tinylens:flex-col/,
+    // 坊市卷首动作 + 悬赏板题头 + 货架/悬赏行
+    expect(market?.src, "坊市要接共同卷首").toContain("<FolioPageHeader");
+    expect(market?.src, "坊市卷首动作极窄档落整行").toContain(
+      "tinylens:w-full tinylens:justify-between",
     );
     expect(market?.src, "悬赏板题头极窄档要纵向堆叠").toMatch(
       /justify-between pr-1 tinylens:flex-col/,
     );
     expect(market?.src, "货架与悬赏行极窄档要允许换行").toMatch(/tinylens:flex-wrap/);
     expect(market?.src, "名称块极窄档要占满整行").toMatch(/tinylens:basis-full/);
-    // 门庭顶栏
-    expect(appr?.src, "门庭顶栏极窄档要纵向堆叠").toMatch(/tinylens:flex tinylens:flex-col/);
+    // 门庭卷首动作按钮在极窄档落整行
+    expect(appr?.src, "门庭要接共同卷首").toContain("<FolioPageHeader");
+    expect(appr?.src, "收徒动作极窄档落整行").toContain("tinylens:w-full");
     expect(appr?.src, "弟子行极窄档要允许换行").toMatch(/flex flex-wrap items-center gap-2/);
   });
 
@@ -1681,13 +1685,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     ).toEqual([]);
   });
 
-  it("弟子顶栏标题锁居中 —— 右侧收徒按钮几档换长,不许随其左右游移", () => {
-    // 收徒按钮文案在「收徒 · 尚差 X 石 / 收徒 NNN 石 / 已收满 N/M」之间换长,
-    // justify-between 下居中的「门庭有徒」会随右缘宽窄游移 —— 与器魂同款问题,
-    // 用同一张两侧均分网格把标题落点锁死。
+  it("门庭收徒按钮收进卷首动作槽 —— 长价签不挤册名", () => {
+    // 收徒按钮文案在「收徒 · 尚差 X 石 / 收徒 NNN 石 / 已收满 N/M」之间换长。
+    // 统一卷首把动作放在标题之外,极窄档再让它独占一行。
     const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
-    expect(appr?.src, "顶栏必须用两侧均分网格").toContain("grid-cols-[1fr_auto_1fr]");
-    expect(appr?.src, "右侧收徒按钮贴右").toContain("justify-self-end");
+    expect(appr?.src, "门庭要接共同卷首").toContain("<FolioPageHeader");
+    expect(appr?.src, "卷首册名要写「门庭有徒」").toContain('title="门庭有徒"');
+    expect(appr?.src, "收徒按钮要进独立动作槽").toContain("<template #action>");
+    expect(appr?.src, "极窄档收徒按钮独占整行").toContain("tinylens:w-full");
+    expect(appr?.src, "洞府返回兜底要写清").toContain('back-to="dongfu"');
   });
 
   it("门庭派活卡排成等高两列 —— 五个产出项目前靠内容宽窄拼成 3+2 的锯齿", () => {
@@ -3206,14 +3212,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(ui, "ui store 要有一枚一次性交接旗").toContain("worldEnter");
   });
 
-  it("人物子页返回控件齐 —— 兄弟页有「← 人物」,这四个不许裸奔", () => {
-    // /titles /collection /build /legacy 都是 CharacterView 的子目标,与 Dongfu/
-    // RealmCodex/Souls 同类 —— 后三者都有返回行,这四个首行即 SectionTitle 无返回
-    // (底栏五格兜底但不高亮它们)。按兄弟页同款补「← 人物」,不许再裸。
+  it("人物子页返回控件齐 —— 四个册页共用「人物」父页兜底", () => {
+    // /titles /collection /build /legacy 都是 CharacterView 的子目标。统一卷首
+    // 保留父页兜底,冷启动直达时也不会被裸 back() 送出游戏。
     for (const f of ["TitlesView", "CollectionView", "BuildView", "LegacyView"]) {
       const src = FILES.find((x) => x.path === `views/${f}.vue`)?.src ?? "";
-      expect(src, `${f} 要有回人物的返回行`).toContain('to="/character"');
-      expect(src, `${f} 返回行要写「← 人物」`).toContain("← 人物");
+      expect(src, `${f} 要接共同卷首`).toContain("<FolioPageHeader");
+      expect(src, `${f} 的返回兜底要指向人物`).toContain('back-to="character"');
+      expect(src, `${f} 的返回文案要写「人物」`).toContain('back-label="人物"');
     }
   });
 

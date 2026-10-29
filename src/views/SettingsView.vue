@@ -1,6 +1,6 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <SectionTitle title="设置" />
+    <FolioPageHeader title="设置" back-to="home" back-label="返回" />
 
     <!-- 偏好 -->
     <div class="card-ink divide-y divide-ink/7 px-4">
@@ -349,6 +349,7 @@ import {
   storageKey,
   subscribeSaveWriteFailure,
 } from "@/utils/storage";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import PrivacyDialog from "@/components/common/PrivacyDialog.vue";

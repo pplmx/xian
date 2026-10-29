@@ -5,8 +5,6 @@
  * core/marketService(纯)与 stores/market(编排),本页只做展示与点击。
  */
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
-import { goBack } from "@/router/goBack";
 import { useMarketStore } from "@/stores/market";
 import { useBountyStore } from "@/stores/bounty";
 import { useInventoryStore } from "@/stores/inventory";
@@ -48,11 +46,11 @@ import { equipmentTemplate } from "@/data/equipment";
 import { colorWithAlpha } from "@/ui/colorVar";
 import { isRareQuality, qualityTierStyle } from "@/ui/qualityTier";
 import QualitySeal from "@/components/common/QualitySeal.vue";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 
-const router = useRouter();
 const market = useMarketStore();
 const bounty = useBountyStore();
 const inventory = useInventoryStore();
@@ -408,32 +406,22 @@ function bountyReady(o: BountySlot): boolean {
 
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!--
-      抬头:常态是一行三段(返回 / 标题+副题 / 刷新牌)。200% 缩放档(195 CSS px)实测
-      一行塞不下:中间那列被挤到 8px 宽、副题折成 14 行,整块高 221px —— 故极窄档
-      改成纵向堆叠(高 113px,三块各 129px 宽、副题 4 行)。320 / 390 两档读数不动。
-    -->
-    <div
-      class="card-ink flex items-center justify-between gap-2 px-4 py-3 tinylens:flex-col tinylens:items-stretch tinylens:gap-1"
+    <FolioPageHeader
+      title="坊市"
+      subtitle="灵石换机缘 · 时来运转"
+      back-to="dongfu"
+      back-label="返回"
     >
-      <button
-        class="tap-row -my-1.5 py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
-        @click="goBack(router, { name: 'dongfu' })"
-      >
-        ← 返回
-      </button>
-      <div class="min-w-0 text-center tinylens:text-left">
-        <p class="font-kai text-[15px] tracking-[0.3em] text-ink">坊市</p>
-        <p class="text-[10px] text-ink-faint">灵石换机缘 · 时来运转</p>
-      </div>
-      <span
-        class="rounded-md border border-ink/10 px-1.5 py-0.5 text-[10px] tabular text-ink-faint"
-        :title="headerClock.title"
-      >
-        {{ headerClock.label }}
-        <span class="countdown-slot">{{ headerClock.text }}</span>
-      </span>
-    </div>
+      <template #action>
+        <span
+          class="inline-flex items-center gap-1 rounded-sm border border-ink/10 px-2 py-1 text-[10px] tabular text-ink-faint tinylens:w-full tinylens:justify-between"
+          :title="headerClock.title"
+        >
+          {{ headerClock.label }}
+          <span class="countdown-slot">{{ headerClock.text }}</span>
+        </span>
+      </template>
+    </FolioPageHeader>
 
     <!-- 卷首先报此刻:三册各有多少当下可做,页签只负责带路。 -->
     <div

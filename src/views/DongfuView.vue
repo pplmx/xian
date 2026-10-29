@@ -1,33 +1,16 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!--
-      卷首 —— 与修炼页/人物页同一套语言:不铺「返回|标题|占位」那种通用三栏(右侧那个
-      空 span 是为了让标题视觉居中而塞的假元素),而是书名独立成卷首、返回挂在它左侧。
-      洞府这一页回答的是「我这份家业攒到哪一步了」,故书名下面直接接一句家底读数。
-    -->
-    <div class="pb-1 text-center">
-      <!--
-        冷启动直接落在这一页时(书签 / deep link / 恢复上次路由),站内没有上一页,
-        裸 router.back() 会退到 about:blank 把游戏一起带走 —— 故走 goBack(父页兜底)
-      -->
-      <div class="relative">
-        <button
-          class="tap-row absolute left-0 top-1/2 -my-1.5 -translate-y-1/2 py-1.5 text-left text-[11px] text-ink-faint active:text-ink-soft"
-          @click="goBack(router, { name: 'home' })"
-        >
-          ← 返回
-        </button>
-        <p class="font-kai text-[15px] tracking-[0.3em] text-ink">洞府营造</p>
-      </div>
-      <!-- 家底一句:座数、离线档、弟子在途 —— 三个数概括这一页,不必翻卡 -->
-      <p class="mt-1 text-[11px] text-ink-faint tabular">
-        已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }} 座 · 离线可攒
-        {{ offlineCapHours }} 时<template v-if="apprenticeBusy">
-          · 弟子在途 {{ apprenticeBusy }} 人</template
-        >
-      </p>
-    </div>
-    <div class="ink-divider" aria-hidden="true" />
+    <FolioPageHeader title="洞府营造" back-to="home" back-label="返回">
+      <template #meta>
+        <!-- 家底一句:座数、离线档、弟子在途 —— 三个数概括这一页,不必翻卡 -->
+        <p class="mt-1.5 text-[11px] text-ink-faint tabular">
+          已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }} 座 · 离线可攒
+          {{ offlineCapHours }} 时<template v-if="apprenticeBusy">
+            · 弟子在途 {{ apprenticeBusy }} 人</template
+          >
+        </p>
+      </template>
+    </FolioPageHeader>
 
     <!-- 建筑先于家业:这一页的第一任务是营造,坊市与门庭是去别页的入口 -->
     <section>
@@ -185,14 +168,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { useRouter } from "vue-router";
-import { goBack } from "@/router/goBack";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { useApprenticeStore } from "@/stores/apprentice";
 import { usePlayerStore } from "@/stores/player";
 import { OFFLINE_CAP_HOURS, VEIN_UNLOCK_MAJOR } from "@/data/constants";
 import { BUILDINGS } from "@/data/buildings";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BuildingCard from "@/components/dongfu/BuildingCard.vue";
 import VeinInvestCard from "@/components/dongfu/VeinInvestCard.vue";
@@ -200,7 +182,6 @@ import BaseModal from "@/components/common/BaseModal.vue";
 import { hourlyYieldText } from "@/core/engineFacilities";
 import { cnNumber, formatGN } from "@/utils/format";
 
-const router = useRouter();
 const dongfu = useDongfuStore();
 const resources = useResourcesStore();
 const apprentice = useApprenticeStore();
