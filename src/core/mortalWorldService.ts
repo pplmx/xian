@@ -87,6 +87,36 @@ export function isNodeCleared(nodeId: string): boolean {
   return useAdventureStore().mortalCleared.includes(nodeId);
 }
 
+export type MortalStageStatus =
+  | { state: "cleared" }
+  | { state: "current" }
+  | { state: "blocked"; waitsFor: string | null };
+
+/**
+ * 路线列表的阶段提示。
+ *
+ * 一段路只有三种状态:已通、眼下可去、尚在前方。让每张锁定卡都复读
+ * 「眼下该往某处」会把同一个行动指引铺满整页;只有紧挨着当前段的那一段
+ * 需要点名前置,更后面的只需说明还没轮到。乱序记录仍按连续前缀计算,
+ * 不让手改档里的一条后段 id 冒充已通。
+ */
+export function mortalStageStatuses(
+  nodeIds: readonly string[],
+  clearedIds: readonly string[],
+): MortalStageStatus[] {
+  const cleared = new Set(clearedIds);
+  let current = 0;
+  while (current < nodeIds.length && cleared.has(nodeIds[current]!)) current += 1;
+  return nodeIds.map((_, i) => {
+    if (i < current) return { state: "cleared" };
+    if (i === current) return { state: "current" };
+    return {
+      state: "blocked",
+      waitsFor: i === current + 1 ? (nodeIds[current] ?? null) : null,
+    };
+  });
+}
+
 /**
  * 一处地界当下能否进入 —— **准入判定的唯一出口**。
  *

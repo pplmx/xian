@@ -2989,6 +2989,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 事实本身由 worldSemantics.spec 钉着(历练的合并点不含 mortalWorld)。
     expect(mw?.src, "要明说它不改写战斗,免得玩家以为真被降能").toContain("不改写历练里的战斗");
   });
+
+  it("锁定路线只把可行动的那一段说一次,后段不再逐卡复读", () => {
+    const worldView = FILES.find((f) => f.path === "views/MortalWorldView.vue");
+    expect(worldView?.src, "路线阶段提示要来自统一判据").toContain("mortalStageStatuses");
+    expect(worldView?.src, "眼下可去的那一段要有明确记号").toContain("眼下可往");
+    expect(worldView?.src, "紧随其后的锁定段要给唯一前置").toContain("须先通");
+    expect(worldView?.src, "更后面的锁定段只描述相对位置").toContain("尚在前路之后");
+    expect(worldView?.src, "不许逐卡重复同一个全局目的地").not.toContain(
+      "entryBlockReason(p.regionId)",
+    );
+  });
 });
 
 describe("界面分层 · 触屏的滚动与悬停只说真话", () => {

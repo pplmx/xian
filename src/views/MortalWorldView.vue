@@ -105,10 +105,11 @@
       <SectionTitle title="本世地界" hint="这一世的路,按段而行" />
       <div class="space-y-2">
         <div
-          v-for="p in view.places"
+          v-for="(p, routeIndex) in view.places"
           :key="p.nodeId"
           class="card-ink flex items-center gap-3 px-3 py-2.5"
           :class="{ 'border-dashed border-ink/15': !unlocked(p.nodeId) }"
+          :data-stage-state="stageStatuses[routeIndex]?.state"
         >
           <span
             class="grid h-9 w-9 shrink-0 place-items-center rounded-md"
@@ -124,6 +125,9 @@
               <span class="truncate font-kai text-[14px] text-ink">{{ p.name }}</span>
               <span class="shrink-0 text-[11px] text-qing">{{ p.terrain }}</span>
               <span v-if="cleared(p.nodeId)" class="shrink-0 text-[10px] text-jade">已通</span>
+              <span v-else-if="isCurrentStage(routeIndex)" class="shrink-0 text-[10px] text-qing">
+                眼下可往
+              </span>
             </p>
             <p class="mt-0.5 flex items-center gap-2 text-[10px] text-ink-faint">
               <span class="truncate">镇守 {{ p.bossName }}</span>
@@ -136,8 +140,12 @@
               </span>
             </p>
             <!-- 锁住的地界要给一句"为什么现在去不了",而不是只画把锁 -->
-            <p v-if="!unlocked(p.nodeId)" class="mt-0.5 text-[10px] leading-relaxed text-cinnabar">
-              {{ blockReason(p.regionId) ?? "此境未开,须先走完这一世的来时路" }}
+            <p
+              v-if="!unlocked(p.nodeId)"
+              class="mt-0.5 text-[10px] leading-relaxed"
+              :class="isNextLocked(routeIndex) ? 'text-cinnabar' : 'text-ink-faint'"
+            >
+              {{ lockedHint(routeIndex) }}
             </p>
           </div>
           <!-- 已通的段落照样能再去 —— 「已通」是记号,不是封路 -->
@@ -198,8 +206,8 @@ import {
   VIEW_W,
   canEnterNode,
   ensureMortalWorld,
-  entryBlockReason,
   isNodeCleared,
+  mortalStageStatuses,
   worldView,
 } from "@/core/mortalWorldService";
 
@@ -246,6 +254,9 @@ const view = computed(() => {
 const polyline = computed(() =>
   view.value ? view.value.places.map((p) => `${p.x},${p.y}`).join(" ") : "",
 );
+const stageStatuses = computed(() =>
+  mortalStageStatuses(view.value?.places.map((p) => p.nodeId) ?? [], adventure.mortalCleared),
+);
 
 function unlocked(nodeId: string): boolean {
   return canEnterNode(nodeId);
@@ -255,8 +266,20 @@ function cleared(nodeId: string): boolean {
   return isNodeCleared(nodeId);
 }
 
-function blockReason(regionId: string): string | null {
-  return entryBlockReason(regionId);
+function isCurrentStage(index: number): boolean {
+  return stageStatuses.value[index]?.state === "current";
+}
+
+function isNextLocked(index: number): boolean {
+  const status = stageStatuses.value[index];
+  return status?.state === "blocked" && status.waitsFor !== null;
+}
+
+function lockedHint(index: number): string {
+  const status = stageStatuses.value[index];
+  if (status?.state !== "blocked" || !status.waitsFor) return "尚在前路之后";
+  const wait = view.value?.places.find((p) => p.nodeId === status.waitsFor);
+  return wait ? `须先通「${wait.name}」` : "尚在前路之后";
 }
 
 /**

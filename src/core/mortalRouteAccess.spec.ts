@@ -27,6 +27,7 @@ import {
   ensureMortalWorld,
   entryBlockReason,
   isNodeCleared,
+  mortalStageStatuses,
   rerollMortalWorld,
 } from "./mortalWorldService";
 import { ROUTE_SHAPES, generateMortalWorld } from "./mortalWorldGen";
@@ -413,6 +414,37 @@ describe("路线可达性 · 界面与守卫共用一个谓词", () => {
     expect(canEnterRegion(outsideLocked.id)).toBe(false);
     expect(entryBlockReason(outsideLocked.id)).toBeNull();
     console.log(`\n路线外的「${outsideLocked.name}」仍走旧链话术,不与本世路线的理由混淆`);
+  });
+});
+
+describe("路线阶段提示 · 只指一次眼下可去", () => {
+  const route = ["a", "b", "c", "d"];
+
+  it("新号:首段是眼下可去,紧随一段等它,后段不再复读同一个目的地", () => {
+    expect(mortalStageStatuses(route, [])).toEqual([
+      { state: "current" },
+      { state: "blocked", waitsFor: "a" },
+      { state: "blocked", waitsFor: null },
+      { state: "blocked", waitsFor: null },
+    ]);
+  });
+
+  it("推进之后仍按连续前缀显示:已通 / 眼下 / 紧随一段等眼下", () => {
+    expect(mortalStageStatuses(route, ["a", "b"])).toEqual([
+      { state: "cleared" },
+      { state: "cleared" },
+      { state: "current" },
+      { state: "blocked", waitsFor: "c" },
+    ]);
+  });
+
+  it("乱序记录不把后段冒充已通,断在第一处缺口的仍是眼下可去", () => {
+    expect(mortalStageStatuses(route, ["a", "c"])).toEqual([
+      { state: "cleared" },
+      { state: "current" },
+      { state: "blocked", waitsFor: "b" },
+      { state: "blocked", waitsFor: null },
+    ]);
   });
 });
 
