@@ -1856,6 +1856,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cp?.src, "理由要在名字行下直出,不许只挂 :title").toMatch(
       /foeAdaptation\.value\.reasons\.join/,
     );
+    expect(cp?.src, "星级按钮仍要吃满 32px 触达高度").toContain(
+      'class="tap-row -my-2 -ml-1 px-1 active:opacity-60"',
+    );
   });
 
   it("展开/收纳的控制要把状态报给读屏 —— 已登记的这几处 disclosure 都要 aria-expanded", () => {

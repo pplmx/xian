@@ -129,7 +129,7 @@
                 >
                   <button
                     type="button"
-                    class="-my-2 -ml-1 inline-flex min-h-[28px] items-center px-1 active:opacity-60"
+                    class="tap-row -my-2 -ml-1 px-1 active:opacity-60"
                     :aria-expanded="adaptTap === foeAdaptation.stars"
                     @click="
                       adaptTap = adaptTap === foeAdaptation.stars ? null : foeAdaptation.stars

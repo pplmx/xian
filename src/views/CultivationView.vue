@@ -25,18 +25,13 @@
       外圈周天盘在卷首给方向,正文这张账只回答「还要多久、靠什么在快」。
     -->
     <section class="cultivation-ledger" data-cultivation-ledger>
-      <header class="cultivation-ledger__head">
-        <div class="cultivation-ledger__heading">
-          <span class="cultivation-ledger__seal" aria-hidden="true">行</span>
-          <div>
-            <p class="cultivation-ledger__eyebrow">此刻功课</p>
-            <h2 class="cultivation-ledger__title">修 行</h2>
-          </div>
-        </div>
-        <p class="cultivation-ledger__position tabular">
-          第 {{ player.major + 1 }} / {{ REALMS.length }} 境
-        </p>
-      </header>
+      <SectionTitle class="cultivation-ledger__head" title="修 行" eyebrow="此刻功课">
+        <template #actions>
+          <p class="cultivation-ledger__position tabular">
+            第 {{ player.major + 1 }} / {{ REALMS.length }} 境
+          </p>
+        </template>
+      </SectionTitle>
 
       <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
       <div class="cultivation-ledger__ladder">

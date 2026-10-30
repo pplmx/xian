@@ -107,12 +107,34 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     const css = source("src/style.css");
 
     expect(css, "常规页要有统一页框").toContain(".folio-page");
+    expect(css, "页框上缘要给首屏行动让出 10px，而不是层层加白").toMatch(
+      /\.folio-page\s*\{[\s\S]{0,180}?padding:\s*0\.625rem var\(--folio-page-gutter\) 1\.5rem;/,
+    );
     expect(css, "页框要承接纵向节奏").toContain(".folio-page--stack");
     expect(css, "章节要在页内自动编号").toContain(".folio-page .folio-section-mark::before");
     expect(css, "旧的双笔章节头不该继续和栏号签叠成三重记号").not.toContain(
       ".folio-page .section-title::before",
     );
     expect(css, "节次计数器只能由页框重置").toContain("counter-reset: folio-section");
+  });
+
+  it("章节头只有一个组件出处，眉题、标题、副读与动作席沿同一条栏号", () => {
+    const title = source("src/components/common/SectionTitle.vue");
+    const cultivation = source("src/views/CultivationView.vue");
+    const inventory = source("src/views/InventoryView.vue");
+    const css = source("src/style.css");
+
+    expect(title, "章节头要有统一运行时标记").toContain("data-folio-chapter-head");
+    expect(title, "栏号仍由页内 counter 生成").toContain("data-folio-section-mark");
+    expect(title, "章首支持可选眉题").toContain('v-if="eyebrow"');
+    expect(title, "章首支持右侧动作席").toContain('<slot name="actions" />');
+    expect(cultivation, "修炼账走同一个章节头").toContain("<SectionTitle");
+    expect(inventory, "行囊检点走同一个章节头").toContain("<SectionTitle");
+    expect(cultivation, "不再另造第二套章首组件").not.toContain("<FolioChapterHeader");
+    expect(inventory, "不再另造第二套章首组件").not.toContain("<FolioChapterHeader");
+    expect(css, "极窄档动作席落到整行").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,300}?\.folio-chapter-head__actions\s*\{[\s\S]{0,120}?flex:\s*1 0 100%;/,
+    );
   });
 
   it("册页内不再保留 App 式中圆角，纸片只留 2px 方倒角", () => {

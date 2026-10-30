@@ -37,7 +37,13 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     const briefing =
       view.match(/<section[^>]*data-inventory-overview[\s\S]*?<\/section>/)?.[0] ?? "";
 
-    expect(briefing, "检点账要有独立标题").toContain('class="inventory-briefing__title"');
+    expect(briefing, "检点账改用全站唯一的章节头").toContain("<SectionTitle");
+    expect(briefing, "检点账要有独立标题").toContain('title="本批检点"');
+    expect(briefing, "标题后的副读仍保留").toContain('hint="先看新得与可换"');
+    expect(briefing, "两个管理入口收进章节头动作席").toMatch(
+      /<template #actions>[\s\S]{0,220}aria-label="智能收纳设置"/,
+    );
+    expect(briefing, "旧的自绘标题不再保留").not.toContain("inventory-briefing__title");
     expect(briefing, "检点账要报真实行囊件数").toContain(
       ':data-inventory-bag-count="inventory.bagItems.length"',
     );

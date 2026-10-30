@@ -35,6 +35,13 @@ describe("修炼案 · 主读数先行,破境与闭关收成下一步", () => {
     const view = source("src/views/CultivationView.vue");
 
     expect(view, "修行账要有独立运行时指纹").toContain("data-cultivation-ledger");
+    expect(view, "修行账改用全站唯一的章节头").toContain("<SectionTitle");
+    expect(view, "章首保留此刻功课的眉题").toContain('eyebrow="此刻功课"');
+    expect(view, "章首标题仍是修行").toContain('title="修 行"');
+    expect(view, "境界位置收进章首右侧动作席").toMatch(
+      /<template #actions>[\s\S]{0,120}<p class="cultivation-ledger__position tabular">/,
+    );
+    expect(view, "旧的自绘印章章首不再保留").not.toContain("cultivation-ledger__seal");
     expect(view, "修为主值要有独立落点").toContain("data-cultivation-primary");
     expect(view, "灵气与速度要有次读数区").toContain("data-cultivation-meters");
     expect(view, "进度条仍读同一条修为进度").toContain(':value="player.expProgress"');

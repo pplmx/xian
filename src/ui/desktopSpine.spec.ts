@@ -37,6 +37,10 @@ describe("桌面书脊 · 宽屏从手机底栏改为整册目录", () => {
     const css = source("src/style.css");
 
     expect(app, "应用外壳要真的挂上书脊").toContain("<DesktopSpine");
+    expect(app, "外壳宽度与朝向交给样式层，工具类不能压死桌面书桌").not.toContain("max-w-107.5");
+    expect(css, "手机册宽由 .app-shell 自己兜底").toMatch(
+      /\.app-shell\s*\{[\s\S]{0,180}?max-width:\s*26\.875rem;/,
+    );
     expect(app, "手机不挂载整份桌面目录,不能只靠 CSS 藏起来").toContain(
       "<DesktopSpine v-if=\"game.started && route.name !== 'create' && desktopSpineVisible\"",
     );

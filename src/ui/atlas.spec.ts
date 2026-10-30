@@ -41,6 +41,9 @@ describe("玄枢图 · 五卷快引", () => {
     expect(css, "桌面总图要铺成两列卷宗").toMatch(
       /@media \(min-width: 720px\)[\s\S]*?\.atlas-index[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
     );
+    expect(css, "195px 档五卷快引改两列，末卷跨满整行").toMatch(
+      /@media \(max-width: 220px\)[\s\S]*?\.atlas-compass\s*\{[\s\S]{0,180}?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);[\s\S]{0,900}?\.atlas-volume:last-child\s*\{[\s\S]{0,100}?grid-column:\s*1\s*\/\s*-1;/,
+    );
     expect(css, "195px 档要收住五卷快引字距").toContain(".atlas-volume__label");
   });
 });

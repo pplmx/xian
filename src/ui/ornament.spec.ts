@@ -188,9 +188,14 @@ describe("装饰层 · 章节头", () => {
   });
 
   it("尾线拉满剩余宽度,但留得住 4px 的让位底线", () => {
-    expect(TITLE, "尾线没有 flex-1 就拉不满").toContain("flex-1");
-    expect(TITLE, "尾线没有下限,窄屏会被挤成 0").toContain("min-w-1");
-    expect(TITLE, "尾线两侧收口靠渐变,不是实色").toMatch(/from-ink\/\d+/);
+    const rule = CSS.match(/\.folio-chapter-head__rule\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+
+    expect(TITLE, "尾线要由共享章节头统一渲染").toContain("folio-chapter-head__rule");
+    expect(rule, "尾线没有伸缩比就拉不满").toMatch(/flex:\s*1 1 1rem/);
+    expect(rule, "尾线没有下限,窄屏会被挤成 0").toMatch(/min-width:\s*1rem/);
+    expect(rule, "尾线两侧收口靠墨色渐变,不是实色").toMatch(
+      /linear-gradient\([\s\S]*?--color-ink-rgb\)\s*\/\s*0\.14[\s\S]*?--color-ink-rgb\)\s*\/\s*0\.02/,
+    );
   });
 
   it("章节名不裁切 —— 折行也要读全(它不是列表项)", () => {

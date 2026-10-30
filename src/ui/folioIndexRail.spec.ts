@@ -62,7 +62,7 @@ describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
     expect(masthead, "卷首要挂本卷册签").toContain('label="本卷册目"');
   });
 
-  it("签条像书口而不是胶囊，195px 仍收得住", () => {
+  it("签条像书口而不是胶囊，195px 仍收得住且触达不缩水", () => {
     const css = source("src/style.css");
 
     expect(css).toContain(".folio-index-rail__tab");
@@ -72,7 +72,10 @@ describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
       /\.folio-index-rail__tab\[data-folio-rail-current\][\s\S]{0,500}?color:\s*rgb\(var\(--color-cinnabar-rgb\)\)/,
     );
     expect(css).toMatch(
-      /@media \(max-width: 220px\)[\s\S]{0,500}?\.folio-index-rail__tab[\s\S]{0,180}?width: 1\.25rem;/,
+      /@media \(max-width: 220px\)[\s\S]{0,500}?\.folio-index-rail__tab[\s\S]{0,180}?width: 1\.75rem;/,
+    );
+    expect(css, "书口签触达下限不得低于 28px").toMatch(
+      /\.folio-index-rail__tab\s*\{[\s\S]{0,180}?min-width:\s*1\.75rem;[\s\S]{0,80}?min-height:\s*1\.75rem;/,
     );
     expect(css, "短册名在 390px 起才铺开").toMatch(
       /@media \(min-width: 390px\)[\s\S]{0,160}?\.folio-index-rail--chapter \.folio-index-rail__label/,

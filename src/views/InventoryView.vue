@@ -37,29 +37,28 @@
         :data-inventory-new-count="inventory.newItemCount"
         :data-inventory-upgrade-count="upgradeRows.length"
       >
-        <div class="inventory-briefing__heading">
-          <span class="inventory-briefing__title">本批检点</span>
-          <span class="inventory-briefing__hint">先看新得与可换</span>
-          <span class="inventory-briefing__rule" aria-hidden="true" />
-          <button
-            type="button"
-            class="inventory-briefing__tool"
-            aria-label="智能收纳设置"
-            :aria-expanded="smartOpen"
-            @click="smartOpen = true"
-          >
-            收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
-          </button>
-          <button
-            type="button"
-            class="inventory-briefing__tool"
-            aria-label="批量分解装备"
-            :aria-expanded="decomposeOpen"
-            @click="decomposeOpen = true"
-          >
-            分解
-          </button>
-        </div>
+        <SectionTitle class="inventory-briefing__heading" title="本批检点" hint="先看新得与可换">
+          <template #actions>
+            <button
+              type="button"
+              class="inventory-briefing__tool"
+              aria-label="智能收纳设置"
+              :aria-expanded="smartOpen"
+              @click="smartOpen = true"
+            >
+              收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
+            </button>
+            <button
+              type="button"
+              class="inventory-briefing__tool"
+              aria-label="批量分解装备"
+              :aria-expanded="decomposeOpen"
+              @click="decomposeOpen = true"
+            >
+              分解
+            </button>
+          </template>
+        </SectionTitle>
 
         <div class="inventory-briefing__sheet">
           <div class="inventory-briefing__counts">

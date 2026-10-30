@@ -95,29 +95,11 @@
     min-width: 0;
   }
   .inventory-briefing__heading {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.3rem 0.6rem;
     padding-inline: 0.15rem;
   }
-  .inventory-briefing__title {
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    letter-spacing: 0.16em;
-  }
-  .inventory-briefing__hint,
   .inventory-briefing__foot {
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
-  }
-  .inventory-briefing__rule {
-    height: 1px;
-    min-width: 1rem;
-    flex: 1;
-    background: linear-gradient(90deg, rgb(var(--color-ink-rgb) / 0.13), transparent);
   }
   .inventory-briefing__tool {
     display: inline-flex;
@@ -569,14 +551,6 @@
     }
   }
   @media (max-width: 220px) {
-    .inventory-briefing__heading {
-      gap: 0.25rem;
-    }
-
-    .inventory-briefing__rule {
-      display: none;
-    }
-
     .inventory-briefing__counts {
       grid-template-columns: minmax(0, 1fr);
     }
