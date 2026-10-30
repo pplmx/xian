@@ -75,4 +75,59 @@ describe("器魂卷首 · 可凝与道源同源", () => {
     expect(overview.idleSouls.map((s) => s.uid)).toEqual(["d"]);
     expect(overview.refinable).toEqual([]);
   });
+
+  it("下一步先装闲置、再取舍、再开炉,最后才回行囊找器", () => {
+    const one = soul("one");
+    const full = [soul("a"), soul("b"), soul("c")];
+    const base = {
+      soulList: [],
+      items: [],
+      equippedUids: new Set<string>(),
+      daoSource: 0,
+    };
+
+    expect(
+      soulOverview({
+        ...base,
+        activeSouls: [],
+        soulList: [one],
+      }).nextAction,
+    ).toBe("wear");
+    expect(
+      soulOverview({
+        ...base,
+        activeSouls: full,
+        soulList: [...full, one],
+      }).nextAction,
+    ).toBe("choose");
+    expect(
+      soulOverview({
+        ...base,
+        activeSouls: [],
+        items: [weapon("ready")],
+        daoSource: SOUL_REFINE_COST,
+      }).nextAction,
+    ).toBe("refine");
+    expect(
+      soulOverview({
+        ...base,
+        activeSouls: [],
+        items: [weapon("ready")],
+        daoSource: SOUL_REFINE_COST - 1,
+      }).nextAction,
+    ).toBe("short");
+    expect(
+      soulOverview({
+        ...base,
+        activeSouls: full,
+        soulList: full,
+      }).nextAction,
+    ).toBe("settled");
+    expect(
+      soulOverview({
+        ...base,
+        activeSouls: [],
+      }).nextAction,
+    ).toBe("inventory");
+  });
 });

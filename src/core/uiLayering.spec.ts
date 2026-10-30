@@ -1332,9 +1332,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 详情页不再各手搓一条「返回 / 标题 / 读数」三栏。统一卷首把道源放进
     // action 槽,标题天然按册页左缘落位,不再随数字位数或返回文案漂移。
     const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
-    expect(souls?.src, "器魂页要接共同卷首").toContain('<FolioPageHeader title="器 魂"');
+    expect(souls?.src, "器魂页要接共同卷首").toMatch(/<FolioPageHeader[\s\S]{0,180}title="器 魂"/);
     expect(souls?.src, "天界返回兜底要写清").toContain('back-to="celestial"');
-    expect(souls?.src, "道源读数要进独立动作槽").toContain("<template #action>");
+    expect(souls?.src, "道源读数要进独立动作槽").toMatch(/<template[\s\S]{0,80}#action>/);
     expect(souls?.src, "道源仍读同一份 endgame 数据").toContain("formatNum(endgame.daoSource)");
   });
 

@@ -1,49 +1,99 @@
 <template>
-  <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="器 魂" back-to="celestial" back-label="天界">
-      <template #action>
-        <div
-          v-if="unlocked"
-          class="flex items-baseline justify-end gap-2 tinylens:w-full tinylens:justify-between"
-        >
-          <span class="text-note text-ink-faint">道源</span>
-          <span class="tabular font-kai text-section leading-tight text-cinnabar">{{
-            formatNum(endgame.daoSource)
-          }}</span>
+  <div class="folio-page folio-page--stack stagger-in soul-page">
+    <FolioPageHeader
+      title="器 魂"
+      subtitle="形销意存 · 三席成阵"
+      back-to="celestial"
+      back-label="天界"
+      featured
+    >
+      <template v-if="unlocked" #visual>
+        <SoulForgeMap
+          :seats="soulSeats"
+          :idle-count="soulPulse.idleSouls.length"
+          :refinable-count="soulPulse.refinableCount"
+          :affordable-refines="soulPulse.affordableRefines"
+        />
+      </template>
+
+      <template v-if="unlocked" #action>
+        <div class="soul-source">
+          <span class="soul-source__label">道源</span>
+          <strong class="soul-source__value tabular">{{ formatNum(endgame.daoSource) }}</strong>
+          <button type="button" class="soul-source__button" @click="forgeOpen = true">开炉</button>
         </div>
       </template>
 
-      <!-- 卷首先报此刻:槽位、闲置与可凝各有多少当下能动手 -->
-      <div
-        v-if="unlocked"
-        class="grid grid-cols-3 divide-x divide-ink/10 border-t border-ink/10 pt-2 text-center"
-        data-soul-pulse
-      >
-        <p>
-          <span class="block text-note text-ink-faint">装配</span>
-          <span class="block text-body tabular text-ink-soft" data-soul-pulse-active
-            >{{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}</span
+      <!-- 卷首先报此刻:下一步、三席、闲置与可凝各有多少当下能动手 -->
+      <div v-if="unlocked" class="soul-pulse" data-soul-pulse>
+        <div class="soul-pulse__lead">
+          <span class="soul-pulse__seal" aria-hidden="true">{{ soulLead.mark }}</span>
+          <div class="soul-pulse__copy">
+            <p class="soul-pulse__eyebrow">此刻器魂</p>
+            <p class="soul-pulse__title">{{ soulLead.title }}</p>
+            <p class="soul-pulse__detail">{{ soulLead.detail }}</p>
+          </div>
+          <button
+            v-if="soulLead.label"
+            type="button"
+            class="soul-pulse__jump hoverable:hover:border-cinnabar"
+            @click="runSoulLead"
           >
-        </p>
-        <p>
-          <span class="block text-note text-ink-faint">闲置</span>
-          <span class="block text-body tabular text-ink-soft" data-soul-pulse-idle
-            >{{ soulPulse.idleSouls.length }} 缕</span
-          >
-        </p>
-        <p>
-          <span class="block text-note text-ink-faint">可凝</span>
-          <span class="block text-body tabular text-ink-soft" data-soul-pulse-refine
-            >{{ soulPulse.affordableRefines }}/{{ soulPulse.refinableCount }} 件</span
-          >
-        </p>
-        <p
-          v-if="soulPulse.refinableCount > 0 && soulPulse.shortfall > 0"
-          class="col-span-3 border-t border-ink/10 px-2 pt-1.5 text-note text-cinnabar"
-        >
-          道源不足:{{ soulPulse.refinableCount }} 件待凝,尚差
-          {{ formatGN(soulPulse.shortfall) }} 道源可开一炉
-        </p>
+            {{ soulLead.label }}
+          </button>
+        </div>
+
+        <div class="soul-pulse__tallies">
+          <button type="button" class="soul-pulse__tally" @click="scrollToSeats">
+            <span class="soul-pulse__mark" aria-hidden="true">席</span>
+            <span class="soul-pulse__label">三席</span>
+            <span class="soul-pulse__value">
+              <strong data-soul-pulse-active>{{ soulPulse.activeCount }}</strong>
+              <span class="soul-pulse__total">/{{ soulPulse.slotTotal }}</span>
+            </span>
+            <span class="soul-pulse__unit">席</span>
+            <span class="soul-pulse__detail">
+              {{ emptySeats > 0 ? `尚空 ${emptySeats} 席` : "三席俱满" }}
+            </span>
+          </button>
+
+          <button type="button" class="soul-pulse__tally" @click="idleOpen = true">
+            <span class="soul-pulse__mark" aria-hidden="true">闲</span>
+            <span class="soul-pulse__label">闲置</span>
+            <span class="soul-pulse__value">
+              <strong data-soul-pulse-idle>{{ soulPulse.idleSouls.length }}</strong>
+            </span>
+            <span class="soul-pulse__unit">缕</span>
+            <span class="soul-pulse__detail">
+              {{
+                soulPulse.idleSouls.length > 0
+                  ? soulPulse.slotsFull
+                    ? "三席已满,待取舍"
+                    : "可入空席"
+                  : "暂无闲置形意"
+              }}
+            </span>
+          </button>
+
+          <button type="button" class="soul-pulse__tally" @click="forgeOpen = true">
+            <span class="soul-pulse__mark" aria-hidden="true">凝</span>
+            <span class="soul-pulse__label">可凝</span>
+            <span class="soul-pulse__value">
+              <strong data-soul-pulse-refine>{{ soulPulse.affordableRefines }}</strong>
+              <span class="soul-pulse__total">/{{ soulPulse.refinableCount }}</span>
+            </span>
+            <span class="soul-pulse__unit">件</span>
+            <span class="soul-pulse__detail">
+              {{
+                soulPulse.refinableCount > 0
+                  ? soulPulse.shortfall > 0
+                    ? `尚差 ${formatGN(soulPulse.shortfall)} 道源`
+                    : `每枚 ${SOUL_REFINE_COST} 道源`
+                  : "行囊暂无带形意的法器"
+              }}
+            </span>
+          </button>
+        </div>
       </div>
     </FolioPageHeader>
 
@@ -61,101 +111,45 @@
     />
 
     <template v-else>
-      <!-- 何谓器魂 -->
-      <section>
-        <SectionTitle title="何谓器魂" hint="形销而意存,多一条路数" />
-        <div class="card-ink mt-2 px-4 py-3">
-          <!--
-            这一段原是把两段散文铺满整张大卡 —— 它是这一页里最占地方、信息密度
-            最低的一块,而新手每次进来都要先跨过它才看得见自己那三个槽位。
-            改法:一句结论常驻(器魂是什么、从哪来),细节收进「怎么个章法」——
-            想知道的人点开,不想知道的人不必先读两百字。
-          -->
-          <p class="t-body text-ink-soft">
-            凡器入炉,锋芒被天道磨去几分,那份
-            <span class="text-gold-ink">路数</span>却留了下来 —— 这就是器魂:
-            攻防血照常作数,它是在其上多给一条路数。
-          </p>
-          <button
-            class="tap-row mt-1.5 -mx-1.5 -my-1 inline-flex min-h-[28px] min-w-[28px] items-center justify-center px-1.5 text-note text-ink-faint active:opacity-60"
-            :aria-expanded="soulIntroOpen"
-            @click="soulIntroOpen = !soulIntroOpen"
-          >
-            {{ soulIntroOpen ? "▾ 收起" : "▸ 怎么个章法" }}
-          </button>
-          <div v-if="soulIntroOpen" class="mt-1 space-y-1.5">
-            <p class="t-body text-ink-faint">
-              以凡器入炉,形销而意存,得器魂一缕。神魂只容 {{ SOUL_SLOTS }} 缕——取舍便是构筑。
-            </p>
-            <p class="t-body text-ink-faint">
-              至于堆叠本身,天道自有应对:构筑越厚,守关者的道之理解越深;境界未及此界者,还会被境界压制。
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- 已凝形意 -->
-      <section>
+      <!-- 三席:名字、词条与动作都在同一枚席位里读清 -->
+      <section class="soul-seats" data-soul-slots>
         <SectionTitle
-          title="已凝形意"
-          :hint="`${soulPulse.activeCount} / ${soulPulse.slotTotal} 缕`"
+          title="三席"
+          :hint="
+            activeModText
+              ? `${soulPulse.activeCount}/${soulPulse.slotTotal} 席`
+              : `${soulPulse.activeCount}/${soulPulse.slotTotal} 席 · 尚无形意`
+          "
         />
-        <!--
-          三列只在「格子够宽」时成立。200% 缩放档(390 的机型放大一倍,布局视口只剩
-          195 CSS px)下每格只有 49px,「显形·锋魂」六个字必然折成两截 —— 而本作按
-          AGENTS 的口径要防 200% 档折行,故极窄时放开成两列(名字 43px、动作键 36px
-          都还塞得进 77px 的格)。阈值住在一个变体名里(见 tailwind.config.js 的 tinylens),
-          320 / 390 真机(以及它们的常态)仍是三列。
-        -->
-        <div class="mt-2 grid grid-cols-3 gap-2 tinylens:grid-cols-2">
-          <!--
-            卡壳**不再自称按钮**,里面两个动作各用原生 <button>。
-
-            从前整卡是 role=button 的 div,里面还嵌着「卸下」<button>。CDP 读出的
-            无障碍树真把它画成"button 里套着 button":「显形·锋魂 详情」里套着「卸下」。
-            ARIA 里 button 带 Children Presentational —— 屏幕阅读器本应把它里面的
-            内容压平成一段文字,连带那个「卸下」在部分读屏上根本不可达(VoiceOver /
-            TalkBack 正是这类)。而且两个可聚焦控件叠在一处,焦点顺序也说不清。
-
-            空槽另有旧伤:无论有没有器魂都挂着 role=button 与 aria-label「空」,
-            读屏念出一个"空 按钮",按下去只把 soulDetail 赋成 null,弹窗连开都不开
-            —— 声明了 affordance 却不给操作,比不声明更坏。
-
-            现在:「有没有器魂」仍只有一处出口(soulAt),按钮语义则由真 <button>
-            自己带 —— 读屏听到的"是什么"与手上按得动的,是同一个东西。
-          -->
+        <div class="mt-2 grid soul-seat-grid grid-cols-3 gap-2 tinylens:grid-cols-2">
           <div
             v-for="i in SOUL_SLOTS"
             :key="i"
-            class="card-ink flex min-h-[92px] min-w-0 flex-col items-center justify-center px-2 py-2 text-center"
-            :class="soulAt(i) ? '' : 'border-dashed border-ink/15'"
+            class="card-ink soul-seat flex min-h-[104px] min-w-0 flex-col px-2 py-2"
+            :class="soulAt(i) ? 'soul-seat--filled' : 'soul-seat--empty'"
           >
             <template v-if="soulAt(i)">
               <button
-                class="flex min-w-0 flex-1 self-stretch flex-col items-center justify-center px-1 text-center active:scale-95"
+                class="soul-seat__detail flex min-w-0 flex-1 flex-col items-center justify-center px-1 text-center active:scale-95"
                 :aria-label="detailLabel(soulAt(i)!)"
                 @click="openSoulDetail(i)"
               >
                 <span
-                  class="font-kai text-[22px] leading-none"
+                  class="soul-seat__mark font-kai leading-none"
                   :style="{ color: soulColor(soulAt(i)!) }"
                 >
                   {{ soulSeal(soulAt(i)!) }}
                 </span>
-                <span class="mt-1 text-note leading-tight text-ink-soft">{{
+                <span class="soul-seat__name mt-1 text-note leading-tight text-ink-soft">{{
                   soulLabel(soulAt(i)!)
                 }}</span>
-                <!--
-                  装配了就看不见"给什么" —— 就地摊一行词条短字(全量读数在详情弹窗,
-                  同闲置行的 soulModText,不另造第二份文案)。
-                -->
-                <span class="mt-0.5 w-full truncate text-note leading-tight text-ink-faint">{{
-                  soulModText(soulAt(i)!)
-                }}</span>
+                <span
+                  class="soul-seat__mods mt-0.5 w-full text-note leading-tight text-ink-faint"
+                  >{{ soulModText(soulAt(i)!) }}</span
+                >
               </button>
-              <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 32px 的靶面 -->
               <button
-                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-note text-ink-faint underline active:opacity-60"
+                class="tap-row soul-seat__remove mt-1 min-w-[28px] px-2 py-1.5 text-note text-ink-faint active:opacity-60"
                 :aria-label="`卸下 ${soulLabel(soulAt(i)!)}`"
                 @click="removeSoul(soulAt(i)!.uid)"
               >
@@ -163,76 +157,110 @@
               </button>
             </template>
             <template v-else>
-              <span class="text-note text-ink-faint">空</span>
-              <!--
-                手上有闲置形意时,这一格就是玩家下一步该按的地方 —— 从前只写一个「空」,
-                装配的入口在页面下方的「散置形意」里,人得自己想起来去那儿找。
-                按第四十四条同一道闸:**没有可装的东西时它就不是按钮**。点开的仍是那张
-                清单(由玩家挑一缕),而不是替玩家装某不知名的魂。
-              -->
+              <span class="soul-seat__empty">空席</span>
               <button
                 v-if="soulPulse.idleSouls.length > 0"
-                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-note text-ink-faint underline active:opacity-60"
+                class="tap-row soul-seat__wear mt-1 min-w-[28px] px-2 py-1.5 text-note text-cinnabar active:opacity-60"
                 aria-label="空槽 · 挑一缕装配"
                 @click="idleOpen = true"
               >
                 装配
               </button>
+              <span v-else class="soul-seat__hint">待凝形意</span>
             </template>
           </div>
         </div>
-        <p v-if="activeModText" class="mt-2 px-1 text-note leading-relaxed text-gold-ink">
-          合计:{{ activeModText }}
-        </p>
+        <p v-if="activeModText" class="soul-seat-total"><span>合计</span>{{ activeModText }}</p>
       </section>
 
-      <!-- 两处入口 -->
-      <section class="space-y-2">
-        <button
-          class="card-ink flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:scale-99"
-          @click="idleOpen = true"
-        >
-          <span
-            class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-violet-ink/85 font-kai text-[19px] text-paper"
-            >意</span
+      <!-- 两处门径:闲置形意与凝炼台各报自己的真实账 -->
+      <section class="soul-gateways" data-soul-gateways>
+        <SectionTitle title="两处门径" hint="散置形意 · 凝炼台" />
+        <div class="soul-gateway-grid mt-2">
+          <button
+            type="button"
+            class="soul-gateway hoverable:hover:border-cinnabar"
+            data-soul-gateway="idle"
+            @click="idleOpen = true"
           >
-          <span class="min-w-0 flex-1">
-            <span class="block t-card">散置形意</span>
-            <span class="block truncate text-note leading-relaxed text-ink-faint">
-              {{
-                soulPulse.idleSouls.length > 0
-                  ? soulPulse.slotsFull
-                    ? `${soulPulse.idleSouls.length} 缕待用 · 槽位已满,先散去一缕`
-                    : `${soulPulse.idleSouls.length} 缕待用 · 装配或散去`
-                  : "暂无闲置器魂"
-              }}
+            <span class="soul-gateway__mark" aria-hidden="true">意</span>
+            <span class="soul-gateway__copy">
+              <span class="soul-gateway__name">散置形意</span>
+              <span class="soul-gateway__note">
+                {{
+                  soulPulse.idleSouls.length > 0
+                    ? soulPulse.slotsFull
+                      ? `${soulPulse.idleSouls.length} 缕待用 · 三席已满,先散去一缕`
+                      : `${soulPulse.idleSouls.length} 缕待用 · 装配或散去`
+                    : "暂无闲置器魂"
+                }}
+              </span>
             </span>
-          </span>
-          <span class="shrink-0 text-body text-ink-faint">›</span>
-        </button>
+            <span class="soul-gateway__arrow" aria-hidden="true">›</span>
+          </button>
 
-        <button
-          class="card-ink flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:scale-99"
-          @click="forgeOpen = true"
-        >
-          <span
-            class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-cinnabar/85 font-kai text-[19px] text-paper"
-            >炼</span
+          <button
+            type="button"
+            class="soul-gateway hoverable:hover:border-cinnabar"
+            data-soul-gateway="forge"
+            @click="forgeOpen = true"
           >
-          <span class="min-w-0 flex-1">
-            <span class="block t-card">凝炼台</span>
-            <span class="block truncate text-note leading-relaxed text-ink-faint">
-              {{
-                soulPulse.refinableCount > 0
-                  ? soulPulse.affordableRefines > 0
-                    ? `${soulPulse.affordableRefines}/${soulPulse.refinableCount} 件此刻可凝 · 每枚 ${SOUL_REFINE_COST} 道源`
-                    : `${soulPulse.refinableCount} 件待凝 · 尚差 ${formatGN(soulPulse.shortfall)} 道源开一炉`
-                  : "行囊中无可凝之器"
-              }}
+            <span class="soul-gateway__mark is-forge" aria-hidden="true">炼</span>
+            <span class="soul-gateway__copy">
+              <span class="soul-gateway__name">凝炼台</span>
+              <span class="soul-gateway__note">
+                {{
+                  soulPulse.refinableCount > 0
+                    ? soulPulse.affordableRefines > 0
+                      ? `${soulPulse.affordableRefines}/${soulPulse.refinableCount} 件此刻可凝 · 每枚 ${SOUL_REFINE_COST} 道源`
+                      : `${soulPulse.refinableCount} 件待凝 · 尚差 ${formatGN(soulPulse.shortfall)} 道源开一炉`
+                    : "行囊中无可凝之器"
+                }}
+              </span>
             </span>
-          </span>
-          <span class="shrink-0 text-body text-ink-faint">›</span>
-        </button>
+            <span class="soul-gateway__arrow" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 章法退成页尾的注:先知道代价,再决定哪件入炉 -->
+      <section class="soul-principle">
+        <SectionTitle title="器魂章法" hint="先懂代价,再决定入炉" />
+        <div class="soul-principle__sheet">
+          <div class="soul-principle__lead">
+            <span class="soul-principle__seal" aria-hidden="true">魂</span>
+            <p>
+              凡器入炉,锋芒被天道磨去几分,那份
+              <span class="text-gold-ink">路数</span>却留了下来 —— 攻防血照常作数,
+              器魂是在其上多给一条路数。
+            </p>
+          </div>
+
+          <div class="soul-principle__steps">
+            <p v-for="step in SOUL_STEPS" :key="step.mark" class="soul-principle__step">
+              <span class="soul-principle__step-mark" aria-hidden="true">{{ step.mark }}</span>
+              <span>
+                <strong>{{ step.title }}</strong>
+                <small>{{ step.detail }}</small>
+              </span>
+            </p>
+          </div>
+
+          <button
+            class="tap-row soul-principle__toggle -mx-1.5 inline-flex min-h-[28px] min-w-[28px] items-center justify-center px-1.5 text-note text-ink-faint active:opacity-60"
+            :aria-expanded="soulIntroOpen"
+            @click="soulIntroOpen = !soulIntroOpen"
+          >
+            {{ soulIntroOpen ? "▾ 收起章法" : "▸ 怎么个章法" }}
+          </button>
+          <div v-if="soulIntroOpen" class="soul-principle__more">
+            <p>以凡器入炉,形销而意存,得器魂一缕。神魂只容 {{ SOUL_SLOTS }} 缕 —— 取舍便是构筑。</p>
+            <p>
+              至于堆叠本身,天道自有应对:构筑越厚,守关者的道之理解越深;境界未及此界者,
+              还会被境界压制。
+            </p>
+          </div>
+        </div>
       </section>
     </template>
 
@@ -482,6 +510,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { formatGN, formatNum } from "@/utils/format";
 import { modsText } from "@/data/statNames";
 import { equipmentTemplate } from "@/data/equipment";
@@ -521,10 +550,12 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
+import SoulForgeMap from "@/components/celestial/SoulForgeMap.vue";
 
 const endgame = useEndgameStore();
 const inventory = useInventoryStore();
 const player = usePlayerStore();
+const router = useRouter();
 
 const unlocked = computed(() => endgameUnlocked());
 const idleOpen = ref(false);
@@ -574,6 +605,116 @@ const soulPulse = computed(() =>
     daoSource: endgame.daoSource,
   }),
 );
+
+const emptySeats = computed(() =>
+  Math.max(0, soulPulse.value.slotTotal - soulPulse.value.activeCount),
+);
+
+interface SoulLead {
+  mark: string;
+  title: string;
+  detail: string;
+  label: string;
+  action: "idle" | "forge" | "inventory" | null;
+}
+
+const SOUL_SETTLED_LEAD: SoulLead = {
+  mark: "定",
+  title: "三席俱满，形意已成阵",
+  detail: "没有闲置形意，也没有可凝法器；当前构筑已经落定。",
+  label: "",
+  action: null,
+};
+
+/** 把卷首「此刻器魂」收成一句先手:先处理已有形意,再给开炉或回行囊。 */
+const soulLead = computed<SoulLead>(() => {
+  const pulse = soulPulse.value;
+  switch (pulse.nextAction) {
+    case "wear":
+      return {
+        mark: "装",
+        title: "先装一缕闲置形意",
+        detail: `手上有 ${pulse.idleSouls.length} 缕闲置形意，三席尚空 ${emptySeats.value} 席。`,
+        label: "去装配",
+        action: "idle",
+      };
+    case "choose":
+      return {
+        mark: "择",
+        title: "三席已满，先做取舍",
+        detail: `另有 ${pulse.idleSouls.length} 缕闲置形意；卸下一席，才装得下新的路数。`,
+        label: "去取舍",
+        action: "idle",
+      };
+    case "refine":
+      return {
+        mark: "炼",
+        title: "有一件可入炉",
+        detail: `此刻可凝 ${pulse.affordableRefines}/${pulse.refinableCount} 件，每枚耗 ${SOUL_REFINE_COST} 道源。`,
+        label: "去开炉",
+        action: "forge",
+      };
+    case "short":
+      return {
+        mark: "缺",
+        title: "有器可凝，道源还差一截",
+        detail: `${pulse.refinableCount} 件待凝，尚差 ${formatGN(pulse.shortfall)} 道源可开一炉。`,
+        label: "去看凝炼台",
+        action: "forge",
+      };
+    case "inventory":
+      return {
+        mark: "寻",
+        title: "三席未满，行囊里还差一件带形意的法器",
+        detail: "凝炼只取未佩戴、未上锁且有词条的法器；先去行囊挑一件。",
+        label: "回行囊",
+        action: "inventory",
+      };
+    case "settled":
+    default:
+      return SOUL_SETTLED_LEAD;
+  }
+});
+
+function runSoulLead(): void {
+  switch (soulLead.value.action) {
+    case "idle":
+      idleOpen.value = true;
+      break;
+    case "forge":
+      forgeOpen.value = true;
+      break;
+    case "inventory":
+      void router.push("/inventory");
+      break;
+  }
+}
+
+function scrollToSeats(): void {
+  document.querySelector<HTMLElement>("[data-soul-slots]")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+/** 章法里的数字只从机制常量取，避免改 SOUL_SLOTS / 炉费后文案还停在旧值。 */
+const SOUL_STEPS = [
+  {
+    mark: "一",
+    title: "入炉",
+    detail: `挑一件带词条的法器入炉，耗 ${SOUL_REFINE_COST} 道源，原器即毁。`,
+  },
+  {
+    mark: "二",
+    title: "存意",
+    detail: "锋、盾、棘、连、泽、背六路形意，按主导词条凝成。",
+  },
+  {
+    mark: "三",
+    title: "择席",
+    detail: `神魂只容 ${SOUL_SLOTS} 缕，装配就是取舍。`,
+  },
+] as const;
 
 /** 道源够一枚就允许开确认；短差由 soulPulse 统一报出。 */
 const canAffordRefine = computed(() => soulPulse.value.affordableRefines > 0);
@@ -712,6 +853,26 @@ function soulColor(soul: SoulInstance): string {
 function soulModText(soul: SoulInstance): string {
   return modsText(soulMods(soul));
 }
+
+const SOUL_SEAT_POSITIONS = [
+  { x: 52, y: 34 },
+  { x: 124, y: 34 },
+  { x: 88, y: 101 },
+] as const;
+
+/** 星图三席与正文共用 soulAt；空席只报序号，不另造一套占位数据。 */
+const soulSeats = computed(() =>
+  SOUL_SEAT_POSITIONS.map((position, index) => {
+    const soul = soulAt(index + 1);
+    return {
+      ...position,
+      filled: soul !== null,
+      mark: soul ? soulSeal(soul) : String(index + 1),
+      color: soul ? soulColor(soul) : "var(--color-ink-faint)",
+    };
+  }),
+);
+
 /** 已装配器魂的合计词条 */
 const activeModText = computed(() => modsText(endgame.soulMods));
 </script>
