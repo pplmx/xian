@@ -1,6 +1,7 @@
 <template>
   <header
-    class="app-masthead relative z-20 shrink-0 border-b border-transparent bg-paper-deep/90 px-4 py-2 backdrop-blur short:py-1 tinylens:px-2"
+    data-folio-head
+    class="app-masthead folio-head relative z-20 shrink-0 border-b border-transparent bg-paper-deep/90 px-4 py-2 backdrop-blur short:py-1 tinylens:px-2"
     :style="`padding-top: max(env(safe-area-inset-top), ${statusTopPad})`"
   >
     <!--
@@ -17,28 +18,27 @@
       不参与收缩)、每格 whitespace-nowrap(数不许断行),让左组先让位:
       名字 truncate、境界行 overflow-hidden,被裁掉的尾巴只能是卷目/世界这类闲格。
     -->
-    <div class="flex min-w-0 items-center justify-between gap-2 overflow-hidden">
+    <div
+      class="folio-head__body relative flex min-w-0 items-center justify-between gap-2 overflow-hidden"
+    >
       <div class="flex min-w-0 items-center gap-2 overflow-hidden">
         <button
           type="button"
           data-atlas-trigger
-          class="atlas-trigger grid h-8 w-8 shrink-0 place-items-center border border-ink/20 font-kai text-[14px] text-ink-soft active:scale-90"
+          class="atlas-trigger flex h-8 w-8 shrink-0 flex-col items-center justify-center gap-0.5 border border-ink/20 font-kai text-ink-soft active:scale-90"
           aria-label="打开玄枢图"
           @click="atlasOpen = true"
         >
-          玄
+          <span class="atlas-trigger__char text-[14px] leading-none">玄</span>
+          <span class="atlas-trigger__mark text-[10px] leading-none">枢</span>
         </button>
         <div class="min-w-0 leading-tight">
-          <p class="flex items-center gap-1 truncate font-kai text-[13px] tracking-wider text-ink">
-            <span class="min-w-0 truncate">{{ player.name }}</span>
-            <span
-              v-if="current"
-              class="hidden shrink-0 text-[10px] text-ink-faint min-[360px]:inline"
-              >· {{ current.label }}</span
-            >
+          <p class="truncate font-kai text-[14px] tracking-[0.14em] text-ink">
+            {{ player.name }}
           </p>
           <p class="flex items-center gap-1.5 whitespace-nowrap text-[10px] text-ink-faint">
             <span class="min-w-0 flex-1 truncate">{{ player.realmName }}</span>
+            <span class="h-3 w-px shrink-0 bg-ink/15" aria-hidden="true" />
             <!-- 年龄:寿元将尽时转朱砂,顶栏常驻便于随时察觉 -->
             <span
               class="tabular shrink-0"
@@ -49,12 +49,18 @@
           </p>
         </div>
       </div>
-      <div class="flex shrink-0 items-center gap-3 text-[11px] text-ink-soft tabular short:gap-2">
-        <span class="flex items-center gap-1 whitespace-nowrap" title="灵石">
+      <div class="folio-head__ledger flex shrink-0 items-center text-[11px] text-ink-soft tabular">
+        <span
+          class="folio-head__ledger-entry flex items-center gap-1 whitespace-nowrap"
+          title="灵石"
+        >
           <GameIcon name="gem" :size="13" class="text-gold-ink" />
           {{ formatGN(resources.spiritStone) }}
         </span>
-        <span class="flex items-center gap-1 whitespace-nowrap" title="灵气">
+        <span
+          class="folio-head__ledger-entry flex items-center gap-1 whitespace-nowrap"
+          title="灵气"
+        >
           <GameIcon name="wind" :size="13" class="text-qing" />
           {{ formatNum(Math.floor(resources.qi)) }}
         </span>
@@ -62,7 +68,7 @@
         <RouterLink
           to="/settings"
           aria-label="设置"
-          class="-my-2 -mr-2 flex min-h-[40px] min-w-[40px] items-center justify-center p-1.5 text-ink-faint active:scale-90 tinylens:hidden"
+          class="folio-head__settings -my-2 -mr-2 flex min-h-[40px] min-w-[40px] items-center justify-center p-1.5 text-ink-faint active:scale-90 tinylens:hidden"
         >
           <GameIcon name="settings" :size="15" />
         </RouterLink>
@@ -71,15 +77,12 @@
 
     <!-- 卷目栏:只报「我在哪一卷」与「此世何界」,不重复页面里的大标题。 -->
     <div
+      :data-folio-position="positionKey"
       class="masthead-route mt-1.5 flex items-center gap-1.5 border-t border-ink/10 pt-1 text-[10px] text-ink-faint short:hidden"
     >
-      <span class="font-kai tracking-[0.2em] text-cinnabar">{{
-        current?.sectionLabel ?? "玄枢"
-      }}</span>
+      <span class="shrink-0 font-kai tracking-[0.18em] text-cinnabar">{{ positionMark }}</span>
       <span aria-hidden="true">·</span>
-      <span class="font-kai tracking-[0.12em] text-ink-soft">{{
-        current?.label ?? "未名之页"
-      }}</span>
+      <span class="min-w-0 truncate font-kai tracking-[0.12em] text-ink-soft">{{ entryMark }}</span>
       <span class="ml-auto min-w-0 truncate text-right">
         {{ player.worldName }}
         <template v-if="player.reincarnation.count > 0">
@@ -97,11 +100,11 @@ import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
-import { formatGN, formatNum, lifespanPair } from "@/utils/format";
+import { cnNumber, formatGN, formatNum, lifespanPair } from "@/utils/format";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { Capacitor } from "@capacitor/core";
 import { useNativeInsets } from "@/composables/useNativeInsets";
-import { navigationEntryOf } from "@/ui/navigation";
+import { navigationPositionOf } from "@/ui/navigation";
 import GameIcon from "./GameIcon.vue";
 import NavigationAtlas from "./NavigationAtlas.vue";
 
@@ -109,7 +112,20 @@ const player = usePlayerStore();
 const resources = useResourcesStore();
 const route = useRoute();
 const atlasOpen = ref(false);
-const current = computed(() => navigationEntryOf(route.name));
+const position = computed(() => navigationPositionOf(route.name));
+const positionKey = computed(() =>
+  position.value ? `${position.value.sectionIndex + 1}-${position.value.entryIndex + 1}` : "",
+);
+const positionMark = computed(() =>
+  position.value
+    ? `卷${cnNumber(position.value.sectionIndex + 1)} · ${position.value.section.label}`
+    : "玄枢",
+);
+const entryMark = computed(() =>
+  position.value
+    ? `${String(position.value.entryIndex + 1).padStart(2, "0")} ${position.value.entry.label}`
+    : "未名之页",
+);
 /**
  * 状态栏占位:原生实测有值(安卓,见 useNativeInsets)就用实测;没有就退回
  * 老的猜测 —— 原生 20px(沉浸式状态栏的近似)/ 网页 8px,web 渲染逐位不变。

@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <!--
       历练中 / 选择区域:这页最大的同页切换(进战斗、收兵回府)不该硬切 ——
       复用全局 page-fade,让来去有呼吸(纯 opacity/transform,布局门量不到)。

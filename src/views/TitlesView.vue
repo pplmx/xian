@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="名号与灵兽" back-to="character" back-label="人物" />
     <!-- 页签 -->
     <InkTabs v-model="tab" :tabs="TABS" />

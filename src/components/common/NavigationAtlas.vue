@@ -58,7 +58,7 @@
               :key="entry.name"
               :to="entry.to"
               data-atlas-entry
-              class="atlas-entry group relative flex min-h-[48px] items-center gap-2.5 border-b border-ink/10 px-1.5 py-2 text-left transition-[transform,background-color,color] active:scale-99"
+              class="atlas-entry group relative flex min-h-[48px] items-center gap-2.5 border-b border-ink/10 px-1.5 py-2 text-left transition-[transform,background-color,color] active:scale-99 tinylens:gap-1.5 tinylens:px-1"
               :class="
                 route.name === entry.name
                   ? 'bg-cinnabar/6 text-cinnabar'
@@ -68,7 +68,7 @@
               @click="emit('close')"
             >
               <span
-                class="grid h-8 w-8 shrink-0 place-items-center border"
+                class="grid h-8 w-8 shrink-0 place-items-center border tinylens:h-7 tinylens:w-7"
                 :class="
                   route.name === entry.name
                     ? 'border-cinnabar/40 text-cinnabar'
@@ -79,7 +79,7 @@
               </span>
               <span class="min-w-0 flex-1">
                 <span
-                  class="block font-kai text-[14px] tracking-[0.16em]"
+                  class="block font-kai text-[14px] tracking-[0.16em] tinylens:tracking-[0.08em]"
                   :class="route.name === entry.name ? 'text-cinnabar' : 'text-ink'"
                   >{{ entry.label }}</span
                 >
@@ -114,7 +114,8 @@
 import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
-import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationEntryOf } from "@/ui/navigation";
+import { cnNumber } from "@/utils/format";
+import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationPositionOf } from "@/ui/navigation";
 import BaseModal from "./BaseModal.vue";
 import GameIcon from "./GameIcon.vue";
 
@@ -123,11 +124,13 @@ const emit = defineEmits<{ close: [] }>();
 
 const route = useRoute();
 const player = usePlayerStore();
-const current = computed(() => navigationEntryOf(route.name));
+const currentPosition = computed(() => navigationPositionOf(route.name));
+const current = computed(() => currentPosition.value?.entry);
 const currentOrdinal = computed(() => {
-  const i = NAVIGATION_ENTRIES.findIndex((entry) => entry.name === route.name);
-  return i < 0 ? "未入册" : `第 ${String(i + 1).padStart(2, "0")} 册`;
+  const position = currentPosition.value;
+  return position
+    ? `卷${cnNumber(position.sectionIndex + 1)} · 第 ${String(position.entryIndex + 1).padStart(2, "0")} 册`
+    : "未入册";
 });
-const SECTION_NUMERALS = ["一", "二", "三", "四", "五"] as const;
-const sectionNumber = (index: number): string => SECTION_NUMERALS[index] ?? String(index + 1);
+const sectionNumber = (index: number): string => cnNumber(index + 1);
 </script>

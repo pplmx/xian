@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="藏珍与成就" back-to="character" back-label="人物" />
     <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
     <InkTabs v-model="tab" :tabs="tabRows" />

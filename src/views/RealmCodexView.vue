@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="界域志" back-to="character" back-label="人物">
       <template #meta>
         <p class="mt-1.5 text-[10px] text-ink-faint">

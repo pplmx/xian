@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 /*
  * 视觉节奏的两条硬底线 —— 都不看图也能查，且改坏了会直接红。
  *
- * 1) 页面外壳:所有常规页共用同一套内边距与纵向节奏(space-y-4 px-4 pb-6 pt-4)。
+ * 1) 页面外壳:所有常规页共用同一套内边距与纵向节奏(.folio-page)。
  *    新页若自带一套间距,滚动到第二屏就会「跳格」—— 每个页面都对,合起来不对。
  * 2) 颜色:组件里不写裸十六进制色;调色板的单一来源是 style.css 的 token。
  *    裸色最麻烦的不是写错,而是换肤(夜间主题)时它不会跟着变。
@@ -16,7 +16,8 @@ const COMPONENTS = resolve(__dirname, "../components");
 
 /** 开局两页是单屏版式,库存页按栏目自带分节,均不套常规外壳 */
 const SHELL_EXEMPT = new Set(["CreateView.vue", "WelcomeView.vue", "InventoryView.vue"]);
-const SHELL = /class="[^"]*\bspace-y-4\b[^"]*\bpx-4\b[^"]*\bpb-6\b[^"]*\bpt-4\b[^"]*"/;
+const SHELL = /class="[^"]*\bfolio-page\b[^"]*"/;
+const STACK = /class="[^"]*\bfolio-page--stack\b[^"]*"/;
 
 /** 两处裸色都有明确理由:canvas 画不了 CSS 变量;传送门是独立艺术块(见各自注释) */
 const HEX_EXEMPT: Array<{ file: string; why: string }> = [
@@ -35,6 +36,13 @@ describe("视觉节奏 · 页面外壳与配色来源", () => {
       .filter((f) => f.endsWith(".vue") && !SHELL_EXEMPT.has(f))
       .filter((f) => !SHELL.test(readFileSync(resolve(VIEWS, f), "utf8")));
     expect(bad, "这些页面没套标准外壳 —— 滚动时会跳格").toEqual([]);
+  });
+
+  it("常规页的纵向节奏也走同一个页框,不再逐页手拼 space-y", () => {
+    const bad = readdirSync(VIEWS)
+      .filter((f) => f.endsWith(".vue") && !SHELL_EXEMPT.has(f))
+      .filter((f) => !STACK.test(readFileSync(resolve(VIEWS, f), "utf8")));
+    expect(bad, "这些页面没接页框纵向节奏").toEqual([]);
   });
 
   it("组件里不写裸十六进制色(两处已注明的例外除外)", () => {

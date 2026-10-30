@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <template v-if="view">
       <!-- 世界身份是这一页的卷首:先读此世之名,再读路怎么走 -->
       <FolioPageHeader :title="view.title" :subtitle="view.summary" featured>
@@ -77,7 +77,7 @@
             换界的代价必须写在按钮下面:setMortalWorld 会把本世路线进度清零(「换界即换路」)。
             只说价、不说会清进度,等于让玩家在不知情的情况下丢掉已经走过的路。
           -->
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-1 text-[10px] leading-relaxed text-ink-soft">
           换界即换路:已走的本世路线会清零,所钟与地貌构成重新掷定。
         </p>
       </FolioPageHeader>

@@ -6260,7 +6260,7 @@ async function taskAdventureFold() {
     } else {
       const fold = await page.evaluate(() => {
         const nav = document.querySelector("nav")?.getBoundingClientRect();
-        const title = [...document.querySelectorAll("h2")].find(
+        const title = [...document.querySelectorAll("h1, h2")].find(
           (el) => (el.textContent || "").trim() === "历练",
         );
         const secret = document.querySelector("[data-secret-realm-card]");

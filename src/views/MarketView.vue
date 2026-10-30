@@ -405,7 +405,7 @@ function bountyReady(o: BountySlot): boolean {
 </script>
 
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader
       title="坊市"
       subtitle="灵石换机缘 · 时来运转"

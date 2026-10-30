@@ -97,6 +97,10 @@ describe("排版量法口径", () => {
     expect(SCRIPT).toContain("info.verticalTexts?.length");
   });
 
+  it("历练首屏标题判据认共用卷首的 h1，也兼容旧页面的 h2", () => {
+    expect(SCRIPT).toContain('document.querySelectorAll("h1, h2")');
+  });
+
   it("缩放档要量后期档 —— 空档量不出「长数字 + 满屏内容」在 195 宽上什么样", () => {
     /*
      * 主巡页那一遍用的是刚建号的空档:灵石几百、行囊两件、没有在途秘境。195 CSS px 上

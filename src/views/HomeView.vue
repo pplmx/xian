@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <!-- 读屏起手句:创角踏入仙途后补念「你已入此世…」,只在那一趟有值(CreateView 交接、读完即清) -->
     <p aria-live="polite" class="sr-only">{{ bootLine }}</p>
     <!--
@@ -62,7 +62,7 @@
             weatherLeft
           }}</span>
         </div>
-        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint [word-break:keep-all]">
+        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-soft [word-break:keep-all]">
           {{ weather.desc }}<span v-if="tomorrowWeather">{{ tomorrowBrief }}</span>
         </p>
         <!--
@@ -70,7 +70,7 @@
           渡劫前一天该不该等天时,靠一句「皆有裨益」算不出来。
           效果行照 mods 真值摊开;渡劫倍率 >1 再挂一句险。
         -->
-        <p v-if="weatherModText" class="mt-0.5 text-[10px] text-qing tabular">
+        <p v-if="weatherModText" class="mt-0.5 text-[10px] text-ink-soft tabular">
           {{ weatherModText
           }}<span v-if="weatherTribulation"> · 今日渡劫 ×{{ weatherTribulation }}</span>
         </p>

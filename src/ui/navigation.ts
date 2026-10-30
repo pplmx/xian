@@ -179,11 +179,29 @@ export const NAVIGATION_ENTRIES: readonly NavigationEntry[] = NAVIGATION_SECTION
   (group) => group.entries,
 );
 
-const BY_NAME = new Map(NAVIGATION_ENTRIES.map((entry) => [entry.name, entry]));
+export interface NavigationPosition {
+  /** 所属分卷 */
+  section: NavigationSection;
+  /** 当前册目 */
+  entry: NavigationEntry;
+  /** 分卷在玄枢图中的零基序号 */
+  sectionIndex: number;
+  /** 册目在本卷中的零基序号 */
+  entryIndex: number;
+}
 
-/** 路由名 → 册目。欢迎页、建号页与未知路由不在图里。 */
-export function navigationEntryOf(
+const POSITION_BY_NAME = new Map<string, NavigationPosition>(
+  NAVIGATION_SECTIONS.flatMap((section, sectionIndex) =>
+    section.entries.map((entry, entryIndex) => [
+      entry.name,
+      { section, entry, sectionIndex, entryIndex },
+    ]),
+  ),
+);
+
+/** 路由名 → 卷次、册次与册目本身。所有「第几卷 / 第几册」都从这里取。 */
+export function navigationPositionOf(
   name: string | symbol | null | undefined,
-): NavigationEntry | undefined {
-  return typeof name === "string" ? BY_NAME.get(name) : undefined;
+): NavigationPosition | undefined {
+  return typeof name === "string" ? POSITION_BY_NAME.get(name) : undefined;
 }

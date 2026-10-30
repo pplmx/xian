@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationEntryOf } from "./navigation";
+import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationPositionOf } from "./navigation";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -22,20 +22,37 @@ describe("玄枢图 · 全站册目", () => {
   });
 
   it("按路由名能找回所在册与分卷", () => {
-    expect(navigationEntryOf("cultivation")).toMatchObject({
+    expect(navigationPositionOf("cultivation")?.entry).toMatchObject({
       label: "修炼",
       sectionLabel: "修行",
     });
-    expect(navigationEntryOf("souls")).toMatchObject({
+    expect(navigationPositionOf("souls")?.entry).toMatchObject({
       label: "器魂",
       sectionLabel: "身外",
     });
-    expect(navigationEntryOf("settings")).toMatchObject({
+    expect(navigationPositionOf("settings")?.entry).toMatchObject({
       label: "设置",
       sectionLabel: "天机",
     });
-    expect(navigationEntryOf("not-a-route")).toBeUndefined();
-    expect(navigationEntryOf(undefined)).toBeUndefined();
+    expect(navigationPositionOf("not-a-route")).toBeUndefined();
+    expect(navigationPositionOf(undefined)).toBeUndefined();
+  });
+
+  it("按册目能读出卷次与册次,供顶栏、卷首与弹窗共用", () => {
+    expect(navigationPositionOf("home")).toMatchObject({
+      sectionIndex: 0,
+      entryIndex: 0,
+    });
+    expect(navigationPositionOf("souls")).toMatchObject({
+      sectionIndex: 3,
+      entryIndex: 2,
+    });
+    expect(navigationPositionOf("settings")).toMatchObject({
+      sectionIndex: 4,
+      entryIndex: 4,
+    });
+    expect(navigationPositionOf("not-a-route")).toBeUndefined();
+    expect(navigationPositionOf(undefined)).toBeUndefined();
   });
 
   it("新壳层真的接上玄枢图,而不是只造了一份死数据", () => {

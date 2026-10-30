@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in px-4 pb-6 pt-4">
+  <div class="folio-page stagger-in">
     <FolioPageHeader title="行囊" subtitle="装备、丹药与材料" featured>
       <template #action>
         <div class="text-right tinylens:text-left">

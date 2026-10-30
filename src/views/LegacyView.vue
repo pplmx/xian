@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader
       title="修仙录"
       subtitle="这一部,只写你自己"

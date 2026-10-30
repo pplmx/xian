@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader :title="player.realm.name" :subtitle="player.realm.desc" featured>
       <template #meta>
         <p class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px]">

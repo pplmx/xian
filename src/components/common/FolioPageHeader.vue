@@ -1,6 +1,6 @@
 <template>
   <header
-    class="folio-masthead card-ink relative overflow-hidden"
+    class="folio-masthead relative overflow-hidden"
     :class="featured ? 'folio-masthead--featured px-4 pb-4 pt-4' : 'px-4 py-3'"
     data-folio-masthead
     :data-folio-featured="featured ? '' : undefined"
@@ -17,6 +17,11 @@
       >
         ← {{ backLabel }}
       </button>
+      <span
+        data-folio-position
+        class="folio-masthead__position shrink-0 text-[10px] font-kai tracking-[0.2em] text-ink-faint"
+        >{{ positionMark }}</span
+      >
       <span class="text-[10px] font-kai tracking-[0.28em] text-cinnabar" data-folio-section>
         {{ navigation?.sectionLabel ?? "玄枢" }}
       </span>
@@ -69,7 +74,8 @@
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
-import { navigationEntryOf } from "@/ui/navigation";
+import { cnNumber } from "@/utils/format";
+import { navigationPositionOf } from "@/ui/navigation";
 import GameIcon from "./GameIcon.vue";
 
 const props = withDefaults(
@@ -86,6 +92,10 @@ const props = withDefaults(
 
 const route = useRoute();
 const router = useRouter();
-const navigation = computed(() => navigationEntryOf(route.name));
+const position = computed(() => navigationPositionOf(route.name));
+const navigation = computed(() => position.value?.entry);
+const positionMark = computed(() =>
+  position.value ? `卷${cnNumber(position.value.sectionIndex + 1)}` : "卷首",
+);
 const description = computed(() => props.subtitle || navigation.value?.description || "");
 </script>

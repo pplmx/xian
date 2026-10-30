@@ -28,7 +28,7 @@
                 data-folio-modal-section
                 class="folio-modal__section text-[10px] tracking-[0.3em] text-ink-faint"
               >
-                {{ modalSection }} · 卷页
+                {{ modalPosition }} · 卷页
               </p>
               <h3 class="mt-1 flex items-center gap-2 font-kai text-lg tracking-[0.2em] text-ink">
                 <span
@@ -107,7 +107,8 @@ if (typeof window !== "undefined") window.addEventListener("keydown", onWindowKe
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, useTemplateRef, watch } from "vue";
 import { useRoute } from "vue-router";
-import { navigationEntryOf } from "@/ui/navigation";
+import { cnNumber } from "@/utils/format";
+import { navigationPositionOf } from "@/ui/navigation";
 
 const props = withDefaults(
   defineProps<{
@@ -131,7 +132,10 @@ const props = withDefaults(
 
 const emit = defineEmits<{ close: [] }>();
 const route = useRoute();
-const modalSection = computed(() => navigationEntryOf(route.name)?.sectionLabel ?? "玄枢");
+const modalPosition = computed(() => {
+  const position = navigationPositionOf(route.name);
+  return position ? `卷${cnNumber(position.sectionIndex + 1)} · ${position.section.label}` : "玄枢";
+});
 
 /**
  * 焦点管理 —— 弹窗打开时,键盘焦点必须跟着进去,且不许跑出去。

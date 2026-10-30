@@ -666,11 +666,99 @@ html[data-theme="dark"] .btn-seal:disabled {
  * 免得它读成又一个现代 App 的汉堡菜单。
  */
 .app-masthead {
+  border-left: 2px solid var(--world-bar);
   background-image: linear-gradient(
     180deg,
     rgb(var(--color-paper-rgb) / 0.5),
     rgb(var(--color-paper-deep-rgb) / 0.16)
   );
+  box-shadow:
+    inset 1px 0 0 rgb(var(--color-paper-rgb) / 0.32),
+    inset 0 -1px 0 rgb(var(--color-ink-rgb) / 0.025);
+}
+
+.folio-head::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(var(--color-ink-rgb) / 0.12) 18%,
+    rgb(var(--color-ink-rgb) / 0.12) 82%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.folio-head__ledger-entry {
+  position: relative;
+  min-height: 20px;
+}
+
+.folio-head__ledger-entry + .folio-head__ledger-entry {
+  padding-left: 0.55rem;
+}
+
+.folio-head__ledger-entry + .folio-head__ledger-entry::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  width: 1px;
+  background: rgb(var(--color-ink-rgb) / 0.12);
+}
+
+.folio-head__settings {
+  border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+}
+
+.folio-page {
+  --folio-page-gutter: 1rem;
+  position: relative;
+  counter-reset: folio-section;
+  padding: 1rem var(--folio-page-gutter) 1.5rem;
+}
+
+.folio-page--stack > * + * {
+  margin-top: 1rem;
+}
+
+.folio-page .section-title {
+  counter-increment: folio-section;
+  column-gap: 0.375rem;
+}
+
+.folio-page .section-title::before {
+  content: counter(folio-section, decimal-leading-zero);
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: none;
+  place-items: center;
+  margin-top: 0.1rem;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+  background: rgb(var(--color-paper-rgb) / 0.5);
+  box-shadow: inset 0 0 0 2px rgb(var(--color-paper-rgb) / 0.22);
+  color: rgb(var(--color-ink-faint-rgb));
+  font-family: var(--font-kai);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 220px) {
+  .folio-page {
+    --folio-page-gutter: 0.75rem;
+  }
+
+  .folio-page--stack > * + * {
+    margin-top: 0.875rem;
+  }
 }
 
 .folio-surface {
@@ -694,11 +782,16 @@ html[data-theme="dark"] .btn-seal:disabled {
 }
 
 .atlas-trigger {
-  border-radius: 2px;
+  border-radius: 1px;
   background: rgb(var(--color-paper-rgb) / 0.52);
   box-shadow:
     inset 0 0 0 1px rgb(var(--color-paper-rgb) / 0.32),
     0 1px 0 rgb(var(--color-ink-rgb) / 0.08);
+}
+
+.atlas-trigger__mark {
+  color: rgb(var(--color-ink-faint-rgb));
+  letter-spacing: 0.08em;
 }
 
 .atlas-trigger:active {
@@ -805,6 +898,12 @@ html[data-theme="dark"] .btn-seal:disabled {
   );
 }
 
+@media (max-width: 220px) {
+  .atlas-entry-list {
+    margin-left: 1.5rem;
+  }
+}
+
 .atlas-entry[data-atlas-current] {
   box-shadow: inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.62);
 }
@@ -814,7 +913,35 @@ html[data-theme="dark"] .btn-seal:disabled {
 }
 
 .folio-masthead {
+  position: relative;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
   border-left: 2px solid var(--world-bar);
+  border-radius: 2px;
+  background:
+    linear-gradient(
+      112deg,
+      rgb(var(--color-paper-rgb) / 0.34),
+      transparent 46%,
+      rgb(var(--color-ink-rgb) / 0.018)
+    ),
+    rgb(var(--color-paper-lifted-rgb));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.44),
+    2px 2px 0 rgb(var(--color-ink-rgb) / 0.025);
+}
+
+.folio-masthead::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.035);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.folio-masthead__position {
+  padding-right: 0.35rem;
+  border-right: 1px solid rgb(var(--color-ink-rgb) / 0.14);
 }
 
 .folio-masthead--featured {
@@ -828,31 +955,31 @@ html[data-theme="dark"] .btn-seal:disabled {
     ),
     rgb(var(--color-paper-lifted-rgb));
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.42),
-    inset 0 0 0 1px rgb(var(--color-ink-rgb) / 0.025),
-    0 3px 12px rgb(var(--shadow-ink-rgb) / 0.055);
+    inset 0 1px 0 rgb(255 255 255 / 0.48),
+    3px 3px 0 rgb(var(--color-ink-rgb) / 0.03);
 }
 
 .folio-masthead::after {
   content: "";
   position: absolute;
-  right: -26px;
-  top: -30px;
-  width: 82px;
-  height: 82px;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.06);
-  transform: rotate(12deg);
+  right: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  background: linear-gradient(
+    225deg,
+    rgb(var(--color-paper-deep-rgb) / 0.92) 0 49%,
+    rgb(var(--color-ink-rgb) / 0.045) 50% 100%
+  );
+  box-shadow: -1px 1px 2px rgb(var(--shadow-ink-rgb) / 0.04);
   pointer-events: none;
 }
 
 .folio-masthead--featured::after {
-  right: -22px;
-  top: -34px;
-  width: 112px;
-  height: 112px;
-  border-color: rgb(var(--color-ink-rgb) / 0.08);
-  box-shadow: inset 0 0 0 8px rgb(var(--color-paper-rgb) / 0.12);
-  transform: rotate(14deg);
+  width: 24px;
+  height: 24px;
 }
 
 .folio-seal {
@@ -878,8 +1005,7 @@ html[data-theme="dark"] .btn-seal:disabled {
 html[data-theme="dark"] .folio-masthead--featured {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.05),
-    inset 0 0 0 1px rgb(var(--color-ink-rgb) / 0.03),
-    0 3px 12px rgb(var(--shadow-ink-rgb) / 0.08);
+    3px 3px 0 rgb(var(--color-ink-rgb) / 0.04);
 }
 
 html[data-theme="dark"] .bottom-dock-rail {
@@ -1257,11 +1383,11 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     position: relative;
     background: rgb(var(--color-paper-lifted-rgb));
     border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
-    border-radius: 4px;
+    border-radius: 2px;
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.5),
-      0 1px 2px rgb(var(--shadow-ink-rgb) / 0.06),
-      0 4px 14px rgb(var(--shadow-ink-rgb) / 0.05);
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.025),
+      0 1px 2px rgb(var(--shadow-ink-rgb) / 0.04);
     /* 触感统一:btn-seal/btn-ghost/chip-ink 按压都是 0.12s 滑移,拿 card-ink 当按钮处不该硬跳 */
     transition: transform 0.12s ease;
   }
@@ -1273,9 +1399,9 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
   .card-ink::before {
     content: "";
     position: absolute;
-    inset: 4px;
+    inset: 3px;
     border: 1px solid rgb(var(--color-ink-rgb) / 0.035);
-    border-radius: 2px;
+    border-radius: 1px;
     pointer-events: none;
   }
 
@@ -1291,8 +1417,8 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
   html[data-theme="dark"] .card-ink {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 1px 2px rgb(var(--shadow-ink-rgb) / 0.06),
-      0 4px 14px rgb(var(--shadow-ink-rgb) / 0.05);
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.035),
+      0 1px 2px rgb(var(--shadow-ink-rgb) / 0.04);
   }
 
   /*
@@ -1539,8 +1665,8 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     position: sticky;
     top: 0;
     z-index: 30;
-    margin-inline: -1rem;
-    padding-inline: 1rem;
+    margin-inline: calc(var(--folio-page-gutter, 1rem) * -1);
+    padding-inline: var(--folio-page-gutter, 1rem);
     background: rgb(var(--color-paper-rgb) / 0.94);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);

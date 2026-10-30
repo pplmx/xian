@@ -216,7 +216,7 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
 </script>
 
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader
       title="门庭有徒"
       :subtitle="`弟子跑腿,资材自来 · ${slots} 槽`"

@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="洞府营造" back-to="home" back-label="返回">
       <template #meta>
         <!-- 家底一句:座数、离线档、弟子在途 —— 三个数概括这一页,不必翻卡 -->

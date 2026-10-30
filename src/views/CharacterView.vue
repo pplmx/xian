@@ -1,5 +1,5 @@
 <template>
-  <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="道躯" subtitle="属性、灵根与传承" featured>
       <template #action>
         <div class="text-right tinylens:text-left">
