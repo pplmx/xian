@@ -139,6 +139,7 @@
   .settings-trail {
     --settings-accent: var(--color-cinnabar);
     --settings-accent-rgb: var(--color-cinnabar-rgb);
+    --ledger-accent: var(--settings-accent);
     position: relative;
     overflow: hidden;
     margin-top: 0.5rem;
@@ -178,41 +179,6 @@
     content: "";
     pointer-events: none;
   }
-  .settings-console__head,
-  .settings-archive__head,
-  .settings-trail__head {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 0.58rem 0.72rem;
-    padding: 0.82rem 0.92rem 0.72rem;
-  }
-  .settings-console__seal,
-  .settings-archive__seal,
-  .settings-trail__seal {
-    display: grid;
-    width: 2.5rem;
-    height: 2.5rem;
-    flex: 0 0 auto;
-    place-items: center;
-    border: 1px solid rgb(var(--settings-accent-rgb) / 0.34);
-    color: var(--settings-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    line-height: 1;
-  }
-  .settings-console__identity,
-  .settings-archive__identity,
-  .settings-trail__identity {
-    min-width: 7rem;
-    flex: 1 1 11rem;
-  }
-  .settings-console__eyebrow,
-  .settings-archive__eyebrow,
-  .settings-trail__eyebrow,
   .settings-group__eyebrow {
     display: block;
     color: var(--color-ink-faint);
@@ -220,9 +186,6 @@
     letter-spacing: 0.12em;
     line-height: 1.45;
   }
-  .settings-console__title,
-  .settings-archive__title,
-  .settings-trail__title,
   .settings-group__title {
     color: var(--color-ink);
     font-family: var(--font-kai);
@@ -230,34 +193,6 @@
     font-weight: 400;
     letter-spacing: 0.08em;
     line-height: 1.3;
-  }
-  .settings-console__desc,
-  .settings-archive__desc {
-    display: block;
-    margin-top: 0.12rem;
-    color: var(--color-ink-soft);
-    font-size: var(--type-note);
-    line-height: 1.58;
-  }
-  .settings-console__score,
-  .settings-archive__score,
-  .settings-trail__score {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: baseline;
-    gap: 0.18rem;
-    margin-left: auto;
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    white-space: nowrap;
-  }
-  .settings-console__score strong,
-  .settings-archive__score {
-    color: var(--settings-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    font-weight: 400;
-    letter-spacing: 0.06em;
   }
   .settings-console__grid {
     position: relative;
@@ -699,9 +634,6 @@
     }
   }
   @media (max-width: 220px) {
-    .settings-console__head,
-    .settings-archive__head,
-    .settings-trail__head,
     .settings-group,
     .settings-archive__stat,
     .settings-archive__notice,
@@ -710,14 +642,6 @@
     .settings-trail__body,
     .settings-index__row {
       padding-inline: 0.68rem;
-    }
-
-    .settings-console__score,
-    .settings-archive__score,
-    .settings-trail__score {
-      width: 100%;
-      margin-left: 0;
-      padding-left: 3.08rem;
     }
 
     .settings-group__head {

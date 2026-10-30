@@ -34,6 +34,8 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       { file: "src/components/build/BuildDiscovery.vue", count: 1 },
       { file: "src/views/MortalWorldView.vue", count: 2 },
       { file: "src/views/RealmCodexView.vue", count: 1 },
+      { file: "src/views/CollectionView.vue", count: 2 },
+      { file: "src/views/SettingsView.vue", count: 3 },
     ];
 
     for (const { file, count } of cases) {
@@ -51,10 +53,12 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       "src/components/build/BuildDiscovery.vue",
       "src/views/MortalWorldView.vue",
       "src/views/RealmCodexView.vue",
+      "src/views/CollectionView.vue",
+      "src/views/SettingsView.vue",
     ]) {
       const view = source(file);
       expect(view).not.toMatch(
-        /<(?:header)[^>]*class="[^"]*(?:build-ledger__head|legacy-ledger__head|name-beast-ledger__head|name-ledger__head|build-discovery__head|world-ledger__head|realm-now__head)/,
+        /<(?:header)[^>]*class="[^"]*(?:build-ledger__head|legacy-ledger__head|name-beast-ledger__head|name-ledger__head|build-discovery__head|world-ledger__head|realm-now__head|achievement-briefing__head|collection-briefing__head|settings-console__head|settings-archive__head|settings-trail__head)/,
       );
     }
   });
@@ -79,6 +83,8 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
     const titles = source("src/styles/pages/titles.css");
     const world = source("src/styles/pages/world.css");
     const realm = source("src/styles/pages/realm-codex.css");
+    const collection = source("src/styles/pages/collection.css");
+    const settings = source("src/styles/pages/settings.css");
 
     expect(build).toMatch(
       /\.build-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--build-accent\)/,
@@ -93,5 +99,11 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       /\.world-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--world-accent\)/,
     );
     expect(realm).toMatch(/\.realm-now\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--realm-accent\)/);
+    expect(collection).toMatch(
+      /\.achievement-briefing,\s*\.collection-briefing\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--color-gold-ink\)/,
+    );
+    expect(settings).toMatch(
+      /\.settings-console,\s*\.settings-archive,\s*\.settings-trail\s*\{[\s\S]{0,300}--ledger-accent:\s*var\(--settings-accent\)/,
+    );
   });
 });

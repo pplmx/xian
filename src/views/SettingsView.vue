@@ -35,20 +35,14 @@
     <section class="folio-span-all">
       <SectionTitle title="天机总案" hint="六项设置即时生效,只改听看与行止" />
       <section class="settings-console" data-settings-console>
-        <header class="settings-console__head">
-          <span class="settings-console__seal" aria-hidden="true">枢</span>
-          <span class="settings-console__identity">
-            <span class="settings-console__eyebrow">本机法度</span>
-            <h2 class="settings-console__title">声息、观照与行止</h2>
-            <span class="settings-console__desc">
-              开关只决定你怎么听、怎么看、怎么遇；修行结算与存档事实不另立一套。
-            </span>
-          </span>
-          <span class="settings-console__score">
-            <span>改动</span>
-            <strong>即存</strong>
-          </span>
-        </header>
+        <LedgerHeader
+          seal="枢"
+          eyebrow="本机法度"
+          title="声息、观照与行止"
+          description="开关只决定你怎么听、怎么看、怎么遇；修行结算与存档事实不另立一套。"
+          score-label="改动"
+          score-value="即存"
+        />
 
         <div class="settings-console__grid">
           <section class="settings-group" data-settings-group="sound">
@@ -239,17 +233,16 @@
     <section class="folio-span-all">
       <SectionTitle title="存续案" hint="备份是丢档前唯一的保险" />
       <section class="settings-archive" data-settings-archive :data-backup="backupReadout.state">
-        <header class="settings-archive__head">
-          <span class="settings-archive__seal" aria-hidden="true">档</span>
-          <span class="settings-archive__identity">
-            <span class="settings-archive__eyebrow">本机存档</span>
-            <h2 class="settings-archive__title">存续与迁移</h2>
-            <span class="settings-archive__desc">
-              导出是唯一能带走的一份；导入会整体替换当前进度，确认前先摊清底细。
-            </span>
-          </span>
-          <span class="settings-archive__score tabular">存档版本 v{{ SAVE_VERSION }}</span>
-        </header>
+        <LedgerHeader
+          seal="档"
+          eyebrow="本机存档"
+          title="存续与迁移"
+          description="导出是唯一能带走的一份；导入会整体替换当前进度，确认前先摊清底细。"
+        >
+          <template #meta>
+            <p class="folio-ledger-head__meta tabular text-qing">存档版本 v{{ SAVE_VERSION }}</p>
+          </template>
+        </LedgerHeader>
 
         <div class="settings-archive__ledger">
           <div class="settings-archive__stat" data-settings-save-stat="duration">
@@ -346,19 +339,16 @@
     <section class="folio-span-all">
       <SectionTitle title="留痕案" :hint="`异常最多留 ${DIAG_MAX} 条`" />
       <section class="settings-trail" data-settings-trail :data-state="diagReadout.state">
-        <header class="settings-trail__head">
-          <span class="settings-trail__seal" aria-hidden="true">{{ diagReadout.mark }}</span>
-          <span class="settings-trail__identity">
-            <span class="settings-trail__eyebrow">本机留痕</span>
-            <h2 class="settings-trail__title">异常记录</h2>
-          </span>
-          <span
-            class="settings-trail__score tabular"
-            :class="diagReadout.state === 'clear' ? 'text-qing' : 'text-cinnabar'"
-          >
-            {{ diagReadout.label }}
-          </span>
-        </header>
+        <LedgerHeader :seal="diagReadout.mark" eyebrow="本机留痕" title="异常记录">
+          <template #meta>
+            <p
+              class="folio-ledger-head__meta tabular"
+              :class="diagReadout.state === 'clear' ? 'text-qing' : 'text-cinnabar'"
+            >
+              {{ diagReadout.label }}
+            </p>
+          </template>
+        </LedgerHeader>
 
         <div class="settings-trail__body">
           <p class="settings-trail__copy">
@@ -550,6 +540,7 @@ import {
   subscribeSaveWriteFailure,
 } from "@/utils/storage";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import PrivacyDialog from "@/components/common/PrivacyDialog.vue";

@@ -24,20 +24,14 @@
     <!-- 功名:一张卷首账 + 按方向收起的功名卷 -->
     <template v-if="tab === 'achievement'">
       <section class="achievement-briefing" data-achievement-hero>
-        <header class="achievement-briefing__head">
-          <div class="achievement-briefing__identity">
-            <span class="achievement-briefing__seal" aria-hidden="true">名</span>
-            <div class="min-w-0">
-              <p class="achievement-briefing__eyebrow text-note">功名状</p>
-              <h2 class="achievement-briefing__title text-section">成就谱</h2>
-              <p class="achievement-briefing__lead">名称与条件不再藏着；做成一枚，记一枚。</p>
-            </div>
-          </div>
-          <p class="achievement-briefing__score tabular">
-            <strong class="text-heading">{{ doneCount }}</strong>
-            <span class="text-body">/{{ ACHIEVEMENTS.length }}</span>
-          </p>
-        </header>
+        <LedgerHeader
+          seal="名"
+          eyebrow="功名状"
+          title="成就谱"
+          description="名称与条件不再藏着；做成一枚，记一枚。"
+          :score-value="doneCount"
+          :score-suffix="`/${ACHIEVEMENTS.length}`"
+        />
 
         <div class="achievement-briefing__meter">
           <ProgressBar
@@ -188,32 +182,24 @@
     <!-- 藏珍:先给九册总谱,再把册目收成可逐册翻看的藏珍格 -->
     <template v-else>
       <section class="collection-briefing" data-collection-hero>
-        <header class="collection-briefing__head">
-          <div class="collection-briefing__identity">
-            <span class="collection-briefing__seal" aria-hidden="true">珍</span>
-            <div class="min-w-0">
-              <p class="collection-briefing__eyebrow text-note">九册总谱</p>
-              <h2 class="collection-briefing__title text-section">藏珍谱</h2>
-              <p class="collection-briefing__lead">
-                {{
-                  collectionOverview.newCount > 0
-                    ? `${collectionOverview.newRows.length} 册有新得，已展 ${openedNewCount} 册${
-                        collectionOverview.newRows.length > openedNewCount
-                          ? `；余 ${collectionOverview.newRows.length - openedNewCount} 册可展开。`
-                          : "。"
-                      }`
-                    : collectionOverview.known > 0
-                      ? "先看将满的一册；余册收着，点开再翻。"
-                      : "九册尚未开册；点开一册，看来源与收录进度。"
-                }}
-              </p>
-            </div>
-          </div>
-          <p class="collection-briefing__score tabular">
-            <strong class="text-heading">{{ collectionOverview.known }}</strong>
-            <span class="text-body">/{{ collectionOverview.total }}</span>
-          </p>
-        </header>
+        <LedgerHeader
+          seal="珍"
+          eyebrow="九册总谱"
+          title="藏珍谱"
+          :description="
+            collectionOverview.newCount > 0
+              ? `${collectionOverview.newRows.length} 册有新得，已展 ${openedNewCount} 册${
+                  collectionOverview.newRows.length > openedNewCount
+                    ? `；余 ${collectionOverview.newRows.length - openedNewCount} 册可展开。`
+                    : '。'
+                }`
+              : collectionOverview.known > 0
+                ? '先看将满的一册；余册收着，点开再翻。'
+                : '九册尚未开册；点开一册，看来源与收录进度。'
+          "
+          :score-value="collectionOverview.known"
+          :score-suffix="`/${collectionOverview.total}`"
+        />
 
         <div class="collection-briefing__meter">
           <ProgressBar
@@ -558,6 +544,7 @@ import {
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import CollectionCabinet from "@/components/common/CollectionCabinet.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
