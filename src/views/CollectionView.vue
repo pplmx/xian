@@ -1,231 +1,251 @@
 <template>
-  <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="藏珍与成就" back-to="character" back-label="人物" />
+  <div class="folio-page folio-page--stack stagger-in collection-page">
+    <FolioPageHeader
+      title="藏 珍"
+      subtitle="功名入谱 · 九册纳珍"
+      back-to="character"
+      back-label="人物"
+      featured
+    >
+      <template #visual>
+        <CollectionCabinet
+          :cells="collectionCabinetCells"
+          :achievement-done="doneCount"
+          :achievement-total="ACHIEVEMENTS.length"
+          :collection-known="collectionOverview.known"
+          :collection-total="collectionOverview.total"
+        />
+      </template>
+    </FolioPageHeader>
+
     <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
     <InkTabs v-model="tab" :tabs="tabRows" />
 
-    <!-- 成就 -->
+    <!-- 功名:一张卷首账 + 按方向收起的功名卷 -->
     <template v-if="tab === 'achievement'">
-      <!--
-        卷首先报「此刻」:整体走到哪、眼下哪三枚最近。
-        名称与条件全部摊开,玩家才知道该往哪使劲;不再用一整墙「???」代替目标。
-      -->
-      <div class="card-ink mt-2 px-4 py-3" data-achievement-hero>
-        <div class="flex items-end justify-between gap-3">
-          <div class="min-w-0">
-            <p class="font-kai text-title tracking-[0.2em] text-ink">成就谱</p>
-            <p class="mt-1 text-note leading-relaxed text-ink-faint">
-              名称与条件不再藏着；做成一枚，记一枚。
-            </p>
+      <section class="achievement-briefing" data-achievement-hero>
+        <header class="achievement-briefing__head">
+          <div class="achievement-briefing__identity">
+            <span class="achievement-briefing__seal" aria-hidden="true">名</span>
+            <div class="min-w-0">
+              <p class="achievement-briefing__eyebrow text-note">功名状</p>
+              <h2 class="achievement-briefing__title text-section">成就谱</h2>
+              <p class="achievement-briefing__lead">名称与条件不再藏着；做成一枚，记一枚。</p>
+            </div>
           </div>
-          <p class="shrink-0 font-kai text-heading text-cinnabar tabular">
-            {{ doneCount }}<span class="text-body text-ink-faint">/{{ ACHIEVEMENTS.length }}</span>
+          <p class="achievement-briefing__score tabular">
+            <strong class="text-heading">{{ doneCount }}</strong>
+            <span class="text-body">/{{ ACHIEVEMENTS.length }}</span>
           </p>
+        </header>
+
+        <div class="achievement-briefing__meter">
+          <ProgressBar
+            :value="doneCount / ACHIEVEMENTS.length"
+            color="var(--color-jade)"
+            :height="3"
+          />
         </div>
-        <ProgressBar
-          class="mt-2"
-          :value="doneCount / ACHIEVEMENTS.length"
-          color="var(--color-jade)"
-          :height="3"
-        />
-        <div class="ink-divider-mark my-3" />
-        <div class="flex items-baseline justify-between gap-2">
-          <p class="font-kai text-body tracking-widest text-ink-soft">眼下可追</p>
-          <p class="text-note text-ink-faint">按完成比例</p>
+
+        <div class="achievement-briefing__label">
+          <p class="text-body">眼下可追</p>
+          <span class="text-note">按完成比例</span>
         </div>
-        <div v-if="nearestAchievements.length" class="mt-1.5 space-y-1">
+
+        <div v-if="nearestAchievements.length" class="achievement-briefing__targets">
           <button
-            v-for="row in nearestAchievements"
+            v-for="(row, index) in nearestAchievements"
             :key="row.def.id"
             type="button"
-            class="flex min-h-8 w-full items-start gap-2 rounded px-1.5 py-1.5 text-left active:bg-ink/5"
+            class="achievement-target"
             :data-achievement-jump="row.def.id"
             :data-achievement-jump-direction="row.direction"
             :aria-label="`查看成就 ${row.def.name}`"
             @click="revealAchievement(row)"
           >
-            <span
-              class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
-              :class="row.ratio > 0 ? 'bg-cinnabar' : 'bg-ink/20'"
-            />
-            <span class="min-w-0 flex-1">
-              <span
-                class="flex items-baseline justify-between gap-2 tinylens:flex-col tinylens:items-start tinylens:gap-0"
-              >
-                <span class="truncate font-kai text-body text-ink">{{ row.def.name }}</span>
-                <span class="shrink-0 tabular text-note text-qing">{{ row.label }}</span>
-              </span>
-              <span class="mt-0.5 block truncate text-note text-ink-faint">{{ row.def.desc }}</span>
+            <span class="achievement-target__ordinal" aria-hidden="true">
+              {{ String(index + 1).padStart(2, "0") }}
             </span>
-            <span class="mt-0.5 shrink-0 text-note text-ink-faint" aria-hidden="true">›</span>
+            <span class="achievement-target__copy">
+              <span class="achievement-target__line">
+                <strong class="text-title">{{ row.def.name }}</strong>
+                <span class="achievement-target__progress tabular">{{ row.label }}</span>
+              </span>
+              <span class="achievement-target__desc">{{ row.def.desc }}</span>
+            </span>
+            <span class="achievement-target__arrow" aria-hidden="true">›</span>
           </button>
         </div>
-        <p v-else class="mt-2 text-note text-jade">全谱已成，往后的路只看你怎么走。</p>
-      </div>
+        <p v-else class="achievement-briefing__empty">全谱已成，往后的路只看你怎么走。</p>
 
-      <div class="mt-3 space-y-2">
-        <section
-          v-for="(g, gi) in achievementGroups"
-          :key="g.direction"
-          class="card-ink overflow-hidden"
-          :data-achievement-group="g.direction"
-        >
-          <button
-            type="button"
-            class="flex w-full items-start gap-3 px-4 py-3 text-left active:bg-ink/5"
-            :data-achievement-group-toggle="g.direction"
-            :aria-expanded="isGroupOpen(g.direction)"
-            :aria-controls="groupBodyId(gi)"
-            @click="toggleGroup(g.direction)"
+        <footer class="achievement-briefing__foot">
+          <span>一路只开一卷</span>
+          <span>点最近一枚，可落到目标卷目</span>
+        </footer>
+      </section>
+
+      <section class="achievement-volumes">
+        <SectionTitle title="功名卷目" hint="按方向收卷 · 条件全开" />
+        <div class="achievement-volumes__list">
+          <section
+            v-for="(g, gi) in achievementGroups"
+            :key="g.direction"
+            class="achievement-volume"
+            :data-achievement-group="g.direction"
           >
-            <span class="min-w-0 flex-1">
-              <span class="flex items-baseline justify-between gap-2">
-                <span class="font-kai text-title tracking-[0.2em] text-ink">{{ g.direction }}</span>
-                <span class="shrink-0 tabular text-body text-ink-faint"
-                  >{{ g.done }}/{{ g.total }}</span
-                >
-              </span>
-              <ProgressBar
-                class="mt-1.5"
-                :value="g.total > 0 ? g.done / g.total : 0"
-                color="var(--color-jade)"
-                :height="2"
-              />
-              <span class="mt-1 block truncate text-note text-ink-faint">
-                {{
-                  g.done === g.total
-                    ? "此路已尽，点开回看"
-                    : g.nearest
-                      ? `最近：${g.nearest.def.name} · ${g.nearest.label}`
-                      : "尚无可量化目标"
-                }}
-              </span>
-            </span>
-            <span
-              class="mt-0.5 shrink-0 text-body transition-transform"
-              :class="isGroupOpen(g.direction) ? 'rotate-180 text-cinnabar' : 'text-ink-faint'"
-              aria-hidden="true"
-              >▾</span
+            <button
+              type="button"
+              class="achievement-volume__head"
+              :data-achievement-group-toggle="g.direction"
+              :aria-expanded="isGroupOpen(g.direction)"
+              :aria-controls="groupBodyId(gi)"
+              @click="toggleGroup(g.direction)"
             >
-          </button>
-          <div
-            v-if="isGroupOpen(g.direction)"
-            :id="groupBodyId(gi)"
-            :data-achievement-group-body="g.direction"
-            class="border-t border-ink/6"
-          >
-            <div
-              v-for="row in g.rows"
-              :key="row.def.id"
-              :data-achievement-id="row.def.id"
-              class="flex items-start gap-3 border-b border-ink/6 px-4 py-2.5 last:border-b-0"
-            >
-              <span
-                class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-note font-kai"
-                :class="
-                  row.done
-                    ? 'border-gold-ink text-gold-ink'
-                    : row.target !== null
-                      ? 'border-cinnabar/40 text-cinnabar'
-                      : 'border-ink/15 text-ink-faint'
-                "
-              >
-                {{ row.done ? "成" : row.percent === null ? "未" : `${row.percent}%` }}
+              <span class="achievement-volume__seal" aria-hidden="true">
+                {{ achievementDirectionMark(g.direction) }}
               </span>
-              <div class="min-w-0 flex-1">
-                <div
-                  class="flex items-baseline justify-between gap-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
-                >
-                  <p class="font-kai text-body" :class="row.done ? 'text-ink' : 'text-ink-soft'">
-                    {{ row.def.name }}
-                  </p>
-                  <span
-                    class="shrink-0 tabular text-note"
-                    :class="row.done ? 'text-gold-ink' : 'text-qing'"
-                    >{{ row.label }}</span
-                  >
-                </div>
-                <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
-                  {{ row.def.desc }}
-                </p>
+              <span class="achievement-volume__copy">
+                <span class="achievement-volume__line">
+                  <strong class="text-title">{{ g.direction }}</strong>
+                  <span class="tabular">{{ g.done }}/{{ g.total }}</span>
+                </span>
                 <ProgressBar
-                  v-if="!row.done && row.target !== null"
-                  class="mt-1.5"
-                  :value="row.ratio"
-                  color="var(--color-cinnabar)"
+                  :value="g.total > 0 ? g.done / g.total : 0"
+                  color="var(--color-jade)"
                   :height="2"
                 />
-                <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏(见 rewardText 含 titleId) -->
-                <p v-if="row.done && row.rewardText" class="mt-0.5 text-note text-qing tabular">
-                  {{ row.rewardText }}
-                </p>
-              </div>
+                <span class="achievement-volume__summary">
+                  {{
+                    g.done === g.total
+                      ? "此路已尽，点开回看"
+                      : g.nearest
+                        ? `最近：${g.nearest.def.name} · ${g.nearest.label}`
+                        : "尚无可量化目标"
+                  }}
+                </span>
+              </span>
+              <span
+                class="achievement-volume__toggle"
+                :class="{ 'is-open': isGroupOpen(g.direction) }"
+                aria-hidden="true"
+                >▾</span
+              >
+            </button>
+
+            <div
+              v-if="isGroupOpen(g.direction)"
+              :id="groupBodyId(gi)"
+              :data-achievement-group-body="g.direction"
+              class="achievement-volume__body"
+            >
+              <article
+                v-for="row in g.rows"
+                :key="row.def.id"
+                :data-achievement-id="row.def.id"
+                class="achievement-entry"
+              >
+                <span
+                  class="achievement-entry__state"
+                  :class="{
+                    'is-done': row.done,
+                    'is-live': !row.done && row.target !== null,
+                  }"
+                >
+                  {{ row.done ? "成" : row.percent === null ? "未" : `${row.percent}%` }}
+                </span>
+                <div class="achievement-entry__copy">
+                  <div class="achievement-entry__line">
+                    <p class="text-body" :class="row.done ? 'text-ink' : 'text-ink-soft'">
+                      {{ row.def.name }}
+                    </p>
+                    <span
+                      class="achievement-entry__progress tabular"
+                      :class="row.done ? 'text-gold-ink' : 'text-qing'"
+                      >{{ row.label }}</span
+                    >
+                  </div>
+                  <p class="achievement-entry__desc">{{ row.def.desc }}</p>
+                  <ProgressBar
+                    v-if="!row.done && row.target !== null"
+                    class="achievement-entry__meter"
+                    :value="row.ratio"
+                    color="var(--color-cinnabar)"
+                    :height="2"
+                  />
+                  <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏(见 rewardText 含 titleId) -->
+                  <p v-if="row.done && row.rewardText" class="achievement-entry__reward tabular">
+                    {{ row.rewardText }}
+                  </p>
+                </div>
+              </article>
             </div>
-          </div>
-        </section>
-      </div>
-      <p class="text-center text-note text-ink-faint">
-        未达成也写明条件；卷目按方向收着，点开可逐条对账
-      </p>
+          </section>
+        </div>
+        <p class="collection-page__footnote">未达成也写明条件；卷目按方向收着，点开可逐条对账</p>
+      </section>
     </template>
 
-    <!-- 收藏图鉴 -->
+    <!-- 藏珍:先给九册总谱,再把册目收成可逐册翻看的藏珍格 -->
     <template v-else>
-      <!--
-        卷首先回答「哪一册值得现在打开」:有新得就最多先展开三册;
-        没有新得就只展开最接近收齐的一册。余册收成题头,不再九册同时铺开。
-      -->
-      <div class="card-ink mt-2 px-4 py-3" data-collection-hero>
-        <div class="flex items-end justify-between gap-3">
-          <div class="min-w-0">
-            <p class="font-kai text-title tracking-[0.2em] text-ink">藏珍谱</p>
-            <p class="mt-1 text-note leading-relaxed text-ink-faint">
-              {{
-                collectionOverview.newCount > 0
-                  ? `${collectionOverview.newRows.length} 册有新得，已展 ${openedNewCount} 册${
-                      collectionOverview.newRows.length > openedNewCount
-                        ? `；余 ${collectionOverview.newRows.length - openedNewCount} 册可展开。`
-                        : "。"
-                    }`
-                  : collectionOverview.known > 0
-                    ? "先看将满的一册；余册收着，点开再翻。"
-                    : "九册尚未开册；点开一册，看来源与收录进度。"
-              }}
-            </p>
+      <section class="collection-briefing" data-collection-hero>
+        <header class="collection-briefing__head">
+          <div class="collection-briefing__identity">
+            <span class="collection-briefing__seal" aria-hidden="true">珍</span>
+            <div class="min-w-0">
+              <p class="collection-briefing__eyebrow text-note">九册总谱</p>
+              <h2 class="collection-briefing__title text-section">藏珍谱</h2>
+              <p class="collection-briefing__lead">
+                {{
+                  collectionOverview.newCount > 0
+                    ? `${collectionOverview.newRows.length} 册有新得，已展 ${openedNewCount} 册${
+                        collectionOverview.newRows.length > openedNewCount
+                          ? `；余 ${collectionOverview.newRows.length - openedNewCount} 册可展开。`
+                          : "。"
+                      }`
+                    : collectionOverview.known > 0
+                      ? "先看将满的一册；余册收着，点开再翻。"
+                      : "九册尚未开册；点开一册，看来源与收录进度。"
+                }}
+              </p>
+            </div>
           </div>
-          <p class="shrink-0 font-kai text-heading text-cinnabar tabular">
-            {{ collectionOverview.known
-            }}<span class="text-body text-ink-faint">/{{ collectionOverview.total }}</span>
+          <p class="collection-briefing__score tabular">
+            <strong class="text-heading">{{ collectionOverview.known }}</strong>
+            <span class="text-body">/{{ collectionOverview.total }}</span>
           </p>
+        </header>
+
+        <div class="collection-briefing__meter">
+          <ProgressBar
+            :value="
+              collectionOverview.total > 0 ? collectionOverview.known / collectionOverview.total : 0
+            "
+            color="var(--color-jade)"
+            :height="3"
+          />
         </div>
-        <ProgressBar
-          class="mt-2"
-          :value="
-            collectionOverview.total > 0 ? collectionOverview.known / collectionOverview.total : 0
-          "
-          color="var(--color-jade)"
-          :height="3"
-        />
-        <div class="ink-divider-mark my-3" />
-        <div class="flex items-baseline justify-between gap-2">
-          <p class="font-kai text-body tracking-widest text-ink-soft">
-            {{ collectionOverview.newCount > 0 ? "眼下新得" : "将满之册" }}
-          </p>
-          <p class="text-note text-ink-faint">
+
+        <div class="collection-briefing__label">
+          <p class="text-body">{{ collectionOverview.newCount > 0 ? "眼下新得" : "将满之册" }}</p>
+          <span class="text-note">
             {{
               collectionOverview.newCount > 0
                 ? `${collectionOverview.newCount} 枚待看`
                 : "按已录比例"
             }}
-          </p>
+          </span>
         </div>
+
         <template v-if="collectionHighlights.length">
-          <div class="mt-1.5 grid grid-cols-[repeat(auto-fit,minmax(96px,1fr))] gap-1.5">
+          <div
+            class="collection-briefing__highlights grid grid-cols-[repeat(auto-fit,minmax(96px,1fr))]"
+          >
             <button
               v-for="row in collectionHighlights"
               :key="row.key"
               type="button"
-              class="flex min-h-[76px] min-w-0 flex-col rounded-md border border-ink/10 bg-paper-deep/40 px-2.5 py-2 text-left active:bg-ink/5"
+              class="collection-highlight"
+              :class="{ 'is-new': row.newCount > 0, 'is-complete': row.complete }"
               :data-collection-jump="row.key"
               :aria-label="
                 row.newCount > 0
@@ -234,25 +254,19 @@
               "
               @click="revealCollectionCategory(row.key)"
             >
-              <span class="flex min-w-0 items-start justify-between gap-1">
-                <span class="truncate font-kai text-body tracking-[0.08em] text-ink">{{
-                  row.name
-                }}</span>
-                <span class="mt-0.5 shrink-0 text-note text-ink-faint" aria-hidden="true">›</span>
-              </span>
-              <span class="mt-auto flex min-w-0 items-baseline justify-between gap-1 pt-2">
-                <span v-if="row.newCount > 0" class="shrink-0 tabular text-note text-cinnabar"
-                  >新 {{ row.newCount }}</span
-                >
-                <span v-else class="truncate tabular text-note text-qing"
-                  >还差 {{ row.remaining }}</span
-                >
-                <span class="shrink-0 tabular text-note text-ink-faint">
-                  {{ row.known }}/{{ row.total }}
+              <span class="collection-highlight__top">
+                <span class="collection-highlight__mark" aria-hidden="true">
+                  {{ collectionCategoryMark(row.key) }}
                 </span>
+                <span class="collection-highlight__name text-title">{{ row.name }}</span>
+                <span class="collection-highlight__arrow" aria-hidden="true">›</span>
+              </span>
+              <span class="collection-highlight__reading">
+                <span v-if="row.newCount > 0" class="is-new tabular">新 {{ row.newCount }}</span>
+                <span v-else class="is-short tabular">还差 {{ row.remaining }}</span>
+                <span class="tabular">{{ row.known }}/{{ row.total }}</span>
               </span>
               <ProgressBar
-                class="mt-1.5"
                 :value="row.ratio"
                 :color="row.newCount > 0 ? 'var(--color-cinnabar)' : 'var(--color-qing)'"
                 :height="2"
@@ -262,7 +276,7 @@
           <button
             v-if="collectionMoreNewCount > 0"
             type="button"
-            class="mt-2 flex w-full items-center justify-between gap-2 rounded-md border border-cinnabar/25 bg-cinnabar/5 px-2.5 py-2 text-left text-note text-ink-faint active:bg-cinnabar/10"
+            class="collection-briefing__more"
             data-collection-more-new
             :aria-expanded="collectionMoreNewOpen"
             :aria-label="
@@ -282,171 +296,190 @@
                   : `另有 ${collectionMoreNewCount} 册新得未列于此`
               }}
             </span>
-            <span class="shrink-0 text-cinnabar">
+            <span class="is-action">
               {{ collectionMoreNewOpen ? "收起余册" : "展开余册 →" }}
             </span>
           </button>
         </template>
-        <p v-else-if="collectionOverview.known > 0" class="mt-2 text-note text-jade">
+        <p v-else-if="collectionOverview.known > 0" class="collection-briefing__empty is-jade">
           已开之册皆尽收，余册待你从历练、炼丹与奇缘里启封。
         </p>
-        <p v-else class="mt-2 text-note text-ink-faint">
+        <p v-else class="collection-briefing__empty">
           先从历练、炼丹与奇缘里带回第一件，九册会自己亮起来。
         </p>
-      </div>
 
-      <div class="mt-3 space-y-2">
-        <section
-          v-for="cat in visibleCats"
-          :key="cat.key"
-          class="card-ink overflow-hidden"
-          :data-collection-category="cat.key"
-          :data-collection-start="cat.knownStart"
-          :data-collection-shown="cat.knownShown"
-          :data-collection-total="cat.knownTotal"
-        >
-          <button
-            type="button"
-            class="flex w-full items-start gap-3 px-4 py-3 text-left active:bg-ink/5"
-            :data-collection-category-toggle="cat.key"
-            :aria-expanded="isCollectionCategoryOpen(cat.key)"
-            :aria-controls="collectionCategoryBodyId(cat.key)"
-            @click="toggleCollectionCategory(cat.key)"
+        <footer class="collection-briefing__foot">
+          <span>新得先看</span>
+          <span>无新得时，先翻将满之册</span>
+        </footer>
+      </section>
+
+      <section class="collection-shelves">
+        <SectionTitle
+          title="九册藏珍"
+          :hint="`${collectionOverview.known}/${collectionOverview.total} 已录`"
+        />
+        <div class="collection-shelves__list">
+          <section
+            v-for="cat in visibleCats"
+            :key="cat.key"
+            class="collection-volume"
+            :data-collection-category="cat.key"
+            :data-collection-start="cat.knownStart"
+            :data-collection-shown="cat.knownShown"
+            :data-collection-total="cat.knownTotal"
           >
-            <span class="min-w-0 flex-1">
-              <span class="flex items-baseline justify-between gap-2">
-                <span class="flex min-w-0 items-center gap-1.5">
-                  <span class="truncate font-kai text-title tracking-[0.2em] text-ink">{{
-                    cat.name
-                  }}</span>
-                  <span
-                    v-if="progressOf(cat.key).newCount > 0"
-                    class="chip-ink shrink-0 border-cinnabar/50 text-note text-cinnabar"
-                    >新 {{ progressOf(cat.key).newCount }}</span
-                  >
-                </span>
-                <span class="shrink-0 tabular text-body text-ink-faint">
-                  {{ progressOf(cat.key).known }}/{{ progressOf(cat.key).total }}
-                </span>
-              </span>
-              <ProgressBar
-                class="mt-1.5"
-                :value="progressOf(cat.key).ratio"
-                :color="
-                  progressOf(cat.key).complete ? 'var(--color-jade)' : 'var(--color-cinnabar)'
-                "
-                :height="2"
-              />
-              <span class="mt-1 block truncate text-note text-ink-faint">
-                {{ collectionCategorySummary(cat.key) }}
-              </span>
-            </span>
-            <span
-              class="mt-0.5 shrink-0 text-body transition-transform"
-              :class="
-                isCollectionCategoryOpen(cat.key) ? 'rotate-180 text-cinnabar' : 'text-ink-faint'
-              "
-              aria-hidden="true"
-              >▾</span
+            <button
+              type="button"
+              class="collection-volume__head"
+              :data-collection-category-toggle="cat.key"
+              :aria-expanded="isCollectionCategoryOpen(cat.key)"
+              :aria-controls="collectionCategoryBodyId(cat.key)"
+              @click="toggleCollectionCategory(cat.key)"
             >
-          </button>
-          <div :id="collectionCategoryBodyId(cat.key)" :data-collection-category-body="cat.key">
-            <div v-if="isCollectionCategoryOpen(cat.key)" class="border-t border-ink/6">
-              <!--
-                未收录的条目只是一片「???」—— 得告诉玩家去哪儿找,否则这一册只能干瞪眼。
-                全收齐的那一目,「去哪儿找」就没了意义,替换成石绿的「尽收」完成感。
-              -->
-              <p v-if="catComplete(cat)" class="px-4 pt-3 text-note text-jade">
-                <span class="chip-ink border-jade/60 text-note text-jade">尽收</span>
-                此目已无未识之物 —— 见之者皆入册
-              </p>
-              <p v-else class="px-4 pt-3 text-note leading-relaxed text-ink-faint">
-                {{ cat.source }}
-              </p>
-              <div class="flex flex-wrap gap-1.5 px-3.5 py-3">
-                <template v-for="entry in cat.knownVisible" :key="entry.id">
-                  <button
-                    class="chip-ink flex items-center gap-1 active:scale-95"
-                    :style="{ color: entry.color }"
-                    :data-codex-entry="cat.key"
-                    :data-codex-id="entry.id"
-                    @click="openDetail(cat, entry)"
-                  >
-                    <!-- 灵兽册这类带 icon 的条目,已收录的 chip 前置一枚小章 —— 图鉴终于有貌 -->
-                    <GameIcon v-if="entry.icon" :name="entry.icon" :size="11" />
-                    {{ entry.name }}
-                    <span v-if="entry.badge" class="text-note text-ink-faint">{{
-                      entry.badge
-                    }}</span>
-                    <!--
-                      新得:收录时刻在「上次打开图鉴」之后才露这一枚(判据在 quests store,见 quests.spec)。
-                      刻意不覆盖的两类:灵材谱(认知深浅)与悟道录(分支阶段)不经 quests.collect(),
-                      collectedAt 无其时间戳、恒不挂 —— 它们是「深浅/已择」语义不是「新收录」,别误当漏标。
-                    -->
+              <span
+                class="collection-volume__seal"
+                :class="{ 'is-complete': progressOf(cat.key).complete }"
+                aria-hidden="true"
+              >
+                {{ collectionCategoryMark(cat.key) }}
+              </span>
+              <span class="collection-volume__copy">
+                <span class="collection-volume__line">
+                  <span class="collection-volume__name text-title">
+                    {{ cat.name }}
                     <span
-                      v-if="quests.isEntryNew(cat.key, entry.id)"
-                      class="text-note text-cinnabar animate-new-pop"
-                      >新</span
+                      v-if="progressOf(cat.key).newCount > 0"
+                      class="collection-volume__new tabular"
+                      >新 {{ progressOf(cat.key).newCount }}</span
                     >
-                  </button>
-                </template>
+                  </span>
+                  <span class="collection-volume__count tabular">
+                    {{ progressOf(cat.key).known }}/{{ progressOf(cat.key).total }}
+                  </span>
+                </span>
+                <ProgressBar
+                  :value="progressOf(cat.key).ratio"
+                  :color="
+                    progressOf(cat.key).complete ? 'var(--color-jade)' : 'var(--color-cinnabar)'
+                  "
+                  :height="2"
+                />
+                <span class="collection-volume__summary">
+                  {{ collectionCategorySummary(cat.key) }}
+                </span>
+              </span>
+              <span
+                class="collection-volume__toggle"
+                :class="{ 'is-open': isCollectionCategoryOpen(cat.key) }"
+                aria-hidden="true"
+                >▾</span
+              >
+            </button>
+
+            <div :id="collectionCategoryBodyId(cat.key)" :data-collection-category-body="cat.key">
+              <div v-if="isCollectionCategoryOpen(cat.key)" class="collection-volume__body">
                 <!--
-                  已收条目也会长到几百枚。每册先摆一批,余下的由玩家自己续开 ——
-                  未识的 ??? 仍只铺 UNKNOWN_CAP,不跟着续开变成一堵无信息的问号墙。
+                  未收录的条目只是一片「???」—— 得告诉玩家去哪儿找,否则这一册只能干瞪眼。
+                  全收齐的那一目,「去哪儿找」就没了意义,替换成石绿的「尽收」完成感。
                 -->
-                <div v-if="cat.knownStart > 0 || cat.hiddenKnown > 0" class="flex gap-1">
-                  <button
-                    v-if="cat.knownStart > 0"
-                    type="button"
-                    class="chip-ink border-ink/25 !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
-                    :data-collection-prev="cat.key"
-                    :aria-label="previousKnownLabel(cat)"
-                    @click="showPreviousKnown(cat)"
+                <p v-if="catComplete(cat)" class="collection-volume__source is-complete">
+                  <span>尽收</span>
+                  此目已无未识之物 —— 见之者皆入册
+                </p>
+                <p v-else class="collection-volume__source">
+                  {{ cat.source }}
+                </p>
+
+                <div class="collection-volume__entries">
+                  <template v-for="entry in cat.knownVisible" :key="entry.id">
+                    <button
+                      class="collection-token"
+                      :style="{ color: entry.color }"
+                      :data-codex-entry="cat.key"
+                      :data-codex-id="entry.id"
+                      @click="openDetail(cat, entry)"
+                    >
+                      <!-- 灵兽册这类带 icon 的条目,已收录的 chip 前置一枚小章 —— 图鉴终于有貌 -->
+                      <GameIcon v-if="entry.icon" :name="entry.icon" :size="11" />
+                      <span class="collection-token__name">{{ entry.name }}</span>
+                      <span v-if="entry.badge" class="collection-token__badge">{{
+                        entry.badge
+                      }}</span>
+                      <!--
+                        新得:收录时刻在「上次打开图鉴」之后才露这一枚(判据在 quests store,见 quests.spec)。
+                        刻意不覆盖的两类:灵材谱(认知深浅)与悟道录(分支阶段)不经 quests.collect(),
+                        collectedAt 无其时间戳、恒不挂 —— 它们是「深浅/已择」语义不是「新收录」,别误当漏标。
+                      -->
+                      <span
+                        v-if="quests.isEntryNew(cat.key, entry.id)"
+                        class="collection-token__new animate-new-pop"
+                        >新</span
+                      >
+                    </button>
+                  </template>
+
+                  <!--
+                    已收条目也会长到几百枚。每册先摆一批,余下的由玩家自己续开 ——
+                    未识的 ??? 仍只铺 UNKNOWN_CAP,不跟着续开变成一堵无信息的问号墙。
+                  -->
+                  <div
+                    v-if="cat.knownStart > 0 || cat.hiddenKnown > 0"
+                    class="collection-volume__paging"
                   >
-                    {{ previousKnownLabel(cat) }}
-                  </button>
-                  <button
-                    v-if="cat.hiddenKnown > 0"
-                    type="button"
-                    class="chip-ink border-cinnabar/50 !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
-                    :data-collection-more="cat.key"
-                    :data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"
-                    :aria-label="moreKnownLabel(cat)"
-                    @click="showMoreKnown(cat)"
-                  >
-                    {{ moreKnownLabel(cat) }}
-                  </button>
-                </div>
-                <template v-for="entry in cat.unknownVisible" :key="entry.id">
+                    <button
+                      v-if="cat.knownStart > 0"
+                      type="button"
+                      class="collection-paging"
+                      :data-collection-prev="cat.key"
+                      :aria-label="previousKnownLabel(cat)"
+                      @click="showPreviousKnown(cat)"
+                    >
+                      {{ previousKnownLabel(cat) }}
+                    </button>
+                    <button
+                      v-if="cat.hiddenKnown > 0"
+                      type="button"
+                      class="collection-paging is-more"
+                      :data-collection-more="cat.key"
+                      :data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"
+                      :aria-label="moreKnownLabel(cat)"
+                      @click="showMoreKnown(cat)"
+                    >
+                      {{ moreKnownLabel(cat) }}
+                    </button>
+                  </div>
+
+                  <template v-for="entry in cat.unknownVisible" :key="entry.id">
+                    <span class="collection-token is-unknown" :title="`尚未收录 · ${cat.source}`"
+                      >???</span
+                    >
+                  </template>
+
+                  <!--
+                    未识者至多铺 UNKNOWN_CAP 枚:装备图鉴有 288 个模板,全铺出来是二十屏的「?」墙 ——
+                    而每个 ? 都不带一点信息(名字、品阶全遮着),只等于同一个数重复画。多出来的折成一枚计数章。
+                  -->
                   <span
-                    class="chip-ink border-ink/15 text-ink-faint"
-                    :title="`尚未收录 · ${cat.source}`"
-                    >???</span
+                    v-if="cat.hiddenUnknown"
+                    class="collection-token is-unknown is-more"
+                    :title="`尚有 ${cat.hiddenUnknown} 件未收录`"
+                    >…+{{ cat.hiddenUnknown }}</span
                   >
-                </template>
-                <!--
-                  未识者至多铺 UNKNOWN_CAP 枚:装备图鉴有 288 个模板,全铺出来是二十屏的「?」墙 ——
-                  而每个 ? 都不带一点信息(名字、品阶全遮着),只等于同一个数重复画。多出来的折成一枚计数章。
-                -->
-                <span
-                  v-if="cat.hiddenUnknown"
-                  class="chip-ink border-ink/15 text-ink-faint"
-                  :title="`尚有 ${cat.hiddenUnknown} 件未收录`"
-                  >…+{{ cat.hiddenUnknown }}</span
-                >
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      </div>
-      <p class="text-center text-note text-ink-faint">
-        点册目展开来源与条目;每册按批翻看,「再看 / 前一批」前后可达 —— 灵材与悟道另分深浅,愈用愈明
-      </p>
+          </section>
+        </div>
+        <p class="collection-page__footnote">
+          点册目展开来源与条目;每册按批翻看,「再看 / 前一批」前后可达 —— 灵材与悟道另分深浅,愈用愈明
+        </p>
+      </section>
     </template>
 
     <!-- 图鉴详情 -->
     <BaseModal :open="detail !== null" :title="detail?.entry.name ?? ''" @close="detail = null">
-      <div v-if="detail">
+      <div v-if="detail" class="collection-detail">
         <!-- 详情同查一件收录物,却有 icon 的条目(灵兽册等)只在收集 chip 上有、详情里整块丢了 ——
              补一枚色章做视觉锚(有 icon 才渲染,与丹房/材料详情同构) -->
         <div
@@ -459,30 +492,30 @@
             :style="{ color: detail.entry.color ?? 'var(--color-ink-soft)' }"
           />
         </div>
-        <p class="flex flex-wrap items-center gap-2">
+        <div class="collection-detail__meta">
           <span
-            class="chip-ink border-current"
+            class="collection-detail__category"
             :style="{ color: detail.entry.color ?? 'var(--color-ink-soft)' }"
           >
             {{ detail.catName }}
           </span>
-          <span v-if="detail.entry.stageName" class="chip-ink border-ink/20 text-ink-faint">{{
+          <span v-if="detail.entry.stageName" class="collection-detail__stage">{{
             detail.entry.stageName
           }}</span>
-          <span v-if="detail.entry.meta" class="text-body text-ink-faint">{{
+          <span v-if="detail.entry.meta" class="collection-detail__line">{{
             detail.entry.meta
           }}</span>
-        </p>
-        <p class="mt-3 whitespace-pre-line text-title leading-relaxed text-ink-soft">
+        </div>
+        <p class="collection-detail__desc">
           {{ detail.entry.desc || "此物玄妙,难以言表。" }}
         </p>
-        <p v-if="detail.entry.hint" class="mt-2 text-body text-ink-faint">
+        <p v-if="detail.entry.hint" class="collection-detail__hint">
           {{ detail.entry.hint }}
         </p>
         <div class="ink-divider-mark my-3" />
-        <p class="flex justify-between text-body">
-          <span class="text-ink-faint">{{ detail.entry.foot.label }}</span>
-          <span class="tabular text-ink-soft">{{ detail.entry.foot.value }}</span>
+        <p class="collection-detail__foot">
+          <span>{{ detail.entry.foot.label }}</span>
+          <span class="tabular">{{ detail.entry.foot.value }}</span>
         </p>
       </div>
     </BaseModal>
@@ -516,9 +549,16 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
+import {
+  achievementDirectionMark,
+  collectionCabinetCells as buildCollectionCabinetCells,
+  collectionCategoryMark,
+} from "@/ui/collectionDesk";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
+import SectionTitle from "@/components/common/SectionTitle.vue";
+import CollectionCabinet from "@/components/common/CollectionCabinet.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 
@@ -702,6 +742,9 @@ const collectionOverview = computed(() =>
   collectionProgressOverviewFromCodex(collectionCats.value, (key, id) =>
     quests.isEntryNew(key, id),
   ),
+);
+const collectionCabinetCells = computed(() =>
+  buildCollectionCabinetCells(collectionOverview.value.rows),
 );
 const collectionProgressByKey = computed(
   () => new Map(collectionOverview.value.rows.map((row) => [row.key, row])),

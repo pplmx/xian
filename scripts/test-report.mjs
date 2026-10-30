@@ -248,6 +248,7 @@ const CATEGORIES = [
       "achievementHint",
       "achievementProgress",
       "collectionProgress",
+      "collectionDesk",
       "titleProgress",
       "titleLadder",
       "artifactEffects",
