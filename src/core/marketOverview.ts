@@ -63,8 +63,12 @@ export function bountyStatus(order: BountySlot, holdings: MarketHoldings): Bount
 }
 
 export interface MarketOverview {
+  /** 本架总格数（含已售）。 */
+  goodsTotal: number;
   /** 当前货架还买得到几格（已售不计）。 */
   availableGoods: number;
+  /** 本版尚未交掉的悬赏总数。 */
+  openBounties: number;
   /** 没交且眼下交得掉的悬赏数，贡器也算。 */
   claimableBounties: number;
   /** 其中能一键交掉的非贡器单数。 */
@@ -82,17 +86,21 @@ export function marketOverview(
   let availableGoods = 0;
   let claimableBounties = 0;
   let autoClaimableBounties = 0;
+  let openBounties = 0;
   for (const slot of stock) {
     if (!slot.sold) availableGoods += 1;
   }
   for (const order of orders) {
+    if (!order.claimed) openBounties += 1;
     const status = bountyStatus(order, holdings);
     if (!status.ready) continue;
     claimableBounties += 1;
     if (order.kind !== "equip") autoClaimableBounties += 1;
   }
   return {
+    goodsTotal: stock.length,
     availableGoods,
+    openBounties,
     claimableBounties,
     autoClaimableBounties,
     consignCount: Math.max(0, Math.floor(consignCount)),

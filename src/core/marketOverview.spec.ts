@@ -95,7 +95,9 @@ describe("坊市 · 卷首市况", () => {
       2,
     );
     expect(overview).toEqual({
+      goodsTotal: 3,
       availableGoods: 2,
+      openBounties: 3,
       claimableBounties: 3,
       autoClaimableBounties: 2,
       consignCount: 2,

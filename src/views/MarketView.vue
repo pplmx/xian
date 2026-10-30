@@ -50,6 +50,7 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
+import MarketArcade from "@/components/market/MarketArcade.vue";
 
 const market = useMarketStore();
 const bounty = useBountyStore();
@@ -150,6 +151,92 @@ const headerClock = computed(() => {
   };
 });
 
+/** 最近一件寄售的归账时刻；卷首只报这一件，逐件倒计时仍在售出册里。 */
+const nextConsign = computed(() => {
+  const next = [...market.consign].sort((a, b) => a.finishAt - b.finishAt)[0];
+  if (!next) return { text: "暂无寄卖", at: null };
+  const sec = Math.max(0, Math.ceil((next.finishAt - now.value) / 1000));
+  return { text: `最近 ${formatCountdown(sec)} 后入账`, at: next.finishAt };
+});
+
+/**
+ * 卷首总账与市桥图共用这一份行市读数。三册都可从这里直接落位，
+ * 不再让玩家先看一组漂亮数字、再自己猜该翻哪一册。
+ */
+const marketLedgerRows = computed(() => [
+  {
+    id: "shelf" as const,
+    mark: "货",
+    label: "货架",
+    value: marketPulse.value.availableGoods,
+    total: marketPulse.value.goodsTotal,
+    unit: "件可买",
+    detail: `换货 ${formatCountdown(remainingSec.value)}`,
+  },
+  {
+    id: "bounty" as const,
+    mark: "赏",
+    label: "悬赏",
+    value: marketPulse.value.claimableBounties,
+    total: marketPulse.value.openBounties,
+    unit: "单可交",
+    detail: `换榜 ${formatCountdown(bountyRemainingSec(bounty.bountyAt, now.value))}`,
+  },
+  {
+    id: "sell" as const,
+    mark: "寄",
+    label: "寄卖",
+    value: marketPulse.value.consignCount,
+    total: MARKET_CONSIGN_SLOTS,
+    unit: "格在用",
+    detail: nextConsign.value.text,
+  },
+]);
+
+/** 眼下最先能落手的一件事；只读同一份市况，不再另算一套「看起来可做」。 */
+const marketLead = computed(() => {
+  const p = marketPulse.value;
+  if (p.claimableBounties > 0) {
+    return {
+      tab: "bounty" as const,
+      mark: "先收",
+      title: `${p.claimableBounties} 单悬赏已备齐`,
+      detail:
+        p.autoClaimableBounties > 0
+          ? `其中 ${p.autoClaimableBounties} 单可一键交，贡器单另挑一件`
+          : "贡器单要点开挑一件，价随品质现算",
+    };
+  }
+  if (p.availableGoods > 0) {
+    return {
+      tab: "shelf" as const,
+      mark: "先看",
+      title: `${p.availableGoods} 件货仍在本架`,
+      detail: `换货前还有 ${formatCountdown(remainingSec.value)}，灵石 ${formatGN(resources.spiritStone)}`,
+    };
+  }
+  if (p.consignCount > 0) {
+    return {
+      tab: "sell" as const,
+      mark: "等售",
+      title: `${p.consignCount} 件寄卖正在等时辰`,
+      detail: nextConsign.value.text,
+    };
+  }
+  return {
+    tab: "shelf" as const,
+    mark: "候市",
+    title: "这一市暂无现成可做",
+    detail: `下一架货在 ${formatCountdown(remainingSec.value)} 后换新`,
+  };
+});
+
+function consignProgress(finishAt: number): number {
+  const left = Math.max(0, finishAt - now.value);
+  const total = MARKET_CONSIGN_SECONDS * 1000;
+  return Math.max(0, Math.min(100, (1 - left / total) * 100));
+}
+
 /**
  * 货架装备预览(确定性实例,只取它与品质,不落库)。缓成 per-slot 表:
  * 只随货架 / 上货时刻重算,不再随每秒的倒计时重掷整件装备(避免每个 tick 生成 6 次)。
@@ -237,7 +324,14 @@ function sellPill(id: string): void {
   else notify(`「${name}」已无量可售`, "warn");
 }
 function sellMat(matId: "herb" | "ore"): void {
-  market.sellMaterial(matId, player.major);
+  const label = matId === "herb" ? "灵草" : "玄铁";
+  const sold = market.sellMaterial(matId, player.major);
+  if (sold)
+    notify(
+      `已售 ${MARKET_MAT_COUNT} ${label}，得 ${formatGN(materialSellPrice(player.major))} 石`,
+      "success",
+    );
+  else notify(`${label}不足 ${MARKET_MAT_COUNT}，这一批卖不成`, "warn");
 }
 
 /** 即时售短差:不足售不出去时与悬赏「需 N X,缺 M」同源,直列差几份 */
@@ -405,16 +499,29 @@ function bountyReady(o: BountySlot): boolean {
 </script>
 
 <template>
-  <div class="folio-page folio-page--stack stagger-in">
+  <div class="folio-page folio-page--stack stagger-in market-page">
     <FolioPageHeader
       title="坊市"
       subtitle="灵石换机缘 · 时来运转"
       back-to="dongfu"
       back-label="返回"
+      featured
     >
+      <template #visual>
+        <MarketArcade
+          :goods="marketPulse.availableGoods"
+          :goods-total="marketPulse.goodsTotal"
+          :bounties="marketPulse.claimableBounties"
+          :bounties-total="marketPulse.openBounties"
+          :consign="marketPulse.consignCount"
+          :consign-slots="MARKET_CONSIGN_SLOTS"
+          :active="marketTab"
+        />
+      </template>
+
       <template #action>
         <span
-          class="inline-flex items-center gap-1 rounded-sm border border-ink/10 px-2 py-1 text-note tabular text-ink-faint tinylens:w-full tinylens:justify-between"
+          class="market-clock inline-flex items-center gap-1 rounded-sm border border-ink/10 px-2 py-1 text-note tabular text-ink-faint tinylens:w-full tinylens:justify-between"
           :title="headerClock.title"
         >
           {{ headerClock.label }}
@@ -422,76 +529,88 @@ function bountyReady(o: BountySlot): boolean {
         </span>
       </template>
 
-      <!-- 卷首先报此刻:三册各有多少当下可做,页签只负责带路。 -->
-      <div
-        class="grid grid-cols-3 divide-x divide-ink/10 border-t border-ink/10 pt-2 text-center"
-        data-market-pulse
-      >
-        <p>
-          <span class="block text-note text-ink-faint">可买</span>
-          <span class="block text-body tabular text-ink-soft" data-market-pulse-goods
-            >{{ marketPulse.availableGoods }} 件</span
+      <!-- 卷首先报此刻，再让三册账目各自成为入口。 -->
+      <div class="market-pulse" data-market-pulse>
+        <div class="market-pulse__lead tinylens:flex-wrap">
+          <span class="market-pulse__seal" aria-hidden="true">{{ marketLead.mark }}</span>
+          <div class="market-pulse__copy tinylens:basis-full">
+            <p class="market-pulse__eyebrow">今日行市</p>
+            <p class="market-pulse__title">{{ marketLead.title }}</p>
+            <p class="market-pulse__detail">{{ marketLead.detail }}</p>
+          </div>
+          <button
+            type="button"
+            class="market-pulse__jump hoverable:hover:border-cinnabar"
+            @click="marketTab = marketLead.tab"
           >
-        </p>
-        <p>
-          <span class="block text-note text-ink-faint">可交</span>
-          <span
-            class="block text-body tabular"
-            :class="marketPulse.claimableBounties > 0 ? 'text-cinnabar' : 'text-ink-soft'"
-            data-market-pulse-bounties
-            >{{ marketPulse.claimableBounties }} 单</span
+            去看{{
+              marketLead.tab === "shelf" ? "货架" : marketLead.tab === "bounty" ? "悬赏" : "寄卖"
+            }}
+          </button>
+        </div>
+
+        <div class="market-pulse__tallies">
+          <button
+            v-for="row in marketLedgerRows"
+            :key="row.id"
+            type="button"
+            class="market-pulse__tally"
+            :class="{ 'is-active': marketTab === row.id }"
+            @click="marketTab = row.id"
           >
-        </p>
-        <p>
-          <span class="block text-note text-ink-faint">寄售</span>
-          <span class="block text-body tabular text-ink-soft" data-market-pulse-consign
-            >{{ marketPulse.consignCount }}/{{ MARKET_CONSIGN_SLOTS }}</span
-          >
-        </p>
+            <span class="market-pulse__mark" aria-hidden="true">{{ row.mark }}</span>
+            <span class="market-pulse__label">{{ row.label }}</span>
+            <span class="market-pulse__value">
+              <strong
+                :data-market-pulse-goods="row.id === 'shelf' ? row.value : undefined"
+                :data-market-pulse-bounties="row.id === 'bounty' ? row.value : undefined"
+                :data-market-pulse-consign="row.id === 'sell' ? row.value : undefined"
+                >{{ row.value }}</strong
+              >
+              <span class="market-pulse__total">/{{ row.total }}</span>
+            </span>
+            <span class="market-pulse__unit">{{ row.unit }}</span>
+            <span class="market-pulse__detail">{{ row.detail }}</span>
+          </button>
+        </div>
       </div>
     </FolioPageHeader>
 
     <InkTabs v-model="marketTab" :tabs="marketTabRows" />
 
-    <!-- 货架 -->
-    <section v-show="marketTab === 'shelf'">
-      <SectionTitle title="货架" hint="时辰一到自会换新" />
-      <div class="mt-2 space-y-2">
-        <div
+    <!-- 货架：每一格都是一张摊签，名称、品阶、价格与买不买得起同屏。 -->
+    <section v-show="marketTab === 'shelf'" class="market-book" data-market-book="shelf">
+      <div class="market-book__head">
+        <SectionTitle title="货架" hint="时辰一到自会换新" />
+        <span class="market-book__clock">换货 {{ formatCountdown(remainingSec) }}</span>
+      </div>
+      <div class="market-goods">
+        <article
           v-for="slot in market.stock"
           :key="slot.idx"
-          class="flex items-center gap-2 rounded-sm border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
-          :class="{ 'border-dashed border-ink/15': slot.sold }"
+          class="market-good"
+          :class="{ 'is-sold': slot.sold }"
           :style="shelfTier(slot)"
         >
-          <!--
-            极窄档(≤220 CSS px)这一段要占满整行:三段横排时名称块只剩 4px 宽、副题
-            折成 10 行(实测行高 140px)。放开成两行后名称块 137px / 4 行,行高 86px;
-            320 / 390 两档读数不动。
-          -->
-          <div class="min-w-0 flex-1 text-body tinylens:basis-full">
+          <span class="market-good__mark" aria-hidden="true">
+            {{ slot.kind === "pill" ? "丹" : slot.kind === "material" ? "料" : "兵" }}
+          </span>
+          <div class="market-good__body">
             <template v-if="slot.kind === 'pill'">
-              <p class="truncate">
+              <p class="market-good__name">
                 {{ pillDef(slot.pillId)?.name ?? slot.pillId }}
-                <span class="text-ink-faint">×{{ slot.count }}</span>
+                <span class="market-good__count">×{{ slot.count }}</span>
               </p>
-              <p class="text-note text-ink-faint">一枚丹方之味</p>
+              <p class="market-good__note">一枚丹方之味 · 免去集草开炉</p>
             </template>
             <template v-else-if="slot.kind === 'material'">
-              <p class="truncate">
+              <p class="market-good__name">
                 {{ slot.matId === "herb" ? "灵草" : "玄铁" }} ×{{ MARKET_MAT_COUNT }}
               </p>
-              <p class="text-note text-ink-faint">续洞府生产之料</p>
+              <p class="market-good__note">续洞府生产之料 · 当场入账</p>
             </template>
             <template v-else>
-              <!--
-                货架上一件兵刃的主标题该是「它是什么」,不是「它多好」。
-                原先这里印的是「精品·9 层 品质底档精品」—— 品阶名打头、末尾又复述一遍,
-                真正的物件反而没有名字,玩家买完才知道拿的是什么。
-                改成:装备名(品阶色) · 品阶 · 阶数;底档降为副行的一句附注。
-                天/仙/神在名前盖品阶阴文章(与背包格/候选行同一条形状线索)。
-              -->
-              <p class="truncate">
+              <p class="market-good__name">
                 <QualitySeal
                   v-if="previews[slot.idx]?.rare"
                   :quality="previews[slot.idx]!.quality"
@@ -503,54 +622,54 @@ function bountyReady(o: BountySlot): boolean {
                   :style="{ color: previews[slot.idx]?.color ?? 'var(--color-ink)' }"
                   >{{ previews[slot.idx]?.name ?? "兵刃" }}</span
                 >
-                <span class="text-ink-faint"
+                <span class="market-good__quality"
                   >· {{ previews[slot.idx]?.qualityName ?? "" }}{{ slot.tier }}阶</span
                 >
               </p>
-              <p class="text-note text-ink-faint">
-                一件已定兵刃,到手即用 · 底档{{
+              <p class="market-good__note">
+                一件已定兵刃，到手即用 · 底档{{
                   QUALITIES[(slot as { minQualityRank: number }).minQualityRank]?.name ?? ""
                 }}
               </p>
             </template>
           </div>
-          <span class="text-body tabular text-cinnabar">{{ formatGN(slot.price) }} 灵石</span>
-          <!-- min-h-[28px] 触达下限:此前的 !py-1 小钮实测只有 24.5px(排版自检尺子) -->
-          <button
-            class="btn-seal min-h-[28px] !px-3 !py-1 text-body"
-            :disabled="
-              slot.sold ||
-              (slot.kind === 'equipment' && inventory.bagFull) ||
-              !resources.hasStone(slot.price)
-            "
-            @click="buySlot(slot.idx)"
-          >
-            {{
-              slot.sold
-                ? "已售"
-                : slot.kind === "equipment" && inventory.bagFull
-                  ? "行囊已满"
-                  : resources.hasStone(slot.price)
-                    ? "购入"
-                    : `尚差 ${formatGN(stoneShort(slot.price))} 石`
-            }}
-          </button>
-        </div>
-        <p v-if="market.stock.length === 0" class="py-3 text-center text-body text-ink-faint">
+          <div class="market-good__trade">
+            <span class="market-good__price">{{ formatGN(slot.price) }}</span>
+            <span class="market-good__price-unit">灵石</span>
+            <button
+              class="btn-seal market-good__action min-h-[28px] !px-3 !py-1 text-body hoverable:hover:border-cinnabar"
+              :disabled="
+                slot.sold ||
+                (slot.kind === 'equipment' && inventory.bagFull) ||
+                !resources.hasStone(slot.price)
+              "
+              @click="buySlot(slot.idx)"
+            >
+              {{
+                slot.sold
+                  ? "已售"
+                  : slot.kind === "equipment" && inventory.bagFull
+                    ? "行囊已满"
+                    : resources.hasStone(slot.price)
+                      ? "购入"
+                      : `尚差 ${formatGN(stoneShort(slot.price))} 石`
+              }}
+            </button>
+          </div>
+        </article>
+        <p v-if="market.stock.length === 0" class="market-book__empty">
           货架空着 —— 时辰一到自会换新。
         </p>
       </div>
     </section>
 
-    <!-- 悬赏板:商号收购 -->
-    <section v-show="marketTab === 'bounty'">
-      <!-- 极窄档(≤220 CSS px)同一行塞不下「标题 + 一键领取 + 换新倒计时」:标题被压到
-           19px 一字一行 —— 改成纵向堆叠,320 / 390 两档不动。 -->
+    <!-- 悬赏板：先看总账，再逐单摊开要什么、缺多少、交得掉多少。 -->
+    <section v-show="marketTab === 'bounty'" class="market-book" data-market-book="bounty">
       <div
-        class="flex items-center justify-between pr-1 tinylens:flex-col tinylens:items-start tinylens:gap-1"
+        class="market-book__head market-book__head--bounty justify-between pr-1 tinylens:flex-col tinylens:items-start tinylens:gap-1"
       >
-        <SectionTitle title="悬赏板" />
-        <div class="flex items-center gap-2">
+        <SectionTitle title="悬赏板" hint="商号收购 · 交货即得" />
+        <div class="market-book__tools">
           <button
             v-if="autoClaimable.length"
             class="btn-seal min-h-[28px] !px-2.5 !py-1 text-body whitespace-nowrap"
@@ -558,66 +677,67 @@ function bountyReady(o: BountySlot): boolean {
           >
             一键领取({{ autoClaimable.length }})
           </button>
-          <span
-            class="text-note text-ink-faint"
-            :title="`${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`"
-            >换新
+          <span class="market-book__clock" :title="`${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`">
+            换新
             <span class="countdown-slot">{{
               formatCountdown(bountyRemainingSec(bounty.bountyAt, now))
-            }}</span></span
-          >
+            }}</span>
+          </span>
         </div>
       </div>
-      <div class="mt-1 space-y-2">
-        <div
+
+      <div class="market-bounties">
+        <article
           v-for="o in bounty.orders"
           :key="o.idx"
-          class="flex items-center gap-2 rounded-sm border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
-          :class="{ 'border-dashed border-ink/15': o.claimed }"
+          class="market-bounty"
+          :class="{ 'is-claimed': o.claimed, 'is-ready': bountyReady(o) }"
         >
-          <div class="min-w-0 flex-1 text-body tinylens:basis-full">
+          <span class="market-bounty__mark" aria-hidden="true">赏</span>
+          <div class="market-bounty__body">
             <template v-if="o.kind === 'herb' || o.kind === 'ore'">
-              <p class="truncate">募 {{ o.kind === "herb" ? "灵草" : "玄铁" }} ×{{ o.target }}</p>
-              <p v-if="bountyShort(o)" class="text-note text-cinnabar">
-                {{ bountyShort(o) }}
+              <p class="market-bounty__name">
+                募 {{ o.kind === "herb" ? "灵草" : "玄铁" }} ×{{ o.target }}
               </p>
-              <p v-else class="text-note text-ink-faint">交货即得灵石</p>
+              <p v-if="bountyShort(o)" class="market-bounty__short">{{ bountyShort(o) }}</p>
+              <p v-else class="market-bounty__note">交货即得灵石</p>
             </template>
             <template v-else-if="o.kind === 'pill'">
-              <p class="truncate">{{ pillDef(o.kindId)?.name ?? o.kindId }} ×{{ o.target }}</p>
-              <p v-if="bountyShort(o)" class="text-note text-cinnabar">
-                {{ bountyShort(o) }}
+              <p class="market-bounty__name">
+                {{ pillDef(o.kindId)?.name ?? o.kindId }} ×{{ o.target }}
               </p>
-              <p v-else class="text-note text-ink-faint">
+              <p v-if="bountyShort(o)" class="market-bounty__short">{{ bountyShort(o) }}</p>
+              <p v-else class="market-bounty__note">
                 另得{{ RESOURCE_LABELS.wudao }}×{{ o.extra }}
               </p>
             </template>
             <template v-else>
-              <p class="leading-relaxed">贡一柄 ≥{{ o.tier }} 阶兵刃</p>
-              <p v-if="bountyShort(o)" class="text-note text-cinnabar">
-                {{ bountyShort(o) }}
-              </p>
-              <p v-else class="text-note text-ink-faint">价随所交之品质现算</p>
+              <p class="market-bounty__name leading-relaxed">贡一柄 ≥{{ o.tier }} 阶兵刃</p>
+              <p v-if="bountyShort(o)" class="market-bounty__short">{{ bountyShort(o) }}</p>
+              <p v-else class="market-bounty__note">价随所交之品质现算</p>
             </template>
           </div>
-          <span class="text-body tabular text-cinnabar">
-            {{
-              o.kind === "equip"
-                ? `≥ ${formatGN(equipBountyReward(o.tier, 0).stone)} 石 + ${equipBountyReward(o.tier, 0).dust} 尘`
-                : `${formatGN(o.reward)} 灵石`
-            }}
-          </span>
+          <div class="market-bounty__reward">
+            <span class="market-bounty__reward-label">酬</span>
+            <span class="market-bounty__reward-value">
+              {{
+                o.kind === "equip"
+                  ? `≥ ${formatGN(equipBountyReward(o.tier, 0).stone)} 石 + ${equipBountyReward(o.tier, 0).dust} 尘`
+                  : `${formatGN(o.reward)} 灵石`
+              }}
+            </span>
+          </div>
           <button
             :data-bounty-equip="o.kind === 'equip' ? o.idx : undefined"
-            class="btn-seal min-h-[28px] !px-3 !py-1 text-body"
+            class="btn-seal market-bounty__action min-h-[28px] !px-3 !py-1 text-body hoverable:hover:border-cinnabar"
             :disabled="o.claimed || !bountyReady(o)"
             @click="claimBounty(o.idx)"
           >
             {{ o.claimed ? "已交" : "交货" }}
           </button>
-        </div>
-        <p v-if="bounty.orders.length === 0" class="py-3 text-center text-body text-ink-faint">
-          悬赏板空着 —— 商号还没挂单,下个时辰自会换新。
+        </article>
+        <p v-if="bounty.orders.length === 0" class="market-book__empty">
+          悬赏板空着 —— 商号还没挂单，下个时辰自会换新。
         </p>
       </div>
     </section>
@@ -692,136 +812,167 @@ function bountyReady(o: BountySlot): boolean {
       </div>
     </BaseModal>
 
-    <!-- 售出:寄卖装备 + 即时售丹/料 -->
-    <section v-show="marketTab === 'sell'">
-      <SectionTitle title="售出" />
-      <div class="mt-2">
-        <!-- 寄卖中的 -->
-        <div v-if="market.consign.length" class="mb-2 space-y-1">
+    <!-- 售出：寄卖架先看在架，即时柜再处理丹药与材料。 -->
+    <section v-show="marketTab === 'sell'" class="market-book" data-market-book="sell">
+      <div class="market-book__head">
+        <SectionTitle title="售出" hint="寄卖到时自售 · 即时售即入账" />
+        <span class="market-book__clock"
+          >寄卖 {{ market.consign.length }}/{{ MARKET_CONSIGN_SLOTS }}</span
+        >
+      </div>
+
+      <div class="market-sell-grid">
+        <section class="market-consign">
+          <div class="market-consign__head">
+            <p class="market-consign__title">寄卖架</p>
+            <p class="market-consign__note">
+              {{ MARKET_CONSIGN_SLOTS }} 格 · 约 {{ MARKET_CONSIGN_SECONDS / 60 }} 分自售入账 ·
+              离包即定
+            </p>
+          </div>
+
+          <div v-if="market.consign.length" class="market-consign__active">
+            <div v-for="p in market.consign" :key="p.slot" class="market-consign__row">
+              <span class="market-consign__mark" aria-hidden="true">寄</span>
+              <div class="market-consign__body">
+                <p class="market-consign__name">{{ p.name }}</p>
+                <p class="market-consign__price">售出得 {{ formatGN(p.price) }} 灵石</p>
+                <span class="market-consign__track" aria-hidden="true">
+                  <span :style="{ width: `${consignProgress(p.finishAt)}%` }" />
+                </span>
+              </div>
+              <span class="market-consign__eta">
+                <span class="countdown-slot">{{
+                  formatCountdown(Math.max(0, Math.ceil((p.finishAt - now) / 1000)))
+                }}</span>
+                后入账
+              </span>
+            </div>
+          </div>
+          <p v-else class="market-consign__empty">寄卖架空着 —— 挑一件行囊里舍得的兵刃上架。</p>
+
           <div
-            v-for="p in market.consign"
-            :key="p.slot"
-            class="flex items-center gap-2 rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-1.5 text-body"
+            class="market-consign__picker"
+            :data-market-consign-total="inventory.bagItems.length"
+            :data-market-consign-start="consignPage.start"
           >
-            <span class="flex-1 truncate">{{ p.name }}</span>
-            <span class="tabular text-ink-faint">
-              <span class="countdown-slot">{{
-                formatCountdown(Math.max(0, (p.finishAt - now) / 1000))
-              }}</span>
-              后自售 · {{ formatGN(p.price) }}
+            <template v-if="market.consign.length < MARKET_CONSIGN_SLOTS">
+              <div class="market-consign__candidates">
+                <button
+                  v-for="it in consignPage.visible"
+                  :key="it.uid"
+                  :data-consign-uid="it.uid"
+                  class="market-consign__candidate hoverable:hover:border-cinnabar"
+                  @click="consign(it.uid)"
+                >
+                  <QualitySeal
+                    v-if="isRareQuality(it.quality)"
+                    :quality="it.quality"
+                    :size="12"
+                    class="mr-1"
+                  />
+                  <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">{{
+                    equipmentTemplate(it.templateId)?.name ?? "?"
+                  }}</span>
+                  <span class="text-ink-faint"
+                    >· {{ qualityDef(it.quality).name }}{{ it.tier }}阶 ·
+                    {{ formatGN(consignPrice(it.tier, qualityDef(it.quality).rank)) }} 石</span
+                  >
+                </button>
+                <span v-if="inventory.bagItems.length === 0" class="market-consign__empty">
+                  行囊空空 —— 去历练中寻些机缘吧
+                </span>
+              </div>
+              <div
+                v-if="consignPage.hidden > 0 || consignPage.start > 0"
+                class="market-consign__pager"
+              >
+                <button
+                  v-if="consignPage.start > 0"
+                  data-market-prev="consign"
+                  class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
+                  :aria-label="consignPrevLabel"
+                  @click="showPreviousConsign"
+                >
+                  {{ consignPrevLabel }}
+                </button>
+                <button
+                  v-if="consignPage.hidden > 0"
+                  data-market-more="consign"
+                  :data-promised="Math.min(INVENTORY_RENDER_BATCH, consignPage.hidden)"
+                  class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
+                  :aria-label="consignMoreLabel"
+                  @click="showMoreConsign"
+                >
+                  {{ consignMoreLabel }}
+                </button>
+              </div>
+            </template>
+            <p v-else class="market-consign__empty">
+              已上满 {{ MARKET_CONSIGN_SLOTS }} 格，待手头一张空闲。
+            </p>
+          </div>
+        </section>
+
+        <section class="market-counter">
+          <div class="market-consign__head">
+            <p class="market-consign__title">即时柜</p>
+            <p class="market-consign__note">丹药一颗一颗卖，材料一批一批卖，点下即入账。</p>
+          </div>
+
+          <div class="market-counter__pills">
+            <button
+              v-for="p in sellablePills"
+              :key="p.id"
+              class="market-counter__item hoverable:hover:border-cinnabar"
+              @click="sellPill(p.id)"
+            >
+              <span class="market-counter__mark" aria-hidden="true">丹</span>
+              <span class="market-counter__copy">
+                <span>售{{ p.def?.name ?? p.id }}(现持 {{ p.count }})</span>
+                <span class="market-counter__price"
+                  >每颗得 {{ formatGN(pillSellPrice(p.id)) }} 石</span
+                >
+              </span>
+            </button>
+            <span v-if="sellablePills.length === 0" class="market-consign__empty">
+              并无即时可售的丹药 —— 历练所得，自能入市
             </span>
           </div>
-        </div>
 
-        <!-- 寄卖入口:挑一件背包装备上架 -->
-        <div
-          class="rounded-sm border border-ink/10 bg-paper-deep/40 px-3 py-2"
-          :data-market-consign-total="inventory.bagItems.length"
-          :data-market-consign-start="consignPage.start"
-        >
-          <p class="mb-1 text-note text-ink-faint">
-            寄卖一件背包装备({{ MARKET_CONSIGN_SLOTS }} 格,约
-            {{ MARKET_CONSIGN_SECONDS / 60 }} 分自售入账,离包即定)
-          </p>
-          <template v-if="market.consign.length < MARKET_CONSIGN_SLOTS">
-            <div class="scroll-pane flex gap-1 overflow-x-auto">
-              <!--
-                这一枚是「挑一件去寄售」的候选。原先印的是 {{ it.quality }} —— 品阶的
-                **id**（excellent / profound / earth），玩家看到的是英文枚举，不是品阶名。
-                而且整枚只有「品阶·阶数·价格」,没有装备名 —— 同一阶数的两件根本分不出。
-                改成:装备名(带品阶色) · 品阶名 · 阶数 · 价。
-              -->
-              <button
-                v-for="it in consignPage.visible"
-                :key="it.uid"
-                :data-consign-uid="it.uid"
-                class="inline-flex min-h-[28px] shrink-0 items-center rounded border border-ink/10 px-2 py-1 text-note hoverable:hover:border-cinnabar"
-                @click="consign(it.uid)"
-              >
-                <QualitySeal
-                  v-if="isRareQuality(it.quality)"
-                  :quality="it.quality"
-                  :size="12"
-                  class="mr-1"
-                />
-                <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">{{
-                  equipmentTemplate(it.templateId)?.name ?? "?"
+          <div class="market-counter__materials">
+            <button
+              class="market-counter__item hoverable:hover:border-cinnabar"
+              :disabled="!resources.hasSmall('herb', MARKET_MAT_COUNT)"
+              @click="sellMat('herb')"
+            >
+              <span class="market-counter__mark" aria-hidden="true">草</span>
+              <span class="market-counter__copy">
+                <span>{{
+                  herbSellShort > 0 ? `尚差 ${herbSellShort} 灵草` : `售灵草×${MARKET_MAT_COUNT}`
                 }}</span>
-                <span class="text-ink-faint"
-                  >· {{ qualityDef(it.quality).name }}{{ it.tier }}阶 ·
-                  {{ formatGN(consignPrice(it.tier, qualityDef(it.quality).rank)) }} 石</span
+                <span class="market-counter__price"
+                  >得 {{ formatGN(materialSellPrice(player.major)) }} 石</span
                 >
-              </button>
-              <span v-if="inventory.bagItems.length === 0" class="text-note text-ink-faint"
-                >行囊空空 —— 去历练中寻些机缘吧</span
-              >
-            </div>
-            <div v-if="consignPage.hidden > 0 || consignPage.start > 0" class="mt-1 flex gap-1">
-              <button
-                v-if="consignPage.start > 0"
-                data-market-prev="consign"
-                class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
-                :aria-label="consignPrevLabel"
-                @click="showPreviousConsign"
-              >
-                {{ consignPrevLabel }}
-              </button>
-              <button
-                v-if="consignPage.hidden > 0"
-                data-market-more="consign"
-                :data-promised="Math.min(INVENTORY_RENDER_BATCH, consignPage.hidden)"
-                class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
-                :aria-label="consignMoreLabel"
-                @click="showMoreConsign"
-              >
-                {{ consignMoreLabel }}
-              </button>
-            </div>
-          </template>
-          <p v-else class="text-note text-ink-faint">
-            已上满 {{ MARKET_CONSIGN_SLOTS }} 格,待手头一张空闲
-          </p>
-        </div>
-
-        <!-- 即时售 -->
-        <div
-          class="mt-2 flex flex-wrap items-center gap-2 rounded-sm border border-ink/10 bg-paper-deep/40 px-3 py-2"
-        >
-          <button
-            v-for="p in sellablePills"
-            :key="p.id"
-            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-note hoverable:hover:border-cinnabar"
-            @click="sellPill(p.id)"
-          >
-            售{{ p.def?.name ?? p.id }}(现持 {{ p.count }}) · 每颗得
-            {{ formatGN(pillSellPrice(p.id)) }} 石
-          </button>
-          <button
-            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-note hoverable:hover:border-cinnabar"
-            :disabled="!resources.hasSmall('herb', MARKET_MAT_COUNT)"
-            @click="sellMat('herb')"
-          >
-            {{
-              herbSellShort > 0
-                ? `尚差 ${herbSellShort} 灵草`
-                : `售灵草×${MARKET_MAT_COUNT} · 得 ${formatGN(materialSellPrice(player.major))} 石`
-            }}
-          </button>
-          <button
-            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-note hoverable:hover:border-cinnabar"
-            :disabled="!resources.hasSmall('ore', MARKET_MAT_COUNT)"
-            @click="sellMat('ore')"
-          >
-            {{
-              oreSellShort > 0
-                ? `尚差 ${oreSellShort} 玄铁`
-                : `售玄铁×${MARKET_MAT_COUNT} · 得 ${formatGN(materialSellPrice(player.major))} 石`
-            }}
-          </button>
-          <span v-if="sellablePills.length === 0" class="text-note text-ink-faint"
-            >并无即时可售的丹药 —— 历练所得,自能入市</span
-          >
-        </div>
+              </span>
+            </button>
+            <button
+              class="market-counter__item hoverable:hover:border-cinnabar"
+              :disabled="!resources.hasSmall('ore', MARKET_MAT_COUNT)"
+              @click="sellMat('ore')"
+            >
+              <span class="market-counter__mark" aria-hidden="true">铁</span>
+              <span class="market-counter__copy">
+                <span>{{
+                  oreSellShort > 0 ? `尚差 ${oreSellShort} 玄铁` : `售玄铁×${MARKET_MAT_COUNT}`
+                }}</span>
+                <span class="market-counter__price"
+                  >得 {{ formatGN(materialSellPrice(player.major)) }} 石</span
+                >
+              </span>
+            </button>
+          </div>
+        </section>
       </div>
     </section>
   </div>
