@@ -248,7 +248,9 @@ describe("装饰层 · 花饰分隔只在页面层", () => {
   });
 
   it("确实有页面在用(否则这条判据在替一份空名单站岗)", () => {
-    expect(hits.length).toBeGreaterThanOrEqual(5);
+    // 行囊改九佩检点时撤掉了旧花饰,页面内外仍有四处真实使用;
+    // 这里守的是“判据没有空转”,不是把旧装饰数量钉成发版指标。
+    expect(hits.length).toBeGreaterThanOrEqual(4);
   });
 });
 

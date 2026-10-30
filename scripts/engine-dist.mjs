@@ -163,7 +163,10 @@ execFileSync("npm", ["pack", "--dry-run", "--json"], {
   env: { ...process.env, npm_config_cache: npmCache },
   stdio: ["ignore", openSync(packJson, "w"), "inherit"],
 });
-const pack = JSON.parse(readFileSync(packJson, "utf8"))[0];
+const packed = JSON.parse(readFileSync(packJson, "utf8"));
+// npm 11 及以前返回数组,npm 12 改成以包名为键的对象;两种都读,
+// 免得发布包内容门因为 npm 大版本升级而把真实产物检查直接炸掉。
+const pack = Array.isArray(packed) ? packed[0] : Object.values(packed)[0];
 const shipped = pack.files.map((f) => f.path);
 for (const required of [
   "dist/index.js",

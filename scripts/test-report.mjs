@@ -265,6 +265,7 @@ const CATEGORIES = [
       "folioSpread",
       "homeDesk",
       "cultivationDesk",
+      "inventoryDesk",
       "desktopSpine",
       "navigation",
       "visualRhythm",

@@ -42,6 +42,7 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(briefing, "途中三档仍走唯一档位表").toContain("EVENT_TIERS");
     expect(briefing, "每档概率按当前缘分状态现算").toContain("tierOddsText(t.id, chainPending)");
     expect(briefing, "所钟标签仍从 biasEffectOf 取").toContain("{{ biasLabel }}");
+    expect(briefing, "所钟说明要收成一行,给 390 首屏的出发键留余量").toContain("只放大此路所得。");
     expect(briefing, "所钟行保留稳定判据落点").toContain("data-bias-hint");
     expect(briefing, "遇事勿扰要在出发前看得见").toContain("遇事勿扰开启");
     expect(briefing, "遇事勿扰要能就地关闭").toContain('@click="settings.dndEvents = false"');

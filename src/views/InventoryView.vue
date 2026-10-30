@@ -1,14 +1,23 @@
 <template>
   <div class="folio-page stagger-in">
-    <FolioPageHeader title="行囊" subtitle="装备、丹药与材料" featured>
-      <template #action>
-        <div class="text-right tinylens:text-left">
-          <p class="text-note tracking-[0.24em] text-ink-faint">藏珍</p>
-          <p class="mt-0.5 font-kai text-heading leading-tight text-ink tabular">
-            {{ inventory.bagItems.length
-            }}<span class="text-body text-ink-faint"> / {{ BAG_CAPACITY }}</span>
-          </p>
+    <FolioPageHeader title="行囊" subtitle="九佩随身,余珍入藏" featured>
+      <template #meta>
+        <div class="inventory-masthead__meta">
+          <span
+            >已佩 <strong class="tabular">{{ equippedCount }}</strong> / {{ SLOTS.length }}</span
+          >
+          <span
+            >器灵尘 <strong class="tabular">{{ formatExact(resources.dust) }}</strong></span
+          >
         </div>
+      </template>
+      <template #visual>
+        <InventoryReliquary
+          :slots="SLOTS"
+          :filled-slots="filledEquipSlots"
+          :bag-count="inventory.bagItems.length"
+          :capacity="BAG_CAPACITY"
+        />
       </template>
     </FolioPageHeader>
 
@@ -18,173 +27,187 @@
     <!-- 装备:部位槽,点击唤起部位列表 -->
     <template v-if="tab === 'equip'">
       <!--
-        行囊卷首 —— 先回答「这一批有什么、哪里真会变强」。
-        底栏的新货徽标只说有货,而藏品原先按品阶排序,新得可能落到后面的批次;
-        一键换装也只写「换最强」,不报到底会动几个槽。两件事都在这里先摊开。
+        行囊开卷先答三件事:这一批新得什么、哪几席能换、器物何去何从。
+        新得、可换与穿齐仍各读原有同一份核心清单;这里只重排先后,不另算一次。
       -->
-      <div
-        class="card-ink mt-3 px-4 py-3"
+      <section
+        class="inventory-briefing mt-3"
         data-inventory-overview
         :data-inventory-bag-count="inventory.bagItems.length"
         :data-inventory-new-count="inventory.newItemCount"
         :data-inventory-upgrade-count="upgradeRows.length"
       >
-        <p class="text-note tracking-[0.24em] text-ink-faint">本批览要</p>
-        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-note">
-          <span class="text-ink-faint"
-            >器灵尘
-            <span class="text-ink-soft tabular">{{ formatExact(resources.dust) }}</span></span
-          >
+        <div class="inventory-briefing__heading">
+          <span class="inventory-briefing__title">本批检点</span>
+          <span class="inventory-briefing__hint">先看新得与可换</span>
+          <span class="inventory-briefing__rule" aria-hidden="true" />
           <button
-            v-if="inventory.newItemCount > 0"
             type="button"
-            data-inventory-new-toggle
-            class="tap-row -my-1 py-1 font-kai tracking-wider text-cinnabar active:opacity-60"
-            :aria-pressed="itemScope === 'new'"
-            @click="itemScope = itemScope === 'new' ? 'all' : 'new'"
+            class="inventory-briefing__tool"
+            aria-label="智能收纳设置"
+            :aria-expanded="smartOpen"
+            @click="smartOpen = true"
           >
-            {{
-              itemScope === "new" ? "看全部藏品" : `新得 ${inventory.newItemCount} 件 · 只看新得`
-            }}
+            收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
           </button>
-          <span v-else class="text-ink-faint">此批已看尽</span>
-        </div>
-        <div class="ink-divider-mark my-2.5" />
-        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-          <span class="text-body" :class="upgradeRows.length ? 'text-ink-soft' : 'text-jade'">
-            {{ upgradeRows.length ? `可动 ${upgradeRows.length} 槽` : "已无可换之器" }}
-          </span>
-          <span class="text-note text-ink-faint">只计真实战力更高</span>
-        </div>
-        <div v-if="upgradeRows.length" class="mt-1.5 flex flex-wrap gap-1.5">
           <button
-            v-for="row in upgradeRows"
-            :key="row.slot"
             type="button"
-            :data-inventory-upgrade-slot="row.slot"
-            class="chip-ink !px-2 !py-1 text-note active:scale-95"
-            :aria-label="`查看${EQUIP_SLOT_NAMES[row.slot]}候选，${upgradeText(row)}`"
+            class="inventory-briefing__tool"
+            aria-label="批量分解装备"
+            :aria-expanded="decomposeOpen"
+            @click="decomposeOpen = true"
+          >
+            分解
+          </button>
+        </div>
+
+        <div class="inventory-briefing__sheet">
+          <div class="inventory-briefing__counts">
+            <div class="inventory-briefing__count">
+              <span class="inventory-briefing__eyebrow">藏珍</span>
+              <p>
+                <strong class="tabular">{{ inventory.bagItems.length }}</strong>
+                <span class="tabular">/ {{ BAG_CAPACITY }}</span>
+              </p>
+              <span class="inventory-briefing__foot"
+                >余位 <b class="tabular">{{ BAG_CAPACITY - inventory.bagItems.length }}</b></span
+              >
+            </div>
+            <div class="inventory-briefing__count inventory-briefing__count--new">
+              <span class="inventory-briefing__eyebrow">新得</span>
+              <p>
+                <strong class="tabular">{{ inventory.newItemCount }}</strong>
+                <span>件</span>
+              </p>
+              <button
+                v-if="inventory.newItemCount > 0"
+                type="button"
+                data-inventory-new-toggle
+                class="inventory-briefing__new-toggle"
+                :aria-pressed="itemScope === 'new'"
+                @click="itemScope = itemScope === 'new' ? 'all' : 'new'"
+              >
+                {{ itemScope === "new" ? "看全部" : "只看新得" }}
+              </button>
+              <span v-else class="inventory-briefing__foot">已看尽</span>
+            </div>
+          </div>
+
+          <div class="inventory-briefing__upgrade">
+            <div class="inventory-briefing__upgrade-head">
+              <span class="inventory-briefing__eyebrow">可换</span>
+              <strong :class="upgradeRows.length ? 'text-ink-soft' : 'text-jade'">
+                {{ upgradeRows.length ? `${upgradeRows.length} 槽` : "无事可换" }}
+              </strong>
+              <span class="inventory-briefing__foot">只计真实战力更高</span>
+            </div>
+            <div v-if="upgradeRows.length" class="inventory-briefing__upgrade-slots">
+              <button
+                v-for="row in upgradeRows"
+                :key="row.slot"
+                type="button"
+                :data-inventory-upgrade-slot="row.slot"
+                class="chip-ink !px-2 !py-1 text-note active:scale-95"
+                :aria-label="`查看${EQUIP_SLOT_NAMES[row.slot]}候选，${upgradeText(row)}`"
+                @click="pickerSlot = row.slot"
+              >
+                {{ EQUIP_SLOT_NAMES[row.slot] }}
+                <span class="tabular text-jade">{{ upgradeText(row) }}</span>
+              </button>
+            </div>
+            <p v-else class="inventory-briefing__empty">没有空槽,也没有更强藏品。</p>
+            <button
+              class="inventory-briefing__wear"
+              :disabled="upgradeRows.length === 0"
+              :aria-label="
+                upgradeRows.length
+                  ? `一键换上 ${upgradeRows.length} 个槽位的最强装备`
+                  : '已无可换之器'
+              "
+              @click="wearEquipBest"
+            >
+              {{ upgradeRows.length ? `一键 · 换上 ${upgradeRows.length} 槽最强` : "已无可换之器" }}
+            </button>
+          </div>
+
+          <div v-if="setRows.length" class="inventory-briefing__resonance">
+            <div class="inventory-briefing__resonance-head">
+              <span class="inventory-briefing__eyebrow">共鸣</span>
+              <span class="inventory-briefing__foot">同组两件即共鸣,机制不叠数值</span>
+            </div>
+            <div v-for="s in setRows" :key="s.def.id" class="inventory-briefing__resonance-row">
+              <span class="font-kai" :class="s.active ? 'text-jade' : 'text-ink-soft'">{{
+                s.def.name
+              }}</span>
+              <span class="tabular" :class="s.active ? 'text-jade' : 'text-ink-faint'"
+                >{{ s.count }}/{{ s.def.required }}</span
+              >
+              <span class="inventory-briefing__resonance-copy">{{ s.def.effectDesc }}</span>
+              <button
+                type="button"
+                class="inventory-briefing__resonance-action"
+                :aria-label="`穿齐${s.def.name}`"
+                @click="wearSetOf(s.def.id)"
+              >
+                穿齐 →
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="inventory-equipment" data-inventory-equipment>
+        <SectionTitle title="九佩" :hint="`${equippedCount} / ${SLOTS.length} 已佩`" />
+        <div class="inventory-equipment__grid">
+          <button
+            v-for="(row, index) in slotRows"
+            :key="row.slot"
+            :data-equip-slot="row.slot"
+            :data-equip-upgrade="row.upgrade ? row.upgrade.slot : undefined"
+            class="inventory-equipment__slot"
+            :class="{ 'is-upgradable': row.upgrade, 'is-empty': !row.item }"
+            :aria-label="slotAriaLabel(row)"
             @click="pickerSlot = row.slot"
           >
-            {{ EQUIP_SLOT_NAMES[row.slot] }}
-            <span class="tabular text-jade">{{ upgradeText(row) }}</span>
+            <span class="inventory-equipment__number" aria-hidden="true">
+              {{ String(index + 1).padStart(2, "0") }}
+            </span>
+            <span class="inventory-equipment__head">
+              <span class="inventory-equipment__name">{{ row.name }}</span>
+              <span v-if="row.stock" class="inventory-equipment__stock">{{ row.stock }} 件</span>
+            </span>
+            <span v-if="row.item && row.template" class="inventory-equipment__piece">
+              <GameIcon
+                :name="row.template.icon"
+                :size="20"
+                :style="{ color: qualityDef(row.item.quality).color }"
+              />
+              <span class="inventory-equipment__piece-copy">
+                <span
+                  class="inventory-equipment__piece-name"
+                  :style="{ color: qualityDef(row.item.quality).color }"
+                >
+                  {{ row.template.name }}
+                  <span v-if="row.item.level > 0" class="tabular">+{{ row.item.level }}</span>
+                </span>
+                <span v-if="row.item.note" class="inventory-equipment__note">{{
+                  row.item.note
+                }}</span>
+              </span>
+            </span>
+            <span v-else class="inventory-equipment__blank">空悬待补</span>
+            <span v-if="row.upgrade" class="inventory-equipment__upgrade-mark">
+              换 <span class="tabular">{{ upgradeText(row.upgrade) }}</span>
+            </span>
           </button>
         </div>
-        <p v-else class="mt-1 text-note leading-relaxed text-ink-faint">
-          行囊里没有可补上空槽或换上更强的藏品。
-        </p>
-      </div>
-
-      <!-- 装备共鸣:机制是活的,玩家却看不见 —— 同组两件即共鸣,（2/2）亮起 -->
-      <div v-if="setRows.length" class="card-ink mt-3 px-4 py-2.5">
-        <p class="text-note text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
-        <p v-for="s in setRows" :key="s.def.id" class="mt-1 flex items-baseline gap-2 text-body">
-          <span class="font-kai" :class="s.active ? 'text-jade' : 'text-ink-soft'">{{
-            s.def.name
-          }}</span>
-          <span class="tabular" :class="s.active ? 'text-jade' : 'text-ink-faint'"
-            >{{ s.count }}/{{ s.def.required }}</span
-          >
-          <span class="min-w-0 grow text-note leading-relaxed text-ink-faint">{{
-            s.def.effectDesc
-          }}</span>
-          <!-- 穿齐该套:换上已持有里最强的套件,已穿更强者不动(绝不降级) -->
-          <button
-            type="button"
-            class="tap-row shrink-0 -my-1.5 py-1.5 font-kai text-body text-cinnabar active:opacity-60"
-            :aria-label="`穿齐${s.def.name}`"
-            @click="wearSetOf(s.def.id)"
-          >
-            穿齐 →
-          </button>
-        </p>
-      </div>
-      <div class="mt-2 flex gap-2">
-        <button
-          class="chip-ink flex-1 !justify-center !py-1.5 text-body"
-          aria-label="智能收纳设置"
-          :aria-expanded="smartOpen"
-          @click="smartOpen = true"
-        >
-          收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
-        </button>
-        <button
-          class="chip-ink flex-1 !justify-center !py-1.5 text-body"
-          aria-label="批量分解装备"
-          :aria-expanded="decomposeOpen"
-          @click="decomposeOpen = true"
-        >
-          分解
-        </button>
-      </div>
-      <div class="mt-2 grid grid-cols-3 gap-2">
-        <button
-          v-for="row in slotRows"
-          :key="row.slot"
-          :data-equip-slot="row.slot"
-          :data-equip-upgrade="row.upgrade ? row.upgrade.slot : undefined"
-          class="card-ink relative flex flex-col items-center gap-1 px-2 py-2.5 active:scale-95"
-          @click="pickerSlot = row.slot"
-        >
-          <span
-            v-if="row.upgrade"
-            class="absolute right-1 top-1 font-kai text-note leading-none text-jade"
-            aria-hidden="true"
-            >换</span
-          >
-          <!--
-            槽名与下面的装备名同为 10px 时,一格里两层字一样重,读的人得先分辨
-            「哪个是我的东西」。槽名走楷体 + 字距:外形一变就认得出是题头而非内容;
-            「·N」是候选件数,压到更淡的一档。
-          -->
-          <span class="font-kai text-note tracking-[0.15em] text-ink-faint">
-            {{ row.name }}
-            <span v-if="row.stock" class="tracking-normal text-ink-faint">·{{ row.stock }}</span>
-          </span>
-          <template v-if="row.item && row.template">
-            <GameIcon
-              :name="row.template.icon"
-              :size="16"
-              :style="{ color: qualityDef(row.item.quality).color }"
-            />
-            <span
-              class="w-full truncate text-center font-kai text-note"
-              :style="{ color: qualityDef(row.item.quality).color }"
-            >
-              {{ row.template.name }}
-              <template v-if="row.item.level > 0">+{{ row.item.level }}</template>
-              <template v-if="row.item.note">·{{ row.item.note }}</template>
-            </span>
-          </template>
-          <template v-else>
-            <span class="grid h-4 w-4 place-items-center text-ink-faint">·</span>
-            <span class="text-note text-ink-faint">空悬</span>
-          </template>
-        </button>
-      </div>
-      <p class="mt-2 text-center text-note text-ink-faint">
-        点击部位查看候选,行囊满时新掉落自动折作器灵尘
-      </p>
-      <!--
-        一键穿最强:纯方便性动作,只改装配,绝不把好换差。
-        它是常驻的便利入口 —— 从前藏在「有共鸣套才出现」的卡里,后来塞进「收纳/分解」
-        那一排 11px 小字里,两回都没人看得见(两次实测反馈)。故改成整行按钮,写明全称。
-      -->
-      <button
-        class="btn-ghost mt-2 w-full !py-2 !text-body"
-        :disabled="upgradeRows.length === 0"
-        :aria-label="
-          upgradeRows.length ? `一键换上 ${upgradeRows.length} 个槽位的最强装备` : '已无可换之器'
-        "
-        @click="wearEquipBest"
-      >
-        {{ upgradeRows.length ? `一键 · 换上 ${upgradeRows.length} 槽最强` : "已无可换之器" }}
-      </button>
+        <p class="inventory-equipment__foot">点一片查看同席候补;行囊满时新掉落自动折作器灵尘。</p>
+      </section>
 
       <!-- 全部藏品(含佩戴中):部位槽之下的完整清单 -->
-      <div
+      <section
         v-if="visibleItems.length"
-        class="mt-4"
+        class="inventory-collection"
         :data-inventory-total="visibleItems.length"
         :data-inventory-start="itemPage.start"
         :data-inventory-scope="itemScope"
@@ -198,7 +221,7 @@
           更是认不出的墨点。四列给到 ~88px,名字与角标才都有立足处。
           320 宽下四列仍有 ~66px,比原来的五列 ~50px 宽裕。
         -->
-        <div class="mt-2 grid grid-cols-4 gap-2">
+        <div class="inventory-collection__grid mt-2">
           <EquipmentCard
             v-for="row in itemPage.visible"
             :key="row.item.uid"
@@ -212,11 +235,14 @@
           背包一次只留一批卡:80 张实测 1048 DOM,已越过 700 的预算。
           「再看」前移到下一批并滑掉上一批,「前一批」保证整份行囊仍逐件可达。
         -->
-        <div v-if="itemPage.hidden > 0 || itemPage.start > 0" class="mt-3 flex gap-2">
+        <div
+          v-if="itemPage.hidden > 0 || itemPage.start > 0"
+          class="inventory-collection__pager mt-3"
+        >
           <button
             v-if="itemPage.start > 0"
             data-inventory-prev
-            class="btn-ghost flex-1 !py-2 !text-body"
+            class="btn-ghost !py-2 !text-body"
             :aria-label="previousItemsLabel"
             @click="showPreviousItems"
           >
@@ -224,14 +250,14 @@
           </button>
           <button
             v-if="itemPage.hidden > 0"
-            class="btn-ghost flex-1 !py-2 !text-body"
+            class="btn-ghost !py-2 !text-body"
             :aria-label="moreItemsLabel"
             @click="showMoreItems"
           >
             {{ moreItemsLabel }}
           </button>
         </div>
-      </div>
+      </section>
       <p v-else class="empty-note mt-8 text-center text-body text-ink-faint">
         行囊空空,去历练中寻些机缘吧
       </p>
@@ -239,64 +265,66 @@
 
     <!-- 丹药 -->
     <template v-else-if="tab === 'pill'">
-      <!-- 开炉炼丹:入口置顶,点开弹窗 -->
-      <button
-        class="card-ink mt-3 flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:scale-99"
-        @click="craftOpen = true"
-      >
-        <span
-          class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-cinnabar/85 font-kai text-[19px] text-paper"
-          >炉</span
-        >
-        <span class="min-w-0 flex-1">
-          <span class="block t-card">开炉炼丹</span>
-          <span class="block truncate text-note leading-relaxed text-ink-faint">
-            {{
-              recipes.length > 0
-                ? `已知丹方 ${recipes.length} 种 · ${HERB_GRADE_SHORT[herbGradeOfMajor(player.major)]}灵草 ${resources.herbOf(herbGradeOfMajor(player.major))}`
-                : "尚不知任何丹方"
-            }}
-          </span>
-        </span>
-        <span class="shrink-0 text-body text-ink-faint">›</span>
-      </button>
+      <section class="inventory-workshop" data-inventory-workshop>
+        <SectionTitle title="丹房" hint="开炉、购草与成丹去处" />
+        <div class="inventory-workshop__grid">
+          <!-- 开炉炼丹:入口置顶,点开弹窗 -->
+          <button
+            class="inventory-workshop__card inventory-workshop__card--brew"
+            @click="craftOpen = true"
+          >
+            <span class="inventory-workshop__seal inventory-workshop__seal--cinnabar">炉</span>
+            <span class="inventory-workshop__copy">
+              <span class="inventory-workshop__name">开炉炼丹</span>
+              <span class="inventory-workshop__detail">
+                {{
+                  recipes.length > 0
+                    ? `已知丹方 ${recipes.length} 种 · ${HERB_GRADE_SHORT[herbGradeOfMajor(player.major)]}灵草 ${resources.herbOf(herbGradeOfMajor(player.major))}`
+                    : "尚不知任何丹方"
+                }}
+              </span>
+            </span>
+            <span class="inventory-workshop__go">入炉 →</span>
+          </button>
 
-      <!-- 灵草坊(ISS-306):灵石购草 —— 草比石贵,想补哪一品,明码标价(极贵) -->
-      <button
-        class="card-ink mt-2 flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left active:scale-99"
-        @click="marketOpen = true"
-      >
-        <span
-          class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-section text-paper"
-          >坊</span
-        >
-        <span class="min-w-0 flex-1">
-          <span class="block t-card">灵草坊</span>
-          <span class="block truncate text-note leading-relaxed text-ink-faint">
-            灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,道品
-            {{ formatGN(herbBuyPrice(5)) }} 灵石一株
-          </span>
-        </span>
-        <span class="shrink-0 text-body text-ink-faint">买 ›</span>
-      </button>
+          <!-- 灵草坊(ISS-306):灵石购草 —— 草比石贵,想补哪一品,明码标价(极贵) -->
+          <button
+            class="inventory-workshop__card inventory-workshop__card--shop"
+            @click="marketOpen = true"
+          >
+            <span class="inventory-workshop__seal inventory-workshop__seal--jade">坊</span>
+            <span class="inventory-workshop__copy">
+              <span class="inventory-workshop__name">灵草坊</span>
+              <span class="inventory-workshop__detail">
+                灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,道品
+                {{ formatGN(herbBuyPrice(5)) }} 灵石一株
+              </span>
+            </span>
+            <span class="inventory-workshop__go">问价 →</span>
+          </button>
+        </div>
+      </section>
 
-      <!-- 丹匣:格子只给图标、名号与存量,详情看弹窗 -->
-      <div v-if="pillRows.length" class="mt-3 grid grid-cols-4 gap-2">
-        <ItemCell
-          v-for="row in pillRows"
-          :key="row.def!.id"
-          :icon="row.def!.icon"
-          :name="row.def!.name"
-          :tone="qualityDef(row.def!.quality).color"
-          :quality="row.def!.quality"
-          :foot="`×${row.count}`"
-          :label="`${qualityDef(row.def!.quality).name}·${row.def!.name} · 存 ${row.count}`"
-          @open="pillDetail = row.def!.id"
-        />
-      </div>
-      <p v-else class="empty-note mt-10 text-center text-body text-ink-faint">
-        丹匣空空,去藏经阁参悟丹方,或去坊市收购几株灵草
-      </p>
+      <section class="inventory-pill-cabinet">
+        <SectionTitle title="丹匣" :hint="`${pillRows.length} 味 · 点一格看火候`" />
+        <!-- 丹匣:格子只给图标、名号与存量,详情看弹窗 -->
+        <div v-if="pillRows.length" class="inventory-pill-cabinet__grid mt-2">
+          <ItemCell
+            v-for="row in pillRows"
+            :key="row.def!.id"
+            :icon="row.def!.icon"
+            :name="row.def!.name"
+            :tone="qualityDef(row.def!.quality).color"
+            :quality="row.def!.quality"
+            :foot="`×${row.count}`"
+            :label="`${qualityDef(row.def!.quality).name}·${row.def!.name} · 存 ${row.count}`"
+            @open="pillDetail = row.def!.id"
+          />
+        </div>
+        <p v-else class="empty-note mt-4 text-center text-body text-ink-faint">
+          丹匣空空,去藏经阁参悟丹方,或去坊市收购几株灵草
+        </p>
+      </section>
     </template>
 
     <!-- 材料 -->
@@ -306,34 +334,55 @@
         差得很远(前三样进炉子,后三样进账本)。分两组,各带一行说明 ——
         找「炼丹要什么」与「我还有多少底子」是两件事。
       -->
-      <p class="mt-3 px-1 text-body text-ink-faint">炼制之材 · 进炉子</p>
-      <div class="mt-1.5 grid grid-cols-4 gap-2">
-        <ItemCell
-          v-for="m in craftMaterials"
-          :key="m.key"
-          :icon="m.icon"
-          :name="m.name"
-          plain
-          :icon-class="m.color"
-          :foot="m.display"
-          :label="`${m.name} ${m.display}`"
-          @open="materialDetail = m.key"
-        />
-      </div>
-      <p class="mt-3 px-1 text-body text-ink-faint">修行所积 · 进账本</p>
-      <div class="mt-1.5 grid grid-cols-4 gap-2">
-        <ItemCell
-          v-for="m in stockMaterials"
-          :key="m.key"
-          :icon="m.icon"
-          :name="m.name"
-          plain
-          :icon-class="m.color"
-          :foot="m.display"
-          :label="`${m.name} ${m.display}`"
-          @open="materialDetail = m.key"
-        />
-      </div>
+      <section class="inventory-materials" data-inventory-materials>
+        <SectionTitle title="材簿" hint="炼制与账本,两类去处" />
+        <div class="inventory-materials__groups">
+          <section class="inventory-material-group" data-inventory-material-group="craft">
+            <div class="inventory-material-group__head">
+              <span class="inventory-material-group__title">炼制之材</span>
+              <span class="inventory-material-group__hint">进炉子</span>
+              <span class="inventory-material-group__count tabular"
+                >{{ craftMaterials.length }} 类</span
+              >
+            </div>
+            <div class="inventory-material-group__grid">
+              <ItemCell
+                v-for="m in craftMaterials"
+                :key="m.key"
+                :icon="m.icon"
+                :name="m.name"
+                plain
+                :icon-class="m.color"
+                :foot="m.display"
+                :label="`${m.name} ${m.display}`"
+                @open="materialDetail = m.key"
+              />
+            </div>
+          </section>
+          <section class="inventory-material-group" data-inventory-material-group="stock">
+            <div class="inventory-material-group__head">
+              <span class="inventory-material-group__title">修行所积</span>
+              <span class="inventory-material-group__hint">进账本</span>
+              <span class="inventory-material-group__count tabular"
+                >{{ stockMaterials.length }} 类</span
+              >
+            </div>
+            <div class="inventory-material-group__grid">
+              <ItemCell
+                v-for="m in stockMaterials"
+                :key="m.key"
+                :icon="m.icon"
+                :name="m.name"
+                plain
+                :icon-class="m.color"
+                :foot="m.display"
+                :label="`${m.name} ${m.display}`"
+                @open="materialDetail = m.key"
+              />
+            </div>
+          </section>
+        </div>
+      </section>
     </template>
 
     <!-- 法宝:面板不是弹窗,整段在 ArtifactPanel(祭炼的账随面板走) -->
@@ -516,6 +565,7 @@ import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ArtifactPanel from "@/components/inventory/ArtifactPanel.vue";
+import InventoryReliquary from "@/components/inventory/InventoryReliquary.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import EquipmentCard from "@/components/equipment/EquipmentCard.vue";
 import ItemCell from "@/components/common/ItemCell.vue";
@@ -644,6 +694,19 @@ const slotRows = computed(() =>
     };
   }),
 );
+const equippedCount = computed(() => slotRows.value.filter((row) => row.item).length);
+const filledEquipSlots = computed(() =>
+  slotRows.value.filter((row) => row.item).map((row) => row.slot),
+);
+
+function slotAriaLabel(row: (typeof slotRows.value)[number]): string {
+  const worn =
+    row.item && row.template
+      ? `${row.template.name}${row.item.level > 0 ? `+${row.item.level}` : ""}`
+      : "空悬";
+  const upgrade = row.upgrade ? `,${upgradeText(row.upgrade)}可换` : "";
+  return `${row.name},${worn},${row.stock} 件同席候选${upgrade}`;
+}
 
 /** 全部藏品(含佩戴中):本次新得先列,两组内部再按品质/层级降序 */
 const allItems = computed(() =>

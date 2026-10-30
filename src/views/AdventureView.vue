@@ -38,7 +38,7 @@
             <div v-if="biasLabel" data-bias-hint class="adventure-briefing__fact">
               <span class="adventure-briefing__eyebrow">本世所钟</span>
               <strong>{{ biasLabel }}</strong>
-              <p>只放大这一路所得,不改动别处。</p>
+              <p>只放大此路所得。</p>
             </div>
             <div class="adventure-briefing__tiers">
               <div class="adventure-briefing__tier-head">
