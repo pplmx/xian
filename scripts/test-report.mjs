@@ -270,6 +270,7 @@ const CATEGORIES = [
       "folioOpening",
       "folioChrome",
       "folioSpread",
+      "openingDesk",
       "homeDesk",
       "cultivationDesk",
       "legacyDesk",

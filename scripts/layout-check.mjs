@@ -122,10 +122,10 @@
  *   四十六 开局前两页(欢迎 / 建号):它们是唯二**没有存档才看得见**的页面 ——
  *      路由守卫见存档已开就把 #/welcome、#/create 重定向回首页,所以巡页 ROUTES
  *      永远巡不到它们(硬塞进 ROUTES 只会把首页重复量一遍)。故另开一个无存档的
- *      context:先量欢迎页,再走「开始游戏 → 同意并开始」落到建号页量一遍。
+ *      context:先量欢迎页,再走「启封入山 → 同意并开始」落到建号页量一遍。
  *      只查基础档(横向溢出 / 外壳偏移 / 越界元素 / 无名控件 / 可点过小 / 正文对比度),
  *      不查底部导航项数 —— 这两页本来就没有导航(开局前不该有)。
- *      两页也各过一遍 200% 缩放档:实测欢迎页在 195 宽下把「开 始 游 戏」折成两行、
+ *      两页也各过一遍 200% 缩放档:旧欢迎页曾在 195 宽下把主钮折成两行、
  *      把三枚底链压成 25px 宽的四字竖排 —— 而这是玩家看到的第一屏。
  *   四十七 浮层在 200% 缩放档:页面上点得开的那几扇(装备详情 / 丹房 / 器魂 / 灵脉)
  *      另起一个任务,在 195×422 里逐扇点开量一遍。巡页不会去点它们,缩放档那一遍
@@ -1954,7 +1954,7 @@ async function taskPageTour(vp) {
   await page.goto(INDEX, { waitUntil: "load" });
   // 建号:同意隐私 → 传送门(约 2.5s)→ 命名 → 踏入仙途
   await page
-    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .getByRole("button", { name: /启封入山/ })
     .first()
     .click();
   /*
@@ -2357,7 +2357,7 @@ async function taskSaveUnwritable() {
     watchPageErrors(page, pageErrors);
     await page.goto(INDEX, { waitUntil: "load" });
     await page
-      .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+      .getByRole("button", { name: /启封入山/ })
       .first()
       .click();
     await page.locator("input[type=checkbox]").first().check();
@@ -2410,7 +2410,7 @@ async function taskModalFocus() {
     watchPageErrors(page, pageErrors);
     await page.goto(INDEX, { waitUntil: "load" });
     await page
-      .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+      .getByRole("button", { name: /启封入山/ })
       .first()
       .click();
     await page.locator("input[type=checkbox]").first().check();
@@ -2554,7 +2554,7 @@ async function taskTabFocus() {
     watchPageErrors(page, pageErrors);
     await page.goto(INDEX, { waitUntil: "load" });
     await page
-      .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+      .getByRole("button", { name: /启封入山/ })
       .first()
       .click();
     await page.locator("input[type=checkbox]").first().check();
@@ -2626,7 +2626,7 @@ async function taskToastDismiss() {
     watchPageErrors(page, pageErrors);
     await page.goto(INDEX, { waitUntil: "load" });
     await page
-      .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+      .getByRole("button", { name: /启封入山/ })
       .first()
       .click();
     await page.locator("input[type=checkbox]").first().check();
@@ -2705,7 +2705,7 @@ async function taskEngineModals() {
     watchPageErrors(page, pageErrors);
     await page.goto(INDEX, { waitUntil: "load" });
     await page
-      .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+      .getByRole("button", { name: /启封入山/ })
       .first()
       .click();
     await page.locator("input[type=checkbox]").first().check();
@@ -2807,7 +2807,7 @@ async function taskColdStartBack() {
     const boot = await ctx.newPage();
     await boot.goto(INDEX, { waitUntil: "load" });
     await boot
-      .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+      .getByRole("button", { name: /启封入山/ })
       .first()
       .click();
     await boot.locator("input[type=checkbox]").first().check();
@@ -8670,7 +8670,7 @@ async function taskBuildArtifacts() {
  * /welcome 与 /create 是「没有存档才看得见」的页面:路由守卫见存档已开就把它们
  * 重定向回首页,巡页 ROUTES 永远巡不到 —— 此前这两页从未被量过,而它们恰是
  * 每个新玩家的第一屏(字体最大的一屏、表单页)。这里开一个**无存档**的 context:
- * 直接落在欢迎页量一遍,再走「开始游戏 → 同意并开始」落到建号页量一遍。
+ * 直接落在欢迎页量一遍,再走「启封入山 → 同意并开始」落到建号页量一遍。
  *
  * 判据只取基础档,且是 measurePage 的**子集**:底部导航项数、顶栏折行、页签栏
  * 这些判据以「游戏内页面」为前提,开局前两页没有导航与顶栏,硬套只会量出假红。
@@ -8762,6 +8762,17 @@ async function taskPreGameTour() {
             ({ el, r, declared }) =>
               `${r.height.toFixed(1)}px(声明 ${declared || "—"}px)«${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 12)}» [${(el.className || "").toString().slice(0, 60)}]`,
           ),
+        firstScreenAction: (() => {
+          const el = document.querySelector("[data-opening-enter], [data-opening-reroll]");
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return {
+            name: (el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 16),
+            top: Math.round(r.top),
+            bottom: Math.round(r.bottom),
+            viewport: window.innerHeight,
+          };
+        })(),
       };
     });
 
@@ -8790,12 +8801,23 @@ async function taskPreGameTour() {
   await page.waitForTimeout(900);
   await settleVisuals(page);
   {
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({ path: join(SHOTS_DIR, "390_welcome.png"), fullPage: true });
+    }
     const info = await measureBasic();
     checked += 1;
     if (!info.hash.includes("welcome"))
       failures.push(`[开局前] 无存档冷启动落在 ${info.hash},应落在欢迎页`);
     const problems = problemsOfBasic(info);
     if (problems.length) failures.push(`[开局前] /welcome → ${problems.join(" / ")}`);
+    if (!info.firstScreenAction) {
+      failures.push("[开局前] /welcome 首屏没有「启封入山」主入口");
+    } else if (info.firstScreenAction.bottom > info.firstScreenAction.viewport - 8) {
+      failures.push(
+        `[开局前] /welcome 首屏主入口被推到折线以下(${info.firstScreenAction.top}..${info.firstScreenAction.bottom} / ${info.firstScreenAction.viewport})`,
+      );
+    }
     await quiesceOverlays(page);
     for (const bad of await measureTextContrast(page)) {
       contrastFails.push(
@@ -8806,7 +8828,7 @@ async function taskPreGameTour() {
      * 开局前两页也要过 200% 那一档。
      *
      * 它们是唯二**没有存档才看得见**的页面(路由守卫见存档已开就重定向),主巡页
-     * 的缩放档那一遍永远巡不到。实测欢迎页在这一档把「开 始 游 戏」折成两行、
+     * 的缩放档那一遍永远巡不到。旧欢迎页曾在这一档把主钮折成两行、
      * 把三枚底链各压成 25px 宽的四字竖排 —— 而这是玩家看到的第一屏。
      */
     zoomSeen += 1;
@@ -8820,7 +8842,7 @@ async function taskPreGameTour() {
 
   // ---- 建号页:同意隐私后由欢迎页进来(传送门约 2.5s) ----
   await page
-    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .getByRole("button", { name: /启封入山/ })
     .first()
     .click();
   await page.waitForTimeout(600);
@@ -8832,12 +8854,23 @@ async function taskPreGameTour() {
   await page.waitForTimeout(3200);
   await settleVisuals(page);
   {
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({ path: join(SHOTS_DIR, "390_create.png"), fullPage: true });
+    }
     const info = await measureBasic();
     checked += 1;
     if (!info.hash.includes("create"))
       failures.push(`[开局前] 同意隐私后落在 ${info.hash},应落在建号页`);
     const problems = problemsOfBasic(info);
     if (problems.length) failures.push(`[开局前] /create → ${problems.join(" / ")}`);
+    if (!info.firstScreenAction) {
+      failures.push("[开局前] /create 首屏没有「逆天改命」入口");
+    } else if (info.firstScreenAction.bottom > info.firstScreenAction.viewport - 8) {
+      failures.push(
+        `[开局前] /create 首屏重掷入口被推到折线以下(${info.firstScreenAction.top}..${info.firstScreenAction.bottom} / ${info.firstScreenAction.viewport})`,
+      );
+    }
     await quiesceOverlays(page);
     for (const bad of await measureTextContrast(page)) {
       contrastFails.push(
@@ -8851,6 +8884,47 @@ async function taskPreGameTour() {
     );
     if (createZoom.length)
       failures.push(`[开局前] /create 在 200% 下坏了:${createZoom.join(" / ")}`);
+  }
+
+  /*
+   * 桌面开局页不是放大的手机单列:欢迎页的「山门 / 三则」与建号页的
+   * 「留名 / 验根」都应在宽屏并读。这里仍用无存档 context,免得主巡页
+   * 因路由守卫根本看不到这两页。
+   */
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await settleVisuals(page);
+  {
+    const columns = await page.locator(".opening-create__sheet").evaluate((el) => {
+      const value = getComputedStyle(el).gridTemplateColumns;
+      return value.split(/\s+/).filter(Boolean).length;
+    });
+    if (columns < 2) failures.push(`[开局前] /create 桌面上没有并读留名与验根(${columns} 列)`);
+    const problems = problemsOfBasic(await measureBasic());
+    if (problems.length) failures.push(`[开局前] /create 桌面 → ${problems.join(" / ")}`);
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "1280x800_create.png"), fullPage: true });
+    }
+    checked += 1;
+  }
+
+  await page
+    .getByRole("link", { name: /欢迎/ })
+    .first()
+    .click();
+  await page.waitForTimeout(500);
+  await settleVisuals(page);
+  {
+    const columns = await page.locator(".opening-gate__layout").evaluate((el) => {
+      const value = getComputedStyle(el).gridTemplateColumns;
+      return value.split(/\s+/).filter(Boolean).length;
+    });
+    if (columns < 2) failures.push(`[开局前] /welcome 桌面上没有并读山门与三则(${columns} 列)`);
+    const problems = problemsOfBasic(await measureBasic());
+    if (problems.length) failures.push(`[开局前] /welcome 桌面 → ${problems.join(" / ")}`);
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "1280x800_welcome.png"), fullPage: true });
+    }
+    checked += 1;
   }
 
   if (pageErrors.length) failures.push(`[开局前] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);

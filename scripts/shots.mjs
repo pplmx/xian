@@ -137,7 +137,7 @@ async function clean(page) {
   await shot(page, "welcome");
 
   await page
-    .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+    .getByRole("button", { name: /启封入山/ })
     .first()
     .click();
   await page.locator("input[type=checkbox]").first().check();

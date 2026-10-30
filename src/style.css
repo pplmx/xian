@@ -1427,6 +1427,11 @@ html[data-theme="dark"] .bottom-dock-rail {
  * 这层只改桌面断点,手机上的页框、触达尺寸与滚动宿主一位不动。
  */
 @media (min-width: 960px) {
+  .app-shell[data-opening="true"] {
+    width: min(calc(100% - 3rem), 72rem);
+    max-width: 72rem;
+  }
+
   .app-shell[data-game-shell="desk"] {
     display: grid;
     width: calc(100% - 2rem);

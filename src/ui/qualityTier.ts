@@ -21,3 +21,15 @@ export function qualityTierStyle(quality: QualityId): { border: number; bg: numb
 export function isRareQuality(quality: QualityId): boolean {
   return qualityDef(quality).rank >= 6;
 }
+
+/**
+ * 品阶名当正文时的字色。
+ *
+ * 凡品的墨色只适合直接落在纸面；坊市这类「品阶色 6% 晕染底」会把夜间卡片再抬亮，
+ * 实测名称只剩 4.46:1。这里只把凡品文字抬到 ink-soft，晕染仍用品阶原色，
+ * 不把同行的说明与价格一起推过 AA 线。
+ */
+export function qualityTextColor(quality: QualityId): string {
+  const def = qualityDef(quality);
+  return def.rank === 0 ? "var(--color-ink-soft)" : def.color;
+}

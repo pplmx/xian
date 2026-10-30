@@ -1263,12 +1263,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const wel = FILES.find((f) => f.path === "views/WelcomeView.vue");
     expect(wel?.src, "首屏主钮要有柔辉").toMatch(/btn-seal animate-glow-pulse/);
     /*
-     * 极窄档(195 CSS px)实测:留白 32px 后内容宽只剩 131px ——「开 始 游 戏」四个
-     * 17px 的字加 0.3em 字距放不下,当场折成两行(79px 高);三枚底链并排要 44×3,
-     * 被压成 25px 宽的四字竖排。这是玩家看到的**第一屏**,而它没有存档才可见,
-     * 主巡页的缩放档那一遍永远巡不到。
+     * 极窄档(195 CSS px)实测:旧欢迎页的 17px 主钮加 0.3em 字距放不下,当场折成
+     * 两行(79px 高);三枚底链并排也会被压成 25px 宽的四字竖排。这是玩家看到的
+     * **第一屏**,而它没有存档才可见,主巡页的缩放档那一遍永远巡不到。
      */
-    expect(wel?.src, "主钮极窄档收字距并锁一行").toMatch(
+    expect(wel?.src, "主入口极窄档收字距并锁一行").toMatch(
       /tracking-\[0\.3em\] whitespace-nowrap tinylens:tracking-normal/,
     );
     expect(wel?.src, "三枚底链极窄档换行而不是被压成竖排").toMatch(

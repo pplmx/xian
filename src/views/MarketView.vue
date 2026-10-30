@@ -44,7 +44,7 @@ import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
 import { qualityDef, QUALITIES } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
 import { colorWithAlpha } from "@/ui/colorVar";
-import { isRareQuality, qualityTierStyle } from "@/ui/qualityTier";
+import { isRareQuality, qualityTextColor, qualityTierStyle } from "@/ui/qualityTier";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
@@ -251,6 +251,7 @@ interface EquipPreview {
   name: string;
   qualityName: string;
   color: string;
+  textColor: string;
   quality: QualityId;
   /** 天/仙/神 —— 该盖品阶章的那批(同源 qualityTier,与背包格一份账) */
   rare: boolean;
@@ -265,6 +266,7 @@ const previews = computed<Record<number, EquipPreview>>(() => {
       name: equipmentTemplate(inst.templateId)?.name ?? "兵刃",
       qualityName: q.name,
       color: q.color,
+      textColor: qualityTextColor(inst.quality),
       quality: inst.quality,
       rare: isRareQuality(inst.quality),
     };
@@ -619,7 +621,7 @@ function bountyReady(o: BountySlot): boolean {
                 />
                 <span
                   class="font-kai"
-                  :style="{ color: previews[slot.idx]?.color ?? 'var(--color-ink)' }"
+                  :style="{ color: previews[slot.idx]?.textColor ?? 'var(--color-ink)' }"
                   >{{ previews[slot.idx]?.name ?? "兵刃" }}</span
                 >
                 <span class="market-good__quality"
@@ -772,7 +774,7 @@ function bountyReady(o: BountySlot): boolean {
               :size="12"
               class="mr-1 align-[-2px]"
             />
-            <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">
+            <span class="font-kai" :style="{ color: qualityTextColor(it.quality) }">
               {{ equipmentTemplate(it.templateId)?.name ?? "无名法器" }}
             </span>
             <span class="ml-1 text-ink-faint"
@@ -871,7 +873,7 @@ function bountyReady(o: BountySlot): boolean {
                     :size="12"
                     class="mr-1"
                   />
-                  <span class="font-kai" :style="{ color: qualityDef(it.quality).color }">{{
+                  <span class="font-kai" :style="{ color: qualityTextColor(it.quality) }">{{
                     equipmentTemplate(it.templateId)?.name ?? "?"
                   }}</span>
                   <span class="text-ink-faint"

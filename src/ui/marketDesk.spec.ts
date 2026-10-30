@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { qualityDef } from "@/data/qualities";
+import { qualityTextColor } from "@/ui/qualityTier";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -9,6 +11,11 @@ function source(rel: string): string {
 }
 
 describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
+  it("凡品名在品阶晕染上仍有正文可读性，其余品阶不改字色", () => {
+    expect(qualityTextColor("mortal")).toBe("var(--color-ink-soft)");
+    expect(qualityTextColor("fine")).toBe(qualityDef("fine").color);
+  });
+
   it("卷首市桥图读三册真值，整图不重复进入读屏", () => {
     const view = source("src/views/MarketView.vue");
     const arcade = source("src/components/market/MarketArcade.vue");

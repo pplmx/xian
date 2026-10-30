@@ -1,92 +1,98 @@
 <template>
-  <div class="stagger-in flex min-h-full flex-col items-center justify-center px-8 py-10">
-    <!--
-      首屏印面 —— 原先是一个大圆角方块装着一个「道」字:
-      那是任何一款 App 的图标语言,与这一作的印面/篆意不是一回事。
-      改成方印:方角、内框一道、朱砂底墨字,左右各留一道空(印文的边) ——
-      方印在纸上是不裁圆角的,圆角一上去就变成了软件图标。
-    -->
-    <div class="relative">
-      <div
-        class="grid h-24 w-24 place-items-center bg-cinnabar shadow-lg shadow-cinnabar/30"
-        role="img"
-        aria-label="玄枢录印"
-      >
-        <!-- 内框:篆刻的边栏,比外框矮一档、细一分 -->
-        <div class="grid h-[76px] w-[76px] place-items-center border border-paper/45">
+  <div class="opening-page opening-page--gate stagger-in" data-opening-gate>
+    <OpeningBackdrop variant="gate" />
+
+    <div class="opening-page__inner">
+      <header class="opening-gate__brand">
+        <div class="opening-gate__seal" role="img" aria-label="玄枢录印">
           <span class="font-kai text-[46px] leading-none text-paper">道</span>
         </div>
+        <div class="opening-gate__wordmark">
+          <p class="opening-gate__eyebrow">万象归枢 · 一念入道</p>
+          <h1 class="font-kai text-[40px] leading-none text-ink">玄枢录</h1>
+          <p class="opening-gate__motto">玄之又玄 · 众妙之门</p>
+        </div>
+        <span class="opening-gate__folio">卷一 · 入世</span>
+      </header>
+
+      <div class="opening-gate__layout">
+        <section class="opening-gate__threshold">
+          <p class="opening-gate__kicker">
+            <span aria-hidden="true" />
+            山门未闭
+          </p>
+          <h2>从一介凡身，走入万象之枢</h2>
+          <p class="opening-gate__lead">
+            此世没有开局即定的天命。你从引气一层起，择功法、铸道途、渡天劫；
+            每一次转世都带走一点前世的答案。
+          </p>
+
+          <dl class="opening-gate__measure">
+            <div>
+              <dt>界</dt>
+              <dd class="tabular">{{ cnNumber(WORLDS.length) }} 方</dd>
+            </div>
+            <div>
+              <dt>境</dt>
+              <dd class="tabular">{{ cnNumber(REALMS.length) }} 重</dd>
+            </div>
+            <div>
+              <dt>世</dt>
+              <dd>可轮回</dd>
+            </div>
+          </dl>
+
+          <button
+            class="btn-seal animate-glow-pulse opening-gate__enter tracking-[0.3em] whitespace-nowrap tinylens:tracking-normal"
+            data-opening-enter
+            @click="onStart"
+          >
+            <span>启封入山</span>
+            <span class="opening-gate__enter-mark" aria-hidden="true">入</span>
+          </button>
+          <p class="opening-gate__oath">无需账号 · 进度只在本机 · 不加载外部脚本</p>
+        </section>
+
+        <aside class="opening-gate__ledger">
+          <header>
+            <div>
+              <p>本作所守</p>
+              <span>三则</span>
+            </div>
+            <span class="opening-gate__ledger-seal" aria-hidden="true">枢</span>
+          </header>
+          <ol>
+            <li v-for="(line, index) in highlights" :key="line">
+              <span class="opening-gate__ordinal tabular">{{ cnNumber(index + 1) }}</span>
+              <p>{{ line }}</p>
+            </li>
+          </ol>
+          <footer class="tinylens:flex-wrap tinylens:justify-center">
+            <button
+              class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft min-h-[28px]"
+              @click="privacyOpen = true"
+            >
+              隐私政策
+            </button>
+            <span aria-hidden="true">·</span>
+            <button
+              class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft min-h-[28px]"
+              @click="importOpen = true"
+            >
+              导入存档
+            </button>
+            <span aria-hidden="true">·</span>
+            <button
+              class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft min-h-[28px]"
+              @click="aboutOpen = true"
+            >
+              关于此作
+            </button>
+          </footer>
+        </aside>
       </div>
     </div>
 
-    <!-- 游戏名 -->
-    <h1 class="mt-6 font-kai text-[40px] leading-tight tracking-[0.3em] text-ink">玄枢录</h1>
-    <p class="mt-2 text-body tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
-
-    <!-- 开始按钮:首屏主钮 —— 一缕柔辉呼吸着请玩家按(与突破就绪的朱砂辉光同族,
-         只动 box-shadow 合层,reduce-motion 全局兜) -->
-    <!--
-      极窄档(195 CSS px)收字距并锁一行:留白 32px 后内容宽只剩 131px,
-      「开 始 游 戏」四个 17px 的字加 0.3em 字距正好放不下,当场折成两行(实测 79px 高)。
-      字距是这一作题字的呼吸,收窄只发生在这一档;320 / 390 一分不动。
-    -->
-    <button
-      class="btn-seal animate-glow-pulse mt-10 w-full max-w-72 !py-3.5 text-[17px] tracking-[0.3em] whitespace-nowrap tinylens:tracking-normal"
-      @click="onStart"
-    >
-      开 始 游 戏
-    </button>
-
-    <!-- 底部:隐私政策 / 导出导入恢复 / 关于 -->
-    <!-- 三枚底链是全站 28px 触点族的一员:裸 text-body 的命中区只有字高 16.5px
-         (排版自检「开局前两页」任务首检即红),-my-1.5 py-1.5 把行盒撑到 28px 一族。
-         极窄档换行而不是压窄:三枚并排要 44×3 + 间距,而这一档只有 131px ——
-         不给换行时每枚被压成 25px 宽、四字各占一行(自检量到 25×45)。 -->
-    <div
-      class="mt-5 flex items-center gap-3 text-body text-ink-faint tinylens:flex-wrap tinylens:justify-center tinylens:gap-2"
-    >
-      <button
-        class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft"
-        @click="privacyOpen = true"
-      >
-        隐私政策
-      </button>
-      <span class="shrink-0 text-ink/15">·</span>
-      <button
-        class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft"
-        @click="importOpen = true"
-      >
-        导入存档
-      </button>
-      <span class="shrink-0 text-ink/15">·</span>
-      <button
-        class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft"
-        @click="aboutOpen = true"
-      >
-        关于此作
-      </button>
-    </div>
-
-    <!--
-      首屏到这儿原本就断在留白里 —— 而这一屏正是最该说「这是个什么游戏」的地方。
-      补三句本作的对照(每句都是真的差异,不是广告词),用「·」起头排成一列,
-      字号压到 10px 的淡字:它是脚注,不抢主钮。
-
-      用 px-6 左右等高留白、整块占满宽度再居中,而不是 w-fit:
-      w-fit 时容器左缘由最长那行决定,三行长短不一时看着像整块偏了位。
-    -->
-    <div class="mt-10 w-full max-w-80 px-6">
-      <ul class="space-y-1.5">
-        <li
-          v-for="line in highlights"
-          :key="line"
-          class="flex gap-1.5 text-note leading-relaxed text-ink-faint"
-        >
-          <span class="shrink-0 text-ink/15">·</span>
-          <span>{{ line }}</span>
-        </li>
-      </ul>
-    </div>
     <input
       ref="fileInput"
       type="file"
@@ -95,7 +101,6 @@
       @change="onFilePicked"
     />
 
-    <!-- 导入存档:确认文案 -->
     <BaseModal :open="importOpen" title="导入存档" @close="importOpen = false">
       <p class="t-body text-ink-faint">从设置页导出的存档文件可在此恢复。</p>
       <template #footer>
@@ -106,34 +111,17 @@
       </template>
     </BaseModal>
 
-    <!-- 关于我们 -->
     <AboutDialog :open="aboutOpen" @close="aboutOpen = false" />
-
-    <!-- 隐私政策全文 -->
     <PrivacyDialog :open="privacyOpen" @close="privacyOpen = false" />
 
-    <!-- 开始前的同意确认 -->
     <BaseModal :open="agreeOpen" title="进入前请确认" :closable="false">
       <p class="t-body text-ink-faint">
         游戏数据仅保存在你的浏览器本地,不上传服务器,也不接入任何第三方服务——页面不加载外部脚本、不发任何外部请求(详见隐私政策)。继续游玩前,请阅读并同意隐私政策。
       </p>
       <label class="mt-3 flex items-center gap-2">
         <input v-model="agreed" type="checkbox" class="h-4 w-4 accent-cinnabar" />
-        <!--
-          外层 span 从 inline 改成 flex:行内盒按父级行高分配空间,
-          会把里面的 inline-flex 按钮压到 26.3px(即使它声明了 min-height:28px,
-          layout-check 实测「声明 28px 却只有 26.3px」)。
-          父级一旦是 flex,子项就按自己的盒子尺寸排,min-height 才真正算数。
-        -->
         <span class="flex flex-wrap items-center gap-x-1 text-body text-ink-soft">
           我已阅读并同意
-          <!--
-            这一枚按钮的高度在这条路径上试过 inline-flex + min-h、flex 父级、
-            shrink-0 三种写法,实测都停在 26.3px —— 行盒对行内级盒子的分配
-            在这里比我们更强势。
-            最后改用 flex(块级)容器 + 明确 min-h:块级子项的尺寸由自己的盒子决定,
-            行盒插不上手。命中区该由「手指要多大」决定,而不是由行高间接推。
-          -->
           <button
             class="flex min-h-[28px] items-center text-qing active:opacity-60"
             @click.prevent="privacyOpen = true"
@@ -152,7 +140,6 @@
       </template>
     </BaseModal>
 
-    <!-- 开始前穿梭传送门特效(同意并开始后播放,播完进建号页) -->
     <WarpPortal ref="warpRef" />
   </div>
 </template>
@@ -168,6 +155,7 @@ import BaseModal from "@/components/common/BaseModal.vue";
 import PrivacyDialog from "@/components/common/PrivacyDialog.vue";
 import AboutDialog from "@/components/common/AboutDialog.vue";
 import WarpPortal from "@/components/common/WarpPortal.vue";
+import OpeningBackdrop from "@/components/opening/OpeningBackdrop.vue";
 import { REALMS, WORLDS } from "@/data/realms";
 import { cnNumber } from "@/utils/format";
 
@@ -184,11 +172,10 @@ const fileInput = useTemplateRef<HTMLInputElement>("fileInput");
 const warpRef = useTemplateRef<InstanceType<typeof WarpPortal>>("warpRef");
 
 /**
- * 首屏那三句 —— 每一句都对应本作真有的机制,不是广告词:
- *   ① 二十一境四界:REALMS / WORLDS 的长度,改境界表这行跟着变;
- *   ② 本地存档、零外域请求:与隐私政策同口径(审计脚本也真在数外域请求);
- *   ③ 转世继承:道果与天赋跨世保留(见 reincarnation)。
- * 数目一律读常量,不手写「21 境」—— 手写的数会在改表时成为唯一不跟的那处。
+ * 首屏三则都对应本作真有的机制:
+ *   ① 境界与界域数直接读 REALMS / WORLDS;
+ *   ② 本地存档与零外域请求和隐私政策同口径;
+ *   ③ 转世继承道果与天赋,跨世保留。
  */
 const highlights = [
   `${cnNumber(REALMS.length)}境${cnNumber(WORLDS.length)}界,自炼气一路走到混沌道祖`,
@@ -207,14 +194,12 @@ function onStart(): void {
 function confirmStart(): void {
   settings.privacyAccepted = true;
   agreeOpen.value = false;
-  // 穿梭传送门:播放约 2.5s 后进入建号页
   warpRef.value?.show({ title: "云深不知处", subtitle: "一念修行 · 仙路自此始" });
   setTimeout(() => {
     void router.push("/create");
   }, 2500);
 }
 
-// ---- 导入存档(与设置页同流程:先停引擎,导完重载) ----
 function triggerImport(): void {
   fileInput.value?.click();
 }
@@ -229,11 +214,10 @@ function onFilePicked(e: Event): void {
     const err = importSaveText(text);
     if (err) {
       ui.toast(err, "warn");
-      engine.resume(); // 导入失败时恢复引擎
+      engine.resume();
       return;
     }
     ui.toast("存档导入成功,即将重入仙途", "success");
-    // 导入已写盘,立即封存:阻止 persist 插件把欢迎页旧内存(started=false)回写覆盖
     sealStorageWrites();
     setTimeout(reloadGame, 800);
   };
@@ -241,3 +225,341 @@ function onFilePicked(e: Event): void {
   if (fileInput.value) fileInput.value.value = "";
 }
 </script>
+
+<style scoped>
+.opening-page {
+  position: relative;
+  min-height: 100%;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(1.35rem, 4.8vw, 4rem);
+}
+
+.opening-page__inner {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 64rem);
+  margin-inline: auto;
+}
+
+.opening-gate__brand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem 1.1rem;
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  padding-bottom: 1rem;
+}
+
+.opening-gate__seal {
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-deep-rgb) / 0.46);
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.08), transparent 52%), var(--color-cinnabar);
+  box-shadow:
+    inset 0 0 0 0.34rem rgb(var(--color-cinnabar-rgb) / 0.32),
+    0.35rem 0.35rem 0 rgb(var(--color-ink-rgb) / 0.035);
+}
+
+.opening-gate__wordmark {
+  min-width: 0;
+}
+
+.opening-gate__eyebrow,
+.opening-gate__folio,
+.opening-gate__motto,
+.opening-gate__kicker,
+.opening-gate__oath,
+.opening-gate__ledger header p,
+.opening-gate__ledger header span,
+.opening-gate__ledger footer {
+  font-size: var(--type-note);
+}
+
+.opening-gate__eyebrow {
+  color: var(--color-ink-faint);
+  letter-spacing: 0.18em;
+}
+
+.opening-gate__wordmark h1 {
+  margin-top: 0.22rem;
+  letter-spacing: 0.24em;
+}
+
+.opening-gate__motto {
+  margin-top: 0.34rem;
+  color: var(--color-ink-soft);
+  letter-spacing: 0.32em;
+}
+
+.opening-gate__folio {
+  align-self: start;
+  border-left: 1px solid rgb(var(--color-cinnabar-rgb) / 0.34);
+  padding-left: 0.65rem;
+  color: var(--color-cinnabar);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+.opening-gate__layout {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.35rem;
+  margin-top: 1.35rem;
+}
+
+.opening-gate__threshold {
+  min-width: 0;
+  padding: 0.15rem 0 0.35rem;
+}
+
+.opening-gate__kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-cinnabar);
+  letter-spacing: 0.18em;
+}
+
+.opening-gate__kicker span {
+  width: 1.8rem;
+  height: 1px;
+  background: currentColor;
+}
+
+.opening-gate__threshold h2 {
+  max-width: 18em;
+  margin-top: 0.72rem;
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-heading);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1.42;
+}
+
+.opening-gate__lead {
+  max-width: 34rem;
+  margin-top: 0.62rem;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.8;
+}
+
+.opening-gate__measure {
+  display: grid;
+  max-width: 31rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1rem;
+  border-block: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+}
+
+.opening-gate__measure div {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.58rem 0.55rem;
+}
+
+.opening-gate__measure div + div {
+  border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+}
+
+.opening-gate__measure dt {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  letter-spacing: 0.18em;
+}
+
+.opening-gate__measure dd {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  line-height: 1.35;
+}
+
+.opening-gate__enter {
+  display: flex;
+  width: min(100%, 22rem);
+  min-height: 3.4rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.1rem;
+  padding: 0.65rem 0.7rem 0.65rem 1.1rem;
+  text-align: left;
+}
+
+.opening-gate__enter-mark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 0.28);
+  font-size: var(--type-body);
+  letter-spacing: 0;
+}
+
+.opening-gate__oath {
+  margin-top: 0.55rem;
+  color: var(--color-ink-faint);
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+}
+
+.opening-gate__ledger {
+  align-self: start;
+  min-width: 0;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+  border-top: 2px solid var(--color-qing);
+  background:
+    linear-gradient(145deg, rgb(var(--color-qing-rgb) / 0.045), transparent 48%),
+    rgb(var(--color-paper-lifted-rgb) / 0.72);
+  box-shadow: 0.28rem 0.28rem 0 rgb(var(--color-ink-rgb) / 0.025);
+}
+
+.opening-gate__ledger > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  padding: 0.85rem 0.9rem 0.72rem;
+}
+
+.opening-gate__ledger header p {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.14em;
+}
+
+.opening-gate__ledger header span {
+  color: var(--color-ink-faint);
+}
+
+.opening-gate__ledger-seal {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-qing-rgb) / 0.34);
+  color: var(--color-qing);
+  font-family: var(--font-kai);
+  font-size: var(--type-section);
+  line-height: 1;
+}
+
+.opening-gate__ledger ol {
+  display: grid;
+}
+
+.opening-gate__ledger li {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.62rem;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  padding: 0.72rem 0.9rem;
+}
+
+.opening-gate__ledger li:first-child {
+  border-top: 0;
+}
+
+.opening-gate__ordinal {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.28);
+  color: var(--color-cinnabar);
+  font-family: var(--font-kai);
+  font-size: var(--type-note);
+}
+
+.opening-gate__ledger li p {
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  line-height: 1.7;
+}
+
+.opening-gate__ledger footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  padding: 0.72rem 0.9rem 0.82rem;
+  color: var(--color-ink-faint);
+}
+
+.opening-gate__ledger footer button {
+  color: var(--color-ink-soft);
+}
+
+@media (min-width: 820px) {
+  .opening-gate__layout {
+    grid-template-columns: minmax(0, 1.16fr) minmax(18rem, 0.84fr);
+    align-items: start;
+    gap: 2rem;
+    margin-top: 1.8rem;
+  }
+
+  .opening-gate__threshold {
+    padding-top: 0.45rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .opening-gate__brand {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .opening-gate__folio {
+    grid-column: 2;
+    justify-self: start;
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 220px) {
+  .opening-page {
+    padding-inline: 0.75rem;
+  }
+
+  .opening-gate__brand {
+    gap: 0.65rem;
+  }
+
+  .opening-gate__seal {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+
+  .opening-gate__wordmark h1 {
+    letter-spacing: 0.08em;
+  }
+
+  .opening-gate__motto {
+    letter-spacing: 0.12em;
+  }
+
+  .opening-gate__measure {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .opening-gate__measure div + div {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    border-left: 0;
+  }
+
+  .opening-gate__ledger > header,
+  .opening-gate__ledger li,
+  .opening-gate__ledger footer {
+    padding-inline: 0.62rem;
+  }
+}
+</style>

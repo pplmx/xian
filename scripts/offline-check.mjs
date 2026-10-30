@@ -137,11 +137,11 @@ const page = await context.newPage();
 const pageErrors = [];
 watchPageErrors(page, pageErrors);
 
-/** 应用真的起来了 —— 认"开始游戏"这扇门,不认某个 div 存不存在 */
+/** 应用真的起来了 —— 认「启封入山」这扇门,不认某个 div 存不存在 */
 async function booted() {
   return page.evaluate(() => {
     const text = document.body?.innerText || "";
-    const door = /开\s*始\s*游\s*戏/.test(text);
+    const door = /启封入山/.test(text);
     return { door, blank: text.trim().length === 0, swError: /离线且无缓存副本/.test(text) };
   });
 }
@@ -324,7 +324,7 @@ if (pageErrors.length) failures.push(`离线自检页面异常:${[...new Set(pag
   const off2 = await p2.evaluate(() => {
     const text = document.body?.innerText || "";
     return {
-      door: /开\s*始\s*游\s*戏/.test(text),
+      door: /启封入山/.test(text),
       blank: text.trim().length === 0,
       swError: /离线且无缓存副本/.test(text),
     };
@@ -386,7 +386,7 @@ if (pageErrors.length) failures.push(`离线自检页面异常:${[...new Set(pag
   const subText = await p3.evaluate(() => document.body?.innerText || "");
   if (/离线且无缓存副本/.test(subText))
     failures.push("子路径部署下首访断网落到 503 —— 预缓存清单/回退可能按根路径拼地址");
-  else if (!/开\s*始\s*游\s*戏/.test(subText) || subText.trim().length === 0)
+  else if (!/启封入山/.test(subText) || subText.trim().length === 0)
     failures.push("子路径部署下首访断网应用没起来 —— /xian/ 这条入口的离线承诺没兑现");
   else pass.push("子路径部署(/xian/):首访即断网也能重开");
   if (errs3.length) failures.push(`子路径那一轮页面异常:${[...new Set(errs3)].join(" | ")}`);

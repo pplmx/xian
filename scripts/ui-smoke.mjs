@@ -268,7 +268,7 @@ async function runRoute(route) {
      */
     try {
       await page
-        .getByRole("button", { name: /开\s*始\s*游\s*戏/ })
+        .getByRole("button", { name: /启封入山/ })
         .first()
         .click({ timeout: 5000 });
       await page.locator("input[type=checkbox]").first().check({ timeout: 5000 });
@@ -288,7 +288,7 @@ async function runRoute(route) {
     } catch {
       errors.push({
         where: "建号",
-        msg: "建号流程没走完(开始游戏 / 同意 / 踏入仙途 有一步没找到)—— 后面几页读到的是空号",
+        msg: "建号流程没走完(启封入山 / 同意 / 踏入仙途 有一步没找到)—— 后面几页读到的是空号",
       });
     }
   }
