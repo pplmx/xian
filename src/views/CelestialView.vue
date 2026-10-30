@@ -256,7 +256,7 @@
           <p
             v-for="(row, i) in expedition.rows"
             :key="i"
-            class="flex items-center justify-between rounded bg-paper-deep/70 px-3 py-1.5 text-body"
+            class="flex items-center justify-between rounded-[2px] bg-paper-deep/70 px-3 py-1.5 text-body"
           >
             <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
               第{{ i + 1 }}战 · {{ row.foeName }} · {{ row.win ? "胜" : "负" }}
@@ -272,7 +272,7 @@
         -->
         <div
           v-if="expedition.judgementLines?.length"
-          class="mt-2 rounded-md bg-cinnabar/5 px-3 py-2"
+          class="mt-2 rounded-[2px] bg-cinnabar/5 px-3 py-2"
         >
           <p class="font-kai text-body tracking-widest text-cinnabar">此战之判</p>
           <p

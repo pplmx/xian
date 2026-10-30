@@ -9,7 +9,7 @@
       而这一屏最该先看见的就是那个数。现在改成:数字与「有效收益」并排成一组读数,
       每枚名义那句留作组下的一句注解。
     -->
-    <div class="rounded-md bg-violet-ink/[0.05] px-3 py-2.5">
+    <div class="rounded-[2px] bg-violet-ink/[0.05] px-3 py-2.5">
       <div class="flex items-baseline justify-between gap-2">
         <span class="text-body text-ink-soft">
           道果
@@ -49,7 +49,7 @@
     </div>
     <!-- 逆旅契:道果的第一个消费出口。花道果换一世逆境,回报只有履历 -->
     <div
-      class="mt-2 flex items-center justify-between gap-2 rounded-md border border-ink/15 px-3 py-2"
+      class="mt-2 flex items-center justify-between gap-2 rounded-[2px] border border-ink/15 px-3 py-2"
     >
       <span class="min-w-0 text-body text-ink-soft">
         逆旅契
@@ -151,7 +151,7 @@
       负责在底边淡出一层(见 style.css):还有下文时那一截是虚的。
     -->
     <div v-if="heritageOpen" class="scroll-fade mt-1.5">
-      <div class="scroll-pane max-h-64 overflow-y-auto rounded-md bg-paper-deep/60 px-3 py-2">
+      <div class="scroll-pane max-h-64 overflow-y-auto rounded-[2px] bg-paper-deep/60 px-3 py-2">
         <!--
           两组各带一枚色点与自己的小标:一条细线分不开「留下」与「归尘」这两件相反的事。
           上组(随魂)走玉色、下组(归尘)走淡墨 —— 颜色在这一屏就是结论。

@@ -277,7 +277,7 @@
         </p>
 
         <!-- 在身之卦 -->
-        <div v-if="currentReading" class="mt-3 rounded-md bg-paper-deep/50 px-3 py-2.5">
+        <div v-if="currentReading" class="mt-3 rounded-[2px] bg-paper-deep/50 px-3 py-2.5">
           <p class="flex flex-wrap items-center gap-2">
             <span class="font-kai text-[16px] tracking-widest text-cinnabar"
               >{{ currentReading.hexagram.name }}卦</span

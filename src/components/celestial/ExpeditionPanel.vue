@@ -71,7 +71,7 @@
           <button
             v-for="(node, i) in currentNodes"
             :key="node.id"
-            class="rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-2 text-left active:scale-97"
+            class="rounded-[2px] border border-ink/15 bg-paper-deep/60 px-2.5 py-2 text-left active:scale-97"
             @click="pickNode(i as 0 | 1)"
           >
             <p class="font-kai text-title text-ink">{{ node.name }}</p>
@@ -101,7 +101,7 @@
       </template>
       <template v-if="abandonArmed">
         <p
-          class="mt-2 rounded-md bg-cinnabar/6 px-2.5 py-1.5 text-note leading-relaxed text-cinnabar"
+          class="mt-2 rounded-[2px] bg-cinnabar/6 px-2.5 py-1.5 text-note leading-relaxed text-cinnabar"
         >
           此行 {{ runWorld.entryCost }} 道源与已攒的沿途道源
           {{ run.bonus > 0 ? `+${run.bonus}` : "" }}尽付东流,战果与纪录不保。
@@ -132,7 +132,7 @@
       <div v-for="world in CELESTIAL_WORLDS" :key="world.id" class="card-ink px-4 py-3">
         <p class="celestial-world__head flex flex-wrap items-center gap-2">
           <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-indigo-ink/85 font-kai text-section text-paper"
+            class="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] bg-indigo-ink/85 font-kai text-section text-paper"
           >
             {{ world.seal }}
           </span>
@@ -195,7 +195,7 @@
       <div class="card-ink border border-violet-ink/25 px-4 py-3">
         <p class="celestial-world__head flex flex-wrap items-center gap-2">
           <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-violet-ink/85 font-kai text-section text-paper"
+            class="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] bg-violet-ink/85 font-kai text-section text-paper"
           >
             {{ endgame.voidWorld?.seal ?? "虚" }}
           </span>
@@ -291,7 +291,7 @@
       </p>
       <div class="mt-2 space-y-1.5">
         <button
-          class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left active:opacity-70"
+          class="flex w-full items-center gap-2 rounded-[2px] px-2.5 py-1.5 text-left active:opacity-70"
           :class="
             prepPact === null
               ? 'bg-jade/10 border border-jade/40'
@@ -305,7 +305,7 @@
         <button
           v-for="pact in PACTS"
           :key="pact.id"
-          class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left active:opacity-70"
+          class="flex w-full items-center gap-2 rounded-[2px] px-2.5 py-1.5 text-left active:opacity-70"
           :class="
             prepPact === pact.id
               ? 'bg-cinnabar/10 border border-cinnabar/40'
@@ -314,7 +314,7 @@
           @click="prepPact = pact.id"
         >
           <span
-            class="grid h-6 w-6 shrink-0 place-items-center rounded bg-ink/80 font-kai text-body text-paper"
+            class="grid h-6 w-6 shrink-0 place-items-center rounded-[2px] bg-ink/80 font-kai text-body text-paper"
             >{{ pact.seal }}</span
           >
           <span class="min-w-0">
@@ -326,7 +326,7 @@
       <!-- 逆命契:签前把这场封印的具体词条摊开(决策前摊数字,不许只给定性形容词) -->
       <p
         v-if="sealedCore"
-        class="mt-1.5 rounded-md bg-paper-deep/70 px-3 py-2 text-note leading-relaxed text-cinnabar"
+        class="mt-1.5 rounded-[2px] bg-paper-deep/70 px-3 py-2 text-note leading-relaxed text-cinnabar"
       >
         <span class="font-kai text-ink">封印「{{ sealedCore.displayName }}」:</span>
         {{ sealedCore.text }}
@@ -337,7 +337,7 @@
       </p>
       <div class="mt-1.5 grid grid-cols-4 gap-1.5">
         <button
-          class="rounded-md px-1 py-1.5 text-center text-body active:opacity-70"
+          class="rounded-[2px] px-1 py-1.5 text-center text-body active:opacity-70"
           :class="
             prepGate === null
               ? 'bg-jade/10 border border-jade/40 text-ink-soft'
@@ -350,7 +350,7 @@
         <button
           v-for="g in GATES"
           :key="g.id"
-          class="rounded-md px-1 py-1.5 text-center text-body active:opacity-70"
+          class="rounded-[2px] px-1 py-1.5 text-center text-body active:opacity-70"
           :class="
             prepGate === g.id
               ? 'bg-violet-ink/10 border border-violet-ink/40 text-ink'
@@ -374,7 +374,7 @@
       </div>
       <p
         v-if="selectedGate"
-        class="mt-1.5 rounded-md bg-paper-deep/70 px-3 py-2 text-note leading-relaxed text-ink-soft"
+        class="mt-1.5 rounded-[2px] bg-paper-deep/70 px-3 py-2 text-note leading-relaxed text-ink-soft"
       >
         <span class="font-kai text-ink">{{ selectedGate.fullName }}</span>
         <span class="text-ink-faint">
@@ -391,7 +391,7 @@
         <span class="text-ink-faint">{{ selectedGate.gist }}</span>
       </p>
       <!-- 天道赌约:整程预估(信息归玩家,答案也归玩家) -->
-      <div v-if="prepForecast" class="mt-2.5 rounded-md bg-paper-deep/70 px-3 py-2">
+      <div v-if="prepForecast" class="mt-2.5 rounded-[2px] bg-paper-deep/70 px-3 py-2">
         <p class="flex items-center justify-between text-body">
           <span class="font-kai text-ink-soft">天道推演</span>
           <span class="tabular text-ink-soft">此行 {{ prepForecast.difficulty }}</span>

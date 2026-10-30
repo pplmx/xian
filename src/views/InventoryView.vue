@@ -232,7 +232,7 @@
           />
         </div>
         <!--
-          背包一次只留一批卡:80 张实测 1048 DOM,已越过 700 的预算。
+          背包一次只留一批卡:80 张实测 1048 DOM,已越过 800 的首帧预算。
           「再看」前移到下一批并滑掉上一批,「前一批」保证整份行囊仍逐件可达。
         -->
         <div
@@ -399,7 +399,7 @@
       <template v-if="currentPill?.def">
         <div class="flex items-center gap-3">
           <span
-            class="grid h-12 w-12 shrink-0 place-items-center rounded-md"
+            class="grid h-12 w-12 shrink-0 place-items-center rounded-[2px]"
             :style="{
               color: qualityDef(currentPill.def.quality).color,
               background: colorWithAlpha(qualityDef(currentPill.def.quality).color, 0.08),
@@ -465,7 +465,7 @@
     >
       <template v-if="currentMaterial">
         <div class="flex items-center gap-3">
-          <span class="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-ink/5">
+          <span class="grid h-12 w-12 shrink-0 place-items-center rounded-[2px] bg-ink/5">
             <GameIcon :name="currentMaterial.icon" :size="24" :class="currentMaterial.color" />
           </span>
           <div class="min-w-0">

@@ -50,7 +50,7 @@ function clearNote(): void {
       :maxlength="4"
       aria-label="为这件装备加个标记区分流派(最多四个字)"
       placeholder="加个标记区分流派(≤4字)"
-      class="min-w-0 grow rounded-md border border-ink/15 bg-paper-deep/60 px-2 py-1 text-[16px] text-ink outline-none placeholder:text-ink-faint focus:border-qing"
+      class="min-w-0 grow rounded-[2px] border border-ink/15 bg-paper-deep/60 px-2 py-1 text-[16px] text-ink outline-none placeholder:text-ink-faint focus:border-qing"
       @change="applyNote"
     />
     <button

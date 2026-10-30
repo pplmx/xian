@@ -10,7 +10,7 @@
         @click="ui.gongfaDetailId = mainDef.id"
       >
         <span
-          class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-cinnabar/6 font-kai text-cinnabar"
+          class="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] bg-cinnabar/6 font-kai text-cinnabar"
           >主</span
         >
         <span class="min-w-0 grow">
@@ -21,17 +21,17 @@
             </span>
             <span
               v-if="branchName(mainDef.id)"
-              class="min-w-0 truncate rounded bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
+              class="min-w-0 truncate rounded-[2px] bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
               >{{ branchName(mainDef.id) }}</span
             >
             <span
               v-else-if="canEnlighten(mainDef.id)"
-              class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-note text-qing"
+              class="shrink-0 rounded-[2px] bg-qing/6 px-1.5 py-0.5 text-note text-qing"
               >待悟道</span
             >
             <span
               v-if="mainCanUpgrade"
-              class="shrink-0 rounded bg-jade/6 px-1.5 py-0.5 text-note text-jade"
+              class="shrink-0 rounded-[2px] bg-jade/6 px-1.5 py-0.5 text-note text-jade"
               >可升层</span
             >
           </span>
@@ -61,7 +61,7 @@
             :aria-label="`${GONGFA_TYPE_NAMES[g.type]} ${g.items.length} 部`"
             :tabindex="gongfaCat === g.type ? 0 : -1"
             :data-gongfa-cat="g.type"
-            class="flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 font-kai text-title tracking-[0.14em]"
+            class="flex flex-1 items-center justify-center gap-1 rounded-[2px] py-1.5 font-kai text-title tracking-[0.14em]"
             :class="
               gongfaCat === g.type
                 ? 'bg-cinnabar/6 text-ink'
@@ -136,13 +136,13 @@
             <span class="flex min-w-0 items-center gap-1.5">
               <span
                 v-if="branchName(def.id)"
-                class="min-w-0 truncate rounded bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
+                class="min-w-0 truncate rounded-[2px] bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
               >
                 {{ branchName(def.id) }}
               </span>
               <span
                 v-else-if="canEnlighten(def.id)"
-                class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-note text-qing"
+                class="shrink-0 rounded-[2px] bg-qing/6 px-1.5 py-0.5 text-note text-qing"
                 >待悟道</span
               >
               <span v-else-if="isFull(def.id)" class="shrink-0 text-note text-ink-faint">圆满</span>
@@ -160,7 +160,7 @@
             class="empty-note px-4 py-6 text-center t-body text-ink-faint"
           >
             <span
-              class="mx-auto mb-2 grid h-7 w-7 place-items-center rounded-md bg-cinnabar/6 font-kai text-title text-cinnabar"
+              class="mx-auto mb-2 grid h-7 w-7 place-items-center rounded-[2px] bg-cinnabar/6 font-kai text-title text-cinnabar"
               aria-hidden="true"
               >{{ gongfaSeal(gongfaCat) }}</span
             >

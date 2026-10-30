@@ -1,6 +1,6 @@
 <template>
   <button
-    class="relative aspect-square rounded-md border transition-transform active:scale-95"
+    class="relative aspect-square rounded-[2px] border transition-transform active:scale-95"
     :style="{
       borderColor: colorWithAlpha(quality.color, tier.border),
       background: colorWithAlpha(quality.color, tier.bg),

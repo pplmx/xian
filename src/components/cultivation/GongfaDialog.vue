@@ -17,12 +17,12 @@
         >
         <span
           v-if="learned && branchPicked"
-          class="rounded bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
+          class="rounded-[2px] bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
           >{{ branchPicked.name }}</span
         >
         <span
           v-else-if="learned && fullLevel && branches.length"
-          class="rounded bg-qing/6 px-1.5 py-0.5 text-note text-qing"
+          class="rounded-[2px] bg-qing/6 px-1.5 py-0.5 text-note text-qing"
           >待悟道</span
         >
         <span v-if="learned" class="ml-auto tabular text-body text-gold-ink"
@@ -66,7 +66,7 @@
             此功已修至顶层,可就其中一条道走到底,永久追加下方词条(转世不失)。
             <span class="text-cinnabar">道分歧路,一经择定终身不改。</span>
           </p>
-          <div v-if="branchPicked" class="rounded-md bg-paper-deep/70 px-3 py-2">
+          <div v-if="branchPicked" class="rounded-[2px] bg-paper-deep/70 px-3 py-2">
             <p>
               <span class="font-kai text-title text-gold-ink">{{ branchPicked.name }}</span>
               <span class="ml-2 text-body text-ink-faint">{{ branchPicked.desc }}</span>
@@ -77,7 +77,7 @@
             <button
               v-for="b in branches"
               :key="b.id"
-              class="flex w-full items-center justify-between gap-2 rounded-md border border-ink/20 px-3 py-2 text-left active:scale-98"
+              class="flex w-full items-center justify-between gap-2 rounded-[2px] border border-ink/20 px-3 py-2 text-left active:scale-98"
               @click="branchConfirm = b.id"
             >
               <span class="min-w-0">
@@ -88,7 +88,7 @@
               <span class="shrink-0 text-note text-qing">择此道 →</span>
             </button>
             <!-- 永久抉择二步确认:选了就改不了,按一下不该就此了结 -->
-            <div v-if="branchConfirm" class="rounded-md bg-cinnabar/5 px-3 py-2">
+            <div v-if="branchConfirm" class="rounded-[2px] bg-cinnabar/5 px-3 py-2">
               <p class="text-note leading-relaxed text-cinnabar">
                 道分歧路,一经择定<strong>终身不改</strong>(转世仍随你)。确认择【{{
                   gongfaBranchDef(branchConfirm)?.name ?? ""

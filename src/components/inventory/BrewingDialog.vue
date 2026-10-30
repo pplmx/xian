@@ -28,7 +28,7 @@
       有意义 —— 吃没吃、加几成,开着炉就该看得见;没吃则给个引子,不许白吃白扛。
       效果文案走 buff 的 mods → modsText,不在此处另写一份(见 pillBatch.spec 的收口)。
     -->
-    <div v-if="alchemyBuffRows.length" class="mb-2 rounded-md bg-paper-deep/60 px-3 py-2">
+    <div v-if="alchemyBuffRows.length" class="mb-2 rounded-[2px] bg-paper-deep/60 px-3 py-2">
       <p class="text-note text-ink-faint">炼丹增益 · 此刻在炉前生效</p>
       <div class="mt-1 space-y-0.5">
         <p
@@ -57,7 +57,7 @@
         type="text"
         inputmode="search"
         aria-label="搜方名"
-        class="w-full rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[16px] text-ink outline-none placeholder:text-ink-faint"
+        class="w-full rounded-[2px] border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[16px] text-ink outline-none placeholder:text-ink-faint"
         placeholder="搜方名…"
       />
       <p v-if="filteredRecipes.length" class="px-0.5 text-center text-note text-ink-faint tabular">
@@ -217,7 +217,7 @@
       排在方子之后:九项技艺在窄屏上要占半屏,放在前面会把方子压到折叠线以下。
       说明一栏至少留 9 个字宽,不够就整段换到下一行,不再被三列定宽挤成竖排。
     -->
-    <div v-if="skillRows.length" class="mb-2 mt-3 rounded-md bg-paper-deep/60 px-3 py-2">
+    <div v-if="skillRows.length" class="mb-2 mt-3 rounded-[2px] bg-paper-deep/60 px-3 py-2">
       <p class="text-note text-ink-faint">技艺(按道分,做得多就精)</p>
       <div class="mt-1 space-y-1">
         <div v-for="s in skillRows" :key="s.id">

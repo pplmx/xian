@@ -1,6 +1,6 @@
 <template>
   <button
-    class="relative aspect-square rounded-md border transition-transform active:scale-95"
+    class="relative aspect-square rounded-[2px] border transition-transform active:scale-95"
     :class="plain ? 'border-ink/15 bg-ink/[0.03]' : ''"
     :style="
       plain

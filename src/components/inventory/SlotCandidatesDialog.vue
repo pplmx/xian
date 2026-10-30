@@ -25,7 +25,7 @@
         :key="row.item.uid"
         :data-slot-candidate="row.item.uid"
         tabindex="-1"
-        class="flex items-center gap-2.5 rounded-md px-2.5 py-2"
+        class="flex items-center gap-2.5 rounded-[2px] px-2.5 py-2"
         :class="row.equipped ? 'bg-jade/10' : 'bg-paper-deep/70'"
       >
         <GameIcon

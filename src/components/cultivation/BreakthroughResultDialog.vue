@@ -31,7 +31,7 @@
       -->
       <p
         v-if="view.success && view.isMajor"
-        class="mx-auto mt-1.5 w-fit animate-ink-pop rounded border border-gold-ink/60 bg-gold-ink/6 px-2 py-0.5 font-kai text-body tracking-[0.3em] text-gold-ink"
+        class="mx-auto mt-1.5 w-fit animate-ink-pop rounded-[2px] border border-gold-ink/60 bg-gold-ink/6 px-2 py-0.5 font-kai text-body tracking-[0.3em] text-gold-ink"
       >
         大 境
       </p>
@@ -44,7 +44,7 @@
       </p>
       <div
         v-if="view.tribulationLog.length"
-        class="scroll-pane mt-3 max-h-40 overflow-y-auto rounded-md bg-ink/4 px-3 py-2 text-left"
+        class="scroll-pane mt-3 max-h-40 overflow-y-auto rounded-[2px] bg-ink/4 px-3 py-2 text-left"
       >
         <p v-for="(line, i) in view.tribulationLog" :key="i" class="py-0.5 t-body text-ink-soft">
           {{ line }}

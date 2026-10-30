@@ -13,7 +13,7 @@
         与 data/constants 的三个概率算出来,并把「此刻有没有缘在续」算进去。
       -->
       <div
-        class="mb-2.5 rounded-md border-l-2 bg-ink/4 px-2.5 py-1.5"
+        class="mb-2.5 rounded-[2px] border-l-2 bg-ink/4 px-2.5 py-1.5"
         :style="{ borderColor: tierDef.color }"
       >
         <p class="flex items-center gap-2">
@@ -27,7 +27,7 @@
       <!-- Phase 31.3 遗产回声:曾弃之缘,世界记得(叙事,无数值) -->
       <p
         v-if="echo"
-        class="mb-2 rounded-md border border-qing/30 bg-qing/5 px-3 py-2 text-body leading-relaxed text-qing"
+        class="mb-2 rounded-[2px] border border-qing/30 bg-qing/5 px-3 py-2 text-body leading-relaxed text-qing"
       >
         {{ echo.line }}
       </p>
@@ -81,7 +81,7 @@
         <li
           v-for="(line, i) in result.lines"
           :key="i"
-          class="rounded bg-paper-deep/70 px-3 py-1.5 text-body text-ink tabular"
+          class="rounded-[2px] bg-paper-deep/70 px-3 py-1.5 text-body text-ink tabular"
         >
           {{ line }}
         </li>

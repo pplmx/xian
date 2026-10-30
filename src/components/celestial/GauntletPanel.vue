@@ -5,7 +5,7 @@
       <button
         v-for="(fight, i) in rows"
         :key="i"
-        class="rounded px-1.5 py-0.5 text-note transition-transform active:scale-95"
+        class="rounded-[2px] px-1.5 py-0.5 text-note transition-transform active:scale-95"
         :class="
           i === current
             ? 'bg-cinnabar/85 text-paper'
@@ -38,7 +38,7 @@
     <!-- 战报 -->
     <div
       ref="logBox"
-      class="scroll-pane mt-2 max-h-40 overflow-y-auto rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-2"
+      class="scroll-pane mt-2 max-h-40 overflow-y-auto rounded-[2px] border border-ink/10 bg-paper-deep/40 px-3 py-2"
     >
       <p
         v-for="(entry, i) in displayed"

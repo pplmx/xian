@@ -209,7 +209,7 @@ function doTransfer(): void {
             :key="c.item.uid"
             :data-affix-candidate="c.item.uid"
             tabindex="-1"
-            class="rounded"
+            class="rounded-[2px]"
             :class="
               c.block
                 ? 'text-ink-faint'
@@ -220,7 +220,7 @@ function doTransfer(): void {
           >
             <button
               type="button"
-              class="flex min-h-[28px] w-full flex-wrap items-center gap-2 rounded px-2 py-1.5 text-left text-body"
+              class="flex min-h-[28px] w-full flex-wrap items-center gap-2 rounded-[2px] px-2 py-1.5 text-left text-body"
               :class="c.block ? 'cursor-not-allowed text-ink-faint' : 'hoverable:hover:bg-ink/5'"
               :disabled="c.block !== null"
               @click="
@@ -301,7 +301,7 @@ function doTransfer(): void {
           <button
             v-for="l in landings"
             :key="l.replaceId ?? '__new__'"
-            class="flex w-full flex-wrap items-center gap-2 rounded px-2 py-1 text-left text-body"
+            class="flex w-full flex-wrap items-center gap-2 rounded-[2px] px-2 py-1 text-left text-body"
             :class="l.check.ok ? 'hoverable:hover:bg-ink/5' : 'cursor-not-allowed text-ink-faint'"
             :disabled="!l.check.ok"
             @click="

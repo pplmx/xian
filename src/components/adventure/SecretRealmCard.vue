@@ -141,7 +141,7 @@
             <button
               v-for="r in visibleList"
               :key="r.id"
-              class="w-full rounded-md bg-paper-deep/30 px-3 py-2 text-left active:scale-99"
+              class="w-full rounded-[2px] bg-paper-deep/30 px-3 py-2 text-left active:scale-99"
               :class="{ 'border border-ink/10': !canPay(r) }"
               :disabled="!canPay(r)"
               @click="enter(r.id)"
@@ -174,7 +174,7 @@
           </div>
           <button
             v-if="list.length > SECRET_REALM_PREVIEW"
-            class="mt-1.5 flex min-h-[28px] w-full items-center justify-center rounded-md border border-dashed border-ink/15 px-3 py-1 text-note text-ink-faint active:scale-99 active:text-ink-soft"
+            class="mt-1.5 flex min-h-[28px] w-full items-center justify-center rounded-[2px] border border-dashed border-ink/15 px-3 py-1 text-note text-ink-faint active:scale-99 active:text-ink-soft"
             :aria-expanded="secretListExpanded"
             aria-controls="secret-realm-list"
             data-secret-realm-toggle

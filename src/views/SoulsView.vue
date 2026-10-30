@@ -273,7 +273,7 @@
       <template v-if="soulDetail">
         <div class="flex items-center gap-3">
           <span
-            class="grid h-12 w-12 shrink-0 place-items-center rounded-md font-kai text-[24px]"
+            class="grid h-12 w-12 shrink-0 place-items-center rounded-[2px] font-kai text-[24px]"
             :style="{ color: soulColor(soulDetail) }"
           >
             {{ soulSeal(soulDetail) }}

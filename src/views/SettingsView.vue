@@ -472,7 +472,7 @@
       <!-- 备份是谁的、什么版本、什么时间导的:整体替换前先摊个底细(决策前摊数字契约) -->
       <div
         v-if="importInspect"
-        class="mt-3 rounded-md bg-paper-deep/60 px-3 py-2 text-body leading-relaxed"
+        class="mt-3 rounded-[2px] bg-paper-deep/60 px-3 py-2 text-body leading-relaxed"
       >
         <p class="flex flex-wrap items-baseline gap-x-2 text-ink">
           <span class="font-kai text-title">{{ importInspect.name }}</span>

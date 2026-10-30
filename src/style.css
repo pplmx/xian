@@ -696,21 +696,25 @@
     counter-increment: folio-section;
     column-gap: 0.375rem;
   }
-  .folio-page .section-title::before {
-    content: counter(folio-section, decimal-leading-zero);
+  .folio-page .folio-section-mark {
+    position: relative;
     display: grid;
-    width: 1.4rem;
-    height: 1.4rem;
-    flex: none;
+    width: 1.55rem;
+    height: 1.55rem;
     place-items: center;
-    margin-top: 0.1rem;
     border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
     background: rgb(var(--color-paper-rgb) / 0.5);
-    box-shadow: inset 0 0 0 2px rgb(var(--color-paper-rgb) / 0.22);
+    box-shadow:
+      inset -2px 0 0 var(--world-bar),
+      inset -3px 0 0 rgb(var(--color-ink-rgb) / 0.2),
+      inset 0 0 0 2px rgb(var(--color-paper-rgb) / 0.22);
     color: rgb(var(--color-ink-faint-rgb));
     font-family: var(--font-kai);
     font-size: var(--type-note);
     line-height: 1;
+  }
+  .folio-page .folio-section-mark::before {
+    content: counter(folio-section, decimal-leading-zero);
     letter-spacing: 0.04em;
   }
   @media (max-width: 220px) {
@@ -720,6 +724,11 @@
 
     .folio-page--stack > * + * {
       margin-top: 0.875rem;
+    }
+
+    .folio-page .folio-section-mark {
+      width: 1.3rem;
+      height: 1.3rem;
     }
   }
   .folio-surface {

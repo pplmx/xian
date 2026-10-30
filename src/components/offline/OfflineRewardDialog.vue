@@ -35,7 +35,7 @@
           <li
             v-for="row in gainRows"
             :key="row.label"
-            class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
+            class="flex items-center justify-between rounded-[2px] bg-paper-deep/70 px-3 py-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
           >
             <span class="flex items-center gap-2 text-title text-ink-soft">
               <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
@@ -52,7 +52,7 @@
           <li
             v-for="row in roadRows"
             :key="row.label"
-            class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
+            class="flex items-center justify-between rounded-[2px] bg-paper-deep/70 px-3 py-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
           >
             <span class="flex items-center gap-2 text-title" :class="row.cls">
               <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
@@ -60,7 +60,7 @@
             </span>
             <span class="tabular text-title" :class="row.cls">{{ row.value }}</span>
           </li>
-          <li v-if="savedEquipment.length" class="rounded-md bg-paper-deep/70 px-3 py-2">
+          <li v-if="savedEquipment.length" class="rounded-[2px] bg-paper-deep/70 px-3 py-2">
             <p class="mb-1 flex items-center gap-2 text-title text-ink-soft">
               <GameIcon name="backpack" :size="15" class="text-ink-faint" />
               拾得装备 ×{{ savedEquipment.length }}
@@ -76,7 +76,7 @@
               </span>
             </p>
           </li>
-          <li v-if="eventReceipts.length" class="rounded-md bg-paper-deep/70 px-3 py-2">
+          <li v-if="eventReceipts.length" class="rounded-[2px] bg-paper-deep/70 px-3 py-2">
             <p class="mb-1.5 flex items-center gap-2 text-title text-ink-soft">
               <GameIcon name="star" :size="15" class="text-ink-faint" />
               际遇结果

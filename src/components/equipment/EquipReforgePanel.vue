@@ -207,14 +207,14 @@ function triesOf(id: string, minRoll = 0): number | null {
   -->
   <div
     v-if="autoOpen && reforgeCostVal"
-    class="mt-3 rounded-md border border-ink/15 bg-paper-deep/50 px-3 py-2"
+    class="mt-3 rounded-[2px] border border-ink/15 bg-paper-deep/50 px-3 py-2"
   >
     <p class="mb-1 text-body text-ink-soft">洗到这些词条出现就停(任一命中即停,至多 3 条)</p>
     <div class="scroll-pane grid max-h-36 grid-cols-3 gap-1 overflow-y-auto tinylens:grid-cols-2">
       <button
         v-for="af in affixOptions"
         :key="af.id"
-        class="rounded px-1 py-1 text-note leading-tight active:opacity-60"
+        class="rounded-[2px] px-1 py-1 text-note leading-tight active:opacity-60"
         :aria-pressed="isAutoTarget(af.id)"
         :class="
           isAutoTarget(af.id) ? 'border border-cinnabar text-cinnabar' : 'bg-ink/4 text-ink-faint'
@@ -263,7 +263,7 @@ function triesOf(id: string, minRoll = 0): number | null {
           min="1"
           max="500"
           aria-label="自动重铸至多洗几次"
-          class="w-16 min-w-0 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
+          class="w-16 min-w-0 rounded-[2px] border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
           @change="clampAutoBudget"
         />
         <span class="text-note text-ink-faint tabular">次</span>
@@ -313,7 +313,7 @@ function triesOf(id: string, minRoll = 0): number | null {
       </button>
       <div
         v-if="sealCostVal"
-        class="flex flex-1 items-center justify-center rounded-md border px-2 py-1"
+        class="flex flex-1 items-center justify-center rounded-[2px] border px-2 py-1"
         :class="
           sealAffordable
             ? 'border-qing/20 bg-qing/5 text-qing'

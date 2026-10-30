@@ -15,7 +15,7 @@
         这一屏唯一会变的东西却排在引文下面当注脚。提成独立一行:数值放大 + 档位词,
         让「现在我合不合师门」一眼可读(档位阈值与染色同源,不许第二把尺)。
       -->
-      <div class="flex items-baseline justify-between rounded-md bg-paper-deep/60 px-3 py-2">
+      <div class="flex items-baseline justify-between rounded-[2px] bg-paper-deep/60 px-3 py-2">
         <span class="text-body text-ink-soft">契合度</span>
         <span class="flex items-baseline gap-1.5">
           <span

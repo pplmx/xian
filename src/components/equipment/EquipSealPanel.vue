@@ -54,7 +54,7 @@ function doUnsealAffix(): void {
 <template>
   <button
     v-if="canSealAffix(affixId)"
-    class="min-h-[28px] shrink-0 rounded-md px-1.5 py-1 text-note text-qing active:scale-90 active:opacity-60"
+    class="min-h-[28px] shrink-0 rounded-[2px] px-1.5 py-1 text-note text-qing active:scale-90 active:opacity-60"
     :class="{ '!text-ink-faint': !sealAffordable }"
     :disabled="!sealAffordable"
     :aria-label="`封存词条${name}`"
@@ -73,7 +73,7 @@ function doUnsealAffix(): void {
       与封存的账目纪律区分开。
     -->
     <button
-      class="min-h-[28px] shrink-0 rounded-md px-1.5 py-1 text-note text-ink-faint hoverable:hover:text-qing active:scale-90 active:opacity-60"
+      class="min-h-[28px] shrink-0 rounded-[2px] px-1.5 py-1 text-note text-ink-faint hoverable:hover:text-qing active:scale-90 active:opacity-60"
       :aria-label="`解除封存词条${name}`"
       @click="doUnsealAffix"
     >

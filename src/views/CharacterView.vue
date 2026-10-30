@@ -154,7 +154,7 @@
           <button
             v-for="row in modRows"
             :key="row.label"
-            class="-my-1 flex items-center justify-between rounded px-1.5 py-1.5 text-left text-body transition-colors active:opacity-60"
+            class="-my-1 flex items-center justify-between rounded-[2px] px-1.5 py-1.5 text-left text-body transition-colors active:opacity-60"
             :class="breakdownKey === row.key ? 'bg-ink/5' : ''"
             :aria-expanded="breakdownKey === row.key"
             @click="toggleBreakdown(row.key)"
@@ -192,7 +192,7 @@
           护盾至多覆盖最大气血的 {{ formatPercent(SHIELD_CAP_RATIO, 0) }} ——
           盾系堆得再多也顶不破这道上限。
         </p>
-        <div v-if="breakdownRows.length" class="mt-1.5 rounded-md bg-paper-deep/60 px-2.5 py-2">
+        <div v-if="breakdownRows.length" class="mt-1.5 rounded-[2px] bg-paper-deep/60 px-2.5 py-2">
           <p class="text-note text-ink-soft">{{ STAT_NAMES[breakdownKey!] }} · 来源明细</p>
           <p v-for="c in breakdownRows" :key="c.name" class="mt-0.5 flex justify-between text-note">
             <span class="text-ink-faint">

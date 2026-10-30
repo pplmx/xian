@@ -20,7 +20,7 @@
       渡劫走 runTribulation 的逐波推演),摆出来只会让人以为还有一个可以堆的概率。
     -->
     <div class="mt-2 grid gap-2" :class="btInfo.needTribulation ? 'grid-cols-1' : 'grid-cols-2'">
-      <div v-if="!btInfo.needTribulation" class="rounded-md bg-paper-deep/60 px-2.5 py-1.5">
+      <div v-if="!btInfo.needTribulation" class="rounded-[2px] bg-paper-deep/60 px-2.5 py-1.5">
         <p class="text-note text-ink-faint">进阶成功率(小进阶)</p>
         <p
           class="tabular text-[16px] font-kai leading-tight"
@@ -34,7 +34,7 @@
         -->
         <p v-if="triesText" class="tabular text-note text-ink-faint">{{ triesText }}</p>
       </div>
-      <div class="rounded-md bg-paper-deep/60 px-2.5 py-1.5">
+      <div class="rounded-[2px] bg-paper-deep/60 px-2.5 py-1.5">
         <p class="text-note text-ink-faint">{{ btInfo.needTribulation ? "此劫" : "渡劫" }}</p>
         <template v-if="tribPlan">
           <p
@@ -56,7 +56,7 @@
       破境增益 · 此刻在身:小进阶的成功率是谁在顶,突破前一眼见 —— buff→modsText,
       与开炉幕同款(不做两本账);大关不吃此益,故只在非天劫幕亮。
     -->
-    <div v-if="!btInfo.needTribulation" class="mt-2 rounded-md bg-paper-deep/60 px-3 py-2">
+    <div v-if="!btInfo.needTribulation" class="mt-2 rounded-[2px] bg-paper-deep/60 px-3 py-2">
       <p class="text-note text-ink-faint">破境增益 · 此刻在身</p>
       <div v-if="breakthroughBuffRows.length" class="mt-1 space-y-0.5">
         <p
@@ -104,7 +104,7 @@
     <!-- Phase 28 突破准备:静坐调息 / 服聚气丹(无劫突破时,一次性加成) -->
     <div
       v-if="!btInfo.needTribulation"
-      class="mt-2 rounded-md border border-ink/10 bg-paper-deep/50 px-2.5 py-2"
+      class="mt-2 rounded-[2px] border border-ink/10 bg-paper-deep/50 px-2.5 py-2"
     >
       <div class="flex items-center justify-between text-note text-ink-faint">
         <span>突破准备(一次有效)</span>

@@ -484,7 +484,7 @@
              补一枚色章做视觉锚(有 icon 才渲染,与丹房/材料详情同构) -->
         <div
           v-if="detail.entry.icon"
-          class="mb-3 grid h-12 w-12 place-items-center rounded-md bg-ink/5"
+          class="mb-3 grid h-12 w-12 place-items-center rounded-[2px] bg-ink/5"
         >
           <GameIcon
             :name="detail.entry.icon"

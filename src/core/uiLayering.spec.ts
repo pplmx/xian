@@ -712,11 +712,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(rite, "越界判据只许走 announceWorldEntry 纯函数").toContain("announceWorldEntry");
     expect(rite, "宣告遮罩不许拦操作(pointer-events-none)").toContain("pointer-events-none");
     // 章节标题杆是全页高频的装饰 cue:每界各一色,别退回「只剩人间朱砂」
-    const section = readFileSync(
-      resolve(__dirname, "../components/common/SectionTitle.vue"),
-      "utf-8",
+    expect(css, "标题杆要读世界色(--world-bar),不许写死朱砂").toMatch(
+      /\.folio-section-mark\s*\{[\s\S]{0,500}var\(--world-bar\)/,
     );
-    expect(section, "标题杆要读世界色(--world-bar),不许写死朱砂").toContain("var(--world-bar)");
     expect(css).toMatch(/data-world="immortal"\][\s\S]{0,180}--world-bar/);
     expect(css).toMatch(/data-world="god"\][\s\S]{0,180}--world-bar/);
     expect(css).toMatch(/data-world="chaos"\][\s\S]{0,180}--world-bar/);
@@ -1281,13 +1279,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(home?.src, "法球要有同世界色的落地影").toMatch(/bg-\[var\(--world-mountain\)\]/);
   });
 
-  it("全库弹窗标题统一笔杆 —— 页面每节有世界色 brush-bar,弹窗标题不许孤悬", () => {
-    // 页面章节头(SectionTitle)都有一根世界色笔杆当家;BaseModal 是全库复用的浮层
-    // 原语,标题此前是悬空一行楷体。弹窗标题必须带同一根杆 —— 一处改动罩住全库
-    // 每个弹窗;拆掉杆(或挪到别处),下面红。
+  it("全库弹窗标题统一笔杆 —— 页面每节有世界色书脊,弹窗标题不许孤悬", () => {
+    // 页面章节头(SectionTitle)用栏号签里的世界色书脊当家;BaseModal 是全库复用的
+    // 浮层原语,标题此前是悬空一行楷体。弹窗标题必须带同一根杆 —— 一处改动罩住
+    // 全库每个弹窗;拆掉杆(或挪到别处),下面红。
     const modal = FILES.find((f) => f.path === "components/common/BaseModal.vue");
     expect(modal?.src, "弹窗标题要挂世界色 brush-bar").toMatch(
-      /<span[\s\S]{0,40}v-if="props\.title"[\s\S]{0,80}class="brush-bar h-3 w-0\.75 rounded bg-\[var\(--world-bar\)\]"/,
+      /<span[\s\S]{0,40}v-if="props\.title"[\s\S]{0,80}class="brush-bar h-3 w-0\.75 rounded-\[2px\] bg-\[var\(--world-bar\)\]"/,
     );
   });
 
@@ -1483,7 +1481,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const off = FILES.find((f) => f.path === "components/offline/OfflineRewardDialog.vue");
     const rows = [
       ...(off?.src ?? "").matchAll(
-        /class="(flex items-center justify-between rounded-md bg-paper-deep\/70 px-3 py-2[^"]*)"/g,
+        /class="(flex items-center justify-between rounded-\[2px\] bg-paper-deep\/70 px-3 py-2[^"]*)"/g,
       ),
     ].map((m) => m[1]!);
     expect(rows.length, "入账 / 路上两组行都要定位得到 —— 定位不到这条就是空转").toBe(2);

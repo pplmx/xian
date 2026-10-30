@@ -65,7 +65,7 @@
           >
           <button
             v-if="isStaleRuleset(mark.ruleset)"
-            class="min-h-[28px] min-w-[28px] shrink-0 rounded border border-cinnabar/50 bg-cinnabar/6 px-1.5 py-0.5 font-kai text-note text-cinnabar active:scale-90"
+            class="min-h-[28px] min-w-[28px] shrink-0 rounded-[2px] border border-cinnabar/50 bg-cinnabar/6 px-1.5 py-0.5 font-kai text-note text-cinnabar active:scale-90"
             :title="`录于旧纪 ${mark.ruleset},天道已变`"
             @click="openEra(mark)"
           >
@@ -73,7 +73,7 @@
           </button>
           <button
             v-if="mark.replay"
-            class="min-h-[28px] min-w-[28px] shrink-0 rounded border border-gold-ink/40 px-1.5 py-0.5 font-kai text-note text-gold-ink active:scale-90"
+            class="min-h-[28px] min-w-[28px] shrink-0 rounded-[2px] border border-gold-ink/40 px-1.5 py-0.5 font-kai text-note text-gold-ink active:scale-90"
             title="以当年的构筑重打此战"
             @click="goReplay(mark)"
           >
@@ -82,13 +82,13 @@
           <!-- 重写要花道源,代价内联在按钮上(不再是 hover 专属),触控面放大,并加一步确认 -->
           <template v-if="mark.cleared && mark.replay && rewriteConfirm === markKey(mark)">
             <button
-              class="min-h-[28px] shrink-0 rounded border border-cinnabar/50 bg-cinnabar/6 px-2 py-1 font-kai text-note text-cinnabar active:scale-90"
+              class="min-h-[28px] shrink-0 rounded-[2px] border border-cinnabar/50 bg-cinnabar/6 px-2 py-1 font-kai text-note text-cinnabar active:scale-90"
               @click="rewriteConfirm = null"
             >
               再想想
             </button>
             <button
-              class="min-h-[28px] shrink-0 rounded bg-cinnabar px-2 py-1 font-kai text-note text-paper active:scale-90"
+              class="min-h-[28px] shrink-0 rounded-[2px] bg-cinnabar px-2 py-1 font-kai text-note text-paper active:scale-90"
               @click="doRewrite(mark)"
             >
               确认重写
@@ -107,7 +107,7 @@
           </template>
           <button
             v-else-if="mark.cleared && mark.replay"
-            class="min-h-[28px] shrink-0 rounded border border-cinnabar/40 px-2 py-1 font-kai text-note text-cinnabar active:scale-90"
+            class="min-h-[28px] shrink-0 rounded-[2px] border border-cinnabar/40 px-2 py-1 font-kai text-note text-cinnabar active:scale-90"
             :title="`以今日之你重打此战,快过 ${mark.rounds} 回合即【胜于旧我】`"
             :class="{ 'border-ink/15 !text-ink-faint': rewriteShort > 0 }"
             :disabled="rewriteShort > 0"

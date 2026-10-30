@@ -419,7 +419,7 @@
         v-model="saveName"
         maxlength="8"
         aria-label="给这套构筑起个名字"
-        class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-2 text-[16px] outline-none focus:border-cinnabar/50 t-card"
+        class="mt-2 w-full rounded-[2px] border border-ink/20 bg-paper-deep/60 px-3 py-2 text-[16px] outline-none focus:border-cinnabar/50 t-card"
         placeholder="给这套构筑起个名字"
       />
       <template #footer>

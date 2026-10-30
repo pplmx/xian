@@ -15,7 +15,7 @@
  * 另有四件事单独核:
  *   卡片顶光与印面亮边 —— 夜间不许沿用浅色那份(会浮成灰塑料);
  *   装饰墨的浓度上限 —— 背景里的墨不许浓到能当第二条边框;
- *   章节头的三件套 —— 主笔随世界换色、副笔走装饰档、尾线可让位;
+ *   章节头的三件套 —— 栏号签随世界换色、副线走装饰档、尾线可让位;
  *   花饰分隔的位置 —— 只在页面层,弹窗是密集面板,一枚墨点会与数据争视线。
  */
 import { describe, expect, it } from "vite-plus/test";
@@ -174,16 +174,17 @@ describe("装饰层 · 卡片顶光与印面压印", () => {
 describe("装饰层 · 章节头", () => {
   const TITLE = templateOf(vue("src/components/common/SectionTitle.vue"));
 
-  it("主笔随世界换色 —— 不许写死朱砂", () => {
-    expect(TITLE).toContain("--world-bar");
+  it("栏号签只有一处，编号、世界色书脊与墨色副线收在同一枚签上", () => {
+    expect(TITLE).toContain("folio-section-mark");
+    expect(TITLE.match(/class="[^"]*folio-section-mark/), "章节头只许留一枚栏号签").toBeTruthy();
+    expect(TITLE.match(/data-folio-section-mark/g), "章节头只许留一枚栏号签").toHaveLength(1);
+    expect(TITLE, "旧双笔不该继续挂在栏号签旁边").not.toContain('class="brush-bar');
+    expect(CSS, "主笔随世界换色 —— 不许写死朱砂").toContain("inset -2px 0 0 var(--world-bar)");
     expect(TITLE, "章节笔杆写死了颜色,换界之后不跟").not.toMatch(/bg-cinnabar/);
   });
 
-  it("副笔与主笔并置,且走装饰档(墨 20%)", () => {
-    // 单笔时章节与列表项题头同一级;两笔并置才读作「笔杆」。
-    // 间距取 2px 而不是 1px:2x 屏上 1px 会与主笔糊成一根「略脏的粗线」
-    expect(TITLE).toMatch(/bg-ink\/20/);
-    expect(TITLE).toMatch(/gap-0\.5/);
+  it("副线紧跟主笔，仍走装饰档(墨 20%)", () => {
+    expect(CSS).toContain("inset -3px 0 0 rgb(var(--color-ink-rgb) / 0.2)");
   });
 
   it("尾线拉满剩余宽度,但留得住 4px 的让位底线", () => {

@@ -19,7 +19,7 @@
         </div>
         <div
           v-if="furnaceConfirm === row.rate.resource"
-          class="mt-1.5 rounded-md bg-cinnabar/5 px-3 py-2"
+          class="mt-1.5 rounded-[2px] bg-cinnabar/5 px-3 py-2"
         >
           <p class="text-note leading-relaxed text-cinnabar">
             将

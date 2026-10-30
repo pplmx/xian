@@ -24,7 +24,7 @@
 
       <!-- 她自己提出的事(Phase 34.1):不是世界安排的事件,是她开的口 -->
       <template v-if="herIntent">
-        <div class="mt-3 rounded-md border border-gold-ink/30 bg-gold-ink/[0.04] px-3 py-2.5">
+        <div class="mt-3 rounded-[2px] border border-gold-ink/30 bg-gold-ink/[0.04] px-3 py-2.5">
           <p class="text-body leading-relaxed text-gold-ink">{{ herIntent.line }}</p>
           <p class="mt-1 text-note text-ink-faint">她所求:{{ herIntent.wish }}</p>
           <!-- 意图由经历催生,不是凭空的:把「因何而起」摆出来 -->
@@ -46,7 +46,7 @@
 
       <!-- 共同事件:她的诉求与底线在此第一次被玩家看见并回应 -->
       <template v-if="pendingEvent && !bond.fallen && !bond.departed">
-        <div class="mt-3 rounded-md border border-ink/15 bg-paper-deep/50 px-3 py-2.5">
+        <div class="mt-3 rounded-[2px] border border-ink/15 bg-paper-deep/50 px-3 py-2.5">
           <p class="t-card">{{ pendingEvent.title }}</p>
           <p class="text-note text-ink-faint">因何而来:{{ pendingEventTriggers }}</p>
           <p class="mt-1 t-body text-ink-soft">{{ pendingEvent.text }}</p>
@@ -75,7 +75,7 @@
       </template>
       <p
         v-else-if="lastEventText"
-        class="mt-3 rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-2 t-body text-ink-soft"
+        class="mt-3 rounded-[2px] border border-ink/10 bg-paper-deep/40 px-3 py-2 t-body text-ink-soft"
       >
         {{ lastEventText }}
       </p>

@@ -11,10 +11,10 @@
       <div
         v-for="row in marketRows"
         :key="row.grade"
-        class="flex items-center gap-2.5 rounded-md bg-paper-deep/70 px-3 py-2"
+        class="flex items-center gap-2.5 rounded-[2px] bg-paper-deep/70 px-3 py-2"
       >
         <span
-          class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-title text-paper"
+          class="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] bg-jade/85 font-kai text-title text-paper"
           >{{ row.grade }}</span
         >
         <div class="min-w-0 grow">

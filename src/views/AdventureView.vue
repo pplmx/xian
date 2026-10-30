@@ -117,7 +117,7 @@
             -->
                 <div class="flex items-start gap-3 tinylens:flex-col tinylens:gap-1.5">
                   <span
-                    class="grid h-10 w-10 shrink-0 place-items-center rounded-md tinylens:h-8 tinylens:w-8"
+                    class="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] tinylens:h-8 tinylens:w-8"
                     :class="
                       row.suppressed
                         ? 'bg-gold-ink/6 text-gold-ink'
@@ -230,7 +230,7 @@
                   v-if="row.suppressed"
                   data-region-action
                   data-suppress-info
-                  class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-gold-ink/6 px-2.5 py-1.5"
+                  class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] bg-gold-ink/6 px-2.5 py-1.5"
                 >
                   <span class="text-body text-gold-ink tabular"
                     >自动产出 · {{ rateText(row.def, row.recall) }}</span
@@ -262,7 +262,7 @@
                 <div
                   v-else-if="row.canEnter && row.qualified"
                   data-region-action
-                  class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-ink/4 px-2.5 py-1.5"
+                  class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] bg-ink/4 px-2.5 py-1.5"
                 >
                   <span class="text-note text-ink-faint">已取得镇压资格</span>
                   <span class="text-note text-gold-ink tabular">{{
@@ -398,7 +398,7 @@
       @close="modeTarget = null"
     >
       <!-- 适配预览 -->
-      <div v-if="preview" class="mb-3 rounded-md bg-ink/4 px-3 py-2.5">
+      <div v-if="preview" class="mb-3 rounded-[2px] bg-ink/4 px-3 py-2.5">
         <template v-if="preview.mine && currentBuild">
           <p class="flex items-center justify-between text-body">
             <span class="text-ink-soft">

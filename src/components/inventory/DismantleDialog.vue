@@ -16,7 +16,7 @@
       <label
         v-for="row in decomposeRows"
         :key="row.rank"
-        class="flex items-center gap-2.5 rounded-md px-2.5 py-1.5"
+        class="flex items-center gap-2.5 rounded-[2px] px-2.5 py-1.5"
         :class="settings.decomposeRanks.includes(row.rank) ? 'bg-paper-deep/80' : ''"
       >
         <input
@@ -143,7 +143,7 @@
     -->
     <div
       v-if="settings.smartKeep.enabled"
-      class="mt-1 rounded-md bg-paper-deep/60 px-2.5 py-2 text-note"
+      class="mt-1 rounded-[2px] bg-paper-deep/60 px-2.5 py-2 text-note"
     >
       <p class="text-ink-soft tabular">
         依当前规则:行囊 {{ impact.candidates }} 件中留 {{ impact.keep }} 件 · 化尘

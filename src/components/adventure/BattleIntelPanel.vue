@@ -39,7 +39,7 @@
     {{ battleLoot.join(" · ") }}
   </p>
   <!-- 此物所知(Phase 32.5:交手越多,战前看得越清楚) -->
-  <div v-if="showLore && lore" class="mt-2 rounded-md bg-ink/4 px-3 py-2.5">
+  <div v-if="showLore && lore" class="mt-2 rounded-[2px] bg-ink/4 px-3 py-2.5">
     <p class="flex items-center gap-2">
       <span class="font-kai text-[12px] tracking-wider text-ink">{{ battle?.enemyName }}</span>
       <span class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink">{{
@@ -60,7 +60,10 @@
       · {{ ph.at }}时{{ ph.label }}
     </p>
     <p v-if="lore.archetype" class="mt-1.5 text-body leading-relaxed text-gold-ink">
-      <span v-if="lore.archetypeLabel" class="mr-1 rounded bg-gold-ink/6 px-1 py-0.5 text-note">
+      <span
+        v-if="lore.archetypeLabel"
+        class="mr-1 rounded-[2px] bg-gold-ink/6 px-1 py-0.5 text-note"
+      >
         {{ lore.archetypeLabel }}
       </span>
       {{ lore.archetype }}
@@ -68,7 +71,7 @@
     <p v-if="lore.hint" class="mt-1.5 text-note text-ink-faint">{{ lore.hint }}</p>
   </div>
   <!-- 战斗分析(战败自动展开;硬核数据供研究) -->
-  <div v-if="showAnalysis && analysis" class="mt-2 rounded-md bg-ink/4 px-3 py-2.5">
+  <div v-if="showAnalysis && analysis" class="mt-2 rounded-[2px] bg-ink/4 px-3 py-2.5">
     <p
       class="font-kai text-[12px] tracking-wider"
       :class="battle?.result.win ? 'text-jade' : 'text-cinnabar'"

@@ -1,6 +1,6 @@
 <template>
   <p
-    class="mt-1.5 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 rounded-md border border-cinnabar/20 bg-cinnabar/4 px-2 py-1 text-note leading-relaxed text-cinnabar tabular"
+    class="mt-1.5 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 rounded-[2px] border border-cinnabar/20 bg-cinnabar/4 px-2 py-1 text-note leading-relaxed text-cinnabar tabular"
   >
     <GameIcon name="wind" :size="11" class="shrink-0" />
     <span class="font-kai">尚差 {{ formatNum(short) }} 灵气</span>

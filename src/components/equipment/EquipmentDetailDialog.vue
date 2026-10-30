@@ -83,7 +83,7 @@
           稀有度交给左侧那道色边(与名目同色):一眼看得出哪条是撞上的大运,
           又不至于九块颜色抢戏。
         -->
-        <ul class="overflow-hidden rounded-md bg-violet-ink/6">
+        <ul class="overflow-hidden rounded-[2px] bg-violet-ink/6">
           <li
             v-for="(line, i) in resolved.affixLines"
             :key="line.id"

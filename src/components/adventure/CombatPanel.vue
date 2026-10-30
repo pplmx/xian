@@ -267,14 +267,14 @@
         -->
         <button
           v-if="!playbackDone"
-          class="tap-row absolute right-1 -top-0.5 z-10 -m-2 rounded p-2 text-note text-ink-faint active:text-ink active:opacity-60"
+          class="tap-row absolute right-1 -top-0.5 z-10 -m-2 rounded-[2px] p-2 text-note text-ink-faint active:text-ink active:opacity-60"
           @click="skipPlayback"
         >
           跳过播放 »
         </button>
         <div
           ref="logBox"
-          class="scroll-pane space-y-1 overflow-y-auto rounded-md bg-ink/4 px-3 py-2"
+          class="scroll-pane space-y-1 overflow-y-auto rounded-[2px] bg-ink/4 px-3 py-2"
           :class="playbackDone ? 'max-h-48' : 'h-48'"
         >
           <!--

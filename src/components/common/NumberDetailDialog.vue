@@ -7,7 +7,11 @@
         也才留得住每三位一个逗号的完整数字。
       -->
       <div class="space-y-2">
-        <div v-for="(row, i) in view.rows" :key="i" class="rounded-md bg-paper-deep/60 px-3 py-2">
+        <div
+          v-for="(row, i) in view.rows"
+          :key="i"
+          class="rounded-[2px] bg-paper-deep/60 px-3 py-2"
+        >
           <p class="flex items-baseline justify-between gap-2">
             <span class="shrink-0 text-body text-ink-faint">{{ row.label }}</span>
             <span v-if="row.text" class="shrink-0 text-title text-ink tabular">{{ row.text }}</span>
@@ -39,7 +43,7 @@
           </p>
         </div>
       </div>
-      <p v-if="view.note" class="mt-2 rounded-md bg-ink/4 px-2.5 py-2 t-body text-ink-soft">
+      <p v-if="view.note" class="mt-2 rounded-[2px] bg-ink/4 px-2.5 py-2 t-body text-ink-soft">
         {{ view.note }}
       </p>
       <!--

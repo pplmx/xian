@@ -83,7 +83,7 @@
       <div v-for="trial in TRIALS" :key="trial.id" class="card-ink px-4 py-3">
         <p class="flex items-center gap-2">
           <span
-            class="grid h-8 w-8 place-items-center rounded-md bg-gold-ink/85 font-kai text-section text-paper"
+            class="grid h-8 w-8 place-items-center rounded-[2px] bg-gold-ink/85 font-kai text-section text-paper"
           >
             {{ trial.seal }}
           </span>
@@ -205,12 +205,12 @@
         v-model="draft.name"
         maxlength="8"
         aria-label="为此挑战书命名(最多八个字)"
-        class="mt-2 w-full rounded-md border border-ink/20 bg-paper-deep/60 px-3 py-1.5 text-[16px] outline-none focus:border-cinnabar/50 t-card"
+        class="mt-2 w-full rounded-[2px] border border-ink/20 bg-paper-deep/60 px-3 py-1.5 text-[16px] outline-none focus:border-cinnabar/50 t-card"
         placeholder="为此挑战书命名(如《无盾求生》)"
       />
       <div
         v-if="challengeVerdict"
-        class="mt-2 rounded-md px-3 py-2"
+        class="mt-2 rounded-[2px] px-3 py-2"
         :class="challengeVerdict.ok ? 'bg-paper-deep/70' : 'bg-cinnabar/10'"
       >
         <p v-if="challengeVerdict.ok" class="flex items-center justify-between text-body">

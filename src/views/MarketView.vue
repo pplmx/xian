@@ -764,7 +764,7 @@ function bountyReady(o: BountySlot): boolean {
           v-for="it in equipCandidatePage.visible"
           :key="it.uid"
           :data-equip-candidate="it.uid"
-          class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-body hoverable:hover:border-cinnabar"
+          class="flex w-full items-center justify-between gap-2 rounded-[2px] border border-ink/10 px-3 py-2 text-left text-body hoverable:hover:border-cinnabar"
           @click="deliverPicked(it.uid)"
         >
           <span class="min-w-0 truncate">

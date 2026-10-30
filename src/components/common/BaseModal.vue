@@ -33,7 +33,7 @@
               <h3 class="mt-1 flex items-center gap-2 font-kai text-lg tracking-[0.2em] text-ink">
                 <span
                   v-if="props.title"
-                  class="brush-bar h-3 w-0.75 rounded bg-[var(--world-bar)]"
+                  class="brush-bar h-3 w-0.75 rounded-[2px] bg-[var(--world-bar)]"
                   aria-hidden="true"
                 />
                 {{ props.title }}

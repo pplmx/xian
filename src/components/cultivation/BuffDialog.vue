@@ -3,7 +3,7 @@
     <template v-if="def">
       <p class="flex items-center gap-2">
         <span
-          class="grid h-9 w-9 shrink-0 place-items-center rounded-md"
+          class="grid h-9 w-9 shrink-0 place-items-center rounded-[2px]"
           :class="isInjury ? 'bg-cinnabar/6 text-cinnabar' : 'bg-jade/6 text-jade'"
         >
           <GameIcon :name="def.icon" :size="17" />

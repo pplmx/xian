@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
 import { folioTurnDirectionOf } from "./folioTurn";
@@ -9,6 +9,14 @@ const ROOT = resolve(__dirname, "../..");
 function source(rel: string): string {
   if (rel === "src/style.css") return readStyleCss();
   return readFileSync(resolve(ROOT, rel), "utf8");
+}
+
+function vueFiles(dir = resolve(ROOT, "src")): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(dir, entry.name);
+    if (entry.isDirectory()) return vueFiles(path);
+    return entry.isFile() && entry.name.endsWith(".vue") ? [path] : [];
+  });
 }
 
 describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => {
@@ -100,8 +108,30 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
 
     expect(css, "常规页要有统一页框").toContain(".folio-page");
     expect(css, "页框要承接纵向节奏").toContain(".folio-page--stack");
-    expect(css, "章节要在页内自动编号").toContain(".folio-page .section-title::before");
+    expect(css, "章节要在页内自动编号").toContain(".folio-page .folio-section-mark::before");
+    expect(css, "旧的双笔章节头不该继续和栏号签叠成三重记号").not.toContain(
+      ".folio-page .section-title::before",
+    );
     expect(css, "节次计数器只能由页框重置").toContain("counter-reset: folio-section");
+  });
+
+  it("册页内不再保留 App 式中圆角，纸片只留 2px 方倒角", () => {
+    const banned = /^(?:rounded|rounded-(?:md|lg|xl|2xl|3xl))$/;
+    const offenders: string[] = [];
+
+    for (const file of vueFiles()) {
+      const text = readFileSync(file, "utf8");
+      for (const match of text.matchAll(/class="([^"]*)"/g)) {
+        for (const token of match[1]!.split(/\s+/)) {
+          if (!banned.test(token)) continue;
+          offenders.push(
+            `${file.slice(ROOT.length + 1)}:${text.slice(0, match.index).split("\n").length}`,
+          );
+        }
+      }
+    }
+
+    expect(offenders, `仍在中圆角:${offenders.join(", ")}`).toEqual([]);
   });
 
   it("书首书脊走伪元素，不拿空 span 冒充顶栏文字", () => {

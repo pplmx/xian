@@ -1,18 +1,13 @@
 <template>
   <div class="section-title flex min-w-0 items-start gap-2 px-1">
     <!--
-      双笔 —— 研墨是两落:一笔主(随世界换色)、一笔副(只留一道墨痕)。
+      栏号签 —— 一章只留一枚。
 
-      原先只有一根 3px 竖条。单看没毛病,可与全库上百处「列表项题头」摆在一起就不够
-      分了 —— 竖条太轻,章节与行目读着同一级。并置两笔之后,同一个元素立刻读作「笔杆」:
-      主笔是落下的那道,副笔是提笔时带出的余墨,粗细一正一副,和朱砂/墨的层次一致。
-
-      两笔共用一个 brush-bar:入场时一起自上而下长出来,不会一笔先到一笔后到。
+      页框本来就会给出 01、02 的序号，旧版又在旁边并置「世界色主笔 + 墨色副笔」，
+      同一处章节头于是出现三重记号。这里把三者收进一枚签：签面写页内序号，右侧内嵌
+      世界色书脊与一道墨色副线。换界时仍跟着世界换色，但不再多挂两颗空节点。
     -->
-    <span class="brush-bar mt-0.5 flex h-6 shrink-0 items-stretch gap-0.5" aria-hidden="true">
-      <span class="w-0.75 rounded bg-[var(--world-bar)]" />
-      <span class="w-px rounded bg-ink/20" />
-    </span>
+    <span data-folio-section-mark class="folio-section-mark mt-0.5 shrink-0" aria-hidden="true" />
     <div class="min-w-0">
       <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
         <h2 class="min-w-0 font-kai text-section tracking-[0.25em] text-ink">{{ title }}</h2>

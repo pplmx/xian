@@ -25,7 +25,7 @@
               <span class="truncate">{{ v.name }}</span>
               <span
                 v-if="isMain(v.id)"
-                class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-note leading-none text-cinnabar"
+                class="shrink-0 rounded-[2px] bg-cinnabar/6 px-1 py-0.5 text-note leading-none text-cinnabar"
                 >主脉</span
               >
               <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-note text-ink-faint"
