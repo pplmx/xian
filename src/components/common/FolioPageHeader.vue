@@ -1,5 +1,12 @@
 <template>
-  <header class="folio-masthead card-ink relative overflow-hidden px-4 py-3" data-folio-masthead>
+  <header
+    class="folio-masthead card-ink relative overflow-hidden"
+    :class="featured ? 'folio-masthead--featured px-4 pb-4 pt-4' : 'px-4 py-3'"
+    data-folio-masthead
+    :data-folio-featured="featured ? '' : undefined"
+  >
+    <slot name="backdrop" />
+
     <div class="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-1">
       <button
         v-if="backTo"
@@ -22,21 +29,38 @@
 
     <div class="relative z-10 mt-2 flex flex-wrap items-start gap-3">
       <span
-        class="folio-seal grid h-9 w-9 shrink-0 place-items-center border border-ink/20 text-ink-soft"
+        class="folio-seal grid shrink-0 place-items-center border border-ink/20 text-ink-soft"
+        :class="featured ? 'h-11 w-11' : 'h-9 w-9'"
         aria-hidden="true"
       >
-        <GameIcon :name="navigation?.icon ?? 'scroll'" :size="17" />
+        <GameIcon :name="navigation?.icon ?? 'scroll'" :size="featured ? 20 : 17" />
       </span>
       <div class="min-w-0 flex-1">
-        <h1 class="font-kai text-[18px] leading-snug tracking-[0.18em] text-ink">{{ title }}</h1>
+        <h1
+          class="font-kai leading-snug text-ink"
+          :class="
+            featured
+              ? 'text-[24px] tracking-[0.16em] tinylens:text-[19px]'
+              : 'text-[18px] tracking-[0.18em]'
+          "
+        >
+          {{ title }}
+        </h1>
         <p v-if="description" class="mt-1 t-body text-ink-faint">
           {{ description }}
         </p>
         <slot name="meta" />
       </div>
+      <div v-if="$slots.visual" class="shrink-0 tinylens:hidden">
+        <slot name="visual" />
+      </div>
       <div v-if="$slots.action" class="shrink-0 tinylens:w-full">
         <slot name="action" />
       </div>
+    </div>
+
+    <div v-if="$slots.default" class="relative z-10 mt-3">
+      <slot />
     </div>
   </header>
 </template>
@@ -54,8 +78,10 @@ const props = withDefaults(
     subtitle?: string;
     backTo?: string;
     backLabel?: string;
+    /** 主五册的开卷版式:更大的册名、印章和可铺开的卷首正文 */
+    featured?: boolean;
   }>(),
-  { subtitle: "", backTo: "", backLabel: "返回" },
+  { subtitle: "", backTo: "", backLabel: "返回", featured: false },
 );
 
 const route = useRoute();

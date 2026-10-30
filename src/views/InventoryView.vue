@@ -1,7 +1,19 @@
 <template>
   <div class="stagger-in px-4 pb-6 pt-4">
+    <FolioPageHeader title="行囊" subtitle="装备、丹药与材料" featured>
+      <template #action>
+        <div class="text-right tinylens:text-left">
+          <p class="text-[10px] tracking-[0.24em] text-ink-faint">藏珍</p>
+          <p class="mt-0.5 font-kai text-[18px] leading-tight text-ink tabular">
+            {{ inventory.bagItems.length
+            }}<span class="text-[11px] text-ink-faint"> / {{ BAG_CAPACITY }}</span>
+          </p>
+        </div>
+      </template>
+    </FolioPageHeader>
+
     <!-- 页签 -->
-    <InkTabs v-model="tab" :tabs="TABS" />
+    <InkTabs v-model="tab" :tabs="TABS" class="mt-3" />
 
     <!-- 装备:部位槽,点击唤起部位列表 -->
     <template v-if="tab === 'equip'">
@@ -17,12 +29,7 @@
         :data-inventory-new-count="inventory.newItemCount"
         :data-inventory-upgrade-count="upgradeRows.length"
       >
-        <div class="flex items-baseline justify-between gap-2">
-          <span class="font-kai text-[14px] tracking-[0.25em] text-ink">行 囊</span>
-          <span class="text-[11px] text-ink-soft tabular"
-            >{{ inventory.bagItems.length }}/{{ BAG_CAPACITY }}</span
-          >
-        </div>
+        <p class="text-[10px] tracking-[0.24em] text-ink-faint">本批览要</p>
         <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[10px]">
           <span class="text-ink-faint"
             >器灵尘
@@ -504,6 +511,7 @@ import { useLoreStore } from "@/stores/lore";
 import { formatGN, formatExact, formatNum, formatPercent } from "@/utils/format";
 import { colorWithAlpha } from "@/ui/colorVar";
 import type { EquipSlot } from "@/types";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";

@@ -8,11 +8,10 @@
       <CombatPanel v-if="adventure.sessionActive" />
 
       <div v-else class="space-y-4">
-        <!-- 本世行旅条:历练是路线真正落地的地方,这里给进度与眼下去处,详情仍归世界页 -->
-        <MortalWorldRibbon :view="worldOverview" :statuses="worldStatuses" />
-        <div class="ink-divider" aria-hidden="true" />
-
-        <SectionTitle title="历练" hint="行万里路,炼一颗心" />
+        <FolioPageHeader title="历练" subtitle="行万里路,炼一颗心" featured>
+          <!-- 本世行旅条:历练是路线真正落地的地方,这里给进度与眼下去处,详情仍归世界页 -->
+          <MortalWorldRibbon :view="worldOverview" :statuses="worldStatuses" />
+        </FolioPageHeader>
         <!--
           星象是背景条件,不是行动:整句压成 ink-soft,只把「利在何处」那一个地名留在
           金处 —— 五行散在同一段里,读的人得先找重点,再回头读句子。
@@ -466,7 +465,7 @@ import { personalityEffects } from "@/core/petPersonality";
 import { useUiStore } from "@/stores/ui";
 import { REGIONS, regionDef, DANGER_NAMES } from "@/data/regions";
 import { worldOf, type WorldDef } from "@/data/realms";
-import SectionTitle from "@/components/common/SectionTitle.vue";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SecretRealmCard from "@/components/adventure/SecretRealmCard.vue";
 import MortalWorldRibbon from "@/components/world/MortalWorldRibbon.vue";
 import { todayMansion, favoredWorld, todayMansionLine, MANSION_EVENT_LUCK } from "@/core/astronomy";

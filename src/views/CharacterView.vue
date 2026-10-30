@@ -1,41 +1,34 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
+    <FolioPageHeader title="道躯" subtitle="属性、灵根与传承" featured>
+      <template #action>
+        <div class="text-right tinylens:text-left">
+          <p class="text-[10px] tracking-[0.28em] text-ink-faint">战 力</p>
+          <p class="mt-0.5 font-kai text-[20px] leading-tight text-cinnabar tabular">
+            <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
+          </p>
+        </div>
+      </template>
+    </FolioPageHeader>
+
     <!--
-      道躯总览 —— 战力是这一页唯一「一个数概括全部」的读数,故它是主角字;
-      但它由攻/防/血三项按权重折成,只报那个数等于让人背结论。
-      于是把三项按权重摊在同一行,读数与「这数怎么来的」同框而不同级。
+      开卷先报战力,卡内随即摊开战力由攻/防/血三项按权重折成 ——
+      只报结论不够,「这数怎么来的」必须与结论同框而不同级。
     -->
     <div class="card-ink px-4 py-3">
-      <!--
-        这张卡不设卡名 —— 它原叫「道 躯」,与一屏之下的分区标题撞名。
-        卡片题头的作用是「这一张讲什么」,而这张只讲一件事:战力。
-        而「战 力」那一行本身就是它的名字,再加一层题头是多余的一层。
-        右上角那句话交代折算口径,是这张卡唯一需要的旁注。
-      -->
-      <div data-value-row class="flex items-baseline justify-between gap-2">
-        <span class="text-[11px] tracking-[0.3em] text-ink-faint">战 力</span>
-        <span class="font-kai text-[18px] text-cinnabar tabular">
-          <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
-        </span>
-      </div>
-      <!--
-        折算口径这句旁注**不能**待在主值行里:200% 缩放档的有效视口只有 ~195px,
-        「战 力」与这句一起放,主值行当场折成两行(layout-check 报过)。
-        主值行只放主读数,旁注自成一行。
-      -->
-      <p class="mt-0.5 text-right text-[10px] text-ink-faint">攻 · 防 · 血 按权重折算</p>
+      <p class="text-[10px] tracking-[0.16em] text-ink-faint">战力构成 · 攻 / 防 / 血按权重折算</p>
       <!--
         战力构成 —— 一条按比例分段的横条,不是一个三格数字阵。
         
         由来:这里原先摆着「攻击 45% / 防御 19% / 气血 36%」三枚 15px 楷体数字,
-        而一屏之下的「道躯」节又摆着同样三项标签(攻击/防御/气血)的原始值 ——
+        而一屏之下的「根本属性」节又摆着同样三项标签(攻击/防御/气血)的原始值 ——
         同名的三项在一屏里出现两次、都占主角位置,读者第一反应是「重复了」。
         
         职责确实不同(这里是占比、那里是原值),但**不同职责不等于要各占一行大字**:
         占比这件事本来就是「谁撑起了这个数」,一把横条说得比三个百分数更直接,
         而且不再与下方三项撞名同框。
       -->
-      <div class="mt-2">
+      <div class="mt-2.5">
         <div class="flex h-1.5 overflow-hidden rounded-sm" role="img" :aria-label="powerShareLabel">
           <span
             v-for="row in powerDetailRows"
@@ -127,7 +120,7 @@
 
     <!-- 属性 -->
     <section>
-      <SectionTitle title="道躯" />
+      <SectionTitle title="根本属性" />
       <div class="card-ink mt-2 px-4 py-3">
         <!--
           三列在 200% 缩放档(195 CSS px)下每列只剩 38px,「48.61亿」这类九位数
@@ -414,6 +407,7 @@ import { buildIdentity } from "@/core/identityService";
 import { rootElements, tendencyLines } from "@/core/linggenAffinity";
 import { cnNumber, formatNum, formatPercent } from "@/utils/format";
 import { add, gn, mulN, ratio } from "@/utils/gnum";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
 import { STAT_NAMES } from "@/data/statNames";

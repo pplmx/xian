@@ -258,6 +258,7 @@ const CATEGORIES = [
       "effectWiring",
       "uiLayering",
       "folioMasthead",
+      "folioOpening",
       "navigation",
       "visualRhythm",
       "itemText",

@@ -1,37 +1,21 @@
 <template>
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
-    <!--
-      卷首行 —— 世界名、匾额、这一境的名与注:它们回答的是「我在哪一界、走到第几境」,
-      是一页的书名,不是一件可以操作的东西。故不铺卡、不压影,只在结尾落一道分隔线;
-      卡从下面的「修行」开始。一道 430 行的大卡会把书名与读数拉成同一档。
-    -->
-    <div class="pb-2 text-center">
-      <!-- 世界名带它的信标色(仙界=石青/神界=紫/混沌=幽蓝):修炼页是平时最常开的面,「这是哪一界」一眼可见 -->
-      <p class="world-label font-kai text-[11px] tracking-[0.5em]">{{ player.worldName }}</p>
-      <!--
-        境界名是这一页的主角字 —— 两侧衬两条世界色短横,像匾额两端的框墨。
-        只在宽裕的视口出现(min-360px):200% 缩放档有效视口只有 ~195px,
-        横杆会让名字折成竖排反而挤 —— 窄了就让名字独行,回归原样。
-      -->
-      <p class="mt-1 flex items-center justify-center gap-2.5">
-        <span
-          class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline"
-          aria-hidden="true"
-        />
-        <span class="font-kai text-[30px] tracking-[0.3em] text-ink">{{ player.realm.name }}</span>
-        <span
-          class="hidden h-px w-8 shrink-0 bg-[var(--world-bar)] min-[360px]:inline"
-          aria-hidden="true"
-        />
-      </p>
-      <p class="mt-0.5 font-kai text-[14px] tracking-[0.4em] text-cinnabar">{{ player.subName }}</p>
-      <p class="mt-1 text-[11px] text-ink-faint">{{ player.realm.desc }}</p>
-      <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->
-      <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
-        「{{ player.realm.basis }}」{{ player.realm.lore }}
-      </p>
-    </div>
-    <div class="ink-divider" aria-hidden="true" />
+    <FolioPageHeader :title="player.realm.name" :subtitle="player.realm.desc" featured>
+      <template #meta>
+        <p class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px]">
+          <span class="world-label font-kai tracking-[0.28em]">{{ player.worldName }}</span>
+          <span class="text-ink-faint" aria-hidden="true">·</span>
+          <span class="font-kai tracking-[0.22em] text-cinnabar">{{ player.subName }}</span>
+          <span class="ml-auto tabular text-ink-faint"
+            >第 {{ player.major + 1 }} / {{ REALMS.length }} 境</span
+          >
+        </p>
+        <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->
+        <p class="mt-1.5 border-t border-ink/10 pt-1.5 text-[10px] leading-relaxed text-ink-faint">
+          「{{ player.realm.basis }}」{{ player.realm.lore }}
+        </p>
+      </template>
+    </FolioPageHeader>
 
     <!--
       修行卡 —— 这一页的主卡,左侧一道世界色竖封条把它与下面的破境卡分开。
@@ -370,6 +354,7 @@ import {
   formatPercent,
   formatRate,
 } from "@/utils/format";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import TapNumber from "@/components/common/TapNumber.vue";
 import { qualityDef } from "@/data/qualities";
 import SectionTitle from "@/components/common/SectionTitle.vue";

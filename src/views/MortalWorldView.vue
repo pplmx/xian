@@ -2,93 +2,85 @@
   <div class="stagger-in space-y-4 px-4 pb-6 pt-4">
     <template v-if="view">
       <!-- 世界身份是这一页的卷首:先读此世之名,再读路怎么走 -->
-      <section class="card-ink relative overflow-hidden rounded-xl px-4 pb-3.5 pt-4">
-        <svg
-          class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8"
-          viewBox="0 0 400 110"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M0 110 L52 48 L86 76 L132 32 L174 79 L216 55 L264 88 L318 38 L360 70 L400 45 L400 110 Z"
-            fill="currentColor"
-          />
-          <path
-            d="M0 110 L42 84 L93 103 L142 74 L188 101 L238 82 L290 104 L337 79 L400 96 L400 110 Z"
-            fill="currentColor"
-            opacity="0.5"
-          />
-        </svg>
+      <FolioPageHeader :title="view.title" :subtitle="view.summary" featured>
+        <template #backdrop>
+          <svg
+            class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8"
+            viewBox="0 0 400 110"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M0 110 L52 48 L86 76 L132 32 L174 79 L216 55 L264 88 L318 38 L360 70 L400 45 L400 110 Z"
+              fill="currentColor"
+            />
+            <path
+              d="M0 110 L42 84 L93 103 L142 74 L188 101 L238 82 L290 104 L337 79 L400 96 L400 110 Z"
+              fill="currentColor"
+              opacity="0.5"
+            />
+          </svg>
+        </template>
+        <template #action>
+          <span
+            class="grid h-10 w-10 place-items-center rounded-sm border border-cinnabar/45 font-kai text-[15px] text-cinnabar"
+            aria-hidden="true"
+            >界</span
+          >
+        </template>
 
-        <div class="relative">
-          <div class="flex items-start gap-3">
-            <div class="min-w-0 flex-1">
-              <p class="text-[10px] tracking-[0.32em] text-cinnabar">本世之界</p>
-              <h1 class="mt-1 font-kai text-[19px] leading-snug tracking-[0.12em] text-ink">
-                {{ view.title }}
-              </h1>
-              <p class="mt-1 t-body text-ink-faint">{{ view.summary }}</p>
-            </div>
-            <span
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-cinnabar/45 font-kai text-[15px] text-cinnabar"
-              aria-hidden="true"
-              >界</span
-            >
+        <div class="grid grid-cols-3 border-y border-ink/10 py-2" data-world-shape>
+          <div class="min-w-0 border-r border-ink/10 pr-2">
+            <p class="text-[10px] text-ink-faint">地界</p>
+            <p class="mt-0.5 font-kai text-[15px] text-ink tabular">{{ view.stages }}</p>
           </div>
-
-          <div class="mt-3 grid grid-cols-3 border-y border-ink/10 py-2" data-world-shape>
-            <div class="min-w-0 border-r border-ink/10 pr-2">
-              <p class="text-[10px] text-ink-faint">地界</p>
-              <p class="mt-0.5 font-kai text-[15px] text-ink tabular">{{ view.stages }}</p>
-            </div>
-            <div class="min-w-0 border-r border-ink/10 px-2">
-              <p class="text-[10px] text-ink-faint">层级</p>
-              <p class="mt-0.5 font-kai text-[15px] text-ink tabular">{{ tierRangeText }}</p>
-            </div>
-            <div class="min-w-0 pl-2">
-              <p class="text-[10px] text-ink-faint">已行</p>
-              <p class="mt-0.5 font-kai text-[15px] text-ink tabular">
-                {{ view.clearedStages
-                }}<span class="text-[10px] text-ink-faint"> / {{ view.stages }}</span>
-              </p>
-            </div>
+          <div class="min-w-0 border-r border-ink/10 px-2">
+            <p class="text-[10px] text-ink-faint">层级</p>
+            <p class="mt-0.5 font-kai text-[15px] text-ink tabular">{{ tierRangeText }}</p>
           </div>
+          <div class="min-w-0 pl-2">
+            <p class="text-[10px] text-ink-faint">已行</p>
+            <p class="mt-0.5 font-kai text-[15px] text-ink tabular">
+              {{ view.clearedStages
+              }}<span class="text-[10px] text-ink-faint"> / {{ view.stages }}</span>
+            </p>
+          </div>
+        </div>
 
-          <p class="mt-2 text-[11px]">
-            <span class="text-cinnabar">此世命数:</span>
-            <span class="ml-1 font-kai text-[14px] text-ink">{{ view.ruleText }}</span>
-          </p>
-          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
-            这条命数只参与成形时的难度校准,不改写历练里的战斗。
-          </p>
-          <!--
+        <p class="mt-2 text-[11px]">
+          <span class="text-cinnabar">此世命数:</span>
+          <span class="ml-1 font-kai text-[14px] text-ink">{{ view.ruleText }}</span>
+        </p>
+        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+          这条命数只参与成形时的难度校准,不改写历练里的战斗。
+        </p>
+        <!--
             资源偏向必须写明兑现方式:摘要里那句「矿脉深厚之地」若没有数字跟着,
             玩家会把它当纯flavor —— 而它现在真的乘在玄铁掉率上(见 core/mortalBias)。
           -->
-          <p v-if="view.biasText" class="mt-1 text-[11px] text-ink-faint">
-            <span class="text-qing">此地所钟</span> · {{ view.biasText }}
-          </p>
-          <!--
+        <p v-if="view.biasText" class="mt-1 text-[11px] text-ink-faint">
+          <span class="text-qing">此地所钟</span> · {{ view.biasText }}
+        </p>
+        <!--
             道果出口之一:换一方天地。发的是**选择权**,不是数值 —— 出口的发放物不得属于
             StatMods 命名空间(见 core/fruitOutlets.spec 的结论)。不够时把差多少写出来。
           -->
-          <button
-            class="btn-ghost mt-3 min-h-[28px] max-w-full !px-3 !py-1 text-[11px]"
-            :disabled="!canRerollWorld"
-            data-world-reroll
-            @click="rerollConfirm = true"
-          >
-            换一方天地({{ rerollCost }} 道果{{ rerollBlockText }})
-          </button>
-          <!--
+        <button
+          class="btn-ghost mt-3 min-h-[28px] max-w-full !px-3 !py-1 text-[11px]"
+          :disabled="!canRerollWorld"
+          data-world-reroll
+          @click="rerollConfirm = true"
+        >
+          换一方天地({{ rerollCost }} 道果{{ rerollBlockText }})
+        </button>
+        <!--
             换界的代价必须写在按钮下面:setMortalWorld 会把本世路线进度清零(「换界即换路」)。
             只说价、不说会清进度,等于让玩家在不知情的情况下丢掉已经走过的路。
           -->
-          <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
-            换界即换路:已走的本世路线会清零,所钟与地貌构成重新掷定。
-          </p>
-        </div>
-      </section>
+        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          换界即换路:已走的本世路线会清零,所钟与地貌构成重新掷定。
+        </p>
+      </FolioPageHeader>
 
       <BaseModal :open="rerollConfirm" title="换一方天地" @close="rerollConfirm = false">
         <p class="t-body leading-relaxed">
@@ -263,6 +255,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import MortalRouteMap from "@/components/world/MortalRouteMap.vue";

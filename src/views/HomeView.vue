@@ -8,82 +8,74 @@
     -->
     <InstallToHomeNotice />
 
-    <!-- 人物水墨主视觉 -->
-    <div data-home-hero class="card-ink home-hero relative overflow-hidden px-4 pb-4 pt-3">
-      <!-- 远山:墨色随世界微染(异地即异色,仍 8% 极淡、只在氛围层) -->
-      <svg
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8"
-        viewBox="0 0 400 110"
-        preserveAspectRatio="none"
-      >
-        <path
-          class="drift-far"
-          d="M0 110 L60 40 Q80 20 100 45 L150 95 L200 30 Q215 12 235 38 L300 100 L340 55 Q355 38 372 60 L400 90 L400 110 Z"
-          fill="currentColor"
-        />
-        <path
-          class="drift-near"
-          d="M0 110 L40 80 L110 105 L180 70 L260 108 L330 80 L400 105 L400 110 Z"
-          fill="currentColor"
-          opacity="0.6"
-        />
-      </svg>
-      <div
-        class="relative z-10 flex items-center justify-between border-b border-ink/10 pb-2 text-[10px]"
-      >
-        <span class="font-kai tracking-[0.3em] text-cinnabar">今日 · 洞府</span>
-        <span class="text-ink-faint">{{ player.worldName }}</span>
-      </div>
-      <div class="relative z-10 mt-3 flex items-start justify-between">
-        <div class="min-w-0 flex-1">
-          <!--
-            主角位是「玩家此刻状态」,却落在最弱档(text-ink-faint),下方次要的今日天时
-            反而 font-kai 披金 —— 层级倒挂。提一档到 ink-soft 并配楷体(不动字号,
-            200% 缩放判据不受影响);寿元告急那一路仍走朱砂。
-          -->
-          <p
-            class="font-kai text-[11px]"
-            :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : 'text-ink-soft'"
-          >
-            {{ statusText }}
-          </p>
-          <!-- 今日天时:确定性环境,影响当日产出与渡劫 -->
-          <div class="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-            <GameIcon name="sparkles" :size="13" class="shrink-0 text-gold-ink" />
-            <span
-              class="shrink-0 whitespace-nowrap font-kai text-[11px] tracking-widest text-ink"
-              >{{ weather.name }}</span
-            >
-            <span class="countdown-slot ml-1 shrink-0 text-[10px] text-ink-faint tabular">{{
-              weatherLeft
-            }}</span>
-          </div>
-          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint [word-break:keep-all]">
-            {{ weather.desc }}<span v-if="tomorrowWeather">{{ tomorrowBrief }}</span>
-          </p>
-          <!--
-            天时的影响是确定性数值,却只写在散文里(「灵气恢复与修炼皆有裨益」) ——
-            渡劫前一天该不该等天时,靠一句「皆有裨益」算不出来。
-            效果行照 mods 真值摊开;渡劫倍率 >1 再挂一句险。
-          -->
-          <p v-if="weatherModText" class="mt-0.5 text-[10px] text-qing tabular">
-            {{ weatherModText
-            }}<span v-if="weatherTribulation"> · 今日渡劫 ×{{ weatherTribulation }}</span>
-          </p>
-        </div>
-        <!-- 修炼法球 · 灵气法阵环绕 -->
-        <div class="relative mr-1 -mt-1 h-35 w-35 shrink-0">
+    <FolioPageHeader data-home-hero title="洞府总览" subtitle="今日天时、主线与日课" featured>
+      <template #backdrop>
+        <!-- 远山:墨色随世界微染(异地即异色,仍 8% 极淡、只在氛围层) -->
+        <svg
+          class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8"
+          viewBox="0 0 400 110"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            class="drift-far"
+            d="M0 110 L60 40 Q80 20 100 45 L150 95 L200 30 Q215 12 235 38 L300 100 L340 55 Q355 38 372 60 L400 90 L400 110 Z"
+            fill="currentColor"
+          />
+          <path
+            class="drift-near"
+            d="M0 110 L40 80 L110 105 L180 70 L260 108 L330 80 L400 105 L400 110 Z"
+            fill="currentColor"
+            opacity="0.6"
+          />
+        </svg>
+      </template>
+      <template #visual>
+        <div class="relative h-35 w-35">
           <!-- 落地影:球浮着也得有个「歇脚处」 —— 远山同色的淡淡一痕,把球按回画里 -->
           <span
-            class="pointer-events-none absolute bottom-0 left-1/2 h-1.5 w-14 -translate-x-1/2 rounded-[50%] bg-[var(--world-mountain)] opacity-20"
+            class="pointer-events-none absolute bottom-0 left-1/2 h-1.5 w-12 -translate-x-1/2 rounded-[50%] bg-[var(--world-mountain)] opacity-20"
             aria-hidden="true"
           />
           <CultivationOrb :active="true" :full="player.expFull" :progress="player.expProgress">
             <span class="text-[17px]">☯</span>
           </CultivationOrb>
         </div>
+      </template>
+      <template #meta>
+        <p
+          class="mt-1 font-kai text-[11px]"
+          :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : 'text-ink-soft'"
+        >
+          {{ statusText }}
+        </p>
+      </template>
+
+      <!-- 今日天时:确定性环境,影响当日产出与渡劫 -->
+      <div class="border-t border-ink/10 pt-2.5">
+        <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+          <GameIcon name="sparkles" :size="13" class="shrink-0 text-gold-ink" />
+          <span class="shrink-0 whitespace-nowrap font-kai text-[11px] tracking-widest text-ink">{{
+            weather.name
+          }}</span>
+          <span class="countdown-slot ml-1 shrink-0 text-[10px] text-ink-faint tabular">{{
+            weatherLeft
+          }}</span>
+        </div>
+        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint [word-break:keep-all]">
+          {{ weather.desc }}<span v-if="tomorrowWeather">{{ tomorrowBrief }}</span>
+        </p>
+        <!--
+          天时的影响是确定性数值,却只写在散文里(「灵气恢复与修炼皆有裨益」) ——
+          渡劫前一天该不该等天时,靠一句「皆有裨益」算不出来。
+          效果行照 mods 真值摊开;渡劫倍率 >1 再挂一句险。
+        -->
+        <p v-if="weatherModText" class="mt-0.5 text-[10px] text-qing tabular">
+          {{ weatherModText
+          }}<span v-if="weatherTribulation"> · 今日渡劫 ×{{ weatherTribulation }}</span>
+        </p>
       </div>
-    </div>
+    </FolioPageHeader>
 
     <!--
       第一步(只在开局这一段出现,见 core/firstStep):目标 / 主线 / 每日三块各指一个页签,
@@ -305,6 +297,7 @@ import { isRetreating } from "@/core/earlyGameService";
 import { dailyRowsOf, dailyStateOf } from "@/core/engineDailies";
 import { todayChallenge } from "@/core/dailyChallenge";
 import { mainQuestAt } from "@/core/engineChain";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";

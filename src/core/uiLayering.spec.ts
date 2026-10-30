@@ -1192,7 +1192,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 下方的次要天时反而 font-kai 披金 —— 层级倒挂。提一档 ink-soft 并配楷体,
     // 寿元告急那一路仍走朱砂;退回 faint 或拆掉 kai,下面红。
     const home = FILES.find((f) => f.path === "views/HomeView.vue");
-    expect(home?.src, "状态行要配楷体与对位主角比肩").toMatch(/class="font-kai text-\[11px\]"/);
+    expect(home?.src, "状态行要配楷体与对位主角比肩").toMatch(
+      /class="[^"]*font-kai text-\[11px\][^"]*"/,
+    );
     expect(home?.src, "非告急那一路不许退回最弱档(ink-faint)").toMatch(
       /text-cinnabar' : 'text-ink-soft'/,
     );
@@ -1211,7 +1213,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(rows.length, "修为/灵气/耗灵气主值行都要在 ink-soft 或更上").toBeGreaterThanOrEqual(3);
   });
 
-  it("全面墨感 · 触感与主位 —— 按压滑移、匾额框墨、首屏主钮辉光、法球落地影", () => {
+  it("全面墨感 · 触感与主位 —— 按压滑移、卷首框墨、首屏主钮辉光、法球落地影", () => {
     // 全面美化批:btn-seal/ghost/chip 早已 0.12s 滑移,唯 card-ink 交互卡硬跳;
     // 境界名加世界色横杆(匾额)、欢迎页主钮起朱砂柔辉、首页法球加远山同色落地影。
     // 四件各退一件,下面红 —— 不许拆回「卡一按就跳、主角字光秃秃」。
@@ -1220,7 +1222,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /^[ \t]*\.card-ink \{[\s\S]{0,600}transition: transform 0\.12s ease;/m,
     );
     const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
-    expect(cult?.src, "境界名要用世界色横杆框墨").toMatch(/bg-\[var\(--world-bar\)\]/m);
+    expect(cult?.src, "境界名要进主册开卷卷首").toMatch(
+      /<FolioPageHeader[\s\S]{0,240}\bfeatured\b/,
+    );
+    expect(style, "卷首要保留世界色左缘").toMatch(
+      /^[ \t]*\.folio-masthead \{[\s\S]{0,600}border-left: 2px solid var\(--world-bar\);/m,
+    );
+    expect(style, "主册开卷版式要能加粗这道卷边").toContain(".folio-masthead--featured");
     const wel = FILES.find((f) => f.path === "views/WelcomeView.vue");
     expect(wel?.src, "首屏主钮要有柔辉").toMatch(/btn-seal animate-glow-pulse/);
     /*
@@ -2745,7 +2753,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 修炼球(overlap=true)。修法:整行 flex-wrap 让倒计时装不下就换行,天时名 shrink-0
     // 不折 —— 既消竖排又不撞球。退化成只 nowrap 不 wrap 的写法,倒计时照样盖到球上。
     const home = FILES.find((f) => f.path === "views/HomeView.vue");
-    const row = home?.src.match(/mt-3 flex flex-wrap items-center[\s\S]{0,400}/)?.[0] ?? "";
+    const row =
+      home?.src.match(
+        /<div class="flex flex-wrap items-center gap-x-1\.5 gap-y-0\.5">[\s\S]{0,400}/,
+      )?.[0] ?? "";
     expect(row).toContain("flex flex-wrap");
     // 只钉「不折」这件事(whitespace-nowrap + shrink-0 + 楷体),字号不进判据 ——
     // 字阶归「主巡页 · 字阶同一套」管,一条判据只管一件事,改字号不该打红布局判据。
@@ -3361,12 +3372,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(ribbon?.src, "读屏名要带进度与眼下去处").toContain("linkLabel");
   });
 
-  it("历练首屏先给主线:标题在秘境支线之前,支线默认收口", () => {
+  it("历练首屏先给主线:卷首在秘境支线之前,支线默认收口", () => {
     const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
     const src = adventure?.src ?? "";
-    const titleAt = src.indexOf('<SectionTitle title="历练"');
+    const titleAt = src.indexOf('<FolioPageHeader title="历练"');
     const secretAt = src.indexOf("<SecretRealmCard");
-    expect(titleAt, "历练标题要能找到").toBeGreaterThan(-1);
+    expect(titleAt, "历练卷首要能找到").toBeGreaterThan(-1);
     expect(secretAt, "秘境卡要能找到").toBeGreaterThan(titleAt);
     expect(src, "地界列表要挂稳定落点").toContain("data-adventure-regions");
     const secret = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
@@ -3865,6 +3876,7 @@ describe("主巡页 · 字阶同一套", () => {
     "views/SoulsView.vue": { sizes: [24, 22, 19], why: "器魂匾额 · 神魂印章单字" },
     "views/BuildView.vue": { sizes: [22, 16], why: "流派印面 · 评级大字" },
     "views/MortalWorldView.vue": { sizes: [19], why: "凡尘印面" },
+    "views/CharacterView.vue": { sizes: [20], why: "卷首战力主读数" },
     /*
      * 首屏两页的题字与印面是「这一作的门面」,它们的尺寸不属于页面字阶 ——
      * 字阶管的是「读」的层次,而 40~56 的题字与印章是「认」的图形。
