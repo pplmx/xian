@@ -130,20 +130,22 @@
     <SectionTitle title="特殊规则世界" hint="择契而入,逐层择路" />
     <div class="mt-2 space-y-2.5">
       <div v-for="world in CELESTIAL_WORLDS" :key="world.id" class="card-ink px-4 py-3">
-        <p class="flex items-center gap-2">
+        <p class="celestial-world__head flex flex-wrap items-center gap-2">
           <span
-            class="grid h-8 w-8 place-items-center rounded-md bg-indigo-ink/85 font-kai text-section text-paper"
+            class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-indigo-ink/85 font-kai text-section text-paper"
           >
             {{ world.seal }}
           </span>
-          <span class="font-kai text-title tracking-[0.2em] text-ink">{{ world.name }}</span>
+          <span class="shrink-0 font-kai text-title tracking-[0.2em] text-ink">{{
+            world.name
+          }}</span>
           <span
             v-if="endgame.worldClears[world.id]"
-            class="chip-ink border-jade/60 text-note text-jade"
+            class="chip-ink shrink-0 border-jade/60 text-note text-jade"
           >
             已破 ×{{ endgame.worldClears[world.id] }}
           </span>
-          <span class="ml-auto tabular text-body text-ink-faint"
+          <span class="ml-auto tabular text-body text-ink-faint tinylens:ml-0 tinylens:basis-full"
             >入界+{{ cnNumber(EXPEDITION_ROUTE_LAYERS) }}重+界主</span
           >
         </p>
@@ -191,19 +193,19 @@
 
       <!-- 虚界之门:程序化生成 + 裁判过审 -->
       <div class="card-ink border border-violet-ink/25 px-4 py-3">
-        <p class="flex items-center gap-2">
+        <p class="celestial-world__head flex flex-wrap items-center gap-2">
           <span
-            class="grid h-8 w-8 place-items-center rounded-md bg-violet-ink/85 font-kai text-section text-paper"
+            class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-violet-ink/85 font-kai text-section text-paper"
           >
             {{ endgame.voidWorld?.seal ?? "虚" }}
           </span>
-          <span class="font-kai text-title tracking-[0.2em] text-ink">
+          <span class="min-w-0 font-kai text-title tracking-[0.2em] text-ink">
             虚界之门
             <template v-if="endgame.voidWorld">· {{ endgame.voidWorld.name }}</template>
           </span>
           <span
             v-if="endgame.worldClears['void']"
-            class="chip-ink border-jade/60 text-note text-jade"
+            class="chip-ink shrink-0 border-jade/60 text-note text-jade"
           >
             已破 ×{{ endgame.worldClears["void"] }}
           </span>

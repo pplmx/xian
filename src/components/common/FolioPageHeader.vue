@@ -31,7 +31,9 @@
         class="h-px min-w-2 flex-1 bg-gradient-to-r from-ink/15 to-transparent"
         aria-hidden="true"
       />
-      <span class="text-note text-ink-faint">{{ navigation?.label ?? "未名之页" }}</span>
+      <span class="folio-masthead__book text-note text-ink-faint">{{
+        navigation?.label ?? "未名之页"
+      }}</span>
     </div>
 
     <div class="relative z-10 mt-2 flex flex-wrap items-start gap-3">
@@ -66,7 +68,10 @@
       <div v-if="$slots.visual" class="ml-auto shrink-0 compact:hidden tinylens:hidden">
         <slot name="visual" />
       </div>
-      <div v-if="$slots.action" class="shrink-0 tinylens:w-full">
+      <div
+        v-if="$slots.action"
+        class="folio-masthead__action shrink-0 compact:w-full tinylens:w-full"
+      >
         <slot name="action" />
       </div>
     </div>

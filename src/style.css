@@ -7022,6 +7022,670 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
   }
 
   /*
+   * 天界案 —— 天门星图先给“道 / 征 / 试 / 痕”四册方位，
+   * 今日天门再收拢道途、远征、试炼与道痕的真实进度。
+   *
+   * 旧卷首只有一行道源与三行副标题，四个页签彼此没有总览；
+   * 正文又把每一册拆成同权重的卡片。现在四册先落一张总账，
+   * 星图只报方向，正文仍由远征、试炼、道痕各自报逐项事实。
+   */
+  .celestial-page .folio-masthead--featured {
+    background:
+      radial-gradient(circle at 82% 18%, rgb(var(--color-qing-rgb) / 0.05), transparent 10rem),
+      radial-gradient(circle at 68% 58%, rgb(var(--color-cinnabar-rgb) / 0.035), transparent 7rem),
+      linear-gradient(112deg, rgb(var(--color-paper-rgb) / 0.28), transparent 58%);
+  }
+
+  .celestial-page .folio-masthead__book {
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+
+  .celestial-source {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.5rem;
+    border-left: 1px solid rgb(var(--color-cinnabar-rgb) / 0.22);
+    padding-left: 0.62rem;
+  }
+
+  .celestial-source__label {
+    flex: none;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+  }
+
+  .celestial-source__button {
+    display: flex;
+    min-width: 7.5rem;
+    min-height: 32px;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.08rem 0.52rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.24);
+    border-radius: 1px;
+    padding: 0.28rem 0.5rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    text-align: left;
+  }
+
+  .celestial-source__button span {
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+
+  .celestial-source__button strong {
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .celestial-pulse {
+    position: relative;
+    overflow: hidden;
+    margin-top: 0.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    border-top: 2px solid rgb(var(--color-qing-rgb) / 0.52);
+    border-radius: 2px;
+    background:
+      linear-gradient(
+        116deg,
+        rgb(var(--color-paper-rgb) / 0.36),
+        transparent 48%,
+        rgb(var(--color-qing-rgb) / 0.018)
+      ),
+      rgb(var(--color-paper-lifted-rgb) / 0.74);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.34),
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
+  }
+
+  .celestial-pulse::before {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.03);
+    content: "";
+    pointer-events: none;
+  }
+
+  .celestial-pulse__lead {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.46rem 0.62rem;
+    padding: 0.7rem 0.78rem 0.64rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+
+  .celestial-pulse__seal {
+    display: grid;
+    width: 2.1rem;
+    height: 2.1rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+    background:
+      linear-gradient(
+        145deg,
+        rgb(var(--color-paper-rgb) / 0.6),
+        rgb(var(--color-cinnabar-rgb) / 0.035)
+      ),
+      rgb(var(--color-paper-rgb) / 0.28);
+    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.22);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+
+  .celestial-pulse__copy {
+    min-width: 8rem;
+    flex: 1;
+  }
+
+  .celestial-pulse__eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.16em;
+  }
+
+  .celestial-pulse__title {
+    margin-top: 0.04rem;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+  }
+
+  .celestial-pulse__detail {
+    margin-top: 0.08rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .celestial-pulse__jump {
+    min-height: 32px;
+    flex: none;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.28);
+    border-radius: 1px;
+    padding: 0.28rem 0.62rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+
+  .celestial-pulse__tallies {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .celestial-pulse__tally {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.32rem minmax(0, 1fr);
+    align-content: start;
+    gap: 0.08rem 0.32rem;
+    padding: 0.56rem 0.62rem 0.6rem;
+    text-align: left;
+    transition: background-color 0.14s ease;
+  }
+
+  .celestial-pulse__tally:nth-child(even) {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+
+  .celestial-pulse__tally:nth-child(n + 3) {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+
+  .celestial-pulse__tally.is-active {
+    background:
+      linear-gradient(180deg, rgb(var(--color-cinnabar-rgb) / 0.04), transparent),
+      rgb(var(--color-paper-rgb) / 0.16);
+  }
+
+  .celestial-pulse__mark {
+    display: grid;
+    width: 1.32rem;
+    height: 1.32rem;
+    grid-row: span 2;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+
+  .celestial-pulse__tally.is-active .celestial-pulse__mark {
+    border-color: rgb(var(--color-cinnabar-rgb) / 0.34);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+
+  .celestial-pulse__label {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+
+  .celestial-pulse__value {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.05rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+
+  .celestial-pulse__value strong {
+    font-weight: 500;
+  }
+
+  .celestial-pulse__total {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+
+  .celestial-pulse__unit,
+  .celestial-pulse__detail {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .celestial-pulse__unit {
+    grid-column: 2;
+  }
+
+  .celestial-pulse__detail {
+    grid-column: 1 / -1;
+    margin-top: 0.14rem;
+    padding-top: 0.28rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+  }
+
+  .celestial-book {
+    overflow: hidden;
+    margin-top: 0.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    border-top: 2px solid rgb(var(--color-qing-rgb) / 0.46);
+    border-radius: 2px;
+    background:
+      linear-gradient(108deg, rgb(var(--color-qing-rgb) / 0.018), transparent 42%),
+      rgb(var(--color-paper-lifted-rgb));
+    box-shadow:
+      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.12),
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.018);
+  }
+
+  .celestial-book > section {
+    padding: 0.78rem;
+  }
+
+  .celestial-book > section + section {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+
+  .celestial-dao__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem 0.7rem;
+  }
+
+  .celestial-dao__state {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+
+  .celestial-dao__card {
+    margin-top: 0.52rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.18);
+    background:
+      linear-gradient(120deg, rgb(var(--color-cinnabar-rgb) / 0.035), transparent 38%),
+      rgb(var(--color-paper-rgb) / 0.18);
+    padding: 0.76rem;
+  }
+
+  .celestial-dao__identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.62rem;
+  }
+
+  .celestial-dao__seal {
+    display: grid;
+    width: 2.45rem;
+    height: 2.45rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+    background:
+      linear-gradient(
+        145deg,
+        rgb(var(--color-paper-rgb) / 0.55),
+        rgb(var(--color-cinnabar-rgb) / 0.05)
+      ),
+      rgb(var(--color-paper-rgb) / 0.24);
+    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.2);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+
+  .celestial-dao__name {
+    min-width: 0;
+  }
+
+  .celestial-dao__name p {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.16em;
+    line-height: 1.35;
+  }
+
+  .celestial-dao__name span {
+    display: block;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+
+  .celestial-dao__desc {
+    margin-top: 0.52rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+
+  .celestial-dao__columns {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.52rem;
+    margin-top: 0.6rem;
+  }
+
+  .celestial-dao__rules,
+  .celestial-dao__deep {
+    min-width: 0;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    padding: 0.5rem 0.58rem;
+  }
+
+  .celestial-dao__deep {
+    border-color: rgb(var(--color-qing-rgb) / 0.18);
+    background: rgb(var(--color-qing-rgb) / 0.025);
+  }
+
+  .celestial-dao__caption {
+    margin-bottom: 0.22rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+
+  .celestial-dao__line {
+    display: flex;
+    min-width: 0;
+    gap: 0.38rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.62;
+    overflow-wrap: anywhere;
+  }
+
+  .celestial-dao__line > span:first-child {
+    flex: none;
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+
+  .celestial-dao__deep .celestial-dao__line,
+  .celestial-dao__deep .celestial-dao__line > span:first-child {
+    color: rgb(var(--color-qing-rgb));
+  }
+
+  .celestial-dao__purity {
+    margin-top: 0.58rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    padding-top: 0.46rem;
+  }
+
+  .celestial-dao__purity > p:first-child {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+
+  .celestial-dao__purity strong {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-weight: 500;
+  }
+
+  .celestial-dao__track {
+    display: block;
+    width: 100%;
+    height: 3px;
+    margin-top: 0.28rem;
+    overflow: hidden;
+    background: rgb(var(--color-ink-rgb) / 0.07);
+  }
+
+  .celestial-dao__track span {
+    display: block;
+    height: 100%;
+    background: rgb(var(--color-cinnabar-rgb) / 0.62);
+  }
+
+  .celestial-dao__purity-note {
+    margin-top: 0.22rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .celestial-dao__story {
+    margin-top: 0.5rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.7;
+  }
+
+  .celestial-dao__choices {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.44rem;
+    margin-top: 0.52rem;
+  }
+
+  .celestial-dao__choice {
+    display: grid;
+    min-width: 0;
+    gap: 0.2rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    background: rgb(var(--color-paper-rgb) / 0.16);
+    padding: 0.62rem;
+    text-align: left;
+  }
+
+  .celestial-dao__choice-head {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.52rem;
+  }
+
+  .celestial-dao__choice-name {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.12em;
+  }
+
+  .celestial-dao__choice-desc,
+  .celestial-dao__choice-rule,
+  .celestial-dao__choice-deep {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.58;
+    overflow-wrap: anywhere;
+  }
+
+  .celestial-dao__choice-desc {
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+
+  .celestial-dao__choice-rule {
+    color: rgb(var(--color-qing-rgb));
+  }
+
+  .celestial-dao__choice-deep {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+
+  .celestial-gateways {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.44rem;
+  }
+
+  .celestial-gateway {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.56rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    background: rgb(var(--color-paper-rgb) / 0.16);
+    padding: 0.58rem 0.62rem;
+    text-align: left;
+  }
+
+  .celestial-gateway__mark {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.3);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+
+  .celestial-gateway__mark.is-soul {
+    border-color: rgb(var(--color-qing-rgb) / 0.3);
+    color: rgb(var(--color-qing-rgb));
+  }
+
+  .celestial-gateway__copy {
+    min-width: 0;
+  }
+
+  .celestial-gateway__name {
+    display: block;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.1em;
+    line-height: 1.45;
+  }
+
+  .celestial-gateway__note {
+    display: block;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .celestial-gateway__arrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+  }
+
+  @media (min-width: 960px) {
+    .celestial-pulse__tallies {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .celestial-pulse__tally:nth-child(even) {
+      border-left: 0;
+    }
+
+    .celestial-pulse__tally + .celestial-pulse__tally {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+
+    .celestial-pulse__tally:nth-child(n + 3) {
+      border-top: 0;
+    }
+
+    .celestial-dao__columns {
+      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    }
+
+    .celestial-dao__choices,
+    .celestial-gateways {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 220px) {
+    .celestial-source,
+    .celestial-pulse__lead,
+    .celestial-pulse__tally,
+    .celestial-book > section,
+    .celestial-dao__card,
+    .celestial-dao__choice,
+    .celestial-gateway {
+      padding-inline: 0.62rem;
+    }
+
+    .celestial-source {
+      min-width: 0;
+      width: 100%;
+      border-top: 1px solid rgb(var(--color-cinnabar-rgb) / 0.18);
+      border-left: 0;
+      padding-top: 0.42rem;
+      padding-left: 0;
+    }
+
+    .celestial-source__button,
+    .celestial-pulse__jump {
+      width: 100%;
+    }
+
+    .celestial-pulse__tallies {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .celestial-pulse__tally:nth-child(even) {
+      border-left: 0;
+    }
+
+    .celestial-pulse__tally + .celestial-pulse__tally {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+
+    .celestial-dao__identity {
+      align-items: flex-start;
+    }
+
+    .celestial-dao__name p {
+      letter-spacing: 0.08em;
+    }
+
+    .celestial-gateway {
+      grid-template-columns: 2rem minmax(0, 1fr);
+    }
+
+    .celestial-gateway__arrow {
+      display: none;
+    }
+  }
+
+  /*
  * 开关(.toggle-ink)—— 设置页的四个布尔项
  *
  * 原生 checkbox 只换一层形:appearance:none 只动外观,元素仍是 <input type=checkbox>,

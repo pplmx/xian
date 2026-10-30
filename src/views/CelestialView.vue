@@ -1,26 +1,86 @@
 <template>
-  <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="天 界" back-to="home" back-label="返回">
-      <template #action>
-        <div
-          v-if="unlocked"
-          class="flex items-center justify-end gap-2 tinylens:w-full tinylens:justify-between"
-        >
-          <span class="chip-ink border-cinnabar/50 text-note text-cinnabar">此世消耗</span>
-          <button class="text-left active:opacity-60" @click="openDaoSourceDialog()">
-            <span class="block text-note leading-tight text-ink-faint">叩问天道·试一试</span>
-            <span class="block tabular font-kai text-[17px] leading-tight text-cinnabar">{{
-              formatNum(endgame.daoSource)
-            }}</span>
+  <div class="folio-page folio-page--stack stagger-in celestial-page">
+    <FolioPageHeader
+      title="天界"
+      subtitle="道源叩天门 · 四册证道"
+      back-to="home"
+      back-label="返回"
+      featured
+    >
+      <template v-if="unlocked" #visual>
+        <CelestialGateMap
+          :active="celTab"
+          :dao-chosen="celestialPulse.daoChosen"
+          :dao-seal="currentDao?.seal ?? '门'"
+          :worlds-cleared="celestialPulse.worldsCleared"
+          :worlds-total="celestialPulse.worldsTotal"
+          :run-active="celestialPulse.activeRun"
+          :daily-state="celestialPulse.dailyState"
+          :marks-count="celestialPulse.marksCount"
+          :marks-total="celestialPulse.marksTotal"
+          :marks-full="celestialPulse.marksFull"
+        />
+      </template>
+
+      <template v-if="unlocked" #action>
+        <div class="celestial-source">
+          <span class="celestial-source__label">此世道源</span>
+          <button type="button" class="celestial-source__button" @click="openDaoSourceDialog()">
+            <span>叩问天道 · 试一试</span>
+            <strong class="tabular">{{ formatNum(endgame.daoSource) }}</strong>
           </button>
         </div>
       </template>
+
+      <div v-if="unlocked" class="celestial-pulse" data-celestial-pulse>
+        <div class="celestial-pulse__lead">
+          <span class="celestial-pulse__seal" aria-hidden="true">{{ celestialLead.mark }}</span>
+          <div class="celestial-pulse__copy">
+            <p class="celestial-pulse__eyebrow">今日天门</p>
+            <p class="celestial-pulse__title">{{ celestialLead.title }}</p>
+            <p class="celestial-pulse__detail">{{ celestialLead.detail }}</p>
+          </div>
+          <button
+            type="button"
+            class="celestial-pulse__jump hoverable:hover:border-cinnabar"
+            @click="celTab = celestialLead.tab"
+          >
+            去看{{ celestialLeadLabel }}
+          </button>
+        </div>
+
+        <div class="celestial-pulse__tallies">
+          <button
+            v-for="row in celestialLedgerRows"
+            :key="row.id"
+            type="button"
+            class="celestial-pulse__tally"
+            :class="{ 'is-active': celTab === row.id }"
+            @click="celTab = row.id"
+          >
+            <span class="celestial-pulse__mark" aria-hidden="true">{{ row.mark }}</span>
+            <span class="celestial-pulse__label">{{ row.label }}</span>
+            <span class="celestial-pulse__value">
+              <strong
+                :data-celestial-pulse-dao="row.id === 'dao' ? row.value : undefined"
+                :data-celestial-pulse-exped="row.id === 'exped' ? row.value : undefined"
+                :data-celestial-pulse-trial="row.id === 'trial' ? row.value : undefined"
+                :data-celestial-pulse-marks="row.id === 'marks' ? row.value : undefined"
+                >{{ row.value }}</strong
+              >
+              <span class="celestial-pulse__total">/{{ row.total }}</span>
+            </span>
+            <span class="celestial-pulse__unit">{{ row.unit }}</span>
+            <span class="celestial-pulse__detail">{{ row.detail }}</span>
+          </button>
+        </div>
+      </div>
     </FolioPageHeader>
 
     <!-- 未至真仙:封卷页把门限、当前境界与下一步一起摊开 -->
     <UnopenedFolio
       v-if="!unlocked"
-      title="天 界"
+      title="天界"
       eyebrow="天门未启"
       lead="仙光垂落而不可及。先走完凡界诸境,再叩天门。"
       hint="这一册不催你提前攒道源;破境之后,道途、远征、试炼与道痕会在此展开。"
@@ -34,145 +94,142 @@
       <!-- 页签:长卷分册 -->
       <InkTabs v-model="celTab" :tabs="celTabRows" />
 
-      <template v-if="celTab === 'dao'">
-        <!-- 道途 -->
-        <section>
-          <SectionTitle title="道途" hint="此生一诺,来世另择" />
-          <div v-if="currentDao" class="card-ink mt-2 px-4 py-3">
-            <p class="flex items-center gap-3">
-              <span
-                class="grid h-10 w-10 place-items-center rounded-md bg-cinnabar/90 font-kai text-[20px] text-paper"
-              >
-                {{ currentDao.seal }}
-              </span>
-              <span class="font-kai text-[16px] tracking-widest text-ink">{{
-                currentDao.name
-              }}</span>
-            </p>
-            <p class="mt-2 t-body text-ink-soft">{{ currentDao.desc }}</p>
-            <!--
-              三组文字此前同为 11px,只靠颜色分(青/金/灰)—— 三色都是低饱和,
-              并排时读作同一片淡字。改法:给每组一条**自己的小标题**,
-              并让词条值与说明分成两档(值用 ink-soft、前缀用 faint),
-              机制则整组套一层浅底,把「这一段是玩法」与「这一段是风味」分开。
-            -->
-            <p class="mt-2 text-note text-ink-faint">行此道的代价与所得</p>
-            <div class="mt-1 space-y-0.5">
-              <p
-                v-for="(r, i) in currentDao.ruleText"
-                :key="i"
-                class="flex gap-1.5 text-body leading-relaxed"
-              >
-                <span class="shrink-0 text-ink-faint">·</span>
-                <span class="min-w-0 text-qing">{{ r }}</span>
-              </p>
+      <div class="celestial-book" :data-celestial-book="celTab">
+        <template v-if="celTab === 'dao'">
+          <!-- 道途:此世已定则摊开代价、章法与剑意；未定则先列七道 -->
+          <section class="celestial-dao">
+            <div class="celestial-dao__head">
+              <SectionTitle title="道途" hint="此生一诺，来世另择" />
+              <span class="celestial-dao__state">{{ currentDao ? "此世已定" : "七道待择" }}</span>
             </div>
-            <p v-if="currentDao.deepText.length" class="mt-2 text-note text-ink-faint">
-              此道的章法
-            </p>
-            <div
-              v-if="currentDao.deepText.length"
-              class="mt-1 space-y-1 rounded-md bg-paper-deep/60 px-2.5 py-2"
-            >
-              <p
-                v-for="(r, i) in currentDao.deepText"
-                :key="`d${i}`"
-                class="flex gap-1.5 text-body leading-relaxed"
-              >
-                <span class="shrink-0 text-gold-ink">◈</span>
-                <span class="min-w-0 text-gold-ink">{{ r }}</span>
-              </p>
-            </div>
-            <p v-if="swordInfo" class="mt-1.5 text-body text-violet-ink tabular">
-              当前剑意 {{ swordInfo.layers }}/{{ SWORD_PURITY_MAX_LAYERS }} 层({{
-                swordInfo.checks
-                  .filter((c) => c.ok)
-                  .map((c) => c.name)
-                  .join("、") || "尚无一纯"
-              }})
-            </p>
-            <p v-if="daoStory" class="mt-1.5 font-kai t-body text-ink-soft">「{{ daoStory }}」</p>
-          </div>
-          <div v-else class="mt-2 grid grid-cols-2 gap-2.5">
-            <button
-              v-for="dao in DAO_PATHS"
-              :key="dao.id"
-              class="card-ink px-3 py-3 text-left active:scale-98"
-              @click="pickDao(dao.id)"
-            >
-              <p class="flex items-center gap-2">
-                <span
-                  class="grid h-8 w-8 place-items-center rounded-md bg-cinnabar/85 font-kai text-[16px] text-paper"
-                >
-                  {{ dao.seal }}
+
+            <article v-if="currentDao" class="celestial-dao__card">
+              <header class="celestial-dao__identity">
+                <span class="celestial-dao__seal" aria-hidden="true">{{ currentDao.seal }}</span>
+                <div class="celestial-dao__name">
+                  <p>{{ currentDao.name }}</p>
+                  <span>此世道途 · 转世另择</span>
+                </div>
+              </header>
+              <p class="celestial-dao__desc">{{ currentDao.desc }}</p>
+
+              <div class="celestial-dao__columns">
+                <section class="celestial-dao__rules">
+                  <p class="celestial-dao__caption">行此道的代价与所得</p>
+                  <p v-for="(r, i) in currentDao.ruleText" :key="i" class="celestial-dao__line">
+                    <span aria-hidden="true">·</span>
+                    <span>{{ r }}</span>
+                  </p>
+                </section>
+                <section v-if="currentDao.deepText.length" class="celestial-dao__deep">
+                  <p class="celestial-dao__caption">此道的章法</p>
+                  <p
+                    v-for="(r, i) in currentDao.deepText"
+                    :key="`d${i}`"
+                    class="celestial-dao__line"
+                  >
+                    <span aria-hidden="true">◇</span>
+                    <span>{{ r }}</span>
+                  </p>
+                </section>
+              </div>
+
+              <div v-if="swordInfo" class="celestial-dao__purity">
+                <p>
+                  <span>当前剑意</span>
+                  <strong class="tabular"
+                    >{{ swordInfo.layers }}/{{ SWORD_PURITY_MAX_LAYERS }} 层</strong
+                  >
+                </p>
+                <span class="celestial-dao__track" aria-hidden="true">
+                  <span
+                    :style="{
+                      width: `${(swordInfo.layers / SWORD_PURITY_MAX_LAYERS) * 100}%`,
+                    }"
+                  />
                 </span>
-                <span class="t-card">{{ dao.name }}</span>
-              </p>
-              <p class="mt-1.5 text-note leading-relaxed text-ink-faint">{{ dao.desc }}</p>
-              <p v-for="(r, i) in dao.ruleText" :key="i" class="mt-0.5 text-note text-qing">
-                · {{ r }}
-              </p>
-              <p
-                v-for="(r, i) in dao.deepText"
-                :key="`d${i}`"
-                class="mt-0.5 text-note text-gold-ink"
-              >
-                ◈ {{ r }}
-              </p>
-            </button>
-          </div>
-        </section>
+                <p class="celestial-dao__purity-note">
+                  {{
+                    swordInfo.checks
+                      .filter((c) => c.ok)
+                      .map((c) => c.name)
+                      .join("、") || "尚无一纯"
+                  }}
+                </p>
+              </div>
+              <p v-if="daoStory" class="celestial-dao__story">「{{ daoStory }}」</p>
+            </article>
 
-        <!-- 天道熔炉 / 器魂:两处入口 -->
-        <section class="space-y-2">
-          <button
-            class="card-ink flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:scale-99"
-            @click="furnaceOpen = true"
-          >
-            <span
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-cinnabar/85 font-kai text-[19px] text-paper"
-              >炉</span
-            >
-            <span class="min-w-0 flex-1">
-              <span class="block t-card">天道熔炉</span>
-              <span class="block truncate text-note leading-relaxed text-ink-faint"
-                >前尘俗物,皆可熔作道源</span
+            <div v-else class="celestial-dao__choices">
+              <button
+                v-for="dao in DAO_PATHS"
+                :key="dao.id"
+                type="button"
+                class="celestial-dao__choice hoverable:hover:border-cinnabar"
+                @click="pickDao(dao.id)"
               >
-            </span>
-            <span class="shrink-0 text-body text-ink-faint">›</span>
-          </button>
+                <span class="celestial-dao__choice-head">
+                  <span class="celestial-dao__seal" aria-hidden="true">{{ dao.seal }}</span>
+                  <span class="celestial-dao__choice-name">{{ dao.name }}</span>
+                </span>
+                <span class="celestial-dao__choice-desc">{{ dao.desc }}</span>
+                <span v-for="(r, i) in dao.ruleText" :key="i" class="celestial-dao__choice-rule">
+                  · {{ r }}
+                </span>
+                <span
+                  v-for="(r, i) in dao.deepText"
+                  :key="`d${i}`"
+                  class="celestial-dao__choice-deep"
+                >
+                  ◇ {{ r }}
+                </span>
+              </button>
+            </div>
+          </section>
 
-          <button
-            class="card-ink flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:scale-99"
-            @click="goSouls()"
-          >
-            <span
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-gold-ink/85 font-kai text-[19px] text-paper"
-              >魂</span
+          <!-- 天道熔炉 / 器魂:两处门径 -->
+          <section class="celestial-gateways">
+            <button
+              type="button"
+              class="celestial-gateway hoverable:hover:border-cinnabar"
+              @click="furnaceOpen = true"
             >
-            <span class="min-w-0 flex-1">
-              <span class="block t-card">器 魂</span>
-              <span class="block truncate text-note leading-relaxed text-ink-faint">
-                凡器承不住天道,只余形意 · 已凝
-                {{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}
+              <span class="celestial-gateway__mark" aria-hidden="true">炉</span>
+              <span class="celestial-gateway__copy">
+                <span class="celestial-gateway__name">天道熔炉</span>
+                <span class="celestial-gateway__note">前尘俗物，皆可熔作道源</span>
               </span>
-            </span>
-            <span class="shrink-0 text-body text-ink-faint">›</span>
-          </button>
-        </section>
-      </template>
+              <span class="celestial-gateway__arrow" aria-hidden="true">›</span>
+            </button>
 
-      <!--
-        三个页签面板按激活页签互斥渲染(与拆分前 v-else-if 链一致)。
-        拆分时一度改成无条件挂载 —— 未激活页签的 DOM 混进了浏览器自检:
-        择契 chip 22.5px 过小、变数 chips 的多选组(0 条是合法初始态)被
-        「每组恰有一个选中」的单选判据误拦。页签未激活不渲染,不只是省渲染。
-      -->
-      <ExpeditionPanel v-if="celTab === 'exped'" @outcome="handleOutcome" />
+            <button
+              type="button"
+              class="celestial-gateway hoverable:hover:border-cinnabar"
+              @click="goSouls()"
+            >
+              <span class="celestial-gateway__mark is-soul" aria-hidden="true">魂</span>
+              <span class="celestial-gateway__copy">
+                <span class="celestial-gateway__name">器魂</span>
+                <span class="celestial-gateway__note">
+                  凡器承不住天道，只余形意 · 已凝
+                  {{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}
+                </span>
+              </span>
+              <span class="celestial-gateway__arrow" aria-hidden="true">›</span>
+            </button>
+          </section>
+        </template>
 
-      <TrialPanel v-else-if="celTab === 'trial'" :daily="daily" @report="openReport" />
+        <!--
+          三个页签面板按激活页签互斥渲染(与拆分前 v-else-if 链一致)。
+          未激活页签的 DOM 混进浏览器自检会误伤触控与选中态判据。
+        -->
+        <ExpeditionPanel v-if="celTab === 'exped'" @outcome="handleOutcome" />
 
-      <MarksPanel v-else-if="celTab === 'marks'" @report="openReport" />
+        <TrialPanel v-else-if="celTab === 'trial'" :daily="daily" @report="openReport" />
+
+        <MarksPanel v-else-if="celTab === 'marks'" @report="openReport" />
+      </div>
     </template>
 
     <!-- 战报(远征终局 / 试炼 / 变数) -->
@@ -290,15 +347,23 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
-import { useEndgameStore } from "@/stores/endgame";
-import { DAO_PATHS, daoPathDef } from "@/data/endgame";
+import { MAX_MARKS, useEndgameStore } from "@/stores/endgame";
+import {
+  CELESTIAL_WORLDS,
+  DAO_PATHS,
+  EXPEDITION_ROUTE_LAYERS,
+  TRIALS,
+  daoPathDef,
+} from "@/data/endgame";
 import { realmDef, WORLD_BREAK_MAJOR } from "@/data/realms";
 import { todayChallenge } from "@/core/dailyChallenge";
 import { chooseDaoPath, endgameUnlocked } from "@/core/endgameService";
+import { celestialOverview } from "@/core/celestialOverview";
 import { soulOverview } from "@/core/soulOverview";
 import { currentDaoNarrative } from "@/core/identity";
-import type { StepOutcome } from "@/core/expedition";
+import { resolveWorld, type StepOutcome } from "@/core/expedition";
 import { detectBuild } from "@/core/buildDetect";
+import { BUILD_PROFILES } from "@/core/buildSim";
 import { foeOriginLines } from "@/core/battleAnalysis";
 import { swordPurity, SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
 import { formatNum, formatPercent } from "@/utils/format";
@@ -308,6 +373,7 @@ import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GauntletPanel from "@/components/celestial/GauntletPanel.vue";
+import CelestialGateMap from "@/components/celestial/CelestialGateMap.vue";
 import FurnaceDialog from "@/components/celestial/FurnaceDialog.vue";
 import TutorialDialog from "@/components/celestial/TutorialDialog.vue";
 import MarksPanel from "@/components/celestial/MarksPanel.vue";
@@ -327,6 +393,8 @@ const player = usePlayerStore();
 const inventory = useInventoryStore();
 const endgame = useEndgameStore();
 
+const currentDao = computed(() => (endgame.daoPath ? daoPathDef(endgame.daoPath) : undefined));
+
 /** 天界入口与器魂页共用同一份槽位账。 */
 const soulPulse = computed(() =>
   soulOverview({
@@ -339,6 +407,142 @@ const soulPulse = computed(() =>
 );
 
 const unlocked = computed(() => endgameUnlocked());
+
+/** 今日天道同时供卷首总账、页签朱点与试炼面板使用。 */
+const daily = computed(() => (unlocked.value && endgame.daoPath ? todayChallenge() : null));
+
+const activeRunWorld = computed(() =>
+  endgame.worldRun ? resolveWorld(endgame.worldRun.worldId) : undefined,
+);
+const dailyWorld = computed(() =>
+  daily.value ? resolveWorld(daily.value.draft.worldId) : undefined,
+);
+const expeditionWorlds = computed(() => [
+  ...CELESTIAL_WORLDS,
+  ...(endgame.voidWorld ? [endgame.voidWorld] : []),
+]);
+const affordableExpeditions = computed(
+  () => expeditionWorlds.value.filter((world) => endgame.daoSource >= world.entryCost).length,
+);
+
+/** 天界四册只在卷首汇一次；面板里的逐项明细继续各报各的。 */
+const celestialPulse = computed(() =>
+  celestialOverview({
+    daoChosen: endgame.daoPath !== null,
+    worldIds: expeditionWorlds.value.map((world) => world.id),
+    worldClears: endgame.worldClears,
+    worldRun: endgame.worldRun,
+    trialIds: TRIALS.map((trial) => trial.id),
+    trialRecords: endgame.trialRecords,
+    daily: daily.value,
+    dailyDoneDay: endgame.dailyDoneDay,
+    marksCount: endgame.marks.length,
+    marksTotal: MAX_MARKS,
+  }),
+);
+
+const dailyStateText = computed(() => {
+  if (celestialPulse.value.dailyState === "ready") return "今日可应";
+  if (celestialPulse.value.dailyState === "done") return "今日已成";
+  return "择道后开题";
+});
+
+/** 四册总账与星图共用这一份读数；每一栏都能直接翻到对应册页。 */
+const celestialLedgerRows = computed(() => [
+  {
+    id: "dao" as const,
+    mark: currentDao.value?.seal ?? "道",
+    label: "道途",
+    value: celestialPulse.value.daoChosen ? 1 : 0,
+    total: DAO_PATHS.length,
+    unit: celestialPulse.value.daoChosen ? "道已定" : "道待择",
+    detail: currentDao.value?.name ?? "此世一诺，转世另择",
+  },
+  {
+    id: "exped" as const,
+    mark: "征",
+    label: "远征",
+    value: celestialPulse.value.worldsCleared,
+    total: celestialPulse.value.worldsTotal,
+    unit: "界已破",
+    detail:
+      endgame.worldRun && activeRunWorld.value
+        ? `${activeRunWorld.value.name} · 已历 ${celestialPulse.value.runFights}/${EXPEDITION_ROUTE_LAYERS + 2} 战`
+        : `${affordableExpeditions.value} 界可启程`,
+  },
+  {
+    id: "trial" as const,
+    mark: "试",
+    label: "试炼",
+    value: celestialPulse.value.trialsCleared,
+    total: celestialPulse.value.trialsTotal,
+    unit: "试已破",
+    detail: dailyStateText.value,
+  },
+  {
+    id: "marks" as const,
+    mark: "痕",
+    label: "道痕",
+    value: celestialPulse.value.marksCount,
+    total: celestialPulse.value.marksTotal,
+    unit: "痕在卷",
+    detail: celestialPulse.value.marksFull
+      ? "下一战覆去最古一痕"
+      : `还可记 ${celestialPulse.value.marksRemaining} 则`,
+  },
+]);
+
+/** 先手只带路，不替玩家做决定；每一句仍读四册同一份总账。 */
+const celestialLead = computed(() => {
+  const pulse = celestialPulse.value;
+  if (endgame.worldRun && activeRunWorld.value) {
+    const nextFight = Math.min(EXPEDITION_ROUTE_LAYERS + 2, pulse.runFights + 1);
+    return {
+      tab: "exped" as const,
+      mark: "续行",
+      title: `${activeRunWorld.value.name} · 第 ${nextFight}/${EXPEDITION_ROUTE_LAYERS + 2} 战`,
+      detail: `已历 ${pulse.runFights} 战 · 携血 ${formatPercent(endgame.worldRun.carriedHpPct, 0)} · 可回凡界整备`,
+    };
+  }
+  if (!pulse.daoChosen) {
+    return {
+      tab: "dao" as const,
+      mark: "定道",
+      title: "先定此世道途",
+      detail: `${DAO_PATHS.length} 道各有一得，也各有代价；落子后须待转世再选`,
+    };
+  }
+  if (pulse.dailyState === "ready" && daily.value && dailyWorld.value) {
+    return {
+      tab: "trial" as const,
+      mark: "应题",
+      title: "今日天道尚待应战",
+      detail: `${dailyWorld.value.name} · 赏 ${daily.value.verdict.reward} 道源 · 可行 ${daily.value.verdict.viable}/${BUILD_PROFILES.length} 流派`,
+    };
+  }
+  if (affordableExpeditions.value > 0) {
+    return {
+      tab: "exped" as const,
+      mark: "启程",
+      title: `${affordableExpeditions.value} 界已备道源`,
+      detail: `现有道源 ${formatNum(endgame.daoSource)} · 择契、看路、再叩天门`,
+    };
+  }
+  if (pulse.dailyState === "done") {
+    return {
+      tab: "trial" as const,
+      mark: "再炼",
+      title: "今日天道已成",
+      detail: `试炼已破 ${pulse.trialsCleared}/${pulse.trialsTotal} · 变数与挑战书仍可再战`,
+    };
+  }
+  return {
+    tab: "marks" as const,
+    mark: "阅痕",
+    title: "四册暂歇",
+    detail: `道痕 ${pulse.marksCount}/${pulse.marksTotal} · 再看一眼来路，或去熔炉换些道源`,
+  };
+});
 
 const router = useRouter();
 const route = useRoute();
@@ -366,8 +570,6 @@ function openDaoSourceDialog(): void {
   markResourceDialogSeen();
 }
 
-const currentDao = computed(() => (endgame.daoPath ? daoPathDef(endgame.daoPath) : undefined));
-
 // ---- 页签:长卷分册(远征在途时落在远征册) ----
 type CelTab = "dao" | "exped" | "trial" | "marks";
 const CEL_TABS: { id: CelTab; label: string }[] = [
@@ -376,6 +578,9 @@ const CEL_TABS: { id: CelTab; label: string }[] = [
   { id: "trial", label: "试炼" },
   { id: "marks", label: "道痕" },
 ];
+const celestialLeadLabel = computed(
+  () => CEL_TABS.find((tab) => tab.id === celestialLead.value.tab)?.label ?? "道途",
+);
 /**
  * 落哪一册:界域志的「奇门」可带 `?tab=exped` 直接落到远征册(择门就在那儿),
  * 其余按旧规矩 —— 远征在途落远征,否则落道途。
@@ -467,7 +672,4 @@ function handleOutcome(outcome: StepOutcome | null, title: string): void {
 
 /** 道途行为叙事(本世道痕 ≥2 则方语) */
 const daoStory = computed(() => currentDaoNarrative());
-
-// ---- 今日天道(daily 本体留主文件:页签朱点 celTabRows 与试炼面板同源) ----
-const daily = computed(() => (unlocked.value && endgame.daoPath ? todayChallenge() : null));
 </script>

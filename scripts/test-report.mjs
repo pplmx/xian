@@ -332,6 +332,8 @@ const CATEGORIES = [
       "celestialSim",
       "celestialStarAblation",
       "celestialCaliber",
+      "celestialOverview",
+      "celestialDesk",
       "endgameService",
       "phase21",
       "expedition",
