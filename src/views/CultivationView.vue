@@ -297,6 +297,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/cultivation.css";
 import { computed, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { usePlayerStore } from "@/stores/player";

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { collectionProgressOverview } from "@/core/collectionProgress";
+import { readStyleCss } from "@/test/readStyleCss";
 import {
   achievementDirectionMark,
   collectionCabinetCells,
@@ -12,6 +13,7 @@ import {
 const ROOT = resolve(__dirname, "../..");
 
 function source(rel: string): string {
+  if (rel === "src/style.css") return readStyleCss();
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 

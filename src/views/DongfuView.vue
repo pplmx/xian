@@ -229,6 +229,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/dongfu.css";
 import { computed, ref } from "vue";
 import type { BuildingDef, BuildingId } from "@/types";
 import { useDongfuStore } from "@/stores/dongfu";

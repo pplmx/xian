@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import "@/styles/pages/apprentice.css";
 /**
  * 收徒 —— 后台游历的 idle 层。弟子离线跑腿,按墙钟走工,归来带回资材。
  *

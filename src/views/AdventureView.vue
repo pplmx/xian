@@ -476,6 +476,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/adventure.css";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { ExploreMode, RegionDef, RegionRecall, WorldId } from "@/types";

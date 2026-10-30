@@ -267,6 +267,7 @@ const CATEGORIES = [
       "worldDesk",
       "uiLayering",
       "folioMasthead",
+      "folioIndexRail",
       "folioOpening",
       "folioChrome",
       "folioSpread",

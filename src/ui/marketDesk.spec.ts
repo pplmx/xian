@@ -3,10 +3,12 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { qualityDef } from "@/data/qualities";
 import { qualityTextColor } from "@/ui/qualityTier";
+import { readStyleCss } from "@/test/readStyleCss";
 
 const ROOT = resolve(__dirname, "../..");
 
 function source(rel: string): string {
+  if (rel === "src/style.css") return readStyleCss();
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 

@@ -9,7 +9,7 @@
   >
     <slot name="backdrop" />
 
-    <div class="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-1">
+    <div class="relative z-10 flex flex-wrap items-center gap-x-2 gap-y-1">
       <button
         v-if="backTo"
         type="button"
@@ -19,19 +19,19 @@
       >
         ← {{ backLabel }}
       </button>
-      <span
-        data-folio-position
-        class="folio-masthead__position shrink-0 text-note font-kai tracking-[0.2em] text-ink-faint"
-        >{{ positionMark }}</span
-      >
-      <span class="text-note font-kai tracking-[0.28em] text-cinnabar" data-folio-section>
-        {{ navigation?.sectionLabel ?? "玄枢" }}
-      </span>
+      <div data-folio-position class="flex min-w-0 items-center gap-1.5">
+        <span
+          class="folio-masthead__position shrink-0 text-note font-kai tracking-[0.2em] text-ink-faint compact:hidden"
+          >{{ positionMark }}</span
+        >
+        <span class="sr-only" data-folio-section>{{ navigation?.sectionLabel ?? "玄枢" }}卷</span>
+        <FolioIndexRail :items="chapterItems" label="本卷册目" />
+      </div>
       <span
         class="h-px min-w-2 flex-1 bg-gradient-to-r from-ink/15 to-transparent"
         aria-hidden="true"
       />
-      <span class="folio-masthead__book text-note text-ink-faint">{{
+      <span class="folio-masthead__book text-note text-ink-faint tinylens:hidden">{{
         navigation?.label ?? "未名之页"
       }}</span>
     </div>
@@ -87,7 +87,9 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
 import { cnNumber } from "@/utils/format";
+import { chapterRailItems } from "@/ui/folioIndexRail";
 import { navigationPositionOf } from "@/ui/navigation";
+import FolioIndexRail from "./FolioIndexRail.vue";
 import GameIcon from "./GameIcon.vue";
 
 const props = withDefaults(
@@ -106,8 +108,11 @@ const route = useRoute();
 const router = useRouter();
 const position = computed(() => navigationPositionOf(route.name));
 const navigation = computed(() => position.value?.entry);
+const chapterItems = computed(() => chapterRailItems(route.name));
 const positionMark = computed(() =>
-  position.value ? `卷${cnNumber(position.value.sectionIndex + 1)}` : "卷首",
+  position.value
+    ? `卷${cnNumber(position.value.sectionIndex + 1)} · ${position.value.section.label}`
+    : "卷首",
 );
 const description = computed(() => props.subtitle || navigation.value?.description || "");
 </script>

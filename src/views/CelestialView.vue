@@ -343,6 +343,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/celestial.css";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { usePlayerStore } from "@/stores/player";

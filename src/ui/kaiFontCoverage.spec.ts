@@ -43,7 +43,7 @@ interface ChunkMeta {
 }
 
 /**
- * src 下所有 .ts/.vue/.js(跳过 *.spec.ts)+ 入口 index.html 里出现过的字符 ——
+ * src 下所有 .ts/.vue/.js/.css(跳过 *.spec.ts)+ 入口 index.html 里出现过的字符 ——
  * 与生成脚本的 needed_chars() 同一条规则:用例里有别人写下的正则区间端点
  * (如 /[⺀-鿿　-〿＀-￯]/ 的两端),那两个字符不会出现在界面上,不该算进来。
  */
@@ -56,7 +56,7 @@ function sourceChars(): Set<string> {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = resolve(dir, entry.name);
       if (entry.isDirectory()) walk(path);
-      else if (/\.(ts|vue|js)$/.test(entry.name) && !entry.name.endsWith(".spec.ts"))
+      else if (/\.(ts|vue|js|css)$/.test(entry.name) && !entry.name.endsWith(".spec.ts"))
         eat(readFileSync(path, "utf-8"));
     }
   };

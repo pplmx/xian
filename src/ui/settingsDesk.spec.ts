@@ -2,12 +2,14 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { backupDesk, diagDesk, settingVolume, soundDesk, themeDesk } from "./settingsDesk";
+import { readStyleCss } from "@/test/readStyleCss";
 
 const ROOT = resolve(__dirname, "../..");
 const DAY = 86400000;
 const NOW = Date.UTC(2026, 9, 30, 12, 0, 0);
 
 function source(rel: string): string {
+  if (rel === "src/style.css") return readStyleCss();
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 

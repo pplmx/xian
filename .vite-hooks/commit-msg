@@ -1,3 +1,13 @@
 # commitlint 依赖已移除(官方撤回 21.2.4 导致 CI 无法安装)。
-# 提交信息规范以 AGENTS.md + CI 门禁为准;本地可用 npx commitlint 手动校验。
+# 这里保留一条不依赖第三方包的硬检查:用 `git commit -m "标题\n- 条目"`
+# 时 shell 不会展开 \n,提交正文会把所有 bullet 挤成一行。真正的换行应写进
+# 提交信息文件,或使用多个 -m。
+if grep -Eq '\\n[[:space:]]*-' "$1"; then
+  cat >&2 <<'EOF'
+提交信息里出现了字面量 \n-:
+  shell 的 -m 参数不会把 \n 展开成换行,请改用提交信息文件或分多个 -m。
+EOF
+  exit 1
+fi
+
 exit 0

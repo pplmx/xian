@@ -1,3 +1,7 @@
+import "./styles/layers.css";
+import "./styles/tailwind-base.css";
+import "./style.css";
+import "./styles/tailwind-utilities.css";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
@@ -9,7 +13,6 @@ import { acquireSaveWriterRole } from "./core/singleWriter";
 import { recordRuntimeDiagnostic, summarizeError } from "./core/diagnostics";
 import { useUiStore } from "./stores/ui";
 import { useDiagStore } from "./stores/diag";
-import "./style.css";
 
 /**
  * 单写者判定放在**所有存档写入之前**:下面的扫描与结构升级都会改盘。

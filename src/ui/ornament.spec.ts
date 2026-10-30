@@ -21,6 +21,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
+import { readStyleCss } from "@/test/readStyleCss";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -28,7 +29,7 @@ function stripComments(text: string): string {
   return text.replace(/\/\*[\s\S]*?\*\//g, "");
 }
 
-const CSS_RAW = readFileSync(resolve(ROOT, "src/style.css"), "utf-8");
+const CSS_RAW = readStyleCss();
 const CSS = stripComments(CSS_RAW);
 
 type Decl = { selector: string; prop: string; value: string };

@@ -22,9 +22,10 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { QUALITIES } from "@/data/qualities";
+import { readStyleCss } from "@/test/readStyleCss";
 
 const ROOT = resolve(__dirname, "../..");
-const CSS = readFileSync(resolve(ROOT, "src/style.css"), "utf-8");
+const CSS = readStyleCss();
 const TAILWIND = readFileSync(resolve(ROOT, "tailwind.config.js"), "utf-8");
 const THEME_TS = readFileSync(resolve(ROOT, "src/core/theme.ts"), "utf-8");
 const PRIVACY = readFileSync(resolve(ROOT, "public/privacy.html"), "utf-8");
@@ -33,9 +34,18 @@ const INDEX_HTML = readFileSync(resolve(ROOT, "index.html"), "utf-8");
 type Rgb = readonly [number, number, number];
 
 function bodyOf(scope: RegExp): string {
-  const body = scope.exec(CSS)?.[1];
-  if (body === undefined) throw new Error("style.css 里找不到这段作用域");
-  return body;
+  const match = scope.exec(CSS);
+  if (match === null) throw new Error("style.css 里找不到这段作用域");
+  const open = CSS.indexOf("{", match.index);
+  let depth = 0;
+  for (let index = open; index < CSS.length; index += 1) {
+    if (CSS[index] === "{") depth += 1;
+    else if (CSS[index] === "}") {
+      depth -= 1;
+      if (depth === 0) return CSS.slice(open + 1, index);
+    }
+  }
+  throw new Error("style.css 里这段作用域没有配平的花括号");
 }
 
 /**
@@ -323,7 +333,7 @@ describe("调色板 · 文字不叠透明度", () => {
      * 不必把字一起压掉。0.45 的墨叠在纸上只剩约 2.5:1,低于 AA。
      * 与按钮禁用态同一条口径:压装饰,不压字。
      */
-    const body = /\.foe-defeated \{([\s\S]*?)\n\}/.exec(CSS)?.[1] ?? "";
+    const body = /\.foe-defeated \{([\s\S]*?)\n\s*\}/.exec(CSS)?.[1] ?? "";
     expect(body, ".foe-defeated 不见了,判据要跟着改").not.toBe("");
     const m = /opacity:\s*([\d.]+)/.exec(body);
     expect(m, "已败态不再用 opacity 了?那这条判据要跟着改").toBeTruthy();

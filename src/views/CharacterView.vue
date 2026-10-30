@@ -362,6 +362,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/character.css";
 import { computed, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { STAGE_NAMES } from "@/data/daolu";

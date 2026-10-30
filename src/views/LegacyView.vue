@@ -528,6 +528,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/legacy.css";
 import { computed, nextTick, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
 import { usePlayerStore } from "@/stores/player";

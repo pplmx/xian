@@ -83,13 +83,10 @@ META = ROOT / "scripts/fonts/kai-subset.meta.json"
 CHARS = ROOT / "scripts/fonts/kai-subset.chars.txt"
 CACHE = pathlib.Path("/tmp/lxgw-wenkai-cache")
 
-# 切片数:再多就只是把请求数堆上去(每片都要一次往返),再少则第一片太肥。
-CHUNKS = 5
-
 # 界面一定会用到、但未必出现在源码字面量里的字符:ASCII、常用标点与全角符号
 EXTRA = (
     "".join(chr(c) for c in range(0x20, 0x7F))
-    + "　、。〈〉《》「」『』【】〔〕—…·～×÷％＋－°※→←↑↓√✓○●◆◇■□★☆"
+    + "　、。〈〉《》「」『』【】〔〕“”‘’—…·～×÷％＋－°※→←↑↓√✓○●◆◇■□★☆"
 )
 
 # 允许「由系统符号/emoji 字体去画」的字符 —— 它们不是汉字,楷体里也没有,
@@ -125,14 +122,14 @@ def ensure_master(explicit: str | None) -> pathlib.Path:
 
 def needed_chars() -> set[str]:
     """
-    游戏要用到的字 = 源码/模板里出现的全部字符 + 界面符号 + GB2312 全字集。
+    游戏要用到的字 = 源码/模板/样式里出现的全部字符 + 界面符号 + GB2312 全字集。
 
     跳过 *.spec.ts:用例里会有别人写下的**正则区间端点**(如 /[⺀-鿿　-〿＀-￯]/ 里的
     U+FF00、U+FFEF),那两端的字符根本不会出现在界面上,收进字体只是白占体积。
     界面文字都住在 src 的其余文件与 index.html 里,漏不了。
     """
     chars: set[str] = set()
-    for pattern in ("*.ts", "*.vue", "*.js"):
+    for pattern in ("*.ts", "*.vue", "*.js", "*.css"):
         for p in (ROOT / "src").rglob(pattern):
             if p.name.endswith(".spec.ts"):
                 continue
@@ -153,12 +150,12 @@ def ui_corpus() -> str:
     """
     界面语料 —— 用来给字排频次,决定谁进第一片。
 
-    取的是**源码与模板里的全部文本**(含 src/data 里的名字与文案),跳过 *.spec.ts
+    取的是**源码、模板与样式里的全部文本**(含 src/data 里的名字与文案),跳过 *.spec.ts
     (与 needed_chars 同一条规则)。频次只是个权重,不要求精确:哪一片先到,只影响
     冷启动那几次请求的大小,不影响覆盖。
     """
     parts: list[str] = []
-    for pattern in ("*.ts", "*.vue", "*.js"):
+    for pattern in ("*.ts", "*.vue", "*.js", "*.css"):
         for p in (ROOT / "src").rglob(pattern):
             if p.name.endswith(".spec.ts"):
                 continue
@@ -271,6 +268,14 @@ def main() -> None:
             + "".join(unexpected)
             + "\n要么换母体,要么把确实该由系统字体画的字符加进 SYMBOLS_FROM_SYSTEM"
         )
+
+    # 切片数会随文案增减。生成成功后清掉上一轮多出来的文件,否则少一片时旧的
+    # subset-N 会永远留在目录里,既进包又被覆盖判据当成孤儿。
+    expected_files = {str(chunk["file"]) for chunk in chunks}
+    for stale in OUT_DIR.glob("lxgw-wenkai-gb-screen-subset-*.woff2"):
+        if stale.name not in expected_files:
+            stale.unlink()
+
     CHARS.write_text("".join(sorted(covered_all)), encoding="utf-8")
 
     # @font-face 声明也由脚本写:每一片的 unicode-range 必须与那一份**产物**的 cmap 一致,

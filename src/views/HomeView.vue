@@ -288,6 +288,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/home.css";
 import { computed, ref, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 import { usePlayerStore } from "@/stores/player";

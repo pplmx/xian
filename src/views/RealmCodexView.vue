@@ -548,6 +548,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/realm-codex.css";
 import { computed, nextTick, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { gameNow } from "@/core/enginePause";

@@ -523,6 +523,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/collection.css";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useQuestsStore } from "@/stores/quests";
 import { useInventoryStore } from "@/stores/inventory";

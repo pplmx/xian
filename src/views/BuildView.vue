@@ -435,6 +435,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/build.css";
 import { computed, nextTick, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import {

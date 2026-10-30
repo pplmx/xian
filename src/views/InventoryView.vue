@@ -522,6 +522,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/inventory.css";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useInventoryStore } from "@/stores/inventory";

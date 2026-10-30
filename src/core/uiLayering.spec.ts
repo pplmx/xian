@@ -21,6 +21,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { readStyleCss } from "@/test/readStyleCss";
 
 const SRC = resolve(__dirname, "..");
 
@@ -346,7 +347,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(codex?.src, "图鉴 chip 的「新」徽章要有入场动画(animate-new-pop)").toContain(
       "animate-new-pop",
     );
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "new-pop 的帧定义被删了 —— 徽章会退回瞬显").toMatch(
       /@keyframes new-pop[\s\S]{0,200}scale:\s*0\.5/,
     );
@@ -643,7 +644,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(fight?.src, "横踏必须挂在出手方(entry.side)上 —— 挪到受击方就重复震颤了").toMatch(
       /triggerStrike\(entry\.side\)/,
     );
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "strike 的帧定义被删了 —— 攻击方退回完全静态").toMatch(
       /@keyframes strike[\s\S]{0,160}translateY\(var\(--strike-y\)\)/,
     );
@@ -657,7 +658,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const fight = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
     expect(fight?.src).toContain(':key="battle?.at"');
     expect(fight?.src).toContain("enemy-enter");
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "enemy-enter 的帧定义被删了 —— 换敌退回硬切").toMatch(
       /@keyframes enemy-enter[\s\S]{0,120}translateY\(5px\)/,
     );
@@ -679,7 +680,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(fight?.src, "登场宣告(boss-reveal)被拆了").toMatch(
       /v-if="battle\?\.isBoss"[\s\S]{0,160}boss-reveal/,
     );
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "boss-reveal 的帧定义被删了 —— 首领登场退回硬切").toMatch(
       /@keyframes boss-reveal[\s\S]{0,140}opacity: 1/,
     );
@@ -698,7 +699,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(home?.src, "远山要读世界的山色变量(--world-mountain)").toContain(
       "var(--world-mountain)",
     );
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     // 三界都要有雾色覆盖 —— 缺了后两界就是「只做了仙界」的半成品
     expect(css).toMatch(/data-world="immortal"\][\s\S]{0,60}\.mist/);
     expect(css).toMatch(/data-world="god"\][\s\S]{0,60}\.mist/);
@@ -716,9 +717,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "utf-8",
     );
     expect(section, "标题杆要读世界色(--world-bar),不许写死朱砂").toContain("var(--world-bar)");
-    expect(css).toMatch(/data-world="immortal"\][\s\S]{0,80}--world-bar/);
-    expect(css).toMatch(/data-world="god"\][\s\S]{0,80}--world-bar/);
-    expect(css).toMatch(/data-world="chaos"\][\s\S]{0,80}--world-bar/);
+    expect(css).toMatch(/data-world="immortal"\][\s\S]{0,180}--world-bar/);
+    expect(css).toMatch(/data-world="god"\][\s\S]{0,180}--world-bar/);
+    expect(css).toMatch(/data-world="chaos"\][\s\S]{0,180}--world-bar/);
     // 世界身份落地到最常看的两处:修炼页「此刻的界」+ 界域志的「色卡地图」
     const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
     expect(cult?.src, "修炼页世界名要读世界信标色(world-label)").toContain("world-label");
@@ -1248,7 +1249,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 全面美化批:btn-seal/ghost/chip 早已 0.12s 滑移,唯 card-ink 交互卡硬跳;
     // 境界名加世界色横杆(匾额)、欢迎页主钮起朱砂柔辉、首页法球加远山同色落地影。
     // 四件各退一件,下面红 —— 不许拆回「卡一按就跳、主角字光秃秃」。
-    const style = readFileSync(resolve(__dirname, "../style.css"), "utf8");
+    const style = readStyleCss();
     expect(style, "card-ink 要带按压滑移").toMatch(
       /^[ \t]*\.card-ink \{[\s\S]{0,600}transition: transform 0\.12s ease;/m,
     );
@@ -1295,9 +1296,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 点按先弹灰盒再播按压反馈。选中改半透明朱砂(rgb 随主题转亮,两套主题
     // 都不打架),点按高亮压 transparent(全站交互元素自带 active 按压,
     // 系统那一下反而冲出画外)。退回去,下面红。
-    const style = readFileSync(resolve(__dirname, "../style.css"), "utf8");
+    const style = readStyleCss();
     expect(style, "选中文字要朱砂浸染").toMatch(
-      /::selection \{\n  background: rgb\(var\(--color-cinnabar-rgb\) \/ 0\.22\);/,
+      /::selection \{\n\s+background: rgb\(var\(--color-cinnabar-rgb\) \/ 0\.22\);/,
     );
     expect(style, "点按高亮不许弹系统灰盒").toMatch(/-webkit-tap-highlight-color: transparent;/);
   });
@@ -1419,7 +1420,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * whitespace-nowrap,其余各处靠运气 —— 200% 档实测坊市「← 返回」被挤成三行。
      * 判据只钉角色本体:各调用点不许再抄一遍(两本账),也不许被删掉。
      */
-    const css = readFileSync(resolve(SRC, "style.css"), "utf-8");
+    const css = readStyleCss();
     const tapRow = /\.tap-row \{([^}]*)\}/.exec(css)?.[1];
     expect(tapRow, "tap-row 角色要能定位到 —— 定位不到这条就是空转").toBeTruthy();
     expect(tapRow, "短动作标签不许折行(角色的语义,不是某处的装饰)").toContain(
@@ -1447,7 +1448,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const rows = /class="(grid grid-cols-2 gap-x-4 gap-y-1[^"]*)"/.exec(ch?.src ?? "")?.[1];
     expect(rows, "属性行网格要定位得到").toBeTruthy();
     expect(rows, "极窄档放开成单列").toContain("tinylens:grid-cols-1");
-    const css = readFileSync(resolve(SRC, "style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "总案常态单列").toMatch(
       /\.character-dossier__grid \{[\s\S]{0,100}?grid-template-columns: minmax\(0, 1fr\)/,
     );
@@ -1506,7 +1507,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      *      128px 里,「· 已封顶」被甩到第二行(主值行折行判据红);改极窄档上下两段。
      */
     const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf8");
+    const css = readStyleCss();
     expect(dv?.src, "七作仍走自己的分组网格").toContain('class="dongfu-workshop__grid"');
     expect(css, "七作常态是两列").toMatch(
       /\.dongfu-workshop__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
@@ -1676,7 +1677,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * CSS 里没法用 Tailwind 变体,但数值必须与配置一字不差,否则两边会各走各的:
      * 改了配置里那一行,按钮的内边距仍停在旧阈值上,而排版自检看不出这种漂移。
      */
-    const css = readFileSync(resolve(SRC, "style.css"), "utf-8");
+    const css = readStyleCss();
     const cssThresholds = [...css.matchAll(/@media \(max-width: *(\d+)px\)/g)].map((m) => m[1]!);
     for (const t of cssThresholds) {
       expect(declared, `style.css 里的 ${t}px 与 tinylens 的阈值不是同一个数`).toContain(t);
@@ -1987,7 +1988,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(fight?.src, "闪避时攻击方仍该横踏(出手确实出手了)").toMatch(
       /entry\.t === "dodge"[\s\S]{0,80}triggerStrike/,
     );
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "flicker 的帧定义被删了 —— 闪避退回一动不动的淡字").toMatch(/@keyframes flicker/);
   });
 
@@ -2005,7 +2006,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(fight?.src, "护盾无出手方,不得跟着横踏").not.toMatch(
       /entry\.t === "shield"[\s\S]{0,80}triggerStrike/,
     );
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "shield-rise 的帧定义被删了 —— 护盾退回一行淡字").toMatch(/@keyframes shield-rise/);
   });
 
@@ -2018,7 +2019,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(fight?.src, "胜方要有定音(foe-victorious),不许只让败方灰化").toContain(
       `defeated === 'e' ? 'foe-victorious'`,
     );
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "victory-seal 的帧定义被删了 —— 胜方退回无声").toMatch(/@keyframes victory-seal/);
     expect(css).toMatch(/\.foe-victorious[\s\S]{0,60}animation:\s*victory-seal/);
   });
@@ -3036,7 +3037,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(dlg?.src).toContain("border-jade");
     expect(dlg?.src, "归 来不能退回一行淡字 —— 完成态要有印身").toContain("h-16 w-16");
     expect(dlg?.src).not.toContain("border-cinnabar");
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "seal-breathe 的帧定义被删了 —— 归来印退回瞬显").toMatch(/@keyframes seal-breathe/);
     const tw = readFileSync(resolve(__dirname, "../../tailwind.config.js"), "utf-8");
     expect(tw, "seal-breathe 的映射被拆了 —— 归来印失去呼吸").toContain(
@@ -3233,7 +3234,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 全库最常见的微动作按钮是 chip-ink(服丹/闭关/灵脉/设置 chips),此前只有
     // btn-seal/btn-ghost 两个基类自带 :active —— chips 按下零反馈。补基类规则
     // (轻缩+淡染,disabled 不触发),再扫一圈裸按钮逐一补 active:opacity/scale。
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(
       css,
       "chip-ink 基类要有 :active 按压反馈(限 button —— 装饰性 chip 是 span,不该有按压态)",
@@ -3251,7 +3252,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * chip-ink 原本只有 22.5px 高,修行页的状态胶囊在后期档被排版门抓红。
      * 触控下限只该落在交互按钮上;品阶、首领等 span 装饰 chip 尺寸不应被连带改掉。
      */
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "button.chip-ink 要自带 28px 最小高度").toMatch(
       /button\.chip-ink\s*\{[^}]*min-height:\s*28px;/s,
     );
@@ -3336,7 +3337,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「减少动效」减了个寂寞。系统偏好与「减少动效」设置项两条规则
     // 都必须把 delay 一并清零:动效省略 = 时长 + 延迟双双归零。
     // 故障注入:删掉任一规则的 animation-delay → 红。
-    const css = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+    const css = readStyleCss();
     expect(css, "清零对象要真实存在 —— 先有分步入场的多档延迟,才谈得上把它清零").toMatch(
       /\.stagger-in[\s\S]{0,400}animation-delay:/,
     );
@@ -3952,7 +3953,7 @@ describe("主巡页 · 字阶同一套", () => {
       const view = FILES.find((f) => f.path === path);
       let src = view?.src ?? "";
       if (path === "views/DongfuView.vue") {
-        const css = readFileSync(resolve(__dirname, "../style.css"), "utf8");
+        const css = readStyleCss();
         const start = css.indexOf(".dongfu-masthead__meta");
         const end = css.indexOf("/*\n   * 道躯案", start);
         src += [
@@ -4276,47 +4277,49 @@ describe("样式层序 —— 角色定基线,调用处的工具类必须能盖"
    * `shadow-lg` 一个都没落地。最扎眼的一处:秘境卡「未解锁 = 虚线框」从上线起
    * 就没画出来过 —— 因为卡自己的 `border: 1px solid` 一直压着那两条工具类。
    *
-   * 修法不是给每处补 `!`,是把角色挪进 `@layer components`:utilities 层整体压在它上面,
+   * 修法不是给每处补 `!`,是把角色挪进 `@layer shared` / `@layer page`:
+   * utilities 层整体压在它们上面,
    * 角色定基线、调用处永远能盖。这条判据守两件事:
-   *   一 那批角色确实在 components 层里(挪出去就退回静默失效);
+   *   一 那批角色确实在 shared / page 层里(挪出去就退回静默失效);
    *   二 层内的暗色覆写照旧按特指度生效(层不改变层内先后)。
    */
-  const STYLE = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+  const STYLE = readStyleCss();
 
   /**
-   * 取**所有** `@layer components` 段的正文(按花括号配平)。
+   * 取**所有** `@layer shared` 与 `@layer page` 段的正文(按花括号配平)。
    *
    * 层可以开多次(排版角色一块、按钮与触达一块),判据要把它们合起来看 ——
    * 只取第一块会让第二块里的角色读成「在层外」,那是一条假红。
    */
   function layerBody(css: string): string {
-    const marker = "@layer components {";
     let out = "";
-    let from = 0;
-    for (;;) {
-      const start = css.indexOf(marker, from);
-      if (start < 0) break;
-      let depth = 0;
-      let end = -1;
-      for (let i = start; i < css.length; i += 1) {
-        if (css[i] === "{") depth += 1;
-        else if (css[i] === "}") {
-          depth -= 1;
-          if (depth === 0) {
-            end = i + 1;
-            break;
+    for (const marker of ["@layer shared {", "@layer page {"]) {
+      let from = 0;
+      for (;;) {
+        const start = css.indexOf(marker, from);
+        if (start < 0) break;
+        let depth = 0;
+        let end = -1;
+        for (let i = start; i < css.length; i += 1) {
+          if (css[i] === "{") depth += 1;
+          else if (css[i] === "}") {
+            depth -= 1;
+            if (depth === 0) {
+              end = i + 1;
+              break;
+            }
           }
         }
+        if (end < 0) throw new Error(`${marker} 没有配平的花括号`);
+        out += `${css.slice(start, end)}\n`;
+        from = end;
       }
-      if (end < 0) throw new Error("@layer components 没有配平的花括号");
-      out += `${css.slice(start, end)}\n`;
-      from = end;
     }
-    if (out === "") throw new Error("style.css 里找不到 @layer components —— 判据要跟着改");
+    if (out === "") throw new Error("style.css 里找不到 @layer shared / page —— 判据要跟着改");
     return out;
   }
 
-  it("定基线的角色都在 components 层里 —— 不许再裸写在 utilities 之后", () => {
+  it("定基线的角色都在 shared / page 层里 —— 不许再裸写在 utilities 之后", () => {
     const layer = layerBody(STYLE);
     const roles = [
       "card-ink",
@@ -4350,7 +4353,7 @@ describe("样式层序 —— 角色定基线,调用处的工具类必须能盖"
 
   it("判据自证:层外的角色会被认出来", () => {
     const fake =
-      "@layer components {\n.btn-seal {\n  color: red;\n}\n}\n.tap-row {\n  display: flex;\n}\n";
+      "@layer shared {\n.btn-seal {\n  color: red;\n}\n}\n.tap-row {\n  display: flex;\n}\n";
     const layer = layerBody(fake);
     expect(/^[ \t]*\.tap-row \{/m.test(layer), "层外的 tap-row 应被认出来").toBe(false);
     expect(/^[ \t]*\.btn-seal \{/m.test(layer), "层内的 btn-seal 应被认出来").toBe(true);
@@ -4371,7 +4374,7 @@ describe("禁用态 —— 压色不压字", () => {
    * 但它只量得到**巡到的页面**。这条判据守源码面:凡是把禁用/不可用写成
    * 「整块压透明度」的,当场红。
    */
-  const STYLE = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+  const STYLE = readStyleCss();
 
   /** 一个 class 串里有没有「整块压透明度」的写法(按压态 active:opacity 不算) */
   function dimsWholeElement(cls: string): boolean {
@@ -4464,7 +4467,7 @@ describe("排版角色 —— 有名字的才叫系统", () => {
    *   一 角色类在 style.css 里确实定义着(不许删了定义只留引用);
    *   二 正文那三连组合不许再手写回来 —— 用 .t-body。
    */
-  const STYLE = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+  const STYLE = readStyleCss();
 
   it("五个排版角色都在 style.css 里有定义", () => {
     for (const role of ["t-card", "t-entry", "t-item", "t-body", "t-note"]) {
@@ -4598,7 +4601,7 @@ describe("滚动区 —— 还有下文时要说出来", () => {
    *   一 类在 style.css 里定义着(不许删定义只留引用);
    *   二 淡出层不接鼠标/触摸(pointer-events: none),否则它会挡住最后一行。
    */
-  const STYLE = readFileSync(resolve(__dirname, "../style.css"), "utf-8");
+  const STYLE = readStyleCss();
 
   it("scroll-fade 有定义,且不挡点击", () => {
     expect(STYLE, "缺 .scroll-fade 定义").toMatch(/\.scroll-fade \{/);

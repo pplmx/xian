@@ -1,0 +1,411 @@
+@layer reset, shared, page, app-utilities;
+@layer page {
+  /*
+   * 洞府案 —— 山门图先给七作意象，正文把家底、眼下动工与离线档收成一张总账。
+   *
+   * 旧页把七张同形建筑卡平铺，再在题头、卡片和一条独立阶梯里重复报「已营 / 产出 /
+   * 离线上限」。现在总账先摊开能决定下一步的数，七作再按基业、修行、丹器、生计分组；
+   * 家业与灵脉则退成两行门径，不再用大面积入口卡抢走营造主位。
+   */
+  .dongfu-masthead__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.12rem 0.72rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .dongfu-masthead__meta strong {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    font-weight: 500;
+  }
+  .dongfu-ledger {
+    position: relative;
+    overflow: hidden;
+    margin-top: 0.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.15);
+    border-top: 2px solid var(--world-bar);
+    border-radius: 2px;
+    background:
+      linear-gradient(
+        118deg,
+        rgb(var(--color-paper-rgb) / 0.34),
+        transparent 46%,
+        rgb(var(--color-ink-rgb) / 0.015)
+      ),
+      rgb(var(--color-paper-lifted-rgb));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.44),
+      3px 3px 0 rgb(var(--color-ink-rgb) / 0.024);
+  }
+  .dongfu-ledger::before {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.03);
+    content: "";
+    pointer-events: none;
+  }
+  .dongfu-ledger__head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem 0.7rem;
+    padding: 0.78rem 0.9rem 0.68rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .dongfu-ledger__seal {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.4);
+    background:
+      linear-gradient(
+        145deg,
+        rgb(var(--color-paper-rgb) / 0.62),
+        rgb(var(--color-cinnabar-rgb) / 0.04)
+      ),
+      rgb(var(--color-paper-rgb) / 0.3);
+    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.28);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .dongfu-ledger__heading {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.08rem;
+  }
+  .dongfu-ledger__eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.16em;
+  }
+  .dongfu-ledger__title {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+  }
+  .dongfu-ledger__position {
+    margin-left: auto;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .dongfu-ledger__grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dongfu-ledger__progress,
+  .dongfu-ledger__accounts {
+    min-width: 0;
+    padding: 0.78rem 0.9rem 0.82rem;
+  }
+  .dongfu-ledger__accounts {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background:
+      radial-gradient(circle at 95% 5%, rgb(var(--color-qing-rgb) / 0.05), transparent 8rem),
+      rgb(var(--color-paper-rgb) / 0.12);
+  }
+  .dongfu-ledger__label-row,
+  .dongfu-ledger__offline-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.12rem 0.55rem;
+  }
+  .dongfu-ledger__label,
+  .dongfu-ledger__account-name {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.18em;
+  }
+  .dongfu-ledger__hint,
+  .dongfu-ledger__next,
+  .dongfu-ledger__offline-note,
+  .dongfu-ledger__blocked {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .dongfu-ledger__value {
+    margin-top: 0.22rem;
+    color: rgb(var(--color-ink-rgb));
+    font-size: var(--type-display);
+    line-height: 1.12;
+  }
+  .dongfu-ledger__value span {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-title);
+  }
+  .dongfu-ledger__bar {
+    height: 5px;
+    margin-top: 0.52rem;
+    overflow: hidden;
+    border-radius: 1px;
+    background: rgb(var(--color-ink-rgb) / 0.06);
+  }
+  .dongfu-ledger__bar span {
+    display: block;
+    height: 100%;
+    background: rgb(var(--color-qing-rgb) / 0.7);
+  }
+  .dongfu-ledger__next {
+    margin-top: 0.42rem;
+  }
+  .dongfu-ledger__next span {
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+  .dongfu-ledger__accounts {
+    display: grid;
+    gap: 0.34rem;
+  }
+  .dongfu-ledger__account {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 4.3rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.5rem;
+    padding-block: 0.28rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+  }
+  .dongfu-ledger__account:last-child {
+    border-bottom: 0;
+  }
+  .dongfu-ledger__account-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .dongfu-ledger__offline {
+    position: relative;
+    z-index: 1;
+    padding: 0.72rem 0.9rem 0.78rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background:
+      linear-gradient(90deg, rgb(var(--color-cinnabar-rgb) / 0.022), transparent 50%),
+      rgb(var(--color-paper-rgb) / 0.16);
+  }
+  .dongfu-ledger__offline-current {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+  .dongfu-ledger__ladder {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin-top: 0.46rem;
+  }
+  .dongfu-ledger__step {
+    min-width: 0;
+    padding: 0.38rem 0.1rem 0.32rem;
+    border: 1px solid;
+    border-radius: 1px;
+    font-size: var(--type-note);
+    line-height: 1.35;
+    text-align: center;
+  }
+  .dongfu-ledger__offline-note {
+    margin-top: 0.42rem;
+  }
+  .dongfu-ledger__quick {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.28rem 0.8rem;
+    padding: 0.64rem 0.9rem;
+    border-top: 1px solid rgb(var(--color-cinnabar-rgb) / 0.22);
+    background:
+      linear-gradient(90deg, rgb(var(--color-cinnabar-rgb) / 0.065), transparent 58%),
+      rgb(var(--color-paper-rgb) / 0.18);
+    text-align: left;
+  }
+  .dongfu-ledger__quick:active {
+    background-color: rgb(var(--color-cinnabar-rgb) / 0.045);
+  }
+  .dongfu-ledger__quick-copy {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.48rem;
+  }
+  .dongfu-ledger__quick-eyebrow {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+  .dongfu-ledger__quick-name {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.08em;
+  }
+  .dongfu-ledger__quick-cost {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .dongfu-ledger__perfect,
+  .dongfu-ledger__blocked {
+    position: relative;
+    z-index: 1;
+    padding: 0.62rem 0.9rem 0.7rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .dongfu-ledger__perfect {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.55rem;
+    color: rgb(var(--color-jade-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .dongfu-workshop {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+  }
+  .dongfu-workshop__group {
+    min-width: 0;
+  }
+  .dongfu-workshop__group-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.48rem;
+    margin-bottom: 0.42rem;
+    padding-inline: 0.1rem;
+  }
+  .dongfu-workshop__group-index {
+    display: grid;
+    width: 1.32rem;
+    height: 1.32rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.32);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .dongfu-workshop__group-title {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.16em;
+  }
+  .dongfu-workshop__group-hint {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .dongfu-workshop__group-count {
+    margin-left: auto;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .dongfu-workshop__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  .dongfu-workshop__group:first-child .dongfu-workshop__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dongfu-workshop__group[data-dongfu-group="foundation"] .card-ink {
+    border-top-color: rgb(var(--color-cinnabar-rgb) / 0.48);
+  }
+  .dongfu-gateways {
+    overflow: hidden;
+    margin-top: 0.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    border-top: 2px solid rgb(var(--color-qing-rgb) / 0.55);
+    border-radius: 2px;
+    background:
+      linear-gradient(110deg, rgb(var(--color-qing-rgb) / 0.026), transparent 46%),
+      rgb(var(--color-paper-lifted-rgb));
+    box-shadow:
+      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.18),
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
+  }
+  @media (min-width: 620px) {
+    .dongfu-ledger__grid {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    }
+
+    .dongfu-ledger__accounts {
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    }
+  }
+  @media (max-width: 220px) {
+    .dongfu-ledger__head,
+    .dongfu-ledger__progress,
+    .dongfu-ledger__accounts,
+    .dongfu-ledger__offline,
+    .dongfu-ledger__quick {
+      padding-inline: 0.68rem;
+    }
+
+    .dongfu-ledger__seal {
+      width: 2.2rem;
+      height: 2.2rem;
+    }
+
+    .dongfu-ledger__position {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .dongfu-ledger__account {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.08rem;
+    }
+
+    .dongfu-ledger__ladder {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .dongfu-ledger__quick {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .dongfu-workshop__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dongfu-workshop__group-count {
+      width: 100%;
+      margin-left: 1.8rem;
+    }
+  }
+}

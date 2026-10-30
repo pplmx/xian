@@ -318,6 +318,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/world.css";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";

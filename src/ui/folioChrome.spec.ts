@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { readStyleCss } from "@/test/readStyleCss";
 
 const ROOT = resolve(__dirname, "../..");
 
 function source(rel: string): string {
+  if (rel === "src/style.css") return readStyleCss();
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
@@ -106,8 +108,8 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(atlas, "目录行在极窄档要收回横向内边距").toContain("tinylens:px-1");
     expect(atlas, "目录图标在极窄档要缩成 28px").toContain("tinylens:h-7 tinylens:w-7");
     expect(atlas, "册名在极窄档要收字距").toContain("tinylens:tracking-[0.08em]");
-    expect(css, "卷宗题头与目录行在极窄档要收回内边距").toContain(
-      ".atlas-section__head {\n    padding-inline: 0.5rem;",
+    expect(css, "卷宗题头与目录行在极窄档要收回内边距").toMatch(
+      /\.atlas-section__head \{\n\s+padding-inline: 0\.5rem;/,
     );
   });
 

@@ -1,0 +1,7 @@
+/*
+ * 全局级联层序：共享基线 < 页面案头 < Tailwind 工具类。
+ *
+ * 页面样式是路由分片，可能晚于工具类到达；先把顺序钉在这里，后到的
+ * `@layer page` 才不会翻到 `@layer app-utilities` 上面。
+ */
+@layer reset, shared, page, app-utilities;

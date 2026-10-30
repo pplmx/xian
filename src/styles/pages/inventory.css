@@ -1,0 +1,610 @@
+@layer reset, shared, page, app-utilities;
+@layer page {
+  /*
+   * 行囊案 —— 先盘九佩，再问本批新得与可换。
+   *
+   * 旧卷首把容量、收纳、分解、一键换装和九席散成五块竖排，真正要看的
+   * 「哪一席缺、哪一席能换」被压到折线以下。新版把容量、新得与换装报价
+   * 收进一张检点账；九佩按三乘三落成器匣，藏品仍留在其后。
+   */
+  .inventory-masthead__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.8rem;
+    margin-top: 0.45rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .inventory-masthead__meta strong {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    font-weight: 500;
+  }
+  .inventory-reliquary {
+    position: relative;
+    display: grid;
+    width: 140px;
+    height: 140px;
+    place-items: center;
+  }
+  .inventory-reliquary::before {
+    position: absolute;
+    inset: 16px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, rgb(var(--color-qing-rgb) / 0.045), transparent 66%),
+      linear-gradient(135deg, rgb(var(--color-paper-rgb) / 0.55), transparent);
+    content: "";
+  }
+  .inventory-reliquary svg {
+    position: relative;
+    z-index: 1;
+    width: 140px;
+    height: 140px;
+    overflow: visible;
+  }
+  .inventory-reliquary__rim {
+    fill: none;
+    stroke: rgb(var(--color-ink-rgb) / 0.15);
+    stroke-width: 1;
+  }
+  .inventory-reliquary__rim--inner {
+    stroke: rgb(var(--color-ink-rgb) / 0.07);
+    stroke-dasharray: 1 5;
+  }
+  .inventory-reliquary__capacity {
+    fill: none;
+    stroke: rgb(var(--color-qing-rgb) / 0.68);
+    stroke-linecap: round;
+    stroke-width: 2.2;
+    transform: rotate(-90deg);
+    transform-origin: 70px 70px;
+  }
+  .inventory-reliquary__slot rect {
+    fill: rgb(var(--color-paper-lifted-rgb) / 0.88);
+    stroke: rgb(var(--color-ink-rgb) / 0.2);
+    stroke-dasharray: 2 2;
+    stroke-width: 0.9;
+  }
+  .inventory-reliquary__slot text {
+    fill: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: 9px;
+  }
+  .inventory-reliquary__slot.is-filled rect {
+    fill: rgb(var(--color-qing-rgb) / 0.08);
+    stroke: rgb(var(--color-qing-rgb) / 0.62);
+    stroke-dasharray: none;
+  }
+  .inventory-reliquary__slot.is-filled text {
+    fill: rgb(var(--color-qing-rgb));
+  }
+  .inventory-reliquary__count {
+    fill: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+  .inventory-briefing,
+  .inventory-equipment,
+  .inventory-collection,
+  .inventory-workshop,
+  .inventory-pill-cabinet,
+  .inventory-materials {
+    min-width: 0;
+  }
+  .inventory-briefing__heading {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.6rem;
+    padding-inline: 0.15rem;
+  }
+  .inventory-briefing__title {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    letter-spacing: 0.16em;
+  }
+  .inventory-briefing__hint,
+  .inventory-briefing__foot {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .inventory-briefing__rule {
+    height: 1px;
+    min-width: 1rem;
+    flex: 1;
+    background: linear-gradient(90deg, rgb(var(--color-ink-rgb) / 0.13), transparent);
+  }
+  .inventory-briefing__tool {
+    display: inline-flex;
+    min-width: 36px;
+    min-height: 28px;
+    align-items: center;
+    justify-content: center;
+    padding: 0.22rem 0.48rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.15);
+    background: rgb(var(--color-paper-lifted-rgb) / 0.62);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+  .inventory-briefing__sheet {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0.5rem;
+    overflow: hidden;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    border-left: 2px solid rgb(var(--color-qing-rgb) / 0.42);
+    background: rgb(var(--color-paper-lifted-rgb));
+    box-shadow:
+      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.2),
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
+  }
+  .inventory-briefing__counts {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .inventory-briefing__count {
+    min-width: 0;
+    padding: 0.62rem 0.72rem;
+    background:
+      linear-gradient(135deg, rgb(var(--color-qing-rgb) / 0.04), transparent 72%),
+      rgb(var(--color-paper-rgb) / 0.12);
+  }
+  .inventory-briefing__count + .inventory-briefing__count {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .inventory-briefing__count--new {
+    background:
+      linear-gradient(135deg, rgb(var(--color-cinnabar-rgb) / 0.035), transparent 72%),
+      rgb(var(--color-paper-rgb) / 0.12);
+  }
+  .inventory-briefing__eyebrow {
+    display: block;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.16em;
+  }
+  .inventory-briefing__count p {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.28rem;
+    margin-top: 0.12rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .inventory-briefing__count p strong {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  .inventory-briefing__foot {
+    display: block;
+    margin-top: 0.18rem;
+    line-height: 1.45;
+  }
+  .inventory-briefing__foot b {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-weight: 500;
+  }
+  .inventory-briefing__new-toggle {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    margin-top: 0.05rem;
+    padding-block: 0.1rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+  }
+  .inventory-briefing__upgrade {
+    display: grid;
+    min-width: 0;
+    align-content: start;
+    gap: 0.4rem;
+    padding: 0.62rem 0.72rem 0.68rem;
+  }
+  .inventory-briefing__upgrade-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.45rem;
+  }
+  .inventory-briefing__upgrade-head strong {
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+  }
+  .inventory-briefing__upgrade-head .inventory-briefing__foot {
+    margin-top: 0;
+  }
+  .inventory-briefing__upgrade-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .inventory-briefing__empty {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .inventory-briefing__wear {
+    display: flex;
+    min-height: 32px;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.72);
+    background: rgb(var(--color-cinnabar-rgb) / 0.94);
+    color: rgb(var(--color-paper-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+  .inventory-briefing__wear:disabled {
+    border-color: rgb(var(--color-ink-rgb) / 0.12);
+    background: rgb(var(--color-ink-rgb) / 0.05);
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .inventory-briefing__resonance {
+    grid-column: 1 / -1;
+    padding: 0.58rem 0.72rem 0.65rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    background: rgb(var(--color-qing-rgb) / 0.025);
+  }
+  .inventory-briefing__resonance-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+  }
+  .inventory-briefing__resonance-row {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.55rem;
+    margin-top: 0.32rem;
+    font-size: var(--type-body);
+  }
+  .inventory-briefing__resonance-copy {
+    min-width: 0;
+    flex: 1 1 10rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .inventory-briefing__resonance-action {
+    min-height: 28px;
+    padding: 0.15rem 0.25rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.06em;
+  }
+  .inventory-equipment__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+  }
+  .inventory-equipment__slot {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 6.55rem;
+    flex-direction: column;
+    gap: 0.38rem;
+    padding: 0.55rem 0.58rem 0.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    background: linear-gradient(
+      145deg,
+      rgb(var(--color-paper-lifted-rgb)),
+      rgb(var(--color-paper-rgb) / 0.4)
+    );
+    text-align: left;
+  }
+  .inventory-equipment__slot::after {
+    position: absolute;
+    right: 0.35rem;
+    bottom: 0.3rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-right: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    content: "";
+  }
+  .inventory-equipment__slot.is-empty {
+    background: rgb(var(--color-paper-rgb) / 0.3);
+  }
+  .inventory-equipment__slot.is-upgradable {
+    border-color: rgb(var(--color-jade-rgb) / 0.42);
+    box-shadow: inset 2px 0 0 rgb(var(--color-jade-rgb) / 0.56);
+  }
+  .inventory-equipment__number {
+    position: absolute;
+    top: 0.34rem;
+    right: 0.42rem;
+    color: rgb(var(--color-ink-rgb) / 0.32);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.04em;
+  }
+  .inventory-equipment__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.12rem 0.3rem;
+    padding-right: 1.15rem;
+  }
+  .inventory-equipment__name {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.1em;
+  }
+  .inventory-equipment__stock {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .inventory-equipment__piece {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.38rem;
+  }
+  .inventory-equipment__piece-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.08rem;
+  }
+  .inventory-equipment__piece-name {
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .inventory-equipment__note {
+    overflow: hidden;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .inventory-equipment__blank {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+  .inventory-equipment__upgrade-mark {
+    display: inline-flex;
+    width: max-content;
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 0.15rem;
+    color: rgb(var(--color-jade-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.35;
+  }
+  .inventory-equipment__foot {
+    margin-top: 0.55rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+    text-align: center;
+  }
+  .inventory-collection__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .inventory-collection__pager {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .inventory-collection__pager > button {
+    min-width: 8rem;
+    flex: 1;
+  }
+  .inventory-workshop__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-top: 0.55rem;
+  }
+  .inventory-workshop__card {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.68rem 0.72rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    background: linear-gradient(
+      125deg,
+      rgb(var(--color-paper-lifted-rgb)),
+      rgb(var(--color-paper-rgb) / 0.34)
+    );
+    text-align: left;
+  }
+  .inventory-workshop__card--brew {
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.58);
+  }
+  .inventory-workshop__card--shop {
+    border-left: 2px solid rgb(var(--color-jade-rgb) / 0.58);
+  }
+  .inventory-workshop__seal {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    color: rgb(var(--color-paper-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+  }
+  .inventory-workshop__seal--cinnabar {
+    background: rgb(var(--color-cinnabar-rgb) / 0.9);
+  }
+  .inventory-workshop__seal--jade {
+    background: rgb(var(--color-jade-rgb) / 0.9);
+  }
+  .inventory-workshop__copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.16rem;
+  }
+  .inventory-workshop__name {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.1em;
+  }
+  .inventory-workshop__detail {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .inventory-workshop__go {
+    grid-column: 2;
+    justify-self: end;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+  }
+  .inventory-pill-cabinet__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .inventory-materials__groups {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+    margin-top: 0.55rem;
+  }
+  .inventory-material-group {
+    min-width: 0;
+    padding: 0.65rem 0.72rem 0.75rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    background:
+      linear-gradient(135deg, rgb(var(--color-qing-rgb) / 0.035), transparent 58%),
+      rgb(var(--color-paper-lifted-rgb));
+  }
+  .inventory-material-group__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.12rem 0.55rem;
+    margin-bottom: 0.5rem;
+  }
+  .inventory-material-group__title {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.12em;
+  }
+  .inventory-material-group__hint,
+  .inventory-material-group__count {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .inventory-material-group__count {
+    margin-left: auto;
+  }
+  .inventory-material-group__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  @media (min-width: 360px) {
+    .inventory-briefing__sheet {
+      grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+    }
+
+    .inventory-briefing__counts {
+      border-right: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+      border-bottom: 0;
+    }
+  }
+  @media (min-width: 960px) {
+    .inventory-briefing__sheet {
+      grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.38fr);
+    }
+
+    .inventory-equipment__grid {
+      gap: 0.58rem;
+    }
+
+    .inventory-materials__groups {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 220px) {
+    .inventory-briefing__heading {
+      gap: 0.25rem;
+    }
+
+    .inventory-briefing__rule {
+      display: none;
+    }
+
+    .inventory-briefing__counts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .inventory-briefing__count + .inventory-briefing__count {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+      border-left: 0;
+    }
+
+    .inventory-equipment__grid,
+    .inventory-workshop__grid,
+    .inventory-materials__groups {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .inventory-equipment__slot {
+      min-height: 0;
+    }
+
+    .inventory-collection__grid,
+    .inventory-pill-cabinet__grid,
+    .inventory-material-group__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inventory-collection__pager > button {
+      min-width: 0;
+      flex-basis: 100%;
+    }
+  }
+}

@@ -402,6 +402,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/titles.css";
 import { computed, nextTick, ref } from "vue";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";

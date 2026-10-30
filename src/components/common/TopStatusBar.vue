@@ -89,12 +89,17 @@
     <!-- 卷目栏:只报「我在哪一卷」与「此世何界」,不重复页面里的大标题。 -->
     <div
       :data-folio-position="positionKey"
-      class="masthead-route mt-1.5 flex items-center gap-1.5 border-t border-ink/10 pt-1 text-note text-ink-faint short:hidden"
+      class="masthead-route mt-1.5 flex min-w-0 items-center gap-1.5 border-t border-ink/10 pt-1 text-note text-ink-faint short:hidden"
     >
-      <span class="shrink-0 font-kai tracking-[0.18em] text-cinnabar">{{ positionMark }}</span>
-      <span aria-hidden="true">·</span>
-      <span class="min-w-0 truncate font-kai tracking-[0.12em] text-ink-soft">{{ entryMark }}</span>
-      <span class="ml-auto min-w-0 truncate text-right">
+      <span class="masthead-route__position compact:hidden">{{ positionMark }}</span>
+      <FolioIndexRail
+        :items="volumeItems"
+        kind="volume"
+        label="五卷快引"
+        class="masthead-route__rail"
+      />
+      <span class="masthead-route__book min-w-0 truncate">{{ entryMark }}</span>
+      <span class="masthead-route__world ml-auto min-w-0 truncate text-right tinylens:hidden">
         {{ player.worldName }}
         <template v-if="player.reincarnation.count > 0">
           · {{ player.reincarnation.count }} 世
@@ -115,7 +120,9 @@ import { cnNumber, formatGN, formatNum, lifespanPair } from "@/utils/format";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { Capacitor } from "@capacitor/core";
 import { useNativeInsets } from "@/composables/useNativeInsets";
+import { volumeRailItems } from "@/ui/folioIndexRail";
 import { navigationPositionOf } from "@/ui/navigation";
+import FolioIndexRail from "./FolioIndexRail.vue";
 import GameIcon from "./GameIcon.vue";
 import NavigationAtlas from "./NavigationAtlas.vue";
 
@@ -124,6 +131,7 @@ const resources = useResourcesStore();
 const route = useRoute();
 const atlasOpen = ref(false);
 const position = computed(() => navigationPositionOf(route.name));
+const volumeItems = computed(() => volumeRailItems(route.name));
 const positionKey = computed(() =>
   position.value ? `${position.value.sectionIndex + 1}-${position.value.entryIndex + 1}` : "",
 );
@@ -134,7 +142,7 @@ const positionMark = computed(() =>
 );
 const entryMark = computed(() =>
   position.value
-    ? `${String(position.value.entryIndex + 1).padStart(2, "0")} ${position.value.entry.label}`
+    ? `${String(position.value.entryIndex + 1).padStart(2, "0")} · ${position.value.entry.label}`
     : "未名之页",
 );
 /**

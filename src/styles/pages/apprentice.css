@@ -1,0 +1,566 @@
+@layer reset, shared, page, app-utilities;
+@layer page {
+  /*
+   * 门庭案 —— 门庭图先给“谁在家、谁在路上”的方位，今日总账再收拢派发决策，
+   * 值日簿按候差在前、归期先后逐人摊开。
+   *
+   * 旧页把卷首读数、弟子身份、羁绊说明与五枚任务按钮挤在同一张卡上，重复的
+   * “等级 / 羁绊 / 真传”说明又把真正要点的差事进度与产出压到后面。现在总账
+   * 只回答“几个人能派、最近谁回来”，值日簿再回答“这个人适合去哪、归来拿什么”。
+   */
+  .apprentice-pulse {
+    position: relative;
+    overflow: hidden;
+    margin-top: 0.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    border-top: 2px solid rgb(var(--color-cinnabar-rgb) / 0.48);
+    border-radius: 2px;
+    background:
+      linear-gradient(
+        116deg,
+        rgb(var(--color-paper-rgb) / 0.34),
+        transparent 48%,
+        rgb(var(--color-cinnabar-rgb) / 0.018)
+      ),
+      rgb(var(--color-paper-lifted-rgb) / 0.72);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.36),
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
+  }
+  .apprentice-pulse::before {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.03);
+    content: "";
+    pointer-events: none;
+  }
+  .apprentice-pulse__head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.46rem 0.62rem;
+    padding: 0.68rem 0.78rem 0.58rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .apprentice-pulse__seal {
+    display: grid;
+    width: 2.1rem;
+    height: 2.1rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+    background:
+      linear-gradient(
+        145deg,
+        rgb(var(--color-paper-rgb) / 0.58),
+        rgb(var(--color-cinnabar-rgb) / 0.035)
+      ),
+      rgb(var(--color-paper-rgb) / 0.28);
+    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.24);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .apprentice-pulse__heading {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.04rem;
+  }
+  .apprentice-pulse__eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.16em;
+  }
+  .apprentice-pulse__title {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.14em;
+    line-height: 1.35;
+  }
+  .apprentice-pulse__position {
+    margin-left: auto;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .apprentice-pulse__body {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 0;
+  }
+  .apprentice-pulse__tallies {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .apprentice-pulse__tally,
+  .apprentice-pulse__next {
+    min-width: 0;
+    padding: 0.54rem 0.7rem 0.58rem;
+  }
+  .apprentice-pulse__tally {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+  .apprentice-pulse__tally + .apprentice-pulse__tally {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .apprentice-pulse__next {
+    grid-column: 1 / -1;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    background: rgb(var(--color-qing-rgb) / 0.018);
+  }
+  .apprentice-pulse__label {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+  .apprentice-pulse__value {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    line-height: 1;
+  }
+  .apprentice-pulse__unit {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .apprentice-pulse__next-value {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.02rem 0.34rem;
+    margin-top: 0.2rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    font-weight: 400;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .apprentice-pulse__next-route {
+    min-width: 0;
+  }
+  .apprentice-pulse__next-countdown {
+    white-space: nowrap;
+  }
+  .apprentice-pulse .apprentice-pulse__dispatch {
+    width: 100%;
+    min-height: 42px;
+    border-radius: 1px;
+    padding: 0.58rem 0.78rem;
+    white-space: normal;
+  }
+  .apprentice-pulse__foot {
+    position: relative;
+    z-index: 1;
+    padding: 0.42rem 0.78rem 0.52rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .apprentice-roster {
+    overflow: hidden;
+    margin-top: 0.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    border-top: 2px solid rgb(var(--color-qing-rgb) / 0.44);
+    border-radius: 2px;
+    background:
+      linear-gradient(108deg, rgb(var(--color-qing-rgb) / 0.018), transparent 42%),
+      rgb(var(--color-paper-lifted-rgb));
+    box-shadow:
+      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.12),
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.018);
+  }
+  .apprentice-roster__empty {
+    display: flex;
+    min-height: 9rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.7;
+    text-align: center;
+  }
+  .apprentice-roster__empty-seal {
+    display: grid;
+    width: 2.4rem;
+    height: 2.4rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+  }
+  .apprentice-roster__group + .apprentice-roster__group {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .apprentice-roster__group-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.16rem 0.5rem;
+    padding: 0.62rem 0.8rem 0.48rem;
+    background:
+      linear-gradient(90deg, rgb(var(--color-paper-rgb) / 0.34), transparent 58%),
+      rgb(var(--color-paper-rgb) / 0.12);
+  }
+  .apprentice-roster__group-index {
+    display: grid;
+    width: 1.32rem;
+    height: 1.32rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.32);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .apprentice-roster__group-title {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.16em;
+  }
+  .apprentice-roster__group-hint {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .apprentice-roster__group-count {
+    margin-left: auto;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .apprentice-roster__list {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .apprentice-roster__row {
+    min-width: 0;
+    padding: 0.76rem 0.8rem 0.82rem;
+  }
+  .apprentice-roster__row + .apprentice-roster__row {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  }
+  .apprentice-roster__mark {
+    display: grid;
+    width: 1.82rem;
+    height: 1.82rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.17);
+    background: rgb(var(--color-paper-rgb) / 0.3);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .apprentice-roster__name {
+    color: rgb(var(--color-ink-rgb));
+    font-size: var(--type-title);
+    letter-spacing: 0.08em;
+    line-height: 1.35;
+  }
+  .apprentice-roster__quality,
+  .apprentice-roster__level {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .apprentice-roster__talent {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.18rem;
+    padding: 0.08rem 0.28rem;
+    border: 1px solid rgb(var(--color-qing-rgb) / 0.22);
+    background: rgb(var(--color-qing-rgb) / 0.035);
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .apprentice-roster__status {
+    margin-left: auto;
+    padding: 0.06rem 0.28rem;
+    border: 1px solid;
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.1em;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .apprentice-roster__status.is-idle {
+    border-color: rgb(var(--color-cinnabar-rgb) / 0.3);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .apprentice-roster__status.is-away {
+    border-color: rgb(var(--color-qing-rgb) / 0.28);
+    color: rgb(var(--color-qing-rgb));
+  }
+  .apprentice-roster__desc {
+    margin-top: 0.28rem;
+    padding-left: 2.28rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .apprentice-roster__bond {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.18rem 0.55rem;
+    margin-top: 0.42rem;
+    padding-left: 2.28rem;
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .apprentice-roster__bond-title,
+  .apprentice-roster__bond-next,
+  .apprentice-roster__bond-done {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .apprentice-roster__bond-title {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    letter-spacing: 0.08em;
+  }
+  .apprentice-roster__bond-track {
+    width: 100%;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 1px;
+    background: rgb(var(--color-ink-rgb) / 0.07);
+  }
+  .apprentice-roster__bond-track span {
+    display: block;
+    height: 100%;
+    background: rgb(var(--color-qing-rgb) / 0.58);
+  }
+  .apprentice-roster__task {
+    margin-top: 0.58rem;
+    padding: 0.54rem 0.62rem 0.58rem;
+    border-left: 2px solid rgb(var(--color-qing-rgb) / 0.46);
+    background:
+      linear-gradient(90deg, rgb(var(--color-qing-rgb) / 0.045), transparent 72%),
+      rgb(var(--color-paper-rgb) / 0.16);
+  }
+  .apprentice-roster__task-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.16rem 0.5rem;
+  }
+  .apprentice-roster__task-name {
+    color: rgb(var(--color-ink-rgb));
+    font-size: var(--type-body);
+    letter-spacing: 0.08em;
+  }
+  .apprentice-roster__task-talent {
+    padding: 0.04rem 0.24rem;
+    border: 1px solid rgb(var(--color-qing-rgb) / 0.24);
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .apprentice-roster__task-eta {
+    margin-left: auto;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .apprentice-roster__task-bar {
+    margin-top: 0.38rem;
+  }
+  .apprentice-roster__task-yield {
+    margin-top: 0.32rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .apprentice-roster__task-yield span {
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+  .apprentice-roster__dispatch {
+    margin-top: 0.58rem;
+  }
+  .apprentice-roster__dispatch-note {
+    margin-bottom: 0.38rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .apprentice-task-choice {
+    min-width: 0;
+    border-radius: 1px;
+  }
+  .apprentice-task-choice__top {
+    min-width: 0;
+  }
+  .apprentice-task-choice__name {
+    min-width: 0;
+    overflow: hidden;
+    color: rgb(var(--color-ink-rgb));
+    font-size: var(--type-body);
+    letter-spacing: 0.04em;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .apprentice-task-choice__talent {
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .apprentice-task-choice__time {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .apprentice-task-choice__yield {
+    display: block;
+    margin-top: 0.14rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.48;
+    overflow-wrap: anywhere;
+  }
+  .apprentice-roster__task-note {
+    margin-top: 0.4rem;
+    padding: 0.38rem 0.46rem;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+    background: rgb(var(--color-cinnabar-rgb) / 0.025);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
+  .apprentice-rules {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    border-top: 2px solid rgb(var(--color-cinnabar-rgb) / 0.34);
+    border-radius: 2px;
+    background:
+      linear-gradient(102deg, rgb(var(--color-paper-rgb) / 0.28), transparent 46%),
+      rgb(var(--color-paper-lifted-rgb) / 0.72);
+    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.12);
+  }
+  .apprentice-rules__item {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.4rem minmax(0, 1fr);
+    gap: 0.55rem;
+    padding: 0.62rem 0.74rem;
+  }
+  .apprentice-rules__item + .apprentice-rules__item {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .apprentice-rules__index {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .apprentice-rules__title {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    line-height: 1.55;
+  }
+  .apprentice-rules__copy {
+    margin-top: 0.1rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.62;
+  }
+  @media (min-width: 620px) {
+    .apprentice-pulse__tallies {
+      grid-template-columns: minmax(5rem, 0.55fr) minmax(5rem, 0.55fr) minmax(0, 1.9fr);
+    }
+
+    .apprentice-pulse__next {
+      grid-column: auto;
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+
+    .apprentice-rules {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .apprentice-rules__item:nth-child(2) {
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+
+    .apprentice-rules__item:nth-child(4) {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+  }
+  @media (max-width: 220px) {
+    .apprentice-pulse__head,
+    .apprentice-pulse__tally,
+    .apprentice-pulse__next,
+    .apprentice-pulse__foot,
+    .apprentice-roster__group-head,
+    .apprentice-roster__row,
+    .apprentice-rules__item {
+      padding-inline: 0.62rem;
+    }
+
+    .apprentice-pulse__position,
+    .apprentice-roster__status {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .apprentice-pulse__tallies {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .apprentice-pulse__tally + .apprentice-pulse__tally {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+      border-left: 0;
+    }
+
+    .apprentice-pulse__next {
+      grid-column: auto;
+    }
+
+    .apprentice-roster__group-count {
+      width: 100%;
+      margin-left: 1.82rem;
+    }
+
+    .apprentice-roster__desc,
+    .apprentice-roster__bond {
+      padding-left: 0;
+    }
+
+    .apprentice-roster__task-eta {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .apprentice-rules__item {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.05rem;
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { readStyleCss } from "@/test/readStyleCss";
 import { atlasJumpIndex, atlasSectionIdForRoute } from "./atlas";
 
 const ROOT = resolve(__dirname, "../..");
@@ -25,7 +26,7 @@ describe("玄枢图 · 五卷快引", () => {
 
   it("组件接上五卷快引、卷宗分册与极窄档规则", () => {
     const atlas = readFileSync(resolve(ROOT, "src/components/common/NavigationAtlas.vue"), "utf8");
-    const css = readFileSync(resolve(ROOT, "src/style.css"), "utf8");
+    const css = readStyleCss();
     const modal = readFileSync(resolve(ROOT, "src/components/common/BaseModal.vue"), "utf8");
 
     expect(atlas, "顶栏的玄枢图要有五卷快引").toContain("data-atlas-compass");

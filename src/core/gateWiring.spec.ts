@@ -31,14 +31,17 @@
  * 判据只看**真实的命令**(行首是 `#` 的注释行跳过),不解析 YAML:`run:` 的写法
  * 就那么几种,能静态数出来的,就该有一条会自己跑的判据。
  */
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vite-plus/test";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const WORKFLOWS = join(ROOT, ".github/workflows");
 const ACTIONS = join(ROOT, ".github/actions");
 const PRE_COMMIT = join(ROOT, ".vite-hooks/pre-commit");
+const COMMIT_MSG = join(ROOT, ".vite-hooks/commit-msg");
 
 /** package.json 的本仓契约(脚本、运行时与直接依赖) */
 const PKG = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
@@ -215,6 +218,28 @@ const BROWSER_GATES = [
 
 /** vite.config.ts 的 run.tasks 名(`vp run X` 的第二处真相源),读一次 */
 const VITE_TASKS = viteTaskNames();
+
+describe("提交信息门 —— 字面量 \\n 不许冒充换行", () => {
+  function runHook(message: string) {
+    const dir = mkdtempSync(join(tmpdir(), "xuanshu-commit-msg-"));
+    const file = join(dir, "COMMIT_EDITMSG");
+    writeFileSync(file, message);
+    const result = spawnSync(COMMIT_MSG, [file], { encoding: "utf8" });
+    rmSync(dir, { recursive: true, force: true });
+    return result;
+  }
+
+  it("拦下被 -m 挤成一行的 bullet", () => {
+    const result = runHook("refactor(ui): 示例\n\n- 第一条\\n- 第二条\\n- 第三条\n");
+    expect(result.status, "字面量 \\n- 没有被拦下").toBe(1);
+    expect(result.stderr).toContain("请改用提交信息文件");
+  });
+
+  it("真正的多行 bullet 照常放行", () => {
+    const result = runHook("refactor(ui): 示例\n\n- 第一条\n- 第二条\n- 第三条\n");
+    expect(result.status).toBe(0);
+  });
+});
 
 describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () => {
   it("正向:CI 里每个点名的 scripts/*.mjs 都能在 package.json 或 verify 里找到入口", () => {

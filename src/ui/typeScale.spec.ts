@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { readStyleCss } from "@/test/readStyleCss";
 
 const ROOT = resolve(__dirname, "../..");
 const SRC = resolve(ROOT, "src");
-const STYLE = readFileSync(resolve(SRC, "style.css"), "utf8");
+const STYLE = readStyleCss();
 const TAILWIND = readFileSync(resolve(ROOT, "tailwind.config.js"), "utf8");
 
 const TIERS = ["note", "body", "title", "section", "heading"] as const;

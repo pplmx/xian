@@ -525,6 +525,7 @@
 </template>
 
 <script setup lang="ts">
+import "@/styles/pages/settings.css";
 import { computed, ref, useTemplateRef, onUnmounted } from "vue";
 import { useSettingsStore } from "@/stores/settings";
 import { useGameStore } from "@/stores/game";
