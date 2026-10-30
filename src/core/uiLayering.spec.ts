@@ -3963,6 +3963,19 @@ describe("主巡页 · 字阶同一套", () => {
           css.slice(start, end),
         ].join("\n");
       }
+      if (src.includes("@/components/common/LedgerHeader.vue")) {
+        /*
+         * 章首字阶已迁进共享案头；防空转要把组件结构与 style.css 里的案头字阶一起数，
+         * 不能把抽组件误判成整页清空。结构本身仍由 ui/ledgerHeader.spec 另守。
+         */
+        const css = readStyleCss();
+        const start = css.indexOf(".folio-ledger-head {");
+        const end = css.indexOf("@media (max-width: 220px)", start);
+        src += [
+          FILES.find((f) => f.path === "components/common/LedgerHeader.vue")?.src ?? "",
+          css.slice(start, end),
+        ].join("\n");
+      }
       const extra = NON_TEXT_ALLOW[path];
       const allow = extra ? [...PAGE_TIERS, ...extra.sizes] : PAGE_TIERS;
       const off = [...new Set(usedTypeSizes(src))].filter((n) => !allow.includes(n));

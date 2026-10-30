@@ -78,21 +78,15 @@
         data-legacy-tab="samsara"
       >
         <section class="legacy-ledger" data-legacy-samsara>
-          <header class="legacy-ledger__head">
-            <span class="legacy-ledger__seal" aria-hidden="true">轮</span>
-            <div class="legacy-ledger__identity">
-              <p class="legacy-ledger__eyebrow">本世总案</p>
-              <h2 class="legacy-ledger__title">宿慧与随身所知</h2>
-              <p class="legacy-ledger__desc">
-                轮回阶只开见识；灵材、丹方、器谱与敌手路数才是跨世不灭的底账。
-              </p>
-            </div>
-            <p class="legacy-ledger__score tabular">
-              <span>第</span>
-              <strong class="text-heading">{{ currentLife }}</strong>
-              <span>世</span>
-            </p>
-          </header>
+          <LedgerHeader
+            seal="轮"
+            eyebrow="本世总案"
+            title="宿慧与随身所知"
+            description="轮回阶只开见识；灵材、丹方、器谱与敌手路数才是跨世不灭的底账。"
+            score-label="第"
+            :score-value="currentLife"
+            score-suffix="世"
+          />
 
           <div class="legacy-ledger__grid legacy-ledger__grid--three">
             <article class="legacy-panel" data-legacy-stage>
@@ -200,19 +194,16 @@
           :data-life-shown="lifePage.shown"
           :data-life-start="lifePage.start"
         >
-          <header class="legacy-ledger__head legacy-history__head">
-            <div>
-              <p class="legacy-ledger__eyebrow">旧世归档</p>
-              <h2 class="legacy-ledger__title">历世履历</h2>
-            </div>
-            <p class="legacy-history__window tabular">
-              {{
-                lifeRows.length
-                  ? `现看 ${lifePage.start + 1}–${lifePage.shown} · 共 ${lifeRows.length} 世`
-                  : "初世"
-              }}
-            </p>
-          </header>
+          <LedgerHeader
+            variant="index"
+            eyebrow="旧世归档"
+            title="历世履历"
+            :meta="
+              lifeRows.length
+                ? `现看 ${lifePage.start + 1}–${lifePage.shown} · 共 ${lifeRows.length} 世`
+                : '初世'
+            "
+          />
 
           <div class="legacy-history__list">
             <template v-if="lifeRows.length">
@@ -273,21 +264,15 @@
         data-legacy-tab="journey"
       >
         <section class="legacy-ledger" data-legacy-journey>
-          <header class="legacy-ledger__head">
-            <span class="legacy-ledger__seal" aria-hidden="true">程</span>
-            <div class="legacy-ledger__identity">
-              <p class="legacy-ledger__eyebrow">跨世行迹</p>
-              <h2 class="legacy-ledger__title">修行节点与宿敌</h2>
-              <p class="legacy-ledger__desc">
-                节点是首次破界留下的路标；宿敌只记败过三次以上的对手，雪耻后仍留名。
-              </p>
-            </div>
-            <p class="legacy-ledger__score tabular">
-              <span>节点</span>
-              <strong class="text-heading">{{ milestoneRows.length }}</strong>
-              <span>/ {{ MILESTONE_DEFS.length }}</span>
-            </p>
-          </header>
+          <LedgerHeader
+            seal="程"
+            eyebrow="跨世行迹"
+            title="修行节点与宿敌"
+            description="节点是首次破界留下的路标；宿敌只记败过三次以上的对手，雪耻后仍留名。"
+            score-label="节点"
+            :score-value="milestoneRows.length"
+            :score-suffix="`/ ${MILESTONE_DEFS.length}`"
+          />
 
           <div class="legacy-ledger__grid">
             <article class="legacy-panel">
@@ -356,21 +341,15 @@
         data-legacy-tab="fate"
       >
         <section class="legacy-ledger" data-legacy-fate>
-          <header class="legacy-ledger__head">
-            <span class="legacy-ledger__seal" aria-hidden="true">缘</span>
-            <div class="legacy-ledger__identity">
-              <p class="legacy-ledger__eyebrow">未了之缘</p>
-              <h2 class="legacy-ledger__title">奇缘录</h2>
-              <p class="legacy-ledger__desc">
-                只有起了头的缘才在此露面；已了与缘断都留结局，不把旧选择一笔抹掉。
-              </p>
-            </div>
-            <p class="legacy-ledger__score tabular">
-              <span>未了</span>
-              <strong class="text-heading">{{ unfinishedChains }}</strong>
-              <span>条</span>
-            </p>
-          </header>
+          <LedgerHeader
+            seal="缘"
+            eyebrow="未了之缘"
+            title="奇缘录"
+            description="只有起了头的缘才在此露面；已了与缘断都留结局，不把旧选择一笔抹掉。"
+            score-label="未了"
+            :score-value="unfinishedChains"
+            score-suffix="条"
+          />
 
           <div v-if="chainRows.length" class="legacy-fate__list">
             <article
@@ -406,19 +385,16 @@
           :data-loss-shown="lossPage.shown"
           :data-loss-start="lossPage.start"
         >
-          <header class="legacy-ledger__head legacy-history__head">
-            <div>
-              <p class="legacy-ledger__eyebrow">世界回响</p>
-              <h2 class="legacy-ledger__title">行迹录</h2>
-            </div>
-            <p class="legacy-history__window tabular">
-              {{
-                lossTotal
-                  ? `现看 ${lossPage.start + 1}–${lossPage.shown} · 共 ${lossTotal} 则`
-                  : "尚无回响"
-              }}
-            </p>
-          </header>
+          <LedgerHeader
+            variant="index"
+            eyebrow="世界回响"
+            title="行迹录"
+            :meta="
+              lossTotal
+                ? `现看 ${lossPage.start + 1}–${lossPage.shown} · 共 ${lossTotal} 则`
+                : '尚无回响'
+            "
+          />
 
           <div class="legacy-loss__list">
             <template v-if="lossRows.length">
@@ -470,21 +446,15 @@
 
       <section v-else class="legacy-tab" role="tabpanel" aria-label="纪录" data-legacy-tab="record">
         <section class="legacy-ledger" data-legacy-record>
-          <header class="legacy-ledger__head">
-            <span class="legacy-ledger__seal" aria-hidden="true">极</span>
-            <div class="legacy-ledger__identity">
-              <p class="legacy-ledger__eyebrow">只与过去的自己比</p>
-              <h2 class="legacy-ledger__title">极境纪录</h2>
-              <p class="legacy-ledger__desc">
-                每一格都记破界那一刻的实值；未立不是零，只表示还没走到可比较的一战。
-              </p>
-            </div>
-            <p class="legacy-ledger__score tabular">
-              <span>已立</span>
-              <strong class="text-heading">{{ recordCount }}</strong>
-              <span>/ {{ RECORD_DEFS.length }}</span>
-            </p>
-          </header>
+          <LedgerHeader
+            seal="极"
+            eyebrow="只与过去的自己比"
+            title="极境纪录"
+            description="每一格都记破界那一刻的实值；未立不是零，只表示还没走到可比较的一战。"
+            score-label="已立"
+            :score-value="recordCount"
+            :score-suffix="`/ ${RECORD_DEFS.length}`"
+          />
 
           <div class="legacy-record__list">
             <article
@@ -565,6 +535,7 @@ import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 
 /** 长卷分册:轮回(本世与历世)/ 征程(节点与宿敌)/ 缘迹(奇缘与行迹)/ 纪录 */

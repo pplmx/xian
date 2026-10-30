@@ -132,6 +132,7 @@
   .build-ledger {
     --build-accent: var(--color-cinnabar);
     --build-accent-rgb: var(--color-cinnabar-rgb);
+    --ledger-accent: var(--build-accent);
     position: relative;
     min-width: 0;
     overflow: hidden;
@@ -160,68 +161,6 @@
     border: 1px solid rgb(var(--color-ink-rgb) / 0.028);
     content: "";
     pointer-events: none;
-  }
-  .build-ledger__head {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 0.58rem 0.72rem;
-    padding: 0.78rem 0.88rem 0.68rem;
-  }
-  .build-ledger__seal {
-    display: grid;
-    width: 2.45rem;
-    height: 2.45rem;
-    flex: 0 0 auto;
-    place-items: center;
-    border: 1px solid rgb(var(--build-accent-rgb) / 0.34);
-    color: var(--build-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    line-height: 1;
-  }
-  .build-ledger__identity {
-    min-width: 7rem;
-    flex: 1 1 11rem;
-  }
-  .build-ledger__eyebrow {
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
-    line-height: 1.45;
-  }
-  .build-ledger__title {
-    color: var(--color-ink);
-    font-family: var(--font-kai);
-    font-size: var(--type-heading);
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    line-height: 1.3;
-  }
-  .build-ledger__desc {
-    margin-top: 0.12rem;
-    color: var(--color-ink-soft);
-    font-size: var(--type-note);
-    line-height: 1.55;
-  }
-  .build-ledger__score {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: baseline;
-    gap: 0.18rem;
-    margin-left: auto;
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    white-space: nowrap;
-  }
-  .build-ledger__score strong {
-    color: var(--build-accent);
-    font-family: var(--font-kai);
-    font-weight: 400;
-    line-height: 1;
   }
   .build-ledger__grid {
     position: relative;
@@ -719,68 +658,6 @@
   .build-compare__note {
     color: var(--color-ink-faint);
   }
-  .build-discovery__head {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 0.58rem 0.72rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-    padding: 0.82rem 0.88rem 0.7rem;
-  }
-  .build-discovery__head-seal {
-    display: grid;
-    width: 2.45rem;
-    height: 2.45rem;
-    flex: 0 0 auto;
-    place-items: center;
-    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.34);
-    color: var(--color-cinnabar);
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    line-height: 1;
-  }
-  .build-discovery__identity {
-    min-width: 7rem;
-    flex: 1 1 11rem;
-  }
-  .build-discovery__head .build-discovery__eyebrow {
-    gap: 0.18rem 0.56rem;
-  }
-  .build-discovery__head .build-discovery__eyebrow span + span::before {
-    margin-right: 0.56rem;
-  }
-  .build-discovery__head h2 {
-    color: var(--color-ink);
-    font-family: var(--font-kai);
-    font-size: var(--type-heading);
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    line-height: 1.3;
-  }
-  .build-discovery__desc {
-    margin-top: 0.12rem;
-    color: var(--color-ink-soft);
-    font-size: var(--type-note);
-    line-height: 1.55;
-  }
-  .build-discovery__score {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: baseline;
-    gap: 0.18rem;
-    margin-left: auto;
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    white-space: nowrap;
-  }
-  .build-discovery__score strong {
-    color: var(--color-cinnabar);
-    font-family: var(--font-kai);
-    font-size: var(--type-heading);
-    font-weight: 400;
-    line-height: 1;
-  }
   .build-discovery__reading span {
     color: var(--color-cinnabar);
   }
@@ -801,10 +678,6 @@
     .build-ledger__grid--three .build-panel:nth-child(3) {
       border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
       border-left: 0;
-    }
-
-    .build-discovery__head {
-      padding-inline: 1rem;
     }
   }
   @media (min-width: 960px) {
@@ -828,32 +701,12 @@
       height: 6.5rem;
     }
 
-    .build-ledger__head,
     .build-panel,
     .build-ledger__foot,
     .build-loadout__toolbar,
     .build-loadout__row,
-    .build-compare__body,
-    .build-discovery__head {
+    .build-compare__body {
       padding-inline: 0.62rem;
-    }
-
-    .build-ledger__head {
-      gap: 0.46rem 0.55rem;
-    }
-
-    .build-ledger__seal,
-    .build-discovery__head-seal {
-      width: 2rem;
-      height: 2rem;
-    }
-
-    .build-ledger__score,
-    .build-discovery__score {
-      width: 100%;
-      margin-left: 0;
-      padding-left: 2.55rem;
-      text-align: left;
     }
 
     .build-ledger__grid,

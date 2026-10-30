@@ -25,21 +25,15 @@
 
       <section v-if="tab === 'title'" class="name-beast-tab" role="tabpanel" aria-label="名号">
         <section class="name-beast-ledger" data-title-ledger data-kind="title">
-          <header class="name-beast-ledger__head">
-            <span class="name-beast-ledger__seal" aria-hidden="true">名</span>
-            <div class="name-beast-ledger__identity">
-              <p class="name-beast-ledger__eyebrow">名下之印</p>
-              <h2 class="name-beast-ledger__title">名号总案</h2>
-              <p class="name-beast-ledger__desc">
-                一枚佩在身上，其余收进谱中；下一顶仍从成就进度里算。
-              </p>
-            </div>
-            <p class="name-beast-ledger__score tabular">
-              <span>已藏</span>
-              <strong>{{ ownedCount }}</strong>
-              <span>/ {{ TITLES.length }}</span>
-            </p>
-          </header>
+          <LedgerHeader
+            seal="名"
+            eyebrow="名下之印"
+            title="名号总案"
+            description="一枚佩在身上，其余收进谱中；下一顶仍从成就进度里算。"
+            score-label="已藏"
+            :score-value="ownedCount"
+            :score-suffix="`/ ${TITLES.length}`"
+          />
 
           <div class="name-beast-ledger__grid">
             <article class="name-beast-ledger__panel" data-title-current>
@@ -120,15 +114,12 @@
           :data-title-shown="titlePage.shown"
           :data-title-start="titlePage.start"
         >
-          <header class="name-ledger__head">
-            <div>
-              <p class="name-ledger__eyebrow">佩印与旧藏</p>
-              <h2 class="name-ledger__title">名号谱</h2>
-            </div>
-            <p class="name-ledger__window tabular">
-              现看 {{ titlePage.start + 1 }}–{{ titlePage.shown }} · 共 {{ titleRows.length }} 顶
-            </p>
-          </header>
+          <LedgerHeader
+            variant="index"
+            eyebrow="佩印与旧藏"
+            title="名号谱"
+            :meta="`现看 ${titlePage.start + 1}–${titlePage.shown} · 共 ${titleRows.length} 顶`"
+          />
 
           <div class="name-ledger__list">
             <article
@@ -203,21 +194,15 @@
 
       <section v-else class="name-beast-tab" role="tabpanel" aria-label="灵兽">
         <section class="name-beast-ledger" data-pet-ledger data-kind="pet">
-          <header class="name-beast-ledger__head">
-            <span class="name-beast-ledger__seal" aria-hidden="true">兽</span>
-            <div class="name-beast-ledger__identity">
-              <p class="name-beast-ledger__eyebrow">同行之契</p>
-              <h2 class="name-beast-ledger__title">灵契总案</h2>
-              <p class="name-beast-ledger__desc">
-                一兽相伴，其余结缘在册；出战加成读人物页同一份终值。
-              </p>
-            </div>
-            <p class="name-beast-ledger__score tabular">
-              <span>已结缘</span>
-              <strong>{{ ownedPetCount }}</strong>
-              <span>/ {{ PETS.length }}</span>
-            </p>
-          </header>
+          <LedgerHeader
+            seal="兽"
+            eyebrow="同行之契"
+            title="灵契总案"
+            description="一兽相伴，其余结缘在册；出战加成读人物页同一份终值。"
+            score-label="已结缘"
+            :score-value="ownedPetCount"
+            :score-suffix="`/ ${PETS.length}`"
+          />
 
           <div class="name-beast-ledger__grid">
             <article class="name-beast-ledger__panel" data-pet-current>
@@ -294,15 +279,12 @@
           :data-pet-shown="petPage.shown"
           :data-pet-start="petPage.start"
         >
-          <header class="name-ledger__head">
-            <div>
-              <p class="name-ledger__eyebrow">已契与未逢</p>
-              <h2 class="name-ledger__title">灵兽谱</h2>
-            </div>
-            <p class="name-ledger__window tabular">
-              现看 {{ petPage.start + 1 }}–{{ petPage.shown }} · 共 {{ petRows.length }} 只
-            </p>
-          </header>
+          <LedgerHeader
+            variant="index"
+            eyebrow="已契与未逢"
+            title="灵兽谱"
+            :meta="`现看 ${petPage.start + 1}–${petPage.shown} · 共 ${petRows.length} 只`"
+          />
 
           <div class="name-ledger__list">
             <article
@@ -433,6 +415,7 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import NameBeastAtlas from "@/components/common/NameBeastAtlas.vue";
 import { nameBeastMeter, petEntryState, titleEntryState } from "@/ui/titlesDesk";
 

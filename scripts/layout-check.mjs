@@ -1482,14 +1482,23 @@ async function measurePixelContrast(page, sampler, dpr) {
     const mainBox = document.querySelector("main")?.getBoundingClientRect();
     const rail = document.querySelector(".tab-rail");
     const railBox = rail?.getBoundingClientRect();
+    const colorCanvas = document.createElement("canvas");
+    colorCanvas.width = 1;
+    colorCanvas.height = 1;
+    const colorCtx = colorCanvas.getContext("2d", { willReadFrequently: true });
     const parse = (c) => {
-      const m = /rgba?\(([^)]+)\)/.exec(c);
-      if (!m) return null;
-      const p = m[1]
-        .split(/[,\s/]+/)
-        .filter(Boolean)
-        .map(Number);
-      return p.length < 3 ? null : { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 };
+      if (!colorCtx) return null;
+      /*
+       * `color-mix()` 的计算值在 Chromium 里可能是 `color(srgb 0.62 0.71 0.62)`,
+       * 不是 `rgb(160 183 158)`. 若只按 0–255 的 rgba 正则取数字,会把它读成
+       * 0.62 / 0.71 / 0.62 三颗「近黑」通道,查出 1.78:1 的假红。交给 1×1
+       * canvas 归一成 sRGB RGBA,既覆盖 `color()`,也覆盖 `oklch()` / `lab()`.
+       */
+      colorCtx.clearRect(0, 0, 1, 1);
+      colorCtx.fillStyle = c;
+      colorCtx.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = colorCtx.getImageData(0, 0, 1, 1).data;
+      return { rgb: [r, g, b], a: a / 255 };
     };
     /**
      * 这块字的底沾没沾渐变/图片 —— 一路向上,直到撞上不透明的色层。
@@ -1585,9 +1594,11 @@ async function measurePixelContrast(page, sampler, dpr) {
       }
       if (!rects.length) continue;
       const size = parseFloat(cs.fontSize);
+      const rgba = parse(cs.color);
+      if (!rgba) continue;
       out.push({
         rects,
-        color: cs.color,
+        rgba: [...rgba.rgb, rgba.a],
         size,
         need: size >= 24 || (Number(cs.fontWeight) >= 700 && size >= 18.66) ? 3 : 4.5,
         text: (el.textContent || "").trim().slice(0, 14),
@@ -1658,12 +1669,12 @@ async function measurePixelContrast(page, sampler, dpr) {
       const lum = (p) => 0.2126 * f(p[0]) + 0.7152 * f(p[1]) + 0.0722 * f(p[2]);
       const out = [];
       for (const t of list) {
-        const parts = (t.color.match(/[\d.]+/g) || []).map(Number);
-        if (parts.length < 3) {
+        const rgba = t.rgba;
+        if (!Array.isArray(rgba) || rgba.length < 4) {
           out.push(null);
           continue;
         }
-        const alpha = parts.length > 3 ? parts[3] : 1;
+        const [fgR, fgG, fgB, alpha] = rgba;
         const ratios = [];
         for (const [x, y, w, h] of t.rects) {
           const px = Math.max(0, Math.floor(x * scale));
@@ -1674,7 +1685,7 @@ async function measurePixelContrast(page, sampler, dpr) {
           const data = ctx.getImageData(px, py, pw, ph).data;
           for (let k = 0; k < data.length; k += 4) {
             const bg = [data[k], data[k + 1], data[k + 2]];
-            const fg = [0, 1, 2].map((i) => parts[i] * alpha + bg[i] * (1 - alpha));
+            const fg = [fgR, fgG, fgB].map((v, i) => v * alpha + bg[i] * (1 - alpha));
             const [hi, lo] = [lum(fg), lum(bg)].sort((a, b) => b - a);
             ratios.push((hi + 0.05) / (lo + 0.05));
           }
@@ -9866,7 +9877,7 @@ async function taskBuildDiscovery() {
             paths: root.querySelectorAll("[data-build-path]").length,
             ledgerRows: root.querySelectorAll("[data-build-ledger] > p").length,
             progress: root.querySelectorAll('[role="progressbar"]').length,
-            headSeal: root.querySelector(".build-discovery__head-seal")?.textContent?.trim() || "",
+            headSeal: root.querySelector(".folio-ledger-head__seal")?.textContent?.trim() || "",
             wheelCount: root.querySelectorAll(".build-discovery__wheel").length,
             atlasHidden: document.querySelector("[data-build-atlas]")?.getAttribute("aria-hidden"),
             cultivation: root.querySelector('a[href="#/cultivation"]')?.textContent?.trim() || "",

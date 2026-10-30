@@ -4,26 +4,14 @@
     class="build-discovery stagger-in"
     :data-build-path-count="rows.length"
   >
-    <header class="build-discovery__head">
-      <span class="build-discovery__head-seal" aria-hidden="true">未</span>
-      <div class="build-discovery__identity">
-        <p class="build-discovery__eyebrow">
-          <span>道途未成</span>
-          <span>{{ cnNumber(rows.length) }}路并观</span>
-        </p>
-        <h2>脚下还没有一条走重</h2>
-        <p class="build-discovery__desc">
-          修行不先选职业。功法、法宝、装备与天赋留下的核心词条，会把你推向其中一路；
-          先走出一条，再谈混合与克制。
-        </p>
-      </div>
-      <p class="build-discovery__score">
-        <strong class="tabular">{{
-          hasTrace ? formatPercent(closest.affinity, 0) : formatPercent(0, 0)
-        }}</strong>
-        <span>{{ hasTrace ? "最近契合" : "尚无契合" }}</span>
-      </p>
-    </header>
+    <LedgerHeader
+      seal="未"
+      :eyebrow="`道途未成 · ${cnNumber(rows.length)}路并观`"
+      title="脚下还没有一条走重"
+      description="修行不先选职业。功法、法宝、装备与天赋留下的核心词条，会把你推向其中一路；先走出一条，再谈混合与克制。"
+      :score-label="hasTrace ? '最近契合' : '尚无契合'"
+      :score-value="formatPercent(hasTrace ? closest.affinity : 0, 0)"
+    />
 
     <div class="build-discovery__ledger" data-build-ledger>
       <p>
@@ -149,6 +137,7 @@ import {
 } from "@/core/buildDetect";
 import { STAT_NAMES } from "@/data/statNames";
 import { cnNumber, formatPercent } from "@/utils/format";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 
 const props = defineProps<{

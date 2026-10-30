@@ -34,18 +34,14 @@
 
     <div class="build-page__body folio-span-all">
       <section v-if="build" class="build-ledger" data-build-formed>
-        <header class="build-ledger__head">
-          <span class="build-ledger__seal" aria-hidden="true">{{ build.style.seal }}</span>
-          <div class="build-ledger__identity">
-            <p class="build-ledger__eyebrow">已成之路 · {{ build.stageName }}</p>
-            <h2 class="build-ledger__title">{{ build.displayName }}</h2>
-            <p class="build-ledger__desc">{{ build.style.desc }}</p>
-          </div>
-          <p class="build-ledger__score tabular">
-            <span>契合</span>
-            <strong class="text-heading">{{ formatPercent(build.affinity, 0) }}</strong>
-          </p>
-        </header>
+        <LedgerHeader
+          :seal="build.style.seal"
+          :eyebrow="`已成之路 · ${build.stageName}`"
+          :title="build.displayName"
+          :description="build.style.desc"
+          score-label="契合"
+          :score-value="formatPercent(build.affinity, 0)"
+        />
 
         <div class="build-ledger__grid build-ledger__grid--three">
           <article class="build-panel" data-build-stage>
@@ -175,22 +171,14 @@
       <BuildDiscovery v-else :rows="buildPaths" />
 
       <section v-if="build" class="build-ledger build-ledger--field" data-build-battle>
-        <header class="build-ledger__head">
-          <span class="build-ledger__seal" aria-hidden="true">战</span>
-          <div class="build-ledger__identity">
-            <p class="build-ledger__eyebrow">实战面 · 只报方向</p>
-            <h2 class="build-ledger__title">短板与第二套答案</h2>
-            <p class="build-ledger__desc">
-              七类本世实敌各打一轮估算；再把主派核心封掉，看看还剩多少胜率。
-            </p>
-          </div>
-          <p class="build-ledger__score tabular">
-            <span>最弱</span>
-            <strong class="text-heading">{{
-              formatPercent(weakestMatchup?.winRate ?? 0, 0)
-            }}</strong>
-          </p>
-        </header>
+        <LedgerHeader
+          seal="战"
+          eyebrow="实战面 · 只报方向"
+          title="短板与第二套答案"
+          description="七类本世实敌各打一轮估算；再把主派核心封掉，看看还剩多少胜率。"
+          score-label="最弱"
+          :score-value="formatPercent(weakestMatchup?.winRate ?? 0, 0)"
+        />
 
         <div class="build-ledger__grid">
           <article class="build-panel build-matchups">
@@ -268,21 +256,15 @@
       </section>
 
       <section class="build-ledger" data-build-loadouts>
-        <header class="build-ledger__head">
-          <span class="build-ledger__seal" aria-hidden="true">藏</span>
-          <div class="build-ledger__identity">
-            <p class="build-ledger__eyebrow">换装底账</p>
-            <h2 class="build-ledger__title">构筑快照</h2>
-            <p class="build-ledger__desc">
-              把顺手的整套功法、法宝与装备存起来，按当前处境一键换装。
-            </p>
-          </div>
-          <p class="build-ledger__score tabular">
-            <span>已存</span>
-            <strong class="text-heading">{{ loadouts.list.length }}</strong>
-            <span>/ {{ MAX_LOADOUTS }}</span>
-          </p>
-        </header>
+        <LedgerHeader
+          seal="藏"
+          eyebrow="换装底账"
+          title="构筑快照"
+          description="把顺手的整套功法、法宝与装备存起来，按当前处境一键换装。"
+          score-label="已存"
+          :score-value="loadouts.list.length"
+          :score-suffix="`/ ${MAX_LOADOUTS}`"
+        />
 
         <div class="build-loadout__toolbar">
           <p>快照只记当前整套装配，不替你重算词条。</p>
@@ -333,21 +315,15 @@
       </section>
 
       <section v-if="compareCandidates.length" class="build-ledger" data-build-compare>
-        <header class="build-ledger__head">
-          <span class="build-ledger__seal" aria-hidden="true">照</span>
-          <div class="build-ledger__identity">
-            <p class="build-ledger__eyebrow">跨世校样</p>
-            <h2 class="build-ledger__title">构筑对照</h2>
-            <p class="build-ledger__desc">
-              以当前构筑，对照道痕中冻结的一套过往构筑，看四天局面各有何异。
-            </p>
-          </div>
-          <p class="build-ledger__score tabular">
-            <span>旧样</span>
-            <strong class="text-heading">{{ compareRows.length }}</strong>
-            <span>则</span>
-          </p>
-        </header>
+        <LedgerHeader
+          seal="照"
+          eyebrow="跨世校样"
+          title="构筑对照"
+          description="以当前构筑，对照道痕中冻结的一套过往构筑，看四天局面各有何异。"
+          score-label="旧样"
+          :score-value="compareRows.length"
+          score-suffix="则"
+        />
 
         <div class="build-compare__body">
           <div
@@ -463,6 +439,7 @@ import { STAT_NAMES } from "@/data/statNames";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import BuildAtlas from "@/components/build/BuildAtlas.vue";
 import BuildDiscovery from "@/components/build/BuildDiscovery.vue";

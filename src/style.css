@@ -780,6 +780,109 @@
     align-items: center;
     gap: 0.3rem;
   }
+  /*
+   * 深页案头 —— 一张总案只认一套身份栏。
+   *
+   * 流派、三生录与名兽页原先各自复制了「印 / 眉题 / 标题 / 说明 / 末尾总账」
+   * 五段结构，颜色、字号和窄屏退行也各写一遍。容器现在只交一枚 --ledger-accent，
+   * 其余结构、间距与 195px 退行由这里统一负责。
+   */
+  .folio-ledger-head {
+    --folio-ledger-accent: var(--ledger-accent, var(--color-cinnabar));
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 2.45rem minmax(0, 1fr) auto;
+    grid-template-areas: "seal identity aside";
+    align-items: start;
+    gap: 0.58rem 0.72rem;
+    padding: 0.78rem 0.88rem 0.68rem;
+  }
+  .folio-ledger-head[data-variant="index"] {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "identity aside";
+    align-items: end;
+    padding: 0.68rem 0.86rem 0.58rem;
+  }
+  .folio-ledger-head__seal {
+    position: relative;
+    display: grid;
+    width: 2.45rem;
+    height: 2.45rem;
+    grid-area: seal;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--folio-ledger-accent) 34%, transparent);
+    background: color-mix(in srgb, var(--folio-ledger-accent) 5%, transparent);
+    color: var(--folio-ledger-accent);
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    line-height: 1;
+  }
+  .folio-ledger-head__seal::after {
+    position: absolute;
+    inset: 3px;
+    border: 1px solid color-mix(in srgb, var(--folio-ledger-accent) 13%, transparent);
+    content: "";
+  }
+  .folio-ledger-head__identity {
+    min-width: 0;
+    grid-area: identity;
+  }
+  .folio-ledger-head__eyebrow {
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .folio-ledger-head__title {
+    color: var(--color-ink);
+    font-family: var(--font-kai);
+    font-size: var(--type-heading);
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .folio-ledger-head__description {
+    margin-top: 0.12rem;
+    color: var(--color-ink-soft);
+    font-size: var(--type-note);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+  .folio-ledger-head__aside {
+    display: flex;
+    min-width: 0;
+    grid-area: aside;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 0.24rem;
+  }
+  .folio-ledger-head__meta {
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.45;
+    text-align: right;
+  }
+  .folio-ledger-head__score {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 0.18rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .folio-ledger-head__score strong {
+    color: var(--folio-ledger-accent);
+    font-family: var(--font-kai);
+    font-size: var(--type-heading);
+    font-weight: 400;
+    line-height: 1;
+  }
   @media (max-width: 220px) {
     .folio-page {
       --folio-page-gutter: 0.75rem;
@@ -801,6 +904,39 @@
     .folio-chapter-head__actions {
       flex: 1 0 100%;
       justify-content: flex-end;
+    }
+
+    .folio-ledger-head {
+      grid-template-columns: 2rem minmax(0, 1fr);
+      grid-template-areas:
+        "seal identity"
+        ". aside";
+      gap: 0.46rem 0.55rem;
+      padding-inline: 0.62rem;
+    }
+
+    .folio-ledger-head[data-variant="index"] {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        "identity"
+        "aside";
+    }
+
+    .folio-ledger-head__seal {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .folio-ledger-head__aside {
+      align-items: flex-start;
+    }
+
+    .folio-ledger-head__meta {
+      text-align: left;
+    }
+
+    .folio-ledger-head__score {
+      justify-content: flex-start;
     }
   }
   .folio-surface {
