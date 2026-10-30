@@ -149,6 +149,15 @@
   .cultivation-next {
     min-width: 0;
   }
+  .cultivation-support {
+    min-width: 0;
+  }
+  .cultivation-support__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 1rem;
+  }
   .cultivation-next__grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -175,9 +184,9 @@
       min-height: 100%;
     }
 
-    .cultivation-next__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.9rem;
+    .cultivation-support__grid {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+      gap: 1.25rem;
     }
   }
   @media (max-width: 220px) {

@@ -251,7 +251,12 @@
     border-bottom: 0;
   }
   .market-good.is-sold {
-    opacity: 0.52;
+    background: rgb(var(--color-ink-rgb) / 0.025);
+  }
+  .market-good.is-sold .market-good__name {
+    text-decoration: line-through;
+    text-decoration-color: rgb(var(--color-ink-rgb) / 0.42);
+    text-decoration-thickness: 1px;
   }
   .market-good__mark,
   .market-bounty__mark,
@@ -351,7 +356,12 @@
       rgb(var(--color-paper-rgb) / 0.12);
   }
   .market-bounty.is-claimed {
-    opacity: 0.5;
+    background: rgb(var(--color-ink-rgb) / 0.025);
+  }
+  .market-bounty.is-claimed .market-bounty__name {
+    text-decoration: line-through;
+    text-decoration-color: rgb(var(--color-ink-rgb) / 0.42);
+    text-decoration-thickness: 1px;
   }
   .market-bounty.is-ready .market-bounty__mark {
     border-color: rgb(var(--color-cinnabar-rgb) / 0.36);

@@ -61,6 +61,14 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     );
   });
 
+  it("修炼页让行功账与下一步同排双页,下一步不再横跨后把右页留空", () => {
+    const view = source("src/views/CultivationView.vue");
+
+    expect(view).toContain('<section class="cultivation-ledger" data-cultivation-ledger>');
+    expect(view).toContain('<section class="cultivation-next" data-cultivation-next>');
+    expect(view).not.toContain('<section class="folio-span-all cultivation-next"');
+  });
+
   it("真浏览器门在 1280 档核外壳宽度、双栏与单叶宽度,避免只靠源码自证", () => {
     const layout = source("scripts/layout-check.mjs");
 

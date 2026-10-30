@@ -13,9 +13,12 @@ function source(rel: string): string {
 }
 
 describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
-  it("凡品名在品阶晕染上仍有正文可读性，其余品阶不改字色", () => {
+  it("常见两档品名在品阶晕染上仍有正文可读性，其余品阶不改字色", () => {
     expect(qualityTextColor("mortal")).toBe("var(--color-ink-soft)");
-    expect(qualityTextColor("fine")).toBe(qualityDef("fine").color);
+    expect(qualityTextColor("fine")).toBe(
+      `color-mix(in srgb, ${qualityDef("fine").color} 85%, var(--color-ink) 15%)`,
+    );
+    expect(qualityTextColor("excellent")).toBe(qualityDef("excellent").color);
   });
 
   it("卷首市桥图读三册真值，整图不重复进入读屏", () => {
@@ -66,6 +69,21 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(view, "行囊满要就地改口").toContain('"行囊已满"');
     expect(view, "售料不足也要列差").toContain("尚差 ${herbSellShort} 灵草");
     expect(view, "售铁不足也要列差").toContain("尚差 ${oreSellShort} 玄铁");
+  });
+
+  it("售罄与已领只换底和划记，不用整行透明度把文字压到读不清", () => {
+    const css = source("src/styles/pages/market.css");
+
+    expect(css, "售罄行不可整行降透明度").not.toMatch(
+      /\.market-good\.is-sold\s*\{[\s\S]{0,80}?opacity:/,
+    );
+    expect(css, "已领赏单不可整行降透明度").not.toMatch(
+      /\.market-bounty\.is-claimed\s*\{[\s\S]{0,80}?opacity:/,
+    );
+    expect(css, "售罄仍要保留可读的划记线索").toContain(".market-good.is-sold .market-good__name");
+    expect(css, "已领仍要保留可读的划记线索").toContain(
+      ".market-bounty.is-claimed .market-bounty__name",
+    );
   });
 
   it("悬赏逐单把所需、缺口、酬劳与交货动作放在同一张赏单上", () => {

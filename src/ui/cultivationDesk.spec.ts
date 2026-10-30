@@ -57,19 +57,23 @@ describe("修炼案 · 主读数先行,破境与闭关收成下一步", () => {
     expect(next, "破境卡仍留在下一步章节").toContain("<BreakthroughCard />");
     expect(next, "闭关卡仍留在下一步章节").toContain("<RetreatCard />");
     expect(next, "两张卡共用同一条响应式栅格").toContain("cultivation-next__grid");
-    expect(view, "下一步跨过桌面双页中缝").toContain(
-      '<section class="folio-span-all cultivation-next" data-cultivation-next>',
+    expect(view, "下一步与行功账在桌面双页并读").toContain(
+      '<section class="cultivation-next" data-cultivation-next>',
     );
+    expect(view, "下一步不再横跨双页把右页留空").not.toContain(
+      '<section class="folio-span-all cultivation-next"',
+    );
+    expect(view, "状态与速服在辅册内同排").toContain(
+      '<div class="cultivation-support folio-span-all">',
+    );
+    expect(view, "功法整区落在双页下方").toContain('<GongfaSection class="folio-span-all" />');
   });
 
-  it("下一步在手机单列、桌面并读,极窄档不横向溢出", () => {
+  it("下一步始终单列承接两张行动卡,极窄档不横向溢出", () => {
     const css = source("src/style.css");
 
     expect(css).toMatch(
       /\.cultivation-next__grid\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1fr\)/,
-    );
-    expect(css).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]{0,300}\.cultivation-next__grid\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(css).toMatch(/@media \(max-width: 220px\)\s*\{[\s\S]{0,1200}\.cultivation-next__grid/);
   });

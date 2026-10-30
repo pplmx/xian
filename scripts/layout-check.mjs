@@ -2206,6 +2206,10 @@ async function taskPageTour(vp) {
         const pageStyle = getComputedStyle(page);
         const gutter = getComputedStyle(page, "::before");
         const spineStyle = spine ? getComputedStyle(spine) : null;
+        const cultivationLedger = document.querySelector("[data-cultivation-ledger]");
+        const cultivationNext = document.querySelector("[data-cultivation-next]");
+        const ledgerRect = cultivationLedger?.getBoundingClientRect();
+        const nextRect = cultivationNext?.getBoundingClientRect();
         return {
           layout: shell.getAttribute("data-folio-layout"),
           shellWidth: Math.round(shell.getBoundingClientRect().width),
@@ -2223,6 +2227,14 @@ async function taskPageTour(vp) {
               }
             : null,
           dock: dock ? getComputedStyle(dock).display : null,
+          cultivationPair:
+            ledgerRect && nextRect
+              ? {
+                  sameRow: Math.abs(ledgerRect.top - nextRect.top) <= 2,
+                  nextOnRight: nextRect.left >= ledgerRect.right - 1,
+                  nextWidth: Math.round(nextRect.width),
+                }
+              : null,
         };
       });
       desktopFolioSeen += 1;
@@ -2265,6 +2277,19 @@ async function taskPageTour(vp) {
           }
           if (!desk.gutter.includes("linear-gradient")) {
             failures.push(`[${vp.tag}] ${route} 双页中缝没有画出来`);
+          }
+          if (
+            route === "/cultivation" &&
+            (!desk.cultivationPair ||
+              !desk.cultivationPair.sameRow ||
+              !desk.cultivationPair.nextOnRight ||
+              desk.cultivationPair.nextWidth < 320)
+          ) {
+            failures.push(
+              `[${vp.tag}] /cultivation 行功账与下一步没有在双页上并读(${JSON.stringify(
+                desk.cultivationPair,
+              )})`,
+            );
           }
         } else {
           if (desk.layout !== "single" || desk.display === "grid") {

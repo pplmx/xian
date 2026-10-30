@@ -181,7 +181,7 @@
       修行账回答「现在走到哪」,下一步只回答「此刻做哪件事」。
       破境先于闭关:前者是这一境的出口,后者是留在原地的加速。
     -->
-    <section class="folio-span-all cultivation-next" data-cultivation-next>
+    <section class="cultivation-next" data-cultivation-next>
       <SectionTitle title="下一步" hint="关口看把握,闭关看当下" />
       <div class="cultivation-next__grid">
         <BreakthroughCard />
@@ -193,98 +193,104 @@
       主区(修行/破境/闭关)与辅区(状态/丹药/功法)之间落一枚花饰分隔:
       往下不再是「今天要做的事」,是「随身带着的家当」。
     -->
-    <div class="ink-divider-mark my-4" aria-hidden="true" />
+    <div class="ink-divider-mark folio-span-all my-4" aria-hidden="true" />
 
-    <!-- 状态 -->
-    <section v-if="activeBuffs.length">
-      <SectionTitle title="状态" />
-      <div class="mt-2 flex flex-wrap gap-2">
-        <!--
-          状态胶囊每秒刷新一次,倒数文本必须定宽:formatCountdown 逐位补零,
-          再给它一个固定宽度的槽位(文字右对齐)—— 否则「10分0秒 → 10分1秒」
-          这一位的增减会把整排胶囊推来推去,看起来就是「状态一直在抖」。
-        -->
-        <button
-          v-for="b in activeBuffs"
-          :key="b.def!.id"
-          type="button"
-          class="chip-ink tabular transition-transform active:scale-95"
-          :class="
-            b.def!.kind === 'injury'
-              ? 'border-cinnabar/60 text-cinnabar'
-              : 'border-jade/60 text-jade'
-          "
-          @click="ui.buffDetailId = b.def!.id"
-        >
-          <GameIcon :name="b.def!.icon" :size="11" />
-          {{ b.def!.name }}
-          <span
-            v-if="b.stack > 1"
-            class="text-note"
-            :aria-label="`${b.def!.name} 与 ${b.stack - 1} 味状态同刻叠加`"
-            >×{{ b.stack }}</span
-          >
-          <span class="countdown-slot">{{ formatCountdown(b.remain) }}</span>
-        </button>
-      </div>
-    </section>
+    <div class="cultivation-support folio-span-all">
+      <div class="cultivation-support__grid">
+        <!-- 状态 -->
+        <section v-if="activeBuffs.length">
+          <SectionTitle title="状态" />
+          <div class="mt-2 flex flex-wrap gap-2">
+            <!--
+              状态胶囊每秒刷新一次,倒数文本必须定宽:formatCountdown 逐位补零,
+              再给它一个固定宽度的槽位(文字右对齐)—— 否则「10分0秒 → 10分1秒」
+              这一位的增减会把整排胶囊推来推去,看起来就是「状态一直在抖」。
+            -->
+            <button
+              v-for="b in activeBuffs"
+              :key="b.def!.id"
+              type="button"
+              class="chip-ink tabular transition-transform active:scale-95"
+              :class="
+                b.def!.kind === 'injury'
+                  ? 'border-cinnabar/60 text-cinnabar'
+                  : 'border-jade/60 text-jade'
+              "
+              @click="ui.buffDetailId = b.def!.id"
+            >
+              <GameIcon :name="b.def!.icon" :size="11" />
+              {{ b.def!.name }}
+              <span
+                v-if="b.stack > 1"
+                class="text-note"
+                :aria-label="`${b.def!.name} 与 ${b.stack - 1} 味状态同刻叠加`"
+                >×{{ b.stack }}</span
+              >
+              <span class="countdown-slot">{{ formatCountdown(b.remain) }}</span>
+            </button>
+          </div>
+        </section>
 
-    <!-- 丹药速服 -->
-    <section v-if="quickPills.length">
-      <SectionTitle title="以药辅道" />
-      <!-- 极窄档(≤220 CSS px):两列时每张卡只有 78px,「存 5 · 修为 +」被压成 11px
-           宽、9 行 —— 放开成单列,中间那块回到整行宽。320 / 390 两档不动。 -->
-      <div class="mt-2 grid grid-cols-2 gap-2 tinylens:grid-cols-1">
-        <button
-          v-for="p in quickPills"
-          :key="p.def!.id"
-          data-quick-pill
-          class="card-ink flex items-center gap-2 px-3 py-2 text-left active:scale-98"
-          :disabled="p.overflow === 'full'"
-          @click="usePill(p.def!.id)"
-        >
-          <GameIcon
-            :name="p.def!.icon"
-            :size="16"
-            :style="{ color: qualityDef(p.def!.quality).color }"
-          />
-          <span class="min-w-0 grow">
-            <span class="block truncate font-kai text-body text-ink">{{ p.def!.name }}</span>
-            <span class="block text-note text-ink-faint tabular">
-              存 {{ p.count
-              }}<template v-if="quickPillBrief(p.def!)"> · {{ quickPillBrief(p.def!) }}</template>
-            </span>
-          </span>
-          <!-- 顶满=白费,禁用并改口;续时=只剩尾巴可续,照吃但把话说清 -->
-          <span
-            class="shrink-0 text-body"
-            :class="
-              p.overflow === 'full'
-                ? 'text-ink-faint'
-                : p.overflow === 'partial'
-                  ? 'text-amber-ink'
-                  : 'text-jade'
-            "
+        <!-- 丹药速服 -->
+        <section v-if="quickPills.length">
+          <SectionTitle title="以药辅道" />
+          <!-- 极窄档(≤220 CSS px):两列时每张卡只有 78px,「存 5 · 修为 +」被压成 11px
+               宽、9 行 —— 放开成单列,中间那块回到整行宽。320 / 390 两档不动。 -->
+          <div class="mt-2 grid grid-cols-2 gap-2 tinylens:grid-cols-1">
+            <button
+              v-for="p in quickPills"
+              :key="p.def!.id"
+              data-quick-pill
+              class="card-ink flex items-center gap-2 px-3 py-2 text-left active:scale-98"
+              :disabled="p.overflow === 'full'"
+              @click="usePill(p.def!.id)"
+            >
+              <GameIcon
+                :name="p.def!.icon"
+                :size="16"
+                :style="{ color: qualityDef(p.def!.quality).color }"
+              />
+              <span class="min-w-0 grow">
+                <span class="block truncate font-kai text-body text-ink">{{ p.def!.name }}</span>
+                <span class="block text-note text-ink-faint tabular">
+                  存 {{ p.count
+                  }}<template v-if="quickPillBrief(p.def!)"
+                    >· {{ quickPillBrief(p.def!) }}</template
+                  >
+                </span>
+              </span>
+              <!-- 顶满=白费,禁用并改口;续时=只剩尾巴可续,照吃但把话说清 -->
+              <span
+                class="shrink-0 text-body"
+                :class="
+                  p.overflow === 'full'
+                    ? 'text-ink-faint'
+                    : p.overflow === 'partial'
+                      ? 'text-amber-ink'
+                      : 'text-jade'
+                "
+              >
+                {{ p.overflow === "full" ? "已顶" : p.overflow === "partial" ? "续时" : "服用" }}
+              </span>
+            </button>
+          </div>
+          <!-- 速服只铺前四味;余量不能静默消失,给出去丹匣逐味查看的直达入口 -->
+          <RouterLink
+            v-if="quickPillsHidden > 0"
+            data-quick-pills-hidden
+            :to="{ path: '/inventory', query: { tab: 'pill' } }"
+            :aria-label="`另有 ${quickPillsHidden} 味可服丹药，前往丹匣查看`"
+            class="tap-row mt-2 w-full justify-between rounded-sm border border-ink/10 px-3 py-2 text-note text-ink-faint active:scale-99"
           >
-            {{ p.overflow === "full" ? "已顶" : p.overflow === "partial" ? "续时" : "服用" }}
-          </span>
-        </button>
+            <span>另有 {{ quickPillsHidden }} 味</span>
+            <span class="text-qing">去丹匣 ›</span>
+          </RouterLink>
+        </section>
       </div>
-      <!-- 速服只铺前四味;余量不能静默消失,给出去丹匣逐味查看的直达入口 -->
-      <RouterLink
-        v-if="quickPillsHidden > 0"
-        data-quick-pills-hidden
-        :to="{ path: '/inventory', query: { tab: 'pill' } }"
-        :aria-label="`另有 ${quickPillsHidden} 味可服丹药，前往丹匣查看`"
-        class="tap-row mt-2 w-full justify-between rounded-sm border border-ink/10 px-3 py-2 text-note text-ink-faint active:scale-99"
-      >
-        <span>另有 {{ quickPillsHidden }} 味</span>
-        <span class="text-qing">去丹匣 ›</span>
-      </RouterLink>
-    </section>
+    </div>
 
     <!-- 功法区(主修卡/一门一册书目/参悟)→ GongfaSection,整块随本体迁入 -->
-    <GongfaSection />
+    <GongfaSection class="folio-span-all" />
 
     <GongfaDialog />
     <BuffDialog />
