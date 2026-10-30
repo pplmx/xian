@@ -1596,7 +1596,14 @@ async function measurePixelContrast(page, sampler, dpr) {
     return out;
   });
   if (!targets.length) return [];
-  // 把字藏起来再拍:剩下的像素就是字底下的底色(藏的是文本节点本身,不动盒子)
+  /*
+   * 把字藏起来再拍:剩下的像素就是字底下的底色。
+   *
+   * 这里不能替换文本节点 —— 坊市倒计时每秒会触发 Vue 更新,替换掉的隐藏节点会被
+   * 新文本顶回去,截图时字又出现了,采样便把字芯算成 1:1(实测 /market 红过一次)。
+   * 改为给目标元素挂 data 标记,再用一条样式把文字填色置透明:盒子、背景与布局都
+   * 原样保留,响应式更新也不会把「隐藏」这件事撤掉。
+   */
   const hidden = await page.evaluate(() => {
     let n = 0;
     for (const el of document.querySelectorAll("body *")) {
@@ -1606,14 +1613,15 @@ async function measurePixelContrast(page, sampler, dpr) {
       if (!texts.length) continue;
       const cs = getComputedStyle(el);
       if (cs.visibility === "hidden" || cs.display === "none") continue;
-      for (const node of texts) {
-        const span = document.createElement("span");
-        span.dataset.pixelProbe = "1";
-        span.style.visibility = "hidden";
-        node.parentNode.replaceChild(span, node);
-        span.appendChild(node);
-        n += 1;
-      }
+      el.dataset.pixelProbe = "1";
+      n += 1;
+    }
+    if (n > 0) {
+      const style = document.createElement("style");
+      style.dataset.pixelProbeStyle = "1";
+      style.textContent =
+        '[data-pixel-probe="1"] { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }';
+      document.head.appendChild(style);
     }
     return n;
   });
@@ -1624,11 +1632,9 @@ async function measurePixelContrast(page, sampler, dpr) {
    */
   const shot = await page.screenshot({ animations: "disabled", caret: "hide" });
   await page.evaluate(() => {
-    for (const span of document.querySelectorAll("[data-pixel-probe]")) {
-      const parent = span.parentNode;
-      parent.replaceChild(span.firstChild, span);
-      parent.normalize();
-    }
+    for (const el of document.querySelectorAll("[data-pixel-probe]"))
+      el.removeAttribute("data-pixel-probe");
+    document.querySelector("style[data-pixel-probe-style]")?.remove();
   });
   if (!hidden) return [];
   const stats = await sampler.evaluate(
@@ -2094,6 +2100,27 @@ async function taskPageTour(vp) {
     controlHostsSeen += info.nestedControls?.hosts ?? 0;
     const problems = problemsOf(info);
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
+    if (vp.tag === "390" && (route === "/celestial" || route === "/souls")) {
+      const sealed = await page.evaluate(() => {
+        const folio = document.querySelector("[data-unopened-folio]");
+        if (!folio) return null;
+        return {
+          ledgerRows: folio.querySelectorAll("[data-unopened-ledger] > p").length,
+          hasProgress: Boolean(folio.querySelector("[data-unopened-progress]")),
+          cultivation: folio.querySelector('a[href="#/cultivation"]')?.textContent?.trim() || "",
+          codex: folio.querySelector('a[href="#/codex"]')?.textContent?.trim() || "",
+        };
+      });
+      if (
+        !sealed ||
+        sealed.ledgerRows !== 3 ||
+        !sealed.hasProgress ||
+        !sealed.cultivation.includes("回修炼") ||
+        !sealed.codex.includes("看境界谱")
+      ) {
+        failures.push(`[${vp.tag}] ${route} 封卷页没有渲染出来,或门槛账与两条去路不齐`);
+      }
+    }
     /*
      * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,首页 / 修炼 / 道躯
      * 三册走双页网格,其余页是一张 48rem 的单叶。源码契约在 folioSpread.spec 里,

@@ -47,17 +47,18 @@
       </div>
     </FolioPageHeader>
 
-    <!-- 未至真仙 -->
-    <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
-      <p class="font-kai text-[22px] tracking-[0.4em] text-ink">器 魂</p>
-      <p class="mt-4 t-body text-ink-faint">
-        凡器未历天道,何来形意。
-        <br />
-        修至
-        <span class="text-cinnabar">真仙境</span>
-        ,方知此理。
-      </p>
-    </div>
+    <!-- 未至真仙:器魂随天门而启,不在凡境提前占行囊 -->
+    <UnopenedFolio
+      v-if="!unlocked"
+      title="器 魂"
+      eyebrow="形意未生"
+      lead="凡器未历天道,何来形意。器魂不是另一套背包,而是天门开启后从旧器留下的路数。"
+      :hint="`此册与天界同门。修至真仙后,才需要挑法器入炉、取舍 ${SOUL_SLOTS} 枚器魂。`"
+      :current-realm="player.realmName"
+      :current-major="player.major"
+      :gate-realm="realmDef(WORLD_BREAK_MAJOR).name"
+      :gate-major="WORLD_BREAK_MAJOR"
+    />
 
     <template v-else>
       <!-- 何谓器魂 -->
@@ -493,6 +494,7 @@ import {
   soulTypeDef,
   type SoulInstance,
 } from "@/data/souls";
+import { realmDef, WORLD_BREAK_MAJOR } from "@/data/realms";
 import {
   dissolveSoul,
   previewSoul,
@@ -514,12 +516,15 @@ import {
 } from "@/core/listRender";
 import { useEndgameStore } from "@/stores/endgame";
 import { useInventoryStore } from "@/stores/inventory";
+import { usePlayerStore } from "@/stores/player";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 
 const endgame = useEndgameStore();
 const inventory = useInventoryStore();
+const player = usePlayerStore();
 
 const unlocked = computed(() => endgameUnlocked());
 const idleOpen = ref(false);

@@ -17,17 +17,18 @@
       </template>
     </FolioPageHeader>
 
-    <!-- 未至真仙 -->
-    <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
-      <p class="font-kai text-[22px] tracking-[0.4em] text-ink">天 界</p>
-      <p class="mt-4 t-body text-ink-faint">
-        天门紧闭,仙光垂落而不可及。
-        <br />
-        修至
-        <span class="text-cinnabar">真仙境</span>
-        ,方见此界真容。
-      </p>
-    </div>
+    <!-- 未至真仙:封卷页把门限、当前境界与下一步一起摊开 -->
+    <UnopenedFolio
+      v-if="!unlocked"
+      title="天 界"
+      eyebrow="天门未启"
+      lead="仙光垂落而不可及。先走完凡界诸境,再叩天门。"
+      hint="这一册不催你提前攒道源;破境之后,道途、远征、试炼与道痕会在此展开。"
+      :current-realm="player.realmName"
+      :current-major="player.major"
+      :gate-realm="realmDef(WORLD_BREAK_MAJOR).name"
+      :gate-major="WORLD_BREAK_MAJOR"
+    />
 
     <template v-else>
       <!-- 页签:长卷分册 -->
@@ -291,6 +292,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useEndgameStore } from "@/stores/endgame";
 import { DAO_PATHS, daoPathDef } from "@/data/endgame";
+import { realmDef, WORLD_BREAK_MAJOR } from "@/data/realms";
 import { todayChallenge } from "@/core/dailyChallenge";
 import { chooseDaoPath, endgameUnlocked } from "@/core/endgameService";
 import { soulOverview } from "@/core/soulOverview";
@@ -301,6 +303,7 @@ import { foeOriginLines } from "@/core/battleAnalysis";
 import { swordPurity, SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
 import { formatNum, formatPercent } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";

@@ -106,4 +106,56 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
       ".atlas-entry-list {\n    margin-left: 1.5rem;",
     );
   });
+
+  it("未开启册页是封卷页：报当前境界、门限与尚隔，不再只剩一块大白卡", () => {
+    const sealed = source("src/components/common/UnopenedFolio.vue");
+    const celestial = source("src/views/CelestialView.vue");
+    const souls = source("src/views/SoulsView.vue");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(sealed, "封卷页要能被运行时与判据定位").toContain("data-unopened-folio");
+    expect(sealed, "封卷页要报当前境界").toContain("currentRealm");
+    expect(sealed, "封卷页要报开启门限").toContain("gateRealm");
+    expect(sealed, "封卷页要把尚隔几重境摊开").toContain("remainingMajors");
+    expect(sealed, "封卷页的进度要与境界差同源").toContain("progress");
+    expect(sealed, "封卷页要有下一步入口").toContain('to="/cultivation"');
+    expect(sealed, "封卷页要有境界谱入口").toContain('to="/codex"');
+    expect(sealed, "封卷页要有读屏隐藏的氛围层").toContain('aria-hidden="true"');
+
+    expect(celestial, "天界未开启要走同一枚封卷页").toContain("<UnopenedFolio");
+    expect(souls, "器魂未开启要走同一枚封卷页").toContain("<UnopenedFolio");
+    expect(celestial, "天界不再保留旧的通用空白卡").not.toContain(
+      '<div v-if="!unlocked" class="card-ink px-6 py-16 text-center">',
+    );
+    expect(souls, "器魂不再保留旧的通用空白卡").not.toContain(
+      '<div v-if="!unlocked" class="card-ink px-6 py-16 text-center">',
+    );
+    expect(layout, "真浏览器门要核封卷页真的渲染出来").toContain("封卷页没有渲染出来");
+  });
+
+  it("封卷页的门槛读数取境界事实源，不把「真仙境」与九重差各抄一份", () => {
+    const sealed = source("src/components/common/UnopenedFolio.vue");
+    const celestial = source("src/views/CelestialView.vue");
+    const souls = source("src/views/SoulsView.vue");
+
+    expect(sealed, "尚隔几重由 currentMajor / gateMajor 计算").toContain(
+      "props.gateMajor - props.currentMajor",
+    );
+    expect(sealed, "进度也由同一对境界计算").toContain("props.currentMajor / props.gateMajor");
+    expect(celestial, "天界门限读 WORLD_BREAK_MAJOR").toContain("WORLD_BREAK_MAJOR");
+    expect(souls, "器魂门限读 WORLD_BREAK_MAJOR").toContain("WORLD_BREAK_MAJOR");
+    expect(souls, "器魂槽位数不手抄，读 SOUL_SLOTS").toContain("${SOUL_SLOTS}");
+  });
+
+  it("像素对比度采样不许替换会每秒刷新的文本节点", () => {
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(layout, "采样要按元素挂 data-pixel-probe").toContain('el.dataset.pixelProbe = "1"');
+    expect(layout, "隐藏文字要用透明填色,不能换掉 Vue 的文本节点").not.toContain(
+      "node.parentNode.replaceChild(span, node)",
+    );
+    expect(layout, "截图后要撤掉采样标记").toContain(
+      'document.querySelectorAll("[data-pixel-probe]")',
+    );
+  });
 });
