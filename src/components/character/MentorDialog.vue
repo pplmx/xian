@@ -65,7 +65,7 @@
       <button
         v-for="m in mentorChoices()"
         :key="m!.id"
-        class="w-full rounded-lg border px-3 py-2.5 text-left transition-[transform,background-color] active:scale-98"
+        class="w-full rounded-sm border px-3 py-2.5 text-left transition-[transform,background-color] active:scale-98"
         :class="hintMentor === m!.id ? 'border-cinnabar/60 bg-cinnabar/5' : 'border-ink/20'"
         @click="player.adoptMentor(m!.id)"
       >

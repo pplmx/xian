@@ -1,7 +1,7 @@
 <template>
   <div class="stagger-in flex min-h-full flex-col items-center justify-center px-8 py-10">
     <!--
-      首屏印面 —— 原先是一个 rounded-2xl 的圆角方块装着一个「道」字:
+      首屏印面 —— 原先是一个大圆角方块装着一个「道」字:
       那是任何一款 App 的图标语言,与这一作的印面/篆意不是一回事。
       改成方印:方角、内框一道、朱砂底墨字,左右各留一道空(印文的边) ——
       方印在纸上是不裁圆角的,圆角一上去就变成了软件图标。

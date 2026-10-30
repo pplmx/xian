@@ -11,7 +11,7 @@ defineEmits<{ refresh: [] }>();
   <Transition name="page-fade">
     <div
       v-if="visible"
-      class="absolute left-0 right-0 top-2 z-[60] mx-auto flex max-w-xs items-center gap-2 rounded-lg border border-cinnabar/40 bg-paper-deep/95 px-3 py-2 shadow-lg backdrop-blur"
+      class="absolute left-0 right-0 top-2 z-[60] mx-auto flex max-w-xs items-center gap-2 rounded-sm border border-cinnabar/40 bg-paper-deep/95 px-3 py-2 shadow-lg backdrop-blur"
       role="status"
     >
       <span class="flex-1 text-[11px] text-ink">新版本已就绪,存好了再刷新即可。</span>

@@ -12,24 +12,11 @@
           }}</span>
         </div>
       </template>
-    </FolioPageHeader>
 
-    <!-- 未至真仙 -->
-    <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
-      <p class="font-kai text-[22px] tracking-[0.4em] text-ink">器 魂</p>
-      <p class="mt-4 t-body text-ink-faint">
-        凡器未历天道,何来形意。
-        <br />
-        修至
-        <span class="text-cinnabar">真仙境</span>
-        ,方知此理。
-      </p>
-    </div>
-
-    <template v-else>
       <!-- 卷首先报此刻:槽位、闲置与可凝各有多少当下能动手 -->
       <div
-        class="card-ink grid grid-cols-3 divide-x divide-ink/10 px-2 py-2 text-center"
+        v-if="unlocked"
+        class="grid grid-cols-3 divide-x divide-ink/10 border-t border-ink/10 pt-2 text-center"
         data-soul-pulse
       >
         <p>
@@ -58,7 +45,21 @@
           {{ formatGN(soulPulse.shortfall) }} 道源可开一炉
         </p>
       </div>
+    </FolioPageHeader>
 
+    <!-- 未至真仙 -->
+    <div v-if="!unlocked" class="card-ink px-6 py-16 text-center">
+      <p class="font-kai text-[22px] tracking-[0.4em] text-ink">器 魂</p>
+      <p class="mt-4 t-body text-ink-faint">
+        凡器未历天道,何来形意。
+        <br />
+        修至
+        <span class="text-cinnabar">真仙境</span>
+        ,方知此理。
+      </p>
+    </div>
+
+    <template v-else>
       <!-- 何谓器魂 -->
       <section>
         <SectionTitle title="何谓器魂" hint="形销而意存,多一条路数" />

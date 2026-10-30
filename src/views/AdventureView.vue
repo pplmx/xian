@@ -410,7 +410,7 @@
         <button
           v-for="m in MODE_LIST"
           :key="m.id"
-          class="flex w-full items-center justify-between rounded-lg border border-ink/20 px-4 py-3 text-left active:scale-98 active:bg-ink/5"
+          class="flex w-full items-center justify-between rounded-sm border border-ink/20 px-4 py-3 text-left active:scale-98 active:bg-ink/5"
           @click="begin(m.id)"
         >
           <span>

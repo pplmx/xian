@@ -108,7 +108,7 @@
         </div>
 
         <!-- 这一世的命题 -->
-        <div v-if="vowTheme" class="mt-2 rounded-lg border border-ink/15 px-3 py-2">
+        <div v-if="vowTheme" class="mt-2 rounded-sm border border-ink/15 px-3 py-2">
           <p class="flex items-center justify-between">
             <span class="font-kai text-[14px] text-ink">「{{ vowTheme.vow }}」</span>
             <span

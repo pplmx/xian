@@ -148,7 +148,7 @@ function doTransfer(): void {
 </script>
 
 <template>
-  <div class="rounded-lg border border-ink/10 bg-paper-deep/60 p-3 text-[12px]">
+  <div class="rounded-sm border border-ink/10 bg-paper-deep/60 p-3 text-[12px]">
     <div class="mb-2 flex flex-wrap items-center gap-2">
       <span class="shrink-0 font-medium text-ink tinylens:order-1">词条转移</span>
       <span class="text-[10px] text-ink-faint tinylens:order-3 tinylens:basis-full"

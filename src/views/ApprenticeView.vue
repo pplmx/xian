@@ -238,13 +238,11 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
           }}
         </button>
       </template>
-    </FolioPageHeader>
 
-    <!-- 弟子 -->
-    <div v-if="appr.apprentices.length" class="space-y-2">
       <!-- 卷首先报门庭此刻:谁在家、谁在路上、最近何时回来;一键派发也收在这里。 -->
       <div
-        class="card-ink px-3 py-2.5"
+        v-if="appr.apprentices.length"
+        class="border-t border-ink/10 pt-2.5"
         data-apprentice-pulse
         :data-apprentice-total="pulse.total"
         :data-apprentice-idle="pulse.idle"
@@ -287,10 +285,14 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
           {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
         </button>
       </div>
+    </FolioPageHeader>
+
+    <!-- 弟子 -->
+    <div v-if="appr.apprentices.length" class="space-y-2">
       <div
         v-for="a in appr.apprentices"
         :key="a.uid"
-        class="rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2"
+        class="rounded-sm border border-ink/10 bg-paper-deep/60 px-3 py-2"
       >
         <!-- 极窄档(≤220 CSS px):「名字 + 等级 + 羁绊 + 天赋描述」一行塞不下,描述被压到
              10px 一字一行 —— 允许换行,描述整块落到下一行。320 / 390 两档不动。 -->

@@ -28,7 +28,7 @@
       </p>
 
       <!-- 这一世立的题 -->
-      <div v-if="reviewTheme" class="mt-3 rounded-lg border border-ink/15 px-3 py-2">
+      <div v-if="reviewTheme" class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
         <p class="flex items-center justify-between">
           <span class="font-kai text-[14px] text-ink">「{{ reviewTheme.vow }}」</span>
           <span class="text-[11px]" :class="RESULT_COLORS[view.review.themeResult ?? 'unfinished']">
@@ -54,7 +54,7 @@
       <p v-else class="mt-3 text-[11px] text-ink-faint">此生不曾为自己立下什么题目。</p>
 
       <!-- 宿慧与阶段 -->
-      <div class="mt-3 rounded-lg border border-ink/15 px-3 py-2">
+      <div class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
         <p class="flex items-center justify-between text-[11px]">
           <span class="text-ink-soft">此生所历,化作宿慧</span>
           <span class="font-kai text-cinnabar tabular">+{{ view.review.insightGained }}</span>
@@ -103,7 +103,7 @@
       </p>
 
       <!-- 交割清单:带走什么、放下什么 —— 与 core/samsaraAudit 的继承表同源,不另写一份 -->
-      <div class="mt-3 rounded-lg border border-ink/15 px-3 py-2">
+      <div class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
         <p class="text-[10px] text-ink-faint">
           此生交割 —— 留下的是「我是谁」,放下的是「我拥有多少」
         </p>
@@ -197,7 +197,7 @@
         <button
           v-for="id in view.talentChoices"
           :key="id"
-          class="w-full rounded-lg border px-3 py-2 text-left transition-[transform,background-color] active:scale-98"
+          class="w-full rounded-sm border px-3 py-2 text-left transition-[transform,background-color] active:scale-98"
           :class="chosen === id ? 'border-cinnabar bg-cinnabar/5' : 'border-ink/20'"
           @click="chosen = id"
         >
@@ -229,7 +229,7 @@
       <!-- 这一世锻得的宿命传承(ISS-302):深修的「我是谁」,随神魂不灭 -->
       <div
         v-if="view.heritageGained && heritageDef(view.heritageGained)"
-        class="mt-4 rounded-lg border border-gold-ink/30 bg-gold-ink/5 px-3 py-2"
+        class="mt-4 rounded-sm border border-gold-ink/30 bg-gold-ink/5 px-3 py-2"
       >
         <p class="font-kai text-[14px] tracking-widest text-gold-ink">
           道统传承 · {{ heritageDef(view.heritageGained)!.name }}
@@ -257,7 +257,7 @@
           <button
             v-for="t in themeDefs"
             :key="t.id"
-            class="w-full rounded-lg border px-3 py-2 text-left transition-[transform,background-color] active:scale-98"
+            class="w-full rounded-sm border px-3 py-2 text-left transition-[transform,background-color] active:scale-98"
             :class="theme === t.id ? 'border-cinnabar bg-cinnabar/5' : 'border-ink/20'"
             @click="theme = theme === t.id ? null : t.id"
           >

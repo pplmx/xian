@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const ROOT = resolve(__dirname, "../..");
 
 function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
+}
+
+function vueFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(dir, entry.name);
+    if (entry.isDirectory()) return vueFiles(path);
+    return entry.name.endsWith(".vue") ? [path] : [];
+  });
 }
 
 describe("开卷版式 · 全站十七册共用一条书页基线", () => {
@@ -72,5 +80,32 @@ describe("开卷版式 · 全站十七册共用一条书页基线", () => {
     expect(adventure).not.toContain('<SectionTitle title="历练"');
     expect(inventory).not.toContain(">行 囊</span>");
     expect(character).not.toContain('<SectionTitle title="道躯"');
+  });
+
+  it("坊市、门庭与器魂的此刻汇总收进卷首，不再另起同职责卡片", () => {
+    const pages = [
+      ["MarketView", "data-market-pulse"],
+      ["ApprenticeView", "data-apprentice-pulse"],
+      ["SoulsView", "data-soul-pulse"],
+    ] as const;
+
+    for (const [page, marker] of pages) {
+      const src = source(`src/views/${page}.vue`);
+      const masthead = src.match(/<FolioPageHeader[\s\S]*?<\/FolioPageHeader>/)?.[0] ?? "";
+
+      expect(masthead, `${page} 的此刻汇总仍在卷首之外`).toContain(marker);
+      expect(
+        src.match(new RegExp(`${marker}(?![-\\w])`, "g")),
+        `${page} 的汇总落点重复了`,
+      ).toHaveLength(1);
+    }
+  });
+
+  it("册页语言清退大圆角 App 卡，只留纸页的小倒角", () => {
+    const offenders = vueFiles(resolve(ROOT, "src"))
+      .filter((file) => /\brounded-(?:lg|xl|2xl|3xl)\b/.test(readFileSync(file, "utf8")))
+      .map((file) => file.slice(resolve(ROOT, "src").length + 1));
+
+    expect(offenders, `这些组件仍在使用大圆角：${offenders.join(", ")}`).toEqual([]);
   });
 });

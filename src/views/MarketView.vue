@@ -421,35 +421,35 @@ function bountyReady(o: BountySlot): boolean {
           <span class="countdown-slot">{{ headerClock.text }}</span>
         </span>
       </template>
-    </FolioPageHeader>
 
-    <!-- 卷首先报此刻:三册各有多少当下可做,页签只负责带路。 -->
-    <div
-      class="card-ink grid grid-cols-3 divide-x divide-ink/10 px-2 py-2 text-center"
-      data-market-pulse
-    >
-      <p>
-        <span class="block text-[10px] text-ink-faint">可买</span>
-        <span class="block text-[11px] tabular text-ink-soft" data-market-pulse-goods
-          >{{ marketPulse.availableGoods }} 件</span
-        >
-      </p>
-      <p>
-        <span class="block text-[10px] text-ink-faint">可交</span>
-        <span
-          class="block text-[11px] tabular"
-          :class="marketPulse.claimableBounties > 0 ? 'text-cinnabar' : 'text-ink-soft'"
-          data-market-pulse-bounties
-          >{{ marketPulse.claimableBounties }} 单</span
-        >
-      </p>
-      <p>
-        <span class="block text-[10px] text-ink-faint">寄售</span>
-        <span class="block text-[11px] tabular text-ink-soft" data-market-pulse-consign
-          >{{ marketPulse.consignCount }}/{{ MARKET_CONSIGN_SLOTS }}</span
-        >
-      </p>
-    </div>
+      <!-- 卷首先报此刻:三册各有多少当下可做,页签只负责带路。 -->
+      <div
+        class="grid grid-cols-3 divide-x divide-ink/10 border-t border-ink/10 pt-2 text-center"
+        data-market-pulse
+      >
+        <p>
+          <span class="block text-[10px] text-ink-faint">可买</span>
+          <span class="block text-[11px] tabular text-ink-soft" data-market-pulse-goods
+            >{{ marketPulse.availableGoods }} 件</span
+          >
+        </p>
+        <p>
+          <span class="block text-[10px] text-ink-faint">可交</span>
+          <span
+            class="block text-[11px] tabular"
+            :class="marketPulse.claimableBounties > 0 ? 'text-cinnabar' : 'text-ink-soft'"
+            data-market-pulse-bounties
+            >{{ marketPulse.claimableBounties }} 单</span
+          >
+        </p>
+        <p>
+          <span class="block text-[10px] text-ink-faint">寄售</span>
+          <span class="block text-[11px] tabular text-ink-soft" data-market-pulse-consign
+            >{{ marketPulse.consignCount }}/{{ MARKET_CONSIGN_SLOTS }}</span
+          >
+        </p>
+      </div>
+    </FolioPageHeader>
 
     <InkTabs v-model="marketTab" :tabs="marketTabRows" />
 
@@ -460,7 +460,7 @@ function bountyReady(o: BountySlot): boolean {
         <div
           v-for="slot in market.stock"
           :key="slot.idx"
-          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
+          class="flex items-center gap-2 rounded-sm border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
           :class="{ 'border-dashed border-ink/15': slot.sold }"
           :style="shelfTier(slot)"
         >
@@ -572,7 +572,7 @@ function bountyReady(o: BountySlot): boolean {
         <div
           v-for="o in bounty.orders"
           :key="o.idx"
-          class="flex items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
+          class="flex items-center gap-2 rounded-sm border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
           :class="{ 'border-dashed border-ink/15': o.claimed }"
         >
           <div class="min-w-0 flex-1 text-[11px] tinylens:basis-full">
@@ -715,7 +715,7 @@ function bountyReady(o: BountySlot): boolean {
 
         <!-- 寄卖入口:挑一件背包装备上架 -->
         <div
-          class="rounded-lg border border-ink/10 bg-paper-deep/40 px-3 py-2"
+          class="rounded-sm border border-ink/10 bg-paper-deep/40 px-3 py-2"
           :data-market-consign-total="inventory.bagItems.length"
           :data-market-consign-start="consignPage.start"
         >
@@ -785,7 +785,7 @@ function bountyReady(o: BountySlot): boolean {
 
         <!-- 即时售 -->
         <div
-          class="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-ink/10 bg-paper-deep/40 px-3 py-2"
+          class="mt-2 flex flex-wrap items-center gap-2 rounded-sm border border-ink/10 bg-paper-deep/40 px-3 py-2"
         >
           <button
             v-for="p in sellablePills"
