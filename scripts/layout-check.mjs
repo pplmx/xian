@@ -10697,6 +10697,15 @@ async function taskTitlePetOverflow() {
     }
 
     await page.locator("[data-title-total]").waitFor({ state: "visible", timeout: 10000 });
+    const titleCurrentText =
+      (await page.locator("[data-title-current]").first().textContent())?.replace(/\s+/g, " ") ??
+      "";
+    checked += 1;
+    if (!titleCurrentText.includes(wornTitle.name)) {
+      failures.push(
+        `[320] 名号卷首没有报出当前佩印「${wornTitle.name}」:${titleCurrentText || "空白"}`,
+      );
+    }
     await page.setViewportSize({ width: 195, height: 422 });
     await settleVisuals(page);
     await exerciseList({
@@ -10710,6 +10719,14 @@ async function taskTitlePetOverflow() {
     const petTab = page.getByRole("tab", { name: /灵兽/ }).first();
     await petTab.click({ timeout: 5000 });
     await page.locator("[data-pet-total]").waitFor({ state: "visible", timeout: 5000 });
+    const petCurrentText =
+      (await page.locator("[data-pet-current]").first().textContent())?.replace(/\s+/g, " ") ?? "";
+    checked += 1;
+    if (!petCurrentText.includes(activePet.name)) {
+      failures.push(
+        `[320] 灵兽卷首没有报出当前相伴「${activePet.name}」:${petCurrentText || "空白"}`,
+      );
+    }
     await settleVisuals(page);
     await exerciseList({
       kind: "pet",

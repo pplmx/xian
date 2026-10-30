@@ -250,6 +250,7 @@ const CATEGORIES = [
       "collectionProgress",
       "collectionDesk",
       "titleProgress",
+      "titlesDesk",
       "titleLadder",
       "artifactEffects",
       "dataHeaderAudit",
