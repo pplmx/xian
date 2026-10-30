@@ -2100,6 +2100,41 @@ async function taskPageTour(vp) {
     controlHostsSeen += info.nestedControls?.hosts ?? 0;
     const problems = problemsOf(info);
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
+    if (route === "/settings") {
+      const settingsDesk = await page.evaluate(() => {
+        const current = document.querySelector("[data-settings-current]");
+        const consoleDesk = document.querySelector("[data-settings-console]");
+        return {
+          current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
+          console: !!consoleDesk,
+          groups: [...document.querySelectorAll("[data-settings-group]")].map(
+            (el) => el.getAttribute("data-settings-group") || "",
+          ),
+          archive: !!document.querySelector("[data-settings-archive]"),
+          trail: !!document.querySelector("[data-settings-trail]"),
+          index: !!document.querySelector("[data-settings-index]"),
+          compass: !!document.querySelector("[data-settings-compass]"),
+        };
+      });
+      checked += 1;
+      if (!settingsDesk.current || !settingsDesk.console) {
+        failures.push(`[${vp.tag}] /settings 天机总案没有渲染出来(卷首与正文都没报此刻)`);
+      }
+      if (settingsDesk.groups.join(",") !== "sound,sight,conduct") {
+        failures.push(
+          `[${vp.tag}] /settings 三案顺序不对:${settingsDesk.groups.join(" / ") || "无"}`,
+        );
+      }
+      if (!settingsDesk.archive || !settingsDesk.trail || !settingsDesk.index) {
+        failures.push(`[${vp.tag}] /settings 存续案、留痕案或卷末索引缺了一案`);
+      }
+      if (vp.width >= 360 && !settingsDesk.compass) {
+        failures.push(`[${vp.tag}] /settings 天机盘没有随卷首渲染`);
+      }
+      if (!/乐|静/.test(settingsDesk.current) || !/备份/.test(settingsDesk.current)) {
+        failures.push(`[${vp.tag}] /settings 卷首没有同报声息与存续:«${settingsDesk.current}»`);
+      }
+    }
     if (vp.tag === "390" && (route === "/celestial" || route === "/souls")) {
       const sealed = await page.evaluate(() => {
         const folio = document.querySelector("[data-unopened-folio]");
@@ -5372,10 +5407,7 @@ async function taskReduceMotion() {
     }
     await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
     await page.waitForTimeout(700);
-    const box = page
-      .locator("label", { hasText: /减少动效/ })
-      .locator("input[type=checkbox]")
-      .first();
+    const box = page.getByLabel("减少动效");
     if ((await box.count()) === 0) failures.push("[390] 减动效场景:设置页找不到「减少动效」开关");
     else {
       await box.check({ timeout: 2500 }).catch(() => {});
@@ -7887,7 +7919,7 @@ async function taskBadSave() {
     const cardShown = await page
       .waitForFunction(
         () =>
-          [...document.querySelectorAll(".card-ink")].some((c) =>
+          [...document.querySelectorAll("[data-settings-archive]")].some((c) =>
             (c.textContent || "").includes("存档版本"),
           ),
         { timeout: 20000 },
@@ -7895,7 +7927,7 @@ async function taskBadSave() {
       .then(() => true)
       .catch(() => false);
     const notice = await page.evaluate(() => {
-      const card = [...document.querySelectorAll(".card-ink")].find((c) =>
+      const card = [...document.querySelectorAll("[data-settings-archive]")].find((c) =>
         (c.textContent || "").includes("存档版本"),
       );
       return (card?.innerText || "").replace(/\n+/g, " ");
@@ -8087,9 +8119,7 @@ async function taskIosNotice() {
       if ((await cardCount(page)) !== 1)
         failures.push("[iOS] 设置页没有常驻那一份 —— 玩家回头想装时找不到那两步");
       const backup = await page.evaluate(() => {
-        const el = [...document.querySelectorAll("p")].find((p) =>
-          (p.textContent || "").includes("上次导出备份"),
-        );
+        const el = document.querySelector('[data-settings-save-stat="export"]');
         return (el?.innerText || "").replace(/\s+/g, " ");
       });
       if (!/上次导出备份/.test(backup)) failures.push("[iOS] 设置页没有「上次导出备份」那一行");
@@ -11590,10 +11620,30 @@ async function taskReadOnlyTab() {
   try {
     const writer = await ctx.newPage();
     await writer.goto(INDEX + "#/", { waitUntil: "load" });
-    await writer.waitForTimeout(900);
+    /*
+     * 并发负载下，900ms 墙钟不保证写者已经拿到 Web Lock；读者若抢在前面，
+     * 两个页面都会是写者，这条只读判据便整组假红。先等锁真的在写者手里，
+     * 再开第二个标签页 —— 判据不变，只把「先到」这件事变成确定事实。
+     */
+    const writerHeld = await writer
+      .waitForFunction(
+        async () => {
+          const state = await navigator.locks.query();
+          return (state.held || []).some((l) => l.name === "xuanshu.save-writer");
+        },
+        { timeout: 12000 },
+      )
+      .then(() => true)
+      .catch(() => false);
+    checked += 1;
+    if (!writerHeld) {
+      failures.push("[390] 只读页场景:写者页没拿到 Web Lock,后面的双标签判据没有立足点");
+    }
     const reader = await ctx.newPage();
     await reader.goto(INDEX + "#/", { waitUntil: "load" });
-    await reader.waitForTimeout(900);
+    await reader
+      .waitForFunction(() => !!document.querySelector("[data-save-reader]"), { timeout: 12000 })
+      .catch(() => undefined);
 
     checked += 1;
     const writerHas = await writer.evaluate(() => !!document.querySelector("[data-save-reader]"));

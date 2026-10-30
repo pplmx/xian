@@ -1,179 +1,341 @@
 <template>
-  <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="设置" back-to="home" back-label="返回" />
-
-    <!-- 偏好 -->
-    <div class="card-ink divide-y divide-ink/7 px-4">
-      <div class="py-3">
-        <label class="flex items-center justify-between">
-          <span class="text-title text-ink-soft">背景音乐</span>
-          <input v-model="settings.musicOn" type="checkbox" class="toggle-ink" />
-        </label>
-        <!--
-          min-w-0:range 的原生宽度(约 129px)是它作为可替换元素的自动最小尺寸,
-          光有 grow 压不下去 —— 200% 字号(布局视口 195px)下整行会被它顶出去 6px。
-        -->
-        <div v-if="settings.musicOn" class="mt-2 flex items-center gap-2">
-          <span class="text-note text-ink-faint">轻</span>
-          <input
-            v-model.number="settings.musicVol"
-            type="range"
-            min="0"
-            max="100"
-            aria-label="背景音乐音量"
-            class="min-w-0 grow accent-cinnabar"
-          />
-          <span class="w-7 text-right text-note tabular text-ink-faint">{{
-            settings.musicVol
-          }}</span>
-        </div>
-      </div>
-      <div class="py-3">
-        <label class="flex items-center justify-between">
-          <span class="text-title text-ink-soft">音效</span>
-          <input v-model="settings.sfxOn" type="checkbox" class="toggle-ink" />
-        </label>
-        <div v-if="settings.sfxOn" class="mt-2 flex items-center gap-2">
-          <span class="text-note text-ink-faint">轻</span>
-          <input
-            v-model.number="settings.sfxVol"
-            type="range"
-            min="0"
-            max="100"
-            aria-label="音效音量"
-            class="min-w-0 grow accent-cinnabar"
-          />
-          <span class="w-7 text-right text-note tabular text-ink-faint">{{ settings.sfxVol }}</span>
-        </div>
-      </div>
-      <label class="flex items-center justify-between py-3">
-        <span class="text-title text-ink-soft">减少动效</span>
-        <input v-model="settings.reduceMotion" type="checkbox" class="toggle-ink" />
-      </label>
-      <div class="py-3">
-        <label class="flex items-center justify-between">
-          <span class="text-title text-ink-soft">遇事勿扰</span>
-          <input v-model="settings.dndEvents" type="checkbox" class="toggle-ink" />
-        </label>
-        <!--
-          功能 hint:这开关开着是「静默的」(际遇自动结清、弹窗永不出现),只留一个勾
-          玩家会以为是际遇没了 —— 历练页有开着时的完整提示与就地关掉(见 explorationDnd
-          与 AdventureView),这里把压缩成一句,两页通气。
-        -->
-        <p class="mt-1 text-note leading-relaxed text-ink-faint">
-          历练撞见际遇不再弹窗,按默认好愿当场结清(奖励照拿);历练页会提醒开着,可就地关。
+  <div class="folio-page folio-page--stack stagger-in settings-page">
+    <FolioPageHeader
+      class="settings-masthead"
+      title="天机匣"
+      subtitle="声息、观照与存续"
+      back-to="home"
+      back-label="返回"
+      featured
+    >
+      <template #meta>
+        <p class="settings-masthead__meta" data-settings-current>
+          <span data-settings-sound>{{ soundReadout.label }}</span>
+          <span>{{ themeReadout.label }} · 战报 ×{{ settings.battleSpeed }}</span>
+          <span
+            data-settings-backup
+            :data-state="backupReadout.state"
+            :class="backupReadout.state === 'fresh' ? 'text-qing' : 'text-cinnabar'"
+          >
+            {{ backupReadout.label }}
+          </span>
         </p>
-      </div>
-      <!--
-        极窄档(≤220 CSS px):「标签 + 右侧分段按钮组」一行塞不下,标签被压成 14px 宽
-        一字一行(实测 4 行、行高 109px)。允许换行后标签回到 56px 一行(行高 81px);
-        320 / 390 两档读数不动。
-      -->
-      <div class="flex flex-wrap items-center justify-between py-3">
-        <span class="text-title whitespace-nowrap text-ink-soft">夜间模式</span>
-        <div role="group" aria-label="夜间模式" class="flex gap-1">
-          <button
-            v-for="o in THEME_OPTIONS"
-            :key="o.id"
-            :aria-pressed="settings.theme === o.id"
-            class="chip-ink !py-1.5"
-            :class="
-              settings.theme === o.id
-                ? 'border-cinnabar text-cinnabar'
-                : 'border-ink/25 text-ink-faint'
-            "
-            @click="settings.theme = o.id"
-          >
-            {{ o.label }}
-          </button>
-        </div>
-      </div>
-      <div class="flex flex-wrap items-center justify-between py-3">
-        <span class="text-title whitespace-nowrap text-ink-soft">战报速度</span>
-        <div role="group" aria-label="战报速度" class="flex gap-1">
-          <button
-            v-for="s in [1, 2, 4] as const"
-            :key="s"
-            :aria-pressed="settings.battleSpeed === s"
-            class="chip-ink !py-1.5"
-            :class="
-              settings.battleSpeed === s
-                ? 'border-cinnabar text-cinnabar'
-                : 'border-ink/25 text-ink-faint'
-            "
-            @click="settings.battleSpeed = s"
-          >
-            ×{{ s }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 存档 -->
-    <SectionTitle title="存档" />
-    <div class="card-ink space-y-2 px-4 py-3">
-      <p class="text-body text-ink-faint tabular">
-        存档版本 v{{ SAVE_VERSION }} · 修行时长 {{ formatDuration(game.totalPlaySec) }}
-      </p>
-      <!--
-        备份这件事没人提醒就不会做,而它恰恰是丢档前唯一的保险 —— 故常驻一行;
-        备份旧了、这一档又确实攒了东西时,才把那句「建议导出一份」说出来(见 core/saveBackup.ts)。
-      -->
-      <p class="text-body tabular" :class="backupPrompt ? 'text-amber-ink' : 'text-ink-faint'">
-        上次导出备份:{{ lastExportText }}
-        <span v-if="backupPrompt" class="leading-relaxed">
-          · 建议导出一份 —— 安卓清应用数据、iOS 七天不打开都会把进度带走
-        </span>
-      </p>
-      <!-- 写盘失败时这里必须说话:玩家可能正玩得兴起,却不知道进度没进档 -->
-      <p
-        v-if="saveFailed"
-        class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-body leading-relaxed text-cinnabar"
-      >
-        上次写入存档失败 ——
-        浏览器存储可能已满。请先「导出存档」留一份,再清理浏览器数据或换设备导入。
-        腾出空间后会自动重试,成功时这条自己消失。
-      </p>
-      <!--
-        坏掉的分片只说一次(启动时一条 2.4 秒的提示)是不够的:
-        玩家多半是先发现「我的灵石怎么没了」,再回来找原因。
-        故这里常驻一条:哪一片坏了、原档还在哪儿、以及最该做的那件事(导入备份)。
-      -->
-      <p
-        v-if="corruptedNotice.length"
-        class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-body leading-relaxed text-cinnabar"
-      >
-        启动时发现 {{ corruptedNotice.length }} 个存档分片损坏,已跳过损坏内容:{{
-          corruptedNotice.map((id) => STORE_NAMES[id] ?? id).join("、")
-        }}。损坏的原档没有删除,仍在本机。备份键:<span class="break-all">{{ corruptKeys }}</span
-        >;备份失败时仍在原键:<span class="break-all">{{ sourceKeys }}</span
-        >。同一片多次损坏时,后续原文会追加 .1/.2。若手上还有导出的备份,可在此导入恢复。
-        <button
-          class="mt-1 block text-ink-faint underline active:opacity-60"
-          @click="ui.corruptedNotice = []"
-        >
-          知道了
-        </button>
-      </p>
-      <!-- 极窄档(≤220 CSS px):两列各 61px 时「导出存档」四字折成两行 —— 放开成单列。 -->
-      <div class="grid grid-cols-2 gap-2 tinylens:grid-cols-1">
-        <button class="btn-ghost !text-body" @click="onExport">导出存档</button>
-        <button class="btn-ghost !text-body" @click="triggerImport">导入存档</button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept="application/json,.save"
-          class="hidden"
-          @change="onFilePicked"
+      </template>
+      <template #visual>
+        <SettingsCompass
+          :sound-level="soundReadout.level"
+          :sight-level="themeReadout.level"
+          :keep-level="backupReadout.level"
+          :quiet="soundReadout.quiet"
+          :backup-state="backupReadout.state"
         />
-      </div>
-      <button
-        class="btn-ghost w-full !border-cinnabar/40 !text-body !text-cinnabar"
-        @click="openReset"
-      >
-        散尽修为,重入轮回(清空存档)
-      </button>
-    </div>
+      </template>
+    </FolioPageHeader>
+
+    <section class="folio-span-all">
+      <SectionTitle title="天机总案" hint="六项设置即时生效,只改听看与行止" />
+      <section class="settings-console" data-settings-console>
+        <header class="settings-console__head">
+          <span class="settings-console__seal" aria-hidden="true">枢</span>
+          <span class="settings-console__identity">
+            <span class="settings-console__eyebrow">本机法度</span>
+            <h2 class="settings-console__title">声息、观照与行止</h2>
+            <span class="settings-console__desc">
+              开关只决定你怎么听、怎么看、怎么遇；修行结算与存档事实不另立一套。
+            </span>
+          </span>
+          <span class="settings-console__score">
+            <span>改动</span>
+            <strong>即存</strong>
+          </span>
+        </header>
+
+        <div class="settings-console__grid">
+          <section class="settings-group" data-settings-group="sound">
+            <header class="settings-group__head">
+              <span class="settings-group__ordinal" aria-hidden="true">壹</span>
+              <span class="settings-group__identity">
+                <span class="settings-group__eyebrow">入耳</span>
+                <h3 class="settings-group__title">声息</h3>
+              </span>
+              <span class="settings-group__state tabular">{{ soundReadout.label }}</span>
+            </header>
+
+            <div class="settings-group__controls">
+              <div class="settings-control">
+                <div class="settings-control__head">
+                  <label for="settings-music" class="settings-control__label">背景音乐</label>
+                  <span class="settings-control__value tabular">
+                    {{ settings.musicOn ? soundReadout.music : "静" }}
+                  </span>
+                  <input
+                    id="settings-music"
+                    v-model="settings.musicOn"
+                    type="checkbox"
+                    class="toggle-ink"
+                  />
+                </div>
+                <!--
+                  min-w-0:range 的原生宽度(约 129px)是它作为可替换元素的自动最小尺寸,
+                  光有 grow 压不下去 —— 200% 字号(布局视口 195px)下整行会被它顶出去 6px。
+                -->
+                <div v-if="settings.musicOn" class="settings-level">
+                  <span class="settings-level__edge">轻</span>
+                  <input
+                    v-model.number="settings.musicVol"
+                    type="range"
+                    min="0"
+                    max="100"
+                    aria-label="背景音乐音量"
+                    class="settings-range min-w-0"
+                    :style="{ '--settings-level': `${soundReadout.music}%` }"
+                  />
+                  <span class="settings-level__value tabular">{{ soundReadout.music }}</span>
+                </div>
+              </div>
+
+              <div class="settings-control">
+                <div class="settings-control__head">
+                  <label for="settings-sfx" class="settings-control__label">音效</label>
+                  <span class="settings-control__value tabular">
+                    {{ settings.sfxOn ? soundReadout.sfx : "静" }}
+                  </span>
+                  <input
+                    id="settings-sfx"
+                    v-model="settings.sfxOn"
+                    type="checkbox"
+                    class="toggle-ink"
+                  />
+                </div>
+                <div v-if="settings.sfxOn" class="settings-level">
+                  <span class="settings-level__edge">轻</span>
+                  <input
+                    v-model.number="settings.sfxVol"
+                    type="range"
+                    min="0"
+                    max="100"
+                    aria-label="音效音量"
+                    class="settings-range min-w-0"
+                    :style="{ '--settings-level': `${soundReadout.sfx}%` }"
+                  />
+                  <span class="settings-level__value tabular">{{ soundReadout.sfx }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-group" data-settings-group="sight">
+            <header class="settings-group__head">
+              <span class="settings-group__ordinal" aria-hidden="true">贰</span>
+              <span class="settings-group__identity">
+                <span class="settings-group__eyebrow">入眼</span>
+                <h3 class="settings-group__title">观照</h3>
+              </span>
+              <span class="settings-group__state tabular">
+                {{ themeReadout.mark }} · ×{{ settings.battleSpeed }}
+              </span>
+            </header>
+
+            <div class="settings-group__controls">
+              <div class="settings-control">
+                <div class="settings-control__head">
+                  <span class="settings-control__label">夜间模式</span>
+                  <span class="settings-control__value">{{ themeReadout.label }}</span>
+                </div>
+                <div role="group" aria-label="夜间模式" class="settings-segments">
+                  <button
+                    v-for="o in THEME_OPTIONS"
+                    :key="o.id"
+                    type="button"
+                    :aria-pressed="settings.theme === o.id"
+                    class="settings-segment"
+                    @click="settings.theme = o.id"
+                  >
+                    {{ o.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-control">
+                <div class="settings-control__head">
+                  <span class="settings-control__label">战报速度</span>
+                  <span class="settings-control__value tabular">×{{ settings.battleSpeed }}</span>
+                </div>
+                <div role="group" aria-label="战报速度" class="settings-segments">
+                  <button
+                    v-for="s in [1, 2, 4] as const"
+                    :key="s"
+                    type="button"
+                    :aria-pressed="settings.battleSpeed === s"
+                    class="settings-segment"
+                    @click="settings.battleSpeed = s"
+                  >
+                    ×{{ s }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-group" data-settings-group="conduct">
+            <header class="settings-group__head">
+              <span class="settings-group__ordinal" aria-hidden="true">叁</span>
+              <span class="settings-group__identity">
+                <span class="settings-group__eyebrow">入行</span>
+                <h3 class="settings-group__title">行止</h3>
+              </span>
+              <span class="settings-group__state">
+                {{ settings.reduceMotion ? "动效静" : "动效开" }} ·
+                {{ settings.dndEvents ? "勿扰" : "照常" }}
+              </span>
+            </header>
+
+            <div class="settings-group__controls">
+              <div class="settings-control">
+                <div class="settings-control__head">
+                  <label for="settings-motion" class="settings-control__label">减少动效</label>
+                  <input
+                    id="settings-motion"
+                    v-model="settings.reduceMotion"
+                    type="checkbox"
+                    class="toggle-ink"
+                  />
+                </div>
+                <p class="settings-control__hint">
+                  入场、进度与战报回放少走过场，需要结果的步骤直接给结果。
+                </p>
+              </div>
+
+              <div class="settings-control">
+                <div class="settings-control__head">
+                  <label for="settings-dnd" class="settings-control__label">遇事勿扰</label>
+                  <input
+                    id="settings-dnd"
+                    v-model="settings.dndEvents"
+                    type="checkbox"
+                    class="toggle-ink"
+                  />
+                </div>
+                <!--
+                  功能 hint:这开关开着是「静默的」(际遇自动结清、弹窗永不出现),只留一个勾
+                  玩家会以为是际遇没了 —— 历练页有开着时的完整提示与就地关掉(见 explorationDnd
+                  与 AdventureView),这里把压缩成一句,两页通气。
+                -->
+                <p class="settings-control__hint">
+                  历练撞见际遇不再弹窗，按默认好愿当场结清，奖励照拿；历练页会提醒开着，可就地关。
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <footer class="settings-console__foot">
+          <span>改动即时写入本机设置</span>
+          <span>声音开关只影响播放，不改变结算</span>
+        </footer>
+      </section>
+    </section>
+
+    <section class="folio-span-all">
+      <SectionTitle title="存续案" hint="备份是丢档前唯一的保险" />
+      <section class="settings-archive" data-settings-archive :data-backup="backupReadout.state">
+        <header class="settings-archive__head">
+          <span class="settings-archive__seal" aria-hidden="true">档</span>
+          <span class="settings-archive__identity">
+            <span class="settings-archive__eyebrow">本机存档</span>
+            <h2 class="settings-archive__title">存续与迁移</h2>
+            <span class="settings-archive__desc">
+              导出是唯一能带走的一份；导入会整体替换当前进度，确认前先摊清底细。
+            </span>
+          </span>
+          <span class="settings-archive__score tabular">存档版本 v{{ SAVE_VERSION }}</span>
+        </header>
+
+        <div class="settings-archive__ledger">
+          <div class="settings-archive__stat" data-settings-save-stat="duration">
+            <span>修行时长</span>
+            <strong class="tabular">{{ formatDuration(game.totalPlaySec) }}</strong>
+          </div>
+          <div class="settings-archive__stat" data-settings-save-stat="export">
+            <span>上次导出备份</span>
+            <strong class="tabular">{{ backupReadout.detail }}</strong>
+          </div>
+          <div class="settings-archive__stat" data-settings-save-stat="backup">
+            <span>备份状态</span>
+            <strong
+              :class="backupReadout.state === 'fresh' ? 'text-qing' : 'text-cinnabar'"
+              class="tabular"
+            >
+              {{ backupReadout.label }}
+            </strong>
+          </div>
+        </div>
+
+        <div v-if="backupPrompt" class="settings-archive__notice" data-backup-prompt>
+          <span class="settings-archive__notice-mark" aria-hidden="true">备</span>
+          <p>
+            <strong>建议导出一份。</strong>
+            安卓清应用数据、iOS 七天不打开，都可能把进度带走。
+          </p>
+        </div>
+
+        <!-- 写盘失败时这里必须说话:玩家可能正玩得兴起,却不知道进度没进档 -->
+        <p v-if="saveFailed" class="settings-archive__danger">
+          上次写入存档失败 ——
+          浏览器存储可能已满。请先「导出存档」留一份，再清理浏览器数据或换设备导入。
+          腾出空间后会自动重试，成功时这条自己消失。
+        </p>
+
+        <!--
+          坏掉的分片只说一次(启动时一条 2.4 秒的提示)是不够的:
+          玩家多半是先发现「我的灵石怎么没了」,再回来找原因。
+          故这里常驻一条:哪一片坏了、原档还在哪儿、以及最该做的那件事(导入备份)。
+        -->
+        <div v-if="corruptedNotice.length" class="settings-archive__danger">
+          <p>
+            启动时发现 {{ corruptedNotice.length }} 个存档分片损坏，已跳过损坏内容：{{
+              corruptedNotice.map((id) => STORE_NAMES[id] ?? id).join("、")
+            }}。损坏的原档没有删除，仍在本机。备份键：<span class="break-all">{{
+              corruptKeys
+            }}</span
+            >；备份失败时仍在原键：<span class="break-all">{{ sourceKeys }}</span
+            >。同一片多次损坏时，后续原文会追加 .1/.2。若手上还有导出的备份，可在此导入恢复。
+          </p>
+          <button
+            class="settings-archive__acknowledge"
+            type="button"
+            @click="ui.corruptedNotice = []"
+          >
+            知道了
+          </button>
+        </div>
+
+        <div class="settings-archive__actions">
+          <button class="btn-seal !text-body" type="button" @click="onExport">导出存档</button>
+          <button class="btn-ghost !text-body" type="button" @click="triggerImport">
+            导入存档
+          </button>
+          <input
+            ref="fileInput"
+            type="file"
+            accept="application/json,.save"
+            class="hidden"
+            @change="onFilePicked"
+          />
+        </div>
+
+        <button
+          class="settings-archive__reset btn-ghost w-full !text-body"
+          type="button"
+          @click="openReset"
+        >
+          散尽修为，重入轮回（清空存档）
+        </button>
+      </section>
+    </section>
+
+    <!-- iOS 专属:装到主屏幕才躲得过系统清存储(非 iOS 不显示,见组件注释) -->
+    <InstallToHomeNotice permanent />
 
     <!--
       诊断:异常留档。
@@ -181,61 +343,100 @@
       从前全局异常只 toast 一句「出现异常,已记录」—— 手机上根本没有控制台,
       那句「已记录」无处可查。这里把它坐实:最近 20 条、可复制、也随「导出存档」一起走。
     -->
-    <SectionTitle title="诊断" />
-    <div class="card-ink space-y-2 px-4 py-3">
-      <p class="t-body text-ink-faint">
-        <template v-if="diag.errors.length"
-          >最近记录了 {{ diag.errors.length }} 条异常(最多留 {{ DIAG_MAX }} 条)</template
+    <section class="folio-span-all">
+      <SectionTitle title="留痕案" :hint="`异常最多留 ${DIAG_MAX} 条`" />
+      <section class="settings-trail" data-settings-trail :data-state="diagReadout.state">
+        <header class="settings-trail__head">
+          <span class="settings-trail__seal" aria-hidden="true">{{ diagReadout.mark }}</span>
+          <span class="settings-trail__identity">
+            <span class="settings-trail__eyebrow">本机留痕</span>
+            <h2 class="settings-trail__title">异常记录</h2>
+          </span>
+          <span
+            class="settings-trail__score tabular"
+            :class="diagReadout.state === 'clear' ? 'text-qing' : 'text-cinnabar'"
+          >
+            {{ diagReadout.label }}
+          </span>
+        </header>
+
+        <div class="settings-trail__body">
+          <p class="settings-trail__copy">
+            <template v-if="diag.errors.length">
+              最近记录了 {{ diag.errors.length }} 条异常（最多留 {{ DIAG_MAX }} 条）。
+            </template>
+            <template v-else>
+              未记录到异常。真出问题时这里会自动留一条，可连同「导出存档」一起发给我们。
+            </template>
+          </p>
+
+          <p v-if="latestError" class="settings-trail__latest">
+            <span class="tabular text-ink-faint">{{ formatClock(latestError.at) }}</span>
+            <span v-if="latestError.count > 1" class="ml-1 text-ink-faint"
+              >×{{ latestError.count }}</span
+            >
+            <span class="ml-1 break-all">{{ latestError.message }}</span>
+            <span v-if="latestError.route" class="ml-1 text-ink-faint">{{
+              latestError.route
+            }}</span>
+          </p>
+
+          <div v-if="diag.errors.length" class="settings-trail__actions">
+            <button class="btn-ghost !text-body" type="button" @click="copyDiag">
+              复制异常记录
+            </button>
+            <button class="btn-ghost !text-body" type="button" @click="diag.clear()">
+              清空记录
+            </button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="folio-span-all">
+      <SectionTitle title="卷末索引" hint="关于、隐私与数值来路" />
+      <div class="settings-index" data-settings-index>
+        <button
+          class="settings-index__row"
+          type="button"
+          data-settings-about
+          @click="aboutOpen = true"
         >
-        <template v-else
-          >未记录到异常。真出问题时这里会自动留一条,可连同「导出存档」一起发给我们。</template
+          <span class="settings-index__ordinal" aria-hidden="true">壹</span>
+          <span class="settings-index__copy">
+            <strong>关于此作</strong>
+            <span>版本、作者与开源致谢</span>
+          </span>
+          <span class="settings-index__action">展卷 →</span>
+        </button>
+        <button
+          class="settings-index__row"
+          type="button"
+          data-settings-privacy
+          @click="privacyOpen = true"
         >
-      </p>
-      <p
-        v-if="latestError"
-        class="rounded-md bg-ink/4 px-2 py-1.5 text-note leading-relaxed text-ink-soft"
-      >
-        <span class="tabular text-ink-faint">{{ formatClock(latestError.at) }}</span>
-        <span v-if="latestError.count > 1" class="ml-1 text-ink-faint"
-          >×{{ latestError.count }}</span
+          <span class="settings-index__ordinal" aria-hidden="true">贰</span>
+          <span class="settings-index__copy">
+            <strong>隐私政策</strong>
+            <span>本地存档与零外域请求</span>
+          </span>
+          <span class="settings-index__action">展卷 →</span>
+        </button>
+        <button
+          class="settings-index__row"
+          type="button"
+          data-settings-progression
+          @click="progressionOpen = true"
         >
-        <span class="ml-1 break-all">{{ latestError.message }}</span>
-        <span v-if="latestError.route" class="ml-1 text-ink-faint">{{ latestError.route }}</span>
-      </p>
-      <div v-if="diag.errors.length" class="grid grid-cols-2 gap-2">
-        <button class="btn-ghost !text-body" @click="copyDiag">复制异常记录</button>
-        <button class="btn-ghost !text-body" @click="diag.clear()">清空记录</button>
+          <span class="settings-index__ordinal" aria-hidden="true">叁</span>
+          <span class="settings-index__copy">
+            <strong>数值体系</strong>
+            <span>复利倍率、净耗时与积余</span>
+          </span>
+          <span class="settings-index__action">展卷 →</span>
+        </button>
       </div>
-    </div>
-
-    <!-- iOS 专属:装到主屏幕才躲得过系统清存储(非 iOS 不显示,见组件注释) -->
-    <InstallToHomeNotice permanent />
-
-    <!-- 关于 -->
-    <SectionTitle title="关于" />
-    <div class="card-ink divide-y divide-ink/7 px-4">
-      <button
-        class="flex w-full items-center justify-between py-3 active:opacity-60"
-        @click="aboutOpen = true"
-      >
-        <span class="text-title text-ink-soft">关于此作</span>
-        <span class="text-body text-ink-faint">查看 →</span>
-      </button>
-      <button
-        class="flex w-full items-center justify-between py-3 active:opacity-60"
-        @click="privacyOpen = true"
-      >
-        <span class="text-title text-ink-soft">隐私政策</span>
-        <span class="text-body text-ink-faint">查看 →</span>
-      </button>
-      <button
-        class="flex w-full items-center justify-between py-3 active:opacity-60"
-        @click="progressionOpen = true"
-      >
-        <span class="text-title text-ink-soft">数值体系</span>
-        <span class="text-body text-ink-faint">查看 →</span>
-      </button>
-    </div>
+    </section>
 
     <!-- 关于我们 -->
     <AboutDialog :open="aboutOpen" @close="aboutOpen = false" />
@@ -338,7 +539,7 @@ import {
   inspectImportText,
 } from "@/core/save";
 import { exportSaveToDevice } from "@/core/savePlatform";
-import { formatLastExport, shouldPromptBackup } from "@/core/saveBackup";
+import { shouldPromptBackup } from "@/core/saveBackup";
 import { formatDuration } from "@/utils/format";
 import {
   SAVE_VERSION,
@@ -354,7 +555,9 @@ import PrivacyDialog from "@/components/common/PrivacyDialog.vue";
 import AboutDialog from "@/components/common/AboutDialog.vue";
 import ProgressionDialog from "@/components/common/ProgressionDialog.vue";
 import InstallToHomeNotice from "@/components/common/InstallToHomeNotice.vue";
+import SettingsCompass from "@/components/common/SettingsCompass.vue";
 import { DIAG_MAX, useDiagStore } from "@/stores/diag";
+import { backupDesk, diagDesk, soundDesk, themeDesk } from "@/ui/settingsDesk";
 
 const settings = useSettingsStore();
 const game = useGameStore();
@@ -410,7 +613,12 @@ const unsubscribeSaveFailure = subscribeSaveWriteFailure((failure) => {
  * Date.now() 反而会让 computed 不稳定。跨天挂着不动属于可接受的误差(重进页面即刷新)。
  */
 const now = ref(Date.now());
-const lastExportText = computed(() => formatLastExport(settings.lastExportAt, now.value));
+const soundReadout = computed(() =>
+  soundDesk(settings.musicOn, settings.musicVol, settings.sfxOn, settings.sfxVol),
+);
+const themeReadout = computed(() => themeDesk(settings.theme));
+const backupReadout = computed(() => backupDesk(settings.lastExportAt, now.value));
+const diagReadout = computed(() => diagDesk(diag.errors.length, DIAG_MAX));
 /** 该不该说出「建议导出一份」(备份旧了 + 这一档攒够了天数,见 core/saveBackup.ts) */
 const backupPrompt = computed(() =>
   shouldPromptBackup(settings.lastExportAt, game.createdAt, now.value),

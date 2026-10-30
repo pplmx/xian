@@ -236,6 +236,7 @@ const CATEGORIES = [
       "useServiceWorkerUpdate",
       "utils/saveShape",
       "settings.spec",
+      "settingsDesk",
       "savePlatform",
       "saveRoundTrip",
       "saveBackup",
