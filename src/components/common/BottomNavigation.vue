@@ -5,13 +5,12 @@
     经 NativeApp 桥量来,桥缺位(网页/iOS/桌面)恒 0,max 退化成 env(),与旧渲染逐位相同。
   -->
   <nav
+    data-folio-dock
     class="bottom-dock relative z-20 shrink-0 border-t border-transparent bg-paper-deep/95 backdrop-blur"
     :style="`padding-bottom: max(env(safe-area-inset-bottom), ${navInset}px)`"
   >
     <div class="ink-divider absolute -top-px inset-x-0" />
-    <div
-      class="bottom-dock-rail mx-2 mt-2 grid grid-cols-5 gap-0.5 border border-ink/10 bg-paper/60 p-0.5"
-    >
+    <div class="bottom-dock-rail mx-2 mt-1.5 grid grid-cols-5 border-y border-ink/15 bg-paper/70">
       <!--
         当前在哪一页交给 RouterLink:它在 exact-active 时自己渲染 aria-current="page"
         (vue-router 的 aria-current-value 默认值就是 page)。这里不再手写一份 ——
@@ -22,12 +21,9 @@
         v-for="tab in TABS"
         :key="tab.name"
         :to="tab.to"
-        class="bottom-dock-tab relative flex min-h-[46px] flex-col items-center justify-center gap-0.5 px-0.5 py-1 transition-colors short:min-h-[40px] short:gap-0 short:py-0.5"
-        :class="
-          route.name === tab.name
-            ? 'text-cinnabar bg-paper-deep/75'
-            : 'text-ink-faint active:text-ink-soft'
-        "
+        class="bottom-dock-tab bottom-dock-slip relative flex min-h-[46px] flex-col items-center justify-center gap-0.5 border-l border-ink/10 px-0.5 py-1 transition-[transform,background-color,color,box-shadow] first:border-l-0 short:min-h-[40px] short:gap-0 short:py-0.5"
+        :class="route.name === tab.name ? 'text-cinnabar' : 'text-ink-faint active:text-ink-soft'"
+        :data-dock-current="route.name === tab.name ? '' : undefined"
       >
         <!--
           落笔 —— 当前这栏顶上压一道朱砂短笔,像夹在书页间的那枚书签带。

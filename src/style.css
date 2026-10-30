@@ -719,14 +719,98 @@ html[data-theme="dark"] .btn-seal:disabled {
 }
 
 .bottom-dock-rail {
-  border-radius: 4px;
+  border-radius: 0;
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.28),
-    0 1px 3px rgb(var(--shadow-ink-rgb) / 0.06);
+    inset 0 1px 0 rgb(255 255 255 / 0.24),
+    inset 0 -1px 0 rgb(var(--color-ink-rgb) / 0.04);
 }
 
 .bottom-dock-tab {
-  border-radius: 2px;
+  border-radius: 0;
+}
+
+.bottom-dock-slip {
+  background: transparent;
+  box-shadow: none;
+}
+
+.bottom-dock-slip[data-dock-current] {
+  background:
+    linear-gradient(180deg, rgb(var(--color-paper-rgb) / 0.9), rgb(var(--color-paper-rgb) / 0.64)),
+    rgb(var(--color-paper-lifted-rgb) / 0.72);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.36),
+    inset 0 -2px 0 rgb(var(--color-cinnabar-rgb) / 0.06);
+  transform: translateY(-1px);
+}
+
+.atlas-current {
+  background:
+    linear-gradient(
+      110deg,
+      rgb(var(--color-paper-rgb) / 0.52),
+      rgb(var(--color-paper-rgb) / 0.1) 62%
+    ),
+    rgb(var(--color-paper-deep-rgb) / 0.58);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.26);
+}
+
+.atlas-current__seal {
+  box-shadow:
+    inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.22),
+    0 1px 0 rgb(var(--color-ink-rgb) / 0.06);
+}
+
+.atlas-index {
+  position: relative;
+}
+
+.atlas-index::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 1.4rem;
+  bottom: 0.2rem;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--color-ink-rgb) / 0.14),
+    rgb(var(--color-ink-rgb) / 0.04)
+  );
+  pointer-events: none;
+}
+
+.atlas-section {
+  position: relative;
+  margin-top: 0.8rem;
+}
+
+.atlas-section:first-child {
+  margin-top: 0;
+}
+
+.atlas-section__number {
+  position: relative;
+  z-index: 1;
+  background: var(--color-paper);
+  box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.2);
+}
+
+.atlas-entry-list {
+  margin-left: 2rem;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--color-paper-rgb) / 0.16),
+    rgb(var(--color-paper-rgb) / 0.42)
+  );
+}
+
+.atlas-entry[data-atlas-current] {
+  box-shadow: inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.62);
+}
+
+.atlas-entry:last-child {
+  border-bottom-color: transparent;
 }
 
 .folio-masthead {
@@ -1447,8 +1531,9 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
  *    同一套样式在五页里会长得不一样。
  * 二 自己铺一层纸色 + 毛玻璃:穿过去的东西必须被挡住,与顶栏、底栏同一种做法。
  *    颜色走 --color-paper-rgb,夜间主题自动跟随。
- * 三 ::after 是往下 12px 的渐隐遮罩。卡片是圆角的,圆角底下那两块三角缺口
- *    挡不住,内容会从角上冒出来。它只画不占位,页面上原有的行距一点没变。
+ * 三 ::after 是往下 12px 的渐隐遮罩。索引签是方角的,但页签与正文之间仍需要
+ *    一段过渡,否则下一条内容会像从切口里突然冒出来。它只画不占位,页面上原有
+ *    的行距一点没变。
  */
   .tab-rail {
     position: sticky;
@@ -1467,6 +1552,70 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     height: 0.75rem;
     background: linear-gradient(to bottom, rgb(var(--color-paper-rgb) / 0.94), transparent);
     pointer-events: none;
+  }
+
+  /*
+ * 书口索引签
+ *
+ * 原先页签是一枚 card-ink 里的圆角滑块:功能没错,但语言仍是「App 分段控件」。
+ * 现在改成连续的书口:上下两道墨线收住一叠小册页,选中签只铺淡纸、底边落一道
+ * 朱砂短线。索引签本身不圆、不浮,读起来像夹在书口里的签条。
+ */
+  .folio-tab-index {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.24),
+      inset 0 -1px 0 rgb(var(--color-ink-rgb) / 0.04);
+  }
+
+  .folio-tab-index__tab {
+    background: transparent;
+  }
+
+  .folio-tab-index__marker {
+    transform-origin: left center;
+  }
+
+  /*
+ * 册页浮层
+ *
+ * 全库弹窗共用这一层:世界色上缘是书签带,题签先报分卷,右上角「合」是收卷动作。
+ * ::before 画一道内收 6px 的纸边,让面板从「带标题的盒子」变成一张摊开的笺。
+ * .paper-grain 已占 ::after,这里只动 ::before,不抢纸纹层。
+ */
+  .folio-modal {
+    isolation: isolate;
+    background:
+      linear-gradient(
+        145deg,
+        rgb(var(--color-paper-rgb) / 0.42),
+        transparent 46%,
+        rgb(var(--color-ink-rgb) / 0.02)
+      ),
+      var(--color-paper);
+  }
+
+  .folio-modal::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    z-index: 0;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.045);
+    pointer-events: none;
+  }
+
+  .folio-modal__head {
+    background: linear-gradient(90deg, rgb(var(--color-paper-deep-rgb) / 0.22), transparent 74%);
+  }
+
+  .folio-modal__section {
+    font-family: var(--font-kai);
+  }
+
+  .folio-modal__close {
+    background: rgb(var(--color-paper-rgb) / 0.34);
+    box-shadow:
+      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.26),
+      0 1px 0 rgb(var(--color-ink-rgb) / 0.06);
   }
 
   /*
@@ -2024,7 +2173,8 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
 .modal-fade-leave-active .modal-panel {
   transition:
     transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.2s ease;
+    opacity 0.2s ease,
+    filter 0.2s ease;
 }
 
 .modal-fade-enter-from,
@@ -2033,11 +2183,13 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
 }
 
 .modal-fade-enter-from .modal-panel {
-  transform: scale(0.94) translateY(10px);
+  transform: scale(0.965) translateY(14px);
+  filter: blur(1px);
 }
 
 .modal-fade-leave-to .modal-panel {
-  transform: scale(0.97);
+  transform: scale(0.985) translateY(4px);
+  filter: blur(0.5px);
 }
 
 /*

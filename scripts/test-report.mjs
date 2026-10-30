@@ -259,6 +259,7 @@ const CATEGORIES = [
       "uiLayering",
       "folioMasthead",
       "folioOpening",
+      "folioChrome",
       "navigation",
       "visualRhythm",
       "itemText",

@@ -235,6 +235,10 @@ describe("排版量法口径", () => {
     );
     expect(card).toContain("isNew?: boolean");
     expect(card).not.toContain('from "@/stores/inventory"');
+    expect(card, "空格位也会按卡数进 DOM —— 标记带用 ml-auto 对齐即可").not.toContain(
+      'class="w-2.5"',
+    );
+    expect(card).toContain('v-if="setName || props.item.level > 0"');
 
     const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
     expect(perf).toContain("maxDomByView");

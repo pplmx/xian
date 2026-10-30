@@ -13,39 +13,39 @@
           aria-modal="true"
           :aria-label="props.ariaLabel || props.title || undefined"
           tabindex="-1"
-          class="modal-panel paper-grain relative w-full max-h-[82vh] flex flex-col overflow-hidden rounded-[4px] border border-ink/20 border-t-2 border-t-[var(--world-bar)] bg-paper shadow-2xl outline-none"
+          data-folio-modal
+          class="modal-panel folio-modal paper-grain relative flex max-h-[84vh] w-full flex-col overflow-hidden rounded-[3px] border border-ink/20 border-t-2 border-t-[var(--world-bar)] bg-paper shadow-2xl outline-none"
           :class="props.wide ? 'max-w-100' : 'max-w-90'"
           @keydown="onPanelKeydown"
         >
-          <!-- 卷轴上缘 -->
+          <!-- 卷首题签:先报这一扇浮层落在哪一卷,再落册名。 -->
           <header
             v-if="props.title || props.closable"
-            class="relative z-10 flex items-center justify-between px-5 pt-4 pb-1 shrink-0 tinylens:px-3"
+            class="folio-modal__head relative z-10 flex shrink-0 items-start justify-between gap-3 px-5 pb-2 pt-4 tinylens:px-3"
           >
-            <!--
-              弹窗标题此前是悬空一行楷体:页面每节都有世界色笔杆(brush-bar)当家,
-              弹窗是全库复用的浮层原语,标题却没有这根杆 —— 全库所有弹窗统一补上。
-            -->
-            <h3 class="flex items-center gap-2 font-kai text-lg tracking-[0.2em] text-ink">
-              <span
-                v-if="props.title"
-                class="brush-bar h-3 w-0.75 rounded bg-[var(--world-bar)]"
-                aria-hidden="true"
-              />
-              {{ props.title }}
-            </h3>
-            <!--
-              关闭键此前只有一枚图标:读屏只念「按钮」(没有可访问名),
-              而且连内外边距只有 26px —— 拇指够得着的那条线是 28px。
-              补 aria-label 与 30px 触面(负外边距抵消,视觉位置不动)。
-            -->
+            <div class="min-w-0">
+              <p
+                data-folio-modal-section
+                class="folio-modal__section text-[10px] tracking-[0.3em] text-ink-faint"
+              >
+                {{ modalSection }} · 卷页
+              </p>
+              <h3 class="mt-1 flex items-center gap-2 font-kai text-lg tracking-[0.2em] text-ink">
+                <span
+                  v-if="props.title"
+                  class="brush-bar h-3 w-0.75 rounded bg-[var(--world-bar)]"
+                  aria-hidden="true"
+                />
+                {{ props.title }}
+              </h3>
+            </div>
             <button
               v-if="props.closable"
-              class="p-1.5 -m-1.5 text-ink-faint active:scale-90"
+              class="folio-modal__close grid h-8 w-8 shrink-0 place-items-center border border-ink/20 font-kai text-[14px] leading-none text-ink-soft active:scale-90"
               aria-label="关闭"
               @click="emit('close')"
             >
-              <GameIcon name="x" :size="18" />
+              <span aria-hidden="true">合</span>
             </button>
           </header>
           <!--
@@ -62,7 +62,10 @@
             class="ink-divider mx-5 shrink-0"
             aria-hidden="true"
           />
-          <div class="scroll-pane relative z-10 overflow-y-auto px-5 py-3 grow tinylens:px-3">
+          <div
+            data-folio-modal-scroll
+            class="scroll-pane relative z-10 grow overflow-y-auto px-5 py-3 tinylens:px-3"
+          >
             <slot />
           </div>
           <footer
@@ -102,8 +105,9 @@ if (typeof window !== "undefined") window.addEventListener("keydown", onWindowKe
 </script>
 
 <script setup lang="ts">
-import { nextTick, onUnmounted, useTemplateRef, watch } from "vue";
-import GameIcon from "./GameIcon.vue";
+import { computed, nextTick, onUnmounted, useTemplateRef, watch } from "vue";
+import { useRoute } from "vue-router";
+import { navigationEntryOf } from "@/ui/navigation";
 
 const props = withDefaults(
   defineProps<{
@@ -126,6 +130,8 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{ close: [] }>();
+const route = useRoute();
+const modalSection = computed(() => navigationEntryOf(route.name)?.sectionLabel ?? "玄枢");
 
 /**
  * 焦点管理 —— 弹窗打开时,键盘焦点必须跟着进去,且不许跑出去。

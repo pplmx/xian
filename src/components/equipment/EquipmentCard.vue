@@ -23,8 +23,7 @@
         class="rounded-sm bg-jade/6 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
         >佩</span
       >
-      <span v-else class="w-2.5" aria-hidden="true" />
-      <span class="flex items-center gap-0.5">
+      <span class="ml-auto flex items-center gap-0.5">
         <QualitySeal v-if="rare" :quality="props.item.quality" :size="13" />
         <span
           v-if="props.item.locked"
@@ -56,15 +55,20 @@
     </span>
 
     <!-- 底边:左「共」(共鸣),右强化等级 —— 两样都是数值性的,故都走右下这条基线 -->
-    <span class="absolute inset-x-0 bottom-0.5 flex items-center justify-between px-1">
+    <span
+      v-if="setName || props.item.level > 0"
+      class="absolute inset-x-0 bottom-0.5 flex items-center justify-between px-1"
+    >
       <span
         v-if="setName"
         class="font-kai text-[10px] leading-none text-violet-ink"
         :title="`共鸣「${setName}」`"
         >共</span
       >
-      <span v-else class="w-2.5" aria-hidden="true" />
-      <span v-if="props.item.level > 0" class="text-[10px] leading-none text-gold-ink tabular">
+      <span
+        v-if="props.item.level > 0"
+        class="ml-auto text-[10px] leading-none text-gold-ink tabular"
+      >
         +{{ props.item.level }}
       </span>
     </span>
