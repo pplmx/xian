@@ -3417,7 +3417,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("历练首屏先给主线:卷首在秘境支线之前,支线默认收口", () => {
     const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
     const src = adventure?.src ?? "";
-    const titleAt = src.indexOf('<FolioPageHeader title="历练"');
+    const titleAt = src.search(/<FolioPageHeader[\s\S]{0,180}\btitle="历练"/);
     const secretAt = src.indexOf("<SecretRealmCard");
     expect(titleAt, "历练卷首要能找到").toBeGreaterThan(-1);
     expect(secretAt, "秘境卡要能找到").toBeGreaterThan(titleAt);
