@@ -6,7 +6,7 @@ import { listWindow, nextListLimit, previousListLimit } from "./listRender";
  */
 export const INVENTORY_RENDER_BATCH = 32;
 
-/** 背包一次只留一批:80 张卡实测 1048 DOM,已越过 700 的背包预算。 */
+/** 背包一次只留一批:80 张卡实测 1048 DOM,已越过 800 的背包首帧预算。 */
 export const INVENTORY_RENDER_WINDOW = INVENTORY_RENDER_BATCH;
 
 /** 坊市是短横条/弹窗行,不比整张装备卡;两批可见仍能守在 1100 DOM 内。 */

@@ -279,6 +279,7 @@ const CATEGORIES = [
       "characterDossier",
       "dongfuDesk",
       "desktopSpine",
+      "useMediaQuery",
       "navigation",
       "atlas.spec",
       "visualRhythm",

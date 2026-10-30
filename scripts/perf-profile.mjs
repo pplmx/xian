@@ -100,11 +100,21 @@ const BUDGET = {
    * 修行页三册功法每窗最多 24 部,全习得 66 部逐门翻完;单门整册铺开也会随内容增长,
    * 故单独守住 700 DOM。
    * 天界道痕满卷 60 则每窗最多 24 则,全流程峰值 362;celestial 也守住 700 DOM。
+   * 背包首帧与候选弹窗分开算:首帧含 32 张卡和整页账,守 800;弹窗叠在整页之上,
+   * 与部位候选自己的 1100 上限共用一档。这样不会把「整页 + 浮层」误算成首帧回潮。
    * 1100 拦的是窗口上限失效、点击越多 DOM 越长的回潮。
    */
   maxDomByView: {
     cultivation: 700,
-    inventory: 700,
+    inventory: 800,
+    market: 1100,
+    collection: 1100,
+    celestial: 700,
+  },
+  /** 点开弹窗、续开长清单后的总 DOM；只有会叠浮层的背包另给一档。 */
+  maxInteractiveDomByView: {
+    cultivation: 700,
+    inventory: 1100,
     market: 1100,
     collection: 1100,
     celestial: 700,
@@ -1157,13 +1167,17 @@ for (const r of results) {
     failures.push(
       `${r.name}: 功法/${bad.label}册 DOM ${bad.peakNodes} > ${BUDGET.maxDomByView[r.name]} —— 整门书册是否又进了 DOM`,
     );
+  } else if (gate && BUDGET.maxDomByView[r.name] && r.nodes > BUDGET.maxDomByView[r.name]) {
+    failures.push(
+      `${r.name}: 首帧 DOM ${r.nodes} > ${BUDGET.maxDomByView[r.name]} —— 长列表是否又整批进首帧了`,
+    );
   } else if (
     gate &&
-    BUDGET.maxDomByView[r.name] &&
-    (r.peakNodes ?? r.nodes) > BUDGET.maxDomByView[r.name]
+    BUDGET.maxInteractiveDomByView[r.name] &&
+    (r.peakNodes ?? r.nodes) > BUDGET.maxInteractiveDomByView[r.name]
   ) {
     failures.push(
-      `${r.name}: DOM ${r.peakNodes ?? r.nodes} > ${BUDGET.maxDomByView[r.name]} —— 长列表是否又整批进首帧了`,
+      `${r.name}: 交互后 DOM ${r.peakNodes ?? r.nodes} > ${BUDGET.maxInteractiveDomByView[r.name]} —— 窗口上限是否失效了`,
     );
   } else if (gate && checks.some(([, b]) => !b.ok)) {
     const [label, bad] = checks.find(([, b]) => !b.ok);
@@ -1174,7 +1188,7 @@ for (const r of results) {
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 修行功法 DOM ≤ ${BUDGET.maxDomByView.cultivation} · 背包 DOM ≤ ${BUDGET.maxDomByView.inventory} · 道痕满卷 DOM ≤ ${BUDGET.maxDomByView.celestial} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxDomByView.collection} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 修行功法 DOM ≤ ${BUDGET.maxInteractiveDomByView.cultivation} · 背包首帧 DOM ≤ ${BUDGET.maxDomByView.inventory} / 弹窗峰值 ≤ ${BUDGET.maxInteractiveDomByView.inventory} · 道痕满卷 DOM ≤ ${BUDGET.maxInteractiveDomByView.celestial} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.collection} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);

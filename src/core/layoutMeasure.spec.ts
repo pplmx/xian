@@ -246,7 +246,9 @@ describe("排版量法口径", () => {
 
     const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
     expect(perf).toContain("maxDomByView");
-    expect(perf).toContain("inventory: 700");
+    expect(perf).toContain("inventory: 800");
+    expect(perf).toContain("maxInteractiveDomByView");
+    expect(perf).toContain("inventory: 1100");
     expect(perf).toContain("makeBigBagItems");
     expect(perf).toContain("data-inventory-total");
     expect(perf).toContain("夹具只装进");

@@ -28,7 +28,7 @@
       />
     </div>
 
-    <DesktopSpine v-if="game.started && route.name !== 'create'" />
+    <DesktopSpine v-if="game.started && route.name !== 'create' && desktopSpineVisible" />
     <TopStatusBar v-if="game.started && route.name !== 'create'" />
 
     <!--
@@ -113,6 +113,7 @@ import { applyTheme, initTheme } from "@/core/theme";
 import { configureAudio, playSfx, stopBgm, unlockAudio } from "@/core/audio";
 import { folioLayoutOf } from "@/ui/folioSpread";
 import { folioTurnDirectionOf, type FolioTurnDirection } from "@/ui/folioTurn";
+import { useMediaQuery } from "@/composables/useMediaQuery";
 import DesktopSpine from "@/components/common/DesktopSpine.vue";
 import TopStatusBar from "@/components/common/TopStatusBar.vue";
 import BottomNavigation from "@/components/common/BottomNavigation.vue";
@@ -139,6 +140,8 @@ const router = useRouter();
 const folioLayout = computed(() => folioLayoutOf(route.name));
 const turnDirection = ref<FolioTurnDirection>("cross");
 const turnName = computed(() => `folio-turn-${turnDirection.value}`);
+/** 书脊只属于桌面两列骨架；手机即便 CSS 已隐藏，也不该把整份十七册目录留在 DOM。 */
+const desktopSpineVisible = useMediaQuery("(min-width: 960px)");
 const stopAfterEach = router.afterEach((to, from) => {
   turnDirection.value = folioTurnDirectionOf(from.name, to.name);
 });
