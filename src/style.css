@@ -3212,6 +3212,314 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
   }
 
   /*
+   * 修炼案 —— 周天盘在卷首报方向,正文只留一张行功账。
+   *
+   * 旧版把「修行 / 破境 / 闭关」排成三张同权重卡,玩家先读到的是三套边框;
+   * 现在先把本境修为抬成主读数,行速与灵气退成两栏明细,破境与闭关则共同
+   * 归入「下一步」。所有数字仍读 View 里原有的同源 computed。
+   */
+  .cultivation-ledger {
+    position: relative;
+    align-self: stretch;
+    overflow: hidden;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    border-top: 2px solid var(--world-bar);
+    border-radius: 2px;
+    background:
+      linear-gradient(
+        118deg,
+        rgb(var(--color-paper-rgb) / 0.32),
+        transparent 46%,
+        rgb(var(--color-ink-rgb) / 0.018)
+      ),
+      rgb(var(--color-paper-lifted-rgb));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.42),
+      3px 3px 0 rgb(var(--color-ink-rgb) / 0.025);
+  }
+
+  .cultivation-ledger::before {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.03);
+    content: "";
+    pointer-events: none;
+  }
+
+  .cultivation-ledger__head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem 0.65rem;
+  }
+
+  .cultivation-ledger__heading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .cultivation-ledger__seal {
+    display: grid;
+    width: 2.55rem;
+    height: 2.55rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+    background:
+      linear-gradient(
+        145deg,
+        rgb(var(--color-paper-rgb) / 0.6),
+        rgb(var(--color-cinnabar-rgb) / 0.04)
+      ),
+      rgb(var(--color-paper-rgb) / 0.32);
+    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.28);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+
+  .cultivation-ledger__eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.16em;
+  }
+
+  .cultivation-ledger__title {
+    margin-top: 0.06rem;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.2em;
+    line-height: 1.35;
+  }
+
+  .cultivation-ledger__position {
+    flex: none;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+
+  .cultivation-ledger__ladder {
+    position: relative;
+    z-index: 1;
+    margin: 0 auto;
+    max-width: 19rem;
+    padding: 0 1rem 0.85rem;
+  }
+
+  .cultivation-ledger__primary {
+    position: relative;
+    z-index: 1;
+    margin: 0 0.75rem;
+    padding: 0.75rem 0.8rem 0.8rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.72);
+    background:
+      linear-gradient(115deg, rgb(var(--color-cinnabar-rgb) / 0.045), transparent 52%),
+      rgb(var(--color-paper-rgb) / 0.28);
+  }
+
+  .cultivation-ledger__primary-head,
+  .cultivation-ledger__remainder,
+  .cultivation-ledger__meter-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.55rem;
+  }
+
+  .cultivation-ledger__primary-head {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+
+  .cultivation-ledger__value-row {
+    margin-top: 0.22rem;
+    line-height: 1.2;
+  }
+
+  .cultivation-ledger__value {
+    display: inline-flex;
+    align-items: baseline;
+    color: rgb(var(--color-ink-rgb));
+    font-size: var(--type-heading);
+    letter-spacing: 0.02em;
+  }
+
+  .cultivation-ledger__remainder {
+    margin-top: 0.4rem;
+    font-size: var(--type-body);
+  }
+
+  .cultivation-ledger__hint {
+    margin-top: 0.35rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.65;
+  }
+
+  .cultivation-ledger__meters {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin: 0.8rem 0.75rem 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+
+  .cultivation-ledger__meter {
+    min-width: 0;
+    padding: 0.72rem 0.15rem;
+  }
+
+  .cultivation-ledger__meter + .cultivation-ledger__meter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+
+  .cultivation-ledger__meter-label {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+
+  .cultivation-ledger__meter-value {
+    margin-top: 0.15rem;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-title);
+    line-height: 1.35;
+  }
+
+  .cultivation-ledger__meter-copy {
+    margin-top: 0.25rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
+
+  .cultivation-ledger__qi-row {
+    margin-top: 0.18rem;
+  }
+
+  .cultivation-ledger__sources {
+    position: relative;
+    z-index: 1;
+    margin: 0.7rem 0.75rem 0.85rem;
+    padding: 0.65rem 0.75rem;
+    border-left: 1px solid rgb(var(--color-qing-rgb) / 0.32);
+    background: rgb(var(--color-qing-rgb) / 0.035);
+    font-size: var(--type-note);
+    line-height: 1.65;
+  }
+
+  .cultivation-ledger__sources p + p {
+    margin-top: 0.2rem;
+  }
+
+  .cultivation-next {
+    min-width: 0;
+  }
+
+  .cultivation-next__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+  }
+
+  @media (min-width: 360px) {
+    .cultivation-ledger__meters {
+      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    }
+
+    .cultivation-ledger__meter {
+      padding: 0.72rem;
+    }
+
+    .cultivation-ledger__meter + .cultivation-ledger__meter {
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+  }
+
+  @media (min-width: 960px) {
+    .cultivation-ledger {
+      min-height: 100%;
+    }
+
+    .cultivation-next__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+  }
+
+  @media (max-width: 220px) {
+    .cultivation-ledger__head {
+      align-items: flex-start;
+      padding: 0.72rem 0.72rem 0.55rem;
+    }
+
+    .cultivation-ledger__heading {
+      gap: 0.45rem;
+    }
+
+    .cultivation-ledger__seal {
+      width: 2.15rem;
+      height: 2.15rem;
+      font-size: var(--type-body);
+    }
+
+    .cultivation-ledger__title {
+      letter-spacing: 0.1em;
+    }
+
+    .cultivation-ledger__position {
+      max-width: 4.5rem;
+      text-align: right;
+    }
+
+    .cultivation-ledger__ladder {
+      padding-inline: 0.72rem;
+    }
+
+    .cultivation-ledger__primary {
+      margin-inline: 0.5rem;
+      padding-inline: 0.65rem;
+    }
+
+    .cultivation-ledger__primary-head,
+    .cultivation-ledger__remainder {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .cultivation-ledger__meters {
+      margin-inline: 0.5rem;
+    }
+
+    .cultivation-ledger__sources {
+      margin-inline: 0.5rem;
+      padding-inline: 0.6rem;
+    }
+
+    .cultivation-next__grid {
+      gap: 0.5rem;
+    }
+  }
+
+  /*
  * 开关(.toggle-ink)—— 设置页的四个布尔项
  *
  * 原生 checkbox 只换一层形:appearance:none 只动外观,元素仍是 <input type=checkbox>,

@@ -263,6 +263,7 @@ const CATEGORIES = [
       "folioChrome",
       "folioSpread",
       "homeDesk",
+      "cultivationDesk",
       "desktopSpine",
       "navigation",
       "visualRhythm",

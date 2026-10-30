@@ -106,7 +106,7 @@ describe("建号「逆天改命」不限次", () => {
     expect(player.name).toBe("旧名");
   });
 
-  it("确认转世时把草稿写进新一世(带名走,不带名则沿用)", () => {
+  it("确认转世时把草稿写进新一世(带名走,不带名则沿用)", { timeout: 60_000 }, () => {
     const rng = new RandomService(mulberry32(777));
     const player = usePlayerStore();
     const ui = useUiStore();

@@ -15,78 +15,61 @@
           「{{ player.realm.basis }}」{{ player.realm.lore }}
         </p>
       </template>
+      <template #visual>
+        <CultivationDial />
+      </template>
     </FolioPageHeader>
 
     <!--
-      修行卡 —— 这一页的主卡,左侧一道世界色竖封条把它与下面的破境卡分开。
-      卡名右侧是「第 N / 21 境」:境数读 REALMS.length,不手写(改境界表不撒谎)。
+      行功账 —— 修炼页只留一张主账:先报本境修为,再报行速与灵气。
+      外圈周天盘在卷首给方向,正文这张账只回答「还要多久、靠什么在快」。
     -->
-    <div class="card-ink border-l-2 border-l-[var(--world-bar)] px-4 py-3">
-      <div class="flex items-baseline justify-between">
-        <span class="font-kai text-title tracking-[0.2em] text-ink">修 行</span>
-        <span class="text-body text-ink-faint tabular">
+    <section class="cultivation-ledger" data-cultivation-ledger>
+      <header class="cultivation-ledger__head">
+        <div class="cultivation-ledger__heading">
+          <span class="cultivation-ledger__seal" aria-hidden="true">行</span>
+          <div>
+            <p class="cultivation-ledger__eyebrow">此刻功课</p>
+            <h2 class="cultivation-ledger__title">修 行</h2>
+          </div>
+        </div>
+        <p class="cultivation-ledger__position tabular">
           第 {{ player.major + 1 }} / {{ REALMS.length }} 境
-        </span>
-      </div>
+        </p>
+      </header>
+
       <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
-      <div class="mx-auto mt-3 max-w-xs">
+      <div class="cultivation-ledger__ladder">
         <RealmLadder :major="player.major" />
       </div>
-      <div class="mt-4">
-        <!--
-          修为读数成组:标签行(修为 + 下一步)→ 条 → 尾行(还剩多少 / 来路)。
-          从前「修为 +x/秒 ▸来路」与「现值 / 所需」挤在同一行、而「下一步」被一道分隔线
-          隔到另一段里去 —— 同一个量拆成两处,读的人得来回找。
-          主行的 flex-wrap 保留:200% 字号(布局视口 195px)下「下一步 → X」会换到
-          第二行,值那一块本身仍是一行(主值行折行 = 判据红)。
-        -->
+
+      <div class="cultivation-ledger__primary" data-cultivation-primary>
+        <div class="cultivation-ledger__primary-head">
+          <span>本境修为</span>
+          <span class="text-ink-soft">下一步 → {{ btInfo.targetLabel }}</span>
+        </div>
         <div
           data-value-row
-          class="mb-1 flex flex-wrap justify-between text-body text-ink-soft tabular"
+          class="text-ink-soft cultivation-ledger__value-row flex flex-wrap items-baseline gap-x-1 text-body tabular"
         >
-          <span class="flex items-baseline gap-1">
-            <span class="text-ink-faint">修为</span>
-            <!--
-              修为数可点:缩写照旧(排版不动),点开看精确值。
-              详情里按玩家的建议分两行(现有 / 所需),并补上**还需**与**预计耗时** ——
-              大数字看不出变化时,"还差多远、还要多久"才是真正被感知的那个量。
-            -->
-            <!--
-              这里**永远显示真实修为**。从前写的是 `expFull ? expReq : exp` ——
-              圆满之后那行就锁死在「所需」上,玩家盯着一个不动的数,得出的结论自然是
-              「修为不涨」(实测反馈)。圆满该由后面的标记说明,不该拿假的现值去表达。
-            -->
+          <span class="cultivation-ledger__value font-kai">
             <TapNumber
               :value="player.exp"
               title="修为"
               :rows="expDetailRows"
               :note="expDetailNote"
             />
-            <span class="text-ink-faint">/ {{ formatGN(player.expReq) }}</span>
-            <!--
-              积余不进这一行:它是"次要读数",挤在主行上会把这一行顶成两行(窄屏尤其明显)——
-              点开修为那个数就能看到精确的积余与它的去路(突破时随境界带走)。
-              主行只留状态词(圆满),它短、而且解释"为什么这个数不再变"。
-            -->
-            <span v-if="player.expFull" class="text-jade">· 圆满</span>
           </span>
-          <span class="text-ink-soft">下一步 → {{ btInfo.targetLabel }}</span>
+          <span class="text-ink-faint">/ {{ formatGN(player.expReq) }}</span>
+          <span v-if="player.expFull" class="text-jade">· 圆满</span>
         </div>
         <div :class="player.expFull ? 'bar-charged' : ''">
           <ProgressBar :value="player.expProgress" color="var(--color-cinnabar)" :height="10" />
         </div>
-        <!--
-          尾行两件事:还剩多远(百分比 + 现成 ETA 文案,都在别处算过,这里只读)与
-          「来路」—— 修为速度的来路由它摊开,故它落在这一行而不是主行。
-        -->
-        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-2 text-body">
+        <div class="cultivation-ledger__remainder">
           <span class="text-ink-soft tabular">
             还剩 {{ formatPercent(1 - player.expProgress, 0) }} · {{ expEtaText }}
           </span>
-          <!--
-            「▸来路」实测只有 25px 宽 —— 高度给了 32 也没用,拇指按不到这么窄的一条。
-            补到 28 用横向负外边距抵掉(`-mx-1.5 px-1.5`),视觉位置一分不动。
-          -->
           <button
             class="tap-row -mx-1.5 -my-1 min-w-[28px] justify-center px-1.5 py-1.5 text-center text-note text-ink-faint active:opacity-60"
             :aria-expanded="showCultBreakdown"
@@ -95,132 +78,121 @@
             {{ showCultBreakdown ? "▾" : "▸" }}来路
           </button>
         </div>
-        <!--
-          长 ETA 的解释:一天以上的等待单凭一个日期说明不了什么,旁边得有一句
-          「怎么让它变快」。见 longEtaHint 的注释。
-        -->
-        <p v-if="longEtaHint" class="mt-1 text-note leading-relaxed text-ink-faint">
+        <p v-if="longEtaHint" class="cultivation-ledger__hint">
           {{ longEtaHint }}
         </p>
-        <!-- 修炼速度是玩家最常盯的数,故在它自己那一行就地摊开:基础 × (1 + 各来源) -->
-        <div
-          v-if="showCultBreakdown"
-          class="mt-2 rounded-md bg-paper-deep/60 px-2.5 py-2 text-note"
-        >
-          <p class="text-ink-soft">
-            基础 {{ formatRate(cultBase) }}({{ player.realm.name }}{{ player.subName
-            }}{{ player.linggen ? `·${player.linggen.gradeName}` : "" }}) × (1 +
-            <span class="tabular text-qing">{{ formatPercent(cultMultiplier) }}</span
-            >) = <span class="tabular text-cinnabar">{{ formatRate(player.cultPerSec) }}</span>
-          </p>
-          <p v-for="row in cultSources" :key="row.name" class="mt-0.5 flex justify-between">
-            <span class="text-ink-faint">{{ row.name }}</span>
-            <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
-              {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
-            </span>
-          </p>
-          <p class="mt-1 text-note leading-relaxed text-ink-faint">
-            这些都是修炼速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
-          </p>
-        </div>
       </div>
-      <div class="ink-divider my-3" aria-hidden="true" />
-      <div class="mt-3">
-        <!--
-          极窄档(195 CSS px)改成上下两段:一行放「灵气 +X/秒」与「现值 · 已封顶」共需
-          92+85px,而整行只剩 128px —— 硬挤的结果是「· 已封顶」被单独甩到第二行
-          (自检在后期档量到主值行两行)。上下叠之后值那一段独享整行宽度,一行读得完。
-        -->
-        <div
-          data-value-row
-          class="mb-1 flex justify-between text-body text-ink-soft tabular tinylens:flex-col tinylens:items-start tinylens:gap-y-0.5"
-        >
-          <span>灵气 +{{ formatRate(player.qiRegenPerSec) }}</span>
-          <span>
-            <TapNumber
-              :value="Math.floor(resources.qi)"
-              title="灵气"
-              :rows="qiDetailRows"
-              :note="qiDetailNote"
-            >
-              <!--
-                行内照旧只给"看得懂的那一位":到标称容量就封顶(进度条也走这条线),
-                超出的部分用一个小「+」提示"还有积余",精确值点开看 —— 免得主行被顶成两行。
-              -->
-              <span :class="qiOverCap ? 'text-qing' : ''">
-                {{ formatNum(Math.min(Math.floor(resources.qi), player.qiCapValue))
-                }}<template v-if="qiOverCap">+</template>
-              </span>
-            </TapNumber>
-            <!--
-              上限与当前值并排只在常规档成立:195 CSS px(200% 缩放)上这一行只剩 68px,
-              「1.032兆+ / 1.032兆 · 已封顶」必然折成三行(自检在后期档量到过)。
-              极窄档隐去「/ 上限」,只留当前值与封顶标记 —— 上限在进度条的比例里、
-              也在点开的详情里(标称容量那行),不是丢了,是换了一处更读得清的地方。
-            -->
-            <span class="tinylens:hidden">/ {{ formatNum(player.qiCapValue) }}</span>
-            <!--
-              灵气积到银行上限就不再涨 —— 不说明的话,玩家只会以为它坏了。
-              词收短到三字("已积至上限"在 320 宽后期档会把这一行顶折,自检当场量到过);
-              完整的口径(上限值、不会再涨、怎么花)在点开的详情里。
-            -->
-            <span v-if="resources.qi >= player.qiBankCapValue" class="text-amber-ink"
-              >· 已封顶</span
-            >
-          </span>
-        </div>
-        <ProgressBar
-          :value="Math.min(1, resources.qi / Math.max(1, player.qiCapValue))"
-          color="var(--color-qing)"
-          :height="8"
-        />
-        <!--
-          灵气充盈:灵气 ≥ 标称容量 QI_RICH_THRESHOLD_RATIO → 修炼 +QI_RICH_BONUS。
-          off 态藏着不说是欺瞒 —— 玩家每日最常盯的就是修炼,这个加成答得上
-          「我灵气满了该怎么花」。阈值与结算同读 QI_RICH_THRESHOLD_RATIO(见
-          player.qirich),括号里的比率不许手写「一半」—— 改常数就撒谎。
-        -->
-        <p class="mt-1 text-note" :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'">
-          <template v-if="qiRichInfo.on"
-            >灵气充盈 —— 修炼速度 +{{ formatPercent(QI_RICH_BONUS) }}</template
+
+      <div class="cultivation-ledger__meters" data-cultivation-meters>
+        <section class="cultivation-ledger__meter">
+          <p class="cultivation-ledger__meter-label">此刻行速</p>
+          <p class="cultivation-ledger__meter-value font-kai">
+            {{ formatRate(player.cultPerSec) }}
+          </p>
+          <p class="cultivation-ledger__meter-copy tabular">
+            基础 {{ formatRate(cultBase) }} · 加成
+            <span class="text-qing">{{ formatPercent(cultMultiplier) }}</span>
+          </p>
+        </section>
+
+        <section class="cultivation-ledger__meter">
+          <div class="cultivation-ledger__meter-head">
+            <p class="cultivation-ledger__meter-label">灵气</p>
+            <span class="text-note text-ink-faint">+{{ formatRate(player.qiRegenPerSec) }}</span>
+          </div>
+          <!--
+            极窄档(195 CSS px)把「灵气 +X/秒」与「现值 · 已封顶」拆成上下两段,
+            免得封顶标记被甩出主值行。
+          -->
+          <div
+            data-value-row
+            class="text-ink-soft cultivation-ledger__qi-row flex justify-between text-body tabular tinylens:flex-col tinylens:items-start tinylens:gap-y-0.5"
           >
-          <template v-else>
-            距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵气(灵气 ≥
-            {{ formatNum(qiRichInfo.threshold) }}(容量
-            {{ formatPercent(QI_RICH_THRESHOLD_RATIO) }})→ 修炼 +{{ formatPercent(QI_RICH_BONUS) }})
-          </template>
-        </p>
-        <!--
-          以灵气疗伤(修复):灵气积余的用途,代价随境界指数增长。
-          它是「顺手做的一件小事」,不是这一页的主行动 —— 故走 chip-ink,把唯一的
-          btn-seal 留给突破钮(chip-ink 自带 nowrap,长文案在窄屏改为可折行)。
-        -->
-        <button
-          v-if="repair.injured"
-          type="button"
-          class="chip-ink mt-2 w-full !py-2 !whitespace-normal text-body justify-center"
-          :disabled="!repair.affordable"
-          @click="repairWithQi()"
-        >
-          {{
-            repair.affordable
-              ? `引气静养 · 平复伤势心魔 · 耗灵气 ${formatNum(repair.cost)}`
-              : `灵气不足(需 ${formatNum(repair.cost)})`
-          }}
-        </button>
-        <!-- 灵气不足只报四字,拦下的却是「还差多少、回够要多久」 —— 补齐直显,与突破钮 btQiBlock 同款 -->
-        <QiShortfallNote v-if="repairBlock" :short="repairBlock.short" :eta="repairBlock.eta" />
+            <span>
+              <TapNumber
+                :value="Math.floor(resources.qi)"
+                title="灵气"
+                :rows="qiDetailRows"
+                :note="qiDetailNote"
+              >
+                <span :class="qiOverCap ? 'text-qing' : ''">
+                  {{ formatNum(Math.min(Math.floor(resources.qi), player.qiCapValue))
+                  }}<template v-if="qiOverCap">+</template>
+                </span>
+              </TapNumber>
+              <span class="tinylens:hidden">/ {{ formatNum(player.qiCapValue) }}</span>
+              <span v-if="resources.qi >= player.qiBankCapValue" class="text-amber-ink"
+                >· 已封顶</span
+              >
+            </span>
+          </div>
+          <ProgressBar
+            :value="Math.min(1, resources.qi / Math.max(1, player.qiCapValue))"
+            color="var(--color-qing)"
+            :height="8"
+          />
+          <p
+            class="cultivation-ledger__meter-copy"
+            :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'"
+          >
+            <template v-if="qiRichInfo.on"
+              >灵气充盈 —— 修炼速度 +{{ formatPercent(QI_RICH_BONUS) }}</template
+            >
+            <template v-else>
+              距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵气(灵气 ≥
+              {{ formatNum(qiRichInfo.threshold) }}(容量
+              {{ formatPercent(QI_RICH_THRESHOLD_RATIO) }})→ 修炼 +{{
+                formatPercent(QI_RICH_BONUS)
+              }})
+            </template>
+          </p>
+          <button
+            v-if="repair.injured"
+            type="button"
+            class="chip-ink mt-2 w-full justify-center !whitespace-normal !py-2 text-center text-body"
+            :disabled="!repair.affordable"
+            @click="repairWithQi()"
+          >
+            {{
+              repair.affordable
+                ? `引气静养 · 平复伤势心魔 · 耗灵气 ${formatNum(repair.cost)}`
+                : `灵气不足(需 ${formatNum(repair.cost)})`
+            }}
+          </button>
+          <QiShortfallNote v-if="repairBlock" :short="repairBlock.short" :eta="repairBlock.eta" />
+        </section>
       </div>
-    </div>
+
+      <div v-if="showCultBreakdown" class="cultivation-ledger__sources">
+        <p class="text-ink-soft">
+          基础 {{ formatRate(cultBase) }}({{ player.realm.name }}{{ player.subName
+          }}{{ player.linggen ? `·${player.linggen.gradeName}` : "" }}) × (1 +
+          <span class="tabular text-qing">{{ formatPercent(cultMultiplier) }}</span
+          >) = <span class="tabular text-cinnabar">{{ formatRate(player.cultPerSec) }}</span>
+        </p>
+        <p v-for="row in cultSources" :key="row.name" class="flex justify-between">
+          <span class="text-ink-faint">{{ row.name }}</span>
+          <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
+            {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
+          </span>
+        </p>
+        <p class="cultivation-ledger__hint">
+          这些都是修炼速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
+        </p>
+      </div>
+    </section>
 
     <!--
-      破境卡(下一步要不要做)→ BreakthroughCard:卡本体/准备选项/破境增益/劫势瓦片/
-      代价行/短差行随本体迁入 —— 拆分第五轮 · 一。
+      修行账回答「现在走到哪」,下一步只回答「此刻做哪件事」。
+      破境先于闭关:前者是这一境的出口,后者是留在原地的加速。
     -->
-    <BreakthroughCard />
-
-    <!-- 闭关卡(Phase 28)→ RetreatCard:卡本体/前瞻折算/card-flash 随本体迁入 -->
-    <RetreatCard />
+    <section class="folio-span-all cultivation-next" data-cultivation-next>
+      <SectionTitle title="下一步" hint="关口看把握,闭关看当下" />
+      <div class="cultivation-next__grid">
+        <BreakthroughCard />
+        <RetreatCard />
+      </div>
+    </section>
 
     <!--
       主区(修行/破境/闭关)与辅区(状态/丹药/功法)之间落一枚花饰分隔:
@@ -363,6 +335,7 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import GongfaDialog from "@/components/cultivation/GongfaDialog.vue";
 import BuffDialog from "@/components/cultivation/BuffDialog.vue";
 import RealmLadder from "@/components/cultivation/RealmLadder.vue";
+import CultivationDial from "@/components/cultivation/CultivationDial.vue";
 import GongfaSection from "@/components/cultivation/GongfaSection.vue";
 import BreakthroughCard from "@/components/cultivation/BreakthroughCard.vue";
 import RetreatCard from "@/components/cultivation/RetreatCard.vue";
