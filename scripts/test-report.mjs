@@ -267,6 +267,7 @@ const CATEGORIES = [
       "cultivationDesk",
       "inventoryDesk",
       "characterDossier",
+      "dongfuDesk",
       "desktopSpine",
       "navigation",
       "visualRhythm",

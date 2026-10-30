@@ -1,186 +1,254 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="洞府营造" back-to="home" back-label="返回">
+    <FolioPageHeader title="洞府营造" back-to="home" back-label="返回" featured>
       <template #meta>
-        <!-- 家底一句:座数、离线档、弟子在途 —— 三个数概括这一页,不必翻卡 -->
-        <p class="mt-1.5 text-body text-ink-faint tabular">
-          已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }} 座 · 离线可攒
-          {{ offlineCapHours }} 时<template v-if="apprenticeBusy">
-            · 弟子在途 {{ apprenticeBusy }} 人</template
+        <p class="dongfu-masthead__meta">
+          <span
+            >已营 <strong class="tabular">{{ dongfu.builtCount }}</strong> /
+            {{ BUILDINGS.length }}</span
+          >
+          <span
+            >离线可攒 <strong class="tabular">{{ offlineCapHours }}</strong> 时</span
+          >
+          <span v-if="apprenticeBusy"
+            >弟子在途 <strong class="tabular">{{ apprenticeBusy }}</strong> 人</span
           >
         </p>
       </template>
+      <template #visual>
+        <DongfuAtlas :nodes="atlasNodes" :built-count="dongfu.builtCount" />
+      </template>
     </FolioPageHeader>
 
-    <!-- 建筑先于家业:这一页的第一任务是营造,坊市与门庭是去别页的入口 -->
-    <section>
-      <!-- 家业总览的一份子:已营几座在首页入口可见,洞府页自己反倒没有 —— 补进营造题头 -->
+    <!--
+      营造总账先把「家底有多少、眼下能做什么、离线能攒多久」摊在同一处。
+      旧页把这些数散在题头、七张卡和一条独立阶梯里，玩家要来回心算。
+    -->
+    <section class="folio-span-all">
       <SectionTitle
         title="营造"
         :hint="`已营 ${dongfu.builtCount}/${BUILDINGS.length} · 各司其职,日夜不辍`"
       />
-      <!--
-        每时藏收:各地产卡的数散在七张卡里,合计得玩家心算 —— 补一行总额。
-        读数走 hourlyYieldText(buildingRates 同源):界面上这个数字就是实时/离线结算
-        实际发给玩家的那笔,不另写一份。未启(全 0)不上行,藏经阁 1~3 级保底照露。
-      -->
-      <p
-        v-if="hourlyLines.length"
-        class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-note text-ink-faint"
-      >
-        <span class="font-kai tracking-[0.2em] text-ink">每时藏收</span>
-        <template v-for="(part, i) in hourlyLines" :key="part">
-          <span v-if="i" class="text-ink-faint">·</span>
-          <span>{{ part }}</span>
-        </template>
-      </p>
-      <!-- 洞府是其余建筑等级上限的枢纽:提为整宽主卡置顶,其余 6 座排 2 列 3 行 -->
-      <!--
-        极窄档(195 CSS px)改单列:两列时每卡内宽只剩 ~51px,「连升×5 ·共 31.37万 石
-        400 铁」那两段 nowrap 直接顶出卡片左右各 13px(自检在后期档量到)。单列内宽 137px,
-        两段各自一行放得下;320 / 390 两档不受影响。
-        主卡的 col-span-2 在单列里必须同时收回 col-span-1 —— 否则它会撑出第二条隐式列,
-        卡片量到 224px 宽(比整页还宽),越界判据当场红。
-      -->
-      <div class="mt-2 grid grid-cols-2 gap-2.5 tinylens:grid-cols-1">
-        <BuildingCard v-if="mansionDef" :def="mansionDef" class="col-span-2 tinylens:col-span-1" />
-        <BuildingCard v-for="def in otherBuildings" :key="def.id" :def="def" />
+      <div class="dongfu-ledger" data-dongfu-ledger>
+        <header class="dongfu-ledger__head">
+          <span class="dongfu-ledger__seal" aria-hidden="true">府</span>
+          <span class="dongfu-ledger__heading">
+            <span class="dongfu-ledger__eyebrow">山门总账</span>
+            <span class="dongfu-ledger__title">七作营造</span>
+          </span>
+          <span class="dongfu-ledger__position tabular">
+            {{ dongfu.builtCount }} / {{ BUILDINGS.length }} 已营
+          </span>
+        </header>
+
+        <div class="dongfu-ledger__grid">
+          <section class="dongfu-ledger__progress">
+            <div class="dongfu-ledger__label-row">
+              <span class="dongfu-ledger__label">已 营</span>
+              <span class="dongfu-ledger__hint">每座一级便算入册</span>
+            </div>
+            <p class="dongfu-ledger__value font-kai tabular">
+              {{ dongfu.builtCount }}<span>/{{ BUILDINGS.length }}</span>
+            </p>
+            <div class="dongfu-ledger__bar" role="img" :aria-label="builtProgressLabel">
+              <span :style="{ width: builtProgress }" />
+            </div>
+            <p class="dongfu-ledger__next">
+              <template v-if="nextBuild">
+                眼下可动工 · <span class="font-kai">{{ nextBuild.def.name }}</span>
+                <span class="tabular"
+                  >（{{ nextBuild.level }} → {{ nextBuild.info.nextLevel }} 级）</span
+                >
+              </template>
+              <template v-else-if="dongfu.allBuildingsMaxed">七作俱已至顶</template>
+              <template v-else>眼下没有料足可动的营造</template>
+            </p>
+          </section>
+
+          <section class="dongfu-ledger__accounts" data-dongfu-accounts>
+            <div class="dongfu-ledger__account">
+              <span class="dongfu-ledger__account-name">合府加成</span>
+              <span class="dongfu-ledger__account-value">{{
+                buildingModText || "尚未形成合府加成"
+              }}</span>
+            </div>
+            <div class="dongfu-ledger__account">
+              <span class="dongfu-ledger__account-name">每时藏收</span>
+              <span class="dongfu-ledger__account-value">
+                <template v-if="hourlyLines.length">
+                  <span v-for="(part, i) in hourlyLines" :key="part">
+                    <span v-if="i" aria-hidden="true"> · </span>{{ part }}
+                  </span>
+                </template>
+                <template v-else>尚未形成常产</template>
+              </span>
+            </div>
+            <div class="dongfu-ledger__account">
+              <span class="dongfu-ledger__account-name">门庭弟子</span>
+              <span class="dongfu-ledger__account-value">{{ apprenticeFact }}</span>
+            </div>
+          </section>
+        </div>
+
+        <button
+          v-if="nextBuild"
+          type="button"
+          class="dongfu-ledger__quick"
+          data-dongfu-quick-build
+          :aria-label="quickBuildLabel"
+          @click="quickBuild"
+        >
+          <span class="dongfu-ledger__quick-copy">
+            <span class="dongfu-ledger__quick-eyebrow">眼前一锤</span>
+            <span class="dongfu-ledger__quick-name">
+              {{ nextBuild.def.name }} · {{ nextBuild.level > 0 ? "升级" : "建造" }}
+            </span>
+          </span>
+          <span class="dongfu-ledger__quick-cost tabular">
+            {{ nextBuild.level }} → {{ nextBuild.info.nextLevel }} 级
+            <span aria-hidden="true">·</span>
+            {{ formatGN(nextBuild.info.stone) }} 石
+            <template v-if="nextBuild.info.ore > 0">
+              <span aria-hidden="true">·</span> {{ nextBuild.info.ore }} 玄铁
+            </template>
+          </span>
+        </button>
+
+        <section class="dongfu-ledger__offline" data-dongfu-offline>
+          <div class="dongfu-ledger__offline-head">
+            <span class="dongfu-ledger__label">离线存续</span>
+            <span class="dongfu-ledger__offline-current tabular"
+              >当前 {{ offlineCapHours }} 时</span
+            >
+          </div>
+          <div class="dongfu-ledger__ladder">
+            <div
+              v-for="(h, i) in OFFLINE_CAP_HOURS"
+              :key="i"
+              class="dongfu-ledger__step"
+              :class="
+                i <= mansionLevel
+                  ? 'border-cinnabar bg-cinnabar text-paper font-kai'
+                  : 'border-ink/15 text-ink-faint'
+              "
+              :title="`洞府 ${i} 级可攒 ${h} 小时`"
+            >
+              {{ h }}时
+            </div>
+          </div>
+          <p class="dongfu-ledger__offline-note">
+            离线上限随洞府等级抬升
+            <template v-if="mansionLevel < OFFLINE_CAP_HOURS.length - 1">
+              —— 升到 {{ mansionLevel + 1 }} 级,可攒至 {{ OFFLINE_CAP_HOURS[mansionLevel + 1] }} 时
+            </template>
+            <template v-else>—— 已至顶档</template>
+          </p>
+        </section>
+
+        <p v-if="dongfu.allBuildingsMaxed" class="dongfu-ledger__perfect" data-dongfu-perfect>
+          <span class="chip-ink border-jade/60 text-note text-jade">营造尽善</span>
+          {{ cnNumber(BUILDINGS.length) }} 座建筑俱已至顶 —— 此间经营,已然圆满
+        </p>
+        <p v-else-if="!nextBuild" class="dongfu-ledger__blocked">
+          眼下无可动工 · {{ firstBlockedReason }}
+        </p>
       </div>
-      <!--
-        营造尽善的完成感:各卡到了顶只会各自说「已至顶档」,七座全满的圆满
-        没有一句话 —— 家业经营到头的这一天,与图鉴「尽收」/名号尽收同族。
-        判据读 store 的 allBuildingsMaxed(与卡面的 N/M 同源),不另数一遍。
-      -->
-      <p
-        v-if="dongfu.allBuildingsMaxed"
-        class="mt-2 flex items-center gap-1.5 px-1 text-body text-jade"
-      >
-        <span class="chip-ink border-jade/60 text-note text-jade">营造尽善</span>
-        {{ cnNumber(BUILDINGS.length) }} 座建筑俱已至顶 —— 此间经营,已然圆满
-      </p>
     </section>
 
-    <!-- 家业两案入口:坊市(灵石周转)与收徒(弟子跑腿) -->
+    <!-- 七作按「基业 / 修行 / 丹器 / 生计」分组，不再让七张同形卡平铺成账本。 -->
+    <section class="folio-span-all" data-dongfu-workshop>
+      <SectionTitle title="七作" hint="点开详情看完整效果与连升总账" />
+      <div class="dongfu-workshop">
+        <section
+          v-for="group in buildingGroups"
+          :key="group.key"
+          class="dongfu-workshop__group"
+          :data-dongfu-group="group.key"
+        >
+          <header class="dongfu-workshop__group-head">
+            <span class="dongfu-workshop__group-index tabular">{{ group.index }}</span>
+            <span class="dongfu-workshop__group-title">{{ group.title }}</span>
+            <span class="dongfu-workshop__group-hint">{{ group.hint }}</span>
+            <span class="dongfu-workshop__group-count tabular">
+              {{ groupBuiltCount(group.ids) }}/{{ group.ids.length }} 已营
+            </span>
+          </header>
+          <div class="dongfu-workshop__grid">
+            <BuildingCard v-for="def in group.defs" :key="def.id" :def="def" />
+          </div>
+        </section>
+      </div>
+    </section>
+
     <section>
-      <SectionTitle title="家业 · 财与人" :hint="`灵石往来 · 弟子跑腿`" />
-      <!--
-        两案入口此前只有名字 + 一句定性介绍,点进去才知道家底如何。各补一行真读数:
-        坊市报手上灵石(它唯一的通用货币),门庭报在途弟子数 —— 都是玩家此刻就能决定的依据。
-      -->
-      <div class="mt-2 grid grid-cols-2 gap-2.5">
-        <RouterLink
+      <SectionTitle title="家业 · 财与人" hint="灵石周转 · 弟子跑腿" />
+      <div class="dongfu-gateways" data-dongfu-gateways>
+        <DongfuGatewayRow
           to="/market"
-          class="card-ink flex flex-col justify-between gap-2 px-3 py-3 active:scale-99"
-        >
-          <div>
-            <p class="font-kai text-title tracking-[0.2em] text-ink">坊市</p>
-            <p class="mt-0.5 text-body text-ink-faint">购丹续料、购兵刃,兼售寄卖</p>
-          </div>
-          <p class="text-body text-ink-soft tabular">
-            囊中 <span class="text-cinnabar">{{ formatGN(stone) }}</span> 灵石
-          </p>
-        </RouterLink>
-        <RouterLink
+          icon="gem"
+          title="坊 市"
+          tone="gold"
+          action="往市"
+          sub="购丹续料、购兵刃,兼售寄卖"
+          :fact="`囊中 ${formatGN(stone)} 灵石`"
+        />
+        <DongfuGatewayRow
           to="/apprentice"
-          class="card-ink flex flex-col justify-between gap-2 px-3 py-3 active:scale-99"
-        >
-          <div>
-            <p class="font-kai text-title tracking-[0.2em] text-ink">门庭有徒</p>
-            <p class="mt-0.5 text-body text-ink-faint">弟子离线跑腿,归来带回资材</p>
-          </div>
-          <p class="text-body text-ink-soft tabular">
-            {{
-              apprentices.length
-                ? apprenticeBusy
-                  ? `在途 ${apprenticeBusy} 人 · 门下 ${apprentices.length} 人`
-                  : `门前 ${apprentices.length} 人皆待命`
-                : "门下尚无弟子"
-            }}
-          </p>
-        </RouterLink>
+          icon="circle-user"
+          title="门庭有徒"
+          tone="jade"
+          action="看顾"
+          sub="弟子离线跑腿,归来带回资材"
+          :fact="apprenticeFact"
+        />
       </div>
     </section>
 
-    <!--
-      灵脉投资:金丹后开放 —— 从主页归位到洞府页(组件本就在 dongfu/ 域,
-      副题自己写着「引灵脉入洞府」,经营类动线该归一处)。主页洞府入口的
-      右侧实况仍露灵脉点数,可见性不丢。
-    -->
     <section v-if="player.major >= VEIN_UNLOCK_MAJOR">
       <SectionTitle title="灵脉 · 引脉入府" hint="炼化灵石,永久强化" />
-      <button
-        class="card-ink mt-2 flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:scale-99"
-        @click="veinOpen = true"
-      >
-        <span class="min-w-0 flex-1">
-          <span class="block t-card">灵脉投资</span>
-          <span class="block truncate text-note leading-relaxed text-ink-faint"
-            >择一主脉而修,投点立得全局加成</span
-          >
-        </span>
-        <span class="shrink-0 text-body text-ink-faint">›</span>
-      </button>
+      <div class="dongfu-gateways" data-dongfu-vein>
+        <DongfuGatewayRow
+          icon="wind"
+          title="灵脉投资"
+          tone="qing"
+          action="调理"
+          sub="择一主脉而修,投点立得全局加成"
+          :fact="veinFact"
+          @click="veinOpen = true"
+        />
+      </div>
     </section>
+
     <BaseModal :open="veinOpen" title="" aria-label="灵脉" wide @close="veinOpen = false">
       <VeinInvestCard />
       <template #footer>
         <button class="btn-seal w-full" @click="veinOpen = false">收 起</button>
       </template>
     </BaseModal>
-
-    <!--
-      离线存续阶梯:离线上限按洞府等级分档,从前只活在常数表里
-      (OFFLINE_CAP_HOURS 仅结算用),玩家看不出"现在第几档、升洞府能到哪一档"。
-      五格一栏,亮到当前档,title 注各档可攒几时。
-    -->
-    <section>
-      <SectionTitle title="离线存续" :hint="`当前 ${offlineCapHours} 时`" />
-      <!--
-        五格横排在 200% 缩放档(195 CSS px)下每格只剩 28px,「12时」被折成两行(整排 44px)。
-        字号不许降(主巡页字阶只有 18/15/14/11/10,私开 9 档会被字阶判据打红),
-        故极窄档改成可换行:每格保底 34px,五格排两行,标签各自一行。
-      -->
-      <div class="mt-2 grid grid-cols-5 items-stretch gap-1.5 tinylens:grid-cols-3">
-        <div
-          v-for="(h, i) in OFFLINE_CAP_HOURS"
-          :key="i"
-          class="flex-1 rounded-t-sm border px-0.5 pb-1 pt-2 text-center text-note tabular"
-          :class="
-            i <= mansionLevel
-              ? 'border-cinnabar bg-cinnabar text-paper font-kai'
-              : 'border-ink/15 text-ink-faint'
-          "
-          :title="`洞府 ${i} 级可攒 ${h} 小时`"
-        >
-          {{ h }}时
-        </div>
-      </div>
-      <p class="mt-1.5 text-note text-ink-faint">
-        离线上限随洞府等级抬升
-        <template v-if="mansionLevel < OFFLINE_CAP_HOURS.length - 1">
-          —— 升到 {{ mansionLevel + 1 }} 级,可攒至 {{ OFFLINE_CAP_HOURS[mansionLevel + 1] }} 时
-        </template>
-        <template v-else>—— 已至顶档</template>
-      </p>
-    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import type { BuildingDef, BuildingId } from "@/types";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { useApprenticeStore } from "@/stores/apprentice";
 import { usePlayerStore } from "@/stores/player";
 import { OFFLINE_CAP_HOURS, VEIN_UNLOCK_MAJOR } from "@/data/constants";
 import { BUILDINGS } from "@/data/buildings";
-import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
-import SectionTitle from "@/components/common/SectionTitle.vue";
-import BuildingCard from "@/components/dongfu/BuildingCard.vue";
-import VeinInvestCard from "@/components/dongfu/VeinInvestCard.vue";
-import BaseModal from "@/components/common/BaseModal.vue";
+import { modsText } from "@/data/statNames";
+import { veinDef } from "@/data/veins";
+import { buildingUpgradeInfo, upgradeBuilding } from "@/core/buildingService";
 import { hourlyYieldText } from "@/core/engineFacilities";
 import { cnNumber, formatGN } from "@/utils/format";
+import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import SectionTitle from "@/components/common/SectionTitle.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
+import BuildingCard from "@/components/dongfu/BuildingCard.vue";
+import DongfuAtlas from "@/components/dongfu/DongfuAtlas.vue";
+import DongfuGatewayRow from "@/components/dongfu/DongfuGatewayRow.vue";
+import VeinInvestCard from "@/components/dongfu/VeinInvestCard.vue";
 
 const dongfu = useDongfuStore();
 const resources = useResourcesStore();
@@ -188,17 +256,136 @@ const apprentice = useApprenticeStore();
 const player = usePlayerStore();
 const veinOpen = ref(false);
 
-/** 坊市入口报的那枚数:灵石是全作唯一的通用货币,它决定「现在买不买得起」 */
 const stone = computed(() => resources.spiritStone);
 const apprentices = computed(() => apprentice.apprentices);
-/** 在途弟子数 —— task 非空即已派出去,归来前不接新活 */
-const apprenticeBusy = computed(() => apprentice.apprentices.filter((a) => a.task).length);
+const apprenticeBusy = computed(() => apprentices.value.filter((a) => a.task).length);
+const apprenticeFact = computed(() => {
+  if (!apprentices.value.length) return "门下尚无弟子";
+  return apprenticeBusy.value
+    ? `在途 ${apprenticeBusy.value} · 门下 ${apprentices.value.length}`
+    : `门前 ${apprentices.value.length} 人皆待命`;
+});
 
-/** 洞府是其余建筑的等级上限来源:整宽主卡置顶,不与普通建筑同格位 */
-const mansionDef = BUILDINGS.find((b) => b.id === "mansion");
-const otherBuildings = BUILDINGS.filter((b) => b.id !== "mansion");
-const mansionLevel = computed(() => dongfu.levels["mansion"] ?? 0);
+const mansionLevel = computed(() => dongfu.levels.mansion ?? 0);
 const offlineCapHours = computed(() => dongfu.offlineCapHours);
-/** 每时藏收:建筑合计的每小时产出(field 灵草/玄铁 + 藏经阁悟道,与 buildingRates / accrue 同源) */
-const hourlyLines = computed(() => hourlyYieldText({ ...dongfu.levels } as Record<string, number>));
+const hourlyLines = computed(() => hourlyYieldText({ ...dongfu.levels }));
+const buildingModText = computed(() => modsText(dongfu.buildingMods));
+const builtProgress = computed(() => `${Math.min(1, dongfu.builtCount / BUILDINGS.length) * 100}%`);
+const builtProgressLabel = computed(() => `已营 ${dongfu.builtCount} / ${BUILDINGS.length} 座`);
+
+const ATLAS_MARKS: Record<BuildingId, string> = {
+  mansion: "府",
+  array: "阵",
+  alchemy: "炉",
+  forge: "台",
+  field: "田",
+  library: "阁",
+  beast: "园",
+};
+
+const atlasNodes = computed(() =>
+  BUILDINGS.map((def) => {
+    const info = buildingUpgradeInfo(def.id);
+    return {
+      id: def.id,
+      mark: ATLAS_MARKS[def.id],
+      level: dongfu.levels[def.id] ?? 0,
+      cap: dongfu.buildingCap(def.id),
+      canUpgrade: info.canUpgrade,
+    };
+  }),
+);
+
+type BuildingGroup = {
+  key: string;
+  index: string;
+  title: string;
+  hint: string;
+  ids: BuildingId[];
+  defs: BuildingDef[];
+};
+
+const GROUP_SPECS = [
+  {
+    key: "foundation",
+    index: "壹",
+    title: "基业",
+    hint: "洞府为诸作之枢",
+    ids: ["mansion"],
+  },
+  {
+    key: "cultivation",
+    index: "贰",
+    title: "修行",
+    hint: "聚气与藏经",
+    ids: ["array", "library"],
+  },
+  {
+    key: "craft",
+    index: "叁",
+    title: "丹器",
+    hint: "一炉一台",
+    ids: ["alchemy", "forge"],
+  },
+  {
+    key: "livelihood",
+    index: "肆",
+    title: "生计",
+    hint: "田畴与灵兽",
+    ids: ["field", "beast"],
+  },
+] satisfies Array<Omit<BuildingGroup, "defs">>;
+
+const buildingGroups: BuildingGroup[] = GROUP_SPECS.map((group) => ({
+  ...group,
+  ids: [...group.ids],
+  defs: group.ids
+    .map((id) => BUILDINGS.find((def) => def.id === id))
+    .filter((def): def is BuildingDef => Boolean(def)),
+}));
+
+function groupBuiltCount(ids: BuildingId[]): number {
+  return ids.filter((id) => (dongfu.levels[id] ?? 0) > 0).length;
+}
+
+const nextBuild = computed(() => {
+  for (const def of BUILDINGS) {
+    const info = buildingUpgradeInfo(def.id);
+    if (info.canUpgrade) {
+      return {
+        def,
+        info,
+        level: dongfu.levels[def.id] ?? 0,
+      };
+    }
+  }
+  return null;
+});
+
+const firstBlockedReason = computed(() => {
+  for (const def of BUILDINGS) {
+    if ((dongfu.levels[def.id] ?? 0) >= dongfu.buildingCap(def.id)) continue;
+    return `${def.name} · ${buildingUpgradeInfo(def.id).reason || "料未备齐"}`;
+  }
+  return "料未备齐";
+});
+
+const quickBuildLabel = computed(() => {
+  const row = nextBuild.value;
+  if (!row) return "眼下无可动工";
+  const verb = row.level > 0 ? "升级" : "建造";
+  const ore = row.info.ore > 0 ? ` · ${row.info.ore} 玄铁` : "";
+  return `${row.def.name}${verb}，${formatGN(row.info.stone)} 石${ore}`;
+});
+
+function quickBuild(): void {
+  const row = nextBuild.value;
+  if (row) upgradeBuilding(row.def.id);
+}
+
+const veinFact = computed(() => {
+  const total = dongfu.veinTotal;
+  if (!dongfu.veinMain) return `已投 ${total} 点 · 尚未立主脉`;
+  return `已投 ${total} 点 · 主脉 ${veinDef(dongfu.veinMain).name}`;
+});
 </script>

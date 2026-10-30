@@ -6541,14 +6541,13 @@ async function taskDongfuFold() {
         const estateTitle = [...document.querySelectorAll("h2")].find(
           (el) => (el.textContent || "").trim() === "家业 · 财与人",
         );
-        const action = [
-          ...document.querySelectorAll("[data-building-action]:not([disabled])"),
-        ].find((el) => {
-          const r = el.getBoundingClientRect();
-          return r.width > 0 && r.height > 0;
-        });
-        const card = action?.closest(".card-ink");
-        const toggle = card?.querySelector("[data-building-detail-toggle]");
+        const action =
+          document.querySelector("[data-dongfu-quick-build]:not([disabled])") ??
+          [...document.querySelectorAll("[data-building-action]:not([disabled])")].find((el) => {
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height > 0;
+          });
+        const toggle = document.querySelector("[data-building-detail-toggle]");
         const detailId = toggle?.getAttribute("aria-controls") || "";
         const detail = detailId ? document.getElementById(detailId) : null;
         const actionRect = action?.getBoundingClientRect();

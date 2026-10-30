@@ -75,6 +75,9 @@ const usedTypeSizes = (src: string): number[] => [
   ...[...src.matchAll(/\btext-(note|body|title|section|heading)\b/g)].map(
     (m) => TYPE_TOKEN_PX[m[1] ?? ""] ?? 0,
   ),
+  ...[...src.matchAll(/font-size:\s*var\(--type-(note|body|title|section|heading)\)/g)].map(
+    (m) => TYPE_TOKEN_PX[m[1] ?? ""] ?? 0,
+  ),
 ];
 
 /*
@@ -1495,9 +1498,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 主巡页量的是刚建号的空档:建筑未营、没有在途秘境、灵石只有三位数。
      * 同一批页面在神人境(九位数灵石 + 成套装备 + 在途秘境)的 195 CSS px 下,
      * 四处当场坏掉 —— 空档那一遍一页都量不到,故单列一条判据钉住:
-     *   一 洞府建筑两列时每卡内宽 ~51px,「连升×5 ·共 31.37万 石 400 铁」两段 nowrap
-     *      顶出卡片左右各 13px;改单列。**主卡的 col-span-2 必须同时收回** —— 单列里
-     *      留着它就会撑出第二条隐式列,卡片量到 224px 宽(比整页还宽)。
+     *   一 洞府七作两列时每卡内宽 ~51px,「连升×5 ·共 31.37万 石 400 铁」两段 nowrap
+     *      顶出卡片左右各 13px;分组工作台在极窄档改单列。
      *   二 在途秘境「再入一层 / 出秘境」两枚 flex-1 并排各剩 61px,五个字带字距放不下,
      *      折成三行、按钮涨到 84px;改极窄档上下叠。
      *   三 远征择路两径并排每格 ~52px,节点说明被压成三行竖排;改单列。
@@ -1505,15 +1507,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
      *      128px 里,「· 已封顶」被甩到第二行(主值行折行判据红);改极窄档上下两段。
      */
     const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
-    const dongfuGrids = [
-      ...(dv?.src ?? "").matchAll(/class="(mt-2 grid grid-cols-2 gap-2\.5[^"]*)"/g),
-    ].map((m) => m[1]!);
-    expect(dongfuGrids.length, "洞府页两处两列网格(家业入口 / 建筑)都要定位得到").toBe(2);
-    expect(
-      dongfuGrids.filter((c) => c.includes("tinylens:grid-cols-1")),
-      "建筑网格(带 col-span 主卡那一处)极窄档改单列",
-    ).toHaveLength(1);
-    expect(dv?.src, "主卡的跨列要在单列里收回").toContain("col-span-2 tinylens:col-span-1");
+    const css = readFileSync(resolve(__dirname, "../style.css"), "utf8");
+    expect(dv?.src, "七作仍走自己的分组网格").toContain('class="dongfu-workshop__grid"');
+    expect(css, "七作常态是两列").toMatch(
+      /\.dongfu-workshop__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(css, "极窄档七作改单列").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.dongfu-workshop__grid\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
 
     const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
     expect(sr?.src, "在途秘境的两枚动作键极窄档要上下叠").toMatch(
@@ -3925,6 +3926,7 @@ describe("主巡页 · 字阶同一套", () => {
     "views/BuildView.vue": { sizes: [22, 16], why: "流派印面 · 评级大字" },
     "views/MortalWorldView.vue": { sizes: [19], why: "凡尘印面" },
     "views/CharacterView.vue": { sizes: [20], why: "卷首战力主读数" },
+    "views/DongfuView.vue": { sizes: [30], why: "营造总账的已营主读数" },
     /*
      * 首屏两页的题字与印面是「这一作的门面」,它们的尺寸不属于页面字阶 ——
      * 字阶管的是「读」的层次,而 40~56 的题字与印章是「认」的图形。
@@ -3949,7 +3951,17 @@ describe("主巡页 · 字阶同一套", () => {
   for (const path of pages) {
     it(`${path} 不冒出页面字阶以外的私档`, () => {
       const view = FILES.find((f) => f.path === path);
-      const src = view?.src ?? "";
+      let src = view?.src ?? "";
+      if (path === "views/DongfuView.vue") {
+        const css = readFileSync(resolve(__dirname, "../style.css"), "utf8");
+        const start = css.indexOf(".dongfu-masthead__meta");
+        const end = css.indexOf("/*\n   * 道躯案", start);
+        src += [
+          FILES.find((f) => f.path === "components/dongfu/DongfuAtlas.vue")?.src ?? "",
+          FILES.find((f) => f.path === "components/dongfu/DongfuGatewayRow.vue")?.src ?? "",
+          css.slice(start, end),
+        ].join("\n");
+      }
       const extra = NON_TEXT_ALLOW[path];
       const allow = extra ? [...PAGE_TIERS, ...extra.sizes] : PAGE_TIERS;
       const off = [...new Set(usedTypeSizes(src))].filter((n) => !allow.includes(n));
