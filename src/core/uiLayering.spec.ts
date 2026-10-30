@@ -2841,6 +2841,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(problems, `话术或武装态各说各话:${problems.join(" | ")}`).toEqual([]);
   });
 
+  it("洞府巡游的离开键只留动作,后果单独说 —— 195px 下短标签不许被括号挤折", () => {
+    const cave = FILES.find((f) => f.path === "components/dongfu/CaveEventModal.vue");
+    expect(cave?.src, "离开后的后果要单独成行").toContain("离开后,今日不再巡游");
+    expect(cave?.src, "按钮只留短动作并锁一行").toMatch(
+      /class="btn-ghost tap-row w-full"[^>]*>离 开<\/button>/,
+    );
+    expect(cave?.src, "后果句不许再塞回按钮标签").not.toContain("离 开(今日不再巡游)");
+  });
+
   it("导入存档与重置同一条确认纪律 —— 备份会整体替换当前进度,不许直接落库", () => {
     // 导入备份会把本机全部进度替换掉、不可逆,却曾与重置不对称:重置有整整一个
     // 确认弹窗,导入却在选中文件后直接 importSaveText + reloadGame,一句话带过。
@@ -2895,12 +2904,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(eg, "熔炉价目不再手写「玄铁/功法残页」").not.toMatch(/name: "玄铁"|name: "功法残页"/);
   });
 
-  it("流派名单源 —— 空态名单与模拟矩阵都由 BUILD_STYLES 派生", () => {
-    // 六大流派短名此前在 BuildView 空态与 buildSim 矩阵各抄一份,新增/改名一侧另一侧不跟。
+  it("流派名单源 —— 道途发现页与模拟矩阵都由 BUILD_STYLES 派生", () => {
+    // 六大流派短名此前在空态与 buildSim 矩阵各抄一份,新增/改名一侧另一侧不跟。
     const bd = readFileSync(resolve(__dirname, "../core/buildDetect.ts"), "utf-8");
-    expect(bd, "短名要从 BUILD_STYLES 派生").toContain("BUILD_STYLES.map");
-    const bv = FILES.find((f) => f.path === "views/BuildView.vue");
-    expect(bv?.src, "空态名单改读 STYLE_SHORT_NAMES").toContain("STYLE_SHORT_NAMES.join");
+    expect(bd, "发现页读数要从 BUILD_STYLES 逐路计算").toContain("BUILD_STYLES.map");
+    const discovery = FILES.find((f) => f.path === "components/build/BuildDiscovery.vue");
+    expect(discovery?.src, "每一路的名字从行数据读").toContain("{{ row.style.name }}");
+    expect(discovery?.src, "发现页不手抄任何流派名").not.toMatch(
+      /背水流|罡盾流|反震流|连击流|沐泽流|锋芒流/,
+    );
     const bs = readFileSync(resolve(__dirname, "../core/buildSim.ts"), "utf-8");
     expect(bs, "模拟矩阵不再手抄流派名").not.toMatch(/name: "背水流"/);
     expect(bs, "模拟矩阵改名要经 styleName 查 BUILD_STYLES").toContain('styleName("beishui")');

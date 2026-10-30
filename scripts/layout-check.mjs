@@ -9535,6 +9535,123 @@ async function taskBuildCompareOverflow() {
 }
 
 /**
+ * 道途未成时,流派页不是一句占位话,而是六路实时发现账。
+ *
+ * 巡页的新号会在加载后留下零星核心词条,不能稳定命中空态;这里用展品档清空
+ * 装备 / 法宝 / 法宝槽,只保留其它生活数据,单独验证六路契合、雏形缺口、
+ * 四条当前读数与两条真实入口。390、320 与 195(200% 缩放)三档同量。
+ */
+async function taskBuildDiscovery() {
+  const failures = [];
+  const zoomFails = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.inventory = {
+      ...slices.inventory,
+      items: [],
+      equipped: {},
+      artifacts: [],
+      equippedArtifacts: [],
+    };
+    await seedSave(ctx, slices, "__buildDiscoveryFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/build", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390] /build 道途发现页没渲染出来,首屏判据没量到东西");
+    }
+
+    const discoveryVisible = await page
+      .locator("[data-build-discovery]")
+      .waitFor({ state: "visible", timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    const discovery = discoveryVisible
+      ? await page.evaluate(() => {
+          const root = document.querySelector("[data-build-discovery]");
+          if (!root) return null;
+          return {
+            declaredPaths: Number(root.getAttribute("data-build-path-count")),
+            paths: root.querySelectorAll("[data-build-path]").length,
+            ledgerRows: root.querySelectorAll("[data-build-ledger] > p").length,
+            progress: root.querySelectorAll('[role="progressbar"]').length,
+            wheelHidden: root.querySelector(".build-discovery__wheel")?.getAttribute("aria-hidden"),
+            cultivation: root.querySelector('a[href="#/cultivation"]')?.textContent?.trim() || "",
+            inventory: root.querySelector('a[href="#/inventory"]')?.textContent?.trim() || "",
+          };
+        })
+      : null;
+    checked += 1;
+    if (!discovery) {
+      failures.push("[390] /build 道途发现页没有渲染出来");
+    } else {
+      if (
+        discovery.declaredPaths <= 0 ||
+        discovery.paths !== discovery.declaredPaths ||
+        discovery.progress !== discovery.declaredPaths
+      ) {
+        failures.push(
+          `[390] /build 道途发现页的路数不齐(${discovery.paths}/${discovery.declaredPaths},进度 ${discovery.progress})`,
+        );
+      }
+      if (discovery.ledgerRows !== 4) {
+        failures.push("[390] /build 道途发现页的当前读数不是四格");
+      }
+      if (discovery.wheelHidden !== "true") {
+        failures.push("[390] /build 道途发现页的装饰轮盘没有对读屏隐藏");
+      }
+      if (!discovery.cultivation.includes("去修行") || !discovery.inventory.includes("看行囊")) {
+        failures.push("[390] /build 道途发现页的两条真实入口不齐");
+      }
+    }
+
+    await clearOverlays(page);
+    for (const [width, height, tag] of [
+      [390, 844, "390"],
+      [320, 568, "320"],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await settleVisuals(page);
+      const problems = problemsOf(await measurePage(page));
+      checked += 1;
+      if (problems.length) {
+        failures.push(`[${tag}] /build 道途发现页 → ${problems.join(" / ")}`);
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleVisuals(page);
+    const zoom = await measureZoomScale(page, { width: 390, height: 844 });
+    zoomSeen += 1;
+    const zoomBad = zoomProblems(zoom, "390");
+    checked += 1;
+    if (zoomBad.length) {
+      zoomFails.push(`[390] /build 道途发现页 → ${zoomBad.join(" / ")}`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 道途发现页场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails };
+}
+
+/**
  * 修仙录的两部历史:历世履历与行迹录。
  *
  * 30 世验证履历按 12 世一批、同时只留 24 行 DOM,最后一批会滑窗,回翻能回首批;
@@ -11641,7 +11758,16 @@ async function taskAtlasNavigation() {
           .catch(() => false);
         checked += 1;
         if (!jumped) failures.push("[390] 玄枢图点「器魂」没有跳到 /souls");
-        if ((await page.locator("[data-nav-atlas]").count()) !== 0) {
+        /*
+         * 路由 hash 先变，册目随后才走收起动画并卸载。点完立刻 count() 量到的是
+         * 收起动画中的旧 DOM，在并发负载下会偶发假红；这里等它真的离场，仍以
+         * 「最终 DOM 里没有册目」为判据，不是放宽到只要路由变了就算。
+         */
+        const atlasClosed = await page
+          .waitForFunction(() => !document.querySelector("[data-nav-atlas]"), { timeout: 2000 })
+          .then(() => true)
+          .catch(() => false);
+        if (!atlasClosed) {
           failures.push("[390] 玄枢图点选后没有收起");
         }
       }
@@ -11695,6 +11821,7 @@ const TASKS = [
   ["修行功法三册的分批回看", taskGongfaListOverflow],
   ["天界道痕满卷的分批回看", taskMarksListOverflow],
   ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
+  ["道途未成的逐路发现账", taskBuildDiscovery],
   ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
   ["道侣的历世同行回看", taskBondHistoryOverflow],
   ["器魂两册的分批回看", taskSoulListOverflow],

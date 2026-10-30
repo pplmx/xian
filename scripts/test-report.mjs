@@ -256,6 +256,7 @@ const CATEGORIES = [
       "soulOverview",
       "buildingCardSource",
       "effectWiring",
+      "buildDiscovery",
       "uiLayering",
       "folioMasthead",
       "folioOpening",

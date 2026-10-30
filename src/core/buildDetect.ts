@@ -78,8 +78,28 @@ export interface BuildDetection {
   displayName: string;
 }
 
+export interface BuildTermProgress {
+  key: AnyStatKey;
+  value: number;
+  /** 该词条按 100% 契合折算时的参考值 */
+  reference: number;
+  /** 0~1，单条词条对契合度的贡献比例 */
+  ratio: number;
+}
+
+export interface BuildAffinityRow {
+  style: BuildStyleDef;
+  /** 0~1，核心词条贡献的平均值 */
+  affinity: number;
+  terms: BuildTermProgress[];
+  /** 已留下非零词条的条数 */
+  activeTerms: number;
+}
+
 /** 副体系判定门槛 */
 const SECONDARY_MIN_AFFINITY = 0.3;
+/** 雏形判定线 —— 未达此线的册页会展示道途发现页 */
+export const STYLE_EMERGENCE_AFFINITY = 0.25;
 /** 流派成形 / 大成判定线 —— 判定、stageName 与纯度文案同读这一枚(AGENTS「改常数就撒谎」) */
 export const STYLE_MATURE_AFFINITY = 0.6;
 export const STYLE_MASTER_AFFINITY = 0.9;
@@ -88,27 +108,51 @@ function shortName(style: BuildStyleDef): string {
   return style.name.replace(/流$/, "");
 }
 
-/** 各流派短名(去「流」):空态名单等展示用,由 BUILD_STYLES 派生,不另抄一份 */
-export const STYLE_SHORT_NAMES: string[] = BUILD_STYLES.map(shortName);
+/**
+ * 各路当前契合度与核心词条缺口。
+ *
+ * 识别与「道途未成」发现页必须读同一份计算：否则页面说「还差 4%」，
+ * 识别却可能按另一套算法提前成路。排序只按契合度降序，同分保留书目顺序。
+ */
+export function buildAffinityRows(mods: StatMods): BuildAffinityRow[] {
+  return BUILD_STYLES.map((style, index) => {
+    const keys = Object.keys(style.core) as AnyStatKey[];
+    const terms = keys.map((key) => {
+      const value = modOf(mods, key);
+      const reference = style.core[key] ?? 1;
+      return {
+        key,
+        value,
+        reference,
+        ratio: Math.min(1, value / reference),
+      };
+    });
+    return {
+      style,
+      affinity: terms.reduce((sum, term) => sum + term.ratio, 0) / terms.length,
+      terms,
+      activeTerms: terms.filter((term) => term.value > 0).length,
+      index,
+    };
+  })
+    .sort((a, b) => b.affinity - a.affinity || a.index - b.index)
+    .map((row) => ({
+      style: row.style,
+      affinity: row.affinity,
+      terms: row.terms,
+      activeTerms: row.activeTerms,
+    }));
+}
 
 /** 识别当前流派;不足雏形返回 null */
 export function detectBuild(mods: StatMods): BuildDetection | null {
-  const scored = BUILD_STYLES.map((style) => {
-    const keys = Object.keys(style.core) as AnyStatKey[];
-    let sum = 0;
-    for (const key of keys) {
-      const ref = style.core[key] ?? 1;
-      sum += Math.min(1, modOf(mods, key) / ref);
-    }
-    return { style, affinity: sum / keys.length };
-  }).sort((a, b) => b.affinity - a.affinity);
+  const rows = buildAffinityRows(mods);
 
-  const best = scored[0]!;
-  if (best.affinity < 0.25) return null;
+  const best = rows[0]!;
+  if (best.affinity < STYLE_EMERGENCE_AFFINITY) return null;
 
-  const second = scored[1]!;
+  const second = rows[1]!;
   const hasSecondary = second.affinity >= SECONDARY_MIN_AFFINITY;
-  const keys = Object.keys(best.style.core) as AnyStatKey[];
   return {
     style: best.style,
     affinity: best.affinity,
@@ -118,7 +162,9 @@ export function detectBuild(mods: StatMods): BuildDetection | null {
         : best.affinity >= STYLE_MATURE_AFFINITY
           ? "成形"
           : "雏形",
-    coreValues: keys.map((key) => ({ key, value: modOf(mods, key) })).filter((x) => x.value > 0),
+    coreValues: best.terms
+      .map(({ key, value }) => ({ key, value }))
+      .filter((term) => term.value > 0),
     secondary: hasSecondary ? { style: second.style, affinity: second.affinity } : undefined,
     displayName: hasSecondary
       ? `${shortName(best.style)}·${shortName(second.style)}`

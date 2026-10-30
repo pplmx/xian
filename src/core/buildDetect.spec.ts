@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
-import { BUILD_STYLES, detectBuild } from "./buildDetect";
+import {
+  BUILD_STYLES,
+  STYLE_EMERGENCE_AFFINITY,
+  buildAffinityRows,
+  detectBuild,
+} from "./buildDetect";
 
 describe("流派识别(Build 面板数据层)", () => {
   it("无相关词条时不识别", () => {
@@ -53,5 +58,38 @@ describe("流派识别(Build 面板数据层)", () => {
       expect(Object.keys(s.core).length).toBeGreaterThan(1);
       expect(s.seal.length).toBe(1);
     }
+  });
+
+  it("道途未成时六路都摊开：空词条不伪造契合，顺序稳定", () => {
+    const rows = buildAffinityRows({ attackPct: 0.5 });
+    expect(rows.map((row) => row.style.id)).toEqual(BUILD_STYLES.map((style) => style.id));
+    expect(rows.every((row) => row.affinity === 0)).toBe(true);
+    expect(rows.every((row) => row.activeTerms === 0)).toBe(true);
+    expect(rows[0]!.terms.map((term) => term.key)).toEqual(Object.keys(BUILD_STYLES[0]!.core));
+  });
+
+  it("发现页与识别同源：排序第一、契合度与雏形门限逐位一致", () => {
+    const mods = { shieldOnStart: 0.2, shieldPower: 0.25, counterRate: 0.02 };
+    const rows = buildAffinityRows(mods);
+    const detected = detectBuild(mods)!;
+
+    expect(rows[0]!.style.id).toBe(detected.style.id);
+    expect(rows[0]!.affinity).toBe(detected.affinity);
+    expect(rows[0]!.affinity).toBeGreaterThanOrEqual(STYLE_EMERGENCE_AFFINITY);
+    expect(rows[0]!.activeTerms).toBe(2);
+    expect(
+      rows
+        .find((row) => row.style.id === "fanzhen")!
+        .terms.find((term) => term.key === "counterRate")!.ratio,
+    ).toBeCloseTo(0.02 / 0.3);
+  });
+
+  it("核心词条按参考值折算，排序读的是同一份平均值", () => {
+    const rows = buildAffinityRows({ shieldOnStart: 0.125, shieldPower: 0.15 });
+    const gangdun = rows.find((row) => row.style.id === "gangdun")!;
+
+    expect(gangdun.affinity).toBe(0.5);
+    expect(gangdun.terms.map((term) => term.ratio)).toEqual([0.5, 0.5]);
+    expect(rows[0]!.style.id).toBe("gangdun");
   });
 });

@@ -6,199 +6,187 @@
       back-to="character"
       back-label="人物"
     />
-    <div class="card-ink px-4 py-3">
-      <template v-if="build">
-        <div class="flex items-center gap-3">
-          <span
-            class="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-cinnabar/90 font-kai text-[22px] text-paper shadow"
-          >
-            {{ build.style.seal }}
-          </span>
-          <div class="min-w-0 grow">
-            <!-- 极窄档(≤220 CSS px):流派名 + 阶段 + 契合度一行塞不下,流派名被压到
-                 22px 宽一字一行 —— 允许换行,名字 itself 锁一行。320 / 390 两档不动。 -->
-            <p class="flex flex-wrap items-baseline gap-2">
-              <span class="font-kai whitespace-nowrap text-[16px] tracking-widest text-ink">{{
-                build.displayName
-              }}</span>
-              <span class="text-body text-cinnabar">{{ build.stageName }}</span>
-              <span class="ml-auto tabular text-body text-ink-soft"
-                >契合 {{ formatPercent(build.affinity, 0) }}</span
-              >
-            </p>
-            <ProgressBar
-              class="mt-1.5"
-              :value="build.affinity"
-              :height="5"
-              color="var(--color-cinnabar)"
-            />
-            <p class="mt-0.5 text-note text-ink-faint tabular">{{ stageGapText }}</p>
-            <p v-if="build.secondary" class="mt-1 text-note text-ink-faint tabular">
-              副体系:{{ build.secondary.style.name }}
-              {{ formatPercent(build.secondary.affinity, 0) }} —— 修行无职业,道路可以不纯
-            </p>
-          </div>
-        </div>
-        <p class="mt-2 t-body text-ink-faint">{{ build.style.desc }}</p>
-        <div class="mt-2 space-y-1">
-          <p v-for="cv in build.coreValues" :key="cv.key" class="flex justify-between text-body">
-            <span class="text-ink-soft">{{ STAT_NAMES[cv.key] }}</span>
-            <span class="tabular text-violet-ink">+{{ formatPercent(cv.value) }}</span>
-          </p>
-        </div>
-        <p
-          v-if="buildSourceNames.length"
-          class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-body text-ink-faint"
+    <div v-if="build" class="card-ink px-4 py-3">
+      <div class="flex items-center gap-3">
+        <span
+          class="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-cinnabar/90 font-kai text-[22px] text-paper shadow"
         >
-          <span>成路于:</span>
-          <span v-for="name in buildSourceNames" :key="name" class="text-qing">{{ name }}</span>
-        </p>
-        <!-- 五维评级(Phase 30.2):读懂构筑"形状",不看战力总数 -->
-        <div class="mt-2.5 rounded-md bg-paper-deep/60 px-3 py-2">
-          <p class="text-note text-ink-faint">
-            {{ cnNumber(powerRating.labels.length) }}维评级 —— 读的是形状,不是排名
-          </p>
-          <div class="mt-1 grid grid-cols-1 gap-0.5">
-            <!-- 每维可点开:星级是结果,词条才是原因 -->
-            <button
-              v-for="l in powerRating.labels"
-              :key="l.key"
-              class="w-full min-h-8 -my-1 py-1.5 text-left active:opacity-60"
-              :aria-expanded="dimKey === l.key"
-              :aria-controls="`build-dim-panel-${l.key}`"
-              @click="toggleDim(l.key)"
+          {{ build.style.seal }}
+        </span>
+        <div class="min-w-0 grow">
+          <!-- 极窄档(≤220 CSS px):流派名 + 阶段 + 契合度一行塞不下,流派名被压到
+                 22px 宽一字一行 —— 允许换行,名字 itself 锁一行。320 / 390 两档不动。 -->
+          <p class="flex flex-wrap items-baseline gap-2">
+            <span class="font-kai whitespace-nowrap text-[16px] tracking-widest text-ink">{{
+              build.displayName
+            }}</span>
+            <span class="text-body text-cinnabar">{{ build.stageName }}</span>
+            <span class="ml-auto tabular text-body text-ink-soft"
+              >契合 {{ formatPercent(build.affinity, 0) }}</span
             >
-              <span class="flex items-center justify-between text-body">
-                <span class="text-ink-soft">{{ l.name }}</span>
-                <span class="tabular tracking-widest text-gold-ink">{{
-                  ratingStars(l.stars)
-                }}</span>
+          </p>
+          <ProgressBar
+            class="mt-1.5"
+            :value="build.affinity"
+            :height="5"
+            color="var(--color-cinnabar)"
+          />
+          <p class="mt-0.5 text-note text-ink-faint tabular">{{ stageGapText }}</p>
+          <p v-if="build.secondary" class="mt-1 text-note text-ink-faint tabular">
+            副体系:{{ build.secondary.style.name }}
+            {{ formatPercent(build.secondary.affinity, 0) }} —— 修行无职业,道路可以不纯
+          </p>
+        </div>
+      </div>
+      <p class="mt-2 t-body text-ink-faint">{{ build.style.desc }}</p>
+      <div class="mt-2 space-y-1">
+        <p v-for="cv in build.coreValues" :key="cv.key" class="flex justify-between text-body">
+          <span class="text-ink-soft">{{ STAT_NAMES[cv.key] }}</span>
+          <span class="tabular text-violet-ink">+{{ formatPercent(cv.value) }}</span>
+        </p>
+      </div>
+      <p
+        v-if="buildSourceNames.length"
+        class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-body text-ink-faint"
+      >
+        <span>成路于:</span>
+        <span v-for="name in buildSourceNames" :key="name" class="text-qing">{{ name }}</span>
+      </p>
+      <!-- 五维评级(Phase 30.2):读懂构筑"形状",不看战力总数 -->
+      <div class="mt-2.5 rounded-md bg-paper-deep/60 px-3 py-2">
+        <p class="text-note text-ink-faint">
+          {{ cnNumber(powerRating.labels.length) }}维评级 —— 读的是形状,不是排名
+        </p>
+        <div class="mt-1 grid grid-cols-1 gap-0.5">
+          <!-- 每维可点开:星级是结果,词条才是原因 -->
+          <button
+            v-for="l in powerRating.labels"
+            :key="l.key"
+            class="w-full min-h-8 -my-1 py-1.5 text-left active:opacity-60"
+            :aria-expanded="dimKey === l.key"
+            :aria-controls="`build-dim-panel-${l.key}`"
+            @click="toggleDim(l.key)"
+          >
+            <span class="flex items-center justify-between text-body">
+              <span class="text-ink-soft">{{ l.name }}</span>
+              <span class="tabular tracking-widest text-gold-ink">{{ ratingStars(l.stars) }}</span>
+            </span>
+            <span
+              v-if="dimKey === l.key"
+              :id="`build-dim-panel-${l.key}`"
+              class="mt-1 block rounded-md bg-paper/70 px-2 py-1.5"
+            >
+              <span class="block text-note text-ink-soft">
+                {{ l.name }}得分 {{ l.score.toFixed(2) }} · 跨
+                {{ powerRating.thresholds[l.key].join(" / ") }} 逐级加星
               </span>
               <span
-                v-if="dimKey === l.key"
-                :id="`build-dim-panel-${l.key}`"
-                class="mt-1 block rounded-md bg-paper/70 px-2 py-1.5"
+                v-for="t in l.terms"
+                :key="t.label"
+                class="mt-0.5 flex justify-between text-note"
               >
-                <span class="block text-note text-ink-soft">
-                  {{ l.name }}得分 {{ l.score.toFixed(2) }} · 跨
-                  {{ powerRating.thresholds[l.key].join(" / ") }} 逐级加星
-                </span>
-                <span
-                  v-for="t in l.terms"
-                  :key="t.label"
-                  class="mt-0.5 flex justify-between text-note"
-                >
-                  <span class="text-ink-faint">{{ t.label }}</span>
-                  <span class="tabular text-qing">+{{ t.contribution.toFixed(2) }}</span>
-                </span>
-                <span v-if="!l.terms.length" class="block text-note text-ink-faint"
-                  >这一维还没有词条撑着。</span
-                >
-                <span class="mt-1 block text-note leading-relaxed text-ink-faint">
-                  贡献之和就是得分 —— 星级只看得分跨过哪一档。
-                </span>
+                <span class="text-ink-faint">{{ t.label }}</span>
+                <span class="tabular text-qing">+{{ t.contribution.toFixed(2) }}</span>
               </span>
-            </button>
-          </div>
-          <p class="mt-1 text-note text-ink-faint">点一维看它由哪些词条凑出来。</p>
-          <p class="mt-1 text-note leading-relaxed text-ink-faint">
-            同一星级的两个构筑谁更强,由环境与相性决定 —— 所以这里给的是形状,不是名次。
-          </p>
+              <span v-if="!l.terms.length" class="block text-note text-ink-faint"
+                >这一维还没有词条撑着。</span
+              >
+              <span class="mt-1 block text-note leading-relaxed text-ink-faint">
+                贡献之和就是得分 —— 星级只看得分跨过哪一档。
+              </span>
+            </span>
+          </button>
         </div>
-        <!-- 组合技:两条道路交汇处的一式神通 -->
-        <div
-          v-if="comboInfo"
-          class="mt-2.5 rounded-md px-3 py-2"
-          :class="comboInfo.active ? 'bg-violet-ink/6' : 'bg-ink/4'"
-        >
-          <p class="flex items-center gap-2">
-            <span
-              class="font-kai text-title"
-              :class="comboInfo.active ? 'text-violet-ink' : 'text-ink-faint'"
-            >
-              组合技「{{ comboInfo.art.name }}」
-            </span>
-            <span class="text-note" :class="comboInfo.active ? 'text-jade' : 'text-ink-faint'">
-              {{
-                comboInfo.active
-                  ? "已成"
-                  : `副体系至 ${formatPercent(COMBO_SECONDARY_MIN, 0)} 契合可成`
-              }}
-            </span>
-          </p>
-          <p
-            class="mt-0.5 text-body leading-relaxed"
-            :class="comboInfo.active ? 'text-ink-soft' : 'text-ink-faint'"
+        <p class="mt-1 text-note text-ink-faint">点一维看它由哪些词条凑出来。</p>
+        <p class="mt-1 text-note leading-relaxed text-ink-faint">
+          同一星级的两个构筑谁更强,由环境与相性决定 —— 所以这里给的是形状,不是名次。
+        </p>
+      </div>
+      <!-- 组合技:两条道路交汇处的一式神通 -->
+      <div
+        v-if="comboInfo"
+        class="mt-2.5 rounded-md px-3 py-2"
+        :class="comboInfo.active ? 'bg-violet-ink/6' : 'bg-ink/4'"
+      >
+        <p class="flex items-center gap-2">
+          <span
+            class="font-kai text-title"
+            :class="comboInfo.active ? 'text-violet-ink' : 'text-ink-faint'"
           >
-            {{ comboInfo.art.desc }}
-          </p>
-          <p class="mt-0.5 text-note text-cinnabar">代价:{{ comboInfo.art.costText }}</p>
-        </div>
-        <!-- 构筑韧性:主派被封后还剩什么 -->
-        <div v-if="resilience" class="mt-2.5 rounded-md bg-ink/4 px-3 py-2">
-          <!--
+            组合技「{{ comboInfo.art.name }}」
+          </span>
+          <span class="text-note" :class="comboInfo.active ? 'text-jade' : 'text-ink-faint'">
+            {{
+              comboInfo.active
+                ? "已成"
+                : `副体系至 ${formatPercent(COMBO_SECONDARY_MIN, 0)} 契合可成`
+            }}
+          </span>
+        </p>
+        <p
+          class="mt-0.5 text-body leading-relaxed"
+          :class="comboInfo.active ? 'text-ink-soft' : 'text-ink-faint'"
+        >
+          {{ comboInfo.art.desc }}
+        </p>
+        <p class="mt-0.5 text-note text-cinnabar">代价:{{ comboInfo.art.costText }}</p>
+      </div>
+      <!-- 构筑韧性:主派被封后还剩什么 -->
+      <div v-if="resilience" class="mt-2.5 rounded-md bg-ink/4 px-3 py-2">
+        <!--
             标签与取值各成一格并允许换行:窄屏上「构筑韧性(主派核心封印之下)」会把
             右边那串胜率挤成两行(「胜率 100% →」/「100%」)。副题拆成独立一格,
             换行时整串胜率一起落到下一行(nowrap 保证它自己不裂)。
           -->
-          <p class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-body">
-            <span class="font-kai whitespace-nowrap text-ink-soft">构筑韧性</span>
-            <span class="text-note text-ink-faint">(主派核心封印之下)</span>
-            <span
-              class="ml-auto shrink-0 whitespace-nowrap tabular"
-              :class="resilience.retention >= 0.45 ? 'text-jade' : 'text-cinnabar'"
-            >
-              胜率 {{ formatPercent(resilience.normal, 0) }} →
-              {{ formatPercent(resilience.sealed, 0) }}
-            </span>
-          </p>
-          <p class="mt-0.5 text-note text-ink-faint">{{ resilienceText(resilience) }}</p>
-        </div>
-        <!--
+        <p class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-body">
+          <span class="font-kai whitespace-nowrap text-ink-soft">构筑韧性</span>
+          <span class="text-note text-ink-faint">(主派核心封印之下)</span>
+          <span
+            class="ml-auto shrink-0 whitespace-nowrap tabular"
+            :class="resilience.retention >= 0.45 ? 'text-jade' : 'text-cinnabar'"
+          >
+            胜率 {{ formatPercent(resilience.normal, 0) }} →
+            {{ formatPercent(resilience.sealed, 0) }}
+          </span>
+        </p>
+        <p class="mt-0.5 text-note text-ink-faint">{{ resilienceText(resilience) }}</p>
+      </div>
+      <!--
           本世对局:七类本世实敌挨个对打,短板一面先入眼。
           玩家早在四处踩坑,却看不到「到底输在哪一类」 —— 胜率面把最吃亏的那面摆在前头。
         -->
-        <div v-if="matchupRows" class="mt-2.5 rounded-md bg-ink/4 px-3 py-2">
-          <p class="text-note text-ink-faint">
-            本世对局 —— 与当下构筑对打七类实敌,估其胜率,短板在前
-          </p>
-          <div class="mt-1.5 space-y-1">
-            <div v-for="row in matchupSorted" :key="row.id" class="flex items-center gap-2">
-              <span class="w-9 shrink-0 truncate text-body text-ink-soft">{{ row.name }}</span>
+      <div v-if="matchupRows" class="mt-2.5 rounded-md bg-ink/4 px-3 py-2">
+        <p class="text-note text-ink-faint">本世对局 —— 与当下构筑对打七类实敌,估其胜率,短板在前</p>
+        <div class="mt-1.5 space-y-1">
+          <div v-for="row in matchupSorted" :key="row.id" class="flex items-center gap-2">
+            <span class="w-9 shrink-0 truncate text-body text-ink-soft">{{ row.name }}</span>
+            <span
+              v-if="row.wall"
+              class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-note leading-none text-cinnabar"
+              >墙</span
+            >
+            <span class="track-ink h-1.25 min-w-0 flex-1 overflow-hidden rounded-full">
               <span
-                v-if="row.wall"
-                class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-note leading-none text-cinnabar"
-                >墙</span
-              >
-              <span class="track-ink h-1.25 min-w-0 flex-1 overflow-hidden rounded-full">
-                <span
-                  class="bar-fill h-full rounded-full"
-                  :class="winBarCls(row.winRate)"
-                  :style="{ width: `${row.winRate * 100}%` }"
-                />
-              </span>
-              <span
-                class="w-9 shrink-0 text-right tabular text-body"
-                :class="winTextCls(row.winRate)"
-              >
-                {{ formatPercent(row.winRate, 0) }}
-              </span>
-            </div>
+                class="bar-fill h-full rounded-full"
+                :class="winBarCls(row.winRate)"
+                :style="{ width: `${row.winRate * 100}%` }"
+              />
+            </span>
+            <span
+              class="w-9 shrink-0 text-right tabular text-body"
+              :class="winTextCls(row.winRate)"
+            >
+              {{ formatPercent(row.winRate, 0) }}
+            </span>
           </div>
-          <p class="mt-1.5 text-note leading-relaxed text-ink-faint">
-            每类各打 {{ MATCHUP_SAMPLE_RUNS }} 场估算,读的是「哪面吃亏」的方向,不是精确胜率;四墙
-            (首领 / 高爆发 / 真伤 / 疾影)通吃,才称万金油。
-          </p>
         </div>
-      </template>
-      <p v-else class="empty-note t-body text-center text-ink-faint">
-        道途尚未成路。凑齐同一路数的词条、功法与法宝,自成一派——
-        <br />
-        <span class="text-ink-faint"
-          >{{ STYLE_SHORT_NAMES.join(" / ") }},各有克制,亦各有天敌。</span
-        >
-      </p>
+        <p class="mt-1.5 text-note leading-relaxed text-ink-faint">
+          每类各打 {{ MATCHUP_SAMPLE_RUNS }} 场估算,读的是「哪面吃亏」的方向,不是精确胜率;四墙 (首领
+          / 高爆发 / 真伤 / 疾影)通吃,才称万金油。
+        </p>
+      </div>
     </div>
+    <BuildDiscovery v-else :rows="buildPaths" />
 
     <!-- 构筑快照 -->
     <SectionTitle title="构筑快照" :hint="`已存 ${loadouts.list.length}/${MAX_LOADOUTS} 套`" />
@@ -351,9 +339,9 @@
 import { computed, nextTick, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import {
+  buildAffinityRows,
   detectBuild,
   buildSources,
-  STYLE_SHORT_NAMES,
   STYLE_MATURE_AFFINITY,
   STYLE_MASTER_AFFINITY,
 } from "@/core/buildDetect";
@@ -375,6 +363,7 @@ import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
+import BuildDiscovery from "@/components/build/BuildDiscovery.vue";
 
 const player = usePlayerStore();
 const loadouts = useLoadoutsStore();
@@ -382,6 +371,7 @@ const loadouts = useLoadoutsStore();
 const loadoutsFull = computed(() => loadouts.list.length >= MAX_LOADOUTS);
 
 const build = computed(() => detectBuild(player.finalStats.mods));
+const buildPaths = computed(() => buildAffinityRows(player.finalStats.mods));
 /** 距下一形态还差多少契合:读判定线常量(60%/90%,与 stageName 同源),进度不许空转 */
 const stageGapText = computed(() => {
   const aff = build.value?.affinity;

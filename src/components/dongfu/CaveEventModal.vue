@@ -87,7 +87,8 @@ const locationLabel = computed(() =>
       </button>
     </div>
     <template #footer>
-      <button class="btn-ghost w-full" @click="handleIgnore">离 开(今日不再巡游)</button>
+      <p class="mb-1 text-center text-note text-ink-faint">离开后,今日不再巡游</p>
+      <button class="btn-ghost tap-row w-full" @click="handleIgnore">离 开</button>
     </template>
   </BaseModal>
 </template>
