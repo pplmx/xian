@@ -261,6 +261,7 @@ const CATEGORIES = [
       "folioOpening",
       "folioChrome",
       "folioSpread",
+      "desktopSpine",
       "navigation",
       "visualRhythm",
       "itemText",

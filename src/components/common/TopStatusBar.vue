@@ -32,7 +32,7 @@
           <span class="atlas-trigger__char text-[14px] leading-none">玄</span>
           <span class="atlas-trigger__mark text-[10px] leading-none">枢</span>
         </button>
-        <div class="min-w-0 leading-tight">
+        <div class="folio-head__identity min-w-0 leading-tight">
           <p class="truncate font-kai text-[14px] tracking-[0.14em] text-ink">
             {{ player.name }}
           </p>
@@ -47,6 +47,19 @@
               {{ lifespan.age }}/{{ lifespan.max }}载
             </span>
           </p>
+        </div>
+        <div
+          data-desktop-context
+          class="folio-head__desktop-context min-w-0 items-center gap-2 whitespace-nowrap"
+        >
+          <span class="font-kai text-[11px] tracking-[0.16em] text-cinnabar">{{
+            positionMark
+          }}</span>
+          <span class="h-3 w-px shrink-0 bg-ink/15" aria-hidden="true" />
+          <span class="min-w-0 truncate font-kai text-[14px] tracking-[0.12em] text-ink">{{
+            entryMark
+          }}</span>
+          <span class="text-[10px] text-ink-faint">· {{ player.worldName }}</span>
         </div>
       </div>
       <div class="folio-head__ledger flex shrink-0 items-center text-[11px] text-ink-soft tabular">

@@ -27,6 +27,7 @@
       />
     </div>
 
+    <DesktopSpine v-if="game.started && route.name !== 'create'" />
     <TopStatusBar v-if="game.started && route.name !== 'create'" />
 
     <!--
@@ -41,7 +42,7 @@
       data-save-reader
       :data-save-reader-freed="writerFreed ? '' : undefined"
       role="status"
-      class="relative z-10 flex shrink-0 flex-wrap items-center justify-center gap-x-1 border-b border-cinnabar/40 bg-cinnabar/6 px-3 py-1 text-center font-kai text-[11px] leading-relaxed text-cinnabar"
+      class="app-save-reader relative z-10 flex shrink-0 flex-wrap items-center justify-center gap-x-1 border-b border-cinnabar/40 bg-cinnabar/6 px-3 py-1 text-center font-kai text-[11px] leading-relaxed text-cinnabar"
     >
       <template v-if="writerFreed">
         <span>另一处已关闭 ——</span>
@@ -109,6 +110,7 @@ import { apprenticeReapText } from "@/core/apprenticeService";
 import { applyTheme, initTheme } from "@/core/theme";
 import { configureAudio, playSfx, stopBgm, unlockAudio } from "@/core/audio";
 import { folioLayoutOf } from "@/ui/folioSpread";
+import DesktopSpine from "@/components/common/DesktopSpine.vue";
 import TopStatusBar from "@/components/common/TopStatusBar.vue";
 import BottomNavigation from "@/components/common/BottomNavigation.vue";
 import ToastHost from "@/components/common/ToastHost.vue";

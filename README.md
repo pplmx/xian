@@ -58,7 +58,7 @@ vp install      # 安装依赖(底层走 bun)
 vp dev          # 开发服务器
 vp build        # 类型检查 + 生产构建
 vp preview      # 预览构建结果
-vp test         # 全量 398 个 spec(本作自己那部分 318 个)
+vp test         # 全量 399 个 spec(本作自己那部分 319 个)
 vp check        # 环境/类型/文档自检 + Oxlint
 ```
 
@@ -123,7 +123,7 @@ vp check        # 环境/类型/文档自检 + Oxlint
 | Vue Router | 5 | 客户端路由(hash 模式) |
 | Tone.js | 15 | FluidR3 乐器采样播放(BGM + SFX) |
 | CryptoJS | 4 | 存档 AES 加密 |
-| Vitest | 5 | 单元测试与平衡审计(全量 398 个 spec,含公共库 `packages/engine` 的 80 个) |
+| Vitest | 5 | 单元测试与平衡审计(全量 399 个 spec,含公共库 `packages/engine` 的 80 个) |
 | Electron / Capacitor | 44 / 8 | Windows 桌面与 Android 打包 |
 
 ## 许可证

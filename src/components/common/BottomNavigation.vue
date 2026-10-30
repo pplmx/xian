@@ -102,23 +102,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useNativeInsets } from "@/composables/useNativeInsets";
-import { useInventoryStore } from "@/stores/inventory";
-import { breakthroughInfo } from "@/core/breakthrough";
+import { useNavigationSignals } from "@/composables/useNavigationSignals";
 import GameIcon from "./GameIcon.vue";
 
 const route = useRoute();
 /** 安卓三键实测占位(防底栏被系统按钮盖住,见 useNativeInsets) */
 const { bottom: navInset } = useNativeInsets();
-/** 背包页签的新货量:没开包看过几件报几件(判据在 inventory store 的 newItemCount,见 inventorySeen.spec) */
-const bagNewCount = computed(() => useInventoryStore().newItemCount);
-/**
- * 此刻能不能破境 —— 与修炼页卡头那一行读的是同一个 breakthroughInfo(),
- * 不另算一套「大概够了吧」。它直接吃 store,故在底栏也能调。
- */
-const canBreakthrough = computed(() => breakthroughInfo().ready);
+/** 手机底栏与桌面书脊共用的两枚提醒(背包新货 / 可破境) */
+const { bagNewCount, canBreakthrough } = useNavigationSignals();
 
 const TABS = [
   { name: "home", label: "洞府", icon: "mountain", to: "/" },

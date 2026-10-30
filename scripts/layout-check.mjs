@@ -220,6 +220,7 @@ import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
 import { EVENTS } from "../src/data/events.ts";
 import { GONGFA } from "../src/data/gongfa.ts";
 import { qualityDef } from "../src/data/qualities.ts";
+import { NAVIGATION_ENTRIES } from "../src/ui/navigation.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -306,6 +307,8 @@ let zoomSeen = 0;
 let pixelTextsSeen = 0;
 /** 1280 桌面档逐页核过多少次书桌 / 单叶 / 双页几何 */
 let desktopFolioSeen = 0;
+/** 1280 桌面档逐页核过多少次书脊、当前册与底栏退场 */
+let desktopSpineSeen = 0;
 /** 拦掉的外域请求数 —— 打印出来,顺带证明这条拦截是活的 */
 // 外域请求拦截:计数在 context 层累积,收尾打印(见 auditContext)
 
@@ -574,13 +577,13 @@ async function measurePage(page) {
         };
       })(),
       overflows,
-      navItems: document.querySelectorAll("nav button, nav a").length,
+      navItems: document.querySelectorAll("[data-folio-dock] button, [data-folio-dock] a").length,
       /**
        * 底栏标出来的「当前在哪一页」—— 读屏靠 aria-current,不靠颜色与那枚朱砂短笔。
        * 取的是 href 而不是文字:文字可以重名(以后多一枚「洞府」入口也不会误判)。
        */
-      navCurrent: [...document.querySelectorAll("nav [aria-current='page']")].map((el) =>
-        String(el.getAttribute("href") || "").replace(/^#/, ""),
+      navCurrent: [...document.querySelectorAll("[data-folio-dock] [aria-current='page']")].map(
+        (el) => String(el.getAttribute("href") || "").replace(/^#/, ""),
       ),
       /**
        * 只有图标的控件必须自带可访问名(aria-label / 可见文字)。
@@ -1121,7 +1124,7 @@ async function measurePage(page) {
       railDrift: (() => {
         const main = document.querySelector("main");
         const header = document.querySelector("header");
-        const nav = document.querySelector("nav");
+        const nav = document.querySelector("[data-folio-dock]");
         if (!main || !header || !nav) return null;
         const doc = document.documentElement;
         const windowOverflow = Math.round(doc.scrollHeight - doc.clientHeight);
@@ -2051,9 +2054,12 @@ async function taskPageTour(vp) {
       const desk = await page.evaluate(() => {
         const shell = document.querySelector(".app-shell");
         const page = document.querySelector(".folio-page");
+        const spine = document.querySelector("[data-desktop-spine]");
+        const dock = document.querySelector("[data-folio-dock]");
         if (!shell || !page) return null;
         const pageStyle = getComputedStyle(page);
         const gutter = getComputedStyle(page, "::before");
+        const spineStyle = spine ? getComputedStyle(spine) : null;
         return {
           layout: shell.getAttribute("data-folio-layout"),
           shellWidth: Math.round(shell.getBoundingClientRect().width),
@@ -2061,12 +2067,40 @@ async function taskPageTour(vp) {
           display: pageStyle.display,
           columns: pageStyle.gridTemplateColumns.split(/\s+/).filter(Boolean).length,
           gutter: gutter.backgroundImage,
+          spine: spine
+            ? {
+                display: spineStyle.display,
+                width: Math.round(spine.getBoundingClientRect().width),
+                entries: spine.querySelectorAll('nav[aria-label="全站册目"] a[href]').length,
+                current: spine.querySelectorAll("[data-spine-current]").length,
+                currentHref: spine.querySelector("[data-spine-current]")?.getAttribute("href"),
+              }
+            : null,
+          dock: dock ? getComputedStyle(dock).display : null,
         };
       });
       desktopFolioSeen += 1;
+      desktopSpineSeen += 1;
       if (!desk) {
         failures.push(`[${vp.tag}] ${route} 桌面册页几何没量到`);
       } else {
+        if (!desk.spine || desk.spine.display === "none" || desk.spine.width < 60) {
+          failures.push(`[${vp.tag}] ${route} 桌面书脊没有出现`);
+        } else {
+          if (desk.spine.entries !== NAVIGATION_ENTRIES.length) {
+            failures.push(
+              `[${vp.tag}] ${route} 桌面书脊册目不全(${desk.spine.entries}/${NAVIGATION_ENTRIES.length})`,
+            );
+          }
+          if (desk.spine.current !== 1 || desk.spine.currentHref !== `#${route}`) {
+            failures.push(
+              `[${vp.tag}] ${route} 桌面书脊当前册标记为 ${desk.spine.current} 处 / ${desk.spine.currentHref}`,
+            );
+          }
+        }
+        if (desk.dock !== "none") {
+          failures.push(`[${vp.tag}] ${route} 桌面仍留着手机底栏(${desk.dock ?? "未找到"})`);
+        }
         if (desk.shellWidth < 1000) {
           failures.push(
             `[${vp.tag}] ${route} 游戏态外壳只有 ${desk.shellWidth}px —— 桌面仍是一条手机屏`,
@@ -6318,7 +6352,7 @@ async function taskAdventureFold() {
       failures.push("[390-adventure] 历练页没渲染出来,首屏判据没量到东西");
     } else {
       const fold = await page.evaluate(() => {
-        const nav = document.querySelector("nav")?.getBoundingClientRect();
+        const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
         const title = [...document.querySelectorAll("h1, h2")].find(
           (el) => (el.textContent || "").trim() === "历练",
         );
@@ -6424,7 +6458,7 @@ async function taskDongfuFold() {
       failures.push("[390-dongfu] 洞府页没渲染出来,首屏判据没量到东西");
     } else {
       const fold = await page.evaluate(() => {
-        const nav = document.querySelector("nav")?.getBoundingClientRect();
+        const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
         const buildTitle = [...document.querySelectorAll("h2")].find(
           (el) => (el.textContent || "").trim() === "营造",
         );
@@ -6536,7 +6570,7 @@ async function taskCodexFold() {
       failures.push("[390-codex] 界域志没渲染出来,首屏判据没量到东西");
     } else {
       const fold = await page.evaluate(() => {
-        const nav = document.querySelector("nav")?.getBoundingClientRect();
+        const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
         const hero = document.querySelector("[data-realm-current]");
         const heroRect = hero?.getBoundingClientRect();
         const name = (hero?.querySelector("[data-current-realm-name]")?.textContent || "")
@@ -6708,7 +6742,7 @@ async function taskAchievementFold() {
     } else {
       const readGroups = () =>
         page.evaluate(() => {
-          const nav = document.querySelector("nav")?.getBoundingClientRect();
+          const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
           const hero = document.querySelector("[data-achievement-hero]");
           const heroRect = hero?.getBoundingClientRect();
           const jumps = [...document.querySelectorAll("[data-achievement-jump]")].map((btn) => ({
@@ -6906,7 +6940,7 @@ async function taskCollectionFold() {
 
       const read = () =>
         page.evaluate(() => {
-          const nav = document.querySelector("nav")?.getBoundingClientRect();
+          const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
           const hero = document.querySelector("[data-collection-hero]");
           const heroRect = hero?.getBoundingClientRect();
           const toggles = [...document.querySelectorAll("[data-collection-category-toggle]")].map(
@@ -11649,6 +11683,11 @@ if (desktopFolioSeen < ROUTES.length) {
     `桌面书桌只量了 ${desktopFolioSeen}/${ROUTES.length} 页 —— 1280 巡页没把新版式全部覆盖`,
   );
 }
+if (desktopSpineSeen < ROUTES.length) {
+  failures.push(
+    `桌面书脊只量了 ${desktopSpineSeen}/${ROUTES.length} 页 —— 1280 巡页没把新导航全部覆盖`,
+  );
+}
 
 /**
  * 产物层静态判据:**首页不许引用任何外链**。
@@ -11683,6 +11722,7 @@ if (failures.length === 0) {
   console.log("✓ 六处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界 / 坊市),且铺满内容区宽度");
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
   console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:三册双页、其余单叶)`);
+  console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);
   console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`);

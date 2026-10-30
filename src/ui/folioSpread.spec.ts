@@ -32,7 +32,7 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
 
     expect(css).toMatch(/@media \(min-width: 960px\)/);
     expect(css).toContain('.app-shell[data-game-shell="desk"]');
-    expect(css).toContain("max-width: 70rem");
+    expect(css).toContain("max-width: 88rem");
     expect(css).toContain("max-width: 48rem");
     expect(css).toContain("max-width: 66rem");
   });

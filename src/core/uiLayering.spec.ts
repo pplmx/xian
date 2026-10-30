@@ -302,7 +302,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 「大概够了吧」)、挂在修炼点上、并且是玉色圆点而不是背包那枚朱砂计数徽标
      * (它说的是「有事在等你」,不是一个数)。
      */
-    expect(nav?.src, "底栏要读同一个 breakthroughInfo()").toContain("breakthroughInfo()");
+    const navSignals = readFileSync(
+      resolve(__dirname, "../composables/useNavigationSignals.ts"),
+      "utf-8",
+    );
+    expect(nav?.src, "底栏与书脊要共用同一份导航提醒").toContain("useNavigationSignals");
+    expect(navSignals, "导航提醒要读同一个 breakthroughInfo()").toContain(
+      "breakthroughInfo().ready",
+    );
     expect(nav?.src, "可破境圆点挂在修炼点").toContain(
       "tab.name === 'cultivation' && canBreakthrough",
     );

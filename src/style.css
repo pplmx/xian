@@ -1066,6 +1066,330 @@ html[data-theme="dark"] .bottom-dock-rail {
 }
 
 /*
+ * 桌面书脊 —— 宽屏不再把手机底栏横着拉长。
+ *
+ * 手机与窄桌面仍由底栏承担五处高频去向；游戏态到 960px 后，外壳改成
+ * 「书脊 + 正文」两列：书脊读全站同一份十七册目录，底栏退场。960~1099px
+ * 先收成只留图标的窄书脊，1100px 以上展开卷目与册名。这样桌面导航是真正
+ * 可扫读的目录，而不是把五枚手机页签平均铺到一千多像素宽。
+ *
+ * 收起态仍有 28px 触达高度；册名只是视觉收起，链接文字仍在 DOM 中供读屏读取。
+ */
+.desktop-spine,
+.folio-head__desktop-context {
+  display: none;
+}
+
+.desktop-spine {
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+  background:
+    linear-gradient(90deg, rgb(var(--color-ink-rgb) / 0.026), transparent 28%),
+    linear-gradient(
+      180deg,
+      rgb(var(--color-paper-deep-rgb) / 0.74),
+      rgb(var(--color-paper-rgb) / 0.44) 42%,
+      rgb(var(--color-paper-deep-rgb) / 0.56)
+    );
+  box-shadow: inset -1px 0 0 rgb(var(--color-paper-rgb) / 0.38);
+}
+
+.desktop-spine__mast {
+  flex: none;
+  padding: 0.9rem 0.55rem 0.7rem;
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+}
+
+.desktop-spine__brand {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.desktop-spine__seal {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  grid-template-columns: repeat(2, 1fr);
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.46);
+  background: rgb(var(--color-cinnabar-rgb) / 0.06);
+  box-shadow:
+    inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.26),
+    0 1px 0 rgb(var(--color-ink-rgb) / 0.05);
+  color: rgb(var(--color-cinnabar-rgb));
+  font-family: var(--font-kai);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.desktop-spine__wordmark,
+.desktop-spine__identity,
+.desktop-spine__copy,
+.desktop-spine__entry-copy,
+.desktop-spine__current,
+.desktop-spine__colophon {
+  display: none;
+}
+
+.desktop-spine__wordmark {
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.desktop-spine__title {
+  font-family: var(--font-kai);
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  color: rgb(var(--color-ink-rgb));
+}
+
+.desktop-spine__edition {
+  font-family: var(--font-kai);
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  color: rgb(var(--color-ink-faint-rgb));
+}
+
+.desktop-spine__identity {
+  margin-top: 0.7rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.desktop-spine__name {
+  overflow: hidden;
+  font-family: var(--font-kai);
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  color: rgb(var(--color-ink-rgb));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-spine__realm {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgb(var(--color-qing-rgb));
+}
+
+.desktop-spine__lifespan {
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgb(var(--color-ink-faint-rgb));
+}
+
+.desktop-spine__index.scroll-pane {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.45rem 0.4rem 0.7rem;
+  scrollbar-width: none;
+}
+
+.desktop-spine__index::-webkit-scrollbar {
+  display: none;
+}
+
+.desktop-spine__section {
+  margin-top: 0.4rem;
+}
+
+.desktop-spine__section:first-child {
+  margin-top: 0;
+}
+
+.desktop-spine__section-head {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding-inline: 0.2rem;
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+}
+
+.desktop-spine__section-number {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.18);
+  background: rgb(var(--color-paper-rgb) / 0.42);
+  color: rgb(var(--color-ink-faint-rgb));
+  font-family: var(--font-kai);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.desktop-spine__copy {
+  min-width: 0;
+  flex-direction: column;
+}
+
+.desktop-spine__section-label {
+  font-family: var(--font-kai);
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: 0.18em;
+  color: rgb(var(--color-ink-soft-rgb));
+}
+
+.desktop-spine__section-hint {
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.25;
+  color: rgb(var(--color-ink-faint-rgb));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-spine__entry {
+  position: relative;
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.18rem 0.35rem;
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.055);
+  border-left: 2px solid transparent;
+  color: rgb(var(--color-ink-soft-rgb));
+  text-decoration: none;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.desktop-spine__entry[data-spine-current] {
+  border-left-color: rgb(var(--color-cinnabar-rgb) / 0.72);
+  background: rgb(var(--color-cinnabar-rgb) / 0.06);
+  color: rgb(var(--color-cinnabar-rgb));
+  box-shadow: inset 0 1px 0 rgb(var(--color-paper-rgb) / 0.34);
+}
+
+.desktop-spine__entry-icon {
+  position: relative;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+  background: rgb(var(--color-paper-rgb) / 0.3);
+}
+
+.desktop-spine__entry[data-spine-current] .desktop-spine__entry-icon {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.42);
+  background: rgb(var(--color-cinnabar-rgb) / 0.06);
+}
+
+.desktop-spine__entry-copy {
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.desktop-spine__entry-label {
+  overflow: hidden;
+  font-family: var(--font-kai);
+  font-size: 14px;
+  line-height: 1.25;
+  letter-spacing: 0.12em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-spine__entry-description {
+  display: none;
+}
+
+.desktop-spine__current {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.42);
+  color: rgb(var(--color-cinnabar-rgb));
+  font-family: var(--font-kai);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.desktop-spine__badge {
+  position: absolute;
+  left: 22px;
+  top: 1px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid rgb(var(--color-paper-rgb) / 0.9);
+  border-radius: 999px;
+  background: rgb(var(--color-cinnabar-rgb));
+  box-shadow: 0 0 0 1px rgb(var(--color-cinnabar-rgb) / 0.2);
+}
+
+.desktop-spine__badge--count {
+  left: auto;
+  right: 3px;
+  top: 1px;
+  display: grid;
+  width: auto;
+  min-width: 13px;
+  height: 13px;
+  padding-inline: 2px;
+  place-items: center;
+  border: 0;
+  border-radius: 2px;
+  color: rgb(var(--color-paper-rgb));
+  font-family: var(--font-kai);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.desktop-spine__badge--ready {
+  background: rgb(var(--color-jade-rgb));
+  box-shadow: 0 0 0 1px rgb(var(--color-jade-rgb) / 0.2);
+}
+
+.desktop-spine__colophon {
+  flex: none;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .desktop-spine__entry:not([data-spine-current]):hover {
+    background: rgb(var(--color-paper-rgb) / 0.48);
+    color: rgb(var(--color-ink-rgb));
+  }
+}
+
+/*
  * 桌面不是一条被拉长的手机屏。
  *
  * 手机与横屏继续走单叶;到 960px 以上,游戏态外壳展开成一张书桌,正文页收在
@@ -1077,7 +1401,45 @@ html[data-theme="dark"] .bottom-dock-rail {
  */
 @media (min-width: 960px) {
   .app-shell[data-game-shell="desk"] {
-    max-width: 70rem;
+    display: grid;
+    width: calc(100% - 2rem);
+    max-width: 88rem;
+    grid-template-columns: 4.25rem minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "spine head"
+      "spine notice"
+      "spine main";
+    border-radius: 2px;
+    box-shadow:
+      0 26px 80px rgb(0 0 0 / 0.48),
+      0 2px 0 rgb(var(--color-ink-rgb) / 0.08);
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine {
+    display: flex;
+    grid-area: spine;
+  }
+
+  .app-shell[data-game-shell="desk"] .folio-head {
+    grid-area: head;
+    padding-block: 0.7rem;
+  }
+
+  .app-shell[data-game-shell="desk"] main {
+    grid-area: main;
+  }
+
+  .app-shell[data-game-shell="desk"] .app-save-reader {
+    grid-area: notice;
+  }
+
+  .app-shell[data-game-shell="desk"] [data-folio-dock] {
+    display: none;
+  }
+
+  .app-shell[data-game-shell="desk"] .masthead-route {
+    display: none;
   }
 
   .app-shell[data-game-shell="desk"] .folio-head {
@@ -1130,6 +1492,57 @@ html[data-theme="dark"] .bottom-dock-rail {
       transparent
     );
     pointer-events: none;
+  }
+}
+
+@media (min-width: 1100px) {
+  .app-shell[data-game-shell="desk"] {
+    grid-template-columns: 14rem minmax(0, 1fr);
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine__wordmark,
+  .app-shell[data-game-shell="desk"] .desktop-spine__identity,
+  .app-shell[data-game-shell="desk"] .desktop-spine__colophon {
+    display: flex;
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine__copy,
+  .app-shell[data-game-shell="desk"] .desktop-spine__entry-copy {
+    display: flex;
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine__current {
+    display: grid;
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine__brand {
+    justify-content: flex-start;
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine__section-head {
+    justify-content: flex-start;
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine__entry {
+    justify-content: flex-start;
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine__badge {
+    left: 18px;
+  }
+
+  .app-shell[data-game-shell="desk"] .desktop-spine__badge--count {
+    right: 4px;
+    left: auto;
+  }
+
+  .app-shell[data-game-shell="desk"] [data-atlas-trigger],
+  .app-shell[data-game-shell="desk"] .folio-head__identity {
+    display: none;
+  }
+
+  .app-shell[data-game-shell="desk"] .folio-head__desktop-context {
+    display: flex;
   }
 }
 
