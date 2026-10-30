@@ -1065,6 +1065,74 @@ html[data-theme="dark"] .bottom-dock-rail {
   }
 }
 
+/*
+ * 桌面不是一条被拉长的手机屏。
+ *
+ * 手机与横屏继续走单叶;到 960px 以上,游戏态外壳展开成一张书桌,正文页收在
+ * 48rem 的阅读宽度。洞府、修炼、道躯这三册的信息本来就能成对读,故再展开成
+ * 双页:主册在左、副册在右,中缝只留一道极淡的折影。历练仍有严格的顺序叙事,
+ * 不硬切成两栏,留在单叶里。
+ *
+ * 这层只改桌面断点,手机上的页框、触达尺寸与滚动宿主一位不动。
+ */
+@media (min-width: 960px) {
+  .app-shell[data-game-shell="desk"] {
+    max-width: 70rem;
+  }
+
+  .app-shell[data-game-shell="desk"] .folio-head {
+    padding-inline: max(1rem, calc((100% - 60rem) / 2));
+  }
+
+  .app-shell[data-game-shell="desk"] .bottom-dock-rail {
+    max-width: 60rem;
+    margin-inline: auto;
+  }
+
+  .app-shell[data-game-shell="desk"] .folio-page {
+    --folio-page-gutter: 2rem;
+    width: 100%;
+    max-width: 48rem;
+    margin-inline: auto;
+    padding: 1.5rem 2rem 2rem;
+  }
+
+  .app-shell[data-folio-layout="spread"] .folio-page--stack {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    align-items: start;
+    column-gap: 1.75rem;
+    row-gap: 1rem;
+    max-width: 66rem;
+  }
+
+  .app-shell[data-folio-layout="spread"] .folio-page--stack > * + * {
+    margin-top: 0;
+  }
+
+  .app-shell[data-folio-layout="spread"] .folio-page--stack > .folio-masthead,
+  .app-shell[data-folio-layout="spread"] .folio-span-all {
+    grid-column: 1 / -1;
+  }
+
+  .app-shell[data-folio-layout="spread"] .folio-page--stack::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 1.5rem;
+    bottom: 2rem;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--color-ink-rgb) / 0.08) 12%,
+      rgb(var(--color-ink-rgb) / 0.08) 88%,
+      transparent
+    );
+    pointer-events: none;
+  }
+}
+
 /* 宣纸颗粒 */
 .paper-grain::after {
   content: "";

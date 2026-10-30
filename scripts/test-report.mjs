@@ -260,6 +260,7 @@ const CATEGORIES = [
       "folioMasthead",
       "folioOpening",
       "folioChrome",
+      "folioSpread",
       "navigation",
       "visualRhythm",
       "itemText",

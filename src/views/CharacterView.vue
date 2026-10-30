@@ -15,7 +15,7 @@
       开卷先报战力,卡内随即摊开战力由攻/防/血三项按权重折成 ——
       只报结论不够,「这数怎么来的」必须与结论同框而不同级。
     -->
-    <div class="card-ink px-4 py-3">
+    <div class="card-ink folio-span-all px-4 py-3">
       <p class="text-[10px] tracking-[0.16em] text-ink-faint">战力构成 · 攻 / 防 / 血按权重折算</p>
       <!--
         战力构成 —— 一条按比例分段的横条,不是一个三格数字阵。

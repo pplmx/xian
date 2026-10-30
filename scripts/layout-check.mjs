@@ -240,7 +240,7 @@ const VIEWPORTS = [
   { width: 320, height: 568, tag: "320", dpr: 2 },
   // 两档「不是手机竖屏」的设备。它们各自暴露过一类毛病,故各占一档:
   //   横屏 844×390 —— 上下两栏吃掉 22% 的高度(改前 26%),而宽度只用掉一半;
-  //   桌面 1280×800 —— 窄栏顶天立地;不在大屏上收成一册,它就只是一条带子。
+  //   桌面 1280×800 —— 游戏态展开成书桌:洞府 / 修炼 / 道躯双页,其余页单叶居中。
   // 安卓壳与桌面客户端都能转到这两档;PWA manifest 锁了竖屏,浏览器里随意缩窗。
   { width: 844, height: 390, tag: "844x390", dpr: 2 },
   { width: 1280, height: 800, tag: "1280x800", dpr: 1 },
@@ -304,6 +304,8 @@ let controlHostsSeen = 0;
 /** 200% 缩放档量过几页、采样像素量过几处字 —— 同样防判据空转 */
 let zoomSeen = 0;
 let pixelTextsSeen = 0;
+/** 1280 桌面档逐页核过多少次书桌 / 单叶 / 双页几何 */
+let desktopFolioSeen = 0;
 /** 拦掉的外域请求数 —— 打印出来,顺带证明这条拦截是活的 */
 // 外域请求拦截:计数在 context 层累积,收尾打印(见 auditContext)
 
@@ -1764,8 +1766,9 @@ async function pixelContrastOf(page, sampler) {
  * 页签栏(InkTabs 的外壳 .tab-rail)要吸顶 —— 内容滚下去,它钉在内容区顶上。
  *
  * 这几册(背包四册、图鉴、名号、界域志、天界、坊市)都是越往下越长的列表,页签跟着滚走
- * 就得先滚回顶才能换一册。判据两条:滚过之后它还贴在内容区顶;盒子铺满内容区宽度
- * (两侧留缝的话,内容会从缝里明晃晃地穿过去)。
+ * 就得先滚回顶才能换一册。判据两条:滚过之后它还贴在内容区顶;盒子铺满**当前页叶**宽度
+ * (两侧留缝的话,内容会从缝里明晃晃地穿过去)。桌面单叶居中后,不能拿整块书桌去比 ——
+ * 那会把设计好的页边误报成缝。
  *
  * 造余量那一段是有讲究的:空档的背包只有几件东西,页面根本滚不动,吸顶无从量起。
  * 于是往**视图根节点里**垫一块 1200px 的占位 —— 必须垫在容器里面:吸顶盒的活动
@@ -1782,13 +1785,13 @@ async function measureTabRail(page) {
     const spacer = document.createElement("div");
     spacer.style.height = "1200px";
     root.appendChild(spacer);
-    const mainBox = main.getBoundingClientRect();
+    const rootBox = root.getBoundingClientRect();
     main.scrollTop = 600;
     const box = rail.getBoundingClientRect();
     const out = {
       scrolled: Math.round(main.scrollTop),
       drift: Math.round(box.top - main.getBoundingClientRect().top),
-      bleed: Math.round(box.left - mainBox.left) + Math.round(mainBox.right - box.right),
+      bleed: Math.round(box.left - rootBox.left) + Math.round(rootBox.right - box.right),
     };
     main.scrollTop = 0;
     spacer.remove();
@@ -2039,6 +2042,62 @@ async function taskPageTour(vp) {
     controlHostsSeen += info.nestedControls?.hosts ?? 0;
     const problems = problemsOf(info);
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
+    /*
+     * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,首页 / 修炼 / 道躯
+     * 三册走双页网格,其余页是一张 48rem 的单叶。源码契约在 folioSpread.spec 里,
+     * 这里量真实布局 —— 只改断点不改 App 数据属性、或网格被页框压回单列,都该红。
+     */
+    if (vp.tag === "1280x800") {
+      const desk = await page.evaluate(() => {
+        const shell = document.querySelector(".app-shell");
+        const page = document.querySelector(".folio-page");
+        if (!shell || !page) return null;
+        const pageStyle = getComputedStyle(page);
+        const gutter = getComputedStyle(page, "::before");
+        return {
+          layout: shell.getAttribute("data-folio-layout"),
+          shellWidth: Math.round(shell.getBoundingClientRect().width),
+          pageWidth: Math.round(page.getBoundingClientRect().width),
+          display: pageStyle.display,
+          columns: pageStyle.gridTemplateColumns.split(/\s+/).filter(Boolean).length,
+          gutter: gutter.backgroundImage,
+        };
+      });
+      desktopFolioSeen += 1;
+      if (!desk) {
+        failures.push(`[${vp.tag}] ${route} 桌面册页几何没量到`);
+      } else {
+        if (desk.shellWidth < 1000) {
+          failures.push(
+            `[${vp.tag}] ${route} 游戏态外壳只有 ${desk.shellWidth}px —— 桌面仍是一条手机屏`,
+          );
+        }
+        if (["/", "/cultivation", "/character"].includes(route)) {
+          if (desk.layout !== "spread" || desk.display !== "grid" || desk.columns < 2) {
+            failures.push(
+              `[${vp.tag}] ${route} 双页册没有真的展开(${desk.layout} / ${desk.display} / ${desk.columns} 栏)`,
+            );
+          }
+          if (desk.pageWidth < 1000) {
+            failures.push(
+              `[${vp.tag}] ${route} 双页正文只有 ${desk.pageWidth}px —— 没有用上书桌宽度`,
+            );
+          }
+          if (!desk.gutter.includes("linear-gradient")) {
+            failures.push(`[${vp.tag}] ${route} 双页中缝没有画出来`);
+          }
+        } else {
+          if (desk.layout !== "single" || desk.display === "grid") {
+            failures.push(`[${vp.tag}] ${route} 不该展开成双页(${desk.layout} / ${desk.display})`);
+          }
+          if (desk.pageWidth > 800) {
+            failures.push(
+              `[${vp.tag}] ${route} 单叶册在桌面上拉得过宽(${desk.pageWidth}px,应不超过 800px)`,
+            );
+          }
+        }
+      }
+    }
     /*
      * 正文对比度只在最常用那一档视口上量(390):它与视口宽度无关,五档各量一遍只是把
      * 巡页时间乘以五。两套主题都量,见 measureTextContrast。
@@ -11585,6 +11644,11 @@ if (zoomSeen === 0) {
 if (pixelTextsSeen === 0) {
   failures.push("渐变/图片底上的字一处都没采到 —— 那条判据空转了(采样半径或底色判定写错了?)");
 }
+if (desktopFolioSeen < ROUTES.length) {
+  failures.push(
+    `桌面书桌只量了 ${desktopFolioSeen}/${ROUTES.length} 页 —— 1280 巡页没把新版式全部覆盖`,
+  );
+}
 
 /**
  * 产物层静态判据:**首页不许引用任何外链**。
@@ -11618,6 +11682,7 @@ if (failures.length === 0) {
   console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
   console.log("✓ 六处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界 / 坊市),且铺满内容区宽度");
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
+  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:三册双页、其余单叶)`);
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);
   console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`);

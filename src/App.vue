@@ -3,6 +3,8 @@
   <div
     class="app-shell mx-auto flex max-w-107.5 flex-col overflow-hidden bg-paper shadow-[0_0_60px_rgba(0,0,0,0.45)] relative paper-grain"
     :class="{ 'reduce-motion': settings.reduceMotion }"
+    :data-game-shell="game.started ? 'desk' : 'leaf'"
+    :data-folio-layout="folioLayout"
     :data-world="player.world.id"
   >
     <!--
@@ -87,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
@@ -106,6 +108,7 @@ import { notify } from "@/core/notify";
 import { apprenticeReapText } from "@/core/apprenticeService";
 import { applyTheme, initTheme } from "@/core/theme";
 import { configureAudio, playSfx, stopBgm, unlockAudio } from "@/core/audio";
+import { folioLayoutOf } from "@/ui/folioSpread";
 import TopStatusBar from "@/components/common/TopStatusBar.vue";
 import BottomNavigation from "@/components/common/BottomNavigation.vue";
 import ToastHost from "@/components/common/ToastHost.vue";
@@ -127,6 +130,7 @@ const settings = useSettingsStore();
 const updateReady = ref(false);
 let swHandle: ServiceWorkerUpdateHandle | undefined;
 const route = useRoute();
+const folioLayout = computed(() => folioLayoutOf(route.name));
 
 /** 内容区滚动宿主(滚动条挂在这个常驻的 main 上,不是 window) */
 const scrollHost = useTemplateRef<HTMLElement>("scrollHost");

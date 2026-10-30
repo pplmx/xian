@@ -165,7 +165,7 @@
     </RouterLink>
 
     <!-- 修行志(任务) -->
-    <section>
+    <section class="folio-span-all">
       <SectionTitle title="修行志" />
       <div class="card-ink mt-2 px-4 py-3">
         <template v-if="mainQuest">
