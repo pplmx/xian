@@ -7469,6 +7469,121 @@ async function taskWorldHistory() {
   return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
 }
 
+/**
+ * 本世山河案 —— 卷首世界身份、全图与路线账必须是一张连续的账。
+ *
+ * 旧页的卷首三格、行旅图、地界卡与前尘册各自成卡，首屏几乎只剩世界名和地图。
+ * 这里用普通展品档核对卷首山图、三项总账、换界说明与路线行是否同时落位，
+ * 再把 390 / 320 / 195（200% 缩放）三档交给同一把排版尺子。
+ */
+async function taskWorldDesk() {
+  const failures = [];
+  const zoomFails = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__worldDeskFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/world", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390] /world 本世山河案没渲染出来,首屏判据没量到东西");
+    }
+
+    const deskVisible = await page
+      .locator("[data-world-desk]")
+      .waitFor({ state: "visible", timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    checked += 1;
+    if (!deskVisible) {
+      failures.push("[390] /world 本世山河案没有渲染出来");
+    } else {
+      const desk = await page.evaluate(() => {
+        const text = (selector) =>
+          (document.querySelector(selector)?.innerText || "").replace(/\s+/g, " ").trim();
+        const root = document.querySelector("[data-world-desk]");
+        const current = document.querySelector("[data-world-current]");
+        const currentRect = current?.getBoundingClientRect();
+        return {
+          shapeRows: document.querySelectorAll("[data-world-shape] > span").length,
+          atlasHidden: document.querySelector("[data-world-atlas]")?.getAttribute("aria-hidden"),
+          routeMap: !!document.querySelector("[data-world-route-map]"),
+          stages: document.querySelectorAll("[data-stage-index]").length,
+          currentRows: document.querySelectorAll("[data-world-current]").length,
+          currentText: (current?.innerText || "").replace(/\s+/g, " ").trim(),
+          currentTop: currentRect?.top ?? 0,
+          reroll: text("[data-world-reroll]"),
+          rerollNote: text(".world-masthead__reroll p"),
+          body: (root?.innerText || "").replace(/\s+/g, " ").trim(),
+          viewportHeight: window.innerHeight,
+        };
+      });
+
+      if (desk.shapeRows !== 3) {
+        failures.push(`[390] 本世山河案卷首应有地界 / 层级 / 已行三项,实见 ${desk.shapeRows} 项`);
+      }
+      if (desk.atlasHidden !== "true") {
+        failures.push("[390] 本世山河案的卷首山图没有对读屏隐藏");
+      }
+      if (!desk.routeMap) {
+        failures.push("[390] 本世山河案缺少行旅全图");
+      }
+      if (desk.stages <= 0) {
+        failures.push("[390] 本世山河案没有列出任何地界");
+      }
+      if (desk.currentRows !== 1) {
+        failures.push(`[390] 本世山河案应恰有 1 段眼下路线,实见 ${desk.currentRows} 段`);
+      }
+      if (!desk.currentText.includes("眼下可往")) {
+        failures.push(`[390] 眼下路线没有标出「眼下可往」:«${desk.currentText}»`);
+      }
+      if (!desk.reroll.includes("道果") || !desk.rerollNote.includes("换界即换路")) {
+        failures.push("[390] 换界按钮或换路代价说明不齐");
+      }
+      if (/NaN|undefined|Infinity/.test(desk.body)) {
+        failures.push(`[390] 本世山河案漏出占位符:«${desk.body.slice(0, 120)}»`);
+      }
+      if (desk.currentTop <= 0 || desk.currentTop >= desk.viewportHeight) {
+        failures.push(
+          `[390] 眼下路线首屏不可见:top ${Math.round(desk.currentTop)} / viewport ${desk.viewportHeight}`,
+        );
+      }
+    }
+
+    await clearOverlays(page);
+    for (const [width, height, tag] of [
+      [390, 844, "390"],
+      [320, 568, "320"],
+      [195, 422, "195·200%"],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await settleVisuals(page);
+      const problems = problemsOf(await measurePage(page));
+      checked += 1;
+      if (problems.length) failures.push(`[${tag}] /world 本世山河案 → ${problems.join(" / ")}`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 本世山河案场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails };
+}
+
 /** 切后台立即落盘 */
 async function taskPersistTiming() {
   const failures = [];
@@ -12061,6 +12176,7 @@ const TASKS = [
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],
   ["历练首屏主线优先", taskAdventureFold],
   ["前尘山河三世同册", taskWorldHistory],
+  ["本世山河案首屏", taskWorldDesk],
   ["切后台立即落盘", taskPersistTiming],
   ["导出失败也说话", taskExportFailure],
   ["坏档也能进游戏", taskBadSave],

@@ -264,6 +264,7 @@ const CATEGORIES = [
       "effectWiring",
       "buildDiscovery",
       "buildDesk",
+      "worldDesk",
       "uiLayering",
       "folioMasthead",
       "folioOpening",

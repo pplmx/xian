@@ -1,6 +1,6 @@
 <template>
   <section
-    class="card-ink relative overflow-hidden px-3 pb-3 pt-3"
+    class="world-route-map relative overflow-hidden px-3 pb-3 pt-3"
     data-world-route-map
     aria-labelledby="world-route-heading"
   >
@@ -145,7 +145,7 @@
         </svg>
       </div>
 
-      <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-note text-ink-faint">
+      <div class="world-route-map__legend">
         <span class="inline-flex items-center gap-1">
           <span class="h-2 w-2 rounded-full bg-jade" aria-hidden="true" />已通
         </span>
