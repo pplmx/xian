@@ -51,6 +51,8 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(view, "总账悬赏总数读同一份汇总").toContain("marketPulse.value.openBounties");
     expect(view, "总账寄卖总数读机制常量").toContain("total: MARKET_CONSIGN_SLOTS");
     expect(view, "总账三册可一键落位").toContain('v-for="row in marketLedgerRows"');
+    expect(view, "坊市账格交三列").toContain(':tally-columns="3"');
+    expect(view, "账格由共享组件承担").toContain("<LedgerTally");
     expect(view, "最近归账只报最近一件").toContain("nextConsign.value.text");
     expect(view, "今日行市接共享此刻账").toContain("<LedgerPulse");
     expect(pulse, "先手动作读共享动作键").toContain("folio-ledger-pulse__action");
@@ -131,16 +133,10 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(start, "坊市样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "坊市样式段要有明确结尾").toBeGreaterThan(start);
     expect(marketCss).toMatch(
-      /\.market-pulse__tallies\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/,
-    );
-    expect(marketCss).toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,300}\.market-goods\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(marketCss).toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,300}\.market-sell-grid\s*\{[\s\S]{0,120}minmax\(0, 1\.08fr\)/,
-    );
-    expect(marketCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,700}\.market-pulse__tallies\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(marketCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.market-good\s*\{[\s\S]{0,100}grid-template-columns:\s*1\.82rem minmax\(0, 1fr\)/,

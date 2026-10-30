@@ -836,6 +836,163 @@
     letter-spacing: 0.08em;
   }
   /*
+   * 账格 —— 坊市、器魂与天界只交行列数，不再各画一遍「印、名、值、量、注」。
+   *
+   * 页面给的是同一份行数据；这里统一纸线、读数层级、选中态与窄屏退行。
+   * 选中态仍用朱砂小印，天界的石青只留在纸边，不在账格里另起第三套导航色。
+   */
+  .folio-ledger-pulse__tallies {
+    --folio-tally-columns: 3;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(var(--folio-tally-columns), minmax(0, 1fr));
+  }
+  .folio-ledger-pulse__tallies[data-columns="1"] {
+    --folio-tally-columns: 1;
+  }
+  .folio-ledger-pulse__tallies[data-columns="2"] {
+    --folio-tally-columns: 2;
+  }
+  .folio-ledger-pulse__tallies[data-columns="4"] {
+    --folio-tally-columns: 4;
+  }
+  .folio-ledger-pulse__tallies[data-columns="2"] > *:nth-child(even),
+  .folio-ledger-pulse__tallies[data-columns="3"] > * + *,
+  .folio-ledger-pulse__tallies[data-columns="4"] > * + * {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .folio-ledger-pulse__tallies[data-columns="2"] > *:nth-child(n + 3),
+  .folio-ledger-pulse__tallies[data-columns="3"] > *:nth-child(n + 4),
+  .folio-ledger-pulse__tallies[data-columns="4"] > *:nth-child(n + 5) {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .folio-ledger-tally {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.32rem minmax(0, 1fr);
+    align-content: start;
+    gap: 0.08rem 0.32rem;
+    padding: 0.56rem 0.62rem 0.6rem;
+    text-align: left;
+    transition:
+      background-color 0.14s ease,
+      color 0.14s ease;
+  }
+  .folio-ledger-tally.is-active {
+    background:
+      linear-gradient(180deg, rgb(var(--color-cinnabar-rgb) / 0.045), transparent),
+      rgb(var(--color-paper-rgb) / 0.18);
+  }
+  .folio-ledger-tally.is-active::after {
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 2px 0 rgb(var(--color-cinnabar-rgb) / 0.34);
+    content: "";
+    pointer-events: none;
+  }
+  .folio-ledger-tally:focus-visible {
+    outline: 1px solid rgb(var(--color-cinnabar-rgb) / 0.46);
+    outline-offset: -3px;
+  }
+  .folio-ledger-tally__mark {
+    display: grid;
+    width: 1.32rem;
+    height: 1.32rem;
+    grid-row: span 2;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .folio-ledger-tally.is-active .folio-ledger-tally__mark {
+    border-color: rgb(var(--color-cinnabar-rgb) / 0.34);
+    background: rgb(var(--color-cinnabar-rgb) / 0.035);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .folio-ledger-tally__label {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+  .folio-ledger-tally__value {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.05rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .folio-ledger-tally__value strong {
+    font-weight: 500;
+  }
+  .folio-ledger-tally__total {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .folio-ledger-tally__unit,
+  .folio-ledger-tally__detail {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .folio-ledger-tally__unit {
+    grid-column: 2;
+  }
+  .folio-ledger-tally__detail {
+    grid-column: 1 / -1;
+    margin-top: 0.14rem;
+    padding-top: 0.28rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+  }
+  @media (hover: hover) {
+    .folio-ledger-tally:hover {
+      background-color: rgb(var(--color-ink-rgb) / 0.025);
+    }
+  }
+  @media (min-width: 960px) {
+    .folio-ledger-pulse__tallies[data-wide-columns="1"] {
+      --folio-tally-columns: 1;
+    }
+    .folio-ledger-pulse__tallies[data-wide-columns="2"] {
+      --folio-tally-columns: 2;
+    }
+    .folio-ledger-pulse__tallies[data-wide-columns="4"] {
+      --folio-tally-columns: 4;
+    }
+    .folio-ledger-pulse__tallies[data-columns="2"][data-wide-columns="4"] > *:nth-child(even) {
+      border-left: 0;
+    }
+    .folio-ledger-pulse__tallies[data-columns="2"][data-wide-columns="4"] > * + * {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+    .folio-ledger-pulse__tallies[data-columns="2"][data-wide-columns="4"] > *:nth-child(n + 3) {
+      border-top: 0;
+    }
+  }
+  @media (max-width: 220px) {
+    .folio-ledger-pulse__tallies {
+      --folio-tally-columns: 1;
+    }
+    .folio-ledger-pulse__tallies[data-columns] > * {
+      border-top: 0;
+      border-left: 0;
+    }
+    .folio-ledger-pulse__tallies[data-columns] > * + * {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+  }
+  /*
    * 深页案头 —— 一张总案只认一套身份栏。
    *
    * 流派、三生录与名兽页原先各自复制了「印 / 眉题 / 标题 / 说明 / 末尾总账」

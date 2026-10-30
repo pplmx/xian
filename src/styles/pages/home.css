@@ -394,7 +394,7 @@
     display: block;
   }
   .home-passage__eyebrow {
-    color: rgb(var(--color-qing-rgb));
+    color: rgb(var(--color-ink-soft-rgb));
     font-family: var(--font-kai);
     font-size: var(--type-note);
     letter-spacing: 0.16em;

@@ -40,6 +40,8 @@
         eyebrow="今日天门"
         :title="celestialLead.title"
         :description="celestialLead.detail"
+        :tally-columns="2"
+        :tally-wide-columns="4"
       >
         <template #actions>
           <button
@@ -51,31 +53,24 @@
           </button>
         </template>
 
-        <div class="celestial-pulse__tallies">
-          <button
+        <template #tallies>
+          <LedgerTally
             v-for="row in celestialLedgerRows"
             :key="row.id"
-            type="button"
-            class="celestial-pulse__tally"
-            :class="{ 'is-active': celTab === row.id }"
-            @click="celTab = row.id"
-          >
-            <span class="celestial-pulse__mark" aria-hidden="true">{{ row.mark }}</span>
-            <span class="celestial-pulse__label">{{ row.label }}</span>
-            <span class="celestial-pulse__value">
-              <strong
-                :data-celestial-pulse-dao="row.id === 'dao' ? row.value : undefined"
-                :data-celestial-pulse-exped="row.id === 'exped' ? row.value : undefined"
-                :data-celestial-pulse-trial="row.id === 'trial' ? row.value : undefined"
-                :data-celestial-pulse-marks="row.id === 'marks' ? row.value : undefined"
-                >{{ row.value }}</strong
-              >
-              <span class="celestial-pulse__total">/{{ row.total }}</span>
-            </span>
-            <span class="celestial-pulse__unit">{{ row.unit }}</span>
-            <span class="celestial-pulse__detail">{{ row.detail }}</span>
-          </button>
-        </div>
+            :mark="row.mark"
+            :label="row.label"
+            :value="row.value"
+            :total="row.total"
+            :unit="row.unit"
+            :detail="row.detail"
+            :active="celTab === row.id"
+            :data-celestial-pulse-dao="row.id === 'dao' ? row.value : undefined"
+            :data-celestial-pulse-exped="row.id === 'exped' ? row.value : undefined"
+            :data-celestial-pulse-trial="row.id === 'trial' ? row.value : undefined"
+            :data-celestial-pulse-marks="row.id === 'marks' ? row.value : undefined"
+            @select="celTab = row.id"
+          />
+        </template>
       </LedgerPulse>
     </FolioPageHeader>
 
@@ -372,6 +367,7 @@ import { swordPurity, SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
 import { formatNum, formatPercent } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
+import LedgerTally from "@/components/common/LedgerTally.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";

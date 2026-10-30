@@ -33,6 +33,7 @@
         eyebrow="此刻器魂"
         :title="soulLead.title"
         :description="soulLead.detail"
+        :tally-columns="3"
       >
         <template #actions>
           <button
@@ -45,57 +46,22 @@
           </button>
         </template>
 
-        <div class="soul-pulse__tallies">
-          <button type="button" class="soul-pulse__tally" @click="scrollToSeats">
-            <span class="soul-pulse__mark" aria-hidden="true">席</span>
-            <span class="soul-pulse__label">三席</span>
-            <span class="soul-pulse__value">
-              <strong data-soul-pulse-active>{{ soulPulse.activeCount }}</strong>
-              <span class="soul-pulse__total">/{{ soulPulse.slotTotal }}</span>
-            </span>
-            <span class="soul-pulse__unit">席</span>
-            <span class="soul-pulse__detail">
-              {{ emptySeats > 0 ? `尚空 ${emptySeats} 席` : "三席俱满" }}
-            </span>
-          </button>
-
-          <button type="button" class="soul-pulse__tally" @click="idleOpen = true">
-            <span class="soul-pulse__mark" aria-hidden="true">闲</span>
-            <span class="soul-pulse__label">闲置</span>
-            <span class="soul-pulse__value">
-              <strong data-soul-pulse-idle>{{ soulPulse.idleSouls.length }}</strong>
-            </span>
-            <span class="soul-pulse__unit">缕</span>
-            <span class="soul-pulse__detail">
-              {{
-                soulPulse.idleSouls.length > 0
-                  ? soulPulse.slotsFull
-                    ? "三席已满,待取舍"
-                    : "可入空席"
-                  : "暂无闲置形意"
-              }}
-            </span>
-          </button>
-
-          <button type="button" class="soul-pulse__tally" @click="forgeOpen = true">
-            <span class="soul-pulse__mark" aria-hidden="true">凝</span>
-            <span class="soul-pulse__label">可凝</span>
-            <span class="soul-pulse__value">
-              <strong data-soul-pulse-refine>{{ soulPulse.affordableRefines }}</strong>
-              <span class="soul-pulse__total">/{{ soulPulse.refinableCount }}</span>
-            </span>
-            <span class="soul-pulse__unit">件</span>
-            <span class="soul-pulse__detail">
-              {{
-                soulPulse.refinableCount > 0
-                  ? soulPulse.shortfall > 0
-                    ? `尚差 ${formatGN(soulPulse.shortfall)} 道源`
-                    : `每枚 ${SOUL_REFINE_COST} 道源`
-                  : "行囊暂无带形意的法器"
-              }}
-            </span>
-          </button>
-        </div>
+        <template #tallies>
+          <LedgerTally
+            v-for="row in soulLedgerRows"
+            :key="row.id"
+            :mark="row.mark"
+            :label="row.label"
+            :value="row.value"
+            :total="row.total"
+            :unit="row.unit"
+            :detail="row.detail"
+            :data-soul-pulse-active="row.id === 'active' ? row.value : undefined"
+            :data-soul-pulse-idle="row.id === 'idle' ? row.value : undefined"
+            :data-soul-pulse-refine="row.id === 'refine' ? row.value : undefined"
+            @select="runSoulLedger(row.id)"
+          />
+        </template>
       </LedgerPulse>
     </FolioPageHeader>
 
@@ -551,6 +517,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
+import LedgerTally from "@/components/common/LedgerTally.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -613,6 +580,49 @@ const soulPulse = computed(() =>
 const emptySeats = computed(() =>
   Math.max(0, soulPulse.value.slotTotal - soulPulse.value.activeCount),
 );
+
+type SoulLedgerId = "active" | "idle" | "refine";
+
+/** 卷首三枚账格与阵图、先手共读同一份 soulPulse。 */
+const soulLedgerRows = computed(() => [
+  {
+    id: "active" as const,
+    mark: "席",
+    label: "三席",
+    value: soulPulse.value.activeCount,
+    total: soulPulse.value.slotTotal,
+    unit: "席",
+    detail: emptySeats.value > 0 ? `尚空 ${emptySeats.value} 席` : "三席俱满",
+  },
+  {
+    id: "idle" as const,
+    mark: "闲",
+    label: "闲置",
+    value: soulPulse.value.idleSouls.length,
+    total: "",
+    unit: "缕",
+    detail:
+      soulPulse.value.idleSouls.length > 0
+        ? soulPulse.value.slotsFull
+          ? "三席已满,待取舍"
+          : "可入空席"
+        : "暂无闲置形意",
+  },
+  {
+    id: "refine" as const,
+    mark: "凝",
+    label: "可凝",
+    value: soulPulse.value.affordableRefines,
+    total: soulPulse.value.refinableCount,
+    unit: "件",
+    detail:
+      soulPulse.value.refinableCount > 0
+        ? soulPulse.value.shortfall > 0
+          ? `尚差 ${formatGN(soulPulse.value.shortfall)} 道源`
+          : `每枚 ${SOUL_REFINE_COST} 道源`
+        : "行囊暂无带形意的法器",
+  },
+]);
 
 interface SoulLead {
   mark: string;
@@ -699,6 +709,12 @@ function scrollToSeats(): void {
     behavior: "smooth",
     block: "start",
   });
+}
+
+function runSoulLedger(id: SoulLedgerId): void {
+  if (id === "active") scrollToSeats();
+  else if (id === "idle") idleOpen.value = true;
+  else forgeOpen.value = true;
 }
 
 /** 章法里的数字只从机制常量取，避免改 SOUL_SLOTS / 炉费后文案还停在旧值。 */

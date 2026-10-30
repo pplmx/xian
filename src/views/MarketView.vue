@@ -49,6 +49,7 @@ import { isRareQuality, qualityTextColor, qualityTierStyle } from "@/ui/qualityT
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
+import LedgerTally from "@/components/common/LedgerTally.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
@@ -541,6 +542,7 @@ function bountyReady(o: BountySlot): boolean {
         eyebrow="今日行市"
         :title="marketLead.title"
         :description="marketLead.detail"
+        :tally-columns="3"
       >
         <template #actions>
           <button
@@ -554,30 +556,23 @@ function bountyReady(o: BountySlot): boolean {
           </button>
         </template>
 
-        <div class="market-pulse__tallies">
-          <button
+        <template #tallies>
+          <LedgerTally
             v-for="row in marketLedgerRows"
             :key="row.id"
-            type="button"
-            class="market-pulse__tally"
-            :class="{ 'is-active': marketTab === row.id }"
-            @click="marketTab = row.id"
-          >
-            <span class="market-pulse__mark" aria-hidden="true">{{ row.mark }}</span>
-            <span class="market-pulse__label">{{ row.label }}</span>
-            <span class="market-pulse__value">
-              <strong
-                :data-market-pulse-goods="row.id === 'shelf' ? row.value : undefined"
-                :data-market-pulse-bounties="row.id === 'bounty' ? row.value : undefined"
-                :data-market-pulse-consign="row.id === 'sell' ? row.value : undefined"
-                >{{ row.value }}</strong
-              >
-              <span class="market-pulse__total">/{{ row.total }}</span>
-            </span>
-            <span class="market-pulse__unit">{{ row.unit }}</span>
-            <span class="market-pulse__detail">{{ row.detail }}</span>
-          </button>
-        </div>
+            :mark="row.mark"
+            :label="row.label"
+            :value="row.value"
+            :total="row.total"
+            :unit="row.unit"
+            :detail="row.detail"
+            :active="marketTab === row.id"
+            :data-market-pulse-goods="row.id === 'shelf' ? row.value : undefined"
+            :data-market-pulse-bounties="row.id === 'bounty' ? row.value : undefined"
+            :data-market-pulse-consign="row.id === 'sell' ? row.value : undefined"
+            @select="marketTab = row.id"
+          />
+        </template>
       </LedgerPulse>
     </FolioPageHeader>
 

@@ -32,6 +32,14 @@
     </LedgerHeader>
 
     <div class="folio-ledger-pulse__body">
+      <div
+        v-if="$slots.tallies"
+        class="folio-ledger-pulse__tallies"
+        :data-columns="tallyColumns"
+        :data-wide-columns="tallyWideColumns"
+      >
+        <slot name="tallies" />
+      </div>
       <slot />
     </div>
   </section>
@@ -51,6 +59,8 @@ withDefaults(
     scoreValue?: string | number;
     scoreSuffix?: string;
     variant?: "ledger" | "index";
+    tallyColumns?: 1 | 2 | 3 | 4;
+    tallyWideColumns?: 1 | 2 | 3 | 4;
   }>(),
   {
     seal: "",
@@ -61,6 +71,8 @@ withDefaults(
     scoreValue: "",
     scoreSuffix: "",
     variant: "ledger",
+    tallyColumns: 3,
+    tallyWideColumns: 3,
   },
 );
 </script>

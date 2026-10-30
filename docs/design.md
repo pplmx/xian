@@ -327,8 +327,8 @@
 `__head / __seal / __identity / __score`;`variant="index"` 用于谱册、履历这类无印小账头。
 常规宽度三席并读,195 CSS px 时总账退到身份栏下方,仍与标题同一条左边线。
 坊市行市、器魂此刻与天界天门再共用一枚 `LedgerPulse`:外层纸边、朱砂或石青上缘与先手
-动作键只留一处,三页仅保留各自的账格、读数与落位动作。结构与退行由
-`ledgerHeader.spec.ts` 与 `ledgerPulse.spec.ts` 守住。
+动作键只留一处;账格再由 `LedgerTally` 统一印、名、值、量、注与选中态,三页只交行列数、
+同一份行数据与落位动作。结构与退行由 `ledgerHeader.spec.ts` 与 `ledgerPulse.spec.ts` 守住。
 
 未开启的终局册页不再用一块大白卡占位。天界与器魂共用 `UnopenedFolio`:前景先落
 「封」印,再把**当前境界 / 门限 / 尚隔几重境**摊成一张门槛账,进度条与「此世行迹」

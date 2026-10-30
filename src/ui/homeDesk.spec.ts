@@ -98,4 +98,15 @@ describe("首页案头 · 先给今日一步，再摊长期账", () => {
     expect(masthead).toContain("compact:hidden tinylens:hidden");
     expect(tailwind).toContain('addVariant("compact", "@media (max-width: 359px)")');
   });
+
+  it("门径眉题不借装饰青压字，夜间也保持正文可读", () => {
+    const homeCss = source("src/styles/pages/home.css");
+
+    expect(homeCss).toMatch(
+      /\.home-passage__eyebrow\s*\{[\s\S]{0,120}color:\s*rgb\(var\(--color-ink-soft-rgb\)\)/,
+    );
+    expect(homeCss).not.toMatch(
+      /\.home-passage__eyebrow\s*\{[\s\S]{0,120}color:\s*rgb\(var\(--color-qing-rgb\)\)/,
+    );
+  });
 });

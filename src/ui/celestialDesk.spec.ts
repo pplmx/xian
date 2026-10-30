@@ -49,6 +49,9 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(view, "总账四册可一键落位").toContain('v-for="row in celestialLedgerRows"');
     expect(view, "今日天门接共享此刻账").toContain("<LedgerPulse");
     expect(pulse, "先手动作读共享动作键").toContain("folio-ledger-pulse__action");
+    expect(pulse, "四册账格由共享组件承担").toContain("<LedgerTally");
+    expect(pulse, "手机账格交两列").toContain(':tally-columns="2"');
+    expect(pulse, "桌面账格交四列").toContain(':tally-wide-columns="4"');
     expect(pulse, "总账带道途运行时落点").toContain(":data-celestial-pulse-dao=");
     expect(pulse, "总账带远征运行时落点").toContain(":data-celestial-pulse-exped=");
     expect(pulse, "总账带试炼运行时落点").toContain(":data-celestial-pulse-trial=");
@@ -109,16 +112,7 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(start, "天界样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "天界样式段要有明确结尾").toBeGreaterThan(start);
     expect(celestialCss).toMatch(
-      /\.celestial-pulse__tallies\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
-    );
-    expect(celestialCss).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]{0,300}\.celestial-pulse__tallies\s*\{[\s\S]{0,120}repeat\(4, minmax\(0, 1fr\)\)/,
-    );
-    expect(celestialCss).toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,900}\.celestial-dao__columns\s*\{[\s\S]{0,140}minmax\(0, 0\.92fr\)/,
-    );
-    expect(celestialCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.celestial-pulse__tallies\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(celestialCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.celestial-gateway\s*\{[\s\S]{0,120}grid-template-columns:\s*2rem minmax\(0, 1fr\)/,

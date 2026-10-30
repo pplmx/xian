@@ -44,6 +44,9 @@ describe("器魂案 · 三席先立意,此刻再落到先手", () => {
     expect(view, "汇总仍走 core/soulOverview 唯一一份").toContain("soulOverview({");
     expect(view, "此刻器魂接共享此刻账").toContain("<LedgerPulse");
     expect(pulse, "先手动作读共享动作键").toContain("folio-ledger-pulse__action");
+    expect(pulse, "三席账格由同一份行数据生成").toContain('v-for="row in soulLedgerRows"');
+    expect(pulse, "账格由共享组件承担").toContain("<LedgerTally");
+    expect(pulse, "器魂账格交三列").toContain(':tally-columns="3"');
     expect(pulse, "总账带三席运行时落点").toContain("data-soul-pulse-active");
     expect(pulse, "总账带闲置运行时落点").toContain("data-soul-pulse-idle");
     expect(pulse, "总账带可凝运行时落点").toContain("data-soul-pulse-refine");
@@ -93,13 +96,7 @@ describe("器魂案 · 三席先立意,此刻再落到先手", () => {
     expect(start, "器魂样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "器魂样式段要有明确结尾").toBeGreaterThan(start);
     expect(soulCss).toMatch(
-      /\.soul-pulse__tallies\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/,
-    );
-    expect(soulCss).toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,160}\.soul-gateway-grid\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
-    );
-    expect(soulCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.soul-pulse__tallies\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(soulCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1200}\.soul-gateway__arrow\s*\{[\s\S]{0,80}display:\s*none/,

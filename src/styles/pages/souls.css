@@ -49,86 +49,6 @@
   .soul-pulse {
     --ledger-accent: var(--color-cinnabar);
   }
-  .soul-pulse__detail {
-    margin-top: 0.08rem;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.55;
-    overflow-wrap: anywhere;
-  }
-  .soul-pulse__tallies {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    min-width: 0;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .soul-pulse__tally {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: 1.32rem minmax(0, 1fr);
-    align-content: start;
-    gap: 0.08rem 0.32rem;
-    padding: 0.56rem 0.62rem 0.6rem;
-    text-align: left;
-    transition: background-color 0.14s ease;
-  }
-  .soul-pulse__tally + .soul-pulse__tally {
-    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-  }
-  .soul-pulse__mark {
-    display: grid;
-    width: 1.32rem;
-    height: 1.32rem;
-    grid-row: span 2;
-    place-items: center;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
-    color: rgb(var(--color-ink-soft-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1;
-  }
-  .soul-pulse__label {
-    min-width: 0;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
-  }
-  .soul-pulse__value {
-    display: flex;
-    min-width: 0;
-    align-items: baseline;
-    gap: 0.05rem;
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    line-height: 1;
-  }
-  .soul-pulse__value strong {
-    font-weight: 500;
-  }
-  .soul-pulse__total {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-  }
-  .soul-pulse__unit,
-  .soul-pulse__detail {
-    min-width: 0;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.45;
-    overflow-wrap: anywhere;
-  }
-  .soul-pulse__unit {
-    grid-column: 2;
-  }
-  .soul-pulse__detail {
-    grid-column: 1 / -1;
-    margin-top: 0.14rem;
-    padding-top: 0.28rem;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
-  }
   .soul-seats,
   .soul-gateways,
   .soul-principle {
@@ -366,7 +286,6 @@
   }
   @media (max-width: 220px) {
     .soul-source,
-    .soul-pulse__tally,
     .soul-gateway,
     .soul-principle__sheet {
       padding-inline: 0.62rem;
@@ -379,16 +298,6 @@
       border-left: 0;
       padding-top: 0.42rem;
       padding-left: 0;
-    }
-
-    .soul-source__button,
-    .soul-pulse__tallies {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .soul-pulse__tally + .soul-pulse__tally {
-      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-      border-left: 0;
     }
 
     .soul-gateway {
