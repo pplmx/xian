@@ -1806,8 +1806,17 @@ async function measureTabRail(page) {
     const spacer = document.createElement("div");
     spacer.style.height = "1200px";
     root.appendChild(spacer);
+    const mainTop = main.getBoundingClientRect().top;
     const rootBox = root.getBoundingClientRect();
-    main.scrollTop = 600;
+    /*
+     * 600px 只是造余量的下限，不是「页签一定已经到顶」的保证。
+     * 后期档天界在页签前还有卷首与今日总账，页签天然起点会越过 600；
+     * 若仍按 600 量，会把「尚未滚到吸顶阈值」误判成「吸顶坏了」。
+     * 先读页签的天然起点，再越过它一段，才量的是 sticky 真正生效后的位置。
+     */
+    const railStart = Math.max(0, Math.round(rail.getBoundingClientRect().top - mainTop));
+    const scrollTarget = Math.max(600, railStart + 120);
+    main.scrollTop = scrollTarget;
     const box = rail.getBoundingClientRect();
     const out = {
       scrolled: Math.round(main.scrollTop),
@@ -3242,6 +3251,22 @@ async function taskLateTour() {
       const railFails = railProblems(rail);
       if (rail) checked += 1;
       if (railFails.length) failures.push(`[390-late] ${route} → ${railFails.join(" / ")}`);
+      if (SHOTS) {
+        await clearOverlays(page);
+        const acknowledgment = page
+          .locator(".modal-panel button")
+          .filter({ hasText: /^知道了$/ })
+          .last();
+        if ((await acknowledgment.count()) > 0) {
+          await acknowledgment.click({ timeout: 1500 }).catch(() => {});
+          await settleVisuals(page);
+        }
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({
+          path: join(SHOTS_DIR, `390-late${route.replace(/\//g, "_")}.png`),
+          fullPage: true,
+        });
+      }
     }
 
     /*

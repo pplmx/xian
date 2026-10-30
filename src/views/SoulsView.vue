@@ -26,22 +26,23 @@
 
       <!-- 卷首先报此刻:下一步、三席、闲置与可凝各有多少当下能动手 -->
       <div v-if="unlocked" class="soul-pulse" data-soul-pulse>
-        <div class="soul-pulse__lead">
-          <span class="soul-pulse__seal" aria-hidden="true">{{ soulLead.mark }}</span>
-          <div class="soul-pulse__copy">
-            <p class="soul-pulse__eyebrow">此刻器魂</p>
-            <p class="soul-pulse__title">{{ soulLead.title }}</p>
-            <p class="soul-pulse__detail">{{ soulLead.detail }}</p>
-          </div>
-          <button
-            v-if="soulLead.label"
-            type="button"
-            class="soul-pulse__jump hoverable:hover:border-cinnabar"
-            @click="runSoulLead"
-          >
-            {{ soulLead.label }}
-          </button>
-        </div>
+        <LedgerHeader
+          :seal="soulLead.mark"
+          eyebrow="此刻器魂"
+          :title="soulLead.title"
+          :description="soulLead.detail"
+        >
+          <template #actions>
+            <button
+              v-if="soulLead.label"
+              type="button"
+              class="soul-pulse__jump hoverable:hover:border-cinnabar"
+              @click="runSoulLead"
+            >
+              {{ soulLead.label }}
+            </button>
+          </template>
+        </LedgerHeader>
 
         <div class="soul-pulse__tallies">
           <button type="button" class="soul-pulse__tally" @click="scrollToSeats">
@@ -548,6 +549,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";

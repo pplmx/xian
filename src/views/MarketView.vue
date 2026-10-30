@@ -48,6 +48,7 @@ import { colorWithAlpha } from "@/ui/colorVar";
 import { isRareQuality, qualityTextColor, qualityTierStyle } from "@/ui/qualityTier";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
@@ -534,23 +535,24 @@ function bountyReady(o: BountySlot): boolean {
 
       <!-- 卷首先报此刻，再让三册账目各自成为入口。 -->
       <div class="market-pulse" data-market-pulse>
-        <div class="market-pulse__lead tinylens:flex-wrap">
-          <span class="market-pulse__seal" aria-hidden="true">{{ marketLead.mark }}</span>
-          <div class="market-pulse__copy tinylens:basis-full">
-            <p class="market-pulse__eyebrow">今日行市</p>
-            <p class="market-pulse__title">{{ marketLead.title }}</p>
-            <p class="market-pulse__detail">{{ marketLead.detail }}</p>
-          </div>
-          <button
-            type="button"
-            class="market-pulse__jump hoverable:hover:border-cinnabar"
-            @click="marketTab = marketLead.tab"
-          >
-            去看{{
-              marketLead.tab === "shelf" ? "货架" : marketLead.tab === "bounty" ? "悬赏" : "寄卖"
-            }}
-          </button>
-        </div>
+        <LedgerHeader
+          :seal="marketLead.mark"
+          eyebrow="今日行市"
+          :title="marketLead.title"
+          :description="marketLead.detail"
+        >
+          <template #actions>
+            <button
+              type="button"
+              class="market-pulse__jump hoverable:hover:border-cinnabar"
+              @click="marketTab = marketLead.tab"
+            >
+              去看{{
+                marketLead.tab === "shelf" ? "货架" : marketLead.tab === "bounty" ? "悬赏" : "寄卖"
+              }}
+            </button>
+          </template>
+        </LedgerHeader>
 
         <div class="market-pulse__tallies">
           <button

@@ -33,21 +33,22 @@
       </template>
 
       <div v-if="unlocked" class="celestial-pulse" data-celestial-pulse>
-        <div class="celestial-pulse__lead">
-          <span class="celestial-pulse__seal" aria-hidden="true">{{ celestialLead.mark }}</span>
-          <div class="celestial-pulse__copy">
-            <p class="celestial-pulse__eyebrow">今日天门</p>
-            <p class="celestial-pulse__title">{{ celestialLead.title }}</p>
-            <p class="celestial-pulse__detail">{{ celestialLead.detail }}</p>
-          </div>
-          <button
-            type="button"
-            class="celestial-pulse__jump hoverable:hover:border-cinnabar"
-            @click="celTab = celestialLead.tab"
-          >
-            去看{{ celestialLeadLabel }}
-          </button>
-        </div>
+        <LedgerHeader
+          :seal="celestialLead.mark"
+          eyebrow="今日天门"
+          :title="celestialLead.title"
+          :description="celestialLead.detail"
+        >
+          <template #actions>
+            <button
+              type="button"
+              class="celestial-pulse__jump hoverable:hover:border-cinnabar"
+              @click="celTab = celestialLead.tab"
+            >
+              去看{{ celestialLeadLabel }}
+            </button>
+          </template>
+        </LedgerHeader>
 
         <div class="celestial-pulse__tallies">
           <button
@@ -369,6 +370,7 @@ import { foeOriginLines } from "@/core/battleAnalysis";
 import { swordPurity, SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
 import { formatNum, formatPercent } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";

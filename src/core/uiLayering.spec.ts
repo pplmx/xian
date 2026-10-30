@@ -1645,8 +1645,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(market?.src, "悬赏板题头极窄档要纵向堆叠").toMatch(
       /justify-between pr-1 tinylens:flex-col/,
     );
-    expect(market?.src, "货架与悬赏行极窄档要允许换行").toMatch(/tinylens:flex-wrap/);
-    expect(market?.src, "名称块极窄档要占满整行").toMatch(/tinylens:basis-full/);
+    expect(market?.src, "坊市总账改接共享案头").toContain("<LedgerHeader");
+    expect(market?.src, "坊市不再私写先手栏").not.toContain("market-pulse__lead");
+    expect(
+      readFileSync(resolve(SRC, "styles/pages/market.css"), "utf8"),
+      "坊市先手按钮极窄档落整行",
+    ).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.market-pulse__jump\s*\{[\s\S]{0,80}width:\s*100%/,
+    );
     // 门庭卷首动作按钮在极窄档落整行
     expect(appr?.src, "门庭要接共同卷首").toContain("<FolioPageHeader");
     expect(appr?.src, "收徒动作极窄档落整行").toContain("tinylens:w-full");

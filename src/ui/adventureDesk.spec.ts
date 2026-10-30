@@ -88,6 +88,9 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
   it("今日账在手机先单列,390 起三档并读,极窄档把路线与数值放开", () => {
     const css = source("src/style.css");
 
+    expect(css, "卷首法球收在 124px,给 390 首屏的出发键留出安全间距").toMatch(
+      /\.adventure-compass\s*\{[\s\S]{0,160}width:\s*124px/,
+    );
     expect(css).toMatch(
       /\.adventure-briefing__sheet\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );

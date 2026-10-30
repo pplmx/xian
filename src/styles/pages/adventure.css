@@ -10,8 +10,8 @@
   .adventure-compass {
     position: relative;
     display: grid;
-    width: 140px;
-    height: 140px;
+    width: 124px;
+    height: 124px;
     place-items: center;
     color: rgb(var(--color-ink-faint-rgb));
   }
@@ -34,8 +34,8 @@
   .adventure-compass svg {
     position: relative;
     z-index: 1;
-    width: 140px;
-    height: 140px;
+    width: 124px;
+    height: 124px;
     overflow: visible;
   }
   .adventure-compass__rim {

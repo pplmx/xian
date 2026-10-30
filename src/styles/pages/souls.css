@@ -47,6 +47,7 @@
     letter-spacing: 0.08em;
   }
   .soul-pulse {
+    --ledger-accent: var(--color-cinnabar);
     position: relative;
     overflow: hidden;
     margin-top: 0.5rem;
@@ -71,55 +72,6 @@
     border: 1px solid rgb(var(--color-ink-rgb) / 0.03);
     content: "";
     pointer-events: none;
-  }
-  .soul-pulse__lead {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.46rem 0.62rem;
-    padding: 0.7rem 0.78rem 0.64rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-  }
-  .soul-pulse__seal {
-    display: grid;
-    width: 2.1rem;
-    height: 2.1rem;
-    flex: none;
-    place-items: center;
-    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
-    background:
-      linear-gradient(
-        145deg,
-        rgb(var(--color-paper-rgb) / 0.6),
-        rgb(var(--color-cinnabar-rgb) / 0.035)
-      ),
-      rgb(var(--color-paper-rgb) / 0.28);
-    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.22);
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1;
-  }
-  .soul-pulse__copy {
-    min-width: 8rem;
-    flex: 1;
-  }
-  .soul-pulse__eyebrow {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.16em;
-  }
-  .soul-pulse__title {
-    margin-top: 0.04rem;
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    letter-spacing: 0.08em;
-    line-height: 1.4;
   }
   .soul-pulse__detail {
     margin-top: 0.08rem;
@@ -448,7 +400,6 @@
   }
   @media (max-width: 220px) {
     .soul-source,
-    .soul-pulse__lead,
     .soul-pulse__tally,
     .soul-gateway,
     .soul-principle__sheet {
