@@ -270,6 +270,7 @@ const CATEGORIES = [
       "folioSpread",
       "homeDesk",
       "cultivationDesk",
+      "legacyDesk",
       "inventoryDesk",
       "characterDossier",
       "dongfuDesk",

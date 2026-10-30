@@ -1,346 +1,529 @@
 <template>
-  <div class="folio-page folio-page--stack stagger-in">
+  <div class="folio-page folio-page--stack stagger-in legacy-page-shell">
     <FolioPageHeader
-      title="修仙录"
-      subtitle="这一部,只写你自己"
+      class="legacy-masthead"
+      title="三生录"
+      subtitle="一世一笔，所知与旧缘都从这里续写"
       back-to="character"
       back-label="人物"
-    />
+      featured
+    >
+      <template #meta>
+        <p class="legacy-masthead__meta" data-legacy-current>
+          <span>{{ stage.name }}</span>
+          <span>第 {{ currentLife }} 世</span>
+          <span>宿慧 {{ insight }}</span>
+        </p>
+      </template>
+      <template #visual>
+        <LegacyWheel
+          :life="currentLife"
+          :stage-mark="stage.name.slice(0, 1)"
+          :stage-ratio="stageMeter.ratio"
+          :lore-ratio="loreCoverage.ratio"
+          :fate-ratio="fateMeter.ratio"
+        />
+      </template>
+    </FolioPageHeader>
 
-    <!-- 修行画像 -->
-    <div v-if="profile" class="card-ink px-4 py-3">
-      <p class="mb-1.5 font-kai text-body tracking-[0.3em] text-ink-faint">修行画像</p>
-      <p class="font-kai text-title leading-relaxed text-ink">「{{ profile.verdict }}」</p>
-      <div class="mt-2 space-y-1">
-        <p v-for="d in profile.daoShares" :key="d.name" class="flex items-center gap-2 text-body">
-          <span class="w-14 shrink-0 text-ink-faint">{{ d.name }}</span>
-          <ProgressBar
-            :value="d.pct / 100"
-            class="grow"
-            :height="5"
-            color="var(--color-cinnabar)"
-          />
-          <span class="w-8 shrink-0 text-right tabular text-ink-soft">{{
-            formatPercent(d.pct / 100)
-          }}</span>
-        </p>
-      </div>
-      <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-body tinylens:grid-cols-1">
-        <p class="flex justify-between">
-          <span class="text-ink-faint">风险偏好</span>
-          <span class="text-ink-soft">{{ profile.riskText }}</span>
-        </p>
-        <p class="flex justify-between">
-          <span class="text-ink-faint">构筑倾向</span>
-          <span class="text-ink-soft">{{ profile.buildTendency }}</span>
-        </p>
-        <p class="flex justify-between">
-          <span class="text-ink-faint">常用流派</span>
-          <span class="text-ink-soft">{{ profile.favoriteBuild }}</span>
-        </p>
-        <p v-if="profile.favoritePacts.length" class="flex justify-between">
-          <span class="text-ink-faint">常立之契</span>
-          <span class="text-ink-soft">{{ profile.favoritePacts.join(" / ") }}</span>
-        </p>
-        <p v-if="profile.bestWorld" class="flex justify-between">
-          <span class="text-ink-faint">最擅长</span>
-          <span class="text-jade">{{ profile.bestWorld }}</span>
-        </p>
-        <p v-if="profile.weakWorld" class="flex justify-between">
-          <span class="text-ink-faint">最薄弱</span>
-          <span class="text-cinnabar">{{ profile.weakWorld }}</span>
-        </p>
-      </div>
-      <p class="mt-1.5 text-note text-ink-faint">画像皆出自真实道痕,不可人工修饰。</p>
-    </div>
-    <p v-else class="empty-note card-ink px-4 py-6 text-center text-body text-ink-faint">
-      道痕未满{{ cnNumber(PROFILE_MIN_MARKS) }}则,画像尚不成形。
-    </p>
+    <div class="legacy-page folio-span-all">
+      <section
+        class="legacy-profile"
+        data-legacy-profile
+        :data-state="profile ? 'formed' : 'unformed'"
+      >
+        <span class="legacy-profile__seal" aria-hidden="true">{{ profile ? "象" : "待" }}</span>
+        <div class="legacy-profile__identity">
+          <p class="legacy-profile__eyebrow">修行画像 · {{ endgame.marks.length }} 则道痕</p>
+          <template v-if="profile">
+            <p class="legacy-profile__verdict">「{{ profile.verdict }}」</p>
+            <div class="legacy-profile__traits">
+              <span>风险 {{ profile.riskText }}</span>
+              <span>{{ profile.buildTendency }}</span>
+              <span>常用 {{ profile.favoriteBuild }}</span>
+              <span v-if="profile.favoritePacts.length">
+                常契 {{ profile.favoritePacts.join(" / ") }}
+              </span>
+              <span v-if="profile.bestWorld">擅长 {{ profile.bestWorld }}</span>
+              <span v-if="profile.weakWorld">薄弱 {{ profile.weakWorld }}</span>
+            </div>
+          </template>
+          <template v-else>
+            <p class="legacy-profile__verdict">
+              「道痕未满{{ cnNumber(PROFILE_MIN_MARKS) }}则，画像尚不成形。」
+            </p>
+            <p class="legacy-profile__copy">
+              画像只从真实道痕归纳；再走几程，风险、流派与擅长世界自会显出轮廓。
+            </p>
+          </template>
+        </div>
+        <div v-if="profile" class="legacy-profile__shares" aria-label="道途分布">
+          <p v-for="d in profile.daoShares" :key="d.name" class="legacy-profile__share">
+            <span>{{ d.name }}</span>
+            <span class="legacy-profile__track">
+              <span :style="{ width: `${Math.max(0, Math.min(100, d.pct))}%` }" />
+            </span>
+            <strong class="tabular">{{ formatPercent(d.pct / 100) }}</strong>
+          </p>
+        </div>
+      </section>
 
-    <!-- 页签:长卷分册 —— 与界域志 / 图鉴 / 名号 / 天界同构,免得七段一路滑到底 -->
-    <InkTabs v-model="tab" :tabs="TABS" />
+      <InkTabs v-model="tab" :tabs="TABS" />
 
-    <template v-if="tab === 'samsara'">
-      <!-- 轮回录(Phase 32.5):第 N 世与第 1 世的实质区别 -->
-      <SectionTitle title="轮回录" :hint="`宿慧 ${insight}`" />
-      <div class="card-ink px-4 py-3">
-        <!-- 极窄档(≤220 CSS px):阶段名 + 第 N 世 + 再积 N 宿慧一行塞不下,
-             阶段名被压到 15px 一字一行 —— 允许换行。320 / 390 两档不动。 -->
-        <p class="flex flex-wrap items-center gap-2">
-          <span class="t-card whitespace-nowrap">{{ stage.name }}</span>
-          <span class="text-note text-ink-faint tabular"
-            >第 {{ player.reincarnation.count + 1 }} 世</span
-          >
-          <span
-            v-if="toNextStage !== null"
-            class="ml-auto shrink-0 text-note text-ink-faint tabular"
-          >
-            再积 {{ toNextStage }} 宿慧入下一境地
-          </span>
-          <span v-else class="ml-auto shrink-0 text-note text-gold-ink">此道已至尽头</span>
-        </p>
-        <p class="mt-1 t-body text-ink-faint">{{ stage.desc }}</p>
+      <section
+        v-if="tab === 'samsara'"
+        class="legacy-tab"
+        role="tabpanel"
+        aria-label="轮回"
+        data-legacy-tab="samsara"
+      >
+        <section class="legacy-ledger" data-legacy-samsara>
+          <header class="legacy-ledger__head">
+            <span class="legacy-ledger__seal" aria-hidden="true">轮</span>
+            <div class="legacy-ledger__identity">
+              <p class="legacy-ledger__eyebrow">本世总案</p>
+              <h2 class="legacy-ledger__title">宿慧与随身所知</h2>
+              <p class="legacy-ledger__desc">
+                轮回阶只开见识；灵材、丹方、器谱与敌手路数才是跨世不灭的底账。
+              </p>
+            </div>
+            <p class="legacy-ledger__score tabular">
+              <span>第</span>
+              <strong class="text-heading">{{ currentLife }}</strong>
+              <span>世</span>
+            </p>
+          </header>
 
-        <!-- 随神魂不灭的那一份 -->
-        <div
-          class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-ink/10 pt-2 text-body tinylens:grid-cols-1"
+          <div class="legacy-ledger__grid legacy-ledger__grid--three">
+            <article class="legacy-panel" data-legacy-stage>
+              <p class="legacy-panel__label">
+                宿慧阶梯
+                <span>{{ stage.name }}</span>
+              </p>
+              <p class="legacy-panel__line">
+                <strong>{{ stage.name }}</strong>
+                <span>宿慧 {{ insight }}</span>
+              </p>
+              <p class="legacy-panel__copy">{{ stage.desc }}</p>
+              <ProgressBar
+                class="mt-2"
+                :value="stageMeter.ratio"
+                color="var(--color-cinnabar)"
+                :height="3"
+              />
+              <p v-if="nextStage" class="legacy-panel__gap tabular">
+                尚差 {{ stageMeter.remaining }} 宿慧入「{{ nextStage.name }}」
+              </p>
+              <p v-else class="legacy-panel__complete">此道已至尽头，宿慧仍可继续累积。</p>
+            </article>
+
+            <article class="legacy-panel" data-legacy-lore>
+              <p class="legacy-panel__label">
+                随身所知
+                <span>不随转世清零</span>
+              </p>
+              <div class="legacy-lore">
+                <div
+                  v-for="row in loreRows"
+                  :key="row.key"
+                  class="legacy-lore__row"
+                  :data-legacy-lore-row="row.key"
+                >
+                  <span class="legacy-lore__mark" aria-hidden="true">{{ row.mark }}</span>
+                  <span class="legacy-lore__name">{{ row.name }}</span>
+                  <span class="legacy-lore__value tabular">
+                    {{ row.value }} / {{ row.total }} {{ row.unit }}
+                  </span>
+                  <span class="legacy-lore__track">
+                    <span :style="{ width: `${row.meter.ratio * 100}%` }" />
+                  </span>
+                </div>
+              </div>
+              <p class="legacy-panel__copy">
+                睁眼即识 {{ stage.knownMaterialRank }} 阶以下 · 已辨识
+                {{ lore.knownMaterialCount }} 味，通晓用法 {{ lore.masteredMaterialCount }} 味。
+              </p>
+            </article>
+
+            <article class="legacy-panel" data-legacy-vow>
+              <p class="legacy-panel__label">
+                此世命题
+                <span v-if="vowTheme" :data-state="vowState">{{ vowStateLabel }}</span>
+                <span v-else>未立</span>
+              </p>
+              <template v-if="vowTheme">
+                <p class="legacy-panel__line">
+                  <strong>「{{ vowTheme.vow }}」</strong>
+                  <span>{{ vowStateLabel }}</span>
+                </p>
+                <p class="legacy-panel__copy">{{ vowTheme.goal }}</p>
+                <ProgressBar
+                  v-if="vowMeter"
+                  class="mt-2"
+                  :value="vowMeter.ratio"
+                  :color="
+                    vowBroken
+                      ? 'var(--color-amber-ink)'
+                      : vowDone
+                        ? 'var(--color-jade)'
+                        : 'var(--color-cinnabar)'
+                  "
+                  :height="3"
+                />
+                <p v-if="vowProg" class="legacy-panel__gap tabular">
+                  {{ Math.floor(vowProg.cur) }} / {{ vowProg.need }}
+                  <span v-if="vowMeter && !vowMeter.complete">
+                    · 尚差 {{ Math.max(0, vowProg.need - Math.floor(vowProg.cur)) }}
+                  </span>
+                </p>
+              </template>
+              <template v-else>
+                <p class="legacy-panel__line"><strong>这一世尚未立题</strong></p>
+                <p class="legacy-panel__copy">
+                  兵解转世时可择一题而行；命题只判这一世，不追认前尘。
+                </p>
+              </template>
+            </article>
+          </div>
+
+          <footer class="legacy-ledger__foot">
+            <p v-for="stat in overviewStats" :key="stat.key" class="legacy-stat">
+              <span>{{ stat.label }}</span>
+              <strong class="tabular">{{ stat.value }}</strong>
+            </p>
+          </footer>
+        </section>
+
+        <section
+          class="legacy-ledger legacy-history"
+          :data-life-total="lifeRows.length"
+          :data-life-shown="lifePage.shown"
+          :data-life-start="lifePage.start"
         >
-          <p class="flex justify-between">
-            <span class="text-ink-faint">认得灵材</span>
-            <span class="tabular text-ink-soft">{{ lore.knownMaterialCount }} 味</span>
-          </p>
-          <p class="flex justify-between">
-            <span class="text-ink-faint">通晓丹方</span>
-            <span class="tabular text-ink-soft">{{ lore.masteredRecipeCount }} 张</span>
-          </p>
-          <p class="flex justify-between">
-            <span class="text-ink-faint">读通器谱</span>
-            <span class="tabular text-ink-soft">{{ lore.masteredBlueprintCount }} 张</span>
-          </p>
-          <p class="flex justify-between">
-            <span class="text-ink-faint">洞悉敌手</span>
-            <span class="tabular text-ink-soft">{{ lore.masteredEnemyCount }} 种</span>
-          </p>
-          <p class="flex justify-between">
-            <span class="text-ink-faint">睁眼即识</span>
-            <span class="tabular text-ink-soft">{{ stage.knownMaterialRank }} 阶以下</span>
-          </p>
-        </div>
+          <header class="legacy-ledger__head legacy-history__head">
+            <div>
+              <p class="legacy-ledger__eyebrow">旧世归档</p>
+              <h2 class="legacy-ledger__title">历世履历</h2>
+            </div>
+            <p class="legacy-history__window tabular">
+              {{
+                lifeRows.length
+                  ? `现看 ${lifePage.start + 1}–${lifePage.shown} · 共 ${lifeRows.length} 世`
+                  : "初世"
+              }}
+            </p>
+          </header>
 
-        <!-- 这一世的命题 -->
-        <div v-if="vowTheme" class="mt-2 rounded-sm border border-ink/15 px-3 py-2">
-          <p class="flex items-center justify-between">
-            <span class="font-kai text-title text-ink">「{{ vowTheme.vow }}」</span>
-            <span
-              class="text-body"
-              :class="vowBroken ? 'text-amber-ink' : vowDone ? 'text-cinnabar' : 'text-ink-faint'"
-            >
-              {{ vowBroken ? "已破" : vowDone ? "已成" : "在途" }}
-            </span>
-          </p>
-          <p class="mt-1 text-body text-ink-faint">
-            {{ vowTheme.goal }}
-            <span v-if="vowProg" class="tabular"
-              >({{ Math.floor(vowProg.cur) }} / {{ vowProg.need }})</span
-            >
-          </p>
-        </div>
-        <p v-else class="mt-2 text-body text-ink-faint">
-          这一世不曾为自己立题。兵解转世时,可择一题而行。
-        </p>
-      </div>
+          <div class="legacy-history__list">
+            <template v-if="lifeRows.length">
+              <article
+                v-for="l in lifePage.visible"
+                :key="l.index"
+                :data-life-row="l.index"
+                tabindex="-1"
+                class="legacy-history__row"
+              >
+                <span class="legacy-history__index tabular">第{{ l.index }}世</span>
+                <div class="legacy-history__copy">
+                  <p class="legacy-history__line">
+                    <strong>{{ l.realmLabel }}</strong>
+                    <span>寿 {{ l.age }} 载</span>
+                  </p>
+                  <p v-if="l.themeName" class="legacy-history__theme" :class="l.resultColor">
+                    {{ l.themeName }} · {{ l.resultText }}
+                  </p>
+                  <p v-else class="legacy-history__quiet">此世未立命题</p>
+                </div>
+                <span class="legacy-history__insight tabular">宿慧 +{{ l.insight }}</span>
+              </article>
+              <div v-if="lifePage.start > 0 || lifePage.hidden > 0" class="legacy-pager">
+                <button
+                  v-if="lifePage.start > 0"
+                  type="button"
+                  data-life-prev
+                  class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+                  :aria-label="previousLifeText()"
+                  @click="showPreviousLives"
+                >
+                  {{ previousLifeText() }}
+                </button>
+                <button
+                  v-if="lifePage.hidden > 0"
+                  type="button"
+                  data-life-more
+                  class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+                  :aria-label="moreLifeText()"
+                  :data-promised="Math.min(LIFE_RENDER_BATCH, lifePage.hidden)"
+                  @click="showMoreLives"
+                >
+                  {{ moreLifeText() }}
+                </button>
+              </div>
+            </template>
+            <p v-else class="legacy-empty">此为初世。你尚未死过一次，也就还没有什么可以回忆。</p>
+          </div>
+        </section>
+      </section>
 
-      <!-- 历世履历 -->
-      <SectionTitle
-        title="历世履历"
-        :hint="lifeRows.length ? `共 ${lifeRows.length} 世` : '初世'"
-      />
-      <div
-        class="card-ink divide-y divide-ink/6 px-4"
-        :data-life-total="lifeRows.length"
-        :data-life-shown="lifePage.shown"
-        :data-life-start="lifePage.start"
+      <section
+        v-else-if="tab === 'journey'"
+        class="legacy-tab"
+        role="tabpanel"
+        aria-label="征程"
+        data-legacy-tab="journey"
       >
-        <template v-if="lifeRows.length">
-          <p
-            v-for="l in lifePage.visible"
-            :key="l.index"
-            :data-life-row="l.index"
-            tabindex="-1"
-            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-body"
-          >
-            <span class="w-11 shrink-0 whitespace-nowrap font-kai text-ink-faint tabular"
-              >第{{ l.index }}世</span
-            >
-            <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ l.realmLabel }}</span>
-            <span class="shrink-0 whitespace-nowrap text-note text-ink-faint tabular"
-              >寿 {{ l.age }} 载</span
-            >
-            <span
-              v-if="l.themeName"
-              class="shrink-0 whitespace-nowrap text-note"
-              :class="l.resultColor"
-              >{{ l.themeName }}·{{ l.resultText }}</span
-            >
-            <span class="ml-auto shrink-0 whitespace-nowrap tabular text-note text-gold-ink"
-              >宿慧 +{{ l.insight }}</span
-            >
-          </p>
-          <div v-if="lifePage.start > 0 || lifePage.hidden > 0" class="flex flex-wrap gap-1 py-2">
-            <button
-              v-if="lifePage.start > 0"
-              type="button"
-              data-life-prev
-              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
-              :aria-label="previousLifeText()"
-              @click="showPreviousLives"
-            >
-              {{ previousLifeText() }}
-            </button>
-            <button
-              v-if="lifePage.hidden > 0"
-              type="button"
-              data-life-more
-              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
-              :aria-label="moreLifeText()"
-              :data-promised="Math.min(LIFE_RENDER_BATCH, lifePage.hidden)"
-              @click="showMoreLives"
-            >
-              {{ moreLifeText() }}
-            </button>
+        <section class="legacy-ledger" data-legacy-journey>
+          <header class="legacy-ledger__head">
+            <span class="legacy-ledger__seal" aria-hidden="true">程</span>
+            <div class="legacy-ledger__identity">
+              <p class="legacy-ledger__eyebrow">跨世行迹</p>
+              <h2 class="legacy-ledger__title">修行节点与宿敌</h2>
+              <p class="legacy-ledger__desc">
+                节点是首次破界留下的路标；宿敌只记败过三次以上的对手，雪耻后仍留名。
+              </p>
+            </div>
+            <p class="legacy-ledger__score tabular">
+              <span>节点</span>
+              <strong class="text-heading">{{ milestoneRows.length }}</strong>
+              <span>/ {{ MILESTONE_DEFS.length }}</span>
+            </p>
+          </header>
+
+          <div class="legacy-ledger__grid">
+            <article class="legacy-panel">
+              <p class="legacy-panel__label">
+                修行节点
+                <span>{{ milestoneRows.length }} / {{ MILESTONE_DEFS.length }}</span>
+              </p>
+              <div v-if="milestoneRows.length" class="legacy-timeline">
+                <article
+                  v-for="row in milestoneRows"
+                  :key="row.id"
+                  class="legacy-timeline__row"
+                  :data-legacy-milestone="row.id"
+                >
+                  <span class="legacy-timeline__mark tabular">{{ row.life }}</span>
+                  <div class="legacy-timeline__copy">
+                    <p class="legacy-panel__line">
+                      <strong>{{ row.name }}</strong>
+                      <span>第 {{ row.life }} 世</span>
+                    </p>
+                    <p class="legacy-panel__copy">{{ row.desc }}</p>
+                  </div>
+                </article>
+              </div>
+              <p v-else class="legacy-empty">此录尚白。天界之行，自会留名。</p>
+            </article>
+
+            <article class="legacy-panel">
+              <p class="legacy-panel__label">
+                征战录
+                <span>宿敌 {{ nemesisRows.length }} 位</span>
+              </p>
+              <div v-if="nemesisRows.length" class="legacy-duels">
+                <article
+                  v-for="n in nemesisRows"
+                  :key="n.enemyId"
+                  class="legacy-duel"
+                  :data-state="n.avengedAt ? 'avenged' : 'active'"
+                  :data-legacy-nemesis="n.enemyId"
+                >
+                  <span class="legacy-duel__mark" aria-hidden="true">
+                    {{ n.avengedAt ? "雪" : "仇" }}
+                  </span>
+                  <div class="legacy-duel__copy">
+                    <p class="legacy-panel__line">
+                      <strong>{{ n.enemyName }}</strong>
+                      <span>{{ n.regionName }} · 败我 {{ n.lossCount }} 次</span>
+                    </p>
+                    <p class="legacy-duel__state">
+                      {{ n.avengedAt ? "已雪耻，旧名仍在册" : "尚为宿敌，下一战可雪耻" }}
+                    </p>
+                  </div>
+                </article>
+              </div>
+              <p v-else class="legacy-empty">尚无宿敌。此录待你的血与道来填。</p>
+            </article>
           </div>
-        </template>
-        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
-          此为初世。你尚未死过一次,也就还没有什么可以回忆。
-        </p>
-      </div>
-    </template>
+        </section>
+      </section>
 
-    <template v-else-if="tab === 'journey'">
-      <!-- 修行节点 -->
-      <SectionTitle
-        title="修行节点"
-        :hint="`${endgame.milestones.length}/${MILESTONE_DEFS.length}`"
-      />
-      <div class="card-ink px-4 py-2">
-        <div v-if="milestoneRows.length" class="relative ml-2 border-l border-ink/15 pl-4">
-          <div v-for="row in milestoneRows" :key="row.id" class="relative py-1.5">
-            <span class="absolute -left-5.25 top-2.5 h-2 w-2 rounded-full bg-gold-ink" />
-            <p class="font-kai text-title text-ink">第 {{ row.life }} 世 · {{ row.name }}</p>
-            <p class="text-note text-ink-faint">{{ row.desc }}</p>
-          </div>
-        </div>
-        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
-          此录尚白。天界之行,自会留名。
-        </p>
-      </div>
-
-      <!-- 征战录(Phase 30.9 S2):宿敌与雪耻 -->
-      <SectionTitle title="征战录" :hint="`宿敌 ${nemesisRows.length} 位`" />
-      <div class="card-ink divide-y divide-ink/6 px-4">
-        <template v-if="nemesisRows.length">
-          <p
-            v-for="n in nemesisRows"
-            :key="n.enemyId"
-            class="flex items-center gap-2 py-2 text-body"
-          >
-            <span class="font-kai text-title" :class="n.avengedAt ? 'text-ink' : 'text-cinnabar'">{{
-              n.enemyName
-            }}</span>
-            <span class="text-note text-ink-faint"
-              >{{ n.regionName }} · 败我 {{ n.lossCount }} 次</span
-            >
-            <span
-              class="ml-auto shrink-0 text-note"
-              :class="n.avengedAt ? 'text-jade' : 'text-cinnabar'"
-            >
-              {{ n.avengedAt ? "已雪耻" : "尚为宿敌" }}
-            </span>
-          </p>
-        </template>
-        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
-          尚无宿敌。此录待你的血与道来填。
-        </p>
-      </div>
-    </template>
-
-    <template v-else-if="tab === 'fate'">
-      <!-- 奇缘录(Phase 34.2):未了之缘,一世一世接下去 -->
-      <SectionTitle title="奇缘录" :hint="`未了之缘 ${unfinishedChains} 条`" />
-      <div class="card-ink divide-y divide-ink/6 px-4">
-        <template v-if="chainRows.length">
-          <p v-for="c in chainRows" :key="c.id" class="flex items-center gap-2 py-2 text-body">
-            <span
-              class="shrink-0 font-kai text-title"
-              :class="c.broken ? 'text-ink-faint' : c.finished ? 'text-ink' : 'text-cinnabar'"
-              >{{ c.name }}</span
-            >
-            <span class="min-w-0 truncate text-note text-ink-faint">
-              {{ c.broken ? "缘断,不复再续" : c.hint }}
-            </span>
-            <span
-              class="ml-auto shrink-0 tabular text-note"
-              :class="c.broken ? 'text-ink-faint' : c.finished ? 'text-jade' : 'text-ink-faint'"
-            >
-              {{ c.broken ? "缘断" : c.finished ? "已了" : `第 ${c.stage + 1}/${c.total} 程` }}
-            </span>
-          </p>
-        </template>
-        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
-          尚无未了之缘。缘起于路上,不在名录里。
-        </p>
-      </div>
-
-      <SectionTitle title="行迹录" :hint="`际遇回响 ${lossTotal} 则`" />
-      <div
-        class="card-ink divide-y divide-ink/6 px-4"
-        :data-loss-total="lossTotal"
-        :data-loss-shown="lossPage.shown"
-        :data-loss-start="lossPage.start"
+      <section
+        v-else-if="tab === 'fate'"
+        class="legacy-tab"
+        role="tabpanel"
+        aria-label="缘迹"
+        data-legacy-tab="fate"
       >
-        <template v-if="lossRows.length">
-          <p
-            v-for="l in lossPage.visible"
-            :key="l.eventId + l.at"
-            :data-loss-row="l.eventId"
-            tabindex="-1"
-            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-body"
-          >
-            <span class="shrink-0 whitespace-nowrap text-note text-ink-faint">{{
-              formatDate(l.at)
-            }}</span>
-            <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ l.eventName }}</span>
-            <span
-              class="ml-auto shrink-0 text-note text-ink-faint tinylens:ml-0 tinylens:basis-full tinylens:whitespace-normal"
-              >{{ l.note }}</span
-            >
-          </p>
-          <div v-if="lossPage.start > 0 || lossPage.hidden > 0" class="flex flex-wrap gap-1 py-2">
-            <button
-              v-if="lossPage.start > 0"
-              type="button"
-              data-loss-prev
-              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
-              :aria-label="previousLossText()"
-              @click="showPreviousLoss"
-            >
-              {{ previousLossText() }}
-            </button>
-            <button
-              v-if="lossPage.hidden > 0"
-              type="button"
-              data-loss-more
-              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
-              :aria-label="moreLossText()"
-              :data-promised="Math.min(LOSS_RENDER_BATCH, lossPage.hidden)"
-              @click="showMoreLoss"
-            >
-              {{ moreLossText() }}
-            </button>
-          </div>
-        </template>
-        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
-          世界尚未记住你的足迹。此录待你行过此世,自会留下回响。
-        </p>
-      </div>
-    </template>
+        <section class="legacy-ledger" data-legacy-fate>
+          <header class="legacy-ledger__head">
+            <span class="legacy-ledger__seal" aria-hidden="true">缘</span>
+            <div class="legacy-ledger__identity">
+              <p class="legacy-ledger__eyebrow">未了之缘</p>
+              <h2 class="legacy-ledger__title">奇缘录</h2>
+              <p class="legacy-ledger__desc">
+                只有起了头的缘才在此露面；已了与缘断都留结局，不把旧选择一笔抹掉。
+              </p>
+            </div>
+            <p class="legacy-ledger__score tabular">
+              <span>未了</span>
+              <strong class="text-heading">{{ unfinishedChains }}</strong>
+              <span>条</span>
+            </p>
+          </header>
 
-    <template v-else>
-      <!-- 我的纪录 -->
-      <SectionTitle title="我的纪录" hint="只与过去的自己比" />
-      <div class="card-ink divide-y divide-ink/6 px-4">
-        <template v-if="recordRows.length">
-          <p v-for="r in recordRows" :key="r.id" class="flex items-center gap-2 py-2 text-body">
-            <span class="text-ink-faint">{{ r.name }}</span>
-            <span class="ml-auto tabular font-kai text-title text-gold-ink">{{ r.valueText }}</span>
-            <span class="shrink-0 text-note text-ink-faint">第{{ r.life }}世 · {{ r.note }}</span>
-          </p>
-        </template>
-        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
-          纪录待创。破界之时,自见分晓。
-        </p>
-      </div>
-    </template>
+          <div v-if="chainRows.length" class="legacy-fate__list">
+            <article
+              v-for="c in chainRows"
+              :key="c.id"
+              class="legacy-fate__row"
+              :data-state="c.broken ? 'broken' : c.finished ? 'finished' : 'open'"
+            >
+              <span class="legacy-fate__mark" aria-hidden="true">
+                {{ c.broken ? "断" : c.finished ? "了" : "续" }}
+              </span>
+              <div class="legacy-fate__copy">
+                <p class="legacy-panel__line">
+                  <strong>{{ c.name }}</strong>
+                  <span>
+                    {{
+                      c.broken ? "缘断" : c.finished ? "已了" : `第 ${c.stage + 1}/${c.total} 程`
+                    }}
+                  </span>
+                </p>
+                <p class="legacy-panel__copy">
+                  {{ c.broken ? "缘断，不复再续" : c.hint }}
+                </p>
+              </div>
+            </article>
+          </div>
+          <p v-else class="legacy-empty">尚无未了之缘。缘起于路上，不在名录里。</p>
+        </section>
+
+        <section
+          class="legacy-ledger legacy-loss"
+          :data-loss-total="lossTotal"
+          :data-loss-shown="lossPage.shown"
+          :data-loss-start="lossPage.start"
+        >
+          <header class="legacy-ledger__head legacy-history__head">
+            <div>
+              <p class="legacy-ledger__eyebrow">世界回响</p>
+              <h2 class="legacy-ledger__title">行迹录</h2>
+            </div>
+            <p class="legacy-history__window tabular">
+              {{
+                lossTotal
+                  ? `现看 ${lossPage.start + 1}–${lossPage.shown} · 共 ${lossTotal} 则`
+                  : "尚无回响"
+              }}
+            </p>
+          </header>
+
+          <div class="legacy-loss__list">
+            <template v-if="lossRows.length">
+              <article
+                v-for="l in lossPage.visible"
+                :key="l.eventId + l.at"
+                :data-loss-row="l.eventId"
+                tabindex="-1"
+                class="legacy-loss__row"
+              >
+                <span class="legacy-loss__date tabular">{{ formatDate(l.at) }}</span>
+                <div class="legacy-loss__copy">
+                  <p class="legacy-panel__line">
+                    <strong>{{ l.eventName }}</strong>
+                  </p>
+                  <p class="legacy-panel__copy">{{ l.note }}</p>
+                </div>
+              </article>
+              <div v-if="lossPage.start > 0 || lossPage.hidden > 0" class="legacy-pager">
+                <button
+                  v-if="lossPage.start > 0"
+                  type="button"
+                  data-loss-prev
+                  class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+                  :aria-label="previousLossText()"
+                  @click="showPreviousLoss"
+                >
+                  {{ previousLossText() }}
+                </button>
+                <button
+                  v-if="lossPage.hidden > 0"
+                  type="button"
+                  data-loss-more
+                  class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+                  :aria-label="moreLossText()"
+                  :data-promised="Math.min(LOSS_RENDER_BATCH, lossPage.hidden)"
+                  @click="showMoreLoss"
+                >
+                  {{ moreLossText() }}
+                </button>
+              </div>
+            </template>
+            <p v-else class="legacy-empty">
+              世界尚未记住你的足迹。此录待你行过此世，自会留下回响。
+            </p>
+          </div>
+        </section>
+      </section>
+
+      <section v-else class="legacy-tab" role="tabpanel" aria-label="纪录" data-legacy-tab="record">
+        <section class="legacy-ledger" data-legacy-record>
+          <header class="legacy-ledger__head">
+            <span class="legacy-ledger__seal" aria-hidden="true">极</span>
+            <div class="legacy-ledger__identity">
+              <p class="legacy-ledger__eyebrow">只与过去的自己比</p>
+              <h2 class="legacy-ledger__title">极境纪录</h2>
+              <p class="legacy-ledger__desc">
+                每一格都记破界那一刻的实值；未立不是零，只表示还没走到可比较的一战。
+              </p>
+            </div>
+            <p class="legacy-ledger__score tabular">
+              <span>已立</span>
+              <strong class="text-heading">{{ recordCount }}</strong>
+              <span>/ {{ RECORD_DEFS.length }}</span>
+            </p>
+          </header>
+
+          <div class="legacy-record__list">
+            <article
+              v-for="r in recordRows"
+              :key="r.id"
+              class="legacy-record__row"
+              :data-state="r.record ? 'set' : 'empty'"
+              :data-legacy-record-row="r.id"
+            >
+              <span class="legacy-record__mark" aria-hidden="true">{{
+                r.record ? "极" : "待"
+              }}</span>
+              <div class="legacy-record__copy">
+                <p class="legacy-panel__line">
+                  <strong>{{ r.name }}</strong>
+                  <span v-if="r.record">第{{ r.record.life }}世 · {{ r.record.note }}</span>
+                  <span v-else>尚未立纪录</span>
+                </p>
+                <p class="legacy-panel__copy">
+                  {{ r.record ? "此项已记入跨世极境，后续只接受更好的结果。" : r.emptyCopy }}
+                </p>
+              </div>
+              <strong class="legacy-record__value tabular">{{ r.valueText }}</strong>
+            </article>
+          </div>
+          <footer class="legacy-ledger__foot legacy-record__foot">
+            <ProgressBar
+              class="min-w-0 flex-1"
+              :value="recordMeter.ratio"
+              color="var(--color-gold-ink)"
+              :height="3"
+            />
+            <p class="legacy-panel__copy">
+              已立 {{ recordCount }} / {{ RECORD_DEFS.length }} 项；纪录只增不减，跨世保留。
+            </p>
+          </footer>
+        </section>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -363,6 +546,10 @@ import { nextStageAfter } from "@/data/samsara";
 import { lifeThemeDef } from "@/data/lifeThemes";
 import { regionDef } from "@/data/regions";
 import { eventDef } from "@/data/events";
+import { MATERIALS } from "@/data/materials";
+import { PILLS } from "@/data/pills";
+import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
+import { ENEMIES } from "@/data/enemies";
 import { isNemesis } from "@/core/worldMemory";
 import { chainProgressRows } from "@/core/eventEngine";
 import {
@@ -372,9 +559,10 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
+import { legacyCoverage, legacyMeter, legacyStageMeter } from "@/ui/legacyDesk";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
-import SectionTitle from "@/components/common/SectionTitle.vue";
+import LegacyWheel from "@/components/common/LegacyWheel.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 
@@ -392,21 +580,66 @@ const endgame = useEndgameStore();
 const player = usePlayerStore();
 const adventure = useAdventureStore();
 const lore = useLoreStore();
+const RECIPE_TOTAL = PILLS.filter((pill) => pill.recipe).length;
 
-// ---- 轮回录 ----
 const insight = computed(() => totalInsight());
 const stage = computed(() => currentStage());
-const toNextStage = computed(() => {
-  const next = nextStageAfter(insight.value);
-  return next ? next.insight - insight.value : null;
-});
+const currentLife = computed(() => player.reincarnation.count + 1);
+const nextStage = computed(() => nextStageAfter(insight.value));
+const stageMeter = computed(() =>
+  legacyStageMeter(insight.value, stage.value.insight, nextStage.value?.insight ?? null),
+);
+
 const vowTheme = computed(() => {
   const vow = player.reincarnation.vow;
   return vow ? (lifeThemeDef(vow.themeId) ?? null) : null;
 });
 const vowProg = computed(() => vowProgress());
+const vowMeter = computed(() =>
+  vowProg.value ? legacyMeter(vowProg.value.cur, vowProg.value.need) : null,
+);
 const vowBroken = computed(() => vowResult() === "broken");
 const vowDone = computed(() => vowResult() === "done");
+const vowState = computed(() => (vowBroken.value ? "broken" : vowDone.value ? "done" : "open"));
+const vowStateLabel = computed(() => (vowBroken.value ? "已破" : vowDone.value ? "已成" : "在途"));
+
+const loreRows = computed(() =>
+  [
+    {
+      key: "material",
+      mark: "材",
+      name: "认得灵材",
+      value: lore.knownMaterialCount,
+      total: MATERIALS.length,
+      unit: "味",
+    },
+    {
+      key: "recipe",
+      mark: "方",
+      name: "通晓丹方",
+      value: lore.masteredRecipeCount,
+      total: RECIPE_TOTAL,
+      unit: "张",
+    },
+    {
+      key: "blueprint",
+      mark: "谱",
+      name: "读通器谱",
+      value: lore.masteredBlueprintCount,
+      total: EQUIPMENT_TEMPLATES.length,
+      unit: "张",
+    },
+    {
+      key: "enemy",
+      mark: "敌",
+      name: "洞悉敌手",
+      value: lore.masteredEnemyCount,
+      total: ENEMIES.length,
+      unit: "种",
+    },
+  ].map((row) => ({ ...row, meter: legacyMeter(row.value, row.total) })),
+);
+const loreCoverage = computed(() => legacyCoverage(loreRows.value));
 
 const RESULT_TEXTS: Record<"done" | "unfinished" | "broken", string> = {
   done: "践行到底",
@@ -486,8 +719,9 @@ const nemesisRows = computed(() =>
     }))
     .sort((a, b) => (a.avengedAt ?? 0) - (b.avengedAt ?? 0)),
 );
+const activeNemeses = computed(() => nemesisRows.value.filter((n) => !n.avengedAt).length);
 
-/** 征战录:事件余波(世界记忆的最近完成) */
+/** 行迹录:事件余波(世界记忆的最近完成) */
 const lossRows = computed(() =>
   Object.values(adventure.eventMemories)
     .filter((m) => m.times >= 2)
@@ -495,7 +729,7 @@ const lossRows = computed(() =>
       eventId: m.eventId,
       at: m.lastAt,
       eventName: eventDef(m.eventId)?.title ?? m.eventId,
-      note: `${m.times} 次际遇后,此地已别有风貌`,
+      note: `${m.times} 次际遇后，此地已别有风貌`,
     }))
     .sort((a, b) => b.at - a.at),
 );
@@ -541,6 +775,7 @@ const chainRows = computed(() => chainProgressRows());
 const unfinishedChains = computed(
   () => chainRows.value.filter((c) => !c.finished && !c.broken).length,
 );
+const fateMeter = computed(() => legacyMeter(unfinishedChains.value, chainRows.value.length));
 
 const milestoneRows = computed(() =>
   [...endgame.milestones]
@@ -553,15 +788,34 @@ const milestoneRows = computed(() =>
 
 const recordRows = computed(() =>
   RECORD_DEFS.map((def) => {
-    const r = endgame.records[def.id];
-    if (!r) return null;
+    const record = endgame.records[def.id];
     return {
       id: def.id,
       name: def.name,
-      valueText: def.unit === "×" ? `×${r.value}` : `${r.value} ${def.unit}`,
-      life: r.life,
-      note: r.note,
+      record: record ?? null,
+      valueText: record
+        ? def.unit === "×"
+          ? `×${record.value}`
+          : `${record.value} ${def.unit}`
+        : "未立",
+      emptyCopy:
+        def.id === "fastest_world"
+          ? "首次破界后，会记下最短回合数。"
+          : def.id === "highest_pact"
+            ? "带着逆旅契破界后，会记下最高风险倍率。"
+            : def.id === "biggest_reward"
+              ? "首次拿到破界道源后，会记下单程最厚之赏。"
+              : "完成挑战书并领赏后，会记下最高赏格。",
     };
-  }).filter((x): x is NonNullable<typeof x> => x !== null),
+  }),
 );
+const recordCount = computed(() => recordRows.value.filter((r) => r.record !== null).length);
+const recordMeter = computed(() => legacyMeter(recordCount.value, RECORD_DEFS.length));
+
+const overviewStats = computed(() => [
+  { key: "lives", label: "旧世", value: lifeRows.value.length },
+  { key: "insight", label: "宿慧", value: insight.value },
+  { key: "nemesis", label: "宿敌", value: activeNemeses.value },
+  { key: "chains", label: "未了缘", value: unfinishedChains.value },
+]);
 </script>

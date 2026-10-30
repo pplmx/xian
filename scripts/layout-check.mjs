@@ -2135,6 +2135,40 @@ async function taskPageTour(vp) {
         failures.push(`[${vp.tag}] /settings 卷首没有同报声息与存续:«${settingsDesk.current}»`);
       }
     }
+    if (route === "/legacy") {
+      const legacyDesk = await page.evaluate(() => {
+        const current = document.querySelector("[data-legacy-current]");
+        return {
+          current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
+          profile: !!document.querySelector("[data-legacy-profile]"),
+          samsara: !!document.querySelector("[data-legacy-samsara]"),
+          stage: !!document.querySelector("[data-legacy-stage]"),
+          lore: !!document.querySelector("[data-legacy-lore]"),
+          vow: !!document.querySelector("[data-legacy-vow]"),
+          wheel: !!document.querySelector("[data-legacy-wheel]"),
+          tabs: document.querySelectorAll("[data-legacy-tab]").length,
+        };
+      });
+      checked += 1;
+      if (!legacyDesk.current || !legacyDesk.samsara) {
+        failures.push(`[${vp.tag}] /legacy 三生总案没有渲染出来(卷首与正文都没报此刻)`);
+      }
+      if (!legacyDesk.profile) {
+        failures.push(`[${vp.tag}] /legacy 修行画像没有常驻在页签之前`);
+      }
+      if (!legacyDesk.stage || !legacyDesk.lore || !legacyDesk.vow) {
+        failures.push(`[${vp.tag}] /legacy 本世总案缺了宿慧、随身所知或此世命题`);
+      }
+      if (legacyDesk.tabs !== 1) {
+        failures.push(`[${vp.tag}] /legacy 当前册应只铺一个 tabpanel,实见 ${legacyDesk.tabs}`);
+      }
+      if (vp.width >= 360 && !legacyDesk.wheel) {
+        failures.push(`[${vp.tag}] /legacy 三生盘没有随卷首渲染`);
+      }
+      if (!/第\s*\d+\s*世/.test(legacyDesk.current) || !/宿慧/.test(legacyDesk.current)) {
+        failures.push(`[${vp.tag}] /legacy 卷首没有同报世数与宿慧:«${legacyDesk.current}»`);
+      }
+    }
     if (vp.tag === "390" && (route === "/celestial" || route === "/souls")) {
       const sealed = await page.evaluate(() => {
         const folio = document.querySelector("[data-unopened-folio]");
