@@ -50,12 +50,12 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(css).toContain(".folio-span-all");
   });
 
-  it("首页修行志与人物页战力构成跨两栏,不再留半页空白", () => {
+  it("首页修行志与人物页道躯总案跨两栏,不再留半页空白", () => {
     expect(source("src/views/HomeView.vue")).toMatch(
       /<section class="folio-span-all">\s*<SectionTitle title="修行志"/,
     );
     expect(source("src/views/CharacterView.vue")).toMatch(
-      /<div class="card-ink folio-span-all px-4 py-3">/,
+      /<section class="folio-span-all">\s*<SectionTitle title="道躯总案"/,
     );
   });
 

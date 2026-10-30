@@ -1429,23 +1429,32 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(restated, "角色已经管了 nowrap,调用点不许再抄一遍(两本账)").toEqual([]);
   });
 
-  it("人物页两处网格在极窄档放开列数 —— 九位数与属性名不许挤成竖排", () => {
+  it("人物页总案与属性行在极窄档放开列数 —— 九位数与属性名不许挤成竖排", () => {
     /*
      * 195 CSS px(390 按 200%)实测:
-     *   道躯那行三列时每列只剩 38px,「48.61亿」这类九位数被折成两行 —— 放开成两列
-     *     就回到 68px 一行(块高 56→83)。再放开成一列并没有额外收益(块高 129),
-     *     所以这一处是"三列 → 两列",不是"越少越好"。
+     *   道躯总案常态三列会只剩几十像素,读数与占比挤成两行;极窄档把占比退到
+     *     数值下方,名称与主值仍各占一行。总案本身在 720px 以下保持单列。
      *   属性行两列时每列 56.5px,「进阶成功率」被压成 11px 宽一字一行(8 行里 7 行竖排)
      *     —— 放开成单列,名字回到 44px 一行。
-     * 320 / 390 两档实测读数一分未动(仍是三列 / 两列)。
+     * 320 / 390 两档实测读数一分未动。
      */
     const ch = FILES.find((f) => f.path === "views/CharacterView.vue");
-    const trio = /class="(grid grid-cols-3 gap-2 text-center[^"]*)"/.exec(ch?.src ?? "")?.[1];
-    expect(trio, "道躯那行网格要定位得到 —— 定位不到这条就是空转").toBeTruthy();
-    expect(trio, "极窄档放开成两列").toContain("tinylens:grid-cols-2");
+    expect(ch?.src, "道躯总案要定位得到 —— 定位不到这条就是空转").toContain(
+      "data-character-dossier",
+    );
     const rows = /class="(grid grid-cols-2 gap-x-4 gap-y-1[^"]*)"/.exec(ch?.src ?? "")?.[1];
     expect(rows, "属性行网格要定位得到").toBeTruthy();
     expect(rows, "极窄档放开成单列").toContain("tinylens:grid-cols-1");
+    const css = readFileSync(resolve(SRC, "style.css"), "utf-8");
+    expect(css, "总案常态单列").toMatch(
+      /\.character-dossier__grid \{[\s\S]{0,100}?grid-template-columns: minmax\(0, 1fr\)/,
+    );
+    expect(css, "极窄档十位数与占比分两层").toMatch(
+      /@media \(max-width: 220px\) \{[\s\S]{0,1800}?\.character-dossier__stat \{[\s\S]{0,100}?grid-template-columns: minmax\(0, 1fr\) auto/,
+    );
+    expect(css, "主值读数列不许折行").toMatch(
+      /\.character-dossier__stat-value \{[\s\S]{0,120}?white-space: nowrap/,
+    );
   });
 
   it("浮层在极窄档收窄内边距 —— 195 宽下 20px 一层的内边距吃掉四成可用宽", () => {
@@ -4525,17 +4534,33 @@ describe("入口卡 —— 一件,不是九件", () => {
    */
   const char = (): string => FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
 
-  it("人物页的入口都走 NavCard", () => {
+  it("人物页的册目都走 CharacterIndexRow", () => {
     const src = char();
-    expect(src, "人物页要引入 NavCard").toContain('from "@/components/common/NavCard.vue"');
+    expect(src, "人物页要引入册目行").toContain(
+      'from "@/components/character/CharacterIndexRow.vue"',
+    );
+    expect((src.match(/<CharacterIndexRow/g) ?? []).length, "九处去向一项不少").toBe(9);
     // 手写骨架的特征组合:card-ink + items-center + gap-3 + px-4 py-3
     const handWritten = [
       ...src.matchAll(/class="[^"]*card-ink[^"]*items-center[^"]*gap-3[^"]*"/g),
     ].map((m) => m[0]);
     expect(
       handWritten,
-      `人物页还有手写的入口卡骨架 —— 改用 <NavCard>:${handWritten.join(" | ")}`,
+      `人物页还有手写的入口卡骨架 —— 改用 <CharacterIndexRow>:${handWritten.join(" | ")}`,
     ).toEqual([]);
+  });
+
+  it("CharacterIndexRow 自带去向、状态、动作与待办提醒", () => {
+    const row = readFileSync(
+      resolve(__dirname, "../components/character/CharacterIndexRow.vue"),
+      "utf-8",
+    );
+    expect(row, "题头图走同一枚图标").toContain('<GameIcon :name="icon" :size="16"');
+    expect(row, "去向走 title 档楷体").toContain("character-index__title");
+    expect(row, "动作自动缀箭头").toContain("{{ action }}");
+    expect(row, "待办提醒仍能在行内出现").toContain("character-index__badge");
+    expect(row, "当前事实仍占一行").toContain("character-index__sub");
+    expect(row, "按压反馈由册目行承担").toContain("active:bg-ink/5");
   });
 
   it("NavCard 自己带齐三件:题头图 / 卡名 / 动作词", () => {

@@ -266,6 +266,7 @@ const CATEGORIES = [
       "homeDesk",
       "cultivationDesk",
       "inventoryDesk",
+      "characterDossier",
       "desktopSpine",
       "navigation",
       "visualRhythm",

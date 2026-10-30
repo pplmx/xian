@@ -1,153 +1,145 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="道躯" subtitle="属性、灵根与传承" featured>
-      <template #action>
-        <div class="text-right tinylens:text-left">
-          <p class="text-note tracking-[0.28em] text-ink-faint">战 力</p>
-          <p class="mt-0.5 font-kai text-[20px] leading-tight text-cinnabar tabular">
-            <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
-          </p>
-        </div>
+    <FolioPageHeader title="道躯" subtitle="根骨、灵根与道途" featured>
+      <template #meta>
+        <p class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-body">
+          <span class="whitespace-nowrap">
+            <span class="world-label font-kai tracking-[0.24em]">{{ player.worldName }}</span>
+            <span class="mx-1 text-ink-faint" aria-hidden="true">·</span>
+            <span class="font-kai tracking-[0.16em] text-cinnabar">{{ player.realm.name }}</span>
+          </span>
+          <span class="ml-auto whitespace-nowrap">
+            <span class="text-ink-soft">{{ player.linggen?.gradeName ?? "灵根未显" }}</span>
+            <span class="mx-1 text-ink-faint" aria-hidden="true">·</span>
+            <span class="tabular text-ink-faint">{{ build?.displayName ?? "道途未成" }}</span>
+          </span>
+        </p>
+      </template>
+      <template #visual>
+        <CharacterSigil
+          :name="player.name"
+          :growth-mult="player.linggen?.growthMult ?? 1"
+          :roots="player.linggen?.roots ?? []"
+          :segments="powerSegments"
+        />
       </template>
     </FolioPageHeader>
 
     <!--
-      开卷先报战力,卡内随即摊开战力由攻/防/血三项按权重折成 ——
-      只报结论不够,「这数怎么来的」必须与结论同框而不同级。
+      道躯总案 —— 一张账同时回答「我有多强」与「这副根骨适合怎么走」。
+      三围不再在上下两张卡里各占一次主位：原值、权重与占战力比在同一行读，
+      灵根则独立成另一半，名号、资质、倍率与天然倾向不再挤在战力卡尾。
     -->
-    <div class="card-ink folio-span-all px-4 py-3">
-      <p class="text-note tracking-[0.16em] text-ink-faint">战力构成 · 攻 / 防 / 血按权重折算</p>
-      <!--
-        战力构成 —— 一条按比例分段的横条,不是一个三格数字阵。
-        
-        由来:这里原先摆着「攻击 45% / 防御 19% / 气血 36%」三枚 15px 楷体数字,
-        而一屏之下的「根本属性」节又摆着同样三项标签(攻击/防御/气血)的原始值 ——
-        同名的三项在一屏里出现两次、都占主角位置,读者第一反应是「重复了」。
-        
-        职责确实不同(这里是占比、那里是原值),但**不同职责不等于要各占一行大字**:
-        占比这件事本来就是「谁撑起了这个数」,一把横条说得比三个百分数更直接,
-        而且不再与下方三项撞名同框。
-      -->
-      <div class="mt-2.5">
-        <div class="flex h-1.5 overflow-hidden rounded-sm" role="img" :aria-label="powerShareLabel">
-          <span
-            v-for="row in powerDetailRows"
-            :key="row.label"
-            :style="{ width: `${row.share * 100}%`, background: row.barColor }"
-          />
-        </div>
-        <!-- 图例:小字一行,三项按各自的色点对位 -->
-        <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-note text-ink-faint">
-          <span v-for="row in powerDetailRows" :key="row.label" class="flex items-center gap-1">
-            <span class="h-1.5 w-1.5 shrink-0 rounded-full" :style="{ background: row.barColor }" />
-            {{ row.label }} {{ formatPercent(row.share, 0) }}
+    <section class="folio-span-all">
+      <SectionTitle title="道躯总案" hint="三围折成战力,灵根定下行路" />
+      <div class="character-dossier" data-character-dossier>
+        <header class="character-dossier__head">
+          <span class="character-dossier__seal" aria-hidden="true">躯</span>
+          <span class="character-dossier__heading">
+            <span class="character-dossier__eyebrow">本世根骨</span>
+            <span class="character-dossier__title">战力与灵根</span>
           </span>
-        </p>
-      </div>
-      <div class="ink-divider-mark my-3" />
-      <!-- 灵根 -->
-      <!--
-        左右两栏,而不是一行里塞四段再靠 ml-auto 撑开。
+          <span class="character-dossier__position tabular">
+            第 {{ player.major + 1 }} / {{ REALMS.length }} 境
+          </span>
+        </header>
 
-        原来是一整行 wrap:标签 / 名号 / 圆环阵 / ×倍率,四个 shrink-0 加一个
-        ml-auto —— 撑得开时看着尚可,可只要名号长一点(「三系杂灵根」)或窄屏,
-        ml-auto 就变成 0 甚至为负,×倍率 会被顶到第二行单独站着。而它和圆环
-        量的是同一件事(这张牌有多好),被拆开就没了对照。
+        <div class="character-dossier__grid">
+          <section class="character-dossier__power" data-character-power>
+            <div class="character-dossier__power-head">
+              <span class="character-dossier__label">战 力</span>
+              <span class="character-dossier__hint">攻 / 防 / 血按引擎权重折算</span>
+            </div>
+            <p class="character-dossier__power-value font-kai tabular">
+              <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
+            </p>
+            <p class="character-dossier__formula tabular">{{ powerFormulaText }}</p>
+            <div class="character-dossier__bar" role="img" :aria-label="powerShareLabel">
+              <span
+                v-for="row in powerDetailRows"
+                :key="row.label"
+                :style="{ width: `${row.share * 100}%`, background: row.barColor }"
+              />
+            </div>
+            <div class="character-dossier__stats">
+              <div v-for="row in powerDetailRows" :key="row.label" class="character-dossier__stat">
+                <span class="character-dossier__stat-name">
+                  {{ row.label }}
+                  <span class="character-dossier__weight">×{{ row.weightText }}</span>
+                </span>
+                <span class="character-dossier__stat-value font-kai tabular">
+                  <TapNumber
+                    :value="row.value"
+                    :title="row.label"
+                    :rows="[
+                      { label: '战力权重', text: `×${row.weightText}` },
+                      { label: '占战力', text: formatPercent(row.share, 0) },
+                    ]"
+                  />
+                </span>
+                <span class="character-dossier__stat-share tabular">
+                  {{ formatPercent(row.share, 0) }}
+                </span>
+              </div>
+            </div>
+          </section>
 
-        改成:左边「叫什么 + 哪几系」,右边「倍率」独立成栏顶对齐。两栏各自
-        可以在内部换行,谁也不挤谁。
-      -->
-      <div class="flex items-start justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <span class="shrink-0 font-kai text-body tracking-widest text-ink-faint">灵根</span>
-            <!-- 名号必须 nowrap:它曾被两侧挤到只剩 24px 宽,一个字一行竖排下来 -->
-            <span class="shrink-0 whitespace-nowrap font-kai text-title text-cinnabar">{{
-              player.linggen?.gradeName
-            }}</span>
-          </div>
-          <div class="mt-1.5 flex flex-wrap gap-x-2 gap-y-1">
-            <span
-              v-for="root in player.linggen?.roots ?? []"
-              :key="root.element"
-              class="flex items-center gap-1"
-              :title="`${ELEMENTS[root.element].char}系 · 资质 ${root.aptitude}`"
-            >
-              <span
-                class="grid h-6 w-6 place-items-center rounded-full border font-kai text-body"
-                :style="{
-                  borderColor: ELEMENTS[root.element].color,
-                  color: ELEMENTS[root.element].color,
-                }"
-              >
-                {{ ELEMENTS[root.element].char }}
+          <section class="character-dossier__roots" data-character-roots>
+            <div class="character-dossier__roots-head">
+              <span class="character-dossier__label">灵 根</span>
+              <span class="character-dossier__grade">{{ player.linggen?.gradeName }}</span>
+              <span class="character-dossier__growth tabular">
+                ×{{ player.linggen?.growthMult.toFixed(2) }}
               </span>
-              <!-- 资质直接亮在圆环旁,不再只藏 hover —— 手机上看得到才谈得上权衡 -->
+            </div>
+            <div class="character-dossier__root-list">
               <span
-                class="tabular text-note leading-none"
-                :style="{ color: ELEMENTS[root.element].color }"
+                v-for="root in player.linggen?.roots ?? []"
+                :key="root.element"
+                class="character-dossier__root"
+                :title="`${ELEMENTS[root.element].char}系 · 资质 ${root.aptitude}`"
               >
-                {{ root.aptitude }}
+                <span
+                  class="character-dossier__root-mark"
+                  :style="{
+                    borderColor: ELEMENTS[root.element].color,
+                    color: ELEMENTS[root.element].color,
+                  }"
+                  >{{ ELEMENTS[root.element].char }}</span
+                >
+                <span
+                  class="character-dossier__root-aptitude tabular"
+                  :style="{ color: ELEMENTS[root.element].color }"
+                  >{{ root.aptitude }}</span
+                >
               </span>
-            </span>
-          </div>
+            </div>
+            <p class="character-dossier__roots-copy">
+              灵根倍率作用于修行所得；五行只定亲近之路,不分高低。
+            </p>
+            <div v-if="tendencies.length" class="character-dossier__tendencies">
+              <p
+                v-for="t in tendencies"
+                :key="t.element"
+                class="character-dossier__tendency t-body"
+              >
+                <span
+                  class="character-dossier__tendency-mark"
+                  :style="{ color: ELEMENTS[t.element].color }"
+                  >{{ ELEMENTS[t.element].char }}</span
+                >
+                <span>{{ t.text }}</span>
+              </p>
+            </div>
+          </section>
         </div>
-        <!-- 倍率是这张牌的总分,单独成栏、与名号同一行顶齐 -->
-        <span class="shrink-0 whitespace-nowrap text-body text-ink-faint tabular">
-          ×{{ player.linggen?.growthMult.toFixed(2) }}
-        </span>
       </div>
-      <!--
-        天然牌面(Phase 32.2):转世发下的这张牌决定路好不好走,而非走得多快。
-        每一条前面的元素字与上面圆环阵同色同字 —— 它就是这行所属的那一系,
-        不必再写一遍「水系」才知道在说谁。
-      -->
-      <div v-if="tendencies.length" class="mt-2.5 space-y-1">
-        <p
-          v-for="t in tendencies"
-          :key="t.element"
-          class="flex items-baseline gap-1.5 t-body text-ink-faint"
-        >
-          <span
-            class="shrink-0 font-kai leading-none"
-            :style="{ color: ELEMENTS[t.element].color }"
-            >{{ ELEMENTS[t.element].char }}</span
-          >
-          <span>{{ t.text }}</span>
-        </p>
-      </div>
-    </div>
+    </section>
 
     <!-- 属性 -->
     <section>
-      <SectionTitle title="根本属性" />
-      <div class="card-ink mt-2 px-4 py-3">
-        <!--
-          三列在 200% 缩放档(195 CSS px)下每列只剩 38px,「48.61亿」这类九位数
-          被折成两行 —— 放开成两列(实测 68px 一行,块高 56→83,仍比一列的 129 省)。
-          阈值与器魂槽位同一条:195 < 220 ≤ 320,320 / 390 两档不受影响。
-        -->
-        <div class="grid grid-cols-3 gap-2 text-center tinylens:grid-cols-2">
-          <div>
-            <p class="text-note text-ink-faint">攻击</p>
-            <p class="tabular font-kai text-section text-ink">
-              <TapNumber :value="stats.attack" title="攻击" />
-            </p>
-          </div>
-          <div>
-            <p class="text-note text-ink-faint">防御</p>
-            <p class="tabular font-kai text-section text-ink">
-              <TapNumber :value="stats.defense" title="防御" />
-            </p>
-          </div>
-          <div>
-            <p class="text-note text-ink-faint">气血</p>
-            <p class="tabular font-kai text-section text-ink">
-              <TapNumber :value="stats.maxHp" title="气血" />
-            </p>
-          </div>
-        </div>
-        <div v-if="modRows.length" class="ink-divider-mark my-2.5" />
+      <SectionTitle title="行藏加成" hint="点一行看它从哪来" />
+      <div class="card-ink mt-2 px-4 py-3" data-character-modifiers>
         <!--
           每行可点:玩家问的从来不只是「多少」,还有「从哪来」。
           可点这件事得先看得见 —— 选中那行染底并亮出「明细」,其余行才敢不吭声。
@@ -226,46 +218,40 @@
       </div>
     </section>
 
-    <!-- 各处入口 —— 按「道途 / 缘法 / 记录」分节,每张卡带一枚题头图标,免成一列同形的卡 -->
+    <!-- 至此是「我是谁」;往下转入九册去向,用一道页内花饰换气。 -->
+    <div class="ink-divider-mark my-4" aria-hidden="true" />
+
+    <!--
+      九处去向不再各占一张同形入口卡。三组册目只留「去向 / 当前事实 / 动作」三列，
+      一行读一件事；人物页的主体回到战力与灵根，导航退成一册索引。
+    -->
     <section>
-      <SectionTitle title="道途" hint="流派" />
-      <div class="mt-2 space-y-2">
-        <NavCard
-          v-if="build"
+      <SectionTitle title="道途" hint="路数与身份" />
+      <div class="character-index mt-2" data-character-index="way">
+        <CharacterIndexRow
           to="/build"
           icon="swords"
           title="流 派"
           tone="cinnabar"
           action="参详"
-          :sub="`${build.displayName} · 契合 ${formatPercent(build.affinity, 0)} · 快照 ${loadouts.list.length} 套`"
-        />
-        <NavCard
-          v-else
-          to="/build"
-          icon="swords"
-          title="流 派"
-          tone="cinnabar"
-          action="参详"
-          sub="道途尚未成路,词条与功法凑成一派便见分晓"
+          :sub="
+            build
+              ? `${build.displayName} · 契合 ${formatPercent(build.affinity, 0)} · 快照 ${loadouts.list.length} 套`
+              : '道途尚未成路,词条与功法凑成一派便见分晓'
+          "
         />
 
         <!-- 修行画像(Phase 31.2:历史行为归纳,纯描述无数值) -->
-        <!-- 画像叙述是这一页最有「人味」的一行,一行截断会拦腰断句 —— 给两行 -->
-        <NavCard
+        <CharacterIndexRow
           icon="circle-user"
           title="修行画像"
           action="展卷"
-          clamp-sub
+          :sub="`「${identity?.epithet ?? '玄枢散人'}」 · ${identity?.narrative ?? '足迹尚浅'}`"
           @click="identityOpen = true"
-        >
-          <template #sub
-            >「{{ identity?.epithet ?? "玄枢散人" }}」 ·
-            {{ identity?.narrative ?? "足迹尚浅" }}</template
-          >
-        </NavCard>
+        />
 
         <!-- 相伴灵兽的「脸」:有伴亮伴侣的形,未伴用名号的冕 —— 同其他入口一样是一枚题头图 -->
-        <NavCard
+        <CharacterIndexRow
           to="/titles"
           :icon="currentPetIcon ?? 'crown'"
           title="名号与灵兽"
@@ -279,9 +265,9 @@
     <!-- 缘法:这一世遇见的人 -->
     <section>
       <SectionTitle title="缘法" hint="师承道侣" />
-      <div class="mt-2 space-y-2">
+      <div class="character-index mt-2" data-character-index="bond">
         <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
-        <NavCard
+        <CharacterIndexRow
           icon="scroll"
           title="师 承"
           tone="qing"
@@ -299,7 +285,7 @@
           她开了口 / 提了事,还等你一句 —— 这一行要报出来。此前只有点开弹窗
           才知道有事在等,而不开弹窗就永远不知道(与「卦在身」「今日天道未做」同族)。
         -->
-        <NavCard
+        <CharacterIndexRow
           icon="user"
           title="道 侣"
           tone="qing"
@@ -319,9 +305,9 @@
 
     <!-- 记录:走过什么、这条路从哪来 -->
     <section>
-      <SectionTitle title="记录" hint="藏珍" />
-      <div class="mt-2 space-y-2">
-        <NavCard
+      <SectionTitle title="行迹" hint="藏珍与轮回" />
+      <div class="character-index mt-2" data-character-index="record">
+        <CharacterIndexRow
           to="/collection"
           icon="gem"
           title="藏珍与成就"
@@ -331,7 +317,7 @@
           :sub="`成就 ${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length} · 图鉴 ${collectionSummary.known}/${collectionSummary.total}`"
         />
 
-        <NavCard
+        <CharacterIndexRow
           to="/legacy"
           icon="book"
           title="修仙录"
@@ -344,7 +330,7 @@
           这一册装着两半:界域/典籍是「来路」(只读),周易/紫微/星象/奇门是「术数四门」
           (有当下,问卦就在里面) —— 副题要把两半都说出来,否则想找问卦的人根本不会点进来。
         -->
-        <NavCard
+        <CharacterIndexRow
           to="/codex"
           icon="mountain"
           title="界域志"
@@ -353,7 +339,7 @@
           :sub="`${cnNumber(WORLDS.length)}界${cnNumber(REALMS.length)}境的来路与典籍 · 术数四门`"
         />
 
-        <NavCard
+        <CharacterIndexRow
           icon="refresh"
           title="轮 回"
           tone="violet"
@@ -409,7 +395,8 @@ import type { AnyStatKey } from "@/types";
 import { STAT_NAMES } from "@/data/statNames";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import SectionTitle from "@/components/common/SectionTitle.vue";
-import NavCard from "@/components/common/NavCard.vue";
+import CharacterIndexRow from "@/components/character/CharacterIndexRow.vue";
+import CharacterSigil from "@/components/character/CharacterSigil.vue";
 import RebirthDialog from "@/components/character/RebirthDialog.vue";
 import BondDialog from "@/components/character/BondDialog.vue";
 import MentorDialog from "@/components/character/MentorDialog.vue";
@@ -475,6 +462,19 @@ const powerDetailRows = computed(() => {
 /** 横条的读屏描述 —— 纯视觉的百分比分段,读屏用户也该知道这个数由谁撑起来 */
 const powerShareLabel = computed(() =>
   powerDetailRows.value.map((r) => `${r.label} ${formatPercent(r.share, 0)}`).join(" · "),
+);
+
+const powerSegments = computed(() =>
+  powerDetailRows.value.map(({ label, share, barColor }) => ({
+    label,
+    share,
+    color: barColor,
+  })),
+);
+
+/** 战力公式直接摊开三项权重；调 POWER_WEIGHTS 时这里跟着变。 */
+const powerFormulaText = computed(() =>
+  powerDetailRows.value.map((row) => `${row.label} × ${row.weightText}`).join(" + "),
 );
 
 /** 灵根的天然牌面(倾向文案,不含任何数值) */
