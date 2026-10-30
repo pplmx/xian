@@ -262,6 +262,7 @@ const CATEGORIES = [
       "folioOpening",
       "folioChrome",
       "folioSpread",
+      "homeDesk",
       "desktopSpine",
       "navigation",
       "visualRhythm",

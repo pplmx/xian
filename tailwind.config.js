@@ -151,12 +151,18 @@ export default {
    * 从没生效过)。两处各写一个数就是两本账 —— 改一处另一处不动,同一台 200% 的机器上
    * 一处放开一处不放开,而排版自检只判溢出/越界,看不出这是"两本账"而不是"没坏"。
    * 收成具名变体后,阈值只住这一行。
+   *
+   * compact: —— 「320 小屏档」(布局视口 ≤359 CSS px)
+   *
+   * 390 的常见机型仍能容下 140px 法球与四字册名;320 只能二选一。
+   * 320 优先保住册名与今日行止,把纯装饰的主视觉收起,而不是把标题挤成四行。
    */
   plugins: [
     ({ addVariant }) => {
       addVariant("short", "@media (max-height: 560px)");
       addVariant("hoverable", "@media (hover: hover) and (pointer: fine)");
       addVariant("tinylens", "@media (max-width: 220px)");
+      addVariant("compact", "@media (max-width: 359px)");
     },
   ],
 };

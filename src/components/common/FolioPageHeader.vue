@@ -1,7 +1,9 @@
 <template>
   <header
     class="folio-masthead relative overflow-hidden"
-    :class="featured ? 'folio-masthead--featured px-4 pb-4 pt-4' : 'px-4 py-3'"
+    :class="
+      featured ? 'folio-masthead--featured px-4 pb-4 pt-4 tinylens:px-3' : 'px-4 py-3 tinylens:px-3'
+    "
     data-folio-masthead
     :data-folio-featured="featured ? '' : undefined"
   >
@@ -35,12 +37,17 @@
     <div class="relative z-10 mt-2 flex flex-wrap items-start gap-3">
       <span
         class="folio-seal grid shrink-0 place-items-center border border-ink/20 text-ink-soft"
-        :class="featured ? 'h-11 w-11' : 'h-9 w-9'"
+        :class="featured ? 'h-11 w-11 tinylens:h-9 tinylens:w-9' : 'h-9 w-9'"
         aria-hidden="true"
       >
         <GameIcon :name="navigation?.icon ?? 'scroll'" :size="featured ? 20 : 17" />
       </span>
-      <div class="min-w-0 flex-1">
+      <!--
+        标题块保留 7rem 的可用宽度,空间不够时让右侧主视觉整块换到下一行。
+        390 宽仍能与 140px 法球同排;更窄的 compact 档直接收起纯装饰法球,
+        免得「洞府总览」被压成四行竖排。
+      -->
+      <div class="min-w-28 flex-1 compact:min-w-0">
         <h1
           class="font-kai leading-snug text-ink"
           :class="
@@ -56,7 +63,7 @@
         </p>
         <slot name="meta" />
       </div>
-      <div v-if="$slots.visual" class="shrink-0 tinylens:hidden">
+      <div v-if="$slots.visual" class="ml-auto shrink-0 compact:hidden tinylens:hidden">
         <slot name="visual" />
       </div>
       <div v-if="$slots.action" class="shrink-0 tinylens:w-full">

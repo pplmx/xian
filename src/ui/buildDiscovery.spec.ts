@@ -60,4 +60,17 @@ describe("道途未成 · 六路发现页", () => {
       '["道途未成的逐路发现账", taskBuildDiscovery]',
     );
   });
+
+  it("200% 缩放档把契合读数退到下一行，流派说明不被三列挤成竖排", () => {
+    const css = source("src/style.css");
+    const tiny = /@media \(max-width: 220px\) \{([\s\S]*?)\n  \}/.exec(
+      css.slice(css.indexOf(".build-discovery__paths")),
+    )?.[1];
+
+    expect(tiny, "极窄档规则必须仍在").toBeTruthy();
+    expect(tiny).toMatch(
+      /\.build-discovery__path-head \{[\s\S]{0,160}?grid-template-columns: 2rem minmax\(0, 1fr\)/,
+    );
+    expect(tiny).toMatch(/\.build-discovery__path-score \{[\s\S]{0,160}?grid-column: 1 \/ -1/);
+  });
 });
