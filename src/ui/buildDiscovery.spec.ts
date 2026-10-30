@@ -49,9 +49,7 @@ describe("道途未成 · 六路发现页", () => {
     expect(discovery, "不许把六路写死").not.toContain("六路");
     expect(discovery, "去修行是真实入口").toContain('to="/cultivation"');
     expect(discovery, "看行囊是真实入口").toContain('to="/inventory"');
-    expect(discovery, "装饰轮盘不参与读屏").toContain(
-      'class="build-discovery__wheel" aria-hidden="true"',
-    );
+    expect(discovery, "六路谱不再重复一张装饰轮盘").not.toContain("build-discovery__wheel");
     expect(discovery, "发现页不摆假可点控件").not.toContain("<button");
     expect(layout, "真浏览器要核发现页真的渲染出来").toContain("道途发现页没有渲染出来");
     expect(layout, "真浏览器要逐路数齐").toContain('querySelectorAll("[data-build-path]")');

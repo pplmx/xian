@@ -210,6 +210,7 @@ import {
   decryptSlice,
   encryptSlice,
   FULL_MARKS_COUNT,
+  lateSlices,
   makeFullMarks,
   seedSave,
   showcaseSlices,
@@ -9651,7 +9652,9 @@ async function taskBuildDiscovery() {
             paths: root.querySelectorAll("[data-build-path]").length,
             ledgerRows: root.querySelectorAll("[data-build-ledger] > p").length,
             progress: root.querySelectorAll('[role="progressbar"]').length,
-            wheelHidden: root.querySelector(".build-discovery__wheel")?.getAttribute("aria-hidden"),
+            headSeal: root.querySelector(".build-discovery__head-seal")?.textContent?.trim() || "",
+            wheelCount: root.querySelectorAll(".build-discovery__wheel").length,
+            atlasHidden: document.querySelector("[data-build-atlas]")?.getAttribute("aria-hidden"),
             cultivation: root.querySelector('a[href="#/cultivation"]')?.textContent?.trim() || "",
             inventory: root.querySelector('a[href="#/inventory"]')?.textContent?.trim() || "",
           };
@@ -9673,8 +9676,14 @@ async function taskBuildDiscovery() {
       if (discovery.ledgerRows !== 4) {
         failures.push("[390] /build 道途发现页的当前读数不是四格");
       }
-      if (discovery.wheelHidden !== "true") {
-        failures.push("[390] /build 道途发现页的装饰轮盘没有对读屏隐藏");
+      if (discovery.headSeal !== "未") {
+        failures.push("[390] /build 道途发现页的卷首印不是「未」");
+      }
+      if (discovery.wheelCount !== 0) {
+        failures.push("[390] /build 道途发现页又长回了装饰轮盘");
+      }
+      if (discovery.atlasHidden !== "true") {
+        failures.push("[390] /build 道途发现页的卷首铸道盘没有对读屏隐藏");
       }
       if (!discovery.cultivation.includes("去修行") || !discovery.inventory.includes("看行囊")) {
         failures.push("[390] /build 道途发现页的两条真实入口不齐");
@@ -9707,6 +9716,145 @@ async function taskBuildDiscovery() {
 
     if (pageErrors.length) {
       failures.push(`[390] 道途发现页场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails };
+}
+
+/**
+ * 成路后的流派页不是一串同权卡片,而是一张「铸道案」。
+ *
+ * 用后期档稳定造出背水成形路:卷首铸道盘必须与当前路同报,正文六块账位
+ * (道途阶梯 / 五维形状 / 下一步 / 实战短板 / 快照 / 旧构筑)要各自落位。
+ * 390、320 与 200% 缩放档(195)同量;截图档另存一张 195 宽的成路总案。
+ */
+async function taskBuildFormed() {
+  const failures = [];
+  const zoomFails = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, lateSlices("light"), "__buildFormedFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/build", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390] /build 成路总案没渲染出来,首屏判据没量到东西");
+    }
+
+    const formedVisible = await page
+      .locator("[data-build-formed]")
+      .waitFor({ state: "visible", timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    checked += 1;
+    if (!formedVisible) {
+      failures.push("[390] /build 成路总案没有渲染出来");
+    } else {
+      const formed = await page.evaluate(() => {
+        const text = (selector) =>
+          (document.querySelector(selector)?.innerText || "").replace(/\s+/g, " ").trim();
+        const root = document.querySelector("[data-build-formed]");
+        return {
+          current: text("[data-build-current]"),
+          atlasHidden: document.querySelector("[data-build-atlas]")?.getAttribute("aria-hidden"),
+          stage: !!document.querySelector("[data-build-stage]"),
+          shape: !!document.querySelector("[data-build-shape]"),
+          next: !!document.querySelector("[data-build-next]"),
+          battle: !!document.querySelector("[data-build-battle]"),
+          loadouts: !!document.querySelector("[data-build-loadouts]"),
+          compare: !!document.querySelector("[data-build-compare]"),
+          shapeRows:
+            document.querySelector("[data-build-shape]")?.querySelectorAll(".build-rating__row")
+              .length ?? 0,
+          matchupRows:
+            document.querySelector("[data-build-battle]")?.querySelectorAll("[data-build-matchup]")
+              .length ?? 0,
+          body: (root?.innerText || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+
+      if (!/背水/.test(formed.current)) {
+        failures.push(`[390] 成路总案卷首没有报出当前路:«${formed.current}»`);
+      }
+      if (!/(大成|成形|雏形)/.test(formed.current)) {
+        failures.push(`[390] 成路总案卷首没有报出当前阶段:«${formed.current}»`);
+      }
+      if (formed.atlasHidden !== "true") {
+        failures.push("[390] 成路总案的卷首铸道盘没有对读屏隐藏");
+      }
+      for (const [key, label] of [
+        ["stage", "道途阶梯"],
+        ["shape", "五维形状"],
+        ["next", "下一步"],
+        ["battle", "实战短板"],
+        ["loadouts", "构筑快照"],
+      ]) {
+        if (!formed[key]) failures.push(`[390] 成路总案缺少${label}账位`);
+      }
+      if (formed.shapeRows !== 5) {
+        failures.push(`[390] 成路总案的五维形状应恰有 5 行,实见 ${formed.shapeRows}`);
+      }
+      if (formed.matchupRows <= 0) {
+        failures.push("[390] 成路总案的实战短板没有列出任何对局");
+      }
+      if (/NaN|undefined|Infinity/.test(formed.body)) {
+        failures.push(`[390] 成路总案漏出占位符:«${formed.body.slice(0, 120)}»`);
+      }
+      // 对照账只在道痕里有旧构筑时出现；后期档没有道痕，不把缺席误判成回归。
+      if (formed.compare) checked += 1;
+    }
+
+    await clearOverlays(page);
+    for (const [width, height, tag] of [
+      [390, 844, "390"],
+      [320, 568, "320"],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await settleVisuals(page);
+      const problems = problemsOf(await measurePage(page));
+      checked += 1;
+      if (problems.length) {
+        failures.push(`[${tag}] /build 成路总案 → ${problems.join(" / ")}`);
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleVisuals(page);
+    const zoom = await measureZoomScale(page, { width: 390, height: 844 });
+    zoomSeen += 1;
+    const zoomBad = zoomProblems(zoom, "390");
+    checked += 1;
+    if (zoomBad.length) {
+      zoomFails.push(`[390] /build 成路总案 → ${zoomBad.join(" / ")}`);
+    }
+
+    if (SHOTS) {
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({
+        path: join(SHOTS_DIR, "195_build-formed.png"),
+        fullPage: true,
+      });
+      await page.setViewportSize({ width: 390, height: 844 });
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 成路总案场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
   } finally {
     await ctx.close();
@@ -11922,6 +12070,7 @@ const TASKS = [
   ["天界道痕满卷的分批回看", taskMarksListOverflow],
   ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
   ["道途未成的逐路发现账", taskBuildDiscovery],
+  ["成路后的铸道总案", taskBuildFormed],
   ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
   ["道侣的历世同行回看", taskBondHistoryOverflow],
   ["器魂两册的分批回看", taskSoulListOverflow],

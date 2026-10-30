@@ -263,6 +263,7 @@ const CATEGORIES = [
       "buildingCardSource",
       "effectWiring",
       "buildDiscovery",
+      "buildDesk",
       "uiLayering",
       "folioMasthead",
       "folioOpening",
