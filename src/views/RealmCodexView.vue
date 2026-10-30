@@ -36,31 +36,25 @@
         :data-world="currentRealm.world.id"
         class="realm-now"
       >
-        <header class="realm-now__head">
-          <span class="realm-now__seal" aria-hidden="true">
-            {{ realmCodexWorldMark(currentRealm.world.id) }}
-          </span>
-          <div class="realm-now__identity">
-            <p class="realm-now__eyebrow text-note">
-              <span class="world-label">{{ currentRealm.world.name }}</span>
-              <span>第 {{ realmOverview.worldIndex }} / {{ realmOverview.worldCount }} 界</span>
-              <span>此刻在此</span>
-            </p>
-            <p class="realm-now__titleline">
-              <span data-current-realm-name class="realm-now__title">{{
-                currentRealm.def.name
-              }}</span>
-              <span class="realm-now__basis">{{ currentRealm.def.basis }}</span>
-              <span class="realm-now__now">此刻</span>
-            </p>
-            <p class="realm-now__desc">{{ currentRealm.def.desc }}</p>
-          </div>
-          <p class="realm-now__score tabular">
-            <span>全路</span>
-            <strong>{{ currentRealm.globalPosition }}</strong>
-            <span>/ {{ realmOverview.total }}</span>
-          </p>
-        </header>
+        <LedgerHeader
+          :seal="realmCodexWorldMark(currentRealm.world.id)"
+          :title="currentRealm.def.name"
+          score-label="全路"
+          :score-value="currentRealm.globalPosition"
+          :score-suffix="`/ ${realmOverview.total}`"
+        >
+          <template #eyebrow>
+            <span class="world-label">{{ currentRealm.world.name }}</span>
+            <span>第 {{ realmOverview.worldIndex }} / {{ realmOverview.worldCount }} 界</span>
+            <span>此刻在此</span>
+          </template>
+          <template #title>
+            <span data-current-realm-name>{{ currentRealm.def.name }}</span>
+            <span class="realm-now__basis">{{ currentRealm.def.basis }}</span>
+            <span class="realm-now__now">此刻</span>
+          </template>
+          <template #description>{{ currentRealm.def.desc }}</template>
+        </LedgerHeader>
 
         <div class="realm-now__ladder">
           <RealmLadder :major="player.major" />
@@ -587,6 +581,7 @@ import {
   type RealmCodexAtlasRow,
 } from "@/ui/realmCodexDesk";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import ValueRow from "@/components/common/ValueRow.vue";

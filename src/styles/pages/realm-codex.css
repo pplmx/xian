@@ -85,6 +85,9 @@
     --realm-accent: var(--color-cinnabar);
     --realm-accent-rgb: var(--color-cinnabar-rgb);
   }
+  .realm-now {
+    --ledger-accent: var(--realm-accent);
+  }
   .realm-now[data-world="immortal"],
   .realm-world-index__cell[data-world="immortal"],
   .realm-volume[data-world="immortal"] {
@@ -128,33 +131,8 @@
     content: "";
     pointer-events: none;
   }
-  .realm-now__head {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    align-items: flex-start;
-    gap: 0.72rem;
-    padding: 0.82rem 0.9rem 0.58rem;
-  }
-  .realm-now__seal {
-    display: grid;
-    width: 2.7rem;
-    height: 2.7rem;
-    flex: 0 0 auto;
-    place-items: center;
-    border: 1px solid rgb(var(--realm-accent-rgb) / 0.34);
-    color: var(--realm-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    line-height: 1;
-  }
-  .realm-now__identity {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-  .realm-now__eyebrow,
-  .realm-now__titleline,
+  .realm-now .folio-ledger-head__eyebrow,
+  .realm-now .folio-ledger-head__title,
   .realm-now__steps,
   .realm-world-index__line,
   .realm-world-index__status,
@@ -167,19 +145,6 @@
     align-items: baseline;
     gap: 0.22rem 0.48rem;
   }
-  .realm-now__eyebrow {
-    color: var(--color-ink-faint);
-  }
-  .realm-now__titleline {
-    margin-top: 0.18rem;
-  }
-  .realm-now__title {
-    color: var(--color-ink);
-    font-family: var(--font-kai);
-    font-size: var(--type-heading);
-    letter-spacing: 0.12em;
-    line-height: 1.2;
-  }
   .realm-now__basis {
     color: var(--color-ink-faint);
     font-size: var(--type-note);
@@ -190,28 +155,6 @@
     color: var(--realm-accent);
     font-size: var(--type-note);
     line-height: 1.35;
-  }
-  .realm-now__desc {
-    margin-top: 0.2rem;
-    color: var(--color-ink-soft);
-    font-size: var(--type-body);
-    line-height: 1.6;
-  }
-  .realm-now__score {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: baseline;
-    gap: 0.18rem;
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    white-space: nowrap;
-  }
-  .realm-now__score strong {
-    color: var(--realm-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-heading);
-    font-weight: 400;
-    line-height: 1;
   }
   .realm-now__ladder {
     position: relative;
@@ -517,20 +460,9 @@
       padding-inline: 0.45rem;
     }
 
-    .realm-now__head,
     .realm-world-index__head,
     .realm-volume__head {
       padding-inline: 0.62rem;
-    }
-
-    .realm-now__head {
-      flex-wrap: wrap;
-    }
-
-    .realm-now__score {
-      width: 100%;
-      margin-left: 0;
-      padding-left: 3.42rem;
     }
 
     .realm-now__ladder,

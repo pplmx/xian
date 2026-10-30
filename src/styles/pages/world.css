@@ -144,6 +144,7 @@
   .world-ledger {
     --world-accent: var(--color-qing);
     --world-accent-rgb: var(--color-qing-rgb);
+    --ledger-accent: var(--world-accent);
     position: relative;
     min-width: 0;
     overflow: hidden;
@@ -172,72 +173,6 @@
   .world-ledger--history {
     --world-accent: var(--color-gold-ink);
     --world-accent-rgb: var(--color-gold-ink-rgb);
-  }
-  .world-ledger__head {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 0.58rem 0.72rem;
-    padding: 0.78rem 0.88rem 0.68rem;
-  }
-  .world-ledger__seal {
-    display: grid;
-    width: 2.45rem;
-    height: 2.45rem;
-    flex: 0 0 auto;
-    place-items: center;
-    border: 1px solid rgb(var(--world-accent-rgb) / 0.34);
-    color: var(--world-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    line-height: 1;
-  }
-  .world-ledger__seal--past {
-    color: var(--color-gold-ink);
-  }
-  .world-ledger__identity {
-    min-width: 7rem;
-    flex: 1 1 11rem;
-  }
-  .world-ledger__eyebrow {
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
-    line-height: 1.45;
-  }
-  .world-ledger__title {
-    color: var(--color-ink);
-    font-family: var(--font-kai);
-    font-size: var(--type-heading);
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    line-height: 1.3;
-  }
-  .world-ledger__desc {
-    margin-top: 0.12rem;
-    color: var(--color-ink-soft);
-    font-size: var(--type-note);
-    line-height: 1.55;
-  }
-  .world-ledger__score {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: baseline;
-    gap: 0.18rem;
-    margin-left: auto;
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    white-space: nowrap;
-  }
-  .world-ledger__score strong {
-    color: var(--world-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-heading);
-    font-weight: 400;
-    line-height: 1;
   }
   .world-ledger__body {
     position: relative;
@@ -606,7 +541,6 @@
       display: block;
     }
 
-    .world-ledger__head,
     .world-history__row {
       padding-inline: 1rem;
     }
@@ -634,28 +568,11 @@
       padding-top: 0.52rem;
     }
 
-    .world-ledger__head,
     .world-stage,
     .world-origin summary,
     .world-origin__body,
     .world-history__row {
       padding-inline: 0.62rem;
-    }
-
-    .world-ledger__head {
-      gap: 0.46rem 0.55rem;
-    }
-
-    .world-ledger__seal {
-      width: 2rem;
-      height: 2rem;
-    }
-
-    .world-ledger__score {
-      width: 100%;
-      margin-left: 0;
-      padding-left: 2.55rem;
-      text-align: left;
     }
 
     .world-route__head {

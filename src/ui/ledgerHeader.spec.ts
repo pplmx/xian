@@ -20,15 +20,20 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
     expect(header).toContain("scoreValue");
     expect(header).toContain('<slot name="meta"');
     expect(header).toContain('<slot name="actions"');
+    expect(header).toContain('<slot name="eyebrow"');
+    expect(header).toContain('<slot name="title"');
+    expect(header).toContain('<slot name="description"');
     expect(header).toContain("v-if=\"seal && variant !== 'index'\"");
   });
 
-  it("三张深页与流派未成卷全部改读共享案头,不再各手搓一套章首", () => {
+  it("深页与流派未成卷全部改读共享案头,不再各手搓一套章首", () => {
     const cases = [
       { file: "src/views/BuildView.vue", count: 4 },
       { file: "src/views/LegacyView.vue", count: 6 },
       { file: "src/views/TitlesView.vue", count: 4 },
       { file: "src/components/build/BuildDiscovery.vue", count: 1 },
+      { file: "src/views/MortalWorldView.vue", count: 2 },
+      { file: "src/views/RealmCodexView.vue", count: 1 },
     ];
 
     for (const { file, count } of cases) {
@@ -44,10 +49,12 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       "src/views/LegacyView.vue",
       "src/views/TitlesView.vue",
       "src/components/build/BuildDiscovery.vue",
+      "src/views/MortalWorldView.vue",
+      "src/views/RealmCodexView.vue",
     ]) {
       const view = source(file);
       expect(view).not.toMatch(
-        /<(?:header)[^>]*class="[^"]*(?:build-ledger__head|legacy-ledger__head|name-beast-ledger__head|name-ledger__head|build-discovery__head)/,
+        /<(?:header)[^>]*class="[^"]*(?:build-ledger__head|legacy-ledger__head|name-beast-ledger__head|name-ledger__head|build-discovery__head|world-ledger__head|realm-now__head)/,
       );
     }
   });
@@ -66,10 +73,12 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
     );
   });
 
-  it("三页容器只交出自己的强调色,案头本体不再复制颜色与字号", () => {
+  it("容器只交出自己的强调色,案头本体不再复制颜色与字号", () => {
     const build = source("src/styles/pages/build.css");
     const legacy = source("src/styles/pages/legacy.css");
     const titles = source("src/styles/pages/titles.css");
+    const world = source("src/styles/pages/world.css");
+    const realm = source("src/styles/pages/realm-codex.css");
 
     expect(build).toMatch(
       /\.build-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--build-accent\)/,
@@ -80,5 +89,9 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
     expect(titles).toMatch(
       /\.name-beast-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--name-beast-accent\)/,
     );
+    expect(world).toMatch(
+      /\.world-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--world-accent\)/,
+    );
+    expect(realm).toMatch(/\.realm-now\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--realm-accent\)/);
   });
 });

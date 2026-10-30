@@ -4,9 +4,15 @@
       {{ seal }}
     </span>
     <div class="folio-ledger-head__identity">
-      <p v-if="eyebrow" class="folio-ledger-head__eyebrow">{{ eyebrow }}</p>
-      <h2 class="folio-ledger-head__title">{{ title }}</h2>
-      <p v-if="description" class="folio-ledger-head__description">{{ description }}</p>
+      <p v-if="eyebrow || $slots.eyebrow" class="folio-ledger-head__eyebrow">
+        <slot name="eyebrow">{{ eyebrow }}</slot>
+      </p>
+      <h2 class="folio-ledger-head__title">
+        <slot name="title">{{ title }}</slot>
+      </h2>
+      <p v-if="description || $slots.description" class="folio-ledger-head__description">
+        <slot name="description">{{ description }}</slot>
+      </p>
       <slot name="body" />
     </div>
     <div v-if="meta || hasScore || $slots.meta || $slots.actions" class="folio-ledger-head__aside">

@@ -124,21 +124,20 @@
       </BaseModal>
 
       <section class="world-ledger folio-span-all" data-world-desk>
-        <header class="world-ledger__head">
-          <span class="world-ledger__seal text-section" aria-hidden="true">山</span>
-          <div class="world-ledger__identity">
-            <p class="world-ledger__eyebrow text-note">本世山河案</p>
-            <h2 class="world-ledger__title text-heading">山河行旅</h2>
-            <p class="world-ledger__desc">
+        <LedgerHeader
+          seal="山"
+          eyebrow="本世山河案"
+          title="山河行旅"
+          score-label="已行"
+          :score-value="meter.cleared"
+          :score-suffix="`/ ${meter.total}`"
+        >
+          <template #description>
+            <span>
               {{ currentRouteText }} · 余 <span class="tabular">{{ meter.remaining }}</span> 程
-            </p>
-          </div>
-          <p class="world-ledger__score tabular">
-            <span>已行</span>
-            <strong>{{ meter.cleared }}</strong>
-            <span>/ {{ meter.total }}</span>
-          </p>
-        </header>
+            </span>
+          </template>
+        </LedgerHeader>
 
         <div class="world-ledger__body">
           <MortalRouteMap
@@ -267,20 +266,14 @@
         class="world-ledger world-ledger--history folio-span-all"
         data-world-history-section
       >
-        <header class="world-ledger__head">
-          <span class="world-ledger__seal world-ledger__seal--past text-section" aria-hidden="true"
-            >旧</span
-          >
-          <div class="world-ledger__identity">
-            <p class="world-ledger__eyebrow text-note">前尘山河</p>
-            <h2 class="world-ledger__title text-heading">最近 {{ historyRows.length }} 世</h2>
-            <p class="world-ledger__desc">近世在前；世界名、段数与气象仍走同一套翻译。</p>
-          </div>
-          <p class="world-ledger__score tabular">
-            <span>历世</span>
-            <strong>{{ historyRows.length }}</strong>
-          </p>
-        </header>
+        <LedgerHeader
+          seal="旧"
+          eyebrow="前尘山河"
+          :title="`最近 ${historyRows.length} 世`"
+          description="近世在前；世界名、段数与气象仍走同一套翻译。"
+          score-label="历世"
+          :score-value="historyRows.length"
+        />
 
         <div class="world-history" data-world-history>
           <article
@@ -323,6 +316,7 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import MortalRouteMap from "@/components/world/MortalRouteMap.vue";
 import WorldAtlas from "@/components/world/WorldAtlas.vue";
 import { useAdventureStore } from "@/stores/adventure";
