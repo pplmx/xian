@@ -16,7 +16,8 @@
       :aria-label="`${item.label}：${item.hint}`"
       :title="`${item.label} · ${item.hint}`"
     >
-      <span aria-hidden="true">{{ item.mark }}</span>
+      <span class="folio-index-rail__mark" aria-hidden="true">{{ item.mark }}</span>
+      <span class="folio-index-rail__label" aria-hidden="true">{{ item.shortLabel }}</span>
     </RouterLink>
   </nav>
 </template>

@@ -3,6 +3,7 @@ import { NAVIGATION_SECTIONS, navigationPositionOf } from "./navigation";
 export interface FolioIndexRailItem {
   key: string;
   label: string;
+  shortLabel: string;
   mark: string;
   to: string;
   hint: string;
@@ -17,6 +18,7 @@ export function volumeRailItems(
   return NAVIGATION_SECTIONS.map((section) => ({
     key: section.id,
     label: `${section.label}卷`,
+    shortLabel: section.label,
     mark: section.label.slice(0, 1),
     to: section.entries[0]?.to ?? "/",
     hint: section.hint,
@@ -33,6 +35,7 @@ export function chapterRailItems(
   return current.section.entries.map((entry) => ({
     key: entry.name,
     label: entry.label,
+    shortLabel: entry.shortLabel,
     mark: entry.label.replace(/\s/g, "").slice(0, 1),
     to: entry.to,
     hint: entry.description,

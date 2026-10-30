@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
+import { folioTurnDirectionOf } from "./folioTurn";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -11,6 +12,28 @@ function source(rel: string): string {
 }
 
 describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => {
+  it("全站翻卷按玄枢目录辨前后，开局与未知页才走横向开卷", () => {
+    expect(folioTurnDirectionOf("home", "cultivation")).toBe("forward");
+    expect(folioTurnDirectionOf("cultivation", "home")).toBe("back");
+    expect(folioTurnDirectionOf("souls", "celestial")).toBe("forward");
+    expect(folioTurnDirectionOf("celestial", "souls")).toBe("back");
+    expect(folioTurnDirectionOf("welcome", "home")).toBe("cross");
+    expect(folioTurnDirectionOf("home", "home")).toBe("cross");
+  });
+
+  it("路由壳接上方向化翻卷，前进、回翻与开卷各有独立过渡", () => {
+    const app = source("src/App.vue");
+    const css = source("src/style.css");
+
+    expect(app, "翻卷方向要读共享目录").toContain("folioTurnDirectionOf");
+    expect(app, "路由过渡名要由方向生成").toContain(':name="turnName"');
+    expect(app, "导航完成后更新方向").toContain("router.afterEach");
+    expect(app, "外壳要留下运行时方向标记").toContain(':data-folio-turn="turnDirection"');
+    expect(css).toContain(".folio-turn-forward-enter-from");
+    expect(css).toContain(".folio-turn-back-enter-from");
+    expect(css).toContain(".folio-turn-cross-enter-from");
+  });
+
   it("弹窗是带卷目题签的册页，关闭动作写成合卷而不是通用图标", () => {
     const modal = source("src/components/common/BaseModal.vue");
     const css = source("src/style.css");

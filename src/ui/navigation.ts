@@ -10,6 +10,8 @@ export interface NavigationEntry {
   name: string;
   /** 册名,显示在玄枢图里 */
   label: string;
+  /** 书口签上的短名,只用于窄条导航,不替代完整册名 */
+  shortLabel: string;
   /** 一句话说明这一册回答什么问题 */
   description: string;
   /** 水墨图标名,必须已登记在 ui/inkIcons */
@@ -48,6 +50,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "home",
       label: "洞府总览",
+      shortLabel: "洞府",
       description: "今日天时、主线与日课",
       icon: "mountain",
       to: "/",
@@ -55,6 +58,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "cultivation",
       label: "修炼",
+      shortLabel: "修炼",
       description: "吐纳、破境与渡劫",
       icon: "flame",
       to: "/cultivation",
@@ -62,6 +66,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "character",
       label: "道躯",
+      shortLabel: "道躯",
       description: "属性、灵根与传承",
       icon: "circle-user",
       to: "/character",
@@ -71,6 +76,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "dongfu",
       label: "营造",
+      shortLabel: "营造",
       description: "建筑、灵脉与家底",
       icon: "home",
       to: "/dongfu",
@@ -78,6 +84,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "apprentice",
       label: "门庭",
+      shortLabel: "门庭",
       description: "弟子差事与归来",
       icon: "user",
       to: "/apprentice",
@@ -85,6 +92,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "market",
       label: "坊市",
+      shortLabel: "坊市",
       description: "灵石、药材与寄卖",
       icon: "gem",
       to: "/market",
@@ -94,6 +102,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "adventure",
       label: "历练",
+      shortLabel: "历练",
       description: "地界、秘境与战斗",
       icon: "swords",
       to: "/adventure",
@@ -101,6 +110,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "world",
       label: "人间",
+      shortLabel: "人间",
       description: "本世山河与路线",
       icon: "trees",
       to: "/world",
@@ -108,6 +118,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "codex",
       label: "界域志",
+      shortLabel: "界域",
       description: "境界、典籍与术数",
       icon: "scroll",
       to: "/codex",
@@ -117,6 +128,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "inventory",
       label: "行囊",
+      shortLabel: "行囊",
       description: "装备、丹药与材料",
       icon: "backpack",
       to: "/inventory",
@@ -124,6 +136,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "collection",
       label: "藏珍",
+      shortLabel: "藏珍",
       description: "法宝、灵兽与成就",
       icon: "book",
       to: "/collection",
@@ -131,6 +144,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "souls",
       label: "器魂",
+      shortLabel: "器魂",
       description: "凝炼、装配与形意",
       icon: "sparkles",
       to: "/souls",
@@ -140,6 +154,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "celestial",
       label: "天界",
+      shortLabel: "天界",
       description: "道途、远征与试炼",
       icon: "cloud",
       to: "/celestial",
@@ -147,6 +162,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "build",
       label: "构筑",
+      shortLabel: "构筑",
       description: "流派、词条与模拟",
       icon: "hammer",
       to: "/build",
@@ -154,6 +170,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "titles",
       label: "名号",
+      shortLabel: "名号",
       description: "身份、称号与灵兽",
       icon: "crown",
       to: "/titles",
@@ -161,6 +178,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "legacy",
       label: "轮回录",
+      shortLabel: "轮回",
       description: "历世、道果与遗产",
       icon: "watch",
       to: "/legacy",
@@ -168,6 +186,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
     {
       name: "settings",
       label: "设置",
+      shortLabel: "设置",
       description: "声音、主题与存档",
       icon: "settings",
       to: "/settings",

@@ -793,10 +793,13 @@
   }
   .folio-index-rail__tab {
     position: relative;
-    display: grid;
-    width: 1.5rem;
+    display: flex;
+    min-width: 1.5rem;
     min-height: 1.5rem;
-    place-items: center;
+    align-items: center;
+    justify-content: center;
+    gap: 0.22rem;
+    padding-inline: 0.18rem;
     border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
     border-bottom-color: rgb(var(--color-ink-rgb) / 0.22);
     background:
@@ -812,6 +815,20 @@
       border-color 0.14s ease,
       color 0.14s ease,
       transform 0.14s ease;
+  }
+  .folio-index-rail__mark,
+  .folio-index-rail__label {
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .folio-index-rail__mark {
+    flex: none;
+  }
+  .folio-index-rail__label {
+    display: none;
+    padding-left: 0.2rem;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    letter-spacing: 0.1em;
   }
   .folio-index-rail__tab::after {
     content: "";
@@ -833,8 +850,24 @@
     transform: translateY(-2px);
   }
   .folio-index-rail--chapter .folio-index-rail__tab {
-    width: 1.5rem;
+    min-width: 1.5rem;
     min-height: 1.5rem;
+  }
+  @media (min-width: 390px) {
+    .folio-index-rail--chapter .folio-index-rail__label {
+      display: inline;
+    }
+  }
+  @media (min-width: 390px) and (max-width: 639px) {
+    .folio-masthead__position,
+    .folio-masthead__book {
+      display: none;
+    }
+  }
+  @media (min-width: 720px) {
+    .folio-index-rail--volume .folio-index-rail__label {
+      display: inline;
+    }
   }
   @media (hover: hover) and (pointer: fine) {
     .folio-index-rail__tab:not([data-folio-rail-current]):hover {
@@ -854,6 +887,10 @@
     .folio-index-rail--chapter .folio-index-rail__tab {
       width: 1.25rem;
       min-height: 1.25rem;
+      padding-inline: 0;
+    }
+    .folio-index-rail__label {
+      display: none;
     }
   }
   .bottom-dock-rail {
@@ -2938,6 +2975,53 @@
   .page-fade-leave-to {
     opacity: 0;
     transform: translateY(-4px);
+  } /*
+ * 全站翻卷 —— 方向由玄枢目录决定,不是统一的滑动模板。
+ *
+ * 后册从右手边压进来、前册向左退;回翻反过来。开卷两页尚未入册,横向淡入。
+ * 位移只有十余像素,配一点书页展开的转折,不遮住正文、不把页面甩出屏幕。
+ * 真正的阅读顺序只据 navigationPositionOf,顶栏书口签、卷首册签与这层动效
+ * 因此不会各算一套「前进」。
+ */
+  .folio-turn-forward-enter-active,
+  .folio-turn-forward-leave-active,
+  .folio-turn-back-enter-active,
+  .folio-turn-back-leave-active {
+    backface-visibility: hidden;
+    transform-origin: center;
+    transition:
+      opacity 0.16s ease,
+      transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .folio-turn-forward-enter-from {
+    opacity: 0;
+    transform: perspective(80rem) translate3d(16px, 0, 0) rotateY(-1.4deg);
+  }
+  .folio-turn-forward-leave-to {
+    opacity: 0;
+    transform: perspective(80rem) translate3d(-10px, 0, 0) rotateY(0.8deg);
+  }
+  .folio-turn-back-enter-from {
+    opacity: 0;
+    transform: perspective(80rem) translate3d(-16px, 0, 0) rotateY(1.4deg);
+  }
+  .folio-turn-back-leave-to {
+    opacity: 0;
+    transform: perspective(80rem) translate3d(10px, 0, 0) rotateY(-0.8deg);
+  }
+  .folio-turn-cross-enter-active,
+  .folio-turn-cross-leave-active {
+    transition:
+      opacity 0.16s ease,
+      transform 0.2s ease;
+  }
+  .folio-turn-cross-enter-from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.997);
+  }
+  .folio-turn-cross-leave-to {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.999);
   } /* Toast */
   .toast-slide-enter-active,
   .toast-slide-leave-active {

@@ -62,9 +62,10 @@
     <main
       ref="scrollHost"
       class="folio-surface relative z-10 min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+      :data-folio-turn="turnDirection"
     >
       <RouterView v-slot="{ Component }">
-        <Transition name="page-fade" mode="out-in" @before-enter="resetScroll">
+        <Transition :name="turnName" mode="out-in" @before-enter="resetScroll">
           <component :is="Component" />
         </Transition>
       </RouterView>
@@ -92,7 +93,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
@@ -111,6 +112,7 @@ import { apprenticeReapText } from "@/core/apprenticeService";
 import { applyTheme, initTheme } from "@/core/theme";
 import { configureAudio, playSfx, stopBgm, unlockAudio } from "@/core/audio";
 import { folioLayoutOf } from "@/ui/folioSpread";
+import { folioTurnDirectionOf, type FolioTurnDirection } from "@/ui/folioTurn";
 import DesktopSpine from "@/components/common/DesktopSpine.vue";
 import TopStatusBar from "@/components/common/TopStatusBar.vue";
 import BottomNavigation from "@/components/common/BottomNavigation.vue";
@@ -133,7 +135,13 @@ const settings = useSettingsStore();
 const updateReady = ref(false);
 let swHandle: ServiceWorkerUpdateHandle | undefined;
 const route = useRoute();
+const router = useRouter();
 const folioLayout = computed(() => folioLayoutOf(route.name));
+const turnDirection = ref<FolioTurnDirection>("cross");
+const turnName = computed(() => `folio-turn-${turnDirection.value}`);
+const stopAfterEach = router.afterEach((to, from) => {
+  turnDirection.value = folioTurnDirectionOf(from.name, to.name);
+});
 
 /** 内容区滚动宿主(滚动条挂在这个常驻的 main 上,不是 window) */
 const scrollHost = useTemplateRef<HTMLElement>("scrollHost");
@@ -251,6 +259,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  stopAfterEach();
   if (writerWatch !== undefined) window.clearInterval(writerWatch);
   unsubscribeTheme();
   unsubscribeSaveFailure();

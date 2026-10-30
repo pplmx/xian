@@ -16,6 +16,7 @@ describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
     const items = volumeRailItems("souls");
 
     expect(items.map((item) => item.mark)).toEqual(["修", "道", "行", "身", "天"]);
+    expect(items.map((item) => item.shortLabel)).toEqual(["修行", "道场", "行旅", "身外", "天机"]);
     expect(items.filter((item) => item.active).map((item) => item.key)).toEqual(["belongings"]);
     expect(items.map((item) => item.to)).toEqual([
       "/",
@@ -31,6 +32,11 @@ describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
       "inventory",
       "collection",
       "souls",
+    ]);
+    expect(chapterRailItems("souls").map((item) => item.shortLabel)).toEqual([
+      "行囊",
+      "藏珍",
+      "器魂",
     ]);
     expect(
       chapterRailItems("souls")
@@ -49,6 +55,7 @@ describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
     expect(component, "当前签要有读屏落点").toContain(":aria-current");
     expect(component, "读屏落点要用 location 语义").toContain("'location'");
     expect(component, "每枚签要有完整读屏名").toContain(":aria-label");
+    expect(component, "书口签可容纳时要露出短册名").toContain("folio-index-rail__label");
     expect(top, "顶栏五卷签读共享构造器").toContain("volumeRailItems");
     expect(top, "顶栏要挂五卷签").toContain('kind="volume"');
     expect(masthead, "卷首册签读共享构造器").toContain("chapterRailItems");
@@ -59,12 +66,16 @@ describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
     const css = source("src/style.css");
 
     expect(css).toContain(".folio-index-rail__tab");
+    expect(css).toContain(".folio-index-rail__label");
     expect(css).toContain(".folio-index-rail__tab[data-folio-rail-current]");
     expect(css, "当前签只以朱砂落款").toMatch(
       /\.folio-index-rail__tab\[data-folio-rail-current\][\s\S]{0,500}?color:\s*rgb\(var\(--color-cinnabar-rgb\)\)/,
     );
     expect(css).toMatch(
       /@media \(max-width: 220px\)[\s\S]{0,500}?\.folio-index-rail__tab[\s\S]{0,180}?width: 1\.25rem;/,
+    );
+    expect(css, "短册名在 390px 起才铺开").toMatch(
+      /@media \(min-width: 390px\)[\s\S]{0,160}?\.folio-index-rail--chapter \.folio-index-rail__label/,
     );
   });
 });

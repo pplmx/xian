@@ -16,6 +16,8 @@ describe("玄枢图 · 全站册目", () => {
   it("每一册都有可见说明,册目不是一排没有语义的入口", () => {
     for (const entry of NAVIGATION_ENTRIES) {
       expect(entry.label.length, `${entry.name} 缺册名`).toBeGreaterThan(0);
+      expect(entry.shortLabel.length, `${entry.name} 缺书口短名`).toBeGreaterThan(0);
+      expect(entry.shortLabel.length, `${entry.name} 的书口短名过长`).toBeLessThanOrEqual(2);
       expect(entry.description.length, `${entry.name} 缺一句说明`).toBeGreaterThan(5);
       expect(entry.icon.length, `${entry.name} 缺图标`).toBeGreaterThan(0);
     }
