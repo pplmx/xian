@@ -25,24 +25,25 @@
       </template>
 
       <!-- 卷首先报此刻:下一步、三席、闲置与可凝各有多少当下能动手 -->
-      <div v-if="unlocked" class="soul-pulse" data-soul-pulse>
-        <LedgerHeader
-          :seal="soulLead.mark"
-          eyebrow="此刻器魂"
-          :title="soulLead.title"
-          :description="soulLead.detail"
-        >
-          <template #actions>
-            <button
-              v-if="soulLead.label"
-              type="button"
-              class="soul-pulse__jump hoverable:hover:border-cinnabar"
-              @click="runSoulLead"
-            >
-              {{ soulLead.label }}
-            </button>
-          </template>
-        </LedgerHeader>
+      <LedgerPulse
+        v-if="unlocked"
+        class="soul-pulse"
+        data-soul-pulse
+        :seal="soulLead.mark"
+        eyebrow="此刻器魂"
+        :title="soulLead.title"
+        :description="soulLead.detail"
+      >
+        <template #actions>
+          <button
+            v-if="soulLead.label"
+            type="button"
+            class="folio-ledger-pulse__action"
+            @click="runSoulLead"
+          >
+            {{ soulLead.label }}
+          </button>
+        </template>
 
         <div class="soul-pulse__tallies">
           <button type="button" class="soul-pulse__tally" @click="scrollToSeats">
@@ -95,7 +96,7 @@
             </span>
           </button>
         </div>
-      </div>
+      </LedgerPulse>
     </FolioPageHeader>
 
     <!-- 未至真仙:器魂随天门而启,不在凡境提前占行囊 -->
@@ -549,7 +550,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
-import LedgerHeader from "@/components/common/LedgerHeader.vue";
+import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";

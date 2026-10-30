@@ -52,6 +52,8 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(view, "总账寄卖总数读机制常量").toContain("total: MARKET_CONSIGN_SLOTS");
     expect(view, "总账三册可一键落位").toContain('v-for="row in marketLedgerRows"');
     expect(view, "最近归账只报最近一件").toContain("nextConsign.value.text");
+    expect(view, "今日行市接共享此刻账").toContain("<LedgerPulse");
+    expect(pulse, "先手动作读共享动作键").toContain("folio-ledger-pulse__action");
     expect(pulse, "总账带可买运行时落点").toContain(":data-market-pulse-goods=");
     expect(pulse, "总账带可交运行时落点").toContain(":data-market-pulse-bounties=");
     expect(pulse, "总账带寄卖运行时落点").toContain(":data-market-pulse-consign=");

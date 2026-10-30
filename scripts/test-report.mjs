@@ -272,6 +272,7 @@ const CATEGORIES = [
       "folioChrome",
       "folioSpread",
       "ledgerHeader",
+      "ledgerPulse",
       "openingDesk",
       "homeDesk",
       "cultivationDesk",

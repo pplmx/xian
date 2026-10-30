@@ -32,23 +32,24 @@
         </div>
       </template>
 
-      <div v-if="unlocked" class="celestial-pulse" data-celestial-pulse>
-        <LedgerHeader
-          :seal="celestialLead.mark"
-          eyebrow="今日天门"
-          :title="celestialLead.title"
-          :description="celestialLead.detail"
-        >
-          <template #actions>
-            <button
-              type="button"
-              class="celestial-pulse__jump hoverable:hover:border-cinnabar"
-              @click="celTab = celestialLead.tab"
-            >
-              去看{{ celestialLeadLabel }}
-            </button>
-          </template>
-        </LedgerHeader>
+      <LedgerPulse
+        v-if="unlocked"
+        class="celestial-pulse"
+        data-celestial-pulse
+        :seal="celestialLead.mark"
+        eyebrow="今日天门"
+        :title="celestialLead.title"
+        :description="celestialLead.detail"
+      >
+        <template #actions>
+          <button
+            type="button"
+            class="folio-ledger-pulse__action"
+            @click="celTab = celestialLead.tab"
+          >
+            去看{{ celestialLeadLabel }}
+          </button>
+        </template>
 
         <div class="celestial-pulse__tallies">
           <button
@@ -75,7 +76,7 @@
             <span class="celestial-pulse__detail">{{ row.detail }}</span>
           </button>
         </div>
-      </div>
+      </LedgerPulse>
     </FolioPageHeader>
 
     <!-- 未至真仙:封卷页把门限、当前境界与下一步一起摊开 -->
@@ -370,7 +371,7 @@ import { foeOriginLines } from "@/core/battleAnalysis";
 import { swordPurity, SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
 import { formatNum, formatPercent } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
-import LedgerHeader from "@/components/common/LedgerHeader.vue";
+import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";

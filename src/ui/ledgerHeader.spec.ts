@@ -39,9 +39,6 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       { file: "src/views/DongfuView.vue", count: 1 },
       { file: "src/views/CharacterView.vue", count: 1 },
       { file: "src/views/ApprenticeView.vue", count: 1 },
-      { file: "src/views/MarketView.vue", count: 1 },
-      { file: "src/views/SoulsView.vue", count: 1 },
-      { file: "src/views/CelestialView.vue", count: 1 },
     ];
 
     for (const { file, count } of cases) {

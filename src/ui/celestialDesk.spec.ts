@@ -47,6 +47,8 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(view, "试炼总数读数据源").toContain("trialIds: TRIALS.map((trial) => trial.id)");
     expect(view, "道痕上限读机制常量").toContain("marksTotal: MAX_MARKS");
     expect(view, "总账四册可一键落位").toContain('v-for="row in celestialLedgerRows"');
+    expect(view, "今日天门接共享此刻账").toContain("<LedgerPulse");
+    expect(pulse, "先手动作读共享动作键").toContain("folio-ledger-pulse__action");
     expect(pulse, "总账带道途运行时落点").toContain(":data-celestial-pulse-dao=");
     expect(pulse, "总账带远征运行时落点").toContain(":data-celestial-pulse-exped=");
     expect(pulse, "总账带试炼运行时落点").toContain(":data-celestial-pulse-trial=");

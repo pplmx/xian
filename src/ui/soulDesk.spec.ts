@@ -42,6 +42,8 @@ describe("器魂案 · 三席先立意,此刻再落到先手", () => {
 
     expect(markers, "总账运行时落点只能有一个").toHaveLength(1);
     expect(view, "汇总仍走 core/soulOverview 唯一一份").toContain("soulOverview({");
+    expect(view, "此刻器魂接共享此刻账").toContain("<LedgerPulse");
+    expect(pulse, "先手动作读共享动作键").toContain("folio-ledger-pulse__action");
     expect(pulse, "总账带三席运行时落点").toContain("data-soul-pulse-active");
     expect(pulse, "总账带闲置运行时落点").toContain("data-soul-pulse-idle");
     expect(pulse, "总账带可凝运行时落点").toContain("data-soul-pulse-refine");
