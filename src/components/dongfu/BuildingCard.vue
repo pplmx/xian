@@ -9,7 +9,7 @@
         <GameIcon :name="props.def.icon" :size="14" />
       </span>
       <div class="min-w-0 flex-1">
-        <p class="truncate font-kai text-[14px] tracking-wider text-ink">
+        <p class="truncate font-kai text-title tracking-wider text-ink">
           {{ props.def.name }}
         </p>
         <div class="mt-1 flex items-center gap-1.5">
@@ -18,13 +18,13 @@
           </div>
           <p
             :key="level"
-            class="shrink-0 whitespace-nowrap text-[10px] text-ink-faint animate-ink-pop"
+            class="shrink-0 whitespace-nowrap text-note text-ink-faint animate-ink-pop"
           >
             {{ level > 0 ? `${level}/${cap} 级` : "未启用" }}
           </p>
           <button
             type="button"
-            class="inline-flex min-h-[28px] min-w-[28px] shrink-0 items-center justify-center px-1 text-[10px] text-ink-faint active:text-ink-soft"
+            class="inline-flex min-h-[28px] min-w-[28px] shrink-0 items-center justify-center px-1 text-note text-ink-faint active:text-ink-soft"
             :aria-expanded="detailsOpen"
             :aria-controls="detailId"
             :aria-label="detailsOpen ? `收起${props.def.name}详情` : `展开${props.def.name}详情`"
@@ -41,7 +41,7 @@
       卡面只留两行决策摘要:当前最要紧的一项、下一级会变的一项。
       完整效果、联动与连升账都在下面的 disclosure 里,不再把双列卡铺成账本。
     -->
-    <div class="mt-2 space-y-1 text-[11px] leading-relaxed">
+    <div class="mt-2 space-y-1 text-body leading-relaxed">
       <p class="text-ink-soft">{{ keepNumberUnits(primaryCurrent) }}</p>
       <p v-if="primaryPreview" class="text-gold-ink">
         <span class="font-kai tracking-wider">{{
@@ -74,8 +74,8 @@
     </button>
 
     <div v-show="detailsOpen" :id="detailId" class="mt-2 border-t border-ink/10 pt-2">
-      <p class="font-kai text-[10px] tracking-[0.2em] text-ink">当前效果</p>
-      <div class="mt-0.5 space-y-0.5 text-[10px] leading-relaxed text-ink-soft">
+      <p class="font-kai text-note tracking-[0.2em] text-ink">当前效果</p>
+      <div class="mt-0.5 space-y-0.5 text-note leading-relaxed text-ink-soft">
         <template v-if="level > 0">
           <p v-for="(line, i) in currentLines" :key="i">{{ keepNumberUnits(line) }}</p>
         </template>
@@ -83,20 +83,20 @@
       </div>
 
       <template v-if="preview.lines.length">
-        <p class="mt-1 font-kai text-[10px] tracking-wider text-gold-ink">
+        <p class="mt-1 font-kai text-note tracking-wider text-gold-ink">
           {{ preview.built ? "建成后" : `升至 ${preview.nextLevel} 级` }}
         </p>
-        <div class="space-y-0.5 text-[10px] leading-relaxed text-ink-soft">
+        <div class="space-y-0.5 text-note leading-relaxed text-ink-soft">
           <p v-for="(line, i) in preview.lines" :key="i">{{ keepNumberUnits(line) }}</p>
         </div>
       </template>
 
       <!-- 灵兽园:把当前相伴的灵兽报在园子里 —— 别的建筑都是数值,这里是活物 -->
-      <p v-if="beastCompanionName" class="mt-1 flex items-center gap-1 text-[10px] text-jade">
+      <p v-if="beastCompanionName" class="mt-1 flex items-center gap-1 text-note text-jade">
         <GameIcon name="paw" :size="11" />居园相伴 · {{ beastCompanionName }}
       </p>
       <!-- 藏经阁:下一张方子几时来 —— 丹方是全书唯一常驻被动流水,读数同开炉页(studyEta) -->
-      <p v-if="studyStatusLine" class="mt-1 flex items-center gap-1 text-[10px] text-gold-ink">
+      <p v-if="studyStatusLine" class="mt-1 flex items-center gap-1 text-note text-gold-ink">
         <GameIcon name="book" :size="11" />{{ studyStatusLine }}
       </p>
 
@@ -107,7 +107,7 @@
       -->
       <div v-if="info.canUpgrade" class="mt-2">
         <button
-          class="btn-ghost min-h-[28px] w-full !py-1 !text-[10px]"
+          class="btn-ghost min-h-[28px] w-full !py-1 !text-note"
           :aria-label="`连升 ${BUILD_BATCH} 级`"
           :disabled="!info.canUpgrade"
           @click="buildingUpgradeN(props.def.id, BUILD_BATCH)"
@@ -128,7 +128,7 @@
              (batch.levels>1 才有意义;单步的净得卡面 preview 已报) -->
         <p
           v-if="batchPreview.lines.length && batch.levels > 1"
-          class="mt-1 text-[10px] leading-relaxed text-jade"
+          class="mt-1 text-note leading-relaxed text-jade"
         >
           <span class="text-ink-faint">升至 {{ batchPreview.nextLevel }} 级累积净得:</span>
           <span v-for="line in batchPreview.lines" :key="line" class="block">{{

@@ -58,6 +58,22 @@ export default {
         kai: ["var(--font-kai)"],
         song: ["var(--font-song)"],
       },
+      /*
+       * 页面阅读字阶只认这六个名字。
+       *
+       * 以前模板里直接写 text-[10px] / text-[11px] / text-[14px] 等裸值，手机看着刚好，
+       * 到 1280 桌面仍原样放大留白，整页像一张被摊开的手机截图。现在字号值本身仍由
+       * style.css 的 --type-* 定义：手机维持原刻度，960px 以上由同一组变量整体抬一档。
+       * display 只给卷首题字，不参与正文五档。
+       */
+      fontSize: {
+        note: "var(--type-note)",
+        body: "var(--type-body)",
+        title: "var(--type-title)",
+        section: "var(--type-section)",
+        heading: "var(--type-heading)",
+        display: "var(--type-display)",
+      },
       /* v4 的 @theme 按需生成任意数值,v3 只有固定 scale,缺的须显式补齐。
          v4 的 spacing 公式是 calc(0.25rem * N),下面的值据此换算。
          maxWidth 不必单列:v3.4 的 maxWidth 默认已继承 theme.spacing */

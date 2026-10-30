@@ -1,8 +1,8 @@
 <template>
   <div class="card-ink px-4 py-3">
     <div class="mb-2 flex items-center justify-between">
-      <h3 class="font-kai text-[14px] tracking-[0.25em] text-ink">灵脉投资</h3>
-      <span class="text-[11px] text-ink-faint tabular">
+      <h3 class="font-kai text-title tracking-[0.25em] text-ink">灵脉投资</h3>
+      <span class="text-body text-ink-faint tabular">
         {{ veinTotal }}/{{ VEIN_TOTAL_CAPACITY }}
       </span>
     </div>
@@ -25,14 +25,14 @@
               <span class="truncate">{{ v.name }}</span>
               <span
                 v-if="isMain(v.id)"
-                class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-[10px] leading-none text-cinnabar"
+                class="shrink-0 rounded bg-cinnabar/6 px-1 py-0.5 text-note leading-none text-cinnabar"
                 >主脉</span
               >
-              <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-[10px] text-ink-faint"
+              <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-note text-ink-faint"
                 >首投成主</span
               >
             </span>
-            <span class="tabular text-[11px]">
+            <span class="tabular text-body">
               <span :class="atCap(v.id) ? 'text-jade' : 'text-ink-faint'">
                 {{ currentLevel(v.id) }}/{{ cap(v.id) }}
               </span>
@@ -51,7 +51,7 @@
           <!-- 连投:主脉 70 点一次一点要点半天,给个批量 —— 点到批量/满/料尽为止,合一条账。
                批量数读 VEIN_BATCH(单源),不许手写「+5」当常量改了只顾一头。 -->
           <button
-            class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-[11px]"
+            class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-body"
             :aria-label="`连投 ${VEIN_BATCH} 点`"
             :disabled="!canInvest(v.id)"
             @click="doInvestBatch(v.id)"
@@ -60,20 +60,20 @@
           </button>
         </div>
         <!-- 每条脉都要自陈作用:此前只显示名字与价格,玩家无从判断该投哪条 -->
-        <p class="px-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p class="px-0.5 text-note leading-relaxed text-ink-faint">
           {{ v.desc }}
           <span v-if="currentLevel(v.id) > 0" class="text-qing"
             >· {{ veinEffectText(v, currentLevel(v.id)) }}</span
           >
         </p>
         <!-- 原主脉迁出后超额部分保留(效果不失,不可再投) -->
-        <p v-if="surplusPoints(v.id) > 0" class="px-0.5 text-[10px] text-gold-ink">
+        <p v-if="surplusPoints(v.id) > 0" class="px-0.5 text-note text-gold-ink">
           原主脉的 {{ surplusPoints(v.id) }} 点超额保留,效果不减,唯不再可投
         </p>
         <!-- 改立此脉为主脉:付费换向,现主脉点数转副(超额保留),按下前说清楚点数去向 -->
         <button
           v-if="switchCandidate(v.id)"
-          class="ml-0.5 px-0.5 text-[10px] text-cinnabar active:opacity-60"
+          class="ml-0.5 px-0.5 text-note text-cinnabar active:opacity-60"
           :disabled="!canSwitchTo(v.id)"
           @click="doSwitch(v.id)"
         >
@@ -87,15 +87,15 @@
     </div>
 
     <!-- 当前加成:一枚枚小 chip 收着,不再连排成 switch → 一加多就断行碎成流浪分号 -->
-    <p class="mt-3 text-[10px] text-ink-faint">当前加成</p>
+    <p class="mt-3 text-note text-ink-faint">当前加成</p>
     <div class="mt-1 flex flex-wrap gap-1.5">
-      <span v-if="!bonusRows.length" class="text-[10px] text-ink-faint"
+      <span v-if="!bonusRows.length" class="text-note text-ink-faint"
         >尚无 —— 炼化灵石点亮某一脉</span
       >
       <span
         v-for="row in bonusRows"
         :key="row.label"
-        class="chip-ink !py-0.5 !px-2 text-[10px] tabular text-qing"
+        class="chip-ink !py-0.5 !px-2 text-note tabular text-qing"
       >
         {{ row.label }} {{ row.sign }}{{ formatPercent(row.value) }}
       </span>

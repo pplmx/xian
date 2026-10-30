@@ -1,6 +1,6 @@
 <template>
   <BaseModal :open="open" title="暂别修行" @close="dismiss">
-    <p class="text-[14px] leading-relaxed text-ink-soft">
+    <p class="text-title leading-relaxed text-ink-soft">
       <template v-if="game.started"
         >此去进度自会封存,离开的这段时日照旧在长,归来时一并结算。</template
       >

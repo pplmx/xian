@@ -14,24 +14,24 @@
           >主</span
         >
         <span class="min-w-0 grow">
-          <span class="block truncate font-kai text-[14px] text-ink">{{ mainDef.name }}</span>
+          <span class="block truncate font-kai text-title text-ink">{{ mainDef.name }}</span>
           <span class="flex items-center gap-1.5">
-            <span class="shrink-0 text-[11px] text-ink-faint tabular">
+            <span class="shrink-0 text-body text-ink-faint tabular">
               第 {{ cultivation.learned[mainDef.id] }} 层 · {{ qualityDef(mainDef.quality).name }}
             </span>
             <span
               v-if="branchName(mainDef.id)"
-              class="min-w-0 truncate rounded bg-gold-ink/6 px-1.5 py-0.5 text-[10px] text-gold-ink"
+              class="min-w-0 truncate rounded bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
               >{{ branchName(mainDef.id) }}</span
             >
             <span
               v-else-if="canEnlighten(mainDef.id)"
-              class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-[10px] text-qing"
+              class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-note text-qing"
               >待悟道</span
             >
             <span
               v-if="mainCanUpgrade"
-              class="shrink-0 rounded bg-jade/6 px-1.5 py-0.5 text-[10px] text-jade"
+              class="shrink-0 rounded bg-jade/6 px-1.5 py-0.5 text-note text-jade"
               >可升层</span
             >
           </span>
@@ -61,7 +61,7 @@
             :aria-label="`${GONGFA_TYPE_NAMES[g.type]} ${g.items.length} 部`"
             :tabindex="gongfaCat === g.type ? 0 : -1"
             :data-gongfa-cat="g.type"
-            class="flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 font-kai text-[14px] tracking-[0.14em]"
+            class="flex flex-1 items-center justify-center gap-1 rounded-md py-1.5 font-kai text-title tracking-[0.14em]"
             :class="
               gongfaCat === g.type
                 ? 'bg-cinnabar/6 text-ink'
@@ -70,17 +70,17 @@
             @click="gongfaCat = g.type"
           >
             <span
-              class="font-kai text-[11px]"
+              class="font-kai text-body"
               :class="gongfaCat === g.type ? 'text-cinnabar' : 'text-ink-faint'"
               >{{ gongfaSeal(g.type) }}</span
             >
             <span class="hidden min-[360px]:inline">{{ GONGFA_TYPE_NAMES[g.type] }}</span>
-            <span class="tabular text-[10px] text-ink-faint">{{ g.items.length }}</span>
+            <span class="tabular text-note text-ink-faint">{{ g.items.length }}</span>
           </button>
         </div>
 
         <p
-          class="flex flex-wrap gap-x-1.5 border-b border-ink/7 px-3 py-1.5 text-[11px] text-ink-faint"
+          class="flex flex-wrap gap-x-1.5 border-b border-ink/7 px-3 py-1.5 text-body text-ink-faint"
         >
           <span>此门已习 {{ activeGongfaItems.length }} 部</span>
           <span v-if="activeGongfaItems.length" class="tabular"
@@ -124,33 +124,31 @@
                   class="shrink-0"
                 />
                 <span
-                  class="min-w-0 truncate font-kai text-[14px] leading-none"
+                  class="min-w-0 truncate font-kai text-title leading-none"
                   :style="{ color: qualityDef(def.quality).color }"
                   >{{ def.name }}</span
                 >
               </span>
-              <span class="shrink-0 tabular text-[10px] text-ink-faint"
+              <span class="shrink-0 tabular text-note text-ink-faint"
                 >第 {{ cultivation.learned[def.id] }} 层</span
               >
             </span>
             <span class="flex min-w-0 items-center gap-1.5">
               <span
                 v-if="branchName(def.id)"
-                class="min-w-0 truncate rounded bg-gold-ink/6 px-1.5 py-0.5 text-[10px] text-gold-ink"
+                class="min-w-0 truncate rounded bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
               >
                 {{ branchName(def.id) }}
               </span>
               <span
                 v-else-if="canEnlighten(def.id)"
-                class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-[10px] text-qing"
+                class="shrink-0 rounded bg-qing/6 px-1.5 py-0.5 text-note text-qing"
                 >待悟道</span
               >
-              <span v-else-if="isFull(def.id)" class="shrink-0 text-[10px] text-ink-faint"
-                >圆满</span
-              >
-              <span v-else class="shrink-0 text-[10px] text-ink-faint">修习中</span>
+              <span v-else-if="isFull(def.id)" class="shrink-0 text-note text-ink-faint">圆满</span>
+              <span v-else class="shrink-0 text-note text-ink-faint">修习中</span>
               <span
-                class="ml-auto shrink-0 text-[10px]"
+                class="ml-auto shrink-0 text-note"
                 :class="equipStateOf(def.id) ? 'text-qing' : 'text-ink-faint'"
               >
                 {{ equipStateOf(def.id) || "未装配" }}
@@ -162,7 +160,7 @@
             class="empty-note px-4 py-6 text-center t-body text-ink-faint"
           >
             <span
-              class="mx-auto mb-2 grid h-7 w-7 place-items-center rounded-md bg-cinnabar/6 font-kai text-[14px] text-cinnabar"
+              class="mx-auto mb-2 grid h-7 w-7 place-items-center rounded-md bg-cinnabar/6 font-kai text-title text-cinnabar"
               aria-hidden="true"
               >{{ gongfaSeal(gongfaCat) }}</span
             >
@@ -184,7 +182,7 @@
             v-if="gongfaPage.start > 0"
             type="button"
             data-gongfa-prev
-            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft"
+            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-note leading-relaxed text-ink-soft"
             :aria-label="previousGongfaText"
             @click="showPreviousGongfa"
           >
@@ -194,7 +192,7 @@
             v-if="gongfaPage.hidden > 0"
             type="button"
             data-gongfa-more
-            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar"
+            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-note leading-relaxed text-cinnabar"
             :aria-label="moreGongfaText"
             :data-promised="Math.min(GONGFA_RENDER_BATCH, gongfaPage.hidden)"
             @click="showMoreGongfa"
@@ -219,13 +217,13 @@
         @click="comprehendGongfa()"
       >
         于藏经阁参悟功法(残页×{{ COMPREHEND_PAGE_COST }})
-        <span v-if="comprehendLeft === 0" class="ml-1 text-[10px] text-ink-faint"
+        <span v-if="comprehendLeft === 0" class="ml-1 text-note text-ink-faint"
           >· 此境功法已尽数参悟</span
         >
-        <span v-else-if="pageShort > 0" class="ml-1 text-[10px] text-ink-faint"
+        <span v-else-if="pageShort > 0" class="ml-1 text-note text-ink-faint"
           >· 尚差 {{ pageShort }} 残页</span
         >
-        <span v-else class="ml-1 text-[10px] text-ink-faint"
+        <span v-else class="ml-1 text-note text-ink-faint"
           >· 池中尚有 {{ comprehendLeft }} 部未参</span
         >
       </button>

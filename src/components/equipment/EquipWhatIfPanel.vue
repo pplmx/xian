@@ -53,13 +53,13 @@ watch(inst, () => {
     </button>
     <template v-else>
       <p class="mb-1.5 font-kai text-[12px] tracking-[0.3em] text-ink-faint">天机推演</p>
-      <p class="text-[11px] text-ink-soft tabular">
+      <p class="text-body text-ink-soft tabular">
         构筑:{{ whatIf.buildBefore?.displayName ?? "未成路" }}
         <span class="text-ink-faint">→</span>
         {{ whatIf.buildAfter?.displayName ?? "流派散去" }}
       </p>
       <div class="mt-1 space-y-0.5">
-        <p v-for="w in whatIf.worlds" :key="w.name" class="flex justify-between text-[11px]">
+        <p v-for="w in whatIf.worlds" :key="w.name" class="flex justify-between text-body">
           <span class="text-ink-faint">{{ w.name }}</span>
           <span class="tabular">
             <span class="text-ink-faint">{{ w.beforeText }}</span>
@@ -78,14 +78,14 @@ watch(inst, () => {
           </span>
         </p>
       </div>
-      <p v-if="whatIf.modChanges.length" class="mt-1 text-[10px] text-qing tabular">
+      <p v-if="whatIf.modChanges.length" class="mt-1 text-note text-qing tabular">
         主要变化:{{
           whatIf.modChanges
             .map((c) => `${c.label} ${c.delta > 0 ? "+" : ""}${formatPercent(c.delta, 0)}`)
             .join(" · ")
         }}
       </p>
-      <p class="mt-0.5 text-[10px] text-ink-faint">推演只述局面,不替你定夺。</p>
+      <p class="mt-0.5 text-note text-ink-faint">推演只述局面,不替你定夺。</p>
     </template>
   </template>
 </template>

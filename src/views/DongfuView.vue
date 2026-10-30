@@ -3,7 +3,7 @@
     <FolioPageHeader title="洞府营造" back-to="home" back-label="返回">
       <template #meta>
         <!-- 家底一句:座数、离线档、弟子在途 —— 三个数概括这一页,不必翻卡 -->
-        <p class="mt-1.5 text-[11px] text-ink-faint tabular">
+        <p class="mt-1.5 text-body text-ink-faint tabular">
           已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }} 座 · 离线可攒
           {{ offlineCapHours }} 时<template v-if="apprenticeBusy">
             · 弟子在途 {{ apprenticeBusy }} 人</template
@@ -26,7 +26,7 @@
       -->
       <p
         v-if="hourlyLines.length"
-        class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-ink-faint"
+        class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-note text-ink-faint"
       >
         <span class="font-kai tracking-[0.2em] text-ink">每时藏收</span>
         <template v-for="(part, i) in hourlyLines" :key="part">
@@ -53,9 +53,9 @@
       -->
       <p
         v-if="dongfu.allBuildingsMaxed"
-        class="mt-2 flex items-center gap-1.5 px-1 text-[11px] text-jade"
+        class="mt-2 flex items-center gap-1.5 px-1 text-body text-jade"
       >
-        <span class="chip-ink border-jade/60 text-[10px] text-jade">营造尽善</span>
+        <span class="chip-ink border-jade/60 text-note text-jade">营造尽善</span>
         {{ cnNumber(BUILDINGS.length) }} 座建筑俱已至顶 —— 此间经营,已然圆满
       </p>
     </section>
@@ -73,10 +73,10 @@
           class="card-ink flex flex-col justify-between gap-2 px-3 py-3 active:scale-99"
         >
           <div>
-            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">坊市</p>
-            <p class="mt-0.5 text-[11px] text-ink-faint">购丹续料、购兵刃,兼售寄卖</p>
+            <p class="font-kai text-title tracking-[0.2em] text-ink">坊市</p>
+            <p class="mt-0.5 text-body text-ink-faint">购丹续料、购兵刃,兼售寄卖</p>
           </div>
-          <p class="text-[11px] text-ink-soft tabular">
+          <p class="text-body text-ink-soft tabular">
             囊中 <span class="text-cinnabar">{{ formatGN(stone) }}</span> 灵石
           </p>
         </RouterLink>
@@ -85,10 +85,10 @@
           class="card-ink flex flex-col justify-between gap-2 px-3 py-3 active:scale-99"
         >
           <div>
-            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">门庭有徒</p>
-            <p class="mt-0.5 text-[11px] text-ink-faint">弟子离线跑腿,归来带回资材</p>
+            <p class="font-kai text-title tracking-[0.2em] text-ink">门庭有徒</p>
+            <p class="mt-0.5 text-body text-ink-faint">弟子离线跑腿,归来带回资材</p>
           </div>
-          <p class="text-[11px] text-ink-soft tabular">
+          <p class="text-body text-ink-soft tabular">
             {{
               apprentices.length
                 ? apprenticeBusy
@@ -114,11 +114,11 @@
       >
         <span class="min-w-0 flex-1">
           <span class="block t-card">灵脉投资</span>
-          <span class="block truncate text-[10px] leading-relaxed text-ink-faint"
+          <span class="block truncate text-note leading-relaxed text-ink-faint"
             >择一主脉而修,投点立得全局加成</span
           >
         </span>
-        <span class="shrink-0 text-[11px] text-ink-faint">›</span>
+        <span class="shrink-0 text-body text-ink-faint">›</span>
       </button>
     </section>
     <BaseModal :open="veinOpen" title="" aria-label="灵脉" wide @close="veinOpen = false">
@@ -144,7 +144,7 @@
         <div
           v-for="(h, i) in OFFLINE_CAP_HOURS"
           :key="i"
-          class="flex-1 rounded-t-sm border px-0.5 pb-1 pt-2 text-center text-[10px] tabular"
+          class="flex-1 rounded-t-sm border px-0.5 pb-1 pt-2 text-center text-note tabular"
           :class="
             i <= mansionLevel
               ? 'border-cinnabar bg-cinnabar text-paper font-kai'
@@ -155,7 +155,7 @@
           {{ h }}时
         </div>
       </div>
-      <p class="mt-1.5 text-[10px] text-ink-faint">
+      <p class="mt-1.5 text-note text-ink-faint">
         离线上限随洞府等级抬升
         <template v-if="mansionLevel < OFFLINE_CAP_HOURS.length - 1">
           —— 升到 {{ mansionLevel + 1 }} 级,可攒至 {{ OFFLINE_CAP_HOURS[mansionLevel + 1] }} 时

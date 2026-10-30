@@ -5,12 +5,12 @@
     <div class="card-ink divide-y divide-ink/7 px-4">
       <div v-for="row in furnaceRows" :key="row.rate.resource" class="py-2.5">
         <div class="flex items-center justify-between gap-2">
-          <span class="text-[11px] text-ink-soft"
+          <span class="text-body text-ink-soft"
             >{{ row.rate.name }}(存 {{ formatNum(row.have) }})</span
           >
           <!-- 全熔防误触:文案亮出『整包』与可得道源(不再是『按 25:1 换』的可兑换暗示),再按一下才熔 -->
           <button
-            class="btn-ghost !px-3 !py-1 !text-[11px] tabular"
+            class="btn-ghost !px-3 !py-1 !text-body tabular"
             :disabled="furnacePreview(row.rate) <= 0"
             @click="furnaceConfirm = row.rate.resource"
           >
@@ -21,7 +21,7 @@
           v-if="furnaceConfirm === row.rate.resource"
           class="mt-1.5 rounded-md bg-cinnabar/5 px-3 py-2"
         >
-          <p class="text-[10px] leading-relaxed text-cinnabar">
+          <p class="text-note leading-relaxed text-cinnabar">
             将
             <span class="tabular"
               >{{ row.rate.name }} ×{{ formatNum(furnacePreview(row.rate) * row.rate.per) }}</span
@@ -37,22 +37,20 @@
             —— 此举不可逆,熔去的这些再无炼丹/锻造/参悟之途。
           </p>
           <div class="mt-1.5 flex justify-end gap-2">
-            <button class="btn-ghost !px-3 !py-1 !text-[11px]" @click="furnaceConfirm = null">
+            <button class="btn-ghost !px-3 !py-1 !text-body" @click="furnaceConfirm = null">
               再想想
             </button>
-            <button class="btn-seal !px-3 !py-1 !text-[11px] tabular" @click="doFurnace(row.rate)">
+            <button class="btn-seal !px-3 !py-1 !text-body tabular" @click="doFurnace(row.rate)">
               确认熔尽
             </button>
           </div>
         </div>
       </div>
       <div class="flex items-center justify-between py-2.5">
-        <span class="text-[11px] text-ink-soft"
-          >灵石(存 {{ formatGN(resources.spiritStone) }})</span
-        >
+        <span class="text-body text-ink-soft">灵石(存 {{ formatGN(resources.spiritStone) }})</span>
         <!-- 灵石不足置灰+列差:值与差异都现算(与熔尽本包/其余消费点同款纪律) -->
         <button
-          class="btn-ghost !px-3 !py-1 !text-[11px] tabular"
+          class="btn-ghost !px-3 !py-1 !text-body tabular"
           :disabled="stoneShort > 0"
           @click="furnaceConvertStone()"
         >
@@ -64,10 +62,10 @@
       </div>
       <div class="py-2.5">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] text-ink-soft">道源凝道果(跨世保留)</span>
+          <span class="text-body text-ink-soft">道源凝道果(跨世保留)</span>
           <!-- 道源不足置灰+列差:差多少现算(与灵石行同款) -->
           <button
-            class="btn-ghost !px-3 !py-1 !text-[11px] tabular"
+            class="btn-ghost !px-3 !py-1 !text-body tabular"
             :disabled="daoShort > 0"
             @click="doCondense()"
           >
@@ -83,12 +81,12 @@
           是口径旁注,降回 10px 一行。
         -->
         <div data-value-row class="mt-1 flex items-baseline gap-2">
-          <span class="shrink-0 text-[11px] text-ink-faint">凝一枚</span>
-          <span class="font-kai text-[14px] text-gold-ink tabular"
+          <span class="shrink-0 text-body text-ink-faint">凝一枚</span>
+          <span class="font-kai text-title text-gold-ink tabular"
             >下世有效 {{ fruitInfo.nextEffectiveText }} 枚(+{{ fruitInfo.deltaPct }}%)</span
           >
         </div>
-        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular">
+        <p class="mt-0.5 text-note leading-relaxed text-ink-faint tabular">
           当前 {{ fruitInfo.total }} 枚 · 有效 {{ fruitInfo.effectiveText }} 枚 · 边际收益渐减
         </p>
       </div>
@@ -100,17 +98,17 @@
 
   <!-- 首次凝道果:把「跨世保留的到底是什么」讲一次 -->
   <BaseModal :open="fruitDialogOpen" title="道果" @close="fruitDialogOpen = false">
-    <div class="space-y-2.5 text-[11px] leading-relaxed">
+    <div class="space-y-2.5 text-body leading-relaxed">
       <p class="text-ink-soft">{{ fruitDialog.intro }}</p>
       <div>
-        <p class="font-kai text-[11px] tracking-wider text-ink">用途</p>
+        <p class="font-kai text-body tracking-wider text-ink">用途</p>
         <p class="text-ink-faint">{{ fruitDialog.usages.join(" · ") }}</p>
       </div>
       <div>
-        <p class="font-kai text-[11px] tracking-wider text-ink">来处</p>
+        <p class="font-kai text-body tracking-wider text-ink">来处</p>
         <p class="text-ink-faint">{{ fruitDialog.gains.join(" · ") }}</p>
       </div>
-      <p class="border-l-2 border-violet-ink/60 pl-2 text-[11px] text-violet-ink">
+      <p class="border-l-2 border-violet-ink/60 pl-2 text-body text-violet-ink">
         {{ fruitDialog.lifecycle }}
       </p>
     </div>

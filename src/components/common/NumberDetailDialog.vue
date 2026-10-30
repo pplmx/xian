@@ -9,24 +9,22 @@
       <div class="space-y-2">
         <div v-for="(row, i) in view.rows" :key="i" class="rounded-md bg-paper-deep/60 px-3 py-2">
           <p class="flex items-baseline justify-between gap-2">
-            <span class="shrink-0 text-[11px] text-ink-faint">{{ row.label }}</span>
-            <span v-if="row.text" class="shrink-0 text-[14px] text-ink tabular">{{
-              row.text
-            }}</span>
-            <span v-else class="shrink-0 text-[11px] text-ink-faint tabular">{{
+            <span class="shrink-0 text-body text-ink-faint">{{ row.label }}</span>
+            <span v-if="row.text" class="shrink-0 text-title text-ink tabular">{{ row.text }}</span>
+            <span v-else class="shrink-0 text-body text-ink-faint tabular">{{
               formatGN(row.value!)
             }}</span>
           </p>
-          <p v-if="row.text" class="mt-0.5 text-right text-[10px] leading-snug text-ink-faint">
+          <p v-if="row.text" class="mt-0.5 text-right text-note leading-snug text-ink-faint">
             {{ row.hint ?? "由当前速率推算,会随构筑与加成变化" }}
           </p>
           <p
             v-else
-            class="mt-0.5 break-all text-right font-kai text-[15px] leading-snug text-ink tabular"
+            class="mt-0.5 break-all text-right font-kai text-section leading-snug text-ink tabular"
           >
             {{ row.value === undefined ? "" : formatExact(row.value) }}
           </p>
-          <p v-if="row.hint && !row.text" class="mt-0.5 text-right text-[10px] text-ink-faint">
+          <p v-if="row.hint && !row.text" class="mt-0.5 text-right text-note text-ink-faint">
             {{ row.hint }}
           </p>
           <!--
@@ -35,7 +33,7 @@
           -->
           <p
             v-else-if="row.value !== undefined && magnitudeOf(row.value)"
-            class="mt-0.5 text-right text-[10px] text-ink-faint tabular"
+            class="mt-0.5 text-right text-note text-ink-faint tabular"
           >
             {{ magnitudeOf(row.value!) }}
           </p>
@@ -48,7 +46,7 @@
         诚实说明:大数只带约 15 位有效数字,再往后是量级而不是精度。
         不写这句的话,那串尾部的 0 会被读成"精确到个位" —— 那是骗人。
       -->
-      <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
+      <p class="mt-2 text-note leading-relaxed text-ink-faint">
         数值以有效数字存储(约 15 位);超过 24 位的改用科学计数法,不再补零充当精度。
         同一页里的小号数字是缩写(万/亿/兆/京…),方便横比。
       </p>

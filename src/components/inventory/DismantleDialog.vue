@@ -25,14 +25,14 @@
           :checked="settings.decomposeRanks.includes(row.rank)"
           @change="toggleRank(row.rank)"
         />
-        <span class="font-kai text-[14px]" :style="{ color: row.color }">{{ row.name }}</span>
-        <span class="ml-auto tabular text-[11px] text-ink-faint">
+        <span class="font-kai text-title" :style="{ color: row.color }">{{ row.name }}</span>
+        <span class="ml-auto tabular text-body text-ink-faint">
           现存 {{ row.count }} 件
           <template v-if="row.count > 0">· {{ row.text }}</template>
         </span>
       </label>
     </div>
-    <p v-if="decomposeTotal > 0" class="mt-2 text-right text-[11px] text-cinnabar tabular">
+    <p v-if="decomposeTotal > 0" class="mt-2 text-right text-body text-cinnabar tabular">
       共 {{ decomposeTotal }} 件 → {{ batchYieldText(decomposePlanned) }}
     </p>
     <template #footer>
@@ -52,7 +52,7 @@
       要扔得你自己动手(单件分解,或勾选该品质的一键分解)。
     </p>
     <label class="mt-2 flex items-center justify-between py-1.5">
-      <span class="text-[14px] text-ink-soft">启用智能收纳</span>
+      <span class="text-title text-ink-soft">启用智能收纳</span>
       <input v-model="settings.smartKeep.enabled" type="checkbox" class="h-4 w-4 accent-cinnabar" />
     </label>
     <!--
@@ -61,8 +61,8 @@
     -->
     <div class="py-1.5">
       <div class="flex items-baseline justify-between">
-        <span class="text-[11px] text-ink-soft">此品质起一律保留</span>
-        <span class="text-[10px] text-ink-faint">低于它才交给缘分裁决</span>
+        <span class="text-body text-ink-soft">此品质起一律保留</span>
+        <span class="text-note text-ink-faint">低于它才交给缘分裁决</span>
       </div>
       <!-- 选中的档位只靠 borderColor 表达,读屏需要显式的按压态(与 SettingsView 的 theme/battleSpeed 同一范式) -->
       <div class="mt-1.5 flex flex-wrap gap-1" role="group" aria-label="品质保留线">
@@ -87,9 +87,9 @@
     -->
     <div class="py-1.5">
       <div class="flex items-baseline justify-between">
-        <span class="text-[11px] text-ink-soft">此阶以下一律回收</span>
+        <span class="text-body text-ink-soft">此阶以下一律回收</span>
         <span
-          class="text-[10px]"
+          class="text-note"
           :class="settings.smartKeep.minTier > 0 ? 'text-cinnabar' : 'text-ink-faint'"
         >
           {{
@@ -108,7 +108,7 @@
         >
           −
         </button>
-        <span class="tabular w-14 text-center font-kai text-[15px] text-ink">
+        <span class="tabular w-14 text-center font-kai text-section text-ink">
           {{ settings.smartKeep.minTier > 0 ? `${settings.smartKeep.minTier} 阶` : "关" }}
         </span>
         <button
@@ -119,7 +119,7 @@
         >
           ＋
         </button>
-        <span class="ml-1 text-[10px] text-ink-faint"> 你当前可到 {{ playerTier }} 阶 </span>
+        <span class="ml-1 text-note text-ink-faint"> 你当前可到 {{ playerTier }} 阶 </span>
       </div>
     </div>
     <!--
@@ -127,9 +127,9 @@
       但把它收回政策弹窗、并排在保留线之后 —— 线上的件永远不受它影响。
     -->
     <label class="flex items-center justify-between py-1.5">
-      <span class="text-[11px] text-ink-soft">
+      <span class="text-body text-ink-soft">
         线下不看缘分,一律回收
-        <span class="block text-[10px] text-ink-faint">低于保留线的件不再由核心词条/套件救回</span>
+        <span class="block text-note text-ink-faint">低于保留线的件不再由核心词条/套件救回</span>
       </span>
       <input
         v-model="settings.smartKeep.junkBelowLine"
@@ -143,7 +143,7 @@
     -->
     <div
       v-if="settings.smartKeep.enabled"
-      class="mt-1 rounded-md bg-paper-deep/60 px-2.5 py-2 text-[10px]"
+      class="mt-1 rounded-md bg-paper-deep/60 px-2.5 py-2 text-note"
     >
       <p class="text-ink-soft tabular">
         依当前规则:行囊 {{ impact.candidates }} 件中留 {{ impact.keep }} 件 · 化尘
@@ -162,7 +162,7 @@
       </p>
     </div>
     <label class="flex items-center justify-between py-1.5">
-      <span class="text-[11px] text-ink-soft">保留主流派核心词条件</span>
+      <span class="text-body text-ink-soft">保留主流派核心词条件</span>
       <input
         v-model="settings.smartKeep.keepCoreAffix"
         type="checkbox"
@@ -170,7 +170,7 @@
       />
     </label>
     <label class="flex items-center justify-between py-1.5">
-      <span class="text-[11px] text-ink-soft">保留组合技部件(副体系词条)</span>
+      <span class="text-body text-ink-soft">保留组合技部件(副体系词条)</span>
       <input
         v-model="settings.smartKeep.keepComboPiece"
         type="checkbox"
@@ -178,7 +178,7 @@
       />
     </label>
     <label class="flex items-center justify-between py-1.5">
-      <span class="text-[11px] text-ink-soft">保留成套共鸣件(机制优先)</span>
+      <span class="text-body text-ink-soft">保留成套共鸣件(机制优先)</span>
       <input
         v-model="settings.smartKeep.keepSetPiece"
         type="checkbox"
@@ -186,7 +186,7 @@
       />
     </label>
     <label class="flex items-center justify-between py-1.5">
-      <span class="text-[11px] text-ink-soft">保留词条近满件</span>
+      <span class="text-body text-ink-soft">保留词条近满件</span>
       <input
         v-model="settings.smartKeep.keepPerfectRolls"
         type="checkbox"
@@ -196,20 +196,18 @@
     <template #footer>
       <!-- 一键清理二步确认:整包报废,按一下不该就此了结 -->
       <template v-if="!cleanConfirm">
-        <button class="btn-ghost w-full !text-[11px]" @click="cleanConfirm = true">
+        <button class="btn-ghost w-full !text-body" @click="cleanConfirm = true">
           依此规则清理行囊(未锁定的无缘之物化尘)
         </button>
       </template>
       <template v-else>
-        <p class="mb-2 text-center text-[11px] text-cinnabar">
+        <p class="mb-2 text-center text-body text-cinnabar">
           将把行囊中未锁定的无缘之物尽数化尘,共 {{ cleanPlanned.count }} 件,拿回
           {{ batchYieldText(cleanPlanned) }}——此举不可逆,仍要清理?
         </p>
         <div class="flex gap-2">
-          <button class="btn-ghost flex-1 !text-[11px]" @click="cleanConfirm = false">
-            再想想
-          </button>
-          <button class="btn-seal flex-1 !text-[11px]" @click="smartClean()">清理化尘</button>
+          <button class="btn-ghost flex-1 !text-body" @click="cleanConfirm = false">再想想</button>
+          <button class="btn-seal flex-1 !text-body" @click="smartClean()">清理化尘</button>
         </div>
       </template>
     </template>

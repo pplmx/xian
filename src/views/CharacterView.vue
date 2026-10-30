@@ -3,7 +3,7 @@
     <FolioPageHeader title="道躯" subtitle="属性、灵根与传承" featured>
       <template #action>
         <div class="text-right tinylens:text-left">
-          <p class="text-[10px] tracking-[0.28em] text-ink-faint">战 力</p>
+          <p class="text-note tracking-[0.28em] text-ink-faint">战 力</p>
           <p class="mt-0.5 font-kai text-[20px] leading-tight text-cinnabar tabular">
             <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
           </p>
@@ -16,7 +16,7 @@
       只报结论不够,「这数怎么来的」必须与结论同框而不同级。
     -->
     <div class="card-ink folio-span-all px-4 py-3">
-      <p class="text-[10px] tracking-[0.16em] text-ink-faint">战力构成 · 攻 / 防 / 血按权重折算</p>
+      <p class="text-note tracking-[0.16em] text-ink-faint">战力构成 · 攻 / 防 / 血按权重折算</p>
       <!--
         战力构成 —— 一条按比例分段的横条,不是一个三格数字阵。
         
@@ -37,7 +37,7 @@
           />
         </div>
         <!-- 图例:小字一行,三项按各自的色点对位 -->
-        <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-ink-faint">
+        <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-note text-ink-faint">
           <span v-for="row in powerDetailRows" :key="row.label" class="flex items-center gap-1">
             <span class="h-1.5 w-1.5 shrink-0 rounded-full" :style="{ background: row.barColor }" />
             {{ row.label }} {{ formatPercent(row.share, 0) }}
@@ -60,9 +60,9 @@
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <span class="shrink-0 font-kai text-[11px] tracking-widest text-ink-faint">灵根</span>
+            <span class="shrink-0 font-kai text-body tracking-widest text-ink-faint">灵根</span>
             <!-- 名号必须 nowrap:它曾被两侧挤到只剩 24px 宽,一个字一行竖排下来 -->
-            <span class="shrink-0 whitespace-nowrap font-kai text-[14px] text-cinnabar">{{
+            <span class="shrink-0 whitespace-nowrap font-kai text-title text-cinnabar">{{
               player.linggen?.gradeName
             }}</span>
           </div>
@@ -74,7 +74,7 @@
               :title="`${ELEMENTS[root.element].char}系 · 资质 ${root.aptitude}`"
             >
               <span
-                class="grid h-6 w-6 place-items-center rounded-full border font-kai text-[11px]"
+                class="grid h-6 w-6 place-items-center rounded-full border font-kai text-body"
                 :style="{
                   borderColor: ELEMENTS[root.element].color,
                   color: ELEMENTS[root.element].color,
@@ -84,7 +84,7 @@
               </span>
               <!-- 资质直接亮在圆环旁,不再只藏 hover —— 手机上看得到才谈得上权衡 -->
               <span
-                class="tabular text-[10px] leading-none"
+                class="tabular text-note leading-none"
                 :style="{ color: ELEMENTS[root.element].color }"
               >
                 {{ root.aptitude }}
@@ -93,7 +93,7 @@
           </div>
         </div>
         <!-- 倍率是这张牌的总分,单独成栏、与名号同一行顶齐 -->
-        <span class="shrink-0 whitespace-nowrap text-[11px] text-ink-faint tabular">
+        <span class="shrink-0 whitespace-nowrap text-body text-ink-faint tabular">
           ×{{ player.linggen?.growthMult.toFixed(2) }}
         </span>
       </div>
@@ -129,20 +129,20 @@
         -->
         <div class="grid grid-cols-3 gap-2 text-center tinylens:grid-cols-2">
           <div>
-            <p class="text-[10px] text-ink-faint">攻击</p>
-            <p class="tabular font-kai text-[15px] text-ink">
+            <p class="text-note text-ink-faint">攻击</p>
+            <p class="tabular font-kai text-section text-ink">
               <TapNumber :value="stats.attack" title="攻击" />
             </p>
           </div>
           <div>
-            <p class="text-[10px] text-ink-faint">防御</p>
-            <p class="tabular font-kai text-[15px] text-ink">
+            <p class="text-note text-ink-faint">防御</p>
+            <p class="tabular font-kai text-section text-ink">
               <TapNumber :value="stats.defense" title="防御" />
             </p>
           </div>
           <div>
-            <p class="text-[10px] text-ink-faint">气血</p>
-            <p class="tabular font-kai text-[15px] text-ink">
+            <p class="text-note text-ink-faint">气血</p>
+            <p class="tabular font-kai text-section text-ink">
               <TapNumber :value="stats.maxHp" title="气血" />
             </p>
           </div>
@@ -162,14 +162,14 @@
           <button
             v-for="row in modRows"
             :key="row.label"
-            class="-my-1 flex items-center justify-between rounded px-1.5 py-1.5 text-left text-[11px] transition-colors active:opacity-60"
+            class="-my-1 flex items-center justify-between rounded px-1.5 py-1.5 text-left text-body transition-colors active:opacity-60"
             :class="breakdownKey === row.key ? 'bg-ink/5' : ''"
             :aria-expanded="breakdownKey === row.key"
             @click="toggleBreakdown(row.key)"
           >
             <span class="text-ink-faint">
               {{ row.label }}
-              <span v-if="row.capped" class="ml-0.5 text-[10px] text-cinnabar">软</span>
+              <span v-if="row.capped" class="ml-0.5 text-note text-cinnabar">软</span>
             </span>
             <span class="flex items-center gap-1">
               <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
@@ -177,7 +177,7 @@
               </span>
               <!-- 明细口:收着时是一枚淡「›」,展开时转 90° 并转朱砂 -->
               <span
-                class="w-2 text-[10px] leading-none transition-transform"
+                class="w-2 text-note leading-none transition-transform"
                 :class="breakdownKey === row.key ? 'rotate-90 text-cinnabar' : 'text-ink-faint'"
                 aria-hidden="true"
                 >›</span
@@ -186,43 +186,39 @@
           </button>
         </div>
         <!-- 提示只在没展开时出现:一旦展开,下面那块牌子本身就是答案 -->
-        <p v-if="modRows.length && !breakdownRows.length" class="mt-1 text-[10px] text-ink-faint">
+        <p v-if="modRows.length && !breakdownRows.length" class="mt-1 text-note text-ink-faint">
           点一行看它从哪来
         </p>
         <!--
           进阶成功率的名字容易过度承诺:它只进小进阶那一次掷点,大关走天劫推演。
           有这一项时才提示 —— 没有这项的玩家不需要知道这个边界。
         -->
-        <p v-if="hasAdvanceRate" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p v-if="hasAdvanceRate" class="mt-0.5 text-note leading-relaxed text-ink-faint">
           进阶成功率只作用于小进阶;大关须渡天劫,看的是劫型与四维准备度(护持/恢复/抗性/爆发)。
         </p>
-        <p v-if="hasShieldMods" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p v-if="hasShieldMods" class="mt-0.5 text-note leading-relaxed text-ink-faint">
           护盾至多覆盖最大气血的 {{ formatPercent(SHIELD_CAP_RATIO, 0) }} ——
           盾系堆得再多也顶不破这道上限。
         </p>
         <div v-if="breakdownRows.length" class="mt-1.5 rounded-md bg-paper-deep/60 px-2.5 py-2">
-          <p class="text-[10px] text-ink-soft">{{ STAT_NAMES[breakdownKey!] }} · 来源明细</p>
-          <p
-            v-for="c in breakdownRows"
-            :key="c.name"
-            class="mt-0.5 flex justify-between text-[10px]"
-          >
+          <p class="text-note text-ink-soft">{{ STAT_NAMES[breakdownKey!] }} · 来源明细</p>
+          <p v-for="c in breakdownRows" :key="c.name" class="mt-0.5 flex justify-between text-note">
             <span class="text-ink-faint">
               {{ c.name }}
-              <span v-if="c.onTop" class="ml-1 text-[10px] text-cinnabar">另乘</span>
+              <span v-if="c.onTop" class="ml-1 text-note text-cinnabar">另乘</span>
             </span>
             <span class="tabular" :class="c.value > 0 ? 'text-qing' : 'text-cinnabar'">
               {{ c.value > 0 ? "+" : "" }}{{ formatPercent(c.value) }}
             </span>
           </p>
-          <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          <p class="mt-1 text-note leading-relaxed text-ink-faint">
             明细之和就是上面那个数;标「另乘」的不并入百分比,而是单独乘在攻防血上。
           </p>
-          <p v-if="diminishNote" class="mt-0.5 text-[10px] leading-relaxed text-cinnabar">
+          <p v-if="diminishNote" class="mt-0.5 text-note leading-relaxed text-cinnabar">
             {{ diminishNote }}
           </p>
         </div>
-        <p v-if="softCappedNotes.length" class="mt-1.5 text-[10px] leading-relaxed text-cinnabar">
+        <p v-if="softCappedNotes.length" class="mt-1.5 text-note leading-relaxed text-cinnabar">
           标「软」者已达软上限:{{
             softCappedNotes.join("、")
           }}。极限堆叠到此后收益递减,不是面板被削。

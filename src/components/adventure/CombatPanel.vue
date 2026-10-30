@@ -3,9 +3,9 @@
     <!-- 会话信息 -->
     <div class="card-ink px-4 py-3">
       <div class="flex items-center justify-between">
-        <p class="font-kai text-[15px] tracking-widest text-ink">
+        <p class="font-kai text-section tracking-widest text-ink">
           {{ region?.name }}
-          <span class="text-[11px] text-ink-faint">· {{ modeName }}</span>
+          <span class="text-body text-ink-faint">· {{ modeName }}</span>
         </p>
         <!-- 每秒在走的倒计时同样要定宽:与状态面板同一类抖动,修就修干净 -->
         <span class="tabular text-[12px] text-ink-soft">
@@ -19,7 +19,7 @@
       -->
       <p
         v-if="bossHint"
-        class="mt-1 border-l-2 pl-2 text-[10px]"
+        class="mt-1 border-l-2 pl-2 text-note"
         :class="bossSoon ? 'border-cinnabar/60 text-cinnabar' : 'border-gold-ink/60 text-gold-ink'"
       >
         {{ bossHint }}
@@ -27,21 +27,21 @@
       <!-- 战果四个读数各占一格:散文串里数字混在一句话中,读起来得先数逗号 -->
       <div class="mt-1.5 grid grid-cols-4 gap-2">
         <div>
-          <p class="text-[10px] text-ink-faint">战绩</p>
+          <p class="text-note text-ink-faint">战绩</p>
           <p class="tabular text-[13px] text-ink">
             {{ session ? sessionRecordText(session) : "胜 0 场" }}
           </p>
         </div>
         <div>
-          <p class="text-[10px] text-ink-faint">际遇</p>
+          <p class="text-note text-ink-faint">际遇</p>
           <p class="tabular text-[13px] text-ink">{{ session?.events ?? 0 }}</p>
         </div>
         <div>
-          <p class="text-[10px] text-ink-faint">拾获</p>
+          <p class="text-note text-ink-faint">拾获</p>
           <p class="tabular text-[13px] text-ink">{{ session?.itemGain ?? 0 }}</p>
         </div>
         <div>
-          <p class="text-[10px] text-ink-faint">悟道</p>
+          <p class="text-note text-ink-faint">悟道</p>
           <p class="tabular text-[13px] text-ink">{{ session?.wudaoGain ?? 0 }}</p>
         </div>
       </div>
@@ -51,7 +51,7 @@
       -->
       <p
         v-if="streakLine || gains"
-        class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[10px]"
+        class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-note"
       >
         <span v-if="streakLine" class="text-gold-ink tabular">{{ streakLine }}</span>
         <!-- 本次所得:石头与修为此前只在挂机总结里出现,在线历练中玩家看不到这一趟赚了什么 -->
@@ -102,7 +102,7 @@
               标签压在一起。标签数量不定,让它跟名字抢宽度就永远会有下一档挤法 ——
               干脆分层:第一行只答「这是谁、我打它多合适」,第二行只答「它有什么路数」。
             -->
-              <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-kai text-[14px] text-ink">
+              <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-kai text-title text-ink">
                 <template v-if="battle">
                   <span
                     data-foe-name
@@ -125,7 +125,7 @@
               -->
                 <span
                   v-if="foeAdaptation"
-                  class="ml-auto shrink-0 text-[10px] font-normal text-gold-ink tabular"
+                  class="ml-auto shrink-0 text-note font-normal text-gold-ink tabular"
                 >
                   <button
                     type="button"
@@ -139,10 +139,7 @@
                   </button>
                 </span>
               </p>
-              <p
-                v-if="adaptReveal"
-                class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular"
-              >
+              <p v-if="adaptReveal" class="mt-0.5 text-note leading-relaxed text-ink-faint tabular">
                 {{ adaptReveal }}
               </p>
               <!-- 标签行:首领 / 宿敌 / 敌人路数(特性)—— 有几个就排几个,放不下就在这一行里换行 -->
@@ -223,7 +220,7 @@
             <GameIcon name="user" :size="18" />
           </span>
           <div class="grow">
-            <p class="font-kai text-[14px] text-ink">{{ player.name }}</p>
+            <p class="font-kai text-title text-ink">{{ player.name }}</p>
             <!--
               两条血条的色各有单一用途:敌方恒为朱砂(威胁),我方恒为青玉(自身)。
               危血不再改我方条的颜色(那会让「青玉」同时表示两种状态),改挂一圈朱砂描边 +
@@ -270,7 +267,7 @@
         -->
         <button
           v-if="!playbackDone"
-          class="tap-row absolute right-1 -top-0.5 z-10 -m-2 rounded p-2 text-[10px] text-ink-faint active:text-ink active:opacity-60"
+          class="tap-row absolute right-1 -top-0.5 z-10 -m-2 rounded p-2 text-note text-ink-faint active:text-ink active:opacity-60"
           @click="skipPlayback"
         >
           跳过播放 »

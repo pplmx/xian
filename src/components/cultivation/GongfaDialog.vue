@@ -4,7 +4,7 @@
       <div class="flex items-center gap-2">
         <QualityTag :quality="def.quality" />
         <span class="chip-ink border-ink/30 text-ink-soft">{{ GONGFA_TYPE_NAMES[def.type] }}</span>
-        <span v-if="def.type === 'secret'" class="text-[10px] text-ink-faint">装配时占辅修席</span>
+        <span v-if="def.type === 'secret'" class="text-note text-ink-faint">装配时占辅修席</span>
         <span v-if="def.element" class="chip-ink" :style="{ color: ELEMENTS[def.element].color }">
           {{ ELEMENTS[def.element].name }}属性
         </span>
@@ -17,63 +17,61 @@
         >
         <span
           v-if="learned && branchPicked"
-          class="rounded bg-gold-ink/6 px-1.5 py-0.5 text-[10px] text-gold-ink"
+          class="rounded bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
           >{{ branchPicked.name }}</span
         >
         <span
           v-else-if="learned && fullLevel && branches.length"
-          class="rounded bg-qing/6 px-1.5 py-0.5 text-[10px] text-qing"
+          class="rounded bg-qing/6 px-1.5 py-0.5 text-note text-qing"
           >待悟道</span
         >
-        <span v-if="learned" class="ml-auto tabular text-[11px] text-gold-ink"
+        <span v-if="learned" class="ml-auto tabular text-body text-gold-ink"
           >第 {{ level }}/{{ def.maxLevel }} 层</span
         >
       </div>
       <p class="mt-2 t-body text-ink-faint">{{ def.desc }}</p>
-      <p v-if="!learned && def.minRealm > player.major" class="mt-1 text-[11px] text-cinnabar">
+      <p v-if="!learned && def.minRealm > player.major" class="mt-1 text-body text-cinnabar">
         需 {{ realmDef(def.minRealm)?.name ?? `第${def.minRealm}境` }} 境方可参悟其精义
       </p>
       <div class="ink-divider my-3" />
       <template v-if="learned">
         <div class="space-y-1.5">
-          <p v-for="row in modRows" :key="row.label" class="flex justify-between text-[11px]">
+          <p v-for="row in modRows" :key="row.label" class="flex justify-between text-body">
             <span class="text-ink-soft">{{ row.label }}</span>
             <span class="tabular text-qing">{{ row.value }}</span>
           </p>
-          <p v-if="def.skill" class="text-[11px] leading-relaxed text-cinnabar">
+          <p v-if="def.skill" class="text-body leading-relaxed text-cinnabar">
             {{ gongfaSkillLine(def.skill) }}
           </p>
         </div>
         <!-- 每进一层的增量:进修要花悟道点与残页,值不值当得看得见 -->
-        <p class="mt-2 text-[11px] text-ink-faint">
+        <p class="mt-2 text-body text-ink-faint">
           每进一层:<span class="tabular text-qing">{{ modsText(def.perLevelMods) }}</span>
         </p>
-        <p v-if="upCost" class="mt-3 text-right text-[11px] text-ink-faint tabular">
+        <p v-if="upCost" class="mt-3 text-right text-body text-ink-faint tabular">
           进修需 悟道点×{{ upCost.wudao }} · 残页×{{ upCost.page }}
         </p>
         <!--
           冲满的尽头要看得见:分支内容不预告(圆满才揭晓),但"这部功法是条有选择的
           路"这个事实得先说 —— 不然冲哪部全靠名字猜,圆满了才发现没岔路可走。
         -->
-        <p v-if="!fullLevel && branches.length" class="mt-2 text-[11px] text-ink-faint">
+        <p v-if="!fullLevel && branches.length" class="mt-2 text-body text-ink-faint">
           修至圆满,可循其中一条道走到底({{ branches.length }} 条道途)
           <span class="text-cinnabar">—— 一经择定终身不改</span>
         </p>
         <!-- Phase 31 A3:满级悟道,择一分支。文案须自解释——给什么、要不要慎重,按下之前就得看见 -->
         <div v-if="fullLevel && branches.length" class="mt-3">
-          <p class="mb-1 font-kai text-[11px] tracking-[0.2em] text-ink-faint">
-            功 行 圆 满 · 悟 道
-          </p>
+          <p class="mb-1 font-kai text-body tracking-[0.2em] text-ink-faint">功 行 圆 满 · 悟 道</p>
           <p class="mb-2 t-body text-ink-faint">
             此功已修至顶层,可就其中一条道走到底,永久追加下方词条(转世不失)。
             <span class="text-cinnabar">道分歧路,一经择定终身不改。</span>
           </p>
           <div v-if="branchPicked" class="rounded-md bg-paper-deep/70 px-3 py-2">
             <p>
-              <span class="font-kai text-[14px] text-gold-ink">{{ branchPicked.name }}</span>
-              <span class="ml-2 text-[11px] text-ink-faint">{{ branchPicked.desc }}</span>
+              <span class="font-kai text-title text-gold-ink">{{ branchPicked.name }}</span>
+              <span class="ml-2 text-body text-ink-faint">{{ branchPicked.desc }}</span>
             </p>
-            <p class="tabular mt-0.5 text-[11px] text-qing">{{ modsText(branchPicked.mods) }}</p>
+            <p class="tabular mt-0.5 text-body text-qing">{{ modsText(branchPicked.mods) }}</p>
           </div>
           <div v-else class="space-y-1.5">
             <button
@@ -83,26 +81,24 @@
               @click="branchConfirm = b.id"
             >
               <span class="min-w-0">
-                <span class="font-kai text-[14px] text-ink">{{ b.name }}</span>
-                <span class="ml-2 text-[11px] text-ink-faint">{{ b.desc }}</span>
-                <span class="tabular mt-0.5 block text-[11px] text-qing">{{
-                  modsText(b.mods)
-                }}</span>
+                <span class="font-kai text-title text-ink">{{ b.name }}</span>
+                <span class="ml-2 text-body text-ink-faint">{{ b.desc }}</span>
+                <span class="tabular mt-0.5 block text-body text-qing">{{ modsText(b.mods) }}</span>
               </span>
-              <span class="shrink-0 text-[10px] text-qing">择此道 →</span>
+              <span class="shrink-0 text-note text-qing">择此道 →</span>
             </button>
             <!-- 永久抉择二步确认:选了就改不了,按一下不该就此了结 -->
             <div v-if="branchConfirm" class="rounded-md bg-cinnabar/5 px-3 py-2">
-              <p class="text-[10px] leading-relaxed text-cinnabar">
+              <p class="text-note leading-relaxed text-cinnabar">
                 道分歧路,一经择定<strong>终身不改</strong>(转世仍随你)。确认择【{{
                   gongfaBranchDef(branchConfirm)?.name ?? ""
                 }}】?
               </p>
               <div class="mt-1.5 flex justify-end gap-2">
-                <button class="btn-ghost !px-3 !py-1 !text-[11px]" @click="branchConfirm = null">
+                <button class="btn-ghost !px-3 !py-1 !text-body" @click="branchConfirm = null">
                   再想想
                 </button>
-                <button class="btn-seal !px-3 !py-1 !text-[11px]" @click="confirmBranch()">
+                <button class="btn-seal !px-3 !py-1 !text-body" @click="confirmBranch()">
                   确认择道
                 </button>
               </div>
@@ -110,7 +106,7 @@
           </div>
         </div>
         <!-- 满级却无分支:也要交代一句,免得玩家满世界找入口 -->
-        <p v-else-if="fullLevel" class="mt-3 text-[11px] text-ink-faint">
+        <p v-else-if="fullLevel" class="mt-3 text-body text-ink-faint">
           此功已修至顶层,一以贯之,别无歧路可择。
         </p>
       </template>
@@ -119,18 +115,18 @@
         玩家只能凭名字挑 —— 而名字看不出它是攻是守。故这里给满级账。
       -->
       <template v-else>
-        <p class="text-[11px] text-ink-faint">尚未习得此功法。</p>
-        <p class="mt-2 text-[11px] text-ink-soft">修至圆满({{ def.maxLevel }} 层)可得:</p>
+        <p class="text-body text-ink-faint">尚未习得此功法。</p>
+        <p class="mt-2 text-body text-ink-soft">修至圆满({{ def.maxLevel }} 层)可得:</p>
         <div class="mt-1 space-y-1">
-          <p v-for="row in previewRows" :key="row.label" class="flex justify-between text-[11px]">
+          <p v-for="row in previewRows" :key="row.label" class="flex justify-between text-body">
             <span class="text-ink-faint">{{ row.label }}</span>
             <span class="tabular text-qing">{{ row.value }}</span>
           </p>
-          <p v-if="def.skill" class="text-[11px] leading-relaxed text-cinnabar">
+          <p v-if="def.skill" class="text-body leading-relaxed text-cinnabar">
             {{ gongfaSkillLine(def.skill) }}
           </p>
           <!-- 同上一行:满级账之外,把这功法的"尽头是条可择之路"一并预告 -->
-          <p v-if="branches.length" class="flex justify-between text-[11px]">
+          <p v-if="branches.length" class="flex justify-between text-body">
             <span class="text-ink-faint">圆满后道途</span>
             <span class="tabular text-gold-ink">共 {{ branches.length }} 条可择(终身不改)</span>
           </p>
@@ -172,7 +168,7 @@
         <!-- 修到顶:一次修到圆满或悟道点/残页见底,不必逐层点(合一条总账) -->
         <button
           v-if="upCost"
-          class="btn-ghost w-full !py-1.5 !text-[11px]"
+          class="btn-ghost w-full !py-1.5 !text-body"
           :disabled="!upAffordable"
           :aria-label="upAffordable ? '修到顶' : `修到顶 · 尚差 ${upShort}`"
           @click="doUpgradeAll"

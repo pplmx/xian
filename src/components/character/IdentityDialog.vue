@@ -15,7 +15,7 @@
         「这条路你已经走过哪几段」。未定的那几项现在是淡的、且不带标点,
         眼睛自然先落在有字的那几项上。
       -->
-      <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+      <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-body">
         <p v-for="r in identityRoots" :key="r.label" class="flex justify-between gap-2">
           <span class="shrink-0 text-ink-faint">{{ r.label }}</span
           ><span class="truncate" :class="r.value ? 'text-ink-soft' : 'text-ink-faint'">{{
@@ -23,10 +23,10 @@
           }}</span>
         </p>
       </div>
-      <p v-if="identity.roots.fortunes.length" class="text-[11px] text-ink-faint">
+      <p v-if="identity.roots.fortunes.length" class="text-body text-ink-faint">
         机缘印记:{{ identity.roots.fortunes.map((f) => f.title).join(" · ") }}
       </p>
-      <p class="text-[10px] leading-relaxed text-ink-faint">
+      <p class="text-note leading-relaxed text-ink-faint">
         画像基于真实选择归纳——你玩成了什么样,它便描述什么。
       </p>
     </div>

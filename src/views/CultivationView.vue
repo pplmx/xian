@@ -2,7 +2,7 @@
   <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader :title="player.realm.name" :subtitle="player.realm.desc" featured>
       <template #meta>
-        <p class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px]">
+        <p class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-body">
           <span class="world-label font-kai tracking-[0.28em]">{{ player.worldName }}</span>
           <span class="text-ink-faint" aria-hidden="true">·</span>
           <span class="font-kai tracking-[0.22em] text-cinnabar">{{ player.subName }}</span>
@@ -11,7 +11,7 @@
           >
         </p>
         <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->
-        <p class="mt-1.5 border-t border-ink/10 pt-1.5 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-1.5 border-t border-ink/10 pt-1.5 text-note leading-relaxed text-ink-faint">
           「{{ player.realm.basis }}」{{ player.realm.lore }}
         </p>
       </template>
@@ -23,8 +23,8 @@
     -->
     <div class="card-ink border-l-2 border-l-[var(--world-bar)] px-4 py-3">
       <div class="flex items-baseline justify-between">
-        <span class="font-kai text-[14px] tracking-[0.2em] text-ink">修 行</span>
-        <span class="text-[11px] text-ink-faint tabular">
+        <span class="font-kai text-title tracking-[0.2em] text-ink">修 行</span>
+        <span class="text-body text-ink-faint tabular">
           第 {{ player.major + 1 }} / {{ REALMS.length }} 境
         </span>
       </div>
@@ -42,7 +42,7 @@
         -->
         <div
           data-value-row
-          class="mb-1 flex flex-wrap justify-between text-[11px] text-ink-soft tabular"
+          class="mb-1 flex flex-wrap justify-between text-body text-ink-soft tabular"
         >
           <span class="flex items-baseline gap-1">
             <span class="text-ink-faint">修为</span>
@@ -79,7 +79,7 @@
           尾行两件事:还剩多远(百分比 + 现成 ETA 文案,都在别处算过,这里只读)与
           「来路」—— 修为速度的来路由它摊开,故它落在这一行而不是主行。
         -->
-        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-2 text-[11px]">
+        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-2 text-body">
           <span class="text-ink-soft tabular">
             还剩 {{ formatPercent(1 - player.expProgress, 0) }} · {{ expEtaText }}
           </span>
@@ -88,7 +88,7 @@
             补到 28 用横向负外边距抵掉(`-mx-1.5 px-1.5`),视觉位置一分不动。
           -->
           <button
-            class="tap-row -mx-1.5 -my-1 min-w-[28px] justify-center px-1.5 py-1.5 text-center text-[10px] text-ink-faint active:opacity-60"
+            class="tap-row -mx-1.5 -my-1 min-w-[28px] justify-center px-1.5 py-1.5 text-center text-note text-ink-faint active:opacity-60"
             :aria-expanded="showCultBreakdown"
             @click="showCultBreakdown = !showCultBreakdown"
           >
@@ -99,13 +99,13 @@
           长 ETA 的解释:一天以上的等待单凭一个日期说明不了什么,旁边得有一句
           「怎么让它变快」。见 longEtaHint 的注释。
         -->
-        <p v-if="longEtaHint" class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        <p v-if="longEtaHint" class="mt-1 text-note leading-relaxed text-ink-faint">
           {{ longEtaHint }}
         </p>
         <!-- 修炼速度是玩家最常盯的数,故在它自己那一行就地摊开:基础 × (1 + 各来源) -->
         <div
           v-if="showCultBreakdown"
-          class="mt-2 rounded-md bg-paper-deep/60 px-2.5 py-2 text-[10px]"
+          class="mt-2 rounded-md bg-paper-deep/60 px-2.5 py-2 text-note"
         >
           <p class="text-ink-soft">
             基础 {{ formatRate(cultBase) }}({{ player.realm.name }}{{ player.subName
@@ -119,7 +119,7 @@
               {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
             </span>
           </p>
-          <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+          <p class="mt-1 text-note leading-relaxed text-ink-faint">
             这些都是修炼速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
           </p>
         </div>
@@ -133,7 +133,7 @@
         -->
         <div
           data-value-row
-          class="mb-1 flex justify-between text-[11px] text-ink-soft tabular tinylens:flex-col tinylens:items-start tinylens:gap-y-0.5"
+          class="mb-1 flex justify-between text-body text-ink-soft tabular tinylens:flex-col tinylens:items-start tinylens:gap-y-0.5"
         >
           <span>灵气 +{{ formatRate(player.qiRegenPerSec) }}</span>
           <span>
@@ -180,7 +180,7 @@
           「我灵气满了该怎么花」。阈值与结算同读 QI_RICH_THRESHOLD_RATIO(见
           player.qirich),括号里的比率不许手写「一半」—— 改常数就撒谎。
         -->
-        <p class="mt-1 text-[10px]" :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'">
+        <p class="mt-1 text-note" :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'">
           <template v-if="qiRichInfo.on"
             >灵气充盈 —— 修炼速度 +{{ formatPercent(QI_RICH_BONUS) }}</template
           >
@@ -198,7 +198,7 @@
         <button
           v-if="repair.injured"
           type="button"
-          class="chip-ink mt-2 w-full !py-2 !whitespace-normal text-[11px] justify-center"
+          class="chip-ink mt-2 w-full !py-2 !whitespace-normal text-body justify-center"
           :disabled="!repair.affordable"
           @click="repairWithQi()"
         >
@@ -253,7 +253,7 @@
           {{ b.def!.name }}
           <span
             v-if="b.stack > 1"
-            class="text-[10px]"
+            class="text-note"
             :aria-label="`${b.def!.name} 与 ${b.stack - 1} 味状态同刻叠加`"
             >×{{ b.stack }}</span
           >
@@ -282,15 +282,15 @@
             :style="{ color: qualityDef(p.def!.quality).color }"
           />
           <span class="min-w-0 grow">
-            <span class="block truncate font-kai text-[11px] text-ink">{{ p.def!.name }}</span>
-            <span class="block text-[10px] text-ink-faint tabular">
+            <span class="block truncate font-kai text-body text-ink">{{ p.def!.name }}</span>
+            <span class="block text-note text-ink-faint tabular">
               存 {{ p.count
               }}<template v-if="quickPillBrief(p.def!)"> · {{ quickPillBrief(p.def!) }}</template>
             </span>
           </span>
           <!-- 顶满=白费,禁用并改口;续时=只剩尾巴可续,照吃但把话说清 -->
           <span
-            class="shrink-0 text-[11px]"
+            class="shrink-0 text-body"
             :class="
               p.overflow === 'full'
                 ? 'text-ink-faint'
@@ -309,7 +309,7 @@
         data-quick-pills-hidden
         :to="{ path: '/inventory', query: { tab: 'pill' } }"
         :aria-label="`另有 ${quickPillsHidden} 味可服丹药，前往丹匣查看`"
-        class="tap-row mt-2 w-full justify-between rounded-sm border border-ink/10 px-3 py-2 text-[10px] text-ink-faint active:scale-99"
+        class="tap-row mt-2 w-full justify-between rounded-sm border border-ink/10 px-3 py-2 text-note text-ink-faint active:scale-99"
       >
         <span>另有 {{ quickPillsHidden }} 味</span>
         <span class="text-qing">去丹匣 ›</span>

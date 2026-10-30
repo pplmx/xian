@@ -21,7 +21,7 @@
 
     <!-- 游戏名 -->
     <h1 class="mt-6 font-kai text-[40px] leading-tight tracking-[0.3em] text-ink">玄枢录</h1>
-    <p class="mt-2 text-[11px] tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
+    <p class="mt-2 text-body tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
 
     <!-- 开始按钮:首屏主钮 —— 一缕柔辉呼吸着请玩家按(与突破就绪的朱砂辉光同族,
          只动 box-shadow 合层,reduce-motion 全局兜) -->
@@ -38,12 +38,12 @@
     </button>
 
     <!-- 底部:隐私政策 / 导出导入恢复 / 关于 -->
-    <!-- 三枚底链是全站 28px 触点族的一员:裸 text-[11px] 的命中区只有字高 16.5px
+    <!-- 三枚底链是全站 28px 触点族的一员:裸 text-body 的命中区只有字高 16.5px
          (排版自检「开局前两页」任务首检即红),-my-1.5 py-1.5 把行盒撑到 28px 一族。
          极窄档换行而不是压窄:三枚并排要 44×3 + 间距,而这一档只有 131px ——
          不给换行时每枚被压成 25px 宽、四字各占一行(自检量到 25×45)。 -->
     <div
-      class="mt-5 flex items-center gap-3 text-[11px] text-ink-faint tinylens:flex-wrap tinylens:justify-center tinylens:gap-2"
+      class="mt-5 flex items-center gap-3 text-body text-ink-faint tinylens:flex-wrap tinylens:justify-center tinylens:gap-2"
     >
       <button
         class="-my-1.5 shrink-0 py-1.5 whitespace-nowrap active:text-ink-soft"
@@ -80,7 +80,7 @@
         <li
           v-for="line in highlights"
           :key="line"
-          class="flex gap-1.5 text-[10px] leading-relaxed text-ink-faint"
+          class="flex gap-1.5 text-note leading-relaxed text-ink-faint"
         >
           <span class="shrink-0 text-ink/15">·</span>
           <span>{{ line }}</span>
@@ -125,7 +125,7 @@
           layout-check 实测「声明 28px 却只有 26.3px」)。
           父级一旦是 flex,子项就按自己的盒子尺寸排,min-height 才真正算数。
         -->
-        <span class="flex flex-wrap items-center gap-x-1 text-[11px] text-ink-soft">
+        <span class="flex flex-wrap items-center gap-x-1 text-body text-ink-soft">
           我已阅读并同意
           <!--
             这一枚按钮的高度在这条路径上试过 inline-flex + min-h、flex 父级、

@@ -12,12 +12,12 @@
     @animationend.self="retreatFlash = false"
   >
     <div class="flex items-baseline justify-between">
-      <span class="font-kai text-[14px] tracking-[0.2em] text-ink">闭 关</span>
-      <span v-if="retreating" class="text-[11px] text-amber-ink tabular">
+      <span class="font-kai text-title tracking-[0.2em] text-ink">闭 关</span>
+      <span v-if="retreating" class="text-body text-amber-ink tabular">
         闭关中 · <span class="countdown-slot">{{ formatCountdown(retreatRemaining) }}</span>
       </span>
     </div>
-    <p class="mt-0.5 text-[10px] text-ink-faint">
+    <p class="mt-0.5 text-note text-ink-faint">
       <!--
         文案里的时制要与真实时长对得上:闭关只有 5 分钟,一炷香却是 30 分钟 ——
         拿"一炷香"说 5 分钟,玩家按古语理解会以为半小时,那就成了撒谎。
@@ -27,14 +27,14 @@
     <button
       v-if="!retreating"
       type="button"
-      class="chip-ink mt-2 w-full justify-center !py-1.5 text-center !whitespace-normal text-[11px] leading-relaxed"
+      class="chip-ink mt-2 w-full justify-center !py-1.5 text-center !whitespace-normal text-body leading-relaxed"
       @click="beginRetreat"
     >
       闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)
     </button>
     <!-- 闭关该收多少就摊多少:照现倍率折算 base,不只在定性「+150%」上打转。
          只在未闭关头展示为**前瞻**;闭关中现速率已含 +150%,再折算一遍会重复叠加,故撤 -->
-    <p v-if="!retreating" class="mt-1 text-[10px] text-ink-faint tabular">
+    <p v-if="!retreating" class="mt-1 text-note text-ink-faint tabular">
       闭关后每秒 ≈ {{ formatRate(retreatPerSec) }}(现 {{ formatRate(player.cultPerSec) }})·{{
         retreatMinutes
       }}分钟约多收 {{ formatRate(retreatExtra) }} 修为

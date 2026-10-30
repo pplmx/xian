@@ -8,7 +8,7 @@
     @close="emit('close')"
   >
     <div v-if="mentorVer" class="space-y-3">
-      <p class="font-kai text-[14px] text-ink">{{ mentorVer.mentor?.master }}</p>
+      <p class="font-kai text-title text-ink">{{ mentorVer.mentor?.master }}</p>
       <p class="t-body text-ink-soft">「{{ mentorVer.line }}」</p>
       <!--
         契合度:已拜视图里唯一的动态量。从前是 11px 小字里夹一个数 —— 玩家行为变了,
@@ -16,10 +16,10 @@
         让「现在我合不合师门」一眼可读(档位阈值与染色同源,不许第二把尺)。
       -->
       <div class="flex items-baseline justify-between rounded-md bg-paper-deep/60 px-3 py-2">
-        <span class="text-[11px] text-ink-soft">契合度</span>
+        <span class="text-body text-ink-soft">契合度</span>
         <span class="flex items-baseline gap-1.5">
           <span
-            class="font-kai text-[15px] tabular"
+            class="font-kai text-section tabular"
             :class="
               mentorVer.affinity > 0.2
                 ? 'text-jade'
@@ -31,7 +31,7 @@
             {{ mentorVer.affinity.toFixed(2) }}
           </span>
           <span
-            class="text-[10px]"
+            class="text-note"
             :class="
               mentorVer.affinity > 0.2
                 ? 'text-jade'
@@ -70,14 +70,14 @@
         @click="player.adoptMentor(m!.id)"
       >
         <p class="flex items-baseline gap-2">
-          <span class="font-kai text-[14px] text-ink">{{ m!.name }}</span>
-          <span class="text-[11px] text-qing">{{ m!.title }}</span>
+          <span class="font-kai text-title text-ink">{{ m!.name }}</span>
+          <span class="text-body text-qing">{{ m!.title }}</span>
           <span
             v-if="hintMentor === m!.id"
-            class="chip-ink border-cinnabar/50 text-[10px] text-cinnabar"
+            class="chip-ink border-cinnabar/50 text-note text-cinnabar"
             >机缘引荐</span
           >
-          <span class="ml-auto text-[10px] text-ink-faint">{{ m!.master }}</span>
+          <span class="ml-auto text-note text-ink-faint">{{ m!.master }}</span>
         </p>
         <p class="mt-0.5 t-body text-ink-faint">{{ m!.desc }}</p>
         <!-- 词条逐项成芯片:数额在右、等宽数字,同一项在四张卡里总在同一列 -->
@@ -85,7 +85,7 @@
           <span
             v-for="p in modsPills(m!.mods)"
             :key="p.name"
-            class="chip-ink gap-1 border-qing/40 !py-0.5 text-[10px] text-ink-soft"
+            class="chip-ink gap-1 border-qing/40 !py-0.5 text-note text-ink-soft"
           >
             {{ p.name }}
             <span class="tabular text-qing">{{ p.value }}</span>

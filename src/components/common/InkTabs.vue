@@ -32,7 +32,7 @@
         role="tab"
         :aria-selected="model === t.id"
         :tabindex="model === t.id ? 0 : -1"
-        class="folio-tab-index__tab relative z-10 min-w-0 flex-1 border-r border-ink/10 py-2 font-kai text-[14px] tracking-[0.2em] transition-colors duration-200 last:border-r-0 tinylens:text-[11px] tinylens:tracking-normal tinylens:whitespace-nowrap"
+        class="folio-tab-index__tab relative z-10 min-w-0 flex-1 border-r border-ink/10 py-2 font-kai text-title tracking-[0.2em] transition-colors duration-200 last:border-r-0 tinylens:text-body tinylens:tracking-normal tinylens:whitespace-nowrap"
         :class="
           model === t.id ? 'bg-paper-deep/70 text-ink' : 'text-ink-faint active:text-ink-soft'
         "

@@ -29,14 +29,14 @@
           aria-label="打开玄枢图"
           @click="atlasOpen = true"
         >
-          <span class="atlas-trigger__char text-[14px] leading-none">玄</span>
-          <span class="atlas-trigger__mark text-[10px] leading-none">枢</span>
+          <span class="atlas-trigger__char text-title leading-none">玄</span>
+          <span class="atlas-trigger__mark text-note leading-none">枢</span>
         </button>
         <div class="folio-head__identity min-w-0 leading-tight">
-          <p class="truncate font-kai text-[14px] tracking-[0.14em] text-ink">
+          <p class="truncate font-kai text-title tracking-[0.14em] text-ink">
             {{ player.name }}
           </p>
-          <p class="flex items-center gap-1.5 whitespace-nowrap text-[10px] text-ink-faint">
+          <p class="flex items-center gap-1.5 whitespace-nowrap text-note text-ink-faint">
             <span class="min-w-0 flex-1 truncate">{{ player.realmName }}</span>
             <span class="h-3 w-px shrink-0 bg-ink/15" aria-hidden="true" />
             <!-- 年龄:寿元将尽时转朱砂,顶栏常驻便于随时察觉 -->
@@ -52,17 +52,15 @@
           data-desktop-context
           class="folio-head__desktop-context min-w-0 items-center gap-2 whitespace-nowrap"
         >
-          <span class="font-kai text-[11px] tracking-[0.16em] text-cinnabar">{{
-            positionMark
-          }}</span>
+          <span class="font-kai text-body tracking-[0.16em] text-cinnabar">{{ positionMark }}</span>
           <span class="h-3 w-px shrink-0 bg-ink/15" aria-hidden="true" />
-          <span class="min-w-0 truncate font-kai text-[14px] tracking-[0.12em] text-ink">{{
+          <span class="min-w-0 truncate font-kai text-title tracking-[0.12em] text-ink">{{
             entryMark
           }}</span>
-          <span class="text-[10px] text-ink-faint">· {{ player.worldName }}</span>
+          <span class="text-note text-ink-faint">· {{ player.worldName }}</span>
         </div>
       </div>
-      <div class="folio-head__ledger flex shrink-0 items-center text-[11px] text-ink-soft tabular">
+      <div class="folio-head__ledger flex shrink-0 items-center text-body text-ink-soft tabular">
         <span
           class="folio-head__ledger-entry flex items-center gap-1 whitespace-nowrap"
           title="灵石"
@@ -91,7 +89,7 @@
     <!-- 卷目栏:只报「我在哪一卷」与「此世何界」,不重复页面里的大标题。 -->
     <div
       :data-folio-position="positionKey"
-      class="masthead-route mt-1.5 flex items-center gap-1.5 border-t border-ink/10 pt-1 text-[10px] text-ink-faint short:hidden"
+      class="masthead-route mt-1.5 flex items-center gap-1.5 border-t border-ink/10 pt-1 text-note text-ink-faint short:hidden"
     >
       <span class="shrink-0 font-kai tracking-[0.18em] text-cinnabar">{{ positionMark }}</span>
       <span aria-hidden="true">·</span>

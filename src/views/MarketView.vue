@@ -414,7 +414,7 @@ function bountyReady(o: BountySlot): boolean {
     >
       <template #action>
         <span
-          class="inline-flex items-center gap-1 rounded-sm border border-ink/10 px-2 py-1 text-[10px] tabular text-ink-faint tinylens:w-full tinylens:justify-between"
+          class="inline-flex items-center gap-1 rounded-sm border border-ink/10 px-2 py-1 text-note tabular text-ink-faint tinylens:w-full tinylens:justify-between"
           :title="headerClock.title"
         >
           {{ headerClock.label }}
@@ -428,23 +428,23 @@ function bountyReady(o: BountySlot): boolean {
         data-market-pulse
       >
         <p>
-          <span class="block text-[10px] text-ink-faint">可买</span>
-          <span class="block text-[11px] tabular text-ink-soft" data-market-pulse-goods
+          <span class="block text-note text-ink-faint">可买</span>
+          <span class="block text-body tabular text-ink-soft" data-market-pulse-goods
             >{{ marketPulse.availableGoods }} 件</span
           >
         </p>
         <p>
-          <span class="block text-[10px] text-ink-faint">可交</span>
+          <span class="block text-note text-ink-faint">可交</span>
           <span
-            class="block text-[11px] tabular"
+            class="block text-body tabular"
             :class="marketPulse.claimableBounties > 0 ? 'text-cinnabar' : 'text-ink-soft'"
             data-market-pulse-bounties
             >{{ marketPulse.claimableBounties }} 单</span
           >
         </p>
         <p>
-          <span class="block text-[10px] text-ink-faint">寄售</span>
-          <span class="block text-[11px] tabular text-ink-soft" data-market-pulse-consign
+          <span class="block text-note text-ink-faint">寄售</span>
+          <span class="block text-body tabular text-ink-soft" data-market-pulse-consign
             >{{ marketPulse.consignCount }}/{{ MARKET_CONSIGN_SLOTS }}</span
           >
         </p>
@@ -469,19 +469,19 @@ function bountyReady(o: BountySlot): boolean {
             折成 10 行(实测行高 140px)。放开成两行后名称块 137px / 4 行,行高 86px;
             320 / 390 两档读数不动。
           -->
-          <div class="min-w-0 flex-1 text-[11px] tinylens:basis-full">
+          <div class="min-w-0 flex-1 text-body tinylens:basis-full">
             <template v-if="slot.kind === 'pill'">
               <p class="truncate">
                 {{ pillDef(slot.pillId)?.name ?? slot.pillId }}
                 <span class="text-ink-faint">×{{ slot.count }}</span>
               </p>
-              <p class="text-[10px] text-ink-faint">一枚丹方之味</p>
+              <p class="text-note text-ink-faint">一枚丹方之味</p>
             </template>
             <template v-else-if="slot.kind === 'material'">
               <p class="truncate">
                 {{ slot.matId === "herb" ? "灵草" : "玄铁" }} ×{{ MARKET_MAT_COUNT }}
               </p>
-              <p class="text-[10px] text-ink-faint">续洞府生产之料</p>
+              <p class="text-note text-ink-faint">续洞府生产之料</p>
             </template>
             <template v-else>
               <!--
@@ -507,17 +507,17 @@ function bountyReady(o: BountySlot): boolean {
                   >· {{ previews[slot.idx]?.qualityName ?? "" }}{{ slot.tier }}阶</span
                 >
               </p>
-              <p class="text-[10px] text-ink-faint">
+              <p class="text-note text-ink-faint">
                 一件已定兵刃,到手即用 · 底档{{
                   QUALITIES[(slot as { minQualityRank: number }).minQualityRank]?.name ?? ""
                 }}
               </p>
             </template>
           </div>
-          <span class="text-[11px] tabular text-cinnabar">{{ formatGN(slot.price) }} 灵石</span>
+          <span class="text-body tabular text-cinnabar">{{ formatGN(slot.price) }} 灵石</span>
           <!-- min-h-[28px] 触达下限:此前的 !py-1 小钮实测只有 24.5px(排版自检尺子) -->
           <button
-            class="btn-seal min-h-[28px] !px-3 !py-1 text-[11px]"
+            class="btn-seal min-h-[28px] !px-3 !py-1 text-body"
             :disabled="
               slot.sold ||
               (slot.kind === 'equipment' && inventory.bagFull) ||
@@ -536,7 +536,7 @@ function bountyReady(o: BountySlot): boolean {
             }}
           </button>
         </div>
-        <p v-if="market.stock.length === 0" class="py-3 text-center text-[11px] text-ink-faint">
+        <p v-if="market.stock.length === 0" class="py-3 text-center text-body text-ink-faint">
           货架空着 —— 时辰一到自会换新。
         </p>
       </div>
@@ -553,13 +553,13 @@ function bountyReady(o: BountySlot): boolean {
         <div class="flex items-center gap-2">
           <button
             v-if="autoClaimable.length"
-            class="btn-seal min-h-[28px] !px-2.5 !py-1 text-[11px] whitespace-nowrap"
+            class="btn-seal min-h-[28px] !px-2.5 !py-1 text-body whitespace-nowrap"
             @click="claimAllAuto()"
           >
             一键领取({{ autoClaimable.length }})
           </button>
           <span
-            class="text-[10px] text-ink-faint"
+            class="text-note text-ink-faint"
             :title="`${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`"
             >换新
             <span class="countdown-slot">{{
@@ -575,32 +575,32 @@ function bountyReady(o: BountySlot): boolean {
           class="flex items-center gap-2 rounded-sm border border-ink/10 bg-paper-deep/60 px-3 py-2 tinylens:flex-wrap"
           :class="{ 'border-dashed border-ink/15': o.claimed }"
         >
-          <div class="min-w-0 flex-1 text-[11px] tinylens:basis-full">
+          <div class="min-w-0 flex-1 text-body tinylens:basis-full">
             <template v-if="o.kind === 'herb' || o.kind === 'ore'">
               <p class="truncate">募 {{ o.kind === "herb" ? "灵草" : "玄铁" }} ×{{ o.target }}</p>
-              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
+              <p v-if="bountyShort(o)" class="text-note text-cinnabar">
                 {{ bountyShort(o) }}
               </p>
-              <p v-else class="text-[10px] text-ink-faint">交货即得灵石</p>
+              <p v-else class="text-note text-ink-faint">交货即得灵石</p>
             </template>
             <template v-else-if="o.kind === 'pill'">
               <p class="truncate">{{ pillDef(o.kindId)?.name ?? o.kindId }} ×{{ o.target }}</p>
-              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
+              <p v-if="bountyShort(o)" class="text-note text-cinnabar">
                 {{ bountyShort(o) }}
               </p>
-              <p v-else class="text-[10px] text-ink-faint">
+              <p v-else class="text-note text-ink-faint">
                 另得{{ RESOURCE_LABELS.wudao }}×{{ o.extra }}
               </p>
             </template>
             <template v-else>
               <p class="leading-relaxed">贡一柄 ≥{{ o.tier }} 阶兵刃</p>
-              <p v-if="bountyShort(o)" class="text-[10px] text-cinnabar">
+              <p v-if="bountyShort(o)" class="text-note text-cinnabar">
                 {{ bountyShort(o) }}
               </p>
-              <p v-else class="text-[10px] text-ink-faint">价随所交之品质现算</p>
+              <p v-else class="text-note text-ink-faint">价随所交之品质现算</p>
             </template>
           </div>
-          <span class="text-[11px] tabular text-cinnabar">
+          <span class="text-body tabular text-cinnabar">
             {{
               o.kind === "equip"
                 ? `≥ ${formatGN(equipBountyReward(o.tier, 0).stone)} 石 + ${equipBountyReward(o.tier, 0).dust} 尘`
@@ -609,14 +609,14 @@ function bountyReady(o: BountySlot): boolean {
           </span>
           <button
             :data-bounty-equip="o.kind === 'equip' ? o.idx : undefined"
-            class="btn-seal min-h-[28px] !px-3 !py-1 text-[11px]"
+            class="btn-seal min-h-[28px] !px-3 !py-1 text-body"
             :disabled="o.claimed || !bountyReady(o)"
             @click="claimBounty(o.idx)"
           >
             {{ o.claimed ? "已交" : "交货" }}
           </button>
         </div>
-        <p v-if="bounty.orders.length === 0" class="py-3 text-center text-[11px] text-ink-faint">
+        <p v-if="bounty.orders.length === 0" class="py-3 text-center text-body text-ink-faint">
           悬赏板空着 —— 商号还没挂单,下个时辰自会换新。
         </p>
       </div>
@@ -629,7 +629,7 @@ function bountyReady(o: BountySlot): boolean {
       aria-label="交付兵刃"
       @close="equipPick = null"
     >
-      <p class="mb-2 text-[11px] text-ink-faint">
+      <p class="mb-2 text-body text-ink-faint">
         交付就没了 —— 挑一件你舍得交的。价随所交之品质现算。
       </p>
       <div
@@ -641,7 +641,7 @@ function bountyReady(o: BountySlot): boolean {
           v-for="it in equipCandidatePage.visible"
           :key="it.uid"
           :data-equip-candidate="it.uid"
-          class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-[11px] hoverable:hover:border-cinnabar"
+          class="flex w-full items-center justify-between gap-2 rounded border border-ink/10 px-3 py-2 text-left text-body hoverable:hover:border-cinnabar"
           @click="deliverPicked(it.uid)"
         >
           <span class="min-w-0 truncate">
@@ -659,7 +659,7 @@ function bountyReady(o: BountySlot): boolean {
               >{{ qualityDef(it.quality).name }} · {{ it.tier }}阶</span
             >
           </span>
-          <span class="ml-1 shrink-0 text-[11px] text-ink-faint tabular"
+          <span class="ml-1 shrink-0 text-body text-ink-faint tabular"
             >收 {{ equipBountyText(it) }}
           </span>
           <span class="shrink-0 text-cinnabar">交付</span>
@@ -671,7 +671,7 @@ function bountyReady(o: BountySlot): boolean {
           <button
             v-if="equipCandidatePage.start > 0"
             data-market-prev="equip"
-            class="btn-ghost min-h-[28px] flex-1 !py-1 text-[10px]"
+            class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
             :aria-label="equipCandidatePrevLabel"
             @click="showPreviousEquipCandidates"
           >
@@ -681,14 +681,14 @@ function bountyReady(o: BountySlot): boolean {
             v-if="equipCandidatePage.hidden > 0"
             data-market-more="equip"
             :data-promised="Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.hidden)"
-            class="btn-ghost min-h-[28px] flex-1 !py-1 text-[10px]"
+            class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
             :aria-label="equipCandidateMoreLabel"
             @click="showMoreEquipCandidates"
           >
             {{ equipCandidateMoreLabel }}
           </button>
         </div>
-        <p v-if="equipCandidates.length === 0" class="text-[11px] text-ink-faint">没有够阶的兵刃</p>
+        <p v-if="equipCandidates.length === 0" class="text-body text-ink-faint">没有够阶的兵刃</p>
       </div>
     </BaseModal>
 
@@ -701,7 +701,7 @@ function bountyReady(o: BountySlot): boolean {
           <div
             v-for="p in market.consign"
             :key="p.slot"
-            class="flex items-center gap-2 rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-1.5 text-[11px]"
+            class="flex items-center gap-2 rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-1.5 text-body"
           >
             <span class="flex-1 truncate">{{ p.name }}</span>
             <span class="tabular text-ink-faint">
@@ -719,7 +719,7 @@ function bountyReady(o: BountySlot): boolean {
           :data-market-consign-total="inventory.bagItems.length"
           :data-market-consign-start="consignPage.start"
         >
-          <p class="mb-1 text-[10px] text-ink-faint">
+          <p class="mb-1 text-note text-ink-faint">
             寄卖一件背包装备({{ MARKET_CONSIGN_SLOTS }} 格,约
             {{ MARKET_CONSIGN_SECONDS / 60 }} 分自售入账,离包即定)
           </p>
@@ -735,7 +735,7 @@ function bountyReady(o: BountySlot): boolean {
                 v-for="it in consignPage.visible"
                 :key="it.uid"
                 :data-consign-uid="it.uid"
-                class="inline-flex min-h-[28px] shrink-0 items-center rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
+                class="inline-flex min-h-[28px] shrink-0 items-center rounded border border-ink/10 px-2 py-1 text-note hoverable:hover:border-cinnabar"
                 @click="consign(it.uid)"
               >
                 <QualitySeal
@@ -752,7 +752,7 @@ function bountyReady(o: BountySlot): boolean {
                   {{ formatGN(consignPrice(it.tier, qualityDef(it.quality).rank)) }} 石</span
                 >
               </button>
-              <span v-if="inventory.bagItems.length === 0" class="text-[10px] text-ink-faint"
+              <span v-if="inventory.bagItems.length === 0" class="text-note text-ink-faint"
                 >行囊空空 —— 去历练中寻些机缘吧</span
               >
             </div>
@@ -760,7 +760,7 @@ function bountyReady(o: BountySlot): boolean {
               <button
                 v-if="consignPage.start > 0"
                 data-market-prev="consign"
-                class="btn-ghost min-h-[28px] flex-1 !py-1 text-[10px]"
+                class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
                 :aria-label="consignPrevLabel"
                 @click="showPreviousConsign"
               >
@@ -770,7 +770,7 @@ function bountyReady(o: BountySlot): boolean {
                 v-if="consignPage.hidden > 0"
                 data-market-more="consign"
                 :data-promised="Math.min(INVENTORY_RENDER_BATCH, consignPage.hidden)"
-                class="btn-ghost min-h-[28px] flex-1 !py-1 text-[10px]"
+                class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
                 :aria-label="consignMoreLabel"
                 @click="showMoreConsign"
               >
@@ -778,7 +778,7 @@ function bountyReady(o: BountySlot): boolean {
               </button>
             </div>
           </template>
-          <p v-else class="text-[10px] text-ink-faint">
+          <p v-else class="text-note text-ink-faint">
             已上满 {{ MARKET_CONSIGN_SLOTS }} 格,待手头一张空闲
           </p>
         </div>
@@ -790,14 +790,14 @@ function bountyReady(o: BountySlot): boolean {
           <button
             v-for="p in sellablePills"
             :key="p.id"
-            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
+            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-note hoverable:hover:border-cinnabar"
             @click="sellPill(p.id)"
           >
             售{{ p.def?.name ?? p.id }}(现持 {{ p.count }}) · 每颗得
             {{ formatGN(pillSellPrice(p.id)) }} 石
           </button>
           <button
-            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
+            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-note hoverable:hover:border-cinnabar"
             :disabled="!resources.hasSmall('herb', MARKET_MAT_COUNT)"
             @click="sellMat('herb')"
           >
@@ -808,7 +808,7 @@ function bountyReady(o: BountySlot): boolean {
             }}
           </button>
           <button
-            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-[10px] hoverable:hover:border-cinnabar"
+            class="inline-flex min-h-[28px] items-center rounded border border-ink/10 px-2 py-1 text-note hoverable:hover:border-cinnabar"
             :disabled="!resources.hasSmall('ore', MARKET_MAT_COUNT)"
             @click="sellMat('ore')"
           >
@@ -818,7 +818,7 @@ function bountyReady(o: BountySlot): boolean {
                 : `售玄铁×${MARKET_MAT_COUNT} · 得 ${formatGN(materialSellPrice(player.major))} 石`
             }}
           </button>
-          <span v-if="sellablePills.length === 0" class="text-[10px] text-ink-faint"
+          <span v-if="sellablePills.length === 0" class="text-note text-ink-faint"
             >并无即时可售的丹药 —— 历练所得,自能入市</span
           >
         </div>

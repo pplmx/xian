@@ -55,7 +55,7 @@ const show = computed(() => event.value !== null);
 <template>
   <!-- 背板/Esc/关闭键一律等于「忽略」:与从前点背板的语义一致 -->
   <BaseModal :open="show" title="悟道顿悟" @close="handleIgnore">
-    <p class="flex items-center justify-between text-[11px] text-ink-faint">
+    <p class="flex items-center justify-between text-body text-ink-faint">
       <span>灵光一闪,选择一项增益</span>
       <!-- 临散前转朱砂:限时增益,过了就白丢 —— 紧迫得用颜色说出来,不看倒计时也瞥见
            (颜色判断用原始秒数,呈现走 formatCountdown 定宽串) -->
@@ -76,7 +76,7 @@ const show = computed(() => event.value !== null);
         <!-- 风味一行、数值一行:数值由 ui/earlyGameText 从 buff 本体现算,
              文案(opt.desc)只剩风味 —— 改 buffs.ts 的常数,这一行跟着变 -->
         <span class="mt-0.5 block t-body text-ink-faint">{{ opt.desc }}</span>
-        <span class="mt-0.5 block text-[11px] leading-relaxed tabular text-jade">{{
+        <span class="mt-0.5 block text-body leading-relaxed tabular text-jade">{{
           enlightenmentEffectText(opt)
         }}</span>
       </button>

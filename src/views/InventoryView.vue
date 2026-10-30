@@ -3,10 +3,10 @@
     <FolioPageHeader title="行囊" subtitle="装备、丹药与材料" featured>
       <template #action>
         <div class="text-right tinylens:text-left">
-          <p class="text-[10px] tracking-[0.24em] text-ink-faint">藏珍</p>
-          <p class="mt-0.5 font-kai text-[18px] leading-tight text-ink tabular">
+          <p class="text-note tracking-[0.24em] text-ink-faint">藏珍</p>
+          <p class="mt-0.5 font-kai text-heading leading-tight text-ink tabular">
             {{ inventory.bagItems.length
-            }}<span class="text-[11px] text-ink-faint"> / {{ BAG_CAPACITY }}</span>
+            }}<span class="text-body text-ink-faint"> / {{ BAG_CAPACITY }}</span>
           </p>
         </div>
       </template>
@@ -29,8 +29,8 @@
         :data-inventory-new-count="inventory.newItemCount"
         :data-inventory-upgrade-count="upgradeRows.length"
       >
-        <p class="text-[10px] tracking-[0.24em] text-ink-faint">本批览要</p>
-        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[10px]">
+        <p class="text-note tracking-[0.24em] text-ink-faint">本批览要</p>
+        <div class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-note">
           <span class="text-ink-faint"
             >器灵尘
             <span class="text-ink-soft tabular">{{ formatExact(resources.dust) }}</span></span
@@ -51,10 +51,10 @@
         </div>
         <div class="ink-divider-mark my-2.5" />
         <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-          <span class="text-[11px]" :class="upgradeRows.length ? 'text-ink-soft' : 'text-jade'">
+          <span class="text-body" :class="upgradeRows.length ? 'text-ink-soft' : 'text-jade'">
             {{ upgradeRows.length ? `可动 ${upgradeRows.length} 槽` : "已无可换之器" }}
           </span>
-          <span class="text-[10px] text-ink-faint">只计真实战力更高</span>
+          <span class="text-note text-ink-faint">只计真实战力更高</span>
         </div>
         <div v-if="upgradeRows.length" class="mt-1.5 flex flex-wrap gap-1.5">
           <button
@@ -62,7 +62,7 @@
             :key="row.slot"
             type="button"
             :data-inventory-upgrade-slot="row.slot"
-            class="chip-ink !px-2 !py-1 text-[10px] active:scale-95"
+            class="chip-ink !px-2 !py-1 text-note active:scale-95"
             :aria-label="`查看${EQUIP_SLOT_NAMES[row.slot]}候选，${upgradeText(row)}`"
             @click="pickerSlot = row.slot"
           >
@@ -70,28 +70,28 @@
             <span class="tabular text-jade">{{ upgradeText(row) }}</span>
           </button>
         </div>
-        <p v-else class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        <p v-else class="mt-1 text-note leading-relaxed text-ink-faint">
           行囊里没有可补上空槽或换上更强的藏品。
         </p>
       </div>
 
       <!-- 装备共鸣:机制是活的,玩家却看不见 —— 同组两件即共鸣,（2/2）亮起 -->
       <div v-if="setRows.length" class="card-ink mt-3 px-4 py-2.5">
-        <p class="text-[10px] text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
-        <p v-for="s in setRows" :key="s.def.id" class="mt-1 flex items-baseline gap-2 text-[11px]">
+        <p class="text-note text-ink-faint">装备共鸣(同组两件即共鸣,机制不叠数值)</p>
+        <p v-for="s in setRows" :key="s.def.id" class="mt-1 flex items-baseline gap-2 text-body">
           <span class="font-kai" :class="s.active ? 'text-jade' : 'text-ink-soft'">{{
             s.def.name
           }}</span>
           <span class="tabular" :class="s.active ? 'text-jade' : 'text-ink-faint'"
             >{{ s.count }}/{{ s.def.required }}</span
           >
-          <span class="min-w-0 grow text-[10px] leading-relaxed text-ink-faint">{{
+          <span class="min-w-0 grow text-note leading-relaxed text-ink-faint">{{
             s.def.effectDesc
           }}</span>
           <!-- 穿齐该套:换上已持有里最强的套件,已穿更强者不动(绝不降级) -->
           <button
             type="button"
-            class="tap-row shrink-0 -my-1.5 py-1.5 font-kai text-[11px] text-cinnabar active:opacity-60"
+            class="tap-row shrink-0 -my-1.5 py-1.5 font-kai text-body text-cinnabar active:opacity-60"
             :aria-label="`穿齐${s.def.name}`"
             @click="wearSetOf(s.def.id)"
           >
@@ -101,7 +101,7 @@
       </div>
       <div class="mt-2 flex gap-2">
         <button
-          class="chip-ink flex-1 !justify-center !py-1.5 text-[11px]"
+          class="chip-ink flex-1 !justify-center !py-1.5 text-body"
           aria-label="智能收纳设置"
           :aria-expanded="smartOpen"
           @click="smartOpen = true"
@@ -109,7 +109,7 @@
           收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
         </button>
         <button
-          class="chip-ink flex-1 !justify-center !py-1.5 text-[11px]"
+          class="chip-ink flex-1 !justify-center !py-1.5 text-body"
           aria-label="批量分解装备"
           :aria-expanded="decomposeOpen"
           @click="decomposeOpen = true"
@@ -128,7 +128,7 @@
         >
           <span
             v-if="row.upgrade"
-            class="absolute right-1 top-1 font-kai text-[10px] leading-none text-jade"
+            class="absolute right-1 top-1 font-kai text-note leading-none text-jade"
             aria-hidden="true"
             >换</span
           >
@@ -137,7 +137,7 @@
             「哪个是我的东西」。槽名走楷体 + 字距:外形一变就认得出是题头而非内容;
             「·N」是候选件数,压到更淡的一档。
           -->
-          <span class="font-kai text-[10px] tracking-[0.15em] text-ink-faint">
+          <span class="font-kai text-note tracking-[0.15em] text-ink-faint">
             {{ row.name }}
             <span v-if="row.stock" class="tracking-normal text-ink-faint">·{{ row.stock }}</span>
           </span>
@@ -148,7 +148,7 @@
               :style="{ color: qualityDef(row.item.quality).color }"
             />
             <span
-              class="w-full truncate text-center font-kai text-[10px]"
+              class="w-full truncate text-center font-kai text-note"
               :style="{ color: qualityDef(row.item.quality).color }"
             >
               {{ row.template.name }}
@@ -158,11 +158,11 @@
           </template>
           <template v-else>
             <span class="grid h-4 w-4 place-items-center text-ink-faint">·</span>
-            <span class="text-[10px] text-ink-faint">空悬</span>
+            <span class="text-note text-ink-faint">空悬</span>
           </template>
         </button>
       </div>
-      <p class="mt-2 text-center text-[10px] text-ink-faint">
+      <p class="mt-2 text-center text-note text-ink-faint">
         点击部位查看候选,行囊满时新掉落自动折作器灵尘
       </p>
       <!--
@@ -171,7 +171,7 @@
         那一排 11px 小字里,两回都没人看得见(两次实测反馈)。故改成整行按钮,写明全称。
       -->
       <button
-        class="btn-ghost mt-2 w-full !py-2 !text-[11px]"
+        class="btn-ghost mt-2 w-full !py-2 !text-body"
         :disabled="upgradeRows.length === 0"
         :aria-label="
           upgradeRows.length ? `一键换上 ${upgradeRows.length} 个槽位的最强装备` : '已无可换之器'
@@ -216,7 +216,7 @@
           <button
             v-if="itemPage.start > 0"
             data-inventory-prev
-            class="btn-ghost flex-1 !py-2 !text-[11px]"
+            class="btn-ghost flex-1 !py-2 !text-body"
             :aria-label="previousItemsLabel"
             @click="showPreviousItems"
           >
@@ -224,7 +224,7 @@
           </button>
           <button
             v-if="itemPage.hidden > 0"
-            class="btn-ghost flex-1 !py-2 !text-[11px]"
+            class="btn-ghost flex-1 !py-2 !text-body"
             :aria-label="moreItemsLabel"
             @click="showMoreItems"
           >
@@ -232,7 +232,7 @@
           </button>
         </div>
       </div>
-      <p v-else class="empty-note mt-8 text-center text-[11px] text-ink-faint">
+      <p v-else class="empty-note mt-8 text-center text-body text-ink-faint">
         行囊空空,去历练中寻些机缘吧
       </p>
     </template>
@@ -250,7 +250,7 @@
         >
         <span class="min-w-0 flex-1">
           <span class="block t-card">开炉炼丹</span>
-          <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
+          <span class="block truncate text-note leading-relaxed text-ink-faint">
             {{
               recipes.length > 0
                 ? `已知丹方 ${recipes.length} 种 · ${HERB_GRADE_SHORT[herbGradeOfMajor(player.major)]}灵草 ${resources.herbOf(herbGradeOfMajor(player.major))}`
@@ -258,7 +258,7 @@
             }}
           </span>
         </span>
-        <span class="shrink-0 text-[11px] text-ink-faint">›</span>
+        <span class="shrink-0 text-body text-ink-faint">›</span>
       </button>
 
       <!-- 灵草坊(ISS-306):灵石购草 —— 草比石贵,想补哪一品,明码标价(极贵) -->
@@ -267,17 +267,17 @@
         @click="marketOpen = true"
       >
         <span
-          class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-[15px] text-paper"
+          class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-jade/85 font-kai text-section text-paper"
           >坊</span
         >
         <span class="min-w-0 flex-1">
           <span class="block t-card">灵草坊</span>
-          <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
+          <span class="block truncate text-note leading-relaxed text-ink-faint">
             灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,道品
             {{ formatGN(herbBuyPrice(5)) }} 灵石一株
           </span>
         </span>
-        <span class="shrink-0 text-[11px] text-ink-faint">买 ›</span>
+        <span class="shrink-0 text-body text-ink-faint">买 ›</span>
       </button>
 
       <!-- 丹匣:格子只给图标、名号与存量,详情看弹窗 -->
@@ -294,7 +294,7 @@
           @open="pillDetail = row.def!.id"
         />
       </div>
-      <p v-else class="empty-note mt-10 text-center text-[11px] text-ink-faint">
+      <p v-else class="empty-note mt-10 text-center text-body text-ink-faint">
         丹匣空空,去藏经阁参悟丹方,或去坊市收购几株灵草
       </p>
     </template>
@@ -306,7 +306,7 @@
         差得很远(前三样进炉子,后三样进账本)。分两组,各带一行说明 ——
         找「炼丹要什么」与「我还有多少底子」是两件事。
       -->
-      <p class="mt-3 px-1 text-[11px] text-ink-faint">炼制之材 · 进炉子</p>
+      <p class="mt-3 px-1 text-body text-ink-faint">炼制之材 · 进炉子</p>
       <div class="mt-1.5 grid grid-cols-4 gap-2">
         <ItemCell
           v-for="m in craftMaterials"
@@ -320,7 +320,7 @@
           @open="materialDetail = m.key"
         />
       </div>
-      <p class="mt-3 px-1 text-[11px] text-ink-faint">修行所积 · 进账本</p>
+      <p class="mt-3 px-1 text-body text-ink-faint">修行所积 · 进账本</p>
       <div class="mt-1.5 grid grid-cols-4 gap-2">
         <ItemCell
           v-for="m in stockMaterials"
@@ -359,18 +359,18 @@
             <GameIcon :name="currentPill.def.icon" :size="24" />
           </span>
           <div class="min-w-0">
-            <p class="text-[11px]" :style="{ color: qualityDef(currentPill.def.quality).color }">
+            <p class="text-body" :style="{ color: qualityDef(currentPill.def.quality).color }">
               {{ qualityDef(currentPill.def.quality).name }}
             </p>
-            <p class="text-[11px] text-ink-faint tabular">持有 ×{{ currentPill.count }}</p>
+            <p class="text-body text-ink-faint tabular">持有 ×{{ currentPill.count }}</p>
           </div>
         </div>
         <p class="mt-3 t-body text-ink-soft">{{ currentPill.def.desc }}</p>
         <!-- 效果与来路:丹药卡片此前只有风味与数量,服下去会怎样一个字都没说 -->
-        <p class="mt-2 whitespace-pre-line text-[11px] leading-relaxed text-qing">
+        <p class="mt-2 whitespace-pre-line text-body leading-relaxed text-qing">
           {{ pillFuncText(currentPill.def) }}
         </p>
-        <p v-if="pillMasteryText(currentPill.def.id)" class="mt-1 text-[11px] text-ink-faint">
+        <p v-if="pillMasteryText(currentPill.def.id)" class="mt-1 text-body text-ink-faint">
           {{ pillMasteryText(currentPill.def.id) }}
         </p>
         <!--
@@ -379,7 +379,7 @@
         -->
         <p
           v-if="currentPillHint"
-          class="mt-1 text-[11px]"
+          class="mt-1 text-body"
           :class="
             currentPillHint.tone === 'cinnabar'
               ? 'text-cinnabar'
@@ -420,8 +420,8 @@
             <GameIcon :name="currentMaterial.icon" :size="24" :class="currentMaterial.color" />
           </span>
           <div class="min-w-0">
-            <p class="font-kai text-[15px] text-ink tabular">{{ currentMaterial.full }}</p>
-            <p class="text-[10px] text-ink-faint">现有</p>
+            <p class="font-kai text-section text-ink tabular">{{ currentMaterial.full }}</p>
+            <p class="text-note text-ink-faint">现有</p>
           </div>
         </div>
         <!--
@@ -429,12 +429,12 @@
           与炼丹头 / 灵草坊同一套分档读数(herbGradeHeld / herbOf 同源)。
         -->
         <template v-if="currentMaterial.key === RESOURCE_LABELS.herb">
-          <p class="mt-3 text-[10px] text-ink-faint">分品持有</p>
+          <p class="mt-3 text-note text-ink-faint">分品持有</p>
           <div class="mt-1 flex flex-wrap gap-1.5">
             <span
               v-for="g in HERB_GRADES"
               :key="g"
-              class="chip-ink !py-0.5 !px-2 !text-[10px] tabular"
+              class="chip-ink !py-0.5 !px-2 !text-note tabular"
               :class="herbGradeHeld(g) > 0 ? 'text-jade' : 'text-ink-faint'"
               :title="HERB_GRADE_NAMES[g]"
             >

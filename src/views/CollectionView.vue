@@ -13,14 +13,13 @@
       <div class="card-ink mt-2 px-4 py-3" data-achievement-hero>
         <div class="flex items-end justify-between gap-3">
           <div class="min-w-0">
-            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">成就谱</p>
-            <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+            <p class="font-kai text-title tracking-[0.2em] text-ink">成就谱</p>
+            <p class="mt-1 text-note leading-relaxed text-ink-faint">
               名称与条件不再藏着；做成一枚，记一枚。
             </p>
           </div>
-          <p class="shrink-0 font-kai text-[18px] text-cinnabar tabular">
-            {{ doneCount
-            }}<span class="text-[11px] text-ink-faint">/{{ ACHIEVEMENTS.length }}</span>
+          <p class="shrink-0 font-kai text-heading text-cinnabar tabular">
+            {{ doneCount }}<span class="text-body text-ink-faint">/{{ ACHIEVEMENTS.length }}</span>
           </p>
         </div>
         <ProgressBar
@@ -31,8 +30,8 @@
         />
         <div class="ink-divider-mark my-3" />
         <div class="flex items-baseline justify-between gap-2">
-          <p class="font-kai text-[11px] tracking-widest text-ink-soft">眼下可追</p>
-          <p class="text-[10px] text-ink-faint">按完成比例</p>
+          <p class="font-kai text-body tracking-widest text-ink-soft">眼下可追</p>
+          <p class="text-note text-ink-faint">按完成比例</p>
         </div>
         <div v-if="nearestAchievements.length" class="mt-1.5 space-y-1">
           <button
@@ -53,17 +52,15 @@
               <span
                 class="flex items-baseline justify-between gap-2 tinylens:flex-col tinylens:items-start tinylens:gap-0"
               >
-                <span class="truncate font-kai text-[11px] text-ink">{{ row.def.name }}</span>
-                <span class="shrink-0 tabular text-[10px] text-qing">{{ row.label }}</span>
+                <span class="truncate font-kai text-body text-ink">{{ row.def.name }}</span>
+                <span class="shrink-0 tabular text-note text-qing">{{ row.label }}</span>
               </span>
-              <span class="mt-0.5 block truncate text-[10px] text-ink-faint">{{
-                row.def.desc
-              }}</span>
+              <span class="mt-0.5 block truncate text-note text-ink-faint">{{ row.def.desc }}</span>
             </span>
-            <span class="mt-0.5 shrink-0 text-[10px] text-ink-faint" aria-hidden="true">›</span>
+            <span class="mt-0.5 shrink-0 text-note text-ink-faint" aria-hidden="true">›</span>
           </button>
         </div>
-        <p v-else class="mt-2 text-[10px] text-jade">全谱已成，往后的路只看你怎么走。</p>
+        <p v-else class="mt-2 text-note text-jade">全谱已成，往后的路只看你怎么走。</p>
       </div>
 
       <div class="mt-3 space-y-2">
@@ -83,10 +80,8 @@
           >
             <span class="min-w-0 flex-1">
               <span class="flex items-baseline justify-between gap-2">
-                <span class="font-kai text-[14px] tracking-[0.2em] text-ink">{{
-                  g.direction
-                }}</span>
-                <span class="shrink-0 tabular text-[11px] text-ink-faint"
+                <span class="font-kai text-title tracking-[0.2em] text-ink">{{ g.direction }}</span>
+                <span class="shrink-0 tabular text-body text-ink-faint"
                   >{{ g.done }}/{{ g.total }}</span
                 >
               </span>
@@ -96,7 +91,7 @@
                 color="var(--color-jade)"
                 :height="2"
               />
-              <span class="mt-1 block truncate text-[10px] text-ink-faint">
+              <span class="mt-1 block truncate text-note text-ink-faint">
                 {{
                   g.done === g.total
                     ? "此路已尽，点开回看"
@@ -107,7 +102,7 @@
               </span>
             </span>
             <span
-              class="mt-0.5 shrink-0 text-[11px] transition-transform"
+              class="mt-0.5 shrink-0 text-body transition-transform"
               :class="isGroupOpen(g.direction) ? 'rotate-180 text-cinnabar' : 'text-ink-faint'"
               aria-hidden="true"
               >▾</span
@@ -126,7 +121,7 @@
               class="flex items-start gap-3 border-b border-ink/6 px-4 py-2.5 last:border-b-0"
             >
               <span
-                class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[10px] font-kai"
+                class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-note font-kai"
                 :class="
                   row.done
                     ? 'border-gold-ink text-gold-ink'
@@ -141,16 +136,16 @@
                 <div
                   class="flex items-baseline justify-between gap-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
                 >
-                  <p class="font-kai text-[11px]" :class="row.done ? 'text-ink' : 'text-ink-soft'">
+                  <p class="font-kai text-body" :class="row.done ? 'text-ink' : 'text-ink-soft'">
                     {{ row.def.name }}
                   </p>
                   <span
-                    class="shrink-0 tabular text-[10px]"
+                    class="shrink-0 tabular text-note"
                     :class="row.done ? 'text-gold-ink' : 'text-qing'"
                     >{{ row.label }}</span
                   >
                 </div>
-                <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+                <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
                   {{ row.def.desc }}
                 </p>
                 <ProgressBar
@@ -161,7 +156,7 @@
                   :height="2"
                 />
                 <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏(见 rewardText 含 titleId) -->
-                <p v-if="row.done && row.rewardText" class="mt-0.5 text-[10px] text-qing tabular">
+                <p v-if="row.done && row.rewardText" class="mt-0.5 text-note text-qing tabular">
                   {{ row.rewardText }}
                 </p>
               </div>
@@ -169,7 +164,7 @@
           </div>
         </section>
       </div>
-      <p class="text-center text-[10px] text-ink-faint">
+      <p class="text-center text-note text-ink-faint">
         未达成也写明条件；卷目按方向收着，点开可逐条对账
       </p>
     </template>
@@ -183,8 +178,8 @@
       <div class="card-ink mt-2 px-4 py-3" data-collection-hero>
         <div class="flex items-end justify-between gap-3">
           <div class="min-w-0">
-            <p class="font-kai text-[14px] tracking-[0.2em] text-ink">藏珍谱</p>
-            <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+            <p class="font-kai text-title tracking-[0.2em] text-ink">藏珍谱</p>
+            <p class="mt-1 text-note leading-relaxed text-ink-faint">
               {{
                 collectionOverview.newCount > 0
                   ? `${collectionOverview.newRows.length} 册有新得，已展 ${openedNewCount} 册${
@@ -198,9 +193,9 @@
               }}
             </p>
           </div>
-          <p class="shrink-0 font-kai text-[18px] text-cinnabar tabular">
+          <p class="shrink-0 font-kai text-heading text-cinnabar tabular">
             {{ collectionOverview.known
-            }}<span class="text-[11px] text-ink-faint">/{{ collectionOverview.total }}</span>
+            }}<span class="text-body text-ink-faint">/{{ collectionOverview.total }}</span>
           </p>
         </div>
         <ProgressBar
@@ -213,10 +208,10 @@
         />
         <div class="ink-divider-mark my-3" />
         <div class="flex items-baseline justify-between gap-2">
-          <p class="font-kai text-[11px] tracking-widest text-ink-soft">
+          <p class="font-kai text-body tracking-widest text-ink-soft">
             {{ collectionOverview.newCount > 0 ? "眼下新得" : "将满之册" }}
           </p>
-          <p class="text-[10px] text-ink-faint">
+          <p class="text-note text-ink-faint">
             {{
               collectionOverview.newCount > 0
                 ? `${collectionOverview.newCount} 枚待看`
@@ -240,19 +235,19 @@
               @click="revealCollectionCategory(row.key)"
             >
               <span class="flex min-w-0 items-start justify-between gap-1">
-                <span class="truncate font-kai text-[11px] tracking-[0.08em] text-ink">{{
+                <span class="truncate font-kai text-body tracking-[0.08em] text-ink">{{
                   row.name
                 }}</span>
-                <span class="mt-0.5 shrink-0 text-[10px] text-ink-faint" aria-hidden="true">›</span>
+                <span class="mt-0.5 shrink-0 text-note text-ink-faint" aria-hidden="true">›</span>
               </span>
               <span class="mt-auto flex min-w-0 items-baseline justify-between gap-1 pt-2">
-                <span v-if="row.newCount > 0" class="shrink-0 tabular text-[10px] text-cinnabar"
+                <span v-if="row.newCount > 0" class="shrink-0 tabular text-note text-cinnabar"
                   >新 {{ row.newCount }}</span
                 >
-                <span v-else class="truncate tabular text-[10px] text-qing"
+                <span v-else class="truncate tabular text-note text-qing"
                   >还差 {{ row.remaining }}</span
                 >
-                <span class="shrink-0 tabular text-[10px] text-ink-faint">
+                <span class="shrink-0 tabular text-note text-ink-faint">
                   {{ row.known }}/{{ row.total }}
                 </span>
               </span>
@@ -267,7 +262,7 @@
           <button
             v-if="collectionMoreNewCount > 0"
             type="button"
-            class="mt-2 flex w-full items-center justify-between gap-2 rounded-md border border-cinnabar/25 bg-cinnabar/5 px-2.5 py-2 text-left text-[10px] text-ink-faint active:bg-cinnabar/10"
+            class="mt-2 flex w-full items-center justify-between gap-2 rounded-md border border-cinnabar/25 bg-cinnabar/5 px-2.5 py-2 text-left text-note text-ink-faint active:bg-cinnabar/10"
             data-collection-more-new
             :aria-expanded="collectionMoreNewOpen"
             :aria-label="
@@ -292,10 +287,10 @@
             </span>
           </button>
         </template>
-        <p v-else-if="collectionOverview.known > 0" class="mt-2 text-[10px] text-jade">
+        <p v-else-if="collectionOverview.known > 0" class="mt-2 text-note text-jade">
           已开之册皆尽收，余册待你从历练、炼丹与奇缘里启封。
         </p>
-        <p v-else class="mt-2 text-[10px] text-ink-faint">
+        <p v-else class="mt-2 text-note text-ink-faint">
           先从历练、炼丹与奇缘里带回第一件，九册会自己亮起来。
         </p>
       </div>
@@ -321,16 +316,16 @@
             <span class="min-w-0 flex-1">
               <span class="flex items-baseline justify-between gap-2">
                 <span class="flex min-w-0 items-center gap-1.5">
-                  <span class="truncate font-kai text-[14px] tracking-[0.2em] text-ink">{{
+                  <span class="truncate font-kai text-title tracking-[0.2em] text-ink">{{
                     cat.name
                   }}</span>
                   <span
                     v-if="progressOf(cat.key).newCount > 0"
-                    class="chip-ink shrink-0 border-cinnabar/50 text-[10px] text-cinnabar"
+                    class="chip-ink shrink-0 border-cinnabar/50 text-note text-cinnabar"
                     >新 {{ progressOf(cat.key).newCount }}</span
                   >
                 </span>
-                <span class="shrink-0 tabular text-[11px] text-ink-faint">
+                <span class="shrink-0 tabular text-body text-ink-faint">
                   {{ progressOf(cat.key).known }}/{{ progressOf(cat.key).total }}
                 </span>
               </span>
@@ -342,12 +337,12 @@
                 "
                 :height="2"
               />
-              <span class="mt-1 block truncate text-[10px] text-ink-faint">
+              <span class="mt-1 block truncate text-note text-ink-faint">
                 {{ collectionCategorySummary(cat.key) }}
               </span>
             </span>
             <span
-              class="mt-0.5 shrink-0 text-[11px] transition-transform"
+              class="mt-0.5 shrink-0 text-body transition-transform"
               :class="
                 isCollectionCategoryOpen(cat.key) ? 'rotate-180 text-cinnabar' : 'text-ink-faint'
               "
@@ -361,11 +356,11 @@
                 未收录的条目只是一片「???」—— 得告诉玩家去哪儿找,否则这一册只能干瞪眼。
                 全收齐的那一目,「去哪儿找」就没了意义,替换成石绿的「尽收」完成感。
               -->
-              <p v-if="catComplete(cat)" class="px-4 pt-3 text-[10px] text-jade">
-                <span class="chip-ink border-jade/60 text-[10px] text-jade">尽收</span>
+              <p v-if="catComplete(cat)" class="px-4 pt-3 text-note text-jade">
+                <span class="chip-ink border-jade/60 text-note text-jade">尽收</span>
                 此目已无未识之物 —— 见之者皆入册
               </p>
-              <p v-else class="px-4 pt-3 text-[10px] leading-relaxed text-ink-faint">
+              <p v-else class="px-4 pt-3 text-note leading-relaxed text-ink-faint">
                 {{ cat.source }}
               </p>
               <div class="flex flex-wrap gap-1.5 px-3.5 py-3">
@@ -380,7 +375,7 @@
                     <!-- 灵兽册这类带 icon 的条目,已收录的 chip 前置一枚小章 —— 图鉴终于有貌 -->
                     <GameIcon v-if="entry.icon" :name="entry.icon" :size="11" />
                     {{ entry.name }}
-                    <span v-if="entry.badge" class="text-[10px] text-ink-faint">{{
+                    <span v-if="entry.badge" class="text-note text-ink-faint">{{
                       entry.badge
                     }}</span>
                     <!--
@@ -390,7 +385,7 @@
                     -->
                     <span
                       v-if="quests.isEntryNew(cat.key, entry.id)"
-                      class="text-[10px] text-cinnabar animate-new-pop"
+                      class="text-note text-cinnabar animate-new-pop"
                       >新</span
                     >
                   </button>
@@ -403,7 +398,7 @@
                   <button
                     v-if="cat.knownStart > 0"
                     type="button"
-                    class="chip-ink border-ink/25 !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+                    class="chip-ink border-ink/25 !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
                     :data-collection-prev="cat.key"
                     :aria-label="previousKnownLabel(cat)"
                     @click="showPreviousKnown(cat)"
@@ -413,7 +408,7 @@
                   <button
                     v-if="cat.hiddenKnown > 0"
                     type="button"
-                    class="chip-ink border-cinnabar/50 !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+                    class="chip-ink border-cinnabar/50 !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
                     :data-collection-more="cat.key"
                     :data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"
                     :aria-label="moreKnownLabel(cat)"
@@ -444,7 +439,7 @@
           </div>
         </section>
       </div>
-      <p class="text-center text-[10px] text-ink-faint">
+      <p class="text-center text-note text-ink-faint">
         点册目展开来源与条目;每册按批翻看,「再看 / 前一批」前后可达 —— 灵材与悟道另分深浅,愈用愈明
       </p>
     </template>
@@ -474,18 +469,18 @@
           <span v-if="detail.entry.stageName" class="chip-ink border-ink/20 text-ink-faint">{{
             detail.entry.stageName
           }}</span>
-          <span v-if="detail.entry.meta" class="text-[11px] text-ink-faint">{{
+          <span v-if="detail.entry.meta" class="text-body text-ink-faint">{{
             detail.entry.meta
           }}</span>
         </p>
-        <p class="mt-3 whitespace-pre-line text-[14px] leading-relaxed text-ink-soft">
+        <p class="mt-3 whitespace-pre-line text-title leading-relaxed text-ink-soft">
           {{ detail.entry.desc || "此物玄妙,难以言表。" }}
         </p>
-        <p v-if="detail.entry.hint" class="mt-2 text-[11px] text-ink-faint">
+        <p v-if="detail.entry.hint" class="mt-2 text-body text-ink-faint">
           {{ detail.entry.hint }}
         </p>
         <div class="ink-divider-mark my-3" />
-        <p class="flex justify-between text-[11px]">
+        <p class="flex justify-between text-body">
           <span class="text-ink-faint">{{ detail.entry.foot.label }}</span>
           <span class="tabular text-ink-soft">{{ detail.entry.foot.value }}</span>
         </p>

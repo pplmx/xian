@@ -2,9 +2,7 @@
   <div class="stagger-in flex min-h-full flex-col px-6 py-8">
     <!-- 上一步:未定格前可回欢迎页核隐私(路由守卫允许 create→welcome) -->
     <div class="flex items-center">
-      <RouterLink
-        to="/welcome"
-        class="-my-1.5 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
+      <RouterLink to="/welcome" class="-my-1.5 py-1.5 text-body text-ink-faint active:text-ink-soft"
         >← 欢迎</RouterLink
       >
     </div>
@@ -12,12 +10,12 @@
     <!-- 题字 -->
     <div class="mt-6 text-center">
       <h1 class="font-kai text-[42px] leading-tight tracking-[0.35em] text-ink">玄枢录</h1>
-      <p class="mt-2 text-[11px] tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
+      <p class="mt-2 text-body tracking-[0.5em] text-ink-faint">玄之又玄 · 众妙之门</p>
     </div>
 
     <!-- 道号 -->
     <div class="card-ink mt-8 px-4 py-3">
-      <p class="mb-2 font-kai text-[14px] tracking-[0.3em] text-ink-faint">道 号</p>
+      <p class="mb-2 font-kai text-title tracking-[0.3em] text-ink-faint">道 号</p>
       <div class="flex items-center gap-2">
         <input
           v-model="name"
@@ -35,8 +33,8 @@
     <!-- 灵根 -->
     <div class="card-ink mt-4 px-4 py-4">
       <div class="flex items-baseline justify-between">
-        <p class="font-kai text-[11px] tracking-[0.3em] text-ink-faint">灵 根</p>
-        <span class="font-kai text-[15px] tracking-widest text-cinnabar">{{
+        <p class="font-kai text-body tracking-[0.3em] text-ink-faint">灵 根</p>
+        <span class="font-kai text-section tracking-widest text-cinnabar">{{
           profile.gradeName
         }}</span>
       </div>
@@ -60,7 +58,7 @@
           >
             {{ ELEMENTS[root.element].char }}
           </span>
-          <span class="tabular text-[11px] text-ink-soft">资质 {{ root.aptitude }}</span>
+          <span class="tabular text-body text-ink-soft">资质 {{ root.aptitude }}</span>
         </div>
       </div>
       <!--
@@ -69,10 +67,10 @@
         与灵根圆环同处一卡而自成一组。
       -->
       <div data-value-row class="mt-4 flex items-baseline justify-center gap-2">
-        <span class="text-[10px] tracking-[0.2em] text-ink-faint">修行倍率</span>
+        <span class="text-note tracking-[0.2em] text-ink-faint">修行倍率</span>
         <span
           :key="rollSeq"
-          class="font-kai text-[18px] leading-none text-cinnabar tabular animate-ink-pop"
+          class="font-kai text-heading leading-none text-cinnabar tabular animate-ink-pop"
           >×{{ profile.growthMult.toFixed(2) }}</span
         >
       </div>
@@ -98,14 +96,14 @@
       -->
       <div class="mt-4 border-t border-ink/8 pt-3">
         <button
-          class="btn-ghost w-full !py-2.5 font-kai text-[14px] tracking-[0.3em]"
+          class="btn-ghost w-full !py-2.5 font-kai text-title tracking-[0.3em]"
           :disabled="starting"
           @click="reroll"
         >
           {{ rerollLabel }}
         </button>
       </div>
-      <p v-if="unlimitedReroll" class="mt-2 text-center text-[11px] text-ink-faint">
+      <p v-if="unlimitedReroll" class="mt-2 text-center text-body text-ink-faint">
         不满意就一直改,改到掷中你认的那副牌为止
       </p>
     </div>
@@ -116,7 +114,7 @@
       那一大片空白原本什么也没说,现在说了一件玩家此刻正想知道的事。
     -->
     <div class="grow" />
-    <p class="mb-2 text-center text-[10px] leading-relaxed text-ink-faint">
+    <p class="mb-2 text-center text-note leading-relaxed text-ink-faint">
       按下之后,灵根将就此定格 —— 这一世的修行之路,由它决定
     </p>
     <button class="btn-seal mb-1 w-full !py-3 text-[16px]" :disabled="starting" @click="begin">

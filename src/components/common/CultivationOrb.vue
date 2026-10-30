@@ -368,7 +368,7 @@ function particleStyle(index: number): Record<string, string> {
   position: absolute;
   left: 50%;
   top: 50%;
-  font-size: 10px;
+  font-size: var(--type-note);
   color: rgb(var(--color-gold-ink-rgb) / 0.28);
   transform: translate(-50%, -50%) rotate(var(--ang)) translateY(-72px)
     rotate(calc(-1 * var(--ang)));

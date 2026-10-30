@@ -55,7 +55,7 @@ function clearNote(): void {
     />
     <button
       v-if="noteDraft"
-      class="tap-row -my-1 px-1 py-1 text-[11px] text-ink-faint active:opacity-60"
+      class="tap-row -my-1 px-1 py-1 text-body text-ink-faint active:opacity-60"
       @click="clearNote"
     >
       清除

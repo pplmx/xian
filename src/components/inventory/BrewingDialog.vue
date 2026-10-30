@@ -5,11 +5,11 @@
       灵草五品:方子按品阶耗(见每条方子的 cost.herbGrade),总读数归一堆毫无意义 ——
       逐品列出持有,才看得出这张方子的这一品够不够。灵石仍是单一大数,占同一行右侧。
     -->
-    <p class="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] tabular">
+    <p class="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-body tabular">
       <span class="text-ink-faint">灵草</span>
       <template v-for="g in HERB_GRADES" :key="g">
         <span
-          class="chip-ink !py-0.5 !px-1.5 !text-[10px]"
+          class="chip-ink !py-0.5 !px-1.5 !text-note"
           :class="herbGradeHeld(g) > 0 ? 'text-jade' : 'text-ink-faint'"
           >{{ HERB_GRADE_SHORT[g] }} {{ herbGradeHeld(g) }}</span
         >
@@ -20,7 +20,7 @@
       被动翻检全程无进度条:玩家只知道某天突然翻出一张方子,不知道它快到了。
       这一行把「下一件事」报成时间 —— 读数与 studyTick 同序,见 core/loreService.studyEta
     -->
-    <p v-if="studyLine" class="mb-2 text-[10px] leading-relaxed text-ink-faint tabular">
+    <p v-if="studyLine" class="mb-2 text-note leading-relaxed text-ink-faint tabular">
       {{ studyLine }}
     </p>
     <!--
@@ -29,19 +29,19 @@
       效果文案走 buff 的 mods → modsText,不在此处另写一份(见 pillBatch.spec 的收口)。
     -->
     <div v-if="alchemyBuffRows.length" class="mb-2 rounded-md bg-paper-deep/60 px-3 py-2">
-      <p class="text-[10px] text-ink-faint">炼丹增益 · 此刻在炉前生效</p>
+      <p class="text-note text-ink-faint">炼丹增益 · 此刻在炉前生效</p>
       <div class="mt-1 space-y-0.5">
         <p
           v-for="row in alchemyBuffRows"
           :key="row.buffId"
-          class="flex items-baseline gap-1.5 text-[11px]"
+          class="flex items-baseline gap-1.5 text-body"
         >
           <span class="font-kai shrink-0 text-qing">{{ row.name }}</span>
           <span class="tabular text-ink-soft">{{ row.effect }}</span>
         </p>
       </div>
     </div>
-    <p v-else class="mb-2 text-[10px] leading-relaxed text-ink-faint">
+    <p v-else class="mb-2 text-note leading-relaxed text-ink-faint">
       炉前还是白身 —— 备一味
       <span class="text-qing">安神 · 澄心 · 定心</span>,双成 / 心得 / 护料即刻各涨一截
     </p>
@@ -60,16 +60,13 @@
         class="w-full rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[16px] text-ink outline-none placeholder:text-ink-faint"
         placeholder="搜方名…"
       />
-      <p
-        v-if="filteredRecipes.length"
-        class="px-0.5 text-center text-[10px] text-ink-faint tabular"
-      >
+      <p v-if="filteredRecipes.length" class="px-0.5 text-center text-note text-ink-faint tabular">
         {{ recipeQuery.trim() ? "搜得" : "丹方共" }} {{ filteredRecipes.length }} 张 · 现看
         {{ filteredRecipePage.start + 1 }}–{{ filteredRecipePage.shown }}
       </p>
       <p
         v-if="recipeQuery.trim() !== '' && !filteredRecipes.length"
-        class="px-0.5 text-[10px] text-ink-faint"
+        class="px-0.5 text-note text-ink-faint"
       >
         没有叫「{{ recipeQuery.trim() }}」的方子
       </p>
@@ -97,13 +94,13 @@
           />
           <div class="min-w-0 grow">
             <p class="flex items-center gap-2">
-              <span class="whitespace-nowrap font-kai text-[14px] text-ink">{{ r.def.name }}</span>
-              <span class="whitespace-nowrap text-[10px] text-ink-faint">{{ r.able.rank }} 阶</span>
-              <span v-if="r.able.overReach > 0" class="whitespace-nowrap text-[10px] text-cinnabar"
+              <span class="whitespace-nowrap font-kai text-title text-ink">{{ r.def.name }}</span>
+              <span class="whitespace-nowrap text-note text-ink-faint">{{ r.able.rank }} 阶</span>
+              <span v-if="r.able.overReach > 0" class="whitespace-nowrap text-note text-cinnabar"
                 >越阶 {{ r.able.overReach }}</span
               >
             </p>
-            <p class="text-[11px] text-ink-faint tabular">
+            <p class="text-body text-ink-faint tabular">
               {{ HERB_GRADE_SHORT[r.cost.herbGrade] }}灵草×{{ r.cost.herb }} · 灵石
               {{ formatGN(r.cost.stone) }} ·<template v-if="r.shouzhuoLeft"
                 >本世首败(任一炉)灵草全保</template
@@ -111,19 +108,19 @@
               ><template v-if="toNum(r.cost.stone) > 0"> · 灵石不退</template>
             </p>
             <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
-            <p class="text-[10px] leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
+            <p class="text-note leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
           </div>
           <div class="shrink-0 text-right">
             <p
-              class="tabular text-[14px]"
+              class="tabular text-title"
               :class="r.guaranteeLeft > 0 ? 'text-gold-ink' : rateClass(r.able.successRate)"
             >
               {{ r.guaranteeLeft > 0 ? "必成" : formatPercent(r.able.successRate) }}
-              <span v-if="brewTriesText(r)" class="ml-1 text-[10px] text-ink-faint">{{
+              <span v-if="brewTriesText(r)" class="ml-1 text-note text-ink-faint">{{
                 brewTriesText(r)
               }}</span>
             </p>
-            <p class="text-[10px] text-ink-faint">
+            <p class="text-note text-ink-faint">
               {{
                 r.guaranteeLeft > 0
                   ? `本世前 ${craftGuaranteeCrafts(player.reincarnation.heritage)} 炉保底 · 剩 ${r.guaranteeLeft} 炉`
@@ -131,9 +128,9 @@
               }}
             </p>
             <!-- 双成率也亮在炉前:骰子不藏 —— 与掷骰同一口径(alchemyBonusCapped,见行构造器) -->
-            <p class="mt-0.5 tabular text-[10px] text-ink-soft">
+            <p class="mt-0.5 tabular text-note text-ink-soft">
               {{ formatPercent(r.doubleRate)
-              }}<span class="ml-1 text-[10px] text-ink-faint">双成</span>
+              }}<span class="ml-1 text-note text-ink-faint">双成</span>
             </p>
             <!--
               炉前存货账:存几枚、增益丹药力顶没顶 —— 此前只摊把握与代价,
@@ -141,7 +138,7 @@
               存货与丹匣同一份账(inventory.pills),药力状态与服用侧同一把尺
               (buffOverflowOf)+ 同一把钟(见 useBrewing 行构造器)。
             -->
-            <p class="mt-0.5 tabular text-[10px]">
+            <p class="mt-0.5 tabular text-note">
               <span :class="r.stock > 0 ? 'text-ink-soft' : 'text-ink-faint'"
                 >存 {{ r.stock }}</span
               >
@@ -150,7 +147,7 @@
             </p>
           </div>
         </div>
-        <p v-if="r.shortText" class="mt-1 pl-7 text-[10px] text-cinnabar tabular">
+        <p v-if="r.shortText" class="mt-1 pl-7 text-note text-cinnabar tabular">
           {{ r.shortText }}
           <button
             v-if="r.shortHerb"
@@ -161,7 +158,7 @@
           </button>
         </p>
         <template v-if="r.guaranteeLeft === 0">
-          <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-[10px] text-ink-faint">
+          <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-note text-ink-faint">
             · {{ w }}
           </p>
         </template>
@@ -172,7 +169,7 @@
         -->
         <div class="mt-2 flex justify-end gap-1.5">
           <button
-            class="btn-seal whitespace-nowrap !px-3 !py-1.5 !text-[11px] tinylens:!px-2"
+            class="btn-seal whitespace-nowrap !px-3 !py-1.5 !text-body tinylens:!px-2"
             :disabled="r.shortHerb || r.shortStone"
             @click="craftPill(r.def.id)"
           >
@@ -180,7 +177,7 @@
           </button>
           <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
           <button
-            class="btn-ghost whitespace-nowrap !px-3 !py-1.5 !text-[11px] tinylens:!px-2"
+            class="btn-ghost whitespace-nowrap !px-3 !py-1.5 !text-body tinylens:!px-2"
             :disabled="r.shortHerb || r.shortStone"
             @click="craftBatch(r.def.id)"
           >
@@ -196,7 +193,7 @@
           v-if="filteredRecipePage.start > 0"
           type="button"
           data-recipe-prev
-          class="btn-ghost min-w-0 flex-1 !py-2 !text-[11px] tinylens:basis-full tinylens:whitespace-nowrap"
+          class="btn-ghost min-w-0 flex-1 !py-2 !text-body tinylens:basis-full tinylens:whitespace-nowrap"
           :aria-label="previousRecipeText"
           @click="showPreviousRecipes"
         >
@@ -206,7 +203,7 @@
           v-if="filteredRecipePage.hidden > 0"
           type="button"
           data-recipe-more
-          class="btn-ghost min-w-0 flex-1 !py-2 !text-[11px] tinylens:basis-full tinylens:whitespace-nowrap"
+          class="btn-ghost min-w-0 flex-1 !py-2 !text-body tinylens:basis-full tinylens:whitespace-nowrap"
           :aria-label="moreRecipeText"
           :data-promised="Math.min(RECIPE_RENDER_BATCH, filteredRecipePage.hidden)"
           @click="showMoreRecipes"
@@ -221,10 +218,10 @@
       说明一栏至少留 9 个字宽,不够就整段换到下一行,不再被三列定宽挤成竖排。
     -->
     <div v-if="skillRows.length" class="mb-2 mt-3 rounded-md bg-paper-deep/60 px-3 py-2">
-      <p class="text-[10px] text-ink-faint">技艺(按道分,做得多就精)</p>
+      <p class="text-note text-ink-faint">技艺(按道分,做得多就精)</p>
       <div class="mt-1 space-y-1">
         <div v-for="s in skillRows" :key="s.id">
-          <p class="flex items-baseline gap-2 text-[11px] tinylens:flex-wrap tinylens:gap-x-1.5">
+          <p class="flex items-baseline gap-2 text-body tinylens:flex-wrap tinylens:gap-x-1.5">
             <span class="w-14 shrink-0 text-ink-faint tinylens:w-auto">{{ s.daoName }}</span>
             <span class="w-12 shrink-0 font-kai text-ink-soft tinylens:w-auto">{{ s.name }}</span>
             <span
@@ -239,7 +236,7 @@
               (挤在一行读得出),说明用 basis-full 独占下一行。
             -->
             <span
-              class="min-w-[9em] flex-1 text-[10px] leading-relaxed text-ink-faint tinylens:basis-full"
+              class="min-w-[9em] flex-1 text-note leading-relaxed text-ink-faint tinylens:basis-full"
               >{{ s.desc }}</span
             >
           </p>
@@ -251,7 +248,7 @@
               :height="4"
               class="flex-1"
             />
-            <span class="w-7 shrink-0 text-right text-[10px] tabular text-ink-faint">{{
+            <span class="w-7 shrink-0 text-right text-note tabular text-ink-faint">{{
               s.stage === "大成" ? "已顶" : formatPercent(s.progress, 0)
             }}</span>
           </p>
@@ -261,7 +258,7 @@
     <p v-else class="px-1 py-6 text-center t-body text-ink-faint">
       你还不知道任何丹方。
       <br />
-      <span class="text-[10px]">去藏经阁参悟,或留意「失传丹方」奇缘,新方自会翻出</span>
+      <span class="text-note">去藏经阁参悟,或留意「失传丹方」奇缘,新方自会翻出</span>
     </p>
     <template #footer>
       <button class="btn-seal w-full" @click="emit('close')">收 炉</button>

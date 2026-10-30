@@ -209,12 +209,12 @@ function triesOf(id: string, minRoll = 0): number | null {
     v-if="autoOpen && reforgeCostVal"
     class="mt-3 rounded-md border border-ink/15 bg-paper-deep/50 px-3 py-2"
   >
-    <p class="mb-1 text-[11px] text-ink-soft">洗到这些词条出现就停(任一命中即停,至多 3 条)</p>
+    <p class="mb-1 text-body text-ink-soft">洗到这些词条出现就停(任一命中即停,至多 3 条)</p>
     <div class="scroll-pane grid max-h-36 grid-cols-3 gap-1 overflow-y-auto tinylens:grid-cols-2">
       <button
         v-for="af in affixOptions"
         :key="af.id"
-        class="rounded px-1 py-1 text-[10px] leading-tight active:opacity-60"
+        class="rounded px-1 py-1 text-note leading-tight active:opacity-60"
         :aria-pressed="isAutoTarget(af.id)"
         :class="
           isAutoTarget(af.id) ? 'border border-cinnabar text-cinnabar' : 'bg-ink/4 text-ink-faint'
@@ -228,7 +228,7 @@ function triesOf(id: string, minRoll = 0): number | null {
       </button>
     </div>
     <div v-if="autoTargets.length" class="mt-1.5 space-y-1">
-      <div v-for="t in autoTargets" :key="t.affixId" class="space-y-0.5 text-[10px] text-ink-faint">
+      <div v-for="t in autoTargets" :key="t.affixId" class="space-y-0.5 text-note text-ink-faint">
         <p class="flex items-center gap-2">
           <span class="w-10 shrink-0 font-kai text-ink-soft">{{
             affixDef(t.affixId)?.name ?? t.affixId
@@ -256,7 +256,7 @@ function triesOf(id: string, minRoll = 0): number | null {
     </div>
     <div class="mt-1.5 flex flex-wrap items-center gap-2">
       <label class="flex min-w-0 items-center gap-1">
-        <span class="text-[10px] text-ink-faint tabular">至多洗</span>
+        <span class="text-note text-ink-faint tabular">至多洗</span>
         <input
           v-model.number="autoBudget"
           type="number"
@@ -266,10 +266,10 @@ function triesOf(id: string, minRoll = 0): number | null {
           class="w-16 min-w-0 rounded border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
           @change="clampAutoBudget"
         />
-        <span class="text-[10px] text-ink-faint tabular">次</span>
+        <span class="text-note text-ink-faint tabular">次</span>
       </label>
       <button
-        class="btn-ghost ml-auto shrink-0 whitespace-nowrap !px-3 !py-1 !text-[11px]"
+        class="btn-ghost ml-auto shrink-0 whitespace-nowrap !px-3 !py-1 !text-body"
         :disabled="!autoTargets.length || !autoReachable || !autoAffordable"
         :title="
           !autoTargets.length
@@ -285,21 +285,21 @@ function triesOf(id: string, minRoll = 0): number | null {
         开 洗
       </button>
     </div>
-    <p class="mt-1 text-[10px] text-ink-faint tabular">
+    <p class="mt-1 text-note text-ink-faint tabular">
       每洗 器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
     </p>
     <!-- 首洗就付不起,预告就把它摆出来(与重铸/封存同款):灰钮不许只有 broke toast -->
-    <p v-if="autoTargets.length && !autoAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
+    <p v-if="autoTargets.length && !autoAffordable" class="mt-1 text-note text-cinnabar tabular">
       尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
       {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
     </p>
-    <p v-if="autoTargets.length && !autoReachable" class="mt-1 text-[10px] text-cinnabar">
+    <p v-if="autoTargets.length && !autoReachable" class="mt-1 text-note text-cinnabar">
       这些目标不会命中:封存词条不重掷,或阈值已到 100%。
     </p>
   </div>
   <!-- 重铸与封存 (Phase 30.1) -->
   <template v-if="reforgeCostVal || sealCostVal">
-    <div class="flex gap-2 text-[11px] tinylens:flex-col">
+    <div class="flex gap-2 text-body tinylens:flex-col">
       <button
         v-if="reforgeCostVal"
         class="btn-ghost flex-1 !py-1 tinylens:flex-col"
@@ -307,7 +307,7 @@ function triesOf(id: string, minRoll = 0): number | null {
         @click="doReforge"
       >
         重铸词条
-        <span class="ml-1 tabular text-[10px] text-ink-faint tinylens:ml-0">
+        <span class="ml-1 tabular text-note text-ink-faint tinylens:ml-0">
           器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
         </span>
       </button>
@@ -324,27 +324,27 @@ function triesOf(id: string, minRoll = 0): number | null {
       </div>
     </div>
     <!-- 付不起就把缺摆出来(与强化同款):重铸同样器灵尘+灵石两道账,缺谁明说谁 -->
-    <p v-if="reforgeCostVal && !reforgeAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
+    <p v-if="reforgeCostVal && !reforgeAffordable" class="mt-1 text-note text-cinnabar tabular">
       尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
       {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
     </p>
     <!-- 封存只算灵石一道账:付不起同样置灰+列差,不许只有点了才听见 toast -->
-    <p v-if="sealCostVal && !sealAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
+    <p v-if="sealCostVal && !sealAffordable" class="mt-1 text-note text-cinnabar tabular">
       封存尚差 {{ formatGN(sealShortfall) }} 灵石
     </p>
     <!--
       重铸到底做什么,得在按下之前说清:条数与数值一并重掷(封存的不动),
       不限次数、成本只随「阶数」与「封存数」走 —— 与旧版"越洗越贵、上限十次"不同。
     -->
-    <p v-if="reforgeCostVal" class="text-center text-[10px] leading-relaxed text-ink-faint">
+    <p v-if="reforgeCostVal" class="text-center text-note leading-relaxed text-ink-faint">
       重掷未封存的词条:条数(≤{{ affixCap }} 条)与数值一并重掷,封存的不动 ·
       不限次数,成本随阶数与封存数走
     </p>
-    <p v-if="reforgeCostVal" class="text-center text-[10px] text-qing tabular">
+    <p v-if="reforgeCostVal" class="text-center text-note text-qing tabular">
       新词条掷点 ≥ {{ formatPercent(reforgeFloor, 0) }}（铭纹·{{ inscribeStage }}
       {{ formatPercent(inscribeFloor, 0) }} + 器谱 {{ formatPercent(blueprintBonus, 0) }}）,封存不受
     </p>
-    <p v-if="reforgeCostVal" class="text-center text-[10px] text-ink-faint tabular">
+    <p v-if="reforgeCostVal" class="text-center text-note text-ink-faint tabular">
       器谱 {{ formatPercent(blueprintMastery, 0) }} · 每次成功重铸 +
       {{ formatPercent(BLUEPRINT_MASTERY_PER_REFORGE, 0) }} ·
       <template v-if="blueprintReforgesLeft > 0">
@@ -352,19 +352,19 @@ function triesOf(id: string, minRoll = 0): number | null {
       </template>
       <template v-else>已读通</template>
     </p>
-    <p v-if="reforgeCostVal" class="text-center text-[10px] text-ink-faint tabular">
+    <p v-if="reforgeCostVal" class="text-center text-note text-ink-faint tabular">
       读通后:额外保底 +{{ formatPercent(BLUEPRINT_ROLL_BONUS_MAX, 0) }} · 宿慧 +{{
         INSIGHT_PER_BLUEPRINT
       }}
     </p>
-    <p v-if="inst" class="text-center text-[10px] text-ink-faint tabular">
+    <p v-if="inst" class="text-center text-note text-ink-faint tabular">
       已重铸 {{ inst.reforgeCount ?? 0 }} 次 · 已封存 {{ (inst.sealedAffixIds ?? []).length }}/{{
         sealCapacity(inst)
       }}
     </p>
     <button
       v-if="reforgeCostVal"
-      class="btn-ghost min-h-[28px] w-full !py-1 !text-[11px]"
+      class="btn-ghost min-h-[28px] w-full !py-1 !text-body"
       :aria-expanded="autoOpen"
       :title="autoOpen ? undefined : '洗到指定词条即停'"
       @click="autoOpen = !autoOpen"
@@ -372,7 +372,7 @@ function triesOf(id: string, minRoll = 0): number | null {
       {{ autoOpen ? "收起自动重铸" : "自动重铸" }}
     </button>
     <button
-      class="btn-ghost min-h-[28px] w-full !py-1 !text-[11px]"
+      class="btn-ghost min-h-[28px] w-full !py-1 !text-body"
       :aria-expanded="transferOpen"
       @click="transferOpen = !transferOpen"
     >

@@ -15,13 +15,13 @@
     </span>
     <div class="min-w-0">
       <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <h2 class="min-w-0 font-kai text-[15px] tracking-[0.25em] text-ink">{{ title }}</h2>
+        <h2 class="min-w-0 font-kai text-section tracking-[0.25em] text-ink">{{ title }}</h2>
         <!--
           hint 不取 shrink-0:它是次要读数,极端窄档(200% 缩放的有效视口 ~195px)下
           章节名 + 一段长 hint 会一起把这一行顶到 200px 以外(实测 /codex 与 /dongfu 越界)。
           允许它让位、必要时整块落到第二行 —— 字一个不少，行也不再压出边。
         -->
-        <span v-if="hint" class="min-w-0 tabular text-[11px] text-ink-faint">{{ hint }}</span>
+        <span v-if="hint" class="min-w-0 tabular text-body text-ink-faint">{{ hint }}</span>
       </div>
     </div>
     <!--

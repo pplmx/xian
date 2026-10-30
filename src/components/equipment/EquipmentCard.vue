@@ -20,7 +20,7 @@
     <span class="absolute inset-x-0 top-0 flex items-start justify-between px-1 pt-0.5">
       <span
         v-if="props.equipped"
-        class="rounded-sm bg-jade/6 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
+        class="rounded-sm bg-jade/6 px-[3px] font-kai text-note leading-[1.4] text-jade"
         >佩</span
       >
       <span class="ml-auto flex items-center gap-0.5">
@@ -38,7 +38,7 @@
     <!-- 新入包、还没开过背包看它 -->
     <span
       v-if="isNew"
-      class="absolute left-1/2 top-0.5 -translate-x-1/2 font-kai text-[10px] leading-none text-cinnabar animate-new-pop"
+      class="absolute left-1/2 top-0.5 -translate-x-1/2 font-kai text-note leading-none text-cinnabar animate-new-pop"
     >
       新
     </span>
@@ -47,7 +47,7 @@
     <span class="flex h-full w-full flex-col items-center justify-center gap-1 px-1 py-4">
       <GameIcon :name="template?.icon ?? 'sword'" :size="22" :style="{ color: quality.color }" />
       <span
-        class="w-full truncate text-center text-[10px] leading-tight"
+        class="w-full truncate text-center text-note leading-tight"
         :style="{ color: quality.color }"
       >
         {{ template?.name ?? "?" }}
@@ -61,13 +61,13 @@
     >
       <span
         v-if="setName"
-        class="font-kai text-[10px] leading-none text-violet-ink"
+        class="font-kai text-note leading-none text-violet-ink"
         :title="`共鸣「${setName}」`"
         >共</span
       >
       <span
         v-if="props.item.level > 0"
-        class="ml-auto text-[10px] leading-none text-gold-ink tabular"
+        class="ml-auto text-note leading-none text-gold-ink tabular"
       >
         +{{ props.item.level }}
       </span>
@@ -76,7 +76,7 @@
     <!-- 玩家标记:同名装备按流派区分(详情弹窗里写,见 noteDraft)。 -->
     <span
       v-if="props.item.note"
-      class="absolute inset-x-1 bottom-4 truncate text-center text-[10px] leading-none text-ink-faint"
+      class="absolute inset-x-1 bottom-4 truncate text-center text-note leading-none text-ink-faint"
     >
       {{ props.item.note }}
     </span>

@@ -1,5 +1,5 @@
 <template>
-  <p class="mb-1 font-kai text-[10px] tracking-[0.5em] text-ink-faint">{{ text }}</p>
+  <p class="mb-1 font-kai text-note tracking-[0.5em] text-ink-faint">{{ text }}</p>
 </template>
 
 <script setup lang="ts">

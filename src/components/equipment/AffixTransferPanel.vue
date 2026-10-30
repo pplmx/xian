@@ -151,11 +151,11 @@ function doTransfer(): void {
   <div class="rounded-sm border border-ink/10 bg-paper-deep/60 p-3 text-[12px]">
     <div class="mb-2 flex flex-wrap items-center gap-2">
       <span class="shrink-0 font-medium text-ink tinylens:order-1">词条转移</span>
-      <span class="text-[10px] text-ink-faint tinylens:order-3 tinylens:basis-full"
+      <span class="text-note text-ink-faint tinylens:order-3 tinylens:basis-full"
         >抽走源件一条词条,落到另一件上;源件保留,被移走与被顶替的词条皆不可回</span
       >
       <button
-        class="btn-ghost ml-auto min-h-[28px] shrink-0 whitespace-nowrap !px-2 !py-0.5 text-[11px] tinylens:order-2"
+        class="btn-ghost ml-auto min-h-[28px] shrink-0 whitespace-nowrap !px-2 !py-0.5 text-body tinylens:order-2"
         @click="emit('close')"
       >
         收起
@@ -171,12 +171,12 @@ function doTransfer(): void {
     <template v-else>
       <!-- 选源件词条 -->
       <div class="mb-2">
-        <p class="mb-1 text-[10px] text-ink-faint">抽哪一条?点选源件词条</p>
+        <p class="mb-1 text-note text-ink-faint">抽哪一条?点选源件词条</p>
         <div class="flex flex-wrap gap-1">
           <button
             v-for="a in source.affixes"
             :key="a.id"
-            class="btn-ghost !px-2 text-[11px]"
+            class="btn-ghost !px-2 text-body"
             :class="affixId === a.id ? '!border-cinnabar !text-cinnabar' : ''"
             @click="pick(a.id)"
           >
@@ -188,7 +188,7 @@ function doTransfer(): void {
       <!-- 选目标件 -->
       <div v-if="affixId" class="mb-2">
         <p
-          class="mb-1 flex flex-wrap items-baseline justify-between gap-x-2 text-[10px] text-ink-faint"
+          class="mb-1 flex flex-wrap items-baseline justify-between gap-x-2 text-note text-ink-faint"
         >
           <span>落到哪一件?</span>
           <span
@@ -220,7 +220,7 @@ function doTransfer(): void {
           >
             <button
               type="button"
-              class="flex min-h-[28px] w-full flex-wrap items-center gap-2 rounded px-2 py-1.5 text-left text-[11px]"
+              class="flex min-h-[28px] w-full flex-wrap items-center gap-2 rounded px-2 py-1.5 text-left text-body"
               :class="c.block ? 'cursor-not-allowed text-ink-faint' : 'hoverable:hover:bg-ink/5'"
               :disabled="c.block !== null"
               @click="
@@ -256,7 +256,7 @@ function doTransfer(): void {
               </span>
             </button>
           </div>
-          <p v-if="!candidates.length" class="px-2 py-2 text-center text-[10px] text-ink-faint">
+          <p v-if="!candidates.length" class="px-2 py-2 text-center text-note text-ink-faint">
             行囊里没有能接这一条的件。
           </p>
         </div>
@@ -269,7 +269,7 @@ function doTransfer(): void {
             v-if="candidatePage.start > 0"
             type="button"
             data-affix-candidate-prev
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
             :aria-label="previousCandidateText"
             @click="showPreviousCandidates"
           >
@@ -279,7 +279,7 @@ function doTransfer(): void {
             v-if="candidatePage.hidden > 0"
             type="button"
             data-affix-candidate-more
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
             :aria-label="moreCandidateText"
             :data-promised="Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
             @click="showMoreCandidates"
@@ -291,7 +291,7 @@ function doTransfer(): void {
 
       <!-- 选落位 -->
       <div v-if="target && landings.length" class="mb-2">
-        <p class="mb-1 text-[10px] text-ink-faint">
+        <p class="mb-1 text-note text-ink-faint">
           落在「{{ equipmentTemplate(target.templateId)?.name ?? target.templateId }}」哪里?<span
             class="whitespace-nowrap"
             >({{ target.affixes.length }}/{{ qualityDef(target.quality).affixes[1] }} 条)</span
@@ -301,7 +301,7 @@ function doTransfer(): void {
           <button
             v-for="l in landings"
             :key="l.replaceId ?? '__new__'"
-            class="flex w-full flex-wrap items-center gap-2 rounded px-2 py-1 text-left text-[11px]"
+            class="flex w-full flex-wrap items-center gap-2 rounded px-2 py-1 text-left text-body"
             :class="l.check.ok ? 'hoverable:hover:bg-ink/5' : 'cursor-not-allowed text-ink-faint'"
             :disabled="!l.check.ok"
             @click="
@@ -329,14 +329,14 @@ function doTransfer(): void {
 
       <!-- 同时封存 + 确认 -->
       <div v-if="plan" class="flex flex-wrap items-center gap-2 border-t border-ink/10 pt-2">
-        <label class="flex items-center gap-1.5 text-[11px]">
+        <label class="flex items-center gap-1.5 text-body">
           <input v-model="seal" type="checkbox" :disabled="!plan.canSeal" />
           同时封存(重铸不移)
         </label>
-        <span v-if="plan.sealMode === 'inherit'" class="min-w-0 text-[10px] text-ink-faint"
+        <span v-if="plan.sealMode === 'inherit'" class="min-w-0 text-note text-ink-faint"
           >顶替已封存条,新条自动沿用封存</span
         >
-        <span class="ml-auto text-[11px]">
+        <span class="ml-auto text-body">
           <span v-if="affordable">
             器灵尘×{{ plan.cost.dust }} · 灵石
             {{ formatGN(plan.cost.stone) }}
@@ -351,11 +351,7 @@ function doTransfer(): void {
           </span>
           <span v-else class="text-ink-faint">任选一处落位</span>
         </span>
-        <button
-          class="btn-seal !px-3 !py-1 text-[11px]"
-          :disabled="!affordable"
-          @click="doTransfer"
-        >
+        <button class="btn-seal !px-3 !py-1 text-body" :disabled="!affordable" @click="doTransfer">
           转移
         </button>
       </div>

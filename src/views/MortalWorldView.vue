@@ -23,7 +23,7 @@
         </template>
         <template #action>
           <span
-            class="grid h-10 w-10 place-items-center rounded-sm border border-cinnabar/45 font-kai text-[15px] text-cinnabar"
+            class="grid h-10 w-10 place-items-center rounded-sm border border-cinnabar/45 font-kai text-section text-cinnabar"
             aria-hidden="true"
             >界</span
           >
@@ -31,34 +31,34 @@
 
         <div class="grid grid-cols-3 border-y border-ink/10 py-2" data-world-shape>
           <div class="min-w-0 border-r border-ink/10 pr-2">
-            <p class="text-[10px] text-ink-faint">地界</p>
-            <p class="mt-0.5 font-kai text-[15px] text-ink tabular">{{ view.stages }}</p>
+            <p class="text-note text-ink-faint">地界</p>
+            <p class="mt-0.5 font-kai text-section text-ink tabular">{{ view.stages }}</p>
           </div>
           <div class="min-w-0 border-r border-ink/10 px-2">
-            <p class="text-[10px] text-ink-faint">层级</p>
-            <p class="mt-0.5 font-kai text-[15px] text-ink tabular">{{ tierRangeText }}</p>
+            <p class="text-note text-ink-faint">层级</p>
+            <p class="mt-0.5 font-kai text-section text-ink tabular">{{ tierRangeText }}</p>
           </div>
           <div class="min-w-0 pl-2">
-            <p class="text-[10px] text-ink-faint">已行</p>
-            <p class="mt-0.5 font-kai text-[15px] text-ink tabular">
+            <p class="text-note text-ink-faint">已行</p>
+            <p class="mt-0.5 font-kai text-section text-ink tabular">
               {{ view.clearedStages
-              }}<span class="text-[10px] text-ink-faint"> / {{ view.stages }}</span>
+              }}<span class="text-note text-ink-faint"> / {{ view.stages }}</span>
             </p>
           </div>
         </div>
 
-        <p class="mt-2 text-[11px]">
+        <p class="mt-2 text-body">
           <span class="text-cinnabar">此世命数:</span>
-          <span class="ml-1 font-kai text-[14px] text-ink">{{ view.ruleText }}</span>
+          <span class="ml-1 font-kai text-title text-ink">{{ view.ruleText }}</span>
         </p>
-        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
           这条命数只参与成形时的难度校准,不改写历练里的战斗。
         </p>
         <!--
             资源偏向必须写明兑现方式:摘要里那句「矿脉深厚之地」若没有数字跟着,
             玩家会把它当纯flavor —— 而它现在真的乘在玄铁掉率上(见 core/mortalBias)。
           -->
-        <p v-if="view.biasText" class="mt-1 text-[11px] text-ink-faint">
+        <p v-if="view.biasText" class="mt-1 text-body text-ink-faint">
           <span class="text-qing">此地所钟</span> · {{ view.biasText }}
         </p>
         <!--
@@ -66,7 +66,7 @@
             StatMods 命名空间(见 core/fruitOutlets.spec 的结论)。不够时把差多少写出来。
           -->
         <button
-          class="btn-ghost mt-3 min-h-[28px] max-w-full !px-3 !py-1 text-[11px]"
+          class="btn-ghost mt-3 min-h-[28px] max-w-full !px-3 !py-1 text-body"
           :disabled="!canRerollWorld"
           data-world-reroll
           @click="rerollConfirm = true"
@@ -77,7 +77,7 @@
             换界的代价必须写在按钮下面:setMortalWorld 会把本世路线进度清零(「换界即换路」)。
             只说价、不说会清进度,等于让玩家在不知情的情况下丢掉已经走过的路。
           -->
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-soft">
+        <p class="mt-1 text-note leading-relaxed text-ink-soft">
           换界即换路:已走的本世路线会清零,所钟与地貌构成重新掷定。
         </p>
       </FolioPageHeader>
@@ -87,17 +87,17 @@
           耗 <span class="text-cinnabar tabular">{{ rerollCost }}</span> 枚道果,
           <span class="text-ink">本世路线进度清零</span>,所钟与地貌重掷。
         </p>
-        <p class="mt-1 text-[11px] text-ink-faint">
+        <p class="mt-1 text-body text-ink-faint">
           现有 {{ player.reincarnation.daoFruit }} 枚 · 换完剩
           {{ Math.max(0, player.reincarnation.daoFruit - rerollCost) }} 枚。 这一步不可逆 ——
           走过的地界要重新走。
         </p>
         <div class="mt-3 flex justify-end gap-2">
-          <button class="btn-ghost min-h-[32px] !px-3 text-[11px]" @click="rerollConfirm = false">
+          <button class="btn-ghost min-h-[32px] !px-3 text-body" @click="rerollConfirm = false">
             再想想
           </button>
           <button
-            class="btn-primary min-h-[32px] !px-4 text-[11px]"
+            class="btn-primary min-h-[32px] !px-4 text-body"
             data-world-reroll-confirm
             @click="confirmReroll"
           >
@@ -137,25 +137,25 @@
                   aria-hidden="true"
                 />
               </span>
-              <span class="mt-1 text-[10px] text-ink-faint tabular">{{ routeIndex + 1 }}</span>
+              <span class="mt-1 text-note text-ink-faint tabular">{{ routeIndex + 1 }}</span>
             </div>
 
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-                <span class="min-w-0 truncate font-kai text-[14px] tracking-[0.14em] text-ink">{{
+                <span class="min-w-0 truncate font-kai text-title tracking-[0.14em] text-ink">{{
                   p.name
                 }}</span>
-                <span class="shrink-0 text-[11px] text-qing">{{ p.terrain }}</span>
-                <span v-if="cleared(p.nodeId)" class="shrink-0 text-[10px] text-jade">已通</span>
-                <span v-else-if="isCurrentStage(routeIndex)" class="shrink-0 text-[10px] text-qing">
+                <span class="shrink-0 text-body text-qing">{{ p.terrain }}</span>
+                <span v-if="cleared(p.nodeId)" class="shrink-0 text-note text-jade">已通</span>
+                <span v-else-if="isCurrentStage(routeIndex)" class="shrink-0 text-note text-qing">
                   眼下可往
                 </span>
                 <!-- 旧链已开、路线尚未轮到的中段:进度仍按路线走,但入口不能假装上锁 -->
-                <span v-else-if="canDepart(p.regionId)" class="shrink-0 text-[10px] text-qing">
+                <span v-else-if="canDepart(p.regionId)" class="shrink-0 text-note text-qing">
                   旧路可往
                 </span>
               </div>
-              <p class="mt-1 flex items-center gap-2 text-[10px] text-ink-faint">
+              <p class="mt-1 flex items-center gap-2 text-note text-ink-faint">
                 <span class="truncate">镇守 {{ p.bossName }}</span>
                 <span class="flex shrink-0 gap-0.5" aria-hidden="true">
                   <span
@@ -168,7 +168,7 @@
               <!-- 锁住的地界要给一句"为什么现在去不了",而不是只画把锁 -->
               <p
                 v-if="!canDepart(p.regionId)"
-                class="mt-1 text-[10px] leading-relaxed"
+                class="mt-1 text-note leading-relaxed"
                 :class="isNextLocked(routeIndex) ? 'text-cinnabar' : 'text-ink-faint'"
               >
                 {{ lockedHint(routeIndex) }}
@@ -176,7 +176,7 @@
               <!-- 已通的段落照样能再去 —— 「已通」是记号,不是封路 -->
               <div v-if="canDepart(p.regionId)" class="mt-2 flex justify-end">
                 <button
-                  class="btn-seal min-h-[28px] !px-4 !py-1 !text-[11px]"
+                  class="btn-seal min-h-[28px] !px-4 !py-1 !text-body"
                   @click="depart(p.regionId)"
                 >
                   出 发
@@ -192,7 +192,7 @@
         两条路都会清空本世路线进度。规则存在却不告诉玩家,和没有规则一样糟。
       -->
       <div class="card-ink px-4 py-3">
-        <p class="font-kai text-[14px] tracking-widest text-ink-soft">此界从何而来</p>
+        <p class="font-kai text-title tracking-widest text-ink-soft">此界从何而来</p>
         <p class="mt-1.5 t-body text-ink-faint">
           你睁眼时,天地已成此形。所历地界、途中缓急、镇守之物皆随此世而定,
           <!-- 标点跟着前一句走:单独成行会在窄屏上被折成孤零零一个句号 -->
@@ -222,22 +222,22 @@
             :data-world-history-row="i + 1"
           >
             <p class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span class="shrink-0 text-[10px] text-ink-faint tabular" data-world-history-label>{{
+              <span class="shrink-0 text-note text-ink-faint tabular" data-world-history-label>{{
                 pastWorldLabel(i)
               }}</span>
               <span
-                class="min-w-0 font-kai text-[14px] tracking-[0.1em] text-ink"
+                class="min-w-0 font-kai text-title tracking-[0.1em] text-ink"
                 data-world-history-title
                 >{{ h.title }}</span
               >
               <span
-                class="ml-auto shrink-0 text-[10px] text-ink-faint tabular"
+                class="ml-auto shrink-0 text-note text-ink-faint tabular"
                 data-world-history-stages
                 >{{ h.stages }} 段</span
               >
             </p>
-            <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">{{ h.summary }}</p>
-            <p class="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px]">
+            <p class="mt-0.5 text-note leading-relaxed text-ink-faint">{{ h.summary }}</p>
+            <p class="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-note">
               <span class="text-ink-faint">{{ h.tierText }}</span>
               <span class="text-cinnabar">命数 {{ h.ruleText }}</span>
               <span v-if="h.biasText" class="text-qing">所钟 {{ h.biasText }}</span>
@@ -246,7 +246,7 @@
         </div>
       </template>
     </template>
-    <p v-else class="empty-note text-center text-[11px] text-ink-faint">
+    <p v-else class="empty-note text-center text-body text-ink-faint">
       此世气象尚未凝成。天地未就,不妨先去历练,待此世凝成再来。
     </p>
   </div>

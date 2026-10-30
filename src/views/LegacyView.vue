@@ -9,10 +9,10 @@
 
     <!-- 修行画像 -->
     <div v-if="profile" class="card-ink px-4 py-3">
-      <p class="mb-1.5 font-kai text-[11px] tracking-[0.3em] text-ink-faint">修行画像</p>
-      <p class="font-kai text-[14px] leading-relaxed text-ink">「{{ profile.verdict }}」</p>
+      <p class="mb-1.5 font-kai text-body tracking-[0.3em] text-ink-faint">修行画像</p>
+      <p class="font-kai text-title leading-relaxed text-ink">「{{ profile.verdict }}」</p>
       <div class="mt-2 space-y-1">
-        <p v-for="d in profile.daoShares" :key="d.name" class="flex items-center gap-2 text-[11px]">
+        <p v-for="d in profile.daoShares" :key="d.name" class="flex items-center gap-2 text-body">
           <span class="w-14 shrink-0 text-ink-faint">{{ d.name }}</span>
           <ProgressBar
             :value="d.pct / 100"
@@ -25,7 +25,7 @@
           }}</span>
         </p>
       </div>
-      <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] tinylens:grid-cols-1">
+      <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-body tinylens:grid-cols-1">
         <p class="flex justify-between">
           <span class="text-ink-faint">风险偏好</span>
           <span class="text-ink-soft">{{ profile.riskText }}</span>
@@ -51,9 +51,9 @@
           <span class="text-cinnabar">{{ profile.weakWorld }}</span>
         </p>
       </div>
-      <p class="mt-1.5 text-[10px] text-ink-faint">画像皆出自真实道痕,不可人工修饰。</p>
+      <p class="mt-1.5 text-note text-ink-faint">画像皆出自真实道痕,不可人工修饰。</p>
     </div>
-    <p v-else class="empty-note card-ink px-4 py-6 text-center text-[11px] text-ink-faint">
+    <p v-else class="empty-note card-ink px-4 py-6 text-center text-body text-ink-faint">
       道痕未满{{ cnNumber(PROFILE_MIN_MARKS) }}则,画像尚不成形。
     </p>
 
@@ -68,22 +68,22 @@
              阶段名被压到 15px 一字一行 —— 允许换行。320 / 390 两档不动。 -->
         <p class="flex flex-wrap items-center gap-2">
           <span class="t-card whitespace-nowrap">{{ stage.name }}</span>
-          <span class="text-[10px] text-ink-faint tabular"
+          <span class="text-note text-ink-faint tabular"
             >第 {{ player.reincarnation.count + 1 }} 世</span
           >
           <span
             v-if="toNextStage !== null"
-            class="ml-auto shrink-0 text-[10px] text-ink-faint tabular"
+            class="ml-auto shrink-0 text-note text-ink-faint tabular"
           >
             再积 {{ toNextStage }} 宿慧入下一境地
           </span>
-          <span v-else class="ml-auto shrink-0 text-[10px] text-gold-ink">此道已至尽头</span>
+          <span v-else class="ml-auto shrink-0 text-note text-gold-ink">此道已至尽头</span>
         </p>
         <p class="mt-1 t-body text-ink-faint">{{ stage.desc }}</p>
 
         <!-- 随神魂不灭的那一份 -->
         <div
-          class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-ink/10 pt-2 text-[11px] tinylens:grid-cols-1"
+          class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-ink/10 pt-2 text-body tinylens:grid-cols-1"
         >
           <p class="flex justify-between">
             <span class="text-ink-faint">认得灵材</span>
@@ -110,22 +110,22 @@
         <!-- 这一世的命题 -->
         <div v-if="vowTheme" class="mt-2 rounded-sm border border-ink/15 px-3 py-2">
           <p class="flex items-center justify-between">
-            <span class="font-kai text-[14px] text-ink">「{{ vowTheme.vow }}」</span>
+            <span class="font-kai text-title text-ink">「{{ vowTheme.vow }}」</span>
             <span
-              class="text-[11px]"
+              class="text-body"
               :class="vowBroken ? 'text-amber-ink' : vowDone ? 'text-cinnabar' : 'text-ink-faint'"
             >
               {{ vowBroken ? "已破" : vowDone ? "已成" : "在途" }}
             </span>
           </p>
-          <p class="mt-1 text-[11px] text-ink-faint">
+          <p class="mt-1 text-body text-ink-faint">
             {{ vowTheme.goal }}
             <span v-if="vowProg" class="tabular"
               >({{ Math.floor(vowProg.cur) }} / {{ vowProg.need }})</span
             >
           </p>
         </div>
-        <p v-else class="mt-2 text-[11px] text-ink-faint">
+        <p v-else class="mt-2 text-body text-ink-faint">
           这一世不曾为自己立题。兵解转世时,可择一题而行。
         </p>
       </div>
@@ -147,22 +147,22 @@
             :key="l.index"
             :data-life-row="l.index"
             tabindex="-1"
-            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-[11px]"
+            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-body"
           >
             <span class="w-11 shrink-0 whitespace-nowrap font-kai text-ink-faint tabular"
               >第{{ l.index }}世</span
             >
             <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ l.realmLabel }}</span>
-            <span class="shrink-0 whitespace-nowrap text-[10px] text-ink-faint tabular"
+            <span class="shrink-0 whitespace-nowrap text-note text-ink-faint tabular"
               >寿 {{ l.age }} 载</span
             >
             <span
               v-if="l.themeName"
-              class="shrink-0 whitespace-nowrap text-[10px]"
+              class="shrink-0 whitespace-nowrap text-note"
               :class="l.resultColor"
               >{{ l.themeName }}·{{ l.resultText }}</span
             >
-            <span class="ml-auto shrink-0 whitespace-nowrap tabular text-[10px] text-gold-ink"
+            <span class="ml-auto shrink-0 whitespace-nowrap tabular text-note text-gold-ink"
               >宿慧 +{{ l.insight }}</span
             >
           </p>
@@ -171,7 +171,7 @@
               v-if="lifePage.start > 0"
               type="button"
               data-life-prev
-              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
               :aria-label="previousLifeText()"
               @click="showPreviousLives"
             >
@@ -181,7 +181,7 @@
               v-if="lifePage.hidden > 0"
               type="button"
               data-life-more
-              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
               :aria-label="moreLifeText()"
               :data-promised="Math.min(LIFE_RENDER_BATCH, lifePage.hidden)"
               @click="showMoreLives"
@@ -190,7 +190,7 @@
             </button>
           </div>
         </template>
-        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
           此为初世。你尚未死过一次,也就还没有什么可以回忆。
         </p>
       </div>
@@ -206,11 +206,11 @@
         <div v-if="milestoneRows.length" class="relative ml-2 border-l border-ink/15 pl-4">
           <div v-for="row in milestoneRows" :key="row.id" class="relative py-1.5">
             <span class="absolute -left-5.25 top-2.5 h-2 w-2 rounded-full bg-gold-ink" />
-            <p class="font-kai text-[14px] text-ink">第 {{ row.life }} 世 · {{ row.name }}</p>
-            <p class="text-[10px] text-ink-faint">{{ row.desc }}</p>
+            <p class="font-kai text-title text-ink">第 {{ row.life }} 世 · {{ row.name }}</p>
+            <p class="text-note text-ink-faint">{{ row.desc }}</p>
           </div>
         </div>
-        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
           此录尚白。天界之行,自会留名。
         </p>
       </div>
@@ -222,25 +222,23 @@
           <p
             v-for="n in nemesisRows"
             :key="n.enemyId"
-            class="flex items-center gap-2 py-2 text-[11px]"
+            class="flex items-center gap-2 py-2 text-body"
           >
-            <span
-              class="font-kai text-[14px]"
-              :class="n.avengedAt ? 'text-ink' : 'text-cinnabar'"
-              >{{ n.enemyName }}</span
-            >
-            <span class="text-[10px] text-ink-faint"
+            <span class="font-kai text-title" :class="n.avengedAt ? 'text-ink' : 'text-cinnabar'">{{
+              n.enemyName
+            }}</span>
+            <span class="text-note text-ink-faint"
               >{{ n.regionName }} · 败我 {{ n.lossCount }} 次</span
             >
             <span
-              class="ml-auto shrink-0 text-[10px]"
+              class="ml-auto shrink-0 text-note"
               :class="n.avengedAt ? 'text-jade' : 'text-cinnabar'"
             >
               {{ n.avengedAt ? "已雪耻" : "尚为宿敌" }}
             </span>
           </p>
         </template>
-        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
           尚无宿敌。此录待你的血与道来填。
         </p>
       </div>
@@ -251,24 +249,24 @@
       <SectionTitle title="奇缘录" :hint="`未了之缘 ${unfinishedChains} 条`" />
       <div class="card-ink divide-y divide-ink/6 px-4">
         <template v-if="chainRows.length">
-          <p v-for="c in chainRows" :key="c.id" class="flex items-center gap-2 py-2 text-[11px]">
+          <p v-for="c in chainRows" :key="c.id" class="flex items-center gap-2 py-2 text-body">
             <span
-              class="shrink-0 font-kai text-[14px]"
+              class="shrink-0 font-kai text-title"
               :class="c.broken ? 'text-ink-faint' : c.finished ? 'text-ink' : 'text-cinnabar'"
               >{{ c.name }}</span
             >
-            <span class="min-w-0 truncate text-[10px] text-ink-faint">
+            <span class="min-w-0 truncate text-note text-ink-faint">
               {{ c.broken ? "缘断,不复再续" : c.hint }}
             </span>
             <span
-              class="ml-auto shrink-0 tabular text-[10px]"
+              class="ml-auto shrink-0 tabular text-note"
               :class="c.broken ? 'text-ink-faint' : c.finished ? 'text-jade' : 'text-ink-faint'"
             >
               {{ c.broken ? "缘断" : c.finished ? "已了" : `第 ${c.stage + 1}/${c.total} 程` }}
             </span>
           </p>
         </template>
-        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
           尚无未了之缘。缘起于路上,不在名录里。
         </p>
       </div>
@@ -286,14 +284,14 @@
             :key="l.eventId + l.at"
             :data-loss-row="l.eventId"
             tabindex="-1"
-            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-[11px]"
+            class="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-2 text-body"
           >
-            <span class="shrink-0 whitespace-nowrap text-[10px] text-ink-faint">{{
+            <span class="shrink-0 whitespace-nowrap text-note text-ink-faint">{{
               formatDate(l.at)
             }}</span>
             <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ l.eventName }}</span>
             <span
-              class="ml-auto shrink-0 text-[10px] text-ink-faint tinylens:ml-0 tinylens:basis-full tinylens:whitespace-normal"
+              class="ml-auto shrink-0 text-note text-ink-faint tinylens:ml-0 tinylens:basis-full tinylens:whitespace-normal"
               >{{ l.note }}</span
             >
           </p>
@@ -302,7 +300,7 @@
               v-if="lossPage.start > 0"
               type="button"
               data-loss-prev
-              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
               :aria-label="previousLossText()"
               @click="showPreviousLoss"
             >
@@ -312,7 +310,7 @@
               v-if="lossPage.hidden > 0"
               type="button"
               data-loss-more
-              class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
               :aria-label="moreLossText()"
               :data-promised="Math.min(LOSS_RENDER_BATCH, lossPage.hidden)"
               @click="showMoreLoss"
@@ -321,7 +319,7 @@
             </button>
           </div>
         </template>
-        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
           世界尚未记住你的足迹。此录待你行过此世,自会留下回响。
         </p>
       </div>
@@ -332,15 +330,13 @@
       <SectionTitle title="我的纪录" hint="只与过去的自己比" />
       <div class="card-ink divide-y divide-ink/6 px-4">
         <template v-if="recordRows.length">
-          <p v-for="r in recordRows" :key="r.id" class="flex items-center gap-2 py-2 text-[11px]">
+          <p v-for="r in recordRows" :key="r.id" class="flex items-center gap-2 py-2 text-body">
             <span class="text-ink-faint">{{ r.name }}</span>
-            <span class="ml-auto tabular font-kai text-[14px] text-gold-ink">{{
-              r.valueText
-            }}</span>
-            <span class="shrink-0 text-[10px] text-ink-faint">第{{ r.life }}世 · {{ r.note }}</span>
+            <span class="ml-auto tabular font-kai text-title text-gold-ink">{{ r.valueText }}</span>
+            <span class="shrink-0 text-note text-ink-faint">第{{ r.life }}世 · {{ r.note }}</span>
           </p>
         </template>
-        <p v-else class="empty-note py-4 text-center text-[11px] text-ink-faint">
+        <p v-else class="empty-note py-4 text-center text-body text-ink-faint">
           纪录待创。破界之时,自见分晓。
         </p>
       </div>

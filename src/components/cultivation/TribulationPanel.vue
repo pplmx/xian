@@ -7,13 +7,13 @@
     一字未删,只是把「与你有关的三句」提到读数之前。
   -->
   <div class="mt-2 rounded-md border border-violet-ink/25 bg-violet-ink/5 px-3 py-2">
-    <p class="text-[11px] text-violet-ink">{{ plan.desc }}</p>
-    <p class="mt-1 text-[11px] text-ink-soft">
+    <p class="text-body text-violet-ink">{{ plan.desc }}</p>
+    <p class="mt-1 text-body text-ink-soft">
       主要风险:<span class="text-cinnabar">{{ plan.risks.join("; ") }}</span>
     </p>
-    <p class="mt-1 text-[11px] text-ink-soft">{{ plan.advice }}</p>
+    <p class="mt-1 text-body text-ink-soft">{{ plan.advice }}</p>
     <!-- Phase 32.2:灵根解开的那条路——说明这道劫为何对你不太一样(留一线,不是免死) -->
-    <p v-if="reliefRoots.length" class="mt-1 text-[11px] text-jade">
+    <p v-if="reliefRoots.length" class="mt-1 text-body text-jade">
       灵根相应:{{
         reliefRoots.map((e) => ELEMENTS[e].name).join("、")
       }}——此劫为你留了一线,能走到哪一步仍看自身准备
@@ -25,8 +25,8 @@
       摊开读数是因为玩家最容易在这里误判:一身厚血厚防站在劫前,却不知道自己缺什么。
     -->
     <!-- 渡劫账:一排挤成串的读数改造成可扫读的 2×2 小网格 —— 四项各占一格,三维折算作小字跟在本格 -->
-    <p class="text-[10px] text-ink-faint">此劫只认百分比 —— 此刻会读的几项:</p>
-    <p class="mt-1.5 text-[10px] text-ink-faint tabular">
+    <p class="text-note text-ink-faint">此劫只认百分比 —— 此刻会读的几项:</p>
+    <p class="mt-1.5 text-note text-ink-faint tabular">
       准备:
       <span class="text-ink-soft">{{ PREP_NAMES.guard }} {{ PREP_STARS[plan.prep.guard] }}</span>
       · {{ PREP_NAMES.sustain }} {{ PREP_STARS[plan.prep.sustain] }} · {{ PREP_NAMES.resist }}
@@ -39,13 +39,13 @@
       格子分两行:上行「标签 + 值」,下行「折算成几成」。320 宽下两列各只 ~104px,
       「天劫抗性 42%(防御折算 3%)」挤一行必然顶折 —— 拆成两行才扫得动。
     -->
-    <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px] tabular">
+    <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1.5 text-note tabular">
       <p>
         <span class="flex items-baseline gap-1">
           <span class="text-ink-faint">天劫抗性</span>
           <span class="text-ink-soft">{{ formatPercent(tribLedger?.resist ?? 0, 0) }}</span>
         </span>
-        <span class="block text-[10px] text-ink-faint"
+        <span class="block text-note text-ink-faint"
           >(防御折算 {{ formatPercent(tribLedger?.statResist ?? 0, 0) }})</span
         >
       </p>
@@ -60,7 +60,7 @@
           <span class="text-ink-faint">濒危减伤</span>
           <span class="text-ink-soft">{{ formatPercent(tribLedger?.lowHpRed ?? 0, 0) }}</span>
         </span>
-        <span class="block text-[10px] text-ink-faint"
+        <span class="block text-note text-ink-faint"
           >(气血垂危(&lt;30%)时逐波生效 —— 结算同款封顶)</span
         >
       </p>
@@ -75,7 +75,7 @@
           <span class="text-ink-faint">开劫护持</span>
           <span class="text-ink-soft">{{ formatPercent(tribLedger?.guard ?? 0, 0) }}</span>
         </span>
-        <span class="block text-[10px] text-ink-faint"
+        <span class="block text-note text-ink-faint"
           >(气血折算 {{ formatPercent(tribLedger?.statGuard ?? 0, 0) }})</span
         >
       </p>
@@ -86,14 +86,14 @@
       tribulationMult —— verdict/建议早已吃进这一笔,但没摆成一行。
       这里与主页天时卡同一口径(读 todayWeather,不另算),渡劫前一眼对上。
     -->
-    <p class="text-[10px] text-ink-faint tabular">
+    <p class="text-note text-ink-faint tabular">
       今日天时 · {{ tribWeather.name
       }}<template v-if="tribWeatherMult"> · 渡劫 ×{{ tribWeatherMult }}</template
       ><template v-if="tribWeatherResistPenalty">
         · {{ STAT_NAMES["tribulationResist"] }} {{ tribWeatherResistPenalty }}</template
       >
     </p>
-    <p class="mt-0.5 text-[10px] text-ink-faint">
+    <p class="mt-0.5 text-note text-ink-faint">
       攻伐不进天劫公式;防御与气血按本境裸修为折算成上面的抗性与护持,各有上限 ——
       血再厚也只能硬抗一部分,剩下的仍要抗性/减伤/恢复来补。进阶成功率与突破准备也只作用于小进阶,大关不看它们。
     </p>
@@ -107,13 +107,13 @@
       v-if="worldStep"
       class="mt-2 rounded-md border border-cinnabar/30 bg-cinnabar/5 px-2.5 py-2"
     >
-      <p class="text-[10px] leading-relaxed text-cinnabar">
+      <p class="text-note leading-relaxed text-cinnabar">
         界膜之劫:跨界这一关血肉之厚一概不算 ——
         防御与气血折算出的抗性、开劫护持在此作废,只认词条与准备。
       </p>
     </div>
     <!-- 天威本身的长相:道数随境界涨、单波逐道加重,摊出来才知道护持该留到哪一段 -->
-    <p v-if="tribWave" class="mt-0.5 text-[10px] text-ink-faint tabular">
+    <p v-if="tribWave" class="mt-0.5 text-note text-ink-faint tabular">
       共 {{ tribWave.waves }} 道,单波 {{ formatPercent(tribWave.min, 0) }}–{{
         formatPercent(tribWave.max, 0)
       }}

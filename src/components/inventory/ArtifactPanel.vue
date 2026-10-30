@@ -3,14 +3,14 @@
     主值行只留读数;「几境开下一格」是**次要信息**,自己占一行 ——
     挤在同一行里,窄屏上会被顶成两行(与修炼页那两行同一类)。
   -->
-  <p class="mt-3 px-1 text-[11px] text-ink-faint tabular">
+  <p class="mt-3 px-1 text-body text-ink-faint tabular">
     法宝位 {{ inventory.equippedArtifacts.length }}/{{ artifactSlots }}
   </p>
-  <p v-if="artifactSlots < ARTIFACT_MAX_SLOTS" class="mt-0.5 px-1 text-[10px] text-ink-faint">
+  <p v-if="artifactSlots < ARTIFACT_MAX_SLOTS" class="mt-0.5 px-1 text-note text-ink-faint">
     {{ artifactUnlockRealm }}境开启第{{ cnNumber(ARTIFACT_MAX_SLOTS) }}法宝位
   </p>
   <!-- 祭炼到底给什么:数值都从上界常数来,不在界面里再写一份 -->
-  <p class="mt-1 px-1 text-[10px] text-ink-faint">
+  <p class="mt-1 px-1 text-note text-ink-faint">
     祭炼一重,被动与神通各强 {{ formatPercent(ARTIFACT_LEVEL_BONUS) }},至多
     {{ cnNumber(ARTIFACT_MAX_LEVEL) }} 重 —— 顶到封顶的不再涨,卡片上标着
   </p>
@@ -21,7 +21,7 @@
     :data-artifact-shown="artifactPage.shown"
     :data-artifact-start="artifactPage.start"
   >
-    <p class="pb-1 text-center text-[10px] text-ink-faint tabular">
+    <p class="pb-1 text-center text-note text-ink-faint tabular">
       法宝共 {{ artifactRows.length }} 件 · 现看 {{ artifactPage.start + 1 }}–{{
         artifactPage.shown
       }}
@@ -50,7 +50,7 @@
         <!-- 佩戴中的法宝盖「随」章(玉色,与装备格的「佩」同族) —— 靠按钮文字区分太隐晦 -->
         <span
           v-if="row.equipped"
-          class="absolute left-2 top-2 rounded-sm bg-jade/6 px-[3px] font-kai text-[10px] leading-[1.4] text-jade"
+          class="absolute left-2 top-2 rounded-sm bg-jade/6 px-[3px] font-kai text-note leading-[1.4] text-jade"
           >随</span
         >
         <!-- 天/仙/神右上盖品阶阴文章 —— 与装备/丹药同一套视觉语言(见 qualityTier) -->
@@ -63,14 +63,12 @@
             :size="18"
             :style="{ color: qualityDef(row.def.quality).color }"
           />
-          <span
-            class="font-kai text-[14px]"
-            :style="{ color: qualityDef(row.def.quality).color }"
-            >{{ row.def.name }}</span
-          >
+          <span class="font-kai text-title" :style="{ color: qualityDef(row.def.quality).color }">{{
+            row.def.name
+          }}</span>
           <QualityTag :quality="row.def.quality" />
           <!-- 「重」而不是「阶」:阶是地界与装备层级的词,法宝这一头说的是祭炼了几重 -->
-          <span class="ml-auto shrink-0 tabular text-[11px] text-gold-ink">{{
+          <span class="ml-auto shrink-0 tabular text-body text-gold-ink">{{
             artifactLevelLabel(row.owned.level)
           }}</span>
         </div>
@@ -82,7 +80,7 @@
           :height="2"
         />
         <p class="mt-1.5 t-body text-ink-faint">{{ row.def.desc }}</p>
-        <p class="mt-1 text-[11px] text-qing">
+        <p class="mt-1 text-body text-qing">
           {{ passiveLines(row.def.id, row.owned.level).join(" · ") }}
         </p>
         <!--
@@ -90,7 +88,7 @@
         文案不能停在基线那一句
         (见 data/artifacts.artifactActiveText —— 战斗与这句话读的是同一个函数)
       -->
-        <p class="mt-1 text-[11px] text-violet-ink">
+        <p class="mt-1 text-body text-violet-ink">
           神通「{{ row.def.active.name }}」:{{ artifactActiveText(row.def, row.owned.level) }}
         </p>
         <!--
@@ -99,13 +97,13 @@
       -->
         <p
           v-if="nextGainText(row.def.id, row.owned.level)"
-          class="mt-1 text-[10px] leading-relaxed text-ink-faint tabular"
+          class="mt-1 text-note leading-relaxed text-ink-faint tabular"
         >
           下一重:{{ nextGainText(row.def.id, row.owned.level) }}
         </p>
         <div class="mt-2.5 flex gap-2 tinylens:flex-col">
           <button
-            class="btn-seal flex-1 !py-1.5 !text-[11px]"
+            class="btn-seal flex-1 !py-1.5 !text-body"
             :class="{ '!bg-ink-faint': row.equipped }"
             @click="toggleArtifact(row.def.id)"
           >
@@ -113,7 +111,7 @@
           </button>
           <button
             v-if="row.upCost"
-            class="btn-ghost flex-1 !py-1.5 !text-[11px] tabular"
+            class="btn-ghost flex-1 !py-1.5 !text-body tabular"
             :disabled="!row.upAffordable"
             @click="refineArtifact(row.def.id)"
           >
@@ -125,7 +123,7 @@
           </button>
         </div>
         <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完 -->
-        <p v-if="row.upCost && !row.upAffordable" class="mt-1.5 text-[10px] text-cinnabar tabular">
+        <p v-if="row.upCost && !row.upAffordable" class="mt-1.5 text-note text-cinnabar tabular">
           尚差 悟道点 {{ Math.max(0, row.upCost.wudao - resources.wudao) }} · 灵石
           {{ formatGN(Math.max(0, toNum(row.upCost.stone) - toNum(resources.spiritStone))) }}
         </p>
@@ -135,7 +133,7 @@
       <button
         v-if="artifactPage.start > 0"
         data-artifact-prev
-        class="btn-ghost min-w-0 flex-1 !py-2 !text-[11px] tinylens:basis-full tinylens:whitespace-nowrap"
+        class="btn-ghost min-w-0 flex-1 !py-2 !text-body tinylens:basis-full tinylens:whitespace-nowrap"
         :aria-label="previousArtifactText"
         @click="showPreviousArtifacts"
       >
@@ -144,7 +142,7 @@
       <button
         v-if="artifactPage.hidden > 0"
         data-artifact-more
-        class="btn-ghost min-w-0 flex-1 !py-2 !text-[11px] tinylens:basis-full tinylens:whitespace-nowrap"
+        class="btn-ghost min-w-0 flex-1 !py-2 !text-body tinylens:basis-full tinylens:whitespace-nowrap"
         :aria-label="moreArtifactText"
         :data-promised="Math.min(ARTIFACT_RENDER_BATCH, artifactPage.hidden)"
         @click="showMoreArtifacts"
@@ -153,12 +151,12 @@
       </button>
     </div>
   </div>
-  <p v-else class="empty-note mt-16 text-center text-[11px] text-ink-faint">
+  <p v-else class="empty-note mt-16 text-center text-body text-ink-faint">
     尚无法宝随身
     <br />
-    <span class="text-[11px]">法宝多出自际遇与强敌之手</span>
+    <span class="text-body">法宝多出自际遇与强敌之手</span>
   </p>
-  <p v-if="player.petId" class="mt-4 text-center text-[11px] text-ink-faint">
+  <p v-if="player.petId" class="mt-4 text-center text-body text-ink-faint">
     灵兽相伴,可在「名号」页更替
   </p>
 </template>

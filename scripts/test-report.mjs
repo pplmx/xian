@@ -264,6 +264,7 @@ const CATEGORIES = [
       "desktopSpine",
       "navigation",
       "visualRhythm",
+      "typeScale",
       "itemText",
       "eventText",
       "kaiFontCoverage",

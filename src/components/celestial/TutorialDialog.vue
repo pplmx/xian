@@ -1,7 +1,7 @@
 <template>
   <!-- Phase 30.9 S4:首次登真仙·终局导览 -->
   <BaseModal :open="open" title="登临真仙" :closable="false">
-    <div class="space-y-2.5 text-[14px] leading-relaxed">
+    <div class="space-y-2.5 text-title leading-relaxed">
       <p class="font-kai text-ink">凡间所得,终有尽时。</p>
       <p class="text-ink-soft">
         玄铁、功法残页、灵石……到了此境,皆可献入
@@ -24,7 +24,7 @@
         <b class="text-violet-ink">来世</b>
         更进一步。
       </p>
-      <p class="mt-2 text-[11px] text-ink-faint">
+      <p class="mt-2 text-body text-ink-faint">
         一句话:
         <!-- 标点跟着前一句走:单独成行会在窄屏上被折成孤零零一个句号 -->
         <span class="text-cinnabar">道源是此世拿来折腾的,</span>

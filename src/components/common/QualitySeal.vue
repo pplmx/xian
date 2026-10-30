@@ -41,6 +41,6 @@ const props = withDefaults(
 
 const qualityName = computed(() => qualityDef(props.quality).name);
 const tone = computed(() => qualityDef(props.quality).color);
-const sizeClass = computed(() => (props.size >= 16 ? "text-[11px]" : "text-[9px]"));
+const sizeClass = computed(() => (props.size >= 16 ? "text-body" : "text-[9px]"));
 const boxStyle = computed(() => ({ width: `${props.size}px`, height: `${props.size}px` }));
 </script>

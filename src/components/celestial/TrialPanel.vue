@@ -5,19 +5,19 @@
     <div class="card-ink mt-2 px-4 py-3">
       <p class="flex items-center gap-2">
         <span class="t-card">{{ dailyWorld?.name }}</span>
-        <span class="tabular text-[11px] text-ink-soft"
+        <span class="tabular text-body text-ink-soft"
           >{{ daily.verdict.difficulty }} · 可行 {{ daily.verdict.viable }}/{{
             BUILD_PROFILES.length
           }}</span
         >
-        <span class="ml-auto tabular text-[11px] text-gold-ink">赏 {{ daily.verdict.reward }}</span>
+        <span class="ml-auto tabular text-body text-gold-ink">赏 {{ daily.verdict.reward }}</span>
       </p>
-      <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
+      <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
         <span v-for="m in dailyMutators" :key="m!.id">◇ {{ m!.name }}:{{ m!.text }}</span>
         <span v-if="dailyPact" class="text-cinnabar">契·{{ dailyPact.name }}</span>
       </p>
       <button
-        class="btn-seal mt-2 w-full !py-1.5 !text-[11px]"
+        class="btn-seal mt-2 w-full !py-1.5 !text-body"
         :disabled="endgame.dailyDoneDay === daily.day || challengeDaoShort > 0"
         @click="goDaily"
       >
@@ -41,12 +41,12 @@
     <SectionTitle title="天道变数" hint="规则随机,每探一次天机便换一副面孔" />
     <div class="card-ink mt-2 px-4 py-3">
       <template v-if="mutationDraw.length">
-        <p v-for="m in mutationRows" :key="m!.id" class="text-[11px] text-violet-ink">
+        <p v-for="m in mutationRows" :key="m!.id" class="text-body text-violet-ink">
           ◇ {{ m!.name }}:{{ m!.text }}
         </p>
         <div class="mt-2 flex gap-2">
           <button
-            class="btn-seal flex-1 !py-2 !text-[11px]"
+            class="btn-seal flex-1 !py-2 !text-body"
             :disabled="mutationDaoShort > 0"
             @click="goMutation"
           >
@@ -55,7 +55,7 @@
               >应 战(道源 {{ MUTATION_ENTRY_COST }} · 破解得 {{ MUTATION_BASE_REWARD }})</template
             >
           </button>
-          <button class="btn-ghost !px-3 !text-[11px]" @click="mutationDraw = rollMutators()">
+          <button class="btn-ghost !px-3 !text-body" @click="mutationDraw = rollMutators()">
             再探
           </button>
         </div>
@@ -67,7 +67,7 @@
           }}连战,规则叠加。
         </p>
         <button
-          class="btn-ghost mt-2 w-full !py-2 !text-[11px]"
+          class="btn-ghost mt-2 w-full !py-2 !text-body"
           @click="mutationDraw = rollMutators()"
         >
           窥探变数
@@ -83,24 +83,24 @@
       <div v-for="trial in TRIALS" :key="trial.id" class="card-ink px-4 py-3">
         <p class="flex items-center gap-2">
           <span
-            class="grid h-8 w-8 place-items-center rounded-md bg-gold-ink/85 font-kai text-[15px] text-paper"
+            class="grid h-8 w-8 place-items-center rounded-md bg-gold-ink/85 font-kai text-section text-paper"
           >
             {{ trial.seal }}
           </span>
-          <span class="font-kai text-[14px] tracking-[0.2em] text-ink">{{ trial.name }}</span>
+          <span class="font-kai text-title tracking-[0.2em] text-ink">{{ trial.name }}</span>
           <span
             v-if="endgame.trialRecords[trial.id]"
-            class="ml-auto tabular text-[10px] text-gold-ink"
+            class="ml-auto tabular text-note text-gold-ink"
           >
             最佳 {{ endgame.trialRecords[trial.id]!.bestRounds }} 回合
           </span>
         </p>
         <p class="mt-1.5 t-body text-ink-faint">{{ trial.desc }}</p>
-        <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
+        <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
           <span v-for="(r, i) in trial.ruleText" :key="i">{{ r }}</span>
         </p>
         <button
-          class="btn-ghost mt-2.5 w-full !py-2 !text-[14px]"
+          class="btn-ghost mt-2.5 w-full !py-2 !text-title"
           :disabled="!endgame.daoPath || daoEntryShort(trial.entryCost) > 0"
           @click="goTrial(trial.id)"
         >
@@ -126,7 +126,7 @@
 
     <SectionTitle title="天道挑战书" hint="你定规则,天道定赏" />
     <div class="card-ink mt-2 px-4 py-3">
-      <p class="text-[11px] text-ink-faint">
+      <p class="text-body text-ink-faint">
         选界 · 叠变数(至多 {{ cnNumber(CHALLENGE_MAX_MUTATORS) }} 条)· 立契 ·
         命名。赏格由天道实测难度定价,无从作弊。
       </p>
@@ -172,7 +172,7 @@
         </button>
       </div>
       <!-- 变数已选的,把效果正文亮出来 —— 手机没有 hover,赌约规则得看得见 -->
-      <p v-if="selectedMutators.length" class="mt-1 text-[10px] leading-relaxed text-violet-ink">
+      <p v-if="selectedMutators.length" class="mt-1 text-note leading-relaxed text-violet-ink">
         {{ selectedMutators.map((m) => `${m.name}：${m.text}`).join("；") }}
       </p>
       <div class="mt-1.5 flex flex-wrap gap-1.5">
@@ -198,7 +198,7 @@
           {{ p.name }}
         </button>
       </div>
-      <p v-if="challengePact" class="mt-1 text-[10px] leading-relaxed text-ink-soft">
+      <p v-if="challengePact" class="mt-1 text-note leading-relaxed text-ink-soft">
         立约「{{ challengePact.name }}」：{{ challengePact.ruleText }}
       </p>
       <input
@@ -213,19 +213,19 @@
         class="mt-2 rounded-md px-3 py-2"
         :class="challengeVerdict.ok ? 'bg-paper-deep/70' : 'bg-cinnabar/10'"
       >
-        <p v-if="challengeVerdict.ok" class="flex items-center justify-between text-[11px]">
+        <p v-if="challengeVerdict.ok" class="flex items-center justify-between text-body">
           <span class="text-ink-soft"
             >天道受此约:{{ challengeVerdict.difficulty }} · 可行流派
             {{ challengeVerdict.viable }}/{{ BUILD_PROFILES.length }}</span
           >
           <span class="tabular text-gold-ink">赏 道源 {{ challengeVerdict.reward }}</span>
         </p>
-        <p v-else class="text-[11px] text-cinnabar">{{ challengeVerdict.reason }}</p>
+        <p v-else class="text-body text-cinnabar">{{ challengeVerdict.reason }}</p>
       </div>
       <div class="mt-2 flex gap-2">
-        <button class="btn-ghost flex-1 !py-1.5 !text-[11px]" @click="doVerify">验 约</button>
+        <button class="btn-ghost flex-1 !py-1.5 !text-body" @click="doVerify">验 约</button>
         <button
-          class="btn-seal flex-1 !py-1.5 !text-[11px]"
+          class="btn-seal flex-1 !py-1.5 !text-body"
           :disabled="!endgame.daoPath || !challengeVerdict?.ok || challengeDaoShort > 0"
           @click="doUndertake"
         >

@@ -26,7 +26,7 @@
             <div class="min-w-0">
               <p
                 data-folio-modal-section
-                class="folio-modal__section text-[10px] tracking-[0.3em] text-ink-faint"
+                class="folio-modal__section text-note tracking-[0.3em] text-ink-faint"
               >
                 {{ modalPosition }} · 卷页
               </p>
@@ -41,7 +41,7 @@
             </div>
             <button
               v-if="props.closable"
-              class="folio-modal__close grid h-8 w-8 shrink-0 place-items-center border border-ink/20 font-kai text-[14px] leading-none text-ink-soft active:scale-90"
+              class="folio-modal__close grid h-8 w-8 shrink-0 place-items-center border border-ink/20 font-kai text-title leading-none text-ink-soft active:scale-90"
               aria-label="关闭"
               @click="emit('close')"
             >

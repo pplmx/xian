@@ -12,7 +12,7 @@
     >
       <span class="veil-glow" />
       <div class="veil-plaque animate-ink-pop">
-        <p class="text-[11px] tracking-[0.5em] text-ink-faint">顿 开 界 膜</p>
+        <p class="text-body tracking-[0.5em] text-ink-faint">顿 开 界 膜</p>
         <p class="mt-1.5 font-kai text-[25px] leading-none tracking-[0.45em] text-cinnabar">
           {{ rite.name }}
         </p>

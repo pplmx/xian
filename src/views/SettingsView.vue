@@ -6,7 +6,7 @@
     <div class="card-ink divide-y divide-ink/7 px-4">
       <div class="py-3">
         <label class="flex items-center justify-between">
-          <span class="text-[14px] text-ink-soft">背景音乐</span>
+          <span class="text-title text-ink-soft">背景音乐</span>
           <input v-model="settings.musicOn" type="checkbox" class="toggle-ink" />
         </label>
         <!--
@@ -14,7 +14,7 @@
           光有 grow 压不下去 —— 200% 字号(布局视口 195px)下整行会被它顶出去 6px。
         -->
         <div v-if="settings.musicOn" class="mt-2 flex items-center gap-2">
-          <span class="text-[10px] text-ink-faint">轻</span>
+          <span class="text-note text-ink-faint">轻</span>
           <input
             v-model.number="settings.musicVol"
             type="range"
@@ -23,18 +23,18 @@
             aria-label="背景音乐音量"
             class="min-w-0 grow accent-cinnabar"
           />
-          <span class="w-7 text-right text-[10px] tabular text-ink-faint">{{
+          <span class="w-7 text-right text-note tabular text-ink-faint">{{
             settings.musicVol
           }}</span>
         </div>
       </div>
       <div class="py-3">
         <label class="flex items-center justify-between">
-          <span class="text-[14px] text-ink-soft">音效</span>
+          <span class="text-title text-ink-soft">音效</span>
           <input v-model="settings.sfxOn" type="checkbox" class="toggle-ink" />
         </label>
         <div v-if="settings.sfxOn" class="mt-2 flex items-center gap-2">
-          <span class="text-[10px] text-ink-faint">轻</span>
+          <span class="text-note text-ink-faint">轻</span>
           <input
             v-model.number="settings.sfxVol"
             type="range"
@@ -43,18 +43,16 @@
             aria-label="音效音量"
             class="min-w-0 grow accent-cinnabar"
           />
-          <span class="w-7 text-right text-[10px] tabular text-ink-faint">{{
-            settings.sfxVol
-          }}</span>
+          <span class="w-7 text-right text-note tabular text-ink-faint">{{ settings.sfxVol }}</span>
         </div>
       </div>
       <label class="flex items-center justify-between py-3">
-        <span class="text-[14px] text-ink-soft">减少动效</span>
+        <span class="text-title text-ink-soft">减少动效</span>
         <input v-model="settings.reduceMotion" type="checkbox" class="toggle-ink" />
       </label>
       <div class="py-3">
         <label class="flex items-center justify-between">
-          <span class="text-[14px] text-ink-soft">遇事勿扰</span>
+          <span class="text-title text-ink-soft">遇事勿扰</span>
           <input v-model="settings.dndEvents" type="checkbox" class="toggle-ink" />
         </label>
         <!--
@@ -62,7 +60,7 @@
           玩家会以为是际遇没了 —— 历练页有开着时的完整提示与就地关掉(见 explorationDnd
           与 AdventureView),这里把压缩成一句,两页通气。
         -->
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-1 text-note leading-relaxed text-ink-faint">
           历练撞见际遇不再弹窗,按默认好愿当场结清(奖励照拿);历练页会提醒开着,可就地关。
         </p>
       </div>
@@ -72,7 +70,7 @@
         320 / 390 两档读数不动。
       -->
       <div class="flex flex-wrap items-center justify-between py-3">
-        <span class="text-[14px] whitespace-nowrap text-ink-soft">夜间模式</span>
+        <span class="text-title whitespace-nowrap text-ink-soft">夜间模式</span>
         <div role="group" aria-label="夜间模式" class="flex gap-1">
           <button
             v-for="o in THEME_OPTIONS"
@@ -91,7 +89,7 @@
         </div>
       </div>
       <div class="flex flex-wrap items-center justify-between py-3">
-        <span class="text-[14px] whitespace-nowrap text-ink-soft">战报速度</span>
+        <span class="text-title whitespace-nowrap text-ink-soft">战报速度</span>
         <div role="group" aria-label="战报速度" class="flex gap-1">
           <button
             v-for="s in [1, 2, 4] as const"
@@ -114,14 +112,14 @@
     <!-- 存档 -->
     <SectionTitle title="存档" />
     <div class="card-ink space-y-2 px-4 py-3">
-      <p class="text-[11px] text-ink-faint tabular">
+      <p class="text-body text-ink-faint tabular">
         存档版本 v{{ SAVE_VERSION }} · 修行时长 {{ formatDuration(game.totalPlaySec) }}
       </p>
       <!--
         备份这件事没人提醒就不会做,而它恰恰是丢档前唯一的保险 —— 故常驻一行;
         备份旧了、这一档又确实攒了东西时,才把那句「建议导出一份」说出来(见 core/saveBackup.ts)。
       -->
-      <p class="text-[11px] tabular" :class="backupPrompt ? 'text-amber-ink' : 'text-ink-faint'">
+      <p class="text-body tabular" :class="backupPrompt ? 'text-amber-ink' : 'text-ink-faint'">
         上次导出备份:{{ lastExportText }}
         <span v-if="backupPrompt" class="leading-relaxed">
           · 建议导出一份 —— 安卓清应用数据、iOS 七天不打开都会把进度带走
@@ -130,7 +128,7 @@
       <!-- 写盘失败时这里必须说话:玩家可能正玩得兴起,却不知道进度没进档 -->
       <p
         v-if="saveFailed"
-        class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-[11px] leading-relaxed text-cinnabar"
+        class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-body leading-relaxed text-cinnabar"
       >
         上次写入存档失败 ——
         浏览器存储可能已满。请先「导出存档」留一份,再清理浏览器数据或换设备导入。
@@ -143,7 +141,7 @@
       -->
       <p
         v-if="corruptedNotice.length"
-        class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-[11px] leading-relaxed text-cinnabar"
+        class="rounded-md border border-cinnabar/40 bg-cinnabar/6 px-2 py-1.5 text-body leading-relaxed text-cinnabar"
       >
         启动时发现 {{ corruptedNotice.length }} 个存档分片损坏,已跳过损坏内容:{{
           corruptedNotice.map((id) => STORE_NAMES[id] ?? id).join("、")
@@ -159,8 +157,8 @@
       </p>
       <!-- 极窄档(≤220 CSS px):两列各 61px 时「导出存档」四字折成两行 —— 放开成单列。 -->
       <div class="grid grid-cols-2 gap-2 tinylens:grid-cols-1">
-        <button class="btn-ghost !text-[11px]" @click="onExport">导出存档</button>
-        <button class="btn-ghost !text-[11px]" @click="triggerImport">导入存档</button>
+        <button class="btn-ghost !text-body" @click="onExport">导出存档</button>
+        <button class="btn-ghost !text-body" @click="triggerImport">导入存档</button>
         <input
           ref="fileInput"
           type="file"
@@ -170,7 +168,7 @@
         />
       </div>
       <button
-        class="btn-ghost w-full !border-cinnabar/40 !text-[11px] !text-cinnabar"
+        class="btn-ghost w-full !border-cinnabar/40 !text-body !text-cinnabar"
         @click="openReset"
       >
         散尽修为,重入轮回(清空存档)
@@ -195,7 +193,7 @@
       </p>
       <p
         v-if="latestError"
-        class="rounded-md bg-ink/4 px-2 py-1.5 text-[10px] leading-relaxed text-ink-soft"
+        class="rounded-md bg-ink/4 px-2 py-1.5 text-note leading-relaxed text-ink-soft"
       >
         <span class="tabular text-ink-faint">{{ formatClock(latestError.at) }}</span>
         <span v-if="latestError.count > 1" class="ml-1 text-ink-faint"
@@ -205,8 +203,8 @@
         <span v-if="latestError.route" class="ml-1 text-ink-faint">{{ latestError.route }}</span>
       </p>
       <div v-if="diag.errors.length" class="grid grid-cols-2 gap-2">
-        <button class="btn-ghost !text-[11px]" @click="copyDiag">复制异常记录</button>
-        <button class="btn-ghost !text-[11px]" @click="diag.clear()">清空记录</button>
+        <button class="btn-ghost !text-body" @click="copyDiag">复制异常记录</button>
+        <button class="btn-ghost !text-body" @click="diag.clear()">清空记录</button>
       </div>
     </div>
 
@@ -220,22 +218,22 @@
         class="flex w-full items-center justify-between py-3 active:opacity-60"
         @click="aboutOpen = true"
       >
-        <span class="text-[14px] text-ink-soft">关于此作</span>
-        <span class="text-[11px] text-ink-faint">查看 →</span>
+        <span class="text-title text-ink-soft">关于此作</span>
+        <span class="text-body text-ink-faint">查看 →</span>
       </button>
       <button
         class="flex w-full items-center justify-between py-3 active:opacity-60"
         @click="privacyOpen = true"
       >
-        <span class="text-[14px] text-ink-soft">隐私政策</span>
-        <span class="text-[11px] text-ink-faint">查看 →</span>
+        <span class="text-title text-ink-soft">隐私政策</span>
+        <span class="text-body text-ink-faint">查看 →</span>
       </button>
       <button
         class="flex w-full items-center justify-between py-3 active:opacity-60"
         @click="progressionOpen = true"
       >
-        <span class="text-[14px] text-ink-soft">数值体系</span>
-        <span class="text-[11px] text-ink-faint">查看 →</span>
+        <span class="text-title text-ink-soft">数值体系</span>
+        <span class="text-body text-ink-faint">查看 →</span>
       </button>
     </div>
 
@@ -250,7 +248,7 @@
 
     <!-- 重置确认(弹窗期间引擎暂停) -->
     <BaseModal :open="resetConfirm" title="重置游戏" @close="closeReset">
-      <p class="text-[14px] leading-relaxed text-ink-soft">
+      <p class="text-title leading-relaxed text-ink-soft">
         此举将
         <span class="text-cinnabar">彻底抹去</span>
         本机的一切修行痕迹,包括转世收获,且无法恢复。
@@ -265,7 +263,7 @@
 
     <!-- 导入确认(与重置同一条确认纪律:这份备份会整体替换当前进度,不可逆) -->
     <BaseModal :open="importConfirm" title="导入存档" @close="closeImport">
-      <p class="text-[14px] leading-relaxed text-ink-soft">
+      <p class="text-title leading-relaxed text-ink-soft">
         这份备份将
         <span class="text-cinnabar">整体替换</span>
         本机当前的修行进度 —— 之后的收获会回到备份那一刻,且无法撤销。
@@ -273,14 +271,14 @@
       <!-- 备份是谁的、什么版本、什么时间导的:整体替换前先摊个底细(决策前摊数字契约) -->
       <div
         v-if="importInspect"
-        class="mt-3 rounded-md bg-paper-deep/60 px-3 py-2 text-[11px] leading-relaxed"
+        class="mt-3 rounded-md bg-paper-deep/60 px-3 py-2 text-body leading-relaxed"
       >
         <p class="flex flex-wrap items-baseline gap-x-2 text-ink">
-          <span class="font-kai text-[14px]">{{ importInspect.name }}</span>
+          <span class="font-kai text-title">{{ importInspect.name }}</span>
           <span class="text-ink-faint">{{ importInspect.realmLabel }}</span>
         </p>
         <p
-          class="mt-0.5 flex flex-wrap gap-x-2 tabular text-[10px]"
+          class="mt-0.5 flex flex-wrap gap-x-2 tabular text-note"
           :class="importInspect.tooNew ? 'text-cinnabar' : 'text-ink-faint'"
         >
           <span>备份 v{{ importInspect.version }}</span>
@@ -289,7 +287,7 @@
         </p>
         <p
           v-if="importInspect.skipped.length || importInspect.missingCritical"
-          class="mt-1 text-[10px] leading-relaxed text-cinnabar"
+          class="mt-1 text-note leading-relaxed text-cinnabar"
         >
           <template v-if="importInspect.missingCritical">
             这份备份缺少「{{

@@ -5,7 +5,7 @@
       <button
         v-for="(fight, i) in rows"
         :key="i"
-        class="rounded px-1.5 py-0.5 text-[10px] transition-transform active:scale-95"
+        class="rounded px-1.5 py-0.5 text-note transition-transform active:scale-95"
         :class="
           i === current
             ? 'bg-cinnabar/85 text-paper'
@@ -22,9 +22,9 @@
 
     <!-- 对阵与血条 -->
     <div v-if="row" class="card-ink px-3 py-2.5">
-      <div class="flex items-center justify-between gap-2 text-[11px]">
+      <div class="flex items-center justify-between gap-2 text-body">
         <span class="min-w-0 truncate font-kai text-ink">{{ playerName }}</span>
-        <span class="shrink-0 text-[10px] text-ink-faint"
+        <span class="shrink-0 text-note text-ink-faint"
           >第 {{ current + 1 }} 战 · {{ row.rounds }} 回合</span
         >
         <span class="min-w-0 truncate text-right font-kai text-cinnabar">{{ row.foeName }}</span>
@@ -43,7 +43,7 @@
       <p
         v-for="(entry, i) in displayed"
         :key="i"
-        class="py-0.5 text-[11px] leading-relaxed"
+        class="py-0.5 text-body leading-relaxed"
         :class="KIND_COLOR[entry.t]"
       >
         {{ entry.text }}
@@ -51,19 +51,19 @@
           entry.dmg
         }}</span>
       </p>
-      <p v-if="displayed.length === 0" class="py-2 text-center text-[11px] text-ink-faint">
+      <p v-if="displayed.length === 0" class="py-2 text-center text-body text-ink-faint">
         此战无录
       </p>
     </div>
 
     <!-- 播放控制 -->
     <div class="mt-2 flex items-center justify-between gap-2">
-      <span class="text-[10px] text-ink-faint">{{ displayed.length }} / {{ logs.length }}</span>
+      <span class="text-note text-ink-faint">{{ displayed.length }} / {{ logs.length }}</span>
       <div class="flex gap-1">
-        <button v-if="!finished" class="btn-ghost !px-2.5 !py-1 !text-[11px]" @click="skip()">
+        <button v-if="!finished" class="btn-ghost !px-2.5 !py-1 !text-body" @click="skip()">
           略过
         </button>
-        <button v-else class="btn-ghost !px-2.5 !py-1 !text-[11px]" @click="replay()">重播</button>
+        <button v-else class="btn-ghost !px-2.5 !py-1 !text-body" @click="replay()">重播</button>
       </div>
     </div>
   </div>

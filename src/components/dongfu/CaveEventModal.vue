@@ -58,8 +58,8 @@ const locationLabel = computed(() =>
 
 <template>
   <BaseModal :open="show" title="洞府巡游" :closable="false" @close="handleIgnore">
-    <p class="flex items-center justify-between text-[11px] text-ink-faint">
-      <span class="chip-ink !py-0 text-[10px] text-jade">{{ locationLabel }}</span>
+    <p class="flex items-center justify-between text-body text-ink-faint">
+      <span class="chip-ink !py-0 text-note text-jade">{{ locationLabel }}</span>
       <!-- 临散前转朱砂:关掉=放弃当日巡游,紧迫得用颜色说出来
            (颜色判断用原始秒数,呈现走 formatCountdown 定宽串) -->
       <span
@@ -81,7 +81,7 @@ const locationLabel = computed(() =>
         <!-- 风味一行、数值一行:数值由 ui/earlyGameText 从 reward / penalty 现算,
              文案(opt.effect)只剩风味 —— 改 buffs.ts 或 reward 的值,这一行跟着变 -->
         <span class="mt-0.5 block t-body text-ink-faint">{{ opt.effect }}</span>
-        <span class="mt-0.5 block text-[11px] leading-relaxed tabular text-jade">{{
+        <span class="mt-0.5 block text-body leading-relaxed tabular text-jade">{{
           caveOptionEffectText(opt)
         }}</span>
       </button>

@@ -2,7 +2,7 @@
   <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="界域志" back-to="character" back-label="人物">
       <template #meta>
-        <p class="mt-1.5 text-[10px] text-ink-faint">
+        <p class="mt-1.5 text-note text-ink-faint">
           境界名从哪来 · 已至「{{ realmDef(player.major).name }}」
         </p>
       </template>
@@ -27,7 +27,7 @@
       >
         <div class="flex items-start justify-between gap-3 tinylens:flex-col tinylens:gap-1">
           <div class="min-w-0">
-            <p class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px]">
+            <p class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-note">
               <span class="world-label font-kai tracking-[0.24em]">{{
                 currentRealm.world.name
               }}</span>
@@ -36,14 +36,14 @@
             <p class="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span
                 data-current-realm-name
-                class="font-kai text-[18px] tracking-[0.18em] text-ink"
+                class="font-kai text-heading tracking-[0.18em] text-ink"
                 >{{ currentRealm.def.name }}</span
               >
-              <span class="text-[10px] text-ink-faint">{{ currentRealm.def.basis }}</span>
+              <span class="text-note text-ink-faint">{{ currentRealm.def.basis }}</span>
             </p>
             <p class="mt-1 t-body text-ink-soft">{{ currentRealm.def.desc }}</p>
           </div>
-          <span class="shrink-0 text-[10px] text-ink-faint tabular">
+          <span class="shrink-0 text-note text-ink-faint tabular">
             第 {{ currentRealm.globalPosition }} / {{ REALMS.length }} 境
           </span>
         </div>
@@ -58,13 +58,13 @@
           <button
             v-if="currentRealm.previous"
             data-realm-step="prev"
-            class="tap-row min-h-[28px] text-[10px] text-qing active:opacity-60"
+            class="tap-row min-h-[28px] text-note text-qing active:opacity-60"
             @click="gotoRealm(currentRealm.previous.def.id)"
           >
             ← 前境 · {{ currentRealm.previous.def.name }}
           </button>
-          <span v-else class="text-[10px] text-ink-faint">仙路起笔</span>
-          <span data-current-world-position class="text-[10px] text-ink-faint tabular">
+          <span v-else class="text-note text-ink-faint">仙路起笔</span>
+          <span data-current-world-position class="text-note text-ink-faint tabular">
             {{ currentRealm.world.name }} {{ currentRealm.worldPosition }}/{{
               currentRealm.worldTotal
             }}
@@ -72,12 +72,12 @@
           <button
             v-if="currentRealm.next"
             data-realm-step="next"
-            class="tap-row min-h-[28px] text-[10px] text-qing active:opacity-60"
+            class="tap-row min-h-[28px] text-note text-qing active:opacity-60"
             @click="gotoRealm(currentRealm.next.def.id)"
           >
             后境 · {{ currentRealm.next.def.name }} →
           </button>
-          <span v-else class="text-[10px] text-ink-faint">已至此卷末</span>
+          <span v-else class="text-note text-ink-faint">已至此卷末</span>
         </div>
       </section>
 
@@ -103,20 +103,20 @@
         >
           <span class="min-w-0 flex-1">
             <span class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span class="world-seal font-kai text-[15px] tracking-[0.25em]">{{
+              <span class="world-seal font-kai text-section tracking-[0.25em]">{{
                 row.world.name
               }}</span>
-              <span class="text-[10px] text-ink-faint"
+              <span class="text-note text-ink-faint"
                 >第 {{ row.world.start + 1 }}–{{ row.world.end + 1 }} 境</span
               >
             </span>
-            <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
+            <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-note">
               <span :class="worldStateClass(row)">{{ worldStatusText(row) }}</span>
               <span class="text-ink-faint">{{ isWorldOpen(row.world.id) ? "收卷" : "展卷" }}</span>
             </span>
           </span>
           <span
-            class="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-ink/10 text-[11px] text-ink-faint transition-transform"
+            class="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-ink/10 text-body text-ink-faint transition-transform"
             :class="isWorldOpen(row.world.id) ? 'rotate-180' : ''"
             aria-hidden="true"
             >▾</span
@@ -141,7 +141,7 @@
             >
               <p class="flex items-baseline gap-2">
                 <span
-                  class="font-kai text-[14px] tracking-wider"
+                  class="font-kai text-title tracking-wider"
                   :class="
                     cell.index === player.major
                       ? ''
@@ -154,8 +154,8 @@
                 </span>
                 <!-- 基准(内丹/道基…)是分类签,不是主角字:压到 10px 的淡字,
                    与境界名同基线但不争大小 -->
-                <span class="text-[10px] text-ink-faint">{{ cell.def.basis }}</span>
-                <span v-if="cell.index === player.major" class="text-[10px] text-cinnabar"
+                <span class="text-note text-ink-faint">{{ cell.def.basis }}</span>
+                <span v-if="cell.index === player.major" class="text-note text-cinnabar"
                   >此刻在此</span
                 >
               </p>
@@ -166,7 +166,7 @@
               <!-- 所据何典:点一下就跳到「典籍」那一册 —— codex 要能顺着来路追下去 -->
               <p
                 v-if="classicsOf(cell.def.id).length"
-                class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[10px] text-ink-faint"
+                class="mt-1 flex flex-wrap items-center gap-x-1.5 text-note text-ink-faint"
               >
                 <span>所据:</span>
                 <!-- 行内链接给 28px 触达面(inline-flex min-h),与历练页那枚同款 -->
@@ -197,15 +197,15 @@
           class="card-ink px-4 py-3"
         >
           <p class="flex flex-wrap items-center gap-2">
-            <span class="font-kai text-[14px] text-ink">《{{ c.title }}》</span>
-            <span class="chip-ink !text-[10px]">{{ c.school }}</span>
-            <span class="text-[10px] text-ink-faint">{{ c.source }}</span>
+            <span class="font-kai text-title text-ink">《{{ c.title }}》</span>
+            <span class="chip-ink !text-note">{{ c.school }}</span>
+            <span class="text-note text-ink-faint">{{ c.source }}</span>
           </p>
           <p class="mt-1 t-body text-ink-soft">{{ c.gist }}</p>
           <!-- 相涉何境:点一下跳回「界域」那一段 —— 反向也能追 -->
           <p
             v-if="c.realms.length"
-            class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[10px] text-ink-faint"
+            class="mt-1 flex flex-wrap items-center gap-x-1.5 text-note text-ink-faint"
           >
             <span>相涉:</span>
             <button
@@ -240,19 +240,19 @@
             <span class="font-kai text-[16px] tracking-widest text-cinnabar"
               >{{ currentReading.hexagram.name }}卦</span
             >
-            <span class="text-[10px] text-ink-faint tabular">
+            <span class="text-note text-ink-faint tabular">
               上{{ currentReading.upper.name }}{{ currentReading.upper.symbol }} · 下{{
                 currentReading.lower.name
               }}{{ currentReading.lower.symbol }}
             </span>
-            <span v-if="currentReading.changed" class="chip-ink !text-[10px]"
+            <span v-if="currentReading.changed" class="chip-ink !text-note"
               >之{{ currentReading.changed.name }}</span
             >
-            <span class="ml-auto text-[10px] tabular text-ink-faint"
+            <span class="ml-auto text-note tabular text-ink-faint"
               ><span class="countdown-slot">{{ remainText }}</span></span
             >
           </p>
-          <div class="mt-1.5 space-y-0.5 font-kai text-[11px] tracking-[0.2em] text-ink-soft">
+          <div class="mt-1.5 space-y-0.5 font-kai text-body tracking-[0.2em] text-ink-soft">
             <p v-for="(bar, i) in drawnLines" :key="i">{{ bar }}</p>
           </div>
           <p class="mt-1.5 t-body text-ink-soft">
@@ -261,7 +261,7 @@
           <p v-for="(line, i) in counsel" :key="`c${i}`" class="mt-0.5 t-body text-ink-faint">
             {{ line }}
           </p>
-          <p class="mt-1.5 text-[11px] text-qing">在身之力:{{ powerText }}</p>
+          <p class="mt-1.5 text-body text-qing">在身之力:{{ powerText }}</p>
         </div>
 
         <!-- 读屏:散卦没有 toast 可依,整块消失的那一瞬必须自报(成卦由 toast 落地即念) -->
@@ -274,17 +274,17 @@
         -->
         <div class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
           <button
-            class="btn-ghost shrink-0 whitespace-nowrap !py-1.5 !text-[11px]"
+            class="btn-ghost shrink-0 whitespace-nowrap !py-1.5 !text-body"
             :disabled="askDisabled"
             @click="ask"
           >
             {{ askLabel }}
           </button>
-          <span class="text-[10px] leading-relaxed text-ink-faint">
+          <span class="text-note leading-relaxed text-ink-faint">
             卜以决疑,不疑何卜 —— 一事不二卜,卦力随动爻而盛,亦随时而尽。
           </span>
         </div>
-        <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-ink-faint tabular">
+        <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-note text-ink-faint tabular">
           <span v-for="(t, i) in CHANGING_TIERS" :key="t.min"
             >{{ changingRange(CHANGING_TIERS, i) }} 动 → {{ t.minutes }} 分 · ×{{
               t.power
@@ -299,14 +299,12 @@
         <!-- 320px 窄窗:卦辞挪到自己一行,宜/忌靠右 —— 卦名+象+宜忌一行,卦辞整行不被挤成一根线 -->
         <div v-for="t in TRIGRAMS" :key="t.id" class="py-2.5">
           <p class="flex flex-wrap items-start gap-x-2 gap-y-0.5">
-            <span class="w-[52px] shrink-0 font-kai text-[15px] text-ink"
+            <span class="w-[52px] shrink-0 font-kai text-section text-ink"
               >{{ t.symbol }} {{ t.name }}</span
             >
-            <span class="shrink-0 text-[10px] text-ink-faint"
-              >象{{ t.image }} · {{ t.nature }}</span
-            >
-            <span class="ml-auto shrink-0 text-[10px] text-jade">宜{{ t.good }}</span>
-            <span class="shrink-0 text-[10px] text-cinnabar">忌{{ t.bad }}</span>
+            <span class="shrink-0 text-note text-ink-faint">象{{ t.image }} · {{ t.nature }}</span>
+            <span class="ml-auto shrink-0 text-note text-jade">宜{{ t.good }}</span>
+            <span class="shrink-0 text-note text-cinnabar">忌{{ t.bad }}</span>
           </p>
           <p class="mt-0.5 t-body text-ink-soft">{{ t.gist }}</p>
         </div>
@@ -319,10 +317,10 @@
           :aria-expanded="showAllHex"
           @click="showAllHex = !showAllHex"
         >
-          <span class="font-kai text-[14px] tracking-wider text-ink"
+          <span class="font-kai text-title tracking-wider text-ink"
             >{{ cnNumber(HEXAGRAMS.length) }}卦</span
           >
-          <span class="text-[10px] text-qing">{{
+          <span class="text-note text-qing">{{
             showAllHex ? "收起" : `展开查看 ${HEXAGRAMS.length} 卦 →`
           }}</span>
         </button>
@@ -331,9 +329,9 @@
           class="scroll-pane mt-2 max-h-72 divide-y divide-ink/6 overflow-y-auto"
         >
           <div v-for="x in HEXAGRAMS" :key="x.order" class="flex items-baseline gap-2 py-2">
-            <span class="w-6 shrink-0 tabular text-[10px] text-ink-faint">{{ x.order }}</span>
-            <span class="w-14 shrink-0 font-kai text-[14px] text-ink">{{ x.name }}</span>
-            <span class="w-16 shrink-0 text-[10px] text-ink-faint tabular">
+            <span class="w-6 shrink-0 tabular text-note text-ink-faint">{{ x.order }}</span>
+            <span class="w-14 shrink-0 font-kai text-title text-ink">{{ x.name }}</span>
+            <span class="w-16 shrink-0 text-note text-ink-faint tabular">
               {{ trigramDef(x.upper)?.symbol }}{{ trigramDef(x.lower)?.symbol }}
             </span>
             <span class="min-w-0 t-body text-ink-soft">{{ x.gist }}</span>
@@ -352,11 +350,11 @@
         力有多大」,机制说明该归来历。
       -->
       <section class="card-ink px-4 py-3">
-        <p class="font-kai text-[14px] leading-relaxed text-ink">{{ fateLordLineText }}</p>
+        <p class="font-kai text-title leading-relaxed text-ink">{{ fateLordLineText }}</p>
         <div class="ink-divider my-2.5" aria-hidden="true" />
         <!-- 用:命格之力 —— 这一册唯一据以行动的结论,与星象「今日利」同一版式 -->
         <ValueRow label="命格之力" :value="fateModsText" color="text-jade" />
-        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
           卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
         </p>
         <div class="ink-divider my-2.5" aria-hidden="true" />
@@ -368,10 +366,10 @@
             :key="row.palace.id"
             class="flex items-baseline gap-2 py-1.5"
           >
-            <span class="w-14 shrink-0 font-kai text-[11px] text-ink-soft">{{
+            <span class="w-14 shrink-0 font-kai text-body text-ink-soft">{{
               row.palace.name
             }}</span>
-            <span class="w-24 shrink-0 text-[11px] text-cinnabar">{{ row.starNames }}</span>
+            <span class="w-24 shrink-0 text-body text-cinnabar">{{ row.starNames }}</span>
             <span class="min-w-0 t-body text-ink-faint"
               >{{ row.palace.domain }} · {{ row.palace.use }}</span
             >
@@ -385,7 +383,7 @@
           </p>
         </div>
         <!-- 来历:取象义而非排盘的说明,归脚注 -->
-        <p class="mt-2 border-t border-ink/8 pt-2 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-2 border-t border-ink/8 pt-2 text-note leading-relaxed text-ink-faint">
           紫微斗数本当以生辰起五行局再安诸星,游戏内没有生辰 —— 故此门只取
           <b class="text-ink">{{ cnNumber(PALACES.length) }}宫所主</b>与
           <b class="text-ink">{{ cnNumber(STARS.length) }}主星的星性</b
@@ -403,33 +401,33 @@
           原先的顺序是把「管用的是下面这条」放在最前、把可执行的「今日利」埋在第三段,
           而玩家打开这一册想知道的从来是第一件:今天该往哪界走。
         -->
-        <p class="font-kai text-[14px] leading-relaxed text-ink">{{ mansionLine }}</p>
+        <p class="font-kai text-title leading-relaxed text-ink">{{ mansionLine }}</p>
         <div class="ink-divider my-2.5" aria-hidden="true" />
         <!-- 主读数:今日利某一界 —— 这是这一册唯一能据以行动的结论。
              label 与界名挨着放(不两端撑开):它们是一句话「今日利 人间界」,
              撑到卡两边会读成两栏互不相干的读数。 -->
         <div data-value-row class="flex items-baseline gap-2">
-          <span class="shrink-0 text-[11px] text-ink-faint">今日利</span>
-          <span class="font-kai text-[15px] text-gold-ink">{{ favoredWorldName }}</span>
-          <span class="ml-auto shrink-0 text-[10px] text-ink-faint tabular"
+          <span class="shrink-0 text-body text-ink-faint">今日利</span>
+          <span class="font-kai text-section text-gold-ink">{{ favoredWorldName }}</span>
+          <span class="ml-auto shrink-0 text-note text-ink-faint tabular"
             >+{{ formatPercent(MANSION_EVENT_LUCK, 0) }}</span
           >
         </div>
-        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
           只在 {{ favoredWorldName }} 生效,往他处去不加 —— 与天时不同:天时是全境之气,星象只利一方。
         </p>
-        <button class="btn-ghost mt-2 w-full !py-1.5 !text-[11px]" @click="goAdventure">
+        <button class="btn-ghost mt-2 w-full !py-1.5 !text-body" @click="goAdventure">
           去 {{ favoredWorldName }} 历练 →
         </button>
         <!-- 来历归脚注:分野依《晋书·天文志》只作读,管用的是上面那条约定 -->
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-1 text-note leading-relaxed text-ink-faint">
           分野依《晋书·天文志》(诸家小异),只作来历读 —— 游戏里的地界不是九州。
           {{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{
             imageWorldMap
           }}),值日之宿所属之象, 所配界域今日际遇更易。
         </p>
         <button
-          class="mt-2 w-full border-t border-ink/8 pt-2 text-left text-[10px] text-qing active:opacity-60"
+          class="mt-2 w-full border-t border-ink/8 pt-2 text-left text-note text-qing active:opacity-60"
           :aria-expanded="showAllMansions"
           @click="showAllMansions = !showAllMansions"
         >
@@ -441,7 +439,7 @@
         </button>
         <div v-if="showAllMansions" class="mt-2 divide-y divide-ink/6">
           <template v-for="img in IMAGES" :key="img.id">
-            <p class="pt-2 text-[10px] text-ink-faint">
+            <p class="pt-2 text-note text-ink-faint">
               {{ img.direction }}方 {{ img.name }} · 所配{{ worldName(img.world) }}
             </p>
             <div
@@ -449,9 +447,9 @@
               :key="m.name"
               class="flex items-baseline gap-2 py-1.5"
             >
-              <span class="w-12 shrink-0 font-kai text-[14px] text-ink">{{ m.name }}</span>
-              <span class="w-20 shrink-0 text-[10px] text-ink-faint">{{ m.fullName }}</span>
-              <span class="w-12 shrink-0 text-[10px] text-ink-faint">{{ m.domain }}</span>
+              <span class="w-12 shrink-0 font-kai text-title text-ink">{{ m.name }}</span>
+              <span class="w-20 shrink-0 text-note text-ink-faint">{{ m.fullName }}</span>
+              <span class="w-12 shrink-0 text-note text-ink-faint">{{ m.domain }}</span>
               <span class="min-w-0 t-body text-ink-soft">{{ m.good }}</span>
             </div>
           </template>
@@ -473,31 +471,31 @@
         <div class="mt-2.5 divide-y divide-ink/6">
           <div v-for="g in GATES" :key="g.id" class="flex items-start gap-2 py-2">
             <span
-              class="w-12 shrink-0 font-kai text-[14px]"
+              class="w-12 shrink-0 font-kai text-title"
               :class="
                 g.kind === '凶' ? 'text-cinnabar' : g.kind === '吉' ? 'text-jade' : 'text-ink-soft'
               "
             >
               {{ g.fullName }}
             </span>
-            <span class="w-20 shrink-0 text-[10px] text-ink-faint tabular"
+            <span class="w-20 shrink-0 text-note text-ink-faint tabular"
               >{{ g.gua }}{{ g.direction }} · {{ g.palace }}宫 · {{ g.kind }}</span
             >
             <span class="min-w-0 t-body text-ink-soft"
               >{{ g.gist }}<br /><span
                 v-if="gateRuleSummary(g.rules)"
-                class="mt-0.5 inline-block text-[10px] tabular text-ink-faint"
+                class="mt-0.5 inline-block text-note tabular text-ink-faint"
                 >{{ gateRuleSummary(g.rules) }}</span
               ></span
             >
           </div>
         </div>
-        <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-2 text-note leading-relaxed text-ink-faint">
           门的效果全部用既有的战斗规则表达,不另造字段 —— 不择门(走常道)时,规则与从前逐字相同。
         </p>
         <!-- 志 → 行动:门讲得再清楚,也得递出「去哪儿择」这一步 -->
         <button
-          class="mt-1.5 inline-flex min-h-[28px] items-center text-[11px] text-qing underline underline-offset-2 active:opacity-60"
+          class="mt-1.5 inline-flex min-h-[28px] items-center text-body text-qing underline underline-offset-2 active:opacity-60"
           @click="goExped"
         >
           去天道远征 · 择门入界 →

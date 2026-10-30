@@ -11,7 +11,7 @@
       <button
         v-if="backTo"
         type="button"
-        class="tap-row -my-1.5 min-h-7 py-1.5 text-[11px] text-ink-faint active:text-ink-soft"
+        class="tap-row -my-1.5 min-h-7 py-1.5 text-body text-ink-faint active:text-ink-soft"
         :aria-label="`返回${backLabel}`"
         @click="goBack(router, { name: backTo })"
       >
@@ -19,17 +19,17 @@
       </button>
       <span
         data-folio-position
-        class="folio-masthead__position shrink-0 text-[10px] font-kai tracking-[0.2em] text-ink-faint"
+        class="folio-masthead__position shrink-0 text-note font-kai tracking-[0.2em] text-ink-faint"
         >{{ positionMark }}</span
       >
-      <span class="text-[10px] font-kai tracking-[0.28em] text-cinnabar" data-folio-section>
+      <span class="text-note font-kai tracking-[0.28em] text-cinnabar" data-folio-section>
         {{ navigation?.sectionLabel ?? "玄枢" }}
       </span>
       <span
         class="h-px min-w-2 flex-1 bg-gradient-to-r from-ink/15 to-transparent"
         aria-hidden="true"
       />
-      <span class="text-[10px] text-ink-faint">{{ navigation?.label ?? "未名之页" }}</span>
+      <span class="text-note text-ink-faint">{{ navigation?.label ?? "未名之页" }}</span>
     </div>
 
     <div class="relative z-10 mt-2 flex flex-wrap items-start gap-3">
@@ -45,8 +45,8 @@
           class="font-kai leading-snug text-ink"
           :class="
             featured
-              ? 'text-[24px] tracking-[0.16em] tinylens:text-[19px]'
-              : 'text-[18px] tracking-[0.18em]'
+              ? 'text-display tracking-[0.16em] tinylens:text-[19px]'
+              : 'text-heading tracking-[0.18em]'
           "
         >
           {{ title }}

@@ -6,9 +6,9 @@
           v-if="unlocked"
           class="flex items-center justify-end gap-2 tinylens:w-full tinylens:justify-between"
         >
-          <span class="chip-ink border-cinnabar/50 text-[10px] text-cinnabar">此世消耗</span>
+          <span class="chip-ink border-cinnabar/50 text-note text-cinnabar">此世消耗</span>
           <button class="text-left active:opacity-60" @click="openDaoSourceDialog()">
-            <span class="block text-[10px] leading-tight text-ink-faint">叩问天道·试一试</span>
+            <span class="block text-note leading-tight text-ink-faint">叩问天道·试一试</span>
             <span class="block tabular font-kai text-[17px] leading-tight text-cinnabar">{{
               formatNum(endgame.daoSource)
             }}</span>
@@ -55,18 +55,18 @@
               并让词条值与说明分成两档(值用 ink-soft、前缀用 faint),
               机制则整组套一层浅底,把「这一段是玩法」与「这一段是风味」分开。
             -->
-            <p class="mt-2 text-[10px] text-ink-faint">行此道的代价与所得</p>
+            <p class="mt-2 text-note text-ink-faint">行此道的代价与所得</p>
             <div class="mt-1 space-y-0.5">
               <p
                 v-for="(r, i) in currentDao.ruleText"
                 :key="i"
-                class="flex gap-1.5 text-[11px] leading-relaxed"
+                class="flex gap-1.5 text-body leading-relaxed"
               >
                 <span class="shrink-0 text-ink-faint">·</span>
                 <span class="min-w-0 text-qing">{{ r }}</span>
               </p>
             </div>
-            <p v-if="currentDao.deepText.length" class="mt-2 text-[10px] text-ink-faint">
+            <p v-if="currentDao.deepText.length" class="mt-2 text-note text-ink-faint">
               此道的章法
             </p>
             <div
@@ -76,13 +76,13 @@
               <p
                 v-for="(r, i) in currentDao.deepText"
                 :key="`d${i}`"
-                class="flex gap-1.5 text-[11px] leading-relaxed"
+                class="flex gap-1.5 text-body leading-relaxed"
               >
                 <span class="shrink-0 text-gold-ink">◈</span>
                 <span class="min-w-0 text-gold-ink">{{ r }}</span>
               </p>
             </div>
-            <p v-if="swordInfo" class="mt-1.5 text-[11px] text-violet-ink tabular">
+            <p v-if="swordInfo" class="mt-1.5 text-body text-violet-ink tabular">
               当前剑意 {{ swordInfo.layers }}/{{ SWORD_PURITY_MAX_LAYERS }} 层({{
                 swordInfo.checks
                   .filter((c) => c.ok)
@@ -107,14 +107,14 @@
                 </span>
                 <span class="t-card">{{ dao.name }}</span>
               </p>
-              <p class="mt-1.5 text-[10px] leading-relaxed text-ink-faint">{{ dao.desc }}</p>
-              <p v-for="(r, i) in dao.ruleText" :key="i" class="mt-0.5 text-[10px] text-qing">
+              <p class="mt-1.5 text-note leading-relaxed text-ink-faint">{{ dao.desc }}</p>
+              <p v-for="(r, i) in dao.ruleText" :key="i" class="mt-0.5 text-note text-qing">
                 · {{ r }}
               </p>
               <p
                 v-for="(r, i) in dao.deepText"
                 :key="`d${i}`"
-                class="mt-0.5 text-[10px] text-gold-ink"
+                class="mt-0.5 text-note text-gold-ink"
               >
                 ◈ {{ r }}
               </p>
@@ -134,11 +134,11 @@
             >
             <span class="min-w-0 flex-1">
               <span class="block t-card">天道熔炉</span>
-              <span class="block truncate text-[10px] leading-relaxed text-ink-faint"
+              <span class="block truncate text-note leading-relaxed text-ink-faint"
                 >前尘俗物,皆可熔作道源</span
               >
             </span>
-            <span class="shrink-0 text-[11px] text-ink-faint">›</span>
+            <span class="shrink-0 text-body text-ink-faint">›</span>
           </button>
 
           <button
@@ -151,12 +151,12 @@
             >
             <span class="min-w-0 flex-1">
               <span class="block t-card">器 魂</span>
-              <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
+              <span class="block truncate text-note leading-relaxed text-ink-faint">
                 凡器承不住天道,只余形意 · 已凝
                 {{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}
               </span>
             </span>
-            <span class="shrink-0 text-[11px] text-ink-faint">›</span>
+            <span class="shrink-0 text-body text-ink-faint">›</span>
           </button>
         </section>
       </template>
@@ -182,7 +182,7 @@
     >
       <template v-if="expedition">
         <p
-          class="font-kai text-[14px] tracking-wider"
+          class="font-kai text-title tracking-wider"
           :class="expedition.cleared ? 'text-jade' : 'text-cinnabar'"
         >
           {{ expedition.markText }}
@@ -198,12 +198,12 @@
           <p
             v-for="(row, i) in expedition.rows"
             :key="i"
-            class="flex items-center justify-between rounded bg-paper-deep/70 px-3 py-1.5 text-[11px]"
+            class="flex items-center justify-between rounded bg-paper-deep/70 px-3 py-1.5 text-body"
           >
             <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
               第{{ i + 1 }}战 · {{ row.foeName }} · {{ row.win ? "胜" : "负" }}
             </span>
-            <span class="tabular text-[11px] text-ink-faint"
+            <span class="tabular text-body text-ink-faint"
               >{{ row.rounds }}回合 · 余血{{ formatPercent(row.hpLeftPct, 0) }}</span
             >
           </p>
@@ -216,16 +216,16 @@
           v-if="expedition.judgementLines?.length"
           class="mt-2 rounded-md bg-cinnabar/5 px-3 py-2"
         >
-          <p class="font-kai text-[11px] tracking-widest text-cinnabar">此战之判</p>
+          <p class="font-kai text-body tracking-widest text-cinnabar">此战之判</p>
           <p
             v-for="(line, i) in expedition.judgementLines"
             :key="i"
-            class="mt-0.5 text-[10px] leading-relaxed text-ink-faint"
+            class="mt-0.5 text-note leading-relaxed text-ink-faint"
           >
             {{ line }}
           </p>
         </div>
-        <p v-if="expedition.reward > 0" class="mt-2 text-[11px] text-gold-ink tabular">
+        <p v-if="expedition.reward > 0" class="mt-2 text-body text-gold-ink tabular">
           <GameIcon name="sparkles" :size="12" class="inline" />
           道源 +{{ expedition.reward }}
         </p>
@@ -241,12 +241,12 @@
     <!-- 道途选择确认:一世只此一次,点了就锁到转世 -->
     <BaseModal :open="pendingDao !== undefined" title="定下道途" @close="pendingDaoId = null">
       <template v-if="pendingDao">
-        <p class="font-kai text-[14px] tracking-wider text-ink">{{ pendingDao.name }}</p>
+        <p class="font-kai text-title tracking-wider text-ink">{{ pendingDao.name }}</p>
         <p class="mt-1.5 t-body text-ink-soft">{{ pendingDao.desc }}</p>
-        <p v-for="(r, i) in pendingDao.ruleText" :key="i" class="mt-0.5 text-[11px] text-qing">
+        <p v-for="(r, i) in pendingDao.ruleText" :key="i" class="mt-0.5 text-body text-qing">
           · {{ r }}
         </p>
-        <p class="mt-3 border-l-2 border-cinnabar/60 pl-2 text-[11px] text-cinnabar">
+        <p class="mt-3 border-l-2 border-cinnabar/60 pl-2 text-body text-cinnabar">
           道途既定,此世不再更改;误选须待兵解转世方能重择
         </p>
       </template>
@@ -260,17 +260,17 @@
 
     <!-- Phase 30.9 S2:道源说明弹窗 -->
     <BaseModal :open="daoSourceDialogOpen" title="道源" @close="daoSourceDialogOpen = false">
-      <div class="space-y-3 text-[11px] leading-relaxed">
+      <div class="space-y-3 text-body leading-relaxed">
         <p class="text-ink-soft">{{ daoSourceDialog().intro }}</p>
         <div>
-          <p class="font-kai text-[11px] tracking-wider text-ink">用途</p>
+          <p class="font-kai text-body tracking-wider text-ink">用途</p>
           <p class="text-ink-faint">{{ daoSourceDialog().usages.join(" · ") }}</p>
         </div>
         <div>
-          <p class="font-kai text-[11px] tracking-wider text-ink">获取</p>
+          <p class="font-kai text-body tracking-wider text-ink">获取</p>
           <p class="text-ink-faint">{{ daoSourceDialog().gains.join(" · ") }}</p>
         </div>
-        <p class="border-l-2 border-cinnabar/60 pl-2 text-[11px] text-cinnabar">
+        <p class="border-l-2 border-cinnabar/60 pl-2 text-body text-cinnabar">
           {{ daoSourceDialog().lifecycle }}
         </p>
       </div>

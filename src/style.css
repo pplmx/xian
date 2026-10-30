@@ -125,6 +125,22 @@
   --font-kai: "LXGW WenKai GB Screen", "Kaiti SC", "STKaiti", KaiTi, "Noto Serif SC", serif;
   --font-song: "Noto Serif SC", "Source Han Serif SC", STSong, SimSun, "Kaiti SC", serif;
 
+  /*
+   * 阅读字阶 —— 手机是原刻度,桌面整体抬一档。
+   *
+   * 只给「行文」的五个名字,外加卷首题字 display。模板不再写裸像素:
+   * text-note / text-body / text-title / text-section / text-heading / text-display
+   * 都指向这里。960px 以上的手机壳已展开成书桌,若字号仍停在 10~18px,
+   * 1280 宽屏上会像一张放大的手机截图;故桌面统一改成 11~20px,题字 28px。
+   * 200% 缩放档仍在 960px 以下,继续用手机刻度,不受这轮影响。
+   */
+  --type-note: 10px;
+  --type-body: 11px;
+  --type-title: 14px;
+  --type-section: 15px;
+  --type-heading: 18px;
+  --type-display: 24px;
+
   /* 明暗通用阴影色(暗色主题下重定义) */
   --shadow-ink: rgb(41 39 34);
   /*
@@ -147,6 +163,17 @@
    */
   --shadow-ink-rgb: 41 39 34;
   --color-paper-lifted-rgb: 244 240 230;
+}
+
+@media (min-width: 960px) {
+  :root {
+    --type-note: 11px;
+    --type-body: 12px;
+    --type-title: 15px;
+    --type-section: 16px;
+    --type-heading: 20px;
+    --type-display: 28px;
+  }
 }
 
 @keyframes rise-in {
@@ -746,7 +773,7 @@ html[data-theme="dark"] .btn-seal:disabled {
   box-shadow: inset 0 0 0 2px rgb(var(--color-paper-rgb) / 0.22);
   color: rgb(var(--color-ink-faint-rgb));
   font-family: var(--font-kai);
-  font-size: 10px;
+  font-size: var(--type-note);
   line-height: 1;
   letter-spacing: 0.04em;
 }
@@ -1127,7 +1154,7 @@ html[data-theme="dark"] .bottom-dock-rail {
     0 1px 0 rgb(var(--color-ink-rgb) / 0.05);
   color: rgb(var(--color-cinnabar-rgb));
   font-family: var(--font-kai);
-  font-size: 14px;
+  font-size: var(--type-title);
   line-height: 1;
 }
 
@@ -1148,7 +1175,7 @@ html[data-theme="dark"] .bottom-dock-rail {
 
 .desktop-spine__title {
   font-family: var(--font-kai);
-  font-size: 18px;
+  font-size: var(--type-heading);
   line-height: 1.2;
   letter-spacing: 0.2em;
   color: rgb(var(--color-ink-rgb));
@@ -1156,7 +1183,7 @@ html[data-theme="dark"] .bottom-dock-rail {
 
 .desktop-spine__edition {
   font-family: var(--font-kai);
-  font-size: 10px;
+  font-size: var(--type-note);
   line-height: 1.2;
   letter-spacing: 0.18em;
   color: rgb(var(--color-ink-faint-rgb));
@@ -1173,7 +1200,7 @@ html[data-theme="dark"] .bottom-dock-rail {
 .desktop-spine__name {
   overflow: hidden;
   font-family: var(--font-kai);
-  font-size: 14px;
+  font-size: var(--type-title);
   line-height: 1.4;
   letter-spacing: 0.14em;
   color: rgb(var(--color-ink-rgb));
@@ -1182,13 +1209,13 @@ html[data-theme="dark"] .bottom-dock-rail {
 }
 
 .desktop-spine__realm {
-  font-size: 11px;
+  font-size: var(--type-body);
   line-height: 1.4;
   color: rgb(var(--color-qing-rgb));
 }
 
 .desktop-spine__lifespan {
-  font-size: 10px;
+  font-size: var(--type-note);
   line-height: 1.4;
   color: rgb(var(--color-ink-faint-rgb));
 }
@@ -1234,7 +1261,7 @@ html[data-theme="dark"] .bottom-dock-rail {
   background: rgb(var(--color-paper-rgb) / 0.42);
   color: rgb(var(--color-ink-faint-rgb));
   font-family: var(--font-kai);
-  font-size: 10px;
+  font-size: var(--type-note);
   line-height: 1;
 }
 
@@ -1245,7 +1272,7 @@ html[data-theme="dark"] .bottom-dock-rail {
 
 .desktop-spine__section-label {
   font-family: var(--font-kai);
-  font-size: 11px;
+  font-size: var(--type-body);
   line-height: 1.25;
   letter-spacing: 0.18em;
   color: rgb(var(--color-ink-soft-rgb));
@@ -1253,7 +1280,7 @@ html[data-theme="dark"] .bottom-dock-rail {
 
 .desktop-spine__section-hint {
   overflow: hidden;
-  font-size: 10px;
+  font-size: var(--type-note);
   line-height: 1.25;
   color: rgb(var(--color-ink-faint-rgb));
   text-overflow: ellipsis;
@@ -1311,7 +1338,7 @@ html[data-theme="dark"] .bottom-dock-rail {
 .desktop-spine__entry-label {
   overflow: hidden;
   font-family: var(--font-kai);
-  font-size: 14px;
+  font-size: var(--type-title);
   line-height: 1.25;
   letter-spacing: 0.12em;
   text-overflow: ellipsis;
@@ -1330,7 +1357,7 @@ html[data-theme="dark"] .bottom-dock-rail {
   border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.42);
   color: rgb(var(--color-cinnabar-rgb));
   font-family: var(--font-kai);
-  font-size: 10px;
+  font-size: var(--type-note);
   line-height: 1;
 }
 
@@ -1360,7 +1387,7 @@ html[data-theme="dark"] .bottom-dock-rail {
   border-radius: 2px;
   color: rgb(var(--color-paper-rgb));
   font-family: var(--font-kai);
-  font-size: 10px;
+  font-size: var(--type-note);
   line-height: 1;
 }
 
@@ -1378,7 +1405,7 @@ html[data-theme="dark"] .bottom-dock-rail {
   padding: 0.35rem 0.65rem;
   border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
   color: rgb(var(--color-ink-faint-rgb));
-  font-size: 10px;
+  font-size: var(--type-note);
   line-height: 1.2;
 }
 
@@ -1775,31 +1802,31 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
  */
   .t-card {
     font-family: var(--font-kai);
-    font-size: 14px;
+    font-size: var(--type-title);
     letter-spacing: 0.1em;
     line-height: 1.4;
     color: rgb(var(--color-ink-rgb));
   }
   .t-entry {
     font-family: var(--font-kai);
-    font-size: 14px;
+    font-size: var(--type-title);
     letter-spacing: 0.2em;
     line-height: 1.4;
     color: rgb(var(--color-ink-rgb));
   }
   .t-item {
     font-family: var(--font-kai);
-    font-size: 14px;
+    font-size: var(--type-title);
     letter-spacing: 0.25em;
     line-height: 1.4;
     color: rgb(var(--color-ink-rgb));
   }
   .t-body {
-    font-size: 11px;
+    font-size: var(--type-body);
     line-height: 1.625; /* = leading-relaxed */
   }
   .t-note {
-    font-size: 10px;
+    font-size: var(--type-note);
     line-height: 1.625;
   }
 
@@ -2078,7 +2105,7 @@ html[data-theme="dark"] .app-shell[data-world="chaos"] .mist-soft {
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 11px;
+    font-size: var(--type-body);
     padding: 2px 8px;
     border-radius: 2px;
     border: 1px solid currentColor;

@@ -9,9 +9,9 @@
           归
         </div>
       </div>
-      <p class="mt-2 text-[11px] text-ink-faint">
+      <p class="mt-2 text-body text-ink-faint">
         此去
-        <span class="font-kai text-[14px] text-ink">{{ formatDuration(summary.seconds) }}</span>
+        <span class="font-kai text-title text-ink">{{ formatDuration(summary.seconds) }}</span>
         <!--
           两条账分开报:被动修行(修为/灵气)不限时、全额;产出与派遣受洞府上限。
           从前只写一句"收益按 X 结算",玩家看到的是"挂了一周没怎么变",却不知道哪一条被砍了。
@@ -37,11 +37,11 @@
             :key="row.label"
             class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
           >
-            <span class="flex items-center gap-2 text-[14px] text-ink-soft">
+            <span class="flex items-center gap-2 text-title text-ink-soft">
               <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
               {{ row.label }}
             </span>
-            <span class="font-kai tabular text-[14px] text-ink">{{ row.value }}</span>
+            <span class="font-kai tabular text-title text-ink">{{ row.value }}</span>
           </li>
         </ul>
       </template>
@@ -54,14 +54,14 @@
             :key="row.label"
             class="flex items-center justify-between rounded-md bg-paper-deep/70 px-3 py-2 tinylens:flex-col tinylens:items-start tinylens:gap-0.5"
           >
-            <span class="flex items-center gap-2 text-[14px]" :class="row.cls">
+            <span class="flex items-center gap-2 text-title" :class="row.cls">
               <GameIcon :name="row.icon" :size="15" class="text-ink-faint" />
               {{ row.label }}
             </span>
-            <span class="tabular text-[14px]" :class="row.cls">{{ row.value }}</span>
+            <span class="tabular text-title" :class="row.cls">{{ row.value }}</span>
           </li>
           <li v-if="savedEquipment.length" class="rounded-md bg-paper-deep/70 px-3 py-2">
-            <p class="mb-1 flex items-center gap-2 text-[14px] text-ink-soft">
+            <p class="mb-1 flex items-center gap-2 text-title text-ink-soft">
               <GameIcon name="backpack" :size="15" class="text-ink-faint" />
               拾得装备 ×{{ savedEquipment.length }}
             </p>
@@ -69,7 +69,7 @@
               <span
                 v-for="(eq, i) in savedEquipment"
                 :key="i"
-                class="font-kai text-[11px]"
+                class="font-kai text-body"
                 :style="{ color: qualityDef(eq.quality).color }"
               >
                 {{ qualityDef(eq.quality).name }}·{{ eq.name }}
@@ -77,13 +77,13 @@
             </p>
           </li>
           <li v-if="eventReceipts.length" class="rounded-md bg-paper-deep/70 px-3 py-2">
-            <p class="mb-1.5 flex items-center gap-2 text-[14px] text-ink-soft">
+            <p class="mb-1.5 flex items-center gap-2 text-title text-ink-soft">
               <GameIcon name="star" :size="15" class="text-ink-faint" />
               际遇结果
             </p>
             <ul class="space-y-2">
               <li v-for="(receipt, i) in eventReceipts" :key="i">
-                <p class="flex items-baseline justify-between gap-2 text-[11px]">
+                <p class="flex items-baseline justify-between gap-2 text-body">
                   <span class="font-kai text-ink-soft">{{ receipt.title }}</span>
                   <span v-if="receipt.count > 1" class="tabular text-ink-faint">
                     ×{{ receipt.count }}
@@ -92,7 +92,7 @@
                 <p
                   v-for="(line, j) in receipt.lines"
                   :key="j"
-                  class="mt-0.5 text-[11px] leading-relaxed text-ink"
+                  class="mt-0.5 text-body leading-relaxed text-ink"
                 >
                   {{ line }}
                 </p>
@@ -101,7 +101,7 @@
           </li>
         </ul>
       </template>
-      <p v-for="(note, i) in summary.notes" :key="i" class="mt-2 text-[11px] text-ink-faint">
+      <p v-for="(note, i) in summary.notes" :key="i" class="mt-2 text-body text-ink-faint">
         {{ note }}
       </p>
     </div>

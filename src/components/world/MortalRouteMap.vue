@@ -25,18 +25,18 @@
     <div class="relative">
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
-          <h2 id="world-route-heading" class="font-kai text-[14px] tracking-[0.24em] text-ink">
+          <h2 id="world-route-heading" class="font-kai text-title tracking-[0.24em] text-ink">
             山河行旅图
           </h2>
-          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+          <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
             高处境深 · 远处路长 · 点大处事多
           </p>
         </div>
         <div class="shrink-0 text-right">
-          <p class="font-kai text-[14px] text-ink tabular">
-            {{ clearedCount }}<span class="text-[10px] text-ink-faint"> / {{ places.length }}</span>
+          <p class="font-kai text-title text-ink tabular">
+            {{ clearedCount }}<span class="text-note text-ink-faint"> / {{ places.length }}</span>
           </p>
-          <p class="mt-0.5 text-[10px] text-ink-faint">程已行</p>
+          <p class="mt-0.5 text-note text-ink-faint">程已行</p>
         </div>
       </div>
 
@@ -145,7 +145,7 @@
         </svg>
       </div>
 
-      <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-ink-faint">
+      <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-note text-ink-faint">
         <span class="inline-flex items-center gap-1">
           <span class="h-2 w-2 rounded-full bg-jade" aria-hidden="true" />已通
         </span>

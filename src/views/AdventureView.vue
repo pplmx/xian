@@ -16,7 +16,7 @@
           星象是背景条件,不是行动:整句压成 ink-soft,只把「利在何处」那一个地名留在
           金处 —— 五行散在同一段里,读的人得先找重点,再回头读句子。
         -->
-        <p class="text-[10px] leading-relaxed text-ink-soft">
+        <p class="text-note leading-relaxed text-ink-soft">
           今日星象:{{ mansionLine }} —— 利
           <span class="text-gold-ink">{{ favoredWorldName }}</span>
           ,在其地历练际遇{{ describeMansionLuck }}。
@@ -26,10 +26,10 @@
           世界页说得到,历练页才是真正干活的地方 —— 出发前就该看见,而不是打完一场
           在战报里才发现「所钟」两个字(那已经是马后炮)。
         -->
-        <p v-if="biasLabel" data-bias-hint class="text-[10px] leading-relaxed text-ink-soft">
+        <p v-if="biasLabel" data-bias-hint class="text-note leading-relaxed text-ink-soft">
           此地所钟:<span class="text-gold-ink">{{ biasLabel }}</span>
         </p>
-        <p v-if="player.suppressedRegions.length > 0" class="text-[10px] text-ink-soft">
+        <p v-if="player.suppressedRegions.length > 0" class="text-note text-ink-soft">
           镇压收益中 <span class="text-gold-ink">{{ player.suppressedRegions.length }} 处</span> ——
           与历练互不冲突,可同时收取;一次只能历练一处。灵石与材料按区域固定产出,不随境界变;修为红利随修炼速度涨;
           转世重修后需重新镇压。
@@ -40,12 +40,12 @@
           这三枚胶囊把档位、稀有度与一句话摆在**出发之前**,名字与概率全部取自 core/eventTier,
           与事件引擎真正掷的那条乘法链同源(见 data/constants 那段)。
         -->
-        <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+        <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-note">
           <span class="text-ink-faint">途中三档:</span>
           <span
             v-for="t in EVENT_TIERS"
             :key="t.id"
-            class="chip-ink text-[10px]"
+            class="chip-ink text-note"
             :style="{ color: t.color }"
           >
             {{ t.name }} · {{ tierOddsText(t.id, chainPending) }}
@@ -57,12 +57,12 @@
         -->
         <p
           v-if="settings.dndEvents"
-          class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-amber-ink"
+          class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-note text-amber-ink"
         >
           <span>遇事勿扰开启 —— 途中际遇自动结清,不再弹窗</span>
           <button
             type="button"
-            class="-my-1.5 py-1.5 text-[10px] text-ink-faint underline active:opacity-60"
+            class="-my-1.5 py-1.5 text-note text-ink-faint underline active:opacity-60"
             @click="settings.dndEvents = false"
           >
             关掉
@@ -73,11 +73,11 @@
         <div data-adventure-regions class="space-y-2.5">
           <template v-for="group in groupedRows" :key="group.world.id">
             <div class="flex items-center gap-2 pt-1">
-              <span class="font-kai text-[11px] tracking-[0.3em] text-ink-soft">{{
+              <span class="font-kai text-body tracking-[0.3em] text-ink-soft">{{
                 group.world.name
               }}</span>
               <span class="h-px grow bg-ink/10" />
-              <span class="text-[10px] text-ink-faint">{{ group.rows.length }} 处</span>
+              <span class="text-note text-ink-faint">{{ group.rows.length }} 处</span>
             </div>
             <div
               v-for="row in group.rows"
@@ -117,34 +117,34 @@
                   <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span
                       data-region-name
-                      class="font-kai whitespace-nowrap text-[15px] tracking-wider text-ink"
+                      class="font-kai whitespace-nowrap text-section tracking-wider text-ink"
                       >{{ row.def.name }}</span
                     >
                     <span
                       v-if="row.isRouteCurrent"
                       data-route-current
-                      class="chip-ink border-qing/60 text-[10px] text-qing"
+                      class="chip-ink border-qing/60 text-note text-qing"
                       >本世眼下</span
                     >
                     <span
                       v-if="row.suppressed"
-                      class="chip-ink border-gold-ink/60 text-[10px] text-gold-ink"
+                      class="chip-ink border-gold-ink/60 text-note text-gold-ink"
                       >已镇压</span
                     >
                     <span
                       v-else-if="row.revived"
-                      class="chip-ink border-cinnabar/60 text-[10px] text-cinnabar"
+                      class="chip-ink border-cinnabar/60 text-note text-cinnabar"
                       >妖气复聚</span
                     >
                     <span
                       v-else-if="row.cleared"
-                      class="chip-ink border-jade/60 text-[10px] text-jade"
+                      class="chip-ink border-jade/60 text-note text-jade"
                       >已靖</span
                     >
                     <!-- 世界记忆(Phase 30.9):区域兴衰状态 -->
                     <span
                       v-if="row.recall.prosperity !== 'chaos'"
-                      class="chip-ink text-[10px]"
+                      class="chip-ink text-note"
                       :class="
                         row.recall.prosperity === 'flourish'
                           ? 'border-qing/60 text-qing'
@@ -158,7 +158,7 @@
                     这一行是三档字号里的「注」:境相宜与中点留在最淡处(它是基准线),
                     凶险名抬到 ink-soft(它才是要判的那一项),凶险 ≥4 另有朱砂。
                   -->
-                  <p class="mt-0.5 text-[11px] text-ink-faint">
+                  <p class="mt-0.5 text-body text-ink-faint">
                     {{ REALMS[row.def.minRealm]?.name }}境相宜 ·
                     <span :class="row.def.danger >= 4 ? 'text-cinnabar' : 'text-ink-soft'">{{
                       DANGER_NAMES[row.def.danger]
@@ -178,7 +178,7 @@
                   <p
                     v-if="row.foeOrigin.parts.length"
                     data-region-foe-origin
-                    class="mt-0.5 text-[10px] leading-relaxed text-ink-faint"
+                    class="mt-0.5 text-note leading-relaxed text-ink-faint"
                   >
                     此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
                   </p>
@@ -191,7 +191,7 @@
                 <button
                   v-if="row.canEnter && !row.suppressed"
                   data-region-action
-                  class="btn-seal shrink-0 !px-4 !py-2 !text-[14px] tinylens:!px-2.5 tinylens:!py-1 tinylens:!text-[11px]"
+                  class="btn-seal shrink-0 !px-4 !py-2 !text-title tinylens:!px-2.5 tinylens:!py-1 tinylens:!text-body"
                   @click="chooseMode(row.def)"
                 >
                   出发
@@ -208,23 +208,23 @@
                 data-suppress-info
                 class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-gold-ink/6 px-2.5 py-1.5"
               >
-                <span class="text-[11px] text-gold-ink tabular"
+                <span class="text-body text-gold-ink tabular"
                   >自动产出 · {{ rateText(row.def, row.recall) }}</span
                 >
                 <!-- 守土之年:守得越久,兴衰越盛,产出随之上浮 -->
-                <span class="text-[10px] text-ink-faint tabular"
+                <span class="text-note text-ink-faint tabular"
                   >已守 {{ heldText(row.def.id) }}</span
                 >
                 <!-- 复聚有确定期限,就该有倒计时:否则玩家只会看到镇压某天突然消失 -->
                 <span
-                  class="text-[10px] tabular"
+                  class="text-note tabular"
                   :class="reviveNow(row) <= 12 ? 'text-cinnabar' : 'text-ink-faint'"
                 >
                   妖气 {{ reviveText(reviveNow(row)) }}后复聚
                 </span>
                 <!-- 停取收益是次级动作:放在产出条里,不跟名字抢那一行 -->
                 <button
-                  class="ml-auto inline-flex min-h-[28px] items-center px-1 text-[10px] text-ink-faint underline underline-offset-2 active:scale-95 active:text-ink"
+                  class="ml-auto inline-flex min-h-[28px] items-center px-1 text-note text-ink-faint underline underline-offset-2 active:scale-95 active:text-ink"
                   @click.stop="unsuppress(row.def.id)"
                 >
                   停取收益,改去历练
@@ -240,12 +240,12 @@
                 data-region-action
                 class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-ink/4 px-2.5 py-1.5"
               >
-                <span class="text-[10px] text-ink-faint">已取得镇压资格</span>
-                <span class="text-[10px] text-gold-ink tabular">{{
+                <span class="text-note text-ink-faint">已取得镇压资格</span>
+                <span class="text-note text-gold-ink tabular">{{
                   rateText(row.def, row.recall)
                 }}</span>
                 <button
-                  class="ml-auto chip-ink min-h-[28px] !text-[10px] active:scale-95"
+                  class="ml-auto chip-ink min-h-[28px] !text-note active:scale-95"
                   @click.stop="suppress(row.def.id)"
                 >
                   转为镇压收益
@@ -264,9 +264,9 @@
             -->
               <p
                 v-if="row.canEnter && !row.suppressed && !row.qualified"
-                class="mt-1 text-[10px] leading-relaxed tabular"
+                class="mt-1 text-note leading-relaxed tabular"
               >
-                <span class="text-[11px] text-ink-soft">镇压资格</span>
+                <span class="text-body text-ink-soft">镇压资格</span>
                 <span class="ml-1" :class="row.progress.winsOk ? 'text-jade' : 'text-ink-soft'">
                   {{ row.progress.wins }}/{{ row.progress.needWins }} 胜
                 </span>
@@ -291,7 +291,7 @@
                 <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
               </p>
               <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
-              <p v-if="row.blockReason" class="mt-1 text-[11px] text-cinnabar">
+              <p v-if="row.blockReason" class="mt-1 text-body text-cinnabar">
                 {{ row.blockReason }}
               </p>
               <div
@@ -301,7 +301,7 @@
                 <span
                   v-for="chip in row.chips"
                   :key="chip.trait"
-                  class="chip-ink !text-[10px]"
+                  class="chip-ink !text-note"
                   :class="
                     chip.level >= 3
                       ? 'border-cinnabar/50 text-cinnabar'
@@ -314,7 +314,7 @@
                 <!-- min-h-[28px] 是排版自检的尺子:展开按钮此前只有 15px 高,拇指点不着 -->
                 <button
                   v-if="row.adaptation"
-                  class="ml-auto inline-flex min-h-[28px] items-center text-[10px] text-ink-soft tabular active:scale-95"
+                  class="ml-auto inline-flex min-h-[28px] items-center text-note text-ink-soft tabular active:scale-95"
                   :title="row.adaptation.reasons.join(';')"
                   :aria-expanded="adaptExpand === row.def.id"
                   @click="adaptExpand = adaptExpand === row.def.id ? null : row.def.id"
@@ -328,14 +328,14 @@
                 先读一段描写再看见「能不能打、打得合不合路数」,判断被夹在中间。
                 移到判据与 chips 之后、适配理由展开之前,字号收到 10px 一档。
               -->
-              <p v-if="row.canEnter" class="mt-2 text-[10px] leading-relaxed text-ink-faint">
+              <p v-if="row.canEnter" class="mt-2 text-note leading-relaxed text-ink-faint">
                 {{ row.def.desc }}
               </p>
               <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
                 <p
                   v-for="(r, i) in row.adaptation.reasons"
                   :key="i"
-                  class="text-[10px] leading-relaxed text-ink-faint"
+                  class="text-note leading-relaxed text-ink-faint"
                 >
                   · {{ r }}
                 </p>
@@ -351,8 +351,8 @@
         -->
         <div class="space-y-1">
           <div class="ink-divider" aria-hidden="true" />
-          <p class="text-[10px] text-ink-faint">历练之则</p>
-          <p class="text-[10px] leading-relaxed text-ink-faint">
+          <p class="text-note text-ink-faint">历练之则</p>
+          <p class="text-note leading-relaxed text-ink-faint">
             镇压门槛:胜 {{ SUPPRESS_THRESHOLDS.minWins }} 场 · 均
             {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{
               formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0)
@@ -371,7 +371,7 @@
       <!-- 适配预览 -->
       <div v-if="preview" class="mb-3 rounded-md bg-ink/4 px-3 py-2.5">
         <template v-if="preview.mine && currentBuild">
-          <p class="flex items-center justify-between text-[11px]">
+          <p class="flex items-center justify-between text-body">
             <span class="text-ink-soft">
               当前构筑:
               <span class="font-kai text-ink">{{ currentBuild.displayName }}</span>
@@ -381,31 +381,31 @@
           <p
             v-for="(r, i) in preview.mine.reasons"
             :key="i"
-            class="mt-0.5 text-[10px] text-ink-faint"
+            class="mt-0.5 text-note text-ink-faint"
           >
             {{ r }}
           </p>
         </template>
-        <p v-else class="text-[11px] text-ink-faint">尚未成流派,此地对各路数一视同仁。</p>
+        <p v-else class="text-body text-ink-faint">尚未成流派,此地对各路数一视同仁。</p>
         <div class="ink-divider my-2" />
-        <p class="text-[10px] text-ink-faint">此地相性(机制契合度,并非胜率):</p>
+        <p class="text-note text-ink-faint">此地相性(机制契合度,并非胜率):</p>
         <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
           <span
             v-for="rec in preview.recs"
             :key="rec.style.id"
-            class="text-[11px] text-ink-soft tabular"
+            class="text-body text-ink-soft tabular"
           >
             {{ rec.style.name }}
             <span class="text-gold-ink">{{ starsText(rec.adaptation.stars) }}</span>
           </span>
         </p>
-        <p class="mt-1.5 text-[10px] text-ink-faint tabular">
+        <p class="mt-1.5 text-note text-ink-faint tabular">
           战力 {{ formatGN(player.finalStats.power) }} · 装备成色、词条与临场随机仍定成败
         </p>
       </div>
-      <p class="text-[11px] text-ink-faint">此行欲作何打算?</p>
+      <p class="text-body text-ink-faint">此行欲作何打算?</p>
       <!-- 灵兽之性会改动出行时长与遇险:结算读了它,弹窗就必须摊开(见 exploration 的乘积) -->
-      <p v-if="petLine" class="mt-1 text-[10px] text-violet-ink tabular">{{ petLine }}</p>
+      <p v-if="petLine" class="mt-1 text-note text-violet-ink tabular">{{ petLine }}</p>
       <div class="mt-3 space-y-2">
         <button
           v-for="m in MODE_LIST"
@@ -416,7 +416,7 @@
           <span>
             <span class="t-card">{{ EXPLORE_MODES[m.id].name }}</span>
             <span
-              class="ml-2 text-[11px]"
+              class="ml-2 text-body"
               :class="m.id === 'risky' || m.id === 'prolonged' ? 'text-cinnabar' : 'text-ink-faint'"
               >{{ m.risk }}</span
             >
@@ -425,7 +425,7 @@
             收益一直是亮着的,危险却是暗的:四档里敌人差了 2.6 倍,玩家却只看得到钱。
             两个数并排摆出来,「要不要涉险」才是个可算的账。
           -->
-          <span class="text-right text-[11px] text-ink-faint tabular">
+          <span class="text-right text-body text-ink-faint tabular">
             {{ formatDuration(EXPLORE_MODES[m.id].durationSec) }}
             <br />
             预计材料 ≈ {{ expectedMaterials(m.id) }} 件<br />
@@ -439,7 +439,7 @@
         </button>
       </div>
       <!-- 上面两行按普通战算:首领战装备 ×2.5、法宝 ×6,不写清会让人以为亘古不变 -->
-      <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
+      <p class="mt-2 text-note leading-relaxed text-ink-faint">
         以上按普通战计;首领战的装备与法宝产出另计,高于此数。
       </p>
     </BaseModal>

@@ -22,22 +22,22 @@
         没有任何表示。与图鉴「尽收」同族 —— 判据读同一个 ownedCount(与标题
         计数同源),全收后给一行「名号尽收」,把圆满说出来。
       -->
-      <p v-if="titlesAllOwned" class="mt-2 flex items-center gap-1.5 px-1 text-[11px] text-jade">
-        <span class="chip-ink border-jade/60 text-[10px] text-jade">名号尽收</span>
+      <p v-if="titlesAllOwned" class="mt-2 flex items-center gap-1.5 px-1 text-body text-jade">
+        <span class="chip-ink border-jade/60 text-note text-jade">名号尽收</span>
         {{ TITLES.length }} 顶名号皆入囊中 —— 这一世的名,走到头了
       </p>
       <div v-if="nextTitle" class="card-ink mt-2 px-4 py-3" data-title-guide>
         <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <p class="font-kai text-[11px] tracking-widest text-ink-soft">下一顶名号</p>
-          <p class="text-[10px] text-ink-faint">按成就进度</p>
+          <p class="font-kai text-body tracking-widest text-ink-soft">下一顶名号</p>
+          <p class="text-note text-ink-faint">按成就进度</p>
         </div>
         <div class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <p class="min-w-0 font-kai text-[14px] text-ink">{{ nextTitle.def.name }}</p>
-          <p class="shrink-0 text-[10px] text-cinnabar tabular">
+          <p class="min-w-0 font-kai text-title text-ink">{{ nextTitle.def.name }}</p>
+          <p class="shrink-0 text-note text-cinnabar tabular">
             {{ nextTitle.progress.label }}
           </p>
         </div>
-        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
           名号获自「{{ nextTitle.source.name }}」 · {{ nextTitle.source.desc }}
         </p>
         <ProgressBar
@@ -46,7 +46,7 @@
           color="var(--color-cinnabar)"
           :height="2"
         />
-        <p v-if="nextTitle.progress.gap !== null" class="mt-1 text-[10px] text-cinnabar tabular">
+        <p v-if="nextTitle.progress.gap !== null" class="mt-1 text-note text-cinnabar tabular">
           尚差 {{ nextTitle.progress.gap }} —— 进度来自成就，不另算一套
         </p>
       </div>
@@ -66,7 +66,7 @@
           class="flex flex-wrap items-center gap-3 py-2.5"
         >
           <span
-            class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-kai"
+            class="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-body font-kai"
             :class="
               row.worn
                 ? 'border-cinnabar text-cinnabar'
@@ -78,14 +78,14 @@
             {{ row.worn ? "佩" : row.owned ? "藏" : "未" }}
           </span>
           <div class="min-w-0 grow">
-            <p class="font-kai text-[14px]" :class="row.owned ? 'text-ink' : 'text-ink-faint'">
+            <p class="font-kai text-title" :class="row.owned ? 'text-ink' : 'text-ink-faint'">
               {{ row.def.name }}
             </p>
-            <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>
-            <p v-if="row.owned && row.modText" class="text-[10px] text-qing tabular">
+            <p class="truncate text-note text-ink-faint">{{ row.def.desc }}</p>
+            <p v-if="row.owned && row.modText" class="text-note text-qing tabular">
               {{ row.modText }}
             </p>
-            <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+            <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
               名号获自「{{ row.source.name }}」<template v-if="!row.owned">
                 · {{ titleSourceProgressText(row) }}</template
               >
@@ -100,7 +100,7 @@
           </div>
           <button
             v-if="row.owned"
-            class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-[11px]"
+            class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-body"
             @click="toggleTitle(row.def.id)"
           >
             {{ row.worn ? "卸下" : "佩戴" }}
@@ -112,7 +112,7 @@
             v-if="titlePage.start > 0"
             type="button"
             data-title-prev
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
             :aria-label="previousTitleText()"
             @click="showPreviousTitles"
           >
@@ -122,7 +122,7 @@
             v-if="titlePage.hidden > 0"
             type="button"
             data-title-more
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
             :aria-label="moreTitleText()"
             :data-promised="Math.min(TITLE_RENDER_BATCH, titlePage.hidden)"
             @click="showMoreTitles"
@@ -151,11 +151,11 @@
         抬头写着「3/14」却看不到另外 11 只是什么、去哪儿遇,这一册也就无从追。
         改成与图鉴同款:全册都在,未结缘盖成「???」,并给出处。
       -->
-      <p v-if="petsAllOwned" class="mt-1 text-[10px] text-jade">
-        <span class="chip-ink border-jade/60 text-[10px] text-jade">尽收</span>
+      <p v-if="petsAllOwned" class="mt-1 text-note text-jade">
+        <span class="chip-ink border-jade/60 text-note text-jade">尽收</span>
         {{ cnNumber(PETS.length) }}只灵兽俱已结缘 —— 山野之间再无生客
       </p>
-      <p v-else class="mt-1 text-[10px] text-ink-faint">{{ CODEX_SOURCES.pet }}</p>
+      <p v-else class="mt-1 text-note text-ink-faint">{{ CODEX_SOURCES.pet }}</p>
       <div
         class="card-ink mt-2 divide-y divide-ink/6 px-4"
         :data-pet-total="petRows.length"
@@ -180,22 +180,22 @@
               <div class="min-w-0 grow">
                 <p class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                   <span
-                    class="font-kai text-[14px]"
+                    class="font-kai text-title"
                     :style="{ color: qualityDef(row.def.quality).color }"
                     >{{ row.def.name }}</span
                   >
                   <!-- 品阶文字:数值按品阶重配过,名字旁的「神品/仙品…」让品质与效果一眼可对(见 petQuality.spec 两条不变量) -->
                   <span
-                    class="text-[10px] tracking-[0.2em]"
+                    class="text-note tracking-[0.2em]"
                     :style="{ color: qualityDef(row.def.quality).color }"
                     >{{ qualityDef(row.def.quality).name }}</span
                   >
-                  <span v-if="row.active" class="text-[10px] text-jade">相伴中</span>
+                  <span v-if="row.active" class="text-note text-jade">相伴中</span>
                 </p>
-                <p class="truncate text-[10px] text-ink-faint">{{ row.def.desc }}</p>
-                <p v-if="row.modText" class="text-[10px] text-qing tabular">{{ row.modText }}</p>
+                <p class="truncate text-note text-ink-faint">{{ row.def.desc }}</p>
+                <p v-if="row.modText" class="text-note text-qing tabular">{{ row.modText }}</p>
                 <!-- 性格 + 数值并一行:定性的话之外还要给数(换不换这只伙伴,靠「更容易」三个字算不出来) -->
-                <p class="text-[10px] text-violet-ink">
+                <p class="text-note text-violet-ink">
                   {{ row.personalityName }}
                   <span class="text-ink-faint">{{ row.personalityDesc }}</span>
                   <template v-if="row.traitText">
@@ -209,14 +209,14 @@
                 <GameIcon name="lock" :size="14" />
               </span>
               <div class="min-w-0 grow">
-                <p class="font-kai text-[14px] text-ink-faint">???</p>
-                <p class="truncate text-[10px] text-ink-faint">尚未结缘</p>
+                <p class="font-kai text-title text-ink-faint">???</p>
+                <p class="truncate text-note text-ink-faint">尚未结缘</p>
               </div>
             </template>
           </div>
           <button
             v-if="row.owned"
-            class="btn-ghost min-h-7 shrink-0 whitespace-nowrap !px-2.5 !py-1.5 !text-[11px] tinylens:w-full"
+            class="btn-ghost min-h-7 shrink-0 whitespace-nowrap !px-2.5 !py-1.5 !text-body tinylens:w-full"
             @click="togglePet(row.def.id)"
           >
             {{ row.active ? "暂别" : "唤来" }}
@@ -227,7 +227,7 @@
             v-if="petPage.start > 0"
             type="button"
             data-pet-prev
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
             :aria-label="previousPetText()"
             @click="showPreviousPets"
           >
@@ -237,7 +237,7 @@
             v-if="petPage.hidden > 0"
             type="button"
             data-pet-more
-            class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
             :aria-label="morePetText()"
             :data-promised="Math.min(PET_RENDER_BATCH, petPage.hidden)"
             @click="showMorePets"

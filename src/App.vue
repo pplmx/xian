@@ -42,7 +42,7 @@
       data-save-reader
       :data-save-reader-freed="writerFreed ? '' : undefined"
       role="status"
-      class="app-save-reader relative z-10 flex shrink-0 flex-wrap items-center justify-center gap-x-1 border-b border-cinnabar/40 bg-cinnabar/6 px-3 py-1 text-center font-kai text-[11px] leading-relaxed text-cinnabar"
+      class="app-save-reader relative z-10 flex shrink-0 flex-wrap items-center justify-center gap-x-1 border-b border-cinnabar/40 bg-cinnabar/6 px-3 py-1 text-center font-kai text-body leading-relaxed text-cinnabar"
     >
       <template v-if="writerFreed">
         <span>另一处已关闭 ——</span>

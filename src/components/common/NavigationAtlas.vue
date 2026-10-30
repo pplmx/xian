@@ -6,7 +6,7 @@
         class="atlas-current relative overflow-hidden border border-ink/15 bg-paper-deep/60 py-3 pl-14 pr-3"
       >
         <span
-          class="atlas-current__seal absolute inset-y-3 left-3 grid w-8 place-items-center border border-cinnabar/45 bg-cinnabar/6 font-kai text-[14px] text-cinnabar"
+          class="atlas-current__seal absolute inset-y-3 left-3 grid w-8 place-items-center border border-cinnabar/45 bg-cinnabar/6 font-kai text-title text-cinnabar"
           aria-hidden="true"
           >在</span
         >
@@ -15,11 +15,11 @@
           aria-hidden="true"
         />
         <div class="relative min-w-0">
-          <p class="text-[10px] tracking-[0.3em] text-cinnabar">此刻在册 · {{ currentOrdinal }}</p>
-          <p class="mt-1 font-kai text-[15px] tracking-[0.18em] text-ink">
+          <p class="text-note tracking-[0.3em] text-cinnabar">此刻在册 · {{ currentOrdinal }}</p>
+          <p class="mt-1 font-kai text-section tracking-[0.18em] text-ink">
             {{ current?.sectionLabel ?? "玄枢" }} · {{ current?.label ?? "未名之页" }}
           </p>
-          <p class="mt-1 text-[10px] text-ink-faint">
+          <p class="mt-1 text-note text-ink-faint">
             {{ player.name }} · {{ player.realmName }} · {{ player.worldName }}
           </p>
         </div>
@@ -34,16 +34,16 @@
         >
           <div class="flex items-start gap-2">
             <span
-              class="atlas-section__number grid h-6 w-6 shrink-0 place-items-center border border-ink/20 font-kai text-[11px] text-ink-soft"
+              class="atlas-section__number grid h-6 w-6 shrink-0 place-items-center border border-ink/20 font-kai text-body text-ink-soft"
               aria-hidden="true"
               >{{ sectionNumber(groupIndex) }}</span
             >
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span class="font-kai text-[14px] tracking-[0.25em] text-ink">{{
+                <span class="font-kai text-title tracking-[0.25em] text-ink">{{
                   group.label
                 }}</span>
-                <span class="text-[10px] text-ink-faint">{{ group.hint }}</span>
+                <span class="text-note text-ink-faint">{{ group.hint }}</span>
               </div>
               <span
                 class="mt-1 block h-px w-full bg-gradient-to-r from-ink/15 to-transparent"
@@ -79,21 +79,21 @@
               </span>
               <span class="min-w-0 flex-1">
                 <span
-                  class="block font-kai text-[14px] tracking-[0.16em] tinylens:tracking-[0.08em]"
+                  class="block font-kai text-title tracking-[0.16em] tinylens:tracking-[0.08em]"
                   :class="route.name === entry.name ? 'text-cinnabar' : 'text-ink'"
                   >{{ entry.label }}</span
                 >
-                <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{
+                <span class="mt-0.5 block text-note leading-relaxed text-ink-faint">{{
                   entry.description
                 }}</span>
               </span>
               <span
                 v-if="route.name === entry.name"
-                class="shrink-0 border border-cinnabar/40 px-1 py-0.5 font-kai text-[10px] leading-none text-cinnabar"
+                class="shrink-0 border border-cinnabar/40 px-1 py-0.5 font-kai text-note leading-none text-cinnabar"
                 aria-hidden="true"
                 >在</span
               >
-              <span v-else class="shrink-0 text-[11px] text-ink-faint" aria-hidden="true">›</span>
+              <span v-else class="shrink-0 text-body text-ink-faint" aria-hidden="true">›</span>
             </RouterLink>
           </div>
         </section>
@@ -101,7 +101,7 @@
 
       <div class="flex items-center gap-2 border-t border-ink/10 pt-2">
         <span class="h-px min-w-1 flex-1 bg-gradient-to-r from-transparent to-ink/15" />
-        <p class="shrink-0 text-center text-[10px] text-ink-faint">
+        <p class="shrink-0 text-center text-note text-ink-faint">
           {{ NAVIGATION_SECTIONS.length }} 卷 {{ NAVIGATION_ENTRIES.length }} 册 · 点一册即可前往
         </p>
         <span class="h-px min-w-1 flex-1 bg-gradient-to-l from-transparent to-ink/15" />

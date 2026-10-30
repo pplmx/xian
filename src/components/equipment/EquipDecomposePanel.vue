@@ -63,8 +63,8 @@ function doDecompose(): void {
       </button>
     </template>
     <template v-else>
-      <button class="btn-seal !px-2.5 !text-[11px]" @click="doDecompose">确认分解</button>
-      <button class="btn-ghost px-2 text-[11px] text-ink-faint" @click="decomposeArm = null">
+      <button class="btn-seal !px-2.5 !text-body" @click="doDecompose">确认分解</button>
+      <button class="btn-ghost px-2 text-body text-ink-faint" @click="decomposeArm = null">
         再想想
       </button>
     </template>

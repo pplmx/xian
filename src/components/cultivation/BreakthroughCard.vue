@@ -10,8 +10,8 @@
   -->
   <div class="card-ink px-4 py-3">
     <div class="flex items-baseline justify-between">
-      <span class="font-kai text-[14px] tracking-[0.2em] text-ink">破 境</span>
-      <span class="text-[11px]" :class="btInfo.ready ? 'text-jade' : 'text-ink-soft'">
+      <span class="font-kai text-title tracking-[0.2em] text-ink">破 境</span>
+      <span class="text-body" :class="btInfo.ready ? 'text-jade' : 'text-ink-soft'">
         {{ btInfo.ready ? "可破" : btInfo.reason }}
       </span>
     </div>
@@ -21,7 +21,7 @@
     -->
     <div class="mt-2 grid gap-2" :class="btInfo.needTribulation ? 'grid-cols-1' : 'grid-cols-2'">
       <div v-if="!btInfo.needTribulation" class="rounded-md bg-paper-deep/60 px-2.5 py-1.5">
-        <p class="text-[10px] text-ink-faint">进阶成功率(小进阶)</p>
+        <p class="text-note text-ink-faint">进阶成功率(小进阶)</p>
         <p
           class="tabular text-[16px] font-kai leading-tight"
           :class="btInfo.rate >= 0.7 ? 'text-jade' : 'text-cinnabar'"
@@ -32,10 +32,10 @@
           概率不直观,期望直观:71% 读起来"还行",但它意味着平均要试 1.4 次。
           数值来自 core 的 expectedTries(与 realms.sim 同一个口径),不在这里另算。
         -->
-        <p v-if="triesText" class="tabular text-[10px] text-ink-faint">{{ triesText }}</p>
+        <p v-if="triesText" class="tabular text-note text-ink-faint">{{ triesText }}</p>
       </div>
       <div class="rounded-md bg-paper-deep/60 px-2.5 py-1.5">
-        <p class="text-[10px] text-ink-faint">{{ btInfo.needTribulation ? "此劫" : "渡劫" }}</p>
+        <p class="text-note text-ink-faint">{{ btInfo.needTribulation ? "此劫" : "渡劫" }}</p>
         <template v-if="tribPlan">
           <p
             class="tabular text-[16px] font-kai leading-tight"
@@ -43,7 +43,7 @@
           >
             {{ tribPlan.title }}
           </p>
-          <p class="text-[10px] text-ink-faint">
+          <p class="text-note text-ink-faint">
             劫势:{{ verdictLabel(tribPlan.verdict) }}
             <template v-if="tribPlan.risks.length"> · {{ tribPlan.risks[0] }}</template>
           </p>
@@ -57,12 +57,12 @@
       与开炉幕同款(不做两本账);大关不吃此益,故只在非天劫幕亮。
     -->
     <div v-if="!btInfo.needTribulation" class="mt-2 rounded-md bg-paper-deep/60 px-3 py-2">
-      <p class="text-[10px] text-ink-faint">破境增益 · 此刻在身</p>
+      <p class="text-note text-ink-faint">破境增益 · 此刻在身</p>
       <div v-if="breakthroughBuffRows.length" class="mt-1 space-y-0.5">
         <p
           v-for="row in breakthroughBuffRows"
           :key="row.buffId"
-          class="flex items-baseline gap-1.5 text-[11px]"
+          class="flex items-baseline gap-1.5 text-body"
         >
           <span class="font-kai shrink-0" :class="row.rate > 0 ? 'text-qing' : 'text-cinnabar'">{{
             row.name
@@ -70,11 +70,11 @@
           <span class="tabular text-ink-soft">{{ row.effect }}</span>
         </p>
         <!-- 诚实收口:这条只列「状态」来源 —— 装备/称号/天时等别的源头在大数字里,不在条里重抄 -->
-        <p class="pt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p class="pt-0.5 text-note leading-relaxed text-ink-faint">
           只列状态来源 —— 装备·名号·天时等见上值
         </p>
       </div>
-      <p v-else class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+      <p v-else class="mt-0.5 text-note leading-relaxed text-ink-faint">
         此刻身无破境状态 —— 备一味
         <span class="text-qing">破境 · 凝神 · 定心 · 本源归一</span>,成功率即刻见涨
       </p>
@@ -82,7 +82,7 @@
 
     <!-- 劫势详情(决意前评估:风险维度 + 建议)→ TribulationPanel,注释与读数群随本体迁入 -->
     <TribulationPanel v-if="tribPlan" :plan="tribPlan" />
-    <p data-value-row class="mt-1 text-[11px] text-ink-soft tabular">
+    <p data-value-row class="mt-1 text-body text-ink-soft tabular">
       耗灵气 {{ formatNum(btInfo.qiCost) }}
       <template v-if="btInfo.needTribulation">
         ·
@@ -94,7 +94,7 @@
          且不复述「只损修为」那种不完整的账。
          减多少由 buff 本体现算:这里曾读 injury 的 desc,而 desc 现在只写风味 ——
          数值若留在那句风味里,改 mods 之后这行就成了唯一不跟的那处。 -->
-    <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint tabular">
+    <p class="mt-0.5 text-note leading-relaxed text-ink-faint tabular">
       突破不成损修为 {{ formatPercent(BT_FAIL_EXP_LOSS) }}、身负
       <span class="text-cinnabar">重伤</span>({{ modsText(injuryDef.mods) }},持续
       {{ cnNumber(INJURY_DURATION) }}
@@ -106,7 +106,7 @@
       v-if="!btInfo.needTribulation"
       class="mt-2 rounded-md border border-ink/10 bg-paper-deep/50 px-2.5 py-2"
     >
-      <div class="flex items-center justify-between text-[10px] text-ink-faint">
+      <div class="flex items-center justify-between text-note text-ink-faint">
         <span>突破准备(一次有效)</span>
         <!--
           倒计时一律走 formatCountdown(定宽),不用 formatDuration:
@@ -125,14 +125,14 @@
         (实测第二枚右缘到 331px,越界 11px)。故允许换行:宽屏并排、窄屏上下。
       -->
       <div v-if="!btInfo.prep.sitting && !btInfo.prep.ready" class="mt-1.5 flex flex-wrap gap-1.5">
-        <button type="button" class="chip-ink !py-1.5 text-[10px]" @click="startPrep('meditate')">
+        <button type="button" class="chip-ink !py-1.5 text-note" @click="startPrep('meditate')">
           {{ prepMeditate.label }} · {{ Math.round(prepMeditate.duration / 60) }}分钟 +{{
             formatPercent(prepMeditate.bonusRate, 0)
           }}
         </button>
         <button
           type="button"
-          class="chip-ink !py-1.5 text-[10px]"
+          class="chip-ink !py-1.5 text-note"
           :disabled="!prepCanPill"
           @click="startPrep('pill')"
         >

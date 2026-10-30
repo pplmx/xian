@@ -8,7 +8,7 @@
   <!-- 战斗后统计 + 分析入口 -->
   <p
     v-if="battleSummary"
-    class="mt-2 flex items-center justify-center gap-2 text-center text-[10px] text-ink-faint tabular"
+    class="mt-2 flex items-center justify-center gap-2 text-center text-note text-ink-faint tabular"
   >
     {{ battleSummary }}
     <!--
@@ -34,7 +34,7 @@
     </button>
   </p>
   <!-- 本战拾获明细:战报里原本只进件数,「得了什么」全靠猜 -->
-  <p v-if="battleLoot.length" class="mt-1 text-center text-[10px] leading-relaxed text-ink-faint">
+  <p v-if="battleLoot.length" class="mt-1 text-center text-note leading-relaxed text-ink-faint">
     <span class="text-gold-ink">本战所得</span>
     {{ battleLoot.join(" · ") }}
   </p>
@@ -45,9 +45,9 @@
       <span class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink">{{
         lore.stageName
       }}</span>
-      <span v-if="lore.boosted" class="text-[10px] text-gold-ink">宿慧照见</span>
+      <span v-if="lore.boosted" class="text-note text-gold-ink">宿慧照见</span>
     </p>
-    <p v-if="lore.elementName || lore.frame.length" class="mt-1 text-[11px] text-ink-soft">
+    <p v-if="lore.elementName || lore.frame.length" class="mt-1 text-body text-ink-soft">
       <span v-if="lore.elementName" class="mr-1.5 text-qing">{{ lore.elementName }}属</span>
       {{ lore.frame.join(" · ") }}
     </p>
@@ -56,20 +56,16 @@
       <span class="text-ink">{{ s.name }}</span>
       ——{{ s.note }}
     </p>
-    <p
-      v-for="ph in lore.phases"
-      :key="ph.at"
-      class="mt-1 text-[11px] leading-relaxed text-cinnabar"
-    >
+    <p v-for="ph in lore.phases" :key="ph.at" class="mt-1 text-body leading-relaxed text-cinnabar">
       · {{ ph.at }}时{{ ph.label }}
     </p>
-    <p v-if="lore.archetype" class="mt-1.5 text-[11px] leading-relaxed text-gold-ink">
-      <span v-if="lore.archetypeLabel" class="mr-1 rounded bg-gold-ink/6 px-1 py-0.5 text-[10px]">
+    <p v-if="lore.archetype" class="mt-1.5 text-body leading-relaxed text-gold-ink">
+      <span v-if="lore.archetypeLabel" class="mr-1 rounded bg-gold-ink/6 px-1 py-0.5 text-note">
         {{ lore.archetypeLabel }}
       </span>
       {{ lore.archetype }}
     </p>
-    <p v-if="lore.hint" class="mt-1.5 text-[10px] text-ink-faint">{{ lore.hint }}</p>
+    <p v-if="lore.hint" class="mt-1.5 text-note text-ink-faint">{{ lore.hint }}</p>
   </div>
   <!-- 战斗分析(战败自动展开;硬核数据供研究) -->
   <div v-if="showAnalysis && analysis" class="mt-2 rounded-md bg-ink/4 px-3 py-2.5">
@@ -89,7 +85,7 @@
       此前只挂在 :title 上,点了没反应 = 对触屏玩家死提示。方向名改可点、理由点开
       直出(与「此物所知/战斗分析」同款行内按钮 idiom)。
     -->
-    <p v-if="analysis.directions.length" class="mt-1.5 text-[10px] text-ink-faint">
+    <p v-if="analysis.directions.length" class="mt-1.5 text-note text-ink-faint">
       可借力的方向(非唯一解):
       <span v-for="d in analysis.directions" :key="d.styleName" class="ml-1">
         <button
@@ -110,7 +106,7 @@
       <p
         v-for="row in analysis.dataRows"
         :key="row.label"
-        class="flex justify-between text-[10px] tabular"
+        class="flex justify-between text-note tabular"
       >
         <span class="text-ink-faint">{{ row.label }}</span>
         <span class="text-ink-soft">{{ row.value }}</span>

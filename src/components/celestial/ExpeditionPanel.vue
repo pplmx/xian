@@ -15,7 +15,7 @@
             :class="i <= run.layer ? 'bg-cinnabar/45' : 'bg-ink/15'"
           />
           <span
-            class="flex items-center gap-1 text-[10px]"
+            class="flex items-center gap-1 text-note"
             :class="
               i < run.layer
                 ? 'text-ink-soft'
@@ -38,7 +38,7 @@
           </span>
         </template>
       </div>
-      <p class="text-[11px] text-ink-faint tabular">
+      <p class="text-body text-ink-faint tabular">
         已历 {{ run.rows.length }} 战 · 沿途道源 +{{ run.bonus }} · 携血
         {{ formatPercent(run.carriedHpPct, 0) }}
         <template
@@ -48,7 +48,7 @@
         </template>
       </p>
       <div class="mt-1.5 space-y-1">
-        <p v-for="(row, i) in run.rows" :key="i" class="flex justify-between text-[11px]">
+        <p v-for="(row, i) in run.rows" :key="i" class="flex justify-between text-body">
           <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
             第{{ i + 1 }}战 {{ row.foeName }} · {{ row.win ? "胜" : "负" }}
           </span>
@@ -60,7 +60,7 @@
       <div class="ink-divider-mark my-2.5" />
       <!-- 择路 -->
       <template v-if="run.layer < EXPEDITION_ROUTE_LAYERS && currentNodes">
-        <p class="mb-1.5 text-[11px] text-ink-faint">
+        <p class="mb-1.5 text-body text-ink-faint">
           第 {{ run.layer + 1 }} 重 · 两径择一(层间可回凡界换构筑)
         </p>
         <!--
@@ -74,11 +74,11 @@
             class="rounded-md border border-ink/15 bg-paper-deep/60 px-2.5 py-2 text-left active:scale-97"
             @click="pickNode(i as 0 | 1)"
           >
-            <p class="font-kai text-[14px] text-ink">{{ node.name }}</p>
-            <p class="mt-0.5 text-[10px] text-ink-faint">{{ node.desc }}</p>
-            <p class="mt-1 text-[10px] text-cinnabar">险:{{ node.riskText }}</p>
-            <p class="text-[10px] text-gold-ink tabular">道源 +{{ node.bonus }}</p>
-            <p v-if="nodePreviews[i]" class="mt-0.5 text-[10px] text-violet-ink">
+            <p class="font-kai text-title text-ink">{{ node.name }}</p>
+            <p class="mt-0.5 text-note text-ink-faint">{{ node.desc }}</p>
+            <p class="mt-1 text-note text-cinnabar">险:{{ node.riskText }}</p>
+            <p class="text-note text-gold-ink tabular">道源 +{{ node.bonus }}</p>
+            <p v-if="nodePreviews[i]" class="mt-0.5 text-note text-violet-ink">
               天机:{{ nodePreviews[i]!.winText }}
             </p>
           </button>
@@ -86,14 +86,14 @@
       </template>
       <!-- 界主 -->
       <template v-else-if="run.layer === EXPEDITION_GUARDIAN_LAYER">
-        <p class="mb-1.5 text-[11px] text-ink-faint">
+        <p class="mb-1.5 text-body text-ink-faint">
           {{ cnNumber(EXPEDITION_ROUTE_LAYERS) }}重已过,界主临阵。可先回凡界整备,再来决战。
         </p>
-        <p v-if="guardianPreview" class="mb-1.5 text-[10px] text-violet-ink">
+        <p v-if="guardianPreview" class="mb-1.5 text-note text-violet-ink">
           天机:{{ guardianPreview.winText }} · {{ guardianPreview.skillLines.join(" / ") }}
         </p>
         <button
-          class="btn-seal w-full !py-2 !text-[14px] pulse-ready animate-glow-pulse"
+          class="btn-seal w-full !py-2 !text-title pulse-ready animate-glow-pulse"
           @click="fightBoss"
         >
           决战 · {{ runWorld.guardian.name }}
@@ -101,23 +101,23 @@
       </template>
       <template v-if="abandonArmed">
         <p
-          class="mt-2 rounded-md bg-cinnabar/6 px-2.5 py-1.5 text-[10px] leading-relaxed text-cinnabar"
+          class="mt-2 rounded-md bg-cinnabar/6 px-2.5 py-1.5 text-note leading-relaxed text-cinnabar"
         >
           此行 {{ runWorld.entryCost }} 道源与已攒的沿途道源
           {{ run.bonus > 0 ? `+${run.bonus}` : "" }}尽付东流,战果与纪录不保。
         </p>
         <div class="mt-1.5 flex gap-2">
-          <button class="btn-ghost flex-1 !py-1.5 !text-[11px]" @click="abandonArmed = false">
+          <button class="btn-ghost flex-1 !py-1.5 !text-body" @click="abandonArmed = false">
             再想想
           </button>
-          <button class="btn-seal flex-1 !py-1.5 !text-[11px]" @click="abandonRun">
+          <button class="btn-seal flex-1 !py-1.5 !text-body" @click="abandonRun">
             确认中道而返
           </button>
         </div>
       </template>
       <button
         v-else
-        class="btn-ghost mt-2 w-full !py-1.5 !text-[11px] !text-ink-faint"
+        class="btn-ghost mt-2 w-full !py-1.5 !text-body !text-ink-faint"
         @click="abandonArmed = true"
       >
         中道而返(道源不退)
@@ -132,18 +132,18 @@
       <div v-for="world in CELESTIAL_WORLDS" :key="world.id" class="card-ink px-4 py-3">
         <p class="flex items-center gap-2">
           <span
-            class="grid h-8 w-8 place-items-center rounded-md bg-indigo-ink/85 font-kai text-[15px] text-paper"
+            class="grid h-8 w-8 place-items-center rounded-md bg-indigo-ink/85 font-kai text-section text-paper"
           >
             {{ world.seal }}
           </span>
-          <span class="font-kai text-[14px] tracking-[0.2em] text-ink">{{ world.name }}</span>
+          <span class="font-kai text-title tracking-[0.2em] text-ink">{{ world.name }}</span>
           <span
             v-if="endgame.worldClears[world.id]"
-            class="chip-ink border-jade/60 text-[10px] text-jade"
+            class="chip-ink border-jade/60 text-note text-jade"
           >
             已破 ×{{ endgame.worldClears[world.id] }}
           </span>
-          <span class="ml-auto tabular text-[11px] text-ink-faint"
+          <span class="ml-auto tabular text-body text-ink-faint"
             >入界+{{ cnNumber(EXPEDITION_ROUTE_LAYERS) }}重+界主</span
           >
         </p>
@@ -153,7 +153,7 @@
             哪天梯子挪了,这句自己跟上。
           -->
         <p
-          class="mt-0.5 text-[10px]"
+          class="mt-0.5 text-note"
           :class="
             player.major < anchorMajorOf(world.anchorTier) ? 'text-cinnabar' : 'text-ink-faint'
           "
@@ -164,18 +164,18 @@
           >
         </p>
         <p class="mt-1.5 t-body text-ink-faint">{{ world.desc }}</p>
-        <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
+        <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
           <span v-for="(r, i) in world.ruleText" :key="i">{{ r }}</span>
         </p>
         <p
           v-if="world.starTied"
-          class="mt-1 tabular text-[10px]"
+          class="mt-1 tabular text-note"
           :class="starTieFavorOn(world) ? 'text-qing' : 'text-ink-faint'"
         >
           {{ starTieLine(world) }}
         </p>
         <button
-          class="btn-seal mt-2.5 w-full !py-2 !text-[14px]"
+          class="btn-seal mt-2.5 w-full !py-2 !text-title"
           :disabled="run !== null || daoEntryShort(world.entryCost) > 0"
           @click="openPrep(world.id)"
         >
@@ -193,17 +193,17 @@
       <div class="card-ink border border-violet-ink/25 px-4 py-3">
         <p class="flex items-center gap-2">
           <span
-            class="grid h-8 w-8 place-items-center rounded-md bg-violet-ink/85 font-kai text-[15px] text-paper"
+            class="grid h-8 w-8 place-items-center rounded-md bg-violet-ink/85 font-kai text-section text-paper"
           >
             {{ endgame.voidWorld?.seal ?? "虚" }}
           </span>
-          <span class="font-kai text-[14px] tracking-[0.2em] text-ink">
+          <span class="font-kai text-title tracking-[0.2em] text-ink">
             虚界之门
             <template v-if="endgame.voidWorld">· {{ endgame.voidWorld.name }}</template>
           </span>
           <span
             v-if="endgame.worldClears['void']"
-            class="chip-ink border-jade/60 text-[10px] text-jade"
+            class="chip-ink border-jade/60 text-note text-jade"
           >
             已破 ×{{ endgame.worldClears["void"] }}
           </span>
@@ -212,17 +212,17 @@
           <p class="mt-1.5 t-body text-ink-faint">
             {{ endgame.voidWorld.desc }}
           </p>
-          <p class="mt-1 flex flex-wrap gap-x-3 text-[10px] text-violet-ink">
+          <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
             <span v-for="(r, i) in endgame.voidWorld.ruleText" :key="i">{{ r }}</span>
           </p>
-          <p class="mt-1 text-[10px] text-ink-faint">
+          <p class="mt-1 text-note text-ink-faint">
             盘踞:{{ endgame.voidWorld.foes.map((f) => f.name).join("、") }} · 界主「{{
               endgame.voidWorld.guardian.name
             }}」
           </p>
           <!-- 与普通天界同款边界行:虚界同样按锚点层次定标、同样有境界压制,别把这条只埋在 prep 里 -->
           <p
-            class="mt-0.5 text-[10px]"
+            class="mt-0.5 text-note"
             :class="
               player.major < anchorMajorOf(endgame.voidWorld.anchorTier)
                 ? 'text-cinnabar'
@@ -237,7 +237,7 @@
           </p>
           <div class="mt-2.5 flex gap-2">
             <button
-              class="btn-seal flex-1 !py-2 !text-[14px]"
+              class="btn-seal flex-1 !py-2 !text-title"
               :disabled="run !== null || daoEntryShort(endgame.voidWorld.entryCost) > 0"
               @click="openPrep('void')"
             >
@@ -250,7 +250,7 @@
               }}
             </button>
             <button
-              class="btn-ghost !px-3 !text-[11px]"
+              class="btn-ghost !px-3 !text-body"
               :disabled="voidRerollShort > 0"
               @click="rerollVoidWorld()"
             >
@@ -264,7 +264,7 @@
             天道以变数织界:随机规则、随机敌阵、随机路线,经天机推演过审方能成形——每一座虚界都独一无二。
           </p>
           <button
-            class="btn-ghost mt-2.5 w-full !py-2 !text-[11px]"
+            class="btn-ghost mt-2.5 w-full !py-2 !text-body"
             :disabled="voidRerollShort > 0"
             @click="rerollVoidWorld()"
           >
@@ -297,8 +297,8 @@
           "
           @click="prepPact = null"
         >
-          <span class="text-[11px] text-ink-soft">不立契约</span>
-          <span class="ml-auto text-[10px] text-ink-faint">道源 ×1.0</span>
+          <span class="text-body text-ink-soft">不立契约</span>
+          <span class="ml-auto text-note text-ink-faint">道源 ×1.0</span>
         </button>
         <button
           v-for="pact in PACTS"
@@ -312,19 +312,19 @@
           @click="prepPact = pact.id"
         >
           <span
-            class="grid h-6 w-6 shrink-0 place-items-center rounded bg-ink/80 font-kai text-[11px] text-paper"
+            class="grid h-6 w-6 shrink-0 place-items-center rounded bg-ink/80 font-kai text-body text-paper"
             >{{ pact.seal }}</span
           >
           <span class="min-w-0">
-            <span class="block font-kai text-[11px] text-ink">{{ pact.name }}</span>
-            <span class="block text-[10px] text-ink-faint">{{ pact.ruleText }}</span>
+            <span class="block font-kai text-body text-ink">{{ pact.name }}</span>
+            <span class="block text-note text-ink-faint">{{ pact.ruleText }}</span>
           </span>
         </button>
       </div>
       <!-- 逆命契:签前把这场封印的具体词条摊开(决策前摊数字,不许只给定性形容词) -->
       <p
         v-if="sealedCore"
-        class="mt-1.5 rounded-md bg-paper-deep/70 px-3 py-2 text-[10px] leading-relaxed text-cinnabar"
+        class="mt-1.5 rounded-md bg-paper-deep/70 px-3 py-2 text-note leading-relaxed text-cinnabar"
       >
         <span class="font-kai text-ink">封印「{{ sealedCore.displayName }}」:</span>
         {{ sealedCore.text }}
@@ -335,7 +335,7 @@
       </p>
       <div class="mt-1.5 grid grid-cols-4 gap-1.5">
         <button
-          class="rounded-md px-1 py-1.5 text-center text-[11px] active:opacity-70"
+          class="rounded-md px-1 py-1.5 text-center text-body active:opacity-70"
           :class="
             prepGate === null
               ? 'bg-jade/10 border border-jade/40 text-ink-soft'
@@ -348,7 +348,7 @@
         <button
           v-for="g in GATES"
           :key="g.id"
-          class="rounded-md px-1 py-1.5 text-center text-[11px] active:opacity-70"
+          class="rounded-md px-1 py-1.5 text-center text-body active:opacity-70"
           :class="
             prepGate === g.id
               ? 'bg-violet-ink/10 border border-violet-ink/40 text-ink'
@@ -360,9 +360,9 @@
           "
           @click="prepGate = g.id"
         >
-          <span class="font-kai text-[14px]">{{ g.name }}</span>
+          <span class="font-kai text-title">{{ g.name }}</span>
           <span
-            class="ml-0.5 text-[10px]"
+            class="ml-0.5 text-note"
             :class="
               g.kind === '凶' ? 'text-cinnabar' : g.kind === '吉' ? 'text-jade' : 'text-ink-faint'
             "
@@ -372,7 +372,7 @@
       </div>
       <p
         v-if="selectedGate"
-        class="mt-1.5 rounded-md bg-paper-deep/70 px-3 py-2 text-[10px] leading-relaxed text-ink-soft"
+        class="mt-1.5 rounded-md bg-paper-deep/70 px-3 py-2 text-note leading-relaxed text-ink-soft"
       >
         <span class="font-kai text-ink">{{ selectedGate.fullName }}</span>
         <span class="text-ink-faint">
@@ -390,11 +390,11 @@
       </p>
       <!-- 天道赌约:整程预估(信息归玩家,答案也归玩家) -->
       <div v-if="prepForecast" class="mt-2.5 rounded-md bg-paper-deep/70 px-3 py-2">
-        <p class="flex items-center justify-between text-[11px]">
+        <p class="flex items-center justify-between text-body">
           <span class="font-kai text-ink-soft">天道推演</span>
           <span class="tabular text-ink-soft">此行 {{ prepForecast.difficulty }}</span>
         </p>
-        <p class="mt-0.5 flex items-center justify-between text-[10px] text-ink-faint">
+        <p class="mt-0.5 flex items-center justify-between text-note text-ink-faint">
           <span>
             当前构筑相性
             <span class="text-gold-ink">{{ prepForecast.stars }}</span>
@@ -408,25 +408,22 @@
         <p
           v-for="(line, i) in prepForecast.judgementLines"
           :key="i"
-          class="mt-0.5 text-[10px] leading-relaxed text-cinnabar"
+          class="mt-0.5 text-note leading-relaxed text-cinnabar"
         >
           {{ line }}
         </p>
       </div>
-      <p v-if="prepPreview" class="mt-2 text-[10px] leading-relaxed text-violet-ink">
+      <p v-if="prepPreview" class="mt-2 text-note leading-relaxed text-violet-ink">
         天机透视 · 入界之敌:{{ prepPreview.skillLines.join(" / ") }} —— {{ prepPreview.winText }}
       </p>
-      <p
-        v-if="prepPreview?.riskLines.length"
-        class="mt-1 text-[10px] leading-relaxed text-cinnabar"
-      >
+      <p v-if="prepPreview?.riskLines.length" class="mt-1 text-note leading-relaxed text-cinnabar">
         危局:{{ prepPreview.riskLines.join(";") }}
       </p>
     </template>
     <template #footer>
       <p
         v-if="prepWorld && expeditionEntryShort <= 0"
-        class="mb-1 text-center text-[10px] text-ink-faint"
+        class="mb-1 text-center text-note text-ink-faint"
       >
         入界即花 {{ prepWorld.entryCost }} 道源;途中道源攒至出界才发放,
         <template v-if="selectedPact"

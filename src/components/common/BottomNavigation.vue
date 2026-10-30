@@ -80,7 +80,7 @@
           />
         </span>
         <span
-          class="relative font-kai text-[11px] tracking-[0.2em] short:text-[10px] tinylens:text-[10px] tinylens:tracking-normal"
+          class="relative font-kai text-body tracking-[0.2em] short:text-note tinylens:text-note tinylens:tracking-normal"
           >{{ tab.label }}</span
         >
         <!--

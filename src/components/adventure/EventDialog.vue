@@ -17,33 +17,33 @@
         :style="{ borderColor: tierDef.color }"
       >
         <p class="flex items-center gap-2">
-          <span class="chip-ink text-[10px]" :style="{ color: tierDef.color }">{{
+          <span class="chip-ink text-note" :style="{ color: tierDef.color }">{{
             tierDef.name
           }}</span>
-          <span class="text-[10px] tabular text-ink-faint">{{ tierOdds }}</span>
+          <span class="text-note tabular text-ink-faint">{{ tierOdds }}</span>
         </p>
-        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">{{ tierDef.brief }}</p>
+        <p class="mt-0.5 text-note leading-relaxed text-ink-faint">{{ tierDef.brief }}</p>
       </div>
       <!-- Phase 31.3 遗产回声:曾弃之缘,世界记得(叙事,无数值) -->
       <p
         v-if="echo"
-        class="mb-2 rounded-md border border-qing/30 bg-qing/5 px-3 py-2 text-[11px] leading-relaxed text-qing"
+        class="mb-2 rounded-md border border-qing/30 bg-qing/5 px-3 py-2 text-body leading-relaxed text-qing"
       >
         {{ echo.line }}
       </p>
       <!-- 世界记忆:余波文本(曾经完成过的事件,再次遭遇时概率出现) -->
       <p
         v-else-if="aftermath"
-        class="mb-2 border-l-2 border-gold-ink/60 pl-2 text-[11px] text-gold-ink"
+        class="mb-2 border-l-2 border-gold-ink/60 pl-2 text-body text-gold-ink"
       >
         {{ aftermath }}
       </p>
-      <p class="text-[14px] leading-relaxed text-ink-soft">{{ def.text }}</p>
+      <p class="text-title leading-relaxed text-ink-soft">{{ def.text }}</p>
       <div class="mt-4 space-y-2">
         <button
           v-for="(choice, idx) in def.choices"
           :key="idx"
-          class="w-full rounded-sm border px-4 py-2.5 text-left font-kai text-[14px] tracking-widest transition-[transform,background-color]"
+          class="w-full rounded-sm border px-4 py-2.5 text-left font-kai text-title tracking-widest transition-[transform,background-color]"
           :class="
             choiceAvailable(choice, tier)
               ? 'border-ink/25 text-ink active:scale-98 active:bg-ink/5'
@@ -60,7 +60,7 @@
           -->
           <span
             v-if="choiceHintText(choice, tier) || stoneShortHint(choice, tier)"
-            class="ml-2 text-[11px] font-normal text-ink-faint"
+            class="ml-2 text-body font-normal text-ink-faint"
           >
             {{ choiceHintText(choice, tier)
             }}<template v-if="stoneShortHint(choice, tier)">
@@ -72,8 +72,8 @@
     </template>
     <!-- 结果阶段 -->
     <template v-else-if="result">
-      <p class="mb-1.5 text-[10px] text-ink-faint">{{ tierDef.name }} · {{ tierDef.brief }}</p>
-      <p class="text-[14px] leading-relaxed text-ink-soft animate-ink-pop">
+      <p class="mb-1.5 text-note text-ink-faint">{{ tierDef.name }} · {{ tierDef.brief }}</p>
+      <p class="text-title leading-relaxed text-ink-soft animate-ink-pop">
         {{ result.outcomeText }}
       </p>
       <!-- 收益清点逐行晕开(与离线归来卷轴同款 stagger-in);结果句已 animate-ink-pop,列表不让它单着 -->
@@ -81,7 +81,7 @@
         <li
           v-for="(line, i) in result.lines"
           :key="i"
-          class="rounded bg-paper-deep/70 px-3 py-1.5 text-[11px] text-ink tabular"
+          class="rounded bg-paper-deep/70 px-3 py-1.5 text-body text-ink tabular"
         >
           {{ line }}
         </li>

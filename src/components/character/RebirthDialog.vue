@@ -11,30 +11,30 @@
     -->
     <div class="rounded-md bg-violet-ink/[0.05] px-3 py-2.5">
       <div class="flex items-baseline justify-between gap-2">
-        <span class="text-[11px] text-ink-soft">
+        <span class="text-body text-ink-soft">
           道果
-          <span class="ml-1 text-[10px] text-violet-ink">【永久积累】</span>
+          <span class="ml-1 text-note text-violet-ink">【永久积累】</span>
         </span>
         <span class="flex items-baseline gap-2">
-          <span class="tabular font-kai text-[18px] leading-none text-cinnabar">{{
+          <span class="tabular font-kai text-heading leading-none text-cinnabar">{{
             formatNum(player.reincarnation.daoFruit)
           }}</span>
-          <span class="text-[10px] text-ink-faint">枚</span>
+          <span class="text-note text-ink-faint">枚</span>
         </span>
       </div>
       <!-- S3 道果收益:有效值(边际渐减后的真值)紧跟实数,两个数一起读 -->
-      <p class="mt-1 flex items-baseline justify-between text-[11px] tabular">
+      <p class="mt-1 flex items-baseline justify-between text-body tabular">
         <span class="text-ink-faint">有效收益</span>
         <span>
           <span class="text-gold-ink">{{ fruitInfo.effectiveText }} 枚</span>
-          <span class="ml-1 text-[10px] text-ink-faint"
+          <span class="ml-1 text-note text-ink-faint"
             >(边际渐减){{
               fruitInfo.total > 0 ? ` · 当前修行 ${fruitInfo.cultBonusText}` : ""
             }}</span
           >
         </span>
       </p>
-      <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+      <p class="mt-1 text-note leading-relaxed text-ink-faint">
         每枚名义:修行 +{{ formatPercent(DAO_FRUIT_CULT_BONUS, 0) }},道躯 +{{
           formatPercent(DAO_FRUIT_COMBAT_BONUS, 0)
         }};合计受软上限,转世保留
@@ -43,7 +43,7 @@
         软上限到底怎么递减、从多少开始 —— 上一句只说了"受软上限",玩家读完仍不知道
         二十枚是个坎。白话出在 core/resourceGuidance 一处(与有效收益同模块),不在这里另写。
       -->
-      <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+      <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
         {{ softCapText }}
       </p>
     </div>
@@ -51,10 +51,10 @@
     <div
       class="mt-2 flex items-center justify-between gap-2 rounded-md border border-ink/15 px-3 py-2"
     >
-      <span class="min-w-0 text-[11px] text-ink-soft">
+      <span class="min-w-0 text-body text-ink-soft">
         逆旅契
-        <span class="ml-1 text-[10px] text-violet-ink">【本世 · 消耗道果】</span>
-        <span class="block text-[10px] text-ink-faint">
+        <span class="ml-1 text-note text-violet-ink">【本世 · 消耗道果】</span>
+        <span class="block text-note text-ink-faint">
           {{
             signedTrial
               ? `此生已立「${signedTrial.name}」·${signedTrial.ruleText}`
@@ -65,12 +65,14 @@
       <!-- 拇指够得着:纯文字按钮只有 18px 高,补成 30px(弹窗里的可点元素同样受 28px 那条约束) -->
       <button
         v-if="!signedTrial"
-        class="shrink-0 px-2 py-1.5 text-[11px] text-gold-ink underline underline-offset-2 active:text-cinnabar"
+        class="shrink-0 px-2 py-1.5 text-body text-gold-ink underline underline-offset-2 active:text-cinnabar"
         @click="trialOpen = true"
       >
         立契
       </button>
-      <span v-else class="shrink-0 font-kai text-[15px] text-cinnabar">{{ signedTrial.seal }}</span>
+      <span v-else class="shrink-0 font-kai text-section text-cinnabar">{{
+        signedTrial.seal
+      }}</span>
     </div>
 
     <!--
@@ -83,8 +85,8 @@
       「{n} 项」跟在标题后面:数目本身就是玩家想知道的一半。
     -->
     <div class="mt-3 flex items-baseline justify-between">
-      <span class="font-kai text-[14px] tracking-[0.25em] text-ink">先天之姿</span>
-      <span v-if="ownedTalents.length" class="text-[10px] text-ink-faint tabular"
+      <span class="font-kai text-title tracking-[0.25em] text-ink">先天之姿</span>
+      <span v-if="ownedTalents.length" class="text-note text-ink-faint tabular"
         >{{ ownedTalents.length }} 项</span
       >
     </div>
@@ -102,11 +104,11 @@
         >
           {{ t!.name }}
         </button>
-        <span v-if="!ownedTalents.length" class="text-[11px] text-ink-faint"
+        <span v-if="!ownedTalents.length" class="text-body text-ink-faint"
           >转世后可觉醒先天之姿</span
         >
       </div>
-      <p v-if="talentTap && tappedTalent" class="mt-1.5 text-[10px] leading-relaxed text-ink-faint">
+      <p v-if="talentTap && tappedTalent" class="mt-1.5 text-note leading-relaxed text-ink-faint">
         <span :style="{ color: TALENT_GRADE_COLORS[tappedTalent.grade] }">{{
           tappedTalent.name
         }}</span>
@@ -124,12 +126,12 @@
       默认收起:不压弹窗高度,按下前点开即可核对。
     -->
     <button
-      class="mt-2 flex w-full items-center justify-between px-2 py-2 text-left text-[11px] text-ink-soft active:opacity-60"
+      class="mt-2 flex w-full items-center justify-between px-2 py-2 text-left text-body text-ink-soft active:opacity-60"
       :aria-expanded="heritageOpen"
       @click="heritageOpen = !heritageOpen"
     >
       <span>转世去留一览({{ keepCount }} 留 · {{ resetCount }} 去)</span>
-      <span class="text-[10px] text-qing">{{ heritageOpen ? "▾ 收 起" : "▸ 展 开" }}</span>
+      <span class="text-note text-qing">{{ heritageOpen ? "▾ 收 起" : "▸ 展 开" }}</span>
     </button>
     <!--
       折叠态也要报出「打折的那几条」:光看「16 留 · 20 去」,玩家不知道留下的
@@ -137,7 +139,7 @@
     -->
     <p
       v-if="!heritageOpen && partialKeepRows.length"
-      class="mt-1 px-2 text-[10px] leading-relaxed text-ink-faint"
+      class="mt-1 px-2 text-note leading-relaxed text-ink-faint"
     >
       其中 {{ partialKeepRows.length }} 条折半或部分保留:{{
         partialKeepRows.map((r) => r.name).join(" · ")
@@ -154,7 +156,7 @@
           两组各带一枚色点与自己的小标:一条细线分不开「留下」与「归尘」这两件相反的事。
           上组(随魂)走玉色、下组(归尘)走淡墨 —— 颜色在这一屏就是结论。
         -->
-        <p class="flex items-center gap-1.5 text-[10px] text-jade">
+        <p class="flex items-center gap-1.5 text-note text-jade">
           <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-jade" aria-hidden="true" />
           随魂留存
         </p>
@@ -162,7 +164,7 @@
           <p
             v-for="row in heritageKeepRows"
             :key="row.id"
-            class="flex items-baseline justify-between gap-2 text-[10px]"
+            class="flex items-baseline justify-between gap-2 text-note"
           >
             <span class="text-ink-soft">{{ row.name }}</span>
             <!--
@@ -176,7 +178,7 @@
             }}</span>
           </p>
         </div>
-        <p class="mt-2.5 flex items-center gap-1.5 text-[10px] text-ink-faint">
+        <p class="mt-2.5 flex items-center gap-1.5 text-note text-ink-faint">
           <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-ink/20" aria-hidden="true" />
           归尘散去
         </p>
@@ -184,7 +186,7 @@
           <p
             v-for="row in heritageResetRows"
             :key="row.id"
-            class="flex items-baseline justify-between gap-2 text-[10px]"
+            class="flex items-baseline justify-between gap-2 text-note"
           >
             <span class="text-ink-faint">{{ row.name }}</span>
             <span class="shrink-0" :class="row.cls">{{ row.modeLabel }}</span>
@@ -193,7 +195,7 @@
       </div>
     </div>
     <template #footer>
-      <button class="btn-ghost w-full !text-[11px]" :disabled="!canRebirth" @click="rebirth">
+      <button class="btn-ghost w-full !text-body" :disabled="!canRebirth" @click="rebirth">
         {{
           canRebirth ? "兵解转世" : `${REALMS[MANUAL_REBIRTH_MIN_MAJOR]?.name ?? ""}境方可自行兵解`
         }}
@@ -217,16 +219,14 @@
         @click="signTrial(t.id)"
       >
         <span class="flex items-baseline justify-between">
-          <span class="font-kai text-[14px] text-ink">{{ t.seal }} · {{ t.name }}</span>
+          <span class="font-kai text-title text-ink">{{ t.seal }} · {{ t.name }}</span>
           <!--
             哑巴灰的补齐:契签不下只有两个理由 —— 本世已签过 / 道果不足。
             已签过整组都灰,报「此生已签」(此时再报尚差会指错方向);
             道果不足照「尚差 N」报差数(与聚气丹/建筑同款纪律),不稳灰到底。
           -->
-          <span v-if="signedTrial" class="shrink-0 tabular text-[11px] text-ink-faint"
-            >此生已签</span
-          >
-          <span v-else class="shrink-0 tabular text-[11px] text-cinnabar">
+          <span v-if="signedTrial" class="shrink-0 tabular text-body text-ink-faint">此生已签</span>
+          <span v-else class="shrink-0 tabular text-body text-cinnabar">
             {{
               player.reincarnation.daoFruit >= t.cost
                 ? `${t.cost} 道果`
@@ -235,7 +235,7 @@
           </span>
         </span>
         <span class="mt-0.5 block t-body text-ink-soft">{{ t.desc }}</span>
-        <span class="mt-0.5 block text-[10px] text-ink-faint">{{ t.ruleText }}</span>
+        <span class="mt-0.5 block text-note text-ink-faint">{{ t.ruleText }}</span>
       </button>
     </div>
     <p class="mt-3 t-body text-ink-faint">

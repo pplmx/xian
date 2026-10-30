@@ -16,7 +16,7 @@
         大行囊按部位摊开后,同一槽仍可能几十件。先铺一批,余件显式续开;
         窗口最多留两批,回翻保证前面几批也仍可达。
       -->
-      <p class="pb-1 text-center text-[10px] text-ink-faint tabular">
+      <p class="pb-1 text-center text-note text-ink-faint tabular">
         共 {{ pickerRows.length }} 件 · 现看 {{ candidatePage.start + 1 }}–{{ candidatePage.shown }}
         · 佩戴中置顶
       </p>
@@ -43,14 +43,14 @@
               class="shrink-0"
             />
             <span
-              class="min-w-0 truncate font-kai text-[14px]"
+              class="min-w-0 truncate font-kai text-title"
               :style="{ color: qualityDef(row.item.quality).color }"
             >
               {{ row.template.name }}
               <template v-if="row.item.level > 0">+{{ row.item.level }}</template>
             </span>
           </span>
-          <span class="block text-[10px] text-ink-faint">
+          <span class="block text-note text-ink-faint">
             <!-- 条数带分母:这一件还剩多少条可涨,一眼看得出(上限来自品质表) -->
             {{ qualityDef(row.item.quality).name }} · {{ row.item.tier }} 阶 · 词条
             {{ row.item.affixes.length }}/{{ qualityDef(row.item.quality).affixes[1] }}
@@ -62,21 +62,21 @@
         -->
         <span
           v-if="row.delta !== null"
-          class="shrink-0 text-[10px] tabular"
+          class="shrink-0 text-note tabular"
           :class="row.deltaCls"
           :title="`vs 当前佩戴:${row.deltaText}`"
           >{{ row.deltaText }}</span
         >
         <button
           v-if="row.equipped"
-          class="btn-ghost shrink-0 !px-2.5 !py-1 !text-[11px]"
+          class="btn-ghost shrink-0 !px-2.5 !py-1 !text-body"
           @click="unequipSlot()"
         >
           卸下
         </button>
         <button
           v-else
-          class="btn-seal shrink-0 !px-2.5 !py-1 !text-[11px]"
+          class="btn-seal shrink-0 !px-2.5 !py-1 !text-body"
           @click="equipItem(row.item.uid)"
         >
           换上
@@ -91,7 +91,7 @@
           v-if="candidatePage.start > 0"
           type="button"
           data-slot-candidate-prev
-          class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+          class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
           :aria-label="previousCandidateText"
           @click="showPreviousCandidates"
         >
@@ -101,7 +101,7 @@
           v-if="candidatePage.hidden > 0"
           type="button"
           data-slot-candidate-more
-          class="chip-ink !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+          class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
           :aria-label="moreCandidateText"
           :data-promised="Math.min(SLOT_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
           @click="showMoreCandidates"
@@ -110,10 +110,10 @@
         </button>
       </div>
     </div>
-    <p v-else class="py-8 text-center text-[11px] text-ink-faint">
+    <p v-else class="py-8 text-center text-body text-ink-faint">
       此部位尚无藏品,去历练中寻些机缘吧
     </p>
-    <p class="mt-2 text-center text-[10px] text-ink-faint">点名称可查看详情与对比</p>
+    <p class="mt-2 text-center text-note text-ink-faint">点名称可查看详情与对比</p>
   </BaseModal>
 </template>
 

@@ -6,8 +6,8 @@
           v-if="unlocked"
           class="flex items-baseline justify-end gap-2 tinylens:w-full tinylens:justify-between"
         >
-          <span class="text-[10px] text-ink-faint">道源</span>
-          <span class="tabular font-kai text-[15px] leading-tight text-cinnabar">{{
+          <span class="text-note text-ink-faint">道源</span>
+          <span class="tabular font-kai text-section leading-tight text-cinnabar">{{
             formatNum(endgame.daoSource)
           }}</span>
         </div>
@@ -20,26 +20,26 @@
         data-soul-pulse
       >
         <p>
-          <span class="block text-[10px] text-ink-faint">装配</span>
-          <span class="block text-[11px] tabular text-ink-soft" data-soul-pulse-active
+          <span class="block text-note text-ink-faint">装配</span>
+          <span class="block text-body tabular text-ink-soft" data-soul-pulse-active
             >{{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}</span
           >
         </p>
         <p>
-          <span class="block text-[10px] text-ink-faint">闲置</span>
-          <span class="block text-[11px] tabular text-ink-soft" data-soul-pulse-idle
+          <span class="block text-note text-ink-faint">闲置</span>
+          <span class="block text-body tabular text-ink-soft" data-soul-pulse-idle
             >{{ soulPulse.idleSouls.length }} 缕</span
           >
         </p>
         <p>
-          <span class="block text-[10px] text-ink-faint">可凝</span>
-          <span class="block text-[11px] tabular text-ink-soft" data-soul-pulse-refine
+          <span class="block text-note text-ink-faint">可凝</span>
+          <span class="block text-body tabular text-ink-soft" data-soul-pulse-refine
             >{{ soulPulse.affordableRefines }}/{{ soulPulse.refinableCount }} 件</span
           >
         </p>
         <p
           v-if="soulPulse.refinableCount > 0 && soulPulse.shortfall > 0"
-          class="col-span-3 border-t border-ink/10 px-2 pt-1.5 text-[10px] text-cinnabar"
+          class="col-span-3 border-t border-ink/10 px-2 pt-1.5 text-note text-cinnabar"
         >
           道源不足:{{ soulPulse.refinableCount }} 件待凝,尚差
           {{ formatGN(soulPulse.shortfall) }} 道源可开一炉
@@ -76,7 +76,7 @@
             攻防血照常作数,它是在其上多给一条路数。
           </p>
           <button
-            class="tap-row mt-1.5 -mx-1.5 -my-1 inline-flex min-h-[28px] min-w-[28px] items-center justify-center px-1.5 text-[10px] text-ink-faint active:opacity-60"
+            class="tap-row mt-1.5 -mx-1.5 -my-1 inline-flex min-h-[28px] min-w-[28px] items-center justify-center px-1.5 text-note text-ink-faint active:opacity-60"
             :aria-expanded="soulIntroOpen"
             @click="soulIntroOpen = !soulIntroOpen"
           >
@@ -141,20 +141,20 @@
                 >
                   {{ soulSeal(soulAt(i)!) }}
                 </span>
-                <span class="mt-1 text-[10px] leading-tight text-ink-soft">{{
+                <span class="mt-1 text-note leading-tight text-ink-soft">{{
                   soulLabel(soulAt(i)!)
                 }}</span>
                 <!--
                   装配了就看不见"给什么" —— 就地摊一行词条短字(全量读数在详情弹窗,
                   同闲置行的 soulModText,不另造第二份文案)。
                 -->
-                <span class="mt-0.5 w-full truncate text-[10px] leading-tight text-ink-faint">{{
+                <span class="mt-0.5 w-full truncate text-note leading-tight text-ink-faint">{{
                   soulModText(soulAt(i)!)
                 }}</span>
               </button>
               <!-- 纯文字按钮只有字体那 15px 高;补成内联块给拇指一个 32px 的靶面 -->
               <button
-                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
+                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-note text-ink-faint underline active:opacity-60"
                 :aria-label="`卸下 ${soulLabel(soulAt(i)!)}`"
                 @click="removeSoul(soulAt(i)!.uid)"
               >
@@ -162,7 +162,7 @@
               </button>
             </template>
             <template v-else>
-              <span class="text-[10px] text-ink-faint">空</span>
+              <span class="text-note text-ink-faint">空</span>
               <!--
                 手上有闲置形意时,这一格就是玩家下一步该按的地方 —— 从前只写一个「空」,
                 装配的入口在页面下方的「散置形意」里,人得自己想起来去那儿找。
@@ -171,7 +171,7 @@
               -->
               <button
                 v-if="soulPulse.idleSouls.length > 0"
-                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-[10px] text-ink-faint underline active:opacity-60"
+                class="tap-row mt-1 min-w-[28px] px-2 py-2 text-note text-ink-faint underline active:opacity-60"
                 aria-label="空槽 · 挑一缕装配"
                 @click="idleOpen = true"
               >
@@ -180,7 +180,7 @@
             </template>
           </div>
         </div>
-        <p v-if="activeModText" class="mt-2 px-1 text-[10px] leading-relaxed text-gold-ink">
+        <p v-if="activeModText" class="mt-2 px-1 text-note leading-relaxed text-gold-ink">
           合计:{{ activeModText }}
         </p>
       </section>
@@ -197,7 +197,7 @@
           >
           <span class="min-w-0 flex-1">
             <span class="block t-card">散置形意</span>
-            <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
+            <span class="block truncate text-note leading-relaxed text-ink-faint">
               {{
                 soulPulse.idleSouls.length > 0
                   ? soulPulse.slotsFull
@@ -207,7 +207,7 @@
               }}
             </span>
           </span>
-          <span class="shrink-0 text-[11px] text-ink-faint">›</span>
+          <span class="shrink-0 text-body text-ink-faint">›</span>
         </button>
 
         <button
@@ -220,7 +220,7 @@
           >
           <span class="min-w-0 flex-1">
             <span class="block t-card">凝炼台</span>
-            <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
+            <span class="block truncate text-note leading-relaxed text-ink-faint">
               {{
                 soulPulse.refinableCount > 0
                   ? soulPulse.affordableRefines > 0
@@ -230,7 +230,7 @@
               }}
             </span>
           </span>
-          <span class="shrink-0 text-[11px] text-ink-faint">›</span>
+          <span class="shrink-0 text-body text-ink-faint">›</span>
         </button>
       </section>
     </template>
@@ -250,12 +250,12 @@
             {{ soulSeal(soulDetail) }}
           </span>
           <div class="min-w-0">
-            <p class="text-[11px]" :style="{ color: soulColor(soulDetail) }">
+            <p class="text-body" :style="{ color: soulColor(soulDetail) }">
               {{ soulGradeDef(soulDetail.grade).name }}·{{
                 soulTypeDef(soulDetail.type)?.name ?? "器魂"
               }}
             </p>
-            <p class="text-[10px] text-ink-faint">凝自「{{ soulDetail.fromName }}」</p>
+            <p class="text-note text-ink-faint">凝自「{{ soulDetail.fromName }}」</p>
           </div>
         </div>
         <p class="mt-3 t-body text-ink-soft">{{ soulModText(soulDetail) }}</p>
@@ -284,7 +284,7 @@
         :data-soul-idle-shown="idleSoulPage.shown"
         :data-soul-idle-start="idleSoulPage.start"
       >
-        <p class="mb-1 flex flex-wrap items-baseline justify-between gap-1 text-[10px]">
+        <p class="mb-1 flex flex-wrap items-baseline justify-between gap-1 text-note">
           <span class="text-ink-faint">品阶高者在前</span>
           <span class="tabular text-ink-faint">共 {{ idleSoulRows.length }} 缕</span>
         </p>
@@ -297,16 +297,16 @@
             class="flex items-center justify-between gap-2 py-2.5 tinylens:flex-col tinylens:items-stretch"
           >
             <div class="min-w-0">
-              <p class="truncate text-[11px]" :style="{ color: soulColor(soul) }">
+              <p class="truncate text-body" :style="{ color: soulColor(soul) }">
                 {{ soulLabel(soul) }}
               </p>
-              <p class="text-[10px] leading-relaxed text-ink-faint">
+              <p class="text-note leading-relaxed text-ink-faint">
                 凝自「{{ soul.fromName }}」 · {{ soulModText(soul) }}
               </p>
             </div>
             <div class="flex shrink-0 flex-wrap gap-1 tinylens:justify-end">
               <button
-                class="btn-ghost !px-2.5 !py-1 !text-[11px]"
+                class="btn-ghost !px-2.5 !py-1 !text-body"
                 :disabled="soulPulse.slotsFull"
                 @click="wearSoul(soul.uid)"
               >
@@ -314,20 +314,17 @@
               </button>
               <template v-if="pendingDissolveUid !== soul.uid">
                 <button
-                  class="btn-ghost !px-2 !py-1 !text-[11px] !text-ink-faint"
+                  class="btn-ghost !px-2 !py-1 !text-body !text-ink-faint"
                   @click="pendingDissolveUid = soul.uid"
                 >
                   散去
                 </button>
               </template>
               <template v-else>
-                <button class="btn-seal !px-2 !py-1 !text-[11px]" @click="doDissolve(soul.uid)">
+                <button class="btn-seal !px-2 !py-1 !text-body" @click="doDissolve(soul.uid)">
                   确认散去
                 </button>
-                <button
-                  class="btn-ghost !px-2 !py-1 !text-[11px]"
-                  @click="pendingDissolveUid = null"
-                >
+                <button class="btn-ghost !px-2 !py-1 !text-body" @click="pendingDissolveUid = null">
                   再想想
                 </button>
               </template>
@@ -342,7 +339,7 @@
             v-if="idleSoulPage.start > 0"
             type="button"
             data-soul-idle-prev
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
             :aria-label="previousListText(idleSoulPage.shown, idleSoulRows.length, '缕')"
             @click="showPreviousIdleSouls"
           >
@@ -352,7 +349,7 @@
             v-if="idleSoulPage.hidden > 0"
             type="button"
             data-soul-idle-more
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
             :aria-label="moreListText(idleSoulPage.hidden, '缕')"
             @click="showMoreIdleSouls"
           >
@@ -363,7 +360,7 @@
       <p v-else class="px-4 py-6 text-center t-body text-ink-faint">
         并无闲置形意。
         <br />
-        <span class="text-[10px]">凝出的器魂若已尽数装配,此处便空着</span>
+        <span class="text-note">凝出的器魂若已尽数装配,此处便空着</span>
       </p>
       <template #footer>
         <button class="btn-seal w-full" @click="idleOpen = false">收 起</button>
@@ -388,7 +385,7 @@
         :data-soul-forge-shown="refinablePage.shown"
         :data-soul-forge-start="refinablePage.start"
       >
-        <p class="mb-1 flex flex-wrap items-baseline justify-between gap-1 text-[10px]">
+        <p class="mb-1 flex flex-wrap items-baseline justify-between gap-1 text-note">
           <span class="text-ink-faint">品质高者在前</span>
           <span class="tabular text-ink-faint">共 {{ refinableRows.length }} 件</span>
         </p>
@@ -401,15 +398,15 @@
             class="flex items-center justify-between gap-2 py-2.5 tinylens:flex-col tinylens:items-stretch"
           >
             <div class="min-w-0">
-              <p class="truncate text-[11px] text-ink-soft">{{ row.name }}</p>
-              <p class="truncate text-[10px] text-ink-faint">
+              <p class="truncate text-body text-ink-soft">{{ row.name }}</p>
+              <p class="truncate text-note text-ink-faint">
                 将凝出
                 <span :style="{ color: soulGradeDef(row.gradeRank).color }"
                   >{{ soulGradeDef(row.gradeRank).name }}·{{ row.typeName }}</span
                 >
               </p>
               <!-- 给什么要有数:魂效果是确定的,就在入炉前说出来(与闲置形意的读数同款) -->
-              <p v-if="modsText(row.mods)" class="truncate text-[10px] text-ink-soft">
+              <p v-if="modsText(row.mods)" class="truncate text-note text-ink-soft">
                 {{ modsText(row.mods) }}
               </p>
               <!--
@@ -419,7 +416,7 @@
               -->
               <p
                 v-if="row.invested && row.investedCost"
-                class="text-[10px] leading-relaxed text-cinnabar"
+                class="text-note leading-relaxed text-cinnabar"
               >
                 此器已淬养,入炉将连同强化投入一并失去(器灵尘×{{ row.investedCost.dust }} · 灵石
                 {{ formatGN(row.investedCost.stone) }})
@@ -428,17 +425,17 @@
             <!-- 入炉二步确认:毁的是原器,不按一个「入 炉」就直接交代了 -->
             <button
               v-if="pendingRefineUid !== row.inst.uid"
-              class="btn-ghost !px-3 !py-1 !text-[11px] tinylens:self-end"
+              class="btn-ghost !px-3 !py-1 !text-body tinylens:self-end"
               :disabled="!canAffordRefine"
               @click="pendingRefineUid = row.inst.uid"
             >
               入 炉
             </button>
             <div v-else class="flex shrink-0 items-center gap-1.5 tinylens:self-end">
-              <button class="btn-seal !px-2.5 !py-1 !text-[11px]" @click="doRefine(row.inst.uid)">
+              <button class="btn-seal !px-2.5 !py-1 !text-body" @click="doRefine(row.inst.uid)">
                 确认凝炼
               </button>
-              <button class="btn-ghost !px-2.5 !py-1 !text-[11px]" @click="pendingRefineUid = null">
+              <button class="btn-ghost !px-2.5 !py-1 !text-body" @click="pendingRefineUid = null">
                 再想想
               </button>
             </div>
@@ -452,7 +449,7 @@
             v-if="refinablePage.start > 0"
             type="button"
             data-soul-forge-prev
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
             :aria-label="previousListText(refinablePage.shown, refinableRows.length, '件')"
             @click="showPreviousRefinable"
           >
@@ -462,7 +459,7 @@
             v-if="refinablePage.hidden > 0"
             type="button"
             data-soul-forge-more
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-[10px] leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
             :aria-label="moreListText(refinablePage.hidden, '件')"
             @click="showMoreRefinable"
           >
@@ -473,7 +470,7 @@
       <p v-else class="px-4 py-6 text-center t-body text-ink-faint">
         行囊中无可凝之器。
         <br />
-        <span class="text-[10px]">已穿戴、已上锁、或无任何词条的法器都入不得炉</span>
+        <span class="text-note">已穿戴、已上锁、或无任何词条的法器都入不得炉</span>
       </p>
       <template #footer>
         <button class="btn-seal w-full" @click="forgeOpen = false">收 炉</button>

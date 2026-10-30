@@ -19,7 +19,7 @@
     </p>
     <button
       v-if="!permanent"
-      class="mt-2 text-[11px] text-ink-faint underline active:opacity-60"
+      class="mt-2 text-body text-ink-faint underline active:opacity-60"
       @click="dismiss"
     >
       知道了

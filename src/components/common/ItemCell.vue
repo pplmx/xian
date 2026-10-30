@@ -25,7 +25,7 @@
         :style="plain ? undefined : { color: tone }"
       />
       <span
-        class="w-full truncate text-center text-[10px] leading-tight"
+        class="w-full truncate text-center text-note leading-tight"
         :class="plain ? 'text-ink-soft' : undefined"
         :style="plain ? undefined : { color: tone }"
       >
@@ -41,7 +41,7 @@
     <!-- 右下:数量/等级这类读数,统一贴这条基线(plain 与否同色 —— 色调只染图标与名字) -->
     <span
       v-if="foot"
-      class="absolute bottom-0.5 right-1 text-[10px] leading-none tabular text-ink-soft"
+      class="absolute bottom-0.5 right-1 text-note leading-none tabular text-ink-soft"
     >
       {{ foot }}
     </span>

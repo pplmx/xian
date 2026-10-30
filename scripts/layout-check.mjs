@@ -1999,6 +1999,55 @@ async function taskPageTour(vp) {
   await page.goto(INDEX, { waitUntil: "load" });
   await page.waitForTimeout(700);
   {
+    /*
+     * 阅读字阶不是「源码里写了变量」就算数:Tailwind 不生成类、变量只定义在错误的
+     * 作用域、或桌面断点没命中,计算字号都会静默退回浏览器默认值。这里在真页面上
+     * 读四枚代表元素 —— 位置签(note)、说明(body)、章节题(section)、卷首题(display),
+     * 手机与桌面各核一遍。
+     */
+    const type = await page.evaluate(() => {
+      const px = (selector) => {
+        const el = document.querySelector(selector);
+        return el ? Number.parseFloat(getComputedStyle(el).fontSize) : null;
+      };
+      const shell = document.querySelector(".app-shell");
+      const style = shell ? getComputedStyle(shell) : getComputedStyle(document.documentElement);
+      const vars = Object.fromEntries(
+        ["note", "body", "title", "section", "heading", "display"].map((tier) => [
+          tier,
+          Number.parseFloat(style.getPropertyValue(`--type-${tier}`)),
+        ]),
+      );
+      return {
+        vars,
+        note: px("[data-folio-position]"),
+        body: px(".t-body"),
+        section: px(".section-title h2"),
+        display: px(".folio-masthead h1"),
+      };
+    });
+    checked += 1;
+    const desktop = vp.width >= 960;
+    const expected = desktop
+      ? { note: 11, body: 12, title: 15, section: 16, heading: 20, display: 28 }
+      : { note: 10, body: 11, title: 14, section: 15, heading: 18, display: 24 };
+    for (const [tier, want] of Object.entries(expected)) {
+      if (type.vars[tier] !== want) {
+        failures.push(`[${vp.tag}] 阅读字阶 --type-${tier} 是 ${type.vars[tier]},应为 ${want}px`);
+      }
+    }
+    for (const [name, got, want] of [
+      ["位置签", type.note, expected.note],
+      ["正文说明", type.body, expected.body],
+      ["章节题", type.section, expected.section],
+      ["卷首题", type.display, expected.display],
+    ]) {
+      if (got !== want) {
+        failures.push(`[${vp.tag}] ${name}计算字号是 ${got},应为 ${want}px`);
+      }
+    }
+  }
+  {
     const step = await page.evaluate(() => {
       const a = [...document.querySelectorAll("a")].find((el) =>
         (el.textContent || "").includes("第一步"),

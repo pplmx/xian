@@ -56,6 +56,27 @@ const FILES = walk(SRC)
       .replace(/^\s*\/\/.*$/gm, ""),
   }));
 
+/**
+ * 阅读字阶的语义 token → 手机基准像素。
+ *
+ * 模板已不再写 text-[10px] 这类裸值；判据若只认像素，会在重构后「零命中全绿」。
+ * 这里把 token 还原成手机基准档，既保留原有的私档检查，也防止把 text-title 写成
+ * 别的字号再靠改名绕过。
+ */
+const TYPE_TOKEN_PX: Record<string, number> = {
+  note: 10,
+  body: 11,
+  title: 14,
+  section: 15,
+  heading: 18,
+};
+const usedTypeSizes = (src: string): number[] => [
+  ...[...src.matchAll(/text-\[(\d+)px\]/g)].map((m) => Number(m[1] ?? 0)),
+  ...[...src.matchAll(/\btext-(note|body|title|section|heading)\b/g)].map(
+    (m) => TYPE_TOKEN_PX[m[1] ?? ""] ?? 0,
+  ),
+];
+
 /*
  * 「按钮套按钮」扫描器 —— 带名字的标签栈,认两种按钮语义写法。
  *
@@ -1200,7 +1221,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 寿元告急那一路仍走朱砂;退回 faint 或拆掉 kai,下面红。
     const home = FILES.find((f) => f.path === "views/HomeView.vue");
     expect(home?.src, "状态行要配楷体与对位主角比肩").toMatch(
-      /class="[^"]*font-kai text-\[11px\][^"]*"/,
+      /class="[^"]*font-kai text-body[^"]*"/,
     );
     expect(home?.src, "非告急那一路不许退回最弱档(ink-faint)").toMatch(
       /text-cinnabar' : 'text-ink-soft'/,
@@ -1499,7 +1520,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 两条主值行都带 data-value-row,灵气那条是唯一要求极窄档上下两段的
     const qiRows = [...(cv?.src ?? "").matchAll(/data-value-row[\s\S]{0,240}?class="([^"]*)"/g)]
       .map((m) => m[1]!)
-      .filter((c) => c.includes("text-[11px]"));
+      .filter((c) => c.includes("text-body"));
     expect(qiRows.length, "两处主值行都要定位得到 —— 定位不到这条就是空转").toBe(2);
     expect(
       qiRows.filter((c) => c.includes("tinylens:flex-col")),
@@ -1594,8 +1615,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /rounded-md bg-ink shadow[\s\S]{0,120}text-paper/,
     );
     const cls = /class="([^"]*font-kai[^"]*)"/.exec(tabs?.src ?? "")?.[1];
-    expect(cls, "页签字号要落在页面字阶内").toContain("text-[14px]");
-    expect(cls, "极窄档用 11px 收口").toContain("tinylens:text-[11px]");
+    expect(cls, "页签字号要落在页面字阶内").toContain("text-title");
+    expect(cls, "极窄档用 body 档收口").toContain("tinylens:text-body");
   });
 
   it("极窄档的顶栏与行要放开 —— 三段横排塞不下时不许把标题压成一字一行", () => {
@@ -2767,7 +2788,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(row).toContain("flex flex-wrap");
     // 只钉「不折」这件事(whitespace-nowrap + shrink-0 + 楷体),字号不进判据 ——
     // 字阶归「主巡页 · 字阶同一套」管,一条判据只管一件事,改字号不该打红布局判据。
-    expect(row).toMatch(/shrink-0 whitespace-nowrap font-kai text-\[\d+px\] tracking-widest/);
+    expect(row).toMatch(
+      /shrink-0 whitespace-nowrap font-kai text-(?:note|body|title|section|heading) tracking-widest/,
+    );
     expect(row).toContain("countdown-slot");
   });
 
@@ -3737,9 +3760,7 @@ describe("修炼页 · 字号收六档", () => {
    * 相邻两档差 1px 时,读者分不出谁大谁小,层次就塌了。
    * 三弹窗(状态 / 顿悟 / 突破结果)同族:庆功题字 16,名字 14,正文 11,小签 10。
    */
-  const SIZES = /text-\[(\d+)px\]/g;
-  const usedSizes = (src: string): number[] =>
-    [...src.matchAll(SIZES)].map((m) => Number(m[1] ?? 0));
+  const usedSizes = usedTypeSizes;
 
   it("修炼域只用六档:30 / 16 / 15 / 14 / 11 / 10 —— 宿主与全域子面板一体", () => {
     // 拆分轮备案的盲区收口:这条判据此前只扫宿主 CultivationView,GongfaSection/
@@ -3825,7 +3846,7 @@ describe("修炼页 · 字号收六档", () => {
   });
 
   it("判据自证:认得出越档的坏样本", () => {
-    const bad = usedSizes('<p class="text-[13px]">x</p><p class="text-[9px]">y</p>');
+    const bad = usedTypeSizes('<p class="text-[13px]">x</p><p class="text-[9px]">y</p>');
     expect(bad.filter((n) => ![30, 16, 15, 14, 11, 10].includes(n))).toEqual([13, 9]);
   });
 });
@@ -3840,7 +3861,6 @@ describe("主巡页 · 字阶同一套", () => {
    * (修炼页另有 30 的匾额与 16 的庆功字,它是特例,单列在上面那条)。
    * 新页面进场时要么沿用这套,要么在这条判据里明写它为何是特例。
    */
-  const SIZES = /text-\[(\d+)px\]/g;
   const PAGE_TIERS = [18, 15, 14, 11, 10];
   const pages = [
     "views/CharacterView.vue",
@@ -3911,9 +3931,7 @@ describe("主巡页 · 字阶同一套", () => {
       const src = view?.src ?? "";
       const extra = NON_TEXT_ALLOW[path];
       const allow = extra ? [...PAGE_TIERS, ...extra.sizes] : PAGE_TIERS;
-      const off = [...new Set([...src.matchAll(SIZES)].map((m) => Number(m[1] ?? 0)))].filter(
-        (n) => !allow.includes(n),
-      );
+      const off = [...new Set(usedTypeSizes(src))].filter((n) => !allow.includes(n));
       expect(
         off,
         `${path} 冒出了页面字阶以外的字号:${off.join(", ")}${
@@ -3921,7 +3939,7 @@ describe("主巡页 · 字阶同一套", () => {
         }`,
       ).toEqual([]);
       // 防空转:这页真在写字号,不是被整页清空换了一张绿
-      expect([...src.matchAll(SIZES)].length).toBeGreaterThanOrEqual(5);
+      expect(usedTypeSizes(src).length).toBeGreaterThanOrEqual(5);
     });
   }
 
@@ -4110,7 +4128,23 @@ describe("语义色类 —— 指向不存在的 token 就是静默无色", () =
     "origin",
     "color",
   ]);
-  const TEXT_SIZES = new Set(["xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl"]);
+  const TEXT_SIZES = new Set([
+    "xs",
+    "sm",
+    "base",
+    "lg",
+    "xl",
+    "2xl",
+    "3xl",
+    "4xl",
+    "5xl",
+    "note",
+    "body",
+    "title",
+    "section",
+    "heading",
+    "display",
+  ]);
 
   /** 扫一段源码,回报「指向不存在的 token / 不在档位的透明度」的类名 */
   function deadColorClasses(src: string): string[] {
@@ -4411,7 +4445,7 @@ describe("排版角色 —— 有名字的才叫系统", () => {
     // 而正文有两档墨(faint / soft),由调用处按语境挑。
     const bodyBlock = /\.t-body \{([\s\S]*?)\}/.exec(STYLE)?.[1] ?? "";
     expect(bodyBlock, ".t-body 不该写死颜色").not.toMatch(/color:/);
-    expect(bodyBlock, ".t-body 该是 11px").toMatch(/font-size: 11px/);
+    expect(bodyBlock, ".t-body 要读语义变量").toMatch(/font-size: var\(--type-body\)/);
   });
 
   it("正文三连不许手写回来 —— 用 .t-body", () => {
@@ -4421,7 +4455,7 @@ describe("排版角色 —— 有名字的才叫系统", () => {
       for (const m of f.src.matchAll(/class="([^"]*)"/g)) {
         const toks = (m[1] ?? "").split(/\s+/);
         if (
-          toks.includes("text-[11px]") &&
+          toks.includes("text-body") &&
           toks.includes("leading-relaxed") &&
           (toks.includes("text-ink-faint") || toks.includes("text-ink-soft"))
         ) {
@@ -4496,8 +4530,8 @@ describe("入口卡 —— 一件,不是九件", () => {
     const nav = readFileSync(resolve(__dirname, "../components/common/NavCard.vue"), "utf-8");
     // 三件的字号必须落在页面字阶上,不许各写各的
     expect(nav, "题头图 16px").toContain(':size="16"');
-    expect(nav, "卡名 14px 楷体").toContain("text-[14px]");
-    expect(nav, "动作词 11px").toContain("text-[11px]");
+    expect(nav, "卡名走 title 档楷体").toContain("text-title");
+    expect(nav, "动作词走 body 档").toContain("text-body");
     expect(nav, "动作词要自动缀箭头").toContain("{{ action }} →");
     // 按压反馈:判据另一条要求卡状元素带 scale-99
     expect(nav, "入口卡要带按压反馈").toContain("active:scale-99");

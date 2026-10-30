@@ -44,7 +44,7 @@
       </template>
       <template #meta>
         <p
-          class="mt-1 font-kai text-[11px]"
+          class="mt-1 font-kai text-body"
           :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : 'text-ink-soft'"
         >
           {{ statusText }}
@@ -55,14 +55,14 @@
       <div class="border-t border-ink/10 pt-2.5">
         <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
           <GameIcon name="sparkles" :size="13" class="shrink-0 text-gold-ink" />
-          <span class="shrink-0 whitespace-nowrap font-kai text-[11px] tracking-widest text-ink">{{
+          <span class="shrink-0 whitespace-nowrap font-kai text-body tracking-widest text-ink">{{
             weather.name
           }}</span>
-          <span class="countdown-slot ml-1 shrink-0 text-[10px] text-ink-faint tabular">{{
+          <span class="countdown-slot ml-1 shrink-0 text-note text-ink-faint tabular">{{
             weatherLeft
           }}</span>
         </div>
-        <p class="mt-0.5 text-[10px] leading-relaxed text-ink-soft [word-break:keep-all]">
+        <p class="mt-0.5 text-note leading-relaxed text-ink-soft [word-break:keep-all]">
           {{ weather.desc }}<span v-if="tomorrowWeather">{{ tomorrowBrief }}</span>
         </p>
         <!--
@@ -70,7 +70,7 @@
           渡劫前一天该不该等天时,靠一句「皆有裨益」算不出来。
           效果行照 mods 真值摊开;渡劫倍率 >1 再挂一句险。
         -->
-        <p v-if="weatherModText" class="mt-0.5 text-[10px] text-ink-soft tabular">
+        <p v-if="weatherModText" class="mt-0.5 text-note text-ink-soft tabular">
           {{ weatherModText
           }}<span v-if="weatherTribulation"> · 今日渡劫 ×{{ weatherTribulation }}</span>
         </p>
@@ -88,12 +88,12 @@
     >
       <GameIcon name="footprints" :size="14" class="shrink-0 text-cinnabar" />
       <span class="min-w-0 flex-1">
-        <span class="block font-kai text-[14px] tracking-wider text-ink">{{ firstStep.text }}</span>
-        <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{
+        <span class="block font-kai text-title tracking-wider text-ink">{{ firstStep.text }}</span>
+        <span class="mt-0.5 block text-note leading-relaxed text-ink-faint">{{
           firstStep.hint
         }}</span>
       </span>
-      <span class="shrink-0 text-[11px] text-cinnabar">{{ firstStep.label }} →</span>
+      <span class="shrink-0 text-body text-cinnabar">{{ firstStep.label }} →</span>
     </RouterLink>
 
     <!-- Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页)。
@@ -113,15 +113,15 @@
       <GameIcon name="scroll" :size="14" class="shrink-0 text-jade" />
       <div class="min-w-0 flex-1">
         <p class="flex items-baseline justify-between gap-2">
-          <span class="font-kai text-[14px] tracking-wider text-ink">{{ currentGoal.text }}</span>
+          <span class="font-kai text-title tracking-wider text-ink">{{ currentGoal.text }}</span>
           <span
             v-if="currentGoal.progress !== undefined"
-            class="shrink-0 text-[10px] text-ink-faint tabular"
+            class="shrink-0 text-note text-ink-faint tabular"
           >
             {{ formatPercent(currentGoal.progress, 0) }}
           </span>
         </p>
-        <p v-if="currentGoal.hint" class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+        <p v-if="currentGoal.hint" class="mt-0.5 text-note leading-relaxed text-ink-faint">
           {{ currentGoal.hint }}
         </p>
       </div>
@@ -146,22 +146,22 @@
           见的一档本来一行放得下。题头「天界已开」四字留白足够,章跟在后头不挤谁。
         -->
         <span class="flex flex-wrap items-center gap-1.5">
-          <span class="font-kai whitespace-nowrap text-[14px] tracking-[0.25em] text-ink"
+          <span class="font-kai whitespace-nowrap text-title tracking-[0.25em] text-ink"
             >天界已开</span
           >
           <span
             v-if="dailyPending"
-            class="chip-ink shrink-0 border-cinnabar/50 text-[10px] text-cinnabar"
+            class="chip-ink shrink-0 border-cinnabar/50 text-note text-cinnabar"
             >今日天道未做</span
           >
         </span>
         <!-- word-break:keep-all:窄屏(320)这行放不下时,只在「 · 」的空白处断,
              默认的 CJK 折行会把「试炼」拦腰折成「试/炼」 -->
-        <span class="block text-[10px] text-ink-faint [word-break:keep-all]">
+        <span class="block text-note text-ink-faint [word-break:keep-all]">
           道途 · 特殊世界 · 天道熔炉 · 试炼 · 道痕
         </span>
       </span>
-      <span class="shrink-0 whitespace-nowrap text-[11px] text-cinnabar">踏天 →</span>
+      <span class="shrink-0 whitespace-nowrap text-body text-cinnabar">踏天 →</span>
     </RouterLink>
 
     <!-- 修行志(任务) -->
@@ -170,14 +170,14 @@
       <div class="card-ink mt-2 px-4 py-3">
         <template v-if="mainQuest">
           <p class="flex items-center justify-between">
-            <span class="font-kai text-[14px] tracking-wider text-ink">{{ mainQuest.name }}</span>
-            <span class="text-[10px] text-ink-faint"
+            <span class="font-kai text-title tracking-wider text-ink">{{ mainQuest.name }}</span>
+            <span class="text-note text-ink-faint"
               >主线 {{ quests.mainIdx + 1 }}/{{ MAIN_QUESTS.length }}</span
             >
           </p>
-          <p class="mt-0.5 text-[11px] text-ink-faint">{{ mainQuest.desc }}</p>
+          <p class="mt-0.5 text-body text-ink-faint">{{ mainQuest.desc }}</p>
           <!-- 主线赏哪一口缝和日课一样:光说"自动领赏"不报赏,路线图的终点价得看得见 -->
-          <p class="mt-0.5 text-[11px] text-ink-soft tabular">
+          <p class="mt-0.5 text-body text-ink-soft tabular">
             奖 {{ rewardText(mainQuest.reward)
             }}{{
               mainQuest.cond.type === "realm"
@@ -189,7 +189,7 @@
             主线只给"要做什么"不够 —— 新手第一天靠它当路线图,得知道自己走到哪了。
             进度文案与发赏判定同源(core/questProgress 读 progress.evalCond)。
           -->
-          <p v-if="mainProgress" class="mt-1 flex items-center justify-between tabular text-[11px]">
+          <p v-if="mainProgress" class="mt-1 flex items-center justify-between tabular text-body">
             <span :class="mainProgress.done ? 'text-jade' : 'text-ink-faint'">{{
               mainProgress.text
             }}</span>
@@ -203,25 +203,25 @@
             />
           </p>
         </template>
-        <p v-else class="text-[11px] text-ink-faint">主线已尽,前路由你自己书写。</p>
+        <p v-else class="text-body text-ink-faint">主线已尽,前路由你自己书写。</p>
         <div class="ink-divider-mark my-2.5" />
         <div class="space-y-1.5">
           <p
             v-for="t in dailyRows"
             :key="t.id"
-            class="flex items-center justify-between gap-2 text-[11px]"
+            class="flex items-center justify-between gap-2 text-body"
           >
             <span class="min-w-0">
               <span :class="t.done ? 'text-ink-faint line-through' : 'text-ink-soft'">{{
                 t.desc
               }}</span>
               <!-- 每条日课能换什么:奖励从没在界面上露过 —— 标的是实发额,记入账那套换算 -->
-              <span class="ml-1.5 text-[10px] text-ink-faint tabular"
+              <span class="ml-1.5 text-note text-ink-faint tabular"
                 >得 {{ rewardText(t.reward) }}</span
               >
             </span>
             <span
-              class="shrink-0 tabular text-[11px]"
+              class="shrink-0 tabular text-body"
               :class="t.done ? 'text-jade' : 'text-ink-faint'"
             >
               {{ t.done ? "已成" : `${t.progress}/${t.target}` }}
@@ -235,9 +235,9 @@
         -->
         <p
           v-if="dailyAllDone"
-          class="mt-2 flex items-center gap-1.5 border-t border-ink/10 pt-2 text-[11px] text-jade"
+          class="mt-2 flex items-center gap-1.5 border-t border-ink/10 pt-2 text-body text-jade"
         >
-          <span class="chip-ink border-jade/60 text-[10px] text-jade">今日已毕</span>
+          <span class="chip-ink border-jade/60 text-note text-jade">今日已毕</span>
           日课全做完了,该收的都收了 —— 可安心挂机
         </p>
       </div>
@@ -250,13 +250,13 @@
     >
       <span class="min-w-0 flex-1">
         <span class="block t-card">洞府营造</span>
-        <span class="block truncate text-[10px] leading-relaxed text-ink-faint"
+        <span class="block truncate text-note leading-relaxed text-ink-faint"
           >经营家业,道途更稳</span
         >
       </span>
       <!-- 右侧实况:离线可攒小时 + 已营座数 + 灵脉点数,与洞府页纪要同一口径现算;
            灵脉投资已归位洞府页(经营动线归一),主页留一行点数保持可见性 -->
-      <span class="flex shrink-0 flex-col items-end gap-0.5 text-[10px]">
+      <span class="flex shrink-0 flex-col items-end gap-0.5 text-note">
         <span class="tabular text-gold-ink">离线 {{ offlineHrs }} 时</span>
         <span class="tabular text-ink-faint"
           >已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }}</span
@@ -265,7 +265,7 @@
           >灵脉 {{ dongfu.veinTotal }} 点</span
         >
       </span>
-      <span class="shrink-0 text-[11px] text-ink-faint">›</span>
+      <span class="shrink-0 text-body text-ink-faint">›</span>
     </RouterLink>
   </div>
 </template>

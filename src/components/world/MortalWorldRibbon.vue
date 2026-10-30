@@ -10,16 +10,16 @@
         <GameIcon name="cloud" :size="15" />
       </span>
       <span class="min-w-0 grow">
-        <span class="block font-kai text-[14px] tracking-[0.2em] text-ink">本世之界</span>
-        <span class="block truncate text-[10px] leading-relaxed text-ink-faint">
+        <span class="block font-kai text-title tracking-[0.2em] text-ink">本世之界</span>
+        <span class="block truncate text-note leading-relaxed text-ink-faint">
           {{ view?.title ?? "此世气象未明,一观便知" }}
         </span>
       </span>
-      <span class="shrink-0 text-[11px] text-qing">观 象 →</span>
+      <span class="shrink-0 text-body text-qing">观 象 →</span>
     </span>
 
     <span v-if="view && view.places.length > 0" class="mt-2 block">
-      <span class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[10px]">
+      <span class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-note">
         <span class="text-qing tabular">{{ clearedCount }}/{{ view.stages }} 程</span>
         <span class="min-w-0 truncate text-ink-faint">
           {{ currentPlace ? `眼下「${currentPlace.name}」` : "此世路线已尽" }}

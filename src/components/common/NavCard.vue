@@ -35,16 +35,16 @@
         副行一长,它又把副行挤成两行(截图里「修行画像」那张就是这样)。
       -->
       <span class="flex items-baseline justify-between gap-2">
-        <span class="min-w-0 font-kai text-[14px] tracking-[0.25em] text-ink">{{ title }}</span>
-        <span class="shrink-0 text-[11px]" :class="TONE[tone].text">{{ action }} →</span>
+        <span class="min-w-0 font-kai text-title tracking-[0.25em] text-ink">{{ title }}</span>
+        <span class="shrink-0 text-body" :class="TONE[tone].text">{{ action }} →</span>
       </span>
       <span
-        class="mt-0.5 block text-[10px] text-ink-faint"
+        class="mt-0.5 block text-note text-ink-faint"
         :class="clampSub ? 'line-clamp-2 leading-relaxed' : 'truncate'"
       >
         <span
           v-if="badge"
-          class="chip-ink mr-1 border-current align-middle text-[10px]"
+          class="chip-ink mr-1 border-current align-middle text-note"
           :class="TONE[tone].text"
           >{{ badge }}</span
         ><slot name="sub">{{ sub }}</slot>

@@ -58,11 +58,11 @@ function doUpgradeAll(): void {
       <span class="tabular">器灵尘×{{ upCost.dust }} · 灵石 {{ formatGN(upCost.stone) }}</span>
     </p>
     <!-- 代价有了,这一级给什么也要在 —— 基础攻防血按 (1+级数×12%) 叠乘,读 EPQUIP_LEVEL_BONUS 不手写 -->
-    <p class="mt-0.5 text-[10px] text-ink-faint">
+    <p class="mt-0.5 text-note text-ink-faint">
       强化每级:基础攻防血 ×(1 + 级数 ×{{ formatPercent(EQUIP_LEVEL_BONUS, 0) }})
     </p>
     <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完(与法宝炼化同款) -->
-    <p v-if="!upAffordable" class="mt-1 text-[10px] text-cinnabar tabular">
+    <p v-if="!upAffordable" class="mt-1 text-note text-cinnabar tabular">
       尚差 器灵尘×{{ Math.max(0, upCost.dust - resources.dust) }} · 灵石
       {{ formatGN(Math.max(0, toNum(upCost.stone) - toNum(resources.spiritStone))) }}
     </p>
@@ -71,7 +71,7 @@ function doUpgradeAll(): void {
          只有一级可点时上行已报下一级,不重复 -->
     <p
       v-if="restUpgrade !== 'max' && restUpgrade.count > 1"
-      class="mt-1 text-[10px] text-ink-faint tabular"
+      class="mt-1 text-note text-ink-faint tabular"
     >
       连强到顶共需({{ restUpgrade.count }} 级)器灵尘×{{ restUpgrade.dust }} · 灵石
       {{ formatGN(restUpgrade.stone) }}

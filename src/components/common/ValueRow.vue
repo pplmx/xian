@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-baseline gap-2">
-    <span class="shrink-0 text-[11px] text-ink-faint">{{ label }}</span>
-    <span class="font-kai text-[15px]" :class="colorClass">{{ value }}</span>
+    <span class="shrink-0 text-body text-ink-faint">{{ label }}</span>
+    <span class="font-kai text-section" :class="colorClass">{{ value }}</span>
   </div>
 </template>
 

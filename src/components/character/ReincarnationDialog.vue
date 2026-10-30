@@ -3,7 +3,7 @@
   <BaseModal :open="ui.deathDialog && !view" :closable="false" aria-label="寿元将尽">
     <div class="text-center">
       <p class="mt-2 font-kai text-2xl tracking-[0.4em] text-ink">寿元将尽</p>
-      <p class="mt-3 text-[14px] leading-relaxed text-ink-soft">
+      <p class="mt-3 text-title leading-relaxed text-ink-soft">
         {{ player.name }}枯坐于蒲团之上,油尽灯枯。
         <br />
         此生行至 {{ yearsShown(player.age) }} 载,止步于{{ player.realmName }}。
@@ -30,12 +30,12 @@
       <!-- 这一世立的题 -->
       <div v-if="reviewTheme" class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
         <p class="flex items-center justify-between">
-          <span class="font-kai text-[14px] text-ink">「{{ reviewTheme.vow }}」</span>
-          <span class="text-[11px]" :class="RESULT_COLORS[view.review.themeResult ?? 'unfinished']">
+          <span class="font-kai text-title text-ink">「{{ reviewTheme.vow }}」</span>
+          <span class="text-body" :class="RESULT_COLORS[view.review.themeResult ?? 'unfinished']">
             {{ RESULT_NAMES[view.review.themeResult ?? "unfinished"] }}
           </span>
         </p>
-        <p class="mt-1 text-[11px] text-ink-faint">
+        <p class="mt-1 text-body text-ink-faint">
           {{ reviewTheme.goal }}
           <span v-if="view.review.themeResult === 'unfinished'" class="tabular">
             ({{ Math.floor(view.review.themeCur) }} / {{ view.review.themeNeed }})
@@ -43,40 +43,40 @@
         </p>
         <p
           v-if="view.review.themeResult === 'done'"
-          class="mt-1 text-[11px] leading-relaxed text-gold-ink"
+          class="mt-1 text-body leading-relaxed text-gold-ink"
         >
           {{ reviewTheme.legacy }}
         </p>
-        <p v-else-if="view.review.themeResult === 'broken'" class="mt-1 text-[11px] text-ink-faint">
+        <p v-else-if="view.review.themeResult === 'broken'" class="mt-1 text-body text-ink-faint">
           你{{ TABOO_NAMES[reviewTheme.taboo ?? "pill"] }}了。这一世的话,没能说到底。
         </p>
       </div>
-      <p v-else class="mt-3 text-[11px] text-ink-faint">此生不曾为自己立下什么题目。</p>
+      <p v-else class="mt-3 text-body text-ink-faint">此生不曾为自己立下什么题目。</p>
 
       <!-- 宿慧与阶段 -->
       <div class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
-        <p class="flex items-center justify-between text-[11px]">
+        <p class="flex items-center justify-between text-body">
           <span class="text-ink-soft">此生所历,化作宿慧</span>
           <span class="font-kai text-cinnabar tabular">+{{ view.review.insightGained }}</span>
         </p>
-        <p class="mt-1.5 flex items-center justify-between text-[11px]">
+        <p class="mt-1.5 flex items-center justify-between text-body">
           <span class="text-ink-soft">宿慧共计</span>
           <span class="tabular text-ink">{{ view.insightAfter }}</span>
         </p>
         <p class="mt-2 flex items-center gap-2">
           <span
-            class="font-kai text-[14px]"
+            class="font-kai text-title"
             :class="view.stageAdvanced ? 'text-cinnabar' : 'text-ink'"
             >{{ view.stageName }}</span
           >
           <span
             v-if="view.stageAdvanced"
-            class="rounded bg-cinnabar/6 px-1.5 py-0.5 text-[10px] text-cinnabar"
+            class="rounded bg-cinnabar/6 px-1.5 py-0.5 text-note text-cinnabar"
             >境地已迁</span
           >
         </p>
         <p class="mt-1 t-body text-ink-faint">{{ view.stageDesc }}</p>
-        <p v-if="view.toNextStage !== null" class="mt-1 text-[11px] text-ink-faint tabular">
+        <p v-if="view.toNextStage !== null" class="mt-1 text-body text-ink-faint tabular">
           再积 {{ view.toNextStage }} 宿慧,可入下一境地。
         </p>
       </div>
@@ -104,13 +104,13 @@
 
       <!-- 交割清单:带走什么、放下什么 —— 与 core/samsaraAudit 的继承表同源,不另写一份 -->
       <div class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
-        <p class="text-[10px] text-ink-faint">
+        <p class="text-note text-ink-faint">
           此生交割 —— 留下的是「我是谁」,放下的是「我拥有多少」
         </p>
         <div v-for="g in heritageGroups()" :key="g.mode" class="mt-1.5">
-          <p class="text-[11px]" :class="g.mode === 'reset' ? 'text-ink-faint' : 'text-ink-soft'">
+          <p class="text-body" :class="g.mode === 'reset' ? 'text-ink-faint' : 'text-ink-soft'">
             {{ g.title }}
-            <span class="ml-1 text-[10px] text-ink-faint">{{ g.rows.length }} 项</span>
+            <span class="ml-1 text-note text-ink-faint">{{ g.rows.length }} 项</span>
           </p>
           <!--
             交割清单的每一条 chip 都点得开 —— 机制说明(r.detail,30+ 条)原先只挂在
@@ -124,7 +124,7 @@
             <button
               v-for="r in g.rows"
               :key="r.id"
-              class="chip-ink min-h-[28px] !text-[10px] text-left"
+              class="chip-ink min-h-[28px] !text-note text-left"
               :class="
                 g.mode === 'full'
                   ? 'border-jade/50 text-jade'
@@ -141,7 +141,7 @@
           </p>
           <p
             v-if="tappedHeritage && tappedHeritage.mode === g.mode"
-            class="mt-1 text-[10px] leading-relaxed text-ink-faint"
+            class="mt-1 text-note leading-relaxed text-ink-faint"
           >
             <span class="text-ink-soft">{{ tappedHeritage.name }}</span>
             ：{{ tappedHeritage.detail }}
@@ -171,8 +171,8 @@
       </p>
 
       <!-- 新一世的道号:每世一换,确认页可改回(玩家反馈「转世名字没重随机」) -->
-      <p class="mt-3 font-kai text-[14px] tracking-widest text-ink">新一世的道号</p>
-      <p class="mt-1 text-[11px] text-ink-faint">道号属「这一世如何自报家门」,随皮囊一同换过。</p>
+      <p class="mt-3 font-kai text-title tracking-widest text-ink">新一世的道号</p>
+      <p class="mt-1 text-body text-ink-faint">道号属「这一世如何自报家门」,随皮囊一同换过。</p>
       <div class="mt-2 flex items-center gap-2">
         <input
           v-model="nameDraft"
@@ -186,8 +186,8 @@
         </button>
       </div>
 
-      <p class="mt-3 font-kai text-[14px] tracking-widest text-ink">择一先天之姿</p>
-      <p class="mt-0.5 text-[10px] leading-relaxed text-ink-faint">
+      <p class="mt-3 font-kai text-title tracking-widest text-ink">择一先天之姿</p>
+      <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
         只取其一,余者本世无缘 —— 下一世才会重抽。
       </p>
       <p v-if="view.talentChoices.length === 0" class="mt-2 t-body text-ink-faint">
@@ -203,23 +203,23 @@
         >
           <p class="flex items-center gap-2">
             <span
-              class="font-kai text-[14px]"
+              class="font-kai text-title"
               :style="{ color: TALENT_GRADE_COLORS[talentDef(id)?.grade ?? 1] }"
             >
               {{ talentDef(id)?.name }}
             </span>
-            <span class="text-[10px] text-ink-faint">{{
+            <span class="text-note text-ink-faint">{{
               TALENT_GRADE_NAMES[talentDef(id)?.grade ?? 1]
             }}</span>
           </p>
-          <p class="mt-0.5 text-[11px] text-ink-faint">{{ talentDef(id)?.desc }}</p>
+          <p class="mt-0.5 text-body text-ink-faint">{{ talentDef(id)?.desc }}</p>
           <!-- 具体效果不再只藏在名字后面:抽的时候就看得到数字(手机上没 hover) -->
-          <p v-if="modsText(talentDef(id)?.mods ?? {})" class="mt-0.5 text-[11px] text-qing">
+          <p v-if="modsText(talentDef(id)?.mods ?? {})" class="mt-0.5 text-body text-qing">
             {{ modsText(talentDef(id)?.mods ?? {}) }}
           </p>
         </button>
       </div>
-      <p v-if="view.extraTalents.length" class="mt-3 text-[11px] text-ink-faint">
+      <p v-if="view.extraTalents.length" class="mt-3 text-body text-ink-faint">
         另有先天之姿自开:
         <span v-for="id in view.extraTalents" :key="id" class="mr-2 font-kai text-gold-ink">{{
           talentDef(id)?.name
@@ -231,26 +231,26 @@
         v-if="view.heritageGained && heritageDef(view.heritageGained)"
         class="mt-4 rounded-sm border border-gold-ink/30 bg-gold-ink/5 px-3 py-2"
       >
-        <p class="font-kai text-[14px] tracking-widest text-gold-ink">
+        <p class="font-kai text-title tracking-widest text-gold-ink">
           道统传承 · {{ heritageDef(view.heritageGained)!.name }}
         </p>
         <p class="mt-1 t-body text-ink-soft">
           {{ heritageDef(view.heritageGained)!.desc }}
         </p>
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-1 text-note leading-relaxed text-ink-faint">
           效果：{{ heritageDef(view.heritageGained)!.effectDesc }}
         </p>
       </div>
 
       <!-- 这一世的命题 -->
       <template v-if="view.themeChoices.length">
-        <p class="mt-4 font-kai text-[14px] tracking-widest text-ink">
+        <p class="mt-4 font-kai text-title tracking-widest text-ink">
           这一世要做什么
-          <span v-if="view.themeFree" class="ml-1 text-[10px] font-normal text-gold-ink"
+          <span v-if="view.themeFree" class="ml-1 text-note font-normal text-gold-ink"
             >(百世老修,任你自择)</span
           >
         </p>
-        <p class="mt-1 text-[11px] text-ink-faint">
+        <p class="mt-1 text-body text-ink-faint">
           立题不给属性。走到底了,所得的是随神魂不灭的一份所知。
         </p>
         <div class="mt-2 space-y-2">
@@ -262,11 +262,11 @@
             @click="theme = theme === t.id ? null : t.id"
           >
             <p class="flex items-center justify-between">
-              <span class="font-kai text-[14px] text-ink">{{ t.name }}</span>
-              <span class="text-[10px] text-ink-faint tabular">宿慧 +{{ t.insight }}</span>
+              <span class="font-kai text-title text-ink">{{ t.name }}</span>
+              <span class="text-note text-ink-faint tabular">宿慧 +{{ t.insight }}</span>
             </p>
             <p class="mt-0.5 t-body text-ink-soft">{{ t.vow }}</p>
-            <p class="mt-0.5 text-[11px] text-ink-faint">
+            <p class="mt-0.5 text-body text-ink-faint">
               {{ t.goal }}
               <span v-if="t.taboo" class="ml-1 text-amber-ink"
                 >忌:{{ TABOO_NAMES[t.taboo] }} —— 一世守之,破之题废,无所得</span
@@ -274,7 +274,7 @@
             </p>
           </button>
         </div>
-        <p class="mt-2 text-[11px] text-ink-faint">不选亦可——无题的一世,不过是少一份所得。</p>
+        <p class="mt-2 text-body text-ink-faint">不选亦可——无题的一世,不过是少一份所得。</p>
       </template>
     </div>
     <template #footer>

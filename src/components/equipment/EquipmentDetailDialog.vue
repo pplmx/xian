@@ -4,13 +4,11 @@
       <div class="flex items-center gap-2">
         <QualityTag :quality="inst.quality" />
         <!-- 界域 + 阶位:同一句「23 阶」在人间界与仙界完全不是一回事,故写清是哪一界 -->
-        <span class="text-[11px] text-ink-faint">
+        <span class="text-body text-ink-faint">
           {{ EQUIP_SLOT_NAMES[template.slot] }} · {{ worldNameOfTier(inst.tier) }} ·
           {{ inst.tier }} 阶
         </span>
-        <span v-if="inst.level > 0" class="text-[11px] text-gold-ink tabular"
-          >+{{ inst.level }}</span
-        >
+        <span v-if="inst.level > 0" class="text-body text-gold-ink tabular">+{{ inst.level }}</span>
         <button
           class="-m-1.5 flex min-h-[28px] min-w-[28px] items-center justify-center p-1.5 text-ink-faint active:scale-90"
           :aria-label="inst.locked ? '解锁' : '锁定'"
@@ -26,7 +24,7 @@
         共鸣是机制而非数值,但装备卡片此前一个字都不提:玩家在「要不要换掉这件」时,
         看不到它身上拴着一条会断的机制(见 core/equipSet)。
       -->
-      <p v-if="setInfo" class="mt-1.5 text-[11px] leading-relaxed">
+      <p v-if="setInfo" class="mt-1.5 text-body leading-relaxed">
         <span class="font-kai" :class="setInfo.active ? 'text-jade' : 'text-violet-ink'">
           共鸣「{{ setInfo.def.name }}」{{ setInfo.count }}/{{ setInfo.def.required }}
         </span>
@@ -38,23 +36,23 @@
         >
       </p>
       <div class="ink-divider my-3" />
-      <p v-if="compareTarget" class="mb-1.5 text-[10px] text-ink-faint tabular">
+      <p v-if="compareTarget" class="mb-1.5 text-note text-ink-faint tabular">
         对比当前佩戴:「{{ compareTarget.name }}」(绿升红降)
       </p>
       <div class="space-y-1.5">
-        <p v-for="row in flatRows" :key="row.label" class="flex justify-between text-[14px]">
+        <p v-for="row in flatRows" :key="row.label" class="flex justify-between text-title">
           <span class="text-ink-soft">{{ row.label }}</span>
           <span class="tabular text-ink">
             {{ row.value }}
             <span
               v-if="row.diff"
-              class="ml-1 text-[11px]"
+              class="ml-1 text-body"
               :class="row.up ? 'text-jade' : 'text-cinnabar'"
               >({{ row.diff }})</span
             >
           </span>
         </p>
-        <p v-for="row in fixedModRows" :key="row.label" class="flex justify-between text-[14px]">
+        <p v-for="row in fixedModRows" :key="row.label" class="flex justify-between text-title">
           <span class="text-ink-soft">{{ row.label }}</span>
           <span class="tabular text-qing">{{ row.value }}</span>
         </p>
@@ -67,10 +65,10 @@
           「要不要为这件洗下去」才算得清。
         -->
         <p
-          class="mb-1.5 flex items-baseline justify-between font-kai text-[14px] tracking-[0.3em] text-ink-faint"
+          class="mb-1.5 flex items-baseline justify-between font-kai text-title tracking-[0.3em] text-ink-faint"
         >
           <span>词 条</span>
-          <span class="text-[10px] tracking-normal tabular">
+          <span class="text-note tracking-normal tabular">
             {{ inst.affixes.length }} / {{ affixCap }} 条
             <span class="ml-1 text-ink-faint">({{ qualityName }}上限)</span>
           </span>
@@ -94,7 +92,7 @@
             :style="{ borderLeft: `2px solid ${AFFIX_RARITY_META[line.rarity].color}` }"
           >
             <span
-              class="shrink-0 font-kai text-[14px]"
+              class="shrink-0 font-kai text-title"
               :style="{ color: AFFIX_RARITY_META[line.rarity].color }"
             >
               「{{ line.name }}」
@@ -106,7 +104,7 @@
               {{ AFFIX_RARITY_META[line.rarity].name }}
             </span>
             <span
-              class="ml-auto min-w-0 text-right text-[11px] leading-snug text-ink-soft tinylens:order-3 tinylens:basis-full tinylens:text-left"
+              class="ml-auto min-w-0 text-right text-body leading-snug text-ink-soft tinylens:order-3 tinylens:basis-full tinylens:text-left"
             >
               {{ line.before }}<span class="tabular font-medium text-ink">{{ line.value }}</span
               >{{ line.after }}
@@ -115,13 +113,13 @@
             <EquipSealPanel class="tinylens:order-2" :affix-id="line.id" :name="line.name" />
           </li>
         </ul>
-        <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+        <p class="mt-1 text-note leading-relaxed text-ink-faint">
           排序:稀有度(传世 → 常见)→ 掷点;左侧色边即这一条的成色
         </p>
       </template>
       <template v-if="buildPreview">
         <div class="ink-divider my-3" />
-        <p class="flex items-center justify-between text-[14px]">
+        <p class="flex items-center justify-between text-title">
           <span class="text-ink-faint">装备后流派</span>
           <span class="tabular">
             <template v-if="buildPreview.before">
@@ -160,7 +158,7 @@
         <p
           v-for="s in forgeSkills"
           :key="s.id"
-          class="flex items-center gap-2 text-[10px] text-ink-faint"
+          class="flex items-center gap-2 text-note text-ink-faint"
         >
           <span class="w-10 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
           <span class="w-12 shrink-0 tabular" :class="s.active ? 'text-jade' : ''">{{
@@ -177,7 +175,7 @@
       </div>
       <!-- 强化子面板:价签/加成/短差/连强总账随面板走(EquipUpgradePanel,自读同一份 inst) -->
       <EquipUpgradePanel />
-      <p v-if="salvage" class="mt-1 flex items-center justify-between text-[11px] text-ink-faint">
+      <p v-if="salvage" class="mt-1 flex items-center justify-between text-body text-ink-faint">
         <span>分解返还{{ inst.level > 0 ? `(${refundRateText()})` : "" }}</span>
         <span class="tabular">
           器灵尘×{{ salvage.dust }}

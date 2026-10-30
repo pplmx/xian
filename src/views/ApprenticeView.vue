@@ -225,7 +225,7 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
     >
       <template #action>
         <button
-          class="btn-seal min-h-[28px] !px-2 !py-1 whitespace-nowrap text-[11px] tinylens:w-full"
+          class="btn-seal min-h-[28px] !px-2 !py-1 whitespace-nowrap text-body tinylens:w-full"
           :disabled="slotsFull || recruitShort > 0"
           @click="doRecruit"
         >
@@ -249,36 +249,36 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
         :data-apprentice-away="pulse.away"
       >
         <div class="flex items-baseline justify-between gap-2">
-          <span class="font-kai text-[14px] tracking-[0.22em] text-ink">门庭今日</span>
-          <span class="text-[10px] text-ink-faint">共 {{ pulse.total }} 名弟子</span>
+          <span class="font-kai text-title tracking-[0.22em] text-ink">门庭今日</span>
+          <span class="text-note text-ink-faint">共 {{ pulse.total }} 名弟子</span>
         </div>
         <div
           class="mt-2 grid grid-cols-3 divide-x divide-ink/10 text-center tinylens:grid-cols-1 tinylens:divide-x-0 tinylens:divide-y tinylens:divide-ink/10"
         >
           <p class="px-1 py-1">
-            <span class="block text-[10px] text-ink-faint">在途</span>
-            <span class="block text-[11px] tabular text-ink-soft" data-apprentice-away
+            <span class="block text-note text-ink-faint">在途</span>
+            <span class="block text-body tabular text-ink-soft" data-apprentice-away
               >{{ pulse.away }} 人</span
             >
           </p>
           <p class="px-1 py-1">
-            <span class="block text-[10px] text-ink-faint">闲置</span>
+            <span class="block text-note text-ink-faint">闲置</span>
             <span
-              class="block text-[11px] tabular"
+              class="block text-body tabular"
               :class="pulse.idle > 0 ? 'text-cinnabar' : 'text-ink-soft'"
               data-apprentice-idle
               >{{ pulse.idle }} 人</span
             >
           </p>
           <p class="px-1 py-1">
-            <span class="block text-[10px] text-ink-faint">最近归来</span>
-            <span class="block text-[11px] tabular text-ink-soft" data-apprentice-next-return>{{
+            <span class="block text-note text-ink-faint">最近归来</span>
+            <span class="block text-body tabular text-ink-soft" data-apprentice-next-return>{{
               nextReturnText
             }}</span>
           </p>
         </div>
         <button
-          class="btn-seal mt-2 min-h-[28px] w-full !py-1 text-[11px]"
+          class="btn-seal mt-2 min-h-[28px] w-full !py-1 text-body"
           :disabled="!hasIdle"
           @click="doDispatchAll"
         >
@@ -297,13 +297,13 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
         <!-- 极窄档(≤220 CSS px):「名字 + 等级 + 羁绊 + 天赋描述」一行塞不下,描述被压到
              10px 一字一行 —— 允许换行,描述整块落到下一行。320 / 390 两档不动。 -->
         <div class="flex flex-wrap items-center gap-2">
-          <span class="font-kai text-[14px] text-ink">{{
+          <span class="font-kai text-title text-ink">{{
             apprenticeDef(a.archId)?.name ?? a.archId
           }}</span>
-          <span class="text-[10px] text-ink-faint">Lv{{ a.level }}/{{ APPRENTICE_MAX_LEVEL }}</span>
+          <span class="text-note text-ink-faint">Lv{{ a.level }}/{{ APPRENTICE_MAX_LEVEL }}</span>
           <span
             v-if="a.bond > 0"
-            class="rounded bg-cinnabar/6 px-1.5 py-0.5 text-[10px] text-cinnabar"
+            class="rounded bg-cinnabar/6 px-1.5 py-0.5 text-note text-cinnabar"
             :title="
               bondNext(a.bond)
                 ? `羁绊 ${a.bond} 趟 · 距「${bondNext(a.bond)!.name}」还差 ${bondNext(a.bond)!.remaining} 趟(完工趟数,纯称谓不带加成)`
@@ -311,17 +311,17 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
             "
             >{{ bondTitle(a.bond) }} · {{ a.bond }} 趟</span
           >
-          <span v-if="bondNext(a.bond)" class="whitespace-nowrap text-[10px] text-ink-faint"
+          <span v-if="bondNext(a.bond)" class="whitespace-nowrap text-note text-ink-faint"
             >距离「{{ bondNext(a.bond)!.name }}」{{ bondNext(a.bond)!.remaining }} 趟</span
           >
-          <span class="ml-auto text-[10px] text-ink-faint">{{
+          <span class="ml-auto text-note text-ink-faint">{{
             apprenticeDef(a.archId)?.desc ?? ""
           }}</span>
         </div>
 
         <!-- 在途 -->
         <div v-if="a.task" class="mt-1.5" :data-apprentice-task-progress="taskProgress(a)">
-          <div class="flex items-center gap-2 text-[11px]">
+          <div class="flex items-center gap-2 text-body">
             <span class="rounded bg-ink/5 px-1.5 py-0.5">{{ taskDef(a.task.spec).name }}</span>
             <span class="tabular text-ink-faint"
               >归期
@@ -345,7 +345,7 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
 
         <!-- 闲置:可派活 -->
         <div v-else class="mt-1.5">
-          <p class="mb-1 text-[10px] text-ink-faint">派去:</p>
+          <p class="mb-1 text-note text-ink-faint">派去:</p>
           <div class="grid grid-cols-2 gap-1.5 tinylens:grid-cols-1">
             <button
               v-for="t in APPRENTICE_TASKS"
@@ -367,12 +367,12 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
               </span>
               <span class="min-w-0 flex-1">
                 <span class="flex items-baseline justify-between gap-1">
-                  <span class="font-kai text-[11px] tracking-[0.05em] text-ink">{{ t.name }}</span>
-                  <span class="shrink-0 text-[10px] tabular text-ink-faint"
+                  <span class="font-kai text-body tracking-[0.05em] text-ink">{{ t.name }}</span>
+                  <span class="shrink-0 text-note tabular text-ink-faint"
                     >{{ Math.round(apprenticeTaskSeconds(t.spec) / 60) }} 分</span
                   >
                 </span>
-                <span class="mt-0.5 block text-[10px] leading-relaxed text-ink-faint">{{
+                <span class="mt-0.5 block text-note leading-relaxed text-ink-faint">{{
                   taskYield(a, t.spec)
                 }}</span>
               </span>
@@ -382,28 +382,28 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
                第一tap 展开,再点同一枚即派出 —— 派出锁人 30~90 分钟,顺手变成两步。 -->
           <p
             v-if="tappedTask && tappedTask.uid === a.uid"
-            class="mt-1 text-[10px] leading-relaxed text-ink-faint"
+            class="mt-1 text-note leading-relaxed text-ink-faint"
           >
             「{{ taskDef(tappedTask.spec).name }}」{{ taskDef(tappedTask.spec).desc }} ——
             再点一次「{{ taskDef(tappedTask.spec).name }}」即派出
           </p>
         </div>
         <!-- 真传:跨世之缘只对最高羁绊开放 —— 养出真传的玩家该看得见这条,不藏注释 -->
-        <p v-if="a.bond >= BOND_TRUECODE_MIN" class="mt-1.5 text-[10px] text-gold-ink">
+        <p v-if="a.bond >= BOND_TRUECODE_MIN" class="mt-1.5 text-note text-gold-ink">
           真传 —— 转世时凝一缕跨世之缘,来世情谊随魂而来
         </p>
         <!-- 未到真传也要把这条机制与门槛摊明:冲「跨世之缘」的人在达成前就该知道它存在、差几趟 -->
-        <p v-else class="mt-1.5 text-[10px] text-ink-faint">
+        <p v-else class="mt-1.5 text-note text-ink-faint">
           抵达「真传」({{ BOND_TRUECODE_MIN }} 趟)后,转世时凝一缕跨世之缘,来世情谊随魂而来
         </p>
       </div>
     </div>
-    <p v-else class="py-3 text-center text-[11px] text-ink-faint">
+    <p v-else class="py-3 text-center text-body text-ink-faint">
       尚无一徒 —— 开局白送一名,或再收。
     </p>
 
     <!-- 收徒成本说明 -->
-    <p class="text-[10px] leading-relaxed text-ink-faint">
+    <p class="text-note leading-relaxed text-ink-faint">
       收徒一次耗灵石(按当前境界)。弟子天赋门类的产出 ×{{
         APPRENTICE_TALENT_BONUS
       }}。到时辰归来,久不在线亦照算。
@@ -413,7 +413,7 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
       「半格进度」可言 —— 故不编一条「距下次升级」的假进度,把来源说清楚。
       羁绊(趟数)已逐档摊在弟子卡上,与升级同源同长。
     -->
-    <p class="text-[10px] leading-relaxed text-ink-faint">
+    <p class="text-note leading-relaxed text-ink-faint">
       弟子每完工一趟升一级(封顶 {{ APPRENTICE_MAX_LEVEL }} 级),等级越高,一趟带回的越多。
     </p>
   </div>
