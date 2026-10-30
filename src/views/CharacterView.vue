@@ -33,16 +33,14 @@
     <section class="folio-span-all">
       <SectionTitle title="道躯总案" hint="三围折成战力,灵根定下行路" />
       <div class="character-dossier" data-character-dossier>
-        <header class="character-dossier__head">
-          <span class="character-dossier__seal" aria-hidden="true">躯</span>
-          <span class="character-dossier__heading">
-            <span class="character-dossier__eyebrow">本世根骨</span>
-            <span class="character-dossier__title">战力与灵根</span>
-          </span>
-          <span class="character-dossier__position tabular">
-            第 {{ player.major + 1 }} / {{ REALMS.length }} 境
-          </span>
-        </header>
+        <LedgerHeader
+          seal="躯"
+          eyebrow="本世根骨"
+          title="战力与灵根"
+          score-label="第"
+          :score-value="player.major + 1"
+          :score-suffix="`/ ${REALMS.length} 境`"
+        />
 
         <div class="character-dossier__grid">
           <section class="character-dossier__power" data-character-power>
@@ -391,6 +389,7 @@ import { rootElements, tendencyLines } from "@/core/linggenAffinity";
 import { cnNumber, formatNum, formatPercent } from "@/utils/format";
 import { add, gn, mulN, ratio } from "@/utils/gnum";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
 import { STAT_NAMES } from "@/data/statNames";

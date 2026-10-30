@@ -40,6 +40,7 @@ import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { notify } from "@/core/notify";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
@@ -328,16 +329,13 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
         :data-apprentice-idle="pulse.idle"
         :data-apprentice-away="pulse.away"
       >
-        <header class="apprentice-pulse__head">
-          <span class="apprentice-pulse__seal" aria-hidden="true">庭</span>
-          <span class="apprentice-pulse__heading">
-            <span class="apprentice-pulse__eyebrow">今日门庭</span>
-            <span class="apprentice-pulse__title text-heading">一册值日</span>
-          </span>
-          <span class="apprentice-pulse__position tabular">
-            {{ pulse.total }} / {{ slots }} 席
-          </span>
-        </header>
+        <LedgerHeader
+          seal="庭"
+          eyebrow="今日门庭"
+          title="一册值日"
+          :score-value="`${pulse.total} / ${slots}`"
+          score-suffix="席"
+        />
 
         <div class="apprentice-pulse__body">
           <div class="apprentice-pulse__tallies">

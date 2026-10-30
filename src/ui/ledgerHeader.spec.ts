@@ -36,6 +36,9 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       { file: "src/views/RealmCodexView.vue", count: 1 },
       { file: "src/views/CollectionView.vue", count: 2 },
       { file: "src/views/SettingsView.vue", count: 3 },
+      { file: "src/views/DongfuView.vue", count: 1 },
+      { file: "src/views/CharacterView.vue", count: 1 },
+      { file: "src/views/ApprenticeView.vue", count: 1 },
     ];
 
     for (const { file, count } of cases) {
@@ -55,10 +58,13 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       "src/views/RealmCodexView.vue",
       "src/views/CollectionView.vue",
       "src/views/SettingsView.vue",
+      "src/views/DongfuView.vue",
+      "src/views/CharacterView.vue",
+      "src/views/ApprenticeView.vue",
     ]) {
       const view = source(file);
       expect(view).not.toMatch(
-        /<(?:header)[^>]*class="[^"]*(?:build-ledger__head|legacy-ledger__head|name-beast-ledger__head|name-ledger__head|build-discovery__head|world-ledger__head|realm-now__head|achievement-briefing__head|collection-briefing__head|settings-console__head|settings-archive__head|settings-trail__head)/,
+        /<(?:header)[^>]*class="[^"]*(?:build-ledger__head|legacy-ledger__head|name-beast-ledger__head|name-ledger__head|build-discovery__head|world-ledger__head|realm-now__head|achievement-briefing__head|collection-briefing__head|settings-console__head|settings-archive__head|settings-trail__head|dongfu-ledger__head|character-dossier__head|apprentice-pulse__head)/,
       );
     }
   });
@@ -85,6 +91,9 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
     const realm = source("src/styles/pages/realm-codex.css");
     const collection = source("src/styles/pages/collection.css");
     const settings = source("src/styles/pages/settings.css");
+    const dongfu = source("src/styles/pages/dongfu.css");
+    const character = source("src/styles/pages/character.css");
+    const apprentice = source("src/styles/pages/apprentice.css");
 
     expect(build).toMatch(
       /\.build-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--build-accent\)/,
@@ -104,6 +113,15 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
     );
     expect(settings).toMatch(
       /\.settings-console,\s*\.settings-archive,\s*\.settings-trail\s*\{[\s\S]{0,300}--ledger-accent:\s*var\(--settings-accent\)/,
+    );
+    expect(dongfu).toMatch(
+      /\.dongfu-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--color-cinnabar\)/,
+    );
+    expect(character).toMatch(
+      /\.character-dossier\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--color-cinnabar\)/,
+    );
+    expect(apprentice).toMatch(
+      /\.apprentice-pulse\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--color-cinnabar\)/,
     );
   });
 });

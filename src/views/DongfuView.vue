@@ -30,16 +30,14 @@
         :hint="`已营 ${dongfu.builtCount}/${BUILDINGS.length} · 各司其职,日夜不辍`"
       />
       <div class="dongfu-ledger" data-dongfu-ledger>
-        <header class="dongfu-ledger__head">
-          <span class="dongfu-ledger__seal" aria-hidden="true">府</span>
-          <span class="dongfu-ledger__heading">
-            <span class="dongfu-ledger__eyebrow">山门总账</span>
-            <span class="dongfu-ledger__title">七作营造</span>
-          </span>
-          <span class="dongfu-ledger__position tabular">
-            {{ dongfu.builtCount }} / {{ BUILDINGS.length }} 已营
-          </span>
-        </header>
+        <LedgerHeader
+          seal="府"
+          eyebrow="山门总账"
+          title="七作营造"
+          score-label="已营"
+          :score-value="dongfu.builtCount"
+          :score-suffix="`/ ${BUILDINGS.length}`"
+        />
 
         <div class="dongfu-ledger__grid">
           <section class="dongfu-ledger__progress">
@@ -244,6 +242,7 @@ import { buildingUpgradeInfo, upgradeBuilding } from "@/core/buildingService";
 import { hourlyYieldText } from "@/core/engineFacilities";
 import { cnNumber, formatGN } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import BuildingCard from "@/components/dongfu/BuildingCard.vue";

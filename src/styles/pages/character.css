@@ -8,6 +8,7 @@
    * 现在左半账同时报原值、权重与占比，右半账只讲灵根；九处去向退成一册索引。
    */
   .character-dossier {
+    --ledger-accent: var(--color-cinnabar);
     position: relative;
     overflow: hidden;
     margin-top: 0.5rem;
@@ -32,62 +33,6 @@
     border: 1px solid rgb(var(--color-ink-rgb) / 0.032);
     content: "";
     pointer-events: none;
-  }
-  .character-dossier__head {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.55rem 0.7rem;
-    padding: 0.82rem 0.9rem 0.7rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-  }
-  .character-dossier__seal {
-    display: grid;
-    width: 2.5rem;
-    height: 2.5rem;
-    flex: none;
-    place-items: center;
-    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.4);
-    background:
-      linear-gradient(
-        145deg,
-        rgb(var(--color-paper-rgb) / 0.62),
-        rgb(var(--color-cinnabar-rgb) / 0.04)
-      ),
-      rgb(var(--color-paper-rgb) / 0.32);
-    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.28);
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    line-height: 1;
-  }
-  .character-dossier__heading {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 0.08rem;
-  }
-  .character-dossier__eyebrow {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.16em;
-  }
-  .character-dossier__title {
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    letter-spacing: 0.16em;
-    line-height: 1.4;
-  }
-  .character-dossier__position {
-    margin-left: auto;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    white-space: nowrap;
   }
   .character-dossier__grid {
     position: relative;
@@ -342,20 +287,9 @@
     }
   }
   @media (max-width: 220px) {
-    .character-dossier__head,
     .character-dossier__power,
     .character-dossier__roots {
       padding-inline: 0.72rem;
-    }
-
-    .character-dossier__seal {
-      width: 2.2rem;
-      height: 2.2rem;
-    }
-
-    .character-dossier__position {
-      width: 100%;
-      margin-left: 0;
     }
 
     .character-dossier__stat {
